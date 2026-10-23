@@ -361,7 +361,7 @@ func TestEventSizeSurvivesASaveAndLoad(t *testing.T) {
 	gained := func(ge *GameEngine) float64 {
 		ge.mu.Lock()
 		defer ge.mu.Unlock()
-		ge.permanentBonuses["food"] += 1e6 // room for the harvest, from the event's own rates pass
+		ge.permanentBonuses["food"] += config.Million // room for the harvest, from the event's own rates pass
 		before := ge.Resources.Get("food")
 		ge.fireEvent(harvest)
 		return ge.Resources.Get("food") - before

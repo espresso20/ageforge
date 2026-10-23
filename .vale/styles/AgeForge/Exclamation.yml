@@ -1,0 +1,7 @@
+extends: existence
+message: "No exclamation marks in the wiki or the README."
+description: "The wiki states things plainly."
+level: error
+nonword: true
+tokens:
+  - "!"

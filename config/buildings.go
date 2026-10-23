@@ -178,7 +178,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== COLONIAL AGE (costs: 5M-15M) =====
 		{
 			Name: "Colonial Warehouse", Key: "colonial_warehouse", Category: "storage",
-			BaseCost:  map[string]float64{"stone": 7.7e+06, "gold": 1000000},
+			BaseCost:  map[string]float64{"stone": 7.7 * Million, "gold": Million},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -190,7 +190,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== INDUSTRIAL AGE (costs: 25M-75M) =====
 		{
 			Name: "Industrial Depot", Key: "industrial_depot", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 2.6e07, "iron": 3.4e07, "coal": 1.7e07},
+			BaseCost:  map[string]float64{"steel": 26 * Million, "iron": 34 * Million, "coal": 17 * Million},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -202,7 +202,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== VICTORIAN AGE (costs: 125M-375M) =====
 		{
 			Name: "Victorian Vault", Key: "victorian_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 2.1e08, "gold": 1.7e08, "iron": 1.3e08},
+			BaseCost:  map[string]float64{"steel": 210 * Million, "gold": 170 * Million, "iron": 130 * Million},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -214,7 +214,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== ELECTRIC AGE (costs: 600M-2B) =====
 		{
 			Name: "Electric Warehouse", Key: "electric_warehouse", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 1.3e09, "electricity": 2.1e08, "iron": 8.6e08},
+			BaseCost:  map[string]float64{"steel": 1.3 * Billion, "electricity": 210 * Million, "iron": 860 * Million},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -226,7 +226,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== ATOMIC AGE (costs: 3B-10B) =====
 		{
 			Name: "Atomic Vault", Key: "atomic_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 1.2e10, "stone": 1.9e10, "iron": 7.4e09},
+			BaseCost:  map[string]float64{"steel": 12 * Billion, "stone": 19 * Billion, "iron": 7.4 * Billion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -238,7 +238,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== MODERN AGE (costs: 15B-50B) =====
 		{
 			Name: "Modern Depot", Key: "modern_depot", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 8.7e10, "gold": 6.2e10, "electricity": 2e10},
+			BaseCost:  map[string]float64{"steel": 87 * Billion, "gold": 62 * Billion, "electricity": 20 * Billion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -250,7 +250,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== INFORMATION AGE (costs: 75B-250B) =====
 		{
 			Name: "Info Vault", Key: "info_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 2.5e11, "electricity": 9.9e10, "data": 1.6e09},
+			BaseCost:  map[string]float64{"steel": 250 * Billion, "electricity": 99 * Billion, "data": 1.6 * Billion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -262,7 +262,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== DIGITAL AGE (costs: 400B-1.2T) =====
 		{
 			Name: "Digital Archive", Key: "digital_archive", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 1.2e12, "data": 2.5e10, "electricity": 3.7e11},
+			BaseCost:  map[string]float64{"steel": 1.2 * Trillion, "data": 25 * Billion, "electricity": 370 * Billion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -274,7 +274,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== CYBERPUNK AGE (costs: 2T-6T) =====
 		{
 			Name: "Cyber Vault", Key: "cyber_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 7.4e12, "data": 1.5e11, "crypto": 2.5e10},
+			BaseCost:  map[string]float64{"steel": 7.4 * Trillion, "data": 150 * Billion, "crypto": 25 * Billion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -286,7 +286,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== FUSION AGE (costs: 10T-30T) =====
 		{
 			Name: "Fusion Vault", Key: "fusion_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 2.5e13, "plasma": 1.2e12, "electricity": 1.2e13},
+			BaseCost:  map[string]float64{"steel": 25 * Trillion, "plasma": 1.2 * Trillion, "electricity": 12 * Trillion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -298,7 +298,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== SPACE AGE (costs: 50T-150T) =====
 		{
 			Name: "Orbital Depot", Key: "orbital_depot", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 1.8e14, "plasma": 2.1e13, "electricity": 1.1e14},
+			BaseCost:  map[string]float64{"steel": 180 * Trillion, "plasma": 21 * Trillion, "electricity": 110 * Trillion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -310,7 +310,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== INTERSTELLAR AGE (costs: 250T-750T) =====
 		{
 			Name: "Stellar Vault", Key: "stellar_vault", Category: "storage",
-			BaseCost:  map[string]float64{"titanium": 2.1e14, "plasma": 1.8e14, "electricity": 2.8e14},
+			BaseCost:  map[string]float64{"titanium": 210 * Trillion, "plasma": 180 * Trillion, "electricity": 280 * Trillion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -322,7 +322,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== GALACTIC AGE (costs: 1.25Q-3.75Q) =====
 		{
 			Name: "Galactic Vault", Key: "galactic_vault", Category: "storage",
-			BaseCost:  map[string]float64{"dark_matter": 3.5e14, "titanium": 1.8e15, "plasma": 7.1e14},
+			BaseCost:  map[string]float64{"dark_matter": 350 * Trillion, "titanium": 1.8 * Quadrillion, "plasma": 710 * Trillion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -334,7 +334,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== QUANTUM AGE (costs: 6Q-20Q) =====
 		{
 			Name: "Quantum Vault", Key: "quantum_vault", Category: "storage",
-			BaseCost:  map[string]float64{"antimatter": 5e15, "dark_matter": 9.9e15, "titanium": 2.5e15},
+			BaseCost:  map[string]float64{"antimatter": 5 * Quadrillion, "dark_matter": 9.9 * Quadrillion, "titanium": 2.5 * Quadrillion},
 			CostScale: 1.75,
 
 			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
@@ -435,7 +435,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Medieval Age — normal costs: 180k-360k
 		{
 			Name: "Great Library", Key: "great_library", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 10500000, "gold": 8070000},
+			BaseCost:  map[string]float64{"stone": 10.5 * Million, "gold": 8.07 * Million},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "research", Value: 2},
@@ -450,7 +450,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Renaissance Age — normal costs: 400k-600k
 		{
 			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 3.84e07, "gold": 3.84e07, "faith": 32000, "culture": 960000},
+			BaseCost:  map[string]float64{"stone": 38.4 * Million, "gold": 38.4 * Million, "faith": 32000, "culture": 960000},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
@@ -465,7 +465,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Colonial Age — normal costs: 1.2M-2M
 		{
 			Name: "Grand Lighthouse", Key: "grand_lighthouse", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 3.2e08, "gold": 1.92e08, "steel": 3.68e07},
+			BaseCost:  map[string]float64{"stone": 320 * Million, "gold": 192 * Million, "steel": 36.8 * Million},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "gold", Value: 5},
@@ -480,7 +480,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Industrial Age — normal costs: 12M-25M
 		{
 			Name: "Crystal Palace", Key: "crystal_palace", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 7.2e08, "iron": 3.2e08, "iron_ore": 3.2e08, "gold": 4.96e08, "coal": 6.4e08},
+			BaseCost:  map[string]float64{"steel": 720 * Million, "iron": 320 * Million, "iron_ore": 320 * Million, "gold": 496 * Million, "coal": 640 * Million},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.15},
@@ -495,7 +495,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Victorian Age — normal costs: 90M-150M
 		{
 			Name: "Eiffel Tower", Key: "eiffel_tower", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 7.52e09, "iron": 6.08e09, "gold": 8.16e09},
+			BaseCost:  map[string]float64{"steel": 7.52 * Billion, "iron": 6.08 * Billion, "gold": 8.16 * Billion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 5},
@@ -510,7 +510,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Electric Age — normal costs: 500M-1B
 		{
 			Name: "Hoover Dam", Key: "hoover_dam", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.136e11, "electricity": 3.2e10},
+			BaseCost:  map[string]float64{"steel": 113.6 * Billion, "electricity": 32 * Billion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 10},
@@ -525,7 +525,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Atomic Age — normal costs: 3B-10B
 		{
 			Name: "Particle Accelerator", Key: "particle_accelerator", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.86e11, "electricity": 2.6e11, "uranium": 2.98e10},
+			BaseCost:  map[string]float64{"steel": 186 * Billion, "electricity": 260 * Billion, "uranium": 29.8 * Billion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "research", Value: 10},
@@ -540,7 +540,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Modern Age — normal costs: 15B-40B
 		{
 			Name: "Space Program", Key: "space_program", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 6.6e11, "titanium_ore": 6.6e11, "gold": 1.19e12, "electricity": 7.38e11},
+			BaseCost:  map[string]float64{"steel": 660 * Billion, "titanium_ore": 660 * Billion, "gold": 1.19 * Trillion, "electricity": 738 * Billion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "research", Value: 6},
@@ -555,7 +555,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Information Age — normal costs: 75B-125B
 		{
 			Name: "Global Network", Key: "global_network", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 3.84e12, "titanium_ore": 3.84e12, "data": 9.28e11, "electricity": 1.536e12, "gold": 3.84e12},
+			BaseCost:  map[string]float64{"steel": 3.84 * Trillion, "titanium_ore": 3.84 * Trillion, "data": 928 * Billion, "electricity": 1.536 * Trillion, "gold": 3.84 * Trillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 30},
@@ -570,7 +570,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Digital Age — normal costs: 400B-750B
 		{
 			Name: "World Simulation", Key: "world_simulation", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 2.72e13, "titanium_ore": 2.72e13, "data": 1.6e12, "electricity": 3.2e13},
+			BaseCost:  map[string]float64{"steel": 27.2 * Trillion, "titanium_ore": 27.2 * Trillion, "data": 1.6 * Trillion, "electricity": 32 * Trillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 60},
@@ -585,7 +585,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Cyberpunk Age — normal costs: 2T-4T
 		{
 			Name: "Neon Citadel", Key: "neon_citadel", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 1.6e14, "electricity": 6.16e13, "dark_matter_crystals": 6.16e13, "crypto": 1.92e13, "data": 1.024e13},
+			BaseCost:  map[string]float64{"steel": 160 * Trillion, "electricity": 61.6 * Trillion, "dark_matter_crystals": 61.6 * Trillion, "crypto": 19.2 * Trillion, "data": 10.24 * Trillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "crypto", Value: 10},
@@ -600,7 +600,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Fusion Age — normal costs: 10T-15T
 		{
 			Name: "Stellar Cradle", Key: "stellar_cradle", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 6.88e14, "plasma": 5.44e14, "electricity": 3.68e14, "dark_matter_crystals": 3.68e14},
+			BaseCost:  map[string]float64{"steel": 688 * Trillion, "plasma": 544 * Trillion, "electricity": 368 * Trillion, "dark_matter_crystals": 368 * Trillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "plasma", Value: 15},
@@ -615,7 +615,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Space Age — normal costs: 50T-80T
 		{
 			Name: "Dyson Scaffold", Key: "dyson_scaffold", Category: "wonder",
-			BaseCost:  map[string]float64{"titanium": 1.456e15, "plasma": 1.056e15, "steel": 8.8e15},
+			BaseCost:  map[string]float64{"titanium": 1.456 * Quadrillion, "plasma": 1.056 * Quadrillion, "steel": 8.8 * Quadrillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 200},
@@ -630,7 +630,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Interstellar Age — normal costs: 250T-500T
 		{
 			Name: "Warp Nexus", Key: "warp_nexus", Category: "wonder",
-			BaseCost:  map[string]float64{"titanium": 4.96e16, "dark_matter": 3.52e15, "plasma": 4.64e16},
+			BaseCost:  map[string]float64{"titanium": 49.6 * Quadrillion, "dark_matter": 3.52 * Quadrillion, "plasma": 46.4 * Quadrillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "dark_matter", Value: 8},
@@ -645,7 +645,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Galactic Age — normal costs: 1Q-1.5Q
 		{
 			Name: "Cosmic Beacon", Key: "cosmic_beacon", Category: "wonder",
-			BaseCost:  map[string]float64{"dark_matter": 3.68e16, "antimatter": 2.72e16, "titanium": 1.04e17},
+			BaseCost:  map[string]float64{"dark_matter": 36.8 * Quadrillion, "antimatter": 27.2 * Quadrillion, "titanium": 104 * Quadrillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "antimatter", Value: 10},
@@ -660,7 +660,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Quantum Age — normal costs: 2.5Q-5Q
 		{
 			Name: "Reality Anchor", Key: "reality_anchor", Category: "wonder",
-			BaseCost:  map[string]float64{"quantum_flux": 5.6e16, "antimatter": 9.11e16, "dark_matter": 1.03e17},
+			BaseCost:  map[string]float64{"quantum_flux": 56 * Quadrillion, "antimatter": 91.1 * Quadrillion, "dark_matter": 103 * Quadrillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "quantum_flux", Value: 15},
@@ -675,7 +675,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Transcendent Age
 		{
 			Name: "Singularity Core", Key: "singularity_core", Category: "wonder",
-			BaseCost:  map[string]float64{"quantum_flux": 5.76e17, "antimatter": 5.92e17, "dark_matter": 5.92e17},
+			BaseCost:  map[string]float64{"quantum_flux": 576 * Quadrillion, "antimatter": 592 * Quadrillion, "dark_matter": 592 * Quadrillion},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 2},
@@ -699,7 +699,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Any other Category here is silently dropped.
 		{
 			Name: "Embassy", Key: "embassy", Category: "diplomacy",
-			BaseCost:     map[string]float64{"gold": 4.7e07, "iron": 1.15e07, "iron_ore": 1.15e07},
+			BaseCost:     map[string]float64{"gold": 47 * Million, "iron": 11.5 * Million, "iron_ore": 11.5 * Million},
 			CostScale:    1.15,
 			Effects:      []Effect{{Type: "opinion", Target: "opinion", Value: 0.05}},
 			BuildTicks:   3600,
@@ -711,7 +711,7 @@ func baseBuildingsRaw() []BuildingDef {
 		},
 		{
 			Name: "Grand Embassy", Key: "grand_embassy", Category: "diplomacy",
-			BaseCost:     map[string]float64{"gold": 1.8e08, "steel": 8.8e07},
+			BaseCost:     map[string]float64{"gold": 180 * Million, "steel": 88 * Million},
 			CostScale:    1.15,
 			Effects:      []Effect{{Type: "opinion", Target: "opinion", Value: 0.1}},
 			BuildTicks:   3600,
@@ -737,7 +737,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// whitelisted in the effect-target validator.
 		{
 			Name: "Geographic Society", Key: "geographic_society", Category: "diplomacy",
-			BaseCost:     map[string]float64{"gold": 6.4e07, "steel": 3.4e07, "coal": 1.3e07},
+			BaseCost:     map[string]float64{"gold": 64 * Million, "steel": 34 * Million, "coal": 13 * Million},
 			CostScale:    1.15,
 			BuildTicks:   3600,
 			RequiredAge:  "industrial_age",

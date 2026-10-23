@@ -758,7 +758,7 @@ func TestInviteGuaranteesTheStrike(t *testing.T) {
 	}
 	forceFate(t, ge, 26000)
 	tickTo(ge, arrivalTick(ge))
-	setStock(ge, map[string][2]float64{"faith": {1e6, 1e6}})
+	setStock(ge, map[string][2]float64{"faith": {config.Million, config.Million}})
 	if err := ge.HarbingerInvite(); err != nil {
 		t.Fatal(err)
 	}
@@ -1024,7 +1024,7 @@ func TestCosmicDoomParksTheLastPassageThread(t *testing.T) {
 		t.Errorf("Last Passage state = %+v", lp)
 	}
 	// Appease goes to the doom's thread; the Last Passage's keeps its level.
-	setStock(ge, map[string][2]float64{"faith": {1e12, 1e12}, "culture": {1e12, 1e12}})
+	setStock(ge, map[string][2]float64{"faith": {config.Trillion, config.Trillion}, "culture": {config.Trillion, config.Trillion}})
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}

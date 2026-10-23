@@ -247,12 +247,12 @@ func costStr(c map[string]float64) string {
 // num formats a number compactly: whole below ten thousand, and from there
 // the game's own format (textfmt.Number: 12.5K, 3.4M, 1.56T, 8.9Q), so the
 // report reads as the game does. It used to stop at T and printed the Cosmic
-// Era's quadrillions as 8.9e+03T.
+// Era's quadrillions as 8900T in scientific form.
 func num(v float64) string {
 	switch {
 	case bad(v):
 		return fmt.Sprint(v)
-	case math.Abs(v) >= 1e4:
+	case math.Abs(v) >= 10_000:
 		return textfmt.Number(v)
 	default:
 		return fmt.Sprintf("%.0f", v)

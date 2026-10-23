@@ -3,6 +3,7 @@ package game
 import (
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -47,7 +48,7 @@ func BenchmarkRefusalSeveralValues(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := ge.RecruitWorker("worker", 1_000_000); err == nil {
+		if err := ge.RecruitWorker("worker", config.Million); err == nil {
 			b.Fatal("a recruit of a million was not refused")
 		}
 	}

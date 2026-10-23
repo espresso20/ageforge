@@ -36,7 +36,7 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 		}
 	}
 	// Every mission takes a party: an army at home that covers any number.
-	setSoldiers(ge, 1e12)
+	setSoldiers(ge, config.Trillion)
 	if n > 0 {
 		ge.Buildings.LoadCounts(map[string]int{autoExpeditionBuildingKey: n})
 	}
@@ -173,7 +173,7 @@ func TestAutoExpeditionInterval_ScalesAndFloors(t *testing.T) {
 // TestAutoExpedition_NoBuildingNoDispatch: without the society, nothing is ever
 // dispatched, however long the game runs.
 func TestAutoExpedition_NoBuildingNoDispatch(t *testing.T) {
-	ge := autoExpeditionTestEngine(t, "atomic_age", 0, 0, 1e9)
+	ge := autoExpeditionTestEngine(t, "atomic_age", 0, 0, config.Billion)
 	if launched, _ := runAutoTicks(ge, 5000); launched != 0 {
 		t.Errorf("%d expeditions auto-launched with no Geographic Society built", launched)
 	}
@@ -187,13 +187,13 @@ func TestAutoExpedition_NoBuildingNoDispatch(t *testing.T) {
 // mission takes a party); with an army it sends, and never a grand mission,
 // whatever its haul per minute.
 func TestAutoExpedition_NeverSendsWhatItCannotPay(t *testing.T) {
-	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
+	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, config.Billion)
 	learn(ge, "military_tactics")
 	setSoldiers(ge, 0)
 	if launched, _ := runAutoTicks(ge, 5000); launched != 0 {
 		t.Fatalf("%d missions auto-launched with no soldiers at home", launched)
 	}
-	setSoldiers(ge, 1e12)
+	setSoldiers(ge, config.Trillion)
 	launched, _ := runAutoTicks(ge, 20000)
 	if launched == 0 {
 		t.Fatal("nothing auto-launched at full investment with an army at home — the dispatcher is inert")
@@ -220,7 +220,7 @@ func TestAutoExpedition_NeverSendsWhatItCannotPay(t *testing.T) {
 // at home can make up the party, holds the dispatch when they cannot and
 // fires it the tick they can.
 func TestAutoExpedition_RespectsTheArmy(t *testing.T) {
-	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
+	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, config.Billion)
 	// The soldiers at home: one short party and a little over.
 	short := ge.partySizeLocked(MissionOffer{Tier: TierShort})
 	setSoldiers(ge, float64(short)+1)
@@ -246,7 +246,7 @@ func TestAutoExpedition_RespectsTheArmy(t *testing.T) {
 	}
 
 	// Soldiers come home: the pending dispatch fires on the very next tick.
-	setSoldiers(ge, 1e12)
+	setSoldiers(ge, config.Trillion)
 	ge.processAutoExpeditions()
 	if n := len(ge.Military.ActiveAll()); n != 2 {
 		t.Errorf("%d missions under way after the soldiers came home, want 2 (the manual one and the society's)", n)
@@ -256,7 +256,7 @@ func TestAutoExpedition_RespectsTheArmy(t *testing.T) {
 // TestAutoExpedition_PaysTheCost: an auto-launch is charged exactly what a manual
 // launch is charged.
 func TestAutoExpedition_PaysTheCost(t *testing.T) {
-	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
+	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, config.Billion)
 	ge.EnsureMissionBoard()
 	n := ge.pickAutoOffer()
 	if n == 0 {
@@ -320,7 +320,7 @@ func TestAutoExpedition_SkipsWhenUnaffordable(t *testing.T) {
 	// Refill: the held dispatch must go out immediately, and the flag must clear.
 	for _, def := range config.BaseResources() {
 		if r, ok := ge.Resources.resources[def.Key]; ok {
-			r.Amount = 1e6
+			r.Amount = config.Million
 		}
 	}
 	if launched, _ := runAutoTicks(ge, 1); launched != 1 {
@@ -350,7 +350,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 
 	var prev float64
 	for i, tc := range cases {
-		ge := autoExpeditionTestEngine(t, "atomic_age", tc.count, tc.assigned, 1e12)
+		ge := autoExpeditionTestEngine(t, "atomic_age", tc.count, tc.assigned, config.Trillion)
 		_, fill := ge.autoExpeditionInvestment()
 		want := autoExpeditionIntervalIn(ge.age, tc.count, fill)
 		scoutLongest := minutesToTicks(config.MissionBoardLongestMinutes())
@@ -396,7 +396,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 // TestAutoExpedition_CountdownSurvivesSaveReload: the dispatch countdown is
 // persisted, so a save/reload cannot be used to skip the wait.
 func TestAutoExpedition_CountdownSurvivesSaveReload(t *testing.T) {
-	ge := autoExpeditionTestEngine(t, "atomic_age", 1, 0, 1e9)
+	ge := autoExpeditionTestEngine(t, "atomic_age", 1, 0, config.Billion)
 	// One dispatch, then 100 ticks of the next countdown served.
 	runAutoTicks(ge, 101)
 	want := ge.autoExpeditionTicksLeft
@@ -409,7 +409,7 @@ func TestAutoExpedition_CountdownSurvivesSaveReload(t *testing.T) {
 		AutoExpeditionTicksLeft: ge.autoExpeditionTicksLeft,
 	}
 
-	fresh := autoExpeditionTestEngine(t, "atomic_age", 1, 0, 1e9)
+	fresh := autoExpeditionTestEngine(t, "atomic_age", 1, 0, config.Billion)
 	fresh.autoExpeditionTicksLeft = save.AutoExpeditionTicksLeft
 	if got := fresh.autoExpeditionTicksLeft; got != want {
 		t.Errorf("countdown after reload = %d, want %d", got, want)
@@ -424,7 +424,7 @@ func TestAutoExpedition_CountdownSurvivesSaveReload(t *testing.T) {
 // the offer with the best haul per minute of length that can be sent, stable
 // across repeated calls.
 func TestAutoExpedition_PickerIsDeterministicAndBest(t *testing.T) {
-	ge := autoExpeditionTestEngine(t, "atomic_age", 1, 0, 1e9)
+	ge := autoExpeditionTestEngine(t, "atomic_age", 1, 0, config.Billion)
 	learn(ge, "military_tactics")
 	ge.EnsureMissionBoard()
 
@@ -474,7 +474,7 @@ func TestAutoExpedition_PickerIsDeterministicAndBest(t *testing.T) {
 // sitting starved. AutoExpeditionState is the fix; this is its contract.
 func TestAutoExpeditionSnapshot(t *testing.T) {
 	t.Run("nothing built reads as off", func(t *testing.T) {
-		ge := autoExpeditionTestEngine(t, "industrial_age", 0, 0, 1e9)
+		ge := autoExpeditionTestEngine(t, "industrial_age", 0, 0, config.Billion)
 		got := ge.GetState().Military.AutoExpedition
 		if got != (AutoExpeditionState{}) {
 			t.Errorf("no society should snapshot as the zero value, got %+v", got)
@@ -483,7 +483,7 @@ func TestAutoExpeditionSnapshot(t *testing.T) {
 
 	t.Run("built and staffed", func(t *testing.T) {
 		// 2 societies x WorkerCapacity 8 = 16 capacity, 8 assigned = 0.5 fill.
-		ge := autoExpeditionTestEngine(t, "industrial_age", 2, 8, 1e9)
+		ge := autoExpeditionTestEngine(t, "industrial_age", 2, 8, config.Billion)
 		// One pass so the countdown is primed by a real dispatch rather than
 		// reading back its zero value.
 		if launched, _ := runAutoTicks(ge, 1); launched != 1 {

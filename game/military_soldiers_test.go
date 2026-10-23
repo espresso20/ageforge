@@ -258,7 +258,7 @@ func TestSoldiersArrivalIsLoggedAndCounted(t *testing.T) {
 	posts := warCampPosts(t)
 	ge := peopleEngine(t)
 	for key := range ge.Resources.resources {
-		setAmount(ge, key, 1e6)
+		setAmount(ge, key, config.Million)
 	}
 	ge.Buildings.UnlockBuilding("war_camp")
 	if err := ge.BuildBuilding("war_camp"); err != nil {

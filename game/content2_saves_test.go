@@ -154,7 +154,7 @@ func TestContent2OldSave(t *testing.T) {
 	}
 	learn(ge, "electrification")
 	stock(ge)
-	setResource(ge, "steel", 1e10) // the first Steam Works costs 1.25B, over what stock() gives
+	setResource(ge, "steel", 10*config.Billion) // the first Steam Works costs 1.25B, over what stock() gives
 	if err := ge.BuildBuilding("steam_works"); err != nil {
 		t.Errorf("a Steam Works with Electrification researched: %v", err)
 	}

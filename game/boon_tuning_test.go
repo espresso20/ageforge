@@ -64,7 +64,7 @@ const (
 	// tuningStockFill is the amount every resource is pre-loaded with (and the
 	// storage cap raised to) so a ResourceDrain has something to bite and an
 	// InstantResource grant is not silently clamped away.
-	tuningStockFill = 1e9
+	tuningStockFill = config.Billion
 	// tuningStartPop is the starting worker head-count, big enough that repeated
 	// WorkerLoss maluses cannot floor the population and hide their own severity.
 	tuningStartPop = 5000
@@ -645,7 +645,7 @@ func prepareTuningEngine(sc tuningScenario, seed int64) *GameEngine {
 	ge.Workers.AddLentWorkers(tuningStartPop)
 	// Every mission takes a party: the scenario's town has an army at home
 	// that covers any number of them.
-	ge.garrisonForTest, ge.garrisonForTestSet = 1e12, true
+	ge.garrisonForTest, ge.garrisonForTestSet = config.Trillion, true
 	ge.syncSoldiers()
 
 	// Automated scenarios stand up the Geographic Societies and staff them, so the

@@ -1,0 +1,65 @@
+name: Workflow lint
+
+# actionlint over .github/. It also runs shellcheck on the run: scripts when
+# shellcheck is installed, which the GitHub-hosted runners have. Reports and
+# does not fail the run for now. See docs/ci.md.
+
+on:
+  pull_request:
+    paths:
+      - ".github/**"
+  push:
+    branches: [master]
+    paths:
+      - ".github/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install actionlint
+        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+
+      - name: actionlint
+        id: lint
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          actionlint -verbose 2>&1 | tee actionlint.txt
+
+      - name: Job summary
+        if: ${{ always() }}
+        run: |
+          {
+            echo "### actionlint"
+            echo
+            findings=$(grep -cE '^\.github/' actionlint.txt || true)
+            echo "Findings: **${findings}**"
+            if [ "${findings}" != "0" ]; then
+              echo
+              echo '```'
+              grep -E '^\.github/' actionlint.txt | head -n 100
+              echo '```'
+              echo
+              echo "Reporting only: this check does not fail the run yet."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

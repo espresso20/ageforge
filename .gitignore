@@ -4,7 +4,9 @@
 *.dll
 *.so
 *.dylib
-ageforge
+# The built binary, at the repository root only. Unanchored, this also matched
+# .vale/styles/AgeForge on a case-insensitive filesystem (macOS, Windows).
+/ageforge
 bin/
 
 # Test binary, built with `go test -c`

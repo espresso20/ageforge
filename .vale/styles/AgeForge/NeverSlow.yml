@@ -1,0 +1,9 @@
+extends: existence
+message: "Don't call the game slow: '%s'."
+description: "Describe what a mechanic does; never call the game or its pace slow."
+level: warning
+ignorecase: true
+scope: sentence
+tokens:
+  - '(game|pace|pacing|progress|progression|early game|late game|ages?|eras?|runs?) (is|are|feels?|can feel|gets?|moves?|goes) (really |very |too |rather |a bit |quite |a little |pretty |fairly )?(slow|slower|sluggish|tedious|grindy)'
+  - '(slow|sluggish|tedious|grindy) (game|pace|pacing|start|progress|progression|grind)'

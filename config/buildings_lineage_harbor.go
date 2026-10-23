@@ -26,7 +26,7 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 0 — colonial_age
 	b = append(b, BuildingDef{
 		Name: "Harbor", Key: "harbor", Category: "production",
-		BaseCost:  map[string]float64{"stone": 5.43e+07, "gold": 5.43e+07},
+		BaseCost:  map[string]float64{"stone": 54.3 * Million, "gold": 54.3 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 23300},
@@ -43,7 +43,7 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 1 — industrial_age
 	b = append(b, BuildingDef{
 		Name: "Harbor Authority", Key: "harbor_authority", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1.8e08, "coal": 6.4e07, "gold": 1.1e08},
+		BaseCost:  map[string]float64{"steel": 180 * Million, "coal": 64 * Million, "gold": 110 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 38500},
@@ -59,10 +59,10 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 2 — modern_age
 	b = append(b, BuildingDef{
 		Name: "Seaport", Key: "seaport", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1.05e11, "titanium_ore": 1.05e11, "electricity": 7.2e10, "gold": 4.8e09},
+		BaseCost:  map[string]float64{"steel": 105 * Billion, "titanium_ore": 105 * Billion, "electricity": 72 * Billion, "gold": 4.8 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "gold", Value: 4370000},
+			{Type: "production", Target: "gold", Value: 4.37 * Million},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.15},
 		},
 		BuildTicks:   3600,
@@ -76,10 +76,10 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 3 — information_age
 	b = append(b, BuildingDef{
 		Name: "Container Terminal", Key: "container_terminal", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 5.6e11, "data": 5.6e10, "gold": 1e12},
+		BaseCost:  map[string]float64{"electricity": 560 * Billion, "data": 56 * Billion, "gold": Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "gold", Value: 2.28e08},
+			{Type: "production", Target: "gold", Value: 228 * Million},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.2},
 		},
 		BuildTicks:   3600,
@@ -93,7 +93,7 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 4 — digital_age
 	b = append(b, BuildingDef{
 		Name: "Logistics Hub", Key: "logistics_hub", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 2.8e12, "data": 3.6e11},
+		BaseCost:  map[string]float64{"electricity": 2.8 * Trillion, "data": 360 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 102.4},

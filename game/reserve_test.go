@@ -3,6 +3,8 @@ package game
 import (
 	"testing"
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // A pass brings in 1% of the population, rounded up, and at least one.
@@ -21,7 +23,7 @@ func TestReserve_OnePassAddsOnePercent(t *testing.T) {
 	ge.Workers.UnlockType("worker")
 	ge.Workers.Recruit("worker", 400, ge.popCapLocked())
 	ge.recalculateRates()
-	setAmount(ge, "food", 1e6)
+	setAmount(ge, "food", config.Million)
 	for _, pop := range []int{400, 404, 409} {
 		if got := ge.Workers.TotalPop(); got != pop {
 			t.Fatalf("population %d, want %d", got, pop)

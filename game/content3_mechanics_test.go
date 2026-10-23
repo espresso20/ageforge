@@ -47,7 +47,7 @@ func TestDigitalToCosmicMechanics(t *testing.T) {
 		ge.age = "digital_age"
 		for res, r := range ge.Resources.resources {
 			ge.Resources.UnlockResource(res)
-			r.Amount = 1e11
+			r.Amount = 100 * config.Billion
 		}
 		most := 0
 		for seed := int64(1); seed <= 40; seed++ {

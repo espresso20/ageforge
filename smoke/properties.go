@@ -126,7 +126,7 @@ func StaticProperties() Properties {
 	// until its income has doubled.
 	grown := make([]refRun, n)
 	for i := range t.ages {
-		grown[i] = t.stay(i, towns[i], refPlay{rate: 1, speed: 1, refIncome: refIncome[i], horizon: 2e7, stopAtDouble: true})
+		grown[i] = t.stay(i, towns[i], refPlay{rate: 1, speed: 1, refIncome: refIncome[i], horizon: 20 * config.Million, stopAtDouble: true})
 	}
 	add := func(num int, says string, holds bool, today string) {
 		out.List = append(out.List, Property{N: num, Says: says, Holds: holds, Today: today})

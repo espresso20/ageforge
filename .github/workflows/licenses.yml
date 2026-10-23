@@ -1,0 +1,93 @@
+name: Licenses
+
+# The license of every module the game builds in, weekly and whenever go.mod or
+# go.sum changes. go-licenses lists them; the check compares each against an
+# allowlist of permissive licenses. The project's own license (a custom
+# non-commercial one) is left out of both on purpose.
+#
+# Fail-soft: the report is the job summary and an artifact, and a license off
+# the list does not fail the run. See docs/ci.md.
+
+on:
+  pull_request:
+    paths:
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/licenses.yml"
+  schedule:
+    - cron: "53 5 * * 1" # weekly, Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  licenses:
+    name: go-licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OWN_MODULE: github.com/espresso20/ageforge
+      ALLOWED: Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MIT,MPL-2.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install go-licenses
+        run: go install github.com/google/go-licenses/v2@v2.0.1
+
+      - name: Report
+        run: |
+          go-licenses report ./... --ignore "$OWN_MODULE" > licenses.csv 2> licenses.err || true
+          wc -l < licenses.csv
+
+      - name: Check against the allowlist
+        id: check
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          go-licenses check ./... --ignore "$OWN_MODULE" --allowed_licenses="$ALLOWED" 2>&1 | tee check.txt
+
+      - name: Job summary
+        if: ${{ always() }}
+        env:
+          CHECK: ${{ steps.check.outcome }}
+        run: |
+          {
+            echo "### Dependency licenses"
+            echo
+            if [ ! -s licenses.csv ]; then
+              echo "go-licenses wrote no report; see the step log."
+            else
+              echo "| Package | License |"
+              echo "| --- | --- |"
+              awk -F, '{print "| " $1 " | " $3 " |"}' licenses.csv
+              echo
+              if [ "$CHECK" = "success" ]; then
+                echo "Every license is on the allowlist (${ALLOWED})."
+              else
+                echo "A license is not on the allowlist (${ALLOWED}). Reporting only: this check does not fail the run yet."
+                echo
+                echo '```'
+                grep -vE '^[WI][0-9]{4} ' check.txt | head -n 40
+                echo '```'
+              fi
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: licenses
+          path: licenses.csv
+          if-no-files-found: ignore

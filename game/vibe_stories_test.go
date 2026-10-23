@@ -296,15 +296,16 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 	// With the switch on, the same thread (the VibeMode set names the figure,
 	// so the same engine under a script that changes nothing is the twin).
 	vibe.Set(true)
-	twin := func() *GameEngine {
+	// Read the twin while that script is still in force: the real script
+	// has its own lines for these warnings.
+	wantKept, wantKeys, wantRead := func() ([]string, []string, []string) {
 		defer vibe.UseRewriterForTest(func(id, plain string) string { return plain })()
 		ge := newSeededEngine(4)
 		if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
 			t.Fatal(err)
 		}
-		return ge
+		return harborLines(ge)
 	}()
-	wantKept, wantKeys, wantRead := harborLines(twin)
 	if len(wantKept) != 2 {
 		t.Fatalf("under a script that changes nothing the thread keeps %q", wantKept)
 	}

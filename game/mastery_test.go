@@ -344,7 +344,7 @@ func TestMasteryDropKeepsStock(t *testing.T) {
 	ge.mu.Lock()
 	ge.recalculateRates()
 	r := ge.Resources.resources["wood"]
-	high := 1e6 // a stock held at k = 2
+	high := config.Million // a stock held at k = 2
 	r.Amount = high
 	ge.Prestige.SetMastery(ge.age, 0) // k drops to 1 (as entering new ground does)
 	ge.recalculateRates()
@@ -353,10 +353,10 @@ func TestMasteryDropKeepsStock(t *testing.T) {
 		t.Fatalf("after k dropped: wood %v, was %v; want the stock kept", r.Amount, high)
 	}
 	ge.mu.Lock()
-	ge.Resources.Add("wood", 3e6)
+	ge.Resources.Add("wood", 3*config.Million)
 	ge.mu.Unlock()
-	if r := ge.Resources.resources["wood"]; r.Amount != high+3e6 {
-		t.Errorf("wood %v after a big add, want %v: nothing clips a credit", r.Amount, high+3e6)
+	if r := ge.Resources.resources["wood"]; r.Amount != high+3*config.Million {
+		t.Errorf("wood %v after a big add, want %v: nothing clips a credit", r.Amount, high+3*config.Million)
 	}
 }
 

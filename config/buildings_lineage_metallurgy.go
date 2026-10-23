@@ -61,7 +61,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// Steel is a higher-tier resource; the rate reset to 0.50 is correct for the new tier.
 	b = append(b, BuildingDef{
 		Name: "Foundry", Key: "foundry", Category: "production",
-		BaseCost:     map[string]float64{"gold": 2800000, "steel": 930000, "coal": 340000},
+		BaseCost:     map[string]float64{"gold": 2.8 * Million, "steel": 930000, "coal": 340000},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "steel", Value: 261}},
 		BuildTicks:   2400,
@@ -75,7 +75,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 4 — colonial_age  output=steel  rate=1.0
 	b = append(b, BuildingDef{
 		Name: "Colonial Steelworks", Key: "iron_works", Category: "production",
-		BaseCost:     map[string]float64{"gold": 1.6e07, "steel": 8500000},
+		BaseCost:     map[string]float64{"gold": 16 * Million, "steel": 8.5 * Million},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "steel", Value: 2590}},
 		BuildTicks:   3600,
@@ -89,7 +89,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 5 — industrial_age  output=steel  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Steel Mill", Key: "steel_mill", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.2e08, "coal": 5.1e07, "gold": 6.8e07},
+		BaseCost:    map[string]float64{"steel": 120 * Million, "coal": 51 * Million, "gold": 68 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "steel", Value: 41500}},
 		BuildTicks:  5000,
@@ -102,7 +102,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 6 — victorian_age  output=steel  rate=4.0
 	b = append(b, BuildingDef{
 		Name: "Bessemer Plant", Key: "bessemer_plant", Category: "production",
-		BaseCost:  map[string]float64{"steel": 8.3e08, "coal": 4.2e08, "gold": 5.1e08},
+		BaseCost:  map[string]float64{"steel": 830 * Million, "coal": 420 * Million, "gold": 510 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "steel", Value: 101000},
@@ -118,7 +118,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 7 — electric_age  output=steel  rate=8.0
 	b = append(b, BuildingDef{
 		Name: "Electric Arc Furnace", Key: "electric_arc_furnace", Category: "production",
-		BaseCost:  map[string]float64{"steel": 5.1e09, "electricity": 2.1e09, "gold": 3e09},
+		BaseCost:  map[string]float64{"steel": 5.1 * Billion, "electricity": 2.1 * Billion, "gold": 3 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "steel", Value: 659000},
@@ -134,10 +134,10 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 8 — atomic_age  output=steel  rate=16.0
 	b = append(b, BuildingDef{
 		Name: "Advanced Alloy Plant", Key: "advanced_alloy_plant", Category: "production",
-		BaseCost:  map[string]float64{"steel": 2.5e10, "electricity": 1.1e10, "uranium": 1.7e09},
+		BaseCost:  map[string]float64{"steel": 25 * Billion, "electricity": 11 * Billion, "uranium": 1.7 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "steel", Value: 2550000},
+			{Type: "production", Target: "steel", Value: 2.55 * Million},
 			{Type: "production", Target: "iron", Value: 54200},
 		},
 		BuildTicks:  9360,
@@ -152,11 +152,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// Titanium is a tier-5 resource; starting rate 0.50 matches the iron/steel pivot pattern.
 	b = append(b, BuildingDef{
 		Name: "Titanium Smelter", Key: "titanium_smelter", Category: "production",
-		BaseCost:  map[string]float64{"steel": 7e10, "titanium_ore": 7e10, "electricity": 5.5e10, "data": 5.1e09},
+		BaseCost:  map[string]float64{"steel": 70 * Billion, "titanium_ore": 70 * Billion, "electricity": 55 * Billion, "data": 5.1 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "titanium", Value: 0.5},
-			{Type: "production", Target: "steel", Value: 17100000},
+			{Type: "production", Target: "steel", Value: 17.1 * Million},
 		},
 		BuildTicks:  9360,
 		RequiredAge: "modern_age",
@@ -168,11 +168,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 10 — information_age  output=titanium  rate=1.0
 	b = append(b, BuildingDef{
 		Name: "Aerospace Foundry", Key: "aerospace_foundry", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 4e11, "data": 4.2e10, "steel": 3.7e11, "titanium_ore": 3.7e11},
+		BaseCost:  map[string]float64{"electricity": 400 * Billion, "data": 42 * Billion, "steel": 370 * Billion, "titanium_ore": 370 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "titanium", Value: 1},
-			{Type: "production", Target: "steel", Value: 141000000},
+			{Type: "production", Target: "steel", Value: 141 * Million},
 		},
 		BuildTicks:  10920,
 		RequiredAge: "information_age",
@@ -184,11 +184,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 11 — digital_age  output=titanium  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Nano Alloy Plant", Key: "nano_alloy_plant", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 1.9e12, "data": 2.4e11, "steel": 1.4e12, "titanium_ore": 1.4e12, "nanobots": 17000},
+		BaseCost:  map[string]float64{"electricity": 1.9 * Trillion, "data": 240 * Billion, "steel": 1.4 * Trillion, "titanium_ore": 1.4 * Trillion, "nanobots": 17000},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "titanium", Value: 2},
-			{Type: "production", Target: "steel", Value: 202000000},
+			{Type: "production", Target: "steel", Value: 202 * Million},
 		},
 		BuildTicks:  12480,
 		RequiredAge: "digital_age",
@@ -202,11 +202,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// dark_matter is a tier-7 resource; starting at 1.0/tick is correct.
 	b = append(b, BuildingDef{
 		Name: "Dark Matter Refinery", Key: "dark_matter_refinery", Category: "production",
-		BaseCost:  map[string]float64{"data": 9.3e11, "crypto": 4.9e12, "electricity": 4.85e12, "dark_matter_crystals": 4.85e12},
+		BaseCost:  map[string]float64{"data": 930 * Billion, "crypto": 4.9 * Trillion, "electricity": 4.85 * Trillion, "dark_matter_crystals": 4.85 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "dark_matter", Value: 1},
-			{Type: "production", Target: "steel", Value: 493000000},
+			{Type: "production", Target: "steel", Value: 493 * Million},
 		},
 		BuildTicks:  14040,
 		RequiredAge: "cyberpunk_age",
@@ -218,11 +218,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 13 — fusion_age  output=dark_matter  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Exotic Matter Forge", Key: "exotic_matter_forge", Category: "production",
-		BaseCost:  map[string]float64{"plasma": 2e13, "electricity": 3.2e13, "dark_matter_crystals": 3.2e13, "steel": 8.5e13},
+		BaseCost:  map[string]float64{"plasma": 20 * Trillion, "electricity": 32 * Trillion, "dark_matter_crystals": 32 * Trillion, "steel": 85 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "dark_matter", Value: 2},
-			{Type: "production", Target: "steel", Value: 1.93e09},
+			{Type: "production", Target: "steel", Value: 1.93 * Billion},
 		},
 		BuildTicks:  15600,
 		RequiredAge: "fusion_age",
@@ -240,11 +240,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// it makes the age's steel as well.
 	b = append(b, BuildingDef{
 		Name: "Orbital Refinery", Key: "orbital_refinery", Category: "production",
-		BaseCost:  map[string]float64{"plasma": 4.7e14, "electricity": 2.35e14, "dark_matter_crystals": 2.35e14},
+		BaseCost:  map[string]float64{"plasma": 470 * Trillion, "electricity": 235 * Trillion, "dark_matter_crystals": 235 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "titanium", Value: 1.08e10},
-			{Type: "production", Target: "steel", Value: 2.3e9},
+			{Type: "production", Target: "titanium", Value: 10.8 * Billion},
+			{Type: "production", Target: "steel", Value: 2.3 * Billion},
 		},
 		BuildTicks:  17160,
 		RequiredAge: "space_age",
@@ -258,11 +258,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// antimatter is a tier-8 resource; starting at 2.0/tick matches cosmic-era rarity.
 	b = append(b, BuildingDef{
 		Name: "Antimatter Forge", Key: "antimatter_forge", Category: "production",
-		BaseCost:  map[string]float64{"dark_matter": 4.4e14, "titanium": 3.5e15, "plasma": 2.2e15},
+		BaseCost:  map[string]float64{"dark_matter": 440 * Trillion, "titanium": 3.5 * Quadrillion, "plasma": 2.2 * Quadrillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "antimatter", Value: 2},
-			{Type: "production", Target: "titanium", Value: 1.32e11},
+			{Type: "production", Target: "titanium", Value: 132 * Billion},
 		},
 		BuildTicks:  18720,
 		RequiredAge: "interstellar_age",
@@ -274,11 +274,11 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 16 — galactic_age  output=antimatter  rate=4.0
 	b = append(b, BuildingDef{
 		Name: "Stellar Metallurgy", Key: "stellar_metallurgy", Category: "production",
-		BaseCost:  map[string]float64{"dark_matter": 6.63e15, "titanium": 3.31e16},
+		BaseCost:  map[string]float64{"dark_matter": 6.63 * Quadrillion, "titanium": 33.1 * Quadrillion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "antimatter", Value: 5.94e9},
-			{Type: "production", Target: "titanium", Value: 2.42e11},
+			{Type: "production", Target: "antimatter", Value: 5.94 * Billion},
+			{Type: "production", Target: "titanium", Value: 242 * Billion},
 		},
 		BuildTicks:  18720,
 		RequiredAge: "galactic_age",
@@ -292,9 +292,9 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// quantum_flux is the terminal resource; matching antimatter rate is the intended cap.
 	b = append(b, BuildingDef{
 		Name: "Quantum Metal Works", Key: "quantum_metal_works", Category: "production",
-		BaseCost:     map[string]float64{"quantum_flux": 9.5e14, "antimatter": 2.8e17, "dark_matter": 2.4e17},
+		BaseCost:     map[string]float64{"quantum_flux": 950 * Trillion, "antimatter": 280 * Quadrillion, "dark_matter": 240 * Quadrillion},
 		CostScale:    1.15,
-		Effects:      []Effect{{Type: "production", Target: "quantum_flux", Value: 6.49e10}},
+		Effects:      []Effect{{Type: "production", Target: "quantum_flux", Value: 64.9 * Billion}},
 		BuildTicks:   18720,
 		RequiredAge:  "quantum_age",
 		RequiredTech: "quantum_metallurgy",

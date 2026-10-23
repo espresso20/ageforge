@@ -274,11 +274,11 @@ func plural(n int, one, many string) string {
 
 // short renders a rate: 3.2, 748, 12.4k, 3.1M.
 func short(f float64) string {
-	if f >= 999.5e12 {
+	if f >= 999.5*trillion {
 		return textfmt.Number(f) // past the T of this table: the game's own units
 	}
 	unit := ""
-	for i, u := range [4]float64{1e12, 1e9, 1e6, 1e3} {
+	for i, u := range [4]float64{trillion, billion, million, 1000} {
 		if f >= u {
 			f, unit = f/u, [4]string{"T", "B", "M", "k"}[i]
 			break

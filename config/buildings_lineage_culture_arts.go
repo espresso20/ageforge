@@ -48,7 +48,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 2 — renaissance_age  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Art Studio", Key: "art_studio", Category: "production",
-		BaseCost:  map[string]float64{"gold": 2950000, "stone": 1330000},
+		BaseCost:  map[string]float64{"gold": 2.95 * Million, "stone": 1.33 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 2},
@@ -63,7 +63,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 3 — colonial_age  rate=4.0
 	b = append(b, BuildingDef{
 		Name: "Concert Hall", Key: "concert_hall", Category: "production",
-		BaseCost:  map[string]float64{"gold": 1.2e07, "stone": 7500000, "steel": 2400000},
+		BaseCost:  map[string]float64{"gold": 12 * Million, "stone": 7.5 * Million, "steel": 2.4 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 4},
@@ -78,7 +78,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 4 — industrial_age  rate=8.0
 	b = append(b, BuildingDef{
 		Name: "Opera House", Key: "opera_house", Category: "production",
-		BaseCost:  map[string]float64{"steel": 8.4e07, "gold": 5.4e07, "stone": 3.6e07},
+		BaseCost:  map[string]float64{"steel": 84 * Million, "gold": 54 * Million, "stone": 36 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 8},
@@ -93,7 +93,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 5 — victorian_age  rate=15
 	b = append(b, BuildingDef{
 		Name: "Grand Museum", Key: "grand_museum", Category: "production",
-		BaseCost:  map[string]float64{"steel": 6e08, "gold": 3.6e08, "stone": 2.4e08},
+		BaseCost:  map[string]float64{"steel": 600 * Million, "gold": 360 * Million, "stone": 240 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 15},
@@ -108,7 +108,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 6 — electric_age  rate=30
 	b = append(b, BuildingDef{
 		Name: "Radio Station", Key: "radio_station", Category: "production",
-		BaseCost:  map[string]float64{"steel": 3.3e09, "electricity": 1.4e09, "gold": 2.1e09},
+		BaseCost:  map[string]float64{"steel": 3.3 * Billion, "electricity": 1.4 * Billion, "gold": 2.1 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 30},
@@ -123,7 +123,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 7 — atomic_age  rate=60
 	b = append(b, BuildingDef{
 		Name: "Cinema", Key: "cinema", Category: "production",
-		BaseCost:  map[string]float64{"steel": 1.7e10, "electricity": 6.6e09, "gold": 1.1e10},
+		BaseCost:  map[string]float64{"steel": 17 * Billion, "electricity": 6.6 * Billion, "gold": 11 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 60},
@@ -138,7 +138,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 8 — modern_age  rate=120
 	b = append(b, BuildingDef{
 		Name: "TV Studio", Key: "tv_studio", Category: "production",
-		BaseCost:  map[string]float64{"steel": 5e10, "titanium_ore": 5e10, "electricity": 3.9e10, "data": 3.6e09},
+		BaseCost:  map[string]float64{"steel": 50 * Billion, "titanium_ore": 50 * Billion, "electricity": 39 * Billion, "data": 3.6 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 120},
@@ -153,7 +153,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 9 — information_age  rate=250
 	b = append(b, BuildingDef{
 		Name: "Media Center", Key: "media_center", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 2.7e11, "data": 2.7e10, "gold": 4.8e11},
+		BaseCost:  map[string]float64{"electricity": 270 * Billion, "data": 27 * Billion, "gold": 480 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 250},
@@ -168,7 +168,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 10 — digital_age  rate=500
 	b = append(b, BuildingDef{
 		Name: "VR Studio", Key: "vr_studio", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 1.3e12, "data": 1.6e11, "steel": 9.5e11, "titanium_ore": 9.5e11},
+		BaseCost:  map[string]float64{"electricity": 1.3 * Trillion, "data": 160 * Billion, "steel": 950 * Billion, "titanium_ore": 950 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 500},
@@ -183,7 +183,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 11 — cyberpunk_age  rate=1000
 	b = append(b, BuildingDef{
 		Name: "Holographic Theater", Key: "holographic_theater", Category: "production",
-		BaseCost:  map[string]float64{"data": 6.5e11, "crypto": 3.3e12, "electricity": 3.3e12, "dark_matter_crystals": 3.3e12},
+		BaseCost:  map[string]float64{"data": 650 * Billion, "crypto": 3.3 * Trillion, "electricity": 3.3 * Trillion, "dark_matter_crystals": 3.3 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 1000},
@@ -199,7 +199,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 12 — fusion_age  rate=2000
 	b = append(b, BuildingDef{
 		Name: "Neural Art Complex", Key: "neural_art_complex", Category: "production",
-		BaseCost:  map[string]float64{"plasma": 1.4e13, "electricity": 2.1e13, "dark_matter_crystals": 2.1e13, "steel": 5.7e13},
+		BaseCost:  map[string]float64{"plasma": 14 * Trillion, "electricity": 21 * Trillion, "dark_matter_crystals": 21 * Trillion, "steel": 57 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 2000},
@@ -214,7 +214,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 13 — space_age  rate=4000
 	b = append(b, BuildingDef{
 		Name: "Zero G Gallery", Key: "zero_g_gallery", Category: "production",
-		BaseCost:  map[string]float64{"titanium": 2.5e14, "plasma": 1.2e14, "electricity": 1.5e14, "dark_matter_crystals": 1.5e14},
+		BaseCost:  map[string]float64{"titanium": 250 * Trillion, "plasma": 120 * Trillion, "electricity": 150 * Trillion, "dark_matter_crystals": 150 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 4000},
@@ -229,7 +229,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 14 — interstellar_age  rate=8000
 	b = append(b, BuildingDef{
 		Name: "Cultural Beacon", Key: "cultural_beacon", Category: "production",
-		BaseCost:  map[string]float64{"dark_matter": 2.9e14, "titanium": 2.2e15, "plasma": 1.4e15},
+		BaseCost:  map[string]float64{"dark_matter": 290 * Trillion, "titanium": 2.2 * Quadrillion, "plasma": 1.4 * Quadrillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 8000},
@@ -244,7 +244,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 15 — galactic_age  rate=16000
 	b = append(b, BuildingDef{
 		Name: "Civilization Archive", Key: "civilization_archive", Category: "production",
-		BaseCost:  map[string]float64{"antimatter": 5.6e14, "dark_matter": 2.8e15, "titanium": 1.4e16},
+		BaseCost:  map[string]float64{"antimatter": 560 * Trillion, "dark_matter": 2.8 * Quadrillion, "titanium": 14 * Quadrillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 16000},
@@ -259,7 +259,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// tier 16 — quantum_age  rate=32000
 	b = append(b, BuildingDef{
 		Name: "Reality Art Engine", Key: "reality_art_engine", Category: "production",
-		BaseCost:  map[string]float64{"quantum_flux": 6.2e14, "antimatter": 1.8e17, "dark_matter": 1.5e17},
+		BaseCost:  map[string]float64{"quantum_flux": 620 * Trillion, "antimatter": 180 * Quadrillion, "dark_matter": 150 * Quadrillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 32000},

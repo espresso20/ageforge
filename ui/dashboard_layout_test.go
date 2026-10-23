@@ -342,7 +342,7 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 func TestResourceRowsLineUp(t *testing.T) {
 	rows := []resRow{
 		storeRow(game.ResourceState{Name: "Food", Amount: 49600, Rate: 13.9}),
-		storeRow(game.ResourceState{Name: "Gold", Amount: 2.66e6, Rate: 3760}), // "+3.76K/tick", the longest
+		storeRow(game.ResourceState{Name: "Gold", Amount: 2.66 * config.Million, Rate: 3760}), // "+3.76K/tick", the longest
 		storeRow(game.ResourceState{Name: "Knowledge", Amount: 32400, Rate: 17}),
 		storeRow(game.ResourceState{Name: "Dark Matter Crystals", Amount: 12, Rate: -0.04}),
 		faithRow(game.ResourceState{Name: "Faith", Amount: 20, Rate: 0.04}, game.CatastropheOutlook{FaithStrength: 0.41, FaithBand: game.FaithBandAt(0.41)}),

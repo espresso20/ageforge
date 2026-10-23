@@ -181,7 +181,8 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 	expect("building sum past the ceiling", sum, true, "Stone Pits and Cultural Obelisks", "between them")
 
 	// Stock has no cap: any amount of a resource an age supplies can be held.
-	hoard := config.MilestoneDef{Name: "Hoard", Key: "hoard", MinResources: map[string]float64{"gold": 1e300}}
+	const anyAmountOfGold = 1e300 // far past what any run holds; stock has no cap to stop it
+	hoard := config.MilestoneDef{Name: "Hoard", Key: "hoard", MinResources: map[string]float64{"gold": anyAmountOfGold}}
 	expect("gold, any amount", hoard, false)
 	for _, r := range config.BaseResources() {
 		if m.resAge[r.Key] > end {

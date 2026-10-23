@@ -1,0 +1,67 @@
+name: CodeQL
+
+# GitHub's code scanning, advanced setup by workflow file (no repository
+# setting changes). Go for the game, "actions" for the workflows themselves.
+# Results land in the Security tab; the run itself does not fail on findings.
+
+on:
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - "site/**"
+      - "words/**"
+      - "**.md"
+  push:
+    branches: [master]
+    paths-ignore:
+      - "site/**"
+      - "words/**"
+      - "**.md"
+  schedule:
+    - cron: "37 4 * * 3" # weekly, Wednesday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: go
+            build-mode: autobuild
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The same Go the other workflows build with, so autobuild does not fall
+      # back to the runner image's older toolchain.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: ${{ matrix.language == 'go' }}
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          category: "/language:${{ matrix.language }}"
