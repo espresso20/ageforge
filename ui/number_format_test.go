@@ -64,7 +64,8 @@ func TestQuantumTownPrintsNoFourDigitFigure(t *testing.T) {
 		for name, text := range map[string]string{
 			"Resources": d.economyTab.resourceTV.GetText(true),
 			"Buildings": d.economyTab.buildingTV.GetText(true),
-			"Next Age":  d.ageTV.GetText(true),
+			"Ledger":    d.ledgerTV.GetText(true),
+			"Ribbon":    d.statusTV.GetText(true),
 		} {
 			if m := bigFigure.FindString(text); m != "" {
 				t.Errorf("%s at %dx%d prints %q:\n%s", name, w, h, m, strings.TrimSpace(text))

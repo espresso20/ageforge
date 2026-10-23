@@ -37,11 +37,12 @@ var shameMessages = []vibe.Entry{
 // Map panel leaves these rows free, so the prompt works while it is open.
 const promptRows = 3
 
-// The dashboard's other fixed sizes: the rows over the boxes (the badge
-// line, the status bar, the toast line and the two of the Next Age strip)
-// and the width of the right column (the Panels list and the People box).
+// The dashboard's other fixed sizes: the rows over the boxes on the smallest
+// terminals (the badge line, the status ribbon, the toast line and the two of
+// the Ledger, dash_ledger.go; a bigger terminal gives the Ledger more) and
+// the width of the right column (the Panels list and the People box).
 const (
-	dashHeaderRows = 1 + 1 + 1 + 2
+	dashHeaderRows = 1 + 1 + 1 + ledgerCompactRows
 	sidebarW       = 22
 )
 
@@ -65,9 +66,14 @@ type Dashboard struct {
 	workerDetail  bool // the terminal has the rows for the People box's food detail line
 
 	// Shared UI
-	logTV            *tview.TextView
-	statusTV         *fitView
-	ageTV            *fitView
+	logTV    *tview.TextView
+	statusTV *fitView
+	// ledgerTV is the Ledger under the status ribbon (dash_ledger.go) and
+	// ledger what it draws; ledgerReset asks for its trends to start over
+	// (a game was loaded).
+	ledgerTV         *ledgerBox
+	ledger           ledger
+	ledgerReset      atomic.Bool
 	inputField       *commandInput
 	lastAge          string
 	pendingAgeSplash string // set by bus handler, consumed by refresh()
@@ -341,22 +347,23 @@ func (d *Dashboard) build() {
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	// Status bar: written for the bar's width (statusLine).
+	// Status ribbon: written for the bar's width (statusLine).
 	d.statusTV = newFitView(func(w, _ int) string {
 		if d.lastState == nil {
 			return ""
 		}
-		return statusLine(*d.lastState, w)
+		return statusLine(*d.lastState, d.ribbonFacts(), w)
 	})
-	d.statusTV.SetTextAlign(tview.AlignCenter)
 
-	// Age progress tracker: the next age's requirements, each kept whole on
-	// its line.
-	d.ageTV = newFitView(func(w, h int) string {
-		if d.lastState == nil {
-			return ""
+	// The Ledger: the long bar to the next age with what it waits on, the
+	// four pillars and a card for each resource, written for the size it is
+	// drawn at (ledgerLines).
+	d.ledgerTV = newLedgerBox(func(w, h int) []string {
+		if d.lastState == nil || !d.ledger.ready {
+			return nil
 		}
-		return strings.Join(ageProgressLines(*d.lastState, w, h), "\n")
+		tw, th := d.screenSize()
+		return ledgerLines(&d.ledger.data, ledgerTierFor(tw, th), w, h, d.mapSettings().Tier)
 	})
 
 	// Toast notification
@@ -442,8 +449,9 @@ func (d *Dashboard) build() {
 		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", capFirstUI(name), verb), "warning", 8*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
-		// Runs under the engine write lock: only flip the flag, never touch the engine.
+		// Runs under the engine write lock: only flip the flags, never touch the engine.
 		d.catReshow.Store(true)
+		d.ledgerReset.Store(true)
 	})
 	d.engine.Bus.Subscribe(game.EventEpochEventFired, func(e game.EventData) {
 		eventName, _ := e.Payload["event_name"].(string)
@@ -574,9 +582,15 @@ func (d *Dashboard) build() {
 		AddItem(d.cheaterTV, 1, 0, false).
 		AddItem(d.statusTV, 1, 0, false).
 		AddItem(d.toastTV, 1, 0, false).
-		AddItem(d.ageTV, 2, 0, false).
+		AddItem(d.ledgerTV, ledgerCompactRows, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
 		AddItem(d.inputField, promptRows, 0, true)
+	// The Ledger is as tall as the terminal calls for, chosen before the
+	// rows are shared out, so a resize shows the right one at once.
+	d.root.SetDrawFunc(func(_ tcell.Screen, x, y, w, h int) (int, int, int, int) {
+		d.root.ResizeItem(d.ledgerTV, ledgerHeight(w, h, d.ledger.slots), 0)
+		return x, y, w, h
+	})
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -866,10 +880,11 @@ func (d *Dashboard) syncVibe() {
 		d.economyTab.retitle()
 		d.overlayMgr.RetitleAll()
 		// A box that keeps the text it wrote for its size writes it again.
-		for _, v := range []*fitView{d.sidebar, d.statusTV, d.ageTV, d.workerMiniTV,
+		for _, v := range []*fitView{d.sidebar, d.statusTV, d.workerMiniTV,
 			d.economyTab.resourceTV, d.economyTab.buildingTV, d.economyTab.constructionTV} {
 			v.changed()
 		}
+		d.ledgerTV.changed()
 	}
 }
 
@@ -975,8 +990,8 @@ func (d *Dashboard) refresh() {
 		d.lastAge = state.Age
 	}
 
-	d.refreshStatus(state)
 	d.refreshAgeProgress(state)
+	d.refreshStatus(state)
 	d.refreshLog(state)
 	d.toastTV.SetText(safeTags(d.toastMgr.CurrentFor(d.toastW)))
 
@@ -1186,16 +1201,36 @@ func (d *Dashboard) refreshStatus(game.GameState) {
 	d.statusTV.changed()
 }
 
-// statusLine writes the status bar for a bar w cells wide (0: as wide as
-// it likes). When the whole line does not fit it gives up, in order: half
-// the hint, then all of it, the wording of the catastrophe and harbinger
-// badges (and long counts are written short), what morale does to
-// production, the civilization's title, the account's name, the rest of the
-// badges' words and the wide spacing. The age, the badges, the population
-// and morale always show.
-func statusLine(state game.GameState, w int) string {
-	// note: the next age lives on the Next Age bar below, so the status bar
-	// no longer repeats it (it used to print the raw key).
+// ribbonFacts are the facts the status ribbon takes from the Ledger's view
+// of the gate: the calendar year and the next age (both "" when there is
+// nothing to say), and whether the plain glyph tier is on.
+type ribbonFacts struct {
+	year, next string
+	plain      bool
+}
+
+// ribbonFacts reads them from the last refresh.
+func (d *Dashboard) ribbonFacts() ribbonFacts {
+	f := ribbonFacts{plain: d.mapSettings().Tier == mapmodel.TierASCII}
+	if d.ledger.ready {
+		v := d.ledger.data.v
+		f.year = v.YearText
+		if !v.Final {
+			f.next = v.NextName
+		}
+	}
+	return f
+}
+
+// statusLine writes the status ribbon for a bar w cells wide (0: as wide as
+// it likes): the age and the account's marks, then the calendar year, the
+// people, morale and the next age. When the whole line does not fit it gives
+// up, in order: half the hint, then all of it, the next age, the wording of
+// the catastrophe and harbinger badges (and long counts are written short),
+// what morale does to production, the civilization's title, the account's
+// name, the rest of the badges' words, the calendar year and the wide
+// spacing. The age, the badges, the people and morale always show.
+func statusLine(state game.GameState, f ribbonFacts, w int) string {
 	prestigeStr := ""
 	if state.Prestige.Level > 0 {
 		prestigeStr = vibe.Sprintf("ui.dashboard.statusLine.01", "  [cyan]Prestige %d[-]", state.Prestige.Level)
@@ -1208,6 +1243,10 @@ func statusLine(state game.GameState, w int) string {
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
 	// computeMoraleBand is the shared source of truth (same as the workers panel).
 	mBand := computeMoraleBand(state.Morale, state.MoraleMultiplier)
+	dot := "·"
+	if f.plain {
+		dot = "|"
+	}
 
 	// build writes the line at a level of brevity: each level gives up one
 	// more thing.
@@ -1244,7 +1283,9 @@ func statusLine(state game.GameState, w int) string {
 		if mBand.DeltaLabel != "" && level < 4 {
 			moraleDelta = vibe.Sprintf("ui.dashboard.statusLine.12", " (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)
 		}
-		moraleStr := vibe.Sprintf("ui.dashboard.statusLine.13", "  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
+		// The text starts with the spaces that used to set it off from the
+		// population; the ribbon sets its facts off with a mark instead.
+		moraleStr := strings.TrimLeft(vibe.Sprintf("ui.dashboard.statusLine.13", "  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta), " ")
 		// Leading account-name segment, when an account is wired. Truncate a long name so
 		// the status line stays readable on narrow terminals.
 		acctStr := ""
@@ -1267,12 +1308,20 @@ func statusLine(state game.GameState, w int) string {
 		case 1:
 			hint = vibe.Line("ui.dashboard.statusLine.15", "  |  [gray]Esc: close or menu[-]")
 		}
-		pop := fmt.Sprintf("%d/%d", state.Workers.TotalPop, state.Workers.MaxPop)
+		pop := groupedCount(state.Workers.TotalPop) + "/" + groupedCount(state.Workers.MaxPop)
 		if level >= 3 {
 			pop = FormatNumber(float64(state.Workers.TotalPop)) + "/" + FormatNumber(float64(state.Workers.MaxPop))
 		}
-		line := vibe.Sprintf("ui.dashboard.statusLine.16", "%s[gold]%s[-]%s%s%s%s  |  Pop: %s%s%s",
-			acctStr, state.AgeName, prestigeStr, titleStr, catStr, devStr, pop, moraleStr, hint)
+		facts := make([]string, 0, 4)
+		if f.year != "" && level < 8 {
+			facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.19", "Year %s", f.year))
+		}
+		facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.17", "People %s", pop), moraleStr)
+		if f.next != "" && level < 2 {
+			facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.18", "[gray]Next: %s[-]", f.next))
+		}
+		line := " " + acctStr + "[gold]" + state.AgeName + "[-]" + prestigeStr + titleStr + catStr + devStr +
+			"  [gray]" + dot + "[-]  " + strings.Join(facts, "  [gray]"+dot+"[-]  ") + hint
 		if level >= 9 {
 			line = strings.ReplaceAll(line, "  ", " ")
 		}
@@ -1285,139 +1334,28 @@ func statusLine(state game.GameState, w int) string {
 	return line
 }
 
-func (d *Dashboard) refreshAgeProgress(game.GameState) {
-	// The row is written from d.lastState at its next draw (ageProgressLines).
-	d.ageTV.changed()
+// groupedCount writes a whole count with a comma between its thousands
+// (1,094), and a count of a million or more as a short number (41.2M).
+func groupedCount(n int) string {
+	if n < 1000 || n >= 1_000_000 {
+		return FormatNumber(float64(n))
+	}
+	return fmt.Sprintf("%d,%03d", n/1000, n%1000)
 }
 
-// ageGoal is one thing the next age asks for: its text ("Hut 7/10")
-// and whether it is met. The wonder and its keystone are red all through (red).
-type ageGoal struct {
-	text string
-	met  bool
-	red  bool
+func (d *Dashboard) refreshAgeProgress(state game.GameState) {
+	// The Ledger is worked out here, once, from the snapshot: the status
+	// ribbon reads its year and next age, and both are written from it at
+	// their next draw (ledgerLines).
+	if d.ledgerReset.Swap(false) {
+		d.ledger.trail.reset()
+	}
+	d.ledger.update(state, d.engine)
+	d.ledgerTV.changed()
 }
 
-// ageGoals lists what the next age asks for: the age's wonder and its
-// keystone tech while they are still to do, then the buildings. The wonder
-// leads so that a long list of buildings can never push it out of sight.
-func ageGoals(state game.GameState) []ageGoal {
-	var goals []ageGoal
-	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
-	if state.CurrentAgeWonderKey != "" {
-		banked := wonderBankPercent(state, state.CurrentAgeWonderKey)
-		goals = append(goals, ageGoal{vibe.Sprintf("ui.dashboard.ageGoals.01", "Wonder: %s %.0f%% banked", state.CurrentAgeWonderName, banked), false, true})
-		// Its keystone tech, while that is still to research.
-		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {
-			goals = append(goals, ageGoal{vibe.Line("ui.dashboard.ageGoals.02", "Keystone: ") + game.TechName(tech), false, true})
-		}
-	}
-	for _, key := range sortedKeysOf(state.NextAgeBldReqs) {
-		req := state.NextAgeBldReqs[key]
-		current := 0
-		if bs, ok := state.Buildings[key]; ok {
-			// A gate counts the building and the later rungs of its line.
-			current = max(bs.Count, bs.HeldWithLater)
-		}
-		goals = append(goals, ageGoal{fmt.Sprintf("%s %d/%d", game.BuildingName(key), current, req), current >= req, false})
-	}
-	return goals
-}
-
-// ageProgressLines writes the Next Age row for a strip w cells wide and h
-// rows tall: the age's name, then what it asks for (the wonder and its
-// keystone first, then the buildings), each marked ✓ or ✗ and kept whole on
-// its line. When the strip is too small for all of it, what is
-// already met is counted instead of listed, and after that the list ends
-// with how many more there are.
-func ageProgressLines(state game.GameState, w, h int) []string {
-	lines := ageStripLines(state, w, h)
-	if state.NextAge == "" || len(lines) == 0 {
-		return lines
-	}
-	// The strip is the short form of the Advance panel: say how to open it
-	// when the last line has room for the words.
-	last := len(lines) - 1
-	if used := runeLen(plainLogText(lines[last])); used+2+runeLen(charterStripHint.String()) <= w {
-		lines[last] += "  [gray]" + charterStripHint.String() + "[-]"
-	}
-	return lines
-}
-
-// charterStripHint ends the Next Age strip when it has the room.
+// charterStripHint ends the Ledger's long bar when it has the room.
 var charterStripHint = vibe.E("ui.dashboard.charterStripHint.01", "type charter")
-
-// ageStripLines is the strip without its hint.
-func ageStripLines(state game.GameState, w, h int) []string {
-	if w < 1 || h < 1 {
-		return nil
-	}
-	if state.NextAge == "" {
-		return []string{" [gold]" + truncate(vibe.Line("ui.dashboard.ageStripLines.01", "You have reached the final age."), w-1) + "[-]"}
-	}
-	type cell struct {
-		tagged string
-		width  int
-	}
-	title := truncate(vibe.Line("ui.dashboard.ageStripLines.02", "Next Age: ")+state.NextAgeName, w-1)
-	goalCell := func(g ageGoal) cell {
-		// The wonder and its keystone are red all through, as they were.
-		if g.red {
-			return cell{"[red]✗ " + g.text + "[-]", 2 + runeLen(g.text)}
-		}
-		if g.met {
-			return cell{"[green]✓[-] " + g.text, 2 + runeLen(g.text)}
-		}
-		return cell{"[red]✗[-] " + g.text, 2 + runeLen(g.text)}
-	}
-	note := func(s string) cell { return cell{"[gray]" + s + "[-]", runeLen(s)} }
-	// pack flows cells onto lines of at most w cells, two spaces apart,
-	// after the title.
-	pack := func(cells []cell) []string {
-		lines := []string{" [gold]" + title + "[-]"}
-		used := 1 + runeLen(title)
-		for _, c := range cells {
-			if used+2+c.width > w && used > 1 {
-				lines = append(lines, " "+c.tagged)
-				used = 1 + c.width
-				continue
-			}
-			lines[len(lines)-1] += "  " + c.tagged
-			used += 2 + c.width
-		}
-		return lines
-	}
-	goals := ageGoals(state)
-	var all, open []cell
-	met := 0
-	for _, g := range goals {
-		all = append(all, goalCell(g))
-		if g.met {
-			met++
-		} else {
-			open = append(open, goalCell(g))
-		}
-	}
-	if lines := pack(all); len(lines) <= h {
-		return lines
-	}
-	// What is met is counted, not listed.
-	if met > 0 {
-		open = append(open, note(vibe.Sprintf("ui.dashboard.ageStripLines.03", "✓ %d met", met)))
-		if lines := pack(open); len(lines) <= h {
-			return lines
-		}
-		open = open[:len(open)-1]
-	}
-	// As many of the open ones as fit, then how many more there are.
-	for keep := len(open) - 1; keep >= 0; keep-- {
-		rest := len(open) - keep + met
-		if lines := pack(append(append([]cell(nil), open[:keep]...), note(vibe.Sprintf("ui.dashboard.ageStripLines.04", "+%d more", rest)))); len(lines) <= h {
-			return lines
-		}
-	}
-	return pack(nil)[:1]
-}
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder

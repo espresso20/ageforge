@@ -63,7 +63,7 @@ An age asks for the town it is priced for. **No age asks you to hold an amount o
 - **Five copies of the age's storage building.**
 - **The age's wonder**, built, and **its keystone tech**, researched. See [Wonder Requirement](#wonder-requirement) and [Keystone Techs](#keystone-techs).
 
-The table under each age below lists the building counts the gate into it asks for. The Next Age row in the game shows the same list, with your count beside each one.
+The table under each age below lists the building counts the gate into it asks for. The Waiting on line at the top of the game lists what is still missing from the same list, with your count beside each one.
 
 **What a gate leaves out.**
 - A building that waits for a tech is asked for only when you cannot leave the age without that tech: it is the keystone of that age's wonder or of an earlier one, or a tech one stands on. Standing Stones (after Ritual), Barracks (after Military Tactics), Smelter (after Iron Smelting), Steam Works (after Electrification), Cyber Command (after Cybersecurity), Pulsar Tap (after Stellar Engineering) and Quasar Tap (after Antimatter Synthesis) are not asked for, nor is any other building behind a tech you can finish the age without.

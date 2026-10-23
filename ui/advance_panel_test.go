@@ -555,25 +555,29 @@ func cellsText(cells []tcell.SimCell) string {
 	return b.String()
 }
 
-// The Next Age strip says how to open the panel when its last line has room,
-// and never at the cost of a requirement or of the width.
-func TestNextAgeStripPointsAtTheCharter(t *testing.T) {
+// The Ledger's long bar says how to open the panel when it has room, and
+// never at the cost of the width.
+func TestLedgerPointsAtTheCharter(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "bronze_age")
-	st := eng.GetState()
-	wide := untag(strings.Join(ageProgressLines(st, 160, 2), "\n"))
+	l := ledgerOf(eng.GetState(), eng)
+	wide := untag(strings.Join(ledgerLines(&l.data, ledgerFull, 160, 11, mapmodel.TierUnicode), "\n"))
 	if !strings.Contains(wide, charterStripHint.String()) {
-		t.Errorf("a wide strip has no hint:\n%s", wide)
+		t.Errorf("a wide Ledger has no hint:\n%s", wide)
 	}
-	for w := 20; w <= 160; w++ {
-		for _, l := range ageProgressLines(st, w, 2) {
-			if n := runeLen(plainLogText(l)); n > w {
-				t.Fatalf("width %d: a line of %d cells: %q", w, n, l)
+	for w := 40; w <= 200; w++ {
+		for _, tier := range []ledgerTier{ledgerCompact, ledgerStandard, ledgerFull} {
+			for _, line := range ledgerLines(&l.data, tier, w, 11, mapmodel.TierUnicode) {
+				if n := runeLen(plainLogText(line)); n > w {
+					t.Fatalf("tier %d at width %d: a line of %d cells: %q", tier, w, n, line)
+				}
 			}
 		}
 	}
-	if final := ageProgressLines(game.GameState{}, 100, 2); strings.Contains(strings.Join(final, ""), charterStripHint.String()) {
-		t.Errorf("the final age points at a panel with no gate: %v", final)
+	final := &ledger{}
+	final.data.v = game.AdvanceView{Final: true}
+	if lines := ledgerLines(&final.data, ledgerFull, 160, 11, mapmodel.TierUnicode); strings.Contains(strings.Join(lines, ""), charterStripHint.String()) {
+		t.Errorf("the final age points at a panel with no gate: %v", lines)
 	}
 }
 

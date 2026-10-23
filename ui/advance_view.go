@@ -270,9 +270,13 @@ func pillarStatus(p game.GatePillar) (string, xk) {
 	return fmt.Sprintf("%d%%", sharePercent(p.Progress, false)), xText
 }
 
+// barFill is how many of w cells a bar filled to share fills. The Advance
+// panel's bars and the top of the dashboard (dash_ledger.go) use it alike.
+func barFill(share float64, w int) int { return clamp(int(share*float64(w)+0.5), 0, w) }
+
 // advBar draws a bar of w cells filled to share.
 func advBar(g *xgrid, x, y, w int, share float64, k xk) {
-	fill := clamp(int(share*float64(w)+0.5), 0, w)
+	fill := barFill(share, w)
 	for i := 0; i < w; i++ {
 		if i < fill {
 			g.set(x+i, y, '█', k)

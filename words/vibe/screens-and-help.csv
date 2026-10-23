@@ -529,14 +529,7 @@ ui.dashboard.statusLine.12," (output drip [%s]%s[-])"
 ui.dashboard.statusLine.13,"  Vibes [%s]%.0f%%[-]%s"
 ui.dashboard.statusLine.14,"  |  [gray]type a panel name to summon it · Esc: dip or menu[-]"
 ui.dashboard.statusLine.15,"  |  [gray]Esc: bounce or menu[-]"
-ui.dashboard.statusLine.16,%s[gold]%s[-]%s%s%s%s  |  Squad: %s%s%s
-ui.dashboard.ageGoals.01,Wonder: %s %.0f%% of the bag secured
-ui.dashboard.ageGoals.02,Main character tech: 
 ui.dashboard.charterStripHint.01,type charter for the tea
-ui.dashboard.ageStripLines.01,"You made it to the Final Boss Age, the end of the lore."
-ui.dashboard.ageStripLines.02,Next era: 
-ui.dashboard.ageStripLines.03,✓ %d locked in
-ui.dashboard.ageStripLines.04,+%d more to grind
 ui.dashboard.showDevUnlockModal.01,"[red]Dev mode unlocked, cheat codes on.[-] Start commands with / (for example /god, /fill, /give wood 9999)."
 ui.dashboard.leaveToMenu.02,Say less
 ui.dashboard.showWindow.01," Respawn code "
@@ -2409,3 +2402,7 @@ ui.wonders_view.galleryText.01,[gold]═══ The Flex Gallery ═══[-]
 ui.wonders_view.galleryText.02,"[gray]Zero wonders built so far. Every one you build gets hung here, drawn exactly like the map serves it.[-]"
 ui.wonders_view.galleryText.03,[gray]%d of %d flexed[-]
 ui.wonders_view.galleryText.04,"  [gray]the age dropped %s[-]"
+ui.dash_ledger.finalRow.01,"You've hit the final age, the endgame."
+ui.dash_ledger.waitText.04,"+%d more, bet"
+ui.dash_ledger.moreText.01,"+%d more, lowkey a lot"
+ui.dashboard.showDevUnlockModal.01,"[red]Dev mode on, bestie.[-] Prefix commands with / (for example /god, /fill, /give wood 9999), the cheat code era."

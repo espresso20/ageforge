@@ -145,7 +145,7 @@ func TestFreshGameShowsNoSpoilers(t *testing.T) {
 	d.refresh()
 	screen := screenAt(t, pages, 180, 56)
 	checkSpoilers(t, "screen", screen, terms)
-	if !strings.Contains(screen, "Next Age: Stone Age") {
+	if !strings.Contains(screen, "To the Stone Age") {
 		t.Errorf("the Next Age goal should name the next age:\n%s", screen)
 	}
 

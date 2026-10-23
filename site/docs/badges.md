@@ -170,7 +170,7 @@ Three of them, as examples:
 
 The badge case never names something the game has not shown you yet:
 
-- A badge about an **age** stays a blank slab until you reach that age. The badge for reaching the next age is the one exception: the Next Age bar already names it.
+- A badge about an **age** stays a blank slab until you reach that age. The badge for reaching the next age is the one exception: the long bar at the top of the dashboard already names it.
 - A badge about a **civilization** or a **harbinger** stays hidden until you have met it, one about an **awakening** until it happens, and one about a **catastrophe** until its warning names it or it strikes.
 - A **family** with nothing in sight has no tab and no heading.
 - The case counts what you can see, for example `3 of 127 earned, 15 points, ??? hidden`. It does not say how many badges are hidden until an account has reached the last age.

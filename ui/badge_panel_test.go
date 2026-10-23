@@ -590,15 +590,15 @@ func TestHackerThemesBelongToTheirBadges(t *testing.T) {
 func TestStatusBarWearsTheTitle(t *testing.T) {
 	st := game.NewGameEngine().GetState()
 	st.AccountStats = &game.AccountStatsView{DisplayName: "Ada", BadgeSummary: game.BadgeSummary{Title: "Settler"}}
-	if line := untag(statusLine(st, 200)); !strings.Contains(line, "Ada · ") || strings.Contains(line, "Settler") {
+	if line := untag(statusLine(st, ribbonFacts{}, 200)); !strings.Contains(line, "Ada · ") || strings.Contains(line, "Settler") {
 		t.Errorf("the first title: %q", line)
 	}
 	st.AccountStats.BadgeSummary = game.BadgeSummary{Title: "Magistrate", TitleRank: 2}
-	if line := untag(statusLine(st, 200)); !strings.Contains(line, "Ada Magistrate · ") {
+	if line := untag(statusLine(st, ribbonFacts{}, 200)); !strings.Contains(line, "Ada Magistrate · ") {
 		t.Errorf("a wide bar: %q", line)
 	}
 	for w := 40; w <= 200; w += 7 {
-		if line := untag(statusLine(st, w)); runeLen(line) > w {
+		if line := untag(statusLine(st, ribbonFacts{}, w)); runeLen(line) > w {
 			t.Errorf("%d columns: the status bar is %d cells: %q", w, runeLen(line), line)
 		}
 	}
