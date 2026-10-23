@@ -243,7 +243,7 @@ func TestFestivalAndBlackMarketStretch(t *testing.T) {
 	ge.age = stretchedAge
 	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
-	ge.Resources.LoadAmounts(map[string]float64{"culture": 1_000_000})
+	ge.Resources.LoadAmounts(map[string]float64{"culture": config.Million})
 	buff, cd := config.StretchTicks(stretchedAge, festivalBuffTicks), config.StretchTicks(stretchedAge, festivalCooldownTicks)
 	if st := ge.FestivalStatus(); st.BuffTicks != buff || st.CooldownTicks != cd {
 		t.Errorf("festival status %d/%d ticks, want %d/%d", st.BuffTicks, st.CooldownTicks, buff, cd)

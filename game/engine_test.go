@@ -4,6 +4,8 @@ import (
 	"math"
 	"os"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 func TestEngine_NewEngineStartsInPrimitive(t *testing.T) {
@@ -377,7 +379,7 @@ func TestEngine_BuildMultiple_QueueAwareCost(t *testing.T) {
 
 	// Pre-load resources generously.
 	ge.mu.Lock()
-	ge.Resources.Add("wood", 1_000_000)
+	ge.Resources.Add("wood", config.Million)
 	startWood := ge.Resources.Get("wood") // actual amount after storage cap
 	ge.mu.Unlock()
 

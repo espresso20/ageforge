@@ -13,8 +13,8 @@ import (
 // same share of the age's stock scale in hours of the moderate economy's
 // income, and keeps these amounts.
 var oldBraceCeilings = map[string]float64{
-	"iron_age": 130000, "classical_age": 1000000, "medieval_age": 7300000, "renaissance_age": 33000000,
-	"colonial_age": 150000000, "industrial_age": 510000000, "victorian_age": 6500000000, "electric_age": 72 * config.Billion,
+	"iron_age": 130000, "classical_age": config.Million, "medieval_age": 7.3 * config.Million, "renaissance_age": 33 * config.Million,
+	"colonial_age": 150 * config.Million, "industrial_age": 510 * config.Million, "victorian_age": 6.5 * config.Billion, "electric_age": 72 * config.Billion,
 	"atomic_age": 430 * config.Billion, "modern_age": 1.8 * config.Trillion, "information_age": 11 * config.Trillion, "digital_age": 44 * config.Trillion,
 	"cyberpunk_age": 400 * config.Trillion, "fusion_age": 1.9 * config.Quadrillion, "space_age": 9.7 * config.Quadrillion, "interstellar_age": 290 * config.Quadrillion,
 	"galactic_age": 2.6 * config.Quintillion, "quantum_age": 200 * config.Quintillion, "transcendent_age": 200 * config.Quintillion,
