@@ -960,3 +960,54 @@ func TestCapstonesReadByShape(t *testing.T) {
 		t.Errorf("Scholasticism runs %d ticks; an optional tech's is %d", got, opt)
 	}
 }
+
+// TestResearchEffectSentenceCarriesTheEffectTag: what a tech does ("Road
+// Building gives +8% gold production.") is drawn in the effect colour, bold;
+// the flavour sentence before it keeps the body text colour.
+func TestResearchEffectSentenceCarriesTheEffectTag(t *testing.T) {
+	ge := classicalGame(t)
+	st := ge.GetState()
+	m := buildTree(st, treeGeomFor(120, false), false, "road_building")
+	sents := m.cardSentences(st, m.by["road_building"], "")
+	const effect = "Road Building gives +8% gold production."
+	if !strings.Contains(sents[0], string(swEffect)+effect) {
+		t.Fatalf("the effect sentence is not behind the effect switch: %q", sents[0])
+	}
+	g := newTGrid(200, 1)
+	g.styledText(0, 0, sents[0])
+	want := []rune(effect)
+	start := -1
+	for x := 0; x+len(want) <= len(g.c); x++ {
+		match := true
+		for i, r := range want {
+			if g.c[x+i].r != r {
+				match = false
+				break
+			}
+		}
+		if match {
+			start = x
+			break
+		}
+	}
+	if start < 0 {
+		t.Fatalf("the effect sentence is not on the grid:\n%s", sents[0])
+	}
+	for i := range want {
+		if st := g.c[start+i].st; st != tsEffect {
+			t.Fatalf("effect sentence cell %d is style %d, want tsEffect", i, st)
+		}
+	}
+	if st := g.c[0].st; st != tsText {
+		t.Errorf("the flavour sentence is style %d, want tsText", st)
+	}
+
+	p := newGridPalette(1, func(int) string { return "#ffffff" })
+	fg, bg, attr := p.styles[tsEffect].Decompose()
+	if want := theme.Legible(theme.Color(theme.RoleEffect), p.bg, 4.5); fg != want || bg != p.bg {
+		t.Errorf("tsEffect paints %06x on %06x, want %06x on %06x", fg.Hex(), bg.Hex(), want.Hex(), p.bg.Hex())
+	}
+	if attr&tcell.AttrBold == 0 {
+		t.Errorf("tsEffect is not bold")
+	}
+}

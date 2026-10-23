@@ -32,6 +32,7 @@ All notable changes to AgeForge are documented here.
 - **Prestige past your record.** After a prestige, the next one opens only once you pass the furthest age an earlier run reached.
 - Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
 - **The top bar no longer shows the era badge.** The age name is enough; the next age is in the Next Age bar.
+- **What a tech does stands out.** The effect of a tech is shown in its own colour in the research screens.
 
 ### Fixed
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
