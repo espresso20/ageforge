@@ -29,14 +29,14 @@ import (
 //     part now (wonders, banked items, another age's buildings, a tech not
 //     researched). Only storage, knowledge and the army are paid for in the
 //     model.
-//   - The first planOptimizeCopies copies are reordered; the rest follow in
+//   - The first PlanOptimizeCopies copies are reordered; the rest follow in
 //     their order.
 //   - The old order and the new are both played through the plan's own rules
 //     (planModel.walk); the new one is kept only if it is faster.
 
-// planOptimizeCopies is how many copies of the plan's builds the optimizer
+// PlanOptimizeCopies is how many copies of the plan's builds the optimizer
 // plays through.
-const planOptimizeCopies = 2000
+const PlanOptimizeCopies = 2000
 
 // Why a plan optimize left the plan alone.
 const (
@@ -149,7 +149,7 @@ func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
 		}
 		switch kind := ge.planOptimizeKind(it); kind {
 		case optMover:
-			take := min(it.Count, planOptimizeCopies-copies)
+			take := min(it.Count, PlanOptimizeCopies-copies)
 			counts[it.Key] += take
 			started[it.Key] += it.Started
 			before = append(before, simItem{key: keyOf(it.Key), left: take})
@@ -170,7 +170,7 @@ func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
 			held = append(held, h)
 			copies += it.Count
 		}
-		if copies >= planOptimizeCopies {
+		if copies >= PlanOptimizeCopies {
 			capped = true
 		}
 	}

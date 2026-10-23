@@ -85,6 +85,7 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Factions & Diplomacy](factions.md). |
 | `plan list` | Print the plan with each item's status |
 | `plan remove <n>` (or `plan rm`) | Remove item `n` |
+| `plan optimize` (or `plan reorder`) | Reorder the planned buildings for the fastest growth, mixing homes and producers, and say how much sooner the plan finishes. It only keeps an order that is faster. See [Optimizing the order](plan.md#optimizing-the-order) |
 | `plan up <n>` | Move item `n` one place up |
 | `plan down <n>` | Move item `n` one place down |
 | `plan clear` | Empty the plan |
@@ -97,6 +98,7 @@ plan advance
 plan deal merchant_guild 2
 plan up 3
 plan rm 4
+plan optimize
 ```
 
 ---
