@@ -9,8 +9,8 @@ A guided walkthrough of the Primitive Age, your first age. The steps follow the 
 The game opens on its [main menu](how-to-play.md#the-main-menu). On a first visit that is the forge and a title page, with **New game** first: press `Enter` (or `n`), name your civilization, and the game starts.
 
 You're in the **Primitive Age**. The screen shows:
-- The status bar: your account name, `Primitive Age`, `Pop: 0/0` and `Morale 50%`
-- The Next Age row: what the Stone Age asks for, each item marked ✓ or ✗
+- The status ribbon: your account name, `Primitive Age`, the year, `People 0/0` and `Morale 50%`
+- The Ledger under it: a long bar to the Stone Age with what it is waiting on, and a card for each resource you have
 - The Economy panel, which is always on screen: Resources, Under construction (with the People box beside it on a big terminal) and the Log on the left, the Buildings list on the right, with the Getting started guide under it
 
 Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 36 rows or larger.
@@ -161,9 +161,9 @@ The grove also speeds research and gives +0.05 food/tick permanently.
 
 ---
 
-## Step 10: Check the Next Age row and advance
+## Step 10: Check the long bar and advance
 
-The Next Age row under the status bar always shows what you need for the **next age**. For the Stone Age:
+The long bar under the status ribbon runs to the **next age**, and the **Waiting on** line beside it (under it on a big terminal) names what is still missing, with your count beside each one. Type `charter` for the whole list. For the Stone Age the gate asks for:
 - Gathering Camps: 8
 - Huts: 10
 - Shrines: 8
@@ -172,9 +172,9 @@ The Next Age row under the status bar always shows what you need for the **next 
 - Wood Camps: 8
 - The Sacred Grove built
 
-No age asks you to hold an amount of a resource, and advancing spends none. See [Advancement Requirements](ages.md#advancement-requirements) for the rule. Keep building huts (new huts bring new workers) and keep your scholars researching. When every item has its ✓, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
+No age asks you to hold an amount of a resource, and advancing spends none. See [Advancement Requirements](ages.md#advancement-requirements) for the rule. Keep building huts (new huts bring new workers) and keep your scholars researching. When the bar is full and the line says every pillar stands, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
 
-> **A harbinger?** A `⚑ Harbinger` badge may appear on the status bar. Type `harbinger` to read it, or ignore it: it never blocks anything, and no catastrophe can strike before the Iron Era. See [The Harbinger](harbinger.md).
+> **A harbinger?** A `⚑ Harbinger` badge may appear on the status ribbon. Type `harbinger` to read it, or ignore it: it never blocks anything, and no catastrophe can strike before the Iron Era. See [The Harbinger](harbinger.md).
 
 ---
 
