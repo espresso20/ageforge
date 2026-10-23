@@ -34,11 +34,8 @@ func formatTechEffect(eff config.Effect) string {
 	case "unlock":
 		return "unlocks " + game.BuildingName(eff.Target)
 	case "capacity":
-		switch eff.Target {
-		case "population":
+		if eff.Target == "population" {
 			return textfmt.Signed(eff.Value) + " housing"
-		case "military":
-			return textfmt.Signed(eff.Value) + " soldier storage"
 		}
 		return textfmt.Signed(eff.Value) + " " + game.EffectTargetName(eff.Target)
 	default:

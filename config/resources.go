@@ -2,7 +2,7 @@ package config
 
 import "math"
 
-// ResourceDef defines a single game resource. There are 26 resources in total,
+// ResourceDef defines a single game resource. There are 24 resources in total,
 // unlocking progressively through the 22 ages.
 //
 // BaseStorage is the starting storage cap before any storage buildings are built.

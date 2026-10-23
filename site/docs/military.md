@@ -29,11 +29,11 @@ The mission board has three tiers. A grand offer is either military or civil. Se
 
 Soldiers are people at the posts of your military buildings. A copy of a military building comes with a fixed number of them (see [Military Buildings](#military-buildings) for the number in each age), they take their posts from the reserve first and then as new arrivals, whether or not your homes have room, and they leave with the copy if it is lost. They are listed with your other [people](workers-and-domains.md#the-people-of-your-town), under the age's own word for them, in the People box and on the People panel's Army tab, not in the Resources box. The army is the soldiers at their posts, and that is the number the rest of this page calls your soldiers: the defense rating, raids and the Brace preview count the soldiers at home, and a mission's party is taken from them.
 
-Posts fill only while the food margin holds (net food stays at or above one person's food, or 5% of the food made, after the newcomer eats), so soldiers arriving never starve the town. A post food cannot fill waits and fills as the food allows; the Army tab shows posted over posts, and the log says once for each building that its posts are waiting. Nothing trains soldiers and nothing stores them. Workers you put in a military building's slots do not make soldiers, and the techs that once raised soldier storage no longer change the army.
+Posts fill only while the food margin holds (net food stays at or above one person's food, or 5% of the food made, after the newcomer eats), so soldiers arriving never starve the town. A post food cannot fill waits and fills as the food allows; the Army tab shows posted over posts, and the log says once for each building that its posts are waiting. Nothing trains soldiers and nothing stores them, and a military building has no worker slots. Two technologies change the posts: the Military-Industrial Complex and Augmented Soldiers each give every military building a tenth more posts (`posts a copy = ceil(base x (1 + 0.1 x techs))`), and the new posts fill as the food allows.
 
 ### Food drain
 
-Every soldier eats the same amount of food as a worker (see [Food drain](workers-and-domains.md#food-drain)), and so do the workers in a military building's slots. A big army costs food because it is a lot of people, so check your food rate after you build a military building, and your homes: soldiers take a place in them like everyone else, and a town whose army fills the homes stops growing until you build more.
+Every soldier eats the same amount of food as a worker (see [Food drain](workers-and-domains.md#food-drain)). A big army costs food because it is a lot of people, so check your food rate after you build a military building, and your homes: soldiers take a place in them like everyone else, and a town whose army fills the homes stops growing until you build more.
 
 ### Parties and losses
 
@@ -94,7 +94,7 @@ The running missions show in the separate **Expeditions** panel (`expedition`), 
 
 ## Military Buildings
 
-Military buildings give workers somewhere to work, and each copy comes with its soldiers (see Soldiers above). They make and store nothing else.
+Each copy of a military building comes with its soldiers (see Soldiers above). They have no worker slots and make and store nothing else.
 
 All military buildings belong to the **military lineage** (22 tiers, Stone Age through Transcendent Age). Each extra copy of a building costs 15% more than the one before.
 
@@ -106,30 +106,30 @@ soldiers a copy = ceil(14% of the homes at the end of the age ÷ copies of the a
 
 The town holds eight copies of each of the age's military buildings, or the gate's count where it asks for more (a building the gate leaves out is in the town all the same). Its homes are eight copies of every housing building so far, or the gate's count where it asks for more.
 
-| Tier | Key | Name | Age Unlocked | Soldiers a copy | Worker Slots |
-|------|-----|------|-------------|-----------------|--------------|
-| 0 | `war_camp` | War Camp | Stone Age | 9 | 3 |
-| 1 | `barracks` | Barracks | Bronze Age | 16 | 4 |
-| 2 | `hunting_lodge` | Hunting Lodge | Iron Age | 10 | 5 |
-| 3 | `legion_fort` | Legion Fort | Iron Age | 10 | 6 |
-| 4 | `military_academy` | Military Academy | Classical Age | 24 | 6 |
-| 5 | `castle_keep` | Castle Keep | Medieval Age | 77 | 7 |
-| 6 | `fortress` | Fortress | Renaissance Age | 145 | 7 |
-| 7 | `fort` | Fort | Colonial Age | 279 | 8 |
-| 8 | `military_base` | Military Base | Industrial Age | 1,287 | 10 |
-| 9 | `garrison` | Garrison | Victorian Age | 1,825 | 10 |
-| 10 | `command_post` | Command Post | Electric Age | 2,900 | 12 |
-| 11 | `bunker_complex` | Bunker Complex | Atomic Age | 2,245 | 12 |
-| 12 | `special_ops_hq` | Special Ops HQ | Modern Age | 21,178 | 14 |
-| 13 | `cyber_command` | Cyber Command | Information Age | 29,780 | 15 |
-| 14 | `drone_warfare_center` | Drone Warfare Center | Digital Age | 46,983 | 16 |
-| 15 | `combat_aug_center` | Combat Aug Center | Cyberpunk Age | 154,503 | 18 |
-| 16 | `plasma_command` | Plasma Command | Fusion Age | 178,653 | 20 |
-| 17 | `space_force_base` | Space Force Base | Space Age | 481,364 | 20 |
-| 18 | `fleet_command` | Fleet Command | Interstellar Age | 1,513,556 | 25 |
-| 19 | `stellar_armada_hq` | Stellar Armada HQ | Galactic Age | 3,577,940 | 25 |
-| 20 | `probability_war_room` | Probability War Room | Quantum Age | 2,495,437 | 30 |
-| 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | 6,880,954 | 35 |
+| Tier | Key | Name | Age Unlocked | Soldiers a copy |
+|------|-----|------|-------------|-----------------|
+| 0 | `war_camp` | War Camp | Stone Age | 9 |
+| 1 | `barracks` | Barracks | Bronze Age | 16 |
+| 2 | `hunting_lodge` | Hunting Lodge | Iron Age | 10 |
+| 3 | `legion_fort` | Legion Fort | Iron Age | 10 |
+| 4 | `military_academy` | Military Academy | Classical Age | 24 |
+| 5 | `castle_keep` | Castle Keep | Medieval Age | 77 |
+| 6 | `fortress` | Fortress | Renaissance Age | 145 |
+| 7 | `fort` | Fort | Colonial Age | 279 |
+| 8 | `military_base` | Military Base | Industrial Age | 1,287 |
+| 9 | `garrison` | Garrison | Victorian Age | 1,825 |
+| 10 | `command_post` | Command Post | Electric Age | 2,900 |
+| 11 | `bunker_complex` | Bunker Complex | Atomic Age | 2,245 |
+| 12 | `special_ops_hq` | Special Ops HQ | Modern Age | 21,178 |
+| 13 | `cyber_command` | Cyber Command | Information Age | 29,780 |
+| 14 | `drone_warfare_center` | Drone Warfare Center | Digital Age | 46,983 |
+| 15 | `combat_aug_center` | Combat Aug Center | Cyberpunk Age | 154,503 |
+| 16 | `plasma_command` | Plasma Command | Fusion Age | 178,653 |
+| 17 | `space_force_base` | Space Force Base | Space Age | 481,364 |
+| 18 | `fleet_command` | Fleet Command | Interstellar Age | 1,513,556 |
+| 19 | `stellar_armada_hq` | Stellar Armada HQ | Galactic Age | 3,577,940 |
+| 20 | `probability_war_room` | Probability War Room | Quantum Age | 2,495,437 |
+| 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | 6,880,954 |
 
 The soldiers count per building: two Barracks bring twice the soldiers of one.
 
@@ -258,7 +258,7 @@ Compare an offer's odds, haul and party before sending it.
 
 ## Military Domain Workers
 
-Workers in military buildings take a class name that changes with the age:
+Military buildings have no worker slots. The one building with military worker slots is the Geographic Society (see [Automatic dispatch](#automatic-dispatch-the-geographic-society)); workers in it take a class name that changes with the age:
 
 | Age | Class Name |
 |-----|-----------|
@@ -286,17 +286,10 @@ The class name doesn't change what they eat. Every worker eats the age's food co
 ### Assignment
 
 ```
-assign <building> [count|all]
-
-# Examples:
-assign war_camp 3
-assign barracks all
-assign castle_keep 7
+assign geographic_society [count|all]
 ```
 
-Workers in a military building are not its soldiers: the soldiers come with the building, and the workers in its slots make nothing of their own. You can only assign workers to a building you have built at least one of.
-
-Staffing sets output for buildings that make something. A military building makes nothing, so staffing it changes no soldier count; the workers in its slots still count toward the [morale](#morale-and-military-ratio) ratio below.
+You can only assign workers to a building you have built at least one of. Staffing a Society shortens the wait between its parties; it changes no soldier count.
 
 ---
 
@@ -402,7 +395,7 @@ The raids of these ages are Tribal Raid and Beast Stampede (Stone Era) and Bandi
 
 Every player carries a garrison without trying. The age gates ask for military buildings (8 War Camps for the Bronze Age, 15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 8 Castle Keeps for the Renaissance, 18 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent, and eight of each age's own military building in most of the ages between; see [Advancement Requirements](ages.md#advancement-requirements)). You keep those buildings into every later age, and their soldiers stay with them, whether or not any worker is assigned. The soldiers a gate's worth of buildings brings is about 14% of the homes of the town that age is priced for, which is how many soldiers each building comes with (see [Military Buildings](#military-buildings)).
 
-A deliberate army is what pushes toward the 45% ceiling: more military buildings of the current age, workers staffed into them, and `military_power` research.
+A deliberate army is what pushes toward the 45% ceiling: more military buildings of the current age, and `military_power` research.
 
 ### What it blunts
 
@@ -472,7 +465,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 - A War Camp's soldiers move in the day it stands, and a Barracks needs Military Tactics. Build Barracks for `iron_legion` (10 Barracks).
 - Your first military building brings the 5 soldiers `first_soldiers` asks for, and its +0.05 military power. The Hunting Lodge costs only wood.
 - `campaign trade_escort` (3 soldiers, Iron Age, 156-260 ticks, 0.30 difficulty) is the easiest early campaign: keep it running next to a scouting party for the encounters.
-- Soldiers and the workers in military buildings eat the same food as everyone else. Soldiers also take places in your homes. Keep your food rate positive.
+- Soldiers eat the same food as everyone else and take places in your homes. Keep your food rate positive.
 
 ### Mid game (Classical to Industrial Age)
 
@@ -495,12 +488,12 @@ The Army panel shows your **defense rating** (soldiers × 2.0 × (1 + military p
 - **Keep up with the age.** The threat rises with the army each age's buildings bring, so a garrison you stop growing fades. Adding the current age's military buildings keeps pace, since each age's building comes with more soldiers.
 - **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat rises and your garrison blunts less than the preview showed.
 - **Brace and garrison stack, up to a point.** Together they cut an Endure's losses by at most 60%. With Brace 2, a garrison that blunts 20% already reaches the building cap (8% fall), so extra soldiers mostly buy stock kept, up to 66%.
-- **Soldiers cost food and homes.** Every soldier eats like a worker and takes a place in your homes. Only the workers in military buildings count toward the morale ratio below.
+- **Soldiers cost food and homes.** Every soldier eats like a worker and takes a place in your homes.
 - **Research military power.** It multiplies the defense rating of the soldiers you already have.
 
 ### Army size and food
 
-Soldiers eat like any worker, and so does a worker in a military building. The food cost of an army is that of its people. Rough rules:
+Soldiers eat like any worker. The food cost of an army is that of its people. Rough rules:
 
 - Before you recruit, check `rates` and make sure your food rate stays positive with the new workers added.
 - Use `recruit max` only when food is overflowing, so a big recruit doesn't tip you into a deficit.
@@ -508,7 +501,7 @@ Soldiers eat like any worker, and so does a worker in a military building. The f
 
 ### Morale and military ratio
 
-A large army has a second cost: **morale**. If more than **30% of your population** works in military buildings (Geographic Societies included), morale drops every tick, and the further over 30% you are, the faster it drops:
+A large army has a second cost: **morale**. If more than **30% of your population** works in military-domain buildings, morale drops every tick, and the further over 30% you are, the faster it drops:
 
 | Military share | Over 30% by | Morale lost per tick |
 |---------------|---------|--------------|
@@ -519,9 +512,9 @@ A large army has a second cost: **morale**. If more than **30% of your populatio
 
 Morale multiplies the output of every worker in your civilization, on a continuous curve centered on 50%. Below 50% it cuts production, down to ×0.50 at the 10% floor. Above 50% it raises production, up to +20% at the top. An oversized army that drags morale down therefore slows every domain at once (food, research, trade and the rest), and the army's food gets harder to cover as your farmers produce less. A lean army leaves room to push morale above 50% instead.
 
-**Keep military workers at 25-28% of your population or less.** That leaves a buffer below 30% if you lose workers to an event. The soldiers come with the buildings, so there is nothing to gain by staffing a military building: move its workers to buildings that make something.
+Only the Geographic Society has military worker slots now. Soldiers at their posts are not military workers and do not count toward this share, so the drain needs a very large number of Societies, all staffed.
 
-Morale drifts back toward 50% by itself, a little each tick, once you're back under 30%. If morale is falling and more than 30% of your workers are in military buildings, unassign some of them or recruit more workers for other buildings.
+Morale drifts back toward 50% by itself, a little each tick, once you're back under 30%. If morale is falling and more than 30% of your workers are in Societies, unassign some of them or recruit more workers for other buildings.
 
 See [Morale](morale.md) for the full system.
 

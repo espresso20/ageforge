@@ -30,6 +30,10 @@ const SoldierSharePercent = 14
 // Soldiers are not a resource; the army is the soldiers at their posts.
 const SoldiersKey = "soldiers"
 
+// SoldierBeginAge is the age the soldiers begin in: the age before it has no
+// army to speak of for the rules that ask when a garrison can first stand.
+const SoldierBeginAge = "iron_age"
+
 // MilitaryDomain is the badge domain of the soldiers: the staffing ladder
 // "military" counts the soldiers at their posts, as the other domains count
 // their workers at work. (The military work area itself belongs to the

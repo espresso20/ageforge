@@ -35,7 +35,7 @@ func buildingsLineageMilitary() []BuildingDef {
 		BuildTicks:   500,
 		RequiredAge:  "bronze_age",
 		RequiredTech: "military_tactics",
-		Description:  "Trains and houses soldiers.",
+		Description:  "Houses soldiers.",
 		LineageKey:   "military", LineageTier: 1,
 		EpochKey: "stone_era",
 	})

@@ -318,13 +318,13 @@ func (b *Bot) Play(st game.GameState) {
 const ArmyGarrison = 4
 
 // keepGarrison is the -army=on policy, a player who keeps a modest standing
-// army: once soldiers exist (Iron Age on), hold ArmyGarrison of the current
+// army: once soldiers begin (Iron Age on), hold ArmyGarrison of the current
 // age's newest military building, buying one per decision when its price is
 // at most a quarter of what the bot holds of everything it costs. The
-// buildings train soldiers unstaffed (20% rate), and the bot never spends
-// them, so the stock is a garrison that blunts raids and catastrophes.
+// soldiers come with the buildings, and the bot never sends them out, so they
+// are a garrison that blunts raids and catastrophes.
 func (b *Bot) keepGarrison(p *plan) {
-	if r, ok := p.st.Resources["soldiers"]; !ok || !r.Unlocked {
+	if b.ageIdx[p.st.Age] < b.ageIdx[config.SoldierBeginAge] {
 		return
 	}
 	best, tier := "", -1

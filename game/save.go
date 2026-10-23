@@ -931,7 +931,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.Resources.LoadStorage(save.Storage)
 	}
 	ge.Buildings.LoadCounts(save.Buildings)
-	ge.loadSoldiersPosted(&save)
 	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
 		// Deep copy stats to avoid aliasing with the deserialized save
@@ -985,6 +984,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	// Restore Phase 3 systems
 	ge.loadResearch(&save)
+	// The posts come after the techs: a tech adds posts (config.MechanicSoldierPosts).
+	ge.loadSoldiersPosted(&save)
 	ge.Military.LoadState(save.Military)
 	ge.autoExpeditionTicksLeft = save.Military.AutoExpeditionTicksLeft
 	ge.autoExpeditionStarved = false

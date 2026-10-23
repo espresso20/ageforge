@@ -222,7 +222,7 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 | 4 | Geological Extraction | masonry | stone → iron ore → uranium → titanium ore → dark matter crystals → antimatter | 21 | Stone Camp | Reality Excavator |
 | 5 | Knowledge | none | research | 21 | Story Circle | Reality Academy |
 | 6 | Faith | faith | faith | 21 | Shrine | Transcendence Hall |
-| 7 | Military | military | soldiers | 22 | War Camp | Omniversal War Council |
+| 7 | Military | None | its soldiers, no resource | 22 | War Camp | Omniversal War Council |
 | 8 | Trade | trade | gold | 20 | Market | Omniversal Bazaar |
 | 9 | Engineering | engineering | iron → steel → electricity → plasma → dark matter → quantum flux | 20 | Smithy | Singularity Engine |
 | 10 | Culture/Arts | None | culture | 17 | Amphitheater | Reality Art Engine |
@@ -371,7 +371,7 @@ Times are at the base tick of 2 seconds; game speed bonuses shorten them in real
 
 ## The Maker Rule
 
-Every material an age charges for, in a building its gate asks for or in its wonder, has a maker in that age: a building of that age that makes it. Every maker is set on one standard, so a maker repays the price of its first copy in the same number of ticks as the age's other makers (the Payback Rule above). The rule covers building materials. It leaves out nanobots and the flow resources, food, faith, culture and soldiers.
+Every material an age charges for, in a building its gate asks for or in its wonder, has a maker in that age: a building of that age that makes it. Every maker is set on one standard, so a maker repays the price of its first copy in the same number of ticks as the age's other makers (the Payback Rule above). The rule covers building materials. It leaves out nanobots and the flow resources, food, faith and culture.
 
 One shortage is left as it is. The Electric Age has no maker of coal, and the older buildings you keep cover it. A building is never priced in a material nothing in its age makes any more: the Colonial Age's Settlement Block, Harbor and Colonial Warehouse are priced in stone, not wood. One exception is listed: the last age's wonder is paid from the Quantum Age's makers, because the Transcendent Age has none of its own.
 

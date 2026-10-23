@@ -488,6 +488,7 @@ All notable changes to AgeForge are documented here.
 - **Four trade routes opened before you could build what they need.** Cotton Exchange and Steamship Line wanted a Seaport (Modern Age) and Rail Freight wanted Steam Works (Victorian Age), all from the Industrial Age; Warp Commerce opened in the Space Age and wanted a Warp Drive Plant (Interstellar Age). Cotton Exchange now needs 1 Stock Exchange, Steamship Line 2 Harbor Authorities and Rail Freight 1 Integrated Steelworks, all Industrial Age buildings; Warp Commerce now opens in the Interstellar Age.
 
 ### Removed
+- **The soldier stockpile.** Soldiers are no longer a resource and military buildings no longer have work slots; the army is the soldiers at their posts. Military-Industrial Complex and Augmented Soldiers each add a tenth more posts.
 - **The knowledge store, the knowledge price and the over-the-store refusal.** A tech has no price to pay and no store to fit, so `research` no longer refuses one for its price, the plan no longer reads `needs more knowledge storage`, and the tech tree no longer marks a price with a red cross.
 - **The knowledge worker domain** (`roster knowledge`, `workers share knowledge`).
 - **Two badge ladders:** the knowledge payroll badges and the knowledge made ladder (6 badges, 175 points).

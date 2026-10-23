@@ -793,8 +793,8 @@ These techs move a single number of a game mechanic.
 | Interchangeable Parts | Industrial | Upgrades cost 15% less |
 | General Staff | Victorian | Campaigns take 15% less time |
 | Special Forces | Modern | Campaigns take 15% less time |
-| Military-Industrial Complex | Atomic | Room for 20% more soldiers |
-| Augmented Soldiers | Cyberpunk | Room for 10% more soldiers |
+| Military-Industrial Complex | Atomic | Military buildings have 10% more soldier posts |
+| Augmented Soldiers | Cyberpunk | Military buildings have 10% more soldier posts |
 | Military-Industrial Complex | Atomic | Campaigns bring back 20% more |
 | Probability Warfare | Quantum | Campaigns bring back 15% more |
 | Global Village | Digital | Every civilization offers 1 more deal |
@@ -803,7 +803,7 @@ These techs move a single number of a game mechanic.
 | Void Contemplation | Interstellar | Appeasing a harbinger costs 20% less |
 
 - **Trade route time, expedition time, deal refresh, festival cooldown.** A cut shortens the timer when it is next set: a route's next run, the next expedition sent, the next set of offers, the next festival. Cuts multiply (two 15% cuts leave 72% of a route's time) and none takes a timer under 40% of its length: the four cuts of a route's time leave 49% of it, and the six of an expedition's 45%. Expedition time is for scouting expeditions, and the Army panel lists their times with it; campaigns have a number of their own.
-- **Campaign time, campaign loot, soldier storage.** A General Staff and Special Forces each cut the time of every campaign sent after them by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and Probability Warfare 15% more again; the Military-Industrial Complex gives room for 20% more soldiers and Augmented Soldiers 10% more of that. See [Military](military.md).
+- **Campaign time, campaign loot, soldier posts.** A General Staff and Special Forces each cut the time of every campaign sent after them by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and Probability Warfare 15% more again; the Military-Industrial Complex and Augmented Soldiers each give every military building a tenth more soldier posts (two techs make it a fifth more), and the new posts fill as the food allows. See [Military](military.md).
 - **Wonder construction.** With Architecture a wonder takes three quarters of its listed time to build, and the cuts of all construction then apply to what is left. It is the one cut a wonder has to itself. See [Wonders](wonders.md).
 - **Festival length.** With Baroque Arts a festival's bonus lasts 25% longer; its price and the wait for the next are other numbers. See [Festival](commands.md#festival).
 - **Gifts and alliances.** With Embassies a gift earns 22 opinion where it earned 15 (half as much again, rounded down). With the Concert of Nations every ally adds 25% more to its specialty, and with the Federation Charter 25% more again: a +20% bonus becomes +25%, then +31.25%, and the Factions panel lists it so. See [Factions](factions.md).
