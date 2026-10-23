@@ -12,8 +12,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// --- helpers ---------------------------------------------------------------
-
 func rollN(p Profile, seed int64, n int) []Boon {
 	rng := rand.New(rand.NewSource(seed))
 	out := make([]Boon, n)
@@ -31,8 +29,8 @@ func defsByName() map[string]Def {
 	return m
 }
 
-// fakeApplier records every call so tests can assert dispatch and mapping in
-// complete isolation from the game engine.
+// fakeApplier records every call so tests can check dispatch and mapping without
+// the game engine.
 type fakeApplier struct {
 	injected []struct {
 		effects []config.Effect
@@ -90,8 +88,6 @@ func (f *fakeApplier) calls() int {
 	return len(f.injected) + len(f.granted) + len(f.workers) + len(f.drained) + len(f.lost)
 }
 
-// --- determinism -----------------------------------------------------------
-
 func TestRollBoonDeterministic(t *testing.T) {
 	p := DefaultProfile()
 	p.Specialty = "iron"
@@ -104,15 +100,13 @@ func TestRollBoonDeterministic(t *testing.T) {
 		t.Fatalf("same seed + profile produced different boon sequences")
 	}
 
-	// A different seed should (essentially always) diverge, proving the stream
-	// actually tracks the rng rather than being constant.
+	// A different seed should diverge, which shows the stream follows the rng and
+	// is not constant.
 	c := rollN(p, 99999, 300)
 	if reflect.DeepEqual(a, c) {
 		t.Fatalf("different seeds produced identical sequences — rng not driving rolls")
 	}
 }
-
-// --- weighting: disabled kind never rolls ----------------------------------
 
 func TestDisabledKindNeverRolls(t *testing.T) {
 	p := DefaultProfile()
@@ -127,8 +121,6 @@ func TestDisabledKindNeverRolls(t *testing.T) {
 	}
 }
 
-// --- weighting: up-weighted kind dominates ---------------------------------
-
 func TestUpweightedKindDominates(t *testing.T) {
 	p := DefaultProfile()
 	p.Age = "iron_age"
@@ -141,17 +133,15 @@ func TestUpweightedKindDominates(t *testing.T) {
 			tick++
 		}
 	}
-	if tick < n*4/5 { // expect ~90%+; assert a safe > 80%
+	if tick < n*4/5 { // about 90% or more is expected; 80% is the bar
 		t.Fatalf("up-weighted TickSpeed only won %d/%d rolls; expected dominance", tick, n)
 	}
 }
 
-// --- ranges: rolled values respect the Def bounds (× MagnitudeScale) --------
-
-// UPDATED (boon capacity/malus pass): instant lump ranges are no longer raw Def
-// values — they are multiplied by Profile.instantScale() (age growth ×
-// MagnitudeScale), so the expected bounds scale with them. The assertion is
-// otherwise unchanged: rolled values must sit inside the Def range, transformed.
+// TestRolledValuesWithinDefRanges checks that rolled values sit inside the Def
+// ranges. Magnitudes are scaled by MagnitudeScale, instant lumps by
+// Profile.instantScale (age growth times MagnitudeScale) and durations by the age
+// stretch, so the expected bounds are scaled the same way.
 func TestRolledValuesWithinDefRanges(t *testing.T) {
 	const eps = 1e-9
 	catalog := defsByName()
@@ -204,8 +194,6 @@ func TestRolledValuesWithinDefRanges(t *testing.T) {
 		}
 	}
 }
-
-// --- apply dispatch: each kind routes to the right method, correctly mapped --
 
 func TestApplyRateBuffMapsToResourceRate(t *testing.T) {
 	f := &fakeApplier{}
@@ -283,8 +271,6 @@ func TestApplyReservedKindsAreNoOps(t *testing.T) {
 	}
 }
 
-// --- rolled boons apply through the fake end-to-end ------------------------
-
 func TestRollThenApplyEndToEnd(t *testing.T) {
 	p := DefaultProfile()
 	p.Age = "space_age"
@@ -305,8 +291,8 @@ func TestRollThenApplyEndToEnd(t *testing.T) {
 	}
 }
 
-// --- decoupling guard: the package must never import game ------------------
-
+// TestNoGameImport fails if any file in the package imports game, which would be
+// an import cycle and would tie the roll engine to the game.
 func TestNoGameImport(t *testing.T) {
 	fset := token.NewFileSet()
 	entries, err := os.ReadDir(".")
@@ -330,7 +316,8 @@ func TestNoGameImport(t *testing.T) {
 	}
 }
 
-// Sanity: DefaultProfile keeps every catalogued kind reachable.
+// TestDefaultProfileRollsMultipleKinds checks that DefaultProfile keeps every
+// catalogued kind reachable.
 func TestDefaultProfileRollsMultipleKinds(t *testing.T) {
 	p := DefaultProfile()
 	p.Age = "space_age"
@@ -339,7 +326,7 @@ func TestDefaultProfileRollsMultipleKinds(t *testing.T) {
 	for _, b := range rollN(p, 1, 3000) {
 		seen[b.Kind] = true
 	}
-	// The five catalogued kinds should all appear over many neutral rolls.
+	// All five catalogued kinds should appear over many neutral rolls.
 	for _, k := range []Kind{RateBuff, AllProduction, TickSpeed, InstantResource, TempWorkers} {
 		if !seen[k] {
 			t.Errorf("kind %v never rolled under DefaultProfile", k)
