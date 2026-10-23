@@ -71,7 +71,7 @@ type Dashboard struct {
 	// ledgerTV is the Ledger under the status ribbon (dash_ledger.go) and
 	// ledger what it draws; ledgerReset asks for its trends to start over
 	// (a game was loaded).
-	ledgerTV         *fitView
+	ledgerTV         *ledgerBox
 	ledger           ledger
 	ledgerReset      atomic.Bool
 	inputField       *commandInput
@@ -343,12 +343,12 @@ func (d *Dashboard) build() {
 	// The Ledger: the long bar to the next age with what it waits on, the
 	// four pillars and a card for each resource, written for the size it is
 	// drawn at (ledgerLines).
-	d.ledgerTV = newFitView(func(w, h int) string {
+	d.ledgerTV = newLedgerBox(func(w, h int) []string {
 		if d.lastState == nil || !d.ledger.ready {
-			return ""
+			return nil
 		}
 		tw, th := d.screenSize()
-		return strings.Join(ledgerLines(&d.ledger.data, ledgerTierFor(tw, th), w, h, d.mapSettings().Tier), "\n")
+		return ledgerLines(&d.ledger.data, ledgerTierFor(tw, th), w, h, d.mapSettings().Tier)
 	})
 
 	// Toast notification
@@ -865,10 +865,11 @@ func (d *Dashboard) syncVibe() {
 		d.economyTab.retitle()
 		d.overlayMgr.RetitleAll()
 		// A box that keeps the text it wrote for its size writes it again.
-		for _, v := range []*fitView{d.sidebar, d.statusTV, d.ledgerTV, d.workerMiniTV,
+		for _, v := range []*fitView{d.sidebar, d.statusTV, d.workerMiniTV,
 			d.economyTab.resourceTV, d.economyTab.buildingTV, d.economyTab.constructionTV} {
 			v.changed()
 		}
+		d.ledgerTV.changed()
 	}
 }
 
@@ -1298,7 +1299,7 @@ func statusLine(state game.GameState, f ribbonFacts, w int) string {
 		}
 		facts := make([]string, 0, 4)
 		if f.year != "" && level < 8 {
-			facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.16", "Year %s", f.year))
+			facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.19", "Year %s", f.year))
 		}
 		facts = append(facts, vibe.Sprintf("ui.dashboard.statusLine.17", "People %s", pop), moraleStr)
 		if f.next != "" && level < 2 {

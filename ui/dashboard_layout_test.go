@@ -227,7 +227,7 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			}
 
 			// The Ledger, the Panels list and the Buildings list.
-			checkFitted(t, where+", Ledger", d.ledgerTV, cells, w)
+			checkFittedBox(t, where+", Ledger", d.ledgerTV, cells, w)
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
 			for _, name := range sidebarPanels {
 				if !strings.Contains(panels, name) {

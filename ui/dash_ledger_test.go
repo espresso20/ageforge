@@ -43,7 +43,39 @@ func plainTier(d *Dashboard) {
 func ledgerRowsOn(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []string {
 	t.Helper()
 	cells := drawnDashboard(t, d, pages, w, h)
-	return checkFitted(t, fmt.Sprintf("Ledger at %dx%d", w, h), d.ledgerTV, cells, w)
+	return checkFittedBox(t, fmt.Sprintf("Ledger at %dx%d", w, h), d.ledgerTV, cells, w)
+}
+
+// checkFittedBox holds the Ledger to what it wrote, as checkFitted holds a
+// text box: no row wider than the box, and the rows on screen are the rows it
+// wrote, one each.
+func checkFittedBox(t *testing.T, where string, b *ledgerBox, cells []tcell.SimCell, screenW int) []string {
+	t.Helper()
+	x, y, w, h := b.GetInnerRect()
+	if w <= 0 || h <= 0 {
+		t.Errorf("%s: the box has no room inside (%dx%d)", where, w, h)
+		return nil
+	}
+	text := strings.Split(b.GetText(true), "\n")
+	if len(b.lines) > h {
+		t.Errorf("%s: %d rows written for a box %d tall", where, len(b.lines), h)
+	}
+	for i, line := range text {
+		if n := runeLen(strings.TrimRight(line, " ")); n > w {
+			t.Errorf("%s: row %d is %d cells in a box %d wide, so it is cut: %q", where, i+1, n, w, line)
+		}
+	}
+	drawn := rectText(cells, screenW, x, y, w, h)
+	for row, got := range drawn {
+		want := ""
+		if row < len(text) {
+			want = strings.TrimRight(text[row], " ")
+		}
+		if got != want {
+			t.Errorf("%s: row %d shows %q, the box wrote %q", where, row+1, got, want)
+		}
+	}
+	return drawn
 }
 
 // TestLedgerHeights: the rows the Ledger takes for each size, and the
@@ -342,6 +374,7 @@ func TestLedgerTrendAndSpark(t *testing.T) {
 	}{
 		{[]float64{1, 2, 3, 4}, 0, 1}, {[]float64{4, 3, 2, 1}, 5, -1}, {[]float64{100, 100.5, 100.2}, 5, 0},
 		{[]float64{0, 0, 0}, 5, 0}, {nil, 2, 1}, {[]float64{7}, -2, -1}, {nil, 0, 0},
+		{[]float64{1, 2, 3, 4}, -1, -1}, // up over the minutes, down now
 	} {
 		if got := ledgerTrend(c.trail, c.rate); got != c.want {
 			t.Errorf("trend of %v at rate %v = %d, want %d", c.trail, c.rate, got, c.want)

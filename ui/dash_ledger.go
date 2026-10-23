@@ -5,6 +5,12 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
+	"unicode/utf8"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -191,8 +197,13 @@ func (t *ledgerTrail) observe(state game.GameState) {
 }
 
 // ledgerTrend says which way an amount has gone over its trail: 1 rising,
-// -1 falling, 0 steady. With fewer than two samples the rate says.
+// -1 falling, 0 steady. A stock that is going down now is falling, whatever
+// the trail says of the minutes before; with fewer than two samples the rate
+// says.
 func ledgerTrend(trail []float64, rate float64) int {
+	if rate < 0 {
+		return -1
+	}
 	if len(trail) < 2 {
 		switch {
 		case rate > 0:
@@ -473,8 +484,9 @@ func (l *ledger) cardsFor(state game.GameState) {
 		}
 		var trail []float64
 		if r := l.trail.rings[key]; r != nil {
+			// The samples, then the amount now, so the line ends where the stock is.
 			at := len(l.buf)
-			l.buf = r.appendTo(l.buf)
+			l.buf = append(r.appendTo(l.buf), rs.Amount)
 			trail = l.buf[at:len(l.buf):len(l.buf)]
 		}
 		d.Cards = append(d.Cards, ledgerCard{Key: key, Name: rs.Name, Amount: rs.Amount, Rate: rs.Rate, Trail: trail, Trend: ledgerTrend(trail, rs.Rate)})
@@ -873,15 +885,15 @@ const (
 	ledgerWideCols = 142 // the full Ledger writes wide cards from this many columns
 )
 
-// trendWord is the trend in words, padded to its column.
-func trendWord(trend int) string {
+// trendText is the trend as a mark and a word, padded to its column.
+func trendText(trend int) string {
 	switch {
 	case trend > 0:
-		return padRight(vibe.Line("ui.dash_ledger.trendWord.01", "rising"), 7)
+		return padRight(vibe.Line("ui.dash_ledger.trendText.01", "▲ rising"), 9)
 	case trend < 0:
-		return padRight(vibe.Line("ui.dash_ledger.trendWord.02", "falling"), 7)
+		return padRight(vibe.Line("ui.dash_ledger.trendText.02", "▼ falling"), 9)
 	}
-	return padRight(vibe.Line("ui.dash_ledger.trendWord.03", "steady"), 7)
+	return padRight(vibe.Line("ui.dash_ledger.trendText.03", "▬ steady"), 9)
 }
 
 func trendGlyph(trend int) (string, theme.Role) {
@@ -960,7 +972,7 @@ func (lv ledgerView) cardLines(c ledgerCard, cw int) (l1, l2 string) {
 		b.raw(" ", 1)
 		b.put(theme.RoleLabel, ledgerSpark(c.Trail, sw, lv.plain))
 		b.raw(" ", 1)
-		b.put(arrowRole, arrow+" "+trendWord(c.Trend))
+		b.put(arrowRole, trendText(c.Trend))
 	} else {
 		nameW := cw - 1 - ledgerAmtW // the mark and name; then a space and the amount
 		lv.nameCell(&a, c, nameW)
@@ -1152,4 +1164,168 @@ func (lv ledgerView) full(rows int) []string {
 	lines := []string{lv.barRow(false), lv.waitRow(), names, meters, ""}
 	per, cw := ledgerCardShape(lv.w)
 	return append(lines, lv.cardRows(rows, per, cw)...)
+}
+
+// ===== The box =====
+
+// ledgerBox is the Ledger's primitive. Its rows are strings of colour tags,
+// as a fitView holds, and are written for the size it is drawn at in the same
+// way (the render function is handed the width and the rows); but it draws them
+// a rune at a time. The Ledger is a thousand cells of single-width marks that
+// change twice a second, and a TextView takes a good part of a frame to parse
+// and lay out that much.
+type ledgerBox struct {
+	*tview.Box
+	render func(w, h int) []string
+	lines  []string
+	w, h   int
+	stale  bool
+	// drawn: the box has been drawn, so it has a real size.
+	drawn bool
+}
+
+func newLedgerBox(render func(w, h int) []string) *ledgerBox {
+	return &ledgerBox{Box: tview.NewBox(), render: render, stale: true}
+}
+
+// changed says what the box shows has changed, and writes it again, as
+// fitView.changed does.
+func (b *ledgerBox) changed() {
+	b.stale = true
+	if b.drawn {
+		b.layout()
+		return
+	}
+	const unbounded = 1 << 16
+	b.lines = b.render(unbounded, unbounded)
+}
+
+// layout writes the rows for the box's current size if they are out of date.
+func (b *ledgerBox) layout() {
+	_, _, w, h := b.GetInnerRect()
+	if b.stale || w != b.w || h != b.h {
+		b.lines = b.render(w, h)
+		b.w, b.h, b.stale = w, h, false
+	}
+}
+
+// GetText is the rows as text, one to a line, with the colour tags left in
+// unless stripTags.
+func (b *ledgerBox) GetText(stripTags bool) string {
+	lines := make([]string, len(b.lines))
+	for i, l := range b.lines {
+		if stripTags {
+			l = stripLedgerTags(l)
+		}
+		lines[i] = l
+	}
+	return strings.Join(lines, "\n")
+}
+
+// ledgerTagRoles are the names of the colour tags the Ledger writes, with
+// the role each stands for.
+var ledgerTagRoles = sync.OnceValue(func() map[string]theme.Role { return theme.TagNames() })
+
+// ledgerTag reads the tag that opens at s[0] ('['): its length in bytes and
+// the colours it sets. ok is false when what follows is not one of the
+// Ledger's tags, which then print as they are.
+func ledgerTag(s string) (n int, fg, bg tcell.Color, setFg, setBg, ok bool) {
+	end := strings.IndexByte(s, ']')
+	if end < 2 || end > 24 {
+		return
+	}
+	body := s[1:end]
+	fgName, bgName, _ := strings.Cut(body, ":")
+	bgName, _, _ = strings.Cut(bgName, ":")
+	// The reset tags are "-" and "-:-:-"; a name is a role's.
+	known := func(name string) (tcell.Color, bool, bool) {
+		switch name {
+		case "":
+			return 0, false, true
+		case "-":
+			return tcell.ColorDefault, true, true
+		}
+		role, found := ledgerTagRoles()[name]
+		if !found {
+			return 0, false, false
+		}
+		return theme.Ref(role), true, true
+	}
+	var okFg, okBg bool
+	if fg, setFg, okFg = known(fgName); !okFg {
+		return
+	}
+	if bg, setBg, okBg = known(bgName); !okBg {
+		return
+	}
+	return end + 1, fg, bg, setFg, setBg, true
+}
+
+// stripLedgerTags is s without the tags the Ledger writes.
+func stripLedgerTags(s string) string {
+	var sb strings.Builder
+	for i := 0; i < len(s); {
+		if s[i] == '[' {
+			if n, _, _, _, _, ok := ledgerTag(s[i:]); ok {
+				i += n
+				continue
+			}
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		sb.WriteRune(r)
+		i += size
+	}
+	return sb.String()
+}
+
+// ledgerRuneWidth is the cells a rune takes: one for the marks the Ledger
+// draws, and what the terminal's rules say for any other.
+func ledgerRuneWidth(r rune) int {
+	switch {
+	case r < 0x1100, r >= 0x2580 && r <= 0x25FF, r == 0x2713:
+		return 1
+	}
+	return uniseg.StringWidth(string(r))
+}
+
+// Draw paints the box and, rune by rune, its rows.
+func (b *ledgerBox) Draw(screen tcell.Screen) {
+	if !b.drawn {
+		b.drawn, b.stale = true, true
+	}
+	b.layout()
+	b.DrawForSubclass(screen, b)
+	x, y, w, h := b.GetInnerRect()
+	baseFg, baseBg := tview.Styles.PrimaryTextColor, b.GetBackgroundColor()
+	base := tcell.StyleDefault.Foreground(baseFg).Background(baseBg)
+	for row, line := range b.lines {
+		if row >= h {
+			break
+		}
+		style, col := base, 0
+		for i := 0; i < len(line) && col < w; {
+			if line[i] == '[' {
+				if n, fg, bg, setFg, setBg, ok := ledgerTag(line[i:]); ok {
+					if setFg && fg == tcell.ColorDefault {
+						style = style.Foreground(baseFg)
+					} else if setFg {
+						style = style.Foreground(fg)
+					}
+					if setBg && bg == tcell.ColorDefault {
+						style = style.Background(baseBg)
+					} else if setBg {
+						style = style.Background(bg)
+					}
+					i += n
+					continue
+				}
+			}
+			r, size := utf8.DecodeRuneInString(line[i:])
+			i += size
+			if r != ' ' || style != base {
+				screen.SetContent(x+col, y+row, r, nil, style)
+			}
+			col += max(1, ledgerRuneWidth(r))
+		}
+	}
 }
