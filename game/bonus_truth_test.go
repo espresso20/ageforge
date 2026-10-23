@@ -94,9 +94,11 @@ const truthCopies = int(config.FlowCopies)
 const truthSoldiers = 1000
 
 // newTruthEngine builds a lab engine in age. Clean: truthCopies of every
-// building up to age, fully staffed, and nothing else. Typical adds what
-// config.TypicalIncome assumes a player holds by then: every tech up to age
-// and every earlier age's wonder. Milestones, monuments, events and morale
+// building up to age, fully staffed, and nothing else (a storage building's
+// only effect is a share of the all-production pool, so the clean town holds
+// none). Typical adds what config.TypicalIncome assumes a player holds by
+// then: every tech up to age and every earlier age's wonder, and five copies
+// of each age's storage building, what the gates ask for. Milestones, monuments, events and morale
 // are left out, as there, so the typical pools are a floor: a player who
 // also holds milestone rewards reaches a cap sooner, never later.
 func newTruthEngine(age string, mode truthMode) *GameEngine {
@@ -126,6 +128,14 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 				ge.Buildings.counts[key] = 1
 			}
 		case "monument":
+		case "storage":
+			// A storage building's only effect is its share of the
+			// all-production pool, so a clean town (no pool source) holds
+			// none. The typical town holds what the gate asks for, five
+			// copies of each age's (config.StorageRuleCopies).
+			if mode == truthTypical {
+				ge.Buildings.counts[key] = config.StorageRuleCopies
+			}
 		default:
 			ge.Buildings.counts[key] = truthCopies
 			if def.WorkerCapacity > 0 {
@@ -150,10 +160,28 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 	ge.Research.defs["lab_tech"] = config.TechDef{Name: "Lab Tech", Key: "lab_tech", Age: ageKeys()[0], Cost: 1e18}
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
-	// Half of every store: a grant has room, a loss has something to take.
+	// Half of every store, as it stood with truthCopies copies of each
+	// storage building (a storage building holds nothing now, but the store
+	// is still the measure): a loss has something to take, and a town that
+	// holds a little stock does not starve in the first ticks.
+	held := map[string]int{}
+	for key, def := range ge.Buildings.defs {
+		if def.Category == "storage" && order[def.RequiredAge] <= at {
+			held[key] = ge.Buildings.counts[key]
+			ge.Buildings.counts[key] = truthCopies
+		}
+	}
+	ge.recalculateRates()
+	half := map[string]float64{}
 	for _, key := range ge.Resources.order {
-		r := ge.Resources.resources[key]
-		r.Amount = r.Storage / 2
+		half[key] = ge.Resources.resources[key].Storage / 2
+	}
+	for key, n := range held {
+		ge.Buildings.counts[key] = n
+	}
+	ge.recalculateRates()
+	for key, v := range half {
+		ge.Resources.resources[key].Amount = v
 	}
 	return ge
 }
@@ -165,55 +193,6 @@ func truthStartLab(ge *GameEngine) {
 		panic(err)
 	}
 	ge.recalculateRates()
-}
-
-// truthRoom gives a lab town room for amount more of res: copies of the
-// newest storage building it can build, until the store holds what it has
-// and amount on top. A store is a wall, and a gain it cannot hold is cut
-// short (TestBonusTruthGrantsSayWhatFit, TestPaidIntoAFullStore); a meter
-// that reads a gain off the stock needs a store that takes all of it. More
-// storage changes nothing else a town makes.
-func truthRoom(ge *GameEngine, res string, amount float64) {
-	r := ge.Resources.resources[res]
-	if r == nil || r.Storage-r.Amount >= amount {
-		return
-	}
-	if res == "knowledge" {
-		// Only knowledge buildings raise the knowledge store, and they
-		// make knowledge too, which would move what the meter reads. The
-		// lab raises the store's base on this engine instead.
-		d := ge.Resources.defs[res]
-		d.BaseStorage += amount - (r.Storage - r.Amount)
-		ge.Resources.defs[res] = d
-		ge.recalculateRates()
-		return
-	}
-	order := ageOrders()
-	best := ""
-	for _, key := range ge.Buildings.order {
-		def := ge.Buildings.defs[key]
-		at, ok := order[def.RequiredAge]
-		if def.Category != "storage" || !ok || at > order[ge.age] {
-			continue
-		}
-		if best == "" || at > order[ge.Buildings.defs[best].RequiredAge] {
-			best = key
-		}
-	}
-	if best == "" {
-		return
-	}
-	held := r.Storage
-	ge.Buildings.counts[best]++
-	ge.recalculateRates()
-	per := r.Storage - held
-	if per <= 0 {
-		return
-	}
-	if short := amount - (r.Storage - r.Amount); short > 0 {
-		ge.Buildings.counts[best] += int(math.Ceil(short / per))
-		ge.recalculateRates()
-	}
 }
 
 // truthLab hands out the lab engines, one per age and mode, built on first
@@ -2030,7 +2009,9 @@ func truthBuildingPromises() []truthPromise {
 		for _, eff := range def.Effects {
 			key := def.Key
 			count := float64(truthCopies)
-			if source != "building" {
+			if source != "building" || eff.Type == "bonus" {
+				// A wonder or monument stands once; a storage building's
+				// bonus is promised per copy, so the lab holds one.
 				count = 1
 			}
 			// An output the building's own text marks "once unlocked".
@@ -2091,10 +2072,6 @@ func truthEventSwitch(ge *GameEngine, def config.EventDef, eff config.Effect) tr
 	return truthSwitch{
 		off: func() {
 			noGarrison(ge) // no garrison: a raid takes its full share
-			if eff.Type == config.EventGain {
-				// Room for the whole gain: the meter reads it off the stock.
-				truthRoom(ge, eff.Target, config.EventSize(eff, ge.eventTown(eff.Target, false)))
-			}
 		},
 		on: func() {
 			one := def

@@ -1,23 +1,18 @@
 package config
 
-import "testing"
+import (
+	"math"
+	"strings"
+	"testing"
+)
 
-// TestStorageTablesFollowTheRule recomputes every storage building's size
-// from the storage rule (storage_rule.go) and holds the tables to it. A size
-// typed by hand that the rule does not give fails here; so does a price or a
-// gate count that moved without the sizes being worked out again.
-func TestStorageTablesFollowTheRule(t *testing.T) {
-	defs := BaseBuildings()
-	ages := Ages()
-	base := 0.0
-	for _, r := range BaseResources() {
-		if r.Key == "wood" {
-			base = r.BaseStorage
-		}
-	}
-	sizes, _ := StorageRuleSizes(defs, ages, base)
+// TestStorageBuildingsBoostProduction: a storage building holds nothing (stock
+// has no cap); each copy adds StorageBoostPercent percent to all production,
+// and that is all it does. Its price climbs at the storage rate with no copy
+// limit: the price is the limit.
+func TestStorageBuildingsBoostProduction(t *testing.T) {
 	seen := 0
-	for _, d := range defs {
+	for _, d := range BaseBuildings() {
 		if d.Category != "storage" {
 			continue
 		}
@@ -28,27 +23,45 @@ func TestStorageTablesFollowTheRule(t *testing.T) {
 		if d.MaxCount != 0 {
 			t.Errorf("%s has a copy limit of %d: the price curve is the limit on storage", d.Key, d.MaxCount)
 		}
-		got := 0.0
 		for _, e := range d.Effects {
-			if e.Type == "storage" && e.Target == "all" {
-				got = e.Value
+			if e.Type == "storage" {
+				t.Errorf("%s still has a storage effect (%s %v): a storage building boosts production now", d.Key, e.Target, e.Value)
 			}
 		}
-		if want := sizes[d.Key]; got != want {
-			t.Errorf("%s holds %s a copy, the storage rule gives %s", d.Key, FormatRateValue(got), FormatRateValue(want))
+		if len(d.Effects) != 1 || d.Effects[0].Type != "bonus" || d.Effects[0].Target != "production_all" || d.Effects[0].Value != StorageBoost() {
+			t.Errorf("%s effects = %v, want one bonus of %g%% on production_all", d.Key, d.Effects, float64(StorageBoostPercent))
+		}
+		if !strings.Contains(d.Description, "+1% all production") {
+			t.Errorf("%s says %q: its text must say what it does", d.Key, d.Description)
 		}
 	}
-	if seen != len(sizes) || seen == 0 {
-		t.Fatalf("%d storage buildings in the table, %d sized by the rule", seen, len(sizes))
+	if seen != 21 {
+		t.Fatalf("%d storage buildings in the table, want 21", seen)
 	}
 }
 
-// TestGatesAskForTheReferenceStore: every gate asks for five copies of the
+// TestStorageEffectsLeftAreNotStorageBuildings: only the culture arts buildings
+// and one wonder keep a storage effect (the Black Market and festival prices
+// still read the culture store until they are redone), and none of them is a
+// storage building.
+func TestStorageEffectsLeftAreNotStorageBuildings(t *testing.T) {
+	for _, d := range BaseBuildings() {
+		if d.Category == "storage" {
+			continue
+		}
+		for _, e := range d.Effects {
+			if e.Type == "storage" && d.Category != "wonder" && d.LineageKey != "culture_arts" {
+				t.Errorf("%s (%s) has a storage effect", d.Key, d.Category)
+			}
+		}
+	}
+}
+
+// TestGatesAskForFiveStorageCopies: every gate asks for five copies of the
 // storage building of the age it leaves, and for no other storage building.
-// The store those copies give is the one the storage rule sized to pay for
-// the next age's first storage building; a town let through with less could
-// never build storage again (the age lock forbids the older building).
-func TestGatesAskForTheReferenceStore(t *testing.T) {
+// A town that passes arrives with five of each age's, so the boost they give
+// is the same for everyone who is let through.
+func TestGatesAskForFiveStorageCopies(t *testing.T) {
 	defs := BaseBuildings()
 	storage := map[string]bool{}
 	for _, d := range defs {
@@ -76,74 +89,45 @@ func TestGatesAskForTheReferenceStore(t *testing.T) {
 	}
 }
 
-// TestFirstStorageCopyFitsTheStoreArrivedWith: in every age the first copy of
-// the storage building fits under the reference store of the age before it
-// (the first Stash under what a new game holds), and each copy up to the
-// fifth under the store the copies before it give. Without this an age could
-// open with nothing buyable.
-func TestFirstStorageCopyFitsTheStoreArrivedWith(t *testing.T) {
-	defs := BaseBuildings()
-	store := 0.0
-	for _, r := range BaseResources() {
-		if r.Key == "wood" {
-			store = r.BaseStorage
-		}
-	}
-	for _, a := range Ages() {
-		for _, d := range defs {
-			if d.RequiredAge != a.Key || d.Category != "storage" {
-				continue
-			}
-			size := 0.0
-			for _, e := range d.Effects {
-				if e.Type == "storage" && e.Target == "all" {
-					size = e.Value
-				}
-			}
-			for k := 0; k < StorageRuleCopies; k++ {
-				if price := maxPrice(d, k); price > store {
-					t.Errorf("%s: copy %d of the %s costs %s, the store by then holds %s", a.Name, k+1, d.Name, FormatRateValue(price), FormatRateValue(store))
-				}
-				store += size
-			}
-		}
-	}
-}
+// storageCopyIncomeShare is the most of the age's typical income, over one
+// pacing target of the age, that any one price part of a storage copy the
+// gate asks for may be. The stores used to be the bound on these prices; with
+// none, the bound is what the age makes: every copy the gate asks for, the
+// first Stash included, is payable from the age's own income inside one
+// target of the age.
+const storageCopyIncomeShare = 1.0
 
-// TestEveryStorageBuildingHasALastCopyAtLeastTheFifth: the gate asks five
-// copies of each storage building and every one of them fits (rule 3), and the
-// sixth is allowed to be the first that does not. The last copy a town can buy
-// is worked out from the tables here for every storage building; it is where
-// the engine's "at its limit" begins (game/stash_loop_test.go plays the Stash,
-// whose last copy is the fifth: 715 wood held, the sixth costs 741).
-func TestEveryStorageBuildingHasALastCopyAtLeastTheFifth(t *testing.T) {
-	defs, ages := BaseBuildings(), Ages()
-	base := 0.0
-	for _, r := range BaseResources() {
-		if r.Key == "wood" {
-			base = r.BaseStorage
-		}
-	}
-	sizes, store := StorageRuleSizes(defs, ages, base)
-	last := StorageLastCopy(defs, ages, base, sizes, store)
-	n := 0
+// TestStorageCopiesAreAffordableFromTheAgesIncome: the intent of the old
+// "first copy fits the store" rule that survives without a store. Each of the
+// copies a gate asks for (StorageRuleCopies) of an age's storage building has
+// every price part inside what the age's typical income (Incomes: a moderate
+// town's) makes in one pacing target of the age. Without this an age could
+// open with a storage building nobody can pay for.
+func TestStorageCopiesAreAffordableFromTheAgesIncome(t *testing.T) {
+	defs := BaseBuildings()
+	income := Incomes(defs, Technologies(), AgeOrder(), AnyResource)
+	checked := 0
 	for _, d := range defs {
 		if d.Category != "storage" {
 			continue
 		}
-		n++
-		got, ok := last[d.Key]
-		if !ok || got >= 1000 {
-			t.Errorf("%s: no last copy found (%d)", d.Key, got)
-		}
-		if got < StorageRuleCopies {
-			t.Errorf("%s: the last copy a town can buy is %d, the gate asks %d", d.Key, got, StorageRuleCopies)
+		checked++
+		target := LatePriceTargetTicks(d.RequiredAge)
+		for res, base := range d.BaseCost {
+			per := income[d.RequiredAge][res]
+			if per <= 0 {
+				t.Errorf("%s costs %s, which the %s makes none of", d.Key, res, d.RequiredAge)
+				continue
+			}
+			limit := storageCopyIncomeShare * per * target
+			for k := 0; k < StorageRuleCopies; k++ {
+				if price := base * math.Pow(d.CostScale, float64(k)); price > limit {
+					t.Errorf("%s copy %d costs %s %s, more than the %s the %s makes in one target", d.Key, k+1, FormatRateValue(price), res, FormatRateValue(limit), d.RequiredAge)
+				}
+			}
 		}
 	}
-	if n == 0 || len(last) != n {
-		t.Fatalf("%d storage buildings, %d last copies", n, len(last))
-	}
-	if last["stash"] != 5 {
-		t.Errorf("stash last copy = %d, want 5 (715 wood held, the sixth costs 741)", last["stash"])
+	if checked != 21 {
+		t.Fatalf("%d storage buildings checked, want 21", checked)
 	}
 }

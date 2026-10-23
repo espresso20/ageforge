@@ -220,12 +220,12 @@ func describeProgression(res *Result, sum *Summary) {
 }
 
 func runStatic(e *Env, res *Result) {
-	problems, slack := StaticGates()
-	s := &Summary{Gates: problems, Slack: slack}
+	problems := StaticGates()
+	s := &Summary{Gates: problems}
 	var sb strings.Builder
 	s.writeGates(&sb)
 	for _, g := range problems {
-		res.fail("gate_"+g.Kind, "%s -> %s: %s %s (need %s, max storage %s)", g.From, g.To, g.Key, g.Resource, num(g.Need), num(g.MaxStorage))
+		res.fail("gate_"+g.Kind, "%s -> %s: %s %s (need %s)", g.From, g.To, g.Key, g.Resource, num(g.Need))
 	}
 	sp, rows := StaticStorage()
 	for _, p := range sp {
@@ -234,10 +234,6 @@ func runStatic(e *Env, res *Result) {
 	mp, mr := StaticMilestones()
 	for _, p := range mp {
 		res.fail("milestone_"+p.Kind, "%s", p.Why)
-	}
-	hp := StaticHarbingerPrices()
-	for _, p := range hp {
-		res.fail("harbinger_price", "%s %s costs %s %s, over the %s storage buildable in %s", p.Epoch, p.Answer, num(p.Price), p.Resource, num(p.MaxStorage), p.Age)
 	}
 	ar := StaticAppeaseRules()
 	for _, p := range ar {
@@ -271,17 +267,17 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range bp {
 		res.fail("badge_"+p.Kind, "%s", p.Why)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d departure(s) from the storage rule; %d milestone problem(s); %d harbinger price(s) over storage; %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(slack), len(sp), len(mp), len(hp), len(ar), len(br), len(fp), len(cp), len(dp), research, len(bp))
+	res.Summary = fmt.Sprintf("%d gate problem(s); %d departure(s) from the storage check; %d milestone problem(s); %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(sp), len(mp), len(ar), len(br), len(fp), len(cp), len(dp), research, len(bp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, sp, rows)
-	res.section("Storage Covenant", "%s", st.String())
+	res.section("Storage check", "%s", st.String())
 	var mf strings.Builder
 	writeMilestones(&mf, mp, mr)
 	res.section("Milestone feasibility", "%s", mf.String())
 	var hf strings.Builder
-	writeHarbingerPrices(&hf, hp, ar, br)
-	res.section("Harbinger prices against storage and the warning", "%s", hf.String())
+	writeHarbingerPrices(&hf, ar, br)
+	res.section("Harbinger prices against the warning", "%s", hf.String())
 	var ff strings.Builder
 	writeFaithStrength(&ff, fp, fr)
 	res.section("Faith strength", "%s", ff.String())

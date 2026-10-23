@@ -116,6 +116,8 @@ type Set struct {
 	flowStaffed map[string]map[string]float64
 	military    []config.MilitaryScaleDef // by age order
 	typStore    map[string]map[string]float64
+	refSize     map[string]float64 // what a copy of each storage building held (the reference store)
+	refStore    map[string]float64 // the reference store on leaving each age
 	// refArmy is the soldiers the reference town has at its posts at the end
 	// of each age (config.RefSoldiers), by age key.
 	refArmy map[string]float64

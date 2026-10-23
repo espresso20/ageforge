@@ -12,8 +12,8 @@ import (
 // TestMilestonesAreFeasible: every milestone, chain and title can be
 // completed, proven from config alone (the Milestone Covenant, see
 // static_milestones.go). It runs in plain `go test ./...`, so a balance
-// change that strands a milestone (storage, cost curves, housing, the tech
-// tree, the age a run prestiges at) fails CI with the math that broke.
+// change that strands a milestone (a max count, housing, the tech tree, the
+// age a run prestiges at) fails CI with the math that broke.
 func TestMilestonesAreFeasible(t *testing.T) {
 	problems, reach := StaticMilestones()
 	for _, p := range problems {
@@ -30,7 +30,12 @@ func TestMilestonesAreFeasible(t *testing.T) {
 }
 
 // preCovenantMilestones is the milestone data master shipped before the
-// feasibility check existed, patched onto today's config.
+// feasibility check existed, patched onto today's config, as far as it can
+// still break: the two that named an age too early for their count. The
+// others (the last Stone Pit, Temple, Trading Post and Coal Plant costing more
+// than their age could store, a billion people, 20,000 structures) were
+// broken by the stores, which are gone: stock has no cap, so those counts
+// can be built.
 func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 	t.Helper()
 	ms := config.Milestones()
@@ -38,37 +43,6 @@ func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 	for i := range ms {
 		d := &ms[i]
 		switch d.Key {
-		case "small_village":
-			d.MinPopulation = 5000
-		case "bustling_town":
-			d.MinPopulation = 50000
-		case "growing_city":
-			d.MinPopulation = 500000
-		case "metropolis":
-			d.MinPopulation = 10000000
-		case "urban_sprawl":
-			d.MinPopulation = 100000000
-		case "megalopolis":
-			d.MinPopulation = 1000000000
-		case "global_city":
-			d.MinAge, d.MinPopulation = "industrial_age", 10000000000
-		case "stone_mason":
-			d.MinBuildings = map[string]int{"stone_pit": 50}
-		case "temple_city":
-			d.MinBuildings = map[string]int{"temple": 50}
-		case "trade_empire":
-			d.MinBuildingSum = config.BuildingSum{}
-			d.MinBuildings = map[string]int{"trading_post": 30, "merchant_quarter": 12}
-		case "power_grid":
-			d.MinBuildings = map[string]int{"coal_plant": 50, "steam_turbine": 10}
-		case "early_builder":
-			d.MinTotalBuilt = 500
-		case "seasoned_builder":
-			d.MinTotalBuilt = 2000
-		case "master_builder":
-			d.MinTotalBuilt = 5000
-		case "grand_architect":
-			d.MinTotalBuilt = 20000
 		case "wonder_empire":
 			d.MinAge = "modern_age"
 		case "tech_ascendant":
@@ -78,24 +52,16 @@ func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 		}
 		patched[d.Key] = true
 	}
-	if len(patched) != 17 {
-		t.Fatalf("patched %d milestones, want 17: a key was renamed?", len(patched))
+	if len(patched) != 2 {
+		t.Fatalf("patched %d milestones, want 2: a key was renamed?", len(patched))
 	}
 	return ms
 }
 
 // TestMilestoneFeasibilityCatchesBrokenMilestones keeps the guard honest:
-// the numbers master shipped before this check must each be flagged, for
-// the right reason, along with the three chains they blocked. Seven could
-// never be completed (the last Stone Pit, Temple, Trading Post and Coal
-// Plant cost more than their age can store; a billion and ten billion
-// people need more housing than the game has; 20,000 structures is more
-// than a run holds), four were out of reach in a run (10M and 100M people,
-// 5,000 structures, and 2,000: the storage wall put it past the half of what
-// a run holds that a count may ask), and two named an age too early for their count (15
-// wonders, every tech). A third did when it shipped, 50 techs by the
-// Industrial Age: the tree has since grown past it (53 by then), so that
-// number is no longer broken and is not patched in.
+// the numbers master shipped before this check that can still break must be
+// flagged, for the right reason, along with the chains they block. Two named
+// an age too early for their count (15 wonders, every tech).
 func TestMilestoneFeasibilityCatchesBrokenMilestones(t *testing.T) {
 	// Judged under the rules those numbers shipped with: prestige opened in
 	// the Modern Age. The prestige test covers moving it.
@@ -105,12 +71,13 @@ func TestMilestoneFeasibilityCatchesBrokenMilestones(t *testing.T) {
 		got[p.Key] = p.Kind
 		t.Log(p.Why)
 	}
-	want := map[string]string{
-		"stone_mason": "building", "temple_city": "building", "trade_empire": "building", "power_grid": "building",
-		"metropolis": "population", "urban_sprawl": "population", "megalopolis": "population", "global_city": "population",
-		"seasoned_builder": "builds", "master_builder": "builds", "grand_architect": "builds",
-		"tech_ascendant": "techs", "wonder_empire": "wonders",
-		"settlement_chain": "chain", "builder_chain": "chain", "trade_chain": "chain",
+	want := map[string]string{"tech_ascendant": "techs", "wonder_empire": "wonders"}
+	for _, c := range config.MilestoneChains() {
+		for _, k := range c.MilestoneKeys {
+			if _, broken := want[k]; broken {
+				want[c.Key] = "chain"
+			}
+		}
 	}
 	for k, kind := range want {
 		if got[k] != kind {
@@ -160,19 +127,20 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 		}
 	}
 
+	// A building with no max count stands up to the model's ceiling: stock
+	// has no cap, so nothing else stops it.
 	c := m.ceiling("stone_pit")
-	if c.n <= 0 || c.res == "" {
-		t.Fatalf("stone_pit ceiling = %+v, want a storage-bound count", c)
+	if c.n != copyLimit {
+		t.Fatalf("stone_pit ceiling = %+v, want the model's ceiling %d (no max count, no store)", c, copyLimit)
 	}
 	pits := config.MilestoneDef{Name: "Pits", Key: "pits", MinBuildings: map[string]int{"stone_pit": c.n}}
 	expect("stone pits at the ceiling", pits, false)
 	pits.MinBuildings = map[string]int{"stone_pit": c.n + 1}
-	expect("stone pits past the ceiling", pits, true, "Stone Pits", "Stone Age", "storage", grouped(c.n))
+	expect("stone pits past the ceiling", pits, true, "Stone Pits", grouped(c.n))
 
-	// A copy limit is the other ceiling. No storage building has one since
-	// the storage wall (the wall stops it instead); the monuments do: one each.
+	// A copy limit is the other ceiling: the monuments have one each.
 	g := m.ceiling("cultural_obelisk")
-	if g.res != "" || g.n != 1 {
+	if g.n != 1 {
 		t.Fatalf("cultural_obelisk ceiling = %+v, want its max count (1) to bind", g)
 	}
 	obelisks := config.MilestoneDef{Name: "Obelisks", Key: "obelisks", MinBuildings: map[string]int{"cultural_obelisk": g.n + 1}}
@@ -212,11 +180,9 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 	sum.MinBuildingSum.Count++
 	expect("building sum past the ceiling", sum, true, "Stone Pits and Cultural Obelisks", "between them")
 
-	gold := m.limitOf(t, config.MilestoneDef{MinResources: map[string]float64{"gold": 1}}, end)
-	hoard := config.MilestoneDef{Name: "Hoard", Key: "hoard", MinResources: map[string]float64{"gold": gold}}
-	expect("gold at the storage margin", hoard, false)
-	hoard.MinResources = map[string]float64{"gold": gold * 1.01}
-	expect("gold past the storage margin", hoard, true, "gold", "storage")
+	// Stock has no cap: any amount of a resource an age supplies can be held.
+	hoard := config.MilestoneDef{Name: "Hoard", Key: "hoard", MinResources: map[string]float64{"gold": 1e300}}
+	expect("gold, any amount", hoard, false)
 	for _, r := range config.BaseResources() {
 		if m.resAge[r.Key] > end {
 			expect("a resource from after the run", config.MilestoneDef{Name: "Later", Key: "later", MinResources: map[string]float64{r.Key: 1}}, true, game.ResourceName(r.Key))
@@ -249,21 +215,11 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 	expect("unknown building", unknown, true, "stone_pits", "does not exist")
 }
 
-// limitOf is the limit the model gives d's only requirement at age i.
-func (m *milestoneModel) limitOf(t *testing.T, d config.MilestoneDef, i int) float64 {
-	t.Helper()
-	reqs := m.requirements(d, 0)
-	if len(reqs) != 1 || reqs[0].limit == nil {
-		t.Fatalf("want one requirement with a limit, got %d", len(reqs))
-	}
-	return reqs[0].limit(i)
-}
-
 // TestMilestoneFeasibilityFollowsPrestige: a run ends where prestige opens
 // (game.PrestigeMinAge), so the check re-validates every milestone when that
 // moves. Opening prestige at the Industrial Age would cut the run off at the
-// Colonial Age, too early for the settlement ladder's top rung and the
-// 2,000-structure milestone; opening it at the last age only relaxes things.
+// Colonial Age, too early for the technologies two milestones ask for and the
+// chain that holds them; opening it at the last age only relaxes things.
 func TestMilestoneFeasibilityFollowsPrestige(t *testing.T) {
 	ms, chains, titles, defs := config.Milestones(), config.MilestoneChains(), config.MilestoneTitles(), config.BuildingByKey()
 	if m := newMilestoneModel(defs, game.PrestigeMinAge); m.ages[m.runEnd+1].Key != game.PrestigeMinAge {
@@ -274,7 +230,7 @@ func TestMilestoneFeasibilityFollowsPrestige(t *testing.T) {
 	for _, p := range early {
 		flagged[p.Key] = p.Kind
 	}
-	for k, kind := range map[string]string{"megalopolis": "population", "grand_architect": "builds", "settlement_chain": "chain", "builder_chain": "chain"} {
+	for k, kind := range map[string]string{"philosophes": "techs", "renaissance_mind": "techs", "scholar_chain": "chain"} {
 		if flagged[k] != kind {
 			t.Errorf("with prestige at the Industrial Age, %s: flagged as %q, want %q", k, flagged[k], kind)
 		}

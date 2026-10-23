@@ -176,7 +176,7 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 		change func(src *rules.Source)
 	}{
 		{"more copies than can stand", hut, "copies", func(src *rules.Source) {
-			special(t, src, hut).Threshold = 5000
+			special(t, src, hut).Threshold = float64(2 * copyLimit)
 		}},
 		{"every copy that can stand", hut, "copies", func(src *rules.Source) {
 			// The ceiling itself is over the share a copies badge may ask.
@@ -191,10 +191,10 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			b.Subject, b.Counter = "hovel", "standing.hovel"
 		}},
 		{"a ladder past 25 runs", "lineage.housing.2", "lifetime", func(src *rules.Source) {
-			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {14, 1e6}}
+			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {14, 1e12}}
 		}},
 		{"a first rung a first run does not build in time", "lineage.housing.1", "first_rung", func(src *rules.Source) {
-			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {30, 57, 230, 570, 1400}}
+			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {1e8, 2e8, 3e8, 4e8, 5e8}}
 		}},
 		{"a first rung of two runs' wonders", "ladder.wonders.1", "first_rung", func(src *rules.Source) {
 			ladderFamily(t, src, "Wonders raised").Ladders = map[string][]float64{"": {25, 100, 300}}
@@ -314,14 +314,14 @@ func TestBadgeProofsNameTheNumber(t *testing.T) {
 	src := rules.FromConfig()
 	for i := range src.Badges {
 		if src.Badges[i].Key == "special.hut_hoarder" {
-			src.Badges[i].Threshold = 5000
+			src.Badges[i].Threshold = 1e6
 		}
 	}
 	problems, _ := staticBadges(rules.Compile(src), src.Badges, src.BadgeFamilies, config.BuildingByKey(), game.PrestigeRunAge)
 	if len(problems) != 1 {
 		t.Fatalf("want one problem, got %+v", problems)
 	}
-	for _, want := range []string{"Hut Hoarder", "5,000", "Huts", "Primitive Age", "wood", "97%"} {
+	for _, want := range []string{"Hut Hoarder", "1,000,000", "Huts", "Primitive Age", "100,000"} {
 		if !strings.Contains(problems[0].Why, want) {
 			t.Errorf("the failure does not mention %q: %s", want, problems[0].Why)
 		}

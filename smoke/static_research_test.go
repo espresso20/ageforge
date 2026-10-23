@@ -127,7 +127,7 @@ func TestEveryKeystoneIsReachableInItsAge(t *testing.T) {
 	colosseum := late["colosseum"]
 	colosseum.RequiredTech = "philosophy"
 	late["colosseum"] = colosseum
-	problems, _ := staticGates(ages, late)
+	problems := staticGates(ages, late)
 	found := false
 	for _, g := range problems {
 		if g.Kind == "tech_locked" && g.Key == "colosseum" && g.From == "iron_age" {

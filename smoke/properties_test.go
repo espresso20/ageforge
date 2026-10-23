@@ -12,18 +12,21 @@ import (
 // holding, or a reading that moves, fails here.
 func TestProperties(t *testing.T) {
 	p := StaticProperties()
-	// Numbered 1 to 22 without 5 and 17, which were about a full knowledge
-	// store carried into an age, 11, which was about the market's swap, and
-	// 13, which was about gate amounts. All are gone; 22 is new (the cap on
-	// research).
-	if len(p.List) != 18 {
-		t.Fatalf("%d properties, want 18", len(p.List))
+	// Numbered 1 to 22 without 3, 4, 6 and 7, which were about the storage
+	// wall (income and store at the wall, prices and first copies against the
+	// stores), 5 and 17, which were about a full knowledge store carried into
+	// an age, 11, which was about the market's swap, and 13, which was about
+	// gate amounts. All are gone; 22 is new (the cap on research).
+	if len(p.List) != 14 {
+		t.Fatalf("%d properties, want 14", len(p.List))
 	}
 	for _, pr := range p.List {
-		if pr.N == 11 {
+		switch pr.N {
+		case 3, 4, 6, 7:
+			t.Errorf("property %d is back: stock has no cap, so there is no storage wall to measure", pr.N)
+		case 11:
 			t.Error("property 11 is back: the market no longer swaps, so it has nothing to measure")
-		}
-		if pr.N == 13 {
+		case 13:
 			t.Error("property 13 is back: no gate asks for an amount of a resource, so it has nothing to measure")
 		}
 	}

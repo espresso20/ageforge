@@ -11,22 +11,13 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// TestHarbingerPricesFitStorage: every Appease and Brace price, both levels,
-// fits the most storage buildable in the first age of its era. Appease grows
-// with the pacing targets while faith and culture storage stay as typed, so a
-// longer curve is what would break this.
-func TestHarbingerPricesFitStorage(t *testing.T) {
-	rows := HarbingerPrices()
-	if len(rows) == 0 {
+// TestHarbingerPricesAreRead: the price table the static checks run on has a
+// row for every age a harbinger can arrive in. Stock has no cap, so no price
+// is held against a store; the warning each is priced on holds it
+// (TestAppeasePricesFitTheWarning, the Brace rules).
+func TestHarbingerPricesAreRead(t *testing.T) {
+	if len(HarbingerPrices()) == 0 {
 		t.Fatal("no harbinger prices read")
-	}
-	for _, p := range StaticHarbingerPrices() {
-		t.Errorf("%s %s costs %v %s, over the %v buildable in %s", p.Epoch, p.Answer, p.Price, p.Resource, p.MaxStorage, p.Age)
-	}
-	// The check sees a price that cannot fit: faith storage in the Iron Era's
-	// first age is finite, so no row may claim an uncapped faith store there.
-	if m := MaxStorage(config.EpochByKey()["iron_era"].Ages[0], "faith"); m <= 0 || m > 1e300 {
-		t.Errorf("iron-age faith storage %v: the check would never fire", m)
 	}
 }
 
@@ -232,12 +223,14 @@ func TestBraceTakesEffort(t *testing.T) {
 	// with it while what the age makes did not: a third of the warning is
 	// under the ceiling of more materials, and the Iron, Medieval and Colonial
 	// Ages are off the all-capped list (the Atomic, Electric and Modern Ages
-	// have none on it). The counts are read from the price table.
+	// have none on it). At the factor 1.43 the Iron Age's stone and the Modern
+	// Age's materials are under their ceilings too. The counts are read from
+	// the price table.
 	wantCapped := map[string]int{
-		"iron_age": 3, "classical_age": 2, "medieval_age": 1,
+		"iron_age": 2, "classical_age": 2, "medieval_age": 1,
 		"renaissance_age": 1, "colonial_age": 1, "industrial_age": 2,
 		"victorian_age": 1, "electric_age": 1, "atomic_age": 0,
-		"modern_age": 1, "information_age": 2, "digital_age": 2,
+		"modern_age": 0, "information_age": 2, "digital_age": 2,
 		"cyberpunk_age": 1, "fusion_age": 1, "space_age": 1,
 	}
 	if !maps.Equal(capped, wantCapped) {
@@ -247,7 +240,7 @@ func TestBraceTakesEffort(t *testing.T) {
 	// warning, rounded up, is the same figure. The ceiling did not cut them,
 	// and the test in package game that holds Appease against Brace counts
 	// only the Industrial Age.)
-	if want := []string{"iron_age", "industrial_age"}; !slices.Equal(allCapped, want) {
+	if want := []string{"industrial_age"}; !slices.Equal(allCapped, want) {
 		t.Errorf("every material is on its ceiling in %v, want %v", allCapped, want)
 	}
 	// The final era's two threads have the ceiling a doom has, and a moderate

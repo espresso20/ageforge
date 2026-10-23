@@ -11,6 +11,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
+- **Storage buildings boost production.** With no caps to raise, every storage building now adds 1% to all production, and older ones keep counting.
 - **A skyline that looks like your town.** The skyline draws far more of your buildings, gives them outlines, lit windows and depth, and varies their shapes, so a big town looks big.
 - **The board grows with your civilization.** Scouts only in the Stone Era, longer missions from the Iron Era, grand missions from the Steel Era; no tech locks. Missions give your army experience: ranks raise odds, hauls and Legendary offers, and a Veteran army sees the next tier an era early.
 - **The skyline comes alive.** Bigger people walk the streets in groups, and every age has its own traffic on the road, the rails and in the sky, from camels and chariots to steam trains, bullet trains and starships.
@@ -24,7 +25,7 @@ All notable changes to AgeForge are documented here.
 - **Homes fill up.** Population grows toward your housing while food lasts, faster for a bigger town. Villagers without a job wait in the reserve and take new jobs at once; the Workers box says what holds your population back.
 - **No more instant techs.** Research left over from a finished tech no longer carries into the next one, gifts of research (events, milestones, expeditions, trade) add at most half a tech, and Grand Discovery only grants techs you could start.
 - **A new Expeditions panel.** The Ready Room shows the age's lands as a map with every offer as a pin and a briefing for the one you pick; the Expedition Report follows every party out and lists what came home. Send with the arrow keys and Enter, or type part of an offer's name.
-- **New buildings cost more.** Every new copy of a building costs about a quarter more than it did, and stores grew to match; wonders are unchanged. Upgrading an older building costs half a new copy, so upgrading first is the cheaper road.
+- **New buildings cost more.** Every new copy of a building costs about 43% more than it did, and stores grew to match; wonders are unchanged. Upgrading an older building costs half a new copy, so upgrading first is the cheaper road.
 - **Upgrades are half price.** A building from an earlier age keeps producing and can be upgraded straight to its line's building for the current age, at half the price of a new copy. Upgraded copies count toward the next age.
 - **One resource per line.** The six building lines that changed resource partway are split, 39 lines in all; a line never switches resource, and an older building only upgrades to a building that makes the same resource.
 - **Ended resources stay ended.** A resource is priced for at most one age after the last age that builds a maker for it, never later. The Colonial Age's three wood prices are gone: the settlement block and the colonial warehouse pay in stone, the harbor in stone and gold.
