@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // tradeProvider renders the Trade routes panel: the routes, and the allied
@@ -16,7 +17,7 @@ func tradeProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	trade := state.Trade
 
-	sb.WriteString(" [gold]═══ Trade routes ═══[-]\n\n")
+	sb.WriteString(vibe.Line("ui.overlay_trade.tradeProvider.01", " [gold]═══ Trade routes ═══[-]\n\n"))
 	sb.WriteString(lockNotes(state, config.FeatureTradeRoutes, config.FeatureRouteRailFreight, config.FeatureRouteWarpCommerce, config.FeatureBlackMarket))
 
 	// Disruption banner: a war or an embargo blockades these resources, and
@@ -26,12 +27,12 @@ func tradeProvider(state game.GameState, _ int) string {
 		for i, r := range trade.DisruptedResources {
 			names[i] = game.ResourceName(r)
 		}
-		fmt.Fprintf(&sb, " [red]⚠ Routes importing %s are suspended (a war, or your embargo).[-]\n", textfmt.List(names))
-		sb.WriteString(" [gray]Lift your embargo with: diplomacy neutral <civ>[-]\n\n")
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.02", " [red]⚠ Routes importing %s are suspended (a war, or your embargo).[-]\n", textfmt.List(names)))
+		sb.WriteString(vibe.Line("ui.overlay_trade.tradeProvider.03", " [gray]Lift your embargo with: diplomacy neutral <civ>[-]\n\n"))
 	}
 
 	if len(trade.ActiveRoutes) > 0 {
-		sb.WriteString(" [gold]Active routes:[-]\n\n")
+		sb.WriteString(vibe.Line("ui.overlay_trade.tradeProvider.04", " [gold]Active routes:[-]\n\n"))
 		// The snapshot builds this list from a map; sort it so the panel does
 		// not reshuffle on every refresh.
 		active := append([]game.ActiveRouteInfo(nil), trade.ActiveRoutes...)
@@ -42,19 +43,19 @@ func tradeProvider(state game.GameState, _ int) string {
 				marker = "[red]✖[-]"
 			}
 			fmt.Fprintf(&sb, " %s [cyan]%s[-]\n", marker, route.Name)
-			fmt.Fprintf(&sb, "   Export: %s\n", formatResMap(route.Export))
-			fmt.Fprintf(&sb, "   Import: %s\n", formatResMap(route.Import))
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.05", "   Export: %s\n", formatResMap(route.Export)))
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.06", "   Import: %s\n", formatResMap(route.Import)))
 			if route.Disrupted {
-				fmt.Fprintf(&sb, "   [red]Suspended: %s imports are blockaded[-]\n\n", game.ResourceName(route.DisruptedBy))
+				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.07", "   [red]Suspended: %s imports are blockaded[-]\n\n", game.ResourceName(route.DisruptedBy)))
 			} else {
-				fmt.Fprintf(&sb, "   %s left in this cycle  [gray](%s done)[-]\n\n",
-					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, "cycle", "cycles"))
+				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.08", "   %s left in this cycle  [gray](%s done)[-]\n\n",
+					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, vibe.Line("ui.overlay_trade.tradeProvider.09", "cycle"), vibe.Line("ui.overlay_trade.tradeProvider.10", "cycles"))))
 			}
 		}
 	}
 
 	if len(trade.AvailableRoutes) > 0 {
-		sb.WriteString(" [gold]Available routes:[-]\n\n")
+		sb.WriteString(vibe.Line("ui.overlay_trade.tradeProvider.11", " [gold]Available routes:[-]\n\n"))
 		for _, route := range trade.AvailableRoutes {
 			statusIcon := "[red]✗[-]"
 			if route.CanStart {
@@ -62,30 +63,30 @@ func tradeProvider(state game.GameState, _ int) string {
 			}
 			fmt.Fprintf(&sb, " %s [cyan]%s[-]\n", statusIcon, route.Name)
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", route.Description)
-			fmt.Fprintf(&sb, "   Export: %s → Import: %s\n",
-				formatResMap(route.Export), formatResMap(route.Import))
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.12", "   Export: %s → Import: %s\n",
+				formatResMap(route.Export), formatResMap(route.Import)))
 			if route.CanStart {
-				fmt.Fprintf(&sb, "   [green]trade route start %s[-]\n", route.Key)
+				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.13", "   [green]trade route start %s[-]\n", route.Key))
 			} else {
-				fmt.Fprintf(&sb, "   [red]needs %s (have %s)[-]\n",
+				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.14", "   [red]needs %s (have %s)[-]\n",
 					game.BuildingCount(route.MinCount, route.RequiredBld),
-					textfmt.Int(max(state.Buildings[route.RequiredBld].Count, state.Buildings[route.RequiredBld].HeldWithLater)))
+					textfmt.Int(max(state.Buildings[route.RequiredBld].Count, state.Buildings[route.RequiredBld].HeldWithLater))))
 			}
 			sb.WriteString("\n")
 		}
 	}
 
 	if len(trade.ActiveRoutes) == 0 && len(trade.AvailableRoutes) == 0 {
-		sb.WriteString(" [gray]No trade routes in this age yet.[-]\n")
+		sb.WriteString(vibe.Line("ui.overlay_trade.tradeProvider.15", " [gray]No trade routes in this age yet.[-]\n"))
 	}
 
 	writeAllyTradeBonuses(&sb, state.Diplomacy)
 
-	sb.WriteString(" [gray]Commands: trade route start/stop <key>[-]\n")
+	sb.WriteString(vibe.Line("ui.overlay_trade.tradeProvider.16", " [gray]Commands: trade route start/stop <key>[-]\n"))
 
 	// Civilization opinion lives on the Factions panel only. This panel used
 	// to carry its own copy, which went stale.
-	sb.WriteString("\n [gray]Opinion and deals with other civilizations: type factions[-]\n")
+	sb.WriteString(vibe.Line("ui.overlay_trade.tradeProvider.17", "\n [gray]Opinion and deals with other civilizations: type factions[-]\n"))
 
 	return sb.String()
 }
@@ -107,11 +108,11 @@ func writeAllyTradeBonuses(sb *strings.Builder, dip game.DiplomacyState) {
 		return
 	}
 	sort.Strings(keys)
-	sb.WriteString(" [gold]Allied bonuses:[-]\n")
+	sb.WriteString(vibe.Line("ui.overlay_trade.writeAllyTradeBonuses.01", " [gold]Allied bonuses:[-]\n"))
 	for _, k := range keys {
 		f := dip.Factions[k]
-		fmt.Fprintf(sb, "   %s: [green]%s %s[-] [gray](route imports and production)[-]\n",
-			f.Name, textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty))
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_trade.writeAllyTradeBonuses.02", "   %s: [green]%s %s[-] [gray](route imports and production)[-]\n",
+			f.Name, textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty)))
 	}
 	sb.WriteString("\n")
 }

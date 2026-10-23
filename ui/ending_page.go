@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // ending_page.go draws the film of a run's ending (ending.go runs it). A
@@ -80,7 +81,7 @@ const (
 )
 
 // endWord is the word for the moment, set in iron at the strike.
-const endWord = "Prestige"
+var endWord = vibe.E("ui.ending_page.endWord.01", "Prestige")
 
 // endSpan is a beat's place in the film.
 type endSpan struct {
@@ -170,12 +171,12 @@ func endViewFor(end game.RunEnding, pal *menuPalette) endView {
 	v.lines = append(v.lines, endLine{kind: elAge, text: v.age})
 	if v.prestige && (end.Points > 0 || end.Kind != game.RunEndSuccumbed) {
 		v.lines = append(v.lines, endLine{kind: elCount, count: end.Points, say: func(n int) string {
-			return textfmt.Count(n, "prestige point", "prestige points")
+			return textfmt.Count(n, vibe.Line("ui.ending_page.endViewFor.01", "prestige point"), vibe.Line("ui.ending_page.endViewFor.02", "prestige points"))
 		}})
 	}
 	if end.Badges > 0 {
 		v.lines = append(v.lines, endLine{kind: elCount, count: end.Badges, say: func(n int) string {
-			return textfmt.Count(n, "badge", "badges") + " earned"
+			return textfmt.Count(n, vibe.Line("ui.ending_page.endViewFor.03", "badge"), vibe.Line("ui.ending_page.endViewFor.04", "badges")) + vibe.Line("ui.ending_page.endViewFor.05", " earned")
 		}})
 	}
 	v.lines = append(v.lines, rest...)
@@ -244,7 +245,7 @@ func endLayoutFor(w, h int, v *endView) endLayout {
 	if len(L.caption) > 2 {
 		L.caption = L.caption[:2]
 	}
-	L.word = placeIron(endWord, modes, w-4, h-8-len(L.caption))
+	L.word = placeIron(endWord.String(), modes, w-4, h-8-len(L.caption))
 	L.word.x = centred(w, L.word.w)
 	L.word.y = max(2, (h-L.word.h-3-len(L.caption))/2)
 	L.stars = L.word.y + L.word.h + 1
@@ -593,7 +594,7 @@ func (sc *endScene) render(pal *menuPalette, v *endView, old, cur *menuTown, mf 
 				line = plainOf(endLineSegs(v.lines[0], v.lines[0].count, pal, v.plain))
 			}
 		case beatStrike:
-			line = strings.ToUpper(endWord)
+			line = strings.ToUpper(endWord.String())
 		case beatBeginning:
 			line = fitOption(v.captions, L.w)
 		}
@@ -770,7 +771,7 @@ func (sc *endScene) drawStrike(g *mGrid, pal *menuPalette, v *endView) {
 	if p.ok {
 		drawIron(g, pal, p.rows, p.x, p.y, p.mode, heat, v.plain)
 	} else {
-		centreText(g, pal, p.y, spaced(strings.ToUpper(endWord)), rampAt(&pal.heat, 0.5+0.5*sc.heat), true)
+		centreText(g, pal, p.y, spaced(strings.ToUpper(endWord.String())), rampAt(&pal.heat, 0.5+0.5*sc.heat), true)
 	}
 	if sc.heat < 1 {
 		return // the level and the game's line come with the heavy blow

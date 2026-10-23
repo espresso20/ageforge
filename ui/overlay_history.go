@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // historyProvider is the OverlayProvider for the history overlay.
@@ -14,7 +15,7 @@ func historyProvider(state game.GameState, w int) string {
 
 func renderHistoryOverlay(state game.GameState, w int) string {
 	if state.History == nil || len(state.History.Samples) < 2 {
-		return "\n[gray] No history yet. Play for a while and check back.[-]\n"
+		return vibe.Line("ui.overlay_history.renderHistoryOverlay.01", "\n[gray] No history yet. Play for a while and check back.[-]\n")
 	}
 
 	samples := state.History.Samples
@@ -55,19 +56,19 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	}
 
 	metrics := []metricDef{
-		{"Population", "[cyan]", func(s game.HistorySample) float64 { return s.Population }, " workers", false},
-		{"Food rate", "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
-		{"Research rate", "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
-		{"Faith", "[gold]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
-		{"Morale", "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
-		{"All production", "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
-		{"Game speed", "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.02", "Population"), "[cyan]", func(s game.HistorySample) float64 { return s.Population }, vibe.Line("ui.overlay_history.renderHistoryOverlay.03", " workers"), false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.07", "Morale"), "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
+		{vibe.Line("ui.overlay_history.renderHistoryOverlay.09", "Game speed"), "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
 	}
 
 	var sb strings.Builder
 
-	sb.WriteString("\n[gold]═══ Civilization history ═══[-]\n")
-	sb.WriteString(fmt.Sprintf("[gray]Ticks %d – %d  │  %d samples  │  age advances marked │[-]\n\n",
+	sb.WriteString(vibe.Line("ui.overlay_history.renderHistoryOverlay.10", "\n[gold]═══ Civilization history ═══[-]\n"))
+	sb.WriteString(vibe.Sprintf("ui.overlay_history.renderHistoryOverlay.11", "[gray]Ticks %d – %d  │  %d samples  │  age advances marked │[-]\n\n",
 		firstTick, lastTick, n))
 
 	for _, m := range metrics {
@@ -102,7 +103,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 		}
 
 		// header line
-		sb.WriteString(fmt.Sprintf("%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
+		sb.WriteString(vibe.Sprintf("ui.overlay_history.renderHistoryOverlay.12", "%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
 			m.color, m.label, trend, curStr, m.unit,
 			fmtVal(minV), fmtVal(maxV)))
 
@@ -124,7 +125,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 
 	// x-axis age labels
 	if len(markerNames) > 0 {
-		sb.WriteString("[gray]  Ages: ")
+		sb.WriteString(vibe.Line("ui.overlay_history.renderHistoryOverlay.13", "[gray]  Ages: "))
 		for i, name := range markerNames {
 			if i > 0 {
 				sb.WriteString(" → ")

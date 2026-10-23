@@ -133,3 +133,35 @@ func TestTheShippedScript(t *testing.T) {
 		}
 	}
 }
+
+// TestEntryReadsWhenItIsUsed: a table made once holds its entries as they were
+// written, and each reads as Line would at the time it is used, so the same
+// table follows the switch both ways.
+func TestEntryReadsWhenItIsUsed(t *testing.T) {
+	defer UseScriptForTest(map[string]string{"x.one": "vibe one"})()
+	defer Set(false)
+	Set(false)
+	table := []Entry{E("x.one", "plain one"), E("x.two", "plain two")}
+	for i, want := range []string{"plain one", "plain two"} {
+		if got := table[i].String(); got != want {
+			t.Errorf("with VibeMode off, entry %d reads %q, want %q", i, got, want)
+		}
+	}
+	Set(true)
+	if got := table[0].String(); got != "vibe one" {
+		t.Errorf("with VibeMode on, a row the script has reads %q", got)
+	}
+	if got := table[1].String(); got != "plain two" {
+		t.Errorf("with VibeMode on, a row the script lacks reads %q", got)
+	}
+	if got := fmt.Sprintf("%s|%v", table[0], table[1]); got != "vibe one|plain two" {
+		t.Errorf("an entry printed reads %q", got)
+	}
+	if got := table[0].Plain(); got != "plain one" {
+		t.Errorf("Plain reads %q while VibeMode is on", got)
+	}
+	Set(false)
+	if got := table[0].String(); got != "plain one" {
+		t.Errorf("turned off again, the entry reads %q", got)
+	}
+}

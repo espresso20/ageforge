@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // badge_panel.go is the badge case's panel: the case over the whole screen
@@ -27,13 +28,13 @@ import (
 
 // badgeKeys are the badge case's keys as the Help panel lists them: the
 // key, then what it does.
-var badgeKeys = [][2]string{
-	{"Arrows", "Move from badge to badge; the grid follows"},
-	{"Tab", "The next family's tab (Shift-Tab: the one before)"},
-	{"PgUp/PgDn", "A page up and down"},
-	{"Home/End", "The first badge and the last"},
-	{"Enter", "Open the selected badge's detail, and close it (with something typed, Tab and Enter act on the prompt instead)"},
-	{"Esc", "Close the detail, then the panel"},
+var badgeKeys = []keyHelp{
+	{"Arrows", vibe.E("ui.badge_panel.badgeKeys.02", "Move from badge to badge; the grid follows")},
+	{"Tab", vibe.E("ui.badge_panel.badgeKeys.04", "The next family's tab (Shift-Tab: the one before)")},
+	{"PgUp/PgDn", vibe.E("ui.badge_panel.badgeKeys.05", "A page up and down")},
+	{"Home/End", vibe.E("ui.badge_panel.badgeKeys.06", "The first badge and the last")},
+	{"Enter", vibe.E("ui.badge_panel.badgeKeys.08", "Open the selected badge's detail, and close it (with something typed, Tab and Enter act on the prompt instead)")},
+	{"Esc", vibe.E("ui.badge_panel.badgeKeys.10", "Close the detail, then the panel")},
 }
 
 // badgeRequest is how a command asks the case to open: on a tab, or on a

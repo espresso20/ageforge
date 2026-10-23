@@ -12,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // map_panel.go is the Map panel: the active map style over the whole
@@ -48,7 +49,7 @@ func mapFrame(m *mapmodel.Model, set mapSettings, since time.Duration) mapstyle.
 }
 
 // mapIconsHint is the one-time hint the first Map panel open shows.
-const mapIconsHint = "Want real icons on your map? Type icons."
+var mapIconsHint = vibe.E("ui.map_panel.mapIconsHint.01", "Want real icons on your map? Type icons.")
 
 // mapViews is shared by the Map panel and the mini map: the style
 // registry, one model builder (the UI goroutine owns it) and the
@@ -251,18 +252,18 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 	}
 	var lead, cmd []barPart
 	if p.hint {
-		lead = []barPart{{mapIconsHint, 1}, {"  ", 0}}
+		lead = []barPart{{mapIconsHint.String(), 1}, {"  ", 0}}
 	} else if p.note != "" {
 		lead = []barPart{{p.note, 1}, {"  ", 0}}
 	}
 	if p.prompt != nil && p.prompt() != "" {
-		cmd = []barPart{{"Enter", 1}, {" runs the command below · ", 2}}
+		cmd = []barPart{{"Enter", 1}, {vibe.Line("ui.map_panel.drawBar.02", " runs the command below · "), 2}}
 	} else if in, ok := st.Inspect(f); ok && in.Command != "" {
-		cmd = []barPart{{"Enter", 1}, {" types ", 2}, {in.Command, 0}, {" · ", 2}}
+		cmd = []barPart{{"Enter", 1}, {vibe.Line("ui.map_panel.drawBar.04", " types "), 2}, {in.Command, 0}, {" · ", 2}}
 	}
 	full := []barPart{{"map style", 1}, {" " + styleTitle(p.mv.reg, p.set.Style) + " · ", 2},
-		{"map glyphs", 1}, {" " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {" close", 2}}
-	short := []barPart{{"map style", 1}, {" · ", 2}, {"Esc", 1}, {" close", 2}}
+		{"map glyphs", 1}, {" " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {vibe.Line("ui.map_panel.drawBar.06", " close"), 2}}
+	short := []barPart{{"map style", 1}, {" · ", 2}, {"Esc", 1}, {vibe.Line("ui.map_panel.drawBar.08", " close"), 2}}
 	width := func(parts ...[]barPart) int {
 		n := 0
 		for _, ps := range parts {
@@ -349,7 +350,7 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 	if ev.Key() == tcell.KeyEnter {
 		in, ok := p.current().Inspect(p.frame())
 		if !ok || in.Command == "" {
-			p.note = "Nothing to type here. Move the cursor onto a building or a civilization."
+			p.note = vibe.Line("ui.map_panel.handleKey.01", "Nothing to type here. Move the cursor onto a building or a civilization.")
 			return true
 		}
 		if p.stage != nil {
@@ -393,7 +394,7 @@ func (p *mapPanel) reply(cmd string, res CommandResult) {
 	msg, _, _ := strings.Cut(res.Message, "\n")
 	msg = strings.TrimSpace(barTags.ReplaceAllString(msg, ""))
 	if msg == "" {
-		msg = "Ran " + cmd + "."
+		msg = vibe.Line("ui.map_panel.reply.01", "Ran ") + cmd + "."
 	}
 	p.hint, p.note = false, msg
 }

@@ -128,8 +128,8 @@ func TestThemeSwatchesLabelsEveryRole(t *testing.T) {
 	forge, _ := theme.ByKey("forge")
 	sw := themeSwatches(forge)
 	for _, sr := range swatchRoles {
-		if !strings.Contains(sw, sr.label) {
-			t.Errorf("themeSwatches missing role label %q\ngot: %s", sr.label, sw)
+		if !strings.Contains(sw, sr.label.String()) {
+			t.Errorf("themeSwatches missing role label %q\ngot: %s", sr.label.String(), sw)
 		}
 		// Each row must render a colored block, not bare text.
 		if !strings.Contains(sw, "███") {

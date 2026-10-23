@@ -144,7 +144,8 @@ func TestPeopleTabsFitAt80x24And100x30(t *testing.T) {
 	st := peopleTown(t)
 	for _, size := range [][2]int{{80, 24}, {100, 30}, {80, 21}} {
 		w, h := size[0], size[1]
-		for tab, name := range peopleTabs {
+		for tab, tabName := range peopleTabs {
+			name := tabName.String()
 			for row := 0; row < 3; row++ {
 				v := peopleView{tab: tab, row: row}
 				g := renderPeople(st, v, w, h)

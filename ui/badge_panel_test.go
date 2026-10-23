@@ -348,8 +348,8 @@ func TestHelpListsBadgeKeys(t *testing.T) {
 			section = section[:end]
 		}
 		for _, k := range badgeKeys {
-			if !strings.Contains(section, "  "+k[0]) {
-				t.Errorf("%d columns: the Help panel's badge case section does not list %s", screenW, k[0])
+			if !strings.Contains(section, "  "+k.key) {
+				t.Errorf("%d columns: the Help panel's badge case section does not list %s", screenW, k.key)
 			}
 		}
 		flat := strings.Join(strings.Fields(help), " ")
@@ -361,7 +361,7 @@ func TestHelpListsBadgeKeys(t *testing.T) {
 	}
 	listed := ""
 	for _, k := range badgeKeys {
-		listed += k[0] + " " + k[1] + " "
+		listed += k.key + " " + k.what.String() + " "
 	}
 	for _, name := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "End", "Enter", "Esc"} {
 		if !strings.Contains(listed, name) {

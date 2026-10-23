@@ -1,10 +1,9 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The tech tree's lock, as the panels show it. An age's wonder needs one
@@ -42,20 +41,20 @@ func wonderKeystoneLine(state game.GameState, key string) string {
 	def, _ := state.Ruleset().Building(key)
 	switch {
 	case researched:
-		return fmt.Sprintf("[green]✓ Keystone: %s, researched[-]", name)
+		return vibe.Sprintf("ui.keystone.wonderKeystoneLine.01", "[green]✓ Keystone: %s, researched[-]", name)
 	case waived:
-		return fmt.Sprintf("[gray]Keystone: %s, not needed in this age (the lock starts when you next advance)[-]", name)
+		return vibe.Sprintf("ui.keystone.wonderKeystoneLine.02", "[gray]Keystone: %s, not needed in this age (the lock starts when you next advance)[-]", name)
 	}
-	return fmt.Sprintf("[red]✗ Keystone: %s, not researched (research %s)[-]", name, def.RequiredTech)
+	return vibe.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, def.RequiredTech)
 }
 
 // wonderBuildLine is what a full wonder bank says to do next: build it, or
 // research its keystone first.
 func wonderBuildLine(state game.GameState, key string) string {
 	if name, researched, waived, ok := wonderKeystone(state, key); ok && !researched && !waived {
-		return fmt.Sprintf("[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, key)
+		return vibe.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, key)
 	}
-	return fmt.Sprintf("[green]✓ The bank is full. Build it with: build %s[-]", key)
+	return vibe.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", key)
 }
 
 // keystoneMark is the tag a tech carries in the research lists when a
@@ -65,8 +64,8 @@ func keystoneMark(ts game.TechState) string {
 	if ts.Kind != config.TechKeystone || ts.KeystoneOf == "" {
 		return ""
 	}
-	return fmt.Sprintf("  [gold]★ keystone: %s[-]", game.BuildingName(ts.KeystoneOf))
+	return vibe.Sprintf("ui.keystone.keystoneMark.01", "  [gold]★ keystone: %s[-]", game.BuildingName(ts.KeystoneOf))
 }
 
 // keystoneLegend explains the mark, once per list.
-const keystoneLegend = "[gray]★ keystone: the one tech its age's wonder needs before it can be built.[-]"
+var keystoneLegend = vibe.E("ui.keystone.keystoneLegend.01", "[gray]★ keystone: the one tech its age's wonder needs before it can be built.[-]")

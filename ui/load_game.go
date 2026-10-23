@@ -12,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // loadGamePage is the page name under which the Load Game browser is registered
@@ -75,7 +76,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 	title := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gold]═══ Load game ═══[-]")
+		SetText(vibe.Line("ui.load_game.newLoadGameBrowser.01", "[gold]═══ Load game ═══[-]"))
 
 	b.subtitle = tview.NewTextView().
 		SetDynamicColors(true).
@@ -102,7 +103,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 		SetDynamicColors(true).
 		SetText(legendText())
 	legend.SetBorder(true).
-		SetTitle(" Key ")
+		SetTitle(vibe.Line("ui.load_game.newLoadGameBrowser.02", " Key "))
 	theme.Track(func() {
 		legend.SetBorderColor(theme.Color(theme.RoleAccent)).
 			SetTitleColor(theme.Color(theme.RoleAccent))
@@ -113,7 +114,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 		SetDynamicColors(true).
 		SetWrap(true)
 	b.detail.SetBorder(true).
-		SetTitle(" Details ")
+		SetTitle(vibe.Line("ui.load_game.newLoadGameBrowser.03", " Details "))
 	theme.Track(func() {
 		b.detail.SetBorderColor(theme.Color(theme.RoleAccent)).
 			SetTitleColor(theme.Color(theme.RoleAccent))
@@ -150,8 +151,8 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		// Surface it in the detail pane rather than crashing, and show an empty list.
 		b.saves = nil
 		b.list.Clear()
-		b.subtitle.SetText("[gray]" + savesDirLabel() + " · could not read saves[-]")
-		b.detail.SetText(fmt.Sprintf("[red]Could not read saves: %v[-]", err))
+		b.subtitle.SetText("[gray]" + savesDirLabel() + vibe.Line("ui.load_game.refresh.01", " · could not read saves[-]"))
+		b.detail.SetText(vibe.Sprintf("ui.load_game.refresh.02", "[red]Could not read saves: %v[-]", err))
 		return
 	}
 
@@ -178,7 +179,7 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 	b.list.Clear()
 	if len(rows) == 0 {
 		// Empty state — the action keys become no-ops (handleKey guards on len).
-		b.detail.SetText("[gray]This account has no saved games yet.\n\nStart a new game to create one.[-]")
+		b.detail.SetText(vibe.Line("ui.load_game.refresh.03", "[gray]This account has no saved games yet.\n\nStart a new game to create one.[-]"))
 		return
 	}
 
@@ -206,7 +207,7 @@ func (b *loadGameBrowser) continueNote() string {
 	if !b.hasCur {
 		return ""
 	}
-	return " · Continue opens " + b.cur.Save.Name
+	return vibe.Line("ui.load_game.continueNote.01", " · Continue opens ") + b.cur.Save.Name
 }
 
 // currentTag is the trailing tag of the row Continue opens: the main game's
@@ -216,9 +217,9 @@ func (b *loadGameBrowser) currentTag(s game.SaveInfo) string {
 	case s.Corrupt:
 		return ""
 	case s.Name == b.mainGame && b.mainGame != "":
-		return "   [accent]◆ main game[-]"
+		return vibe.Line("ui.load_game.currentTag.01", "   [accent]◆ main game[-]")
 	case b.hasCur && s.Name == b.cur.Save.Name:
-		return "   [label]▸ continue[-]"
+		return vibe.Line("ui.load_game.currentTag.02", "   [label]▸ continue[-]")
 	}
 	return ""
 }
@@ -231,11 +232,11 @@ func (b *loadGameBrowser) currentLine(s game.SaveInfo) string {
 	}
 	switch b.cur.Why {
 	case game.CurrentMain:
-		return "[accent]◆ The main game:[-] [gray]Continue opens it. M unmarks it.[-]"
+		return vibe.Line("ui.load_game.currentLine.01", "[accent]◆ The main game:[-] [gray]Continue opens it. M unmarks it.[-]")
 	case game.CurrentLast:
-		return "[label]▸ Continue opens this game,[-] [gray]the one last played. M marks it as the main game.[-]"
+		return vibe.Line("ui.load_game.currentLine.02", "[label]▸ Continue opens this game,[-] [gray]the one last played. M marks it as the main game.[-]")
 	}
-	return "[label]▸ Continue opens this game,[-] [gray]the newest save. M marks it as the main game.[-]"
+	return vibe.Line("ui.load_game.currentLine.03", "[label]▸ Continue opens this game,[-] [gray]the newest save. M marks it as the main game.[-]")
 }
 
 // detailFor is the detail pane's text for a save: its facts, then the line
@@ -328,15 +329,15 @@ func (b *loadGameBrowser) doLoad() {
 		return
 	}
 	if s.Corrupt {
-		b.detail.SetText(b.detailFor(s) + "\n\n[red]Can't load a corrupt save.[-]")
+		b.detail.SetText(b.detailFor(s) + vibe.Line("ui.load_game.doLoad.01", "\n\n[red]Can't load a corrupt save.[-]"))
 		return
 	}
 	if err := b.engine.LoadGame(s.Name); err != nil {
-		b.engine.AddLog("error", fmt.Sprintf("Load failed: %v", err))
-		b.detail.SetText(b.detailFor(s) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
+		b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doLoad.02", "Load failed: %v", err))
+		b.detail.SetText(b.detailFor(s) + vibe.Sprintf("ui.load_game.doLoad.03", "\n\n[red]Load failed: %v[-]", err))
 		return
 	}
-	b.engine.AddLog("success", "Game loaded.")
+	b.engine.AddLog("success", vibe.Line("ui.load_game.doLoad.04", "Game loaded."))
 	b.pages.RemovePage(loadGamePage)
 	b.pages.SwitchToPage("dashboard")
 	// From the splash this performs the first engine start; mid-game the engine is
@@ -358,10 +359,10 @@ func (b *loadGameBrowser) doMarkMain() {
 	acct := b.engine.Account()
 	switch {
 	case s.Corrupt:
-		b.detail.SetText(b.detailFor(s) + "\n\n[red]A corrupt save cannot be the main game.[-]")
+		b.detail.SetText(b.detailFor(s) + vibe.Line("ui.load_game.doMarkMain.01", "\n\n[red]A corrupt save cannot be the main game.[-]"))
 		return
 	case acct == nil:
-		b.detail.SetText(b.detailFor(s) + "\n\n[red]The main game is kept on an account, and none is in use.[-]")
+		b.detail.SetText(b.detailFor(s) + vibe.Line("ui.load_game.doMarkMain.02", "\n\n[red]The main game is kept on an account, and none is in use.[-]"))
 		return
 	}
 	name := s.Name
@@ -369,7 +370,7 @@ func (b *loadGameBrowser) doMarkMain() {
 		name = ""
 	}
 	if err := acct.SetMainGame(name); err != nil {
-		b.detail.SetText(b.detailFor(s) + fmt.Sprintf("\n\n[red]The main game could not be saved to your account: %v[-]", err))
+		b.detail.SetText(b.detailFor(s) + vibe.Sprintf("ui.load_game.doMarkMain.03", "\n\n[red]The main game could not be saved to your account: %v[-]", err))
 		return
 	}
 	b.refresh(b.list.GetCurrentItem())
@@ -385,17 +386,17 @@ func (b *loadGameBrowser) doDelete() {
 
 	const page = "load_game_delete"
 	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Delete '%s'?\n\nThis can't be undone.", s.Name)).
-		AddButtons([]string{"Cancel", "Delete"}).
-		SetDoneFunc(func(_ int, label string) {
+		SetText(vibe.Sprintf("ui.load_game.doDelete.01", "Delete '%s'?\n\nThis can't be undone.", s.Name)).
+		AddButtons([]string{vibe.Line("ui.load_game.doDelete.02", "Cancel"), "Delete"}).
+		SetDoneFunc(func(button int, _ string) {
 			b.pages.RemovePage(page)
 			b.app.SetFocus(b.list)
-			if label != "Delete" {
+			if button != 1 { // "Delete" is the second button; Cancel and Esc (-1) keep the save
 				return
 			}
 			if err := game.DeleteSave(s.Name); err != nil {
-				b.engine.AddLog("error", fmt.Sprintf("Delete failed: %v", err))
-				b.detail.SetText(fmt.Sprintf("[red]Delete failed: %v[-]", err))
+				b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doDelete.04", "Delete failed: %v", err))
+				b.detail.SetText(vibe.Sprintf("ui.load_game.doDelete.05", "[red]Delete failed: %v[-]", err))
 				return
 			}
 			// The account's records of its current game let go of the name.
@@ -438,7 +439,7 @@ func (b *loadGameBrowser) doRename() {
 		SetTextAlign(tview.AlignCenter)
 
 	input := tview.NewInputField().
-		SetLabel("Name: ").
+		SetLabel(vibe.Line("ui.load_game.doRename.01", "Name: ")).
 		SetText(s.Name).
 		SetFieldWidth(40)
 
@@ -474,9 +475,9 @@ func (b *loadGameBrowser) doRename() {
 		b.selectByName(newName)
 	}
 
-	okBtn := tview.NewButton("[ OK ]").SetSelectedFunc(submit)
+	okBtn := tview.NewButton(vibe.Line("ui.load_game.doRename.02", "[ OK ]")).SetSelectedFunc(submit)
 	styleFilledButton(okBtn, theme.RoleAccent)
-	cancelBtn := tview.NewButton("[ Cancel ]").SetSelectedFunc(close)
+	cancelBtn := tview.NewButton(vibe.Line("ui.load_game.doRename.03", "[ Cancel ]")).SetSelectedFunc(close)
 
 	// Enter in the input field submits.
 	input.SetDoneFunc(func(key tcell.Key) {
@@ -499,7 +500,7 @@ func (b *loadGameBrowser) doRename() {
 		AddItem(tview.NewBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Rename save ").
+		SetTitle(vibe.Line("ui.load_game.doRename.04", " Rename save ")).
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
 
@@ -537,8 +538,8 @@ func (b *loadGameBrowser) doDuplicate() {
 	}
 	newName, err := game.DuplicateSave(s.Name)
 	if err != nil {
-		b.engine.AddLog("error", fmt.Sprintf("Duplicate failed: %v", err))
-		b.detail.SetText(fmt.Sprintf("[red]Duplicate failed: %v[-]", err))
+		b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doDuplicate.01", "Duplicate failed: %v", err))
+		b.detail.SetText(vibe.Sprintf("ui.load_game.doDuplicate.02", "[red]Duplicate failed: %v[-]", err))
 		return
 	}
 	b.refresh(0)
@@ -564,7 +565,7 @@ func (b *loadGameBrowser) selectByName(name string) {
 // is appended, separate from the gold ★ auto tag.
 func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 	if s.Corrupt {
-		return fmt.Sprintf("[gray]%s%s   ·   %s   ⚠ corrupt[-]", prefix, s.Name, relativeTime(s.Timestamp))
+		return vibe.Sprintf("ui.load_game.rowLabel.01", "[gray]%s%s   ·   %s   ⚠ corrupt[-]", prefix, s.Name, relativeTime(s.Timestamp))
 	}
 	age := ageDisplay(s.Age)
 	tag := rowTag(s)
@@ -572,7 +573,7 @@ func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 		if tag != "" {
 			tag += " "
 		}
-		tag += "[label]● active[-]"
+		tag += vibe.Line("ui.load_game.rowLabel.02", "[label]● active[-]")
 	}
 	if tag != "" {
 		tag = "   " + tag
@@ -590,7 +591,10 @@ func footerButton(key, label string) string {
 
 // footerKey is one action on a key bar: its key, its name, and a shorter
 // name for a bar with little room ("" when the name is short already).
-type footerKey struct{ key, label, short string }
+type footerKey struct {
+	key          string
+	label, short vibe.Entry
+}
 
 // keyBar lays a key bar out for a box w cells wide and rows lines tall. It
 // writes the fullest form that fits on one line: every name in full, then
@@ -600,9 +604,9 @@ func keyBar(keys []footerKey, w, rows int) string {
 	line := func(ks []footerKey, short bool, gap string) string {
 		parts := make([]string, len(ks))
 		for i, k := range ks {
-			label := k.label
-			if short && k.short != "" {
-				label = k.short
+			label := k.label.String()
+			if short && k.short.Plain() != "" {
+				label = k.short.String()
 			}
 			parts[i] = footerButton(k.key, label)
 		}
@@ -632,13 +636,13 @@ func keyBar(keys []footerKey, w, rows int) string {
 
 // loadGameKeys are the Load Game browser's actions.
 var loadGameKeys = []footerKey{
-	{"↑↓", "Navigate", "Move"},
-	{"Enter", "Load", ""},
-	{"D", "Delete", ""},
-	{"R", "Rename", ""},
-	{"C", "Duplicate", "Copy"},
-	{"M", "Main game", "Main"},
-	{"Esc", "Back", ""},
+	{"↑↓", vibe.E("ui.load_game.loadGameKeys.01", "Navigate"), vibe.E("ui.load_game.loadGameKeys.02", "Move")},
+	{"Enter", vibe.E("ui.load_game.loadGameKeys.04", "Load"), vibe.Entry{}},
+	{"D", vibe.E("ui.load_game.loadGameKeys.05", "Delete"), vibe.Entry{}},
+	{"R", vibe.E("ui.load_game.loadGameKeys.06", "Rename"), vibe.Entry{}},
+	{"C", vibe.E("ui.load_game.loadGameKeys.07", "Duplicate"), vibe.E("ui.load_game.loadGameKeys.08", "Copy")},
+	{"M", vibe.E("ui.load_game.loadGameKeys.09", "Main game"), vibe.E("ui.load_game.loadGameKeys.10", "Main")},
+	{"Esc", vibe.E("ui.load_game.loadGameKeys.12", "Back"), vibe.Entry{}},
 }
 
 // footerBar is the Load Game action bar with every name in full: a keycap
@@ -653,23 +657,23 @@ func footerBar() string {
 // ⚠) so the box reads as a direct legend for what's shown in the list.
 func legendText() string {
 	return strings.Join([]string{
-		"[gold]★ auto[-]      automatic save slot (overwritten on autosave)",
-		"[label]● active[-]    the save your game is autosaving into",
-		"[accent]◆ main game[-] Continue on the main menu opens it (M marks one)",
-		"[red]⚠ modified[-]  save file edited outside the game",
-		"[red]⚠ corrupt[-]   file could not be read, so it cannot load",
+		vibe.Line("ui.load_game.legendText.01", "[gold]★ auto[-]      automatic save slot (overwritten on autosave)"),
+		vibe.Line("ui.load_game.legendText.02", "[label]● active[-]    the save your game is autosaving into"),
+		vibe.Line("ui.load_game.legendText.03", "[accent]◆ main game[-] Continue on the main menu opens it (M marks one)"),
+		vibe.Line("ui.load_game.legendText.04", "[red]⚠ modified[-]  save file edited outside the game"),
+		vibe.Line("ui.load_game.legendText.05", "[red]⚠ corrupt[-]   file could not be read, so it cannot load"),
 	}, "\n")
 }
 
 func rowTag(s game.SaveInfo) string {
 	if s.Name == game.AutosaveName {
-		return "[gold]★ auto[-]"
+		return vibe.Line("ui.load_game.rowTag.01", "[gold]★ auto[-]")
 	}
 	if s.Modified {
-		return "[red]⚠ modified[-]"
+		return vibe.Line("ui.load_game.rowTag.02", "[red]⚠ modified[-]")
 	}
 	if s.Elite {
-		return "[gold]⭐ elite[-]"
+		return vibe.Line("ui.load_game.rowTag.03", "[gold]⭐ elite[-]")
 	}
 	return ""
 }
@@ -683,8 +687,8 @@ const detailSep = " [gold]·[-] "
 // unloadable notice + file time.
 func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) string {
 	if s.Corrupt {
-		return fmt.Sprintf(
-			"[red]⚠ Corrupt save. It cannot be loaded.[-]\n[gray]File time: %s[-]",
+		return vibe.Sprintf(
+			"ui.load_game.detailText.01", "[red]⚠ Corrupt save. It cannot be loaded.[-]\n[gray]File time: %s[-]",
 			s.Timestamp.Format("Jan 2, 2006 3:04 PM"),
 		)
 	}
@@ -705,9 +709,9 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 
 	// Line 2 — civilisation footprint.
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[gray]Population[-] [white]%s[-]", textfmt.Int(s.Population)),
-		fmt.Sprintf("[gray]Buildings[-] [white]%s[-]", textfmt.Int(s.Buildings)),
-		fmt.Sprintf("[gray]Wonders[-] [white]%s[-]", textfmt.Int(s.Wonders)),
+		vibe.Sprintf("ui.load_game.detailText.02", "[gray]Population[-] [white]%s[-]", textfmt.Int(s.Population)),
+		vibe.Sprintf("ui.load_game.detailText.03", "[gray]Buildings[-] [white]%s[-]", textfmt.Int(s.Buildings)),
+		vibe.Sprintf("ui.load_game.detailText.04", "[gray]Wonders[-] [white]%s[-]", textfmt.Int(s.Wonders)),
 	}, detailSep))
 
 	// Line 3 — progress markers. Milestones show "done/total" only when the total
@@ -717,15 +721,15 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 		milestones = fmt.Sprintf("%s/%s", textfmt.Int(s.MilestonesDone), textfmt.Int(s.MilestonesTotal))
 	}
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[gray]Milestones[-] [white]%s[-]", milestones),
-		fmt.Sprintf("[gray]Techs[-] [white]%s[-]", textfmt.Int(s.Techs)),
-		fmt.Sprintf("[gray]Soldiers[-] [white]%s[-]", textfmt.Int(s.Soldiers)),
+		vibe.Sprintf("ui.load_game.detailText.05", "[gray]Milestones[-] [white]%s[-]", milestones),
+		vibe.Sprintf("ui.load_game.detailText.06", "[gray]Techs[-] [white]%s[-]", textfmt.Int(s.Techs)),
+		vibe.Sprintf("ui.load_game.detailText.07", "[gray]Soldiers[-] [white]%s[-]", textfmt.Int(s.Soldiers)),
 	}, detailSep))
 
 	// Line 4 — prestige + morale.
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[gray]Prestige[-] [white]level %s[-] [gray](%s points)[-]", textfmt.Int(s.PrestigeLevel), textfmt.Int(s.PrestigeTotal)),
-		fmt.Sprintf("[gray]Morale[-] [white]%.0f%%[-]", s.Morale*100),
+		vibe.Sprintf("ui.load_game.detailText.08", "[gray]Prestige[-] [white]level %s[-] [gray](%s points)[-]", textfmt.Int(s.PrestigeLevel), textfmt.Int(s.PrestigeTotal)),
+		vibe.Sprintf("ui.load_game.detailText.09", "[gray]Morale[-] [white]%.0f%%[-]", s.Morale*100),
 	}, detailSep))
 
 	// Line 4b — account attribution. Pre-account/legacy saves show a dash; saves
@@ -733,22 +737,22 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	// "(another account)". Only the short id prefix is shown — never the full id.
 	switch {
 	case s.AccountID == "":
-		lines = append(lines, "[gray]Account:[-] [gray]none (pre-account save)[-]")
+		lines = append(lines, vibe.Line("ui.load_game.detailText.10", "[gray]Account:[-] [gray]none (pre-account save)[-]"))
 	case s.AccountID == currentAccountID && currentAccountID != "":
-		lines = append(lines, fmt.Sprintf("[gray]Account:[-] [white]%s[-] [gray](this account)[-]", shortAccountID(s.AccountID)))
+		lines = append(lines, vibe.Sprintf("ui.load_game.detailText.11", "[gray]Account:[-] [white]%s[-] [gray](this account)[-]", shortAccountID(s.AccountID)))
 	default:
-		lines = append(lines, fmt.Sprintf("[gray]Account:[-] [white]%s[-] [yellow](another account)[-]", shortAccountID(s.AccountID)))
+		lines = append(lines, vibe.Sprintf("ui.load_game.detailText.12", "[gray]Account:[-] [white]%s[-] [yellow](another account)[-]", shortAccountID(s.AccountID)))
 	}
 
 	// Line 5 — looming catastrophe warning (omitted entirely when none pending).
 	if s.PendingCatastrophe != "" {
-		lines = append(lines, fmt.Sprintf("[red]⚠ Pending: %s[-]", s.PendingCatastrophe))
+		lines = append(lines, vibe.Sprintf("ui.load_game.detailText.13", "[red]⚠ Pending: %s[-]", s.PendingCatastrophe))
 	}
 
 	// Line 6 — save metadata.
 	// note: the raw tick count used to ride here; ticks mean nothing to a player.
-	lines = append(lines, fmt.Sprintf(
-		"[gray]Saved[-] %s",
+	lines = append(lines, vibe.Sprintf(
+		"ui.load_game.detailText.14", "[gray]Saved[-] %s",
 		s.Timestamp.Format("Jan 2, 2006 3:04 PM"),
 	))
 
@@ -756,9 +760,9 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	// present (deleted/renamed) is marked "(detached)" rather than implying a link.
 	if s.ParentName != "" && s.ParentName != s.Name {
 		if parentPresent {
-			lines = append(lines, fmt.Sprintf("[gray]Branched from: %s[-]", s.ParentName))
+			lines = append(lines, vibe.Sprintf("ui.load_game.detailText.15", "[gray]Branched from: %s[-]", s.ParentName))
 		} else {
-			lines = append(lines, fmt.Sprintf("[gray]Branched from: %s (detached)[-]", s.ParentName))
+			lines = append(lines, vibe.Sprintf("ui.load_game.detailText.16", "[gray]Branched from: %s (detached)[-]", s.ParentName))
 		}
 	}
 
@@ -773,13 +777,13 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 func detailBadges(s game.SaveInfo) string {
 	var parts []string
 	if s.Name == game.AutosaveName {
-		parts = append(parts, "[gold]★ autosave[-]")
+		parts = append(parts, vibe.Line("ui.load_game.detailBadges.01", "[gold]★ autosave[-]"))
 	}
 	if s.Elite {
-		parts = append(parts, "[gold]⭐ elite[-]")
+		parts = append(parts, vibe.Line("ui.load_game.detailBadges.02", "[gold]⭐ elite[-]"))
 	}
 	if s.Modified {
-		parts = append(parts, "[red]⚠ modified[-]")
+		parts = append(parts, vibe.Line("ui.load_game.detailBadges.03", "[red]⚠ modified[-]"))
 	}
 	return strings.Join(parts, "   ")
 }
@@ -807,36 +811,36 @@ func relativeTime(t time.Time) string {
 	switch {
 	case d < 0:
 		// Clock skew / future-stamped save — treat as just now.
-		return "just now"
+		return vibe.Line("ui.load_game.relativeTime.02", "just now")
 	case d < time.Minute:
-		return "just now"
+		return vibe.Line("ui.load_game.relativeTime.03", "just now")
 	case d < time.Hour:
 		m := int(d / time.Minute)
-		return fmt.Sprintf("%dm ago", m)
+		return vibe.Sprintf("ui.load_game.relativeTime.04", "%dm ago", m)
 	case d < 24*time.Hour:
 		h := int(d / time.Hour)
-		return fmt.Sprintf("%dh ago", h)
+		return vibe.Sprintf("ui.load_game.relativeTime.05", "%dh ago", h)
 	case d < 48*time.Hour:
 		return "yesterday"
 	default:
 		days := int(d / (24 * time.Hour))
-		return fmt.Sprintf("%d days ago", days)
+		return vibe.Sprintf("ui.load_game.relativeTime.07", "%d days ago", days)
 	}
 }
 
 // pluralSaves renders the save-count label ("1 save" / "N saves").
 func pluralSaves(n int) string {
 	if n == 1 {
-		return "1 save"
+		return vibe.Line("ui.load_game.pluralSaves.01", "1 save")
 	}
-	return fmt.Sprintf("%d saves", n)
+	return vibe.Sprintf("ui.load_game.pluralSaves.02", "%d saves", n)
 }
 
 // savesDirLabel is the subtitle prefix. Saves live in the active account's
 // slot (data/accounts/<id>/saves/), so the label names the account rather than
 // a folder path that would be wrong for every account.
 func savesDirLabel() string {
-	return "This account"
+	return vibe.Line("ui.load_game.savesDirLabel.01", "This account")
 }
 
 // centeredModal wraps an inner primitive in nested Flex spacers so it floats at a

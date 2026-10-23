@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // dash_skyline.go is the skyline strip: the town's skyline, in a border,
@@ -85,7 +86,7 @@ func (s *skylineStrip) Draw(scr tcell.Screen) {
 		return
 	}
 	cv := &mapstyle.Canvas{Scr: scr, R: mapstyle.Rect{X: x, Y: y, W: w, H: h}, Tier: s.set.Tier}
-	drawMapFrame(cv, w, h, " Skyline ")
+	drawMapFrame(cv, w, h, vibe.Line("ui.dash_skyline.Draw.01", " Skyline "))
 	f := mapFrame(s.model, s.set, s.now().Sub(s.start))
 	s.view.DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)
 }

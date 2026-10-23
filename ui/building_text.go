@@ -1,11 +1,11 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // buildingText is a building's description as the lists show it. A knowledge
@@ -16,16 +16,16 @@ func buildingText(bs game.BuildingState) string {
 	if bs.Scholars <= 0 {
 		return bs.Description
 	}
-	count := textfmt.Count(bs.Scholars, "scholar", "scholars")
+	count := textfmt.Count(bs.Scholars, vibe.Line("ui.building_text.buildingText.01", "scholar"), vibe.Line("ui.building_text.buildingText.02", "scholars"))
 	line := ""
 	if !strings.Contains(bs.Description, count) {
-		line = count + " a copy"
+		line = count + vibe.Line("ui.building_text.buildingText.03", " a copy")
 	}
 	if bs.ScholarCap > 0 {
 		if line != "" {
 			line += ", "
 		}
-		line += fmt.Sprintf("%d of %d built", bs.Count, bs.ScholarCap)
+		line += vibe.Sprintf("ui.building_text.buildingText.04", "%d of %d built", bs.Count, bs.ScholarCap)
 	}
 	if line == "" {
 		return bs.Description
@@ -38,7 +38,7 @@ func buildingText(bs game.BuildingState) string {
 // not show them already.
 func atLimit(bs game.BuildingState) string {
 	if bs.Scholars > 0 && bs.AtMaxCount {
-		return "Building limit reached."
+		return vibe.Line("ui.building_text.atLimit.01", "Building limit reached.")
 	}
 	return ""
 }

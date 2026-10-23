@@ -404,18 +404,18 @@ func TestPanelsTableCoversEveryPanel(t *testing.T) {
 		for _, p := range g.panels {
 			names = append(names, p.name)
 			all = append(all, p.name)
-			if p.job == "" || runeLen(p.job) > panelJobMax {
-				t.Errorf("%s: the job line %q is empty or over %d cells", p.name, p.job, panelJobMax)
+			if p.job.String() == "" || runeLen(p.job.String()) > panelJobMax {
+				t.Errorf("%s: the job line %q is empty or over %d cells", p.name, p.job.String(), panelJobMax)
 			}
-			if strings.ContainsAny(p.job, "!—–") {
-				t.Errorf("%s: the job line %q has an exclamation mark or a dash", p.name, p.job)
+			if strings.ContainsAny(p.job.String(), "!—–") {
+				t.Errorf("%s: the job line %q has an exclamation mark or a dash", p.name, p.job.String())
 			}
 			if runeLen(p.name) > panelNameW {
 				t.Errorf("%s is wider than the name column (%d)", p.name, panelNameW)
 			}
 		}
-		if fmt.Sprint(names) != fmt.Sprint(want[g.title]) {
-			t.Errorf("group %s lists %v, want %v", g.title, names, want[g.title])
+		if fmt.Sprint(names) != fmt.Sprint(want[g.title.String()]) {
+			t.Errorf("group %s lists %v, want %v", g.title.String(), names, want[g.title.String()])
 		}
 	}
 	sort.Strings(all)
@@ -447,11 +447,11 @@ func TestPanelsRichText(t *testing.T) {
 			}
 			plain := untag(text)
 			for _, g := range panelGroups {
-				if !strings.Contains(plain, strings.ToUpper(g.title)) {
-					t.Errorf("%dx%d: no heading for %s", w, h, g.title)
+				if !strings.Contains(plain, strings.ToUpper(g.title.String())) {
+					t.Errorf("%dx%d: no heading for %s", w, h, g.title.String())
 				}
 				for _, p := range g.panels {
-					if !strings.Contains(plain, p.name+strings.Repeat(" ", panelNameW-len(p.name))+" "+p.job) {
+					if !strings.Contains(plain, p.name+strings.Repeat(" ", panelNameW-len(p.name))+" "+p.job.String()) {
 						t.Errorf("%dx%d: %s and its job are not on one row", w, h, p.name)
 					}
 				}
@@ -509,8 +509,8 @@ func TestPanelsListOnTheDashboard(t *testing.T) {
 		if described {
 			for _, g := range panelGroups {
 				for _, p := range g.panels {
-					if !strings.Contains(panels, p.job) {
-						t.Errorf("%s: the Panels list lost the job line %q", where, p.job)
+					if !strings.Contains(panels, p.job.String()) {
+						t.Errorf("%s: the Panels list lost the job line %q", where, p.job.String())
 					}
 				}
 			}

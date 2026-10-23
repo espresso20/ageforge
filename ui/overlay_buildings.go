@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // buildingsProvider generates the buildings overlay text from the current game
@@ -44,8 +45,8 @@ func buildingsProvider(state game.GameState, screenW int) string {
 		}
 	}
 
-	fmt.Fprintf(&sb, "[gold]═══ Buildings: %d built, %d unlocked ═══[-]\n", totalBuilt, totalUnlocked)
-	sb.WriteString(" [gray]Every age so far. Build with: build <key> (current age only).[-]\n\n")
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_buildings.buildingsProvider.01", "[gold]═══ Buildings: %d built, %d unlocked ═══[-]\n", totalBuilt, totalUnlocked))
+	sb.WriteString(vibe.Line("ui.overlay_buildings.buildingsProvider.02", " [gray]Every age so far. Build with: build <key> (current age only).[-]\n\n"))
 
 	for i := 0; i <= currentIdx; i++ {
 		ageKey := ageOrder[i]
@@ -86,7 +87,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 		// Age header.
 		isCurrent := (ageKey == state.Age)
 		if isCurrent {
-			fmt.Fprintf(&sb, "[gold]── %s (current) ──[-]\n", ageDef.Name)
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_buildings.buildingsProvider.03", "[gold]── %s (current) ──[-]\n", ageDef.Name))
 		} else {
 			fmt.Fprintf(&sb, "[gray]── %s ──[-]\n", ageDef.Name)
 		}
@@ -101,7 +102,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 				fmt.Fprintf(&sb, " [gray]%s %s (%s)[-]\n", lockedMarker, bs.Name, e.key)
 				sb.WriteString(hangingRow("   ", "[gray]"+lockedNeedsLine(bs)+"[-]", width))
 				if price := buildingPrice(&state, e.key, bs); len(price) > 0 {
-					sb.WriteString("[gray]" + costRow("   Cost: ", price, width) + "[-]")
+					sb.WriteString("[gray]" + costRow(vibe.Line("ui.overlay_buildings.buildingsProvider.04", "   Cost: "), price, width) + "[-]")
 				}
 				if text := buildingText(bs); text != "" {
 					fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)
@@ -119,15 +120,15 @@ func buildingsProvider(state game.GameState, screenW int) string {
 			// Legacy indicator.
 			legacyPart := ""
 			if bs.IsLegacy {
-				legacyPart = " [gray](legacy)[-]"
+				legacyPart = vibe.Line("ui.overlay_buildings.buildingsProvider.05", " [gray](legacy)[-]")
 			}
 
 			// Worker info.
 			workerPart := ""
 			if bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
-				workerPart = fmt.Sprintf(" [cyan]workers: %d/%d[-]", bs.WorkersAssigned, bs.WorkerCapacity*bs.Count)
+				workerPart = vibe.Sprintf("ui.overlay_buildings.buildingsProvider.06", " [cyan]workers: %d/%d[-]", bs.WorkersAssigned, bs.WorkerCapacity*bs.Count)
 				if bs.Count == 0 {
-					workerPart = fmt.Sprintf(" [gray]workers: up to %d each[-]", bs.WorkerCapacity)
+					workerPart = vibe.Sprintf("ui.overlay_buildings.buildingsProvider.07", " [gray]workers: up to %d each[-]", bs.WorkerCapacity)
 				}
 			}
 
@@ -142,7 +143,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 
 			// Cost and description on indent.
 			if price := buildingPrice(&state, e.key, bs); len(price) > 0 && !bs.IsLegacy {
-				sb.WriteString("[gray]" + costRow("   Cost: ", price, overlayTextWidth(screenW)) + "[-]")
+				sb.WriteString("[gray]" + costRow(vibe.Line("ui.overlay_buildings.buildingsProvider.08", "   Cost: "), price, overlayTextWidth(screenW)) + "[-]")
 			}
 			if text := buildingText(bs); text != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)

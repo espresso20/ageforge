@@ -40,7 +40,7 @@ var vibeColumns = []string{"id", "where", "kind", "age", "keep", "max", "plain",
 // vibe.Sprintf or vibe.Errorf(id, format, args...).
 type lineCall struct {
 	id, plain string
-	kind      string // Line, Sprintf or Errorf
+	kind      string // Line, E, Sprintf or Errorf
 	file      string
 	line      int
 	literal   bool // plain is a string literal (or a constant sum of them), which the lint can compare
@@ -57,7 +57,7 @@ func lineCalls(m *module) []lineCall {
 				return true
 			}
 			kind := call.Fun.(*ast.SelectorExpr).Sel.Name
-			if kind == "Line" && len(call.Args) != 2 {
+			if (kind == "Line" || kind == "E") && len(call.Args) != 2 {
 				return true
 			}
 			id, ok := stringOf(call.Args[0])
@@ -66,7 +66,7 @@ func lineCalls(m *module) []lineCall {
 			}
 			lc := lineCall{id: id, kind: kind, file: f.rel, line: m.fset.Position(call.Pos()).Line}
 			lc.plain, lc.literal = stringLit(call.Args[1])
-			if kind != "Line" {
+			if kind != "Line" && kind != "E" {
 				lc.args = len(call.Args) - 2
 				if call.Ellipsis.IsValid() {
 					lc.args = -1
@@ -353,6 +353,12 @@ func vibeLint(c *catalog, root, dir string, out io.Writer) (int, error) {
 		}
 		for _, p := range checkKeep(row, r.Text) {
 			fail("%s %s", where, p)
+		}
+		// The spaces and line breaks a text starts and ends with are part of how the
+		// code joins it to what is next to it, so a line keeps them as they are.
+		lead, trail := edges(row.current)
+		if l, tr := edges(r.Text); l != lead || tr != trail {
+			fail("%s must start with %q and end with %q, as the original does, and starts with %q and ends with %q", where, lead, trail, l, tr)
 		}
 		if row.max > 0 && utf8.RuneCountInString(r.Text) > row.max {
 			fail("%s is %d characters and the row allows %d", where, utf8.RuneCountInString(r.Text), row.max)

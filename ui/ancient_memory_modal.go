@@ -5,6 +5,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -31,27 +32,27 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	header := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gray]You have discovered an old cache. It appears to contain\n" +
-			"memories of a now-extinct civilization.[-]")
+		SetText(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.01", "[gray]You have discovered an old cache. It appears to contain\n"+
+			"memories of a now-extinct civilization.[-]"))
 
 	body := tview.NewTextView().
 		SetDynamicColors(true).
-		SetText(fmt.Sprintf("[white]── Recovered memory: [-][cyan]%s[-]\n", techName) +
+		SetText(vibe.Sprintf("ui.ancient_memory_modal.showAncientMemoryModal.02", "[white]── Recovered memory: [-][cyan]%s[-]\n", techName) +
 			fmt.Sprintf("  [gray]%s[-]\n\n", def.Description) +
-			"  [green]✓ Research it now, free of prerequisites[-]\n" +
-			"  [red]• It takes twice as long to research[-]\n" +
-			"  [gray]Only one such memory surfaces per civilization.[-]")
+			vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.03", "  [green]✓ Research it now, free of prerequisites[-]\n") +
+			vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.04", "  [red]• It takes twice as long to research[-]\n") +
+			vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.05", "  [gray]Only one such memory surfaces per civilization.[-]"))
 
-	btnAccept := tview.NewButton("[A[] Accept").
+	btnAccept := tview.NewButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.06", "[A[] Accept")).
 		SetSelectedFunc(func() {
 			if err := d.engine.AcceptAncientMemory(); err != nil {
-				d.engine.AddLog("error", "Could not recover the memory: "+err.Error())
+				d.engine.AddLog("error", vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.07", "Could not recover the memory: ")+err.Error())
 			}
 			d.closeAncientMemoryModal()
 		})
 	styleFilledButton(btnAccept, theme.RolePositive)
 
-	btnDecline := tview.NewButton("[D[] Decline").
+	btnDecline := tview.NewButton(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.08", "[D[] Decline")).
 		SetSelectedFunc(func() {
 			d.engine.DeclineAncientMemory()
 			d.closeAncientMemoryModal()
@@ -69,7 +70,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		AddItem(tview.NewBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, true)
 	inner.SetBorder(true).
-		SetTitle(" ✦ Ancient Memory ").
+		SetTitle(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.09", " ✦ Ancient Memory ")).
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
 

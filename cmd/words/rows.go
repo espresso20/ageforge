@@ -164,6 +164,7 @@ func read(root string) (*catalog, error) {
 	}
 	fl.bankRows(c)
 	c.link()
+	c.fixedWidths()
 	if err := c.finish(); err != nil {
 		return nil, err
 	}

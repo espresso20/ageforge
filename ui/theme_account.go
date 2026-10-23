@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // This file is the Phase-2 bridge between the leaf `theme` package (pure
@@ -20,7 +21,7 @@ import (
 
 // themeUnavailableMsg is the player-facing refusal when a theme isn't unlocked yet
 // (a locked flavor theme in Phase 3). No theme is unavailable today.
-const themeUnavailableMsg = "That theme is locked. Type 'theme list' to see how to earn it."
+var themeUnavailableMsg = vibe.E("ui.theme_account.themeUnavailableMsg.01", "That theme is locked. Type 'theme list' to see how to earn it.")
 
 // themeAvailable reports whether theme t may be selected/applied for the given
 // account. The policy (the theming design §4/§5/§6):

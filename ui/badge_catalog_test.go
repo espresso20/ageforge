@@ -144,7 +144,7 @@ func TestEveryFamilyHasAHeading(t *testing.T) {
 		if titled[f.key] != "" {
 			t.Errorf("the family %s has two headings", f.key)
 		}
-		titled[f.key] = f.title
+		titled[f.key] = f.title.String()
 	}
 	for _, def := range rules.Core().Badges() {
 		if titled[def.Family] == "" {
@@ -540,7 +540,7 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 	has("the points", fmt.Sprintf("worth %s points", wholeNumber(points)))
 	has("the count of secrets", fmt.Sprintf("**%d badges are secret.**", secret))
 	for _, f := range badgeFamilyTitles {
-		has("the family "+f.title, fmt.Sprintf("| **%s** | %d |", f.title, byFamily[f.key]))
+		has("the family "+f.title.String(), fmt.Sprintf("| **%s** | %d |", f.title.String(), byFamily[f.key]))
 	}
 	lifetime := 0
 	for _, l := range ladders {

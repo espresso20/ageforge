@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // badge_list.go writes the account's badges as plain text: the Stats
@@ -19,24 +20,27 @@ import (
 
 // badgeFamilyTitles are the headings of the badge families, in the order
 // they list. A family not named here lists last, under its own key.
-var badgeFamilyTitles = []struct{ key, title string }{
-	{"age", "Ages"},
-	{"swift", "Swift Eras"},
-	{"wonder", "Wonders"},
-	{"maximalist", "Maximalists"},
-	{"techs", "Research"},
-	{"lineage", "Lineages"},
-	{"domain", "Payrolls"},
-	{"resource", "Resources"},
-	{"civ", "Civilizations"},
-	{"harbinger", "Harbingers"},
-	{"doom", "Catastrophes"},
-	{"expedition", "Expeditions"},
-	{"awakening", "Awakenings"},
-	{"ladder", "Ladders"},
-	{"theme", "Themes"},
-	{"map", "Maps"},
-	{"special", "Specials"},
+var badgeFamilyTitles = []struct {
+	key   string
+	title vibe.Entry
+}{
+	{"age", vibe.E("ui.badge_list.badgeFamilyTitles.02", "Ages")},
+	{"swift", vibe.E("ui.badge_list.badgeFamilyTitles.04", "Swift Eras")},
+	{"wonder", vibe.E("ui.badge_list.badgeFamilyTitles.05", "Wonders")},
+	{"maximalist", vibe.E("ui.badge_list.badgeFamilyTitles.07", "Maximalists")},
+	{"techs", vibe.E("ui.badge_list.badgeFamilyTitles.08", "Research")},
+	{"lineage", vibe.E("ui.badge_list.badgeFamilyTitles.10", "Lineages")},
+	{"domain", vibe.E("ui.badge_list.badgeFamilyTitles.12", "Payrolls")},
+	{"resource", vibe.E("ui.badge_list.badgeFamilyTitles.14", "Resources")},
+	{"civ", vibe.E("ui.badge_list.badgeFamilyTitles.15", "Civilizations")},
+	{"harbinger", vibe.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
+	{"doom", vibe.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
+	{"expedition", vibe.E("ui.badge_list.badgeFamilyTitles.19", "Expeditions")},
+	{"awakening", vibe.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
+	{"ladder", vibe.E("ui.badge_list.badgeFamilyTitles.23", "Ladders")},
+	{"theme", vibe.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
+	{"map", vibe.E("ui.badge_list.badgeFamilyTitles.25", "Maps")},
+	{"special", vibe.E("ui.badge_list.badgeFamilyTitles.27", "Specials")},
 }
 
 // badgeListLocked is how many locked badges of a family the plain list
@@ -64,15 +68,15 @@ func wholeNumber(n int) string {
 // are stays "???" until the account has seen the last age.
 func badgeSummaryLine(sum game.BadgeSummary) string {
 	parts := []string{
-		fmt.Sprintf("%d of %d earned", sum.Earned, sum.Shown),
-		textfmt.Count(sum.Points, "point", "points"),
+		vibe.Sprintf("ui.badge_list.badgeSummaryLine.01", "%d of %d earned", sum.Earned, sum.Shown),
+		textfmt.Count(sum.Points, vibe.Line("ui.badge_list.badgeSummaryLine.02", "point"), vibe.Line("ui.badge_list.badgeSummaryLine.03", "points")),
 	}
 	if sum.Hidden > 0 {
 		hidden := game.BadgeHiddenName
 		if sum.HiddenCounted {
 			hidden = textfmt.Int(sum.Hidden)
 		}
-		parts = append(parts, hidden+" hidden")
+		parts = append(parts, hidden+vibe.Line("ui.badge_list.badgeSummaryLine.04", " hidden"))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -89,7 +93,7 @@ func badgeLine(v game.BadgeView) (line string, ok bool) {
 	case v.Earned:
 		line = fmt.Sprintf("[green]★[-] %s%s  %s", lit(v.Name), tier, lit(v.Desc))
 		if v.Crossed {
-			line += " [red]Earned in a modified game: no points.[-]"
+			line += vibe.Line("ui.badge_list.badgeLine.01", " [red]Earned in a modified game: no points.[-]")
 		}
 		return line, true
 	case v.Hidden:
@@ -105,7 +109,7 @@ func badgeLine(v game.BadgeView) (line string, ok bool) {
 	}
 	line = fmt.Sprintf("[gray]☆[-] %s%s  [gray]%s[-]", lit(v.Name), tier, lit(v.Desc))
 	if v.Target > 0 {
-		line += fmt.Sprintf(" [gray](%s of %s)[-]", FormatNumber(v.Progress), FormatNumber(v.Target))
+		line += vibe.Sprintf("ui.badge_list.badgeLine.02", " [gray](%s of %s)[-]", FormatNumber(v.Progress), FormatNumber(v.Target))
 	}
 	return line, true
 }
@@ -171,18 +175,18 @@ func badgeFamilies(views []game.BadgeView) []badgeFamilyList {
 
 // badgeHeadLines is the top of both lists: the count, and the title worn.
 func badgeHeadLines(sum game.BadgeSummary) []string {
-	lines := []string{"[gold]Badges:[-] " + badgeSummaryLine(sum)}
+	lines := []string{vibe.Line("ui.badge_list.badgeHeadLines.01", "[gold]Badges:[-] ") + badgeSummaryLine(sum)}
 	if sum.Title != "" {
-		title := " [gold]Title:[-] " + wornTitle(sum)
+		title := vibe.Line("ui.badge_list.badgeHeadLines.02", " [gold]Title:[-] ") + wornTitle(sum)
 		if sum.NextTitle != "" {
-			title += fmt.Sprintf(" [gray](%s at %s points)[-]", sum.NextTitle, wholeNumber(sum.NextTitleAt))
+			title += vibe.Sprintf("ui.badge_list.badgeHeadLines.03", " [gray](%s at %s points)[-]", sum.NextTitle, wholeNumber(sum.NextTitleAt))
 		}
 		lines = append(lines, title)
 	}
 	return lines
 }
 
-const badgeCaseHint = " [gray]Type badges to open the badge case and see them all.[-]"
+var badgeCaseHint = vibe.E("ui.badge_list.badgeCaseHint.01", " [gray]Type badges to open the badge case and see them all.[-]")
 
 // badgeListLines is the account's badges as a list (`account badges`): a
 // count line, then each family in sight under a heading with its own
@@ -192,7 +196,7 @@ func badgeListLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 	lines := badgeHeadLines(sum)
 	fams := badgeFamilies(views)
 	for _, f := range fams {
-		lines = append(lines, fmt.Sprintf(" [yellow]%s[-] [gray](%d of %d)[-]", f.title, f.got, f.shown))
+		lines = append(lines, vibe.Sprintf("ui.badge_list.badgeListLines.01", " [yellow]%s[-] [gray](%d of %d)[-]", f.title, f.got, f.shown))
 		for _, v := range f.earned {
 			if l, ok := badgeLine(v); ok {
 				lines = append(lines, "   "+l)
@@ -200,7 +204,7 @@ func badgeListLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 		}
 		for i, v := range f.locked {
 			if i == badgeListLocked {
-				lines = append(lines, fmt.Sprintf("   [gray]and %s more to earn.[-]", wholeNumber(len(f.locked)-i)))
+				lines = append(lines, vibe.Sprintf("ui.badge_list.badgeListLines.02", "   [gray]and %s more to earn.[-]", wholeNumber(len(f.locked)-i)))
 				break
 			}
 			if l, ok := badgeLine(v); ok {
@@ -208,13 +212,13 @@ func badgeListLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 			}
 		}
 		if f.secrets > 0 {
-			lines = append(lines, "   [gray]? "+textfmt.Count(f.secrets, "secret badge", "secret badges")+", each with a hint in the badge case.[-]")
+			lines = append(lines, "   [gray]? "+textfmt.Count(f.secrets, vibe.Line("ui.badge_list.badgeListLines.03", "secret badge"), vibe.Line("ui.badge_list.badgeListLines.04", "secret badges"))+vibe.Line("ui.badge_list.badgeListLines.05", ", each with a hint in the badge case.[-]"))
 		}
 	}
 	if len(fams) == 0 {
-		return append(lines, "   [gray]None to show yet.[-]")
+		return append(lines, vibe.Line("ui.badge_list.badgeListLines.06", "   [gray]None to show yet.[-]"))
 	}
-	return append(lines, badgeCaseHint)
+	return append(lines, badgeCaseHint.String())
 }
 
 // badgeDigestLines is the account's badges in a few lines, for the Stats
@@ -227,9 +231,9 @@ func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 	for _, f := range fams {
 		note := ""
 		if f.secrets > 0 {
-			note = " [gray]and " + textfmt.Count(f.secrets, "secret", "secrets") + "[-]"
+			note = vibe.Line("ui.badge_list.badgeDigestLines.01", " [gray]and ") + textfmt.Count(f.secrets, vibe.Line("ui.badge_list.badgeDigestLines.02", "secret"), vibe.Line("ui.badge_list.badgeDigestLines.03", "secrets")) + "[-]"
 		}
-		lines = append(lines, fmt.Sprintf("   [yellow]%-14s[-] %d of %d%s", f.title, f.got, f.shown, note))
+		lines = append(lines, vibe.Sprintf("ui.badge_list.badgeDigestLines.04", "   [yellow]%-14s[-] %d of %d%s", f.title, f.got, f.shown, note))
 		for _, v := range f.earned {
 			if !v.At.IsZero() {
 				latest = append(latest, v)
@@ -237,14 +241,14 @@ func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 		}
 	}
 	if len(fams) == 0 {
-		return append(lines, "   [gray]None to show yet.[-]")
+		return append(lines, vibe.Line("ui.badge_list.badgeDigestLines.05", "   [gray]None to show yet.[-]"))
 	}
 	sort.SliceStable(latest, func(a, b int) bool { return latest[a].At.After(latest[b].At) })
 	for i, v := range latest {
 		if i == 3 {
 			break
 		}
-		head := " [gold]Latest:[-]"
+		head := vibe.Line("ui.badge_list.badgeDigestLines.06", " [gold]Latest:[-]")
 		if i > 0 {
 			head = "        "
 		}
@@ -252,7 +256,7 @@ func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 			lines = append(lines, head+" "+l)
 		}
 	}
-	return append(lines, badgeCaseHint)
+	return append(lines, badgeCaseHint.String())
 }
 
 // badgeToast is the one-row toast for a badge just earned, written for a
@@ -276,13 +280,13 @@ func badgeToast(v game.BadgeView, tier mapmodel.GlyphTier, w int) string {
 			}
 		}
 	}
-	const head = "Badge earned:"
+	head := vibe.Line("ui.badge_list.badgeToast.01", "Badge earned:")
 	name, tierText, desc := v.Name, "", v.Desc
 	if v.Tier != "" {
 		tierText = " (" + v.Tier + ")"
 	}
 	// The mark, a space, the head, a space, the name, the tier, a full stop.
-	fixed := len(mark) + 1 + len(head) + 1 + runeLen(tierText) + 1
+	fixed := len(mark) + 1 + runeLen(head) + 1 + runeLen(tierText) + 1
 	if w > 0 && fixed+runeLen(name)+1+runeLen(desc) > w {
 		desc = ""
 	}

@@ -433,7 +433,7 @@ func TestAdvancePanelWording(t *testing.T) {
 			}
 		}
 	}
-	for _, s := range []string{charterStripHint, advanceKeys[0][1], advanceKeys[1][1], advanceKeys[2][1]} {
+	for _, s := range []string{charterStripHint.String(), advanceKeys[0].what.String(), advanceKeys[1].what.String(), advanceKeys[2].what.String()} {
 		if strings.ContainsAny(s, "—!") {
 			t.Errorf("wording %q", s)
 		}
@@ -562,7 +562,7 @@ func TestNextAgeStripPointsAtTheCharter(t *testing.T) {
 	_, _, eng := stagedDashboard(t, "bronze_age")
 	st := eng.GetState()
 	wide := untag(strings.Join(ageProgressLines(st, 160, 2), "\n"))
-	if !strings.Contains(wide, charterStripHint) {
+	if !strings.Contains(wide, charterStripHint.String()) {
 		t.Errorf("a wide strip has no hint:\n%s", wide)
 	}
 	for w := 20; w <= 160; w++ {
@@ -572,7 +572,7 @@ func TestNextAgeStripPointsAtTheCharter(t *testing.T) {
 			}
 		}
 	}
-	if final := ageProgressLines(game.GameState{}, 100, 2); strings.Contains(strings.Join(final, ""), charterStripHint) {
+	if final := ageProgressLines(game.GameState{}, 100, 2); strings.Contains(strings.Join(final, ""), charterStripHint.String()) {
 		t.Errorf("the final age points at a panel with no gate: %v", final)
 	}
 }
