@@ -35,9 +35,10 @@ const (
 // answers the harbinger every way, and returns what the player would have read,
 // in order, each text under the kind of story it is. The engine is returned as
 // the run left it.
-func playStories(t *testing.T, seed int64) ([]string, *GameEngine) {
+func playStories(t *testing.T, seed int64) ([]string, []LogEntry, *GameEngine) {
 	t.Helper()
 	var texts []string
+	var entries []LogEntry
 	rec := func(kind, label, text string) { texts = append(texts, fmt.Sprintf("%s|%s|%s", kind, label, text)) }
 	ge := NewGameEngineWith(rules.CoreFor(false))
 	ge.SeedRNG(seed)
@@ -53,6 +54,7 @@ func playStories(t *testing.T, seed int64) ([]string, *GameEngine) {
 	grab := func(label string) {
 		for _, l := range ge.GetLogs() {
 			rec(kindLog, label, l.Type+"|"+l.Message)
+			entries = append(entries, l)
 		}
 		view(label)
 	}
@@ -120,12 +122,12 @@ func playStories(t *testing.T, seed int64) ([]string, *GameEngine) {
 		rec(kindLog, "prestige", err.Error())
 	}
 	grab("prestige")
-	return texts, ge
+	return texts, entries, ge
 }
 
 // playStoriesWith plays the run with VibeMode on or off and, when rewrite is
 // not nil, with every text the code writes itself read through it.
-func playStoriesWith(t *testing.T, on bool, rewrite func(id, plain string) string) ([]string, *GameEngine) {
+func playStoriesWith(t *testing.T, on bool, rewrite func(id, plain string) string) ([]string, []LogEntry, *GameEngine) {
 	t.Helper()
 	vibeOff(t)
 	if rewrite != nil {
@@ -141,11 +143,11 @@ func playStoriesWith(t *testing.T, on bool, rewrite func(id, plain string) strin
 func TestStoriesReadPlainWhileVibeModeIsOff(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
 	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	plain, _ := playStoriesWith(t, false, nil)
+	plain, _, _ := playStoriesWith(t, false, nil)
 	if len(plain) < 5000 {
 		t.Fatalf("the run read only %d texts", len(plain))
 	}
-	scripted, _ := playStoriesWith(t, false, mark)
+	scripted, _, _ := playStoriesWith(t, false, mark)
 	sameTexts(t, "VibeMode off, a script that rewrites every text", scripted, plain)
 	kinds := map[string]int{}
 	for _, s := range plain {
@@ -169,8 +171,8 @@ func TestStoriesReadPlainWhileVibeModeIsOff(t *testing.T) {
 func TestStoriesFollowTheScriptAndTheStateDoesNot(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
 	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	plain, plainGE := playStoriesWith(t, true, func(id, plain string) string { return plain })
-	marked, markedGE := playStoriesWith(t, true, mark)
+	plain, _, plainGE := playStoriesWith(t, true, func(id, plain string) string { return plain })
+	marked, _, markedGE := playStoriesWith(t, true, mark)
 	if len(marked) != len(plain) {
 		t.Fatalf("the run under the script read %d texts, in plain English %d", len(marked), len(plain))
 	}
@@ -410,5 +412,34 @@ func TestASaveWithoutKeysStillLoadsAndReadsPlain(t *testing.T) {
 			// It plays on: a new warning in its thread has keys again.
 			loaded.StepTicks(50)
 		}()
+	}
+}
+
+// TestAStoryKeepsItsTagsInEveryScript: what a line of story is about is the
+// tags it was written with, so a script leaves every line in the panel it was
+// in: a run in plain English and the same run under a script write the same
+// lines with the same tags.
+func TestAStoryKeepsItsTagsInEveryScript(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	_, plain, _ := playStoriesWith(t, false, nil)
+	_, marked, _ := playStoriesWith(t, true, mark)
+	if len(plain) != len(marked) {
+		t.Fatalf("the run under the script wrote %d lines, in plain English %d", len(marked), len(plain))
+	}
+	stories, raids := 0, 0
+	for i := range plain {
+		if got, want := marked[i].Tags, plain[i].Tags&^TagPlain; got != want {
+			t.Fatalf("line %d has tags %b under the script and %b in plain English: %q", i, got, want, plain[i].Message)
+		}
+		if strings.Contains(plain[i].Message, "[comment]") {
+			stories++
+			if marked[i].Tags&TagArmy != 0 {
+				raids++
+			}
+		}
+	}
+	if stories < 1000 || raids == 0 {
+		t.Errorf("%d lines of story in the run, %d of them about the army", stories, raids)
 	}
 }

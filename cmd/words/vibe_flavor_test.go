@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -109,5 +112,61 @@ func TestVibeWireHasNothingToDoForTheFlavorSheets(t *testing.T) {
 		if !strings.Contains(out.String(), ", 0 to wire now (") || strings.Contains(out.String(), "left:") {
 			t.Errorf("vibe-wire has something to do for %s:\n%s", s.area.file, out.String())
 		}
+	}
+}
+
+// TestVibeLintHoldsAStoryLineToItsSlots: a line of the script for a story
+// sentence keeps the slot the sentence draws a word into and the placeholders
+// the game fills in, and counts as read by the game (no "nothing reads it yet"
+// note). A line that drops either is an error.
+func TestVibeLintHoldsAStoryLineToItsSlots(t *testing.T) {
+	c := realCatalog(t)
+	var both, slotted *row // a sentence with a placeholder, one with a slot
+	for _, r := range c.rows {
+		if r.rules&rulesSkel == 0 || r.max < len(r.current)+20 {
+			continue
+		}
+		switch {
+		case strings.Contains(r.current, "{subject}") && (both == nil || len(r.current) < len(both.current)):
+			both = r
+		case strings.Contains(r.current, "~") && !strings.Contains(r.current, "{") && (slotted == nil || len(r.current) < len(slotted.current)):
+			slotted = r
+		}
+	}
+	var word *row
+	for _, r := range c.rows {
+		if r.rules&rulesBank != 0 && (word == nil || len(r.current) < len(word.current)) {
+			word = r
+		}
+	}
+	if both == nil || slotted == nil || word == nil {
+		t.Fatalf("the export has no sentence with a subject (%v), none with a slot (%v), and no word-list entry (%v)", both != nil, slotted != nil, word != nil)
+	}
+	lint := func(sheet string) (int, string) {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "story.csv"), []byte("id,text\n"+sheet), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var out bytes.Buffer
+		n, err := vibeLint(c, realRoot(t), dir, &out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n, out.String()
+	}
+	row := func(id, text string) string { return id + "," + strconv.Quote(text) + "\n" }
+
+	n, got := lint(row(both.id, "Fr fr: "+both.current) + row(slotted.id, "Fr fr: "+slotted.current) + row(word.id, word.current))
+	if n != 0 || strings.Contains(got, "nothing reads them yet") {
+		t.Errorf("a sound story line was refused or called unread (%d errors):\n%s", n, got)
+	}
+	n, got = lint(row(slotted.id, "No slot here, fr") + row(both.id, strings.ReplaceAll(both.current, "{subject}", "them")))
+	for _, want := range []string{slotted.id, both.id, "{subject}"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("vibe-lint did not say %q:\n%s", want, got)
+		}
+	}
+	if n != 2 {
+		t.Errorf("vibe-lint found %d errors in two story lines that drop a slot, want 2:\n%s", n, got)
 	}
 }
