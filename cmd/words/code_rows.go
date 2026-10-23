@@ -224,7 +224,10 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 		}
 	}
 	maybeWord := false
-	if keyLike(u.text) && !single && !noun && !cr.prose[cr.parent[u]] {
+	// The singular of a count noun ("nanobot") reads like a key, and sits in a
+	// vibe call: the flavor package tells it in the script's words, so it is shown.
+	flavorWord := strings.HasPrefix(u.vibeID, "flavor.")
+	if keyLike(u.text) && !flavorWord && !single && !noun && !cr.prose[cr.parent[u]] {
 		if !cr.c.mightBeShown(u) {
 			return nil, whyKey
 		}

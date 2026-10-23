@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Resource countability — the part of this package that stops the generator
@@ -88,9 +89,28 @@ func isAbstract(key string) bool { return abstractResource[key] }
 
 // countSingular holds the SINGULAR label for each count noun, for the "1 X" case.
 // Mass nouns need no entry — they do not inflect.
-var countSingular = map[string]string{
-	"nanobots":             "nanobot",
-	"dark_matter_crystals": "dark matter crystal",
+var countSingular = map[string]vibe.Entry{
+	"nanobots":             vibe.E("flavor.resource.countSingular.01", "nanobot"),
+	"dark_matter_crystals": vibe.E("flavor.resource.countSingular.02", "dark matter crystal"),
+}
+
+// The pieces of the two frames that are words of the game's own, and so are
+// told in the script's.
+var (
+	storesOpen  = vibe.E("flavor.resource.phraseStores.01", "your ")
+	storesClose = vibe.E("flavor.resource.phraseStores.02", " stores")
+	haulOpen    = vibe.E("flavor.resource.phraseHaul.01", "a haul of ")
+)
+
+// say is an entry as it reads now: the script's line when the line is to be
+// told in the script's words (told), else the game's own English. A line is
+// put together in both readings (Result.Text and Result.Plain), so the frames
+// below take the reading they are asked for and never the switch's.
+func say(told bool, e vibe.Entry) string {
+	if told {
+		return e.String()
+	}
+	return e.Plain()
 }
 
 // labelOverride replaces the config display name where lowercasing it does not
@@ -158,20 +178,31 @@ func phraseBare(key string) string { return resourceLabel(key) }
 
 // phraseStores is "{res_stores}": MASS ONLY. "your food stores" — a plural head
 // noun, so it takes a plural verb ("your food stores are lighter").
-func phraseStores(key string) string { return "your " + resourceLabel(key) + " stores" }
+func phraseStores(key string) string { return phraseStoresAs(key, false) }
+
+// phraseStoresAs is phraseStores in the reading asked for (see say).
+func phraseStoresAs(key string, told bool) string {
+	return say(told, storesOpen) + resourceLabel(key) + say(told, storesClose)
+}
 
 // phraseHaul is "{res_haul}": MASS ONLY. "a haul of food" — the indefinite
 // article attaches to "haul", never to the mass noun itself.
-func phraseHaul(key string) string { return "a haul of " + resourceLabel(key) }
+func phraseHaul(key string) string { return phraseHaulAs(key, false) }
+
+// phraseHaulAs is phraseHaul in the reading asked for (see say).
+func phraseHaulAs(key string, told bool) string { return say(told, haulOpen) + resourceLabel(key) }
 
 // phraseQuantity is "{amt_res}": a number and a label, correctly inflected.
 // Mass nouns never inflect ("40 food"); count nouns take the singular at exactly
 // one ("1 soldier") and the already-plural label otherwise ("12 soldiers").
-func phraseQuantity(key string, n int) string {
+func phraseQuantity(key string, n int) string { return phraseQuantityAs(key, n, false) }
+
+// phraseQuantityAs is phraseQuantity in the reading asked for (see say).
+func phraseQuantityAs(key string, n int, told bool) string {
 	label := resourceLabel(key)
 	if classOf(key) == countNoun && n == 1 {
 		if s, ok := countSingular[key]; ok {
-			label = s
+			label = say(told, s)
 		}
 	}
 	return textfmt.Int(n) + " " + label

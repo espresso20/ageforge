@@ -175,6 +175,12 @@ func (m *module) nodeCtxs(f *srcFile) map[[2]int]nodeCtx {
 // wireVerdict decides how the text of a row follows the switch, or why it
 // does not.
 func (c *catalog) wireVerdict(r *row) verdict {
+	if flavorRead(r) {
+		// A sentence or a word of a flavor catalog is told through the script by
+		// the flavor package when it draws a line, under the id its place in the
+		// catalog gives it. There is nothing in the source to rewrite.
+		return verdict{}
+	}
 	if reason, ok := leftAlone[r.id]; ok {
 		return verdict{reason: reason}
 	}
@@ -214,6 +220,10 @@ func (c *catalog) wireVerdict(r *row) verdict {
 	return verdict{kind: wireLine}
 }
 
+// flavorRead says whether a row is a sentence or a word-list entry of a flavor
+// catalog, which the flavor package tells through the script itself.
+func flavorRead(r *row) bool { return r.rules&(rulesSkel|rulesBank) != 0 }
+
 // edit replaces the bytes [lo, hi) of a file.
 type edit struct {
 	lo, hi int
@@ -243,7 +253,7 @@ func vibeWire(c *catalog, root, sheet, only string, dry bool, out io.Writer) err
 		if r.area != target {
 			continue
 		}
-		if r.u.vibeID != "" {
+		if r.u.vibeID != "" || flavorRead(r) {
 			already++
 			continue
 		}

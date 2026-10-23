@@ -265,7 +265,13 @@ type Request struct {
 // set of literal fragments to match against.
 type Result struct {
 	// Text is the finished, markup-free sentence. Empty for an unknown Moment.
+	// While VibeMode is on and the script has a line for the sentence, it is
+	// the script's words; it is what a log line tells.
 	Text string
+	// Plain is the same line in the game's own English, whatever the switch
+	// says. It is what a line that is kept (saved, compared) holds: nothing of
+	// the script is ever stored. Key tells it again in the script's words.
+	Plain string
 	// Moment echoes the request's Moment.
 	Moment Moment
 	// Template is the stable id of the template used. Empty when Text is empty.
@@ -275,6 +281,9 @@ type Result struct {
 	// notice that two different sentences two lines apart both mentioned the long
 	// rope, which skeleton identity cannot see.
 	slot string
+	// draws is the entry drawn for each of the sentence's slots, by its place in
+	// the bank (see Key).
+	draws []int
 }
 
 // Line generates one sentence for req. It is Generate(req, rng).Text — the
