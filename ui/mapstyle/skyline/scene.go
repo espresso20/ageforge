@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // scene.go composes one frame, back to front: sky, sky objects, clouds, the
@@ -1358,13 +1359,13 @@ func (s *scene) markers() {
 			tag := ""
 			switch {
 			case flagged(lv) && lv.b.Workers == 0:
-				tag = "IDLE"
+				tag = vibe.Line("ui.mapstyle.skyline.scene.markers.01", "IDLE")
 			case flagged(lv):
-				tag = "LOW"
+				tag = vibe.Line("ui.mapstyle.skyline.scene.markers.02", "LOW")
 			}
 			if tag != "" && y >= 0 {
 				bg := s.fb.showAt(clampInt(x, 0, s.W-1), s.Y(y))
-				s.fb.text(x-len(tag)/2, s.Y(y), tag, theme.Legible(warn, bg, 3), bg, dTag)
+				s.fb.text(x-textLen(tag)/2, s.Y(y), tag, theme.Legible(warn, bg, 3), bg, dTag)
 			}
 		}
 	}

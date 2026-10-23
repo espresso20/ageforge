@@ -14,14 +14,15 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Entry is the skyline's registry entry.
 func Entry() mapstyle.Entry {
 	return mapstyle.Entry{
 		Name:  "skyline",
-		Title: "Skyline",
-		Blurb: "Your empire side-on as an ANSI panorama, one district per age, lit by the people working it.",
+		Title: vibe.Line("ui.mapstyle.skyline.skyline.Entry.01", "Skyline"),
+		Blurb: vibe.Line("ui.mapstyle.skyline.skyline.Entry.02", "Your empire side-on as an ANSI panorama, one district per age, lit by the people working it."),
 		New:   func() mapstyle.Style { return newView() },
 	}
 }

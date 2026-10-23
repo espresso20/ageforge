@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // orbit_mandala.go is the Transcendent Age. The civilization has left
@@ -179,28 +180,28 @@ func mandalaTargets(m *mapmodel.Model) []tgt {
 func mandalaInspection(m *mapmodel.Model, t tgt) (in inspectionData, ok bool) {
 	switch t.kind {
 	case tCore:
-		return inspectionData{title: "The core", cmd: m.SquareCommand(),
-			lines: []string{"you, no longer bound to form", "every age you lived through, in light"}}, true
+		return inspectionData{title: vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.01", "The core"), cmd: m.SquareCommand(),
+			lines: []string{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.02", "you, no longer bound to form"), vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.03", "every age you lived through, in light")}}, true
 	case tRing:
 		if t.cp < 0 || t.cp >= len(m.Catalog.EpochName) {
 			return in, false
 		}
-		return inspectionData{title: "Ring of the " + m.Catalog.EpochName[t.cp], cmd: mapmodel.CmdStatus,
-			lines: []string{"nothing of it still stands", "the ring remembers"}}, true
+		return inspectionData{title: vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.04", "Ring of the ") + m.Catalog.EpochName[t.cp], cmd: mapmodel.CmdStatus,
+			lines: []string{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.05", "nothing of it still stands"), vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.06", "the ring remembers")}}, true
 	case tMark:
 		in = lotInspection(m, t.key, 0)
 		if in.title == "" {
 			return in, false
 		}
-		where, marks := "a petal of the crown", m.Crown()
+		where, marks := vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.07", "a petal of the crown"), m.Crown()
 		if rings := m.Mandala(); t.row >= 2 && t.row-2 < len(rings) {
 			if r := rings[t.row-2]; r.Epoch < len(m.Catalog.EpochName) {
-				where, marks = "a light on the ring of the "+m.Catalog.EpochName[r.Epoch], r.Marks
+				where, marks = vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.08", "a light on the ring of the ")+m.Catalog.EpochName[r.Epoch], r.Marks
 			}
 		}
 		for j, mk := range marks { // which of the ring's lights it is
 			if mk.Key == t.key {
-				where += " (" + strconv.Itoa(j+1) + " of " + strconv.Itoa(len(marks)) + ")"
+				where += " (" + strconv.Itoa(j+1) + vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaInspection.09", " of ") + strconv.Itoa(len(marks)) + ")"
 			}
 		}
 		in.lines = append([]string{where}, in.lines...)
@@ -285,23 +286,23 @@ func (o *orb) mandalaLegend() []seg {
 		glyphs += string(mapmodel.R(mapmodel.EraSym(r.Epoch), o.tier)) + " "
 	}
 	return []seg{
-		{" " + string(mapmodel.R(mapmodel.SymCore, o.tier)) + " ", theme.RoleText}, {"the core: you, beyond form  ", theme.RoleDim},
-		{string(mapmodel.R(mapmodel.SymPetal, o.tier)) + " ", theme.RoleText}, {"the crown: this age's works  ", theme.RoleDim},
-		{glyphs, theme.RoleText}, {"a ring for each era you lived, oldest innermost  ", theme.RoleDim},
-		{"the wave: ", theme.RoleText}, {"light, rolling outward", theme.RoleDim},
+		{" " + string(mapmodel.R(mapmodel.SymCore, o.tier)) + " ", theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaLegend.01", "the core: you, beyond form  "), theme.RoleDim},
+		{string(mapmodel.R(mapmodel.SymPetal, o.tier)) + " ", theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaLegend.02", "the crown: this age's works  "), theme.RoleDim},
+		{glyphs, theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaLegend.03", "a ring for each era you lived, oldest innermost  "), theme.RoleDim},
+		{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaLegend.04", "the wave: "), theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaLegend.05", "light, rolling outward"), theme.RoleDim},
 	}
 }
 
 // mandalaHints is the status line at rest: the keys, and where you are.
 func (o *orb) mandalaHints() []seg {
 	key, dim := theme.RoleAccent, theme.RoleDim
-	tail := []seg{{"│ ", dim}, {"beyond form, in light", theme.RoleLabel}}
+	tail := []seg{{"│ ", dim}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.01", "beyond form, in light"), theme.RoleLabel}}
 	return fitHints(o.W, tail,
-		[]seg{{" Tab ", key}, {"inspect  ", dim}, {"◄► ", key}, {"round a ring  ", dim}, {"↑↓ ", key},
-			{"ring to ring  ", dim}, {"Home ", key}, {"the core  ", dim}, {"map flows ", key}, {"overlay  ", dim}},
-		[]seg{{" Tab ", key}, {"inspect  ", dim}, {"◄► ", key}, {"round a ring  ", dim}, {"↑↓ ", key},
-			{"ring to ring  ", dim}, {"Home ", key}, {"the core  ", dim}},
-		[]seg{{" Tab ", key}, {"inspect  ", dim}, {"◄► ↑↓ ", key}, {"move  ", dim}},
+		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.03", "inspect  "), dim}, {"◄► ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.04", "round a ring  "), dim}, {"↑↓ ", key},
+			{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.05", "ring to ring  "), dim}, {"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.07", "the core  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.08", "overlay  "), dim}},
+		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.10", "inspect  "), dim}, {"◄► ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.11", "round a ring  "), dim}, {"↑↓ ", key},
+			{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.12", "ring to ring  "), dim}, {"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.14", "the core  "), dim}},
+		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.16", "inspect  "), dim}, {"◄► ↑↓ ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.17", "move  "), dim}},
 		[]seg{{" Tab ◄► ↑↓  ", key}},
 	)
 }

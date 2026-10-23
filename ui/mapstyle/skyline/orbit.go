@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // orbit.go is the sky arc on the skyline (mapmodel/sky.go): from the Space
@@ -680,22 +681,22 @@ func (o *orb) header(bg tcell.Color) {
 	}
 	parts := []seg{
 		{" " + m.EpochName, theme.RoleLabel},
-		{"  day ", theme.RoleDim}, {strconv.Itoa(m.Clock.Day), theme.RoleHighlight},
+		{vibe.Line("ui.mapstyle.skyline.orbit.header.01", "  day "), theme.RoleDim}, {strconv.Itoa(m.Clock.Day), theme.RoleHighlight},
 		{"  " + m.Clock.String(), theme.RoleText},
-		{"  pop ", theme.RoleDim}, {strconv.Itoa(m.Workers.Pop) + "/" + strconv.Itoa(m.Workers.MaxPop), theme.RoleHighlight},
-		{"  bld ", theme.RoleDim}, {strconv.Itoa(m.TotalBuildings()), theme.RoleHighlight},
+		{vibe.Line("ui.mapstyle.skyline.orbit.header.02", "  pop "), theme.RoleDim}, {strconv.Itoa(m.Workers.Pop) + "/" + strconv.Itoa(m.Workers.MaxPop), theme.RoleHighlight},
+		{vibe.Line("ui.mapstyle.skyline.orbit.header.03", "  bld "), theme.RoleDim}, {strconv.Itoa(m.TotalBuildings()), theme.RoleHighlight},
 	}
 	if n := m.Recap.NewCount; o.v.changes && n > 0 {
-		parts = append(parts, seg{"  ▼ " + strconv.Itoa(n) + " new since your last visit", theme.RolePositive})
+		parts = append(parts, seg{"  ▼ " + strconv.Itoa(n) + vibe.Line("ui.mapstyle.skyline.orbit.header.04", " new since your last visit"), theme.RolePositive})
 	}
 	if n := idleProducers(m); n > 0 {
-		parts = append(parts, seg{"  ▪ " + strconv.Itoa(n) + " idle", theme.RoleWarning})
+		parts = append(parts, seg{"  ▪ " + strconv.Itoa(n) + vibe.Line("ui.mapstyle.skyline.orbit.header.05", " idle"), theme.RoleWarning})
 	}
 	if o.v.flows && m.Workers.Idle > 0 {
-		parts = append(parts, seg{"  " + strconv.Itoa(m.Workers.Idle) + " idle workers", theme.RoleWarning})
+		parts = append(parts, seg{"  " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.skyline.orbit.header.06", " idle workers"), theme.RoleWarning})
 	}
 	if h := m.Harbinger; h != nil {
-		parts = append(parts, seg{"  " + string(mapmodel.R(mapmodel.SymHarbinger, o.tier)) + " " + h.Name + " is watching", theme.RoleWarning})
+		parts = append(parts, seg{"  " + string(mapmodel.R(mapmodel.SymHarbinger, o.tier)) + " " + h.Name + vibe.Line("ui.mapstyle.skyline.orbit.header.07", " is watching"), theme.RoleWarning})
 	}
 	if c := m.Catastrophe; c.Pending != "" {
 		parts = append(parts, seg{"  " + string(mapmodel.R(mapmodel.SymFire, o.tier)) + " " + c.PendingName, theme.RoleNegative})
@@ -704,18 +705,18 @@ func (o *orb) header(bg tcell.Color) {
 }
 
 // skyLegend is what the legend says each sky scene draws.
-var skyLegend = [mapmodel.NumSkyScenes]string{
-	mapmodel.SkyOrbit:   "city lights below ",
-	mapmodel.SkyDeep:    "colony beacons ",
-	mapmodel.SkyGalaxy:  "star systems ",
-	mapmodel.SkyQuantum: "echoes ",
+var skyLegend = [mapmodel.NumSkyScenes]vibe.Entry{
+	mapmodel.SkyOrbit:   vibe.E("ui.mapstyle.skyline.orbit.skyLegend.01", "city lights below "),
+	mapmodel.SkyDeep:    vibe.E("ui.mapstyle.skyline.orbit.skyLegend.02", "colony beacons "),
+	mapmodel.SkyGalaxy:  vibe.E("ui.mapstyle.skyline.orbit.skyLegend.03", "star systems "),
+	mapmodel.SkyQuantum: vibe.E("ui.mapstyle.skyline.orbit.skyLegend.04", "echoes "),
 }
 
-var skyLegendWhat = [mapmodel.NumSkyScenes]string{
-	mapmodel.SkyOrbit:   "your districts  ",
-	mapmodel.SkyDeep:    "your lineages  ",
-	mapmodel.SkyGalaxy:  "civs met  ",
-	mapmodel.SkyQuantum: "the town you were  ",
+var skyLegendWhat = [mapmodel.NumSkyScenes]vibe.Entry{
+	mapmodel.SkyOrbit:   vibe.E("ui.mapstyle.skyline.orbit.skyLegendWhat.01", "your districts  "),
+	mapmodel.SkyDeep:    vibe.E("ui.mapstyle.skyline.orbit.skyLegendWhat.02", "your lineages  "),
+	mapmodel.SkyGalaxy:  vibe.E("ui.mapstyle.skyline.orbit.skyLegendWhat.03", "civs met  "),
+	mapmodel.SkyQuantum: vibe.E("ui.mapstyle.skyline.orbit.skyLegendWhat.04", "the town you were  "),
 }
 
 func (o *orb) status(bg tcell.Color) {
@@ -735,7 +736,7 @@ func (o *orb) status(bg tcell.Color) {
 					w += 2 + textLen(l)
 				}
 				if in.cmd != "" {
-					w += textLen("  type: ") + textLen(in.cmd)
+					w += textLen(vibe.Line("ui.mapstyle.skyline.orbit.status.01", "  type: ")) + textLen(in.cmd)
 				}
 				return w <= o.W
 			}
@@ -747,7 +748,7 @@ func (o *orb) status(bg tcell.Color) {
 				parts = append(parts, seg{"  " + l, theme.RoleDim})
 			}
 			if in.cmd != "" {
-				parts = append(parts, seg{"  type: ", theme.RoleDim}, seg{in.cmd, theme.RoleLabel})
+				parts = append(parts, seg{vibe.Line("ui.mapstyle.skyline.orbit.status.02", "  type: "), theme.RoleDim}, seg{in.cmd, theme.RoleLabel})
 			}
 			o.segs(0, y, bg, parts)
 			return
@@ -756,10 +757,10 @@ func (o *orb) status(bg tcell.Color) {
 	if o.v.flows {
 		w := m.Flows.Worst
 		if w == "" {
-			w = "nothing is stuck"
+			w = vibe.Line("ui.mapstyle.skyline.orbit.status.03", "nothing is stuck")
 		}
-		parts := []seg{{" flows: ", theme.RoleAccent}, {w, theme.RoleWarning}}
-		parts = append(parts, seg{"  type: ", theme.RoleDim}, seg{m.IdleCommand(), theme.RoleLabel})
+		parts := []seg{{vibe.Line("ui.mapstyle.skyline.orbit.status.04", " flows: "), theme.RoleAccent}, {w, theme.RoleWarning}}
+		parts = append(parts, seg{vibe.Line("ui.mapstyle.skyline.orbit.status.05", "  type: "), theme.RoleDim}, seg{m.IdleCommand(), theme.RoleLabel})
 		o.segs(0, y, bg, parts)
 		return
 	}
@@ -772,19 +773,19 @@ func (o *orb) status(bg tcell.Color) {
 		return
 	}
 	if o.v.legend {
-		parts := []seg{{" lit windows ", theme.RoleText}, {"staffed  ", theme.RoleDim},
-			{"glowing vents ", theme.RoleText}, {"producing  ", theme.RoleDim}, {"▼ ", theme.RolePositive}, {"new  ", theme.RoleDim},
-			{"IDLE LOW ", theme.RoleWarning}, {"flows  ", theme.RoleDim},
-			{skyLegend[o.sc], theme.RoleText}, {skyLegendWhat[o.sc], theme.RoleDim}}
+		parts := []seg{{vibe.Line("ui.mapstyle.skyline.orbit.status.06", " lit windows "), theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.orbit.status.07", "staffed  "), theme.RoleDim},
+			{vibe.Line("ui.mapstyle.skyline.orbit.status.08", "glowing vents "), theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.orbit.status.09", "producing  "), theme.RoleDim}, {"▼ ", theme.RolePositive}, {vibe.Line("ui.mapstyle.skyline.orbit.status.10", "new  "), theme.RoleDim},
+			{vibe.Line("ui.mapstyle.skyline.orbit.status.11", "IDLE LOW "), theme.RoleWarning}, {vibe.Line("ui.mapstyle.skyline.orbit.status.12", "flows  "), theme.RoleDim},
+			{skyLegend[o.sc].String(), theme.RoleText}, {skyLegendWhat[o.sc].String(), theme.RoleDim}}
 		if o.sc == mapmodel.SkyGalaxy {
 			parts = append(parts, seg{string([]rune{'◄', mapmodel.R(mapmodel.SymUFO, o.tier), '►'}) + " ", theme.RoleText},
-				seg{"alien traffic  ", theme.RoleDim})
+				seg{vibe.Line("ui.mapstyle.skyline.orbit.status.13", "alien traffic  "), theme.RoleDim})
 		}
-		parts = append(parts, seg{"pennants ", theme.RoleText}, seg{"your standing with each civ", theme.RoleDim})
+		parts = append(parts, seg{vibe.Line("ui.mapstyle.skyline.orbit.status.14", "pennants "), theme.RoleText}, seg{vibe.Line("ui.mapstyle.skyline.orbit.status.15", "your standing with each civ"), theme.RoleDim})
 		o.segs(0, y, bg, parts)
 		return
 	}
-	where := "the void"
+	where := vibe.Line("ui.mapstyle.skyline.orbit.status.16", "the void")
 	if di := m.Skyline.DistrictAt(o.cam + o.W/2); di >= 0 {
 		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + " " + skyWhere[o.sc]
 	}
