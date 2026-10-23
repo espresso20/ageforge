@@ -34,7 +34,7 @@ import "math"
 const (
 	ln2Hi = 6.93147180369123816490e-01 // 0x3fe62e42fee00000
 	ln2Lo = 1.90821492927058770002e-10 // 0x3dea39ef35793c76
-	log2e = 1.44269504088896338700e+00
+	log2e = 1.442695040888963387
 )
 
 // Log returns the natural logarithm of x. Special cases as math.Log.
@@ -83,8 +83,8 @@ func Log10(x float64) float64 {
 // Exp returns e**x. Special cases as math.Exp.
 func Exp(x float64) float64 {
 	const (
-		overflow  = 7.09782712893383973096e+02
-		underflow = -7.45133219101941108420e+02
+		overflow  = 709.782712893383973096
+		underflow = -745.13321910194110842
 		nearZero  = 1.0 / (1 << 28) // 2**-28
 	)
 	switch {
