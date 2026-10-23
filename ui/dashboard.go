@@ -652,7 +652,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 // sidebarPanels is the Panels list, in order.
-var sidebarPanels = []string{"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
+var sidebarPanels = []string{"milestones", "badges", "research", "plan", "charter", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
 
 // buildSidebarText is the Panels list in one column, the open panel
 // highlighted: the list as it shows when the screen is tall enough for it.
