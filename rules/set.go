@@ -130,6 +130,11 @@ type Set struct {
 
 	names  [numKinds]map[string]string
 	counts map[string]int
+
+	// gatesV2 says the gates are measured (GateMeasure); measures are the
+	// numbers, by the age left.
+	gatesV2  bool
+	measures map[string]config.GateMeasure
 }
 
 // Compile builds a Set from src: it copies the tables and works out every
@@ -170,6 +175,12 @@ func Compile(src Source) *Set {
 	}
 	for era, bonus := range src.Legacy {
 		s.legacy[era] = maps.Clone(bonus)
+	}
+	s.gatesV2 = src.GatesV2
+	s.measures = make(map[string]config.GateMeasure, len(src.GateMeasures))
+	for _, m := range src.GateMeasures {
+		m.Materials = slices.Clone(m.Materials)
+		s.measures[m.Age] = m
 	}
 	s.indexAges()
 	s.indexEras(src)
@@ -374,6 +385,19 @@ func (s *Set) Next(age string) string {
 
 // Wonder returns the key of the wonder age unlocks ("" when it has none).
 func (s *Set) Wonder(age string) string { return s.wonders[age] }
+
+// GatesV2 reports whether this set's gates are measured: population, the
+// income of the age's main materials and key techs, not building counts.
+func (s *Set) GatesV2() bool { return s.gatesV2 }
+
+// GateMeasure returns what the measured gate out of age asks for; false for an
+// age with none (the last, or one a ruleset gives no measure), whose gate keeps
+// the building counts. The Materials are a copy.
+func (s *Set) GateMeasure(age string) (config.GateMeasure, bool) {
+	m, ok := s.measures[age]
+	m.Materials = slices.Clone(m.Materials)
+	return m, ok
+}
 
 // ===== Eras =====
 

@@ -421,6 +421,8 @@ func (l *ledger) blockers(state game.GameState) {
 			case game.GateRowCount:
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d/%d", r.Label, r.Have, r.Need))
 				short(buildingPrice(&state, r.Key, state.Buildings[r.Key]), nil)
+			case game.GateRowAmount:
+				d.Waits = append(d.Waits, fmt.Sprintf("%s %s/%s", r.Label, FormatNumber(r.Value), FormatNumber(r.Target)))
 			case game.GateRowShare:
 				bankOpen = true
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d%%", r.Label, r.Have))

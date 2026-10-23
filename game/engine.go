@@ -477,6 +477,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		runFacts:         newRunFacts(),
 	}
 	ge.Buildings = ge.newBuildingManager()
+	ge.progress.town = ge.gateTown()
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
 	ge.Resources.Add("food", 25)
