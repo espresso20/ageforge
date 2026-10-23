@@ -1899,7 +1899,7 @@ ui.overlay_stats.statsProvider.50," [gray]Receipts from %s: %s.[-]
 "
 ui.overlay_stats.statsProvider.51,point
 ui.overlay_stats.statsProvider.52,points
-ui.overlay_stats.statsProvider.53," [gray]Reach %s to unlock the prestige glow-up.[-]
+ui.overlay_stats.statsProvider.53," [gray]Hit %s to unlock the prestige glow-up.[-]
 "
 ui.overlay_stats.statsProvider.54," [yellow]Hit %s and you can glow up again.[-]
 "
@@ -1999,7 +1999,7 @@ ui.overlay_wonders.wondersProvider.09," [gray]? ???[-]   [gray]%s, gatekept[-]
 ui.overlay_wonders.wondersProvider.10,"? ???   %s in ages still to come, gatekept"
 ui.overlay_wonders.wondersProvider.11,more wonder
 ui.overlay_wonders.wondersProvider.12,more wonders
-ui.overlay_wonders.wondersProvider.13,"[gray]No wonders built yet, the flex wall is bare.[-]
+ui.overlay_wonders.wondersProvider.13,"[gray]Zero wonders so far, the flex wall is bare.[-]
 "
 ui.overlay_wonders.wondersProvider.14,"[gold]Flexed:[-] %s
 "
@@ -2059,130 +2059,130 @@ ui.people_tabs.card.07,"jobs first, no NPCs"
 ui.people_tabs.card.08,glow up with homes
 ui.people_tabs.card.09,peep Work
 ui.people_tabs.card.10,none on tour
-ui.people_tabs.card.11," out, on the road"
-ui.people_tabs.card.12," at their posts, locked in"
-ui.people_tabs.card.13,"defense, the shield "
-ui.people_tabs.card.14,"check Army, real"
-ui.people_tabs.card.15," at desks, the brain squad"
-ui.people_tabs.card.16," researching, the brain work"
-ui.people_tabs.card.17," teaching, the mentor arc"
-ui.people_tabs.card.18,"come with buildings, the freebies"
-ui.people_tabs.recruitText.01,"Auto-recruit is off, so turn it on with: workers auto-recruit on, bet"
-ui.people_tabs.recruitText.02,"Auto-recruit is waiting after your last worker command, lowkey patient, "
-ui.people_tabs.recruitText.03," more, the wait."
-ui.people_tabs.recruitText.04,"Auto-recruit is held by housing, so build more homes for more people, real talk."
-ui.people_tabs.recruitText.05,"Auto-recruit is held by food, so build or staff food buildings, the munchies."
-ui.people_tabs.recruitText.06,"Auto-recruit is paused: the food ran out, L."
-ui.people_tabs.recruitText.07,"Auto-recruit is on: the town is glowing up toward its homes, bussin."
-ui.people_tabs.work.01,"Work areas, the stations"
-ui.people_tabs.work.02,"No worker buildings yet, so every area is on auto, chill."
+ui.people_tabs.card.11," on tour"
+ui.people_tabs.card.12," locked in on duty"
+ui.people_tabs.card.13,shield 
+ui.people_tabs.card.14,peep Army
+ui.people_tabs.card.15," big braining at desks"
+ui.people_tabs.card.16," cooking research"
+ui.people_tabs.card.17," in their mentor arc"
+ui.people_tabs.card.18,spawn with buildings
+ui.people_tabs.recruitText.01,Auto-recruit is off. Flip it on with: workers auto-recruit on
+ui.people_tabs.recruitText.02,"Auto-recruit is chilling after your last worker command, "
+ui.people_tabs.recruitText.03," more, then it is back."
+ui.people_tabs.recruitText.04,Auto-recruit is gatekept by housing: build more cribs for more people.
+ui.people_tabs.recruitText.05,"Auto-recruit is gatekept by food: build or staff food buildings, the squad is hungry."
+ui.people_tabs.recruitText.06,Auto-recruit is paused: the snacks ran out.
+ui.people_tabs.recruitText.07,Auto-recruit is on: the town is glowing up toward its homes.
+ui.people_tabs.work.01,Grind spots
+ui.people_tabs.work.02,"No worker buildings yet, so every area is on autopilot."
 ui.people_tabs.work.06,"  Spot"
 ui.people_tabs.work.07,Slice
 ui.people_tabs.work.08,Packed
-ui.people_tabs.work.09,"and %d more, the rest"
-ui.people_tabs.work.10,"No buildings here yet, we're early."
-ui.people_tabs.work.11,"auto, by its buildings' slots, the vibe"
+ui.people_tabs.work.09,and %d more on the bench
+ui.people_tabs.work.10,"No buildings here yet, so early."
+ui.people_tabs.work.11,"autopilot, by its buildings' slots"
 ui.people_tabs.work.12,locked to 
 ui.people_tabs.work.13,Slice  
 ui.people_tabs.work.14,Bet it  
-ui.people_tabs.work.17,"Open slots fill from the reserve, bussin."
-ui.people_tabs.work.19,"pick an area, fr"
-ui.people_tabs.army.01,"Military buildings, the muscle"
-ui.people_tabs.army.02,"Away, on tour · %s"
-ui.people_tabs.army.03,"No military buildings yet, the barracks are quiet."
-ui.people_tabs.army.04,"%s/%s posted, the squad"
+ui.people_tabs.work.17,Open slots fill from the bench.
+ui.people_tabs.work.19,pick a grind spot
+ui.people_tabs.army.01,Squad bases
+ui.people_tabs.army.02,On tour · %s
+ui.people_tabs.army.03,"No military buildings yet, zero squad bases."
+ui.people_tabs.army.04,%s/%s locked in
 ui.people_tabs.army.05," posted of "
-ui.people_tabs.army.06,"Defense, the shield "
-ui.people_tabs.army.07,"  threat, the sus meter "
-ui.people_tabs.army.08,", blunts, the shield "
-ui.people_tabs.army.09,"Rank, the glow "
-ui.people_tabs.army.10," experience, the XP"
-ui.people_tabs.army.11,"Gives, the perk "
-ui.people_tabs.army.12,"%s · back in %s, the countdown"
-ui.people_tabs.army.13,"Nobody's out, couch era."
-ui.people_tabs.army.14,"Fallen and packed, real"
-ui.people_tabs.army.15,"No news from the army, quiet vibes."
-ui.people_tabs.army.17,"pick a building, fr"
-ui.people_tabs.scholars.01,"Desks, the brains"
-ui.people_tabs.scholars.02,"Research, the brain work"
-ui.people_tabs.scholars.03,"No knowledge buildings yet, real talk: each one comes with its "
-ui.people_tabs.scholars.04,"%s each, the rate"
-ui.people_tabs.scholars.05,", %d of %d copies, the stack"
-ui.people_tabs.scholars.07,"nothing planned, the blank slate"
-ui.people_tabs.scholars.08,"Studying, the grind"
-ui.people_tabs.scholars.09,"Progress, the glow"
-ui.people_tabs.scholars.10,"Research, bussin"
+ui.people_tabs.army.06,Shield 
+ui.people_tabs.army.07,"  opps "
+ui.people_tabs.army.08,", tanks "
+ui.people_tabs.army.09,Rank drip 
+ui.people_tabs.army.10," XP"
+ui.people_tabs.army.11,Perks 
+ui.people_tabs.army.12,%s · pulls up in %s
+ui.people_tabs.army.13,"Zero on tour, couch era."
+ui.people_tabs.army.14,"Fallen and refilled, real ones"
+ui.people_tabs.army.15,No tea from the army.
+ui.people_tabs.army.17,pick a squad base
+ui.people_tabs.scholars.01,Desk squad
+ui.people_tabs.scholars.02,Brain grind
+ui.people_tabs.scholars.03,Zero knowledge buildings so far: each one spawns with its 
+ui.people_tabs.scholars.04,%s a pop
+ui.people_tabs.scholars.05,", %d of %d dupes"
+ui.people_tabs.scholars.07,blank slate
+ui.people_tabs.scholars.08,Cramming
+ui.people_tabs.scholars.09,Glow-up so far
+ui.people_tabs.scholars.10,Brain output
 ui.people_tabs.scholars.11," a tick, the clock"
-ui.people_tabs.scholars.12,"%s: %s research, %s teach, the split"
-ui.people_tabs.scholars.13,"Teaching, the mentors"
-ui.people_tabs.scholars.14," to what workers make, the bonus"
+ui.people_tabs.scholars.12,"%s: %s cooking research, %s in mentor mode"
+ui.people_tabs.scholars.13,Mentor mode
+ui.people_tabs.scholars.14," buff to what workers make"
 ui.people_tabs.scholars.15,Up next
-ui.people_tabs.scholars.16,"How to speed research, the cheat code"
-ui.people_tabs.scholars.17,"Build knowledge buildings, bet: each comes with its "
-ui.people_tabs.scholars.18,Research techs that glow up your 
-ui.people_tabs.scholars.19," faster, big brain."
-ui.people_tabs.scholars.20,"Expeditions and events can bring back finds that add to the research in progress, the loot bonus, bet."
-ui.people_tabs.scholars.22,"pick a building, bet"
-ui.people_view.peopleTabs.01,"OVERVIEW, THE TEA"
-ui.people_view.peopleTabs.02,"WORK, THE GRIND"
-ui.people_view.peopleTabs.03,"ARMY, THE MUSCLE"
-ui.people_view.peopleTabs.04,"SCHOLARS, THE BRAINS"
-ui.people_view.peopleKeys.01,"Flip between Overview, Work, Army and Scholars, easy"
-ui.people_view.peopleKeys.02,"Pick a card, a work area or a building, bet"
+ui.people_tabs.scholars.16,Research speedrun tips
+ui.people_tabs.scholars.17,Build knowledge buildings: each one spawns with its 
+ui.people_tabs.scholars.18,Research techs that buff your 
+ui.people_tabs.scholars.19," into speedrunners."
+ui.people_tabs.scholars.20,Expeditions and events can bring back loot that pushes the research in progress.
+ui.people_tabs.scholars.22,pick a big brain building
+ui.people_view.peopleTabs.01,THE TEA
+ui.people_view.peopleTabs.02,GRIND
+ui.people_view.peopleTabs.03,SQUAD
+ui.people_view.peopleTabs.04,BIG BRAINS
+ui.people_view.peopleKeys.01,"Flip between the Tea, Grind, Squad and Big Brains tabs"
+ui.people_view.peopleKeys.02,"Pick a card, a grind spot or a building"
 ui.people_view.peopleKeys.04,Bounce from the panel
-ui.people_view.renderPeople.01,"People, the crew · "
-ui.people_view.renderPeople.02,"This window is too small for the People panel, fr. Esc closes it."
-ui.people_view.peopleHeader.04,"People, the crew "
+ui.people_view.renderPeople.01,The Crew · 
+ui.people_view.renderPeople.02,Window too smol for the People panel. Esc closes it.
+ui.people_view.peopleHeader.04,Squad 
 ui.people_view.peopleHeader.05," of "
-ui.people_view.peopleHeader.06," homes, the crib"
-ui.plan_optimize.planOptimizeText.01,"Nothing to reorder: none of the buildings in the plan changes how fast the town grows, so nothing to shuffle, fr."
-ui.plan_optimize.planOptimizeText.02,"Reordered the plan for faster growth, W."
-ui.plan_optimize.planOptimizeText.03,"  and %d more, the tail"
-ui.plan_optimize.planOptimizeText.04,"The plan is already in the fastest order I could find, so I left it alone, the vibe is right."
+ui.people_view.peopleHeader.06," cribs"
+ui.plan_optimize.planOptimizeText.01,"Nothing to reshuffle: none of the buildings in the plan changes how fast the town grows, so the plan stays, no notes."
+ui.plan_optimize.planOptimizeText.02,"Reshuffled the plan for faster growth, speedrun mode."
+ui.plan_optimize.planOptimizeText.03,"  plus %d more on deck"
+ui.plan_optimize.planOptimizeText.04,"The plan already ate: it is the fastest order I could find, so I left it alone."
 ui.plan_optimize.planOptimizeText.05,"
-Only the first %s copies were reordered; the other %s keep their order after them, fr."
+Only the first %s copies got reshuffled; the other %s keep their spots after them, no cutting."
 ui.plan_optimize.planOptimizeText.06,"
-%s can't start until the town makes what they cost, bet."
-ui.plan_optimize.planOptimizeText.07,copy
-ui.plan_optimize.planOptimizeText.08,copies
-ui.plan_optimize.planOptimizeTimes.01," The last building should start in about %s, the countdown."
-ui.plan_optimize.planOptimizeTimes.02," The last building should start in about %s instead of %s, W."
-ui.prestige_cue_notice.prestigeCueText.01,"Time to prestige, fr?"
-ui.prestige_cue_notice.prestigeCueText.02,"Finishing the %s takes about %s at today's income, the math."
-ui.prestige_cue_notice.prestigeCueText.03,"A new run with x%.2f production would be back here and past it in about %s, the glow."
-ui.prestige_cue_notice.prestigeCueText.04,"Type prestige to see what you keep, the receipts."
+%s cannot start until the town makes what they cost, broke era."
+ui.plan_optimize.planOptimizeText.07,dupe
+ui.plan_optimize.planOptimizeText.08,dupes
+ui.plan_optimize.planOptimizeTimes.01," The last building should drop in about %s."
+ui.plan_optimize.planOptimizeTimes.02," The last building should drop in about %s instead of %s, speedrun."
+ui.prestige_cue_notice.prestigeCueText.01,Prestige era?
+ui.prestige_cue_notice.prestigeCueText.02,Finishing the %s takes about %s at today's bag rate.
+ui.prestige_cue_notice.prestigeCueText.03,A new run with x%.2f production would speedrun back here and past it in about %s.
+ui.prestige_cue_notice.prestigeCueText.04,Type prestige for the tea on what you keep.
 ui.prestige_kit.prestigePointsLines.01,"
-  [green]You can prestige now for %s, bussin.[-]"
+  [green]You can prestige rn for %s.[-]"
 ui.prestige_kit.prestigePointsLines.02,point
 ui.prestige_kit.prestigePointsLines.03,points
 ui.prestige_kit.prestigePointsLines.04,"
-  [yellow]Reach %s to prestige; a prestige there pays %s, W.[-]"
+  [yellow]Reach %s to unlock prestige; glowing up there pays %s.[-]"
 ui.prestige_kit.prestigePointsLines.05,point
 ui.prestige_kit.prestigePointsLines.06,points
-ui.prestige_kit.prestigePointsLines.07,"  From %s it would pay %s (%s more), the bag."
+ui.prestige_kit.prestigePointsLines.07,"  From %s the bag would be %s (%s more)."
 ui.prestige_kit.prestigePointsLines.08,point
 ui.prestige_kit.prestigePointsLines.09,points
-ui.prestige_kit.prestigePointsLines.10,"  [gray]This is an early taste: each era's ages pay 3 times what the era before paid, so going deeper pays far more per day, bussin.[-]"
-ui.prestige_kit.carryoverStatusLines.01,"  Plan Template: [gray]not yet, we're early[-]"
-ui.prestige_kit.carryoverStatusLines.02,"  Roster: [gray]not yet, bet[-]"
-ui.prestige_kit.carryoverStatusLines.03,"  Old Friends: [gray]not yet, lowkey[-]"
-ui.prestige_kit.carryoverStatusLines.04,"  Plan Template: [green]on, bussin[-]"
-ui.prestige_kit.carryoverStatusLines.05,"  Roster: [green]on, locked in[-]"
-ui.prestige_kit.carryoverStatusLines.06,"  Old Friends: [green]on, W[-]"
-ui.prestige_kit.kitMemoryLines.01,"  [gray]The kit remembers your plan, roster and the civilizations you meet, the lore. Nothing is remembered yet: it starts with your first prestige, fr.[-]"
-ui.prestige_kit.kitMemoryLines.02,"  [gold]What the kit remembers from your runs, the receipts[-]"
-ui.prestige_kit.kitMemoryLines.03,"  Plan: %s over %s, the stack."
+ui.prestige_kit.prestigePointsLines.10,"  [gray]This is an early taste: each era's ages pay 3 times what the era before paid, so going deeper hits way harder per day.[-]"
+ui.prestige_kit.carryoverStatusLines.01,"  Plan Template: [gray]not unlocked, so early[-]"
+ui.prestige_kit.carryoverStatusLines.02,"  Roster: [gray]still loading[-]"
+ui.prestige_kit.carryoverStatusLines.03,"  Old Friends: [gray]gatekept for now[-]"
+ui.prestige_kit.carryoverStatusLines.04,"  Plan Template: [green]locked in[-]"
+ui.prestige_kit.carryoverStatusLines.05,"  Roster: [green]on, it ate[-]"
+ui.prestige_kit.carryoverStatusLines.06,"  Old Friends: [green]on, besties[-]"
+ui.prestige_kit.kitMemoryLines.01,"  [gray]The kit remembers your plan, roster and the civs you meet, like a group chat that never forgets. Nothing saved yet: it starts with your first prestige.[-]"
+ui.prestige_kit.kitMemoryLines.02,"  [gold]Receipts the kit keeps from your runs[-]"
+ui.prestige_kit.kitMemoryLines.03,"  Plan lore: %s over %s."
 ui.prestige_kit.kitMemoryLines.04,item
 ui.prestige_kit.kitMemoryLines.05,items
 ui.prestige_kit.kitMemoryLines.06,age
 ui.prestige_kit.kitMemoryLines.07,ages
-ui.prestige_kit.kitMemoryLines.08,"  Roster, the squad: %s."
+ui.prestige_kit.kitMemoryLines.08,"  Squad roster: %s."
 ui.prestige_kit.kitMemoryLines.09,domain
 ui.prestige_kit.kitMemoryLines.10,domains
-ui.prestige_kit.kitMemoryLines.11,"  Civilizations met, the squads: %d."
-ui.research_panel.researchKeys.02,"Move to the nearest tech that way, the view follows along"
-ui.research_panel.researchKeys.04,"Next tech you can start, the glow (Shift-Tab: the one before)"
-ui.research_panel.researchKeys.05,"Zoom out to a tech a line, then back in, the lens"
+ui.prestige_kit.kitMemoryLines.11,"  Civs in the group chat: %d."
+ui.research_panel.researchKeys.02,Hop to the nearest tech that way; the camera tags along
+ui.research_panel.researchKeys.04,Next tech ready to cook (Shift-Tab: the one before)
+ui.research_panel.researchKeys.05,"Zoom out to one tech a line, then back in for the HD view"
 ui.research_panel.researchKeys.07,"Back to your current age, the home base"
 ui.research_panel.researchKeys.09,"Open the selected tech's card; on the card, do what its last line says, bussin (with something typed, Tab and Enter act on the prompt instead)"
 ui.research_panel.researchKeys.11,"Bounce from the card, then the panel"
