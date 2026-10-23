@@ -1205,7 +1205,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// A save from before the one-week curve hears once that the ages ahead
 	// are longer; its next save carries PacingWeek, so the line never repeats.
 	if !save.PacingWeek {
-		ge.addLog("info", pacingNotice)
+		ge.addLog("info", pacingNotice())
 	}
 	// A save from before the tree's locks hears once what changed and what
 	// its grace covers; its next save carries the tree's version.
@@ -1213,15 +1213,15 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.addLog("info", ge.treeNotice(save.TreeVersion))
 	}
 	if beforeTheWall {
-		ge.addLog("info", storageWallNotice)
+		ge.addLog("info", storageWallNotice())
 	}
 	if beforeScholars {
-		ge.addLog("info", scholarsNotice)
+		ge.addLog("info", scholarsNotice())
 	}
 	// A save whose plan held sell orders hears once that they are gone; its
 	// next save has none, so the line never repeats.
 	if sellOrders > 0 {
-		ge.addLog("info", marketSwapNotice)
+		ge.addLog("info", marketSwapNotice())
 	}
 
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
@@ -1274,7 +1274,7 @@ func (ge *GameEngine) grantFeaturesLocked(keys []string) {
 // what it keeps. Must be called with the write lock held.
 func (ge *GameEngine) treeNotice(from int) string {
 	changed := vibe.Line("game.save.treeNotice.01", "Research update: the tech tree is complete, with new techs from the Modern Age to the Transcendent. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech.")
-	const kept = " A command you were already using stays open for the rest of this run, and everything you have researched or built stays."
+	kept := vibe.Line("game.save.treeNotice.02", " A command you were already using stays open for the rest of this run, and everything you have researched or built stays.")
 	if from < 4 {
 		changed = vibe.Line("game.save.treeNotice.03", "Research update: the tech tree is complete, with new techs from the Renaissance to the Transcendent Age. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech.")
 	}
@@ -1295,7 +1295,9 @@ func (ge *GameEngine) treeNotice(from int) string {
 
 // pacingNotice is the line a save written before the one-week curve gets
 // on its first load (GameSave.PacingWeek).
-const pacingNotice = "Pacing update: a first run now takes about a week. From the Bronze Age on, each age lasts about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age holds as many of them. Your game carries on where you left it."
+func pacingNotice() string {
+	return vibe.Line("game.save.pacingNotice.01", "Pacing update: a first run now takes about a week. From the Bronze Age on, each age lasts about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age holds as many of them. Your game carries on where you left it.")
+}
 
 // copyBoolMap returns a deep copy of a map[string]bool.
 func copyBoolMap(m map[string]bool) map[string]bool {
@@ -1869,7 +1871,9 @@ func DuplicateSave(filename string) (string, error) {
 // marketSwapNotice is the line a save whose plan held sell orders gets on its
 // first load: the market no longer swaps resources, and the orders were
 // dropped (loadPlanIn skips the retired kind).
-const marketSwapNotice = "The market no longer swaps resources. The sell orders in your plan were removed."
+func marketSwapNotice() string {
+	return vibe.Line("game.save.marketSwapNotice.01", "The market no longer swaps resources. The sell orders in your plan were removed.")
+}
 
 // retiredSellOrders is how many of a saved plan's items are the market
 // swap's sell orders.
@@ -1890,11 +1894,15 @@ func retiredSellOrders(saved []PlanItem) int {
 const scholarRules = 1
 
 // scholarsNotice is the line a save from before the scholars hears once.
-const scholarsNotice = "Knowledge is no longer stored. Your scholars now work on one technology at a time."
+func scholarsNotice() string {
+	return vibe.Line("game.save.scholarsNotice.01", "Knowledge is no longer stored. Your scholars now work on one technology at a time.")
+}
 
 // storageWallNotice is the line a save from before the storage wall gets on
 // its first load.
-const storageWallNotice = "Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked was given back to you."
+func storageWallNotice() string {
+	return vibe.Line("game.save.storageWallNotice.01", "Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked was given back to you.")
+}
 
 // keepStockFromBeforeTheWall carries a save written under the old storage
 // rules across to the new ones without taking anything: what the plan's

@@ -194,7 +194,7 @@ func (ge *GameEngine) roadEventTold(a *ActiveExpedition, e *RoadEvent) string {
 				offer.draw(w)
 			} else {
 				// A mission written by hand: the offer's text is what it is.
-				offer.Words, offer.Description = OfferWords{}, ruinsFound+a.roadPlace()+"."
+				offer.Words, offer.Description = OfferWords{}, ruinsFoundPlain+a.roadPlace()+"."
 			}
 			ge.Military.board.Slots[target].Offer = offer
 		}

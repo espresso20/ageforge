@@ -22,6 +22,8 @@ func init() {
 		"game.catastrophe.startReconstruction.01", "game.defense.applyWarRaids.01",
 		"game.engine.processDiplomacy.01", "game.engine.startChainBoost.01",
 		"game.engine.DoFestival.03",
+		// The description of a ruins offer written by hand is kept in the save as it was written.
+		"game.mission_board.ruinsFoundPlain.01",
 	)
 	leftAloneFor(leftKey,
 		"game.catastrophe.doomMark.01", "game.catastrophe.eraMark.01", // the markers in a history line
@@ -31,6 +33,25 @@ func init() {
 		"game.updater.CheckLatest.02", "game.updater.CheckLatest.03", // HTTP headers
 		"game.updater.updaterPlatformBinary.01",                    // the name of a release file
 		"game.engine.articleName.01", "game.engine.articleName.02", // a or an, by the letter a name starts with
+		"game.scholars.scholarTeachSource.01", // the name of a modifier source: the stats panel groups by it and the tests compare it
+	)
+	leftAloneFor(leftUnits,
+		"pkg.textfmt.textfmt.units.01", "pkg.textfmt.textfmt.units.02", "pkg.textfmt.textfmt.units.03",
+	)
+	// "the " is put in front of an age's name unless the name begins with it
+	// already, and " of " is where a name is cut to be made plural and where
+	// it is joined again. Both are tested against the names of the ruleset,
+	// whichever script they are in, so they are not the script's to change.
+	leftAloneFor(leftGlue,
+		"game.engine.DoPrestige.01", "game.names.pluralName.01",
+	)
+	leftAloneFor(leftSearch,
+		"game.log_tags.logWords.01", "game.log_tags.logWords.02", "game.log_tags.logWords.03",
+		"game.log_tags.logWords.04", "game.log_tags.logWords.05", "game.log_tags.logWords.06",
+		"game.log_tags.logWords.07", "game.log_tags.logWords.08", "game.log_tags.logWords.09",
+		"game.log_tags.logWords.10", "game.log_tags.logWords.11", "game.log_tags.logWords.12",
+		"game.log_tags.logWords.13", "game.log_tags.logWords.14", "game.log_tags.logWords.15",
+		"game.log_tags.logWords.16", "game.log_tags.logWords.17", "game.log_tags.logWords.18",
 	)
 	leftAloneFor(leftDev,
 		"config.maker_rule.RawLeftOut.01", "config.maker_rule.RawLeftOut.02",

@@ -16,7 +16,7 @@ func TestPacingNoticeOnceForOlderSaves(t *testing.T) {
 	notices := func(ge *GameEngine) int {
 		n := 0
 		for _, l := range ge.log {
-			if l.Message == pacingNotice {
+			if l.Message == pacingNotice() {
 				n++
 			}
 		}

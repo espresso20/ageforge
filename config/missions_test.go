@@ -127,7 +127,7 @@ func TestBoardRuleNumbers(t *testing.T) {
 			t.Errorf("%s is %v, want %v", name, c[0], c[1])
 		}
 	}
-	if RareTitleWord != "Legendary" {
-		t.Errorf("the rare word is %q", RareTitleWord)
+	if RareTitleWord() != "Legendary" {
+		t.Errorf("the rare word is %q", RareTitleWord())
 	}
 }

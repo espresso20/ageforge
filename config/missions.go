@@ -1,5 +1,7 @@
 package config
 
+import "github.com/espresso20/ageforge/vibe"
+
 // Mission kinds describe the three mission tiers and what each is worth.
 // A short mission is MissionScout, a long one MissionExpedition and a grand
 // one MissionCampaign; the board (game/mission_board.go) offers all three.
@@ -74,10 +76,12 @@ const (
 	RareSuccessCut    = .15
 	RareSuccessFloor  = .10
 	RareHaulFactor    = 4
-	RareTitleWord     = "Legendary"
 	MissionSuccessMin = .10
 	MissionSuccessMax = .95
 )
+
+// RareTitleWord is the word a rare offer's title begins with.
+func RareTitleWord() string { return vibe.Line("config.missions.RareTitleWord.01", "Legendary") }
 
 // MissionBoardLongestMinutes is the longest an ordinary offer can be out: the
 // grand tier's top length. A Legendary offer is longer still.

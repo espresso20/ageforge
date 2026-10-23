@@ -175,7 +175,7 @@ func TestScout_LaunchableInItsEra_NotCarriedToTheNextAge(t *testing.T) {
 		t.Fatalf("offer %d should be sent from the new age's board: %v", n, err)
 	}
 	words, _ := config.MissionWordsFor("iron_age")
-	if got := ge2.Military.ActiveByTier(TierShort); got == nil || got.Age != "iron_age" || !strings.HasPrefix(strings.TrimPrefix(got.Title, config.RareTitleWord+" "), words.Tiers[config.WordsShort]+": ") {
+	if got := ge2.Military.ActiveByTier(TierShort); got == nil || got.Age != "iron_age" || !strings.HasPrefix(strings.TrimPrefix(got.Title, config.RareTitleWord()+" "), words.Tiers[config.WordsShort]+": ") {
 		t.Errorf("the old age's offer was sent in the Iron Age: %+v", got)
 	}
 }

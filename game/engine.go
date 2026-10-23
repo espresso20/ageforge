@@ -4162,9 +4162,12 @@ const (
 	// ancientMemoryChance is the probability the cache appears at the start of a
 	// qualifying new prestige run. Occasional by design — not every run.
 	ancientMemoryChance = 0.40
-	// ancientMemoryFlavor is shown in the offer modal and the log.
-	ancientMemoryFlavor = "You have discovered an old cache. It appears to contain memories of a now-extinct civilization."
 )
+
+// ancientMemoryFlavor is shown in the offer modal and the log.
+func ancientMemoryFlavor() string {
+	return vibe.Line("game.engine.ancientMemoryFlavor.01", "You have discovered an old cache. It appears to contain memories of a now-extinct civilization.")
+}
 
 // ancientMemoryAges is the set of (early) ages in which a cache can surface. The
 // design fires it early in a fresh run, before the player has rebuilt past it.
@@ -4230,7 +4233,7 @@ func (ge *GameEngine) maybeOfferAncientMemory() {
 	ge.ancientMemoryUsed = true
 	ge.pendingMemoryTech = techKey
 	def, _ := ge.rules.Tech(techKey)
-	ge.addLog("event", vibe.Sprintf("game.engine.maybeOfferAncientMemory.01", "✦ [comment]%s[-] A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor, def.Name))
+	ge.addLog("event", vibe.Sprintf("game.engine.maybeOfferAncientMemory.01", "✦ [comment]%s[-] A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor(), def.Name))
 }
 
 // selectMemoryTech picks a random tech appropriate to the current age, with the
