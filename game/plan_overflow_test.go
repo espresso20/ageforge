@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // Stock has no ceiling and nothing overflows (overflow.go): a plan item banks
@@ -25,8 +27,7 @@ func TestPlanOverflow_QueuedWonderStartsFromStock(t *testing.T) {
 	for k := range ge.Resources.resources {
 		ge.Resources.SetRate(k, 0)
 	}
-	woodCap := need["wood"] / 4 // the store holds a quarter of the wood part
-	ge.Resources.resources["wood"].Storage = woodCap
+	woodCap := need["wood"] / 4 // the town holds a quarter of the wood part
 	setAmount(ge, "wood", woodCap)
 	setAmount(ge, "food", need["food"])
 	if _, err := ge.PlanAddBuild(w, 1); err != nil {
@@ -65,15 +66,15 @@ func TestPlanOverflow_QueuedWonderStartsOffline(t *testing.T) {
 	ge.recalculateRates()
 	w := ge.progress.WonderForAge(ge.age)
 	need := ge.Buildings.defs[w].BaseCost
-	woodCap := ge.Resources.GetStorage("wood")
-	if need["wood"] <= woodCap {
-		t.Fatalf("setup: the wonder's %v wood fits the %v store", need["wood"], woodCap)
+	woodHeld := config.WoodBaseStorage // a small stock: what a new town's wood once filled
+	if need["wood"] <= woodHeld {
+		t.Fatalf("setup: the wonder's %v wood is within the %v held", need["wood"], woodHeld)
 	}
 	if ge.Resources.GetRate("wood") <= 0 || ge.Resources.GetRate("food") <= 0 {
 		t.Fatalf("setup: wood %v/tick, food %v/tick", ge.Resources.GetRate("wood"), ge.Resources.GetRate("food"))
 	}
 	ge.plan = []PlanItem{{Kind: PlanBuild, Key: w, Count: 1}}
-	setAmount(ge, "wood", woodCap)
+	setAmount(ge, "wood", woodHeld)
 	ge.SimulateOffline(8 * time.Hour)
 	if queued(ge, w) == 0 && ge.Buildings.GetCount(w) == 0 {
 		t.Fatalf("eight hours away with the wonder planned: bank %v of %v, not started (plan %+v)", ge.Buildings.wonderBanks[w], need, ge.plan)

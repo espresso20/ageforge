@@ -7,7 +7,7 @@ import (
 
 // TechEffectKind says what one effect of a tech changes. A tech's effect is a
 // kind, a target where the kind takes one, and a value: "output of gold,
-// +10%", "storage, +10%", "build cost, 3% less". The kind is one of the
+// +10%", "housing, +10%", "build cost, 3% less". The kind is one of the
 // constants below, never a free-form key, so a test can list every kind and
 // check that the engine delivers each one.
 //
@@ -38,8 +38,6 @@ const (
 	// for a tech that is the first source of a resource in its age (Steel
 	// Forging's steel), not for a bonus.
 	EffectFlatOutput TechEffectKind = "flat_output"
-	// EffectStorage adds Value, a fraction, to every store. No target.
-	EffectStorage TechEffectKind = "storage"
 	// EffectHousing adds Value, a fraction, to housing. No target.
 	EffectHousing TechEffectKind = "housing"
 	// EffectBuildCost changes what buildings cost by Value, a fraction:
@@ -79,7 +77,7 @@ const (
 func TechEffectKinds() []TechEffectKind {
 	return []TechEffectKind{
 		EffectOutput, EffectAllOutput, EffectFlatOutput,
-		EffectStorage, EffectHousing,
+		EffectHousing,
 		EffectBuildCost, EffectBuildTime, EffectResearchTime,
 		EffectGameSpeed, EffectMilitaryPower, EffectExpeditionReward,
 		EffectMechanic,
@@ -210,7 +208,7 @@ func (t TechDef) GeneralEffects() []Effect {
 }
 
 // Text is e in player words, without a capital or a full stop, the way the
-// Research panel lists effects: "+10% food production", "+10% storage",
+// Research panel lists effects: "+10% food production", "+10% housing",
 // "buildings cost 3% less", "gathering by hand brings 2 more".
 func (e TechEffect) Text() string {
 	pct := FormatPercent(e.Value)
@@ -224,8 +222,6 @@ func (e TechEffect) Text() string {
 		return signed(e.Value, pct) + " all production"
 	case EffectFlatOutput:
 		return signed(e.Value, FormatAmount(e.Value)) + " " + ResourceLabel(e.Target) + "/tick"
-	case EffectStorage:
-		return signed(e.Value, pct) + " storage"
 	case EffectHousing:
 		return signed(e.Value, pct) + " housing"
 	case EffectBuildCost:

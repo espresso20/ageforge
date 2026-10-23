@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // planTestEngine is a Primitive Age game with room to store things (50
@@ -136,13 +138,13 @@ func TestPlan_SkipsPastAWaitingItemForOtherResources(t *testing.T) {
 	}
 }
 
-// A price over what a store used to hold is no obstacle: a store is not a
-// limit. An item whose price the income won't bring in blocks for that, and
+// A price over the stock a new town holds is no obstacle: nothing limits
+// stock. An item whose price the income won't bring in blocks for that, and
 // says so, not for storage; it reserves nothing.
-func TestPlan_ItemPricedOverTheStoreIsNotBlockedOnStorage(t *testing.T) {
-	ge := newSeededEngine(1) // base storage: 50 wood
-	if cost := ge.Buildings.GetCost("shrine")["wood"]; cost <= ge.Resources.GetStorage("wood") {
-		t.Skipf("setup: shrine (%v wood) fits the base store", cost)
+func TestPlan_ItemPricedOverTheStockIsNotBlockedOnStorage(t *testing.T) {
+	ge := newSeededEngine(1)
+	if cost := ge.Buildings.GetCost("shrine")["wood"]; cost <= config.WoodBaseStorage {
+		t.Skipf("setup: shrine (%v wood) is within the %v a new town's wood once filled", cost, config.WoodBaseStorage)
 	}
 	if _, err := ge.PlanAddBuild("shrine", 1); err != nil {
 		t.Fatal(err)
@@ -153,13 +155,13 @@ func TestPlan_ItemPricedOverTheStoreIsNotBlockedOnStorage(t *testing.T) {
 	setAmount(ge, "wood", 40)
 	ge.runPlanTick()
 	if queued(ge, "hut") != 1 {
-		t.Error("the hut waited behind a shrine that costs more than the store holds")
+		t.Error("the hut waited behind a shrine that costs more than is held")
 	}
 	v := ge.planViews()
 	if len(v) != 1 || v[0].Status != PlanStatusBlocked || strings.Contains(v[0].Note, "storage") {
 		t.Errorf("shrine view = %+v, want blocked, and not on storage", v)
 	}
-	// With the stock to pay it, it starts, store or no store.
+	// With the stock to pay it, it starts.
 	setAmount(ge, "wood", ge.Buildings.GetCost("shrine")["wood"])
 	ge.runPlanTick()
 	if queued(ge, "shrine") != 1 {

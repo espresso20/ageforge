@@ -21,7 +21,6 @@ func stageSoldierProduction(t *testing.T, ge *GameEngine, numBarracks int) {
 	// Food enough that the food margin lets the soldiers take their posts.
 	ge.Buildings.counts["gathering_camp"] = 60
 	ge.Resources.UnlockResource("food")
-	ge.Resources.AddStorage("food", 1e9)
 	ge.mu.Unlock()
 }
 

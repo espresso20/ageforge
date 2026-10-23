@@ -152,7 +152,7 @@ func TestContent3OldSaveGetsAnAgeOfGrace(t *testing.T) {
 		ge.mu.Lock()
 		for res, r := range ge.Resources.resources {
 			ge.Resources.UnlockResource(res)
-			r.Storage, r.Amount = 1e30, 1e29
+			r.Amount = 1e29
 		}
 		ge.mu.Unlock()
 	}

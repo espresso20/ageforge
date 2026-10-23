@@ -34,11 +34,6 @@ func TestAdvanceAge_StorageIsNeverOlder(t *testing.T) {
 			t.Errorf("log advises upgrading stashes: %q", l.Message)
 		}
 	}
-	// A Stash holds nothing: it boosts production, and the store measure
-	// takes nothing from it.
-	if got := ge.Buildings.GetStorageBonuses()["all"]; got != 0 {
-		t.Errorf("storage bonus after advancing = %v with 32 Stashes, want 0", got)
-	}
 	if err := ge.UpgradeBuilding("stash", 0, true); err == nil || !strings.Contains(err.Error(), "has no upgrade") {
 		t.Errorf("upgrade stash: err = %v, want a no-upgrade refusal", err)
 	}

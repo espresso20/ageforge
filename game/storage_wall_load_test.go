@@ -88,12 +88,12 @@ func TestWallSave_KeepsEveryCopyAndEveryStock(t *testing.T) {
 		if got := ge.Resources.Get(res); got != want {
 			t.Errorf("%s: %v after the load, want %v (saved %v, banked %v)", res, got, want, v, banked[res])
 		}
-		if ge.Resources.Get(res) > ge.Resources.GetStorage(res) {
+		if ge.Resources.Get(res) > save.Storage[res] {
 			over++
 		}
 	}
 	if over == 0 {
-		t.Error("setup: no stock sits above its new store, so the fixture proves nothing about keeping it")
+		t.Error("setup: no stock sits above the store it was saved in, so the fixture proves nothing about keeping it")
 	}
 	// The plan keeps its items and counts; the banks are empty.
 	if len(ge.plan) != len(save.Plan) {
@@ -117,9 +117,10 @@ func TestWallSave_StockAboveAStoreKeepsGrowing(t *testing.T) {
 	ge.plan = nil // nothing of the plan's spends during the ticks
 	ge.mu.Unlock()
 	before := ge.Resources.GetAll()
+	saved := wallFixtureSave(t).Storage // the stores the old game held it in
 	var over []string
 	for res, v := range before {
-		if v > ge.Resources.GetStorage(res) && ge.Resources.GetRate(res) > 0 {
+		if v > saved[res] && ge.Resources.GetRate(res) > 0 {
 			over = append(over, res)
 		}
 	}
@@ -129,7 +130,7 @@ func TestWallSave_StockAboveAStoreKeepsGrowing(t *testing.T) {
 	ge.StepTicks(100)
 	for _, res := range over {
 		if got := ge.Resources.Get(res); got <= before[res] {
-			t.Errorf("%s was %v over a store of %v and is %v after 100 ticks of income: it must grow", res, before[res], ge.Resources.GetStorage(res), got)
+			t.Errorf("%s was %v over a store of %v and is %v after 100 ticks of income: it must grow", res, before[res], saved[res], got)
 		}
 	}
 

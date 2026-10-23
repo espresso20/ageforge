@@ -638,7 +638,6 @@ func prepareTuningEngine(sc tuningScenario, seed int64) *GameEngine {
 	for _, def := range config.BaseResources() {
 		ge.Resources.UnlockResource(def.Key)
 		if r, ok := ge.Resources.resources[def.Key]; ok {
-			r.Storage = tuningStockFill * 10
 			r.Amount = tuningStockFill
 			r.Rate = 0
 		}

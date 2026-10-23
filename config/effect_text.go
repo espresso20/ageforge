@@ -159,13 +159,6 @@ func buildingEffectParts(d BuildingDef, u unlockOrder) []string {
 			if e.Target == "population" {
 				parts = append(parts, "+"+FormatAmount(e.Value)+" housing")
 			}
-		case "storage":
-			switch e.Target {
-			case "all":
-				parts = append(parts, "+"+FormatAmount(e.Value)+" storage for every resource")
-			default:
-				parts = append(parts, "+"+FormatAmount(e.Value)+" "+ResourceLabel(e.Target)+" storage")
-			}
 		case "bonus", "trade_route_income":
 			parts = append(parts, signed(e.Value, FormatPercent(e.Value))+" "+EffectTargetLabel(e.Target))
 		case "opinion":

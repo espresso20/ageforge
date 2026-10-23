@@ -140,7 +140,7 @@ func TestMapSettingRepliesInTheMainLog(t *testing.T) {
 		{"minimap on", "Mini map on. It shows above the Buildings list"},
 		{"map style skyline", "Map style set to Skyline."},
 		{"map glyphs ascii", "Map glyphs set to ascii."},
-		{"map flows on", "Flows overlay on: full stores"},
+		{"map flows on", "Flows overlay on: stocks running dry"},
 	}
 	for _, c := range cases {
 		d.runForTest(c.cmd)

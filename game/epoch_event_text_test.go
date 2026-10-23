@@ -31,7 +31,6 @@ func TestEpochEventTextMatchesEffects(t *testing.T) {
 		ge := newTruthEngine("classical_age", truthClean)
 		for _, r := range tracked {
 			ge.Resources.UnlockResource(r)
-			ge.Resources.AddStorage(r, 1e9)
 			ge.Resources.Add(r, 1000-ge.Resources.Get(r))
 		}
 		ge.Workers.domains["worker"].count = 100

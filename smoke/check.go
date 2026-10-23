@@ -31,7 +31,7 @@ func (r *runner) checkRequiredBuildings(st game.GameState) {
 
 // invariantProblems is every invariant st breaks: non-finite or negative
 // resources, bad multipliers, worker bookkeeping,
-// and requirements no storage can hold. Scenarios other than progression
+// and requirements nothing can meet. Scenarios other than progression
 // (offline, fuzz, saveload) share it.
 func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
 	var out []problem
@@ -39,8 +39,8 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 	for _, key := range sortedKeys(st.Resources) {
 		rs := st.Resources[key]
 		switch {
-		case bad(rs.Amount) || bad(rs.Rate) || bad(rs.Storage):
-			add("nan_resource", fmt.Sprintf("%s has a non-finite value: amount=%v rate=%v storage=%v", key, rs.Amount, rs.Rate, rs.Storage))
+		case bad(rs.Amount) || bad(rs.Rate):
+			add("nan_resource", fmt.Sprintf("%s has a non-finite value: amount=%v rate=%v", key, rs.Amount, rs.Rate))
 		case rs.Amount < 0:
 			add("negative_resource", fmt.Sprintf("%s is negative: %v", key, rs.Amount))
 		}

@@ -2,7 +2,6 @@ package game
 
 import (
 	"encoding/json"
-	"math"
 	"os"
 	"slices"
 	"strings"
@@ -132,7 +131,6 @@ func fillWonderBank(t *testing.T, ge *GameEngine, key string) {
 			continue
 		}
 		ge.Resources.UnlockResource(res)
-		ge.Resources.resources[res].Storage = math.Max(ge.Resources.resources[res].Storage, need)
 		setAmount(ge, res, need)
 		if _, err := ge.BankWonderMax(key, res); err != nil {
 			t.Fatalf("banking %s for %s: %v", res, key, err)

@@ -98,15 +98,6 @@ func TestMasteryTwinEngines(t *testing.T) {
 				t.Errorf("%s mastery breakdown line %v, want %v", key, k.Breakdown.MasteryRate, want)
 			}
 		}
-		// Knowledge has a store of its own that mastery leaves alone
-		// (knowledge_store.go): every other store doubles.
-		wantStore := 2 * b.Storage
-		if key == "knowledge" {
-			wantStore = b.Storage
-		}
-		if k.Storage != wantStore {
-			t.Errorf("%s storage %v at k = 2 against %v, want %v", key, k.Storage, b.Storage, wantStore)
-		}
 	}
 	if rated == 0 {
 		t.Fatal("no resource has a rate: the twins prove nothing")
@@ -345,28 +336,27 @@ func TestMasteryPassiveRetired(t *testing.T) {
 	}
 }
 
-// TestMasteryDropKeepsStock: when k drops the stores get smaller, but stock
-// has no ceiling: nothing is cut, and production still adds to it.
+// TestMasteryDropKeepsStock: when k drops, stock has no ceiling to be cut to:
+// nothing is lost, and a credit still adds to it whole.
 func TestMasteryDropKeepsStock(t *testing.T) {
 	isolateAccountDir(t)
 	_, ge := masteryTwins(t, 1)
 	ge.mu.Lock()
 	ge.recalculateRates()
 	r := ge.Resources.resources["wood"]
-	high := r.Storage // the k = 2 store
+	high := 1e6 // a stock held at k = 2
 	r.Amount = high
 	ge.Prestige.SetMastery(ge.age, 0) // k drops to 1 (as entering new ground does)
 	ge.recalculateRates()
-	small := r.Storage
 	ge.mu.Unlock()
-	if small >= high || r.Amount != high {
-		t.Fatalf("after k dropped: wood %v (store %v, was %v); want the stock kept", r.Amount, small, high)
+	if r.Amount != high {
+		t.Fatalf("after k dropped: wood %v, was %v; want the stock kept", r.Amount, high)
 	}
 	ge.mu.Lock()
-	ge.Resources.Add("wood", small*3)
+	ge.Resources.Add("wood", 3e6)
 	ge.mu.Unlock()
-	if r := ge.Resources.resources["wood"]; r.Amount != high+small*3 {
-		t.Errorf("wood %v after a big add, want %v: nothing clips a credit", r.Amount, high+small*3)
+	if r := ge.Resources.resources["wood"]; r.Amount != high+3e6 {
+		t.Errorf("wood %v after a big add, want %v: nothing clips a credit", r.Amount, high+3e6)
 	}
 }
 

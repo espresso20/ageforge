@@ -32,10 +32,10 @@ func TestResourceManager_StockIsUncapped(t *testing.T) {
 	rm := NewResourceManager()
 	rm.UnlockResource("food")
 
-	// Food has BaseStorage 50; adding 999 keeps all 999.
+	// Food once had a store of 50; adding 999 keeps all 999.
 	rm.Add("food", 999)
-	if got, store := rm.Get("food"), rm.GetStorage("food"); got != 999 || got <= store {
-		t.Errorf("food = %v after adding 999 to a store of %v, want all 999", got, store)
+	if got := rm.Get("food"); got != 999 {
+		t.Errorf("food = %v after adding 999, want all 999", got)
 	}
 	rm.SetRate("food", 7)
 	rm.ApplyRates()
@@ -149,14 +149,12 @@ func TestResourceManager_SaveLoadRoundTrip(t *testing.T) {
 
 	// Save
 	amounts := rm.GetAll()
-	storage := rm.GetAllStorage()
 
 	// Load into fresh manager
 	rm2 := NewResourceManager()
 	rm2.UnlockResource("food")
 	rm2.UnlockResource("wood")
 	rm2.LoadAmounts(amounts)
-	rm2.LoadStorage(storage)
 
 	if got := rm2.Get("food"); got != 33.5 {
 		t.Errorf("loaded food = %v, want 33.5", got)

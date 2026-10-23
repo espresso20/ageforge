@@ -130,18 +130,6 @@ func planStatusText(v game.PlanItemView) string {
 	}
 }
 
-// planNote is why a blocked item waits, as the engine words it, with the
-// resource of "needs more <resource> storage" written as its name ("dark
-// matter", not the key "dark_matter").
-func planNote(v game.PlanItemView) string {
-	if res, ok := strings.CutPrefix(v.Note, "needs more "); ok {
-		if res, ok = strings.CutSuffix(res, " storage"); ok && game.ResourceName(res) != res {
-			return "needs more " + strings.ToLower(game.ResourceName(res)) + " storage"
-		}
-	}
-	return v.Note
-}
-
 // planItemTitle is "Hut ×3 (2 started)" or "research Tool Making".
 func planItemTitle(v game.PlanItemView) string {
 	switch v.Kind {
@@ -179,7 +167,7 @@ func planItemDetail(v game.PlanItemView, state game.GameState) string {
 func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 	switch v.Status {
 	case game.PlanStatusBlocked:
-		note := planNote(v)
+		note := v.Note
 		if len(v.Banked) > 0 {
 			note += " (" + planPriceWhole(v.Banked) + " banked from overflow)"
 		}
@@ -340,7 +328,7 @@ func planListText(state game.GameState) string {
 				status += " (short of " + game.ResourceName(v.Short) + ")"
 			}
 		case game.PlanStatusBlocked:
-			status = "blocked: " + planNote(v)
+			status = "blocked: " + v.Note
 		}
 		if len(v.Banked) > 0 {
 			status += ", " + formatPlanCost(v.Banked) + " banked"

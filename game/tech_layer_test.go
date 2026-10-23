@@ -98,28 +98,11 @@ func TestTechLayerLeavesFlatAmountsAlone(t *testing.T) {
 	}
 }
 
-// TestTechStorageAndHousing: the techs' storage bonus is a share of every
-// store and their housing bonus a share of housing, rounded up to a whole
-// person. Both add up across techs.
-func TestTechStorageAndHousing(t *testing.T) {
+// TestTechHousing: the techs' housing bonus is a share of housing, rounded up
+// to a whole person, and adds up across techs.
+func TestTechHousing(t *testing.T) {
 	ge := newTruthEngine("bronze_age", truthClean)
 	ge.recalculateRates()
-	learn(ge, "pottery", "masonry") // +10% storage each
-	ge.recalculateRates()
-	bonuses := ge.Buildings.GetStorageBonuses()
-	for _, key := range ge.Resources.order {
-		// The knowledge store is the knowledge buildings' alone: a tech's
-		// bonus to every store does not raise it.
-		factor := 1.20
-		if key == "knowledge" {
-			factor = 1
-		}
-		def := ge.Resources.defs[key]
-		want := ge.storeSize(def, bonuses["all"], bonuses[key], ge.speedK(), factor)
-		if got := ge.Resources.resources[key].Storage; math.Abs(got-want) > 1e-9*want {
-			t.Errorf("%s storage is %v with two +10%% techs, want %v (x%.2f)", key, got, want, factor)
-		}
-	}
 
 	for _, c := range []struct {
 		base  int

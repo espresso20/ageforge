@@ -47,7 +47,7 @@ func TestDigitalToCosmicMechanics(t *testing.T) {
 		ge.age = "digital_age"
 		for res, r := range ge.Resources.resources {
 			ge.Resources.UnlockResource(res)
-			r.Storage, r.Amount = 1e12, 1e11
+			r.Amount = 1e11
 		}
 		most := 0
 		for seed := int64(1); seed <= 40; seed++ {
@@ -72,7 +72,6 @@ func TestDigitalToCosmicMechanics(t *testing.T) {
 	village.mu.Lock()
 	village.Diplomacy.factions["riverlands_tribes"] = &FactionState{Discovered: true, Opinion: AllyOpinion}
 	village.Resources.UnlockResource("gold")
-	village.Resources.resources["gold"].Storage = 1e6
 	village.Resources.resources["gold"].Amount = 1000
 	village.mu.Unlock()
 	if err := village.SetDiplomaticStatus("riverlands_tribes", "allied"); err != nil {
@@ -99,7 +98,6 @@ func TestDigitalToCosmicMechanics(t *testing.T) {
 	ge.mu.Lock()
 	for res, v := range after {
 		ge.Resources.UnlockResource(res)
-		ge.Resources.resources[res].Storage = 2 * v
 		ge.Resources.resources[res].Amount = v
 	}
 	ge.mu.Unlock()

@@ -36,9 +36,6 @@ func TestWriteMarketSwapFixture(t *testing.T) {
 	ge.mu.Lock()
 	ge.Buildings.counts["market"] = 2
 	ge.Buildings.counts["hut"] = 6
-	for _, r := range []string{"wood", "stone", "gold", "food", "iron"} {
-		ge.Resources.resources[r].Storage = 1e6
-	}
 	ge.mu.Unlock()
 	setResource(ge, "wood", 60000)
 	setResource(ge, "stone", 20000)

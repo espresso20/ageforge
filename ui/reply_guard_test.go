@@ -241,7 +241,6 @@ func TestDiplomacyPricesMatchEngine(t *testing.T) {
 	if err := ge.MeetFactionForTest(civ, game.AllyOpinion-game.GiftOpinion); err != nil {
 		t.Fatal(err)
 	}
-	ge.Resources.LoadStorage(map[string]float64{"gold": 10000})
 	ge.Resources.LoadAmounts(map[string]float64{"gold": 5000})
 	opinion := func() int { return ge.GetState().Diplomacy.Factions[civ].Opinion }
 	gold := func() float64 { return ge.GetState().Resources["gold"].Amount }

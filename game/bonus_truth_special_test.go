@@ -20,7 +20,7 @@ func near(got, want float64) bool {
 }
 
 // TestBonusTruthEraMastery: an age with mastery m runs k = 1 + √m times as
-// fast. Every resource's rate and every store are k times what they were,
+// fast. Every resource's rate is k times what it was,
 // research and build times are divided by k (rounded up), and nothing else
 // moves. An age six or more behind the record runs at least 4x (catch-up).
 func TestBonusTruthEraMastery(t *testing.T) {
@@ -43,10 +43,6 @@ func TestBonusTruthEraMastery(t *testing.T) {
 					continue
 				case strings.HasPrefix(meter, "rate:"):
 					want *= k
-				case strings.HasPrefix(meter, "storage:"):
-					// A store scales with k, as production does, and the techs'
-					// storage bonus beside it: read it as the flat calculation.
-					want = truthStoreSize(ge, strings.TrimPrefix(meter, "storage:"))
 				case meter == "research", meter == "buildtime":
 					want = math.Ceil(before[meter]*truthRefTicks/k) / truthRefTicks
 				case meter == "morale":
@@ -160,16 +156,14 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 	type world struct {
 		workers float64
 		stock   map[string]float64
-		store   map[string]float64
 		techs   int
 		counts  map[string]int
 		built   int
 	}
 	look := func(ge *GameEngine) world {
-		w := world{workers: float64(ge.Workers.TotalPop()), stock: map[string]float64{}, store: map[string]float64{}, techs: ge.Research.ResearchedCount(), counts: map[string]int{}}
+		w := world{workers: float64(ge.Workers.TotalPop()), stock: map[string]float64{}, techs: ge.Research.ResearchedCount(), counts: map[string]int{}}
 		for _, key := range ge.Resources.order {
 			w.stock[key] = ge.Resources.resources[key].Amount
-			w.store[key] = ge.Resources.resources[key].Storage
 		}
 		for key, n := range ge.Buildings.counts {
 			w.counts[key] = n

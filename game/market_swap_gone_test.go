@@ -50,7 +50,7 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 	re.mu.Lock()
 	re.Buildings.counts[def.RequiredBld] = def.MinCount
 	for _, r := range re.Resources.resources {
-		r.Storage, r.Amount = 1e9, 1e6
+		r.Amount = 1e6
 	}
 	re.Resources.UnlockResource("gold")
 	re.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
@@ -86,7 +86,6 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 	// over iron's rate.
 	be := bmEngine(50000)
 	be.blackMarketRand = blackMarketSeedWin()
-	be.Resources.resources["iron"].Storage = 1e12
 	be.Resources.resources["iron"].Amount = 0
 	stake := be.BlackMarketStatus().Cost
 	won, gain, err := be.DoBlackMarket("iron")

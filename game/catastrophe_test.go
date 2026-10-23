@@ -197,7 +197,6 @@ func TestEndure_WorkerLossIsProportionalAcrossDomains(t *testing.T) {
 func TestEndure_ResourcesDebuffMoraleAndRecord(t *testing.T) {
 	ge := catEngine(t, "iron_age", 1)
 	ge.Buildings.counts[pickWorkerBuildings(t, "food")[0]] = 5
-	ge.Resources.LoadStorage(map[string]float64{"wood": 1000, "food": 1000})
 	ge.Resources.LoadAmounts(map[string]float64{"wood": 800, "food": 200})
 	ge.morale = 0.60
 	if err := ge.forceCatastrophe(); err != nil {
@@ -310,13 +309,12 @@ func withStartingStock(ge *GameEngine, food, wood float64) {
 	pm.upgradeList = list
 }
 
-// A Succumb sizes the stores before the starting stock lands, as a prestige
-// does. The stock used to be added to stores still at their base size, so
-// anything over 50 food and 50 wood was cut off, and the new run's first
-// snapshot showed the base caps until the first tick.
-func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
+// A Succumb lands the starting stock whole, as a prestige does: stock has no
+// ceiling, so nothing of it is cut off, and the new run's first snapshot
+// already holds it.
+func TestSuccumb_StartingStockLands(t *testing.T) {
 	// A run that fell in the Renaissance Age: the rebuild's Primitive Age
-	// is six ages behind the record and catches up at 4x, stores included.
+	// is six ages behind the record and catches up at 4x.
 	fallen := func(seed int64) *GameEngine {
 		ge := catEngine(t, "renaissance_age", seed)
 		for _, a := range ageKeys() {
@@ -327,10 +325,6 @@ func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
 		}
 		return ge
 	}
-	base := map[string]float64{"food": config.ResourceByKey()["food"].BaseStorage, "wood": config.ResourceByKey()["wood"].BaseStorage}
-	if base["food"] != 50 || base["wood"] != config.WoodBaseStorage {
-		t.Fatalf("base food and wood storage are %v and %v, want 50 and %v: adjust the test", base["food"], base["wood"], config.WoodBaseStorage)
-	}
 
 	ge := fallen(21)
 	succumbIn(t, ge, "renaissance_age")
@@ -338,23 +332,18 @@ func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
 	if k := st.Mastery.K; k != config.CatchUpK {
 		t.Fatalf("the rebuild starts at %vx, want %vx", k, config.CatchUpK)
 	}
-	for _, res := range []string{"food", "wood"} {
-		if got, want := st.Resources[res].Storage, float64(base[res]*config.CatchUpK); got != want {
-			t.Errorf("%s storage %v in the first snapshot after a Succumb, want %v (sized before the first tick)", res, got, want)
-		}
-	}
 	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 15 || wood != 12 {
 		t.Errorf("a Succumb starts with %v food and %v wood, want 15 and 12", food, wood)
 	}
 
-	// With starting stock above the base stores: all of it lands, the same
-	// amounts a prestige starts with.
+	// With a starting-stock grant: all of it lands, the same amounts a
+	// prestige starts with.
 	ge = fallen(22)
 	withStartingStock(ge, 100, 150)
 	succumbIn(t, ge, "renaissance_age")
 	st = ge.GetState()
 	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 115 || wood != 162 {
-		t.Errorf("a Succumb with +100 food and +150 wood starts with %v food and %v wood, want 115 and 162 (it was cut off at %v and %v)", food, wood, base["food"], base["wood"])
+		t.Errorf("a Succumb with +100 food and +150 wood starts with %v food and %v wood, want 115 and 162", food, wood)
 	}
 	pr := fallen(22)
 	withStartingStock(pr, 100, 150)
@@ -363,9 +352,9 @@ func TestSuccumb_StartingStockLandsInSizedStores(t *testing.T) {
 	}
 	ps := pr.GetState()
 	for _, res := range []string{"food", "wood"} {
-		if st.Resources[res].Amount != ps.Resources[res].Amount || st.Resources[res].Storage != ps.Resources[res].Storage {
-			t.Errorf("%s after a Succumb: %v of %v; after a prestige: %v of %v. They must start alike", res,
-				st.Resources[res].Amount, st.Resources[res].Storage, ps.Resources[res].Amount, ps.Resources[res].Storage)
+		if st.Resources[res].Amount != ps.Resources[res].Amount {
+			t.Errorf("%s after a Succumb: %v; after a prestige: %v. They must start alike", res,
+				st.Resources[res].Amount, ps.Resources[res].Amount)
 		}
 	}
 }

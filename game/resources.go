@@ -11,7 +11,6 @@ import (
 type Resource struct {
 	Amount    float64
 	Rate      float64
-	Storage   float64
 	Breakdown RateBreakdown
 }
 
@@ -40,7 +39,7 @@ func NewResourceManagerWith(set *rules.Set) *ResourceManager {
 }
 
 // Rebind moves the manager onto set: it takes set's resource definitions
-// and gives every resource it did not hold yet an empty store. What it
+// and gives every resource it did not hold yet an empty stock. What it
 // already holds stays, a resource set no longer defines included.
 func (rm *ResourceManager) Rebind(set *rules.Set) {
 	rm.rules = set
@@ -50,9 +49,8 @@ func (rm *ResourceManager) Rebind(set *rules.Set) {
 			continue
 		}
 		rm.resources[def.Key] = &Resource{
-			Amount:  0,
-			Rate:    0,
-			Storage: def.BaseStorage,
+			Amount: 0,
+			Rate:   0,
 		}
 	}
 	rm.order = sortedKeys(rm.resources)
@@ -72,14 +70,6 @@ func (rm *ResourceManager) IsUnlocked(key string) bool {
 func (rm *ResourceManager) Get(key string) float64 {
 	if r, ok := rm.resources[key]; ok {
 		return r.Amount
-	}
-	return 0
-}
-
-// GetStorage returns the storage cap for a resource
-func (rm *ResourceManager) GetStorage(key string) float64 {
-	if r, ok := rm.resources[key]; ok {
-		return r.Storage
 	}
 	return 0
 }
@@ -150,13 +140,6 @@ func (rm *ResourceManager) SetRate(key string, rate float64) {
 	}
 }
 
-// AddStorage increases storage cap for a resource
-func (rm *ResourceManager) AddStorage(key string, amount float64) {
-	if r, ok := rm.resources[key]; ok {
-		r.Storage += amount
-	}
-}
-
 // ApplyRates applies per-tick production rates, in key order.
 func (rm *ResourceManager) ApplyRates() {
 	for _, key := range rm.order {
@@ -195,11 +178,20 @@ func (rm *ResourceManager) GetAll() map[string]float64 {
 	return out
 }
 
-// GetAllStorage returns all storage caps (for save)
+// devFillAmount is what the dev console's /fill adds of each resource a town
+// can save up.
+const devFillAmount = 1e12
+
+// GetAllStorage is for the dev console's /fill and nothing else: a large
+// amount of every resource a town can save up (one with a BaseStorage above
+// zero). Stock has no cap, so there is no store to report; the name stays
+// because the console reads it.
 func (rm *ResourceManager) GetAllStorage() map[string]float64 {
 	out := make(map[string]float64)
-	for key, r := range rm.resources {
-		out[key] = r.Storage
+	for key := range rm.resources {
+		if rm.defs[key].BaseStorage > 0 {
+			out[key] = devFillAmount
+		}
 	}
 	return out
 }
@@ -213,15 +205,6 @@ func (rm *ResourceManager) LoadAmounts(amounts map[string]float64) {
 	}
 }
 
-// LoadStorage restores storage caps from save data
-func (rm *ResourceManager) LoadStorage(storage map[string]float64) {
-	for key, amount := range storage {
-		if r, ok := rm.resources[key]; ok {
-			r.Storage = amount
-		}
-	}
-}
-
 // Snapshot returns resource states for UI
 func (rm *ResourceManager) Snapshot() map[string]ResourceState {
 	out := make(map[string]ResourceState, len(rm.resources))
@@ -230,7 +213,6 @@ func (rm *ResourceManager) Snapshot() map[string]ResourceState {
 		out[key] = ResourceState{
 			Amount:    r.Amount,
 			Rate:      r.Rate,
-			Storage:   r.Storage,
 			Name:      def.Name,
 			Unlocked:  rm.unlocked[key],
 			Breakdown: r.Breakdown,

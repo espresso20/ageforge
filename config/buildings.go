@@ -9,7 +9,6 @@ import (
 // Effect represents a single game effect applied by a building, tech, or milestone.
 // The semantics of Value depend on Type:
 //   - "production":     +Value of Target resource per tick
-//   - "storage":        +Value to the global storage cap for Target resource (or "all")
 //   - "capacity":       +Value to Target (e.g. "population") cap
 //   - "bonus":          multiplier bonus — Value is a fraction (0.1 = +10%)
 //   - "unlock":         unlocks the Target building/resource key
@@ -84,9 +83,7 @@ type BuildingDef struct {
 // A storage building no longer stores anything: stock is uncapped, so each
 // copy adds StorageBoostPercent percent to all production instead (the
 // "bonus" effect on production_all, summed by the engine as the "storage"
-// source of that pool). What a copy used to hold lives on as the reference
-// store (reference_store.go), which the few rules that still read a store
-// size are measured against.
+// source of that pool).
 func baseBuildingsRaw() []BuildingDef {
 	return []BuildingDef{
 		// ===== PRIMITIVE AGE (costs: 30-100) =====
@@ -378,7 +375,6 @@ func baseBuildingsRaw() []BuildingDef {
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "research", Value: 0.05},
-				{Type: "storage", Target: "all", Value: 5000},
 			},
 			RequiredAge:  "stone_age",
 			RequiredTech: "stoneworking",
@@ -449,7 +445,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Renaissance Age — normal costs: 400k-600k
 		{
 			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 3.84e07, "gold": 3.84e07, "faith": 32000, "culture": 950000},
+			BaseCost:  map[string]float64{"stone": 3.84e07, "gold": 3.84e07, "faith": 32000, "culture": 980000},
 			CostScale: 1,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
