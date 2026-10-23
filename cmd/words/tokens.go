@@ -141,7 +141,8 @@ func edges(s string) (lead, trail string) {
 	return lead, trail
 }
 
-// keepColumn writes a line's kept pieces for the sheet.
+// keepColumn writes a line's kept pieces for the keep column, separated by
+// spaces, with a line break shown as \n.
 func keepColumn(toks []kept) string {
 	parts := make([]string, 0, len(toks))
 	for _, t := range toks {

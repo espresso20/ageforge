@@ -81,7 +81,8 @@ func lineCalls(m *module) []lineCall {
 	return calls
 }
 
-// stringOf is the value of a string literal.
+// stringOf is the value of a single string literal. Unlike stringLit, it does
+// not follow + or parentheses.
 func stringOf(e ast.Expr) (string, bool) {
 	lit, ok := e.(*ast.BasicLit)
 	if !ok || lit.Kind != token.STRING {

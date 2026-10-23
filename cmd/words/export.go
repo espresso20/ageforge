@@ -84,7 +84,7 @@ func sheetWith(header []string, records [][]string) []byte {
 	return buf.Bytes()
 }
 
-// filled is what the owner had typed against one id in an earlier export.
+// filled is what the owner typed against one id in an earlier export.
 type filled struct {
 	current, yours, notes string
 	file                  string
@@ -192,7 +192,8 @@ func export(c *catalog, dir string, out io.Writer) error {
 	return nil
 }
 
-// inFirstHours reports whether a row belongs in first-hours.csv.
+// inFirstHours reports whether a row belongs in first-hours.csv: a row of the
+// main menu or the first six ages that is not unsure and not a save name.
 func inFirstHours(r *row) bool {
 	return r.age >= 0 && r.age <= firstHoursAges && !r.unsure && r.area != areaSaveNames
 }
@@ -216,7 +217,7 @@ func writeCounts(c *catalog, out io.Writer) {
 	fmt.Fprintf(out, "%-34s %7d %8d\n", "total", rows, words)
 }
 
-// dedupe drops repeated records.
+// dedupe drops repeated records and keeps the first of each.
 func dedupe(recs [][]string) [][]string {
 	seen := map[string]bool{}
 	var out [][]string

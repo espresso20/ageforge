@@ -387,7 +387,8 @@ func isWordCall(cs callSite) bool {
 	return ok && cs.arg >= from && (cs.fn != "pluralize" || cs.arg == 0)
 }
 
-// endsLikeSentence reports whether text ends the way a sentence does.
+// endsLikeSentence reports whether text ends with a full stop, question mark
+// or exclamation mark, ignoring tags and closing quotes and brackets.
 func endsLikeSentence(s string) bool {
 	t := strings.TrimSpace(bare(s))
 	t = strings.TrimRight(t, `"')]`)

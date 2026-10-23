@@ -217,7 +217,8 @@ func (c *catalog) wireVerdict(r *row) verdict {
 	}
 	ctx, ok := idx[[2]int{r.u.start, r.u.end}]
 	if ok && ctx.kind == wireSame {
-		// A table entry made for a string that had no row, and now has one.
+		// A vibe.Same entry whose string has a row of the export: it becomes
+		// vibe.E.
 		return verdict{kind: wireSame, call: ctx.call}
 	}
 	if ok && (r.area == areaScreens || r.area == areaMap) && !ctx.inFunc && !ctx.inConst && ctx.inVar && tableEntry(r.u.near) {
@@ -405,9 +406,9 @@ func stdImport(quoted string) bool {
 	return !strings.Contains(first, ".")
 }
 
-// fixImports gives a file the vibe import it now needs, in the group of the
-// module's imports and not the standard library's, and takes away the fmt
-// import it no longer uses, then formats it.
+// fixImports gives a file the vibe import it needs, in the group of the
+// module's imports and not the standard library's, drops the fmt import if
+// nothing in the file uses fmt, then formats it.
 func fixImports(rel string, src []byte) ([]byte, error) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, rel, src, parser.ParseComments)

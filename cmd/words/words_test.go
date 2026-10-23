@@ -231,7 +231,7 @@ func TestFirstHours(t *testing.T) {
 }
 
 // TestExportCarriesFilledCells: exporting again into a folder keeps what
-// was typed there, and sets aside what no longer has a row.
+// was typed there, and sets aside what has no row in the new export.
 func TestExportCarriesFilledCells(t *testing.T) {
 	c := realCatalog(t)
 	dir := t.TempDir()

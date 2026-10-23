@@ -56,7 +56,7 @@ func saveLedger(root string, led map[string]string) error {
 type tally struct {
 	lines, words         int
 	doneLines, doneWords int // rewritten, and still reading as rewritten
-	changed              int // rewritten once, and different in the source now
+	changed              int // rewritten once, and reading differently in the source since
 }
 
 // count works out the tallies by sheet and in total from the source and the

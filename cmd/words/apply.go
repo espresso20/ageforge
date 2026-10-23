@@ -236,7 +236,7 @@ func checkKeep(r *row, yours string) []string {
 	return out
 }
 
-// show writes a kept piece for a message.
+// show writes a kept piece for a message, spelling out a line break.
 func show(t kept) string {
 	if t.kind == tokBreak {
 		return `a line break (\n)`
