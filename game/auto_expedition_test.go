@@ -441,13 +441,13 @@ func TestAutoExpedition_PickerIsDeterministicAndBest(t *testing.T) {
 	}
 
 	// Nothing on the board may beat it among the offers that can be sent
-	// (short and long: the Society never sends a grand offer).
+	// (short only: the Society sends the era's scout, never a long or grand offer).
 	chosen, _ := ge.Military.BoardOffer(first)
-	if chosen.Tier == TierGrand {
-		t.Fatalf("picker chose grand offer %d", first)
+	if chosen.Tier != TierShort {
+		t.Fatalf("picker chose %s offer %d", chosen.Tier, first)
 	}
 	for i, slot := range ge.Military.board.Slots {
-		if slot.Offer.Tier == TierGrand {
+		if slot.Offer.Tier != TierShort {
 			continue
 		}
 		if _, err := ge.offerRefusalLocked(*slot.Offer, ge.missionCostLocked(*slot.Offer)); err != nil {

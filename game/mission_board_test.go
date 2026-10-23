@@ -51,7 +51,7 @@ func boardJSON(t *testing.T, ge *GameEngine) string {
 func TestBoard_ShapeAndNumbering(t *testing.T) {
 	grands := map[string]int{}
 	for seed := int64(1); seed <= 40; seed++ {
-		ge := boardEngine(t, seed, "iron_age")
+		ge := boardEngine(t, seed, "renaissance_age")
 		state := ge.GetState().Military
 		if len(state.Board) != 9 || len(state.Expeditions) != 9 {
 			t.Fatalf("seed %d: %d slots, %d offers, want 9 and 9", seed, len(state.Board), len(state.Expeditions))
@@ -90,7 +90,7 @@ func TestBoard_ShapeAndNumbering(t *testing.T) {
 // slot empty, and exactly five minutes later a new offer of the same tier is
 // in it; the other slots are untouched.
 func TestBoard_TakenOfferIsRefilledAfterFiveMinutes(t *testing.T) {
-	ge := boardEngine(t, 3, "iron_age")
+	ge := boardEngine(t, 3, "renaissance_age")
 	learn(ge, "exploration", "military_tactics")
 	setSoldiers(ge, 1e6)
 	before := ge.Military.board.clone()
@@ -116,8 +116,8 @@ func TestBoard_TakenOfferIsRefilledAfterFiveMinutes(t *testing.T) {
 	if got == nil {
 		t.Fatal("the slot is still empty after five minutes")
 	}
-	if got.Tier != TierLong || got.Age != "iron_age" || got.ExpiresTick != ge.tick+minutesToTicks(config.BoardExpireMinutes) {
-		t.Errorf("the new offer is %+v, want a long offer of the Iron Age that expires in an hour", *got)
+	if got.Tier != TierLong || got.Age != "renaissance_age" || got.ExpiresTick != ge.tick+minutesToTicks(config.BoardExpireMinutes) {
+		t.Errorf("the new offer is %+v, want a long offer of the Renaissance Age that expires in an hour", *got)
 	}
 	if got.Title == before.Slots[n-1].Offer.Title && got.LengthMinutes == before.Slots[n-1].Offer.LengthMinutes {
 		t.Error("the new offer is the one that was taken")
@@ -151,7 +151,7 @@ func TestBoard_UntakenOfferExpiresAfterAnHour(t *testing.T) {
 	if got.Tier != TierShort || got.ExpiresTick != ge.tick+hour {
 		t.Errorf("the replacement is %+v, want a short offer with a fresh hour", *got)
 	}
-	// All nine were made on the same tick, so all nine went at once.
+	// All the offers were made on the same tick, so all went at once.
 	for i, slot := range ge.Military.board.Slots {
 		if slot.Offer == nil || slot.Offer.ExpiresTick != ge.tick+hour {
 			t.Errorf("slot %d was not replaced with the others: %+v", i+1, slot.Offer)
@@ -206,10 +206,10 @@ func TestBoard_RegeneratedOnAnAgeAdvance(t *testing.T) {
 // cannot cover is refused with the party and the soldiers at home, and takes
 // nothing.
 func TestBoard_MissionsRunTogetherWhileTheArmyHolds(t *testing.T) {
-	ge := boardEngine(t, 6, "iron_age")
+	ge := boardEngine(t, 6, "renaissance_age")
 	learn(ge, "exploration", "military_tactics")
-	short := config.PartySize(config.PartyShort, 3)
-	long := config.PartySize(config.PartyLong, 3)
+	short := config.PartySize(config.PartyShort, 6)
+	long := config.PartySize(config.PartyLong, 6)
 	// Two short parties, a long one and 4 spare: no grand mission fits.
 	setSoldiers(ge, float64(2*short+long+4))
 	for _, n := range []int{1, 2, 4} {
@@ -224,7 +224,7 @@ func TestBoard_MissionsRunTogetherWhileTheArmyHolds(t *testing.T) {
 		t.Errorf("%d soldiers at home, want 4", got)
 	}
 	err := ge.LaunchExpedition(7)
-	want := fmt.Sprintf("needs a party of %d soldiers, and 4 are at home", config.PartySize(config.PartyMilitary, 3))
+	want := fmt.Sprintf("needs a party of %d soldiers, and 4 are at home", config.PartySize(config.PartyMilitary, 6))
 	if err == nil || !strings.Contains(err.Error(), want) {
 		t.Errorf("a grand mission with 4 at home: %v, want a refusal naming %q", err, want)
 	}
@@ -290,7 +290,7 @@ func rareRun(rng *rand.Rand, n int) []bool {
 	var b MissionBoard
 	out := make([]bool, n)
 	for i := range out {
-		out[i] = b.rollRare(rng)
+		out[i] = b.rollRare(rng, 1)
 	}
 	return out
 }
@@ -356,7 +356,7 @@ func TestRare_OfferModifiers(t *testing.T) {
 		var ordinary, rare *MissionOffer
 		for seed := int64(1); seed < 4000 && (ordinary == nil || rare == nil); seed++ {
 			var b MissionBoard
-			o := b.makeOffer(rand.New(rand.NewSource(seed)), ironWords, tier, 0)
+			o := b.makeOffer(rand.New(rand.NewSource(seed)), ironWords, tier, 0, 1)
 			if o.Grand == GrandCivil {
 				continue
 			}
@@ -397,7 +397,7 @@ func TestRare_OfferModifiers(t *testing.T) {
 		// The rarity draw is the first (a long offer draws nothing before it);
 		// the remaining draws are the same stream in both runs.
 		src := rand.New(rand.NewSource(77))
-		return *b.makeOffer(src, ironWords, TierLong, 100)
+		return *b.makeOffer(src, ironWords, TierLong, 100, 1)
 	}
 	plain, legend := roll(false), roll(true)
 	if plain.Rare || !legend.Rare {
@@ -434,7 +434,7 @@ func absDiff(a, b float64) float64 {
 // in the order the offers were made (slot order, an hour at a time) and the
 // share is in range.
 func TestBoard_LegendaryRulesHoldOnTheLiveBoard(t *testing.T) {
-	ge := boardEngine(t, 99, "iron_age")
+	ge := boardEngine(t, 99, "renaissance_age")
 	hour := minutesToTicks(config.BoardExpireMinutes)
 	var flags []bool
 	for step := 0; step < 400; step++ {
@@ -500,7 +500,7 @@ func TestBoard_SameSeedSameBoardOverTime(t *testing.T) {
 // the saved one would have.
 func TestBoard_SaveRoundTrip(t *testing.T) {
 	defer SetDataDirForTest(t.TempDir())()
-	ge := boardEngine(t, 7, "iron_age")
+	ge := boardEngine(t, 7, "renaissance_age")
 	learn(ge, "exploration", "military_tactics")
 	setSoldiers(ge, 5000)
 	if err := ge.LaunchExpedition(8); err != nil {

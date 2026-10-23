@@ -337,7 +337,7 @@ func (c peopleBody) army() {
 
 	// The buildings with their posts, then the army and the defense under them.
 	blds := militaryBuildings(st)
-	per := max(0, (topH-2-3)/2)
+	per := max(0, (topH-2-5)/2)
 	if len(blds) == 0 {
 		g.putFit(c.x+2, c.y+1, lw-4, "No military buildings yet.", xFaint)
 	}
@@ -360,10 +360,13 @@ func (c peopleBody) army() {
 		g.rput(rightOf(c.x, lw), y, staff, sk)
 		g.putFit(c.x+4, y+1, lw-8, b.Description, xDim)
 	}
-	sy := c.y + topH - 4
+	sy := c.y + topH - 6
 	g.segsFit(c.x+2, sy, lw-4, xseg{soldiers.name + " ", xDim}, xseg{num(soldiers.count) + " posted of " + num(mil.SoldierCap), xText})
 	g.segsFit(c.x+2, sy+1, lw-4, xseg{"Defense ", xDim}, xseg{num(int(mil.DefenseRating)), xText},
 		xseg{"  threat " + num(int(mil.Threat)) + ", blunts " + textfmt.Percent(mil.Mitigation), xDim})
+	g.segsFit(c.x+2, sy+2, lw-4, xseg{"Rank ", xDim}, xseg{rankName(st, mil.Rank), xBright}, xseg{" · " + rankProgress(st) + " experience", xText})
+	g.segsFit(c.x+2, sy+3, lw-4, xseg{"Gives ", xDim}, xseg{rankGives(mil.Rank), xText})
+	g.segsFit(c.x+2, sy+4, lw-4, xseg{rankNext(st), xDim})
 
 	// Away: each party out.
 	y := c.y + 1

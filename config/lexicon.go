@@ -39,10 +39,13 @@ func t(one, many string) Word { return Word{One: one, Many: many} }
 
 // plainTerms are the plain English words, used where an age has no entry.
 var plainTerms = map[string]Word{
-	TermWorkers:  t("worker", "workers"),
-	TermReserve:  t("villager", "villagers"),
-	TermSoldiers: t("soldier", "soldiers"),
-	TermScholars: t("scholar", "scholars"),
+	TermWorkers:   t("worker", "workers"),
+	TermReserve:   t("villager", "villagers"),
+	TermSoldiers:  t("soldier", "soldiers"),
+	TermScholars:  t("scholar", "scholars"),
+	"army_rank_0": t("Green", "Green"), "army_rank_1": t("Seasoned", "Seasoned"),
+	"army_rank_2": t("Veteran", "Veteran"), "army_rank_3": t("Elite", "Elite"),
+	"army_rank_4": t("Legendary", "Legendary"),
 }
 
 // lexiconRow is one age's words.

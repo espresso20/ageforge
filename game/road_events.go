@@ -150,7 +150,7 @@ func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 			if target < 0 {
 				target = 0
 			}
-			offer := ge.Military.board.makeOffer(ge.gameRNG(), w, TierShort, ge.tick)
+			offer := ge.Military.board.makeOffer(ge.gameRNG(), w, TierShort, ge.tick, ge.Military.rareFactor())
 			offer.Description = "Found by this mission near the ruins at " + place + "."
 			ge.Military.board.Slots[target].Offer = offer
 		}

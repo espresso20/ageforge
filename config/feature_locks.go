@@ -3,13 +3,13 @@ package config
 import "fmt"
 
 // A feature lock is a command, or a part of one, that waits for a tech:
-// campaigns wait for Military Tactics, the Rail Freight route for Railroads.
+// festivals wait for Drama, the Rail Freight route for Railroads.
 // Until the tech is researched the engine refuses the command and says which
 // tech opens it.
 //
 // A lock names its tech by key. A lock whose tech is not in the tree is
 // inert: the command is open, as it was before the locks. So the table lists
-// all nine locks the tree is designed around, and five of them wait for
+// the locks the tree is designed around, and some of them may wait for
 // content: adding a tech with the key a lock names switches that lock on,
 // with nothing else to change (LiveFeatureLocks tells the two apart, and the
 // static research check lists the ones still waiting).
@@ -22,8 +22,6 @@ import "fmt"
 // The keys of the feature locks.
 const (
 	FeatureTradeRoutes       = "trade_routes"
-	FeatureCampaigns         = "campaigns"
-	FeatureExpeditions       = "expeditions"
 	FeatureDiplomacy         = "diplomacy"
 	FeatureFestivals         = "festivals"
 	FeatureBlackMarket       = "black_market"
@@ -54,10 +52,6 @@ func FeatureLocks() []FeatureLockDef {
 	return []FeatureLockDef{
 		{Key: FeatureTradeRoutes, Name: "Trade routes", Tech: "the_wheel",
 			Needs: "need", Then: "start one", Opens: "opens trade routes"},
-		{Key: FeatureCampaigns, Name: "Campaigns", Tech: "military_tactics",
-			Needs: "need", Then: "send one", Opens: "opens campaigns"},
-		{Key: FeatureExpeditions, Name: "Long and grand missions", Tech: "exploration",
-			Needs: "need", Then: "send one", Opens: "opens long and grand mission offers"},
 		{Key: FeatureDiplomacy, Name: "Gifts, alliances, rivalries and deals", Tech: "envoys",
 			Needs: "need", Then: "deal with other civilizations", Opens: "opens diplomacy"},
 		{Key: FeatureFestivals, Name: "Festivals", Tech: "drama",
@@ -81,8 +75,8 @@ func FeatureLockByKey() map[string]FeatureLockDef {
 }
 
 // Refusal is what the game says when the command is used before its tech,
-// given the tech's name: "Campaigns need Military Tactics first. Research it
-// to send one."
+// given the tech's name: "Festivals need Drama first. Research it
+// to hold one."
 func (d FeatureLockDef) Refusal(techName string) string {
 	return fmt.Sprintf("%s %s %s first. Research it to %s.", d.Name, d.Needs, techName, d.Then)
 }

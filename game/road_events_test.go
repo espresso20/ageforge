@@ -106,7 +106,7 @@ func TestRoadEventOddsLossesAndRuins(t *testing.T) {
 	if military.Soldiers != 9 {
 		t.Fatalf("military ambush left %d soldiers, want 9", military.Soldiers)
 	}
-	ge.Military.board = MissionBoard{Age: "bronze_age", Slots: make([]boardSlot, boardSize)}
+	ge.Military.board = MissionBoard{Age: "bronze_age", Slots: make([]boardSlot, boardSizeFor(3))}
 	ge.applyRoadEvent(a, &RoadEvent{Kind: "ruins", Story: w.RoadTemplate("ruins", 0)})
 	if offer := ge.Military.board.Slots[0].Offer; offer == nil || offer.Tier != TierShort || !strings.Contains(offer.Description, "Found by this mission") {
 		t.Fatalf("ruins did not add a found short offer: %+v", offer)

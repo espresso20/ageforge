@@ -257,6 +257,9 @@ func rawTechnologies() []TechDef {
 			Age: "iron_age", Lane: LaneTrade,
 			AnyOf:       []string{"map_making", "boatbuilding"},
 			Description: "Maps or boats, and the will to see what lies past the next ridge.",
+			Effects: []TechEffect{
+				{Kind: EffectExpeditionReward, Value: 0.10},
+			},
 		},
 		{
 			Name: "Irrigation", Key: "irrigation", Cost: 34500, ResearchTicks: 731, Emblem: "≈",

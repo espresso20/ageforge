@@ -35,6 +35,9 @@ func plantOffer(ge *GameEngine, tier, grand string) int {
 	for i := range boardTiers {
 		if boardTiers[i] == tier {
 			first = i * config.BoardOffersPerTier
+			// The tier may not be open in this age: keep it open for the test.
+			ge.Military.minTiers = max(ge.Military.minTiers, i+1)
+			ge.ensureMissionBoardLocked()
 		}
 	}
 	offer := testOffer(ge, tier, grand)

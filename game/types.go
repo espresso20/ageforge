@@ -531,11 +531,15 @@ type MilitaryState struct {
 	ActiveScout    *ExpeditionSnapshot
 	ActiveMilitary *ExpeditionSnapshot
 	// Expeditions is the offers on the board, in number order; a slot
-	// waiting for its next offer has none. Board has all nine slots.
+	// waiting for its next offer has none. Board has the slots of the open tiers.
 	Expeditions    []ExpeditionInfo
 	Board          []BoardSlotInfo
 	CompletedCount int
-	TotalLoot      map[string]float64
+	// Experience is the army's experience and Rank its rank index (0 Green to
+	// 4 Legendary; config/army.go).
+	Experience float64
+	Rank       int
+	TotalLoot  map[string]float64
 	// Returns is the last missions to come home, newest first (at most
 	// config.MissionReturnsKept). ReturnsMade counts every mission that has
 	// come home this run; ReturnsSeen how many of them the player has seen
