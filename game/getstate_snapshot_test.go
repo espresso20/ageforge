@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -268,5 +269,52 @@ func scribble(v reflect.Value, depth int) {
 			}
 			v.SetMapIndex(k, reflect.Value{})
 		}
+	}
+}
+
+// TestSliceArena: copies out of the arena match slices.Clone (nil stays nil,
+// empty stays empty), are disjoint, and are capped so an append by the caller
+// cannot reach the copy beside it.
+func TestSliceArena(t *testing.T) {
+	srcs := [][]string{{"a", "b"}, nil, {}, {"c"}, {"d", "e", "f"}}
+	var arena sliceArena[string]
+	for _, s := range srcs {
+		arena.reserve(s)
+	}
+	var got [][]string
+	for _, s := range srcs {
+		got = append(got, arena.clone(s))
+	}
+	for i, s := range srcs {
+		if (s == nil) != (got[i] == nil) || !slices.Equal(s, got[i]) {
+			t.Errorf("clone %d = %#v, want %#v", i, got[i], s)
+		}
+		if len(got[i]) > 0 && cap(got[i]) != len(got[i]) {
+			t.Errorf("clone %d has cap %d for len %d", i, cap(got[i]), len(got[i]))
+		}
+	}
+	got[0] = append(got[0], "x") // must not overwrite the next copy
+	got[0][0] = "changed"
+	if got[3][0] != "c" || srcs[0][0] != "a" {
+		t.Errorf("an edit reached a neighbour or the source: %v %v", got[3], srcs[0])
+	}
+	// More than counted: still a correct copy.
+	var short sliceArena[string]
+	short.reserve([]string{"a"})
+	if a, b := short.clone([]string{"a"}), short.clone([]string{"b", "c"}); a[0] != "a" || len(b) != 2 || b[1] != "c" {
+		t.Errorf("short count: %v %v", a, b)
+	}
+	// take: room to append into, disjoint from its neighbours.
+	var rows sliceArena[int]
+	rows.want = 5
+	x, y := rows.take(2), rows.take(3)
+	x = append(x, 1, 2)
+	y = append(y, 3, 4, 5)
+	x = append(x, 9) // past its room: moves, leaves y alone
+	if !slices.Equal(x, []int{1, 2, 9}) || !slices.Equal(y, []int{3, 4, 5}) {
+		t.Errorf("take: %v %v", x, y)
+	}
+	if rows.take(0) != nil {
+		t.Error("take(0) should be nil")
 	}
 }

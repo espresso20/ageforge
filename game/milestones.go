@@ -1,7 +1,6 @@
 package game
 
 import (
-	"slices"
 	"sort"
 	"strings"
 
@@ -322,15 +321,13 @@ func (mm *MilestoneManager) planFor(def config.MilestoneDef) milestonePlan {
 // computeProgress computes progress indicators for a milestone definition
 func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params MilestoneSnapshotParams) []MilestoneProgress {
 	plan := mm.planFor(def)
-	return mm.progressFor(def, &plan, params)
+	return mm.progressFor(def, &plan, params, nil)
 }
 
-// progressFor fills in def's progress rows from its plan and the town's numbers.
-func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestonePlan, params MilestoneSnapshotParams) []MilestoneProgress {
-	var progress []MilestoneProgress
-	if plan.rows > 0 {
-		progress = make([]MilestoneProgress, 0, plan.rows)
-	}
+// progressFor fills in def's progress rows from its plan and the town's
+// numbers, in room taken from rows (nil: its own).
+func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestonePlan, params MilestoneSnapshotParams, rows *sliceArena[MilestoneProgress]) []MilestoneProgress {
+	progress := rows.take(plan.rows)
 
 	if def.MinTick > 0 {
 		progress = append(progress, MilestoneProgress{
@@ -468,11 +465,17 @@ func formatRewards(effects []config.Effect) string {
 func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneState {
 	milestones := make(map[string]MilestoneInfo, len(mm.defs))
 	visibleCount := 0
+	var rewards sliceArena[config.Effect] // one backing array for every milestone's copy
+	var rows sliceArena[MilestoneProgress]
+	for i, def := range mm.defs {
+		rewards.reserve(def.Rewards)
+		rows.want += mm.plans[i].rows
+	}
 
 	for i, def := range mm.defs {
 		completed := mm.completed[def.Key]
 		plan := &mm.plans[i]
-		progress := mm.progressFor(def, plan, params)
+		progress := mm.progressFor(def, plan, params, &rows)
 		ratio := overallProgress(progress)
 
 		// Visibility: completed || !hidden || progress > 0.5
@@ -506,7 +509,7 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 			Visible:     visible,
 			Completed:   completed,
 			RewardText:  plan.rewardText,
-			Rewards:     slices.Clone(def.Rewards), // def is the manager's table
+			Rewards:     rewards.clone(def.Rewards), // def is the manager's table
 			Progress:    progress,
 			ChainKey:    chainKey,
 		}
