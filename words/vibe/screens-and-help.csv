@@ -1329,7 +1329,7 @@ ui.overlay_epoch.harbingerRecordText.02,"[red]Told you so, receipts[-]"
 ui.overlay_epoch.harbingerRecordText.03,[green]Dodged it[-]
 ui.overlay_epoch.harbingerRecordText.04,[yellow]Ratioed[-]
 ui.overlay_epoch.harbingerRecordText.05,[gray]no tea yet[-]
-ui.overlay_epoch.harbingerRecordText.06," [gray](a false prophet, all cap)[-]"
+ui.overlay_epoch.harbingerRecordText.06," [gray](fake prophet, all cap)[-]"
 ui.overlay_epoch.harbingerRecordText.07,appeased %d (simp era)
 ui.overlay_epoch.harbingerRecordText.08,braced %d (tank mode)
 ui.overlay_epoch.harbingerRecordText.09,doom in the 
@@ -1393,7 +1393,7 @@ ui.overlay_factions.writeGeographicSociety.05," [yellow]⚠ A party is due, but 
 ui.overlay_factions.writeGeographicSociety.06," [yellow]  It heads out once the bag is there.[-]
 "
 ui.overlay_factions.writeGeographicSociety.07," Next squad drops in %s"
-ui.overlay_factions.writeGeographicSociety.08," [gray]The Society is running on autopilot: parties head out on their own.[-]
+ui.overlay_factions.writeGeographicSociety.08," [gray]The Society runs on autopilot: parties head out on their own.[-]
 "
 ui.overlay_factions.writeFactionCard.01,"   [red]⚔ At war, the opps will raid you. Sue for peace with: diplomacy tribute "
 ui.overlay_factions.writeFactionCard.02,"   Vibe: [%s]%4d[-]  [%s]%s[-]
@@ -1404,9 +1404,9 @@ ui.overlay_factions.writeFactionCard.05,"   Vibe check: [%s]%s[-]  %s  [gray](%s
 "
 ui.overlay_factions.writeFactionCard.06,trade
 ui.overlay_factions.writeFactionCard.07,trades
-ui.overlay_factions.writeFactionCard.08,"   [green]↳ %d workers on loan (permanent, they live here now)[-]
+ui.overlay_factions.writeFactionCard.08,"   [green]↳ %d workers on permanent loan, they live here now[-]
 "
-ui.overlay_factions.writeFactionCard.09,"   [green]↳ %d workers on loan (temporary, a situationship)[-]
+ui.overlay_factions.writeFactionCard.09,"   [green]↳ %d workers on a temporary loan, situationship vibes[-]
 "
 ui.overlay_factions.writeFactionCard.10,[gold]✦ %s slaying rn[-]
 ui.overlay_factions.writeFactionCard.11,W
@@ -1443,11 +1443,11 @@ ui.overlay_factions.writeFactionDeals.01,Zero deals while they are
 ui.overlay_factions.writeFactionDeals.02,Deals: the shelf is empty rn.
 ui.overlay_factions.writeFactionDeals.03,Deal drops:
 ui.overlay_factions.writeFactionDeals.04,new offers drop in 
-ui.overlay_factions.dealLine.02,"next age's goods, early access"
+ui.overlay_factions.dealLine.02,early access to next-age goods
 ui.overlay_factions.dealLine.04,→ grab
 ui.overlay_harbinger.handleKey.01,Appeased. The real odds just got nerfed.
 ui.overlay_harbinger.handleKey.02,"Braced. An Endure hits softer now, tank mode."
-ui.overlay_harbinger.handleKey.03,"Press I again to invite the catastrophe. No undo button, deadass."
+ui.overlay_harbinger.handleKey.03,"Smash I again to invite the catastrophe. No undo button, deadass."
 ui.overlay_harbinger.handleKey.04,"Invited. It pulls up exactly when fate says, no take-backs."
 ui.overlay_harbinger.handleKey.05,Invited. It pulls up at your next prestige.
 ui.overlay_harbinger.harbingerInviteRefusal.01,"no harbinger around to invite, it's giving empty"
@@ -1457,17 +1457,17 @@ ui.overlay_harbinger.harbingerAbsentText.01," No harbinger here, the vibes are c
 
 "
 ui.overlay_harbinger.harbingerAbsentText.02," A harbinger only pulls up when doom is on its way, a while before it strikes,
- and its whole look changes with each age it lives through. A quiet era is safe, for
- now. In the last era the doom is prestige itself: the Last Passage boss fight."
+ and its whole look changes with each age it lives through. Quiet era? Safe, for
+ now. In the final era the doom is prestige itself: the Last Passage boss fight."
 ui.overlay_harbinger.harbingerAbsentText.03,── The Forecast ──
-ui.overlay_harbinger.harbingerAbsentText.04," Prestige here could bring the Last Passage. Risk vibe: %s.
+ui.overlay_harbinger.harbingerAbsentText.04," Prestige here could summon the Last Passage. Risk vibe: %s.
 "
 ui.overlay_harbinger.harbingerAbsentText.05," Official receipts: %s
 "
 ui.overlay_harbinger.harbingerAbsentText.06," Faith aura: "
 ui.overlay_harbinger.harbingerAbsentText.07,. Stack faith and the odds get nerfed.
 ui.overlay_harbinger.harbingerAbsentText.08,The Last Passage has pulled up. Type 'catastrophe' and make the call.
-ui.overlay_harbinger.harbingerAbsentText.09," This is the final epoch, the endgame. Its passage is prestige, and no harbinger has pulled up.
+ui.overlay_harbinger.harbingerAbsentText.09," Final epoch, the endgame: its passage is prestige, and no harbinger has pulled up.
 "
 ui.overlay_harbinger.harbingerAbsentText.10," Faith aura: "
 ui.overlay_harbinger.harbingerAbsentText.11,".
@@ -1502,187 +1502,187 @@ ui.overlay_harbinger.harbingerPresentText.16,You invited it. The catastrophe pul
 ui.overlay_harbinger.harbingerPresentText.17,── Your Moves ──
 ui.overlay_harbinger.harbingerPresentText.18,"Appease, the simp route: "
 ui.overlay_harbinger.harbingerPresentText.19,"     Each level multiplies the real strike chance by 0.6, a clean nerf."
-ui.overlay_harbinger.harbingerPresentText.20,"Brace, the shield: "
-ui.overlay_harbinger.harbingerPresentText.21,"     If it comes and you Endure: you keep %d%% of the run's prestige points, the cut."
-ui.overlay_harbinger.harbingerPresentText.22,"     Next level: %d%% kept, bussin."
-ui.overlay_harbinger.harbingerPresentText.23,"     If it comes and you Endure: %d%% of buildings fall, %d%% of stock is kept, rough but fine."
-ui.overlay_harbinger.harbingerPresentText.24,"     Next level: %d%% fall, %d%% kept, the upgrade."
-ui.overlay_harbinger.harbingerPresentText.25,"Invite, the sus move: "
-ui.overlay_harbinger.harbingerPresentText.26,"     Guarantees the Last Passage at your next prestige; Succumb then earns the
-     Cosmic Legacy, free, can't be undone, big sus."
-ui.overlay_harbinger.harbingerPresentText.27,"     Guarantees the catastrophe; it still comes when it was fated to. Free.
-     Can't be undone, bet."
-ui.overlay_harbinger.harbingerPresentText.28,"Done, dusted: "
-ui.overlay_harbinger.harbingerPresentText.29,"Unavailable, L: "
-ui.overlay_harbinger.harbingerPresentText.30,"Press I again to confirm, bet."
+ui.overlay_harbinger.harbingerPresentText.20,Brace (tank mode): 
+ui.overlay_harbinger.harbingerPresentText.21,"     If it pulls up and you Endure, %d%% of the run's prestige points survive."
+ui.overlay_harbinger.harbingerPresentText.22,"     Next level up: %d%% stays in the bag."
+ui.overlay_harbinger.harbingerPresentText.23,"     If it pulls up and you Endure: %d%% of buildings get wrecked, %d%% of stock survives."
+ui.overlay_harbinger.harbingerPresentText.24,"     Level up: %d%% wrecked, %d%% secured."
+ui.overlay_harbinger.harbingerPresentText.25,Invite (menace move): 
+ui.overlay_harbinger.harbingerPresentText.26,"     Locks in the Last Passage at your next prestige; Succumb then drops the
+     Cosmic Legacy. Free. No take-backs."
+ui.overlay_harbinger.harbingerPresentText.27,"     Locks in the catastrophe; it still pulls up when fate scheduled it. Free.
+     No undo button."
+ui.overlay_harbinger.harbingerPresentText.28,Locked in: 
+ui.overlay_harbinger.harbingerPresentText.29,Gatekept: 
+ui.overlay_harbinger.harbingerPresentText.30,Smash I again to lock it in.
 ui.overlay_harbinger.harbingerPresentText.31,Appease
 ui.overlay_harbinger.harbingerPresentText.32,Brace
-ui.overlay_harbinger.harbingerPresentText.33,"Invite (twice), no take-backs"
+ui.overlay_harbinger.harbingerPresentText.33,Invite (double tap)
 ui.overlay_harbinger.harbingerPresentText.35,Bail
-ui.overlay_harbinger.harbingerPresentText.36," Nothing here expires, the price is the same in every age of the epoch, fr."
-ui.overlay_harbinger.harbingerCostLine.01,"Not available, sorry: "
-ui.overlay_harbinger.harbingerCostLine.02,"Nothing to pay with yet, we're broke."
-ui.overlay_harbinger.harbingerCostLine.03," (you've got "
-ui.overlay_harbinger.harbingerCostLine.04,"     Next level costs, the bill: "
-ui.overlay_harbinger.harbingerLevelText.01,"Level %d / %d, the grind"
-ui.overlay_harbinger.harbingerSeverityText.02,: the harbinger is in full panic mode
-ui.overlay_harbinger.harbingerSeverityText.04,": a real danger, worth paying to lessen, no cap"
-ui.overlay_harbinger.harbingerSeverityText.06,: kinda uneasy rather than afraid
-ui.overlay_harbinger.harbingerSeverityText.08,": nothing to fear, it's giving calm"
-ui.overlay_harbinger.harbingerGarrisonLine.01,"     No garrison counted: soldiers would soften an Endure further (Army panel), sus."
-ui.overlay_harbinger.harbingerGarrisonLine.02,"     Your garrison is counted: it blunts about %d%% of what Brace leaves, the shield."
-ui.overlay_harbinger.harbingerGarrisonLine.03,"     Brace and garrison together soften an Endure by at most %.0f%%, the cap is real."
-ui.overlay_help.helpProvider.01,"[gold]═══ Getting around, the tour ═══[-]
+ui.overlay_harbinger.harbingerPresentText.36," Nothing here expires, and the price stays the same in every age of the epoch, no inflation era."
+ui.overlay_harbinger.harbingerCostLine.01,Gatekept: 
+ui.overlay_harbinger.harbingerCostLine.02,Too broke to pay for anything yet.
+ui.overlay_harbinger.harbingerCostLine.03," (bag has "
+ui.overlay_harbinger.harbingerCostLine.04,"     Next level damage: "
+ui.overlay_harbinger.harbingerLevelText.01,Lvl %d / %d
+ui.overlay_harbinger.harbingerSeverityText.02,: the harbinger is crashing out in pure terror
+ui.overlay_harbinger.harbingerSeverityText.04,": a real threat, worth paying to nerf"
+ui.overlay_harbinger.harbingerSeverityText.06,": lowkey uneasy, not scared"
+ui.overlay_harbinger.harbingerSeverityText.08,": nothing to fear, unbothered"
+ui.overlay_harbinger.harbingerGarrisonLine.01,"     No garrison counted: soldiers would soften an Endure even more, they tank (Army panel)."
+ui.overlay_harbinger.harbingerGarrisonLine.02,"     Your garrison counts: it tanks about %d%% of what Brace leaves."
+ui.overlay_harbinger.harbingerGarrisonLine.03,"     Brace plus garrison soften an Endure by %.0f%% max; they can only carry so hard."
+ui.overlay_help.helpProvider.01,"[gold]═══ Getting Around, the Starter Pack ═══[-]
 "
-ui.overlay_help.helpProvider.02,"Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open on top of the town, and the prompt keeps working while one is open, bestie."
-ui.overlay_help.helpProvider.04,"Scroll a panel that's longer than the screen, like this one"
-ui.overlay_help.helpProvider.06,"Close the panel (with no panel open: save and go to the main menu), bounce"
-ui.overlay_help.helpProvider.08,Finish the word you're typing (press again for the next match)
-ui.overlay_help.helpProvider.10,"Open this page again at any time, it's always here"
-ui.overlay_help.helpProvider.11,"New here? Try: build hut, then status, then research. Each panel below lists its own keys, no cap."
+ui.overlay_help.helpProvider.02,"In AgeForge everything is a command: type it at the prompt at the bottom of the screen and smash Enter. Panels pop up on top of the town, and the prompt keeps cooking while one is open."
+ui.overlay_help.helpProvider.04,"Scroll a panel that is too long for the screen, like this whole lore dump"
+ui.overlay_help.helpProvider.06,Close the panel (with no panel open: save and dip to the main menu)
+ui.overlay_help.helpProvider.08,"Finish the word for you, autocomplete carry (press again for the next match)"
+ui.overlay_help.helpProvider.10,"Open this page again whenever, it is always here for you, bestie"
+ui.overlay_help.helpProvider.11,"New here? Starter combo: build hut, then status, then research. Each panel below spills its own keys."
 ui.overlay_help.helpProvider.12,"
-[gold]═══ The dashboard, the home base ═══[-]
+[gold]═══ The Dashboard, Main Character Screen ═══[-]
 "
-ui.overlay_help.helpProvider.13,"With no panel open, it's the main stage."
-ui.overlay_help.helpProvider.15,"Scroll the Buildings list, the long scroll"
-ui.overlay_help.helpProvider.16,"The next page of the Resources box, when it's got more than it can show, the overflow"
-ui.overlay_help.helpProvider.18,"Save and go to the main menu (with a panel open: close it), peace out"
+ui.overlay_help.helpProvider.13,"With no panel open, just vibes."
+ui.overlay_help.helpProvider.15,Doomscroll the Buildings list
+ui.overlay_help.helpProvider.16,"The next page of the Resources box, when it has too much drip to fit"
+ui.overlay_help.helpProvider.18,Save and dip to the main menu (with a panel open: close it)
 ui.overlay_help.helpProvider.19,"
-[gold]═══ The prompt, your command line ═══[-]
+[gold]═══ The Prompt, Where You Yap ═══[-]
 "
-ui.overlay_help.helpProvider.20,"As you type, the best completion shows in dim text after the cursor, it's giving autocomplete."
-ui.overlay_help.helpProvider.22,"Take the completion, then press again for the next one, the chain"
-ui.overlay_help.helpProvider.23,"Take the completion (cursor at the end of the line), real easy"
-ui.overlay_help.helpProvider.25,"Run the line; an unfinished line runs its completion (irreversible ones, like sell, are only filled in: Enter again runs them), ngl wild"
-ui.overlay_help.helpProvider.26,"Command history, the replay"
+ui.overlay_help.helpProvider.20,"As you type, the best completion ghosts in as dim text after the cursor."
+ui.overlay_help.helpProvider.22,"Take the completion; press again to cycle to the next one, combo style"
+ui.overlay_help.helpProvider.23,Yoink the completion (cursor at the end of the line)
+ui.overlay_help.helpProvider.25,"Run the line; an unfinished line runs its completion (irreversible ones, like sell, only get filled in: Enter again sends them)"
+ui.overlay_help.helpProvider.26,"Command history, the receipts"
 ui.overlay_help.helpProvider.27,"
-[gold]═══ Panels, the menus ═══[-]
+[gold]═══ Panel Lore ═══[-]
 "
-ui.overlay_help.helpProvider.28,"Type the command to pull up the panel, bet."
-ui.overlay_help.helpProvider.29,Accounts
-ui.overlay_help.helpProvider.30,"Swap, make, or stash accounts [gray](main-menu panel, not a command)[-]"
+ui.overlay_help.helpProvider.28,Type the command and the panel pulls up.
+ui.overlay_help.helpProvider.29,Alts
+ui.overlay_help.helpProvider.30,"Swap, spawn or back up alts [gray](main-menu panel, not a command)[-]"
 ui.overlay_help.helpProvider.31,"
-[gold]═══ The Map panel, the vibe check ═══[-]
+[gold]═══ The Map Panel Lore ═══[-]
 "
-ui.overlay_help.helpProvider.32,"The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = [ ] while the prompt is empty, lowkey clever."
-ui.overlay_help.helpProvider.34,"Move the cursor (roguelike) or scroll (skyline); Shift goes further, half a screen in the skyline, the big jump"
-ui.overlay_help.helpProvider.36,"Next building, wonder or civilization, the next stop (Shift-Tab: the one before)"
-ui.overlay_help.helpProvider.38,"Zoom out and in, the lens"
-ui.overlay_help.helpProvider.39,"Zoom in and out in the skyline (= works as +): far shows the whole town, close every building twice the size; the level is kept for next time, no cap"
-ui.overlay_help.helpProvider.40,"Skyline: jump to the previous and next district, the hop (the bar at the bottom shows your skyline and a box where you are looking)"
-ui.overlay_help.helpProvider.42,"The town square (roguelike), the lore; the oldest district and the present (skyline)"
-ui.overlay_help.helpProvider.44,"Put the command for what the cursor is on in the prompt, bussin (with something typed, Tab and Enter act on the prompt instead)"
-ui.overlay_help.helpProvider.46,"Close the panel, bail"
-ui.overlay_help.helpProvider.47,"Settings are commands: map style, map glyphs, map flows, minimap. Easy."
+ui.overlay_help.helpProvider.32,"The prompt keeps working while the Map is open: type commands like normal. The map yoinks the keys that print nothing, plus + - = [ ] while the prompt is empty."
+ui.overlay_help.helpProvider.34,"Move the cursor (roguelike) or scroll (skyline); Shift speedruns it, half a screen at a time in the skyline"
+ui.overlay_help.helpProvider.36,"Hop to the next building, wonder or civilization (Shift-Tab: run it back one)"
+ui.overlay_help.helpProvider.38,"Zoom out and in, main character camera"
+ui.overlay_help.helpProvider.39,"Zoom in and out in the skyline (= works as +): far is the whole town, close gives every building a 2x glow-up; the level is kept for next time"
+ui.overlay_help.helpProvider.40,Skyline: speedrun to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)
+ui.overlay_help.helpProvider.42,The town square (roguelike); the OG district and the present (skyline)
+ui.overlay_help.helpProvider.44,"Drop the command for whatever the cursor is on into the prompt (with something typed, Tab and Enter act on the prompt instead)"
+ui.overlay_help.helpProvider.46,Bail on the panel
+ui.overlay_help.helpProvider.47,"Settings are commands too, iykyk: map style, map glyphs, map flows, minimap."
 ui.overlay_help.helpProvider.48,"
-[gold]═══ The Research panel, the brain ═══[-]
+[gold]═══ The Research Panel, Big Brain HQ ═══[-]
 "
-ui.overlay_help.helpProvider.49,"The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing, the vibe check."
-ui.overlay_help.helpProvider.50,"Zoom is a command too, fr: research tree close, research tree far."
+ui.overlay_help.helpProvider.49,The tech tree. The prompt keeps cooking while it is open; the tree yoinks the keys that print nothing.
+ui.overlay_help.helpProvider.50,"Zoom has commands too: research tree close, research tree far. Big brain."
 ui.overlay_help.helpProvider.51,"
-[gold]═══ The badge case, the trophy room ═══[-]
+[gold]═══ The Badge Case, Trophy Flex ═══[-]
 "
-ui.overlay_help.helpProvider.52,"Your account's badges, the trophy wall. The prompt keeps working while it is open; the case takes the keys that print nothing, no cap."
-ui.overlay_help.helpProvider.53,"Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still, the calm mode."
+ui.overlay_help.helpProvider.52,Your account's badge drip. The prompt keeps cooking while it is open; the case yoinks the keys that print nothing.
+ui.overlay_help.helpProvider.53,"Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off freezes everything like an NPC."
 ui.overlay_help.helpProvider.54,"
-[gold]═══ The Expeditions panel, the adventure hub ═══[-]
+[gold]═══ The Expeditions Panel, Side Quest HQ ═══[-]
 "
-ui.overlay_help.helpProvider.55,"The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing, real."
-ui.overlay_help.helpProvider.56,"Sending by name is a command: expedition <name>, with just enough of the name to tell the offers apart, lowkey easy."
+ui.overlay_help.helpProvider.55,The Ready Room shows the age's lands with every offer pinned; the Expedition Report keeps tabs on the parties out. The prompt keeps cooking while it is open; the panel yoinks the keys that print nothing.
+ui.overlay_help.helpProvider.56,"Sending by name is a command: expedition <name>, with just enough of the name to tell the offers apart, lazy typing is valid."
 ui.overlay_help.helpProvider.57,"
-[gold]═══ The People panel, the crew ═══[-]
+[gold]═══ The People Panel, the Squad ═══[-]
 "
-ui.overlay_help.helpProvider.58,"Every person in the town: workers, the reserve, soldiers and scholars, each by the name the age gives them, the whole crew. The prompt keeps working while it is open; the panel takes the keys that print nothing."
-ui.overlay_help.helpProvider.59,"Shares are a command: roster <area> <percent|auto>. The panel opens with people or workers, bet."
+ui.overlay_help.helpProvider.58,"Everyone in the town: workers, the reserve, soldiers and scholars, each under the name the age gives them. The prompt keeps cooking while it is open; the panel yoinks the keys that print nothing."
+ui.overlay_help.helpProvider.59,Shares are a command: roster <area> <percent|auto>. Pull up the panel with people or workers.
 ui.overlay_help.helpProvider.60,"
-[gold]═══ The Advance panel, the gate ═══[-]
+[gold]═══ The Advance Panel, the Glow-Up Gate ═══[-]
 "
-ui.overlay_help.helpProvider.61,"The gate into the next age as four pillars (Knowledge, People, Industry and Monument), with the march of ages and a calendar year that moves as you close in. The prompt keeps working while it is open; the panel takes the keys that print nothing, lowkey iconic."
-ui.overlay_help.helpProvider.62,"The panel opens with charter, the vibe check. Typing advance does the same as Enter on it."
+ui.overlay_help.helpProvider.61,"The gate into the next age, served as four pillars (Knowledge, People, Industry and Monument), with the march of ages and a calendar year that moves as you close in. The prompt keeps cooking while it is open; the panel yoinks the keys that print nothing."
+ui.overlay_help.helpProvider.62,Pull it up with charter. Typing advance hits the same as Enter on it.
 ui.overlay_help.helpProvider.63,"
-[gold]═══ Shortcuts, the cheat codes ═══[-]
+[gold]═══ Shortcuts, aka Cheat Codes ═══[-]
 "
 ui.overlay_help.helpProvider.64,"
-[gold]═══ Developer console, dev only ═══[-]
+[gold]═══ Developer Console, Dev Lore ═══[-]
 "
-ui.overlay_help.helpProvider.65,"[gray]Dev mode is on, bussin. Type these in the [-][cyan]>[-][gray] prompt:[-]
+ui.overlay_help.helpProvider.65,"[gray]Dev mode is on, cheat codes unlocked. Type these in the [-][cyan]>[-][gray] prompt:[-]
 "
 ui.overlay_history.renderHistoryOverlay.01,"
-[gray] No history yet. Play for a while and check back, the story starts soon.[-]
+[gray] No history yet. Go grind a while, the lore loads later.[-]
 "
-ui.overlay_history.renderHistoryOverlay.02,"Population, the crew"
+ui.overlay_history.renderHistoryOverlay.02,Squad size
 ui.overlay_history.renderHistoryOverlay.03," workers"
-ui.overlay_history.renderHistoryOverlay.04,"Food rate, the munchies"
-ui.overlay_history.renderHistoryOverlay.05,"Research rate, the brain work"
-ui.overlay_history.renderHistoryOverlay.06,"Faith, the vibe"
-ui.overlay_history.renderHistoryOverlay.07,"Morale, the mood"
-ui.overlay_history.renderHistoryOverlay.08,"All production, the full drip"
-ui.overlay_history.renderHistoryOverlay.09,"Game speed, the vibe"
+ui.overlay_history.renderHistoryOverlay.04,Snack rate
+ui.overlay_history.renderHistoryOverlay.05,Big brain rate
+ui.overlay_history.renderHistoryOverlay.06,Faith aura
+ui.overlay_history.renderHistoryOverlay.07,Vibes
+ui.overlay_history.renderHistoryOverlay.08,All-production aura
+ui.overlay_history.renderHistoryOverlay.09,Speedrun factor
 ui.overlay_history.renderHistoryOverlay.10,"
-[gold]═══ Civilization history, the replay ═══[-]
+[gold]═══ Civ Lore Replay ═══[-]
 "
-ui.overlay_history.renderHistoryOverlay.11,"[gray]Ticks %d – %d  │  %d samples  │  age advances marked, the milestones │[-]
+ui.overlay_history.renderHistoryOverlay.11,"[gray]Ticks %d to %d  │  %d samples  │  age glow-ups marked │[-]
 
 "
-ui.overlay_history.renderHistoryOverlay.12,"%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s, the range[-]
+ui.overlay_history.renderHistoryOverlay.12,"%s%-15s[-] %s %s%s  [gray]floor:%-8s peak:%s[-]
 "
-ui.overlay_history.renderHistoryOverlay.13,"[gray]  Ages, the timeline: "
-ui.overlay_logs.logsProvider.01,"[gold]═══ Game log, the tea ═══[-]
+ui.overlay_history.renderHistoryOverlay.13,[gray]  Age lore: 
+ui.overlay_logs.logsProvider.01,"[gold]═══ The Tea Log ═══[-]
 "
-ui.overlay_logs.logsProvider.02," Every line, with tick numbers, the full receipts. Routine confirmations are marked ·."
-ui.overlay_logs.logsProvider.03,"[gray]No game logs yet, the feed is quiet.[-]
+ui.overlay_logs.logsProvider.02," Every line, tick numbers included, full receipts. Routine confirmations get a ·."
+ui.overlay_logs.logsProvider.03,"[gray]No game logs yet, zero tea.[-]
 "
 ui.overlay_logs.logsProvider.04,"
-[gold]═══ Engine state, the under the hood ═══[-]
+[gold]═══ Engine Lore ═══[-]
 "
-ui.overlay_logs.logsProvider.05," Tick, the clock: [cyan]%d[-]  Age: [cyan]%s[-]  Population: [cyan]%d/%d, the crew[-]
+ui.overlay_logs.logsProvider.05," Tick: [cyan]%d[-]  Era: [cyan]%s[-]  Squad: [cyan]%d/%d[-]
 "
-ui.overlay_logs.logsProvider.06," Food use, the munchies: [yellow]%s[-]  Reserve: [yellow]%d, the stash[-]
+ui.overlay_logs.logsProvider.06," Snack use: [yellow]%s[-]  Bench: [yellow]%d[-]
 "
-ui.overlay_logs.logsProvider.07," Game speed, the tempo: [green]%s[-] (one tick every [cyan]%dms[-])
+ui.overlay_logs.logsProvider.07," Speedrun factor: [green]%s[-] (one tick every [cyan]%dms[-])
 "
-ui.overlay_logs.logsProvider.08," Game speed, the tempo: [gray]base[-] (one tick every [cyan]%dms[-])
+ui.overlay_logs.logsProvider.08," Speedrun factor: [gray]base[-] (one tick every [cyan]%dms[-])
 "
 ui.overlay_logs.logsProvider.09,"
- [gold]Active events, the plot:[-]
+ [gold]Active plot twists:[-]
 "
-ui.overlay_logs.logsProvider.10,"  [yellow]⚡ %s[-] (%s left), bussin
+ui.overlay_logs.logsProvider.10,"  [yellow]⚡ %s[-] (%s of main character time left)
 "
 ui.overlay_logs.logsProvider.11,"
- [gold]Build queue, the to-do:[-]
+ [gold]Build queue, on deck:[-]
 "
 ui.overlay_logs.logsProvider.12,"
- [gold]Researching, cooking:[-]
+ [gold]Currently cooking:[-]
 "
 ui.overlay_logs.logsProvider.13,"
- [gold]Workers, the crew:[-]
+ [gold]The squad:[-]
 "
-ui.overlay_logs.logsProvider.14,"  [cyan]%s[-] ×%d (reserve: %d), the bench
+ui.overlay_logs.logsProvider.14,"  [cyan]%s[-] ×%d (bench: %d)
 "
-ui.overlay_milestones.milestonesProvider.01," [gold]Progress, the grind:[-] %d/%d"
-ui.overlay_milestones.milestonesProvider.02," [cyan]⚡ boost active, W[-]"
-ui.overlay_milestones.milestonesProvider.03,"     [gray]Reward, the drop: %s[-]%s
+ui.overlay_milestones.milestonesProvider.01," [gold]Grind progress:[-] %d/%d"
+ui.overlay_milestones.milestonesProvider.02," [cyan]⚡ buff active[-]"
+ui.overlay_milestones.milestonesProvider.03,"     [gray]Loot: %s[-]%s
 "
-ui.overlay_milestones.milestonesProvider.04,hidden milestone
-ui.overlay_milestones.milestonesProvider.05,hidden milestones
-ui.overlay_military.militaryProvider.01," [gold]═══ Army Overview, the war room ═══[-]
+ui.overlay_milestones.milestonesProvider.04,gatekept milestone
+ui.overlay_milestones.milestonesProvider.05,gatekept milestones
+ui.overlay_military.militaryProvider.01," [gold]═══ Squad Overview ═══[-]
 
 "
-ui.overlay_military.militaryProvider.02," [gold]Soldiers, the muscle:[-]  %s posted of %s
+ui.overlay_military.militaryProvider.02," [gold]Squad:[-]     %s posted of %s
 "
-ui.overlay_military.militaryProvider.03," [gold]Posts, the stations:[-]     %s
+ui.overlay_military.militaryProvider.03," [gold]Posts:[-]     %s
 "
-ui.overlay_military.militaryProvider.04,"none yet. A military building comes with its soldiers, bet."
-ui.overlay_military.militaryProvider.05," [gold]Posts, the stations:[-]     %s x%d: %s/%s
+ui.overlay_military.militaryProvider.04,none yet. Every military building spawns with its own soldiers.
+ui.overlay_military.militaryProvider.05," [gold]Posts:[-]     %s x%d: %s/%s
 "
-ui.overlay_military.militaryProvider.06," [gold]Defense, the shield:[-]   %s
+ui.overlay_military.militaryProvider.06," [gold]Shield:[-]    %s
 "
-ui.overlay_military.militaryProvider.07," [green]Military Bonus, the W: +%.0f%%[-]
+ui.overlay_military.militaryProvider.07," [green]Military Buff: +%.0f%%[-]
 "
-ui.overlay_military.militaryProvider.08," [green]Expedition Bonus, the drip: +%.0f%%[-]
+ui.overlay_military.militaryProvider.08," [green]Expedition Buff: +%.0f%%[-]
 "
 ui.overlay_military.militaryProvider.09,"
- [gold]═══ Active Campaign, the big mission ═══[-]
+ [gold]═══ Active Campaign Arc ═══[-]
 
 "
 ui.overlay_military.militaryProvider.10," [gray]No active campaign, lowkey quiet[-]
