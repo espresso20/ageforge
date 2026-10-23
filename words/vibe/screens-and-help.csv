@@ -1,527 +1,527 @@
 id,text
 ui.dashboard.NewDashboard.18,Halp
-ui.accounts_panel.newAccountsPanel.01,[gold]═══ Accounts: main character energy ═══[-]
-ui.accounts_panel.newAccountsPanel.02,"[gray]Every account gets its own slot, a whole vibe. Switch between them, or back one up to a file, no cap.[-]"
+ui.accounts_panel.newAccountsPanel.01,[gold]═══ Your Alts ═══[-]
+ui.accounts_panel.newAccountsPanel.02,"[gray]Each account lives in its own slot, separate lore. Hop between them, or back one up to a file before it gets ghosted.[-]"
 ui.accounts_panel.newAccountsPanel.03," Deets "
-ui.accounts_panel.refresh.01,"[gray]No accounts found, it's giving empty.
+ui.accounts_panel.refresh.01,"[gray]Zero accounts, it's giving ghost town.
 
-Make one with 'n', or restore a backup with 'i'. Real.[-]"
-ui.accounts_panel.doSwitch.01,"[red]Switch flopped, big L: %v[-]"
-ui.accounts_panel.doSwitch.02,"[green]● Now playing as %s, the vibe is immaculate[-]"
-ui.accounts_panel.doNew.01," Name your new account, bestie "
-ui.accounts_panel.doNew.02,"New account flopped, L"
-ui.accounts_panel.doNew.03,"[green]● Created %s, a whole new era[-]"
+Spin one up with 'n', or bring a backup back with 'i'.[-]"
+ui.accounts_panel.doSwitch.01,[red]The swap fumbled the bag: %v[-]
+ui.accounts_panel.doSwitch.02,[green]● %s has entered the chat[-]
+ui.accounts_panel.doNew.01," Name the new alt "
+ui.accounts_panel.doNew.02,The new account said nah
+ui.accounts_panel.doNew.03,[green]● %s just got soft launched[-]
 ui.accounts_panel.doExport.01,Export flopped
-ui.accounts_panel.doExport.02,"The export fell through, L"
-ui.accounts_panel.doExport.03,"[red]Couldn't make %s, big L: %v[-]"
+ui.accounts_panel.doExport.02,Export ghosted us
+ui.accounts_panel.doExport.03,"[red]%s would not spawn in, sus: %v[-]"
 ui.accounts_panel.doExport.04,Export? Absolutely cooked.
 ui.accounts_panel.doExport.05,"
 
-[gold]Full backup (account files + saves), the whole drip:[-]
+[gold]The whole stash backed up (account files + saves), nothing gatekept:[-]
 %s"
-ui.accounts_panel.doExport.06,"[gold]Backed up %s[-]
+ui.accounts_panel.doExport.06,"[gold]%s is in the vault now[-]
 
 %s
 
-This file carries this account's progress (unlocks, stats,
-badges). Restore it with Import (i) on any machine, no cap.%s"
-ui.accounts_panel.doExport.07,"Account exported, we ate"
-ui.accounts_panel.doBackup.01,Backup flopped
-ui.accounts_panel.doBackup.02,"[gold]Backed up %s[-]
+This file carries the account's whole lore (unlocks, stats,
+badges). Pull it back with Import (i) on any machine, it travels with you.%s"
+ui.accounts_panel.doExport.07,"Account export ate, no notes"
+ui.accounts_panel.doBackup.01,Backup took an L
+ui.accounts_panel.doBackup.02,"[gold]%s is officially in the vault[-]
 
 %s
 
-This is a full snapshot, the whole vault: the account's files plus every save in this
-account's slot. Restore by copying the folder's contents back
-into data/accounts/<id>/. Only the 10 most recent are kept, the rest get ghosted."
-ui.accounts_panel.doBackup.03,"Account backed up, W"
-ui.accounts_panel.doImport.01,Where's the file at: 
+Full snapshot, nothing gatekept: every file of the account plus every
+save in its slot. To restore, copy the folder's contents back
+into data/accounts/<id>/ by hand. Only the 10 newest stick around."
+ui.accounts_panel.doBackup.03,"Backup secured, the account has plot armor now"
+ui.accounts_panel.doImport.01,"Where's the file, fam: "
 ui.accounts_panel.doImport.02,"[gray]Enter: import (merge)  ·  Esc: nah, bounce[-]"
-ui.accounts_panel.doImport.03,"[red]No path, no cap. Type a file path, then Enter.[-]"
-ui.accounts_panel.doImport.04,"[red]Can't read %s, big L: %v[-]"
-ui.accounts_panel.doImport.05,"[green]Backup imported into %s, the account you're on. W.[-]"
-ui.accounts_panel.doImport.06,"[green]%s is in, it's giving success. Hit Enter to switch over.[-]"
+ui.accounts_panel.doImport.03,"[red]That path is giving blank. Type one in, then Enter.[-]"
+ui.accounts_panel.doImport.04,"[red]%s won't open, the file is acting sus: %v[-]"
+ui.accounts_panel.doImport.05,"[green]%s, your active account, just absorbed the backup. Main character upgrade.[-]"
+ui.accounts_panel.doImport.06,"[green]%s is in the building. Hit Enter to swap over, say less.[-]"
 ui.accounts_panel.doImport.07," Yoink an account backup "
-ui.accounts_panel.doRecovery.01,"Recovery code, your comeback"
+ui.accounts_panel.doRecovery.01,Respawn code
 ui.accounts_panel.doRecovery.02,"[gold]%s[-]
 
 [white::b]%s[-]
 
-This code restores your account ID on another machine or after
-a reinstall, the comeback kid. It does not restore progress (unlocks, stats,
-badges); back those up with Export (e). It is not a
-password, it just proves which account you are.
+This code respawns your account ID on another machine or after
+a reinstall. Progress (unlocks, stats, badges) does not come with
+it; back that up with Export (e). It is not a password either,
+it just proves which account is the real you.
 
-Write it down, bestie. Restore with:  account recover <code>"
-ui.accounts_panel.doRecovery.03,Your comeback code
+Write it down, future you will stan. Restore with:  account recover <code>"
+ui.accounts_panel.doRecovery.03,Your respawn code
 ui.accounts_panel.wipeSavesLabel.01,Nuke all saves
-ui.accounts_panel.showWipeSavesConfirmation.01,"⚠  Delete all saves, for real?
+ui.accounts_panel.showWipeSavesConfirmation.01,"⚠  Nuke every save, fr?
 
-Every save of the account ""%s"" gets deleted.
-Those runs and their prestige are gone, no cap.
-The account (themes, lifetime stats, badges) is kept.
+Every single save on ""%s"" gets yeeted.
+Those runs and their prestige are gone for good.
+The account itself (themes, lifetime stats, badges) stays safe.
 
-This cannot be undone, it's giving permanent."
-ui.accounts_panel.showWipeSavesConfirmation.02,Never mind
-ui.accounts_panel.doDeleteSaves.01,"[red]Couldn't delete the saves, L: %v[-]"
-ui.accounts_panel.doDeleteSaves.02,"[gray]%s has zero saves to delete, nothing to see here.[-]"
-ui.accounts_panel.doDeleteSaves.03,"[gray]Yeeted the 1 save of %s. Gone, no cap.[-]"
-ui.accounts_panel.doDeleteSaves.04,"[gray]Wiped %d saves of %s, a clean slate, we're so back.[-]"
-ui.accounts_panel.doWipe.01,"⚠  Wipe the account?
+There is no undo. It's so over for those runs."
+ui.accounts_panel.showWipeSavesConfirmation.02,Nvm
+ui.accounts_panel.doDeleteSaves.01,"[red]The saves refused to be deleted, the audacity: %v[-]"
+ui.accounts_panel.doDeleteSaves.02,"[gray]%s has zero saves, nothing to nuke, we move.[-]"
+ui.accounts_panel.doDeleteSaves.03,[gray]%s had 1 save and it just got yeeted.[-]
+ui.accounts_panel.doDeleteSaves.04,"[gray]Cleared out %d saves from %s, fresh start arc unlocked.[-]"
+ui.accounts_panel.doWipe.01,"⚠  Full account wipe, for real?
 
-This deletes the account ""%s"": its theme unlocks,
+This erases the account ""%s"" from the lore: theme unlocks,
 lifetime stats, badges and every save in its slot.
 
-A backup goes to data/backups/ first, but restoring it is manual. Choose wisely, the stakes are real."
-ui.accounts_panel.doWipe.02,"Keep it, valid"
+A backup lands in data/backups/ first, but bringing it back is on you, manually."
+ui.accounts_panel.doWipe.02,"Nah, keep it"
 ui.accounts_panel.doWipe.03,Nuke it
 ui.accounts_panel.showWipeTypeGate.01,Spill the account name: 
-ui.accounts_panel.showWipeTypeGate.02,"Type this name exactly, no typos, to confirm:[-]
+ui.accounts_panel.showWipeTypeGate.02,"Spell the name out exactly to confirm, deadass no typos:[-]
 "
-ui.accounts_panel.showWipeTypeGate.03,"This permanently deletes the account. Gone forever, no cap.[-:-:-]
+ui.accounts_panel.showWipeTypeGate.03,"The account gets permanently deleted, like it never had lore.[-:-:-]
 "
-ui.accounts_panel.showWipeTypeGate.04,"A backup (account and saves) goes to data/backups/ first, but restoring it is manual, fr.[-]"
+ui.accounts_panel.showWipeTypeGate.04,A backup (account and saves) hits data/backups/ first; restoring it is a DIY side quest.[-]
 ui.accounts_panel.showWipeTypeGate.05,Enter: lock it in  ·  Esc: bail[-]
-ui.accounts_panel.showWipeTypeGate.06,"Name doesn't match. The account is still standing, not wiped, no cap.[-:-:-]"
-ui.accounts_panel.showWipeTypeGate.07,"Wipe flopped, big L: %v[-:-:-]"
+ui.accounts_panel.showWipeTypeGate.06,"Name doesn't match, so the account survives, plot armor activated.[-:-:-]"
+ui.accounts_panel.showWipeTypeGate.07,The wipe whiffed: %v[-:-:-]
 ui.accounts_panel.showWipeTypeGate.08," Lock in the account wipe "
-ui.accounts_panel.resolveAfterWipe.01,"[gray]Account wiped, gone. Backup saved to %s, we're careful like that.[-]"
+ui.accounts_panel.resolveAfterWipe.01,[gray]Account wiped off the map. The backup is chilling at %s[-]
 ui.accounts_panel.resolveAfterWipe.02,"[gray]The account? Wiped, bestie.[-]"
-ui.accounts_panel.showMessage.01,"[gray]Enter / Esc: peace out, close it[-]"
+ui.accounts_panel.showMessage.01,[gray]Enter / Esc: peace out[-]
 ui.accounts_panel.accountRowLabel.01,[-]   [label](the main char)[-]
-ui.accounts_panel.accountRowLabel.02,"   [red]⚠ tampered with, bestie[-]"
-ui.accounts_panel.accountDetailText.01,"[gray]ID, the receipts[-] [white]%s[-] [gray](%s)[-]"
-ui.accounts_panel.accountDetailText.02,"[gray]Recovery code, the lifeline[-] [white]%s[-]"
+ui.accounts_panel.accountRowLabel.02,"   [red]⚠ tampered, sus[-]"
+ui.accounts_panel.accountDetailText.01,[gray]ID receipts[-] [white]%s[-] [gray](%s)[-]
+ui.accounts_panel.accountDetailText.02,[gray]Respawn code[-] [white]%s[-]
 ui.accounts_panel.accountDetailText.03,[gray]Peak era[-] [white]%s[-]
-ui.accounts_panel.accountDetailText.04,"[gray]Total prestiges, the glow-ups[-] [white]%d[-]"
+ui.accounts_panel.accountDetailText.04,[gray]Total prestige glow-ups[-] [white]%d[-]
 ui.accounts_panel.accountDetailText.05,[gray]Badge drip[-] [white]%d[-]
 ui.accounts_panel.accountDetailText.06,[label]● the main character right now[-]
-ui.accounts_panel.accountDetailText.07,"[red]⚠ touched outside the game, sus[-]"
-ui.accounts_panel.accountDetailText.08,"[gray]idle, touching grass[-]"
+ui.accounts_panel.accountDetailText.07,"[red]⚠ edited outside the game, caught in 4K[-]"
+ui.accounts_panel.accountDetailText.08,[gray]touching grass[-]
 ui.accounts_panel.accountDetailText.09,[gray]Vibe check[-] 
-ui.accounts_panel.accountsKeys.02,Swap
-ui.accounts_panel.accountsKeys.03,Fresh
+ui.accounts_panel.accountsKeys.02,Swap alts
+ui.accounts_panel.accountsKeys.03,New alt
 ui.accounts_panel.accountsKeys.04,Pack it up
 ui.accounts_panel.accountsKeys.05,Stash it
 ui.accounts_panel.accountsKeys.06,Yoink
-ui.accounts_panel.accountsKeys.07,Comeback
-ui.accounts_panel.accountsKeys.08,Burn saves
-ui.accounts_panel.accountsKeys.09,Scorch
+ui.accounts_panel.accountsKeys.07,Respawn
+ui.accounts_panel.accountsKeys.08,Nuke saves
+ui.accounts_panel.accountsKeys.09,Full yeet
 ui.accounts_panel.accountsKeys.11,Bounce
-ui.accounts_panel.displayNameOrName.01,"(nameless, no cap)"
+ui.accounts_panel.displayNameOrName.01,"(no name, NPC vibes)"
 ui.advance_panel.registerAdvancePanel.01,Advance
-ui.advance_panel.advance.01,"Final age, no cap. There is no age beyond it, this is the endgame."
-ui.advance_panel.advance.02,"Not yet, bestie: "
-ui.advance_panel.advance.03," still to stand, fr."
+ui.advance_panel.advance.01,"You made it to the final age, the lore ends here. There is no age past it, no sequel, no DLC."
+ui.advance_panel.advance.02,"Nah, not yet: "
+ui.advance_panel.advance.03," have yet to pull up."
 ui.advance_panel.advance.04,Glowed up to the 
-ui.advance_view.advanceKeys.02,"Pick a pillar to see what it's asking for, bestie"
-ui.advance_view.advanceKeys.04,"Advance to the next age once all four pillars stand. Same as typing advance, the real move."
+ui.advance_view.advanceKeys.02,Pick a pillar to get the tea on what it needs
+ui.advance_view.advanceKeys.04,"Level up to the next age once all four pillars are standing (same as the advance command, just with more aura)"
 ui.advance_view.advanceKeys.06,Yeet this panel shut
 ui.advance_view.renderAdvance.01,Advance · 
 ui.advance_view.renderAdvance.02," to "
-ui.advance_view.renderAdvance.03,"This window is too small for the Advance panel, no cap. Widen it, or Esc to bounce."
+ui.advance_view.renderAdvance.03,The window is too smol for the Advance panel. Esc closes it.
 ui.advance_view.renderAdvance.04,The endgame era
-ui.advance_view.renderAdvance.05,What's the blocker between you and the 
-ui.advance_view.renderAdvance.06,"%d of %d stand, lowkey close"
-ui.advance_view.advMarch.01,"The march of ages, the lore"
+ui.advance_view.renderAdvance.05,Who is gatekeeping you from the 
+ui.advance_view.renderAdvance.06,%d of %d locked in
+ui.advance_view.advMarch.01,Lore of the ages
 ui.advance_view.advMarch.02,Final boss age
 ui.advance_view.advMarch.03,Year 
-ui.advance_view.advMarch.04," · %d%% of the way to the %s, we're cooking"
+ui.advance_view.advMarch.04," · %d%% of the speedrun to the %s"
 ui.advance_view.advMarch.05,● been there  ◉ rn  ○ ahead
-ui.advance_view.advCharter.01,"The Charter, the vibe rules"
-ui.advance_view.advCharter.02,"Top of the mountain: this is the last age, nothing after it."
+ui.advance_view.advCharter.01,The Charter lore
+ui.advance_view.advCharter.02,"This is the last age, the final boss level. Nothing comes after it, deadass."
 ui.advance_view.pillarNote.01,"nothing needed, free W"
-ui.advance_view.pillarNote.02,"%d of %d met, it's giving progress"
-ui.advance_view.pillarStatus.01,"✓ stands, it slaps"
-ui.advance_view.advPillar.01,"✓ locked in, bussin"
-ui.advance_view.advPillar.02,"✓ W, standing tall"
-ui.advance_view.advDetail.01," in full detail, no cap"
-ui.advance_view.advDetail.02,"Nothing needed this age, easy W."
-ui.advance_view.advDetail.03,"+%d more, lowkey a lot"
-ui.advance_view.advRow.01,"%s of %s, the grind"
+ui.advance_view.pillarNote.02,"%d of %d ticked, keep cooking"
+ui.advance_view.pillarStatus.01,✓ standing on business
+ui.advance_view.advPillar.01,✓ locked in
+ui.advance_view.advPillar.02,✓ up and slaying
+ui.advance_view.advDetail.01," in 4K detail"
+ui.advance_view.advDetail.02,"This age asks for nothing, free real estate."
+ui.advance_view.advDetail.03,"+%d more, the list is yapping"
+ui.advance_view.advRow.01,%s of %s bagged
 ui.advance_view.advRight.01,no new drip
-ui.advance_view.advRight.02,"%d new, W"
-ui.advance_view.advRight.03,"nothing new, L"
+ui.advance_view.advRight.02,%d fresh drops
+ui.advance_view.advRight.03,no new drops
 ui.advance_view.advRight.04,Builds
 ui.advance_view.advRight.05,Stash
 ui.advance_view.advRight.06,The squad
-ui.advance_view.advRight.07,"Wonder, the flex"
+ui.advance_view.advRight.07,Wonder flex
 ui.advance_view.advRight.08,The 
-ui.advance_view.advRight.09," brings the vibes"
-ui.advance_view.advRight.10," hits different"
+ui.advance_view.advRight.09," pulls up with"
+ui.advance_view.advRight.10," pulls up with"
 ui.advance_view.advRight.11,Serving
-ui.advance_view.advWay.01,The blockers
-ui.advance_view.advWay.02,"Nothing else is blocking your glow-up, we're clear."
+ui.advance_view.advWay.01,The opps
+ui.advance_view.advWay.02,"No opps left in the way, the road is clear."
 ui.advance_view.advFoot.02,Level up to the 
-ui.advance_view.advFoot.03,"Not yet, lowkey: "
-ui.advance_view.advFoot.04," still need to stand, no cap."
-ui.advance_view.shortKeyUse.01,"pick a pillar, bestie"
-ui.age_splash.ageSplashLines.01,"[cyan]New buildings, fresh drip:[-] %s"
-ui.age_splash.ageSplashLines.02,"[cyan]Unlocks later by research, the long game:[-] %s"
-ui.age_splash.ageSplashLines.03,"[green]New resources, the bag:[-] %s"
-ui.age_splash.ageSplashLines.04,"[yellow]Worker types just dropped, the squad:[-] %s"
-ui.age_splash.ageSplashLines.05,"[gold::b]★ Wonder unlocked, huge W: %s[-]"
-ui.age_splash.ageSplashLines.06,"[white]Stack its cost, research %s (the keystone, no cap), then build it, the whole plan.[-]"
-ui.age_splash.ageSplashLines.07,"[white]Bank the cost, then build it, easy W.[-]"
+ui.advance_view.advFoot.03,"Not the time yet, bestie: "
+ui.advance_view.advFoot.04," still have to show up and show out."
+ui.advance_view.shortKeyUse.01,choose your fave pillar
+ui.age_splash.ageSplashLines.01,[cyan]Fresh builds dropped:[-] %s
+ui.age_splash.ageSplashLines.02,"[cyan]Research unlocks these later, patience arc:[-] %s"
+ui.age_splash.ageSplashLines.03,[green]Fresh resources in the bag:[-] %s
+ui.age_splash.ageSplashLines.04,[yellow]Fresh worker types on the squad:[-] %s
+ui.age_splash.ageSplashLines.05,[gold::b]★ A wonder just dropped: %s[-]
+ui.age_splash.ageSplashLines.06,"[white]Stack the bag for its cost, research %s (the keystone), then build it and flex.[-]"
+ui.age_splash.ageSplashLines.07,"[white]Secure the bag for its cost, then build it.[-]"
 ui.age_splash.ageSplashLines.08,[yellow]── Upgrades ready to flex ──[-]
-ui.age_splash.ageSplashLines.09,"  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to level one up, easy."
-ui.age_splash.ageSplashLines.10,"[yellow]── Legacy buildings, the OGs ──[-]"
-ui.age_splash.ageSplashLines.11,"[gold]══ New epoch, let's gooo ══[-]"
+ui.age_splash.ageSplashLines.09,"  Type [cyan]upgrade[-] for the price tea, or [cyan]upgrade <building>[-] to glow one up."
+ui.age_splash.ageSplashLines.10,[yellow]── Legacy OGs ──[-]
+ui.age_splash.ageSplashLines.11,[gold]══ Epoch glow-up ══[-]
 ui.age_splash.ageSplashLines.12,[gray]Press any key to keep the vibe going.[-]
-ui.ancient_memory_modal.showAncientMemoryModal.01,"[gray]You found an old cache, the lore is real. It seems to hold
-memories of a now-extinct civilization.[-]"
-ui.ancient_memory_modal.showAncientMemoryModal.02,"[white]── Recovered memory, the lore: [-][cyan]%s[-]
+ui.ancient_memory_modal.showAncientMemoryModal.01,"[gray]You stumbled on an old cache and the lore goes deep. It holds
+memories of a civilization that is now extinct, rip.[-]"
+ui.ancient_memory_modal.showAncientMemoryModal.02,"[white]── Lore recovered: [-][cyan]%s[-]
 "
-ui.ancient_memory_modal.showAncientMemoryModal.03,"  [green]✓ Research it now, no prereqs, real[-]
+ui.ancient_memory_modal.showAncientMemoryModal.03,"  [green]✓ Research it right now, prereqs who?[-]
 "
-ui.ancient_memory_modal.showAncientMemoryModal.04,"  [red]• It takes twice as long to research, the tax is real[-]
+ui.ancient_memory_modal.showAncientMemoryModal.04,"  [red]• Research runs twice as long, big oof[-]
 "
-ui.ancient_memory_modal.showAncientMemoryModal.05,"  [gray]Only one memory like this pops up per civilization, no spam.[-]"
-ui.ancient_memory_modal.showAncientMemoryModal.06,"[A[] Accept, say less"
-ui.ancient_memory_modal.showAncientMemoryModal.07,"Couldn't recover the memory, L: "
-ui.ancient_memory_modal.showAncientMemoryModal.08,"[D[] Pass, no thanks"
-ui.ancient_memory_modal.showAncientMemoryModal.09," ✦ Ancient Memory, the lore drop "
-ui.army_rank.rankLine.01,"Army, the squad: "
-ui.army_rank.rankGives.01,"nothing yet, it's a blank slate"
-ui.army_rank.rankGives.02,"odds +%d points, hauls +%d%%, Legendary offers +%d%%, it's the luck arc"
-ui.army_rank.rankReturnText.01," The army just gained "
-ui.army_rank.rankReturnText.02," experience, a W."
-ui.army_rank.rankReturnText.03," The army took an L, lost "
-ui.army_rank.rankReturnText.04," experience, rough."
-ui.army_rank.rankNext.01,"Next tier's missions show up an era early, the sneak peek."
-ui.army_rank.rankNext.02," armies see the next tier of missions an era early, fr."
-ui.arrival.feed.01,"Ages in the rearview, lore so far: "
-ui.badge_case.caseTabs.01,Everything
+ui.ancient_memory_modal.showAncientMemoryModal.05,"  [gray]Each civilization drops only one memory like this, a one-time lore drop.[-]"
+ui.ancient_memory_modal.showAncientMemoryModal.06,"[A[] Bet, I accept"
+ui.ancient_memory_modal.showAncientMemoryModal.07,The memory recovery fumbled: 
+ui.ancient_memory_modal.showAncientMemoryModal.08,[D[] Hard pass
+ui.ancient_memory_modal.showAncientMemoryModal.09," ✦ Ancient Memory Lore "
+ui.army_rank.rankLine.01,Army squad: 
+ui.army_rank.rankGives.01,"nothing yet, still an NPC"
+ui.army_rank.rankGives.02,"luck buffed +%d points, hauls +%d%%, Legendary offers +%d%%"
+ui.army_rank.rankReturnText.01," The army farmed "
+ui.army_rank.rankReturnText.02," XP, we take those."
+ui.army_rank.rankReturnText.03," The army dropped "
+ui.army_rank.rankReturnText.04," XP, oof."
+ui.army_rank.rankNext.01,Missions from the next tier get soft launched an era early.
+ui.army_rank.rankNext.02," armies peep next-tier missions an era early."
+ui.arrival.feed.01,Ages left on read: 
+ui.badge_case.caseTabs.01,Errything
 ui.badge_case.caseTabs.02,Up next
-ui.badge_case.hiddenText.01," hidden, no spoilers"
-ui.badge_case.hiddenText.02," hidden, shh"
-ui.badge_case.familyCount.01,"%d of %d%s, lowkey progress"
-ui.badge_case.metaLine.01,"Hidden badges, the mystery drop"
-ui.badge_case.metaLine.02,"Secret, shh"
+ui.badge_case.hiddenText.01," on the down low"
+ui.badge_case.hiddenText.02," gatekept"
+ui.badge_case.familyCount.01,%d of %d%s in the bag
+ui.badge_case.metaLine.01,Gatekept badges
+ui.badge_case.metaLine.02,Lowkey secret
 ui.badge_case.metaLine.03,Mystery
-ui.badge_case.metaLine.04,Integrity
-ui.badge_case.metaLine.05,"zero points, L"
+ui.badge_case.metaLine.04,Integrity vibe check
+ui.badge_case.metaLine.05,"pointless, literally"
 ui.badge_case.metaLine.06," pts"
-ui.badge_case.descText.01,"More badges of this family pop up as you keep playing, no cap."
-ui.badge_case.descText.02,"Not revealed yet, it's giving mystery."
+ui.badge_case.descText.01,Keep grinding and more badges from this family spawn in.
+ui.badge_case.descText.02,Still gatekept for now.
 ui.badge_case.statusLines.01,Bagged
 ui.badge_case.statusLines.02," · run "
-ui.badge_case.statusLines.03,"Earned in a modified game, so no points. Sus energy."
-ui.badge_case.statusLines.04,"Not earned yet, it's still cooking."
-ui.badge_case.statusLines.05,"Rung %d of %d · %s, the climb"
-ui.badge_case.statusLines.06,Hands you the 
-ui.badge_case.statusLines.07," theme, it's giving."
-ui.badge_case.statusLines.08,Hands you the title 
+ui.badge_case.statusLines.03,"Earned in a modded run, zero points, the integrity check said nah."
+ui.badge_case.statusLines.04,"Still locked, the grind continues."
+ui.badge_case.statusLines.05,Step %d of %d on the grind · %s
+ui.badge_case.statusLines.06,Drops the 
+ui.badge_case.statusLines.07," theme, fit check."
+ui.badge_case.statusLines.08,Hard launches the title 
 ui.badge_case.renderCase.01,"Badges: widen the window, it's cramped rn."
-ui.badge_case.renderCase.02,"No account loaded, so zero badges to show, no cap."
-ui.badge_case.renderCase.03,"Zero badges here yet, a blank slate."
-ui.badge_case.renderCase.04,"No counted badge in sight yet, we're early."
+ui.badge_case.renderCase.02,"No account loaded, so there is zero badge drip to show."
+ui.badge_case.renderCase.03,The badge shelf is empty rn.
+ui.badge_case.renderCase.04,"No counted badge on the radar yet, we are so early."
 ui.badge_case.drawTitle.01," BADGE DRIP"
-ui.badge_case.drawTitle.02,"%d of %d, it's giving"
+ui.badge_case.drawTitle.02,%d of %d bagged
 ui.badge_case.drawTitle.03," pts"
-ui.badge_case.drawTitle.04,"%s · %s at %s, the flex "
-ui.badge_case.drawTitle.05,"  %d/%d · %s pts, big energy"
-ui.badge_case.drawCounts.01,"The badges you're closest to, nearest first, the main quest."
-ui.badge_case.drawCounts.02," earned, bussin"
+ui.badge_case.drawTitle.04,%s · %s drops at %s 
+ui.badge_case.drawTitle.05,"  %d/%d · %s pts of aura"
+ui.badge_case.drawCounts.01,"The badges you are about to bag, closest at the top."
+ui.badge_case.drawCounts.02," bagged"
 ui.badge_case.drawLadderLabel.02,Up next: 
 ui.badge_case.drawRow.02,Mystery badges
-ui.badge_case.statusLine.01,"Next rung, the glow: "
-ui.badge_case.statusLine.02,Every single rung of 
-ui.badge_case.statusLine.03," is earned, no cap."
+ui.badge_case.statusLine.01,Next rung to grind: 
+ui.badge_case.statusLine.02,"GG, "
+ui.badge_case.statusLine.03," is fully cleared, every rung bagged."
 ui.badge_case.statusLine.04,Glow-up so far: 
-ui.badge_case.statusLine.05,Closest vibe: 
-ui.badge_case.drawKeys.02,"the badge before, the next, bestie"
-ui.badge_case.drawKeys.12,"first, last, the bookends"
-ui.badge_case.drawKeys.15,"runs the command below, it's easy"
-ui.badge_case.drawKeys.17,"closes the detail, bounce"
+ui.badge_case.statusLine.05,Almost bagged: 
+ui.badge_case.drawKeys.02,"run it back a badge, or the next"
+ui.badge_case.drawKeys.12,"day one, final boss"
+ui.badge_case.drawKeys.15,sends the command below
+ui.badge_case.drawKeys.17,bounces out of the detail
 ui.badge_case.drawKeys.19,dips out of the detail
-ui.badge_case.drawCard.01," Esc closes, bounce "
-ui.badge_list.badgeFamilyTitles.02,Ages
-ui.badge_list.badgeFamilyTitles.04,Swift Eras
-ui.badge_list.badgeFamilyTitles.05,Wonders
-ui.badge_list.badgeFamilyTitles.07,Maximalists
-ui.badge_list.badgeFamilyTitles.08,Research
-ui.badge_list.badgeFamilyTitles.10,Lineages
-ui.badge_list.badgeFamilyTitles.12,Payrolls
-ui.badge_list.badgeFamilyTitles.14,Resources
-ui.badge_list.badgeFamilyTitles.15,Civilizations
-ui.badge_list.badgeFamilyTitles.16,Harbingers
-ui.badge_list.badgeFamilyTitles.18,Catastrophes
-ui.badge_list.badgeFamilyTitles.19,Expeditions
-ui.badge_list.badgeFamilyTitles.21,Awakenings
-ui.badge_list.badgeFamilyTitles.23,Ladders
-ui.badge_list.badgeFamilyTitles.24,Themes
-ui.badge_list.badgeFamilyTitles.25,Maps
-ui.badge_list.badgeFamilyTitles.27,Specials
-ui.badge_list.badgeSummaryLine.01,"%d of %d bagged, bussin"
-ui.badge_list.badgeSummaryLine.02,point
-ui.badge_list.badgeSummaryLine.03,points
-ui.badge_list.badgeSummaryLine.04," hidden, the mystery"
-ui.badge_list.badgeLine.01," [red]Earned in a modified game, so no points, sus.[-]"
-ui.badge_list.badgeLine.02," [gray](%s of %s, lowkey close)[-]"
+ui.badge_case.drawCard.01," Esc to dip "
+ui.badge_list.badgeFamilyTitles.02,Age Lore
+ui.badge_list.badgeFamilyTitles.04,Speedruns
+ui.badge_list.badgeFamilyTitles.05,Wonder Flex
+ui.badge_list.badgeFamilyTitles.07,Maxxers
+ui.badge_list.badgeFamilyTitles.08,Big Brain
+ui.badge_list.badgeFamilyTitles.10,Lineage Lore
+ui.badge_list.badgeFamilyTitles.12,Payroll Era
+ui.badge_list.badgeFamilyTitles.14,The Bag
+ui.badge_list.badgeFamilyTitles.15,Civs
+ui.badge_list.badgeFamilyTitles.16,Omen Arcs
+ui.badge_list.badgeFamilyTitles.18,Doomcore
+ui.badge_list.badgeFamilyTitles.19,Side Quests
+ui.badge_list.badgeFamilyTitles.21,Lore Drops
+ui.badge_list.badgeFamilyTitles.23,Grind Ladders
+ui.badge_list.badgeFamilyTitles.24,Fit Checks
+ui.badge_list.badgeFamilyTitles.25,Map Drip
+ui.badge_list.badgeFamilyTitles.27,Rare Pulls
+ui.badge_list.badgeSummaryLine.01,%d of %d bagged
+ui.badge_list.badgeSummaryLine.02,aura point
+ui.badge_list.badgeSummaryLine.03,aura points
+ui.badge_list.badgeSummaryLine.04," gatekept"
+ui.badge_list.badgeLine.01," [red]Earned in a modded game, so zero points, caught in 4K.[-]"
+ui.badge_list.badgeLine.02," [gray](%s of %s on the grind)[-]"
 ui.badge_list.badgeHeadLines.01,[gold]The badge drip:[-] 
-ui.badge_list.badgeHeadLines.02," [gold]Title, the flex:[-] "
-ui.badge_list.badgeHeadLines.03," [gray](%s at %s points, the big number)[-]"
-ui.badge_list.badgeCaseHint.01," [gray]Type badges to open the badge case and see the whole collection, lowkey.[-]"
-ui.badge_list.badgeListLines.01," [yellow]%s[-] [gray](%d of %d, lowkey proud)[-]"
-ui.badge_list.badgeListLines.02,"   [gray]and %s more to bag, it's a lot.[-]"
-ui.badge_list.badgeListLines.03,secret badge
-ui.badge_list.badgeListLines.04,secret badges
-ui.badge_list.badgeListLines.05,", each with a hint in the badge case, no spoilers.[-]"
+ui.badge_list.badgeHeadLines.02," [gold]Title flex:[-] "
+ui.badge_list.badgeHeadLines.03," [gray](%s unlocks at %s aura points)[-]"
+ui.badge_list.badgeCaseHint.01," [gray]Type badges to open the badge case and peep the whole collection.[-]"
+ui.badge_list.badgeListLines.01," [yellow]%s[-] [gray](%d of %d bagged)[-]"
+ui.badge_list.badgeListLines.02,"   [gray]plus %s more waiting to get bagged.[-]"
+ui.badge_list.badgeListLines.03,gatekept badge
+ui.badge_list.badgeListLines.04,gatekept badges
+ui.badge_list.badgeListLines.05,", and each one drops a hint in the badge case.[-]"
 ui.badge_list.badgeListLines.06,"   [gray]Nothing to flex yet.[-]"
 ui.badge_list.badgeDigestLines.01," [gray]and "
-ui.badge_list.badgeDigestLines.02,secret
-ui.badge_list.badgeDigestLines.03,secrets
-ui.badge_list.badgeDigestLines.04,"   [yellow]%-14s[-] %d of %d%s, lowkey proud"
-ui.badge_list.badgeDigestLines.05,"   [gray]Still blank, nothing to show.[-]"
+ui.badge_list.badgeDigestLines.02,gatekept one
+ui.badge_list.badgeDigestLines.03,gatekept ones
+ui.badge_list.badgeDigestLines.04,"   [yellow]%-14s[-] bagged %d of %d%s"
+ui.badge_list.badgeDigestLines.05,"   [gray]Nothing to show yet, it's giving empty shelf.[-]"
 ui.badge_list.badgeDigestLines.06," [gold]Latest drop:[-]"
 ui.badge_list.badgeToast.01,Badge bagged:
-ui.badge_panel.badgeKeys.02,"Hop from badge to badge, the grid follows along."
-ui.badge_panel.badgeKeys.04,"The next family's tab (Shift-Tab: the one before, rewind)"
-ui.badge_panel.badgeKeys.05,"Flip a page up and down, fr"
-ui.badge_panel.badgeKeys.06,"The first badge and the last, the alpha and omega"
+ui.badge_panel.badgeKeys.02,Hop from badge to badge; the grid tags along like a bestie
+ui.badge_panel.badgeKeys.04,Jump to the next family's tab (Shift-Tab: run it back one)
+ui.badge_panel.badgeKeys.05,Yeet a page up or down
+ui.badge_panel.badgeKeys.06,Day one badge or final boss badge
 ui.badge_panel.badgeKeys.08,"Open the selected badge's detail, and dip out of it (with something typed, Tab and Enter act on the prompt instead)"
 ui.badge_panel.badgeKeys.10,"Bounce from the detail, then the panel"
-ui.building_text.buildingText.01,scholar
-ui.building_text.buildingText.02,scholars
-ui.building_text.buildingText.03," a copy"
-ui.catastrophe_modal.buildCatastropheModalLayout.01,"[white]── ENDURE: weather the catastrophe, main character era ──[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.02,"• %s of buildings get wrecked (wonders, storage and knowledge buildings are spared)"
-ui.catastrophe_modal.buildCatastropheModalLayout.03,"  [red]• All resources cut down to %s, rough[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.04,"  [red]• %.0f%% of workers gone, and workers from wrecked buildings go idle, L[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.05,"  [red]• All production at %.0f%% for %s, morale %+.0f points, the mood[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.06,"  [green]✓ Age, research, wonders and prestige all kept, W[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.07,"  [green]✓ The epoch badge logs that you endured, big respect[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.08,"  [green]✓ Ancient Knowledge: research time %s (%s in all, permanent, the lore)[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.09,"  [gold]✓ %s legacy: %s (permanent, the forever flex)[-]"
+ui.building_text.buildingText.01,big brain
+ui.building_text.buildingText.02,big brains
+ui.building_text.buildingText.03," a pop"
+ui.catastrophe_modal.buildCatastropheModalLayout.01,[white]── ENDURE: tank the catastrophe ──[-]
+ui.catastrophe_modal.buildCatastropheModalLayout.02,"• %s of buildings get wrecked (wonders, storage and knowledge buildings have plot armor)"
+ui.catastrophe_modal.buildCatastropheModalLayout.03,"  [red]• Every resource gets nerfed down to %s[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.04,"  [red]• %.0f%% of workers gone; anyone working in a wrecked building drops into NPC mode (idle)[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.05,"  [red]• Every building produces at %.0f%% for %s, morale %+.0f points, the vibes are down bad[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.06,"  [green]✓ Age, research, wonders and prestige all make it out, we stay winning[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.07,"  [green]✓ The epoch badge keeps receipts that you endured[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.08,"  [green]✓ Ancient Knowledge: research time %s (%s total, permanent buff)[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.09,"  [gold]✓ %s legacy: %s (forever buff)[-]"
 ui.catastrophe_modal.buildCatastropheModalLayout.10,"  [gray]• Ancient Knowledge already bagged here (research time stays %s)[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.11,"  [gray]• %s legacy already yours, no new legacy bonus, we're maxed[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.11,"  [gray]• %s legacy already secured, so the legacy bonus does not stack, you are maxed out[-]"
 ui.catastrophe_modal.buildCatastropheModalLayout.12,"[white]── SUCCUMB: let the whole civ fall, rip ──[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.13,"  [red]• Full reset to the Primitive Age: buildings, resources, research, all cooked[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.14,"  [red]• Zero prestige points, L (level and upgrades are kept)[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.15,"  [green]✓ Up to %d buildings become ruins, rough (50%% output, max %d ruins)[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.16,"  [green]✓ Era Mastery: the ages this run finished gain a level and run faster, the glow-up[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.17,"[gray]Esc: decide later, no rush · advancing waits · type 'catastrophe' to reopen[-]"
-ui.catastrophe_modal.buildCatastropheModalLayout.18," ☄ %s Catastrophe, the big one "
-ui.catastrophe_modal.buildLastPassageModalLayout.01,"[gray]Prestige waits on your answer, the rest is chill.[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.02,"  [red]• You keep %d%% of this run's prestige points, the cut: %d of %d[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.03,"[white]── ENDURE: pass through, lowkey diminished ──[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.04,"  [green]✓ Braced (level %d): %d%% kept instead of %.0f%%, no L[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.05,"  [green]✓ Level, upgrades, legacies and ruins carry over, same as always, real[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.13,"  [red]• Hard reset back to the Touch Grass Age: buildings, resources and research, all wiped[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.14,"  [red]• Zero prestige points in the bag (level and upgrades are kept)[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.15,"  [green]✓ Up to %d buildings survive as ruins, very ruincore (50%% output, max %d ruins)[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.16,"  [green]✓ Era Mastery: every age this run cleared levels up and plays faster next time, speedrun buff[-]"
+ui.catastrophe_modal.buildCatastropheModalLayout.17,[gray]Esc: let it marinate · advancing waits · type 'catastrophe' to reopen[-]
+ui.catastrophe_modal.buildCatastropheModalLayout.18," ☄ %s Catastrophe Arc "
+ui.catastrophe_modal.buildLastPassageModalLayout.01,[gray]Prestige is on hold till you answer. Everything else keeps cooking.[-]
+ui.catastrophe_modal.buildLastPassageModalLayout.02,"  [red]• Only %d%% of this run's prestige points make it out: %d of %d, the tax is giving robbery[-]"
+ui.catastrophe_modal.buildLastPassageModalLayout.03,"[white]── ENDURE: push through, but nerfed ──[-]"
+ui.catastrophe_modal.buildLastPassageModalLayout.04,"  [green]✓ Braced (level %d): you hold on to %d%% instead of %.0f%%, clutch[-]"
+ui.catastrophe_modal.buildLastPassageModalLayout.05,"  [green]✓ Level, upgrades, legacies and ruins carry over like always, they never miss[-]"
 ui.catastrophe_modal.buildLastPassageModalLayout.06,[white]── SUCCUMB: let it cook the run ──[-]
-ui.catastrophe_modal.buildLastPassageModalLayout.07,"  [red]• Prestige completes with zero points from this run, the level still rises[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.08,"  [gray]• You already carry the Cosmic Legacy, so Succumb is locked for you, no cap.[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.09,"  [gold]✓ Cosmic Legacy: production +%.0f%% after the caps, through every prestige, goated[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.10,"  [gold]✓ Earned once, kept forever, rent free[-]"
-ui.catastrophe_modal.buildLastPassageModalLayout.11,"[gray]Esc: decide later · prestige waits · type 'catastrophe' to reopen, bet[-]"
-ui.catastrophe_modal.showCatastropheModal.01,"[E] ENDURE, main character"
+ui.catastrophe_modal.buildLastPassageModalLayout.07,"  [red]• You still prestige, but this run pays out zero points, rip (level still goes up)[-]"
+ui.catastrophe_modal.buildLastPassageModalLayout.08,"  [gray]• You already hold the Cosmic Legacy, so Succumb is gatekept from you.[-]"
+ui.catastrophe_modal.buildLastPassageModalLayout.09,"  [gold]✓ Cosmic Legacy: +%.0f%% production after the caps, riding with you through every prestige, ride or die[-]"
+ui.catastrophe_modal.buildLastPassageModalLayout.10,"  [gold]✓ Earn it once and it lives rent free forever[-]"
+ui.catastrophe_modal.buildLastPassageModalLayout.11,"[gray]Esc: think it over, no pressure · prestige stays on read · type 'catastrophe' to reopen[-]"
+ui.catastrophe_modal.showCatastropheModal.01,"[E] ENDURE, tank it"
 ui.catastrophe_modal.showCatastropheModal.02,Endure flopped: 
-ui.catastrophe_modal.showCatastropheModal.03,"[S] SUCCUMB, let it go"
+ui.catastrophe_modal.showCatastropheModal.03,"[S] SUCCUMB, it's over"
 ui.catastrophe_modal.showCatastropheModal.04,Succumb bombed: 
-ui.catastrophe_modal.endureDefenseLines.01,"  [green]✓ Braced (level %d): %s fall, %s kept, before your garrison even steps up[-]"
-ui.catastrophe_modal.endureDefenseLines.02,"  [gray]• No garrison: soldiers would soften this, real talk (see the Army panel)[-]"
-ui.catastrophe_modal.endureDefenseLines.03,"  [green]✓ Your garrison saves %d %s and keeps %s of stock, not %s, the bodyguard arc[-]"
-ui.catastrophe_modal.endureDefenseLines.04,building
-ui.catastrophe_modal.endureDefenseLines.05,"  [green]✓ Your garrison keeps %s of stock, not %s, and cushions the fall, the shield[-]"
-ui.catastrophe_modal.endureDefenseLines.06,"  [gray]• Brace and garrison together soften an Endure by at most %.0f%%, the cap is real[-]"
+ui.catastrophe_modal.endureDefenseLines.01,"  [green]✓ Braced (level %d): %s go down, %s stay, and the garrison has not even clocked in yet[-]"
+ui.catastrophe_modal.endureDefenseLines.02,"  [gray]• No garrison, so nobody is tanking this; soldiers would soften it (see the Army panel)[-]"
+ui.catastrophe_modal.endureDefenseLines.03,"  [green]✓ Your garrison clutches up: %d %s saved, %s of stock kept instead of %s[-]"
+ui.catastrophe_modal.endureDefenseLines.04,build
+ui.catastrophe_modal.endureDefenseLines.05,"  [green]✓ Your garrison holds on to %s of stock, not %s, and takes the edge off, hard carry[-]"
+ui.catastrophe_modal.endureDefenseLines.06,"  [gray]• Brace plus garrison softens an Endure by %.0f%% max, they can only carry so hard[-]"
 ui.commands.secActions.01,The moves
-ui.commands.secPlan.01,"Build Plan, the game plan"
-ui.commands.helpSections.01,"Queue builds and techs. Each one starts, and gets paid for, once the resources are there, even while you're AFK."
-ui.commands.secPeople.01,The crew
-ui.commands.helpSections.02,"Roster used to be called worker shares. Old name, but workers share still works, no cap."
-ui.commands.secResearch.01,"Research, Expeditions & Army, the quest log"
-ui.commands.secTrade.01,"Trade & Diplomacy, the deal game"
-ui.commands.secWonders.01,"Wonders & Prestige, the glow-up"
-ui.commands.secGame.01,The basics
-ui.commands.secAccounts.01,"Accounts, the main cast"
-ui.commands.helpSections.03,"Each account is its own slot. New and wipe live in the Accounts panel (main menu), bestie."
-ui.help.commands.prestige_confirm_yes,"Prestige: a fresh run, keeping your points, carry-overs and Era Mastery, the reset that slaps"
-ui.help.commands.festival_confirm_yes,"Throw the festival now, it's giving party"
-ui.help.commands.gather,"Gather food, wood or stone by hand, the starter grind (default "
+ui.commands.secPlan.01,Build Plan Arc
+ui.commands.helpSections.01,"Line up builds and techs; each one kicks off, and pays, once the resources show up, even while you are AFK."
+ui.commands.secPeople.01,The squad
+ui.commands.helpSections.02,"The roster had a past life as worker shares, so workers share still works, legacy lore."
+ui.commands.secResearch.01,"Research, Side Quests & the Squad"
+ui.commands.secTrade.01,Trade & Diplomacy Drama
+ui.commands.secWonders.01,Wonders & Prestige Glow-Ups
+ui.commands.secGame.01,Game Lore
+ui.commands.secAccounts.01,Accounts & Alts
+ui.commands.helpSections.03,Each account is its own little universe. New and wipe are chilling in the Accounts panel (main menu).
+ui.help.commands.prestige_confirm_yes,"Prestige: hard reset into a new run, but your points, carry-overs and Era Mastery stay in the bag"
+ui.help.commands.festival_confirm_yes,Kick off the function now
+ui.help.commands.gather,"Grind food, wood or stone by hand (default "
 ui.help.commands.gather.2,", max "
-ui.help.commands.gather.3," per use; the early ages only, the starter pack)"
+ui.help.commands.gather.3," per use; only in the early ages, the tutorial era)"
 ui.help.commands.build,Slap down copies of a building (default 1)
-ui.help.commands.sell,"Yeet copies of a building and get back 50% of the build cost (not wonders, storage or knowledge buildings, those are off-limits)"
-ui.help.commands.advance,"Level up to the next age once it's ready, next era energy"
-ui.help.panels.charter,"The Advance panel: the four pillars the next age wants, the march of ages, and what the next age brings, the full lore dump"
-ui.help.commands.charter,"Open the Advance panel (Enter there advances once all four pillars stand, fr)"
-ui.help.commands.upgrade,"Show the old-school buildings you hold and what upgrading them costs, the glow-up menu"
-ui.help.commands.upgrade.2,"Upgrade copies of an older building into this age's version at half the price of a new copy (no count: as many as you can afford, the discount era)"
-ui.help.panels.plan,"Build plan: queued builds & techs, started as the resources roll in, the to-do stack, no lie"
-ui.help.commands.plan,"Open the Plan panel, shuffle and remove with keys, main character editing"
-ui.help.commands.plan.build,"Add copies of a building (this age's, or the next age's to build once you advance), plan ahead, it's giving foresight"
-ui.help.commands.plan.upgrade,"Plan upgrades for the copies you hold, one at a time as each one gets paid for, kinda satisfying"
-ui.help.commands.plan.research,"Add a tech and the techs it still needs before it (one at a time, in order), the prereq arc, deadass"
-ui.help.commands.plan.advance,"Advance the moment the next age is ready, no delay, bet"
-ui.help.commands.plan.deal,"Take a civilization's trade deal n once its price is there, smooth, ngl a steal"
-ui.help.commands.plan.list,"Print the plan with each item's status, the receipts"
+ui.help.commands.sell,"Yeet copies of a building and get 50% of the build cost back (wonders, storage and knowledge buildings are off-limits)"
+ui.help.commands.advance,"Level up to the next age (once it is ready, no early access)"
+ui.help.panels.charter,"The Advance panel: the four pillars the next age is asking for, the age lore timeline, and what the next age drops"
+ui.help.commands.charter,Pull up the Advance panel (Enter there advances once all four pillars are standing on business)
+ui.help.commands.upgrade,List your older buildings and what each glow-up costs
+ui.help.commands.upgrade.2,Glow up copies of an older building into this age's building for half the price of a new copy (no count: as many as your bag allows)
+ui.help.panels.plan,"Build plan: your queued builds & techs, each one kicks off when the bag fills up"
+ui.help.commands.plan,Open the Plan panel (shuffle and yeet items with keys)
+ui.help.commands.plan.build,"Add copies of a building (this age's, or the next age's, queued up for after you advance, big planner energy)"
+ui.help.commands.plan.upgrade,"Queue glow-ups for copies you own, one at a time as the bag allows"
+ui.help.commands.plan.research,"Add a tech and the prereqs it still needs ahead of it, the whole side quest chain (techs start one at a time, in order)"
+ui.help.commands.plan.advance,"Advance the second the next age is ready, zero hesitation, speedrun mode"
+ui.help.commands.plan.deal,Lock in a civilization's trade deal n once you can cover its price
+ui.help.commands.plan.list,"Print the plan with the status of every item, receipts included"
 ui.help.commands.plan.remove,Yeet item n
-ui.help.commands.plan.optimize,"Shuffle the planned buildings for the fastest growth (homes and producers mixed), and tell you how much sooner the plan finishes, galaxy brain, fr"
-ui.help.commands.plan.up,"Bump item n one place up, it's giving promotion"
-ui.help.commands.plan.down,"Slide item n one place down, highkey humbling"
-ui.help.commands.plan.clear,"Clear the plan, fresh start, real reset"
-ui.help.commands.recruit,"Recruit workers into free housing (default 1). They start idle, so put them to work, no lie."
-ui.help.commands.assign,"Put idle workers to work in a building (default 1), their main character moment"
-ui.help.commands.unassign,"Pull workers out of a building; they go idle (default 1), sorry crew, big sus move"
-ui.help.commands.dismiss,"Dismiss workers from a building; they leave your population, ghosted (default 1)"
-ui.help.commands.roster,"Show your roster: each domain's slice of the workforce, the squad breakdown, no lie"
-ui.help.commands.roster.2,"Set a domain's share of your workers (0 keeps it empty; auto, the default, follows its buildings' slots); no percent just shows it, bussin"
-ui.help.commands.roster.3,"Put every domain back on auto, reset the vibe"
-ui.help.panels.people,"People: workers, the reserve, soldiers and scholars, the whole crew, real"
-ui.help.commands.people,"Open the People panel to see your workers and their work areas, the reserve, your soldiers and your scholars, the whole squad, kinda a lot"
-ui.help.commands.workers,"Open the People panel (same as people, deadass)"
-ui.help.commands.workers.auto-recruit,"Show or set whether the game recruits into empty worker slots as housing and food allow (on by default), autopilot on, bestie"
-ui.help.panels.research,"The tech tree: a map of every tech in sight, the big board, main character map"
-ui.help.commands.research,"Go study a tech, bestie"
-ui.help.commands.research.cancel,"Cancel current research (the work done on it is lost, rip), that's a L"
-ui.help.commands.research.list,"Show every tech you can grab right now, the menu, fr"
-ui.help.commands.research.tree,"Open the tech tree, zoomed in on the big badges (close) or out on the whole tree (far), it's a vibe"
-ui.help.commands.research.card,"Open the tech tree on a tech's card: what it does, how long it takes and what it needs, the full tea"
-ui.help.commands.scholars,"Show your scholars: their kinds, how many research and how many teach, and what teaching adds, the brain squad, ngl genius"
-ui.help.commands.scholars.2,"Set the share of your scholars that research (100 by default); the rest teach, that's the lore"
-ui.help.panels.expedition,"The Expeditions panel (Ready Room and Expedition Report), the adventure hub, main character era"
-ui.help.commands.expedition,"Open the Expeditions panel: the map of this age's lands with its offers pinned on, and the report on the parties out, bussin energy"
-ui.help.commands.expedition.2,"Send the offer with that name (a part of it will do, no need to spell it all); it takes a party of soldiers, and your army sets how many are out, highkey simple"
-ui.help.commands.expedition.list,"Print the mission board, the quest list, no lie"
-ui.help.panels.army,"Army overview & military campaigns, the war room, era of conquest"
-ui.help.commands.army,"Open the Army (military) panel, the soldier hub, kinda a lot of muscle"
-ui.help.commands.campaign,"Same as expedition: send the offer with that name, no difference, bet"
-ui.help.commands.campaign.list,"Print the mission board, the to-do list, deadass"
-ui.help.panels.trade,"Trade routes, the bag bridge, ngl the economy"
-ui.help.commands.trade.route.list,"Show every trade route, the whole network, the vibe"
-ui.help.commands.trade.route.start,"Get a trade route going, it's giving money"
-ui.help.commands.trade.route.stop,"Shut down a trade route, bounce"
-ui.help.commands.trade.black,"Same as blackmarket, the back-alley deal, sus"
-ui.help.commands.blackmarket,"Smuggling run: gamble culture on a haul of one resource (bare blackmarket shows the odds, or when it opens), high-risk energy, bet"
-ui.help.panels.factions,"Boons, the Geographic Society & opinion of each civilization, the diplomacy hub (alias: diplomacy), highkey messy"
-ui.help.commands.factions,"Open the Factions panel (boons, the Geographic Society, opinion), the social scene, spill the tea"
-ui.help.commands.diplomacy,"Alias for factions (opens the same panel), same vibe"
-ui.help.commands.diplomacy.ally,"Ally with a civilization, the bestie move ("
-ui.help.commands.diplomacy.ally.2," or less, the vibe has to be there "
-ui.help.commands.diplomacy.rival,"Mark a civilization as your rival, the beef is real"
-ui.help.commands.diplomacy.embargo,"Embargo a civilization (a provocation: it can start a war, big sus energy)"
-ui.help.commands.diplomacy.gift,"Drop a gold gift, it's giving friendship, for +"
-ui.help.commands.diplomacy.gift.2," opinion or more (the Factions panel shows today's price and what it earns, the receipts)"
-ui.help.commands.diplomacy.neutral,"Chill back to neutral with a civilization, kinda peace"
-ui.help.commands.diplomacy.tribute,"Sue for peace with a civilization at war, the apology tour, big L"
-ui.help.commands.diplomacy.deals,"List trade deals (one civilization, or every one you've met), the deal board, the receipts"
-ui.help.commands.diplomacy.accept,"Take a civilization's trade deal n, W"
-ui.help.commands.diplomacy.raid,"Raid a civilization's trade route (a war provocation, sus behavior)"
-ui.help.commands.wonder,"Show how the wonder bank is doing right now, the vibe check"
-ui.help.commands.wonder.collect,Stash resources into the current wonder (alias: bank; no amount: as much as it needs)
-ui.help.panels.wonders,"Wonder bank & built wonders, the flex wall"
-ui.help.commands.prestige,"Check your prestige status, the glow-up scorecard"
-ui.help.commands.festival,"Spend culture for a temporary production boost, the party era"
-ui.help.commands.catastrophe,"Reopen a pending catastrophe or Last Passage (or show the outlook), the disaster menu, it's giving chaos"
-ui.help.panels.harbinger,"The harbinger's warning & your answers (alias: harb), the heads-up, the ominous text, sus"
-ui.help.commands.harbinger,"Open the Harbinger panel (alias: harb), it's ominous, no lie"
-ui.help.commands.harbinger.2,"Answer the harbinger without opening the panel, quick reply, ngl clean"
-ui.help.commands.rates,"Show the resource rate breakdown, the math, the receipts"
+ui.help.commands.plan.optimize,"Reshuffle the planned buildings for max growth (homes and producers mixed) and spill how much sooner the plan finishes, galaxy brain move"
+ui.help.commands.plan.up,"Bump item n up one spot, a little glow-up"
+ui.help.commands.plan.down,Humble item n one spot down
+ui.help.commands.plan.clear,"Wipe the plan clean, blank slate era"
+ui.help.commands.recruit,"Pull new workers into free housing (default 1); they spawn in idle, zero tasks."
+ui.help.commands.assign,"Give idle workers a job in a building, no more NPC behavior (default 1)"
+ui.help.commands.unassign,Pull workers out of a building; they go idle and touch grass (default 1)
+ui.help.commands.dismiss,Ghost workers from a building; they bounce out of your population for good (default 1)
+ui.help.commands.roster,Show your roster: how the squad splits across each domain
+ui.help.commands.roster.2,"Set a domain's cut of your workers (0 keeps it empty; auto, the default, follows its buildings' slots); leave off the percent to just peep it"
+ui.help.commands.roster.3,"Every domain back on autopilot, vibe reset"
+ui.help.panels.people,"People: the squad roster, i.e. workers, reserve, soldiers and scholars"
+ui.help.commands.people,"Open the People panel: your workers and their grind spots, the reserve, your soldiers and your scholars"
+ui.help.commands.workers,"Open the People panel (people does the same thing, twin)"
+ui.help.commands.workers.auto-recruit,"Show or set whether the game auto-recruits into empty worker slots when housing and food allow (on by default, autopilot era)"
+ui.help.panels.research,The tech tree: every tech in sight on one big brain map
+ui.help.commands.research,Start big brain time on a tech
+ui.help.commands.research.cancel,Cancel the current research (the progress on it gets yeeted)
+ui.help.commands.research.list,Show every tech up for grabs rn
+ui.help.commands.research.tree,"Open the tech tree up close on big badges (close) or zoomed out on the whole tree (far), overview era"
+ui.help.commands.research.card,"Jump the tech tree straight to a tech's card: what it does, how long it cooks and what it needs"
+ui.help.commands.scholars,"Show your scholars: their kinds, how many research vs teach, and what the teaching buff adds"
+ui.help.commands.scholars.2,"Set how many of your scholars research, as a share (100 by default); the rest switch to teacher mode, sensei era"
+ui.help.panels.expedition,"Side quest HQ: Ready Room plus Expedition Report, all in the Expeditions panel"
+ui.help.commands.expedition,"Open the Expeditions panel: this age's map with every offer pinned on it, plus the tea on parties that are out"
+ui.help.commands.expedition.2,"Send out the offer with that name (part of the name works, no need to spell it all); it takes a squad of soldiers, and your army decides how many can be out at once"
+ui.help.commands.expedition.list,"Spit out the full mission board, side quests and all"
+ui.help.panels.army,"Squad overview & military campaigns, the war room"
+ui.help.commands.army,Pull up the Army (military) panel and check on the squad
+ui.help.commands.campaign,Twin of expedition: sends the offer with that name
+ui.help.commands.campaign.list,"Print the side quest board (same mission board, other command)"
+ui.help.panels.trade,"Trade routes, where the bag moves"
+ui.help.commands.trade.route.list,"All your trade routes, receipts included"
+ui.help.commands.trade.route.start,Spin up a trade route and let the bag flow
+ui.help.commands.trade.route.stop,Ghost a trade route
+ui.help.commands.trade.black,"blackmarket, speedrun spelling"
+ui.help.commands.blackmarket,"Smuggling run: bet your culture on a haul of one resource, high risk, high drip (bare blackmarket shows the odds, or when it opens)"
+ui.help.panels.factions,"Boons, the Geographic Society & what every civilization thinks of you, the tea (alias: diplomacy)"
+ui.help.commands.factions,"Pull up the Factions panel for the social tea (boons, the Geographic Society, opinion)"
+ui.help.commands.diplomacy,factions with a different fit on (opens the same panel)
+ui.help.commands.diplomacy.ally,Make a civilization your ride or die (
+ui.help.commands.diplomacy.ally.2," or less, and the vibe check needs opinion "
+ui.help.commands.diplomacy.rival,Start beef with a civilization: declare it your rival
+ui.help.commands.diplomacy.embargo,Embargo a civilization (pure opp behavior: it can start a war)
+ui.help.commands.diplomacy.gift,Rizz a civilization with a gold gift for +
+ui.help.commands.diplomacy.gift.2," opinion or more (the Factions panel has the tea on today's price and what it earns)"
+ui.help.commands.diplomacy.neutral,"Go back to neutral with a civilization, situationship over"
+ui.help.commands.diplomacy.tribute,Start the apology tour: sue for peace with a civilization you are at war with
+ui.help.commands.diplomacy.deals,"Pull the receipts on trade deals (one civilization, or every one you have met)"
+ui.help.commands.diplomacy.accept,Say bet to a civilization's trade deal n
+ui.help.commands.diplomacy.raid,Raid a civilization's trade route (major opp energy: it provokes war)
+ui.help.commands.wonder,Vibe check on the current wonder bank
+ui.help.commands.wonder.collect,Stack resources into the current wonder's bag (alias: bank; no amount: as much as it needs)
+ui.help.panels.wonders,The flex wall: wonder bank & wonders you built
+ui.help.commands.prestige,Peep your prestige status
+ui.help.commands.festival,"Blow culture on a short production buff, party mode"
+ui.help.commands.catastrophe,"Reopen a pending catastrophe or Last Passage (or peep the outlook), the doom menu"
+ui.help.panels.harbinger,"The harbinger's warning & your answers, the ominous group chat (alias: harb)"
+ui.help.commands.harbinger,Slide into the Harbinger panel (alias: harb)
+ui.help.commands.harbinger.2,"Reply to the harbinger straight from the prompt, no panel needed, like a quick DM"
+ui.help.commands.rates,"Break down your resource rates, the math is mathing"
 ui.help.commands.status,Show the detailed vibe check
-ui.help.panels.theme,"Theme picker: palettes & accessibility, the aesthetic, main character fit"
-ui.help.commands.theme,"Open the theme picker (palettes + accessibility), pick your fit, the mood"
-ui.help.commands.theme.2,"Swap to a theme by key, fr"
-ui.help.commands.theme.list,"List themes with their unlock status, the closet, the drip"
-ui.help.panels.map,"The map: your settlement and the known world (aliases: citymap, worldmap), the full view, the vibe"
-ui.help.commands.map,"Open the Map panel (worldmap opens it on the known world); the prompt keeps working while it's open, multitask, slay"
-ui.help.commands.map.style,"Show or set the map style (default roguelike), pick your vibe"
-ui.help.commands.map.glyphs,"Show or set the map's glyphs (default unicode; nerd needs a Nerd Font), the symbol drip"
-ui.help.commands.map.flows,"Turn the Map's flows overlay on or off (bare: flip it), highkey a must"
-ui.help.commands.style,"Same as map style, the shortcut, bet"
-ui.help.commands.minimap,"Show or set the mini map above the Buildings list (default off), the corner pop-up, kinda extra"
-ui.help.commands.motion,"Show or set motion: whether the maps, the badge case and theme effects move (default on), the moving vibes"
-ui.help.commands.vibemode,"Show or set VibeMode: the game's words in a second, GenZ script (default off), it's this whole vibe"
-ui.help.commands.icons,"Check whether your font shows Nerd Font icons, and install one if it doesn't, no excuses, bruh"
-ui.help.commands.save,"Save (no name: overwrite or branch; a name: branch a fresh save), lock in your run, it's giving security"
-ui.help.commands.save.list,"Same as saves, same drip"
-ui.help.commands.load,"Load a save (no name: open the save browser), rewind, time travel vibe"
-ui.help.commands.saves,"List every save file, the whole collection, the drip"
-ui.help.commands.dump,"Export logs to file for debugging, the bug receipts"
-ui.help.panels.help,"This Help panel, the manual, ngl the main character guide"
-ui.help.commands.help,"Open this Help panel, the cheat sheet, no lie"
+ui.help.panels.theme,Fit check: theme palettes & accessibility
+ui.help.commands.theme,Open the theme picker and choose your fit (palettes + accessibility)
+ui.help.commands.theme.2,Switch fits: pick a theme by key
+ui.help.commands.theme.list,Raid the closet: every theme and whether it is unlocked
+ui.help.panels.map,"The map: your settlement plus the known world, the whole lore in one view (aliases: citymap, worldmap)"
+ui.help.commands.map,Open the Map panel (worldmap opens it on the known world); the prompt keeps cooking while it is open
+ui.help.commands.map.style,Show or set the map's aesthetic (default roguelike)
+ui.help.commands.map.glyphs,Show or set the map's glyph drip (default unicode; nerd needs a Nerd Font)
+ui.help.commands.map.flows,"The Map's flows overlay, on or off (bare: just flip it), it lowkey slaps"
+ui.help.commands.style,map style but make it short
+ui.help.commands.minimap,"Show or set the mini map perched above the Buildings list (default off), a smol map"
+ui.help.commands.motion,"Show or set motion: whether the maps, the badge case and theme effects move or stay frozen like an NPC (default on)"
+ui.help.commands.vibemode,"Show or set VibeMode: the game's words in GenZ script, the one you are reading rn (default off)"
+ui.help.commands.icons,"Check if your font can show Nerd Font icons, and install one if it is lacking"
+ui.help.commands.save,"Save, lock in your run (no name: overwrite or branch; a name: branch a fresh save)"
+ui.help.commands.save.list,"saves, just spelled different, same energy"
+ui.help.commands.load,Run it back from a save (no name: open the save browser)
+ui.help.commands.saves,Line up all your save files for a vibe check
+ui.help.commands.dump,"Export the logs to a file, receipts for the bug hunt"
+ui.help.panels.help,"This Halp panel, the cheat sheet"
+ui.help.commands.help,Summon this Halp panel
 ui.help.commands.quit,Save and bounce from the game
-ui.help.commands.account,"Show this account's ID & backup help, the safety net, real"
-ui.help.commands.account.list,"List your local accounts, the whole cast, deadass"
-ui.help.commands.account.badges,"List this account's badges, bagged and locked, the trophy wall, flex"
-ui.help.commands.account.show.code,"Show this account's recovery code, the lifeline, the comeback"
-ui.help.commands.account.switch,"Swap to an existing local account, highkey effortless"
-ui.help.commands.account.export,Stash this account's progress in a file
-ui.help.commands.account.backup,"Full snapshot (account files + saves) to data/backups/, the whole vault, fr"
+ui.help.commands.account,Show this account's ID plus the backup tea
+ui.help.commands.account.list,List every alt on this machine
+ui.help.commands.account.badges,"Flex this account's badges, bagged and still locked"
+ui.help.commands.account.show.code,Show this account's respawn code (the recovery code)
+ui.help.commands.account.switch,Hop onto another local alt that already exists
+ui.help.commands.account.export,Pack this account's whole glow-up into a backup file
+ui.help.commands.account.backup,"Snapshot everything, account files + saves, into data/backups/, no gatekeeping"
 ui.help.commands.account.import,Yoink an account back from a backup file
-ui.help.commands.account.recover,"Restore your account ID from a recovery code, the comeback arc"
-ui.help.commands.account.wipe,"Where to wipe an account (the Accounts panel), the scorch zone"
-ui.help.panels.badges,"The badge case: every badge your account holds or can earn (alias: achievements), the trophy room, flex"
-ui.help.commands.badges,"Open the badge case (alias: achievements); the prompt keeps working while it's open, multitask it, slaps"
-ui.help.commands.badges.2,"Open it on a family's tab: ages, lineages, ladders, specials and the rest (all: every family), the full set, a whole vibe"
-ui.help.commands.badges.3,"Open it on the badges you're closest to, kinda the main quest"
-ui.help.commands.badges.4,"Open a badge's detail by its name, or part of it, no need to spell it all, ngl easy"
-ui.help.commands.title,"List the titles your account holds, and the one it's wearing, the fit check, real"
-ui.help.commands.title.2,"Wear a title you hold (default: the one your badge score gives), main character title"
-ui.help.panels.milestones,"Milestone goals & rewards, the checkpoints, the W's"
-ui.help.panels.stats,"Empire statistics, the big numbers, the receipts"
-ui.help.panels.logs,"Recent game log entries, the spill"
-ui.help.panels.epoch,"Epoch progress & catastrophe, the doom timer, it's giving chaos"
-ui.help.panels.history,"Civilization history timeline, the flashback, the lore"
-ui.help.panels.buildings,"Built structures by lineage, the family tree, real"
-ui.dash_skyline.Draw.01," Skyline "
-ui.dashboard.shameMessages.01,"✦ FORGED SCROLLS, SUS ✦"
-ui.dashboard.shameMessages.02,"✦ ILLEGITIMATE EMPIRE, L ✦"
-ui.dashboard.shameMessages.03,"✦ COUNTERFEIT DYNASTY, DELULU ✦"
-ui.dashboard.shameMessages.04,"✦ USURPER'S THRONE, BIG SUS ✦"
-ui.dashboard.shameMessages.05,"✦ THE FABRICATED AGE, CAP FR ✦"
-ui.dashboard.shameMessages.06,"✦ DECREE OF DISHONOR, ICK ✦"
-ui.dashboard.NewDashboard.01,"Milestones, the W's"
-ui.dashboard.NewDashboard.02,"Brain work, big brain era"
-ui.dashboard.NewDashboard.03,"Badges, the flex"
-ui.dashboard.NewDashboard.04,"Army, the muscle, highkey buff"
-ui.dashboard.NewDashboard.05,"Expeditions, the main quests, bussin"
-ui.dashboard.NewDashboard.06,"Trade routes, the bag pipeline, the grind"
-ui.dashboard.NewDashboard.07,"Factions, the drama, the tea"
-ui.dashboard.NewDashboard.08,"Factions, who's who, kinda iconic"
-ui.dashboard.NewDashboard.09,"Stats, the numbers, no lie"
-ui.dashboard.NewDashboard.10,"Wonders, the W wall"
-ui.dashboard.NewDashboard.11,"People, the crew, a whole vibe"
-ui.dashboard.NewDashboard.12,"Logs, the tea"
-ui.dashboard.NewDashboard.13,"Epoch, the era"
-ui.dashboard.NewDashboard.14,"Harbinger, the omen, sus"
-ui.dashboard.NewDashboard.15,"Build Plan, the to-do stack, no lie"
-ui.dashboard.NewDashboard.16,"Civilization History, the saga, the lore"
-ui.dashboard.NewDashboard.17,"Buildings, the drip"
-ui.dashboard.NewDashboard.19,"Map, the vibe"
-ui.dashboard.build.03,"Age advanced, we're so back: "
-ui.dashboard.build.04,"Research complete, we ate, no lie: "
-ui.dashboard.build.05,"Wonder built, W: %s"
+ui.help.commands.account.recover,Respawn your account ID from a recovery code
+ui.help.commands.account.wipe,Where the account nuke button lives (the Accounts panel)
+ui.help.panels.badges,The badge case: every badge your account flexes or could still bag (alias: achievements)
+ui.help.commands.badges,"Open the badge case (alias: achievements); you can still type while it is open, multitask era"
+ui.help.commands.badges.2,"Open it on one family's tab: ages, lineages, ladders, specials and the rest (all: every family, the full lore)"
+ui.help.commands.badges.3,Open it on the badges you are about to bag
+ui.help.commands.badges.4,"Open a badge's detail by its name, or part of it, lazy typing is valid"
+ui.help.commands.title,Fit check on your titles: the ones your account holds and the one it wears
+ui.help.commands.title.2,"Equip a title you hold, main character style (default: the one your badge score gives)"
+ui.help.panels.milestones,Milestone goals & the Ws they pay out
+ui.help.panels.stats,"Empire stats, receipts for days"
+ui.help.panels.logs,The latest log tea
+ui.help.panels.epoch,"Epoch progress & catastrophe, doomcore edition"
+ui.help.panels.history,Your civilization's lore timeline
+ui.help.panels.buildings,"Everything you built, sorted by lineage like a family group chat"
+ui.dash_skyline.Draw.01," Skyline Drip "
+ui.dashboard.shameMessages.01,✦ SCROLLS CAUGHT IN 4K ✦
+ui.dashboard.shameMessages.02,✦ FRAUD EMPIRE ARC ✦
+ui.dashboard.shameMessages.03,✦ DELULU DYNASTY ✦
+ui.dashboard.shameMessages.04,✦ SUS THRONE ✦
+ui.dashboard.shameMessages.05,✦ THE CAP AGE ✦
+ui.dashboard.shameMessages.06,✦ DECREE OF THE ICK ✦
+ui.dashboard.NewDashboard.01,Milestone Ws
+ui.dashboard.NewDashboard.02,Brain Grind
+ui.dashboard.NewDashboard.03,Badge Flex
+ui.dashboard.NewDashboard.04,Army Squad
+ui.dashboard.NewDashboard.05,Side Quests
+ui.dashboard.NewDashboard.06,Bag Routes
+ui.dashboard.NewDashboard.07,Faction Tea
+ui.dashboard.NewDashboard.08,Faction Drama
+ui.dashboard.NewDashboard.09,Stat Receipts
+ui.dashboard.NewDashboard.10,Wonder Flexes
+ui.dashboard.NewDashboard.11,The Crew
+ui.dashboard.NewDashboard.12,Log Tea
+ui.dashboard.NewDashboard.13,Epoch Era
+ui.dashboard.NewDashboard.14,Harbinger Lore
+ui.dashboard.NewDashboard.15,Build Plan Arc
+ui.dashboard.NewDashboard.16,Civ Lore
+ui.dashboard.NewDashboard.17,Builds
+ui.dashboard.NewDashboard.19,Map Vibes
+ui.dashboard.build.03,Glowed up an age: 
+ui.dashboard.build.04,"Big brain moment, research done: "
+ui.dashboard.build.05,Wonder hard launched: %s
 ui.dashboard.build.06,Milestone drop: 
-ui.dashboard.build.07,"%s %s dawns, era starting"
+ui.dashboard.build.07,%s %s enters the chat
 ui.dashboard.build.08,just dropped
-ui.dashboard.build.09,"takes up the warning, sus"
-ui.dashboard.build.10,"⚑ %s %s. Type harbinger to read the warning, it's giving omen."
-ui.dashboard.build.11,"☄ Catastrophe: %s. Type catastrophe to pick a side, bestie."
-ui.dashboard.build.12,"Epoch event, the plot twist: %s"
-ui.dashboard.build.01," Panels, the menu "
-ui.dashboard.build.02," Log, the tea "
-ui.dashboard.build.13," Command, the move "
-ui.dashboard.build.14," People, the crew "
-ui.dashboard.heldByLines.01,"Held by: housing, the crib"
-ui.dashboard.heldByLines.02,"feeds %d more, kinda wild"
+ui.dashboard.build.09,slides into your DMs with a warning
+ui.dashboard.build.10,⚑ %s %s. Type harbinger to get the ominous tea.
+ui.dashboard.build.11,☄ Catastrophe arc: %s. Type catastrophe and make the call.
+ui.dashboard.build.12,Epoch plot twist: %s
+ui.dashboard.build.01," Panel Drip "
+ui.dashboard.build.02," The Tea "
+ui.dashboard.build.13," Command Era "
+ui.dashboard.build.14," The Crew "
+ui.dashboard.heldByLines.01,Capped by: crib space
+ui.dashboard.heldByLines.02,food covers %d more besties
 ui.dashboard.heldByLines.03," food a tick "
 ui.dashboard.heldByLines.04,/tick 
-ui.dashboard.heldByLines.05,"Held by: food, the snack stash"
-ui.dashboard.heldByLines.06,"Held by: food, the pantry"
-ui.dashboard.peopleBoxTitle.01," People, the squad "
-ui.dashboard.peopleBoxTitle.02," People %d/%d, lowkey packed "
-ui.dashboard.peopleBoxTitle.03," People %s/%s, the roster "
-ui.dashboard.peopleBoxTitle.04," People, the vibe "
+ui.dashboard.heldByLines.05,Capped by: snack supply
+ui.dashboard.heldByLines.06,Capped by: the snack stash
+ui.dashboard.peopleBoxTitle.01," The Squad "
+ui.dashboard.peopleBoxTitle.02," Squad %d/%d "
+ui.dashboard.peopleBoxTitle.03," Squad %s/%s "
+ui.dashboard.peopleBoxTitle.04," Squad "
 ui.dashboard.peopleBoxText.02,"[gray]Pop vibes[white] [%s]%s[white]/[green]%s[-]
 "
-ui.dashboard.statusLine.01,"  [cyan]Prestige %d, glow-up count[-]"
-ui.dashboard.statusLine.02,"  [red]DEV, cheat code zone[-]"
-ui.dashboard.statusLine.03,"☄ Catastrophe pending, fr. Type catastrophe to choose."
-ui.dashboard.statusLine.04,"☄ Catastrophe: type catastrophe, it's time"
-ui.dashboard.statusLine.05,"☄ Catastrophe, brace up"
-ui.dashboard.statusLine.06,"☄ Last Passage, the final boss. Type catastrophe to choose."
-ui.dashboard.statusLine.07,"☄ Last Passage: type catastrophe, final arc"
-ui.dashboard.statusLine.08,"☄ Last Passage, final boss"
+ui.dashboard.statusLine.01,"  [cyan]Glow-ups %d[-]"
+ui.dashboard.statusLine.02,"  [red]DEV cheats[-]"
+ui.dashboard.statusLine.03,☄ A catastrophe is left on read. Type catastrophe to answer it.
+ui.dashboard.statusLine.04,☄ Doom arc: type catastrophe
+ui.dashboard.statusLine.05,☄ Doom arc
+ui.dashboard.statusLine.06,☄ The Last Passage boss fight is here. Type catastrophe to pick.
+ui.dashboard.statusLine.07,☄ Last Passage boss: type catastrophe
+ui.dashboard.statusLine.08,☄ Last Passage boss fight
 ui.dashboard.statusLine.09,"⚑ Harbinger, the omen. Type harbinger to read it."
 ui.dashboard.statusLine.10,"⚑ Harbinger: type harbinger, read the room"
 ui.dashboard.statusLine.11,"⚑ Harbinger, sus"
@@ -2396,3 +2396,7 @@ ui.wonder_gallery.UpdateState.06,"
 "
 ui.wonder_gallery.UpdateState.07,"
 [gold]Wonders built, the W count: %d[-]"
+ui.building_text.buildingText.07,"Past %s, each one researches at half rate, the nerf hits."
+ui.building_text.buildingText.05,dupe
+ui.building_text.buildingText.06,dupes
+ui.people_tabs.scholars.23,", %d dupes, %d nerfed to half rate"
