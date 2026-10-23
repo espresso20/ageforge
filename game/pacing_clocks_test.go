@@ -191,9 +191,9 @@ func TestExpeditionClocksAreNotStretched(t *testing.T) {
 		ge := newSeededEngine(9)
 		learn(ge, "exploration") // the tech that opens expeditions
 		setAge(ge, c.age)
-		setSoldiers(ge, 1e12)
+		setSoldiers(ge, config.Trillion)
 		for _, res := range []string{"food", "wood", "stone", "iron"} {
-			setResource(ge, res, 1e6)
+			setResource(ge, res, config.Million)
 			setIncome(ge, res, 1)
 		}
 		ge.EnsureMissionBoard()
@@ -243,7 +243,7 @@ func TestFestivalAndBlackMarketStretch(t *testing.T) {
 	ge.age = stretchedAge
 	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
-	ge.Resources.LoadAmounts(map[string]float64{"culture": 1_000_000})
+	ge.Resources.LoadAmounts(map[string]float64{"culture": config.Million})
 	buff, cd := config.StretchTicks(stretchedAge, festivalBuffTicks), config.StretchTicks(stretchedAge, festivalCooldownTicks)
 	if st := ge.FestivalStatus(); st.BuffTicks != buff || st.CooldownTicks != cd {
 		t.Errorf("festival status %d/%d ticks, want %d/%d", st.BuffTicks, st.CooldownTicks, buff, cd)

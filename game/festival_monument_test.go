@@ -112,7 +112,7 @@ func TestFestival_DeductsCultureAndInjectsBuff(t *testing.T) {
 	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
 	// Give plenty of culture so cost = festivalMinCost (cap is small early).
-	ge.Resources.LoadAmounts(map[string]float64{"culture": 1_000_000})
+	ge.Resources.LoadAmounts(map[string]float64{"culture": config.Million})
 
 	cost := ge.festivalCost()
 	before := ge.Resources.Get("culture")
@@ -164,7 +164,7 @@ func TestFestival_RespectsCooldown(t *testing.T) {
 	ge := NewGameEngine()
 	learn(ge, "drama") // the tech that opens festivals
 	ge.Resources.UnlockResource("culture")
-	ge.Resources.LoadAmounts(map[string]float64{"culture": 1_000_000})
+	ge.Resources.LoadAmounts(map[string]float64{"culture": config.Million})
 
 	if err := ge.DoFestival(); err != nil {
 		t.Fatalf("first festival failed: %v", err)

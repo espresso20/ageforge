@@ -150,7 +150,7 @@ func (f *fuzzer) number() string {
 	case 2:
 		return fmt.Sprint(-f.r.Intn(1000))
 	case 3:
-		return fmt.Sprintf("%g", f.r.Float64()*1e12)
+		return fmt.Sprintf("%g", f.r.Float64()*config.Trillion)
 	case 4:
 		return f.pick([]string{"all", "max", "1e308", "-1e308", "NaN", "Inf"})
 	default:

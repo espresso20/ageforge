@@ -14,11 +14,11 @@ import (
 // the first with a culture income; before it the price is its minimum.
 var oldFestivalPrices = map[string]float64{
 	"classical_age": 84140, "medieval_age": 609140, "renaissance_age": 2759140, "colonial_age": 13009140,
-	"industrial_age": 43009140, "victorian_age": 5.4300914e+08, "electric_age": 6.04300914e+09,
-	"atomic_age": 3.604300914e+10, "modern_age": 1.5604300915e+11, "information_age": 9.81043009e+11,
-	"digital_age": 3.731043009e+12, "cyberpunk_age": 3.373104301e+13, "fusion_age": 1.66231043e+14,
-	"space_age": 8.16231043e+14, "interstellar_age": 2.4316231045e+16, "galactic_age": 2.2181623105e+17,
-	"quantum_age": 1.722181623e+19, "transcendent_age": 1.722181623e+19,
+	"industrial_age": 43009140, "victorian_age": 543.00914 * config.Million, "electric_age": 6.04300914 * config.Billion,
+	"atomic_age": 36.04300914 * config.Billion, "modern_age": 156.04300915 * config.Billion, "information_age": 981.043009 * config.Billion,
+	"digital_age": 3.731043009 * config.Trillion, "cyberpunk_age": 33.73104301 * config.Trillion, "fusion_age": 166.231043 * config.Trillion,
+	"space_age": 816.231043 * config.Trillion, "interstellar_age": 24.316231045 * config.Quadrillion, "galactic_age": 221.81623105 * config.Quadrillion,
+	"quantum_age": 17.22181623 * config.Quintillion, "transcendent_age": 17.22181623 * config.Quintillion,
 }
 
 // TestCulturePricesKeepTheReferenceTownsPrice: the festival and the Black

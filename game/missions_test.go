@@ -15,7 +15,7 @@ import (
 // era can be sent. Income of resource i (in key order) is 0.2 + 0.05*i per tick.
 func missionReady(t *testing.T, seed int64, age string) *GameEngine {
 	t.Helper()
-	ge := autoExpeditionTestEngine(t, age, 0, 0, 1e9)
+	ge := autoExpeditionTestEngine(t, age, 0, 0, config.Billion)
 	ge.SeedRNG(seed)
 	learn(ge, "exploration", "military_tactics")
 	keys := make([]string, 0)
@@ -103,7 +103,7 @@ func TestMissionRolls_WithinRangesAndSeeded(t *testing.T) {
 func TestMissionLaunch_TicksFollowTheRolledLength(t *testing.T) {
 	for _, age := range eraFirstAges() {
 		ge := missionReady(t, 4, age)
-		setSoldiers(ge, 1e12)
+		setSoldiers(ge, config.Trillion)
 		for _, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}} {
 			n := plantOffer(ge, c.tier, c.grand)
 			offer, _ := ge.Military.BoardOffer(n)
@@ -280,7 +280,7 @@ func TestMissionHaul_FormulaOnSuccessAndFailure(t *testing.T) {
 		for _, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}, {TierGrand, GrandMilitary}} {
 			for _, win := range []bool{true, false} {
 				ge := missionReady(t, 5, age)
-				setSoldiers(ge, 1e12)
+				setSoldiers(ge, config.Trillion)
 				ge.mu.Lock()
 				ge.Military.campaignPay = 1.5
 				ge.mu.Unlock()
@@ -458,10 +458,10 @@ func TestEncounterChance_DoubledAndCapped(t *testing.T) {
 // those it can pay for, in every era; one it cannot pay for is passed over.
 func TestAutoExpedition_SendsTheBestHaulPerMinute(t *testing.T) {
 	for _, age := range eraFirstAges() {
-		ge := autoExpeditionTestEngine(t, age, 1, 8, 1e9)
+		ge := autoExpeditionTestEngine(t, age, 1, 8, config.Billion)
 		learn(ge, "military_tactics")
 		ge.EnsureMissionBoard()
-		setSoldiers(ge, 1e12)
+		setSoldiers(ge, config.Trillion)
 		var wantN int
 		var bestRate float64
 		for i, slot := range ge.Military.board.Slots {
@@ -484,7 +484,7 @@ func TestAutoExpedition_SendsTheBestHaulPerMinute(t *testing.T) {
 		}
 
 		// With no soldiers, a military offer is passed over.
-		ge2 := autoExpeditionTestEngine(t, age, 1, 8, 1e9)
+		ge2 := autoExpeditionTestEngine(t, age, 1, 8, config.Billion)
 		learn(ge2, "military_tactics")
 		ge2.EnsureMissionBoard()
 		setSoldiers(ge2, 0)

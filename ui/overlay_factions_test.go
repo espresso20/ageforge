@@ -562,7 +562,7 @@ func TestDiplomacyThreshold(t *testing.T) {
 // says why. Only theme role tags colour the deal lines.
 func TestFactionsProvider_RendersDeals(t *testing.T) {
 	state := game.GameState{
-		Resources: map[string]game.ResourceState{"stone": {Amount: 100}, "iron": {Amount: 1e6}},
+		Resources: map[string]game.ResourceState{"stone": {Amount: 100}, "iron": {Amount: config.Million}},
 		Diplomacy: game.DiplomacyState{Factions: map[string]game.FactionInfo{
 			"riverlands_tribes": {Name: "Riverlands Tribes", Discovered: true, Status: "neutral", DealRefreshIn: 900, Deals: []game.DealInfo{
 				{Num: 1, Kind: game.DealWant, Give: "stone", GiveAmt: 2100, Get: "food", GetAmt: 3000},

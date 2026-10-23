@@ -87,7 +87,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 6 — renaissance_age
 	b = append(b, BuildingDef{
 		Name: "Fortress", Key: "fortress", Category: "military",
-		BaseCost:    map[string]float64{"stone": 3000000, "gold": 1300000, "steel": 640000},
+		BaseCost:    map[string]float64{"stone": 3 * Million, "gold": 1.3 * Million, "steel": 640000},
 		CostScale:   1.15,
 		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
@@ -98,7 +98,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 7 — colonial_age
 	b = append(b, BuildingDef{
 		Name: "Fort", Key: "fort", Category: "military",
-		BaseCost:    map[string]float64{"gold": 1.7e07, "steel": 8500000},
+		BaseCost:    map[string]float64{"gold": 17 * Million, "steel": 8.5 * Million},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
@@ -109,7 +109,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 8 — industrial_age
 	b = append(b, BuildingDef{
 		Name: "Military Base", Key: "military_base", Category: "military",
-		BaseCost:    map[string]float64{"steel": 1.3e08, "coal": 4.2e07, "gold": 6.4e07},
+		BaseCost:    map[string]float64{"steel": 130 * Million, "coal": 42 * Million, "gold": 64 * Million},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
@@ -120,7 +120,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 9 — victorian_age
 	b = append(b, BuildingDef{
 		Name: "Garrison", Key: "garrison", Category: "military",
-		BaseCost:    map[string]float64{"steel": 8.5e08, "iron": 4.2e08, "gold": 5.1e08},
+		BaseCost:    map[string]float64{"steel": 850 * Million, "iron": 420 * Million, "gold": 510 * Million},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
@@ -131,7 +131,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 10 — electric_age
 	b = append(b, BuildingDef{
 		Name: "Command Post", Key: "command_post", Category: "military",
-		BaseCost:    map[string]float64{"steel": 5.1e09, "electricity": 2.1e09, "gold": 3e09},
+		BaseCost:    map[string]float64{"steel": 5.1 * Billion, "electricity": 2.1 * Billion, "gold": 3 * Billion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "electric_age",
@@ -142,7 +142,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 11 — atomic_age
 	b = append(b, BuildingDef{
 		Name: "Bunker Complex", Key: "bunker_complex", Category: "military",
-		BaseCost:    map[string]float64{"steel": 2.5e10, "stone": 3.4e10, "electricity": 8.5e09},
+		BaseCost:    map[string]float64{"steel": 25 * Billion, "stone": 34 * Billion, "electricity": 8.5 * Billion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
@@ -153,7 +153,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 12 — modern_age
 	b = append(b, BuildingDef{
 		Name: "Special Ops HQ", Key: "special_ops_hq", Category: "military",
-		BaseCost:    map[string]float64{"steel": 7.5e10, "titanium_ore": 7.5e10, "electricity": 5.1e10, "data": 4.2e09},
+		BaseCost:    map[string]float64{"steel": 75 * Billion, "titanium_ore": 75 * Billion, "electricity": 51 * Billion, "data": 4.2 * Billion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "modern_age",
@@ -164,7 +164,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 13 — information_age
 	b = append(b, BuildingDef{
 		Name: "Cyber Command", Key: "cyber_command", Category: "military",
-		BaseCost:     map[string]float64{"electricity": 3.8e11, "data": 4.2e10, "gold": 6.8e11},
+		BaseCost:     map[string]float64{"electricity": 380 * Billion, "data": 42 * Billion, "gold": 680 * Billion},
 		CostScale:    1.15,
 		BuildTicks:   3600,
 		RequiredAge:  "information_age",
@@ -176,7 +176,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 14 — digital_age
 	b = append(b, BuildingDef{
 		Name: "Drone Warfare Center", Key: "drone_warfare_center", Category: "military",
-		BaseCost:    map[string]float64{"electricity": 1.9e12, "data": 2.3e11, "steel": 1.4e12, "titanium_ore": 1.4e12},
+		BaseCost:    map[string]float64{"electricity": 1.9 * Trillion, "data": 230 * Billion, "steel": 1.4 * Trillion, "titanium_ore": 1.4 * Trillion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
@@ -187,7 +187,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 15 — cyberpunk_age
 	b = append(b, BuildingDef{
 		Name: "Combat Aug Center", Key: "combat_aug_center", Category: "military",
-		BaseCost:     map[string]float64{"data": 8.9e11, "crypto": 4.7e12, "electricity": 4.65e12, "dark_matter_crystals": 4.65e12},
+		BaseCost:     map[string]float64{"data": 890 * Billion, "crypto": 4.7 * Trillion, "electricity": 4.65 * Trillion, "dark_matter_crystals": 4.65 * Trillion},
 		CostScale:    1.15,
 		BuildTicks:   3600,
 		RequiredAge:  "cyberpunk_age",
@@ -199,7 +199,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 16 — fusion_age
 	b = append(b, BuildingDef{
 		Name: "Plasma Command", Key: "plasma_command", Category: "military",
-		BaseCost:    map[string]float64{"plasma": 2.1e13, "electricity": 2.95e13, "dark_matter_crystals": 2.95e13, "steel": 7.6e13},
+		BaseCost:    map[string]float64{"plasma": 21 * Trillion, "electricity": 29.5 * Trillion, "dark_matter_crystals": 29.5 * Trillion, "steel": 76 * Trillion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
@@ -210,7 +210,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 17 — space_age
 	b = append(b, BuildingDef{
 		Name: "Space Force Base", Key: "space_force_base", Category: "military",
-		BaseCost:    map[string]float64{"titanium": 3.4e14, "plasma": 1.6e14, "electricity": 2e14, "dark_matter_crystals": 2e14},
+		BaseCost:    map[string]float64{"titanium": 340 * Trillion, "plasma": 160 * Trillion, "electricity": 200 * Trillion, "dark_matter_crystals": 200 * Trillion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
@@ -221,7 +221,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 18 — interstellar_age
 	b = append(b, BuildingDef{
 		Name: "Fleet Command", Key: "fleet_command", Category: "military",
-		BaseCost:    map[string]float64{"dark_matter": 4e14, "titanium": 3.2e15, "plasma": 1.9e15},
+		BaseCost:    map[string]float64{"dark_matter": 400 * Trillion, "titanium": 3.2 * Quadrillion, "plasma": 1.9 * Quadrillion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
@@ -232,7 +232,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 19 — galactic_age
 	b = append(b, BuildingDef{
 		Name: "Stellar Armada HQ", Key: "stellar_armada_hq", Category: "military",
-		BaseCost:    map[string]float64{"antimatter": 8e14, "dark_matter": 4e15, "titanium": 2e16},
+		BaseCost:    map[string]float64{"antimatter": 800 * Trillion, "dark_matter": 4 * Quadrillion, "titanium": 20 * Quadrillion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
@@ -243,7 +243,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 20 — quantum_age
 	b = append(b, BuildingDef{
 		Name: "Probability War Room", Key: "probability_war_room", Category: "military",
-		BaseCost:    map[string]float64{"quantum_flux": 8.9e14, "antimatter": 2.6e17, "dark_matter": 2.2e17},
+		BaseCost:    map[string]float64{"quantum_flux": 890 * Trillion, "antimatter": 260 * Quadrillion, "dark_matter": 220 * Quadrillion},
 		CostScale:   1.15,
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
@@ -254,7 +254,7 @@ func buildingsLineageMilitary() []BuildingDef {
 	// tier 21 — transcendent_age
 	b = append(b, BuildingDef{
 		Name: "Omniversal War Council", Key: "omniversal_war_council", Category: "military",
-		BaseCost:     map[string]float64{"quantum_flux": 8.9e15, "antimatter": 2.6e18, "dark_matter": 2.2e18},
+		BaseCost:     map[string]float64{"quantum_flux": 8.9 * Quadrillion, "antimatter": 2.6 * Quintillion, "dark_matter": 2.2 * Quintillion},
 		CostScale:    1.15,
 		BuildTicks:   3600,
 		RequiredAge:  "transcendent_age",

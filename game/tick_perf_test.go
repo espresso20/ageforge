@@ -39,7 +39,7 @@ func newLateGameEngine(tb testing.TB) *GameEngine {
 	ge.Prestige.NoteAgeEntered(ge.age)
 
 	for key := range ge.Resources.resources {
-		setRes(ge, key, 1e6)
+		setRes(ge, key, config.Million)
 	}
 
 	started := 0

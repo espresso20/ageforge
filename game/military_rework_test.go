@@ -29,7 +29,7 @@ func stageSoldierProduction(t *testing.T, ge *GameEngine, numBarracks int) {
 // morale penalties — same approach as TestMilitaryBuildings_ProduceAndStoreSoldiers).
 func tickWithFood(ge *GameEngine) {
 	ge.mu.Lock()
-	ge.Resources.Add("food", 1e6)
+	ge.Resources.Add("food", config.Million)
 	ge.morale = 1.0
 	ge.mu.Unlock()
 	ge.doTick()
@@ -284,7 +284,7 @@ func TestScoutRuins_LaunchableWithItsParty(t *testing.T) {
 	for _, age := range config.EpochByKey()["iron_era"].Ages {
 		ge := NewGameEngine()
 		setAge(ge, age)
-		setSoldiers(ge, 1e7)
+		setSoldiers(ge, 10*config.Million)
 		for _, res := range []string{"iron", "stone", "wood", "food", "gold"} {
 			setResource(ge, res, 10000)
 			setIncome(ge, res, 1)

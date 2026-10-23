@@ -87,11 +87,11 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	}
 
 	// Answers carry across the handoffs.
-	setStock(ge, map[string][2]float64{"faith": {1e12, 1e12}, "culture": {1e12, 1e12}})
+	setStock(ge, map[string][2]float64{"faith": {config.Trillion, config.Trillion}, "culture": {config.Trillion, config.Trillion}})
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatalf("appease: %v", err)
 	}
-	fillBraceStock(ge, 1e20)
+	fillBraceStock(ge, 100*config.Quintillion)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Fatalf("brace: %v", err)
 	}
@@ -139,10 +139,10 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {1.8e10, 2.8e11, 6e16, 2.9e17},
-		"galactic_age":     {5.8e10, 9.3e11, 2.6e18, 2.6e18},
-		"quantum_age":      {1.9e11, 3e12, 1.4e20, 1.1e19},
-		"transcendent_age": {3e11, 5e12, 2e20, 1.7e19},
+		"interstellar_age": {18 * config.Billion, 280 * config.Billion, 60 * config.Quadrillion, 290 * config.Quadrillion},
+		"galactic_age":     {58 * config.Billion, 930 * config.Billion, 2.6 * config.Quintillion, 2.6 * config.Quintillion},
+		"quantum_age":      {190 * config.Billion, 3 * config.Trillion, 140 * config.Quintillion, 11 * config.Quintillion},
+		"transcendent_age": {300 * config.Billion, 5 * config.Trillion, 200 * config.Quintillion, 17 * config.Quintillion},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)

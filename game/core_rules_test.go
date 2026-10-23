@@ -83,11 +83,11 @@ func eraBraceMaterials(epochKey string) []string {
 var oldEraBrace = map[string]map[string]float64{
 	"stone_era":    {"food": 9600, "wood": 4800},
 	"iron_era":     {"gold": 21600, "iron": 6360, "stone": 26400},
-	"steel_era":    {"gold": 1.8e+06, "steel": 288000},
-	"electric_era": {"electricity": 3.96e+06, "oil": 924000, "steel": 5.64e+07},
-	"digital_era":  {"data": 1.92e+10, "electricity": 1.176e+11, "gold": 1.56e+08},
-	"neon_era":     {"crypto": 3e+09, "data": 4.68e+10, "electricity": 2.88e+11},
-	"cosmic_era":   {"dark_matter": 1.56e+12, "titanium": 7.56e+10},
+	"steel_era":    {"gold": 1.8 * config.Million, "steel": 288000},
+	"electric_era": {"electricity": 3.96 * config.Million, "oil": 924000, "steel": 56.4 * config.Million},
+	"digital_era":  {"data": 19.2 * config.Billion, "electricity": 117.6 * config.Billion, "gold": 156 * config.Million},
+	"neon_era":     {"crypto": 3 * config.Billion, "data": 46.8 * config.Billion, "electricity": 288 * config.Billion},
+	"cosmic_era":   {"dark_matter": 1.56 * config.Trillion, "titanium": 75.6 * config.Billion},
 }
 
 // eraBraceCost is that old price, doubled for level 2. Kept for the tests

@@ -62,7 +62,7 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 	}
 	emb.mu.Lock()
 	emb.Diplomacy.factions["riverlands_tribes"] = &FactionState{Discovered: true}
-	if _, err := emb.Diplomacy.SendGift("riverlands_tribes", 1e9); err != nil {
+	if _, err := emb.Diplomacy.SendGift("riverlands_tribes", config.Billion); err != nil {
 		t.Fatal(err)
 	}
 	if got := emb.Diplomacy.factions["riverlands_tribes"].Opinion; got != 22 {

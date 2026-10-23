@@ -21,7 +21,7 @@ func TestVerdictK(t *testing.T) {
 	if v := VerdictK("iron_age", iron.Seconds(), true, 1); v != VerdictOK {
 		t.Errorf("the frontier: %q", v)
 	}
-	if v := VerdictK("stone_age", 1e6, true, 4); v != VerdictNone {
+	if v := VerdictK("stone_age", config.Million, true, 4); v != VerdictNone {
 		t.Errorf("stone on known ground: %q, want no verdict", v)
 	}
 }

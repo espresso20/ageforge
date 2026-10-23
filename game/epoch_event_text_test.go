@@ -135,7 +135,7 @@ func TestEpochEventTextMatchesEffects(t *testing.T) {
 						t.Errorf("%s: the test town gained no gold, so the minutes read as nothing", ev.Key)
 						break
 					}
-					need(fmt.Sprintf("%g minutes of what your town makes", math.Round((after-before[r])/perMinute*1e6)/1e6))
+					need(fmt.Sprintf("%g minutes of what your town makes", math.Round((after-before[r])/perMinute*config.Million)/config.Million))
 				}
 			case after < before[r]:
 				need(config.FormatPercent(1-after/before[r]) + " of your " + r)

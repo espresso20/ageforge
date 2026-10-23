@@ -11,21 +11,21 @@ package config
 // tables for every other.
 var repricedFrom = map[string]map[string]float64{
 	"demesne":                 {"stone": 540000, "gold": 180000},
-	"market_garden":           {"gold": 1800000, "steel": 600000},
+	"market_garden":           {"gold": 1.8 * Million, "steel": 600000},
 	"stonemasons_guild":       {"stone": 480000, "gold": 150000},
-	"iron_mine":               {"gold": 1500000, "steel": 540000},
+	"iron_mine":               {"gold": 1.5 * Million, "steel": 540000},
 	"monastery_library":       {"stone": 540000, "gold": 180000},
-	"university":              {"gold": 1800000, "steel": 600000},
-	"natural_philosophy_hall": {"gold": 1.1e07, "steel": 4500000},
+	"university":              {"gold": 1.8 * Million, "steel": 600000},
+	"natural_philosophy_hall": {"gold": 11 * Million, "steel": 4.5 * Million},
 	"sawmill":                 {"stone": 480000, "gold": 170000},
-	"coal_mine":               {"gold": 1700000, "steel": 600000},
+	"coal_mine":               {"gold": 1.7 * Million, "steel": 600000},
 	"cathedral":               {"stone": 600000, "gold": 200000},
-	"basilica":                {"gold": 2000000, "stone": 1200000},
-	"mission":                 {"gold": 9000000, "stone": 6000000},
-	"guildhall":               {"stone": 1200000, "gold": 410000},
-	"exchange":                {"gold": 4100000, "steel": 1500000},
-	"art_studio":              {"gold": 2000000, "stone": 900000},
-	"great_library":           {"stone": 5600000, "gold": 4320000},
+	"basilica":                {"gold": 2 * Million, "stone": 1.2 * Million},
+	"mission":                 {"gold": 9 * Million, "stone": 6 * Million},
+	"guildhall":               {"stone": 1.2 * Million, "gold": 410000},
+	"exchange":                {"gold": 4.1 * Million, "steel": 1.5 * Million},
+	"art_studio":              {"gold": 2 * Million, "stone": 900000},
+	"great_library":           {"stone": 5.6 * Million, "gold": 4.32 * Million},
 }
 
 // repricedUnits is the price of each of those buildings, in the age's price

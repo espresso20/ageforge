@@ -289,8 +289,8 @@ func TestKnowledgeBuildingBuildsPastItsCapAtHalfRate(t *testing.T) {
 	ge.mu.Lock()
 	ge.Buildings.unlocked["elders_hall"] = true
 	ge.mu.Unlock()
-	ge.Resources.Add("wood", 1e12)
-	ge.Resources.Add("stone", 1e12)
+	ge.Resources.Add("wood", config.Trillion)
+	ge.Resources.Add("stone", config.Trillion)
 	want := ge.Buildings.GetCost("elders_hall")
 	for res, base := range def.BaseCost {
 		if exact := math.Floor(base * math.Pow(def.CostScale, float64(cap))); math.Abs(want[res]-exact) > 1 {

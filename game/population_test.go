@@ -3,6 +3,8 @@ package game
 import (
 	"math"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // peopleEngine is a Stone Age town with a few huts, camps and food, grown to
@@ -155,7 +157,7 @@ func TestStateTermsFollowTheAge(t *testing.T) {
 func TestScholarsArrivalIsLogged(t *testing.T) {
 	ge := peopleEngine(t)
 	for key := range ge.Resources.resources {
-		setAmount(ge, key, 1e6)
+		setAmount(ge, key, config.Million)
 	}
 	ge.Buildings.UnlockBuilding("elders_hall")
 	if err := ge.BuildBuilding("elders_hall"); err != nil {

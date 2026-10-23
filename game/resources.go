@@ -180,7 +180,7 @@ func (rm *ResourceManager) GetAll() map[string]float64 {
 
 // devFillAmount is what the dev console's /fill adds of each resource a town
 // can save up.
-const devFillAmount = 1e12
+const devFillAmount = config.Trillion
 
 // GetAllStorage is for the dev console's /fill and nothing else: a large
 // amount of every resource a town can save up (one with a BaseStorage above

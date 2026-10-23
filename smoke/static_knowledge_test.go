@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"math"
+	"strconv"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -32,15 +33,22 @@ func TestKnowledgeTechPricesFollowTheLadder(t *testing.T) {
 			// price climb multiplies them, so a price sits within 1% of its ladder
 			// rung. Rungs are 30% apart, so this still pins each tech to its rung.
 			if math.Abs(got-want)/want > 0.01 {
-				t.Errorf("%s: %s runtime cost %g, the climbed unrounded ladder gives %g", l.Age, k, got, want)
+				t.Errorf("%s: %s runtime cost %s, the climbed unrounded ladder gives %s", l.Age, k, config.GoLiteral(got), lit3(want))
 			}
 		}
 		if n := len(l.Prices); n > 0 {
 			if sum := sumOf(l.Prices) * config.LatePriceMultiplier(l.Age); math.Abs(sum/(l.Total*config.LatePriceMultiplier(l.Age))-1) > 0.02 {
-				t.Errorf("%s: the techs total %g, the ladder asks %g", l.Age, sum, l.Total*config.LatePriceMultiplier(l.Age))
+				t.Errorf("%s: the techs total %s, the ladder asks %s", l.Age, lit3(sum), lit3(l.Total*config.LatePriceMultiplier(l.Age)))
 			}
 		}
 	}
+}
+
+// lit3 is v to three significant figures, as the authored prices are, written
+// the way config writes a number (75.4 * Million), ready to paste.
+func lit3(v float64) string {
+	r, _ := strconv.ParseFloat(strconv.FormatFloat(v, 'g', 3, 64), 64)
+	return config.GoLiteral(r)
 }
 
 func sumOf(v []float64) float64 {

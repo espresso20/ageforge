@@ -1,6 +1,10 @@
 package game
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // TestUpgradeBuilding_PartialUpgradeRehomesWorkers is the smoke fuzzer's
 // "upgrade wood_camp 7" (seed 2): a partial upgrade left every worker on the
@@ -25,7 +29,7 @@ func TestUpgradeBuilding_PartialUpgradeRehomesWorkers(t *testing.T) {
 		t.Fatal("setup: assign failed")
 	}
 	for key := range ge.Resources.resources {
-		ge.Resources.Add(key, 1e9)
+		ge.Resources.Add(key, config.Billion)
 	}
 	pop := ge.Workers.TotalPop()
 

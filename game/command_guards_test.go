@@ -7,7 +7,7 @@ import (
 
 // The smoke fuzzer typed "recruit 9223372036854775807" and the pop-cap check
 // (TotalPop()+count > popCap) wrapped negative, so the recruit went through
-// and population landed near -9.2e18. These tests pin the guards on every
+// and population landed near -9.2Qi. These tests pin the guards on every
 // count and amount the engine takes from a command.
 
 func TestWorkerManager_RecruitNoOverflow(t *testing.T) {

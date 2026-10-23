@@ -88,13 +88,13 @@ func TestBlackMarketMakesCryptoAtTheStandard(t *testing.T) {
 	price := priceUnits(d.BaseCost, lv)
 	want := float64(price/MakerPaybackTicks[d.RequiredAge]) * lv["crypto"]
 	if math.Abs(crypto/want-1) > 0.005 { // the literal is written to three figures
-		t.Errorf("black_market makes %.4g crypto a tick, the standard is %.4g", crypto, want)
+		t.Errorf("black_market makes %s crypto a tick, the standard is %s", GoLiteral(roundSignificant(crypto, 4)), GoLiteral(roundSignificant(want, 4)))
 	}
 }
 
 // TestWonderPartsFitTheirAge: a flow part of a wonder's price (food, faith,
 // culture) is covered by the age's income within its target, and the Space
-// Program asks nothing its age does not price. It asked 6e11 knowledge, which
+// Program asks nothing its age does not price. It asked 600B knowledge, which
 // the Modern Age does not price and no town made from buildings; the Sistine
 // Chapel asked 12.8M culture where the Renaissance Age's income makes 967K in
 // its target, and now asks 960K, the largest figure of two significant digits
@@ -110,7 +110,7 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 				continue
 			}
 			if made := FlowIncome(res, d.RequiredAge) * LatePriceTargetTicks(d.RequiredAge); c > made {
-				t.Errorf("%s asks %.4g %s, more than the %.4g the age's income makes in its target", d.Key, c, res, made)
+				t.Errorf("%s asks %s %s, more than the %s the age's income makes in its target", d.Key, GoLiteral(roundSignificant(c, 4)), res, GoLiteral(roundSignificant(made, 4)))
 			}
 		}
 	}
@@ -121,7 +121,7 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 			t.Errorf("space_program asks %s, which %s does not price", res, space.RequiredAge)
 		}
 	}
-	// The Hoover Dam asked 8e10 stone, a material no Electric Age building is
+	// The Hoover Dam asked 80B stone, a material no Electric Age building is
 	// priced in: it sat outside the wonder's units, as the Space Program's
 	// knowledge did, and no building of the age made it. It asks none now.
 	if _, has := BuildingByKey()["hoover_dam"].BaseCost["stone"]; has {
@@ -130,6 +130,6 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 	sistine := BuildingByKey()["sistine_chapel"]
 	made := FlowIncome("culture", sistine.RequiredAge) * LatePriceTargetTicks(sistine.RequiredAge)
 	if got := sistine.BaseCost["culture"]; got != 960000 || made < 960000 || made >= 970000 {
-		t.Errorf("sistine_chapel culture = %.4g with %.4g made in the target: want 960000, the largest two-figure number the income covers", got, made)
+		t.Errorf("sistine_chapel culture = %s with %s made in the target: want 960_000, the largest two-figure number the income covers", GoLiteral(roundSignificant(got, 4)), GoLiteral(roundSignificant(made, 4)))
 	}
 }

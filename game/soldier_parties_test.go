@@ -36,7 +36,7 @@ func partyTown(t *testing.T, camps, reserve int) *GameEngine {
 	ge.recalculateRates()
 	ge.mu.Unlock()
 	for _, res := range []string{"stone", "wood", "food", "gold"} {
-		setResource(ge, res, 1e7)
+		setResource(ge, res, 10*config.Million)
 		setIncome(ge, res, 1)
 	}
 	return ge
@@ -499,7 +499,7 @@ func TestPrimitiveAgeSendsWithoutAParty(t *testing.T) {
 	ge.SeedRNG(5)
 	setAge(ge, "primitive_age")
 	for _, res := range []string{"wood", "food", "stone"} {
-		setResource(ge, res, 1e6)
+		setResource(ge, res, config.Million)
 		setIncome(ge, res, 1)
 	}
 	n := plantOffer(ge, TierShort, "")

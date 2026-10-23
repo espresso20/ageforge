@@ -44,10 +44,10 @@ func TestLateGameStoresPrintInThreeDigits(t *testing.T) {
 			}
 		}
 	}
-	if got := FormatNumber(2.5e19); got != "25Qi" {
+	if got := FormatNumber(25 * config.Quintillion); got != "25Qi" {
 		t.Errorf("25 quintillion prints %q, want 25Qi", got)
 	}
-	if max := textfmt.MaxNumber(); max < largest*40*1e9 {
+	if max := textfmt.MaxNumber(); max < largest*40*config.Billion {
 		t.Errorf("the formatter's ceiling %v is not three units past the late game's stores", max)
 	}
 }

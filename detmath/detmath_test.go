@@ -108,7 +108,7 @@ func TestCloseToStdlib(t *testing.T) {
 			}
 		}
 	})
-	sweep(20000, 1e-3, 1e3, func(x float64) {
+	sweep(20000, 1e-3, 1000, func(x float64) {
 		for _, y := range []float64{1 / 1.5, 1 / 1.6, 0.75, 1.3, -2.5} {
 			if d := ulps(Pow(x, y), math.Pow(x, y)); d > 8 {
 				t.Fatalf("Pow(%v, %v): %d ulps from math.Pow", x, y, d)

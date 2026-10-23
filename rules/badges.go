@@ -381,12 +381,12 @@ func (s *Set) BadgeTitle(points int, complete bool) (title string, rank int, nex
 // badgeCount writes a threshold the way a description shows it: "14",
 // "1,400", "1.1T".
 func badgeCount(v float64) string {
-	if v == float64(int64(v)) && v < 1e6 {
+	if v == float64(int64(v)) && v < config.Million {
 		return textfmt.Int(int(v))
 	}
-	if v >= 1e18 {
+	if v >= config.Quintillion {
 		// Past the last suffix: the count in Q, its thousands set off.
-		q := strconv.FormatInt(int64(math.Round(v/1e15)), 10)
+		q := strconv.FormatInt(int64(math.Round(v/config.Quadrillion)), 10)
 		for i := len(q) - 3; i > 0; i -= 3 {
 			q = q[:i] + "," + q[i:]
 		}

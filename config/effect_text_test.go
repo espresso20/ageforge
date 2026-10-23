@@ -178,7 +178,7 @@ func TestEventSizeBands(t *testing.T) {
 		{"an empty store loses nothing", 0, 0},
 		{"a thin store loses the floor, within a quarter of it", 200, floor},
 		{"a nearly empty store loses a quarter", 40, 10},
-		{"a hoard is held to the ceiling", 1e9, ceil},
+		{"a hoard is held to the ceiling", Billion, ceil},
 	} {
 		if got := EventSize(loss, EventTown{Stock: c.stock, Typical: typical}); got != c.want {
 			t.Errorf("loss: %s: %v, want %v", c.name, got, c.want)

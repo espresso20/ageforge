@@ -268,7 +268,7 @@ func TestCensusNeedsSomethingToHold(t *testing.T) {
 	ge.applyAgeUnlocks("industrial_age")
 	ge.ageTold = ge.age
 	for _, key := range ge.Resources.order {
-		ge.Resources.resources[key].Rate, ge.Resources.resources[key].Amount = 0, 1e30
+		ge.Resources.resources[key].Rate, ge.Resources.resources[key].Amount = 0, config.Nonillion
 	}
 	ge.tick = (ge.tick/config.BadgeCensusTicks + 1) * config.BadgeCensusTicks
 	ge.noteCensus()
@@ -307,8 +307,8 @@ func TestWarsAreReported(t *testing.T) {
 	// Bought off: the engine's own tribute path reports the ending.
 	ge.mu.Lock()
 	ge.Resources.unlocked["gold"], ge.Resources.unlocked["culture"] = true, true
-	ge.Resources.resources["gold"].Amount = 1e9
-	ge.Resources.resources["culture"].Amount = 1e9
+	ge.Resources.resources["gold"].Amount = config.Billion
+	ge.Resources.resources["culture"].Amount = config.Billion
 	ge.mu.Unlock()
 	if err := ge.SendTribute(a); err != nil {
 		t.Fatalf("SendTribute: %v", err)

@@ -14,7 +14,7 @@ func TestAdvanceAge_CapsHoardedResource(t *testing.T) {
 	ge := NewGameEngine()
 
 	// HUGE stockpile of a resource stone_age buildings use (wood + stone).
-	const hoard = 1_000_000.0
+	const hoard = config.Million
 	ge.Resources.LoadAmounts(map[string]float64{
 		"wood":  hoard,
 		"stone": hoard,

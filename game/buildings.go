@@ -775,7 +775,7 @@ func isDestroyable(def config.BuildingDef) bool {
 // the stores they make only grow; an upgrade or an age advance would trade a
 // copy the age lock never lets you rebuild for one of the next tier, and the
 // per-copy figures do not rise by tier (upgrading 4 Natural Philosophy Halls
-// to Research Institutes took the knowledge store from 3.36e7 to 3.64e6).
+// to Research Institutes took the knowledge store from 33.6M to 3.64M).
 // Only a knowledge building carries a knowledge-store figure.
 func keepsItsTier(def config.BuildingDef) bool {
 	return def.Category == "storage" || def.Scholars > 0
