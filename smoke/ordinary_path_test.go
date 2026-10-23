@@ -171,6 +171,17 @@ func timeAway(t *testing.T, age config.AgeDef, ge *game.GameEngine) {
 			if err := e.LoadGame(name); err != nil {
 				t.Fatalf("%s: load: %v", age.Name, err)
 			}
+			// This check measures production, away against played. The
+			// Geographic Society dispatches missions on its own, and a
+			// mission's haul is rolled luck that in the late ages is worth
+			// more than an hour of income, rolled differently on the two
+			// paths. So no Society dispatches in any of the hours (it is
+			// sold from every copy of the save, the same for all of them).
+			if n := e.GetState().Buildings["geographic_society"].Count; n > 0 {
+				if err := e.SellBuilding("geographic_society", n); err != nil {
+					t.Fatalf("%s: selling the Geographic Society: %v", age.Name, err)
+				}
+			}
 			e.SeedRNG(7)
 			return e
 		}
