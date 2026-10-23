@@ -76,6 +76,7 @@ const (
 	wireSprintf          // fmt.Sprintf("format", ...) becomes vibe.Sprintf(id, "format", ...)
 	wireErrorf           // fmt.Errorf likewise
 	wireEntry            // a text of a table made once (a package-level var) becomes vibe.E(id, "text")
+	wireFprintf          // fmt.Fprintf(w, "format", ...) becomes fmt.Fprint(w, vibe.Sprintf(id, "format", ...))
 )
 
 // verdict is what vibe-wire makes of a row.
@@ -129,14 +130,16 @@ func (m *module) nodeCtxs(f *srcFile) map[[2]int]nodeCtx {
 				j--
 			}
 			if j >= 0 {
-				if call, ok := stack[j].(*ast.CallExpr); ok && len(call.Args) > 0 && call.Args[0] == e {
+				if call, ok := stack[j].(*ast.CallExpr); ok && len(call.Args) > 0 {
 					if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
 						if x, ok := sel.X.(*ast.Ident); ok && x.Name == "fmt" && f.imports["fmt"] {
-							switch sel.Sel.Name {
-							case "Sprintf":
+							switch {
+							case call.Args[0] == e && sel.Sel.Name == "Sprintf":
 								ctx.call, ctx.kind = call, wireSprintf
-							case "Errorf":
+							case call.Args[0] == e && sel.Sel.Name == "Errorf":
 								ctx.call, ctx.kind = call, wireErrorf
+							case len(call.Args) > 1 && call.Args[1] == e && sel.Sel.Name == "Fprintf":
+								ctx.call, ctx.kind = call, wireFprintf
 							}
 						}
 					}
@@ -265,6 +268,18 @@ func vibeWire(c *catalog, root, sheet, only string, dry bool, out io.Writer) err
 			perFile[f] = append(perFile[f],
 				edit{r.u.start, r.u.start, name + id + ", "},
 				edit{r.u.end, r.u.end, ")"})
+		case wireFprintf:
+			// The writer keeps its place; the format becomes the vibe call's and the
+			// whole is written with Fprint, so vet reads the format and its arguments
+			// at vibe.Sprintf as it read them at Fprintf.
+			sel := v.call.Fun.(*ast.SelectorExpr)
+			lo := c.m.fset.Position(sel.Sel.Pos()).Offset
+			hi := c.m.fset.Position(sel.Sel.End()).Offset
+			rp := c.m.fset.Position(v.call.Rparen).Offset
+			perFile[f] = append(perFile[f],
+				edit{lo, hi, "Fprint"},
+				edit{r.u.start, r.u.start, "vibe.Sprintf(" + id + ", "},
+				edit{rp, rp, ")"})
 		case wireSprintf, wireErrorf:
 			name := "vibe.Sprintf"
 			if v.kind == wireErrorf {
@@ -279,7 +294,8 @@ func vibeWire(c *catalog, root, sheet, only string, dry bool, out io.Writer) err
 	}
 
 	fmt.Fprintf(out, "%s: %d rows already wired, %d to wire now (%d vibe.Line, %d vibe.Sprintf, %d vibe.Errorf, %d vibe.E) in %d files\n",
-		sheet, already, count[wireLine]+count[wireSprintf]+count[wireErrorf]+count[wireEntry], count[wireLine], count[wireSprintf], count[wireErrorf], count[wireEntry], len(files))
+		sheet, already, count[wireLine]+count[wireSprintf]+count[wireFprintf]+count[wireErrorf]+count[wireEntry],
+		count[wireLine], count[wireSprintf]+count[wireFprintf], count[wireErrorf], count[wireEntry], len(files))
 	reasons := make([]string, 0, len(left))
 	for reason := range left {
 		reasons = append(reasons, reason)
