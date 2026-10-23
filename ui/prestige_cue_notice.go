@@ -1,11 +1,11 @@
 package ui
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -16,10 +16,10 @@ func prestigeCueText(state game.GameState, width int) string {
 	cue := state.PrestigeCue
 	iv := tickInterval(state)
 	lines := []string{
-		"Time to prestige?",
-		fmt.Sprintf("Finishing the %s takes about %s at today's income.", game.AgeName(state.Age), game.DurationText(cue.FinishTicks, iv)),
-		fmt.Sprintf("A new run with x%.2f production would be back here and past it in about %s.", cue.NextMultiplier, game.DurationText(cue.FreshTicks, iv)),
-		"Type prestige to see what you keep.",
+		vibe.Line("ui.prestige_cue_notice.prestigeCueText.01", "Time to prestige?"),
+		vibe.Sprintf("ui.prestige_cue_notice.prestigeCueText.02", "Finishing the %s takes about %s at today's income.", game.AgeName(state.Age), game.DurationText(cue.FinishTicks, iv)),
+		vibe.Sprintf("ui.prestige_cue_notice.prestigeCueText.03", "A new run with x%.2f production would be back here and past it in about %s.", cue.NextMultiplier, game.DurationText(cue.FreshTicks, iv)),
+		vibe.Line("ui.prestige_cue_notice.prestigeCueText.04", "Type prestige to see what you keep."),
 	}
 	max := width*17/20 - 4 // the notice uses the overlay's 85% width, less its frame
 	if max < 20 {

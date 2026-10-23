@@ -63,8 +63,8 @@ func altarEntry(t *testing.T, d *Dashboard, w int) []string {
 // scholarLine is the scholars' line of a locked entry, "" when it has none.
 func scholarLine(entry []string) string {
 	text := collapse(entry)
-	for _, p := range lockedHintLines {
-		if strings.Contains(text, p) {
+	for _, e := range lockedHintLines {
+		if p := e.String(); strings.Contains(text, p) {
 			return p
 		}
 	}

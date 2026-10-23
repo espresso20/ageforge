@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // expedition_field.go draws the Expedition Report's right side in the split
@@ -43,7 +44,7 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 	drawOutList(g, state, x, l.mainY, w, listH, sc, hi)
 
 	y, h := l.mainY+listH, l.mainH-listH
-	g.box(x, y, w, h, xBorder, "Field report", xTitle, false)
+	g.box(x, y, w, h, xBorder, vibe.Line("ui.expedition_field.drawFieldReport.01", "Field report"), xTitle, false)
 	// With no legend row to hold it, the Society's line takes the box's foot.
 	soc, socKind := societyLine(state)
 	foot := 0
@@ -56,7 +57,7 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 	top, bottom := y+1, y+h-1-foot
 	if len(sc.acts) == 0 {
 		offers := len(sc.offers)
-		for i, ln := range wrapText(fmt.Sprintf("Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize("offer", offers)), cw) {
+		for i, ln := range wrapText(vibe.Sprintf("ui.expedition_field.drawFieldReport.02", "Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize(vibe.Line("ui.expedition_field.drawFieldReport.03", "offer"), offers)), cw) {
 			if top+i < bottom {
 				g.putFit(x+1, top+i, cw, ln, xDim)
 			}
@@ -77,7 +78,7 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 func drawOutList(g *xgrid, state game.GameState, x, y, w, h int, sc *expScene, hi int) {
 	cw := w - 2
 	n := len(sc.acts)
-	g.box(x, y, w, h, xBorder, fmt.Sprintf("Out · %d", n), xTitle, false)
+	g.box(x, y, w, h, xBorder, vibe.Sprintf("ui.expedition_field.drawOutList.01", "Out · %d", n), xTitle, false)
 	visible := h - 2
 	if n == 0 || visible <= 0 {
 		return
@@ -114,24 +115,24 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	}
 	tier := tierLabel(game.ExpeditionInfo{Label: a.Label, Tier: a.Tier, Grand: a.Grand})
 	if a.Rare {
-		add(xseg{tier, xAccent}, xseg{"  ◈ Legendary", xLegend})
+		add(xseg{tier, xAccent}, xseg{vibe.Line("ui.expedition_field.fieldLines.01", "  ◈ Legendary"), xLegend})
 	} else {
 		add(xseg{tier, xAccent})
 	}
 	add()
 
 	if a.Party > 0 {
-		parts := []xseg{{"Party  ", xDim}, {fmt.Sprintf("%s %s", FormatNumber(float64(a.Party)), pluralize("soldier", a.Party)), xText}}
+		parts := []xseg{{vibe.Line("ui.expedition_field.fieldLines.02", "Party  "), xDim}, {fmt.Sprintf("%s %s", FormatNumber(float64(a.Party)), pluralize(vibe.Line("ui.expedition_field.fieldLines.03", "soldier"), a.Party)), xText}}
 		if fell := a.Party - a.Soldiers; fell > 0 {
-			parts = append(parts, xseg{fmt.Sprintf(" · %s fell so far", FormatNumber(float64(fell))), xBad})
+			parts = append(parts, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.04", " · %s fell so far", FormatNumber(float64(fell))), xBad})
 		}
 		add(parts...)
 	}
 
-	odds := []xseg{{"Odds   ", xDim}, {expBar(a.SuccessChance, 10, "█", "░"), oddsKind(a.SuccessChance)},
+	odds := []xseg{{vibe.Line("ui.expedition_field.fieldLines.05", "Odds   "), xDim}, {expBar(a.SuccessChance, 10, "█", "░"), oddsKind(a.SuccessChance)},
 		{fmt.Sprintf(" %.0f%%", a.SuccessChance*100), oddsKind(a.SuccessChance)}}
 	if a.LaunchChance > 0 && fmt.Sprintf("%.0f", a.LaunchChance*100) != fmt.Sprintf("%.0f", a.SuccessChance*100) {
-		odds = append(odds, xseg{fmt.Sprintf(" (was %.0f%%)", a.LaunchChance*100), xDim})
+		odds = append(odds, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.06", " (was %.0f%%)", a.LaunchChance*100), xDim})
 	}
 	add(odds...)
 
@@ -139,10 +140,10 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	if a.TotalTicks > 0 {
 		progress = 1 - float64(a.TicksLeft)/float64(a.TotalTicks)
 	}
-	add(xseg{"Going  ", xDim}, xseg{expBar(progress, 10, "▰", "▱"), xGood},
-		xseg{fmt.Sprintf(" %s out · %s to go", expDur(a.TotalTicks-a.TicksLeft, state), expDur(a.TicksLeft, state)), xText})
+	add(xseg{vibe.Line("ui.expedition_field.fieldLines.07", "Going  "), xDim}, xseg{expBar(progress, 10, "▰", "▱"), xGood},
+		xseg{vibe.Sprintf("ui.expedition_field.fieldLines.08", " %s out · %s to go", expDur(a.TotalTicks-a.TicksLeft, state), expDur(a.TicksLeft, state)), xText})
 
-	add(xseg{"Haul   ", xDim}, xseg{fmt.Sprintf("about %.0f min of income", a.HaulMinutes), xGood})
+	add(xseg{vibe.Line("ui.expedition_field.fieldLines.09", "Haul   "), xDim}, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.10", "about %.0f min of income", a.HaulMinutes), xGood})
 	var pays []string
 	for _, k := range sortedKeysOf(a.SuccessHaul) {
 		pays = append(pays, "+"+FormatNumber(a.SuccessHaul[k])+" "+resourceDisplayName(state, k))
@@ -152,13 +153,13 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	}
 	if s := a.HaulScale; s > 0 && math.Abs(s-1) > 1e-9 {
 		factor := strconv.FormatFloat(math.Round(s*100)/100, 'f', -1, 64)
-		add(xseg{"       ", xDim}, xseg{"x" + factor + " from the road", xAccent})
+		add(xseg{"       ", xDim}, xseg{"x" + factor + vibe.Line("ui.expedition_field.fieldLines.11", " from the road"), xAccent})
 	}
 	add()
 
-	add(xseg{"On the road", xAccent})
+	add(xseg{vibe.Line("ui.expedition_field.fieldLines.12", "On the road"), xAccent})
 	if len(a.RoadStories) == 0 {
-		add(xseg{"Nothing has happened yet.", xFaint})
+		add(xseg{vibe.Line("ui.expedition_field.fieldLines.13", "Nothing has happened yet."), xFaint})
 	}
 	for j := len(a.RoadStories) - 1; j >= 0; j-- {
 		kind := xText

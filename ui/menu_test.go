@@ -401,7 +401,7 @@ func TestMenuPagesFitEverySize(t *testing.T) {
 					where := fmt.Sprintf("%s at %dx%d, %s glyphs", st.name, size[0], size[1], tier)
 					if more {
 						v.versions = []string{"v4.0.0 · update available (u)", "v4.0.0 · update (u)", "v4.0.0"}
-						v.elite = eliteLines[2]
+						v.elite = eliteLines[2].strings()
 						v.sel = len(v.items) - 1
 						where += ", with an update and the forge master's line"
 					}
@@ -409,7 +409,7 @@ func TestMenuPagesFitEverySize(t *testing.T) {
 					checkMenuPage(t, where, sc, v, town)
 					if more && !st.forge {
 						g := sc.render(newMenuPalette(theme.Active()), v, town, mapstyle.Frame{Tier: tier})
-						if !strings.Contains(g.row(sc.L.py), eliteLines[2][1]) {
+						if !strings.Contains(g.row(sc.L.py), eliteLines[2].words.String()) {
 							t.Errorf("%s: the forge master's line is not on the box", where)
 						}
 						if !strings.Contains(g.row(sc.L.py+sc.L.ph-1), "update") {
@@ -588,7 +588,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 					w, h := size[0], size[1]
 					where := fmt.Sprintf("%s, %s at %dx%d, %s glyphs", th.Key, st.name, w, h, tier)
 					v, town := stagedMenuView(st.age, st.forge, tier)
-					v.elite = eliteLines[0]
+					v.elite = eliteLines[0].strings()
 					sc := newMenuScene(menuLayoutFor(w, h, v))
 					sc.sparks.a = nil
 					g := sc.render(pal, v, town, mapstyle.Frame{Anim: 3, Clock: 3, Tier: tier})
@@ -615,7 +615,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 						t.Errorf("%s: the page's corner is not on the theme's ground", where)
 					}
 
-					words := []string{"New game", "Load game", "Badges", "Themes", "Accounts", "Check for updates", "Quit", "v4.0.0", "choose", "Enter open", "38 of 120", eliteLines[0][1]}
+					words := []string{"New game", "Load game", "Badges", "Themes", "Accounts", "Check for updates", "Quit", "v4.0.0", "choose", "Enter open", "38 of 120", eliteLines[0].words.String()}
 					if st.forge {
 						words = append(words, "CONTENTS", "The forge", "begun at a campfire", "fourth edition")
 					} else {
@@ -670,7 +670,7 @@ func TestMenuGlyphsAreOneColumnWide(t *testing.T) {
 		for _, st := range []menuStage{{"the first visit", "", true}, {"the town", "bronze_age", false}} {
 			for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 				v, town := stagedMenuView(st.age, st.forge, tier)
-				v.elite = line
+				v.elite = line.strings()
 				sc := newMenuScene(menuLayoutFor(120, 40, v))
 				sc.hit()
 				sc.step()
@@ -682,7 +682,7 @@ func TestMenuGlyphsAreOneColumnWide(t *testing.T) {
 					row = sc.L.rule
 				}
 				text := g.row(row)
-				if !strings.Contains(text, line[1]) {
+				if !strings.Contains(text, line.words.String()) {
 					t.Errorf("%s: the line is not on row %d: %q", where, row, strings.TrimSpace(text))
 				}
 				if tier == mapmodel.TierASCII {

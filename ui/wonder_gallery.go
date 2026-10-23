@@ -11,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // wonderProgressBar returns a simple fill bar with colored segments.
@@ -67,7 +68,7 @@ type WonderPanel struct {
 func NewWonderPanel() *WonderPanel {
 	wp := &WonderPanel{}
 	wp.root = tview.NewFlex().SetDirection(tview.FlexColumn)
-	wp.root.SetBorder(true).SetTitle(" Wonder ")
+	wp.root.SetBorder(true).SetTitle(vibe.Line("ui.wonder_gallery.NewWonderPanel.01", " Wonder "))
 	theme.Track(func() { wp.root.SetTitleColor(theme.Color(theme.RoleAccent)) })
 	return wp
 }
@@ -135,7 +136,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	if current == nil {
 		// No wonder for this age (shouldn't happen, but handle gracefully)
 		tv := tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
-		tv.SetText("[gray]No wonder in this age.[-]")
+		tv.SetText(vibe.Line("ui.wonder_gallery.UpdateState.01", "[gray]No wonder in this age.[-]"))
 		wp.root.AddItem(tv, 0, 1, false)
 		return
 	}
@@ -154,14 +155,14 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	var sb strings.Builder
 	if built {
 		fmt.Fprintf(&sb, "%s [gold::b]★ %s[-]\n", WonderSpriteIcon(current.key), current.name)
-		fmt.Fprintf(&sb, "[green]Built[-] [gray](%s)[-]\n\n", current.ageName)
+		fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.02", "[green]Built[-] [gray](%s)[-]\n\n", current.ageName))
 	} else {
 		fmt.Fprintf(&sb, "[yellow::b]%s[-]\n", current.name)
-		fmt.Fprintf(&sb, "[gray]%s, not built yet[-]\n\n", current.ageName)
+		fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.03", "[gray]%s, not built yet[-]\n\n", current.ageName))
 	}
 
 	// Show effects/perks
-	fmt.Fprintf(&sb, "[cyan]Perks:[-]\n")
+	fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.04", "[cyan]Perks:[-]\n"))
 	for _, eff := range current.def.Effects {
 		fmt.Fprintf(&sb, "  %s%s\n", formatEffect(eff), capTag(state, eff, built, "-"))
 	}
@@ -169,7 +170,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	// Bank progress if not built
 	if !built {
 		if bs, ok := state.Buildings[current.key]; ok {
-			fmt.Fprintf(&sb, "\n[cyan]Wonder bank:[-]\n")
+			fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.05", "\n[cyan]Wonder bank:[-]\n"))
 			costKeys := make([]string, 0, len(current.def.BaseCost))
 			for k := range current.def.BaseCost {
 				costKeys = append(costKeys, k)
@@ -206,7 +207,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 		// The techs' cut of construction time, then Era Mastery: a wonder
 		// builds in its own age, at that age's speed.
 		ticks := game.WonderBuildTicks(current.def.BuildTicks, state.Research, state.Mastery.Speeds[current.def.RequiredAge])
-		fmt.Fprintf(&sb, "\n[gray]Build time: %s[-]\n", formatTicks(ticks, state))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.06", "\n[gray]Build time: %s[-]\n", formatTicks(ticks, state)))
 	}
 
 	// Wonder count
@@ -216,7 +217,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			wonderCount++
 		}
 	}
-	fmt.Fprintf(&sb, "\n[gold]Wonders built: %d[-]", wonderCount)
+	fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.07", "\n[gold]Wonders built: %d[-]", wonderCount))
 
 	infoTV.SetText(safeTags(sb.String()))
 

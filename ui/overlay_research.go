@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // formatTechEffect names a config.Effect in glossary words: "+10% all
@@ -22,12 +23,12 @@ func formatTechEffect(eff config.Effect) string {
 	case "research":
 		// The scholars' work is a time on a tech, never a number of its own
 		// (config.buildingEffectParts says it the same way).
-		return "speeds research"
+		return vibe.Line("ui.overlay_research.formatTechEffect.01", "speeds research")
 	case "unlock":
-		return "unlocks " + game.BuildingName(eff.Target)
+		return vibe.Line("ui.overlay_research.formatTechEffect.02", "unlocks ") + game.BuildingName(eff.Target)
 	case "capacity":
 		if eff.Target == "population" {
-			return textfmt.Signed(eff.Value) + " housing"
+			return textfmt.Signed(eff.Value) + vibe.Line("ui.overlay_research.formatTechEffect.03", " housing")
 		}
 		return textfmt.Signed(eff.Value) + " " + game.EffectTargetName(eff.Target)
 	default:
@@ -54,18 +55,18 @@ func researchSummaryLines(state game.GameState) string {
 	var sb strings.Builder
 	if state.Scholars.Total > 0 {
 		fmt.Fprintf(&sb, "  [gray]%s[-]\n", scholarsLine(state))
-		fmt.Fprintf(&sb, "  [green]%-7s[-] Worker output from teaching [gray](%s with every scholar teaching)[-]\n",
-			textfmt.SignedPercent(state.Scholars.TeachingBonus), textfmt.SignedPercent(state.Scholars.TeachingFull))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_research.researchSummaryLines.01", "  [green]%-7s[-] Worker output from teaching [gray](%s with every scholar teaching)[-]\n",
+			textfmt.SignedPercent(state.Scholars.TeachingBonus), textfmt.SignedPercent(state.Scholars.TeachingFull)))
 	}
 	if p, ok := state.Pools["research_speed"]; ok && p.Earned != 0 {
-		fmt.Fprintf(&sb, "  [gray]Research speed %s: techs take %s of their base time. The times on the tech tree include it.[-]%s\n",
-			textfmt.SignedPercent(p.Earned), textfmt.Percent(math.Max(0, 1-p.Applied)), poolTag(state, "research_speed"))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_research.researchSummaryLines.02", "  [gray]Research speed %s: techs take %s of their base time. The times on the tech tree include it.[-]%s\n",
+			textfmt.SignedPercent(p.Earned), textfmt.Percent(math.Max(0, 1-p.Applied)), poolTag(state, "research_speed")))
 	}
 	if f := state.Research.ResearchTime; f > 0 && f < 1 {
-		fmt.Fprintf(&sb, "  [gray]Research techs: research time %s. The times on the tech tree include it.[-]\n", game.ResearchFactorText(f))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_research.researchSummaryLines.03", "  [gray]Research techs: research time %s. The times on the tech tree include it.[-]\n", game.ResearchFactorText(f)))
 	}
 	if f := state.SuccumbResearchFactor; f > 0 && f < 1 {
-		fmt.Fprintf(&sb, "  [gray]Ancient Knowledge: research time %s. The times on the tech tree include it.[-]\n", game.ResearchFactorText(f))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_research.researchSummaryLines.04", "  [gray]Ancient Knowledge: research time %s. The times on the tech tree include it.[-]\n", game.ResearchFactorText(f)))
 	}
 	sb.WriteString(researchBonusLines(state))
 	return sb.String()
@@ -83,20 +84,20 @@ func researchBonusLines(state game.GameState) string {
 		fmt.Fprintf(&sb, "  [green]%-7s[-] %s\n", value, what)
 	}
 	if rs.AllOutput != 0 {
-		line(textfmt.SignedPercent(rs.AllOutput), "All production")
+		line(textfmt.SignedPercent(rs.AllOutput), vibe.Line("ui.overlay_research.researchBonusLines.01", "All production"))
 	}
 	for _, res := range sortedKeysOf(rs.Output) {
 		if v := rs.Output[res]; v != 0 {
-			line(textfmt.SignedPercent(v), textfmt.Capitalize(game.ResourceName(res))+" production")
+			line(textfmt.SignedPercent(v), textfmt.Capitalize(game.ResourceName(res))+vibe.Line("ui.overlay_research.researchBonusLines.02", " production"))
 		}
 	}
 	if rs.Housing != 0 {
-		line(textfmt.SignedPercent(rs.Housing), "Housing")
+		line(textfmt.SignedPercent(rs.Housing), vibe.Line("ui.overlay_research.researchBonusLines.03", "Housing"))
 	}
 	for _, cut := range []struct {
 		factor float64
 		what   string
-	}{{rs.BuildCost, "Building costs"}, {rs.BuildTime, "Construction time"}, {rs.ResearchTime, "Research time"}} {
+	}{{rs.BuildCost, vibe.Line("ui.overlay_research.researchBonusLines.04", "Building costs")}, {rs.BuildTime, vibe.Line("ui.overlay_research.researchBonusLines.05", "Construction time")}, {rs.ResearchTime, vibe.Line("ui.overlay_research.researchBonusLines.06", "Research time")}} {
 		if cut.factor > 0 && cut.factor != 1 {
 			line(textfmt.SignedPercent(cut.factor-1), cut.what)
 		}
@@ -112,7 +113,7 @@ func researchBonusLines(state game.GameState) string {
 		case def.Multiplies && term != 1:
 			line(textfmt.SignedPercent(term-1), textfmt.Capitalize(def.Name))
 		case !def.Multiplies && term != 0 && def.Unit == config.UnitPoints:
-			line(textfmt.Signed(term*100), textfmt.Capitalize(def.Name)+", in points")
+			line(textfmt.Signed(term*100), textfmt.Capitalize(def.Name)+vibe.Line("ui.overlay_research.researchBonusLines.07", ", in points"))
 		case !def.Multiplies && term != 0 && def.Unit == config.UnitPercent:
 			line(textfmt.SignedPercent(term), textfmt.Capitalize(def.Name))
 		case !def.Multiplies && term != 0:
@@ -131,10 +132,10 @@ func researchBonusLines(state game.GameState) string {
 		}
 	}
 	if len(flat) > 0 {
-		fmt.Fprintf(&sb, "  [gray]Output:[-]  %s\n", strings.Join(flat, ", "))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_research.researchBonusLines.08", "  [gray]Output:[-]  %s\n", strings.Join(flat, ", ")))
 	}
 	if sb.Len() == 0 {
-		return "  [gray]No research bonuses yet.[-]\n"
+		return vibe.Line("ui.overlay_research.researchBonusLines.09", "  [gray]No research bonuses yet.[-]\n")
 	}
 	return sb.String()
 }

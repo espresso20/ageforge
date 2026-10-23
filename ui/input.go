@@ -598,7 +598,7 @@ func cmdScholars(args []string, engine *game.GameEngine) CommandResult {
 func scholarsText(st game.GameState) string {
 	s := st.Scholars
 	if s.Total <= 0 {
-		return vibe.Line("ui.input.scholarsText.01", "You have ") + noScholars + "."
+		return vibe.Line("ui.input.scholarsText.01", "You have ") + noScholars.String() + "."
 	}
 	var sb strings.Builder
 	fmt.Fprint(&sb, vibe.Sprintf("ui.input.scholarsText.02", "[gold]Scholars[-] %d\n", s.Total))
@@ -1649,7 +1649,7 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 	// Unlock gate (the theming design §4/§5): refuse a known-but-locked theme. No theme is
 	// locked today (all shipped themes are Accessible/Forge); this is the Phase-3 seam.
 	if !themeAvailable(themeAccount(engine), t) {
-		return CommandResult{Message: themeUnavailableMsg, Type: "error"}
+		return CommandResult{Message: themeUnavailableMsg.String(), Type: "error"}
 	}
 	if err := theme.SetActive(t.Key); err != nil {
 		return errorResult(err)

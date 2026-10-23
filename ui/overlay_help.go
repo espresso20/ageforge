@@ -112,27 +112,27 @@ func helpProvider(_ game.GameState, screenW int) string {
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.48", "\n[gold]═══ The Research panel ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.49", "The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing."))
-	keys(researchKeys...)
+	keys(helpPairs(researchKeys)...)
 	note(vibe.Line("ui.overlay_help.helpProvider.50", "Zoom is a command too: research tree close, research tree far."))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.51", "\n[gold]═══ The badge case ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.52", "Your account's badges. The prompt keeps working while it is open; the case takes the keys that print nothing."))
-	keys(badgeKeys...)
+	keys(helpPairs(badgeKeys)...)
 	note(vibe.Line("ui.overlay_help.helpProvider.53", "Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still."))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.54", "\n[gold]═══ The Expeditions panel ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.55", "The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
-	keys(expeditionKeys...)
+	keys(helpPairs(expeditionKeys)...)
 	note(vibe.Line("ui.overlay_help.helpProvider.56", "Sending by name is a command: expedition <name>, with as much of the name as it takes to tell the offers apart."))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.57", "\n[gold]═══ The People panel ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.58", "Every person in the town: workers, the reserve, soldiers and scholars, each by the name the age gives them. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
-	keys(peopleKeys...)
+	keys(helpPairs(peopleKeys)...)
 	note(vibe.Line("ui.overlay_help.helpProvider.59", "Shares are a command: roster <area> <percent|auto>. The panel opens with people or workers."))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.60", "\n[gold]═══ The Advance panel ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.61", "The gate into the next age as four pillars (Knowledge, People, Industry and Monument), with the march of ages and a calendar year that moves as you close in. The prompt keeps working while it is open; the panel takes the keys that print nothing."))
-	keys(advanceKeys...)
+	keys(helpPairs(advanceKeys)...)
 	note(vibe.Line("ui.overlay_help.helpProvider.62", "The panel opens with charter. Typing advance does the same as Enter on it."))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.63", "\n[gold]═══ Shortcuts ═══[-]\n"))

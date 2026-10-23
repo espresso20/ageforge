@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // map_mini.go is the dashboard's mini map: the active style's compact view
@@ -129,7 +130,7 @@ func (m *miniMap) Draw(scr tcell.Screen) {
 	}
 	bg := theme.Color(theme.RoleBackground)
 	cv := &mapstyle.Canvas{Scr: scr, R: mapstyle.Rect{X: x, Y: y, W: w, H: h}, Tier: m.set.Tier}
-	drawMapFrame(cv, w, h, " Map · "+styleTitle(m.mv.reg, m.set.Style)+" ")
+	drawMapFrame(cv, w, h, vibe.Line("ui.map_mini.miniMap.Draw.01", " Map · ")+styleTitle(m.mv.reg, m.set.Style)+" ")
 
 	f := mapFrame(m.model, m.set, m.now().Sub(m.start))
 	m.styles.get(m.set.Style).DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)

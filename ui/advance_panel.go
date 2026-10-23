@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // advance_panel.go is the Advance panel's overlay primitive: the whole screen
@@ -60,7 +61,7 @@ func (d *Dashboard) registerAdvancePanel() {
 	d.advancePanel.settings = d.mapSettings
 	d.advancePanel.prompt = d.researchPanel.prompt
 	d.advancePanel.toPrompt = d.researchPanel.toPrompt
-	d.overlayMgr.RegisterWidget(advancePanelName, "Advance", d.advancePanel.open, d.advancePanel.update, true)
+	d.overlayMgr.RegisterWidget(advancePanelName, vibe.E("ui.advance_panel.registerAdvancePanel.01", "Advance"), d.advancePanel.open, d.advancePanel.update, true)
 }
 
 // open is the overlay's build: it runs on every Show, on the first pillar.
@@ -168,7 +169,7 @@ func (p *advancePanel) advance() {
 	v := p.view
 	switch {
 	case v.Final:
-		p.say("This is the final age. There is no age beyond it.", false)
+		p.say(vibe.Line("ui.advance_panel.advance.01", "This is the final age. There is no age beyond it."), false)
 		return
 	case !v.AllStand:
 		var open []string
@@ -177,7 +178,7 @@ func (p *advancePanel) advance() {
 				open = append(open, pl.Name)
 			}
 		}
-		p.say("Not yet: "+textfmt.List(open)+" still to stand.", false)
+		p.say(vibe.Line("ui.advance_panel.advance.02", "Not yet: ")+textfmt.List(open)+vibe.Line("ui.advance_panel.advance.03", " still to stand."), false)
 		return
 	case p.engine == nil:
 		return
@@ -187,6 +188,6 @@ func (p *advancePanel) advance() {
 	if err != nil {
 		p.say(textfmt.Sentence(err.Error()), false)
 	} else {
-		p.say("Advanced to the "+v.NextName+".", true)
+		p.say(vibe.Line("ui.advance_panel.advance.04", "Advanced to the ")+v.NextName+".", true)
 	}
 }

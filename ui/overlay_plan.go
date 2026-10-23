@@ -12,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The Plan panel: the build plan in order, what each item's next start costs
@@ -72,7 +73,7 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 		p.sel = clampSel(p.sel+1, n)
 	case isRune && (r == 'u' || r == 'd'):
 		if n == 0 {
-			p.note, p.noteGood = "The plan is empty.", false
+			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.01", "The plan is empty."), false
 			break
 		}
 		delta := -1
@@ -88,7 +89,7 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 		p.note = ""
 	case event.Key() == tcell.KeyDelete || (isRune && r == 'x'):
 		if n == 0 {
-			p.note, p.noteGood = "The plan is empty.", false
+			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.02", "The plan is empty."), false
 			break
 		}
 		what, err := engine.PlanRemove(p.sel + 1)
@@ -96,21 +97,21 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 			p.note, p.noteGood = err.Error(), false
 			break
 		}
-		p.note, p.noteGood = "Removed "+what+".", true
+		p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.03", "Removed ")+what+".", true
 		p.sel = clampSel(p.sel, n-1)
 	case isRune && event.Rune() == 'C':
 		if n == 0 {
-			p.note, p.noteGood = "The plan is empty.", false
+			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.04", "The plan is empty."), false
 			break
 		}
 		if !p.clearArmed {
 			arm = true
-			p.note, p.noteGood = "Press C again to clear the whole plan.", false
+			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.05", "Press C again to clear the whole plan."), false
 			break
 		}
 		engine.PlanClear()
 		p.sel = 0
-		p.note, p.noteGood = "Plan cleared.", true
+		p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.06", "Plan cleared."), true
 	default:
 		return false
 	}
@@ -122,7 +123,7 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 func planStatusText(v game.PlanItemView) string {
 	switch v.Status {
 	case game.PlanStatusReady:
-		return theme.Paint(theme.RolePositive, "ready  ")
+		return theme.Paint(theme.RolePositive, vibe.Line("ui.overlay_plan.planStatusText.01", "ready  "))
 	case game.PlanStatusWaiting:
 		return theme.Paint(theme.RoleHighlight, "waiting")
 	default:
@@ -134,14 +135,14 @@ func planStatusText(v game.PlanItemView) string {
 func planItemTitle(v game.PlanItemView) string {
 	switch v.Kind {
 	case game.PlanResearch:
-		return "research " + v.Name
+		return vibe.Line("ui.overlay_plan.planItemTitle.01", "research ") + v.Name
 	case game.PlanAdvance:
 		return v.Name
 	}
 	if v.Kind == game.PlanUpgrade {
-		s := fmt.Sprintf("upgrade %d %s → %s", v.Count, v.Name, v.Target)
+		s := vibe.Sprintf("ui.overlay_plan.planItemTitle.02", "upgrade %d %s → %s", v.Count, v.Name, v.Target)
 		if v.Started > 0 {
-			s += fmt.Sprintf(" (%d started)", v.Started)
+			s += vibe.Sprintf("ui.overlay_plan.planItemTitle.03", " (%d started)", v.Started)
 		}
 		return s
 	}
@@ -150,7 +151,7 @@ func planItemTitle(v game.PlanItemView) string {
 		s += fmt.Sprintf(" ×%d", v.Count)
 	}
 	if v.Started > 0 {
-		s += fmt.Sprintf(" (%d started)", v.Started)
+		s += vibe.Sprintf("ui.overlay_plan.planItemTitle.04", " (%d started)", v.Started)
 	}
 	return s
 }
@@ -169,7 +170,7 @@ func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 	case game.PlanStatusBlocked:
 		note := v.Note
 		if len(v.Banked) > 0 {
-			note += " (" + planPriceWhole(v.Banked) + " banked from overflow)"
+			note += " (" + planPriceWhole(v.Banked) + vibe.Line("ui.overlay_plan.planItemDetailGlued.01", " banked from overflow)")
 		}
 		return theme.Paint(theme.RoleDim, note)
 	case game.PlanStatusWaiting:
@@ -181,10 +182,10 @@ func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), FormatNumber(covered), FormatNumber(cost))
 			var notes []string
 			if banked >= 1 {
-				notes = append(notes, FormatNumber(banked)+" banked")
+				notes = append(notes, FormatNumber(banked)+vibe.Line("ui.overlay_plan.planItemDetailGlued.02", " banked"))
 			}
 			if held := state.Resources[v.Short].Amount - (covered - banked); held >= 1 {
-				notes = append(notes, FormatNumber(held)+" held for items above")
+				notes = append(notes, FormatNumber(held)+vibe.Line("ui.overlay_plan.planItemDetailGlued.03", " held for items above"))
 			}
 			if len(notes) > 0 {
 				line += " (" + strings.Join(notes, ", ") + ")"
@@ -196,13 +197,13 @@ func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 		due := planDue(v)
 		switch {
 		case len(v.Cost) == 0:
-			return theme.Paint(theme.RoleDim, "starts next tick")
+			return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.04", "starts next tick"))
 		case len(due) == 0:
-			return theme.Paint(theme.RoleDim, "starts next tick, paid from its bank")
+			return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.05", "starts next tick, paid from its bank"))
 		case len(v.Banked) > 0:
-			return theme.Paint(theme.RoleDim, "starts next tick for "+planPriceWhole(due)+" and its bank")
+			return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.06", "starts next tick for ")+planPriceWhole(due)+vibe.Line("ui.overlay_plan.planItemDetailGlued.07", " and its bank"))
 		}
-		return theme.Paint(theme.RoleDim, "starts next tick for "+planPriceWhole(v.Cost))
+		return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.08", "starts next tick for ")+planPriceWhole(v.Cost))
 	}
 }
 
@@ -268,13 +269,13 @@ func sortedMapKeys(m map[string]float64) []string {
 // of the status word goes on over further lines under its first.
 func planPanelText(state game.GameState, sel int, note string, noteGood, clearArmed bool, width int) string {
 	var sb strings.Builder
-	sb.WriteString(theme.Paint(theme.RoleAccent, "═══ Build plan ═══") + "\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.") + "\n\n")
+	sb.WriteString(theme.Paint(theme.RoleAccent, vibe.Line("ui.overlay_plan.planPanelText.01", "═══ Build plan ═══")) + "\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planPanelText.02", " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.")) + "\n\n")
 
 	if len(state.Plan) == 0 {
-		sb.WriteString(" The plan is empty.\n\n")
+		sb.WriteString(vibe.Line("ui.overlay_plan.planPanelText.03", " The plan is empty.\n\n"))
 		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan build <building> [count[]") + theme.Paint(theme.RoleDim, "   e.g. plan build hut 10") + "\n")
-		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, "            with what it needs first, in order") + "\n")
+		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planPanelText.06", "            with what it needs first, in order")) + "\n")
 	} else {
 		for i, v := range state.Plan {
 			marker := "  "
@@ -289,16 +290,16 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 		}
 		// Research takes no room: the 60 are for everything else.
 		load := game.PlanLoad(state.Plan)
-		count := fmt.Sprintf("%d of %d items", load, game.MaxPlanItems)
+		count := vibe.Sprintf("ui.overlay_plan.planPanelText.07", "%d of %d items", load, game.MaxPlanItems)
 		if techs := len(state.Plan) - load; techs > 0 {
-			count += fmt.Sprintf(", and %s queued (research takes no room)", textfmt.Count(techs, "tech", "techs"))
+			count += vibe.Sprintf("ui.overlay_plan.planPanelText.08", ", and %s queued (research takes no room)", textfmt.Count(techs, vibe.Line("ui.overlay_plan.planPanelText.09", "tech"), vibe.Line("ui.overlay_plan.planPanelText.10", "techs")))
 		}
 		fmt.Fprintf(&sb, "\n %s\n", theme.Paint(theme.RoleDim, count))
 	}
 
-	sb.WriteString("\n " + theme.Keycap("↑↓") + " select  " + theme.Keycap("U") + " up  " + theme.Keycap("D") + " down  " +
-		theme.Keycap("X") + " remove  " + theme.Keycap("C") + " clear\n")
-	sb.WriteString(" " + theme.Paint(theme.RoleDim, "Add with plan build / plan upgrade / plan research; plan list, remove, up, down and clear work as commands too.") + "\n")
+	sb.WriteString("\n " + theme.Keycap("↑↓") + vibe.Line("ui.overlay_plan.planPanelText.11", " select  ") + theme.Keycap("U") + " up  " + theme.Keycap("D") + " down  " +
+		theme.Keycap("X") + vibe.Line("ui.overlay_plan.planPanelText.14", " remove  ") + theme.Keycap("C") + vibe.Line("ui.overlay_plan.planPanelText.15", " clear\n"))
+	sb.WriteString(" " + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planPanelText.16", "Add with plan build / plan upgrade / plan research; plan list, remove, up, down and clear work as commands too.")) + "\n")
 
 	if note != "" {
 		role := theme.RoleNegative
@@ -315,23 +316,23 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 // planListText is `plan list`: the plan as plain log lines.
 func planListText(state game.GameState) string {
 	if len(state.Plan) == 0 {
-		return "The plan is empty. Add items with: plan build <building> [count[], or plan research <tech>."
+		return vibe.Line("ui.overlay_plan.planListText.01", "The plan is empty. Add items with: plan build <building> [count[], or plan research <tech>.")
 	}
 	var sb strings.Builder
-	sb.WriteString(theme.Paint(theme.RoleAccent, "Build plan") + "\n")
+	sb.WriteString(theme.Paint(theme.RoleAccent, vibe.Line("ui.overlay_plan.planListText.02", "Build plan")) + "\n")
 	for i, v := range state.Plan {
 		status := v.Status
 		switch v.Status {
 		case game.PlanStatusWaiting:
-			status = fmt.Sprintf("waiting, %.0f%%", v.Progress*100)
+			status = vibe.Sprintf("ui.overlay_plan.planListText.03", "waiting, %.0f%%", v.Progress*100)
 			if v.Short != "" {
-				status += " (short of " + game.ResourceName(v.Short) + ")"
+				status += vibe.Line("ui.overlay_plan.planListText.04", " (short of ") + game.ResourceName(v.Short) + ")"
 			}
 		case game.PlanStatusBlocked:
-			status = "blocked: " + v.Note
+			status = vibe.Line("ui.overlay_plan.planListText.05", "blocked: ") + v.Note
 		}
 		if len(v.Banked) > 0 {
-			status += ", " + formatPlanCost(v.Banked) + " banked"
+			status += ", " + formatPlanCost(v.Banked) + vibe.Line("ui.overlay_plan.planListText.06", " banked")
 		}
 		fmt.Fprintf(&sb, "  %d. %s  %s\n", i+1, tview.Escape(planItemTitle(v)), theme.Paint(theme.RoleDim, status))
 	}

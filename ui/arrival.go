@@ -12,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/all"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // arrival.go runs the arrival screen: the overlay that greets a new age
@@ -271,7 +272,7 @@ func (a *arrival) feed(prev, cur *game.GameState) {
 	}
 	a.view.passed = ""
 	if len(passed) > 0 {
-		a.view.passed = "Ages passed: " + strings.Join(passed, ", ")
+		a.view.passed = vibe.Line("ui.arrival.feed.01", "Ages passed: ") + strings.Join(passed, ", ")
 	}
 	a.say(cur)
 

@@ -218,7 +218,7 @@ func TestMapInspectStagesCommand(t *testing.T) {
 func TestMapIconsHintOnce(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	d.runForTest("map")
-	if txt := drawMapPanel(t, d, 120, 40); !strings.Contains(txt, mapIconsHint) {
+	if txt := drawMapPanel(t, d, 120, 40); !strings.Contains(txt, mapIconsHint.String()) {
 		t.Errorf("first open: no icons hint in\n%s", txt)
 	}
 	if _, _, shown := eng.Account().MapPrefs(); !shown {
@@ -226,7 +226,7 @@ func TestMapIconsHintOnce(t *testing.T) {
 	}
 	d.overlayMgr.Hide()
 	d.runForTest("map")
-	if txt := drawMapPanel(t, d, 120, 40); strings.Contains(txt, mapIconsHint) {
+	if txt := drawMapPanel(t, d, 120, 40); strings.Contains(txt, mapIconsHint.String()) {
 		t.Errorf("second open shows the hint again")
 	}
 }

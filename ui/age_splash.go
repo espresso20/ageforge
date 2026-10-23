@@ -7,6 +7,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // ShowAgeSplash is the simplified variant of ShowAgeSplashFull for callers that
@@ -127,9 +128,9 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 				bNames = append(bNames, def.Name)
 			}
 		}
-		add(skBody, "[cyan]New buildings:[-] %s", strings.Join(bNames, ", "))
+		add(skBody, vibe.Line("ui.age_splash.ageSplashLines.01", "[cyan]New buildings:[-] %s"), strings.Join(bNames, ", "))
 		if len(later) > 0 {
-			add(skBody, "[cyan]Opened later by research:[-] %s", strings.Join(later, ", "))
+			add(skBody, vibe.Line("ui.age_splash.ageSplashLines.02", "[cyan]Opened later by research:[-] %s"), strings.Join(later, ", "))
 		}
 	}
 	if len(newDef.UnlockResources) > 0 {
@@ -137,25 +138,25 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 		for _, rKey := range newDef.UnlockResources {
 			rNames = append(rNames, game.ResourceName(rKey))
 		}
-		add(skBody, "[green]New resources:[-] %s", strings.Join(rNames, ", "))
+		add(skBody, vibe.Line("ui.age_splash.ageSplashLines.03", "[green]New resources:[-] %s"), strings.Join(rNames, ", "))
 	}
 	if len(newDef.UnlockVillagers) > 0 {
 		wNames := make([]string, 0, len(newDef.UnlockVillagers))
 		for _, wKey := range newDef.UnlockVillagers {
 			wNames = append(wNames, textfmt.Capitalize(strings.ReplaceAll(wKey, "_", " ")))
 		}
-		add(skBody, "[yellow]New worker types:[-] %s", strings.Join(wNames, ", "))
+		add(skBody, vibe.Line("ui.age_splash.ageSplashLines.04", "[yellow]New worker types:[-] %s"), strings.Join(wNames, ", "))
 	}
 
 	// Highlight the wonder for this age
 	for _, bKey := range newDef.UnlockBuildings {
 		if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
 			blank()
-			add(skWonder, "[gold::b]★ Wonder unlocked: %s[-]", def.Name)
+			add(skWonder, vibe.Line("ui.age_splash.ageSplashLines.05", "[gold::b]★ Wonder unlocked: %s[-]"), def.Name)
 			if tech, ok := techs[def.RequiredTech]; ok {
-				add(skWonder, "[white]Bank its cost and research %s, its keystone, then build it.[-]", tech.Name)
+				add(skWonder, vibe.Line("ui.age_splash.ageSplashLines.06", "[white]Bank its cost and research %s, its keystone, then build it.[-]"), tech.Name)
 			} else {
-				add(skWonder, "[white]Bank its cost, then build it.[-]")
+				add(skWonder, "%s", vibe.Line("ui.age_splash.ageSplashLines.07", "[white]Bank its cost, then build it.[-]"))
 			}
 			break
 		}
@@ -166,8 +167,8 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 	if len(summary.BuildingsTransformed) > 0 || len(summary.BuildingsLegacy) > 0 {
 		blank()
 		if len(summary.BuildingsTransformed) > 0 {
-			add(skSection, "[yellow]── Upgrades available ──[-]")
-			add(skUpgradeHelp, "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one.")
+			add(skSection, "%s", vibe.Line("ui.age_splash.ageSplashLines.08", "[yellow]── Upgrades available ──[-]"))
+			add(skUpgradeHelp, "%s", vibe.Line("ui.age_splash.ageSplashLines.09", "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one."))
 			// Every line of the text is centered on its own, so the
 			// counts only line up when the rows are all one width: each
 			// label is padded to the longest, each count to the widest.
@@ -193,7 +194,7 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 			}
 		}
 		if len(summary.BuildingsLegacy) > 0 {
-			add(skSection, "[yellow]── Legacy buildings ──[-]")
+			add(skSection, "%s", vibe.Line("ui.age_splash.ageSplashLines.10", "[yellow]── Legacy buildings ──[-]"))
 			for _, legKey := range summary.BuildingsLegacy {
 				legName := legKey
 				if def, ok := allBuildings[legKey]; ok {
@@ -237,7 +238,7 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 		}
 
 		blank()
-		add(skEpoch, "[gold]══ New epoch ══[-]")
+		add(skEpoch, "%s", vibe.Line("ui.age_splash.ageSplashLines.11", "[gold]══ New epoch ══[-]"))
 		add(skEpoch, "[%s]%s %s[-]", epochColor, epochIcon, epochEvent.EpochName)
 		blank()
 		add(skEpoch, "[%s]%s[-]", eventColor, epochEvent.EventName)
@@ -247,6 +248,6 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 	}
 
 	blank()
-	add(skPrompt, "[gray]Press any key to continue.[-]")
+	add(skPrompt, "%s", vibe.Line("ui.age_splash.ageSplashLines.12", "[gray]Press any key to continue.[-]"))
 	return lines
 }

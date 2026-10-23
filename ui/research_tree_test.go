@@ -331,8 +331,8 @@ func TestHelpListsResearchKeys(t *testing.T) {
 			section = section[:end]
 		}
 		for _, k := range researchKeys {
-			if !strings.Contains(section, "  "+k[0]) {
-				t.Errorf("%d columns: the Help panel's Research section does not list %s", screenW, k[0])
+			if !strings.Contains(section, "  "+k.key) {
+				t.Errorf("%d columns: the Help panel's Research section does not list %s", screenW, k.key)
 			}
 		}
 		for _, want := range []string{"Shift-Tab", "research tree far"} {
@@ -344,7 +344,7 @@ func TestHelpListsResearchKeys(t *testing.T) {
 	// Every key the panel routes is one the Help panel names.
 	listed := ""
 	for _, k := range researchKeys {
-		listed += k[0] + " " + k[1] + " "
+		listed += k.key + " " + k.what.String() + " "
 	}
 	for _, name := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "Enter", "Esc"} {
 		if !strings.Contains(listed, name) {

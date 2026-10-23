@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The Factions panel.
@@ -57,8 +58,8 @@ func factionsProvider(state game.GameState, w int) string {
 	}
 
 	// ─── Header ───
-	writeHeadedLine(&sb, usable, "gold", "═══ Factions ═══",
-		fmt.Sprintf("%d met · %d undiscovered", met, pending))
+	writeHeadedLine(&sb, usable, "gold", vibe.Line("ui.overlay_factions.factionsProvider.01", "═══ Factions ═══"),
+		vibe.Sprintf("ui.overlay_factions.factionsProvider.02", "%d met · %d undiscovered", met, pending))
 	sb.WriteString("\n")
 	sb.WriteString(lockNotes(state, config.FeatureDiplomacy))
 
@@ -66,13 +67,13 @@ func factionsProvider(state game.GameState, w int) string {
 	writeGeographicSociety(&sb, state)
 
 	// ─── Known Factions ───
-	sb.WriteString("\n [yellow]── Civilizations you have met ──[-]\n\n")
+	sb.WriteString(vibe.Line("ui.overlay_factions.factionsProvider.03", "\n [yellow]── Civilizations you have met ──[-]\n\n"))
 	if met == 0 {
 		// The old copy here pointed at the Colonial Age and an Embassy. Both were
 		// wrong: the first civ is reachable in the Bronze Age, and first contact
 		// has been expedition-driven since the encounter engine landed.
-		sb.WriteString(" [gray]You have not met anyone yet. Your scouts make first contact[-]\n")
-		sb.WriteString(" [gray]out in the field, so send scouting expeditions.[-]\n")
+		sb.WriteString(vibe.Line("ui.overlay_factions.factionsProvider.04", " [gray]You have not met anyone yet. Your scouts make first contact[-]\n"))
+		sb.WriteString(vibe.Line("ui.overlay_factions.factionsProvider.05", " [gray]out in the field, so send scouting expeditions.[-]\n"))
 	}
 	for _, def := range defs {
 		f, ok := factions[def.Key]
@@ -85,17 +86,17 @@ func factionsProvider(state game.GameState, w int) string {
 		// Embassies no longer gate first contact, but they are still how you court
 		// a civ you have already met. Their ages are named only once the player
 		// can see them (spoilers.go).
-		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Tip: assign workers to an Embassy (%s) or a Grand Embassy",
+		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Sprintf("ui.overlay_factions.factionsProvider.06", " Tip: assign workers to an Embassy (%s) or a Grand Embassy",
 			ageRef(state, buildingAge(state, "embassy", "colonial_age")))) + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" (%s) to raise opinion over time.",
+		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Sprintf("ui.overlay_factions.factionsProvider.07", " (%s) to raise opinion over time.",
 			ageRef(state, buildingAge(state, "grand_embassy", "industrial_age")))) + "\n")
 	}
 
 	// ─── Not Yet Met ───
 	writeUndiscoveredRoster(&sb, pending)
 
-	sb.WriteString("\n [gray]Commands: diplomacy ally/rival/embargo/gift/neutral/tribute/raid <civ>[-]\n")
-	sb.WriteString(" [gray]Deals: diplomacy deals <civ> · diplomacy accept <civ> <n> · plan deal <civ> <n>[-]\n")
+	sb.WriteString(vibe.Line("ui.overlay_factions.factionsProvider.08", "\n [gray]Commands: diplomacy ally/rival/embargo/gift/neutral/tribute/raid <civ>[-]\n"))
+	sb.WriteString(vibe.Line("ui.overlay_factions.factionsProvider.09", " [gray]Deals: diplomacy deals <civ> · diplomacy accept <civ> <n> · plan deal <civ> <n>[-]\n"))
 
 	return sb.String()
 }
@@ -143,8 +144,8 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 		setbacks += t.setbacks
 	}
 
-	writeHeadedLine(sb, usable, "yellow", "── Boons and setbacks ──",
-		fmt.Sprintf("boons %d/%d · setbacks %d/%d",
+	writeHeadedLine(sb, usable, "yellow", vibe.Line("ui.overlay_factions.writeLiveFactionEffects.01", "── Boons and setbacks ──"),
+		vibe.Sprintf("ui.overlay_factions.writeLiveFactionEffects.02", "boons %d/%d · setbacks %d/%d",
 			boons, game.MaxConcurrentFactionBoons, setbacks, game.MaxConcurrentFactionMaluses))
 	sb.WriteString("\n")
 
@@ -207,7 +208,7 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 		if f.LentPerm {
 			term = "permanent"
 		}
-		fmt.Fprintf(sb, " [green]↳ %d workers on loan from %s (%s)[-]\n", f.LentWorkers, def.Name, term)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeLiveFactionEffects.04", " [green]↳ %d workers on loan from %s (%s)[-]\n", f.LentWorkers, def.Name, term))
 		wrote = true
 	}
 
@@ -217,8 +218,8 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 	for _, crew := range state.Diplomacy.BoonCrews {
 		civ := textfmt.Capitalize(civRef(state, crew.FactionKey))
 		prefix := fmt.Sprintf("↳ %s: ", civ)
-		desc := truncate("crew on loan", descCol-runeLen(prefix))
-		count := textfmt.Count(crew.Count, "worker", "workers")
+		desc := truncate(vibe.Line("ui.overlay_factions.writeLiveFactionEffects.05", "crew on loan"), descCol-runeLen(prefix))
+		count := textfmt.Count(crew.Count, vibe.Line("ui.overlay_factions.writeLiveFactionEffects.06", "worker"), vibe.Line("ui.overlay_factions.writeLiveFactionEffects.07", "workers"))
 		remain := formatTicks(crew.TicksLeft, state)
 		fmt.Fprintf(sb, " [green]↳[-] [cyan]%s[-]: %s%s[green]%s[-]%s%s[gray]%s[-]\n",
 			civ, desc,
@@ -230,8 +231,8 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 	}
 
 	if !wrote {
-		sb.WriteString(" [gray]No boons or setbacks in play.[-]\n")
-		sb.WriteString(" [gray]Civilizations grant boons after encounters on scouting expeditions.[-]\n")
+		sb.WriteString(vibe.Line("ui.overlay_factions.writeLiveFactionEffects.08", " [gray]No boons or setbacks in play.[-]\n"))
+		sb.WriteString(vibe.Line("ui.overlay_factions.writeLiveFactionEffects.09", " [gray]Civilizations grant boons after encounters on scouting expeditions.[-]\n"))
 	}
 }
 
@@ -240,12 +241,12 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 	auto := state.Military.AutoExpedition
 
-	sb.WriteString("\n [yellow]── Geographic Society ──[-]\n\n")
+	sb.WriteString(vibe.Line("ui.overlay_factions.writeGeographicSociety.01", "\n [yellow]── Geographic Society ──[-]\n\n"))
 
 	if !auto.Active {
-		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" No Geographic Society. %s brings one, and it sends",
+		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Sprintf("ui.overlay_factions.writeGeographicSociety.02", " No Geographic Society. %s brings one, and it sends",
 			ageRefCap(state, buildingAge(state, "geographic_society", "industrial_age")))) + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, " scouts out on standing orders.") + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_factions.writeGeographicSociety.03", " scouts out on standing orders.")) + "\n")
 		return
 	}
 
@@ -253,22 +254,22 @@ func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 	if auto.Capacity > 0 {
 		fill = auto.Assigned * 100 / auto.Capacity
 	}
-	fmt.Fprintf(sb, " Societies: [cyan]%d[-] · Staffed: [cyan]%d/%d[-] (%d%%) · Sends a party every %s\n",
-		auto.Count, auto.Assigned, auto.Capacity, fill, formatTicks(auto.Interval, state))
+	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeGeographicSociety.04", " Societies: [cyan]%d[-] · Staffed: [cyan]%d/%d[-] (%d%%) · Sends a party every %s\n",
+		auto.Count, auto.Assigned, auto.Capacity, fill, formatTicks(auto.Interval, state)))
 
 	if auto.Starved {
-		sb.WriteString(" [yellow]⚠ A party is due, but you cannot pay the expedition cost.[-]\n")
-		sb.WriteString(" [yellow]  It goes out once you have the resources.[-]\n")
+		sb.WriteString(vibe.Line("ui.overlay_factions.writeGeographicSociety.05", " [yellow]⚠ A party is due, but you cannot pay the expedition cost.[-]\n"))
+		sb.WriteString(vibe.Line("ui.overlay_factions.writeGeographicSociety.06", " [yellow]  It goes out once you have the resources.[-]\n"))
 		return
 	}
 
-	line := fmt.Sprintf(" Next dispatch in %s", formatTicks(auto.TicksLeft, state))
+	line := vibe.Sprintf("ui.overlay_factions.writeGeographicSociety.07", " Next dispatch in %s", formatTicks(auto.TicksLeft, state))
 	if auto.Interval > 0 {
 		// Fill runs the other way from the countdown: full bar means due now.
 		line += "   " + ProgressBar(float64(auto.Interval-auto.TicksLeft), float64(auto.Interval), 20)
 	}
 	sb.WriteString(line + "\n")
-	sb.WriteString(" [gray]The Society is running: parties go out on their own.[-]\n")
+	sb.WriteString(vibe.Line("ui.overlay_factions.writeGeographicSociety.08", " [gray]The Society is running: parties go out on their own.[-]\n"))
 }
 
 // writeFactionCard renders the detail block for one discovered civilization:
@@ -297,7 +298,7 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 
 	// War banner takes precedence — it's the headline state when active.
 	if f.AtWar {
-		sb.WriteString("   [red]⚔ At war: expect raids. Sue for peace with: diplomacy tribute " + def.Key + "[-]\n")
+		sb.WriteString(vibe.Line("ui.overlay_factions.writeFactionCard.01", "   [red]⚔ At war: expect raids. Sue for peace with: diplomacy tribute ") + def.Key + "[-]\n")
 	}
 
 	// Opinion bar across the -100..100 range. Clamp first to stay panic-free.
@@ -324,7 +325,7 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 		opinionColor = "red"
 	}
 	bar := strings.Repeat("█", filled) + strings.Repeat("░", barCells-filled)
-	fmt.Fprintf(sb, "   Opinion: [%s]%4d[-]  [%s]%s[-]\n", opinionColor, f.Opinion, opinionColor, bar)
+	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.02", "   Opinion: [%s]%4d[-]  [%s]%s[-]\n", opinionColor, f.Opinion, opinionColor, bar))
 
 	// Status label, color-coded.
 	statusColor := "white"
@@ -339,12 +340,12 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 		statusColor = "yellow"
 	}
 	// Active bonus + trade-rate modifier (only allied specialty trades get it).
-	bonus := "[gray]no active bonus[-]"
+	bonus := vibe.Line("ui.overlay_factions.writeFactionCard.03", "[gray]no active bonus[-]")
 	if f.Status == "allied" && f.TradeBonus > 0 {
-		bonus = fmt.Sprintf("[green]%s %s trades[-]", textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty))
+		bonus = vibe.Sprintf("ui.overlay_factions.writeFactionCard.04", "[green]%s %s trades[-]", textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty))
 	}
-	fmt.Fprintf(sb, "   Status: [%s]%s[-]  %s  [gray](%s done)[-]\n",
-		statusColor, f.Status, bonus, textfmt.Count(f.TradeCount, "trade", "trades"))
+	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.05", "   Status: [%s]%s[-]  %s  [gray](%s done)[-]\n",
+		statusColor, f.Status, bonus, textfmt.Count(f.TradeCount, vibe.Line("ui.overlay_factions.writeFactionCard.06", "trade"), vibe.Line("ui.overlay_factions.writeFactionCard.07", "trades"))))
 
 	// Threshold indicator: distance to the next status tier.
 	fmt.Fprintf(sb, "   %s\n", diplomacyThreshold(f.Status, f.Opinion, def.Key, state.Diplomacy.AllyCost))
@@ -352,9 +353,9 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	// Lent-worker status, if this civ has workers on loan with you.
 	if f.LentWorkers > 0 {
 		if f.LentPerm {
-			fmt.Fprintf(sb, "   [green]↳ %d workers on loan (permanent)[-]\n", f.LentWorkers)
+			fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.08", "   [green]↳ %d workers on loan (permanent)[-]\n", f.LentWorkers))
 		} else {
-			fmt.Fprintf(sb, "   [green]↳ %d workers on loan (temporary)[-]\n", f.LentWorkers)
+			fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.09", "   [green]↳ %d workers on loan (temporary)[-]\n", f.LentWorkers))
 		}
 	}
 
@@ -363,10 +364,10 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	if t.boons > 0 || t.setbacks > 0 {
 		var parts []string
 		if t.boons > 0 {
-			parts = append(parts, fmt.Sprintf("[gold]✦ %s active[-]", textfmt.Count(t.boons, "boon", "boons")))
+			parts = append(parts, vibe.Sprintf("ui.overlay_factions.writeFactionCard.10", "[gold]✦ %s active[-]", textfmt.Count(t.boons, vibe.Line("ui.overlay_factions.writeFactionCard.11", "boon"), vibe.Line("ui.overlay_factions.writeFactionCard.12", "boons"))))
 		}
 		if t.setbacks > 0 {
-			parts = append(parts, fmt.Sprintf("[red]⚠ %s active[-]", textfmt.Count(t.setbacks, "setback", "setbacks")))
+			parts = append(parts, vibe.Sprintf("ui.overlay_factions.writeFactionCard.13", "[red]⚠ %s active[-]", textfmt.Count(t.setbacks, vibe.Line("ui.overlay_factions.writeFactionCard.14", "setback"), vibe.Line("ui.overlay_factions.writeFactionCard.15", "setbacks"))))
 		}
 		fmt.Fprintf(sb, "   %s\n", strings.Join(parts, "  "))
 	}
@@ -377,12 +378,12 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	// Action hint: the diplomacy commands available given current status.
 	switch {
 	case f.AtWar:
-		fmt.Fprintf(sb, "   [gray]diplomacy tribute %s (sue for peace) · or wait them out[-]\n\n", def.Key)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.16", "   [gray]diplomacy tribute %s (sue for peace) · or wait them out[-]\n\n", def.Key))
 	case f.Status == "allied":
-		fmt.Fprintf(sb, "   [gray]diplomacy rival/embargo/neutral %s[-]\n\n", def.Key)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.17", "   [gray]diplomacy rival/embargo/neutral %s[-]\n\n", def.Key))
 	default:
-		fmt.Fprintf(sb, "   [gray]Send a gift: %s for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s[-]\n\n",
-			game.Amount(state.Diplomacy.GiftCost, "gold"), state.Diplomacy.GiftGain, def.Key, def.Key)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_factions.writeFactionCard.18", "   [gray]Send a gift: %s for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s[-]\n\n",
+			game.Amount(state.Diplomacy.GiftCost, "gold"), state.Diplomacy.GiftGain, def.Key, def.Key))
 	}
 }
 
@@ -390,17 +391,17 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 // and nothing more: no names, ages, specialties or personalities. They are
 // the player's to discover (the no-spoiler rule, spoilers.go).
 func writeUndiscoveredRoster(sb *strings.Builder, pending int) {
-	sb.WriteString("\n [yellow]── Not yet met ──[-]\n\n")
+	sb.WriteString(vibe.Line("ui.overlay_factions.writeUndiscoveredRoster.01", "\n [yellow]── Not yet met ──[-]\n\n"))
 	if pending == 0 {
-		sb.WriteString(" [gray]Every civilization has been met.[-]\n")
+		sb.WriteString(vibe.Line("ui.overlay_factions.writeUndiscoveredRoster.02", " [gray]Every civilization has been met.[-]\n"))
 		return
 	}
 	them := "them"
 	if pending == 1 {
 		them = "it"
 	}
-	sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" %s not yet discovered. Send expeditions to find %s.",
-		textfmt.Count(pending, "civilization", "civilizations"), them)) + "\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, vibe.Sprintf("ui.overlay_factions.writeUndiscoveredRoster.05", " %s not yet discovered. Send expeditions to find %s.",
+		textfmt.Count(pending, vibe.Line("ui.overlay_factions.writeUndiscoveredRoster.06", "civilization"), vibe.Line("ui.overlay_factions.writeUndiscoveredRoster.07", "civilizations")), them)) + "\n")
 }
 
 // === shared formatting helpers ===
@@ -495,9 +496,9 @@ func effectMagnitude(eff game.EventEffectInfo) (plain, colored string) {
 	case eff.Type == "production":
 		plain = rateNumber(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
 	case eff.Type == "production_all":
-		plain = textfmt.SignedPercent(eff.Value) + " all production"
+		plain = textfmt.SignedPercent(eff.Value) + vibe.Line("ui.overlay_factions.effectMagnitude.01", " all production")
 	case eff.Type == "tick_speed":
-		plain = textfmt.SignedPercent(eff.Value) + " game speed"
+		plain = textfmt.SignedPercent(eff.Value) + vibe.Line("ui.overlay_factions.effectMagnitude.02", " game speed")
 	case strings.HasSuffix(eff.Type, "_rate"):
 		plain = textfmt.SignedPercent(eff.Value) + " " + rateEffectLabel(eff)
 	default:
@@ -551,18 +552,18 @@ func truncate(s string, max int) string {
 func diplomacyThreshold(status string, opinion int, key string, allyCost float64) string {
 	switch status {
 	case "allied":
-		return "[gray](maxed)[-]"
+		return vibe.Line("ui.overlay_factions.diplomacyThreshold.01", "[gray](maxed)[-]")
 	case "rival", "embargo":
-		return "[yellow](opinion decaying)[-]"
+		return vibe.Line("ui.overlay_factions.diplomacyThreshold.02", "[yellow](opinion decaying)[-]")
 	}
 	// neutral / friendly: climbing toward the next eligibility gate.
 	switch {
 	case opinion < 25:
-		return fmt.Sprintf("[gray](+%d opinion to friendly)[-]", 25-opinion)
+		return vibe.Sprintf("ui.overlay_factions.diplomacyThreshold.03", "[gray](+%d opinion to friendly)[-]", 25-opinion)
 	case opinion < game.AllyOpinion:
-		return fmt.Sprintf("[gray](+%d opinion to ally-eligible)[-]", game.AllyOpinion-opinion)
+		return vibe.Sprintf("ui.overlay_factions.diplomacyThreshold.04", "[gray](+%d opinion to ally-eligible)[-]", game.AllyOpinion-opinion)
 	default:
-		return fmt.Sprintf("[gray](can ally: diplomacy ally %s, %s)[-]", key, game.Amount(allyCost, "gold"))
+		return vibe.Sprintf("ui.overlay_factions.diplomacyThreshold.05", "[gray](can ally: diplomacy ally %s, %s)[-]", key, game.Amount(allyCost, "gold"))
 	}
 }
 
@@ -571,15 +572,15 @@ func diplomacyThreshold(status string, opinion int, key string, allyCost float64
 // nothing. Theme roles only.
 func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int) {
 	if f.DealsBlocked != "" {
-		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, "Deals: none while they are "+f.DealsBlocked+"."))
+		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, vibe.Line("ui.overlay_factions.writeFactionDeals.01", "Deals: none while they are ")+f.DealsBlocked+"."))
 		return
 	}
 	if len(f.Deals) == 0 {
-		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleDim, "Deals: nothing to offer right now."))
+		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_factions.writeFactionDeals.02", "Deals: nothing to offer right now.")))
 		return
 	}
-	fmt.Fprintf(sb, "   %s %s\n", theme.Paint(theme.RoleLabel, "Deals:"),
-		theme.Paint(theme.RoleDim, "new offers in "+formatTicks(f.DealRefreshIn, state)))
+	fmt.Fprintf(sb, "   %s %s\n", theme.Paint(theme.RoleLabel, vibe.Line("ui.overlay_factions.writeFactionDeals.03", "Deals:")),
+		theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_factions.writeFactionDeals.04", "new offers in ")+formatTicks(f.DealRefreshIn, state)))
 	for _, d := range f.Deals {
 		fmt.Fprintf(sb, "    %s\n", dealLine(d, state, usable-4))
 	}
@@ -599,7 +600,7 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	case d.Taken:
 		note = "taken"
 	case d.Kind == game.DealRare:
-		note = "next age's goods"
+		note = vibe.Line("ui.overlay_factions.dealLine.02", "next age's goods")
 	}
 	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber))
 	if d.Taken {
@@ -618,6 +619,6 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 		theme.Paint(theme.RoleLabel, fmt.Sprintf("%d.", d.Num)),
 		theme.Paint(theme.RoleAccent, game.DealKindLabel(d.Kind)+":"),
 		theme.Paint(theme.RoleDim, "give"), theme.Paint(giveRole, give),
-		theme.Paint(theme.RoleDim, "→ get"), theme.Paint(theme.RolePositive, get),
+		theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_factions.dealLine.04", "→ get")), theme.Paint(theme.RolePositive, get),
 		gap, theme.Paint(theme.RoleDim, note))
 }

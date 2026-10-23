@@ -1,11 +1,10 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // menu_update.go is the main menu's Check for updates: the check, the
@@ -16,7 +15,7 @@ import (
 const updateModalPage = "update_modal"
 
 func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion string) {
-	modal := tview.NewModal().SetText("Checking for updates...")
+	modal := tview.NewModal().SetText(vibe.Line("ui.menu_update.showUpdateCheck.01", "Checking for updates..."))
 	pages.AddPage(updateModalPage, modal, true, true)
 
 	go func() {
@@ -24,11 +23,11 @@ func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion 
 		app.QueueUpdateDraw(func() {
 			pages.RemovePage(updateModalPage)
 			if err != nil {
-				showUpdateMsg(app, pages, "Update check failed:\n\n"+err.Error())
+				showUpdateMsg(app, pages, vibe.Line("ui.menu_update.showUpdateCheck.02", "Update check failed:\n\n")+err.Error())
 				return
 			}
 			if !result.IsNewer {
-				showUpdateMsg(app, pages, "You're up to date.\n\n"+currentVersion+" is the latest version.")
+				showUpdateMsg(app, pages, vibe.Line("ui.menu_update.showUpdateCheck.03", "You're up to date.\n\n")+currentVersion+vibe.Line("ui.menu_update.showUpdateCheck.04", " is the latest version."))
 				return
 			}
 			showUpdateConfirm(app, pages, result)
@@ -39,7 +38,7 @@ func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion 
 func showUpdateMsg(app *tview.Application, pages *tview.Pages, msg string) {
 	modal := tview.NewModal().
 		SetText(msg).
-		AddButtons([]string{"OK"}).
+		AddButtons([]string{vibe.Line("ui.menu_update.showUpdateMsg.01", "OK")}).
 		SetDoneFunc(func(_ int, _ string) {
 			pages.RemovePage(updateModalPage)
 		})
@@ -47,13 +46,13 @@ func showUpdateMsg(app *tview.Application, pages *tview.Pages, msg string) {
 }
 
 func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {
-	msg := fmt.Sprintf(
-		"  ✦  Update available  ✦\n\n  Latest:   %s\n  Current:  %s\n\nDownload and install now?",
+	msg := vibe.Sprintf(
+		"ui.menu_update.showUpdateConfirm.01", "  ✦  Update available  ✦\n\n  Latest:   %s\n  Current:  %s\n\nDownload and install now?",
 		result.LatestVersion, result.CurrentVersion,
 	)
 	modal := tview.NewModal().
 		SetText(msg).
-		AddButtons([]string{"Update now", "Later"}).
+		AddButtons([]string{vibe.Line("ui.menu_update.showUpdateConfirm.02", "Update now"), vibe.Line("ui.menu_update.showUpdateConfirm.03", "Later")}).
 		SetDoneFunc(func(button int, _ string) {
 			pages.RemovePage(updateModalPage)
 			if button == 0 { // "Update now"; Later and Esc (-1) do not
@@ -65,7 +64,7 @@ func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.U
 
 func showUpdateInstall(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {
 	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Downloading %s...\n\n%s", result.LatestVersion, result.BinaryName))
+		SetText(vibe.Sprintf("ui.menu_update.showUpdateInstall.01", "Downloading %s...\n\n%s", result.LatestVersion, result.BinaryName))
 	pages.AddPage(updateModalPage, modal, true, true)
 
 	go func() {
@@ -73,7 +72,7 @@ func showUpdateInstall(app *tview.Application, pages *tview.Pages, result game.U
 		app.QueueUpdateDraw(func() {
 			pages.RemovePage(updateModalPage)
 			if err != nil {
-				showUpdateMsg(app, pages, "Update failed:\n\n"+err.Error())
+				showUpdateMsg(app, pages, vibe.Line("ui.menu_update.showUpdateInstall.02", "Update failed:\n\n")+err.Error())
 				return
 			}
 			showUpdateMsg(app, pages, "  ✓  "+msg)

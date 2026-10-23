@@ -7,6 +7,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // people_kinds.go is the four kinds of person in the town, as the People box
@@ -65,8 +66,8 @@ func (k peopleKind) boxLine(w int) string {
 	if k.out > 0 {
 		// Only when the whole name still fits beside it.
 		for _, with := range []string{
-			count + " · " + FormatNumber(float64(k.out)) + " out",
-			count + " +" + FormatNumber(float64(k.out)) + " out",
+			count + " · " + FormatNumber(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.01", " out"),
+			count + " +" + FormatNumber(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.02", " out"),
 		} {
 			if w <= 0 || runeLen(k.name)+1+runeLen(with) <= w {
 				count = with

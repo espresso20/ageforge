@@ -1,11 +1,11 @@
 package ui
 
 import (
-	"strings"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -17,7 +17,7 @@ type OverlayProvider func(state game.GameState, w int) string
 // overlayEntry holds the tview widgets and content provider for a text-based overlay.
 // The root Flex uses nested nil spacers to centre the TextView at ~85%×85% of the terminal.
 type overlayEntry struct {
-	title   string
+	title   vibe.Entry
 	tv      *tview.TextView
 	root    tview.Primitive // centered flex wrapper — added/removed from pages.Pages
 	provide OverlayProvider
@@ -31,7 +31,7 @@ type overlayEntry struct {
 // map canvas). When refreshFn is set, Refresh calls it in-place instead of
 // rebuilding and replacing the page (used for panels that manage their own state).
 type widgetEntry struct {
-	title      string
+	title      vibe.Entry
 	build      func(state game.GameState) tview.Primitive
 	refreshFn  func(state game.GameState) // optional; nil means full rebuild on each Refresh
 	fullScreen bool                       // true = fills whole terminal; false = 85×85% modal
@@ -89,13 +89,13 @@ func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func(
 // The overlay is rendered as a centred 85%×85% modal box using nested Flex nil-spacers
 // (tview's idiomatic way to achieve percentage-based positioning in a fixed terminal).
 // NOTE: The ratio 17/20 = 85% — if you change this, update both inner and root Flex items.
-func (om *OverlayManager) Register(name, title string, provide OverlayProvider) {
+func (om *OverlayManager) Register(name string, title vibe.Entry, provide OverlayProvider) {
 	tv := tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true).
 		SetWrap(true)
 	tv.SetBorder(true).
-		SetTitle(" " + title + " (Esc to close) ")
+		SetTitle(overlayTitle(title))
 	// Persistent overlay chrome (built once, reused on every Show): enroll so a live
 	// theme switch restyles the border/title/background.
 	theme.Track(func() {
@@ -130,12 +130,18 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 	om.entries[name] = entry
 }
 
-// Retitle sets the title of the named text overlay, for a title that is
-// written again when VibeMode is switched. Unknown names are ignored.
-func (om *OverlayManager) Retitle(name, title string) {
-	if e, ok := om.entries[name]; ok {
-		e.tv.SetTitle(strings.Replace(e.tv.GetTitle(), e.title, title, 1))
-		e.title = title
+// overlayTitle is the title on the border of an overlay: its name, and how to
+// close it.
+func overlayTitle(title vibe.Entry) string {
+	return " " + title.String() + vibe.Line("ui.overlay.Register.01", " (Esc to close) ")
+}
+
+// RetitleAll writes the titles of the text overlays again, for when VibeMode
+// has been switched. The widget overlays are built each time they open, so they
+// read the title then.
+func (om *OverlayManager) RetitleAll() {
+	for _, e := range om.entries {
+		e.tv.SetTitle(overlayTitle(e.title))
 	}
 }
 
@@ -152,7 +158,7 @@ func (om *OverlayManager) SetKeyHandler(name string, keys func(event *tcell.Even
 // When fullScreen is false the primitive is wrapped in the same centered 85%×85% modal box
 // (gold border, title, ESC to close). When fullScreen is true the primitive fills the entire
 // screen — useful for the Map which needs every pixel.
-func (om *OverlayManager) RegisterWidget(name, title string, build func(state game.GameState) tview.Primitive, refresh func(state game.GameState), fullScreen bool) {
+func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) tview.Primitive, refresh func(state game.GameState), fullScreen bool) {
 	om.widgetEntries[name] = &widgetEntry{
 		title:      title,
 		build:      build,
@@ -185,7 +191,7 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 	// theme switch re-runs buildWidgetRoot on next open.
 	frame.SetBorder(true).
 		SetBorderColor(theme.Color(theme.RoleAccent)).
-		SetTitle(" " + we.title + " (Esc to close) ").
+		SetTitle(" " + we.title.String() + vibe.Line("ui.overlay.buildWidgetRoot.01", " (Esc to close) ")).
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBackgroundColor(theme.Color(theme.RoleSurface))
 	frame.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

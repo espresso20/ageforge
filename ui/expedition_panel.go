@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // expedition_panel.go is the Expeditions panel's overlay primitive: the
@@ -23,11 +24,11 @@ import (
 // the bar, where `expedition <name>` sends an offer by its name.
 
 // expeditionKeys are the panel's keys as the Help panel lists them.
-var expeditionKeys = [][2]string{
-	{"Arrows", "Hop from pin to pin on the Ready Room; pick a party on the Report"},
-	{"Tab", "Switch between the Ready Room and the Expedition Report"},
-	{"Enter", "Ask to send the highlighted offer, and send it (with something typed, Tab and Enter act on the prompt instead)"},
-	{"Esc", "Take back the question, then close the panel"},
+var expeditionKeys = []keyHelp{
+	{"Arrows", vibe.E("ui.expedition_panel.expeditionKeys.02", "Hop from pin to pin on the Ready Room; pick a party on the Report")},
+	{"Tab", vibe.E("ui.expedition_panel.expeditionKeys.04", "Switch between the Ready Room and the Expedition Report")},
+	{"Enter", vibe.E("ui.expedition_panel.expeditionKeys.06", "Ask to send the highlighted offer, and send it (with something typed, Tab and Enter act on the prompt instead)")},
+	{"Esc", vibe.E("ui.expedition_panel.expeditionKeys.08", "Take back the question, then close the panel")},
 }
 
 // expFlashFor is how long a line stays on the key bar.
@@ -298,7 +299,7 @@ func (p *expeditionPanel) send() {
 	if err := p.engine.LaunchExpedition(o.Number); err != nil {
 		p.say(textfmt.Sentence(err.Error()), false)
 	} else {
-		p.say("Sent: "+goingTo(o.Label, o.Place)+". Back in "+expDur(o.DurationMin, p.state)+". Tab to follow it.", true)
+		p.say(vibe.Line("ui.expedition_panel.send.01", "Sent: ")+goingTo(o.Label, o.Place)+vibe.Line("ui.expedition_panel.send.02", ". Back in ")+expDur(o.DurationMin, p.state)+vibe.Line("ui.expedition_panel.send.03", ". Tab to follow it."), true)
 	}
 	p.update(p.engine.GetState())
 }

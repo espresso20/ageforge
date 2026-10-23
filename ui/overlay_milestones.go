@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // milestonesProvider generates the milestones overlay text from the current game state.
@@ -18,7 +19,7 @@ func milestonesProvider(state game.GameState, _ int) string {
 	ms := state.Milestones
 
 	// Header: progress + title
-	fmt.Fprintf(&sb, " [gold]Progress:[-] %d/%d", ms.CompletedCount, ms.TotalCount)
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_milestones.milestonesProvider.01", " [gold]Progress:[-] %d/%d", ms.CompletedCount, ms.TotalCount))
 	if ms.CurrentTitle != "" {
 		fmt.Fprintf(&sb, "  [yellow]\"%s\"[-]", ms.CurrentTitle)
 	}
@@ -55,7 +56,7 @@ func milestonesProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, " [green]★ %s[-] [%d/%d %s] [green]✓ %s[-]",
 					catName, chain.CompletedCount, chain.TotalCount, chainBar, chain.Title)
 				if chain.BoostActive {
-					sb.WriteString(" [cyan]⚡ boost active[-]")
+					sb.WriteString(vibe.Line("ui.overlay_milestones.milestonesProvider.02", " [cyan]⚡ boost active[-]"))
 				}
 			} else {
 				fmt.Fprintf(&sb, " [gold]◆ %s[-] [%d/%d %s]",
@@ -101,13 +102,13 @@ func milestonesProvider(state game.GameState, _ int) string {
 					}
 				}
 				if m.RewardText != "" {
-					fmt.Fprintf(&sb, "     [gray]Reward: %s[-]%s\n", m.RewardText, rewardCapTags(state, m.Rewards, false))
+					fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_milestones.milestonesProvider.03", "     [gray]Reward: %s[-]%s\n", m.RewardText, rewardCapTags(state, m.Rewards, false)))
 				}
 			}
 		}
 
 		if hiddenCount > 0 {
-			fmt.Fprintf(&sb, "   [gray]+ %s[-]\n", textfmt.Count(hiddenCount, "hidden milestone", "hidden milestones"))
+			fmt.Fprintf(&sb, "   [gray]+ %s[-]\n", textfmt.Count(hiddenCount, vibe.Line("ui.overlay_milestones.milestonesProvider.04", "hidden milestone"), vibe.Line("ui.overlay_milestones.milestonesProvider.05", "hidden milestones")))
 		}
 		sb.WriteString("\n")
 	}

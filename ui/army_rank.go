@@ -1,12 +1,12 @@
 package ui
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The army's rank as the Expedition panel and the People panel's Army tab
@@ -37,16 +37,16 @@ func rankProgress(state game.GameState) string {
 
 // rankLine is the header's line: "Army: Veteran · 42/80".
 func rankLine(state game.GameState) string {
-	return "Army: " + rankName(state, state.Military.Rank) + " · " + rankProgress(state)
+	return vibe.Line("ui.army_rank.rankLine.01", "Army: ") + rankName(state, state.Military.Rank) + " · " + rankProgress(state)
 }
 
 // rankGives is what the army's rank gives, for the Army tab: "odds +4 points,
 // hauls +10%, Legendary offers +50%".
 func rankGives(rank int) string {
 	if rank == 0 {
-		return "nothing yet"
+		return vibe.Line("ui.army_rank.rankGives.01", "nothing yet")
 	}
-	return fmt.Sprintf("odds +%d points, hauls +%d%%, Legendary offers +%d%%",
+	return vibe.Sprintf("ui.army_rank.rankGives.02", "odds +%d points, hauls +%d%%, Legendary offers +%d%%",
 		int(math.Round(config.ArmyOddsBonus(rank)*100)), int(math.Round((config.ArmyHaulFactor(rank)-1)*100)), int(math.Round((config.ArmyRareFactor(rank)-1)*100)))
 }
 
@@ -55,9 +55,9 @@ func rankGives(rank int) string {
 func rankReturnText(delta float64) string {
 	switch {
 	case delta > 0:
-		return " The army gained " + xpText(delta) + " experience."
+		return vibe.Line("ui.army_rank.rankReturnText.01", " The army gained ") + xpText(delta) + vibe.Line("ui.army_rank.rankReturnText.02", " experience.")
 	case delta < 0:
-		return " The army lost " + xpText(-delta) + " experience."
+		return vibe.Line("ui.army_rank.rankReturnText.03", " The army lost ") + xpText(-delta) + vibe.Line("ui.army_rank.rankReturnText.04", " experience.")
 	}
 	return ""
 }
@@ -66,7 +66,7 @@ func rankReturnText(delta float64) string {
 // tier opens an era early.
 func rankNext(state game.GameState) string {
 	if state.Military.Rank >= config.ArmyEarlyRank {
-		return "Missions of the next tier are offered an era early."
+		return vibe.Line("ui.army_rank.rankNext.01", "Missions of the next tier are offered an era early.")
 	}
-	return rankName(state, config.ArmyEarlyRank) + " armies see the next tier of missions an era early."
+	return rankName(state, config.ArmyEarlyRank) + vibe.Line("ui.army_rank.rankNext.02", " armies see the next tier of missions an era early.")
 }

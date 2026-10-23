@@ -15,3 +15,19 @@ func said(entries []vibe.Entry) []string {
 	}
 	return out
 }
+
+// keyHelp is a key and what it does, as the Help panel lists a panel's keys.
+// The key is the name of a key on the keyboard, and stays as it is.
+type keyHelp struct {
+	key  string
+	what vibe.Entry
+}
+
+// helpPairs is a table of keyHelp as the pairs the Help panel lays out.
+func helpPairs(table []keyHelp) [][2]string {
+	out := make([][2]string, len(table))
+	for i, k := range table {
+		out[i] = [2]string{k.key, k.what.String()}
+	}
+	return out
+}

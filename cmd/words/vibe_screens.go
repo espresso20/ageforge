@@ -42,6 +42,11 @@ func init() {
 	)
 	leftAloneFor(leftKey,
 		"ui.research_tree.laneLabel.01", // AEIOU: the vowels a letter is tested against
+		// The names of the Help panel's sections, which a command's Section is
+		// compared with; the headings the player reads are the entries beside them.
+		"ui.commands.secActions.02", "ui.commands.secPlan.02", "ui.commands.secPeople.02",
+		"ui.commands.secResearch.02", "ui.commands.secTrade.02", "ui.commands.secWonders.02",
+		"ui.commands.secGame.02", "ui.commands.secAccounts.02",
 	)
 	leftAloneFor(leftBoot, "main.main.main.01", "main.main.main.02", "main.main.leave.01")
 	leftAloneFor(leftArticle, "ui.overlay_stats.statsProvider.42")

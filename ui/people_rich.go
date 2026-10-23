@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // people_rich.go is the People box as the rich layout (dash_layout.go) draws
@@ -81,10 +82,10 @@ func peopleBarText(kinds []peopleKind, homes, w int) string {
 // for the line that carries it.
 func peopleRichTitle(state game.GameState, rows int) string {
 	if rows >= 7 {
-		return " People "
+		return vibe.Line("ui.people_rich.peopleRichTitle.01", " People ")
 	}
 	ws := state.Workers
-	return fmt.Sprintf(" People %s/%s ", FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop)))
+	return vibe.Sprintf("ui.people_rich.peopleRichTitle.02", " People %s/%s ", FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop)))
 }
 
 // peopleRichHeld is the two lines on what holds the population back: what it
@@ -93,11 +94,11 @@ func peopleRichTitle(state game.GameState, rows int) string {
 func peopleRichHeld(ws game.WorkerState, w int) (first, second string) {
 	gray := func(s string) string { return theme.Paint(theme.RoleDim, s) }
 	held := func(by string) string {
-		return gray("Held by: ") + theme.Paint(theme.RoleWarning, by)
+		return gray(vibe.Line("ui.people_rich.peopleRichHeld.01", "Held by: ")) + theme.Paint(theme.RoleWarning, by)
 	}
 	switch ws.HeldBy {
 	case game.HeldHousing:
-		return held("housing"), gray(fitText("every home is full", w))
+		return held("housing"), gray(fitText(vibe.Line("ui.people_rich.peopleRichHeld.02", "every home is full"), w))
 	case game.HeldFood:
 		lines := heldByLines(ws, w)
 		if len(lines) > 1 {
@@ -107,13 +108,13 @@ func peopleRichHeld(ws game.WorkerState, w int) (first, second string) {
 	}
 	empty := max(0, ws.MaxPop-ws.TotalPop)
 	note := ""
-	for _, t := range []string{fmt.Sprintf("%s homes empty", FormatNumber(float64(empty))), fmt.Sprintf("%s empty", FormatNumber(float64(empty)))} {
+	for _, t := range []string{vibe.Sprintf("ui.people_rich.peopleRichHeld.03", "%s homes empty", FormatNumber(float64(empty))), vibe.Sprintf("ui.people_rich.peopleRichHeld.04", "%s empty", FormatNumber(float64(empty)))} {
 		if runeLen(t) <= w {
 			note = t
 			break
 		}
 	}
-	return theme.Paint(theme.RolePositive, fitText("Room to grow", w)), gray(note)
+	return theme.Paint(theme.RolePositive, fitText(vibe.Line("ui.people_rich.peopleRichHeld.05", "Room to grow"), w)), gray(note)
 }
 
 // peopleRichText writes the rich People box for a box w cells wide and h
@@ -126,17 +127,17 @@ func peopleRichText(state game.GameState, w, h int) string {
 
 	// The headcount over the homes, and how full they are when it fits.
 	pop, housing := fmt.Sprintf("%d", ws.TotalPop), fmt.Sprintf("%d", ws.MaxPop)
-	if runeLen("Pop "+pop+"/"+housing) > w {
+	if runeLen(vibe.Line("ui.people_rich.peopleRichText.01", "Pop ")+pop+"/"+housing) > w {
 		pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
 	}
 	popColor := theme.Tag(theme.RoleHighlight)
 	if ws.TotalPop > ws.MaxPop {
 		popColor = theme.Tag(theme.RoleNegative) // the scholars moved in past the homes
 	}
-	popLine := fmt.Sprintf("%sPop[-] %s%s[-]/%s%s[-]", theme.Tag(theme.RoleDim), popColor, pop, theme.Tag(theme.RolePositive), housing)
+	popLine := vibe.Sprintf("ui.people_rich.peopleRichText.02", "%sPop[-] %s%s[-]/%s%s[-]", theme.Tag(theme.RoleDim), popColor, pop, theme.Tag(theme.RolePositive), housing)
 	if ws.MaxPop > 0 {
-		share := fmt.Sprintf("%d%% full", ws.TotalPop*100/ws.MaxPop)
-		if used := runeLen("Pop " + pop + "/" + housing); used+2+runeLen(share) <= w {
+		share := vibe.Sprintf("ui.people_rich.peopleRichText.03", "%d%% full", ws.TotalPop*100/ws.MaxPop)
+		if used := runeLen(vibe.Line("ui.people_rich.peopleRichText.04", "Pop ") + pop + "/" + housing); used+2+runeLen(share) <= w {
 			popLine += strings.Repeat(" ", w-used-runeLen(share)) + theme.Paint(theme.RoleDim, share)
 		}
 	}

@@ -663,7 +663,7 @@ func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 	m := newMainMenu(app, pages, eng, siteMenuVersion)
 	still := time.Unix(0, 0)
 	m.start, m.now = still, func() time.Time { return still }
-	m.eliteMsg, m.view.elite = [3]string{}, [3]string{}
+	m.eliteAt, m.view.elite = -1, [3]string{}
 	defer m.leave()
 
 	cols, rows := siteDashW, siteDashH

@@ -15,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/nerdfont"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // icons.go is the guided icons check (the icons command), in a window of its
@@ -142,7 +143,7 @@ func (f *iconsFlow) seeIcons() {
 	f.stage = iconsHaveIcons
 	f.err = f.setNerd()
 	if f.err == nil {
-		f.log(game.LogRoutine, "Map glyphs set to nerd: your font shows Nerd Font icons.")
+		f.log(game.LogRoutine, vibe.Line("ui.icons.seeIcons.01", "Map glyphs set to nerd: your font shows Nerd Font icons."))
 	}
 	f.notify()
 }
@@ -192,15 +193,15 @@ func (f *iconsFlow) installed(res nerdfont.Result, err error) {
 	}
 	switch {
 	case f.open && err == nil:
-		f.log(game.LogRoutine, "Installed JetBrains Mono Nerd Font "+nerdfont.Version+".")
+		f.log(game.LogRoutine, vibe.Line("ui.icons.installed.01", "Installed JetBrains Mono Nerd Font ")+nerdfont.Version+".")
 	case f.open:
-		f.log(game.LogRoutine, "The Nerd Font install failed: "+err.Error()+".")
+		f.log(game.LogRoutine, vibe.Line("ui.icons.installed.02", "The Nerd Font install failed: ")+err.Error()+".")
 	case err == nil:
 		f.unseen = true
-		f.log("success", "JetBrains Mono Nerd Font is installed. Type icons for the steps to pick it in your terminal.")
+		f.log("success", vibe.Line("ui.icons.installed.03", "JetBrains Mono Nerd Font is installed. Type icons for the steps to pick it in your terminal."))
 	default:
 		f.unseen = true
-		f.log("error", "The Nerd Font install failed: "+err.Error()+". Type icons for what to do next.")
+		f.log("error", vibe.Line("ui.icons.installed.04", "The Nerd Font install failed: ")+err.Error()+vibe.Line("ui.icons.installed.05", ". Type icons for what to do next."))
 	}
 	f.notify()
 }
@@ -224,7 +225,7 @@ func (b iconsButton) caption() string {
 
 // view is the window's text and buttons at the current stage.
 func (f *iconsFlow) view() (string, []iconsButton) {
-	closeBtn := iconsButton{label: "Close", fill: theme.RoleChip, press: f.close}
+	closeBtn := iconsButton{label: vibe.Line("ui.icons.view.01", "Close"), fill: theme.RoleChip, press: f.close}
 	para := func(sb *strings.Builder, role theme.Role, s string) {
 		sb.WriteString(theme.Paint(role, tview.Escape(s)) + "\n")
 	}
@@ -232,66 +233,66 @@ func (f *iconsFlow) view() (string, []iconsButton) {
 	switch f.stage {
 	case iconsAskSee:
 		nerd, uni := iconSamples()
-		para(&sb, theme.RoleText, "The map can draw its symbols as Nerd Font icons, if your font has them.")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.02", "The map can draw its symbols as Nerd Font icons, if your font has them."))
 		sb.WriteString("\n")
-		sb.WriteString("  " + theme.Paint(theme.RoleLabel, "Nerd Font icons    ") + theme.Paint(theme.RoleBright, nerd) + "\n")
-		sb.WriteString("  " + theme.Paint(theme.RoleLabel, "Unicode fallbacks  ") + theme.Paint(theme.RoleBright, uni) + "\n\n")
-		para(&sb, theme.RoleText, "Do the icons on the first line look like symbols, or like boxes and question marks?")
+		sb.WriteString("  " + theme.Paint(theme.RoleLabel, vibe.Line("ui.icons.view.03", "Nerd Font icons    ")) + theme.Paint(theme.RoleBright, nerd) + "\n")
+		sb.WriteString("  " + theme.Paint(theme.RoleLabel, vibe.Line("ui.icons.view.04", "Unicode fallbacks  ")) + theme.Paint(theme.RoleBright, uni) + "\n\n")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.05", "Do the icons on the first line look like symbols, or like boxes and question marks?"))
 		return sb.String(), []iconsButton{
-			{key: 'i', label: "I see icons", fill: theme.RoleAccent, press: f.seeIcons},
-			{key: 'b', label: "I see boxes", fill: theme.RoleAccent, press: f.seeBoxes},
+			{key: 'i', label: vibe.Line("ui.icons.view.06", "I see icons"), fill: theme.RoleAccent, press: f.seeIcons},
+			{key: 'b', label: vibe.Line("ui.icons.view.07", "I see boxes"), fill: theme.RoleAccent, press: f.seeBoxes},
 			closeBtn,
 		}
 	case iconsHaveIcons:
 		if f.err != nil {
-			para(&sb, theme.RoleWarning, "Your font shows the icons, but the setting could not be saved: "+f.err.Error()+". Type map glyphs nerd to try again.")
+			para(&sb, theme.RoleWarning, vibe.Line("ui.icons.view.08", "Your font shows the icons, but the setting could not be saved: ")+f.err.Error()+vibe.Line("ui.icons.view.09", ". Type map glyphs nerd to try again."))
 		} else {
-			para(&sb, theme.RolePositive, "Your font shows Nerd Font icons, so the map now draws them (map glyphs nerd).")
+			para(&sb, theme.RolePositive, vibe.Line("ui.icons.view.10", "Your font shows Nerd Font icons, so the map now draws them (map glyphs nerd)."))
 		}
 		return sb.String(), []iconsButton{closeBtn}
 	case iconsAskInstall:
-		para(&sb, theme.RoleText, "Your font has no Nerd Font icons, so the map keeps its Unicode symbols.")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.11", "Your font has no Nerd Font icons, so the map keeps its Unicode symbols."))
 		sb.WriteString("\n")
-		para(&sb, theme.RoleText, "Install JetBrains Mono Nerd Font "+nerdfont.Version+" for your user? It downloads the official release from GitHub (about 130 MB), checks it, and copies the fonts into your user font folder. It needs no admin rights and changes nothing else.")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.12", "Install JetBrains Mono Nerd Font ")+nerdfont.Version+vibe.Line("ui.icons.view.13", " for your user? It downloads the official release from GitHub (about 130 MB), checks it, and copies the fonts into your user font folder. It needs no admin rights and changes nothing else."))
 		return sb.String(), []iconsButton{
-			{key: 'y', label: "Install", fill: theme.RoleAccent, press: f.install},
-			{key: 'n', label: "No, show me how", fill: theme.RoleChip, press: f.decline},
+			{key: 'y', label: vibe.Line("ui.icons.view.14", "Install"), fill: theme.RoleAccent, press: f.install},
+			{key: 'n', label: vibe.Line("ui.icons.view.15", "No, show me how"), fill: theme.RoleChip, press: f.decline},
 			closeBtn,
 		}
 	case iconsManual:
-		para(&sb, theme.RoleText, "Nothing installed. To install a Nerd Font yourself, get JetBrainsMono from "+nerdFontsPage+", then pick it in your terminal.")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.16", "Nothing installed. To install a Nerd Font yourself, get JetBrainsMono from ")+nerdFontsPage+vibe.Line("ui.icons.view.17", ", then pick it in your terminal."))
 		sb.WriteString("\n" + f.stepsText() + "\n")
-		para(&sb, theme.RoleText, "Then restart your terminal and type icons again to check.")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.18", "Then restart your terminal and type icons again to check."))
 		return sb.String(), []iconsButton{closeBtn}
 	case iconsInstalling:
-		para(&sb, theme.RoleText, "Installing JetBrains Mono Nerd Font "+nerdfont.Version+" for your user. You can close this window and keep playing: type icons to look in again.")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.19", "Installing JetBrains Mono Nerd Font ")+nerdfont.Version+vibe.Line("ui.icons.view.20", " for your user. You can close this window and keep playing: type icons to look in again."))
 		sb.WriteString("\n")
 		for _, p := range f.progress {
 			sb.WriteString("  " + theme.Paint(theme.RoleDim, tview.Escape(p)) + "\n")
 		}
 		if len(f.progress) == 0 {
-			sb.WriteString("  " + theme.Paint(theme.RoleDim, "Starting...") + "\n")
+			sb.WriteString("  " + theme.Paint(theme.RoleDim, vibe.Line("ui.icons.view.21", "Starting...")) + "\n")
 		}
 		return sb.String(), []iconsButton{closeBtn}
 	case iconsInstalled:
-		para(&sb, theme.RolePositive, "JetBrains Mono Nerd Font is installed.")
+		para(&sb, theme.RolePositive, vibe.Line("ui.icons.view.22", "JetBrains Mono Nerd Font is installed."))
 		if f.result.ManualStep != "" {
-			para(&sb, theme.RoleWarning, "One step is left for you: "+f.result.ManualStep)
+			para(&sb, theme.RoleWarning, vibe.Line("ui.icons.view.23", "One step is left for you: ")+f.result.ManualStep)
 		}
-		para(&sb, theme.RoleText, "Now pick it in your terminal.")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.24", "Now pick it in your terminal."))
 		sb.WriteString("\n" + f.stepsText() + "\n")
-		para(&sb, theme.RoleBright, "Restart your terminal, then type icons again to check.")
+		para(&sb, theme.RoleBright, vibe.Line("ui.icons.view.25", "Restart your terminal, then type icons again to check."))
 		return sb.String(), []iconsButton{closeBtn}
 	case iconsFailed:
-		msg := "The install failed."
+		msg := vibe.Line("ui.icons.view.26", "The install failed.")
 		if f.err != nil {
-			msg = "The font was not installed: " + f.err.Error() + "."
+			msg = vibe.Line("ui.icons.view.27", "The font was not installed: ") + f.err.Error() + "."
 		}
-		para(&sb, theme.RoleNegative, msg+" Nothing else was changed.")
+		para(&sb, theme.RoleNegative, msg+vibe.Line("ui.icons.view.28", " Nothing else was changed."))
 		sb.WriteString("\n")
-		para(&sb, theme.RoleText, "You can try again, or get it by hand from "+nerdFontsPage+".")
+		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.29", "You can try again, or get it by hand from ")+nerdFontsPage+".")
 		return sb.String(), []iconsButton{
-			{key: 'r', label: "Try again", fill: theme.RoleAccent, press: f.install},
+			{key: 'r', label: vibe.Line("ui.icons.view.30", "Try again"), fill: theme.RoleAccent, press: f.install},
 			closeBtn,
 		}
 	}
@@ -302,7 +303,7 @@ func (f *iconsFlow) view() (string, []iconsButton) {
 func (f *iconsFlow) stepsText() string {
 	name, steps := terminalFontSteps(f.environ(), f.goos)
 	var sb strings.Builder
-	sb.WriteString(theme.Paint(theme.RoleAccent, tview.Escape("In "+name+":")) + "\n")
+	sb.WriteString(theme.Paint(theme.RoleAccent, tview.Escape(vibe.Line("ui.icons.stepsText.01", "In ")+name+":")) + "\n")
 	for i, s := range steps {
 		sb.WriteString("  " + strconv.Itoa(i+1) + ". " + tview.Escape(s) + "\n")
 	}
@@ -429,7 +430,7 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 	w.body = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 	w.body.SetTextColor(theme.Color(theme.RoleText)).SetBackgroundColor(theme.Color(theme.RoleSurface))
 	w.btnRow = tview.NewFlex().SetDirection(tview.FlexColumn)
-	hint := surfaceText(theme.Paint(theme.RoleDim, "Tab moves between buttons · Enter presses · Esc closes"), tview.AlignCenter)
+	hint := surfaceText(theme.Paint(theme.RoleDim, vibe.Line("ui.icons.newIconsWindow.01", "Tab moves between buttons · Enter presses · Esc closes")), tview.AlignCenter)
 	// A Flex paints nothing of its own, so the margins beside the text are
 	// surface boxes: every cell inside the border belongs to something that
 	// clears it, or the dashboard shows through.
@@ -443,7 +444,7 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 		AddItem(w.btnRow, 1, 0, true).
 		AddItem(hint, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Icons check ").
+		SetTitle(vibe.Line("ui.icons.newIconsWindow.02", " Icons check ")).
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent)).
 		SetBackgroundColor(theme.Color(theme.RoleSurface))
