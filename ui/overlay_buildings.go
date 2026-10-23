@@ -15,7 +15,6 @@ import (
 // Each row shows the key the build command takes next to the name.
 func buildingsProvider(state game.GameState, screenW int) string {
 	var sb strings.Builder
-	wall := &storeWall{state: state}
 
 	set := state.Ruleset()
 	ageOrder := set.AgeKeys()
@@ -144,11 +143,6 @@ func buildingsProvider(state game.GameState, screenW int) string {
 			// Cost and description on indent.
 			if price := buildingPrice(&state, e.key, bs); len(price) > 0 && !bs.IsLegacy {
 				sb.WriteString("[gray]" + costRow("   Cost: ", price, overlayTextWidth(screenW)) + "[-]")
-				if isCurrent {
-					if line := wall.line(bs); line != "" {
-						sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", overlayTextWidth(screenW)))
-					}
-				}
 			}
 			if text := buildingText(bs); text != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)

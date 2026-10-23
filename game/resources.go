@@ -22,13 +22,8 @@ type ResourceManager struct {
 	defs      map[string]config.ResourceDef
 	unlocked  map[string]bool
 	// order is every resource key, sorted, fixed at construction, so the
-	// per-tick walks (and the overflow they report) never follow map order.
+	// per-tick walks never follow map order.
 	order []string
-	// grace is the resources whose stock may sit above the cap (the grace
-	// rule, mastery.go): Add never cuts them down to it, and never adds
-	// while they are over. recalculateRates drops a resource from it once
-	// its stock is at or under the cap. nil when none.
-	grace map[string]bool
 }
 
 // NewResourceManager creates a resource manager on the core ruleset.
@@ -98,9 +93,9 @@ func (rm *ResourceManager) GetRate(key string) float64 {
 	return 0
 }
 
-// Add adds an amount to a resource, respecting storage limits. A NaN amount is
-// ignored: it would otherwise stick to the resource forever, since the clamps
-// below compare false against NaN.
+// Add adds an amount to a resource. Stock has no ceiling: nothing clips a
+// credit. A NaN amount is ignored: it would otherwise stick to the resource
+// forever. Stock never goes below zero.
 func (rm *ResourceManager) Add(key string, amount float64) float64 {
 	r, ok := rm.resources[key]
 	if !ok {
@@ -109,16 +104,7 @@ func (rm *ResourceManager) Add(key string, amount float64) float64 {
 	if math.IsNaN(amount) {
 		return r.Amount
 	}
-	old := r.Amount
 	r.Amount += float64(amount) // callers pass products: round them, no FMA
-	if r.Amount > r.Storage {
-		if rm.grace[key] && old > r.Storage {
-			// Graced stock above the cap: spending lowers it, nothing raises it.
-			r.Amount = math.Min(old, r.Amount)
-		} else {
-			r.Amount = r.Storage
-		}
-	}
 	if r.Amount < 0 {
 		r.Amount = 0
 	}
@@ -171,50 +157,31 @@ func (rm *ResourceManager) AddStorage(key string, amount float64) {
 	}
 }
 
-// ApplyRates applies per-tick production rates
+// ApplyRates applies per-tick production rates, in key order.
 func (rm *ResourceManager) ApplyRates() {
-	rm.ApplyRatesCapped(nil)
-}
-
-// ApplyRatesCapped applies one tick of rates like ApplyRates, in key order,
-// and calls lost (when non-nil) with what the storage cap cut off each
-// resource that hit it.
-func (rm *ResourceManager) ApplyRatesCapped(lost func(key string, amount float64)) {
 	for _, key := range rm.order {
 		r := rm.resources[key]
 		if !rm.unlocked[key] || r.Rate == 0 {
 			continue
 		}
-		want := r.Amount + r.Rate
 		rm.Add(key, r.Rate)
-		if lost != nil && r.Rate > 0 && want > r.Amount {
-			lost(key, want-r.Amount)
-		}
 	}
 }
 
 // AddProduced credits scale ticks of every positive rate (offline catch-up),
-// in key order, never past a cap: a resource at or over its cap gains
-// nothing. gained and lost (either may be nil) receive what each resource
-// took in and what its cap cut off.
-func (rm *ResourceManager) AddProduced(scale float64, gained, lost func(key string, amount float64)) {
+// in key order. gained (may be nil) receives what each resource took in.
+func (rm *ResourceManager) AddProduced(scale float64, gained func(key string, amount float64)) {
 	for _, key := range rm.order {
 		r := rm.resources[key]
 		if !rm.unlocked[key] || r.Rate <= 0 {
 			continue
 		}
-		amount := float64(r.Rate * scale)
-		g := math.Min(amount, r.Storage-r.Amount)
+		g := float64(r.Rate * scale)
 		if g > 0 {
 			r.Amount += g
 			if gained != nil {
 				gained(key, g)
 			}
-		} else {
-			g = 0
-		}
-		if lost != nil && amount-g > 0 {
-			lost(key, amount-g)
 		}
 	}
 }
@@ -255,58 +222,6 @@ func (rm *ResourceManager) LoadStorage(storage map[string]float64) {
 	}
 }
 
-// markGraceAll marks every resource holding stock for the grace rule; the
-// storage pass that follows keeps the mark only where stock is over the cap.
-func (rm *ResourceManager) markGraceAll() {
-	for _, key := range rm.order {
-		if rm.resources[key].Amount > 0 {
-			if rm.grace == nil {
-				rm.grace = make(map[string]bool)
-			}
-			rm.grace[key] = true
-		}
-	}
-}
-
-// markGrace marks one resource holding stock for the grace rule (as
-// markGraceAll does for every one).
-func (rm *ResourceManager) markGrace(key string) {
-	if r, ok := rm.resources[key]; ok && r.Amount > 0 {
-		if rm.grace == nil {
-			rm.grace = make(map[string]bool)
-		}
-		rm.grace[key] = true
-	}
-}
-
-// Graced reports whether key's stock is under the grace rule.
-func (rm *ResourceManager) Graced(key string) bool { return rm.grace[key] }
-
-// graceSave is the graced set for a save (nil when empty).
-func (rm *ResourceManager) graceSave() map[string]bool {
-	if len(rm.grace) == 0 {
-		return nil
-	}
-	out := make(map[string]bool, len(rm.grace))
-	for k := range rm.grace {
-		out[k] = true
-	}
-	return out
-}
-
-// loadGrace restores the graced set from a save (known resources only).
-func (rm *ResourceManager) loadGrace(g map[string]bool) {
-	rm.grace = nil
-	for k, on := range g {
-		if _, ok := rm.resources[k]; ok && on {
-			if rm.grace == nil {
-				rm.grace = make(map[string]bool)
-			}
-			rm.grace[k] = true
-		}
-	}
-}
-
 // Snapshot returns resource states for UI
 func (rm *ResourceManager) Snapshot() map[string]ResourceState {
 	out := make(map[string]ResourceState)
@@ -319,8 +234,6 @@ func (rm *ResourceManager) Snapshot() map[string]ResourceState {
 			Name:      def.Name,
 			Unlocked:  rm.unlocked[key],
 			Breakdown: r.Breakdown,
-
-			OverCapGrace: rm.grace[key],
 		}
 	}
 	return out

@@ -288,8 +288,6 @@ func registry() []*Command {
 				{Name: "collect", Aliases: []string{"bank"},
 					Args: []Arg{{Kind: ArgWonderResource, Words: []string{"all"}}, {Kind: ArgNumber, Words: []string{"all", "max"}, Optional: true}},
 					Help: []Usage{{"wonder collect <resource|all> [amount|all|max]", "Bank resources into the current wonder (alias: bank; no amount: as much as it needs)"}}},
-				sub("overflow", "wonder overflow [on|off]", "Bank what full stores would waste (on by default)",
-					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
 			}},
 		panel("wonders", "Wonder bank & built wonders"),
 		{Name: "prestige", Section: secWonders, BareOK: true,

@@ -103,7 +103,7 @@ func TestPlanPanel_KeysAndText(t *testing.T) {
 		HandleCommand(c, engine)
 	}
 	text := plainText(p.provider(engine.GetState(), 100))
-	for _, want := range []string{"1. Hut ×2", "ready", "blocked", "needs more wood storage", "3. Stash"} {
+	for _, want := range []string{"1. Hut ×2", "ready", "blocked", "too little wood coming in", "3. Stash"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("panel lacks %q:\n%s", want, text)
 		}

@@ -11,6 +11,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - **The skyline comes alive.** Bigger people walk the streets in groups, and every age has its own traffic on the road, the rails and in the sky, from camels and chariots to steam trains, bullet trains and starships.
+- **No more storage caps.** Resources pile up without limit and nothing you make is wasted; rising prices are the only brake. A building is never refused for costing more than a store holds.
 - **Offers stand out on the map.** Each offer is a coloured marker with its place name, and the terrain around it steps back.
 - **Help starts with how to get around.** The Help page opens with the keys to scroll and close panels, how commands work, and the prompt and dashboard keys, before the command lists.
 - **Winding routes.** Routes on the expedition map find their way around water and hills instead of running in a straight line.
@@ -496,6 +497,8 @@ All notable changes to AgeForge are documented here.
 - **Four trade routes opened before you could build what they need.** Cotton Exchange and Steamship Line wanted a Seaport (Modern Age) and Rail Freight wanted Steam Works (Victorian Age), all from the Industrial Age; Warp Commerce opened in the Space Age and wanted a Warp Drive Plant (Interstellar Age). Cotton Exchange now needs 1 Stock Exchange, Steamship Line 2 Harbor Authorities and Rail Freight 1 Integrated Steelworks, all Industrial Age buildings; Warp Commerce now opens in the Interstellar Age.
 
 ### Removed
+- **Wonder overflow.** With no caps there is nothing to overflow; bank into a wonder by hand.
+- **Two overflow badges.** Exact Change and Nothing Wasted were about overflow and are retired. The game has 556 badges to earn, worth 12,880 points.
 - **The soldier stockpile.** Soldiers are no longer a resource and military buildings no longer have work slots; the army is the soldiers at their posts. Military-Industrial Complex and Augmented Soldiers each add a tenth more posts.
 - **The knowledge store, the knowledge price and the over-the-store refusal.** A tech has no price to pay and no store to fit, so `research` no longer refuses one for its price, the plan no longer reads `needs more knowledge storage`, and the tech tree no longer marks a price with a red cross.
 - **The knowledge worker domain** (`roster knowledge`, `workers share knowledge`).

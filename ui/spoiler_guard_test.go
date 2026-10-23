@@ -152,7 +152,7 @@ func TestFreshGameShowsNoSpoilers(t *testing.T) {
 	// Read-only commands.
 	for _, cmd := range []string{"status", "rates", "build", "upgrade", "wonder", "festival", "blackmarket",
 		"prestige", "catastrophe", "research list", "trade route list",
-		"plan list", "diplomacy deals", "expedition", "campaign", "wonder overflow", "theme list", "saves", "account"} {
+		"plan list", "diplomacy deals", "expedition", "campaign", "theme list", "saves", "account"} {
 		checkSpoilers(t, cmd, guardRendered(HandleCommand(cmd, engine).Message), terms)
 	}
 }

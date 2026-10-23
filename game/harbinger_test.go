@@ -827,8 +827,8 @@ func TestAppeaseRefusesWhenUnaffordable(t *testing.T) {
 	setStock(ge, map[string][2]float64{"faith": {20, 40}})
 	err := ge.HarbingerAppease()
 	want := textfmt.Number(need-20) + " more faith"
-	if err == nil || !strings.Contains(err.Error(), want) || !strings.Contains(err.Error(), "storage must reach "+textfmt.Number(need)) {
-		t.Fatalf("err = %v, want %q and the storage it needs", err, want)
+	if err == nil || !strings.Contains(err.Error(), want) || strings.Contains(err.Error(), "storage") {
+		t.Fatalf("err = %v, want %q and nothing about storage", err, want)
 	}
 	if ge.Resources.Get("faith") != 20 || ge.harbinger.AppeaseLevel != 0 {
 		t.Error("a refused appease changed state")
