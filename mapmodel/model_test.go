@@ -92,6 +92,15 @@ func checkTown(t *testing.T, name string, prev, cur *mapmodel.Model) {
 	}
 }
 
+// anchor is the world column a lot's position is measured from: its
+// district's east edge (where the bay begins). A district widens to fit what
+// it holds, which carries the districts east of it, so a silhouette keeps its
+// place against its district's east edge, not its world column.
+func anchor(m *mapmodel.Model, l mapmodel.Lot) int {
+	d := m.Skyline.Districts[l.Age]
+	return d.X0 + d.LandW
+}
+
 func checkSkyline(t *testing.T, name string, prev, cur *mapmodel.Model) {
 	t.Helper()
 	type id struct {
@@ -107,13 +116,15 @@ func checkSkyline(t *testing.T, name string, prev, cur *mapmodel.Model) {
 		if !ok {
 			t.Fatalf("%s: skyline lot %s#%d vanished", name, l.Key, l.Copy)
 		}
-		if c.X != l.X || c.Row != l.Row || c.Seed != l.Seed {
-			t.Fatalf("%s: skyline lot %s#%d moved from %d/%d to %d/%d", name, l.Key, l.Copy, l.X, l.Row, c.X, c.Row)
+		if c.X-anchor(cur, c) != l.X-anchor(prev, l) || c.Row != l.Row || c.Seed != l.Seed {
+			t.Fatalf("%s: skyline lot %s#%d moved from %d/%d to %d/%d in its district", name, l.Key, l.Copy,
+				l.X-anchor(prev, l), l.Row, c.X-anchor(cur, c), c.Row)
 		}
 	}
 	for i, d := range prev.Skyline.Districts {
-		if cur.Skyline.Districts[i] != d {
-			t.Fatalf("%s: district %d changed", name, i)
+		c := cur.Skyline.Districts[i]
+		if c.Age != d.Age || c.X0 < d.X0 || c.LandW < d.LandW || c.Bay != d.Bay || c.BayW < d.BayW {
+			t.Fatalf("%s: district %d shrank or changed: %+v -> %+v", name, i, d, c)
 		}
 	}
 }

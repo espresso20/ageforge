@@ -69,10 +69,11 @@ type pt struct{ x, y int }
 type sprite struct {
 	w, h    int
 	c       []scell
-	smoke   []pt // chimney mouths
-	beacons []pt // blinking lights
-	blades  []pt // windmill hubs
-	flame   []pt // torches and braziers
+	smoke   []pt   // chimney mouths
+	beacons []pt   // blinking lights
+	blades  []pt   // windmill hubs
+	flame   []pt   // torches and braziers
+	edge    []bool // the outline mask, found on first use (dress.go)
 }
 
 func newSprite(w, h int) *sprite {

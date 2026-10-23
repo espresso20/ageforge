@@ -304,7 +304,7 @@ func (s *scene) reserveSpan() (int, int) {
 		return 0, 0
 	}
 	d := s.m.Skyline.Districts[s.city.Age]
-	w := max(6, d.LandW/8)
+	w := clampInt(d.LandW/8, 6, 12) // (a district widens to fit its buildings; the reserve stays a reserve)
 	x0 := d.X0 + d.LandW/3 - w/2
 	return x0, x0 + w
 }
@@ -732,7 +732,7 @@ func (s *scene) compactCity(a0, a1 int) {
 		return
 	}
 	d := s.m.Skyline.Districts[fusion]
-	x := (d.X0 + d.LandW*3/4 - a0) * s.W / (a1 - a0)
+	x := (d.TetherX() - a0) * s.W / (a1 - a0)
 	if x < 0 || x >= s.W {
 		return
 	}
