@@ -509,7 +509,7 @@ Stock has no limit, so no building is refused for costing more than a store hold
 
 Nothing you make is wasted, and nothing overflows. The age's wonder is still paid through its bank, which you fill by hand (see [Wonders](wonders.md)).
 
-A few prices are still a share of a store's size (the festival, the black market and the harbinger's Brace). That size is what the storage buildings used to hold, and it still grows with them, but no store stops you holding more.
+No price reads a store size any more. The festival, the black market and faction deals follow your income, and the harbinger's Brace follows what a moderate town of the age makes.
 
 The gate out of each age asks for five copies of its storage building. Build each age's storage while it is current.
 
@@ -604,7 +604,7 @@ Culture buildings have no worker domain. They produce culture every tick at thei
 
 They also **restore morale every tick** (see [Morale](morale.md)), so they do two jobs: culture for epoch outcomes and morale for a production bonus.
 
-How full your culture storage is decides which good epoch events you can get, so a civilization rich in culture comes through epoch transitions better.
+Your culture strength decides which good epoch events you can get, so a civilization rich in culture comes through epoch transitions better.
 
 ---
 

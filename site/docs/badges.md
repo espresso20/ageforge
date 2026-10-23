@@ -28,7 +28,7 @@ A few rules hold for all of them:
 
 - **A badge goes to the account the game belongs to.** A game started or loaded under one account never earns for another.
 - **Building counts ignore selling and rebuilding.** A copy counts only when it takes that building past the most the run has built of it.
-- **Production counts what was made.** A resource ladder counts what your buildings, workers and techs produce, whether or not there was room to store it. Trades, loot, refunds and gifts are not production.
+- **Production counts what was made.** A resource ladder counts what your buildings, workers and techs produce. Trades, loot, refunds and gifts are not production.
 - **Time away counts.** What the game produced while you were gone counts the same as what it produced while you watched.
 - **A modified game marks what it earns.** A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points.
 - **The developer console does not block badges.** A game it has changed still earns like any other.
@@ -68,6 +68,8 @@ A badge's rarity follows its tier unless the badge says otherwise: a few are rar
 | **Themes** | 16 | Advancing an age while wearing each theme |
 | **Maps** | 5 | Advancing an age with each map style and each glyph set |
 | **Specials** | 65 | One-off feats, from the easy to the very hard. Maxed Out and Fully Invested are retired with the prestige shop |
+
+One special asks you to save up. **Everything Full** is earned in the Industrial Age or later by holding at least 6 hours of your income in every resource you can save up, all at once. Your income is what your town makes of each resource now, so it rises as you grow and the bar rises with it. Food, faith, culture and nanobots are spent as they are made and do not count, and neither does a resource your town makes none of.
 
 Three more badges sit outside the families. They are worth no points, count toward nothing, and are not listed until they are earned.
 

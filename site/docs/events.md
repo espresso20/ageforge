@@ -49,11 +49,11 @@ Every duration and cooldown is set as a base length, which is exact in the Primi
 
 ### Seeing what happened
 
-The main log reports each event as it fires, and the line says exactly what it did, in the amounts that were applied: `Lost 800 food and 1K wood.`, `Gained 2.4K food.`, `Food -8.2/tick for ~52s.` A loss counts only what actually left your stores. The **Logs** panel (`logs`) keeps the history with tick numbers, so check it after time away.
+The main log reports each event as it fires, and the line says exactly what it did, in the amounts that were applied: `Lost 800 food and 1K wood.`, `Gained 2.4K food.`, `Food -8.2/tick for ~52s.` A loss counts only what actually left your stock. The **Logs** panel (`logs`) keeps the history with tick numbers, so check it after time away.
 
 A timed event's log line says how long it lasts in the age it fired in (a Drought reads `for ~20s` in the Stone Age and `for ~52s` from the Bronze Age on), and the Stats panel counts it down.
 
-An instant gain goes into your storage, and storage only takes what it has room for. When a full store cuts a gain short, the next line says what fit (`Storage was nearly full: only 25 food (of 225) fit.`). Milestone rewards and boon lumps do the same.
+An instant gain goes into your stock in full, however much you hold. Milestone rewards and boon lumps do the same.
 
 The **Stats panel** (`stats`) lists every active timed event under "Active Events" with the time left on it (e.g. `~2m 30s`) and its ongoing effect, color-coded: **green** for a bonus, **red** for a penalty. A production-boost event shows `all production +10%` in green. (On the colorblind-safe and high-contrast [themes](themes.md), bonuses show **blue** and penalties **orange**, with `▲`/`▼` marking the sign.) Instant effects (resource grants, thefts, worker loss) are not listed there, since they already happened.
 
@@ -209,10 +209,10 @@ Every awakening after the Stone Age's fires from the Bronze Age on, so its durat
 
 **Production penalties** (`drought`, `storm`, `heresy`, `nuclear_scare`): short penalties you can't avoid, so ride them out. A drought takes half of your food production for 26 ticks from the Bronze Age on, 13 ticks of food in all. Don't restructure your workers over a penalty that lasts under a minute.
 
-**Losses** (`bandit_raid`, `pirate_attack`, `data_breach` and the losses in other events): the resources are gone the moment the event fires. A loss is a share of what you hold, so a full store loses more than a thin one. Spend what you have saved before you walk away from the game, and keep a garrison: it blunts the raids among them.
+**Losses** (`bandit_raid`, `pirate_attack`, `data_breach` and the losses in other events): the resources are gone the moment the event fires. A loss is a share of what you hold, so a big stockpile loses more than a thin one. Spend what you have saved before you walk away from the game, and keep a garrison: it blunts the raids among them.
 
 **Worker loss** (`plague`, `mine_collapse`, `industrial_accident`): the only lasting damage. Lost workers come out of every building in proportion, idle ones included, so keeping workers idle doesn't shield anything. With auto-recruit on (the default), the game refills the empty slots as housing and food allow; with it off, `recruit` and `assign` to replace them. See [People](workers-and-domains.md).
 
-**Good events** need no preparation. Boosts like `gold_rush` and `crypto_boom` add a share of what you make, worked out when they fire, so let them run. A gain lands in storage, so room in the store is the only thing that can waste one. Research windfalls (`skilled_immigrants`, `ancient_discovery`, `first_contact`) fill the bar of the tech in progress by the share they are worth. A windfall never gives more than half of that tech's price, so it finishes a tech only when the bar is already past halfway. With nothing in progress they are lost. So start a tech before you hope for one.
+**Good events** need no preparation. Boosts like `gold_rush` and `crypto_boom` add a share of what you make, worked out when they fire, so let them run. A gain lands in your stock in full, so nothing can waste one. Research windfalls (`skilled_immigrants`, `ancient_discovery`, `first_contact`) fill the bar of the tech in progress by the share they are worth. A windfall never gives more than half of that tech's price, so it finishes a tech only when the bar is already past halfway. With nothing in progress they are lost. So start a tech before you hope for one.
 
 **Faith and culture affect epoch transition events, not random events.** Stacking faith doesn't make `bountiful_harvest` more likely or `drought` less likely. See [Epochs](epochs.md).
