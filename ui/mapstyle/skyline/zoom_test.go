@@ -607,7 +607,7 @@ func TestZoomTransforms(t *testing.T) {
 	}
 	dst := &fb{}
 	dst.reset(6, 3+5) // 5 scene rows: two and a half world rows
-	magnify(dst, src)
+	magnify(dst, src, 0)
 	for r := 0; r < 5; r++ {
 		wantRow := 3 - (4-r)/2 // the bottom screen row is half of the last world row
 		for x := 0; x < 6; x++ {

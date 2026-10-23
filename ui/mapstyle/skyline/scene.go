@@ -51,9 +51,15 @@ type scene struct {
 	// on a screen sw by sh: then W, H and S are the screen's, and groundY
 	// and everything placed by the layers stay in the world frame's terms
 	// (sx and sy convert). At mid the two are the same.
-	zm      zoom
-	lw, ls  int
-	sw, sh  int
+	zm     zoom
+	lw, ls int // lw: the world columns the view shows; ls: the frame's scene rows
+	sw, sh int
+	// fit says the frame is the far level's (fit.go): a frame column stands
+	// for kx world columns, and the camera is at the town's west edge.
+	// pan raises the close level's window over the frame, in world rows.
+	fit     bool
+	kx      float64
+	pan     int
 	ovBox   [2]int // the cells of the overview bar's box (chrome.go)
 	band    int    // traffic band of the current age
 	gridOut bool
@@ -259,7 +265,7 @@ func (s *scene) orbitY(x int) (float64, int) {
 // elevatorX is the screen column of the space elevator, or -1.
 func (s *scene) elevatorX() int {
 	if x := tetherX(s.m); x >= 0 {
-		return x - s.cam
+		return s.fx(x - s.cam)
 	}
 	return -1
 }
@@ -502,7 +508,9 @@ func (s *scene) harbinger() {
 func (s *scene) nearLayer() {
 	if s.megacity() {
 		s.megacityNear()
-		s.midTown()
+		if !s.fit {
+			s.midTown()
+		}
 		return
 	}
 	a := s.m.AgeIdx
@@ -527,7 +535,9 @@ func (s *scene) nearLayer() {
 			}
 		}
 	}
-	s.midTown()
+	if !s.fit { // (the far level draws the town itself)
+		s.midTown()
+	}
 }
 
 // midTown is the distant town: flat silhouettes whose height follows the
@@ -1271,6 +1281,25 @@ func (s *scene) catastrophe() {
 	}
 }
 
+// catastropheSky is the catastrophe's overlay in the sky only: the far level
+// has no roofs to set alight.
+func (s *scene) catastropheSky() {
+	if s.m.Catastrophe.Pending == "" {
+		return
+	}
+	switch s.m.Catalog.EpochIdx[s.m.Catastrophe.Pending] {
+	case 0:
+		s.meteor()
+	case 3:
+		s.skyCracks()
+	case 4, 5:
+		s.glitch()
+	case 6:
+		s.skyCracks()
+		s.glitch()
+	}
+}
+
 func (s *scene) fires(every int) {
 	black := s.p.hue(theme.SkySmokeBlack, mFlat, 0)
 	for _, li := range s.vis {
@@ -1346,7 +1375,7 @@ func (s *scene) markers() {
 	warn := s.mp.Fg[mapmodel.CIdle]
 	for _, li := range s.vis {
 		lv := &s.lay.lots[li]
-		x := s.sx(lv.x0 - s.cam + lv.spr.w/2)
+		x := s.wsx(lv.x0 - s.cam + lv.spr.w/2)
 		y := max(0, s.sy(s.groundY-lv.spr.h-1))
 		if s.v.changes && lv.ml.New {
 			s.fb.fg(x, s.Y(y), mapmodel.R(mapmodel.SymFresh, s.tier), pos, dTag)
@@ -1417,14 +1446,14 @@ func (s *scene) cursor() {
 	switch t := s.v.cur; {
 	case s.sel >= 0:
 		lv := &s.lay.lots[s.sel]
-		x0, x1 = s.sx(lv.x0-s.cam), max(s.sx(lv.x0-s.cam), s.sx(lv.x0-s.cam+lv.spr.w)-1)
+		x0, x1 = s.wsx(lv.x0-s.cam), max(s.wsx(lv.x0-s.cam), s.wsx(lv.x0-s.cam+lv.spr.w)-1)
 		top = s.sy(s.groundY - lv.spr.h)
 		name = lv.b.Name
 		if lv.ml.Wonder {
 			name = s.m.Catalog.Defs[lv.ml.Key].Name
 		}
 	case t.kind == tTether:
-		if x := s.elevatorX(); x >= 0 && x < s.lw {
+		if x := s.elevatorX(); x >= 0 && x < s.W {
 			x = s.sx(x)
 			mark(x-1, s.Y(max(0, s.sy(s.groundY/2))), '►')
 			lbl := " " + mapmodel.FeatTether.Info().Title + " "
@@ -1432,7 +1461,7 @@ func (s *scene) cursor() {
 		}
 		return
 	case t.kind == tUFO:
-		if x, y, ok := saucerAt(s.m, s.visit, s.lw); ok {
+		if x, y, ok := saucerAt(s.m, s.visit, s.W); ok {
 			ch, my := '▼', y-1
 			if my < 0 {
 				ch, my = '▲', y+1
@@ -1474,6 +1503,11 @@ type ridgeItem struct {
 // ridgeItems places the discovered civs west to east by their site, then
 // the harbinger, on the far ridge (which scrolls at 0.15 parallax).
 func ridgeItems(m *mapmodel.Model, W, cam int) []ridgeItem {
+	return ridgeItemsSpan(m, W, cam, m.Skyline.Width)
+}
+
+// ridgeItemsSpan is ridgeItems for a town ww columns wide.
+func ridgeItemsSpan(m *mapmodel.Model, W, cam, ww int) []ridgeItem {
 	var civs []*mapmodel.Faction
 	for i := range m.Factions {
 		if m.Factions[i].Discovered {
@@ -1488,7 +1522,7 @@ func ridgeItems(m *mapmodel.Model, W, cam int) []ridgeItem {
 		return w.Sites[f.Site].X - w.CX
 	}
 	sort.SliceStable(civs, func(i, j int) bool { return siteX(civs[i]) < siteX(civs[j]) })
-	span := W + int(float64(max(0, m.Skyline.Width-W))*0.15)
+	span := W + int(float64(max(0, ww-W))*0.15)
 	shift := int(float64(cam) * 0.15)
 	var out []ridgeItem
 	for i, f := range civs {

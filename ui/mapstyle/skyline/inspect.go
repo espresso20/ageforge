@@ -136,7 +136,7 @@ func abs(v int) int {
 // once it is not.
 func (v *view) resolve(m *mapmodel.Model, ts []tgt, anim int) int {
 	if v.cur.kind == tUFO {
-		if saucerInView(m, anim, v.viewW()) {
+		if saucerInView(m, anim, v.frameW()) {
 			return -1
 		}
 		v.cur = target{}
@@ -166,7 +166,7 @@ func nearestTop(ts []tgt, x int) int {
 // (↑ past the top row reaches the saucer while it is in view), tab through
 // the Tab order.
 func (v *view) step(m *mapmodel.Model, anim, dx, drow, tab int) {
-	ts := v.targetsFor(m, v.viewW(), v.cam)
+	ts := v.targetsFor(m, v.viewW(), v.camX())
 	if len(ts) == 0 {
 		return
 	}
@@ -175,8 +175,8 @@ func (v *view) step(m *mapmodel.Model, anim, dx, drow, tab int) {
 		if drow >= 0 && tab == 0 {
 			return // nothing beside it or above it
 		}
-		x, _, _ := saucerAt(m, anim, v.viewW())
-		v.cur, v.reveal = ts[nearestTop(ts, v.cam+x+1)].target, true
+		x, _, _ := saucerAt(m, anim, v.frameW())
+		v.cur, v.reveal = ts[nearestTop(ts, v.camX()+v.fx(x+1))].target, true
 		return
 	}
 	if i < 0 {
@@ -233,7 +233,7 @@ func (v *view) step(m *mapmodel.Model, anim, dx, drow, tab int) {
 				break
 			}
 		}
-		if !moved && drow > 0 && saucerInView(m, anim, v.viewW()) {
+		if !moved && drow > 0 && saucerInView(m, anim, v.frameW()) {
 			v.cur = target{kind: tUFO}
 			return
 		}
@@ -243,7 +243,7 @@ func (v *view) step(m *mapmodel.Model, anim, dx, drow, tab int) {
 }
 
 func (v *view) inspection(m *mapmodel.Model, anim int) (in inspectionData, ok bool) {
-	ts := v.targetsFor(m, v.viewW(), v.cam)
+	ts := v.targetsFor(m, v.viewW(), v.camX())
 	i := v.resolve(m, ts, anim)
 	if v.cur.kind == tUFO {
 		return inspectionData{title: vibe.Line("ui.mapstyle.skyline.inspect.inspection.01", "Unknown craft"), lines: []string{vibe.Line("ui.mapstyle.skyline.inspect.inspection.02", "Not one of ours.")}, kind: mapstyle.KindAlien}, true

@@ -41,6 +41,9 @@ type layout struct {
 	// they are no lots: nothing can be inspected on them and the model has
 	// nothing placed there.
 	sites []lotView
+	// fitC is the town read as fitN columns (fit.go).
+	fitN int
+	fitC []fitCol
 }
 
 type lotID struct {
