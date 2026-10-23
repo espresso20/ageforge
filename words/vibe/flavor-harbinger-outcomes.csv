@@ -59,7 +59,7 @@ flavor.harbinger_fulfilled.feudal.012,"The revisionist king of a steward claims 
 flavor.harbinger_fulfilled.feudal.013,The bishop has declared the day an eternal no-snack fast
 flavor.harbinger_fulfilled.feudal.014,The market theory is that the saints looked away because nobody asked them
 flavor.harbinger_fulfilled.feudal.015,"Plot twist, the warning was fake, and it came true anyway because you asked it to"
-flavor.harbinger_fulfilled.feudal.016,"The friars preached on it for a year, a false prophecy made true by a lord's will, and never landed on what it meant"
+flavor.harbinger_fulfilled.feudal.016,"The friars preached on it for a year, a false prophecy made canon by a lord's will, and never landed on what it meant"
 flavor.harbinger_fulfilled.feudal.017,"In the tavern {subject} is now the only liar in history to get proved right by somebody else, the luckiest fraud alive"
 flavor.harbinger_fulfilled.industrial.001,"The mills stood silent, not a single machine running"
 flavor.harbinger_fulfilled.industrial.002,"The odds were scary accurate, zero margin of error"
@@ -73,7 +73,7 @@ flavor.harbinger_fulfilled.industrial.009,"The ones who fled on packed trains ca
 flavor.harbinger_fulfilled.industrial.010,"Along the terraces nobody argued anymore about brave or wicked, neighbors dug each other out, made tea on the pavements with whatever they could find, and didn't look at the sky"
 flavor.harbinger_fulfilled.industrial.011,The unions are fuming that the rebuilding contracts went to the same old firms
 flavor.harbinger_fulfilled.industrial.012,"A national day of mourning has been declared, and it will be observed"
-flavor.harbinger_fulfilled.industrial.013,"In the pubs they say you did it on purpose, which, yeah, you did"
+flavor.harbinger_fulfilled.industrial.013,"The pub consensus is that you did it on purpose, which, yeah, you did"
 flavor.harbinger_fulfilled.digital.001,"The feeds went dark, the timeline frozen"
 flavor.harbinger_fulfilled.digital.002,"The markets stayed shut, nobody trading anything"
 flavor.harbinger_fulfilled.digital.003,The hashtag turned into a memorial
@@ -91,9 +91,9 @@ flavor.harbinger_fulfilled.digital.014,"Your name is in every mouth, and not in 
 flavor.harbinger_fulfilled.cosmic.001,"The dark answered, no delay"
 flavor.harbinger_fulfilled.cosmic.002,"The outer ring was lost, gone"
 flavor.harbinger_fulfilled.cosmic.003,"The station survived, mostly, sort of"
-flavor.harbinger_fulfilled.cosmic.004,The kids' ship kept going and didn't look back
-flavor.harbinger_fulfilled.cosmic.005,The officer who walked off the command deck came back and took his seat again
-flavor.harbinger_fulfilled.cosmic.006,"The instruments recorded the arrival in terrible detail, the readings were sealed by order, and that order has been challenged every year since by people who want to see"
+flavor.harbinger_fulfilled.cosmic.004,"The ship with the kids just kept going, eyes forward, no looking back"
+flavor.harbinger_fulfilled.cosmic.005,The officer who rage-quit the command deck came back and took his seat again
+flavor.harbinger_fulfilled.cosmic.006,"The instruments captured the arrival in terrible detail, the readings got sealed by order, and every year since, people who want to see have challenged that gatekeeping"
 flavor.harbinger_fulfilled.cosmic.007,"Every deck held a vigil for the ones who were lost, lights low"
 flavor.harbinger_fulfilled.cosmic.008,"Whatever was waiting out in the dark came when it was called, unhurried, and left afterwards in its own time"
 flavor.harbinger_fulfilled.cosmic.009,"The engineers who complained that nobody consulted engineering went three days without sleep patching the hull, petty but loyal"
@@ -132,14 +132,14 @@ flavor.harbinger_vindicated.late.008,"People are complaining that the warning sh
 flavor.harbinger_vindicated.ancient.001,"The prophet got a whole songbook out of it, the songs began"
 flavor.harbinger_vindicated.ancient.002,"The elders went quiet, and stayed that way"
 flavor.harbinger_vindicated.ancient.003,{subject} finally got respect in the form of offerings
-flavor.harbinger_vindicated.ancient.004,"The young men carried the heaviest loads afterwards, and didn't have to be told"
+flavor.harbinger_vindicated.ancient.004,"The young men carried the heaviest loads afterwards without being told, a quiet redemption arc"
 flavor.harbinger_vindicated.ancient.005,"The warning got painted on the rock face as a permanent post, never to be forgotten"
 flavor.harbinger_vindicated.ancient.006,"By the elders' order {subject} gets a lifetime meal plan, fed as long as the camp has food"
 flavor.harbinger_vindicated.ancient.007,"The drums spread it to the next camp over, ancient group chat"
 flavor.harbinger_vindicated.ancient.008,"A kid who'd done the prophecy in a silly voice had to redo it properly, no more bits"
 flavor.harbinger_vindicated.ancient.009,"Everybody now remembers some sign they saw beforehand, a bird or a cloud or a weird stone, and the signs get bigger every time, lore inflation"
 flavor.harbinger_vindicated.ancient.010,"The hunters went out to where the herd grazed and found the ground exactly as the prophecy said it would be, and came back without a word"
-flavor.harbinger_vindicated.ancient.011,"The old women went over every word of the warning at the fire that night, and at each word one of them nodded, and at the end the oldest declared it a true one and said there would be songs"
+flavor.harbinger_vindicated.ancient.011,"The old women vibe-checked every word of the warning at the fire that night, one of them nodding at each, and at the end the oldest declared it a true one and said there would be songs"
 flavor.harbinger_vindicated.ancient.012,"The hunters are whining that nobody told them properly, when they were told"
 flavor.harbinger_vindicated.ancient.013,"Three huts, one pit and most of the herd, exactly as the warning said, accurate to the hut"
 flavor.harbinger_vindicated.ancient.014,"The herd got counted and the count matches the prophecy, the math is mathing"
@@ -199,7 +199,7 @@ flavor.harbinger_vindicated.cosmic.005,"The navigation officer who called it noi
 flavor.harbinger_vindicated.cosmic.006,Every deck logged its own version of the warning for the lore
 flavor.harbinger_vindicated.cosmic.007,"The station's archive gave the warning a verified tag, blue check for the prophecy"
 flavor.harbinger_vindicated.cosmic.008,"People kept returning to the observation deck where they'd watched the dark for signs, and stood there, and didn't say what they were looking for now"
-flavor.harbinger_vindicated.cosmic.009,"The estimate had been right within its stated margin, and the engineers had the margin engraved on a plate by the airlock"
+flavor.harbinger_vindicated.cosmic.009,"The estimate had been right within its stated margin, so the engineers got the margin engraved on a plate by the airlock, a flex and a memorial in one"
 flavor.harbinger_vindicated.cosmic.010,"Out in the dark the thing that was foretold has moved on or gone back to sleep, and the only evidence the warning was ever given is the colony itself, smaller now, and the list of names read out at every shift change"
 flavor.harbinger_vindicated.cosmic.011,Crew are salty the warning got buried under routine traffic
 flavor.harbinger_vindicated.cosmic.012,"All future warnings go to every deck immediately, no more burying the lede"
@@ -233,7 +233,7 @@ flavor.harbinger_spared.late.004,"The risk estimate dropped to zero in real time
 flavor.harbinger_spared.late.005,"Ears finally free, people took their earpieces out for the first time in days"
 flavor.harbinger_spared.late.006,"The systems that had been shut down came back online in order, each announcing itself with a tiny cheerful chime that people found unbearable, read the room"
 flavor.harbinger_spared.late.007,"For a day nobody could focus, output everywhere crashed to nothing, and everyone sat around telling each other they were fine"
-flavor.harbinger_spared.late.008,"The settlement's logs recorded the moment the danger passed down to the millisecond, and people keep going back to read that one entry among millions"
+flavor.harbinger_spared.late.008,"The settlement's logs captured the exact millisecond the danger passed, and people keep going back to reread that one entry among millions, comfort content"
 flavor.harbinger_spared.ancient.001,The drums switched to party tempo
 flavor.harbinger_spared.ancient.002,"Four pits opened and all four still good, a perfect score"
 flavor.harbinger_spared.ancient.003,The elders got the giggles
@@ -266,7 +266,7 @@ flavor.harbinger_spared.industrial.002,"The odds took a nosedive, for once in th
 flavor.harbinger_spared.industrial.003,"The trains are back on the grind, running to schedule"
 flavor.harbinger_spared.industrial.004,The kids are devastated that schools reopen Monday
 flavor.harbinger_spared.industrial.005,The odds got one last tiny farewell print in the papers
-flavor.harbinger_spared.industrial.006,"The lines at the bank vanished overnight, and the manager, who'd been sleeping in his office, went home for the first time in a week"
+flavor.harbinger_spared.industrial.006,"The lines at the bank vanished overnight, and the manager, who'd been sleeping in his office, finally clocked out and went home for the first time in a week"
 flavor.harbinger_spared.industrial.007,"The shelters got locked up again with the tins still inside, the snacks can wait"
 flavor.harbinger_spared.industrial.008,"The enlistment office thanked its volunteers and benched them, not needed after all"
 flavor.harbinger_spared.industrial.009,"The bookmakers who'd given short odds on disaster had nobody to pay out, and threw a party, the house always wins"
@@ -284,7 +284,7 @@ flavor.harbinger_spared.digital.007,"The group chats went from relief straight t
 flavor.harbinger_spared.digital.008,"The cloud woke up, server farms spinning back up in rolling sequence"
 flavor.harbinger_spared.digital.009,The companies that sent staff home announced a return to the office so fast it was obvious they'd been waiting for the excuse
 flavor.harbinger_spared.digital.010,"The trending topic went from warning to relief to a celebrity divorce in one afternoon, goldfish attention span"
-flavor.harbinger_spared.digital.011,"Once the danger passed, the doors of the lower levels opened again in reverse order, and people came up blinking out of the car parks with their emergency kits over their shoulders"
+flavor.harbinger_spared.digital.011,"Once the danger passed the lower level doors opened in reverse order, and people came blinking up out of the car parks with their emergency kits slung over their shoulders, the least glamorous comeback ever"
 flavor.harbinger_spared.digital.012,The comment section has decided it was all overblown
 flavor.harbinger_spared.digital.013,Everyone groaned at the email saying offices reopen Monday
 flavor.harbinger_spared.digital.014,"Nobody won the office sweepstake on the date, so the pot just sits there"
@@ -319,7 +319,7 @@ flavor.harbinger_discredited.early.003,"Kids wrote rude songs about {subject}, a
 flavor.harbinger_discredited.early.004,"The buried stuff got dug back up, and the digging was not a happy vibe"
 flavor.harbinger_discredited.early.005,"The crowd that ran {subject} out of the settlement threw whatever came to hand, including food they couldn't spare, the anger was expensive"
 flavor.harbinger_discredited.early.006,"The old women said the warning had been false but the fear had been real, and the fear should count for something"
-flavor.harbinger_discredited.early.007,"For a long time afterwards anyone who predicted anything at all, even rain, got looked at in a way that made them stop halfway through the sentence, and a whole season of weather went unforecast because nobody dared"
+flavor.harbinger_discredited.early.007,"For ages afterwards anyone who predicted anything, even rain, got a look that made them stop mid-sentence, and a whole season of weather went unforecast because nobody dared"
 flavor.harbinger_discredited.early.008,Somebody yeeted a rotten turnip with feeling
 flavor.harbinger_discredited.early.009,"The offerings went back to their owners two goats short, and the goats remain unaccounted for"
 flavor.harbinger_discredited.early.010,"Everyone who'd spread the warning went round unsaying it, which took way longer than saying it"
@@ -335,7 +335,7 @@ flavor.harbinger_discredited.ancient.007,The elders say they'll vet who they lis
 flavor.harbinger_discredited.ancient.008,The feathers and charms got yeeted onto the midden
 flavor.harbinger_discredited.ancient.009,"Three other camps, it turns out, had already run {subject} out for doing exactly this, the reviews were out there"
 flavor.harbinger_discredited.ancient.010,"The women dug up the grain pits they'd moved up the slope and moved them back down, with a lot to say the whole time"
-flavor.harbinger_discredited.ancient.011,"The hunters who stayed in for a moon went out the first clear morning and found the herds had wandered way off, and walked three days to catch up, cursing {subject} by name the whole way"
+flavor.harbinger_discredited.ancient.011,"The hunters who stayed in for a moon went out the first clear morning to find the herds had wandered way off, and had to hike three days to catch up, cursing {subject} by name the whole way"
 flavor.harbinger_discredited.ancient.012,The hunters are big mad about losing an entire moon of hunting to a liar
 flavor.harbinger_discredited.ancient.013,"The elders banned feeding wandering prophets, no more free lunches"
 flavor.harbinger_discredited.ancient.014,"Around camp they say {subject} ate better than anyone that moon, the grift was delicious"
@@ -356,14 +356,14 @@ flavor.harbinger_discredited.feudal.005,The guild is chasing a refund on its can
 flavor.harbinger_discredited.feudal.006,The carts that fled north did a sheepish walk of shame back
 flavor.harbinger_discredited.feudal.007,The lord's bailiff went bounty hunting for {subject} with a warrant
 flavor.harbinger_discredited.feudal.008,The tavern got a new bit and ran it all week
-flavor.harbinger_discredited.feudal.009,"Cattle sold cheap on the strength of the warning stayed sold, and the buyers laughed in the sellers' faces, brutal"
+flavor.harbinger_discredited.feudal.009,"Cattle panic-sold on the warning stayed sold, and the buyers laughed right in the sellers' faces, brutal"
 flavor.harbinger_discredited.feudal.010,"The abbey's chronicle filed the affair under follies, page closed"
 flavor.harbinger_discredited.feudal.011,"The false warning got read out in the market square by order of the mayor, so everyone could hear how silly it sounded now, and it sounded exactly as scary as the first time, so the reading was cut short"
 flavor.harbinger_discredited.feudal.012,The steward is fuming that he doubled the watch for a liar
 flavor.harbinger_discredited.feudal.013,"It is proclaimed that {subject} is not to be given lodging within the walls, banned from the city"
 flavor.harbinger_discredited.feudal.014,Market gossip has {subject} on the grain merchants' payroll
-flavor.harbinger_discredited.feudal.015,"Candles returned to the chandler: forty, refunds given: none"
-flavor.harbinger_discredited.feudal.016,"The monks who'd prayed in shifts for a week sent the town a bill for the prayers, and the town refused to pay for prayers against nothing"
+flavor.harbinger_discredited.feudal.015,"Forty candles returned to the chandler, zero refunds given"
+flavor.harbinger_discredited.feudal.016,"The monks who'd prayed in shifts for a week invoiced the town for the prayers, and the town refused to pay for prayers against nothing"
 flavor.harbinger_discredited.feudal.017,"The friars preached that the false warning had been a test of belief, and the town failed it by believing, which confused literally everyone"
 flavor.harbinger_discredited.feudal.018,"The fair is rescheduled, so we're back in business"
 flavor.harbinger_discredited.feudal.019,"The chalk crosses drawn on every door on the high street got scrubbed off by next morning, each household doing its own and pretending it never drew one, and the stone was cleaner than it had been in years"

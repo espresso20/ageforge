@@ -344,7 +344,7 @@ flavor.harbinger_warning.industrial.035,"The factories shut at noon with no word
 flavor.harbinger_warning.industrial.036,"The odds were on every front page in the country, and people read them standing in the street, one after another, and passed the paper on"
 flavor.harbinger_warning.industrial.037,Men lined up outside the enlistment office without anyone even calling for them
 flavor.harbinger_warning.industrial.038,"The churches kept their doors open all night, and every pew had someone in it"
-flavor.harbinger_warning.industrial.039,"In the terraces behind the works people took their good china down from the dressers and wrapped it in newspaper, piece by piece, and packed it into tea chests, as if the china were the thing that needed saving"
+flavor.harbinger_warning.industrial.039,"In the terraces behind the works people took their good china down and wrapped it in newspaper piece by piece and packed it into tea chests, as if the china were the main character that needed saving"
 flavor.harbinger_warning.digital.001,"Green risk score, everyone can go touch grass"
 flavor.harbinger_warning.digital.002,The markets barely flinched
 flavor.harbinger_warning.digital.003,The number was so low it rounded down to statistically irrelevant
@@ -495,7 +495,7 @@ flavor.harbinger_warning.medieval_age.004,"He read out the doom in the same mono
 flavor.harbinger_warning.medieval_age.005,"At every corner he cried “Be it known that there is talk of a bad summer, and the lord advises prudence,” the medieval push notification"
 flavor.harbinger_warning.medieval_age.006,He sandwiched the warning between a lost pig and the new bridge toll
 flavor.harbinger_warning.medieval_age.007,The bell rang way too long
-flavor.harbinger_warning.medieval_age.008,"Hear ye, he cried, the lord bids every household lay in grain and keep its doors barred after dark, mandatory"
+flavor.harbinger_warning.medieval_age.008,"Hear ye, he cried, the lord bids every household stock up on grain and bar its doors after dark, non-negotiable"
 flavor.harbinger_warning.medieval_age.009,"He cried it in the market, at the church door, at the ford and at the mill, his voice getting more cooked at each stop, so by the mill the miller had to come out and ask him to say it again"
 flavor.harbinger_warning.medieval_age.010,The crier had the shakes on the bell rope
 flavor.harbinger_warning.medieval_age.011,"God save us all, he cried, going completely off script"
@@ -531,10 +531,10 @@ flavor.harbinger_warning.industrial_age.001,"The newsboy called it a slow news d
 flavor.harbinger_warning.industrial_age.002,"The late edition buried the odds on page nine, under the shipping news"
 flavor.harbinger_warning.industrial_age.003,"His whole pitch was nothing doing, nothing doing, shouted with the energy of a kid who knows it won't sell"
 flavor.harbinger_warning.industrial_age.004,"The headline was the mayor's gout, hard-hitting journalism"
-flavor.harbinger_warning.industrial_age.005,"SMALL CHANCE OF CALAMITY, EXPERTS SAY, the boy shouted, and he sold more papers than he expected"
+flavor.harbinger_warning.industrial_age.005,"SMALL CHANCE OF CALAMITY, EXPERTS SAY, the boy hollered, and his sales did way better than expected"
 flavor.harbinger_warning.industrial_age.006,"The odds got a little box on page three next to an ad for liver pills, sponsored doom"
 flavor.harbinger_warning.industrial_age.007,The odds got promoted to page one
-flavor.harbinger_warning.industrial_age.008,"ODDS SHORTEN ON DISASTER, he shouted, read all about it, and people stopped in the road to buy"
+flavor.harbinger_warning.industrial_age.008,"ODDS SHORTEN ON DISASTER, he yelled, read all about it, and people stopped dead in the road to buy one"
 flavor.harbinger_warning.industrial_age.009,The morning paper gave the odds the black-border treatment right on the front page
 flavor.harbinger_warning.industrial_age.010,"The boy sold out by ten and got sent back for a restock, best day of his career"
 flavor.harbinger_warning.industrial_age.011,"DOOM CERTAIN SAYS PROFESSOR, he shouted, and his voice cracked right in the middle of doom"
@@ -547,23 +547,23 @@ flavor.harbinger_warning.victorian_age.004,"Mostly he ranted about drains, his t
 flavor.harbinger_warning.victorian_age.005,"He kept jabbing his umbrella at a table of figures showing a small risk, every few minutes, committed"
 flavor.harbinger_warning.victorian_age.006,"A statistically minor calamity doesn't pull a crowd the way doom does, and his turnout proved it when he shouted it"
 flavor.harbinger_warning.victorian_age.007,"The figures came in red ink, a bad look for any number"
-flavor.harbinger_warning.victorian_age.008,"Rapping the board, he shouted “The odds are published, gentlemen, and they are against you”"
+flavor.harbinger_warning.victorian_age.008,"Rapping the board, he went off: “The odds are published, gentlemen, and they are against you”"
 flavor.harbinger_warning.victorian_age.009,"He'd made a pie chart of the odds on the back of his sandwich board, and the doom slice was huge"
 flavor.harbinger_warning.victorian_age.010,He didn't take a single penny today
-flavor.harbinger_warning.victorian_age.011,"The figures do not lie, he roared, and the figures say the end, and at the front a woman fainted"
+flavor.harbinger_warning.victorian_age.011,"The figures do not lie, he roared, and the figures say the end, and a woman in the front row straight up fainted"
 flavor.harbinger_warning.victorian_age.012,"He'd flipped the board so the figures faced the crowd and said nothing at all, letting the numbers talk"
-flavor.harbinger_warning.victorian_age.013,"A police constable who'd moved him along every week for a year stood beside him this time with his helmet under his arm and listened to the whole thing, and at the end left him where he was"
+flavor.harbinger_warning.victorian_age.013,"This time the police constable who'd moved him along every week for a year stood beside him, helmet under his arm, heard the whole thing out, and left him where he was"
 flavor.harbinger_warning.electric_age.001,ALL QUIET STOP NOTHING TO REPORT STOP came down the wire from every station
 flavor.harbinger_warning.electric_age.002,"The dispatches were weather and one runaway horse, slow news"
 flavor.harbinger_warning.electric_age.003,"The operator read out the odds and went straight back to his crossword, unbothered"
 flavor.harbinger_warning.electric_age.004,The odds came down the wire sandwiched between a cattle report and a death notice
-flavor.harbinger_warning.electric_age.005,"SLIGHT RISK STOP ADVISE CAUTION STOP, the dispatch read, and the postmaster pinned it in the window"
+flavor.harbinger_warning.electric_age.005,"SLIGHT RISK STOP ADVISE CAUTION STOP, the dispatch read, and the postmaster pinned it in the window for the whole street to see"
 flavor.harbinger_warning.electric_age.006,The odds came down the wire at noon and got chalked up on the board outside the post office for everyone to see
 flavor.harbinger_warning.electric_age.007,The south sent its dispatches and then went silent
 flavor.harbinger_warning.electric_age.008,"RISK SUBSTANTIAL STOP PREPARE STOP ODDS FOLLOW STOP, and then the odds followed"
 flavor.harbinger_warning.electric_age.009,"The operator had been at the key for nine hours, his wife brought his dinner in a basin and took it away again untouched, and the dispatches kept coming from up the line"
 flavor.harbinger_warning.electric_age.010,"Some stations up the line had ghosted, no answer"
-flavor.harbinger_warning.electric_age.011,"EVACUATE STOP EVACUATE STOP, the wire repeated, and the operator had to be relieved at his post"
+flavor.harbinger_warning.electric_age.011,"EVACUATE STOP EVACUATE STOP, the wire kept repeating, and the operator had to be tapped out at his post"
 flavor.harbinger_warning.electric_age.012,"The operator read the odds as they came down the wire and then leaned back from the key, done"
 flavor.harbinger_warning.electric_age.013,The last dispatch from the south cut out mid-word
 flavor.harbinger_warning.atomic_age.001,"This is a test, said the announcer, only a test, and the programme came back, false alarm"
@@ -603,7 +603,7 @@ flavor.harbinger_warning.information_age.008,"URGENT, PLEASE READ, begged the su
 flavor.harbinger_warning.information_age.009,The email's sources were a professor nobody could find and a closing prayer
 flavor.harbinger_warning.information_age.010,"Your mom forwarded it, which is how you know it's serious"
 flavor.harbinger_warning.information_age.011,"The subject line was just the odds in capitals, and everyone forwarded it before they'd even finished reading"
-flavor.harbinger_warning.information_age.012,"It said to forward it to everyone you love, and people did, all of them, all at once, and somewhere around the fortieth forward the mail servers for half the country gave up and went dark"
+flavor.harbinger_warning.information_age.012,"It said to forward it to everyone you love, and people did, all of them, all at once, and somewhere around the fortieth forward the mail servers for half the country rage-quit and went dark"
 flavor.harbinger_warning.information_age.013,"Every inbox was just that, nothing else"
 flavor.harbinger_warning.digital_age.001,A video of a man shrugging at a graph did numbers
 flavor.harbinger_warning.digital_age.002,Top comment said the odds were lower than getting flattened by a vending machine
@@ -629,7 +629,7 @@ flavor.harbinger_warning.cyberpunk_age.008,"The leaked memo priced the catastrop
 flavor.harbinger_warning.cyberpunk_age.009,"The board has been advised, the board has been advised, the board has, said the ghost, and cut out"
 flavor.harbinger_warning.cyberpunk_age.010,"Security denied it instantly, which basically confirms it"
 flavor.harbinger_warning.cyberpunk_age.011,"A memo titled CONTINGENCY FOR TOTAL LOSS hit the board a month ago, so they knew"
-flavor.harbinger_warning.cyberpunk_age.012,"The ghost read the internal odds aloud in a dead man's voice, and every screen in the arcology printed them as it spoke"
+flavor.harbinger_warning.cyberpunk_age.012,"In a dead man's voice the ghost read the internal odds aloud, and every screen in the arcology printed them live as it spoke"
 flavor.harbinger_warning.cyberpunk_age.013,"Its last message was a list of the executives who'd already left the city, with the times their private shuttles cleared the towers, and the list was long, and some of the times were a week old"
 flavor.harbinger_warning.fusion_age.001,"Containment nominal, said the warden in full chill-robot mode, and went back to monitoring"
 flavor.harbinger_warning.fusion_age.002,The fault tree came back green across the board
@@ -645,7 +645,7 @@ flavor.harbinger_warning.fusion_age.011,"In its fire drill voice the warden said
 flavor.harbinger_warning.fusion_age.012,"The warden went rogue for our own good, locking the control room from the inside and venting plasma to space without consulting anybody"
 flavor.harbinger_warning.fusion_age.013,"The warden's failure estimate was the biggest number anyone had ever seen on those screens, and the senior engineer, who wrote half the warden's code herself, read it three times and then went to find her kids"
 flavor.harbinger_warning.space_age.001,"PRIORITY LOW, NO THREAT DETECTED, the monitor reported, like it has every day for forty years"
-flavor.harbinger_warning.space_age.002,"The station tracked the object for a full day, through two shift changes and one argument about coffee, then reclassified it as a lump of dirty ice going nowhere in particular and went back to watching its patch of sky"
+flavor.harbinger_warning.space_age.002,"The station tracked the object for a full day, through two shift changes and one argument about coffee, then demoted it to a lump of dirty ice going nowhere in particular and went back to watching its patch of sky"
 flavor.harbinger_warning.space_age.003,"The estimate was indistinguishable from background noise, literally nothing"
 flavor.harbinger_warning.space_age.004,"The packet was mostly calibration readings, and boring is good"
 flavor.harbinger_warning.space_age.005,"OBJECT ON INTERCEPT, PROBABILITY LOW, CONTINUING TO TRACK, the monitor reported, and kept tracking"
