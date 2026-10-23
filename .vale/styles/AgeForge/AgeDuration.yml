@@ -1,0 +1,16 @@
+extends: existence
+message: "Don't say how long an age takes: '%s'."
+description: "Ages are paced by the economy and by the player. The wiki never promises a duration."
+level: warning
+ignorecase: true
+scope: sentence
+tokens:
+  # "takes 3 hours", "takes about a day", "takes several minutes"
+  - 'takes? (about |around |roughly |only |nearly |almost |just )?(\d+|an?|one|two|three|four|five|six|seven|several|a few) (second|minute|hour|day|week)s?'
+  # "about a day", "roughly an hour", "almost a week" (words, not figures, so
+  # "about 157 hours of income" is left alone)
+  - '(about|around|roughly|nearly|almost) (an?|one|two|three|four|five|six|seven) (minute|hour|day|week)s?'
+  # "minutes per age", "two hours an age", "hours each era"
+  - '(minute|hour|day|week)s? (per|an|a|each|every) (age|era)'
+  # "the Stone Age lasts about two days", "an age runs 4 hours"
+  - '(age|era)s? (take|takes|last|lasts|run|runs) (about |around |roughly |only |nearly |almost )?(\d+|an?|one|two|three|four|five|six|seven|several|a few) (minute|hour|day|week)s?'

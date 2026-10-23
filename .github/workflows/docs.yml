@@ -1,0 +1,202 @@
+name: Docs
+
+# Writing checks: markdownlint (Markdown structure), Vale (the wiki's prose
+# rules, in .vale/styles/AgeForge), typos (spelling in code and docs) and, on
+# the weekly run and by hand, lychee (dead links).
+#
+# All of them report and none fails the run for now. See docs/ci.md for what
+# each rule is for, how to run it locally, and how to silence a false positive.
+
+on:
+  pull_request:
+  schedule:
+    - cron: "29 6 * * 1" # weekly, Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  markdownlint:
+    name: markdownlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The action reports each finding as an annotation (the first ten show on
+      # the run page, every one is in the step log). Rules are in
+      # .markdownlint.jsonc.
+      - name: markdownlint-cli2
+        id: lint
+        continue-on-error: true
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+        with:
+          globs: |
+            README.md
+            CONTRIBUTING.md
+            CHANGELOG.md
+            docs/**/*.md
+            site/docs/**/*.md
+
+      - name: Job summary
+        if: ${{ always() }}
+        env:
+          OUTCOME: ${{ steps.lint.outcome }}
+        run: |
+          {
+            echo "### markdownlint"
+            echo
+            if [ "$OUTCOME" = "success" ]; then
+              echo "No findings."
+            else
+              echo "There are findings. Each one is an annotation on this run, and all of them are in the markdownlint-cli2 step log."
+              echo
+              echo "Reporting only: this check does not fail the run yet."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  vale:
+    name: Vale
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Vendor release binary, checked against the hash written here (the
+      # release's own checksums file has the same value).
+      VALE_VERSION: "3.24.0"
+      VALE_SHA256: "867534ddb678abca7f214bc4706ead0922bd5252ffe8035fc227013f66c8b214"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Vale
+        run: |
+          set -euo pipefail
+          url="https://github.com/vale-cli/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz"
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/vale.tar.gz" "$url"
+          echo "${VALE_SHA256}  $RUNNER_TEMP/vale.tar.gz" | sha256sum --check --strict -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/vale.tar.gz" -C "$RUNNER_TEMP/bin" vale
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      # --no-exit: findings are reported, the step does not fail.
+      - name: Vale
+        run: vale --no-exit --output=line site/docs README.md | tee vale.txt
+
+      - name: Job summary
+        if: ${{ always() }}
+        run: |
+          {
+            echo "### Vale"
+            echo
+            total=$(wc -l < vale.txt)
+            echo "Findings: **${total}**"
+            if [ "${total}" != "0" ]; then
+              echo
+              echo "| Rule | Findings |"
+              echo "| --- | ---: |"
+              awk -F: '{print $4}' vale.txt | sort | uniq -c | sort -rn | awk '{print "| " $2 " | " $1 " |"}'
+              echo
+              echo '```'
+              head -n 100 vale.txt
+              echo '```'
+              echo
+              echo "Reporting only: this check does not fail the run yet."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: vale
+          path: vale.txt
+          if-no-files-found: ignore
+
+  typos:
+    name: typos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TYPOS_VERSION: "1.51.1"
+      TYPOS_SHA256: "93c301fd4120ff076e2cc2a6d6a61cab4a4bdb81899287c0938b452e56d1f454"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The release binary (crate-ci/typos, the same tool its action wraps),
+      # so the findings can go into the job summary.
+      - name: Install typos
+        run: |
+          set -euo pipefail
+          url="https://github.com/crate-ci/typos/releases/download/v${TYPOS_VERSION}/typos-v${TYPOS_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/typos.tar.gz" "$url"
+          echo "${TYPOS_SHA256}  $RUNNER_TEMP/typos.tar.gz" | sha256sum --check --strict -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/typos.tar.gz" -C "$RUNNER_TEMP/bin" ./typos
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: typos
+        id: scan
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          typos --format brief | tee typos.txt
+
+      - name: Job summary
+        if: ${{ always() }}
+        run: |
+          {
+            echo "### typos"
+            echo
+            total=$(grep -c ': error: ' typos.txt || true)
+            echo "Findings: **${total}**"
+            if [ "${total}" != "0" ]; then
+              echo
+              echo '```'
+              head -n 100 typos.txt
+              echo '```'
+              echo
+              echo "Reporting only: this check does not fail the run yet."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: typos
+          path: typos.txt
+          if-no-files-found: ignore
+
+  links:
+    name: lychee
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # fail: false keeps a dead link from failing the run; the table is the
+      # job summary (jobSummary) and the lychee-report artifact.
+      - name: lychee
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          fail: false
+          args: --config .lychee.toml --no-progress 'site/docs/**/*.md' README.md
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: lychee-report
+          path: lychee/out.md
+          if-no-files-found: ignore

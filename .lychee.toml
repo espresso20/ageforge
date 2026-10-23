@@ -1,0 +1,26 @@
+# Config for lychee (link checker). See docs/ci.md for how to run it and how to
+# silence a false positive.
+
+# Root-relative links in the docsify sidebar and navbar ("/changelog.html")
+# resolve against the site folder.
+root_dir = "site"
+
+# Fragments are not checked (the default): docsify routes live after a "#/"
+# (https://ageforge.io/docs/#/commands), which is not an anchor on the page.
+
+max_concurrency = 8
+timeout = 20
+max_retries = 2
+retry_wait_time = 5
+
+# 429 means the host rate-limited us, not that the link is dead.
+accept = ["200..=299", "429"]
+
+# Hosts that block or rate-limit scripted requests, and addresses that only
+# make sense on a developer machine.
+exclude = [
+    '^https?://(localhost|127\.0\.0\.1)',
+    '^https://img\.shields\.io/',
+    '^https://trello\.com/',
+    '^https://(www\.)?(twitter|x|linkedin|facebook|instagram)\.com/',
+]
