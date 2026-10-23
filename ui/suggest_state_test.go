@@ -87,11 +87,10 @@ func TestSuggestBuildGameAware(t *testing.T) {
 	if err := eng.SummonHarbingerForTest("bronze_age"); err != nil {
 		t.Fatal(err)
 	}
-	// The Bronze Age's buildings cost more than the starting stores hold, so
-	// the stores grow first: some of its buildings are then within reach and
-	// the rest are not.
+	// The Bronze Age's buildings cost more than the starting stock, so stock
+	// is added first: some of its buildings are then within reach and the
+	// rest are not.
 	for _, r := range []string{"wood", "stone", "food"} {
-		eng.Resources.AddStorage(r, 1000)
 		eng.Resources.Add(r, 1000)
 	}
 	checkBuildSuggestions(t, eng)

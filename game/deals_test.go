@@ -268,7 +268,6 @@ func dealEngine(t *testing.T, age string) *GameEngine {
 	// when the transition's own draws (its epoch event, the era's fate) do.
 	ge.SeedRNG(11)
 	for _, r := range ge.Resources.resources {
-		r.Storage = 1e15
 		r.Amount = 5e14
 	}
 	return ge
@@ -599,8 +598,10 @@ func TestDeals_Wording(t *testing.T) {
 	}
 	ge.mu.Lock()
 	d1, d2 := ge.Diplomacy.factions["merchant_guild"].Deals[0], ge.Diplomacy.factions["merchant_guild"].Deals[1]
+	held := ge.Resources.resources[d2.Give].Amount
 	ge.Resources.resources[d2.Give].Amount = 0
 	views := ge.planViews()
+	ge.Resources.resources[d2.Give].Amount = held // deal 1 may be paid in the same goods
 	ge.mu.Unlock()
 	if want := "deal with the Merchant Guild (" + dealLogTerms(d2) + ")"; len(views) != 1 || views[0].Name != want {
 		t.Errorf("plan label %+v, want %q", views, want)

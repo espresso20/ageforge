@@ -262,7 +262,7 @@ It only ever sends the era's short scout. Long and grand missions, and every cam
 
 It sends a party only when the soldiers at home can make one up, as a hand-sent mission does. Nothing is queued.
 
-It pays full price. Each automatic mission costs the same materials you would pay. If your stores can't outfit one, the Society holds it back, tells you once, and sends it as soon as the supplies are there. It never runs up a debt.
+It pays full price. Each automatic mission costs the same materials you would pay. If you don't hold the materials to outfit one, the Society holds it back, tells you once, and sends it as soon as the supplies are there. It never runs up a debt.
 
 It sends the affordable short or long offer with the best haul per minute, so it won't spend your treasury on a grand mission.
 
@@ -270,7 +270,7 @@ Its missions are ordinary missions. They use the same odds, pay the same haul an
 
 The more you invest, the faster it goes. A single unstaffed Society sends about one party every 2,340 ticks (about 1h 18m), roughly what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each extra Society shortens the wait again, down to a floor of about **one party every 260 ticks** (about 8m 40s) with six fully staffed Societies. More than that only helps when a party comes home late. Societies are staffed by military-domain workers, so they count toward the [military share of your population](#morale-and-military-ratio).
 
-The **Expedition Report** (the second view of the `expedition` panel) shows one line for it: the time until the next party leaves, or a warning that a party is due and your stores are too thin to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](factions.md#the-factions-panel). Both show approximate wall-clock time rather than ticks.
+The **Expedition Report** (the second view of the `expedition` panel) shows one line for it: the time until the next party leaves, or a warning that a party is due and you do not hold the materials to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](factions.md#the-factions-panel). Both show approximate wall-clock time rather than ticks.
 
 A Society is always slower than doing it yourself, by design. The Society keeps missions moving while you are away. Sending offers by hand gives you control over the odds, haul and cost.
 

@@ -179,16 +179,17 @@ func TestCultureStrengthAfterSpendingAndBuying(t *testing.T) {
 		t.Errorf("after buying ten times the culture made: strength %.4f, want the %.4f the buildings earned", got, top)
 	}
 
-	// A moderate town with a store full of bought culture stays on Minor
+	// A moderate town holding a good stock of bought culture stays on Minor
 	// events: under the old rule it had the Legendary tier.
 	rich := cultureTown(t, "renaissance_age", 1)
 	rich.StepTicks(300)
-	rich.Resources.Add("culture", float64(0.9*rich.Resources.GetStorage("culture")))
-	if fill := rich.Resources.Get("culture") / rich.Resources.GetStorage("culture"); fill < 0.75 {
-		t.Fatalf("the store is %.2f full of culture, want over three quarters", fill)
+	good := float64(0.9 * config.StockScale("renaissance_age"))
+	rich.Resources.Add("culture", good)
+	if held := rich.Resources.Get("culture"); held < good {
+		t.Fatalf("the town holds %v culture, want at least the %v bought", held, good)
 	}
 	if o := rich.CatastropheOutlook(); o.CultureTier != CultureTierMinor || math.Abs(o.CultureStrength-o.CultureDevotion/CultureFullSets) > 1e-9 {
-		t.Errorf("a moderate town with a store of bought culture: strength %.4f (%s), want a moderate town's, Minor only", o.CultureStrength, o.CultureTier)
+		t.Errorf("a moderate town with a stock of bought culture: strength %.4f (%s), want a moderate town's, Minor only", o.CultureStrength, o.CultureTier)
 	}
 
 	// An Appease paid in culture lowers it.

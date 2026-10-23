@@ -538,3 +538,27 @@ func TestPerformance(t *testing.T) {
 		t.Errorf("a frame takes %v", per)
 	}
 }
+
+// TestFlowsNeverSayFull: stock has no ceiling, so the flows overlay and the
+// legend have no FULL tag and no "full:" list to draw, at any size or age.
+func TestFlowsNeverSayFull(t *testing.T) {
+	for i, age := range config.AgeOrder() {
+		m := build(fixture.Options{Age: age, Seed: int64(i + 1), Tick: tickAt(0.5)}, 0)
+		for _, legend := range []bool{false, true} {
+			v := newView()
+			v.flows, v.legend = true, legend
+			for _, sz := range [][2]int{{200, 60}, {120, 40}, {80, 24}} {
+				scr := draw(v, m, sz[0], sz[1], 10, mapmodel.TierUnicode, false)
+				cells, _, _ := scr.GetContents()
+				var b strings.Builder
+				for _, c := range cells {
+					b.WriteString(string(c.Runes))
+				}
+				text := b.String()
+				if strings.Contains(text, "FULL") || strings.Contains(text, "full:") {
+					t.Errorf("%s at %dx%d (legend %v) still says full", age, sz[0], sz[1], legend)
+				}
+			}
+		}
+	}
+}

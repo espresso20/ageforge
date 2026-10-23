@@ -15,7 +15,7 @@ You're in the **Primitive Age**. The screen shows:
 
 Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 34 rows or larger.
 
-<figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: stores nearly empty, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
+<figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: almost nothing in stock, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 
 You have no workers, no housing and 50 wood. Workers come on their own once you have housing and buildings for them to work in. Start by gathering:
 
@@ -155,7 +155,7 @@ wonder collect all
 build sacred_grove
 ```
 
-`wonder collect all` banks as much of each needed resource as you have. Run it again whenever your stock refills; your storage limits how much you can bank at once. **Wonder overflow** helps too: it is on by default, and production your full stores would waste goes into the Grove's bank on its own.
+`wonder collect all` banks as much of each needed resource as you have. Run it again whenever your stock refills. Nothing flows into the Grove's bank on its own.
 
 The grove also speeds research and gives +0.05 food/tick permanently.
 
@@ -206,7 +206,7 @@ When you reach the Stone Age:
 - **Elders' Hall**: a better knowledge building, with 2 scholars
 - **Standing Stones**: a better faith building, once you research Ritual (it needs Language, a Primitive Age tech)
 - **Longhouse**: bigger housing (+25 housing each)
-- **Storage Pit**: +1.2K storage for every resource
+- **Storage Pit**: +1% to all production a copy
 - **War Camp**: an early military building. Its soldiers move in the day it stands, and a garrison blunts the raids of the Stone and Bronze Ages (see [Military](military.md))
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 

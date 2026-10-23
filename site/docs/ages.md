@@ -2,7 +2,7 @@
 
 AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources and worker domains, and adds a new district to your [skyline](map.md#skyline). Advancement requires the buildings each age asks for **and** completing the age's wonder. No age asks you to hold an amount of any resource.
 
-From the Modern Age on, first-copy prices rise by 1.4 times each age. The Modern Age keeps its authored prices. Stores, wonders and research scale with the price level; resource outputs do not. In every age a new copy of a building (wonders and monuments aside) also costs 1.43 times what it was written at.
+From the Modern Age on, first-copy prices rise by 1.4 times each age. The Modern Age keeps its authored prices. Wonders and research scale with the price level; resource outputs do not. In every age a new copy of a building (wonders and monuments aside) also costs 1.43 times what it was written at.
 
 <figure class="screen" data-screen="age-arrival"><figcaption>Reaching a new age, here the Bronze Age: its name is struck in iron, sparks fly, and the town turns from the age you left into the new one.</figcaption></figure>
 
@@ -18,7 +18,7 @@ Each age unlocks exactly one wonder building. You must **build that wonder** bef
 
 ## Keystone Techs
 
-From the Stone Age on, each age's wonder needs one technology of that age before it can be built: its **keystone**. The wonder's bank is open from the first tick of the age and fills while you research, by deposit and by overflow. Only `build <wonder>` waits for the tech. Since the next age needs the wonder, the keystone is the one tech an age asks of you, together with the techs it stands on. Everything else in the tree is your choice.
+From the Stone Age on, each age's wonder needs one technology of that age before it can be built: its **keystone**. The wonder's bank is open from the first tick of the age and fills while you research, by deposit. Only `build <wonder>` waits for the tech. Since the next age needs the wonder, the keystone is the one tech an age asks of you, together with the techs it stands on. Everything else in the tree is your choice.
 
 | Age | Wonder | Keystone tech | It stands on |
 |---|---|---|---|
@@ -73,13 +73,12 @@ The table under each age below lists the building counts the gate into it asks f
 Every age can be finished, and an automated test checks this in every release. The test holds each age to these rules:
 
 - Every building requirement names a building you can build in the age you are advancing **from**, never an older one you can no longer build.
-- A town that passes a gate arrives holding the store the rules size for it, because the gate asks for the storage copies. Storage is a wall (see [Storage](buildings.md#storage-buildings-21-tiers)), so no town can pass without them.
+- A town that passes a gate arrives with five copies of the age's storage building, because the gate asks for them, so it already has the production boost they give (see [Storage](buildings.md#storage-buildings-21-tiers)).
 - A town that passes a gate has the age's knowledge building built to its cap, because the gate asks for that many copies, and the scholars that come with them (see [Scholars and Research](knowledge.md#what-a-scholar-is)).
-- The last required copy of each building costs at most **80%** of the store the gates force you to hold, so a town that met the earlier gates can always afford it.
 - The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age.
 - Every resource a required building, the wonder or the keystone costs has a source in the age itself, even for a town that skipped every building no earlier gate asked for. See [The Maker Rule](buildings.md#the-maker-rule).
 - A food, faith or culture cost is something a moderate economy makes in the age.
-- A town that arrives in a new age with empty stores, and only the buildings the gates asked for, can buy the first copy of every building the age opens, except those that wait for a tech you may never research.
+- A town that arrives in a new age with nothing in stock, and only the buildings the gates asked for, can buy the first copy of every building the age opens, except those that wait for a tech you may never research.
 
 ## What Happens on Age Advance
 
@@ -89,7 +88,7 @@ When your civilization crosses into a new age:
 2. **Buildings of earlier ages become older buildings.** Wherever a building's line has a newer building for the new age, the old one is an older building. The newer building is in the same line and makes the same resource (see [The 39 Building Lines](buildings.md#the-39-building-lines)), so a Sawmill is never offered a Coal Mine. Nothing is converted automatically. Storage buildings are in no line: every stash, storage pit or vault you built keeps counting toward your storage for the rest of the run.
 3. **Production continues at the old rate** until you upgrade. Leaving older buildings as they are costs nothing; the reason to upgrade is the new building's higher output, and an upgraded copy counts toward the next age's building requirements.
 4. **New-tier buildings are available at once** in the Buildings panel, so you can build fresh copies of the new tier right away.
-5. **The age's speed is set.** On known ground the log says how much faster the age runs (`Known ground: the Bronze Age runs 2.4x faster (mastery 2).`). Stepping from known ground onto an age no run has completed logs that it runs at 1x; storage shrinks back with the speed, but stock already above the new cap stays until you spend it (see [The grace rule](prestige.md#the-grace-rule)).
+5. **The age's speed is set.** On known ground the log says how much faster the age runs (`Known ground: the Bronze Age runs 2.4x faster (mastery 2).`). Stepping from known ground onto an age no run has completed logs that it runs at 1x.
 
 ### Upgrading buildings after an advance
 

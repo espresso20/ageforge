@@ -232,7 +232,7 @@ func (l *truthLab) firstMade(res, age string, income bool) string {
 
 // truthReading is everything the cheap meters read off an engine, by name:
 // "rate:food", "made:food" (what buildings make before any bonus),
-// "storage:food", "stock:food", "housing", "speed", "research", "cost",
+// "stock:food", "housing", "speed", "research", "cost",
 // "defense", "morale", "workers".
 type truthReading map[string]float64
 
@@ -255,12 +255,7 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 		r := ge.Resources.resources[key]
 		out["rate:"+key] = r.Rate
 		out["made:"+key] = r.Breakdown.BuildingRate
-		out["storage:"+key] = r.Storage
-		out["aux:storage-raw:"+key] = truthStoreSize(ge, key)
 		out["stock:"+key] = r.Amount
-		if want := truthStoreSize(ge, key); !near(r.Storage, want) {
-			t.Errorf("storage %s is %v, want the flat storage %v", key, r.Storage, want)
-		}
 	}
 	// The scholars' work, with every scholar researching, and the building
 	// figures it is made of (scholars.go). Both read under "rate:", so a
@@ -284,21 +279,6 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 	out["defense"] = truthDefense(ge)
 	out["morale"] = truthMoraleLift(t, ge)
 	return out
-}
-
-// truthStoreSize is the ordinary flat building, mastery, and tech
-// calculation of a store: the measure a promised storage bonus is held to.
-func truthStoreSize(ge *GameEngine, res string) float64 {
-	return truthStoreWithTechScale(ge, res, 1+ge.Research.Bonus(config.EffectStorage, ""))
-}
-
-// truthStoreWithTechScale is the flat-capacity calculation with a given tech
-// multiplier. A storage tech is measured against this same calculation with
-// its tech multiplier set to one.
-func truthStoreWithTechScale(ge *GameEngine, res string, techStorage float64) float64 {
-	def := ge.Resources.defs[res]
-	bonuses, permanent := ge.Buildings.GetStorageBonuses(), ge.permanentBonusMap()
-	return ge.storeSize(def, bonuses["all"]+permanent["all"], bonuses[res]+permanent[res], ge.speedK(), techStorage)
 }
 
 // truthMechanics reads every mechanic number a tech can move
@@ -355,12 +335,6 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 		ge.Military.setActive(c.tier, held)
 	}
 	return out
-}
-
-// truthStoreScale is what the techs multiply the store of res by: their
-// storage bonus on every store.
-func truthStoreScale(ge *GameEngine, res string) float64 {
-	return 1 + ge.Research.Bonus(config.EffectStorage, "")
 }
 
 // truthLayerScale is what one point of the tech layer on res is worth in its
@@ -889,36 +863,6 @@ var truthKinds = map[string]truthKind{
 			return m
 		},
 	},
-	// A tech's "+X% storage": X of every store, whatever else is researched
-	// (the techs' storage bonuses add up).
-	"tech_storage": {
-		Unit: "of every store", Pool: true,
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			ge.recalculateRates()
-			m := truthMeasured{Allowed: meterHasPrefix("storage:", "stock:")}
-			lo, hi := math.Inf(1), math.Inf(-1)
-			for _, key := range ge.Resources.order {
-				// The knowledge store is the knowledge buildings' alone
-				// (knowledge_store.go): a tech's bonus to every store, and
-				// a storage building's, do not reach it.
-				if key == "knowledge" {
-					continue
-				}
-				base := truthStoreWithTechScale(ge, key, 1)
-				if base <= 0 {
-					continue
-				}
-				d, noise := truthDiff(before, after, "aux:storage-raw:"+key)
-				lo, hi = math.Min(lo, d/base), math.Max(hi, d/base)
-				m.Noise = math.Max(m.Noise, noise/base)
-			}
-			m.Delivered = lo
-			if hi-lo > 3e-6*math.Max(1, math.Abs(hi))+2*m.Noise {
-				m.Skip = fmt.Sprintf("resources disagree: %v to %v", lo, hi)
-			}
-			return m
-		},
-	},
 	// A tech's "+X% housing": X of housing, rounded up to a whole person
 	// (game.TechHousing), so the reading is good to a person either way.
 	"tech_housing": {
@@ -1150,35 +1094,6 @@ var truthKinds = map[string]truthKind{
 			res := p.Eff.Target
 			d, noise := truthDiff(before, after, "made:"+res)
 			return truthMeasured{Delivered: d / p.Count, Noise: noise / p.Count, Allowed: meterIs("rate:"+res, "made:"+res)}
-		},
-	},
-	// "+V storage for every resource but knowledge" or for one.
-	"storage": {
-		Unit: "storage per copy",
-		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			// The techs' storage bonus multiplies every store, as k does.
-			count := p.Count * ge.speedK()
-			if p.Eff.Target != "all" {
-				scale := count * truthStoreScale(ge, p.Eff.Target)
-				d, noise := truthDiff(before, after, "aux:storage-raw:"+p.Eff.Target)
-				return truthMeasured{Delivered: d / scale, Noise: noise / scale, Allowed: meterIs("storage:" + p.Eff.Target)}
-			}
-			m := truthMeasured{Allowed: meterHasPrefix("storage:")}
-			lo, hi := math.Inf(1), math.Inf(-1)
-			for _, key := range ge.Resources.order {
-				if key == "knowledge" {
-					continue // its own store (knowledge_store.go)
-				}
-				scale := count * truthStoreScale(ge, key)
-				d, noise := truthDiff(before, after, "aux:storage-raw:"+key)
-				lo, hi = math.Min(lo, d/scale), math.Max(hi, d/scale)
-				m.Noise = math.Max(m.Noise, noise/scale)
-			}
-			m.Delivered = lo
-			if hi-lo > 3e-6*math.Max(1, math.Abs(hi))+2*m.Noise {
-				m.Skip = fmt.Sprintf("resources disagree: %v to %v", lo, hi)
-			}
-			return m
 		},
 	},
 	// "+V housing".
@@ -1466,7 +1381,7 @@ func truthEffectKind(source string, e config.Effect) string {
 			if e.Target == config.ResearchTarget {
 				return "research_layer"
 			}
-		case config.EffectAllOutput, config.EffectStorage, config.EffectHousing,
+		case config.EffectAllOutput, config.EffectHousing,
 			config.EffectBuildCost, config.EffectBuildTime, config.EffectResearchTime:
 			return e.Type
 		case config.EffectMechanic:
@@ -1511,10 +1426,6 @@ func truthEffectKind(source string, e config.Effect) string {
 				return "building_output"
 			}
 			return "flat_rate"
-		}
-	case "storage":
-		if isRes(e.Target) || e.Target == "all" {
-			return "storage"
 		}
 	case "capacity":
 		switch e.Target {
@@ -1647,7 +1558,7 @@ func (s truthSnapshot) put(ge *GameEngine) {
 	for k, v := range s.legacy {
 		ge.legacyBonuses[k] = v
 	}
-	ge.recalculateRates() // storage first: stock must fit before it goes back
+	ge.recalculateRates()
 	for key, v := range s.stock {
 		ge.Resources.resources[key].Amount = v
 	}
@@ -1741,9 +1652,6 @@ func (l *truthLab) probe(t *testing.T, p truthPromise, age string, mode truthMod
 		if m == "morale" && faith {
 			continue // faith income lifts morale (site/docs/faith.md): the rate's own doing
 		}
-		if strings.HasPrefix(m, "stock:") && p.Kind == "storage" {
-			continue // a store that shrinks clips its stock
-		}
 		out.Leaks = append(out.Leaks, fmt.Sprintf("%s %+.4g", m, after[m]-before[m]))
 	}
 	return out
@@ -1760,12 +1668,6 @@ func truthEffectText(e config.Effect) string {
 		return truthPercent(e.Value) + " " + EffectTargetName(e.Target)
 	case "production":
 		return fmt.Sprintf("%+g %s/tick", e.Value, ResourceName(e.Target))
-	case "storage":
-		switch e.Target {
-		case "all":
-			return fmt.Sprintf("%+g storage for every resource but knowledge", e.Value)
-		}
-		return fmt.Sprintf("%+g %s storage", e.Value, ResourceName(e.Target))
 	case "capacity":
 		if e.Target == "population" {
 			return fmt.Sprintf("%+g housing", e.Value)

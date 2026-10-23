@@ -20,9 +20,6 @@ func TestPrestige_RetiredPerksAreInert(t *testing.T) {
 	plain := run(nil)
 	up := run(map[string]int{"storage_bonus": 3, "population_cap": 2, "starting_food": 3, "tick_speed": 5})
 
-	if got := up.Resources["food"].Storage - plain.Resources["food"].Storage; got != 0 {
-		t.Errorf("retired storage_bonus 3: food storage +%v after prestige, want +0", got)
-	}
 	if got := up.Workers.MaxPop - plain.Workers.MaxPop; got != 0 {
 		t.Errorf("retired population_cap 2: max pop +%d after prestige, want +0", got)
 	}

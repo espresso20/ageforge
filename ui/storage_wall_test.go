@@ -60,21 +60,21 @@ func panelPages(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) [][]st
 	return out
 }
 
-// A building whose next copy costs more than a store holds is marked like
-// any building that is not affordable (the red cross), and nothing about
-// storage: a store is not a limit.
+// A building whose next copy costs more than is held is marked like any
+// building that is not affordable (the red cross), and nothing about
+// storage: stock has no limit.
 func TestBuildingsPanelHasNoStorageWall(t *testing.T) {
 	restoreForge(t)
 	d, pages, eng := wallTown(t, map[string]int{"workshop": 80})
 	st := eng.GetState()
 	over := ""
 	for res, cost := range st.Buildings["workshop"].NextCost {
-		if cost > st.Resources[res].Storage {
+		if cost > st.Resources[res].Amount {
 			over = res
 		}
 	}
 	if over == "" {
-		t.Fatalf("staging: the next workshop (%v) fits every store", st.Buildings["workshop"].NextCost)
+		t.Fatalf("staging: the town holds the next workshop (%v)", st.Buildings["workshop"].NextCost)
 	}
 	err := eng.BuildBuilding("workshop")
 	if err == nil || strings.Contains(err.Error(), "storage") {

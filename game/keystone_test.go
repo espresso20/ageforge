@@ -37,7 +37,6 @@ func TestWonderWaitsForItsKeystone(t *testing.T) {
 	}
 
 	// A deposit goes in.
-	ge.Resources.resources["wood"].Storage = 1000
 	setAmount(ge, "wood", 400)
 	if got, err := ge.BankWonderResource("great_monolith", "wood", 300); err != nil || got != 300 {
 		t.Fatalf("a deposit while the keystone is missing: banked %v, %v", got, err)

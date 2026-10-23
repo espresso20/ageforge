@@ -8,9 +8,6 @@ func TestPlan_WonderPaysItsBankFromStock(t *testing.T) {
 	ge := planTestEngine(t)
 	w := ge.progress.WonderForAge(ge.age)
 	need := ge.Buildings.defs[w].BaseCost
-	for res := range need {
-		ge.Resources.resources[res].Storage = 1e6
-	}
 	// Half of each part is already banked.
 	ge.Buildings.wonderBanks[w] = map[string]float64{}
 	for res, c := range need {
@@ -72,14 +69,12 @@ func TestPlan_WonderPaysItsBankFromStock(t *testing.T) {
 	}
 }
 
-// A part bigger than the store is no obstacle: nothing limits stock, so the
+// A part bigger than any stock held is no obstacle: nothing limits stock, so the
 // wonder is not blocked on its bank. It waits for the stock like any price,
 // and starts once what is held covers all of it.
-func TestPlan_WonderPartOverStoreIsNotBlocked(t *testing.T) {
+func TestPlan_WonderPartOverStockIsNotBlocked(t *testing.T) {
 	ge := planTestEngine(t)
 	w := ge.progress.WonderForAge(ge.age)
-	res := sortedKeys(ge.Buildings.defs[w].BaseCost)[0]
-	ge.Resources.resources[res].Storage = ge.Buildings.defs[w].BaseCost[res] / 2
 	if _, err := ge.PlanAddBuild(w, 1); err != nil {
 		t.Fatal(err)
 	}

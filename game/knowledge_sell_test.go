@@ -97,7 +97,6 @@ func TestUpgradeKnowledgeBuilding_IsRefused(t *testing.T) {
 		ge.Buildings.counts[c.from] = 4
 		ge.recalculateRates()
 		for res := range ge.Resources.GetAllStorage() {
-			ge.Resources.AddStorage(res, 1e12)
 			ge.Resources.Add(res, 1e12)
 		}
 		scholars := ge.scholarTotal()

@@ -307,8 +307,8 @@ func TestWarsAreReported(t *testing.T) {
 	// Bought off: the engine's own tribute path reports the ending.
 	ge.mu.Lock()
 	ge.Resources.unlocked["gold"], ge.Resources.unlocked["culture"] = true, true
-	ge.Resources.resources["gold"].Storage, ge.Resources.resources["gold"].Amount = 1e9, 1e9
-	ge.Resources.resources["culture"].Storage, ge.Resources.resources["culture"].Amount = 1e9, 1e9
+	ge.Resources.resources["gold"].Amount = 1e9
+	ge.Resources.resources["culture"].Amount = 1e9
 	ge.mu.Unlock()
 	if err := ge.SendTribute(a); err != nil {
 		t.Fatalf("SendTribute: %v", err)

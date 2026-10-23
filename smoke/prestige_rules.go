@@ -122,7 +122,7 @@ func treeResetProblems(after game.GameState) []problem {
 			}
 		}
 	}
-	for name, v := range map[string]float64{"all output": rs.AllOutput, "storage": rs.Storage, "housing": rs.Housing} {
+	for name, v := range map[string]float64{"all output": rs.AllOutput, "housing": rs.Housing} {
 		if v != 0 {
 			kept = append(kept, fmt.Sprintf("%s %+g", name, v))
 		}

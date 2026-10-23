@@ -222,7 +222,6 @@ func (v *view) flowLines() []flowLine {
 			out = append(out, flowLine{tag: tag, text: text, c: c})
 		}
 	}
-	add(len(fl.Full) > 0, "FULL ", names(fl.Full), mapmodel.CIdle)
 	add(len(fl.Draining) > 0, "DRAIN", names(fl.Draining), mapmodel.CDanger)
 	add(fl.IdleWorkers > 0, "IDLE ", plural(fl.IdleWorkers, "worker", "workers"), mapmodel.CIdle)
 	short := len(fl.Understaffed) + len(fl.Idle)

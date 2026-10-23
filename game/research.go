@@ -468,7 +468,6 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 		Flat:            rm.byTarget(config.EffectFlatOutput),
 		Output:          rm.byTarget(config.EffectOutput),
 		AllOutput:       rm.Bonus(config.EffectAllOutput, ""),
-		Storage:         rm.Bonus(config.EffectStorage, ""),
 		Housing:         rm.Bonus(config.EffectHousing, ""),
 		BuildCost:       rm.Bonus(config.EffectBuildCost, ""),
 		BuildTime:       rm.Bonus(config.EffectBuildTime, ""),

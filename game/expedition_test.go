@@ -16,7 +16,6 @@ func setResource(ge *GameEngine, key string, amount float64) {
 	ge.Resources.UnlockResource(key)
 	r, ok := ge.Resources.resources[key]
 	if ok {
-		r.Storage = amount + 1000
 		r.Amount = amount
 		r.Rate = 0
 	}

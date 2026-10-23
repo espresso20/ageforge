@@ -13,7 +13,7 @@ The game tracks and graphs seven metrics:
 | **Population** | Total workers alive |
 | **Food rate** | Net food per tick (positive = surplus, negative = deficit) |
 | **Research rate** | The work your scholars do per tick |
-| **Faith** | The faith you have stored |
+| **Faith** | The faith you hold |
 | **Morale** | Civilization morale as a percentage (see [Morale](morale.md)) |
 | **All production** | Your all-production bonus as the game applies it, as a percentage: every source added together, in full up to +200% and a quarter of the rest |
 | **Game speed** | Your game speed bonus from techs and events (0.15 means ticks come 15% faster) |
@@ -45,7 +45,7 @@ Population      ↑ 163 workers  min:10.0    max:198.0
 
 ## How history is collected
 
-The game records one sample every **10 ticks** (about 20 seconds) and keeps the last **300 samples**. That is about the last **100 minutes** of play, not your whole run: on a run that lasts days, the graphs show recent trends. When the store is full, each new sample replaces the oldest one. Age advances are stored as markers and drawn across all graphs. The history is saved with your game, so it survives restarts. The graphs appear once two samples exist.
+The game records one sample every **10 ticks** (about 20 seconds) and keeps the last **300 samples**. That is about the last **100 minutes** of play, not your whole run: on a run that lasts days, the graphs show recent trends. When the history is full, each new sample replaces the oldest one. Age advances are stored as markers and drawn across all graphs. The history is saved with your game, so it survives restarts. The graphs appear once two samples exist.
 
 ---
 
