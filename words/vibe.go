@@ -1,6 +1,7 @@
 package words
 
 import (
+	"bufio"
 	"embed"
 	"encoding/csv"
 	"fmt"
@@ -72,19 +73,19 @@ func VibeRows() ([]Row, []string) {
 // line. A row with no id or no text is left out; a row that is not text is
 // reported.
 func ParseRows(file string, r io.Reader) ([]Row, []string) {
-	cr := csv.NewReader(r)
+	br := bufio.NewReader(r)
+	if b, err := br.Peek(3); err == nil && string(b) == "\xEF\xBB\xBF" {
+		_, _ = br.Discard(3) // the byte-order mark Excel writes
+	}
+	cr := csv.NewReader(br)
 	cr.FieldsPerRecord = -1
 	cr.LazyQuotes = true
-	recs, err := cr.ReadAll()
-	if err != nil {
-		return nil, []string{fmt.Sprintf("%s: %v", file, err)}
-	}
-	if len(recs) == 0 {
+	head, err := cr.Read()
+	if err == io.EOF {
 		return nil, []string{file + ": the sheet is empty: it needs a header row with id and text"}
 	}
-	head := recs[0]
-	if len(head) > 0 {
-		head[0] = strings.TrimPrefix(head[0], "\xEF\xBB\xBF")
+	if err != nil {
+		return nil, []string{fmt.Sprintf("%s: %v", file, err)}
 	}
 	idCol, textCol := -1, -1
 	for i, h := range head {
@@ -100,12 +101,18 @@ func ParseRows(file string, r io.Reader) ([]Row, []string) {
 	}
 	var rows []Row
 	var problems []string
-	for n, rec := range recs[1:] {
-		line := n + 2
+	for {
+		rec, err := cr.Read()
+		if err == io.EOF {
+			break
+		}
+		line, _ := cr.FieldPos(0)
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("%s:%d: %v", file, line, err))
+			continue
+		}
 		if idCol >= len(rec) || textCol >= len(rec) {
-			if len(rec) > 1 || (len(rec) == 1 && strings.TrimSpace(rec[0]) != "") {
-				problems = append(problems, fmt.Sprintf("%s:%d: the row is too short for its header", file, line))
-			}
+			problems = append(problems, fmt.Sprintf("%s:%d: the row is too short for its header", file, line))
 			continue
 		}
 		id, text := strings.TrimSpace(rec[idCol]), rec[textCol]
