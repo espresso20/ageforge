@@ -133,7 +133,7 @@ func explore(ge *game.GameEngine, st game.GameState) {
 	if st.Military.ActiveScout == nil {
 		for _, e := range st.Military.Expeditions {
 			if e.Category == "scouting" && e.CanLaunch {
-				_ = ge.LaunchExpedition(e.Key)
+				_ = ge.LaunchExpedition(e.Number)
 				break
 			}
 		}
