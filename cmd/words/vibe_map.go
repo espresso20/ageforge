@@ -25,6 +25,15 @@ func init() {
 	)
 }
 
+// typedIn are the commands the player types that a sentence of the map names
+// as they are typed (the hint line that ends in "map flows"), by row id. The
+// keep column cannot tell one from the words round it, so the sheet lists them
+// with the keys and the verbs, and vibe-lint holds a line to them.
+var typedIn = map[string][]string{
+	"ui.mapstyle.roguelike.chrome.bottom.01":       {"map flows"},
+	"ui.mapstyle.roguelike.space_chrome.bottom.01": {"map flows"},
+}
+
 // mapReason says why a row of the map sheet is not wired, when its place says
 // so by itself.
 func mapReason(r *row) string {

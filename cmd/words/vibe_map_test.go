@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -160,5 +163,40 @@ func TestAStringWithNoRowBecomesAnEntryWhenItGetsOne(t *testing.T) {
 	}
 	if n == 0 {
 		t.Fatal("no row for the legend's word water")
+	}
+}
+
+// TestVibeLintHoldsTheCommandsASentenceNames: the hint line of the map that ends
+// in the command map flows keeps it as it is typed, however the rest is said.
+func TestVibeLintHoldsTheCommandsASentenceNames(t *testing.T) {
+	c := realCatalog(t)
+	for id, cmds := range typedIn {
+		r := c.byID[id]
+		if r == nil {
+			t.Fatalf("%s: no such row", id)
+		}
+		for _, cmd := range cmds {
+			if !strings.Contains(r.current, cmd) {
+				t.Errorf("%s: %q is not in %q", id, cmd, r.current)
+			}
+		}
+	}
+	const id = "ui.mapstyle.roguelike.chrome.bottom.01"
+	dir := t.TempDir()
+	write := func(text string) {
+		body := "id,text\n" + id + ",\"" + text + "\"\n"
+		if err := os.WriteFile(filepath.Join(dir, "1.csv"), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var out bytes.Buffer
+	write("arrows go  Shift quick  PgUp PgDn zoom  Tab next  Home middle  flows")
+	if n, err := vibeLint(c, realRoot(t), dir, &out); err != nil || n != 1 || !strings.Contains(out.String(), "is missing map flows") {
+		t.Errorf("vibe-lint on a line that lost the command: %d errors, %v:\n%s", n, err, out.String())
+	}
+	out.Reset()
+	write("arrows go  Shift quick  PgUp PgDn zoom  Tab next  Home middle  map flows")
+	if n, err := vibeLint(c, realRoot(t), dir, &out); err != nil || n != 0 {
+		t.Errorf("vibe-lint refused a line that keeps the command: %d errors, %v:\n%s", n, err, out.String())
 	}
 }
