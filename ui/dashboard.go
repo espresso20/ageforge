@@ -1257,10 +1257,7 @@ func ageGoals(state game.GameState) []ageGoal {
 	var goals []ageGoal
 	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
 	if state.CurrentAgeWonderKey != "" {
-		banked := 0.0
-		if wonder, ok := state.Ruleset().Building(state.CurrentAgeWonderKey); ok {
-			banked = wonderBankPercent(state.Buildings[state.CurrentAgeWonderKey].WonderBank, wonder.BaseCost)
-		}
+		banked := wonderBankPercent(state, state.CurrentAgeWonderKey)
 		goals = append(goals, ageGoal{fmt.Sprintf("Wonder: %s %.0f%% banked", state.CurrentAgeWonderName, banked), false})
 		// Its keystone tech, while that is still to research.
 		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {

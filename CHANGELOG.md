@@ -13,6 +13,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **A wonder's banked share counts each resource at its worth.** The percent the Next Age strip, the Wonders panel and the Map show for a wonder's bank weighs each resource by its price in the age, so a resource named in huge amounts no longer outweighs a dear one.
 - **The last of storage.** Techs and bonuses that raised storage now raise production a little instead, culture buildings drop their storage, and the screens and wiki no longer mention stores.
 - **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
 - **Storage buildings boost production.** With no caps to raise, every storage building now adds 1% to all production, and older ones keep counting.

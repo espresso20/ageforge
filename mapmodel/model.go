@@ -433,7 +433,7 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 			w.Progress = 1
 			w.Delta = since != nil && since.Buildings[d.Key] == 0
 		} else {
-			w.Progress = bankProgress(bs)
+			w.Progress = bankProgress(st, bs)
 			if !wonderStarted(st, bs, d.Name) {
 				continue
 			}
@@ -461,33 +461,14 @@ func wonderStarted(st *game.GameState, bs game.BuildingState, name string) bool 
 	return false
 }
 
-// bankProgress is how much of a wonder's cost is banked, 0..1.
-func bankProgress(bs game.BuildingState) float64 {
+// bankProgress is how much of a wonder's cost is banked, 0..1: the share the
+// Next Age strip, the Wonders panel and the Advance panel read too
+// (game.WonderBankShare).
+func bankProgress(st *game.GameState, bs game.BuildingState) float64 {
 	if bs.WonderBankFull {
 		return 1
 	}
-	var have, need float64
-	res := make([]string, 0, len(bs.NextCost))
-	for r := range bs.NextCost {
-		res = append(res, r)
-	}
-	sort.Strings(res)
-	for _, r := range res {
-		c := bs.NextCost[r]
-		if c <= 0 {
-			continue
-		}
-		b := bs.WonderBank[r]
-		if b > c {
-			b = c
-		}
-		have += b
-		need += c
-	}
-	if need <= 0 {
-		return 0
-	}
-	return clamp01(have / need)
+	return clamp01(game.WonderBankShare(st.Ruleset(), bs.AgeKey, bs.NextCost, bs.WonderBank))
 }
 
 func (m *Model) lineages() {

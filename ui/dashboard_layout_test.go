@@ -629,7 +629,7 @@ func TestNextAgeStripShowsWonderBankProgress(t *testing.T) {
 		t.Fatalf("banking food: %+v", result)
 	}
 	st = eng.GetState()
-	pct := wonderBankPercent(st.Buildings[wonder].WonderBank, def.BaseCost)
+	pct := wonderBankPercent(st, wonder)
 	if pct == 0 {
 		t.Fatal("staging: the partly banked Sacred Grove reads 0%")
 	}

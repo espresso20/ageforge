@@ -4,7 +4,24 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/espresso20/ageforge/game"
 )
+
+// paidByPrice is the share of a wonder's price that is paid, each part counted
+// at what it is worth in the age's price levels (game.WonderBankShare says
+// the same; this is worked out apart from it).
+func paidByPrice(st game.GameState, wonder string) float64 {
+	def, _ := st.Ruleset().Building(wonder)
+	bank := st.Buildings[wonder].WonderBank
+	need, paid := 0.0, 0.0
+	for res, c := range def.BaseCost {
+		level := st.Ruleset().DealPriceLevel(res, def.RequiredAge)
+		need += c / level
+		paid += min(bank[res], c) / level
+	}
+	return paid / need
+}
 
 // A wonder's bank reads as what is paid toward it. The Iron Age save in the
 // raw-materials tests had its Colosseum bank full at the old price (512K
@@ -27,15 +44,11 @@ func TestWondersListDoesNotSayFullWhenAPartIsMissing(t *testing.T) {
 	if st.Buildings["colosseum"].WonderBankFull {
 		t.Fatal("staging: the bank reads full")
 	}
-	// What is paid: each part up to its price.
-	need, paid := 0.0, 0.0
-	for res, c := range def.BaseCost {
-		need += c
-		paid += min(st.Buildings["colosseum"].WonderBank[res], c)
-	}
-	want := fmt.Sprintf("(%.0f%% banked)", float64(int(paid/need*100)))
-	if paid >= need || want == "(100% banked)" {
-		t.Fatalf("staging: %v of %v is paid", paid, need)
+	// What is paid: each part up to its price, each at its worth.
+	share := paidByPrice(st, "colosseum")
+	want := fmt.Sprintf("(%.0f%% banked)", float64(int(share*100)))
+	if share >= 1 || want == "(100% banked)" {
+		t.Fatalf("staging: %v of the price is paid", share)
 	}
 
 	text := wondersProvider(st, 100)
@@ -59,7 +72,8 @@ func TestWondersListDoesNotSayFullWhenAPartIsMissing(t *testing.T) {
 }
 
 // A part banked past its price pays toward nothing else: a bank with only a
-// surplus in one part reads the share that part is worth, not more.
+// surplus in one part reads the share that part is worth, not more. The worth
+// is the part's price in the age's price levels, not its raw amount.
 func TestWondersListCapsEachPartAtItsPrice(t *testing.T) {
 	restoreForge(t)
 	_, _, eng := stagedDashboard(t, "iron_age")
@@ -67,12 +81,12 @@ func TestWondersListCapsEachPartAtItsPrice(t *testing.T) {
 	def, _ := st0.Ruleset().Building("colosseum")
 	eng.Buildings.LoadWonderBanks(map[string]map[string]float64{"colosseum": {"stone": def.BaseCost["stone"] * 10}})
 	eng.StepTicks(1)
-	need := 0.0
-	for _, c := range def.BaseCost {
-		need += c
+	st := eng.GetState()
+	want := fmt.Sprintf("(%d%% banked)", int(paidByPrice(st, "colosseum")*100))
+	if want == "(0% banked)" {
+		t.Fatal("staging: the surplus of stone pays nothing")
 	}
-	want := fmt.Sprintf("(%d%% banked)", int(def.BaseCost["stone"]/need*100))
-	if text := untag(wondersProvider(eng.GetState(), 100)); !strings.Contains(text, want) {
+	if text := untag(wondersProvider(st, 100)); !strings.Contains(text, want) {
 		t.Errorf("a surplus of stone alone should read %s:\n%s", want, text)
 	}
 }
