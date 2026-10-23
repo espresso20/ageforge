@@ -63,5 +63,5 @@ func (ge *GameEngine) logScholarsArrived(def config.BuildingDef) {
 		return
 	}
 	w := config.Term(ge.age, config.TermScholars)
-	ge.addLog(LogRoutine, vibe.Sprintf("game.population.logScholarsArrived.01", "%s moved in with the %s.", textfmt.Count(def.Scholars, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.population.logScholarsArrived.01", "%s moved in with the %s.", textfmt.Count(def.Scholars, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }

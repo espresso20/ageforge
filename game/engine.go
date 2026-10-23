@@ -1523,7 +1523,7 @@ func (ge *GameEngine) doTick() {
 	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
-			ge.addLog("warning", vibe.Sprintf("game.engine.doTick.05", "⚠ Food has run out. One worker dies every %s until you have food again.",
+			ge.addLogAbout("warning", TagPeople, vibe.Sprintf("game.engine.doTick.05", "⚠ Food has run out. One worker dies every %s until you have food again.",
 				ge.durationLocked(starvationDeathInterval)))
 			if q := config.PickLogFlavor(config.LogFlavorStarvation, ge.quipRNG()); q != "" {
 				ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
@@ -1533,12 +1533,12 @@ func (ge *GameEngine) doTick() {
 			killed := ge.Workers.KillWorker(1)
 			if killed > 0 {
 				ge.report(Event{Kind: config.BadgeEvStarved, N: float64(killed)})
-				ge.addLog("error", vibe.Sprintf("game.engine.doTick.06", "☠ A worker starved to death. Population: %d.", ge.popLocked()))
+				ge.addLogAbout("error", TagPeople|TagBad, vibe.Sprintf("game.engine.doTick.06", "☠ A worker starved to death. Population: %d.", ge.popLocked()))
 			}
 		}
 	} else if ge.starvationTicks > 0 {
 		ge.starvationTicks = 0
-		ge.addLog("info", vibe.Line("game.engine.doTick.07", "✓ Food is back. Workers have stopped starving."))
+		ge.addLogAbout("info", TagPeople|TagGood, vibe.Line("game.engine.doTick.07", "✓ Food is back. Workers have stopped starving."))
 		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded, ge.quipRNG()); q != "" {
 			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
@@ -1648,7 +1648,14 @@ func (ge *GameEngine) processEvents() {
 	for _, ae := range expired {
 		ge.addLog("debug", fmt.Sprintf("Event expired: %s", ae.Key))
 		suffix := buildLossSuffix(ae)
-		ge.addLog("info", vibe.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, suffix))
+		var about LogTag
+		switch ae.Key {
+		case "worker_lending":
+			about = TagPeople
+		case "war_raid":
+			about = TagArmy
+		}
+		ge.addLogAbout("info", about, vibe.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, suffix))
 	}
 
 	// Morale effects from triggered events
@@ -1683,17 +1690,27 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	// (EventManager.Tick).
 	line := eventLine(def.LogMessage, out, ge.durationLocked(ge.rules.StretchTicks(ge.age, def.Duration)))
 	// Setbacks log as warnings so they don't read like windfalls.
+	var about LogTag
+	if out.workers > 0 {
+		about |= TagPeople | TagBad
+	}
+	if len(out.lost) > 0 {
+		about |= TagBad
+	}
+	if def.Raid {
+		about |= TagArmy | TagBad
+	}
 	if def.Sentiment == "bad" {
-		ge.addLog("warning", line)
+		ge.addLogAbout("warning", about, line)
 	} else {
-		ge.addLog("event", line)
+		ge.addLogAbout("event", about, line)
 	}
 	if garrison != "" {
-		ge.addLog("success", garrison)
+		ge.addLogAbout("success", TagArmy|TagGood, garrison)
 		// The garrison blunted a raid that landed: some of it fell doing so.
 		if def.Raid {
 			if fall := ge.raidFallLocked(); fall != "" {
-				ge.addLog("warning", fall)
+				ge.addLogAbout("warning", TagPeople|TagArmy|TagBad, fall)
 			}
 		}
 	}
@@ -1723,9 +1740,9 @@ func (ge *GameEngine) processExpeditions() {
 		res.Message += ge.casualtyLine(res)
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.Military.recordReturn(res, ge.tick)
-		ge.addLog("event", res.Message)
+		ge.addLogAbout("event", casualtyTags(res), res.Message)
 		if res.Rank > res.RankBefore {
-			ge.addLog("event", vibe.Sprintf("game.engine.processExpeditions.03", "Your army is now %s.", config.Term(ge.age, config.ArmyRankKey(res.Rank)).One))
+			ge.addLogAbout("event", TagArmy|TagGood, vibe.Sprintf("game.engine.processExpeditions.03", "Your army is now %s.", config.Term(ge.age, config.ArmyRankKey(res.Rank)).One))
 		}
 		if res.RoadEvents > 0 {
 			ge.addLog("info", vibe.Sprintf("game.engine.processExpeditions.04", "The mission met %d road events.", res.RoadEvents))
@@ -1812,7 +1829,11 @@ func (ge *GameEngine) processDiplomacy() {
 	ge.meetOldFriendsLocked()
 	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
 	for _, msg := range messages {
-		ge.addLog("event", msg)
+		var about LogTag
+		if slices.Contains(ge.Diplomacy.loanLines, msg) {
+			about = TagPeople | TagGood // workers lent, or home again
+		}
+		ge.addLogAbout("event", about, msg)
 	}
 	// First contact, however it came about this tick: an expedition's
 	// encounter, an old friend, or the age reaching the civilization.
@@ -2674,7 +2695,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		before := ge.Workers.TotalPop()
 		ge.Workers.AddPctAll(0.15)
 		if gained := ge.Workers.TotalPop() - before; gained > 0 {
-			ge.addLog("success", vibe.Sprintf("game.engine.applyGoodEpochEvent.01", "  → %s joined (population now %d).",
+			ge.addLogAbout("success", TagPeople|TagGood, vibe.Sprintf("game.engine.applyGoodEpochEvent.01", "  → %s joined (population now %d).",
 				textfmt.Count(gained, vibe.Line("game.engine.applyGoodEpochEvent.02", "new worker"), vibe.Line("game.engine.applyGoodEpochEvent.03", "new workers")), ge.popLocked()))
 		}
 	case "ancient_cache":
@@ -2786,7 +2807,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		before := ge.Workers.TotalPop()
 		ge.Workers.RemovePct(0.20)
 		if lost := before - ge.Workers.TotalPop(); lost > 0 {
-			ge.addLog("warning", vibe.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", textfmt.Count(lost, vibe.Line("game.engine.applyChallengingEpochEvent.04", "worker"), vibe.Line("game.engine.applyChallengingEpochEvent.05", "workers"))))
+			ge.addLogAbout("warning", TagPeople|TagBad, vibe.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", textfmt.Count(lost, vibe.Line("game.engine.applyChallengingEpochEvent.04", "worker"), vibe.Line("game.engine.applyChallengingEpochEvent.05", "workers"))))
 		}
 	case "resource_drought":
 		// Debuff epoch's primary resource
@@ -2883,7 +2904,7 @@ func (ge *GameEngine) loseShare(res string, frac float64) {
 	if loss <= 0 || !ge.Resources.Remove(res, loss) {
 		return
 	}
-	ge.addLog("warning", vibe.Sprintf("game.engine.loseShare.01", "  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
+	ge.addLogAbout("warning", TagBad, vibe.Sprintf("game.engine.loseShare.01", "  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
 }
 
 // gainResource adds to a resource and returns what it added.
@@ -3178,7 +3199,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 		ge.addLog("success", vibe.Sprintf("game.engine.DoBlackMarket.06", "The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
 		return true, reward, nil
 	}
-	ge.addLog("warning", vibe.Sprintf("game.engine.DoBlackMarket.07", "The smuggling run failed. You lost %s.", Amount(cost, "culture")))
+	ge.addLogAbout("warning", TagBad, vibe.Sprintf("game.engine.DoBlackMarket.07", "The smuggling run failed. You lost %s.", Amount(cost, "culture")))
 	return false, 0, nil
 }
 
@@ -3766,7 +3787,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	}
 	ge.Stats.RecordRecruit(available)
 	ge.holdStaffing()
-	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.RecruitMax.04", "Recruited %s (population %d/%d).",
+	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.engine.RecruitMax.04", "Recruited %s (population %d/%d).",
 		textfmt.Count(available, vibe.Line("game.engine.RecruitMax.05", "worker"), vibe.Line("game.engine.RecruitMax.06", "workers")), ge.popLocked(), popCap))
 	return available, nil
 }
@@ -3795,7 +3816,7 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	ge.Stats.RecordRecruit(count)
 	ge.holdStaffing()
 	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.popLocked(), popCap))
-	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
+	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
 		textfmt.Count(count, vibe.Line("game.engine.RecruitWorker.09", "worker"), vibe.Line("game.engine.RecruitWorker.10", "workers")), ge.popLocked(), popCap))
 	return nil
 }
@@ -3832,7 +3853,7 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
-	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
+	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
 	return nil
 }
 
@@ -3865,7 +3886,7 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	}
 	ge.holdStaffing()
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
+	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
 	return toAssign, nil
 }
 
@@ -3887,7 +3908,7 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	}
 	ge.holdStaffing()
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
+	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
 	return assigned, nil
 }
 
@@ -3913,7 +3934,7 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
-	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
+	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
 	return nil
 }
 
@@ -3938,7 +3959,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	}
 	ge.holdStaffing()
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.DismissWorkers.03", "Dismissed %s from %s. They left your population (now %d).",
+	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.DismissWorkers.03", "Dismissed %s from %s. They left your population (now %d).",
 		textfmt.Count(dismissed, vibe.Line("game.engine.DismissWorkers.04", "worker"), vibe.Line("game.engine.DismissWorkers.05", "workers")), def.Name, ge.popLocked()))
 	return nil
 }
@@ -4131,7 +4152,7 @@ func (ge *GameEngine) CancelResearch() error {
 		return vibe.Errorf("game.engine.CancelResearch.01", "No research in progress.")
 	}
 	ge.recalculateRates()
-	ge.addLog("warning", vibe.Sprintf("game.engine.CancelResearch.02", "Research on %s canceled. The work done on it is lost.", ge.rules.Name(rules.KindTech, tech)))
+	ge.addLogAbout("warning", TagBad, vibe.Sprintf("game.engine.CancelResearch.02", "Research on %s canceled. The work done on it is lost.", ge.rules.Name(rules.KindTech, tech)))
 	return nil
 }
 
@@ -4272,7 +4293,7 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	if ticks := ge.researchTicksLeft(); ticks > 0 {
 		ge.addLog("success", vibe.Sprintf("game.engine.AcceptAncientMemory.02", "Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ticks)))
 	} else {
-		ge.addLog("success", vibe.Sprintf("game.engine.AcceptAncientMemory.03", "Recovered the memory of %s. It needs scholars researching to go on.", def.Name))
+		ge.addLogAbout("success", TagPeople, vibe.Sprintf("game.engine.AcceptAncientMemory.03", "Recovered the memory of %s. It needs scholars researching to go on.", def.Name))
 	}
 	ge.note(config.BadgeEvMemoryAccepted, techKey)
 	return nil
@@ -4596,10 +4617,10 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 
 	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (party of %d soldiers)", offer.Title, int(soldiers)))
 	if offer.Military() {
-		ge.addLog(LogRoutine, vibe.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
+		ge.addLogAbout(LogRoutine, TagPeople|TagArmy, vibe.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
 		if soldiers > 0 {
-			ge.addLog(LogRoutine, vibe.Sprintf("game.engine.launchExpeditionLocked.03", "Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
+			ge.addLogAbout(LogRoutine, TagPeople|TagArmy, vibe.Sprintf("game.engine.launchExpeditionLocked.03", "Expedition sent: %s (%d soldiers).", offer.Title, int(soldiers)))
 		} else {
 			ge.addLog(LogRoutine, vibe.Sprintf("game.engine.launchExpeditionLocked.04", "Expedition sent: %s.", offer.Title))
 		}
@@ -5267,10 +5288,21 @@ func buildDoneLog(def config.BuildingDef) string {
 // addLog appends a log entry (must be called with lock held). logType is the
 // entry's category; see LogRoutine for which categories reach which log.
 func (ge *GameEngine) addLog(logType, message string) {
+	ge.addLogAbout(logType, 0, message)
+}
+
+// addLogAbout is addLog for a line that is about something a panel picks
+// lines by (see LogTag): tags say what, whatever words the line is written
+// in. Must be called with the lock held.
+func (ge *GameEngine) addLogAbout(logType string, tags LogTag, message string) {
+	if !vibe.On() {
+		tags |= TagPlain
+	}
 	entry := LogEntry{
 		Tick:    ge.tick,
 		Message: message,
 		Type:    logType,
+		Tags:    tags,
 	}
 	ge.log = append(ge.log, entry)
 	if len(ge.log) > MaxLogSize {
@@ -5422,7 +5454,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.addLog("info", vibe.Line("game.engine.applyOfflineProgress.03", "While you were away, your plan ")+starts.describe(ge.rules)+".")
 	}
 	if staffed.any() {
-		ge.addLog("info", vibe.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
+		ge.addLogAbout("info", TagPeople, vibe.Line("game.engine.applyOfflineProgress.04", "While you were away, your roster ")+staffed.describe(ge.popLocked(), ge.popCapLocked())+".")
 	}
 }
 
@@ -5558,9 +5590,9 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 	name := ge.rules.Name(rules.KindCiv, factionKey)
 	ge.noteWars(false)
 	if started {
-		ge.addLog("warning", vibe.Sprintf("game.engine.RaidCivRoute.01", "You raided a %s trade route. They declared war.", name))
+		ge.addLogAbout("warning", TagArmy, vibe.Sprintf("game.engine.RaidCivRoute.01", "You raided a %s trade route. They declared war.", name))
 	} else {
-		ge.addLog("warning", vibe.Sprintf("game.engine.RaidCivRoute.02", "You raided a %s trade route. Opinion %s.",
+		ge.addLogAbout("warning", TagArmy, vibe.Sprintf("game.engine.RaidCivRoute.02", "You raided a %s trade route. Opinion %s.",
 			name, textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	}
 	return nil

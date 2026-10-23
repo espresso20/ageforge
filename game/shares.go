@@ -695,12 +695,12 @@ func (ge *GameEngine) keepSharesLive() {
 		return
 	}
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, vibe.Line("game.shares.keepSharesLive.01", "Roster: ")+c.describe(ge.popLocked(), ge.popCapLocked())+".")
+	ge.addLogAbout(LogRoutine, TagPeople, vibe.Line("game.shares.keepSharesLive.01", "Roster: ")+c.describe(ge.popLocked(), ge.popCapLocked())+".")
 	if before == 0 && c.hired > 0 {
 		// The first recruits of a run (or after everyone died): say once,
 		// as a note rather than a routine line, that this happens on its
 		// own.
-		ge.addLog("info", vibe.Line("game.shares.keepSharesLive.02", "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand."))
+		ge.addLogAbout("info", TagPeople, vibe.Line("game.shares.keepSharesLive.02", "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand."))
 	}
 }
 

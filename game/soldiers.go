@@ -221,7 +221,7 @@ func (ge *GameEngine) trainFallenPosts() int {
 // at a military building. Caller holds the lock.
 func (ge *GameEngine) logSoldiersTrained(def config.BuildingDef, n int) {
 	w := config.Term(ge.age, config.TermSoldiers)
-	ge.addLog(LogRoutine, vibe.Sprintf("game.soldiers.logSoldiersTrained.01", "%s finished training at the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+	ge.addLogAbout(LogRoutine, TagPeople|TagArmy, vibe.Sprintf("game.soldiers.logSoldiersTrained.01", "%s finished training at the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }
 
 // postAllSoldiers puts a soldier at every post, with no food test: a town set
@@ -289,7 +289,7 @@ func (ge *GameEngine) fillSoldierPosts() int {
 				ge.soldierWaitLogged = map[string]bool{}
 			}
 			ge.soldierWaitLogged[key] = true
-			ge.addLog(LogRoutine, vibe.Sprintf("game.soldiers.fillSoldierPosts.01", "The %s has posts waiting on food: its soldiers come as the food allows.", def.Name))
+			ge.addLogAbout(LogRoutine, TagPeople|TagArmy, vibe.Sprintf("game.soldiers.fillSoldierPosts.01", "The %s has posts waiting on food: its soldiers come as the food allows.", def.Name))
 		}
 	}
 	return total + ge.trainFallenPosts()
@@ -345,7 +345,7 @@ func (ge *GameEngine) logSoldiersArrived(def config.BuildingDef, n int) {
 		return
 	}
 	w := config.Term(ge.age, config.TermSoldiers)
-	ge.addLog(LogRoutine, vibe.Sprintf("game.soldiers.logSoldiersArrived.01", "%s moved in with the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.soldiers.logSoldiersArrived.01", "%s moved in with the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }
 
 // soldiersPostedSave is the posted soldiers for a save: nil when there are
@@ -418,6 +418,18 @@ func (ge *GameEngine) casualtyLine(res ExpeditionResult) string {
 		return vibe.Sprintf("game.soldiers.casualtyLine.01", " %d of %d soldiers fell.", fell, res.Party)
 	}
 	return vibe.Sprintf("game.soldiers.casualtyLine.02", " All %d soldiers came home.", res.Party)
+}
+
+// casualtyTags is what the casualty line is about: the party, and whether it
+// lost soldiers or came home whole. None for a mission with no party.
+func casualtyTags(res ExpeditionResult) LogTag {
+	switch {
+	case res.Party <= 0:
+		return 0
+	case res.Party-res.Marching+res.SoldiersFell > 0:
+		return TagPeople | TagArmy | TagBad
+	}
+	return TagPeople | TagArmy | TagGood
 }
 
 // partySizeLocked is the party a mission of the offer takes: its tier's share

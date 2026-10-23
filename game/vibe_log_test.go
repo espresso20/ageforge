@@ -27,13 +27,23 @@ import (
 // left it.
 func playForText(t *testing.T, set *rules.Set) ([]string, *GameEngine) {
 	t.Helper()
+	texts, _, ge := playRun(t, set)
+	return texts, ge
+}
+
+// playRun is playForText that also returns the log entries it read, in the
+// order the texts have them (one entry for each "log" text).
+func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
+	t.Helper()
 	var texts []string
+	var entries []LogEntry
 	rec := func(format string, args ...any) { texts = append(texts, fmt.Sprintf(format, args...)) }
 	ge := NewGameEngineWith(set)
 	ge.SeedRNG(7)
 	grab := func(label string) {
 		for _, l := range ge.GetLogs() {
 			rec("%s|log|%s|%s", label, l.Type, l.Message)
+			entries = append(entries, l)
 		}
 	}
 	refuse := func(label string) {
@@ -181,7 +191,7 @@ func playForText(t *testing.T, set *rules.Set) ([]string, *GameEngine) {
 	grab("prestige")
 	ge.StepTicks(300)
 	grab("after-prestige")
-	return texts, ge
+	return texts, entries, ge
 }
 
 // playWith plays the run with VibeMode set to on and, when rewrite is not
@@ -318,6 +328,9 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 	if strings.Contains(string(js), markOpen) {
 		t.Error("the state holds a text of the script")
 	}
+	if strings.Contains(string(js), `"Tags"`) {
+		t.Error("the state holds the tags of a log line")
+	}
 	vibe.Set(true)
 	defer vibe.Set(false)
 	defer vibe.UseRewriterForTest(mark)()
@@ -330,6 +343,9 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 	}
 	if strings.Contains(string(raw), markOpen) {
 		t.Error("the save holds a text of the script")
+	}
+	if strings.Contains(string(raw), `"Tags"`) || strings.Contains(string(raw), `"log"`) {
+		t.Error("the save holds the log or the tags of its lines")
 	}
 }
 
@@ -403,5 +419,129 @@ func TestALogLineFollowsTheSwitch(t *testing.T) {
 	vibe.Set(false)
 	if gathered() != plainLine || refused() != plainRefusal {
 		t.Error("with VibeMode off again, the text is not plain English")
+	}
+}
+
+// TestAScriptDoesNotMoveALineOutOfAPanel: what a line is about is the tags it
+// was written with, so a script that rewrites every text of the code leaves
+// every line in the panel it was in. Played plain and played under a script
+// that marks every text, a run writes the same lines with the same tags, a
+// panel that asks a line what it is about picks the same lines in both, and
+// a line under the script is read by its tags and never by its words.
+func TestAScriptDoesNotMoveALineOutOfAPanel(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeOff(t)
+	run := func(on bool, rewrite func(id, plain string) string) []LogEntry {
+		if rewrite != nil {
+			defer vibe.UseRewriterForTest(rewrite)()
+		}
+		vibe.Set(on)
+		defer vibe.Set(false)
+		_, entries, _ := playRun(t, rules.CoreFor(false))
+		return entries
+	}
+	plain := run(false, nil)
+	marked := run(true, mark)
+	if len(marked) != len(plain) {
+		t.Fatalf("the run under the script wrote %d lines, in plain English %d", len(marked), len(plain))
+	}
+
+	subjects := []struct {
+		name string
+		tag  LogTag
+		min  int
+	}{{"people", TagPeople, 100}, {"army", TagArmy, 5}, {"bad news", TagBad, 100}, {"good news", TagGood, 20}}
+	picked := map[LogTag]int{}
+	for i := range plain {
+		if plain[i].Tags&TagPlain == 0 {
+			t.Fatalf("line %d was written in plain English and is not marked so: %+v", i, plain[i])
+		}
+		if marked[i].Tags&TagPlain != 0 {
+			t.Fatalf("line %d was written under a script and is marked plain: %+v", i, marked[i])
+		}
+		if got, want := marked[i].Tags, plain[i].Tags&^TagPlain; got != want {
+			t.Fatalf("line %d has tags %b under the script and %b in plain English: %q", i, got, want, plain[i].Message)
+		}
+		for _, sub := range subjects {
+			// The panel under the script picks what the plain run's tags pick.
+			want := plain[i].Tags&sub.tag != 0
+			if got := marked[i].About(sub.tag); got != want {
+				t.Fatalf("line %d: the %s panel picks it %v under the script and %v in plain English: %q", i, sub.name, got, want, plain[i].Message)
+			}
+			if want && plain[i].Type != "debug" {
+				picked[sub.tag]++
+			}
+		}
+	}
+	for _, sub := range subjects {
+		t.Logf("%d lines of the run are about %s", picked[sub.tag], sub.name)
+		if picked[sub.tag] < sub.min {
+			t.Errorf("only %d lines of the run are about %s, want at least %d", picked[sub.tag], sub.name, sub.min)
+		}
+	}
+}
+
+// TestALineIsReadByItsWordsOnlyInPlainEnglish: a line written in plain English
+// is picked by its words as it always was, with no tag needed; a line written
+// under a script is picked by its tags, whatever its words say.
+func TestALineIsReadByItsWordsOnlyInPlainEnglish(t *testing.T) {
+	plain := LogEntry{Message: "Recruited 3 workers (population 4/9).", Tags: TagPlain}
+	if !plain.About(TagPeople) || !plain.About(TagGood) || plain.About(TagArmy) || plain.About(TagBad) {
+		t.Errorf("a plain line is read wrong: people %v good %v army %v bad %v", plain.About(TagPeople), plain.About(TagGood), plain.About(TagArmy), plain.About(TagBad))
+	}
+	quiet := LogEntry{Message: "Built a Hut (you have 4).", Tags: TagPlain | TagPeople}
+	if quiet.About(TagPeople) {
+		t.Error("a plain line is picked by a tag its words do not carry: plain lines are read by their words")
+	}
+	// The same line in a script's words, with its tags.
+	slang := LogEntry{Message: "Squad of 3 pulled up, no cap.", Tags: TagPeople | TagGood}
+	if !slang.About(TagPeople) || !slang.About(TagGood) || slang.About(TagArmy) || slang.About(TagBad) {
+		t.Error("a line under a script is not read by its tags")
+	}
+	// Words that read like a loss do not make a line under a script one.
+	trap := LogEntry{Message: "The soldiers lost the plot.", Tags: TagPeople}
+	if trap.About(TagArmy) || trap.About(TagBad) {
+		t.Error("a line under a script is read by its words")
+	}
+}
+
+// TestTheLinesOfTheCommandsAreTagged: a command that recruits, assigns,
+// unassigns or dismisses writes a line about the people, in whatever script;
+// a loss is bad news, and an arrival good.
+func TestTheLinesOfTheCommandsAreTagged(t *testing.T) {
+	vibeOff(t)
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	defer vibe.Set(false)
+	for _, on := range []bool{false, true} {
+		vibe.Set(on)
+		ge := newSeededEngine(1)
+		ge.Workers.UnlockType("worker")
+		ge.Buildings.counts["gathering_camp"] = 2
+		ge.Buildings.counts["hut"] = 2
+		ge.recalculateRates()
+		last := func() LogEntry { logs := ge.GetLogs(); return logs[len(logs)-1] }
+		if err := ge.RecruitWorker("worker", 1); err != nil {
+			t.Fatalf("VibeMode %v: a recruit was refused: %v", on, err)
+		}
+		e := last()
+		if e.Tags&(TagPeople|TagGood) != TagPeople|TagGood {
+			t.Errorf("VibeMode %v: a recruit is written %+v", on, e)
+		}
+		if marked := e.Tags&TagPlain != 0; marked == on {
+			t.Errorf("VibeMode %v: the line is marked plain %v", on, marked)
+		}
+		if err := ge.AssignWorker("gathering_camp", 1); err != nil {
+			t.Fatalf("VibeMode %v: an assign was refused: %v", on, err)
+		}
+		if e := last(); e.Tags&TagPeople == 0 {
+			t.Errorf("VibeMode %v: an assign is written %+v", on, e)
+		}
+		if err := ge.UnassignWorker("gathering_camp", 1); err != nil {
+			t.Fatalf("VibeMode %v: an unassign was refused: %v", on, err)
+		}
+		if e := last(); e.Tags&TagPeople == 0 {
+			t.Errorf("VibeMode %v: an unassign is written %+v", on, e)
+		}
 	}
 }

@@ -100,6 +100,9 @@ type DiplomacyManager struct {
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
+	// loanLines are the log lines of the last Tick that are about workers
+	// lent or returned, so the engine can say what they are about. Not saved.
+	loanLines []string
 
 	// boonLoans are the crews faction boons lent (faction_boon.go). They live
 	// here so a new run, which builds a new DiplomacyManager along with a new
@@ -743,7 +746,8 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 	}
 
 	// Worker-lending lifecycle: return due batches, then maybe lend new ones.
-	messages = append(messages, dm.processLending(rng, tick, age)...)
+	dm.loanLines = dm.processLending(rng, tick, age)
+	messages = append(messages, dm.loanLines...)
 
 	// War: raids + auto-end (wait-them-out) timer.
 	messages = append(messages, dm.processWar(tick, age)...)

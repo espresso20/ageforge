@@ -310,9 +310,9 @@ func (ge *GameEngine) applyWarRaids() {
 			}
 			ge.Resources.Remove(raid.Resource, raid.Amount)
 		}
-		ge.addLog("event", ge.raidLogLine(raid))
+		ge.addLogAbout("event", TagArmy|TagBad, ge.raidLogLine(raid))
 		if fall != "" {
-			ge.addLog("warning", fall)
+			ge.addLogAbout("warning", TagPeople|TagArmy|TagBad, fall)
 		}
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "war_raid",

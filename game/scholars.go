@@ -392,7 +392,7 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	}
 	key := ge.Research.currentTech
 	if key == "" {
-		ge.addLog("info", vibe.Line("game.scholars.grantResearch.01", "Your scholars had nothing to study, so the insight was lost."))
+		ge.addLogAbout("info", TagPeople|TagBad, vibe.Line("game.scholars.grantResearch.01", "Your scholars had nothing to study, so the insight was lost."))
 		return ""
 	}
 	def := ge.Research.defs[key]
@@ -401,7 +401,7 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	ge.Milestones.researchDone = ge.Stats.ResearchWork
 	landed, completed := ge.Research.Grant(work)
 	if landed < work {
-		ge.addLog("info", vibe.Sprintf("game.scholars.grantResearch.02", "Your scholars gained some ground on %s.", def.Name))
+		ge.addLogAbout("info", TagPeople, vibe.Sprintf("game.scholars.grantResearch.02", "Your scholars gained some ground on %s.", def.Name))
 	}
 	if completed != "" {
 		ge.finishResearch(completed)
@@ -554,9 +554,9 @@ func (ge *GameEngine) turnKnowledgeIntoWork(save *GameSave) {
 	stock := save.Resources["knowledge"]
 	if stock > 0 {
 		if ge.Research.currentTech == "" {
-			ge.addLog("info", vibe.Line("game.scholars.turnKnowledgeIntoWork.01", "Your scholars had nothing to study, so the insight was lost."))
+			ge.addLogAbout("info", TagPeople|TagBad, vibe.Line("game.scholars.turnKnowledgeIntoWork.01", "Your scholars had nothing to study, so the insight was lost."))
 		} else if landed, _ := ge.Research.Grant(stock); landed < stock {
-			ge.addLog("info", vibe.Sprintf("game.scholars.turnKnowledgeIntoWork.02", "Your scholars gained some ground on %s.", ge.Research.defs[ge.Research.currentTech].Name))
+			ge.addLogAbout("info", TagPeople, vibe.Sprintf("game.scholars.turnKnowledgeIntoWork.02", "Your scholars gained some ground on %s.", ge.Research.defs[ge.Research.currentTech].Name))
 		}
 	}
 	for _, key := range ge.loadedCompletions {
