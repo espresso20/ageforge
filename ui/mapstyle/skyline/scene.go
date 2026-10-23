@@ -1493,11 +1493,15 @@ func (s *scene) cursor() {
 		return
 	}
 	bar := s.sy(s.groundY + 2)
-	for x := x0 + 1; x < x1; x++ {
-		mark(x, s.Y(bar), '─')
+	if x1 > x0 {
+		for x := x0 + 1; x < x1; x++ {
+			mark(x, s.Y(bar), '─')
+		}
+		mark(x0, s.Y(bar), '└')
+		mark(x1, s.Y(bar), '┘')
+	} else { // a lot no wider than a screen column (the far level)
+		mark(x0, s.Y(bar), '┴')
 	}
-	mark(x0, s.Y(bar), '└')
-	mark(x1, s.Y(bar), '┘')
 	mark((x0+x1)/2, s.Y(bar-1), '▲')
 	lbl := " " + name + " "
 	n := textLen(lbl)

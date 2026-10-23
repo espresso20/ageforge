@@ -456,6 +456,9 @@ func (v *view) panFor(z zoom, S, def int) int {
 // revealTarget scrolls so the cursor's target is on screen.
 func (v *view) revealTarget(m *mapmodel.Model, t tgt, W int) {
 	v.reveal = false
+	if v.fitting() {
+		return // the whole town is in view
+	}
 	x := t.x - v.cam
 	if t.kind != tLot && t.kind != tTether { // the tether stands in the world, like a building
 		x = t.x - v.cam // ridge targets are placed in screen terms already

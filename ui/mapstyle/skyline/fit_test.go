@@ -158,6 +158,9 @@ func TestFarCursor(t *testing.T) {
 		press(v, m, tcell.KeyTab, 0, 0)
 	}
 	s := v.compose(f, 160, 45)
+	if !v.follow {
+		t.Errorf("Tab at the far level stopped the view following the present")
+	}
 	if s.sel < 0 {
 		t.Fatalf("the cursor is on no lot")
 	}
