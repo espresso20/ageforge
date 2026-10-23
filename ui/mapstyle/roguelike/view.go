@@ -152,7 +152,7 @@ func (v *view) palette(epoch, age int) *pal {
 	bg := p.Bg
 	if dials[epochIdx(epoch)].night { // the land recedes so lit structures glow
 		for _, c := range []mapmodel.Class{mapmodel.CGround, mapmodel.CFlora, mapmodel.CRock, mapmodel.CHill, mapmodel.CWater} {
-			p.Fg[c] = theme.Legible(theme.Mix(p.Fg[c], bg, 0.35), bg, 1.5)
+			p.Fg[c] = theme.Legible(theme.Mix(p.Fg[c], bg, 0.35), bg, mapstyle.TerrainFloor)
 		}
 	}
 	if city {

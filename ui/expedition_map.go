@@ -57,6 +57,24 @@ type expTerrain struct {
 	r     []rune
 	k     []xk
 	water []bool
+	// halo marks the cells next to a pin or the town: their terrain is not
+	// drawn, so nothing crowds them. Nil until haloAround sets it.
+	halo []bool
+}
+
+// haloAround sets the halo: every cell within one of the given cells.
+func (t *expTerrain) haloAround(cells []pt) {
+	t.halo = make([]bool, t.w*t.h)
+	for _, c := range cells {
+		for dy := -1; dy <= 1; dy++ {
+			for dx := -1; dx <= 1; dx++ {
+				x, y := c.x+dx, c.y+dy
+				if x >= 0 && y >= 0 && x < t.w && y < t.h {
+					t.halo[y*t.w+x] = true
+				}
+			}
+		}
+	}
 }
 
 // buildTerrain draws the land: a coast on one side (which side comes from
@@ -71,7 +89,7 @@ func buildTerrain(seed int64, age string, w, h int) *expTerrain {
 		coast := int(float64(w)*0.80) + int(math.Round(math.Sin(float64(y)*.7)*2+expNoise(s, 0, y)*2))
 		for x := 0; x < w; x++ {
 			i := y*w + x
-			t.r[i], t.k[i] = ' ', xFaint
+			t.r[i], t.k[i] = ' ', xDust
 			edge := x
 			if left {
 				edge = w - 1 - x
@@ -94,7 +112,7 @@ func buildTerrain(seed int64, age string, w, h int) *expTerrain {
 					t.r[i] = '"'
 				}
 			case r > .9:
-				t.r[i] = '.'
+				t.r[i], t.k[i] = '.', xDust
 			}
 		}
 	}

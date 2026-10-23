@@ -11,6 +11,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - **No more storage caps.** Resources pile up without limit and nothing you make is wasted; rising prices are the only brake. A building is never refused for costing more than a store holds.
+- **Offers stand out on the map.** Each offer is a coloured marker with its place name, and the terrain around it steps back.
 - **Help starts with how to get around.** The Help page opens with the keys to scroll and close panels, how commands work, and the prompt and dashboard keys, before the command lists.
 - **Winding routes.** Routes on the expedition map find their way around water and hills instead of running in a straight line.
 - **Every expedition takes a party.** Soldiers march with every mission and some do not come back; raids cost soldiers too. Your army, not a rule, decides how many missions are out at once, and empty posts train new soldiers from the reserve.
@@ -36,6 +37,7 @@ All notable changes to AgeForge are documented here.
 - **What a tech does stands out.** The effect of a tech is shown in its own colour in the research screens.
 
 ### Fixed
+- **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
 
 ### Added
