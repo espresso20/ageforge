@@ -91,6 +91,9 @@ func (p *expeditionPanel) setSize(w, h int) { p.w, p.h = w, h }
 // scene is the map as it stands, on the panel's size.
 func (p *expeditionPanel) scene() *expScene {
 	l := layoutFor(p.w, p.h)
+	if p.view.report {
+		l = reportLayoutFor(p.w, p.h)
+	}
 	if l.small {
 		return buildScene(p.state, 1, 1)
 	}

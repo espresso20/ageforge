@@ -159,11 +159,20 @@ func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 }
 
 func scaleActiveRewards(a *ActiveExpedition, factor float64) {
+	a.HaulScale = a.haulScale() * factor
 	for _, m := range []map[string]float64{a.BaseRewards, a.SuccessRewards, a.FailureRewards} {
 		for k := range m {
 			m[k] *= factor
 		}
 	}
+}
+
+// haulScale is what the road has done to the loot: 1 until a road event scales it.
+func (a *ActiveExpedition) haulScale() float64 {
+	if a.HaulScale == 0 {
+		return 1
+	}
+	return a.HaulScale
 }
 
 func expRoadDuration(ticks int) string {
