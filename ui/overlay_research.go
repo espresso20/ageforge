@@ -124,6 +124,8 @@ func researchBonusLines(state game.GameState) string {
 			line(textfmt.SignedPercent(term-1), textfmt.Capitalize(def.Name))
 		case !def.Multiplies && term != 0 && def.Unit == config.UnitPoints:
 			line(textfmt.Signed(term*100), textfmt.Capitalize(def.Name)+", in points")
+		case !def.Multiplies && term != 0 && def.Unit == config.UnitPercent:
+			line(textfmt.SignedPercent(term), textfmt.Capitalize(def.Name))
 		case !def.Multiplies && term != 0:
 			line(textfmt.Signed(term), textfmt.Capitalize(def.Name))
 		}
