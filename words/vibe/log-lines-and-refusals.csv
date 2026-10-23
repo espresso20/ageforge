@@ -4,7 +4,7 @@ config.gate_pillars.PillarName.01,Big Brain
 config.gate_pillars.PillarName.02,The Squad
 config.gate_pillars.PillarName.03,The Grind
 config.gate_pillars.PillarName.04,The Flex
-game.engine.NewGameEngineWith.01,"Welcome to AgeForge. Your whole starter pack is two bare hands, humble beginnings are so real."
+game.engine.NewGameEngineWith.01,"Welcome to AgeForge. Your whole starter pack is two bare hands, so lock in, humble beginnings are so real."
 pkg.textfmt.textfmt.List.01, n' 
 game.account.SwitchAccount.01,"The ID %s? Never heard of her, zero accounts answer to that."
 game.account.ExportAccountByID.01,ID %s is giving ghost town: no account lives there.
