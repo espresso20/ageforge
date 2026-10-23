@@ -4603,7 +4603,7 @@ func (ge *GameEngine) offerSuccessLocked(offer MissionOffer) float64 {
 			}
 		}
 	}
-	success += config.ArmyOddsBonus(ge.Military.Rank())
+	success = float64(success + config.ArmyOddsBonus(ge.Military.Rank()))
 	return math.Max(config.MissionSuccessMin, math.Min(config.MissionSuccessMax, success))
 }
 

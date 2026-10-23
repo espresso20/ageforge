@@ -243,12 +243,11 @@ A tech's bonus is never permanent. Prestige, Succumb and a new game wipe every t
 
 ## Commands a Tech Opens
 
-Some commands wait for a tech. Until it is researched, the command is refused with the name of the tech that opens it (`Campaigns need Military Tactics first. Research it to send one.`). The tech's effect list says what it opens, and the log says it again when the research finishes (`Military Tactics opens campaigns.`).
+Some commands wait for a tech. Until it is researched, the command is refused with the name of the tech that opens it (`Festivals need Drama first. Research it to hold one.`). The tech's effect list says what it opens, and the log says it again when the research finishes (`Drama opens festivals.`). Missions are not on the list: the board opens its tiers by era, with no tech.
 
 | Command | Opened by | Age |
 |---|---|---|
 | Trade routes (`trade route start <route>`) | The Wheel | Bronze |
-| Military grand offers (`expedition <name>`) | Military Tactics | Bronze |
 | Diplomacy: gifts, alliances, rivalries, embargoes and deals (`diplomacy ...`, `plan deal`) | Envoys | Classical |
 | Festivals (`festival confirm yes`) | Drama | Classical |
 | The black market (`blackmarket <resource>`) | Mercantilism | Colonial |
@@ -257,7 +256,7 @@ Some commands wait for a tech. Until it is researched, the command is refused wi
 
 The panels say which tech a command waits for (the Trade, Expeditions, Army and Factions panels, and `festival`). Every lock has its tech now: Warp Commerce's, Interstellar Trade, was the last to arrive.
 
-**Saves from before a lock.** A game saved before a command waited for its tech keeps every command open in the age it was in, and keeps for the rest of that run any command it was already using: a campaign under way, a route running, an ally, a festival held. In that age its buildings and its wonder wait for no tech either. One line in the log says so when the save is first loaded. The locks start with the next age for what that run never used, and with the next run for the rest. This covers the four commands and the seven buildings that found their tech with the Stone and Iron Eras' new techs, Stonehenge's keystone, the nine buildings that found theirs with the Steel and Electric Eras' techs, and the Warp Commerce route and the nineteen buildings that found theirs with the Digital, Neon and Cosmic Eras' (a game saved in one of those ages keeps its age's buildings open until it advances, and a Warp Commerce route it was running stays open for the run).
+**Saves from before a lock.** A game saved before a command waited for its tech keeps every command open in the age it was in, and keeps for the rest of that run any command it was already using: a route running, an ally, a festival held. In that age its buildings and its wonder wait for no tech either. One line in the log says so when the save is first loaded. The locks start with the next age for what that run never used, and with the next run for the rest. This covers the four commands and the seven buildings that found their tech with the Stone and Iron Eras' new techs, Stonehenge's keystone, the nine buildings that found theirs with the Steel and Electric Eras' techs, and the Warp Commerce route and the nineteen buildings that found theirs with the Digital, Neon and Cosmic Eras' (a game saved in one of those ages keeps its age's buildings open until it advances, and a Warp Commerce route it was running stays open for the run).
 
 ---
 

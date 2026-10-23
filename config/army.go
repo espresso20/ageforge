@@ -69,14 +69,14 @@ func ArmyRankKey(rank int) string {
 }
 
 // ArmyOddsBonus is the odds a rank adds to every mission: two points a rank.
-func ArmyOddsBonus(rank int) float64 { return ArmyOddsPerRank * float64(rank) }
+func ArmyOddsBonus(rank int) float64 { return float64(ArmyOddsPerRank * float64(rank)) }
 
 // ArmyHaulFactor is the factor a rank puts on every haul.
-func ArmyHaulFactor(rank int) float64 { return 1 + ArmyHaulPerRank*float64(rank) }
+func ArmyHaulFactor(rank int) float64 { return 1 + float64(ArmyHaulPerRank*float64(rank)) }
 
 // ArmyRareFactor is the factor a rank puts on the chance of a Legendary
 // offer.
-func ArmyRareFactor(rank int) float64 { return 1 + ArmyRarePerRank*float64(rank) }
+func ArmyRareFactor(rank int) float64 { return 1 + float64(ArmyRarePerRank*float64(rank)) }
 
 // MissionTiersOpen is how many tiers of the board are open (1 short, 2 plus
 // long, 3 plus grand) in the era of that order for an army of that rank: the

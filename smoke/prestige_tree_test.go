@@ -18,6 +18,8 @@ func TestTreeResetCheck(t *testing.T) {
 		if err := ge.EnterAgeForTest(a); err != nil {
 			t.Fatal(err)
 		}
+		// The test is about the tree, not about luck: no doom is fated.
+		_ = ge.ForceQuietFateForTest(ge.Rules().EraOf(a))
 		if a == game.PrestigeRunAge {
 			break
 		}

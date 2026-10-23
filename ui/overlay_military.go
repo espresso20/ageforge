@@ -55,7 +55,7 @@ func militaryProvider(state game.GameState, _ int) string {
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
 		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
 		sb.WriteString(theme.Paint(theme.RoleDim, " Campaigns are grand missions and cost soldiers,") + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, " which come with military buildings. They open in the Steel Era, or an era early for a Veteran army.") + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, " which come with military buildings. They open as your civilization grows.") + "\n")
 	} else {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}
