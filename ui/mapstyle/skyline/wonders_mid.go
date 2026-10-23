@@ -63,10 +63,11 @@ func basilica(h int) *sprite {
 	s.block(cx-1, cx+1, base-1, base, sWallDark)
 	s.put(cx, base-1, '▄', sGlow, sWallDark)
 	if nav >= 6 {
-		s.put(cx-1, ty+2, '▄', sGlow, sNone)
-		s.put(cx, ty+2, '█', sGlow, sNone)
-		s.put(cx+1, ty+2, '▄', sGlow, sNone)
-		s.put(cx, ty+3, '▀', sGlow, sNone)
+		ellipse(float64(cx)+0.5, float64(2*ty+5), 2.4, 2.4, func(x, py int, dx, dy float64) {
+			if dx*dx+dy*dy > 0.35 || hash(x, py, 2)%5 != 0 {
+				s.pset(x, py, sGlow)
+			}
+		})
 	}
 	// the drum with its pilasters and windows
 	dx0, dx1 := cx-u(6), cx+u(6)

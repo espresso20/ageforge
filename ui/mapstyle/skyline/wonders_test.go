@@ -1,14 +1,15 @@
 package skyline
 
 import (
-	"strconv"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/rivo/uniseg"
 
-	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
@@ -552,7 +553,7 @@ func TestWonderPlaque(t *testing.T) {
 	}
 	m := wonderModel(fixture.Options{Age: "classical_age", Seed: 3, Tick: tickAt(0.5)}, true, 0)
 	lot := wonderLot(t, m)
-	near, far, other := -1, -1, -1
+	near, far := -1, -1
 	for i := range m.Skyline.Lots {
 		l := &m.Skyline.Lots[i]
 		d := abs(l.X - lot.X)
@@ -563,7 +564,6 @@ func TestWonderPlaque(t *testing.T) {
 		case d > 60 && far < 0:
 			far = i
 		}
-		_ = other
 	}
 	if near < 0 || far < 0 {
 		t.Fatalf("no lots near (%d) and far (%d) from the wonder", near, far)
@@ -686,6 +686,55 @@ func TestSkyWonderArt(t *testing.T) {
 	}
 }
 
-// keep imports used when a helper is trimmed
-var _ = game.GameState{}
-var _ = strconv.Itoa
+// TestWonderCaptures writes review captures of every age's wonder when
+// SKYLINE_CAPTURE names a directory: built at mid and close zoom, by day and
+// by night (a few frames each, so the lamps turn), and the ground ages' wonder
+// under way at a fifth, half and all of its cost.
+func TestWonderCaptures(t *testing.T) {
+	dir := os.Getenv("SKYLINE_CAPTURE")
+	if dir == "" {
+		t.Skip("set SKYLINE_CAPTURE to a directory to write captures")
+	}
+	c := catalog()
+	write := func(name string, m *mapmodel.Model, x int, z zoom, w, h int) {
+		v := newView()
+		v.zoom, v.follow = z, false
+		v.cam = x - z.cols(w)/2
+		var frames []string
+		for k := 0; k < 6; k++ {
+			scr := draw(v, m, w, h, 40+k*5, mapmodel.TierUnicode, false)
+			frames = append(frames, capture.Frame(scr))
+			if k == 0 {
+				_ = capture.PNG(filepath.Join(dir, name+".png"), scr)
+			}
+		}
+		bg, fg := capture.Hex(theme.Color(theme.RoleBackground)), capture.Hex(theme.Color(theme.RoleText))
+		_ = os.WriteFile(filepath.Join(dir, name+".html"), []byte(capture.HTML(name, bg, fg, capture.Fonts, frames, 6)), 0o644)
+	}
+	for a := range c.ByAge {
+		key := wonderKeyOf(a)
+		for _, night := range []bool{false, true} {
+			tod, when := 0.5, "day"
+			if night {
+				tod, when = 0.95, "night"
+			}
+			m := wonderModel(fixture.Options{Age: c.Ages[a], Seed: 3, Routes: 2, Tick: tickAt(tod)}, true, 0)
+			x := wonderX(m.Skyline.Districts[a], key)
+			if a == len(c.ByAge)-1 { // the mandala has no lots to centre on
+				continue
+			}
+			for _, z := range zoomSteps {
+				if z != zMid && z != zClose || m.Sky() != mapmodel.SkyGround && z == zClose {
+					continue
+				}
+				write(fmt.Sprintf("wonder_%02d_%s_%s_%s", a, key, z, when), m, x, z, 100, 40)
+			}
+		}
+		if a < groundAges {
+			for _, share := range []float64{0.2, 0.5, 1} {
+				m := wonderModel(fixture.Options{Age: c.Ages[a], Seed: 3, Routes: 2, Tick: tickAt(0.5)}, false, share)
+				write(fmt.Sprintf("wonder_%02d_%s_site_%d", a, key, int(share*100)), m, wonderX(m.Skyline.Districts[a], key), zMid, 100, 40)
+			}
+		}
+	}
+}

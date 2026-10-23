@@ -118,15 +118,6 @@ func (s *sprite) haloCells() []pt {
 
 // ------------------------------------------------------------ drawing
 
-// pfill fills columns x0..x1 over half rows p0..p1 (inclusive) with sl.
-func (s *sprite) pfill(x0, x1, p0, p1 int, sl slot) {
-	for p := p0; p <= p1; p++ {
-		for x := x0; x <= x1; x++ {
-			s.pset(x, p, sl)
-		}
-	}
-}
-
 // block fills whole cells x0..x1, y0..y1 with a full block of sl.
 func (s *sprite) block(x0, x1, y0, y1 int, sl slot) {
 	for y := y0; y <= y1; y++ {
