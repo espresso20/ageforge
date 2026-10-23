@@ -8,10 +8,10 @@ import (
 	"github.com/espresso20/ageforge/words"
 )
 
-// code_special.go holds what the code reader has to be told: what each
-// source file is to a player (for the where sentence, the sheet and the
-// age), and the handful of places where text is built by a helper, lives in
-// a table of its own, or looks like prose and is not.
+// This file holds what the code reader has to be told: what each source file
+// is to a player (for the where sentence, the sheet and the age), and the
+// handful of places where text is built by a helper, lives in a table of its
+// own, or looks like prose and is not.
 
 // noteFor returns what a source file is to a player.
 func noteFor(f *srcFile) fileNote {
@@ -243,8 +243,8 @@ var fileNotes = map[string]fileNote{
 	"ui/wonder_icon.go":          {skip: whyArt},
 }
 
-// skipDecls are functions and variables whose strings no player reads, by
-// "file:name".
+// skipDecls are functions and variables whose strings are left out, by
+// "file:name", each with its reason.
 var skipDecls = map[string]string{
 	"config/tech_effects.go:Check":                whyDev,
 	"ui/commands.go:devCommands":                  whyDev,

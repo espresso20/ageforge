@@ -7,12 +7,12 @@ import (
 	"github.com/espresso20/ageforge/words"
 )
 
-// data_rows.go reads the data definitions: the struct literals in config,
-// boon, theme and mapmodel that describe buildings, techs, badges and the
-// rest. Each string field of those structs is either text a player reads
-// (fieldRules: its id, its kind, where it shows) or not (hiddenFields: a key,
-// a reference, a number in words). TestConfigFieldsAreAllClassified fails
-// on a config field in neither table.
+// This file reads the data definitions: the struct literals in config, boon,
+// theme and mapmodel that describe buildings, techs, badges and the rest. Each
+// string field of those structs is either text a player reads (fieldRules: its
+// kind, its sheet, where it shows) or not (hiddenFields: a key, a reference, a
+// number in words). TestConfigFieldsAreAllClassified fails on a config field in
+// neither table.
 
 // How often a player meets a line, for the order of first-hours.csv.
 const (
@@ -27,9 +27,9 @@ const (
 // fieldRule says how a struct field becomes a row.
 type fieldRule struct {
 	// id is the template for the row's id. The table below leaves it empty:
-	// the ids of a struct field live in words.FieldIDs, shared with the
-	// ruleset overlay. Only a rule written inline by the code reader
-	// (code_special.go) carries its own.
+	// readField takes the id from words.FieldIDs, which the ruleset overlay
+	// shares. Only a rule written inline by the code reader (code_special.go)
+	// carries its own.
 	id    string
 	kind  string
 	area  *area
@@ -43,9 +43,10 @@ type fieldRule struct {
 
 // Templates may use: {Field} a field of the same struct literal; {^Field} a
 // field of the struct literal around it; {k} the map key the text sits
-// under; {n} its place in a list; {sn} the struct literal's place in its
-// list; {aN} the Nth argument of the call around it; {decl} the variable or
-// function it is declared in; {name:X} what the game calls the key X.
+// under, {k2} the next map key out; {n} its place in a list; {sn} the struct
+// literal's place in its list; {aN} the Nth argument of the call around it;
+// {decl} the variable or function it is declared in; {name:X} what the game
+// calls the key X.
 
 var fieldRules = map[string]fieldRule{
 	// ----- ages and eras -----
@@ -365,8 +366,8 @@ func readField(c *catalog, u *unit) (*row, string) {
 			return nil, why
 		}
 		if strings.HasPrefix(s.typ, "config.") && u.f.dir == "config" {
-			// A config field nobody has classified: put it in front of the
-			// owner, marked, rather than lose it.
+			// A config field in neither table: keep it as an unsure row so it is
+			// seen and not lost.
 			if !hasWord(u.text) {
 				return nil, whyNoWords
 			}

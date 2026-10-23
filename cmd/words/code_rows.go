@@ -9,15 +9,15 @@ import (
 	"unicode"
 )
 
-// code_rows.go reads text out of ordinary code: the panels, the command
-// replies, the log lines, the refusals. There is no table of fields to go
-// by here, so the reader works from what a literal is used for. It leaves
-// out what the code only matches on or looks up (keys, identifiers, file
-// names, the patterns of text operations), what only a developer reads, and
-// what has no words in it; it keeps the rest, and marks what it cannot be
-// sure reaches the screen.
+// This file reads text out of ordinary code: the panels, the command replies,
+// the log lines, the refusals. There is no table of fields to go by here, so
+// the reader works from what a literal is used for. It leaves out what the
+// code only matches on or looks up (keys, identifiers, file names, the
+// patterns of text operations), what only a developer reads, and what has no
+// words in it. It keeps the rest, and marks what it cannot be sure reaches the
+// screen.
 
-// Why a unit is left out. The export reports the counts.
+// Why a unit is left out. The left command prints each unit with its reason.
 const (
 	whyReadBack = "text the game reads back out of old saves, so it has to stay as it is"
 	whyNoWords  = "no words in it: layout, a number format or a glyph"
@@ -68,10 +68,13 @@ func keyLike(s string) bool {
 	return false
 }
 
-// Calls whose string arguments are never shown.
+// Calls the reader treats by name. opPkgs, opAllArgs, pathPkgs, devCalls and
+// syntaxArgs name calls whose string arguments are never shown. The others
+// name calls whose text is shown.
 var (
 	// Package functions that work on text: every argument after the first is
-	// a pattern. NewReplacer and the Sscan family take patterns throughout.
+	// a pattern. The calls in opAllArgs (NewReplacer, the Sscan family, regexp
+	// and time layouts) take patterns throughout.
 	opPkgs     = map[string]bool{"strings": true, "bytes": true, "regexp": true, "strconv": true, "utf8": true, "unicode": true}
 	opAllArgs  = map[string]bool{"strings.NewReplacer": true, "fmt.Sscanf": true, "fmt.Sscan": true, "fmt.Fscanf": true, "regexp.MustCompile": true, "regexp.Compile": true, "time.Parse": true}
 	pathPkgs   = map[string]bool{"filepath": true, "path": true, "os": true, "exec": true, "http": true, "url": true, "json": true, "hex": true, "base64": true, "ioutil": true, "io": true, "runtime": true, "nerdfont": true}
@@ -144,10 +147,11 @@ func newCodeReader(c *catalog, f *srcFile, units []*unit) *codeReader {
 				if kv, ok := el.(*ast.KeyValueExpr); ok {
 					v = kv.Value
 				}
-				// A text wired for VibeMode is the text of the list still: it reads as
-				// it did before it was wired. (A vibe.Line in the log's and the
-				// screens' lists is not seen through: they were wired before this
-				// was known, and their export is held as it was.)
+				// A vibe call counts as the text it carries, so wiring a text leaves its
+				// list as it was. The exception is vibe.Line outside the map files: it
+				// is not seen through, so a single lower-case word in one is still
+				// judged as a possible key, even in a list of worded text. This keeps
+				// the log and screens exports unchanged.
 				if call, ok := v.(*ast.CallExpr); ok {
 					if s, ok := vibeCarried(call); ok && (cr.note.area == areaMap || !isVibeLine(call)) {
 						v = s
@@ -184,8 +188,8 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 		return nil, whyNoWords
 	}
 	for _, marker := range cr.c.rules.readBack {
-		// A text a vibe call carries is the line told from what is kept, not
-		// the kept text, which the call's id would not be on.
+		// A text inside a vibe call is the line as it is told, not the line kept
+		// in the save, so the markers are looked for only in texts with no vibe id.
 		if u.vibeID == "" && strings.Contains(u.text, marker) {
 			return nil, whyReadBack
 		}
@@ -260,10 +264,9 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	if fn == "" {
 		fn = "top"
 	}
-	// A row is its place in its function (the nth text of it), unless a vibe
-	// call carries its id: that id is the row's for good, wherever the text
-	// moves, and the places it holds are not counted for the texts without
-	// one (a text added before it takes the next number nobody holds).
+	// A row id is its place in its function (the nth text of it), unless a vibe
+	// call carries the id: that id stays with the text wherever it moves. A
+	// number held by such an id is skipped for the texts that have none.
 	if u.vibeID != "" {
 		r.id = u.vibeID
 	} else {
