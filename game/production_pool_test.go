@@ -8,13 +8,12 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// soft_cap_test.go guards the soft cap on the production pools. The pools
-// (production_all and every "<res>_rate") were once unbounded above: a boon
-// soak measured a x20.3 multiplier on knowledge_rate purely from stacked
-// timed events. Then they were clamped at x3.0, and a player with every
-// milestone and wonder got nothing for two thirds of them. Now a pool applies
-// in full up to +200% and a quarter of every point past it, never under the
-// floor: max(productionFloor, 1 + softCap(Σ)).
+// production_pool_test.go guards the production pools. The pools
+// (production_all and every "<res>_rate") have no ceiling: a pool applies in
+// full, however large it grows, and is never under the floor:
+// max(productionFloor, 1 + Σ). (They were once clamped at x3.0, and then bent
+// at +200%; a boon soak measured x20.3 on knowledge_rate from stacked timed
+// events before either, and the cap on concurrent boons is what bounds that.)
 
 // stackRateEvents injects n active events each carrying `value` on the given
 // effect type, the same shape faction boons and catastrophes use.
@@ -29,10 +28,9 @@ func stackRateEvents(ge *GameEngine, effectType string, value float64, n int) {
 	}
 }
 
-// TestRecalculateRates_ResRatePoolFollowsTheSoftCap: 40 stacked +0.50
-// knowledge_rate events would be a x21 multiplier with no cap, and x3 under
-// the old clamp. The soft cap makes it 1 + 2 + 18/4 = x7.5.
-func TestRecalculateRates_ResRatePoolFollowsTheSoftCap(t *testing.T) {
+// TestRecalculateRates_ResRatePoolAppliesInFull: 40 stacked +0.50
+// knowledge_rate events are a x21 multiplier, all of it.
+func TestRecalculateRates_ResRatePoolAppliesInFull(t *testing.T) {
 	ge := NewGameEngine()
 	ge.morale = moraleNeutral // moraleMultiplier() == 1.0, isolates the pool
 	addProductionBuilding(ge, "test_library", "knowledge", 10.0, 1)
@@ -47,21 +45,20 @@ func TestRecalculateRates_ResRatePoolFollowsTheSoftCap(t *testing.T) {
 	ge.recalculateRates()
 
 	got := resRate(ge, "knowledge")
-	if want := base * 7.5; math.Abs(got-want) > 1e-6 {
-		t.Fatalf("stacked knowledge_rate gave rate %.6f (x%.2f), want %.6f (x7.50): +200%% in full and a quarter of the other +1800%%",
+	if want := base * 21; math.Abs(got-want) > 1e-6 {
+		t.Fatalf("stacked knowledge_rate gave rate %.6f (x%.2f), want %.6f (x21.00): all of the +2000%%",
 			got, got/base, want)
 	}
 
-	// The raw pool is still reported honestly to the panels; only the
-	// APPLIED multiplier goes through the soft cap.
+	// The pool reads the same earned and applied.
 	if sum := ge.buildResolver().AddTotal("knowledge_rate"); sum < 19.0 {
 		t.Fatalf("resolver AddTotal(knowledge_rate) = %.4f, want the raw Σ (~20) for the panel", sum)
 	}
 }
 
-// TestRecalculateRates_ProductionAllPoolFollowsTheSoftCap: the same rule on
-// the broad pool. Σ = +12.0 applies 1 + 2 + 10/4 = x5.5.
-func TestRecalculateRates_ProductionAllPoolFollowsTheSoftCap(t *testing.T) {
+// TestRecalculateRates_ProductionAllPoolAppliesInFull: the same rule on
+// the broad pool. Σ = +12.0 applies x13.
+func TestRecalculateRates_ProductionAllPoolAppliesInFull(t *testing.T) {
 	ge := NewGameEngine()
 	ge.morale = moraleNeutral
 	addProductionBuilding(ge, "test_farm", "food", 8.0, 1)
@@ -76,14 +73,13 @@ func TestRecalculateRates_ProductionAllPoolFollowsTheSoftCap(t *testing.T) {
 	ge.recalculateRates()
 
 	got := ge.Resources.GetRate("food")
-	if want := base * 5.5; math.Abs(got-want) > 1e-6 {
-		t.Fatalf("stacked production_all gave rate %.6f (x%.2f), want %.6f (x5.50)", got, got/base, want)
+	if want := base * 13; math.Abs(got-want) > 1e-6 {
+		t.Fatalf("stacked production_all gave rate %.6f (x%.2f), want %.6f (x13.00)", got, got/base, want)
 	}
 }
 
-// TestRecalculateRates_FloorStillHolds: the soft cap is about the top. A
-// pathological negative stack still saturates at productionFloor, and the
-// rate never flips negative.
+// TestRecalculateRates_FloorStillHolds: a pathological negative stack still
+// saturates at productionFloor, and the rate never flips negative.
 func TestRecalculateRates_FloorStillHolds(t *testing.T) {
 	ge := NewGameEngine()
 	ge.morale = moraleNeutral
@@ -105,8 +101,8 @@ func TestRecalculateRates_FloorStillHolds(t *testing.T) {
 	}
 }
 
-// TestRecalculateRates_ModerateBonusesAreUnaffected: the soft cap must only
-// bend the top. A realistic +60% pool passes through untouched.
+// TestRecalculateRates_ModerateBonusesAreUnaffected: a realistic +60% pool
+// passes through untouched.
 func TestRecalculateRates_ModerateBonusesAreUnaffected(t *testing.T) {
 	ge := NewGameEngine()
 	ge.morale = moraleNeutral
@@ -117,21 +113,22 @@ func TestRecalculateRates_ModerateBonusesAreUnaffected(t *testing.T) {
 	got := ge.Resources.GetRate("food")
 	want := 8.0 * 1.60
 	if math.Abs(got-want) > 1e-9 {
-		t.Fatalf("moderate food_rate bonus gave %.6f, want %.6f (the soft cap must not bend here)", got, want)
+		t.Fatalf("moderate food_rate bonus gave %.6f, want %.6f ", got, want)
 	}
 }
 
-// TestSoftCapEveryProductionPool: one rule for all production and for every
-// resource's own pool, read below, at and above the knee. Each row is a pool
-// total and the multiplier a rate must show for it.
-func TestSoftCapEveryProductionPool(t *testing.T) {
+// TestEveryProductionPoolAppliesInFull: one rule for all production and for
+// every resource's own pool, at any size. Each row is a pool total and the
+// multiplier a rate must show for it: 1 + the total.
+func TestEveryProductionPoolAppliesInFull(t *testing.T) {
 	rows := []struct{ earned, factor float64 }{
-		{0.50, 1.50},   // well under
-		{1.99, 2.99},   // just under
-		{2.00, 3.00},   // at the knee: all of it
-		{2.04, 3.01},   // just over: a quarter of the +4%
-		{3.20, 3.30},   // the worked example: +320% applies +230%
-		{6.61, 4.1525}, // everything a run can hold in the last age
+		{0.50, 1.50},  // modest
+		{1.99, 2.99},  // just under +200%
+		{2.00, 3.00},  // at +200%
+		{2.04, 3.04},  // just over: still all of it
+		{3.20, 4.20},  // +320%
+		{6.61, 7.61},  // everything a run can hold in the last age
+		{99.0, 100.0}, // far past anything a run holds
 	}
 	for _, pool := range []string{"production_all", "knowledge_rate", "gold_rate", "food_rate"} {
 		res := "food"
@@ -152,37 +149,36 @@ func TestSoftCapEveryProductionPool(t *testing.T) {
 			if want := row.factor - 1; math.Abs(p.Applied-want) > 1e-9 || math.Abs(p.Earned-row.earned) > 1e-9 {
 				t.Errorf("%s at %+.0f%%: the pool reads earned %v, applied %v, want applied %v", pool, row.earned*100, p.Earned, p.Applied, want)
 			}
-			if past := row.earned > 2; p.Limited != past || p.Soft != past {
-				t.Errorf("%s at %+.0f%%: limited %v, soft %v, want both %v", pool, row.earned*100, p.Limited, p.Soft, past)
+			if p.Limited || CapNote(p, row.earned, true) != "" || PoolNote(p) != "" || PoolLine(p) != "" {
+				t.Errorf("%s at %+.0f%%: the pool says something is held back: limited %v, note %q, pool note %q", pool, row.earned*100, p.Limited, CapNote(p, row.earned, true), PoolNote(p))
 			}
 		}
 	}
 }
 
-// TestSoftCapIsContinuousAndNeverFalls: the engine's factor for a growing
-// pool never drops and never jumps, across the knee included.
-func TestSoftCapIsContinuousAndNeverFalls(t *testing.T) {
-	soft := NewGameEngine().rules.SoftCap()
+// TestPoolFactorGrowsOneForOne: the engine's factor for a growing pool never
+// drops and never bends: past the floor, every point earned is a point of
+// multiplier.
+func TestPoolFactorGrowsOneForOne(t *testing.T) {
 	const step = 0.001
-	prev := poolFactor("production_all", -1.5, soft)
+	prev := poolFactor("production_all", -1.5)
 	for i := 1; i <= 9000; i++ {
 		earned := -1.5 + float64(i)*step
-		f := poolFactor("production_all", earned, soft)
+		f := poolFactor("production_all", earned)
 		if f < prev {
 			t.Fatalf("the factor falls from %v to %v as the pool grows to %+.1f%%", prev, f, earned*100)
 		}
-		if f-prev > step+1e-12 {
-			t.Fatalf("the factor jumps by %v at %+.1f%% for a step of %v", f-prev, earned*100, step)
+		if earned > -0.89 && math.Abs(f-prev-step) > 1e-9 {
+			t.Fatalf("the factor moves by %v at %+.1f%% for a step of %v", f-prev, earned*100, step)
 		}
 		prev = f
 	}
 }
 
-// TestTimedBonusesFollowTheSoftCap: a festival and an Age of Plenty (the
-// era event that doubles production) join the all-production pool like any
-// bonus. Under the knee they count in full;
-// past it they add a quarter, and they add nothing less.
-func TestTimedBonusesFollowTheSoftCap(t *testing.T) {
+// TestTimedBonusesCountInFull: a festival and an Age of Plenty (the era
+// event that doubles production) join the all-production pool like any
+// bonus, and count in full whatever the pool holds.
+func TestTimedBonusesCountInFull(t *testing.T) {
 	festival := config.Effect{Type: "production_all", Target: "production_all", Value: festivalBuffPercent}
 	plenty := config.Effect{Type: "production_all", Target: "production_all", Value: 1.0}
 	for _, c := range []struct {
@@ -191,11 +187,11 @@ func TestTimedBonusesFollowTheSoftCap(t *testing.T) {
 		effects []config.Effect
 		factor  float64
 	}{
-		{"a festival under the knee", 1.00, []config.Effect{festival}, 2.20},
-		{"a festival across the knee", 1.90, []config.Effect{festival}, 3.025},
-		{"a festival past the knee", 2.40, []config.Effect{festival}, 3.15},
-		{"a festival and an Age of Plenty across the knee", 1.45, []config.Effect{festival, plenty}, 3.1625},
-		{"a festival and an Age of Plenty past the knee", 2.40, []config.Effect{festival, plenty}, 3.40},
+		{"a festival on a small pool", 1.00, []config.Effect{festival}, 2.20},
+		{"a festival on a pool near +200%", 1.90, []config.Effect{festival}, 3.10},
+		{"a festival on a large pool", 2.40, []config.Effect{festival}, 3.60},
+		{"a festival and an Age of Plenty", 1.45, []config.Effect{festival, plenty}, 3.65},
+		{"a festival and an Age of Plenty on a large pool", 2.40, []config.Effect{festival, plenty}, 4.60},
 	} {
 		ge := NewGameEngine()
 		ge.morale = moraleNeutral
@@ -211,23 +207,23 @@ func TestTimedBonusesFollowTheSoftCap(t *testing.T) {
 	}
 }
 
-// TestMilestonePastTheKneeRaisesProduction: a milestone earned with the
-// all-production pool already past +200% is not wasted. Wonder Builder's
+// TestMilestoneOnALargePoolRaisesProductionInFull: a milestone earned with
+// the all-production pool already past +200% counts in full. Wonder Builder's
 // +5% all production, granted through the game's own milestone check, moves
-// every rate by a quarter of it, and the log says so.
-func TestMilestonePastTheKneeRaisesProduction(t *testing.T) {
+// every rate by the whole of it, and the log says nothing is held back.
+func TestMilestoneOnALargePoolRaisesProductionInFull(t *testing.T) {
 	ge := NewGameEngine()
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	ge.morale = moraleNeutral
 	addProductionBuilding(ge, "test_farm", "food", 10.0, 1)
-	ge.permanentBonuses["production_all"] = 3.0 // +300%: past the knee
+	ge.permanentBonuses["production_all"] = 3.0 // +300%
 	ge.checkMilestones()                        // whatever a new game completes at once
 	ge.recalculateRates()
 	before := ge.Resources.GetRate("food")
 	pool := ge.bonusPoolLocked(ge.buildResolver(), "production_all")
-	if !pool.Soft {
-		t.Fatalf("the all-production pool is not past its knee: %+v", pool)
+	if pool.Earned <= 2 || pool.Limited {
+		t.Fatalf("the all-production pool is not large and unlimited: %+v", pool)
 	}
 
 	var wonder string
@@ -257,23 +253,12 @@ func TestMilestonePastTheKneeRaisesProduction(t *testing.T) {
 		t.Fatalf("Wonder Builder added %+.4f to the all-production pool, want +0.05", reward)
 	}
 	gained := ge.Resources.GetRate("food") - before
-	if want := 10.0 * (0.05 + wonderAll) * 0.25; math.Abs(gained-want) > 1e-9 {
-		t.Errorf("the milestone moved the food rate by %+.6f, want %+.6f: a quarter of what was earned past the knee", gained, want)
+	if want := 10.0 * (0.05 + wonderAll); math.Abs(gained-want) > 1e-9 {
+		t.Errorf("the milestone moved the food rate by %+.6f, want %+.6f: all of what was earned", gained, want)
 	}
-	if gained <= 0 {
-		t.Errorf("a milestone earned past the knee did not raise production (%+.6f)", gained)
-	}
-	var said bool
 	for _, e := range ge.log[logged:] {
-		if strings.Contains(e.Message, "+5% all production counts a quarter past +200%: +1.25% now.") {
-			said = true
+		if strings.Contains(e.Message, "counts a quarter") || strings.Contains(e.Message, "capped") {
+			t.Errorf("the log holds a reward back that counts in full: %q", e.Message)
 		}
-	}
-	if !said {
-		var lines []string
-		for _, e := range ge.log[logged:] {
-			lines = append(lines, e.Message)
-		}
-		t.Errorf("the log does not say the reward counts a quarter:\n%s", strings.Join(lines, "\n"))
 	}
 }

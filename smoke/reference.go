@@ -33,7 +33,7 @@ import (
 // Stock has no cap, so no price is held against a store. A storage building
 // holds nothing: each copy a town stands adds config.StorageBoostPercent
 // percent to all production, in the all-production pool the pacing model's
-// ProductionAllHeld already sits in and through its soft cap (refTables.boosters,
+// ProductionAllHeld already sits in, applied in full (refTables.boosters,
 // on unless a reading wants the model without them).
 //
 // Every player also upgrades (refTables.upgrades, on unless a reading wants
@@ -261,12 +261,11 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 	}
 	fac := t.factor[i]
 	if boost > 0 {
-		// The boost joins the all-production pool the pacing model holds, and
-		// goes through its soft cap with it: the factor scales by what the
-		// pool with the boost applies over what it applied without.
+		// The boost joins the all-production pool the pacing model holds,
+		// in full: the factor scales by what the pool with the boost
+		// applies over what it applied without.
 		held := config.ProductionAllHeld[t.ages[i].Key]
-		soft := config.ProductionSoftCap()
-		scale := (1 + soft.Applied(held+boost)) / (1 + soft.Applied(held))
+		scale := (1 + (held + boost)) / (1 + held)
 		scaled := make(map[string]float64, len(fac))
 		for r, v := range fac {
 			scaled[r] = float64(v * scale)

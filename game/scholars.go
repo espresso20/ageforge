@@ -198,7 +198,7 @@ func (ge *GameEngine) scholarModifiers() []Modifier {
 // speed-ups that shorten a time: the building figure, morale, the pools, the
 // techs' bonus to research, an event's change, the Cosmic Legacy and Era
 // Mastery. Under the write lock, from the last pass of recalculateRates.
-func (ge *GameEngine) researchWork(r *Resolver, mMult, prodAllFactor float64, soft config.SoftCap) float64 {
+func (ge *GameEngine) researchWork(r *Resolver, mMult, prodAllFactor float64) float64 {
 	base := 0.0
 	ge.Buildings.eachBuilt(func(key string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
@@ -210,7 +210,7 @@ func (ge *GameEngine) researchWork(r *Resolver, mMult, prodAllFactor float64, so
 	ge.researchBase = base
 	rate := float64(base * mMult)
 	rate = float64(rate * prodAllFactor)
-	rate = float64(rate * poolFactor("knowledge_rate", r.AddTotal("knowledge_rate"), soft))
+	rate = float64(rate * poolFactor("knowledge_rate", r.AddTotal("knowledge_rate")))
 	rate = float64(rate * ge.Research.OutputFactor(config.ResearchTarget))
 	legacy := ge.cosmicLegacyFactor()
 	// What an event sizes its change on: the work with no event running.
@@ -254,11 +254,11 @@ func (ge *GameEngine) researchTimeFactor() float64 {
 
 // updateResearchRate works out the work the researching scholars do each
 // tick (ge.researchPerTick). Called by recalculateRates.
-func (ge *GameEngine) updateResearchRate(r *Resolver, mMult, prodAllFactor float64, soft config.SoftCap) {
+func (ge *GameEngine) updateResearchRate(r *Resolver, mMult, prodAllFactor float64) {
 	n := ge.scholarTotal()
 	research, _ := ge.scholarPosts(n)
 	// The work with every scholar researching: what the posts split.
-	work := ge.researchWork(r, mMult, prodAllFactor, soft)
+	work := ge.researchWork(r, mMult, prodAllFactor)
 	work = float64(work / ge.researchTimeFactor())
 	ge.researchFull = work
 	ge.researchPerTick = ge.workOfResearchers(work, n, research)

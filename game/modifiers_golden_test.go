@@ -29,7 +29,7 @@ const goldenEps = 1e-9
 //	prodAllAdd = research[production_all] + permanent[production_all]
 //	           + prestige[production_all] + wonders[production_all]
 //	           + Σ active-event production_all effects
-//	factor     = moraleMultiplier() × max(productionFloor, 1 + softCap(prodAllAdd))
+//	factor     = moraleMultiplier() × max(productionFloor, 1 + prodAllAdd)
 //
 // The morale factor is moraleMultiplier(), applied unconditionally to the
 // building rate (recalculateRates hoists it as `mMult := ge.moraleMultiplier()`,
@@ -40,10 +40,9 @@ const goldenEps = 1e-9
 //
 // Fix B removed the old `prodAllAdd > 0` gate: a negative additive bonus (e.g.
 // the Reconstruction Effort catastrophe's -0.10) now applies. The floor only
-// binds when 1+add drops under productionFloor, and the soft cap only when add
-// passes +200%; for every fixture here neither does, so this expected factor
-// equals the resolver's Total (1+add)×morale. The resolver carries the additive
-// pool and morale; the floor and the soft cap are engine-side only.
+// binds when 1+add drops under productionFloor; for every fixture here it does
+// not, so this expected factor equals the resolver's Total (1+add)×morale. The
+// resolver carries the additive pool and morale; the floor is engine-side only.
 func expectedProductionAll(ge *GameEngine) float64 {
 	research := ge.Research.GetBonuses()
 	prestige := ge.Prestige.GetBonuses()
@@ -61,25 +60,22 @@ func expectedProductionAll(ge *GameEngine) float64 {
 }
 
 // expectedPoolFactor re-derives what the engine makes of a production pool
-// that has earned add: all of it up to +200%, a quarter of the rest, and
-// never under the floor. Written out here on purpose, not read from config.
+// that has earned add: all of it, however large, and never under the floor.
+// Written out here on purpose, not read from config.
 func expectedPoolFactor(add float64) float64 {
-	if add > 2.0 {
-		add = 2.0 + (add-2.0)*0.25
-	}
 	return math.Max(productionFloor, 1.0+add)
 }
 
 // expectedResRate re-derives the per-resource rate multiplier (Fix B: ungated +
-// floored; above +200% the soft cap):
+// floored; no ceiling):
 //
 //	add    = research[<res>_rate] + permanent[<res>_rate] + prestige[<res>_rate] + wonders[<res>_rate]
-//	factor = max(productionFloor, 1 + softCap(add))
+//	factor = max(productionFloor, 1 + add)
 //
 // (permanentBonuses already absorbs milestone/legacy/epoch; prestige and wonders
 // are merged into the same effective per-resource pool in recalculateRates.) As
-// with production_all the floor and the soft cap only bind outside [0.10, 3.0];
-// fixtures here are non-binding, so this equals the resolver's Total.
+// with production_all the floor only binds under 0.10; fixtures here are
+// non-binding, so this equals the resolver's Total.
 func expectedResRate(ge *GameEngine, res string) float64 {
 	key := res + "_rate"
 	research := ge.Research.GetBonuses()

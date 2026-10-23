@@ -1971,7 +1971,7 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 
 // festivalCapLines says, before the culture is spent, what a festival held
 // now would add when less than the whole buff would count: all production
-// is past +200%, where a bonus counts a quarter. Nothing when it all counts.
+// is held by a limit. Nothing when it all counts.
 func festivalCapLines(st game.FestivalStatus) []string {
 	if st.CapPhrase == "" {
 		return nil
