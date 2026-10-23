@@ -3,8 +3,6 @@ package game
 import (
 	"strings"
 	"testing"
-
-	"github.com/espresso20/ageforge/rules"
 )
 
 // Storage is in no line, so it is never an older building: a stash can't be
@@ -36,10 +34,10 @@ func TestAdvanceAge_StorageIsNeverOlder(t *testing.T) {
 			t.Errorf("log advises upgrading stashes: %q", l.Message)
 		}
 	}
-	// Every Stash still counts for what a Stash held in the reference store.
-	each := rules.Core().ReferenceStorePerCopy("stash")
-	if got := ge.Buildings.GetStorageBonuses()["all"]; each <= 0 || got != 32*each {
-		t.Errorf("storage bonus after advancing = %v, want %v (32 Stashes of %v)", got, 32*each, each)
+	// A Stash holds nothing: it boosts production, and the store measure
+	// takes nothing from it.
+	if got := ge.Buildings.GetStorageBonuses()["all"]; got != 0 {
+		t.Errorf("storage bonus after advancing = %v with 32 Stashes, want 0", got)
 	}
 	if err := ge.UpgradeBuilding("stash", 0, true); err == nil || !strings.Contains(err.Error(), "has no upgrade") {
 		t.Errorf("upgrade stash: err = %v, want a no-upgrade refusal", err)

@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 func bad(v float64) bool { return math.IsNaN(v) || math.IsInf(v, 0) }
@@ -165,7 +166,7 @@ func Dump(st game.GameState, cycle int, sim time.Duration) string {
 		if !rs.Unlocked {
 			continue
 		}
-		fmt.Fprintf(&sb, "  %-22s %12s / %-12s %+.4g/t\n", k, num(rs.Amount), num(rs.Storage), rs.Rate)
+		fmt.Fprintf(&sb, "  %-22s %12s / %-12s %+.4g/t\n", k, num(rs.Amount), num(goodStockOf(rules.Core(), st, k)), rs.Rate)
 	}
 	sb.WriteString("buildings:\n")
 	for _, k := range sortedKeys(st.Buildings) {

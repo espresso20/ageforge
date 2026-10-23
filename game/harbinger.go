@@ -1121,8 +1121,7 @@ func (ge *GameEngine) inviteBlocked() string {
 	return ""
 }
 
-// shortfall lists what cost needs beyond what is stored, in config order, and
-// says so when a price is larger than the resource's storage can hold.
+// shortfall lists what cost needs beyond what is held, in config order.
 func (ge *GameEngine) shortfall(cost map[string]float64) string {
 	var parts []string
 	for _, def := range ge.rules.Resources() {

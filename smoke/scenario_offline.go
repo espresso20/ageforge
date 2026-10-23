@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // playUntil plays seed with the bot until stop returns true (checked at
@@ -104,8 +105,8 @@ func offlineBase(res *Result, base *game.GameEngine, age string, seed int64) []s
 		for k, g := range o.gains {
 			if g > 0 {
 				gained++
-				if g/math.Max(o.pre.Resources[k].Storage, 1) > topV {
-					top, topV = fmt.Sprintf("%s +%s", k, num(g)), g/math.Max(o.pre.Resources[k].Storage, 1)
+				if g/math.Max(goodStockOf(rules.Core(), o.pre, k), 1) > topV {
+					top, topV = fmt.Sprintf("%s +%s", k, num(g)), g/math.Max(goodStockOf(rules.Core(), o.pre, k), 1)
 				}
 			}
 		}

@@ -199,21 +199,20 @@ func TestUncapped_EveryCreditKeepsTheWholeAmount(t *testing.T) {
 	}
 }
 
-// A store that shrinks (the storage it was built on is gone) takes nothing
-// from the stock it held.
-func TestUncapped_ShrinkingAStoreKeepsTheStock(t *testing.T) {
+// Losing storage buildings takes nothing from the stock held.
+func TestUncapped_LosingStorageKeepsTheStock(t *testing.T) {
 	ge := newSeededEngine(1)
 	ge.age = "stone_age"
 	ge.Buildings.counts["storage_pit"] = 4
 	ge.recalculateRates()
-	full := ge.Resources.GetStorage("wood")
-	setAmount(ge, "wood", full)
+	held := 1e6
+	setAmount(ge, "wood", held)
 	if n := ge.Buildings.RemoveBuilding("storage_pit", 2); n != 2 {
 		t.Fatalf("removed %d storage pits, want 2", n)
 	}
 	ge.recalculateRates()
-	if got, size := ge.Resources.Get("wood"), ge.Resources.GetStorage("wood"); got != full || size >= full {
-		t.Errorf("after losing storage: wood %v (was %v), store %v", got, full, size)
+	if got := ge.Resources.Get("wood"); got != held {
+		t.Errorf("after losing storage: wood %v (was %v)", got, held)
 	}
 }
 

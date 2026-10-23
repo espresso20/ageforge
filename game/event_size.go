@@ -117,9 +117,8 @@ func (ge *GameEngine) sizeEffects(effects []config.Effect) []config.Effect {
 
 // eventOutcome is what a random event did when it fired.
 type eventOutcome struct {
-	// gained is what the event gave, by resource, in full: what storage
-	// took of it is in fit.
-	gained, fit map[string]float64
+	// gained is what the event gave, by resource.
+	gained map[string]float64
 	// lost is what left the stores, after a garrison's share.
 	lost    map[string]float64
 	workers int

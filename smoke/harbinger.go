@@ -1,10 +1,10 @@
 package smoke
 
 import (
-	"math"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Harbinger policies for the bot (--harbinger).
@@ -34,7 +34,6 @@ func (b *Bot) harbingerTargets(p *plan) {
 	add := func(cost map[string]float64) {
 		for r, c := range cost {
 			p.target[r] += c
-			p.capNeed[r] = math.Max(p.capNeed[r], c)
 		}
 	}
 	if b.wantsAppease() && v.AppeaseBlocked == "" {
@@ -81,7 +80,8 @@ func (b *Bot) spareFor(st game.GameState, cost map[string]float64) bool {
 	return true
 }
 
-// ResourcePoint is one resource's stock and cap at a moment.
+// ResourcePoint is one resource's stock and a good stock of it (the field is
+// called Storage for the reports that read it) at a moment.
 type ResourcePoint struct {
 	Stock   float64 `json:"stock"`
 	Storage float64 `json:"storage"`
@@ -136,7 +136,7 @@ func affordableIn(st game.GameState, cost map[string]float64) (afford, fits bool
 		if rs.Amount < c {
 			afford = false
 		}
-		if rs.Storage < c {
+		if goodStockOf(rules.Core(), st, r) < c {
 			fits = false
 		}
 	}
@@ -148,7 +148,7 @@ func pricedPoints(st game.GameState, costs ...map[string]float64) map[string]Res
 	for _, c := range costs {
 		for r := range c {
 			rs := st.Resources[r]
-			out[r] = ResourcePoint{Stock: rs.Amount, Storage: rs.Storage}
+			out[r] = ResourcePoint{Stock: rs.Amount, Storage: goodStockOf(rules.Core(), st, r)}
 		}
 	}
 	return out

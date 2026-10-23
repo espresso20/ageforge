@@ -443,10 +443,10 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 				continue
 			}
 			if out.gained == nil {
-				out.gained, out.fit = make(map[string]float64), make(map[string]float64)
+				out.gained = make(map[string]float64)
 			}
 			out.gained[eff.Target] += eff.Value
-			out.fit[eff.Target] += ge.grantLocked(eff.Target, eff.Value)
+			ge.grantLocked(eff.Target, eff.Value)
 			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
 		case "steal_resource":
 			current := ge.Resources.Get(eff.Target)

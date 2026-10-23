@@ -160,28 +160,13 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 	ge.Research.defs["lab_tech"] = config.TechDef{Name: "Lab Tech", Key: "lab_tech", Age: ageKeys()[0], Cost: 1e18}
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
-	// Half of every store, as it stood with truthCopies copies of each
-	// storage building (a storage building holds nothing now, but the store
-	// is still the measure): a loss has something to take, and a town that
-	// holds a little stock does not starve in the first ticks.
-	held := map[string]int{}
-	for key, def := range ge.Buildings.defs {
-		if def.Category == "storage" && order[def.RequiredAge] <= at {
-			held[key] = ge.Buildings.counts[key]
-			ge.Buildings.counts[key] = truthCopies
-		}
-	}
-	ge.recalculateRates()
-	half := map[string]float64{}
+	// Half a good stock of the age in every resource: a loss has something to
+	// take, and a town that holds a little stock does not starve in the first
+	// ticks. (It was half of every store, as it stood with truthCopies copies
+	// of each storage building; the age's stock scale is that store.)
+	half := ge.rules.StockScale(age) / 2
 	for _, key := range ge.Resources.order {
-		half[key] = ge.Resources.resources[key].Storage / 2
-	}
-	for key, n := range held {
-		ge.Buildings.counts[key] = n
-	}
-	ge.recalculateRates()
-	for key, v := range half {
-		ge.Resources.resources[key].Amount = v
+		ge.Resources.resources[key].Amount = half
 	}
 	return ge
 }
@@ -271,10 +256,10 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 		out["rate:"+key] = r.Rate
 		out["made:"+key] = r.Breakdown.BuildingRate
 		out["storage:"+key] = r.Storage
-		out["aux:storage-raw:"+key] = truthStoreWithoutNextCopyFloor(ge, key)
+		out["aux:storage-raw:"+key] = truthStoreSize(ge, key)
 		out["stock:"+key] = r.Amount
-		if want := truthStoreWithNextCopyFloor(ge, key); !near(r.Storage, want) {
-			t.Errorf("storage %s is %v, want max(flat storage, owned storage next-copy prices) %v", key, r.Storage, want)
+		if want := truthStoreSize(ge, key); !near(r.Storage, want) {
+			t.Errorf("storage %s is %v, want the flat storage %v", key, r.Storage, want)
 		}
 	}
 	// The scholars' work, with every scholar researching, and the building
@@ -301,36 +286,19 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 	return out
 }
 
-// truthStoreWithoutNextCopyFloor is the ordinary flat building, mastery, and
-// tech calculation. The separate raw reading lets a promised storage bonus be
-// measured even where the next-copy floor deliberately masks its final store.
-func truthStoreWithoutNextCopyFloor(ge *GameEngine, res string) float64 {
+// truthStoreSize is the ordinary flat building, mastery, and tech
+// calculation of a store: the measure a promised storage bonus is held to.
+func truthStoreSize(ge *GameEngine, res string) float64 {
 	return truthStoreWithTechScale(ge, res, 1+ge.Research.Bonus(config.EffectStorage, ""))
 }
 
-// truthStoreWithTechScale is the flat-capacity calculation before the
-// next-copy floor. A storage tech is measured against this same calculation
-// with its tech multiplier set to one.
+// truthStoreWithTechScale is the flat-capacity calculation with a given tech
+// multiplier. A storage tech is measured against this same calculation with
+// its tech multiplier set to one.
 func truthStoreWithTechScale(ge *GameEngine, res string, techStorage float64) float64 {
 	def := ge.Resources.defs[res]
 	bonuses, permanent := ge.Buildings.GetStorageBonuses(), ge.permanentBonusMap()
 	return ge.storeSize(def, bonuses["all"]+permanent["all"], bonuses[res]+permanent[res], ge.speedK(), techStorage)
-}
-
-// truthStoreWithNextCopyFloor independently spells out the storage floor so
-// the truth tests do not mistake its deliberate clamp for a broken bonus.
-func truthStoreWithNextCopyFloor(ge *GameEngine, res string) float64 {
-	size := truthStoreWithoutNextCopyFloor(ge, res)
-	for key, count := range ge.Buildings.counts {
-		if count < 1 || ge.Buildings.defs[key].Category != "storage" {
-			continue
-		}
-		cost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
-		if cost[res] > size {
-			size = cost[res]
-		}
-	}
-	return size
 }
 
 // truthMechanics reads every mechanic number a tech can move
@@ -425,8 +393,7 @@ func truthCut(meter string, unit string) truthKind {
 			// The reference price and times round to whole units.
 			allowed := meterIs(meter)
 			if meter == "cost" {
-				// A lower storage-building price lowers the next-copy floor.
-				allowed = meterHasPrefix(meter, "storage:", "stock:")
+				allowed = meterHasPrefix(meter, "stock:")
 			} else if meter == "research" {
 				allowed = meterIs(meter, "rate:research") // a shorter time is faster work
 			}
@@ -997,8 +964,7 @@ var truthKinds = map[string]truthKind{
 			}
 			allowed := meterIs(meter)
 			if meter == "cost" {
-				// A lower storage-building price lowers the next-copy floor.
-				allowed = meterHasPrefix(meter, "storage:", "stock:")
+				allowed = meterHasPrefix(meter, "stock:")
 			}
 			return truthMeasured{Delivered: after[meter]/a - 1, Noise: noise, Allowed: allowed}
 		},
@@ -1234,7 +1200,7 @@ var truthKinds = map[string]truthKind{
 		Unit: "points of the listed price", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
 			// The techs' cut multiplies what the pool leaves of the price.
-			return truthMeasured{Delivered: (after["cost"] - before["cost"]) / ge.Research.Bonus(config.EffectBuildCost, ""), Allowed: meterHasPrefix("cost", "storage:", "stock:")}
+			return truthMeasured{Delivered: (after["cost"] - before["cost"]) / ge.Research.Bonus(config.EffectBuildCost, ""), Allowed: meterHasPrefix("cost", "stock:")}
 		},
 	},
 	// "+X% game speed".

@@ -52,7 +52,7 @@ func partsNotWhole(rows []string, parts []string) []string {
 }
 
 // priceTown is a dashboard over a town of age with none of key built, every
-// store full, so the first copy of key can be bought.
+// stock of the age's scale, so the first copy of key can be bought.
 func priceTown(t *testing.T, age, key string) (*Dashboard, *tview.Pages, *game.GameEngine, game.BuildingState) {
 	t.Helper()
 	d, pages, eng := stagedDashboard(t, age)
@@ -66,7 +66,7 @@ func priceTown(t *testing.T, age, key string) (*Dashboard, *tview.Pages, *game.G
 	st := eng.GetState()
 	for k, rs := range st.Resources {
 		if rs.Unlocked {
-			eng.SetStockForTest(k, rs.Storage)
+			eng.SetStockForTest(k, eng.Rules().StockScale(age))
 		}
 	}
 	eng.StepTicks(1)
