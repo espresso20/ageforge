@@ -122,6 +122,7 @@ The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has
 
 <figure class="screen" data-screen="map-skyline"><figcaption>The same town in the skyline style: a district for each age so far, under the sky of that hour.</figcaption></figure>
 
+- **A silhouette for every building.** Each building you own draws its own silhouette, up to 24 of any one kind, so a big town looks big. A district is as wide as the buildings in it need, so a large town is a long skyline you scroll, and a new building joins the street without moving the ones already there. Every silhouette has a darker outline so neighbours part, the rows behind are dimmer and cooler than the row in front, and the copies of one building come in three variants (a lower one, a taller one, and different window patterns, with a chimney, a flagpole or an aerial on some roofs), so eight farms do not all look alike. At night the lit windows glow in the light of their age (torches and fires, then lamps, bulbs, cool white light and screens, and neon) and waver slowly; they hold still when `motion` is off.
 - **Windows light and chimneys smoke only where workers are staffed.** An unstaffed building stays dark.
 - **The sky** follows the game clock and the weather.
 - **The far ridge** holds the civilizations you have met, each drawn as a town, and the harbinger.

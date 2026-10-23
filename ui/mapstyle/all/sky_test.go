@@ -159,14 +159,7 @@ func TestSkyDisparity(t *testing.T) {
 		sigs := make([]skySignature, len(arcAges))
 		for i, m := range models {
 			sigs[i] = skyFrameSig(t, style, m, 400)
-			// (the mean over a few frame pairs: the Quantum Age's fringes flip
-			// by the handful from one pair to the next, and a town that
-			// covers more of the picture leaves them a larger share of it)
-			self := 0.0
-			for _, an := range []int{400, 412, 424, 436} {
-				self += skyDistance(skyFrameSig(t, style, m, an), skyFrameSig(t, style, m, an+3)) / 4
-			}
-			if self > disparityFloor/2 {
+			if self := skyDistance(sigs[i], skyFrameSig(t, style, m, 403)); self > disparityFloor/3 {
 				t.Errorf("%s %s: a frame later it is already %.2f away from itself", style, arcAges[i], self)
 			}
 		}

@@ -93,16 +93,12 @@ func checkTown(t *testing.T, name string, prev, cur *mapmodel.Model) {
 }
 
 // anchor is the world column a lot's position is measured from: its
-// district's west edge, or the bay's for the quay and the lighthouse. A
-// district widens to fit what it holds, which carries the districts and the
-// bay east of it, so a silhouette keeps its place in its district, not its
-// world column.
+// district's east edge (where the bay begins). A district widens to fit what
+// it holds, which carries the districts east of it, so a silhouette keeps its
+// place against its district's east edge, not its world column.
 func anchor(m *mapmodel.Model, l mapmodel.Lot) int {
 	d := m.Skyline.Districts[l.Age]
-	if d.Bay && (l.Quay || l.Key == "grand_lighthouse") {
-		return d.BayX
-	}
-	return d.X0
+	return d.X0 + d.LandW
 }
 
 func checkSkyline(t *testing.T, name string, prev, cur *mapmodel.Model) {

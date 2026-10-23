@@ -295,13 +295,15 @@ const (
 	skyLotStep   = 3
 	skyBayW      = 20
 	skyMinLandW  = 30
-	// skyLotInset is where a district's first lot column starts, from its
-	// west edge; skyLotMargin is the room kept past the last column.
+	// skyLotInset is where a district's first lot column stands, in from its
+	// east edge; skyLotMargin is the room kept past the last column.
 	skyLotInset  = 4
 	skyLotMargin = 6
-	// skyWonderAt is where a district's landmark stands, from its west edge.
-	skyWonderAt = 16
+	// skyWonderIn is where a district's landmark stands, in from its east edge.
+	skyWonderIn = 18
 	skyTetherIn = 10
+	// skyBlock is how many copies of one type stand side by side.
+	skyBlock = 4
 	// SkyCopiesPer is how many buildings one silhouette stands for.
 	SkyCopiesPer = 1
 	// SkyMaxCopies caps the silhouettes one type draws.
@@ -330,11 +332,16 @@ func hasBay(ds []*Def) bool {
 	return false
 }
 
-// skySlot is the slot a silhouette stands in: copy c of the age's t-th type
-// among nt. It depends on nothing that grows, so a lot never moves once it is
-// drawn; the district is as wide as the slots in use need.
+// skySlot is the slot a silhouette stands in, counted from its district's
+// east edge (the side the next age, the cranes and the camera are on): copy c
+// of the age's t-th type among nt. A type's first skyBlock copies stand side
+// by side in a block of their own, the next skyBlock copies of every type in
+// the round to the west, and so on; within a round the newest types stand
+// nearest the east. It depends on nothing that grows, so a lot never moves
+// from its district's east edge once it is drawn, and the district is as wide
+// as the slots in use need.
 func skySlot(c, t, nt int) (col, row int) {
-	l := c*nt + t
+	l := c/skyBlock*nt*skyBlock + (nt-1-t)*skyBlock + c%skyBlock
 	col = l / 3
 	return col, (l + col) % 3
 }
@@ -419,7 +426,7 @@ func skylineFor(m *Model) Skyline {
 					Seed: Hash(m.Seed, int64(a), int64(t), int64(c)), New: b.Delta > 0 && c >= prevN}
 				switch {
 				case def.Wonder:
-					lot.Wonder, lot.X, lot.Row = true, d.X0+skyWonderAt, 0
+					lot.Wonder, lot.X, lot.Row = true, d.X0+d.LandW-skyWonderIn, 0
 					if d.Bay && def.Key == "grand_lighthouse" {
 						lot.X = d.BayX + skyBayW - 4
 					}
@@ -429,7 +436,7 @@ func skylineFor(m *Model) Skyline {
 				default:
 					col, row := skySlot(c, t, nt)
 					lot.Row = row
-					lot.X = d.X0 + skyLotInset + col*skyLotStep + int(Hash(int64(lot.Seed), 3)%3) - 1
+					lot.X = d.X0 + d.LandW - skyLotInset - col*skyLotStep + int(Hash(int64(lot.Seed), 3)%3) - 1
 				}
 				sk.Lots = append(sk.Lots, lot)
 				if def.Wonder {

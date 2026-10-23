@@ -195,6 +195,20 @@ func (p *pal) col(fam, variant int, s slot, depth int) tcell.Color {
 	if c := p.matCache[i]; c != 0 {
 		return c
 	}
+	c := p.built(fam, variant, s, depth)
+	if depth == 1 || depth == 2 {
+		// the rows behind are dimmer than the one in front, even by day when
+		// the haze would lighten a dark wall (dress.go)
+		c = p.recede(c, p.built(fam, variant, s, 0), s, depth)
+	}
+	c = p.final(c)
+	p.matCache[i] = c
+	return c
+}
+
+// built is a material's colour before the theme's duotone: lit, toned for its
+// row and hazed toward the horizon.
+func (p *pal) built(fam, variant int, s slot, depth int) tcell.Color {
 	m := p.mats[fam][variant]
 	c := p.raw(m, s)
 	if !s.emissive() {
@@ -202,12 +216,11 @@ func (p *pal) col(fam, variant int, s slot, depth int) tcell.Color {
 		if p.light {
 			c = theme.Mix(c, theme.Shade(c, 0.8), p.night) // ink on paper
 		}
+		c = p.tone(c, depth) // the back rows cooler (dress.go)
 	} else if p.day > 0.5 && !p.gloom {
 		c = theme.Mix(c, theme.Tint(m.Wall, p.lightTint), float64(0.35*p.day)) // neon washes out by day
 	}
-	c = p.final(theme.Mix(c, p.horizon, p.haze(depth)))
-	p.matCache[i] = c
-	return c
+	return theme.Mix(c, p.horizon, p.haze(depth))
 }
 
 // hue resolves a fixed scene colour in a mode at a haze depth.
