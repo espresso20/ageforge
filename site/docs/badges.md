@@ -137,7 +137,7 @@ Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contracto
 
 ### Payrolls
 
-A payroll badge asks for that many workers at work in one domain at the same time. The game takes the count every 50 ticks, so the workers have to stay at work for a moment, not only pass through.
+A payroll badge asks for that many workers at work in one domain at the same time. The game takes the count every 50 ticks, so the workers have to stay at work for a moment, not only pass through. The Military payroll counts soldiers at their posts instead of workers.
 
 | Domain | Rungs |
 |---|---|
@@ -145,7 +145,7 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 | Lumber | 270 · 468 |
 | Masonry | 270 · 477 |
 | Faith | 160 · 265 |
-| Military | 270 · 444 |
+| Military | 11,900 · 19,600 |
 | Trade | 170 · 237 |
 | Engineering | 180 · 305 |
 | Metallurgy | 150 · 248 |

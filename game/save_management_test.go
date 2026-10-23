@@ -293,7 +293,7 @@ func TestListSaveDetailsRichFields(t *testing.T) {
 
 	wonderKey, prodKey := pickBuildingKeys(t)
 
-	// 5 production + 1 wonder = 6 building instances (the count-0 key is excluded
+	// 5 production + 1 wonder + 1 war camp = 7 building instances (the count-0 key is excluded
 	// from both totals). 4 + 6 = 10 workers.
 	save := GameSave{
 		Timestamp:          time.Now(),
@@ -304,8 +304,10 @@ func TestListSaveDetailsRichFields(t *testing.T) {
 		CurrentEpoch:       "iron_era",
 		PendingCatastrophe: "iron_era", // pending_catastrophe holds an epoch key
 		Milestones:         []string{"m1", "m2", "m3"},
-		Resources:          map[string]float64{"soldiers": 137.9, "wood": 50},
-		Buildings:          map[string]int{prodKey: 5, wonderKey: 1, "ghost_key_zero": 0},
+		Resources:          map[string]float64{"wood": 50},
+		SoldiersPosted:     map[string]int{"war_camp": 137},
+		Military:           MilitarySave{Active: []ActiveSlotSave{{Slot: "short", Mission: &ActiveExpedition{Soldiers: 37}}}},
+		Buildings:          map[string]int{prodKey: 5, wonderKey: 1, "war_camp": 1, "ghost_key_zero": 0},
 		Workers: map[string]WorkerInfo{
 			"food":     {Count: 4},
 			"military": {Count: 6},
@@ -330,8 +332,8 @@ func TestListSaveDetailsRichFields(t *testing.T) {
 	if found.Population != 10 {
 		t.Errorf("Population = %d, want 10 (4 food + 6 military)", found.Population)
 	}
-	if found.Buildings != 6 { // 5 prod + 1 wonder; the count-0 key is excluded
-		t.Errorf("Buildings = %d, want 6", found.Buildings)
+	if found.Buildings != 7 { // 5 prod + 1 wonder + 1 war camp; the count-0 key is excluded
+		t.Errorf("Buildings = %d, want 7", found.Buildings)
 	}
 	if found.Wonders != 1 {
 		t.Errorf("Wonders = %d, want 1", found.Wonders)
@@ -339,8 +341,8 @@ func TestListSaveDetailsRichFields(t *testing.T) {
 	if found.Techs != 4 {
 		t.Errorf("Techs = %d, want 4", found.Techs)
 	}
-	if found.Soldiers != 137 { // int() truncation of 137.9
-		t.Errorf("Soldiers = %d, want 137", found.Soldiers)
+	if found.Soldiers != 100 { // 137 posted, 37 of them away on a mission
+		t.Errorf("Soldiers = %d, want 100", found.Soldiers)
 	}
 	if found.PrestigeLevel != 2 {
 		t.Errorf("PrestigeLevel = %d, want 2", found.PrestigeLevel)

@@ -1,7 +1,7 @@
 # AgeForge - Project Conventions
 
 ## Overview
-CLI idle/clicker empire builder game built with Go + tview/tcell. 22 ages, 302 buildings (39 lines), 203 techs, 77 milestones, 7 epochs, catastrophe system with harbingers and the Last Passage, 11 worker domains, 25 resources, trade, diplomacy, prestige. Pacing targets live in `config/pacing.go` (about a week to first prestige).
+CLI idle/clicker empire builder game built with Go + tview/tcell. 22 ages, 302 buildings (39 lines), 203 techs, 77 milestones, 7 epochs, catastrophe system with harbingers and the Last Passage, 11 worker domains, 24 resources, trade, diplomacy, prestige. Pacing targets live in `config/pacing.go` (about a week to first prestige).
 
 ## Conventions
 - Package names: lowercase, single word (config, game, ui)

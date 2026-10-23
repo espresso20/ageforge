@@ -38,6 +38,7 @@ const (
 	tsBad                   // a strike, a warning
 	tsSlab                  // a hidden badge: the chip colour as ink
 	tsLabel                 // a value's label
+	tsEffect                // what a tech does: its effect sentence, bold in the effect colour
 	tsCount                 // how many styles there are
 )
 
@@ -198,6 +199,7 @@ func newGridPalette(lanes int, hue func(i int) string) *gridPalette {
 	// out, not text to read, so it is not pushed to the contrast rule.
 	p.styles[tsSlab] = tcell.StyleDefault.Background(p.bg).Foreground(chip)
 	p.styles[tsLabel] = on(theme.RoleLabel, p.bg, 4.5)
+	p.styles[tsEffect] = on(theme.RoleEffect, p.bg, 4.5).Bold(true)
 	for i := 0; i < lanes; i++ {
 		p.lane = append(p.lane, tcell.StyleDefault.Background(p.bg).Foreground(theme.Hue(hue(i), p.bg)))
 	}

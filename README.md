@@ -48,7 +48,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 
 ## Features
 
-- **Resource Management**: 25 resources across 22 ages with storage limits and production chains
+- **Resource Management**: 24 resources across 22 ages with storage limits and production chains
 - **Building System**: 302 buildings (251 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
 - **Worker System**: 11 domains (food, faith, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy); workers arrive on their own and follow your worker shares (`workers share faith 40`), with auto-recruit as housing and food allow
 - **Tech Tree**: 203 technologies with prerequisites and permanent bonuses
@@ -64,7 +64,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Prestige**: Reset-and-grow system from the Medieval Age on. Every point ever earned is a lasting production bonus in every age. Plan Template, Roster and Old Friends carry over automatically after the first prestige. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
 - **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
 - **Themes and accounts**: 16 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
-- **Badges**: 552 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
+- **Badges**: 556 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
 

@@ -56,7 +56,7 @@ func gameRequests(m Moment, age string) []Request {
 					out = append(out,
 						Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj},
 						Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj, Resource: "gold", Amount: 340},
-						Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj, Resource: "soldiers", Amount: 1},
+						Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj, Resource: "nanobots", Amount: 1},
 						Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj, Resource: "dark_matter_crystals", Amount: 12},
 					)
 				}
@@ -238,7 +238,7 @@ func callerText(line string, req Request) string {
 }
 
 // singularLabel is the n == 1 form of a count-noun resource label, which the
-// quantity frame can emit ("1 soldier"). Mass nouns return their label.
+// quantity frame can emit ("1 nanobot"). Mass nouns return their label.
 func singularLabel(key string) string {
 	return strings.TrimSpace(phraseQuantity(key, 1)[1:])
 }

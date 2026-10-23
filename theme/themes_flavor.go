@@ -40,6 +40,7 @@ var Parchment = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xa3, 0x2a, 0x1f), // wax red
 		RoleSelection:  tcell.NewRGBColor(0xd8, 0xc4, 0x9a), // darker cream backing
 		RoleComment:    tcell.NewRGBColor(0xad, 0x42, 0x08), // flavor sentences only: rust orange
+		RoleEffect:     tcell.NewRGBColor(0x1f, 0x4e, 0x8c), // what a tech does: ink blue
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -67,6 +68,7 @@ var Bronze = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xe0, 0x6a, 0x3c), // burnt-orange loss
 		RoleSelection:  tcell.NewRGBColor(0x3a, 0x2a, 0x18),
 		RoleComment:    tcell.NewRGBColor(0xff, 0x8a, 0x1a), // flavor sentences only: bright orange, brighter than the bronze accent
+		RoleEffect:     tcell.NewRGBColor(0x7f, 0xb2, 0xea), // what a tech does: steel blue on the brown canvas
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -95,6 +97,7 @@ var Cyberpunk = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x49, 0x6b), // neon pink-red loss
 		RoleSelection:  tcell.NewRGBColor(0x2a, 0x12, 0x3a),
 		RoleComment:    tcell.NewRGBColor(0xff, 0x8a, 0x1f), // flavor sentences only: neon orange
+		RoleEffect:     tcell.NewRGBColor(0x5b, 0x8c, 0xff), // what a tech does: electric blue
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -125,6 +128,7 @@ var Monochrome = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0x9a, 0x9a, 0x9a), // mid grey = loss
 		RoleSelection:  tcell.NewRGBColor(0x33, 0x33, 0x33),
 		RoleComment:    tcell.NewRGBColor(0xe8, 0x88, 0x3a), // flavor sentences only: the one warm ink, for the voice
+		RoleEffect:     tcell.NewRGBColor(0x9d, 0xb4, 0xcc), // what a tech does: the one cool ink; every other role is grey
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -153,6 +157,7 @@ var Cosmic = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x6e, 0x8a), // nebula red
 		RoleSelection:  tcell.NewRGBColor(0x24, 0x20, 0x4a),
 		RoleComment:    tcell.NewRGBColor(0xff, 0x9a, 0x3c), // flavor sentences only: nebula orange
+		RoleEffect:     tcell.NewRGBColor(0x7a, 0xa8, 0xff), // what a tech does: nebula blue
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
@@ -180,6 +185,7 @@ var Source = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x4d, 0x4d), // red loss
 		RoleSelection:  tcell.NewRGBColor(0x0d, 0x2b, 0x17),
 		RoleComment:    tcell.NewRGBColor(0xff, 0x9a, 0x3a), // flavor sentences only: amber against the greens
+		RoleEffect:     tcell.NewRGBColor(0x7f, 0xd4, 0xff), // what a tech does: sky blue; the only cool hue on phosphor green
 		RoleBright:     tcell.NewRGBColor(0xd9, 0xff, 0xe3), // near-white green
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -208,6 +214,7 @@ var Glitch = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x3b, 0x3b), // red loss
 		RoleSelection:  tcell.NewRGBColor(0x2a, 0x16, 0x40),
 		RoleComment:    tcell.NewRGBColor(0xff, 0x8a, 0x2a), // flavor sentences only: neon orange
+		RoleEffect:     tcell.NewRGBColor(0x6d, 0x8f, 0xff), // what a tech does: signal blue
 		RoleBright:     tcell.NewRGBColor(0xff, 0xff, 0xff),
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -237,6 +244,7 @@ var Ashfall = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x5a, 0x4d), // burn
 		RoleSelection:  tcell.NewRGBColor(0x2b, 0x21, 0x1c),
 		RoleComment:    tcell.NewRGBColor(0xff, 0xcf, 0x9e), // flavor sentences only: pale apricot: every orange here is taken
+		RoleEffect:     tcell.NewRGBColor(0x8f, 0xb6, 0xe0), // what a tech does: cold steel blue; every warm hue here is taken
 		RoleBright:     tcell.NewRGBColor(0xf3, 0xec, 0xe6),
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -265,6 +273,7 @@ var Ledger = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xb3, 0x26, 0x1e), // in the red
 		RoleSelection:  tcell.NewRGBColor(0xdf, 0xe9, 0xd6),
 		RoleComment:    tcell.NewRGBColor(0xb5, 0x47, 0x09), // flavor sentences only: rust orange
+		RoleEffect:     tcell.NewRGBColor(0x1f, 0x4f, 0x8f), // what a tech does: ledger blue
 		RoleBright:     tcell.NewRGBColor(0x0b, 0x13, 0x0e),
 	},
 	GainGlyph:   flavorGainGlyph,
@@ -293,6 +302,7 @@ var Prismatic = define(Theme{
 		RoleNegative:   tcell.NewRGBColor(0xff, 0x5c, 0x5c), // red
 		RoleSelection:  tcell.NewRGBColor(0x1d, 0x1b, 0x2c),
 		RoleComment:    tcell.NewRGBColor(0xff, 0x9a, 0x3c), // flavor sentences only: orange
+		RoleEffect:     tcell.NewRGBColor(0x8a, 0xa2, 0xff), // what a tech does: periwinkle
 		RoleBright:     tcell.NewRGBColor(0xff, 0xff, 0xff),
 	},
 	GainGlyph:   flavorGainGlyph,

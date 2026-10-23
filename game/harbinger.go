@@ -620,7 +620,7 @@ func (ge *GameEngine) summonHarbinger() error {
 		f.Claim = CatastropheTierMedium
 	}
 	f.Invited, f.Resolved, f.ResolvedTick, f.AtAdvance, f.Arrived = false, "", 0, false, false
-	f.StrikeTick = ge.tick + int(f.LeadFrac*ge.expectedAgeTicks(ge.age))
+	f.StrikeTick = ge.tick + int(f.LeadFrac*ge.warningAgeTicks(ge.age))
 	if !ge.fateArrive() {
 		return fmt.Errorf("No harbinger could come in this age.")
 	}

@@ -56,7 +56,7 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 	perSec := 1 / game.BaseTickInterval.Seconds()
 	for _, k := range keys {
 		r := st.Resources[k]
-		if !r.Unlocked || k == "soldiers" {
+		if !r.Unlocked {
 			continue
 		}
 		// Stock has no ceiling, so no store is ever full (Full stays empty).

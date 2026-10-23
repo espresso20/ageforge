@@ -48,7 +48,7 @@ func StaticEnded() []EndedProblem {
 			makes[e.Target][p] = true
 		}
 	}
-	always := map[string]bool{"food": true, "faith": true, "culture": true, "knowledge": true, "soldiers": true}
+	always := map[string]bool{"food": true, "faith": true, "culture": true, "knowledge": true}
 	var out []EndedProblem
 	for _, d := range defs {
 		p, ok := pos[d.RequiredAge]

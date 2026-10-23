@@ -13,11 +13,11 @@ import (
 // maker's age. A building "makes" R when it has a production effect for R,
 // main or side output (wonders count). So R is priced up to one age past its
 // last maker (the cold-start bridge into the next age), never after. Food,
-// faith, culture, knowledge and soldiers are always available and are left
+// faith, culture and knowledge are always available and are left
 // out of the check.
 
 // EndedExempt are the resources the ended-resource check leaves alone.
-var EndedExempt = map[string]bool{"food": true, "faith": true, "culture": true, "knowledge": true, "soldiers": true}
+var EndedExempt = map[string]bool{"food": true, "faith": true, "culture": true, "knowledge": true}
 
 // EndedPart is one price part that charges a resource which is not available
 // in the building's age.

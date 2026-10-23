@@ -50,6 +50,7 @@ const (
 	RoleChip          // chip / keycap-label background (derived: Background 15% toward Text)
 	RoleOnNegative    // text drawn ON a Negative fill: danger modals (derived: Text, else black/white)
 	RoleComment       // the flavor sentences (quips, comments, lore) and nothing else; no other role uses it
+	RoleEffect        // what a tech does (its effect sentence in the research screens): blue; derived when a theme leaves it unset
 	numRoles
 )
 
@@ -95,6 +96,8 @@ func (r Role) String() string {
 		return "OnNegative"
 	case RoleComment:
 		return "Comment"
+	case RoleEffect:
+		return "Effect"
 	default:
 		return "Role(?)"
 	}

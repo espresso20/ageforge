@@ -277,6 +277,7 @@ const (
 	truthRefBuilding = "zz_truth_ref_building"
 	truthRefTicks    = 1_000_000
 	truthRefCost     = 1e12
+	truthRefPosts    = 1e6 // posts a copy of a made-up military building has
 	truthMoraleStart = 10.0
 )
 
@@ -287,10 +288,6 @@ func readTruth(t *testing.T, ge *GameEngine) truthReading {
 	ge.recalculateTickSpeed()
 	out := truthReading{}
 	for _, key := range ge.Resources.order {
-		if key == "soldiers" {
-			// The posted army, not a store or a flow (soldiers.go).
-			continue
-		}
 		r := ge.Resources.resources[key]
 		out["rate:"+key] = r.Rate
 		out["made:"+key] = r.Breakdown.BuildingRate
@@ -366,7 +363,7 @@ func truthStoreWithNextCopyFloor(ge *GameEngine, res string) float64 {
 // alliance costs, what an ally adds per point of its listed bonus, the
 // share of its price an Appease level costs, the share of its price a festival costs, how long it lasts
 // and the wait before the next, a wonder's construction time, how many
-// soldiers can be held, the share of its price an upgrade costs.
+// posts a military building has beyond its base, the share of its price an upgrade costs.
 // Hand gathering and raid losses are read as the engine's own term: a real
 // gather and a real raid spend the engine, and TestTechGatherAndRaids runs
 // both. A number that cannot be read in this engine is left out. It leaves
@@ -386,7 +383,7 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 		config.MechanicGiftOpinion:           float64(ge.Diplomacy.GiftGain()),
 		config.MechanicAllianceBonus:         ge.Diplomacy.AllyBonus(config.FactionDef{TradeBonus: 1}),
 		config.MechanicCampaignReward:        ge.Military.CampaignPay(truthRefTicks) / truthRefTicks,
-		config.MechanicSoldierStorage:        ge.soldierRoom(truthRefCost) / truthRefCost,
+		config.MechanicSoldierPosts:          float64(ge.soldierPerCopy(config.BuildingDef{Soldiers: truthRefPosts}))/truthRefPosts - 1,
 		config.MechanicAllianceCost:          ge.Diplomacy.AllyPrice(),
 		config.MechanicAppeaseCost:           ge.appeaseCut(truthRefCost) / truthRefCost,
 		// A peaceful civilization's set for a neutral player: two deals,
@@ -414,13 +411,9 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 }
 
 // truthStoreScale is what the techs multiply the store of res by: their
-// storage bonus on every store, and the soldiers' own term on theirs.
+// storage bonus on every store.
 func truthStoreScale(ge *GameEngine, res string) float64 {
-	scale := 1 + ge.Research.Bonus(config.EffectStorage, "")
-	if res == "soldiers" {
-		scale = float64(scale * ge.Research.Mechanic(config.MechanicSoldierStorage))
-	}
-	return scale
+	return 1 + ge.Research.Bonus(config.EffectStorage, "")
 }
 
 // truthLayerScale is what one point of the tech layer on res is worth in its
@@ -485,11 +478,10 @@ func truthBuildCost(ge *GameEngine) float64 {
 // truthDefense is the Defense Rating of a garrison of truthSoldiers, per
 // point of its unboosted rating (1 with no bonus).
 func truthDefense(ge *GameEngine) float64 {
-	r := ge.Resources.resources["soldiers"]
-	have := r.Amount
-	r.Amount = truthSoldiers
+	held, was := ge.garrisonForTest, ge.garrisonForTestSet
+	ge.garrisonForTest, ge.garrisonForTestSet = truthSoldiers, true
 	rating := ge.defenseRating()
-	r.Amount = have
+	ge.garrisonForTest, ge.garrisonForTestSet = held, was
 	return rating / (2 * truthSoldiers)
 }
 
@@ -963,7 +955,7 @@ var truthKinds = map[string]truthKind{
 				// The knowledge store is the knowledge buildings' alone
 				// (knowledge_store.go): a tech's bonus to every store, and
 				// a storage building's, do not reach it.
-				if key == "knowledge" || key == "soldiers" { // soldiers: the posted army
+				if key == "knowledge" {
 					continue
 				}
 				base := truthStoreWithTechScale(ge, key, 1)
@@ -1024,14 +1016,10 @@ var truthKinds = map[string]truthKind{
 			if p.Eff.Target == config.MechanicGiftOpinion {
 				noise = 1 / a
 			}
-			// More room for soldiers is more of their store.
 			allowed := meterIs(meter)
 			if meter == "cost" {
 				// A lower storage-building price lowers the next-copy floor.
 				allowed = meterHasPrefix(meter, "storage:", "stock:")
-			}
-			if p.Eff.Target == config.MechanicSoldierStorage {
-				allowed = meterIs(meter, "storage:soldiers", "stock:soldiers")
 			}
 			return truthMeasured{Delivered: after[meter]/a - 1, Noise: noise, Allowed: allowed}
 		},
@@ -1233,8 +1221,8 @@ var truthKinds = map[string]truthKind{
 			m := truthMeasured{Allowed: meterHasPrefix("storage:")}
 			lo, hi := math.Inf(1), math.Inf(-1)
 			for _, key := range ge.Resources.order {
-				if key == "knowledge" || key == "soldiers" {
-					continue // its own store (knowledge_store.go); the posted army
+				if key == "knowledge" {
+					continue // its own store (knowledge_store.go)
 				}
 				scale := count * truthStoreScale(ge, key)
 				d, noise := truthDiff(before, after, "aux:storage-raw:"+key)
@@ -1831,8 +1819,6 @@ func truthEffectText(e config.Effect) string {
 		switch e.Target {
 		case "all":
 			return fmt.Sprintf("%+g storage for every resource but knowledge", e.Value)
-		case "soldiers":
-			return fmt.Sprintf("%+g soldier storage", e.Value)
 		}
 		return fmt.Sprintf("%+g %s storage", e.Value, ResourceName(e.Target))
 	case "capacity":
@@ -1956,7 +1942,7 @@ func truthMilestoneAge(l *truthLab, def config.MilestoneDef) string {
 		later(config.ResourceByKey()[res].Age)
 	}
 	if def.MinSoldiersTrained > 0 {
-		later(config.ResourceByKey()["soldiers"].Age)
+		later("iron_age") // where the soldiers begin
 	}
 	if def.MinTechCount > 0 || def.MinWonders > 0 || def.MinPopulation > 0 {
 		for i, a := range keys {
@@ -2632,8 +2618,8 @@ func (l *truthLab) judge(t *testing.T, p truthPromise) truthVerdict {
 	if res := truthPaidIn(p); res != "" {
 		def := config.ResourceByKey()[res]
 		unlock := def.Age
-		// A resource its own buildings unlock (soldiers) is made by the
-		// first of them, whatever the age.
+		// A resource its own buildings unlock is made by the first of them,
+		// whatever the age.
 		selfUnlocked := def.BuiltUnlocks && p.Kind == "building_output"
 		if ageOrders()[unlock] > ageOrders()[p.Age] && !selfUnlocked {
 			if !p.Later {

@@ -218,6 +218,9 @@ func (ge *GameEngine) noteCensus() {
 			}
 		}
 	}
+	// The military domain is the soldiers at their posts: no building has
+	// military worker slots to count.
+	staffed[config.MilitaryDomain] = ge.soldierTotal()
 	for _, d := range ge.badges.domains {
 		attrs["staffed."+d] = float64(staffed[d])
 	}

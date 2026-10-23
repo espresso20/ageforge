@@ -225,12 +225,10 @@ func TestMissionCost_MilitaryGrandIsItsParty(t *testing.T) {
 		n := plantOffer(ge, TierGrand, GrandMilitary)
 		order, _ := ge.progress.AgeIndex(age)
 		want := float64(config.PartySizeOf(config.PartyMilitary, config.RefArmy(order)))
-		setIncome(ge, "soldiers", 0.037)
 		cost := ge.MissionCost(n)
 		if cost["soldiers"] != want || len(cost) != min(1, int(want)) {
 			t.Errorf("era %d: a military grand mission in %s costs %v, want %v soldiers and nothing else", i, age, cost, want)
 		}
-		setIncome(ge, "soldiers", 0)
 		if got := ge.MissionCost(n)["soldiers"]; got != want {
 			t.Errorf("a military grand mission in %s with no soldier income costs %v soldiers, want %v", age, got, want)
 		}
@@ -350,7 +348,6 @@ func TestCampaign_LeavesThePostsFull(t *testing.T) {
 	} {
 		ge := missionReady(t, 2, "iron_age")
 		setSoldiers(ge, c.held)
-		setIncome(ge, "soldiers", c.income)
 		n := plantOffer(ge, TierGrand, GrandMilitary)
 		cost := int(ge.MissionCost(n)["soldiers"])
 		if c.held > float64(cost) {
@@ -371,7 +368,7 @@ func TestCampaign_LeavesThePostsFull(t *testing.T) {
 		if active := ge.Military.ActiveByCategory(ExpeditionMilitary); active == nil || active.Soldiers != c.sent {
 			t.Fatalf("income %v: the party is %+v, want %d soldiers", c.income, active, c.sent)
 		}
-		if got := ge.Resources.Get("soldiers"); got != c.held {
+		if got := float64(ge.soldiersHome()); got != c.held {
 			t.Fatalf("soldiers after the launch = %v, want all %v still at their posts", got, c.held)
 		}
 		ge.mu.Lock()
@@ -383,7 +380,7 @@ func TestCampaign_LeavesThePostsFull(t *testing.T) {
 		if ge.Military.HasActive() {
 			t.Fatal("the campaign did not come home")
 		}
-		if got := ge.Resources.Get("soldiers"); got != c.held {
+		if got := float64(ge.soldiersHome()); got != c.held {
 			t.Errorf("sent %d, win=%v: %v soldiers at home, want %v", c.sent, c.win, got, c.held)
 		}
 	}

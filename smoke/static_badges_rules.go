@@ -95,16 +95,24 @@ func (c *badgeCheck) moreRules(def config.BadgeDef, label string, r *BadgeReach)
 		slots, deep := 0, 0
 		for _, k := range sortedKeys(m.defs) {
 			d := m.defs[k]
-			if d.WorkerDomain != def.Subject || d.WorkerCapacity <= 0 {
+			// The military domain counts soldiers at their posts: its slots
+			// are the posts of the military buildings.
+			per := d.WorkerCapacity
+			if def.Subject == config.MilitaryDomain {
+				per = d.Soldiers
+			} else if d.WorkerDomain != def.Subject {
+				continue
+			}
+			if per <= 0 {
 				continue
 			}
 			ceil := m.ceiling(k)
 			if ceil.age < 0 {
 				continue
 			}
-			deep += ceil.n * d.WorkerCapacity
+			deep += ceil.n * per
 			if ceil.age <= m.runEnd {
-				slots += ceil.n * d.WorkerCapacity
+				slots += ceil.n * per
 			}
 		}
 		housing, where := m.housing[m.runEnd], "a run"

@@ -48,16 +48,6 @@ func (ge *GameEngine) pushMechanics() {
 	ge.Buildings.SetUpgradeCostTerm(ge.Research.Mechanic(config.MechanicUpgradeCost))
 }
 
-// soldierRoom is room, the soldiers' store, with the techs' term on it:
-// room itself with none. Caller holds the lock.
-func (ge *GameEngine) soldierRoom(room float64) float64 {
-	term := ge.Research.Mechanic(config.MechanicSoldierStorage)
-	if term == 1 {
-		return room
-	}
-	return float64(room * term)
-}
-
 // appeaseCut is amount, one resource of an Appease level's price, with the
 // techs' cut (config.MechanicAppeaseCost): amount itself with none. Caller
 // holds the lock.

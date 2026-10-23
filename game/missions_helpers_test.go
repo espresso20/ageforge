@@ -139,7 +139,6 @@ func stoneEraReady(ge *GameEngine, age string) {
 	setSoldiers(ge, 1000)
 	setIncome(ge, "stone", 0.5)
 	setIncome(ge, "wood", 0.5)
-	setIncome(ge, "soldiers", 0.01)
 }
 
 // setActive puts a at the place of the oldest mission under way in tier (or

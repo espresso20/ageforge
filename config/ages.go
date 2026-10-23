@@ -92,7 +92,7 @@ func Ages() []AgeDef {
 			Quip:            "Harder, sharper, and far more likely to end an argument permanently.",
 			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 5, "warehouse": 5, "farm": 8, "smithy": 8, "altar": 8, "market": 8},
 			UnlockBuildings: []string{"townhouse", "granary", "field_works", "timber_yard", "marble_quarry", "agora", "temple", "hunting_lodge", "legion_fort", "trading_post", "ironworks", "smelter", "colosseum"},
-			UnlockResources: []string{"marble", "iron_ore", "soldiers"},
+			UnlockResources: []string{"marble", "iron_ore"},
 		},
 		// === 4: CLASSICAL AGE (Iron Era) ===
 		{

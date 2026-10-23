@@ -50,8 +50,14 @@ type ActiveExpedition struct {
 	LuckSeed  int64   `json:"luck_seed,omitempty"`
 	LuckDraws uint64  `json:"luck_draws,omitempty"`
 	Luck      float64 `json:"luck,omitempty"`
-	luckSrc   *countingSource
-	luckRNG   *rand.Rand
+	// LaunchChance is the odds the mission was sent with: SuccessChance moves
+	// with the road, this does not. HaulScale is what the road did to the
+	// loot, the product of its scalings (0 is none). Both are read by the
+	// Expedition Report's field report.
+	LaunchChance float64 `json:"launch_chance,omitempty"`
+	HaulScale    float64 `json:"haul_scale,omitempty"`
+	luckSrc      *countingSource
+	luckRNG      *rand.Rand
 }
 
 // luckStream is the mission's own random stream. It is built on first use from
@@ -188,6 +194,7 @@ func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, c
 		TotalTicks:   ticks,
 		BaseRewards:  maps.Clone(baseHaul),
 		Cost:         maps.Clone(cost),
+		LaunchChance: offer.SuccessChance,
 	}
 	mm.active = append(mm.active, a)
 	return a, nil
@@ -372,11 +379,9 @@ func (mm *MilitaryManager) CalculateDefense(soldierCount int, militaryBonus floa
 
 // Snapshot returns military state for UI.
 //
-// soldierCount is the current soldiers resource amount; soldierCap and
-// soldierRate are that resource's storage cap and per-tick production rate.
-// The engine fills the board's offers (it knows the costs and the stores) and
+// soldierCount is the soldiers at home. The engine fills the board's offers (it knows the costs and the stores) and
 // the automatic dispatch view.
-func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, militaryBonus, expeditionBonus float64) MilitaryState {
+func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionBonus float64) MilitaryState {
 	snap := func(a *ActiveExpedition) *ExpeditionSnapshot {
 		out := snapshotActive(a, expeditionBonus)
 		if out != nil {
@@ -404,8 +409,6 @@ func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, m
 
 	return MilitaryState{
 		SoldierCount:    soldierCount,
-		SoldierCap:      soldierCap,
-		SoldierRate:     soldierRate,
 		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
 		MilitaryBonus:   militaryBonus,
 		ExpeditionBonus: expeditionBonus,
@@ -458,7 +461,22 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		SuccessHaul:   success,
 		FailureHaul:   failure,
 		RoadStories:   append([]string(nil), active.RoadEventsSeen...),
+		RoadKinds:     firedRoadKinds(active),
+		LaunchChance:  active.LaunchChance,
+		HaulScale:     active.haulScale(),
 	}
+}
+
+// firedRoadKinds is the kind of each road event that has fired, in the order
+// RoadEventsSeen holds their stories.
+func firedRoadKinds(active *ActiveExpedition) []string {
+	var kinds []string
+	for _, e := range active.RoadEvents {
+		if e.Fired {
+			kinds = append(kinds, e.Kind)
+		}
+	}
+	return kinds
 }
 
 func scaleLoot(in map[string]float64, scale float64) map[string]float64 {

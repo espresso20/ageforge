@@ -155,19 +155,19 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 	}
 
 	// The Military-Industrial Complex: a campaign brings back a fifth more,
-	// won or lost. Scouting does not. (Its room for soldiers has nothing to
-	// hold now: the army is the posted soldiers, not a store.)
+	// won or lost. Scouting does not. It also gives every military building a
+	// tenth more posts.
 	mic := with("military_industrial_complex")
 	for _, ge := range []*GameEngine{plain, mic} {
 		ge.mu.Lock()
-		ge.Resources.UnlockResource("soldiers")
 		ge.Buildings.counts["garrison"] = 3
 		ge.postAllSoldiers()
 		ge.recalculateRates()
 		ge.mu.Unlock()
 	}
-	if a, b := plain.Resources.Get("soldiers"), mic.Resources.Get("soldiers"); a <= 0 || a != b {
-		t.Errorf("three Garrisons post %v soldiers, %v with the Military-Industrial Complex; want the same posts", a, b)
+	base := plain.Buildings.defs["garrison"].Soldiers
+	if a, b := plain.soldierTotal(), mic.soldierTotal(); a != 3*base || b != 3*int(math.Ceil(float64(base)*1.1)) {
+		t.Errorf("three Garrisons post %d soldiers, %d with the Military-Industrial Complex; want %d and %d (a tenth more posts)", a, b, 3*base, 3*int(math.Ceil(float64(base)*1.1)))
 	}
 	if a, b := plain.Resources.GetStorage("food"), mic.Resources.GetStorage("food"); a != b {
 		t.Errorf("the food store is %v, %v with the Military-Industrial Complex; want the same", a, b)

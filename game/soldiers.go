@@ -28,9 +28,8 @@ import (
 // (military.go, parties): the party leaves its posts while away, so the army
 // at home is the posted soldiers less the soldiers away. Everything that reads
 // soldiers (the Defense Rating, raids, the Brace view, a party's launch, the
-// soldier milestones) reads the "soldiers" resource, and syncSoldiers holds
-// that resource at the army at home every tick. Nothing else writes it. Away
-// or home, a soldier is a person: he eats and takes a place in the homes.
+// soldier milestones) reads soldiersHome. There is no soldiers resource.
+// Away or home, a soldier is a person: he eats and takes a place in the homes.
 //
 // Soldiers fall: on a mission that fails or costs lives, in an ambush on the
 // road, and when a raid lands against the garrison. A fallen soldier leaves the
@@ -54,11 +53,26 @@ type SoldierPost struct {
 	Posted, Posts int
 }
 
+// soldierPerCopy is the posts one copy of a military building has: its base
+// figure (config.BuildingDef.Soldiers) with the techs' tenth more each
+// (config.MechanicSoldierPosts):
+//
+//	posts = ceil(base x (1 + 0.1 x techs))
+func (ge *GameEngine) soldierPerCopy(def config.BuildingDef) int {
+	bonus := ge.Research.Mechanic(config.MechanicSoldierPosts)
+	if def.Soldiers <= 0 || bonus <= 0 {
+		return def.Soldiers
+	}
+	// The epsilon keeps a product that lands a hair above a whole number
+	// (10 x 1.1) from rounding up a post.
+	return int(math.Ceil(float64(float64(def.Soldiers)*(1+bonus)) - 1e-9))
+}
+
 // soldierPostsOf is the posts of the copies of key that stand.
 func (ge *GameEngine) soldierPostsOf(key string) int {
 	bm := ge.Buildings
 	if n := bm.counts[key]; n > 0 {
-		return n * bm.defs[key].Soldiers
+		return n * ge.soldierPerCopy(bm.defs[key])
 	}
 	return 0
 }
@@ -92,8 +106,9 @@ func (ge *GameEngine) soldierPosts() []SoldierPost {
 		if def.Soldiers <= 0 {
 			return
 		}
-		posts := count * def.Soldiers
-		out = append(out, SoldierPost{Key: key, Name: def.Name, Count: count, PerCopy: def.Soldiers, Posted: min(ge.soldiersPosted[key], posts), Posts: posts})
+		per := ge.soldierPerCopy(def)
+		posts := count * per
+		out = append(out, SoldierPost{Key: key, Name: def.Name, Count: count, PerCopy: per, Posted: min(ge.soldiersPosted[key], posts), Posts: posts})
 	})
 	sort.SliceStable(out, func(i, j int) bool {
 		return ge.Buildings.defs[out[i].Key].LineageTier < ge.Buildings.defs[out[j].Key].LineageTier
@@ -280,14 +295,13 @@ func (ge *GameEngine) fillSoldierPosts() int {
 	return total + ge.trainFallenPosts()
 }
 
-// syncSoldiers holds the soldiers resource at the army at home (the posted army less
-// the parties away), the compatibility
-// bridge to every reader that still reads the resource. It also counts the
-// soldiers that arrive (a copy built, an older copy upgraded) in the lifetime
-// soldiers-trained total the milestones read (a load sets soldiersSeen to the
-// army that stands, so a loaded army is not counted again). Caller holds the write lock. Called by
-// recalculateRates, which runs every tick and after every change to the
-// buildings.
+// syncSoldiers settles the posts: it drops the soldiers and vacancies that went
+// with a lost copy, and counts the soldiers that arrive (a copy built, an older
+// copy upgraded) in the lifetime soldiers-trained total the milestones read
+// and in the badge counter produced.soldiers (a load sets soldiersSeen to the
+// army that stands, so a loaded army is not counted again). Caller holds the
+// write lock. Called by recalculateRates, which runs every tick and after every
+// change to the buildings.
 func (ge *GameEngine) syncSoldiers() {
 	// Posts that went with a lost copy are gone.
 	for key, n := range ge.soldiersPosted {
@@ -322,15 +336,6 @@ func (ge *GameEngine) syncSoldiers() {
 		}
 	}
 	ge.soldiersSeen = posted
-	home := float64(ge.soldiersHome())
-	r := ge.Resources.resources["soldiers"]
-	if r == nil {
-		return
-	}
-	if home > 0 {
-		ge.Resources.UnlockResource("soldiers")
-	}
-	r.Amount, r.Storage, r.Rate = home, home, 0
 }
 
 // logSoldiersArrived says that n soldiers have taken their posts at a military
@@ -348,7 +353,7 @@ func (ge *GameEngine) logSoldiersArrived(def config.BuildingDef, n int) {
 func (ge *GameEngine) withSoldierFigures(bs map[string]BuildingState) map[string]BuildingState {
 	for key, b := range bs {
 		if def, ok := ge.Buildings.defs[key]; ok && def.Soldiers > 0 {
-			b.Soldiers = def.Soldiers
+			b.Soldiers = ge.soldierPerCopy(def)
 			bs[key] = b
 		}
 	}

@@ -20,13 +20,13 @@ import (
 // mid-age included. The fate is persisted (GameSave.Fate): a reload cannot
 // re-roll it.
 //
-// Every expected duration here (the era's window, the harbinger's lead, the
-// "before this age is out" forecast, the shortest warning) is measured in
-// expectedAgeTicks, never a hard-coded time, so a pacing change carries
-// through in one place.
+// Every expected duration here (the era's window, the "before this age is
+// out" forecast) is measured in expectedAgeTicks, and the harbinger's lead in
+// warningAgeTicks (the same age on the price target), never a hard-coded
+// time, so a pacing change carries through in one place.
 //
 // A harbinger comes only when a doom is fated, a random lead before the
-// strike: LeadFrac × the current age's expectedAgeTicks, never before the era
+// strike: LeadFrac × the current age's warningAgeTicks, never before the era
 // began. A quiet era means safe, for now. Until the harbinger arrives nothing
 // may reveal whether a doom is fated: CatastropheOutlook, the panels, the
 // commands, the log and the map read the same either way.
@@ -82,7 +82,8 @@ const (
 	FateStrikeScale = 5.0
 
 	// harbingerLeadMin and harbingerLeadMax bound the harbinger's lead before
-	// the strike, as a fraction of the current age's expectedAgeTicks.
+	// the strike, as a fraction of the current age's warningAgeTicks (its price
+	// target, the one Appease and Brace are priced on).
 	harbingerLeadMin = 0.20
 	harbingerLeadMax = 0.60
 )
@@ -123,7 +124,7 @@ type FateSave struct {
 	// foretells. Absolute tick.
 	StrikeTick int `json:"strike_tick,omitempty"`
 	// LeadFrac is the harbinger's lead before StrikeTick as a fraction of the
-	// current age's expectedAgeTicks.
+	// current age's warningAgeTicks.
 	LeadFrac float64 `json:"lead_frac,omitempty"`
 	// Claim is the tier a false prophet claims (medium or high).
 	Claim CatastropheTier `json:"claim,omitempty"`
@@ -148,6 +149,17 @@ type FateSave struct {
 // Read-only.
 func (ge *GameEngine) expectedAgeTicks(age string) float64 {
 	return float64(ge.rules.TargetTicks(age) / ge.Prestige.AgeSpeed(age))
+}
+
+// warningAgeTicks is the age length a harbinger's lead is a share of: the
+// price target (rules.Set.PriceTargetTicks, the one the Appease and Brace
+// prices are set from) divided by the age's Era Mastery speed, as
+// expectedAgeTicks does. It is longer than expectedAgeTicks from the Modern
+// Age on, where prices climb, so a warning lasts long enough to earn what
+// the answers to it cost. Only the lead reads it: the era's window and the
+// "before this age is out" forecast stay on expectedAgeTicks. Read-only.
+func (ge *GameEngine) warningAgeTicks(age string) float64 {
+	return float64(ge.rules.PriceTargetTicks(age) / ge.Prestige.AgeSpeed(age))
 }
 
 // expectedEraTicks is epochKey's expected length: its ages' expectedAgeTicks
@@ -230,7 +242,7 @@ func (ge *GameEngine) fateThread() *HarbingerSave {
 // strike, measured in the current age's target.
 func (ge *GameEngine) fateArrivalTick() int {
 	f := ge.fate
-	return f.StrikeTick - int(f.LeadFrac*ge.expectedAgeTicks(ge.age))
+	return f.StrikeTick - int(f.LeadFrac*ge.warningAgeTicks(ge.age))
 }
 
 // fateHarbingerDue reports whether the fate's harbinger should arrive now. A
@@ -326,7 +338,7 @@ func (ge *GameEngine) fateArrive() bool {
 	// A doom is always foretold: never sooner than the shortest lead after
 	// its harbinger comes (a strike fated for the era's first moments, before
 	// any lead could reach back, is held until then).
-	if soonest := ge.tick + int(harbingerLeadMin*ge.expectedAgeTicks(ge.age)); f.StrikeTick < soonest {
+	if soonest := ge.tick + int(harbingerLeadMin*ge.warningAgeTicks(ge.age)); f.StrikeTick < soonest {
 		f.StrikeTick = soonest
 	}
 	h.When = ge.fateWhen(def)

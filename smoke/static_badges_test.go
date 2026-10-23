@@ -130,15 +130,20 @@ func TestFirstRungsComeEarly(t *testing.T) {
 	// Every resource ladder climbs in even multiplicative steps, from the
 	// first age's production to twenty-five runs: no step is more than a
 	// quarter longer than another (the rungs are rounded to two figures).
-	if len(byName) != len(set.Resources()) {
-		t.Errorf("%d resource ladders for %d resources", len(byName), len(set.Resources()))
+	// The soldiers are no resource, but their ladder is one of these.
+	ladders := []string{config.SoldiersKey}
+	for _, res := range set.Resources() {
+		ladders = append(ladders, res.Key)
+	}
+	if len(byName) != len(ladders) {
+		t.Errorf("%d resource ladders for %d resources and the soldiers", len(byName), len(set.Resources()))
 	}
 	badges := 0
-	for _, res := range set.Resources() {
-		r := byName[res.Key]
+	for _, key := range ladders {
+		r := byName[key]
 		badges += len(r.Rungs)
 		if len(r.Rungs) < 3 {
-			t.Errorf("%s has %d rungs", res.Key, len(r.Rungs))
+			t.Errorf("%s has %d rungs", key, len(r.Rungs))
 			continue
 		}
 		low, high := math.Inf(1), 0.0
@@ -147,11 +152,11 @@ func TestFirstRungsComeEarly(t *testing.T) {
 			low, high = math.Min(low, step), math.Max(high, step)
 		}
 		if high > 1.25*low {
-			t.Errorf("%s: the rungs %v climb in steps from x%.3g to x%.3g, not evenly", res.Key, r.Rungs, low, high)
+			t.Errorf("%s: the rungs %v climb in steps from x%.3g to x%.3g, not evenly", key, r.Rungs, low, high)
 		}
-		perRun, _ := set.RunProduction(res.Key)
+		perRun, _ := set.RunProduction(key)
 		if top := r.Rungs[len(r.Rungs)-1]; top > config.BadgeMaxRuns*perRun || top < 0.9*config.BadgeMaxRuns*perRun {
-			t.Errorf("%s: the top rung is %s, want %d runs of %s", res.Key, config.FormatAmount(top), config.BadgeMaxRuns, config.FormatAmount(perRun))
+			t.Errorf("%s: the top rung is %s, want %d runs of %s", key, config.FormatAmount(top), config.BadgeMaxRuns, config.FormatAmount(perRun))
 		}
 	}
 	if badges != 90 {

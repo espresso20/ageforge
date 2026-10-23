@@ -30,6 +30,39 @@ func helpProvider(_ game.GameState, screenW int) string {
 		}
 	}
 
+	// keys writes a section of keys: each key padded to the longest, then
+	// what it does.
+	keys := func(rows ...[2]string) {
+		keyW := 0
+		for _, r := range rows {
+			keyW = max(keyW, runeLen(r[0]))
+		}
+		for _, r := range rows {
+			row("  [cyan]"+r[0]+"[-]"+strings.Repeat(" ", keyW-runeLen(r[0]))+" - ", r[1])
+		}
+	}
+
+	sb.WriteString("[gold]═══ Getting around ═══[-]\n")
+	note("Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open on top of the town; the prompt keeps working while one is open.")
+	keys([2]string{"PgUp/PgDn", "Scroll a panel that is longer than the screen, like this one"},
+		[2]string{"Esc", "Close the panel (with no panel open: save and go to the main menu)"},
+		[2]string{"Tab", "Finish the word you are typing (press again for the next match)"},
+		[2]string{"help", "Open this page again at any time"})
+	note("New here? Try: build hut, then status, then research. Each panel below lists its own keys.")
+	sb.WriteString("\n[gold]═══ The dashboard ═══[-]\n")
+	note("With no panel open.")
+	keys([2]string{"PgUp/PgDn", "Scroll the Buildings list"},
+		[2]string{resourcePageKeyName, "The next page of the Resources box, when it has more than it can show"},
+		[2]string{"Esc", "Save and go to the main menu (with a panel open: close it)"})
+
+	sb.WriteString("\n[gold]═══ The prompt ═══[-]\n")
+	note("As you type, the best completion shows in dim text after the cursor.")
+	keys([2]string{"Tab", "Take the completion; press again for the next one"},
+		[2]string{"→", "Take the completion (cursor at the end of the line)"},
+		[2]string{"Enter", "Run the line; an unfinished line runs its completion (irreversible ones, like sell, are only filled in: Enter again runs them)"},
+		[2]string{"↑/↓", "Command history"})
+
+	sb.WriteString("\n")
 	for i, sec := range helpSections {
 		if i > 0 {
 			sb.WriteString("\n")
@@ -63,31 +96,6 @@ func helpProvider(_ game.GameState, screenW int) string {
 		}
 	}
 	row("  [cyan]"+padRight("Accounts", 12)+"[-] - ", "Switch, create or back up accounts [gray](main-menu panel, not a command)[-]")
-
-	// keys writes a section of keys: each key padded to the longest, then
-	// what it does.
-	keys := func(rows ...[2]string) {
-		keyW := 0
-		for _, r := range rows {
-			keyW = max(keyW, runeLen(r[0]))
-		}
-		for _, r := range rows {
-			row("  [cyan]"+r[0]+"[-]"+strings.Repeat(" ", keyW-runeLen(r[0]))+" - ", r[1])
-		}
-	}
-
-	sb.WriteString("\n[gold]═══ The dashboard ═══[-]\n")
-	note("With no panel open.")
-	keys([2]string{"PgUp/PgDn", "Scroll the Buildings list"},
-		[2]string{resourcePageKeyName, "The next page of the Resources box, when it has more than it can show"},
-		[2]string{"Esc", "Save and go to the main menu (with a panel open: close it)"})
-
-	sb.WriteString("\n[gold]═══ The prompt ═══[-]\n")
-	note("As you type, the best completion shows in dim text after the cursor.")
-	keys([2]string{"Tab", "Take the completion; press again for the next one"},
-		[2]string{"→", "Take the completion (cursor at the end of the line)"},
-		[2]string{"Enter", "Run the line; an unfinished line runs its completion (irreversible ones, like sell, are only filled in: Enter again runs them)"},
-		[2]string{"↑/↓", "Command history"})
 
 	sb.WriteString("\n[gold]═══ The Map panel ═══[-]\n")
 	note("The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing.")

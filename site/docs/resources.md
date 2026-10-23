@@ -1,6 +1,6 @@
 # Resources
 
-AgeForge has **25 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Stock has no limit: what you make piles up, and prices are the only brake. Research is not one of them: it is done by [scholars](knowledge.md), and nothing holds it.
+AgeForge has **24 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Stock has no limit: what you make piles up, and prices are the only brake. Research is not one of them: it is done by [scholars](knowledge.md), and nothing holds it.
 
 Amounts print with up to three figures and a unit from a thousand up: K, M, B, T and Q, and past Q the units go on as Qi, Sx, Sp, Oc, No and Dc (1.5K, 876M, 11.8Qi).
 
@@ -54,13 +54,7 @@ These four come from Geological Extraction mines. In the ages that make one, bui
 | Antimatter | `antimatter` | Galactic Age | 20 | Annihilation fuel for megastructures |
 | Quantum Flux | `quantum_flux` | Quantum Age | 10 | Unstable quantum energy |
 
-### Military
-
-| Resource | Key | Unlocks | Base Storage | Notes |
-|----------|-----|---------|--------------|-------|
-| Soldiers | `soldiers` | Iron Age, or your first military building | 0 | Not made or stored: military buildings come with them, and they stand at its posts as your garrison |
-
-Soldiers are the 26th entry, but not a stockpile: the number is the soldiers at the posts of your military buildings. See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
+Soldiers are not on this list. They are people, not a resource: the army is the soldiers at the posts of your military buildings. See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
 
 ---
 
@@ -223,7 +217,7 @@ Bonuses to one resource ("+10% gold production" from a milestone or a wonder) ha
 
 ## Production Rates
 
-Every building rate in the game is the **fully staffed** rate shown in the building's description. For **construction resources** (anything the buildings of your current age cost) the rate follows the **Payback Rule**: fully staffed, a producer earns back the price of its first copy within the age's payback time. That time is a growing share of the age: under a minute in the Primitive Age, 45 minutes in the Iron Age, 5 hours in the Renaissance. Later ages repay more slowly because your older buildings keep producing too. The **flow resources** (food, faith, culture and soldiers) keep hand-set rates, and the requirements that ask for them are sized to match. Details and the full table are on [Buildings](buildings.md#how-production-rates-are-set).
+Every building rate in the game is the **fully staffed** rate shown in the building's description. For **construction resources** (anything the buildings of your current age cost) the rate follows the **Payback Rule**: fully staffed, a producer earns back the price of its first copy within the age's payback time. That time is a growing share of the age: under a minute in the Primitive Age, 45 minutes in the Iron Age, 5 hours in the Renaissance. Later ages repay more slowly because your older buildings keep producing too. The **flow resources** (food, faith, culture and nanobots) keep hand-set rates, and the requirements that ask for them are sized to match. Details and the full table are on [Buildings](buildings.md#how-production-rates-are-set).
 
 ---
 
@@ -258,9 +252,9 @@ Gold pays for diplomacy gifts and many mid-to-late game buildings.
 
 ## Soldiers
 
-Soldiers are not a stockpile: they are the people at the posts of your military buildings (the 26th resource entry holds that number for the panels that read it). The number unlocks when your first military building stands (a War Camp can be built in the Stone Age), and at the **Iron Age** for a town that built none.
+Soldiers are not a resource: they are the people at the posts of your military buildings. The first stand when a military building does (a War Camp can be built in the Stone Age).
 
-**Where soldiers come from:** each copy of a military building (War Camp, Barracks and their successors) has a fixed number of posts, which fill from the reserve and then with new arrivals as the food allows. Nothing produces or stores them, so no staffing, storage building or storage tech changes the number. A copy that is lost takes its soldiers with it.
+**Where soldiers come from:** each copy of a military building (War Camp, Barracks and their successors) has a fixed number of posts, which fill from the reserve and then with new arrivals as the food allows. Nothing produces or stores them, and a military building has no worker slots. Two technologies, the Military-Industrial Complex and Augmented Soldiers, give every military building a tenth more posts each. A copy that is lost takes its soldiers with it.
 
 **What soldiers need:** they are people, so they take a place in your homes and eat the same food as a worker. If your homes are full when a military building stands, its soldiers still arrive (as far as the food margin allows) and your reserve stops growing until there is room.
 

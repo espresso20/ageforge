@@ -11,22 +11,16 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// giveSoldiers unlocks the soldiers resource and fills it with n soldiers
-// (storage raised to fit).
+// giveSoldiers puts n soldiers at home, whatever military buildings stand
+// (a rates pass would otherwise count the posted army).
 func giveSoldiers(ge *GameEngine, n float64) {
-	// A rates pass holds the resource at the posted army; the test hook holds
-	// it at n instead.
 	ge.garrisonForTest, ge.garrisonForTestSet = n, true
-	ge.Resources.UnlockResource("soldiers")
-	room(ge, "soldiers", n)
-	ge.Resources.Add("soldiers", n)
 }
 
 // noGarrison holds the army at nothing whatever military buildings stand
 // (a rates pass would put the posted army back).
 func noGarrison(ge *GameEngine) {
 	ge.garrisonForTest, ge.garrisonForTestSet = 0, true
-	ge.Resources.resources["soldiers"].Amount = 0
 }
 
 // room gives ge storage for n more of res that a rates pass keeps, as a

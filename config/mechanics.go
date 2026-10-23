@@ -59,8 +59,9 @@ const (
 	// MechanicCampaignTicks multiplies the time a military campaign takes.
 	// Scouting expeditions have MechanicExpeditionTicks.
 	MechanicCampaignTicks = "campaign_ticks"
-	// MechanicSoldierStorage multiplies how many soldiers can be held.
-	MechanicSoldierStorage = "soldier_storage"
+	// MechanicSoldierPosts adds to the posts of every military building: a
+	// tenth of its base figure for each tech (game.soldierPerCopy).
+	MechanicSoldierPosts = "soldier_posts"
 	// MechanicCampaignReward multiplies what a military campaign brings
 	// back, won or lost.
 	MechanicCampaignReward = "campaign_reward"
@@ -140,8 +141,8 @@ func Mechanics() []MechanicDef {
 			Text: "upgrades cost %s less", Unit: UnitPercent},
 		{Key: MechanicCampaignTicks, Name: "campaign time", Multiplies: true, Min: 0.40, Max: 1,
 			Text: "campaigns take %s less time", Unit: UnitPercent},
-		{Key: MechanicSoldierStorage, Name: "soldier storage", Multiplies: true, Min: 1, Max: 2,
-			Text: "room for %s more soldiers", Unit: UnitPercent},
+		{Key: MechanicSoldierPosts, Name: "soldier posts", Min: 0, Max: 0.30,
+			Text: "military buildings have %s more soldier posts", Unit: UnitPercent},
 		{Key: MechanicCampaignReward, Name: "campaign loot", Multiplies: true, Min: 1, Max: 2,
 			Text: "campaigns bring back %s more", Unit: UnitPercent},
 		{Key: MechanicDealSlots, Name: "deals a civilization offers", Min: 0, Max: 3,

@@ -152,7 +152,8 @@ func TestFamilySources(t *testing.T) {
 		{"eras", config.BadgeSourceEras, len(src.Eras), config.BadgeRevealAtAge},
 		{"wonders", config.BadgeSourceWonders, len(src.Ages), config.BadgeRevealAtAge},
 		{"lineages", config.BadgeSourceLineages, len(lineages), config.BadgeRevealAtAge},
-		{"resources", config.BadgeSourceResources, len(src.Resources), config.BadgeRevealAtAge},
+		// The soldiers are no resource, but their ladder is one more row here.
+		{"resources", config.BadgeSourceResources, len(src.Resources) + 1, config.BadgeRevealAtAge},
 		{"civs", config.BadgeSourceCivs, len(src.Factions), config.BadgeRevealOnCounter},
 		{"harbingers", config.BadgeSourceHarbingers, len(src.Harbingers), config.BadgeRevealOnCounter},
 		{"awakenings", config.BadgeSourceAwakenings, len(src.Awakenings), config.BadgeRevealOnCounter},

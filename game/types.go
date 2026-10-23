@@ -495,13 +495,12 @@ type TechState struct {
 
 // MilitaryState represents military system state for UI
 type MilitaryState struct {
-	// SoldierCount is the soldiers at home: the soldiers resource, which is
-	// held at the posted army (soldiers.go).
+	// SoldierCount is the soldiers at home: the posted army less the parties
+	// away (soldiers.go).
 	SoldierCount int
 	// SoldierCap is the army's whole strength: the posts of every standing
-	// military building. SoldierRate is always 0: nothing trains soldiers.
-	SoldierCap  int
-	SoldierRate float64
+	// military building.
+	SoldierCap int
 	// Posts is the soldiers' posts building by building, oldest first: the
 	// army at home over the army's whole strength.
 	Posts         []SoldierPost
@@ -604,6 +603,12 @@ type ExpeditionSnapshot struct {
 	SuccessHaul   map[string]float64
 	FailureHaul   map[string]float64
 	RoadStories   []string
+	// RoadKinds is the kind of each road event that has fired, in the order of
+	// RoadStories. LaunchChance is the odds it was sent with (0 for a save from
+	// before it was kept) and HaulScale what the road did to its loot (0 is none).
+	RoadKinds    []string
+	LaunchChance float64
+	HaulScale    float64
 }
 
 // ExpeditionInfo represents an available expedition for UI
@@ -724,7 +729,7 @@ type MilestoneSnapshotParams struct {
 	Population      int
 	TechCount       int
 	TotalBuilt      int
-	SoldierCount    int // soldiers resource amount (live); used by non-milestone consumers
+	SoldierCount    int // soldiers at home (live); used by non-milestone consumers
 	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
 	KnowledgeCount  int // scholars

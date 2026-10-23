@@ -18,9 +18,8 @@ func warCampPosts(t *testing.T) int {
 	return def.Soldiers
 }
 
-// No building makes soldiers or stores them any more: a military building
-// comes with its soldiers (config.BuildingDef.Soldiers) and nothing else
-// writes the resource.
+// No building makes soldiers or stores them: a military building comes with
+// its soldiers (config.BuildingDef.Soldiers). There is no soldiers resource.
 func TestNoBuildingMakesOrStoresSoldiers(t *testing.T) {
 	military := 0
 	for _, d := range config.BaseBuildings() {
@@ -187,17 +186,17 @@ func TestSoldiersEat(t *testing.T) {
 	}
 }
 
-// The soldiers resource is the posted army, every tick: it follows the posts
-// that fill, a lost copy takes its soldiers with it, and nothing else moves it.
-func TestSoldiersResourceIsThePostedArmyEachTick(t *testing.T) {
+// The soldiers at home are the posted army, every tick: they follow the posts
+// that fill, and a lost copy takes its soldiers with it.
+func TestSoldiersAtHomeAreThePostedArmyEachTick(t *testing.T) {
 	posts := warCampPosts(t)
 	ge := peopleEngine(t)
-	army := func() (resource float64, posted int, rate float64) {
+	army := func() (home float64, posted int) {
 		ge.mu.RLock()
 		defer ge.mu.RUnlock()
-		return ge.Resources.Get("soldiers"), ge.soldierTotal(), ge.Resources.GetRate("soldiers")
+		return float64(ge.soldiersHome()), ge.soldierTotal()
 	}
-	if r, p, _ := army(); r != 0 || p != 0 {
+	if r, p := army(); r != 0 || p != 0 {
 		t.Fatalf("no military building, yet %v soldiers (%d posted)", r, p)
 	}
 	ge.mu.Lock()
@@ -206,23 +205,20 @@ func TestSoldiersResourceIsThePostedArmyEachTick(t *testing.T) {
 	ge.StepTicks(staffEveryTicks * 2)
 	for i := 0; i < 5; i++ {
 		ge.StepTicks(1)
-		r, p, rate := army()
-		if p != 3*posts || r != float64(p) || rate != 0 {
-			t.Fatalf("tick %d: %v soldiers, %d posted, rate %v; want %d, %d and no rate", i, r, p, rate, 3*posts, 3*posts)
+		r, p := army()
+		if p != 3*posts || r != float64(p) {
+			t.Fatalf("tick %d: %v soldiers, %d posted; want %d and %d", i, r, p, 3*posts, 3*posts)
 		}
 	}
 	st := ge.GetState()
 	if st.Military.SoldierCount != 3*posts || st.Workers.Soldiers != 3*posts {
 		t.Errorf("the state says %d soldiers in the army and %d in the town, want %d", st.Military.SoldierCount, st.Workers.Soldiers, 3*posts)
 	}
-	if !st.Resources["soldiers"].Unlocked {
-		t.Error("a standing War Camp did not unlock the soldiers")
-	}
 	ge.mu.Lock()
 	ge.Buildings.counts["war_camp"] = 1
 	ge.mu.Unlock()
 	ge.StepTicks(1)
-	if r, p, _ := army(); p != posts || r != float64(posts) {
+	if r, p := army(); p != posts || r != float64(posts) {
 		t.Errorf("after two copies went: %v soldiers, %d posted, want %d", r, p, posts)
 	}
 	// Defense reads the posted army.
@@ -262,9 +258,7 @@ func TestSoldiersArrivalIsLoggedAndCounted(t *testing.T) {
 	posts := warCampPosts(t)
 	ge := peopleEngine(t)
 	for key := range ge.Resources.resources {
-		if key != "soldiers" {
-			setAmount(ge, key, 1e6)
-		}
+		setAmount(ge, key, 1e6)
 	}
 	ge.Buildings.UnlockBuilding("war_camp")
 	if err := ge.BuildBuilding("war_camp"); err != nil {
