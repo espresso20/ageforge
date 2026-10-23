@@ -16,6 +16,7 @@
 
 - **Progression**
   - [The 22 Ages](ages.md)
+  - [The Advance Panel](advance.md)
   - [Wonders](wonders.md)
   - [Milestones & Chains](milestones.md)
   - [Epochs](epochs.md)

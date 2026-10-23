@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **The Advance panel.** A full-screen view of what stands between you and the next age: the march of ages with a moving calendar year, the age's four pillars (Knowledge, People, Industry, Monument), and what the next age brings.
 - **Skyline zoom.** Zoom out to see the whole town or in to see every building up close, and steer by the overview bar, which now shows your real skyline and a box for where you are looking.
 - **VibeMode (early).** A setting that swaps the game's words for a GenZ script; this release has the switch and a first handful of lines.
 - **plan optimize.** Reorders your planned buildings for the fastest growth, interleaving homes and producers, and says how much sooner the plan finishes.

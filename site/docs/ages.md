@@ -14,7 +14,7 @@ If more than one age goes by before the screen can show (a queued [`plan advance
 
 ## Wonder Requirement
 
-Each age unlocks exactly one wonder building. You must **build that wonder** before you can advance to the next age, on top of the building requirements listed below. The age progress bar shows a red `✗ Wonder: <name>` notice until it is complete. See [Wonders](wonders.md) for build costs and instructions.
+Each age unlocks exactly one wonder building. You must **build that wonder** before you can advance to the next age, on top of the building requirements listed below. The age progress bar shows a red `✗ Wonder: <name>` notice until it is complete. See [Wonders](wonders.md) for build costs and instructions. The whole gate, sorted into four pillars, is on the [Advance panel](advance.md).
 
 ## Keystone Techs
 
