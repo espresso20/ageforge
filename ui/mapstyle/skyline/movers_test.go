@@ -49,11 +49,19 @@ func moverModels(m *mapmodel.Model) []*mapmodel.Model {
 
 // sweep calls fn with the traffic of m over the whole panorama (cameras
 // 80 columns apart on a view 160 wide, so every bay and launch pad passes
-// through it) at a spread of frames.
+// through it) at a spread of frames, on a tall view (45 rows: the roster's
+// people and lanes) and a short one (36 rows: the one-cell markers).
 func sweep(m *mapmodel.Model, fn func(vs []vehicle)) {
-	for cam := 0; cam < m.Skyline.Width; cam += 80 {
-		for _, anim := range []int{0, 9, 40, 77, 133, 400} {
-			fn(trafficFor(m, anim, cam, 160, 39))
+	sweepAt(m, []int{39, 30}, fn)
+}
+
+// sweepAt is sweep on views whose ground is at the scene rows gys.
+func sweepAt(m *mapmodel.Model, gys []int, fn func(vs []vehicle)) {
+	for _, gy := range gys {
+		for cam := 0; cam < m.Skyline.Width; cam += 80 {
+			for _, anim := range []int{0, 9, 40, 77, 133, 400} {
+				fn(trafficFor(m, anim, cam, 160, gy))
+			}
 		}
 	}
 }
@@ -185,39 +193,40 @@ func TestMoverFallbacks(t *testing.T) {
 		model int // moverModels index: 1 land, 2 sea, 3 air routes
 		which pick
 		want  []*vtemplate
-		max   int // at most this many (0: any number)
+		max   int  // at most this many (0: any number)
+		small bool // only on the short view: the tall one's roster draws these streams (roster.go)
 	}{
-		{"bronze_age", 1, land, []*vtemplate{&tPorters}, 0},
-		{"iron_age", 1, land, []*vtemplate{&tOxCart}, 0},
-		{"colonial_age", 1, land, []*vtemplate{&tTradeCoach}, 0},
-		{"industrial_age", 1, land, []*vtemplate{&tTradeCoach, &tSteamTrain}, 0},
-		{"atomic_age", 1, land, []*vtemplate{&tTram}, 0},
-		{"atomic_age", 3, land, []*vtemplate{&tTram}, 0}, // air routes go overland before the plane
-		{"modern_age", 1, land, []*vtemplate{&tTruck}, 0},
-		{"modern_age", 3, land, []*vtemplate{&tCargoJet}, 0},
-		{"digital_age", 1, land, []*vtemplate{&tTruck}, 0},
-		{"digital_age", 3, land, []*vtemplate{&tCargoJet}, 0},
-		{"cyberpunk_age", 1, land, []*vtemplate{&tMaglev}, 0},
-		{"cyberpunk_age", 3, land, []*vtemplate{&tFlyCargo}, 0},
-		{"digital_age", 1, kind(vkPrivate), []*vtemplate{&tCar}, 0},
-		{"cyberpunk_age", 1, kind(vkPrivate), []*vtemplate{&tFlyCar}, 0},
-		{"atomic_age", 1, kind(vkAmbient), []*vtemplate{&tZeppelin, &tBiplane}, 3},
-		{"modern_age", 1, kind(vkAmbient), []*vtemplate{&tJet, &tAirliner, &tHeli}, 0},
-		{"digital_age", 1, kind(vkAmbient), []*vtemplate{&tDrone, &tHeli}, 0}, // the drones arrive
-		{"cyberpunk_age", 1, kind(vkAmbient), []*vtemplate{&tDrone}, 0},
-		{"digital_age", 1, kind(vkArmy), []*vtemplate{&tJeep, &tWarband}, 0},
-		{"cyberpunk_age", 1, kind(vkArmy), []*vtemplate{&tHoverTank, &tWarband}, 0},
-		{"bronze_age", 2, ships, []*vtemplate{&tCanoe}, 0},
-		{"bronze_age", 2, boats, []*vtemplate{&tCanoe}, 0},
-		{"iron_age", 2, ships, []*vtemplate{&tTrireme}, 0},
-		{"medieval_age", 2, ships, []*vtemplate{&tTrireme}, 0},
-		{"medieval_age", 2, boats, []*vtemplate{&tTrireme}, 0},
-		{"renaissance_age", 2, ships, []*vtemplate{&tSail}, 0},
-		{"atomic_age", 2, ships, []*vtemplate{&tSteamer}, 0},
-		{"atomic_age", 2, boats, []*vtemplate{&tBarge}, 0},
-		{"modern_age", 2, ships, []*vtemplate{&tFreighter}, 0},
-		{"digital_age", 2, boats, []*vtemplate{&tBarge}, 0},
-		{"cyberpunk_age", 2, boats, []*vtemplate{&tHoverCar}, 0},
+		{"bronze_age", 1, land, []*vtemplate{&tPorters}, 0, false},
+		{"iron_age", 1, land, []*vtemplate{&tOxCart}, 0, false},
+		{"colonial_age", 1, land, []*vtemplate{&tTradeCoach}, 0, false},
+		{"industrial_age", 1, land, []*vtemplate{&tTradeCoach, &tSteamTrain}, 0, false},
+		{"atomic_age", 1, land, []*vtemplate{&tTram}, 0, false},
+		{"atomic_age", 3, land, []*vtemplate{&tTram}, 0, false}, // air routes go overland before the plane
+		{"modern_age", 1, land, []*vtemplate{&tTruck}, 0, false},
+		{"modern_age", 3, land, []*vtemplate{&tCargoJet}, 0, false},
+		{"digital_age", 1, land, []*vtemplate{&tTruck}, 0, false},
+		{"digital_age", 3, land, []*vtemplate{&tCargoJet}, 0, false},
+		{"cyberpunk_age", 1, land, []*vtemplate{&tMaglev}, 0, false},
+		{"cyberpunk_age", 3, land, []*vtemplate{&tFlyCargo}, 0, false},
+		{"digital_age", 1, kind(vkPrivate), []*vtemplate{&tCar}, 0, true},
+		{"cyberpunk_age", 1, kind(vkPrivate), []*vtemplate{&tFlyCar}, 0, true},
+		{"atomic_age", 1, kind(vkAmbient), []*vtemplate{&tZeppelin, &tBiplane}, 3, true},
+		{"modern_age", 1, kind(vkAmbient), []*vtemplate{&tJet, &tAirliner, &tHeli}, 0, true},
+		{"digital_age", 1, kind(vkAmbient), []*vtemplate{&tDrone, &tHeli}, 0, true}, // the drones arrive
+		{"cyberpunk_age", 1, kind(vkAmbient), []*vtemplate{&tDrone}, 0, true},
+		{"digital_age", 1, kind(vkArmy), []*vtemplate{&tJeep, &tWarband}, 0, false},
+		{"cyberpunk_age", 1, kind(vkArmy), []*vtemplate{&tHoverTank, &tWarband}, 0, false},
+		{"bronze_age", 2, ships, []*vtemplate{&tCanoe}, 0, false},
+		{"bronze_age", 2, boats, []*vtemplate{&tCanoe}, 0, false},
+		{"iron_age", 2, ships, []*vtemplate{&tTrireme}, 0, false},
+		{"medieval_age", 2, ships, []*vtemplate{&tTrireme}, 0, false},
+		{"medieval_age", 2, boats, []*vtemplate{&tTrireme}, 0, false},
+		{"renaissance_age", 2, ships, []*vtemplate{&tSail}, 0, false},
+		{"atomic_age", 2, ships, []*vtemplate{&tSteamer}, 0, false},
+		{"atomic_age", 2, boats, []*vtemplate{&tBarge}, 0, false},
+		{"modern_age", 2, ships, []*vtemplate{&tFreighter}, 0, false},
+		{"digital_age", 2, boats, []*vtemplate{&tBarge}, 0, false},
+		{"cyberpunk_age", 2, boats, []*vtemplate{&tHoverCar}, 0, false},
 	} {
 		if models[c.age] == nil {
 			models[c.age] = moverModels(build(fixture.Options{Age: c.age, Seed: 4, Routes: 5, Wars: 1, Tick: tickAt(0.5)}, 0))
@@ -228,7 +237,11 @@ func TestMoverFallbacks(t *testing.T) {
 			ok[w] = true
 		}
 		found := 0
-		sweep(m, func(vs []vehicle) {
+		gys := []int{39, 30}
+		if c.small {
+			gys = []int{30}
+		}
+		sweepAt(m, gys, func(vs []vehicle) {
 			n := 0
 			for _, v := range vs {
 				if !c.which(v) {

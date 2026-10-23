@@ -10,6 +10,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **The skyline comes alive.** Bigger people walk the streets in groups, and every age has its own traffic on the road, the rails and in the sky, from camels and chariots to steam trains, bullet trains and starships.
 - **No more storage caps.** Resources pile up without limit and nothing you make is wasted; rising prices are the only brake. A building is never refused for costing more than a store holds.
 - **Offers stand out on the map.** Each offer is a coloured marker with its place name, and the terrain around it steps back.
 - **Help starts with how to get around.** The Help page opens with the keys to scroll and close panels, how commands work, and the prompt and dashboard keys, before the command lists.

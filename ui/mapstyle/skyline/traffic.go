@@ -25,19 +25,28 @@ const (
 	vkPrivate              // wealth
 	vkAmbient              // the age's own life: birds, balloons, aircraft
 	vkCity                 // the Earth arc's city: freeway cars, sky trains, swarms (city.go)
+	vkLife                 // the age's roster: groups of people and the three lanes' traffic (roster.go)
 )
 
 // vtemplate is a vehicle drawing facing east. mask letters: b body,
 // a accent, d ink, k wood, w canvas or sail, g trade gold, r war red,
-// m metal, s steam, l warm light, n neon, c cyan light.
+// m metal, s steam, l warm light, n neon, c cyan light; the roster adds
+// h a head and 1 to 5 the clothes of a person (roster.go).
 type vtemplate struct {
 	rows, mask   []string
 	body, accent theme.SkyHue
 	sym          mapmodel.Sym
+	// The roster's drawings (roster.go) also carry: alt, the second frame of
+	// a step or a turn of the wheels; ascii and asciiAlt, the ASCII tier's
+	// own rows (nil: the Unicode rows, folded); paint, a body colour picked
+	// per vehicle; emit, self-lit; steam, a chimney trailing smoke.
+	alt, ascii, asciiAlt []string
+	paint, emit, steam   bool
+	people               bool // a group of people
 }
 
 func vt(rows, mask []string, body, accent theme.SkyHue, sym mapmodel.Sym) vtemplate {
-	return vtemplate{rows, mask, body, accent, sym}
+	return vtemplate{rows: rows, mask: mask, body: body, accent: accent, sym: sym}
 }
 
 func one(r, m string) ([]string, []string) { return []string{r}, []string{m} }
@@ -170,12 +179,32 @@ type vehicle struct {
 	west  bool // facing west (mirrored)
 	seed  int
 	body  theme.SkyHue // overrides the template body (car colours)
+	// set by the scene when it draws: the glyph tier and which of the
+	// template's two frames shows
+	tier  mapmodel.GlyphTier
+	frame int
+}
+
+// rowsNow is the rows the vehicle draws: its tier's, in its frame.
+func (v *vehicle) rowsNow() []string {
+	t := v.t
+	if v.tier == mapmodel.TierASCII && t.ascii != nil {
+		if v.frame == 1 && t.asciiAlt != nil {
+			return t.asciiAlt
+		}
+		return t.ascii
+	}
+	if v.frame == 1 && t.alt != nil {
+		return t.alt
+	}
+	return t.rows
 }
 
 // cells calls fn for every drawn cell of the vehicle, in frame terms.
 func (v *vehicle) cells(fn func(x, y int, ch rune, mk byte)) {
-	n := len(v.t.rows)
-	for r, row := range v.t.rows {
+	rows := v.rowsNow()
+	n := len(rows)
+	for r, row := range rows {
 		rs, ms := []rune(row), []rune(v.t.mask[r])
 		for i := range rs {
 			j := i
@@ -183,6 +212,8 @@ func (v *vehicle) cells(fn func(x, y int, ch rune, mk byte)) {
 			if v.west {
 				j = len(rs) - 1 - i
 				if m, ok := mirrorRunes[ch]; ok {
+					ch = m
+				} else if m, ok := rosterMirror[ch]; ok {
 					ch = m
 				}
 			}
@@ -199,13 +230,7 @@ func (v *vehicle) cells(fn func(x, y int, ch rune, mk byte)) {
 }
 
 // width is the vehicle's widest row.
-func (v *vehicle) width() int {
-	w := 0
-	for _, r := range v.t.rows {
-		w = max(w, len([]rune(r)))
-	}
-	return w
-}
+func (v *vehicle) width() int { return v.t.width() }
 
 // bandOf is the traffic band of an age: 0 primitive/stone, 1 bronze to
 // classical, 2 medieval/renaissance, 3 colonial/industrial,
@@ -276,6 +301,7 @@ type lanes struct {
 	sky                [3]lane
 	day                bool // birds fly
 	viaduct, rails     bool
+	big                bool // the roster draws the people, the private traffic and the high aircraft (roster.go)
 }
 
 // walk picks stream i's vehicle in band: pick gives a band's own choice
@@ -376,6 +402,9 @@ func (l *lanes) ambient(b, i int) (*vtemplate, lane) {
 	seed := 900 + i
 	ln := l.high
 	ln.y = max(1, l.groundY/6+int(hash(seed, 37)%uint64(max(1, l.groundY/4))))
+	if l.big && (b >= 5 || b == 4 && i%2 == 1) {
+		return nil, ln // the roster's sky lane has the aeroplanes, jets, helicopters and drones
+	}
 	switch b {
 	case 0, 1, 2:
 		if !l.day || i > 2 {
@@ -446,6 +475,7 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		day:     m.Clock.Daylight > 0.5 && m.Weather.Kind != mapmodel.Rain && m.Weather.Kind != mapmodel.Storm,
 		viaduct: hasViaduct(m.AgeIdx),
 		rails:   hasRails(m.AgeIdx),
+		big:     bigFigures(groundY),
 	}
 	var out []vehicle
 	add := func(kind vkind, t *vtemplate, seed int, ln lane, speed float64) {
@@ -501,7 +531,10 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 			add(vkRoute, t, seed, ln, sp(seed, 0.25, 0.45))
 		}
 	}
-	// people at work
+	// people at work: the roster's groups from 40 rows up
+	if ls.big {
+		c.foot, c.private = 0, 0
+	}
 	for i := 0; i < c.foot; i++ {
 		seed := 300 + i
 		t := &tWalker
@@ -537,6 +570,9 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		if t, ln := ls.walk(band, i, (*lanes).ambient); t != nil {
 			add(vkAmbient, t, seed, ln, sp(seed, 0.2, 0.7))
 		}
+	}
+	if ls.big {
+		out = append(out, rosterTraffic(m, anim, cam, w, groundY)...)
 	}
 	// the Earth arc's city: freeway cars, sky trains, swarms and hovercars
 	cityTraffic(m, groundY, func(t *vtemplate, seed int, ln lane, speed float64, west bool, dx int) {
@@ -632,6 +668,7 @@ func railYs(groundY int) []lane { return cityRailYs(groundY) }
 // The viaduct waits for the railway and the rails for the maglev.
 func (s *scene) structures() {
 	gy := s.groundY
+	s.railbed()
 	metal := s.p.col(5, 0, sMetal, 1)
 	if hasFreeway(s.m.AgeIdx) {
 		s.freeway() // the Modern to the Digital Age's elevated freeway (city.go)
@@ -688,6 +725,40 @@ func (s *scene) structures() {
 	}
 }
 
+// inWater reports whether screen column x is a bay's water, where no street
+// runs.
+func (s *scene) inWater(x int) bool {
+	wx := s.wx(x)
+	di := s.m.Skyline.DistrictAt(wx)
+	if di < 0 || di >= len(s.m.Skyline.Districts) {
+		return false
+	}
+	d := s.m.Skyline.Districts[di]
+	return d.Bay && wx >= d.BayX && wx < d.BayX+d.BayW
+}
+
+// railbed lays the roster's rail lane along the verge, in the ages whose
+// roster has trains and the full view tall enough to draw them: rails on
+// sleepers, behind the trains, in front of the street.
+func (s *scene) railbed() {
+	if !bigFigures(s.groundY) || !hasRailLane(s.m.AgeIdx) {
+		return
+	}
+	rail := s.p.hue(theme.SkyRail, mLit, 0)
+	tie := s.p.hue(theme.SkyTrunk, mLit, 0)
+	y := s.Y(s.groundY + 2)
+	for x := 0; x < s.W; x++ {
+		if s.inWater(x) {
+			continue
+		}
+		if s.wx(x)%4 == 0 {
+			s.fb.fg(x, y, '╪', tie, dStreet)
+		} else {
+			s.fb.fg(x, y, '═', rail, dStreet)
+		}
+	}
+}
+
 // traffic draws the vehicles, depth tested cell by cell, plus the space
 // elevator's climber, orbital traffic and warp flashes.
 func (s *scene) traffic() {
@@ -705,9 +776,20 @@ func (s *scene) traffic() {
 			body = v.body
 		}
 		markX, markY := v.x+v.width()/2, v.y
+		v.tier = s.tier
+		if v.t.alt != nil || v.t.asciiAlt != nil {
+			v.frame = (s.anim/4 + v.seed) % 2 // a step every half second
+		}
 		v.cells(func(x, y int, ch rune, mk byte) {
+			if v.kind == vkLife && v.depth < dGround && s.inWater(x) {
+				return // the street ends at the quay
+			}
 			h, md := body, mode
 			switch mk {
+			case 'h':
+				h = theme.SkyCanvas
+			case '1', '2', '3', '4', '5':
+				h = peopleHues[(int(mk-'1')+v.seed)%len(peopleHues)]
 			case 'a':
 				h = v.t.accent
 			case 'd':
@@ -731,7 +813,7 @@ func (s *scene) traffic() {
 			case 'c':
 				h, md = theme.SkyNeonCyan, mEmit
 			}
-			if v.t == &tStarship || v.t == &tSatellite || v.t == &tMote {
+			if v.t == &tStarship || v.t == &tSatellite || v.t == &tMote || v.t.emit {
 				md = mEmit
 			}
 			if s.tier == mapmodel.TierNerd && x == markX && y == markY && v.t.sym != mapmodel.SymNone {
@@ -747,12 +829,23 @@ func (s *scene) traffic() {
 			s.fb.fg(hx, s.Y(v.y), '▪', s.p.cityHue(theme.CityHeadlight, mEmit, 0), v.depth)
 			s.fb.fg(tx, s.Y(v.y), '·', s.p.cityHue(theme.CityTaillight, mEmit, 0), v.depth)
 		}
-		if night && s.band >= 5 && v.depth == dStreet && v.kind != vkFoot {
+		if night && s.band >= 5 && v.depth == dStreet && v.kind != vkFoot && !v.t.people {
 			hx := v.x + v.width()
 			if v.west {
 				hx = v.x - 1
 			}
 			s.fb.tint(hx, s.Y(v.y), s.p.hue(theme.SkyHeadlight, mEmit, 0), 0.3, v.depth)
+		}
+		if v.t.steam { // the roster's steam engine: smoke from the chimney, leaning back
+			cx, dir := v.x+v.width()-1, -1
+			if v.west {
+				cx, dir = v.x, 1
+			}
+			steam := s.p.hue(theme.SkySteam, mLit, 0)
+			top := v.y - len(v.t.rows) + 1
+			for k := 1; k <= 3; k++ {
+				s.fb.fg(cx+dir*k, s.Y(top-1-k/2), [3]rune{'▓', '▒', '░'}[k-1], steam, v.depth)
+			}
 		}
 		if v.t == &tSteamTrain || v.t == &tSteamer {
 			sx, dir := v.x, -1
