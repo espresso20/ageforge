@@ -111,7 +111,7 @@ func offlineBase(res *Result, base *game.GameEngine, age string, seed int64) []s
 		}
 		rows = append(rows, fmt.Sprintf("| %s | %s | %d | %d | %s | %s |", age, d, o.post.Tick-o.pre.Tick, gained, top, orDefault(strings.Join(notes, "; "), "ok")))
 	}
-	// Longer closures never pay less, and past the cap they pay the same.
+	// Longer closures never pay less, and past the allowance they pay the same.
 	byD := map[time.Duration]offlineRun{}
 	for _, o := range runs {
 		byD[o.d] = o
@@ -276,15 +276,12 @@ func checkOffline(o offlineRun, fail func(check, format string, args ...interfac
 		case g > float64(limit*(1+1e-9))+1e-6:
 			fail("offline_overpaid", "%s away: %s gained %s, more than rate %.4g (the higher of before and after) x %d ticks x %.0f%% = %s", o.d, k, num(g), top, ticks, game.OfflineEfficiency*100, num(limit))
 		}
-		if post.Amount > float64(post.Storage*(1+1e-9))+1e-6 {
-			fail("offline_over_storage", "%s away: %s is %s over its %s cap", o.d, k, num(post.Amount), num(post.Storage))
-		}
-		if pre.Rate > 0 && pre.Amount < pre.Storage-1 {
+		if pre.Rate > 0 {
 			anyRate = true
 			if g > 0 {
 				anyGain = true
 			} else {
-				fail("offline_no_gain", "%s away: %s was producing %+.4g/t below its cap but gained nothing", o.d, k, pre.Rate)
+				fail("offline_no_gain", "%s away: %s was producing %+.4g/t but gained nothing", o.d, k, pre.Rate)
 			}
 		}
 	}
