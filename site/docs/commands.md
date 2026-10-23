@@ -199,7 +199,7 @@ campaign list
 army
 ```
 
-The board has short, long and grand offers, each shown as a pin on the Ready Room's map with its length, odds, haul and cost. Arrow keys hop between pins, `Enter` asks and `Enter` again sends, and `Tab` switches to the Expedition Report. Offers have no numbers: type part of a title to send one, and the game asks which when several fit. Every offer takes a party of soldiers, and your army decides how many missions are out at once. A grand offer is military or civil. The Geographic Society sends offers automatically once available. See [Military](military.md#the-expeditions-panel).
+The board has short offers from the start, long offers from the Iron Era and grand offers from the Steel Era (a Veteran army sees the next tier an era early), each shown as a pin on the Ready Room's map with its length, odds, haul and cost. Arrow keys hop between pins, `Enter` asks and `Enter` again sends, and `Tab` switches to the Expedition Report. Offers have no numbers: type part of a title to send one, and the game asks which when several fit. Every offer takes a party of soldiers, and your army decides how many missions are out at once. A grand offer is military or civil. The Geographic Society sends offers automatically once available. See [Military](military.md#the-expeditions-panel).
 
 ---
 

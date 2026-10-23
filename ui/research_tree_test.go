@@ -514,7 +514,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 	st := ge.GetState()
 	for key, wants := range map[string][]string{
 		"road_building":    {"Road Building gives +8% gold production. With it, trade routes take 15% less time.", "It builds on Masonry and The Wheel.", "It is item 1 in your plan."},
-		"military_tactics": {"gives +15% military power.", "It opens campaigns.", "It builds on Bronze Working.", "adds it to your plan. Philosophy is running, so it starts in"},
+		"military_tactics": {"gives +15% military power.", "It opens the Barracks.", "It builds on Bronze Working.", "adds it to your plan. Philosophy is running, so it starts in"},
 		"mathematics":      {"It is this age's keystone: the Colosseum cannot be built without it.", "You already hold this."},
 		"philosophy":       {"It is being researched:", "Type research cancel to stop it"},
 		"imperial_legions": {"It builds on Siege Warfare and Iron Smelting.", "adds it to your plan, after the 2 techs it needs first (Military Tactics, then Siege Warfare). They run in that order, one at a time."},
@@ -701,8 +701,9 @@ func TestResearchListMarksTheKeystone(t *testing.T) {
 	}
 }
 
-// TestPanelsMarkLockedCommands: the Army and Trade panels and `expedition` say when a command still waits for a tech, in the words of the
-// refusal, once that tech's age is reached and never before.
+// TestPanelsMarkLockedCommands: the Trade and Factions panels and `festival` say when a command still waits for a tech, in the words of the
+// refusal, once that tech's age is reached and never before. The mission
+// board waits for no tech: it opens its tiers by era.
 func TestPanelsMarkLockedCommands(t *testing.T) {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
@@ -711,14 +712,12 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	const campaigns = "Campaigns need Military Tactics first. Research it to send one."
 	ge.SetGarrisonForTest("bronze_age", 1000) // an army at home to make up a party
 	st := ge.GetState()
-	if out := militaryProvider(st, 120); !strings.Contains(out, campaigns) {
-		t.Errorf("the Army panel does not say campaigns are locked:\n%s", out)
-	}
-	if out := cmdMissionBoard(ge).Message; !strings.Contains(out, campaigns) {
-		t.Errorf("campaign list does not say campaigns are locked:\n%s", out)
+	for what, out := range map[string]string{"the Army panel": militaryProvider(st, 120), "the mission board": cmdMissionBoard(ge).Message} {
+		if strings.Contains(out, "first. Research it to send one") {
+			t.Errorf("%s says a mission waits for a tech:\n%s", what, out)
+		}
 	}
 	// Railroads and Mercantilism are techs of later ages: not a word yet.
 	// The Wheel is this age's, and trade routes wait for it.
@@ -727,19 +726,10 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 		t.Errorf("the Trade panel should name The Wheel and no tech of a later age:\n%s", out)
 	}
 	// Envoys and Drama belong to ages not in sight: the Factions panel and
-	// the festival command say nothing of them yet. The Expeditions panel
-	// already lists Scout Nearby Ruins, so it names Exploration, a tech of
-	// the next age, at once.
+	// the festival command say nothing of them yet.
 	festival := func() string { return cmdFestival(nil, ge).Message + cmdFestival([]string{"confirm"}, ge).Message }
 	if out := factionsProvider(st, 120) + festival(); strings.Contains(out, "Envoys") || strings.Contains(out, "Drama") {
 		t.Errorf("a panel names a tech of an age not in sight:\n%s", out)
-	}
-	if out := cmdExpedition([]string{"list"}, ge).Message; !strings.Contains(out, "Long and grand missions need Exploration first. Research it to send one") {
-		t.Errorf("the mission board lists a long offer and does not say it waits for Exploration:\n%s", out)
-	}
-	ge.GrantTechsForTest("military_tactics")
-	if out := militaryProvider(ge.GetState(), 120) + cmdMissionBoard(ge).Message; strings.Contains(out, "Military Tactics first") {
-		t.Errorf("with Military Tactics researched the lock is still shown:\n%s", out)
 	}
 	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {
 		if err := ge.EnterAgeForTest(a); err != nil {
@@ -756,7 +746,6 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	// and stops once it is researched.
 	late := ge.GetState()
 	for what, c := range map[string][2]string{
-		"the mission board":  {cmdExpedition([]string{"list"}, ge).Message, "Long and grand missions need Exploration first. Research it to send one"},
 		"the Factions panel": {factionsProvider(late, 120), "Gifts, alliances, rivalries and deals need Envoys first. Research it to deal with other civilizations."},
 		"festival":           {cmdFestival(nil, ge).Message, "Festivals need Drama first. Research it to hold one."},
 		"festival confirm":   {cmdFestival([]string{"confirm"}, ge).Message, "Festivals need Drama first. Research it to hold one."},
@@ -765,9 +754,12 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 			t.Errorf("%s is missing %q:\n%s", what, c[1], c[0])
 		}
 	}
-	ge.GrantTechsForTest("exploration", "envoys", "drama", "the_wheel")
+	if out := cmdExpedition([]string{"list"}, ge).Message; strings.Contains(out, "first. Research it to send one") {
+		t.Errorf("the mission board says a mission waits for a tech:\n%s", out)
+	}
+	ge.GrantTechsForTest("envoys", "drama", "the_wheel")
 	late = ge.GetState()
-	if out := cmdExpedition([]string{"list"}, ge).Message + factionsProvider(late, 120) + festival() + tradeProvider(late, 120); strings.Contains(out, "Exploration first") || strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
+	if out := factionsProvider(late, 120) + festival() + tradeProvider(late, 120); strings.Contains(out, "Envoys first") || strings.Contains(out, "Drama first") || strings.Contains(out, "The Wheel first") {
 		t.Errorf("with the techs researched a lock is still shown:\n%s", out)
 	}
 	if strings.Contains(out, "Interstellar Trade") || strings.Contains(out, "interstellar_trade") {

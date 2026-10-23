@@ -57,6 +57,7 @@ func TestMissionRolls_WithinRangesAndSeeded(t *testing.T) {
 		for seed := int64(1); seed <= 30; seed++ {
 			board := func() []boardSlot {
 				ge := missionReady(t, seed, age)
+				ge.Military.minTiers = 3 // every tier, whatever the era opens
 				ge.EnsureMissionBoard()
 				return ge.Military.board.clone().Slots
 			}
@@ -453,8 +454,8 @@ func TestEncounterChance_DoubledAndCapped(t *testing.T) {
 }
 
 // TestAutoExpedition_SendsTheBestHaulPerMinute: the Geographic Society sends
-// the offer with the most haul minutes for each minute of length among those
-// it can pay for, in every era; one it cannot pay for is passed over.
+// the short offer with the most haul minutes for each minute of length among
+// those it can pay for, in every era; one it cannot pay for is passed over.
 func TestAutoExpedition_SendsTheBestHaulPerMinute(t *testing.T) {
 	for _, age := range eraFirstAges() {
 		ge := autoExpeditionTestEngine(t, age, 1, 8, 1e9)
@@ -464,8 +465,8 @@ func TestAutoExpedition_SendsTheBestHaulPerMinute(t *testing.T) {
 		var wantN int
 		var bestRate float64
 		for i, slot := range ge.Military.board.Slots {
-			if slot.Offer.Tier == TierGrand {
-				continue // the Society never sends a grand offer
+			if slot.Offer.Tier != TierShort {
+				continue // the Society sends the era's scout only
 			}
 			if rate := slot.Offer.HaulMinutes / slot.Offer.LengthMinutes; rate > bestRate {
 				wantN, bestRate = i+1, rate

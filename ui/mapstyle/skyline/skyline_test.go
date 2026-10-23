@@ -162,15 +162,27 @@ func TestTrafficDensity(t *testing.T) {
 				t.Errorf("%s: more trade routes did not bring more route traffic", age)
 			}
 		}
+		// people: one-cell markers on a short view, groups on a tall one
 		few, many := *busy, *busy
 		few.Activity.Staffed, many.Activity.Staffed = 3, 5000
-		if countKind(trafficFor(&many, 5, 0, 160, 39), vkFoot) <= countKind(trafficFor(&few, 5, 0, 160, 39), vkFoot) {
-			t.Errorf("%s: more staffed workers did not bring more foot traffic", age)
-		}
 		idle := *busy
 		idle.Activity.Staffed = 0
-		if n := countKind(trafficFor(&idle, 5, 0, 160, 39), vkFoot); n != 0 {
-			t.Errorf("%s: %d walkers with nobody at work", age, n)
+		for _, gy := range []int{30, 39} {
+			foot := func(m *mapmodel.Model) int {
+				n := 0
+				for _, v := range trafficFor(m, 5, 0, 160, gy) {
+					if v.kind == vkFoot || v.t.people {
+						n++
+					}
+				}
+				return n
+			}
+			if foot(&many) <= foot(&few) {
+				t.Errorf("%s (ground %d): more staffed workers did not bring more foot traffic", age, gy)
+			}
+			if n := foot(&idle); n != 0 {
+				t.Errorf("%s (ground %d): %d walkers with nobody at work", age, gy, n)
+			}
 		}
 	}
 	m := build(fixture.Options{Age: "medieval_age", Seed: 4, Wars: 2}, 0)
