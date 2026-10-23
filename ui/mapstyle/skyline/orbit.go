@@ -988,6 +988,7 @@ func (s *sprite) padFoot(n int) *sprite {
 	o := newSprite(s.w, s.h+n)
 	copy(o.c, s.c)
 	o.smoke, o.beacons, o.blades, o.flame = s.smoke, s.beacons, s.blades, s.flame
+	o.carryExtras(s, 0, 0)
 	return o
 }
 
@@ -1009,5 +1010,6 @@ func (s *sprite) cropTop(h int) *sprite {
 		return out
 	}
 	o.smoke, o.beacons, o.blades, o.flame = sh(s.smoke), sh(s.beacons), sh(s.blades), sh(s.flame)
+	o.carryExtras(s, 0, -cut)
 	return o
 }

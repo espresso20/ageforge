@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"math"
 	"sort"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -37,6 +38,10 @@ type layout struct {
 	width   int
 	news    []int // world columns of lots new since the last visit
 	index   map[lotID]int
+	// sites are the wonders still being built (the scaffolding on their plots);
+	// they are no lots: nothing can be inspected on them and the model has
+	// nothing placed there.
+	sites []lotView
 }
 
 type lotID struct {
@@ -96,6 +101,16 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 	}
 	lay := &layout{m: m, groundY: groundY, ref: ref, scale: sceneScale(ref), width: max(m.Skyline.Width, 1)}
 	maxH := max(2, ref-3)
+	// Every district's landmark is the tallest thing in it, at least half as
+	// tall again as the tallest building: the buildings of an age stop short of
+	// what that age's wonder stands at (districtCap).
+	wonderKey := wonderKeys(m.Catalog)
+	capOf := func(age int) int {
+		if age < 0 || age >= len(wonderKey) || wonderKey[age] == "" {
+			return maxH
+		}
+		return min(maxH, districtCap(wonderRows(wonderKey[age], lay.scale, ref)))
+	}
 	for i := range m.Skyline.Lots {
 		ml := &m.Skyline.Lots[i]
 		def := m.Catalog.Defs[ml.Key]
@@ -116,7 +131,8 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 				lv.fam = fam
 			}
 			lv.depth = dWonder
-			sk = spriteKey{ml.Key, 0, int(lay.scale * 100)}
+			lv.vr = 0 // a landmark wears its period's standard finish, whatever the game's seed
+			sk = spriteKey{ml.Key, 0, wonderRows(ml.Key, lay.scale, ref)}
 		} else {
 			fm = formFor(def)
 			lv.producer = fm.smoke
@@ -126,14 +142,14 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 			if ml.Row > 0 {
 				h *= 1.12
 			}
-			sk = spriteKey{ml.Key, ml.Seed, clampInt(int(h+0.5), 2, maxH)}
+			sk = spriteKey{ml.Key, ml.Seed, softCap(clampInt(int(h+0.5), 2, maxH), capOf(ml.Age))}
 		}
 		spr := v.sprites[sk]
 		if spr == nil {
 			if ml.Wonder {
-				spr = wonderSprite(ml.Key, lay.scale)
+				spr = wonderArt(ml.Key, sk.h)
 			} else {
-				spr = dress(fm.fn(newRnd(ml.Seed), sk.h), lv.variant, ml.Seed, ml.Age, maxH)
+				spr = dressedUnder(fm, ml, lv.variant, sk.h, capOf(ml.Age), maxH)
 				if hash(int(ml.Seed), 5)%2 == 0 {
 					spr = spr.mirror()
 				}
@@ -163,6 +179,7 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 			lay.news = append(lay.news, ml.X)
 		}
 	}
+	v.layoutSites(lay)
 	lay.byX = make([]int32, len(lay.lots))
 	for i := range lay.byX {
 		lay.byX[i] = int32(i)
@@ -226,4 +243,103 @@ func clamp01(v float64) float64 {
 		return 1
 	}
 	return v
+}
+
+// wonderKeys is the key of each age's wonder, by age index ("" for none).
+func wonderKeys(c *mapmodel.Catalog) []string {
+	out := make([]string, len(c.ByAge))
+	for a, ds := range c.ByAge {
+		for _, d := range ds {
+			if d.Wonder {
+				out[a] = d.Key
+			}
+		}
+	}
+	return out
+}
+
+// districtCap is the most rows a building of a district may stand when its
+// wonder is rows tall: the wonder is at least half as tall again.
+func districtCap(wonderRows int) int { return max(2, wonderRows*2/3) }
+
+// softCap bends a building's height so it stays under capH without a row of
+// flat roofs: it is unchanged under 60% of the cap, then eases toward the cap
+// (reaching it only for ever taller buildings), keeping their order.
+func softCap(h, capH int) int {
+	knee := capH * 6 / 10
+	if h <= knee {
+		return h
+	}
+	span := float64(capH - knee)
+	if span <= 0 {
+		return min(h, capH)
+	}
+	v := float64(knee) + span*(1-math.Exp(-float64(h-knee)/span))
+	return clampInt(int(v+0.5), 2, capH)
+}
+
+// dressedUnder draws a building h rows tall dressed for its variant, never
+// over capH rows: a form that comes out taller than it was asked to (a spire,
+// a stack) is asked again for less.
+func dressedUnder(fm form, ml *mapmodel.Lot, variant, h, capH, maxH int) *sprite {
+	build := func(req int) *sprite {
+		return dress(fm.fn(newRnd(ml.Seed), req), variant, ml.Seed, ml.Age, maxH)
+	}
+	spr := build(h)
+	for req := h - 1; spr.h > capH && req >= 2; req-- {
+		spr = build(req)
+	}
+	if spr.h > capH {
+		spr = spr.cropTop(capH)
+	}
+	return spr
+}
+
+// wonderIn is where a district's landmark stands, in columns from its east
+// edge, and wonderBayIn the grand lighthouse's, in from the bay's east end:
+// mapmodel places the lots, this is the same spot for a wonder that is not a
+// lot yet (a test holds the two together).
+const (
+	wonderIn    = 18
+	wonderBayIn = 16
+)
+
+// wonderX is the world column a wonder's plot is centred on in district d.
+func wonderX(d mapmodel.District, key string) int {
+	if d.Bay && key == "grand_lighthouse" {
+		return d.BayX + wonderBayIn
+	}
+	return d.X0 + d.LandW - wonderIn
+}
+
+// layoutSites puts the scaffolding of every wonder under way on its plot.
+func (v *view) layoutSites(lay *layout) {
+	m := lay.m
+	if len(m.Wonders) == 0 {
+		return
+	}
+	lots := make([]mapmodel.Lot, 0, len(m.Wonders))
+	steel := m.Catalog.AgeIdx["industrial_age"]
+	for _, w := range m.Wonders {
+		if w.Built || w.Age < 0 || w.Age >= len(m.Skyline.Districts) {
+			continue
+		}
+		key := w.Key
+		rows := wonderRows(key, lay.scale, lay.ref)
+		built := siteRows(w.Progress, rows)
+		sk := spriteKey{key + "/site", uint64(built), rows}
+		spr := v.sprites[sk]
+		if spr == nil {
+			spr = scaffoldArt(key, rows, built, w.Age >= steel)
+			v.sprites[sk] = spr
+		}
+		x := wonderX(m.Skyline.Districts[w.Age], key)
+		lots = append(lots, mapmodel.Lot{Key: key, Lineage: mapmodel.LinWonder, Age: w.Age, X: x, Wonder: true,
+			Seed: uint64(hash(len(key), int(key[0]), 17))})
+		lv := lotView{ml: &lots[len(lots)-1], b: m.Building(key), spr: spr, fam: familyOf(w.Age), depth: dWonder, x0: x - spr.w/2}
+		if fam, ok := wonderFamily[key]; ok {
+			lv.fam = fam
+		}
+		lay.sites = append(lay.sites, lv)
+	}
 }

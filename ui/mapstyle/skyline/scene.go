@@ -641,14 +641,22 @@ func (s *scene) lots() {
 	screens := s.inCity && s.city.Key == "information_age"
 	mega := s.megacity()
 	cool := s.p.cityHue(theme.CityScreenCool, mEmit, 0)
-	for _, li := range s.vis {
-		lv := &s.lay.lots[li]
+	draw := func(lv *lotView, li int) {
 		spr := lv.spr
+		if s.zm == zClose {
+			spr = spr.closeUp() // the detail only the close zoom shows
+		}
 		x0 := lv.x0 - s.cam
 		y0 := s.groundY - spr.h
 		hz := lv.ml.Row
-		sel := li == s.sel
+		sel := li >= 0 && li == s.sel
 		dim := s.v.flows && flagged(lv)
+		lit := lv.ml.Wonder && dark > 0.2 // a landmark glows at night
+		var glow tcell.Color
+		var glowK float64
+		if lit {
+			glow, glowK = s.wonderGlow(lv, hz), clamp01((dark-0.2)*1.6)
+		}
 		flick := lv.fam == 8 && hash(int(lv.ml.Seed), s.anim/3)%9 == 0
 		tint := s.districtTint(lv.ml.Age, hz)
 		phase := 0.0
@@ -695,7 +703,7 @@ func (s *scene) lots() {
 					fg = s.leafFade(lv, sx, sy, fg, hz)
 				}
 				if rim {
-					fg = theme.Shade(fg, outlineK)
+					fg = s.rimShade(fg, lit, glow, glowK)
 				}
 				if dim {
 					fg = theme.Shade(fg, 0.55)
@@ -721,7 +729,7 @@ func (s *scene) lots() {
 					bg = s.neonFix(bg, hz)
 				}
 				if rim {
-					bg = theme.Shade(bg, outlineK)
+					bg = s.rimShade(bg, lit, glow, glowK)
 				}
 				if dim {
 					bg = theme.Shade(bg, 0.55)
@@ -731,6 +739,9 @@ func (s *scene) lots() {
 				}
 				s.fb.set(X, Y, ch, fg, bg, lv.depth)
 			}
+		}
+		if lit {
+			s.wonderLight(lv, spr, x0, y0, glow, glowK)
 		}
 		for _, b := range spr.beacons {
 			on := (s.anim/3+int(hash(int(lv.ml.Seed), b.x)%7))%8 < 3
@@ -763,6 +774,15 @@ func (s *scene) lots() {
 			}
 			s.emit = append(s.emit, emitter{x0 + e.x, y0 + e.y, busy, lv.producer && lv.ml.Age >= 8,
 				int(lv.ml.Seed) + i*31, lv.depth - 1})
+		}
+	}
+	for _, li := range s.vis {
+		draw(&s.lay.lots[li], li)
+	}
+	for i := range s.lay.sites { // wonders still going up, in their scaffolding
+		lv := &s.lay.sites[i]
+		if lv.x0 < s.cam+s.W+12 && lv.x0+lv.spr.w > s.cam-12 {
+			draw(lv, -1)
 		}
 	}
 }

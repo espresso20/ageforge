@@ -43,6 +43,7 @@ func (s *sprite) raise(n int) *sprite {
 		return out
 	}
 	o.smoke, o.beacons, o.blades, o.flame = sh(s.smoke), sh(s.beacons), sh(s.blades), sh(s.flame)
+	o.carryExtras(s, 0, n)
 	return o
 }
 

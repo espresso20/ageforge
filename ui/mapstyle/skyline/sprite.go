@@ -74,6 +74,13 @@ type sprite struct {
 	blades  []pt   // windmill hubs
 	flame   []pt   // torches and braziers
 	edge    []bool // the outline mask, found on first use (dress.go)
+	// The landmarks' extras (wonders.go): lamp beams that sweep at night, the
+	// detail only the close zoom draws, and the cells round the silhouette a
+	// night glow reaches (found on first use).
+	beams []beam
+	fine  []fineCell
+	close *sprite
+	halo  []pt
 }
 
 func newSprite(w, h int) *sprite {
@@ -173,6 +180,7 @@ func (s *sprite) blit(o *sprite, x, y int) {
 	s.beacons = append(s.beacons, mv(o.beacons)...)
 	s.blades = append(s.blades, mv(o.blades)...)
 	s.flame = append(s.flame, mv(o.flame)...)
+	s.carryExtras(o, x, y)
 }
 
 // halves decodes a cell into its top and bottom half-cell slots.
@@ -396,6 +404,17 @@ func (s *sprite) mirror() *sprite {
 		return out
 	}
 	o.smoke, o.beacons, o.blades, o.flame = fl(s.smoke), fl(s.beacons), fl(s.blades), fl(s.flame)
+	for _, b := range s.beams {
+		b.x = s.w - 1 - b.x
+		o.beams = append(o.beams, b)
+	}
+	for _, f := range s.fine {
+		f.x = s.w - 1 - f.x
+		if r, ok := mirrorRunes[f.c.ch]; ok {
+			f.c.ch = r
+		}
+		o.fine = append(o.fine, f)
+	}
 	return o
 }
 
@@ -438,6 +457,7 @@ func (s *sprite) trimTop() *sprite {
 		return out
 	}
 	o.smoke, o.beacons, o.blades, o.flame = sh(s.smoke), sh(s.beacons), sh(s.blades), sh(s.flame)
+	o.carryExtras(s, 0, -top)
 	return o
 }
 
