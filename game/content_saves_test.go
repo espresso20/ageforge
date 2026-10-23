@@ -90,7 +90,7 @@ func TestWriteContentFixtures(t *testing.T) {
 	}, func(ge *GameEngine) {
 		// The game's own commands, so its save says what it used.
 		for _, res := range []string{"food", "wood", "stone", "gold"} {
-			setResource(ge, res, 1e6)
+			setResource(ge, res, config.Million)
 		}
 		if err := ge.StartTradeRoute("local_barter"); err != nil {
 			t.Fatalf("starting a route: %v", err)

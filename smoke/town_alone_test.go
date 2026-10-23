@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -52,7 +53,7 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 	town := tb.refTown(i)
 	ref := tb.state(town, i, 1)
 	refIncome := units(ref.income, tb.levels[i])
-	wall := tb.stay(i, town, refPlay{rate: 1, speed: 1, refIncome: refIncome, horizon: 2e7})
+	wall := tb.stay(i, town, refPlay{rate: 1, speed: 1, refIncome: refIncome, horizon: 20 * config.Million})
 	out := aloneAge{age: tb.ages[i].Name, model: units(wall.end.income, tb.levels[i]) / refIncome}
 
 	ge := game.NewGameEngine()

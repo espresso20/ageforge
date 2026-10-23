@@ -70,7 +70,7 @@ func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
 			{"buildmany", func() error { _, e := ge.BuildMultiple("hut", 100000); return e }},
 			{"buildwonder", func() error { _, e := ge.BuildMultiple("great_pyramid", 1); return e }},
 			{"recruit0", func() error { return ge.RecruitWorker("worker", 0) }},
-			{"recruitbig", func() error { return ge.RecruitWorker("worker", 1000000) }},
+			{"recruitbig", func() error { return ge.RecruitWorker("worker", config.Million) }},
 			{"recruitodd", func() error { return ge.RecruitWorker("nonesuch", 1) }},
 			{"assign0", func() error { return ge.AssignWorker("hut", 0) }},
 			{"assignbig", func() error { return ge.AssignWorker("hut", 100000) }},

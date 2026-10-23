@@ -1,0 +1,60 @@
+# GoReleaser configuration. See docs/ci.md.
+#
+# What it does today: builds the four release targets and the checksums, for
+# the "Release snapshot" workflow (workflow_dispatch only). Nothing here
+# publishes. A tag push is still released by .github/workflows/release.yml.
+#
+# The archives are the raw binaries, named exactly as release.yml names them
+# (ageforge-macos-arm64, ageforge-windows-amd64.exe, ...) with a SHA256SUMS.txt
+# beside them, because the in-game updater (game/updater.go) downloads those
+# file names. Switching the tag release to GoReleaser later keeps it working.
+version: 2
+
+project_name: ageforge
+
+builds:
+  - id: ageforge
+    main: .
+    binary: ageforge
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      # The four release targets: linux/amd64, darwin/amd64, darwin/arm64 and
+      # windows/amd64.
+      - goos: linux
+        goarch: arm64
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      # Same variable and the same "v1.2.3" form release.yml sets from the tag.
+      - -X main.version=v{{ .Version }}
+
+archives:
+  - id: raw
+    formats:
+      - binary
+    name_template: >-
+      ageforge-{{ if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}-{{ .Arch }}
+
+checksum:
+  name_template: SHA256SUMS.txt
+  algorithm: sha256
+
+# Release notes come from CHANGELOG.md (release.yml extracts them), and the
+# GitHub release is created there. Left off here so GoReleaser can never publish
+# or write notes by accident; turn both on in the same change that retires
+# release.yml.
+release:
+  disable: true
+
+changelog:
+  disable: true

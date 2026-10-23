@@ -16,7 +16,7 @@ func atomicEngine(t *testing.T) *GameEngine {
 	ge.applyAgeUnlocks("atomic_age")
 	for _, r := range config.BaseResources() {
 		ge.Resources.UnlockResource(r.Key)
-		ge.Resources.Add(r.Key, 1e14)
+		ge.Resources.Add(r.Key, 100*config.Trillion)
 	}
 	return ge
 }

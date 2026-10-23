@@ -48,7 +48,7 @@ func writeOldFile(t *testing.T) (id string) {
 		"age.stone_age":     {At: 50},
 		"lineage.housing.1": {At: 60},
 	}
-	acct.Counters = map[string]float64{stoneCount: r2.Threshold * 2, "built.lineage.housing": 1e9}
+	acct.Counters = map[string]float64{stoneCount: r2.Threshold * 2, "built.lineage.housing": config.Billion}
 	acct.dirty = true
 	acct.mu.Unlock()
 	if err := acct.Save(); err != nil {

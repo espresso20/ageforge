@@ -110,8 +110,8 @@ func TestHarborRouteBonus_RaisesIncome(t *testing.T) {
 		ge.age = "industrial_age"
 		// Provide a market for the route requirement + the simplest route.
 		ge.Buildings.counts["market"] = 2
-		setRes(ge, "food", 1e6)
-		setRes(ge, "wood", 1e6)
+		setRes(ge, "food", config.Million)
+		setRes(ge, "wood", config.Million)
 		setRes(ge, "gold", 0)
 		if withHarbor {
 			ge.Buildings.counts["harbor"] = 1 // +5% route income
@@ -151,7 +151,7 @@ func TestRouteCycle_RaisesOpinion(t *testing.T) {
 	ge := NewGameEngine()
 	ge.age = "medieval_age"
 	ge.Buildings.counts["market"] = 3
-	setRes(ge, "gold", 1e6)
+	setRes(ge, "gold", config.Million)
 	ge.Diplomacy.factions["riverlands_tribes"] = &FactionState{Discovered: true, Opinion: 10, Status: "neutral"}
 	ge.Diplomacy.factions["ironhold_clans"] = &FactionState{Discovered: true, Opinion: -60, Status: "rival", AtWar: true}
 	ge.Diplomacy.factions["artisan_league"] = &FactionState{Discovered: false, Opinion: 0, Status: "neutral"}
@@ -210,7 +210,7 @@ func TestDisruption_BlocksRouteWhenAtWar(t *testing.T) {
 		ge := NewGameEngine()
 		ge.age = "medieval_age"
 		ge.Buildings.counts["market"] = 3
-		setRes(ge, "gold", 1e6)
+		setRes(ge, "gold", config.Million)
 		setRes(ge, "culture", 0)
 		if err := ge.Trade.StartRoute("silk_road", ge.Buildings, ge.age, ge.progress.GetAgeOrder()); err != nil {
 			t.Fatalf("StartRoute: %v", err)

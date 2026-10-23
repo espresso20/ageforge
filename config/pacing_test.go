@@ -155,7 +155,7 @@ func TestWondersSizedToTheirAge(t *testing.T) {
 }
 
 func TestFormatRateValue(t *testing.T) {
-	cases := map[float64]string{0.2: "0.2", 0.7111: "0.711", 44.83: "44.8", 3344: "3.34K", 2.72e6: "2.72M", 1.5e15: "1.5Q"}
+	cases := map[float64]string{0.2: "0.2", 0.7111: "0.711", 44.83: "44.8", 3344: "3.34K", 2.72 * Million: "2.72M", 1.5 * Quadrillion: "1.5Q"}
 	for v, want := range cases {
 		if got := FormatRateValue(v); got != want {
 			t.Errorf("FormatRateValue(%v) = %q, want %q", v, got, want)

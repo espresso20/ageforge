@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -19,7 +20,7 @@ func TestOnboardingCommandsRun(t *testing.T) {
 	ge.SeedRNG(1)
 	stock := map[string]float64{}
 	for k := range ge.GetState().Resources {
-		stock[k] = 1e6
+		stock[k] = config.Million
 	}
 	ge.Resources.LoadAmounts(stock)
 

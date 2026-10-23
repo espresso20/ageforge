@@ -101,7 +101,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 7 — colonial_age
 	b = append(b, BuildingDef{
 		Name: "Settlement Block", Key: "settlement_block", Category: "housing",
-		BaseCost:    map[string]float64{"stone": 5.55e+06},
+		BaseCost:    map[string]float64{"stone": 5.55 * Million},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 960}},
 		BuildTicks:  3600,
@@ -113,7 +113,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 8 — industrial_age
 	b = append(b, BuildingDef{
 		Name: "Tenement", Key: "tenement", Category: "housing",
-		BaseCost:    map[string]float64{"stone": 1.1e07, "iron": 7400000},
+		BaseCost:    map[string]float64{"stone": 11 * Million, "iron": 7.4 * Million},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 1920}},
 		BuildTicks:  3600,
@@ -125,7 +125,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 9 — victorian_age
 	b = append(b, BuildingDef{
 		Name: "Row House", Key: "row_house", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 7.4e07, "stone": 5.5e07},
+		BaseCost:    map[string]float64{"steel": 74 * Million, "stone": 55 * Million},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 3840}},
 		BuildTicks:  3600,
@@ -137,7 +137,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 10 — electric_age
 	b = append(b, BuildingDef{
 		Name: "Apartment Block", Key: "apartment_block", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 4.6e08, "electricity": 1.8e08},
+		BaseCost:    map[string]float64{"steel": 460 * Million, "electricity": 180 * Million},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 7680}},
 		BuildTicks:  3600,
@@ -149,7 +149,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 11 — atomic_age
 	b = append(b, BuildingDef{
 		Name: "Housing Project", Key: "housing_project", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 2.8e09, "electricity": 9.2e08},
+		BaseCost:    map[string]float64{"steel": 2.8 * Billion, "electricity": 920 * Million},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 15360}},
 		BuildTicks:  3600,
@@ -161,7 +161,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 12 — modern_age
 	b = append(b, BuildingDef{
 		Name: "Tower Block", Key: "tower_block", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 1.8e10, "electricity": 7.4e09},
+		BaseCost:    map[string]float64{"steel": 18 * Billion, "electricity": 7.4 * Billion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 30720}},
 		BuildTicks:  3600,
@@ -173,7 +173,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 13 — information_age
 	b = append(b, BuildingDef{
 		Name: "Smart Complex", Key: "smart_complex", Category: "housing",
-		BaseCost:     map[string]float64{"steel": 1.1e11, "electricity": 4.6e10, "data": 4.6e09},
+		BaseCost:     map[string]float64{"steel": 110 * Billion, "electricity": 46 * Billion, "data": 4.6 * Billion},
 		CostScale:    1.13,
 		Effects:      []Effect{{Type: "capacity", Target: "population", Value: 61440}},
 		BuildTicks:   3600,
@@ -186,7 +186,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 14 — digital_age
 	b = append(b, BuildingDef{
 		Name: "Megaplex", Key: "megaplex", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 6.5e11, "electricity": 2.8e11, "data": 2.8e10},
+		BaseCost:    map[string]float64{"steel": 650 * Billion, "electricity": 280 * Billion, "data": 28 * Billion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 122880}},
 		BuildTicks:  3600,
@@ -198,7 +198,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 15 — cyberpunk_age
 	b = append(b, BuildingDef{
 		Name: "Arcology Pod", Key: "arcology_pod", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 4.6e12, "data": 1.4e11, "crypto": 4.6e11},
+		BaseCost:    map[string]float64{"steel": 4.6 * Trillion, "data": 140 * Billion, "crypto": 460 * Billion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 245760}},
 		BuildTicks:  3600,
@@ -210,7 +210,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 16 — fusion_age
 	b = append(b, BuildingDef{
 		Name: "Habitat Ring", Key: "habitat_ring", Category: "housing",
-		BaseCost:    map[string]float64{"steel": 3.2e13, "plasma": 4.6e12, "electricity": 1.4e13},
+		BaseCost:    map[string]float64{"steel": 32 * Trillion, "plasma": 4.6 * Trillion, "electricity": 14 * Trillion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 491520}},
 		BuildTicks:  3600,
@@ -222,7 +222,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 17 — space_age
 	b = append(b, BuildingDef{
 		Name: "Orbital Habitat", Key: "orbital_habitat", Category: "housing",
-		BaseCost:    map[string]float64{"titanium": 4.6e13, "plasma": 2.8e13, "steel": 1.8e14},
+		BaseCost:    map[string]float64{"titanium": 46 * Trillion, "plasma": 28 * Trillion, "steel": 180 * Trillion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 983040}},
 		BuildTicks:  3600,
@@ -234,7 +234,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 18 — interstellar_age
 	b = append(b, BuildingDef{
 		Name: "Generation Ship", Key: "generation_ship", Category: "housing",
-		BaseCost:    map[string]float64{"titanium": 4.6e14, "dark_matter": 4.6e13, "plasma": 2.8e14},
+		BaseCost:    map[string]float64{"titanium": 460 * Trillion, "dark_matter": 46 * Trillion, "plasma": 280 * Trillion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 1966080}},
 		BuildTicks:  3600,
@@ -246,7 +246,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 19 — galactic_age
 	b = append(b, BuildingDef{
 		Name: "Dyson Sphere Habitat", Key: "dyson_sphere_habitat", Category: "housing",
-		BaseCost:    map[string]float64{"dark_matter": 4.6e14, "titanium": 4.6e15, "antimatter": 9.2e13},
+		BaseCost:    map[string]float64{"dark_matter": 460 * Trillion, "titanium": 4.6 * Quadrillion, "antimatter": 92 * Trillion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 3932160}},
 		BuildTicks:  3600,
@@ -258,7 +258,7 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 20 — quantum_age
 	b = append(b, BuildingDef{
 		Name: "Reality Fold", Key: "reality_fold", Category: "housing",
-		BaseCost:    map[string]float64{"quantum_flux": 9.2e13, "antimatter": 4.6e16, "dark_matter": 3.7e16},
+		BaseCost:    map[string]float64{"quantum_flux": 92 * Trillion, "antimatter": 46 * Quadrillion, "dark_matter": 37 * Quadrillion},
 		CostScale:   1.13,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 7864320}},
 		BuildTicks:  3600,
@@ -270,9 +270,9 @@ func buildingsLineageHousing() []BuildingDef {
 	// tier 21 — transcendent_age
 	b = append(b, BuildingDef{
 		Name: "Transcendent Nexus", Key: "transcendent_nexus", Category: "housing",
-		BaseCost:    map[string]float64{"quantum_flux": 9.2e14, "antimatter": 4.6e17, "dark_matter": 3.7e17},
+		BaseCost:    map[string]float64{"quantum_flux": 920 * Trillion, "antimatter": 460 * Quadrillion, "dark_matter": 370 * Quadrillion},
 		CostScale:   1.13,
-		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 1.572864e07}},
+		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 15.72864 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "transcendent_age",
 		Description: "A transcendent dimensional habitation nexus.",

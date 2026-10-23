@@ -120,7 +120,7 @@ func TestPlanOverflow_AdvanceReturnsBanksBeforeTheTrim(t *testing.T) {
 	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
 		t.Fatal(err)
 	}
-	ge.plan[0].Banked = map[string]float64{"wood": 1e5}
+	ge.plan[0].Banked = map[string]float64{"wood": 100_000}
 	setAmount(ge, "wood", 0)
 	next := ge.progress.GetNextAge(ge.age)
 	trim := CarryoverStarterBuildings * ageEntryCost(next, "wood")

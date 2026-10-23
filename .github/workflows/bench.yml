@@ -1,0 +1,155 @@
+name: Benchmarks
+
+# The hot-path benchmarks (engine tick, UI snapshot, one dashboard frame, one
+# map frame per style) compared with benchstat. See scripts/ci-bench.sh for
+# exactly what runs and docs/ci.md for how to read it.
+#
+#   - Pull request: the merge result against the base branch's tip, built and
+#     run back to back on the same machine, so a noisy runner hits both sides
+#     alike. A benchmark that benchstat marks significant and more than 15%
+#     slower is called out in the job summary and in a pull request comment.
+#   - Push to master: this commit alone, kept as an artifact for 90 days (the
+#     trend).
+#   - By hand: this commit alone, or against any ref (base_ref).
+#
+# Why not compare with the last master run's stored numbers: that run happened
+# on a different virtual machine, and machine-to-machine spread on shared
+# runners is about the size of the threshold.
+#
+# Non-blocking: nothing here fails the run.
+
+on:
+  pull_request:
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "scripts/ci-bench.sh"
+      - ".github/workflows/bench.yml"
+  push:
+    branches: [master]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "scripts/ci-bench.sh"
+      - ".github/workflows/bench.yml"
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: "Compare this commit against a ref (for example origin/master). Empty: benchmark this commit alone."
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  bench:
+    name: benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      regressed: ${{ steps.run.outputs.regressed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # benchstat has no tagged releases; this is a commit of golang.org/x/perf.
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@be2c69fb417e05de5fec05c732911f4c5f172606
+
+      - name: Run the benchmarks
+        id: run
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_BASE: ${{ inputs.base_ref }}
+        run: |
+          set -euo pipefail
+          base=""
+          if [ "$EVENT" = "pull_request" ]; then
+            base="HEAD^1" # the base branch's tip, first parent of the test merge
+          elif [ -n "$INPUT_BASE" ]; then
+            base="$INPUT_BASE"
+          fi
+          if [ -n "$base" ]; then
+            scripts/ci-bench.sh compare "$base" bench-out | tee -a "$GITHUB_STEP_SUMMARY"
+            if [ -s bench-out/regressions.txt ]; then
+              echo "regressed=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::A benchmark got slower by more than 15%; see the job summary"
+            else
+              echo "regressed=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            scripts/ci-bench.sh single bench-out | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "regressed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: ${{ github.event_name == 'push' && format('bench-master-{0}', github.sha) || 'bench' }}
+          path: bench-out/
+          retention-days: ${{ github.event_name == 'push' && 90 || 14 }}
+          if-no-files-found: ignore
+
+  # Posts (or updates) one comment on the pull request. Kept apart from the job
+  # that runs the pull request's code, so that job never holds a write token.
+  # Fork pull requests get a read-only token and are skipped; they still get the
+  # job summary.
+  comment:
+    name: pull request comment
+    needs: bench
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: bench
+          path: bench-out
+
+      - name: Comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REGRESSED: ${{ needs.bench.outputs.regressed }}
+        run: |
+          set -euo pipefail
+          marker="<!-- ageforge-bench -->"
+          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"$marker\"))) | .id" | sed -n '1p')
+
+          if [ "$REGRESSED" = "true" ]; then
+            # Benchmark names come from the pull request's code: keep them in a
+            # code block with no backticks in it (\140 is the backtick).
+            lines=$(tr -d '\140' < bench-out/regressions.txt | head -n 20)
+            body=$(printf '%s\n**Benchmarks:** slower by more than 15%% (reporting only, nothing is blocked).\n\n```\n%s\n```\n\nThe full benchstat table is in the [job summary](%s).' "$marker" "$lines" "$RUN_URL")
+          elif [ -n "$existing" ]; then
+            body=$(printf '%s\n**Benchmarks:** nothing is slower by more than 15%% now. Details in the [job summary](%s).' "$marker" "$RUN_URL")
+          else
+            echo "No regression and no earlier comment: nothing to post."
+            exit 0
+          fi
+
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$existing" -f body="$body" >/dev/null
+          else
+            gh api --method POST "repos/$REPO/issues/$PR/comments" -f body="$body" >/dev/null
+          fi

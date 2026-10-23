@@ -1,0 +1,17 @@
+# Config for gitleaks. See docs/ci.md for how to run it and how to silence a
+# false positive.
+title = "AgeForge gitleaks config"
+
+[extend]
+# Keep every rule gitleaks ships with.
+useDefault = true
+
+# Two constants are public by design: the game's save-integrity key and the
+# hash behind the dev-mode unlock both sit in the open source. They are not
+# credentials, and they only match when the line AND the file match.
+[[allowlists]]
+description = "Save-integrity key and dev-mode key hash in the game source"
+condition = "AND"
+regexTarget = "line"
+regexes = ['''(saveHMACKey|devKeyHash)\s*=''']
+paths = ['''game/save\.go''', '''game/devmode\.go''']

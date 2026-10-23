@@ -162,7 +162,7 @@ func TestScout_LaunchableInItsEra_NotCarriedToTheNextAge(t *testing.T) {
 
 	ge2 := NewGameEngine()
 	setAge(ge2, "stone_age")
-	setSoldiers(ge2, 1e6)
+	setSoldiers(ge2, config.Million)
 	setResource(ge2, "stone", 1000)
 	setResource(ge2, "wood", 1000)
 	setResource(ge2, "iron", 1000)

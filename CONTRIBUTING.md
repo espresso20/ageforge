@@ -31,6 +31,8 @@ make release-minor   # bump minor version, update CHANGELOG, tag, push
 make release-major   # bump major version, update CHANGELOG, tag, push
 ```
 
+What CI checks beyond the tests (security scans, linters, prose rules, benchmarks, release builds), how to run each one locally, and how to quiet a false positive: [docs/ci.md](docs/ci.md).
+
 ---
 
 ## Writing Commits
@@ -440,6 +442,10 @@ A seed must play the same run on every machine: the same smoke numbers locally a
 Map iteration order is the third trap (Go randomizes it per run); float sums and anything that rolls dice walk sorted keys (`sortedKeys`, `BuildingManager.eachBuilt`).
 
 Tests in `detmath/rules_test.go` enforce both rules: `TestNoFusedMultiplyAdd` compiles these packages for arm64 and amd64 v3 and lists every FMA instruction with its file, line and source, and `TestNoStdlibTranscendentals` lists every banned `math` call. The cross-machine check (Smoke testing, below) catches whatever slips past them.
+
+### Writing big numbers
+
+Write a number from a million up as `<m> * <Unit>` with `m` from 1 to 1000: `75.4 * Million`, `2.5 * Quadrillion` (`config.Million` outside `config`). The names are in `config/units.go` and match the game's suffixes (K, M, B, T, Q, Qi, Sx, Sp, Oc, No, Dc). Below a million use plain digits, with an underscore every three digits from five digits up: `22_700`, `950_000`, `4_500.5`, but `7500`. No e-notation for these; tolerances such as `1e-9` stay. The constants are exact, so `75.4 * Million` is the same float64 as `7.54e07` was. A tool or a failing test that prints a price to paste back into source should print it with `config.GoLiteral`, which writes this form.
 
 ---
 

@@ -217,10 +217,10 @@ func TestHarbingerNeverNamesTheEraToCome(t *testing.T) {
 			}
 			stock := map[string][2]float64{}
 			for k := range doomAppeaseCost(ep.Key, ep.Ages[0], HarbingerMaxAppease) {
-				stock[k] = [2]float64{1e12, 1e12}
+				stock[k] = [2]float64{config.Trillion, config.Trillion}
 			}
 			for _, k := range eraBraceMaterials(ep.Key) {
-				stock[k] = [2]float64{1e12, 1e12}
+				stock[k] = [2]float64{config.Trillion, config.Trillion}
 			}
 			setStock(ge, stock)
 			for _, act := range []func() error{ge.HarbingerAppease, ge.HarbingerBrace, ge.HarbingerInvite} {
@@ -384,7 +384,7 @@ func TestFalseThreadClaim(t *testing.T) {
 		t.Errorf("colonial figure announced %q, want the same false high", ge.harbinger.AnnouncedTier)
 	}
 	ge.advanceAge("industrial_age")
-	setStock(ge, map[string][2]float64{"culture": {1e7, 1e7}})
+	setStock(ge, map[string][2]float64{"culture": {10 * config.Million, 10 * config.Million}})
 	setFaithStrength(ge, 0.5)
 	v := ge.GetState().Harbinger
 	if !v.Numeric || v.Tier != CatastropheTierHigh || math.Abs(v.Probability-0.90) > 1e-9 {
@@ -477,7 +477,7 @@ func TestHarbingerCostSameAcrossEpoch(t *testing.T) {
 		}
 		for _, age := range ep.Ages[1:] {
 			ge.advanceAge(age)
-			fillBraceStock(ge, 1e15) // caps no longer matter
+			fillBraceStock(ge, config.Quadrillion) // caps no longer matter
 			v := ge.GetState().Harbinger
 			if !reflect.DeepEqual(v.AppeaseCost, first.AppeaseCost) || !reflect.DeepEqual(v.BraceCost, first.BraceCost) {
 				t.Errorf("%s at %s: costs %v / %v, first age %v / %v", ep.Key, age, v.AppeaseCost, v.BraceCost, first.AppeaseCost, first.BraceCost)
@@ -522,20 +522,20 @@ func TestHarbingerCostExamples(t *testing.T) {
 		brace      map[string]float64
 	}{
 		{"iron_era", "iron_age", map[string]float64{"gold": 130000, "iron": 130000, "stone": 120000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 1000000, "iron": 1000000, "stone": 610000}},
-		{"iron_era", "medieval_age", map[string]float64{"gold": 7300000, "iron": 6400000, "stone": 6100000}},
-		{"steel_era", "renaissance_age", map[string]float64{"gold": 33000000, "steel": 7300000}},
-		{"steel_era", "colonial_age", map[string]float64{"gold": 150000000, "steel": 120000000}},
-		{"steel_era", "industrial_age", map[string]float64{"gold": 510000000, "steel": 510000000}},
-		{"electric_era", "victorian_age", map[string]float64{"electricity": 2700000, "oil": 2200000000, "steel": 6500000000}},
-		{"electric_era", "electric_age", map[string]float64{"electricity": 34000000000, "oil": 7400000000, "steel": 72000000000}},
-		{"electric_era", "atomic_age", map[string]float64{"electricity": 280000000000, "oil": 10000000000, "steel": 340000000000}},
-		{"digital_era", "modern_age", map[string]float64{"data": 47000000000, "electricity": 1400000000000, "gold": 1700000000000}},
-		{"digital_era", "information_age", map[string]float64{"data": 1400000000000, "electricity": 11000000000000, "gold": 11000000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 8000000000000, "electricity": 44000000000000, "gold": 44000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 39000000000000, "electricity": 400000000000000}},
-		{"neon_era", "fusion_age", map[string]float64{"data": 65000000000000, "electricity": 1.9e15}},
-		{"neon_era", "space_age", map[string]float64{"data": 110000000000000, "electricity": 9.7e15}},
+		{"iron_era", "classical_age", map[string]float64{"gold": config.Million, "iron": config.Million, "stone": 610000}},
+		{"iron_era", "medieval_age", map[string]float64{"gold": 7.3 * config.Million, "iron": 6.4 * config.Million, "stone": 6.1 * config.Million}},
+		{"steel_era", "renaissance_age", map[string]float64{"gold": 33 * config.Million, "steel": 7.3 * config.Million}},
+		{"steel_era", "colonial_age", map[string]float64{"gold": 150 * config.Million, "steel": 120 * config.Million}},
+		{"steel_era", "industrial_age", map[string]float64{"gold": 510 * config.Million, "steel": 510 * config.Million}},
+		{"electric_era", "victorian_age", map[string]float64{"electricity": 2.7 * config.Million, "oil": 2.2 * config.Billion, "steel": 6.5 * config.Billion}},
+		{"electric_era", "electric_age", map[string]float64{"electricity": 34 * config.Billion, "oil": 7.4 * config.Billion, "steel": 72 * config.Billion}},
+		{"electric_era", "atomic_age", map[string]float64{"electricity": 280 * config.Billion, "oil": 10 * config.Billion, "steel": 340 * config.Billion}},
+		{"digital_era", "modern_age", map[string]float64{"data": 47 * config.Billion, "electricity": 1.4 * config.Trillion, "gold": 1.7 * config.Trillion}},
+		{"digital_era", "information_age", map[string]float64{"data": 1.4 * config.Trillion, "electricity": 11 * config.Trillion, "gold": 11 * config.Trillion}},
+		{"digital_era", "digital_age", map[string]float64{"data": 8 * config.Trillion, "electricity": 44 * config.Trillion, "gold": 44 * config.Trillion}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 39 * config.Trillion, "electricity": 400 * config.Trillion}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 65 * config.Trillion, "electricity": 1.9 * config.Quadrillion}},
+		{"neon_era", "space_age", map[string]float64{"data": 110 * config.Trillion, "electricity": 9.7 * config.Quadrillion}},
 	}
 	listed := 0
 	for _, ep := range config.Epochs() {
@@ -564,7 +564,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 	// a moderate economy over an hour and a half of the Victorian Age's
 	// electricity and seconds of the Atomic Age's.
 	old := eraBraceCost("electric_era", 1)
-	if want := map[string]float64{"steel": 56400000, "oil": 924000, "electricity": 3960000}; !reflect.DeepEqual(old, want) {
+	if want := map[string]float64{"steel": 56.4 * config.Million, "oil": 924000, "electricity": 3.96 * config.Million}; !reflect.DeepEqual(old, want) {
 		t.Errorf("the Electric Era's old price = %v, want %v", old, want)
 	}
 	first, last := epochAges(t, "electric_era")[0], epochAges(t, "electric_era")[2]
@@ -594,10 +594,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// Then the soft cap went: the model's all-production pool counts in
 		// full now, past +200% in these ages, 15% more income in the
 		// Interstellar Age, up to 55% more in the Transcendent.
-		{"interstellar_age", map[string]float64{"dark_matter": 3e16, "titanium": 2.9e17}},
-		{"galactic_age", map[string]float64{"dark_matter": 1.4e18, "titanium": 2.6e18}},
-		{"quantum_age", map[string]float64{"dark_matter": 6.8e19, "titanium": 5.1e18}},
-		{"transcendent_age", map[string]float64{"dark_matter": 1.2e20, "titanium": 8.4e18}},
+		{"interstellar_age", map[string]float64{"dark_matter": 30 * config.Quadrillion, "titanium": 290 * config.Quadrillion}},
+		{"galactic_age", map[string]float64{"dark_matter": 1.4 * config.Quintillion, "titanium": 2.6 * config.Quintillion}},
+		{"quantum_age", map[string]float64{"dark_matter": 68 * config.Quintillion, "titanium": 5.1 * config.Quintillion}},
+		{"transcendent_age", map[string]float64{"dark_matter": 120 * config.Quintillion, "titanium": 8.4 * config.Quintillion}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(tears) {
 		t.Fatalf("the Cosmic Era has ages %v; the Reality Tear's brace is listed for %d", ages, len(tears))
@@ -630,11 +630,11 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// Media, the two +5% on all production.
 		{"iron_era", "medieval_age", map[string]float64{"faith": 6600}},
 		{"steel_era", "renaissance_age", map[string]float64{"culture": 150000, "faith": 15000}},
-		{"steel_era", "industrial_age", map[string]float64{"culture": 1700000, "faith": 150000}},
+		{"steel_era", "industrial_age", map[string]float64{"culture": 1.7 * config.Million, "faith": 150000}},
 		// The Cosmic Era's row counts the model's all-production pool in full:
 		// it is past +200% there, 15% more income than when a quarter of the
 		// rest counted.
-		{"cosmic_era", "interstellar_age", map[string]float64{"culture": 82000000000, "faith": 5300000000}},
+		{"cosmic_era", "interstellar_age", map[string]float64{"culture": 82 * config.Billion, "faith": 5.3 * config.Billion}},
 	}
 	for _, c := range dooms {
 		if got := doomAppeaseCost(c.epoch, c.age, 1); !reflect.DeepEqual(got, c.appease) {
@@ -668,10 +668,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// And by the tree's last techs: 4% more culture each from Neural
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
 		// And by the soft cap going: the pool counts in full, as above.
-		{"interstellar_age", map[string]float64{"culture": 280000000000, "faith": 18000000000}, map[string]float64{"dark_matter": 6e16, "titanium": 2.9e17}},
-		{"galactic_age", map[string]float64{"culture": 930000000000, "faith": 58000000000}, map[string]float64{"dark_matter": 2.6e18, "titanium": 2.6e18}},
-		{"quantum_age", map[string]float64{"culture": 3000000000000, "faith": 190000000000}, map[string]float64{"dark_matter": 1.4e20, "titanium": 1.1e19}},
-		{"transcendent_age", map[string]float64{"culture": 5000000000000, "faith": 300000000000}, map[string]float64{"dark_matter": 2e20, "titanium": 1.7e19}},
+		{"interstellar_age", map[string]float64{"culture": 280 * config.Billion, "faith": 18 * config.Billion}, map[string]float64{"dark_matter": 60 * config.Quadrillion, "titanium": 290 * config.Quadrillion}},
+		{"galactic_age", map[string]float64{"culture": 930 * config.Billion, "faith": 58 * config.Billion}, map[string]float64{"dark_matter": 2.6 * config.Quintillion, "titanium": 2.6 * config.Quintillion}},
+		{"quantum_age", map[string]float64{"culture": 3 * config.Trillion, "faith": 190 * config.Billion}, map[string]float64{"dark_matter": 140 * config.Quintillion, "titanium": 11 * config.Quintillion}},
+		{"transcendent_age", map[string]float64{"culture": 5 * config.Trillion, "faith": 300 * config.Billion}, map[string]float64{"dark_matter": 200 * config.Quintillion, "titanium": 17 * config.Quintillion}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(passages) {
 		t.Fatalf("the Cosmic Era has ages %v; the Last Passage's price is listed for %d", ages, len(passages))
@@ -869,7 +869,7 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 		t.Run(string(rune('0'+tc.level)), func(t *testing.T) {
 			t.Cleanup(SetDataDirForTest(t.TempDir()))
 			ge := threadEngine(t, "iron_era", 6)
-			fillBraceStock(ge, 1e9)
+			fillBraceStock(ge, config.Billion)
 			price := threadBraceCost(ge.harbinger, 1)
 			res := sortedKeys(price)[0]
 			for i := 1; i <= tc.level; i++ {
@@ -932,7 +932,7 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 // which the player reaches first.
 func TestInviteForcesCatastropheAndDisablesAppease(t *testing.T) {
 	ge := threadEngine(t, "iron_era", 7)
-	setStock(ge, map[string][2]float64{"faith": {1e6, 1e6}})
+	setStock(ge, map[string][2]float64{"faith": {config.Million, config.Million}})
 	if err := ge.HarbingerInvite(); err != nil {
 		t.Fatal(err)
 	}
@@ -945,7 +945,7 @@ func TestInviteForcesCatastropheAndDisablesAppease(t *testing.T) {
 	if err := ge.HarbingerAppease(); err == nil || !strings.Contains(err.Error(), "invited") {
 		t.Errorf("appease after invite: err = %v", err)
 	}
-	if ge.Resources.Get("faith") != 1e6 {
+	if ge.Resources.Get("faith") != config.Million {
 		t.Error("refused appease spent faith")
 	}
 	if err := ge.HarbingerInvite(); err == nil {
@@ -955,7 +955,7 @@ func TestInviteForcesCatastropheAndDisablesAppease(t *testing.T) {
 	if v.AppeaseBlocked == "" || v.InviteBlocked == "" || v.BraceBlocked != "" {
 		t.Errorf("view after invite = %+v", v)
 	}
-	fillBraceStock(ge, 1e9)
+	fillBraceStock(ge, config.Billion)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Errorf("brace after invite: %v", err)
 	}
@@ -1046,8 +1046,8 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := threadEngine(t, "iron_era", 10)
 	ge.advanceAge("classical_age")
-	setStock(ge, map[string][2]float64{"faith": {1e6, 1e6}})
-	fillBraceStock(ge, 1e9)
+	setStock(ge, map[string][2]float64{"faith": {config.Million, config.Million}})
+	fillBraceStock(ge, config.Billion)
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
@@ -1399,12 +1399,12 @@ func TestThreadBraceCost(t *testing.T) {
 	if !reflect.DeepEqual(want2, want1) {
 		t.Errorf("the Last Passage's level 2 asks %v, want level 1's %v again", want2, want1)
 	}
-	fillBraceStock(lp, 1e18) // every material the price names
+	fillBraceStock(lp, config.Quintillion) // every material the price names
 	if err := lp.HarbingerBrace(); err != nil {
 		t.Fatal(err)
 	}
 	for res, c := range want1 {
-		if paid := 1e18 - lp.Resources.Get(res); paid != c {
+		if paid := config.Quintillion - lp.Resources.Get(res); paid != c {
 			t.Errorf("level 1 took %v %s, want %v", paid, res, c)
 		}
 	}
@@ -1445,11 +1445,11 @@ func TestThreadBraceCost(t *testing.T) {
 		t.Errorf("the waiting Last Passage thread: brace %v, want %v", got, want1)
 	}
 	// The era's old price no longer pays for it.
-	setStock(both, map[string][2]float64{"dark_matter": {1e13, 1e18}, "titanium": {1e13, 1e18}})
+	setStock(both, map[string][2]float64{"dark_matter": {10 * config.Trillion, config.Quintillion}, "titanium": {10 * config.Trillion, config.Quintillion}})
 	if err := both.HarbingerBrace(); err == nil || both.harbinger.BraceLevel != 0 {
 		t.Errorf("bracing against the Reality Tear with 10T of each: err %v, level %d; want refused", err, both.harbinger.BraceLevel)
 	}
-	fillBraceStock(both, 1e18) // every material the price names
+	fillBraceStock(both, config.Quintillion) // every material the price names
 	for level := 1; level <= HarbingerMaxBrace; level++ {
 		before := both.Resources.Get("dark_matter")
 		if err := both.HarbingerBrace(); err != nil {

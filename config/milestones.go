@@ -274,7 +274,7 @@ func Milestones() []MilestoneDef {
 			Flavor:      "A million people. The planet has filed a formal complaint about the crowding.",
 			Category:    "settlement", Hidden: true,
 			MinAge:        "digital_age",
-			MinPopulation: 1000000,
+			MinPopulation: Million,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.20},
 			},
@@ -792,7 +792,7 @@ func Milestones() []MilestoneDef {
 			Flavor:      "A million gold. You could swim in it, if your advisors would stop fainting at the suggestion.",
 			Category:    "trade", Hidden: true,
 			MinAge:       "renaissance_age",
-			MinResources: map[string]float64{"gold": 1000000},
+			MinResources: map[string]float64{"gold": Million},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "gold_rate", Value: 0.10},
 			},

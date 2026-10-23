@@ -73,7 +73,7 @@ func TestDefenseMitigation_Curve(t *testing.T) {
 		t.Errorf("defense == threat blunts %v, want half the cap %v", got, config.DefenseMitigationCap/2)
 	}
 	prev := 0.0
-	for d := 1.0; d < 1e15; d *= 1.7 {
+	for d := 1.0; d < config.Quadrillion; d *= 1.7 {
 		m := config.DefenseMitigation(d, threat)
 		if m > config.DefenseMitigationCap {
 			t.Fatalf("defense %g blunts %v, above the cap %v", d, m, config.DefenseMitigationCap)
@@ -211,7 +211,7 @@ func TestNonRaidEventIgnoresGarrison(t *testing.T) {
 		ge.fireEvent(def)
 		return ge.Resources.Get("wood")
 	}
-	if a, b := run(0), run(1e6); a != b {
+	if a, b := run(0), run(config.Million); a != b {
 		t.Errorf("earthquake left %v wood without soldiers and %v with, want equal", a, b)
 	}
 }

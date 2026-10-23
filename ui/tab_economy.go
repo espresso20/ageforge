@@ -10,6 +10,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -93,7 +94,7 @@ func renderOnboarding(w int) string {
 // cultureThresholds defines the culture breakpoints at which rewards unlock.
 // The bar displayed in the Economy panel measures progress towards the next threshold.
 var cultureThresholds = []float64{
-	500, 2500, 10000, 50000, 250000, 1_000_000, 5_000_000, 25_000_000, 100_000_000, 500_000_000, 1_000_000_000,
+	500, 2500, 10000, 50000, 250000, config.Million, 5 * config.Million, 25 * config.Million, 100 * config.Million, 500 * config.Million, config.Billion,
 }
 
 // cultureThresholdLabels are short effect labels for each threshold (parallel to cultureThresholds).

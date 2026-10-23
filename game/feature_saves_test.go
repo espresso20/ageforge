@@ -119,9 +119,9 @@ func savedFeatures(t *testing.T, name string) []string {
 // army at home to make up any party.
 func stock(ge *GameEngine) {
 	for _, res := range []string{"food", "wood", "stone", "iron", "gold", "culture", "steel", "coal"} {
-		setResource(ge, res, 1e9)
+		setResource(ge, res, config.Billion)
 	}
-	setSoldiers(ge, 1e12)
+	setSoldiers(ge, config.Trillion)
 }
 
 // clearArmy calls every expedition home, so the next can be sent.

@@ -1,0 +1,37 @@
+// markdownlint rules. See docs/ci.md. Tuned to how the README, CONTRIBUTING.md,
+// CHANGELOG.md and the wiki in site/docs are actually written, so a finding
+// means something is off, not that the house style differs from the default.
+{
+  "default": true,
+
+  // Line length: prose is written one paragraph per line.
+  "MD013": false,
+
+  // Inline HTML: the wiki uses it (details, kbd, br inside tables).
+  "MD033": false,
+
+  // The wiki pages and the README may start with a badge row or a note
+  // rather than an H1.
+  "MD041": false,
+
+  // The changelog repeats "Added", "Changed", "Fixed" under every release,
+  // and wiki pages repeat "Notes" and "Examples" across sections.
+  "MD024": { "siblings_only": true },
+
+  // Blank lines around headings and lists. CHANGELOG.md is written compact by
+  // scripts/release.sh and make commit, and the wiki follows the same layout.
+  "MD022": false,
+  "MD032": false,
+
+  // Spaces inside code spans: the command reference writes "plan build " with
+  // the trailing space on purpose, to show the argument that follows.
+  "MD038": false,
+
+  // Link fragments: docsify builds its own heading ids (an ampersand becomes
+  // "amp"), which differ from the GitHub ids this rule checks.
+  "MD051": false,
+
+  // Table column style: the wiki's tables are compact pipe tables, not
+  // padded to a common width.
+  "MD060": false
+}

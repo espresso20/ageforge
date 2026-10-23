@@ -148,7 +148,7 @@ func checkMakerFilledOutputsAreTheStandard(t *testing.T) {
 		}
 		for res, w := range want[key] {
 			if math.Abs(made[res]/w-1) > 0.005 {
-				t.Errorf("%s makes %.4g %s a tick, the standard is %.4g", key, made[res], res, w)
+				t.Errorf("%s makes %s %s a tick, the standard is %s", key, GoLiteral(roundSignificant(made[res], 4)), res, GoLiteral(roundSignificant(w, 4)))
 			}
 		}
 	}
