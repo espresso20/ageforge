@@ -3,6 +3,7 @@ package roguelike
 import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_visitor.go is the rare visitor in the sky scenes (the Space and
@@ -73,6 +74,6 @@ func (v *skyView) skyVisitorAt(p mapmodel.Pt) (mapstyle.Inspection, bool) {
 	if !ok || p.Y != q.Y || abs(p.X-q.X) > 1 {
 		return mapstyle.Inspection{}, false
 	}
-	return mapstyle.Inspection{Title: "Unknown craft", Lines: []string{saucerLines[sg.Roll>>24%uint64(len(saucerLines))]},
+	return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_visitor.skyVisitorAt.01", "Unknown craft"), Lines: []string{saucerLines[sg.Roll>>24%uint64(len(saucerLines))].String()},
 		Kind: mapstyle.KindAlien}, true
 }
