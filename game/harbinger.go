@@ -1059,7 +1059,9 @@ func (ge *GameEngine) harbingerActionCheck() error {
 
 // lastPassageCame is the refusal every action shows while the Last Passage
 // is pending: the answers belonged to the passage, which has been rolled.
-const lastPassageCame = "the Last Passage has already come"
+func lastPassageCame() string {
+	return vibe.Line("game.harbinger.lastPassageCame.01", "the Last Passage has already come")
+}
 
 // harbingerPowerless is the refusal every action shows for a thread in an era
 // where nothing can be fated (a false prophet in the Stone Era): no
@@ -1079,7 +1081,7 @@ func (ge *GameEngine) appeaseBlocked() string {
 	case h == nil:
 		return vibe.Line("game.harbinger.appeaseBlocked.01", "no harbinger is here")
 	case ge.pendingLastPassage:
-		return lastPassageCame
+		return lastPassageCame()
 	case ge.harbingerPowerless() != "":
 		return ge.harbingerPowerless()
 	case h.Invited:
@@ -1097,7 +1099,7 @@ func (ge *GameEngine) braceBlocked() string {
 	case h == nil:
 		return vibe.Line("game.harbinger.braceBlocked.01", "no harbinger is here")
 	case ge.pendingLastPassage:
-		return lastPassageCame
+		return lastPassageCame()
 	case ge.harbingerPowerless() != "":
 		return ge.harbingerPowerless()
 	case h.BraceLevel >= HarbingerMaxBrace:
@@ -1113,7 +1115,7 @@ func (ge *GameEngine) inviteBlocked() string {
 	case h == nil:
 		return vibe.Line("game.harbinger.inviteBlocked.01", "no harbinger is here")
 	case ge.pendingLastPassage:
-		return lastPassageCame
+		return lastPassageCame()
 	case ge.harbingerPowerless() != "":
 		return ge.harbingerPowerless()
 	case h.Invited:

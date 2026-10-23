@@ -1856,7 +1856,8 @@ func (ge *GameEngine) processDiplomacy() {
 		// Surface as a timed event so it shows in the active-events panel too.
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "worker_lending",
-			Name:      "Workers on Loan",
+			Src:       nameFromCode,
+			Ref:       "worker_lending",
 			TicksLeft: lendEventDisplayTicks,
 		})
 	}
@@ -2022,7 +2023,6 @@ func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
 func (ge *GameEngine) startChainBoost(chain config.MilestoneChainDef, ticks int) {
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       chain.Key + "_boost",
-		Name:      chain.Name + " Speed Boost",
 		Src:       nameFromChain,
 		Ref:       chain.Key,
 		TicksLeft: ticks,
@@ -3047,7 +3047,8 @@ func (ge *GameEngine) DoFestival() error {
 	buff := ge.festivalLength()
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "cultural_festival",
-		Name:      "Cultural Festival",
+		Src:       nameFromCode,
+		Ref:       "cultural_festival",
 		TicksLeft: buff,
 		Effects:   []config.Effect{{Type: "production_all", Value: festivalBuffPercent}},
 	})
@@ -4169,9 +4170,12 @@ const (
 	// ancientMemoryChance is the probability the cache appears at the start of a
 	// qualifying new prestige run. Occasional by design — not every run.
 	ancientMemoryChance = 0.40
-	// ancientMemoryFlavor is shown in the offer modal and the log.
-	ancientMemoryFlavor = "You have discovered an old cache. It appears to contain memories of a now-extinct civilization."
 )
+
+// ancientMemoryFlavor is shown in the offer modal and the log.
+func ancientMemoryFlavor() string {
+	return vibe.Line("game.engine.ancientMemoryFlavor.01", "You have discovered an old cache. It appears to contain memories of a now-extinct civilization.")
+}
 
 // ancientMemoryAges is the set of (early) ages in which a cache can surface. The
 // design fires it early in a fresh run, before the player has rebuilt past it.
@@ -4237,7 +4241,7 @@ func (ge *GameEngine) maybeOfferAncientMemory() {
 	ge.ancientMemoryUsed = true
 	ge.pendingMemoryTech = techKey
 	def, _ := ge.rules.Tech(techKey)
-	ge.addLog("event", vibe.Sprintf("game.engine.maybeOfferAncientMemory.01", "✦ [comment]%s[-] A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor, def.Name))
+	ge.addLog("event", vibe.Sprintf("game.engine.maybeOfferAncientMemory.01", "✦ [comment]%s[-] A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor(), def.Name))
 }
 
 // selectMemoryTech picks a random tech appropriate to the current age, with the

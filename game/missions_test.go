@@ -398,7 +398,7 @@ func TestMissionBoard_TitlesComeFromTheAgesWords(t *testing.T) {
 		words, _ := config.MissionWordsFor(age.Key)
 		for i, slot := range ge.Military.board.Slots {
 			o := slot.Offer
-			title := strings.TrimPrefix(o.Title, config.RareTitleWord+" ")
+			title := strings.TrimPrefix(o.Title, config.RareTitleWord()+" ")
 			if o.Rare != (title != o.Title) {
 				t.Errorf("%s: %q is rare=%v", age.Key, o.Title, o.Rare)
 			}

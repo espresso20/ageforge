@@ -432,7 +432,7 @@ func TestScholarsSave_SaysItOnce(t *testing.T) {
 	if ge.cheaterBadge {
 		t.Fatal("tamper flag")
 	}
-	if n := countLines(ge, scholarsNotice); n != 1 {
+	if n := countLines(ge, scholarsNotice()); n != 1 {
 		t.Fatalf("the notice was said %d times, want once", n)
 	}
 	if err := ge.SaveGame("scholars_new"); err != nil {
@@ -442,8 +442,8 @@ func TestScholarsSave_SaysItOnce(t *testing.T) {
 	if err := back.loadSave("scholars_new", false); err != nil {
 		t.Fatal(err)
 	}
-	if back.cheaterBadge || countLines(back, scholarsNotice) != 0 {
-		t.Errorf("reloading the new save: tamper flag %v, notice %d times", back.cheaterBadge, countLines(back, scholarsNotice))
+	if back.cheaterBadge || countLines(back, scholarsNotice()) != 0 {
+		t.Errorf("reloading the new save: tamper flag %v, notice %d times", back.cheaterBadge, countLines(back, scholarsNotice()))
 	}
 }
 
@@ -473,8 +473,8 @@ func TestScholarsSave_FromTheKnowledgeStoreLoadsClean(t *testing.T) {
 	// Its knowledge is lost, as nothing is in progress to take it; the
 	// techs it researched on the way are done.
 	old := loadSaveFile(t, "testdata/pre_knowledge_store_medieval.json")
-	if len(ge.Research.researched) <= len(old.Research.Researched) || countLines(ge, scholarsNotice) != 1 {
-		t.Errorf("researched %d (saved %d), notice said %d times", len(ge.Research.researched), len(old.Research.Researched), countLines(ge, scholarsNotice))
+	if len(ge.Research.researched) <= len(old.Research.Researched) || countLines(ge, scholarsNotice()) != 1 {
+		t.Errorf("researched %d (saved %d), notice said %d times", len(ge.Research.researched), len(old.Research.Researched), countLines(ge, scholarsNotice()))
 	}
 }
 

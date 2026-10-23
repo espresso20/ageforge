@@ -108,3 +108,72 @@ func TestEveryWiredTextReadsPlainWhileVibeModeIsOff(t *testing.T) {
 		t.Errorf("only %d vibe calls walked", n)
 	}
 }
+
+// TestVibeWireAddsTheImportToAFileWithNone: a file with no import block that
+// gets a vibe call gets the vibe import with it, so it still builds; a file
+// with imports keeps them, in the right group.
+func TestVibeWireAddsTheImportToAFileWithNone(t *testing.T) {
+	const call = "var greeting = vibe.Line(\"config.x.greeting.01\", \"Hello\")\n"
+	for name, tc := range map[string]struct{ src, want string }{
+		"none": {
+			"package config\n\n// greeting says hello.\n" + call,
+			"package config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n// greeting says hello.\n" + call,
+		},
+		"none, a package doc": {
+			"// Package config is the config.\npackage config\n\n" + call,
+			"// Package config is the config.\npackage config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n" + call,
+		},
+		"already there": {
+			"package config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n" + call,
+			"package config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n" + call,
+		},
+		"another import": {
+			"package config\n\nimport \"strings\"\n\n" + call + "var _ = strings.ToUpper\n",
+			"package config\n\nimport (\n\t\"strings\"\n\n\t\"github.com/espresso20/ageforge/vibe\"\n)\n\n" + call + "var _ = strings.ToUpper\n",
+		},
+	} {
+		got, err := fixImports("config/x.go", []byte(tc.src))
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if string(got) != tc.want {
+			t.Errorf("%s: the file reads\n%s\nwant\n%s", name, got, tc.want)
+		}
+	}
+}
+
+// TestATableEntryCarriesItsRowIdAndCountsAsWired: the road event templates are a
+// table made once, so each entry holds its own row id (vibeRow) and whoever
+// draws one reads it through vibe.Line. The export honours the id, takes the
+// id's own string for a key, and calls the row wired.
+func TestATableEntryCarriesItsRowIdAndCountsAsWired(t *testing.T) {
+	c := realCatalog(t)
+	w := newVibeWiring(c)
+	n := 0
+	for _, r := range c.rows {
+		if !strings.HasPrefix(r.id, "config.mission_words.roadEventTemplates.") {
+			continue
+		}
+		n++
+		if !r.u.vibeTable || r.u.vibeID != r.id {
+			t.Errorf("%s is not read as a table entry carrying its own id", r.id)
+		}
+		if !w.wired(r.id) {
+			t.Errorf("%s is not counted as wired", r.id)
+		}
+		if reason := c.wireVerdict(r).reason; forGood(reason) {
+			t.Errorf("%s is left alone for good: %s", r.id, reason)
+		}
+		if r.area != areaLog {
+			t.Errorf("%s is on the sheet %s", r.id, r.area.file)
+		}
+	}
+	if n != 27 {
+		t.Errorf("%d road event templates in the export, want 27", n)
+	}
+	for _, r := range c.rows {
+		if strings.HasPrefix(r.id, "unclassified.") && strings.Contains(r.id, "roadTemplate") {
+			t.Errorf("%s: the id of a table entry is read as text", r.id)
+		}
+	}
+}

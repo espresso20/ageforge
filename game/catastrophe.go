@@ -663,7 +663,8 @@ func (ge *GameEngine) startReconstruction() int {
 	debuff := ge.rules.StretchTicks(ge.age, endureDebuffTicks)
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "endure_reconstruction",
-		Name:      "Reconstruction Effort",
+		Src:       nameFromCode,
+		Ref:       "endure_reconstruction",
 		TicksLeft: debuff,
 		Effects: []config.Effect{
 			{Type: "production_all", Value: endureDebuffProduction},
@@ -878,6 +879,12 @@ const passageMark = "{passage}"
 func (ge *GameEngine) historyLines() []string {
 	out := make([]string, len(ge.catastropheHistory))
 	for i, line := range ge.catastropheHistory {
+		if vibe.On() {
+			if told, ok := ge.vibeHistoryLine(line); ok {
+				out[i] = told
+				continue
+			}
+		}
 		out[i] = historyMarkRe.ReplaceAllStringFunc(line, func(m string) string {
 			parts := historyMarkRe.FindStringSubmatch(m)
 			switch parts[1] {
@@ -892,4 +899,48 @@ func (ge *GameEngine) historyLines() []string {
 		})
 	}
 	return out
+}
+
+// The four lines the civilization log is written as, in plain English with
+// their markers: a save holds them so, and they are the key the line is told
+// again by when VibeMode is on (vibeHistoryLine).
+var (
+	historyEnduredRe   = regexp.MustCompile(`^Tick (\d+)` + regexp.QuoteMeta(catHistEnduredMarker) + `\{doom:([a-z_]+)\} \(\{era:([a-z_]+)\}\)\. (\d+) buildings lost\.$`)
+	historySuccumbedRe = regexp.MustCompile(`^Tick (\d+)` + regexp.QuoteMeta(catHistSuccumbedMarker) + `\{doom:([a-z_]+)\} \(\{era:([a-z_]+)\}\)\. Civilization reset\. (Legacy bonus (?:earned|already held)\.)$`)
+	historyPassageEnRe = regexp.MustCompile(`^Tick (\d+)` + regexp.QuoteMeta(catHistEnduredMarker) + `\{passage\} \(\{era:([a-z_]+)\}\)\. Prestige kept (\d+) of (\d+) points\.$`)
+	historyPassageSuRe = regexp.MustCompile(`^Tick (\d+)` + regexp.QuoteMeta(catHistSuccumbedMarker) + `\{passage\} \(\{era:([a-z_]+)\}\)\. No prestige points\. Cosmic Legacy earned\.$`)
+)
+
+// vibeHistoryLine tells a line of the civilization log in the words of the
+// script in force, from the plain English the save holds it in. It reports
+// false for a line it does not know (one written by another version), which
+// is then read as it was written.
+func (ge *GameEngine) vibeHistoryLine(line string) (string, bool) {
+	tick := func(s string) int { n, _ := strconv.Atoi(s); return n }
+	doom := func(key string) string { name, _ := ge.rules.Catastrophe(key); return name }
+	era := func(key string) string { return eraName(ge.rules, key) }
+	passage := func() string { name, _ := ge.rules.LastPassage(); return name }
+	switch {
+	case historyEnduredRe.MatchString(line):
+		m := historyEnduredRe.FindStringSubmatch(line)
+		return vibe.Sprintf("game.catastrophe.historyLines.01", "Tick %d — Endured %s (%s). %d buildings lost.",
+			tick(m[1]), doom(m[2]), era(m[3]), tick(m[4])), true
+	case historySuccumbedRe.MatchString(line):
+		m := historySuccumbedRe.FindStringSubmatch(line)
+		note := vibe.Line("game.catastrophe.historyLines.03", "Legacy bonus earned.")
+		if strings.Contains(m[4], "already held") {
+			note = vibe.Line("game.catastrophe.historyLines.04", "Legacy bonus already held.")
+		}
+		return vibe.Sprintf("game.catastrophe.historyLines.02", "Tick %d — Succumbed to %s (%s). Civilization reset. %s",
+			tick(m[1]), doom(m[2]), era(m[3]), note), true
+	case historyPassageEnRe.MatchString(line):
+		m := historyPassageEnRe.FindStringSubmatch(line)
+		return vibe.Sprintf("game.catastrophe.historyLines.05", "Tick %d — Endured %s (%s). Prestige kept %d of %d points.",
+			tick(m[1]), passage(), era(m[2]), tick(m[3]), tick(m[4])), true
+	case historyPassageSuRe.MatchString(line):
+		m := historyPassageSuRe.FindStringSubmatch(line)
+		return vibe.Sprintf("game.catastrophe.historyLines.06", "Tick %d — Succumbed to %s (%s). No prestige points. Cosmic Legacy earned.",
+			tick(m[1]), passage(), era(m[2])), true
+	}
+	return "", false
 }
