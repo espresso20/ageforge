@@ -206,7 +206,7 @@ func TestPlanTechWaitsForWhatItNeeds(t *testing.T) {
 // pools the rest of the game reads hold only what techs share with it.
 func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 	ge := NewGameEngine()
-	// Banking: +8% gold. Alchemy: +8% knowledge. Pottery: +10% storage.
+	// Banking: +8% gold. Alchemy: +8% knowledge. Pottery: +0.8% all production.
 	// Feudalism: +8% housing. Steel Forging: first steel (0.25 a tick), +8%
 	// iron. Chronometry: +5% game speed. Priesthood: morale can rise 5
 	// points higher.
@@ -222,9 +222,8 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 		{config.EffectOutput, "iron", 0.08},
 		{config.EffectFlatOutput, "steel", 0.25},
 		{config.EffectFlatOutput, "gold", 0},
-		{config.EffectStorage, "", 0.10},
 		{config.EffectHousing, "", 0.08},
-		{config.EffectAllOutput, "", 0},
+		{config.EffectAllOutput, "", 0.008},
 		{config.EffectGameSpeed, "", 0.05},
 		{config.EffectMechanic, config.MechanicMoraleCap, 0.05},
 		// A kind that multiplies reads 1 with no tech.
@@ -237,8 +236,8 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 			t.Errorf("Bonus(%s, %q) = %v, want %v", c.kind, c.target, got, c.want)
 		}
 	}
-	if got := rm.OutputFactor("gold"); got != 1.08 {
-		t.Errorf("the layer's factor on gold is %v, want 1.08", got)
+	if got := rm.OutputFactor("gold"); math.Abs(got-1.088) > 1e-12 {
+		t.Errorf("the layer's factor on gold is %v, want 1.088 (+8%% gold, +0.8%% all production)", got)
 	}
 	pools := map[string]float64{"tick_speed": 0.05}
 	if got := rm.GetBonuses(); !reflect.DeepEqual(got, pools) {
@@ -258,7 +257,7 @@ func TestResearchBonusesAreKeyedByKindAndTarget(t *testing.T) {
 	if !reflect.DeepEqual(rs.Bonuses, pools) ||
 		!reflect.DeepEqual(rs.Flat, map[string]float64{"steel": 0.25}) ||
 		!reflect.DeepEqual(rs.Output, map[string]float64{"gold": 0.08, config.ResearchTarget: 0.08, "iron": 0.08}) ||
-		rs.Storage != 0.10 || rs.Housing != 0.08 || rs.AllOutput != 0 ||
+		rs.Housing != 0.08 || rs.AllOutput != 0.008 ||
 		rs.BuildCost != 1 || rs.BuildTime != 1 || rs.ResearchTime != 1 ||
 		!reflect.DeepEqual(rs.Mechanics, map[string]float64{config.MechanicMoraleCap: 0.05}) {
 		t.Errorf("the snapshot holds %+v", rs)

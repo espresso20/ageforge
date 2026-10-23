@@ -236,7 +236,7 @@ func formatEffect(eff config.Effect) string {
 	switch eff.Type {
 	case "production":
 		return "[green]" + text + "[-]"
-	case "capacity", "storage":
+	case "capacity":
 		return "[yellow]" + text + "[-]"
 	case "bonus":
 		return "[cyan]" + text + "[-]"

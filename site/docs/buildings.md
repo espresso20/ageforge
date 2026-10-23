@@ -53,7 +53,7 @@ upgrade <building> <n>     upgrade up to n copies
 upgrade <building> all     upgrade every copy you hold, as far as you can pay
 ```
 
-Bare `upgrade` prints one line per older building you hold: the old and new keys, how many copies you hold, the price of the next copy, how many you can pay for now, and the reason if something blocks the next one (a tech to research, or a price larger than a store can hold).
+Bare `upgrade` prints one line per older building you hold: the old and new keys, how many copies you hold, the price of the next copy, how many you can pay for now, and the reason if something blocks the next one (a tech to research).
 
 Copies are upgraded one at a time, each at its own price, and the command stops at the first copy it cannot pay for. It says how many it upgraded, what they cost, and what the next copy costs or why it stopped. An upgrade takes effect at once: there is no build time. Upgrades are per building, so you control the order. An upgrade stops at the new building's max count, if it has one.
 
@@ -70,7 +70,7 @@ One upgraded copy costs **half** of what the next new copy of the building it be
 
 The old copy is given up, and nothing is paid back for it. Selling an older building pays back half of its own price, but the copy stops producing, so an older building is better kept or upgraded than sold.
 
-An upgrade is refused only for what it costs against what you hold. The size of a store does not matter.
+An upgrade is refused only for what it costs against what you hold.
 
 ### Workers and upgrades
 
@@ -127,7 +127,7 @@ total cost = sum of floor(first-copy price × scale ^ (built + queued + i))
 
 So a batch always costs more per copy than the first copy alone, and queued buildings raise the price of your next purchase before they finish.
 
-Most buildings (production, military, trade, diplomacy and monuments) cost **15% more** per copy than the last. Knowledge buildings cost **50% more**. Storage and housing buildings grow more gently, at **13%** per copy. Wonders have a flat price and are limited to one each. The scaling lineages still grow exponentially, so plan your production before bulk-buying.
+Most buildings (production, military, trade, diplomacy and monuments) cost **15% more** per copy than the last. Knowledge buildings cost **50% more**. Housing buildings grow more gently, at **13%** per copy, and storage buildings climb **1.75 times** per copy (see [Storage Buildings](#storage-buildings-21-tiers)). Wonders have a flat price and are limited to one each. The scaling lineages still grow exponentially, so plan your production before bulk-buying.
 
 ### Build-cost reductions
 
@@ -143,7 +143,7 @@ A handful of **milestone rewards** (Master Builder, Grand Architect and others) 
 
 Build times are capped by the age's pace: ordinary buildings take at most **1/6 of their age's target time**, wonders take at most **1/3**, and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2m 30s in the Primitive Age, 2h 36m in the Renaissance and 10h 24m from the Interstellar Age on (storage: 18 seconds, 19m 30s and 1h 18m). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
 
-These are first-run times. On known ground (an age a past run completed) every build time is divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick, and production and storage are multiplied by it. The time shown when you start a build is the real, shortened one.
+These are first-run times. On known ground (an age a past run completed) every build time is divided by the age's [Era Mastery](prestige.md#era-mastery) speed, rounded up and never below one tick, and production is multiplied by it. The time shown when you start a build is the real, shortened one.
 
 ### Buildings a tech opens
 
@@ -288,7 +288,6 @@ A building can have one or more of these effects. Knowing them helps you decide 
 | Effect | What It Does |
 |--------|-------------|
 | Production | Adds an amount of a resource each tick, scaled by how many workers it has (see below). Most production buildings do this. |
-| Storage | Raises the size of one resource's store (culture buildings and a few wonders). Storage buildings no longer have it: they boost production. A knowledge building comes with scholars. |
 | Housing | Raises your housing, the number of workers you can have (housing buildings). |
 | Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production, or the 1% each storage building adds (which add into [the all-production pool](resources.md#the-all-production-cap)). |
 | Trade route income | Raises the income of every trade route (Harbor lineage). |
@@ -321,7 +320,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 - Wood Camp (Primitive): costs 23 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 40 ticks (80 seconds).
 - Stone Pit (Stone): costs 257 stone and 429 wood. At Stone Age parity (343 stone = 515 wood) that is worth 543 stone, and at 3.48 stone/tick it repays in about 5 minutes 10 seconds.
 
-**Flow resources keep hand-set rates:** food, faith and culture. They feed workers, set morale and epoch odds or fill culture storage. Soldiers are no flow: a military building comes with its soldiers and makes no resource. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Research keeps fixed rates too: a knowledge building's work is a hand-set figure (see [Scholars and Research](knowledge.md#what-a-scholar-is)), and nothing is priced in it.
+**Flow resources keep hand-set rates:** food, faith and culture. They feed workers and set morale, epoch odds and what good events you can get. Soldiers are no flow: a military building comes with its soldiers and makes no resource. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Research keeps fixed rates too: a knowledge building's work is a hand-set figure (see [Scholars and Research](knowledge.md#what-a-scholar-is)), and nothing is priced in it.
 
 | Age | Target time | Payback (fully staffed) | Build-time cap | Storage build cap |
 |-----|-------------|-------------------------|----------------|-------------------|
@@ -356,7 +355,7 @@ Some ages sit off the curve, because the ages are not smooth: how quick one is d
 
 | Age | Against the curve | Why |
 |-----|-------------------|-----|
-| Industrial | 1.15x | A run that arrives with a large store plays it in under two thirds of its target. |
+| Industrial | 1.15x | A run that arrives with a large stock plays it in under two thirds of its target. |
 | Electric | 1.1x | It ran a little under two thirds of its target on the curve alone. |
 | Modern | 1.1x | It ran a little under seven tenths of its target on the curve alone. |
 | Information | 0.45x | The one late age that ran near its target. You buy your way into data and steel before you make anything, and you arrive from a Modern Age that repays more slowly than it did. It keeps the payback it had. |
@@ -505,7 +504,7 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 
 ### No storage wall
 
-Stock has no limit, so no building is refused for costing more than a store holds. A building, an upgrade or a [build plan](plan.md) item is refused only for what it costs against what you hold, by `build`, `build <n>`, `build max`, `upgrade` and the plan alike. A price larger than the store for its resource can be paid if you hold that much.
+Stock has no limit, so no building is refused for the size of its price. A building, an upgrade or a [build plan](plan.md) item is refused only for what it costs against what you hold, by `build`, `build <n>`, `build max`, `upgrade` and the plan alike. If you hold the stock, you can buy it.
 
 Nothing you make is wasted, and nothing overflows. The age's wonder is still paid through its bank, which you fill by hand (see [Wonders](wonders.md)).
 
@@ -557,7 +556,7 @@ A wonder in your [build plan](plan.md) banks and starts by itself once what you 
 
 You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 64 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/3 of the age's target time to build.
 
-Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to research or to expedition rewards, or housing or storage. All-production bonuses add into [the all-production pool](resources.md#the-all-production-cap), which applies in full up to +200% and a quarter of every point past it.
+Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to research or to expedition rewards, or housing. All-production bonuses add into [the all-production pool](resources.md#the-all-production-cap), which applies in full up to +200% and a quarter of every point past it.
 
 Endure and the Great Fire never destroy wonders, and Succumb never turns them into ruins. They stay for the rest of the run, like storage.
 
@@ -600,7 +599,7 @@ Recruit workers with `recruit [count|max]` and assign them with `assign <buildin
 
 ## Culture Buildings (Lineage 10)
 
-Culture buildings have no worker domain. They produce culture every tick at their base rate, with or without workers, and each one also adds culture storage. Build them to earn culture passively.
+Culture buildings have no worker domain. They produce culture every tick at their base rate, with or without workers. Build them to earn culture passively.
 
 They also **restore morale every tick** (see [Morale](morale.md)), so they do two jobs: culture for epoch outcomes and morale for a production bonus.
 

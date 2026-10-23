@@ -31,7 +31,6 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 	for _, def := range config.BaseResources() {
 		ge.Resources.UnlockResource(def.Key)
 		if r, ok := ge.Resources.resources[def.Key]; ok {
-			r.Storage = stock*10 + 1
 			r.Amount = stock
 			r.Rate = 1 // an income, so a scout's cost is sized on something
 		}
@@ -321,7 +320,6 @@ func TestAutoExpedition_SkipsWhenUnaffordable(t *testing.T) {
 	// Refill: the held dispatch must go out immediately, and the flag must clear.
 	for _, def := range config.BaseResources() {
 		if r, ok := ge.Resources.resources[def.Key]; ok {
-			r.Storage = 1e9
 			r.Amount = 1e6
 		}
 	}

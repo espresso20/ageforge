@@ -14,6 +14,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - **Wonders you can recognise.** Every age's wonder is a landmark on the skyline, the tallest thing in its district, lit at night, with scaffolding that rises as you bank it.
+- **The last of storage.** Techs and bonuses that raised storage now raise production a little instead, culture buildings drop their storage, and the screens and wiki no longer mention stores.
 - **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
 - **Storage buildings boost production.** With no caps to raise, every storage building now adds 1% to all production, and older ones keep counting.
 - **Nothing reads a store any more.** Festival and Black Market prices, faction deals, the Brace ceiling and the Maximalist badges now follow your income instead of a store size.

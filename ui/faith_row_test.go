@@ -25,8 +25,8 @@ func TestFaithRowShowsTheStrengthTheRollsRead(t *testing.T) {
 		band := game.FaithBandAt(c.strength)
 		o := game.CatastropheOutlook{FaithStrength: c.strength, FaithBand: band, FaithDevotion: c.strength * game.FaithFullSets, FaithKept: 1}
 		odds := fmt.Sprintf("(epoch: %.0f%% good)", game.EpochGoodChanceIn(band)*100)
-		// The store is a trillion wide and half full: none of the row's business.
-		row, bar := faithRowText(game.ResourceState{Name: "Faith", Amount: 5e11, Storage: 1e12, Rate: 0.5}, o)
+		// A big stock: none of the row's business.
+		row, bar := faithRowText(game.ResourceState{Name: "Faith", Amount: 5e11, Rate: 0.5}, o)
 		if !strings.Contains(row, c.label) || !strings.Contains(row, odds) || !strings.Contains(row, fmt.Sprintf("%.0f%%", c.strength*100)) {
 			t.Errorf("strength %v (%s): row %q, want %q, %q and the strength as a percentage", c.strength, band, row, c.label, odds)
 		}

@@ -2,6 +2,7 @@ package mapmodel_test
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -307,13 +308,25 @@ func TestTrafficScalesWithRoutes(t *testing.T) {
 	}
 }
 
-// TestFlows: the fixture's draining stores, idle workers and understaffed
-// buildings all show up; no store is ever full, for stock has no ceiling.
+// TestFlowsHaveNoFullStores: stock has no ceiling, so the flows summary has no
+// full stores to list (the field is gone) and no store carries a fill.
+func TestFlowsHaveNoFullStores(t *testing.T) {
+	if _, ok := reflect.TypeOf(mapmodel.Flows{}).FieldByName("Full"); ok {
+		t.Error("Flows still lists full stores")
+	}
+	if _, ok := reflect.TypeOf(mapmodel.Store{}).FieldByName("Fill"); ok {
+		t.Error("a Store still carries a fill")
+	}
+}
+
+// TestFlows: the fixture's draining stocks, idle workers and understaffed
+// buildings all show up, and the verdict never speaks of a full store: stock
+// has no ceiling.
 func TestFlows(t *testing.T) {
 	m := build(t, fixture.State(fixture.Options{Age: "renaissance_age", Seed: 7, Idle: 12}), nil)
 	f := m.Flows
-	if len(f.Full) != 0 || strings.Contains(f.Worst, "full") || f.IdleWorkers != 12 || len(f.Understaffed)+len(f.Idle) == 0 || f.Worst == "" {
-		t.Fatalf("flows: full %d draining %d idle %d under %d worst %q", len(f.Full), len(f.Draining), f.IdleWorkers, len(f.Understaffed), f.Worst)
+	if strings.Contains(f.Worst, "full") || f.IdleWorkers != 12 || len(f.Understaffed)+len(f.Idle) == 0 || f.Worst == "" {
+		t.Fatalf("flows: draining %d idle %d under %d worst %q", len(f.Draining), f.IdleWorkers, len(f.Understaffed), f.Worst)
 	}
 	sum := 0.0
 	for _, s := range f.Shares {

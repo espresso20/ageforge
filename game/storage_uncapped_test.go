@@ -4,20 +4,25 @@ import (
 	"math"
 	"strings"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // Stock has no ceiling. Every way stock arrives keeps the whole amount, no
-// building is refused for costing more than a store holds, and nothing
-// overflows into a wonder. A store's size is still worked out (other rules
-// read it) but nothing is held to it.
+// building is refused for costing more than a town once stored, and nothing
+// overflows into a wonder.
 
-// shrineEngine is a Primitive Age game whose wood store (50) is smaller than
-// a Shrine's price (60).
+// baseStore is the amount of res a store of the base size once held: the
+// stock these tests start from and measure "past" against.
+func baseStore(res string) float64 { return config.ResourceByKey()[res].BaseStorage }
+
+// shrineEngine is a Primitive Age game whose wood (a base store's worth) is
+// less than a Shrine's price.
 func shrineEngine(t *testing.T) *GameEngine {
 	t.Helper()
 	ge := newSeededEngine(1)
-	if cost, store := ge.Buildings.GetCost("shrine")["wood"], ge.Resources.GetStorage("wood"); cost <= store {
-		t.Fatalf("setup: a shrine (%v wood) fits the wood store (%v)", cost, store)
+	if cost, store := ge.Buildings.GetCost("shrine")["wood"], baseStore("wood"); cost <= store {
+		t.Fatalf("setup: a shrine (%v wood) is within a base store of wood (%v)", cost, store)
 	}
 	return ge
 }
@@ -60,7 +65,7 @@ func TestUncapped_EveryPurchasePathAsksOnlyForTheStock(t *testing.T) {
 	}
 }
 
-// An upgrade priced over a store goes through when the stock covers it.
+// An upgrade priced over a base store goes through when the stock covers it.
 func TestUncapped_UpgradeOverTheStoreGoesThrough(t *testing.T) {
 	ge := newSeededEngine(1)
 	ge.Buildings.counts["wood_camp"] = 3
@@ -70,13 +75,13 @@ func TestUncapped_UpgradeOverTheStoreGoesThrough(t *testing.T) {
 	one := ge.Buildings.UpgradeCopyCost("wood_camp", 0, nil)
 	over := false
 	for res, c := range one {
-		if c > ge.Resources.GetStorage(res) {
+		if c > baseStore(res) {
 			over = true
 		}
 		setAmount(ge, res, 100*c)
 	}
 	if !over {
-		t.Fatalf("setup: one upgrade costs %v and fits every store", one)
+		t.Fatalf("setup: one upgrade costs %v and is within every base store", one)
 	}
 	if err := ge.UpgradeBuilding("wood_camp", 1, false); err != nil {
 		t.Fatalf("upgrade with the stock to pay: %v", err)
@@ -115,7 +120,7 @@ func TestUncapped_BuildMultipleOnAWonderTakesTheBankPath(t *testing.T) {
 }
 
 // `max` buys what the stock pays for, the same copies a run of single builds
-// would, whatever the store holds.
+// would.
 func TestUncapped_MaxBuysWhatTheStockPaysFor(t *testing.T) {
 	setup := func() *GameEngine {
 		ge := newSeededEngine(1)
@@ -148,7 +153,7 @@ func TestUncapped_MaxBuysWhatTheStockPaysFor(t *testing.T) {
 // route's run all keep the whole amount, past the store.
 func TestUncapped_EveryCreditKeepsTheWholeAmount(t *testing.T) {
 	ge := newSeededEngine(1)
-	store := ge.Resources.GetStorage("food")
+	store := baseStore("food")
 	setAmount(ge, "food", store*10)
 	before := ge.Resources.Get("food")
 
@@ -183,7 +188,7 @@ func TestUncapped_EveryCreditKeepsTheWholeAmount(t *testing.T) {
 	ge.Buildings.counts["hut"] = 3
 	refund, _ := ge.Buildings.SellCost("hut", 3)
 	for res := range refund {
-		setAmount(ge, res, 10*ge.Resources.GetStorage(res))
+		setAmount(ge, res, 10*baseStore(res)+1000)
 	}
 	held := ge.Resources.GetAll()
 	if err := ge.SellBuilding("hut", 3); err != nil {
@@ -227,14 +232,14 @@ func TestUncapped_NothingOverflowsIntoTheWonder(t *testing.T) {
 	if w == "" {
 		t.Fatalf("setup: the %s has no wonder", ge.age)
 	}
-	for _, r := range ge.Resources.resources {
-		r.Amount = r.Storage
+	for key, r := range ge.Resources.resources {
+		r.Amount = baseStore(key)
 	}
 	for tick := 0; tick < 300; tick++ {
 		ge.doTick()
 	}
-	if got, store := ge.Resources.Get("wood"), ge.Resources.GetStorage("wood"); got <= store {
-		t.Errorf("wood = %v after 300 ticks of income from a full store of %v, want it past the store", got, store)
+	if got, store := ge.Resources.Get("wood"), baseStore("wood"); got <= store {
+		t.Errorf("wood = %v after 300 ticks of income from a base store of %v, want it past the store", got, store)
 	}
 	for res, v := range ge.Buildings.wonderBanks[w] {
 		if v != 0 {
@@ -265,7 +270,7 @@ func TestUncapped_DealIntoAFullStoreIsTaken(t *testing.T) {
 	}
 	d := ge.Diplomacy.factions["merchant_guild"].Deals[idx]
 	ge.Resources.resources[d.Give].Amount = d.GiveAmt * 3
-	ge.Resources.resources[d.Get].Amount = ge.Resources.GetStorage(d.Get) // full
+	ge.Resources.resources[d.Get].Amount = baseStore(d.Get) // a base store's worth
 	give, get := ge.Resources.Get(d.Give), ge.Resources.Get(d.Get)
 	ge.mu.Unlock()
 
@@ -301,7 +306,7 @@ func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
 	}
 	ge.Resources.UnlockResource(imp)
 	ge.Resources.resources[exp].Amount = 1e6
-	ge.Resources.resources[imp].Amount = ge.Resources.GetStorage(imp) // full
+	ge.Resources.resources[imp].Amount = baseStore(imp) // a base store's worth
 	full := ge.Resources.Get(imp)
 	ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
 	msgs := ge.Trade.Tick(ge.Resources, ge.Buildings, nil, 0, nil)

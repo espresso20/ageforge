@@ -95,11 +95,8 @@ func PrestigeUpgradeName(key string) string {
 // production_all → "all production", gather_rate → "worker output",
 // food_rate → "food production", tick_speed → "game speed". It extends
 // config.EffectTargetLabel (the one source of target wording) with the
-// storage and bare-resource targets that milestones and events use.
+// bare-resource targets that milestones and events use.
 func EffectTargetName(target string) string {
-	if res, ok := strings.CutSuffix(target, "_storage"); ok {
-		return ResourceName(res) + " storage"
-	}
 	if _, ok := rules.Core().Resource(target); ok {
 		return ResourceName(target) + " production"
 	}

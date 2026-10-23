@@ -169,9 +169,6 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 	if a, b := plain.soldierTotal(), mic.soldierTotal(); a != 3*base || b != 3*int(math.Ceil(float64(base)*1.1)) {
 		t.Errorf("three Garrisons post %d soldiers, %d with the Military-Industrial Complex; want %d and %d (a tenth more posts)", a, b, 3*base, 3*int(math.Ceil(float64(base)*1.1)))
 	}
-	if a, b := plain.Resources.GetStorage("food"), mic.Resources.GetStorage("food"); a != b {
-		t.Errorf("the food store is %v, %v with the Military-Industrial Complex; want the same", a, b)
-	}
 	// A mission is sent the way a player sends it, so its haul is sized on
 	// the town's income and the campaign pay is read at the launch.
 	loot := func(ge *GameEngine, key string) float64 {

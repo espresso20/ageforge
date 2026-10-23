@@ -352,13 +352,6 @@ func (s *scene) status(bg tcell.Color) {
 			w = "nothing is stuck"
 		}
 		parts := []seg{{" flows: ", theme.RoleAccent}, {w, theme.RoleWarning}}
-		if len(m.Flows.Full) > 0 {
-			names := make([]string, 0, len(m.Flows.Full))
-			for _, st := range m.Flows.Full {
-				names = append(names, strings.ToLower(st.Name))
-			}
-			parts = append(parts, seg{"  full: ", theme.RoleDim}, seg{strings.Join(names, ", "), theme.RoleWarning})
-		}
 		parts = append(parts, seg{"  type: ", theme.RoleDim}, seg{m.IdleCommand(), theme.RoleLabel})
 		s.segs(0, y, bg, parts)
 		return
@@ -366,7 +359,7 @@ func (s *scene) status(bg tcell.Color) {
 	if s.v.legend {
 		parts := []seg{{" lit windows ", theme.RoleText}, {"staffed  ", theme.RoleDim},
 			{"smoke ", theme.RoleText}, {"producing  ", theme.RoleDim}, {"▼ ", theme.RolePositive}, {"new  ", theme.RoleDim},
-			{"IDLE LOW FULL ", theme.RoleWarning}, {"flows  ", theme.RoleDim}, {"pennants ", theme.RoleText},
+			{"IDLE LOW ", theme.RoleWarning}, {"flows  ", theme.RoleDim}, {"pennants ", theme.RoleText},
 			{"your standing with each civ", theme.RoleDim}}
 		if s.inCity { // the age's look, in a word or two (city.go)
 			parts = append(parts, seg{"  │ ", theme.RoleDim}, seg{s.city.Name + ": ", theme.RoleText},

@@ -134,7 +134,7 @@ type Pointing interface {
 type Option uint8
 
 const (
-	// OptFlows overlays the flows summary: full stores, understaffed
+	// OptFlows overlays the flows summary: stocks running dry, understaffed
 	// buildings, idle workers.
 	OptFlows Option = iota
 	// OptInspect puts the cursor out.

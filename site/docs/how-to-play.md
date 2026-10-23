@@ -41,7 +41,7 @@ An account with no game yet sees the forge and a title page, with **New game** f
 Build → Staff → Research → Advance → Repeat
 ```
 
-1. **Build** structures to add housing, storage and production
+1. **Build** structures to add housing and production
 2. **Staff** them: workers move in on their own toward your housing while food allows, and go to work by your [roster](workers-and-domains.md#the-roster). Steer the split with `roster`, or `recruit` and `assign` by hand
 3. **Research** technologies that multiply your output
 4. **Advance** to the next age with `advance` once the buildings it asks for stand and the age's wonder is built (see [Advancement Requirements](ages.md#advancement-requirements))
@@ -81,7 +81,7 @@ The status bar also carries your prestige level and civilization title once you 
 
 <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: resources, then construction and the People box side by side, then the log on the left; the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
 
-The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount over its cap, its rate, a bar, and a marker when the store is nearly full (`◈`) or falling (`▼`). On a narrow terminal the rows give up the bar first, then the cap, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
+The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row: its amount, its rate and a marker when it is falling (`▼`); culture and faith add a bar toward their next step. On a narrow terminal the rows give up the bar first, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
 
 **The People box.** From 120 columns by 36 rows the People box is the right half of the Under construction row, and the row is as tall as the box. It shows the headcount over your homes (with how full they are when there is room to say so), one bar across the homes in the colors of the four kinds of person (workers, the reserve, soldiers and scholars), a line for each kind in the age's own word, and what holds your population back. The soldiers' line shows the soldiers at their posts over all the posts they have while some wait on food, and how many are out on a mission. `Held by: food` carries the net food a tick and how many more it would feed once the terminal is 42 rows tall. When nothing holds the population back the box says so and counts the empty homes. On a smaller terminal the box is the short one under the Panels list, with the same lines in less room. The [People panel](workers-and-domains.md#the-people-of-your-town) has the whole picture.
 
@@ -114,8 +114,8 @@ You don't need to watch it. Check in a few times a day, spend what has built up,
 
 - **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your roster recruits and staffs as the hours pass. The welcome-back lines in the log say what happened.
 - **The build plan.** Queue up to 60 builds, techs, deals and an advance with `plan build`, `plan research`, `plan deal` and `plan advance`. The game starts each item, in order, as the resources come in, and pays for it only when it starts. See [The Build Plan](plan.md).
-- **Overflow.** Production a full store would waste goes into your age's wonder bank (`wonder overflow`, on by default) until the bank holds the wonder's price. When overflow is off, or the bank is full, it is lost. It does not pay toward the plan.
-- **Storage.** Storage is a wall. A building or an upgrade whose price is larger than a store can hold cannot be bought, and the game names the storage building to build. Storage buildings have no copy limit, each copy costs 1.75 times the one before it, and every age gate asks for five copies of the storage building of the age you are leaving. Anything overflow doesn't take is lost, so build storage before a long absence.
+- **Nothing is lost.** Stock has no limit, so everything you make while you are away is waiting when you come back. Nothing flows into a wonder's bank on its own: fill it with `wonder collect`, or let a planned wonder pay its bank from what you hold.
+- **Storage.** Storage buildings hold nothing: each copy adds 1% to all production. They have no copy limit, each copy costs 1.75 times the one before it, and every age gate asks for five copies of the storage building of the age you are leaving.
 
 ---
 
@@ -127,7 +127,7 @@ From the Iron Era on, each era may hide a fated catastrophe. It can strike at an
 
 ## Resource management tips
 
-- Each resource has a storage limit. Once a resource is full, anything more it would produce is wasted, unless wonder overflow banks it. A price larger than a store cannot be paid, so build storage before the building that needs it.
+- Stock has no limit: what you make piles up, and a price is the only thing that holds you back. Each age's storage building adds 1% to all production a copy.
 - **Food drain:** everyone eats the same amount, whatever building a worker staffs, scholars and the reserve included. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
 - **Food** runs out first early on. Keep your gathering camps staffed before anything else, then build a Story Circle: its scholars start research with no workers.
 - Watch the rates in the Resources box. A negative rate is draining you.
@@ -174,7 +174,7 @@ wonder collect all
 build stonehenge
 ```
 
-`wonder collect all` banks as much of every needed resource as you have; repeat it until the bank is full, then build. Wonder overflow fills the bank too, from production your full stores would waste. Each wonder can be built only once. They are listed in the **Wonders** panel (`wonders`). See [Wonders](wonders.md).
+`wonder collect all` banks as much of every needed resource as you have; repeat it until the bank is full, then build. Each wonder can be built only once. They are listed in the **Wonders** panel (`wonders`). See [Wonders](wonders.md).
 
 ---
 

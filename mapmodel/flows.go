@@ -7,30 +7,28 @@ import (
 )
 
 // flows.go is the "flows" summary the maps can overlay: where the economy is
-// stuck. Draining stores are about to run dry, understaffed buildings and idle workers are labour in the
+// stuck. Draining stocks are about to run dry, understaffed buildings and idle workers are labour in the
 // wrong place, and the per-lineage output share says what the settlement
 // actually runs on.
 
-// Store is one resource store.
+// Store is one resource's stock.
 type Store struct {
 	Key, Name string
-	Fill      float64 // amount / storage, 0..1
 	Rate      float64 // per second
-	// EmptyIn is the seconds until a draining store runs dry (0 when not
+	// EmptyIn is the seconds until a draining stock runs dry (0 when not
 	// draining).
 	EmptyIn float64
 }
 
 // Flows is the bottleneck summary.
 type Flows struct {
-	Full         []Store // always empty: stock has no ceiling (readers go in the UI pass)
 	Draining     []Store // falling, dry within about a minute
 	Understaffed []*Building
 	IdleWorkers  int
 	Idle         []*Building // take workers and have none
 	// Shares is every lineage's share of working output, largest first.
 	Shares []LineageShare
-	// Worst is the one-line verdict ("iron store full · 12 idle workers"),
+	// Worst is the one-line verdict ("iron runs dry · 12 idle workers"),
 	// "" when nothing is stuck.
 	Worst string
 }
@@ -43,7 +41,7 @@ type LineageShare struct {
 
 // Stuck reports whether anything is flagged.
 func (f Flows) Stuck() bool {
-	return len(f.Full) > 0 || len(f.Draining) > 0 || len(f.Understaffed) > 0 || f.IdleWorkers > 0
+	return len(f.Draining) > 0 || len(f.Understaffed) > 0 || f.IdleWorkers > 0
 }
 
 func flowsFor(m *Model, st *game.GameState) Flows {
@@ -59,7 +57,6 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 		if !r.Unlocked {
 			continue
 		}
-		// Stock has no ceiling, so no store is ever full (Full stays empty).
 		if r.Rate < 0 && r.Amount > 0 {
 			s := Store{Key: k, Name: r.Name, Rate: float64(r.Rate * perSec)}
 			s.EmptyIn = r.Amount / -s.Rate

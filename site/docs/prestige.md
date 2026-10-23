@@ -189,7 +189,7 @@ The prestige shop and its two badges, **Maxed Out** and **Fully Invested**, are 
 
 ## Era Mastery
 
-Every age remembers how many of your runs completed it and then ended, in a prestige or a Succumb. That count is the age's **mastery**, from 0 to 10, and an age you have mastered runs faster: its production, storage, build times and research times all move **k** times as fast, where k = 1 + √mastery.
+Every age remembers how many of your runs completed it and then ended, in a prestige or a Succumb. That count is the age's **mastery**, from 0 to 10, and an age you have mastered runs faster: its production, build times and research times all move **k** times as fast, where k = 1 + √mastery.
 
 ### How mastery grows
 
@@ -216,7 +216,6 @@ An age at mastery 0 is the **frontier**: no run has completed it, and it runs at
 On **known ground** (an age running faster than 1x, through mastery or [catch-up](#catch-up)):
 
 - **Production.** Every resource's net rate is multiplied by k. This comes last, after the production pools and every other bonus, food drain included, so a balanced food supply stays balanced. The `rates` breakdown shows it as its own **Era Mastery** part.
-- **Storage.** Every cap is multiplied by k too, so a store holds the same hours of income it would at 1x.
 - **Build times** are divided by k, rounded up, never below one tick.
 - **Research times** are divided by k after your research speed is applied, rounded up, never below one tick. The Research and Wonders panels show the shortened times.
 - **Catastrophe timing.** A fated doom's window and the harbinger's lead shrink with each age's speed (see [Catastrophes on known ground](#catastrophes-on-known-ground)).
@@ -232,16 +231,6 @@ What does not change:
 Your **record** is the deepest age you have ever entered, in any run. An age **6 or more ages behind your record** runs at least **4x**, or at its own speed if that is higher (4.2x at mastery 10). With a record in the Interstellar Age, every age up to the Modern Age runs at 4x or better, whatever its mastery.
 
 Catch-up applies after a Succumb too, even on a run that has never prestiged: the rebuild runs the ages 6 or more behind your record at least 4x. Fall in the Steel Era from the Industrial Age, and the next run's Primitive, Stone and Bronze Ages run at 4x; the Iron to the Colonial Age, which the fallen run completed, run at 2x.
-
-### The grace rule
-
-When your speed drops, as you step from known ground onto new ground or out of catch-up, storage shrinks with it. Stock already above the new cap is not cut:
-
-- it stays until you spend it;
-- production adds nothing to that resource while it is over the cap;
-- once it falls under the cap, the grace ends and the resource fills normally again.
-
-Graced stock is saved with your game.
 
 ### Catastrophes on known ground
 
@@ -313,7 +302,7 @@ Once you own all three, the shop has nothing more to sell, and the points you ea
 ### Persists Across Prestige
 - Prestige level, prestige points and carry-overs
 - What the kit remembers: the plan template (the techs you planned included), your roster and the civilizations you have met (it is used only by the items you own)
-- Your auto-recruit and wonder overflow settings
+- Your auto-recruit setting
 - Era Mastery: every age's mastery, and your record (the deepest age you have ever entered)
 - Ruins (from past Succumb events), which carry into the new run
 - Legacy bonuses (from Succumb events), active from tick 1
@@ -397,7 +386,7 @@ Prestige from before the Cosmic Era never rolls for it.
 
 ### The roll
 
-When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 15B faith and 240B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
+When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once: 18%, 15% or 12% from low to high faith, by your faith strength at that moment (see [Faith Threshold Bands](faith.md#faith-threshold-bands)). A typical town rolls at 18%. Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most; each costs 16B faith and 240B culture: see [What it costs](harbinger.md#what-it-costs-by-epoch)). Invite makes it certain.
 
 `prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
@@ -432,7 +421,7 @@ Both finish the prestige and raise your prestige level. Both add a line to the c
 
 The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway, and your soldiers don't change it. The log records a Vindicated verdict, or Fulfilled if you invited it.
 
-Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 50Q dark matter and 260Q titanium, about 157 hours of a moderate economy's income. Appease (15B faith and 240B culture a level, about 243 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
+Bracing for the Last Passage takes effort. Its price is set by what the Interstellar Age makes, not by what the era's advances ask: each level costs 52Q dark matter and 290Q titanium, about 157 hours of a moderate economy's income. Appease (16B faith and 240B culture a level, about 245 hours) lowers the chance instead. For what each is worth, see [Brace or Appease against the Last Passage](harbinger.md#brace-or-appease-against-the-last-passage).
 
 **Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
 

@@ -8,7 +8,7 @@ Faith is a resource that accumulates from Faith lineage buildings and faith-doma
 
 1. **Epoch roll odds.** Your faith strength sets the chance of a good (rather than bad) event at each epoch transition.
 2. **Catastrophe odds.** When a doom fated for your era reaches its moment, your faith strength at that moment sets the chance it strikes. It sets the odds of the Last Passage at a Cosmic Era prestige the same way. The table below is the one place these odds are listed.
-3. **Worker morale.** Producing faith lifts worker [morale](morale.md) a little each tick. The lift scales with your faith **production rate** (faith/tick), not your stored faith, and it is **capped** per tick, so even a huge late-game faith income can't max out morale in one step. A steady faith income is an ongoing morale source on top of the epoch odds.
+3. **Worker morale.** Producing faith lifts worker [morale](morale.md) a little each tick. The lift scales with your faith **production rate** (faith/tick), not the faith you hold, and it is **capped** per tick, so even a huge late-game faith income can't max out morale in one step. A steady faith income is an ongoing morale source on top of the epoch odds.
 
 ---
 
@@ -77,7 +77,7 @@ A moderate set by age. The last two columns are what your faith buildings must a
 
 Each faith building makes twice what the one before it does, so the newest one carries about half of a moderate set's faith: sixteen fully staffed copies of it make about what the whole set does. The per-building rates are under [How to Produce Faith](#how-to-produce-faith).
 
-**Why it isn't a share of storage.** It used to be: the bands read your faith as a percentage of your faith storage. But faith has no store of its own. It is kept in the general store, which is sized for building materials and grows about tenfold an age while faith income doubles. Against the least storage the age gates force on anyone, an economy three times as devoted as the moderate one, saving through a doom's longest warning, reached 20% in the Iron Age, 21% in the Classical Age and under 5% from the Medieval Age on, and by the Cosmic Era a whole age's faith was millionths of the store. So every roll read the bottom band, whatever you did, and those are the odds every game so far was played at. They still are for a typical town. What changed is that the middle and top rows can now be reached, by a town that works at it.
+**It is not a share of what you hold.** Stock has no limit, so a pile of faith says nothing about how devoted a town is. The bands read what your faith buildings have made against a moderate set, times the share of your faith you have kept. A typical town sits in the bottom band, and those are the odds every game so far was played at. A town that works at it can reach the middle and the top rows.
 
 **What high faith is worth.** A doom is fated in 27% of the eras from the Iron Era on (see [When It Triggers](catastrophe.md#when-it-triggers)). A first run to a Modern Age prestige lives through three eras that can hold a doom (the Iron, Steel and Electric Eras; the Digital Era's doom rarely strikes before you prestige there), so it can expect about 0.73 catastrophes at low faith, 0.61 at mid faith and 0.49 at high faith. High faith saves you about a quarter of a catastrophe per run, and brings more good epoch events. A deep run to a Quantum Age prestige lives through all six such eras: about 1.46 catastrophes at low faith, plus the Last Passage roll.
 
@@ -91,7 +91,7 @@ Faith does not drain on its own. It goes down only when:
 - a random event takes some: **Workers' Uprising** (500 faith) and **Industrial Blight** (300 faith) in the Steel Era, or **Heresy** (-0.5 faith/tick for 31 ticks) from the Medieval Age on,
 - you **Appease** a [harbinger](harbinger.md), which costs faith and culture,
 - you build the **Sistine Chapel** (see [Faith Costs](#faith-costs)),
-- you **Endure** a catastrophe, which cuts every stored resource, faith included (see [Catastrophe](catastrophe.md#endure)).
+- you **Endure** a catastrophe, which cuts every resource you hold, faith included (see [Catastrophe](catastrophe.md#endure)).
 
 Otherwise your faith total only grows. The Cultural Festival epoch event goes the other way: it adds 20% to your faith at once and +1 faith/tick for 374 ticks.
 

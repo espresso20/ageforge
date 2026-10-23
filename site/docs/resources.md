@@ -10,49 +10,49 @@ Amounts print with up to three figures and a unit from a thousand up: K, M, B, T
 
 ### Basic Resources
 
-| Resource | Key | Unlocks | Base Storage | Notes |
-|----------|-----|---------|--------------|-------|
-| Food | `food` | Primitive Age | 50 | Every worker eats it every tick, so the rate must stay positive |
-| Wood | `wood` | Primitive Age | 75 | The first building material |
-| Faith | `faith` | Primitive Age | 50 | Never drains on its own; your faith strength (your faith buildings against a moderate set, times the share of your faith you have kept) sets the epoch and catastrophe odds, and faith income lifts morale |
-| Stone | `stone` | Stone Age | 50 | Durable construction material |
-| Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |
-| Gold | `gold` | Bronze Age | 50 | Pays for diplomacy and many buildings |
-| Culture | `culture` | Classical Age | 50 | Spent on monuments, festivals and more; your culture strength decides which good epoch events you can get |
+| Resource | Key | Unlocks | Notes |
+|----------|-----|---------|-------|
+| Food | `food` | Primitive Age | Every worker eats it every tick, so the rate must stay positive |
+| Wood | `wood` | Primitive Age | The first building material |
+| Faith | `faith` | Primitive Age | Never drains on its own; your faith strength (your faith buildings against a moderate set, times the share of your faith you have kept) sets the epoch and catastrophe odds, and faith income lifts morale |
+| Stone | `stone` | Stone Age | Durable construction material |
+| Iron | `iron` | Bronze Age | Metal for tools, weapons and early engineering |
+| Gold | `gold` | Bronze Age | Pays for diplomacy and many buildings |
+| Culture | `culture` | Classical Age | Spent on monuments, festivals and more; your culture strength decides which good epoch events you can get |
 
 ### Ores
 
 These four come from Geological Extraction mines. In the ages that make one, buildings are priced in it; see [What the ores are for](#what-the-ores-are-for).
 
-| Resource | Key | Unlocks | Base Storage | Notes |
-|----------|-----|---------|--------------|-------|
-| Marble | `marble` | Iron Age | 30 | Made by the Marble Quarry and the Marble Works. Bought in the Iron and Classical Age, with stone |
-| Iron Ore | `iron_ore` | Iron Age | 30 | Made from the Iron to the Industrial Age. Bought in those ages, with iron |
-| Titanium Ore | `titanium_ore` | Modern Age | 20 | Made by the Modern to Digital Age titanium mines. Bought in those ages, with steel |
-| Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Made from the Cyberpunk to the Space Age. Bought in those ages, with electricity |
+| Resource | Key | Unlocks | Notes |
+|----------|-----|---------|-------|
+| Marble | `marble` | Iron Age | Made by the Marble Quarry and the Marble Works. Bought in the Iron and Classical Age, with stone |
+| Iron Ore | `iron_ore` | Iron Age | Made from the Iron to the Industrial Age. Bought in those ages, with iron |
+| Titanium Ore | `titanium_ore` | Modern Age | Made by the Modern to Digital Age titanium mines. Bought in those ages, with steel |
+| Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | Made from the Cyberpunk to the Space Age. Bought in those ages, with electricity |
 
 ### Industrial Resources
 
-| Resource | Key | Unlocks | Base Storage | Notes |
-|----------|-----|---------|--------------|-------|
-| Steel | `steel` | Medieval Age | 30 | Refined metal for advanced construction; made from the Renaissance Age |
-| Coal | `coal` | Renaissance Age | 50 | Fuel; Organic Extraction makes it from the Renaissance to the Industrial Age |
-| Oil | `oil` | Industrial Age | 50 | Fuel for machines; made from the Victorian Age |
-| Electricity | `electricity` | Victorian Age | 50 | Powers modern infrastructure |
-| Uranium | `uranium` | Atomic Age | 30 | Reactor fuel, mined by Geological Extraction |
+| Resource | Key | Unlocks | Notes |
+|----------|-----|---------|-------|
+| Steel | `steel` | Medieval Age | Refined metal for advanced construction; made from the Renaissance Age |
+| Coal | `coal` | Renaissance Age | Fuel; Organic Extraction makes it from the Renaissance to the Industrial Age |
+| Oil | `oil` | Industrial Age | Fuel for machines; made from the Victorian Age |
+| Electricity | `electricity` | Victorian Age | Powers modern infrastructure |
+| Uranium | `uranium` | Atomic Age | Reactor fuel, mined by Geological Extraction |
 
 ### Advanced Resources
 
-| Resource | Key | Unlocks | Base Storage | Notes |
-|----------|-----|---------|--------------|-------|
-| Data | `data` | Modern Age | 50 | Made by Hacker buildings from the Modern Age, starting with the Mainframe Hall |
-| Nanobots | `nanobots` | Modern Age | 20 | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them. A build material with hand-set rates |
-| Crypto | `crypto` | Cyberpunk Age | 50 | Made by the Black Market Hub, with a trickle from the Neon Citadel wonder. Blockchain adds 4% to it |
-| Plasma | `plasma` | Fusion Age | 30 | Superheated gas for energy |
-| Titanium | `titanium` | Space Age | 30 | Light metal for space construction |
-| Dark Matter | `dark_matter` | Interstellar Age | 20 | Exotic matter for warp technology |
-| Antimatter | `antimatter` | Galactic Age | 20 | Annihilation fuel for megastructures |
-| Quantum Flux | `quantum_flux` | Quantum Age | 10 | Unstable quantum energy |
+| Resource | Key | Unlocks | Notes |
+|----------|-----|---------|-------|
+| Data | `data` | Modern Age | Made by Hacker buildings from the Modern Age, starting with the Mainframe Hall |
+| Nanobots | `nanobots` | Modern Age | Made by the **Nano Foundry** (Modern Age) and by Organic Extraction from the Digital to the Fusion Age; Digital and Cyberpunk buildings cost them. A build material with hand-set rates |
+| Crypto | `crypto` | Cyberpunk Age | Made by the Black Market Hub, with a trickle from the Neon Citadel wonder. Blockchain adds 4% to it |
+| Plasma | `plasma` | Fusion Age | Superheated gas for energy |
+| Titanium | `titanium` | Space Age | Light metal for space construction |
+| Dark Matter | `dark_matter` | Interstellar Age | Exotic matter for warp technology |
+| Antimatter | `antimatter` | Galactic Age | Annihilation fuel for megastructures |
+| Quantum Flux | `quantum_flux` | Quantum Age | Unstable quantum energy |
 
 Soldiers are not on this list. They are people, not a resource: the army is the soldiers at the posts of your military buildings. See [Soldiers](#soldiers) below and [Military](military.md) for the full mechanics.
 
@@ -79,7 +79,7 @@ Faith comes from Faith lineage buildings (Shrine, Standing Stones, Altar, ...), 
 
 Faith does two jobs:
 
-- **Odds.** Your faith strength sets the odds of a good epoch event and of a fated catastrophe striking. It measures what your faith buildings have made against a moderate set (eight staffed copies of each), times the share of your faith you have kept. A typical town sits in the bottom band; more faith buildings and fuller crews move it up. It is not a share of storage: faith is kept in the general store, which it could never fill. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
+- **Odds.** Your faith strength sets the odds of a good epoch event and of a fated catastrophe striking. It measures what your faith buildings have made against a moderate set (eight staffed copies of each), times the share of your faith you have kept. A typical town sits in the bottom band; more faith buildings and fuller crews move it up. It is not a share of what you hold: stock has no limit, so the odds read your faith buildings and the share you have kept, not a pile. See [Faith Threshold Bands](faith.md#faith-threshold-bands).
 - **Morale.** Your faith income (faith per tick, not the stockpile) lifts morale a little every tick, up to a limit, and worship buildings lift it too. See [Morale](morale.md).
 
 **Advice:** Keep faith workers in your faith buildings well before an epoch transition. The buildings make only a trickle with no one in them.
@@ -88,7 +88,7 @@ Faith does two jobs:
 
 ## Culture
 
-Culture comes from the Culture/Arts lineage (Amphitheater onward). These buildings take no workers and produce culture on their own, so you can build them while your workers stay elsewhere. Each one also raises culture storage and lifts morale.
+Culture comes from the Culture/Arts lineage (Amphitheater onward). These buildings take no workers and produce culture on their own, so you can build them while your workers stay elsewhere. Each one also lifts morale.
 
 Culture has two jobs. Your **culture strength** decides which tier of good epoch event you can get at an epoch transition: over 40% makes Major events eligible, and over 75% adds a 15% chance at the Legendary one. It is what your own culture buildings have made against a moderate set, times the share of your culture you have kept, so it takes about twice a moderate set to open Major events, and culture you spend or buy does not help (see [Culture strength](epochs.md#culture-strength)). And culture is **spent**, on the things below. Prestige resets culture along with every other resource.
 
@@ -168,7 +168,7 @@ The quarries and mines of the Iron to the Industrial Age make stone, iron and ir
 - It can't be sold.
 - Catastrophes don't destroy it.
 
-When you advance to a new age, the stock you carry over is trimmed to a few copies of the cheapest building of the new age that uses it. That is a head start, not a store: see [Ages](ages.md).
+When you advance to a new age, the stock you carry over is trimmed to a few copies of the cheapest building of the new age that uses it. That is a head start: see [Ages](ages.md).
 
 ---
 

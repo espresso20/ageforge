@@ -21,7 +21,6 @@ func TestUpgradeCommandListsAndUpgrades(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, r := range []string{"wood", "stone", "food"} {
-		eng.Resources.AddStorage(r, 5000)
 		eng.Resources.Add(r, 5000)
 	}
 

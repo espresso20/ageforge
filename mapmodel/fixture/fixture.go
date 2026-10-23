@@ -148,16 +148,16 @@ func State(o Options) game.GameState {
 		if ageIdx[r.Age] > ai {
 			continue
 		}
-		storage := r.BaseStorage * float64(10+ai*20)
+		scale := r.BaseStorage * float64(10+ai*20) // what an age's stock is measured against here
 		fill := float64(mapmodel.Hash(o.Seed, int64(i), 21)%100) / 100
 		rate := 1.0 + float64(i%5)
 		if i%7 == 3 {
-			fill = 1 // a full store
+			fill = 1 // a big stock
 		}
 		if i%11 == 5 {
-			rate, fill = -storage/10, 0.05 // one draining
+			rate, fill = -scale/10, 0.05 // one draining
 		}
-		st.Resources[r.Key] = game.ResourceState{Name: r.Name, Amount: storage * fill, Storage: storage, Rate: rate,
+		st.Resources[r.Key] = game.ResourceState{Name: r.Name, Amount: scale * fill, Rate: rate,
 			Unlocked: true, Breakdown: game.RateBreakdown{BuildingRate: rate}}
 	}
 

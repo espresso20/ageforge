@@ -67,7 +67,7 @@ func determinismSetup(t *testing.T, seed int64) (*GameEngine, determinismScript)
 	}
 	ge.recalculateRates()
 	for _, r := range ge.Resources.resources {
-		r.Amount = r.Storage / 2
+		r.Amount = config.StockScale(target) / 2
 	}
 	ge.Workers.UnlockType("worker")
 	ge.Workers.Recruit("worker", 120, 1000)

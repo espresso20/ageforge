@@ -74,9 +74,9 @@ From the Modern Age on, the age price level rises by 1.4 times per age. Each won
 
 In the ages that make a raw material, a wonder pays half of its stone, iron, steel or electricity part in the raw instead, one for one: marble, iron ore, titanium ore or dark matter crystals. The Colosseum, the Parthenon, the Crystal Palace, the Space Program, the Global Network, the World Simulation, the Neon Citadel and the Stellar Cradle are paid that way, and the wonder's total in price units is unchanged. See [What the ores are for](resources.md#what-the-ores-are-for).
 
-The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **800 food**, the Great Monolith **2.4K food**, and the Sistine Chapel **32K faith** and **950K culture**.
+The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **800 food**, the Great Monolith **2.4K food**, and the Sistine Chapel **32K faith** and **960K culture**.
 
-A wonder is paid through its bank, a deposit at a time. Stock has no limit (see [No storage wall](buildings.md#no-storage-wall)), so the whole price can sit in your stores until you bank it.
+A wonder is paid through its bank, a deposit at a time. Stock has no limit (see [No storage wall](buildings.md#no-storage-wall)), so the whole price can sit in your stock until you bank it.
 
 No wonder takes longer to build than a third of its age's target length. Build times below are in ticks, with the real time beside them; one tick is 2 seconds. These are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed, and the Wonders panel shows the shorter time. **Architecture**, a Renaissance Age tech, takes a quarter off the time of every wonder you start after it, and the techs that cut all construction then take their share of what is left.
 
@@ -111,7 +111,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Wood | 8K |
 | Food | 2.4K |
 
-**Bonus:** speeds research · +5K storage for every resource
+**Bonus:** speeds research
 
 ---
 
@@ -178,7 +178,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 | Stone | 38.4M |
 | Gold | 38.4M |
 | Faith | 32K |
-| Culture | 950K |
+| Culture | 960K |
 
 **Bonus:** +3.5 culture/t · +1.8 faith/t
 

@@ -2780,7 +2780,7 @@ func cmdMap(cmd string, args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: subUsage("map"), Type: "error"}
 }
 
-// cmdMapFlows turns the Map's flows overlay (full stores, understaffed
+// cmdMapFlows turns the Map's flows overlay (stocks running dry, understaffed
 // buildings, idle workers) on, off, or over when bare. It is a view option
 // for the session, applied by the dashboard.
 func cmdMapFlows(args []string) CommandResult {
@@ -2800,7 +2800,7 @@ func cmdMapFlows(args []string) CommandResult {
 // flowsReply is the reply once the flows overlay is on or off.
 func flowsReply(on bool) string {
 	if on {
-		return "Flows overlay on: full stores, understaffed buildings and idle workers show on the Map."
+		return "Flows overlay on: stocks running dry, understaffed buildings and idle workers show on the Map."
 	}
 	return "Flows overlay off."
 }

@@ -261,7 +261,6 @@ type RateBreakdown struct {
 type ResourceState struct {
 	Amount    float64
 	Rate      float64
-	Storage   float64
 	Name      string
 	Unlocked  bool
 	Breakdown RateBreakdown
@@ -456,11 +455,9 @@ type ResearchState struct {
 	// The tech layer, which no cap holds. Output is the techs' bonus on
 	// each resource's output and AllOutput their bonus on every resource's
 	// (fractions; a resource's layer factor is 1 + its Output + AllOutput).
-	// Storage and Housing are their bonus on every store and on housing
-	// (fractions).
+	// Housing is their bonus on housing (a fraction).
 	Output    map[string]float64
 	AllOutput float64
-	Storage   float64
 	Housing   float64
 	// BuildCost, BuildTime and ResearchTime are the techs' factors on what
 	// buildings cost, how long construction takes and how long research

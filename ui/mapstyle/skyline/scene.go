@@ -1343,7 +1343,6 @@ func (s *scene) meteor() {
 func (s *scene) markers() {
 	pos := s.mp.Fg[mapmodel.CFresh]
 	warn := s.mp.Fg[mapmodel.CIdle]
-	full := len(s.m.Flows.Full) > 0
 	for _, li := range s.vis {
 		lv := &s.lay.lots[li]
 		x := s.sx(lv.x0 - s.cam + lv.spr.w/2)
@@ -1362,8 +1361,6 @@ func (s *scene) markers() {
 				tag = "IDLE"
 			case flagged(lv):
 				tag = "LOW"
-			case full && lv.ml.Lineage == mapmodel.LinStorage:
-				tag = "FULL"
 			}
 			if tag != "" && y >= 0 {
 				bg := s.fb.showAt(clampInt(x, 0, s.W-1), s.Y(y))

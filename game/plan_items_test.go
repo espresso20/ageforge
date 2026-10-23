@@ -17,9 +17,6 @@ func bronzeEngine(t *testing.T) *GameEngine {
 	ge.pendingCatastrophe = ""
 	ge.Buildings.counts["market"] = 1
 	ge.recalculateRates()
-	for _, r := range []string{"wood", "stone", "gold", "food", "iron", "knowledge"} {
-		ge.Resources.resources[r].Storage = 1e6
-	}
 	return ge
 }
 

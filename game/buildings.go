@@ -559,24 +559,6 @@ func (bm *BuildingManager) GetPopCapacity() int {
 	return cap
 }
 
-// GetStorageBonuses returns per-resource storage bonuses from buildings
-// "all" key means it applies to every resource. A storage building holds
-// nothing (it boosts production): only the "storage" effects of other
-// buildings count, such as the culture lineage's. No rule reads a store size
-// any more, so this is a measure the promises of those effects are held to
-// (the bonus truth guard) and nothing else.
-func (bm *BuildingManager) GetStorageBonuses() map[string]float64 {
-	bonuses := make(map[string]float64)
-	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
-		for _, eff := range def.Effects {
-			if eff.Type == "storage" {
-				bonuses[eff.Target] += float64(eff.Value * float64(count))
-			}
-		}
-	})
-	return bonuses
-}
-
 // GetAll returns building counts (for save)
 func (bm *BuildingManager) GetAll() map[string]int {
 	out := make(map[string]int)
