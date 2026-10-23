@@ -12,6 +12,7 @@ func TestMultiplierSourceLabel(t *testing.T) {
 		"research":               "Research",
 		"prestige":               "Prestige",
 		"wonders":                "Wonders",
+		"storage":                "Storage buildings",
 		"permanent":              "Permanent",
 		"morale":                 "Morale",
 		"event":                  "Event",

@@ -194,7 +194,7 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 		// Of its own income, counted inside the band every gain is held to
 		// (a quarter of to four times what a moderate town of the age
 		// makes), and in knowledge no more than the age's cheapest tech
-		// costs. The lab's stores have room for all of it.
+		// costs. Stock has no cap, so all of it lands.
 		"ancient_cache": func(t *testing.T, ge *GameEngine, before, after world) {
 			cheapest := 0.0
 			for _, tech := range ge.rules.Techs() {
@@ -215,10 +215,6 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 				want := 15 * (60 / config.TickSeconds) * income
 				if key == "knowledge" {
 					want = math.Min(want, cheapest)
-				}
-				if room := before.store[key] - before.stock[key]; room < want {
-					t.Errorf("%s: the lab's store has room for %v of the %v the cache pays; the check needs all of it to fit", key, room, want)
-					continue
 				}
 				if got := after.stock[key] - before.stock[key]; !near(got, want) {
 					t.Errorf("%s gained %v, want %v (15 minutes of the town's income)", key, got, want)
@@ -295,13 +291,6 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 				// faith exist, and techs of the age are left to discover.
 				ge := newTruthEngine("classical_age", truthClean)
 				ge.Research.currentTech, ge.Research.progress = "tool_making", 0
-				if def.Key == "ancient_cache" {
-					for _, key := range ge.Resources.order {
-						if ge.Resources.IsUnlocked(key) {
-							truthRoom(ge, key, config.EventSize(config.Effect{Type: config.EventGain, Target: key, Value: config.AncientCacheMinutes}, ge.eventTown(key, false)))
-						}
-					}
-				}
 				before := look(ge)
 				if good {
 					ge.applyGoodEpochEvent(def)
@@ -434,8 +423,6 @@ func TestPrestigeProductionRateEventSizesBeforePrestige(t *testing.T) {
 
 	base, key = newTown()
 	offline, _ := withEvent()
-	truthRoom(base, key, base.Resources.resources[key].Rate*10)
-	truthRoom(offline, key, offline.Resources.resources[key].Rate*10)
 	startBase, startOffline := base.Resources.Get(key), offline.Resources.Get(key)
 	base.SimulateOffline(10 * time.Second)
 	offline.SimulateOffline(10 * time.Second)
