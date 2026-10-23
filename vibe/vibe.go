@@ -8,7 +8,13 @@
 //   - the ruleset overlay (package rules) swaps the text of every definition
 //     that has a row, when the ruleset is built, and
 //   - Line swaps one string of code in place, for a line the code writes
-//     itself (a log line, a title).
+//     itself (a title, a label, a word), and Sprintf and Errorf do the same
+//     for a format (a log line, a refusal), before the arguments go in.
+//
+// Each of the three takes the row id the copy export gives the string, and
+// the string. The id is part of the source, so it stays with the string when
+// the code around it moves (cmd/words vibe-wire writes it, vibe-lint checks
+// it).
 //
 // A line with no row in the script reads as it always did, and nothing but
 // words ever changes: no number, no key, no save.
@@ -17,6 +23,7 @@
 package vibe
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -92,6 +99,36 @@ func Line(id, plain string) string {
 	if !on.Load() {
 		return plain
 	}
+	return lineFor(id, plain)
+}
+
+// Sprintf is fmt.Sprintf for a format the code writes itself (a log line, a
+// refusal): the script's line for the row id, if VibeMode is on and the script
+// has one, else format, and then the arguments are put in. id is the row id
+// the copy export gives the format.
+//
+// It is a wrapper vet reads as it reads fmt.Sprintf, so a format and its
+// arguments that do not agree are still caught at the call. The script's line
+// must carry the same verbs in the same order (vibe-lint holds it to that).
+func Sprintf(id, format string, a ...any) string {
+	if !on.Load() {
+		return fmt.Sprintf(format, a...)
+	}
+	return fmt.Sprintf(lineFor(id, format), a...)
+}
+
+// Errorf is fmt.Errorf for a refusal or an error the code writes itself, on
+// the same terms as Sprintf. The script's line may carry %w where the format
+// does, and wraps in the same place.
+func Errorf(id, format string, a ...any) error {
+	if !on.Load() {
+		return fmt.Errorf(format, a...)
+	}
+	return fmt.Errorf(lineFor(id, format), a...)
+}
+
+// lineFor is the script's line for a row id, else plain. VibeMode is on.
+func lineFor(id, plain string) string {
 	if s, ok := script().text[id]; ok {
 		return s
 	}
