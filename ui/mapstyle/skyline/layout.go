@@ -21,6 +21,7 @@ type lotView struct {
 	staff    float64 // 0..1: lights and smoke follow it
 	producer bool
 	depth    uint8
+	variant  int // 0..2: the copy's own height, windows and roof (dress.go)
 }
 
 type layout struct {
@@ -94,7 +95,7 @@ func (v *view) layoutFor(m *mapmodel.Model, groundY int) *layout {
 		}
 		b := m.Building(ml.Key)
 		lv := lotView{ml: ml, b: b, fam: familyOf(ml.Age), vr: int(hash(int(ml.Seed), 7) % 3),
-			staff: staffOf(m, b), depth: rowDepth(ml.Row)}
+			staff: staffOf(m, b), depth: rowDepth(ml.Row), variant: variantOf(ml.Seed)}
 		count := 1
 		if b != nil {
 			count = b.Count
@@ -111,7 +112,7 @@ func (v *view) layoutFor(m *mapmodel.Model, groundY int) *layout {
 			fm = formFor(def)
 			lv.producer = fm.smoke
 			h := float64(fm.height * lay.scale)
-			h *= 0.82 + 0.36*hashf(int(ml.Seed), 11)
+			h *= (0.9 + 0.2*hashf(int(ml.Seed), 11)) * variantHeight[lv.variant]
 			h *= 1 + 0.05*mapmodel.Log2(1+float64(count))
 			if ml.Row > 0 {
 				h *= 1.12
@@ -123,7 +124,7 @@ func (v *view) layoutFor(m *mapmodel.Model, groundY int) *layout {
 			if ml.Wonder {
 				spr = wonderSprite(ml.Key, lay.scale)
 			} else {
-				spr = fm.fn(newRnd(ml.Seed), sk.h)
+				spr = dress(fm.fn(newRnd(ml.Seed), sk.h), lv.variant, ml.Seed, ml.Age, maxH)
 				if hash(int(ml.Seed), 5)%2 == 0 {
 					spr = spr.mirror()
 				}

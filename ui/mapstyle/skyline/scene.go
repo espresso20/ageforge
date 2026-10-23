@@ -165,7 +165,7 @@ func (s *scene) skyStructures() {
 	a := s.m.AgeIdx
 	gy := s.groundY
 	if a >= 18 {
-		cx, cy := s.W*3/4-int(float64(s.cam)*0.02), 3
+		cx, cy := s.W*3/4-int(drift(s.cam, 0.02, 40)), 3
 		pc := s.p.final(theme.Mix(theme.SkyColor(theme.SkyPlanet), s.p.sky[0], 0.3))
 		rc := s.p.final(theme.Mix(theme.SkyColor(theme.SkyPlanetRing), s.p.sky[0], 0.3))
 		for dy := -1; dy <= 1; dy++ {
@@ -223,9 +223,24 @@ func (s *scene) skyStructures() {
 	}
 }
 
+// drift is the parallax offset of a far object that scrolls at rate k of the
+// camera: the same as k·cam while that is under half of lim, and never past
+// lim however long the panorama is (a town that fills its districts is
+// thousands of columns long, and a far planet or ring must not slide off the
+// screen). Plain arithmetic: no transcendentals in simulation code.
+func drift(cam int, k, lim float64) float64 {
+	x := float64(cam) * k
+	h := lim / 2
+	if x <= h {
+		return x
+	}
+	d := x - h
+	return h + h*d/(d+h)
+}
+
 // orbitY is the orbital ring's row at screen column x.
 func (s *scene) orbitY(x int) (float64, int) {
-	cx := float64(s.W)/2 - float64(s.cam)*0.03
+	cx := float64(s.W)/2 - drift(s.cam, 0.03, 60)
 	d := (float64(x) - cx) / float64(s.W)
 	fy := 1.5 + float64(d*d)*float64(s.groundY)*0.9
 	return fy, int(fy)
@@ -240,7 +255,7 @@ func (s *scene) elevatorX() int {
 }
 
 // tetherX is the world column of the space elevator, or -1: it rises from
-// the Fusion district, east of its middle, in the Fusion Age and stays
+// the Fusion district, a few columns in from its east edge, in the Fusion Age and stays
 // there through the Space Age, where the sky arc (orbit_space.go) carries
 // it from the planet up to the station. From the Interstellar Age the map
 // is out in deep space, with no planet to anchor it.
@@ -250,7 +265,7 @@ func tetherX(m *mapmodel.Model) int {
 		return -1
 	}
 	d := m.Skyline.Districts[fusion]
-	return d.X0 + d.LandW*3/4
+	return d.TetherX()
 }
 
 func (s *scene) clouds() {
@@ -610,7 +625,7 @@ func flagged(lv *lotView) bool {
 
 func (s *scene) lots() {
 	p := s.p
-	night := p.night
+	dark := math.Max(p.night, p.twilight*0.8) // lamps come on at dusk
 	s.vis = s.lay.visible(s.cam-12, s.cam+s.W+12, s.vis)
 	white := theme.SkyColor(theme.SkyWhite)
 	fade := s.inCity && mapmodel.Greenery(s.m.AgeIdx) < 1 // the greenery fade (city.go)
@@ -631,6 +646,7 @@ func (s *scene) lots() {
 		if lv.fam == 10 {
 			phase = 0.5 + 0.5*mapmodel.Sin(float64(s.anim)/48+hashf(int(lv.ml.Seed)))
 		}
+		edge := spr.edges()
 		for sy := 0; sy < spr.h; sy++ {
 			Y := s.Y(y0 + sy)
 			for sx := 0; sx < spr.w; sx++ {
@@ -639,6 +655,7 @@ func (s *scene) lots() {
 				if c.ch == 0 || X < 0 || X >= s.W {
 					continue
 				}
+				rim := edge[sy*spr.w+sx] // the outline: a darker edge so neighbours part
 				fg := p.col(lv.fam, lv.vr, c.fg, hz)
 				if tint != 0 && !c.fg.emissive() {
 					fg = theme.Mix(fg, tint, 0.32)
@@ -648,18 +665,13 @@ func (s *scene) lots() {
 				}
 				ch := c.ch
 				switch {
-				case c.fg == sWin && night > 0.25 && s.windowLit(lv, sx, sy):
-					h := theme.SkyWinWarm
-					if k := hash(int(lv.ml.Seed), sx, sy); k%4 == 0 {
-						h = theme.SkyWinPale
-					} else if lv.ml.Age >= 15 && k%3 == 0 {
-						h = theme.SkyWinNeon
-					}
-					lit := p.hue(h, mEmit, hz)
+				case c.fg == sWin && dark > 0.25 && s.windowLit(lv, sx, sy):
+					lit := p.hue(windowHue(lv.ml.Age, hash(int(lv.ml.Seed), sx, sy)), mEmit, hz)
 					if s.inCity { // the age's own light in the windows (city.go)
 						lit = s.windowLight(lv, sx, sy, lit, hz)
 					}
-					fg = theme.Mix(fg, lit, math.Min(1, (night-0.25)*2))
+					glow := windowGlow(lv.ml.Age, int(lv.ml.Seed), sx, sy, s.anim)
+					fg = theme.Mix(fg, lit, math.Min(1, (dark-0.25)*2)*glow)
 				case screens && c.fg == sWin && lv.ml.Age >= 10 && hash(int(lv.ml.Seed), sx, sy, s.anim/3)%23 == 0:
 					fg = cool // a screen flickers in a window
 				case flick && (c.fg == sNeon1 || c.fg == sNeon2 || c.fg == sNeon3):
@@ -672,6 +684,9 @@ func (s *scene) lots() {
 					}
 				case fade && (c.fg == sLeaf || c.fg == sLeafDark || c.fg == sField1 || c.fg == sField2):
 					fg = s.leafFade(lv, sx, sy, fg, hz)
+				}
+				if rim {
+					fg = theme.Shade(fg, outlineK)
 				}
 				if dim {
 					fg = theme.Shade(fg, 0.55)
@@ -696,6 +711,9 @@ func (s *scene) lots() {
 				if mega && (c.bg.emissive() || c.bg == sGlass || c.bg == sGlassHi) {
 					bg = s.neonFix(bg, hz)
 				}
+				if rim {
+					bg = theme.Shade(bg, outlineK)
+				}
 				if dim {
 					bg = theme.Shade(bg, 0.55)
 				}
@@ -707,7 +725,7 @@ func (s *scene) lots() {
 		}
 		for _, b := range spr.beacons {
 			on := (s.anim/3+int(hash(int(lv.ml.Seed), b.x)%7))%8 < 3
-			if on || night < 0.3 {
+			if on || p.night < 0.3 {
 				c := p.hue(theme.SkyBeacon, mEmit, hz)
 				if !on {
 					c = theme.Shade(c, 0.55)

@@ -385,8 +385,9 @@ func TestSkyNoSpoilers(t *testing.T) {
 		movers := map[mapmodel.Mover]bool{}
 		for cam := 0; cam < m.Skyline.Width; cam += 120 {
 			for anim := 0; anim < 2000; anim += 37 {
+				o.cam = cam // (the tether's screen column follows the camera)
 				g := o.geo()
-				g.cam, g.anim = cam, anim
+				g.anim = anim
 				for _, vh := range skyTrafficFor(g) {
 					k := vh.t.mover
 					if k == mapmodel.MoverNone {
@@ -612,9 +613,16 @@ func TestSkyTetherCarriesOn(t *testing.T) {
 	if sf.elevatorX() < 0 {
 		t.Fatal("the Fusion Age has no tether")
 	}
-	if w := tetherX(spc); w != wf {
-		t.Errorf("the Space Age's tether stands at world column %d, the Fusion Age's at %d", w, wf)
+	// (A district widens to fit its buildings: the tether keeps its place
+	// in the Fusion district, a few columns in from its east edge.)
+	rel := func(m *mapmodel.Model) int {
+		d := m.Skyline.Districts[m.Catalog.AgeIdx["fusion_age"]]
+		return d.X0 + d.LandW - tetherX(m)
 	}
+	if a, b := rel(spc), rel(fus); a != b {
+		t.Errorf("the Space Age's tether stands %d columns in from the Fusion district's edge, the Fusion Age's %d", a, b)
+	}
+	wf = tetherX(spc)
 	vs := newView()
 	vs.follow, vs.cam = false, max(0, wf-80)
 	ss := vs.compose(mapstyle.Frame{Model: spc}, 160, 48)
