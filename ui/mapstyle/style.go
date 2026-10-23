@@ -106,6 +106,14 @@ type CompactNews interface {
 	CompactShowsNews() bool
 }
 
+// Zoomable is implemented by a style whose view has zoom levels that
+// persist in the map settings. A level is a name ("far", "mid", "close"); ""
+// is the style's default, and a name it does not know changes nothing.
+type Zoomable interface {
+	ZoomLevel() string
+	SetZoom(level string)
+}
+
 // Pointer is where a style's cursor stands, in the style's own terms (for
 // the roguelike, a tile of the settlement).
 type Pointer struct{ X, Y int }

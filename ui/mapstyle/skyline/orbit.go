@@ -119,7 +119,7 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 	}
 	m := f.Model
 	v.lastW = W
-	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: H - 3, top: 1, sel: -1}
+	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: H - 3, top: 1, sel: -1, lw: W, ls: H - 3, sw: W, sh: H}
 	s.groundY = skyGround(s.S)
 	s.band = bandOf(m.AgeIdx)
 	s.p, s.mp = v.palettes(m)

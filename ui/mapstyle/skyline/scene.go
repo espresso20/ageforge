@@ -45,7 +45,16 @@ type scene struct {
 	top     int // screen row of scene row 0
 	groundY int
 	cam     int
-	band    int // traffic band of the current age
+	// The zoom (zoom.go). The scene composes into a world frame lw columns
+	// wide with ls scene rows (the ground at groundY), and present puts it
+	// on a screen sw by sh: then W, H and S are the screen's, and groundY
+	// and everything placed by the layers stay in the world frame's terms
+	// (sx and sy convert). At mid the two are the same.
+	zm      zoom
+	lw, ls  int
+	sw, sh  int
+	ovBox   [2]int // the cells of the overview bar's box (chrome.go)
+	band    int    // traffic band of the current age
 	gridOut bool
 	farTops []float64
 	emit    []emitter
@@ -1308,15 +1317,17 @@ func (s *scene) meteor() {
 // ------------------------------------------------------------ markers
 
 // markers: the ▼ over what is new since the last visit, the flows tags,
-// the labels on the grid and the inspect cursor.
+// the labels on the grid and the inspect cursor. They are drawn on the
+// screen, so under a zoom (zoom.go) the world's positions are converted
+// (sx, sy) and the text keeps its own size.
 func (s *scene) markers() {
 	pos := s.mp.Fg[mapmodel.CFresh]
 	warn := s.mp.Fg[mapmodel.CIdle]
 	full := len(s.m.Flows.Full) > 0
 	for _, li := range s.vis {
 		lv := &s.lay.lots[li]
-		x := lv.x0 - s.cam + lv.spr.w/2
-		y := max(0, s.groundY-lv.spr.h-1)
+		x := s.sx(lv.x0 - s.cam + lv.spr.w/2)
+		y := max(0, s.sy(s.groundY-lv.spr.h-1))
 		if s.v.changes && lv.ml.New {
 			s.fb.fg(x, s.Y(y), mapmodel.R(mapmodel.SymFresh, s.tier), pos, dTag)
 			if s.tier != mapmodel.TierNerd {
@@ -1341,11 +1352,13 @@ func (s *scene) markers() {
 		}
 	}
 	for _, lb := range s.labels {
+		n := textLen(lb.text)
+		x, y := s.sx(lb.x+n/2)-n/2, s.sy(lb.y)
 		for dy := 0; dy < 3; dy++ {
-			if s.labelFree(lb.x, lb.y-dy, textLen(lb.text)) {
+			if s.labelFree(x, y-dy, n) {
 				for i, r := range []rune(lb.text) {
-					if c := s.fb.at(lb.x+i, s.Y(lb.y-dy)); c != nil {
-						s.fb.fg(lb.x+i, s.Y(lb.y-dy), r, theme.Legible(lb.fg, c.show(), 3), dLabel)
+					if c := s.fb.at(x+i, s.Y(y-dy)); c != nil {
+						s.fb.fg(x+i, s.Y(y-dy), r, theme.Legible(lb.fg, c.show(), 3), dLabel)
 					}
 				}
 				break
@@ -1355,8 +1368,10 @@ func (s *scene) markers() {
 	s.cursor()
 }
 
+// labelFree reports whether a label n wide fits at screen scene row y,
+// column x: above the ground and over nothing nearer than a label.
 func (s *scene) labelFree(x, y, n int) bool {
-	if y < 0 || y >= s.groundY {
+	if y < 0 || y >= s.sy(s.groundY) {
 		return false
 	}
 	for i := 0; i < n; i++ {
@@ -1383,44 +1398,46 @@ func (s *scene) cursor() {
 	switch t := s.v.cur; {
 	case s.sel >= 0:
 		lv := &s.lay.lots[s.sel]
-		x0, x1 = lv.x0-s.cam, lv.x0-s.cam+lv.spr.w-1
-		top = s.groundY - lv.spr.h
+		x0, x1 = s.sx(lv.x0-s.cam), max(s.sx(lv.x0-s.cam), s.sx(lv.x0-s.cam+lv.spr.w)-1)
+		top = s.sy(s.groundY - lv.spr.h)
 		name = lv.b.Name
 		if lv.ml.Wonder {
 			name = s.m.Catalog.Defs[lv.ml.Key].Name
 		}
 	case t.kind == tTether:
-		if x := s.elevatorX(); x >= 0 && x < s.W {
-			mark(x-1, s.Y(s.groundY/2), '►')
+		if x := s.elevatorX(); x >= 0 && x < s.lw {
+			x = s.sx(x)
+			mark(x-1, s.Y(max(0, s.sy(s.groundY/2))), '►')
 			lbl := " " + mapmodel.FeatTether.Info().Title + " "
-			s.fb.text(clampInt(x-textLen(lbl)/2, 0, max(0, s.W-textLen(lbl))), s.Y(s.groundY/2-2), lbl, cfg, cbg, dTop)
+			s.fb.text(clampInt(x-textLen(lbl)/2, 0, max(0, s.W-textLen(lbl))), s.Y(max(0, s.sy(s.groundY/2)-2)), lbl, cfg, cbg, dTop)
 		}
 		return
 	case t.kind == tUFO:
-		if x, y, ok := saucerAt(s.m, s.visit, s.W); ok {
+		if x, y, ok := saucerAt(s.m, s.visit, s.lw); ok {
 			ch, my := '▼', y-1
 			if my < 0 {
 				ch, my = '▲', y+1
 			}
-			mark(x+1, s.Y(my), ch)
+			mark(s.sx(x+1), s.Y(max(0, s.sy(my))), ch)
 		}
 		return
 	case t.kind != tLot:
 		for _, it := range s.ridge {
 			if (t.kind == tHarbinger && it.fac == nil) || (it.fac != nil && it.fac.Key == t.key) {
-				mark(it.x, s.Y(s.ridgeTop(it.x)-6), '▼')
+				mark(s.sx(it.x), s.Y(max(0, s.sy(s.ridgeTop(it.x)-6))), '▼')
 			}
 		}
 		return
 	default:
 		return
 	}
+	bar := s.sy(s.groundY + 2)
 	for x := x0 + 1; x < x1; x++ {
-		mark(x, s.Y(s.groundY+2), '─')
+		mark(x, s.Y(bar), '─')
 	}
-	mark(x0, s.Y(s.groundY+2), '└')
-	mark(x1, s.Y(s.groundY+2), '┘')
-	mark((x0+x1)/2, s.Y(s.groundY+1), '▲')
+	mark(x0, s.Y(bar), '└')
+	mark(x1, s.Y(bar), '┘')
+	mark((x0+x1)/2, s.Y(bar-1), '▲')
 	lbl := " " + name + " "
 	n := textLen(lbl)
 	s.fb.text(clampInt((x0+x1)/2-n/2, 0, max(0, s.W-n)), s.Y(max(0, top-2)), lbl, cfg, cbg, dTop)

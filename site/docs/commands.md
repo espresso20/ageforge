@@ -313,11 +313,11 @@ The command bar keeps working while the Map is open: type commands as usual. The
 |---|---|
 | Arrows | Move the cursor or scroll |
 | `Tab` / `Shift-Tab` | Next or previous thing to inspect |
-| `PgUp` / `PgDn` | Zoom out and in (roguelike) or scroll half a screen (skyline) |
+| `PgUp` / `PgDn` | Zoom out and in |
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press Enter again to run it) |
 | `Esc` | Close the Map |
 
-With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
+The skyline also takes `+`, `-` and `=` (zoom: far, mid, close) and `[` and `]` (the previous and next district) while the prompt is empty; its zoom level is saved with your account. With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
 
 ---
 

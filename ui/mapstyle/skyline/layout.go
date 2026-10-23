@@ -27,6 +27,7 @@ type lotView struct {
 type layout struct {
 	m       *mapmodel.Model
 	groundY int
+	ref     int // the ground row the buildings are sized for (the mid view's)
 	scale   float64
 	lots    []lotView // draw order: back rows first, taller first, wonders last
 	byX     []int32   // lot indexes sorted by x0
@@ -79,14 +80,22 @@ func staffOf(m *mapmodel.Model, b *mapmodel.Building) float64 {
 }
 
 func (v *view) layoutFor(m *mapmodel.Model, groundY int) *layout {
-	if v.lay != nil && v.lay.m == m && v.lay.groundY == groundY {
+	return v.layoutSized(m, groundY, groundY)
+}
+
+// layoutSized is layoutFor with the buildings sized for a scene whose
+// ground is at row ref: the far zoom composes a taller frame (ground at
+// groundY) in which a building is still as tall as the screen's own height
+// makes it.
+func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
+	if v.lay != nil && v.lay.m == m && v.lay.groundY == groundY && v.lay.ref == ref {
 		return v.lay
 	}
 	if v.sprites == nil || len(v.sprites) > 6000 {
 		v.sprites = map[spriteKey]*sprite{}
 	}
-	lay := &layout{m: m, groundY: groundY, scale: sceneScale(groundY), width: max(m.Skyline.Width, 1)}
-	maxH := max(2, groundY-3)
+	lay := &layout{m: m, groundY: groundY, ref: ref, scale: sceneScale(ref), width: max(m.Skyline.Width, 1)}
+	maxH := max(2, ref-3)
 	for i := range m.Skyline.Lots {
 		ml := &m.Skyline.Lots[i]
 		def := m.Catalog.Defs[ml.Key]

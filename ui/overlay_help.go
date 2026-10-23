@@ -98,10 +98,12 @@ func helpProvider(_ game.GameState, screenW int) string {
 	row("  [cyan]"+padRight("Accounts", 12)+"[-] - ", "Switch, create or back up accounts [gray](main-menu panel, not a command)[-]")
 
 	sb.WriteString("\n[gold]═══ The Map panel ═══[-]\n")
-	note("The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing.")
-	keys([2]string{"Arrows", "Move the cursor (roguelike) or scroll (skyline); Shift moves further"},
+	note("The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = [ ] while the prompt is empty.")
+	keys([2]string{"Arrows", "Move the cursor (roguelike) or scroll (skyline); Shift moves further, half a screen in the skyline"},
 		[2]string{"Tab", "Next building, wonder or civilization (Shift-Tab: the one before)"},
-		[2]string{"PgUp/PgDn", "Zoom out and in (roguelike) or scroll half a screen (skyline)"},
+		[2]string{"PgUp/PgDn", "Zoom out and in"},
+		[2]string{"+/-", "Zoom in and out in the skyline (= works as +): far shows the whole town, close every building twice the size; the level is kept for next time"},
+		[2]string{"[ ]", "Skyline: jump to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)"},
 		[2]string{"Home/End", "The town square (roguelike); the oldest district and the present (skyline)"},
 		[2]string{"Enter", "Put the command for what the cursor is on in the prompt (with something typed, Tab and Enter act on the prompt instead)"},
 		[2]string{"Esc", "Close the panel"})
