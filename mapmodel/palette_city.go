@@ -35,9 +35,9 @@ type CityLook struct {
 	// Rain is the age's ambient rain (the megacity's acid streaks).
 	Rain bool
 
-	// the entries Name, Structure and Ambient were written as, read again
-	// while VibeMode is on
-	nameE, structureE, ambientE vibe.Entry
+	// def is the table entry Name, Structure and Ambient were written as, read
+	// again while VibeMode is on
+	def *cityLookDef
 }
 
 type cityLookDef struct {
@@ -76,14 +76,15 @@ func buildCityLooks() []CityLook {
 		idx[k] = i
 	}
 	out := make([]CityLook, 0, len(cityLookDefs))
-	for _, d := range cityLookDefs {
+	for i := range cityLookDefs {
+		d := &cityLookDefs[i]
 		a, ok := idx[d.key]
 		if !ok {
 			continue // an unknown age key (TestCityLooks fails on it)
 		}
 		out = append(out, CityLook{Key: d.key, Age: a, Name: d.name.Plain(), Palette: d.palette, Structure: d.structure.Plain(),
 			Mover: d.mover, Ambient: d.ambient.Plain(), Greenery: d.greenery, Smog: d.smog, Night: d.night, Rain: d.rain,
-			nameE: d.name, structureE: d.structure, ambientE: d.ambient})
+			def: d})
 	}
 	return out
 }
@@ -101,7 +102,7 @@ func CityLooks() []CityLook {
 // off, else read again from the entries the table was written as.
 func (l CityLook) told() CityLook {
 	if vibe.On() {
-		l.Name, l.Structure, l.Ambient = l.nameE.String(), l.structureE.String(), l.ambientE.String()
+		l.Name, l.Structure, l.Ambient = l.def.name.String(), l.def.structure.String(), l.def.ambient.String()
 	}
 	return l
 }

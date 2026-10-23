@@ -64,9 +64,8 @@ type CityFeatureInfo struct {
 	From, Until int
 	Lines       []string // what inspecting it says; each cell keeps one
 
-	// the entries these were written as, read again while VibeMode is on
-	nameE, titleE vibe.Entry
-	linesE        []vibe.Entry
+	// def is the table entry these were written as, read again while VibeMode is on
+	def *cityFeatureDef
 }
 
 // In reports whether the feature stands in the age with index age.
@@ -178,10 +177,9 @@ func buildCityFeatures() [NumCityFeatures]CityFeatureInfo {
 	var out [NumCityFeatures]CityFeatureInfo
 	out[FeatNone].From, out[FeatNone].Until = -1, -1
 	for f := CityFeature(1); f < NumCityFeatures; f++ {
-		d := cityFeatureDefs[f]
+		d := &cityFeatureDefs[f]
 		out[f] = CityFeatureInfo{Key: d.key, Name: d.name.Plain(), Title: d.title.Plain(), Sym: d.sym,
-			From: age(d.from, -1), Until: age(d.until, -1), Lines: plainLines(d.lines),
-			nameE: d.name, titleE: d.title, linesE: d.lines}
+			From: age(d.from, -1), Until: age(d.until, -1), Lines: plainLines(d.lines), def: d}
 		if d.until != "" && out[f].Until < 0 {
 			out[f].From = -1 // an unknown age key: never stands (TestCityRoster fails on it)
 		}
@@ -195,8 +193,8 @@ func (f CityFeature) Info() CityFeatureInfo {
 		return cityFeatureTable[FeatNone]
 	}
 	in := cityFeatureTable[f]
-	if vibe.On() {
-		in.Name, in.Title, in.Lines = in.nameE.String(), in.titleE.String(), toldLines(in.linesE)
+	if vibe.On() && in.def != nil { // (FeatNone has no entry)
+		in.Name, in.Title, in.Lines = in.def.name.String(), in.def.title.String(), toldLines(in.def.lines)
 	}
 	return in
 }

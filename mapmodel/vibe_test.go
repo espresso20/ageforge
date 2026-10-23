@@ -26,6 +26,13 @@ func TestTheRostersReadTheScript(t *testing.T) {
 	told(t)
 	words := func() map[string]string {
 		out := map[string]string{}
+		// (the first of each is nothing, and reads as nothing)
+		if i := mapmodel.FeatNone.Info(); i.Name != "" || len(i.Lines) != 0 {
+			t.Errorf("no feature reads as %+v", i)
+		}
+		if i := mapmodel.MoverNone.Info(); i.Name != "" || len(i.Lines) != 0 {
+			t.Errorf("no mover reads as %+v", i)
+		}
 		for f := mapmodel.CityFeature(1); f < mapmodel.NumCityFeatures; f++ {
 			i := f.Info()
 			out["city "+i.Key] = i.Name + "|" + i.Title + "|" + strings.Join(i.Lines, "|") + "|" + i.Line(3)

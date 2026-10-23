@@ -82,9 +82,8 @@ type MoverInfo struct {
 	// Lines are what inspecting one says; each mover keeps one of them.
 	Lines []string
 
-	// the entries these were written as, read again while VibeMode is on
-	nameE, titleE vibe.Entry
-	linesE        []vibe.Entry
+	// def is the table entry these were written as, read again while VibeMode is on
+	def *moverDef
 }
 
 // In reports whether the mover is about in the age with index age.
@@ -224,11 +223,10 @@ func buildMovers() [NumMovers]MoverInfo {
 	var out [NumMovers]MoverInfo
 	out[MoverNone].From, out[MoverNone].Until = -1, -1 // nothing introduces nothing
 	for k := Mover(1); k < NumMovers; k++ {
-		d := moverDefs[k]
+		d := &moverDefs[k]
 		out[k] = MoverInfo{Key: d.key, Name: d.name.Plain(), Title: d.title.Plain(), Sym: d.sym, Class: d.class, Way: d.way,
 			From: age(d.from, -1), Until: age(d.until, -1), Pace: max(1, d.pace), Cars: max(1, d.cars),
-			Smoke: d.smoke, Night: d.night, Lines: plainLines(d.lines),
-			nameE: d.name, titleE: d.title, linesE: d.lines}
+			Smoke: d.smoke, Night: d.night, Lines: plainLines(d.lines), def: d}
 		if d.until != "" && out[k].Until < 0 {
 			out[k].From = -1
 		}
@@ -250,8 +248,8 @@ func (k Mover) Info() MoverInfo {
 // told is the roster entry with its words as they read now: itself while
 // VibeMode is off, else read again from the entries the table was written as.
 func (i MoverInfo) told() MoverInfo {
-	if vibe.On() {
-		i.Name, i.Title, i.Lines = i.nameE.String(), i.titleE.String(), toldLines(i.linesE)
+	if vibe.On() && i.def != nil { // (MoverNone has no entry)
+		i.Name, i.Title, i.Lines = i.def.name.String(), i.def.title.String(), toldLines(i.def.lines)
 	}
 	return i
 }
@@ -346,11 +344,11 @@ func buildSkyMovers() [numAllMovers - NumMovers]MoverInfo {
 		return -2 // an unknown age key: never about (TestSkyMoverRoster fails on it)
 	}
 	var out [numAllMovers - NumMovers]MoverInfo
-	for i, d := range skyMoverDefs {
+	for i := range skyMoverDefs {
+		d := &skyMoverDefs[i]
 		info := MoverInfo{Key: d.key, Name: d.name.Plain(), Title: d.title.Plain(), Sym: d.sym, Class: d.class, Way: d.way,
 			From: age(d.from), Until: age(d.until), Pace: max(1, d.pace), Cars: max(1, d.cars),
-			Smoke: d.smoke, Night: d.night, Lines: plainLines(d.lines),
-			nameE: d.name, titleE: d.title, linesE: d.lines}
+			Smoke: d.smoke, Night: d.night, Lines: plainLines(d.lines), def: d}
 		if info.From < 0 || info.Until == -2 {
 			info.From, info.Until = -1, -1
 		}
