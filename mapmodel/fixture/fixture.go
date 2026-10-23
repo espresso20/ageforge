@@ -123,8 +123,10 @@ func State(o Options) game.GameState {
 		if n < 1 {
 			n = 1
 		}
-		if d.MaxCount > 0 && n > d.MaxCount {
-			n = d.MaxCount
+		// A town stands as many copies as the models let one hold: the
+		// building's limit, or for a knowledge building its full-rate count.
+		if limit := d.ModelCopyLimit(); limit > 0 && n > limit {
+			n = limit
 		}
 		bs.Count, bs.IsLegacy = n, legacy
 		if d.WorkerCapacity > 0 {
@@ -244,8 +246,8 @@ func Grow(st game.GameState, step int) game.GameState {
 				WorkerCapacity: d.WorkerCapacity, Unlocked: true}
 			add++
 		}
-		if d.MaxCount > 0 && bs.Count+add > d.MaxCount {
-			add = d.MaxCount - bs.Count
+		if limit := d.ModelCopyLimit(); limit > 0 && bs.Count+add > limit {
+			add = limit - bs.Count
 		}
 		bs.Count += add
 		out.Buildings[k] = bs

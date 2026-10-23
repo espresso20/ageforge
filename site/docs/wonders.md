@@ -82,9 +82,9 @@ No wonder takes longer to build than a third of its age's target length. Build t
 
 ---
 
-## Wonders and the all-production cap
+## Wonders and the all-production pool
 
-Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%), Warp Nexus (+80%), Cosmic Beacon (+50%), Reality Anchor (+50%) and Singularity Core (+200%). Every all-production bonus in the game, from wonders, milestones, monuments, events and boons alike, adds into one pool (a tech's bonus and the Cosmic Legacy are applied after it). The pool applies in full up to +200%, and past that every further point counts a quarter (see [The all-production cap](resources.md#the-all-production-cap)). The first five wonders alone come to +215%, and milestones usually take the pool past +200% well before the last of them, so a late wonder adds a quarter of what it lists. An example: with +400% earned, the pool applies +250%. Building the Warp Nexus (+80%) takes it to +480% earned and +270% applied, 20 points more. The Wonders panel shows that figure beside the bonus before you build (`+80% all production (counts a quarter past +200%: +20% now)`). Their flat outputs (dark matter, antimatter, quantum flux and the rest) count in full.
+Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%), Warp Nexus (+80%), Cosmic Beacon (+50%), Reality Anchor (+50%) and Singularity Core (+200%). Every all-production bonus in the game, from wonders, milestones, monuments, events and boons alike, adds into one pool (a tech's bonus and the Cosmic Legacy are applied after it). The pool applies in full, however large it grows (see [The all-production pool](resources.md#the-all-production-pool)), so a late wonder adds all of what it lists. An example: with +400% earned, building the Warp Nexus (+80%) takes the pool to +480%, 80 points more. Their flat outputs (dark matter, antimatter, quantum flux and the rest) count in full.
 
 ---
 
@@ -385,7 +385,7 @@ Six wonders add to all production: the Crystal Palace (+15%), Hoover Dam (+20%),
 
 **Bonus:** **+200% all production** · +20.0 quantum flux/t
 
-> The Singularity Core is the last wonder and has the biggest bill in the game. Its +200% all production is the largest bonus in the game. By the Transcendent Age the pool is far past +200%, where a bonus counts a quarter, so it adds 50 points to what the pool applies. The Transcendent Age has no makers of its own, so the Singularity Core is paid from the Quantum Age's makers (see [The Maker Rule](buildings.md#the-maker-rule)).
+> The Singularity Core is the last wonder and has the biggest bill in the game. Its +200% all production is the largest bonus in the game. By the Transcendent Age the pool is already large, and the Singularity Core adds all 200 points to it. The Transcendent Age has no makers of its own, so the Singularity Core is paid from the Quantum Age's makers (see [The Maker Rule](buildings.md#the-maker-rule)).
 
 ---
 

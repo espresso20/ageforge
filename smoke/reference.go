@@ -33,7 +33,7 @@ import (
 // Stock has no cap, so no price is held against a store. A storage building
 // holds nothing: each copy a town stands adds config.StorageBoostPercent
 // percent to all production, in the all-production pool the pacing model's
-// ProductionAllHeld already sits in and through its soft cap (refTables.boosters,
+// ProductionAllHeld already sits in, applied in full (refTables.boosters,
 // on unless a reading wants the model without them).
 //
 // Every player also upgrades (refTables.upgrades, on unless a reading wants
@@ -248,8 +248,9 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 			case e.Type == "research":
 				// Scholars come with the building and work at a full crew
 				// from the day it stands: no staffing. They live in the
-				// houses and eat (counted below).
-				free[config.ResearchTarget] += float64(n * e.Value)
+				// houses and eat (counted below). Copies past the cap
+				// research at half rate.
+				free[config.ResearchTarget] += float64(d.ResearchCopies(counts[k]) * e.Value)
 			case e.Type == "production" && d.WorkerCapacity > 0:
 				staffed[e.Target] += float64(n * e.Value)
 			case e.Type == "production":
@@ -261,12 +262,11 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 	}
 	fac := t.factor[i]
 	if boost > 0 {
-		// The boost joins the all-production pool the pacing model holds, and
-		// goes through its soft cap with it: the factor scales by what the
-		// pool with the boost applies over what it applied without.
+		// The boost joins the all-production pool the pacing model holds,
+		// in full: the factor scales by what the pool with the boost
+		// applies over what it applied without.
 		held := config.ProductionAllHeld[t.ages[i].Key]
-		soft := config.ProductionSoftCap()
-		scale := (1 + soft.Applied(held+boost)) / (1 + soft.Applied(held))
+		scale := (1 + (held + boost)) / (1 + held)
 		scaled := make(map[string]float64, len(fac))
 		for r, v := range fac {
 			scaled[r] = float64(v * scale)
@@ -400,7 +400,9 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 			best, bestCost, bestUp := -1, 0.0, false
 			for bi, d := range blds {
 				n := counts[d.Key]
-				if d.MaxCount > 0 && n >= d.MaxCount {
+				// The reference players build a knowledge building to its cap
+				// and no further (the soft cap lets a real town go past it).
+				if limit := d.ModelCopyLimit(); limit > 0 && n >= limit {
 					continue
 				}
 				if p.only != nil && n >= p.only[d.Key] {

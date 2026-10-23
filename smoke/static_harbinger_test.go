@@ -62,9 +62,10 @@ func TestAppeasePricesFitTheWarning(t *testing.T) {
 		}
 	}
 
-	// The check fires on broken numbers. The old era price (3.1B faith, 48B
-	// culture in every age, on the late price climb) is more than the
-	// Interstellar Age makes; a doom's
+	// The check fires on broken numbers. A price half as much again as the
+	// Interstellar Age makes in the warning is caught (the old era price,
+	// 3.1B faith and 48B culture in every age on the late price climb, was
+	// such a price when it was set); a doom's
 	// own price is not above a doom's; a price with the culture left out is
 	// caught too.
 	income := rules.Core().FlowIncome
@@ -91,9 +92,11 @@ func TestAppeasePricesFitTheWarning(t *testing.T) {
 			}
 		}
 	}
-	want("the old era price", alter(func(r *PriceRow) {
-		c := config.LatePriceMultiplier(cosmic[0])
-		r.AppeaseL1 = map[string]float64{"faith": float64(3.1e9 * c), "culture": float64(48e9 * c)}
+	want("a price above the warning", alter(func(r *PriceRow) {
+		r.AppeaseL1 = map[string]float64{
+			"faith":   float64(1.5 * float64(income("faith", r.Age)*r.WarningTicks)),
+			"culture": float64(1.5 * float64(income("culture", r.Age)*r.WarningTicks)),
+		}
 	}), AppeaseRuleWarning, "culture", "faith")
 	var ordinary map[string]float64
 	for _, r := range rows {

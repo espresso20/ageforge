@@ -94,11 +94,6 @@ type Source struct {
 	Targets map[string]time.Duration
 	Stretch map[string]float64
 
-	// SoftCap is the rule every production bonus pool follows: the knee a
-	// pool applies in full up to, and the share of each point past it that
-	// still counts.
-	SoftCap config.SoftCap
-
 	// Catastrophes is each era's doom, by era key; UnknownCatastrophe what
 	// an unknown key reads as; LastPassage the final era's passage. Legacy
 	// is what succumbing in each era leaves: resource key -> share.
@@ -153,7 +148,6 @@ func FromConfig() Source {
 		LegacyKit:            config.LegacyKit(),
 		Targets:              maps.Clone(config.AgeTargets),
 		Stretch:              map[string]float64{},
-		SoftCap:              config.ProductionSoftCap(),
 		Catastrophes:         map[string]Catastrophe{},
 		Legacy:               map[string]map[string]float64{},
 		CatastropheGate:      config.CatastropheGateEpoch,

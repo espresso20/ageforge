@@ -866,9 +866,6 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 			}
 			lines = append(lines, vibe.Sprintf("ui.input.cmdBuild.02", "  %s [cyan]%s[-] (%d built) - Cost: %s %s",
 				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
-			if limit := atLimit(b); limit != "" {
-				lines = append(lines, "      [yellow]"+limit+"[-]")
-			}
 		}
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
@@ -1975,7 +1972,7 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 
 // festivalCapLines says, before the culture is spent, what a festival held
 // now would add when less than the whole buff would count: all production
-// is past +200%, where a bonus counts a quarter. Nothing when it all counts.
+// is held by a limit. Nothing when it all counts.
 func festivalCapLines(st game.FestivalStatus) []string {
 	if st.CapPhrase == "" {
 		return nil

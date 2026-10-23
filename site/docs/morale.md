@@ -12,7 +12,7 @@ Morale multiplies **all worker-driven building output** every tick: food, resear
 output = base rate × buildings × (0.20 + 0.80 × workers assigned / worker slots) × morale multiplier
 ```
 
-Morale is **not** part of the all-production pool. That pool (wonders, milestones, events and the rest) applies in full up to +200% and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). Morale multiplies building output separately, so its bonus counts in full however much the pool holds.
+Morale is **not** part of the all-production pool. That pool (wonders, milestones, events and the rest) applies in full, however large it grows (see [The all-production pool](resources.md#the-all-production-pool)). Morale multiplies building output separately, so it is never part of that sum.
 
 For how morale fits the rest of the worker system, see [People](workers-and-domains.md).
 

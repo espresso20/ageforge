@@ -992,9 +992,9 @@ func (bm *BuildingManager) ageLocked(def *config.BuildingDef) bool {
 // buildingExtra is what the engine adds to a building's state: the scholars and
 // soldiers a copy comes with, and the research a tech still locks it behind.
 type buildingExtra struct {
-	scholars, scholarCap, soldiers int
-	lockTech                       string
-	lockTechPath                   []string
+	scholars, fullRate, soldiers int
+	lockTech                     string
+	lockTechPath                 []string
 }
 
 // Snapshot returns building states for UI.
@@ -1005,7 +1005,7 @@ type buildingExtra struct {
 // (see buildingExtra). It takes its figures by value on purpose: handed a
 // pointer to the definition or the state, the compiler could not tell it keeps
 // neither and would move both to the heap for every building.
-func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int, extras func(scholars, maxCount, soldiers int, needsTech string) buildingExtra) map[string]BuildingState {
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int, extras func(scholars, fullRate, soldiers int, needsTech string) buildingExtra) map[string]BuildingState {
 	out := make(map[string]BuildingState, len(bm.defs))
 	for key, def := range bm.defs {
 		// NextCost uses BuildBatchCost so it reflects queue depth — the displayed
@@ -1058,8 +1058,8 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 			}
 		}
 		if extras != nil {
-			x := extras(def.Scholars, def.MaxCount, def.Soldiers, state.NeedsTech)
-			state.Scholars, state.ScholarCap, state.Soldiers = x.scholars, x.scholarCap, x.soldiers
+			x := extras(def.Scholars, def.FullRateCopies, def.Soldiers, state.NeedsTech)
+			state.Scholars, state.FullRateCopies, state.Soldiers = x.scholars, x.fullRate, x.soldiers
 			state.LockTech, state.LockTechPath = x.lockTech, x.lockTechPath
 		}
 		out[key] = state

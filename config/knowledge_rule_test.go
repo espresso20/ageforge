@@ -42,8 +42,9 @@ func TestKnowledgeBuildingsComeWithScholars(t *testing.T) {
 	}
 }
 
-// TestKnowledgeCapIsTheGate: a knowledge building cannot be built past the
-// count its gate asks for, and that count is the one the age tables author.
+// TestKnowledgeCapIsTheGate: a knowledge building researches at full rate up
+// to the count its gate asks for, and that count is the one the age tables
+// author. It is a soft cap: nothing limits the copies.
 func TestKnowledgeCapIsTheGate(t *testing.T) {
 	ages := Ages()
 	for _, d := range BaseBuildings() {
@@ -51,8 +52,11 @@ func TestKnowledgeCapIsTheGate(t *testing.T) {
 			continue
 		}
 		cap := KnowledgeCap(d.Key)
-		if d.MaxCount != cap || cap <= 0 {
-			t.Errorf("%s: the most copies is %d, the cap is %d", d.Key, d.MaxCount, cap)
+		if d.FullRateCopies != cap || cap <= 0 {
+			t.Errorf("%s: the copies at full rate are %d, the cap is %d", d.Key, d.FullRateCopies, cap)
+		}
+		if d.MaxCount != 0 {
+			t.Errorf("%s: at most %d copies; a knowledge building has no hard limit", d.Key, d.MaxCount)
 		}
 		for i, a := range ages {
 			if a.Key != d.RequiredAge || i+1 >= len(ages) {
@@ -65,6 +69,37 @@ func TestKnowledgeCapIsTheGate(t *testing.T) {
 	}
 	if KnowledgeCap("hut") != 0 {
 		t.Error("a building that is not a knowledge building has a cap")
+	}
+}
+
+// TestResearchCopiesHalvesPastTheCap: up to the cap every copy counts, bit
+// for bit; each copy past it counts half. A building with no cap counts
+// every copy.
+func TestResearchCopiesHalvesPastTheCap(t *testing.T) {
+	d := BuildingDef{Key: "hall", FullRateCopies: 8}
+	for _, c := range []struct {
+		count int
+		want  float64
+	}{
+		{0, 0}, {1, 1}, {7, 7}, {8, 8}, // up to the cap: the count itself
+		{9, 8.5}, {10, 9}, {16, 12}, {108, 58}, // past it: half a copy each
+	} {
+		if got := d.ResearchCopies(c.count); got != c.want {
+			t.Errorf("%d copies of a building capped at 8 count as %v, want %v", c.count, got, c.want)
+		}
+	}
+	plain := BuildingDef{Key: "mill"}
+	if got := plain.ResearchCopies(40); got != 40 {
+		t.Errorf("40 copies of a building with no cap count as %v, want 40", got)
+	}
+	if KnowledgePastCapShare != 0.5 {
+		t.Errorf("a copy past the cap researches at %v of a copy's rate, want half", KnowledgePastCapShare)
+	}
+	if got := d.ModelCopyLimit(); got != 8 {
+		t.Errorf("the models let a town hold %d of a building capped at 8, want 8", got)
+	}
+	if got := (BuildingDef{MaxCount: 1, FullRateCopies: 8}).ModelCopyLimit(); got != 1 {
+		t.Errorf("a hard limit of 1 reads as %d", got)
 	}
 }
 

@@ -233,7 +233,7 @@ You keep all your progress and production. A Gathering Camp in the Food lineage 
 
 > Lineages 8 to 14 start in later ages (Trade and Engineering in the Bronze Age, Culture/Arts in the Classical, Metallurgy in the Iron, Energy in the Industrial, Hacker/Digital in the Modern and Harbor in the Colonial), so they have fewer tiers. The Housing, Culture/Arts and Knowledge lineages have no worker domain: they work without workers (the Knowledge lineage comes with scholars). The **Harbor** lineage also raises trade income: besides producing gold, each harbor adds a percentage bonus to the income of *every* active trade route. See [Trade](trade.md#harbor-lineage-trade-route-income).
 
-The **Knowledge** lineage is the one that comes with scholars. Each copy comes with its scholars, from 2 for a Story Circle to 20 for a Reality Academy, who take no workers, and each copy costs 50% more than the one before it. A knowledge building cannot be built past its cap, the count its age's gate asks for, 5 to 10 copies. [Scholars and Research](knowledge.md#what-a-scholar-is) has each building's scholars, work and cap.
+The **Knowledge** lineage is the one that comes with scholars. Each copy comes with its scholars, from 2 for a Story Circle to 20 for a Reality Academy, who take no workers, and each copy costs 50% more than the one before it. A knowledge building researches at full rate up to the count its age's gate asks for, 5 to 10 copies; a copy past that count still builds, and researches at half rate. [Scholars and Research](knowledge.md#what-a-scholar-is) has each building's scholars, work and full-rate count.
 
 The **Mainframe Hall** (Modern Age) is the first tier of the Hacker/Digital lineage and the first building that makes data. It uses `hacker` workers, the Modern Age's gate asks for eight of it, and its next tier is the Server Farm in the Information Age.
 
@@ -289,7 +289,7 @@ A building can have one or more of these effects. Knowing them helps you decide 
 |--------|-------------|
 | Production | Adds an amount of a resource each tick, scaled by how many workers it has (see below). Most production buildings do this. |
 | Housing | Raises your housing, the number of workers you can have (housing buildings). |
-| Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production, or the 1% each storage building adds (which add into [the all-production pool](resources.md#the-all-production-cap)). |
+| Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production, or the 1% each storage building adds (which add into [the all-production pool](resources.md#the-all-production-pool)). |
 | Trade route income | Raises the income of every trade route (Harbor lineage). |
 | Morale | Restores a little morale every tick (Faith and Culture/Arts buildings). |
 | Opinion | Raises opinion with the non-hostile civilizations you have met, each tick, scaled by workers (the two embassies; see [Factions & Diplomacy](factions.md#embassy-buildings)). |
@@ -474,7 +474,7 @@ Your 20 Gathering Camps stay Gathering Camps, producing at their full rate, unti
 
 Storage buildings form their own lineage. Stock has no limit, so there is nothing for a storage building to hold: each copy you own adds **1%** to all production instead. They need no workers: build them and everything you make rises.
 
-The boost goes into the same pool as the wonders' and monuments' bonuses to all production (see [the all-production cap](resources.md#the-all-production-cap)), so it adds to theirs, shows as "Storage" among the sources in the Stats panel, and counts in full up to +200% and a quarter of every point past it. Every copy counts the same, whatever its age: five copies of each of the 21 buildings add up to 105%.
+The boost goes into the same pool as the wonders' and monuments' bonuses to all production (see [the all-production pool](resources.md#the-all-production-pool)), so it adds to theirs, shows as "Storage" among the sources in the Stats panel, and counts in full. Every copy counts the same, whatever its age: five copies of each of the 21 buildings add up to 105%.
 
 Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
 
@@ -520,7 +520,7 @@ Storage is also permanent: catastrophes never destroy it or turn it into ruins, 
 
 ## Cultural Monuments (4)
 
-Cultural Monuments are one-off structures (one copy each) that turn surplus **culture** into a lasting payoff. Each costs a large lump of culture plus other materials of its age, and gives a bonus to all production while it stands (an Endure can destroy it like any building but wonders, storage and knowledge buildings). Unlike wonders, they need no resource banking: build them with the normal `build <key>` command. Their bonuses add into the same pool as every other all-production bonus but a tech's. The pool applies in full up to +200% and a quarter of every point past it, so a monument built late still raises your output, by a quarter of what it lists. See [The all-production cap](resources.md#the-all-production-cap).
+Cultural Monuments are one-off structures (one copy each) that turn surplus **culture** into a lasting payoff. Each costs a large lump of culture plus other materials of its age, and gives a bonus to all production while it stands (an Endure can destroy it like any building but wonders, storage and knowledge buildings). Unlike wonders, they need no resource banking: build them with the normal `build <key>` command. Their bonuses add into the same pool as every other all-production bonus but a tech's. The pool applies in full, however large it grows, so a monument built late still raises your output by all of what it lists. See [The all-production pool](resources.md#the-all-production-pool).
 
 | Monument | Age | Culture Cost | Bonus |
 |----------|-----|--------------|-----------------|
@@ -556,7 +556,7 @@ A wonder in your [build plan](plan.md) banks and starts by itself once what you 
 
 You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 64 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/3 of the age's target time to build.
 
-Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to research or to expedition rewards, or housing. All-production bonuses add into [the all-production pool](resources.md#the-all-production-cap), which applies in full up to +200% and a quarter of every point past it.
+Every wonder adds a little production of one or two resources, and many add more: a percentage to all production (the Crystal Palace, Hoover Dam and the last four wonders), to research or to expedition rewards, or housing. All-production bonuses add into [the all-production pool](resources.md#the-all-production-pool), which applies in full, however large it grows.
 
 Endure and the Great Fire never destroy wonders, and Succumb never turns them into ruins. They stay for the rest of the run, like storage.
 

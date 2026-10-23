@@ -997,13 +997,13 @@ func rawTechnologies() []TechDef {
 
 		// === MODERN AGE ===
 		{
-			Name: "Television", Key: "television", Cost: 1.27e08, ResearchTicks: 3510, Code: "TELEV", Emblem: "▭",
+			Name: "Television", Key: "television", Cost: 1.29e08, ResearchTicks: 3510, Code: "TELEV", Emblem: "▭",
 			Age: "modern_age", Lane: LaneFaith,
 			Prerequisites: []string{"cinema"},
 			Description:   "One screen in every front room, and the whole country watching it. Opens the Monument of Ages.",
 		},
 		{
-			Name: "Information Theory", Key: "information_theory", Cost: 1.66e08, ResearchTicks: 3510, Code: "INFOR", Emblem: "∂",
+			Name: "Information Theory", Key: "information_theory", Cost: 1.68e08, ResearchTicks: 3510, Code: "INFOR", Emblem: "∂",
 			Age: "modern_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"modern_physics"},
 			Description:   "Any message is a count of yes and no, and a count can be sent without loss.",
@@ -1012,7 +1012,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Containerization", Key: "containerization", Cost: 2.15e08, ResearchTicks: 3510, Code: "CONTA", Emblem: "▬",
+			Name: "Containerization", Key: "containerization", Cost: 2.18e08, ResearchTicks: 3510, Code: "CONTA", Emblem: "▬",
 			Age: "modern_age", Lane: LaneTrade,
 			Prerequisites: []string{"corporations"},
 			Description:   "One steel box fits every ship, train and truck, and the docks empty in hours.",
@@ -1021,7 +1021,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Suburbs", Key: "suburbs", Cost: 2.80e08, ResearchTicks: 3510, Code: "SUBUR", Emblem: "▴",
+			Name: "Suburbs", Key: "suburbs", Cost: 2.83e08, ResearchTicks: 3510, Code: "SUBUR", Emblem: "▴",
 			Age: "modern_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"green_revolution"},
 			Description:   "A house, a lawn and a car for every family, an hour from where they work.",
@@ -1030,7 +1030,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Nanofabrication", Key: "nanofabrication", Cost: 3.64e08, ResearchTicks: 3510, Code: "NANO", Emblem: "◇",
+			Name: "Nanofabrication", Key: "nanofabrication", Cost: 3.68e08, ResearchTicks: 3510, Code: "NANO", Emblem: "◇",
 			Age: "modern_age", Lane: LaneCraft,
 			Prerequisites: []string{"computers"},
 			Description:   "Nanobot swarms assemble structures atom-by-atom, cutting construction costs.",
@@ -1039,7 +1039,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Titanium Alloys", Key: "titanium_alloys", Cost: 4.73e08, ResearchTicks: 3510, Code: "TITAN", Emblem: "▨",
+			Name: "Titanium Alloys", Key: "titanium_alloys", Cost: 4.79e08, ResearchTicks: 3510, Code: "TITAN", Emblem: "▨",
 			Age: "modern_age", Lane: LaneMaterials,
 			Prerequisites: []string{"chemical_engineering"},
 			Description:   "Light, strong metal for anything that has to fly or last.",
@@ -1049,7 +1049,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Special Forces", Key: "special_forces", Cost: 6.15e08, ResearchTicks: 3510, Code: "SPECI", Emblem: "⚜",
+			Name: "Special Forces", Key: "special_forces", Cost: 6.22e08, ResearchTicks: 3510, Code: "SPECI", Emblem: "⚜",
 			Age: "modern_age", Lane: LaneMilitary,
 			Prerequisites: []string{"nuclear_deterrence"},
 			Description:   "Small teams that are in and out before the war is declared.",
@@ -1058,7 +1058,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Advanced Electrics", Key: "electricity_tech", Cost: 5.80e07, ResearchTicks: 2808, Code: "ADVEL", Emblem: "↭",
+			Name: "Advanced Electrics", Key: "electricity_tech", Cost: 5.87e07, ResearchTicks: 2808, Code: "ADVEL", Emblem: "↭",
 			Age: "modern_age", Lane: LaneEnergy,
 			Prerequisites: []string{"nuclear_fission"},
 			Description:   "High-voltage grids carry power across a continent.",
@@ -1067,7 +1067,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Satellite Technology", Key: "satellite_tech", Cost: 9.80e07, ResearchTicks: 3510, Code: "SATEL", Emblem: "✧",
+			Name: "Satellite Technology", Key: "satellite_tech", Cost: 9.92e07, ResearchTicks: 3510, Code: "SATEL", Emblem: "✧",
 			Age: "modern_age", Lane: LaneSpace,
 			Prerequisites: []string{"rocketry", "electricity_tech"},
 			Description:   "Orbital satellites for communication and surveillance.",
@@ -1077,7 +1077,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Computers", Key: "computers", Cost: 7.54e07, ResearchTicks: 2808, Code: "COMP", Emblem: "⊟",
+			Name: "Computers", Key: "computers", Cost: 7.63e07, ResearchTicks: 2808, Code: "COMP", Emblem: "⊟",
 			Age: "modern_age", Lane: LaneComputing,
 			Prerequisites: []string{"electricity_tech"},
 			Description:   "Machines that do the arithmetic of a thousand clerks, and never tire.",

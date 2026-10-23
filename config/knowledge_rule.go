@@ -15,10 +15,16 @@ import (
 //     KnowledgeRate is nearest the total KnowledgeGateWas copies cost at
 //     ProducerRate, a tie going to the lower count (KnowledgeGateCount). The
 //     tables are literals; a test holds them to this.
-//  3. A knowledge building cannot be built past the count its gate asks for
-//     (KnowledgeCap): an age's research has a ceiling, and the tech prices
-//     are set against it.
+//  3. A knowledge building researches at full rate up to the count its gate
+//     asks for (KnowledgeCap): an age's research has a soft ceiling, and the
+//     tech prices are set against it. Copies past it still build, at the
+//     normal climb in price, and each researches at KnowledgePastCapShare
+//     of a copy's rate (BuildingDef.ResearchCopies).
 const KnowledgeRate = 1.5
+
+// KnowledgePastCapShare is the share of a copy's research that each copy of a
+// knowledge building past its cap (BuildingDef.FullRateCopies) makes: half.
+const KnowledgePastCapShare = 0.5
 
 // Research simmers. It is an idle game: a player should be able to get every
 // tech, but it takes some time. The work an age's techs ask is a share of the
@@ -122,15 +128,39 @@ func KnowledgeGateCount(was int) int {
 	return best
 }
 
-// KnowledgeCap is the most copies of the knowledge building key a town can
-// build: the count the gate out of its age asks for (KnowledgeGateCount). 0
-// for a key that is not one of the knowledge buildings.
+// KnowledgeCap is the most copies of the knowledge building key that research
+// at full rate: the count the gate out of its age asks for
+// (KnowledgeGateCount). Each copy past it researches at half rate. 0 for a
+// key that is not one of the knowledge buildings.
 func KnowledgeCap(key string) int {
 	was, ok := KnowledgeGateWas()[key]
 	if !ok {
 		return 0
 	}
 	return KnowledgeGateCount(was)
+}
+
+// ResearchCopies is the copies of d that count toward its research when a
+// town holds count of it: all of them up to d.FullRateCopies, and a share
+// (KnowledgePastCapShare) of each copy past it. A building with no such cap
+// counts every copy. Under the cap the figure is the count itself, bit for
+// bit.
+func (d BuildingDef) ResearchCopies(count int) float64 {
+	if d.FullRateCopies <= 0 || count <= d.FullRateCopies {
+		return float64(count)
+	}
+	return float64(d.FullRateCopies) + float64(KnowledgePastCapShare*float64(count-d.FullRateCopies))
+}
+
+// ModelCopyLimit is the most copies of d the reference models let a town
+// hold: its MaxCount, or for a knowledge building the copies that research at
+// full rate (the models build to the cap and no further). 0 where there is no
+// limit.
+func (d BuildingDef) ModelCopyLimit() int {
+	if d.MaxCount > 0 {
+		return d.MaxCount
+	}
+	return d.FullRateCopies
 }
 
 // The teaching rule. A scholar who is not researching teaches, and teaching
