@@ -7,28 +7,28 @@ import (
 
 func TestNumber(t *testing.T) {
 	cases := map[float64]string{
-		0:          "0",
-		950:        "950",
-		12.5:       "12.5",
-		0.04:       "0.04",
-		-3:         "-3",
-		1000:       "1K",
-		1500:       "1.5K",
-		0.7111:     "0.711",
-		44.83:      "44.8",
-		999600:     "1M",
-		12500:      "12.5K",
-		966000:     "966K",
-		1234567:    "1.23M",
-		876000000:  "876M",
-		2.5e9:      "2.5B",
-		999.96:     "1K",
-		1.5e15:     "1.5Q",
-		-1234567.0: "-1.23M",
-		7.73e18:    "7.73Qi",
-		1.5e18:     "1.5Qi",
-		2.5e19:     "25Qi",
-		-1.18e19:   "-11.8Qi",
+		0:                   "0",
+		950:                 "950",
+		12.5:                "12.5",
+		0.04:                "0.04",
+		-3:                  "-3",
+		1000:                "1K",
+		1500:                "1.5K",
+		0.7111:              "0.711",
+		44.83:               "44.8",
+		999600:              "1M",
+		12500:               "12.5K",
+		966000:              "966K",
+		1234567:             "1.23M",
+		876000000:           "876M",
+		2.5 * billion:       "2.5B",
+		999.96:              "1K",
+		1.5 * quadrillion:   "1.5Q",
+		-1234567.0:          "-1.23M",
+		7.73 * quintillion:  "7.73Qi",
+		1.5 * quintillion:   "1.5Qi",
+		25 * quintillion:    "25Qi",
+		-11.8 * quintillion: "-11.8Qi",
 	}
 	for in, want := range cases {
 		if got := Number(in); got != want {
@@ -45,8 +45,8 @@ func TestNumberUnitBoundaries(t *testing.T) {
 		power  float64
 		suffix string
 	}{
-		{1e3, "K"}, {1e6, "M"}, {1e9, "B"}, {1e12, "T"}, {1e15, "Q"},
-		{1e18, "Qi"}, {1e21, "Sx"}, {1e24, "Sp"}, {1e27, "Oc"}, {1e30, "No"}, {1e33, "Dc"},
+		{1000, "K"}, {million, "M"}, {billion, "B"}, {trillion, "T"}, {quadrillion, "Q"},
+		{quintillion, "Qi"}, {sextillion, "Sx"}, {septillion, "Sp"}, {octillion, "Oc"}, {nonillion, "No"}, {decillion, "Dc"},
 	}
 	if len(want) != len(units) {
 		t.Fatalf("the table has %d units, the test knows %d", len(units), len(want))
@@ -80,7 +80,7 @@ func TestNumberUnitBoundaries(t *testing.T) {
 		}
 		prev = w.suffix
 	}
-	if got := Number(-2.5e21); got != "-2.5Sx" {
+	if got := Number(-2.5 * sextillion); got != "-2.5Sx" {
 		t.Errorf("Number(-2.5e21) = %q", got)
 	}
 }
@@ -98,8 +98,8 @@ func TestMaxNumber(t *testing.T) {
 	}
 	// The late game's stores reach about 25 quintillion; the table runs
 	// well past that, by at least three units.
-	const topStore = 2.5e19
-	if max < topStore*1e9 {
+	const topStore = 25 * quintillion
+	if max < topStore*billion {
 		t.Errorf("MaxNumber() = %v is not three units past the late game's top store %v", max, topStore)
 	}
 	for v := 0.5; v <= max; v *= 1.37 {
