@@ -14,10 +14,10 @@ import (
 // income, and keeps these amounts.
 var oldBraceCeilings = map[string]float64{
 	"iron_age": 130000, "classical_age": 1000000, "medieval_age": 7300000, "renaissance_age": 33000000,
-	"colonial_age": 150000000, "industrial_age": 510000000, "victorian_age": 6500000000, "electric_age": 7.2e+10,
-	"atomic_age": 4.3e+11, "modern_age": 1.8e+12, "information_age": 1.1e+13, "digital_age": 4.4e+13,
-	"cyberpunk_age": 4e+14, "fusion_age": 1.9e+15, "space_age": 9.7e+15, "interstellar_age": 2.9e+17,
-	"galactic_age": 2.6e+18, "quantum_age": 2e+20, "transcendent_age": 2e+20,
+	"colonial_age": 150000000, "industrial_age": 510000000, "victorian_age": 6500000000, "electric_age": 72 * config.Billion,
+	"atomic_age": 430 * config.Billion, "modern_age": 1.8 * config.Trillion, "information_age": 11 * config.Trillion, "digital_age": 44 * config.Trillion,
+	"cyberpunk_age": 400 * config.Trillion, "fusion_age": 1.9 * config.Quadrillion, "space_age": 9.7 * config.Quadrillion, "interstellar_age": 290 * config.Quadrillion,
+	"galactic_age": 2.6 * config.Quintillion, "quantum_age": 200 * config.Quintillion, "transcendent_age": 200 * config.Quintillion,
 }
 
 // TestBraceCeilingKeepsTheAmountsItHad: in every age a thread can arrive in,

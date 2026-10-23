@@ -278,7 +278,7 @@ func shareText(share float64) string {
 // so the last bit of a float sum never decides between "+68.7%" and
 // "+68.8%".
 func pointsText(frac float64) string {
-	return textfmt.RateValue(math.Round(frac*1e4)/100) + "%"
+	return textfmt.RateValue(math.Round(frac*10_000)/100) + "%"
 }
 
 // PoolNote is the note beside a pool's total: "" when all of it counts,

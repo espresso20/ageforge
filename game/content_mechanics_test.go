@@ -31,7 +31,7 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 		ge.Buildings.counts[def.RequiredBld] = def.MinCount
 		for res, r := range ge.Resources.resources {
 			ge.Resources.UnlockResource(res)
-			r.Amount = 1e6
+			r.Amount = config.Million
 		}
 		var res string
 		for res, listed = range def.Import {

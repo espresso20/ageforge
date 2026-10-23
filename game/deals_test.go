@@ -31,8 +31,8 @@ func testDealEnv(age string) dealEnv {
 		}
 	}
 	for i, r := range config.BaseResources() {
-		env.size[r.Key] = 1e21
-		env.amount[r.Key] = float64(i+1) * 1e18
+		env.size[r.Key] = config.Sextillion
+		env.amount[r.Key] = float64(i+1) * config.Quintillion
 	}
 	return env
 }
@@ -268,7 +268,7 @@ func dealEngine(t *testing.T, age string) *GameEngine {
 	// when the transition's own draws (its epoch event, the era's fate) do.
 	ge.SeedRNG(11)
 	for _, r := range ge.Resources.resources {
-		r.Amount = 5e14
+		r.Amount = 500 * config.Trillion
 	}
 	return ge
 }
@@ -577,17 +577,17 @@ func TestDeals_Wording(t *testing.T) {
 		d    FactionDeal
 		want string
 	}{
-		{FactionDeal{Kind: DealSell, Give: "coal", GiveAmt: 876e6, Get: "food", GetAmt: 966e3}, "Buy: give 876M coal → get 966K food"},
-		{FactionDeal{Kind: DealWant, Give: "iron_ore", GiveAmt: 440e6, Get: "food", GetAmt: 877e3}, "Sell: give 440M iron ore → get 877K food"},
-		{FactionDeal{Kind: DealFavor, Give: "steel", GiveAmt: 899e6, Standing: 5}, "Goodwill: give 899M steel → get +5 opinion"},
-		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7e9, Get: "oil", GetAmt: 3.3e9}, "Rare: give 25.7B electricity → get 3.3B oil"},
+		{FactionDeal{Kind: DealSell, Give: "coal", GiveAmt: 876 * config.Million, Get: "food", GetAmt: 966_000}, "Buy: give 876M coal → get 966K food"},
+		{FactionDeal{Kind: DealWant, Give: "iron_ore", GiveAmt: 440 * config.Million, Get: "food", GetAmt: 877_000}, "Sell: give 440M iron ore → get 877K food"},
+		{FactionDeal{Kind: DealFavor, Give: "steel", GiveAmt: 899 * config.Million, Standing: 5}, "Goodwill: give 899M steel → get +5 opinion"},
+		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7 * config.Billion, Get: "oil", GetAmt: 3.3 * config.Billion}, "Rare: give 25.7B electricity → get 3.3B oil"},
 	} {
 		if got := DealTerms(c.d.Kind, c.d.Give, c.d.GiveAmt, c.d.Get, c.d.GetAmt, c.d.Standing, num); got != c.want {
 			t.Errorf("DealTerms(%s) = %q, want %q", c.d.Kind, got, c.want)
 		}
 	}
 	// The log and the plan label word the same terms as a clause.
-	if got, want := dealLogTerms(FactionDeal{Kind: DealSell, Give: "iron_ore", GiveAmt: 876e6, Get: "food", GetAmt: 966e3}), "Buy: give 876M iron ore, get 966K food"; got != want {
+	if got, want := dealLogTerms(FactionDeal{Kind: DealSell, Give: "iron_ore", GiveAmt: 876 * config.Million, Get: "food", GetAmt: 966_000}), "Buy: give 876M iron ore, get 966K food"; got != want {
 		t.Errorf("dealLogTerms = %q, want %q", got, want)
 	}
 

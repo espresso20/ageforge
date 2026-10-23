@@ -14,7 +14,7 @@ func TestBuildBuilding_QueuesSeveralStorageCopies(t *testing.T) {
 	ge := NewGameEngine()
 	ge.mu.Lock()
 	for _, r := range []string{"wood", "food", "stone"} {
-		ge.Resources.Add(r, 5e5)
+		ge.Resources.Add(r, 500_000)
 	}
 	ge.mu.Unlock()
 

@@ -89,7 +89,7 @@ func TestWriteContent3Fixtures(t *testing.T) {
 	write(content3FixtureFresh, "tree_v4_interstellar", nil)
 	write(content3FixtureInUse, "tree_v4_interstellar_route", func(ge *GameEngine) {
 		// The game's own command, so its save says what it used.
-		setResource(ge, "gold", 1e9)
+		setResource(ge, "gold", config.Billion)
 		if err := ge.StartTradeRoute("warp_commerce"); err != nil {
 			t.Fatalf("starting Warp Commerce: %v", err)
 		}
@@ -152,7 +152,7 @@ func TestContent3OldSaveGetsAnAgeOfGrace(t *testing.T) {
 		ge.mu.Lock()
 		for res, r := range ge.Resources.resources {
 			ge.Resources.UnlockResource(res)
-			r.Amount = 1e29
+			r.Amount = 100 * config.Octillion
 		}
 		ge.mu.Unlock()
 	}

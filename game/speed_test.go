@@ -96,7 +96,7 @@ func TestLoadClampsSavedSpeed(t *testing.T) {
 
 // TestClampPlayerSpeed: whatever a save carries, a player loads at 1x.
 func TestClampPlayerSpeed(t *testing.T) {
-	for _, saved := range []float64{0, -3, 0.5, 1, 1.5, 7, 12, 1e9, math.NaN(), math.Inf(1), math.Inf(-1)} {
+	for _, saved := range []float64{0, -3, 0.5, 1, 1.5, 7, 12, config.Billion, math.NaN(), math.Inf(1), math.Inf(-1)} {
 		if got := clampPlayerSpeed(saved); got != 1 {
 			t.Errorf("clampPlayerSpeed(%v) = %v, want 1", saved, got)
 		}

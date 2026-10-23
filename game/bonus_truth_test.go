@@ -157,7 +157,7 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 	// The typical town has every tech of its ages, so give the lab one tech
 	// that is always startable and dearer than any gift: a gift of work is
 	// then measured whole.
-	ge.Research.defs["lab_tech"] = config.TechDef{Name: "Lab Tech", Key: "lab_tech", Age: ageKeys()[0], Cost: 1e18}
+	ge.Research.defs["lab_tech"] = config.TechDef{Name: "Lab Tech", Key: "lab_tech", Age: ageKeys()[0], Cost: config.Quintillion}
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 	// Half a good stock of the age in every resource: a loss has something to
@@ -240,8 +240,8 @@ const (
 	truthRefTech     = "zz_truth_ref_tech"
 	truthRefBuilding = "zz_truth_ref_building"
 	truthRefTicks    = 1_000_000
-	truthRefCost     = 1e12
-	truthRefPosts    = 1e6 // posts a copy of a made-up military building has
+	truthRefCost     = config.Trillion
+	truthRefPosts    = config.Million // posts a copy of a made-up military building has
 	truthMoraleStart = 10.0
 )
 
@@ -1686,7 +1686,7 @@ func truthEffectText(e config.Effect) string {
 	case "worker_loss":
 		return fmt.Sprintf("%g%% of your workers lost", e.Value*100)
 	case "morale":
-		return fmt.Sprintf("%+g morale points a tick", math.Round(e.Value*1e6)/1e4)
+		return fmt.Sprintf("%+g morale points a tick", math.Round(e.Value*config.Million)/10_000)
 	case "opinion":
 		return fmt.Sprintf("%+g opinion/tick per worker", e.Value)
 	case "trade_route_income":
@@ -2677,7 +2677,9 @@ func TestBonusTruth(t *testing.T) {
 	}
 }
 
-func fmtG(v float64) string { return strconv.FormatFloat(math.Round(v*1e6)/1e6, 'g', -1, 64) }
+func fmtG(v float64) string {
+	return strconv.FormatFloat(math.Round(v*config.Million)/config.Million, 'g', -1, 64)
+}
 
 // truthShort says how much of a capped promise the typical player gets in
 // the first age it falls short.

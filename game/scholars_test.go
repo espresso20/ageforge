@@ -260,8 +260,8 @@ func TestKnowledgeBuildingStopsAtItsCap(t *testing.T) {
 	if bs := ge.GetState().Buildings["elders_hall"]; !bs.AtMaxCount || bs.CanBuild {
 		t.Errorf("at its cap: at max %v, can build %v", bs.AtMaxCount, bs.CanBuild)
 	}
-	ge.Resources.Add("wood", 1e6)
-	ge.Resources.Add("stone", 1e6)
+	ge.Resources.Add("wood", config.Million)
+	ge.Resources.Add("stone", config.Million)
 	if err := ge.BuildBuilding("elders_hall"); err == nil {
 		t.Error("a copy was built past the cap")
 	}

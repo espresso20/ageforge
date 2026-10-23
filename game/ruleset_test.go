@@ -207,7 +207,7 @@ func TestPlayLeavesTheRulesetUnchanged(t *testing.T) {
 		}
 		ge.GrantTechsForTest()
 		for key := range ge.Resources.resources {
-			setRes(ge, key, 1e9)
+			setRes(ge, key, config.Billion)
 		}
 		for _, b := range set.Buildings() {
 			if b.RequiredAge == age && b.Category != "wonder" {

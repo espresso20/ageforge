@@ -812,7 +812,7 @@ func TestCatastropheRandomnessIsSeeded(t *testing.T) {
 // testFaithFull is the faith that reads as full strength for a town staged
 // by setFaithStrength: enough to pay for any Appease the tests buy without
 // moving the strength.
-const testFaithFull = 1e12
+const testFaithFull = config.Trillion
 
 // setFaithStrength gives ge a faith measure and the faith to read as share
 // of full strength (capped at 1): a town whose own faith buildings made all

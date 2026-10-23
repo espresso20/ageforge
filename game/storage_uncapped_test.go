@@ -210,7 +210,7 @@ func TestUncapped_LosingStorageKeepsTheStock(t *testing.T) {
 	ge.age = "stone_age"
 	ge.Buildings.counts["storage_pit"] = 4
 	ge.recalculateRates()
-	held := 1e6
+	held := config.Million
 	setAmount(ge, "wood", held)
 	if n := ge.Buildings.RemoveBuilding("storage_pit", 2); n != 2 {
 		t.Fatalf("removed %d storage pits, want 2", n)
@@ -305,7 +305,7 @@ func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
 	for exp = range def.Export {
 	}
 	ge.Resources.UnlockResource(imp)
-	ge.Resources.resources[exp].Amount = 1e6
+	ge.Resources.resources[exp].Amount = config.Million
 	ge.Resources.resources[imp].Amount = baseStore(imp) // a base store's worth
 	full := ge.Resources.Get(imp)
 	ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}
@@ -313,7 +313,7 @@ func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
 	if want := full + ge.Trade.RoutePay(def.Import[imp]); math.Abs(ge.Resources.Get(imp)-want) > 1e-6 {
 		t.Errorf("%s = %v after a run into a full store, want %v", imp, ge.Resources.Get(imp), want)
 	}
-	if got := 1e6 - ge.Resources.Get(exp); math.Abs(got-def.Export[exp]) > 1e-6 {
+	if got := config.Million - ge.Resources.Get(exp); math.Abs(got-def.Export[exp]) > 1e-6 {
 		t.Errorf("%s taken = %v, want the whole export %v", exp, got, def.Export[exp])
 	}
 	if len(msgs) != 0 {

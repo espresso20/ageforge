@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay:
@@ -50,7 +52,7 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 	re.mu.Lock()
 	re.Buildings.counts[def.RequiredBld] = def.MinCount
 	for _, r := range re.Resources.resources {
-		r.Amount = 1e6
+		r.Amount = config.Million
 	}
 	re.Resources.UnlockResource("gold")
 	re.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 1}

@@ -92,7 +92,7 @@ func TestBoard_ShapeAndNumbering(t *testing.T) {
 func TestBoard_TakenOfferIsRefilledAfterFiveMinutes(t *testing.T) {
 	ge := boardEngine(t, 3, "renaissance_age")
 	learn(ge, "exploration", "military_tactics")
-	setSoldiers(ge, 1e6)
+	setSoldiers(ge, config.Million)
 	before := ge.Military.board.clone()
 
 	const n = 5 // the second long offer
@@ -475,7 +475,7 @@ func TestBoard_SameSeedSameBoardOverTime(t *testing.T) {
 	run := func(seed int64) string {
 		ge := boardEngine(t, seed, "classical_age")
 		learn(ge, "exploration", "military_tactics")
-		setSoldiers(ge, 1e6)
+		setSoldiers(ge, config.Million)
 		var sb strings.Builder
 		for step := 0; step < 200; step++ {
 			stepBoard(ge, 60)
