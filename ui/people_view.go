@@ -157,23 +157,19 @@ func (c peopleBody) footer(keys [][2]string, hint string) {
 // the empty homes dim. It scales to the larger of the homes and the
 // population, so a town with more people than homes still fits.
 func stackBar(g *xgrid, x, y, w int, parts []stackPart, homes int) {
+	counts := make([]int, len(parts))
 	total := 0
-	for _, p := range parts {
+	for i, p := range parts {
+		counts[i] = p.n
 		total += p.n
 	}
-	whole := max(homes, total)
-	if whole <= 0 || w <= 0 {
+	if max(homes, total) <= 0 || w <= 0 {
 		return
 	}
 	used := 0
-	for _, p := range parts {
-		if p.n <= 0 {
-			continue
-		}
-		cells := int(float64(p.n)/float64(whole)*float64(w) + 0.5)
-		cells = max(1, min(cells, w-used))
-		for i := 0; i < cells; i++ {
-			g.set(x+used+i, y, '█', p.kind)
+	for i, cells := range stackWidths(counts, homes, w) {
+		for j := 0; j < cells; j++ {
+			g.set(x+used+j, y, '█', parts[i].kind)
 		}
 		used += cells
 	}

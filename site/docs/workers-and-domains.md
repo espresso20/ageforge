@@ -200,7 +200,7 @@ Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or
 
 <figure class="screen" data-screen="people"><figcaption>The People panel in the Bronze Age: the homes as one bar, a card for each kind of person, and what has happened lately.</figcaption></figure>
 
-On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The **People box** in the sidebar is always visible: the population over the housing, one line for each kind of person with the age's word for it and the count (the soldiers add how many are out on missions when there is room), and, when something holds your population back, what it is. The food use and net food are on the Overview.
+On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The **People box** is always visible (beside Under construction on a terminal of 120 columns by 36 rows or more, under the Panels list on a smaller one): the population over the housing, one line for each kind of person with the age's word for it and the count (the soldiers add how many are out on missions when there is room), and, when something holds your population back, what it is. On a big terminal the box adds a bar across the homes in the colors of the four kinds. The food use and net food are on the Overview.
 
 ### Completion
 
