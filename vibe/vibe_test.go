@@ -79,6 +79,29 @@ func TestSprintfAndErrorfFollowTheSwitch(t *testing.T) {
 	}
 }
 
+func TestRewriterChangesTheTextsTheCodeWrites(t *testing.T) {
+	defer UseScriptForTest(map[string]string{"x.one": "from the script"})()
+	defer UseRewriterForTest(func(id, plain string) string { return "<" + id + ":" + plain + ">" })()
+	Set(false)
+	defer Set(false)
+	if got := Line("x.one", "plain"); got != "plain" {
+		t.Errorf("off: Line reads %q", got)
+	}
+	Set(true)
+	if got := Line("x.one", "plain"); got != "<x.one:plain>" {
+		t.Errorf("on, Line reads %q", got)
+	}
+	if got := Sprintf("x.two", "%d things", 3); got != "<x.two:3 things>" {
+		t.Errorf("on, Sprintf reads %q", got)
+	}
+	if got := Errorf("x.three", "no").Error(); got != "<x.three:no>" {
+		t.Errorf("on, Errorf reads %q", got)
+	}
+	if s, _ := Text("x.one"); s != "from the script" {
+		t.Errorf("the rewriter reached Text: %q", s)
+	}
+}
+
 func TestUseScriptForTestRestores(t *testing.T) {
 	before := IDs()
 	restore := UseScriptForTest(map[string]string{"b": "2", "a": "1"})

@@ -36,36 +36,42 @@ const vibeTodoDir = "words/vibe-todo"
 // script reads back; text is left empty to be filled in.
 var vibeColumns = []string{"id", "where", "kind", "age", "keep", "max", "plain", "wired", "text"}
 
-// lineCall is a vibe.Line(id, plain) in the source.
+// lineCall is a vibe call in the source: vibe.Line(id, plain), or
+// vibe.Sprintf or vibe.Errorf(id, format, args...).
 type lineCall struct {
 	id, plain string
+	kind      string // Line, Sprintf or Errorf
 	file      string
 	line      int
-	literal   bool // plain is a string literal, which the lint can compare
+	literal   bool // plain is a string literal (or a constant sum of them), which the lint can compare
+	args      int  // for a format, how many arguments follow it; -1 when they are spread (args...)
 }
 
-// lineCalls finds every vibe.Line call in the parsed source.
+// lineCalls finds every vibe call in the parsed source.
 func lineCalls(m *module) []lineCall {
 	var calls []lineCall
 	for _, f := range m.files {
 		ast.Inspect(f.ast, func(n ast.Node) bool {
 			call, ok := n.(*ast.CallExpr)
-			if !ok || len(call.Args) != 2 {
+			if !ok || !isVibeCall(call) {
 				return true
 			}
-			sel, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok || sel.Sel.Name != "Line" {
-				return true
-			}
-			if x, ok := sel.X.(*ast.Ident); !ok || x.Name != "vibe" {
+			kind := call.Fun.(*ast.SelectorExpr).Sel.Name
+			if kind == "Line" && len(call.Args) != 2 {
 				return true
 			}
 			id, ok := stringOf(call.Args[0])
 			if !ok {
 				return true
 			}
-			lc := lineCall{id: id, file: f.rel, line: m.fset.Position(call.Pos()).Line}
-			lc.plain, lc.literal = stringOf(call.Args[1])
+			lc := lineCall{id: id, kind: kind, file: f.rel, line: m.fset.Position(call.Pos()).Line}
+			lc.plain, lc.literal = stringLit(call.Args[1])
+			if kind != "Line" {
+				lc.args = len(call.Args) - 2
+				if call.Ellipsis.IsValid() {
+					lc.args = -1
+				}
+			}
 			calls = append(calls, lc)
 			return true
 		})
@@ -194,8 +200,9 @@ func vibeExport(c *catalog, root, scriptDirArg, dir string, out io.Writer) error
 		return "no"
 	}
 
-	type tally struct{ rows, wired int }
+	type tally struct{ rows, wired, left int }
 	counts := map[string]*tally{}
+	leftBy := map[string]int{} // rows left alone for good, by reason
 	var total, totalWired int
 	var names []string
 	write := func(file string, recs [][]string) error {
@@ -207,8 +214,14 @@ func vibeExport(c *catalog, root, scriptDirArg, dir string, out io.Writer) error
 	}
 	for _, a := range areas {
 		var recs [][]string
+		left := 0
 		for _, r := range c.rows {
 			if r.area != a || have[r.id] {
+				continue
+			}
+			if reason := c.wireVerdict(r).reason; forGood(reason) {
+				left++ // not asked of the script: nothing will ever read a line for it
+				leftBy[reason]++
 				continue
 			}
 			rec := make([]string, len(vibeColumns))
@@ -227,7 +240,7 @@ func vibeExport(c *catalog, root, scriptDirArg, dir string, out io.Writer) error
 		if err := write(a.file, recs); err != nil {
 			return err
 		}
-		t := &tally{rows: len(recs)}
+		t := &tally{rows: len(recs), left: left}
 		for _, rec := range recs {
 			if rec[7] == "yes" {
 				t.wired++
@@ -266,19 +279,32 @@ func vibeExport(c *catalog, root, scriptDirArg, dir string, out io.Writer) error
 	total += len(recs)
 	totalWired += len(recs)
 
-	fmt.Fprintf(out, "Wrote %d sheets to %s\n\n%-34s %7s %7s\n", len(names), dir, "sheet", "rows", "wired")
+	fmt.Fprintf(out, "Wrote %d sheets to %s\n\n%-34s %7s %7s %7s\n", len(names), dir, "sheet", "rows", "wired", "left")
 	files := make([]string, 0, len(counts))
 	for f := range counts {
 		files = append(files, f)
 	}
 	sort.Strings(files)
+	totalLeft := 0
 	for _, f := range files {
-		if t := counts[f]; t.rows > 0 {
-			fmt.Fprintf(out, "%-34s %7d %7d\n", f, t.rows, t.wired)
+		if t := counts[f]; t.rows > 0 || t.left > 0 {
+			fmt.Fprintf(out, "%-34s %7d %7d %7d\n", f, t.rows, t.wired, t.left)
+			totalLeft += t.left
 		}
 	}
-	fmt.Fprintf(out, "%-34s %7d %7d\n", "total", total, totalWired)
+	fmt.Fprintf(out, "%-34s %7d %7d %7d\n", "total", total, totalWired, totalLeft)
 	fmt.Fprintf(out, "\n%d rows of the script are written already. wired = yes: the game reads that row once it has a line.\n", len(have))
+	if totalLeft > 0 {
+		fmt.Fprintf(out, "left: rows the sheets leave out, because the game will never read a line for them:\n")
+		reasons := make([]string, 0, len(leftBy))
+		for reason := range leftBy {
+			reasons = append(reasons, reason)
+		}
+		sort.Strings(reasons)
+		for _, reason := range reasons {
+			fmt.Fprintf(out, "  %5d  %s\n", leftBy[reason], reason)
+		}
+	}
 	return nil
 }
 
@@ -312,6 +338,10 @@ func vibeLint(c *catalog, root, dir string, out io.Writer) (int, error) {
 			fail("%s is not a row of the export or the lexicon", where)
 			continue
 		}
+		if reason := c.wireVerdict(row).reason; forGood(reason) {
+			fail("%s is left alone for good (%s): nothing reads a line for it", where, reason)
+			continue
+		}
 		for _, p := range checkKeep(row, r.Text) {
 			fail("%s %s", where, p)
 		}
@@ -324,7 +354,7 @@ func vibeLint(c *catalog, root, dir string, out io.Writer) (int, error) {
 	}
 	// A vibe.Line call must name a row of the export, and quote its text.
 	for _, lc := range wiring.calls {
-		where := fmt.Sprintf("%s:%d: vibe.Line(%q)", lc.file, lc.line, lc.id)
+		where := fmt.Sprintf("%s:%d: vibe.%s(%q)", lc.file, lc.line, lc.kind, lc.id)
 		row, ok := c.byID[lc.id]
 		switch {
 		case !ok:

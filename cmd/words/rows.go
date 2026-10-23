@@ -103,6 +103,7 @@ type catalog struct {
 	matched  map[string]bool // "package\x00text" for every text a package compares or looks up
 	left     []left
 	byID     map[string]*row
+	ctxs     map[*srcFile]map[[2]int]nodeCtx // what the syntax around each text says, filled as vibe-wire asks
 }
 
 // read builds the catalog from the source under root.

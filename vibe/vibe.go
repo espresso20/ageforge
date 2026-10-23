@@ -85,6 +85,19 @@ func UseScriptForTest(rows map[string]string) (restore func()) {
 	return func() { loaned.Store(prev) }
 }
 
+// rewriter is a function a test put in place of the script for the texts the
+// code writes itself.
+var rewriter atomic.Pointer[func(id, plain string) string]
+
+// UseRewriterForTest makes every text the code writes itself (Line, Sprintf,
+// Errorf) read as f(id, plain) while VibeMode is on, whatever the script
+// holds, until the returned function is called. It is for tests that must
+// change every wired text at once, without knowing which they are.
+func UseRewriterForTest(f func(id, plain string) string) (restore func()) {
+	prev := rewriter.Swap(&f)
+	return func() { rewriter.Store(prev) }
+}
+
 // Text is the script's line for a row id, whether or not VibeMode is on. It
 // reports false for a row the script has no line for.
 func Text(id string) (string, bool) {
@@ -129,6 +142,9 @@ func Errorf(id, format string, a ...any) error {
 
 // lineFor is the script's line for a row id, else plain. VibeMode is on.
 func lineFor(id, plain string) string {
+	if f := rewriter.Load(); f != nil {
+		return (*f)(id, plain)
+	}
 	if s, ok := script().text[id]; ok {
 		return s
 	}
