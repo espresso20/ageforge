@@ -45,7 +45,7 @@ func IsMilitaryBuilding(d BuildingDef) bool { return d.LineageKey == "military" 
 
 // refCopiesOf is the copies of d the reference town holds: the same count
 // smoke's reference players build (smoke.refTables.refCount). A knowledge
-// building is the gate's count alone; storage is the storage rule's copies and
+// building is the gate's count alone; storage is the gate's five copies and
 // everything else TownCopies, or the gate's count where the gate asks for
 // more. gate is the buildings the gate out of d's age asks for.
 func refCopiesOf(d BuildingDef, gate map[string]int) int {

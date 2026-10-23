@@ -2,7 +2,6 @@ package config
 
 import (
 	"math"
-	"sync"
 
 	"github.com/espresso20/ageforge/detmath"
 )
@@ -146,18 +145,6 @@ func ReferenceStoreSizes(defs []BuildingDef, ages []AgeDef, baseStore float64) (
 	return sizes, store
 }
 
-var (
-	referenceOnce   sync.Once
-	referenceSizes  map[string]float64
-	referenceStores map[string]float64
-)
-
-func loadReferenceStore() {
-	referenceOnce.Do(func() {
-		referenceSizes, referenceStores = ReferenceStoreSizes(BaseBuildings(), Ages(), ReferenceBaseStore())
-	})
-}
-
 // ReferenceBaseStore is the base store the reference store is worked out on:
 // wood's, the one every store was sized by (a resource with a lower base
 // holds up to 20 less before any building).
@@ -168,20 +155,4 @@ func ReferenceBaseStore() float64 {
 		}
 	}
 	return 0
-}
-
-// ReferenceStorePerCopy is what one copy of the storage building key held of
-// every resource, in the reference store. 0 for a building that is not a
-// storage building.
-func ReferenceStorePerCopy(key string) float64 {
-	loadReferenceStore()
-	return referenceSizes[key]
-}
-
-// ReferenceStore is the reference store on leaving age: the base store and
-// StorageRuleCopies copies of the storage building of every age up to and
-// including it. 0 for an unknown age.
-func ReferenceStore(age string) float64 {
-	loadReferenceStore()
-	return referenceStores[age]
 }

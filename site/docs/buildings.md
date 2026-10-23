@@ -12,7 +12,7 @@ Every resource you use comes from buildings, and the workers assigned to product
 
 - **More production.** Each extra building of the same tier adds its base rate to your total.
 - **More worker slots.** Worker capacity grows with building count, which raises your production ceiling.
-- **More storage.** Storage buildings add storage for every resource at once. A store's size does not limit what you hold; see [Storage Buildings](#storage-buildings-21-tiers).
+- **More output from everything.** Each storage building adds 1% to all production; see [Storage Buildings](#storage-buildings-21-tiers).
 - **Progress toward the next age.** Many ages require a minimum building count or specific buildings.
 
 Most of the game comes down to this: build more buildings and fill them with workers.
@@ -40,7 +40,7 @@ A building from an earlier age is an **older building**. It keeps producing what
 
 A building is older when its line has a newer building for the age you are in. Nothing is stored or marked: it is read from the line and the age, so it follows you through every advance. A Hut in the Iron Age is an older building, and it upgrades straight to the Iron Age's house, not one step at a time. A building only upgrades along its own line, to a building that makes the same resource (see [The 39 Building Lines](#the-39-building-lines)). A line that has no newer building for your age keeps its last building as its current one, so the last building of a line, such as the Sawmill, is never older, and a line that pauses for an age or two has nothing to upgrade to until it resumes.
 
-Some buildings are in no line and are never older: storage (your stashes, storage pits and vaults keep counting toward your storage for the rest of the run, see [Storage Buildings](#storage-buildings-21-tiers)), knowledge buildings (they keep their tier, and each age's knowledge building is built new in its own age, see [Scholars and Research](knowledge.md#what-a-scholar-is)), wonders and monuments.
+Some buildings are in no line and are never older: storage (your stashes, storage pits and vaults keep adding their boost to production for the rest of the run, see [Storage Buildings](#storage-buildings-21-tiers)), knowledge buildings (they keep their tier, and each age's knowledge building is built new in its own age, see [Scholars and Research](knowledge.md#what-a-scholar-is)), wonders and monuments.
 
 When you advance, the log names the buildings that became older (`↑ 12 Gathering Camps can upgrade to Forager Post. Type 'upgrade gathering_camp'.`). Leaving them as they are costs nothing: they keep producing at their old rate. You cannot build new copies of an older building; `build` says so and names the building it upgrades to.
 
@@ -288,9 +288,9 @@ A building can have one or more of these effects. Knowing them helps you decide 
 | Effect | What It Does |
 |--------|-------------|
 | Production | Adds an amount of a resource each tick, scaled by how many workers it has (see below). Most production buildings do this. |
-| Storage | Raises the storage of one resource, or storage for every resource (storage buildings). A knowledge building comes with scholars. |
+| Storage | Raises the size of one resource's store (culture buildings and a few wonders). Storage buildings no longer have it: they boost production. A knowledge building comes with scholars. |
 | Housing | Raises your housing, the number of workers you can have (housing buildings). |
-| Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production (which adds into [the all-production pool](resources.md#the-all-production-cap)). |
+| Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production, or the 1% each storage building adds (which add into [the all-production pool](resources.md#the-all-production-cap)). |
 | Trade route income | Raises the income of every trade route (Harbor lineage). |
 | Morale | Restores a little morale every tick (Faith and Culture/Arts buildings). |
 | Opinion | Raises opinion with the non-hostile civilizations you have met, each tick, scaled by workers (the two embassies; see [Factions & Diplomacy](factions.md#embassy-buildings)). |
@@ -473,35 +473,35 @@ Your 20 Gathering Camps stay Gathering Camps, producing at their full rate, unti
 
 ## Storage Buildings (21 tiers)
 
-Storage buildings form their own lineage and add storage for **every** resource at once. They need no workers: build them and your storage goes up.
+Storage buildings form their own lineage. Stock has no limit, so there is nothing for a storage building to hold: each copy you own adds **1%** to all production instead. They need no workers: build them and everything you make rises.
 
-Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
+The boost goes into the same pool as the wonders' and monuments' bonuses to all production (see [the all-production cap](resources.md#the-all-production-cap)), so it adds to theirs, shows as "Storage" among the sources in the Stats panel, and counts in full up to +200% and a quarter of every point past it. Every copy counts the same, whatever its age: five copies of each of the 21 buildings add up to 105%.
 
-| Building | Age | Storage per copy (every resource) |
-|----------|-----|--------|
-| Stash | Primitive | +130 |
-| Storage Pit | Stone | +1.5K |
-| Warehouse | Bronze | +8.8K |
-| Granary | Iron | +32K |
-| Classical Vault | Classical | +270K |
-| Strongroom | Medieval | +1.9M |
-| Renaissance Vault | Renaissance | +7.8M |
-| Colonial Warehouse | Colonial | +37M |
-| Industrial Depot | Industrial | +110M |
-| Victorian Vault | Victorian | +1.8B |
-| Electric Warehouse | Electric | +20B |
-| Atomic Vault | Atomic | +110B |
-| Modern Depot | Modern | +430B |
-| Info Vault | Information | +3T |
-| Digital Archive | Digital | +9.4T |
-| Cyber Vault | Cyberpunk | +110T |
-| Fusion Vault | Fusion | +470T |
-| Orbital Depot | Space | +2.4Q |
-| Stellar Vault | Interstellar | +85Q |
-| Galactic Vault | Galactic | +710Q |
-| Quantum Vault | Quantum | +62Qi |
+Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
 
-Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
+| Building | Age |
+|----------|-----|
+| Stash | Primitive |
+| Storage Pit | Stone |
+| Warehouse | Bronze |
+| Granary | Iron |
+| Classical Vault | Classical |
+| Strongroom | Medieval |
+| Renaissance Vault | Renaissance |
+| Colonial Warehouse | Colonial |
+| Industrial Depot | Industrial |
+| Victorian Vault | Victorian |
+| Electric Warehouse | Electric |
+| Atomic Vault | Atomic |
+| Modern Depot | Modern |
+| Info Vault | Information |
+| Digital Archive | Digital |
+| Cyber Vault | Cyberpunk |
+| Fusion Vault | Fusion |
+| Orbital Depot | Space |
+| Stellar Vault | Interstellar |
+| Galactic Vault | Galactic |
+| Quantum Vault | Quantum |
 
 ### No storage wall
 
@@ -509,11 +509,11 @@ Stock has no limit, so no building is refused for costing more than a store hold
 
 Nothing you make is wasted, and nothing overflows. The age's wonder is still paid through its bank, which you fill by hand (see [Wonders](wonders.md)).
 
-A store still has a size, and storage buildings still raise it. Some prices are a share of a store's size (the festival, the black market and the harbinger's Brace), but no store stops you holding more.
+A few prices are still a share of a store's size (the festival, the black market and the harbinger's Brace). That size is what the storage buildings used to hold, and it still grows with them, but no store stops you holding more.
 
 The gate out of each age asks for five copies of its storage building. Build each age's storage while it is current.
 
-Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its size for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
+Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its 1% for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
 
 Storage is also permanent: catastrophes never destroy it or turn it into ruins, and it can't be sold.
 

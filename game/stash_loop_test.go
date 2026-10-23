@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The Primitive Age gate, played on the real engine through the same commands
@@ -73,7 +74,7 @@ func woodBase() float64 { return config.ResourceByKey()["wood"].BaseStorage }
 // stashSize is what a Stash held in the reference store (a storage building
 // holds nothing now; the stores are measures the few rules that still read
 // one are worked in).
-func stashSize() float64 { return config.ReferenceStorePerCopy("stash") }
+func stashSize() float64 { return rules.Core().ReferenceStorePerCopy("stash") }
 
 // stashTown is a Primitive Age game holding n Stashes and a full wood store.
 func stashTown(t *testing.T, n int) *GameEngine {

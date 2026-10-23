@@ -157,7 +157,9 @@ The quarries and mines of the Iron to the Industrial Age make stone, iron and ir
 
 **Nothing is refused for costing more than a store.** A building, an upgrade or a [build plan](plan.md) item is refused only for what it costs against what you have. If you hold the stock, you can buy it. The game no longer names a storage building to build first.
 
-Every resource still has a store size, from a small base (10 to 50), raised by **storage buildings** (one per age from the Stash to the Quantum Vault, with no limit on copies, each copy costing 1.75 times the one before it), by four techs (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each) and by culture buildings. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every store by the age's speed along with production. A store's size does not limit what you hold. A few prices are still a share of it: the [festival](#culture), the black market and the harbinger's Brace. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table. Every age gate still asks for five copies of the storage building of the age you are leaving.
+Every resource still has a store size, from a small base (10 to 50), raised by four techs (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each) and by culture buildings. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every store by the age's speed along with production. A store's size does not limit what you hold. A few prices are still a share of it: the [festival](#culture), the black market and the harbinger's Brace.
+
+**Storage buildings no longer hold anything.** There is one per age, from the Stash to the Quantum Vault, with no limit on copies, each copy costing 1.75 times the one before it. Each copy you own adds **1% to all production**, in the same pool as the wonders' and monuments' bonuses to all production (see [the all-production cap](#the-all-production-cap)). The size they used to give a store is still counted in the size those few prices are a share of. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the list. Every age gate still asks for five copies of the storage building of the age you are leaving.
 
 **Storage is permanent.**
 
@@ -172,13 +174,13 @@ When you advance to a new age, the stock you carry over is trimmed to a few copi
 
 ## The all-production cap
 
-Every "+X% all production" bonus in the game adds into one pool, except a technology's: wonders, milestones, cultural monuments, events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + what the pool applies**, and never by less than **x0.1**.
+Every "+X% all production" bonus in the game adds into one pool, except a technology's: wonders, milestones, cultural monuments, [storage buildings](buildings.md#storage-buildings-21-tiers) (1% a copy), events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + what the pool applies**, and never by less than **x0.1**.
 
 **The cap is soft.** Up to **+200%** the pool applies in full. Past +200%, every further point still counts, at **a quarter** of its value. Nothing you earn is thrown away.
 
 > **A worked example.** Your milestones, wonders and monuments have earned +320% all production. The first +200% counts in full. The other +120% counts a quarter, which is +30%. The pool applies +230%, so your output is multiplied by 3.3. Then you finish a milestone worth +10%. The pool has now earned +330% and applies +232.5%: the milestone added 2.5 points.
 
-Milestone rewards fill most of the pool. A player who earns every milestone as early as it can be earned passes +200% in the Electric Age; most runs pass it a few ages later, and a run that skips milestones may never get there. By the last age a full set of milestones, wonders and monuments has earned +661% and applies +315%. The pool used to stop at +200%, and the other +461% did nothing.
+Milestone rewards fill most of the pool, and the five copies of every storage building the age gates ask for add 5% for each age. A player who earns every milestone as early as it can be earned passes +200% in the Victorian Age; most runs pass it a few ages later, and a run that skips milestones may never get there. By the last age a full set of milestones, wonders and monuments, with five copies of every storage building, has earned +766% and applies +341.5%. The pool used to stop at +200%, and the other +566% did nothing.
 
 | The pool has earned | It applies | Output is multiplied by |
 |---|---|---|
@@ -187,7 +189,7 @@ Milestone rewards fill most of the pool. A player who earns every milestone as e
 | +240% | +210% | 3.1 |
 | +320% | +230% | 3.3 |
 | +400% | +250% | 3.5 |
-| +661% | +315% | 4.15 |
+| +766% | +341.5% | 4.4 |
 
 Timed bonuses follow the same rule. A festival's +20% or an Age of Plenty's +100% counts in full while the pool is under +200% and a quarter past it. Penalties do too: while the pool stays past +200%, a -10% setback costs 2.5 points.
 

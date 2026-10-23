@@ -21,28 +21,26 @@ var masterStoreSizes = map[string]float64{
 // is the one master had, and the reference store on leaving an age is the base
 // store and five copies of every storage building up to it.
 func TestReferenceStoreIsWhatTheStoresWere(t *testing.T) {
+	defs := BaseBuildings()
+	sizes, stores := ReferenceStoreSizes(defs, Ages(), ReferenceBaseStore())
 	for key, want := range masterStoreSizes {
-		if got := ReferenceStorePerCopy(key); got != want {
+		if got := sizes[key]; got != want {
 			t.Errorf("%s: reference store per copy %v, master held %v", key, got, want)
 		}
 	}
-	if got := ReferenceStorePerCopy("lumber_mill"); got != 0 {
-		t.Errorf("a building that is not a storage building has a reference size %v", got)
+	if len(sizes) != len(masterStoreSizes) {
+		t.Errorf("%d sizes, master had %d storage buildings", len(sizes), len(masterStoreSizes))
 	}
-	defs := BaseBuildings()
 	want := ReferenceBaseStore()
 	for _, a := range Ages() {
 		for _, d := range defs {
 			if d.Category == "storage" && d.RequiredAge == a.Key {
-				want += float64(StorageRuleCopies * ReferenceStorePerCopy(d.Key))
+				want += float64(StorageRuleCopies * sizes[d.Key])
 			}
 		}
-		if got := ReferenceStore(a.Key); got != want {
+		if got := stores[a.Key]; got != want {
 			t.Errorf("%s: reference store %v, want the base and five of every storage building so far = %v", a.Key, got, want)
 		}
-	}
-	if ReferenceStore("no_such_age") != 0 {
-		t.Error("an unknown age has a reference store")
 	}
 }
 
@@ -51,9 +49,10 @@ func TestReferenceStoreIsWhatTheStoresWere(t *testing.T) {
 // resource's own base in place of wood's.
 func TestReferenceStoreFollowsTheTypicalStore(t *testing.T) {
 	typical := TypicalStorages(BaseBuildings(), BaseResources(), AgeOrder())
+	_, stores := ReferenceStoreSizes(BaseBuildings(), Ages(), ReferenceBaseStore())
 	for _, age := range AgeOrder() {
 		got := typical[age]["wood"]
-		if want := ReferenceStore(age); got != want {
+		if want := stores[age]; got != want {
 			t.Errorf("%s: typical wood store %v, reference store %v", age, got, want)
 		}
 	}

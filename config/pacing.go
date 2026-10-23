@@ -23,8 +23,9 @@ import (
 //   - Price levels (PriceLevels): the median first-copy price of a resource
 //     among an age's buildings.
 //   - The reference town (Incomes, TypicalStorages): what TownCopies staffed
-//     copies of every producer make (FlowCopies is that number), and what the
-//     storage rule's five copies of every store hold (StorageRuleCopies).
+//     copies of every producer make (FlowCopies is that number), and what five
+//     copies of every storage building (StorageRuleCopies) held, in the
+//     reference store (reference_store.go).
 //
 // A construction resource of an age is one that appears in the first-copy
 // price of at least one of that age's buildings (wonders aside), except the

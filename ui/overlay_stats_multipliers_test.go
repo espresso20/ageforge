@@ -12,11 +12,11 @@ func TestMultiplierSourceLabel(t *testing.T) {
 		"research":               "Research",
 		"prestige":               "Prestige",
 		"wonders":                "Wonders",
-		"storage":                "Storage buildings",
 		"permanent":              "Permanent",
 		"morale":                 "Morale",
 		"event":                  "Event",
 		"event:Peaceful Century": "Event: Peaceful Century",
+		"storage":                "Storage",        // capitalize fallback: the storage buildings' boost
 		"mystery_source":         "Mystery_source", // capitalize fallback
 	}
 	for in, want := range cases {

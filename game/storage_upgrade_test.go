@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Storage is in no line, so it is never an older building: a stash can't be
@@ -37,7 +37,7 @@ func TestAdvanceAge_StorageIsNeverOlder(t *testing.T) {
 		}
 	}
 	// Every Stash still counts for what a Stash held in the reference store.
-	each := config.ReferenceStorePerCopy("stash")
+	each := rules.Core().ReferenceStorePerCopy("stash")
 	if got := ge.Buildings.GetStorageBonuses()["all"]; each <= 0 || got != 32*each {
 		t.Errorf("storage bonus after advancing = %v, want %v (32 Stashes of %v)", got, 32*each, each)
 	}

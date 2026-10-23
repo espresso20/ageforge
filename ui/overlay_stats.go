@@ -421,8 +421,6 @@ func multiplierSourceLabel(src string) string {
 		return "Prestige"
 	case "wonders":
 		return "Wonders"
-	case "storage":
-		return "Storage buildings"
 	case "permanent":
 		return "Permanent"
 	case "morale":
