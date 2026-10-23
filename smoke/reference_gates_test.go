@@ -83,10 +83,10 @@ func TestGateMeasuresCoverEveryGate(t *testing.T) {
 	}
 }
 
-// The ordinary player's walk under the measured gate reaches every gate, and
-// its stay is never longer than under building counts in the same age, since
-// the measures are what the counts' town has and he stops paying for
-// buildings once they are met. The readings are logged.
+// The ordinary player's walk under the measured gate reaches every gate at
+// about the point he reaches today's: the measures are what his town has when
+// it meets the building list, so he meets them at the last purchase or one
+// copy before it. The readings are logged.
 func TestGatePacingReading(t *testing.T) {
 	v1, v2 := ReferenceGatePacing(false), ReferenceGatePacing(true)
 	total1, total2 := 0.0, 0.0
@@ -94,9 +94,12 @@ func TestGatePacingReading(t *testing.T) {
 		total1 += v1.Hours[i]
 		total2 += v2.Hours[i]
 		t.Logf("%2d %-20s v1 %10.3f h  v2 %10.3f h", i+1, v1.Names[i], v1.Hours[i], v2.Hours[i])
-		if v2.Hours[i] <= 0 {
-			t.Errorf("%s: the measured gate is met in no time", v1.Names[i])
+		if v2.Hours[i] < 0.95*v1.Hours[i] || v2.Hours[i] > 1.01*v1.Hours[i] {
+			t.Errorf("%s: %.3f h under the measured gate against %.3f h under the building counts", v1.Names[i], v2.Hours[i], v1.Hours[i])
 		}
 	}
 	t.Logf("all ages: v1 %.2f d, v2 %.2f d", total1/24, total2/24)
+	if total2 < 0.99*total1 || total2 > 1.01*total1 {
+		t.Errorf("all ages: %.2f d under the measured gate against %.2f d under the building counts", total2/24, total1/24)
+	}
 }

@@ -20,6 +20,11 @@ import (
 // the wonder's keystone tech (which the wonder cannot be built without), so
 // "all four stand" and "CheckAdvancement says ready" are the same fact
 // (advance_view_test.go holds the two together for every age).
+//
+// Under the measured gate (AGEFORGE_GATES=v2, gate_v2.go) the building rows
+// give way to a population row, an income row and a key tech row, read from
+// the same measuredTown CheckAdvancement reads (gate_v2_test.go holds those
+// two together too).
 
 // GateRowKind says how a row is counted and written.
 type GateRowKind int

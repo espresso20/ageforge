@@ -280,3 +280,49 @@ func TestTodaysGateIgnoresTheMeasures(t *testing.T) {
 		t.Error("today's gate lists no building counts")
 	}
 }
+
+// The tick opens the measured gate for a real town: homes, wood camps and the
+// key tech in, the engine says ready and the notice is logged; with the key
+// tech out it says not.
+func TestMeasuredGateOpensThroughTheTick(t *testing.T) {
+	restore := SetDataDirForTest(t.TempDir())
+	defer restore()
+	ge := NewGameEngineWith(measuredSet())
+	ge.SeedRNG(1)
+	_ = ge.ForceQuietFateForTest("stone_era")
+	m, _ := ge.rules.GateMeasure("primitive_age")
+
+	// A town of homes and wood camps with the wonder built, and no key tech.
+	ge.SetTownForTest(map[string]int{"hut": 30, "wood_camp": 20, "gathering_camp": 20, "sacred_grove": 1, "stash": 5, "story_circle": 5}, 200)
+	ge.StepTicks(50)
+	st := ge.GetState()
+	if st.Workers.TotalPop < m.People || st.Resources["wood"].Rate < m.Income {
+		t.Fatalf("staging: the town has %d people and %.2f wood a tick, the measures are %d and %.2f",
+			st.Workers.TotalPop, st.Resources["wood"].Rate, m.People, m.Income)
+	}
+	if st.AgeReady || st.AdvanceView().AllStand {
+		t.Fatal("the gate is open without its key tech")
+	}
+
+	ge.GrantTechsForTest(m.KeyTech)
+	ge.StepTicks(1)
+	st = ge.GetState()
+	if !st.AgeReady || !st.AdvanceView().AllStand {
+		t.Fatalf("the gate is shut with the measures met: ready %v, pillars %v", st.AgeReady, st.AdvanceView().AllStand)
+	}
+	logged := false
+	for _, e := range st.Log {
+		if strings.Contains(e.Message, "Ready to advance") {
+			logged = true
+		}
+	}
+	if !logged {
+		t.Error("no notice that the age is ready")
+	}
+	if err := ge.AdvanceAge(); err != nil {
+		t.Fatalf("advance: %v", err)
+	}
+	if got := ge.GetState().Age; got != "stone_age" {
+		t.Errorf("age = %s, want stone_age", got)
+	}
+}
