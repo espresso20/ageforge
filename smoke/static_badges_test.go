@@ -31,6 +31,58 @@ func TestBadgesAreReachable(t *testing.T) {
 	}
 }
 
+// lineageLegendaryBefore is each lineage's top rung (Dynasty) before the
+// lineage ladders moved to a scale set by what a dedicated player builds
+// across many runs. The new top rungs must stand well above them.
+var lineageLegendaryBefore = map[string]float64{
+	"culture_arts": 390, "energy": 170, "engineering": 420, "faith": 600, "food": 610,
+	"geological_extraction": 670, "hacker": 370, "harbor": 55, "housing": 1000, "knowledge": 190,
+	"metallurgy": 370, "military": 570, "organic_extraction": 640, "storage": 180, "trade": 360,
+}
+
+// lineageLegendaryFloor is how many times the old top rung the new one is at
+// least: a legendary badge that counts across all runs of an idle game is a
+// long-term goal, not a thousand buildings.
+const lineageLegendaryFloor = 20
+
+// TestLineageLegendariesAreOnAnIdleScale: every lineage's Dynasty rung asks at
+// least lineageLegendaryFloor times what it asked before, and still sits
+// inside the reach rule (25 runs of a tenth of what a run can hold).
+func TestLineageLegendariesAreOnAnIdleScale(t *testing.T) {
+	problems, reach := StaticBadges()
+	for _, p := range problems {
+		t.Errorf("[%s] %s", p.Kind, p.Why)
+	}
+	seen := map[string]bool{}
+	for _, r := range reach {
+		lineage, ok := strings.CutPrefix(r.Key, "lineage.")
+		if !ok {
+			continue
+		}
+		lineage, ok = strings.CutSuffix(lineage, ".5")
+		if !ok {
+			continue
+		}
+		seen[lineage] = true
+		before, known := lineageLegendaryBefore[lineage]
+		if !known {
+			t.Errorf("%s: a lineage with no entry in lineageLegendaryBefore", r.Key)
+			continue
+		}
+		if r.Need < lineageLegendaryFloor*before {
+			t.Errorf("%s asks %s, under %dx the old %s", r.Key, config.FormatAmount(r.Need), lineageLegendaryFloor, config.FormatAmount(before))
+		}
+		if r.Limit <= 0 || r.Need > r.Limit {
+			t.Errorf("%s asks %s, past the reach rule's %s (%s)", r.Key, config.FormatAmount(r.Need), config.FormatAmount(r.Limit), r.Basis)
+		}
+	}
+	for lineage := range lineageLegendaryBefore {
+		if !seen[lineage] {
+			t.Errorf("lineage.%s.5 is not in the catalog", lineage)
+		}
+	}
+}
+
 // brokenBadges runs the covenant on the real catalog with change applied
 // to its tables, and returns the kinds of problem found for key ("" for a
 // table problem).

@@ -121,6 +121,10 @@ func TestOldBuildResaveKeepsBadges(t *testing.T) {
 	const picked = "age.bronze_age"
 	wantBadges := maps.Clone(before.Badges)
 	wantBadges[picked] = BadgeEarned{}
+	// The fixture's housing rung was earned before badges remembered their
+	// bar, and the fixture's 20 houses are under the rung's bar today, so the
+	// one-time cleanup (settleBarsLocked) takes it back.
+	delete(wantBadges, badgeHousing1)
 	wantCounters := maps.Clone(before.Counters)
 	wantCounters[config.BadgeEvBadge] = float64(len(wantBadges))
 
@@ -188,7 +192,10 @@ func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 	if acct.Tampered || acct.BadgesTampered {
 		t.Fatalf("the account reads as modified after the older build played it (account %v, badge file %v)", acct.Tampered, acct.BadgesTampered)
 	}
-	want := append(ageBadges("modern_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeHousing1, badgeCollector)
+	// The fixture's housing rung is not among them: it was earned before
+	// badges remembered their bar, and its 20 houses are under the bar today
+	// (settleBarsLocked takes it back).
+	want := append(ageBadges("modern_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeCollector)
 	slices.Sort(want)
 	if got := acct.EarnedBadges(); !slices.Equal(got, want) {
 		t.Fatalf("badges %v, want %v", got, want)

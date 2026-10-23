@@ -219,11 +219,21 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Proof:      StaticProof(BadgeRuleTechs),
 			Emblem:     "knowledge",
 		},
-		// F6. A lineage's buildings across every run. The top rung is
-		// twenty-five runs. The first rung is one an ordinary first run
-		// holds by the second age after the lineage's first (the guard
-		// checks it), and where that took lowering it the rungs between
-		// climb in even multiplicative steps.
+		// F6. A lineage's buildings across every run, each lineage on its
+		// own scale. The top rung is what a dedicated player builds of the
+		// lineage over the badge horizon (BadgeMaxRuns, 25 runs): the
+		// reference lingering player (smoke.RefLinger), who buys new copies
+		// (an upgrade is not a built copy) and does not stop at a knowledge
+		// building's full-rate cap, playing the four-run plan (a run to the
+		// Renaissance Age, one to the Digital Age, one to the Fusion Age, then
+		// a full clear) and full clears after it. A full clear builds from 130
+		// copies of a lineage (harbor) to 1,000 (housing), so the lineages sit
+		// orders of magnitude apart; the top rungs run from 3,100 to 24,000,
+		// the model's total rounded to two significant figures. Hacker starts
+		// in the Modern Age and the model gives it 5,400; its top rung is
+		// twenty times the old one, 7,400. Each rung below is 0.4 of the one
+		// above, so the first rung falls in the second run of the plan (the
+		// third for energy, the fourth for hacker, which start late).
 		{
 			Family: "lineage", Source: BadgeSourceLineages,
 			Key: "lineage.{key}.{n}", Name: "{name} {rung}",
@@ -231,21 +241,21 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Scope: BadgeLifetime, Counter: BadgeEvBuiltLineage + ".{key}",
 			Rungs: lineageRungs,
 			Ladders: map[string][]float64{
-				"culture_arts":          {3, 16, 52, 160, 390},
-				"energy":                {2, 10, 40, 100, 170},
-				"engineering":           {3, 19, 62, 200, 420},
-				"faith":                 {3, 26, 87, 280, 600},
-				"food":                  {4, 28, 92, 290, 610},
-				"geological_extraction": {8, 40, 160, 400, 670},
-				"hacker":                {2, 17, 68, 170, 370},
-				"harbor":                {2, 4, 10, 24, 55},
-				"housing":               {6, 36, 120, 410, 1000},
-				"knowledge":             {1, 10, 27, 71, 190},
-				"metallurgy":            {3, 16, 53, 170, 370},
-				"military":              {3, 23, 78, 260, 570},
-				"organic_extraction":    {4, 29, 93, 300, 640},
-				"storage":               {1, 3, 13, 49, 180},
-				"trade":                 {2, 24, 96, 240, 360},
+				"culture_arts":          {310, 770, 1_900, 4_800, 12_000},
+				"energy":                {200, 510, 1_300, 3_200, 8_000},
+				"engineering":           {310, 770, 1_900, 4_800, 12_000},
+				"faith":                 {380, 960, 2_400, 6_000, 15_000},
+				"food":                  {380, 960, 2_400, 6_000, 15_000},
+				"geological_extraction": {410, 1_000, 2_600, 6_400, 16_000},
+				"hacker":                {190, 470, 1_200, 3_000, 7_400},
+				"harbor":                {79, 200, 500, 1_200, 3_100},
+				"housing":               {610, 1_500, 3_800, 9_600, 24_000},
+				"knowledge":             {130, 330, 830, 2_100, 5_200},
+				"metallurgy":            {280, 700, 1_800, 4_400, 11_000},
+				"military":              {380, 960, 2_400, 6_000, 15_000},
+				"organic_extraction":    {380, 960, 2_400, 6_000, 15_000},
+				"storage":               {110, 280, 690, 1_700, 4_300},
+				"trade":                 {280, 700, 1_800, 4_400, 11_000},
 			},
 			RevealBySubject: true,
 			Proof:           StaticProof(BadgeRuleLifetime),
