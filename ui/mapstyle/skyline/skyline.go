@@ -353,6 +353,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	sc := s.present()
 	sc.markers()
 	sc.chrome()
+	sc.clearCursorFill()
 	return sc
 }
 
@@ -374,4 +375,34 @@ func (v *view) revealTarget(m *mapmodel.Model, t tgt, W int) {
 	}
 	v.follow = false
 	v.cam = t.x - W/2
+}
+
+// clearCursorFill keeps every cell that is not the cursor's own off the
+// cursor's fill and its blink shade. A theme with few colours can land a
+// scene's own shade on them exactly, and a cell that looks like the cursor
+// points at nothing: it is moved a step toward the page's text.
+func (s *scene) clearCursorFill() {
+	if s.mp == nil {
+		return
+	}
+	_, fill, _ := s.mp.Cursor.Decompose()
+	_, alt, _ := s.mp.CursorAlt.Decompose()
+	step := theme.Color(theme.RoleText)
+	nudge := func(c tcell.Color) tcell.Color { return theme.Mix(c, step, 0.05) }
+	f := s.fb
+	for i := range f.c {
+		c := &f.c[i]
+		if c.d == dTop {
+			continue
+		}
+		if c.ch == '█' {
+			if c.fg == fill || c.fg == alt {
+				c.fg = nudge(c.fg)
+			}
+			continue
+		}
+		if c.bg == fill || c.bg == alt {
+			c.bg = nudge(c.bg)
+		}
+	}
 }
