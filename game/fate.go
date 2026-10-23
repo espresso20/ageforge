@@ -345,7 +345,7 @@ func (ge *GameEngine) fateArrive() bool {
 	h.When = ge.fateWhen(def)
 	tier, _ := ge.harbingerDisplay()
 	h.AnnouncedTier = tier
-	h.Lines = ge.harbingerSpeak(def, tier)
+	h.Lines, h.LineKeys = ge.harbingerSpeak(def, tier)
 
 	ge.addLog("event", vibe.Sprintf("game.fate.fateArrive.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), ge.fateWarningText(h)))
