@@ -40,10 +40,12 @@ type accountsPanel struct {
 	engine         *game.GameEngine
 	currentVersion string
 
-	root   *tview.Flex
-	list   *tview.List
-	detail *tview.TextView
-	status *tview.TextView // transient confirmation line ("Now playing as …")
+	root     *tview.Flex
+	title    *tview.TextView
+	subtitle *tview.TextView
+	list     *tview.List
+	detail   *tview.TextView
+	status   *tview.TextView // transient confirmation line ("Now playing as …")
 
 	summaries []game.AccountSummary // current rows, 1:1 with list items
 
@@ -75,15 +77,15 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	}
 
 	// ── Title ──────────────────────────────────────────────────────────────────
-	title := tview.NewTextView().
+	p.title = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.01", "[gold]═══ Accounts ═══[-]"))
+		SetTextAlign(tview.AlignCenter)
+	title := p.title
 
-	subtitle := tview.NewTextView().
+	p.subtitle = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.02", "[gray]Each account is its own slot. Switch between them, or back one up to a file.[-]"))
+		SetTextAlign(tview.AlignCenter)
+	subtitle := p.subtitle
 
 	// ── Account list ───────────────────────────────────────────────────────────
 	p.list = tview.NewList()
@@ -106,8 +108,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	p.detail = tview.NewTextView().
 		SetDynamicColors(true).
 		SetWrap(true)
-	p.detail.SetBorder(true).
-		SetTitle(vibe.Line("ui.accounts_panel.newAccountsPanel.03", " Details "))
+	p.detail.SetBorder(true)
 	theme.Track(func() {
 		p.detail.SetBorderColor(theme.Color(theme.RoleAccent)).
 			SetTitleColor(theme.Color(theme.RoleAccent))
@@ -144,10 +145,19 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	return p
 }
 
+// retext writes the panel's own words in the script now in force. Switching to
+// an account can switch VibeMode, so refresh does it again.
+func (p *accountsPanel) retext() {
+	p.title.SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.01", "[gold]═══ Accounts ═══[-]"))
+	p.subtitle.SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.02", "[gray]Each account is its own slot. Switch between them, or back one up to a file.[-]"))
+	p.detail.SetTitle(vibe.Line("ui.accounts_panel.newAccountsPanel.03", " Details "))
+}
+
 // refresh re-reads the account listing, rebuilds the list rows, and restores a clamped
 // selection. wantIdx is the index to select after the rebuild (clamped to range); pass the
 // current index to keep position. Called after switch/new/import/wipe.
 func (p *accountsPanel) refresh(wantIdx int) {
+	p.retext()
 	p.summaries = p.engine.ListAccounts()
 
 	p.list.Clear()

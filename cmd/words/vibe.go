@@ -345,6 +345,12 @@ func vibeLint(c *catalog, root, dir string, out io.Writer) (int, error) {
 		for _, p := range checkKeep(row, r.Text) {
 			fail("%s %s", where, p)
 		}
+		// The spaces and line breaks a text starts and ends with are part of how the
+		// code joins it to what is next to it, so a line keeps them as they are.
+		lead, trail := edges(row.current)
+		if l, tr := edges(r.Text); l != lead || tr != trail {
+			fail("%s must start with %q and end with %q, as the original does, and starts with %q and ends with %q", where, lead, trail, l, tr)
+		}
 		if row.max > 0 && utf8.RuneCountInString(r.Text) > row.max {
 			fail("%s is %d characters and the row allows %d", where, utf8.RuneCountInString(r.Text), row.max)
 		}

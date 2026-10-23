@@ -235,8 +235,8 @@ func (f *iconsFlow) view() (string, []iconsButton) {
 		nerd, uni := iconSamples()
 		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.02", "The map can draw its symbols as Nerd Font icons, if your font has them."))
 		sb.WriteString("\n")
-		sb.WriteString("  " + theme.Paint(theme.RoleLabel, vibe.Line("ui.icons.view.03", "Nerd Font icons    ")) + theme.Paint(theme.RoleBright, nerd) + "\n")
-		sb.WriteString("  " + theme.Paint(theme.RoleLabel, vibe.Line("ui.icons.view.04", "Unicode fallbacks  ")) + theme.Paint(theme.RoleBright, uni) + "\n\n")
+		sb.WriteString("  " + theme.Paint(theme.RoleLabel, padRight(vibe.Line("ui.icons.view.03", "Nerd Font icons"), 19)) + theme.Paint(theme.RoleBright, nerd) + "\n")
+		sb.WriteString("  " + theme.Paint(theme.RoleLabel, padRight(vibe.Line("ui.icons.view.04", "Unicode fallbacks"), 19)) + theme.Paint(theme.RoleBright, uni) + "\n\n")
 		para(&sb, theme.RoleText, vibe.Line("ui.icons.view.05", "Do the icons on the first line look like symbols, or like boxes and question marks?"))
 		return sb.String(), []iconsButton{
 			{key: 'i', label: vibe.Line("ui.icons.view.06", "I see icons"), fill: theme.RoleAccent, press: f.seeIcons},

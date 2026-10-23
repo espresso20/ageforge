@@ -717,13 +717,13 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 		if state.Military.SoldierCount < o.SoldiersNeeded {
 			kind = xBad
 		}
-		add(0, xseg{vibe.Line("ui.expedition_view.briefing.01", "Party  "), xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize(vibe.Line("ui.expedition_view.briefing.02", "soldier"), o.SoldiersNeeded)), kind})
+		add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.01", "Party"), 7), xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize(vibe.Line("ui.expedition_view.briefing.02", "soldier"), o.SoldiersNeeded)), kind})
 	}
-	add(0, xseg{vibe.Line("ui.expedition_view.briefing.03", "Odds   "), xDim}, xseg{expBar(o.SuccessChance, 10, "█", "░"), oddsKind(o.SuccessChance)},
+	add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.03", "Odds"), 7), xDim}, xseg{expBar(o.SuccessChance, 10, "█", "░"), oddsKind(o.SuccessChance)},
 		xseg{fmt.Sprintf(" %.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)})
-	add(0, xseg{vibe.Line("ui.expedition_view.briefing.04", "Out    "), xDim}, xseg{expDur(o.DurationMin, state) + vibe.Line("ui.expedition_view.briefing.05", " and back"), xText})
-	add(3, xseg{vibe.Line("ui.expedition_view.briefing.06", "Ends   "), xDim}, xseg{vibe.Line("ui.expedition_view.briefing.07", "in ") + expDur(o.ExpiresTicks, state), xText})
-	add(0, xseg{vibe.Line("ui.expedition_view.briefing.08", "Haul   "), xDim}, xseg{vibe.Sprintf("ui.expedition_view.briefing.09", "about %.0f min of income", o.HaulMinutes), xGood})
+	add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.04", "Out"), 7), xDim}, xseg{expDur(o.DurationMin, state) + vibe.Line("ui.expedition_view.briefing.05", " and back"), xText})
+	add(3, xseg{padRight(vibe.Line("ui.expedition_view.briefing.06", "Ends"), 7), xDim}, xseg{vibe.Line("ui.expedition_view.briefing.07", "in ") + expDur(o.ExpiresTicks, state), xText})
+	add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.08", "Haul"), 7), xDim}, xseg{vibe.Sprintf("ui.expedition_view.briefing.09", "about %.0f min of income", o.HaulMinutes), xGood})
 	var haul []string
 	for _, k := range sortedKeysOf(o.ExpectedHaulMin) {
 		haul = append(haul, "+"+FormatNumber(o.ExpectedHaulMin[k])+" "+resourceDisplayName(state, k))
@@ -743,7 +743,7 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 	for i, k := range costKeys {
 		label := "       "
 		if i == 0 {
-			label = vibe.Line("ui.expedition_view.briefing.10", "Cost   ")
+			label = padRight(vibe.Line("ui.expedition_view.briefing.10", "Cost"), 7)
 		}
 		kind := xGood
 		if !haveAtLeast(state, k, o.Cost[k]) {
@@ -752,7 +752,7 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 		add(0, xseg{label, xDim}, xseg{fitText(FormatNumber(o.Cost[k])+" "+resourceDisplayName(state, k), cw-7), kind})
 	}
 	if len(costKeys) == 0 && !(o.Tier == game.TierGrand && o.Grand == game.GrandMilitary) {
-		add(0, xseg{vibe.Line("ui.expedition_view.briefing.11", "Cost   "), xDim}, xseg{"free", xGood})
+		add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.11", "Cost"), 7), xDim}, xseg{"free", xGood})
 	}
 
 	fail := vibe.Line("ui.expedition_view.briefing.13", "If it fails, the cost is spent, many of the party fall and a third of the haul is kept.")
@@ -889,13 +889,13 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 		if state.Military.SoldierCount < o.SoldiersNeeded {
 			kind = xBad
 		}
-		g.segs(x+2, row, xseg{vibe.Line("ui.expedition_view.drawConfirm.03", "Party "), xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize(vibe.Line("ui.expedition_view.drawConfirm.04", "soldier"), o.SoldiersNeeded)), kind},
+		g.segs(x+2, row, xseg{padRight(vibe.Line("ui.expedition_view.drawConfirm.03", "Party"), 6), xDim}, xseg{fmt.Sprintf("%s %s", FormatNumber(float64(o.SoldiersNeeded)), pluralize(vibe.Line("ui.expedition_view.drawConfirm.04", "soldier"), o.SoldiersNeeded)), kind},
 			xseg{vibe.Sprintf("ui.expedition_view.drawConfirm.05", "  (%s stay home)", FormatNumber(float64(max(0, state.Military.SoldierCount-o.SoldiersNeeded)))), xDim})
 		row++
 	}
 	costKeys := sortedKeysOf(o.Cost)
 	if len(costKeys) > 0 {
-		cx := g.put(x+2, row, vibe.Line("ui.expedition_view.drawConfirm.06", "Cost  "), xDim)
+		cx := g.put(x+2, row, padRight(vibe.Line("ui.expedition_view.drawConfirm.06", "Cost"), 6), xDim)
 		for i, k := range costKeys {
 			kind := xGood
 			if !haveAtLeast(state, k, o.Cost[k]) {
@@ -912,7 +912,7 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 		}
 		row++
 	}
-	g.segs(x+2, row, xseg{vibe.Line("ui.expedition_view.drawConfirm.07", "Odds  "), xDim}, xseg{fmt.Sprintf("%.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)},
+	g.segs(x+2, row, xseg{padRight(vibe.Line("ui.expedition_view.drawConfirm.07", "Odds"), 6), xDim}, xseg{fmt.Sprintf("%.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)},
 		xseg{vibe.Line("ui.expedition_view.drawConfirm.08", "   Back in  "), xDim}, xseg{expDur(o.DurationMin, state), xText},
 		xseg{vibe.Line("ui.expedition_view.drawConfirm.09", "   Haul  "), xDim}, xseg{vibe.Sprintf("ui.expedition_view.drawConfirm.10", "about %.0f min", o.HaulMinutes), xGood})
 	g.segs(x+2, y+h-2, xseg{" Enter ", xSel}, xseg{vibe.Line("ui.expedition_view.drawConfirm.12", " send   "), xText}, xseg{" Esc ", xLabel}, xseg{vibe.Line("ui.expedition_view.drawConfirm.14", " back"), xText})

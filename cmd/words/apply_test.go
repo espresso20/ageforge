@@ -21,7 +21,7 @@ func partialTree(t *testing.T) string {
 	src, dst := realRoot(t), t.TempDir()
 	for _, rel := range []string{
 		"go.mod",
-		"config/research.go",
+		"config/research.go", "config/badge_catalog.go",
 		"ui/accounts_panel.go",
 		"flavor/catalog.go", "flavor/skeleton.go", "flavor/harbinger.go", "flavor/catalog_exp_fail.go",
 		"ui/copy_guard_test.go", "ui/stale_copy_test.go", "ui/docs_lint_test.go",
@@ -107,7 +107,7 @@ func TestImportRoundTrip(t *testing.T) {
 	if err := export(c, dir, io.Discard); err != nil {
 		t.Fatal(err)
 	}
-	files := []string{"config/research.go", "ui/accounts_panel.go", "flavor/catalog_exp_fail.go"}
+	files := []string{"config/research.go", "config/badge_catalog.go", "ui/accounts_panel.go", "flavor/catalog_exp_fail.go"}
 	before := sources(t, root, files...)
 
 	desc := c.byID["tech.calendar.description"]

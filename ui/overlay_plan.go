@@ -123,7 +123,7 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 func planStatusText(v game.PlanItemView) string {
 	switch v.Status {
 	case game.PlanStatusReady:
-		return theme.Paint(theme.RolePositive, vibe.Line("ui.overlay_plan.planStatusText.01", "ready  "))
+		return theme.Paint(theme.RolePositive, padRight(vibe.Line("ui.overlay_plan.planStatusText.01", "ready"), 7))
 	case game.PlanStatusWaiting:
 		return theme.Paint(theme.RoleHighlight, "waiting")
 	default:

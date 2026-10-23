@@ -122,14 +122,14 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	add()
 
 	if a.Party > 0 {
-		parts := []xseg{{vibe.Line("ui.expedition_field.fieldLines.02", "Party  "), xDim}, {fmt.Sprintf("%s %s", FormatNumber(float64(a.Party)), pluralize(vibe.Line("ui.expedition_field.fieldLines.03", "soldier"), a.Party)), xText}}
+		parts := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.02", "Party"), 7), xDim}, {fmt.Sprintf("%s %s", FormatNumber(float64(a.Party)), pluralize(vibe.Line("ui.expedition_field.fieldLines.03", "soldier"), a.Party)), xText}}
 		if fell := a.Party - a.Soldiers; fell > 0 {
 			parts = append(parts, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.04", " · %s fell so far", FormatNumber(float64(fell))), xBad})
 		}
 		add(parts...)
 	}
 
-	odds := []xseg{{vibe.Line("ui.expedition_field.fieldLines.05", "Odds   "), xDim}, {expBar(a.SuccessChance, 10, "█", "░"), oddsKind(a.SuccessChance)},
+	odds := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.05", "Odds"), 7), xDim}, {expBar(a.SuccessChance, 10, "█", "░"), oddsKind(a.SuccessChance)},
 		{fmt.Sprintf(" %.0f%%", a.SuccessChance*100), oddsKind(a.SuccessChance)}}
 	if a.LaunchChance > 0 && fmt.Sprintf("%.0f", a.LaunchChance*100) != fmt.Sprintf("%.0f", a.SuccessChance*100) {
 		odds = append(odds, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.06", " (was %.0f%%)", a.LaunchChance*100), xDim})
@@ -140,10 +140,10 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	if a.TotalTicks > 0 {
 		progress = 1 - float64(a.TicksLeft)/float64(a.TotalTicks)
 	}
-	add(xseg{vibe.Line("ui.expedition_field.fieldLines.07", "Going  "), xDim}, xseg{expBar(progress, 10, "▰", "▱"), xGood},
+	add(xseg{padRight(vibe.Line("ui.expedition_field.fieldLines.07", "Going"), 7), xDim}, xseg{expBar(progress, 10, "▰", "▱"), xGood},
 		xseg{vibe.Sprintf("ui.expedition_field.fieldLines.08", " %s out · %s to go", expDur(a.TotalTicks-a.TicksLeft, state), expDur(a.TicksLeft, state)), xText})
 
-	add(xseg{vibe.Line("ui.expedition_field.fieldLines.09", "Haul   "), xDim}, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.10", "about %.0f min of income", a.HaulMinutes), xGood})
+	add(xseg{padRight(vibe.Line("ui.expedition_field.fieldLines.09", "Haul"), 7), xDim}, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.10", "about %.0f min of income", a.HaulMinutes), xGood})
 	var pays []string
 	for _, k := range sortedKeysOf(a.SuccessHaul) {
 		pays = append(pays, "+"+FormatNumber(a.SuccessHaul[k])+" "+resourceDisplayName(state, k))

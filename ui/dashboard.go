@@ -850,6 +850,11 @@ func (d *Dashboard) syncVibe() {
 		d.retitle()
 		d.economyTab.retitle()
 		d.overlayMgr.RetitleAll()
+		// A box that keeps the text it wrote for its size writes it again.
+		for _, v := range []*fitView{d.sidebar, d.statusTV, d.ageTV, d.workerMiniTV,
+			d.economyTab.resourceTV, d.economyTab.buildingTV, d.economyTab.constructionTV} {
+			v.changed()
+		}
 	}
 }
 

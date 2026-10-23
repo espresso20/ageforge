@@ -184,8 +184,9 @@ func helpForm(form string) string {
 
 // padRight pads s with spaces on the right to width w (no truncation).
 func padRight(s string, w int) string {
-	if len(s) >= w {
+	n := runeLen(s)
+	if n >= w {
 		return s
 	}
-	return s + strings.Repeat(" ", w-len(s))
+	return s + strings.Repeat(" ", w-n)
 }

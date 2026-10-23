@@ -160,7 +160,7 @@ func (m *mainMenu) fingerprint() string {
 		mainGame, last := acct.GameRecord()
 		fmt.Fprintf(&sb, "%s|%s|%s|", acct.AccountID, mainGame, last)
 	}
-	fmt.Fprintf(&sb, "%s|%d|%v|", set.Style, set.Tier, set.Motion)
+	fmt.Fprintf(&sb, "%s|%d|%v|%v|", set.Style, set.Tier, set.Motion, vibe.On()) // the words follow VibeMode too
 	entries, _ := os.ReadDir(filepath.Join(game.DataDir(), "saves"))
 	for _, e := range entries {
 		if fi, err := e.Info(); err == nil {
