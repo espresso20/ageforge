@@ -105,6 +105,7 @@ func helpProvider(_ game.GameState, screenW int) string {
 		[2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.38", "Zoom out and in")},
 		[2]string{"+/-", vibe.Line("ui.overlay_help.helpProvider.39", "Zoom in and out in the skyline (= works as +): far shows the whole town, close every building twice the size; the level is kept for next time")},
 		[2]string{"[ ]", vibe.Line("ui.overlay_help.helpProvider.40", "Skyline: jump to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)")},
+		[2]string{"Up/Down", vibe.Line("ui.overlay_help.helpProvider.66", "Skyline, close zoom: raise and lower the view over a tall tower, Shift for half a screen (Home brings it back to the foot)")},
 		[2]string{"Home/End", vibe.Line("ui.overlay_help.helpProvider.42", "The town square (roguelike); the oldest district and the present (skyline)")},
 		[2]string{"Enter", vibe.Line("ui.overlay_help.helpProvider.44", "Put the command for what the cursor is on in the prompt (with something typed, Tab and Enter act on the prompt instead)")},
 		[2]string{"Esc", vibe.Line("ui.overlay_help.helpProvider.46", "Close the panel")})

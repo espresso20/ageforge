@@ -73,7 +73,9 @@ func (o *orb) iriCol(i int, sl slot, depth int) tcell.Color {
 func (o *orb) quantumBackdrop() {
 	o.stars(0, o.groundY, 0.009, 0.01, 271)
 	o.fringes()
-	o.echo()
+	if !o.fit { // (the ghost of the town is drawn at the town's own scale)
+		o.echo()
+	}
 	o.fractal()
 	o.echoLine()
 }
@@ -209,7 +211,7 @@ func fractalSprite(R float64) *sprite {
 func (o *orb) fractal() {
 	gy := o.groundY
 	R := float64(clampInt(gy*62/100, 5, 24))
-	cx := o.present.Centre - o.cam
+	cx := o.fx(o.present.Centre - o.cam)
 	cy := float64(gy)*0.4 + 0.5
 	if cx+int(R*2) < 0 || cx-int(R*2) > o.W {
 		return

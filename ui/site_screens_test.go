@@ -789,6 +789,14 @@ func TestWriteSiteScreens(t *testing.T) {
 		shots.take(s, p.name)
 		s.close()
 	}
+	// The Wonders panel's gallery: G on the list opens it on the newest wonder.
+	s.open("wonders", "")
+	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tcell.NewEventKey(tcell.KeyRune, 'g', 0), func(tview.Primitive) {})
+	if !s.d.wonders.gallery {
+		t.Fatal("G did not open the gallery")
+	}
+	shots.take(s, "wonders-gallery")
+	s.close()
 	// The same town on the other map style, then back.
 	s.say("map style skyline")
 	s.open("map", "")

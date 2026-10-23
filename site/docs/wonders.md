@@ -42,13 +42,21 @@ Stock has no limit, so nothing is ever cut off and nothing flows into a wonder's
 
 Older saves may carry a `wonder overflow` setting. It is ignored.
 
-The **Wonders** panel (`wonders`) shows progress with a bar for each resource. Each completed wonder there has a small color thumbnail, a 2-character half-block icon taken from the wonder's sprite, so you can tell them apart at a glance. Locked wonders of ages past your next one are counted in one line, not listed, so the panel doesn't name ages you haven't reached.
+The **Wonders** panel (`wonders`) shows progress with a bar for each resource. Each completed wonder there has a small color thumbnail, a 2-character half-block icon taken from the wonder's sprite, so you can tell them apart at a glance. Locked wonders of ages past your next one are counted in one line, not listed, so the panel doesn't name ages you haven't reached. Once you have built one, the panel's first lines say that `G` opens the gallery.
+
+### The gallery
+
+Press `G` (or `Tab`) in the Wonders panel for the **gallery**: a picture of every wonder you have built, one at a time, drawn the way the skyline map draws it, as large as the panel, with its name, its age and the year that age began under it. It opens on the newest. `←` `→` (or `↑` `↓`, `PgUp` `PgDn`) step through the wonders in age order, `Home` and `End` go to the first and the last, `G` or `Tab` goes back to the list, and `Esc` goes back to the list too (a second `Esc` closes the panel). A wonder you have not built is not in it, and the gallery works in every glyph set and theme, down to the smallest terminal.
+
+<figure class="screen" data-screen="wonders-gallery"><figcaption>The gallery in the Bronze Age: a wonder built earlier, drawn at dusk with its lamps lit.</figcaption></figure>
+
+The game does not record the day a wonder was finished, so the gallery gives the year its age began.
 
 ---
 
 ## Viewing Wonders on the Map
 
-Completed wonders appear on the [Map](map.md) (`map` command) as landmarks, each drawn in its era's look. In the roguelike style they stand among your streets, and Tab jumps the cursor between buildings and wonders. In the skyline they stand among the age districts. Point the inspect cursor at one to see its name, the age it belongs to, and its details.
+Completed wonders appear on the [Map](map.md) (`map` command) as landmarks, each drawn in its era's look. In the roguelike style they stand among your streets, and Tab jumps the cursor between buildings and wonders. The skyline shows **one wonder at a time**: this age's, and none from the ages behind you (the [gallery](#the-gallery) has those). Point the inspect cursor at one to see its name, the age it belongs to, and its details.
 
 This age's wonder shows up only once you start it: bank some of its cost or queue its construction, and the roguelike style marks its plot with scaffolding (the cursor shows how much is banked). Until then the Map shows nothing for it.
 

@@ -264,7 +264,7 @@ You meet civilizations by running scouting expeditions, not by building anything
 | `wonder` | Show the current wonder's bank: each resource, banked / needed, and its keystone tech with whether it is researched |
 | `wonder collect <res\|all> [amt\|all\|max]` (or `wonder bank …`) | Bank a resource toward the current wonder. With an amount, bank that much (at most what the wonder still needs). With `all`, `max` or no amount, bank as much as it still needs, up to what you have. `wonder collect all` does this for every resource the wonder still needs |
 | `build <wonder>` | Build the wonder once its bank is full and its [keystone tech](wonders.md#the-keystone-tech) is researched |
-| `wonders` | Open the **Wonders** panel: a progress bar for each required resource, and a sprite of each completed wonder |
+| `wonders` | Open the **Wonders** panel: a progress bar for each required resource, and a sprite of each completed wonder; `G` opens a [gallery](wonders.md#the-gallery) of every wonder you have built |
 
 ```
 wonder collect wood 1000
@@ -316,7 +316,7 @@ The command bar keeps working while the Map is open: type commands as usual. The
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press Enter again to run it) |
 | `Esc` | Close the Map |
 
-The skyline also takes `+`, `-` and `=` (zoom: far, mid, close) and `[` and `]` (the previous and next district) while the prompt is empty; its zoom level is saved with your account. With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
+The skyline also takes `+`, `-` and `=` (zoom: far, wide, mid, close) and `[` and `]` (the previous and next district) while the prompt is empty; its zoom level is saved with your account. At the close level `↑` and `↓` raise and lower the view over a tall tower, and `Home` brings it back. With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
 
 ---
 

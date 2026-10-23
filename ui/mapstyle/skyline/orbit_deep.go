@@ -331,7 +331,7 @@ func (o *orb) gateGeom() (float64, float64, float64) {
 	gy := o.groundY
 	R := float64(clampInt(gy*84/100, 8, 28))
 	cpy := float64(2*gy) - R - 1
-	return float64(o.present.Centre-o.cam) + 0.5, cpy, R
+	return float64(o.fx(o.present.Centre-o.cam)) + 0.5, cpy, R
 }
 
 // gate draws the warp gate over the present district: the built arc of its

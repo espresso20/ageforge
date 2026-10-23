@@ -25,6 +25,12 @@ type overlayEntry struct {
 	// returns nil to consume it (SetKeyHandler). Runs on the tview goroutine,
 	// never under the engine lock.
 	keys func(event *tcell.EventKey) *tcell.EventKey
+	// back, when set, is offered Esc before it closes the overlay: it returns
+	// true when it used the key (a second view going back to the first), so
+	// the overlay stays up (SetBackHandler). open, when set, runs each time
+	// the overlay is shown, before its text is made (SetOpenHandler).
+	back func() bool
+	open func()
 }
 
 // widgetEntry backs an overlay whose content is any tview.Primitive (e.g. a custom
@@ -51,6 +57,7 @@ type OverlayManager struct {
 	app     *tview.Application
 	onClose func() // called after hide to restore focus to the command input field
 	screenW int    // updated every frame via SetBeforeDrawFunc
+	screenH int
 
 	// seen is the last snapshot Refresh was given: for the arrival screen
 	// it is the game as it stood before the advance (arrival.go). arrival is
@@ -77,9 +84,10 @@ func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func(
 		app:           app,
 		onClose:       onClose,
 		screenW:       120, // sensible default before first draw
+		screenH:       40,
 	}
 	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
-		om.screenW, _ = screen.Size()
+		om.screenW, om.screenH = screen.Size()
 		return false
 	})
 	return om
@@ -106,6 +114,11 @@ func (om *OverlayManager) Register(name string, title vibe.Entry, provide Overla
 	entry := &overlayEntry{title: title, tv: tv, provide: provide}
 	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
+			if entry.back != nil && entry.back() {
+				tv.SetText(safeTags(entry.provide(*om.seenState(), om.screenW)))
+				tv.ScrollToBeginning()
+				return nil
+			}
 			om.Hide()
 			return nil
 		}
@@ -151,6 +164,45 @@ func (om *OverlayManager) SetKeyHandler(name string, keys func(event *tcell.Even
 	if e, ok := om.entries[name]; ok {
 		e.keys = keys
 	}
+}
+
+// SetBackHandler gives the named text overlay a say in Esc: back runs first
+// and returns true when the overlay has gone back a step rather than closed
+// (the text is made again from the last state the manager saw). Unknown names
+// are ignored.
+func (om *OverlayManager) SetBackHandler(name string, back func() bool) {
+	if e, ok := om.entries[name]; ok {
+		e.back = back
+	}
+}
+
+// SetOpenHandler has the named text overlay run open each time it is shown,
+// before its text is made. Unknown names are ignored.
+func (om *OverlayManager) SetOpenHandler(name string, open func()) {
+	if e, ok := om.entries[name]; ok {
+		e.open = open
+	}
+}
+
+// seenState is the last state Refresh was given (the zero state before any).
+func (om *OverlayManager) seenState() *game.GameState {
+	if om.seen == nil {
+		return &game.GameState{}
+	}
+	return om.seen
+}
+
+// textSize is the inner size of the named text overlay's box: what it was
+// drawn at, or before its first draw what the screen makes it (the box is
+// 17/19 of the screen each way, less its border).
+func (om *OverlayManager) textSize(name string) (w, h int) {
+	if e, ok := om.entries[name]; ok {
+		// (a box that has not been laid out yet is tview's default 15 by 10)
+		if _, _, iw, ih := e.tv.GetInnerRect(); iw > 0 && ih > 0 && (iw != 13 || ih != 8) {
+			return iw, ih
+		}
+	}
+	return max(20, om.screenW*17/19-2), max(8, om.screenH*17/19-2)
 }
 
 // RegisterWidget registers an overlay backed by any tview.Primitive instead of a TextView.
@@ -219,6 +271,9 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 func (om *OverlayManager) Show(name string, state game.GameState) bool {
 	// Try text overlays first.
 	if e, ok := om.entries[name]; ok {
+		if e.open != nil {
+			e.open()
+		}
 		e.tv.SetText(safeTags(e.provide(state, om.screenW)))
 		e.tv.ScrollToBeginning()
 		if om.active != name {

@@ -125,7 +125,7 @@ The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has
 <figure class="screen" data-screen="map-skyline"><figcaption>The same town in the skyline style: a district for each age so far, under the sky of that hour.</figcaption></figure>
 
 - **A silhouette for every building.** Each building you own draws its own silhouette, up to 24 of any one kind, so a big town looks big. A district is as wide as the buildings in it need, so a large town is a long skyline you scroll, and a new building joins the street without moving the ones already there. Every silhouette has a darker outline so neighbours part, the rows behind are dimmer and cooler than the row in front, and the copies of one building come in three variants (a lower one, a taller one, and different window patterns, with a chimney, a flagpole or an aerial on some roofs), so eight farms do not all look alike. At night the lit windows glow in the light of their age (torches and fires, then lamps, bulbs, cool white light and screens, and neon) and waver slowly; they hold still when `motion` is off.
-- **Every wonder is a landmark.** In the ground ages each age's wonder is drawn as what it is (a ring of megaliths round a low sun, a temple on its rock, a striped lighthouse, an iron tower, a rocket on its gantry), stands at least half as tall again as any building of its district, glows and throws its beam at night, shows finer detail at the close zoom, and while you bank it rises under scaffolding that climbs with the bank; with the inspect cursor beside it, its name shows on a plaque.
+- **One wonder at a time, and it is a landmark.** The skyline draws this age's wonder and no other: once you start it, under scaffolding that climbs with the bank, and once it is built, as the thing it is (a ring of megaliths round a low sun, a temple on its rock, a striped lighthouse, an iron tower, a rocket on its gantry). The wonders of the ages behind you are not in the picture (a ring of megaliths floating in space would look strange); the **Wonders** panel keeps them in its [gallery](wonders.md#the-gallery). A wonder is not made to stand taller than the buildings round it: it is the most detailed thing in view, with an outline of its own, a glow and a beam of light at night, finer detail at the close zoom, and a plaque with its name when the inspect cursor is beside it.
 - **Windows light and chimneys smoke only where workers are staffed.** An unstaffed building stays dark.
 - **The sky** follows the game clock and the weather.
 - **The far ridge** holds the civilizations you have met, each drawn as a town, and the harbinger.
@@ -148,28 +148,31 @@ The mini map wears the age's window light, and shows the megacity's rain and the
 
 ### Zoom and the overview bar
 
-The skyline has three zoom levels, and the footer says which one you are at (`zoom: close`).
+The skyline has four zoom levels, and the footer says which one you are at (`zoom: close`).
 
+- **Far** fits the whole town on one screen, whatever its size. A column of the screen stands for as many columns of the town as it takes, and shows the tallest building among them in the color of its top; at night the windows that are lit show in it. The name of each district is written along the road, and this age's wonder is marked with a star. There is nothing to scroll, so the arrows and `[` `]` do nothing here. A young town that is no wider than two screens has no far level of its own: wide already shows all of it.
+- **Wide** draws the town at half scale, two screens of it at once. The buildings read as a silhouette against the sky.
 - **Mid** is the scale the skyline always had.
-- **Far** draws the town at half scale. A young town fits the width, a big one is a long skyline either way, and the buildings read as a silhouette against the sky.
-- **Close** draws every building twice the size, every cell of it as a 2x2 block, so you can see roofs, windows, the people at the door and the traffic in the street. The view stands on the street, so a tall tower runs off the top of the screen.
+- **Close** draws every building twice the size, every cell of it as a 2x2 block, so you can see roofs, windows, the people at the door and the traffic in the street. The view stands on the street, so a tall tower runs off the top of the screen: press `↑` to raise the view over it and `↓` to lower it again (`Shift` goes half a screen). A bar down the right edge shows where the view stands in the scene, and `Home` brings it back to the street before it does anything else. While the inspect cursor is out the arrows are the cursor's, and moving the cursor brings the view back to the street.
 
-People, traffic, smoke and weather scale with the buildings. Names, the cursor's label and the bars do not: text always keeps its own size. `+` and `-` (or `=`, or `PgDn` and `PgUp`) zoom in and out. The view stays centered on the spot you were looking at (a view that follows the present keeps following it), the inspect cursor works at every level, and the level is kept with your account like the map style. From the Space Age the sky keeps its one scale and the zoom keys do nothing.
+People, traffic, smoke and weather scale with the buildings. Names, the cursor's label and the bars do not: text always keeps its own size. `+` and `-` (or `=`, or `PgDn` and `PgUp`) zoom in and out. The view stays centered on the spot you were looking at (a view that follows the present keeps following it, and leaving the far level brings you back to the spot you left), the inspect cursor works at every level, and the level is kept with your account like the map style.
 
-The bar along the bottom is an **overview** of the whole town. It draws your real skyline: each column as tall as the tallest building there and in the color of that building's top, a `◆` on every wonder, the name of each district where it fits, buildings new since your last visit in the positive color, and a bright box over the part of the town you are looking at. The box widens when you zoom out and narrows when you zoom in. `[` and `]` jump to the start of the previous and next district, so you can steer the view by the bar.
+The sky ages zoom too. In the sky of the Space Age to the Quantum Age, **close** magnifies the station, the fleet or the starbase twice over, the view starting on the baseline where the modules stand (`↑` and `↓` raise it toward the stars and lower it toward the planet or the void), **wide** shows two screens of the panorama, and **far** fits all of it on one screen with the sky behind it. In the last age, the mandala, **close** shows the middle of it at twice the size and the arrows pan the view along and up while the cursor is away; there is no level wider than the whole mandala.
+
+The bar along the bottom is an **overview** of the whole town. It draws your real skyline: each column as tall as the tallest building there and in the color of that building's top, a `◆` on this age's wonder, the name of each district where it fits, buildings new since your last visit in the positive color, and a bright box over the part of the town you are looking at. The box widens when you zoom out and narrows when you zoom in. `[` and `]` jump to the start of the previous and next district, so you can steer the view by the bar.
 
 ### Skyline keys
 
 | Key | Action |
 |---|---|
-| `←` `→` | Scroll four columns of the screen (or move the cursor while inspecting) |
+| `←` `→` | Scroll four columns of the screen (or move the cursor while inspecting); not at the far level, which shows the whole town |
 | `Shift`+`←` `→` | Scroll half a screen |
-| `PgDn` / `PgUp`, `+` / `-` (or `=`) | Zoom in and out: far, mid, close |
+| `PgDn` / `PgUp`, `+` / `-` (or `=`) | Zoom in and out: far, wide, mid, close |
 | `[` `]` | Jump to the start of the previous or next district |
-| `Home` | The oldest district |
+| `Home` | The oldest district (at the close level, with the view raised, it comes back to the street first) |
 | `End` | The present |
 | `Tab` / `Shift-Tab` | Put the inspect cursor out, then step through every target |
-| `↑` `↓` | Move between the building rows and the ridge (while inspecting) |
+| `↑` `↓` | Move between the building rows and the ridge (while inspecting); at the close level, with the cursor away, raise and lower the view over a tall tower (`Shift`: half a screen) |
 
 ---
 
@@ -186,7 +189,7 @@ From the Space Age the Map leaves the ground, in both styles. Each of the last a
 
 In the roguelike each sky has a hub (the station, the home sun, the base's core): `Home` takes the cursor there, and `PgDn` gives a closer view with names.
 
-In the last age of all the skyline has no districts left to scroll. `Tab` still puts the cursor out, the arrows move it round and between what is there, and the bottom row says what each key does.
+In the last age of all the skyline has no districts left to scroll. `Tab` still puts the cursor out, the arrows move it round and between what is there, `+` closes in on the middle of the mandala, and the bottom row says what each key does.
 
 ---
 
