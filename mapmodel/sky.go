@@ -1,6 +1,10 @@
 package mapmodel
 
-import "github.com/espresso20/ageforge/theme"
+import (
+	"github.com/espresso20/ageforge/theme"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // sky.go is the sky arc: from the Space Age on, both map styles leave the
 // ground. Each of the last five ages is a scene of its own (SkyScene): the
@@ -77,54 +81,54 @@ type SkyPart struct {
 }
 
 type skyPartDef struct {
-	name string
+	name vibe.Entry
 	sym  Sym // SymNone: the lineage's own symbol (LineageSym in the Cosmic Era)
 }
 
 var skyParts = [NumSkyScenes]map[string]skyPartDef{
 	SkyOrbit: {
-		LinHousing: {"habitat module", SymHabitat}, LinFood: {"hydroponic bay", SymFieldHydro},
-		LinStorage: {"depot pod", SymDataStore}, LinWood: {"bio-vat", SymNone},
-		LinMines: {"asteroid mine", SymNone}, LinMetal: {"orbital foundry", SymNone},
-		LinEngineer: {"shipyard", SymSkyYard}, LinEnergy: {"solar array", SymSkySolar},
-		LinHarbor: {"docking port", SymNone}, LinHacker: {"relay satellite", SymNone},
-		LinKnowledge: {"observatory", SymNone}, LinFaith: {"sanctuary", SymNone},
-		LinCulture: {"zero-g gallery", SymNone}, LinMonument: {"beacon", SymNone},
-		LinTrade: {"market dock", SymNone}, LinMilitary: {"moon base", SymNone},
-		LinDiplomacy: {"embassy", SymNone},
+		LinHousing: {vibe.E("map.sky.SkyOrbit.housing", "habitat module"), SymHabitat}, LinFood: {vibe.E("map.sky.SkyOrbit.food", "hydroponic bay"), SymFieldHydro},
+		LinStorage: {vibe.E("map.sky.SkyOrbit.storage", "depot pod"), SymDataStore}, LinWood: {vibe.E("map.sky.SkyOrbit.organic_extraction", "bio-vat"), SymNone},
+		LinMines: {vibe.E("map.sky.SkyOrbit.geological_extraction", "asteroid mine"), SymNone}, LinMetal: {vibe.E("map.sky.SkyOrbit.metallurgy", "orbital foundry"), SymNone},
+		LinEngineer: {vibe.E("map.sky.SkyOrbit.engineering", "shipyard"), SymSkyYard}, LinEnergy: {vibe.E("map.sky.SkyOrbit.energy", "solar array"), SymSkySolar},
+		LinHarbor: {vibe.E("map.sky.SkyOrbit.harbor", "docking port"), SymNone}, LinHacker: {vibe.E("map.sky.SkyOrbit.hacker", "relay satellite"), SymNone},
+		LinKnowledge: {vibe.E("map.sky.SkyOrbit.knowledge", "observatory"), SymNone}, LinFaith: {vibe.E("map.sky.SkyOrbit.faith", "sanctuary"), SymNone},
+		LinCulture: {vibe.E("map.sky.SkyOrbit.culture_arts", "zero-g gallery"), SymNone}, LinMonument: {vibe.E("map.sky.SkyOrbit.monument", "beacon"), SymNone},
+		LinTrade: {vibe.E("map.sky.SkyOrbit.trade", "market dock"), SymNone}, LinMilitary: {vibe.E("map.sky.SkyOrbit.military", "moon base"), SymNone},
+		LinDiplomacy: {vibe.E("map.sky.SkyOrbit.diplomacy", "embassy"), SymNone},
 	},
 	SkyDeep: {
-		LinHousing: {"colony ark", SymHabitat}, LinFood: {"farm world", SymFieldHydro},
-		LinStorage: {"depot moon", SymDataStore}, LinWood: {"garden world", SymNone},
-		LinMines: {"mining world", SymNone}, LinMetal: {"forge world", SymNone},
-		LinEngineer: {"warp gate frame", SymSkyGate}, LinEnergy: {"stellar collector", SymSkySolar},
-		LinHarbor: {"port world", SymNone}, LinHacker: {"relay beacon", SymNone},
-		LinKnowledge: {"research world", SymNone}, LinFaith: {"shrine world", SymNone},
-		LinCulture: {"arts world", SymNone}, LinMonument: {"memorial world", SymNone},
-		LinTrade: {"trade world", SymNone}, LinMilitary: {"escort frigate", SymNone},
-		LinDiplomacy: {"embassy world", SymNone},
+		LinHousing: {vibe.E("map.sky.SkyDeep.housing", "colony ark"), SymHabitat}, LinFood: {vibe.E("map.sky.SkyDeep.food", "farm world"), SymFieldHydro},
+		LinStorage: {vibe.E("map.sky.SkyDeep.storage", "depot moon"), SymDataStore}, LinWood: {vibe.E("map.sky.SkyDeep.organic_extraction", "garden world"), SymNone},
+		LinMines: {vibe.E("map.sky.SkyDeep.geological_extraction", "mining world"), SymNone}, LinMetal: {vibe.E("map.sky.SkyDeep.metallurgy", "forge world"), SymNone},
+		LinEngineer: {vibe.E("map.sky.SkyDeep.engineering", "warp gate frame"), SymSkyGate}, LinEnergy: {vibe.E("map.sky.SkyDeep.energy", "stellar collector"), SymSkySolar},
+		LinHarbor: {vibe.E("map.sky.SkyDeep.harbor", "port world"), SymNone}, LinHacker: {vibe.E("map.sky.SkyDeep.hacker", "relay beacon"), SymNone},
+		LinKnowledge: {vibe.E("map.sky.SkyDeep.knowledge", "research world"), SymNone}, LinFaith: {vibe.E("map.sky.SkyDeep.faith", "shrine world"), SymNone},
+		LinCulture: {vibe.E("map.sky.SkyDeep.culture_arts", "arts world"), SymNone}, LinMonument: {vibe.E("map.sky.SkyDeep.monument", "memorial world"), SymNone},
+		LinTrade: {vibe.E("map.sky.SkyDeep.trade", "trade world"), SymNone}, LinMilitary: {vibe.E("map.sky.SkyDeep.military", "escort frigate"), SymNone},
+		LinDiplomacy: {vibe.E("map.sky.SkyDeep.diplomacy", "embassy world"), SymNone},
 	},
 	SkyGalaxy: {
-		LinHousing: {"habitat deck", SymHabitat}, LinFood: {"agri deck", SymFieldHydro},
-		LinStorage: {"cargo hold", SymDataStore}, LinWood: {"bio-works", SymNone},
-		LinMines: {"neutron star mine", SymNone}, LinMetal: {"stellar forge", SymNone},
-		LinEngineer: {"repair pylon", SymNone}, LinEnergy: {"quasar tap", SymNone},
-		LinHarbor: {"docking bay", SymNone}, LinHacker: {"uplink node", SymNone},
-		LinKnowledge: {"research deck", SymNone}, LinFaith: {"shrine deck", SymNone},
-		LinCulture: {"archive deck", SymNone}, LinMonument: {"beacon spire", SymNone},
-		LinTrade: {"exchange deck", SymNone}, LinMilitary: {"fleet at dock", SymStarship},
-		LinDiplomacy: {"embassy deck", SymNone},
+		LinHousing: {vibe.E("map.sky.SkyGalaxy.housing", "habitat deck"), SymHabitat}, LinFood: {vibe.E("map.sky.SkyGalaxy.food", "agri deck"), SymFieldHydro},
+		LinStorage: {vibe.E("map.sky.SkyGalaxy.storage", "cargo hold"), SymDataStore}, LinWood: {vibe.E("map.sky.SkyGalaxy.organic_extraction", "bio-works"), SymNone},
+		LinMines: {vibe.E("map.sky.SkyGalaxy.geological_extraction", "neutron star mine"), SymNone}, LinMetal: {vibe.E("map.sky.SkyGalaxy.metallurgy", "stellar forge"), SymNone},
+		LinEngineer: {vibe.E("map.sky.SkyGalaxy.engineering", "repair pylon"), SymNone}, LinEnergy: {vibe.E("map.sky.SkyGalaxy.energy", "quasar tap"), SymNone},
+		LinHarbor: {vibe.E("map.sky.SkyGalaxy.harbor", "docking bay"), SymNone}, LinHacker: {vibe.E("map.sky.SkyGalaxy.hacker", "uplink node"), SymNone},
+		LinKnowledge: {vibe.E("map.sky.SkyGalaxy.knowledge", "research deck"), SymNone}, LinFaith: {vibe.E("map.sky.SkyGalaxy.faith", "shrine deck"), SymNone},
+		LinCulture: {vibe.E("map.sky.SkyGalaxy.culture_arts", "archive deck"), SymNone}, LinMonument: {vibe.E("map.sky.SkyGalaxy.monument", "beacon spire"), SymNone},
+		LinTrade: {vibe.E("map.sky.SkyGalaxy.trade", "exchange deck"), SymNone}, LinMilitary: {vibe.E("map.sky.SkyGalaxy.military", "fleet at dock"), SymStarship},
+		LinDiplomacy: {vibe.E("map.sky.SkyGalaxy.diplomacy", "embassy deck"), SymNone},
 	},
 	SkyQuantum: {
-		LinHousing: {"folded habitat", SymHabitat}, LinFood: {"probability garden", SymFieldHydro},
-		LinStorage: {"entangled vault", SymDataStore}, LinWood: {"reality harvest", SymNone},
-		LinMines: {"possibility mine", SymNone}, LinMetal: {"quantum works", SymNone},
-		LinEngineer: {"reality forge", SymNone}, LinEnergy: {"zero-point well", SymNone},
-		LinHarbor: {"phase dock", SymNone}, LinHacker: {"reality processor", SymNone},
-		LinKnowledge: {"academy of maybes", SymNone}, LinFaith: {"hall of echoes", SymNone},
-		LinCulture: {"art that might be", SymNone}, LinMonument: {"fixed point", SymNone},
-		LinTrade: {"probability market", SymNone}, LinMilitary: {"war room", SymNone},
-		LinDiplomacy: {"embassy of selves", SymNone},
+		LinHousing: {vibe.E("map.sky.SkyQuantum.housing", "folded habitat"), SymHabitat}, LinFood: {vibe.E("map.sky.SkyQuantum.food", "probability garden"), SymFieldHydro},
+		LinStorage: {vibe.E("map.sky.SkyQuantum.storage", "entangled vault"), SymDataStore}, LinWood: {vibe.E("map.sky.SkyQuantum.organic_extraction", "reality harvest"), SymNone},
+		LinMines: {vibe.E("map.sky.SkyQuantum.geological_extraction", "possibility mine"), SymNone}, LinMetal: {vibe.E("map.sky.SkyQuantum.metallurgy", "quantum works"), SymNone},
+		LinEngineer: {vibe.E("map.sky.SkyQuantum.engineering", "reality forge"), SymNone}, LinEnergy: {vibe.E("map.sky.SkyQuantum.energy", "zero-point well"), SymNone},
+		LinHarbor: {vibe.E("map.sky.SkyQuantum.harbor", "phase dock"), SymNone}, LinHacker: {vibe.E("map.sky.SkyQuantum.hacker", "reality processor"), SymNone},
+		LinKnowledge: {vibe.E("map.sky.SkyQuantum.knowledge", "academy of maybes"), SymNone}, LinFaith: {vibe.E("map.sky.SkyQuantum.faith", "hall of echoes"), SymNone},
+		LinCulture: {vibe.E("map.sky.SkyQuantum.culture_arts", "art that might be"), SymNone}, LinMonument: {vibe.E("map.sky.SkyQuantum.monument", "fixed point"), SymNone},
+		LinTrade: {vibe.E("map.sky.SkyQuantum.trade", "probability market"), SymNone}, LinMilitary: {vibe.E("map.sky.SkyQuantum.military", "war room"), SymNone},
+		LinDiplomacy: {vibe.E("map.sky.SkyQuantum.diplomacy", "embassy of selves"), SymNone},
 	},
 	SkyMandala: {},
 }
@@ -134,10 +138,10 @@ var skyParts = [NumSkyScenes]map[string]skyPartDef{
 // its own name and symbol.
 func SkyPartOf(s SkyScene, lin string) SkyPart {
 	sym := LineageSym(lin, 6)
-	name := LineageNames[lin]
+	name := LineageName(lin)
 	if s < NumSkyScenes {
 		if d, ok := skyParts[s][lin]; ok {
-			name = d.name
+			name = d.name.String()
 			if d.sym != SymNone {
 				sym = d.sym
 			}
@@ -289,15 +293,15 @@ func (m *Model) mandalaMark(d *Def, epoch int) (MandalaMark, bool) {
 // AlienKind is one of the species whose ships are ordinary traffic in the
 // Galactic Age (the rare visitor of the earlier ages, graduated).
 type AlienKind struct {
-	Color string         // how the inspect line names it
+	Color vibe.Entry     // how the inspect line names it
 	Hue   theme.SpaceHue // its colour
-	Lines []string
+	Lines []vibe.Entry
 }
 
 // Aliens are the species of the Galactic Age's traffic, each in its own
 // colour.
 var Aliens = []AlienKind{
-	{"green", theme.SpaceAlienGreen, []string{"A green saucer, waving its lights.", "A green saucer, trading in songs."}},
-	{"violet", theme.SpaceAlienViolet, []string{"A violet saucer, humming a scale.", "A violet saucer, here for the view."}},
-	{"amber", theme.SpaceAlienAmber, []string{"An amber saucer, late for something.", "An amber saucer, haggling by light."}},
+	{vibe.E("map.alien.01.color", "green"), theme.SpaceAlienGreen, []vibe.Entry{vibe.E("map.alien.01.line.01", "A green saucer, waving its lights."), vibe.E("map.alien.01.line.02", "A green saucer, trading in songs.")}},
+	{vibe.E("map.alien.02.color", "violet"), theme.SpaceAlienViolet, []vibe.Entry{vibe.E("map.alien.02.line.01", "A violet saucer, humming a scale."), vibe.E("map.alien.02.line.02", "A violet saucer, here for the view.")}},
+	{vibe.E("map.alien.03.color", "amber"), theme.SpaceAlienAmber, []vibe.Entry{vibe.E("map.alien.03.line.01", "An amber saucer, late for something."), vibe.E("map.alien.03.line.02", "An amber saucer, haggling by light.")}},
 }

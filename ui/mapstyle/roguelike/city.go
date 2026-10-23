@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // city.go is the Earth arc's land, the Modern Age to the Fusion Age: what
@@ -106,20 +107,20 @@ type cityLine struct {
 }
 
 // corp is a megacorp with a tower in the megacity.
-type corp struct{ name, initials string }
+type corp struct{ name, initials vibe.Entry }
 
 // megacorps are the megacity's corporations (invented; none is a civ).
 var megacorps = []corp{
-	{"Kessler-Oda Group", "KOG"}, {"Novatek Holdings", "NVT"}, {"Helix Dynamics", "HXD"},
-	{"Ombra Industries", "OMB"}, {"Sunrise Heavy Industries", "SHI"}, {"Vektor Systems", "VKS"},
-	{"Halcyon Data", "HCD"}, {"Mirai Kogyo", "MKY"}, {"Black Lotus Holdings", "BLH"},
-	{"Zenith Arms", "ZNA"}, {"Pacifica Telecom", "PFT"}, {"Talos Biotech", "TLB"},
-	{"Yamanaka Heavy", "YMH"}, {"Aurum Logistics", "AUL"}, {"Crimson Spire Media", "CSM"},
-	{"Kuroda Neural", "KRN"},
+	{vibe.E("ui.mapstyle.roguelike.city.megacorps.01", "Kessler-Oda Group"), vibe.E("ui.mapstyle.roguelike.city.megacorps.02", "KOG")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.03", "Novatek Holdings"), vibe.Same("NVT")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.04", "Helix Dynamics"), vibe.Same("HXD")},
+	{vibe.E("ui.mapstyle.roguelike.city.megacorps.05", "Ombra Industries"), vibe.E("ui.mapstyle.roguelike.city.megacorps.06", "OMB")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.07", "Sunrise Heavy Industries"), vibe.E("ui.mapstyle.roguelike.city.megacorps.08", "SHI")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.09", "Vektor Systems"), vibe.Same("VKS")},
+	{vibe.E("ui.mapstyle.roguelike.city.megacorps.10", "Halcyon Data"), vibe.Same("HCD")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.11", "Mirai Kogyo"), vibe.E("ui.mapstyle.roguelike.city.megacorps.12", "MKY")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.13", "Black Lotus Holdings"), vibe.Same("BLH")},
+	{vibe.E("ui.mapstyle.roguelike.city.megacorps.14", "Zenith Arms"), vibe.E("ui.mapstyle.roguelike.city.megacorps.15", "ZNA")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.16", "Pacifica Telecom"), vibe.Same("PFT")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.17", "Talos Biotech"), vibe.Same("TLB")},
+	{vibe.E("ui.mapstyle.roguelike.city.megacorps.18", "Yamanaka Heavy"), vibe.E("ui.mapstyle.roguelike.city.megacorps.19", "YMH")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.20", "Aurum Logistics"), vibe.E("ui.mapstyle.roguelike.city.megacorps.21", "AUL")}, {vibe.E("ui.mapstyle.roguelike.city.megacorps.22", "Crimson Spire Media"), vibe.Same("CSM")},
+	{vibe.E("ui.mapstyle.roguelike.city.megacorps.23", "Kuroda Neural"), vibe.Same("KRN")},
 }
 
 // holoAds are the holo-ads' words: four letters at most, a block wide.
-var holoAds = []string{"OPEN", "24H", "SALE", "LIVE", "BAR", "CHIP", "AUGS", "SOMA", "HOT", "BUY", "NEW", "VR"}
+var holoAds = []vibe.Entry{vibe.E("ui.mapstyle.roguelike.city.holoAds.01", "OPEN"), vibe.Same("24H"), vibe.E("ui.mapstyle.roguelike.city.holoAds.02", "SALE"), vibe.E("ui.mapstyle.roguelike.city.holoAds.03", "LIVE"), vibe.E("ui.mapstyle.roguelike.city.holoAds.04", "BAR"), vibe.E("ui.mapstyle.roguelike.city.holoAds.05", "CHIP"), vibe.E("ui.mapstyle.roguelike.city.holoAds.06", "AUGS"), vibe.E("ui.mapstyle.roguelike.city.holoAds.07", "SOMA"), vibe.E("ui.mapstyle.roguelike.city.holoAds.08", "HOT"), vibe.E("ui.mapstyle.roguelike.city.holoAds.09", "BUY"), vibe.E("ui.mapstyle.roguelike.city.holoAds.10", "NEW"), vibe.Same("VR")}
 
 // neonRunes are the neon signs' glyphs (each folds to ASCII).
 var neonRunes = []rune("¥£ƒΣΩ∞≡♦§¤$%&")

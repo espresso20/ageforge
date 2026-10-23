@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // city.go is the Earth arc's skyline, the Modern Age to the Fusion Age,
@@ -209,7 +210,7 @@ func (s *scene) megacityFusion(shift int) {
 func (s *scene) holoAds() {
 	gy := s.groundY
 	shift := int(float64(s.cam) * 0.5)
-	words := []string{"SOMA", "24H", "KOG", "NVT", "LIVE", "HXD", "SALE", "VKS", "CHIP", "OPEN", "AUGS", "ZNA"}
+	words := []string{vibe.Line("ui.mapstyle.skyline.city.holoAds.01", "SOMA"), "24H", vibe.Line("ui.mapstyle.skyline.city.holoAds.02", "KOG"), "NVT", vibe.Line("ui.mapstyle.skyline.city.holoAds.03", "LIVE"), "HXD", vibe.Line("ui.mapstyle.skyline.city.holoAds.04", "SALE"), "VKS", vibe.Line("ui.mapstyle.skyline.city.holoAds.05", "CHIP"), vibe.Line("ui.mapstyle.skyline.city.holoAds.06", "OPEN"), vibe.Line("ui.mapstyle.skyline.city.holoAds.07", "AUGS"), vibe.Line("ui.mapstyle.skyline.city.holoAds.08", "ZNA")}
 	neons := [3]tcell.Color{s.p.cityHue(theme.CityNeonMagenta, mEmit, 0), s.p.cityHue(theme.CityNeonCyan, mEmit, 0),
 		s.p.cityHue(theme.CityNeonYellow, mEmit, 0)}
 	back := s.p.cityHue(theme.CityNight, mFlat, 0)
@@ -217,7 +218,7 @@ func (s *scene) holoAds() {
 		if hash(blk, 41)%4 == 0 {
 			continue
 		}
-		w := words[hash(blk, 42)%uint64(len(words))]
+		w := []rune(words[hash(blk, 42)%uint64(len(words))])
 		x0 := blk*31 - shift + int(hash(blk, 43)%13)
 		y0 := 3 + int(hash(blk, 44)%uint64(max(1, gy/3)))
 		nc := neons[hash(blk, 45)%3]
@@ -230,7 +231,7 @@ func (s *scene) holoAds() {
 				x, y := x0+dx, y0+dy
 				switch {
 				case dy == 0 && dx >= 0 && dx < 2*len(w) && dx%2 == 0:
-					s.fb.set(x, s.Y(y), rune(w[dx/2]), nc, theme.Mix(back, nc, 0.22), dAirLow+1)
+					s.fb.set(x, s.Y(y), w[dx/2], nc, theme.Mix(back, nc, 0.22), dAirLow+1)
 				case dy == 0 && dx >= 0 && dx < 2*len(w):
 					s.fb.set(x, s.Y(y), ' ', nc, theme.Mix(back, nc, 0.22), dAirLow+1)
 				case dy != 0:

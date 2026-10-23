@@ -363,7 +363,7 @@ func TestSkyPalettes(t *testing.T) {
 		}
 	}
 	for _, a := range mapmodel.Aliens {
-		if a.Color == "" || len(a.Lines) == 0 || a.Hue == theme.SpaceNone {
+		if a.Color.Plain() == "" || len(a.Lines) == 0 || a.Hue == theme.SpaceNone {
 			t.Errorf("alien %+v", a)
 		}
 	}

@@ -1694,7 +1694,7 @@ func cmdThemeList(acct *game.Account, st *game.GameState) CommandResult {
 		switch {
 		case !themeAvailable(acct, t):
 			// Locked flavor theme: show the unlock condition rather than nothing.
-			hint := t.UnlockHint
+			hint := t.UnlockHint.String()
 			if st != nil {
 				hint = themeUnlockHint(t, *st)
 			}
@@ -1706,7 +1706,7 @@ func cmdThemeList(acct *game.Account, st *game.GameState) CommandResult {
 			note = vibe.Line("ui.input.cmdThemeList.03", "  [cyan](accessible)[-]")
 		}
 		lines = append(lines, fmt.Sprintf("%s[white]%-20s[-] [gray]%-20s[-] [dim]%-5s[-]%s",
-			marker, t.Name, t.Key, strings.ToLower(t.Variant()), note))
+			marker, t.Name.String(), t.Key, strings.ToLower(t.Variant()), note))
 	}
 	lines = append(lines, vibe.Line("ui.input.cmdThemeList.04", "[gray]Switch with 'theme <key>'.[-]"))
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}

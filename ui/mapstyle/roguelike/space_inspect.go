@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_inspect.go says what the sky cursor is on, in the game's own words,
@@ -22,10 +23,10 @@ func (v *skyView) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 }
 
 // skyVoidNames are what open space is called in each scene.
-var skyVoidNames = [mapmodel.NumSkyScenes][2]string{
-	{}, {"Open space", "low orbit, quiet tonight"}, {"Deep space", "light-years of nothing much"},
-	{"Between the stars", "the lanes run elsewhere"}, {"A maybe", "nothing is certain here"},
-	{"Light", "everything you built, remembered"},
+var skyVoidNames = [mapmodel.NumSkyScenes][2]vibe.Entry{
+	{}, {vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.01", "Open space"), vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.02", "low orbit, quiet tonight")}, {vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.03", "Deep space"), vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.04", "light-years of nothing much")},
+	{vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.05", "Between the stars"), vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.06", "the lanes run elsewhere")}, {vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.07", "A maybe"), vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.08", "nothing is certain here")},
+	{vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.09", "Light"), vibe.E("ui.mapstyle.roguelike.space_inspect.skyVoidNames.10", "everything you built, remembered")},
 }
 
 func (v *skyView) describe(s *skyScene, p mapmodel.Pt) mapstyle.Inspection {
@@ -39,7 +40,7 @@ func (v *skyView) describe(s *skyScene, p mapmodel.Pt) mapstyle.Inspection {
 	if s.sky == mapmodel.SkyOrbit {
 		for k := 0; k < orbDebris; k++ {
 			if q, ok := v.debrisAt(k); ok && q == p {
-				return mapstyle.Inspection{Title: "Debris", Lines: []string{"spent stages and old satellites, still circling"},
+				return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.01", "Debris"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.02", "spent stages and old satellites, still circling")},
 					Kind: mapstyle.KindMover}
 			}
 		}
@@ -48,10 +49,10 @@ func (v *skyView) describe(s *skyScene, p mapmodel.Pt) mapstyle.Inspection {
 		for k := range deepOrbits {
 			if v.orreryPlanet(k) == p {
 				if k == 2 {
-					return mapstyle.Inspection{Title: "The homeworld", Command: m.SquareCommand(),
-						Lines: []string{"where it all began", plural(m.Workers.Pop, "person", "people") + " in all"}}
+					return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.03", "The homeworld"), Command: m.SquareCommand(),
+						Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.04", "where it all began"), plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.05", "person"), vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.06", "people")) + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.07", " in all")}}
 				}
-				return mapstyle.Inspection{Title: "A planet of the home system", Lines: []string{"it keeps its old orbit"}}
+				return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.08", "A planet of the home system"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.09", "it keeps its old orbit")}}
 			}
 		}
 	}
@@ -87,43 +88,43 @@ func (v *skyView) describe(s *skyScene, p mapmodel.Pt) mapstyle.Inspection {
 			in := mapstyle.Inspection{Title: fr.name, Lines: []string{fr.line}}
 			if fr.lin != "" {
 				if l := m.Lineage(fr.lin); l != nil {
-					in.Lines = append(in.Lines, plural(l.Count, "building", "buildings")+" of "+lineageLabel(fr.lin))
+					in.Lines = append(in.Lines, plural(l.Count, vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.10", "building"), vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.11", "buildings"))+vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.12", " of ")+lineageLabel(fr.lin))
 				}
 			}
 			if c.k == skSlot {
-				in.Lines = append(in.Lines, "room to build")
+				in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.13", "room to build"))
 			}
 			return in
 		}
 	case skTether:
-		return mapstyle.Inspection{Title: "Space elevator", Lines: []string{"the tether from " + world + " to the ring",
-			"climbers ride it day and night"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.14", "Space elevator"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.15", "the tether from ") + world + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.16", " to the ring"),
+			vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.17", "climbers ride it day and night")}}
 	case skPlanet, skLimb:
-		return mapstyle.Inspection{Title: world + ", from orbit", Command: m.SquareCommand(),
-			Lines: []string{plural(m.Workers.Pop, "person", "people") + " below", "night side"}}
+		return mapstyle.Inspection{Title: world + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.18", ", from orbit"), Command: m.SquareCommand(),
+			Lines: []string{plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.19", "person"), vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.20", "people")) + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.21", " below"), vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.22", "night side")}}
 	case skCity:
-		return mapstyle.Inspection{Title: "City lights of " + world, Command: m.SquareCommand(),
-			Lines: []string{plural(m.TotalBuildings(), "building", "buildings") + ", " + strconv.Itoa(m.Workers.Idle) + " idle"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.23", "City lights of ") + world, Command: m.SquareCommand(),
+			Lines: []string{plural(m.TotalBuildings(), vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.24", "building"), vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.25", "buildings")) + ", " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.26", " idle")}}
 	case skRock:
-		return mapstyle.Inspection{Title: "Asteroid belt", Lines: []string{"ore for the taking"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.27", "Asteroid belt"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.28", "ore for the taking")}}
 	case skMoon:
-		return mapstyle.Inspection{Title: "The moon", Lines: []string{"it used to be out of reach"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.29", "The moon"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.30", "it used to be out of reach")}}
 	case skSun:
-		return mapstyle.Inspection{Title: "The home sun", Lines: []string{"the orrery of the home system", world + " still turns round it"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.31", "The home sun"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.32", "the orrery of the home system"), world + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}
 	case skOrbit:
-		return mapstyle.Inspection{Title: "The home system", Lines: []string{"a world on every ring"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.34", "The home system"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.35", "a world on every ring")}}
 	case skColony:
-		return mapstyle.Inspection{Title: "Colony world", Lines: []string{"a world of your own, far out"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.36", "Colony world"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.37", "a world of your own, far out")}}
 	case skBeacon:
-		return mapstyle.Inspection{Title: "Colony beacon", Lines: []string{"a world calling home"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.38", "Colony beacon"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.39", "a world calling home")}}
 	case skField:
-		return mapstyle.Inspection{Title: "Warp gate field", Lines: []string{"open: the stars are a step away"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.40", "Warp gate field"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.41", "open: the stars are a step away")}}
 	case skNebula:
-		return mapstyle.Inspection{Title: "Nebula", Lines: []string{"the first color out here"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.42", "Nebula"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.43", "the first color out here")}}
 	case skSpiral:
-		return mapstyle.Inspection{Title: "The galaxy", Lines: []string{"its arms turn slower than history"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.44", "The galaxy"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.45", "its arms turn slower than history")}}
 	case skCloud:
-		return mapstyle.Inspection{Title: "Probability cloud", Lines: []string{"where the station might be"}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.46", "Probability cloud"), Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.47", "where the station might be")}}
 	case skEcho:
 		if int(c.ref) < len(m.Town.Tiles) {
 			tt := &m.Town.Tiles[c.ref]
@@ -131,16 +132,16 @@ func (v *skyView) describe(s *skyScene, p mapmodel.Pt) mapstyle.Inspection {
 			if b := m.Building(tt.Key); b != nil {
 				name = b.Name
 			}
-			return mapstyle.Inspection{Title: "Echo of the old town", Lines: []string{name + ", as it stood on the ground"}}
+			return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.48", "Echo of the old town"), Lines: []string{name + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.49", ", as it stood on the ground")}}
 		}
 	case skRing:
 		if k := int(c.ref); k >= 0 && k < len(s.rings) {
 			return describeRing(s, k)
 		}
 	}
-	in := mapstyle.Inspection{Title: skyVoidNames[s.sky][0], Lines: []string{skyVoidNames[s.sky][1]}}
+	in := mapstyle.Inspection{Title: skyVoidNames[s.sky][0].String(), Lines: []string{skyVoidNames[s.sky][1].String()}}
 	if c.k == skStar {
-		in.Title = "A star"
+		in.Title = vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.50", "A star")
 	}
 	return in
 }
@@ -152,18 +153,18 @@ func describeUnit(s *skyScene, tt *mapmodel.TownTile) mapstyle.Inspection {
 	b := m.Building(tt.Key)
 	part := mapmodel.SkyPartOf(s.sky, tt.Lineage).Name
 	if b == nil {
-		return mapstyle.Inspection{Title: "Ruins", Lines: []string{part}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.01", "Ruins"), Lines: []string{part}}
 	}
 	cmd := m.BuildingCommand(b)
 	if cmd == "" {
 		cmd = mapmodel.CmdStatus
 	}
 	if tt.Ruin {
-		return mapstyle.Inspection{Title: "Ruins of " + b.Name, Command: cmd,
-			Lines: []string{strconv.Itoa(b.Ruins) + " in ruins", part}}
+		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.02", "Ruins of ") + b.Name, Command: cmd,
+			Lines: []string{strconv.Itoa(b.Ruins) + vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.03", " in ruins"), part}}
 	}
 	if b.Legacy {
-		part += ", an older section"
+		part += vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.04", ", an older section")
 	}
 	in := mapstyle.Inspection{Title: b.Name + " ×" + strconv.Itoa(b.Count), Command: cmd, Lines: []string{part}}
 	add := func(ok bool, s string) {
@@ -171,18 +172,18 @@ func describeUnit(s *skyScene, tt *mapmodel.TownTile) mapstyle.Inspection {
 			in.Lines = append(in.Lines, s)
 		}
 	}
-	staff := strconv.Itoa(b.Workers) + "/" + strconv.Itoa(b.Capacity) + " workers"
+	staff := strconv.Itoa(b.Workers) + "/" + strconv.Itoa(b.Capacity) + vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.05", " workers")
 	if b.Understaffed() {
-		staff += ", short of hands"
+		staff += vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.06", ", short of hands")
 	}
 	add(b.Capacity > 0, staff)
 	add(b.Rate > 0 && b.RateName != "", "+"+short(b.Rate)+" "+strings.ToLower(b.RateName)+"/s")
 	if d := m.Catalog.Defs[b.Upgrade]; d != nil {
-		add(true, "upgrades to "+d.Name)
+		add(true, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.07", "upgrades to ")+d.Name)
 	}
-	add(b.Delta > 0, "+"+strconv.Itoa(b.Delta)+" since your last visit")
-	add(b.Delta < 0, strconv.Itoa(-b.Delta)+" fewer since your last visit")
-	add(b.Ruins > 0, strconv.Itoa(b.Ruins)+" in ruins")
+	add(b.Delta > 0, "+"+strconv.Itoa(b.Delta)+vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.08", " since your last visit"))
+	add(b.Delta < 0, strconv.Itoa(-b.Delta)+vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.09", " fewer since your last visit"))
+	add(b.Ruins > 0, strconv.Itoa(b.Ruins)+vibe.Line("ui.mapstyle.roguelike.space_inspect.describeUnit.10", " in ruins"))
 	return in
 }
 
@@ -190,23 +191,23 @@ func describeUnit(s *skyScene, tt *mapmodel.TownTile) mapstyle.Inspection {
 func describeSkyWonder(m *mapmodel.Model, w *mapmodel.Wonder) mapstyle.Inspection {
 	in := mapstyle.Inspection{Title: w.Name, Command: m.WonderCommand(w)}
 	if w.Age >= 0 && w.Age < len(m.Catalog.AgeNames) {
-		in.Lines = append(in.Lines, "wonder of the "+m.Catalog.AgeNames[w.Age])
+		in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeSkyWonder.01", "wonder of the ")+m.Catalog.AgeNames[w.Age])
 	}
 	if w.Built {
-		in.Lines = append(in.Lines, "it shines among the stars")
+		in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeSkyWonder.02", "it shines among the stars"))
 	} else {
-		in.Title += " (rising)"
-		in.Lines = append(in.Lines, strconv.Itoa(int(w.Progress*100))+"% of its cost banked")
+		in.Title += vibe.Line("ui.mapstyle.roguelike.space_inspect.describeSkyWonder.03", " (rising)")
+		in.Lines = append(in.Lines, strconv.Itoa(int(w.Progress*100))+vibe.Line("ui.mapstyle.roguelike.space_inspect.describeSkyWonder.04", "% of its cost banked"))
 	}
 	if w.Delta {
-		in.Lines = append(in.Lines, "completed since your last visit")
+		in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeSkyWonder.05", "completed since your last visit"))
 	}
 	return in
 }
 
 // describeLane is a trade lane to a civ's star system.
 func describeLane(m *mapmodel.Model, f *mapmodel.Faction) mapstyle.Inspection {
-	in := mapstyle.Inspection{Title: "Lane to the " + f.Name, Command: m.FactionCommand(f)}
+	in := mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describeLane.01", "Lane to the ") + f.Name, Command: m.FactionCommand(f)}
 	var rt *mapmodel.Route
 	for i := range m.Routes {
 		if m.Routes[i].Civ == f.Key && rt == nil {
@@ -216,15 +217,15 @@ func describeLane(m *mapmodel.Model, f *mapmodel.Faction) mapstyle.Inspection {
 	}
 	switch {
 	case f.Relation == mapmodel.RelWar:
-		in.Lines = []string{"at war: the lane is closed"}
+		in.Lines = []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describeLane.02", "at war: the lane is closed")}
 	case rt != nil && rt.Disrupted:
-		in.Lines = []string{rt.Name + " is disrupted"}
+		in.Lines = []string{rt.Name + vibe.Line("ui.mapstyle.roguelike.space_inspect.describeLane.03", " is disrupted")}
 	case rt != nil && len(rt.Imports) > 0:
-		in.Lines = []string{rt.Name + " brings " + strings.Join(rt.Imports, ", ")}
+		in.Lines = []string{rt.Name + vibe.Line("ui.mapstyle.roguelike.space_inspect.describeLane.04", " brings ") + strings.Join(rt.Imports, ", ")}
 	case rt != nil:
 		in.Lines = []string{rt.Name}
 	default:
-		in.Lines = []string{"no freight on it", f.Relation.String()}
+		in.Lines = []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describeLane.05", "no freight on it"), f.Relation.String()}
 	}
 	return in
 }
@@ -232,12 +233,12 @@ func describeLane(m *mapmodel.Model, f *mapmodel.Faction) mapstyle.Inspection {
 // describeHub is the scene's heart: what the town square is on the ground.
 func (v *skyView) describeHub(s *skyScene, world string) mapstyle.Inspection {
 	m := s.m
-	titles := [mapmodel.NumSkyScenes]string{"", "Ring station of " + world, "Home system of " + world,
-		"Starbase " + world, "Anchor of " + world, "Core of " + world}
+	titles := [mapmodel.NumSkyScenes]string{"", vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.01", "Ring station of ") + world, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.02", "Home system of ") + world,
+		vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.03", "Starbase ") + world, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.04", "Anchor of ") + world, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.05", "Core of ") + world}
 	in := mapstyle.Inspection{Title: titles[s.sky], Command: m.SquareCommand(),
-		Lines: []string{plural(m.Workers.Pop, "person", "people") + ", " + strconv.Itoa(m.Workers.Idle) + " idle"}}
+		Lines: []string{plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.06", "person"), vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.07", "people")) + ", " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.08", " idle")}}
 	if m.AgeReady && m.NextAgeName != "" {
-		in.Lines = append(in.Lines, m.NextAgeName+" is within reach")
+		in.Lines = append(in.Lines, m.NextAgeName+vibe.Line("ui.mapstyle.roguelike.space_inspect.describeHub.09", " is within reach"))
 	}
 	if m.Flows.Worst != "" {
 		in.Lines = append(in.Lines, m.Flows.Worst)

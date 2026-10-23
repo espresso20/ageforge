@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // orbit_compact.go is the sky scenes squeezed into the mini map (40x15, and
@@ -47,7 +48,7 @@ func (v *view) composeSkyCompact(f mapstyle.Frame, W, H int, sc mapmodel.SkyScen
 		parts = append(parts, seg{" ▼" + strconv.Itoa(n), theme.RolePositive})
 	}
 	if n := idleProducers(m); n > 0 {
-		parts = append(parts, seg{" " + strconv.Itoa(n) + " idle", theme.RoleWarning})
+		parts = append(parts, seg{" " + strconv.Itoa(n) + vibe.Line("ui.mapstyle.skyline.orbit_compact.composeSkyCompact.01", " idle"), theme.RoleWarning})
 	}
 	if m.Harbinger != nil {
 		parts = append(parts, seg{" " + string(mapmodel.R(mapmodel.SymHarbinger, f.Tier)), theme.RoleWarning})

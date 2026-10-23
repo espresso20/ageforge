@@ -566,10 +566,10 @@ func TestHackerThemesBelongToTheirBadges(t *testing.T) {
 		}
 		gives[th.Key] = def.Key
 		if def.Reveal.Kind == config.BadgeSecret {
-			hint := strings.ToLower(th.UnlockHint)
+			hint := strings.ToLower(th.UnlockHint.Plain())
 			for _, word := range strings.Fields(strings.ToLower(def.Name + " " + def.Desc)) {
 				if len(word) > 4 && word != "badge" && strings.Contains(hint, strings.Trim(word, ".,")) {
-					t.Errorf("the hint for %s (%q) gives away its secret badge with %q", th.Key, th.UnlockHint, word)
+					t.Errorf("the hint for %s (%q) gives away its secret badge with %q", th.Key, th.UnlockHint.Plain(), word)
 				}
 			}
 		}
@@ -618,11 +618,11 @@ func TestHackerThemesInTheList(t *testing.T) {
 		th, _ := theme.ByKey(key)
 		line := func() string {
 			for _, l := range strings.Split(untag(cmdThemeList(acct, &st).Message), "\n") {
-				if strings.Contains(l, th.Name) {
+				if strings.Contains(l, th.Name.Plain()) {
 					return l
 				}
 			}
-			t.Fatalf("theme list has no %s", th.Name)
+			t.Fatalf("theme list has no %s", th.Name.Plain())
 			return ""
 		}
 		if got := line(); !strings.Contains(got, "Given by a secret badge") {

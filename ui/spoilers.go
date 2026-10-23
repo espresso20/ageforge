@@ -64,5 +64,5 @@ func themeUnlockHint(t theme.Theme, state game.GameState) string {
 	if ok && def.Event == config.BadgeEvAgeReached && def.Subject != "" && !game.SightOf(&state).Age(def.Subject) {
 		return vibe.Line("ui.spoilers.themeUnlockHint.01", "Reach a later age")
 	}
-	return t.UnlockHint
+	return t.UnlockHint.String()
 }

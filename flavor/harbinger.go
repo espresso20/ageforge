@@ -119,8 +119,14 @@ type ageSet struct {
 // the template set is stable for the determinism contract.
 func agePools(prefix string, sets []ageSet) []tmpl {
 	var out []tmpl
+	key, _ := rowParts(prefix)
 	for _, s := range sets {
-		out = append(out, agePool(prefix+"_"+s.ages[0], s.ages, s.ss)...)
+		set := agePool(prefix+"_"+s.ages[0], s.ages, s.ss)
+		for i := range set {
+			// A batch is a pool of its own, named by its first age.
+			set[i].Row = sentenceRow(key, s.ages[0], i)
+		}
+		out = append(out, set...)
 	}
 	return out
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Rect is a screen rectangle.
@@ -151,9 +152,9 @@ const (
 
 // Entry describes one style for the registry.
 type Entry struct {
-	Name  string // key for "map style <name>"
-	Title string // display name
-	Blurb string // one line for a picker
+	Name  string     // key for "map style <name>"
+	Title vibe.Entry // display name
+	Blurb vibe.Entry // one line for a picker
 	New   func() Style
 }
 

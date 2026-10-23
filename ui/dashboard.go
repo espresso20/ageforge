@@ -1010,7 +1010,7 @@ func (d *Dashboard) announceBadges() {
 		d.toastMgr.ShowFit(func(w int) string { return badgeToast(v, d.mapSettings().Tier, w) }, 5*time.Second)
 		d.engine.AddLog("success", game.BadgeLogLine(v))
 		if t, ok := theme.ByKey(v.RewardTheme); ok {
-			d.engine.AddLog("success", themeUnlockToast(t.Name))
+			d.engine.AddLog("success", themeUnlockToast(t.Name.String()))
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_deep.go is the Interstellar Age: deep space. The home system has
@@ -149,8 +150,8 @@ func (b *skyBase) gateFrame() {
 			foot = i
 		}
 	}
-	scaffold := b.frame("Gate scaffold", "the warp gate's ring, still to raise", slScaffold, mapmodel.LinEngineer)
-	b.frame("Warp gate", "its ring rises segment by segment", slGate, mapmodel.LinEngineer)
+	scaffold := b.frame(vibe.Line("ui.mapstyle.roguelike.space_deep.gateFrame.01", "Gate scaffold"), vibe.Line("ui.mapstyle.roguelike.space_deep.gateFrame.02", "the warp gate's ring, still to raise"), slScaffold, mapmodel.LinEngineer)
+	b.frame(vibe.Line("ui.mapstyle.roguelike.space_deep.gateFrame.03", "Warp gate"), vibe.Line("ui.mapstyle.roguelike.space_deep.gateFrame.04", "its ring rises segment by segment"), slGate, mapmodel.LinEngineer)
 	n := len(ps)
 	order := make([]int, 0, n)
 	for k := 0; len(order) < n; k++ {
@@ -193,7 +194,7 @@ func gateRune(b *skyBase, n int) rune {
 // world is drawn as large as its lineage needs (deepLife).
 func (b *skyBase) colonies() {
 	for _, c := range deepColonies {
-		fr := b.frame(mapmodel.SkyPartOf(mapmodel.SkyDeep, c.lin).Name, "a colony world of your own", slColony, c.lin)
+		fr := b.frame(mapmodel.SkyPartOf(mapmodel.SkyDeep, c.lin).Name, vibe.Line("ui.mapstyle.roguelike.space_deep.colonies.01", "a colony world of your own"), slColony, c.lin)
 		b.colony[c.lin] = colonySite{c: c.at, bg: c.bg, frame: fr}
 		var slots []mapmodel.Pt
 		for _, p := range discCells(float64(c.at.X), float64(c.at.Y), 8, 3.6) {
@@ -222,7 +223,7 @@ func colonyRadius(n int) float64 {
 // relayChain runs the relay chain from home through every colony site to
 // the gate, faintly, and reserves its relay beacons along it.
 func (b *skyBase) relayChain() {
-	fr := b.frame("Relay chain", "it carries word from world to world", slRelay, mapmodel.LinHacker)
+	fr := b.frame(vibe.Line("ui.mapstyle.roguelike.space_deep.relayChain.01", "Relay chain"), vibe.Line("ui.mapstyle.roguelike.space_deep.relayChain.02", "it carries word from world to world"), slRelay, mapmodel.LinHacker)
 	stops := []mapmodel.Pt{pt(deepSunX+4, deepSunY+1)}
 	for _, c := range deepColonies {
 		stops = append(stops, c.at)

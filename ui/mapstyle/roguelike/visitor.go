@@ -5,6 +5,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // visitor.go draws the rare visitor the shared schedule calls for
@@ -23,8 +24,8 @@ type visit struct {
 }
 
 var (
-	saucerLines = []string{"Not one of ours.", "It hums, then it's gone.", "Lights in the sky. Nobody will believe you."}
-	walkerLines = []string{"It waves, then it's gone.", "A small visitor, far from home.", "It seems lost, and fine with that."}
+	saucerLines = []vibe.Entry{vibe.E("ui.mapstyle.roguelike.visitor.saucerLines.01", "Not one of ours."), vibe.E("ui.mapstyle.roguelike.visitor.saucerLines.02", "It hums, then it's gone."), vibe.E("ui.mapstyle.roguelike.visitor.saucerLines.03", "Lights in the sky. Nobody will believe you.")}
+	walkerLines = []vibe.Entry{vibe.E("ui.mapstyle.roguelike.visitor.walkerLines.01", "It waves, then it's gone."), vibe.E("ui.mapstyle.roguelike.visitor.walkerLines.02", "A small visitor, far from home."), vibe.E("ui.mapstyle.roguelike.visitor.walkerLines.03", "It seems lost, and fine with that.")}
 )
 
 // visitNow is the visitor this frame, if one is out.
@@ -178,9 +179,9 @@ func (v *view) visitorAt(p mapmodel.Pt) (insp, bool) {
 		return insp{}, false
 	}
 	if vi.saucer {
-		return insp{Title: "Unknown craft", Lines: []string{saucerLines[vi.s.Roll>>24%uint64(len(saucerLines))]},
+		return insp{Title: vibe.Line("ui.mapstyle.roguelike.visitor.visitorAt.01", "Unknown craft"), Lines: []string{saucerLines[vi.s.Roll>>24%uint64(len(saucerLines))].String()},
 			Kind: mapstyle.KindAlien}, true
 	}
-	return insp{Title: "Visitor", Lines: []string{walkerLines[vi.s.Roll>>24%uint64(len(walkerLines))]},
+	return insp{Title: vibe.Line("ui.mapstyle.roguelike.visitor.visitorAt.02", "Visitor"), Lines: []string{walkerLines[vi.s.Roll>>24%uint64(len(walkerLines))].String()},
 		Kind: mapstyle.KindAlien}, true
 }

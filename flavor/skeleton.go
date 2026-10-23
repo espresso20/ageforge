@@ -175,8 +175,11 @@ func namesResourceAsGoods(text string) bool {
 // signature, which is derived from the prose itself and moves with it.
 func pool(prefix string, eras []era, ss []skel) []tmpl {
 	out := make([]tmpl, 0, len(ss))
+	key, bucket := rowParts(prefix)
 	for i, s := range ss {
-		out = append(out, s.template(prefix+"_"+itoa(i), eras))
+		t := s.template(prefix+"_"+itoa(i), eras)
+		t.Row = sentenceRow(key, bucket, i)
+		out = append(out, t)
 	}
 	return out
 }
