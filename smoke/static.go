@@ -2,7 +2,6 @@ package smoke
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -10,23 +9,18 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// The Gate Covenant (the economy design's Law 1 applied to age gates). Every
-// advance must pass these against the most storage buildable in the age the
-// player advances from, with no build_cost discounts assumed:
+// The Gate Covenant (the economy design's Law 1 applied to age gates). Stock
+// has no cap, so a price is never held against a store; what a gate may ask
+// is held against sources and incomes. Every advance must pass these, with no
+// build_cost discounts assumed:
 //
-//   - each required building can be built in that age (the age lock forbids
-//     building an older age's buildings, and they may have been upgraded away),
-//     and the tech it waits for, if any, can be finished in that age;
-//   - the last required copy of it costs at most 1/GateBuildingMargin of the
-//     store the gates force (gateStore) for every resource it costs: the
-//     storage rule's own room (config.StorageRuleRoom), against the store it
-//     sizes for exactly this;
-//   - the age's wonder, which every advance also requires, is the one price
-//     allowed over a store: it is paid into its bank in rounds (deposits,
-//     overflow), so it is held to no storage margin (it was held to one full
-//     store while a store was 25 copies; the Dyson Scaffold's steel is two
-//     and a half of the Space Age's walled stores). Its parts are checked
-//     for a source, below;
+//   - each required building can be built in the age the player advances
+//     from (the age lock forbids building an older age's buildings, and they
+//     may have been upgraded away), and the tech it waits for, if any, can be
+//     finished in that age;
+//   - the age's wonder, which every advance also requires, is paid into its
+//     bank in rounds (deposits), so it is held to no amount; its parts are
+//     checked for a source, below;
 //   - every resource the gate asks for, directly, in a required building's
 //     price, in the wonder's or in the price of the wonder's keystone tech
 //     (knowledge), can be had in that age from a cold start (see
@@ -40,36 +34,19 @@ import (
 //     (CarriedSupplyTargets);
 //   - a town arrives in the next age with empty stores and the buildings the
 //     gates so far asked for, so the first copy of every building of that age
-//     a run can build, and its first tech, must be payable from that cold
-//     start, and a flow resource in one is held to the bound below, with its
-//     constant (firstCopyProblems);
-//   - every flow resource (food, faith, culture, soldiers) the gate asks for is
-//     made within the age's pacing target at config.FlowIncome;
-//   - the storage ladder: the first copy of the new age's storage building
-//     fits, with GateLadderMargin to spare, in the least storage the gate
-//     forces a player to hold (see ladderForced and gateStore). Storage is
-//     never lost (no catastrophe takes it and it can't be sold), so that is
-//     the least anyone enters the age with, and the age lock leaves the new
-//     age's storage as the only storage they can build there.
+//     a run can build (the age's storage building among them), and its first
+//     tech, must be payable from that cold start, and a flow resource in one
+//     is held to the bound below, with its constant (firstCopyProblems);
+//   - every flow resource (food, faith, culture) the gate asks for is made
+//     within the age's pacing target at config.FlowIncome.
 //
-// Storage is a wall since the storage rule (config/storage_rule.go), and two
-// of these are stated in its terms. A gate asks for five copies of the
-// storage building of the age it leaves, so the least storage it forces is
-// the store those copies give on top of every earlier gate's (gateStore): the
-// rule's reference store. And a required storage copy is not held to
-// GateBuildingMargin against the most storage of the age: it is the building
-// that makes that storage, so each copy up to the last one asked for must
-// fit, with the rule's own margin, under the store the copies before it
-// give. The ladder's margin is the rule's too (it was 1.25 while storage was
-// sized to hours of income and five times what any price needed): the rule
-// sizes five copies to hold the next age's first storage building and
-// config.StorageRuleMargin more.
+// What this used to hold against the most storage buildable (the last
+// required copy fitting a store, the first storage copy fitting the least
+// store a gate forces) went with the stores: see the report.
 const (
-	GateBuildingMargin = config.StorageRuleRoom
 	GateResourceMargin = 1.25
 	GateWonderMargin   = 1.0 // no longer checked: see the wonder, above
 	GateTrickleHours   = 48.0
-	GateLadderMargin   = config.StorageRuleMargin
 )
 
 // GateProblem is an age requirement that breaks the Gate Covenant, found from
@@ -78,79 +55,44 @@ const (
 type GateProblem struct {
 	From string `json:"from"`
 	To   string `json:"to"`
-	// Kind is "building", "wonder", "unbuildable", "unsourced",
-	// "flow", "ladder", "tech_locked" (a gate needs a building whose tech
-	// can't be finished in the age it is built in) or "dead_building" (a building whose price has
-	// no source in its own age; From is that age, To is empty).
+	// Kind is "unbuildable", "unsourced", "flow", "tech_locked" (a gate needs
+	// a building whose tech can't be finished in the age it is built in) or
+	// "dead_building" (a building whose price has no source in its own age;
+	// From is that age, To is empty).
 	Kind     string `json:"kind"`
 	Key      string `json:"key"` // resource, building or wonder key
 	Count    int    `json:"count,omitempty"`
 	Resource string `json:"resource,omitempty"`
-	// Need is the requirement amount, the last required copy's undiscounted
-	// price in Resource, the wonder's price in it, or (flow) the whole amount
-	// of the flow resource the gate asks for.
-	Need       float64 `json:"need,omitempty"`
-	MaxStorage float64 `json:"max_storage,omitempty"`
-	Margin     float64 `json:"margin,omitempty"`   // the margin the rule asks for
-	BuiltIn    string  `json:"built_in,omitempty"` // unbuildable: the only age the building can be built in
+	// Need is the requirement amount: the whole amount of the flow resource
+	// the gate asks for.
+	Need    float64 `json:"need,omitempty"`
+	BuiltIn string  `json:"built_in,omitempty"` // unbuildable: the only age the building can be built in
 	// Flow problems: what FlowIncome makes over the age's target.
 	Made float64 `json:"made,omitempty"`
-	// Ladder problems: Key is the new age's storage building, Need its first
-	// copy's price in Resource, MaxStorage the least storage the gate forces,
-	// and ForcedBy what forces it (a requirement or a required building).
-	ForcedBy string `json:"forced_by,omitempty"`
 }
-
-// GateSlack is the tightest requirement of one advance: MaxStorage / Need
-// for whichever resource requirement, last required copy or wonder part comes
-// closest to the cap.
-type GateSlack struct {
-	From       string  `json:"from"`
-	To         string  `json:"to"`
-	Key        string  `json:"key"`
-	Resource   string  `json:"resource"`
-	Need       float64 `json:"need"`
-	MaxStorage float64 `json:"max_storage"`
-}
-
-// Ratio is MaxStorage / Need.
-func (g GateSlack) Ratio() float64 { return g.MaxStorage / g.Need }
 
 // writeGates renders the static gate check.
 func (s *Summary) writeGates(sb *strings.Builder) {
 	sb.WriteString("\n## Static gate check\n\n")
-	fmt.Fprintf(sb, "From config alone, against the most storage buildable in the age you advance from, with no build_cost discounts. Every building a gate asks for must be buildable in that age, and the tech it waits for, if any, must be finishable in that age. The last required copy of each must cost at most 1/%g of the storage. The wonder is paid through its bank, so it is held to no storage margin. Every resource a gate needs, the wonder's included, must be obtainable in that age from a cold start: a town with empty stores and only the buildings the gates so far asked for. Every flow resource a gate needs must be made within the age's target at a moderate income. The first copy of the new age's storage must fit with %gx to spare in the least storage the gate forces a player to hold. On arrival, the first copy of every building of the new age that a run can build, and the cheapest tech of the new age, must be payable from that same cold start. No building may cost a resource with no source in its own age. Together these checks are the Gate Covenant. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n", GateBuildingMargin, GateLadderMargin)
+	sb.WriteString("From config alone, with no build_cost discounts. Stock has no cap, so no price is held against a store. Every building a gate asks for must be buildable in the age you advance from, and the tech it waits for, if any, must be finishable in that age. The wonder is paid through its bank, so it is held to no amount. Every resource a gate needs, the wonder's included, must be obtainable in that age from a cold start: a town with empty stores and only the buildings the gates so far asked for. Every flow resource a gate needs must be made within the age's target at a moderate income. On arrival, the first copy of every building of the new age that a run can build (its storage building included), and the cheapest tech of the new age, must be payable from that same cold start. No building may cost a resource with no source in its own age. Together these checks are the Gate Covenant. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n")
 	if len(s.Gates) == 0 {
 		sb.WriteString("No problems.\n")
-	} else {
-		sb.WriteString("| advance | requirement | needs | max storage | rule |\n|---|---|---|---|---|\n")
-		for _, g := range s.Gates {
-			switch g.Kind {
-			case "unbuildable":
-				fmt.Fprintf(sb, "| %s → %s | %d %s | built only in %s | - | must be buildable in %s |\n", g.From, g.To, g.Count, g.Key, g.BuiltIn, g.From)
-			case "unsourced":
-				fmt.Fprintf(sb, "| %s → %s | %s (for %s) | no source | - | needs a source in %s |\n", g.From, g.To, g.Resource, g.Key, g.From)
-			case "dead_building":
-				fmt.Fprintf(sb, "| building in %s | %s costs %s | no source | - | price must be obtainable in its age |\n", g.From, g.Key, g.Resource)
-			case "building":
-				fmt.Fprintf(sb, "| %s → %s | %d %s (copy #%d price) | %s %s | %s | %gx |\n", g.From, g.To, g.Count, g.Key, g.Count, num(g.Need), g.Resource, num(g.MaxStorage), g.Margin)
-			case "wonder":
-				fmt.Fprintf(sb, "| %s → %s | wonder %s | %s %s | %s | %gx |\n", g.From, g.To, g.Key, num(g.Need), g.Resource, num(g.MaxStorage), g.Margin)
-			case "ladder":
-				fmt.Fprintf(sb, "| %s → %s | first %s | %s %s | - | %gx under the %s the gate forces (%s) |\n", g.From, g.To, g.Key, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.ForcedBy)
-			case "flow":
-				fmt.Fprintf(sb, "| %s → %s | %s (for %s) | %s %s | - | makes %s in the target |\n", g.From, g.To, g.Resource, g.Key, num(g.Need), g.Resource, num(g.Made))
-			default:
-				fmt.Fprintf(sb, "| %s → %s | %s | %s %s | %s | %gx |\n", g.From, g.To, g.Key, num(g.Need), g.Resource, num(g.MaxStorage), g.Margin)
-			}
-		}
-	}
-	if len(s.Slack) == 0 {
 		return
 	}
-	sb.WriteString("\nTightest requirement per advance (max storage / need):\n\n| advance | requirement | needs | max storage | ratio |\n|---|---|---|---|---|\n")
-	for _, g := range s.Slack {
-		fmt.Fprintf(sb, "| %s → %s | %s | %s %s | %s | %.2fx |\n", g.From, g.To, g.Key, num(g.Need), g.Resource, num(g.MaxStorage), g.Ratio())
+	sb.WriteString("| advance | requirement | needs | rule |\n|---|---|---|---|\n")
+	for _, g := range s.Gates {
+		switch g.Kind {
+		case "unbuildable":
+			fmt.Fprintf(sb, "| %s → %s | %d %s | built only in %s | must be buildable in %s |\n", g.From, g.To, g.Count, g.Key, g.BuiltIn, g.From)
+		case "unsourced":
+			fmt.Fprintf(sb, "| %s → %s | %s (for %s) | no source | needs a source in %s |\n", g.From, g.To, g.Resource, g.Key, g.From)
+		case "dead_building":
+			fmt.Fprintf(sb, "| building in %s | %s costs %s | no source | price must be obtainable in its age |\n", g.From, g.Key, g.Resource)
+		case "flow":
+			fmt.Fprintf(sb, "| %s → %s | %s (for %s) | %s %s | makes %s in the target |\n", g.From, g.To, g.Resource, g.Key, num(g.Need), g.Resource, num(g.Made))
+		default:
+			fmt.Fprintf(sb, "| %s → %s | %s | %s %s | %s |\n", g.From, g.To, g.Key, num(g.Need), g.Resource, g.Kind)
+		}
 	}
 }
 
@@ -161,7 +103,7 @@ func lastCopyPrice(d config.BuildingDef, res string, n int) float64 {
 
 // StaticGates checks every advance against the Gate Covenant and returns
 // what breaks it, plus the tightest requirement of each advance.
-func StaticGates() ([]GateProblem, []GateSlack) {
+func StaticGates() []GateProblem {
 	return staticGates(config.Ages(), config.BuildingByKey())
 }
 
@@ -455,8 +397,8 @@ var ColdStartOpen = []GateProblem{
 }
 
 // staticGates is staticGatesAll without the rows ColdStartOpen names.
-func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]GateProblem, []GateSlack) {
-	all, slack := staticGatesAll(ages, defs)
+func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) []GateProblem {
+	all := staticGatesAll(ages, defs)
 	var out []GateProblem
 	for _, g := range all {
 		open := false
@@ -467,13 +409,12 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 			out = append(out, g)
 		}
 	}
-	return out, slack
+	return out
 }
 
-func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]GateProblem, []GateSlack) {
+func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) []GateProblem {
 	var out []GateProblem
 	cold := coldStarts(ages, defs)
-	var slack []GateSlack
 	for i := 0; i+1 < len(ages); i++ {
 		from, to := ages[i], ages[i+1]
 		wonder := ageWonder(from, defs)
@@ -531,12 +472,6 @@ func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([
 					Need: amount[res], Made: made})
 			}
 		}
-		tight := GateSlack{From: from.Key, To: to.Key, Need: 1, MaxStorage: math.Inf(1)}
-		consider := func(key, res string, need, m float64) {
-			if m/need < tight.Ratio() {
-				tight.Key, tight.Resource, tight.Need, tight.MaxStorage = key, res, need, m
-			}
-		}
 		for _, bld := range sortedKeys(to.BuildingReqs) {
 			n := to.BuildingReqs[bld]
 			d, ok := defs[bld]
@@ -548,54 +483,12 @@ func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([
 				out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "unbuildable", Key: bld, Count: n, BuiltIn: d.RequiredAge})
 				continue
 			}
-			// Report the resource with the least headroom, so one row per building.
-			var worst *GateProblem
-			for _, res := range sortedKeys(d.BaseCost) {
-				if d.Category == "storage" {
-					// Each copy asked for, under the store the copies
-					// before it give: the storage every earlier gate
-					// forced, and this building's own earlier copies.
-					before := gateStore(ages[:i+1], defs) + baseStorage(res)
-					for k := 1; k <= n; k++ {
-						price := lastCopyPrice(d, res, k)
-						m := before + float64(float64(k-1)*storagePerCopy(d))
-						if price*config.StorageRuleMargin <= m {
-							continue
-						}
-						if worst == nil || m/price < worst.MaxStorage/worst.Need {
-							worst = &GateProblem{From: from.Key, To: to.Key, Kind: "building", Key: bld, Count: k,
-								Resource: res, Need: price, MaxStorage: m, Margin: config.StorageRuleMargin}
-						}
-					}
-					continue
-				}
-				// Under the store the gates force by the time the copy is
-				// bought: this gate's own storage copies included.
-				last := lastCopyPrice(d, res, n)
-				m := gateStore(ages[:i+2], defs) + baseStorage(res)
-				consider(bld, res, last, m)
-				if last*GateBuildingMargin <= m {
-					continue
-				}
-				if worst == nil || m/last < worst.MaxStorage/worst.Need {
-					worst = &GateProblem{From: from.Key, To: to.Key, Kind: "building", Key: bld, Count: n,
-						Resource: res, Need: last, MaxStorage: m, Margin: GateBuildingMargin}
-				}
-			}
-			if worst != nil {
-				out = append(out, *worst)
-			}
 		}
-		// The wonder is not held to a store: it is the one price allowed
-		// over one, paid into its bank in rounds (deposits, overflow), and
-		// the storage rule leaves it out of what a store must hold. What its
-		// price is made of is checked above, with the gate's other needs:
-		// every part of it must have a source from a cold start.
-		out = append(out, ladderProblems(ages[:i+2], from, to, defs)...)
+		// The wonder is held to no amount: it is paid into its bank in
+		// deposits. What its price is made of is checked above, with the
+		// gate's other needs: every part of it must have a source from a
+		// cold start.
 		out = append(out, firstCopyProblems(from, to, cold[i+1], defs, config.Technologies())...)
-		if tight.Key != "" {
-			slack = append(slack, tight)
-		}
 	}
 	// Buildings nobody can ever afford: a price in a resource that has no
 	// source in the building's own age (coal before the Renaissance, crypto
@@ -621,7 +514,7 @@ func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) ([
 			}
 		}
 	}
-	return out, slack
+	return out
 }
 
 // firstCopyProblems checks what a town can do on arriving in `to` from `from`
@@ -663,105 +556,6 @@ func firstCopyProblems(from, to config.AgeDef, cs *coldStart, defs map[string]co
 		}
 		for _, res := range sortedKeys(d.BaseCost) {
 			check(k, res, d.BaseCost[res])
-		}
-	}
-	return out
-}
-
-// ladderForced is the least storage the gate from `from` into `to` forces a
-// player to hold: its biggest single price, whether a resource requirement
-// (held all at once) or the last required copy of a building buildable in
-// `from` (paid all at once), undiscounted. The wonder forces nothing: it is
-// banked a deposit at a time. Every storage building raises every cap alike
-// (Target "all"), so the caps move together and one figure stands for all of
-// them. by names what forces it.
-func ladderForced(from, to config.AgeDef, defs map[string]config.BuildingDef) (forced float64, by string) {
-	for _, bld := range sortedKeys(to.BuildingReqs) {
-		d, ok := defs[bld]
-		if !ok || d.Category == "wonder" || (d.RequiredAge != "" && d.RequiredAge != from.Key) {
-			continue // unbuildable requirements are their own problem
-		}
-		n := to.BuildingReqs[bld]
-		for _, res := range sortedKeys(d.BaseCost) {
-			if last := lastCopyPrice(d, res, n); last > forced {
-				forced, by = last, fmt.Sprintf("%s #%d, %s %s", bld, n, num(last), res)
-			}
-		}
-	}
-	return forced, by
-}
-
-// storagePerCopy is what one copy of d adds to every store (its "all"
-// storage).
-func storagePerCopy(d config.BuildingDef) float64 {
-	per := 0.0
-	for _, e := range d.Effects {
-		if e.Type == "storage" && e.Target == "all" {
-			per += e.Value
-		}
-	}
-	return per
-}
-
-// baseStorage is what res holds before any building.
-func baseStorage(res string) float64 {
-	for _, r := range config.BaseResources() {
-		if r.Key == res {
-			return r.BaseStorage
-		}
-	}
-	return 0
-}
-
-// gateStore is the storage, on top of a resource's base, that the gates into
-// ages[1:] force between them: every storage copy they ask for, at what a
-// copy holds. A town that has advanced into the last of ages holds at least
-// this, in the one place a town can get it: an older age's storage cannot be
-// built later.
-func gateStore(ages []config.AgeDef, defs map[string]config.BuildingDef) float64 {
-	total := 0.0
-	for _, a := range ages[1:] {
-		for _, bld := range sortedKeys(a.BuildingReqs) {
-			if d, ok := defs[bld]; ok && d.Category == "storage" {
-				total += float64(float64(a.BuildingReqs[bld]) * storagePerCopy(d))
-			}
-		}
-	}
-	return total
-}
-
-// ladderProblems checks the storage ladder for one advance, the last of
-// ages: the first copy of each storage building of `to` must fit, with
-// GateLadderMargin to spare, in the storage the gates force: the larger of
-// the gate's biggest single price (ladderForced) and the store the storage
-// copies asked for so far give (gateStore, on the resource's base). One row
-// per storage building, for the resource with the least headroom. A player
-// who met the gate with nothing to spare could otherwise never raise a cap
-// in `to`: the age lock forbids every older storage building.
-func ladderProblems(ages []config.AgeDef, from, to config.AgeDef, defs map[string]config.BuildingDef) []GateProblem {
-	forced, by := ladderForced(from, to, defs)
-	store := gateStore(ages, defs)
-	var out []GateProblem
-	for _, k := range sortedKeys(defs) {
-		d := defs[k]
-		if d.Category != "storage" || d.RequiredAge != to.Key {
-			continue
-		}
-		var worst *GateProblem
-		for _, res := range sortedKeys(d.BaseCost) {
-			c := d.BaseCost[res]
-			held, heldBy := forced, by
-			if s := store + baseStorage(res); s > held {
-				held, heldBy = s, "the storage copies the gates ask for"
-			}
-			if c*GateLadderMargin <= held || (worst != nil && c <= worst.Need) {
-				continue
-			}
-			worst = &GateProblem{From: from.Key, To: to.Key, Kind: "ladder", Key: k, Resource: res,
-				Need: c, MaxStorage: held, Margin: GateLadderMargin, ForcedBy: heldBy}
-		}
-		if worst != nil {
-			out = append(out, *worst)
 		}
 	}
 	return out

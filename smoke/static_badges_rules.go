@@ -12,7 +12,7 @@ import (
 )
 
 // static_badges_rules.go holds the proofs the full catalog added to the
-// Badge Covenant (static_badges.go): the last copy a store allows, most of
+// Badge Covenant (static_badges.go): the last copy a max count allows, most of
 // an age's buildings at once, a wonder, an age's techs, a domain's
 // payroll, a habit, and the things the game simply does. It also knows what
 // one run adds to each counter a ladder climbs, and how often one run can
@@ -68,7 +68,7 @@ func (c *badgeCheck) moreRules(def config.BadgeDef, label string, r *BadgeReach)
 		}
 		limit := math.Floor(float64(config.BadgeAgeShare * float64(total)))
 		r.Need, r.Limit = def.Threshold, limit
-		r.Basis = fmt.Sprintf("%d%% of the %s buildings the %s's storage allows", int(config.BadgeAgeShare*100), grouped(total), m.ageName(pos))
+		r.Basis = fmt.Sprintf("%d%% of the %s buildings the %s's ceilings allow", int(config.BadgeAgeShare*100), grouped(total), m.ageName(pos))
 		if def.Threshold <= 0 || def.Threshold > limit {
 			c.fail(def.Key, "age_copies", fmt.Sprintf("%s needs %s of the %s's buildings standing, and may ask for at most %s (%s).", label, grouped(int(def.Threshold)), m.ageName(pos), grouped(int(limit)), r.Basis))
 		}

@@ -27,6 +27,7 @@ func (s *Set) derive() {
 	s.flowStaffed = config.StaffedOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
 	s.military = config.MilitaryScales(s.techs, s.ageKeys)
 	s.typStore = config.TypicalStorages(s.buildings, s.resources, s.ageKeys)
+	s.refSize, s.refStore = config.ReferenceStoreSizes(s.buildings, s.ages, config.ReferenceBaseStore())
 	army := config.RefSoldiers(s.buildings, s.ages)
 	s.refArmy = make(map[string]float64, len(s.ages))
 	for i, a := range s.ages {
@@ -38,6 +39,18 @@ func (s *Set) derive() {
 // its base storage and config.StorageRuleCopies copies of every storage building
 // up to the age (config.TypicalStorages). 0 for an unknown age or resource.
 func (s *Set) TypicalStorage(res, age string) float64 { return s.typStore[age][res] }
+
+// ReferenceStorePerCopy is what one copy of the storage building key held of
+// every resource, in the reference store (config.ReferenceStoreSizes): a
+// storage building holds nothing now, and the few rules that still read a
+// store size are measured on this. 0 for a building that is not a storage
+// building. S3 of the no-caps work retires the readers.
+func (s *Set) ReferenceStorePerCopy(key string) float64 { return s.refSize[key] }
+
+// ReferenceStore is the reference store on leaving age: the base store and
+// config.StorageRuleCopies copies of the storage building of every age up to
+// and including it. 0 for an unknown age.
+func (s *Set) ReferenceStore(age string) float64 { return s.refStore[age] }
 
 // AgeHasStorageBuilding reports whether age has a storage building of its own.
 func (s *Set) AgeHasStorageBuilding(age string) bool {

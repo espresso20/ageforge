@@ -225,21 +225,12 @@ func (s *Summary) writeHarbingers(sb *strings.Builder) {
 	}
 	sb.WriteString("\nThread counts are keyed by the era whose doom the harbinger warns of. A false prophet is only revealed when its thread resolves; the live view hides it.\n")
 
-	sb.WriteString("\n### Level-1 prices against the most storage buildable in the age the harbinger arrives in\n\n")
-	sb.WriteString("A thread's price is set when its harbinger arrives and stays the same in every age it lives through. Appease is priced on the age the harbinger arrives in (what that age makes in the thread's shortest warning: a fifth of the age for a doom, two thirds of it for the Last Passage), so every age one can arrive in has a row. Brace is priced by the era for a doom, and on the same warning as Appease for the Last Passage. The Last Passage's thread comes with its era's first age; its later rows price a thread that began there (an older save, the dev console). \"Max storage\" assumes every capped storage building up to that age was built out, plus storage techs.\n\n")
-	sb.WriteString("| doom (harbinger arrives in) | Appease L1 | Brace L1 | max storage in that age | fits |\n|---|---|---|---|---|\n")
+	sb.WriteString("\n### Level-1 prices by the age the harbinger arrives in\n\n")
+	sb.WriteString("A thread's price is set when its harbinger arrives and stays the same in every age it lives through. Appease is priced on the age the harbinger arrives in (what that age makes in the thread's shortest warning: a fifth of the age for a doom, two thirds of it for the Last Passage), so every age one can arrive in has a row. Brace is priced by the era for a doom, and on the same warning as Appease for the Last Passage. The Last Passage's thread comes with its era's first age; its later rows price a thread that began there (an older save, the dev console). Stock has no cap, so no price is held against a store.\n\n")
+	sb.WriteString("| doom (harbinger arrives in) | Appease L1 | Brace L1 |\n|---|---|---|\n")
 	for _, p := range s.Prices {
-		var over []string
-		for _, c := range []map[string]float64{p.AppeaseL1, p.BraceL1} {
-			for _, res := range sortedKeys(c) {
-				if m := p.MaxStorage[res]; m >= 0 && c[res] > m {
-					over = append(over, fmt.Sprintf("no: %s %s > %s", res, num(c[res]), num(p.MaxStorage[res])))
-				}
-			}
-		}
-		fmt.Fprintf(sb, "| %s (%s) | %s | %s | %s | %s |\n", passageLabel(p.Epoch, p.TargetEpoch), p.Age,
-			orDefault(costStr(p.AppeaseL1), "-"), orDefault(costStr(p.BraceL1), "-"), capsStr(p.MaxStorage),
-			orDefault(strings.Join(over, "; "), "yes"))
+		fmt.Fprintf(sb, "| %s (%s) | %s | %s |\n", passageLabel(p.Epoch, p.TargetEpoch), p.Age,
+			orDefault(costStr(p.AppeaseL1), "-"), orDefault(costStr(p.BraceL1), "-"))
 	}
 
 	var threads []*HarbingerThread

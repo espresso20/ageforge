@@ -1,50 +1,22 @@
 package config
 
-import (
-	"math"
-
-	"github.com/espresso20/ageforge/detmath"
-)
-
-// The storage rule: how large each age's storage building is. It is written
-// in the tables (the storage buildings' own effects); this file is the
-// derivation, and a test recomputes the tables from it and fails when an
-// entry drifts.
+// What is left of the storage rule. Stock is uncapped (#268) and a storage
+// building boosts production instead of raising a store, so nothing sizes a
+// store any more and no check holds a price against one. Three facts about
+// storage buildings survive, because the gates and the price tables are built
+// on them:
 //
-// The reference town holds TownCopies copies of every building that is not
-// storage, or the gate's count where the gate asks for more; of the age's
-// storage building it holds StorageRuleCopies. For each age, in order:
+//   - a gate asks for StorageRuleCopies copies of the storage building of the
+//     age it leaves (GateStorageCopies), so a town that passes arrives with
+//     five of each;
+//   - a storage building climbs at StorageRate a copy (Kittens Game's barn),
+//     and its price is its only limit: it has no copy cap;
+//   - an older age's storage building cannot be built in a later age.
 //
-//  1. The dearest ask is the largest single price, in any one resource, the
-//     reference town pays in the age: the last copy of each building other
-//     than storage, at its reference count. A wonder is not counted: it is
-//     paid into its bank and may be larger than a store.
-//  2. StorageRuleCopies copies of the age's storage building, on top of what
-//     the stores of earlier ages hold, must hold the dearest ask and
-//     StorageRuleRoom more.
-//  3. Each copy of the storage building up to the last must fit under the
-//     store the copies before it give, with StorageRuleMargin to spare.
-//  4. A town must arrive in the next age able to pay the first copy of that
-//     age's storage building and of its house, with StorageRuleMargin to
-//     spare. If the next age has no storage building of its own, this age's
-//     store must hold what that age asks instead (rule 2 for it, and the
-//     first copy of each of its buildings).
-//  5. The size is the smallest that satisfies 2 to 4, never under
-//     StorageRuleFloor of what rule 2 asks in all, rounded up to two figures.
-//
-// A gate also asks for StorageRuleCopies copies of the storage building of
-// the age it leaves (GateStorageCopies). Rule 4 speaks of the reference
-// town; this makes it true of every town. An older age's storage building
-// cannot be built in a later age, and a store is a wall, so a town that
-// arrived holding less than the new age's first storage building costs could
-// never raise a store again: one Stash and a Storage Pit at 520 wood. With
-// the copies asked for, whoever passes a gate arrives with the reference
-// store, and rule 4 sized that to pay for the first copy.
+// The size a store used to have lives on as the reference store
+// (reference_store.go), for the rules that still read one.
 const (
 	StorageRuleCopies = 5
-	StorageRuleRoom   = 1.25
-	StorageRuleMargin = 1.05
-	StorageRuleFloor  = 0.05
 	// StorageRules is the version of the storage rules a save is written
 	// under: 1 from the storage wall on (a price larger than a store cannot
 	// be bought, overflow does not pay the plan). A save without it is from
@@ -74,145 +46,8 @@ func GateStorageCopies(defs []BuildingDef, ages []AgeDef) map[string]map[string]
 	return out
 }
 
-// storageRuleCount is how many copies of d, a building that is not storage,
-// the reference town holds.
-func storageRuleCount(d BuildingDef, gate map[string]int) int {
-	if IsKnowledgeBuilding(d) {
-		// The town holds the copies the gate asks, at the spend the
-		// knowledge rule keeps (knowledge_rule.go), not TownCopies.
-		return gate[d.Key]
-	}
-	return max(TownCopies, gate[d.Key])
-}
-
-func maxPrice(d BuildingDef, owned int) float64 {
-	f := detmath.Pow(d.CostScale, float64(owned))
-	top := 0.0
-	for r, v := range d.BaseCost {
-		if r == "knowledge" {
-			continue // knowledge has a store of its own (knowledge_rule.go)
-		}
-		top = math.Max(top, math.Max(1, math.Floor(v*f)))
-	}
-	return top
-}
-
-func roundUpSignificant(v float64, sig int) float64 {
-	if v <= 0 {
-		return 0
-	}
-	mag := detmath.Pow(10, math.Floor(detmath.Log10(v))-float64(sig-1))
-	return math.Ceil(v/mag-1e-9) * mag
-}
-
-// StorageRuleSizes works the storage rule out: the size of each age's
-// storage building ("all" storage per copy), by building key, and the
-// reference store on leaving each age, by age key. baseStore is what a
-// resource holds before any building.
-func StorageRuleSizes(defs []BuildingDef, ages []AgeDef, baseStore float64) (sizes map[string]float64, store map[string]float64) {
-	n := len(ages)
-	idx := make(map[string]int, n)
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
-	byAge := make([][]BuildingDef, n)
-	for _, d := range defs {
-		if i, ok := idx[d.RequiredAge]; ok && d.Category != "wonder" && d.Category != "monument" {
-			byAge[i] = append(byAge[i], d)
-		}
-	}
-	gate := func(i int) map[string]int {
-		if i+1 < n {
-			return ages[i+1].BuildingReqs
-		}
-		return nil
-	}
-	find := func(i int, category string) (BuildingDef, bool) {
-		for _, d := range byAge[i] {
-			if d.Category == category {
-				return d, true
-			}
-		}
-		return BuildingDef{}, false
-	}
-	dearest := func(i int) float64 {
-		top := 0.0
-		for _, d := range byAge[i] {
-			if d.Category != "storage" {
-				top = math.Max(top, maxPrice(d, storageRuleCount(d, gate(i))-1))
-			}
-		}
-		return top
-	}
-	sizes = map[string]float64{}
-	store = map[string]float64{}
-	prev := baseStore
-	for i := range ages {
-		b, ok := find(i, "storage")
-		if !ok {
-			store[ages[i].Key] = prev
-			continue
-		}
-		asked := StorageRuleRoom * dearest(i)
-		need := asked
-		if i+1 < n {
-			if nb, has := find(i+1, "storage"); has {
-				need = math.Max(need, StorageRuleMargin*maxPrice(nb, 0))
-				if h, hasHouse := find(i+1, "housing"); hasHouse {
-					need = math.Max(need, StorageRuleMargin*maxPrice(h, 0))
-				}
-			} else {
-				need = math.Max(need, StorageRuleRoom*dearest(i+1))
-				for _, d := range byAge[i+1] {
-					need = math.Max(need, StorageRuleMargin*maxPrice(d, 0))
-				}
-			}
-		}
-		size := math.Max((need-prev)/StorageRuleCopies, StorageRuleFloor*asked/StorageRuleCopies)
-		for k := 2; k <= StorageRuleCopies; k++ {
-			size = math.Max(size, (float64(StorageRuleMargin*maxPrice(b, k-1))-prev)/float64(k-1))
-		}
-		size = roundUpSignificant(size, 2)
-		sizes[b.Key] = size
-		prev += float64(StorageRuleCopies * size)
-		store[ages[i].Key] = prev
-	}
-	return sizes, store
-}
-
-// StorageLastCopy is how many copies of each storage building (by key) the
-// reference town can buy: the last copy k whose price, at k-1 owned, fits
-// under the store the stores of earlier ages and the k-1 copies before it give.
-// The price climbs by StorageRate a copy and the store by one size, so there
-// is always a last copy, and it is never under StorageRuleCopies (rule 3). The
-// next copy is over the store, and a screen must call that a limit, not send
-// the player to build the same storage building again. sizes and store are
-// what StorageRuleSizes gives for the same tables.
-func StorageLastCopy(defs []BuildingDef, ages []AgeDef, base float64, sizes, store map[string]float64) map[string]int {
-	out := map[string]int{}
-	prev := base
-	for _, a := range ages {
-		for _, d := range defs {
-			if d.Category != "storage" || d.RequiredAge != a.Key {
-				continue
-			}
-			last := 0
-			for k := 1; k <= 1000; k++ {
-				if maxPrice(d, k-1) > prev+float64(float64(k-1)*sizes[d.Key]) {
-					break
-				}
-				last = k
-			}
-			out[d.Key] = last
-		}
-		prev = store[a.Key]
-	}
-	return out
-}
-
 // AgeHasStorageBuilding reports whether the age has a storage building of its
-// own. The last age has none, and a refusal at the Quantum Vault's limit has
-// no bigger building to point at.
+// own. The last age has none.
 func AgeHasStorageBuilding(defs []BuildingDef, age string) bool {
 	for _, d := range defs {
 		if d.Category == "storage" && d.RequiredAge == age {

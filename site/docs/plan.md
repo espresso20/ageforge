@@ -69,13 +69,13 @@ A save from before stock had no limit had banked part of its items' prices in th
 ```
 ═══ Build Plan ═══
  ▸  1. Hut ×3
-       ready    starts next tick for 18 wood
+       ready    starts next tick for 20 wood
     2. Story Circle
        blocked  too little wood coming in
     3. Wood Camp
-       ready    starts next tick for 20 wood
+       ready    starts next tick for 23 wood
     4. Stash ×2
-       waiting  ████░░░░  57%  wood 26 / 45 (35 held for items above)
+       waiting  ████░░░░  58%  wood 29 / 50 (35 held for items above)
     5. research Tool Making
        blocked  research slot busy
 

@@ -9,17 +9,13 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// The harbinger price check: every Appease and Brace price, both levels, must
-// fit the most storage a player can have in the age the harbinger arrives in
-// (MaxStorage), since a thread's price is set then and stays the same in
-// every age it lives through, where storage is only larger. Every age a
-// harbinger can arrive in is checked (HarbingerPrices), for a doom's thread
-// and for the Last Passage's. Appease is priced on what the age produces at
-// its pacing target (the share of config.FlowIncome × config.AgeTargetTicks
-// that the thread's shortest warning makes), so a longer curve raises it
-// while faith and culture storage stay as typed; this is the check that
-// catches a curve change outgrowing storage. Level 2 is checked at its own
-// price, the same again as level 1.
+// The harbinger price checks. Stock has no cap, so no price is held against
+// the most storage buildable (that check went with the stores); what holds a
+// price is the warning it is priced on. Appease is priced on what the age
+// produces at its pacing target (the share of config.FlowIncome ×
+// config.AgeTargetTicks that the thread's shortest warning makes), so a longer
+// curve raises it. Level 2 is checked at its own price, the same again as
+// level 1.
 //
 // The Appease rule check (StaticAppeaseRules) holds each level-1 Appease
 // price to the warning it is priced on: a moderate economy
@@ -40,39 +36,6 @@ import (
 // material may ask for more than its BraceCeiling, three fifths of what a
 // moderate builder's store holds (five copies of every storage building),
 // and a price that sits on its ceiling has given all the effort it may.
-
-// HarbingerPriceProblem is one price no storage in its arrival age holds.
-type HarbingerPriceProblem struct {
-	Epoch      string  `json:"epoch"`
-	Answer     string  `json:"answer"` // "appease 1", "appease 2", "brace 1", "brace 2"
-	Resource   string  `json:"resource"`
-	Price      float64 `json:"price"`
-	Age        string  `json:"age"`
-	MaxStorage float64 `json:"max_storage"`
-}
-
-// StaticHarbingerPrices checks every thread's harbinger prices against the
-// most storage buildable in the age its harbinger arrives in.
-func StaticHarbingerPrices() []HarbingerPriceProblem {
-	var out []HarbingerPriceProblem
-	for _, r := range HarbingerPrices() {
-		check := func(answer string, cost map[string]float64) {
-			if r.TargetEpoch == "" {
-				answer += " (Last Passage)"
-			}
-			for _, res := range sortedKeys(cost) {
-				if m := MaxStorage(r.Age, res); cost[res] > m {
-					out = append(out, HarbingerPriceProblem{Epoch: r.Epoch, Answer: answer, Resource: res, Price: cost[res], Age: r.Age, MaxStorage: m})
-				}
-			}
-		}
-		check("appease 1", r.AppeaseL1)
-		check("appease 2", r.AppeaseL2)
-		check("brace 1", r.BraceL1)
-		check("brace 2", r.BraceL2)
-	}
-	return out
-}
 
 // The rules an AppeaseRuleProblem can break.
 const (
@@ -311,18 +274,9 @@ func braceRuleProblems(rows []PriceRow, income, built func(res, age string) floa
 	return out
 }
 
-// writeHarbingerPrices renders the three checks for the static scenario.
-func writeHarbingerPrices(sb *strings.Builder, problems []HarbingerPriceProblem, appease []AppeaseRuleProblem, brace []BraceRuleProblem) {
-	sb.WriteString("Every Appease and Brace price, both levels, against the most storage buildable in the age the harbinger arrives in, for every age one can arrive in (a thread's price is set then and is the same in every age it lives through).\n\n")
-	if len(problems) == 0 {
-		sb.WriteString("No problems.\n")
-	} else {
-		sb.WriteString("| era | answer | price | max storage in |\n|---|---|---|---|\n")
-		for _, p := range problems {
-			fmt.Fprintf(sb, "| %s | %s | %s %s | %s (%s) |\n", p.Epoch, p.Answer, num(p.Price), p.Resource, num(p.MaxStorage), p.Age)
-		}
-	}
-	sb.WriteString("\nEvery level-1 Appease price against the warning it is priced on: a moderate economy (config.FlowIncome) must make it inside the thread's shortest warning (a fifth of the arrival age for a doom, two thirds of it for the Last Passage), and the Last Passage's must cost more than a doom's foretold in the same age.\n\n")
+// writeHarbingerPrices renders the two checks for the static scenario.
+func writeHarbingerPrices(sb *strings.Builder, appease []AppeaseRuleProblem, brace []BraceRuleProblem) {
+	sb.WriteString("Every level-1 Appease price against the warning it is priced on: a moderate economy (config.FlowIncome) must make it inside the thread's shortest warning (a fifth of the arrival age for a doom, two thirds of it for the Last Passage), and the Last Passage's must cost more than a doom's foretold in the same age.\n\n")
 	if len(appease) == 0 {
 		sb.WriteString("No problems.\n")
 	} else {

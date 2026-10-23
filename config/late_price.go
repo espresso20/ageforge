@@ -19,7 +19,7 @@ const LatePriceStartAge = "modern_age"
 // of the price it was authored at. Upgrading an older building costs
 // UpgradeShare of a new copy, so the factor is what keeps the upgrade road from
 // shortening the game. Wonders and monuments are not scaled.
-const NewCopyPriceFactor = 1.29
+const NewCopyPriceFactor = 1.43
 
 // WonderBuildFactor makes a wonder the long build that ends an age.
 const WonderBuildFactor = 2
@@ -89,29 +89,6 @@ func applyWonderBuildFactor(defs []BuildingDef) {
 	for i := range defs {
 		if defs[i].Category == "wonder" {
 			defs[i].BuildTicks = int(math.Round(float64(defs[i].BuildTicks) * WonderBuildFactor))
-		}
-	}
-}
-
-// rederiveLatePriceStorage keeps storage on its existing price rule after the
-// late-age curve changes its inputs. Storage is expressed in resources, so it
-// has to be written back into the runtime table after the prices are scaled.
-func rederiveLatePriceStorage(defs []BuildingDef) {
-	base := 0.0
-	for _, resource := range BaseResources() {
-		if resource.Key == "wood" {
-			base = resource.BaseStorage
-			break
-		}
-	}
-	sizes, _ := StorageRuleSizes(defs, Ages(), base)
-	for i := range defs {
-		if size, ok := sizes[defs[i].Key]; ok {
-			for j := range defs[i].Effects {
-				if defs[i].Effects[j].Type == "storage" && defs[i].Effects[j].Target == "all" {
-					defs[i].Effects[j].Value = size
-				}
-			}
 		}
 	}
 }
