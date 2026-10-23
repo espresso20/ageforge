@@ -507,13 +507,12 @@ type TechState struct {
 
 // MilitaryState represents military system state for UI
 type MilitaryState struct {
-	// SoldierCount is the soldiers at home: the soldiers resource, which is
-	// held at the posted army (soldiers.go).
+	// SoldierCount is the soldiers at home: the posted army less the parties
+	// away (soldiers.go).
 	SoldierCount int
 	// SoldierCap is the army's whole strength: the posts of every standing
-	// military building. SoldierRate is always 0: nothing trains soldiers.
-	SoldierCap  int
-	SoldierRate float64
+	// military building.
+	SoldierCap int
 	// Posts is the soldiers' posts building by building, oldest first: the
 	// army at home over the army's whole strength.
 	Posts         []SoldierPost
@@ -736,7 +735,7 @@ type MilestoneSnapshotParams struct {
 	Population      int
 	TechCount       int
 	TotalBuilt      int
-	SoldierCount    int // soldiers resource amount (live); used by non-milestone consumers
+	SoldierCount    int // soldiers at home (live); used by non-milestone consumers
 	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
 	KnowledgeCount  int // scholars

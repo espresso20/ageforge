@@ -955,7 +955,7 @@ func rawTechnologies() []TechDef {
 			Prerequisites: []string{"mechanized_warfare", "nuclear_deterrence"},
 			Description:   "Armies, factories and laboratories on one budget, in peace as in war.",
 			Effects: []TechEffect{
-				{Kind: EffectMechanic, Target: MechanicSoldierStorage, Value: 0.20},
+				{Kind: EffectMechanic, Target: MechanicSoldierPosts, Value: 0.10},
 				{Kind: EffectMechanic, Target: MechanicCampaignReward, Value: 0.20},
 			},
 		},
@@ -1375,7 +1375,7 @@ func rawTechnologies() []TechDef {
 			Description:   "Soldiers rebuilt to see in the dark and carry twice the load.",
 			Effects: []TechEffect{
 				{Kind: EffectMilitaryPower, Value: 0.10},
-				{Kind: EffectMechanic, Target: MechanicSoldierStorage, Value: 0.10},
+				{Kind: EffectMechanic, Target: MechanicSoldierPosts, Value: 0.10},
 			},
 		},
 		{

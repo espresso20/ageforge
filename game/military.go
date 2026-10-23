@@ -372,11 +372,9 @@ func (mm *MilitaryManager) CalculateDefense(soldierCount int, militaryBonus floa
 
 // Snapshot returns military state for UI.
 //
-// soldierCount is the current soldiers resource amount; soldierCap and
-// soldierRate are that resource's storage cap and per-tick production rate.
-// The engine fills the board's offers (it knows the costs and the stores) and
+// soldierCount is the soldiers at home. The engine fills the board's offers (it knows the costs and the stores) and
 // the automatic dispatch view.
-func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, militaryBonus, expeditionBonus float64) MilitaryState {
+func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionBonus float64) MilitaryState {
 	snap := func(a *ActiveExpedition) *ExpeditionSnapshot {
 		out := snapshotActive(a, expeditionBonus)
 		if out != nil {
@@ -404,8 +402,6 @@ func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, m
 
 	return MilitaryState{
 		SoldierCount:    soldierCount,
-		SoldierCap:      soldierCap,
-		SoldierRate:     soldierRate,
 		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
 		MilitaryBonus:   militaryBonus,
 		ExpeditionBonus: expeditionBonus,

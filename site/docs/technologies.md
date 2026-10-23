@@ -450,7 +450,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | `prefabrication` | Prefabrication | optional | 10h 54m | `assembly_line` | Buildings cost 2% less, +5% storage |
 | `plastics` | Plastics | optional | 14h 9m | `chemical_engineering` | +5% oil production |
 | `nuclear_deterrence` | Nuclear Deterrence | optional | 18h 28m | `nuclear_fission`, `rocketry` | +10% military power, raids on you take 10% less |
-| `military_industrial_complex` | Military-Industrial Complex | capstone | 40h 32m | `mechanized_warfare`, `nuclear_deterrence` | Room for 20% more soldiers, campaigns bring back 20% more |
+| `military_industrial_complex` | Military-Industrial Complex | capstone | 40h 32m | `mechanized_warfare`, `nuclear_deterrence` | Military buildings have 10% more soldier posts, campaigns bring back 20% more |
 | `nuclear_fission` | Nuclear Fission | **keystone** (Particle Accelerator) | 3h 48m | `power_distribution`, `chemical_engineering` | +5% uranium production, +5% electricity production |
 | `civilian_reactors` | Civilian Reactors | optional | 23h 59m | `nuclear_deterrence` | Opens the Nuclear Plant |
 | `rocketry` | Rocketry | spine | 2h 56m | `aviation` | +10% expedition rewards, +10% military power |
@@ -522,7 +522,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | `synthetic_food` | Synthetic Food | optional | 69h 44m | `gene_editing` | +4% food production |
 | `cybernetics` | Cybernetics | **keystone** (Neon Citadel) | 31h 39m | `neural_interface` | Opens the Combat Aug Center, +10% military power |
 | `dark_crystal_mining` | Dark Crystal Mining | optional | 90h 43m | `nano_alloys` | +4% dark matter crystals production |
-| `augmented_soldiers` | Augmented Soldiers | optional | 117h 52m | `cybernetics`, `drone_warfare` | +10% military power, room for 10% more soldiers |
+| `augmented_soldiers` | Augmented Soldiers | optional | 117h 52m | `cybernetics`, `drone_warfare` | +10% military power, military buildings have 10% more soldier posts |
 | `dark_energy` | Dark Energy | optional | 153h 3m | `grid_storage` | Opens the Dark Energy Tap, +4% electricity production |
 | `lunar_outposts` | Lunar Outposts | optional | 198h 43m | `reusable_launchers` | +8% expedition rewards |
 | `darknets` | Darknets | optional | 258h 34m | `cloud_computing` | +4% data production |

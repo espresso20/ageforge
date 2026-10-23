@@ -14,26 +14,14 @@ import (
 func stageSoldierProduction(t *testing.T, ge *GameEngine, numBarracks int) {
 	t.Helper()
 	const barracks = "barracks"
-	def := config.BuildingByKey()[barracks]
 
 	ge.mu.Lock()
 	ge.Buildings.counts[barracks] = numBarracks
 	ge.Buildings.unlocked[barracks] = true
 	// Food enough that the food margin lets the soldiers take their posts.
 	ge.Buildings.counts["gathering_camp"] = 60
-	ge.Resources.UnlockResource("soldiers")
 	ge.Resources.UnlockResource("food")
 	ge.Resources.AddStorage("food", 1e9)
-	ge.Workers.UnlockType("worker")
-	totalSlots := def.WorkerCapacity * numBarracks
-	if !ge.Workers.Recruit("worker", totalSlots, 100000) {
-		ge.mu.Unlock()
-		t.Fatalf("failed to recruit %d workers", totalSlots)
-	}
-	if !ge.Workers.Assign("worker", barracks, totalSlots) {
-		ge.mu.Unlock()
-		t.Fatalf("failed to assign %d workers to barracks", totalSlots)
-	}
 	ge.mu.Unlock()
 }
 
@@ -71,10 +59,10 @@ func TestSoldiersTrained_AccruesAcrossTicks(t *testing.T) {
 		t.Fatalf("SoldiersTrained after two staffing passes = %v, want > 0", trained)
 	}
 
-	// The cumulative counter should track the soldiers resource amount while the
-	// resource is still below its storage cap and nothing has been spent.
-	if soldiers := ge.Resources.Get("soldiers"); trained < soldiers {
-		t.Errorf("SoldiersTrained=%v should be >= current soldiers resource=%v", trained, soldiers)
+	// The cumulative counter should track the soldiers at home while nothing
+	// has been spent.
+	if soldiers := float64(ge.soldiersHome()); trained < soldiers {
+		t.Errorf("SoldiersTrained=%v should be >= soldiers at home=%v", trained, soldiers)
 	}
 }
 
@@ -104,7 +92,7 @@ func TestSoldiersTrained_NotDecreasedBySpending(t *testing.T) {
 	if err := ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)); err != nil {
 		t.Fatalf("LaunchExpedition(military grand) error: %v", err)
 	}
-	if got := ge.Resources.Get("soldiers"); got != 871 {
+	if got := float64(ge.soldiersHome()); got != 871 {
 		t.Fatalf("soldiers at home after launch = %v, want 871 (1000 less the party of 129)", got)
 	}
 
@@ -270,7 +258,6 @@ func TestEveryOfferCostsItsParty(t *testing.T) {
 	for order, age := range config.Ages() {
 		ge := NewGameEngine()
 		setAge(ge, age.Key)
-		setIncome(ge, "soldiers", 5)
 		ge.EnsureMissionBoard()
 		for i, slot := range ge.Military.board.Slots {
 			kind := slot.Offer.Tier
@@ -379,7 +366,7 @@ func TestSameTierMissionsRunTogether(t *testing.T) {
 		t.Errorf("%d missions out, want 4 (two short, two grand)", got)
 	}
 	// Two short parties of 8 and two campaigns of 60 left 1000 - 136 home.
-	if got := ge.Resources.Get("soldiers"); got != 864 {
+	if got := float64(ge.soldiersHome()); got != 864 {
 		t.Errorf("%v soldiers at home, want 864", got)
 	}
 }

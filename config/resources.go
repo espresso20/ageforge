@@ -46,7 +46,6 @@ func BaseResources() []ResourceDef {
 		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age", Description: "Currency and trade"},
 		// Iron Age (Iron Era); coal unlocks in the Renaissance Age (Steel Era)
 		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "renaissance_age", Description: "Fuel for smelting and industry"},
-		{Name: "Soldiers", Key: "soldiers", BaseStorage: 0, Age: "iron_age", BuiltUnlocks: true, Description: "Trained fighting force produced by military buildings; spent on campaigns"},
 		// Iron Age (Iron Era): intermediate ores for Geological Extraction and Metallurgy
 		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "iron_age", Description: "Polished stone from quarries"},
 		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "iron_age", Description: "Raw iron ore from mines and quarries"},

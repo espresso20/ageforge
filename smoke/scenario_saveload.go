@@ -76,10 +76,9 @@ func saveloadSkip(path string) bool {
 // reloadSkip is saveloadSkip plus the resource rates: a live snapshot holds
 // the rates the last tick computed before morale and the like moved, while
 // LoadGame recomputes them from the saved state. The next tick agrees
-// again, and the continued-play comparison covers them. Military.SoldierRate
-// is the soldiers resource's rate under another name.
+// again, and the continued-play comparison covers them.
 func reloadSkip(path string) bool {
-	if saveloadSkip(path) || path == "Military.SoldierRate" {
+	if saveloadSkip(path) {
 		return true
 	}
 	if strings.HasPrefix(path, "Resources[") {

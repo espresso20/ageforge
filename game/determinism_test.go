@@ -128,7 +128,6 @@ func (sc determinismScript) play(ge *GameEngine, from, to int) string {
 		}
 		if i%40 == 0 {
 			ge.garrisonForTest, ge.garrisonForTestSet = 200, true
-			ge.Resources.resources["soldiers"].Amount = 200
 		}
 		ge.mu.Unlock()
 		if i%40 == 0 {

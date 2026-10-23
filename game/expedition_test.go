@@ -28,7 +28,6 @@ func setSoldiers(ge *GameEngine, amount float64) {
 	ge.garrisonForTest, ge.garrisonForTestSet = amount, true
 	ge.syncSoldiers()
 	ge.mu.Unlock()
-	setResource(ge, "soldiers", amount)
 }
 
 func setAge(ge *GameEngine, age string) {
@@ -60,7 +59,7 @@ func TestLaunchExpedition_TakesThePartyOutOfThePosts(t *testing.T) {
 		t.Fatalf("LaunchExpedition(siege_campaign) returned error: %v", err)
 	}
 
-	if got := ge.Resources.Get("soldiers"); got != 71 {
+	if got := float64(ge.soldiersHome()); got != 71 {
 		t.Errorf("soldiers at home after launch = %v, want 71 (200 less the party of %d)", got, party)
 	}
 	if active := ge.Military.ActiveByTier(TierGrand); active == nil || active.Soldiers != need || active.Party != need {
@@ -108,7 +107,7 @@ func TestLaunchExpedition_InsufficientSoldiers_NoDeduction(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error launching with insufficient soldiers, got nil")
 	}
-	if got := ge.Resources.Get("soldiers"); got != 4 {
+	if got := float64(ge.soldiersHome()); got != 4 {
 		t.Errorf("soldiers after failed launch = %v, want 4 (unchanged)", got)
 	}
 	if ge.Military.HasActive() {

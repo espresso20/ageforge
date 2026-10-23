@@ -269,9 +269,16 @@ func TestAutoExpedition_PaysTheCost(t *testing.T) {
 		t.Skip("the chosen mission is free — nothing to charge")
 	}
 
+	// The party is the soldiers at home, not a resource.
+	held := func(res string) float64 {
+		if res == "soldiers" {
+			return float64(ge.soldiersHome())
+		}
+		return ge.Resources.Get(res)
+	}
 	before := map[string]float64{}
 	for res := range cost {
-		before[res] = ge.Resources.Get(res)
+		before[res] = held(res)
 	}
 
 	launched, _ := runAutoTicks(ge, 1)
@@ -280,7 +287,7 @@ func TestAutoExpedition_PaysTheCost(t *testing.T) {
 	}
 	for res, amount := range cost {
 		want := before[res] - amount
-		if got := ge.Resources.Get(res); got != want {
+		if got := held(res); got != want {
 			t.Errorf("%s: have %.2f after the auto-launch, want %.2f (cost %.2f unpaid or double-charged)",
 				res, got, want, amount)
 		}
