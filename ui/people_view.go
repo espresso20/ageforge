@@ -131,13 +131,14 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 	ws := st.Workers
 	pop := FormatNumber(float64(ws.TotalPop))
 	homes := FormatNumber(float64(ws.MaxPop))
-	n := runeLen(vibe.Line("ui.people_view.peopleHeader.01", "People ") + pop + vibe.Line("ui.people_view.peopleHeader.02", " of ") + homes + vibe.Line("ui.people_view.peopleHeader.03", " homes"))
+	people, of, homesWord := vibe.Line("ui.people_view.peopleHeader.04", "People "), vibe.Line("ui.people_view.peopleHeader.05", " of "), vibe.Line("ui.people_view.peopleHeader.06", " homes")
+	n := runeLen(people + pop + of + homes + homesWord)
 	if start := g.w - 3 - n + 1; start > x+1 {
 		k := xBright
 		if ws.TotalPop > ws.MaxPop {
 			k = xBad
 		}
-		g.segs(start, 1, xseg{vibe.Line("ui.people_view.peopleHeader.04", "People "), xDim}, xseg{pop, k}, xseg{vibe.Line("ui.people_view.peopleHeader.05", " of ") + homes + vibe.Line("ui.people_view.peopleHeader.06", " homes"), xText})
+		g.segs(start, 1, xseg{people, xDim}, xseg{pop, k}, xseg{of + homes + homesWord, xText})
 	}
 }
 

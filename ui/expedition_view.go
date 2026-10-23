@@ -401,7 +401,8 @@ func header(g *xgrid, state game.GameState, v expView, l expLayout) {
 	g.put(l.w-3-len([]rune(rank)), 0, rank, xText)
 	home := FormatNumber(float64(state.Military.SoldierCount))
 	posted := FormatNumber(float64(state.Military.SoldierCount + state.Military.SoldiersAway))
-	g.segs(l.w-3-len([]rune(vibe.Line("ui.expedition_view.header.04", "Soldiers ")+home+vibe.Line("ui.expedition_view.header.05", " of ")+posted+vibe.Line("ui.expedition_view.header.06", " at home")))+1, 1, xseg{vibe.Line("ui.expedition_view.header.07", "Soldiers "), xDim}, xseg{home, xText}, xseg{vibe.Line("ui.expedition_view.header.08", " of "), xDim}, xseg{posted, xText}, xseg{vibe.Line("ui.expedition_view.header.09", " at home"), xDim})
+	soldiers, of, atHome := vibe.Line("ui.expedition_view.header.07", "Soldiers "), vibe.Line("ui.expedition_view.header.08", " of "), vibe.Line("ui.expedition_view.header.09", " at home")
+	g.segs(l.w-3-runeLen(soldiers+home+of+posted+atHome)+1, 1, xseg{soldiers, xDim}, xseg{home, xText}, xseg{of, xDim}, xseg{posted, xText}, xseg{atHome, xDim})
 }
 
 // drawMap draws the terrain, the town, the routes, the pins and their

@@ -127,17 +127,22 @@ func peopleRichText(state game.GameState, w, h int) string {
 
 	// The headcount over the homes, and how full they are when it fits.
 	pop, housing := fmt.Sprintf("%d", ws.TotalPop), fmt.Sprintf("%d", ws.MaxPop)
-	if runeLen(vibe.Line("ui.people_rich.peopleRichText.01", "Pop ")+pop+"/"+housing) > w {
-		pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
-	}
 	popColor := theme.Tag(theme.RoleHighlight)
 	if ws.TotalPop > ws.MaxPop {
 		popColor = theme.Tag(theme.RoleNegative) // the scholars moved in past the homes
 	}
-	popLine := vibe.Sprintf("ui.people_rich.peopleRichText.02", "%sPop[-] %s%s[-]/%s%s[-]", theme.Tag(theme.RoleDim), popColor, pop, theme.Tag(theme.RolePositive), housing)
+	// The line is measured as it is drawn, in whichever script it is written.
+	say := func() string {
+		return vibe.Sprintf("ui.people_rich.peopleRichText.02", "%sPop[-] %s%s[-]/%s%s[-]", theme.Tag(theme.RoleDim), popColor, pop, theme.Tag(theme.RolePositive), housing)
+	}
+	popLine := say()
+	if visibleLen(popLine) > w {
+		pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
+		popLine = say()
+	}
 	if ws.MaxPop > 0 {
 		share := vibe.Sprintf("ui.people_rich.peopleRichText.03", "%d%% full", ws.TotalPop*100/ws.MaxPop)
-		if used := runeLen(vibe.Line("ui.people_rich.peopleRichText.04", "Pop ") + pop + "/" + housing); used+2+runeLen(share) <= w {
+		if used := visibleLen(popLine); used+2+runeLen(share) <= w {
 			popLine += strings.Repeat(" ", w-used-runeLen(share)) + theme.Paint(theme.RoleDim, share)
 		}
 	}

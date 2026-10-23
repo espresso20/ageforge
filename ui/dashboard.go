@@ -1132,21 +1132,24 @@ func peopleBoxTitle(state game.GameState, detail bool) string {
 // short (51.8M for 51785785). The food use and net are on the People panel.
 func peopleBoxText(state game.GameState, w int, detail bool) string {
 	ws := state.Workers
-	fits := func(plain string) bool { return w <= 0 || runeLen(plain) <= w }
 	var sb strings.Builder
 
 	// On a short terminal with a Held-by line up, the headcount moves to the
 	// box's title (peopleBoxTitle) and its row goes to the Panels list.
 	if !peopleBoxCompact(state, detail) {
 		pop, housing := fmt.Sprintf("%d", ws.TotalPop), fmt.Sprintf("%d", ws.MaxPop)
-		if !fits(vibe.Line("ui.dashboard.peopleBoxText.01", "Pop ") + pop + "/" + housing) {
-			pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
-		}
 		popColor := "yellow"
 		if ws.TotalPop > ws.MaxPop {
 			popColor = "red" // the scholars moved in past the homes
 		}
-		fmt.Fprint(&sb, vibe.Sprintf("ui.dashboard.peopleBoxText.02", "[gray]Pop[white] [%s]%s[white]/[green]%s[-]\n", popColor, pop, housing))
+		// The line is measured as it is drawn, in whichever script it is written.
+		popLine := func() string {
+			return vibe.Sprintf("ui.dashboard.peopleBoxText.02", "[gray]Pop[white] [%s]%s[white]/[green]%s[-]\n", popColor, pop, housing)
+		}
+		if w > 0 && visibleLen(strings.TrimRight(popLine(), "\n")) > w {
+			pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
+		}
+		fmt.Fprint(&sb, popLine())
 	}
 
 	for _, k := range peopleKinds(state) {
