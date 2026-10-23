@@ -1,0 +1,8 @@
+extends: existence
+message: "Use a comma, colon, or full stop instead of the dash '%s'."
+description: "No em dashes or en dashes in the wiki or the README."
+level: error
+nonword: true
+tokens:
+  - "—"
+  - "–"

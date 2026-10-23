@@ -1,0 +1,75 @@
+name: Release snapshot
+
+# Builds the release binaries with GoReleaser (.goreleaser.yaml) and uploads
+# them as a workflow artifact, so a release build can be tried on demand
+# without tagging anything. Manual only.
+#
+# This workflow publishes nothing: no tag, no GitHub release, no secrets. A tag
+# push is still released by release.yml. See docs/ci.md for the plan to switch
+# that over.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    name: goreleaser snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          distribution: goreleaser
+          version: v2.18.3
+          args: release --snapshot --clean
+
+      # GoReleaser leaves each binary in its own folder under its build name;
+      # the release names are in artifacts.json. Gather them beside the
+      # checksums and check the checksums, as a user downloading them would.
+      - name: Gather the release files
+        run: |
+          set -euo pipefail
+          mkdir release-files
+          jq -r '.[] | select(.type == "Binary" and (.name | startswith("ageforge-"))) | "\(.path)\t\(.name)"' dist/artifacts.json |
+            while IFS=$'\t' read -r path name; do
+              cp "$path" "release-files/$name"
+            done
+          cp dist/SHA256SUMS.txt release-files/
+          cd release-files
+          sha256sum --check SHA256SUMS.txt
+          ls -l
+
+      - name: Job summary
+        run: |
+          {
+            echo "### Release snapshot"
+            echo
+            echo "Version: \`$(jq -r .version dist/metadata.json)\`"
+            echo
+            echo '```'
+            (cd release-files && ls -l && echo && cat SHA256SUMS.txt)
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-snapshot
+          path: release-files/
+          retention-days: 7

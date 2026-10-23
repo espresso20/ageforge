@@ -1,0 +1,95 @@
+# golangci-lint v2 configuration. See docs/ci.md for what each linter is for and
+# how to silence a false positive.
+#
+# The set is deliberately small: bug finders, security, and performance hints.
+# No style-only linters (no stylecheck rules, no formatters beyond what
+# go.yml already enforces with gofmt).
+version: "2"
+
+run:
+  timeout: 10m
+  # Tests are linted too (a leaked response body or a hugeParam in a benchmark
+  # helper is still worth knowing), but see the exclusions below.
+  tests: true
+  # Nothing here is in a build tag the CI does not build.
+  build-tags: []
+
+linters:
+  default: none
+  enable:
+    - staticcheck # bug finders (SA) and code simplifications (S)
+    - unused # dead code that the compiler does not catch
+    - ineffassign # assignments whose value is never read
+    - errorlint # errors.Is/As instead of ==, %w instead of %v
+    - bodyclose # http.Response bodies that are never closed
+    - unconvert # conversions that change nothing
+    - gocritic # performance tag only, see settings
+    - prealloc # slices that could be allocated up front
+    - perfsprint # fmt.Sprintf where strconv or concatenation is cheaper
+    - gosec # security rules
+    - misspell # US spelling in comments and strings
+
+  settings:
+    staticcheck:
+      # Everything except the stylecheck (ST) and quickfix (QF) families,
+      # which are style and refactoring suggestions rather than defects.
+      checks:
+        - all
+        - -ST*
+        - -QF*
+    gocritic:
+      # Performance hints only: hugeParam, rangeValCopy, appendCombine,
+      # equalFold, indexAlloc, preferStringWriter, sliceClear, and friends.
+      disable-all: true
+      enabled-tags:
+        - performance
+      settings:
+        # The defaults (80 and 128 bytes) flag a thousand call sites. These
+        # thresholds keep the hint for values where a copy actually costs.
+        hugeParam:
+          sizeThreshold: 256
+        rangeValCopy:
+          sizeThreshold: 256
+    misspell:
+      locale: US
+    perfsprint:
+      # Hot paths care about allocations, error-message formatting does not.
+      errorf: false
+    gosec:
+      excludes:
+        # G104 duplicates errcheck, which is not enabled on purpose.
+        - G104
+        # G115 flags every int/float/uint conversion. The simulation converts
+        # constantly and bounds the values by construction.
+        - G115
+        # G404 flags math/rand. The simulation needs a seeded, reproducible
+        # generator (see the determinism rules in CONTRIBUTING.md), and nothing
+        # here is a secret.
+        - G404
+        # G304 flags every os.ReadFile(path). The game reads its own save,
+        # config, and word files from paths it builds itself.
+        - G304
+
+  exclusions:
+    # Skip files that carry a "generated" header comment.
+    generated: lax
+    paths:
+      # Local-only, git-ignored folders; present on a developer machine only.
+      - data
+      - design-private
+    rules:
+      # Test files build throwaway temp files and fixtures on purpose.
+      - path: _test\.go
+        linters:
+          - gosec
+      # Benchmarks and test helpers copy big structs freely.
+      - path: _test\.go
+        text: "(hugeParam|rangeValCopy)"
+        linters:
+          - gocritic
+
+issues:
+  # Show every finding, not the first 50 per linter, so the baseline count in
+  # the job summary is the real one.
+  max-issues-per-linter: 0
+  max-same-issues: 0

@@ -5,3 +5,16 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+
+  # Every workflow action is pinned to a commit SHA with its version in a
+  # trailing comment; Dependabot bumps the SHA and the comment together. One
+  # pull request a week for all of them.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns:
+          - "*"

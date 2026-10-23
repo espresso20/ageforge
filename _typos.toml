@@ -1,0 +1,48 @@
+# Config for typos (crate-ci/typos). See docs/ci.md for how to run it and how
+# to silence a false positive.
+
+[files]
+extend-exclude = [
+    # VibeMode slang is deliberate (the wording switch writes it that way).
+    "words/vibe/",
+    # Local-only, git-ignored folders; present on a developer machine only.
+    "design-private/",
+    "data/",
+    # Terminal screenshots stored as JSON: text cut off at column edges.
+    "site/docs/screens/",
+    # Fantasy name syllables for save names.
+    "game/savenames.go",
+    # Checksums, not words.
+    "go.sum",
+]
+
+[default]
+# A word typos reads as a typo but this repository uses on purpose.
+# Short loop and geometry variable names first, then spellings that tests feed
+# to the input parser on purpose.
+[default.extend-words]
+# Variable names: cpy (centre y), fpt (fractional point), iy, ot, nd, lins,
+# ba, pn, mis, bui, lits.
+cpy = "cpy"
+fpt = "fpt"
+iy = "iy"
+ot = "ot"
+nd = "nd"
+lins = "lins"
+ba = "ba"
+pn = "pn"
+mis = "mis"
+bui = "bui"
+lits = "lits"
+# Alternate spelling the account code and its tests use.
+unparseable = "unparseable"
+# Misspellings the command parser's typo tolerance is tested against.
+biuld = "biuld"
+reserch = "reserch"
+halp = "halp"
+schol = "schol"
+# Fantasy and proper names in the map and flavor code.
+vektor = "vektor"
+# Column headers cut to width in tables ("Nam", "Sie").
+nam = "nam"
+sie = "sie"
