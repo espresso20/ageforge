@@ -3421,12 +3421,12 @@ func (ge *GameEngine) AdvanceAge() error {
 			if wonderKey != "" && ge.Buildings.GetCount(wonderKey) < 1 {
 				if def, ok := ge.Buildings.defs[wonderKey]; ok {
 					if ge.Buildings.TechLocked(wonderKey) {
-						return fmt.Errorf("Build the %s wonder before advancing: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'.", def.Name, ge.techName(def.RequiredTech), wonderKey)
+						return fmt.Errorf("Build the %s wonder before advancing: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'. %s", def.Name, ge.techName(def.RequiredTech), wonderKey, charterHint)
 					}
-					return fmt.Errorf("Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'.", def.Name, wonderKey)
+					return fmt.Errorf("Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'. %s", def.Name, wonderKey, charterHint)
 				}
 			}
-			return fmt.Errorf("Not ready to advance. The Next Age bar lists what is missing.")
+			return fmt.Errorf("Not ready to advance. The Next Age bar lists what is missing. %s", charterHint)
 		}
 	}
 	nextAge := ge.progress.GetNextAge(ge.age)

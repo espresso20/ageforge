@@ -136,6 +136,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdUpgrade(args, engine)
 	case "advance":
 		return cmdAdvance(engine)
+	case "charter":
+		return CommandResult{OverlayName: "charter"}
 	case "factions":
 		return CommandResult{OverlayName: "factions"}
 	case "milestones", "ms":
