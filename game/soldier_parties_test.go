@@ -312,7 +312,6 @@ func TestWarRaidLogsTheFallen(t *testing.T) {
 	ge.mu.Lock()
 	ge.age = "iron_age"
 	ge.Resources.UnlockResource("gold")
-	room(ge, "gold", 10000)
 	ge.Resources.Add("gold", 1000)
 	ge.Diplomacy.pendingRaids = []RaidRequest{{FactionKey: faction, Resource: "gold", Amount: 200, Message: "raided"}}
 	ge.applyWarRaids()

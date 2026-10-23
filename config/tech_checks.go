@@ -37,8 +37,6 @@ const (
 	// MeasureRate is what the resource Target makes per tick, before the
 	// food drain. Target AllResources is every resource that makes anything.
 	MeasureRate = "rate"
-	// MeasureStorage is the storage of every resource.
-	MeasureStorage = "storage"
 	// MeasureHousing is housing. The game rounds it up to a whole person.
 	MeasureHousing = "housing"
 	// MeasureBuildPrice is what a building costs.
@@ -126,8 +124,6 @@ func (e TechEffect) check() TechCheck {
 		return times("all:"+pct, MeasureRate, AllResources)
 	case EffectFlatOutput:
 		return TechCheck{Atom: "first:" + e.Target, Measure: MeasureRate, Target: e.Target, Op: CheckStarts}
-	case EffectStorage:
-		return times("store:"+pct, MeasureStorage, "")
 	case EffectHousing:
 		return times("house:"+pct, MeasureHousing, "")
 	case EffectBuildCost:

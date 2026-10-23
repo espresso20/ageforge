@@ -312,7 +312,6 @@ func TestEngine_BuildMultiple(t *testing.T) {
 	ge := NewGameEngine()
 
 	ge.mu.Lock()
-	ge.Resources.AddStorage("wood", 100000)
 	ge.Resources.Add("wood", 50000)
 	ge.mu.Unlock()
 
@@ -344,7 +343,6 @@ func TestEngine_BuildMultiple_CostScaling(t *testing.T) {
 
 	// Give enough wood for 5 huts on the curve, plus a buffer.
 	ge.mu.Lock()
-	ge.Resources.AddStorage("wood", expectedCost+1001)
 	ge.Resources.Add("wood", expectedCost+1000)
 	startWood := ge.Resources.Get("wood") // actual capped value after storage rules
 	ge.mu.Unlock()
@@ -379,7 +377,6 @@ func TestEngine_BuildMultiple_QueueAwareCost(t *testing.T) {
 
 	// Pre-load resources generously.
 	ge.mu.Lock()
-	ge.Resources.AddStorage("wood", 1_000_000)
 	ge.Resources.Add("wood", 1_000_000)
 	startWood := ge.Resources.Get("wood") // actual amount after storage cap
 	ge.mu.Unlock()

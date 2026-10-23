@@ -341,12 +341,12 @@ func TestResourcesBoxReachesEveryResource(t *testing.T) {
 // one, and a row never outgrows the box.
 func TestResourceRowsLineUp(t *testing.T) {
 	rows := []resRow{
-		storeRow(game.ResourceState{Name: "Food", Amount: 49600, Storage: 69400, Rate: 13.9}),
-		storeRow(game.ResourceState{Name: "Gold", Amount: 2.66e6, Storage: 2.66e6, Rate: 3760}), // "+3.76K/tick", the longest
-		storeRow(game.ResourceState{Name: "Knowledge", Amount: 32400, Storage: 69400, Rate: 17}),
-		storeRow(game.ResourceState{Name: "Dark Matter Crystals", Amount: 12, Storage: 69400, Rate: -0.04}),
-		faithRow(game.ResourceState{Name: "Faith", Amount: 20, Storage: 69400, Rate: 0.04}, game.CatastropheOutlook{FaithStrength: 0.41, FaithBand: game.FaithBandAt(0.41)}),
-		cultureRow(game.ResourceState{Name: "Culture", Amount: 1200, Storage: 69400, Rate: 7.1}),
+		storeRow(game.ResourceState{Name: "Food", Amount: 49600, Rate: 13.9}),
+		storeRow(game.ResourceState{Name: "Gold", Amount: 2.66e6, Rate: 3760}), // "+3.76K/tick", the longest
+		storeRow(game.ResourceState{Name: "Knowledge", Amount: 32400, Rate: 17}),
+		storeRow(game.ResourceState{Name: "Dark Matter Crystals", Amount: 12, Rate: -0.04}),
+		faithRow(game.ResourceState{Name: "Faith", Amount: 20, Rate: 0.04}, game.CatastropheOutlook{FaithStrength: 0.41, FaithBand: game.FaithBandAt(0.41)}),
+		cultureRow(game.ResourceState{Name: "Culture", Amount: 1200, Rate: 7.1}),
 	}
 	// From a little under the narrowest box the game draws (27 cells, at 80
 	// columns) up to a roomy one.
@@ -396,7 +396,7 @@ func TestResourceRowsLineUp(t *testing.T) {
 func TestResourceBoxLayouts(t *testing.T) {
 	var rows []resRow
 	for i := 0; i < 26; i++ {
-		rows = append(rows, storeRow(game.ResourceState{Name: fmt.Sprintf("Resource %d", i), Amount: float64(i) * 1000, Storage: 30000, Rate: float64(i) * 1.5}))
+		rows = append(rows, storeRow(game.ResourceState{Name: fmt.Sprintf("Resource %d", i), Amount: float64(i) * 1000, Rate: float64(i) * 1.5}))
 		for w := 24; w <= 70; w += 3 {
 			for h := 1; h <= 60; h += 2 {
 				lines, pages := layoutResourceBox(rows, w, h, 0)

@@ -16,7 +16,6 @@ import (
 //
 //   - production: every resource's net rate × k, after the pools and
 //     everything else (recalculateRates), shown as its own breakdown line;
-//   - storage: × k, so the hours a store holds are the same at any k;
 //   - build and research times: ÷ k, rounded up, at least one tick
 //     (MasteryTicks);
 //   - the fate window and the harbinger's lead: ÷ k (expectedAgeTicks, and

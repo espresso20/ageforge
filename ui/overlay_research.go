@@ -10,11 +10,8 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// everyStore is what a bonus to every store says.
-const everyStore = "storage for every resource"
-
 // formatTechEffect names a config.Effect in glossary words: "+10% all
-// production", "+0.5 food/tick", "+500 storage for every resource",
+// production", "+0.5 food/tick",
 // "+10 housing", "unlocks Lumber Mill".
 func formatTechEffect(eff config.Effect) string {
 	switch eff.Type {
@@ -22,11 +19,6 @@ func formatTechEffect(eff config.Effect) string {
 		return textfmt.SignedPercent(eff.Value) + " " + game.EffectTargetName(eff.Target)
 	case "production":
 		return rateNumber(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
-	case "storage":
-		if eff.Target == "all" {
-			return textfmt.Signed(eff.Value) + " " + everyStore
-		}
-		return textfmt.Signed(eff.Value) + " " + game.ResourceName(eff.Target) + " storage"
 	case "research":
 		// The scholars' work is a time on a tech, never a number of its own
 		// (config.buildingEffectParts says it the same way).
@@ -80,7 +72,7 @@ func researchSummaryLines(state game.GameState) string {
 }
 
 // researchBonusLines lists what the researched techs come to together: the
-// tech layer first (output, storage, housing, the cuts of a price or a
+// tech layer first (output, housing, the cuts of a price or a
 // time, the mechanic numbers), which no cap holds, then the pools techs
 // share with the rest of the game (with a note when a limit holds one),
 // then the flat output of a first source.
@@ -97,9 +89,6 @@ func researchBonusLines(state game.GameState) string {
 		if v := rs.Output[res]; v != 0 {
 			line(textfmt.SignedPercent(v), textfmt.Capitalize(game.ResourceName(res))+" production")
 		}
-	}
-	if rs.Storage != 0 {
-		line(textfmt.SignedPercent(rs.Storage), "Storage")
 	}
 	if rs.Housing != 0 {
 		line(textfmt.SignedPercent(rs.Housing), "Housing")

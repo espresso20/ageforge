@@ -13,7 +13,6 @@ const PrestigeBonusCoefficient = 0.282
 // EffectType semantics:
 //
 //	"rate_bonus"        — multiplier added to EffectKey rate (PerTier = fractional, e.g. 0.05 = +5%)
-//	"flat_bonus"        — flat value added to EffectKey cap (PerTier = absolute units)
 //	"starting_resource" — added to the player's starting amount of EffectKey resource on reset
 //	"legacy"            — a legacy kit item: carries EffectKey's automation across a prestige
 type PrestigeUpgradeDef struct {
@@ -21,7 +20,7 @@ type PrestigeUpgradeDef struct {
 	Name        string
 	Description string
 	EffectKey   string  // engine bonus key (e.g. "gather_rate", "population") or resource key for starting_resource
-	EffectType  string  // "rate_bonus", "flat_bonus", "starting_resource" or "legacy"
+	EffectType  string  // "rate_bonus", "starting_resource" or "legacy"
 	PerTier     float64 // bonus increment per tier (meaning depends on EffectType)
 	MaxTier     int     // maximum purchasable tier; upgrade is "maxed" when Tier == MaxTier
 	Costs       []int   // prestige point cost at each tier; len must equal MaxTier

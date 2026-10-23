@@ -266,7 +266,7 @@ func renderActiveMultipliers(state game.GameState) string {
 	wrote := false
 	for _, target := range r.Targets() {
 		if !isPanelMultiplier(target) {
-			continue // capacity/flat value (population, all, bare storage key) — not a rate multiplier
+			continue // capacity/flat value (population, all) — not a rate multiplier
 		}
 		// Build the per-source breakdown FIRST. We render a target if ANY source
 		// contributes beyond epsilon — even when those sources net to ×1.0 — so an
@@ -317,8 +317,8 @@ const multEpsilon = 0.0005
 
 // isPanelMultiplier reports whether a resolver target is a genuine rate
 // multiplier that belongs in the Active Multipliers panel. Capacity/flat values
-// — population, "all", and bare-resource storage keys like "food"/"culture" —
-// are NOT rate multipliers and must not render as percentages here.
+// — population and "all" — are NOT rate multipliers and must not render as
+// percentages here.
 func isPanelMultiplier(target string) bool {
 	switch target {
 	case "production_all", "gather_rate", "tick_speed", "military_power",

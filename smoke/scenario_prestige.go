@@ -88,7 +88,7 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 		return steps
 	}
 	// Era Mastery twin check: the same state at mastery 1 (k = 2) in its
-	// age runs every rate at exactly double and holds double the storage,
+	// age runs every rate at exactly double.
 	{
 		kb, kk := hookedEngine(e, seed), hookedEngine(e, seed)
 		age := kb.GetState().Age
@@ -99,20 +99,10 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 		for _, r := range sortedKeys(bs.Resources) {
 			b, k := bs.Resources[r], ks.Resources[r]
 			if k.Rate != 2*b.Rate {
-				bad = append(bad, fmt.Sprintf("%s rate %g vs %g, storage %g vs %g", r, k.Rate, b.Rate, k.Storage, b.Storage))
+				bad = append(bad, fmt.Sprintf("%s rate %g vs %g", r, k.Rate, b.Rate))
 			}
 		}
-		// Stash is priced only in wood; compare storage for a resource no
-		// owned storage building is priced in, so its floor cannot interfere.
-		if b, ok := bs.Resources["stone"]; ok {
-			k := ks.Resources["stone"]
-			if k.Storage != 2*b.Storage {
-				bad = append(bad, fmt.Sprintf("stone storage %g vs %g", k.Storage, b.Storage))
-			}
-		} else {
-			bad = append(bad, "base town has no stone resource")
-		}
-		check("mastery twin: k = 2 doubles rates and storage", ks.Mastery.K == 2 && len(bad) == 0, "k %v; %s", ks.Mastery.K, strings.Join(bad, "; "))
+		check("mastery twin: k = 2 doubles rates", ks.Mastery.K == 2 && len(bad) == 0, "k %v; %s", ks.Mastery.K, strings.Join(bad, "; "))
 	}
 
 	both := func(f func(ge *game.GameEngine) error) error {

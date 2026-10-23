@@ -273,13 +273,6 @@ func formatPrestigeEffect(def config.PrestigeUpgradeDef, tier int) string {
 	switch def.EffectType {
 	case "rate_bonus":
 		return textfmt.SignedPercent(v) + " " + EffectTargetName(def.EffectKey)
-	case "flat_bonus":
-		// A flat "all" bonus raises every resource's storage (see the
-		// storage bonuses in engine.go), not production.
-		if def.EffectKey == "all" {
-			return textfmt.Signed(v) + vibe.Line("game.prestige.formatPrestigeEffect.04", " storage for every resource")
-		}
-		return textfmt.Signed(v) + " " + EffectTargetName(def.EffectKey)
 	case "starting_resource":
 		return textfmt.Signed(v) + vibe.Line("game.prestige.formatPrestigeEffect.05", " starting ") + ResourceName(def.EffectKey)
 	}

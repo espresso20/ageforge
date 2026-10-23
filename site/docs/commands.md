@@ -46,10 +46,10 @@ Balance values are *defined* in ticks (a tech costs so many ticks of research, a
 
 | Command | Description |
 |---|---|
-| `build <building> [count\|max]` | Start constructing a building (default 1; `max` builds as many as you can afford, up to the building's limit). A price larger than a store can hold cannot be bought: the game says so and names the storage building to build. The age's wonder is the one exception |
-| `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost; their workers go back to idle. Wonders, storage and knowledge buildings can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. A refund your storage can't hold is lost. |
+| `build <building> [count\|max]` | Start constructing a building (default 1; `max` builds as many as you can afford, up to the building's limit). A building is refused only for what it costs against what you hold. The age's wonder is the one exception: it is paid through its bank |
+| `sell <building> [count]` | Demolish copies of a building and get back 50% of what they cost; their workers go back to idle. Wonders, storage and knowledge buildings can't be sold, nothing can be sold in the Primitive Age, and a building with a copy under construction can't be sold until it finishes. |
 | `upgrade` | List the older buildings you hold: copies, the building each becomes, the price of the next copy, how many you can pay for now, and what blocks the next one |
-| `upgrade <building> [count\|all]` | Turn copies of an older building into its line's building for your age, one copy at a time, each at half the price of a new copy of that building. With no count it upgrades as many as you can pay for now; `all` tries every copy you hold. It stops at the first copy it cannot pay for, a price larger than a store can hold, or the new building's max count, and says how many it upgraded and why it stopped. A building that waits for a tech refuses and names it. The copy keeps its workers. Storage and knowledge buildings are never upgraded. |
+| `upgrade <building> [count\|all]` | Turn copies of an older building into its line's building for your age, one copy at a time, each at half the price of a new copy of that building. With no count it upgrades as many as you can pay for now; `all` tries every copy you hold. It stops at the first copy it cannot pay for or the new building's max count, and says how many it upgraded and why it stopped. A building that waits for a tech refuses and names it. The copy keeps its workers. Storage and knowledge buildings are never upgraded. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it) |
 | `gather <food\|wood\|stone> [amount]` | Gather food, wood or stone by hand: 3 by default, at most 25 per use. With Tool Making researched every gather brings 2 more. Not available after the Medieval Age. |
 | `buildings` | Open the **Buildings** panel |
@@ -73,7 +73,7 @@ See [Buildings](buildings.md) and [Ages](ages.md).
 
 ## Build Plan
 
-A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, not counting research, and an item whose price is larger than a store cannot start (it reads `blocked  needs more <resource> storage`). Full rules on the [Build Plan](plan.md) page. After the first prestige, [Plan Template](prestige.md#plan-template) adds each age's part of the plan you wrote when you enter that age.
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. It holds up to 60 items, not counting research, and an item waits until you hold its price. Full rules on the [Build Plan](plan.md) page. After the first prestige, [Plan Template](prestige.md#plan-template) adds each age's part of the plan you wrote when you enter that age.
 
 | Command | Description |
 |---|---|
@@ -268,13 +268,11 @@ You meet civilizations by running scouting expeditions, not by building anything
 ```
 wonder collect wood 1000
 wonder bank food all       # as much food as it still needs, up to what you have
-wonder bank all            # every resource it still needs, as far as your stores go
+wonder bank all            # every resource it still needs, as far as you hold it
 build great_monolith
 ```
 
 A deposit says how much went in and the bank's new total. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and which ones it does), that part of the bank is already full, you have none on hand, or you asked for more than you have. `wonder bank all` banks what it can and lists what it skipped.
-
-**Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, and works during offline catch-up too. The bank fills to the wonder's price and stops; after that, and once the wonder is built, the surplus is lost, as it is while overflow is off. It does not pay toward the build plan. See [Wonders](wonders.md).
 
 ---
 
@@ -286,7 +284,7 @@ The Map draws your empire from your real game state: your buildings and the work
 |---|---|
 | `map` | Open the Map panel. It covers everything but the command bar, which keeps working while it is open |
 | `map style [roguelike\|skyline]` | Bare, show the current style. With a name, switch to it (default roguelike). Saved per account |
-| `map flows [on\|off]` | The Map's flows overlay (full stores, understaffed buildings, idle workers): on, off, or bare to switch it. Lasts for the session |
+| `map flows [on\|off]` | The Map's flows overlay (stocks running dry, understaffed buildings, idle workers): on, off, or bare to switch it. Lasts for the session |
 | `style [roguelike\|skyline]` | Same as `map style` |
 | `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list; `off` hides it so the list gets the whole column (default off). Saved per account |
 | `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal; every icon has a Unicode fallback. Saved per account |
@@ -386,7 +384,7 @@ A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up 
 |---|---|
 | `harbinger` (or `harb`) | Open the **Harbinger** panel. Also listed under Panels in the sidebar. With no harbinger present it says so, explains that one comes only when doom is on its way, some while before it strikes, and shows the outlook |
 | `harbinger appease` | Buy the next Appease level: 15% of what a moderate faith economy makes in the age the harbinger arrived in, in faith, and the same for culture from the Steel Era on (level 2 the same again; the Last Passage's thread costs half of what the Interstellar Age makes, a little over three times a doom foretold there; see [Harbinger](harbinger.md#what-it-costs-by-epoch) for the prices). Each level multiplies the chance the doom strikes by 0.6. Two levels at most; refused after Invite |
-| `harbinger brace` | Buy the next Brace level: a third of what a moderate economy makes, during the doom's shortest warning (a fifth of the age the harbinger arrived in), of each of the era's core materials the age makes, and never more of one than three fifths of what five copies of every storage building hold (level 2 the same again; see [Harbinger](harbinger.md#what-it-costs-by-epoch) for the prices). In the Cosmic Era it costs more of the warning: a third of what the Interstellar Age makes of dark matter and titanium on the Last Passage's thread (about 157 hours of income), a sixth on the Reality Tear's (about 78 hours). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources (against the Last Passage it keeps 70% / 85% of the run's prestige points instead of 50%). Two levels at most |
+| `harbinger brace` | Buy the next Brace level: a third of what a moderate economy makes, during the doom's shortest warning (a fifth of the age the harbinger arrived in), of each of the era's core materials the age makes, and never more of one than its ceiling, a fixed number of hours of a moderate economy's income of it (level 2 the same again; see [Harbinger](harbinger.md#what-it-costs-by-epoch) for the prices). In the Cosmic Era it costs more of the warning: a third of what the Interstellar Age makes of dark matter and titanium on the Last Passage's thread (about 157 hours of income), a sixth on the Reality Tear's (about 79 hours). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources (against the Last Passage it keeps 70% / 85% of the run's prestige points instead of 50%). Two levels at most |
 | `harbinger invite` | Guarantee the doom: it still strikes at its fated moment (on the Last Passage's thread, the Last Passage comes at your next prestige). Free, and can't be undone |
 
 A harbinger comes only when a doom is fated in your era (Iron Era on), some while before it strikes, or before the Industrial Age as a false prophet. In the Stone Era, where nothing can strike, every harbinger is a false prophet and all three answers are refused. In the Cosmic Era a second thread warns of the Last Passage (your next prestige); while the Reality Tear's harbinger is speaking, the actions go to that thread. The actions work in any age of the thread, cost the same in each, and carry over between figures.
@@ -416,7 +414,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 
 | Command | Description |
 |---|---|
-| `status` (or `s`) | Print a status summary: age and game time, every unlocked resource with amount, storage and rate, and your population by class with idle counts, food drain and assignments |
+| `status` (or `s`) | Print a status summary: age and game time, every unlocked resource with amount and rate, and your population by class with idle counts, food drain and assignments |
 | `rates` | Print where each resource's rate comes from: buildings, the [worker output bonus](workers-and-domains.md#worker-output-bonuses), research, events, trade, bonuses, the [Cosmic Legacy](prestige.md#cosmic-legacy), [Era Mastery](prestige.md#era-mastery) and food drain. When a bonus pool applies less than it has earned it says both: `All production: +320% earned, +230% counts. Past +200% a bonus counts a quarter.` (see [The all-production cap](resources.md#the-all-production-cap)) |
 | `logs` | Open the **Logs** panel: recent game log entries with their tick numbers (see [The log](#the-log)) |
 | `dump` | Export logs to a file for debugging, in the `logs/` folder of your active account (`data/accounts/<id>/logs/`). The export prints raw tick counts alongside the wall-clock readings |

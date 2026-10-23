@@ -54,7 +54,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Tech Tree**: 203 technologies with prerequisites and permanent bonuses
 - **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources; your garrison's Defense Rating blunts raids, war raids and catastrophe losses
 - **Epochs and Catastrophes**: 7 epochs; from the Iron Era on a doom may be fated to strike at any moment of an era, and a harbinger comes first (Appease, Brace or Invite). When it strikes you Endure or Succumb, and Succumb's legacy bonuses carry across runs. In the Cosmic Era prestige itself is the Last Passage
-- **Build Plan**: queue builds, techs, trades and an advance (up to 60 items); the game starts each one as the resources come in, and production a full store would waste goes to the current wonder, then to the plan
+- **Build Plan**: queue builds, techs, trades and an advance (up to 60 items); the game starts each one as the resources come in, and stock has no limit, so a price is the only thing that holds a build back
 - **The Map**: your town drawn from your real buildings, in two styles (a roguelike glyph world and a side-on skyline), changing with every age, with a mini map on the dashboard
 - **Random Events**: 61 events (26 base + 35 epoch-exclusive) with streak balancing
 - **Milestones**: 77 milestones across 6 chains with civilization titles and temporary speed boosts

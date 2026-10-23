@@ -181,7 +181,7 @@ func (v *skyView) sidebar(cv *mapstyle.Canvas, x0, y0, w, h int) {
 	}
 }
 
-// flowLines is the flows panel: what is full, draining, idle or short, and
+// flowLines is the flows panel: what is draining, idle or short, and
 // the largest lineages by share, in each one's sky symbol.
 func (v *skyView) flowLines() []flowLine {
 	fl := v.sc.m.Flows
@@ -198,7 +198,6 @@ func (v *skyView) flowLines() []flowLine {
 			out = append(out, flowLine{tag: tag, text: text, c: c})
 		}
 	}
-	add(len(fl.Full) > 0, "FULL ", names(fl.Full), mapmodel.CIdle)
 	add(len(fl.Draining) > 0, "DRAIN", names(fl.Draining), mapmodel.CDanger)
 	add(fl.IdleWorkers > 0, "IDLE ", plural(fl.IdleWorkers, "worker", "workers"), mapmodel.CIdle)
 	short := len(fl.Understaffed) + len(fl.Idle)

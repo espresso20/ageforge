@@ -218,7 +218,7 @@ func readme(c *catalog) string {
 	p("## Other text put together from pieces")
 	p("")
 	p("- Short rows whose `where` says “one piece of a line the game puts together” are joined in code to names and numbers. The `where` shows the whole line with … for what the game fills in. Rewrite the pieces of one line together.")
-	p("- A building's description is followed by what the building does, built from the rows of `config.effect_text.*` (“+5 housing”, “storage for every resource”). A tech's card does the same from `config.tech_effects.*` and the `mechanic.*` rows.")
+	p("- A building's description is followed by what the building does, built from the rows of `config.effect_text.*` (“+5 housing”, “speeds research”). A tech's card does the same from `config.tech_effects.*` and the `mechanic.*` rows.")
 	p("- The refusal when a command waits for a tech is four rows of `feature.*` around the tech's name: “Trade routes need The Wheel first. Research it to start one.”")
 	p("- A boon's line (`boon.*`) has slots for what it gives: `{pct}`, `{res}`, `{amt}`, `{n}`, `{ticks}`.")
 	p("- A badge family's description (`badge_family.*`, `badge_ladder.*`) has slots the game fills for each badge: `{name}`, `{count}`.")

@@ -512,7 +512,7 @@ func (ge *GameEngine) Rules() *rules.Set {
 
 // Rebind moves the engine and every manager onto set, keeping the run's
 // state: the swap a game whose rules change while it runs will make.
-// Nothing in play calls it yet. Rates and storage follow on the next tick,
+// Nothing in play calls it yet. Rates follow on the next tick,
 // and snapshots taken before it keep the set they were made from.
 func (ge *GameEngine) Rebind(set *rules.Set) {
 	ge.mu.Lock()
@@ -1971,9 +1971,8 @@ func (ge *GameEngine) checkMilestones() {
 }
 
 // applyMilestoneRewards grants a completed milestone's rewards: an instant
-// resource goes into the store (as much as fits, with a log line when the
-// store cut it short), a permanent bonus into permanentBonuses for the rest
-// of the run. Under the write lock.
+// resource goes into the stock whole, a permanent bonus into
+// permanentBonuses for the rest of the run. Under the write lock.
 func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
 	for _, eff := range rewards {
 		switch eff.Type {
@@ -2038,8 +2037,6 @@ func (ge *GameEngine) recalculateRates() {
 			r.Breakdown.BuildingRate += moraleRate
 		}
 	}
-
-	permanentBonuses := ge.permanentBonusMap()
 
 	// Additive bonus pools now come from the resolver — the single source of
 	// truth shared with Breakdown/UI. buildResolver reads only already-held
@@ -2284,59 +2281,8 @@ func (ge *GameEngine) recalculateRates() {
 	// figure at a full crew through the steps above that apply to it.
 	ge.updateResearchRate(r, mMult, prodAllFactor, soft)
 
-	// Recalculate the store measure from the buildings' storage effects and
-	// the permanent bonuses, then the techs' percentage on every store.
-	// Nothing reads it for a rule any more (see storeSize).
-	storageBonuses := ge.Buildings.GetStorageBonuses()
-	allBonus := storageBonuses["all"]
-	allBonus += permanentBonuses["all"]
-	techStorage := 1 + ge.Research.Bonus(config.EffectStorage, "")
-
-	for _, def := range ge.Resources.defs {
-		specific := storageBonuses[def.Key]
-		specific += permanentBonuses[def.Key]
-		r := ge.Resources.resources[def.Key]
-		r.Storage = ge.storeSize(def, allBonus, specific, k, techStorage)
-	}
-
 	// The posts settle last, over the stores above (soldiers.go).
 	ge.syncSoldiers()
-}
-
-// permanentBonusMap is every permanent bonus summed by name: the engine's own,
-// prestige's, and the built wonders' (Type "bonus" effects: multipliers such as
-// production_all, knowledge_rate, expedition_reward). The wonders' are computed
-// dynamically from built wonders each time rather than stored in
-// permanentBonuses, so save/load and prestige resets need no special
-// migration.
-func (ge *GameEngine) permanentBonusMap() map[string]float64 {
-	out := make(map[string]float64)
-	for k, v := range ge.permanentBonuses {
-		out[k] = v
-	}
-	for k, v := range ge.Prestige.GetBonuses() {
-		out[k] += v
-	}
-	for k, v := range ge.getWonderBonuses() {
-		out[k] += v
-	}
-	return out
-}
-
-// storeSize is the size of def's store from the storage the buildings and
-// the permanent bonuses give it (allBonus on every store, specific on this one).
-// Storage grows with Era Mastery's k, as production does, so a store holds
-// the same hours of income at any speed. The techs' storage bonus multiplies
-// beside it: +10% of everything the store holds. The one place a
-// store's size is worked out: recalculateRates sets every store with it.
-// Caller holds the lock. A store is a measure now, not a limit: stock is not
-// held to it.
-func (ge *GameEngine) storeSize(def config.ResourceDef, allBonus, specific, k, techStorage float64) float64 {
-	size := float64((def.BaseStorage + allBonus + specific) * k)
-	if techStorage != 1 {
-		size = float64(size * techStorage)
-	}
-	return size
 }
 
 // Age-transition resource carryover tuning (EPIC: age-pacing economy rebalance).
@@ -2636,9 +2582,8 @@ func (ge *GameEngine) rollEpochEvent(epochKey string) {
 //   - over CultureLegendaryAbove, on cultureLegendaryChance of the rolls →
 //     all tiers (legendary) eligible.
 //
-// The tier used to read the fill of culture's store, which is the general
-// store: no town filled it by making culture, and any town could by buying
-// it. Must be called under engine write lock.
+// The tier reads culture strength (what the culture buildings made), never
+// a pile of culture. Must be called under engine write lock.
 func (ge *GameEngine) rollGoodEpochEvent() {
 	tier := "minor"
 	switch best := CultureTierAt(ge.cultureStrength()); {
@@ -4908,10 +4853,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Apply age unlocks for primitive age
 	ge.applyAgeUnlocks("primitive_age")
 
-	// Recompute derived caps and rates for the fresh managers now, not on the
-	// first tick: the storage upgrade has to be in the first snapshot of the
-	// new run, and in place before the starting resources land, or they are
-	// clamped to the base storage it raises.
+	// Recompute derived rates for the fresh managers now, not on the first
+	// tick: they have to be in the first snapshot of the new run.
 	ge.recalculateRates()
 
 	// Apply starting resources (base + prestige bonus)
@@ -5627,8 +5570,8 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 // line has for the town's age, one copy at a time, each at config.UpgradeShare
 // of what the next new copy of the target costs. count > 0 upgrades up to that
 // many; all, or no count, upgrades as many as the town can pay for (all of
-// them, if it can). It stops at the first copy that cannot be paid, a store
-// too small for its price, or the target's cap, and says why. An error means
+// them, if it can). It stops at the first copy that cannot be paid or the
+// target's cap, and says why. An error means
 // no copy was upgraded.
 func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.mu.Lock()
@@ -5763,7 +5706,7 @@ func articleName(name string) string {
 // GetAvailableUpgrades lists the older buildings the town holds: one row for
 // each, with the copies held, the building they upgrade to, the price of the
 // next copy, how many copies the town can pay for now, and what locks the
-// upgrade (a tech to research, a store too small for the price).
+// upgrade (a tech to research).
 func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
@@ -5827,8 +5770,7 @@ type UpgradeInfo struct {
 	CanAfford  bool
 	Affordable int
 	// Lock is what stops the upgrade past the copies Affordable counts: a
-	// tech to research, a store too small for the next price, the target's
-	// cap. "" when only money does.
+	// tech to research, the target's cap. "" when only money does.
 	Lock string
 }
 
@@ -5924,13 +5866,6 @@ func (ge *GameEngine) prestigeUpgradeLine(key string) string {
 	switch def.EffectType {
 	case "rate_bonus":
 		effect = EffectTargetName(def.EffectKey) + " " + textfmt.SignedPercent(total)
-	case "flat_bonus":
-		switch def.EffectKey {
-		case "all":
-			effect = vibe.Line("game.engine.prestigeUpgradeLine.03", "storage for every resource ") + textfmt.Signed(total)
-		default:
-			effect = EffectTargetName(def.EffectKey) + " " + textfmt.Signed(total)
-		}
 	case "starting_resource":
 		effect = vibe.Line("game.engine.prestigeUpgradeLine.04", "each run starts with +") + Amount(total, def.EffectKey)
 	}

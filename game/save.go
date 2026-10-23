@@ -62,7 +62,7 @@ type GameSave struct {
 	FestivalReadyTick    int                   `json:"festival_ready_tick,omitempty"`
 	BlackMarketReadyTick int                   `json:"black_market_ready_tick,omitempty"`
 	Resources            map[string]float64    `json:"resources"`
-	Storage              map[string]float64    `json:"storage"`
+	Storage              map[string]float64    `json:"storage,omitempty"` // retired: read and ignored, never written; old saves keep their signatures
 	Buildings            map[string]int        `json:"buildings"`
 	Workers              map[string]WorkerInfo `json:"workers"`
 	Unlocked             UnlockedState         `json:"unlocked"`
@@ -683,7 +683,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		FestivalReadyTick:    ge.festivalReadyTick,
 		BlackMarketReadyTick: ge.blackMarketReadyTick,
 		Resources:            ge.Resources.GetAll(),
-		Storage:              ge.Resources.GetAllStorage(),
 		Buildings:            ge.Buildings.GetAll(),
 		Workers:              ge.Workers.GetAll(),
 		Unlocked:             ge.getUnlockedState(),
@@ -943,9 +942,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.blackMarketReadyTick = min(save.BlackMarketReadyTick, ge.tick+ge.stretchTicks(blackMarketCooldownTicks))
 	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
-	if save.Storage != nil {
-		ge.Resources.LoadStorage(save.Storage)
-	}
 	ge.Buildings.LoadCounts(save.Buildings)
 	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
@@ -1898,7 +1894,7 @@ const scholarsNotice = "Knowledge is no longer stored. Your scholars now work on
 
 // storageWallNotice is the line a save from before the storage wall gets on
 // its first load.
-const storageWallNotice = "Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked went back to your stores."
+const storageWallNotice = "Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked was given back to you."
 
 // keepStockFromBeforeTheWall carries a save written under the old storage
 // rules across to the new ones without taking anything: what the plan's

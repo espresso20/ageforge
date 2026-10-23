@@ -25,7 +25,6 @@ func TestUpgradeBuilding_PartialUpgradeRehomesWorkers(t *testing.T) {
 		t.Fatal("setup: assign failed")
 	}
 	for key := range ge.Resources.resources {
-		ge.Resources.AddStorage(key, 1e9)
 		ge.Resources.Add(key, 1e9)
 	}
 	pop := ge.Workers.TotalPop()

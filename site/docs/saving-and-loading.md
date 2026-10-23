@@ -24,10 +24,10 @@ Saves are **per-account**: each account keeps its own `saves/` folder, so switch
 
 ## Saves from before the storage wall
 
-A game saved before storage became a wall loads as usual. It keeps every building copy and all of its stock, including stock above a store's new limit. That stock stays until you spend it, and nothing raises it (the same rule as [the grace rule](prestige.md#the-grace-rule)). What your plan had banked from overflow is returned to your stores. The log says so once, on the first load:
+A game saved before storage became a wall loads as usual. It keeps every building copy and all of its stock, and stock has no limit now. What your plan had banked from overflow is given back to you. The log says so once, on the first load:
 
 ```
-Storage changed. A storage building's price now climbs much faster with each copy, a price larger than a store can no longer be bought, and overflow no longer pays the plan. You keep every building you have. Stock above a store's new limit stays until you spend it, and what your plan had banked went back to your stores.
+Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked was given back to you.
 ```
 
 ---

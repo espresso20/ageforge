@@ -413,7 +413,7 @@ type devCommand struct{ name, form, text string }
 
 var devCommands = []devCommand{
 	{"/god", "/god", "Toggle godmode: free costs, instant builds"},
-	{"/fill", "/fill", "Fill all resources to their storage cap"},
+	{"/fill", "/fill", "Add a large amount of every resource"},
 	{"/give", "/give <resource> <amount>", "Add an amount of a resource"},
 	{"/build", "/build <building_key>", "Instantly place one building"},
 	{"/techs", "/techs", "Unlock all techs up to the current age"},

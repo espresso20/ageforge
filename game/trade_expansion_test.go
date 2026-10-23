@@ -14,7 +14,6 @@ func setRes(ge *GameEngine, key string, amount float64) {
 	if !ok {
 		return
 	}
-	r.Storage = amount + 1e9
 	r.Amount = amount
 }
 

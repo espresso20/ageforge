@@ -48,9 +48,7 @@ func newCaseTestEngine(t *testing.T, age string) *game.GameEngine {
 	for _, k := range []string{"food", "wood", "stone", "gold", "iron", "knowledge", "culture", "soldiers"} {
 		stock[k] = 50000
 	}
-	ge.Resources.LoadStorage(stock)
-	// Wood is half full: `trade food wood` sells into it, and a full store
-	// takes nothing.
+	// Wood is half of the others: `trade food wood` sells into it.
 	amounts := map[string]float64{}
 	for k, v := range stock {
 		amounts[k] = v

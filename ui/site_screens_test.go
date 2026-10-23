@@ -125,22 +125,33 @@ func (s *siteStage) say(line string) {
 	}
 }
 
-// stock fills every unlocked store but the soldiers'. It stands in for the
+// reach is the stock the staging tops res up to: the age's stock scale (a
+// good stock of it), or twice the dearest next copy of anything if that is
+// more.
+func (s *siteStage) reach(st game.GameState, res string) float64 {
+	top := config.StockScale(st.Age)
+	for _, b := range st.Buildings {
+		top = max(top, 2*b.NextCost[res])
+	}
+	return top
+}
+
+// stock tops every unlocked resource up to its reach. It stands in for the
 // waiting a player does between purchases: everything else is bought, built
 // and waited for.
 func (s *siteStage) stock() {
-	for k, rs := range s.eng.GetState().Resources {
-		if k == "soldiers" {
-			continue // a garrison is trained, tick by tick
-		}
-		if rs.Unlocked && rs.Storage > rs.Amount {
-			s.eng.Resources.Add(k, rs.Storage-rs.Amount)
+	st := s.eng.GetState()
+	for k, rs := range st.Resources {
+		if rs.Unlocked {
+			if top := s.reach(st, k); top > rs.Amount {
+				s.eng.Resources.Add(k, top-rs.Amount)
+			}
 		}
 	}
 }
 
-// level sets each named store to a share of its cap, so the picture does not
-// show every store full to the brim after stock.
+// level sets each named resource to a share of its reach, so the picture does
+// not show every resource at the top after stock.
 func (s *siteStage) level(shares map[string]float64) {
 	st := s.eng.GetState()
 	for _, k := range sortedKeysOf(shares) {
@@ -148,7 +159,7 @@ func (s *siteStage) level(shares map[string]float64) {
 		if !ok || !rs.Unlocked {
 			s.t.Fatalf("level: no unlocked resource %q", k)
 		}
-		want := float64(rs.Storage * shares[k])
+		want := float64(s.reach(st, k) * shares[k])
 		if want < rs.Amount {
 			s.eng.Resources.Remove(k, rs.Amount-want)
 		} else {
@@ -172,49 +183,16 @@ func (s *siteStage) finish() {
 }
 
 // raise builds n copies of a building one after another, each paid for from
-// full stores and waited for. When a copy costs more than the stores hold,
-// it first builds another of the age's storage building, as a player must.
+// topped-up stock and waited for.
 func (s *siteStage) raise(key string, n int) {
 	s.t.Helper()
 	for i := 0; i < n; i++ {
-		for tries := 0; !s.fits(key); tries++ {
-			store := s.storageKey()
-			if store == "" || store == key || tries > 40 {
-				s.t.Fatalf("building %s (copy %d of %d): its cost does not fit the stores", key, i+1, n)
-			}
-			s.raise(store, 1)
-		}
 		s.stock()
 		if err := s.eng.BuildBuilding(key); err != nil {
 			s.t.Fatalf("building %s (copy %d of %d): %v", key, i+1, n, err)
 		}
 		s.finish()
 	}
-}
-
-// fits reports whether the stores can hold the price of key's next copy.
-func (s *siteStage) fits(key string) bool {
-	st := s.eng.GetState()
-	if st.Buildings[key].Category == "wonder" {
-		return true // a wonder is paid through its bank, not held to a store
-	}
-	for res, cost := range st.Buildings[key].NextCost {
-		if st.Resources[res].Storage < cost {
-			return false
-		}
-	}
-	return true
-}
-
-// storageKey is the current age's storage building.
-func (s *siteStage) storageKey() string {
-	st := s.eng.GetState()
-	for _, k := range sortedKeysOf(st.Buildings) {
-		if b := st.Buildings[k]; b.Category == "storage" && b.AgeKey == st.Age && b.Unlocked {
-			return k
-		}
-	}
-	return ""
 }
 
 // wonder banks and builds the current age's wonder.
