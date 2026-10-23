@@ -397,3 +397,48 @@ func TestTheFramesThatNameAResourceAreTheScriptsToo(t *testing.T) {
 		t.Errorf("phraseStores reads %q with VibeMode off", got)
 	}
 }
+
+// TestAResourceNamedInAStoryIsTheScriptsName: {res}, {res_stores}, {res_haul}
+// and {amt_res} name the resource as the script does while VibeMode is on (the
+// row the ruleset's definition reads), lowercased, and as config does
+// otherwise, whatever the script holds; a resource the script has no name for
+// keeps its own.
+func TestAResourceNamedInAStoryIsTheScriptsName(t *testing.T) {
+	defer vibe.UseScriptForTest(map[string]string{"resource.food.name": "Snacks"})()
+	vibe.Set(true)
+	defer vibe.Set(false)
+	req := Request{Resource: "food", Amount: 12}
+	const text = "{res}; {res_stores}; {res_haul}; {amt_res}"
+	if got := fillAs(text, req, true); got != "snacks; your snacks stores; a haul of snacks; 12 snacks" {
+		t.Errorf("the frames under the script read %q", got)
+	}
+	if got := fillAs(text, req, false); got != "food; your food stores; a haul of food; 12 food" {
+		t.Errorf("the frames in plain English, with VibeMode on, read %q", got)
+	}
+	if got := fillAs("{res}", Request{Resource: "gold"}, true); got != "gold" {
+		t.Errorf("a resource the script has no name for reads %q", got)
+	}
+	if got := fillAs("{res}", Request{}, true); got != "supplies" {
+		t.Errorf("no resource reads %q", got)
+	}
+	vibe.Set(false)
+	if got := fillAs(text, req, true); got != "food; your food stores; a haul of food; 12 food" {
+		t.Errorf("with VibeMode off the frames read %q", got)
+	}
+
+	// Under a script that marks every text, the name is marked too, and with
+	// the marks out the line is the plain one.
+	defer vibe.UseRewriterForTest(marked)()
+	vibe.Set(true)
+	got := fillAs(text, req, true)
+	if unmark.Replace(got) != fillAs(text, req, false) {
+		t.Errorf("the frames under the marking script, marks out, read %q", unmark.Replace(got))
+	}
+	// the name four times, the two frames of {res_stores}, the one of {res_haul}
+	if n := strings.Count(got, markOpen); n != 4+2+1 {
+		t.Errorf("%d texts of the frames are the script's, want 7: %q", n, got)
+	}
+	if !strings.Contains(got, markOpen+"food"+markClose) {
+		t.Errorf("the resource's name is not marked: %q", got)
+	}
+}

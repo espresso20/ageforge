@@ -403,7 +403,7 @@ func fillAs(s string, req Request, told bool) string {
 	amt := roundAmount(req.Amount)
 	return strings.NewReplacer(
 		"{subject}", req.Subject,
-		"{res}", phraseBare(req.Resource),
+		"{res}", phraseBareAs(req.Resource, told),
 		"{res_stores}", phraseStoresAs(req.Resource, told),
 		"{res_haul}", phraseHaulAs(req.Resource, told),
 		"{amt_res}", phraseQuantityAs(req.Resource, amt, told),

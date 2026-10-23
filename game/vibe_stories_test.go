@@ -202,6 +202,18 @@ func TestStoriesFollowTheScriptAndTheStateDoesNot(t *testing.T) {
 			t.Errorf("the script told only %d texts of the kind %s, want at least %d", told[want.kind], want.kind, want.min)
 		}
 	}
+	// A resource named inside a story is the script's name for it, marked
+	// like the rest (mark puts the mark after the first letter of "Food").
+	named := 0
+	for i := range plain {
+		if marked[i] != plain[i] && (strings.HasPrefix(plain[i], kindExpedition+"|") || strings.HasPrefix(plain[i], kindRaid+"|")) && strings.Contains(marked[i], "f"+markOpen+"ood"+markClose) {
+			named++
+		}
+	}
+	t.Logf("%d stories named a resource in the script's words", named)
+	if named < 20 {
+		t.Errorf("only %d stories named a resource in the script's words, want at least 20", named)
+	}
 	t.Logf("%d lines of story in the log were told in the script's words", comments)
 	if comments < 1000 {
 		t.Errorf("the script told only %d lines of story in the log", comments)
