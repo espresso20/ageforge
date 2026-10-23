@@ -2,6 +2,7 @@ package mapmodel_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -295,12 +296,12 @@ func TestTrafficScalesWithRoutes(t *testing.T) {
 	}
 }
 
-// TestFlows: the fixture's full and draining stores, idle workers and
-// understaffed buildings all show up.
+// TestFlows: the fixture's draining stores, idle workers and understaffed
+// buildings all show up; no store is ever full, for stock has no ceiling.
 func TestFlows(t *testing.T) {
 	m := build(t, fixture.State(fixture.Options{Age: "renaissance_age", Seed: 7, Idle: 12}), nil)
 	f := m.Flows
-	if len(f.Full) == 0 || f.IdleWorkers != 12 || len(f.Understaffed)+len(f.Idle) == 0 || f.Worst == "" {
+	if len(f.Full) != 0 || strings.Contains(f.Worst, "full") || f.IdleWorkers != 12 || len(f.Understaffed)+len(f.Idle) == 0 || f.Worst == "" {
 		t.Fatalf("flows: full %d draining %d idle %d under %d worst %q", len(f.Full), len(f.Draining), f.IdleWorkers, len(f.Understaffed), f.Worst)
 	}
 	sum := 0.0
