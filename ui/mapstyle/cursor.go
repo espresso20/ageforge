@@ -161,7 +161,7 @@ const (
 // CursorFromGlyphGrey on a theme whose roles are all greys.
 func CursorGlyphMargin() float64 {
 	for r := theme.Role(0); int(r) < theme.NumRoles; r++ {
-		if r == theme.RoleComment {
+		if r == theme.RoleComment || r == theme.RoleEffect {
 			continue // text only, never a color the map draws
 		}
 		if red, green, blue := theme.Color(r).RGB(); red != green || green != blue {
