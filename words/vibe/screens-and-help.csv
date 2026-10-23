@@ -774,7 +774,7 @@ ui.input.cmdAccount.06,restores that account right next to your other alts. Swap
 ui.input.cmdAccount.07,"[red]Nuke an account[-] (its ID, unlocks, stats and saves, gone for good)"
 ui.input.cmdAccount.08,"is chilling in the [gold]Accounts[-] panel on the main menu, gatekept behind a type-your-name check."
 ui.input.cmdAccount.09,Peep your recovery code with:  account show code
-ui.input.cmdAccount.10,"No local accounts found, not a single alt."
+ui.input.cmdAccount.10,Not a single alt on this machine.
 ui.input.cmdAccount.11,[gold]Your alts on this machine:[-]
 ui.input.cmdAccount.12,(nameless NPC)
 ui.input.cmdAccount.13,"none yet, so early"
@@ -783,7 +783,7 @@ ui.input.cmdAccount.15,%s%s  [gray](%s)[-]  [gray]era:[-] %s%s
 ui.input.cmdAccount.16,Swap alts with:  account switch <name>   (or hop into the Accounts panel on the main menu)
 ui.input.cmdAccount.17,"No account loaded, so accounts are not a thing rn."
 ui.input.cmdAccount.18,"There is no account called %q, sus. Make it from the Accounts panel on the main menu, or type 'account list' to see yours."
-ui.input.cmdAccount.19,You are literally already playing as %s.
+ui.input.cmdAccount.19,"Bestie, %s is already who you are playing as."
 ui.input.cmdAccount.20,The account swap fumbled: 
 ui.input.cmdAccount.21,Accounts are ghosting you: no account is loaded.
 ui.input.cmdAccount.22,Export flopped: 
@@ -793,7 +793,7 @@ ui.input.cmdAccount.25,Progress packed into %s. Run it back with: account import
 ui.input.cmdAccount.26,"This file is your progress receipt (unlocks, stats, badges). Your recovery"
 ui.input.cmdAccount.27,code is its own thing and only respawns your account ID.
 ui.input.cmdAccount.28,"Full backup (account files and saves) dropped at %s, nothing gatekept."
-ui.input.cmdAccount.29,"There is no account to back up, it's giving empty."
+ui.input.cmdAccount.29,"Nothing to back up, the account slot is giving empty."
 ui.input.cmdAccount.30,Backup flopped: 
 ui.input.cmdAccount.31,Full backup is chilling at %s.
 ui.input.cmdAccount.32,"Inside: this account's files (account.json, badges.json) plus every save in its slot, no gatekeeping. To restore,"
@@ -833,12 +833,12 @@ ui.input.accountHoldings.09,civs spawned
 ui.input.savedRunLine.01,Locked in your game %s.
 ui.input.savedRunLine.02,Locked in your game %s on the account %s.
 ui.input.switchedReply.01,%s is the main character now.
-ui.input.oneWordName.01,"Save names are one word, no spaces allowed bestie (try '%s %s')."
+ui.input.oneWordName.01,"One word per save name, no spaces allowed bestie (try '%s %s')."
 ui.input.cmdSave.01,New save branch '%s' just dropped. Autosave follows it now.
 ui.input.cmdSave.02,Save took an L: 
 ui.input.cmdSave.03,"'%s' saved, W secured."
-ui.input.cmdLoad.01,"Type 'load <name>' to run back a save, or open Load Game from the menu (press Esc) to scroll your save family tree."
-ui.input.cmdLoad.02,"No save named '%s' exists, sus. Type saves for the list."
+ui.input.cmdLoad.01,"Type 'load <name>' to run it back from a save, or open Load Game from the menu (press Esc) to scroll your save family tree."
+ui.input.cmdLoad.02,"Zero saves called '%s', sus. Type saves for the list."
 ui.input.cmdLoad.03,Loading '%s' flopped: %s.
 ui.input.cmdLoad.04,Ran it back from '%s'.
 ui.input.cmdRates.01,[gold]Resource Rate Receipts:[-]
@@ -873,10 +873,10 @@ ui.input.cmdResearchList.03,"
 ui.input.cmdResearchList.04,"[gold]In the queue, locked in:[-]"
 ui.input.cmdExpedition.01,"No offer goes by %q, sus. Type expedition list to see the board."
 ui.input.cmdExpedition.02,"Which one, bestie? "
-ui.input.cmdExpedition.03,". Type more of the name, the vibes alone are not enough."
+ui.input.cmdExpedition.03,". Type a few more letters, vibes alone are not enough."
 ui.input.cmdMissionBoard.01,[gold]Side quest board:[-]
-ui.input.cmdMissionBoard.02,"  [gray](taken: a new offer drops in %s)[-]"
-ui.input.cmdMissionBoard.03,"  [gray]No offers yet, the board is in its empty era.[-]"
+ui.input.cmdMissionBoard.02,"  [gray](taken: fresh offer drops in %s)[-]"
+ui.input.cmdMissionBoard.03,"  [gray]Offer board is in its empty era.[-]"
 ui.input.cmdMissionBoard.04,[yellow]On tour: %s (%s left)[-]
 ui.input.tierHeading.01,Big League
 ui.input.offerLine.01,"  %s %s · %.0f min · %.0f%% RNG · loot %s · damage %s"
@@ -886,271 +886,271 @@ ui.input.offerLine.04," · chill · "
 ui.input.offerLine.05," · squad %d %s"
 ui.input.offerLine.06,soldier
 ui.input.cmdFestival.01,[yellow]The function is on cooldown.[-] Next one can drop in %s.
-ui.input.cmdFestival.02,[gold]Throw the Cultural Festival function?[-]
+ui.input.cmdFestival.02,"[gold]Throw a Cultural Festival, aka the function?[-]"
 ui.input.cmdFestival.03,"  Damage: [cyan]%s[-] (your bag has %s)"
 ui.input.cmdFestival.04,"  Buff: [green]+%.0f%%[-] to all production for [cyan]%s[-]."
 ui.input.cmdFestival.05,"  Recovery era after: [cyan]%s[-]."
 ui.input.cmdFestival.06,"  [red]Too broke on culture.[-]"
 ui.input.cmdFestival.07,"  Type [cyan]festival confirm yes[-] and let the party slap."
-ui.input.festivalCapLines.01,"  [yellow]Held now, the festival "
-ui.input.festivalCapLines.02," (see stats), bet.[-]"
-ui.input.cmdFestivalStatus.01,"[gold]Cultural Festival, the party[-]"
-ui.input.cmdFestivalStatus.02,"  Spend a lump of culture to boost all production for a while, it's giving party."
-ui.input.cmdFestivalStatus.03,"  Cost: [cyan]%s[-]  (you've got %s)"
-ui.input.cmdFestivalStatus.04,"  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-], W."
+ui.input.festivalCapLines.01,"  [yellow]Throw it rn and the festival "
+ui.input.festivalCapLines.02," (peep stats).[-]"
+ui.input.cmdFestivalStatus.01,[gold]The Cultural Festival Function[-]
+ui.input.cmdFestivalStatus.02,"  Drop a chunk of culture and every building goes feral for a while."
+ui.input.cmdFestivalStatus.03,"  Damage: [cyan]%s[-]  (your bag has %s)"
+ui.input.cmdFestivalStatus.04,"  Buff: [green]+%.0f%%[-] to all production for [cyan]%s[-]."
 ui.input.cmdFestivalStatus.05,"  Vibe check: "
-ui.input.cmdFestivalStatus.06,"  Vibe check: [green]ready[-], bussin. Type [cyan]festival confirm yes[-]."
-ui.input.cmdFestivalStatus.07,"  Vibe check: [yellow]not enough culture yet, lowkey broke.[-]"
-ui.input.cmdFestivalStatus.08,"  Vibe check: [yellow]on cooldown[-], %s left, rest up."
-ui.input.cmdBlackMarketStatus.01,"[gold]Black Market, the back alley[-]"
-ui.input.cmdBlackMarketStatus.02,Smuggling networks drop open in 
-ui.input.cmdBlackMarketStatus.03,"  Spend culture on a smuggling run: a gamble on a big haul of one resource, high stakes, bet."
-ui.input.cmdBlackMarketStatus.04,"  Cost: [cyan]%s[-] per run  (you've got %s)"
-ui.input.cmdBlackMarketStatus.05,"  Odds: [green]%.0f%%[-] chance of a haul worth [green]%.1fx[-] the culture; otherwise the culture is gone, sus."
-ui.input.cmdBlackMarketStatus.06,"  Vibe check: [green]ready[-]. Type [cyan]blackmarket <resource>[-] (for example, blackmarket gold)."
-ui.input.cmdBlackMarketStatus.07,"  Vibe check: [yellow]not enough culture yet, we're broke.[-]"
-ui.input.cmdBlackMarketStatus.08,"  Vibe check: [yellow]lying low[-]. The next run is possible in %s, lowkey patience."
-ui.input.cmdPrestige.01,"☄ The Last Passage is here. Prestige waits until you pick Endure or Succumb, no cap."
-ui.input.cmdPrestige.02,"[yellow]⚠ Prestige warning, heads up[-]"
-ui.input.cmdPrestige.03,"  You'll earn [cyan]%d[-] prestige points, bussin."
+ui.input.cmdFestivalStatus.06,"  Vibe check: [green]ready[-]. Type [cyan]festival confirm yes[-] and send it."
+ui.input.cmdFestivalStatus.07,"  Vibe check: [yellow]not enough culture yet, broke era.[-]"
+ui.input.cmdFestivalStatus.08,"  Vibe check: [yellow]on cooldown[-], %s left to recover."
+ui.input.cmdBlackMarketStatus.01,"[gold]Black Market, sus side of town[-]"
+ui.input.cmdBlackMarketStatus.02,The smuggling plug opens in 
+ui.input.cmdBlackMarketStatus.03,"  Blow culture on a smuggling run: one gamble, one resource, potentially a massive bag."
+ui.input.cmdBlackMarketStatus.04,"  Damage: [cyan]%s[-] per run  (your bag has %s)"
+ui.input.cmdBlackMarketStatus.05,"  RNG: [green]%.0f%%[-] chance of a haul worth [green]%.1fx[-] the culture; miss and the culture is gone, rip."
+ui.input.cmdBlackMarketStatus.06,"  The tea: [green]ready[-]. Type [cyan]blackmarket <resource>[-] (for example, blackmarket gold)."
+ui.input.cmdBlackMarketStatus.07,"  The tea: [yellow]not enough culture yet, too broke.[-]"
+ui.input.cmdBlackMarketStatus.08,"  The tea: [yellow]lying low[-]. Next run unlocks in %s, stay lowkey."
+ui.input.cmdPrestige.01,☄ The Last Passage has pulled up. Prestige is on hold until you choose Endure or Succumb.
+ui.input.cmdPrestige.02,[yellow]⚠ Prestige PSA[-]
+ui.input.cmdPrestige.03,"  You will bag [cyan]%d[-] prestige points."
 ui.input.cmdPrestige.04,"  Prestige: [green]x%.2f[-] production now, [green]x%.2f[-] after this glow-up."
-ui.input.cmdPrestige.05,"  [red]All progress is reset, L:[-] resources, buildings, workers, research and military."
-ui.input.cmdPrestige.06,"  Kept, the good stuff: prestige points, Plan Template, Roster, Old Friends and Era Mastery."
+ui.input.cmdPrestige.05,"  [red]Full wipe, it is so over for:[-] resources, buildings, workers, research and military."
+ui.input.cmdPrestige.06,"  Plot armor for: prestige points, Plan Template, Roster, Old Friends and Era Mastery."
 ui.input.cmdPrestige.07,"  Type [cyan]prestige confirm yes[-] to lock it in."
-ui.input.cmdPrestigeStatus.01,"[gold]Prestige Status, the scorecard[-]"
-ui.input.cmdPrestigeStatus.02,"  Level, the rank: [cyan]%d[-]"
+ui.input.cmdPrestigeStatus.01,[gold]Prestige Glow-Up Check[-]
+ui.input.cmdPrestigeStatus.02,"  Lvl: [cyan]%d[-]"
 ui.input.cmdPrestigeStatus.03,"  Points bagged: [cyan]%d[-] total"
-ui.input.cmdPrestigeStatus.04,"  Prestige, the flex: [green]x%.2f[-] production"
+ui.input.cmdPrestigeStatus.04,"  Aura multiplier: [green]x%.2f[-] production"
 ui.input.cmdPrestigeStatus.05,"  After this glow-up: [green]x%.2f[-] production"
-ui.input.cmdPrestigeStatus.06,"  Cosmic Legacy: [gold]+%.0f%%[-] production (permanent, goated)"
+ui.input.cmdPrestigeStatus.06,"  Cosmic Legacy: [gold]+%.0f%%[-] production (lives rent free forever)"
 ui.input.cmdPrestigeStatus.07,"
-  [red]☄ The Last Passage is here. Prestige waits for your answer, fr.[-]"
-ui.input.cmdPrestigeStatus.08,"  Type [cyan]catastrophe[-] to pick Endure or Succumb."
-ui.input.cmdPrestigeStatus.09,"  Type [cyan]prestige confirm[-] to reset with bonuses, the glow-up."
-ui.input.cmdTradeRouteList.01,"[gold]Trade routes, the bag bridge:[-]"
+  [red]☄ The Last Passage is here and prestige is on read until you answer.[-]"
+ui.input.cmdPrestigeStatus.08,"  Type [cyan]catastrophe[-] and choose your fighter: Endure or Succumb."
+ui.input.cmdPrestigeStatus.09,"  Type [cyan]prestige confirm[-] for a bonus-loaded glow-up reset."
+ui.input.cmdTradeRouteList.01,[gold]Bag routes:[-]
 ui.input.cmdTradeRouteList.02,"
-[green]Active, rolling:[-]"
-ui.input.cmdTradeRouteList.03,"  [cyan]%s[-] (%s): %s left, %s done, slow and steady"
+[green]Live rn:[-]"
+ui.input.cmdTradeRouteList.03,"  [cyan]%s[-] (%s): %s to go, %s secured"
 ui.input.cmdTradeRouteList.04,cycle
 ui.input.cmdTradeRouteList.05,cycles
 ui.input.cmdTradeRouteList.06,"
 [yellow]Up for grabs:[-]"
-ui.input.cmdTradeRouteList.07,"  [gray]No trade routes up for grabs yet, the board is empty.[-]"
-ui.input.notMetReply.01,"You haven't met a civilization called '%s', L. Type 'diplomacy deals' to see the ones you've met."
-ui.input.cmdDiplomacyDeals.01,"You haven't met anyone to trade with yet. Scouting expeditions make first contact, it's a whole arc."
-ui.input.cmdDiplomacyDeals.02,"Take one with: diplomacy accept <civ> <n> (or plan deal <civ> <n>), easy W"
-ui.input.cmdCatastrophe.01,"Usage, the how-to: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the outlook), no cap"
-ui.input.lastPassageStatusLines.01,"  [red]☄ The Last Passage:[-] %s when you prestige, the big one."
-ui.input.lastPassageStatusLines.02,"  %s is sounding the alarm. Type [cyan]harbinger[-] to answer, sus."
-ui.input.lastPassageRiskText.01,"%.0f%% chance (%s), the coin toss"
-ui.input.lastPassageRiskText.02,"%s risk, the vibe"
-ui.input.lastPassageWarningLines.01,"  [red]☄ In the Cosmic Era, prestige can bring the Last Passage: %s, sheesh.[-]"
-ui.input.lastPassageWarningLines.02,"  If it comes, prestige waits for your call, no lie:"
-ui.input.lastPassageWarningLines.03,"    Endure: keep %d%% of this run's points (%d of %d), the cut."
-ui.input.lastPassageWarningLines.04,"    Succumb is closed: you already carry the Cosmic Legacy, fr."
-ui.input.lastPassageWarningLines.05,"    Succumb: zero points from this run, and the Cosmic Legacy (+%.0f%% production, permanent), goated."
-ui.input.lastPassageWarningLines.06,"  [red]You invited it. It's coming, L.[-]"
-ui.input.cmdHarbinger.01,"Usage, the how-to: harbinger (opens the Harbinger panel), or harbinger appease|brace|invite (answers it directly), easy"
-ui.input.faithStrengthText.01,"faith strength, the vibe "
-ui.input.faithStrengthFigure.01,"%.0f%% (your faith buildings have made no faith yet, it's giving quiet)"
-ui.input.faithStrengthFigure.02,"%.0f%% (devotion %sx, %.0f%% of your faith kept, the loyalty arc)"
-ui.input.cultureStrengthFigure.01,"%.0f%% (your culture buildings have made no culture yet, lowkey crickets)"
-ui.input.cultureStrengthFigure.02,"%.0f%% (devotion %sx, %.0f%% of your culture kept, bussin)"
-ui.input.cultureTierText.01,"Minor, Major, and a shot at the Legendary, bet"
+ui.input.cmdTradeRouteList.07,"  [gray]No trade routes up for grabs yet, the bag has to wait.[-]"
+ui.input.notMetReply.01,No civilization called '%s' is in your group chat yet. Type 'diplomacy deals' to see the ones you have met.
+ui.input.cmdDiplomacyDeals.01,No trade besties yet; scouting expeditions do the first contact soft launch.
+ui.input.cmdDiplomacyDeals.02,Lock one in with: diplomacy accept <civ> <n> (or plan deal <civ> <n>)
+ui.input.cmdCatastrophe.01,"The recipe: catastrophe (reopens a pending catastrophe or Last Passage choice, or peeps the outlook)"
+ui.input.lastPassageStatusLines.01,"  [red]☄ The Last Passage:[-] %s once you prestige, boss fight odds."
+ui.input.lastPassageStatusLines.02,"  %s is spamming the warnings. Type [cyan]harbinger[-] to answer."
+ui.input.lastPassageRiskText.01,%.0f%% RNG (%s)
+ui.input.lastPassageRiskText.02,%s risk energy
+ui.input.lastPassageWarningLines.01,"  [red]☄ Cosmic Era lore: prestige can bring the Last Passage: %s.[-]"
+ui.input.lastPassageWarningLines.02,"  If it pulls up, prestige is on hold till you choose:"
+ui.input.lastPassageWarningLines.03,"    Endure: %d%% of this run's points survive (%d of %d), taxed but alive."
+ui.input.lastPassageWarningLines.04,"    Succumb is gatekept: you already carry the Cosmic Legacy."
+ui.input.lastPassageWarningLines.05,"    Succumb: zero points from this run, but the Cosmic Legacy drops (+%.0f%% production, permanent)."
+ui.input.lastPassageWarningLines.06,"  [red]You invited it. It is pulling up, no take-backs.[-]"
+ui.input.cmdHarbinger.01,"Cheat code: harbinger (opens the Harbinger panel), or harbinger appease|brace|invite (answers it directly, no panel)"
+ui.input.faithStrengthText.01,faith aura 
+ui.input.faithStrengthFigure.01,"%.0f%% (your faith buildings are still on airplane mode, zero faith so far)"
+ui.input.faithStrengthFigure.02,"%.0f%% (devotion %sx, %.0f%% of your faith sticks around, ride or die)"
+ui.input.cultureStrengthFigure.01,%.0f%% (your culture buildings have not cooked any culture yet)
+ui.input.cultureStrengthFigure.02,"%.0f%% (devotion %sx, %.0f%% of your culture stays in the bag)"
+ui.input.cultureTierText.01,"Minor, Major and a shot at the goated Legendary"
 ui.input.cultureTierText.02,"Minor and Major, the mid tiers"
-ui.input.cultureTierText.03,"Minor only, lowkey small"
-ui.input.catastropheOutlookText.01,"No catastrophe pending, we're clear.
+ui.input.cultureTierText.03,"Minor only, smol tier"
+ui.input.catastropheOutlookText.01,"No catastrophe on deck, vibes are calm.
 "
-ui.input.catastropheOutlookText.02,"  Next passage (prestige, the Last Passage): %s, %s, the countdown."
-ui.input.catastropheOutlookText.03,"  This is the final epoch, so its passage is prestige, and the Last Passage can't strike now, fr."
-ui.input.eraOutlookText.01,"No catastrophe can hit in the %s, we're safe."
-ui.input.eraOutlookText.02,"No harbinger has come: the %s is quiet, for now. A doom is always foretold before it hits, no surprises."
-ui.input.eraOutlookText.03,"The doom %s foretold passed you by, W. Nothing more will hit before the %s ends."
-ui.input.eraOutlookText.04,"The %s's doom has landed. Nothing more will hit before it ends, bet."
-ui.input.doomWarningText.01,", with no word of when, rip"
-ui.input.doomWarningText.02,%s is sounding the alarm on doom%s: %s
-ui.input.outlookRiskText.01,%s is giving warning of %s
-ui.input.riskFrom.01,"%.0f%% catastrophe chance (%s), the coin toss"
-ui.input.riskFrom.02,"%s risk of catastrophe (no figures before %s), the mystery"
-ui.input.riskFrom.03,"%s risk of catastrophe (no figures this early), we're early"
-ui.input.cmdPlan.01,"Planned %s, locked in. It starts as soon as the resources are there."
-ui.input.cmdPlan.02,"Planned %s (the most its limit allows), W. It starts as soon as the resources are there."
-ui.input.cmdPlan.03,"Planned to upgrade %s to %s. Each one starts as soon as it can be paid, bussin."
-ui.input.cmdPlan.04,"Planned to upgrade %s to %s (all you hold), we're going all in."
+ui.input.catastropheOutlookText.02,"  Up next, the prestige passage aka the Last Passage: %s, %s."
+ui.input.catastropheOutlookText.03,"  This is the final epoch: its passage is prestige, and the Last Passage cannot hit right now, plot armor."
+ui.input.eraOutlookText.01,"Zero catastrophes can strike in the %s, safe space."
+ui.input.eraOutlookText.02,"No harbinger has pulled up: the %s is quiet, for now. A doom always gets soft launched before it strikes."
+ui.input.eraOutlookText.03,The doom %s foretold left you on read. Nothing else strikes before the %s ends.
+ui.input.eraOutlookText.04,The %s's doom already dropped. Nothing else strikes before it ends.
+ui.input.doomWarningText.01,", timing gatekept"
+ui.input.doomWarningText.02,%s is yapping about doom%s: %s
+ui.input.outlookRiskText.01,%s is spilling tea about %s
+ui.input.riskFrom.01,%.0f%% catastrophe RNG (%s)
+ui.input.riskFrom.02,%s catastrophe risk (figures gatekept before %s)
+ui.input.riskFrom.03,"%s catastrophe risk (no figures yet, still the tutorial era)"
+ui.input.cmdPlan.01,"Queued %s, locked in. It kicks off once the bag is there."
+ui.input.cmdPlan.02,Queued %s (maxed out at its limit). It kicks off once the bag is there.
+ui.input.cmdPlan.03,Queued the glow-up of %s to %s. Each one kicks off the second it is paid.
+ui.input.cmdPlan.04,"Queued the glow-up of %s to %s (every copy you hold, all in)."
 ui.input.cmdPlan.05,Brain work queued: %s.
-ui.input.cmdPlan.06,"Planned research: %s, after %s, fr."
-ui.input.cmdPlan.07," Techs start one at a time, in plan order, no cap."
-ui.input.cmdPlan.08," %s waits for %s, the queue is real."
+ui.input.cmdPlan.06,"Big brain queue: %s, right after %s."
+ui.input.cmdPlan.07," Techs cook one at a time, in plan order."
+ui.input.cmdPlan.08," %s is on deck behind %s."
 ui.input.cmdPlan.09,Yeeted 
-ui.input.cmdPlan.10," from the plan, gone."
-ui.input.cmdPlan.11,"Plan item %d is now number %d, the reshuffle."
-ui.input.cmdPlan.12,"Cleared the plan (%s), fresh start."
+ui.input.cmdPlan.10," out of the plan."
+ui.input.cmdPlan.11,"Plan item %d is number %d now, reshuffle era."
+ui.input.cmdPlan.12,"Plan nuked (%s), fresh start."
 ui.input.cmdPlan.13,item
 ui.input.cmdPlan.14,items
-ui.input.cmdPlan.15,"Planned: take deal %d with the %s as soon as its price is there, smooth."
-ui.input.cmdPlan.16,"Planned: advance as soon as the next age's requirements are met, bet."
-ui.input.planIndexArg.01,"plan %s takes one item number, L"
-ui.input.cmdMapFlows.01,"on or off, pick one, fr"
-ui.input.cmdMapFlows.02,"Flows overlay flipped, W."
-ui.input.cmdMapFlows.03,"map flows takes on or off, not %q, sus"
-ui.input.flowsReply.01,"Flows overlay on: stocks running dry, understaffed buildings and idle workers show on the Map, lowkey useful."
-ui.input.flowsReply.02,"Flows overlay off, bet."
-ui.input.mapSessionOnly.01," No account is loaded, so it only lasts this session, lowkey temporary."
-ui.input.cmdMapStyle.01,"Map style: %s. Styles: %s. Type map style <name> to switch, it's giving aesthetic."
-ui.input.cmdMapStyle.02,"one style name, the one you want, fr"
-ui.input.cmdMapStyle.03,"there's no map style %q, L"
-ui.input.cmdMapStyle.04,"Map style set to %s, looks bussin."
-ui.input.cmdMapGlyphs.01,"Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch (icons checks your font for nerd), the symbol drip."
-ui.input.cmdMapGlyphs.02,"one glyph tier, pick one, fr"
-ui.input.cmdMapGlyphs.03,"there's no glyph tier %q, L"
-ui.input.cmdMapGlyphs.04,"Map glyphs set to %s, the drip is on."
-ui.input.cmdMapGlyphs.05," If the map shows boxes or question marks, type icons, fr."
-ui.input.cmdBadges.01,"No badge or family in sight is called %q, L. Type badges to look through them."
-ui.input.cmdTitle.01,"Titles belong to an account, and none is loaded, so type account to make one, fr."
-ui.input.cmdTitle.02," (worn, the fit)"
-ui.input.cmdTitle.03,"[gold]Titles, the flex:[-] "
-ui.input.cmdTitle.04," Type title and a name to wear one, or title default for the one your badge score gives, bussin."
-ui.input.cmdTitle.05," Some badges give a title of their own, the badge case says which, no cap."
-ui.input.cmdTitle.06,"You don't hold a title called %q, L. Type title to list the ones you hold."
-ui.input.cmdTitle.08,"You now wear the title, slay "
-ui.input.cmdMotion.01,"Motion, the moving vibes: "
-ui.input.cmdMotion.02,". Type motion on or motion off to change it, easy."
-ui.input.cmdMotion.03,"on or off, your call"
-ui.input.cmdMotion.04,"motion takes on or off, not %q, sus"
-ui.input.cmdMotion.05,"Motion off. The maps, the badge case and theme effects hold still, the calm era. Type motion on to bring it back."
-ui.input.cmdMotion.06,"Motion on. The maps, the badge case and theme effects move again, we're so back."
+ui.input.cmdPlan.15,Planned: say bet to deal %d with the %s once its price is there.
+ui.input.cmdPlan.16,Planned: glow up to the next age as soon as its requirements are met.
+ui.input.planIndexArg.01,"plan %s wants exactly one item number, bestie"
+ui.input.cmdMapFlows.01,"on or off, those are the only two vibes"
+ui.input.cmdMapFlows.02,Flows overlay flipped the script.
+ui.input.cmdMapFlows.03,map flows only takes on or off; %q is not it
+ui.input.flowsReply.01,"Flows overlay on: the Map now snitches on stocks running dry, understaffed buildings and idle workers."
+ui.input.flowsReply.02,"Flows overlay gone, the snitching stops."
+ui.input.mapSessionOnly.01," No account is loaded, so this is a situationship: it lasts for this session only."
+ui.input.cmdMapStyle.01,Map aesthetic: %s. Styles: %s. Type map style <name> to switch it up.
+ui.input.cmdMapStyle.02,"one style name only, no group projects"
+ui.input.cmdMapStyle.03,"map style %q does not exist, delulu"
+ui.input.cmdMapStyle.04,Map is in its %s era now.
+ui.input.cmdMapGlyphs.01,Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch up the drip (icons checks your font for nerd).
+ui.input.cmdMapGlyphs.02,"one glyph tier, not a whole playlist"
+ui.input.cmdMapGlyphs.03,"glyph tier %q is not real, sus"
+ui.input.cmdMapGlyphs.04,Map glyphs now serving %s.
+ui.input.cmdMapGlyphs.05," If the map is all boxes and question marks, type icons for a vibe check."
+ui.input.cmdBadges.01,"Nothing in the badge case answers to %q, sus. Type badges to scroll the whole case."
+ui.input.cmdTitle.01,"Titles live on an account, and none is loaded, so no flex for now. Type account to make one."
+ui.input.cmdTitle.02," (wearing it rn)"
+ui.input.cmdTitle.03,[gold]Title flex:[-] 
+ui.input.cmdTitle.04," Type title plus a name to equip it, or title default for whatever your badge score unlocks, main character style."
+ui.input.cmdTitle.05," Some badges come with a title of their own: the badge case spills which."
+ui.input.cmdTitle.06,"You don't own a title called %q, sus. Type title to list the ones you hold."
+ui.input.cmdTitle.08,"Slay, the title you are rocking now is "
+ui.input.cmdMotion.01,Motion vibes: 
+ui.input.cmdMotion.02,. Type motion on or motion off to switch it up.
+ui.input.cmdMotion.03,"on or off, no third option bestie"
+ui.input.cmdMotion.04,"motion takes on or off, and %q is giving neither"
+ui.input.cmdMotion.05,"Motion off. The maps, the badge case and theme effects freeze like NPCs. Type motion on to revive them."
+ui.input.cmdMotion.06,"Motion on. The maps, the badge case and theme effects are wiggling again, we are so back."
 ui.input.cmdVibemode.01,VibeMode: 
-ui.input.cmdVibemode.02,". Type vibemode on or vibemode off to change it, the switch is right there."
-ui.input.cmdVibemode.03,"on or off, pick one, fr"
-ui.input.cmdVibemode.04,"vibemode takes on or off, not %q, sus"
-ui.input.cmdVibemode.06,"VibeMode off. The words are plain again, a little mid. Type vibemode on to bring it back."
-ui.input.cmdVibemode.07,"VibeMode on. The words of the game read in a second script, the full GenZ arc. Type vibemode off to go back."
-ui.input.cmdMinimap.01,"Mini map, the corner pop-up: "
-ui.input.cmdMinimap.02,". Type minimap on or minimap off to change it, bet."
-ui.input.cmdMinimap.03,"on or off, pick one, no cap"
-ui.input.cmdMinimap.04,"minimap takes on or off, not %q, sus"
-ui.input.cmdMinimap.05,"Mini map off, lowkey gone. Type minimap on to bring it back."
-ui.input.cmdMinimap.06,"Mini map on. It pops up above the Buildings list when the terminal has room (%dx%d and up), the corner drip."
-ui.keystone.wonderKeystoneLine.01,"[green]✓ Keystone: %s, researched, bussin[-]"
-ui.keystone.wonderKeystoneLine.02,"[gray]Keystone: %s, not needed this age (the lock starts when you next advance), it's giving later[-]"
-ui.keystone.wonderKeystoneLine.03,"[red]✗ Keystone: %s, not researched (research %s), L[-]"
-ui.keystone.wonderBuildLine.01,"[yellow]✓ The bank is full, sheesh. Research %s, then build it with: build %s[-]"
-ui.keystone.wonderBuildLine.02,"[green]✓ The bank is full, slaps. Build it with: build %s[-]"
-ui.keystone.keystoneMark.01,"  [gold]★ keystone, the main piece: %s[-]"
-ui.keystone.keystoneLegend.01,"[gray]★ keystone: the one tech its age's wonder needs before it can be built, the main quest.[-]"
-ui.load_game.newLoadGameBrowser.01,"[gold]═══ Load game, pick your run ═══[-]"
-ui.load_game.newLoadGameBrowser.02," Key "
+ui.input.cmdVibemode.02,. Type vibemode on or vibemode off to switch the vibe.
+ui.input.cmdVibemode.03,"on or off, choose your fighter"
+ui.input.cmdVibemode.04,vibemode is on or off only; %q is not a vibe
+ui.input.cmdVibemode.06,VibeMode off. The words went back to being mid and plain. Type vibemode on to bring the drip back.
+ui.input.cmdVibemode.07,VibeMode on. Every word in the game just got its GenZ glow-up. Type vibemode off to go back.
+ui.input.cmdMinimap.01,Smol map: 
+ui.input.cmdMinimap.02,". Type minimap on or minimap off, your call bestie."
+ui.input.cmdMinimap.03,"on or off, there is no secret third thing"
+ui.input.cmdMinimap.04,minimap wants on or off; %q is not it
+ui.input.cmdMinimap.05,Smol map has left the chat. Type minimap on to bring it back.
+ui.input.cmdMinimap.06,Smol map on. It pops up above the Buildings list when the terminal has room (%dx%d and up).
+ui.keystone.wonderKeystoneLine.01,"[green]✓ Keystone: %s, big brained and done[-]"
+ui.keystone.wonderKeystoneLine.02,"[gray]Keystone: %s, not needed this age (the gatekeeping starts when you next advance)[-]"
+ui.keystone.wonderKeystoneLine.03,"[red]✗ Keystone: %s, still not researched (research %s), skill issue[-]"
+ui.keystone.wonderBuildLine.01,"[yellow]✓ Bag is full. Research %s, then build it with: build %s[-]"
+ui.keystone.wonderBuildLine.02,"[green]✓ The bag is full, time to cook. Build it with: build %s[-]"
+ui.keystone.keystoneMark.01,"  [gold]★ main character tech: %s[-]"
+ui.keystone.keystoneLegend.01,[gray]★ keystone: the one tech its age's wonder is gatekept behind.[-]
+ui.load_game.newLoadGameBrowser.01,[gold]═══ Run It Back ═══[-]
+ui.load_game.newLoadGameBrowser.02," Key Lore "
 ui.load_game.newLoadGameBrowser.03," Deets "
-ui.load_game.refresh.01," · couldn't read saves, L[-]"
-ui.load_game.refresh.02,"[red]Couldn't read saves, L: %v[-]"
-ui.load_game.refresh.03,"[gray]This account has no saved games yet, the blank slate.
+ui.load_game.refresh.01," · saves are unreadable, sadge[-]"
+ui.load_game.refresh.02,[red]Reading saves fumbled: %v[-]
+ui.load_game.refresh.03,"[gray]This account has zero saved games, blank slate era.
 
-Start a new game to create one, we're early.[-]"
+Start a new game to spawn one.[-]"
 ui.load_game.continueNote.01," · Continue opens "
-ui.load_game.currentTag.01,"   [accent]◆ main game, the main character[-]"
-ui.load_game.currentTag.02,"   [label]▸ continue, let's go[-]"
-ui.load_game.currentLine.01,"[accent]◆ The main game, the main character:[-] [gray]Continue opens it. M unmarks it.[-]"
-ui.load_game.currentLine.02,"[label]▸ Continue opens this game,[-] [gray]the one last played, bussin. M marks it as the main game.[-]"
-ui.load_game.currentLine.03,"[label]▸ Continue opens this game,[-] [gray]the newest save, fresh. M marks it as the main game.[-]"
+ui.load_game.currentTag.01,"   [accent]◆ main character game[-]"
+ui.load_game.currentTag.02,"   [label]▸ run it back[-]"
+ui.load_game.currentLine.01,[accent]◆ The main character game:[-] [gray]Continue opens it. M unmarks it.[-]
+ui.load_game.currentLine.02,"[label]▸ Continue opens this game,[-] [gray]the one you played last. M makes it the main character game.[-]"
+ui.load_game.currentLine.03,"[label]▸ Continue opens this game,[-] [gray]the freshest save. M makes it the main character game.[-]"
 ui.load_game.doLoad.01,"
 
-[red]Can't load a corrupt save, L.[-]"
+[red]Corrupt save, it is cooked and cannot load.[-]"
 ui.load_game.doLoad.02,Load flopped: %v
 ui.load_game.doLoad.03,"
 
 [red]Load flopped: %v[-]"
-ui.load_game.doLoad.04,"Game loaded, we're in."
+ui.load_game.doLoad.04,"Game loaded, we are so back."
 ui.load_game.doMarkMain.01,"
 
-[red]A corrupt save can't be the main game, L.[-]"
+[red]A corrupt save cannot be the main character.[-]"
 ui.load_game.doMarkMain.02,"
 
-[red]The main game lives on an account, and none is in use, L.[-]"
+[red]The main game lives on an account, and none is in use rn.[-]"
 ui.load_game.doMarkMain.03,"
 
-[red]The main game couldn't be saved to your account, L: %v[-]"
-ui.load_game.doDelete.01,"Delete '%s'?
+[red]Saving the main game to your account fumbled: %v[-]"
+ui.load_game.doDelete.01,"Yeet '%s'?
 
-This can't be undone, it's giving permanent."
+No undo, it is gone for good."
 ui.load_game.doDelete.02,"Nah, keep it"
 ui.load_game.doDelete.04,Delete flopped: %v
-ui.load_game.doDelete.05,"[red]Delete flopped, L: %v[-]"
-ui.load_game.doRename.01,Name it: 
-ui.load_game.doRename.02,"[ OK, bet ]"
+ui.load_game.doDelete.05,[red]The delete took an L: %v[-]
+ui.load_game.doRename.01,Name the drip: 
+ui.load_game.doRename.02,[ Bet ]
 ui.load_game.doRename.03,[ Nah ]
-ui.load_game.doRename.04," Rename save, glow it up "
+ui.load_game.doRename.04," Save Name Glow-Up "
 ui.load_game.doDuplicate.01,Duplicate flopped: %v
 ui.load_game.doDuplicate.02,[red]Duplicate bombed: %v[-]
-ui.load_game.rowLabel.01,"[gray]%s%s   ·   %s   ⚠ corrupt, sus[-]"
-ui.load_game.rowLabel.02,"[label]● active, the one that's cooking[-]"
+ui.load_game.rowLabel.01,"[gray]%s%s   ·   %s   ⚠ corrupted, cooked[-]"
+ui.load_game.rowLabel.02,[label]● live rn[-]
 ui.load_game.loadGameKeys.01,Roam
 ui.load_game.loadGameKeys.02,Slide
-ui.load_game.loadGameKeys.04,Run it
-ui.load_game.loadGameKeys.06,Retitle
-ui.load_game.loadGameKeys.07,Clone it
-ui.load_game.loadGameKeys.08,Stash
+ui.load_game.loadGameKeys.04,Run it back
+ui.load_game.loadGameKeys.06,Rebrand
+ui.load_game.loadGameKeys.07,Dupe it
+ui.load_game.loadGameKeys.08,Copypasta
 ui.load_game.loadGameKeys.09,Main character
 ui.load_game.loadGameKeys.10,Main vibe
 ui.load_game.loadGameKeys.12,Dip
-ui.load_game.legendText.01,"[gold]★ auto[-]      the automatic save slot (overwritten on autosave), it's on autopilot"
-ui.load_game.legendText.02,"[label]● active[-]    the save your game is autosaving into, the live one"
-ui.load_game.legendText.03,"[accent]◆ main game[-] Continue on the main menu opens it (M marks one), the main character"
-ui.load_game.legendText.04,"[red]⚠ modified[-]  save file touched outside the game, sus"
-ui.load_game.legendText.05,"[red]⚠ corrupt[-]   file couldn't be read, so it can't load, L"
-ui.load_game.rowTag.01,"[gold]★ auto, on autopilot[-]"
-ui.load_game.rowTag.02,"[red]⚠ modified, sus[-]"
-ui.load_game.rowTag.03,"[gold]⭐ elite, goated[-]"
-ui.load_game.detailText.01,"[red]⚠ Corrupt save. It can't be loaded, L.[-]
+ui.load_game.legendText.01,[gold]★ auto[-]      the autopilot save slot (overwritten on autosave)
+ui.load_game.legendText.02,[label]● active[-]    the save your game is autosaving into rn
+ui.load_game.legendText.03,"[accent]◆ main game[-] Continue on the main menu opens it, main character privileges (M marks one)"
+ui.load_game.legendText.04,"[red]⚠ modified[-]  save file edited outside the game, sus behavior"
+ui.load_game.legendText.05,"[red]⚠ corrupt[-]   file is unreadable, so it is cooked and cannot load"
+ui.load_game.rowTag.01,[gold]★ autopilot[-]
+ui.load_game.rowTag.02,"[red]⚠ modded, sus[-]"
+ui.load_game.rowTag.03,[gold]⭐ goated[-]
+ui.load_game.detailText.01,"[red]⚠ Corrupt save, it is cooked for good.[-]
 [gray]File time: %s[-]"
-ui.load_game.detailText.02,"[gray]Population, the crew[-] [white]%s[-]"
-ui.load_game.detailText.03,"[gray]Buildings, the stuff[-] [white]%s[-]"
-ui.load_game.detailText.04,"[gray]Wonders, the flex[-] [white]%s[-]"
-ui.load_game.detailText.05,"[gray]Milestones, the W's[-] [white]%s[-]"
-ui.load_game.detailText.06,"[gray]Techs, the brain work[-] [white]%s[-]"
-ui.load_game.detailText.07,"[gray]Soldiers, the muscle[-] [white]%s[-]"
-ui.load_game.detailText.08,"[gray]Prestige, the glow[-] [white]level %s[-] [gray](%s points)[-]"
-ui.load_game.detailText.09,"[gray]Morale, the mood[-] [white]%.0f%%[-]"
-ui.load_game.detailText.10,"[gray]Account, your ID:[-] [gray]none (pre-account save)[-]"
-ui.load_game.detailText.11,"[gray]Account, your ID:[-] [white]%s[-] [gray](this account)[-]"
-ui.load_game.detailText.12,"[gray]Account, your ID:[-] [white]%s[-] [yellow](another account, sus)[-]"
-ui.load_game.detailText.13,"[red]⚠ Pending, the doom: %s[-]"
-ui.load_game.detailText.14,"[gray]Saved, the receipt[-] %s"
-ui.load_game.detailText.15,"[gray]Branched from, the family tree: %s[-]"
-ui.load_game.detailText.16,"[gray]Branched from: %s (detached, lowkey solo)[-]"
-ui.load_game.detailBadges.01,"[gold]★ autosave, on autopilot[-]"
-ui.load_game.detailBadges.02,"[gold]⭐ elite, goated[-]"
-ui.load_game.detailBadges.03,"[red]⚠ touched outside, sus[-]"
-ui.load_game.relativeTime.02,"just now, the freshest"
-ui.load_game.relativeTime.03,just now
-ui.load_game.relativeTime.04,"%dm ago, it's giving recent"
+ui.load_game.detailText.02,[gray]Squad size[-] [white]%s[-]
+ui.load_game.detailText.03,[gray]Builds[-] [white]%s[-]
+ui.load_game.detailText.04,[gray]Wonder flex[-] [white]%s[-]
+ui.load_game.detailText.05,[gray]Milestone Ws[-] [white]%s[-]
+ui.load_game.detailText.06,[gray]Big brain techs[-] [white]%s[-]
+ui.load_game.detailText.07,[gray]Army squad[-] [white]%s[-]
+ui.load_game.detailText.08,[gray]Glow-up[-] [white]level %s[-] [gray](%s points)[-]
+ui.load_game.detailText.09,[gray]Vibes[-] [white]%.0f%%[-]
+ui.load_game.detailText.10,[gray]Account receipt:[-] [gray]none (pre-account save)[-]
+ui.load_game.detailText.11,[gray]Account receipt:[-] [white]%s[-] [gray](this account)[-]
+ui.load_game.detailText.12,[gray]Account receipt:[-] [white]%s[-] [yellow](another alt)[-]
+ui.load_game.detailText.13,[red]⚠ Doom on deck: %s[-]
+ui.load_game.detailText.14,[gray]Locked in[-] %s
+ui.load_game.detailText.15,[gray]Spawned from: %s[-]
+ui.load_game.detailText.16,"[gray]Spawned from: %s (detached, solo era)[-]"
+ui.load_game.detailBadges.01,[gold]★ autopilot save[-]
+ui.load_game.detailBadges.02,[gold]⭐ goated[-]
+ui.load_game.detailBadges.03,"[red]⚠ modded, sus[-]"
+ui.load_game.relativeTime.02,literally just now
+ui.load_game.relativeTime.03,rn
+ui.load_game.relativeTime.04,"%dm ago, fresh"
 ui.load_game.relativeTime.05,%dh ago
-ui.load_game.relativeTime.07,"%d days ago, ancient history"
+ui.load_game.relativeTime.07,"%d days ago, ancient lore"
 ui.load_game.pluralSaves.01,1 save
 ui.load_game.pluralSaves.02,%d saves
-ui.load_game.savesDirLabel.01,"This account, your crew"
-ui.locked_hint.lockedHintLines.01,"Locked. Your scholars are still beefing about it, no cap."
-ui.locked_hint.lockedHintLines.02,"Locked. Somebody has to read a book first. Not you, obviously, bruh."
-ui.locked_hint.lockedHintLines.03,"Locked. The blueprints exist, but nobody can read them yet, lowkey tragic."
-ui.locked_hint.lockedHintLines.04,"Locked. Research it, or keep staring. Staring has a bad track record, fr."
-ui.locked_hint.lockedHintLines.05,"Locked. Your scholars need a nudge. A firm, encouraging nudge, it's giving coach."
-ui.locked_hint.lockedHintLines.06,"Locked. Theory first, bricks later, the main character arc."
-ui.locked_hint.lockedHintLines.07,"Locked. The idea is out there. Send a scholar to go grab it, bet."
-ui.locked_hint.lockedHintLines.08,"Locked. Needs knowledge, which needs scholars, which need snacks, the chain is real."
-ui.locked_hint.lockedHintLines.09,"Locked. Your builders asked how. Nobody had an answer, L."
-ui.locked_hint.lockedHintLines.10,"Locked. Crack a book. Or crack the whip at the library, no cap."
-ui.locked_hint.lockedHintLines.11,"Locked. Science hasn't hit this one yet, bet."
-ui.locked_hint.lockedHintLines.12,"Locked. It's on the syllabus. Your town skipped class, sus."
-ui.locked_hint.lockedNeedsLine.01,"Needs %s (research), the prereq"
-ui.locked_hint.lockedNeedsLine.02,"Needs %s (research), after %s, the chain"
-ui.locked_hint.lockedBuildingEntry.01,"   The bill: "
-ui.map_mini.miniMap.Draw.01," Map, the vibe · "
-ui.map_panel.mapIconsHint.01,"Want real icons on your map? Type icons, it's giving upgrade."
-ui.map_panel.drawBar.02," runs the command below, bussin · "
-ui.map_panel.drawBar.04," types, fr "
+ui.load_game.savesDirLabel.01,This alt
+ui.locked_hint.lockedHintLines.01,Locked. Your scholars are still beefing in the group chat about it.
+ui.locked_hint.lockedHintLines.02,"Locked. Somebody has to read a book first. Not you, you are too busy being iconic."
+ui.locked_hint.lockedHintLines.03,"Locked. The blueprints exist, but they are written in lore nobody can read yet."
+ui.locked_hint.lockedHintLines.04,"Locked. Research it, or keep staring. Staring has never cooked anything, ngl."
+ui.locked_hint.lockedHintLines.05,"Locked. Your scholars need a nudge. A firm, supportive, bestie-coded nudge."
+ui.locked_hint.lockedHintLines.06,"Locked. Theory era first, brick era later."
+ui.locked_hint.lockedHintLines.07,Locked. The idea is out there somewhere. Send a scholar on a side quest to fetch it.
+ui.locked_hint.lockedHintLines.08,"Locked. It runs on knowledge, which runs on scholars, who run on snacks. Snack economy is real."
+ui.locked_hint.lockedHintLines.09,"Locked. Your builders asked how, and the whole town left them on read."
+ui.locked_hint.lockedHintLines.10,"Locked. Crack a book, or go full menace at the library."
+ui.locked_hint.lockedHintLines.11,Locked. Science has not pulled up on this one yet.
+ui.locked_hint.lockedHintLines.12,"Locked. It is on the syllabus, and your town chose to skip class. The audacity."
+ui.locked_hint.lockedNeedsLine.01,Gatekept by %s (research)
+ui.locked_hint.lockedNeedsLine.02,"Gatekept by %s (research), after %s"
+ui.locked_hint.lockedBuildingEntry.01,"   Damage: "
+ui.map_mini.miniMap.Draw.01," Smol Map · "
+ui.map_panel.mapIconsHint.01,Want real icons on your map? Type icons for the glow-up.
+ui.map_panel.drawBar.02," sends the command below · "
+ui.map_panel.drawBar.04," sends "
 ui.map_panel.drawBar.06," bounce"
 ui.map_panel.drawBar.08," peace out"
-ui.map_panel.handleKey.01,"Nothing to type here. Move the cursor onto a building or a civilization, the lore spot."
-ui.map_panel.reply.01,"Ran, W "
+ui.map_panel.handleKey.01,This spot has zero lore to type. Move the cursor onto a building or a civilization.
+ui.map_panel.reply.01,Sent it: 
 ui.map_settings.saveMapSettings.01,"The setting couldn't be saved to your account, L: "
 ui.map_settings.markMapHintShown.01,"The map setting couldn't be saved to your account, sus: "
 ui.mastery.masteryNowText.01,"new ground, 1x, the fresh start"
