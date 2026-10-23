@@ -29,29 +29,18 @@ import (
 //     item's reservation, so a cheap item further down can never delay one
 //     above it, while resources the top items don't need are not left idle.
 //     Items that cannot start for a reason money won't fix reserve nothing: a
-//     price over the current storage cap (the next storage building has to
-//     come first), a resource it lacks that the current income won't bring
-//     in within a day (it needs the market or a producer first), or a wonder
-//     (see below).
+//     resource it lacks that the current income won't bring in within a day
+//     (it needs the market or a producer first), or a wonder (see below).
 //   - A wonder's price is what its bank still lacks. Once what is held,
 //     after the reservations above it, covers all of that, the plan banks it
 //     and starts the wonder. While it waits it reserves nothing: it is a
 //     town's worth of price units of its age, and holding that back would
-//     stall everything below it for hours. Deposits, wonder overflow and the plan's overflow
-//     (a queued wonder takes it in plan order, with wonder overflow on or
-//     off) fill the bank; a part bigger than a full store can only be banked
-//     that way.
-//   - Overflow pays the plan (overflow.go, bankPlanOverflow): what a full
-//     store would throw away, after the age's wonder has taken what it needs,
-//     goes into the banks of the plan's build items, in plan order, each up
-//     to what its next copy still lacks. A banked item's price in the walk is
-//     what its bank doesn't cover: that is what it reserves while it waits,
-//     what must fit under the cap, and what it pays from the stores when it
-//     starts (the bank pays the rest). So a copy priced over a cap becomes
-//     buyable once overflow has banked the part over it. Only builds that can
-//     start in this age bank: the next age's buildings wait for the advance.
-//     A queued wonder banks into its own bank. Nothing is built that was not
-//     queued.
+//     stall everything below it for hours. Deposits (by hand) fill the bank.
+//   - A bank an old save carried (from before stock had no ceiling) pays
+//     first: a banked item's price in the walk is what its bank doesn't
+//     cover, which is what it reserves while it waits and what it pays from
+//     the stores when it starts. Nothing fills a bank any more. Nothing is
+//     built that was not queued.
 //   - Deal items (plan_deal.go) take a civilization's trade deal once its
 //     fixed price is free, reserving it while they wait, like one build.
 //   - Techs start in plan order: only the first research item can take the
@@ -139,11 +128,11 @@ type PlanItem struct {
 	Got    float64 `json:"got,omitempty"`
 	// Deal items (plan_deal.go): Key is the civilization, Deal the offer's ID.
 	Deal int `json:"deal,omitempty"`
-	// Banked is what overflow has set aside toward a build item's next copy,
-	// by resource, at most that copy's price (overflow.go). The copy pays
-	// from it first when it starts. Removing the item, a drop, an advance and
-	// the last copy starting put what is left back in the stores, up to their
-	// caps.
+	// Banked is what an old save's overflow set aside toward a build item's
+	// next copy, by resource, at most that copy's price (overflow.go).
+	// Nothing fills it any more. The copy pays from it first when it starts.
+	// Removing the item, a drop, an advance and the last copy starting put
+	// what is left back in the stores.
 	Banked map[string]float64 `json:"banked,omitempty"`
 }
 
@@ -165,7 +154,7 @@ type PlanItemView struct {
 	Started int
 	// Cost is the price of the next start (for a wonder, what its bank still lacks).
 	Cost map[string]float64
-	// Banked is the part of Cost a build item's overflow bank already holds
+	// Banked is the part of Cost a build item's old-save bank already holds
 	// (nil when it holds nothing).
 	Banked map[string]float64
 	// Status is PlanStatusReady, PlanStatusWaiting or PlanStatusBlocked.
@@ -370,7 +359,7 @@ func (ge *GameEngine) PlanAddResearch(key string) error {
 }
 
 // PlanRemove removes item n (1-based) and returns a description of it. What
-// overflow had banked for it goes back to the stores, up to the caps.
+// an old save had banked for it goes back to the stores.
 func (ge *GameEngine) PlanRemove(n int) (string, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -388,8 +377,8 @@ func (ge *GameEngine) PlanRemove(n int) (string, error) {
 	return label, nil
 }
 
-// PlanClear empties the plan and returns how many items it held. What
-// overflow had banked goes back to the stores, up to the caps.
+// PlanClear empties the plan and returns how many items it held. What an old
+// save had banked goes back to the stores.
 func (ge *GameEngine) PlanClear() int {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -662,10 +651,6 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		// note: no God Mode shortcut here; the upgrade path still charges,
 		// so a planned upgrade waits for its price like a typed one.
 		chk := planCheck{cost: cost}
-		if res := ge.overStore(cost); res != "" {
-			chk.blocked = ge.storeTooSmallText("Upgrading "+buildingCountIn(ge.rules, 1, it.Key), res, cost[res])
-			return chk
-		}
 		if res := ge.planUnfunded(cost); res != "" {
 			chk.blocked = "too little " + ge.rules.ResourceLabel(res) + " coming in"
 			return chk
@@ -685,39 +670,21 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 				return planCheck{}
 			}
 			// The rest of the bank is the price: it is paid from what is
-			// held once that covers all of it. A part bigger than a full
-			// store is banked in rounds (deposits, overflow), and a wonder
-			// holds nothing back while it waits, like one whose bank the
-			// income won't fill.
-			rest := ge.wonderBankRest(it.Key)
-			for _, res := range sortedKeys(rest) {
-				if rest[res] > ge.Resources.GetStorage(res) {
-					return planCheck{cost: rest, blocked: "bank not full"}
-				}
-			}
-			return planCheck{cost: rest}
+			// held once that covers all of it. A wonder holds nothing back
+			// while it waits, like one whose bank the income won't fill.
+			return planCheck{cost: ge.wonderBankRest(it.Key)}
 		}
 		cost, _ := ge.Buildings.BuildBatchCost(it.Key, 1, ge.buildQueue)
 		if DevGodMode {
 			return planCheck{}
 		}
-		// A bank an old save carried pays first (overflow no longer fills
-		// one): only the rest must fit under the caps, come in, and be held
-		// back while the item waits. A price larger than a store cannot be
-		// bought, unless stock kept above the store already covers it.
+		// A bank an old save carried pays first (nothing fills one any
+		// more): only the rest must come in and be held back while the item
+		// waits.
 		chk := planCheck{cost: cost}
 		if len(it.Banked) > 0 {
 			chk.price = cost
 			chk.cost, chk.banked = splitBank(cost, it.Banked)
-		}
-		if res := ge.overStore(chk.cost); res != "" {
-			chk.blocked = "needs more " + ge.rules.ResourceLabel(res) + " storage"
-			if ge.Buildings.StorageLimit(it.Key, ge.Resources, ge.buildQueue, ge.storeIf) != "" {
-				// A storage building is not waiting on storage: it has none
-				// left to build this age.
-				chk.blocked = "at its storage limit"
-			}
-			return chk
 		}
 		if res := ge.planUnfunded(chk.cost); res != "" {
 			chk.blocked = "too little " + ge.rules.ResourceLabel(res) + " coming in"

@@ -1112,9 +1112,6 @@ func (ge *GameEngine) shortfall(cost map[string]float64) string {
 			continue
 		}
 		part := textfmt.Number(math.Ceil(need-have)) + " more " + ResourceName(def.Key)
-		if ge.Resources.GetStorage(def.Key) < need {
-			part += fmt.Sprintf(" (your %s storage must reach %s first)", ResourceName(def.Key), textfmt.Number(need))
-		}
 		parts = append(parts, part)
 	}
 	return strings.Join(parts, ", ")

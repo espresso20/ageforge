@@ -28,12 +28,6 @@ import (
 // stays consistent. The record (the
 // deepest age ever entered) can move mid-run, but only ages already behind
 // the player feel it (catch-up), never the current one.
-//
-// The grace rule: when k drops (entering new ground, or leaving catch-up),
-// storage shrinks with it. Stock already above the new cap is not cut: it
-// stays until spent, production stops adding to it, and the grace ends once
-// the resource is under its cap (ResourceManager.grace, saved as
-// GameSave.OverCapGrace).
 
 // MasteryTicks divides ticks by k, rounded up, never below one tick. k ≤ 1
 // (the frontier, or a manager no engine has set) leaves ticks as they are.
@@ -240,17 +234,6 @@ type MasteryState struct {
 
 // speedK is the current age's speed. Must be called with the lock held.
 func (ge *GameEngine) speedK() float64 { return ge.Prestige.AgeSpeed(ge.age) }
-
-// noteGraceLocked applies the grace rule when the current age's k has
-// dropped since the last rates pass: every resource is marked, and the
-// storage pass that follows (recalculateRates) keeps the grace only where
-// stock now sits above the cap. Must be called with the write lock held.
-func (ge *GameEngine) noteGraceLocked(k float64) {
-	if ge.lastK > 0 && k < ge.lastK {
-		ge.Resources.markGraceAll()
-	}
-	ge.lastK = k
-}
 
 // masteryEntryLine is the log line on entering age from an age that ran at
 // prevK: the speed on known ground, or that new ground runs at 1x when the

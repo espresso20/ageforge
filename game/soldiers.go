@@ -331,7 +331,6 @@ func (ge *GameEngine) syncSoldiers() {
 		ge.Resources.UnlockResource("soldiers")
 	}
 	r.Amount, r.Storage, r.Rate = home, home, 0
-	delete(ge.Resources.grace, "soldiers")
 }
 
 // logSoldiersArrived says that n soldiers have taken their posts at a military

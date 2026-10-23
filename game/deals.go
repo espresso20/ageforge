@@ -582,9 +582,6 @@ func (ge *GameEngine) dealProblem(fs *FactionState, d FactionDeal) (blocked, sho
 			return ResourceName(r) + " is not unlocked yet", ""
 		}
 	}
-	if d.Get != "" && ge.Resources.GetStorage(d.Get)-ge.Resources.Get(d.Get) < d.GetAmt {
-		return fmt.Sprintf("not enough %s storage for %s", ResourceName(d.Get), Amount(d.GetAmt, d.Get)), ""
-	}
 	if !(ge.Resources.Get(d.Give) >= d.GiveAmt) {
 		return "", d.Give
 	}

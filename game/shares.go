@@ -48,7 +48,7 @@ import (
 // Shares, the auto-recruit switch and the wait are saved. Prestige, Succumb
 // and a new game put the shares back on auto (startRunShares, where Pacing
 // v2's legacy kit will carry them across a prestige instead). Auto-recruit is
-// a preference, kept across prestige and Succumb like wonder overflow; a new
+// a preference, kept across prestige and Succumb; a new
 // game turns it back on.
 
 const (
