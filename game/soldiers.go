@@ -24,11 +24,24 @@ import (
 // staffing pass (fillSoldierPosts) tries again, so soldiers arriving never
 // starve the town.
 //
-// The army is the soldiers at their posts, which is every soldier in this
-// change: nobody goes out on a mission yet. Everything that reads soldiers
-// (the Defense Rating, raids, the Brace view, a campaign's price, the soldier
-// milestones) still reads the "soldiers" resource, and syncSoldiers holds that
-// resource at the posted army every tick. Nothing else writes it.
+// The army is the soldiers at their posts. A mission takes a party out of it
+// (military.go, parties): the party leaves its posts while away, so the army
+// at home is the posted soldiers less the soldiers away. Everything that reads
+// soldiers (the Defense Rating, raids, the Brace view, a party's launch, the
+// soldier milestones) reads the "soldiers" resource, and syncSoldiers holds
+// that resource at the army at home every tick. Nothing else writes it. Away
+// or home, a soldier is a person: he eats and takes a place in the homes.
+//
+// Soldiers fall: on a mission that fails or costs lives, in an ambush on the
+// road, and when a raid lands against the garrison. A fallen soldier leaves the
+// population (soldiersFall) and his post is empty. The empty posts of the
+// fallen are not filled by arrivals: they train from the reserve, a few at a
+// time (soldierTrainShare of the posts a staffing pass), under the same food
+// margin. soldiersVacant holds them by building.
+
+// soldierTrainPercent is the share of all the posts that may finish training
+// in one staffing pass, at least one soldier.
+const soldierTrainPercent = 1
 
 // SoldierPost is one kind of military building's posts for a snapshot.
 type SoldierPost struct {
@@ -88,6 +101,114 @@ func (ge *GameEngine) soldierPosts() []SoldierPost {
 	return out
 }
 
+// soldiersAway is the soldiers out on missions: the parties under way.
+func (ge *GameEngine) soldiersAway() int { return ge.Military.SoldiersAway() }
+
+// soldiersHome is the army at home: the posted soldiers less those away.
+func (ge *GameEngine) soldiersHome() int {
+	posted := ge.soldierTotal()
+	if ge.garrisonForTestSet {
+		posted = int(ge.garrisonForTest)
+	}
+	return max(0, posted-ge.soldiersAway())
+}
+
+// postKeys is the military buildings that stand, oldest first.
+func (ge *GameEngine) postKeys() []string {
+	var keys []string
+	for _, key := range ge.Buildings.soldierKeys {
+		if ge.soldierPostsOf(key) > 0 {
+			keys = append(keys, key)
+		}
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		return ge.Buildings.defs[keys[i]].LineageTier < ge.Buildings.defs[keys[j]].LineageTier
+	})
+	return keys
+}
+
+// soldiersFall takes n soldiers out of the population: they are dead. They
+// leave the posts, oldest building first, and each post stays empty until the
+// reserve trains someone for it (fillSoldierPosts). It returns how many fell
+// (never more than the posted soldiers). Caller holds the write lock.
+func (ge *GameEngine) soldiersFall(n int) int {
+	if n <= 0 {
+		return 0
+	}
+	if ge.garrisonForTestSet {
+		// A garrison set by a test hook has no posts: the army itself shrinks.
+		n = min(n, int(ge.garrisonForTest))
+		ge.garrisonForTest -= float64(n)
+		ge.syncSoldiers()
+		return n
+	}
+	fell := 0
+	for _, key := range ge.postKeys() {
+		if fell >= n {
+			break
+		}
+		take := min(n-fell, ge.soldiersPosted[key])
+		if take <= 0 {
+			continue
+		}
+		ge.soldiersPosted[key] -= take
+		if ge.soldiersVacant == nil {
+			ge.soldiersVacant = map[string]int{}
+		}
+		ge.soldiersVacant[key] += take
+		fell += take
+	}
+	if fell > 0 {
+		ge.syncSoldiers()
+	}
+	return fell
+}
+
+// trainFallenPosts is the training pass for the posts the fallen left: oldest
+// building first, from the reserve only, at most soldierTrainPercent of all
+// the posts (at least one soldier) a pass, and only while the food margin the
+// reserve's growth uses passes. It returns how many finished training.
+func (ge *GameEngine) trainFallenPosts() int {
+	if len(ge.soldiersVacant) == 0 {
+		return 0
+	}
+	if ge.soldiersPosted == nil {
+		ge.soldiersPosted = map[string]int{}
+	}
+	budget := max(1, (soldierTrainPercent*ge.soldierPostsTotal()+99)/100)
+	net, per, margin := ge.recruitFood()
+	if ge.Resources.Get("food") <= 0 || net-per < margin {
+		return 0
+	}
+	total := 0
+	for _, key := range ge.postKeys() {
+		vacant := ge.soldiersVacant[key]
+		if vacant <= 0 || budget <= 0 {
+			continue
+		}
+		got := ge.Workers.TakeIdle(min(vacant, budget))
+		if got <= 0 {
+			continue
+		}
+		budget -= got
+		total += got
+		ge.soldiersPosted[key] += got
+		ge.soldiersVacant[key] -= got
+		if ge.soldiersVacant[key] <= 0 {
+			delete(ge.soldiersVacant, key)
+		}
+		ge.logSoldiersTrained(ge.Buildings.defs[key], got)
+	}
+	return total
+}
+
+// logSoldiersTrained says that n soldiers have finished training for a post
+// at a military building. Caller holds the lock.
+func (ge *GameEngine) logSoldiersTrained(def config.BuildingDef, n int) {
+	w := config.Term(ge.age, config.TermSoldiers)
+	ge.addLog(LogRoutine, fmt.Sprintf("%s finished training at the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+}
+
 // postAllSoldiers puts a soldier at every post, with no food test: a town set
 // up by hand (a test hook, or staged for a screen) starts with its army.
 func (ge *GameEngine) postAllSoldiers() {
@@ -108,12 +229,12 @@ func (ge *GameEngine) postAllSoldiers() {
 func (ge *GameEngine) fillSoldierPosts() int {
 	var waiting []string
 	for _, key := range ge.Buildings.soldierKeys {
-		if ge.soldiersPosted[key] < ge.soldierPostsOf(key) {
+		if ge.soldiersPosted[key]+ge.soldiersVacant[key] < ge.soldierPostsOf(key) {
 			waiting = append(waiting, key)
 		}
 	}
 	if len(waiting) == 0 {
-		return 0
+		return ge.trainFallenPosts()
 	}
 	sort.SliceStable(waiting, func(i, j int) bool {
 		return ge.Buildings.defs[waiting[i]].LineageTier < ge.Buildings.defs[waiting[j]].LineageTier
@@ -126,7 +247,7 @@ func (ge *GameEngine) fillSoldierPosts() int {
 	total := 0
 	for _, key := range waiting {
 		added := 0
-		if need := ge.soldierPostsOf(key) - ge.soldiersPosted[key]; need > 0 && fed && net-per >= margin {
+		if need := ge.soldierPostsOf(key) - ge.soldiersPosted[key] - ge.soldiersVacant[key]; need > 0 && fed && net-per >= margin {
 			// The reserve first: a person who already eats takes a post.
 			fromReserve := ge.Workers.TakeIdle(need)
 			need -= fromReserve
@@ -146,7 +267,7 @@ func (ge *GameEngine) fillSoldierPosts() int {
 		if added > 0 {
 			ge.logSoldiersArrived(def, added)
 		}
-		if ge.soldiersPosted[key] >= ge.soldierPostsOf(key) {
+		if ge.soldiersPosted[key]+ge.soldiersVacant[key] >= ge.soldierPostsOf(key) {
 			delete(ge.soldierWaitLogged, key)
 		} else if !ge.soldierWaitLogged[key] {
 			if ge.soldierWaitLogged == nil {
@@ -156,10 +277,11 @@ func (ge *GameEngine) fillSoldierPosts() int {
 			ge.addLog(LogRoutine, fmt.Sprintf("The %s has posts waiting on food: its soldiers come as the food allows.", def.Name))
 		}
 	}
-	return total
+	return total + ge.trainFallenPosts()
 }
 
-// syncSoldiers holds the soldiers resource at the posted army, the compatibility
+// syncSoldiers holds the soldiers resource at the army at home (the posted army less
+// the parties away), the compatibility
 // bridge to every reader that still reads the resource. It also counts the
 // soldiers that arrive (a copy built, an older copy upgraded) in the lifetime
 // soldiers-trained total the milestones read (a load sets soldiersSeen to the
@@ -177,6 +299,16 @@ func (ge *GameEngine) syncSoldiers() {
 			}
 		}
 	}
+	// A vacancy cannot outlast its post: a lost copy takes its empty posts too.
+	for key, n := range ge.soldiersVacant {
+		if room := ge.soldierPostsOf(key) - ge.soldiersPosted[key]; n > room {
+			if room <= 0 {
+				delete(ge.soldiersVacant, key)
+			} else {
+				ge.soldiersVacant[key] = room
+			}
+		}
+	}
 	posted := ge.soldierTotal()
 	if posted > ge.soldiersSeen {
 		ge.Stats.RecordSoldiersTrained(float64(posted - ge.soldiersSeen))
@@ -190,10 +322,7 @@ func (ge *GameEngine) syncSoldiers() {
 		}
 	}
 	ge.soldiersSeen = posted
-	home := float64(posted)
-	if ge.garrisonForTestSet {
-		home = ge.garrisonForTest
-	}
+	home := float64(ge.soldiersHome())
 	r := ge.Resources.resources["soldiers"]
 	if r == nil {
 		return
@@ -242,11 +371,33 @@ func (ge *GameEngine) soldiersPostedSave() map[string]int {
 	return out
 }
 
+// soldiersVacantSave is the posts the fallen left, for a save: nil when none.
+func (ge *GameEngine) soldiersVacantSave() map[string]int {
+	var out map[string]int
+	for key, n := range ge.soldiersVacant {
+		if n = min(n, ge.soldierPostsOf(key)); n > 0 {
+			if out == nil {
+				out = map[string]int{}
+			}
+			out[key] = n
+		}
+	}
+	return out
+}
+
 // loadSoldiersPosted restores the posted soldiers from a save, after the
 // buildings are back. A save from before the posts has none: they fill again as
 // the food allows. The army that stands is not counted as trained again.
 func (ge *GameEngine) loadSoldiersPosted(save *GameSave) {
-	ge.soldiersPosted, ge.soldierWaitLogged = nil, nil
+	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant = nil, nil, nil
+	for key, n := range save.SoldiersVacant {
+		if n = min(n, ge.soldierPostsOf(key)); n > 0 {
+			if ge.soldiersVacant == nil {
+				ge.soldiersVacant = map[string]int{}
+			}
+			ge.soldiersVacant[key] = n
+		}
+	}
 	for key, n := range save.SoldiersPosted {
 		if n = min(n, ge.soldierPostsOf(key)); n > 0 {
 			if ge.soldiersPosted == nil {
@@ -263,3 +414,51 @@ func (ge *GameEngine) loadSoldiersPosted(save *GameSave) {
 	}
 	ge.soldiersSeen = ge.soldierTotal()
 }
+
+// casualtyLine is the sentence the returns log and the mission's message add
+// about the party: how many of it fell, counting the road's ambushes, or that
+// all of it came home.
+func (ge *GameEngine) casualtyLine(res ExpeditionResult) string {
+	if res.Party <= 0 {
+		return ""
+	}
+	if fell := res.Party - res.Marching + res.SoldiersFell; fell > 0 {
+		return fmt.Sprintf(" %d of %d soldiers fell.", fell, res.Party)
+	}
+	return fmt.Sprintf(" All %d soldiers came home.", res.Party)
+}
+
+// partySizeLocked is the party a mission of the offer takes: its tier's share
+// of the reference army of the age it is sent in (config.PartyShares).
+func (ge *GameEngine) partySizeLocked(offer MissionOffer) int {
+	kind := config.PartyShort
+	switch {
+	case offer.Tier == TierLong:
+		kind = config.PartyLong
+	case offer.Military():
+		kind = config.PartyMilitary
+	case offer.Tier == TierGrand:
+		kind = config.PartyCivil
+	}
+	order, _ := ge.progress.AgeIndex(ge.age)
+	return config.PartySize(kind, order)
+}
+
+// raidFallLocked is the soldiers a raid costs when it lands against the
+// garrison: a twentieth of the army at home, rounded up, at least one. It
+// returns the sentence for the log, or "" when nobody was home.
+func (ge *GameEngine) raidFallLocked() string {
+	home := ge.soldiersHome()
+	if home <= 0 {
+		return ""
+	}
+	fell := ge.soldiersFall(max(1, (raidFallPercent*home+99)/100))
+	if fell <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("  [red]%s fell defending the town.[-]", textfmt.Count(fell, "soldier", "soldiers"))
+}
+
+// raidFallPercent is the share of the army at home that falls when a raid
+// lands and the garrison blunts it.
+const raidFallPercent = 5

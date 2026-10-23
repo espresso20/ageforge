@@ -22,6 +22,8 @@ func peopleTown(t *testing.T) game.GameState {
 	st.Workers.TotalPop += 108
 	st.Military.SoldierCount = 108
 	st.Military.ActiveShort = &game.ExpeditionSnapshot{Name: "Trade Trek to the Cedar Pass", Soldiers: 20, TicksLeft: 300}
+	st.Military.Active = []*game.ExpeditionSnapshot{st.Military.ActiveShort}
+	st.Military.SoldiersAway = 20
 	return st
 }
 
@@ -78,6 +80,8 @@ func TestPeopleBoxSoldiersOut(t *testing.T) {
 	st := game.GameState{Age: "modern_age"}
 	st.Workers.Soldiers = 108
 	st.Military.ActiveShort = &game.ExpeditionSnapshot{Soldiers: 20}
+	st.Military.Active = []*game.ExpeditionSnapshot{st.Military.ActiveShort}
+	st.Military.SoldiersAway = 20
 	if line := plainText(peopleBoxText(st, 0, false)); !strings.Contains(line, "Soldiers 108 · 20 out") && !strings.Contains(strings.Join(strings.Fields(line), " "), "Soldiers 108 · 20 out") {
 		t.Errorf("no soldiers out on the line:\n%s", line)
 	}

@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strings"
 	"testing"
@@ -199,33 +200,39 @@ func TestBoard_RegeneratedOnAnAgeAdvance(t *testing.T) {
 	}
 }
 
-// TestBoard_OneMissionOfEachTierAtATime: a short, a long and a grand mission
-// can be out together; a second of a tier is refused until the first is home.
-func TestBoard_OneMissionOfEachTierAtATime(t *testing.T) {
+// TestBoard_MissionsRunTogetherWhileTheArmyHolds: any number of missions can
+// be out together, of any tier; the soldiers at home are the only limit. A
+// second mission of a tier goes while the first is out, and a launch the army
+// cannot cover is refused with the party and the soldiers at home, and takes
+// nothing.
+func TestBoard_MissionsRunTogetherWhileTheArmyHolds(t *testing.T) {
 	ge := boardEngine(t, 6, "iron_age")
 	learn(ge, "exploration", "military_tactics")
-	setSoldiers(ge, 1e6)
-	for _, tier := range []string{TierShort, TierLong, TierGrand} {
-		first := 1 + 3*map[string]int{TierShort: 0, TierLong: 1, TierGrand: 2}[tier]
-		if err := ge.LaunchExpedition(first); err != nil {
-			t.Fatalf("the first %s mission: %v", tier, err)
-		}
-		if err := ge.LaunchExpedition(first + 1); err == nil || !strings.Contains(err.Error(), "already under way") {
-			t.Errorf("a second %s mission: %v, want the slot's refusal", tier, err)
-		}
-	}
-	for _, tier := range boardTiers {
-		if ge.Military.ActiveByTier(tier) == nil {
-			t.Errorf("no %s mission is out", tier)
+	short := config.PartySize(config.PartyShort, 3)
+	long := config.PartySize(config.PartyLong, 3)
+	// Two short parties, a long one and 4 spare: no grand mission fits.
+	setSoldiers(ge, float64(2*short+long+4))
+	for _, n := range []int{1, 2, 4} {
+		if err := ge.LaunchExpedition(n); err != nil {
+			t.Fatalf("offer %d: %v", n, err)
 		}
 	}
-	// The refused launches took nothing: the offers they named are still up.
-	for _, n := range []int{2, 5, 8} {
-		if _, err := ge.Military.BoardOffer(n); err != nil {
-			t.Errorf("offer %d was taken by a refused launch: %v", n, err)
-		}
+	if got := len(ge.Military.ActiveOf(TierShort)); got != 2 {
+		t.Errorf("%d short missions out, want 2 together", got)
 	}
-	// One comes home; its tier is free again.
+	if got := ge.soldiersHome(); got != 4 {
+		t.Errorf("%d soldiers at home, want 4", got)
+	}
+	err := ge.LaunchExpedition(7)
+	want := fmt.Sprintf("needs a party of %d soldiers, and 4 are at home", config.PartySize(config.PartyMilitary, 3))
+	if err == nil || !strings.Contains(err.Error(), want) {
+		t.Errorf("a grand mission with 4 at home: %v, want a refusal naming %q", err, want)
+	}
+	// The refused launch took nothing: the offer is still up.
+	if _, err := ge.Military.BoardOffer(7); err != nil {
+		t.Errorf("offer 7 was taken by a refused launch: %v", err)
+	}
+	// One comes home; its party is back at home and a long mission fits again.
 	ge.mu.Lock()
 	ge.Military.ActiveByTier(TierLong).TicksLeft = 1
 	ge.processExpeditions()
@@ -233,31 +240,31 @@ func TestBoard_OneMissionOfEachTierAtATime(t *testing.T) {
 	if ge.Military.ActiveByTier(TierLong) != nil {
 		t.Fatal("the long mission did not come home")
 	}
-	if err := ge.LaunchExpedition(6); err != nil {
+	if err := ge.LaunchExpedition(5); err != nil {
 		t.Errorf("a long mission once the first is home: %v", err)
 	}
 }
 
-// TestBoard_CivilGrandCostsMaterialsAndMilitaryGrandSoldiers: a civil grand
-// offer costs materials and no soldiers, and sends none; a military grand
-// offer costs soldiers and sends them.
-func TestBoard_CivilGrandCostsMaterialsAndMilitaryGrandSoldiers(t *testing.T) {
+// TestBoard_EveryGrandOfferCostsItsParty: a civil grand offer costs materials
+// and its party (12% of the army), a military grand offer its party alone
+// (30%), and each sends that party out.
+func TestBoard_EveryGrandOfferCostsItsParty(t *testing.T) {
 	ge := missionReady(t, 2, "iron_age")
-	setSoldiers(ge, 40)
+	setSoldiers(ge, 1000)
 	setIncome(ge, "soldiers", 0.02)
 	civil := plantOffer(ge, TierGrand, GrandCivil)
 	cost := ge.MissionCost(civil)
-	if _, soldiers := cost["soldiers"]; soldiers || len(cost) != 2 {
-		t.Errorf("a civil grand mission costs %v, want two materials and no soldiers", cost)
+	if cost["soldiers"] != float64(config.PartySize(config.PartyCivil, 3)) || len(cost) != 3 {
+		t.Errorf("a civil grand mission costs %v, want its party of %d and two materials", cost, config.PartySize(config.PartyCivil, 3))
 	}
 	if err := ge.LaunchExpedition(civil); err != nil {
 		t.Fatal(err)
 	}
-	if active := ge.Military.ActiveByTier(TierGrand); active.Soldiers != 0 || active.Military() {
-		t.Errorf("the civil mission is out as %+v, want no soldiers and no army term", active)
+	if active := ge.Military.ActiveByTier(TierGrand); active.Soldiers != 52 || active.Military() {
+		t.Errorf("the civil mission is out as %+v, want 52 soldiers and no army term", active)
 	}
-	if got := ge.Resources.Get("soldiers"); got != 40 {
-		t.Errorf("a civil mission took %v soldiers", 40-got)
+	if got := ge.Resources.Get("soldiers"); got != 1000-52 {
+		t.Errorf("a civil mission took %v soldiers from home, want 52", 1000-got)
 	}
 	// Its odds are its own: the army does not move them.
 	ge.mu.Lock()
@@ -267,8 +274,8 @@ func TestBoard_CivilGrandCostsMaterialsAndMilitaryGrandSoldiers(t *testing.T) {
 
 	military := plantOffer(ge, TierGrand, GrandMilitary)
 	cost = ge.MissionCost(military)
-	if cost["soldiers"] < 1 || len(cost) != 1 {
-		t.Errorf("a military grand mission costs %v, want soldiers and nothing else", cost)
+	if cost["soldiers"] != float64(config.PartySize(config.PartyMilitary, 3)) || len(cost) != 1 {
+		t.Errorf("a military grand mission costs %v, want its party of %d and nothing else", cost, config.PartySize(config.PartyMilitary, 3))
 	}
 	if err := ge.LaunchExpedition(military); err != nil {
 		t.Fatal(err)
@@ -496,8 +503,7 @@ func TestBoard_SaveRoundTrip(t *testing.T) {
 	defer SetDataDirForTest(t.TempDir())()
 	ge := boardEngine(t, 7, "iron_age")
 	learn(ge, "exploration", "military_tactics")
-	setSoldiers(ge, 50)
-	setIncome(ge, "soldiers", 0.02)
+	setSoldiers(ge, 5000)
 	if err := ge.LaunchExpedition(8); err != nil {
 		if err := ge.LaunchExpedition(7); err != nil {
 			t.Fatal(err)

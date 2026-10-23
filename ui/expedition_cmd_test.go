@@ -10,7 +10,7 @@ import (
 )
 
 // newExpeditionTestEngine spins up a fresh engine in the Bronze Age, stocked
-// with enough food, wood and soldiers to launch any offer on its mission
+// with enough food, wood and soldiers at home to launch any offer on its mission
 // board. The age jump uses the dev console (/age applies the age's unlocks);
 // resource amounts are set via LoadAmounts so they bypass nominal storage
 // caps.
@@ -28,10 +28,11 @@ func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 		t.Fatalf("dev /age bronze_age failed: %q", msg)
 	}
 	engine.Resources.LoadAmounts(map[string]float64{
-		"food":     500,
-		"wood":     500,
-		"soldiers": 50,
+		"food": 500,
+		"wood": 500,
 	})
+	// Every mission takes a party: an army at home that covers a few.
+	engine.SetGarrisonForTest("bronze_age", 500)
 	return engine
 }
 
@@ -77,9 +78,10 @@ func TestCmdExpeditionNoArgsPrintsTheBoard(t *testing.T) {
 	}
 }
 
-// TestCmdExpeditionNumberLaunches verifies `expedition <n>` sends offer n and
-// fills its tier's slot; a second offer of the same tier is refused while one
-// is out, and another tier is still free.
+// TestCmdExpeditionNumberLaunches verifies `expedition <n>` sends offer n with
+// its party; a second offer of the same tier goes too while the soldiers at
+// home cover it, and is refused with the party and the soldiers at home when
+// they do not.
 func TestCmdExpeditionNumberLaunches(t *testing.T) {
 	engine := newExpeditionTestEngine(t)
 
@@ -90,9 +92,18 @@ func TestCmdExpeditionNumberLaunches(t *testing.T) {
 	if st := engine.GetState(); st.Military.ActiveShort == nil {
 		t.Errorf("after sending offer 1, ActiveShort is nil; expected a short mission under way")
 	}
-	if res := cmdExpedition([]string{"2"}, engine); res.Type != "error" || !strings.Contains(res.Message, "already under way") {
-		t.Errorf("a second short mission: type %q, %q; want the slot's refusal", res.Type, res.Message)
+	if res := cmdExpedition([]string{"2"}, engine); res.Type != "success" {
+		t.Errorf("a second short mission beside the first: type %q, %q", res.Type, res.Message)
 	}
+	if n := len(engine.GetState().Military.Active); n != 2 {
+		t.Errorf("%d missions under way, want 2", n)
+	}
+	// Eight soldiers per short party, two out; three at home cannot make a third.
+	engine.SetGarrisonForTest("bronze_age", 19)
+	if res := cmdExpedition([]string{"3"}, engine); res.Type != "error" || !strings.Contains(res.Message, "needs a party of 8 soldiers, and 3 are at home") {
+		t.Errorf("a third short mission with 3 at home: type %q, %q; want the party and the soldiers at home", res.Type, res.Message)
+	}
+	engine.SetGarrisonForTest("bronze_age", 500)
 	if res := cmdExpedition([]string{"4"}, engine); res.Type != "success" {
 		t.Errorf("a long mission beside the short one: type %q, %q", res.Type, res.Message)
 	}
@@ -227,8 +238,10 @@ func TestCmdExpeditionSendsByName(t *testing.T) {
 	if st := engine.GetState(); st.Military.ActiveLong == nil || st.Military.ActiveLong.Name != name {
 		t.Errorf("under way: %+v, want %q", st.Military.ActiveLong, name)
 	}
-	// A name that matches an offer whose slot is taken is refused by the game.
-	if res := cmdExpedition(strings.Fields(strings.ToLower(board[4].Offer.Name)), engine); res.Type != "error" || !strings.Contains(res.Message, "already under way") {
+	// A name that matches an offer the army at home cannot make a party for is
+	// refused by the game.
+	engine.SetGarrisonForTest("bronze_age", 25) // a long party is 20; 5 are at home
+	if res := cmdExpedition(strings.Fields(strings.ToLower(board[4].Offer.Name)), engine); res.Type != "error" || !strings.Contains(res.Message, "needs a party of 20 soldiers, and 5 are at home") {
 		t.Errorf("a second long mission by name: type %q, %q", res.Type, res.Message)
 	}
 }

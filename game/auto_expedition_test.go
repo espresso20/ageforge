@@ -36,6 +36,8 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 			r.Rate = 1 // an income, so a scout's cost is sized on something
 		}
 	}
+	// Every mission takes a party: an army at home that covers any number.
+	setSoldiers(ge, 1e12)
 	if n > 0 {
 		ge.Buildings.LoadCounts(map[string]int{autoExpeditionBuildingKey: n})
 	}
@@ -55,9 +57,9 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
 	// A launch is a new active mission: a party that comes home and is sent
 	// out again in the same tick still counts.
-	prev := map[string]*ActiveExpedition{}
-	for _, tier := range boardTiers {
-		prev[tier] = ge.Military.ActiveByTier(tier)
+	seen := map[*ActiveExpedition]bool{}
+	for _, a := range ge.Military.ActiveAll() {
+		seen[a] = true
 	}
 	for i := 0; i < n; i++ {
 		ge.tick++ // the board's refills and expiries run on the clock
@@ -65,12 +67,11 @@ func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
 		ge.Military.RefreshBoard(ge.gameRNG(), ge.tick)
 		resolved += len(ge.Military.Tick(0, 0))
 		ge.processAutoExpeditions()
-		for _, tier := range boardTiers {
-			now := ge.Military.ActiveByTier(tier)
-			if now != nil && now != prev[tier] {
+		for _, a := range ge.Military.ActiveAll() {
+			if !seen[a] {
 				launched++
+				seen[a] = true
 			}
-			prev[tier] = now
 		}
 	}
 	return launched, resolved
@@ -183,18 +184,25 @@ func TestAutoExpedition_NoBuildingNoDispatch(t *testing.T) {
 }
 
 // TestAutoExpedition_NeverSendsWhatItCannotPay: the society sends only what
-// the town can pay for. With no soldiers it never sends a military grand
-// mission, whatever its haul per minute; with soldiers it can.
+// the town can field. With no soldiers at home it sends nothing at all (every
+// mission takes a party); with an army it sends, and never a grand mission,
+// whatever its haul per minute.
 func TestAutoExpedition_NeverSendsWhatItCannotPay(t *testing.T) {
 	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
 	learn(ge, "military_tactics")
 	setSoldiers(ge, 0)
+	if launched, _ := runAutoTicks(ge, 5000); launched != 0 {
+		t.Fatalf("%d missions auto-launched with no soldiers at home", launched)
+	}
+	setSoldiers(ge, 1e12)
 	launched, _ := runAutoTicks(ge, 20000)
 	if launched == 0 {
-		t.Fatal("nothing auto-launched at full investment — the dispatcher is inert")
+		t.Fatal("nothing auto-launched at full investment with an army at home — the dispatcher is inert")
 	}
-	if active := ge.Military.ActiveByCategory(ExpeditionMilitary); active != nil && active.Military() {
-		t.Errorf("auto-dispatch launched a military mission (%s) with no soldiers", active.Title)
+	for _, a := range ge.Military.ActiveAll() {
+		if a.Tier == TierGrand {
+			t.Errorf("auto-dispatch launched a grand mission (%s)", a.Title)
+		}
 	}
 	ge.EnsureMissionBoard()
 	for i := 0; i < 50; i++ {
@@ -202,49 +210,47 @@ func TestAutoExpedition_NeverSendsWhatItCannotPay(t *testing.T) {
 		if n == 0 {
 			break
 		}
-		if o, _ := ge.Military.BoardOffer(n); o.Military() {
-			t.Fatalf("picker chose %s with no soldiers", o.Title)
+		if o, _ := ge.Military.BoardOffer(n); o.Tier == TierGrand {
+			t.Fatalf("picker chose %s", o.Title)
 		}
 	}
 }
 
-// TestAutoExpedition_RespectsTheTierSlots: a mission launched by hand blocks
-// auto-dispatch of its tier for its whole duration, whatever the society
-// would rather send: never two of a tier at once, never a queue.
-func TestAutoExpedition_RespectsTheTierSlots(t *testing.T) {
+// TestAutoExpedition_RespectsTheArmy: the army is the only limit. Missions
+// sent by hand do not block the society, but it sends only while the soldiers
+// at home can make up the party, holds the dispatch when they cannot and
+// fires it the tick they can.
+func TestAutoExpedition_RespectsTheArmy(t *testing.T) {
 	ge := autoExpeditionTestEngine(t, "atomic_age", 6, 48, 1e9)
-	learn(ge, "military_tactics")
-
-	// Park a mission in every tier by hand and freeze their timers high.
-	var manual [3]*ActiveExpedition
-	for i, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}} {
-		if err := ge.launchExpeditionLocked(plantOffer(ge, c.tier, c.grand)); err != nil {
-			t.Fatalf("manual launch of a %s mission failed: %v", c.tier, err)
-		}
-		manual[i] = ge.Military.ActiveByTier(c.tier)
-		manual[i].TicksLeft = 4000
+	// The soldiers at home: one short party and a little over.
+	short := ge.partySizeLocked(MissionOffer{Tier: TierShort})
+	setSoldiers(ge, float64(short)+1)
+	if err := ge.launchExpeditionLocked(plantOffer(ge, TierShort, "")); err != nil {
+		t.Fatalf("manual launch failed: %v", err)
+	}
+	manual := ge.Military.ActiveByTier(TierShort)
+	manual.TicksLeft = 4000
+	if got := ge.soldiersHome(); got != 1 {
+		t.Fatalf("%d soldiers at home after a party of %d left, want 1", got, short)
 	}
 
 	for i := 0; i < 2000; i++ {
 		ge.processAutoExpeditions()
-		for n, tier := range boardTiers {
-			if ge.Military.ActiveByTier(tier) != manual[n] {
-				t.Fatalf("tick %d: auto-dispatch replaced the manual %s mission", i, tier)
-			}
+		if n := len(ge.Military.ActiveAll()); n != 1 {
+			t.Fatalf("tick %d: %d missions under way, want only the manual one (no soldiers to send another)", i, n)
 		}
 	}
 	// The countdown must be spent and WAITING, not forfeited.
 	if ge.autoExpeditionTicksLeft != 0 {
-		t.Errorf("countdown = %d after 2000 blocked ticks, want 0 (a dispatch held pending)",
+		t.Errorf("countdown = %d after 2000 held ticks, want 0 (a dispatch held pending)",
 			ge.autoExpeditionTicksLeft)
 	}
 
-	// Free the long slot: the pending dispatch must fire on the very next tick,
-	// and send a long offer, the only tier with room.
-	ge.Military.active[TierLong] = nil
+	// Soldiers come home: the pending dispatch fires on the very next tick.
+	setSoldiers(ge, 1e12)
 	ge.processAutoExpeditions()
-	if got := ge.Military.ActiveByTier(TierLong); got == nil {
-		t.Error("the pending dispatch did not fire once the slot freed")
+	if n := len(ge.Military.ActiveAll()); n != 2 {
+		t.Errorf("%d missions under way after the soldiers came home, want 2 (the manual one and the society's)", n)
 	}
 }
 

@@ -128,11 +128,11 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := ge.Military.LaunchOffer(offer, ge.tick, 0, nil, nil); err != nil {
+		if _, err := ge.Military.LaunchOffer(offer, ge.tick, 0, nil, nil); err != nil {
 			t.Fatal(err)
 		}
-		ticks = ge.Military.active[offer.Tier].TicksLeft
-		ge.Military.active[offer.Tier] = nil
+		ticks = ge.Military.ActiveByTier(offer.Tier).TicksLeft
+		ge.Military.setActive(offer.Tier, nil)
 		_, infos := ge.boardViewLocked(0)
 		for _, info := range infos {
 			if info.Number == n {

@@ -38,8 +38,7 @@ func panelText(p *expeditionPanel) string {
 func runUntilHome(t *testing.T, engine *game.GameEngine) {
 	t.Helper()
 	for i := 0; ; i++ {
-		mil := engine.GetState().Military
-		if mil.ActiveShort == nil && mil.ActiveLong == nil && mil.ActiveGrand == nil {
+		if len(engine.GetState().Military.Active) == 0 {
 			return
 		}
 		if i > 200000 {
@@ -238,7 +237,9 @@ func TestExpeditionPanelShowsAnOfferThatCannotBeSentItsRefusal(t *testing.T) {
 	p.open(engine.GetState())
 	p.view.report = false
 	p.update(engine.GetState())
-	// Another short offer: the short slot is taken.
+	// Another short offer: only 3 soldiers are at home, and a party is 8.
+	engine.SetGarrisonForTest("bronze_age", 11)
+	p.update(engine.GetState())
 	sc := p.scene()
 	i := -1
 	for j, it := range sc.offers {
@@ -422,6 +423,7 @@ func TestExpeditionRoadStoriesFitCompactReports(t *testing.T) {
 	state := engine.GetState()
 	state.Military.ActiveShort = &game.ExpeditionSnapshot{Label: "Scout", Place: "Tin Road", TotalTicks: 100, TicksLeft: 50, SuccessChance: .65, HaulMinutes: 20,
 		RoadStories: []string{"The party found an amber hoard. The haul grows by 40%.", "A friendly village showed the party a shorter way. 6 minutes saved.", "Bandits shadowed the party for days. The odds fall to 57%."}}
+	state.Military.Active = []*game.ExpeditionSnapshot{state.Military.ActiveShort}
 	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
 		g := renderExpedition(state, expView{report: true}, sz[0], sz[1])
 		lines := g.Lines()
@@ -537,4 +539,120 @@ func runesOf(g *xgrid, x, y, w int) []rune {
 		out = append(out, g.at(x+i, y).r)
 	}
 	return out
+}
+
+// Every offer's briefing carries a Party line: green when the soldiers at home
+// cover the party, the refusal colour when they do not.
+func TestBriefingShowsThePartyOfEveryTier(t *testing.T) {
+	engine, _ := expFixture(t)
+	partyLine := func(state game.GameState, o game.ExpeditionInfo) (text string, kind xk) {
+		body, _ := briefing(state, o, 40)
+		for _, ln := range body {
+			if len(ln.parts) == 2 && strings.TrimSpace(ln.parts[0].s) == "Party" {
+				return ln.parts[1].s, ln.parts[1].k
+			}
+		}
+		return "", xText
+	}
+	state := engine.GetState()
+	if len(state.Military.Expeditions) != 9 {
+		t.Fatalf("%d offers on the board, want 9", len(state.Military.Expeditions))
+	}
+	for _, o := range state.Military.Expeditions {
+		text, kind := partyLine(state, o)
+		if want := FormatNumber(float64(o.SoldiersNeeded)) + " soldiers"; text != want || o.SoldiersNeeded < 1 {
+			t.Errorf("offer %d (%s): Party line %q, want %q", o.Number, o.Tier, text, want)
+		}
+		if kind != xGood {
+			t.Errorf("offer %d: the Party line is not green with %d at home for %d", o.Number, state.Military.SoldierCount, o.SoldiersNeeded)
+		}
+	}
+	// With too few at home the same lines turn to the refusal colour.
+	engine.SetGarrisonForTest("bronze_age", 7)
+	state = engine.GetState()
+	for _, o := range state.Military.Expeditions {
+		if _, kind := partyLine(state, o); kind != xBad {
+			t.Errorf("offer %d: the Party line is not red with 7 at home for %d", o.Number, o.SoldiersNeeded)
+		}
+	}
+}
+
+// The Ready Room header reads home over posted, the send box says how many
+// stay home, the Report shows each party's soldiers and what fell, and the
+// People box counts soldiers out: all at 80x24 as well as 100x30.
+func TestPartiesOnEveryScreen(t *testing.T) {
+	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
+		engine, p := expFixture(t)
+		if err := engine.LaunchExpedition(1); err != nil {
+			t.Fatal(err)
+		}
+		state := engine.GetState()
+		away := state.Military.SoldiersAway
+		if away != 8 {
+			t.Fatalf("%d soldiers away after one short mission in the Bronze Age, want 8", away)
+		}
+		ready := renderExpedition(state, expView{}, sz[0], sz[1]).String()
+		if want := fmt.Sprintf("Soldiers %d of %d at home", 500-away, 500); !strings.Contains(ready, want) {
+			t.Errorf("%dx%d: the header lacks %q:\n%s", sz[0], sz[1], want, ready)
+		}
+		if !strings.Contains(ready, "Party") {
+			t.Errorf("%dx%d: the Ready Room shows no Party line:\n%s", sz[0], sz[1], ready)
+		}
+		p.setSize(sz[0], sz[1])
+		p.open(state)
+		p.view.report = false
+		p.update(state)
+		confirm := renderExpedition(state, expView{confirm: true, sel: p.view.sel}, sz[0], sz[1]).String()
+		if !strings.Contains(confirm, fmt.Sprintf("stay home)")) || !strings.Contains(confirm, "Party") {
+			t.Errorf("%dx%d: the send box lacks the party or who stays home:\n%s", sz[0], sz[1], confirm)
+		}
+		report := renderExpedition(state, expView{report: true}, sz[0], sz[1]).String()
+		if !strings.Contains(report, "8 soldiers") {
+			t.Errorf("%dx%d: the Report block lacks the party's soldiers:\n%s", sz[0], sz[1], report)
+		}
+		box := plainText(peopleBoxText(state, sidebarW-2, false))
+		if !strings.Contains(strings.Join(strings.Fields(box), " "), "· 8 out") {
+			t.Errorf("%dx%d: the People box lacks the soldiers out:\n%s", sz[0], sz[1], box)
+		}
+	}
+}
+
+// The returns lines say how many soldiers fell, or that all came home.
+func TestReturnLinesCountTheFallen(t *testing.T) {
+	r := game.MissionReturn{Label: "Skirmish", Place: "the Amber Coast", Party: 60, Fell: 36}
+	if line := returnLine(r); !strings.Contains(line, "failed.") || !strings.Contains(line, "36 of 60 soldiers fell.") {
+		t.Errorf("failed return: %q", line)
+	}
+	r = game.MissionReturn{Label: "Scout", Place: "the Cedar Pass", Success: true, Haul: "5 wood", Party: 8}
+	if line := returnLine(r); !strings.Contains(line, "All 8 soldiers came home.") {
+		t.Errorf("clean return: %q", line)
+	}
+	r.Fell = 1
+	if line := returnLine(r); !strings.Contains(line, "1 of 8 soldiers fell.") {
+		t.Errorf("a success that lost one: %q", line)
+	}
+}
+
+// With no party to send (the Primitive Age) the briefing and the send box
+// leave the Party row out.
+func TestNoPartyRowWhenNoPartyGoes(t *testing.T) {
+	engine := game.NewGameEngine()
+	engine.SeedRNG(3)
+	if err := engine.EnterAgeForTest("primitive_age"); err != nil {
+		t.Skip("cannot stage the Primitive Age")
+	}
+	engine.EnsureMissionBoard()
+	state := engine.GetState()
+	for _, o := range state.Military.Expeditions {
+		body, _ := briefing(state, o, 40)
+		for _, ln := range body {
+			if len(ln.parts) > 0 && strings.TrimSpace(ln.parts[0].s) == "Party" {
+				t.Errorf("offer %d has a Party row with no party", o.Number)
+			}
+		}
+	}
+	text := renderExpedition(state, expView{confirm: true}, 100, 30).String()
+	if strings.Contains(text, "stay home") || strings.Contains(text, "Party") {
+		t.Errorf("the send box shows a party:\n%s", text)
+	}
 }

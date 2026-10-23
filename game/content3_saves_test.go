@@ -213,7 +213,7 @@ func TestContent3OldSaveNeverUsedTheRoute(t *testing.T) {
 	if err := ge.EnterAgeForTest("galactic_age"); err != nil {
 		t.Fatal(err)
 	}
-	stock(ge, 0)
+	stock(ge)
 	if err := ge.StartTradeRoute("warp_commerce"); err == nil || err.Error() != "The Warp Commerce route needs Interstellar Trade first. Research it to start it." {
 		t.Errorf("Warp Commerce after the grace age, never used: %v", err)
 	}
@@ -247,7 +247,7 @@ func TestContent3OldSaveKeepsItsRoute(t *testing.T) {
 	if err := ge.EnterAgeForTest("galactic_age"); err != nil {
 		t.Fatal(err)
 	}
-	stock(ge, 0)
+	stock(ge)
 	if err := ge.StopTradeRoute("warp_commerce"); err != nil {
 		t.Fatalf("stopping Warp Commerce after the advance: %v", err)
 	}
@@ -273,7 +273,7 @@ func TestContent3OldSaveKeepsItsRoute(t *testing.T) {
 	fresh.age = def.MinAge
 	fresh.mu.Unlock()
 	learn(fresh, "the_wheel")
-	stock(fresh, 0)
+	stock(fresh)
 	if err := fresh.StartTradeRoute("warp_commerce"); err == nil || !strings.Contains(err.Error(), "Interstellar Trade") {
 		t.Errorf("Warp Commerce in a new run, without Interstellar Trade: %v", err)
 	}

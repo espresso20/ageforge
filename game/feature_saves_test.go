@@ -76,7 +76,7 @@ func TestWriteFeatureFixtures(t *testing.T) {
 		}
 	}
 	write(featureFixtureInUse, "pre_features_bronze", "bronze_age", func(ge *GameEngine) {
-		ge.Military.active[TierGrand] = &ActiveExpedition{MissionOffer: MissionOffer{Tier: TierGrand, Grand: GrandMilitary, Title: "Raid Bandit Camp"}, Soldiers: 5, TicksLeft: 200}
+		ge.Military.setActive(TierGrand, &ActiveExpedition{MissionOffer: MissionOffer{Tier: TierGrand, Grand: GrandMilitary, Title: "Raid Bandit Camp"}, Soldiers: 5, TicksLeft: 200})
 		ge.Trade.activeRoutes["local_barter"] = &ActiveRoute{Key: "local_barter", TicksLeft: 10}
 		ge.festivalReadyTick = ge.tick + 250
 		ge.Diplomacy.factions["riverlands_tribes"] = &FactionState{Discovered: true, Opinion: 60, Status: "allied"}
@@ -115,12 +115,13 @@ func savedFeatures(t *testing.T, name string) []string {
 	return gs.GrantedFeatures
 }
 
-// stock gives the game plenty of everything a command might ask for.
-func stock(ge *GameEngine, soldiers float64) {
+// stock gives the game plenty of everything a command might ask for, and an
+// army at home to make up any party.
+func stock(ge *GameEngine) {
 	for _, res := range []string{"food", "wood", "stone", "iron", "gold", "culture", "steel", "coal"} {
 		setResource(ge, res, 1e9)
 	}
-	setSoldiers(ge, soldiers)
+	setSoldiers(ge, 1e12)
 }
 
 // clearArmy calls every expedition home, so the next can be sent.
@@ -170,7 +171,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	}
 
 	// In the save's age a campaign goes out without the tech.
-	stock(ge, 50)
+	stock(ge)
 	clearArmy(ge)
 	if err := ge.LaunchExpedition(keyOffer(ge, "raid_the_rival_clan")); err != nil {
 		t.Fatalf("a campaign in the save's age: %v", err)
@@ -184,7 +185,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	if ge.Buildings.graceAge != "" {
 		t.Fatalf("after the advance the grace age is still %q", ge.Buildings.graceAge)
 	}
-	stock(ge, 50)
+	stock(ge)
 	clearArmy(ge)
 	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Errorf("a campaign in the next age, in a run that was already sending them: %v", err)
@@ -204,7 +205,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	if n, _ := treeNotices(again); n != 0 {
 		t.Errorf("a second load said it again (%d lines)", n)
 	}
-	stock(again, 50)
+	stock(again)
 	clearArmy(again)
 	if err := again.LaunchExpedition(keyOffer(again, "siege_campaign")); err != nil {
 		t.Errorf("a campaign after a second load: %v", err)
@@ -220,7 +221,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	stock(again, 50)
+	stock(again)
 	err := again.LaunchExpedition(keyOffer(again, "raid_the_rival_clan"))
 	if err == nil || err.Error() != "Campaigns need Military Tactics first. Research it to send one." {
 		t.Errorf("a campaign on a new run without Military Tactics: %v", err)
@@ -264,7 +265,7 @@ func TestFeatureOldSaveLocksWhatItNeverUsed(t *testing.T) {
 	if err := ge.EnterAgeForTest("victorian_age"); err != nil {
 		t.Fatal(err)
 	}
-	stock(ge, 50)
+	stock(ge)
 	clearArmy(ge)
 	// Never sent: an expedition waits for Exploration, a campaign for its
 	// tech, and a scout for nothing.
@@ -319,7 +320,7 @@ func TestFeatureGraceCoversASaveFromBeforeTheTree(t *testing.T) {
 	if n != 1 || !strings.Contains(line, "keystone") || !strings.Contains(line, "some commands wait for a tech") || !strings.Contains(line, "Iron Age") {
 		t.Errorf("%d research update lines, the last %q; want one about the keystone and the commands", n, line)
 	}
-	stock(ge, 50)
+	stock(ge)
 	clearArmy(ge)
 	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Errorf("a campaign in the grace age of a save from before the tree: %v", err)
@@ -329,7 +330,7 @@ func TestFeatureGraceCoversASaveFromBeforeTheTree(t *testing.T) {
 		t.Fatal(err)
 	}
 	clearArmy(ge)
-	stock(ge, 50)
+	stock(ge)
 	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Errorf("a campaign after the grace age, in a run that sent one during it: %v", err)
 	}
@@ -355,7 +356,7 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 				break
 			}
 		}
-		stock(ge, 100)
+		stock(ge)
 		return ge
 	}
 	refused := func(what string, err error, want string) {
@@ -506,7 +507,7 @@ func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 		ge.age = def.MinAge
 		ge.mu.Unlock()
 		learn(ge, "the_wheel") // trade routes themselves are open
-		stock(ge, 0)
+		stock(ge)
 	}
 
 	// The tree without the tech: the lock is inert, the route starts, and

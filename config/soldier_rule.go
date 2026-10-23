@@ -1,6 +1,9 @@
 package config
 
-import "math"
+import (
+	"math"
+	"sync"
+)
 
 // The soldier rule: a military building comes with its soldiers. Soldiers are
 // people, not a stock a building trains: a copy of a military building
@@ -162,3 +165,53 @@ func applySoldierPosts(defs []BuildingDef) {
 		}
 	}
 }
+
+// The party a mission takes. Every expedition marches with soldiers: a share
+// of the age's reference army (RefSoldiers), so a party grows with the army
+// an ordinary town holds in that age. PartyShares is the one table of those
+// shares, in percent of the army, by kind of mission.
+const (
+	PartyShort    = "short"
+	PartyLong     = "long"
+	PartyMilitary = "military"
+	PartyCivil    = "civil"
+)
+
+// PartyShares is the percent of the age's reference army each kind of mission
+// takes: short 4, long 10, grand military 30, grand civil 12.
+var PartyShares = map[string]int{
+	PartyShort:    4,
+	PartyLong:     10,
+	PartyMilitary: 30,
+	PartyCivil:    12,
+}
+
+var (
+	refArmyOnce sync.Once
+	refArmy     []float64
+)
+
+// RefArmy is the reference town's army at the end of the age with the given
+// order (RefSoldiers), worked out once.
+func RefArmy(order int) float64 {
+	refArmyOnce.Do(func() { refArmy = RefSoldiers(BaseBuildings(), Ages()) })
+	if order < 0 || len(refArmy) == 0 {
+		return 0
+	}
+	return refArmy[min(order, len(refArmy)-1)]
+}
+
+// PartySizeOf is the party of a mission of the given kind (PartyShort, ...)
+// out of an army: its share of it, rounded up, at least 1. An age with no army
+// (the Primitive Age, before any military building) sends no soldiers: 0.
+func PartySizeOf(kind string, army float64) int {
+	n := int(math.Round(army))
+	if n <= 0 {
+		return 0
+	}
+	return max(1, (PartyShares[kind]*n+99)/100)
+}
+
+// PartySize is the party of a mission of the given kind in the age with the
+// given order, from the reference army.
+func PartySize(kind string, order int) int { return PartySizeOf(kind, RefArmy(order)) }

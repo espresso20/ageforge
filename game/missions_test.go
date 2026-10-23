@@ -102,7 +102,7 @@ func TestMissionRolls_WithinRangesAndSeeded(t *testing.T) {
 func TestMissionLaunch_TicksFollowTheRolledLength(t *testing.T) {
 	for _, age := range eraFirstAges() {
 		ge := missionReady(t, 4, age)
-		setSoldiers(ge, 1e6)
+		setSoldiers(ge, 1e12)
 		for _, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}} {
 			n := plantOffer(ge, c.tier, c.grand)
 			offer, _ := ge.Military.BoardOffer(n)
@@ -183,11 +183,13 @@ func TestMissionCost_IsMinutesOfIncomeInTheMostChargedMaterials(t *testing.T) {
 		}{{TierShort, "", 5}, {TierLong, "", 15}, {TierGrand, GrandCivil, 45}} {
 			n := plantOffer(ge, c.tier, c.grand)
 			cost := ge.MissionCost(n)
+			// Every mission also takes its party (TestEveryOfferCostsItsParty).
+			if cost["soldiers"] < 1 && age != "primitive_age" {
+				t.Errorf("%s %s in %s costs no party: %v", c.tier, c.grand, age, cost)
+			}
+			delete(cost, "soldiers")
 			if len(cost) != 2 {
 				t.Fatalf("%s %s in %s costs %v, want the two materials %v", c.tier, c.grand, age, cost, top)
-			}
-			if _, soldiers := cost["soldiers"]; soldiers {
-				t.Errorf("%s %s in %s costs soldiers: %v", c.tier, c.grand, age, cost)
 			}
 			for _, res := range top {
 				want := math.Ceil(c.minutes / 2 * ticksPerMinute * ge.townIncomeLocked(res))
@@ -201,32 +203,36 @@ func TestMissionCost_IsMinutesOfIncomeInTheMostChargedMaterials(t *testing.T) {
 		setIncome(ge, top[0], 0)
 		n := plantOffer(ge, TierShort, "")
 		cost := ge.MissionCost(n)
+		delete(cost, "soldiers")
 		if _, ok := cost[top[0]]; ok || len(cost) != 1 || cost[top[1]] == 0 {
 			t.Errorf("a short mission in %s with no income of %s costs %v, want only %s", age, top[0], cost, top[1])
 		}
 		setIncome(ge, top[1], 0)
-		if cost := ge.MissionCost(n); len(cost) != 0 {
-			t.Errorf("a short mission in %s with no income at all costs %v, want nothing", age, cost)
+		cost = ge.MissionCost(n)
+		delete(cost, "soldiers")
+		if len(cost) != 0 {
+			t.Errorf("a short mission in %s with no income at all costs %v besides its party, want nothing", age, cost)
 		}
 	}
 }
 
-// TestMissionCost_MilitaryGrandIsTenMinutesOfSoldiers: a military grand
-// mission costs the soldiers the town trains in ten minutes, rounded up, and
-// at least one, and nothing else.
-func TestMissionCost_MilitaryGrandIsTenMinutesOfSoldiers(t *testing.T) {
-	for _, age := range eraFirstAges() {
+// TestMissionCost_MilitaryGrandIsItsParty: a military grand mission costs its
+// party (30% of the age's reference army) and nothing else, whatever the town
+// makes of soldiers.
+func TestMissionCost_MilitaryGrandIsItsParty(t *testing.T) {
+	for i, age := range eraFirstAges() {
 		ge := missionReady(t, 1, age)
 		n := plantOffer(ge, TierGrand, GrandMilitary)
+		order, _ := ge.progress.AgeIndex(age)
+		want := float64(config.PartySizeOf(config.PartyMilitary, config.RefArmy(order)))
 		setIncome(ge, "soldiers", 0.037)
-		want := math.Ceil(10 * ticksPerMinute * ge.townIncomeLocked("soldiers"))
 		cost := ge.MissionCost(n)
-		if cost["soldiers"] != want || len(cost) != 1 {
-			t.Errorf("a military grand mission in %s costs %v, want %v soldiers and nothing else", age, cost, want)
+		if cost["soldiers"] != want || len(cost) != min(1, int(want)) {
+			t.Errorf("era %d: a military grand mission in %s costs %v, want %v soldiers and nothing else", i, age, cost, want)
 		}
 		setIncome(ge, "soldiers", 0)
-		if got := ge.MissionCost(n)["soldiers"]; got != 1 {
-			t.Errorf("a military grand mission in %s with no soldier income costs %v soldiers, want 1", age, got)
+		if got := ge.MissionCost(n)["soldiers"]; got != want {
+			t.Errorf("a military grand mission in %s with no soldier income costs %v soldiers, want %v", age, got, want)
 		}
 	}
 }
@@ -275,7 +281,7 @@ func TestMissionHaul_FormulaOnSuccessAndFailure(t *testing.T) {
 		for _, c := range []struct{ tier, grand string }{{TierShort, ""}, {TierLong, ""}, {TierGrand, GrandCivil}, {TierGrand, GrandMilitary}} {
 			for _, win := range []bool{true, false} {
 				ge := missionReady(t, 5, age)
-				setSoldiers(ge, 1e6)
+				setSoldiers(ge, 1e12)
 				ge.mu.Lock()
 				ge.Military.campaignPay = 1.5
 				ge.mu.Unlock()
@@ -457,7 +463,7 @@ func TestAutoExpedition_SendsTheBestHaulPerMinute(t *testing.T) {
 		ge := autoExpeditionTestEngine(t, age, 1, 8, 1e9)
 		learn(ge, "military_tactics")
 		ge.EnsureMissionBoard()
-		setSoldiers(ge, 1e6)
+		setSoldiers(ge, 1e12)
 		var wantN int
 		var bestRate float64
 		for i, slot := range ge.Military.board.Slots {
@@ -521,8 +527,7 @@ func TestMissionRefusals_OnlyTheBoardsOffersCanBeSent(t *testing.T) {
 func TestMissionRolls_SurviveASave(t *testing.T) {
 	defer SetDataDirForTest(t.TempDir())()
 	ge := missionReady(t, 7, "iron_age")
-	setSoldiers(ge, 50)
-	setIncome(ge, "soldiers", 0.02)
+	setSoldiers(ge, 5000)
 	if err := ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)); err != nil {
 		t.Fatal(err)
 	}

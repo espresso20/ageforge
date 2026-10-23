@@ -121,7 +121,7 @@ func TestContent2OldSave(t *testing.T) {
 	}
 	// In the grace age no building of the age waits for a tech.
 	for _, key := range []string{"coal_plant", "grand_embassy", "geographic_society"} {
-		stock(ge, 0)
+		stock(ge)
 		if bs := ge.GetState().Buildings[key]; bs.NeedsTech != "" {
 			t.Errorf("in the grace age %s reads %+v, want it open", key, bs)
 		}
@@ -145,7 +145,7 @@ func TestContent2OldSave(t *testing.T) {
 	if got := ge.Buildings.GetCount("coal_plant") + queued(ge, "coal_plant"); got != 3 {
 		t.Errorf("%d Coal Plants after the advance, want the 3 the run built", got)
 	}
-	stock(ge, 0)
+	stock(ge)
 	if bs := ge.GetState().Buildings["steam_works"]; bs.NeedsTech != "electrification" {
 		t.Errorf("the Steam Works reads %+v, want it to wait for Electrification", bs)
 	}
@@ -153,7 +153,7 @@ func TestContent2OldSave(t *testing.T) {
 		t.Errorf("a Steam Works without Electrification: %v", err)
 	}
 	learn(ge, "electrification")
-	stock(ge, 0)
+	stock(ge)
 	setResource(ge, "steel", 1e10) // the first Steam Works costs 1.25B, over what stock() gives
 	if err := ge.BuildBuilding("steam_works"); err != nil {
 		t.Errorf("a Steam Works with Electrification researched: %v", err)

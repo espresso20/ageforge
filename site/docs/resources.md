@@ -268,7 +268,7 @@ Soldiers are not a stockpile: they are the people at the posts of your military 
 
 **What soldiers need:** they are people, so they take a place in your homes and eat the same food as a worker. If your homes are full when a military building stands, its soldiers still arrive (as far as the food margin allows) and your reserve stops growing until there is room.
 
-**How soldiers are spent:** launching a campaign needs the soldiers it asks for at home and takes none of them from their posts. Scouting expeditions need none. An Endure leaves the soldiers at their posts.
+**How soldiers are spent:** every mission takes a party out of the soldiers at home, and some of the party fall on the way (see [Parties and losses](military.md#parties-and-losses)). A raid that lands against the garrison costs soldiers too. An Endure leaves the soldiers at their posts.
 
 Soldiers are one of the four kinds of [people](workers-and-domains.md#the-people-of-your-town), so the People box lists them (with how many are out on missions) rather than the Resources box, and the People panel's Army tab shows them building by building.
 

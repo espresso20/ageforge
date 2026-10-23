@@ -23,9 +23,8 @@ import (
 //   - It sends an offer off the mission board: the one with the best haul in
 //     minutes of income for each minute of length, among those it can pay for
 //     (pickAutoOffer).
-//   - It respects the single-slot-per-tier scheduler. An auto-dispatch only sends
-//     an offer whose tier slot is genuinely FREE. Nothing is queued and the
-//     one-mission-per-tier rule is never bypassed.
+//   - It respects the army. An auto-dispatch only sends an offer whose party
+//     the soldiers at home can make up. Nothing is queued.
 //   - It pays the full resource cost through the same launch path a player uses
 //     (launchExpeditionLocked). An unaffordable cycle is skipped, not discounted.
 //   - It is DELIBERATELY SLOWER THAN HANDS-ON PLAY. See the interval constants
@@ -184,8 +183,8 @@ func autoExpeditionInterval(set *rules.Set, age string, count int, fill float64)
 
 // pickAutoOffer chooses which offer the society sends.
 //
-// RULE: among the offers on the board it can send right now (their tier's slot
-// is free, the town can pay the cost and the lock is open), the one with the
+// RULE: among the offers on the board it can send right now (the town has the
+// party at home, can pay the cost and the lock is open), the one with the
 // best haul minutes per minute of length. Ties go to the bigger haul, then to
 // the lower number, so the choice is fully deterministic and needs no RNG.
 //
@@ -251,16 +250,6 @@ func (ge *GameEngine) processAutoExpeditions() {
 	// every slot is busy or nothing is affordable we hold at zero and retry next
 	// tick rather than forfeiting the cycle.
 	ge.ensureMissionBoardLocked()
-	busy := true
-	for _, tier := range boardTiers {
-		if ge.Military.ActiveByTier(tier) == nil {
-			busy = false
-		}
-	}
-	if busy {
-		return
-	}
-
 	n := ge.pickAutoOffer()
 	if n == 0 {
 		// Either the board has nothing the town can send, or the stores are too

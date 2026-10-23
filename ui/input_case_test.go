@@ -57,6 +57,10 @@ func newCaseTestEngine(t *testing.T, age string) *game.GameEngine {
 	}
 	amounts["wood"] = stock["wood"] / 2
 	ge.Resources.LoadAmounts(amounts)
+	if age != "" {
+		// Missions take a party: an army at home to make one up.
+		ge.SetGarrisonForTest(age, 50000)
+	}
 	return ge
 }
 

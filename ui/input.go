@@ -1886,7 +1886,7 @@ func cmdMissionBoard(engine *game.GameEngine) CommandResult {
 	if len(mil.Board) == 0 {
 		lines = append(lines, "  [gray]No offers yet.[-]")
 	}
-	for _, active := range []*game.ExpeditionSnapshot{mil.ActiveShort, mil.ActiveLong, mil.ActiveGrand} {
+	for _, active := range mil.Active {
 		if active != nil {
 			lines = append(lines, fmt.Sprintf("[yellow]Under way: %s (%s left)[-]", active.Name, formatTicks(active.TicksLeft, state)))
 		}
@@ -1924,6 +1924,10 @@ func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
 		} else {
 			line += " · civil · " + expeditionOfferCost(exp, state)
 		}
+	}
+	// Every mission takes a party.
+	if exp.SoldiersNeeded > 0 && !(exp.Tier == game.TierGrand && exp.Grand == game.GrandMilitary) {
+		line += fmt.Sprintf(" · party %d %s", exp.SoldiersNeeded, pluralize("soldier", exp.SoldiersNeeded))
 	}
 	if !exp.CanLaunch && exp.LaunchBlockReason != "" {
 		line += fmt.Sprintf(" [red](%s)[-]", strings.TrimRight(exp.LaunchBlockReason, "."))

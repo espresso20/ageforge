@@ -712,6 +712,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 		}
 	}
 	const campaigns = "Campaigns need Military Tactics first. Research it to send one."
+	ge.SetGarrisonForTest("bronze_age", 1000) // an army at home to make up a party
 	st := ge.GetState()
 	if out := militaryProvider(st, 120); !strings.Contains(out, campaigns) {
 		t.Errorf("the Army panel does not say campaigns are locked:\n%s", out)

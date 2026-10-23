@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"maps"
+	"math"
 	"math/rand"
 	"slices"
 
@@ -27,7 +28,10 @@ const failedLootShare = 0.3
 // from, what it cost, and how long is left.
 type ActiveExpedition struct {
 	MissionOffer
+	// Soldiers is the party marching now (fewer than Party after an ambush);
+	// Party the soldiers it set out with. Both are away from their posts.
 	Soldiers   int `json:"soldiers,omitempty"`
+	Party      int `json:"party,omitempty"`
 	LaunchTick int `json:"launch_tick,omitempty"`
 	TicksLeft  int `json:"ticks_left"`
 	// TotalTicks is the mission's whole length in ticks when it was sent.
@@ -99,15 +103,13 @@ type RoadEvent struct {
 // MilitaryManager handles the mission board, the missions under way and the
 // defense rating.
 //
-// One mission per TIER can be under way at a time: a short, a long and a
-// grand mission may run together (active is keyed by TierShort, TierLong and
-// TierGrand). A military grand mission spends soldiers, a real resource
-// (config/resources.go); the engine validates and deducts every cost before
-// LaunchOffer is called. Soldiers are spent at launch; half come home on a
-// success.
+// Any number of missions may be under way, of any tier: the army is the only
+// limit (every mission takes a party of soldiers out of the army at home, and
+// the engine checks that and the other costs before LaunchOffer is called).
+// active holds them in the order they were sent.
 type MilitaryManager struct {
 	rules          *rules.Set
-	active         map[string]*ActiveExpedition
+	active         []*ActiveExpedition
 	board          MissionBoard
 	completedCount int
 	totalLoot      map[string]float64
@@ -165,61 +167,67 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 	return &MilitaryManager{
 		rules:     set,
 		totalLoot: make(map[string]float64),
-		active:    make(map[string]*ActiveExpedition),
 	}
 }
 
-// LaunchOffer puts a mission under way in its tier's slot. The offer's
-// SuccessChance is the chance the mission is sent with (the engine has
-// already counted the army). Resource costs are validated and deducted by
-// the engine BEFORE this is called; this method only enforces the
-// one-mission-per-tier rule.
-func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, cost, baseHaul map[string]float64) error {
-	if existing := mm.active[offer.Tier]; existing != nil {
-		return fmt.Errorf("%s is already under way (%s left). Wait for it to come back", tierNoun(offer.Tier), approxTicks(existing.TicksLeft, BaseTickInterval))
-	}
+// LaunchOffer puts a mission under way, with its party of soldiers, and
+// returns it. The offer's SuccessChance is the chance the mission is sent with
+// (the engine has already counted the army). The party and the resource costs
+// are validated and deducted by the engine BEFORE this is called.
+func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, cost, baseHaul map[string]float64) (*ActiveExpedition, error) {
 	ticks := mm.missionTicks(offer.Category(), minutesToTicks(offer.LengthMinutes))
 	if ticks < 1 {
 		ticks = 1
 	}
-	mm.active[offer.Tier] = &ActiveExpedition{
+	a := &ActiveExpedition{
 		MissionOffer: offer,
 		Soldiers:     soldiers,
+		Party:        soldiers,
 		LaunchTick:   tick,
 		TicksLeft:    ticks,
 		TotalTicks:   ticks,
 		BaseRewards:  maps.Clone(baseHaul),
 		Cost:         maps.Clone(cost),
 	}
+	mm.active = append(mm.active, a)
+	return a, nil
+}
+
+// ActiveByTier returns the oldest mission under way in a tier, or nil. The
+// returned pointer is the live manager state.
+func (mm *MilitaryManager) ActiveByTier(tier string) *ActiveExpedition {
+	for _, a := range mm.active {
+		if a.Tier == tier {
+			return a
+		}
+	}
 	return nil
 }
 
-// tierNoun is the player-facing noun phrase for one mission of a tier,
-// sentence-initial.
-func tierNoun(tier string) string {
-	switch tier {
-	case TierLong:
-		return "A long mission"
-	case TierGrand:
-		return "A grand mission"
-	}
-	return "A short mission"
-}
-
-// ActiveByTier returns the mission under way in a tier's slot, or nil. The
-// returned pointer is the live manager state.
-func (mm *MilitaryManager) ActiveByTier(tier string) *ActiveExpedition {
-	return mm.active[tier]
-}
-
-// HasActive reports whether any mission is currently under way.
-func (mm *MilitaryManager) HasActive() bool {
-	for _, tier := range boardTiers {
-		if mm.active[tier] != nil {
-			return true
+// ActiveOf returns every mission under way in a tier, oldest first.
+func (mm *MilitaryManager) ActiveOf(tier string) []*ActiveExpedition {
+	var out []*ActiveExpedition
+	for _, a := range mm.active {
+		if a.Tier == tier {
+			out = append(out, a)
 		}
 	}
-	return false
+	return out
+}
+
+// ActiveAll returns every mission under way, in the order they were sent.
+func (mm *MilitaryManager) ActiveAll() []*ActiveExpedition { return slices.Clone(mm.active) }
+
+// HasActive reports whether any mission is currently under way.
+func (mm *MilitaryManager) HasActive() bool { return len(mm.active) > 0 }
+
+// SoldiersAway is the soldiers out on missions: the parties marching.
+func (mm *MilitaryManager) SoldiersAway() int {
+	away := 0
+	for _, a := range mm.active {
+		away += a.Soldiers
+	}
+	return away
 }
 
 // ExpeditionResult holds the rewards + player-facing message for one mission
@@ -239,6 +247,10 @@ type ExpeditionResult struct {
 	Category     string // ExpeditionScouting or ExpeditionMilitary
 	Success      bool   // true if the mission succeeded
 	SoldiersSent int
+	// SoldiersFell is the soldiers who fell on the way home (the failure's or
+	// the success's losses, drawn from the mission's own stream); Party the
+	// party that set out and Marching the soldiers still with it on return.
+	SoldiersFell, Party, Marching int
 	// Offer is the offer the mission was sent from: its tier, age and
 	// Legendary mark are what the badges read.
 	Offer       MissionOffer
@@ -248,35 +260,69 @@ type ExpeditionResult struct {
 	luck *rand.Rand
 }
 
-// Tick advances every mission under way (one per tier) by one tick and
-// returns a result for each that resolved this tick, in tier order. Tiers
-// tick down and resolve independently.
+// Party losses. A failure costs a share of the party that comes home, a
+// success only sometimes; a Legendary mission's failure costs more. Every draw
+// is the mission's own.
+const (
+	lossFailLow, lossFailHigh         = 0.4, 0.7
+	lossRareFailLow, lossRareFailHigh = 0.6, 0.9
+	lossWinChance                     = 0.30
+	lossWinMax                        = 0.15
+)
+
+// missionLosses is the soldiers of a returning party who fell: on a failure
+// ceil(party x U(0.4, 0.7)) (Legendary U(0.6, 0.9)); on a success, with a 30%
+// chance, ceil(party x U(0, 0.15)). It draws from rng a fixed number of times
+// for the outcome: one on a failure, two on a success.
+func missionLosses(rng *rand.Rand, party int, success, rare bool) int {
+	if party <= 0 {
+		return 0
+	}
+	share := 0.0
+	if success {
+		hit := rng.Float64() < lossWinChance
+		amount := float64(lossWinMax * rng.Float64())
+		if hit {
+			share = amount
+		}
+	} else {
+		lo, hi := lossFailLow, lossFailHigh
+		if rare {
+			lo, hi = lossRareFailLow, lossRareFailHigh
+		}
+		share = lo + float64((hi-lo)*rng.Float64())
+	}
+	return min(party, int(math.Ceil(float64(float64(party)*share))))
+}
+
+// Tick advances every mission under way by one tick and returns a result for
+// each that resolved this tick, in the order they were sent. Missions tick
+// down and resolve independently.
 //
 // The success roll is the mission's own SuccessChance (rolled when the offer
 // was made; the army was counted when it was sent). expeditionBonus is not
-// used here: the loot was sized at launch. Soldiers are spent at launch; a
-// failure differs from a success only in the loot (30%).
+// used here: the loot was sized at launch. A failure differs from a success in
+// the loot (30%) and in the soldiers who fall (missionLosses).
 //
 // The roll is the mission's own draw from its luck stream, taken at launch
 // (ActiveExpedition.Luck): it succeeds when that draw is under the odds it
 // has now, so a road event that moves the odds still counts.
 func (mm *MilitaryManager) Tick(missionPower, expeditionBonus float64) []ExpeditionResult {
 	var results []ExpeditionResult
-	for _, tier := range boardTiers {
-		if res, ok := mm.tickTier(tier); ok {
+	kept := mm.active[:0:0]
+	for _, active := range mm.active {
+		if res, ok := mm.tickMission(active); ok {
 			results = append(results, res)
+			continue
 		}
+		kept = append(kept, active)
 	}
+	mm.active = kept
 	return results
 }
 
-// tickTier advances one tier's mission. ok is true only on the tick it
-// resolves.
-func (mm *MilitaryManager) tickTier(tier string) (ExpeditionResult, bool) {
-	active := mm.active[tier]
-	if active == nil {
-		return ExpeditionResult{}, false
-	}
+// tickMission advances one mission. ok is true only on the tick it resolves.
+func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResult, bool) {
 	active.TicksLeft--
 	if active.TicksLeft > 0 {
 		return ExpeditionResult{}, false
@@ -298,9 +344,9 @@ func (mm *MilitaryManager) tickTier(tier string) (ExpeditionResult, bool) {
 		}
 		message = fmt.Sprintf("%s failed. You kept %.0f%% of the loot: %s.", active.Title, failedLootShare*100, amountsText(rewards))
 	}
+	fell := missionLosses(active.luckStream(), active.Soldiers, success, active.Rare)
 
 	mm.completedCount++
-	mm.active[tier] = nil
 	return ExpeditionResult{
 		Rewards:      rewards,
 		Message:      message,
@@ -308,6 +354,9 @@ func (mm *MilitaryManager) tickTier(tier string) (ExpeditionResult, bool) {
 		Category:     active.Category(),
 		Success:      success,
 		SoldiersSent: active.Soldiers,
+		SoldiersFell: fell,
+		Party:        active.Party,
+		Marching:     active.Soldiers,
 		Offer:        active.MissionOffer,
 		RoadEvents:   len(active.RoadEventsSeen),
 		RoadStories:  slices.Clone(active.RoadEventsSeen),
@@ -328,15 +377,18 @@ func (mm *MilitaryManager) CalculateDefense(soldierCount int, militaryBonus floa
 // The engine fills the board's offers (it knows the costs and the stores) and
 // the automatic dispatch view.
 func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, militaryBonus, expeditionBonus float64) MilitaryState {
-	var activeShort, activeLong, activeGrand *ExpeditionSnapshot
-	snap := func(tier string) *ExpeditionSnapshot {
-		snap := snapshotActive(mm.active[tier], expeditionBonus)
-		if snap != nil {
-			snap.Label = mm.Label(mm.active[tier].MissionOffer)
+	snap := func(a *ActiveExpedition) *ExpeditionSnapshot {
+		out := snapshotActive(a, expeditionBonus)
+		if out != nil {
+			out.Label = mm.Label(a.MissionOffer)
 		}
-		return snap
+		return out
 	}
-	activeShort, activeLong, activeGrand = snap(TierShort), snap(TierLong), snap(TierGrand)
+	var all []*ExpeditionSnapshot
+	for _, a := range mm.active {
+		all = append(all, snap(a))
+	}
+	activeShort, activeLong, activeGrand := snap(mm.ActiveByTier(TierShort)), snap(mm.ActiveByTier(TierLong)), snap(mm.ActiveByTier(TierGrand))
 
 	// ActiveScout and ActiveMilitary are the two slots the older panels read:
 	// the short (else the long) mission, and the grand one.
@@ -357,6 +409,8 @@ func (mm *MilitaryManager) Snapshot(soldierCount, soldierCap int, soldierRate, m
 		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
 		MilitaryBonus:   militaryBonus,
 		ExpeditionBonus: expeditionBonus,
+		Active:          all,
+		SoldiersAway:    mm.SoldiersAway(),
 		ActiveShort:     activeShort,
 		ActiveLong:      activeLong,
 		ActiveGrand:     activeGrand,
@@ -396,6 +450,7 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		Grand:         active.Grand,
 		Rare:          active.Rare,
 		Soldiers:      active.Soldiers,
+		Party:         max(active.Party, active.Soldiers),
 		TicksLeft:     active.TicksLeft,
 		LengthMinutes: active.LengthMinutes,
 		SuccessChance: active.SuccessChance,
@@ -417,7 +472,7 @@ func scaleLoot(in map[string]float64, scale float64) map[string]float64 {
 // LoadState restores military state from save: the missions under way, the
 // board and its counters, and the totals.
 func (mm *MilitaryManager) LoadState(save MilitarySave) {
-	mm.active = make(map[string]*ActiveExpedition)
+	mm.active = nil
 	for _, entry := range save.Active {
 		if entry.Mission == nil {
 			continue
@@ -426,7 +481,7 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 		mission.luckSrc, mission.luckRNG = nil, nil
 		mission.RoadEvents = append([]RoadEvent(nil), entry.Mission.RoadEvents...)
 		mission.RoadEventsSeen = append([]string(nil), entry.Mission.RoadEventsSeen...)
-		mm.active[entry.Slot] = &mission
+		mm.active = append(mm.active, &mission)
 	}
 	mm.board = MissionBoard{}
 	if save.Board != nil {
@@ -441,21 +496,19 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 }
 
 // ActiveForSave returns deep copies of the missions under way, as a list
-// keyed by slot (the tier), in tier order.
+// keyed by slot (the tier), in the order they were sent.
 func (mm *MilitaryManager) ActiveForSave() []ActiveSlotSave {
 	var out []ActiveSlotSave
-	for _, tier := range boardTiers {
-		if active := mm.active[tier]; active != nil {
-			c := *active
-			c.BaseRewards, c.SuccessRewards = maps.Clone(active.BaseRewards), maps.Clone(active.SuccessRewards)
-			c.FailureRewards, c.Cost = maps.Clone(active.FailureRewards), maps.Clone(active.Cost)
-			c.RoadEvents = append([]RoadEvent(nil), active.RoadEvents...)
-			c.RoadEventsSeen = append([]string(nil), active.RoadEventsSeen...)
-			// The copy starts its own stream from the seed and draw count, so it
-			// never shares the live mission's stream.
-			c.LuckDraws, c.luckSrc, c.luckRNG = active.luckDraws(), nil, nil
-			out = append(out, ActiveSlotSave{Slot: tier, Mission: &c})
-		}
+	for _, active := range mm.active {
+		c := *active
+		c.BaseRewards, c.SuccessRewards = maps.Clone(active.BaseRewards), maps.Clone(active.SuccessRewards)
+		c.FailureRewards, c.Cost = maps.Clone(active.FailureRewards), maps.Clone(active.Cost)
+		c.RoadEvents = append([]RoadEvent(nil), active.RoadEvents...)
+		c.RoadEventsSeen = append([]string(nil), active.RoadEventsSeen...)
+		// The copy starts its own stream from the seed and draw count, so it
+		// never shares the live mission's stream.
+		c.LuckDraws, c.luckSrc, c.luckRNG = active.luckDraws(), nil, nil
+		out = append(out, ActiveSlotSave{Slot: active.Tier, Mission: &c})
 	}
 	return out
 }

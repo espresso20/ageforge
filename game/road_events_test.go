@@ -68,7 +68,7 @@ func TestRoadEventEffectsAndSaveCopy(t *testing.T) {
 	}
 	a.RoadEvents = []RoadEvent{{Tick: 4, Kind: "fair", Story: "fair", Fired: true}}
 	a.RoadEventsSeen = []string{"Fair skies."}
-	ge.Military.active[TierLong] = a
+	ge.Military.setActive(TierLong, a)
 	saved := ge.Military.ActiveForSave()
 	if len(saved) != 1 || len(saved[0].Mission.RoadEvents) != 1 || len(saved[0].Mission.RoadEventsSeen) != 1 {
 		t.Fatal("road events missing from save copy")

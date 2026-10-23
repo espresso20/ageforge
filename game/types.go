@@ -342,8 +342,11 @@ type WorkerState struct {
 	Scholars int
 	// Soldiers is the soldiers at their posts: the military buildings' own.
 	// They are part of TotalPop and eat like anyone.
-	Soldiers  int
-	FoodDrain float64
+	Soldiers int
+	// SoldiersAway is how many of them are out on missions (counted in
+	// Soldiers: they are still people).
+	SoldiersAway int
+	FoodDrain    float64
 	// Shares is the split of the workforce the player set (shares.go):
 	// domain → percent, only the domains set; nil when every domain is on
 	// auto. ShareRows works out what each domain gets.
@@ -525,8 +528,13 @@ type MilitaryState struct {
 	Saved           *DefenseTally
 	MilitaryBonus   float64
 	ExpeditionBonus float64
-	// ActiveShort / ActiveLong / ActiveGrand are the missions under way, one
-	// slot per tier; any, all or none may be non-nil.
+	// Active is every mission under way, in the order they were sent;
+	// SoldiersAway is the soldiers marching with them (not at home, still
+	// people).
+	Active       []*ExpeditionSnapshot
+	SoldiersAway int
+	// ActiveShort / ActiveLong / ActiveGrand are the oldest mission under way
+	// of each tier; any, all or none may be non-nil.
 	ActiveShort *ExpeditionSnapshot
 	ActiveLong  *ExpeditionSnapshot
 	ActiveGrand *ExpeditionSnapshot
@@ -594,11 +602,13 @@ type ExpeditionSnapshot struct {
 	ExpiresTick int
 	TotalTicks  int
 	// Label is the mission's tier name in the age it was sent in.
-	Label         string
-	Tier          string
-	Grand         string
-	Rare          bool
+	Label string
+	Tier  string
+	Grand string
+	Rare  bool
+	// Soldiers is the party marching now; Party the soldiers it set out with.
 	Soldiers      int
+	Party         int
 	TicksLeft     int
 	LengthMinutes float64
 	SuccessChance float64
@@ -639,7 +649,8 @@ type ExpeditionInfo struct {
 	ExpectedHaulMin map[string]float64
 	ExpectedHaulMax map[string]float64
 	Category        string // "scouting" or "military"
-	SoldiersNeeded  int
+	// SoldiersNeeded is the party the mission takes, whatever its tier.
+	SoldiersNeeded int
 	// DurationMin/DurationMax mirror the ExpeditionDef's randomized active-duration
 	// bounds so the available-expeditions preview can show the rolled range.
 	DurationMin int

@@ -186,3 +186,36 @@ func TestRefSoldiersAreTheReferenceTownsArmy(t *testing.T) {
 		t.Errorf("Bronze Age army %v, want %v", got, want)
 	}
 }
+
+// The parties by age, pinned: short, long, grand military and grand civil for
+// each of the 22 ages, worked out by hand from the reference army (the
+// soldiers a reference town has at its posts) at 4%, 10%, 30% and 12%, rounded
+// up, at least one. Bronze comes to 8, 20, 60 and 24, the sizes the lab
+// settled on.
+func TestPartySizesByAge(t *testing.T) {
+	army := []int{0, 72, 200, 430, 790, 1406, 2566, 4798, 15094, 29694, 52894, 93304, 262728, 500968, 876832, 2112856, 3899386, 7750298, 19858746, 48482266, 85913821, 140961453}
+	want := [][4]int{
+		{0, 0, 0, 0}, {3, 8, 22, 9}, {8, 20, 60, 24}, {18, 43, 129, 52}, {32, 79, 237, 95}, {57, 141, 422, 169},
+		{103, 257, 770, 308}, {192, 480, 1440, 576}, {604, 1510, 4529, 1812}, {1188, 2970, 8909, 3564},
+		{2116, 5290, 15869, 6348}, {3733, 9331, 27992, 11197}, {10510, 26273, 78819, 31528},
+		{20039, 50097, 150291, 60117}, {35074, 87684, 263050, 105220}, {84515, 211286, 633857, 253543},
+		{155976, 389939, 1169816, 467927}, {310012, 775030, 2325090, 930036}, {794350, 1985875, 5957624, 2383050},
+		{1939291, 4848227, 14544680, 5817872}, {3436553, 8591383, 25774147, 10309659}, {5638459, 14096146, 42288436, 16915375},
+	}
+	ref := RefSoldiers(BaseBuildings(), Ages())
+	if len(ref) != len(army) || len(want) != len(army) {
+		t.Fatalf("%d ages, the table has %d armies and %d parties", len(ref), len(army), len(want))
+	}
+	for i := range army {
+		if int(ref[i]) != army[i] {
+			t.Errorf("age %d: reference army %v, the table says %d", i, ref[i], army[i])
+		}
+		got := [4]int{PartySize(PartyShort, i), PartySize(PartyLong, i), PartySize(PartyMilitary, i), PartySize(PartyCivil, i)}
+		if got != want[i] {
+			t.Errorf("age %d (%s): parties %v, want %v", i, Ages()[i].Key, got, want[i])
+		}
+	}
+	if PartyShares[PartyShort] != 4 || PartyShares[PartyLong] != 10 || PartyShares[PartyMilitary] != 30 || PartyShares[PartyCivil] != 12 || len(PartyShares) != 4 {
+		t.Errorf("shares %v, want 4, 10, 30 and 12 percent", PartyShares)
+	}
+}
