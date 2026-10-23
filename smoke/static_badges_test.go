@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -42,28 +43,36 @@ var lineageLegendaryBefore = map[string]float64{
 
 // lineageLegendaryFloor is how many times the old top rung the new one is at
 // least: a legendary badge that counts across all runs of an idle game is a
-// long-term goal, not a thousand buildings.
-const lineageLegendaryFloor = 20
+// long-term goal, not a thousand buildings. Hacker, which starts in the
+// Modern Age and so builds the fewest copies, is the lineage nearest it.
+const lineageLegendaryFloor = 10
 
 // TestLineageLegendariesAreOnAnIdleScale: every lineage's Dynasty rung asks at
-// least lineageLegendaryFloor times what it asked before, and still sits
-// inside the reach rule (25 runs of a tenth of what a run can hold).
+// least lineageLegendaryFloor times what it asked before, still sits inside
+// the reach rule (25 runs of a tenth of what a run can hold), and is what the
+// reference model gives it (lineageTotals, to two significant figures), with
+// every rung below it lineageRungRatio of the one above. If a balance change
+// moves the model, this fails: derive the ladders again (TestLineageDerivation).
 func TestLineageLegendariesAreOnAnIdleScale(t *testing.T) {
 	problems, reach := StaticBadges()
 	for _, p := range problems {
 		t.Errorf("[%s] %s", p.Kind, p.Why)
 	}
-	seen := map[string]bool{}
+	totals, _ := lineageTotals()
+	rungs := map[string]map[string]float64{} // lineage -> rung key -> count
 	for _, r := range reach {
 		lineage, ok := strings.CutPrefix(r.Key, "lineage.")
 		if !ok {
 			continue
 		}
-		lineage, ok = strings.CutSuffix(lineage, ".5")
-		if !ok {
+		lineage = lineage[:strings.LastIndex(lineage, ".")]
+		if rungs[lineage] == nil {
+			rungs[lineage] = map[string]float64{}
+		}
+		rungs[lineage][r.Key] = r.Need
+		if !strings.HasSuffix(r.Key, fmt.Sprintf(".%d", lineageRungCount)) {
 			continue
 		}
-		seen[lineage] = true
 		before, known := lineageLegendaryBefore[lineage]
 		if !known {
 			t.Errorf("%s: a lineage with no entry in lineageLegendaryBefore", r.Key)
@@ -77,8 +86,17 @@ func TestLineageLegendariesAreOnAnIdleScale(t *testing.T) {
 		}
 	}
 	for lineage := range lineageLegendaryBefore {
-		if !seen[lineage] {
-			t.Errorf("lineage.%s.5 is not in the catalog", lineage)
+		total, ok := totals[lineage]
+		if !ok || rungs[lineage] == nil {
+			t.Errorf("lineage %s is not in both the catalog and the model", lineage)
+			continue
+		}
+		for n, want := range lineageLadder(total) {
+			key := fmt.Sprintf("lineage.%s.%d", lineage, n+1)
+			if got := rungs[lineage][key]; math.Abs(got-want) > 0.5 {
+				t.Errorf("%s asks %s, the model gives %s (%s built over %d runs, top rung to two figures, then %.1f of the rung above)",
+					key, config.FormatAmount(got), config.FormatAmount(want), config.FormatAmount(total), config.BadgeMaxRuns, lineageRungRatio)
+			}
 		}
 	}
 }

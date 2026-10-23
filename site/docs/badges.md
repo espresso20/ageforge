@@ -129,7 +129,7 @@ Each lineage is on its own scale, because lineages differ a great deal in how ma
 | Faith | 380 · 960 · 2,400 · 6,000 · 15,000 |
 | Food | 380 · 960 · 2,400 · 6,000 · 15,000 |
 | Geological extraction | 410 · 1,000 · 2,600 · 6,400 · 16,000 |
-| Hacker | 190 · 470 · 1,200 · 3,000 · 7,400 |
+| Hacker | 140 · 350 · 860 · 2,200 · 5,400 |
 | Harbor | 79 · 200 · 500 · 1,200 · 3,100 |
 | Housing | 610 · 1,500 · 3,800 · 9,600 · 24,000 |
 | Knowledge | 130 · 330 · 830 · 2,100 · 5,200 |
