@@ -65,6 +65,7 @@ var keycapWords = map[string]bool{
 	"enter": true, "esc": true, "tab": true, "shift": true, "arrows": true, "up": true, "down": true,
 	"left": true, "right": true, "pgup": true, "pgdn": true, "home": true, "end": true, "backspace": true,
 	"space": true, "delete": true,
+	"◄►": true, "↑↓": true, // the marks the map's key hints use for the arrow keys
 }
 
 var keycapSplit = regexp.MustCompile(`[\s/\-+]+`)
@@ -73,8 +74,8 @@ var styleTagRe = regexp.MustCompile(`\[[A-Za-z0-9#:\-]*\]`)
 // screenReason says why a row of the screens sheet is not wired, when its text
 // says so by itself: the name of a key, or nothing a script could write.
 func screenReason(r *row) string {
-	if r.area != areaScreens {
-		return ""
+	if r.area != areaScreens && r.area != areaMap {
+		return "" // the map's key hints are named like the screens' are
 	}
 	// How to pick a font in each terminal: the names of their menus and the lines of their config files.
 	if strings.HasPrefix(r.id, "ui.icons.terminalFontSteps.") {

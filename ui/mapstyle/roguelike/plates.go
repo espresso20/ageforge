@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // plates.go draws the region zoom on the epoch's cartographic plate: the
@@ -34,7 +35,7 @@ const (
 )
 
 type plate struct {
-	name, title                         string
+	name, title                         vibe.Entry
 	frame, fog, coast                   uint8 // coast: 0 none, 1 line, 2 bold line
 	coastC                              mapmodel.Class
 	marks, sea                          float64 // density of land marks and sea strokes
@@ -45,18 +46,18 @@ type plate struct {
 }
 
 var plates = [7]plate{
-	{name: "charcoal on hide", title: "the lands we know, drawn by the fire of %s", frame: frHide, fog: fogSmudge,
+	{name: vibe.E("ui.mapstyle.roguelike.plates.plates.01", "charcoal on hide"), title: vibe.E("ui.mapstyle.roguelike.plates.plates.02", "the lands we know, drawn by the fire of %s"), frame: frHide, fog: fogSmudge,
 		marks: 0.35, sea: 0.08, coast: 1, coastC: mapmodel.CRock},
-	{name: "portolan chart", title: "Carta of %s", frame: frDouble, fog: fogDragons, marks: 0.2, coast: 2,
+	{name: vibe.E("ui.mapstyle.roguelike.plates.plates.03", "portolan chart"), title: vibe.E("ui.mapstyle.roguelike.plates.plates.04", "Carta of %s"), frame: frDouble, fog: fogDragons, marks: 0.2, coast: 2,
 		coastC: mapmodel.CWall, rhumbs: true},
-	{name: "engraved map", title: "A New and Accurate Map of %s", frame: frNeat, fog: fogBlank, marks: 0.45,
+	{name: vibe.E("ui.mapstyle.roguelike.plates.plates.05", "engraved map"), title: vibe.E("ui.mapstyle.roguelike.plates.plates.06", "A New and Accurate Map of %s"), frame: frNeat, fog: fogBlank, marks: 0.45,
 		coast: 1, coastC: mapmodel.CText, lines: true, hachure: true, compass: true, grid: [2]int{16, 8}},
-	{name: "survey sheet", title: "Survey of %s", frame: frSurvey, fog: fogHatch, marks: 0.25, coast: 1,
+	{name: vibe.E("ui.mapstyle.roguelike.plates.plates.07", "survey sheet"), title: vibe.E("ui.mapstyle.roguelike.plates.plates.08", "Survey of %s"), frame: frSurvey, fog: fogHatch, marks: 0.25, coast: 1,
 		coastC: mapmodel.CWater, contour: true, refs: true, grid: [2]int{20, 8}},
-	{name: "satellite mosaic", title: "EARTH OBSERVATION  %s", frame: frHUD, fog: fogBlank, marks: 0.12, biome: true, scan: true},
-	{name: "orbital night pass", title: "NIGHTSIDE  %s", frame: frHUD, fog: fogBlank, coast: 1,
+	{name: vibe.E("ui.mapstyle.roguelike.plates.plates.09", "satellite mosaic"), title: vibe.E("ui.mapstyle.roguelike.plates.plates.10", "EARTH OBSERVATION  %s"), frame: frHUD, fog: fogBlank, marks: 0.12, biome: true, scan: true},
+	{name: vibe.E("ui.mapstyle.roguelike.plates.plates.11", "orbital night pass"), title: vibe.E("ui.mapstyle.roguelike.plates.plates.12", "NIGHTSIDE  %s"), frame: frHUD, fog: fogBlank, coast: 1,
 		coastC: mapmodel.CMemory, night: true, sweep: true},
-	{name: "planet from orbit", title: "%s from orbit", fog: fogBlank, marks: 0.5, sea: 0.3, space: true},
+	{name: vibe.E("ui.mapstyle.roguelike.plates.plates.13", "planet from orbit"), title: vibe.E("ui.mapstyle.roguelike.plates.plates.14", "%s from orbit"), fog: fogBlank, marks: 0.5, sea: 0.3, space: true},
 }
 
 type regionBuf struct {
@@ -568,7 +569,7 @@ func (v *view) space(cx, cy int, d, ry float64) glyph {
 	return g
 }
 
-var starNames = []string{"Vega", "Altair", "Deneb", "Rigel", "Sirius", "Capella", "Arcturus", "Procyon", "Spica", "Antares"}
+var starNames = []vibe.Entry{vibe.E("ui.mapstyle.roguelike.plates.starNames.01", "Vega"), vibe.E("ui.mapstyle.roguelike.plates.starNames.02", "Altair"), vibe.E("ui.mapstyle.roguelike.plates.starNames.03", "Deneb"), vibe.E("ui.mapstyle.roguelike.plates.starNames.04", "Rigel"), vibe.E("ui.mapstyle.roguelike.plates.starNames.05", "Sirius"), vibe.E("ui.mapstyle.roguelike.plates.starNames.06", "Capella"), vibe.E("ui.mapstyle.roguelike.plates.starNames.07", "Arcturus"), vibe.E("ui.mapstyle.roguelike.plates.starNames.08", "Procyon"), vibe.E("ui.mapstyle.roguelike.plates.starNames.09", "Spica"), vibe.E("ui.mapstyle.roguelike.plates.starNames.10", "Antares")}
 
 // orbit draws the orbital habitats riding the inner ring, satellites on the
 // outer one (the same movers the settlement sees overhead, with the same
@@ -603,7 +604,7 @@ func (v *view) orbit(cv *mapstyle.Canvas, g geom, wcx, wcy, rx, ry float64) {
 			continue
 		}
 		cv.Put(x, y, '✦', v.cls(mapmodel.CLabel).Bold(true))
-		if name := starNames[mapmodel.Hash(seed, 33, k)%uint64(len(starNames))]; v.free(x+2, y, mapstyle.TextLen(name)) {
+		if name := starNames[mapmodel.Hash(seed, 33, k)%uint64(len(starNames))].String(); v.free(x+2, y, mapstyle.TextLen(name)) {
 			cv.Text(x+2, y, 0, name, v.cls(mapmodel.CStar))
 		}
 	}
@@ -635,14 +636,14 @@ func (v *view) furniture(cv *mapstyle.Canvas, p *plate, g geom) {
 		}
 	}
 	if p.fog == fogDragons {
-		v.inRun(cv, g, "here be dragons", func(i int) bool { return rb.vis[i] == 0 }, v.cls(mapmodel.CDim).Italic(true))
+		v.inRun(cv, g, vibe.Line("ui.mapstyle.roguelike.plates.furniture.01", "here be dragons"), func(i int) bool { return rb.vis[i] == 0 }, v.cls(mapmodel.CDim).Italic(true))
 		v.inRun(cv, g, "~^~^~o<", func(i int) bool { return !rb.land[i] && rb.dist[i] >= 2 && rb.vis[i] > 0 }, v.cls(mapmodel.CWater))
 	}
 	if p.frame == frHUD && g.h > 2 {
-		stamp := "PASS " + strconv.Itoa(1+v.sc.m.Clock.Day%97) + "  " + v.sc.m.Clock.String()
+		stamp := vibe.Line("ui.mapstyle.roguelike.plates.furniture.02", "PASS ") + strconv.Itoa(1+v.sc.m.Clock.Day%97) + "  " + v.sc.m.Clock.String()
 		put(g.w-mapstyle.TextLen(stamp)-2, g.h-1, stamp, v.cls(mapmodel.CDim))
 		if p.scan {
-			put(2, g.h-1, "DOWNLINK", v.cls(mapmodel.CFresh))
+			put(2, g.h-1, vibe.Line("ui.mapstyle.roguelike.plates.furniture.03", "DOWNLINK"), v.cls(mapmodel.CFresh))
 		}
 	}
 }
@@ -670,7 +671,7 @@ func (v *view) inRun(cv *mapstyle.Canvas, g geom, text string, ok func(i int) bo
 
 // frame draws the plate's border and title.
 func (v *view) frame(cv *mapstyle.Canvas, p *plate, x, y, w, h int, g geom) {
-	title := strings.Replace(p.title, "%s", v.sc.w.Name, 1)
+	title := strings.Replace(p.title.String(), "%s", v.sc.w.Name, 1)
 	lab, bst := v.cls(mapmodel.CLabel), v.pal.border
 	centre := func(row int, s string, st tcell.Style) {
 		if n := mapstyle.TextLen(s); n <= w-4 {

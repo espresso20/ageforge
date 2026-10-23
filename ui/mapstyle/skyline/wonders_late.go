@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // wonders_late.go: the landmarks of the modern and the future ages.
@@ -361,7 +362,7 @@ func citadel(h int) *sprite {
 	}
 	// the sign, down the face
 	top := tiers[len(tiers)-1].top
-	for i, c := range "CITADEL" {
+	for i, c := range []rune(vibe.Line("ui.mapstyle.skyline.wonders_late.citadel.01", "CITADEL")) {
 		if y := base - top + 3 + i; y < base-1 {
 			s.put(cx, y, c, sNeon2, sInk)
 		}

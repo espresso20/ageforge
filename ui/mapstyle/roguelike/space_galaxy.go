@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_galaxy.go is the Galactic Age: the starbase hub. The galaxy's arms
@@ -139,10 +140,10 @@ func (b *skyBase) starbase() {
 		}
 		return on
 	}
-	core := b.frame("Starbase core", "where the base's heart beats", slStarbase, "")
-	hab := b.frame("Habitat ring", "decks of homes, farms and halls", slStarbase, "")
-	dock := b.frame("Docking ring", "the base's busy edge", slStarbase, "")
-	pyl := b.frame("Docking pylon", "ships tie up at its tip", slPylon, mapmodel.LinEngineer)
+	core := b.frame(vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.01", "Starbase core"), vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.02", "where the base's heart beats"), slStarbase, "")
+	hab := b.frame(vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.03", "Habitat ring"), vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.04", "decks of homes, farms and halls"), slStarbase, "")
+	dock := b.frame(vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.05", "Docking ring"), vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.06", "the base's busy edge"), slStarbase, "")
+	pyl := b.frame(vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.07", "Docking pylon"), vibe.Line("ui.mapstyle.roguelike.space_galaxy.starbase.08", "ships tie up at its tip"), slPylon, mapmodel.LinEngineer)
 	ringOf(4, 1.8, mapmodel.InkAccent, core, false)
 	inner := ringOf(galInRX, galInRY, mapmodel.InkFrame, hab, false)
 	outer := ringOf(galOutRX, galOutRY, mapmodel.InkAccent, dock, true)
@@ -282,7 +283,7 @@ func strokeOf(t float64) rune {
 // energy taps along a conduit to the base.
 func (b *skyBase) pulsar() {
 	px, py := galPulsarX, galPulsarY
-	fr := b.frame("The pulsar", "industry works its light and its matter", slSun, "")
+	fr := b.frame(vibe.Line("ui.mapstyle.roguelike.space_galaxy.pulsar.01", "The pulsar"), vibe.Line("ui.mapstyle.roguelike.space_galaxy.pulsar.02", "industry works its light and its matter"), slSun, "")
 	b.put(int(px), int(py), skyCell{r: '✦', ink: mapmodel.InkStarBright, lv: 3, k: skSun, fx: fxBlink, bold: true, ref: fr})
 	for k := 1; k <= 3; k++ { // the beams, flashing
 		for _, d := range [2][2]int{{1, -1}, {-1, 1}} {

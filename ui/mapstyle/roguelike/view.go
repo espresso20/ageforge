@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Zoom levels share one grammar: the same glyphs, sampled differently.
@@ -22,12 +23,12 @@ const (
 	zDistrict   = 2 // one tile per two cells, with counts and names
 )
 
-var zoomNames = [3]string{"REGION", "SETTLEMENT", "DISTRICT"}
+var zoomNames = [3]vibe.Entry{vibe.E("ui.mapstyle.roguelike.view.zoomNames.01", "REGION"), vibe.E("ui.mapstyle.roguelike.view.zoomNames.02", "SETTLEMENT"), vibe.E("ui.mapstyle.roguelike.view.zoomNames.03", "DISTRICT")}
 
 // Entry is the registry entry for the roguelike style.
 func Entry() mapstyle.Entry {
-	return mapstyle.Entry{Name: "roguelike", Title: "Roguelike",
-		Blurb: "A glyph world with an inspect cursor: your town, its people and the lands around it.",
+	return mapstyle.Entry{Name: "roguelike", Title: vibe.E("ui.mapstyle.roguelike.view.Entry.01", "Roguelike"),
+		Blurb: vibe.E("ui.mapstyle.roguelike.view.Entry.02", "A glyph world with an inspect cursor: your town, its people and the lands around it."),
 		New:   func() mapstyle.Style { return withSky(newView()) }}
 }
 

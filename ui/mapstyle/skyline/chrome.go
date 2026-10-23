@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // chrome.go: the header bar, the minimap strip and the status line. They
@@ -72,15 +73,15 @@ func panoramaHints(w int, where string) []seg {
 	key, dim := theme.RoleAccent, theme.RoleDim
 	tail := []seg{{"│ ", dim}, {where, theme.RoleLabel}}
 	return fitHints(w, tail,
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"district  ", dim},
-			{"Home End ", key}, {"oldest, present  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows ", key}, {"overlay  ", dim}},
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"district  ", dim},
-			{"Home End ", key}, {"oldest, now  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows  ", key}},
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"district  ", dim},
-			{"Home End  ", key}, {"Tab ", key}, {"inspect  ", dim}},
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"Tab ", key}, {"inspect  ", dim}},
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"Tab ", key}, {"inspect  ", dim}},
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"Tab ", key}, {"inspect  ", dim}},
+		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.01", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.02", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.03", "district  "), dim},
+			{"Home End ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.05", "oldest, present  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.07", "inspect  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.08", "overlay  "), dim}},
+		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.09", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.10", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.11", "district  "), dim},
+			{"Home End ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.13", "oldest, now  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.15", "inspect  "), dim}, {"map flows  ", key}},
+		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.16", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.17", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.18", "district  "), dim},
+			{"Home End  ", key}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.21", "inspect  "), dim}},
+		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.22", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.23", "zoom  "), dim}, {"[ ] ", key}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.25", "inspect  "), dim}},
+		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.26", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.27", "zoom  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.29", "inspect  "), dim}},
+		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.30", "scroll  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.32", "inspect  "), dim}},
 		[]seg{{" ◄► Tab  ", key}},
 	)
 }
@@ -133,22 +134,22 @@ func (s *scene) header(bg tcell.Color) {
 	ws := string(mapmodel.R(weatherSym(m), s.tier))
 	parts := []seg{
 		{" " + m.EpochName, theme.RoleLabel},
-		{"  day ", theme.RoleDim}, {strconv.Itoa(m.Clock.Day), theme.RoleHighlight},
+		{vibe.Line("ui.mapstyle.skyline.chrome.header.01", "  day "), theme.RoleDim}, {strconv.Itoa(m.Clock.Day), theme.RoleHighlight},
 		{"  " + m.Clock.String() + " " + ws, theme.RoleText},
-		{"  pop ", theme.RoleDim}, {strconv.Itoa(m.Workers.Pop) + "/" + strconv.Itoa(m.Workers.MaxPop), theme.RoleHighlight},
-		{"  bld ", theme.RoleDim}, {strconv.Itoa(m.TotalBuildings()), theme.RoleHighlight},
+		{vibe.Line("ui.mapstyle.skyline.chrome.header.02", "  pop "), theme.RoleDim}, {strconv.Itoa(m.Workers.Pop) + "/" + strconv.Itoa(m.Workers.MaxPop), theme.RoleHighlight},
+		{vibe.Line("ui.mapstyle.skyline.chrome.header.03", "  bld "), theme.RoleDim}, {strconv.Itoa(m.TotalBuildings()), theme.RoleHighlight},
 	}
 	if n := m.Recap.NewCount; s.v.changes && n > 0 {
-		parts = append(parts, seg{"  ▼ " + strconv.Itoa(n) + " new since your last visit", theme.RolePositive})
+		parts = append(parts, seg{"  ▼ " + strconv.Itoa(n) + vibe.Line("ui.mapstyle.skyline.chrome.header.04", " new since your last visit"), theme.RolePositive})
 	}
 	if n := idleProducers(m); n > 0 {
-		parts = append(parts, seg{"  ▪ " + strconv.Itoa(n) + " idle", theme.RoleWarning})
+		parts = append(parts, seg{"  ▪ " + strconv.Itoa(n) + vibe.Line("ui.mapstyle.skyline.chrome.header.05", " idle"), theme.RoleWarning})
 	}
 	if s.v.flows && m.Workers.Idle > 0 {
-		parts = append(parts, seg{"  " + strconv.Itoa(m.Workers.Idle) + " idle workers", theme.RoleWarning})
+		parts = append(parts, seg{"  " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.skyline.chrome.header.06", " idle workers"), theme.RoleWarning})
 	}
 	if h := m.Harbinger; h != nil {
-		parts = append(parts, seg{"  " + string(mapmodel.R(mapmodel.SymHarbinger, s.tier)) + " " + h.Name + " is on the ridge", theme.RoleWarning})
+		parts = append(parts, seg{"  " + string(mapmodel.R(mapmodel.SymHarbinger, s.tier)) + " " + h.Name + vibe.Line("ui.mapstyle.skyline.chrome.header.07", " is on the ridge"), theme.RoleWarning})
 	}
 	if c := m.Catastrophe; c.Pending != "" {
 		parts = append(parts, seg{"  " + string(mapmodel.R(mapmodel.SymFire, s.tier)) + " " + c.PendingName, theme.RoleNegative})
@@ -340,7 +341,7 @@ func (s *scene) status(bg tcell.Color) {
 				parts = append(parts, seg{"  " + l, theme.RoleDim})
 			}
 			if in.cmd != "" {
-				parts = append(parts, seg{"  type: ", theme.RoleDim}, seg{in.cmd, theme.RoleLabel})
+				parts = append(parts, seg{vibe.Line("ui.mapstyle.skyline.chrome.status.01", "  type: "), theme.RoleDim}, seg{in.cmd, theme.RoleLabel})
 			}
 			s.segs(0, y, bg, parts)
 			return
@@ -349,18 +350,18 @@ func (s *scene) status(bg tcell.Color) {
 	if s.v.flows {
 		w := m.Flows.Worst
 		if w == "" {
-			w = "nothing is stuck"
+			w = vibe.Line("ui.mapstyle.skyline.chrome.status.02", "nothing is stuck")
 		}
-		parts := []seg{{" flows: ", theme.RoleAccent}, {w, theme.RoleWarning}}
-		parts = append(parts, seg{"  type: ", theme.RoleDim}, seg{m.IdleCommand(), theme.RoleLabel})
+		parts := []seg{{vibe.Line("ui.mapstyle.skyline.chrome.status.03", " flows: "), theme.RoleAccent}, {w, theme.RoleWarning}}
+		parts = append(parts, seg{vibe.Line("ui.mapstyle.skyline.chrome.status.04", "  type: "), theme.RoleDim}, seg{m.IdleCommand(), theme.RoleLabel})
 		s.segs(0, y, bg, parts)
 		return
 	}
 	if s.v.legend {
-		parts := []seg{{" lit windows ", theme.RoleText}, {"staffed  ", theme.RoleDim},
-			{"smoke ", theme.RoleText}, {"producing  ", theme.RoleDim}, {"▼ ", theme.RolePositive}, {"new  ", theme.RoleDim},
-			{"IDLE LOW ", theme.RoleWarning}, {"flows  ", theme.RoleDim}, {"pennants ", theme.RoleText},
-			{"your standing with each civ", theme.RoleDim}}
+		parts := []seg{{vibe.Line("ui.mapstyle.skyline.chrome.status.05", " lit windows "), theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.chrome.status.06", "staffed  "), theme.RoleDim},
+			{vibe.Line("ui.mapstyle.skyline.chrome.status.07", "smoke "), theme.RoleText}, {vibe.Line("ui.mapstyle.skyline.chrome.status.08", "producing  "), theme.RoleDim}, {"▼ ", theme.RolePositive}, {vibe.Line("ui.mapstyle.skyline.chrome.status.09", "new  "), theme.RoleDim},
+			{vibe.Line("ui.mapstyle.skyline.chrome.status.10", "IDLE LOW "), theme.RoleWarning}, {vibe.Line("ui.mapstyle.skyline.chrome.status.11", "flows  "), theme.RoleDim}, {vibe.Line("ui.mapstyle.skyline.chrome.status.12", "pennants "), theme.RoleText},
+			{vibe.Line("ui.mapstyle.skyline.chrome.status.13", "your standing with each civ"), theme.RoleDim}}
 		if s.inCity { // the age's look, in a word or two (city.go)
 			parts = append(parts, seg{"  │ ", theme.RoleDim}, seg{s.city.Name + ": ", theme.RoleText},
 				seg{s.city.Structure, theme.RoleDim})
@@ -368,10 +369,10 @@ func (s *scene) status(bg tcell.Color) {
 		s.segs(0, y, bg, parts)
 		return
 	}
-	where := "the wilds"
+	where := vibe.Line("ui.mapstyle.skyline.chrome.status.14", "the wilds")
 	if di := m.Skyline.DistrictAt(s.cam + s.lw/2); di >= 0 {
-		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + " district"
+		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + vibe.Line("ui.mapstyle.skyline.chrome.status.15", " district")
 	}
-	where = "zoom: " + s.zm.String() + "  " + where
+	where = vibe.Line("ui.mapstyle.skyline.chrome.status.16", "zoom: ") + s.zm.String() + "  " + where
 	s.segs(0, y, bg, panoramaHints(s.W, where))
 }

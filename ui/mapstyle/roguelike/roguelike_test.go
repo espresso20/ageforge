@@ -437,7 +437,7 @@ func TestKeys(t *testing.T) {
 func BenchmarkDraw200x60(b *testing.B) {
 	m, _ := grown(b, fixture.Options{Age: "galactic_age", Seed: 7, Harbinger: true, Wars: 1})
 	for _, z := range []int{zRegion, zSettlement, zDistrict} {
-		b.Run(zoomNames[z], func(b *testing.B) {
+		b.Run(zoomNames[z].Plain(), func(b *testing.B) {
 			v := newView()
 			v.zoom = z
 			s := capture.NewScreen(200, 60)
@@ -470,7 +470,7 @@ func TestCaptures(t *testing.T) {
 			v.zoom = z
 			v.flows = z == zDistrict
 			txt := capture.Text(draw(v, m, 160, 48, 3, mapmodel.TierUnicode, false))
-			_ = os.WriteFile(filepath.Join(dir, age+"_"+strings.ToLower(zoomNames[z])+".txt"), []byte(txt), 0o644)
+			_ = os.WriteFile(filepath.Join(dir, age+"_"+strings.ToLower(zoomNames[z].Plain())+".txt"), []byte(txt), 0o644)
 		}
 		txt := capture.Text(draw(newView(), m, 40, 15, 3, mapmodel.TierUnicode, true))
 		_ = os.WriteFile(filepath.Join(dir, age+"_mini.txt"), []byte(txt), 0o644)

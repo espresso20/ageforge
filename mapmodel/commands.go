@@ -3,6 +3,8 @@ package mapmodel
 import (
 	"sort"
 	"strconv"
+
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // commands.go is the command vocabulary the maps teach. Whatever a style's
@@ -35,9 +37,9 @@ func (m *Model) BuildingCommand(b *Building) string {
 // game's words, never the era to come.
 func (h *Harbinger) WarningLine() string {
 	if h == nil || h.Warning == "" {
-		return "warns of impending doom"
+		return vibe.Line("mapmodel.commands.WarningLine.01", "warns of impending doom")
 	}
-	return "warns of " + h.Warning
+	return vibe.Line("mapmodel.commands.WarningLine.02", "warns of ") + h.Warning
 }
 
 // WonderCommand is the command for a wonder: bank into the one rising,

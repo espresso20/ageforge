@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // inspect.go is the cursor: what it can stand on (every silhouette, the civ
@@ -244,7 +245,7 @@ func (v *view) inspection(m *mapmodel.Model, anim int) (in inspectionData, ok bo
 	ts := v.targetsFor(m, v.viewW(), v.cam)
 	i := v.resolve(m, ts, anim)
 	if v.cur.kind == tUFO {
-		return inspectionData{title: "Unknown craft", lines: []string{"Not one of ours."}, kind: mapstyle.KindAlien}, true
+		return inspectionData{title: vibe.Line("ui.mapstyle.skyline.inspect.inspection.01", "Unknown craft"), lines: []string{vibe.Line("ui.mapstyle.skyline.inspect.inspection.02", "Not one of ours.")}, kind: mapstyle.KindAlien}, true
 	}
 	if i < 0 {
 		return in, false
@@ -261,13 +262,13 @@ func (v *view) inspection(m *mapmodel.Model, anim int) (in inspectionData, ok bo
 			return in, false
 		}
 		in.title = f.Name
-		in.lines = append(in.lines, "relation: "+f.Relation.String(),
-			"strength "+strconv.Itoa(f.Strength)+" · opinion "+strconv.Itoa(f.Opinion))
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.inspection.03", "relation: ")+f.Relation.String(),
+			vibe.Line("ui.mapstyle.skyline.inspect.inspection.04", "strength ")+strconv.Itoa(f.Strength)+vibe.Line("ui.mapstyle.skyline.inspect.inspection.05", " · opinion ")+strconv.Itoa(f.Opinion))
 		if f.Specialty != "" {
-			in.lines = append(in.lines, "specialty: "+strings.ReplaceAll(f.Specialty, "_", " "))
+			in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.inspection.06", "specialty: ")+strings.ReplaceAll(f.Specialty, "_", " "))
 		}
 		if f.TradeCount > 0 {
-			in.lines = append(in.lines, strconv.Itoa(f.TradeCount)+" trades")
+			in.lines = append(in.lines, strconv.Itoa(f.TradeCount)+vibe.Line("ui.mapstyle.skyline.inspect.inspection.07", " trades"))
 		}
 		in.cmd = m.FactionCommand(f)
 	case tTether:
@@ -283,11 +284,11 @@ func (v *view) inspection(m *mapmodel.Model, anim int) (in inspectionData, ok bo
 		in.title = h.Name
 		in.lines = append(in.lines, h.WarningLine())
 		if h.Numeric {
-			in.lines = append(in.lines, "odds "+strconv.Itoa(int(h.Probability*100+0.5))+"%")
+			in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.inspection.08", "odds ")+strconv.Itoa(int(h.Probability*100+0.5))+"%")
 		} else if h.Tier != "" {
-			in.lines = append(in.lines, "odds "+h.Tier)
+			in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.inspection.09", "odds ")+h.Tier)
 		}
-		in.lines = append(in.lines, "pressure "+strconv.Itoa(int(m.Catastrophe.Pressure*100+0.5))+"%")
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.inspection.10", "pressure ")+strconv.Itoa(int(m.Catastrophe.Pressure*100+0.5))+"%")
 		in.cmd = mapmodel.CmdHarbinger
 	}
 	return in, true
@@ -309,13 +310,13 @@ func lotInspection(m *mapmodel.Model, key string, cp int) inspectionData {
 	}
 	if def.Wonder {
 		in.title = def.Name
-		in.lines = append(in.lines, "wonder of the "+m.Catalog.AgeNames[def.Age])
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.01", "wonder of the ")+m.Catalog.AgeNames[def.Age])
 		in.cmd = "wonders"
 		for i := range m.Wonders {
 			if m.Wonders[i].Key == key {
 				in.cmd = m.WonderCommand(&m.Wonders[i])
 				if m.Wonders[i].Delta {
-					in.lines = append(in.lines, "built since your last visit")
+					in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.02", "built since your last visit"))
 				}
 			}
 		}
@@ -326,14 +327,14 @@ func lotInspection(m *mapmodel.Model, key string, cp int) inspectionData {
 		return in
 	}
 	in.title += " ×" + strconv.Itoa(b.Count)
-	in.lines = append(in.lines, mapmodel.LineageNames[b.Lineage]+" · "+m.Catalog.AgeNames[def.Age])
+	in.lines = append(in.lines, mapmodel.LineageName(b.Lineage)+" · "+m.Catalog.AgeNames[def.Age])
 	switch {
 	case b.Capacity <= 0:
-		in.lines = append(in.lines, "no workers needed")
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.03", "no workers needed"))
 	case b.Workers == 0:
-		in.lines = append(in.lines, "idle, 0/"+strconv.Itoa(b.Capacity)+" workers")
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.04", "idle, 0/")+strconv.Itoa(b.Capacity)+vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.05", " workers"))
 	default:
-		in.lines = append(in.lines, "workers "+strconv.Itoa(b.Workers)+"/"+strconv.Itoa(b.Capacity))
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.06", "workers ")+strconv.Itoa(b.Workers)+"/"+strconv.Itoa(b.Capacity))
 	}
 	if b.Rate > 0 && b.RateName != "" {
 		in.lines = append(in.lines, "+"+humanN(b.Rate)+" "+strings.ToLower(b.RateName)+"/s")
@@ -344,12 +345,12 @@ func lotInspection(m *mapmodel.Model, key string, cp int) inspectionData {
 		if d := m.Catalog.Defs[b.Upgrade]; d != nil {
 			name = d.Name
 		}
-		in.lines = append(in.lines, "upgrade ready: "+name)
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.07", "upgrade ready: ")+name)
 	case b.Legacy:
-		in.lines = append(in.lines, "legacy: an older tier, it no longer grows")
+		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.08", "legacy: an older tier, it no longer grows"))
 	}
 	if b.Delta > 0 {
-		in.lines = append(in.lines, "+"+strconv.Itoa(b.Delta)+" since your last visit")
+		in.lines = append(in.lines, "+"+strconv.Itoa(b.Delta)+vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.09", " since your last visit"))
 	}
 	in.cmd = m.BuildingCommand(b)
 	if in.cmd == "" {

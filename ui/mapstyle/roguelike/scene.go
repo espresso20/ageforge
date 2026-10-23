@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // scene.go lays one model out on its world: streets, walls, trails to the
@@ -41,18 +42,18 @@ type dial struct {
 	wall   int // 0 none, 1 palisade, 2 stone wall, 3 ring boulevard
 	night  bool
 	smoke  string
-	hazard string // pulse sequence of the catastrophe ring
-	threat string // what the ring is
+	hazard string     // pulse sequence of the catastrophe ring
+	threat vibe.Entry // what the ring is
 }
 
 var dials = [7]dial{
-	{road: 0, wall: 1, smoke: "∙°˚", hazard: "*·˙*", threat: "meteor fall"},
-	{road: 1, wall: 2, smoke: "∙°˚", hazard: "×x»×", threat: "raiding host"},
-	{road: 1, wall: 2, smoke: "°○∙", hazard: "▒░▒░", threat: "choking smog"},
-	{road: 2, wall: 3, smoke: "°○∙", hazard: "░▒░·", threat: "fallout"},
-	{road: 2, wall: 3, smoke: "∙·", hazard: "#%&0", threat: "glitch storm"},
-	{road: 3, wall: 3, night: true, smoke: "·∙", hazard: "☼*☼·", threat: "solar flare"},
-	{road: 3, wall: 3, night: true, smoke: "·", hazard: "╳╱╲╳", threat: "reality fracture"},
+	{road: 0, wall: 1, smoke: "∙°˚", hazard: "*·˙*", threat: vibe.E("ui.mapstyle.roguelike.scene.dials.01", "meteor fall")},
+	{road: 1, wall: 2, smoke: "∙°˚", hazard: "×x»×", threat: vibe.E("ui.mapstyle.roguelike.scene.dials.02", "raiding host")},
+	{road: 1, wall: 2, smoke: "°○∙", hazard: "▒░▒░", threat: vibe.E("ui.mapstyle.roguelike.scene.dials.03", "choking smog")},
+	{road: 2, wall: 3, smoke: "°○∙", hazard: "░▒░·", threat: vibe.Same("fallout")},
+	{road: 2, wall: 3, smoke: "∙·", hazard: "#%&0", threat: vibe.E("ui.mapstyle.roguelike.scene.dials.05", "glitch storm")},
+	{road: 3, wall: 3, night: true, smoke: "·∙", hazard: "☼*☼·", threat: vibe.E("ui.mapstyle.roguelike.scene.dials.06", "solar flare")},
+	{road: 3, wall: 3, night: true, smoke: "·", hazard: "╳╱╲╳", threat: vibe.E("ui.mapstyle.roguelike.scene.dials.07", "reality fracture")},
 }
 
 func epochIdx(e int) int { return clamp(e, 0, 6) }

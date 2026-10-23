@@ -238,7 +238,7 @@ func vibeExport(c *catalog, root, scriptDirArg, dir string, out io.Writer) error
 			rec[1] = r.where
 			rec[2] = r.kind
 			rec[3] = c.ageText(r)
-			rec[4] = keepColumn(r.kept())
+			rec[4] = strings.TrimSpace(keepColumn(r.kept()) + " " + strings.Join(typedIn[r.id], " "))
 			if r.max > 0 {
 				rec[5] = strconv.Itoa(r.max)
 			}
@@ -353,6 +353,12 @@ func vibeLint(c *catalog, root, dir string, out io.Writer) (int, error) {
 		}
 		for _, p := range checkKeep(row, r.Text) {
 			fail("%s %s", where, p)
+		}
+		// A command the player types, written in a sentence, is kept as it is typed.
+		for _, cmd := range typedIn[r.ID] {
+			if !strings.Contains(r.Text, cmd) {
+				fail("%s is missing %s, which the player types as it is", where, cmd)
+			}
 		}
 		// The spaces and line breaks a text starts and ends with are part of how the
 		// code joins it to what is next to it, so a line keeps them as they are.

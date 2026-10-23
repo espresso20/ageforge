@@ -627,7 +627,7 @@ func statusLines(it *caseItem, room, bar int) [][]seg {
 		if v.RewardTheme != "" {
 			name := v.RewardTheme
 			if t, ok := theme.ByKey(v.RewardTheme); ok {
-				name = t.Name
+				name = t.Name.String()
 			}
 			out = append(out, []seg{{text: vibe.Line("ui.badge_case.statusLines.06", "Gives the "), st: tsDim}, {text: name, st: tsHi}, {text: vibe.Line("ui.badge_case.statusLines.07", " theme."), st: tsDim}})
 		}

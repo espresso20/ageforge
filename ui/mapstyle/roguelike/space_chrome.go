@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_chrome.go is everything round a sky scene: the header, the news
@@ -18,12 +19,12 @@ import (
 // every age.
 
 // skyViewNames name each scene's view on the header and the status line.
-var skyViewNames = [mapmodel.NumSkyScenes]string{"", "ORBIT", "DEEP SPACE", "STARBASE", "SUPERPOSITION", "MANDALA"}
+var skyViewNames = [mapmodel.NumSkyScenes]vibe.Entry{{}, vibe.E("ui.mapstyle.roguelike.space_chrome.skyViewNames.01", "ORBIT"), vibe.E("ui.mapstyle.roguelike.space_chrome.skyViewNames.02", "DEEP SPACE"), vibe.E("ui.mapstyle.roguelike.space_chrome.skyViewNames.03", "STARBASE"), vibe.E("ui.mapstyle.roguelike.space_chrome.skyViewNames.04", "SUPERPOSITION"), vibe.E("ui.mapstyle.roguelike.space_chrome.skyViewNames.05", "MANDALA")}
 
 func (v *skyView) viewName() string {
-	n := skyViewNames[v.scene]
+	n := skyViewNames[v.scene].String()
 	if v.g.zoom == zDistrict {
-		n += " CLOSE"
+		n += vibe.Line("ui.mapstyle.roguelike.space_chrome.viewName.01", " CLOSE")
 	}
 	return n
 }
@@ -38,7 +39,7 @@ func (v *skyView) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 	s := v.begin(f)
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, v.g.bgStyle())
 	if s == nil {
-		cv.Text(1, 0, 0, "No map yet.", v.g.cls(mapmodel.CDim))
+		cv.Text(1, 0, 0, vibe.Line("ui.mapstyle.roguelike.space_chrome.Draw.01", "No map yet."), v.g.cls(mapmodel.CDim))
 		return
 	}
 	g := v.g
@@ -78,9 +79,9 @@ func (v *skyView) header(cv *mapstyle.Canvas, W int) {
 		st tcell.Style
 	}{
 		{string(weatherRune(m, v.tier)) + " " + m.Clock.String() + "  ", ch},
-		{"pop " + strconv.Itoa(m.Workers.Pop) + "  ", ch},
-		{"idle " + strconv.Itoa(m.Workers.Idle), idle},
-		{"  civs " + strconv.Itoa(m.DiscoveredCount()) + "/" + strconv.Itoa(len(m.Factions)), ch},
+		{vibe.Line("ui.mapstyle.roguelike.space_chrome.header.01", "pop ") + strconv.Itoa(m.Workers.Pop) + "  ", ch},
+		{vibe.Line("ui.mapstyle.roguelike.space_chrome.header.02", "idle ") + strconv.Itoa(m.Workers.Idle), idle},
+		{vibe.Line("ui.mapstyle.roguelike.space_chrome.header.03", "  civs ") + strconv.Itoa(m.DiscoveredCount()) + "/" + strconv.Itoa(len(m.Factions)), ch},
 		{"  " + v.viewName() + " ", ch.Bold(true)},
 	}
 	for ; len(segs) > 0; segs = segs[1:] {
@@ -120,11 +121,11 @@ func (v *skyView) news(width int) (string, tcell.Style) {
 	case h != "":
 		return h, g.role(theme.RolePositive)
 	case m.Catastrophe.Pending != "":
-		return mapmodel.Clip("DANGER: "+m.Catastrophe.PendingName+" is upon you", width), danger
+		return mapmodel.Clip(vibe.Line("ui.mapstyle.roguelike.space_chrome.news.01", "DANGER: ")+m.Catastrophe.PendingName+vibe.Line("ui.mapstyle.roguelike.space_chrome.news.02", " is upon you"), width), danger
 	case m.Flows.Worst != "" && g.changes:
-		return mapmodel.Clip("stuck: "+m.Flows.Worst, width), g.role(theme.RoleWarning)
+		return mapmodel.Clip(vibe.Line("ui.mapstyle.roguelike.space_chrome.news.03", "stuck: ")+m.Flows.Worst, width), g.role(theme.RoleWarning)
 	}
-	return "all quiet", g.cls(mapmodel.CDim)
+	return vibe.Line("ui.mapstyle.roguelike.space_chrome.news.04", "all quiet"), g.cls(mapmodel.CDim)
 }
 
 // bottom: the news, the two inspector lines and the status line.
@@ -133,26 +134,26 @@ func (v *skyView) bottom(cv *mapstyle.Canvas, W, H int) {
 	n, st := v.news(W - 2)
 	cv.Text(1, H-4, W-2, n, st)
 	dim := g.cls(mapmodel.CDim)
-	hints := "arrows move  Shift fast  PgUp world  PgDn close  Tab next  Home hub  map flows"
+	hints := vibe.Line("ui.mapstyle.roguelike.space_chrome.bottom.01", "arrows move  Shift fast  PgUp world  PgDn close  Tab next  Home hub  map flows")
 	if W < 100 {
-		hints = "arrows move  PgUp PgDn zoom  Tab next"
+		hints = vibe.Line("ui.mapstyle.roguelike.space_chrome.bottom.02", "arrows move  PgUp PgDn zoom  Tab next")
 	}
 	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Clock: v.clock, Tier: v.tier}); {
 	case !ok:
-		cv.Text(1, H-3, W-2, "cursor hidden; move it with the arrow keys", g.bgStyle())
+		cv.Text(1, H-3, W-2, vibe.Line("ui.mapstyle.roguelike.space_chrome.bottom.03", "cursor hidden; move it with the arrow keys"), g.bgStyle())
 		cv.Text(3, H-2, W-4, hints, dim)
 	default:
 		cv.Text(1, H-3, W-2, "▸ "+strings.Join(append([]string{in.Title}, in.Lines...), " · "), g.role(theme.RoleBright).Bold(true))
 		if in.Command == "" {
-			cv.Text(3, H-2, W-4, "nothing to type here; Tab jumps to the next building", dim)
+			cv.Text(3, H-2, W-4, vibe.Line("ui.mapstyle.roguelike.space_chrome.bottom.04", "nothing to type here; Tab jumps to the next building"), dim)
 		} else {
-			x := cv.Text(3, H-2, W-4, "type: ", dim)
+			x := cv.Text(3, H-2, W-4, vibe.Line("ui.mapstyle.roguelike.space_chrome.bottom.05", "type: "), dim)
 			cv.Text(x, H-2, W-x-1, in.Command, g.cls(mapmodel.CAccent).Bold(true))
 		}
 	}
 	left := v.viewName()
 	if g.flows {
-		left += " · flows"
+		left += vibe.Line("ui.mapstyle.roguelike.space_chrome.bottom.06", " · flows")
 	}
 	x := cv.Text(1, H-1, W-2, left, g.cls(mapmodel.CLabel))
 	if hw := mapstyle.TextLen(hints); x+2+hw <= W-1 {
@@ -168,7 +169,7 @@ func (v *skyView) sidebar(cv *mapstyle.Canvas, x0, y0, w, h int) {
 	}
 	y := y0
 	if g.flows {
-		cv.Text(x0+2, y, w-3, "FLOWS", g.cls(mapmodel.CAccent).Bold(true))
+		cv.Text(x0+2, y, w-3, vibe.Line("ui.mapstyle.roguelike.space_chrome.sidebar.01", "FLOWS"), g.cls(mapmodel.CAccent).Bold(true))
 		for _, l := range v.flowLines() {
 			if y++; y < y0+h {
 				g.flowLine(cv, x0+2, y, w-3, l)
@@ -198,11 +199,11 @@ func (v *skyView) flowLines() []flowLine {
 			out = append(out, flowLine{tag: tag, text: text, c: c})
 		}
 	}
-	add(len(fl.Draining) > 0, "DRAIN", names(fl.Draining), mapmodel.CDanger)
-	add(fl.IdleWorkers > 0, "IDLE ", plural(fl.IdleWorkers, "worker", "workers"), mapmodel.CIdle)
+	add(len(fl.Draining) > 0, vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.01", "DRAIN"), names(fl.Draining), mapmodel.CDanger)
+	add(fl.IdleWorkers > 0, vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.02", "IDLE "), plural(fl.IdleWorkers, vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.03", "worker"), vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.04", "workers")), mapmodel.CIdle)
 	short := len(fl.Understaffed) + len(fl.Idle)
-	add(short > 0, "SHORT", plural(short, "building", "buildings"), mapmodel.CIdle)
-	add(len(out) == 0, "OK   ", "nothing stuck", mapmodel.CFresh)
+	add(short > 0, vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.05", "SHORT"), plural(short, vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.06", "building"), vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.07", "buildings")), mapmodel.CIdle)
+	add(len(out) == 0, vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.08", "OK   "), vibe.Line("ui.mapstyle.roguelike.space_chrome.flowLines.09", "nothing stuck"), mapmodel.CFresh)
 	for i, sh := range fl.Shares {
 		if i == 5 || sh.Share <= 0 {
 			break
@@ -235,7 +236,7 @@ func (v *skyView) box(cv *mapstyle.Canvas, x, y, w, maxH int) {
 	for k, c := range [4][2]int{{x, y}, {x + w - 1, y}, {x, y + h - 1}, {x + w - 1, y + h - 1}} {
 		cv.Put(c[0], c[1], []rune("┌┐└┘")[k], b)
 	}
-	cv.Text(x+2, y, w-4, "FLOWS", g.cls(mapmodel.CAccent).Bold(true))
+	cv.Text(x+2, y, w-4, vibe.Line("ui.mapstyle.roguelike.space_chrome.box.01", "FLOWS"), g.cls(mapmodel.CAccent).Bold(true))
 	for i := 0; i < len(lines) && i < h-2; i++ {
 		g.flowLine(cv, x+1, y+1+i, w-2, lines[i])
 	}
@@ -253,13 +254,13 @@ func (v *skyView) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Fram
 	g := v.g
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, g.bgStyle())
 	if s == nil {
-		cv.Text(0, 0, 0, "No map yet.", g.cls(mapmodel.CDim))
+		cv.Text(0, 0, 0, vibe.Line("ui.mapstyle.roguelike.space_chrome.DrawCompact.01", "No map yet."), g.cls(mapmodel.CDim))
 		return
 	}
 	m := s.m
-	x := cv.Text(0, 0, r.W, strings.TrimSuffix(m.AgeName, " Age")+" · pop "+strconv.Itoa(m.Workers.Pop), g.cls(mapmodel.CAccent).Bold(true))
+	x := cv.Text(0, 0, r.W, strings.TrimSuffix(m.AgeName, " Age")+vibe.Line("ui.mapstyle.roguelike.space_chrome.DrawCompact.02", " · pop ")+strconv.Itoa(m.Workers.Pop), g.cls(mapmodel.CAccent).Bold(true))
 	if m.Workers.Idle > 0 {
-		cv.Text(x, 0, r.W-x, " · idle "+strconv.Itoa(m.Workers.Idle), g.cls(mapmodel.CIdle).Bold(true))
+		cv.Text(x, 0, r.W-x, vibe.Line("ui.mapstyle.roguelike.space_chrome.DrawCompact.03", " · idle ")+strconv.Itoa(m.Workers.Idle), g.cls(mapmodel.CIdle).Bold(true))
 	}
 	if r.H >= 2 {
 		n, st := v.news(r.W)

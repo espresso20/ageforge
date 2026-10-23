@@ -43,10 +43,15 @@ var fieldVerb = regexp.MustCompile(`%[-+# 0]*(\d+)?(?:\.\d+)?[a-zA-Z%]`)
 func (c *catalog) fixedWidths() {
 	ints := map[*srcFile]map[string]int{}
 	for _, r := range c.rows {
-		if r.area != areaScreens || r.max > 0 {
+		if r.max > 0 {
 			continue
 		}
-		r.max = c.widthOf(r, ints)
+		switch r.area {
+		case areaScreens:
+			r.max = c.widthOf(r, ints)
+		case areaMap:
+			r.max = mapWidthOf(r)
+		}
 	}
 }
 

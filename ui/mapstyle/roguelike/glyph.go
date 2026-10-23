@@ -4,6 +4,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // glyph.go resolves one world tile to a glyph, and keeps the legend of what
@@ -56,29 +57,29 @@ const (
 )
 
 var lgInfo = [lgCity]struct {
-	label string
+	label vibe.Entry
 	group uint8
 }{
-	{"water", 0}, {"shallows", 0}, {"forest", 0}, {"hills", 0}, {"mountains", 0},
-	{"street", 2}, {"avenue", 2}, {"bridge or ford", 2}, {"trail to a civ", 2}, {"palisade", 2}, {"city wall", 2},
-	{"wall tower", 2}, {"town square", 1}, {"wonder", 1}, {"wonder rising", 1}, {"ruins", 4}, {"legacy (old town)", 1},
-	{"understaffed (dim)", 4}, {"new since last visit", 4}, {"short of hands", 4}, {"civ settlement", 3},
-	{"worker at work", 5}, {"idle worker", 5}, {"caravan", 5}, {"route disrupted", 5}, {"scouts", 5}, {"raiders", 5},
-	{"war on this trail", 3}, {"harbinger", 4}, {"catastrophe", 4}, {"smoke over works", 5},
-	{"railway", 2}, {"maglev line", 2},
+	{vibe.Same("water"), 0}, {vibe.Same("shallows"), 0}, {vibe.Same("forest"), 0}, {vibe.Same("hills"), 0}, {vibe.Same("mountains"), 0},
+	{vibe.Same("street"), 2}, {vibe.Same("avenue"), 2}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.08", "bridge or ford"), 2}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.09", "trail to a civ"), 2}, {vibe.Same("palisade"), 2}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.11", "city wall"), 2},
+	{vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.12", "wall tower"), 2}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.13", "town square"), 1}, {vibe.Same("wonder"), 1}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.14", "wonder rising"), 1}, {vibe.Same("ruins"), 4}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.16", "legacy (old town)"), 1},
+	{vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.17", "understaffed (dim)"), 4}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.18", "new since last visit"), 4}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.19", "short of hands"), 4}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.20", "civ settlement"), 3},
+	{vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.21", "worker at work"), 5}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.22", "idle worker"), 5}, {vibe.Same("caravan"), 5}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.24", "route disrupted"), 5}, {vibe.Same("scouts"), 5}, {vibe.Same("raiders"), 5},
+	{vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.27", "war on this trail"), 3}, {vibe.Same("harbinger"), 4}, {vibe.Same("catastrophe"), 4}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.28", "smoke over works"), 5},
+	{vibe.Same("railway"), 2}, {vibe.E("ui.mapstyle.roguelike.glyph.lgInfo.30", "maglev line"), 2},
 }
 
 // lgTraffic is the legend group the movers list under. The Earth arc's
 // city lists under the land, which it has built over.
 const lgTraffic = 6
 
-var lgGroups = [7]string{"land", "buildings", "ways and walls", "civs", "state", "life", "traffic"}
+var lgGroups = [7]vibe.Entry{vibe.E("ui.mapstyle.roguelike.glyph.lgGroups.01", "land"), vibe.E("ui.mapstyle.roguelike.glyph.lgGroups.02", "buildings"), vibe.E("ui.mapstyle.roguelike.glyph.lgGroups.03", "ways and walls"), vibe.E("ui.mapstyle.roguelike.glyph.lgGroups.04", "civs"), vibe.E("ui.mapstyle.roguelike.glyph.lgGroups.05", "state"), vibe.E("ui.mapstyle.roguelike.glyph.lgGroups.06", "life"), vibe.E("ui.mapstyle.roguelike.glyph.lgGroups.07", "traffic")}
 
 // lgLabel is a legend row's label and group ("" for a row with none).
 func lgLabel(id lgID) (string, uint8) {
 	switch {
 	case id < lgCity:
-		return lgInfo[id].label, lgInfo[id].group
+		return lgInfo[id].label.String(), lgInfo[id].group
 	case id < lgMover:
 		return mapmodel.CityFeature(id - lgCity).Info().Name, 0
 	case id < lgLineage:
@@ -114,7 +115,7 @@ func lineageLabel(lin string) string {
 	if lin == mapmodel.LinHarbor {
 		return "harbor"
 	}
-	return mapmodel.LineageNames[lin]
+	return mapmodel.LineageName(lin)
 }
 
 func lineageIdx(lin string) int {

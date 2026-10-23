@@ -3,6 +3,7 @@ package roguelike
 import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // citylines.go lays the lines over the Earth arc's city: the highways out
@@ -260,7 +261,7 @@ func (s *scene) skyRails(cl *cityLand, fusion bool) {
 	ri, side := 0, int(h>>20%2)*2-1
 	for k := 0; k < n; k++ {
 		ln := cityLine{feat: feat, ink: inks[k%len(inks)].ink, elev: true, layer: uint8(2 + k),
-			name: "the " + inks[k%len(inks)].name + " line"}
+			name: vibe.Line("ui.mapstyle.roguelike.citylines.skyRails.01", "the ") + inks[k%len(inks)].name + vibe.Line("ui.mapstyle.roguelike.citylines.skyRails.02", " line")}
 		if k%2 == 0 { // a row, west to east through the town's latitude
 			for ri < len(rows) && !far(rows[ri]) {
 				ri++
@@ -328,5 +329,5 @@ func (s *scene) tetherLine(cl *cityLand) {
 		return
 	}
 	s.addLine(cl, cityLine{feat: mapmodel.FeatTether, pts: pts, ink: theme.CityTether, elev: true, layer: 9,
-		name: "the tether"})
+		name: vibe.Line("ui.mapstyle.roguelike.citylines.tetherLine.01", "the tether")})
 }

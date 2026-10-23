@@ -5,6 +5,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // space_legend.go is the sky scenes' legend: like the town's, it lists only
@@ -66,21 +67,21 @@ const (
 )
 
 var skyLgInfo = [slPart]struct {
-	label string
+	label vibe.Entry
 	group uint8
 }{
-	slStars: {"stars", 0}, slWonder: {"a wonder's star", 1}, slRising: {"wonder rising", 1},
-	slPlanet: {"the homeworld", 0}, slLimb: {"atmosphere", 0}, slCity: {"city lights", 0},
-	slTether: {"space elevator", 2}, slHub: {"hub", 2}, slRing: {"station ring", 2}, slArc: {"outer ring", 2},
-	slTruss: {"truss", 2}, slSlip: {"slip, hull rising", 2}, slRock: {"asteroid", 0}, slMoon: {"the moon", 0},
-	slNebula: {"nebula", 0}, slSun: {"the home sun", 0}, slOrbitLine: {"orbit", 0}, slGate: {"warp gate", 2},
-	slScaffold: {"gate scaffold", 2}, slField: {"gate field", 2}, slColony: {"colony world", 1},
-	slBeacon: {"colony beacon", 1}, slRelay: {"relay chain", 2}, slSpiral: {"the galaxy", 0},
-	slLane: {"trade lane", 3}, slSystem: {"star system", 3}, slStarbase: {"starbase ring", 2},
-	slPylon: {"docking pylon", 2}, slCloud: {"probability cloud", 0}, slEcho: {"echo of the old town", 0},
-	slCrown: {"the crown", 1}, slCore: {"the core", 1}, slCiv: {"civ", 3}, slRuin: {"ruins", 4},
-	slLegacy: {"older section (dim)", 4}, slUnder: {"understaffed (dim)", 4}, slFresh: {"new since last visit", 4},
-	slFlagged: {"short of hands", 4}, slSparkle: {"transporter beam", 5}, slPulsar: {"the pulsar", 0}, slDebris: {"debris", 0},
+	slStars: {vibe.Same("stars"), 0}, slWonder: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.02", "a wonder's star"), 1}, slRising: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.03", "wonder rising"), 1},
+	slPlanet: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.04", "the homeworld"), 0}, slLimb: {vibe.Same("atmosphere"), 0}, slCity: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.06", "city lights"), 0},
+	slTether: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.07", "space elevator"), 2}, slHub: {vibe.Same("hub"), 2}, slRing: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.09", "station ring"), 2}, slArc: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.10", "outer ring"), 2},
+	slTruss: {vibe.Same("truss"), 2}, slSlip: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.12", "slip, hull rising"), 2}, slRock: {vibe.Same("asteroid"), 0}, slMoon: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.14", "the moon"), 0},
+	slNebula: {vibe.Same("nebula"), 0}, slSun: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.16", "the home sun"), 0}, slOrbitLine: {vibe.Same("orbit"), 0}, slGate: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.18", "warp gate"), 2},
+	slScaffold: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.19", "gate scaffold"), 2}, slField: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.20", "gate field"), 2}, slColony: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.21", "colony world"), 1},
+	slBeacon: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.22", "colony beacon"), 1}, slRelay: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.23", "relay chain"), 2}, slSpiral: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.24", "the galaxy"), 0},
+	slLane: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.25", "trade lane"), 3}, slSystem: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.26", "star system"), 3}, slStarbase: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.27", "starbase ring"), 2},
+	slPylon: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.28", "docking pylon"), 2}, slCloud: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.29", "probability cloud"), 0}, slEcho: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.30", "echo of the old town"), 0},
+	slCrown: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.31", "the crown"), 1}, slCore: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.32", "the core"), 1}, slCiv: {vibe.Same("civ"), 3}, slRuin: {vibe.Same("ruins"), 4},
+	slLegacy: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.35", "older section (dim)"), 4}, slUnder: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.36", "understaffed (dim)"), 4}, slFresh: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.37", "new since last visit"), 4},
+	slFlagged: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.38", "short of hands"), 4}, slSparkle: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.39", "transporter beam"), 5}, slPulsar: {vibe.E("ui.mapstyle.roguelike.space_legend.skyLgInfo.40", "the pulsar"), 0}, slDebris: {vibe.Same("debris"), 0},
 }
 
 var skyLgGroups = [6]string{"space", "yours", "structures", "civs", "state", "traffic"}
@@ -89,7 +90,7 @@ var skyLgGroups = [6]string{"space", "yours", "structures", "civs", "state", "tr
 func (v *skyView) skyLgLabel(id skyLgID) (string, uint8) {
 	switch {
 	case id < slPart:
-		return skyLgInfo[id].label, skyLgInfo[id].group
+		return skyLgInfo[id].label.String(), skyLgInfo[id].group
 	case id < slMover:
 		if i := int(id - slPart); i < len(mapmodel.LineageOrder) {
 			sky := mapmodel.SkyOrbit
@@ -221,7 +222,7 @@ func (v *skyView) legendCell(s *skyScene, c skyCell, l look) {
 
 // drawSkyLegend lists what this frame drew, by group.
 func (v *skyView) drawSkyLegend(cv *mapstyle.Canvas, x, y, w, h int) {
-	cv.Text(x, y, w, "LEGEND", v.g.cls(mapmodel.CAccent).Bold(true))
+	cv.Text(x, y, w, vibe.Line("ui.mapstyle.roguelike.space_legend.drawSkyLegend.01", "LEGEND"), v.g.cls(mapmodel.CAccent).Bold(true))
 	row, end := y+1, y+h
 	for grp := uint8(0); grp < uint8(len(skyLgGroups)); grp++ {
 		head := false

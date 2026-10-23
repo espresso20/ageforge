@@ -250,7 +250,7 @@ func TestSkyInspect(t *testing.T) {
 		for _, tg := range order {
 			def := m.Catalog.Defs[tg.key]
 			part := mapmodel.SkyPartOf(sc, def.Lineage)
-			if def.Wonder || part.Name == mapmodel.LineageNames[def.Lineage] || tg.cp > 0 {
+			if def.Wonder || part.Name == mapmodel.LineageName(def.Lineage) || tg.cp > 0 {
 				continue
 			}
 			v.cur = tg

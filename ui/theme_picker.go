@@ -386,9 +386,9 @@ func themeGroupHeading(name string) string {
 // still LIST (and can preview on highlight) but are visually marked and refused on
 // confirm.
 func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
-	label := "  " + t.Name
+	label := "  " + t.Name.String()
 	if t.Key == activeKey {
-		label = "[gold]● " + t.Name + vibe.Line("ui.theme_picker.themeRowLabel.01", " (current)[-]")
+		label = "[gold]● " + t.Name.String() + vibe.Line("ui.theme_picker.themeRowLabel.01", " (current)[-]")
 	}
 	label += "  [dim]" + strings.ToLower(t.Variant()) + "[-]"
 	if t.Accessible {
@@ -413,9 +413,9 @@ func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
 // cannot see yet); nil shows it as written.
 func themeDetailText(t theme.Theme, available bool, st *game.GameState) string {
 	var lines []string
-	lines = append(lines, vibe.Sprintf("ui.theme_picker.themeDetailText.01", "[gold]%s[-]  [dim]%s theme · %s[-]", t.Name, t.Variant(), t.Group()))
-	if t.Blurb != "" {
-		lines = append(lines, "[gray]"+t.Blurb+"[-]")
+	lines = append(lines, vibe.Sprintf("ui.theme_picker.themeDetailText.01", "[gold]%s[-]  [dim]%s theme · %s[-]", t.Name.String(), t.Variant(), t.Group()))
+	if t.Blurb.String() != "" {
+		lines = append(lines, "[gray]"+t.Blurb.String()+"[-]")
 	}
 	if t.Accessible {
 		note := vibe.Line("ui.theme_picker.themeDetailText.02", "[cyan]Accessible:[-] [gray]colorblind-safe or high-contrast, always unlocked[-]")
@@ -431,7 +431,7 @@ func themeDetailText(t theme.Theme, available bool, st *game.GameState) string {
 		// line if the theme somehow has no hint (the registry-consistency test makes
 		// that impossible for gated themes, but the detail pane shouldn't render an
 		// empty "Locked —" tail if it ever happens).
-		hint := t.UnlockHint
+		hint := t.UnlockHint.String()
 		if st != nil {
 			hint = themeUnlockHint(t, *st) // never an age the player cannot see yet
 		}
@@ -509,7 +509,7 @@ func drawThemeSample(screen tcell.Screen, x, y, w, h int, th theme.Theme) {
 	// Canvas.
 	bg := col(theme.RoleBackground)
 	fill(x, y, x+w, y+h, bg)
-	put(x+1, y, vibe.Line("ui.theme_picker.drawThemeSample.01", "Sample: ")+th.Name+" ("+th.Variant()+")", col(theme.RoleDim), bg, false)
+	put(x+1, y, vibe.Line("ui.theme_picker.drawThemeSample.01", "Sample: ")+th.Name.String()+" ("+th.Variant()+")", col(theme.RoleDim), bg, false)
 
 	// Surface panel with a border.
 	px0, py0, px1, py1 := x+1, y+1, x+w-1, y+h
