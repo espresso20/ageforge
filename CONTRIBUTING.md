@@ -31,6 +31,8 @@ make release-minor   # bump minor version, update CHANGELOG, tag, push
 make release-major   # bump major version, update CHANGELOG, tag, push
 ```
 
+What CI checks beyond the tests (security scans, linters, prose rules, benchmarks, release builds), how to run each one locally, and how to quiet a false positive: [docs/ci.md](docs/ci.md).
+
 ---
 
 ## Writing Commits
