@@ -141,3 +141,39 @@ func TestVibeWireAddsTheImportToAFileWithNone(t *testing.T) {
 		}
 	}
 }
+
+// TestATableEntryCarriesItsRowIdAndCountsAsWired: the road event templates are a
+// table made once, so each entry holds its own row id (vibeRow) and whoever
+// draws one reads it through vibe.Line. The export honours the id, takes the
+// id's own string for a key, and calls the row wired.
+func TestATableEntryCarriesItsRowIdAndCountsAsWired(t *testing.T) {
+	c := realCatalog(t)
+	w := newVibeWiring(c)
+	n := 0
+	for _, r := range c.rows {
+		if !strings.HasPrefix(r.id, "config.mission_words.roadEventTemplates.") {
+			continue
+		}
+		n++
+		if !r.u.vibeTable || r.u.vibeID != r.id {
+			t.Errorf("%s is not read as a table entry carrying its own id", r.id)
+		}
+		if !w.wired(r.id) {
+			t.Errorf("%s is not counted as wired", r.id)
+		}
+		if reason := c.wireVerdict(r).reason; forGood(reason) {
+			t.Errorf("%s is left alone for good: %s", r.id, reason)
+		}
+		if r.area != areaLog {
+			t.Errorf("%s is on the sheet %s", r.id, r.area.file)
+		}
+	}
+	if n != 27 {
+		t.Errorf("%d road event templates in the export, want 27", n)
+	}
+	for _, r := range c.rows {
+		if strings.HasPrefix(r.id, "unclassified.") && strings.Contains(r.id, "roadTemplate") {
+			t.Errorf("%s: the id of a table entry is read as text", r.id)
+		}
+	}
+}

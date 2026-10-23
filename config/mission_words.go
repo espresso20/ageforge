@@ -1,5 +1,11 @@
 package config
 
+import (
+	"sync"
+
+	"github.com/espresso20/ageforge/vibe"
+)
+
 // mission_words.go is the words the mission board builds its offers from.
 // Every age has the names of its four tiers, six places, four objectives for
 // each tier and six twists. An offer's title is
@@ -31,17 +37,62 @@ const (
 	RoadRuinsWeight   = 1
 )
 
+// roadTemplate is a road event story and the row id of the copy export it is
+// told by (vibeRow). The table is made once, so the story cannot follow
+// VibeMode where it is written: whoever tells a story drawn from it reads it
+// through vibe.Line with this id (RoadLine), after the draw.
+type roadTemplate struct {
+	vibeRow string
+	text    string
+}
+
 // roadEventTemplates are short player-facing stories, selected by kind.
-var roadEventTemplates = map[string][]string{
-	"storm":       {"<weather> pinned the party down near the <place>. <time> lost.", "The party waited out <weather> by the <place>, losing <time>.", "<weather> turned the road near the <place> to trouble. The delay cost <time>."},
-	"helpers":     {"<helper> showed the party a shorter way. <time> saved.", "A tip from <helper> cut <time> off the journey.", "The party took a shortcut with help from <helper>, saving <time>."},
-	"find":        {"The party found <find>. The haul grows by <percent>%.", "A lucky find, <find>, adds <percent>% to the haul.", "<find> was waiting by the road. The haul grows by <percent>%."},
-	"toll":        {"On the <place> road, <foe> blocked the way. The captain decided his hide was worth more than a fight and paid <gold> gold to pass.", "<foe> demanded <gold> gold at the <place>. The captain paid and kept moving.", "The party paid <gold> gold to <foe> for safe passage near the <place>."},
-	"foes":        {"<foe> shadowed the party for days. The odds fall to <odds>%.", "The party spotted <foe> on the trail. Odds drop to <odds>%.", "<foe> made the road dangerous. Success odds are now <odds>%."},
-	"ambush":      {"<foe> struck at dusk. <n> soldiers fell.", "<foe> caught the soldiers off guard. <n> fell in the ambush.", "At dusk, <foe> attacked. The party lost <n> soldiers."},
-	"ambush_haul": {"<foe> made off with part of the haul.", "<foe> raided the supplies and took part of the haul.", "The party fought off <foe>, but some of the haul was lost."},
-	"fair":        {"Fair skies and a good guide. The odds rise to <odds>%.", "A clear stretch lifted spirits. Success odds are now <odds>%.", "The party found its rhythm. Odds rise to <odds>%."},
-	"ruins":       {"The party marked ruins off the road near the <place>. They are on the board now.", "An old ruin near the <place> is now marked on the board.", "The party found ruins near the <place>. A new offer is on the board."},
+var roadEventTemplates = map[string][]roadTemplate{
+	"storm": {
+		{"config.mission_words.roadEventTemplates.01", "<weather> pinned the party down near the <place>. <time> lost."},
+		{"config.mission_words.roadEventTemplates.02", "The party waited out <weather> by the <place>, losing <time>."},
+		{"config.mission_words.roadEventTemplates.03", "<weather> turned the road near the <place> to trouble. The delay cost <time>."},
+	},
+	"helpers": {
+		{"config.mission_words.roadEventTemplates.04", "<helper> showed the party a shorter way. <time> saved."},
+		{"config.mission_words.roadEventTemplates.05", "A tip from <helper> cut <time> off the journey."},
+		{"config.mission_words.roadEventTemplates.06", "The party took a shortcut with help from <helper>, saving <time>."},
+	},
+	"find": {
+		{"config.mission_words.roadEventTemplates.07", "The party found <find>. The haul grows by <percent>%."},
+		{"config.mission_words.roadEventTemplates.08", "A lucky find, <find>, adds <percent>% to the haul."},
+		{"config.mission_words.roadEventTemplates.09", "<find> was waiting by the road. The haul grows by <percent>%."},
+	},
+	"toll": {
+		{"config.mission_words.roadEventTemplates.10", "On the <place> road, <foe> blocked the way. The captain decided his hide was worth more than a fight and paid <gold> gold to pass."},
+		{"config.mission_words.roadEventTemplates.11", "<foe> demanded <gold> gold at the <place>. The captain paid and kept moving."},
+		{"config.mission_words.roadEventTemplates.12", "The party paid <gold> gold to <foe> for safe passage near the <place>."},
+	},
+	"foes": {
+		{"config.mission_words.roadEventTemplates.13", "<foe> shadowed the party for days. The odds fall to <odds>%."},
+		{"config.mission_words.roadEventTemplates.14", "The party spotted <foe> on the trail. Odds drop to <odds>%."},
+		{"config.mission_words.roadEventTemplates.15", "<foe> made the road dangerous. Success odds are now <odds>%."},
+	},
+	"ambush": {
+		{"config.mission_words.roadEventTemplates.16", "<foe> struck at dusk. <n> soldiers fell."},
+		{"config.mission_words.roadEventTemplates.17", "<foe> caught the soldiers off guard. <n> fell in the ambush."},
+		{"config.mission_words.roadEventTemplates.18", "At dusk, <foe> attacked. The party lost <n> soldiers."},
+	},
+	"ambush_haul": {
+		{"config.mission_words.roadEventTemplates.19", "<foe> made off with part of the haul."},
+		{"config.mission_words.roadEventTemplates.20", "<foe> raided the supplies and took part of the haul."},
+		{"config.mission_words.roadEventTemplates.21", "The party fought off <foe>, but some of the haul was lost."},
+	},
+	"fair": {
+		{"config.mission_words.roadEventTemplates.22", "Fair skies and a good guide. The odds rise to <odds>%."},
+		{"config.mission_words.roadEventTemplates.23", "A clear stretch lifted spirits. Success odds are now <odds>%."},
+		{"config.mission_words.roadEventTemplates.24", "The party found its rhythm. Odds rise to <odds>%."},
+	},
+	"ruins": {
+		{"config.mission_words.roadEventTemplates.25", "The party marked ruins off the road near the <place>. They are on the board now."},
+		{"config.mission_words.roadEventTemplates.26", "An old ruin near the <place> is now marked on the board."},
+		{"config.mission_words.roadEventTemplates.27", "The party found ruins near the <place>. A new offer is on the board."},
+	},
 }
 
 // RoadTemplate returns a kind's story template at index n.
@@ -50,11 +101,34 @@ func (MissionWords) RoadTemplate(kind string, n int) string {
 	if len(pool) == 0 {
 		return ""
 	}
-	return pool[n%len(pool)]
+	return pool[n%len(pool)].text
 }
 
 // RoadTemplateCount is the number of story templates for kind.
 func (MissionWords) RoadTemplateCount(kind string) int { return len(roadEventTemplates[kind]) }
+
+// roadRow is the row id of each road event template, by its text.
+var roadRow = sync.OnceValue(func() map[string]string {
+	rows := map[string]string{}
+	for _, pool := range roadEventTemplates {
+		for _, t := range pool {
+			rows[t.text] = t.vibeRow
+		}
+	}
+	return rows
+})
+
+// RoadLine is the line a road event's story template is told by: the script's
+// line for it while VibeMode is on and the script has one, else the template
+// itself. template is a text RoadTemplate gave (a RoadEvent keeps it in plain
+// English), and the line has the same <slots>. A text that is no template of
+// the table (one written by hand) is given back as it is.
+func (MissionWords) RoadLine(template string) string {
+	if row, ok := roadRow()[template]; ok {
+		return vibe.Line(row, template)
+	}
+	return template
+}
 
 // MissionWords is one age's words for the mission board.
 type MissionWords struct {

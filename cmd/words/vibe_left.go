@@ -21,6 +21,10 @@ func init() {
 		"game.last_passage.recordLastPassageOutcome.03", "game.last_passage.recordLastPassageOutcome.04",
 		// The description of a ruins offer written by hand is kept in the save as it was written.
 		"game.mission_board.ruinsFoundPlain.01",
+		// A road event's story is kept in the save in plain English with its
+		// numbers written in, the span of time included (RoadTold); it is told
+		// in the script's words from that when it is read (sayRoadDuration).
+		"game.road_events.plainRoadDuration.01", "game.road_events.plainRoadDuration.02",
 	)
 	leftAloneFor(leftKey,
 		"game.catastrophe.doomMark.01", "game.catastrophe.eraMark.01", // the markers in a history line

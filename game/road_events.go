@@ -5,6 +5,9 @@ import (
 	"github.com/espresso20/ageforge/detmath"
 	"math"
 	"math/rand"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -107,6 +110,9 @@ func (a *ActiveExpedition) roadPlace() string {
 // tellRoadStory fills the words of an age into a story told by roadEventTold:
 // the place and the foe, helper, weather and find the event drew by index.
 func tellRoadStory(words config.MissionWords, place string, e RoadEvent, told string) string {
+	if vibe.On() {
+		told = vibeRoadTold(words, e, told)
+	}
 	return strings.NewReplacer(
 		"<place>", place,
 		"<foe>", wordAt(words.Foes[:], e.FoeIndex),
@@ -132,11 +138,11 @@ func (ge *GameEngine) roadEventTold(a *ActiveExpedition, e *RoadEvent) string {
 	case "storm":
 		delay := max(1, int(math.Ceil(float64(a.TotalTicks)*.15)))
 		a.TicksLeft += delay
-		story = value(story, "<time>", expRoadDuration(delay))
+		story = value(story, "<time>", plainRoadDuration(delay))
 	case "helpers":
 		saved := max(1, int(math.Ceil(float64(a.TicksLeft)*.25)))
 		a.TicksLeft = max(1, a.TicksLeft-saved)
-		story = value(story, "<time>", expRoadDuration(saved))
+		story = value(story, "<time>", plainRoadDuration(saved))
 	case "find":
 		factor := 1.4
 		if a.Rare {
@@ -219,11 +225,91 @@ func (a *ActiveExpedition) haulScale() float64 {
 	return a.HaulScale
 }
 
-func expRoadDuration(ticks int) string {
+// plainRoadDuration is a span of the road as a story keeps it: in plain
+// English, whatever script the game is read in (RoadTold).
+func plainRoadDuration(ticks int) string {
 	seconds := ticks * config.TickSeconds
 	if seconds < 60 {
-		return vibe.Sprintf("game.road_events.expRoadDuration.01", "%d seconds", seconds)
+		return fmt.Sprintf("%d seconds", seconds)
 	}
-	minutes := (seconds + 30) / 60
-	return vibe.Sprintf("game.road_events.expRoadDuration.02", "%d minutes", minutes)
+	return fmt.Sprintf("%d minutes", (seconds+30)/60)
+}
+
+var roadDurationRe = regexp.MustCompile(`^(\d+) (seconds|minutes)$`)
+
+// sayRoadDuration is a span of the road kept by plainRoadDuration, said in the
+// script's words. Anything else is given back as it is.
+func sayRoadDuration(kept string) string {
+	m := roadDurationRe.FindStringSubmatch(kept)
+	if m == nil {
+		return kept
+	}
+	n, _ := strconv.Atoi(m[1])
+	if m[2] == "seconds" {
+		return vibe.Sprintf("game.road_events.expRoadDuration.01", "%d seconds", n)
+	}
+	return vibe.Sprintf("game.road_events.expRoadDuration.02", "%d minutes", n)
+}
+
+// roadSlotRe finds the numbers roadEventTold writes into a story's template.
+var roadSlotRe = regexp.MustCompile(`<(?:time|percent|gold|odds|n)>`)
+
+// vibeRoadTold tells a road event's story in the words of the script in force.
+// told is the story as the save holds it: the event's templates (RoadEvent
+// Story, AuxStory and AmbushStory, in plain English) with the numbers written
+// in. Each template found in it is taken out and its line in the script put in
+// its place, with the same numbers; the rest is left as it is, the words still
+// to fill included. A template the script has no line for, or that is not in
+// the story, changes nothing.
+func vibeRoadTold(words config.MissionWords, e RoadEvent, told string) string {
+	type span struct {
+		lo, hi int
+		text   string
+	}
+	var spans []span
+	seen := map[string]bool{}
+	for _, template := range []string{e.Story, e.AuxStory, e.AmbushStory} {
+		if template == "" || seen[template] {
+			continue
+		}
+		seen[template] = true
+		line := words.RoadLine(template)
+		if line == template {
+			continue
+		}
+		slots := roadSlotRe.FindAllString(template, -1)
+		var pattern strings.Builder
+		for i, literal := range roadSlotRe.Split(template, -1) {
+			pattern.WriteString(regexp.QuoteMeta(literal))
+			if i < len(slots) {
+				pattern.WriteString(`(.+?)`)
+			}
+		}
+		at := regexp.MustCompile(pattern.String()).FindStringSubmatchIndex(told)
+		if at == nil {
+			continue
+		}
+		var fill []string
+		for i, slot := range slots {
+			value := told[at[2+2*i]:at[3+2*i]]
+			if slot == "<time>" {
+				value = sayRoadDuration(value)
+			}
+			fill = append(fill, slot, value)
+		}
+		spans = append(spans, span{at[0], at[1], strings.NewReplacer(fill...).Replace(line)})
+	}
+	sort.Slice(spans, func(i, j int) bool { return spans[i].lo < spans[j].lo })
+	var out strings.Builder
+	pos := 0
+	for _, sp := range spans {
+		if sp.lo < pos {
+			continue
+		}
+		out.WriteString(told[pos:sp.lo])
+		out.WriteString(sp.text)
+		pos = sp.hi
+	}
+	out.WriteString(told[pos:])
+	return out.String()
 }
