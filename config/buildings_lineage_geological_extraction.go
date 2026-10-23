@@ -144,7 +144,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 8 — industrial_age  rate=20.48  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Steam Mine", Key: "steam_mine", Category: "production",
-		BaseCost:  map[string]float64{"steel": 6.6e07, "coal": 2.4e07, "gold": 3.6e07},
+		BaseCost:  map[string]float64{"steel": 66 * Million, "coal": 24 * Million, "gold": 36 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "iron_ore", Value: 161},
@@ -161,7 +161,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 9 — victorian_age  rate=40.96  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Uranium Mine", Key: "uranium_mine", Category: "production",
-		BaseCost:  map[string]float64{"steel": 5.3e08, "iron": 2.4e08, "gold": 3e08},
+		BaseCost:  map[string]float64{"steel": 530 * Million, "iron": 240 * Million, "gold": 300 * Million},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "uranium", Value: 40.96},
@@ -177,7 +177,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 10 — electric_age  rate=81.92  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Nuclear Extraction Plant", Key: "nuclear_extraction_plant", Category: "production",
-		BaseCost:    map[string]float64{"steel": 2.9e09, "electricity": 1.1e09},
+		BaseCost:    map[string]float64{"steel": 2.9 * Billion, "electricity": 1.1 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 81.92}},
 		BuildTicks:  3600,
@@ -190,7 +190,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 11 — atomic_age  rate=163.84  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Uranium Processing Works", Key: "uranium_processing_works", Category: "production",
-		BaseCost:  map[string]float64{"steel": 2.46e10, "electricity": 9.85e9},
+		BaseCost:  map[string]float64{"steel": 24.6 * Billion, "electricity": 9.85 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "uranium", Value: 110000},
@@ -206,7 +206,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 12 — modern_age  rate=327.68  output=titanium_ore
 	b = append(b, BuildingDef{
 		Name: "Titanium Mine", Key: "titanium_mine", Category: "production",
-		BaseCost:    map[string]float64{"steel": 8.4e10, "electricity": 3e10, "data": 2.4e09},
+		BaseCost:    map[string]float64{"steel": 84 * Billion, "electricity": 30 * Billion, "data": 2.4 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 9170000}},
 		BuildTicks:  3600,
@@ -219,9 +219,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 13 — information_age  rate=655.36  output=titanium_ore
 	b = append(b, BuildingDef{
 		Name: "Precision Mine", Key: "precision_mine", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 2.1e11, "data": 2.1e10, "steel": 3.9e11},
+		BaseCost:    map[string]float64{"electricity": 210 * Billion, "data": 21 * Billion, "steel": 390 * Billion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 7.29e07}},
+		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 72.9 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "AI-guided precision titanium mining.",
@@ -232,9 +232,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 14 — digital_age  rate=1310.72  output=titanium_ore
 	b = append(b, BuildingDef{
 		Name: "Nano Drill Complex", Key: "nano_drill_complex", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 1.1e12, "data": 1.2e11, "steel": 1.6e12},
+		BaseCost:    map[string]float64{"electricity": 1.1 * Trillion, "data": 120 * Billion, "steel": 1.6 * Trillion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 1.11e08}},
+		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 111 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "digital_age",
 		Description: "Nanoscale drilling for titanium ore.",
@@ -245,9 +245,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 15 — cyberpunk_age  rate=2621.44  output=dark_matter_crystals
 	b = append(b, BuildingDef{
 		Name: "Dark Crystal Mine", Key: "dark_crystal_mine", Category: "production",
-		BaseCost:    map[string]float64{"data": 5.1e11, "crypto": 3.3e12, "electricity": 6.6e12},
+		BaseCost:    map[string]float64{"data": 510 * Billion, "crypto": 3.3 * Trillion, "electricity": 6.6 * Trillion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 4.35e08}},
+		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 435 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
 		Description: "Extraction of dark matter crystals.",
@@ -258,9 +258,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 16 — fusion_age  rate=5242.88  output=dark_matter_crystals
 	b = append(b, BuildingDef{
 		Name: "Exotic Mineral Extractor", Key: "exotic_mineral_extractor", Category: "production",
-		BaseCost:    map[string]float64{"plasma": 1.4e13, "electricity": 3.9e13, "steel": 5.1e13},
+		BaseCost:    map[string]float64{"plasma": 14 * Trillion, "electricity": 39 * Trillion, "steel": 51 * Trillion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 9.22e08}},
+		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 922 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
 		Description: "Plasma-assisted exotic mineral extraction.",
@@ -271,9 +271,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 17 — space_age  rate=10485.76  output=dark_matter_crystals
 	b = append(b, BuildingDef{
 		Name: "Asteroid Crystal Mine", Key: "asteroid_crystal_mine", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 2.1e14, "plasma": 9.6e13, "electricity": 2.6e14},
+		BaseCost:    map[string]float64{"titanium": 210 * Trillion, "plasma": 96 * Trillion, "electricity": 260 * Trillion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 7.84e09}},
+		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 7.84 * Billion}},
 		BuildTicks:  3600,
 		RequiredAge: "space_age",
 		Description: "Asteroid belt dark matter crystal mining.",
@@ -284,7 +284,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 18 — interstellar_age  rate=20971.52  output=antimatter
 	b = append(b, BuildingDef{
 		Name: "Stellar Core Drill", Key: "stellar_core_drill", Category: "production",
-		BaseCost:     map[string]float64{"dark_matter": 2.6e14, "titanium": 2.1e15, "plasma": 1.3e15},
+		BaseCost:     map[string]float64{"dark_matter": 260 * Trillion, "titanium": 2.1 * Quadrillion, "plasma": 1.3 * Quadrillion},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "antimatter", Value: 20971.52}},
 		BuildTicks:   3600,
@@ -298,9 +298,9 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 19 — galactic_age  rate=41943.04  output=antimatter
 	b = append(b, BuildingDef{
 		Name: "Neutron Star Mine", Key: "neutron_star_mine", Category: "production",
-		BaseCost:     map[string]float64{"antimatter": 5.1e14, "dark_matter": 2.6e15, "titanium": 1.3e16},
+		BaseCost:     map[string]float64{"antimatter": 510 * Trillion, "dark_matter": 2.6 * Quadrillion, "titanium": 13 * Quadrillion},
 		CostScale:    1.15,
-		Effects:      []Effect{{Type: "production", Target: "antimatter", Value: 9.15e09}},
+		Effects:      []Effect{{Type: "production", Target: "antimatter", Value: 9.15 * Billion}},
 		BuildTicks:   3600,
 		RequiredAge:  "galactic_age",
 		RequiredTech: "neutron_mining",
@@ -312,10 +312,10 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 20 — quantum_age  rate=83886.08  output=antimatter
 	b = append(b, BuildingDef{
 		Name: "Reality Excavator", Key: "reality_excavator", Category: "production",
-		BaseCost:  map[string]float64{"titanium": 5.71e15},
+		BaseCost:  map[string]float64{"titanium": 5.71 * Quadrillion},
 		CostScale: 1.15,
 		Effects: []Effect{
-			{Type: "production", Target: "antimatter", Value: 7.04e12},
+			{Type: "production", Target: "antimatter", Value: 7.04 * Trillion},
 		},
 		BuildTicks:  3600,
 		RequiredAge: "quantum_age",

@@ -110,7 +110,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 7 — colonial_age  rate=64.00
 	b = append(b, BuildingDef{
 		Name: "Plantation", Key: "plantation", Category: "production",
-		BaseCost:    map[string]float64{"gold": 1.1e07, "steel": 4500000},
+		BaseCost:    map[string]float64{"gold": 11 * Million, "steel": 4500000},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 64}},
 		BuildTicks:  3600,
@@ -123,7 +123,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 8 — industrial_age  rate=128.00
 	b = append(b, BuildingDef{
 		Name: "Agricultural Works", Key: "agricultural_works", Category: "production",
-		BaseCost:    map[string]float64{"steel": 7.5e07, "coal": 3e07, "gold": 4.5e07},
+		BaseCost:    map[string]float64{"steel": 75 * Million, "coal": 30 * Million, "gold": 45 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 128}},
 		BuildTicks:  3600,
@@ -136,7 +136,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 9 — victorian_age  rate=256.00
 	b = append(b, BuildingDef{
 		Name: "Mechanized Farm", Key: "mechanized_farm", Category: "production",
-		BaseCost:    map[string]float64{"steel": 5.4e08, "oil": 2.4e08, "gold": 3e08},
+		BaseCost:    map[string]float64{"steel": 540 * Million, "oil": 240 * Million, "gold": 300 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 256}},
 		BuildTicks:  3600,
@@ -149,7 +149,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 10 — electric_age  rate=512.00
 	b = append(b, BuildingDef{
 		Name: "Industrial Farm", Key: "industrial_farm", Category: "production",
-		BaseCost:    map[string]float64{"steel": 3e09, "electricity": 1.2e09, "oil": 9e08},
+		BaseCost:    map[string]float64{"steel": 3 * Billion, "electricity": 1.2 * Billion, "oil": 900 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 512}},
 		BuildTicks:  3600,
@@ -162,7 +162,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 11 — atomic_age  rate=1024.00
 	b = append(b, BuildingDef{
 		Name: "Agricultural Complex", Key: "agricultural_complex", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.5e10, "electricity": 6e09, "uranium": 1.5e09},
+		BaseCost:    map[string]float64{"steel": 15 * Billion, "electricity": 6 * Billion, "uranium": 1.5 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 1024}},
 		BuildTicks:  3600,
@@ -175,7 +175,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 12 — modern_age  rate=2048.00
 	b = append(b, BuildingDef{
 		Name: "Agritech Campus", Key: "agri_complex", Category: "production",
-		BaseCost:    map[string]float64{"steel": 4.5e10, "titanium_ore": 4.5e10, "electricity": 3.6e10, "data": 3e09},
+		BaseCost:    map[string]float64{"steel": 45 * Billion, "titanium_ore": 45 * Billion, "electricity": 36 * Billion, "data": 3 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 2048}},
 		BuildTicks:  3600,
@@ -188,7 +188,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 13 — information_age  rate=4096.00
 	b = append(b, BuildingDef{
 		Name: "Smart Farm", Key: "smart_farm", Category: "production",
-		BaseCost:     map[string]float64{"electricity": 2.4e11, "data": 2.4e10, "steel": 2.25e11, "titanium_ore": 2.25e11},
+		BaseCost:     map[string]float64{"electricity": 240 * Billion, "data": 24 * Billion, "steel": 225 * Billion, "titanium_ore": 225 * Billion},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "food", Value: 4096}},
 		BuildTicks:   3600,
@@ -202,7 +202,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 14 — digital_age  rate=8192.00
 	b = append(b, BuildingDef{
 		Name: "Nano Farm", Key: "nano_farm", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 1.2e12, "data": 1.5e11, "steel": 9e11, "titanium_ore": 9e11},
+		BaseCost:    map[string]float64{"electricity": 1.2 * Trillion, "data": 150 * Billion, "steel": 900 * Billion, "titanium_ore": 900 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 8192}},
 		BuildTicks:  3600,
@@ -215,7 +215,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 15 — cyberpunk_age  rate=16384.00
 	b = append(b, BuildingDef{
 		Name: "Vat Farm", Key: "vat_farm", Category: "production",
-		BaseCost:    map[string]float64{"data": 6e11, "crypto": 3e12, "electricity": 3e12, "dark_matter_crystals": 3e12},
+		BaseCost:    map[string]float64{"data": 600 * Billion, "crypto": 3 * Trillion, "electricity": 3 * Trillion, "dark_matter_crystals": 3 * Trillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 16384}},
 		BuildTicks:  3600,
@@ -228,7 +228,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 16 — fusion_age  rate=32768.00
 	b = append(b, BuildingDef{
 		Name: "Bio Reactor Farm", Key: "bio_reactor_farm", Category: "production",
-		BaseCost:    map[string]float64{"plasma": 1.5e13, "electricity": 2.25e13, "dark_matter_crystals": 2.25e13, "steel": 6e13},
+		BaseCost:    map[string]float64{"plasma": 15 * Trillion, "electricity": 22.5 * Trillion, "dark_matter_crystals": 22.5 * Trillion, "steel": 60 * Trillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 32768}},
 		BuildTicks:  3600,
@@ -241,7 +241,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 17 — space_age  rate=65536.00
 	b = append(b, BuildingDef{
 		Name: "Hydroponic Bay", Key: "hydroponic_bay", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 2.4e14, "plasma": 1.2e14, "electricity": 1.5e14, "dark_matter_crystals": 1.5e14},
+		BaseCost:    map[string]float64{"titanium": 240 * Trillion, "plasma": 120 * Trillion, "electricity": 150 * Trillion, "dark_matter_crystals": 150 * Trillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 65536}},
 		BuildTicks:  3600,
@@ -254,7 +254,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 18 — interstellar_age  rate=131072.00
 	b = append(b, BuildingDef{
 		Name: "Protein Synthesizer", Key: "protein_synthesizer", Category: "production",
-		BaseCost:    map[string]float64{"dark_matter": 3e14, "titanium": 2.4e15, "plasma": 1.5e15},
+		BaseCost:    map[string]float64{"dark_matter": 300 * Trillion, "titanium": 2.4 * Quadrillion, "plasma": 1.5 * Quadrillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 131072}},
 		BuildTicks:  3600,
@@ -267,7 +267,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 19 — galactic_age  rate=262144.00
 	b = append(b, BuildingDef{
 		Name: "Matter Converter", Key: "matter_converter", Category: "production",
-		BaseCost:    map[string]float64{"antimatter": 6e14, "dark_matter": 3e15, "titanium": 1.5e16},
+		BaseCost:    map[string]float64{"antimatter": 600 * Trillion, "dark_matter": 3 * Quadrillion, "titanium": 15 * Quadrillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 262144}},
 		BuildTicks:  3600,
@@ -280,7 +280,7 @@ func buildingsLineageFood() []BuildingDef {
 	// tier 20 — quantum_age  rate=524288.00
 	b = append(b, BuildingDef{
 		Name: "Quantum Cultivator", Key: "quantum_cultivator", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 6e14, "antimatter": 1.8e17, "dark_matter": 1.5e17},
+		BaseCost:    map[string]float64{"quantum_flux": 600 * Trillion, "antimatter": 180 * Quadrillion, "dark_matter": 150 * Quadrillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 524288}},
 		BuildTicks:  3600,

@@ -16,7 +16,7 @@ var repricedFrom = map[string]map[string]float64{
 	"iron_mine":               {"gold": 1500000, "steel": 540000},
 	"monastery_library":       {"stone": 540000, "gold": 180000},
 	"university":              {"gold": 1800000, "steel": 600000},
-	"natural_philosophy_hall": {"gold": 1.1e07, "steel": 4500000},
+	"natural_philosophy_hall": {"gold": 11 * Million, "steel": 4500000},
 	"sawmill":                 {"stone": 480000, "gold": 170000},
 	"coal_mine":               {"gold": 1700000, "steel": 600000},
 	"cathedral":               {"stone": 600000, "gold": 200000},

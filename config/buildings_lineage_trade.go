@@ -84,7 +84,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 5 — colonial_age  rate=1.60
 	b = append(b, BuildingDef{
 		Name: "Port", Key: "port", Category: "production",
-		BaseCost:    map[string]float64{"gold": 2.3e07, "steel": 1.2e07},
+		BaseCost:    map[string]float64{"gold": 23 * Million, "steel": 12 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 8210}},
 		BuildTicks:  3600,
@@ -97,7 +97,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 6 — industrial_age  rate=3.20
 	b = append(b, BuildingDef{
 		Name: "Stock Exchange", Key: "stock_exchange", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.6e08, "coal": 5.9e07, "gold": 1.1e08},
+		BaseCost:    map[string]float64{"steel": 160 * Million, "coal": 59 * Million, "gold": 110 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 36100}},
 		BuildTicks:  3600,
@@ -110,7 +110,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 7 — victorian_age  rate=6.40
 	b = append(b, BuildingDef{
 		Name: "Bank", Key: "bank", Category: "production",
-		BaseCost:    map[string]float64{"steel": 1.1e09, "gold": 5.9e08, "iron": 4.7e08},
+		BaseCost:    map[string]float64{"steel": 1.1 * Billion, "gold": 590 * Million, "iron": 470 * Million},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 128000}},
 		BuildTicks:  3600,
@@ -123,7 +123,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 8 — electric_age  rate=12.80
 	b = append(b, BuildingDef{
 		Name: "Financial District", Key: "financial_district", Category: "production",
-		BaseCost:    map[string]float64{"steel": 6.5e09, "electricity": 2.6e09, "gold": 4.4e09},
+		BaseCost:    map[string]float64{"steel": 6.5 * Billion, "electricity": 2.6 * Billion, "gold": 4.4 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 768000}},
 		BuildTicks:  3600,
@@ -136,7 +136,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 9 — atomic_age  rate=25.60
 	b = append(b, BuildingDef{
 		Name: "Corporate HQ", Key: "corporate_hq", Category: "production",
-		BaseCost:  map[string]float64{"steel": 3.2e10, "electricity": 1.3e10, "gold": 2.1e10},
+		BaseCost:  map[string]float64{"steel": 32 * Billion, "electricity": 13 * Billion, "gold": 21 * Billion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 2390000},
@@ -151,7 +151,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 10 — modern_age  rate=51.20
 	b = append(b, BuildingDef{
 		Name: "Investment Firm", Key: "investment_firm", Category: "production",
-		BaseCost:    map[string]float64{"steel": 9.5e10, "titanium_ore": 9.5e10, "electricity": 7e10, "data": 7e09},
+		BaseCost:    map[string]float64{"steel": 95 * Billion, "titanium_ore": 95 * Billion, "electricity": 70 * Billion, "data": 7 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6160000}},
 		BuildTicks:  3600,
@@ -164,9 +164,9 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 11 — information_age  rate=102.40
 	b = append(b, BuildingDef{
 		Name: "Venture Hub", Key: "venture_hub", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 5e11, "data": 5.3e10, "gold": 9.4e11},
+		BaseCost:    map[string]float64{"electricity": 500 * Billion, "data": 53 * Billion, "gold": 940 * Billion},
 		CostScale:   1.15,
-		Effects:     []Effect{{Type: "production", Target: "gold", Value: 2.11e08}},
+		Effects:     []Effect{{Type: "production", Target: "gold", Value: 211 * Million}},
 		BuildTicks:  3600,
 		RequiredAge: "information_age",
 		Description: "Digital venture capital hub.",
@@ -177,7 +177,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 12 — digital_age  rate=204.80
 	b = append(b, BuildingDef{
 		Name: "Crypto Exchange", Key: "crypto_exchange", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 2.5e12, "data": 3.1e11},
+		BaseCost:    map[string]float64{"electricity": 2.5 * Trillion, "data": 310 * Billion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 204.8}},
 		BuildTicks:  3600,
@@ -190,7 +190,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 13 — cyberpunk_age  rate=409.60
 	b = append(b, BuildingDef{
 		Name: "Black Market Hub", Key: "black_market", Category: "production",
-		BaseCost:  map[string]float64{"data": 1.84e12, "electricity": 1.84e13},
+		BaseCost:  map[string]float64{"data": 1.84 * Trillion, "electricity": 18.4 * Trillion},
 		CostScale: 1.15,
 		Effects: []Effect{
 			{Type: "production", Target: "crypto", Value: 337000000},
@@ -206,7 +206,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 14 — fusion_age  rate=819.20
 	b = append(b, BuildingDef{
 		Name: "Energy Exchange", Key: "energy_exchange", Category: "production",
-		BaseCost:     map[string]float64{"plasma": 2.5e13, "electricity": 3.5e13, "dark_matter_crystals": 3.5e13, "steel": 9.4e13},
+		BaseCost:     map[string]float64{"plasma": 25 * Trillion, "electricity": 35 * Trillion, "dark_matter_crystals": 35 * Trillion, "steel": 94 * Trillion},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "gold", Value: 819.2}},
 		BuildTicks:   3600,
@@ -220,7 +220,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 15 — space_age  rate=1638.40
 	b = append(b, BuildingDef{
 		Name: "Asteroid Market", Key: "asteroid_market", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 4.4e14, "plasma": 2.1e14, "electricity": 2.6e14, "dark_matter_crystals": 2.6e14},
+		BaseCost:    map[string]float64{"titanium": 440 * Trillion, "plasma": 210 * Trillion, "electricity": 260 * Trillion, "dark_matter_crystals": 260 * Trillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 1638.4}},
 		BuildTicks:  3600,
@@ -233,7 +233,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 16 — interstellar_age  rate=3276.80
 	b = append(b, BuildingDef{
 		Name: "Galactic Trade Hub", Key: "galactic_trade_hub", Category: "production",
-		BaseCost:    map[string]float64{"dark_matter": 5.2e14, "titanium": 4.1e15, "plasma": 2.5e15},
+		BaseCost:    map[string]float64{"dark_matter": 520 * Trillion, "titanium": 4.1 * Quadrillion, "plasma": 2.5 * Quadrillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 3276.8}},
 		BuildTicks:  3600,
@@ -246,7 +246,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 17 — galactic_age  rate=6553.60
 	b = append(b, BuildingDef{
 		Name: "Stellar Exchange", Key: "stellar_exchange", Category: "production",
-		BaseCost:    map[string]float64{"antimatter": 1e15, "dark_matter": 5.2e15, "titanium": 2.6e16},
+		BaseCost:    map[string]float64{"antimatter": Quadrillion, "dark_matter": 5.2 * Quadrillion, "titanium": 26 * Quadrillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 6553.6}},
 		BuildTicks:  3600,
@@ -259,7 +259,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 18 — quantum_age  rate=13107.20
 	b = append(b, BuildingDef{
 		Name: "Probability Market", Key: "probability_market", Category: "production",
-		BaseCost:    map[string]float64{"quantum_flux": 1.1e15, "antimatter": 3.5e17, "dark_matter": 2.8e17},
+		BaseCost:    map[string]float64{"quantum_flux": 1.1 * Quadrillion, "antimatter": 350 * Quadrillion, "dark_matter": 280 * Quadrillion},
 		CostScale:   1.15,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 13107.2}},
 		BuildTicks:  3600,
@@ -272,7 +272,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 19 — transcendent_age  rate=26214.40
 	b = append(b, BuildingDef{
 		Name: "Omniversal Bazaar", Key: "omniversal_bazaar", Category: "production",
-		BaseCost:     map[string]float64{"quantum_flux": 1.1e16, "antimatter": 3.5e18, "dark_matter": 2.8e18},
+		BaseCost:     map[string]float64{"quantum_flux": 11 * Quadrillion, "antimatter": 3.5 * Quintillion, "dark_matter": 2.8 * Quintillion},
 		CostScale:    1.15,
 		Effects:      []Effect{{Type: "production", Target: "gold", Value: 26214.4}},
 		BuildTicks:   3600,
