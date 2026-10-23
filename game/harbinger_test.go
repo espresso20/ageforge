@@ -522,20 +522,20 @@ func TestHarbingerCostExamples(t *testing.T) {
 		brace      map[string]float64
 	}{
 		{"iron_era", "iron_age", map[string]float64{"gold": 130000, "iron": 130000, "stone": 120000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 1000000, "iron": 1000000, "stone": 620000}},
-		{"iron_era", "medieval_age", map[string]float64{"gold": 7300000, "iron": 6500000, "stone": 6200000}},
-		{"steel_era", "renaissance_age", map[string]float64{"gold": 33000000, "steel": 7500000}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 1000000, "iron": 1000000, "stone": 610000}},
+		{"iron_era", "medieval_age", map[string]float64{"gold": 7300000, "iron": 6400000, "stone": 6100000}},
+		{"steel_era", "renaissance_age", map[string]float64{"gold": 33000000, "steel": 7300000}},
 		{"steel_era", "colonial_age", map[string]float64{"gold": 150000000, "steel": 120000000}},
 		{"steel_era", "industrial_age", map[string]float64{"gold": 510000000, "steel": 510000000}},
-		{"electric_era", "victorian_age", map[string]float64{"electricity": 2800000, "oil": 2200000000, "steel": 6500000000}},
-		{"electric_era", "electric_age", map[string]float64{"electricity": 34000000000, "oil": 7600000000, "steel": 72000000000}},
-		{"electric_era", "atomic_age", map[string]float64{"electricity": 280000000000, "oil": 11000000000, "steel": 350000000000}},
-		{"digital_era", "modern_age", map[string]float64{"data": 49000000000, "electricity": 1400000000000, "gold": 1700000000000}},
+		{"electric_era", "victorian_age", map[string]float64{"electricity": 2700000, "oil": 2200000000, "steel": 6500000000}},
+		{"electric_era", "electric_age", map[string]float64{"electricity": 34000000000, "oil": 7400000000, "steel": 72000000000}},
+		{"electric_era", "atomic_age", map[string]float64{"electricity": 280000000000, "oil": 10000000000, "steel": 340000000000}},
+		{"digital_era", "modern_age", map[string]float64{"data": 47000000000, "electricity": 1400000000000, "gold": 1700000000000}},
 		{"digital_era", "information_age", map[string]float64{"data": 1400000000000, "electricity": 11000000000000, "gold": 11000000000000}},
-		{"digital_era", "digital_age", map[string]float64{"data": 7900000000000, "electricity": 44000000000000, "gold": 44000000000000}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 38000000000000, "electricity": 400000000000000}},
-		{"neon_era", "fusion_age", map[string]float64{"data": 62000000000000, "electricity": 1.9e15}},
-		{"neon_era", "space_age", map[string]float64{"data": 110000000000000, "electricity": 9.7e15}},
+		{"digital_era", "digital_age", map[string]float64{"data": 7600000000000, "electricity": 44000000000000, "gold": 44000000000000}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 37000000000000, "electricity": 400000000000000}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 60000000000000, "electricity": 1.9e15}},
+		{"neon_era", "space_age", map[string]float64{"data": 96000000000000, "electricity": 9.7e15}},
 	}
 	listed := 0
 	for _, ep := range config.Epochs() {
@@ -591,10 +591,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// Mining add 8% to titanium.
 		// Then Quantum Metallurgy adds 4% to titanium, and Cosmology and
 		// Zero-Point Energy add 8% to dark matter, on the output standard.
-		{"interstellar_age", map[string]float64{"dark_matter": 2.8e16, "titanium": 2.9e17}},
-		{"galactic_age", map[string]float64{"dark_matter": 1.1e18, "titanium": 2.6e18}},
-		{"quantum_age", map[string]float64{"dark_matter": 5.2e19, "titanium": 3.9e18}},
-		{"transcendent_age", map[string]float64{"dark_matter": 7.9e19, "titanium": 5.9e18}},
+		{"interstellar_age", map[string]float64{"dark_matter": 2.6e16, "titanium": 2.9e17}},
+		{"galactic_age", map[string]float64{"dark_matter": 1.1e18, "titanium": 2.5e18}},
+		{"quantum_age", map[string]float64{"dark_matter": 5e19, "titanium": 3.7e18}},
+		{"transcendent_age", map[string]float64{"dark_matter": 7.6e19, "titanium": 5.6e18}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(tears) {
 		t.Fatalf("the Cosmic Era has ages %v; the Reality Tear's brace is listed for %d", ages, len(tears))
@@ -620,17 +620,17 @@ func TestHarbingerCostExamples(t *testing.T) {
 		epoch, age string
 		appease    map[string]float64
 	}{
-		{"iron_era", "iron_age", map[string]float64{"faith": 1900}},
+		{"iron_era", "iron_age", map[string]float64{"faith": 1800}},
 		// The model counts the tech layer: Ritual's and Calendar's +10% faith
 		// from the Bronze Age, Theology's +8% from the Medieval Age,
 		// the culture of Patronage, Romanticism, Museums, Cinema and Social
 		// Media, the two +5% on all production.
-		{"iron_era", "medieval_age", map[string]float64{"faith": 6800}},
+		{"iron_era", "medieval_age", map[string]float64{"faith": 6600}},
 		{"steel_era", "renaissance_age", map[string]float64{"culture": 150000, "faith": 15000}},
-		{"steel_era", "industrial_age", map[string]float64{"culture": 1700000, "faith": 160000}},
+		{"steel_era", "industrial_age", map[string]float64{"culture": 1700000, "faith": 150000}},
 		// The Cosmic Era's row also carries the soft cap: the model's pool is
 		// past +200% there and a quarter of the rest counts, 5% more income.
-		{"cosmic_era", "interstellar_age", map[string]float64{"culture": 76000000000, "faith": 4900000000}},
+		{"cosmic_era", "interstellar_age", map[string]float64{"culture": 72000000000, "faith": 4700000000}},
 	}
 	for _, c := range dooms {
 		if got := doomAppeaseCost(c.epoch, c.age, 1); !reflect.DeepEqual(got, c.appease) {
@@ -663,10 +663,10 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// the soft cap, as the Reality Tear's rows above: 5% to 20%.
 		// And by the tree's last techs: 4% more culture each from Neural
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
-		{"interstellar_age", map[string]float64{"culture": 260000000000, "faith": 17000000000}, map[string]float64{"dark_matter": 5.5e16, "titanium": 2.9e17}},
-		{"galactic_age", map[string]float64{"culture": 760000000000, "faith": 48000000000}, map[string]float64{"dark_matter": 2.2e18, "titanium": 2.6e18}},
-		{"quantum_age", map[string]float64{"culture": 2300000000000, "faith": 140000000000}, map[string]float64{"dark_matter": 1.1e20, "titanium": 7.7e18}},
-		{"transcendent_age", map[string]float64{"culture": 3500000000000, "faith": 210000000000}, map[string]float64{"dark_matter": 1.6e20, "titanium": 1.2e19}},
+		{"interstellar_age", map[string]float64{"culture": 240000000000, "faith": 16000000000}, map[string]float64{"dark_matter": 5.2e16, "titanium": 2.9e17}},
+		{"galactic_age", map[string]float64{"culture": 730000000000, "faith": 46000000000}, map[string]float64{"dark_matter": 2.1e18, "titanium": 2.6e18}},
+		{"quantum_age", map[string]float64{"culture": 2200000000000, "faith": 140000000000}, map[string]float64{"dark_matter": 9.9e19, "titanium": 7.3e18}},
+		{"transcendent_age", map[string]float64{"culture": 3300000000000, "faith": 200000000000}, map[string]float64{"dark_matter": 1.6e20, "titanium": 1.2e19}},
 	}
 	if ages := epochAges(t, "cosmic_era"); len(ages) != len(passages) {
 		t.Fatalf("the Cosmic Era has ages %v; the Last Passage's price is listed for %d", ages, len(passages))

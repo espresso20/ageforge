@@ -9,7 +9,7 @@ import (
 // Stock has no ceiling, so nothing raises one: no building, tech, milestone
 // reward or event carries a storage effect, and no effect aims at a store
 // ("all" or "<resource>_storage"). A tech that once raised every store
-// raises all production now, by a fifth of what it raised storage by.
+// raises all production now, by a little under a tenth of what it raised storage by.
 
 func TestNothingHasAStorageEffect(t *testing.T) {
 	isResKey := func(k string) bool { _, ok := ResourceByKey()[k]; return ok }
@@ -66,18 +66,19 @@ func TestNothingHasAStorageEffect(t *testing.T) {
 	}
 }
 
-// The seven techs that raised every store raise all production instead, by a
-// fifth of the share they raised storage by.
+// The seven techs that raised every store raise all production instead, by
+// about a tenth of the share they raised storage by (0.8, 0.8, 0.4, 0.4, 0.6,
+// 0.6 and 0.6 percent).
 func TestStorageTechsRaiseProductionInstead(t *testing.T) {
-	was := map[string]float64{ // the storage share each had
-		"pottery": 0.10, "masonry": 0.10, "prefabrication": 0.05, "grid_storage": 0.05,
-		"cloud_computing": 0.08, "superconductors": 0.08, "space_elevator": 0.08,
+	want := map[string]float64{ // the share of all production each gives now
+		"pottery": 0.008, "masonry": 0.008, "prefabrication": 0.004, "grid_storage": 0.004,
+		"cloud_computing": 0.006, "superconductors": 0.006, "space_elevator": 0.006,
 	}
 	byKey := map[string]TechDef{}
 	for _, tc := range Technologies() {
 		byKey[tc.Key] = tc
 	}
-	for key, old := range was {
+	for key, w := range want {
 		tc, ok := byKey[key]
 		if !ok {
 			t.Errorf("no tech %s", key)
@@ -89,8 +90,8 @@ func TestStorageTechsRaiseProductionInstead(t *testing.T) {
 				got += e.Value
 			}
 		}
-		if want := old / 5; math.Abs(got-want) > 1e-12 {
-			t.Errorf("%s raises all production by %v, want %v (a fifth of its old +%v%% storage)", key, got, want, old*100)
+		if math.Abs(got-w) > 1e-12 {
+			t.Errorf("%s raises all production by %v, want %v", key, got, w)
 		}
 		if len(TechChecks(tc, BaseBuildings(), FeatureLocks())) == 0 {
 			t.Errorf("%s promises nothing", key)

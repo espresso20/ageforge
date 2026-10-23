@@ -193,7 +193,7 @@ func TestTechHeadroom(t *testing.T) {
 		key  TechEffectKey
 		want float64
 	}{
-		{TechEffectKey{Kind: EffectAllOutput}, 0.208},
+		{TechEffectKey{Kind: EffectAllOutput}, 0.142},
 		{TechEffectKey{Kind: EffectOutput, Target: "food"}, 1.19},
 		{TechEffectKey{Kind: EffectOutput, Target: ResearchTarget}, 0.99},
 		{TechEffectKey{Kind: EffectOutput, Target: "gold"}, 0.40},
@@ -378,7 +378,7 @@ func TestTechChecks(t *testing.T) {
 		"power_distribution":          "out:electricity:5; unlock:power_generator; keystone:hoover_dam | rate(electricity) x1.05; can_build(power_generator) 0>1; can_build(hoover_dam) 0>1",
 		"military_industrial_complex": "p:soldier_posts:0.1; p:campaign_reward:0.2 | soldier_posts +0.1; campaign_reward x1.20",
 		"holography":                  "unlock:holographic_theater | can_build(holographic_theater) 0>1",
-		"pottery":                     "all:2 | rate(all) x1.02",
+		"pottery":                     "all:0.8 | rate(all) x1.01",
 		"fire_mastery":                "out:food:10; house:5 | rate(food) x1.10; housing x1.05",
 		"civil_engineering":           "out:stone:8; cost:3 | rate(stone) x1.08; build_price x0.97",
 		"quarrying":                   "out:marble:8; out:iron_ore:8 | rate(marble) x1.08; rate(iron_ore) x1.08",

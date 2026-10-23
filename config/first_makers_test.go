@@ -96,8 +96,8 @@ func TestBlackMarketMakesCryptoAtTheStandard(t *testing.T) {
 // culture) is covered by the age's income within its target, and the Space
 // Program asks nothing its age does not price. It asked 6e11 knowledge, which
 // the Modern Age does not price and no town made from buildings; the Sistine
-// Chapel asked 12.8M culture where the Renaissance Age's income makes 988K in
-// its target, and now asks 980K, the largest figure of two significant digits
+// Chapel asked 12.8M culture where the Renaissance Age's income makes 967K in
+// its target, and now asks 960K, the largest figure of two significant digits
 // that income covers (it was 950K against 952K before the storage techs became
 // production techs, which lifted that income).
 func TestWonderPartsFitTheirAge(t *testing.T) {
@@ -129,7 +129,7 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 	}
 	sistine := BuildingByKey()["sistine_chapel"]
 	made := FlowIncome("culture", sistine.RequiredAge) * LatePriceTargetTicks(sistine.RequiredAge)
-	if got := sistine.BaseCost["culture"]; got != 980000 || made < 980000 || made >= 990000 {
-		t.Errorf("sistine_chapel culture = %.4g with %.4g made in the target: want 980000, the largest two-figure number the income covers", got, made)
+	if got := sistine.BaseCost["culture"]; got != 960000 || made < 960000 || made >= 970000 {
+		t.Errorf("sistine_chapel culture = %.4g with %.4g made in the target: want 960000, the largest two-figure number the income covers", got, made)
 	}
 }

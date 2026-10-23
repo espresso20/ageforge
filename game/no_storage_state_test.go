@@ -55,16 +55,16 @@ func TestDevFillAddsALotOfEverythingSavable(t *testing.T) {
 	}
 }
 
-// The seven techs that raised every store raise all production, each by a
-// fifth of the share they raised storage by: the rate of a resource they do
+// The seven techs that raised every store raise all production, each by about
+// a tenth of the share they raised storage by: the rate of a resource they do
 // not name rises by exactly that share.
 func TestConvertedTechsAddTheirProduction(t *testing.T) {
 	for _, c := range []struct {
 		tech string
 		by   float64
 	}{
-		{"pottery", 0.02}, {"masonry", 0.02}, {"prefabrication", 0.01}, {"grid_storage", 0.01},
-		{"cloud_computing", 0.016}, {"superconductors", 0.016}, {"space_elevator", 0.016},
+		{"pottery", 0.008}, {"masonry", 0.008}, {"prefabrication", 0.004}, {"grid_storage", 0.004},
+		{"cloud_computing", 0.006}, {"superconductors", 0.006}, {"space_elevator", 0.006},
 	} {
 		ge := newTruthEngine("bronze_age", truthClean)
 		before := rateOf(ge, "iron")

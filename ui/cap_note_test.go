@@ -97,7 +97,7 @@ func TestResearchPanelBonuses(t *testing.T) {
 	earned(t, st, "gold_rate")
 	out := section(t, statsProvider(st, 120), "Research bonuses", "Resource rates")
 	for _, want := range []string{
-		"[green]+10%   [-] All production\n",
+		"[green]+7%    [-] All production\n",
 		"[green]+36%   [-] Gold production\n",
 		"[green]+86%   [-] Research production\n",
 		"[green]+37%   [-] Housing\n",
