@@ -132,6 +132,7 @@ type Dashboard struct {
 	// map settings when no account is loaded (session only).
 	mapViews *mapViews
 	mapPanel *mapPanel
+	wonders  *wondersView
 	// researchPanel is the Research panel, the tech tree as a map
 	// (research_panel.go).
 	researchPanel *researchPanel
@@ -229,7 +230,21 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("factions", vibe.E("ui.dashboard.NewDashboard.07", "Factions"), factionsProvider)
 	d.overlayMgr.Register("diplomacy", vibe.E("ui.dashboard.NewDashboard.08", "Factions"), factionsProvider)
 	d.overlayMgr.Register("stats", vibe.E("ui.dashboard.NewDashboard.09", "Statistics"), statsProvider)
-	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), wondersProvider)
+	d.wonders = &wondersView{reg: d.mapViews.reg,
+		size:  func() (int, int) { return d.overlayMgr.textSize("wonders") },
+		tier:  func() mapmodel.GlyphTier { return d.mapSettings().Tier },
+		model: d.mapViews.model}
+	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)
+	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
+	d.overlayMgr.SetBackHandler("wonders", d.wonders.back)
+	d.overlayMgr.SetKeyHandler("wonders", func(event *tcell.EventKey) *tcell.EventKey {
+		// tview goroutine, no engine lock held (see the harbinger handler).
+		if !d.wonders.handleKey(event, d.engine.GetState()) {
+			return event
+		}
+		d.overlayMgr.Refresh(d.engine.GetState())
+		return nil
+	})
 	// The People panel, which `workers` opens too, leaves the keyboard with
 	// the command bar as well.
 	d.peoplePanel.settings = d.mapSettings

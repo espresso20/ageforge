@@ -41,7 +41,7 @@ func TestMapZoomKeys(t *testing.T) {
 	for _, step := range []struct {
 		r    rune
 		want string
-	}{{'+', "close"}, {'-', "mid"}, {'-', "far"}, {'=', "mid"}} {
+	}{{'+', "close"}, {'-', "mid"}, {'-', "wide"}, {'-', "wide"}, {'=', "mid"}} { // (this town is too small for a far level of its own: wide shows all of it)
 		if !p.routeKey(key(step.r), "") {
 			t.Fatalf("%q did not go to the skyline", step.r)
 		}
@@ -95,8 +95,8 @@ func TestMapZoomPersists(t *testing.T) {
 	}
 	d.mapPanel.routeKey(key('-'), "")
 	d.mapPanel.routeKey(key('-'), "")
-	if first.MapZoom() != "far" {
-		t.Errorf("the account has %q, want far", first.MapZoom())
+	if first.MapZoom() != "wide" {
+		t.Errorf("the account has %q, want wide", first.MapZoom())
 	}
 	d.overlayMgr.Hide()
 
@@ -121,8 +121,8 @@ func TestMapZoomPersists(t *testing.T) {
 	d.mapPanel.styles = styleSet{reg: d.mapViews.reg}
 	d.runForTest("map")
 	drawMapPanel(t, d, 160, 48)
-	if zoomLevel(d) != "far" {
-		t.Errorf("switching back (read from disk): %q, want far", zoomLevel(d))
+	if zoomLevel(d) != "wide" {
+		t.Errorf("switching back (read from disk): %q, want wide", zoomLevel(d))
 	}
 }
 
@@ -155,7 +155,7 @@ func TestMapZoomFooter(t *testing.T) {
 	for _, step := range []struct {
 		want string
 		next rune // the key that goes on to the next level
-	}{{"mid", '+'}, {"close", '-'}, {"mid", '-'}, {"far", 0}} {
+	}{{"mid", '+'}, {"close", '-'}, {"mid", '-'}, {"wide", 0}} {
 		txt := drawMapPanel(t, d, 160, 48)
 		if !strings.Contains(txt, "zoom: "+step.want) || !strings.Contains(txt, "[ ] district") {
 			t.Errorf("the footer does not say zoom: %s and the district keys:\n%s", step.want, txt)

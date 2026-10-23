@@ -64,15 +64,17 @@ type scene struct {
 	// level's window starts (the mandala's frame is as wide as the screen),
 	// and sS the screen's scene rows when its bars are not the usual three.
 	offX, sS int
-	ovBox    [2]int // the cells of the overview bar's box (chrome.go)
-	band     int    // traffic band of the current age
-	gridOut  bool
-	farTops  []float64
-	emit     []emitter
-	labels   []label
-	vis      []int
-	sel      int // the lot under the cursor, -1
-	ridge    []ridgeItem
+	// detail draws the landmarks' fine detail at any level (the portrait's).
+	detail  bool
+	ovBox   [2]int // the cells of the overview bar's box (chrome.go)
+	band    int    // traffic band of the current age
+	gridOut bool
+	farTops []float64
+	emit    []emitter
+	labels  []label
+	vis     []int
+	sel     int // the lot under the cursor, -1
+	ridge   []ridgeItem
 	// city is the Earth arc's look for this frame (city.go), inCity
 	// whether the age has one.
 	city   mapmodel.CityLook
@@ -665,7 +667,7 @@ func (s *scene) lots() {
 	cool := s.p.cityHue(theme.CityScreenCool, mEmit, 0)
 	draw := func(lv *lotView, li int) {
 		spr := lv.spr
-		if s.zm == zClose {
+		if s.zm == zClose || s.detail {
 			spr = spr.closeUp() // the detail only the close zoom shows
 		}
 		x0 := lv.x0 - s.cam

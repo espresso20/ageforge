@@ -108,11 +108,18 @@ type CompactNews interface {
 }
 
 // Zoomable is implemented by a style whose view has zoom levels that
-// persist in the map settings. A level is a name ("far", "mid", "close"); ""
+// persist in the map settings. A level is a name ("far", "wide", "mid", "close"); ""
 // is the style's default, and a name it does not know changes nothing.
 type Zoomable interface {
 	ZoomLevel() string
 	SetZoom(level string)
+}
+
+// Portraitist is implemented by a style that can draw one wonder alone, as
+// large as a rect holds, on a plain backdrop: the Wonders panel's gallery. It
+// draws every cell of r and reports false for a key it has no wonder for.
+type Portraitist interface {
+	Portrait(scr tcell.Screen, r Rect, f Frame, key string) bool
 }
 
 // Pointer is where a style's cursor stands, in the style's own terms (for
