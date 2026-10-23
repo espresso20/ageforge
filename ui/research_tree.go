@@ -1084,6 +1084,7 @@ const (
 	swGood   = '\x04'
 	swDim    = '\x05'
 	swBad    = '\x06'
+	swEffect = '\x07'
 )
 
 func swStyle(r rune) (tStyle, bool) {
@@ -1100,6 +1101,8 @@ func swStyle(r rune) (tStyle, bool) {
 		return tsDim, true
 	case swBad:
 		return tsBad, true
+	case swEffect:
+		return tsEffect, true
 	}
 	return tsText, false
 }
@@ -1149,27 +1152,27 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 	}
 	blurb := strings.TrimSpace(n.def.Description)
 	if len(gives) > 0 {
-		blurb += " " + sw(swBright, n.def.Name+" gives "+joinAnd(gives)+".")
+		blurb += " " + sw(swEffect, n.def.Name+" gives "+joinAnd(gives)+".")
 	}
 	if len(with) > 0 {
-		blurb += " " + sw(swBright, "With it, "+joinAnd(with)+".")
+		blurb += " " + sw(swEffect, "With it, "+joinAnd(with)+".")
 	}
 	for _, l := range set.FeaturesOpenedBy(n.key) {
-		blurb += " " + sw(swBright, "It "+l.Opens+".")
+		blurb += " " + sw(swEffect, "It "+l.Opens+".")
 	}
 	var blds []string
 	for _, b := range set.Buildings() {
 		switch {
 		case b.RequiredTech != n.key:
 		case b.Category == "wonder":
-			blurb += " " + sw(swBright, "It is this age's keystone: the "+b.Name+" cannot be built without it.")
+			blurb += " " + sw(swEffect, "It is this age's keystone: the "+b.Name+" cannot be built without it.")
 		default:
 			blds = append(blds, "the "+b.Name)
 		}
 	}
 	if len(blds) > 0 {
 		sort.Strings(blds)
-		blurb += " " + sw(swBright, "It opens "+joinAnd(blds)+".")
+		blurb += " " + sw(swEffect, "It opens "+joinAnd(blds)+".")
 	}
 	out = append(out, strings.TrimSpace(blurb))
 
