@@ -73,7 +73,13 @@ func dumpValue(sb *strings.Builder, v reflect.Value, seen map[uintptr]bool, dept
 			return
 		}
 		sb.WriteString(v.Type().String() + "{")
-		for i := 0; i < v.NumField(); i++ {
+		// In name order, so the dump does not depend on how a struct is laid out.
+		order := make([]int, v.NumField())
+		for i := range order {
+			order[i] = i
+		}
+		sort.Slice(order, func(a, b int) bool { return v.Type().Field(order[a]).Name < v.Type().Field(order[b]).Name })
+		for _, i := range order {
 			name := v.Type().Field(i).Name
 			if name == "Rules" { // the shared ruleset, not part of the snapshot
 				continue
