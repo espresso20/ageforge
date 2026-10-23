@@ -20,15 +20,14 @@ var bigFigure = regexp.MustCompile(`[0-9]{4,}[A-Za-z]`)
 // and the formatter's ceiling is far past them.
 func TestLateGameStoresPrintInThreeDigits(t *testing.T) {
 	smallest, largest := 0.0, 0.0
-	for _, d := range config.BuildingByKey() {
-		size := 0.0
-		for _, e := range d.Effects {
-			if e.Type == "storage" && e.Target == "all" {
-				size += e.Value
-			}
-		}
-		if size <= 0 || d.MaxCount > 0 {
-			continue // not a store of its own (the monolith has one copy)
+	// A storage building holds nothing now; the size a copy held is the
+	// reference store (config.ReferenceStoreSizes), which the few prices that
+	// are a share of a store are measured on and the late game's figures
+	// still reach.
+	sizes, _ := config.ReferenceStoreSizes(config.BaseBuildings(), config.Ages(), config.ReferenceBaseStore())
+	for _, size := range sizes {
+		if size <= 0 {
+			continue
 		}
 		if smallest == 0 || size < smallest {
 			smallest = size
