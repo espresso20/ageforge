@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The template model. A template is DATA: an ordered list of parts, where a part
@@ -125,6 +126,9 @@ type tmpl struct {
 	Topic string
 	// Parts is the ordered slot list.
 	Parts []part
+	// Row is the row id of the sentence in the copy export and in the VibeMode
+	// script (see vibe.go): the catalog, the pool and the place in it.
+	Row string
 }
 
 // capacity is the number of distinct lines this template can produce: the product
@@ -161,26 +165,35 @@ func Generate(req Request, rng *rand.Rand) Result {
 // right, then placeholder substitution. Split out of Generate so a Stream's
 // last-resort pick can render a template it chose itself.
 func render(t tmpl, req Request, rng *rand.Rand) Result {
-	var sb strings.Builder
+	// The draws are made on the plain catalog, whatever the switch says, so a
+	// seed reproduces the same stream with VibeMode on or off.
+	var draws []int
 	var drew string
 	for _, p := range t.Parts {
 		if p.bank == "" {
-			sb.WriteString(p.lit)
 			continue
 		}
 		bank := banks[p.bank]
 		if len(bank) == 0 {
 			continue // an empty bank is a catalog bug; a test catches it
 		}
-		drew = bank[rng.Intn(len(bank))]
-		sb.WriteString(drew)
+		i := rng.Intn(len(bank))
+		draws = append(draws, i)
+		drew = bank[i]
 	}
 
+	plain := fillAs(t.compose(draws, false), req, false)
+	text := plain
+	if vibe.On() {
+		text = fillAs(t.compose(draws, true), req, true)
+	}
 	return Result{
-		Text:     fill(sb.String(), req),
+		Text:     text,
+		Plain:    plain,
 		Moment:   req.Moment,
 		Template: t.ID,
 		slot:     drew,
+		draws:    draws,
 	}
 }
 
@@ -378,17 +391,22 @@ var ageIndex = sync.OnceValue(func() map[string]int {
 //	{amt}        Request.Amount rounded, K/M formatted ("1.23M")
 //	{n}          Request.Count, bare
 //	{ticks}      Request.Ticks, bare
-func fill(s string, req Request) string {
+func fill(s string, req Request) string { return fillAs(s, req, false) }
+
+// fillAs is fill in the reading asked for: the frames the game words itself
+// ("your ... stores", "a haul of ...") are the script's when told is set, and
+// the game's own English when it is not.
+func fillAs(s string, req Request, told bool) string {
 	if !strings.ContainsRune(s, '{') {
 		return s
 	}
 	amt := roundAmount(req.Amount)
 	return strings.NewReplacer(
 		"{subject}", req.Subject,
-		"{res}", phraseBare(req.Resource),
-		"{res_stores}", phraseStores(req.Resource),
-		"{res_haul}", phraseHaul(req.Resource),
-		"{amt_res}", phraseQuantity(req.Resource, amt),
+		"{res}", phraseBareAs(req.Resource, told),
+		"{res_stores}", phraseStoresAs(req.Resource, told),
+		"{res_haul}", phraseHaulAs(req.Resource, told),
+		"{amt_res}", phraseQuantityAs(req.Resource, amt, told),
 		"{amt}", textfmt.Int(amt),
 		"{n}", textfmt.Int(req.Count),
 		"{ticks}", strconv.Itoa(req.Ticks),

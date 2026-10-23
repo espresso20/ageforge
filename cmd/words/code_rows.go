@@ -233,7 +233,10 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 		}
 	}
 	maybeWord := false
-	if keyLike(u.text) && !single && !noun && !cr.prose[cr.parent[u]] {
+	// The singular of a count noun ("nanobot") reads like a key, and sits in a
+	// vibe call: the flavor package tells it in the script's words, so it is shown.
+	flavorWord := strings.HasPrefix(u.vibeID, "flavor.")
+	if keyLike(u.text) && !flavorWord && !single && !noun && !cr.prose[cr.parent[u]] {
 		if !cr.c.mightBeShown(u) {
 			return nil, whyKey
 		}
@@ -325,12 +328,29 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 		what = "A single word that may be shown as it is, or may be a key the code matches on. Found"
 	}
 	where := what + " " + cr.note.place + "."
+	pattern := ""
 	if u.chain != nil && u.chain.parts >= 1 && strings.TrimSpace(u.chain.pattern) != strings.TrimSpace(u.text) {
-		where += " It is one piece of a line the game puts together, which reads: “" + oneLine(u.chain.pattern) + "” (… is what the game fills in)."
+		pattern = u.chain.pattern
+	} else if p, ok := framePieces[u.vibeID]; ok {
+		pattern = p
+	}
+	if pattern != "" {
+		where += " It is one piece of a line the game puts together, which reads: “" + oneLine(pattern) + "” (… is what the game fills in)."
 	}
 	r.where = where
 	cr.defaults(u, r)
 	return r, ""
+}
+
+// framePieces are the pieces of the flavor package's frames that name a
+// resource, by row id, with the line each is part of. They are read through
+// entries of a table (the frames are told in plain English and in the
+// script's words from the same entries), so the code does not join them in an
+// expression the reader can see the line in.
+var framePieces = map[string]string{
+	"flavor.resource.phraseStores.01": "your … stores",
+	"flavor.resource.phraseStores.02": "your … stores",
+	"flavor.resource.phraseHaul.01":   "a haul of …",
 }
 
 // defaults fills what the file's note decides, where a row has not set it.

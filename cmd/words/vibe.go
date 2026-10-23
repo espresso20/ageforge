@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/words"
 )
@@ -99,10 +100,14 @@ type vibeWiring struct {
 	code    map[string]lineCall   // the vibe.Line calls, by row id
 	calls   []lineCall            // all of them, in file order
 	tables  map[string]bool       // the row ids of table entries the code reads through vibe.Line when it draws them
+	flavor  map[string]string     // the row ids of the flavor catalogs' sentences and word lists, with their texts: the package reads them when it draws a line
 }
 
 func newVibeWiring(c *catalog) *vibeWiring {
-	w := &vibeWiring{data: map[string]words.Cell{}, lexicon: map[string]words.Cell{}, code: map[string]lineCall{}, tables: map[string]bool{}}
+	w := &vibeWiring{data: map[string]words.Cell{}, lexicon: map[string]words.Cell{}, code: map[string]lineCall{}, tables: map[string]bool{}, flavor: map[string]string{}}
+	for _, fr := range flavor.VibeRows() {
+		w.flavor[fr.ID] = fr.Plain
+	}
 	for _, r := range c.rows {
 		if r.u.vibeTable {
 			w.tables[r.id] = true
@@ -134,6 +139,9 @@ func (w *vibeWiring) wired(id string) bool {
 		return true
 	}
 	if w.tables[id] {
+		return true
+	}
+	if _, ok := w.flavor[id]; ok {
 		return true
 	}
 	_, ok := w.code[id]
@@ -384,6 +392,29 @@ func vibeLint(c *catalog, root, dir string, out io.Writer) (int, error) {
 			fail("%s must give its plain text as a string literal, so the lint can compare it", where)
 		case row.current != lc.plain:
 			fail("%s gives %q and the export reads %q at that id", where, lc.plain, row.current)
+		}
+	}
+
+	// The flavor package tells its sentences and word lists under the ids their
+	// places in the catalogs give them. Each must be a row of the export with
+	// the same text, and each text of a catalog must be one the package tells.
+	flavorIDs := make([]string, 0, len(wiring.flavor))
+	for id := range wiring.flavor {
+		flavorIDs = append(flavorIDs, id)
+	}
+	sort.Strings(flavorIDs)
+	for _, id := range flavorIDs {
+		row, ok := c.byID[id]
+		switch {
+		case !ok:
+			fail("the flavor package tells %s, which is not a row of the export", id)
+		case row.current != wiring.flavor[id]:
+			fail("the flavor package tells %s as %q and the export reads %q at that id", id, wiring.flavor[id], row.current)
+		}
+	}
+	for _, r := range c.rows {
+		if _, ok := wiring.flavor[r.id]; flavorRead(r) && !ok {
+			fail("%s is a text of a flavor catalog and the flavor package does not tell it through the script", r.id)
 		}
 	}
 

@@ -279,8 +279,12 @@ type HarbingerSave struct {
 	// the invite is honoured, so the thread keeps its own copy to tell
 	// Fulfilled from Vindicated at resolution.
 	Invited bool `json:"invited,omitempty"`
-	// Lines are the current figure's arrival and warning lines.
+	// Lines are the current figure's arrival and warning lines, in plain
+	// English (a script's words are never kept). LineKeys name each of them
+	// for flavor.Retell, so they can be told in the script's words when they
+	// are read: "" for a line with no key (a save from before).
 	Lines       []string `json:"lines,omitempty"`
+	LineKeys    []string `json:"line_keys,omitempty"`
 	ArrivedTick int      `json:"arrived_tick,omitempty"`
 }
 
@@ -493,7 +497,7 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 		ClaimFactor:   claim,
 		ArrivedTick:   ge.tick,
 	}
-	lp.Lines = ge.harbingerSpeak(def, announced)
+	lp.Lines, lp.LineKeys = ge.harbingerSpeak(def, announced)
 	if ge.harbinger != nil {
 		// The era's doom is speaking: the Last Passage's thread waits.
 		ge.parkedHarbinger = lp
@@ -503,7 +507,7 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 
 	ge.addLog("event", vibe.Sprintf("game.harbinger.harbingerArriveLastPassage.01", "⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), harbingerWarningText(ge.rules, "")))
-	for _, l := range lp.Lines {
+	for _, l := range ge.harbingerLinesTold(lp) {
 		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 	ge.publishHarbinger(def, "", false)
@@ -528,7 +532,7 @@ func (ge *GameEngine) harbingerHandoff() {
 	}
 	tier, _ := ge.harbingerDisplay()
 	h.AnnouncedTier = tier
-	h.Lines = ge.harbingerSpeak(def, tier)
+	h.Lines, h.LineKeys = ge.harbingerSpeak(def, tier)
 
 	ge.addLog("event", vibe.Sprintf("game.harbinger.harbingerHandoff.01", "⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), warning))
@@ -549,24 +553,71 @@ func harbingerWarningText(set *rules.Set, targetEpoch string) string {
 	return vibe.Line("game.harbinger.harbingerWarningText.01", "impending doom")
 }
 
-// harbingerSpeak draws the arrival and warning lines for def at tier.
-func (ge *GameEngine) harbingerSpeak(def config.HarbingerDef, tier CatastropheTier) []string {
+// harbingerSpeak draws the arrival and warning lines for def at tier. It
+// returns them as the thread keeps them: in plain English, whatever the
+// switch says, with the key each is told again by (harbingerLinesTold).
+func (ge *GameEngine) harbingerSpeak(def config.HarbingerDef, tier CatastropheTier) (lines, keys []string) {
 	rng := ge.gameRNG()
 	stream := ge.flavorStream()
-	arrival := stream.Line(flavor.Request{Moment: flavor.HarbingerArrival, Age: def.Age, Subject: def.Name}, rng)
-	warning := stream.Line(flavor.Request{Moment: flavor.HarbingerWarning, Age: def.Age, Subject: def.Name, Kind: string(tier)}, rng)
-	var lines []string
-	for _, l := range []string{arrival, warning} {
-		if l != "" {
-			lines = append(lines, l)
+	// The lines are kept in plain English, the figure's name too.
+	subject := ge.harborPlainName(def)
+	arrival := stream.Generate(flavor.Request{Moment: flavor.HarbingerArrival, Age: def.Age, Subject: subject}, rng)
+	warning := stream.Generate(flavor.Request{Moment: flavor.HarbingerWarning, Age: def.Age, Subject: subject, Kind: string(tier)}, rng)
+	for _, res := range []flavor.Result{arrival, warning} {
+		if res.Plain != "" {
+			lines = append(lines, res.Plain)
+			keys = append(keys, res.Key())
 		}
 	}
-	return lines
+	return lines, keys
+}
+
+// harborPlainName is the name of a figure in plain English, whatever script
+// the game is read in: a game on a core set reads it from the plain one, as a
+// save's title is (savedTitle), and a game on a set of its own has its own.
+func (ge *GameEngine) harborPlainName(def config.HarbingerDef) string {
+	if rules.IsCore(ge.rules) {
+		if plain, ok := rules.CoreFor(false).Harbinger(def.Age); ok {
+			return plain.Name
+		}
+	}
+	return def.Name
+}
+
+// harbingerLinesTold are a thread's arrival and warning lines as they read
+// now: in the script's words while VibeMode is on, told again from the keys
+// the thread holds; as they were drawn otherwise, and for a line whose key
+// does not name it any more (a save from before the keys, or from a build
+// whose catalog differed). Read-only.
+func (ge *GameEngine) harbingerLinesTold(h *HarbingerSave) []string {
+	out := append([]string(nil), h.Lines...)
+	if !vibe.On() {
+		return out
+	}
+	def, ok := ge.rules.Harbinger(h.Age)
+	if !ok {
+		return out
+	}
+	for i := range out {
+		if i >= len(h.LineKeys) || h.LineKeys[i] == "" {
+			continue
+		}
+		// The key must tell the line the thread holds, in plain English, before
+		// it is trusted to tell it in the script's words.
+		plain, ok := flavor.Retell(h.LineKeys[i], flavor.Request{Subject: ge.harborPlainName(def)}, false)
+		if !ok || plain != h.Lines[i] {
+			continue
+		}
+		if told, ok := flavor.Retell(h.LineKeys[i], flavor.Request{Subject: def.Name}, true); ok && told != "" {
+			out[i] = told
+		}
+	}
+	return out
 }
 
 // harbingerLogLines writes the current figure's lines to the log in gray.
 func (ge *GameEngine) harbingerLogLines() {
-	for _, l := range ge.harbinger.Lines {
+	for _, l := range ge.harbingerLinesTold(ge.harbinger) {
 		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
@@ -1431,7 +1482,7 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		When:               h.When,
 		WhenText:           harbingerWhenText(ge.rules, h),
 		LastPassageWaiting: ge.parkedHarbinger != nil && h.TargetEpoch != "",
-		Lines:              append([]string(nil), h.Lines...),
+		Lines:              ge.harbingerLinesTold(h),
 		Tier:               tier,
 		Probability:        prob,
 		AppeaseLevel:       h.AppeaseLevel,
@@ -1500,6 +1551,7 @@ func copyHarbingerSave(in *HarbingerSave) *HarbingerSave {
 	}
 	h := *in
 	h.Lines = append([]string(nil), in.Lines...)
+	h.LineKeys = append([]string(nil), in.LineKeys...)
 	h.Chain = append([]string(nil), in.Chain...)
 	return &h
 }
@@ -1519,6 +1571,7 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	if save.Harbinger != nil {
 		h := *save.Harbinger
 		h.Lines = append([]string(nil), save.Harbinger.Lines...)
+		h.LineKeys = append([]string(nil), save.Harbinger.LineKeys...)
 		h.Chain = append([]string(nil), save.Harbinger.Chain...)
 		if len(h.Chain) == 0 {
 			h.Chain = []string{h.Age}
