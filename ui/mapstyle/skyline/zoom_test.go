@@ -736,9 +736,19 @@ func TestZoomCaptures(t *testing.T) {
 		v.follow = false
 		d := m.Skyline.Districts[len(m.Skyline.Districts)-1]
 		v.cam = d.Centre - sh.z.cols(sh.w)/2
-		scr := draw(v, m, sh.w, sh.h, 40, mapmodel.TierUnicode, false)
+		var frames []string
+		var txt string
 		name := sh.name + "_" + sh.z.String()
-		_ = os.WriteFile(filepath.Join(dir, name+".txt"), []byte(capture.Text(scr)), 0o644)
-		_ = capture.PNG(filepath.Join(dir, name+".png"), scr)
+		for k := 0; k < 6; k++ {
+			scr := draw(v, m, sh.w, sh.h, 40+k*2, mapmodel.TierUnicode, false)
+			frames = append(frames, capture.Frame(scr))
+			if k == 0 {
+				txt = capture.Text(scr)
+				_ = capture.PNG(filepath.Join(dir, name+".png"), scr)
+			}
+		}
+		bg, fg := capture.Hex(theme.Color(theme.RoleBackground)), capture.Hex(theme.Color(theme.RoleText))
+		_ = os.WriteFile(filepath.Join(dir, name+".txt"), []byte(txt), 0o644)
+		_ = os.WriteFile(filepath.Join(dir, name+".html"), []byte(capture.HTML(name, bg, fg, capture.Fonts, frames, 6)), 0o644)
 	}
 }

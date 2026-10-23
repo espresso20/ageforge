@@ -257,6 +257,11 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.inputField.SetText(cmd)
 	}
 	d.mapPanel.prompt = func() string { return d.inputField.GetText() }
+	d.mapPanel.zoomed = func(level string) {
+		s := d.mapSettings()
+		s.Zoom = level
+		d.saveMapSettings(s)
+	}
 	d.mapPanel.spotted = func(kind string) {
 		// tview goroutine (a refresh or a key handler), outside the engine
 		// lock: the account hears that its player looked at a visitor.

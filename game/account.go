@@ -251,6 +251,9 @@ type AccountPrefs struct {
 	// the default: the first registered style, the unicode glyph tier.
 	MapStyle  string `json:"map_style,omitempty"`
 	MapGlyphs string `json:"map_glyphs,omitempty"`
+	// MapZoom is the skyline map's zoom level ("far", "mid", "close"); empty
+	// is the default, mid.
+	MapZoom string `json:"map_zoom,omitempty"`
 	// MapIconsHint records that the Map panel's one-time "Type icons" hint
 	// was shown, so it is shown once per account.
 	MapIconsHint bool `json:"map_icons_hint,omitempty"`
@@ -1199,6 +1202,22 @@ func (a *Account) SetMapGlyphs(tier string) error {
 	return a.Save()
 }
 
+// MapZoom returns the persisted skyline zoom level ("" for the default).
+func (a *Account) MapZoom() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.Prefs.MapZoom
+}
+
+// SetMapZoom persists the skyline zoom level name. Like SetMapStyle it does
+// not validate it: the UI owns the levels.
+func (a *Account) SetMapZoom(level string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Prefs.MapZoom = level
+	return a.Save()
+}
+
 // MinimapOn reports whether the dashboard's mini map is on. It is off until
 // the player turns it on (minimap on): an account that never chose has none.
 func (a *Account) MinimapOn() bool {
@@ -1702,6 +1721,9 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	}
 	if a.Prefs.MapGlyphs == "" {
 		a.Prefs.MapGlyphs = exp.Prefs.MapGlyphs
+	}
+	if a.Prefs.MapZoom == "" {
+		a.Prefs.MapZoom = exp.Prefs.MapZoom
 	}
 	if a.Prefs.Minimap == "" {
 		a.Prefs.Minimap = exp.Prefs.Minimap

@@ -310,19 +310,21 @@ func mixValid(a, b tcell.Color, t float64) tcell.Color {
 
 // meanColor is the average colour of cs (the first when only one).
 func meanColor(cs []tcell.Color) tcell.Color {
-	var r, g, b, n int32
+	var out tcell.Color
+	n := 0
 	for _, c := range cs {
 		if !c.Valid() {
 			continue
 		}
-		cr, cg, cb := c.RGB()
-		r, g, b, n = r+cr, g+cg, b+cb, n+1
-	}
-	if n == 0 {
-		if len(cs) > 0 {
-			return cs[0]
+		n++
+		if n == 1 {
+			out = c
+		} else {
+			out = theme.Mix(out, c, 1/float64(n))
 		}
-		return 0
 	}
-	return tcell.NewRGBColor((r+n/2)/n, (g+n/2)/n, (b+n/2)/n)
+	if n == 0 && len(cs) > 0 {
+		return cs[0]
+	}
+	return out
 }

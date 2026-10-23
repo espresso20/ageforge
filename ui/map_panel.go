@@ -20,7 +20,8 @@ import (
 // commands work as they do anywhere: printable keys go to the prompt, and
 // the map takes only the keys that print nothing (routeKey): the arrows,
 // Tab and Shift-Tab, PgUp and PgDn, Home and End, and Enter on an empty
-// prompt, which types the inspected command. Style, glyphs and the flows
+// prompt, which types the inspected command. On an empty prompt a style that
+// zooms also takes + - = [ ] (the skyline's zoom and district keys). Style, glyphs and the flows
 // overlay are commands (map style, map glyphs, map flows). The style draws
 // everything but the panel's bottom row, a key bar.
 
@@ -121,6 +122,9 @@ type mapPanel struct {
 	stage func(cmd string)
 	// prompt reads the command bar ("" when it is empty).
 	prompt func() string
+	// zoomed is told the new level when a key changed a style's zoom, to
+	// save it in the map settings.
+	zoomed func(level string)
 	// toPrompt hands a key the map does not take to the command bar, and
 	// the keyboard with it, when the panel itself has the focus.
 	toPrompt func(ev *tcell.EventKey)
@@ -147,6 +151,9 @@ func (p *mapPanel) open(state game.GameState) tview.Primitive {
 	p.note = ""
 	p.current().SetOption(mapstyle.OptWorld, p.world)
 	p.world = false
+	if z, ok := p.current().(mapstyle.Zoomable); ok {
+		z.SetZoom(p.set.Zoom)
+	}
 	p.hint = !p.set.HintShown && p.set.Tier != mapmodel.TierNerd
 	if p.hint && p.hintShown != nil {
 		p.hintShown()
@@ -309,7 +316,9 @@ func (p *mapPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tv
 // command bar (false). The map takes the keys that print nothing: the
 // arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab,
 // Shift-Tab and Enter. With something typed those three are the prompt's
-// (completion, run), and every printable key always is.
+// (completion, run), and every printable key always is, but for the five
+// zoom and district keys + - = [ ] on an empty prompt, which are the map's
+// when the style uses them (no command begins with one).
 func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 	switch ev.Key() {
 	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight,
@@ -318,12 +327,20 @@ func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 		if prompt != "" {
 			return false
 		}
+	case tcell.KeyRune:
+		if prompt != "" || ev.Modifiers()&(tcell.ModCtrl|tcell.ModAlt) != 0 || !strings.ContainsRune(mapRuneKeys, ev.Rune()) {
+			return false
+		}
+		return p.handleKey(ev)
 	default:
 		return false
 	}
 	p.handleKey(ev)
 	return true
 }
+
+// mapRuneKeys are the printable keys the map takes on an empty prompt.
+const mapRuneKeys = "+-=_[]"
 
 // handleKey applies one map key and reports whether anything used it.
 // Enter types the inspected command into the prompt; the rest are the
@@ -344,9 +361,26 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 	used := p.current().HandleKey(ev, p.frame())
 	if used {
 		p.note = ""
+		p.lookForZoom()
 		p.lookForVisitor()
 	}
 	return used
+}
+
+// lookForZoom saves the zoom level when a key changed it.
+func (p *mapPanel) lookForZoom() {
+	z, ok := p.current().(mapstyle.Zoomable)
+	if !ok {
+		return
+	}
+	level := z.ZoomLevel()
+	if cur := p.set.Zoom; cur == level || cur == "" && level == "mid" {
+		return
+	}
+	p.set.Zoom = level
+	if p.zoomed != nil {
+		p.zoomed(level)
+	}
 }
 
 // barTags matches the color tags a reply may carry: the key bar prints
