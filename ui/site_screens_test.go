@@ -40,13 +40,11 @@ import (
 // the Primitive Age to the Medieval Age through the engine's own methods and
 // the prompt's own commands, with every building paid for and waited for,
 // every wonder banked and every age advanced for real. Each gate is met as the
-// game lists it (meetGate reads the Next Age list), not from counts typed here. Staging takes four
+// game lists it (meetGate reads the Next Age list), not from counts typed here. Staging takes three
 // liberties, and no others:
 //
 //   - stores are topped up between purchases (stock), which stands in for
 //     the hours of waiting, and set to mixed levels before a picture (level);
-//   - wonder overflow is off while the Bronze Age town is built, so the
-//     wonder's bank is still part empty when its panel is drawn;
 //   - the Iron Era's secret fate is kept quiet while its town is built, then
 //     a doom is fated on cue, so the harbinger and the catastrophe arrive
 //     through the game's own path when the pictures need them;
@@ -496,9 +494,6 @@ func (s *siteStage) toBronze() {
 // under way, a trade route, scouts on the road, two farms going up and a plan
 // that is part started, part waiting.
 func (s *siteStage) bronzeTown() {
-	// Overflow would fill the wonder's bank while the stores are kept full;
-	// the session turns it back on.
-	s.eng.SetWonderOverflow(false)
 	s.raiseAll(siteBuild{"warehouse", 3}, siteBuild{"house", 8}, siteBuild{"farm", 5}, siteBuild{"lumber_mill", 4},
 		siteBuild{"quarry", 3}, siteBuild{"scriptorium", 3}, siteBuild{"market", 2}, siteBuild{"smithy", 2})
 	// Calendar opens the Altar and The Wheel opens trade routes. The
@@ -517,7 +512,6 @@ func (s *siteStage) bronzeTown() {
 	s.say("trade route start local_barter")
 	s.wait(310)
 	s.level(map[string]float64{"food": 0.71, "wood": 0.34, "stone": 0.83, "gold": 0.37, "iron": 0.22, "faith": 0.41})
-	s.eng.SetWonderOverflow(true)
 	// The Scout Party needs no tech; scouting past it waits for Exploration.
 	s.say("expedition scouting_party")
 	s.say("wonder collect stone")
