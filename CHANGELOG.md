@@ -13,6 +13,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **Wonders you can recognise.** Every age's wonder is a landmark on the skyline, the tallest thing in its district, lit at night, with scaffolding that rises as you bank it.
 - **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
 - **Storage buildings boost production.** With no caps to raise, every storage building now adds 1% to all production, and older ones keep counting.
 - **A skyline that looks like your town.** The skyline draws far more of your buildings, gives them outlines, lit windows and depth, and varies their shapes, so a big town looks big.
