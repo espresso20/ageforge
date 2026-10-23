@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/words"
 )
 
 // code_special.go holds what the code reader has to be told: what each
@@ -318,9 +319,9 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 		case inCall && cs.fn == "sub" && cs.arg == 2:
 			return helpRow("ui.help.commands."+idDots(strings.TrimPrefix(path()+"."+arg(0), ".")), arg(1)), "", true
 		case inCall && cs.fn == "confirmYes" && cs.arg == 1:
-			return helpRow("ui.help.commands."+idSafe(arg(0)), arg(0)), "", true
+			return helpRow("ui.help.commands."+words.IDSafe(arg(0)), arg(0)), "", true
 		case inCall && cs.fn == "panel" && cs.arg == 1:
-			return newRow("ui.help.panels."+idSafe(arg(0)), kindMessage, "What the Help panel's list of panels says the command “"+arg(0)+"” opens."), "", true
+			return newRow("ui.help.panels."+words.IDSafe(arg(0)), kindMessage, "What the Help panel's list of panels says the command “"+arg(0)+"” opens."), "", true
 		case inCall:
 			return nil, "", false
 		case s.typ == "ui.Usage" && s.field == "Text":
@@ -332,7 +333,7 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 		case s.typ == "ui.Usage":
 			return nil, whySyntax, true
 		case s.typ == "ui.Command" && s.field == "Panel":
-			return newRow("ui.help.panels."+idSafe(s.sib["Name"]), kindMessage, "What the Help panel's list of panels says the command “"+s.sib["Name"]+"” opens."), "", true
+			return newRow("ui.help.panels."+words.IDSafe(s.sib["Name"]), kindMessage, "What the Help panel's list of panels says the command “"+s.sib["Name"]+"” opens."), "", true
 		case s.typ == "ui.Command" || s.typ == "ui.Arg":
 			return nil, whySyntax, true
 		}
@@ -402,17 +403,17 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 			r.rules = rulesConfig | rulesDocs
 			return r, "", true
 		case inCall && cs.fn == "wc" && cs.arg == 2:
-			r := newRow("worker_class."+idSafe(arg(0))+"."+idSafe(arg(1)), kindName, "What the Workers panel calls the workers of the "+strings.ReplaceAll(arg(0), "_", " ")+" domain from the "+w.called(arg(1))+" on.")
+			r := newRow("worker_class."+words.IDSafe(arg(0))+"."+words.IDSafe(arg(1)), kindName, "What the Workers panel calls the workers of the "+strings.ReplaceAll(arg(0), "_", " ")+" domain from the "+w.called(arg(1))+" on.")
 			r.area, r.seen, r.age = areaAges, seenRegular, w.ageOf(arg(1))
 			r.rules = rulesConfig | rulesDocs
 			return r, "", true
 		case len(u.calls) > 0 && cs.fn == "ladder" && cs.arg == 6 && u.near == "elem":
-			r := newRow(fmt.Sprintf("badge_ladder.%s.rung.%d", idSafe(arg(0)), u.coll[0].index+1), kindName,
+			r := newRow(fmt.Sprintf("badge_ladder.%s.rung.%d", words.IDSafe(arg(0)), u.coll[0].index+1), kindName,
 				fmt.Sprintf("The name of badge %d of the ladder “%s”: in the badge case, and in the toast and log line when it is earned.", u.coll[0].index+1, arg(1)))
 			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
 			return r, "", true
 		case inCall && cs.fn == "ladder":
-			key := idSafe(arg(0))
+			key := words.IDSafe(arg(0))
 			var r *row
 			switch cs.arg {
 			case 1:
@@ -427,9 +428,9 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
 			return r, "", true
 		case inCall && cs.fn == "mapLook" && (cs.arg == 1 || cs.arg == 2):
-			r := newRow("badge."+idSafe(arg(0))+".name", kindName, "The name of a badge: in the badge case, and in the toast and log line when it is earned.")
+			r := newRow("badge."+words.IDSafe(arg(0))+".name", kindName, "The name of a badge: in the badge case, and in the toast and log line when it is earned.")
 			if cs.arg == 2 {
-				r = newRow("badge."+idSafe(arg(0))+".description", kindVoice, "What the badge case says the badge “"+arg(1)+"” is for.")
+				r = newRow("badge."+words.IDSafe(arg(0))+".description", kindVoice, "What the badge case says the badge “"+arg(1)+"” is for.")
 			}
 			r.area, r.seen, r.rules = areaBadges, seenRegular, rulesConfig|rulesDocs
 			return r, "", true
@@ -462,7 +463,7 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 func idDots(s string) string {
 	parts := strings.Split(s, ".")
 	for i, p := range parts {
-		parts[i] = idSafe(p)
+		parts[i] = words.IDSafe(p)
 	}
 	return strings.Join(parts, ".")
 }

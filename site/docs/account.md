@@ -54,7 +54,7 @@ The account holds two distinct things:
 | Part | What it is |
 |---|---|
 | **Identity** | Your chosen name and the account ID derived from it |
-| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, badges) and your prefs: your theme, map style, map glyphs, mini map setting and motion setting |
+| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, badges) and your prefs: your theme, map style, map glyphs, mini map setting, motion setting and VibeMode setting |
 
 The split matters because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID). The **data** is backed up separately with an account **export** (see [Exporting & importing accounts](#exporting-amp-importing-accounts)).
 
@@ -354,7 +354,7 @@ The file is signed, and the signature covers the account ID:
 
 ### The settings file
 
-The motion setting (`motion on` and `motion off`), the title you chose to wear (`title`), and which game the main menu's Continue opens (the game you played last, and your [main game](saving-and-loading.md#continue-and-your-main-game) if you marked one) are kept in a third file in the slot, `settings.json`. It is there for the same reason `badges.json` is: `account.json` keeps the shape older versions of the game know, so a newer setting goes beside it. The file holds preferences and nothing you earn, so it is plain text and unsigned, and the game writes it when one of them changes: a setting you change, or the first time you play a game. If it is missing or cannot be read, motion is on, you wear the title your score holds, and Continue opens the save written most recently. A title is only worn while the account holds it, so writing one into the file by hand gives nothing. A [backup](#backups) copies it; an export does not carry it.
+The motion setting (`motion on` and `motion off`), the VibeMode setting (`vibemode on` and `vibemode off`), the title you chose to wear (`title`), and which game the main menu's Continue opens (the game you played last, and your [main game](saving-and-loading.md#continue-and-your-main-game) if you marked one) are kept in a third file in the slot, `settings.json`. It is there for the same reason `badges.json` is: `account.json` keeps the shape older versions of the game know, so a newer setting goes beside it. The file holds preferences and nothing you earn, so it is plain text and unsigned, and the game writes it when one of them changes: a setting you change, or the first time you play a game. If it is missing or cannot be read, motion is on, VibeMode is off, you wear the title your score holds, and Continue opens the save written most recently. A title is only worn while the account holds it, so writing one into the file by hand gives nothing. A [backup](#backups) copies it; an export does not carry it.
 
 ---
 
