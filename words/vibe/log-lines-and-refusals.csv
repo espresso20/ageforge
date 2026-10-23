@@ -21,7 +21,7 @@ game.account_settings.SetTitle.01,You don't own the title %q. Delulu if you thou
 game.auto_expedition.processAutoExpeditions.01,"%s: the survey party is standing there ready to slay, but there are no supplies to outfit it. Tragic."
 game.auto_expedition.processAutoExpeditions.03,Off goes a survey party from %s: %s. Main character move.
 game.auto_expedition.autoExpeditionBuildingName.01,The survey office
-game.backup.BackupAccount.01,"Zero account with the ID %s. The backup can't find it, bestie."
+game.backup.BackupAccount.01,"Zero account with the ID %s. The backup can't find it, no cap."
 game.badges.BadgeCatchUpLine.01,W
 game.badges.BadgeCatchUpLine.02,Ws
 game.badges.BadgeCatchUpLine.03," earned from your earlier play, no cap."
@@ -62,13 +62,13 @@ game.caps.capLinesLocked.04," of it counts, no cap."
 game.caps.capLinesLocked.05, tops out at 
 game.caps.capLinesLocked.06,", and you've earned "
 game.catastrophe.catastropheBlockErr.01,%s is upon you. Type 'catastrophe' to pick Endure or Succumb before %s
-game.catastrophe.triggerCatastrophe.01,"☄ %s comes for the %s. Brace yourself, bestie."
+game.catastrophe.triggerCatastrophe.01,"☄ %s comes for the %s. Brace yourself, ngl."
 game.catastrophe.triggerCatastrophe.02,"  Type 'catastrophe' to pick Endure or Succumb. Advancing and prestige wait till you do, no skipping."
 game.catastrophe.Endure.01,"no catastrophe pending, so there's nothing to endure, bestie."
 game.catastrophe.Endure.02,"☄ ENDURE, no cap: %s. [comment]%s[-]"
 game.catastrophe.Endure.03,  Buildings gone rn: %d
 game.catastrophe.Endure.04,"  → %s, big L"
-game.catastrophe.Endure.05,"  Braced up (level %d): only %d%% of buildings lost instead of %d%%, and %.0f%% of stock kept instead of %.0f%%, bestie."
+game.catastrophe.Endure.05,"  Braced up (level %d): only %d%% of buildings lost instead of %d%%, and %.0f%% of stock kept instead of %.0f%%, real talk."
 game.catastrophe.Endure.06,"  Every resource drops to %.0f%% of what's stored, rip."
 game.catastrophe.Endure.07,  %.0f%% of your workers got yeeted.
 game.catastrophe.Endure.08,"  Reconstruction arc: all production %.0f%% for %s. Morale %+.0f points, it's giving comeback."
@@ -89,7 +89,7 @@ game.catastrophe.legacyBonusText.01,%s hits +%.0f%% production
 game.current_game.WipeSavesByID.01,there's no account with the ID %q. Big miss.
 game.deals.dealBlocked.01,beefing with you
 game.deals.dealBlocked.02,cancelled by your embargo
-game.deals.dealBlocked.03,your nemesis
+game.deals.dealBlocked.03,your arch-rival
 game.deals.dealBlocked.04,giving hostile (opinion %d)
 game.deals.dealProblem.01,they're 
 game.deals.dealProblem.02,already spoken for
@@ -141,7 +141,7 @@ game.engine.techLockErr.01,"%s needs %s first, so research it to build here, fr.
 game.engine.wonderNextStep.01,"Research %s, then type 'build %s' and let the construction arc begin."
 game.engine.wonderNextStep.02,Type 'build %s' to start the construction glow-up.
 game.engine.updateMoraleTick.01,⚠ Morale's in the basement (%s): all production %s. Faith output lifts the mood.
-game.engine.Start.01,"Autosave bombed: could not write the save file (%v). Save it by hand, bestie."
+game.engine.Start.01,"Autosave bombed: could not write the save file (%v). Save it by hand, periodt."
 game.engine.Start.03,"Your lifetime stats refused to save (%v). The game will try again at the next autosave, no cap."
 game.engine.safeTick.01,This tick glitched out and got skipped. Save your game and report the bug: %v
 game.engine.SwitchAccount.01,"No account wears the ID %s. Ghost town, fr."
@@ -213,11 +213,11 @@ game.engine.startBuildPaid.04,"%s isn't fully banked yet, bestie. Bank its cost 
 game.engine.startBuildPaid.05,"Can't afford %s, bestie: need %s."
 game.engine.startBuildPaid.07,"Started building %s (%s), the grind begins."
 game.engine.startBuildPaid.08,"%s built, you have %d now, slay."
-game.engine.BuildMultiple.01,"Build count has to be positive (got %d), bestie."
+game.engine.BuildMultiple.01,"Build count has to be positive (got %d), fr."
 game.engine.BuildMultiple.02,"%s isn't unlocked yet, not your era."
 game.engine.BuildMultiple.03,"%s is at max count (%d), no more room."
 game.engine.BuildMultiple.04,Too broke for %s: need %s.
-game.engine.BuildMultiple.05,"Queued up %s, bestie."
+game.engine.BuildMultiple.05,"Queued up %s, no cap."
 game.engine.BuildMultiple.06,"Built %s, you've got %d now."
 game.engine.RecruitMax.01,"Worker type '%s' isn't unlocked yet, not your era."
 game.engine.RecruitMax.02,"No housing left (%d/%d), we're out of room. Build housing to recruit more."
@@ -226,7 +226,7 @@ game.engine.RecruitMax.04,"Recruited %s (population %d/%d), W."
 game.engine.RecruitMax.05,bestie
 game.engine.RecruitMax.06,besties
 game.engine.RecruitWorker.01,"Recruit count needs to be positive (got %d), no cap."
-game.engine.RecruitWorker.02,"Never heard of worker type '%s', bestie."
+game.engine.RecruitWorker.02,"Never heard of worker type '%s', bet."
 game.engine.RecruitWorker.03,Out of housing (%d/%d). Build housing to recruit more.
 game.engine.RecruitWorker.04,Housing is too tight for %s (%d/%d). Build housing to recruit more.
 game.engine.RecruitWorker.05,more bestie
@@ -234,7 +234,7 @@ game.engine.RecruitWorker.06,extra besties
 game.engine.RecruitWorker.08,Hired on: %s (population %d/%d).
 game.engine.RecruitWorker.09,bestie
 game.engine.RecruitWorker.10,besties
-game.engine.AssignWorker.01,"Assign count has to be above zero (got %d), bestie."
+game.engine.AssignWorker.01,"Assign count has to be above zero (got %d), real talk."
 game.engine.AssignWorker.02,"Every %s at %s is stacked, no room left."
 game.engine.AssignWorker.03,job slot
 game.engine.AssignWorker.04,spots
@@ -276,7 +276,7 @@ game.engine.DismissWorkers.05,besties
 game.engine.checkAmount.01,"Amount has to be a real positive number (got %v), no cap."
 game.engine.unknownBuildingErr.01,Never heard of building '%s'. Did you mean '%s'?
 game.engine.unknownBuildingErr.02,Building '%s' isn't a thing here. Type 'build' to see what's available.
-game.engine.workerBuilding.01,"%s doesn't take workers, bestie."
+game.engine.workerBuilding.01,"%s doesn't take workers, tbh."
 game.engine.staffableBuilding.01,Still zero %s in your empire. Build one first.
 game.engine.shortfallText.01,%s (got %s)
 game.engine.SellBuilding.01,Sell count needs to be above zero (got %d).
@@ -285,12 +285,12 @@ game.engine.SellBuilding.03,"Wonders can't be sold, they're forever."
 game.engine.SellBuilding.04,"Storage can't be sold. Once its age passes, it can't be rebuilt, ever."
 game.engine.SellBuilding.05,"Knowledge buildings can't be sold. Once the age passes, no rebuilding, ever."
 game.engine.SellBuilding.06,You've got zero %s to sell.
-game.engine.SellBuilding.07,"A %s is still being built. Sell it once it's done, bestie."
+game.engine.SellBuilding.07,"A %s is still being built. Sell it once it's done, fr."
 game.engine.SellBuilding.08,"Sold %s, refund: %s. Bag secured."
 game.engine.CancelResearch.01,Nothing being researched rn.
 game.engine.CancelResearch.02,"Research on %s got canceled. The work on it is gone, rip."
 game.engine.maybeOfferAncientMemory.01,"✦ [comment]%s[-] A memory of [cyan]%s[-] is stirring. You can research it without its prereqs, at half speed, bestie."
-game.engine.AcceptAncientMemory.01,"No ancient memory to accept, bestie."
+game.engine.AcceptAncientMemory.01,"No ancient memory to accept, ngl."
 game.engine.AcceptAncientMemory.02,"Got the memory of %s back. Researching it at half speed (%s), slow and steady."
 game.engine.AcceptAncientMemory.03,"Memory of %s recovered, but it needs scholars researching to go on."
 game.engine.DeclineAncientMemory.01,"You leave the ancient cache sealed. Its memories turn to dust, big yikes."
@@ -316,7 +316,7 @@ game.engine.completePrestige.10,flavor
 game.engine.completePrestige.11,flavors
 game.engine.completePrestige.12,Type [cyan]help[-] to run it back.
 game.engine.Reset.01,"Game wiped. Fresh start, no baggage."
-game.engine.Reset.02,"Type [cyan]help[-] for the commands, bestie."
+game.engine.Reset.02,"Type [cyan]help[-] for the commands, bet."
 game.engine.applyOfflineProgress.01,"Welcome back, bestie. You were away for %s."
 game.engine.applyOfflineProgress.02,Offline grind (at %s efficiency):
 game.engine.applyOfflineProgress.03,"While you were gone, your plan "
@@ -325,7 +325,7 @@ game.engine.StartTradeRoute.01,Trade route is live: %s.
 game.engine.StopTradeRoute.01,Route closed: %s.
 game.engine.SendGift.01,"Sent the %s a gift: %s, opinion %s. Love that for them."
 game.engine.SendTribute.01,"Paid the %s a tribute of %s. The war is over, bestie."
-game.engine.RaidCivRoute.01,"You ran up on a %s trade route. They declared war, bestie."
+game.engine.RaidCivRoute.01,"You ran up on a %s trade route. They declared war, periodt."
 game.engine.RaidCivRoute.02,"Hit a %s trade route. Opinion %s, oof."
 game.engine.upgradeBuildingLocked.01,%s has no upgrade this age. Type 'upgrade' to list the ones that do.
 game.engine.upgradeBuildingLocked.02,You've got zero %s to upgrade.
@@ -338,8 +338,8 @@ game.engine.upgradeTechErr.01,"%s needs %s first. Research it, then upgrade to i
 game.engine.upgradesAffordableLocked.01,"%s maxed out at %d, no room."
 game.engine.milestoneRewardParts.01,research glow-up
 game.engine.diplomaticStatusLine.01,"You're allied with the %s now. The alliance cost %s, fr."
-game.engine.diplomaticStatusLine.02,"Allied with the %s now, bestie."
-game.engine.diplomaticStatusLine.03,You named the %s your nemesis.
+game.engine.diplomaticStatusLine.02,"Allied with the %s now, tbh."
+game.engine.diplomaticStatusLine.03,"You declared the %s your rival, nemesis energy."
 game.engine.diplomaticStatusLine.04,Embargo slapped on the %s.
 game.engine.diplomaticStatusLine.05,"Neutral with the %s now, no beef."
 game.engine.diplomaticStatusLine.06,"Your status with the %s is now %s, the vibe check says so."
@@ -388,7 +388,7 @@ game.harbinger.shortfall.01, more
 game.harbinger.HarbingerAppease.01,Can't appease: %s.
 game.harbinger.HarbingerAppease.02,Appease denied: there is nothing to offer.
 game.harbinger.HarbingerAppease.03,Too broke to appease: you need %s.
-game.harbinger.HarbingerAppease.04,"⚑ %s (Appease %d/%d): paid %s. The chance it hits is now %.2fx its base, bestie."
+game.harbinger.HarbingerAppease.04,"⚑ %s (Appease %d/%d): paid %s. The chance it hits is now %.2fx its base, no cap."
 game.harbinger.HarbingerBrace.01,Can't brace: %s.
 game.harbinger.HarbingerBrace.02,Brace denied: this era asks for nothing you can stockpile.
 game.harbinger.HarbingerBrace.03,Too broke to brace: you need %s.
@@ -405,7 +405,7 @@ game.harbinger.settleHarbinger.03,"⚑ The Last Passage opens, and nothing comes
 game.harbinger.settleHarbinger.04,"⚑ Ahh, the Last Passage opens, nothing comes through it. The warning was all cap from the start, and %s was the last to repeat it."
 game.harbinger.settleHarbinger.05,"⚑ Invited, and it came, just like %s said it would."
 game.harbinger.settleHarbinger.06,"⚑ You invited it, and it came, though it turns out the warning was all cap."
-game.harbinger.settleHarbinger.07,"⚑ %s was right, bestie."
+game.harbinger.settleHarbinger.07,"⚑ %s was right, ngl."
 game.harbinger.settleHarbinger.08,"⚑ %s called it, though the warning turned out to be all cap from the start."
 game.harbinger.settleHarbinger.09,"  Your prep held: if you Endure, %d%% of buildings fall and %.0f%% of stock is kept."
 game.harbinger.harbingerWhenText.01,by the end of this age
@@ -455,9 +455,9 @@ game.names.Amount.01,research progress
 game.overflow.returnPlanBanks.01,the plan's stash
 game.overflow.logBankReturn.01,"Plan check: %s went back to the stores%s, but they were full."
 game.overflow.logBankReturn.02,Stash: %s went back to the stores%s (%s).
-game.plan.PlanAddUpgrade.01,"The count has to be a whole number from 1 to %d, bestie."
+game.plan.PlanAddUpgrade.01,"The count has to be a whole number from 1 to %d, real talk."
 game.plan.PlanAddUpgrade.02,%s has no upgrade this age. Type 'upgrade' to see which ones do.
-game.plan.PlanAddUpgrade.03,"You're out of %s to upgrade, bestie."
+game.plan.PlanAddUpgrade.03,"You're out of %s to upgrade, periodt."
 game.plan.PlanAddUpgrade.04,%s is topped out at %d.
 game.plan.PlanAddUpgrade.05,"That plan item already holds %d, the max one item can take."
 game.plan.PlanAddBuild.01,Count's gotta be a whole number from 1 to %d.
@@ -523,7 +523,7 @@ game.plan_advance.planAdvanceBlocker.02,a catastrophe is lurking
 game.plan_advance.planAdvanceBlocker.03,still waiting on the requirements
 game.plan_advance.planAdvanceView.01,advance once it's ready
 game.plan_advance.planAdvanceView.02,advance to the 
-game.plan_deal.PlanAddDeal.01,"No deal %d with the %s (they offer %d). Type diplomacy deals to see them, bestie."
+game.plan_deal.PlanAddDeal.01,"No deal %d with the %s (they offer %d). Type diplomacy deals to see them, fr."
 game.plan_deal.PlanAddDeal.02,Deal %d with the %s got snatched already.
 game.plan_deal.PlanAddDeal.03,No trade with the %s: they're %s.
 game.plan_deal.PlanAddDeal.04,The plan already takes that deal.
@@ -534,11 +534,11 @@ game.plan_deal.planDealCheck.01,needs
 game.plan_deal.planDealCheck.02, researched
 game.plan_deal.planDealLabel.01,cut a deal with the 
 game.plan_optimize.PlanOptimize.01,"The plan's empty, nothing to optimize."
-game.plan_research.errTechOutOfSight.01,"No tech '%s' in sight, bestie."
+game.plan_research.errTechOutOfSight.01,"No tech '%s' in sight, no cap."
 game.plan_research.errTechOutOfSight.02," Did you mean '%s', fr?"
 game.plan_research.errTechOutOfSight.03,"%s Type research to see the tree, bestie."
 game.plan_research.PlanAddResearchChain.01,"%s is already in the plan, fr."
-game.plan_research.PlanAddResearchChain.02,"Can't plan %s: %s, bestie."
+game.plan_research.PlanAddResearchChain.02,"Can't plan %s: %s, bet."
 game.population.logScholarsArrived.01,"%s moved in with the %s, the vibes are nice."
 game.prestige.EarlyPrestigeLine.01,rizz point
 game.prestige.EarlyPrestigeLine.02,points of rizz
@@ -555,7 +555,7 @@ game.prestige.EarlyPrestigeLine.12,rizz point
 game.prestige.EarlyPrestigeLine.13,points of rizz
 game.prestige.EarlyPrestigeLine.14,age
 game.prestige.EarlyPrestigeLine.15,ages
-game.prestige.BuyUpgrade.01,"prestige points are now a forever production bonus; upgrades are no longer sold, bestie."
+game.prestige.BuyUpgrade.01,"prestige points are now a forever production bonus; upgrades are no longer sold, real talk."
 game.prestige.formatPrestigeEffect.01,"Retired, refunded with the old shop"
 game.prestige.formatPrestigeEffect.02,Not copped
 game.prestige.formatPrestigeEffect.03,Yours
@@ -564,7 +564,7 @@ game.research.StartResearch.01,tech
 game.research.StartResearch.02,"Type research list to see what you can research, bestie."
 game.research.StartResearch.03,"%s is already researched, we've been there."
 game.research.StartResearch.04,Already cooking %s. Type research cancel to stop it.
-game.research.StartResearch.05,"%s needs %s, bestie."
+game.research.StartResearch.05,"%s needs %s, tbh."
 game.research.StartResearch.06,%s is locked until %s is researched.
 game.research.StartResearch.07,"%s needs %s researched first, no cap."
 game.research.orList.01, or 
@@ -575,7 +575,7 @@ game.research.StartMemoryResearch.04,Still researching %s. Type research cancel 
 game.road_events.expRoadDuration.01,%d secs
 game.road_events.expRoadDuration.02,%d mins
 game.save.SaveGame.01,"the account this game belongs to got wiped, so nothing got saved, rip."
-game.save.BranchSave.01,"A save called '%s' already exists. Pick another name, bestie."
+game.save.BranchSave.01,"A save called '%s' already exists. Pick another name, fr."
 game.save.treeNotice.01,"News from the labs: the tech tree is complete, with new techs from the Modern Age to the Transcendent. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech, no cap."
 game.save.treeNotice.03,"Lab notes: the tech tree is complete, with new techs from the Renaissance to the Transcendent Age. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech, fr."
 game.save.treeNotice.04,"Tech tree patch: the tree gained new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech."
@@ -583,12 +583,12 @@ game.save.treeNotice.05,"Heads up: some commands now wait for a tech and say whi
 game.save.treeNotice.06,"Quick patch note: each age's wonder now needs one tech, its keystone, before it can be built, some commands wait for a tech and say which when you try them, and techs are priced by their age, with smaller bonuses that always count in full."
 game.save.treeNotice.07," Your run was already in the %s, so nothing new is locked, and the locks kick in when you next advance."
 game.save.sanitizeSaveName.01,"The save name is empty. Give it a name, bestie."
-game.save.sanitizeSaveName.02,"That save name is too long (the max is %d characters), bestie."
+game.save.sanitizeSaveName.02,"That save name is too long (the max is %d characters), ngl."
 game.save.sanitizeSaveName.03,This save name has a character a file name can't use.
 game.save.sanitizeSaveName.04,Save names can't have / or \ in them.
 game.save.sanitizeSaveName.05,"No '..' in save names, nice try."
 game.save.sanitizeSaveName.06,"Save names can't start with a dot, no cap."
-game.save.Error.01,"No save called '%s'. Type saves to list them, bestie."
+game.save.Error.01,"No save called '%s'. Type saves to list them, bet."
 game.save.RenameSave.01,New name: %w
 game.save.RenameSave.02,"That's the same name as the current one, bestie."
 game.save.RenameSave.03,Name taken: a save called '%s' already exists. Pick another one.
@@ -597,6 +597,73 @@ game.scholars.grantResearch.02,"The scholars gained some ground on %s, nice."
 game.scholars.grantResearch.03,enough to finish %s
 game.scholars.grantResearch.04,%s of %s
 game.scholars.shareOfTech.01,under 1%
-game.scholars.SetResearchShare.01,"Scholars can only research between 0 and 100 percent. You asked for %d, bestie."
+game.scholars.SetResearchShare.01,"Scholars can only research between 0 and 100 percent. You asked for %d, periodt."
 game.scholars.SetResearchShare.02,"Knowledge buildings bring the scholars, and %d%% of them will research (you've got none yet)."
 game.scholars.SetResearchShare.03,"%d%% of your scholars will research. Nothing's being researched, so all %s teach."
+game.scholars.SetResearchShare.04,brainiac
+game.scholars.SetResearchShare.05,brainiacs
+game.scholars.SetResearchShare.06,"%d%% of your scholars research: %d research and %d teach, no cap."
+game.scholars.startedResearchLine.01,Locked in on researching %s (%s).
+game.scholars.startedResearchLine.02,"Started researching %s. It needs scholars researching to go on, tbh."
+game.scholars.turnKnowledgeIntoWork.01,"Scholars had nothing to study, so the insight is gone, rip."
+game.scholars.turnKnowledgeIntoWork.02,"Your scholars made some progress on %s, nice."
+game.scholars.turnKnowledgeIntoWork.03,"Research done: %s, W."
+game.shares.keepSharesLive.01,Roster: 
+game.shares.keepSharesLive.02,"Workers show up on their own: the game recruits them while housing and food allow, puts them to work by your roster, and keeps the rest in reserve. Type workers to see them; workers auto-recruit off to recruit by hand, bestie."
+game.shares.describe.01,recruited %s (population %d/%d)
+game.shares.describe.02,bestie
+game.shares.describe.03,besties
+game.shares.describe.04,put 
+game.shares.describe.05,idle bestie
+game.shares.describe.06,idle besties
+game.shares.describe.07, to work
+game.shares.describe.08,shifted 
+game.shares.describe.09,bestie
+game.shares.describe.10,besties
+game.shares.describe.11, out of domains set to 0%
+game.shares.UnknownDomainError.01,Never heard of worker domain '%s'. The domains are %s.
+game.shares.SetWorkerShare.01,"A share is a percent from 0 to 100 (got %v), no cap."
+game.shares.applySharesLocked.01,Roster: 
+game.shares.applySharesLocked.02, Shifted 
+game.shares.applySharesLocked.03,bestie
+game.shares.applySharesLocked.04,besties
+game.shares.applySharesLocked.05," to match, fr."
+game.shares.applySharesLocked.06," The shares add up to %s, so each gets scaled down to fit."
+game.shares.applySharesLocked.07, You've got zero %s buildings yet; the share kicks in once you build one.
+game.shares.applySharesLocked.08," Food buildings get no workers now, watch your food, no cap."
+game.shares.sharesLine.01,all on auto (workers vibe with your buildings' slots)
+game.shares.sharesLine.02,the rest on autopilot
+game.soldiers.logSoldiersTrained.01,"%s finished training at the %s, W."
+game.soldiers.fillSoldierPosts.01,The %s has posts waiting on food: its soldiers roll in as the food allows.
+game.soldiers.logSoldiersArrived.01,%s linked up with the %s.
+game.soldiers.casualtyLine.01, %d of %d soldiers went down.
+game.soldiers.casualtyLine.02," All %d soldiers came home, W."
+game.soldiers.raidFallLocked.01,"  [red]%s fell defending the town, rip.[-]"
+game.soldiers.raidFallLocked.02,soldier
+game.soldiers.raidFallLocked.03,soldiers
+game.spoilers.AgeRef.01,the 
+game.spoilers.AgeRef.02,a mystery age
+game.trade.StartRoute.01,trade route
+game.trade.StartRoute.02,"Type trade route list to see the routes, ngl."
+game.trade.StartRoute.03,"%s needs %s, bestie."
+game.trade.StartRoute.04,%s is short on %s (you've got %s).
+game.trade.StartRoute.05,Already running: %s.
+game.trade.StopRoute.01,%s isn't running. Type trade route list to see your routes.
+game.trade.Tick.01,"Trade route %s stopped: it needs %s, rip."
+game.trade.Tick.02,"The route %s got disrupted: a war or embargo is blocking %s shipments, rough."
+game.trade.Tick.03, gave 
+game.trade.Tick.04,"%s skipped a run: it needs %s to export, rip."
+game.updater.CheckLatest.01,"dev build, update check isn't available"
+game.updater.CheckLatest.05,"GitHub sent back HTTP %d, that's cooked."
+game.updater.DownloadAndInstall.03,download flopped: HTTP %d
+game.updater.DownloadAndInstall.09,"Saved as:
+%s
+
+Swap out the current .exe to apply the update, bestie."
+game.updater.DownloadAndInstall.11,"Updated to %s
+
+Restart the game to play the new version, no cap."
+game.updater.updaterVerifyChecksum.01,"expected %.8s…, got %.8s…, that's sus"
+game.villagers.Snapshot.01,Worker
+game.wording.lossParts.01,bestie
+game.wording.lossParts.02,besties
