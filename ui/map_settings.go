@@ -19,7 +19,7 @@ import (
 type mapSettings struct {
 	Style string
 	Tier  mapmodel.GlyphTier
-	// Zoom is the skyline's zoom level ("far", "mid" or "close"); "" is mid.
+	// Zoom is the skyline's zoom level ("far", "wide", "mid" or "close"); "" is mid.
 	Zoom string
 	// Minimap: the dashboard shows the mini map above the Buildings list.
 	// Off unless the player turned it on (minimap on).

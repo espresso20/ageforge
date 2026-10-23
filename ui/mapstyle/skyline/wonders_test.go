@@ -22,6 +22,19 @@ import (
 // stand in the sky arc's scenes.
 const groundAges = 17
 
+// wonderKeys is the key of each age's wonder, by age index ("" for none).
+func wonderKeys(c *mapmodel.Catalog) []string {
+	out := make([]string, len(c.ByAge))
+	for a, ds := range c.ByAge {
+		for _, d := range ds {
+			if d.Wonder {
+				out[a] = d.Key
+			}
+		}
+	}
+	return out
+}
+
 // wonderKeyOf is the key of the wonder of age index a.
 func wonderKeyOf(a int) string { return wonderKeys(catalog())[a] }
 
@@ -145,10 +158,13 @@ func TestEveryWonderDraws(t *testing.T) {
 	}
 }
 
-// TestWonderIsTheTallest: in its own district the wonder stands at least half
-// as tall again as the tallest building (every ground age, every terminal
-// height, a thin town and a crowded one), and within the room the scene has.
-func TestWonderIsTheTallest(t *testing.T) {
+// TestWonderStandsOut: a wonder is judged by being the most obvious thing in
+// view, not by its height (it may be shorter than the towers beside it): in
+// every ground age, at every terminal height, a thin town and a crowded one,
+// the skyline holds exactly one wonder (this age's), drawn within the room
+// the scene has, in front of the buildings, with an outline of its own and
+// more than a couple of materials; and the frame shows nearly all of it.
+func TestWonderStandsOut(t *testing.T) {
 	for _, scale := range []float64{1, 4} {
 		for _, age := range ageKeys(0, groundAges) {
 			for _, h := range []int{16, 24, 30, 36, 45, 60} {
@@ -156,29 +172,87 @@ func TestWonderIsTheTallest(t *testing.T) {
 				v := newView()
 				ref := h - 6 // the scene's room above the ground at mid zoom
 				lay := v.layoutSized(m, ref, ref)
-				a := m.AgeIdx
-				wh, tall, tk := 0, 0, ""
+				var wonder *lotView
 				for i := range lay.lots {
 					lv := &lay.lots[i]
-					if lv.ml.Age != a {
+					if !lv.ml.Wonder {
+						if lv.depth <= dWonder {
+							t.Fatalf("%s at %d rows: %s is drawn as near as a wonder (depth %d)", age, h, lv.ml.Key, lv.depth)
+						}
 						continue
 					}
-					if lv.ml.Wonder {
-						wh = lv.spr.h
-					} else if lv.spr.h > tall {
-						tall, tk = lv.spr.h, lv.ml.Key
+					if wonder != nil {
+						t.Fatalf("%s at %d rows: two wonders on the skyline, %s and %s", age, h, wonder.ml.Key, lv.ml.Key)
 					}
+					wonder = lv
 				}
-				if wh == 0 {
+				if wonder == nil {
 					t.Fatalf("%s %d rows: no wonder in the layout", age, h)
 				}
-				if wh > ref-2 {
-					t.Errorf("%s at %d rows: the wonder is %d rows, the scene holds %d", age, h, wh, ref-2)
+				if wonder.ml.Key != wonderKeyOf(m.AgeIdx) || wonder.ml.Age != m.AgeIdx {
+					t.Errorf("%s at %d rows: the wonder drawn is %s, not this age's", age, h, wonder.ml.Key)
 				}
-				if 2*wh < 3*tall {
-					t.Errorf("%s at %d rows (x%v): the wonder is %d rows against %s at %d: under one and a half times as tall", age, h, scale, wh, tk, tall)
+				if wonder.spr.h > ref-2 || wonder.spr.h < wonderMinRows {
+					t.Errorf("%s at %d rows: the wonder is %d rows, the scene holds %d (at least %d)", age, h, wonder.spr.h, ref-2, wonderMinRows)
+				}
+				// a silhouette no building shares, in more than two materials
+				mask := func(sp *sprite) string {
+					var b strings.Builder
+					for i, c := range sp.c {
+						if c.ch == 0 {
+							b.WriteByte('.')
+						} else {
+							b.WriteByte('#')
+						}
+						if i%sp.w == sp.w-1 {
+							b.WriteByte('/')
+						}
+					}
+					return b.String()
+				}
+				own := mask(wonder.spr)
+				slots := map[slot]bool{}
+				for _, c := range wonder.spr.c {
+					if c.ch != 0 {
+						slots[c.fg] = true
+					}
+				}
+				if len(slots) < 3 {
+					t.Errorf("%s at %d rows: the wonder is drawn in %d materials", age, h, len(slots))
+				}
+				for i := range lay.lots {
+					if lv := &lay.lots[i]; !lv.ml.Wonder && lv.spr.w == wonder.spr.w && lv.spr.h == wonder.spr.h && mask(lv.spr) == own {
+						t.Errorf("%s at %d rows: %s has the wonder's silhouette", age, h, lv.ml.Key)
+					}
 				}
 			}
+		}
+	}
+	// in the frame: the wonder is not buried in the buildings round it
+	for _, age := range ageKeys(0, groundAges) {
+		m := wonderModel(fixture.Options{Age: age, Seed: 5, Scale: 4, Tick: tickAt(0.5)}, true, 0)
+		lot := wonderLot(t, m)
+		v := newView()
+		v.follow, v.cam = false, lot.X-40
+		s := v.compose(mapstyle.Frame{Model: m, Anim: 3}, 80, 45)
+		i := s.lay.find(lot.Key, lot.Copy)
+		if i < 0 {
+			t.Fatalf("%s: the wonder is not in the layout", age)
+		}
+		spr := s.lay.lots[i].spr
+		total, shown := 0, 0
+		for _, c := range spr.c {
+			if c.ch != 0 {
+				total++
+			}
+		}
+		for _, c := range v.fb.c {
+			if c.d == dWonder && c.ch != ' ' {
+				shown++
+			}
+		}
+		if shown*10 < total*8 {
+			t.Errorf("%s: only %d of the wonder's %d cells reach the frame", age, shown, total)
 		}
 	}
 }
@@ -603,38 +677,6 @@ func TestWonderPlaque(t *testing.T) {
 	v.cur = target{tLot, l.Key, l.Copy}
 	if txt := rowText(v, mu, x); !strings.Contains(txt, name(mu)+" 40%") {
 		t.Errorf("the plaque of a wonder 40%% banked does not say so:\n%s", txt)
-	}
-}
-
-// TestDistrictCap: the soft cap keeps order, leaves the low buildings alone
-// and never reaches the cap from below.
-func TestDistrictCap(t *testing.T) {
-	for maxH := 6; maxH <= 60; maxH += 3 {
-		for capH := 3; capH <= maxH; capH++ {
-			prev := 0
-			for h := 2; h <= maxH; h++ {
-				got := softCap(h, capH, maxH)
-				if got > capH {
-					t.Fatalf("softCap(%d, %d, %d) = %d: over the cap", h, capH, maxH, got)
-				}
-				if got < prev {
-					t.Fatalf("softCap(%d, %d, %d) = %d after %d: not monotone", h, capH, maxH, got, prev)
-				}
-				if h <= capH*6/10 && got != h {
-					t.Fatalf("softCap(%d, %d, %d) = %d: a building under the knee changed", h, capH, maxH, got)
-				}
-				prev = got
-			}
-			if maxH > capH*6/10 && softCap(maxH, capH, maxH) != capH {
-				t.Fatalf("softCap(%d, %d, %d): the tallest allowed does not reach the cap", maxH, capH, maxH)
-			}
-		}
-	}
-	if districtCap(30)*3 > 2*30+2 || districtCap(30) < 19 {
-		t.Errorf("districtCap(30) = %d", districtCap(30))
-	}
-	if districtCap(1) < 2 {
-		t.Errorf("districtCap(1) = %d", districtCap(1))
 	}
 }
 

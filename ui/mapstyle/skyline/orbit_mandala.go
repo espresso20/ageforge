@@ -52,31 +52,89 @@ func (v *view) mandalaFor(n, W, S int) *mandalaLayout {
 // composeMandala builds the Transcendent Age's frame into v.fb: the void,
 // a few stars, the mandala, the cursor on it, and the header and status
 // line. There is no panorama, so no camera and no minimap strip: the
-// mandala has every row between the two lines of chrome.
+// mandala has every row between the two lines of chrome. It has two zoom
+// levels: the whole mandala, and the close one, a window half as wide and
+// half as tall on its middle at twice the size, which the arrows pan (there
+// is nothing wider than the mandala for the far levels to show).
 func (v *view) composeMandala(f mapstyle.Frame, W, H int) *scene {
 	m := f.Model
+	v.sw, v.worldW = W, m.Skyline.Width
+	z := zMid
+	if v.zoom == zClose {
+		z = zClose
+	}
 	v.lastW = W
-	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: max(0, H-2), top: 1, sel: -1}
+	world := &v.fb
+	if z != zMid {
+		world = &v.lfb
+	}
+	S := max(0, H-2)
+	s := &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: S, top: 1, sel: -1,
+		zm: z, lw: W, ls: S, sw: W, sh: H, sS: S}
 	s.groundY = s.S // no ground: it is sky to the last row
 	s.p, s.mp = v.palettes(m)
 	s.cam = v.cam // left as it was: there is nothing to scroll
+	rings := m.Mandala()
+	l := v.mandalaFor(len(rings), W, s.S)
 	if v.inspect {
 		v.resolve(m, v.targetsFor(m, W, v.cam), f.VisitFrame())
-		v.reveal = false // nothing scrolls
+		if v.reveal && z == zClose { // the window goes to the cursor, when it is not in it
+			v.revealMandala(m, l, rings, S, W)
+		}
+		v.reveal = false // nothing else scrolls
 	}
-	v.fb.reset(W, H)
+	s.pan, s.offX = v.mandalaWindow(z, S, W)
+	world.reset(W, H)
 	o := newOrb(s, mapmodel.SkyMandala)
 	o.void()
 	o.mandalaStars()
-	rings := m.Mandala()
-	l := v.mandalaFor(len(rings), W, s.S)
 	o.drawMandala(l.g, rings, l.cx, l.cy, s.S)
 	o.catastrophe()
 	if v.inspect {
 		o.mandalaCursor(l, rings)
 	}
+	o.scene = s.present()
+	o.panBar()
 	o.chrome()
-	return s
+	return o.scene
+}
+
+// mandalaWindow is the close level's window over the mandala frame: how many
+// rows it is raised by and how many columns in it starts. It starts on the
+// middle, and the pan the keys keep is relative to that.
+func (v *view) mandalaWindow(z zoom, S, W int) (pan, offX int) {
+	win := (W + 1) / 2
+	hiX := W - win
+	hiY := S - 1 - (S-1)/2
+	v.panLo, v.panHi = -hiY/2, hiY-hiY/2
+	v.panXLo, v.panXHi = -hiX/2, hiX-hiX/2
+	if z != zClose {
+		return 0, 0
+	}
+	v.pan = clampInt(v.pan, v.panLo, v.panHi)
+	v.panX = clampInt(v.panX, v.panXLo, v.panXHi)
+	return hiY/2 + v.pan, hiX/2 + v.panX
+}
+
+// revealMandala moves the close window to the cursor's cell when it is not
+// in view (relative to the middle, which is where the window starts).
+func (v *view) revealMandala(m *mapmodel.Model, l *mandalaLayout, rings []mapmodel.MandalaRing, S, W int) {
+	dx, dy, ok := mandalaSpot(&l.g, m, rings, v.cur)
+	if !ok {
+		return
+	}
+	win := (W + 1) / 2
+	hiX, hiY := W-win, S-1-(S-1)/2
+	pan, offX := hiY/2+v.pan, hiX/2+v.panX
+	cx, cy := l.cx+dx, l.cy+dy
+	top, bottom := S-1-pan-(S-1)/2, S-1-pan
+	if cx < offX+2 || cx >= offX+win-2 {
+		offX = clampInt(cx-win/2, 0, hiX)
+	}
+	if cy < top+1 || cy > bottom-1 {
+		pan = clampInt(S-1-cy-(S-1)/4, 0, hiY)
+	}
+	v.pan, v.panX = pan-hiY/2, offX-hiX/2
 }
 
 // mandalaStars scatters a few faint stars over the pane: points of light
@@ -106,33 +164,71 @@ func (o *orb) mandalaStars() {
 // scroll, so the camera stays where it was (and follows the present again
 // after a prestige): Tab and the arrows put the cursor out and move it,
 // round a ring and from ring to ring; Home takes it to the core; Esc puts
-// it away.
+// it away. + and - (PgDn and PgUp) close in on the middle of the mandala
+// and back; while it is close in and the cursor is away the arrows pan the
+// window over it (Shift for half a window) and Home brings it back to the
+// middle first.
 func (v *view) mandalaKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	m, key := f.Model, ev.Key()
+	shift := ev.Modifiers()&tcell.ModShift != 0
 	move := func(dx, drow, tab int) {
 		if !v.inspect { // the first key only puts the cursor out
 			v.inspect, dx, drow, tab = true, 0, 0, 0
 		}
 		v.step(m, f.VisitFrame(), dx, drow, tab)
 	}
-	switch key {
-	case tcell.KeyTab, tcell.KeyBacktab:
+	closeUp := v.zoom == zClose
+	panning := closeUp && !v.inspect && (v.panHi > v.panLo || v.panXHi > v.panXLo)
+	pan := func(dx, dy int) {
+		wy, wx := max(1, (v.panHi-v.panLo+1)/2), max(1, (v.panXHi-v.panXLo+1)/2)
+		if !shift {
+			wy, wx = panStep, panStep
+		}
+		v.pan = clampInt(v.pan+dy*wy, v.panLo, v.panHi)
+		v.panX = clampInt(v.panX+dx*wx, v.panXLo, v.panXHi)
+	}
+	switch {
+	case key == tcell.KeyPgDn || key == tcell.KeyRune && (ev.Rune() == '+' || ev.Rune() == '='):
+		v.setMandalaZoom(zClose)
+	case key == tcell.KeyPgUp || key == tcell.KeyRune && (ev.Rune() == '-' || ev.Rune() == '_'):
+		v.setMandalaZoom(zMid)
+	case key == tcell.KeyTab || key == tcell.KeyBacktab:
 		d := 1
-		if key == tcell.KeyBacktab || ev.Modifiers()&tcell.ModShift != 0 {
+		if key == tcell.KeyBacktab || shift {
 			d = -1
 		}
 		move(0, 0, d)
-	case tcell.KeyLeft:
+	case key == tcell.KeyLeft:
+		if panning {
+			pan(-1, 0)
+			return true
+		}
 		move(-1, 0, 0)
-	case tcell.KeyRight:
+	case key == tcell.KeyRight:
+		if panning {
+			pan(1, 0)
+			return true
+		}
 		move(1, 0, 0)
-	case tcell.KeyUp:
+	case key == tcell.KeyUp:
+		if panning {
+			pan(0, 1)
+			return true
+		}
 		move(0, 1, 0)
-	case tcell.KeyDown:
+	case key == tcell.KeyDown:
+		if panning {
+			pan(0, -1)
+			return true
+		}
 		move(0, -1, 0)
-	case tcell.KeyHome:
+	case key == tcell.KeyHome:
+		if closeUp && (v.pan != 0 || v.panX != 0) { // the window comes back to the middle first
+			v.pan, v.panX = 0, 0
+			return true
+		}
 		v.inspect, v.cur = true, target{kind: tCore}
-	case tcell.KeyEscape:
+	case key == tcell.KeyEscape:
 		if !v.inspect {
 			return false
 		}
@@ -141,6 +237,21 @@ func (v *view) mandalaKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		return false
 	}
 	return true
+}
+
+// setMandalaZoom closes in on the mandala (zClose) or goes back to the whole
+// of it (anything else): the window starts on the middle.
+func (v *view) setMandalaZoom(z zoom) {
+	if z != zClose {
+		z = zMid
+	}
+	if v.zoom == z || v.zoom != zClose && z == zMid {
+		v.zoom = z // a level the mandala does not have is the whole of it
+		return
+	}
+	v.zoom = z
+	v.pan, v.panX = 0, 0
+	v.reveal = v.inspect
 }
 
 // breath is how brightly the wave of light lights ring k of n at this frame
@@ -293,16 +404,45 @@ func (o *orb) mandalaLegend() []seg {
 	}
 }
 
-// mandalaHints is the status line at rest: the keys, and where you are.
+// mandalaHints is the status line at rest: the keys, and where you are. Close
+// in, with the cursor away, the arrows pan the window instead of moving the
+// cursor, and the line says so.
 func (o *orb) mandalaHints() []seg {
 	key, dim := theme.RoleAccent, theme.RoleDim
 	tail := []seg{{"│ ", dim}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.01", "beyond form, in light"), theme.RoleLabel}}
+	zoom := []seg{{"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.18", "zoom  "), dim}}
+	panning := o.zm == zClose && !o.v.inspect
+	var pan string
+	if panning {
+		pan = vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.19", "pan  ")
+	}
+	join := func(parts ...[]seg) []seg {
+		var out []seg
+		for _, p := range parts {
+			out = append(out, p...)
+		}
+		return out
+	}
+	// the arrows: round a ring and from ring to ring, or the window's
+	move := func(round, ring string) []seg {
+		if panning {
+			return []seg{{"◄► ↑↓ ", key}, {pan, dim}}
+		}
+		return []seg{{"◄► ", key}, {round, dim}, {"↑↓ ", key}, {ring, dim}}
+	}
+	moveShort := func(word string) []seg {
+		if panning {
+			return []seg{{"◄► ↑↓ ", key}, {pan, dim}}
+		}
+		return []seg{{"◄► ↑↓ ", key}, {word, dim}}
+	}
 	return fitHints(o.W, tail,
-		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.03", "inspect  "), dim}, {"◄► ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.04", "round a ring  "), dim}, {"↑↓ ", key},
-			{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.05", "ring to ring  "), dim}, {"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.07", "the core  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.08", "overlay  "), dim}},
-		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.10", "inspect  "), dim}, {"◄► ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.11", "round a ring  "), dim}, {"↑↓ ", key},
-			{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.12", "ring to ring  "), dim}, {"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.14", "the core  "), dim}},
-		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.16", "inspect  "), dim}, {"◄► ↑↓ ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.17", "move  "), dim}},
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.03", "inspect  "), dim}}, move(vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.04", "round a ring  "), vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.05", "ring to ring  ")),
+			zoom, []seg{{"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.07", "the core  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.08", "overlay  "), dim}}),
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.10", "inspect  "), dim}}, move(vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.11", "round a ring  "), vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.12", "ring to ring  ")),
+			[]seg{{"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.14", "the core  "), dim}}),
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.16", "inspect  "), dim}}, moveShort(vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.17", "move  ")), zoom),
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.20", "inspect  "), dim}}, zoom),
 		[]seg{{" Tab ◄► ↑↓  ", key}},
 	)
 }

@@ -122,6 +122,9 @@ func wondersProvider(state game.GameState, _ int) string {
 
 	// Header
 	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.wondersProvider.01", "[gold]═══ Wonders: %d / %d ═══[-]\n", builtCount, totalCount))
+	if builtCount > 0 {
+		sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.15", "[gray]Press G for a gallery of the wonders you have built.[-]\n"))
+	}
 
 	// List each wonder. A locked wonder of an age the player cannot see named
 	// yet is only counted (spoilers.go).

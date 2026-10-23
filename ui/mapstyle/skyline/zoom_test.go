@@ -30,8 +30,12 @@ func press(v *view, m *mapmodel.Model, k tcell.Key, r rune, mod tcell.ModMask) b
 	return v.HandleKey(tcell.NewEventKey(k, r, mod), mapstyle.Frame{Model: m})
 }
 
+// walkSteps are the levels that scroll over the town: every one but far, which
+// fits all of it on the screen.
+var walkSteps = []zoom{zWide, zMid, zClose}
+
 // TestZoomScale: a building is drawn twice as wide at close and half as
-// wide at far as it is at mid, and the three levels show the same building.
+// wide at wide as it is at mid, and the three levels show the same building.
 func TestZoomScale(t *testing.T) {
 	for _, age := range []string{"bronze_age", "medieval_age", "industrial_age"} {
 		m := build(fixture.Options{Age: age, Seed: 5, Tick: tickAt(0.5)}, 0)
@@ -45,7 +49,7 @@ func TestZoomScale(t *testing.T) {
 			tried++
 			width := map[zoom]int{}
 			cells := map[zoom]int{}
-			for _, z := range zoomSteps {
+			for _, z := range walkSteps {
 				v, _ := zoomed(m, z, lv.ml.X, 160, 45)
 				v.noTraffic = true
 				sc := v.compose(mapstyle.Frame{Model: m, Anim: 3}, 160, 45)
@@ -69,16 +73,16 @@ func TestZoomScale(t *testing.T) {
 			if width[zClose] != 2*width[zMid] {
 				t.Errorf("%s %s: drawn %d wide at mid, %d at close", age, lv.ml.Key, width[zMid], width[zClose])
 			}
-			// (at far a lamp post or the like in the cell of the building's edge
+			// (at wide a lamp post or the like in the cell of the building's edge
 			// takes the cell's depth, so the edge cell may count as the lamp's)
-			if w, half := width[zFar], (width[zMid]+1)/2; w < half-1 || w > half+1 {
-				t.Errorf("%s %s: drawn %d wide at mid, %d at far", age, lv.ml.Key, width[zMid], w)
+			if w, half := width[zWide], (width[zMid]+1)/2; w < half-1 || w > half+1 {
+				t.Errorf("%s %s: drawn %d wide at mid, %d at wide", age, lv.ml.Key, width[zMid], w)
 			}
 			if cells[zClose] != 4*cells[zMid] {
 				t.Errorf("%s %s: %d cells at mid, %d at close, not four times as many", age, lv.ml.Key, cells[zMid], cells[zClose])
 			}
-			if cells[zFar] >= cells[zMid] || cells[zFar] == 0 {
-				t.Errorf("%s %s: %d cells at mid, %d at far", age, lv.ml.Key, cells[zMid], cells[zFar])
+			if cells[zWide] >= cells[zMid] || cells[zWide] == 0 {
+				t.Errorf("%s %s: %d cells at mid, %d at wide", age, lv.ml.Key, cells[zMid], cells[zWide])
 			}
 			if tried == 3 {
 				break
@@ -112,13 +116,19 @@ func TestZoomCentred(t *testing.T) {
 		_ = v.compose(mapstyle.Frame{Model: m}, w, 45)
 		v.follow = false
 		v.cam = m.Skyline.Width / 2
-		centre := func() int { return v.cam + v.zoom.cols(w)/2 }
+		centre := func() int {
+			if v.fitting() { // the whole town is in view: the spot it was centred on is kept
+				return v.fitC
+			}
+			return v.cam + v.zoom.cols(w)/2
+		}
 		want := centre()
 		for i, k := range []struct {
 			key  tcell.Key
 			r    rune
 			into zoom
-		}{{tcell.KeyRune, '+', zClose}, {tcell.KeyRune, '-', zMid}, {tcell.KeyRune, '-', zFar}, {tcell.KeyRune, '=', zMid}, {tcell.KeyRune, '=', zClose}, {tcell.KeyPgUp, 0, zMid}} {
+		}{{tcell.KeyRune, '+', zClose}, {tcell.KeyRune, '-', zMid}, {tcell.KeyRune, '-', zWide}, {tcell.KeyRune, '-', zFar},
+			{tcell.KeyRune, '=', zWide}, {tcell.KeyRune, '=', zMid}, {tcell.KeyRune, '=', zClose}, {tcell.KeyPgUp, 0, zMid}} {
 			if !press(v, m, k.key, k.r, 0) || v.zoom != k.into {
 				t.Fatalf("w=%d step %d: zoom is %s, want %s", w, i, v.zoom, k.into)
 			}
@@ -126,6 +136,12 @@ func TestZoomCentred(t *testing.T) {
 				t.Errorf("w=%d step %d (%s): the view is centred on %d, was %d", w, i, v.zoom, c, want)
 			}
 			s := v.compose(mapstyle.Frame{Model: m}, w, 45) // the frame agrees
+			if v.zoom == zFar {
+				if s.cam != 0 || s.lw != m.Skyline.Width {
+					t.Errorf("w=%d far: the frame shows %d columns from %d, not the whole town of %d", w, s.lw, s.cam, m.Skyline.Width)
+				}
+				continue
+			}
 			if c := s.cam + s.lw/2; abs(c-want) > 1 {
 				t.Errorf("w=%d step %d (%s): drawn centred on %d, was %d", w, i, v.zoom, c, want)
 			}
@@ -135,18 +151,23 @@ func TestZoomCentred(t *testing.T) {
 	v := newView()
 	v.sw = 160
 	_ = v.compose(mapstyle.Frame{Model: m}, 160, 45)
-	for _, z := range []zoom{zClose, zFar, zMid} {
+	for _, z := range []zoom{zClose, zWide, zFar, zMid} {
 		v.setZoom(z)
 		s := v.compose(mapstyle.Frame{Model: m}, 160, 45)
+		if z == zFar {
+			if !v.follow {
+				t.Errorf("far: the view stopped following the present")
+			}
+			continue
+		}
 		if !v.follow || s.cam != min(presentCam(m, s.lw), max(0, m.Skyline.Width-s.lw)) {
 			t.Errorf("%s: cam %d, follow %v: not on the present", z, s.cam, v.follow)
 		}
 	}
 }
 
-// TestZoomKeys: the zoom keys step far, mid, close and stop at the ends;
-// Shift-arrows are the half screen; the sky arc, which has no zoom, leaves
-// them to the prompt.
+// TestZoomKeys: the zoom keys step far, wide, mid, close and stop at the ends;
+// Shift-arrows are the half screen.
 func TestZoomKeys(t *testing.T) {
 	m := build(fixture.Options{Age: "industrial_age", Seed: 3}, 0)
 	v := newView()
@@ -160,8 +181,8 @@ func TestZoomKeys(t *testing.T) {
 		want string
 	}{
 		{tcell.KeyRune, '+', "close"}, {tcell.KeyRune, '+', "close"}, {tcell.KeyPgDn, 0, "close"},
-		{tcell.KeyRune, '-', "mid"}, {tcell.KeyPgUp, 0, "far"}, {tcell.KeyRune, '-', "far"}, {tcell.KeyRune, '_', "far"},
-		{tcell.KeyRune, '=', "mid"}, {tcell.KeyPgDn, 0, "close"},
+		{tcell.KeyRune, '-', "mid"}, {tcell.KeyPgUp, 0, "wide"}, {tcell.KeyRune, '-', "far"}, {tcell.KeyRune, '_', "far"},
+		{tcell.KeyRune, '=', "wide"}, {tcell.KeyRune, '=', "mid"}, {tcell.KeyPgDn, 0, "close"},
 	} {
 		if !press(v, m, k.key, k.r, 0) {
 			t.Errorf("key %v %q was not used", k.key, k.r)
@@ -182,8 +203,8 @@ func TestZoomKeys(t *testing.T) {
 	if v.ZoomLevel() != "mid" {
 		t.Errorf("the empty level is mid, not %s", v.ZoomLevel())
 	}
-	// the arrows move the same four screen columns at every level
-	for _, z := range zoomSteps {
+	// the arrows move the same four screen columns at every level that scrolls
+	for _, z := range walkSteps {
 		v.SetZoom(z.String())
 		_ = v.compose(mapstyle.Frame{Model: m}, 100, 30)
 		v.follow, v.cam = false, 600
@@ -197,18 +218,31 @@ func TestZoomKeys(t *testing.T) {
 			t.Errorf("%s: Shift-Right moved %d columns of %d", z, v.cam-600, z.cols(100))
 		}
 	}
-	// the sky arc has no zoom
-	for _, age := range []string{"space_age", "quantum_age"} {
-		sm := build(fixture.Options{Age: age, Seed: 3}, 0)
+	// the sky arc zooms with the same keys: its scenes step far, wide, mid,
+	// close, and the Transcendent Age's mandala steps mid, close
+	for _, age := range skyAges {
+		sm := skyModel(age, 3, 0)
 		sv := newView()
 		_ = sv.compose(mapstyle.Frame{Model: sm}, 100, 30)
-		for _, r := range "+-=_" {
-			if press(sv, sm, tcell.KeyRune, r, 0) {
-				t.Errorf("%s: %q was used in the sky arc", age, r)
-			}
+		type step struct {
+			r    rune
+			want string
 		}
-		if press(sv, sm, tcell.KeyPgUp, 0, 0) || press(sv, sm, tcell.KeyPgDn, 0, 0) {
-			t.Errorf("%s: PgUp or PgDn was used in the sky arc", age)
+		steps := []step{{'+', "close"}, {'+', "close"}, {'-', "mid"}, {'-', "wide"}, {'-', "far"}, {'_', "far"}, {'=', "wide"}, {'+', "mid"}, {'+', "close"}}
+		if sm.Sky() == mapmodel.SkyMandala { // nothing wider than the mandala to show
+			steps = []step{{'+', "close"}, {'+', "close"}, {'-', "mid"}, {'-', "mid"}, {'=', "close"}}
+		}
+		for i, st := range steps {
+			if !press(sv, sm, tcell.KeyRune, st.r, 0) {
+				t.Errorf("%s step %d: %q was not used", age, i, st.r)
+			}
+			if got := sv.ZoomLevel(); got != st.want {
+				t.Fatalf("%s step %d (%q): the zoom is %s, want %s", age, i, st.r, got, st.want)
+			}
+			_ = sv.compose(mapstyle.Frame{Model: sm}, 100, 30) // and the frame draws at every level
+		}
+		if !press(sv, sm, tcell.KeyPgUp, 0, 0) || !press(sv, sm, tcell.KeyPgDn, 0, 0) {
+			t.Errorf("%s: PgUp or PgDn was not used in the sky arc", age)
 		}
 	}
 }
@@ -218,7 +252,7 @@ func TestZoomKeys(t *testing.T) {
 func TestDistrictKeys(t *testing.T) {
 	m := build(fixture.Options{Age: "industrial_age", Seed: 3}, 0)
 	ds := m.Skyline.Districts
-	for _, z := range zoomSteps {
+	for _, z := range walkSteps {
 		v := newView()
 		v.SetZoom(z.String())
 		_ = v.compose(mapstyle.Frame{Model: m}, 160, 45)
@@ -316,7 +350,20 @@ func TestOverviewBox(t *testing.T) {
 // the colour of the tops, the wonders are marked, districts are named where
 // the name fits, and what is new is in the positive colour.
 func TestOverviewShowsTheSkyline(t *testing.T) {
-	m := build(fixture.Options{Age: "medieval_age", Seed: 3, Tick: tickAt(0.5)}, 2)
+	// the present age's wonder is built, so the bar has a wonder to mark
+	// (the skyline draws no other), and the town grows past the baseline
+	b := mapmodel.NewBuilder(catalog())
+	st := fixture.State(fixture.Options{Age: "medieval_age", Seed: 3, Tick: tickAt(0.5)})
+	key := wonderKeyOf(catalog().AgeIdx["medieval_age"])
+	bs := st.Buildings[key]
+	bs.Count, bs.WonderBank, bs.WonderBankFull = 1, nil, false
+	st.Buildings[key] = bs
+	st.CurrentAgeWonderKey, st.CurrentAgeWonderName = "", ""
+	since := mapmodel.VisitOf(b.Build(&st, nil))
+	for i := 1; i <= 2; i++ {
+		st = fixture.Grow(st, i)
+	}
+	m := b.Build(&st, since)
 	v, _ := zoomed(m, zMid, m.Skyline.Width/2, 160, 45)
 	v.changes = true
 	s := v.compose(mapstyle.Frame{Model: m, Anim: 3}, 160, 45)
@@ -594,7 +641,7 @@ func TestZoomTransforms(t *testing.T) {
 	}
 	dst := &fb{}
 	dst.reset(6, 3+5) // 5 scene rows: two and a half world rows
-	magnify(dst, src)
+	magnify(dst, src, 5, 0, 0)
 	for r := 0; r < 5; r++ {
 		wantRow := 3 - (4-r)/2 // the bottom screen row is half of the last world row
 		for x := 0; x < 6; x++ {

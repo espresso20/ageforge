@@ -20,7 +20,8 @@ All notable changes to AgeForge are documented here.
 - **VibeMode reaches the screens.** Panel labels, the help and the reports can switch to the slang script too.
 - **VibeMode reaches the map.** The map's labels, legends and inspect lines can switch to the slang script too.
 - **VibeMode reaches the stories.** Encounters, expeditions, raids, harbinger warnings and run endings can switch to the slang script too.
-- **Wonders you can recognise.** Every age's wonder is a landmark on the skyline, the tallest thing in its district, lit at night, with scaffolding that rises as you bank it.
+- **Wonders you can recognise.** Every age's wonder is a landmark on the skyline, lit at night, with scaffolding that rises as you bank it.
+- **One wonder at a time, and a gallery for the rest.** The skyline shows this age's wonder only; the Wonders panel has a gallery of every wonder you have built. Far zoom fits your whole civilization, the space scenes zoom, and arrow keys pan at close zoom.
 - **The last of storage.** Techs and bonuses that raised storage now raise production a little instead, culture buildings drop their storage, and the screens and wiki no longer mention stores.
 - **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
 - **Storage buildings boost production.** With no caps to raise, every storage building now adds 1% to all production, and older ones keep counting.

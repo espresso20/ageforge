@@ -252,7 +252,7 @@ type AccountPrefs struct {
 	// the default: the first registered style, the unicode glyph tier.
 	MapStyle  string `json:"map_style,omitempty"`
 	MapGlyphs string `json:"map_glyphs,omitempty"`
-	// MapZoom is the skyline map's zoom level ("far", "mid", "close"); empty
+	// MapZoom is the skyline map's zoom level ("far", "wide", "mid", "close"); empty
 	// is the default, mid.
 	MapZoom string `json:"map_zoom,omitempty"`
 	// MapIconsHint records that the Map panel's one-time "Type icons" hint

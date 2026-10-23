@@ -42,10 +42,20 @@ type view struct {
 
 	// zoom is how close the view looks (zoom.go); lastW is the world's
 	// columns the last frame showed (what the cursor maths assume), sw the
-	// screen's.
-	zoom  zoom
-	lastW int
-	sw    int
+	// screen's, worldW the town's.
+	zoom   zoom
+	lastW  int
+	sw     int
+	worldW int
+	// fitC is the world column the view was centred on before the far level
+	// fitted the town on the screen (fit.go).
+	fitC int
+	// pan raises the close level's window over the scene by that many world
+	// rows from where it starts; panLo and panHi are what the last frame
+	// let it be (the foot of the scene up to its top).
+	pan, panLo, panHi int
+	// the mandala's close window pans along as well as up (orbit_mandala.go)
+	panX, panXLo, panXHi int
 
 	lay     *layout
 	clay    *layout // the compact view's
@@ -107,11 +117,13 @@ func (v *view) SetOption(o mapstyle.Option, on bool) {
 // HandleKey: ← → scroll (or move the cursor while inspecting), Shift-← →
 // half a screen, PgDn PgUp (and + and -, = too) zoom in and out, [ and ]
 // jump to the previous and next district, Home End the oldest district and
-// the present, ↑ ↓ between depth rows and the ridge while inspecting, Tab
-// Shift-Tab through every target (the first Tab puts the cursor out), Esc
-// puts it away. The flows overlay is the map flows command (SetOption). The
-// Map panel hands this view the printable keys (+ - = [ ]) only while its
-// prompt is empty; the rest of the keys print nothing.
+// the present, ↑ ↓ between depth rows and the ridge while inspecting (at the
+// close level, with the cursor away, they raise and lower the view over a
+// tall tower, Shift for half a screen, and Home brings it back to the foot of
+// the scene), Tab Shift-Tab through every target (the first Tab puts the
+// cursor out), Esc puts it away. The flows overlay is the map flows command
+// (SetOption). The Map panel hands this view the printable keys (+ - = [ ])
+// only while its prompt is empty; the rest of the keys print nothing.
 func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	m := f.Model
 	if m != nil && m.Sky() == mapmodel.SkyMandala {
@@ -120,11 +132,14 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	w := v.viewW()
 	key := ev.Key()
 	shift := ev.Modifiers()&tcell.ModShift != 0
+	fitting := v.fitting() // the whole town is in view: nothing to scroll
 	scroll := func(dx int) {
+		if fitting {
+			return
+		}
 		v.follow = false
 		v.cam += dx
 	}
-	ground := m != nil && m.Sky() == mapmodel.SkyGround // the sky arc has no zoom
 	switch {
 	case key == tcell.KeyTab || key == tcell.KeyBacktab:
 		if m == nil {
@@ -146,24 +161,24 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		}
 		v.inspect = false
 	case key == tcell.KeyHome:
+		if v.zoom == zClose && v.pan != 0 { // the view comes back to the foot of the scene first
+			v.pan = 0
+			return true
+		}
 		v.follow, v.cam = false, 0
 	case key == tcell.KeyEnd:
 		v.follow = true
 	case key == tcell.KeyPgDn || key == tcell.KeyRune && (ev.Rune() == '+' || ev.Rune() == '='):
-		if !ground {
-			return false
-		}
-		v.setZoom(v.zoom.in())
+		v.setZoom(v.zoom.in(v.fitOK(v.sw)))
 	case key == tcell.KeyPgUp || key == tcell.KeyRune && (ev.Rune() == '-' || ev.Rune() == '_'):
-		if !ground {
-			return false
-		}
-		v.setZoom(v.zoom.out())
+		v.setZoom(v.zoom.out(v.fitOK(v.sw)))
 	case key == tcell.KeyRune && (ev.Rune() == '[' || ev.Rune() == ']'):
 		if m == nil {
 			return false
 		}
-		v.jumpDistrict(m, map[bool]int{true: -1, false: 1}[ev.Rune() == '['])
+		if !fitting {
+			v.jumpDistrict(m, map[bool]int{true: -1, false: 1}[ev.Rune() == '['])
+		}
 	case key == tcell.KeyLeft && shift:
 		scroll(-w / 2)
 	case key == tcell.KeyRight && shift:
@@ -176,15 +191,28 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 			scroll(v.zoom.scrollStep() * dx)
 		}
 	case key == tcell.KeyUp || key == tcell.KeyDown:
-		if !v.inspect || m == nil {
-			return false
+		up := key == tcell.KeyUp
+		if v.inspect && m != nil {
+			v.step(m, f.VisitFrame(), 0, map[bool]int{true: 1, false: -1}[up], 0)
+			return true
 		}
-		v.step(m, f.VisitFrame(), 0, map[bool]int{true: 1, false: -1}[key == tcell.KeyUp], 0)
+		if v.zoom != zClose || v.panHi <= v.panLo {
+			return false // nothing taller than the view to raise it over
+		}
+		step := panStep
+		if shift {
+			step = max(panStep, (v.panHi-v.panLo+1)/2)
+		}
+		v.pan = clampInt(v.pan+map[bool]int{true: step, false: -step}[up], v.panLo, v.panHi)
 	default:
 		return false
 	}
 	return true
 }
+
+// panStep is the world rows an up or down arrow raises or lowers the close
+// level's window by: four screen rows.
+const panStep = 2
 
 // ZoomLevel and SetZoom are mapstyle.Zoomable: the level persists in the map
 // settings.
@@ -197,7 +225,9 @@ func (v *view) SetZoom(level string) {
 }
 
 // setZoom changes the zoom level and keeps the view centred on the same
-// spot of the town (a view that follows the present keeps following it).
+// spot of the town (a view that follows the present keeps following it, and
+// one that leaves the far level, where the whole town was in view, comes
+// back to the spot it left).
 func (v *view) setZoom(z zoom) {
 	if z == v.zoom {
 		return
@@ -206,12 +236,29 @@ func (v *view) setZoom(z zoom) {
 	if sw <= 0 {
 		sw = 160
 	}
-	if !v.follow {
-		c := v.cam + v.zoom.cols(sw)/2
-		v.cam = c - z.cols(sw)/2
+	c := v.cam + v.viewCols(v.zoom, sw)/2
+	if v.fitting() {
+		c = v.fitC
+	}
+	into := z == zFar && v.fitOK(sw)
+	if into {
+		v.fitC = c
+	}
+	if !v.follow && !into {
+		v.cam = c - v.viewCols(z, sw)/2
 	}
 	v.zoom = z
+	v.pan = 0
 	v.reveal = v.inspect // the cursor stays in view
+}
+
+// viewCols is the world columns a view at zoom z on a screen sw wide shows:
+// the whole town at the far level, when that is wider than the wide level.
+func (v *view) viewCols(z zoom, sw int) int {
+	if z == zFar && v.fitOK(sw) {
+		return v.worldW
+	}
+	return z.cols(sw)
 }
 
 // jumpDistrict puts the left edge of the view on the start of the district
@@ -301,15 +348,24 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 		return v.composeSky(f, W, H, sky) // the sky arc: orbit.go
 	}
 	m := f.Model
+	v.sw, v.worldW = W, m.Skyline.Width
 	z := v.zoom
+	fit := z == zFar && v.fitOK(W)
+	if z == zFar && !fit {
+		z = zWide // the wide level already shows all of a town this small
+	}
 	lw, lh := z.cols(W), z.frameRows(H)
+	wcols, kx := lw, 1.0 // the world columns in view, and the share of them a frame column holds
+	if fit {
+		wcols, kx = m.Skyline.Width, float64(m.Skyline.Width)/float64(lw)
+	}
 	world := &v.fb
 	if z != zMid {
 		world = &v.lfb
 	}
-	v.sw, v.lastW = W, lw
+	v.lastW = wcols
 	s := &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: lw, H: lh, S: lh - 3, top: 1, sel: -1,
-		zm: z, lw: lw, ls: lh - 3, sw: W, sh: H}
+		zm: z, lw: wcols, ls: lh - 3, sw: W, sh: H, fit: fit, kx: kx}
 	s.groundY = s.S - 3
 	s.band = bandOf(m.AgeIdx)
 	s.p, s.mp = v.palettes(m)
@@ -317,18 +373,25 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	s.vis = v.vis
 	s.city, s.inCity = mapmodel.CityLookAt(m.AgeIdx)
 	defer func() { v.vis = s.vis }()
-	if v.follow {
+	if v.follow && !fit {
 		v.cam = presentCam(m, lw)
 	}
 	if v.inspect {
-		ts := v.targetsFor(m, lw, v.cam)
+		ts := v.targetsFor(m, wcols, v.camX())
 		if i := v.resolve(m, ts, f.VisitFrame()); i >= 0 && v.reveal {
-			v.revealTarget(m, ts[i], lw)
+			v.revealTarget(m, ts[i], wcols)
 		}
 	}
-	v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-lw))
-	s.cam = v.cam
-	s.ridge = ridgeItems(m, lw, s.cam)
+	if !fit {
+		v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-lw))
+	}
+	s.cam = v.camX()
+	s.pan = v.panFor(z, s.S, 0)
+	if fit {
+		s.ridge = ridgeItemsFar(m, lw)
+	} else {
+		s.ridge = ridgeItems(m, lw, s.cam)
+	}
 	if v.inspect && v.cur.kind == tLot {
 		s.sel = s.lay.find(v.cur.key, v.cur.cp)
 	}
@@ -343,24 +406,59 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	s.clouds()
 	s.farRidge()
 	s.nearLayer()
-	s.lots()
-	s.cityRoofs()
-	s.ground()
-	s.traffic()
+	if fit {
+		s.fitTown()
+		s.fitGround()
+	} else {
+		s.lots()
+		s.cityRoofs()
+		s.ground()
+		s.traffic()
+	}
 	s.visitor()
-	s.smoke()
+	if !fit {
+		s.smoke()
+	}
 	s.weather()
-	s.catastrophe()
+	if !fit {
+		s.catastrophe()
+	} else {
+		s.catastropheSky()
+	}
 	sc := s.present()
+	if fit {
+		sc.farFlags()
+		sc.districtNames(1)
+	}
 	sc.markers()
+	sc.panBar()
 	sc.chrome()
 	sc.clearCursorFill()
 	return sc
 }
 
+// panFor is the rows the close level's window is raised by in a frame of S
+// scene rows: the view's pan from where the scene wants the window to start
+// (def rows up from the foot), kept inside the scene, and the range the
+// view's pan may take is noted for the keys. Away from the close level
+// there is no window to raise.
+func (v *view) panFor(z zoom, S, def int) int {
+	hi := S - 1 - (S-1)/2 // the window's top reaches the scene's top
+	v.panLo, v.panHi = -def, hi-def
+	v.panXLo, v.panXHi = 0, 0
+	if z != zClose {
+		return 0
+	}
+	v.pan = clampInt(v.pan, v.panLo, v.panHi)
+	return def + v.pan
+}
+
 // revealTarget scrolls so the cursor's target is on screen.
 func (v *view) revealTarget(m *mapmodel.Model, t tgt, W int) {
 	v.reveal = false
+	if v.fitting() {
+		return // the whole town is in view
+	}
 	x := t.x - v.cam
 	if t.kind != tLot && t.kind != tTether { // the tether stands in the world, like a building
 		x = t.x - v.cam // ridge targets are placed in screen terms already

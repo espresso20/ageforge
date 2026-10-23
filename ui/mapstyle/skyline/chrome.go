@@ -67,22 +67,61 @@ func fitHints(w int, tail []seg, options ...[]seg) []seg {
 	return append(append([]seg(nil), pick...), tail...)
 }
 
+// hintMode is what the arrow keys do in the view: scroll along the town,
+// pan over its height (the close level of a scene taller than the view), or
+// nothing (the far level shows the whole town).
+type hintMode uint8
+
+const (
+	hintScroll hintMode = iota
+	hintPan
+	hintFit
+)
+
 // panoramaHints is the status line at rest of a panorama (the skyline on
 // the ground and in the sky): its keys, then where the view is.
-func panoramaHints(w int, where string) []seg {
+func panoramaHints(w int, where string, mode hintMode) []seg {
 	key, dim := theme.RoleAccent, theme.RoleDim
 	tail := []seg{{"│ ", dim}, {where, theme.RoleLabel}}
+	// the arrows' hint: each width has its own word for scroll
+	var pan string
+	if mode == hintPan {
+		pan = vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.33", "pan  ")
+	}
+	move := func(scroll string) []seg {
+		switch mode {
+		case hintPan:
+			return []seg{{" ◄► ↑↓ ", key}, {pan, dim}}
+		case hintFit:
+			return []seg{{" ", key}}
+		}
+		return []seg{{" ◄► ", key}, {scroll, dim}}
+	}
+	join := func(parts ...[]seg) []seg {
+		var out []seg
+		for _, p := range parts {
+			out = append(out, p...)
+		}
+		return out
+	}
+	lead := " ◄► Tab  "
+	switch mode {
+	case hintPan:
+		lead = " ◄► ↑↓ Tab  "
+	case hintFit:
+		lead = " Tab  "
+	}
 	return fitHints(w, tail,
-		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.01", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.02", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.03", "district  "), dim},
-			{"Home End ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.05", "oldest, present  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.07", "inspect  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.08", "overlay  "), dim}},
-		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.09", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.10", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.11", "district  "), dim},
-			{"Home End ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.13", "oldest, now  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.15", "inspect  "), dim}, {"map flows  ", key}},
-		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.16", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.17", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.18", "district  "), dim},
-			{"Home End  ", key}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.21", "inspect  "), dim}},
-		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.22", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.23", "zoom  "), dim}, {"[ ] ", key}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.25", "inspect  "), dim}},
-		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.26", "scroll  "), dim}, {"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.27", "zoom  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.29", "inspect  "), dim}},
-		[]seg{{" ◄► ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.30", "scroll  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.32", "inspect  "), dim}},
-		[]seg{{" ◄► Tab  ", key}},
+		join(move(vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.01", "scroll  ")), []seg{{"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.02", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.03", "district  "), dim},
+			{"Home End ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.05", "oldest, present  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.07", "inspect  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.08", "overlay  "), dim}}),
+		join(move(vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.09", "scroll  ")), []seg{{"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.10", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.11", "district  "), dim},
+			{"Home End ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.13", "oldest, now  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.15", "inspect  "), dim}, {"map flows  ", key}}),
+		join(move(vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.16", "scroll  ")), []seg{{"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.17", "zoom  "), dim}, {"[ ] ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.18", "district  "), dim},
+			{"Home End  ", key}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.21", "inspect  "), dim}}),
+		join(move(vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.22", "scroll  ")), []seg{{"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.23", "zoom  "), dim}, {"[ ] ", key}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.25", "inspect  "), dim}}),
+		join(move(vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.26", "scroll  ")), []seg{{"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.27", "zoom  "), dim}, {"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.29", "inspect  "), dim}}),
+		join(move(vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.30", "scroll  ")), []seg{{"Tab ", key}, {vibe.Line("ui.mapstyle.skyline.chrome.panoramaHints.32", "inspect  "), dim}}),
+		[]seg{{lead, key}},
 	)
 }
 
@@ -373,6 +412,22 @@ func (s *scene) status(bg tcell.Color) {
 	if di := m.Skyline.DistrictAt(s.cam + s.lw/2); di >= 0 {
 		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + vibe.Line("ui.mapstyle.skyline.chrome.status.15", " district")
 	}
+	if s.fit { // the whole town is in view, so no district is the one
+		where = vibe.Line("ui.mapstyle.skyline.chrome.status.17", "the whole town")
+	}
 	where = vibe.Line("ui.mapstyle.skyline.chrome.status.16", "zoom: ") + s.zm.String() + "  " + where
-	s.segs(0, y, bg, panoramaHints(s.W, where))
+	s.segs(0, y, bg, panoramaHints(s.W, where, s.arrowMode()))
+}
+
+// arrowMode is what the arrow keys do in this frame: nothing at the far
+// level, which shows the whole town, a pan over its height at the close
+// level when the scene is taller than the window, a scroll otherwise.
+func (s *scene) arrowMode() hintMode {
+	switch {
+	case s.fit:
+		return hintFit
+	case s.zm == zClose && s.v.panHi > s.v.panLo:
+		return hintPan
+	}
+	return hintScroll
 }
