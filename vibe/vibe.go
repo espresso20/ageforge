@@ -3,16 +3,18 @@
 //
 // The script is the sheets in words/vibe, a line per row id (the ids the
 // copy export gives every line of the game). The switch is one flag for the
-// whole process, set from the account's setting. Two things read the script:
+// whole process, set from the account's setting. Three things read the script:
 //
 //   - the ruleset overlay (package rules) swaps the text of every definition
-//     that has a row, when the ruleset is built, and
+//     that has a row, when the ruleset is built,
 //   - Line swaps one string of code in place, for a line the code writes
 //     itself (a title, a label, a word), and Sprintf and Errorf do the same
-//     for a format (a log line, a refusal), before the arguments go in.
+//     for a format (a log line, a refusal), before the arguments go in, and
+//   - E is Line for an entry of a table the code makes once: the entry keeps
+//     the id and reads when it is used.
 //
-// Each of the three takes the row id the copy export gives the string, and
-// the string. The id is part of the source, so it stays with the string when
+// Each of them takes the row id the copy export gives the string, and the
+// string. The id is part of the source, so it stays with the string when
 // the code around it moves (cmd/words vibe-wire writes it, vibe-lint checks
 // it).
 //
@@ -139,6 +141,31 @@ func Errorf(id, format string, a ...any) error {
 	}
 	return fmt.Errorf(lineFor(id, format), a...)
 }
+
+// Entry is a string of a table the code makes once (a list of key hints, the
+// headings of a panel): it carries its row id and its plain text, and reads
+// as Line would when it is used, not when the table was made. So a table at
+// the top of a file can follow the switch, with nothing to rebuild.
+//
+//	var panelKeys = []vibe.Entry{vibe.E("ui.panel.panelKeys.01", "Close the panel")}
+//	... panelKeys[0].String()
+//
+// Like Line, it takes the row id the copy export gives the string.
+type Entry struct {
+	id, plain string
+}
+
+// E is the text of a table entry: the row id and the plain string.
+func E(id, plain string) Entry { return Entry{id: id, plain: plain} }
+
+// String is the text as Line would give it now: the script's line for the row
+// while VibeMode is on and the script has one, else plain. Being a Stringer,
+// an Entry prints as its line with %s and %v.
+func (t Entry) String() string { return Line(t.id, t.plain) }
+
+// Plain is the text in the game's own English, whatever the switch says. It is
+// for the few places that must match or measure the English.
+func (t Entry) Plain() string { return t.plain }
 
 // lineFor is the script's line for a row id, else plain. VibeMode is on.
 func lineFor(id, plain string) string {

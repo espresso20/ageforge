@@ -40,7 +40,7 @@ var vibeColumns = []string{"id", "where", "kind", "age", "keep", "max", "plain",
 // vibe.Sprintf or vibe.Errorf(id, format, args...).
 type lineCall struct {
 	id, plain string
-	kind      string // Line, Sprintf or Errorf
+	kind      string // Line, E, Sprintf or Errorf
 	file      string
 	line      int
 	literal   bool // plain is a string literal (or a constant sum of them), which the lint can compare
@@ -57,7 +57,7 @@ func lineCalls(m *module) []lineCall {
 				return true
 			}
 			kind := call.Fun.(*ast.SelectorExpr).Sel.Name
-			if kind == "Line" && len(call.Args) != 2 {
+			if (kind == "Line" || kind == "E") && len(call.Args) != 2 {
 				return true
 			}
 			id, ok := stringOf(call.Args[0])
@@ -66,7 +66,7 @@ func lineCalls(m *module) []lineCall {
 			}
 			lc := lineCall{id: id, kind: kind, file: f.rel, line: m.fset.Position(call.Pos()).Line}
 			lc.plain, lc.literal = stringLit(call.Args[1])
-			if kind != "Line" {
+			if kind != "Line" && kind != "E" {
 				lc.args = len(call.Args) - 2
 				if call.Ellipsis.IsValid() {
 					lc.args = -1

@@ -345,7 +345,7 @@ func isVibeCall(call *ast.CallExpr) bool {
 		return false
 	}
 	switch sel.Sel.Name {
-	case "Line", "Sprintf", "Errorf":
+	case "Line", "Sprintf", "Errorf", "E":
 		return true
 	}
 	return false
@@ -364,6 +364,9 @@ func vibeCallKind(f *srcFile, call *ast.CallExpr) (string, bool) {
 	switch sel.Sel.Name {
 	case "Line", "Sprintf", "Errorf":
 		return sel.Sel.Name, true
+	case "E":
+		// An entry of a table is the string it carries, said another way, as Line is.
+		return "Line", true
 	}
 	return "", false
 }
