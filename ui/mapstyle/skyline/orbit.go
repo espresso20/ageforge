@@ -119,29 +119,53 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 		return v.composeMandala(f, W, H) // no panorama: the mandala alone
 	}
 	m := f.Model
-	v.lastW = W
-	s := &scene{v: v, m: m, fb: &v.fb, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: W, H: H, S: H - 3, top: 1, sel: -1, lw: W, ls: H - 3, sw: W, sh: H}
+	v.sw, v.worldW = W, m.Skyline.Width
+	z := v.zoom
+	fit := z == zFar && v.fitOK(W)
+	if z == zFar && !fit {
+		z = zWide
+	}
+	lw, lh := z.cols(W), z.frameRows(H)
+	wcols, kx := lw, 1.0
+	if fit {
+		wcols, kx = m.Skyline.Width, float64(m.Skyline.Width)/float64(lw)
+	}
+	world := &v.fb
+	if z != zMid {
+		world = &v.lfb
+	}
+	v.lastW = wcols
+	s := &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: lw, H: lh, S: lh - 3, top: 1, sel: -1,
+		zm: z, lw: wcols, ls: lh - 3, sw: W, sh: H, fit: fit, kx: kx}
 	s.groundY = skyGround(s.S)
+	ref := skyGround(H - 3) // the baseline the forms are sized for: the screen's own
 	s.band = bandOf(m.AgeIdx)
 	s.p, s.mp = v.palettes(m)
 	if sc == mapmodel.SkyQuantum {
-		v.groundBehind(m, s.groundY)
+		v.groundBehind(m, s.groundY, ref)
 	}
-	s.lay = v.skyLayoutFor(m, sc, s.groundY, false)
+	s.lay = v.skyLayoutSized(m, sc, s.groundY, ref, false)
 	s.vis = v.vis
 	defer func() { v.vis = s.vis }()
-	if v.follow {
-		v.cam = presentCam(m, W)
+	if v.follow && !fit {
+		v.cam = presentCam(m, lw)
 	}
 	if v.inspect {
-		ts := v.targetsFor(m, W, v.cam)
+		ts := v.targetsFor(m, wcols, v.camX())
 		if i := v.resolve(m, ts, f.VisitFrame()); i >= 0 && v.reveal {
-			v.revealTarget(m, ts[i], W)
+			v.revealTarget(m, ts[i], wcols)
 		}
 	}
-	v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-W))
-	s.cam = v.cam
-	s.ridge = ridgeItems(m, W, s.cam)
+	if !fit {
+		v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-lw))
+	}
+	s.cam = v.camX()
+	s.pan = v.panFor(z, s.S, skyPanDefault(s.S))
+	if fit {
+		s.ridge = ridgeItemsFar(m, lw)
+	} else {
+		s.ridge = ridgeItems(m, lw, s.cam)
+	}
 	if v.inspect && v.cur.kind == tLot {
 		s.sel = s.lay.find(v.cur.key, v.cur.cp)
 	}
@@ -149,9 +173,11 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 		e := m.Catalog.EpochIdx[ep]
 		s.gridOut = e == 3 || e == 4 || e == 5
 	}
-	v.fb.reset(W, H)
+	world.reset(lw, lh)
 	o := newOrb(s, sc)
-	s.vis = s.lay.visible(s.cam-16, s.cam+s.W+16, s.vis)
+	if !fit {
+		s.vis = s.lay.visible(s.cam-16, s.cam+s.W+16, s.vis)
+	}
 	o.void()
 	switch sc {
 	case mapmodel.SkyOrbit:
@@ -164,9 +190,13 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 		o.quantumBackdrop()
 	}
 	o.farObjects()
-	o.lots()
-	o.frontier()
-	o.traffic()
+	if fit {
+		o.fitLots()
+	} else {
+		o.lots()
+		o.frontier()
+		o.traffic()
+	}
 	if sc == mapmodel.SkyOrbit || sc == mapmodel.SkyDeep {
 		s.visitor()
 	}
@@ -175,9 +205,23 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 	}
 	o.catastrophe()
 	o.farCursorRows()
-	s.markers()
+	o.scene = s.present() // from here on the screen's own twin of the frame
+	if fit {
+		o.farFlags()
+		o.districtNames(3)
+	}
+	o.markers()
+	o.panBar()
 	o.chrome()
-	return s
+	return o.scene
+}
+
+// skyPanDefault is how many world rows up from the foot of a sky scene of S
+// rows the close level's window starts: the baseline, where the station or
+// the fleet stands, a little under the middle of it.
+func skyPanDefault(S int) int {
+	win := (S-1)/2 + 1
+	return clampInt(S-1-skyGround(S)-win*3/10, 0, S-1-(S-1)/2)
 }
 
 // newOrb resolves the scene's palette against the theme for this frame.
@@ -203,6 +247,9 @@ func newOrb(s *scene, sc mapmodel.SkyScene) *orb {
 		o.x0 = s.m.Skyline.Districts[0].X0 - 6
 	}
 	o.x1 = s.m.Skyline.FrontierX + 4 + 4*7 + 6
+	if s.fit { // the baseline's ends in the far frame's own columns
+		o.x0, o.x1 = s.fx(o.x0), s.fx(o.x1)
+	}
 	return o
 }
 
@@ -789,7 +836,7 @@ func (o *orb) status(bg tcell.Color) {
 	if di := m.Skyline.DistrictAt(o.cam + o.W/2); di >= 0 {
 		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + " " + skyWhere[o.sc]
 	}
-	o.segs(0, y, bg, panoramaHints(o.W, where))
+	o.segs(0, y, bg, panoramaHints(o.W, where, o.arrowMode()))
 }
 
 // skyWhere names a district in each scene's terms.
@@ -833,28 +880,33 @@ func skyLayKey(sc mapmodel.SkyScene, groundY int, compact bool) int {
 // the compact view's in v.sclay. Placement is the model's: every form is
 // centred on its lot's column.
 func (v *view) skyLayoutFor(m *mapmodel.Model, sc mapmodel.SkyScene, groundY int, compact bool) *layout {
+	return v.skyLayoutSized(m, sc, groundY, groundY, compact)
+}
+
+// skyLayoutSized is skyLayoutFor with the forms sized for a scene whose
+// baseline is at row ref: the zoomed-out levels compose a taller frame
+// (baseline at groundY) in which a form is still as tall as the screen's own
+// height makes it.
+func (v *view) skyLayoutSized(m *mapmodel.Model, sc mapmodel.SkyScene, groundY, ref int, compact bool) *layout {
 	key := skyLayKey(sc, groundY, compact)
 	slotp := &v.slay
 	if compact {
 		slotp = &v.sclay
 	}
-	if l := *slotp; l != nil && l.m == m && l.groundY == key {
+	if l := *slotp; l != nil && l.m == m && l.groundY == key && l.ref == ref {
 		return l
 	}
 	if v.sprites == nil || len(v.sprites) > 6000 {
 		v.sprites = map[spriteKey]*sprite{}
 	}
-	lay := &layout{m: m, groundY: key, scale: skyScale(groundY), width: max(m.Skyline.Width, 1)}
-	maxH := max(2, groundY-2)
-	present := m.AgeIdx
+	lay := &layout{m: m, groundY: key, ref: ref, scale: skyScale(ref), width: max(m.Skyline.Width, 1)}
+	maxH := max(2, ref-2)
+	present := presentAge(m)
 	keystone := keystoneWonder[sc]
-	if n := len(m.Skyline.Districts); n > 0 {
-		present = m.Skyline.Districts[n-1].Age
-	}
 	for i := range m.Skyline.Lots {
 		ml := &m.Skyline.Lots[i]
 		def := m.Catalog.Defs[ml.Key]
-		if def == nil {
+		if def == nil || hidden(ml, present) {
 			continue
 		}
 		b := m.Building(ml.Key)
@@ -965,13 +1017,13 @@ func (v *view) skyLayoutFor(m *mapmodel.Model, sc mapmodel.SkyScene, groundY int
 
 // groundBehind keeps the model's ground layout at the sky's baseline in
 // v.glay: the Quantum Age's time echo and the forms its lots flicker to.
-func (v *view) groundBehind(m *mapmodel.Model, groundY int) *layout {
-	if v.glay != nil && v.glay.m == m && v.glay.groundY == groundY {
+func (v *view) groundBehind(m *mapmodel.Model, groundY, ref int) *layout {
+	if v.glay != nil && v.glay.m == m && v.glay.groundY == groundY && v.glay.ref == ref {
 		return v.glay
 	}
 	keep := v.lay // layoutFor caches in the ground slot; keep it as it was
 	v.lay = nil
-	v.glay = v.layoutFor(m, groundY)
+	v.glay = v.layoutSized(m, groundY, ref)
 	v.lay = keep
 	return v.glay
 }

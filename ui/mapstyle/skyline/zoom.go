@@ -12,14 +12,17 @@ import (
 // frame of its own, and the zoom is how that frame reaches the screen:
 //
 //   - mid is the frame itself.
-//   - close composes a view half as wide and shows its foot, every cell
-//     drawn as 2x2 (a half block becomes two solid cells, so a roofline is
-//     chunky and exact), cropped at the top: the ground stays at the bottom
-//     and a tall tower runs off the top of the screen.
-//   - far composes a view twice as wide and twice as tall (the buildings
+//   - close composes a view half as wide and shows a window half as tall,
+//     every cell drawn as 2x2 (a half block becomes two solid cells, so a
+//     roofline is chunky and exact). The window starts at the foot of the
+//     scene and the up and down arrows raise it over a tall tower (pan).
+//   - wide composes a view twice as wide and twice as tall (the buildings
 //     keep the size the screen's own height gives them) and shrinks it 2x2
 //     into one cell, quadrant by quadrant, the nearest thing in each
 //     quadrant winning, so thin towers and rooflines survive as a skyline.
+//   - far fits the whole town to the screen's width (fit.go): the frame is
+//     the wide one's size, but each of its columns stands for as many world
+//     columns as it takes, and the nearest-wins shrink reads it out.
 //
 // Text (labels, tags, the cursor's name) and the bars are never scaled:
 // they are drawn on the screen afterwards (scene.present).
@@ -28,17 +31,20 @@ type zoom uint8
 
 const (
 	zMid   zoom = iota // today's scale: the zero value
-	zFar               // half scale
+	zFar               // the whole town fits the screen's width
 	zClose             // double scale
+	zWide              // half scale
 )
 
 // zoomSteps is the levels from the widest view to the closest.
-var zoomSteps = [...]zoom{zFar, zMid, zClose}
+var zoomSteps = [...]zoom{zFar, zWide, zMid, zClose}
 
 func (z zoom) String() string {
 	switch z {
 	case zFar:
 		return "far"
+	case zWide:
+		return "wide"
 	case zClose:
 		return "close"
 	}
@@ -52,35 +58,48 @@ func parseZoom(s string) (zoom, bool) {
 		return zMid, true
 	case "far":
 		return zFar, true
+	case "wide":
+		return zWide, true
 	case "close":
 		return zClose, true
 	}
 	return zMid, false
 }
 
-// in is the next level closer, out the next one wider (both stop at the ends).
-func (z zoom) in() zoom {
-	for i, s := range zoomSteps {
+// levels is the zoom levels a view steps through, widest first. A town
+// that is no wider than two screens has no far level of its own: the wide
+// one already shows all of it.
+func levels(fit bool) []zoom {
+	if fit {
+		return zoomSteps[:]
+	}
+	return zoomSteps[1:]
+}
+
+// in is the next level closer, out the next one wider (both stop at the
+// ends); fit says whether the far level is a level of its own.
+func (z zoom) in(fit bool) zoom  { return z.step(1, fit) }
+func (z zoom) out(fit bool) zoom { return z.step(-1, fit) }
+
+func (z zoom) step(d int, fit bool) zoom {
+	ls := levels(fit)
+	if z == zFar && !fit {
+		z = zWide
+	}
+	for i, s := range ls {
 		if s == z {
-			return zoomSteps[min(i+1, len(zoomSteps)-1)]
+			return ls[clampInt(i+d, 0, len(ls)-1)]
 		}
 	}
 	return z
 }
 
-func (z zoom) out() zoom {
-	for i, s := range zoomSteps {
-		if s == z {
-			return zoomSteps[max(i-1, 0)]
-		}
-	}
-	return z
-}
-
-// cols is how many world columns a screen sw wide shows.
+// cols is how many columns the world frame is for a screen sw wide: the
+// world columns the view shows, but at far, where it is the frame's
+// columns (the town's are more: fit.go).
 func (z zoom) cols(sw int) int {
 	switch z {
-	case zFar:
+	case zFar, zWide:
 		return 2 * sw
 	case zClose:
 		return (sw + 1) / 2
@@ -89,10 +108,10 @@ func (z zoom) cols(sw int) int {
 }
 
 // frameRows is the height of the world's own frame for a screen sh high:
-// the same at mid and close, twice the scene at far (the bars stay three
-// rows, unused).
+// the same at mid and close, twice the scene at wide and far (the bars stay
+// three rows, unused).
 func (z zoom) frameRows(sh int) int {
-	if z == zFar {
+	if z == zFar || z == zWide {
 		return 2*(sh-3) + 3
 	}
 	return sh
@@ -101,7 +120,7 @@ func (z zoom) frameRows(sh int) int {
 // scrollStep is the world columns an arrow key moves: four screen columns.
 func (z zoom) scrollStep() int {
 	switch z {
-	case zFar:
+	case zFar, zWide:
 		return 8
 	case zClose:
 		return 2
@@ -120,20 +139,20 @@ func floorDiv2(x int) int {
 func (s *scene) sx(x int) int {
 	switch s.zm {
 	case zClose:
-		return 2 * x
-	case zFar:
+		return 2 * (x - s.offX)
+	case zFar, zWide:
 		return floorDiv2(x)
 	}
 	return x
 }
 
 // sy is the screen scene row (before the header row) of the world frame's
-// scene row y (its upper cell, at close).
+// scene row y (its upper cell, at close, where the window is raised by pan).
 func (s *scene) sy(y int) int {
 	switch s.zm {
 	case zClose:
-		return 2*y - s.ls
-	case zFar:
+		return 2*(y+s.pan) - s.ls
+	case zFar, zWide:
 		return floorDiv2(y)
 	}
 	return y
@@ -149,13 +168,61 @@ func (s *scene) present() *scene {
 	sc := *s
 	sc.fb = &s.v.fb
 	sc.W, sc.H, sc.S = s.sw, s.sh, s.sh-3
+	if s.sS > 0 {
+		sc.S = s.sS
+	}
 	sc.fb.reset(sc.W, sc.H)
 	if s.zm == zClose {
-		magnify(sc.fb, &s.v.lfb)
+		magnify(sc.fb, &s.v.lfb, sc.S, s.pan, s.offX)
 	} else {
 		shrink(sc.fb, &s.v.lfb, s.tier == mapmodel.TierASCII)
 	}
 	return &sc
+}
+
+// panBar shows where the close level's window stands over a scene bigger
+// than it: a thin line down the right edge with a thick stretch where the
+// window is, and for the mandala, which is wider than the window too, the
+// same along the bottom. It is drawn on the screen, after the scene is
+// scaled.
+func (s *scene) panBar() {
+	if s.zm != zClose || s.W < 2 {
+		return
+	}
+	acc, dim := theme.Color(theme.RoleAccent), theme.Color(theme.RoleDim)
+	if S := s.ls; s.v.panHi > s.v.panLo {
+		hi := S - 1 - s.pan // the window's lowest world row
+		lo := hi - (S-1)/2  // and its highest
+		x := s.W - 1
+		for r := 0; r < S; r++ {
+			c := s.fb.at(x, s.Y(r))
+			if c == nil {
+				continue
+			}
+			bg := c.show()
+			if r >= lo && r <= hi {
+				s.fb.set(x, s.Y(r), '▐', theme.Legible(acc, bg, 3), bg, dBar)
+			} else {
+				s.fb.set(x, s.Y(r), '▕', theme.Legible(dim, bg, 2), bg, dBar)
+			}
+		}
+	}
+	if s.v.panXHi > s.v.panXLo && s.ls > 0 {
+		lo, hi := s.offX, s.offX+(s.W+1)/2-1
+		y := s.Y(s.ls - 1)
+		for x := 0; x < s.W-1; x++ { // (the corner is the other bar's)
+			c := s.fb.at(x, y)
+			if c == nil {
+				continue
+			}
+			bg := c.show()
+			if x >= lo && x <= hi {
+				s.fb.set(x, y, '▄', theme.Legible(acc, bg, 3), bg, dBar)
+			} else {
+				s.fb.set(x, y, '▁', theme.Legible(dim, bg, 2), bg, dBar)
+			}
+		}
+	}
 }
 
 // ------------------------------------------------------------ quadrants
@@ -182,17 +249,22 @@ func bgDepth(d uint8) uint8 {
 	return d + 20
 }
 
-// magnify draws the foot of src (the world frame) at 2x into dst: every
-// cell is a 2x2 block. A block glyph is exact (each of its four quadrants
-// becomes one solid cell); any other glyph is repeated.
-func magnify(dst, src *fb) {
-	S := dst.h - 3 // screen scene rows; the world frame has as many
+// magnify draws a window of src (the world frame) at 2x into dst: every
+// cell is a 2x2 block. The window is the foot of the frame, raised by pan
+// world rows and starting offX columns in; S is the scene rows of dst. A
+// block glyph is exact (each of its four quadrants becomes one solid cell);
+// any other glyph is repeated.
+func magnify(dst, src *fb, S, pan, offX int) {
+	srows := src.h - (dst.h - S) // the frame's scene rows: it has the same bars
 	for r := 0; r < S; r++ {
 		k := S - 1 - r // rows above the bottom one
-		ly := (src.h - 3) - 1 - k/2
+		ly := srows - 1 - k/2 - pan
+		if ly < 0 {
+			continue
+		}
 		low := k%2 == 0
 		for x := 0; x < dst.w; x++ {
-			c := src.at(x/2, ly+1)
+			c := src.at(x/2+offX, ly+1)
 			if c == nil {
 				continue
 			}

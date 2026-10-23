@@ -3,8 +3,9 @@ package skyline
 import "github.com/espresso20/ageforge/mapmodel"
 
 // wonders.go: the landmarks. Each age's wonder is a short drawing on the
-// same cell grammar as the buildings, the tallest and most detailed thing in
-// its district: wonderRows sizes it, wonderArt draws it, and while it is
+// same cell grammar as the buildings, the most detailed thing in its district
+// (not the tallest: it stands as high as its form wants and may be shorter than
+// a tower beside it): wonderRows sizes it, wonderArt draws it, and while it is
 // still being built scaffoldArt shows how much of it is banked.
 
 // wonderFamily lets a landmark wear a later period's finish.

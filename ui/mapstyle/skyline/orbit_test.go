@@ -209,7 +209,7 @@ func TestSkyInspect(t *testing.T) {
 		_ = draw(v, m, 160, 48, 1, mapmodel.TierUnicode, false)
 		want := map[target]bool{}
 		for _, l := range m.Skyline.Lots {
-			if m.Catalog.Defs[l.Key] != nil {
+			if m.Catalog.Defs[l.Key] != nil && !hidden(&l, presentAge(m)) { // one wonder at a time
 				want[target{tLot, l.Key, l.Copy}] = true
 			}
 		}

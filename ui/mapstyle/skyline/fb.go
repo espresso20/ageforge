@@ -17,6 +17,7 @@ import (
 // Depths, nearest first.
 const (
 	dTop       uint8 = 1  // cursor, markers, chrome
+	dBar       uint8 = 2  // the close level's scroll bar
 	dWeather   uint8 = 4  // rain, snow, glitch bands
 	dTag       uint8 = 6  // flows tags and new markers
 	dShip      uint8 = 12 // ships on the bay

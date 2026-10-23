@@ -128,8 +128,8 @@ func (s *scene) plaques() {
 	}
 	cur := &s.lay.lots[s.sel]
 	var gold tcell.Color
-	row := s.sy(s.groundY + 1)                                                       // the road: the cursor's own bar is the row under it
-	mark := s.sx(cur.x0-s.cam) + (s.sx(cur.x0-s.cam+cur.spr.w)-s.sx(cur.x0-s.cam))/2 // the cursor's pointer
+	row := s.sy(s.groundY + 1)                                                          // the road: the cursor's own bar is the row under it
+	mark := s.wsx(cur.x0-s.cam) + (s.wsx(cur.x0-s.cam+cur.spr.w)-s.wsx(cur.x0-s.cam))/2 // the cursor's pointer
 	draw := func(lv *lotView, label string) {
 		reach := lv.spr.w/2 + plaqueReach
 		if abs(cur.ml.X-lv.ml.X) > reach || cur == lv {
@@ -140,7 +140,7 @@ func (s *scene) plaques() {
 		}
 		text := " " + label + " "
 		n := textLen(text)
-		x := clampInt(s.sx(lv.ml.X-s.cam)-n/2, 0, max(0, s.W-n))
+		x := clampInt(s.wsx(lv.ml.X-s.cam)-n/2, 0, max(0, s.W-n))
 		if mark >= x-1 && mark <= x+n { // keep clear of the cursor's pointer
 			if lv.ml.X >= cur.ml.X {
 				x = min(mark+2, max(0, s.W-n))
@@ -164,7 +164,7 @@ func (s *scene) plaques() {
 	}
 	for i := range s.lay.sites {
 		lv := &s.lay.sites[i]
-		if lv.x0 >= s.cam+s.W+12 || lv.x0+lv.spr.w <= s.cam-12 {
+		if lv.x0 >= s.cam+s.lw+12 || lv.x0+lv.spr.w <= s.cam-12 {
 			continue
 		}
 		pct := 0
