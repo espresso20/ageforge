@@ -138,8 +138,8 @@ jobs:
 
           if [ "$REGRESSED" = "true" ]; then
             # Benchmark names come from the pull request's code: keep them in a
-            # code block with no backticks in it.
-            lines=$(tr -d '`' < bench-out/regressions.txt | head -n 20)
+            # code block with no backticks in it (\140 is the backtick).
+            lines=$(tr -d '\140' < bench-out/regressions.txt | head -n 20)
             body=$(printf '%s\n**Benchmarks:** slower by more than 15%% (reporting only, nothing is blocked).\n\n```\n%s\n```\n\nThe full benchstat table is in the [job summary](%s).' "$marker" "$lines" "$RUN_URL")
           elif [ -n "$existing" ]; then
             body=$(printf '%s\n**Benchmarks:** nothing is slower by more than 15%% now. Details in the [job summary](%s).' "$marker" "$RUN_URL")
