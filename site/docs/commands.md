@@ -85,6 +85,7 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Factions & Diplomacy](factions.md). |
 | `plan list` | Print the plan with each item's status |
 | `plan remove <n>` (or `plan rm`) | Remove item `n` |
+| `plan optimize` (or `plan reorder`) | Reorder the planned buildings for the fastest growth, mixing homes and producers, and say how much sooner the plan finishes. It only keeps an order that is faster. See [Optimizing the order](plan.md#optimizing-the-order) |
 | `plan up <n>` | Move item `n` one place up |
 | `plan down <n>` | Move item `n` one place down |
 | `plan clear` | Empty the plan |
@@ -97,6 +98,7 @@ plan advance
 plan deal merchant_guild 2
 plan up 3
 plan rm 4
+plan optimize
 ```
 
 ---
@@ -524,6 +526,21 @@ motion off
 ```
 
 Your theme is saved per account, not in any game save, so it carries across every save and new game. See [Themes & Accessibility](themes.md) for the themes and the [badges](badges.md#themes-from-badges) that unlock them. `motion` is saved per account too; with no account loaded it lasts for the session.
+
+---
+
+## VibeMode
+
+| Command | Description |
+|---|---|
+| `vibemode [on\|off]` | Bare, show whether VibeMode is on. `on` swaps the game's words for a second script, written in GenZ: the names and descriptions of buildings and techs, the log, the words for the people of your town. `off` brings the plain words back. The words change at once, with no restart (default off). Saved per account |
+
+```
+vibemode on
+vibemode off
+```
+
+VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are exactly what they are with it off, and a save made in one script loads in the other. This release carries the switch and a first handful of lines: a few buildings, a tech, a badge, an event, a title, some of the words for the people of your town and two lines of the interface. Every line that has no VibeMode version yet reads as it always did. The setting is saved per account; with no account loaded it lasts for the session.
 
 ---
 

@@ -16,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle/all"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // shameMessages are randomly chosen at session start when the cheater badge is active.
@@ -49,6 +50,12 @@ type Dashboard struct {
 	engine *game.GameEngine
 	pages  *tview.Pages
 	root   *tview.Flex
+
+	// helpTitle is the Help panel's title in the script now in force: the one
+	// string of code VibeMode's hook (vibe.Line) reads as yet.
+	helpTitle func() string
+	// vibeSeen is the VibeMode switch as the dashboard last drew it.
+	vibeSeen bool
 
 	// Tabs (only economy is permanent background)
 	economyTab *EconomyTab
@@ -248,7 +255,9 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	})
 	d.overlayMgr.Register("history", "Civilization History", historyProvider)
 	d.overlayMgr.Register("buildings", "Buildings", buildingsProvider)
-	d.overlayMgr.Register("help", "Help", helpProvider)
+	d.helpTitle = func() string { return vibe.Line("ui.dashboard.NewDashboard.18", "Help") }
+	d.vibeSeen = vibe.On()
+	d.overlayMgr.Register("help", d.helpTitle(), helpProvider)
 
 	// The Map panel: the active map style full screen (map, and its aliases
 	// citymap and worldmap). Its settings travel with the account.
@@ -815,11 +824,23 @@ func (d *Dashboard) StopUpdates() {
 	}
 }
 
+// syncVibe writes again the text the dashboard set once, when VibeMode has
+// been switched since (by the command, or by an account that was switched to).
+// The text the panels draw from the game's state follows on its own: the
+// engine moved onto the other ruleset when the switch changed.
+func (d *Dashboard) syncVibe() {
+	if on := vibe.On(); on != d.vibeSeen {
+		d.vibeSeen = on
+		d.overlayMgr.Retitle("help", d.helpTitle())
+	}
+}
+
 // refresh is the central UI update function, called every 500 ms from StartUpdates.
 // It must only be called from within app.QueueUpdateDraw (i.e. on the tview goroutine).
 // Order matters: catastrophe modal and age splash are checked first because they may
 // swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {
+	d.syncVibe()
 	// Check for pending age splash (set by bus handler under engine lock)
 	if d.pendingAgeSplash != "" {
 		newAge := d.pendingAgeSplash
@@ -1566,6 +1587,10 @@ func (d *Dashboard) submitInput() {
 	}
 	if result.Icons {
 		d.startIcons()
+	}
+	if result.Vibe {
+		d.syncVibe()
+		d.refresh()
 	}
 	if result.MapPref.Key != "" {
 		d.applyMapPref(result.MapPref)

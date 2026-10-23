@@ -49,6 +49,7 @@ var notScanned = map[string]string{
 	"cmd/spritegen":       "a developer tool",
 	"cmd/words":           "this tool",
 	"smoke":               "the smoke suite",
+	"vibe":                "the VibeMode switch, no text (its script is data, in words/vibe)",
 	"detmath":             "arithmetic, no text",
 	"mapmodel/fixture":    "test fixtures",
 	"pkg/nerdfont":        "the icon font installer's glyph table and system paths",

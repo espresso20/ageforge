@@ -1,19 +1,30 @@
 package game
 
-// withLockHints fills LockTech and LockTechPath on every building that its
-// age has unlocked and a tech still locks (the buildings NeedsTech names),
-// so the panels can show them greyed out with the research they need.
-func (ge *GameEngine) withLockHints(bs map[string]BuildingState) map[string]BuildingState {
-	for key, b := range bs {
-		if !ge.Buildings.AgeUnlocked(key) || !ge.Buildings.TechLocked(key) {
-			continue
-		}
-		tech := ge.Buildings.defs[key].RequiredTech
-		b.LockTech = ge.techName(tech)
-		b.LockTechPath = ge.lockTechPath(tech)
-		bs[key] = b
+import (
+	"slices"
+
+	"github.com/espresso20/ageforge/config"
+)
+
+// buildingExtras is what the engine says of one building for its snapshot:
+// the scholars a copy comes with and the most copies that can be built (a
+// knowledge building), the soldiers a copy comes with (a military building),
+// and, so the panels can show a building its age has unlocked greyed out, the
+// research a tech still locks it behind: LockTech and LockTechPath, for the
+// buildings whose needsTech names one.
+func (ge *GameEngine) buildingExtras(scholars, maxCount, soldiers int, needsTech string) buildingExtra {
+	var x buildingExtra
+	if scholars > 0 {
+		x.scholars, x.scholarCap = scholars, maxCount
 	}
-	return bs
+	if soldiers > 0 {
+		x.soldiers = ge.soldierPerCopy(config.BuildingDef{Soldiers: soldiers})
+	}
+	if needsTech != "" {
+		x.lockTech = ge.techName(needsTech)
+		x.lockTechPath = ge.lockTechPath(needsTech)
+	}
+	return x
 }
 
 // lockTechPath is the display names of the prerequisites of tech that are
@@ -21,20 +32,25 @@ func (ge *GameEngine) withLockHints(bs map[string]BuildingState) map[string]Buil
 // prerequisite that is itself still to come. Empty when tech's own
 // prerequisites are all researched.
 func (ge *GameEngine) lockTechPath(tech string) []string {
-	var path []string
-	seen := map[string]bool{tech: true}
-	queue := []string{tech}
-	for len(queue) > 0 {
-		cur := queue[0]
-		queue = queue[1:]
-		for _, p := range ge.Research.defs[cur].Prerequisites {
-			if seen[p] || ge.Research.IsResearched(p) {
+	// The techs met, in the order they were found: the first is tech itself,
+	// and the ones after it are the path. A path is a handful of techs, so a
+	// scan of this beats a set, and the buffer stays on the stack.
+	var buf [24]string
+	found := append(buf[:0], tech)
+	for next := 0; next < len(found); next++ {
+		for _, p := range ge.Research.defs[found[next]].Prerequisites {
+			if slices.Contains(found, p) || ge.Research.IsResearched(p) {
 				continue
 			}
-			seen[p] = true
-			path = append(path, ge.techName(p))
-			queue = append(queue, p)
+			found = append(found, p)
 		}
+	}
+	if len(found) == 1 {
+		return nil
+	}
+	path := make([]string, len(found)-1)
+	for i, key := range found[1:] {
+		path[i] = ge.techName(key)
 	}
 	return path
 }

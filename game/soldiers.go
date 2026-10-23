@@ -348,18 +348,6 @@ func (ge *GameEngine) logSoldiersArrived(def config.BuildingDef, n int) {
 	ge.addLog(LogRoutine, fmt.Sprintf("%s moved in with the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }
 
-// withSoldierFigures adds to a snapshot of the buildings the soldiers a copy of
-// each military building comes with.
-func (ge *GameEngine) withSoldierFigures(bs map[string]BuildingState) map[string]BuildingState {
-	for key, b := range bs {
-		if def, ok := ge.Buildings.defs[key]; ok && def.Soldiers > 0 {
-			b.Soldiers = ge.soldierPerCopy(def)
-			bs[key] = b
-		}
-	}
-	return bs
-}
-
 // soldiersPostedSave is the posted soldiers for a save: nil when there are
 // none.
 func (ge *GameEngine) soldiersPostedSave() map[string]int {

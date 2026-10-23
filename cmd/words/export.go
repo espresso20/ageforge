@@ -70,12 +70,15 @@ func (r *row) kept() []kept {
 }
 
 // sheet renders records as one CSV file.
-func sheet(records [][]string) []byte {
+func sheet(records [][]string) []byte { return sheetWith(columns, records) }
+
+// sheetWith renders records as one CSV file under the given header row.
+func sheetWith(header []string, records [][]string) []byte {
 	var buf bytes.Buffer
 	buf.WriteString(bom)
 	w := csv.NewWriter(&buf)
 	w.UseCRLF = true
-	_ = w.Write(columns)
+	_ = w.Write(header)
 	_ = w.WriteAll(records)
 	w.Flush()
 	return buf.Bytes()

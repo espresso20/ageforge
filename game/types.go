@@ -264,14 +264,18 @@ type ResourceState struct {
 	Breakdown RateBreakdown
 }
 
-// BuildingState represents a building type's current state
+// BuildingState represents a building type's current state.
+//
+// The flags (Unlocked, CanBuild, AtMaxCount, WonderBankFull, IsLegacy) sit
+// together on purpose: spread between wider fields each pads out to a word, and
+// a snapshot holds one of these per building, so the state would fall into the
+// next size class of the allocator (288 bytes for 256).
 type BuildingState struct {
 	Count       int
 	Name        string
 	Category    string
 	Description string
 	Flavor      string // cosmetic personality line; mirrors BuildingDef.Flavor, may be empty
-	Unlocked    bool
 	AgeKey      string // age this building first becomes available
 	// NeedsTech is the tech key a building of an unlocked age still waits
 	// for (Unlocked is false until it is researched); "" otherwise. A wonder
@@ -286,19 +290,13 @@ type BuildingState struct {
 	LockTech     string
 	LockTechPath []string
 	// Cost for next building
-	NextCost   map[string]float64
-	CanBuild   bool
-	AtMaxCount bool
+	NextCost map[string]float64
 	// Wonder-specific: resources banked toward construction
-	WonderBank     map[string]float64
-	WonderBankFull bool
+	WonderBank map[string]float64
 	// Phase 6: worker assignment fields
 	WorkerDomain    string
 	WorkerCapacity  int // per-building-instance capacity
 	WorkersAssigned int // total workers assigned across all instances
-	// IsLegacy is set for an older building (older.go): functional but its
-	// line has a newer rung for this age, so no more are built. Read live.
-	IsLegacy bool
 	// PendingUpgrade is the building an older building held in copies can be
 	// upgraded to; "" if none.
 	PendingUpgrade string
@@ -315,6 +313,14 @@ type BuildingState struct {
 	Soldiers int
 	// Phase 9: ruins
 	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
+
+	Unlocked       bool
+	CanBuild       bool
+	AtMaxCount     bool
+	WonderBankFull bool
+	// IsLegacy is set for an older building (older.go): functional but its
+	// line has a newer rung for this age, so no more are built. Read live.
+	IsLegacy bool
 }
 
 // WorkerState represents all worker info
@@ -737,7 +743,6 @@ type MilestoneSnapshotParams struct {
 	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
 	KnowledgeCount  int // scholars
-	ResearchedTechs map[string]bool
 	// Sight, when set, hides every unfinished milestone that needs an age the
 	// player cannot see named yet (spoilers.go). nil shows them all.
 	Sight        *AgeSight

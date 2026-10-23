@@ -15,18 +15,26 @@ import (
 // not older (the current rung, the last of a line that has paused, or one in
 // no line at all: storage, a wonder, a monument, a knowledge building).
 func (bm *BuildingManager) UpgradeTarget(key string) (config.BuildingDef, bool) {
-	if bm.age == nil {
-		return config.BuildingDef{}, false
-	}
-	target, ok := bm.rules.UpgradeTarget(key, bm.age())
+	targetKey, ok := bm.UpgradeTargetKey(key)
 	if !ok {
 		return config.BuildingDef{}, false
 	}
 	// The manager's own definition: it is the one the prices are worked from.
-	if def, has := bm.defs[target.Key]; has {
-		target = def
+	if def, has := bm.defs[targetKey]; has {
+		return def, true
 	}
+	target, _ := bm.rules.Building(targetKey)
 	return target, true
+}
+
+// UpgradeTargetKey is the key of UpgradeTarget's building, without copying the
+// definition: what the snapshot of every building asks.
+func (bm *BuildingManager) UpgradeTargetKey(key string) (string, bool) {
+	if bm.age == nil {
+		return "", false
+	}
+	targetKey, ok := bm.rules.UpgradeKeys(bm.age())[key]
+	return targetKey, ok
 }
 
 // IsOlder reports whether a building is an older building.
