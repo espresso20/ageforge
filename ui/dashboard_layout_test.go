@@ -201,8 +201,14 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 					if w >= 120 && !strings.Contains(row, "/tick") {
 						t.Errorf("%s: a resource row lost its rate's unit at a size with room for it: %q", where, row)
 					}
-					if w >= 120 && !strings.ContainsAny(row, "█░▓") {
-						t.Errorf("%s: a resource row has no bar at a size with room for one: %q", where, row)
+					// Only culture and faith show progress toward something; an
+					// ordinary resource has no bar, for stock has no ceiling.
+					progress := strings.HasPrefix(row, " Culture") || strings.HasPrefix(row, " Faith")
+					if w >= 120 && progress && !strings.ContainsAny(row, "█░▓") {
+						t.Errorf("%s: a progress row has no bar at a size with room for one: %q", where, row)
+					}
+					if !progress && strings.ContainsAny(row, "█░▓") {
+						t.Errorf("%s: a resource row shows a store bar: %q", where, row)
 					}
 				}
 			}
@@ -359,8 +365,12 @@ func TestResourceRowsLineUp(t *testing.T) {
 				t.Errorf("width %d: rates end at columns %d and %d: %q", w, rateEnd, end, line)
 			}
 			rateEnd = end
-			if f.bar > 0 {
-				start := runeLen(line[:strings.IndexAny(line, "█░▓")])
+			if f.bar > 0 && r.progress {
+				at := strings.IndexAny(line, "█░▓")
+				if at < 0 {
+					t.Fatalf("width %d: a progress row has no bar: %q", w, line)
+				}
+				start := runeLen(line[:at])
 				if barStart >= 0 && start != barStart {
 					t.Errorf("width %d: bars start at columns %d and %d: %q", w, barStart, start, line)
 				}
