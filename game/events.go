@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // ActiveEvent represents a currently active timed event
@@ -127,7 +128,7 @@ func (em *EventManager) nameOf(ae ActiveEvent) (string, bool) {
 	case nameFromChain:
 		for _, c := range em.rules.MilestoneChains() {
 			if c.Key == ae.Ref {
-				return c.Name + " Speed Boost", true
+				return c.Name + vibe.Line("game.events.nameOf.01", " Speed Boost"), true
 			}
 		}
 	case nameFromAwakening:
@@ -444,7 +445,7 @@ func (em *EventManager) GetActiveForSave() []ActiveEvent {
 func buildLossSuffix(event ActiveEvent) string {
 	var parts []string
 	if event.WorkersLost > 0 {
-		parts = append(parts, fmt.Sprintf("[yellow]%d workers lost[-]", event.WorkersLost))
+		parts = append(parts, vibe.Sprintf("game.events.buildLossSuffix.01", "[yellow]%d workers lost[-]", event.WorkersLost))
 	}
 	if len(event.ResourcesLost) > 0 {
 		keys := make([]string, 0, len(event.ResourcesLost))
@@ -454,7 +455,7 @@ func buildLossSuffix(event ActiveEvent) string {
 		sort.Strings(keys)
 		for _, k := range keys {
 			amt := event.ResourcesLost[k]
-			parts = append(parts, fmt.Sprintf("[yellow]%s %s lost[-]", amountText(amt), resourceLabel(k)))
+			parts = append(parts, vibe.Sprintf("game.events.buildLossSuffix.02", "[yellow]%s %s lost[-]", amountText(amt), resourceLabel(k)))
 		}
 	}
 	if len(parts) == 0 {

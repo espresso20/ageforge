@@ -11,6 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -380,12 +381,7 @@ func harbingerPercent(p float64) string {
 }
 
 // capFirstUI upper-cases the first letter: "the Oracle" → "The Oracle".
-func capFirstUI(s string) string {
-	if s == "" {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
-}
+func capFirstUI(s string) string { return textfmt.Capitalize(s) }
 
 // harbingerGarrisonLine says whether the army is counted in the Brace
 // preview above it, and by how much.

@@ -1,9 +1,8 @@
 package game
 
 import (
-	"fmt"
-
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Deal items: `plan deal <civ> <n>` takes a civilization's trade deal (see
@@ -42,18 +41,18 @@ func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 		return err
 	}
 	if fs.DealsFor != ge.age || n < 1 || n > len(fs.Deals) {
-		return fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(fs, ge.age)))
+		return vibe.Errorf("game.plan_deal.PlanAddDeal.01", "There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(fs, ge.age)))
 	}
 	d := fs.Deals[n-1]
 	if d.Taken {
-		return fmt.Errorf("Deal %d with the %s is already taken.", n, def.Name)
+		return vibe.Errorf("game.plan_deal.PlanAddDeal.02", "Deal %d with the %s is already taken.", n, def.Name)
 	}
 	if why := dealBlocked(*fs); why != "" {
-		return fmt.Errorf("The %s won't trade: they are %s.", def.Name, why)
+		return vibe.Errorf("game.plan_deal.PlanAddDeal.03", "The %s won't trade: they are %s.", def.Name, why)
 	}
 	for _, it := range ge.plan {
 		if it.Kind == PlanDeal && it.Key == key && it.Deal == d.ID {
-			return fmt.Errorf("The plan already takes that deal.")
+			return vibe.Errorf("game.plan_deal.PlanAddDeal.04", "The plan already takes that deal.")
 		}
 	}
 	if planLoad(ge.plan) >= MaxPlanItems {
@@ -69,11 +68,11 @@ func (ge *GameEngine) planDealGone(it PlanItem) string {
 	fs, i := ge.findDeal(it.Key, it.Deal)
 	switch {
 	case fs == nil:
-		return "unknown civilization"
+		return vibe.Line("game.plan_deal.planDealGone.01", "unknown civilization")
 	case i < 0 || fs.DealsFor != ge.age:
-		return "the offer is gone"
+		return vibe.Line("game.plan_deal.planDealGone.02", "the offer is gone")
 	case fs.Deals[i].Taken:
-		return "already taken"
+		return vibe.Line("game.plan_deal.planDealGone.03", "already taken")
 	}
 	return ""
 }
@@ -85,7 +84,7 @@ func (ge *GameEngine) planDealCheck(it PlanItem) (d FactionDeal, blocked string)
 	d = fs.Deals[i]
 	if lock, shut := ge.featureLock(config.FeatureDiplomacy); shut {
 		tech, _ := ge.rules.Tech(lock.Tech)
-		return d, "needs " + tech.Name + " researched"
+		return d, vibe.Line("game.plan_deal.planDealCheck.01", "needs ") + tech.Name + vibe.Line("game.plan_deal.planDealCheck.02", " researched")
 	}
 	blocked, _ = ge.dealProblem(fs, d)
 	return d, blocked
@@ -114,7 +113,7 @@ func (ge *GameEngine) planDealLabel(it PlanItem) string {
 	if def, ok := ge.Diplomacy.factionDefs[it.Key]; ok {
 		name = def.Name
 	}
-	return "deal with the " + name
+	return vibe.Line("game.plan_deal.planDealLabel.01", "deal with the ") + name
 }
 
 // planDealView is deal item it for the UI; a waiting deal's price counts

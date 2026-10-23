@@ -18,6 +18,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // saveHMACKey is the HMAC signing key for save integrity. Its presence in the
@@ -577,7 +578,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	ge.mu.RLock()
 	if ge.runOrphaned {
 		ge.mu.RUnlock()
-		return fmt.Errorf("the account this game belongs to was wiped, so the game was not saved")
+		return vibe.Errorf("game.save.SaveGame.01", "the account this game belongs to was wiped, so the game was not saved")
 	}
 	dir := ge.saveDirLocked()
 	// A save of the game in play is the game last played (current_game.go).
@@ -852,7 +853,7 @@ func (ge *GameEngine) BranchSave(newName string) error {
 		return err
 	}
 	if SaveExists(clean) {
-		return fmt.Errorf("A save named '%s' already exists. Pick another name.", clean)
+		return vibe.Errorf("game.save.BranchSave.01", "A save named '%s' already exists. Pick another name.", clean)
 	}
 	parent := ge.ActiveSaveName()
 	ge.SetActiveParentName(parent)
@@ -1272,24 +1273,24 @@ func (ge *GameEngine) grantFeaturesLocked(keys []string) {
 // its next age the grace is over, and the line says only what changed and
 // what it keeps. Must be called with the write lock held.
 func (ge *GameEngine) treeNotice(from int) string {
-	changed := "Research update: the tech tree is complete, with new techs from the Modern Age to the Transcendent. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech."
+	changed := vibe.Line("game.save.treeNotice.01", "Research update: the tech tree is complete, with new techs from the Modern Age to the Transcendent. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech.")
 	const kept = " A command you were already using stays open for the rest of this run, and everything you have researched or built stays."
 	if from < 4 {
-		changed = "Research update: the tech tree is complete, with new techs from the Renaissance to the Transcendent Age. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech."
+		changed = vibe.Line("game.save.treeNotice.03", "Research update: the tech tree is complete, with new techs from the Renaissance to the Transcendent Age. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech.")
 	}
 	if from < 3 {
-		changed = "Research update: the tech tree gained new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech."
+		changed = vibe.Line("game.save.treeNotice.04", "Research update: the tech tree gained new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech.")
 	}
 	if from < 2 {
-		changed = "Research update: some commands now wait for a tech and say which when you try them, and a tech's bonus is smaller but always counts in full."
+		changed = vibe.Line("game.save.treeNotice.05", "Research update: some commands now wait for a tech and say which when you try them, and a tech's bonus is smaller but always counts in full.")
 	}
 	if from < 1 {
-		changed = "Research update: each age's wonder now needs one tech, its keystone, before it can be built, some commands wait for a tech and say which when you try them, and techs are priced by their age, with smaller bonuses that always count in full."
+		changed = vibe.Line("game.save.treeNotice.06", "Research update: each age's wonder now needs one tech, its keystone, before it can be built, some commands wait for a tech and say which when you try them, and techs are priced by their age, with smaller bonuses that always count in full.")
 	}
 	if !ge.inTreeGrace() {
 		return changed + kept
 	}
-	return changed + fmt.Sprintf(" Your game was already in the %s, so nothing new is locked there: the locks start when you next advance.", ge.progress.GetAgeName(ge.age)) + kept
+	return changed + vibe.Sprintf("game.save.treeNotice.07", " Your game was already in the %s, so nothing new is locked there: the locks start when you next advance.", ge.progress.GetAgeName(ge.age)) + kept
 }
 
 // pacingNotice is the line a save written before the one-week curve gets
@@ -1665,22 +1666,22 @@ func sanitizeSaveName(name string) (string, error) {
 	name = strings.TrimSpace(name)
 
 	if name == "" {
-		return "", fmt.Errorf("The save name is empty. Give the save a name.")
+		return "", vibe.Errorf("game.save.sanitizeSaveName.01", "The save name is empty. Give the save a name.")
 	}
 	if len(name) > maxSaveNameLen {
-		return "", fmt.Errorf("That save name is too long (the most is %d characters).", maxSaveNameLen)
+		return "", vibe.Errorf("game.save.sanitizeSaveName.02", "That save name is too long (the most is %d characters).", maxSaveNameLen)
 	}
 	if strings.ContainsRune(name, 0) {
-		return "", fmt.Errorf("That save name has a character a file name cannot use.")
+		return "", vibe.Errorf("game.save.sanitizeSaveName.03", "That save name has a character a file name cannot use.")
 	}
 	if strings.ContainsAny(name, `/\`) {
-		return "", fmt.Errorf("Save names cannot contain / or \\.")
+		return "", vibe.Errorf("game.save.sanitizeSaveName.04", "Save names cannot contain / or \\.")
 	}
 	if strings.Contains(name, "..") {
-		return "", fmt.Errorf("Save names cannot contain '..'.")
+		return "", vibe.Errorf("game.save.sanitizeSaveName.05", "Save names cannot contain '..'.")
 	}
 	if strings.HasPrefix(name, ".") {
-		return "", fmt.Errorf("Save names cannot start with a dot.")
+		return "", vibe.Errorf("game.save.sanitizeSaveName.06", "Save names cannot start with a dot.")
 	}
 	return name, nil
 }
@@ -1694,7 +1695,7 @@ type noSaveError struct {
 }
 
 func (e noSaveError) Error() string {
-	return fmt.Sprintf("No save named '%s'. Type saves to list them.", e.name)
+	return vibe.Sprintf("game.save.Error.01", "No save named '%s'. Type saves to list them.", e.name)
 }
 
 func (e noSaveError) Unwrap() error { return e.err }
@@ -1737,16 +1738,16 @@ func RenameSave(oldName, newName string) error {
 	}
 	dst, err := sanitizeSaveName(newName)
 	if err != nil {
-		return fmt.Errorf("New name: %w", err)
+		return vibe.Errorf("game.save.RenameSave.01", "New name: %w", err)
 	}
 	if !SaveExists(src) {
 		return noSaveError{name: src, err: fs.ErrNotExist}
 	}
 	if src == dst {
-		return fmt.Errorf("The new name is the same as the current one.")
+		return vibe.Errorf("game.save.RenameSave.02", "The new name is the same as the current one.")
 	}
 	if SaveExists(dst) {
-		return fmt.Errorf("A save named '%s' already exists. Pick another name.", dst)
+		return vibe.Errorf("game.save.RenameSave.03", "A save named '%s' already exists. Pick another name.", dst)
 	}
 	srcPath := savePath(src)
 	// Write the renamed file into the same directory the source lives in so a

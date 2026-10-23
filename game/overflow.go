@@ -1,6 +1,6 @@
 package game
 
-import "fmt"
+import "github.com/espresso20/ageforge/vibe"
 
 // ===== Plan banks from before the storage wall =====
 //
@@ -66,7 +66,7 @@ func (ge *GameEngine) returnPlanBanks(why string) {
 		}
 	}
 	if held {
-		ge.logBankReturn("the plan's banks", why, back)
+		ge.logBankReturn(vibe.Line("game.overflow.returnPlanBanks.01", "the plan's banks"), why, back)
 	}
 }
 
@@ -78,8 +78,8 @@ func (ge *GameEngine) logBankReturn(whose, why string, back map[string]float64) 
 		when = " " + why
 	}
 	if len(back) == 0 {
-		ge.addLog("info", fmt.Sprintf("Plan: %s went back to the stores%s, but they were full.", whose, when))
+		ge.addLog("info", vibe.Sprintf("game.overflow.logBankReturn.01", "Plan: %s went back to the stores%s, but they were full.", whose, when))
 		return
 	}
-	ge.addLog("info", fmt.Sprintf("Plan: %s went back to the stores%s (%s).", whose, when, Amounts(back)))
+	ge.addLog("info", vibe.Sprintf("game.overflow.logBankReturn.02", "Plan: %s went back to the stores%s (%s).", whose, when, Amounts(back)))
 }

@@ -194,36 +194,24 @@ func kindLegend(g *xgrid, x, y int, k peopleKind, housed bool) int {
 	return g.put(x, y, FormatNumber(float64(k.count)), xText)
 }
 
+// A log line is picked for a panel by what it is about (LogEntry.About): by
+// its words if it was written in the game's own English, as it always was, and
+// by the tags it was given where it was written if it was written under
+// VibeMode's script, whose words are its own.
+
 // peopleEvent says whether a log line is about people: someone recruited,
 // moved in, starved or fell.
-func peopleEvent(msg string) bool {
-	m := strings.ToLower(msg)
-	for _, s := range []string{"roster:", "recruited", "moved in", "starved", "worker", "villager", "population",
-		"scholar", "soldier", "reserve", "homes", "campaign", "expedition returned", "came home"} {
-		if strings.Contains(m, s) {
-			return true
-		}
-	}
-	return false
-}
+func peopleEvent(e game.LogEntry) bool { return e.About(game.TagPeople) }
 
 // armyEvent says whether a log line is about soldiers.
-func armyEvent(msg string) bool {
-	m := strings.ToLower(msg)
-	for _, s := range []string{"soldier", "campaign", "garrison", "defense", "raid", "army"} {
-		if strings.Contains(m, s) {
-			return true
-		}
-	}
-	return false
-}
+func armyEvent(e game.LogEntry) bool { return e.About(game.TagArmy) }
 
 // recentLog is the newest n log lines (newest first) that keep accepts.
-func recentLog(st game.GameState, keep func(string) bool, n int) []game.LogEntry {
+func recentLog(st game.GameState, keep func(game.LogEntry) bool, n int) []game.LogEntry {
 	var out []game.LogEntry
 	for i := len(st.Log) - 1; i >= 0 && len(out) < n; i-- {
 		e := st.Log[i]
-		if e.Type == "debug" || !keep(e.Message) {
+		if e.Type == "debug" || !keep(e) {
 			continue
 		}
 		out = append(out, e)
@@ -232,12 +220,11 @@ func recentLog(st game.GameState, keep func(string) bool, n int) []game.LogEntry
 }
 
 // logKind is the colour a log line takes: bad news red, a gain green.
-func logKind(msg string) xk {
-	m := strings.ToLower(msg)
+func logKind(e game.LogEntry) xk {
 	switch {
-	case strings.Contains(m, "starv"), strings.Contains(m, "died"), strings.Contains(m, "fell"), strings.Contains(m, "lost"):
+	case e.About(game.TagBad):
 		return xBad
-	case strings.Contains(m, "moved in"), strings.Contains(m, "recruited"), strings.Contains(m, "joined"), strings.Contains(m, "home"):
+	case e.About(game.TagGood):
 		return xGood
 	}
 	return xText
@@ -254,7 +241,7 @@ func drawLog(g *xgrid, x, y, w, rows int, lines []game.LogEntry, none string) {
 		if i >= rows {
 			break
 		}
-		g.putFit(x, y+i, w, strings.TrimSpace(plainLogText(e.Message)), logKind(e.Message))
+		g.putFit(x, y+i, w, strings.TrimSpace(plainLogText(e.Message)), logKind(e))
 	}
 }
 

@@ -6,6 +6,7 @@
 //	go run ./cmd/words left           what the export leaves out, and why
 //	go run ./cmd/words vibe-export [dir]  write the rows VibeMode's script has no line for yet
 //	go run ./cmd/words vibe-lint [dir]    check the script's rows against the export and the source
+//	go run ./cmd/words vibe-wire [sheet]  write the vibe calls into the source for a sheet's texts (--dry-run to look)
 //
 // The export finds the text by parsing the Go source, so nothing in the game
 // has to register its strings anywhere. The import rewrites the same string
@@ -35,7 +36,7 @@ func main() {
 // run carries out one command line from the directory wd.
 func run(args []string, wd string, out io.Writer) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: go run ./cmd/words export|import|status|left|vibe-export|vibe-lint [dir]")
+		return fmt.Errorf("usage: go run ./cmd/words export|import|status|left|vibe-export|vibe-lint|vibe-wire [dir]")
 	}
 	root, err := findRoot(wd)
 	if err != nil {
@@ -61,8 +62,11 @@ func run(args []string, wd string, out io.Writer) error {
 	if len(rest) > 1 {
 		return fmt.Errorf("%s takes one folder, got %d: %s", args[0], len(rest), strings.Join(rest, " "))
 	}
-	if (*dry || *noSame) && args[0] != "import" {
-		return fmt.Errorf("--dry-run and --no-same belong to import")
+	if *noSame && args[0] != "import" {
+		return fmt.Errorf("--no-same belongs to import")
+	}
+	if *dry && args[0] != "import" && args[0] != "vibe-wire" {
+		return fmt.Errorf("--dry-run belongs to import and vibe-wire")
 	}
 	dir := filepath.Join(root, filepath.FromSlash(defaultDir))
 	if args[0] == "vibe-export" {
@@ -75,6 +79,16 @@ func run(args []string, wd string, out io.Writer) error {
 		}
 	}
 	switch args[0] {
+	case "vibe-wire":
+		sheet := areaLog.file
+		if len(rest) == 1 {
+			sheet = rest[0]
+		}
+		c, err := read(root)
+		if err != nil {
+			return err
+		}
+		return vibeWire(c, root, sheet, *dry, out)
 	case "export":
 		c, err := read(root)
 		if err != nil {
@@ -118,5 +132,5 @@ func run(args []string, wd string, out io.Writer) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("unknown command %q: use export, import, status, left, vibe-export or vibe-lint", args[0])
+	return fmt.Errorf("unknown command %q: use export, import, status, left, vibe-export, vibe-lint or vibe-wire", args[0])
 }

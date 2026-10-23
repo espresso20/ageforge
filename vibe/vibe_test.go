@@ -1,6 +1,8 @@
 package vibe
 
 import (
+	"errors"
+	"fmt"
 	"sort"
 	"testing"
 )
@@ -32,6 +34,71 @@ func TestLineFollowsTheSwitch(t *testing.T) {
 	}
 	if _, ok := Text("x.two"); ok {
 		t.Error("Text found a row the script lacks")
+	}
+}
+
+// TestSprintfAndErrorfFollowTheSwitch: the formats of the log and the
+// refusals read the script's line while VibeMode is on and the script has one,
+// are put together like fmt does, and are the plain format in every other
+// case: switched off, no row, never an id.
+func TestSprintfAndErrorfFollowTheSwitch(t *testing.T) {
+	defer UseScriptForTest(map[string]string{
+		"x.built": "%s is up, you got %d now",
+		"x.cause": "nope, because %w",
+	})()
+	Set(false)
+	defer Set(false)
+	plainBuilt, plainCause := "Built %s (you have %d).", "Refused: %w"
+	boom := errors.New("boom")
+
+	if got, want := Sprintf("x.built", plainBuilt, "Hut", 3), fmt.Sprintf(plainBuilt, "Hut", 3); got != want {
+		t.Errorf("off: Sprintf reads %q, want %q", got, want)
+	}
+	if got, want := Errorf("x.cause", plainCause, boom).Error(), "Refused: boom"; got != want {
+		t.Errorf("off: Errorf reads %q, want %q", got, want)
+	}
+
+	Set(true)
+	if got, want := Sprintf("x.built", plainBuilt, "Hut", 3), "Hut is up, you got 3 now"; got != want {
+		t.Errorf("on: Sprintf reads %q, want %q", got, want)
+	}
+	err := Errorf("x.cause", plainCause, boom)
+	if got, want := err.Error(), "nope, because boom"; got != want {
+		t.Errorf("on: Errorf reads %q, want %q", got, want)
+	}
+	if !errors.Is(err, boom) {
+		t.Error("on: Errorf lost the error it wraps")
+	}
+	// A row the script lacks reads plain, with the arguments put in, and the
+	// id never shows.
+	if got, want := Sprintf("x.nothing", plainBuilt, "Hut", 3), "Built Hut (you have 3)."; got != want {
+		t.Errorf("on, no row: Sprintf reads %q, want %q", got, want)
+	}
+	if got := Errorf("x.nothing", "plain").Error(); got != "plain" {
+		t.Errorf("on, no row: Errorf reads %q", got)
+	}
+}
+
+func TestRewriterChangesTheTextsTheCodeWrites(t *testing.T) {
+	defer UseScriptForTest(map[string]string{"x.one": "from the script"})()
+	defer UseRewriterForTest(func(id, plain string) string { return "<" + id + ":" + plain + ">" })()
+	Set(false)
+	defer Set(false)
+	if got := Line("x.one", "plain"); got != "plain" {
+		t.Errorf("off: Line reads %q", got)
+	}
+	Set(true)
+	if got := Line("x.one", "plain"); got != "<x.one:plain>" {
+		t.Errorf("on, Line reads %q", got)
+	}
+	if got := Sprintf("x.two", "%d things", 3); got != "<x.two:3 things>" {
+		t.Errorf("on, Sprintf reads %q", got)
+	}
+	if got := Errorf("x.three", "no").Error(); got != "<x.three:no>" {
+		t.Errorf("on, Errorf reads %q", got)
+	}
+	if s, _ := Text("x.one"); s != "from the script" {
+		t.Errorf("the rewriter reached Text: %q", s)
 	}
 }
 

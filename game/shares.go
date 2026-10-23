@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Worker shares: how the workforce splits across the worker domains, and the
@@ -694,12 +695,12 @@ func (ge *GameEngine) keepSharesLive() {
 		return
 	}
 	ge.recalculateRates()
-	ge.addLog(LogRoutine, "Roster: "+c.describe(ge.popLocked(), ge.popCapLocked())+".")
+	ge.addLogAbout(LogRoutine, TagPeople, vibe.Line("game.shares.keepSharesLive.01", "Roster: ")+c.describe(ge.popLocked(), ge.popCapLocked())+".")
 	if before == 0 && c.hired > 0 {
 		// The first recruits of a run (or after everyone died): say once,
 		// as a note rather than a routine line, that this happens on its
 		// own.
-		ge.addLog("info", "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand.")
+		ge.addLogAbout("info", TagPeople, vibe.Line("game.shares.keepSharesLive.02", "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand."))
 	}
 }
 
@@ -708,13 +709,13 @@ func (ge *GameEngine) keepSharesLive() {
 func (c staffCounts) describe(pop, popCap int) string {
 	var parts []string
 	if c.hired > 0 {
-		parts = append(parts, fmt.Sprintf("recruited %s (population %d/%d)", textfmt.Count(c.hired, "worker", "workers"), pop, popCap))
+		parts = append(parts, vibe.Sprintf("game.shares.describe.01", "recruited %s (population %d/%d)", textfmt.Count(c.hired, vibe.Line("game.shares.describe.02", "worker"), vibe.Line("game.shares.describe.03", "workers")), pop, popCap))
 	}
 	if c.placed > 0 {
-		parts = append(parts, "put "+textfmt.Count(c.placed, "idle worker", "idle workers")+" to work")
+		parts = append(parts, vibe.Line("game.shares.describe.04", "put ")+textfmt.Count(c.placed, vibe.Line("game.shares.describe.05", "idle worker"), vibe.Line("game.shares.describe.06", "idle workers"))+vibe.Line("game.shares.describe.07", " to work"))
 	}
 	if c.moved > 0 {
-		parts = append(parts, "moved "+textfmt.Count(c.moved, "worker", "workers")+" out of domains set to 0%")
+		parts = append(parts, vibe.Line("game.shares.describe.08", "moved ")+textfmt.Count(c.moved, vibe.Line("game.shares.describe.09", "worker"), vibe.Line("game.shares.describe.10", "workers"))+vibe.Line("game.shares.describe.11", " out of domains set to 0%"))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -758,7 +759,7 @@ type ShareReply struct {
 
 // UnknownDomainError refuses a word that names none of set's worker domains.
 func UnknownDomainError(set *rules.Set, domain string) error {
-	return fmt.Errorf("Unknown worker domain '%s'. The domains are %s.", domain, strings.Join(set.WorkerDomains(), ", "))
+	return vibe.Errorf("game.shares.UnknownDomainError.01", "Unknown worker domain '%s'. The domains are %s.", domain, strings.Join(set.WorkerDomains(), ", "))
 }
 
 // SetWorkerShare sets domain's share of the workforce to percent (0 to 100),
@@ -769,7 +770,7 @@ func (ge *GameEngine) SetWorkerShare(domain string, percent float64) (ShareReply
 		return ShareReply{}, UnknownDomainError(ge.rules, domain)
 	}
 	if math.IsNaN(percent) || math.IsInf(percent, 0) || percent < 0 || percent > 100 {
-		return ShareReply{}, fmt.Errorf("A share is a percent from 0 to 100 (got %v).", percent)
+		return ShareReply{}, vibe.Errorf("game.shares.SetWorkerShare.01", "A share is a percent from 0 to 100 (got %v).", percent)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -815,9 +816,9 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 	if moved > 0 || c.any() {
 		ge.recalculateRates()
 	}
-	line := "Roster: " + sharesLine(ge.rules, ge.workerShares) + "."
+	line := vibe.Line("game.shares.applySharesLocked.01", "Roster: ") + sharesLine(ge.rules, ge.workerShares) + "."
 	if moved > 0 {
-		line += " Moved " + textfmt.Count(moved, "worker", "workers") + " to match."
+		line += vibe.Line("game.shares.applySharesLocked.02", " Moved ") + textfmt.Count(moved, vibe.Line("game.shares.applySharesLocked.03", "worker"), vibe.Line("game.shares.applySharesLocked.04", "workers")) + vibe.Line("game.shares.applySharesLocked.05", " to match.")
 	}
 	if c.any() {
 		line += " " + textfmt.Capitalize(c.describe(ge.popLocked(), ge.popCapLocked())) + "."
@@ -827,14 +828,14 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 		total += ge.workerShares[d]
 	}
 	if total = math.Round(total*10) / 10; total > 100 {
-		line += fmt.Sprintf(" The shares add up to %s, so each is scaled down to fit.", SharePercent(total))
+		line += vibe.Sprintf("game.shares.applySharesLocked.06", " The shares add up to %s, so each is scaled down to fit.", SharePercent(total))
 	}
 	if p, ok := ge.workerShares[changed]; ok && p > 0 && slots == 0 {
-		line += fmt.Sprintf(" You have no %s buildings yet; the share applies once you build one.", strings.ToLower(DomainName(changed)))
+		line += vibe.Sprintf("game.shares.applySharesLocked.07", " You have no %s buildings yet; the share applies once you build one.", strings.ToLower(DomainName(changed)))
 	}
 	r := ShareReply{Line: line}
 	if p, ok := ge.workerShares["food"]; ok && p <= 0 {
-		r.Line += " Food buildings get no workers now: watch your food."
+		r.Line += vibe.Line("game.shares.applySharesLocked.08", " Food buildings get no workers now: watch your food.")
 		r.Warning = true
 	}
 	return r
@@ -854,7 +855,7 @@ func domainIndex(set *rules.Set, key string) int {
 // "all on auto".
 func sharesLine(set *rules.Set, shares map[string]float64) string {
 	if len(shares) == 0 {
-		return "all on auto (workers follow your buildings' slots)"
+		return vibe.Line("game.shares.sharesLine.01", "all on auto (workers follow your buildings' slots)")
 	}
 	var parts []string
 	for _, d := range set.WorkerDomains() {
@@ -863,7 +864,7 @@ func sharesLine(set *rules.Set, shares map[string]float64) string {
 		}
 	}
 	if len(shares) < len(set.WorkerDomains()) {
-		parts = append(parts, "the rest on auto")
+		parts = append(parts, vibe.Line("game.shares.sharesLine.02", "the rest on auto"))
 	}
 	return strings.Join(parts, ", ")
 }

@@ -146,9 +146,4 @@ func formatBonusName(key string) string {
 }
 
 // capitalize upper-cases the first letter of s.
-func capitalize(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
-}
+func capitalize(s string) string { return textfmt.Capitalize(s) }

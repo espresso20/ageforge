@@ -1,13 +1,13 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Era Mastery (Pacing v2, PR 5). Each age remembers how many runs completed
@@ -243,11 +243,11 @@ func (ge *GameEngine) masteryEntryLine(age string, prevK float64) string {
 	name := ge.rules.Name(rules.KindAge, age)
 	switch {
 	case k > config.MasteryK(ge.Prestige.Mastery(age)):
-		return fmt.Sprintf("Known ground: the %s runs %s faster while you catch up to your record.", name, SpeedText(k))
+		return vibe.Sprintf("game.mastery.masteryEntryLine.01", "Known ground: the %s runs %s faster while you catch up to your record.", name, SpeedText(k))
 	case k > 1:
-		return fmt.Sprintf("Known ground: the %s runs %s faster (mastery %d).", name, SpeedText(k), ge.Prestige.Mastery(age))
+		return vibe.Sprintf("game.mastery.masteryEntryLine.02", "Known ground: the %s runs %s faster (mastery %d).", name, SpeedText(k), ge.Prestige.Mastery(age))
 	case prevK > 1:
-		return fmt.Sprintf("New ground: the %s runs at 1x until a run completes it.", name)
+		return vibe.Sprintf("game.mastery.masteryEntryLine.03", "New ground: the %s runs at 1x until a run completes it.", name)
 	}
 	return ""
 }
@@ -259,9 +259,9 @@ func masteryCommitLine(set *rules.Set, gained []string) string {
 	case 0:
 		return ""
 	case 1:
-		return fmt.Sprintf("Era Mastery: the %s gained a mastery level and will run faster.", set.Name(rules.KindAge, gained[0]))
+		return vibe.Sprintf("game.mastery.masteryCommitLine.01", "Era Mastery: the %s gained a mastery level and will run faster.", set.Name(rules.KindAge, gained[0]))
 	}
-	return fmt.Sprintf("Era Mastery: the %s to the %s gained a mastery level each and will run faster.",
+	return vibe.Sprintf("game.mastery.masteryCommitLine.02", "Era Mastery: the %s to the %s gained a mastery level each and will run faster.",
 		set.Name(rules.KindAge, gained[0]), set.Name(rules.KindAge, gained[len(gained)-1]))
 }
 
@@ -308,7 +308,7 @@ func (ge *GameEngine) seedMasteryLocked() {
 	}
 	pm.rebuildSpeeds()
 	ge.noteRunAgesLocked()
-	ge.addLog("info", fmt.Sprintf("Era Mastery: ages you have completed now run faster. %s to %s: mastery %d (%s).",
+	ge.addLog("info", vibe.Sprintf("game.mastery.seedMasteryLocked.01", "Era Mastery: ages you have completed now run faster. %s to %s: mastery %d (%s).",
 		shortAgeName(ge.rules, ge.rules.AgeKeys()[0]), shortAgeName(ge.rules, last), m, SpeedText(config.MasteryK(m))))
 }
 

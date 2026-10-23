@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -498,10 +500,14 @@ func wonderCollectAll(w *wonderInfo, engine *game.GameEngine) CommandResult {
 // lowerFirst lowercases the first letter of s, to set an engine sentence
 // inside parentheses.
 func lowerFirst(s string) string {
-	if s == "" {
+	r, n := utf8.DecodeRuneInString(s)
+	if n == 0 || (r == utf8.RuneError && n == 1) {
 		return s
 	}
-	return strings.ToLower(s[:1]) + s[1:]
+	if l := unicode.ToLower(r); l != r {
+		return string(l) + s[n:]
+	}
+	return s
 }
 
 // cmdWorkers is `workers`: bare opens the People panel (as `people` does) and `workers

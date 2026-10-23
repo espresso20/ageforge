@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // domainRuntime holds runtime state for one worker domain
@@ -409,7 +410,7 @@ func (vm *WorkerManager) Snapshot(popCap int) WorkerState {
 		}
 	}
 	if className == "" {
-		className = "Worker"
+		className = vibe.Line("game.villagers.Snapshot.01", "Worker")
 	}
 	return WorkerState{
 		Types: map[string]WorkerDomainState{

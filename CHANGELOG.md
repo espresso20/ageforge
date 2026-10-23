@@ -13,6 +13,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **VibeMode reaches the log.** Log lines and refusals switch to the slang script too.
 - **Wonders you can recognise.** Every age's wonder is a landmark on the skyline, the tallest thing in its district, lit at night, with scaffolding that rises as you bank it.
 - **The last of storage.** Techs and bonuses that raised storage now raise production a little instead, culture buildings drop their storage, and the screens and wiki no longer mention stores.
 - **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.

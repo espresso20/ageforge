@@ -1,12 +1,12 @@
 package game
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Diplomacy tuning constants. Kept here (not in config) because they govern
@@ -65,7 +65,7 @@ const (
 // suggestion looks only at civilizations already met, so a refusal never
 // names or confirms a civilization the player has not found (spoilers.go).
 func (dm *DiplomacyManager) errUnknownCiv(key string) error {
-	msg := fmt.Sprintf("You have not met a civilization called '%s'.", key)
+	msg := vibe.Sprintf("game.diplomacy.errUnknownCiv.01", "You have not met a civilization called '%s'.", key)
 	met := map[string]bool{}
 	for k, fs := range dm.factions {
 		if fs.Discovered {
@@ -73,9 +73,9 @@ func (dm *DiplomacyManager) errUnknownCiv(key string) error {
 		}
 	}
 	if s := closestKey(key, met); s != "" && s != key {
-		msg += fmt.Sprintf(" Did you mean '%s'?", s)
+		msg += vibe.Sprintf("game.diplomacy.errUnknownCiv.02", " Did you mean '%s'?", s)
 	}
-	return fmt.Errorf("%s Scouting expeditions make first contact; type diplomacy deals to see the ones you have met.", msg)
+	return vibe.Errorf("game.diplomacy.errUnknownCiv.03", "%s Scouting expeditions make first contact; type diplomacy deals to see the ones you have met.", msg)
 }
 
 // DiplomacyManager handles NPC civilization discovery and diplomatic relations.
@@ -100,6 +100,9 @@ type DiplomacyManager struct {
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
+	// loanLines are the log lines of the last Tick that are about workers
+	// lent or returned, so the engine can say what they are about. Not saved.
+	loanLines []string
 
 	// boonLoans are the crews faction boons lent (faction_boon.go). They live
 	// here so a new run, which builds a new DiplomacyManager along with a new
@@ -412,7 +415,7 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 	switch status {
 	case "allied":
 		if fs.Opinion < AllyOpinion {
-			return 0, fmt.Errorf("The %s need opinion %d before they will ally (now %d).", def.Name, AllyOpinion, fs.Opinion)
+			return 0, vibe.Errorf("game.diplomacy.SetStatus.01", "The %s need opinion %d before they will ally (now %d).", def.Name, AllyOpinion, fs.Opinion)
 		}
 		cost = dm.AllyPrice()
 	case "rival":
@@ -422,18 +425,18 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 	case "neutral":
 		cost = 0
 	default:
-		return 0, fmt.Errorf("Unknown diplomatic status '%s'. Use allied, rival, embargo or neutral.", status)
+		return 0, vibe.Errorf("game.diplomacy.SetStatus.02", "Unknown diplomatic status '%s'. Use allied, rival, embargo or neutral.", status)
 	}
 
 	if gold < cost {
-		return 0, fmt.Errorf("Not enough gold to ally with the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
+		return 0, vibe.Errorf("game.diplomacy.SetStatus.03", "Not enough gold to ally with the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
 	// Embargo is a provocation: track it and possibly trip a war if opinion is
 	// already deeply hostile. A war it starts is announced on the next tick.
 	if status == "embargo" && fs.Status != "embargo" {
 		if dm.recordProvocation(fs, def, 0) {
-			dm.notices = append(dm.notices, fmt.Sprintf("The %s declared war on you.", def.Name))
+			dm.notices = append(dm.notices, vibe.Sprintf("game.diplomacy.SetStatus.04", "The %s declared war on you.", def.Name))
 		}
 	}
 
@@ -523,16 +526,16 @@ func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64
 		return 0, 0, dm.errUnknownCiv(factionKey)
 	}
 	if !fs.AtWar {
-		return 0, 0, fmt.Errorf("The %s are not at war with you.", def.Name)
+		return 0, 0, vibe.Errorf("game.diplomacy.SendTribute.01", "The %s are not at war with you.", def.Name)
 	}
 	// Tribute cost scales with the civ's strength.
 	goldCost := 300.0 * float64(def.Strength)
 	cultureCost := 50.0 * float64(def.Strength)
 	if gold < goldCost {
-		return 0, 0, fmt.Errorf("Not enough gold for tribute to the %s: need %s, have %s.", def.Name, textfmt.Number(goldCost), textfmt.Number(gold))
+		return 0, 0, vibe.Errorf("game.diplomacy.SendTribute.02", "Not enough gold for tribute to the %s: need %s, have %s.", def.Name, textfmt.Number(goldCost), textfmt.Number(gold))
 	}
 	if culture < cultureCost {
-		return 0, 0, fmt.Errorf("Not enough culture for tribute to the %s: need %s, have %s.", def.Name, textfmt.Number(cultureCost), textfmt.Number(culture))
+		return 0, 0, vibe.Errorf("game.diplomacy.SendTribute.03", "Not enough culture for tribute to the %s: need %s, have %s.", def.Name, textfmt.Number(cultureCost), textfmt.Number(culture))
 	}
 	// Peace: end the war, reset provocations, nudge opinion up to a wary truce.
 	dm.endWar(fs)
@@ -631,7 +634,7 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 
 	cost := dm.GiftPrice()
 	if gold < cost {
-		return 0, fmt.Errorf("Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
+		return 0, vibe.Errorf("game.diplomacy.SendGift.01", "Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
 	fs.Opinion += dm.GiftGain()
@@ -743,7 +746,8 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 	}
 
 	// Worker-lending lifecycle: return due batches, then maybe lend new ones.
-	messages = append(messages, dm.processLending(rng, tick, age)...)
+	dm.loanLines = dm.processLending(rng, tick, age)
+	messages = append(messages, dm.loanLines...)
 
 	// War: raids + auto-end (wait-them-out) timer.
 	messages = append(messages, dm.processWar(tick, age)...)
@@ -768,7 +772,7 @@ func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int, age string)
 			if d, ok := defs[b.FactionKey]; ok {
 				name = d.Name
 			}
-			messages = append(messages, fmt.Sprintf("%s returned home to the %s.", textfmt.Count(b.Count, "lent worker", "lent workers"), name))
+			messages = append(messages, vibe.Sprintf("game.diplomacy.processLending.01", "%s returned home to the %s.", textfmt.Count(b.Count, vibe.Line("game.diplomacy.processLending.02", "lent worker"), vibe.Line("game.diplomacy.processLending.03", "lent workers")), name))
 			continue
 		}
 		kept = append(kept, b)
@@ -841,7 +845,7 @@ func (dm *DiplomacyManager) processWar(tick int, age string) []string {
 		if tick-fs.LastProvocationTick >= cooldown {
 			dm.endWar(fs)
 			dm.warEvents = append(dm.warEvents, warEvent{faction: key})
-			messages = append(messages, fmt.Sprintf("The war with the %s has burned out. An uneasy peace settles.", def.Name))
+			messages = append(messages, vibe.Sprintf("game.diplomacy.processWar.01", "The war with the %s has burned out. An uneasy peace settles.", def.Name))
 			continue
 		}
 		// Raid every warRaidInterval ticks while at war. Severity scales with
@@ -1040,7 +1044,7 @@ func (dm *DiplomacyManager) GetLentBatchesForSave() []LentWorkerBatch {
 // discovered. It introduces the name, personality and backstory, then says
 // where to find their offers.
 func firstContactMessage(def config.FactionDef) string {
-	return fmt.Sprintf("[gold]✦ First contact: %s[-] [gray](%s)[-]. %s Type diplomacy to see their offers.",
+	return vibe.Sprintf("game.diplomacy.firstContactMessage.01", "[gold]✦ First contact: %s[-] [gray](%s)[-]. %s Type diplomacy to see their offers.",
 		def.Name, def.Personality, def.Backstory)
 }
 
@@ -1048,12 +1052,12 @@ func firstContactMessage(def config.FactionDef) string {
 // go home after ticks. The backstory belongs to first contact only, so it is
 // not repeated here. The duration is at base speed (the manager has no clock).
 func lendMessage(def config.FactionDef, count int, permanent bool, ticks int) string {
-	tail := fmt.Sprintf("(they return in %s)", DurationText(ticks, BaseTickInterval))
+	tail := vibe.Sprintf("game.diplomacy.lendMessage.01", "(they return in %s)", DurationText(ticks, BaseTickInterval))
 	if permanent {
-		tail = "(they stay for good)"
+		tail = vibe.Line("game.diplomacy.lendMessage.02", "(they stay for good)")
 	}
-	return fmt.Sprintf("[green]+%s on loan from the %s[-] %s.",
-		textfmt.Count(count, "worker", "workers"), def.Name, tail)
+	return vibe.Sprintf("game.diplomacy.lendMessage.03", "[green]+%s on loan from the %s[-] %s.",
+		textfmt.Count(count, vibe.Line("game.diplomacy.lendMessage.04", "worker"), vibe.Line("game.diplomacy.lendMessage.05", "workers")), def.Name, tail)
 }
 
 // raidMessage builds the MECHANICAL line for a war raid resource loss: who, what,
@@ -1070,7 +1074,7 @@ func lendMessage(def config.FactionDef, count int, permanent bool, ticks int) st
 // names ("Merchant Guild" vs "Void Reavers"), and the old present-tense "The %s
 // raid you" agreed with only half of them.
 func raidMessage(def config.FactionDef, amount float64, resource string) string {
-	return fmt.Sprintf("[red]⚔ The %s raided you: you lost %s %s.[-]",
+	return vibe.Sprintf("game.diplomacy.raidMessage.01", "[red]⚔ The %s raided you: you lost %s %s.[-]",
 		def.Name, amountText(amount), resourceLabel(resource))
 }
 
@@ -1078,13 +1082,13 @@ func raidMessage(def config.FactionDef, amount float64, resource string) string 
 // held less than the raid would have carried off, and a raid takes all of its
 // amount or none of it.
 func raidMissedMessage(def config.FactionDef, resource string) string {
-	return fmt.Sprintf("[yellow]⚔ The %s raided you but found too little %s to carry off. You lost nothing.[-]",
+	return vibe.Sprintf("game.diplomacy.raidMissedMessage.01", "[yellow]⚔ The %s raided you but found too little %s to carry off. You lost nothing.[-]",
 		def.Name, resourceLabel(resource))
 }
 
 // raidMessageDefended is raidMessage for a raid the garrison blunted: what the
 // player still lost, and what the army kept (guard is the share it blunted).
 func raidMessageDefended(def config.FactionDef, lost, kept float64, resource string, guard float64) string {
-	return fmt.Sprintf("[red]⚔ The %s raided you: you lost %s %s.[-] [green]Your garrison kept %s %s from them (about %.0f%% of the raid).[-]",
+	return vibe.Sprintf("game.diplomacy.raidMessageDefended.01", "[red]⚔ The %s raided you: you lost %s %s.[-] [green]Your garrison kept %s %s from them (about %.0f%% of the raid).[-]",
 		def.Name, amountText(lost), resourceLabel(resource), amountText(kept), resourceLabel(resource), guard*100)
 }

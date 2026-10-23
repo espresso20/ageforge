@@ -12,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Civilizational catastrophes (Phase 9).
@@ -220,7 +221,7 @@ func goodChanceFor(strength float64) float64 {
 // catastrophe is pending. action is a gerund ("advancing", "prestiging").
 func (ge *GameEngine) catastropheBlockErr(action string) error {
 	name, _ := ge.rules.Catastrophe(ge.pendingCatastrophe)
-	return fmt.Errorf("%s is upon you. Type 'catastrophe' to choose Endure or Succumb before %s", name, action)
+	return vibe.Errorf("game.catastrophe.catastropheBlockErr.01", "%s is upon you. Type 'catastrophe' to choose Endure or Succumb before %s", name, action)
 }
 
 // How a catastrophe came about; it only changes the log line and event name.
@@ -246,8 +247,8 @@ func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 	if source != catastropheRolled {
 		eventName = catName + " (" + source + ")"
 	}
-	ge.addLog("warning", fmt.Sprintf("☄ %s threatens the %s. Prepare yourself.", catName, ep.Name))
-	ge.addLog("warning", "  Type 'catastrophe' to choose Endure or Succumb. Advancing and prestige wait until you do.")
+	ge.addLog("warning", vibe.Sprintf("game.catastrophe.triggerCatastrophe.01", "☄ %s threatens the %s. Prepare yourself.", catName, ep.Name))
+	ge.addLog("warning", vibe.Line("game.catastrophe.triggerCatastrophe.02", "  Type 'catastrophe' to choose Endure or Succumb. Advancing and prestige wait until you do."))
 
 	ge.epochEventHistory = append(ge.epochEventHistory, EpochEventRecord{
 		EpochKey: epochKey, EpochName: ep.Name,
@@ -395,7 +396,7 @@ func (ge *GameEngine) Endure() error {
 		return ge.resolveLastPassage(lastPassageEndured)
 	}
 	if ge.pendingCatastrophe == "" {
-		return fmt.Errorf("no pending catastrophe to endure")
+		return vibe.Errorf("game.catastrophe.Endure.01", "no pending catastrophe to endure")
 	}
 	epochKey := ge.pendingCatastrophe
 	ge.pendingCatastrophe = ""
@@ -444,13 +445,13 @@ func (ge *GameEngine) Endure() error {
 
 	debuff := ge.startReconstruction()
 
-	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s. [comment]%s[-]", catName, catFlavor))
-	ge.addLog("warning", fmt.Sprintf("  Buildings destroyed: %d", destroyCount))
+	ge.addLog("warning", vibe.Sprintf("game.catastrophe.Endure.02", "☄ ENDURE: %s. [comment]%s[-]", catName, catFlavor))
+	ge.addLog("warning", vibe.Sprintf("game.catastrophe.Endure.03", "  Buildings destroyed: %d", destroyCount))
 	for _, desc := range names {
-		ge.addLog("warning", fmt.Sprintf("  → %s lost", desc))
+		ge.addLogAbout("warning", TagBad, vibe.Sprintf("game.catastrophe.Endure.04", "  → %s lost", desc))
 	}
 	if brace > 0 {
-		ge.addLog("info", fmt.Sprintf("  Braced (level %d): %d%% of buildings lost instead of %d%%, %.0f%% of stock kept instead of %.0f%%.",
+		ge.addLogAbout("info", TagBad, vibe.Sprintf("game.catastrophe.Endure.05", "  Braced (level %d): %d%% of buildings lost instead of %d%%, %.0f%% of stock kept instead of %.0f%%.",
 			brace, braceDestroyPct[brace], braceDestroyPct[0], outcome.BracedKeepFrac*100, braceKeepFrac[0]*100))
 	}
 	if line := endureGarrisonLine(outcome); line != "" {
@@ -461,13 +462,13 @@ func (ge *GameEngine) Endure() error {
 			ge.recordSavedResource(key, keptStock[key])
 		}
 	}
-	ge.addLog("warning", fmt.Sprintf("  All resources reduced to %.0f%% of stored amounts.", keep*100))
-	ge.addLog("warning", fmt.Sprintf("  %.0f%% of workers lost.", endureWorkerLoss*100))
-	ge.addLog("info", fmt.Sprintf("  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
+	ge.addLog("warning", vibe.Sprintf("game.catastrophe.Endure.06", "  All resources reduced to %.0f%% of stored amounts.", keep*100))
+	ge.addLogAbout("warning", TagPeople|TagBad, vibe.Sprintf("game.catastrophe.Endure.07", "  %.0f%% of workers lost.", endureWorkerLoss*100))
+	ge.addLog("info", vibe.Sprintf("game.catastrophe.Endure.08", "  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
 		endureDebuffProduction*100, approxTicks(debuff, ge.tickIntervalLocked()), endureMoraleHit*100))
 	// Past the all-production cap the surplus absorbs the penalty: say so.
 	ge.logCapped(config.Effect{Type: "production_all", Value: endureDebuffProduction})
-	ge.addLog("success", fmt.Sprintf("  ✦ You endured the %s. Its badge records it.", epName))
+	ge.addLog("success", vibe.Sprintf("game.catastrophe.Endure.09", "  ✦ You endured the %s. Its badge records it.", epName))
 	// Cosmetic flavour — a wry beat after surviving the catastrophe.
 	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived, ge.quipRNG()); q != "" {
 		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
@@ -505,7 +506,7 @@ func (ge *GameEngine) Succumb() error {
 		return ge.resolveLastPassage(lastPassageSuccumbed)
 	}
 	if ge.pendingCatastrophe == "" {
-		return fmt.Errorf("no pending catastrophe to succumb to")
+		return vibe.Errorf("game.catastrophe.Succumb.01", "no pending catastrophe to succumb to")
 	}
 	epochKey := ge.pendingCatastrophe
 	catName, _ := ge.rules.Catastrophe(epochKey)
@@ -620,13 +621,13 @@ func (ge *GameEngine) Succumb() error {
 
 	ge.recalculateTickSpeed()
 
-	ge.sayEnding(&end, EndLineVerdict, "event", fmt.Sprintf("☄ %s: civilization has fallen. A new dawn.", catName))
+	ge.sayEnding(&end, EndLineVerdict, "event", vibe.Sprintf("game.catastrophe.Succumb.06", "☄ %s: civilization has fallen. A new dawn.", catName))
 	if newLegacy {
-		ge.sayEnding(&end, EndLineLegacy, "success", fmt.Sprintf("%s legacy bonus (permanent): %s.", ep.Name, legacyBonusText(ge.rules, epochKey)))
+		ge.sayEnding(&end, EndLineLegacy, "success", vibe.Sprintf("game.catastrophe.Succumb.07", "%s legacy bonus (permanent): %s.", ep.Name, legacyBonusText(ge.rules, epochKey)))
 	} else {
-		ge.sayEnding(&end, EndLineLegacy, "info", fmt.Sprintf("The %s legacy was already yours; no new legacy bonus.", ep.Name))
+		ge.sayEnding(&end, EndLineLegacy, "info", vibe.Sprintf("game.catastrophe.Succumb.08", "The %s legacy was already yours; no new legacy bonus.", ep.Name))
 	}
-	ge.sayEnding(&end, EndLineKnowledge, "success", fmt.Sprintf("Ancient Knowledge: research time %s for each epoch succumbed in, now %s (permanent).", ResearchFactorText(SuccumbResearchTimeFactor), ResearchFactorText(ge.succumbResearchFactor())))
+	ge.sayEnding(&end, EndLineKnowledge, "success", vibe.Sprintf("game.catastrophe.Succumb.09", "Ancient Knowledge: research time %s for each epoch succumbed in, now %s (permanent).", ResearchFactorText(SuccumbResearchTimeFactor), ResearchFactorText(ge.succumbResearchFactor())))
 	if masteryLine != "" {
 		ge.sayEnding(&end, EndLineMastery, "info", masteryLine)
 	}
@@ -634,16 +635,16 @@ func (ge *GameEngine) Succumb() error {
 		ge.sayEnding(&end, EndLineGround, "info", line)
 	}
 	if len(savedRuins) > 0 {
-		ge.sayEnding(&end, EndLineRuins, "info", fmt.Sprintf("%s from fallen civilizations carry forward (max %d).", textfmt.Count(ge.Buildings.RuinTotal(), "ruin", "ruins"), MaxRuins))
+		ge.sayEnding(&end, EndLineRuins, "info", vibe.Sprintf("game.catastrophe.Succumb.10", "%s from fallen civilizations carry forward (max %d).", textfmt.Count(ge.Buildings.RuinTotal(), vibe.Line("game.catastrophe.Succumb.11", "ruin"), vibe.Line("game.catastrophe.Succumb.12", "ruins")), MaxRuins))
 	}
 	if droppedRuins > 0 {
-		ge.sayEnding(&end, EndLineRuins, "info", fmt.Sprintf("%s crumbled to make room.", textfmt.Count(droppedRuins, "older, lower-value ruin", "older, lower-value ruins")))
+		ge.sayEnding(&end, EndLineRuins, "info", vibe.Sprintf("game.catastrophe.Succumb.13", "%s crumbled to make room.", textfmt.Count(droppedRuins, vibe.Line("game.catastrophe.Succumb.14", "older, lower-value ruin"), vibe.Line("game.catastrophe.Succumb.15", "older, lower-value ruins"))))
 	}
 	// The legacy kit: shares, the first age's template slice, old friends.
 	kitFrom := len(ge.log)
 	ge.startRunLegacyLocked()
 	ge.takeEndingLines(&end, kitFrom, EndLineKit)
-	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
+	ge.addLog("info", vibe.Line("game.catastrophe.Succumb.16", "Type [cyan]help[-] to rebuild."))
 	// The run that starts here is a new civilization.
 	ge.noteCivilizationStartedLocked()
 
@@ -808,7 +809,7 @@ func legacyBonusText(set *rules.Set, epochKey string) string {
 	bonuses := set.LegacyBonus(epochKey)
 	var parts []string
 	for _, res := range sortedKeys(bonuses) {
-		parts = append(parts, fmt.Sprintf("%s +%.0f%% production", resourceLabel(res), bonuses[res]*100))
+		parts = append(parts, vibe.Sprintf("game.catastrophe.legacyBonusText.01", "%s +%.0f%% production", resourceLabel(res), bonuses[res]*100))
 	}
 	if len(parts) == 0 {
 		return "none"

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Faction trade deals: each civilization you have met offers a small,
@@ -138,13 +138,13 @@ type DealInfo struct {
 func dealBlocked(fs FactionState) string {
 	switch {
 	case fs.AtWar:
-		return "at war with you"
+		return vibe.Line("game.deals.dealBlocked.01", "at war with you")
 	case fs.Status == "embargo":
-		return "under your embargo"
+		return vibe.Line("game.deals.dealBlocked.02", "under your embargo")
 	case fs.Status == "rival":
-		return "your rival"
+		return vibe.Line("game.deals.dealBlocked.03", "your rival")
 	case fs.Opinion <= dealHostileOpinion:
-		return fmt.Sprintf("hostile (opinion %d)", fs.Opinion)
+		return vibe.Sprintf("game.deals.dealBlocked.04", "hostile (opinion %d)", fs.Opinion)
 	}
 	return ""
 }
@@ -575,17 +575,17 @@ func (ge *GameEngine) tickFactionDeals() {
 // it wouldn't (blocked). Both empty: it can be taken.
 func (ge *GameEngine) dealProblem(fs *FactionState, d FactionDeal) (blocked, short string) {
 	if why := dealBlocked(*fs); why != "" {
-		return "they are " + why, ""
+		return vibe.Line("game.deals.dealProblem.01", "they are ") + why, ""
 	}
 	if d.Taken {
-		return "already taken", ""
+		return vibe.Line("game.deals.dealProblem.02", "already taken"), ""
 	}
 	if fs.DealsFor != ge.age {
-		return "the offer lapsed with the age", ""
+		return vibe.Line("game.deals.dealProblem.03", "the offer lapsed with the age"), ""
 	}
 	for _, r := range []string{d.Give, d.Get} {
 		if r != "" && !ge.Resources.IsUnlocked(r) {
-			return ResourceName(r) + " is not unlocked yet", ""
+			return ResourceName(r) + vibe.Line("game.deals.dealProblem.04", " is not unlocked yet"), ""
 		}
 	}
 	if !(ge.Resources.Get(d.Give) >= d.GiveAmt) {
@@ -630,7 +630,7 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 	}
 	d.Taken = true
 	ge.note(config.BadgeEvDeal, def.Key)
-	ge.addLog("success", fmt.Sprintf("Deal with the %s. %s.", def.Name, dealLogTerms(*d)))
+	ge.addLog("success", vibe.Sprintf("game.deals.takeDeal.01", "Deal with the %s. %s.", def.Name, dealLogTerms(*d)))
 	return *d
 }
 
@@ -639,19 +639,19 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 func DealKindLabel(kind string) string {
 	switch kind {
 	case DealWant:
-		return "Sell"
+		return vibe.Line("game.deals.DealKindLabel.01", "Sell")
 	case DealFavor:
-		return "Goodwill" // display only: the saved kind key stays "favor"
+		return vibe.Line("game.deals.DealKindLabel.02", "Goodwill") // display only: the saved kind key stays "favor"
 	case DealRare:
-		return "Rare"
+		return vibe.Line("game.deals.DealKindLabel.03", "Rare")
 	}
-	return "Buy"
+	return vibe.Line("game.deals.DealKindLabel.04", "Buy")
 }
 
 // DealGets is what a deal pays you: "966K food" or "+5 opinion".
 func DealGets(get string, getAmt float64, standing int, num func(float64) string) string {
 	if get == "" {
-		return fmt.Sprintf("+%d opinion", standing)
+		return vibe.Sprintf("game.deals.DealGets.01", "+%d opinion", standing)
 	}
 	return num(getAmt) + " " + ResourceName(get)
 }
@@ -662,7 +662,7 @@ func DealGets(get string, getAmt float64, standing int, num func(float64) string
 // accept` use it; num formats the amounts. The log and the plan label use
 // dealLogTerms, the same terms as a clause.
 func DealTerms(kind, give string, giveAmt float64, get string, getAmt float64, standing int, num func(float64) string) string {
-	return fmt.Sprintf("%s: give %s %s → get %s", DealKindLabel(kind), num(giveAmt), ResourceName(give), DealGets(get, getAmt, standing, num))
+	return vibe.Sprintf("game.deals.DealTerms.01", "%s: give %s %s → get %s", DealKindLabel(kind), num(giveAmt), ResourceName(give), DealGets(get, getAmt, standing, num))
 }
 
 // dealTerms is DealTerms for a saved deal, with the log's number format.
@@ -673,7 +673,7 @@ func dealTerms(d FactionDeal) string {
 // dealLogTerms is a deal's terms as a clause for the log and the plan
 // label: "Buy: give 876M iron ore, get 966K food".
 func dealLogTerms(d FactionDeal) string {
-	return fmt.Sprintf("%s: give %s, get %s", DealKindLabel(d.Kind), Amount(d.GiveAmt, d.Give), DealGets(d.Get, d.GetAmt, d.Standing, textfmt.Number))
+	return vibe.Sprintf("game.deals.dealLogTerms.01", "%s: give %s, get %s", DealKindLabel(d.Kind), Amount(d.GiveAmt, d.Give), DealGets(d.Get, d.GetAmt, d.Standing, textfmt.Number))
 }
 
 // AcceptFactionDeal takes offer n (1-based, as the Factions panel and
@@ -693,21 +693,21 @@ func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) 
 		return FactionDeal{}, err
 	}
 	if why := dealBlocked(*fs); why != "" {
-		return FactionDeal{}, fmt.Errorf("The %s won't trade: they are %s.", def.Name, why)
+		return FactionDeal{}, vibe.Errorf("game.deals.AcceptFactionDeal.01", "The %s won't trade: they are %s.", def.Name, why)
 	}
 	if fs.DealsFor != ge.age || len(fs.Deals) == 0 {
-		return FactionDeal{}, fmt.Errorf("The %s have no offers right now. New offers arrive with each rotation.", def.Name)
+		return FactionDeal{}, vibe.Errorf("game.deals.AcceptFactionDeal.02", "The %s have no offers right now. New offers arrive with each rotation.", def.Name)
 	}
 	if n < 1 || n > len(fs.Deals) {
-		return FactionDeal{}, fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(fs.Deals))
+		return FactionDeal{}, vibe.Errorf("game.deals.AcceptFactionDeal.03", "There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(fs.Deals))
 	}
 	d := fs.Deals[n-1]
 	blocked, short := ge.dealProblem(fs, d)
 	switch {
 	case blocked != "":
-		return FactionDeal{}, fmt.Errorf("Can't take deal %d with the %s: %s.", n, def.Name, blocked)
+		return FactionDeal{}, vibe.Errorf("game.deals.AcceptFactionDeal.04", "Can't take deal %d with the %s: %s.", n, def.Name, blocked)
 	case short != "":
-		return FactionDeal{}, fmt.Errorf("Not enough %s for deal %d: need %s, have %s.", ResourceName(short), n, textfmt.Number(d.GiveAmt), textfmt.Number(ge.Resources.Get(short)))
+		return FactionDeal{}, vibe.Errorf("game.deals.AcceptFactionDeal.05", "Not enough %s for deal %d: need %s, have %s.", ResourceName(short), n, textfmt.Number(d.GiveAmt), textfmt.Number(ge.Resources.Get(short)))
 	}
 	return ge.takeDeal(def, fs, n-1), nil
 }
