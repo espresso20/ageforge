@@ -484,3 +484,22 @@ func TestBuildingFrameBudget(t *testing.T) {
 		scr.Fini()
 	}
 }
+
+// TestDriftStaysOnScreen: a far object's parallax offset follows the camera
+// while the panorama is short and stops short of its limit however long it is.
+func TestDriftStaysOnScreen(t *testing.T) {
+	prev := -1.0
+	for cam := 0; cam <= 20000; cam += 50 {
+		d := drift(cam, 0.03, 60)
+		if d < prev {
+			t.Fatalf("the drift goes back at camera %d", cam)
+		}
+		if d >= 60 {
+			t.Fatalf("the drift reaches its limit (%.1f) at camera %d", d, cam)
+		}
+		if float64(cam)*0.03 <= 30 && d != float64(cam)*0.03 {
+			t.Fatalf("under half the limit the drift is %.2f, want %.2f", d, float64(cam)*0.03)
+		}
+		prev = d
+	}
+}

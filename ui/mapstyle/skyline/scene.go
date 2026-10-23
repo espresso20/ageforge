@@ -224,11 +224,18 @@ func (s *scene) skyStructures() {
 }
 
 // drift is the parallax offset of a far object that scrolls at rate k of the
-// camera: the same as k·cam while that is small, and never past lim however
-// long the panorama is (a town that fills its districts is thousands of
-// columns long, and a far planet or ring must not slide off the screen).
+// camera: the same as k·cam while that is under half of lim, and never past
+// lim however long the panorama is (a town that fills its districts is
+// thousands of columns long, and a far planet or ring must not slide off the
+// screen). Plain arithmetic: no transcendentals in simulation code.
 func drift(cam int, k, lim float64) float64 {
-	return lim * math.Tanh(float64(cam)*k/lim)
+	x := float64(cam) * k
+	h := lim / 2
+	if x <= h {
+		return x
+	}
+	d := x - h
+	return h + h*d/(d+h)
 }
 
 // orbitY is the orbital ring's row at screen column x.
