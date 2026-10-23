@@ -22,7 +22,7 @@ build <wonder_key>                   # start construction once the bank is full
 
 ### The keystone tech
 
-From the Stone Age on, a wonder needs one technology of its own age before it can be built: its **keystone** (Stoneworking for the Great Monolith, Mathematics for the Colosseum; each wonder below lists its own). The bank does not wait for it: deposits and overflow go in from the first tick of the age, so you can fill the bank while the keystone is being researched. Only `build <wonder_key>` is refused until the tech is done, and it names the tech:
+From the Stone Age on, a wonder needs one technology of its own age before it can be built: its **keystone** (Stoneworking for the Great Monolith, Mathematics for the Colosseum; each wonder below lists its own). The bank does not wait for it: deposits go in from the first tick of the age, so you can fill the bank while the keystone is being researched. Only `build <wonder_key>` is refused until the tech is done, and it names the tech:
 
 ```
 Great Monolith needs Stoneworking first. Research it to build here.
@@ -36,21 +36,11 @@ In a game saved before keystones existed, the age you were in is exempt: its won
 
 A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it banks what the wonder still lacks from what you hold as soon as that covers all of it, and starts construction. A planned wonder whose keystone is not researched waits for it (`waits for Stoneworking`) and starts once it is.
 
-### Overflow
+### No overflow
 
-**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage limit, the part the limit would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too.
+Stock has no limit, so nothing is ever cut off and nothing flows into a wonder's bank on its own. The bank moves only when you deposit into it (`wonder collect`), or when a wonder in your build plan pays what its bank lacks from what you hold. The log says `The <Wonder> bank is full.` once, when the last part is in.
 
-The bank fills to the wonder's price and stops, and the log says `The <Wonder> bank is full.` once. After that, and once the wonder is built, a full store's surplus is lost. It is lost too while wonder overflow is off. It no longer pays toward the [build plan](plan.md)'s queued copies.
-
-A wonder you have put in your build plan takes overflow on the same terms as one you have not: only while wonder overflow is on.
-
-```
-wonder overflow        # is it on?
-wonder overflow off    # a full store's surplus is lost
-wonder overflow on
-```
-
-The log says so when overflow finishes a resource's part of the bank (and when the bank is full), and the welcome-back summary adds up what it banked while you were away. The switch is saved with your game and survives prestige. The Wonders panel shows whether it is on.
+Older saves may carry a `wonder overflow` setting. It is ignored.
 
 The **Wonders** panel (`wonders`) shows progress with a bar for each resource. Each completed wonder there has a small color thumbnail, a 2-character half-block icon taken from the wonder's sprite, so you can tell them apart at a glance. Locked wonders of ages past your next one are counted in one line, not listed, so the panel doesn't name ages you haven't reached.
 
@@ -86,7 +76,7 @@ In the ages that make a raw material, a wonder pays half of its stone, iron, ste
 
 The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **800 food**, the Great Monolith **2.4K food**, and the Sistine Chapel **32K faith** and **950K culture**.
 
-A part of a wonder's price can be larger than the store for that resource. That is why the wonder is the one purchase the size of a store does not block (see [Storage is a wall](buildings.md#storage-is-a-wall)): it is banked a deposit at a time, and overflow adds to the deposits.
+A wonder is paid through its bank, a deposit at a time. Stock has no limit (see [No storage wall](buildings.md#no-storage-wall)), so the whole price can sit in your stores until you bank it.
 
 No wonder takes longer to build than a third of its age's target length. Build times below are in ticks, with the real time beside them; one tick is 2 seconds. These are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed, and the Wonders panel shows the shorter time. **Architecture**, a Renaissance Age tech, takes a quarter off the time of every wonder you start after it, and the techs that cut all construction then take their share of what is left.
 
@@ -413,7 +403,7 @@ These figures are the morale **ceiling**, how high the morale percentage can cli
 
 ## Tips
 
-- Bank resources over several deposits as they come in, rather than waiting to cover the whole price at once. Overflow does some of this for you.
+- Bank resources over several deposits as they come in, rather than waiting to cover the whole price at once.
 - **Great Library** and **Global Network** each give +30% scholar output, and the two stack.
 - **Grand Lighthouse** and the Rocketry tech both raise expedition rewards, and they stack.
 - Build each age's wonder early. It is required for `advance`, and its bonuses last for the rest of the run.

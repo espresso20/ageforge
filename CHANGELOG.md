@@ -10,6 +10,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **No more storage caps.** Resources pile up without limit and nothing you make is wasted; rising prices are the only brake. A building is never refused for costing more than a store holds.
 - **Every expedition takes a party.** Soldiers march with every mission and some do not come back; raids cost soldiers too. Your army, not a rule, decides how many missions are out at once, and empty posts train new soldiers from the reserve.
 - **Soldiers are people.** A military building comes with its soldiers: they fill its posts from the reserve and then as new arrivals, while the food allows, live in your homes and eat, and the army is the soldiers at their posts. Military buildings no longer train a stockpile.
 - **People.** Every person in your town is in one place: workers, the reserve, soldiers and scholars, each with its own name in every age. Scholars live in your homes and eat. A People box replaces the Workers box, and the People panel has tabs for your work, your army and your scholars.
@@ -488,6 +489,8 @@ All notable changes to AgeForge are documented here.
 - **Four trade routes opened before you could build what they need.** Cotton Exchange and Steamship Line wanted a Seaport (Modern Age) and Rail Freight wanted Steam Works (Victorian Age), all from the Industrial Age; Warp Commerce opened in the Space Age and wanted a Warp Drive Plant (Interstellar Age). Cotton Exchange now needs 1 Stock Exchange, Steamship Line 2 Harbor Authorities and Rail Freight 1 Integrated Steelworks, all Industrial Age buildings; Warp Commerce now opens in the Interstellar Age.
 
 ### Removed
+- **Wonder overflow.** With no caps there is nothing to overflow; bank into a wonder by hand.
+- **Two overflow badges.** Exact Change and Nothing Wasted were about overflow and are retired. The game has 556 badges to earn, worth 12,880 points.
 - **The knowledge store, the knowledge price and the over-the-store refusal.** A tech has no price to pay and no store to fit, so `research` no longer refuses one for its price, the plan no longer reads `needs more knowledge storage`, and the tech tree no longer marks a price with a red cross.
 - **The knowledge worker domain** (`roster knowledge`, `workers share knowledge`).
 - **Two badge ladders:** the knowledge payroll badges and the knowledge made ladder (6 badges, 175 points).

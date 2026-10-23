@@ -67,8 +67,14 @@ func TestBuildingsPanelHasNoStorageWall(t *testing.T) {
 	restoreForge(t)
 	d, pages, eng := wallTown(t, map[string]int{"workshop": 80})
 	st := eng.GetState()
-	if cost, store := st.Buildings["workshop"].NextCost["wood"], st.Resources["wood"].Storage; cost <= 0 || store <= 0 {
-		t.Fatalf("staging: next workshop %v wood, store %v", cost, store)
+	over := ""
+	for res, cost := range st.Buildings["workshop"].NextCost {
+		if cost > st.Resources[res].Storage {
+			over = res
+		}
+	}
+	if over == "" {
+		t.Fatalf("staging: the next workshop (%v) fits every store", st.Buildings["workshop"].NextCost)
 	}
 	err := eng.BuildBuilding("workshop")
 	if err == nil || strings.Contains(err.Error(), "storage") {

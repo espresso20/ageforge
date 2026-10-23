@@ -1,6 +1,6 @@
 # Resources
 
-AgeForge has **25 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Every resource starts with a small base storage, so storage buildings decide how much of anything you can hold. Research is not one of them: it is done by [scholars](knowledge.md), and nothing holds it.
+AgeForge has **25 resources** that unlock as you advance through the 22 ages. They accumulate on their own from your buildings and the workers in them. Stock has no limit: what you make piles up, and prices are the only brake. Research is not one of them: it is done by [scholars](knowledge.md), and nothing holds it.
 
 Amounts print with up to three figures and a unit from a thousand up: K, M, B, T and Q, and past Q the units go on as Qi, Sx, Sp, Oc, No and Dc (1.5K, 876M, 11.8Qi).
 
@@ -159,11 +159,11 @@ The quarries and mines of the Iron to the Industrial Age make stone, iron and ir
 
 ## Resource Storage
 
-Every resource has a small base storage (10 to 50). **Storage buildings** raise the cap of every resource at once: one per age from the Stash to the Quantum Vault, with no limit on copies. Each copy costs 1.75 times the one before it. A few technologies raise every cap too, culture buildings add culture storage, and military buildings add soldier storage. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table.
+**Stock has no limit.** Nothing you make is wasted, and no store is ever full. Production, hand gathering, loot, event gains, milestone rewards, black market wins, trade runs, faction deals, boons and the refund for a sold building all add their whole amount, however much you hold. The same goes for the time you spend away: what your town makes while the game is closed is added in full. Rising prices are the only thing that holds you back.
 
-**How much it holds.** Each age's storage building is sized by one written rule: five copies of it, on top of the stores of the earlier ages, hold the dearest single price the age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for five copies of the storage building of the age you are leaving. Four techs raise every store by a percentage (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each). On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every cap by the age's speed along with production.
+**Nothing is refused for costing more than a store.** A building, an upgrade or a [build plan](plan.md) item is refused only for what it costs against what you have. If you hold the stock, you can buy it. The game no longer names a storage building to build first.
 
-**Storage is a wall.** A building or an upgrade whose price in any one resource is larger than that resource's store cannot be bought, by `build`, `build <n>`, `build max`, `upgrade` or the [build plan](plan.md). The game says so and names the storage building to build. The age's wonder is the one exception: it is paid through its bank. See [Storage is a wall](buildings.md#storage-is-a-wall).
+Every resource still has a store size, from a small base (10 to 50), raised by **storage buildings** (one per age from the Stash to the Quantum Vault, with no limit on copies, each copy costing 1.75 times the one before it), by four techs (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each) and by culture buildings. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every store by the age's speed along with production. A store's size does not limit what you hold. A few prices are still a share of it: the [festival](#culture), the black market and the harbinger's Brace. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the full table. Every age gate still asks for five copies of the storage building of the age you are leaving.
 
 **Storage is permanent.**
 
@@ -172,11 +172,7 @@ Every resource has a small base storage (10 to 50). **Storage buildings** raise 
 - It can't be sold.
 - Catastrophes don't destroy it.
 
-**What a full store cannot hold** goes into the current age's [wonder](wonders.md#overflow) bank while wonder overflow is on, up to what the wonder still needs, and is otherwise lost. It does not pay toward the build plan. This works during offline catch-up too.
-
-**Gains that meet a full store.** Expedition and campaign loot, black market wins, event gains, milestone rewards and the Ancient Cache lose what does not fit, and the log says `Storage was nearly full: only ... fit.` A sold building's refund loses what does not fit too. A market sale into a store with room for part of it sells only what fits and charges only for that; into a full store it refuses with `<Resource> storage is full.` and charges nothing.
-
-**Priority:** build this age's storage early in every age. Late resources (plasma, titanium, dark matter, antimatter, quantum flux) start at 10 to 30 storage and fill almost at once without it.
+When you advance to a new age, the stock you carry over is trimmed to a few copies of the cheapest building of the new age that uses it. That is a head start, not a store: see [Ages](ages.md).
 
 ---
 

@@ -12,7 +12,7 @@ Every resource you use comes from buildings, and the workers assigned to product
 
 - **More production.** Each extra building of the same tier adds its base rate to your total.
 - **More worker slots.** Worker capacity grows with building count, which raises your production ceiling.
-- **More storage.** Storage buildings add storage for every resource at once.
+- **More storage.** Storage buildings add storage for every resource at once. A store's size does not limit what you hold; see [Storage Buildings](#storage-buildings-21-tiers).
 - **Progress toward the next age.** Many ages require a minimum building count or specific buildings.
 
 Most of the game comes down to this: build more buildings and fill them with workers.
@@ -70,7 +70,7 @@ One upgraded copy costs **half** of what the next new copy of the building it be
 
 The old copy is given up, and nothing is paid back for it. Selling an older building pays back half of its own price, but the copy stops producing, so an older building is better kept or upgraded than sold.
 
-A price larger than a store can hold cannot be paid, however long you wait: the command refuses that copy and names the store. Build more storage first.
+An upgrade is refused only for what it costs against what you hold. The size of a store does not matter.
 
 ### Workers and upgrades
 
@@ -196,7 +196,7 @@ Until the tech is done the building is missing from the build list, and `build` 
 
 A tech only takes a building when the age keeps another way to make the same thing (the Mill beside the Foundry, the Port beside the Harbor), or when the tech is one a run researches anyway. A building that is its age's only source of what it makes is open from the first tick of its age: every age's knowledge and culture building and most of its military ones, the Steam Mine, the Uranium Mine, the Financial District, the Corporate HQ, the Petroleum Refinery, the Nano Foundry, the titanium smelters and mines and the data buildings from the Cyber Hub on among them. The Transcendent Age is the exception: nothing comes after it, so nothing can be stuck behind a tech, and its Singularity Engine, Omniversal Bazaar and Omniversal War Council each wait for one of its three last techs.
 
-Wonders wait for a tech too, in their own way: from the Stone Age on each one needs its age's **keystone** before `build` will start it, but it is listed from the first tick of its age and its bank takes deposits and overflow the whole time. See [The keystone tech](wonders.md#the-keystone-tech).
+Wonders wait for a tech too, in their own way: from the Stone Age on each one needs its age's **keystone** before `build` will start it, but it is listed from the first tick of its age and its bank takes deposits the whole time. See [The keystone tech](wonders.md#the-keystone-tech).
 
 ---
 
@@ -503,23 +503,17 @@ Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one
 
 Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
 
-### Storage is a wall
+### No storage wall
 
-A building or an upgrade whose price in any one resource is larger than the store for that resource can hold **cannot be bought**. That holds for `build`, `build <n>`, `build max`, `upgrade` and the [build plan](plan.md). The game says so and names the storage building to build:
+Stock has no limit, so no building is refused for costing more than a store holds. A building, an upgrade or a [build plan](plan.md) item is refused only for what it costs against what you hold, by `build`, `build <n>`, `build max`, `upgrade` and the plan alike. A price larger than the store for its resource can be paid if you hold that much.
 
-```
-<Building> costs <amount> <resource>, more than your <resource> storage holds (<size>). Build more storage first: <Storage building>.
-```
+Nothing you make is wasted, and nothing overflows. The age's wonder is still paid through its bank, which you fill by hand (see [Wonders](wonders.md)).
 
-The age's wonder is the one exception: it is paid through its bank, a round at a time (see [Wonders](wonders.md#overflow)), so it may cost more than a store holds.
+A store still has a size, and storage buildings still raise it. Some prices are a share of a store's size (the festival, the black market and the harbinger's Brace), but no store stops you holding more.
 
-A storage building's next copy always fits: owning one raises your store to at least the price of the next.
+The gate out of each age asks for five copies of its storage building. Build each age's storage while it is current.
 
-The gate out of each age asks for five copies of its storage building, and all five can be bought.
-
-A full store stops that resource piling up. What it cannot hold goes into the current wonder's bank while the wonder still needs it (unless you typed `wonder overflow off`), and is lost otherwise. It no longer pays toward the plan's next copies. So build storage first whenever you enter a new age.
-
-Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its capacity for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
+Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its size for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
 
 Storage is also permanent: catastrophes never destroy it or turn it into ruins, and it can't be sold.
 
@@ -559,7 +553,7 @@ wonder collect <resource|all> [amount|all|max]   bank resources toward the curre
 build <wonder_key>                              start construction once it is fully funded
 ```
 
-Full stores bank into the wonder on their own ([overflow](wonders.md#overflow)), and a wonder in your [build plan](plan.md) banks and starts by itself once what you hold covers the rest.
+A wonder in your [build plan](plan.md) banks and starts by itself once what you hold covers the rest.
 
 You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 64 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/3 of the age's target time to build.
 
