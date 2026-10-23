@@ -12,6 +12,7 @@ All notable changes to AgeForge are documented here.
 - **VibeMode (early).** A setting that swaps the game's words for a GenZ script; this release has the switch and a first handful of lines.
 - **plan optimize.** Reorders your planned buildings for the fastest growth, interleaving homes and producers, and says how much sooner the plan finishes.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
+- **An experimental gate.** Start the game with AGEFORGE_GATES=v2 to try pillars measured by population, industry income and key techs instead of building counts.
 
 ### Changed
 - **A new top panel.** The top of the dashboard is a ledger: the age and the year, your people and morale, the four pillars to the next age, a long bar to the next age with what it is waiting on, and every resource with its rate and a trend line.
