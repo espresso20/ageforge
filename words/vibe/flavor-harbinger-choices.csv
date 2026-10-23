@@ -1,428 +1,428 @@
 id,text
-flavor.harbinger_appeased.any.001,"Everybody chipped in, no freeloaders"
-flavor.harbinger_appeased.any.002,It ate up most of a day
-flavor.harbinger_appeased.any.003,The kids got voluntold to join in
-flavor.harbinger_appeased.any.004,"People who never pray were out here faking it till they made it, praying awkwardly at the back with hands folded the way they'd seen other people do it"
-flavor.harbinger_appeased.any.005,"A lot of what got given was meant for other stuff, budget reallocated to the cosmos"
-flavor.harbinger_appeased.any.006,"An old man flexed the hardest of anyone, giving up the thing he'd been saving for his own funeral"
-flavor.harbinger_appeased.any.007,"Through all of it {subject} gave zero reaction either way, unreadable"
-flavor.harbinger_appeased.any.008,"Everybody sang, including the people who absolutely cannot carry a tune"
-flavor.harbinger_appeased.any.009,The after-vibes were lighter than anyone could really justify
-flavor.harbinger_appeased.any.010,Several families overspent on generosity and will be feeling that hangover for a season
-flavor.harbinger_appeased.any.011,"Whether any of it reached whoever it was meant for is anyone's guess, but people walked home with way more main character posture than they walked there with"
-flavor.harbinger_appeased.any.012,The grumbling afterwards was mostly about the price tag
-flavor.harbinger_appeased.any.013,"Someone kept receipts for the gods, a list of who gave what"
-flavor.harbinger_appeased.any.014,"Afterwards a full-on beef broke out over who gave the most, running deep into the night, and it only ended when someone pointed out the top giver had gone to bed without joining in, the real winner"
-flavor.harbinger_appeased.grounded.001,Every candle went full send and burned right down to the holder
-flavor.harbinger_appeased.grounded.002,"Doorsteps got little flower drops, soft and sweet"
-flavor.harbinger_appeased.grounded.003,"The dogs, locked indoors for the occasion, said absolutely not and barked through it all from behind the doors"
-flavor.harbinger_appeased.grounded.004,The offering fire's smoke parked itself over the roofs until evening and the town smelled holy all day
-flavor.harbinger_appeased.grounded.005,"By the end a bench outside the shrine had been sat smooth, that's a lot of sitting"
-flavor.harbinger_appeased.grounded.006,The lamps pulled an all-night vigil as part of it
-flavor.harbinger_appeased.grounded.007,"The women who organized it are already talking about making it yearly, and the men who carried the heavy stuff are already planning to be elsewhere next year"
-flavor.harbinger_appeased.grounded.008,"At the end the oldest woman, final boss of ceremonies, stood up, walked three times round the fire with her eyes shut, sat back down, and declared that'll do, and everyone went home like a door had closed"
-flavor.harbinger_appeased.late.001,"Every single person tuned in, the ratings were unreal"
-flavor.harbinger_appeased.late.002,"The screens went dark for an hour, a group screen-time detox"
-flavor.harbinger_appeased.late.003,"It all got streamed, most people watched alone in their rooms, then drifted out into the corridors afterwards just to be near somebody"
-flavor.harbinger_appeased.late.004,The servers were sweating trying to log donations as fast as they poured in
-flavor.harbinger_appeased.late.005,"The hydroponics crew gifted their first crop of the year, farm to altar"
-flavor.harbinger_appeased.late.006,Every deck and every screen went on mute for a minute of silence
-flavor.harbinger_appeased.late.007,"The ceremony was pieced together from half-remembered bits of older ones, because nobody alive had done this properly, and it still hit"
-flavor.harbinger_appeased.late.008,"For an hour the settlement's systems ran the ceremony and nothing else, every display and speaker locked in, and afterwards people said the quiet when the machines went back to work felt like being set down gently"
-flavor.harbinger_appeased.ancient.001,"The stones got a goat, who was not consulted"
+flavor.harbinger_appeased.any.001,Real ones only: everybody gave something
+flavor.harbinger_appeased.any.002,"The ritual ate up most of a day, no cap"
+flavor.harbinger_appeased.any.003,The kids got voluntold into the side quest
+flavor.harbinger_appeased.any.004,"Fake it till you make it era: people who never pray were praying awkwardly at the back, hands folded the way they'd seen other people fold them"
+flavor.harbinger_appeased.any.005,"Lowkey, a lot of what got given was meant for other stuff"
+flavor.harbinger_appeased.any.006,Biggest flex of the day: an old man gave up the thing he'd been saving for his own funeral
+flavor.harbinger_appeased.any.007,"{subject} stayed unbothered through all of it, no sign either way"
+flavor.harbinger_appeased.any.008,"Everybody sang, and the tone-deaf girlies sang loudest"
+flavor.harbinger_appeased.any.009,The after-vibes were lighter than anyone could quite justify
+flavor.harbinger_appeased.any.010,Several families overspent on generosity and will be feeling that L for a season
+flavor.harbinger_appeased.any.011,"Nobody can say if any of it reached whoever it was for, but people walked home with main character posture"
+flavor.harbinger_appeased.any.012,The grumbling afterwards was salty and all about the cost
+flavor.harbinger_appeased.any.013,Somebody kept receipts on who gave what
+flavor.harbinger_appeased.any.014,"Afterwards a beef broke out over who gave the most, running deep into the night, and only ended when someone pointed out the top giver had gone to bed without joining in, the real winner"
+flavor.harbinger_appeased.grounded.001,"The candles went full send and burned right down to the holders, no wick left, a full glow-up for the dark"
+flavor.harbinger_appeased.grounded.002,Doorsteps got a soft cottagecore flower drop
+flavor.harbinger_appeased.grounded.003,"The dogs went full menace mode, shut in to keep quiet and barking through it anyway from behind the doors"
+flavor.harbinger_appeased.grounded.004,A whole holy aesthetic: smoke from the offering fire hung over the roofs until evening
+flavor.harbinger_appeased.grounded.005,"Sheesh, by the end a bench outside the shrine had been sat smooth"
+flavor.harbinger_appeased.grounded.006,The lamps stayed locked in all night as part of it
+flavor.harbinger_appeased.grounded.007,"The women who organized it are already planning a yearly sequel, and the men who carried the heavy stuff are already ghosting next year"
+flavor.harbinger_appeased.grounded.008,"Final boss of ceremonies, the oldest woman stood up, walked three times round the fire with her eyes shut, sat back down and said that'll do, and everyone went home like a door had closed"
+flavor.harbinger_appeased.late.001,"The ratings were bussin, every single person tuned in"
+flavor.harbinger_appeased.late.002,"The whole settlement soft-launched a screen-time detox, screens off for an hour"
+flavor.harbinger_appeased.late.003,"It all got streamed, most people watched alone in their rooms, then pulled up in the corridors afterwards just to be near somebody"
+flavor.harbinger_appeased.late.004,Donations speedran past what the servers could log
+flavor.harbinger_appeased.late.005,The hydroponics crew went full real one and gave their first crop of the year
+flavor.harbinger_appeased.late.006,Real ones on every deck and every screen went silent for a minute
+flavor.harbinger_appeased.late.007,"The ceremony ate even though it was a remix of half-remembered older ones, because nobody alive had done this properly"
+flavor.harbinger_appeased.late.008,"For an hour the settlement's systems were locked in on the ceremony, every display and speaker, and afterwards people said the quiet when the machines went back to work felt like being set down gently"
+flavor.harbinger_appeased.ancient.001,"Massive L for the goat, which went to the stones"
 flavor.harbinger_appeased.ancient.002,The elders hit the dance floor and absolutely ate
-flavor.harbinger_appeased.ancient.003,The drums kept a slow all-night set going
-flavor.harbinger_appeased.ancient.004,"Bundles of sweet grass got burned at every hut until the camp smelled like it, and people's hair still smelled of it three days later, aromatherapy era"
-flavor.harbinger_appeased.ancient.005,"The best of the dried meat went into the fire, and the complaining stayed at whisper volume"
-flavor.harbinger_appeased.ancient.006,"The kids got the hardest job of all, painted with ochre and told to stand perfectly still while the elders sang"
-flavor.harbinger_appeased.ancient.007,"The offerings went up to the standing stones in a seniority-ranked line, oldest first"
+flavor.harbinger_appeased.ancient.003,The drums were vibing slow all night
+flavor.harbinger_appeased.ancient.004,"Bundles of sweet grass burned at every hut until the camp smelled like an aromatherapy era, still in people's hair three days later"
+flavor.harbinger_appeased.ancient.005,The best dried meat went into the fire and the salty comments stayed at whisper volume
+flavor.harbinger_appeased.ancient.006,"The kids got the hardest side quest, painted with ochre and told to stand perfectly still while the elders sang"
+flavor.harbinger_appeased.ancient.007,"The OG elders went first, carrying the offerings up to the standing stones in a line by age"
 flavor.harbinger_appeased.ancient.008,At the stones they dropped ~ and dipped without a backward glance
 flavor.harbinger_appeased.ancient.009,Each family pulled up with ~ and set it down at the foot of the tallest stone
-flavor.harbinger_appeased.ancient.010,"The hunters sacrificed their best spear points, fully aware they'll regret it next time a herd rolls through"
-flavor.harbinger_appeased.ancient.011,"The elders gave it their stamp of approval, done properly"
-flavor.harbinger_appeased.ancient.012,"Two of the hunters are lowkey campaigning for justice, claiming the goat was theirs"
-flavor.harbinger_appeased.ancient.013,"The elders have put everyone in an involuntary vegetarian arc, no meat until the moon is full"
-flavor.harbinger_appeased.ancient.014,"They built the fire bigger than anyone could remember, fed it everything they'd agreed to give plus some bonus stuff they hadn't, and stood round it until it burned down to a red eye"
-flavor.harbinger_appeased.feudal.001,"The bells went off for a full hour, ears still ringing after"
-flavor.harbinger_appeased.feudal.002,Masses ran for three days straight
-flavor.harbinger_appeased.feudal.003,"The abbot sent an invoice, of course he did"
-flavor.harbinger_appeased.feudal.004,The pardoner made bank
-flavor.harbinger_appeased.feudal.005,"The relics got paraded round the walls under a canopy, which snagged on the gatehouse in a full blooper moment and had to be taken down and put back up on the other side"
-flavor.harbinger_appeased.feudal.006,Every household chipped in ~ to the church
-flavor.harbinger_appeased.feudal.007,"Among the offerings was ~, which is going to live rent free in everyone's heads for years"
-flavor.harbinger_appeased.feudal.008,"The hype train rolled out at dawn, the bishop up front and most of the parish behind"
-flavor.harbinger_appeased.feudal.009,"Pilgrims went on an errand run for the soul, off to the shrine with a purse and a list of names"
-flavor.harbinger_appeased.feudal.010,"The monks ran prayer in shifts through the night, and the abbey kitchen ran snacks in shifts too"
-flavor.harbinger_appeased.feudal.011,"The church door handed out alms to anyone who pulled up, no questions asked"
-flavor.harbinger_appeased.feudal.012,The steward is big salty about the lord's wine ending up on the altar
-flavor.harbinger_appeased.feudal.013,"It was announced at the market cross that Friday would be a fast day, no snacks"
-flavor.harbinger_appeased.feudal.014,"The guilds each paid for a candle as tall as a man and tried to out-tall each other, and by evening the candle wars had made the cathedral so bright the priest couldn't see the altar"
-flavor.harbinger_appeased.industrial.001,The collection plates speedran their way back to full
+flavor.harbinger_appeased.ancient.010,"The hunters fumbled their future and gave up their best spear points, fully aware they'll regret it next time a herd rolls through"
+flavor.harbinger_appeased.ancient.011,"The elders gave it the vibe check, done properly"
+flavor.harbinger_appeased.ancient.012,"Two hunters are lowkey salty, claiming the goat was theirs"
+flavor.harbinger_appeased.ancient.013,"The elders put everyone in an involuntary vegetarian arc, no meat until the moon is full"
+flavor.harbinger_appeased.ancient.014,"Feral energy all round: they built the fire bigger than anyone could remember, fed it everything they'd agreed to give and some bonus stuff, and stood round it until it burned down to a red eye"
+flavor.harbinger_appeased.feudal.001,The bells were yapping for a full hour
+flavor.harbinger_appeased.feudal.002,The masses entered a three-day marathon era
+flavor.harbinger_appeased.feudal.003,The audacity: the abbot sent a bill
+flavor.harbinger_appeased.feudal.004,The pardoner secured the bag
+flavor.harbinger_appeased.feudal.005,Fumble of the day: the relic canopy snagged on the gatehouse and had to be taken down and put back up on the far side
+flavor.harbinger_appeased.feudal.006,Real ones in every household gave ~ to the church
+flavor.harbinger_appeased.feudal.007,"Among the offerings was ~, which is going to live rent free for years"
+flavor.harbinger_appeased.feudal.008,"The procession was giving hype train at dawn, the bishop up front and most of the parish behind"
+flavor.harbinger_appeased.feudal.009,Pilgrims went on a side quest to the shrine with a purse and a list of names
+flavor.harbinger_appeased.feudal.010,"The abbey ran a goated shift system all night, monks praying in turns and the kitchen feeding them in turns"
+flavor.harbinger_appeased.feudal.011,The church door gave alms to anyone who pulled up
+flavor.harbinger_appeased.feudal.012,The steward is big salty that the lord's wine went to the altar
+flavor.harbinger_appeased.feudal.013,The market cross hard-launched a fast for Friday
+flavor.harbinger_appeased.feudal.014,"The guilds' candle wars went feral, each paying for one as tall as a man and trying to out-tall the others, until the cathedral was so bright the priest couldn't see the altar"
+flavor.harbinger_appeased.industrial.001,The collection plates speedran back to full
 flavor.harbinger_appeased.industrial.002,A day of prayer got declared and everyone clocked out for it
-flavor.harbinger_appeased.industrial.003,"The mayor gave generously in a very camera-ready, very public way"
-flavor.harbinger_appeased.industrial.004,The brass band had the stamina to play in the park until dark
-flavor.harbinger_appeased.industrial.005,Factory owners gave a day's takings to the churches and farmed some clout by having their names read out
-flavor.harbinger_appeased.industrial.006,"The choirs of four chapels finally pulled off a collab, singing together for the first time ever"
-flavor.harbinger_appeased.industrial.007,"Every pub in the district passed the hat, the landlords matched it, then quietly bumped their prices a farthing the next week"
-flavor.harbinger_appeased.industrial.008,"The newspapers gave public shoutouts to everyone who gave, names printed"
-flavor.harbinger_appeased.industrial.009,"The revival tent on the common had a sold-out run, packed every single night"
-flavor.harbinger_appeased.industrial.010,"The museum lent its oldest relic for the cathedral service, and a line stretched the length of the high street to walk past it"
+flavor.harbinger_appeased.industrial.003,"The mayor's charity was giving camera-ready, generous and very public"
+flavor.harbinger_appeased.industrial.004,"Bangers in the park until dark, courtesy of the brass band"
+flavor.harbinger_appeased.industrial.005,Factory owners farmed clout by giving a day's takings to the churches and having their names read out
+flavor.harbinger_appeased.industrial.006,"The choirs of four chapels finally ate together, a first"
+flavor.harbinger_appeased.industrial.007,"Every pub in the district passed the hat and the landlords matched it, then lowkey bumped their prices a farthing the next week"
+flavor.harbinger_appeased.industrial.008,"The newspapers gave clout to everyone who gave, printing every name"
+flavor.harbinger_appeased.industrial.009,The revival tent was bussin every single night
+flavor.harbinger_appeased.industrial.010,"The museum lent its OG relic for the cathedral service, and a line stretched the length of the high street to walk past it"
 flavor.harbinger_appeased.industrial.011,"Down at the works the men passed the hat on the shop floor, a penny or two each, the foreman flexed a shilling so everyone saw, and the lot went to the chapel in a biscuit tin"
-flavor.harbinger_appeased.industrial.012,The treasurer is fuming that half the pledges are still all talk and no pay
-flavor.harbinger_appeased.industrial.013,"Four thousand pledged, two thousand collected, and a lot of goodwill, the math is only halfway mathing"
-flavor.harbinger_appeased.digital.001,"The hashtag lived a long life by hashtag standards, two full days trending"
-flavor.harbinger_appeased.digital.002,"Three corporations matched donations, brand synergy in the face of doom"
-flavor.harbinger_appeased.digital.003,"The internet entered its sincere era, tribute pages up everywhere"
-flavor.harbinger_appeased.digital.004,"The numbers went crazy, a billion in pledges by midnight"
-flavor.harbinger_appeased.digital.005,"An online vigil out-viewed the final of anything, record broken"
-flavor.harbinger_appeased.digital.006,The meditation apps dropped a free month and people actually took them up on it
-flavor.harbinger_appeased.digital.007,"The feed turned into a public apology era, people asking forgiveness for stuff left and right"
-flavor.harbinger_appeased.digital.008,"The arts fund bankrolled a week of free concerts, and the orchestra played to half-empty halls because everyone stayed home streaming it"
-flavor.harbinger_appeased.digital.009,Corporate sponsors had the audacity to slap their logos on the prayer broadcast
-flavor.harbinger_appeased.digital.010,"Churches, temples and mosques did their first ever shared stream, and the comments underneath were kinder than anyone expected"
-flavor.harbinger_appeased.digital.011,"In the server halls the engineers held their own vigil, standing in the cold aisles between the racks with the lights off and the fans roaring, and at least one of them said afterwards it lowkey helped"
-flavor.harbinger_appeased.digital.012,The comment section has decided it was all for show
-flavor.harbinger_appeased.digital.013,The public broadcaster nuked its entire schedule for the ceremony
-flavor.harbinger_appeased.cosmic.001,The station went full lights-off for the ceremony
-flavor.harbinger_appeased.cosmic.002,Everybody on the ring held their breath in sync
-flavor.harbinger_appeased.cosmic.003,They sent a hymn out into the void like a voice memo to nobody and everybody
-flavor.harbinger_appeased.cosmic.004,"The observation deck got a botanical glow-up, flooded with flowers from hydroponics"
-flavor.harbinger_appeased.cosmic.005,"The station put itself on low power mode, every hull light dimmed for an hour"
-flavor.harbinger_appeased.cosmic.006,"The archive's deepest cuts got played in full, the oldest recordings it had"
-flavor.harbinger_appeased.cosmic.007,"Everyone wrote a little DM to the universe on a slip of film, and the slips got sealed in a capsule and fired into space at a slow drift, to be found or not"
-flavor.harbinger_appeased.cosmic.008,"The fleet did a flyby for the culture, flying in formation past the station's windows"
-flavor.harbinger_appeased.cosmic.009,The chaplains of four faiths stood together on the hangar floor for a collab service that was partly each of theirs and wholly none of them
-flavor.harbinger_appeased.cosmic.010,"Out past the last marker buoy they set adrift a small capsule carrying everyone's names and a recording of the kids singing, on a course that'll take it nowhere for longer than the colony will last"
-flavor.harbinger_appeased.cosmic.011,Engineering is pressed about the ceremony eating their power allocation
-flavor.harbinger_appeased.cosmic.012,By order of the commander every nonessential system went into airplane mode for the vigil
-flavor.harbinger_appeased.cosmic.013,"Every deck got a delivery, one crate of hydroponics flowers each"
-flavor.harbinger_appeased.iron_age.001,"The sackcloth itched like crazy, worst fit ever"
-flavor.harbinger_appeased.iron_age.002,"Even the tax collectors joined the city's three-day fast, which is the real miracle"
-flavor.harbinger_appeased.classical_age.001,Nine mules' worth of gifts pulled up at the shrine
-flavor.harbinger_appeased.classical_age.002,"The shrine priests carefully counted the gifts and sent back a vague the-god-has-seen-it, basically a read receipt"
-flavor.harbinger_appeased.medieval_age.001,"The monks got paid, and then they prayed, transaction complete"
-flavor.harbinger_appeased.medieval_age.002,"The town bought a prayer subscription, three monks at a time praying day and night at the abbey, every hour paid for"
-flavor.harbinger_appeased.renaissance_age.001,"The painter got paid half up front, as artists should"
-flavor.harbinger_appeased.renaissance_age.002,"The prince's ego made it into the altarpiece, the city kneeling under a stormy sky and him painted up front, bigger than the saints"
-flavor.harbinger_appeased.colonial_age.001,"The governor cancelled feasting from the courthouse steps, the fast is on"
-flavor.harbinger_appeased.colonial_age.002,The real sacrifice was the taverns shutting for a day
-flavor.harbinger_appeased.industrial_age.001,The revival preacher rolled up from the coast by train and the doom tour had officially arrived
+flavor.harbinger_appeased.industrial.012,The treasurer is big pressed that half the pledges are still unpaid
+flavor.harbinger_appeased.industrial.013,"The math is only halfway mathing: four thousand pledged, two thousand collected, plus a lot of goodwill"
+flavor.harbinger_appeased.digital.001,The hashtag stayed iconic for two full days
+flavor.harbinger_appeased.digital.002,Three corporations flexed by matching donations
+flavor.harbinger_appeased.digital.003,"The internet entered its tribute page era, posts everywhere"
+flavor.harbinger_appeased.digital.004,"Sheesh, the pledges hit a billion by midnight"
+flavor.harbinger_appeased.digital.005,An online vigil ratioed the final of anything on viewers
+flavor.harbinger_appeased.digital.006,The meditation apps dropped a free month and people actually said bet
+flavor.harbinger_appeased.digital.007,"The feed went into its public apology era, people asking forgiveness for stuff left and right"
+flavor.harbinger_appeased.digital.008,Live music took an L: the arts fund paid for a week of free concerts and the orchestra played to half-empty halls because everyone watched from home
+flavor.harbinger_appeased.digital.009,The audacity: corporate sponsors slapped their logos on the prayer broadcast
+flavor.harbinger_appeased.digital.010,"Wholesome internet era: churches, temples and mosques shared one stream for the first time, and the comments underneath were kinder than anyone expected"
+flavor.harbinger_appeased.digital.011,"The engineers held their own vigil in the server halls, standing in the cold aisles between the racks with the lights off and the fans roaring, and at least one of them said afterwards it lowkey helped"
+flavor.harbinger_appeased.digital.012,The comment section has decided the whole thing was for clout
+flavor.harbinger_appeased.digital.013,The public broadcaster ghosted its whole schedule for the ceremony
+flavor.harbinger_appeased.cosmic.001,The station went into a lights-off era for the ceremony
+flavor.harbinger_appeased.cosmic.002,"Deadass, the whole ring held its breath"
+flavor.harbinger_appeased.cosmic.003,They slid a hymn into the void's DMs
+flavor.harbinger_appeased.cosmic.004,The observation deck got a botanical glow-up from hydroponics
+flavor.harbinger_appeased.cosmic.005,The hull lights went into a dim aesthetic for an hour
+flavor.harbinger_appeased.cosmic.006,"The archive dropped its deepest OG cuts, the oldest recordings played in full"
+flavor.harbinger_appeased.cosmic.007,"Everyone wrote a lil DM to the universe on a slip of film, and the slips went into a capsule fired off at a slow drift, to be found or not"
+flavor.harbinger_appeased.cosmic.008,The fleet did a flex flyby in formation past the station's windows
+flavor.harbinger_appeased.cosmic.009,"In an iconic collab, the chaplains of four faiths led a service on the hangar floor that was partly each of theirs and wholly none of them"
+flavor.harbinger_appeased.cosmic.010,"Real ones set adrift a lil capsule out past the last marker buoy with everyone's names and a recording of the kids singing, on a course that'll take it nowhere for longer than the colony will last"
+flavor.harbinger_appeased.cosmic.011,Engineering is pressed that the ceremony ate their power allocation
+flavor.harbinger_appeased.cosmic.012,"No cap, the commander put every nonessential system into airplane mode for the vigil"
+flavor.harbinger_appeased.cosmic.013,"Every deck got a cottagecore delivery, one crate of hydroponics flowers each"
+flavor.harbinger_appeased.iron_age.001,Worst fit check ever: the sackcloth itched like crazy
+flavor.harbinger_appeased.iron_age.002,"Even the tax collectors joined the city's three-day fast, which is the real plot twist"
+flavor.harbinger_appeased.classical_age.001,The gifts pulled up to the shrine on nine mules
+flavor.harbinger_appeased.classical_age.002,"The shrine priests counted the gifts very carefully, very sus, and sent back word that the god was paying attention"
+flavor.harbinger_appeased.medieval_age.001,"The monks secured the bag, then prayed"
+flavor.harbinger_appeased.medieval_age.002,"The town bought into a prayer subscription era, three monks at a time praying day and night at the abbey, every hour paid for"
+flavor.harbinger_appeased.renaissance_age.001,"The painter secured the bag, half of it up front"
+flavor.harbinger_appeased.renaissance_age.002,"The prince's ego was the main character of the altarpiece: the city kneeling under a stormy sky, and him painted up front, bigger than the saints"
+flavor.harbinger_appeased.colonial_age.001,The governor hard-launched the fast from the courthouse steps
+flavor.harbinger_appeased.colonial_age.002,The taverns took the L and shut for the day
+flavor.harbinger_appeased.industrial_age.001,Tour era began when the revival preacher pulled up from the coast by train
 flavor.harbinger_appeased.industrial_age.002,"Two thousand packed the revival tent, and the overflow crowd ate just as hard outside in the rain, singing along through the canvas"
-flavor.harbinger_appeased.victorian_age.001,The mills got a rare day off for the national day of prayer
-flavor.harbinger_appeased.victorian_age.002,"Every church ran the same script, the proclamation read word for word"
-flavor.harbinger_appeased.electric_age.001,"The revival tour had the original tour bus, a special train with electric lights on every carriage"
-flavor.harbinger_appeased.electric_age.002,"Honestly half the crowd came for the bulbs, the preacher's stage lit with more electric lights than the town had ever seen in one place"
-flavor.harbinger_appeased.atomic_age.001,"The coast got crowdfunded early-warning stations, paid for by public subscription"
-flavor.harbinger_appeased.atomic_age.002,Every headland got a radar dish doing nonstop side-eye at the sky
-flavor.harbinger_appeased.modern_age.001,The telethon went for thirty hours and sleep was optional
-flavor.harbinger_appeased.modern_age.002,"Celebrities were mid at answering telethon phones, and the total on the board behind them climbed all night anyway"
-flavor.harbinger_appeased.information_age.001,"It got forwarded to everybody by everybody, the chain never broke"
-flavor.harbinger_appeased.information_age.002,"It pulled a surprise reunion, hitting every address in every address book, including people who hadn't heard from the sender in fifteen years"
-flavor.harbinger_appeased.digital_age.001,"Positivity was trending, the feel-good hashtag everywhere by lunch"
-flavor.harbinger_appeased.digital_age.002,"Sponsored serenity was the move, influencers paid to post calm"
-flavor.harbinger_appeased.cyberpunk_age.001,The oracle AI smoothly pocketed the bribe and said nothing about it
-flavor.harbinger_appeased.cyberpunk_age.002,The bribe speedran through a chain of shell accounts so long the oracle's own auditors lost track halfway
-flavor.harbinger_appeased.fusion_age.001,The containment hall vigil pulled a double shift
-flavor.harbinger_appeased.fusion_age.002,The hard hats showed their soft side and left flowers on the reactor housing
-flavor.harbinger_appeased.space_age.001,"Every frequency got the peace hymn, a full broadcast drop"
-flavor.harbinger_appeased.space_age.002,"The station's kids sang the hymn and it went outward at full power, still traveling long after anyone who sang it is gone"
-flavor.harbinger_appeased.interstellar_age.001,"The lost colonists got a full roll call, every name read aloud"
-flavor.harbinger_appeased.interstellar_age.002,The lost colony's anthem played on every deck as a tribute
+flavor.harbinger_appeased.victorian_age.001,The mills clocked off for the national day of prayer
+flavor.harbinger_appeased.victorian_age.002,"In full NPC script mode, every church read out the proclamation"
+flavor.harbinger_appeased.electric_age.001,"The revival tour had main character transport, a special train with electric lights on every carriage"
+flavor.harbinger_appeased.electric_age.002,"Honestly half the crowd pulled up for the bulbs, the preacher's stage lit with more electric lights than the town had ever seen in one place"
+flavor.harbinger_appeased.atomic_age.001,"Early-warning stations went up along the coast, a crowdfunded W paid for by public subscription"
+flavor.harbinger_appeased.atomic_age.002,Every headland got a radar dish side-eyeing the sky
+flavor.harbinger_appeased.modern_age.001,The telethon's iconic stamina carried it for thirty hours
+flavor.harbinger_appeased.modern_age.002,"Celebrities were mid at answering the telethon phones, and the total on the board behind them climbed all night anyway"
+flavor.harbinger_appeased.information_age.001,"Every group chat got it, everybody forwarding it to everybody they knew"
+flavor.harbinger_appeased.information_age.002,"It hit every address in every address book, including people who'd been ghosted by the sender for fifteen years"
+flavor.harbinger_appeased.digital_age.001,Wholesome era by lunch: the feel-good hashtag was on everyone's feed
+flavor.harbinger_appeased.digital_age.002,Influencers secured the bag posting calm
+flavor.harbinger_appeased.cyberpunk_age.001,The oracle AI smoothly pocketed the bribe and gatekept the whole thing
+flavor.harbinger_appeased.cyberpunk_age.002,The bribe speedran through shell accounts until even the oracle's own auditors lost track halfway
+flavor.harbinger_appeased.fusion_age.001,Real ones kept the containment hall vigil going through two shifts
+flavor.harbinger_appeased.fusion_age.002,The hard hats showed their soft era and left flowers on the reactor housing
+flavor.harbinger_appeased.space_age.001,The peace hymn slid into every frequency
+flavor.harbinger_appeased.space_age.002,"The station's kids sang the hymn and it went out at full power, a core memory for the universe that'll still be traveling long after anyone who sang it is gone"
+flavor.harbinger_appeased.interstellar_age.001,"Real ones remembered every lost colonist, names read aloud"
+flavor.harbinger_appeased.interstellar_age.002,It hit different hearing the lost colony's anthem on every deck
 flavor.harbinger_appeased.galactic_age.001,The linguists clapped back at the relay in its own geometry
-flavor.harbinger_appeased.galactic_age.002,"The linguists spent four days drafting the reply and beefing over every angle, and when it was sent the relay hummed once and went silent, left on read or accepted, unclear"
-flavor.harbinger_appeased.quantum_age.001,"You went through a whole character development arc and kept every promise, even the small ones"
-flavor.harbinger_appeased.quantum_age.002,"You did every task your future self requested, one by one, including the one you'd been putting off for years, and it was harder than it had any right to be"
-flavor.harbinger_appeased.transcendent_age.001,Each branch that ended got mourned by name
-flavor.harbinger_appeased.transcendent_age.002,"You held a service for the versions of yourself that didn't continue, the hall was full, and the weird part was nobody there was sure how many of the mourners were even from this branch"
-flavor.harbinger_braced.any.001,"Empty hands were banned, everyone hauled something everywhere"
-flavor.harbinger_braced.any.002,The work turned into an all-night grind session
-flavor.harbinger_braced.any.003,"The strongest stuff went in front of the weakest, tank in front"
-flavor.harbinger_braced.any.004,"Every pair of hands got drafted, including a few that were more trouble than help"
-flavor.harbinger_braced.any.005,Someone made a priority queue of what would be needed first
+flavor.harbinger_appeased.galactic_age.002,"Four days of drafting and beefing over every angle later, the linguists sent the reply, and the relay hummed once and went silent, left on read or accepted, unclear"
+flavor.harbinger_appeased.quantum_age.001,"Character development arc: you kept every promise, even the small ones"
+flavor.harbinger_appeased.quantum_age.002,"You cleared every side quest your future self requested, one by one, including the one you'd been putting off for years, and it was harder than it had any right to be"
+flavor.harbinger_appeased.transcendent_age.001,"Real ones remembered every branch that ended, each mourned by name"
+flavor.harbinger_appeased.transcendent_age.002,"You held a service for the versions of yourself that didn't continue, the hall was full, and the cursed part was nobody there was sure how many of the mourners were even from this branch"
+flavor.harbinger_braced.any.001,Carry-everything era: nobody walked anywhere empty-handed
+flavor.harbinger_braced.any.002,"Nobody clocked out, the work went all night"
+flavor.harbinger_braced.any.003,Tank energy: the strongest stuff went in front of the weakest
+flavor.harbinger_braced.any.004,"Every pair of hands got drafted, including a few that were giving more trouble than help"
+flavor.harbinger_braced.any.005,The planning girlies made lists of what would be needed first
 flavor.harbinger_braced.any.006,The old and the young got into generational beef about how it was done last time
-flavor.harbinger_braced.any.007,The kids got little side quests to keep them out of the way
-flavor.harbinger_braced.any.008,"All through the prep {subject} offered zero advice, zero help"
-flavor.harbinger_braced.any.009,"People who'd never lifted anything heavier than a cup got thrown into an involuntary gym arc, hauling loads to the stores and back until their hands blistered"
+flavor.harbinger_braced.any.007,The kids got lil side quests to keep them out of the way
+flavor.harbinger_braced.any.008,{subject} gatekept every bit of advice through the whole prep
+flavor.harbinger_braced.any.009,"People who'd never lifted anything heavier than a cup got thrown into a gym arc, hauling loads to the stores and back until their hands blistered"
 flavor.harbinger_braced.any.010,"By the end there was nothing left to do but wait, and waiting turned out to be the real boss fight"
-flavor.harbinger_braced.any.011,"It was the kind of work that runs on long after anyone remembers why, so by day three people were stacking stuff on autopilot and had to be stopped by someone who could still count"
-flavor.harbinger_braced.any.012,"The grumbling was about who got stuck with the heavy end, the eternal question"
+flavor.harbinger_braced.any.011,"It was the kind of grind that runs on long after anyone remembers why, so by day three people were stacking stuff on autopilot and had to be stopped by someone who could still count"
+flavor.harbinger_braced.any.012,The salty grumbling was all about who got stuck with the heavy end
 flavor.harbinger_braced.any.013,Orders went round that this is a zero waste era now
-flavor.harbinger_braced.grounded.001,"Roofs got weighed down with rocks, rock hats for every house"
-flavor.harbinger_braced.grounded.002,The herd got pulled in close and put on lockdown
-flavor.harbinger_braced.grounded.003,Water got stored in literally anything that would hold it
-flavor.harbinger_braced.grounded.004,"Every floor got the bunker-but-make-it-cozy treatment, blankets piled in the middle"
-flavor.harbinger_braced.grounded.005,"Spades stayed booked from morning to night, and whoever didn't have one dug bare-handed, no excuses"
-flavor.harbinger_braced.grounded.006,"The dogs supervised the work from spot to spot and got under everyone's feet, and nobody had the heart to shut the little managers in"
-flavor.harbinger_braced.grounded.007,"The settlement moved its food, its seed and its old people into the strongest building it had, then stood there doubting whether the strongest building was strong enough, then went back for more stone"
-flavor.harbinger_braced.grounded.008,The mud had zero respect for boundaries and got into everything
-flavor.harbinger_braced.late.001,The servers pulled an all-nighter running backups
-flavor.harbinger_braced.late.002,"Backups for the backups came online, redundancy era"
-flavor.harbinger_braced.late.003,Every spare battery got charged to full bars and stacked
-flavor.harbinger_braced.late.004,"Emergency rations went out to every residence, snack drop incoming"
-flavor.harbinger_braced.late.005,The safe rooms got stocked and double-checked
-flavor.harbinger_braced.late.006,The data got trust issues and was copied to three separate sites
-flavor.harbinger_braced.late.007,"Automated systems ran through the prep faster than people could follow, and people followed anyway, babysitting the robots and checking what they'd already checked"
-flavor.harbinger_braced.late.008,"In the last hours every nonessential process got axed to free power for the ones that mattered, and floor by floor the lights dimmed until the place felt like it was holding its breath"
-flavor.harbinger_braced.ancient.001,The herd got penned up tight
-flavor.harbinger_braced.ancient.002,"Dig, fill, repeat, the pits got done"
-flavor.harbinger_braced.ancient.003,"Old school doors went up, stones rolled across the cave mouths"
+flavor.harbinger_braced.grounded.001,"Every house got a rock-hat glow-up, roofs weighted down with stones"
+flavor.harbinger_braced.grounded.002,The animals got gatekept close to home
+flavor.harbinger_braced.grounded.003,Hydration era: water got stored in anything that would hold it
+flavor.harbinger_braced.grounded.004,Cozycore bunkers: blankets piled in the middle of every floor
+flavor.harbinger_braced.grounded.005,"The spade grind ran morning to night, and anyone without one dug with their hands"
+flavor.harbinger_braced.grounded.006,"The dogs supervised the work from spot to spot and got under everyone's feet, and nobody had the heart to shut the lil managers in"
+flavor.harbinger_braced.grounded.007,"The settlement moved its food, its seed and its old people into the strongest building it had, then side-eyed that building wondering if it was strong enough, then went back for more stone"
+flavor.harbinger_braced.grounded.008,The feral mud got into literally everything
+flavor.harbinger_braced.late.001,"The servers locked in for the backups, running all night"
+flavor.harbinger_braced.late.002,Redundancy era: backups for the backups came online
+flavor.harbinger_braced.late.003,Full bars energy: every spare battery charged and stacked
+flavor.harbinger_braced.late.004,Lowkey snack drop: emergency rations went out to every residence
+flavor.harbinger_braced.late.005,The safe rooms got stocked and vibe checked
+flavor.harbinger_braced.late.006,Trust issues era: everything copied to three separate sites
+flavor.harbinger_braced.late.007,"The robots speedran the prep faster than people could follow, and people followed anyway, babysitting them and checking what they'd already checked"
+flavor.harbinger_braced.late.008,"In the last hours every nonessential process got ghosted to free power for the ones that mattered, and floor by floor the lights dimmed until the place felt like it was holding its breath"
+flavor.harbinger_braced.ancient.001,The herd got gatekept in a pen
+flavor.harbinger_braced.ancient.002,"NPC loop: dig, fill, repeat, until the pits were done"
+flavor.harbinger_braced.ancient.003,"Old school doors went up, OG stones rolled across the cave mouths"
 flavor.harbinger_braced.ancient.004,"The huts got a hide-wrap glow-up, every skin in camp stretched over them and weighted down"
-flavor.harbinger_braced.ancient.005,"The jerky vault was the deepest pit, dried meat stacked in and buried"
-flavor.harbinger_braced.ancient.006,"The elders handed out assigned seating for doom, marking where each family would go when it hits"
-flavor.harbinger_braced.ancient.007,The kids gathered firewood until they'd cleared the map for a day's walk in every direction
-flavor.harbinger_braced.ancient.008,"The men dug a ditch round the whole camp, four days and a lot of yelling, and filled it with thorn"
-flavor.harbinger_braced.ancient.009,"Water got hauled up from the spring in skins and bowls and literally anything that would hold it, and poured into a clay-lined pit"
-flavor.harbinger_braced.ancient.010,"The women took the littlest kids and the oldest people up to the high cave with a moon's worth of food, and the men walled the entrance behind them, leaving a gap at the top the width of a hand"
-flavor.harbinger_braced.ancient.011,The hunters are moaning that nobody is hunting
-flavor.harbinger_braced.ancient.012,"The elders say nothing comes out of the pits until they give the word, hands off"
-flavor.harbinger_braced.ancient.013,"The inventory was stacked, four pits of meat, two of roots, one of seed"
-flavor.harbinger_braced.feudal.001,The granary got filled to the brim
-flavor.harbinger_braced.feudal.002,"The walls got a structural glow-up, shored up all along"
-flavor.harbinger_braced.feudal.003,"Every cellar got barrels, no exceptions"
-flavor.harbinger_braced.feudal.004,The masons pulled overtime by torchlight
-flavor.harbinger_braced.feudal.005,Carts hauled stone from the quarry all week nonstop
-flavor.harbinger_braced.feudal.006,"The castle cellars got cleared out for grain, and the wine got evicted"
-flavor.harbinger_braced.feudal.007,Every well in town got planked over
-flavor.harbinger_braced.feudal.008,"By the lord's order every household meal-prepped a month of flour and sent one man a day to the walls, and the carts ran day and night"
-flavor.harbinger_braced.feudal.009,"Timber came down from the forest faster than it could season, and the carpenters complained the entire time they used it"
+flavor.harbinger_braced.ancient.005,"The jerky got gatekept in the deepest pit, buried under earth"
+flavor.harbinger_braced.ancient.006,Main character planning from the elders: every family got a marked spot for when it hits
+flavor.harbinger_braced.ancient.007,The kids went feral gathering firewood until there was none left within a day's walk
+flavor.harbinger_braced.ancient.008,"The men dug a ditch round the whole camp, four days of grind and a lot of yelling, and filled it with thorn"
+flavor.harbinger_braced.ancient.009,"Hydration side quest: water hauled up from the spring in skins and bowls and anything that would hold it, poured into a clay-lined pit"
+flavor.harbinger_braced.ancient.010,"Real ones protecting real ones: the women took the littlest kids and the oldest people up to the high cave with a moon's worth of food, and the men walled the entrance behind them, leaving a gap the width of a hand"
+flavor.harbinger_braced.ancient.011,The hunters are salty that nobody is hunting
+flavor.harbinger_braced.ancient.012,"The elders are gatekeeping the pits, nothing eaten until they give the word"
+flavor.harbinger_braced.ancient.013,"The pantry glow-up came in at four pits of meat, two of roots and one of seed"
+flavor.harbinger_braced.feudal.001,"W for the granary, filled to the brim"
+flavor.harbinger_braced.feudal.002,The walls got a structural glow-up
+flavor.harbinger_braced.feudal.003,Stocked era: barrels in every cellar
+flavor.harbinger_braced.feudal.004,The masons clocked overtime by torchlight
+flavor.harbinger_braced.feudal.005,The OG supply chain had carts hauling stone from the quarry all week
+flavor.harbinger_braced.feudal.006,The castle cellars got cleared out for grain and the wine got ghosted
+flavor.harbinger_braced.feudal.007,Every well in town got gatekept under planks
+flavor.harbinger_braced.feudal.008,"By the lord's order every household meal-prepped a month of flour and sent one man a day to grind on the walls, and the carts ran day and night"
+flavor.harbinger_braced.feudal.009,"Timber came down from the forest faster than it could season, and the carpenters were salty about it the entire time they used it"
 flavor.harbinger_braced.feudal.010,"The cathedral treasure got gatekept behind a false wall in the crypt, the three men who bricked it up swore on the relics never to tell, and one of them has been drinking ever since"
-flavor.harbinger_braced.feudal.011,The steward ordered a surprise audit of every cellar in town
-flavor.harbinger_braced.feudal.012,"The undercroft is now a whole situation, two hundred barrels of salt fish deep"
-flavor.harbinger_braced.feudal.013,"The masons swear the wall will hold, with suspiciously zero eye contact with the wall"
-flavor.harbinger_braced.industrial.001,Walls of sandbags went up everywhere
-flavor.harbinger_braced.industrial.002,Coal got stockpiled by the ton
-flavor.harbinger_braced.industrial.003,Hospitals cleared their wards and went into waiting mode
-flavor.harbinger_braced.industrial.004,"Basement makeover season hit the street, every cellar cleared and whitewashed"
-flavor.harbinger_braced.industrial.005,The mills got shut and their windows boarded up
-flavor.harbinger_braced.industrial.006,Panic shoppers bought tinned food by the crate
-flavor.harbinger_braced.industrial.007,The fire brigade ran relentless drills in the square every morning
-flavor.harbinger_braced.industrial.008,"Volunteers grinded on the embankment from first light until the lamps came on, and their sandbags went up along the river wall in a line a mile long"
-flavor.harbinger_braced.industrial.009,"The railway company ran extra trains of coal and flour into the city, so overloaded the platforms creaked"
-flavor.harbinger_braced.industrial.010,"The pawnshops did a roaring trade as families turned whatever they had into tins and candles and rope, and the galaxy-brain pawnbroker on the corner, who's seen a few of these, bought nothing he couldn't sell back to them afterwards"
+flavor.harbinger_braced.feudal.011,The steward ordered a vibe check on every cellar in town
+flavor.harbinger_braced.feudal.012,"The undercroft is a whole situation now, two hundred barrels of salt fish deep"
+flavor.harbinger_braced.feudal.013,Highkey sus: the masons swear the wall will hold without once looking at the wall
+flavor.harbinger_braced.industrial.001,The new town aesthetic was walls of sandbags
+flavor.harbinger_braced.industrial.002,Coal got stockpiled in a full hoarding era
+flavor.harbinger_braced.industrial.003,Hospitals cleared their wards and went into waiting era
+flavor.harbinger_braced.industrial.004,Basement glow-up season: cellars up and down the street cleared and whitewashed
+flavor.harbinger_braced.industrial.005,"The mills got ghosted, shut and boarded"
+flavor.harbinger_braced.industrial.006,Panic shoppers went feral and bought tinned food by the crate
+flavor.harbinger_braced.industrial.007,The fire brigade's tryhard morning drills took over the square every day
+flavor.harbinger_braced.industrial.008,A mile-long line of sandbags went up along the river wall thanks to volunteers grinding on the embankment from first light until the lamps came on
+flavor.harbinger_braced.industrial.009,Absolute unit energy: the railway ran extra trains of coal and flour into the city so heavily loaded the platforms creaked
+flavor.harbinger_braced.industrial.010,"Galaxy-brain pawnbroker alert: as families turned whatever they had into tins and candles and rope, the one on the corner, who's seen a few of these, bought nothing he couldn't sell back to them afterwards"
 flavor.harbinger_braced.industrial.011,The ratepayers are big mad about the cost of the sandbags
-flavor.harbinger_braced.industrial.012,"The hottest new decor trend, per official advice, is a bucket of sand on every landing"
-flavor.harbinger_braced.industrial.013,"The math isn't mathing yet, ten thousand sandbags filled and only four thousand placed"
-flavor.harbinger_braced.digital.001,Generators got fueled up and ready
-flavor.harbinger_braced.digital.002,Little delivery-hero drones ferried medicine all night
-flavor.harbinger_braced.digital.003,"The server centers went into island mode, off the grid and self-sufficient"
-flavor.harbinger_braced.digital.004,Critical systems got a just-in-case mirror on three continents
-flavor.harbinger_braced.digital.005,"The great download happened, everyone saving everything they might need offline"
-flavor.harbinger_braced.digital.006,"The water utility topped off every reservoir, hydration maxed"
-flavor.harbinger_braced.digital.007,The supermarkets restocked overnight and got cleaned out by noon
-flavor.harbinger_braced.digital.008,"IT is having a crisis, because offices sent staff home with laptops, orders to keep them charged and, for once, to write their passwords down on paper"
-flavor.harbinger_braced.digital.009,"Hospitals postponed everything they could and lined their corridors with beds, made up and empty, waiting"
-flavor.harbinger_braced.digital.010,"In the towers the building system sealed the lower levels floor by floor, calmly narrating its checks over the speakers, while residents stood in the corridors with their go-bags listening to it count down the doors"
-flavor.harbinger_braced.digital.011,The comment section is pressed about the drills making everyone late
-flavor.harbinger_braced.digital.012,"Residents are asked to go full prepper mode, devices charged and go-bags by the door"
-flavor.harbinger_braced.digital.013,"Hydration has a login now, three days of water per person allocated by app"
-flavor.harbinger_braced.cosmic.001,The shields got double-stacked
-flavor.harbinger_braced.cosmic.002,Bulkheads got sealed up tight
+flavor.harbinger_braced.industrial.012,Official advice says the aesthetic of the season is a bucket of sand on every landing
+flavor.harbinger_braced.industrial.013,The math isn't mathing yet: ten thousand sandbags filled and only four thousand placed
+flavor.harbinger_braced.digital.001,The generators got fueled and locked in
+flavor.harbinger_braced.digital.002,Lil delivery-hero drones ferried medicine all night
+flavor.harbinger_braced.digital.003,"The server centers went full island era, off-grid and self-sufficient"
+flavor.harbinger_braced.digital.004,Trust issues energy: critical systems mirrored to three continents
+flavor.harbinger_braced.digital.005,The great download era: everyone saving everything they might need offline
+flavor.harbinger_braced.digital.006,Hydration W: every reservoir filled to the brim
+flavor.harbinger_braced.digital.007,The supermarkets restocked overnight and got speedrun empty by noon
+flavor.harbinger_braced.digital.008,"IT is having a crisis era: offices sent staff home with laptops, orders to keep them charged and, for once, to write their passwords on paper"
+flavor.harbinger_braced.digital.009,"Waiting era in the hospitals: everything that could be postponed was, and the corridors filled with beds, made up and empty"
+flavor.harbinger_braced.digital.010,"The towers' building system sealed the lower levels floor by floor, calmly yapping its checks over the speakers, while residents stood in the corridors with their go-bags listening to it count down the doors"
+flavor.harbinger_braced.digital.011,The comment section is pressed that the drills are making everyone late
+flavor.harbinger_braced.digital.012,"Residents are asked to enter prepper era: devices charged, go-bags by the door"
+flavor.harbinger_braced.digital.013,"Hydration has a login era now: three days of water per person, allocated by app"
+flavor.harbinger_braced.cosmic.001,The shields got a double-stacked glow-up
+flavor.harbinger_braced.cosmic.002,Bulkheads got gatekept shut
 flavor.harbinger_braced.cosmic.003,Every airlock got a full cycle and vibe check
-flavor.harbinger_braced.cosmic.004,"The outer ring got looted by its own crew, anything movable stripped out"
-flavor.harbinger_braced.cosmic.005,"Every tank got topped up with reserve air, full lungs"
-flavor.harbinger_braced.cosmic.006,"The view got cancelled for safety, hull plating welded right over the viewports"
-flavor.harbinger_braced.cosmic.007,"Crews spent three shifts straight in pressure suits reinforcing the hull from outside, came in grey-faced, and went straight back out"
-flavor.harbinger_braced.cosmic.008,"The seed vault got VIP placement in the station's core, where it'd be the last thing to go"
-flavor.harbinger_braced.cosmic.009,"Every ship in dock got fueled, crewed and kept ready to launch, and people walking past the docking bays on their way to work eyed the lit hatches and did the math on how many berths there were and how many people"
+flavor.harbinger_braced.cosmic.004,"The outer ring got yeeted clean, anything that could be moved stripped out"
+flavor.harbinger_braced.cosmic.005,Lungs got a W: reserve air pumped into every tank
+flavor.harbinger_braced.cosmic.006,The viewports got gatekept behind welded hull plating
+flavor.harbinger_braced.cosmic.007,"Crews went three shifts straight in pressure suits grinding on the hull from outside, came in grey-faced, and went straight back out"
+flavor.harbinger_braced.cosmic.008,"The seed vault got main character placement in the station's core, where it'd be the last thing to go"
+flavor.harbinger_braced.cosmic.009,"Every ship in dock got fueled, crewed and kept ready to dip out, and people walking past the docking bays did the math on how many berths there were and how many people"
 flavor.harbinger_braced.cosmic.010,Hydroponics is pressed that the shields are hogging power and starving their lights
-flavor.harbinger_braced.cosmic.011,"The new mandatory accessory, until further notice, is a pressure suit carried at all times by all crew"
-flavor.harbinger_braced.cosmic.012,"Shields full, reserve air full, morale at half, the stats are bussin and the vibes are not"
-flavor.harbinger_braced.cosmic.013,"The station was humming at max load, fully cranked"
-flavor.harbinger_braced.iron_age.001,"The walls leveled up a course higher, then another"
-flavor.harbinger_braced.iron_age.002,"Every man in the city did a week of stone-carrying cardio for the walls, and the priests joined in, which got noticed"
-flavor.harbinger_braced.classical_age.001,"The citadel's pantry got stocked with a year of oil, grain and wine"
-flavor.harbinger_braced.classical_age.002,Wall-to-wall amphorae filled the citadel's cellars
-flavor.harbinger_braced.medieval_age.001,Every weak stretch of wall got its own emotional support timber prop
-flavor.harbinger_braced.medieval_age.002,"The wall had been running on plot armor, the masons found three spots hollow for a century, filled them, and said it was a mercy nobody had leaned on it"
-flavor.harbinger_braced.renaissance_age.001,The bastions got packed with stores
-flavor.harbinger_braced.renaissance_age.002,"The engineers who designed the new bastions came back to see them in use and walked along the top taking notes, which annoyed the soldiers to no end"
-flavor.harbinger_braced.colonial_age.001,"Powder and flour moved into the magazine together, roommates now"
-flavor.harbinger_braced.colonial_age.002,"The powder stayed dry and the flour stayed separate, lessons learned from what happened last time"
+flavor.harbinger_braced.cosmic.011,The new mandatory drip until further notice: a pressure suit carried at all times by all crew
+flavor.harbinger_braced.cosmic.012,"The stats are bussin but the vibes are not: shields full, reserve air full, morale at half"
+flavor.harbinger_braced.cosmic.013,The cooked station hummed at max load
+flavor.harbinger_braced.iron_age.001,"The walls leveled up a course, then leveled up again"
+flavor.harbinger_braced.iron_age.002,"The priests got clocked carrying stone for the walls too, joining every man in the city for a week of it"
+flavor.harbinger_braced.classical_age.001,"The citadel's pantry went into its stocked-for-a-year era, oil, grain and wine"
+flavor.harbinger_braced.classical_age.002,A whole aesthetic of wall-to-wall amphorae filled the citadel's cellars
+flavor.harbinger_braced.medieval_age.001,Every weak stretch of wall got a lil emotional support timber prop
+flavor.harbinger_braced.medieval_age.002,"The wall had been running on plot armor: the masons found three spots hollow for a century, filled them, and said it was a mercy nobody had leaned on it"
+flavor.harbinger_braced.renaissance_age.001,"The bastions became main character pantries, packed with stores"
+flavor.harbinger_braced.renaissance_age.002,"The engineers who designed the new bastions pulled up to see them used and walked along the top taking notes, which gave the soldiers the ick"
+flavor.harbinger_braced.colonial_age.001,Roommate era: powder and flour moved into the magazine together
+flavor.harbinger_braced.colonial_age.002,"Iykyk: after what happened last time, the powder stayed dry and the flour stayed separate"
 flavor.harbinger_braced.industrial_age.001,"The mills got a steel spine glow-up, braced with iron girders"
-flavor.harbinger_braced.industrial_age.002,"Engineers chalked every mill wall that would come down first, and those chalk marks were still there years later"
-flavor.harbinger_braced.victorian_age.001,Every hall got stocked with tinned goods and sandbags
-flavor.harbinger_braced.victorian_age.002,The grocers got cleaned out of tins by Tuesday
-flavor.harbinger_braced.electric_age.001,Emergency cables got run down every main street like extension cords for the apocalypse
-flavor.harbinger_braced.electric_age.002,"The electricians grinded through the night wiring spare lamps into the hospitals and telephone exchanges, and at dawn the whole city flickered once as they tested it"
-flavor.harbinger_braced.atomic_age.001,The fallout shelters got stocked with ~
-flavor.harbinger_braced.atomic_age.002,"Families carried their own supplies down to the shelter under the town hall, a tin of this and a jar of that, and the organization queen of a shelter marshal logged every item in a book and stacked it along the wall by type"
-flavor.harbinger_braced.modern_age.001,Substations got ringed with sandbags
-flavor.harbinger_braced.modern_age.002,Crews reinforced every transmission tower in the region
-flavor.harbinger_braced.information_age.001,"The backups went retro, everything onto tape"
-flavor.harbinger_braced.information_age.002,"The tape drives pulled an all-nighter in the basement, and by morning there were shelves of cartridges labeled in marker pen and nobody entirely sure what was on them"
-flavor.harbinger_braced.digital_age.001,Bottled water was sold out at every shop by noon
-flavor.harbinger_braced.digital_age.002,Every spare room got a pallet of water as a roommate
-flavor.harbinger_braced.cyberpunk_age.001,"The grid went offline mode, cut clean off the net"
-flavor.harbinger_braced.cyberpunk_age.002,"Technicians unplugged the cables by hand, one by one, until the grid was sealed off and running solo, deaf and blind and safe"
-flavor.harbinger_braced.fusion_age.001,Every spare watt got funneled to containment
-flavor.harbinger_braced.fusion_age.002,The containment fields hit a pitch that gave everyone the ick in their teeth
-flavor.harbinger_braced.space_age.001,The orbital shields got hardened
-flavor.harbinger_braced.space_age.002,"Shield crews took shifts outside bolting reinforcing plates onto the orbital shields, and the station's lights dimmed every time a new section came online"
-flavor.harbinger_braced.interstellar_age.001,Every outpost got called home inside the shield
+flavor.harbinger_braced.industrial_age.002,"Engineers chalked every mill wall that would come down first, and those receipts were still there years later"
+flavor.harbinger_braced.victorian_age.001,Preppercore in every hall: tinned goods and sandbags
+flavor.harbinger_braced.victorian_age.002,The grocers got speedrun out of tins by Tuesday
+flavor.harbinger_braced.electric_age.001,The apocalypse aesthetic: emergency cables run down every main street
+flavor.harbinger_braced.electric_age.002,"The electricians grinded through the night wiring spare lamps into hospitals and exchanges, and at dawn the city flickered once while they tested it"
+flavor.harbinger_braced.atomic_age.001,The prepper era stocked the fallout shelters with ~
+flavor.harbinger_braced.atomic_age.002,"Families carried their own supplies down to the shelter under the town hall, a tin of this and a jar of that, and the shelter marshal, an absolute girlboss of logistics, logged every item and stacked it by type"
+flavor.harbinger_braced.modern_age.001,"The substations got a sandbag glow-up, ringed all round"
+flavor.harbinger_braced.modern_age.002,Crews buffed every transmission tower across the region
+flavor.harbinger_braced.information_age.001,Vintagecore backups: everything onto tape
+flavor.harbinger_braced.information_age.002,"Vintagecore all-nighter: the tape drives ran in the basement till morning, leaving shelves of cartridges labeled in marker pen and nobody sure what was on them"
+flavor.harbinger_braced.digital_age.001,Bottled water got speedrun off every shelf by noon
+flavor.harbinger_braced.digital_age.002,Every spare room entered its pallet-of-water era
+flavor.harbinger_braced.cyberpunk_age.001,The grid logged off the net for good
+flavor.harbinger_braced.cyberpunk_age.002,"Technicians unplugged the cables by hand, one by one, until the grid was sealed off and running in its solo era, deaf and blind and safe"
+flavor.harbinger_braced.fusion_age.001,Containment got locked in with every spare watt
+flavor.harbinger_braced.fusion_age.002,The containment fields hit a pitch that gave everyone's teeth the ick
+flavor.harbinger_braced.space_age.001,The orbital shields got buffed
+flavor.harbinger_braced.space_age.002,"Shield crews took shifts outside bolting reinforcing plates onto the orbital shields, real ones, and the station's lights dimmed every time a new section came online"
+flavor.harbinger_braced.interstellar_age.001,Side quests over: every outpost got pulled back inside the shield
 flavor.harbinger_braced.interstellar_age.002,"The last ones home were a mining crew three years out who did not want to leave, and they pulled up anyway, samples in hand"
 flavor.harbinger_braced.galactic_age.001,The fleet ghosted into the nebula
-flavor.harbinger_braced.galactic_age.002,"The fleet slipped into the nebula one ship at a time, running dark, and the station watched until the last drive glow faded into the gas"
-flavor.harbinger_braced.quantum_age.001,"You diversified the timeline portfolio, branched and hedged"
-flavor.harbinger_braced.quantum_age.002,"Future you had suggested hedging, so you branched the timeline three ways, and now there are versions of you prepping for things this version will never see"
-flavor.harbinger_braced.transcendent_age.001,You anchored yourself to this branch and locked in
-flavor.harbinger_braced.transcendent_age.002,"You gripped this reality like a railing in a storm, knowing the other you had gripped theirs just as hard, and it hadn't been enough for them"
-flavor.harbinger_invited.any.001,The settlement froze like someone hit pause
-flavor.harbinger_invited.any.002,"A few people chose to cheer, which is certainly a choice"
+flavor.harbinger_braced.galactic_age.002,"It hit different watching the fleet slip into the nebula one ship at a time, running dark, until the last drive glow faded into the gas"
+flavor.harbinger_braced.quantum_age.001,Galaxy brain move: the timeline got branched and the branches hedged
+flavor.harbinger_braced.quantum_age.002,"Future you suggested hedging, so you branched the timeline three ways, and now there are versions of you prepping side quests this version will never see"
+flavor.harbinger_braced.transcendent_age.001,You locked in to this branch
+flavor.harbinger_braced.transcendent_age.002,"You gripped this reality like a railing in a storm, knowing the other you had gripped theirs just as hard, and no cap, it hadn't been enough for them"
+flavor.harbinger_invited.any.001,The whole settlement went NPC still
+flavor.harbinger_invited.any.002,The delulu few cheered
 flavor.harbinger_invited.any.003,A few families packed up in the night and dipped before morning
-flavor.harbinger_invited.any.004,People stared at you in total silence
+flavor.harbinger_invited.any.004,People side-eyed you in total silence
 flavor.harbinger_invited.any.005,Taking {subject} up on it was a first in the lore
-flavor.harbinger_invited.any.006,"Mid-sentence, every prayer for it to pass just stopped"
+flavor.harbinger_invited.any.006,Every prayer for it to pass got ghosted mid-sentence
 flavor.harbinger_invited.any.007,"The world-needs-ending crowd took it as a personal endorsement, entered their era, and started making signs"
-flavor.harbinger_invited.any.008,"Moms held their kids closer and gave you a look the kids would remember, and wouldn't understand for years"
-flavor.harbinger_invited.any.009,"A few people were relieved to have it chosen for them, and ashamed of the relief, most felt only the fear, and a handful kept working like nothing had been said"
-flavor.harbinger_invited.any.010,"Low-volume grumbling, playing everywhere at once"
+flavor.harbinger_invited.any.008,"The kids would remember the look, core memory unlocked the wrong way, when moms pulled them closer and stared at you, and they wouldn't understand it for years"
+flavor.harbinger_invited.any.009,"A few people were lowkey relieved to have it chosen for them and ashamed of the relief, most felt only the fear, and a handful kept working like nothing had been said"
+flavor.harbinger_invited.any.010,Low-volume salty grumbling played everywhere at once
 flavor.harbinger_invited.any.011,The vibe curdled the second the announcement said the doom would be welcomed
-flavor.harbinger_invited.any.012,"People are saying you've lost it, others are saying you're brave, and the comments are split"
-flavor.harbinger_invited.grounded.001,Even the dogs said nope and slunk off
-flavor.harbinger_invited.grounded.002,"An old woman left you the ultimate review, spit at your feet, then walked away"
-flavor.harbinger_invited.grounded.003,Some of the young ones painted their faces and danced like chaos goblins
-flavor.harbinger_invited.grounded.004,"You got the cold shoulder in physical form, doors barred as you walked past"
-flavor.harbinger_invited.grounded.005,"The ones who packed headed out along the road at night with their bundles and their kids and didn't look back, while the ones who stayed watched from the doorways"
-flavor.harbinger_invited.grounded.006,"A man threw a rock at {subject} and missed, and his brothers pulled him aside for a talk"
-flavor.harbinger_invited.grounded.007,"That night the fires burned higher than for any feast, and there was singing, some of it the old songs for the dead and some of it drinking songs, and nobody could say which the singers meant"
-flavor.harbinger_invited.grounded.008,"Word went round that the exit was open for anyone, no hard feelings"
-flavor.harbinger_invited.late.001,It took over every screen at once
-flavor.harbinger_invited.late.002,"Some people clapped, which raised questions"
-flavor.harbinger_invited.late.003,"The exit door got busy, emigration requests tripling in an hour"
-flavor.harbinger_invited.late.004,"The settlement's own systems asked for confirmation, then asked again, are you sure, are you really sure"
-flavor.harbinger_invited.late.005,"Countdowns popped up on every public display, no skip button"
-flavor.harbinger_invited.late.006,"The systems did exactly as told, and a lifetime of trusting them to keep people safe went out the window, the floor shifting under everyone"
-flavor.harbinger_invited.late.007,"A small movement that had spent years arguing for exactly this came out with prepared statements and matching jackets, the merch was ready"
-flavor.harbinger_invited.late.008,"The risk estimates that had been dropping for days turned round and started climbing, and for once the reason was sitting in the settlement instead of out in the dark, and everybody knew its name"
-flavor.harbinger_invited.ancient.001,The elders went for maximum drama and tore their cloaks
-flavor.harbinger_invited.ancient.002,The drums cut out mid-beat
-flavor.harbinger_invited.ancient.003,"A kid started crying, and honestly same"
+flavor.harbinger_invited.any.012,"People are saying you've lost it, and others are saying you're iconic and brave"
+flavor.harbinger_invited.grounded.001,Even the dogs said nope and dipped
+flavor.harbinger_invited.grounded.002,One-star review with no notes: an old woman spat at your feet and walked away
+flavor.harbinger_invited.grounded.003,"Feral era for some of the young ones, who painted their faces and danced"
+flavor.harbinger_invited.grounded.004,"You got gatekept, doors barred as you walked past"
+flavor.harbinger_invited.grounded.005,"Dipping out along the road at night, the ones who packed took their bundles and kids and didn't look back, while the ones who stayed watched from the doorways"
+flavor.harbinger_invited.grounded.006,"A man yeeted a rock at {subject} and missed, and his brothers pulled him aside for a talk"
+flavor.harbinger_invited.grounded.007,"That night the fires burned higher than for any feast, and the singing was a whole mix, old songs for the dead and drinking bangers, and nobody could say which the singers meant"
+flavor.harbinger_invited.grounded.008,"Word went round that anyone could dip out, no hard feelings"
+flavor.harbinger_invited.late.001,It went main character on every screen at once
+flavor.harbinger_invited.late.002,Sus energy: some people clapped
+flavor.harbinger_invited.late.003,"Everyone tried to dip out at once, emigration requests tripling in an hour"
+flavor.harbinger_invited.late.004,"The settlement's own systems were lowkey begging, asking for confirmation and then asking again"
+flavor.harbinger_invited.late.005,Final boss timers popped up on every public display
+flavor.harbinger_invited.late.006,"The systems did exactly as told, and a lifetime of trusting them to keep people safe got ghosted, the floor shifting under everyone"
+flavor.harbinger_invited.late.007,Their era finally came: a small movement that spent years arguing for exactly this rolled out with prepared statements and matching jackets
+flavor.harbinger_invited.late.008,"Main character problems: the risk estimates that had been falling for days started climbing, and for once the reason was sitting inside the settlement instead of out in the dark, and everybody knew its name"
+flavor.harbinger_invited.ancient.001,Maximum drama era: the elders tore their cloaks
+flavor.harbinger_invited.ancient.002,The drums ghosted mid-beat
+flavor.harbinger_invited.ancient.003,It hit different when a kid started crying
 flavor.harbinger_invited.ancient.004,"The young men went full zoomies round the fire, whooping"
-flavor.harbinger_invited.ancient.005,"The elders sat in a circle giving you the silent treatment, not one look"
-flavor.harbinger_invited.ancient.006,Someone sucked up to the new boss by leaving an offering for the doom itself
-flavor.harbinger_invited.ancient.007,"The herd got let loose, no point penning it anymore"
-flavor.harbinger_invited.ancient.008,"Three families packed up their entire huts and moved out, huts and all"
-flavor.harbinger_invited.ancient.009,"The oldest woman in camp dropped the lore that a chief did this once in her grandmother's time, and that chief was never seen again, cool cool cool"
-flavor.harbinger_invited.ancient.010,"They painted the protecting marks on backwards, which nobody had ever done, and it freaked them out more than the prophecy had"
-flavor.harbinger_invited.ancient.011,"By evening the camp had split in two, the ones dancing and the ones sitting with their backs to the dancing, and the two halves didn't speak across the fire, and the fire burned higher than it should"
-flavor.harbinger_invited.ancient.012,"The hunters say you've killed them all and would like an explanation, respectfully"
-flavor.harbinger_invited.ancient.013,"The elders say the offerings are cancelled, since they'd only be wasted now"
-flavor.harbinger_invited.ancient.014,Down by the huts they're saying {subject} was as scared as anybody
-flavor.harbinger_invited.feudal.001,The priest straight up fainted
-flavor.harbinger_invited.feudal.002,The bishop escalated to management and wrote to Rome
-flavor.harbinger_invited.feudal.003,"Flagellants showed up in the square, the vibes are medieval in the worst way"
-flavor.harbinger_invited.feudal.004,Carts poured out of every gate
-flavor.harbinger_invited.feudal.005,The monks hard-passed on all of it and locked themselves in the abbey
-flavor.harbinger_invited.feudal.006,"The tavern turned into an end-of-the-world open bar, open all night and nobody paying"
+flavor.harbinger_invited.ancient.005,"The elders ghosted you, sitting in a circle without one look your way"
+flavor.harbinger_invited.ancient.006,Somebody simped for the doom itself and left it an offering
+flavor.harbinger_invited.ancient.007,"The herd got yeeted loose, no point penning it anymore"
+flavor.harbinger_invited.ancient.008,Three families packed up their entire huts and dipped
+flavor.harbinger_invited.ancient.009,"The oldest woman in camp dropped the lore that a chief did this once in her grandmother's time and was never seen again, cool cool cool"
+flavor.harbinger_invited.ancient.010,"Cursed move: they painted the protecting marks on backwards, which nobody had ever done, and it freaked them out more than the prophecy had"
+flavor.harbinger_invited.ancient.011,"Not the vibe: by evening the camp had split into the ones dancing and the ones sitting with their backs to it, and the halves didn't speak across a fire burning higher than it should"
+flavor.harbinger_invited.ancient.012,"The hunters are big mad, saying you've killed them all and they'd like to know why"
+flavor.harbinger_invited.ancient.013,"It's so over, so the elders cancelled the offerings as a waste"
+flavor.harbinger_invited.ancient.014,Down by the huts the tea is that {subject} was as shook as anybody
+flavor.harbinger_invited.feudal.001,"Sheesh, the priest just fainted on the spot"
+flavor.harbinger_invited.feudal.002,The bishop went full escalation era and wrote to Rome
+flavor.harbinger_invited.feudal.003,Flagellants pulled up in the square
+flavor.harbinger_invited.feudal.004,Carts dipped out of every gate
+flavor.harbinger_invited.feudal.005,The monks hard-passed and locked themselves in the abbey
+flavor.harbinger_invited.feudal.006,End-of-the-world open bar era: the tavern stayed open all night and nobody paid
 flavor.harbinger_invited.feudal.007,"A penitent sect speedran its own schism, formed within the hour and split within two"
-flavor.harbinger_invited.feudal.008,"The lord's household dipped at once and, naturally, took the silver with them"
-flavor.harbinger_invited.feudal.009,"The guilds held an emergency meeting and voted, barely, to back the decision, and the minority went home and packed"
-flavor.harbinger_invited.feudal.010,"A preacher in the market square called it the will of God, got loudly agreed with and loudly disagreed with, and kept preaching through both, unshakeable"
-flavor.harbinger_invited.feudal.011,"People raised their whole lives on the world ending on a day of God's choosing now had to adjust to it ending on a day of yours, and some of them took it better than expected"
-flavor.harbinger_invited.feudal.012,The steward is salty that nobody asked him
-flavor.harbinger_invited.feudal.013,The church door got a no-hard-feelings notice saying the doom is invited and everyone is free to leave
-flavor.harbinger_invited.feudal.014,The market gossip is that {subject} hit the floor when told
-flavor.harbinger_invited.industrial.001,The stock exchange shut its doors
-flavor.harbinger_invited.industrial.002,The papers lost their minds
-flavor.harbinger_invited.industrial.003,"The trains out were rammed, standing room only"
-flavor.harbinger_invited.industrial.004,"The bishop went off from the cathedral steps, calling it blasphemy"
-flavor.harbinger_invited.industrial.005,"Congrats on uniting socialists and bankers for once, they both agree you're wrong"
-flavor.harbinger_invited.industrial.006,The music halls did a roaring trade in end-of-the-world bops
-flavor.harbinger_invited.industrial.007,"Men at the works downed tools and went to the pub, priorities sorted"
-flavor.harbinger_invited.industrial.008,"The insurance offices flipped their signs to closed, not covering this one"
-flavor.harbinger_invited.industrial.009,"A society for welcoming the end, which had met for years in a room above a tobacconist's, gained four thousand new members by the weekend, finally their era"
-flavor.harbinger_invited.industrial.010,"The editorial pages couldn't pick a lane, calling you a madman, a visionary and a disgrace, sometimes all in one paper"
-flavor.harbinger_invited.industrial.011,"Up and down the terraces people debated across the street from their front doors whether choosing it was brave or wicked, and by evening most had landed on both"
-flavor.harbinger_invited.industrial.012,The shareholders are fuming that nobody consulted the board
-flavor.harbinger_invited.industrial.013,The government dropped a peak-government statement neither confirming nor denying it was consulted
+flavor.harbinger_invited.feudal.008,"The lord's household dipped at once and, naturally, took the silver"
+flavor.harbinger_invited.feudal.009,"The guilds held an emergency meeting and voted, barely, to stan the decision, and the minority went home and packed"
+flavor.harbinger_invited.feudal.010,"A preacher in the market square called it the will of God, got ratioed and agreed with in equal volume, and kept preaching through both"
+flavor.harbinger_invited.feudal.011,"People raised their whole lives on the world ending on a day of God's choosing now had to adjust to it ending on a day of yours, and lowkey some took it better than expected"
+flavor.harbinger_invited.feudal.012,The steward is salty nobody asked him
+flavor.harbinger_invited.feudal.013,The church door got a no-hard-feelings notice: the doom is invited and everyone is free to dip out
+flavor.harbinger_invited.feudal.014,The tea in the market: {subject} hit the floor when told
+flavor.harbinger_invited.industrial.001,The stock exchange logged off
+flavor.harbinger_invited.industrial.002,The papers went feral
+flavor.harbinger_invited.industrial.003,"Everyone dipped out by train, every carriage packed"
+flavor.harbinger_invited.industrial.004,"No cap, from the cathedral steps the bishop went off and called it blasphemy"
+flavor.harbinger_invited.industrial.005,"Socialists and bankers agreed for once, and their joint take is that you're cooked"
+flavor.harbinger_invited.industrial.006,The music halls cashed in on end-of-the-world bops
+flavor.harbinger_invited.industrial.007,The works crew clocked out and hit the pub
+flavor.harbinger_invited.industrial.008,"The insurance offices ghosted, closed signs up"
+flavor.harbinger_invited.industrial.009,"Finally their era: a society for welcoming the end, which had met for years in a room above a tobacconist's, gained four thousand members by the weekend"
+flavor.harbinger_invited.industrial.010,"The editorial pages were in a chaos era, calling you a madman, a visionary and a disgrace, sometimes all at once in the same paper"
+flavor.harbinger_invited.industrial.011,"Brave or wicked was the beef up and down the terraces, people debating across the street until most landed on both"
+flavor.harbinger_invited.industrial.012,The shareholders are big mad that nobody consulted the board
+flavor.harbinger_invited.industrial.013,The government dropped a peak NPC statement neither confirming nor denying it was consulted
 flavor.harbinger_invited.industrial.014,The pub theory is that you've got secret lore the rest of us don't
-flavor.harbinger_invited.digital.001,The markets absolutely tanked
-flavor.harbinger_invited.digital.002,Every feed exploded and the timeline caught fire
-flavor.harbinger_invited.digital.003,The hashtag went number one worldwide instantly
-flavor.harbinger_invited.digital.004,"Accelerationist forums were wildly unwell about it, calling it the best day of their lives"
-flavor.harbinger_invited.digital.005,Everyone tried to leave at once and the airline booking sites went down
+flavor.harbinger_invited.digital.001,The markets got absolutely cooked
+flavor.harbinger_invited.digital.002,"The timeline went feral, every feed exploding"
+flavor.harbinger_invited.digital.003,"The hashtag went main character instantly, number one everywhere"
+flavor.harbinger_invited.digital.004,Delulu accelerationist forums called it the best day of their entire lives
+flavor.harbinger_invited.digital.005,Everyone tried to dip out at once and the airline booking sites crashed
 flavor.harbinger_invited.digital.006,The comment section split cleanly into terror and fan art
 flavor.harbinger_invited.digital.007,Prediction markets on the catastrophe locked in at certainty
-flavor.harbinger_invited.digital.008,Emergency services begged people to please stop calling about it
-flavor.harbinger_invited.digital.009,"Commentators who'd spent their careers predicting the end of everything got booked on every show and found they had nothing to say, the irony"
-flavor.harbinger_invited.digital.010,"Tech executives who'd been building bunkers for years flew to them within the hour, their location pings leaked, and everyone watched the little dots move"
-flavor.harbinger_invited.digital.011,"The settlement's own safety systems flagged it as an error and escalated it through every layer of approval, got approved at every single one, then logged their objection and complied, which is literally all a system can do"
-flavor.harbinger_invited.digital.012,The comments are fuming that nobody voted on this
-flavor.harbinger_invited.digital.013,"A government alert confirmed the invitation and asked everyone to stay calm, which, sure"
-flavor.harbinger_invited.digital.014,Everyone at work is convinced it must be some kind of galaxy brain strategy
-flavor.harbinger_invited.cosmic.001,The station hit mute
-flavor.harbinger_invited.cosmic.002,Evacuation shuttles filled up fast
-flavor.harbinger_invited.cosmic.003,The chapel overflowed out into the corridor
-flavor.harbinger_invited.cosmic.004,"The crew stared at you across the command deck, the most intense side-eye in orbit"
-flavor.harbinger_invited.cosmic.005,Every antenna on the station swung toward the dark
+flavor.harbinger_invited.digital.008,"Bestie please, emergency services begged people to stop calling about it"
+flavor.harbinger_invited.digital.009,"In an iconic plot twist, commentators who'd spent careers predicting the end of everything got booked on every show and found they had nothing to say"
+flavor.harbinger_invited.digital.010,"Bunker-building tech executives dipped to their bunkers within the hour, and when their location pings leaked everyone watched the lil dots move"
+flavor.harbinger_invited.digital.011,"No cap, the settlement's own safety systems flagged it as an error and escalated it through every layer of approval, got approved at every one, then logged their objection and complied, which is all a system can do"
+flavor.harbinger_invited.digital.012,The comment section is pressed that nobody voted on this
+flavor.harbinger_invited.digital.013,"Sure, bestie: a government alert confirmed the invitation and asked everyone to stay calm"
+flavor.harbinger_invited.digital.014,Everyone at work is convinced it must be some galaxy brain strategy
+flavor.harbinger_invited.cosmic.001,The station went NPC silent all at once
+flavor.harbinger_invited.cosmic.002,"Everyone tried to dip out on the evacuation shuttles, which filled up fast"
+flavor.harbinger_invited.cosmic.003,"The chapel was bussin for the worst reason, overflowing into the corridor"
+flavor.harbinger_invited.cosmic.004,The crew gave you the most intense side-eye in orbit across the command deck
+flavor.harbinger_invited.cosmic.005,Every antenna on the station swung round to side-eye the dark
 flavor.harbinger_invited.cosmic.006,"The shield crews clocked out without being told, because what's even the point"
-flavor.harbinger_invited.cosmic.007,Some people grabbed front row seats on the observation deck to wait for it
-flavor.harbinger_invited.cosmic.008,The navigation officer said not my job anymore and asked to be relieved of duty
-flavor.harbinger_invited.cosmic.009,"Out in the dark something patient for longer than the stars have burned registered the invitation and started, without hurry, to turn"
-flavor.harbinger_invited.cosmic.010,"The colony's kids got loaded onto the fastest ship and sent outward, and the crew were told not to come back whatever they heard"
-flavor.harbinger_invited.cosmic.011,"For the first time in the colony's history the long-range instruments caught a change in the dark that the colony itself caused, a small answering stir out past the last charted star, like the dark had been waiting to be asked"
+flavor.harbinger_invited.cosmic.007,Some people grabbed front row seats on the observation deck for the final boss
+flavor.harbinger_invited.cosmic.008,The navigation officer said not my side quest and asked to be relieved of duty
+flavor.harbinger_invited.cosmic.009,"Out in the dark something patient for longer than the stars have burned clocked the invitation and started, without hurry, to turn"
+flavor.harbinger_invited.cosmic.010,"Real ones made the call: the colony's kids went onto the fastest ship and out into the dark, and the crew were told not to come back whatever they heard"
+flavor.harbinger_invited.cosmic.011,"Lowkey creepy first in the colony's history: the long-range instruments caught the colony itself stirring the dark, a small answering movement out past the last charted star, as if it had been waiting to be asked"
 flavor.harbinger_invited.cosmic.012,Engineering is big mad that nobody consulted engineering
-flavor.harbinger_invited.cosmic.013,All crew are released from duty to prep however they see fit
-flavor.harbinger_invited.cosmic.014,"Word on the ring is that {subject} never expected to be taken seriously, and the bluff got called"
-flavor.harbinger_invited.iron_age.001,"You and the prophet did a duet nobody asked for, cursing the city word for word"
-flavor.harbinger_invited.iron_age.002,The prophet did not expect a feature and looked alarmed about it
-flavor.harbinger_invited.classical_age.001,"Asked for the worst, the Oracle delivered and ate"
-flavor.harbinger_invited.classical_age.002,The shrine priests had never been asked a question like this and sent back to make sure they'd understood it
-flavor.harbinger_invited.medieval_age.001,"The bell ringers went chaos mode and rang them backwards, bottom to top"
-flavor.harbinger_invited.medieval_age.002,"The bell-ringers held out for double pay, and even then the oldest rang with his eyes shut"
-flavor.harbinger_invited.renaissance_age.001,The astrologer upcharged for casting the chart for ruin
-flavor.harbinger_invited.renaissance_age.002,"Weirdly, the prince was a fan"
-flavor.harbinger_invited.colonial_age.001,She made the date absolutely scream in the biggest type she had
-flavor.harbinger_invited.colonial_age.002,"The pamphlet said the governor picked the day, which was true, and the governor didn't deny it"
+flavor.harbinger_invited.cosmic.013,"Say less, the crew got released from duty to prep however they like"
+flavor.harbinger_invited.cosmic.014,The ring is spilling the tea that {subject} never expected to be taken seriously
+flavor.harbinger_invited.iron_age.001,You pulled up beside the prophet and cursed the city with him word for word
+flavor.harbinger_invited.iron_age.002,"The prophet was shook, he did not sign up for a feature"
+flavor.harbinger_invited.classical_age.001,"The Oracle ate when asked for the worst, and delivered it"
+flavor.harbinger_invited.classical_age.002,The shrine priests had never gotten a request this feral and sent back to check they'd understood it
+flavor.harbinger_invited.medieval_age.001,"Cursed mode: the bells got rung backwards, bottom to top"
+flavor.harbinger_invited.medieval_age.002,"The bell-ringers held out to secure the bag at double pay, and even then the oldest rang with his eyes shut"
+flavor.harbinger_invited.renaissance_age.001,"Securing the bag, the astrologer upcharged to cast the chart for ruin"
+flavor.harbinger_invited.renaissance_age.002,"The prince stanned it, weirdly"
+flavor.harbinger_invited.colonial_age.001,She hard-launched the date in the biggest type she had
+flavor.harbinger_invited.colonial_age.002,"The pamphlet spilled the tea that the governor picked the day, which was true, and the governor didn't deny it"
 flavor.harbinger_invited.industrial_age.001,You hard-launched the apocalypse by buying every copy on the street and printing more
-flavor.harbinger_invited.industrial_age.002,"Once you'd bought his entire bag the newsboy stood on the corner with nothing to shout, looking lost, poor little guy"
-flavor.harbinger_invited.victorian_age.001,You climbed up on the crate beside him for a surprise feature and read the figures out yourself
-flavor.harbinger_invited.victorian_age.002,Twice the crowd pulled up
-flavor.harbinger_invited.electric_age.001,"At midnight the wire carried two iconic words, SEND IT"
-flavor.harbinger_invited.electric_age.002,"The operator refused to key it, then caved and keyed it, then sat with his hand flat on the desk beside it, processing"
+flavor.harbinger_invited.industrial_age.002,"Once you bought his entire bag the lil newsboy stood on the corner with nothing to shout, looking lost"
+flavor.harbinger_invited.victorian_age.001,You pulled up on the crate beside him for a feature and read the figures out yourself
+flavor.harbinger_invited.victorian_age.002,"W turnout, the crowd doubled"
+flavor.harbinger_invited.electric_age.001,"The wire carried two words at midnight, SEND IT, and the vibe was no cap"
+flavor.harbinger_invited.electric_age.002,"Lowkey processing, the operator refused to key it, then caved and keyed it, then sat with his hand flat on the desk beside it"
 flavor.harbinger_invited.atomic_age.001,You stood on the roof giving come-get-us energy and waved at the sky
-flavor.harbinger_invited.atomic_age.002,"The civil defence broadcast interrupted itself to ask residents not to wave at the sky, and loads of residents went up to their roofs to wave"
-flavor.harbinger_invited.modern_age.001,"You went live and dared it to come, the boldest broadcast in history"
-flavor.harbinger_invited.modern_age.002,The ratings were insane
-flavor.harbinger_invited.information_age.001,Your reply-all of doom went to everyone
-flavor.harbinger_invited.information_age.002,"The reply-all hit every address the chain email had ever touched, and a surprising number of people replied all with a same"
-flavor.harbinger_invited.digital_age.001,"You duetted the video smiling the entire way through, pure menace"
+flavor.harbinger_invited.atomic_age.002,"Absolute menaces: the civil defence broadcast asked residents not to wave at the sky, and loads went up to their roofs to wave"
+flavor.harbinger_invited.modern_age.001,Main character broadcast: you went live and dared it to come
+flavor.harbinger_invited.modern_age.002,The ratings were bussin
+flavor.harbinger_invited.information_age.001,"Your reply-all went full main character, hitting everyone"
+flavor.harbinger_invited.information_age.002,"Group chat chaos: the reply-all hit every address the chain email had ever touched, and a surprising number of people replied all in agreement"
+flavor.harbinger_invited.digital_age.001,"Pure menace, you duetted the video smiling the entire way through"
 flavor.harbinger_invited.digital_age.002,It ratioed the original on views
 flavor.harbinger_invited.cyberpunk_age.001,The accelerationist collective welcomed you with a handshake that gave the ick by going on way too long
-flavor.harbinger_invited.cyberpunk_age.002,"The collective's manifesto ran forty screens of dense text, and the ghost in the net read every word aloud in a dead executive's voice"
-flavor.harbinger_invited.fusion_age.001,"The warden got told to stop holding back, and it said bet"
-flavor.harbinger_invited.fusion_age.002,"The warden demanded confirmation of the order three times, logged each one with a timestamp, and then the containment fields started humming a different note"
-flavor.harbinger_invited.space_age.001,Every dish on the station swung round to stare at it
+flavor.harbinger_invited.cyberpunk_age.002,"Forty screens of dense manifesto yapping got read aloud, every word, by the ghost in the net in a dead executive's voice"
+flavor.harbinger_invited.fusion_age.001,The warden said bet when told to stop holding back
+flavor.harbinger_invited.fusion_age.002,"The warden demanded confirmation of the order three times, logged each one with receipts and a timestamp, and then the containment fields started humming a different note"
+flavor.harbinger_invited.space_age.001,Every dish on the station swung round to stan it
 flavor.harbinger_invited.space_age.002,The signal slid in with a casual hello
-flavor.harbinger_invited.interstellar_age.001,You answered the beacon and told it to send everything it had
-flavor.harbinger_invited.interstellar_age.002,"The beacon's loop paused for the first time in eighty years, then picked up again from somewhere else"
-flavor.harbinger_invited.galactic_age.001,"The relay got the green light to send them, no take-backs"
-flavor.harbinger_invited.galactic_age.002,"The relay hummed at a pitch the linguists had no word for, and the geometry it sent back had a new opening in it, like a door left unlocked"
+flavor.harbinger_invited.interstellar_age.001,You slid into the beacon's DMs and asked for whatever it had
+flavor.harbinger_invited.interstellar_age.002,"First pause in eighty years: the beacon's loop stopped, then ran it back from a whole new spot"
+flavor.harbinger_invited.galactic_age.001,"Say less, you told the relay, send them"
+flavor.harbinger_invited.galactic_age.002,"Lowkey ominous, the relay hummed at a pitch the linguists had no word for and sent back geometry with a brand new opening in it"
 flavor.harbinger_invited.quantum_age.001,"You hit your future self with a say less, go ahead"
-flavor.harbinger_invited.quantum_age.002,"The reply came back from nine years out almost instantly, and all it said was that you'd said exactly that last time too"
-flavor.harbinger_invited.transcendent_age.001,You buzzed the other you in
-flavor.harbinger_invited.transcendent_age.002,"It stepped into the room the way you step into a warm house after a long trip, looked around at your life with an expression you've seen in mirrors, and said thank you, and didn't say for what"
-flavor.words.harb_offering_ancient.001,a cute little string of shells
-flavor.words.harb_offering_ancient.002,the best antler in camp
-flavor.words.harb_offering_ancient.003,"a pot of honey, the good stuff"
-flavor.words.harb_offering_ancient.004,an entire smoked fish
-flavor.words.harb_offering_ancient.005,a knife nobody could afford to lose
-flavor.words.harb_offering_ancient.006,a bowl of the reddest ochre
-flavor.words.harb_offering_ancient.007,two genuinely good flints
-flavor.words.harb_offering_ancient.008,a freshly scraped pelt still soft to the touch
-flavor.words.harb_offering_feudal.001,an actual silver spoon
-flavor.words.harb_offering_feudal.002,a bolt of gorgeous blue cloth
-flavor.words.harb_offering_feudal.003,a full year's worth of candles
-flavor.words.harb_offering_feudal.004,a mama sheep and her lamb
-flavor.words.harb_offering_feudal.005,the second-best bed in the house
-flavor.words.harb_offering_feudal.006,a psalter with a busted board
-flavor.words.harb_offering_feudal.007,a purse of vintage pennies
-flavor.words.harb_offering_feudal.008,a cask of the top-shelf wine
-flavor.words.harb_shelter_industrial.001,a box of premium tinned peaches
-flavor.words.harb_shelter_industrial.002,a trusty wind-up radio
-flavor.words.harb_shelter_industrial.003,the family photos
-flavor.words.harb_shelter_industrial.004,a hefty sack of flour
-flavor.words.harb_shelter_industrial.005,a well-stocked first-aid tin
-flavor.words.harb_shelter_industrial.006,a deck of cards missing two
-flavor.words.harb_shelter_industrial.007,three chunky jerrycans of water
-flavor.words.harb_shelter_industrial.008,a crate of emergency candles
+flavor.harbinger_invited.quantum_age.002,"The reply from nine years out came back instantly, and the only lore in it was that you'd said exactly that last time too"
+flavor.harbinger_invited.transcendent_age.001,You let the other you pull up inside
+flavor.harbinger_invited.transcendent_age.002,"It gatekept what it was thanking you for, after stepping into the room like you'd step into a warm house after a long trip and looking around at your life with an expression you've seen in mirrors"
+flavor.words.harb_offering_ancient.001,a cute lil string of shells
+flavor.words.harb_offering_ancient.002,the goated best antler in camp
+flavor.words.harb_offering_ancient.003,a pot of bussin honey
+flavor.words.harb_offering_ancient.004,a whole smoked fish with main character energy
+flavor.words.harb_offering_ancient.005,a knife nobody could afford to fumble
+flavor.words.harb_offering_ancient.006,a bowl of aesthetic red ochre
+flavor.words.harb_offering_ancient.007,"two genuinely elite flints, iconic"
+flavor.words.harb_offering_ancient.008,a cozycore pelt still soft from the scraping
+flavor.words.harb_offering_feudal.001,an iconic silver spoon
+flavor.words.harb_offering_feudal.002,a bolt of blue cloth with serious drip
+flavor.words.harb_offering_feudal.003,a sheesh-worthy year's worth of candles
+flavor.words.harb_offering_feudal.004,a sheep and her lil lamb
+flavor.words.harb_offering_feudal.005,the real one sacrifice of the second-best bed
+flavor.words.harb_offering_feudal.006,a vintagecore psalter with a cracked board
+flavor.words.harb_offering_feudal.007,a purse of OG pennies
+flavor.words.harb_offering_feudal.008,a cask of the goated wine
+flavor.words.harb_shelter_industrial.001,a box of bussin tinned peaches
+flavor.words.harb_shelter_industrial.002,a goated wind-up radio
+flavor.words.harb_shelter_industrial.003,the core memory family photos
+flavor.words.harb_shelter_industrial.004,a lowkey heavy sack of flour
+flavor.words.harb_shelter_industrial.005,an iconic first-aid tin
+flavor.words.harb_shelter_industrial.006,a mid deck of cards missing two
+flavor.words.harb_shelter_industrial.007,three jerrycans of hydration-era water
+flavor.words.harb_shelter_industrial.008,a crate of candles for the aesthetic
