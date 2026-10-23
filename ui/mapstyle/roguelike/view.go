@@ -27,8 +27,8 @@ var zoomNames = [3]vibe.Entry{vibe.E("ui.mapstyle.roguelike.view.zoomNames.01", 
 
 // Entry is the registry entry for the roguelike style.
 func Entry() mapstyle.Entry {
-	return mapstyle.Entry{Name: "roguelike", Title: vibe.Line("ui.mapstyle.roguelike.view.Entry.01", "Roguelike"),
-		Blurb: vibe.Line("ui.mapstyle.roguelike.view.Entry.02", "A glyph world with an inspect cursor: your town, its people and the lands around it."),
+	return mapstyle.Entry{Name: "roguelike", Title: vibe.E("ui.mapstyle.roguelike.view.Entry.01", "Roguelike"),
+		Blurb: vibe.E("ui.mapstyle.roguelike.view.Entry.02", "A glyph world with an inspect cursor: your town, its people and the lands around it."),
 		New:   func() mapstyle.Style { return withSky(newView()) }}
 }
 

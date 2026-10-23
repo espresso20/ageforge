@@ -21,8 +21,8 @@ import (
 func Entry() mapstyle.Entry {
 	return mapstyle.Entry{
 		Name:  "skyline",
-		Title: vibe.Line("ui.mapstyle.skyline.skyline.Entry.01", "Skyline"),
-		Blurb: vibe.Line("ui.mapstyle.skyline.skyline.Entry.02", "Your empire side-on as an ANSI panorama, one district per age, lit by the people working it."),
+		Title: vibe.E("ui.mapstyle.skyline.skyline.Entry.01", "Skyline"),
+		Blurb: vibe.E("ui.mapstyle.skyline.skyline.Entry.02", "Your empire side-on as an ANSI panorama, one district per age, lit by the people working it."),
 		New:   func() mapstyle.Style { return newView() },
 	}
 }

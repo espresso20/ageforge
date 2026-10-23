@@ -81,6 +81,13 @@ func TestTheMapSwitchesAtOnce(t *testing.T) {
 	if name := d.mapPanel.model.Town.World.Name; !strings.Contains(name, "«") {
 		t.Errorf("the town is called %q with VibeMode on", name)
 	}
+	// The registry the panel holds was made before the switch; the style's name
+	// on the key bar is read from its entry when the bar is drawn.
+	for style, title := range map[string]string{"roguelike": "«Roguelike»", "skyline": "«Skyline»"} {
+		if !strings.Contains(on[style+" as opened"], title) {
+			t.Errorf("the key bar of the %s map does not name its style %s with VibeMode on", style, title)
+		}
+	}
 	for name, text := range on {
 		if text == plain[name] || !strings.Contains(text, "«") {
 			t.Errorf("%s: VibeMode is on and the map reads as it did", name)

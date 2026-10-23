@@ -63,7 +63,7 @@ func resolveMapSettings(acct *game.Account, reg *mapstyle.Registry) mapSettings 
 func styleTitle(reg *mapstyle.Registry, name string) string {
 	for _, e := range reg.Entries() {
 		if e.Name == name {
-			return e.Title
+			return e.Title.String()
 		}
 	}
 	return name
