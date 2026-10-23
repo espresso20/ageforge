@@ -8,8 +8,8 @@ import (
 
 // lockNotes is a line for each of the feature locks keys that holds its
 // command shut, saying which tech opens it, in the words the game uses when
-// it refuses the command: "Campaigns need Military Tactics first. Research
-// it to send one." A lock is only mentioned once its tech's age is reached,
+// it refuses the command: "Festivals need Drama first. Research
+// it to hold one." A lock is only mentioned once its tech's age is reached,
 // so a panel never names a tech of an age the player has not seen. The
 // lines end with a blank one; "" when every lock is open.
 func lockNotes(state game.GameState, keys ...string) string {

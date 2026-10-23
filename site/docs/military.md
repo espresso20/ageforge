@@ -141,7 +141,17 @@ Five of them wait for a tech of their own age: the Barracks (Military Tactics), 
 
 ### The board
 
-The mission board holds nine offers, three short, three long and three grand. Each offer has a title and description made from the current age's words. The board is saved with the run and uses its seeded random generator.
+The mission board holds three offers of each tier that is open, so it holds three, six or nine offers. Each offer has a title and description made from the current age's words. The board is saved with the run and uses its seeded random generator.
+
+Tiers open by era. No tech locks a tier:
+
+| Era | Ages | Tiers on the board |
+|---|---|---|
+| Stone Era | Primitive, Stone, Bronze | Short (3 offers) |
+| Iron Era | Iron, Classical, Medieval | Short and long (6 offers) |
+| Steel Era and every later era | Renaissance and on | Short, long and grand (9 offers) |
+
+A Veteran army or better sees the next tier an era early: long offers in the Stone Era, grand offers in the Iron Era (see [Army experience](#army-experience)). A tier that opens brings three new offers; one that closes again takes its offers with it, and the other tiers keep theirs.
 
 | Tier | Length | Base odds | Haul |
 |---|---:|---:|---:|
@@ -177,6 +187,30 @@ Short and long offers cost the two materials the current age's buildings charge 
 | Galactic | Survey Drone | Star Voyage | Invasion | Stellar Settlement |
 | Quantum | Phase Probe | Rift Expedition | Incursion | Pocket Universe |
 | Transcendent | Glimpse | Pilgrimage of Light | Reality Incursion | Ascension Rite |
+
+### Army experience
+
+Missions that come home give your army experience, and a failure takes some back. The experience is saved with the run and starts again at 0 when you prestige.
+
+| Mission | Success | Failure |
+|---|---:|---:|
+| Short | +1 | -0.5 |
+| Long | +3 | -1.5 |
+| Grand | +8 | -4 |
+
+Experience never falls below 0. The army's rank follows from it, and every rank above Green adds to what the army does:
+
+| Rank | Experience | Odds | Haul | Legendary offers |
+|---|---:|---:|---:|---:|
+| Green | 0 | no change | no change | no change |
+| Seasoned | 10 | +2 points | +5% | +25% |
+| Veteran | 30 | +4 points | +10% | +50% |
+| Elite | 80 | +6 points | +15% | +75% |
+| Legendary | 200 | +8 points | +20% | +100% |
+
+The odds bonus applies to every offer you send, up to the usual 95% ceiling. The haul bonus applies to what a mission brings home. The Legendary bonus raises the chance that a new offer is Legendary (the usual 5% becomes 6.25% for a Seasoned army, and so on); the rules about spacing Legendary offers stay. From Veteran, the next tier of the board opens an era early.
+
+The log says `Your army is now <Rank>.` when the army rises a rank. The Ready Room shows the rank and the experience toward the next one on its top line (for example `Army: Veteran · 42/80`), the People panel's Army tab shows the rank, the experience and what the rank gives, and each line of the Expedition Report says how much experience the mission gave or took.
 
 Sending an offer removes it temporarily. A replacement arrives after five minutes. Untaken offers expire after an hour, and entering a new age creates a new board. Any number of missions can be under way at once, as many as your army can staff. The panel and `expedition list` show why an offer cannot be sent now. A taken slot shows when its replacement arrives.
 
@@ -222,9 +256,9 @@ A mission's resource cost is spent at launch, whether it succeeds or fails. Ever
 
 ### Automatic dispatch: the Geographic Society
 
-From the **Industrial Age** the **Geographic Society** sends short or long offers on its own for the rest of the run. It waits for the **Geographic Societies** tech of that age, which needs Cartography.
+From the **Industrial Age** the **Geographic Society** sends short offers on its own for the rest of the run. It waits for the **Geographic Societies** tech of that age, which needs Cartography.
 
-It only ever scouts. A Society never wages a campaign; those stay yours to order.
+It only ever sends the era's short scout. Long and grand missions, and every campaign, stay yours to order.
 
 It sends a party only when the soldiers at home can make one up, as a hand-sent mission does. Nothing is queued.
 

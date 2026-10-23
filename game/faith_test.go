@@ -272,6 +272,11 @@ func TestFaithStrengthCarriesAcrossAges(t *testing.T) {
 	for _, sets := range []float64{1, 2, 3.6} {
 		ge := faithTown(t, "bronze_age", sets)
 		ge.Buildings.counts["stonehenge"] = 1
+		// The era events are rolled, and Political Instability takes faith:
+		// this test is about the strength, so no era event fires.
+		for _, e := range config.Epochs() {
+			ge.epochEventFired[e.Key] = true
+		}
 		want := sets / FaithFullSets
 		for _, next := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age"} {
 			ge.StepTicks(300)

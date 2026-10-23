@@ -184,8 +184,10 @@ func autoExpeditionInterval(set *rules.Set, age string, count int, fill float64)
 // pickAutoOffer chooses which offer the society sends.
 //
 // RULE: among the offers on the board it can send right now (the town has the
-// party at home, can pay the cost and the lock is open), the one with the
-// best haul minutes per minute of length. Ties go to the bigger haul, then to
+// party at home and can pay the cost), the one with the
+// best haul minutes per minute of length, among the short offers only: the
+// Society sends the era's scout, and long and grand missions stay the
+// player's call. Ties go to the bigger haul, then to
 // the lower number, so the choice is fully deterministic and needs no RNG.
 //
 // Returns 0 when nothing can be sent right now.
@@ -196,9 +198,9 @@ func (ge *GameEngine) pickAutoOffer() int {
 		if offer == nil || offer.LengthMinutes <= 0 {
 			continue
 		}
-		// The Society sends parties, not armies: grand offers (soldiers or a
-		// big outlay) are the player's call.
-		if offer.Tier == TierGrand {
+		// The Society sends the era's scout: long and grand offers are the
+		// player's call.
+		if offer.Tier != TierShort {
 			continue
 		}
 		if _, err := ge.offerRefusalLocked(*offer, ge.missionCostLocked(*offer)); err != nil {

@@ -8,7 +8,11 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// The mission board: nine offers, three of each tier, rolled up front.
+// The mission board: three offers of each open tier, rolled up front. The
+// Stone Era's board holds the short tier alone, the Iron Era's adds the long
+// tier and the Steel Era's the grand one; a Veteran army sees the next tier an
+// era early (config.MissionTiersOpen). The slots are always the open tiers in
+// order, so a board holds 3, 6 or 9 offers.
 //
 // Every offer holds what a launch used to roll (its length, its odds and its
 // haul in minutes of income), so the player picks between offers. Costs and
@@ -34,8 +38,8 @@ const (
 // slots follow it, config.BoardOffersPerTier to a tier.
 var boardTiers = []string{TierShort, TierLong, TierGrand}
 
-// boardSize is how many offers the board holds.
-var boardSize = len(boardTiers) * config.BoardOffersPerTier
+// boardSizeFor is how many offers a board with tiers tiers open holds.
+func boardSizeFor(tiers int) int { return tiers * config.BoardOffersPerTier }
 
 // tierKind is the kind of mission a tier's offers are tuned as.
 func tierKind(tier string) string {
@@ -138,23 +142,24 @@ type MissionBoard struct {
 	SinceRare int `json:"since_rare,omitempty"`
 }
 
-// ready reports whether the board is made for age.
-func (b *MissionBoard) ready(age string) bool {
-	return b.Age == age && len(b.Slots) == boardSize
+// ready reports whether the board is made for age with tiers tiers open.
+func (b *MissionBoard) ready(age string, tiers int) bool {
+	return b.Age == age && len(b.Slots) == boardSizeFor(tiers)
 }
 
 // rollRare decides whether the next offer is Legendary and moves the
 // counters. The chance is always drawn, so the stream does not depend on the
-// rules. Never two Legendary offers within config.RareOfferGap offers of
+// rules. rareFactor is the army rank's factor on the chance
+// (config.ArmyRareFactor). Never two Legendary offers within config.RareOfferGap offers of
 // each other (at least that many ordinary ones between), and every run of
 // config.RareOfferFloor offers holds one (so after RareOfferFloor-1 ordinary
 // ones in a row the next is Legendary). A board that has had no Legendary
 // offer yet is held to the floor only.
-func (b *MissionBoard) rollRare(rng *rand.Rand) bool {
+func (b *MissionBoard) rollRare(rng *rand.Rand, rareFactor float64) bool {
 	roll := rng.Float64()
 	seenRare := b.SinceRare < b.Made
 	rare := b.SinceRare >= config.RareOfferFloor-1 ||
-		((!seenRare || b.SinceRare >= config.RareOfferGap) && roll < config.RareOfferChance)
+		((!seenRare || b.SinceRare >= config.RareOfferGap) && roll < config.RareOfferChance*rareFactor)
 	b.Made++
 	if rare {
 		b.SinceRare = 0
@@ -165,7 +170,7 @@ func (b *MissionBoard) rollRare(rng *rand.Rand) bool {
 }
 
 // makeOffer rolls one offer of a tier for age, made at tick.
-func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier string, tick int) *MissionOffer {
+func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier string, tick int, rareFactor float64) *MissionOffer {
 	age := words.Age
 	offer := &MissionOffer{Tier: tier, Age: age, ExpiresTick: tick + minutesToTicks(config.BoardExpireMinutes)}
 	which := config.WordsShort
@@ -179,7 +184,7 @@ func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier
 		}
 	}
 	name, objectives := words.Tiers[which], words.ObjectivesFor(which)
-	offer.Rare = b.rollRare(rng)
+	offer.Rare = b.rollRare(rng, rareFactor)
 	objective := objectives[rng.Intn(len(objectives))]
 	place := words.Places[rng.Intn(len(words.Places))]
 	offer.Description = words.Twists[rng.Intn(len(words.Twists))]
@@ -205,26 +210,38 @@ func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier
 	return offer
 }
 
-// regenerate throws the board away and makes nine new offers for age, in
-// slot order. Active missions are not touched.
-func (b *MissionBoard) regenerate(rng *rand.Rand, words config.MissionWords, tick int) {
+// regenerate throws the board away and makes new offers for age, in slot
+// order, for tiers open tiers. Active missions are not touched.
+func (b *MissionBoard) regenerate(rng *rand.Rand, words config.MissionWords, tick, tiers int, rareFactor float64) {
 	b.Age = words.Age
-	b.Slots = make([]boardSlot, boardSize)
+	b.Slots = make([]boardSlot, boardSizeFor(tiers))
 	for i := range b.Slots {
-		b.Slots[i].Offer = b.makeOffer(rng, words, slotTier(i), tick)
+		b.Slots[i].Offer = b.makeOffer(rng, words, slotTier(i), tick, rareFactor)
+	}
+}
+
+// resize fits a board made for age to tiers open tiers: a tier that closed
+// takes its offers with it, a tier that opened gets new offers, in slot order.
+func (b *MissionBoard) resize(rng *rand.Rand, words config.MissionWords, tick, tiers int, rareFactor float64) {
+	size := boardSizeFor(tiers)
+	if len(b.Slots) > size {
+		b.Slots = b.Slots[:size]
+	}
+	for len(b.Slots) < size {
+		b.Slots = append(b.Slots, boardSlot{Offer: b.makeOffer(rng, words, slotTier(len(b.Slots)), tick, rareFactor)})
 	}
 }
 
 // refresh replaces the offers that expired, at once, and fills the slots
 // whose wait for a new offer is over, in slot order.
-func (b *MissionBoard) refresh(rng *rand.Rand, words config.MissionWords, tick int) {
+func (b *MissionBoard) refresh(rng *rand.Rand, words config.MissionWords, tick int, rareFactor float64) {
 	for i := range b.Slots {
 		slot := &b.Slots[i]
 		switch {
 		case slot.Offer != nil && tick >= slot.Offer.ExpiresTick:
-			slot.Offer = b.makeOffer(rng, words, slotTier(i), tick)
+			slot.Offer = b.makeOffer(rng, words, slotTier(i), tick, rareFactor)
 		case slot.Offer == nil && tick >= slot.RefillTick:
-			slot.Offer = b.makeOffer(rng, words, slotTier(i), tick)
+			slot.Offer = b.makeOffer(rng, words, slotTier(i), tick, rareFactor)
 		}
 	}
 }
@@ -246,7 +263,7 @@ func (b *MissionBoard) take(n, tick int) (*MissionOffer, error) {
 // slot is board slot n (1-based), or why there is no such offer.
 func (b *MissionBoard) slot(n int) (*boardSlot, error) {
 	if n < 1 || n > len(b.Slots) {
-		return nil, fmt.Errorf("there is no offer %d. The board has offers 1 to %d. Type expedition to see them", n, boardSize)
+		return nil, fmt.Errorf("there is no offer %d. The board has offers 1 to %d. Type expedition to see them", n, len(b.Slots))
 	}
 	slot := &b.Slots[n-1]
 	if slot.Offer == nil {
@@ -279,15 +296,24 @@ func (b *MissionBoard) clone() MissionBoard {
 }
 
 // EnsureBoard makes the board for age when it is not made yet, or is made
-// for another age: a new age gets a whole new board. Under the engine's
+// for another age: a new age gets a whole new board. A board made for age
+// is fitted to the tiers open now (the era and the army's rank): a tier that
+// opens gets its offers, one that closes loses them. Under the engine's
 // write lock.
 func (mm *MilitaryManager) EnsureBoard(rng *rand.Rand, age string, tick int) {
-	if mm.board.ready(age) {
+	tiers := mm.TiersOpen(age)
+	if mm.board.ready(age, tiers) {
 		return
 	}
-	if words, ok := mm.rules.MissionWords(age); ok {
-		mm.board.regenerate(rng, words, tick)
+	words, ok := mm.rules.MissionWords(age)
+	if !ok {
+		return
 	}
+	if mm.board.Age == age && len(mm.board.Slots) > 0 {
+		mm.board.resize(rng, words, tick, tiers, mm.rareFactor())
+		return
+	}
+	mm.board.regenerate(rng, words, tick, tiers, mm.rareFactor())
 }
 
 // RefreshBoard expires old offers and fills the slots that are due. Call
@@ -297,7 +323,7 @@ func (mm *MilitaryManager) RefreshBoard(rng *rand.Rand, tick int) {
 	if !ok {
 		return
 	}
-	mm.board.refresh(rng, words, tick)
+	mm.board.refresh(rng, words, tick, mm.rareFactor())
 }
 
 // BoardOffer is offer n (1-based) on the board, or why there is none.

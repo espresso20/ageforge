@@ -53,6 +53,8 @@ var pureConfig = map[string]bool{
 	"TechTerms": true, "RouteFeature": true, "TechCodeFor": true,
 	"IsSizedEffect": true, "EventSize": true, "EventBand": true,
 	"Term": true, "TermsFor": true, "PeopleTerms": true,
+	"ArmyExperienceFor": true, "ArmyRankOf": true, "ArmyRankFloor": true, "ArmyRankKey": true,
+	"ArmyOddsBonus": true, "ArmyHaulFactor": true, "ArmyRareFactor": true, "MissionTiersOpen": true,
 }
 
 const (

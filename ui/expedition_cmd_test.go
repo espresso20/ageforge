@@ -33,6 +33,8 @@ func newExpeditionTestEngine(t *testing.T) *game.GameEngine {
 	})
 	// Every mission takes a party: an army at home that covers a few.
 	engine.SetGarrisonForTest("bronze_age", 500)
+	// The Bronze Age board holds short offers only; these tests send every tier.
+	engine.OpenTiersForTest(3)
 	return engine
 }
 

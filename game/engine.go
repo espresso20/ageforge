@@ -1692,6 +1692,9 @@ func (ge *GameEngine) processExpeditions() {
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.Military.recordReturn(res, ge.tick)
 		ge.addLog("event", res.Message)
+		if res.Rank > res.RankBefore {
+			ge.addLog("event", fmt.Sprintf("Your army is now %s.", config.Term(ge.age, config.ArmyRankKey(res.Rank)).One))
+		}
 		if res.RoadEvents > 0 {
 			ge.addLog("info", fmt.Sprintf("The mission met %d road events.", res.RoadEvents))
 		}
@@ -4451,7 +4454,7 @@ func (ge *GameEngine) missionHaulLocked(haulMinutes float64) map[string]float64 
 	}
 	out := make(map[string]float64)
 	for _, entry := range rankedIncomes {
-		out[entry.key] = incomes[entry.key] * (60 / config.TickSeconds) * haulMinutes / 2
+		out[entry.key] = incomes[entry.key] * (60 / config.TickSeconds) * haulMinutes / 2 * config.ArmyHaulFactor(ge.Military.Rank())
 	}
 	return out
 }
@@ -4470,13 +4473,15 @@ func (ge *GameEngine) offerSuccessLocked(offer MissionOffer) float64 {
 			}
 		}
 	}
+	success = float64(success + config.ArmyOddsBonus(ge.Military.Rank()))
 	return math.Max(config.MissionSuccessMin, math.Min(config.MissionSuccessMax, success))
 }
 
 // offerRefusalLocked is why offer cannot be sent now: reason is the short
 // form a panel prints beside the offer, err the sentence the launch command
 // prints; both are empty when it can be sent. It checks, in a fixed order:
-// the party against the soldiers at home, each material, then the tech lock.
+// the party against the soldiers at home, then each material. No tech locks a
+// tier: the board offers the tiers the era (and the army's rank) opens.
 // cost is what the offer costs, the party included.
 func (ge *GameEngine) offerRefusalLocked(offer MissionOffer, cost map[string]float64) (reason string, err error) {
 	if party := int(cost["soldiers"]); party > 0 {
@@ -4495,15 +4500,11 @@ func (ge *GameEngine) offerRefusalLocked(offer MissionOffer, cost map[string]flo
 				fmt.Errorf("%s needs %s %s (you have %s)", offer.Title, amountText(amount), resourceLabel(res), amountText(ge.Resources.Get(res)))
 		}
 	}
-	// The tech that opens this kind of mission.
-	if err := ge.featureErr(expeditionFeatures(offer)...); err != nil {
-		return strings.TrimRight(err.Error(), "."), err
-	}
 	return "", nil
 }
 
 // launchExpeditionLocked is the single mission-launch path: it validates the
-// offer, its tier's slot, the cost and the lock, then deducts the cost and
+// offer, its tier's slot and the cost, then deducts the cost and
 // takes the offer off the board. Callers must already hold the write lock.
 //
 // Both entry points go through here: the player's `expedition` command
@@ -4560,7 +4561,6 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	if _, err := ge.Military.board.take(n, ge.tick); err != nil {
 		return err
 	}
-	ge.useFeature(expeditionFeatures(offer)...)
 
 	// --- All checks passed: deduct the Cost (the party is already on the road). ---
 	for _, res := range sortedKeys(cost) {
@@ -4580,7 +4580,7 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 	return nil
 }
 
-// boardViewLocked is the mission board as the panels read it: all nine
+// boardViewLocked is the mission board as the panels read it: every
 // slots, and the offers in them in number order. bonus is the techs' share on
 // loot. Under a lock.
 func (ge *GameEngine) boardViewLocked(bonus float64) ([]BoardSlotInfo, []ExpeditionInfo) {
