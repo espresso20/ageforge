@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // accountSchemaVersion is the on-disk schema version of account.json. Bumped only
@@ -729,7 +730,7 @@ func SwitchAccount(id string) (*Account, error) {
 		return nil, err
 	}
 	if !found || acct == nil {
-		return nil, fmt.Errorf("There is no account with the ID %s.", id)
+		return nil, vibe.Errorf("game.account.SwitchAccount.01", "There is no account with the ID %s.", id)
 	}
 	// Commit the switch only after the slot is confirmed loadable, so a failed switch
 	// leaves the active account unchanged.
@@ -836,7 +837,7 @@ func ExportAccountByID(id string) ([]byte, error) {
 		return nil, err
 	}
 	if !found || acct == nil {
-		return nil, fmt.Errorf("There is no account with the ID %s.", id)
+		return nil, vibe.Errorf("game.account.ExportAccountByID.01", "There is no account with the ID %s.", id)
 	}
 	return acct.ExportProgress()
 }
@@ -852,7 +853,7 @@ func RecoveryCodeForID(id string) (string, error) {
 		return "", err
 	}
 	if !found || acct == nil {
-		return "", fmt.Errorf("There is no account with the ID %s.", id)
+		return "", vibe.Errorf("game.account.RecoveryCodeForID.01", "There is no account with the ID %s.", id)
 	}
 	return acct.RecoveryCode(), nil
 }
@@ -889,7 +890,7 @@ func AccountExportPath(id string) string {
 func WipeAccountByID(id string) (backupPath string, err error) {
 	if id == "" {
 		// Never remove accountDir("") — that is the shared <root>/accounts root, not a slot.
-		return "", fmt.Errorf("Cannot wipe an account without an ID.")
+		return "", vibe.Errorf("game.account.WipeAccountByID.01", "Cannot wipe an account without an ID.")
 	}
 	// Snapshot first. Best-effort: a backup error is swallowed (backupPath stays "") so the
 	// player's confirmed wipe still proceeds; the snapshot lives outside the slot, so it
@@ -993,7 +994,7 @@ func validAccountID(id string) bool {
 // an import aimed at another slot can never overwrite a different account.
 func (a *Account) Save() error {
 	if !validAccountID(a.AccountID) {
-		return fmt.Errorf("cannot save an account with the ID %q", a.AccountID)
+		return vibe.Errorf("game.account.Save.01", "cannot save an account with the ID %q", a.AccountID)
 	}
 	dir := accountDir(a.AccountID)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -1342,7 +1343,7 @@ func crockfordDecode(s string, byteLen int) ([]byte, error) {
 	for i := 0; i < len(s); i++ {
 		v, ok := crockfordDecodeChar(s[i])
 		if !ok {
-			return nil, fmt.Errorf("That recovery code has a character it cannot contain ('%s'). Check it and try again.", string(s[i]))
+			return nil, vibe.Errorf("game.account.crockfordDecode.01", "That recovery code has a character it cannot contain ('%s'). Check it and try again.", string(s[i]))
 		}
 		buf = (buf << 5) | uint32(v)
 		bits += 5
@@ -1352,7 +1353,7 @@ func crockfordDecode(s string, byteLen int) ([]byte, error) {
 		}
 	}
 	if len(out) < byteLen {
-		return nil, fmt.Errorf("That recovery code is too short. Check it and try again.")
+		return nil, vibe.Errorf("game.account.crockfordDecode.02", "That recovery code is too short. Check it and try again.")
 	}
 	return out[:byteLen], nil
 }
@@ -1407,7 +1408,7 @@ func RecoveryCodeID(code string) (string, error) {
 		norm = norm[len(p):]
 	}
 	if norm == "" {
-		return "", fmt.Errorf("The recovery code is empty. Type account recover <code>.")
+		return "", vibe.Errorf("game.account.RecoveryCodeID.01", "The recovery code is empty. Type account recover <code>.")
 	}
 
 	payload, err := crockfordDecode(norm, 18)
@@ -1417,7 +1418,7 @@ func RecoveryCodeID(code string) (string, error) {
 	idBytes := payload[:16]
 	gotSum := uint16(payload[16])<<8 | uint16(payload[17])
 	if gotSum != crc16CCITT(idBytes) {
-		return "", fmt.Errorf("That recovery code does not check out (a character is probably wrong). Check it and try again.")
+		return "", vibe.Errorf("game.account.RecoveryCodeID.02", "That recovery code does not check out (a character is probably wrong). Check it and try again.")
 	}
 	return hex.EncodeToString(idBytes), nil
 }
@@ -1452,7 +1453,7 @@ func ImportRecoveryCode(code string) (*Account, error) {
 	path := filepath.Join(accountDir(id), accountFileName)
 	if _, statErr := os.Stat(path); statErr == nil {
 		if err := os.Rename(path, path+".corrupt"); err != nil {
-			return nil, fmt.Errorf("The account file for that code is damaged and could not be set aside: %w", err)
+			return nil, vibe.Errorf("game.account.ImportRecoveryCode.01", "The account file for that code is damaged and could not be set aside: %w", err)
 		}
 	}
 
@@ -1610,24 +1611,24 @@ func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 func decodeAccountExport(blob []byte) (*progressExport, error) {
 	var exp progressExport
 	if err := json.Unmarshal(blob, &exp); err != nil {
-		return nil, fmt.Errorf("That file is not a readable progress export: %w", err)
+		return nil, vibe.Errorf("game.account.decodeAccountExport.01", "That file is not a readable progress export: %w", err)
 	}
 	// Verify integrity BEFORE touching the disk. An unsigned blob is rejected (an export is
 	// always signed by ExportProgress; a missing sig means it was not produced by us).
 	if !hmac.Equal([]byte(exp.Signature), []byte(signProgressExport(&exp))) {
-		return nil, fmt.Errorf("That progress export has been changed or damaged since it was made, so it cannot be imported.")
+		return nil, vibe.Errorf("game.account.decodeAccountExport.02", "That progress export has been changed or damaged since it was made, so it cannot be imported.")
 	}
 	if exp.AccountID == "" {
-		return nil, fmt.Errorf("That progress export has no account ID (it comes from an older version) and cannot be imported.")
+		return nil, vibe.Errorf("game.account.decodeAccountExport.03", "That progress export has no account ID (it comes from an older version) and cannot be imported.")
 	}
 	// The ID names the slot the backup lands in, so it must be a real account ID, never a path.
 	if !validAccountID(exp.AccountID) {
-		return nil, fmt.Errorf("That progress export has an account ID the game cannot use, so it cannot be imported.")
+		return nil, vibe.Errorf("game.account.decodeAccountExport.04", "That progress export has an account ID the game cannot use, so it cannot be imported.")
 	}
 	// The badges it carries must be this account's and as the game signed them. An
 	// export is refused whole rather than imported in part.
 	if b := exp.BadgeStore; b != nil && (b.AccountID != exp.AccountID || !verifyBadgeFile(b)) {
-		return nil, fmt.Errorf("That progress export has been changed or damaged since it was made, so it cannot be imported.")
+		return nil, vibe.Errorf("game.account.decodeAccountExport.05", "That progress export has been changed or damaged since it was made, so it cannot be imported.")
 	}
 	return &exp, nil
 }

@@ -1,12 +1,12 @@
 package game
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // TradeManager runs the repeating trade routes. (The market no longer swaps
@@ -153,22 +153,22 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 	routes := tm.routeDefs
 	def, ok := routes[key]
 	if !ok {
-		return unknownKeyError("trade route", key, routes, "Type trade route list to see the routes.")
+		return unknownKeyError(vibe.Line("game.trade.StartRoute.01", "trade route"), key, routes, vibe.Line("game.trade.StartRoute.02", "Type trade route list to see the routes."))
 	}
 
 	// Check age requirement
 	if ageOrder[def.MinAge] > ageOrder[age] {
-		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(tm.rules, age, def.MinAge))
+		return vibe.Errorf("game.trade.StartRoute.03", "%s needs %s.", def.Name, laterAgeRef(tm.rules, age, def.MinAge))
 	}
 
 	// Check building requirement
 	if buildings.CountFrom(def.RequiredBld) < def.MinCount {
-		return fmt.Errorf("%s needs %s (you have %s).", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld), textfmt.Int(buildings.CountFrom(def.RequiredBld)))
+		return vibe.Errorf("game.trade.StartRoute.04", "%s needs %s (you have %s).", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld), textfmt.Int(buildings.CountFrom(def.RequiredBld)))
 	}
 
 	// Check not already active
 	if _, active := tm.activeRoutes[key]; active {
-		return fmt.Errorf("%s is already running.", def.Name)
+		return vibe.Errorf("game.trade.StartRoute.05", "%s is already running.", def.Name)
 	}
 
 	tm.activeRoutes[key] = &ActiveRoute{
@@ -181,7 +181,7 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 // StopRoute deactivates a trade route
 func (tm *TradeManager) StopRoute(key string) error {
 	if _, active := tm.activeRoutes[key]; !active {
-		return fmt.Errorf("%s is not running. Type trade route list to see your routes.", tm.rules.Name(rules.KindRoute, key))
+		return vibe.Errorf("game.trade.StopRoute.01", "%s is not running. Type trade route list to see your routes.", tm.rules.Name(rules.KindRoute, key))
 	}
 	delete(tm.activeRoutes, key)
 	return nil
@@ -224,7 +224,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 
 		// Check building still meets requirements
 		if buildings.CountFrom(def.RequiredBld) < def.MinCount {
-			messages = append(messages, fmt.Sprintf("Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)))
+			messages = append(messages, vibe.Sprintf("game.trade.Tick.01", "Trade route %s stopped: it needs %s.", def.Name, buildingCountIn(tm.rules, def.MinCount, def.RequiredBld)))
 			delete(tm.activeRoutes, key)
 			continue
 		}
@@ -237,7 +237,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		if route.Disrupted {
 			route.TicksLeft--
 			if route.TicksLeft <= 0 {
-				messages = append(messages, fmt.Sprintf("Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)))
+				messages = append(messages, vibe.Sprintf("game.trade.Tick.02", "Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)))
 				route.TicksLeft = tm.RunTicks(def.TicksPerRun)
 			}
 			continue
@@ -279,7 +279,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 					if res == config.ResearchTarget {
 						if research != nil {
 							if said := research(actual); said != "" {
-								messages = append(messages, "  → "+def.Name+" gave "+said+".")
+								messages = append(messages, "  → "+def.Name+vibe.Line("game.trade.Tick.03", " gave ")+said+".")
 							}
 						}
 						continue
@@ -298,7 +298,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				route.Starved = true
 				for _, res := range sortedKeys(def.Export) {
 					if resources.Get(res) < def.Export[res] {
-						messages = append(messages, fmt.Sprintf("%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)))
+						messages = append(messages, vibe.Sprintf("game.trade.Tick.04", "%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)))
 						break
 					}
 				}

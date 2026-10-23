@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // current_game.go says which of an account's saves is "the current game":
@@ -177,7 +179,7 @@ func (ge *GameEngine) CurrentGame() (cur CurrentGame, ok bool) {
 // the engine is reset to a fresh game, as it would be at a launch.
 func (ge *GameEngine) WipeSavesByID(id string) (int, error) {
 	if !validAccountID(id) {
-		return 0, fmt.Errorf("there is no account with the ID %q", id)
+		return 0, vibe.Errorf("game.current_game.WipeSavesByID.01", "there is no account with the ID %q", id)
 	}
 	dir := filepath.Join(accountDir(id), "saves")
 	entries, err := os.ReadDir(dir)

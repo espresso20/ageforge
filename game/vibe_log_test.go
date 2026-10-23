@@ -1,0 +1,407 @@
+package game
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"regexp"
+	"strings"
+	"testing"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
+)
+
+// The log lines and the refusals are written by the code, not read from a
+// ruleset: vibe.Line, Sprintf and Errorf swap them for the script's line while
+// VibeMode is on. These tests play one run, with refusals asked for at every
+// stage, and read every text the player would have read.
+
+// playForText plays a deterministic run on set and returns the text of it in
+// order: every log line (as the log held it after each stage) and every
+// refusal, each with the stage it came at. The engine is returned as the run
+// left it.
+func playForText(t *testing.T, set *rules.Set) ([]string, *GameEngine) {
+	t.Helper()
+	var texts []string
+	rec := func(format string, args ...any) { texts = append(texts, fmt.Sprintf(format, args...)) }
+	ge := NewGameEngineWith(set)
+	ge.SeedRNG(7)
+	grab := func(label string) {
+		for _, l := range ge.GetLogs() {
+			rec("%s|log|%s|%s", label, l.Type, l.Message)
+		}
+	}
+	refuse := func(label string) {
+		errs := []struct {
+			name string
+			do   func() error
+		}{
+			{"build0", func() error { _, e := ge.BuildMultiple("hut", 0); return e }},
+			{"buildunknown", func() error { _, e := ge.BuildMultiple("hutt", 1); return e }},
+			{"buildnope", func() error { _, e := ge.BuildMultiple("zzz", 1); return e }},
+			{"buildmany", func() error { _, e := ge.BuildMultiple("hut", 100000); return e }},
+			{"buildwonder", func() error { _, e := ge.BuildMultiple("great_pyramid", 1); return e }},
+			{"recruit0", func() error { return ge.RecruitWorker("worker", 0) }},
+			{"recruitbig", func() error { return ge.RecruitWorker("worker", 1000000) }},
+			{"recruitodd", func() error { return ge.RecruitWorker("nonesuch", 1) }},
+			{"assign0", func() error { return ge.AssignWorker("hut", 0) }},
+			{"assignbig", func() error { return ge.AssignWorker("hut", 100000) }},
+			{"assignnone", func() error { return ge.AssignWorker("zzz", 1) }},
+			{"assignall", func() error { _, e := ge.AssignAll("zzz"); return e }},
+			{"assignallhut", func() error { _, e := ge.AssignAll("hut"); return e }},
+			{"unassign0", func() error { return ge.UnassignWorker("hut", 0) }},
+			{"unassignbig", func() error { return ge.UnassignWorker("hut", 1000) }},
+			{"unassignall", func() error { _, e := ge.UnassignAll("hut"); return e }},
+			{"dismiss", func() error { return ge.DismissWorkers("hut", 5, false) }},
+			{"sell0", func() error { return ge.SellBuilding("hut", 0) }},
+			{"sellhut", func() error { return ge.SellBuilding("hut", 1) }},
+			{"sellnone", func() error { return ge.SellBuilding("zzz", 1) }},
+			{"research", func() error { return ge.StartResearch("zzz") }},
+			{"researchfar", func() error { return ge.StartResearch("quantum_computing") }},
+			{"cancelresearch", func() error { return ge.CancelResearch() }},
+			{"gather", func() error { _, e := ge.GatherResource("gold", 5); return e }},
+			{"gatherneg", func() error { _, e := ge.GatherResource("food", -1); return e }},
+			{"festival", func() error { return ge.DoFestival() }},
+			{"blackmarket", func() error { _, _, e := ge.DoBlackMarket("zzz"); return e }},
+			{"blackmarket2", func() error { _, _, e := ge.DoBlackMarket("gold"); return e }},
+			{"advance", func() error { return ge.AdvanceAge() }},
+			{"prestige", func() error { return ge.DoPrestige() }},
+			{"upgrade", func() error { return ge.UpgradeBuilding("hut", 1, false) }},
+			{"upgradeall", func() error { return ge.UpgradeBuilding("zzz", 1, true) }},
+			{"route", func() error { return ge.StartTradeRoute("zzz") }},
+			{"routestop", func() error { return ge.StopTradeRoute("zzz") }},
+			{"status", func() error { return ge.SetDiplomaticStatus("zzz", "allied") }},
+			{"statusbad", func() error { return ge.SetDiplomaticStatus("zzz", "bogus") }},
+			{"gift", func() error { return ge.SendGift("zzz") }},
+			{"tribute", func() error { return ge.SendTribute("zzz") }},
+			{"deal", func() error { _, e := ge.AcceptFactionDeal("zzz", 1); return e }},
+			{"dealnone", func() error { _, e := ge.AcceptFactionDeal("", 0); return e }},
+			{"expedition", func() error { return ge.LaunchExpedition(99) }},
+			{"expedition0", func() error { return ge.LaunchExpedition(0) }},
+			{"memory", func() error { return ge.AcceptAncientMemory() }},
+			{"endure", func() error { return ge.Endure() }},
+			{"succumb", func() error { return ge.Succumb() }},
+			{"endurelp", func() error { return ge.EndureLastPassage() }},
+			{"succumblp", func() error { return ge.SuccumbLastPassage() }},
+			{"appease", func() error { return ge.HarbingerAppease() }},
+			{"brace", func() error { return ge.HarbingerBrace() }},
+			{"invite", func() error { return ge.HarbingerInvite() }},
+			{"planupgrade", func() error { _, e := ge.PlanAddUpgrade("hut", 1); return e }},
+			{"planupgrade0", func() error { _, e := ge.PlanAddUpgrade("zzz", 0); return e }},
+			{"planbuild", func() error { _, e := ge.PlanAddBuild("zzz", 1); return e }},
+			{"planbuildhut", func() error { _, e := ge.PlanAddBuild("hutt", 1); return e }},
+			{"planremove", func() error { _, e := ge.PlanRemove(99); return e }},
+			{"planresearch", func() error { _, e := ge.PlanAddResearchChain("zzz"); return e }},
+			{"planadvance", func() error { return ge.PlanAddAdvance() }},
+			{"share", func() error { _, e := ge.SetWorkerShare("zzz", 50); return e }},
+			{"share2", func() error { _, e := ge.SetWorkerShare("food", 500); return e }},
+			{"scholarshare", func() error { _, e := ge.SetResearchShare(500); return e }},
+			{"scholarshare2", func() error { _, e := ge.SetResearchShare(50); return e }},
+			{"switch", func() error { _, e := ge.SwitchAccount("zzz"); return e }},
+			{"branch", func() error { return ge.BranchSave("") }},
+			{"load", func() error { return ge.LoadGame("zzz-nosuch") }},
+			{"bank", func() error { _, e := ge.BankWonderResource("zzz", "gold", 5); return e }},
+			{"bank2", func() error { _, e := ge.BankWonderResource("great_pyramid", "gold", 5); return e }},
+		}
+		for _, e := range errs {
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						rec("%s|refuse|%s|PANIC %v", label, e.name, r)
+					}
+				}()
+				err := e.do()
+				if err == nil {
+					rec("%s|refuse|%s|<nil>", label, e.name)
+				} else {
+					rec("%s|refuse|%s|%s", label, e.name, err.Error())
+				}
+			}()
+		}
+		grab(label + "-after-refusals")
+	}
+	refuse("start")
+	for i, age := range config.AgeOrder()[1:] {
+		if err := ge.EnterAgeForTest(age); err != nil {
+			t.Fatal(err)
+		}
+		ge.GrantTechsForTest()
+		for _, f := range rules.CoreFor(false).Factions() {
+			_ = ge.MeetFactionForTest(f.Key, 40)
+		}
+		_ = ge.SummonHarbingerForTest(age)
+		ge.StepTicks(350)
+		grab(age + "-a")
+		if i%4 == 0 {
+			refuse(age)
+		}
+		if i%3 == 0 && ge.ForceCatastropheForTest() == nil {
+			grab(age + "-doom")
+			if i%2 == 0 {
+				_ = ge.Endure()
+			} else {
+				_ = ge.Succumb()
+			}
+			grab(age + "-doomed")
+		}
+		ge.StepTicks(350)
+		grab(age + "-b")
+	}
+	steps := []struct {
+		name string
+		do   func() error
+	}{
+		{"enter the quantum age", func() error { return ge.EnterAgeForTest("quantum_age") }},
+		{"a harbinger", func() error { return ge.SummonHarbingerForTest("quantum_age") }},
+		{"step", func() error { ge.StepTicks(300); return nil }},
+		{"clear the doom", func() error { _ = ge.Endure(); return nil }},
+		{"the Last Passage", func() error { return ge.ForceLastPassageForTest("transcendent_age") }},
+		{"step", func() error { ge.StepTicks(100); return nil }},
+		{"endure it", ge.EndureLastPassage},
+		{"step", func() error { ge.StepTicks(300); return nil }},
+		{"an earlier age", func() error { return ge.EnterAgeForTest(config.AgeOrder()[8]) }},
+		{"step", func() error { ge.StepTicks(300); return nil }},
+	}
+	for _, st := range steps {
+		if err := st.do(); err != nil {
+			t.Fatalf("%s: %v", st.name, err)
+		}
+		grab("end:" + st.name)
+	}
+	refuse("end")
+	_ = ge.Endure()
+	if err := ge.DoPrestige(); err != nil {
+		rec("prestige|refuse|%s", err.Error())
+	}
+	grab("prestige")
+	ge.StepTicks(300)
+	grab("after-prestige")
+	return texts, ge
+}
+
+// playWith plays the run with VibeMode set to on and, when rewrite is not
+// nil, with every text the code writes itself read through it.
+func playWith(t *testing.T, on bool, rewrite func(id, plain string) string) ([]string, *GameEngine) {
+	t.Helper()
+	vibeOff(t)
+	if rewrite != nil {
+		defer vibe.UseRewriterForTest(rewrite)()
+	}
+	vibe.Set(on)
+	defer vibe.Set(false)
+	return playForText(t, rules.CoreFor(false))
+}
+
+// mark is a script that changes every text of the code and keeps what is in
+// it: the verbs, the slots and the words. Taking the marks out gives the text
+// back. A text that begins with a letter keeps it ahead of the mark, so the
+// code that capitalizes a line it is given still finds a letter to capitalize.
+func mark(id, plain string) string {
+	if r, n := utf8.DecodeRuneInString(plain); n > 0 && unicode.IsLetter(r) {
+		return plain[:n] + markOpen + plain[n:] + markClose
+	}
+	return markOpen + plain + markClose
+}
+
+// The marks mark runs the script has written. No text of the game has them.
+const (
+	markOpen  = "⟦"
+	markClose = "⟧"
+)
+
+var unmark = strings.NewReplacer(markOpen, "", markClose, "")
+
+// idShaped matches a row id: dotted words that begin with a package.
+var idShaped = regexp.MustCompile(`\b(game|config|rules|pkg)\.[a-z_]+\.[A-Za-z_]+\.[0-9]{2}\b`)
+
+func sameTexts(t *testing.T, what string, got, want []string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("%s: %d texts, want %d", what, len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("%s: text %d reads\n  %q\nwant\n  %q", what, i, got[i], want[i])
+			return
+		}
+	}
+}
+
+// TestLogTextIsPlainWhileVibeModeIsOff: with VibeMode off, the log lines and
+// the refusals of a whole run read as they always did, whatever the script
+// holds: a script that rewrites every text does not reach them.
+func TestLogTextIsPlainWhileVibeModeIsOff(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	plain, _ := playWith(t, false, nil)
+	if len(plain) < 5000 {
+		t.Fatalf("the run read only %d texts", len(plain))
+	}
+	scripted, _ := playWith(t, false, mark)
+	sameTexts(t, "VibeMode off, a script that rewrites every text", scripted, plain)
+	for _, s := range plain {
+		if strings.Contains(s, markOpen) || strings.Contains(s, markClose) {
+			t.Fatalf("a plain text has the script's mark in it: %q", s)
+		}
+	}
+}
+
+// TestLogTextFallsBackToPlain: with VibeMode on and no line in the script for
+// a text, it reads plain. It never reads as an id, and never as nothing.
+func TestLogTextFallsBackToPlain(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	// The run in the words of the shipped script for everything the ruleset
+	// writes, and the code's own texts as they are written.
+	want, _ := playWith(t, true, func(id, plain string) string { return plain })
+	for _, script := range []map[string]string{
+		{}, // no row at all
+		{"building.hut.name": "Crash Pad", "game.engine.nonesuch.01": "A row no text has"}, // rows for other things
+	} {
+		restore := vibe.UseScriptForTest(script)
+		got, _ := playWith(t, true, nil)
+		restore()
+		sameTexts(t, fmt.Sprintf("VibeMode on, a script of %d rows with no line for the texts", len(script)), got, want)
+		for _, s := range got {
+			parts := strings.Split(s, "|")
+			if strings.TrimSpace(parts[len(parts)-1]) == "" || idShaped.MatchString(s) {
+				t.Fatalf("a text reads as an id or as nothing: %q", s)
+			}
+		}
+	}
+}
+
+// TestLogTextFollowsTheScriptAndTheStateDoesNot: with VibeMode on, a script
+// that rewrites every text of the code changes the words of the log and of the
+// refusals and nothing else. Take the script's marks out and the run reads as
+// it does in plain English, line for line; the state and the save are the
+// run's own, to the last bit, with no text of the script in either.
+func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	plain, plainGE := playWith(t, true, func(id, plain string) string { return plain })
+	marked, markedGE := playWith(t, true, mark)
+	if len(marked) != len(plain) {
+		t.Fatalf("the run under the script read %d texts, in plain English %d", len(marked), len(plain))
+	}
+	changed := map[string]bool{}
+	for i := range plain {
+		if marked[i] != plain[i] {
+			changed[marked[i]] = true
+		}
+		if got := unmark.Replace(marked[i]); got != plain[i] {
+			t.Fatalf("text %d under the script, marks taken out, reads\n  %q\nin plain English\n  %q", i, got, plain[i])
+		}
+	}
+	if len(changed) < 400 {
+		t.Errorf("the script reached only %d different texts of the run", len(changed))
+	}
+
+	a, b := stateMap(t, plainGE), stateMap(t, markedGE)
+	for k := range a {
+		if !reflect.DeepEqual(a[k], b[k]) {
+			t.Errorf("under the script, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
+		}
+	}
+	if plainGE.StateDigest() != markedGE.StateDigest() {
+		t.Error("the state digests differ")
+	}
+	js, err := markedGE.StateJSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(js), markOpen) {
+		t.Error("the state holds a text of the script")
+	}
+	vibe.Set(true)
+	defer vibe.Set(false)
+	defer vibe.UseRewriterForTest(mark)()
+	if err := markedGE.SaveGame("marked"); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(savePath("marked"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), markOpen) {
+		t.Error("the save holds a text of the script")
+	}
+}
+
+// TestALineThatStartsWithASymbolIsNeverCut: a script's line may begin with
+// anything (an emoji, an accented letter), and the code that works on the
+// first letter of a line it is handed (capitalizing it, lower-casing it) must
+// keep it whole. Every text of a run under a script that puts a symbol first
+// is valid text, with nothing cut out of it.
+func TestALineThatStartsWithASymbolIsNeverCut(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	texts, _ := playWith(t, true, func(id, plain string) string { return "💀 " + plain })
+	reached := 0
+	for _, s := range texts {
+		if !utf8.ValidString(s) || strings.ContainsRune(s, utf8.RuneError) {
+			t.Fatalf("a text has a letter cut out of it: %q", s)
+		}
+		if strings.Contains(s, "💀") {
+			reached++
+		}
+	}
+	if reached < 400 {
+		t.Errorf("the script reached only %d texts", reached)
+	}
+}
+
+// TestALogLineFollowsTheSwitch: one line and one refusal, end to end. They
+// are written in the words of the script while VibeMode is on and the script
+// has a line for them, in plain English when it is off, and the arguments go
+// into the script's format.
+func TestALogLineFollowsTheSwitch(t *testing.T) {
+	vibeOff(t)
+	gathered := func() string {
+		ge := NewGameEngine()
+		if _, err := ge.GatherResource("food", 1); err != nil {
+			t.Fatal(err)
+		}
+		logs := ge.GetLogs()
+		return logs[len(logs)-1].Message
+	}
+	refused := func() string {
+		_, err := NewGameEngine().BuildMultiple("hut", 0)
+		if err == nil {
+			t.Fatal("a build of none was not refused")
+		}
+		return err.Error()
+	}
+	plainLine, plainRefusal := gathered(), refused()
+	if !strings.HasPrefix(plainLine, "Gathered ") || plainRefusal != "Build count must be positive (got 0)." {
+		t.Fatalf("plain English reads %q and %q", plainLine, plainRefusal)
+	}
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	defer vibe.UseScriptForTest(map[string]string{
+		"game.engine.GatherResource.04": "Snagged %s, no cap.",
+		"game.engine.BuildMultiple.01":  "Zero builds? Bet. (got %d)",
+	})()
+	vibe.Set(true)
+	defer vibe.Set(false)
+	// What the amount reads as is the ruleset's word for it (the script
+	// has one for food); the rest of the line is the script's.
+	middle := strings.TrimSuffix(strings.TrimPrefix(func() string {
+		defer vibe.UseRewriterForTest(func(id, plain string) string { return plain })()
+		return gathered()
+	}(), "Gathered "), ".")
+	if got := gathered(); got != "Snagged "+middle+", no cap." {
+		t.Errorf("with VibeMode on, the line reads %q, want %q", got, "Snagged "+middle+", no cap.")
+	}
+	if got := refused(); got != "Zero builds? Bet. (got 0)" {
+		t.Errorf("with VibeMode on, the refusal reads %q", got)
+	}
+	vibe.Set(false)
+	if gathered() != plainLine || refused() != plainRefusal {
+		t.Error("with VibeMode off again, the text is not plain English")
+	}
+}

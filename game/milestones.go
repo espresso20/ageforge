@@ -7,6 +7,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // MilestoneManager tracks milestone completion, chain progress, and the
@@ -298,7 +299,7 @@ func (mm *MilestoneManager) planFor(def config.MilestoneDef) milestonePlan {
 		plan.rows++
 	}
 	if def.MinAge != "" {
-		plan.ageLabel = "Age: " + mm.rules.Name(rules.KindAge, def.MinAge)
+		plan.ageLabel = vibe.Line("game.milestones.planFor.01", "Age: ") + mm.rules.Name(rules.KindAge, def.MinAge)
 		plan.rows++
 	}
 	// Sort resource keys before iterating — map iteration order is random,
@@ -351,7 +352,7 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 
 	if def.MinTick > 0 {
 		progress = append(progress, MilestoneProgress{
-			Label:   "Ticks survived",
+			Label:   vibe.Line("game.milestones.progressFor.01", "Ticks survived"),
 			Current: float64(params.Tick),
 			Target:  float64(def.MinTick),
 			Met:     params.Tick >= def.MinTick,
@@ -403,7 +404,7 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 
 	if def.MinPopulation > 0 {
 		progress = append(progress, MilestoneProgress{
-			Label:   "Population",
+			Label:   vibe.Line("game.milestones.progressFor.02", "Population"),
 			Current: float64(params.Population),
 			Target:  float64(def.MinPopulation),
 			Met:     params.Population >= def.MinPopulation,
@@ -412,7 +413,7 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 
 	if def.MinTechCount > 0 {
 		progress = append(progress, MilestoneProgress{
-			Label:   "Technologies",
+			Label:   vibe.Line("game.milestones.progressFor.03", "Technologies"),
 			Current: float64(params.TechCount),
 			Target:  float64(def.MinTechCount),
 			Met:     params.TechCount >= def.MinTechCount,
@@ -420,10 +421,10 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 	}
 
 	// Run counters
-	progress = appendCounter(progress, "Buildings built", params.TotalBuilt, def.MinTotalBuilt)
-	progress = appendCounter(progress, "Soldiers trained", params.SoldiersTrained, def.MinSoldiersTrained)
-	progress = appendCounter(progress, "Wonders", params.WonderCount, def.MinWonders)
-	progress = appendCounter(progress, "Knowledge workers", params.KnowledgeCount, def.MinKnowledgeWorkers)
+	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.04", "Buildings built"), params.TotalBuilt, def.MinTotalBuilt)
+	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.05", "Soldiers trained"), params.SoldiersTrained, def.MinSoldiersTrained)
+	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.06", "Wonders"), params.WonderCount, def.MinWonders)
+	progress = appendCounter(progress, vibe.Line("game.milestones.progressFor.07", "Knowledge workers"), params.KnowledgeCount, def.MinKnowledgeWorkers)
 
 	return progress
 }
@@ -470,7 +471,7 @@ func formatRewards(effects []config.Effect) string {
 		switch e.Type {
 		case "instant_resource":
 			if e.Target == config.ResearchTarget {
-				parts = append(parts, "research progress")
+				parts = append(parts, vibe.Line("game.milestones.formatRewards.01", "research progress"))
 				continue
 			}
 			parts = append(parts, "+"+Amount(e.Value, e.Target))

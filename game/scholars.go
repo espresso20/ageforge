@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Scholars. Knowledge is not a thing a town holds: a knowledge building comes
@@ -391,7 +392,7 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	}
 	key := ge.Research.currentTech
 	if key == "" {
-		ge.addLog("info", "Your scholars had nothing to study, so the insight was lost.")
+		ge.addLog("info", vibe.Line("game.scholars.grantResearch.01", "Your scholars had nothing to study, so the insight was lost."))
 		return ""
 	}
 	def := ge.Research.defs[key]
@@ -400,16 +401,16 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	ge.Milestones.researchDone = ge.Stats.ResearchWork
 	landed, completed := ge.Research.Grant(work)
 	if landed < work {
-		ge.addLog("info", fmt.Sprintf("Your scholars gained some ground on %s.", def.Name))
+		ge.addLog("info", vibe.Sprintf("game.scholars.grantResearch.02", "Your scholars gained some ground on %s.", def.Name))
 	}
 	if completed != "" {
 		ge.finishResearch(completed)
-		return fmt.Sprintf("enough to complete %s", def.Name)
+		return vibe.Sprintf("game.scholars.grantResearch.03", "enough to complete %s", def.Name)
 	}
 	if def.Cost <= 0 {
 		return ""
 	}
-	return fmt.Sprintf("%s of %s", shareOfTech((ge.Research.progress-before)/def.Cost), def.Name)
+	return vibe.Sprintf("game.scholars.grantResearch.04", "%s of %s", shareOfTech((ge.Research.progress-before)/def.Cost), def.Name)
 }
 
 // shareOfTech is a fraction as a percent, "12%" (under 1% as "under 1%").
@@ -419,7 +420,7 @@ func shareOfTech(f float64) string {
 	case p <= 0:
 		return "0%"
 	case p < 1:
-		return "under 1%"
+		return vibe.Line("game.scholars.shareOfTech.01", "under 1%")
 	}
 	return fmt.Sprintf("%d%%", int(math.Round(p)))
 }
@@ -431,7 +432,7 @@ func (ge *GameEngine) SetResearchShare(percent int) (string, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if percent < 0 || percent > 100 {
-		return "", fmt.Errorf("Scholars research between 0 and 100 percent. You asked for %d.", percent)
+		return "", vibe.Errorf("game.scholars.SetResearchShare.01", "Scholars research between 0 and 100 percent. You asked for %d.", percent)
 	}
 	ge.scholarShare = percent
 	ge.scholarShareSet = percent != 100
@@ -440,11 +441,11 @@ func (ge *GameEngine) SetResearchShare(percent int) (string, error) {
 	research, teach := ge.scholarPosts(n)
 	switch {
 	case n == 0:
-		return fmt.Sprintf("%d%% of your scholars will research. You have no scholars yet: knowledge buildings come with them.", percent), nil
+		return vibe.Sprintf("game.scholars.SetResearchShare.02", "%d%% of your scholars will research. You have no scholars yet: knowledge buildings come with them.", percent), nil
 	case ge.Research.currentTech == "" && !ge.researchQueued():
-		return fmt.Sprintf("%d%% of your scholars will research. Nothing is being researched, so all %s teach.", percent, textfmt.Count(n, "scholar", "scholars")), nil
+		return vibe.Sprintf("game.scholars.SetResearchShare.03", "%d%% of your scholars will research. Nothing is being researched, so all %s teach.", percent, textfmt.Count(n, vibe.Line("game.scholars.SetResearchShare.04", "scholar"), vibe.Line("game.scholars.SetResearchShare.05", "scholars"))), nil
 	}
-	return fmt.Sprintf("%d%% of your scholars research: %d research and %d teach.", percent, research, teach), nil
+	return vibe.Sprintf("game.scholars.SetResearchShare.06", "%d%% of your scholars research: %d research and %d teach.", percent, research, teach), nil
 }
 
 // scholarsStateLocked is the scholars for a snapshot. Must be called with at
@@ -472,9 +473,9 @@ func (ge *GameEngine) milestoneResources() map[string]float64 {
 // the work the researching scholars do now, or that it needs scholars.
 func (ge *GameEngine) startedResearchLine(def config.TechDef) string {
 	if ticks := ge.researchTicksLeft(); ticks > 0 {
-		return fmt.Sprintf("Started researching %s (%s).", def.Name, ge.durationLocked(ticks))
+		return vibe.Sprintf("game.scholars.startedResearchLine.01", "Started researching %s (%s).", def.Name, ge.durationLocked(ticks))
 	}
-	return fmt.Sprintf("Started researching %s. It needs scholars researching to go on.", def.Name)
+	return vibe.Sprintf("game.scholars.startedResearchLine.02", "Started researching %s. It needs scholars researching to go on.", def.Name)
 }
 
 // researchQueueKeys is the research items in the plan, in order.
@@ -553,13 +554,13 @@ func (ge *GameEngine) turnKnowledgeIntoWork(save *GameSave) {
 	stock := save.Resources["knowledge"]
 	if stock > 0 {
 		if ge.Research.currentTech == "" {
-			ge.addLog("info", "Your scholars had nothing to study, so the insight was lost.")
+			ge.addLog("info", vibe.Line("game.scholars.turnKnowledgeIntoWork.01", "Your scholars had nothing to study, so the insight was lost."))
 		} else if landed, _ := ge.Research.Grant(stock); landed < stock {
-			ge.addLog("info", fmt.Sprintf("Your scholars gained some ground on %s.", ge.Research.defs[ge.Research.currentTech].Name))
+			ge.addLog("info", vibe.Sprintf("game.scholars.turnKnowledgeIntoWork.02", "Your scholars gained some ground on %s.", ge.Research.defs[ge.Research.currentTech].Name))
 		}
 	}
 	for _, key := range ge.loadedCompletions {
-		ge.addLog(LogRoutine, fmt.Sprintf("Research complete: %s.", ge.rules.Name(rules.KindTech, key)))
+		ge.addLog(LogRoutine, vibe.Sprintf("game.scholars.turnKnowledgeIntoWork.03", "Research complete: %s.", ge.rules.Name(rules.KindTech, key)))
 	}
 	ge.loadedCompletions = nil
 }

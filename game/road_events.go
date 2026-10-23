@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 var roadKinds = weightedRoadKinds()
@@ -216,8 +217,8 @@ func (a *ActiveExpedition) haulScale() float64 {
 func expRoadDuration(ticks int) string {
 	seconds := ticks * config.TickSeconds
 	if seconds < 60 {
-		return fmt.Sprintf("%d seconds", seconds)
+		return vibe.Sprintf("game.road_events.expRoadDuration.01", "%d seconds", seconds)
 	}
 	minutes := (seconds + 30) / 60
-	return fmt.Sprintf("%d minutes", minutes)
+	return vibe.Sprintf("game.road_events.expRoadDuration.02", "%d minutes", minutes)
 }

@@ -1,13 +1,13 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Soldiers. A military building comes with its soldiers (config.BuildingDef.
@@ -221,7 +221,7 @@ func (ge *GameEngine) trainFallenPosts() int {
 // at a military building. Caller holds the lock.
 func (ge *GameEngine) logSoldiersTrained(def config.BuildingDef, n int) {
 	w := config.Term(ge.age, config.TermSoldiers)
-	ge.addLog(LogRoutine, fmt.Sprintf("%s finished training at the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+	ge.addLog(LogRoutine, vibe.Sprintf("game.soldiers.logSoldiersTrained.01", "%s finished training at the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }
 
 // postAllSoldiers puts a soldier at every post, with no food test: a town set
@@ -289,7 +289,7 @@ func (ge *GameEngine) fillSoldierPosts() int {
 				ge.soldierWaitLogged = map[string]bool{}
 			}
 			ge.soldierWaitLogged[key] = true
-			ge.addLog(LogRoutine, fmt.Sprintf("The %s has posts waiting on food: its soldiers come as the food allows.", def.Name))
+			ge.addLog(LogRoutine, vibe.Sprintf("game.soldiers.fillSoldierPosts.01", "The %s has posts waiting on food: its soldiers come as the food allows.", def.Name))
 		}
 	}
 	return total + ge.trainFallenPosts()
@@ -345,7 +345,7 @@ func (ge *GameEngine) logSoldiersArrived(def config.BuildingDef, n int) {
 		return
 	}
 	w := config.Term(ge.age, config.TermSoldiers)
-	ge.addLog(LogRoutine, fmt.Sprintf("%s moved in with the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+	ge.addLog(LogRoutine, vibe.Sprintf("game.soldiers.logSoldiersArrived.01", "%s moved in with the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }
 
 // soldiersPostedSave is the posted soldiers for a save: nil when there are
@@ -415,9 +415,9 @@ func (ge *GameEngine) casualtyLine(res ExpeditionResult) string {
 		return ""
 	}
 	if fell := res.Party - res.Marching + res.SoldiersFell; fell > 0 {
-		return fmt.Sprintf(" %d of %d soldiers fell.", fell, res.Party)
+		return vibe.Sprintf("game.soldiers.casualtyLine.01", " %d of %d soldiers fell.", fell, res.Party)
 	}
-	return fmt.Sprintf(" All %d soldiers came home.", res.Party)
+	return vibe.Sprintf("game.soldiers.casualtyLine.02", " All %d soldiers came home.", res.Party)
 }
 
 // partySizeLocked is the party a mission of the offer takes: its tier's share
@@ -448,7 +448,7 @@ func (ge *GameEngine) raidFallLocked() string {
 	if fell <= 0 {
 		return ""
 	}
-	return fmt.Sprintf("  [red]%s fell defending the town.[-]", textfmt.Count(fell, "soldier", "soldiers"))
+	return vibe.Sprintf("game.soldiers.raidFallLocked.01", "  [red]%s fell defending the town.[-]", textfmt.Count(fell, vibe.Line("game.soldiers.raidFallLocked.02", "soldier"), vibe.Line("game.soldiers.raidFallLocked.03", "soldiers")))
 }
 
 // raidFallPercent is the share of the army at home that falls when a raid

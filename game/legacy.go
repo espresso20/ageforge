@@ -10,6 +10,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The legacy kit (Pacing v2, PR 6): three prestige shop items that carry a
@@ -382,12 +383,12 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 		return
 	}
 	pm.templateApplied = ge.age
-	line := fmt.Sprintf("Plan Template: added %s for the %s.", textfmt.Count(added, "item", "items"), ge.rules.Name(rules.KindAge, ge.age))
+	line := vibe.Sprintf("game.legacy.applyPlanTemplateLocked.01", "Plan Template: added %s for the %s.", textfmt.Count(added, vibe.Line("game.legacy.applyPlanTemplateLocked.02", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.03", "items")), ge.rules.Name(rules.KindAge, ge.age))
 	if full > 0 {
-		line += fmt.Sprintf(" The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, textfmt.Count(full, "item", "items"))
+		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.04", " The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, textfmt.Count(full, vibe.Line("game.legacy.applyPlanTemplateLocked.05", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.06", "items")))
 	}
 	if skipped > 0 {
-		line += fmt.Sprintf(" %s can't be planned yet.", textfmt.Count(skipped, "item", "items"))
+		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.07", " %s can't be planned yet.", textfmt.Count(skipped, vibe.Line("game.legacy.applyPlanTemplateLocked.08", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.09", "items")))
 	}
 	ge.addLog(LogRoutine, line)
 }
@@ -409,7 +410,7 @@ func (ge *GameEngine) meetOldFriendsLocked() {
 			continue
 		}
 		if _, ok := ge.Diplomacy.DiscoverFaction(key); ok {
-			ge.addLog("event", fmt.Sprintf("Old friends: the %s remember your people and make contact again.", def.Name))
+			ge.addLog("event", vibe.Sprintf("game.legacy.meetOldFriendsLocked.01", "Old friends: the %s remember your people and make contact again.", def.Name))
 		}
 	}
 }
@@ -480,7 +481,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 // holds the write lock.
 func (ge *GameEngine) startRunLegacyLocked() {
 	if ge.applyLegacySharesLocked() {
-		ge.addLog("info", "Roster: your shares carry over. "+sharesLine(ge.rules, ge.workerShares)+".")
+		ge.addLog("info", vibe.Line("game.legacy.startRunLegacyLocked.01", "Roster: your shares carry over. ")+sharesLine(ge.rules, ge.workerShares)+".")
 	}
 	ge.applyPlanTemplateLocked()
 	ge.meetOldFriendsLocked()
@@ -513,7 +514,7 @@ func (ge *GameEngine) legacyOnPurchaseLocked(key string) {
 		}
 	case config.LegacyWorkers:
 		if ge.applyLegacySharesLocked() {
-			ge.addLog("info", "Your remembered roster is set again. "+ge.applySharesLocked("").Line)
+			ge.addLog("info", vibe.Line("game.legacy.legacyOnPurchaseLocked.01", "Your remembered roster is set again. ")+ge.applySharesLocked("").Line)
 		}
 	case config.LegacyFactions:
 		ge.meetOldFriendsLocked()

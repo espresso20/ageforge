@@ -1,11 +1,11 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Population. "People" is the parent of every kind of person in the town:
@@ -63,5 +63,5 @@ func (ge *GameEngine) logScholarsArrived(def config.BuildingDef) {
 		return
 	}
 	w := config.Term(ge.age, config.TermScholars)
-	ge.addLog(LogRoutine, fmt.Sprintf("%s moved in with the %s.", textfmt.Count(def.Scholars, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
+	ge.addLog(LogRoutine, vibe.Sprintf("game.population.logScholarsArrived.01", "%s moved in with the %s.", textfmt.Count(def.Scholars, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }

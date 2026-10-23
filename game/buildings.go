@@ -11,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // BuildingManager manages all buildings, including production buildings, wonders,
@@ -278,9 +279,9 @@ func closestKey[V any](input string, keys map[string]V) string {
 // "Unknown tech 'x'. Did you mean 'y'? Type research list to see what you can
 // research." The suggestion part is dropped when nothing is close.
 func unknownKeyError[V any](kind, input string, keys map[string]V, hint string) error {
-	msg := fmt.Sprintf("Unknown %s '%s'.", kind, input)
+	msg := vibe.Sprintf("game.buildings.unknownKeyError.01", "Unknown %s '%s'.", kind, input)
 	if s := closestKey(input, keys); s != "" && s != input {
-		msg += fmt.Sprintf(" Did you mean '%s'?", s)
+		msg += vibe.Sprintf("game.buildings.unknownKeyError.02", " Did you mean '%s'?", s)
 	}
 	if hint != "" {
 		msg += " " + hint
@@ -601,16 +602,16 @@ func (bm *BuildingManager) LoadCounts(counts map[string]int) {
 func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float64, rm *ResourceManager) (float64, error) {
 	def, ok := bm.defs[wonderKey]
 	if !ok {
-		return 0, unknownKeyError("wonder", wonderKey, bm.defs, "Type wonders to see them.")
+		return 0, unknownKeyError(vibe.Line("game.buildings.BankResource.01", "wonder"), wonderKey, bm.defs, vibe.Line("game.buildings.BankResource.02", "Type wonders to see them."))
 	}
 	if def.Category != "wonder" {
-		return 0, fmt.Errorf("%s is not a wonder", def.Name)
+		return 0, vibe.Errorf("game.buildings.BankResource.03", "%s is not a wonder", def.Name)
 	}
 	if !bm.IsUnlocked(wonderKey) {
-		return 0, fmt.Errorf("%s is not unlocked yet", def.Name)
+		return 0, vibe.Errorf("game.buildings.BankResource.04", "%s is not unlocked yet", def.Name)
 	}
 	if bm.counts[wonderKey] > 0 {
-		return 0, fmt.Errorf("%s is already built", def.Name)
+		return 0, vibe.Errorf("game.buildings.BankResource.05", "%s is already built", def.Name)
 	}
 	required, exists := def.BaseCost[resource]
 	if !exists {
@@ -618,25 +619,25 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 		for _, k := range sortedKeys(def.BaseCost) {
 			needs = append(needs, ResourceName(k))
 		}
-		return 0, fmt.Errorf("%s doesn't need %s (it needs %s)", def.Name, ResourceName(resource), strings.Join(needs, ", "))
+		return 0, vibe.Errorf("game.buildings.BankResource.06", "%s doesn't need %s (it needs %s)", def.Name, ResourceName(resource), strings.Join(needs, ", "))
 	}
 	banked := bm.wonderBanks[wonderKey][resource]
 	remaining := required - banked
 	if remaining <= 0.001 {
-		return 0, fmt.Errorf("%s already has all the %s it needs", def.Name, ResourceName(resource))
+		return 0, vibe.Errorf("game.buildings.BankResource.07", "%s already has all the %s it needs", def.Name, ResourceName(resource))
 	}
 	if amount > remaining {
 		amount = remaining
 	}
 	have := rm.Get(resource)
 	if have < 0.001 {
-		return 0, fmt.Errorf("you have no %s to bank", ResourceName(resource))
+		return 0, vibe.Errorf("game.buildings.BankResource.08", "you have no %s to bank", ResourceName(resource))
 	}
 	if have < amount {
-		return 0, fmt.Errorf("not enough %s: need %s, have %s", ResourceName(resource), textfmt.Number(amount), textfmt.Number(have))
+		return 0, vibe.Errorf("game.buildings.BankResource.09", "not enough %s: need %s, have %s", ResourceName(resource), textfmt.Number(amount), textfmt.Number(have))
 	}
 	if !rm.Pay(map[string]float64{resource: amount}) {
-		return 0, fmt.Errorf("not enough %s", ResourceName(resource))
+		return 0, vibe.Errorf("game.buildings.BankResource.10", "not enough %s", ResourceName(resource))
 	}
 	if bm.wonderBanks[wonderKey] == nil {
 		bm.wonderBanks[wonderKey] = make(map[string]float64)

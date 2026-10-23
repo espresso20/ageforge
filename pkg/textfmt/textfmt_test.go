@@ -169,3 +169,26 @@ func TestSentenceAndList(t *testing.T) {
 		t.Errorf("got %q", got)
 	}
 }
+
+// TestCapitalizeKeepsALineWhole: the first letter is a rune. A line that
+// starts with an accented letter or a symbol (a VibeMode line may) comes back
+// whole and valid, not with its first byte cut.
+func TestCapitalizeKeepsALineWhole(t *testing.T) {
+	cases := map[string]string{
+		"":                "",
+		"hut":             "Hut",
+		"Hut":             "Hut",
+		"élan vital":      "Élan vital",
+		"💀 research":      "💀 research",
+		"⟦marked⟧":        "⟦marked⟧",
+		"\xffbroken":      "\xffbroken",
+		"ǆ digraph":       "Ǆ digraph",
+		"1 worker":        "1 worker",
+		"  leading space": "  leading space",
+	}
+	for in, want := range cases {
+		if got := Capitalize(in); got != want {
+			t.Errorf("Capitalize(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

@@ -1,6 +1,10 @@
 package game
 
-import "github.com/espresso20/ageforge/rules"
+import (
+	"github.com/espresso20/ageforge/rules"
+
+	"github.com/espresso20/ageforge/vibe"
+)
 
 // spoilers.go is the no-spoiler rule for player text (playtest 2026-09-29):
 // no screen, log line or refusal names an age the player cannot see yet, an
@@ -98,9 +102,9 @@ func (s AgeSight) Era(epoch string) bool {
 // it named, "a later age" when not.
 func (s AgeSight) AgeRef(age string) string {
 	if s.Age(age) {
-		return "the " + orCore(s.set).Name(rules.KindAge, age)
+		return vibe.Line("game.spoilers.AgeRef.01", "the ") + orCore(s.set).Name(rules.KindAge, age)
 	}
-	return "a later age"
+	return vibe.Line("game.spoilers.AgeRef.02", "a later age")
 }
 
 // laterAgeRef is AgeRef for a refusal that only knows the current age: the

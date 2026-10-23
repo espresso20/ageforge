@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // names.go turns config keys into the names a player reads. Every log line,
@@ -98,10 +99,10 @@ func PrestigeUpgradeName(key string) string {
 // storage and bare-resource targets that milestones and events use.
 func EffectTargetName(target string) string {
 	if res, ok := strings.CutSuffix(target, "_storage"); ok {
-		return ResourceName(res) + " storage"
+		return ResourceName(res) + vibe.Line("game.names.EffectTargetName.01", " storage")
 	}
 	if _, ok := rules.Core().Resource(target); ok {
-		return ResourceName(target) + " production"
+		return ResourceName(target) + vibe.Line("game.names.EffectTargetName.02", " production")
 	}
 	return config.EffectTargetLabel(target)
 }
@@ -110,7 +111,7 @@ func EffectTargetName(target string) string {
 func Amount(v float64, res string) string {
 	if res == config.ResearchTarget {
 		// Work done on a tech is a progress bar, never a number of its own.
-		return "research progress"
+		return vibe.Line("game.names.Amount.01", "research progress")
 	}
 	return textfmt.Number(v) + " " + ResourceName(res)
 }

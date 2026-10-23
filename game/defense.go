@@ -1,11 +1,11 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Army defense (Trello qPhJ5YxH, Phase 3): the Defense Rating finally does
@@ -231,7 +231,7 @@ func garrisonSavedLine(m float64, resources map[string]float64, workers int) str
 	if len(parts) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("  [green]Your garrison blunted about %.0f%% of the raid: you kept %s.[-]", m*100, joinAnd(parts))
+	return vibe.Sprintf("game.defense.garrisonSavedLine.01", "  [green]Your garrison blunted about %.0f%% of the raid: you kept %s.[-]", m*100, joinAnd(parts))
 }
 
 // endureGarrisonLine is the Endure log line for what the garrison saved, or ""
@@ -244,14 +244,14 @@ func endureGarrisonLine(o EndureOutcome) string {
 	switch o.BuildingsSaved {
 	case 0:
 	case 1:
-		stood = "1 building still stands that would have fallen, and "
+		stood = vibe.Line("game.defense.endureGarrisonLine.01", "1 building still stands that would have fallen, and ")
 	default:
-		stood = fmt.Sprintf("%d buildings still stand that would have fallen, and ", o.BuildingsSaved)
+		stood = vibe.Sprintf("game.defense.endureGarrisonLine.02", "%d buildings still stand that would have fallen, and ", o.BuildingsSaved)
 	}
-	line := fmt.Sprintf("  [green]Your garrison held the line: %syou keep %.0f%% of your stock instead of %.0f%%.[-]",
+	line := vibe.Sprintf("game.defense.endureGarrisonLine.03", "  [green]Your garrison held the line: %syou keep %.0f%% of your stock instead of %.0f%%.[-]",
 		stood, o.KeepFrac*100, o.BracedKeepFrac*100)
 	if o.Capped {
-		line += fmt.Sprintf(" [gray](Brace and garrison together soften an Endure by at most %.0f%%.)[-]", config.EndureReductionCap*100)
+		line += vibe.Sprintf("game.defense.endureGarrisonLine.04", " [gray](Brace and garrison together soften an Endure by at most %.0f%%.)[-]", config.EndureReductionCap*100)
 	}
 	return line
 }

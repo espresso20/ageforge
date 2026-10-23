@@ -1,6 +1,6 @@
 package game
 
-import "fmt"
+import "github.com/espresso20/ageforge/vibe"
 
 // Advance items: `plan advance` advances to the next age as soon as its
 // requirements are met, instead of when the player next looks in. It is the
@@ -18,11 +18,11 @@ func (ge *GameEngine) PlanAddAdvance() error {
 	defer ge.mu.Unlock()
 	for _, it := range ge.plan {
 		if it.Kind == PlanAdvance {
-			return fmt.Errorf("The plan already advances when ready.")
+			return vibe.Errorf("game.plan_advance.PlanAddAdvance.01", "The plan already advances when ready.")
 		}
 	}
 	if ge.progress.GetNextAge(ge.age) == "" {
-		return fmt.Errorf("This is the final age. There is nothing to advance to.")
+		return vibe.Errorf("game.plan_advance.PlanAddAdvance.02", "This is the final age. There is nothing to advance to.")
 	}
 	if planLoad(ge.plan) >= MaxPlanItems {
 		return errPlanFull()
@@ -38,20 +38,20 @@ func (ge *GameEngine) PlanAddAdvance() error {
 func (ge *GameEngine) planAdvanceBlocker() string {
 	switch {
 	case ge.progress.GetNextAge(ge.age) == "":
-		return "this is the final age"
+		return vibe.Line("game.plan_advance.planAdvanceBlocker.01", "this is the final age")
 	case ge.pendingCatastrophe != "":
-		return "a catastrophe is pending"
+		return vibe.Line("game.plan_advance.planAdvanceBlocker.02", "a catastrophe is pending")
 	case ge.progress.CheckAdvancement(ge.age, ge.Buildings) == "":
-		return "waiting for the requirements"
+		return vibe.Line("game.plan_advance.planAdvanceBlocker.03", "waiting for the requirements")
 	}
 	return ""
 }
 
 // planAdvanceView is an advance item for the UI.
 func (ge *GameEngine) planAdvanceView(it PlanItem) PlanItemView {
-	v := PlanItemView{Kind: it.Kind, Count: it.Count, Name: "advance when ready"}
+	v := PlanItemView{Kind: it.Kind, Count: it.Count, Name: vibe.Line("game.plan_advance.planAdvanceView.01", "advance when ready")}
 	if next := ge.progress.GetNextAge(ge.age); next != "" {
-		v.Name = "advance to the " + ge.progress.GetAgeName(next)
+		v.Name = vibe.Line("game.plan_advance.planAdvanceView.02", "advance to the ") + ge.progress.GetAgeName(next)
 	}
 	if b := ge.planAdvanceBlocker(); b != "" {
 		v.Status, v.Note = PlanStatusBlocked, b
