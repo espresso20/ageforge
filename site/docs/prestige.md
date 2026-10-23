@@ -245,7 +245,7 @@ Graced stock is saved with your game.
 
 ### Catastrophes on known ground
 
-A fated doom's window and the harbinger's lead are measured in each age's target time divided by its speed. In a mastered era the doom and its warning both fall inside the shorter era, and warnings are shorter in the same proportion: at 4x the harbinger's lead in the Iron Age is about 20 minutes to an hour instead of 1.3 to 3.9 hours. Mastery is fixed for the run, so a fate rolled when you enter an era never shifts under you. See [The Harbinger](harbinger.md#when-the-harbinger-arrives).
+A fated doom's window is measured in each age's target time divided by its speed, and the harbinger's lead in the age's price length (its target time with the price climb) divided by its speed. In a mastered era the doom and its warning both fall inside the shorter era, and warnings are shorter in the same proportion: at 4x the harbinger's lead in the Iron Age is about 20 minutes to an hour instead of 1.3 to 3.9 hours. Mastery is fixed for the run, so a fate rolled when you enter an era never shifts under you. See [The Harbinger](harbinger.md#when-the-harbinger-arrives).
 
 ### Saves from before Era Mastery
 
