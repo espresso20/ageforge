@@ -121,7 +121,11 @@ func (r *Resolver) Breakdown(target string) []Modifier {
 // equivalent resolver with NewResolver + AddAll. The returned slice is a copy,
 // so mutating it cannot corrupt the resolver.
 func (r *Resolver) All() []Modifier {
-	out := make([]Modifier, 0)
+	n := 0
+	for _, mods := range r.mods {
+		n += len(mods)
+	}
+	out := make([]Modifier, 0, n)
 	for _, target := range r.Targets() {
 		out = append(out, r.mods[target]...)
 	}
