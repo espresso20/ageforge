@@ -1021,7 +1021,7 @@ ui.input.cmdMotion.03,"on or off, your call"
 ui.input.cmdMotion.04,"motion takes on or off, not %q, sus"
 ui.input.cmdMotion.05,"Motion off. The maps, the badge case and theme effects hold still, the calm era. Type motion on to bring it back."
 ui.input.cmdMotion.06,"Motion on. The maps, the badge case and theme effects move again, we're so back."
-ui.input.cmdVibemode.01,"VibeMode, the whole vibe: "
+ui.input.cmdVibemode.01,VibeMode: 
 ui.input.cmdVibemode.02,". Type vibemode on or vibemode off to change it, the switch is right there."
 ui.input.cmdVibemode.03,"on or off, pick one, fr"
 ui.input.cmdVibemode.04,"vibemode takes on or off, not %q, sus"
