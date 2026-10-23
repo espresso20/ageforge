@@ -108,3 +108,36 @@ func TestEveryWiredTextReadsPlainWhileVibeModeIsOff(t *testing.T) {
 		t.Errorf("only %d vibe calls walked", n)
 	}
 }
+
+// TestVibeWireAddsTheImportToAFileWithNone: a file with no import block that
+// gets a vibe call gets the vibe import with it, so it still builds; a file
+// with imports keeps them, in the right group.
+func TestVibeWireAddsTheImportToAFileWithNone(t *testing.T) {
+	const call = "var greeting = vibe.Line(\"config.x.greeting.01\", \"Hello\")\n"
+	for name, tc := range map[string]struct{ src, want string }{
+		"none": {
+			"package config\n\n// greeting says hello.\n" + call,
+			"package config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n// greeting says hello.\n" + call,
+		},
+		"none, a package doc": {
+			"// Package config is the config.\npackage config\n\n" + call,
+			"// Package config is the config.\npackage config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n" + call,
+		},
+		"already there": {
+			"package config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n" + call,
+			"package config\n\nimport \"github.com/espresso20/ageforge/vibe\"\n\n" + call,
+		},
+		"another import": {
+			"package config\n\nimport \"strings\"\n\n" + call + "var _ = strings.ToUpper\n",
+			"package config\n\nimport (\n\t\"strings\"\n\n\t\"github.com/espresso20/ageforge/vibe\"\n)\n\n" + call + "var _ = strings.ToUpper\n",
+		},
+	} {
+		got, err := fixImports("config/x.go", []byte(tc.src))
+		if err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		if string(got) != tc.want {
+			t.Errorf("%s: the file reads\n%s\nwant\n%s", name, got, tc.want)
+		}
+	}
+}

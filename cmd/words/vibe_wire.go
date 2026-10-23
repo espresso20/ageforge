@@ -393,7 +393,10 @@ func fixImports(rel string, src []byte) ([]byte, error) {
 		return edit{lo, hi, ""}
 	}
 
-	if usesVibe && block != nil && !block.Lparen.IsValid() {
+	if usesVibe && block == nil {
+		// A file with no imports at all: the import goes in after the package clause.
+		edits = append(edits, edit{off(f.Name.End()), off(f.Name.End()), "\n\nimport " + vibeImport})
+	} else if usesVibe && block != nil && !block.Lparen.IsValid() {
 		// A single import with no parentheses: "fmt" alone, or something else.
 		spec := block.Specs[0].(*ast.ImportSpec)
 		switch {
