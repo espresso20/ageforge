@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 var roadKinds = weightedRoadKinds()
@@ -68,26 +69,59 @@ func (ge *GameEngine) fireRoadEvents(active *ActiveExpedition, elapsed int) {
 			continue
 		}
 		e.Fired = true
-		story := ge.applyRoadEvent(active, e)
+		told := ge.roadEventTold(active, e)
+		words, _ := ge.rules.MissionWords(active.Age)
+		story := tellRoadStory(words, active.roadPlace(), *e, told)
+		// The save holds the story as told (the numbers in, the words of the
+		// place and the people still marked), not the story as read.
+		active.RoadTold = append(active.RoadTold, RoadTold{Event: i, Text: told})
 		active.RoadEventsSeen = append(active.RoadEventsSeen, story)
 		ge.addLog("event", story)
 	}
 }
 
+// RoadTold is a road event's story as the save holds it: the story of the
+// event numbered Event in RoadEvents, with what the road did written in
+// (the time lost, the odds, the gold) and the words of the script left as
+// <place>, <foe>, <helper>, <weather> and <find>, so the story can be read in
+// whichever script the game is read in. Text is English, never VibeMode's.
+type RoadTold struct {
+	Event int    `json:"event"`
+	Text  string `json:"text"`
+}
+
+// roadPlace is where the road event happens: the mission's place, else "road".
+func (a *ActiveExpedition) roadPlace() string {
+	if a.Place == "" {
+		return "road"
+	}
+	return a.Place
+}
+
+// tellRoadStory fills the words of an age into a story told by roadEventTold:
+// the place and the foe, helper, weather and find the event drew by index.
+func tellRoadStory(words config.MissionWords, place string, e RoadEvent, told string) string {
+	return strings.NewReplacer(
+		"<place>", place,
+		"<foe>", wordAt(words.Foes[:], e.FoeIndex),
+		"<helper>", wordAt(words.Helpers[:], e.HelperIndex),
+		"<weather>", wordAt(words.Weather[:], e.WeatherIndex),
+		"<find>", wordAt(words.Finds[:], e.FindIndex),
+	).Replace(told)
+}
+
+// applyRoadEvent carries a road event out and returns its story as read now.
 func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 	words, _ := ge.rules.MissionWords(a.Age)
-	place := a.Place
-	if place == "" {
-		place = "road"
-	}
-	foe, helper, weather, find := words.Foes[e.FoeIndex], words.Helpers[e.HelperIndex], words.Weather[e.WeatherIndex], words.Finds[e.FindIndex]
+	return tellRoadStory(words, a.roadPlace(), *e, ge.roadEventTold(a, e))
+}
+
+// roadEventTold carries a road event out (it moves the mission's time, odds
+// and loot, takes gold and soldiers, or posts an offer) and returns its story
+// told with the numbers in and the words still to fill (RoadTold).
+func (ge *GameEngine) roadEventTold(a *ActiveExpedition, e *RoadEvent) string {
 	value := func(template, key, value string) string { return strings.ReplaceAll(template, key, value) }
 	story := e.Story
-	story = value(story, "<place>", place)
-	story = value(story, "<foe>", foe)
-	story = value(story, "<helper>", helper)
-	story = value(story, "<weather>", weather)
-	story = value(story, "<find>", find)
 	switch e.Kind {
 	case "storm":
 		delay := max(1, int(math.Ceil(float64(a.TotalTicks)*.15)))
@@ -108,13 +142,11 @@ func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 		gold := 2 * 60 / config.TickSeconds * ge.townIncome("gold")
 		if ge.Resources.Get("gold") >= gold {
 			ge.Resources.Remove("gold", gold)
-			story = value(story, "<gold>", strings.TrimSuffix(Amount(gold, "gold"), " gold"))
+			story = value(story, "<gold>", textfmt.Number(gold))
 		} else {
 			e.Kind = "foes"
 			a.SuccessChance = math.Max(.05, a.SuccessChance-.08)
 			story = e.AuxStory
-			story = value(story, "<place>", place)
-			story = value(story, "<foe>", foe)
 			story = value(story, "<odds>", fmt.Sprint(int(a.SuccessChance*100)))
 		}
 	case "foes":
@@ -132,11 +164,11 @@ func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 		if a.Party == 0 && a.Soldiers == 0 {
 			// No party went (an age with no army): the ambush takes haul only.
 			scaleActiveRewards(a, .85)
-			story = value(e.AmbushStory, "<foe>", foe)
+			story = e.AmbushStory
 		} else if !a.Military() {
 			// A civil or scouting party also loses part of its haul.
 			scaleActiveRewards(a, .85)
-			story += " " + value(e.AmbushStory, "<foe>", foe)
+			story += " " + e.AmbushStory
 		}
 	case "ruins":
 		if w, ok := ge.rules.MissionWords(a.Age); ok {
@@ -151,7 +183,13 @@ func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
 				target = 0
 			}
 			offer := ge.Military.board.makeOffer(ge.gameRNG(), w, TierShort, ge.tick, ge.Military.rareFactor())
-			offer.Description = "Found by this mission near the ruins at " + place + "."
+			if a.Words.Made {
+				offer.Words.Found = a.Words.Place + 1
+				offer.draw(w)
+			} else {
+				// A mission written by hand: the offer's text is what it is.
+				offer.Words, offer.Description = OfferWords{}, ruinsFound+a.roadPlace()+"."
+			}
 			ge.Military.board.Slots[target].Offer = offer
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -251,7 +252,7 @@ func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 	ge.epochEventHistory = append(ge.epochEventHistory, EpochEventRecord{
 		EpochKey: epochKey, EpochName: ep.Name,
 		EventKey: ep.CatastropheKey, EventName: eventName, EventType: "catastrophe",
-		Tick: ge.tick, Outcome: CatastrophePending,
+		Tick: ge.tick, Outcome: CatastrophePending, Source: source,
 	})
 	ge.Bus.Publish(EventData{
 		Type: EventEpochEventFired,
@@ -473,7 +474,7 @@ func (ge *GameEngine) Endure() error {
 	}
 
 	ge.catastropheHistory = append(ge.catastropheHistory,
-		fmt.Sprintf("Tick %d"+catHistEnduredMarker+"%s (%s). %d buildings lost.", ge.tick, catName, epName, destroyCount))
+		fmt.Sprintf("Tick %d"+catHistEnduredMarker+"%s (%s). %d buildings lost.", ge.tick, doomMark(epochKey), eraMark(epochKey), destroyCount))
 
 	ge.applyMorale(endureMoraleHit)
 	ge.report(Event{Kind: config.BadgeEvEndured, Subject: epochKey, Attrs: map[string]float64{
@@ -520,7 +521,7 @@ func (ge *GameEngine) Succumb() error {
 		legacyNote = "Legacy bonus already held."
 	}
 	ge.catastropheHistory = append(ge.catastropheHistory,
-		fmt.Sprintf("Tick %d"+catHistSuccumbedMarker+"%s (%s). Civilization reset. %s", ge.tick, catName, ep.Name, legacyNote))
+		fmt.Sprintf("Tick %d"+catHistSuccumbedMarker+"%s (%s). Civilization reset. %s", ge.tick, doomMark(epochKey), eraMark(epochKey), legacyNote))
 
 	ge.Buildings.GenerateRuins(ge.gameRNG(), SuccumbRuinCount)
 	droppedRuins := ge.Buildings.EnforceRuinCap()
@@ -815,4 +816,81 @@ func legacyBonusText(set *rules.Set, epochKey string) string {
 		return "none"
 	}
 	return strings.Join(parts, ", ")
+}
+
+// recordNames are the names an epoch event record carries, drawn from the
+// words of the ruleset in force: the era's, and the event's or the doom's. It
+// reports false for a record whose names are not drawn from them (one written
+// by hand, or whose event the ruleset does not have).
+func (ge *GameEngine) recordNames(r EpochEventRecord) (epoch, event string, ok bool) {
+	era, found := ge.rules.Era(r.EpochKey)
+	if !found {
+		return "", "", false
+	}
+	if r.EventType == "catastrophe" {
+		event, _ = ge.rules.Catastrophe(r.EpochKey)
+		if r.Source != catastropheRolled {
+			event += " (" + r.Source + ")"
+		}
+		return era.Name, event, true
+	}
+	ev, found := ge.rules.EraEvent(r.EventKey)
+	return era.Name, ev.Name, found
+}
+
+// redrawHistory writes the names in the epoch event history again from the
+// words of the ruleset in force. The history holds the names it was told in,
+// so this runs when the engine moves onto another ruleset and after a load.
+func (ge *GameEngine) redrawHistory() {
+	for i, r := range ge.epochEventHistory {
+		if epoch, event, ok := ge.recordNames(r); ok {
+			ge.epochEventHistory[i].EpochName, ge.epochEventHistory[i].EventName = epoch, event
+		}
+	}
+}
+
+// epochHistoryForSave is the history as a save holds it: a record keeps the
+// keys its names are drawn from and not the names, so a save reads the same
+// in any script (VibeMode).
+func (ge *GameEngine) epochHistoryForSave() []EpochEventRecord {
+	out := append([]EpochEventRecord(nil), ge.epochEventHistory...)
+	for i, r := range out {
+		if _, _, ok := ge.recordNames(r); ok {
+			out[i].EpochName, out[i].EventName = "", ""
+		}
+	}
+	return out
+}
+
+// The civilization log (catastropheHistory) holds its lines with the names
+// they tell of as markers, {doom:ERA}, {era:ERA} and {passage}, and not as
+// the names: a save then reads the same in any script (VibeMode). The
+// markers are written in with the names of the ruleset in force when a
+// state is read (historyLines).
+var historyMarkRe = regexp.MustCompile(`\{(doom|era):([a-z_]+)\}|\{passage\}`)
+
+func doomMark(epochKey string) string { return "{doom:" + epochKey + "}" }
+func eraMark(epochKey string) string  { return "{era:" + epochKey + "}" }
+
+const passageMark = "{passage}"
+
+// historyLines is the civilization log as read now: every marker replaced by
+// the name it stands for in the words of the ruleset in force.
+func (ge *GameEngine) historyLines() []string {
+	out := make([]string, len(ge.catastropheHistory))
+	for i, line := range ge.catastropheHistory {
+		out[i] = historyMarkRe.ReplaceAllStringFunc(line, func(m string) string {
+			parts := historyMarkRe.FindStringSubmatch(m)
+			switch parts[1] {
+			case "doom":
+				name, _ := ge.rules.Catastrophe(parts[2])
+				return name
+			case "era":
+				return eraName(ge.rules, parts[2])
+			}
+			name, _ := ge.rules.LastPassage()
+			return name
+		})
+	}
+	return out
 }

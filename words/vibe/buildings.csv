@@ -3,3 +3,838 @@ building.hut.name,Crash Pad
 building.hut.description,"A mid shelter made of sticks and leaves, no cap."
 building.hut.flavor,Four walls and the main character energy of someday having five.
 building.gathering_camp.name,Grind Camp
+building.stash.flavor,"Supplies tucked away so deep even you forgot, the secret stash is lowkey genius fr."
+building.gathering_camp.flavor,"The bold go out to bag free stuff off the ground, main character behavior and zero shame."
+building.wood_camp.flavor,"Trees are just wood that hasn't given up yet, and honestly that's giving unbothered."
+building.story_circle.flavor,"Elders gather to definitely not make stuff up, and the lore is bussin."
+building.shrine.flavor,"Pile of rocks with a glow-up, nicer than the ones around it, and they know it."
+building.longhouse.flavor,"Hut, but make it long, so the drama at the far end is out of frame. Understood the assignment."
+building.forager_post.flavor,"Certified gatherers. Same grind, now with a title and full CEO energy, bestie."
+building.stone_camp.flavor,"Rocks got promoted from hobby to career, and we are not even a little sorry."
+building.stone_pit.flavor,"Hole. We are extremely proud of this hole, it's literally our whole personality now."
+building.woodcutter_camp.flavor,"The trees saw us coming and called it, sis. They were right to be shook."
+building.elders_hall.flavor,Where the oldest among us stay dry and get asked to remember stuff. Respect the group chat.
+building.standing_stones.flavor,"Heavy rocks, stood up on purpose. Don't ask how, don't ask why, it's giving mystery era."
+building.war_camp.flavor,"Your civilization's diplomacy plan, and it's giving unhinged, not gonna lie."
+building.storage_pit.flavor,Bigger hole for the stuff that didn't fit in the first hole. We stan a storage arc.
+building.house.flavor,"The hut's glow-up era: it has a FLOOR now, we're literally thriving fr."
+building.farm.flavor,"Stopped chasing food and made it stay put. Certified manifesting, no notes."
+building.lumber_mill.flavor,"The trees unionized, cute. We brought a bigger saw and zero fear, slay."
+building.quarry.flavor,"Industrial-scale hole, and the hole is now a whole lifestyle. Iconic behavior."
+building.scriptorium.flavor,Writing it all down so we can forget it with total confidence. That's the bit.
+building.altar.flavor,"Now with a roof, so the gods can hear your rant in comfort. Bestie, they're listening."
+building.barracks.flavor,Where the young learn the spear points the other way. Chaotic training arc.
+building.market.flavor,Two people find out wanting different stuff is a whole money move. W energy.
+building.smithy.flavor,"Hot metal gets hit until it bends to our vision. It's giving obedient, no pushback."
+building.warehouse.flavor,"All your worldly goods, finally indoors and lowkey judging you. Real."
+building.townhouse.flavor,"Walls so thick the neighbors are just a rumor now. Peace and quiet, periodt."
+building.field_works.flavor,"Clipboard-core farming: someone has a plan, a color-coded tab and zero chill."
+building.granary.flavor,Fortress with one job: keep the future fed. Protecting the snacks is the mission.
+building.hunting_lodge.flavor,"The guys rehash the deer that got away, frame by frame. Main character deer."
+building.ironworks.flavor,"Bronze was a phase, we've moved on to sharp stuff with edge. Growth arc, unbothered."
+building.legion_fort.flavor,"Discipline, formation, and the big belief that marching in sync wins wars. Vibe check passed."
+building.marble_quarry.flavor,"Pretty rocks for future tourists to gawk at. We are content creators, honestly."
+building.smelter.flavor,"Heat does the convincing here, and the rocks spill the metal they were hiding. Tea spilled, hot."
+building.temple.flavor,"House for the gods, sized perfectly for offerings. Tithe-to-go energy, no cap."
+building.timber_yard.flavor,Logs sorted by size by people who take logs extremely seriously. Dedication era.
+building.trading_post.flavor,"The edge of commerce, where everyone gets overcharged and says thanks anyway. Mid but profitable."
+building.agora.flavor,"Public square, public debate, public refusal to land on any conclusion. Civic chaos, lowkey iconic."
+building.villa.flavor,"So refined it has rooms nobody can explain, and that is the whole aesthetic."
+building.estate_farm.flavor,Farming with enough surplus to fund a guy whose entire job is thinking. Lowkey goals.
+building.library.flavor,"Knowledge stored and sorted, and nobody returns the books on time. Relatable, honestly."
+building.oracle_house.flavor,"Predictions so vague they're always right. The ultimate hedge, and it's bussin."
+building.military_academy.flavor,"War turns into a class with homework and a tough grader. Study arc, no days off."
+building.merchant_quarter.flavor,"Whole district devoted to the noble art of marking stuff up. Hustle, but make it a zip code."
+building.aqueduct.flavor,"Water convinced to walk uphill against its better judgment. Peer pressure, but make it plumbing."
+building.forge.flavor,Level up unlocked: the smith moves from tools to pure ambition. Glow up gone right.
+building.amphitheater.flavor,"Drama, comedy, and the occasional tragedy that wasn't on the script. Real plot twists, fr."
+building.cultural_obelisk.flavor,"Tall stone finger pointing at the sky, because the sky forgot we exist. Sir, it's a reminder."
+building.marble_works.flavor,"Rough stone turned into stuff rich people pretend to understand. Art, but make it a flex."
+building.wood_workshop.flavor,Carpentry stops being survival here and starts being flexing. Pure show-off energy.
+building.manor.flavor,"The lord's crib, set apart from yours by literally everything, and he knows it."
+building.keep.flavor,"Vault dressed as a tower, dressed as a threat. Layered, like a plot twist."
+building.demesne.flavor,"The lord's personal land, worked by folks who would rather not talk about it. No tea here."
+building.sawmill.flavor,"Water does the cutting now, great for everyone except the poor river. Efficient, sus."
+building.stonemasons_guild.flavor,"Brotherhood of rock experts who know the secrets and refuse to spill. Gatekeeping, but make it stone."
+building.monastery_library.flavor,"Monks copying books by hand, one glowing mistake at a time. Slow content, high quality."
+building.cathedral.flavor,"Century of building up to feel closer to heaven, or just taller than the next town. Both valid."
+building.castle_keep.flavor,Stone walls and the comforting math that attackers have to climb uphill. Math is the mother.
+building.guildhall.flavor,"Tradesmen gather to fix prices and call it standards. Corporate, but make it cozy."
+building.workshop.flavor,"Where stuff gets made by people who will absolutely insist it's art. Valid, honestly."
+building.ironmonger.flavor,"Iron refined way past the point of need, purely for pride. Ego, but shiny."
+building.great_hall.flavor,Room big enough for a feast and all the grudges that come after. Drama on the menu.
+building.art_studio.flavor,"Genius on a deadline and on a patron's budget. The grind is real, bestie."
+building.basilica.flavor,"Church so grand that humility had to wait in the car, and humble is not on the menu, slay."
+building.coal_mine.flavor,"Turns out the past, squeezed long enough, burns beautifully. Ancient fire, sleek flex."
+building.estate.flavor,"Home big enough to get lost in, and honestly, that's the whole point. Main character sprawl."
+building.exchange.flavor,"Money gets made here by people who never touch the product. Pure hustle, zero hands."
+building.fortress.flavor,"Castle that read about cannons and is absolutely not okay with it. Big sad, big walls."
+building.foundry.flavor,"Industrial-scale metalwork, because this age suddenly wants everything cast. Mass production, no chill."
+building.iron_mine.flavor,"Digging deeper for iron, since the easy stuff ran dry a century ago. Hard mode, respectfully."
+building.market_garden.flavor,"Crops tuned for the city's appetite and the gardener's endless patience. Big hunger, big heart."
+building.mill.flavor,Machines turn grain into flour and millers into the rich ones of the village. Economy go brrr.
+building.university.flavor,"The young come to learn, the old come to dodge retirement. Lifelong grind, no exit."
+building.settlement_block.flavor,"Housing thrown up fast, because the frontier is not about to wait. Speedrun energy."
+building.plantation.flavor,"Vast, profitable, and a chapter the history books handle with gloves. Messy, lowkey."
+building.coal_works.flavor,"Coal mined at a scale that would horrify our grandparents, and it still funds our grandkids. Cursed flex, ngl."
+building.natural_philosophy_hall.flavor,"Science before it had the nerve to call itself science, still rocking a powdered wig. Iconic fit."
+building.mission.flavor,"Church on the edge of the map, converting whoever it runs into first. Aggressive outreach, zero chill."
+building.fort.flavor,"Defensive spot planted on land that recently belonged to someone else. Not the vibe, but holding the line."
+building.port.flavor,"Where the world's goods show up, get taxed, and act like they enjoyed the trip. Bussin tax zone."
+building.harbor.flavor,"Ships get parked, patched, and gently reminded the sea is in charge. Humbling, bestie."
+building.dockyard.flavor,"Ships are born here, loud and screaming, to a chorus of hammers. Dramatic entrance, iconic."
+building.iron_works.flavor,"Imperial-scale iron, and the smoke comes free. Big mood, sky haze included."
+building.concert_hall.flavor,"The rich gather to be seen not talking during the music. Silent flex, slaps."
+building.embassy.flavor,"Diplomacy's home base, where wars get politely pushed to next week. Peace, but make it paperwork."
+building.tenement.flavor,"Housing stacked as high as the landlord's conscience allows, and that's rough, ngl."
+building.agricultural_works.flavor,"The fields stopped being aesthetic and became inventory, so machines now. Romance is dead, ong."
+building.steam_coal_plant.flavor,"Coal in, steam out, and a sky that's never the right color again. Sunset is canceled."
+building.steam_mine.flavor,"Steam-powered mining, faster work and slower lungs. Speedrun, but make it wheezy."
+building.research_institute.flavor,"Progress gets invented on schedule and patented by lunch. Productivity arc, lowkey unhinged."
+building.church.flavor,"Faith, but mass-produced: same comfort, bigger crowd, zero dropouts. Good vibes at scale."
+building.military_base.flavor,"War, now with a permanent address and a supply budget. Commitment, no exit plan."
+building.stock_exchange.flavor,"Room where fortunes get made, lost, and screamed about all at once. Chaotic, but it slaps."
+building.iron_works_complex.flavor,"Iron production so huge it made its own weather. Main character sky, honestly."
+building.steel_mill.flavor,"Iron, but make it ambitious, with a higher melting point. Built different."
+building.coal_plant.flavor,"Lighting the whole city by setting the past on fire. Unbothered, lowkey dangerous."
+building.opera_house.flavor,"Three hours of stunning singing in a language nobody in the crowd speaks. Vibe check, zero comprehension."
+building.grand_embassy.flavor,"Diplomacy at scale, several wars postponed at once. Multitasking queen behavior."
+building.geographic_society.flavor,"Gentlemen with sextants, funded to go somewhere unmapped and snap a photo. Explorer era, no notes."
+building.row_house.flavor,"Identical homes in a tidy row. Individuality is frowned upon, but the drainage is elite."
+building.mechanized_farm.flavor,"Machines do the harvest now, and the horses have not filed a single complaint. Peace."
+building.oil_derrick.flavor,"Struck a black, flammable future and said bet, let's drink deep."
+building.uranium_mine.flavor,"We're digging up a rock that glows. Surely that's fine, no red flags here."
+building.academy.flavor,Higher learning for an age that's absolutely sure it's the smartest yet. Main brain era.
+building.grand_cathedral.flavor,"Cathedral so huge God Himself would need a booking. Overbooked, iconic."
+building.garrison.flavor,"Soldiers, permanently posted, permanently bored, permanently armed. Lowkey a whole mood."
+building.bank.flavor,"Your money goes to make someone else money. Passive income, but for them."
+building.steam_works.flavor,"Steam powers everything, because this age refuses to do anything by hand. Zero hands, full steam."
+building.bessemer_plant.flavor,"Steel by the ton, cheap enough that the future is finally affordable. Bargain era, W."
+building.steam_turbine.flavor,"We spin steam into power and call it peak refinement. Sophisticated, unhinged, lovely."
+building.grand_museum.flavor,"The empire puts up treasures from nations it crashed without an invite. Iconic display, questionable manners."
+building.apartment_block.flavor,"Vertical living for thousands, each one sure the neighbor is the loud one. Thousands of main characters."
+building.industrial_farm.flavor,"Agriculture as an industry, where the only thing not mass-produced is the nostalgia. Still vibes, though."
+building.oil_field.flavor,"Entire landscape rented out to the chase for flammable wealth. Lowkey cursed, but profitable."
+building.nuclear_extraction_plant.flavor,"Glowing rocks get pulled at scale, with only mild signage. Caution is not the vibe."
+building.physics_laboratory.flavor,"Reality gets poked, prodded, and occasionally apologized to. Science, but make it chaotic."
+building.revival_hall.flavor,"Faith, electrified: lights, sound, and a collection plate that hums. Good vibes, big bass."
+building.command_post.flavor,"Wars get managed by people with maps and immaculate posture. Serious energy, rizz for days."
+building.financial_district.flavor,"Whole neighborhood that makes nothing and owns everything. Built different, lowkey criminal."
+building.power_station.flavor,"Keeps the lights on and the bills coming, essential and painful, ngl."
+building.electric_arc_furnace.flavor,"Metal gets melted with lightning now, since fire felt too basic. Upgrade, periodt."
+building.power_generator.flavor,"Spinning copper into power, the miracle nobody clocks until it stops. Underrated, we love it."
+building.radio_station.flavor,"Voices through the air to millions, most of them selling you something. Ads, but make it a vibe."
+building.housing_project.flavor,"Affordable housing, designed by optimists, maintained by literally nobody. Big hope, no upkeep."
+building.agricultural_complex.flavor,"Food at a scale that makes famine an admin error. Stan the spreadsheet, it's working."
+building.petroleum_refinery.flavor,"Crude gets refined into a hundred things we can't live without now. Essential, slightly sus."
+building.uranium_processing_works.flavor,"Glowing rocks get refined into something way more concentrated. Sleep well, bestie."
+building.research_campus.flavor,"Whole campus dedicated to discovering things we might regret. Lowkey a risk, highkey fun."
+building.spiritual_center.flavor,"Faith, for an age that saw what it can build and is quietly spiraling. Hope, but make it a prayer."
+building.bunker_complex.flavor,"Home built underground, for when the surface stops being a good lifestyle choice. Cozy, sub-basement edition."
+building.corporate_hq.flavor,"Tower where decisions get made about people who will never be let inside. Gatekeep energy, very corporate."
+building.nuclear_plant.flavor,"Water gets boiled with the fundamental forces of the universe, to make tea, mostly. Spill the tea, literally."
+building.nuclear_reactor.flavor,"Small contained sun, kept in a box, watched very, very closely. Hot girl containment."
+building.cinema.flavor,"Dark room where strangers agree to believe the same lie for two hours. Immersive, and we're here for it."
+building.monument_of_ages.flavor,"Monument to every age before us, including the ones we'd rather forget. Respect the lore, even the sus chapters."
+building.tower_block.flavor,Glass spire where the rent climbs faster than the elevator. The rent is the main character.
+building.agri_complex.flavor,"Soil is a spreadsheet now, fully industrialized farming. Data-driven dirt, slay."
+building.oil_platform.flavor,"City on stilts in the sea, sipping the last of the ancient sunlight. Cool, but kinda dangerous."
+building.think_tank.flavor,"Building full of brilliant people paid to be confidently unsure. Big brain, no answers."
+building.meditation_center.flavor,"Where a frantic civilization pays to be told to sit still and breathe. Touch grass, but indoors."
+building.special_ops_hq.flavor,"The wars nobody admits to get planned by people nobody can name. Top secret, bestie."
+building.investment_firm.flavor,"They turn money into more money, and sometimes into a cautionary tale. Risky, sis."
+building.seaport.flavor,"Global trade, containerized, the whole world turned into stackable boxes. Tetris era."
+building.titanium_mine.flavor,"We dig for jet metal and pure ambition, deeper than any sane person would. Big brain, questionable choices."
+building.tv_studio.flavor,"Reality gets filmed, edited, and glammed up until nobody recognizes it. Reality TV, the original."
+building.nano_foundry.flavor,"Machines too small to see get built, which is either comforting or not. Vibes unclear, rizz pending."
+building.smart_complex.flavor,"Building that knows when you're home, which seemed cute at first. Now it's watching."
+building.smart_farm.flavor,"Crops watched by sensors, picked by robots, and posted about by nobody who works here. Algorithm core."
+building.precision_mine.flavor,"Satellite-guided mining, accurate to the centimeter and not caring about the view. Locked in, no vibes."
+building.innovation_hub.flavor,Open-plan room where disruption gets brainstormed over very pricey oat lattes. Disruptor era.
+building.digital_temple.flavor,"Worship, migrated online, and the soul has a login now, bestie. Lowkey iconic."
+building.cyber_command.flavor,"Wars fought with keyboards, and the casualties are all in the cloud. Chill battle, zero hands."
+building.venture_hub.flavor,"Money chasing ideas, ideas chasing money, and sometimes they run into each other. Iconic chaos."
+building.server_farm.flavor,"Barn of humming machines, fed power, making stuff you can't hold. Ethereal grind, lowkey sus."
+building.media_center.flavor,"Content made round the clock for an audience that never, ever fills up. Infinite scroll, no notes."
+building.megaplex.flavor,"Whole city in one building, so you never have to go outside again. Touch grass is cancelled."
+building.nano_farm.flavor,"Food built atom by atom, identical to the real thing it replaced. Sus origin, bussin taste."
+building.bio_fabrication_lab.flavor,"Living tissue gets printed now, and the ethics board is still in the group chat arguing. Yikes."
+building.ai_research_lab.flavor,"We're teaching machines to think and very politely not asking what they're thinking about. Lowkey terrifying, highkey iconic."
+building.cyber_shrine.flavor,"Faith on autopilot, believing with maximum efficiency. Big brain devotion."
+building.drone_warfare_center.flavor,"War run remotely by operators who clock out and go home for dinner. Work-life balance, mid vibes."
+building.crypto_exchange.flavor,"Imaginary money traded for slightly different imaginary money. Vibes-based finance, periodt."
+building.neural_grid.flavor,"Network that thinks for itself, and we're choosing to call that helpful. Unhinged, but make it a flex."
+building.data_center.flavor,"The cloud, which is really someone else's enormous, anxious basement. Stormy, but make it storage."
+building.vr_studio.flavor,"Nicer worlds than this one get built and sold, with tickets to go back in. Escapism, no shame."
+building.arcology_pod.flavor,"Whole life inside one megastructure, sky optional, sunlight costs extra. Hermit era, slaps."
+building.vat_farm.flavor,"Meat grown in tanks, ethically sourced from absolutely nothing. The sourcing is giving no notes."
+building.nanobot_vat.flavor,"Churning vat of tiny machines building stuff while you sleep. Probably for you, bestie, probably."
+building.dark_crystal_mine.flavor,Crystals that hum at frequencies your ears were smart to skip get mined. Vibes at a dangerous pitch.
+building.neuro_research_center.flavor,"They study the brain, and increasingly, by opening it. Big brain research, rough vibes."
+building.neon_sanctuary.flavor,"Worship in a city that never sleeps, never prays, and never turns the signs off. Neon faith, slay."
+building.combat_aug_center.flavor,"Soldiers trade body parts for buffs, and the warranty is extremely sus. Upgrade arc, risky."
+building.black_market.flavor,"Everything illegal, in stock, and just slightly pricier than the legal one. Sketchy, but the prices slap."
+building.augmentation_foundry.flavor,"The line between person and product gets a little blurrier every quarter. Identity crisis, bussin hardware."
+building.holographic_theater.flavor,"Entertainment so immersive some patrons forget to leave. We're working on the exit sign, it's a whole era."
+building.cyber_hub.flavor,"The beating data heart of the city, where information is the only real currency. Main character organ."
+building.habitat_ring.flavor,"Ring of homes spun for gravity, so down is whatever the engineers say it is. Spinning, but make it cozy."
+building.bio_reactor_farm.flavor,"Living systems built for food and energy, plus a faint unease that's kinda the brand. Organic and sus."
+building.molecular_synthesizer.flavor,"Matter gets built from the bottom up, and 'making' is a very big word, bestie."
+building.theoretical_institute.flavor,"The smartest people alive debate things that might not even exist. Big brain, ghost-level research."
+building.quantum_chapel.flavor,"Faith where the congregation is kinda here and kinda not. Superposition praise, vibes unclear."
+building.plasma_command.flavor,"War fought with bottled stars, by people extremely confident in their containment fields. Big risk, big bravado."
+building.energy_exchange.flavor,"Power itself gets bought and sold here, and the lights flicker with every trade. Market vibes, lowkey stressful."
+building.fusion_reactor.flavor,"Finally, a star in a box, and the box is extremely pricey. Main star energy, bestie."
+building.exotic_matter_forge.flavor,"Matter that shouldn't exist gets forged into shapes that shouldn't hold. Pure chaos, but make it art."
+building.fusion_reactor_array.flavor,"Several captive stars working shifts to light a civilization that never dims. Glow team, all week."
+building.orbital_habitat.flavor,"Home in orbit with a spectacular view and astronomical rent. Living the dream, very pricey dream."
+building.hydroponic_bay.flavor,"Crops grown without soil, in space, and the plants are taking it surprisingly well. Plant rizz is unmatched, honestly."
+building.asteroid_crystal_mine.flavor,"Asteroids get mined now, since we ran out of planet to disappoint. Space arc, lowkey iconic."
+building.deep_space_observatory.flavor,"Our finest instruments aim at the void, and the void stares back. Mutual staring, unbothered."
+building.orbital_sanctuary.flavor,"Place to pray in orbit, closer to the heavens, technically. Elevated faith, the altitude slaps."
+building.space_force_base.flavor,"Military supremacy, extended upward, since two dimensions felt way too basic. Big flex, big sky."
+building.launch_complex.flavor,"Leaving the planet over and over, at huge cost, on purpose. Commitment issues with gravity."
+building.orbital_refinery.flavor,"Refining ore in zero gravity, where the slag has nowhere polite to go. Chaos, but floating."
+building.solar_collector_array.flavor,"Sunlight gets caught before it reaches the ground, and the ground hasn't complained. Solid W."
+building.zero_g_gallery.flavor,"Art that floats, seen by patrons who float too, and critics who float above even that. Elevated taste, no gravity."
+building.generation_ship.flavor,"Ship so slow the passengers who arrive were born aboard, to grandparents they buried in space. Long journey, heavy lore."
+building.protein_synthesizer.flavor,"Food synthesized from raw elements, for crews who forgot what a tomato even was. Tomato-less era, sad but thriving."
+building.reality_matter_weaver.flavor,"Matter gets woven from the fabric of everything, with extreme care around loose threads. Calm, mostly."
+building.stellar_core_drill.flavor,"Stellar hearts get drilled, and it's going exactly as well as it sounds. Chaotic energy, bestie."
+building.xenology_institute.flavor,"The study of alien life, currently a very well-funded department with zero samples. Big budget, no vibes yet."
+building.void_monastery.flavor,"Monks who meditate on the empty space between stars, which is a lot of space. Deep focus, zero distractions."
+building.galactic_trade_hub.flavor,"Commerce across light-years, where shipping delays are measured in lifetimes. Slow hustle, but make it epic."
+building.warp_drive_plant.flavor,"Engines that fold space get built, so the universe finally moves out of our way. Main character physics."
+building.antimatter_forge.flavor,"Opposite of matter gets made, very carefully, in a facility everyone parks far away from. Sus, but efficient."
+building.cultural_beacon.flavor,"Broadcasting our art across the stars, hoping someone out there has taste. Big hope, bold broadcast."
+building.dyson_sphere_habitat.flavor,"Home wrapped around an entire star, where the power bill is finally zero. Sun-sized W, no cap."
+building.matter_converter.flavor,"Any matter gets turned into any other matter, and 'value' is having a full existential crisis."
+building.neutron_star_mine.flavor,"The densest matter in existence gets mined, one impossibly heavy teaspoon at a time. Grind arc, but make it dense."
+building.cosmic_research_station.flavor,"Studying the universe right where it stops making sense. Peak science brain, no notes."
+building.stellar_shrine.flavor,"Worship for a people whose gods now look, dimensionally speaking, like small fry. Glow-up for the gods, lowkey wild."
+building.stellar_armada_hq.flavor,"Command for a fleet so vast its left and right flanks keep different calendars. Big fleet, no sync, mid chaos."
+building.consciousness_upload_hub.flavor,"Minds get copied into the network, and the original is politely asked to step aside. Clone era, bye bye."
+building.civilization_archive.flavor,"Everything we've ever been, backed up, in case the universe asks for receipts. Stored and ready to flex."
+building.quantum_vault.flavor,Stores stuff in a superposition of 'we have it' and 'oh no.' Lowkey the most relatable vault.
+building.quantum_cultivator.flavor,"Grows food across several probable timelines, then harvests whichever timeline slaps. Multiverse farming."
+building.reality_academy.flavor,"Students learn the rules are negotiable, then negotiate them badly. Lowkey chaos, big learning curve."
+building.transcendence_hall.flavor,"Where the faithful prepare to stop being, which the brochure calls 'graduation.' Ascension arc, bestie."
+building.probability_war_room.flavor,"Fighting wars is so last age, now we calculate which ones we already won. Big brain flex, no sweat."
+building.probability_market.flavor,"Trading outcomes that haven't happened yet, to buyers who may not strictly exist. Futures, but make it vibes."
+building.reality_forge.flavor,"Laws of physics get hammered into more convenient shapes, and physics is filing a grievance. Not a good look, but it's giving progress."
+building.reality_processor.flavor,"It computes by asking the universe directly, and the universe is slow to read the room. Big brain, slower reply."
+building.reality_art_engine.flavor,"Makes beauty by editing reality itself, which old painters would have called cheating. Rule-breaker art, slay."
+building.zero_point_generator.flavor,"Power gets drawn from the emptiness of space, which was saving it for something. Nothing to see, lots of juice."
+building.transcendent_nexus.flavor,"Home for beings who outgrew the idea of homes, but kept one for the nostalgia. Growth arc, soft heart."
+building.omniversal_war_council.flavor,"Strategy across every universe at once, for conflicts that might be hypothetical or might be next door. Big brain, big chaos."
+building.omniversal_bazaar.flavor,"Marketplace across all realities, where someone, somewhere, is always getting a deal. Bargain hunters eat."
+building.singularity_engine.flavor,"It does everything, everywhere, instantly, and we stopped asking how and why. Sheesh, no questions."
+building.classical_vault.flavor,"Reinforced vault for a civilization that finally has stuff worth stealing. Loot era, bussin."
+building.renaissance_vault.flavor,"Storage as architecture, and even the warehouse wants a photo op. Aesthetic, no notes."
+building.colonial_warehouse.flavor,"Where the spoils of empire get stacked, counted, and quietly fought over. Tea-drama in the aisles."
+building.industrial_depot.flavor,"Cathedral of crates, where surplus is worshipped and nothing gets tossed. Hoarder devotion, real."
+building.victorian_vault.flavor,"Vault built on the firm Victorian belief that more is, in fact, more. Maximalist era, extra and proud."
+building.electric_warehouse.flavor,"Storage with the lights on, so you can see exactly how much you hoarded. Receipts, no shade."
+building.atomic_vault.flavor,"Bunker for your belongings, built to outlast you and the whole surface. Stuff will survive, respectfully."
+building.modern_depot.flavor,"Logistics perfected, and your goods have better tracking than you do. Big ops, lowkey humbling."
+building.info_vault.flavor,"Data stored, indexed, and never deleted, just in case. Digital hoarding, ngl, respect."
+building.digital_archive.flavor,"Everything you own, digitized and backed up, including the stuff you forgot you had. Main character memory."
+building.cyber_vault.flavor,"Encrypted storage so secure you might lose access forever. Fair trade, bestie."
+building.fusion_vault.flavor,"Storage run by a captive star, because keeping the inventory lit is the whole move."
+building.orbital_depot.flavor,"Warehouse in orbit, where your surplus circles the planet, gently judging it. Spacey stash, lowkey shady."
+building.stellar_vault.flavor,"Storage across star systems, for an empire that has frankly lost track of its stuff. Big stash, no inventory."
+building.galactic_vault.flavor,"Vault the size of a solar system, mostly empty, which is somehow worse. Ghost-town energy, big vibes."
+building.grand_amphitheatre_monument.flavor,"Monument to spectacle, built so future ages know we knew how to party. Iconic, flex-worthy."
+building.eternal_library_monument.flavor,"Monument built to outlast every book inside it, which is grim, but a bold kind of optimism. Doomer hope, lowkey."
+building.deep_iron_mine.flavor,We've dug so deep the iron is starting to feel like a personal favor. Commitment to the bit.
+building.nano_drill_complex.flavor,"Microscopic drills in their billions, digging up stuff you'll never see. Tiny workers, massive grind."
+building.exotic_mineral_extractor.flavor,"We extract minerals the periodic table is still nervous about. Chart-breaking energy, the table is shook."
+building.reality_excavator.flavor,"Digging into reality to haul up whatever the universe left lying around. Treasure hunter, no permission."
+building.smart_refinery.flavor,"Refinery that runs itself and only pings you when something's catastrophically wrong. Hands-off, lowkey iconic."
+building.quantum_organic_extractor.flavor,"Harvesting organic matter from probability, which it finds very intrusive. No boundaries, nah."
+building.cosmic_organic_works.flavor,"Life's raw materials, refined at a scale that should need a license. Unregulated, big bag energy."
+building.reality_harvester.flavor,"The stuff existence runs on gets reaped, leaving the universe a little threadbare. Harvest szn, the vibe is thinning."
+building.advanced_alloy_plant.flavor,"Alloys built for an age that keeps asking 'but can it survive a reactor breach?' Valid question, slay."
+building.titanium_smelter.flavor,"Titanium gets smelted at industrial scale, for an era that builds nothing small. Big energy, bigger pour."
+building.aerospace_foundry.flavor,"Metals that leave the ground and refuse to come back get forged here. Dramatic exit, peak energy."
+building.nano_alloy_plant.flavor,"Metal built atom by atom, stronger than anything that happens by accident. Intentional strength, bestie."
+building.dark_matter_refinery.flavor,"Matter we can't see gets refined into things we can't explain. Profitable, though, which is the real plot."
+building.stellar_metallurgy.flavor,"Forging metal in the furnace of a living star, because the smithy felt cramped. Main character forge."
+building.quantum_metal_works.flavor,"Metal that is technically several shapes at once until you measure it. Unserious, sus, very cool."
+building.oil_refinery.flavor,"The old black gold, refined into a thousand conveniences and one persistent regret. Iconic, sus, mostly fine."
+building.smart_energy_grid.flavor,"Power that routes itself, balances itself, and never explains a single decision. Quiet boss energy."
+building.quantum_battery_array.flavor,"Stores energy in states that exist and don't, charging while you aren't looking. Sneaky, but make it bussin."
+building.dark_energy_tap.flavor,"Force pulling the universe apart gets tapped and billed monthly. Subscription energy, no cap."
+building.pulsar_tap.flavor,"Power gets siphoned from a spinning star corpse, which is metal in every sense. Dark mode aura."
+building.quasar_tap.flavor,"Drawing power from the brightest objects in the universe, very modestly. Humble flex."
+building.power_grid_hub.flavor,"The nerve center of the grid, where one bad day means a very dark city. High stakes, zero room for error."
+building.smart_grid_node.flavor,"Grid that thinks, balancing power so well you forget it was ever hard. Smooth operator, unbothered."
+building.dyson_assembly.flavor,"The factory building the megastructure that swallows the sun. Big quarter ahead, bestie."
+building.fleet_command.flavor,"Admirals move fleets across light-years like very expensive chess pieces. Strategy, but make it cosmic."
+building.asteroid_market.flavor,"Bazaar carved into a tumbling rock, where the prices and the gravity both float. Wobbly deals, no cap."
+building.stellar_exchange.flavor,"Stock market across star systems, where the closing bell takes a year to ring. Slow gains, long game."
+building.neural_art_complex.flavor,"Art pulled straight from the artist's brain, no talent or hands required. Zero hands, full rizz."
+building.quantum_server_farm.flavor,"Servers computing in parallel realities, and the answer comes from whichever one finished first. Multitask goats."
+building.orbital_data_relay.flavor,"Bouncing the world's info off satellites, so the cloud finally has an altitude. Elevated, lowkey extra."
+building.galactic_network_node.flavor,"Relay knitting the galaxy into one group chat, with heroic lag. Read receipts take years."
+building.harbor_authority.flavor,"The bureaucracy of the sea, where every ship waits its turn and resents it. Paperwork, but wet."
+building.container_terminal.flavor,"Global trade in stackable boxes, sorted by cranes that never sleep or clock out. Relentless grind."
+building.logistics_hub.flavor,"The brain of global shipping, routing everything everywhere just in time, mostly. Big brain, nervous energy."
+building.reality_fold.flavor,"Housing folded into a pocket of space, so the address is technically a paradox. Lowkey impossible flat."
+building.stash.name,Stash Spot
+building.stash.description,"Hidden pile of supplies, and the secret stays with us."
+building.storage_pit.name,Stuff Hole
+building.storage_pit.description,"Hole in the ground to stash things, zero judgment."
+building.warehouse.name,Stuff Palace
+building.warehouse.description,"Proper storage, no cap, and it's giving grown-up energy."
+building.granary.name,Snack Vault
+building.granary.description,"Organized supply storage, very mom-coded, very neat."
+building.classical_vault.name,Toga Vault
+building.classical_vault.description,"Stone vault for valuables, and it's giving Roman glow-up."
+building.keep.name,Big Lockbox
+building.keep.description,"Fortified storehouse, secure and a little dramatic."
+building.renaissance_vault.name,Glow-Up Vault
+building.renaissance_vault.description,"Ornate storage facility, extra in the best way."
+building.colonial_warehouse.name,Import Haul Hub
+building.colonial_warehouse.description,"Trade goods warehouse, shady but the racks are fire."
+building.industrial_depot.name,Smokestack Depot
+building.industrial_depot.description,"Industrial-scale storage, unhinged stacks in the best way."
+building.victorian_vault.name,Tea Time Vault
+building.victorian_vault.description,"Reinforced vault, built like it has something to prove."
+building.electric_warehouse.name,Glow Warehouse
+building.electric_warehouse.description,"Climate-controlled storage, cool vibes and the lights stay on."
+building.atomic_vault.name,Bunker Stash
+building.atomic_vault.description,"Radiation-shielded storage, built to survive the apocalypse. Doomsday drip, unbothered."
+building.modern_depot.name,Drip Depot
+building.modern_depot.description,"Automated logistics, with robots clocking in nonstop. Efficiency is bussin."
+building.info_vault.name,Brain Vault
+building.info_vault.description,"Digital and physical storage in one, hybrid energy with main-brain vibes."
+building.digital_archive.name,Cloud Archive
+building.digital_archive.description,"Quantum-encrypted storage, so secret even the files forgot the password. Locked in."
+building.cyber_vault.name,Vibe Vault
+building.cyber_vault.description,"Encrypted digital vault, and the password is literally your vibe. Digital bouncer, slay."
+building.fusion_vault.name,Sun Locker
+building.fusion_vault.description,"Plasma-shielded storage, where the stash is fire and the shield is hotter."
+building.orbital_depot.name,Sky Depot
+building.orbital_depot.description,"Zero-gravity storage, where your stuff floats and nothing is really anywhere. Weightless flex."
+building.stellar_vault.name,Star Stash
+building.stellar_vault.description,"Pocket-dimension storage, bigger inside than it has any right to be. Sus, but spacious."
+building.galactic_vault.name,Galaxy Vault
+building.galactic_vault.description,"Storage network spanning the whole galaxy, lore and loot, no limits."
+building.quantum_vault.name,Maybe Vault
+building.quantum_vault.description,"Stores matter in quantum superposition, so it's both stashed and not, bestie."
+building.embassy.name,Diplo Den
+building.embassy.description,"Diplomatic embassy, where the tea is always hot and the drama is hotter."
+building.grand_embassy.name,Mega Diplo Den
+building.grand_embassy.description,"Grand diplomatic complex, a full ecosystem of politely worded beef. Peace talks, extra."
+building.geographic_society.name,Explorer Squad
+building.geographic_society.description,"Chartered society of surveyors and cartographers that sends scouts out on its own. More societies and more workers shorten the wait (8 workers), main explorer energy."
+building.amphitheater.name,Hype Theater
+building.amphitheater.description,"Open-air theater and culture hub, where every stage is a full main character moment."
+building.great_hall.name,Big Feast Hall
+building.great_hall.description,"Lord's great hall for feasts and culture, cozy royalty with a lot of drama."
+building.art_studio.name,Vibe Studio
+building.art_studio.description,"Painters and sculptors cook up culture, masterpieces with a lot of hype."
+building.concert_hall.name,Bass Hall
+building.concert_hall.description,"Classical music and colonial culture, the bass hits even in the cheap seats."
+building.opera_house.name,Diva House
+building.opera_house.description,"The grandest venue for opera and orchestral culture, iconic, dramatic, a little extra."
+building.grand_museum.name,Flex Museum
+building.grand_museum.description,"Grand Victorian museum of arts and history, extra-curated and proudly dusty."
+building.radio_station.name,Podcast Booth
+building.radio_station.description,"Broadcasts culture to the masses, and yes, the masses are listening."
+building.cinema.name,Movie Night
+building.cinema.description,"Film and cinema spread influence, peak main character lore on the big screen."
+building.tv_studio.name,Reality Set
+building.tv_studio.description,"Television studio beaming global culture, some of it mid, most of it iconic."
+building.media_center.name,Content Farm
+building.media_center.description,"Digital media center cranking out global content, the feed never ends and that's the point."
+building.vr_studio.name,Headset Den
+building.vr_studio.description,"Virtual reality studio for culture you can step inside. Immersive, bestie."
+building.holographic_theater.name,Hologram Hype Hall
+building.holographic_theater.description,"Full-immersion holographic shows, where the front row is literally the stage now."
+building.neural_art_complex.name,Brainwave Art Lab
+building.neural_art_complex.description,"Art made through neural links at fusion scale, peak creative rizz, no hands."
+building.zero_g_gallery.name,Floaty Gallery
+building.zero_g_gallery.description,"Zero-gravity orbital gallery, art floats and so do the critics. No notes."
+building.cultural_beacon.name,Vibe Beacon
+building.cultural_beacon.description,"Beacon broadcasting culture across star systems, hoping the vibe reaches somewhere."
+building.civilization_archive.name,Lore Archive
+building.civilization_archive.description,"Archives of every civilization in the galaxy, and the lore is extensive, bestie."
+building.reality_art_engine.name,Reality Glow Engine
+building.reality_art_engine.description,"Reshapes reality into a canvas, and honestly the canvas is giving slay."
+building.coal_plant.name,Smoke Factory
+building.coal_plant.description,"Industrial coal processing, smoky and sus, but the output is huge."
+building.steam_turbine.name,Steam Spinner
+building.steam_turbine.description,"Steam turbine hall with its own coal seam, self-sufficient and extremely unbothered."
+building.power_generator.name,Hype Dynamo
+building.power_generator.description,"Electric power generator, the lights stay on because it said so."
+building.nuclear_reactor.name,Mini Sun Box
+building.nuclear_reactor.description,"Nuclear fission reactor, split the atom and split the vibes."
+building.oil_refinery.name,Black Gold Plant
+building.oil_refinery.description,"Modern oil refinery and power generation, the black gold gets a glow-up and the grid gets juice."
+building.smart_energy_grid.name,Mini Grid Squad
+building.smart_energy_grid.description,"AI-optimized microgrid batteries, the smartest grid in the group chat."
+building.quantum_battery_array.name,Quantum Juice Array
+building.quantum_battery_array.description,"Quantum-state battery arrays, charged in states that exist and don't. No cap."
+building.dark_energy_tap.name,Shadow Juice Tap
+building.dark_energy_tap.description,"Taps dark energy streams for electricity, a cosmic power bill and a shadowy vibe."
+building.fusion_reactor_array.name,Sun Squad Array
+building.fusion_reactor_array.description,"Array of fusion reactors cranking plasma, a whole squad of tiny suns, slay."
+building.solar_collector_array.name,Sun Catcher Array
+building.solar_collector_array.description,"Orbital solar collectors feeding plasma energy, catching the sun before it gets lazy."
+building.pulsar_tap.name,Star Pulse Tap
+building.pulsar_tap.description,"Taps pulsar radiation for plasma and electricity, a dead star doing the work. Sus, but efficient."
+building.quasar_tap.name,Quasar Drip
+building.quasar_tap.description,"Taps quasar jets for dark matter, the brightest drip in the universe."
+building.zero_point_generator.name,Zero Point Juice
+building.zero_point_generator.description,"Generates energy from quantum zero-point fields, power out of pure nothing, bussin."
+building.smithy.name,Hammer Hub
+building.smithy.description,"Forge smelting iron tools, hot, loud, and very into it."
+building.ironworks.name,Iron Hustle
+building.ironworks.description,"Organized iron working and tools, bronze is cooked and iron is the new rizz."
+building.aqueduct.name,Water Highway
+building.aqueduct.description,"Roman engineering feats that boost iron output, the arches are doing the most."
+building.workshop.name,Craft Lair
+building.workshop.description,"Skilled craftsman's workshop, where the hands are good and the tools are better."
+building.mill.name,Flour Hub
+building.mill.description,"Water-powered mill that kicks off steel production, the river is doing the heavy lifting."
+building.dockyard.name,Ship Factory
+building.dockyard.description,"Naval dockyard cranking out steel ships, pure hype on the water."
+building.iron_works_complex.name,Steel Empire
+building.iron_works_complex.description,"Large-scale iron and steel works, the whole skyline is smoke and ambition."
+building.steam_works.name,Steamy Works
+building.steam_works.description,"Steam-powered steelworks that also make electricity, multitasking energy, no cap."
+building.power_station.name,Lightning Hub
+building.power_station.description,"Coal-fired power station, stone-age fuel with modern drip."
+building.nuclear_plant.name,Atom Works
+building.nuclear_plant.description,"Nuclear fission power, splitting atoms for the grid and the group chat. Big energy."
+building.power_grid_hub.name,Grid Central
+building.power_grid_hub.description,"Smart power grid hub, distributing juice like it's the group's main hype person."
+building.smart_grid_node.name,Grid Brain
+building.smart_grid_node.description,"AI-managed grid node, it runs the show and does not need your input."
+building.neural_grid.name,Brain Grid
+building.neural_grid.description,"Neural-network managed grid, it thinks it's the main character and honestly fair."
+building.augmentation_foundry.name,Upgrade Foundry
+building.augmentation_foundry.description,"Cyberpunk foundry cranking out plasma and power, upgrades on demand, bussin."
+building.fusion_reactor.name,Star in a Box
+building.fusion_reactor.description,"Fusion reactor making plasma and electricity, a star on a strict diet."
+building.launch_complex.name,Rocket Yard
+building.launch_complex.description,"Space launch complex, plasma thrust and rocket energy, the sky is not the limit."
+building.warp_drive_plant.name,Warp Speed Plant
+building.warp_drive_plant.description,"Warp drive manufacturing that harnesses dark matter, the physics is kinda cheating, slay."
+building.dyson_assembly.name,Sun Wrap Factory
+building.dyson_assembly.description,"Assembly line for Dyson sphere panels harvesting dark matter. Big project, big sun, big rizz."
+building.reality_forge.name,Reality Remix
+building.reality_forge.description,"Forges structures out of the quantum fabric, so reality gets a remix."
+building.singularity_engine.name,Everything Engine
+building.singularity_engine.description,"Singularity-powered engine making quantum flux, pure chaos that makes it look easy."
+building.shrine.name,Spirit Spot
+building.shrine.description,"Small spirit shrine, cozy altar energy with a lot of heart."
+building.standing_stones.name,Vibe Stones
+building.standing_stones.description,"Monolithic stones with ritual vibes, stood up for a reason nobody is sharing."
+building.altar.name,Offer Spot
+building.altar.description,"Sacred altar for offerings, the gods got tiny gifts and loved them."
+building.temple.name,Temple Hub
+building.temple.description,"Formal temple for organized worship, a very structured vibe check for the soul."
+building.oracle_house.name,Prophet Pad
+building.oracle_house.description,"Oracles speak for the gods, and the gods have very good publicists."
+building.cathedral.name,Tall Church
+building.cathedral.description,"Towering medieval cathedral, so tall the locals call it a flex."
+building.basilica.name,Grand Chapel
+building.basilica.description,"Grand Renaissance basilica, the architecture is high-key extra and it knows it."
+building.mission.name,Outreach Post
+building.mission.description,"Colonial mission spreading faith, an outreach program with zero off days."
+building.church.name,Parish Hype
+building.church.description,"Industrial-age parish church, cozy pews and a very long to-do list."
+building.grand_cathedral.name,Mega Cathedral
+building.grand_cathedral.description,"Vast Victorian cathedral, and the stained glass is giving pure drama."
+building.revival_hall.name,Revival Hype Hall
+building.revival_hall.description,"Electric revival meetings spreading fervor, the energy is loud and the hymns hit different."
+building.spiritual_center.name,Chill Zen Center
+building.spiritual_center.description,"Atomic-age wellness center for the soul, breathe in, breathe out, let's not talk about the sky."
+building.meditation_center.name,Zen Chill Hub
+building.meditation_center.description,"Modern meditation and mindfulness hub, where the calm is curated and the candles are aesthetic."
+building.digital_temple.name,Cloud Temple
+building.digital_temple.description,"Virtual spiritual sanctuary, the soul has a login and the prayers are cloud-synced."
+building.cyber_shrine.name,Byte Shrine
+building.cyber_shrine.description,"Cybernetic devotional shrine, sacred circuits and very committed worshippers."
+building.neon_sanctuary.name,Neon Chill Zone
+building.neon_sanctuary.description,"Neon-lit sanctuary, the glow is holy and the rent is unholy."
+building.quantum_chapel.name,Maybe Chapel
+building.quantum_chapel.description,"Chapel humming with quantum energy, the vibes are everywhere and nowhere at once."
+building.orbital_sanctuary.name,Sky Sanctuary
+building.orbital_sanctuary.description,"Faith sanctuary in orbit, the view is heavenly, technically speaking."
+building.void_monastery.name,Void Monk Pad
+building.void_monastery.description,"Monastery floating in the void, with monks who have the calmest aura in the galaxy."
+building.stellar_shrine.name,Star Shrine
+building.stellar_shrine.description,"Galaxy-sized shrine, where the prayers take a while to reach the other end."
+building.transcendence_hall.name,Ascend Hall
+building.transcendence_hall.description,"Hall dedicated to transcending existence, the glow-up is out of this world."
+building.gathering_camp.description,"Foragers grab berries and roots, snack run energy, no cap."
+building.forager_post.name,Snack Scout Post
+building.forager_post.description,"Organized foraging, the snacks are sorted and the scouts are unbothered."
+building.farm.name,Crop Rizz
+building.farm.description,"Cultivated fields make steady food, the grind is consistent and the snacks show up."
+building.field_works.name,Field Hustle
+building.field_works.description,"Iron-tool farming with irrigation, the crops are hydrated and the tools are sharp. Organized energy."
+building.estate_farm.name,Terrace Flex Farm
+building.estate_farm.description,"Large estate with managed farmlands, the land is curated and very intentional."
+building.demesne.name,Lord's Patch
+building.demesne.description,"Lord's demesne with serfs and crop rotation, lowkey a rough deal for the serfs."
+building.market_garden.name,Hype Garden
+building.market_garden.description,"Scientific farming and market gardens, the data nerds are winning in the veggie aisle."
+building.plantation.name,Cash Crop Land
+building.plantation.description,"Large-scale colonial plantation, a heavy chapter with no hype to add."
+building.agricultural_works.name,Farm Factory
+building.agricultural_works.description,"Industrial-scale farming works, the crops are in formation and the tractors are in sync."
+building.mechanized_farm.name,Robo Farm Squad
+building.mechanized_farm.description,"Steam and oil-powered farming, the horses get a day off and the engines get the bag."
+building.industrial_farm.name,Power Farm
+building.industrial_farm.description,"Electrified farming complex, the lights are on and the harvest never sleeps."
+building.agricultural_complex.name,Big Crop Complex
+building.agricultural_complex.description,"Atomic-age mega farm complex, the harvest is huge and the glow is slightly concerning."
+building.agri_complex.name,Crop Tech Campus
+building.agri_complex.description,"AI-optimized farming, the spreadsheet is the farmer now and it has main character energy."
+building.smart_farm.name,Smart Crop Pad
+building.smart_farm.description,"Sensor-driven farming, the crops get tracked, the robots get busy, and the vibe is precise."
+building.nano_farm.name,Tiny Crop Lab
+building.nano_farm.description,"Nanotech food synthesis, tiny machines making snacks, bussin and slightly sus."
+building.vat_farm.name,Tank Farm
+building.vat_farm.description,"Vat-grown protein at industrial scale, the tanks are humming and the gains are real."
+building.bio_reactor_farm.name,Bio Snack Reactor
+building.bio_reactor_farm.description,"Plasma-powered food production, the reactor cooks the snacks in the best way."
+building.hydroponic_bay.name,Soil-Free Spot
+building.hydroponic_bay.description,"Zero-gravity growing bays, hydroponic plants with zero dirt and maximum vibes."
+building.protein_synthesizer.name,Protein Printer
+building.protein_synthesizer.description,"Matter-to-protein synthesizer, the gains crowd is going to love this one."
+building.matter_converter.name,Stuff Shifter
+building.matter_converter.description,"Turns raw matter into any food type, so lunch is whatever you want, bestie."
+building.quantum_cultivator.name,Multiverse Farm
+building.quantum_cultivator.description,"Quantum probability tweaks to grow food, where the crops exist in every possible flavor."
+building.stone_camp.name,Rock Camp
+building.stone_camp.description,"Basic camp for gathering stones, low effort, high rock energy."
+building.stone_pit.name,Rock Hole
+building.stone_pit.description,"Shallow pit dug for stone, a humble hole with big potential."
+building.quarry.name,Rock Yard
+building.quarry.description,"Organized stone quarrying, the rocks are sorted and the schedules are very tight."
+building.marble_quarry.name,Marble Glam Pit
+building.marble_quarry.description,"Marble, iron ore, stone and iron, all pulled out and hyped up."
+building.marble_works.name,Marble Glow Shop
+building.marble_works.description,"Classical marble, ore, stone and iron works, the Greek-era rocks are giving prestige."
+building.stonemasons_guild.name,Rock Bros Guild
+building.stonemasons_guild.description,"Guild of stonemasons pulling iron ore, iron, and stone, a group chat with serious skills."
+building.iron_mine.name,Iron Dig Hub
+building.iron_mine.description,"Deep iron ore, iron and stone mining, the depths are dark and the grind is deep."
+building.deep_iron_mine.name,Deep Iron Grind
+building.deep_iron_mine.description,"Colonial deep iron ore, iron and stone pulled from the dark, big yikes energy, no flex."
+building.steam_mine.name,Steam Digger
+building.steam_mine.description,"Steam-powered mine for iron ore, iron, and stone, the engines wheeze and the output slaps."
+building.uranium_mine.name,Hot Rock Mine
+building.uranium_mine.description,"Early uranium ore and stone extraction, the glow is new and so are the questions."
+building.nuclear_extraction_plant.name,Atom Rock Plant
+building.nuclear_extraction_plant.description,"High-tech nuclear material extraction, the glow is fancy now and the warnings are polite."
+building.uranium_processing_works.name,Glow Rock Works
+building.uranium_processing_works.description,"Industrial uranium and stone processing, the glowing rocks get a full makeover."
+building.titanium_mine.name,Jet Metal Mine
+building.titanium_mine.description,"High-precision titanium extraction, the drill bits are sharp and the ore is extra shiny."
+building.precision_mine.name,Laser Mine
+building.precision_mine.description,"AI-guided titanium mining, the robot picks the rock and the rock says thank you."
+building.nano_drill_complex.name,Tiny Drill Squad
+building.nano_drill_complex.description,"Nanoscale drilling for titanium ore, tiny drills with a huge work ethic."
+building.dark_crystal_mine.name,Shadow Gem Mine
+building.dark_crystal_mine.description,"Extraction of dark matter crystals, moody vibes and extremely sus gemstones."
+building.exotic_mineral_extractor.name,Weird Rock Extractor
+building.exotic_mineral_extractor.description,"Plasma-assisted extraction of exotic minerals, the rarest rocks get the hottest treatment."
+building.asteroid_crystal_mine.name,Space Gem Mine
+building.asteroid_crystal_mine.description,"Asteroid belt crystal mining, the dark matter gems are floating and the rocks are flying."
+building.stellar_core_drill.name,Star Core Drill
+building.stellar_core_drill.description,"Drills into stellar cores for antimatter, a very hot job with no lunch break."
+building.neutron_star_mine.name,Dense Star Mine
+building.neutron_star_mine.description,"Mining neutron stars for antimatter, a dense job with extremely high stakes."
+building.reality_excavator.name,Reality Digger
+building.reality_excavator.description,"Digs antimatter out of the quantum foam, a treasure hunt with zero permission slips."
+building.mainframe_hall.name,Big Brain Room
+building.mainframe_hall.description,"Room-sized computers that keep the records, big brains in a big room, very serious."
+building.server_farm.name,Server Barn
+building.server_farm.description,"Big server barn processing data nonstop, the hum is loud and the output is huge."
+building.data_center.name,Cloud Basement
+building.data_center.description,"Hyper-scale data center, the servers are enormous and the cooling fans are never off."
+building.cyber_hub.name,Hacker Hub
+building.cyber_hub.description,"Underground hacker hub, the vibe is cyberpunk and the Wi-Fi is extremely sus."
+building.quantum_server_farm.name,Multiverse Server Barn
+building.quantum_server_farm.description,"Quantum-computing server farm, the answers arrive before the questions, very dramatic."
+building.orbital_data_relay.name,Sky Data Relay
+building.orbital_data_relay.description,"Orbital relay node for star-spanning data, the signal goes up and the group chat comes back."
+building.galactic_network_node.name,Galaxy Group Chat
+building.galactic_network_node.description,"Interstellar network node, the signal is strong and the replies are slow."
+building.consciousness_upload_hub.name,Mind Copy Hub
+building.consciousness_upload_hub.description,"Uploads and processes consciousness data, the minds are backed up and the vibes are cloud-based."
+building.reality_processor.name,Universe Brain
+building.reality_processor.description,"Processes data from the structure of reality, the universe is the input and the output is wild."
+building.harbor.name,Dock Hub
+building.harbor.description,"Working harbor for trade ships, the boats are busy and the docks are vibing."
+building.harbor_authority.name,Dock Boss Office
+building.harbor_authority.description,"Industrial port authority running dock traffic, the boats wait in line like everyone else."
+building.seaport.name,Port Party
+building.seaport.description,"Deep-water seaport handling global cargo, the big ships come in hot and leave full."
+building.container_terminal.name,Box Stack Terminal
+building.container_terminal.description,"Automated container terminal moving freight at scale, the cranes never take a break."
+building.logistics_hub.name,Shipping Brain
+building.logistics_hub.description,"Algorithmic logistics hub routing every shipment, the algorithm has the vibes and the timing."
+building.longhouse.name,Mega Crash Pad
+building.longhouse.description,"Communal longhouse, group chat in real life, everybody is in the same room."
+building.house.name,Home Base
+building.house.description,"Sturdy family dwelling, the walls are firm and the fam is all here."
+building.townhouse.name,Stacked Pad
+building.townhouse.description,"Multi-floor townhouse, stacked and cozy, the stairs are a workout."
+building.villa.name,Fancy Pad
+building.villa.description,"Elegant classical villa, the aesthetic is peak Roman and the view is kind of insane."
+building.manor.name,Lord Crib
+building.manor.description,"Lord's country manor, the lawn is immaculate and the lord is very particular."
+building.estate.name,Big Crib
+building.estate.description,"Grand estate with grounds, plenty of space to get lost in and look cute."
+building.settlement_block.name,Pioneer Block
+building.settlement_block.description,"Colonial settlement block, quick housing, pioneer hustle, and a lot of drama."
+building.tenement.name,Stacked Flats
+building.tenement.description,"Dense worker housing, packed tight, the walls are close and the neighbors are louder."
+building.row_house.name,Terrace Row
+building.row_house.description,"Victorian terrace of row houses, very neat and very, very alike."
+building.apartment_block.name,Vertical Vibes
+building.apartment_block.description,"Modern apartment block, the elevator is slow and the Wi-Fi is spotty."
+building.housing_project.name,Hope Blocks
+building.housing_project.description,"Government-built housing towers, the rent is cheap and the hallway echoes are legendary."
+building.tower_block.name,Glass Spire
+building.tower_block.description,"Soaring residential tower, the elevator is the real main character."
+building.smart_complex.name,Smart Pad Hub
+building.smart_complex.description,"AI-managed living complex, it knows when you're home and has opinions about it."
+building.megaplex.name,Mega Mall Pad
+building.megaplex.description,"Self-contained urban megaplex, a whole city in one building and no excuse to go outside."
+building.arcology_pod.name,Hermit Pod
+building.arcology_pod.description,"Self-sustaining pod, closed-loop living with serious hermit energy."
+building.habitat_ring.name,Spin Ring Home
+building.habitat_ring.description,"Rotating habitat ring in orbit, the spin is a whole vibe and the gravity is cozy."
+building.orbital_habitat.name,Sky Crib
+building.orbital_habitat.description,"Vast orbital habitat complex, the view is unreal and the neighbors float by."
+building.generation_ship.name,Long Haul Ship
+building.generation_ship.description,"Ship that houses whole generations, the family group chat has been running for centuries."
+building.dyson_sphere_habitat.name,Sun Wrap Home
+building.dyson_sphere_habitat.description,"Living quarters inside a Dyson sphere, the sunlight is free and the views are bussin."
+building.reality_fold.name,Pocket Flat
+building.reality_fold.description,"Folded-reality living zone, the address is a paradox and the lease is fine."
+building.transcendent_nexus.name,Ascension Nexus
+building.transcendent_nexus.description,"Transcendent dimensional home base, for beings who outgrew houses and kept the vibe."
+building.story_circle.name,Lore Circle
+building.story_circle.description,"Elders share stories around the fire, the fire is warm and the stories are long. Respect the old heads."
+building.elders_hall.name,Old Heads Hall
+building.elders_hall.description,"Hall where tribal elders convene, the group chat of the oldest and wisest."
+building.scriptorium.name,Scroll Shop
+building.scriptorium.description,"Scribes copy and preserve texts, the handwriting is art and the ink is valuable."
+building.agora.name,Hot Square
+building.agora.description,"Open marketplace of ideas, where the takes are hot and the debates never end."
+building.library.name,Book Stash
+building.library.description,"Repository of written knowledge, the books are stacked and the overdue fines are ruthless."
+building.monastery_library.name,Monk Book Den
+building.monastery_library.description,"Monks preserve and copy scholarly works, slow, careful, and immaculate. Monk mode."
+building.university.name,Big Brain School
+building.university.description,"Higher learning for the intellectual elite, big brain energy and a very long syllabus."
+building.natural_philosophy_hall.name,Nature Brain Hall
+building.natural_philosophy_hall.description,"Scientific inquiry into the natural world, poking nature with a stick and a lot of questions."
+building.research_institute.name,Lab Hype Institute
+building.research_institute.description,"Formal scientific research, the lab coats are pressed and the results are the vibe."
+building.academy.name,Smart School
+building.academy.description,"Victorian academy of sciences, the mustaches are serious and the science is slaying."
+building.physics_laboratory.name,Physics Playground
+building.physics_laboratory.description,"Electrified physics lab, the sparks are the point and the safety goggles are a vibe."
+building.research_campus.name,Nerd Campus
+building.research_campus.description,"Multi-disciplinary atomic-age research campus, a lot of nerds in a lot of rooms, all in."
+building.think_tank.name,Brain Hive
+building.think_tank.description,"Elite group of problem-solvers, the brains are sharp and the whiteboards are full."
+building.innovation_hub.name,Disruptor Hub
+building.innovation_hub.description,"Startup-style innovation accelerator, the pitch deck is fire and the snacks are oat."
+building.ai_research_lab.name,Robot Brain Lab
+building.ai_research_lab.description,"Artificial intelligence drives the research, and the robots take all the notes."
+building.neuro_research_center.name,Brain Hack Center
+building.neuro_research_center.description,"Neural-interface enhanced research, the brain gets upgrades and the consent forms are long."
+building.theoretical_institute.name,Big Think Institute
+building.theoretical_institute.description,"Theoretical physics at fusion-era scale, big theories that somehow keep working."
+building.deep_space_observatory.name,Deep Sky Peepers
+building.deep_space_observatory.description,"Observes the far reaches of the cosmos, nosy in the best way, and the stars are the tea."
+building.xenology_institute.name,Alien Study Lab
+building.xenology_institute.description,"Studies alien civilizations and xeno-science, the field is wide and the samples are still shy."
+building.cosmic_research_station.name,Cosmic Nerd Station
+building.cosmic_research_station.description,"Galactic-scale research station, big nerd energy and the lab notes go on forever."
+building.reality_academy.name,Remix Academy
+building.reality_academy.description,"Learns from the fabric of reality itself, the textbook is the universe and the homework is brutal."
+building.smelter.name,Metal Melter
+building.smelter.description,"Furnace that melts iron, hot, loud, and extremely into the glow-up."
+building.forge.name,Hype Forge
+building.forge.description,"Proper forge for working iron, the hammers are loud and the vibe is serious."
+building.ironmonger.name,Iron Boss
+building.ironmonger.description,"Specialist iron trade and metalworking, the iron is pricey and the boss is picky."
+building.foundry.name,Mold Shop
+building.foundry.description,"Crucible furnaces that churn out steel, the heat is intense and the steel slaps."
+building.iron_works.name,Overseas Steel Yard
+building.iron_works.description,"Colonial iron works processing steel, the output is massive and the history is messy."
+building.steel_mill.name,Steel Grind Mill
+building.steel_mill.description,"Industrial-scale steel production, the mill never sleeps and neither does the foreman."
+building.bessemer_plant.name,Blast Steel Plant
+building.bessemer_plant.description,"Bessemer converter for mass steel and iron, the blasts are bold and the output is huge."
+building.electric_arc_furnace.name,Lightning Furnace
+building.electric_arc_furnace.description,"Electric arc furnace for high-grade steel and iron, lightning in the pot and premium quality."
+building.advanced_alloy_plant.name,Next-Level Alloy Plant
+building.advanced_alloy_plant.description,"Atomic-era alloy manufacturing, the metals are next level and the reactors are close."
+building.titanium_smelter.name,Jet Metal Smelter
+building.titanium_smelter.description,"Refines titanium and steel for precision work, the metal is pristine and the standards are high."
+building.aerospace_foundry.name,Rocket Metal Foundry
+building.aerospace_foundry.description,"Precision aerospace-grade titanium and steel, the foundry is built for the sky and the drama."
+building.nano_alloy_plant.name,Tiny Alloy Plant
+building.nano_alloy_plant.description,"Nano-scale titanium and steel alloys, tiny metal, huge flex."
+building.dark_matter_refinery.name,Shadow Metal Refinery
+building.dark_matter_refinery.description,"Distills dark matter and steel out of the void, and the void is not thrilled."
+building.exotic_matter_forge.name,Weird Matter Forge
+building.exotic_matter_forge.description,"Plasma-forged exotic matter and steel, the forge is wild and the output is unhinged."
+building.orbital_refinery.name,Sky Refinery
+building.orbital_refinery.description,"Zero-gravity titanium and steel refinery, the metal floats and the paperwork doesn't."
+building.antimatter_forge.name,Opposite Forge
+building.antimatter_forge.description,"Forges antimatter and titanium in magnetic containment, and the containment is doing the heavy lifting."
+building.stellar_metallurgy.name,Star Metal Works
+building.stellar_metallurgy.description,"Stellar-scale antimatter and titanium metallurgy, the furnace is a sun and the metal is extra."
+building.quantum_metal_works.name,Maybe Metal Works
+building.quantum_metal_works.description,"Quantum-state metalworking across dimensions, the metal is in several places at once."
+building.war_camp.name,Brawl Camp
+building.war_camp.description,"Fortified war camp, the vibe check failed and the walls are up."
+building.barracks.name,Bunk Bros
+building.barracks.description,"Houses soldiers, the bunks are tight and the drills never stop."
+building.hunting_lodge.name,Deer Hunt Lodge
+building.hunting_lodge.description,"Gathering place for hunters turned military post, the hunting crew is now a whole squad."
+building.legion_fort.name,Squad Fort
+building.legion_fort.description,"Fortified Roman-style legion camp, the toga squad is in formation and very serious."
+building.military_academy.name,Boot Camp Academy
+building.military_academy.description,"Trains elite military officers, the drill sergeants are scary and the graduates are iconic."
+building.castle_keep.name,Big Castle Flex
+building.castle_keep.description,"Fortified stone keep, the walls are thick and the vibes are protective."
+building.fortress.name,Star Fort
+building.fortress.description,"Star-fort that can hold a huge garrison, the walls are pointy and the cannons are ready."
+building.fort.name,Outpost
+building.fort.description,"Colonial frontier fort, planted with confidence on someone else's land."
+building.military_base.name,Army Base Hub
+building.military_base.description,"Industrial-era military base, the mess hall is a bit grim but the gear is bussin."
+building.garrison.name,Guard Town
+building.garrison.description,"Victorian-era garrison town, tea at noon and the guards never blink."
+building.command_post.name,Boss Post
+building.command_post.description,"Electrified command and control post, the screens glow and the boss is watching."
+building.bunker_complex.name,Doomsday Bunker
+building.bunker_complex.description,"Hardened atomic-era bunker complex, built for the worst day and the snacks are stocked."
+building.special_ops_hq.name,Secret Ops HQ
+building.special_ops_hq.description,"Headquarters for the special ops forces, top secret, very quiet, very sus."
+building.cyber_command.name,Hacker Command
+building.cyber_command.description,"Cyber warfare command center, the battles are keyboard-only and the chairs are ergonomic."
+building.drone_warfare_center.name,Drone Battle Center
+building.drone_warfare_center.description,"Autonomous drone warfare command, the drones do the fighting and the people do the paperwork."
+building.combat_aug_center.name,Upgrade Battle Center
+building.combat_aug_center.description,"Cybernetic upgrades for soldiers, buffs stacked and the fine print is a maze."
+building.plasma_command.name,Plasma Boss
+building.plasma_command.description,"Plasma-weapon command, the plasma is hot and the commanders are extremely confident."
+building.space_force_base.name,Orbit Army Base
+building.space_force_base.description,"Orbital base for the space force, the view is unmatched and the drills happen in zero-g."
+building.fleet_command.name,Fleet Boss HQ
+building.fleet_command.description,"Commands a full interstellar fleet, the whole armada is in one group chat and it's loud."
+building.stellar_armada_hq.name,Star Armada Base
+building.stellar_armada_hq.description,"Headquarters for the galactic armada, the flag is big and the mood is intense."
+building.probability_war_room.name,Odds Battle Room
+building.probability_war_room.description,"Wages war across probability timelines, the odds are good and the plans are nervous."
+building.omniversal_war_council.name,Everywhere War Council
+building.omniversal_war_council.description,"Commands forces across the omniverse, every universe gets a battle plan and the snacks are cosmic."
+building.wood_camp.name,Log Crew
+building.wood_camp.description,"Basic camp for collecting wood, low effort, big log energy."
+building.woodcutter_camp.name,Chop Squad
+building.woodcutter_camp.description,"Choppers fell trees with stone axes, and the trees have been warned and they are not thrilled."
+building.lumber_mill.name,Saw Palace
+building.lumber_mill.description,"Bronze-saw lumber processing, the saws are old school and the planks are fresh."
+building.timber_yard.name,Log Sort Yard
+building.timber_yard.description,"Iron-saw timber processing yard, the logs get sorted and the saws are very serious."
+building.wood_workshop.name,Plank Palace
+building.wood_workshop.description,"Skilled carpenters working at full tilt, the hammers are hitting and the vibes are immaculate."
+building.sawmill.name,Saw Hub
+building.sawmill.description,"Water-wheel-powered sawmill, the wheel spins all day and nobody thanks it."
+building.coal_mine.name,Dark Rock Mine
+building.coal_mine.description,"Early coal extraction for industry, dark rocks, big plans, and dusty hands."
+building.coal_works.name,Black Rock Works
+building.coal_works.description,"Organized coal extraction and processing, the rocks are sorted and the lungs are not."
+building.steam_coal_plant.name,Steam Rock Plant
+building.steam_coal_plant.description,"Steam-powered coal extraction plant, the engines chug and the coal keeps coming."
+building.oil_derrick.name,Gusher Pump
+building.oil_derrick.description,"Early oil extraction derrick, a tall rig with very sticky vibes."
+building.oil_field.name,Crude Patch
+building.oil_field.description,"Electrified oil field operations, the wires are live and the crude is going everywhere."
+building.petroleum_refinery.name,Crude Refinery Hub
+building.petroleum_refinery.description,"Advanced petroleum refinery, the crude gets upgraded and the output is a whole lot."
+building.oil_platform.name,Ocean Oil Rig
+building.oil_platform.description,"Offshore AI-monitored oil platform, the robot watches the waves and the crude stays calm."
+building.smart_refinery.name,Self-Run Refinery
+building.smart_refinery.description,"AI-optimized petroleum refinery, the crude gets refined by something that never gets tired."
+building.bio_fabrication_lab.name,Living Print Lab
+building.bio_fabrication_lab.description,"Digital-biological nanofabrication, the printers are alive and the lab is spooky."
+building.nanobot_vat.name,Tiny Bot Tank
+building.nanobot_vat.description,"Vat-grown nanobot manufacturing, the tiny bots are cooking and they stay in the tank."
+building.molecular_synthesizer.name,Molecule Maker Lab
+building.molecular_synthesizer.description,"Plasma-powered molecular synthesis, the atoms get stacked by the hottest machine around."
+building.quantum_organic_extractor.name,Maybe Life Extractor
+building.quantum_organic_extractor.description,"Quantum-state organic matter extraction, the life is harvested in several states at once."
+building.reality_matter_weaver.name,Reality Loom
+building.reality_matter_weaver.description,"Weaves reality into quantum flux, the threads are thin and the design is wild."
+building.cosmic_organic_works.name,Cosmic Snack Works
+building.cosmic_organic_works.description,"Galactic-scale organic works, life made in bulk for the whole galaxy, serious flex."
+building.reality_harvester.name,Reality Picker
+building.reality_harvester.description,"Harvests raw quantum flux from reality, and the universe is a little thinner every time."
+building.nano_foundry.name,Tiny Forge Lab
+building.nano_foundry.description,"Molecular assembly line printing self-organizing nanobots, the bots organize themselves and nobody asked."
+building.market.name,Swap Stalls
+building.market.description,"Trading market for barter and coin, swap your goods and jingle the coins."
+building.trading_post.name,Trade Hub Spot
+building.trading_post.description,"Regional trading post, the locals call it the hub and the markup is real."
+building.merchant_quarter.name,Hustle Quarter
+building.merchant_quarter.description,"Urban merchant district, the hustle is real and the price tags are fun."
+building.guildhall.name,Guild Clubhouse
+building.guildhall.description,"Merchant guilds organize regional trade, the clubhouse runs the whole block with suspicious vibes."
+building.exchange.name,Coin Swap
+building.exchange.description,"Commodity exchange for international trade, goods cross borders with serious flair."
+building.port.name,Ship Stop
+building.port.description,"Colonial maritime trade port, the ships arrive, the goods leave, and the taxes stay."
+building.stock_exchange.name,Money Mosh Pit
+building.stock_exchange.description,"Industrial-era stock exchange, the shouting is loud and the trades are unhinged."
+building.bank.name,Cash Box
+building.bank.description,"Victorian national bank, the vault is huge and the interest rates are mid."
+building.financial_district.name,Cash District
+building.financial_district.description,"Electric-age financial district, the offices light up and the money never sleeps."
+building.corporate_hq.name,Boss Tower HQ
+building.corporate_hq.description,"Multinational headquarters, the boss has a view and the staff has a lanyard."
+building.investment_firm.name,Stack Money Co
+building.investment_firm.description,"Global investment and wealth management, the stacks grow and the vibes stay calm."
+building.venture_hub.name,Startup Hub
+building.venture_hub.description,"Digital venture capital hub, the pitch decks are glowing and the bets are wild."
+building.crypto_exchange.name,Coin Playground
+building.crypto_exchange.description,"Decentralized digital currency exchange, no bank needed, and the vibes are pure chaos."
+building.black_market.name,Shady Stall Hub
+building.black_market.description,"Underground black market network, the deals are hush-hush and the prices are sus."
+building.energy_exchange.name,Power Swap
+building.energy_exchange.description,"Interplanetary energy trading, the power moves between planets and the bills follow."
+building.asteroid_market.name,Rock Bazaar
+building.asteroid_market.description,"Mineral trading hub in the asteroid belt, the rocks are for sale and the prices float."
+building.galactic_trade_hub.name,Galaxy Swap Hub
+building.galactic_trade_hub.description,"Interstellar trade network hub, the deals take years to land and the bags are heavy."
+building.stellar_exchange.name,Star Stock Pit
+building.stellar_exchange.description,"Galaxy-spanning exchange, every star has a ticker and the ticker is cosmic."
+building.probability_market.name,Odds Market
+building.probability_market.description,"Trades across all probable timelines, the futures are exciting and the timelines are messy."
+building.omniversal_bazaar.name,Multiverse Mall
+building.omniversal_bazaar.description,"Omniversal trading bazaar beyond spacetime, the deals are wild and the discounts are cosmic."
+building.cultural_obelisk.name,Golden Age Pillar
+building.cultural_obelisk.description,"Carved obelisk celebrating your people's golden age, the flex is stone and the caption is huge."
+building.grand_amphitheatre_monument.name,Hype Colosseum
+building.grand_amphitheatre_monument.description,"Monumental arena for the games and pageants of an age, the crowd is huge and the drama is legendary."
+building.eternal_library_monument.name,Forever Library
+building.eternal_library_monument.description,"Vast archive preserving the knowledge of every age, the lore is locked in for the long haul."
+building.monument_of_ages.name,Era Stack Monument
+building.monument_of_ages.description,"Timeless monument to your whole civilization, every era stacked, and the legacy is main character material."

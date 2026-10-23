@@ -16,6 +16,7 @@ All notable changes to AgeForge are documented here.
 - **Wonders you can recognise.** Every age's wonder is a landmark on the skyline, the tallest thing in its district, lit at night, with scaffolding that rises as you bank it.
 - **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
 - **Storage buildings boost production.** With no caps to raise, every storage building now adds 1% to all production, and older ones keep counting.
+- **Nothing reads a store any more.** Festival and Black Market prices, faction deals, the Brace ceiling and the Maximalist badges now follow your income instead of a store size.
 - **A skyline that looks like your town.** The skyline draws far more of your buildings, gives them outlines, lit windows and depth, and varies their shapes, so a big town looks big.
 - **The board grows with your civilization.** Scouts only in the Stone Era, longer missions from the Iron Era, grand missions from the Steel Era; no tech locks. Missions give your army experience: ranks raise odds, hauls and Legendary offers, and a Veteran army sees the next tier an era early.
 - **The skyline comes alive.** Bigger people walk the streets in groups, and every age has its own traffic on the road, the rails and in the sky, from camels and chariots to steam trains, bullet trains and starships.

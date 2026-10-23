@@ -68,18 +68,19 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 	eng.Buildings.LoadCounts(counts)
 	eng.StepTicks(2)
 	st = eng.GetState()
-	// stock sets every store to a share of what it holds.
+	// stock sets every resource to a share of a good stock of the age.
+	good := eng.Rules().StockScale(st.Age)
 	stock := func(share func(n int) float64) {
 		n := 0
 		for _, k := range sortedKeysOf(st.Resources) {
 			if rs := st.Resources[k]; rs.Unlocked {
-				eng.SetStockForTest(k, rs.Storage*share(n))
+				eng.SetStockForTest(k, good*share(n))
 				n++
 			}
 		}
 	}
-	// Each kind is ordered from full stores, so what is under construction
-	// does not hang on how an age's prices sit against its storage. The
+	// Each kind is ordered from a full stock, so what is under construction
+	// does not hang on how an age's prices sit against its stock. The
 	// mixed levels follow.
 	queued := 0
 	for _, k := range sortedKeysOf(st.Buildings) {

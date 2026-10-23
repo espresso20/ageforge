@@ -1,2 +1,254 @@
 id,text
 badge.age_stone_age.name,Rock Hard
+badge_theme.forge.name,Forge
+badge_theme.daylight.name,Daylight
+badge_theme.deuteranopia.name,Deuteranopia-safe
+badge_theme.protanopia.name,Protanopia-safe
+badge_theme.high_contrast.name,High Contrast
+badge_theme.high_contrast_light.name,High Contrast Light
+badge_theme.parchment.name,Parchment
+badge_theme.bronze.name,Bronze
+badge_theme.cyberpunk.name,Cyberpunk
+badge_theme.monochrome.name,Monochrome
+badge_theme.cosmic.name,Cosmic
+badge_theme.source.name,Source
+badge_theme.glitch.name,Glitch
+badge_theme.ashfall.name,Ashfall
+badge_theme.ledger.name,Ledger
+badge_theme.prismatic.name,Prismatic
+badge_title.ladder_endured_3,"Still Here, Bestie"
+badge_title.harbinger_heeded,Harbinger Hype Man
+badge_title.ladder_deals_3,Deal Goblin
+badge_title.special_unkillable,Unbothered Forever
+badge_title.lastpassage_succumbed,Cosmic Trust Fund
+badge_title.special_zoning_board,Real Estate Mogul
+badge_family.age_key.description,"Touch down on the {name}, the glow-up is real."
+badge.age_iron_age.name,Drip Check Passed
+badge.age_renaissance_age.name,Round Two Glow-Up
+badge.age_modern_age.name,Deep in the Doomscroll
+badge.age_transcendent_age.name,Final Boss Energy
+badge.age_bronze_age.description,"Glow-Up Age hits and the Bronze theme unlocks. Iconic, no cap."
+badge.age_renaissance_age.description,"Aesthetic Age, and the Parchment theme unlocks. Main character lighting."
+badge.age_information_age.description,"Group Chat Age, and the Monochrome theme unlocks. Read receipts off, vibes on."
+badge.age_cyberpunk_age.description,"Cyber Baddie Age opens the Cyberpunk theme. Netrunner energy, zero chill."
+badge.age_galactic_age.description,"Galaxy Brain Age unlocks the Cosmic theme. Big brain, bigger sky."
+badge_family.wonder_key.description,Put the {name} up and make it a moment.
+badge_family.maximalist_key.name,{short} Maxxer
+badge_family.maximalist_key.description,"Keep {count} of the {name}'s buildings standing before you bounce out of it. Wonders don't count, sorry."
+badge.maximalist_transcendent_age.description,"Hold {count} of the Final Boss Age's buildings standing before you prestige. Wonders don't count, the boss is picky."
+badge_family.techs_key.name,Brain Dump: {short}
+badge_family.lineage_key_n.description,"Build {count} {lname} buildings across every run, no cap. Sold and rebuilt copies count once."
+badge_family.domain_key_n.description,"Clock {count} {lname} workers in at the same time, that's the grind."
+badge.domain_military_1.description,"Post {count} soldiers on duty at the same time, the perimeter is bussin."
+badge.domain_military_2.description,"Stack {count} soldiers on post at once, the vibe check is brutal."
+badge_family.resource_key_n.description,"Mint {count} {lname} across every run. Trades, loot and gifts don't count, they're not the grind."
+badge.resource_soldiers_1.description,"Deploy {count} {lname} across every run, the squad goals are real."
+badge.resource_soldiers_2.description,"Station {count} {lname} across all your runs, locked in."
+badge.resource_soldiers_3.description,"Send out {count} {lname} across every run, no bench warmers."
+badge.resource_soldiers_4.description,"Field {count} {lname} across all your runs, the roster is stacked."
+badge_family.civ_key_met.name,{name}: Slid Into DMs
+badge_family.civ_key_met.description,Run into the {name} and make it a meet-cute.
+badge_family.civ_key_allied.name,Bestie Status with {name}
+badge_family.civ_key_allied.description,"Become besties with the {name}, the pact is sealed."
+badge_family.civ_key_regular.name,Usual Suspect: {name}
+badge_family.civ_key_regular.description,"Snag 5 deals from the {name} across your runs, they know your order."
+badge_family.civ_key_peace.name,Truce Era with {name}
+badge_family.civ_key_peace.description,"End a war with the {name}, by tribute or by ghosting it until it dies."
+badge_family.harbinger_key_met.description,"Let {name} cook, hear them out."
+badge.harbinger_future_self_met.name,"Future You, No Filter"
+badge.harbinger_unmade_self_met.name,"Unmade You, Still Here"
+badge_family.harbinger_key_heeded.name,Took {name} Seriously
+badge_family.harbinger_key_heeded.description,"Appease while {name} is mid-monologue, no notes."
+badge_family.doom_key_endured.name,Sat Through {name}
+badge_family.doom_key_endured.description,"Pick Endure against {mid} and keep grinding with whatever is left, no cap."
+badge_family.doom_key_succumbed.name,Folded to {name}
+badge_family.doom_key_succumbed.description,"Succumb to {mid} and restart with its legacy, the reset hits different."
+badge_family.expedition_key.description,"Make it back from a successful {word} mission in the {name}, slay."
+badge_family.theme_key.name,Serving {name} Realness
+badge_family.theme_key.description,Age up in the {name} theme and let the fit do the talking.
+badge_family.awakening_key.description,"Catch {mid} in the wild, what a plot twist."
+badge_family.swift_key.description,"Peace out of the {name} inside its pacing target, speedrun energy."
+badge.swift_stone_era.name,Caveman Speedrun
+badge.swift_iron_era.name,Speedy Drip
+badge.swift_steel_era.name,Ahead of the Plot
+badge.swift_electric_era.name,Electric Speedrun
+badge.swift_digital_era.name,Ping Certified
+badge.swift_neon_era.name,Ad-Free Baddie
+badge.swift_cosmic_era.name,"Speed of Light, Fr"
+badge.swift_cosmic_era.description,"Prestige out of the last age of the Cosmic Era inside the era's pacing target, speedrun or bust."
+badge.lastpassage_endured.name,Survived the Last Passage
+badge.lastpassage_endured.description,"Endure the Last Passage, then prestige with the scraps. Still a W."
+badge.lastpassage_succumbed.name,Caved at the Last Passage
+badge.lastpassage_succumbed.description,"At the Last Passage, Succumb and carry its legacy into every run. It's a whole arc."
+badge_reward.lastpassage_succumbed.title,Cosmic Trust Fund
+badge.lastpassage_spared.name,Ghosted the Last Passage
+badge.lastpassage_spared.description,Ascend out of the Cosmic Era and let the Last Passage show up to an empty room.
+badge.map_style_roguelike.name,Dungeon Delulu
+badge.map_style_roguelike.description,"Roguelike map energy: an age down, dungeon vibes only."
+badge.map_style_skyline.name,Skyline Girlie
+badge.map_style_skyline.description,"On the skyline map style the view is the whole bag, age up."
+badge.map_glyphs_ascii.name,Ascii Purist
+badge.map_glyphs_ascii.description,"Plain ascii glyphs, minimalist and unbothered, age up."
+badge.map_glyphs_unicode.name,Box Art Girlie
+badge.map_glyphs_unicode.description,"Unicode glyphs, the boxes are doing a lot, age up."
+badge.map_glyphs_nerd.name,Font Stan
+badge.map_glyphs_nerd.description,"Nerd Font glyphs, the icons go hard, age up."
+badge.special_hut_hoarder.name,Crash Pad Hoarder
+badge.special_hut_hoarder.description,"Hoard 30 Crash Pads standing before you leave the Touch Grass Age. The 30th costs 693 Sticks, 34 times the first."
+badge.special_zoning_board.name,Permit Pusher
+badge.special_zoning_board.description,"Line up 31 Crash Pads standing in the Touch Grass Age. There is no 32nd: the storage won't hold that price, the math is the math."
+badge.special_zoning_board.hint,"Something about Crash Pads, no spoilers."
+badge_reward.special_zoning_board.title,Real Estate Mogul
+badge.special_every_nook.name,Stash Spot Everywhere
+badge.special_every_nook.description,Own 5 Stash Spots standing before you leave the Touch Grass Age.
+badge.special_nothing_to_endure.name,Zero Cry Arc
+badge.special_nothing_to_endure.description,"Roll into the Doomscroll Age without picking Endure once, pure main character energy."
+badge.special_hands_on.name,"Hands On, Literally"
+badge.special_hands_on.description,Land in the Smoke Szn Age with the build plan never starting a thing. Self-made era.
+badge.special_family_heirlooms.name,Grandma's Good Stuff
+badge.special_family_heirlooms.description,"Bounce from the Glow-Up Age without upgrading a single building in the run, grandma would be proud."
+badge.special_express_lane.name,Express Lane Only
+badge.special_express_lane.description,"Get to the Doomscroll Age inside four fifths of the combined pacing target of the twelve ages before it, the speed is unreal."
+badge.special_early_riser.name,Dawn Patroller
+badge.special_early_riser.description,Up before the group chat: the Sharp Drip Age arrives inside the combined pacing target of the three ages before it.
+badge.special_fashionably_late.name,"Fashionably Late, Fr"
+badge.special_fashionably_late.description,Spend ten times the Touch Grass Age's pacing target inside the Touch Grass Age. The late entrance was the whole plan.
+badge.special_sandbagged.name,Sandbag Season
+badge.special_sandbagged.description,"Playing it cool: Endure a catastrophe with Brace at level 2, unbothered."
+badge.special_bare_hands.name,"Bare Hands, Big Energy"
+badge.special_bare_hands.description,"Go into a catastrophe with no Brace and no Guard Town, then Endure it. Pure chaos energy."
+badge.special_standing_guard.name,Guard Town Glow
+badge.special_standing_guard.description,"The Guard Town saves buildings during an Endure, it's the MVP."
+badge.special_asked_for_it.name,"Asked for It, Literally"
+badge.special_asked_for_it.description,"Invite a catastrophe, then Endure it, we love a self-inflicted arc."
+badge.special_signed_the_guest_book.name,Guest Book Main Character
+badge.special_signed_the_guest_book.description,"Bring on a catastrophe, then Succumb to it, the vibe is cursed."
+badge.special_paid_in_full.name,"Paid in Full, Iconic"
+badge.special_paid_in_full.description,"Two rounds of Appease on a harbinger and the catastrophe still shows up. Rude, we gave it snacks."
+badge.special_tithe_to_a_liar.name,Tithe to a Fake Oracle
+badge.special_tithe_to_a_liar.description,"Appease a harbinger, only to learn it made the whole thing up. Rough."
+badge.special_tithe_to_a_liar.hint,"Rumor has it: a wasted offering, bestie."
+badge.special_self_fulfilling.name,Manifested It
+badge.special_self_fulfilling.description,"Invite doom on a fake prophet's word and get it anyway, the manifesting is real."
+badge.special_self_fulfilling.hint,Word on the street: manifesting drama.
+badge.special_prepared_for_nothing.name,Packed for Nothing
+badge.special_prepared_for_nothing.description,"Brace to level 2 and get spared, the prep paid off."
+badge.special_full_chorus.name,Full Choir Energy
+badge.special_full_chorus.description,All three voices of one era's warning in one thread. The group chat got loud.
+badge.special_selective_hearing.name,Ignored the Drama
+badge.special_selective_hearing.description,"Ignore a harbinger completely and still come out clean. Read, not replied."
+badge.special_knock_knock.name,"Knock Knock, Who's There"
+badge.special_knock_knock.description,"Summon the Last Passage on purpose. Bold move, no notes."
+badge.special_walked_out_whole.name,Walked Out Glowing
+badge.special_walked_out_whole.description,"Pair Brace at level 2 with Endure at the Last Passage, and walk out in one piece."
+badge.special_heirloom_universe.name,Heirloom Multiverse
+badge.special_heirloom_universe.description,"Prestige five times while holding Cosmic Legacy, generational wealth energy."
+badge.special_not_today.name,"Nope, Not Today"
+badge.special_not_today.description,"Your Guard Town blunts 30 raids in one run, the goons are built different."
+badge.special_protection_money.name,Protection Racket
+badge.special_protection_money.description,"Settle a war by paying tribute, the receipt is the peace treaty."
+badge.special_cold_shoulder.name,Cold Shoulder Energy
+badge.special_cold_shoulder.description,"Let a war die on its own, no tribute, no drama, just ghosting."
+badge.special_popular.name,Enemy Magnet
+badge.special_popular.description,"Be at war with two civilizations at once, dramatic and unbothered."
+badge.special_popular.hint,Lore drop: a lot of frenemies.
+badge.special_everybodys_friend.name,Everybody's Bestie
+badge.special_everybodys_friend.description,"Ally with every civilization you have met, at least four of them. The squad is massive."
+badge.special_regifting.name,Regift Economy
+badge.special_regifting.description,"Get workers on loan from a civilization, hand-me-down labor, we'll take it."
+badge.special_loyal_customer.name,Ride or Die Shopper
+badge.special_loyal_customer.description,Lock in 10 deals with one civilization in one run. The loyalty is documented.
+badge.special_no_questions_asked.name,"No Receipts, No Questions"
+badge.special_no_questions_asked.description,"Make a deal at the black market, shady but iconic."
+badge.special_while_you_were_out.name,Missed Calls Galore
+badge.special_while_you_were_out.description,Come back after the full offline allowance to find the build plan started 10 or more items and ran out of ideas.
+badge.special_maximum_leave.name,Maximum Ghost Mode
+badge.special_maximum_leave.description,"Ghost the game past the offline allowance. It stopped counting before you came back, respect the boundaries."
+badge.special_regular.name,"Regular, Obviously"
+badge.special_regular.description,"Show up on 7 different days within 10 days, consistency is the whole bit."
+badge.special_standing_appointment.name,Reserved Every Day
+badge.special_standing_appointment.description,"Log in on 30 different days, the streak is unreal."
+badge.special_long_game.name,Playing the Long Con
+badge.special_long_game.description,"Queue up 20 items in the build plan at once, the list is absolutely stacked."
+badge.special_absentee_landlord.name,Absentee Landlord Vibes
+badge.special_absentee_landlord.description,Ghost-mode run: prestige when away time is at least three times the playtime. Only credited away time counts.
+badge.special_chain_reaction.name,Domino Energy
+badge.special_chain_reaction.description,"Wrap a milestone chain, the bag is secured."
+badge.special_six_for_six.name,"Six for Six, Iconic"
+badge.special_six_for_six.description,"Finish all six milestone chains in one run, the whole arc is done."
+badge.special_box_ticker.name,Checkbox Queen
+badge.special_box_ticker.description,"Check off every milestone in one run, the to-do list is cooked."
+badge.special_box_ticker.hint,Vibe check: finishing the whole menu.
+badge.special_collector.name,Collector Core
+badge.special_collector.description,"Collect 15 badges, the shelf is starting to shine."
+badge.special_collector.ladder,Badge stack
+badge.special_curator.name,Curated Vibes
+badge.special_curator.description,"Rack up 45 badges, the gallery is giving curated."
+badge.special_curator.ladder,Badge stack
+badge.special_archivist.name,Archive Queen
+badge.special_archivist.description,"Pile up 135 badges, the archive has its own zip code."
+badge.special_archivist.ladder,Badge stack
+badge.special_museum_piece.name,Museum Baddie
+badge.special_museum_piece.description,"Hit 400 badges and the Prismatic theme is yours, legend status."
+badge.special_museum_piece.ladder,Badge stack
+badge.special_full_set.name,"Full Set, No Gaps"
+badge.special_full_set.description,"Clear every rung of one lineage ladder, the collection is complete."
+badge.special_twenty_two_wonders.name,Twenty-Two Wonder Bangers
+badge.special_twenty_two_wonders.description,"Every wonder raised at least once, the skyline is iconic."
+badge.special_rogues_gallery.name,Villain Hall of Fame
+badge.special_rogues_gallery.description,"Hear out every harbinger there is, the whole cast of drama."
+badge.special_small_world.name,"Small World, Big Drama"
+badge.special_small_world.description,"Meet every civilization there is, you've seen the whole map."
+badge.special_connoisseur_of_endings.name,Ending Connoisseur
+badge.special_connoisseur_of_endings.description,"Succumb to every era's catastrophe for the Ashfall theme. Dramatic exit, every time."
+badge.special_unkillable.name,Unkillable Icon
+badge.special_unkillable.description,Endure every era's catastrophe and the Last Passage. The final boss has nothing on you.
+badge_reward.special_unkillable.title,Unbothered Forever
+badge.special_portion_control.name,Snack Shortage
+badge.special_portion_control.description,"A worker went hungry and left the chat, the Snacks ran out."
+badge.special_portion_control.hint,"Dinner drama, and somebody is hungry."
+badge.special_grumbling.name,Mood Ring Gone Red
+badge.special_grumbling.description,"Tank morale far enough that the game flags it, the mood is in shambles."
+badge.special_grumbling.hint,Mood check: it's not great over there.
+badge.special_every_day_a_holiday.name,Every Day Is Brunch
+badge.special_every_day_a_holiday.description,"Throw 10 festivals in one run, the party never ends."
+badge.special_liquidation_sale.name,Everything Must Go
+badge.special_liquidation_sale.description,"Sell 100 buildings in one run, the going-out-of-business energy is real."
+badge.special_liquidation_sale.hint,"Clearance rack energy, sell it all."
+badge.special_artisanal.name,Handmade With Love
+badge.special_artisanal.description,"Gather by hand 1,000 times in one run, the bare-hands bit is iconic."
+badge.special_once_in_a_legend.name,Legendary Drop Chaser
+badge.special_once_in_a_legend.description,"Pull a successful Legendary mission and bring the bag home, legend status."
+badge.special_once_in_a_legend.hint,"The board drops one now and then, stay tuned."
+badge.special_forgetful.name,Brain Fog Flex
+badge.special_forgetful.description,"Decline an Ancient Memory with a flat no, respect the boundaries."
+badge.special_forgetful.hint,"Saying no has a whole arc, the RSVP is pending."
+badge.special_deja_vu.name,Déjà Vu Again
+badge.special_deja_vu.description,"Accept an Ancient Memory, we have been here before."
+badge.special_belt_and_braces.name,Double Layer Stan
+badge.special_belt_and_braces.description,"Export an account backup, extra safe, extra cute."
+badge.special_written_down_somewhere.name,Saved in the Notes App
+badge.special_written_down_somewhere.description,"Peek at your recovery code, the secret handshake."
+badge.special_lucky_break.name,Lucky Girl Syndrome
+badge.special_lucky_break.description,"An era opens with a legendary good event, the timing is immaculate."
+badge.special_character_building.name,Character Development
+badge.special_character_building.description,"Weather three rough era events in one run, the glow-up is earned."
+badge.special_everything_full.name,Overstuffed and Proud
+badge.special_everything_full.description,"Max every storable resource at its cap at the same time, Smoke Szn Age or later. A resource spent as fast as it is made does not count."
+badge.special_old_bones.name,Fossil Energy
+badge.special_old_bones.description,"Start a run holding ruins from a civilization that fell, heavy lore, free loot."
+badge.special_we_are_not_alone.name,Not Alone Anymore
+badge.special_we_are_not_alone.description,"Inspect a visitor from somewhere else on the map, the alien is a whole vibe."
+badge.special_we_are_not_alone.hint,Look up. The sky has a whole thing going on.
+badge.special_hand_in_the_cookie_jar.name,Caught in the Cookie Jar
+badge.special_hand_in_the_cookie_jar.description,"Unlock the developer console, you're in the back room now."
+badge.special_touched_by_the_source.name,"Source Stan, Confirmed"
+badge.special_touched_by_the_source.description,"Load a save with the forge master's proof, certified source-code tourist."
+badge.special_creative_accounting.name,"Creative Accounting, Fr"
+badge.special_creative_accounting.description,"Edited outside the game? Load that save, the receipts are sus."
+badge_score_title.01,Starter Pack
+badge_score_title.02,Group Chat Admin
+badge_score_title.03,Judge Mental
+badge_score_title.04,Main Character
+badge_score_title.05,Iconic Legend
+badge_score_title.06,Never Logs Off

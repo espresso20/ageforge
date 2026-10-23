@@ -116,7 +116,6 @@ func TestTechStorageAndHousing(t *testing.T) {
 		}
 		def := ge.Resources.defs[key]
 		want := ge.storeSize(def, bonuses["all"], bonuses[key], ge.speedK(), factor)
-		want = floorStore(ge.storageFloors(), key, want)
 		if got := ge.Resources.resources[key].Storage; math.Abs(got-want) > 1e-9*want {
 			t.Errorf("%s storage is %v with two +10%% techs, want %v (x%.2f)", key, got, want, factor)
 		}

@@ -57,13 +57,13 @@ const (
 	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
 	festivalCooldownTicks = 300  // ~10 minutes between festivals
 	festivalMinCost       = 2000.0
-	festivalCostFraction  = 0.05 // of culture storage cap
+	festivalCostShare     = 0.05 // of the age's stock scale, in minutes of your culture income (cultureStake)
 
 	// Black market (culture sink, high-risk/high-reward) tuning. The player
 	// spends a lump of culture for a gamble: on a win the imported resource is
 	// paid out at blackMarketWinMult × the stake's gold-value; on a loss the
 	// culture is simply gone. Gated behind colonial age + a cooldown.
-	blackMarketCostFraction  = 0.10           // of culture storage cap, per deal
+	blackMarketCostShare     = 0.10           // of the age's stock scale, in minutes of your culture income, per deal
 	blackMarketMinCost       = 5000.0         // floor so it's meaningful early
 	blackMarketWinChance     = 0.55           // probability of a payout
 	blackMarketWinMult       = 2.5            // payout = stake_gold_value × this on a win
@@ -530,6 +530,8 @@ func (ge *GameEngine) Rebind(set *rules.Set) {
 	ge.Diplomacy.Rebind(set)
 	ge.progress.Rebind(set)
 	ge.badges = newBadgeBook(set)
+	ge.redrawHistory()
+	ge.redrawHarbingerHistory()
 }
 
 // techLockErr is why a building can't be built yet when a tech it needs is
@@ -1686,10 +1688,6 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 	} else {
 		ge.addLog("event", line)
 	}
-	// A gain is stated in full: say so when a full store took less.
-	if clipped := clippedLine(out.gained, out.fit); clipped != "" {
-		ge.addLog("info", clipped)
-	}
 	if garrison != "" {
 		ge.addLog("success", garrison)
 		// The garrison blunted a raid that landed: some of it fell doing so.
@@ -1761,12 +1759,9 @@ func (ge *GameEngine) processExpeditions() {
 	ge.processAutoExpeditions()
 }
 
-// applyExpeditionRewards puts a resolved expedition's loot into the stores. The
-// message already states the full loot: when a full store took less, a line
-// under it says what fit. Under the write lock.
+// applyExpeditionRewards puts a resolved expedition's loot into the stock, in
+// full. Under the write lock.
 func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
-	fit := make(map[string]float64, len(rewards))
-	kept := make(map[string]float64, len(rewards))
 	for _, resource := range sortedKeys(rewards) {
 		if resource == config.ResearchTarget {
 			// Not stored: it goes to the tech in progress.
@@ -1775,11 +1770,7 @@ func (ge *GameEngine) applyExpeditionRewards(rewards map[string]float64) {
 			}
 			continue
 		}
-		fit[resource] = ge.gainResource(resource, rewards[resource])
-		kept[resource] = rewards[resource]
-	}
-	if clipped := clippedLine(kept, fit); clipped != "" {
-		ge.addLog("info", clipped)
+		ge.gainResource(resource, rewards[resource])
 	}
 }
 
@@ -1984,7 +1975,6 @@ func (ge *GameEngine) checkMilestones() {
 // store cut it short), a permanent bonus into permanentBonuses for the rest
 // of the run. Under the write lock.
 func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
-	granted, fit := map[string]float64{}, map[string]float64{}
 	for _, eff := range rewards {
 		switch eff.Type {
 		case "instant_resource":
@@ -1994,15 +1984,10 @@ func (ge *GameEngine) applyMilestoneRewards(rewards []config.Effect) {
 				}
 				continue
 			}
-			granted[eff.Target] += eff.Value
-			fit[eff.Target] += ge.grantLocked(eff.Target, eff.Value)
+			ge.grantLocked(eff.Target, eff.Value)
 		case "permanent_bonus":
 			ge.permanentBonuses[eff.Target] += eff.Value
 		}
-	}
-	// The reward line states the full grant: say so when a full store took less.
-	if line := clippedLine(granted, fit); line != "" {
-		ge.addLog("info", line)
 	}
 }
 
@@ -2012,6 +1997,8 @@ func (ge *GameEngine) startChainBoost(chain config.MilestoneChainDef, ticks int)
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       chain.Key + "_boost",
 		Name:      chain.Name + " Speed Boost",
+		Src:       nameFromChain,
+		Ref:       chain.Key,
 		TicksLeft: ticks,
 		Effects: []config.Effect{
 			{Type: "tick_speed", Target: "tick_speed", Value: chain.BoostValue},
@@ -2297,21 +2284,19 @@ func (ge *GameEngine) recalculateRates() {
 	// figure at a full crew through the steps above that apply to it.
 	ge.updateResearchRate(r, mMult, prodAllFactor, soft)
 
-	// Recalculate storage from buildings + milestones, then the techs'
-	// percentage on every store.
+	// Recalculate the store measure from the buildings' storage effects and
+	// the permanent bonuses, then the techs' percentage on every store.
+	// Nothing reads it for a rule any more (see storeSize).
 	storageBonuses := ge.Buildings.GetStorageBonuses()
 	allBonus := storageBonuses["all"]
 	allBonus += permanentBonuses["all"]
 	techStorage := 1 + ge.Research.Bonus(config.EffectStorage, "")
 
-	floors := ge.storageFloors()
 	for _, def := range ge.Resources.defs {
 		specific := storageBonuses[def.Key]
 		specific += permanentBonuses[def.Key]
 		r := ge.Resources.resources[def.Key]
 		r.Storage = ge.storeSize(def, allBonus, specific, k, techStorage)
-		// Owned storage keeps its next queued-aware copy price within reach.
-		r.Storage = floorStore(floors, def.Key, r.Storage)
 	}
 
 	// The posts settle last, over the stores above (soldiers.go).
@@ -2352,35 +2337,6 @@ func (ge *GameEngine) storeSize(def config.ResourceDef, allBonus, specific, k, t
 		size = float64(size * techStorage)
 	}
 	return size
-}
-
-// storageFloors is, per resource, the dearest next copy of an owned storage
-// building: a store is never smaller, so that copy always fits.
-func (ge *GameEngine) storageFloors() map[string]float64 {
-	var floors map[string]float64
-	for _, key := range ge.Buildings.storageKeys {
-		if ge.Buildings.counts[key] < 1 {
-			continue
-		}
-		cost, ok := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
-		if !ok {
-			continue
-		}
-		if floors == nil {
-			floors = make(map[string]float64, len(cost))
-		}
-		for res, price := range cost {
-			if price > floors[res] {
-				floors[res] = price
-			}
-		}
-	}
-	return floors
-}
-
-// floorStore is size raised to the storage floor for res.
-func floorStore(floors map[string]float64, res string, size float64) float64 {
-	return math.Max(size, floors[res])
 }
 
 // Age-transition resource carryover tuning (EPIC: age-pacing economy rebalance).
@@ -2624,6 +2580,8 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       def.Key,
 		Name:      def.Name,
+		Src:       nameFromAwakening,
+		Ref:       def.Key,
 		TicksLeft: def.Duration,
 		Effects:   def.Effects,
 	})
@@ -2777,17 +2735,14 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	case "ancient_cache":
 		// Minutes of the town's own income of every unlocked resource,
 		// sized like any other gain (config.EventSize), and in knowledge at
-		// most the price of the age's cheapest tech. A store takes what it
-		// has room for; the line under the headline says when one took less.
-		gave, fit := map[string]float64{}, map[string]float64{}
+		// most the price of the age's cheapest tech.
 		for _, key := range ge.Resources.order {
 			if !ge.Resources.IsUnlocked(key) {
 				continue
 			}
 			gain := config.EventSize(config.Effect{Type: config.EventGain, Target: key, Value: config.AncientCacheMinutes}, ge.eventTown(key, false))
 			if gain > 0 {
-				had := ge.Resources.Get(key)
-				gave[key], fit[key] = gain, ge.Resources.Add(key, gain)-had
+				ge.Resources.Add(key, gain)
 			}
 		}
 		// The scholars' share: minutes of their work, at most the price of
@@ -2796,9 +2751,6 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 			if said := ge.grantResearch(gain); said != "" {
 				ge.addLog("info", "  → The cache gave "+said+".")
 			}
-		}
-		if clipped := clippedLine(gave, fit); clipped != "" {
-			ge.addLog("info", clipped)
 		}
 	case "trade_winds":
 		// A share of the town's gold income for Duration ticks
@@ -2955,6 +2907,8 @@ func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, ef
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       key,
 		Name:      ev.Name,
+		Src:       nameFromEra,
+		Ref:       ev.Key,
 		TicksLeft: ev.Duration,
 		Effects:   effects,
 	})
@@ -2987,7 +2941,7 @@ func (ge *GameEngine) loseShare(res string, frac float64) {
 	ge.addLog("warning", fmt.Sprintf("  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
 }
 
-// gainResource adds to a resource and returns what storage actually took.
+// gainResource adds to a resource and returns what it added.
 func (ge *GameEngine) gainResource(res string, amount float64) float64 {
 	before := ge.Resources.Get(res)
 	return ge.Resources.Add(res, amount) - before
@@ -3036,12 +2990,24 @@ func (ge *GameEngine) stretchTicks(ticks int) int {
 	return ge.rules.StretchTicks(ge.age, ticks)
 }
 
+// cultureStake is a share of the age's stock scale (config.StockScale) in
+// minutes of the town's culture income: the minutes are what the share comes
+// to at the age's typical culture income (rules.Set.StockMinutes), and the
+// price is that many minutes of what the town really makes. A town making
+// what the age's typical town does pays what a store of the age's scale used
+// to cost it; one making half as much pays half. A town making none pays
+// nothing here, which is why the prices keep a minimum. Under the lock.
+func (ge *GameEngine) cultureStake(share float64) float64 {
+	minutes := ge.rules.StockMinutes("culture", ge.age, share)
+	return float64(float64(minutes*config.TicksPerMinute) * ge.incomeOf("culture"))
+}
+
 // festivalCost returns the culture cost of a festival at the current progression:
-// max(festivalMinCost, festivalCostFraction × culture storage cap). It scales with
-// the player's culture cap so it stays a meaningful drain into the late game.
+// max(festivalMinCost, festivalCostShare of the age's stock scale in minutes of
+// your culture income). It follows what the town makes of culture, so it stays
+// a meaningful drain into the late game.
 func (ge *GameEngine) festivalCost() float64 {
-	cultureCap := ge.Resources.GetStorage("culture")
-	cost := cultureCap * festivalCostFraction
+	cost := ge.cultureStake(festivalCostShare)
 	if cost < festivalMinCost {
 		cost = festivalMinCost
 	}
@@ -3131,9 +3097,10 @@ func (ge *GameEngine) bmRandFloat() float64 {
 }
 
 // blackMarketCost returns the culture cost of one black-market deal at the
-// current progression: max(blackMarketMinCost, fraction × culture storage cap).
+// current progression: max(blackMarketMinCost, blackMarketCostShare of the
+// age's stock scale in minutes of your culture income).
 func (ge *GameEngine) blackMarketCost() float64 {
-	cost := ge.Resources.GetStorage("culture") * blackMarketCostFraction
+	cost := ge.cultureStake(blackMarketCostShare)
 	if cost < blackMarketMinCost {
 		cost = blackMarketMinCost
 	}
@@ -3264,9 +3231,6 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	if ge.bmRandFloat() < blackMarketWinChance {
 		got := ge.gainResource(resource, reward)
 		ge.addLog("success", fmt.Sprintf("The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
-		if clipped := clippedLine(map[string]float64{resource: reward}, map[string]float64{resource: got}); clipped != "" {
-			ge.addLog("info", clipped)
-		}
 		return true, reward, nil
 	}
 	ge.addLog("warning", fmt.Sprintf("The smuggling run failed. You lost %s.", Amount(cost, "culture")))
@@ -5301,7 +5265,7 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			return out
 		}(),
-		CatastropheHistory:    slices.Clone(ge.catastropheHistory),
+		CatastropheHistory:    ge.historyLines(),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
 		SuccumbResearchFactor: ge.succumbResearchFactor(),

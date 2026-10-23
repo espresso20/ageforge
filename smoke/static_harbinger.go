@@ -32,10 +32,11 @@ import (
 // income; that economy must make every resource it asks for inside the
 // warning; and every one must be a material the moderate economy's own
 // buildings make by the arrival age, not one that only a wonder trickles
-// out. An ordinary doom's has a ceiling as well: no
-// material may ask for more than its BraceCeiling, three fifths of what a
-// moderate builder's store holds (five copies of every storage building),
-// and a price that sits on its ceiling has given all the effort it may.
+// out. Every thread has a ceiling as well: no
+// material may ask for more than its BraceCeiling, three fifths of the arrival
+// age's stock scale (config.StockScale, in hours of a moderate economy's
+// income of the material), and a price that sits on its ceiling has given all
+// the effort it may.
 
 // The rules an AppeaseRuleProblem can break.
 const (
@@ -148,7 +149,8 @@ const (
 	// moderate economy makes by the arrival age.
 	BraceRuleMaterial = "material"
 	// BraceRuleStore: an ordinary doom's level 1 asks more of a resource
-	// than its ceiling, three fifths of a moderate builder's store.
+	// than its ceiling, three fifths of the age's stock scale. (The rule's
+	// name is from when the ceiling was a share of a store.)
 	BraceRuleStore = "store"
 )
 
@@ -192,7 +194,7 @@ func (p BraceRuleProblem) String() string {
 	case p.Rule == BraceRuleMaterial:
 		return fmt.Sprintf("%s asks %s %s for Brace level 1, which no building of a moderate economy makes by then", p.thread(), num(p.Price), p.Resource)
 	case p.Rule == BraceRuleStore:
-		return fmt.Sprintf("%s asks %s %s for Brace level 1, more than the %s that is three fifths of a moderate builder's store", p.thread(), num(p.Price), p.Resource, num(p.Limit))
+		return fmt.Sprintf("%s asks %s %s for Brace level 1, more than the %s that is its ceiling, three fifths of the age's stock scale", p.thread(), num(p.Price), p.Resource, num(p.Limit))
 	case p.Rule == BraceRuleWarning:
 		return fmt.Sprintf("%s asks %s %s for Brace level 1, more than the %s a moderate economy makes in its shortest warning", p.thread(), num(p.Price), p.Resource, num(p.Limit))
 	case p.Resource == "":
@@ -289,7 +291,7 @@ func writeHarbingerPrices(sb *strings.Builder, appease []AppeaseRuleProblem, bra
 			fmt.Fprintf(sb, "| %s | %s | %s %s | %s |\n", p.thread(), p.Rule, num(p.Price), p.Resource, held)
 		}
 	}
-	fmt.Fprintf(sb, "\nEvery level-1 Brace price, for every age the harbinger can arrive in: it must take a moderate economy (config.TypicalIncome) at least %g of the thread's shortest warning (and in the final era, for the Last Passage and its fated doom, at least %g hours of income), that economy must make each resource it asks for inside the warning, and each must be a material its own buildings make by then. An ordinary doom's may ask no more of a material than three fifths of a moderate builder's store (five copies of every storage building), and a price on that ceiling is not held to the share of the warning.\n\n", BraceMinWarningShare, WarningBraceMinHours)
+	fmt.Fprintf(sb, "\nEvery level-1 Brace price, for every age the harbinger can arrive in: it must take a moderate economy (config.TypicalIncome) at least %g of the thread's shortest warning (and in the final era, for the Last Passage and its fated doom, at least %g hours of income), that economy must make each resource it asks for inside the warning, and each must be a material its own buildings make by then. No thread may ask more of a material than three fifths of the arrival age's stock scale (its ceiling, in hours of the moderate economy's income of it), and a price on that ceiling is not held to the share of the warning.\n\n", BraceMinWarningShare, WarningBraceMinHours)
 	if len(brace) == 0 {
 		sb.WriteString("No problems.\n")
 	} else {
@@ -309,8 +311,8 @@ func writeHarbingerPrices(sb *strings.Builder, appease []AppeaseRuleProblem, bra
 	writeBraceStore(sb, HarbingerPrices(), rules.Core().TypicalIncome)
 }
 
-// BraceStoreRow is one thread's level-1 Brace beside the store a moderate
-// builder holds in the arrival age.
+// BraceStoreRow is one thread's level-1 Brace beside the stock scale of the
+// arrival age (config.StockScale).
 type BraceStoreRow struct {
 	Epoch       string `json:"epoch"`
 	Age         string `json:"age"`
@@ -320,19 +322,18 @@ type BraceStoreRow struct {
 	// shortest warning.
 	Hours        float64 `json:"hours"`
 	WarningShare float64 `json:"warning_share"`
-	// Largest is the material the price asks the most of against that store,
-	// and StoreShare how much of the store it is (over 1: five copies of
-	// every storage building do not hold it).
+	// Largest is the material the price asks the most of against that scale,
+	// and ScaleShare how much of the scale it is (over 1: more than the
+	// age's economy calls a good stock).
 	Largest    string  `json:"largest"`
-	StoreShare float64 `json:"store_share"`
+	ScaleShare float64 `json:"scale_share"`
 	// Capped lists the materials whose price is their ceiling.
 	Capped []string `json:"capped,omitempty"`
 }
 
-// BraceStoreRows sets every thread's level-1 Brace against the moderate
-// builder's store, for the report: an ordinary doom's is held under three
-// fifths of it by the ceiling; the final era's two have none, and the table
-// is where that shows.
+// BraceStoreRows sets every thread's level-1 Brace against the arrival age's
+// stock scale, for the report: every thread's is held under three fifths of
+// it by the ceiling, the final era's two included.
 func BraceStoreRows(rows []PriceRow, income func(res, age string) float64) []BraceStoreRow {
 	out := make([]BraceStoreRow, 0, len(rows))
 	for _, r := range rows {
@@ -343,8 +344,8 @@ func BraceStoreRows(rows []PriceRow, income func(res, age string) float64) []Bra
 			if rate := income(res, r.Age); rate > 0 {
 				slowest = math.Max(slowest, price/rate)
 			}
-			if store := r.TypicalStore[res]; store > 0 && price/store > row.StoreShare {
-				row.Largest, row.StoreShare = res, price/store
+			if scale := r.StockScale; scale > 0 && price/scale > row.ScaleShare {
+				row.Largest, row.ScaleShare = res, price/scale
 			}
 			if limit, ok := r.BraceCeiling[res]; ok && price >= float64(limit*braceAtCeiling) {
 				row.Capped = append(row.Capped, res)
@@ -361,8 +362,8 @@ func BraceStoreRows(rows []PriceRow, income func(res, age string) float64) []Bra
 
 // writeBraceStore renders BraceStoreRows.
 func writeBraceStore(sb *strings.Builder, rows []PriceRow, income func(res, age string) float64) {
-	sb.WriteString("\nEvery level-1 Brace price beside the store of a moderate builder (five copies of every storage building up to the arrival age). An ordinary doom's is a third of what the shortest warning makes of each material, or three fifths of that store, whichever is smaller; the final era's two threads have no ceiling.\n\n")
-	sb.WriteString("| thread | Brace level 1 | hours of income | of the shortest warning | largest part, of a moderate store | on its ceiling |\n|---|---|---|---|---|---|\n")
+	sb.WriteString("\nEvery level-1 Brace price beside the stock scale of its arrival age. An ordinary doom's is a third of what the shortest warning makes of each material, and every thread's is held to three fifths of that scale (its ceiling), whichever is smaller.\n\n")
+	sb.WriteString("| thread | Brace level 1 | hours of income | of the shortest warning | largest part, of the stock scale | on its ceiling |\n|---|---|---|---|---|---|\n")
 	for i, b := range BraceStoreRows(rows, income) {
 		r := rows[i]
 		thread := fmt.Sprintf("%s, %s", r.Epoch, r.Age)
@@ -377,6 +378,6 @@ func writeBraceStore(sb *strings.Builder, rows []PriceRow, income func(res, age 
 		if len(b.Capped) > 0 {
 			capped = strings.Join(b.Capped, ", ")
 		}
-		fmt.Fprintf(sb, "| %s | %s | %.1f | %.0f%% | %s %.0f%% | %s |\n", thread, strings.Join(parts, ", "), b.Hours, b.WarningShare*100, b.Largest, b.StoreShare*100, capped)
+		fmt.Fprintf(sb, "| %s | %s | %.1f | %.0f%% | %s %.0f%% | %s |\n", thread, strings.Join(parts, ", "), b.Hours, b.WarningShare*100, b.Largest, b.ScaleShare*100, capped)
 	}
 }

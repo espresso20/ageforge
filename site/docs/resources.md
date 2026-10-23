@@ -18,7 +18,7 @@ Amounts print with up to three figures and a unit from a thousand up: K, M, B, T
 | Stone | `stone` | Stone Age | 50 | Durable construction material |
 | Iron | `iron` | Bronze Age | 50 | Metal for tools, weapons and early engineering |
 | Gold | `gold` | Bronze Age | 50 | Pays for diplomacy and many buildings |
-| Culture | `culture` | Classical Age | 50 | Spent on monuments, festivals and more; its fill % of storage decides which good epoch events you can get |
+| Culture | `culture` | Classical Age | 50 | Spent on monuments, festivals and more; your culture strength decides which good epoch events you can get |
 
 ### Ores
 
@@ -103,7 +103,7 @@ Culture has two jobs. Your **culture strength** decides which tier of good epoch
 | Eternal Library | Industrial | 140K | +3% all production |
 | Monument of Ages | Modern | 7.1M | +5% all production |
 
-**The `festival` command** spends a lump of culture (2K, or 5% of your culture storage if that is more) for **+20% all production for 13 minutes** (390 ticks), then waits **26 minutes** (780 ticks) before the next one (Baroque Arts makes the boost last 25% longer, Radio shortens the wait by 20%, and Social Media the price by 20%). See [Commands](commands.md).
+**The `festival` command** spends a lump of culture (2K, or if that is more a number of minutes of your own culture income, set by the age) for **+20% all production for 13 minutes** (390 ticks), then waits **26 minutes** (780 ticks) before the next one (Baroque Arts makes the boost last 25% longer, Radio shortens the wait by 20%, and Social Media the price by 20%). See [Commands](commands.md).
 
 Culture also pays for:
 
@@ -157,9 +157,9 @@ The quarries and mines of the Iron to the Industrial Age make stone, iron and ir
 
 **Nothing is refused for costing more than a store.** A building, an upgrade or a [build plan](plan.md) item is refused only for what it costs against what you have. If you hold the stock, you can buy it. The game no longer names a storage building to build first.
 
-Every resource still has a store size, from a small base (10 to 50), raised by four techs (Pottery and Masonry +10% each, Cloud Computing and Superconductors +8% each) and by culture buildings. On known ground, [Era Mastery](prestige.md#era-mastery) multiplies every store by the age's speed along with production. A store's size does not limit what you hold. A few prices are still a share of it: the [festival](#culture), the black market and the harbinger's Brace.
+**No rule reads a store size.** A few prices used to be a share of one: the [festival](#culture), the [black market](trade.md#black-market), [faction deals](factions.md#trade-deals) and the harbinger's [Brace](harbinger.md#brace-soften-an-endure). They follow your income now. The festival, the black market and a deal's size are minutes of what your own town makes of the resource, so a town that makes twice the culture pays twice. Brace is priced on what a moderate town of the age makes, and capped at the same figure for every town.
 
-**Storage buildings no longer hold anything.** There is one per age, from the Stash to the Quantum Vault, with no limit on copies, each copy costing 1.75 times the one before it. Each copy you own adds **1% to all production**, in the same pool as the wonders' and monuments' bonuses to all production (see [the all-production cap](#the-all-production-cap)). The size they used to give a store is still counted in the size those few prices are a share of. See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the list. Every age gate still asks for five copies of the storage building of the age you are leaving.
+**Storage buildings no longer hold anything.** There is one per age, from the Stash to the Quantum Vault, with no limit on copies, each copy costing 1.75 times the one before it. Each copy you own adds **1% to all production**, in the same pool as the wonders' and monuments' bonuses to all production (see [the all-production cap](#the-all-production-cap)). See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the list. Every age gate still asks for five copies of the storage building of the age you are leaving.
 
 **Storage is permanent.**
 

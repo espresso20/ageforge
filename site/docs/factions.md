@@ -122,8 +122,8 @@ Every deal is worded from your side, the same way on the panel, in `diplomacy de
 | Kind | You give | You get |
 |---|---|---|
 | **Buy** | one of your construction resources | the civilization's specialty, sized by the goods |
-| **Sell** | one of the three resources whose stores are fullest | the civilization's specialty, a little more than a Buy pays |
-| **Goodwill** | one of the three resources whose stores are fullest | **+5 opinion** instead of goods (only offered below opinion 50) |
+| **Sell** | one of the three resources you hold the most of, against a good stock of each | the civilization's specialty, a little more than a Buy pays |
+| **Goodwill** | one of the three resources you hold the most of, against a good stock of each | **+5 opinion** instead of goods (only offered below opinion 50) |
 | **Rare** | one of your construction resources | a construction resource of the **next** age that this age does not price, at a steep price (0.6 of its next-age parity) |
 
 In an age that prices a raw material, the raw is one of your construction resources, so a Buy or Rare deal can ask for it (see [What the ores are for](resources.md#what-the-ores-are-for)).
@@ -147,7 +147,7 @@ Two techs add to every set: the **Global Village** (Digital Age) and the **Feder
 
 Opinion matters too. Friendly civilizations (friendly status, or opinion 25+) and allies offer more deals, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a Sell) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking a Buy, Sell or Rare deal adds +1 opinion and counts as a trade; a Goodwill deal adds +5. Deals can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it.
 
-A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods fit in half your storage and the price in 80% of it. Amounts are rounded to three figures, never in your favor. A deal whose goods wouldn't fit in the room left in their store is refused before anything is charged.
+A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods come to no more than half a good stock of the resource and the price to no more than 80% of one. A good stock is a number of minutes of your own income of that resource, set by the age: a town that makes twice what the age's moderate economy does of a resource gets twice the lot, within a quarter to four times the moderate lot. Amounts are rounded to three figures, never in your favor.
 
 Offers rotate after **4,680 ticks of play** (about 2h 36m; 30% sooner with the Telecommunications tech) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The card shows the time to the next set.
 
@@ -204,7 +204,7 @@ A boon is rolled from one catalog shared by every civilization:
 | Grand Cache (rare) | a bigger instant lump of a rarer resource (gold, uranium, plasma, ...) | grows with the age | instant |
 | Extra Hands | 3 to 8 temporary workers | | 2,600 to 5,200 ticks |
 
-The sizes are before scaling. Stronger civilizations give bigger boons (×0.98 at strength 1 up to ×1.30 at strength 5), and so do better relations: ×1.15 friendly, ×1.4 allied, ×0.7 from a rival or a civilization under embargo. Industrious Spell adds into [the all-production pool](resources.md#the-all-production-cap) like any all-production bonus, and a specialty boon into its resource's own pool. A pool applies in full up to +200% and a quarter of every point past it, and when a boon lands past +200% its log line says what it adds (`counts a quarter past +200%: +3.75% now`). A lump a full store cuts short says what fit.
+The sizes are before scaling. Stronger civilizations give bigger boons (×0.98 at strength 1 up to ×1.30 at strength 5), and so do better relations: ×1.15 friendly, ×1.4 allied, ×0.7 from a rival or a civilization under embargo. Industrious Spell adds into [the all-production pool](resources.md#the-all-production-cap) like any all-production bonus, and a specialty boon into its resource's own pool. A pool applies in full up to +200% and a quarter of every point past it, and when a boon lands past +200% its log line says what it adds (`counts a quarter past +200%: +3.75% now`).
 
 Which boon you get depends on the civilization's character. Every civilization favors sharing its specialty. A peaceful one leans toward gentle production and research gifts and rarely speeds time; an aggressive one toward Time Dilation and lumps of spoils; a mercantile one toward lumps of goods and resource surges; an isolationist one toward lumps and the rare Grand Cache. Allies make the Grand Cache more likely too.
 
@@ -228,7 +228,7 @@ Setbacks come from their own table:
 | Bad Omen | all production falls 5% to 10% | 1,300 to 3,250 ticks (43m to 1h 48m) |
 | Lost Scouts | 2% to 6% of one resource's stock lost, and all production falls 3% to 6% | 780 to 1,560 ticks (26m to 52m) |
 
-The sizes are before scaling. Setbacks (all but Dysentery's head count) get worse with the civilization's **strength** (×0.90 at strength 1 up to ×1.10 at strength 5) and milder with your relations: ×0.85 friendly, ×0.75 allied, ×1.15 from a rival or under embargo, and ×1.35 at war. So an ally's bad news is gentler than a rival's, and a war with a strong civilization is the worst case. A spoilage never takes more than half a store. Setbacks never touch soldiers.
+The sizes are before scaling. Setbacks (all but Dysentery's head count) get worse with the civilization's **strength** (×0.90 at strength 1 up to ×1.10 at strength 5) and milder with your relations: ×0.85 friendly, ×0.75 allied, ×1.15 from a rival or under embargo, and ×1.35 at war. So an ally's bad news is gentler than a rival's, and a war with a strong civilization is the worst case. A spoilage never takes more than half of what you hold of the resource. Setbacks never touch soldiers.
 
 ### Limits
 

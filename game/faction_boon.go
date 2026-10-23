@@ -200,6 +200,9 @@ func (a boonApplier) InjectTimedEffects(effects []config.Effect, ticks int, name
 	a.ge.Events.InjectEvent(ActiveEvent{
 		Key:       a.eventKey(),
 		Name:      a.name + ": " + name,
+		Src:       nameFromCiv,
+		Ref:       a.key,
+		Tail:      name,
 		TicksLeft: ticks,
 		Effects:   effects,
 	})
@@ -358,14 +361,7 @@ func (ge *GameEngine) applyRolledFactionBoon(def config.FactionDef, b boon.Boon)
 	case boon.TickSpeed:
 		note = ge.capNoteLocked(config.Effect{Type: "tick_speed", Value: b.Magnitude}, false)
 	}
-	stock := ge.Resources.Get(b.Resource)
 	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key})
-	if b.Kind == boon.InstantResource {
-		// A lump a full store cut short says what fit.
-		if took := ge.Resources.Get(b.Resource) - stock; took < b.InstantAmount-float64(1e-9*b.InstantAmount) {
-			note = "storage was nearly full: only " + Amount(math.Max(took, 0), b.Resource) + " fit"
-		}
-	}
 	if note != "" {
 		line += " [yellow](" + note + ")[-]"
 	}

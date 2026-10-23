@@ -107,7 +107,7 @@ culture strength = devotion × share kept ÷ 4.5                                
 - **Culture you did not make counts for nothing past what you spent.** Culture from a faction deal, an event's gift or a wonder's and a tech's culture can make up for culture you spent; it never raises your strength above what your culture buildings earned.
 - It follows the whole run, not the age: nothing jumps when you advance, so the roll reads what the Epochs panel showed you before you advanced. The panel prints it: "Good events at the next era: Minor only", with your culture strength, devotion and share kept under it.
 
-The tier used to read how full culture's storage was. Culture has no store of its own to speak of: it is kept in the general one, which every storage building raises. No town filled it by making culture. A moderate town's whole run of culture, never spent, came to 10% at most of the smallest store an era's gate leaves you holding, and under 1% from the Modern Age on; three and a half times the culture buildings reached 29% at best, at the Iron Era's end. The one way over 40% was the market, which used to sell 3 culture for a gold: from the Medieval Age to the Digital Age, one to twenty minutes of a moderate economy's gold filled a typical store that far. Culture can no longer be bought for gold, and building for it is what opens a tier.
+The tier used to read how full culture's storage was. Culture had no store of its own to speak of: it was kept in the general one. No town filled it by making culture. A moderate town's whole run of culture, never spent, came to 10% at most of the smallest store an era's gate leaves you holding, and under 1% from the Modern Age on; three and a half times the culture buildings reached 29% at best, at the Iron Era's end. The one way over 40% was the market, which used to sell 3 culture for a gold: from the Medieval Age to the Digital Age, one to twenty minutes of a moderate economy's gold filled a typical store that far. Culture can no longer be bought for gold, and building for it is what opens a tier.
 
 | Leaving | Old rule: a moderate town's culture, of its store | Old rule: three and a half times the buildings | Now: moderate | Now: twice | Now: three and a half times |
 |---------|---------------------------------------------------|-----------------------------------------------|---------------|------------|-----------------------------|
@@ -154,7 +154,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | Age of Plenty | +100% all production (double) | 562 ticks (~18m 44s) |
 | Population Surge | +15% workers added | Instant |
-| Ancient Cache | Pays 15 minutes of your town's income of every unlocked resource (in research, progress on the tech in progress, at most half of that tech's price, and lost with nothing in progress; the research share is at most the work of the cheapest tech of the age you entered). A store takes only what it has room for, and the log says `Storage was nearly full: only ... fit.` when one took less | Instant |
+| Ancient Cache | Pays 15 minutes of your town's income of every unlocked resource (in research, progress on the tech in progress, at most half of that tech's price, and lost with nothing in progress; the research share is at most the work of the cheapest tech of the age you entered). Stock has no limit, so all of it lands | Instant |
 | Trade Winds | Gold production +50% | 374 ticks (~12m 28s) |
 | Cultural Festival | +30% of your culture and +20% of your faith at once, then culture production +50% and faith production +50%. Never rolled on entering the Iron Era: culture unlocks in the Classical Age | 374 ticks |
 
@@ -354,7 +354,7 @@ When is it a trap?
 - The longer you stay, the more random events fire, and bad events hurt a civilization that has stopped growing more than one that is still growing.
 - Your current epoch's exclusive events matter less once you've outgrown their amounts.
 
-The sweet spot is usually one extra age's worth of time (enough to build a few faith or culture buildings and fill their storage), not three.
+The sweet spot is usually one extra age's worth of time (enough to build a few faith or culture buildings and let them pay off), not three.
 
 ---
 

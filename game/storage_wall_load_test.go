@@ -188,9 +188,8 @@ func TestWallSave_NoticeOnceAndSavedInTheNewShape(t *testing.T) {
 }
 
 // The next copy of the age's storage building is priced by the new curve, a
-// rate of 1.75 on each copy owned, and its price is the floor of each store
-// it uses when the save is loaded.
-func TestWallSave_NextStorageCopyIsOnTheNewCurveAndFits(t *testing.T) {
+// rate of 1.75 on each copy owned, when the save is loaded.
+func TestWallSave_NextStorageCopyIsOnTheNewCurve(t *testing.T) {
 	ge := wallFixtureView(t)
 	var key string
 	for _, d := range ge.rules.Buildings() {
@@ -216,11 +215,6 @@ func TestWallSave_NextStorageCopyIsOnTheNewCurveAndFits(t *testing.T) {
 	for res, p := range next {
 		if ratio := p / prev[res]; math.Abs(ratio-config.StorageRate) > 1e-6 {
 			t.Errorf("%s: copy %d costs %v of %s, copy %d %v: a ratio of %v, want %v", key, n+1, p, res, n, prev[res], ratio, config.StorageRate)
-		}
-	}
-	for res, amount := range next {
-		if store := ge.Resources.GetStorage(res); store < amount {
-			t.Errorf("next %s costs %v %s but store holds %v", key, amount, res, store)
 		}
 	}
 }

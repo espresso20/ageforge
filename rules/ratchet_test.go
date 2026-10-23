@@ -45,7 +45,7 @@ var pureConfig = map[string]bool{
 	"DefenseMitigation": true, "AgeThreatAt": true,
 	"MilitaryScales": true, "MilitaryScaleIn": true, "MissionDifficulty": true,
 	"MissionKindTuning": true, "MissionKinds": true, "MissionBoardLongestMinutes": true,
-	"TypicalStorages": true, "MissionBadgeKey": true, "MissionKindWord": true,
+	"MissionBadgeKey": true, "MissionKindWord": true,
 	"DurationText": true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,
 	"PickLogFlavor": true, "LogFlavorMoments": true,
 	"PriceLevelsByAge": true, "Incomes": true, "FlowDealLevels": true,

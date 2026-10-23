@@ -115,9 +115,6 @@ type Set struct {
 	built       map[string]map[string]float64
 	flowStaffed map[string]map[string]float64
 	military    []config.MilitaryScaleDef // by age order
-	typStore    map[string]map[string]float64
-	refSize     map[string]float64 // what a copy of each storage building held (the reference store)
-	refStore    map[string]float64 // the reference store on leaving each age
 	// refArmy is the soldiers the reference town has at its posts at the end
 	// of each age (config.RefSoldiers), by age key.
 	refArmy map[string]float64
@@ -636,6 +633,16 @@ func (s *Set) EraEvents() []config.EventDef { return slices.Clone(s.eraEvents) }
 
 // EventMap returns a map of every event by key, the era ones included.
 func (s *Set) EventMap() map[string]config.EventDef { return maps.Clone(s.eventByKey) }
+
+// AwakeningByKey returns an awakening by its key.
+func (s *Set) AwakeningByKey(key string) (config.AwakeningDef, bool) {
+	for _, a := range s.awakenings {
+		if a.Key == key {
+			return a, true
+		}
+	}
+	return config.AwakeningDef{}, false
+}
 
 // GoodEraEvents returns the good events an era's entry can roll.
 func (s *Set) GoodEraEvents() []config.EpochEventDef { return slices.Clone(s.goodEvents) }

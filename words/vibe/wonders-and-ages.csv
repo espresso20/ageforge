@@ -1,0 +1,396 @@
+id,text
+age.primitive_age.name,Touch Grass Age
+age.primitive_age.description,"Survival mode, no cap. Just your hands and whatever wits you packed."
+age.primitive_age.quip,"Fire: discovered, slay. Fingers: regrettably discovered too, sis."
+age.stone_age.name,Rock Stan Age
+age.stone_age.description,"Stone tools and the first camps that actually stayed put, we're settling fr."
+age.stone_age.quip,"Turns out you can hit almost anything with a rock. Revolutionary, and a whole W."
+age.bronze_age.name,Glow-Up Age
+age.bronze_age.description,"Metalwork finally shows up, and trade tags along like a plus one."
+age.bronze_age.quip,"Things are about to get way less wooden, and that's a W."
+age.iron_age.name,Sharp Drip Age
+age.iron_age.description,"Iron tools and weapons spread, and the drip is undeniable, fr."
+age.iron_age.quip,"Harder, sharper, and way more likely to end a beef permanently, no cap."
+age.classical_age.name,Big Brain Age
+age.classical_age.description,"Huge empires get built and philosophy absolutely flourishes, we're so cultured."
+age.classical_age.quip,Everyone suddenly has main character opinions on columns and the meaning of life.
+age.medieval_age.name,Lore Dump Age
+age.medieval_age.description,"Kingdoms pop off and feudalism locks in, respectfully."
+age.medieval_age.quip,"A golden age, if you were lucky enough to be born golden. Everyone else was an NPC."
+age.renaissance_age.name,Aesthetic Age
+age.renaissance_age.description,"Art, science and exploration all flourish, and the aesthetic is immaculate."
+age.renaissance_age.quip,"Everyone's a painter, a scientist, and a poet now. Productivity got ratioed."
+age.colonial_age.name,Passport Age
+age.colonial_age.description,"Exploration and trade stretch across the globe, the wanderlust is unmatched."
+age.colonial_age.quip,"You discover lands that were, awkwardly, already discovered. The locals are NOT here for it."
+age.industrial_age.name,Smoke Szn Age
+age.industrial_age.description,"Machines take over production, and the output is giving unstoppable."
+age.industrial_age.quip,"Smoke everywhere, hours endless, output bussin. Two out of three, not bad."
+age.victorian_age.name,Tea Spill Age
+age.victorian_age.description,"Steam and innovation drive progress, and everyone is spilling the tea about it."
+age.victorian_age.quip,"Progress, propriety, and a heroic amount of repressed feelings. The ick is strong."
+age.electric_age.name,Lit Age
+age.electric_age.description,"Electric light and power finally reach daily life, no more sus candles."
+age.electric_age.quip,"Lightning, house-trained. The dark is now strictly optional, slay."
+age.atomic_age.name,Kaboom Age
+age.atomic_age.description,"Nuclear power, for better and for worse, it's giving high stakes."
+age.atomic_age.quip,"You split the atom. The atom is taking it so personally, big mad."
+age.modern_age.name,Doomscroll Age
+age.modern_age.description,"Technology and innovation define the whole era, and we are all scrolling through it."
+age.modern_age.quip,"Everything is connected now, which seemed like a W at the time. Oops."
+age.information_age.name,Group Chat Age
+age.information_age.description,Every corner of the world is in the group chat now.
+age.information_age.quip,"All human knowledge, and the main use is starting beef in the replies. Mid."
+age.digital_age.name,Upload Age
+age.digital_age.description,"Every bit of civilization is digitized now, and the cloud is holding the bag."
+age.digital_age.quip,"Civilization has been uploaded successfully. Pls do not close this window, sis."
+age.cyberpunk_age.name,Cyber Baddie Age
+age.cyberpunk_age.description,"Neon lights and cyber upgrades, the glow is loud and the chrome is clean."
+age.cyberpunk_age.quip,"High tech, low life, and a concerning number of replacement arms, it's giving chaos."
+age.fusion_age.name,Sun Mode Age
+age.fusion_age.description,"Fusion brings clean, plentiful energy, and the power bill is finally bussin."
+age.fusion_age.quip,"Endless clean power at last, just forty years later than promised. Mid timing, W result."
+age.space_age.name,Space Rizz Age
+age.space_age.description,"Orbital expansion begins, and the sky is officially not the limit."
+age.space_age.quip,"Space: vast, silent, and now absolutely covered in your trash. Touch grass, orbit edition."
+age.interstellar_age.name,Star Hop Age
+age.interstellar_age.description,"Ships hop across the gaps between stars, the commute is giving sci-fi."
+age.interstellar_age.quip,"Nearest neighbor: four light-years away. Finally, some peace, no notes."
+age.galactic_age.name,Galaxy Brain Age
+age.galactic_age.description,"Galactic civilization spans the whole cosmos, big main character energy."
+age.galactic_age.quip,"An empire too big to govern and too far away to feel real, it's giving unbothered."
+age.quantum_age.name,Quantum Vibes Age
+age.quantum_age.description,"Reality bends to quantum mastery, and it's bending hard, no shot."
+age.quantum_age.quip,"Whether you've entered it is technically both, so you're in and out, delulu."
+age.transcendent_age.name,Final Boss Age
+age.transcendent_age.description,"Last age, no cap. There's nowhere further to go, so enjoy the view."
+age.transcendent_age.quip,"You became everything. It's way quieter than the brochure promised, not gonna lie."
+building.sacred_grove.flavor,"First thing your squad ever agreed on: do not set this on fire, bruh."
+building.great_monolith.flavor,"One huge rock, stacked by a crew that is no longer on speaking terms, big beef energy."
+building.stonehenge.flavor,"A calendar, a temple, or a very committed prank. History is being sus about it."
+building.colosseum.flavor,"Mass entertainment, and the show is mostly other people's bad day. Iconic, but we don't talk about it."
+building.parthenon.flavor,"Perfect proportions from people who refused to round anything, the perfectionist era is undefeated."
+building.great_library.flavor,"Every book worth having, guarded by librarians giving don't touch me energy."
+building.sistine_chapel.flavor,"A ceiling so magnificent everyone leaves with a sore neck and a renewed faith, slay."
+building.grand_lighthouse.flavor,"Light tower warning sailors about the rocks and the harbor's prices, big ick for the boats."
+building.crystal_palace.flavor,"A whole building made of glass and pure confidence, daring the weather to say something."
+building.eiffel_tower.flavor,"Locals called it an eyesore, then figured out the ticket booth. Sus, but a W."
+building.hoover_dam.flavor,"We told a whole river to chill, and it actually listened, the manifesting is real."
+building.particle_accelerator.flavor,"We smash the tiniest things together to find tinier things to smash, unhinged cycle."
+building.space_program.flavor,"We strap people onto a controlled explosion and call it exploring, the bravery is unhinged."
+building.global_network.flavor,"We linked every mind on the planet. Earth has notes, and they are all in the replies."
+building.world_simulation.flavor,"We simulated a whole world. It hasn't clocked us yet, probably. We think."
+building.neon_citadel.flavor,"A fortress of light and chrome, main character from far away, bank account drain up close."
+building.stellar_cradle.flavor,"Learning to grow stars over here. The hubris is, frankly, bussin, and we're not sorry."
+building.dyson_scaffold.flavor,"First scaffolding for a thing meant to swallow a star whole. Early days, bestie, early days."
+building.warp_nexus.flavor,"A gateway that folds the galaxy together, built by people who are so done with commuting."
+building.cosmic_beacon.flavor,"Shouting at the cosmos that we exist, which was maybe a bit premature, lowkey messy."
+building.reality_anchor.flavor,"Only thing keeping the universe from drifting off mid-sentence. Do NOT lean on it, sis."
+building.singularity_core.flavor,"Heart of everything you've become, humming at a frequency the universe finds extremely sus."
+building.sacred_grove.name,Vibe Grove
+building.sacred_grove.description,"An old clearing where nature's power flows, and it's giving quiet luxury."
+building.great_monolith.name,Big Rock Energy
+building.great_monolith.description,"A towering stone pillar you can spot for miles, main character pose locked in."
+building.stonehenge.name,Rock Circle
+building.stonehenge.description,"Massive stone circle lined up with the cosmos, the alignment is giving destiny."
+building.colosseum.name,Hype Arena
+building.colosseum.description,"Grand arena of blood and glory, the original hype house."
+building.parthenon.name,Marble Mood
+building.parthenon.description,"Perfect temple of marble and wisdom, zero flaws, just vibes."
+building.great_library.name,Big Brain Hub
+building.great_library.description,"Storage unit for all knowledge, big brain energy, no cap."
+building.sistine_chapel.name,Ceiling Glow-Up
+building.sistine_chapel.description,"Ceiling painted by divine hands, art so clean it hurts."
+building.grand_lighthouse.name,Main Beacon
+building.grand_lighthouse.description,"Beacon you can see across oceans, the main character light show."
+building.crystal_palace.name,Glass Hype House
+building.crystal_palace.description,"Glass cathedral of industry, the aesthetic is giving bougie."
+building.eiffel_tower.name,Iron Icon
+building.eiffel_tower.description,"Iron monument poking the sky, very unbothered."
+building.hoover_dam.name,Dam Bestie
+building.hoover_dam.description,"Taming a river to power a whole nation, very main character."
+building.particle_accelerator.name,Atom Smasher
+building.particle_accelerator.description,"Smashes atoms for science, which is somehow both chill and unhinged."
+building.space_program.name,Rocket Rizz
+building.space_program.description,"Reaching for the stars, and not even pretending to be chill about it."
+building.global_network.name,Global Group Chat
+building.global_network.description,"Every mind connected, and the notifications never sleep."
+building.world_simulation.name,Sim Life Sandbox
+building.world_simulation.description,"A digital twin of reality itself, and reality is not sure how it feels."
+building.neon_citadel.name,Neon Clubhouse
+building.neon_citadel.description,"A city inside a city, lit by neon that never clocks out."
+building.stellar_cradle.name,Star Nursery
+building.stellar_cradle.description,"Mini star harnessed for power, cute but lowkey terrifying."
+building.dyson_scaffold.name,Sphere Starter Kit
+building.dyson_scaffold.description,"Framework for a Dyson sphere, the blueprint is serious and the hype is real."
+building.warp_nexus.name,Shortcut Nexus
+building.warp_nexus.description,"Hub of faster-than-light corridors, speedrun energy is unmatched."
+building.cosmic_beacon.name,Cosmic Ping
+building.cosmic_beacon.description,"A signal fire across the galaxy, big flare energy."
+building.reality_anchor.name,Reality Check
+building.reality_anchor.description,"Stabilizes reality across dimensions, the stability arc is real."
+building.singularity_core.name,Max Rizz Core
+building.singularity_core.description,"Final wonder of the whole vibe, and it knows its worth."
+era.stone_era.name,Rock Bottom Era
+era.stone_era.description,"Humanity took its first steps with wood, stone and fire, starter pack energy."
+era.iron_era.name,Hard Mode Era
+era.iron_era.description,"Empires of iron and faith rise and fall, so much main character drama."
+era.steel_era.name,Flex Era
+era.steel_era.description,"Steam and steel carry trade around the globe, the logistics are bussin."
+era.electric_era.name,Power Up Era
+era.electric_era.description,"Electricity and the atom reshape civilization, no notes, full remodel."
+era.digital_era.name,Main Feed Era
+era.digital_era.description,"Data becomes the thing everyone is chasing, and everyone wants a piece."
+era.neon_era.name,Neon Drip Era
+era.neon_era.description,"Augmented reality and a takeover of the solar system, sci-fi vacation vibes."
+era.cosmic_era.name,Starry Eyed Era
+era.cosmic_era.description,"Between the stars and beyond time itself, the cosmic lore is unhinged."
+resource.food.name,Snacks
+resource.food.description,"Feeds your whole population, and the snack bar never closes."
+resource.wood.name,Sticks
+resource.wood.description,"Basic building material, lowkey the backbone of the whole vibe."
+resource.faith.name,Good Vibes
+resource.faith.description,"Spiritual influence, and it's giving divine. Faith income raises morale, and morale is literally bussin."
+resource.stone.name,Rocks
+resource.stone.description,"Durable building material, built different and unbothered."
+resource.iron.name,Hard Metal
+resource.iron.description,"Metal for tools and weapons, hard mode all the way."
+resource.gold.name,Bling
+resource.gold.description,"Currency and trade, the bag is always the main focus."
+resource.coal.name,Hot Rocks
+resource.coal.description,"Fuel for smelting and industry, lit and very hot, no cap."
+resource.marble.name,Bougie Rocks
+resource.marble.description,"Polished stone from quarries, aesthetic on purpose and zero apologies."
+resource.iron_ore.name,Sus Ore
+resource.iron_ore.description,"Raw iron ore from mines and quarries, lowkey sus but it's the starter pack."
+resource.steel.name,Flex Metal
+resource.steel.description,"Refined metal for advanced construction, the buildings get the full glow-up."
+resource.culture.name,Clout
+resource.culture.description,"Art and cultural influence. Spent on monuments, festivals and appeasing harbingers, the clout is real."
+resource.oil.name,Crude
+resource.oil.description,"Fuel for machines and industry, crude but it slaps."
+resource.electricity.name,Zap Juice
+resource.electricity.description,"Powers modern infrastructure, the grid is giving main character."
+resource.uranium.name,Glow Rocks
+resource.uranium.description,"Radioactive fuel for reactors, glowing hard, maybe a little too much rizz."
+resource.data.name,Tea
+resource.data.description,"Digital information and analytics, the tea is hot and the receipts are attached."
+resource.nanobots.name,Tiny Bots
+resource.nanobots.description,"Microscopic machines, made by the Nano Foundry in the Doomscroll Age, tiny but mighty."
+resource.titanium_ore.name,Feather Ore
+resource.titanium_ore.description,"Raw titanium ore from mines, light as a feather but tough as a boss."
+resource.crypto.name,Meme Coin
+resource.crypto.description,"Decentralized digital currency, no bank, pure chaos."
+resource.dark_matter_crystals.name,Void Gems
+resource.dark_matter_crystals.description,"Crystallized dark matter from deep mines, the vibes are void and the gems are real."
+resource.plasma.name,Spicy Gas
+resource.plasma.description,"Superheated ionized gas for energy, spicy on purpose."
+resource.titanium.name,Featherweight
+resource.titanium.description,"Lightweight metal for space construction, so light it's almost unfair."
+resource.dark_matter.name,Void Vibes
+resource.dark_matter.description,"Exotic matter for warp technology, a bit sus but it's the only speedrun route."
+resource.antimatter.name,Evil Twin
+resource.antimatter.description,"Annihilation fuel for megastructures, the cleanup crew is cooked."
+resource.quantum_flux.name,Maybe Energy
+resource.quantum_flux.description,"Unstable quantum energy for reality manipulation, the vibes are chaotic and we love that."
+worker_class.food.primitive_age,Berry Goblin
+worker_class.food.stone_age,Crop Queen
+worker_class.food.bronze_age,Plant Parent
+worker_class.food.iron_age,Clock Puncher
+worker_class.food.classical_age,Peasant Core
+worker_class.food.medieval_age,Glow Serf
+worker_class.food.renaissance_age,Plow Boss
+worker_class.food.colonial_age,Land Boss
+worker_class.food.industrial_age,Assembly Gremlin
+worker_class.food.victorian_age,Field Goblin
+worker_class.food.electric_age,Juice Farmer
+worker_class.food.atomic_age,Glow Farmer
+worker_class.food.modern_age,Oat Milk Farmer
+worker_class.food.information_age,Pixel Grower
+worker_class.food.digital_age,Bot Gardener
+worker_class.food.cyberpunk_age,Chrome Picker
+worker_class.food.fusion_age,Bio Bestie
+worker_class.food.space_age,Floaty Farmer
+worker_class.food.interstellar_age,Star Gardener
+worker_class.food.galactic_age,Galaxy Grower
+worker_class.food.quantum_age,Maybe Picker
+worker_class.lumber.stone_age,Stick Stan
+worker_class.lumber.bronze_age,Timber Bro
+worker_class.lumber.iron_age,Plaid Aesthetic
+worker_class.lumber.classical_age,Sawdust Sis
+worker_class.lumber.medieval_age,Forest Nerd
+worker_class.lumber.renaissance_age,Aesthetic Logger
+worker_class.lumber.colonial_age,Mill Gremlin
+worker_class.lumber.industrial_age,Hot Rock Digger
+worker_class.lumber.victorian_age,Steam Bro
+worker_class.lumber.electric_age,Zap Ranger
+worker_class.lumber.atomic_age,Fuel Tapper
+worker_class.lumber.modern_age,Crude Gremlin
+worker_class.lumber.information_age,Byte Ranger
+worker_class.lumber.digital_age,Gene Picker
+worker_class.lumber.cyberpunk_age,Tiny Wrangler
+worker_class.lumber.fusion_age,Green Techie
+worker_class.lumber.space_age,Aura Farmer
+worker_class.lumber.interstellar_age,Maybe Digger
+worker_class.lumber.galactic_age,Star Ranger
+worker_class.lumber.quantum_age,Void Digger
+worker_class.masonry.stone_age,Rock Bro
+worker_class.masonry.bronze_age,Slab Sculptor
+worker_class.masonry.iron_age,Dig Goblin
+worker_class.masonry.classical_age,Hard Metal Digger
+worker_class.masonry.medieval_age,Lore Digger
+worker_class.masonry.renaissance_age,Marble Artist
+worker_class.masonry.colonial_age,Claim Jumper
+worker_class.masonry.industrial_age,Soot Digger
+worker_class.masonry.victorian_age,Proper Mason
+worker_class.masonry.electric_age,Spark Digger
+worker_class.masonry.atomic_age,Glow Digger
+worker_class.masonry.modern_age,Rock Nerd
+worker_class.masonry.information_age,Laser Miner
+worker_class.masonry.digital_age,Pixel Digger
+worker_class.masonry.cyberpunk_age,Neon Miner
+worker_class.masonry.fusion_age,Spicy Driller
+worker_class.masonry.space_age,Moon Digger
+worker_class.masonry.interstellar_age,Rock Surfer
+worker_class.masonry.galactic_age,Void Scooper
+worker_class.masonry.quantum_age,Gem Stan
+worker_class.knowledge.primitive_age,Vibe Healer
+worker_class.knowledge.stone_age,Wise Auntie
+worker_class.knowledge.bronze_age,Note Taker
+worker_class.knowledge.iron_age,Brainiac
+worker_class.knowledge.classical_age,Overthinker
+worker_class.knowledge.medieval_age,Cloak Bro
+worker_class.knowledge.renaissance_age,Study Mode
+worker_class.knowledge.colonial_age,Bird Nerd
+worker_class.knowledge.industrial_age,Gadget Nerd
+worker_class.knowledge.victorian_age,Tea Scholar
+worker_class.knowledge.electric_age,Lab Bae
+worker_class.knowledge.atomic_age,Glow Nerd
+worker_class.knowledge.modern_age,Reply Guy
+worker_class.knowledge.information_age,Chart Nerd
+worker_class.knowledge.digital_age,Bot Whisperer
+worker_class.knowledge.cyberpunk_age,Cyber Nerd
+worker_class.knowledge.fusion_age,Sun Brain
+worker_class.knowledge.space_age,Orbit Nerd
+worker_class.knowledge.interstellar_age,Star Brain
+worker_class.knowledge.galactic_age,Galaxy Brain
+worker_class.knowledge.quantum_age,Wave Theorist
+worker_class.faith.primitive_age,Holy Bestie
+worker_class.faith.stone_age,True Believer
+worker_class.faith.bronze_age,Prayer Hands
+worker_class.faith.iron_age,Hype Priest
+worker_class.faith.classical_age,Rookie Mystic
+worker_class.faith.medieval_age,Candle Stan
+worker_class.faith.renaissance_age,Zen Mode
+worker_class.faith.colonial_age,Gospel Hype
+worker_class.faith.industrial_age,Revival Rizz
+worker_class.faith.victorian_age,Parish Icon
+worker_class.faith.electric_age,Loud Preacher
+worker_class.faith.atomic_age,Glowing Prophet
+worker_class.faith.modern_age,Sheep Influencer
+worker_class.faith.information_age,Online Mystic
+worker_class.faith.digital_age,Virtual Saint
+worker_class.faith.cyberpunk_age,Neon Saint
+worker_class.faith.fusion_age,Spicy Prophet
+worker_class.faith.space_age,Star Hype Man
+worker_class.faith.interstellar_age,Cosmic Guru
+worker_class.faith.galactic_age,Galaxy Head Honcho
+worker_class.faith.quantum_age,Mood Sage
+worker_class.military.iron_age,Grunt Bro
+worker_class.military.classical_age,Toga Bro
+worker_class.military.medieval_age,Sir Hype
+worker_class.military.renaissance_age,Pew Pew Bro
+worker_class.military.colonial_age,Sandy Marine
+worker_class.military.industrial_age,Sharpshooter Bro
+worker_class.military.victorian_age,Tea Guard
+worker_class.military.electric_age,Zap Trooper
+worker_class.military.atomic_age,Boom Soldier
+worker_class.military.modern_age,Drone Bro
+worker_class.military.information_age,Keyboard Warrior
+worker_class.military.digital_age,Byte Soldier
+worker_class.military.cyberpunk_age,Chrome Warrior
+worker_class.military.fusion_age,Spicy Trooper
+worker_class.military.space_age,Star Bouncer
+worker_class.military.interstellar_age,Warp Captain
+worker_class.military.galactic_age,Cosmic Bodyguard
+worker_class.military.quantum_age,Maybe Soldier
+worker_class.trade.bronze_age,Hype Hawker
+worker_class.trade.iron_age,Deal Maker
+worker_class.trade.classical_age,Flipper
+worker_class.trade.medieval_age,Old Money
+worker_class.trade.renaissance_age,Bag Holder
+worker_class.trade.colonial_age,Export Hustler
+worker_class.trade.industrial_age,Tycoon Bro
+worker_class.trade.victorian_age,Tea Flipper
+worker_class.trade.electric_age,Power Broker
+worker_class.trade.atomic_age,Meltdown Trader
+worker_class.trade.modern_age,Slide Deck Bro
+worker_class.trade.information_age,Click Flipper
+worker_class.trade.digital_age,Hodl Bro
+worker_class.trade.cyberpunk_age,Gadget Dealer
+worker_class.trade.fusion_age,Sauce Merchant
+worker_class.trade.space_age,Star Haggler
+worker_class.trade.interstellar_age,Wormhole Broker
+worker_class.trade.galactic_age,Cosmic Hustler
+worker_class.trade.quantum_age,Maybe Dealer
+worker_class.engineering.bronze_age,Intern Energy
+worker_class.engineering.iron_age,Maker Bro
+worker_class.engineering.classical_age,Crafty Bae
+worker_class.engineering.medieval_age,Builder Bro
+worker_class.engineering.renaissance_age,Big Brain Builder
+worker_class.engineering.colonial_age,Wrench Wizard
+worker_class.engineering.industrial_age,Gear Head
+worker_class.engineering.victorian_age,Tinker Mom
+worker_class.engineering.electric_age,Volt Wizard
+worker_class.engineering.atomic_age,Reactor Bro
+worker_class.engineering.modern_age,Flowchart Bro
+worker_class.engineering.information_age,Ship It Bro
+worker_class.engineering.digital_age,Robo Bae
+worker_class.engineering.cyberpunk_age,Glitch Builder
+worker_class.engineering.fusion_age,Sauce Engineer
+worker_class.engineering.space_age,Orbit Builder
+worker_class.engineering.interstellar_age,Portal Plumber
+worker_class.engineering.galactic_age,Galaxy Builder
+worker_class.engineering.quantum_age,Shrug Engineer
+worker_class.metallurgy.iron_age,Forge Bae
+worker_class.metallurgy.classical_age,Metal Bro
+worker_class.metallurgy.medieval_age,Lore Smith
+worker_class.metallurgy.renaissance_age,Aesthetic Smelter
+worker_class.metallurgy.colonial_age,Foundry Boss
+worker_class.metallurgy.industrial_age,Overtime Bro
+worker_class.metallurgy.victorian_age,Puff Smelter
+worker_class.metallurgy.electric_age,Zap Smelter
+worker_class.metallurgy.atomic_age,Kaboom Nerd
+worker_class.metallurgy.modern_age,Trendy Smelter
+worker_class.metallurgy.information_age,Cloud Foundry Bro
+worker_class.metallurgy.digital_age,Byte Smelter
+worker_class.metallurgy.cyberpunk_age,Neon Forger
+worker_class.metallurgy.fusion_age,Spicy Metal Nerd
+worker_class.metallurgy.space_age,Starlight Smelter
+worker_class.metallurgy.interstellar_age,Sun Smelter
+worker_class.metallurgy.galactic_age,Galaxy Metal Nerd
+worker_class.metallurgy.quantum_age,Wobbly Smelter
+worker_class.energy.victorian_age,Coal Crew
+worker_class.energy.electric_age,Power Bro
+worker_class.energy.atomic_age,Reactor Nerd
+worker_class.energy.modern_age,Watt Boss
+worker_class.energy.information_age,Grid Mom
+worker_class.energy.digital_age,Cloud Power Boss
+worker_class.energy.cyberpunk_age,Neon Juice Bro
+worker_class.energy.fusion_age,Sunshine Tech
+worker_class.energy.space_age,Sunny Builder
+worker_class.energy.interstellar_age,Void Juice Bro
+worker_class.energy.galactic_age,Evil Twin Expert
+worker_class.energy.quantum_age,Zero Stress Engineer
+worker_class.hacker.information_age,Script Newbie
+worker_class.hacker.digital_age,Vibe Coder
+worker_class.hacker.cyberpunk_age,Sus Hacker
+worker_class.hacker.fusion_age,Prompt Hacker
+worker_class.hacker.space_age,Sky Hacker
+worker_class.hacker.interstellar_age,Warp Netrunner
+worker_class.hacker.galactic_age,Cosmic Hacker
+worker_class.hacker.quantum_age,Glitch Witch
+worker_class.astronaut.space_age,Space Cadet
+worker_class.astronaut.interstellar_age,Hyperdrive Bro
+worker_class.astronaut.galactic_age,Galaxy Tourist
+worker_class.astronaut.quantum_age,Maybe Astronaut

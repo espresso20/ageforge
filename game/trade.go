@@ -275,7 +275,6 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 
 				// Add imports
-				promised, took := map[string]float64{}, map[string]float64{}
 				for res, actual := range imports {
 					if res == config.ResearchTarget {
 						if research != nil {
@@ -285,14 +284,8 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 						}
 						continue
 					}
-					before := resources.Get(res)
 					resources.Add(res, actual)
-					promised[res], took[res] = actual, resources.Get(res)-before
-					tm.totalImported[res] += took[res]
-				}
-				// A cycle a full store cut short says what fit.
-				if line := clippedLine(promised, took); line != "" {
-					messages = append(messages, line)
+					tm.totalImported[res] += actual
 				}
 
 				route.CyclesDone++

@@ -85,6 +85,13 @@ type MissionOffer struct {
 	// offer's pin there and labels it.
 	Place       string `json:"place,omitempty"`
 	Description string `json:"description"`
+	// Words are the words the three texts above were drawn from, by place in
+	// their age's lists. An offer the game made holds them, and a save holds
+	// them in place of the texts, so what a save says does not depend on the
+	// script the game was read in (VibeMode); draw writes the texts again
+	// from the words of the script in force. An offer with no Words is
+	// written by hand (a test's) and its texts are what they are.
+	Words OfferWords `json:"words,omitzero"`
 	// LengthMinutes, SuccessChance and HaulMinutes are the rolls. The haul is
 	// in minutes of the town's income; the resources are worked out at launch.
 	LengthMinutes float64 `json:"length_minutes"`
@@ -93,6 +100,61 @@ type MissionOffer struct {
 	// Rare marks a Legendary offer.
 	Rare        bool `json:"rare,omitempty"`
 	ExpiresTick int  `json:"expires_tick,omitempty"`
+}
+
+// OfferWords are the indices an offer's texts were drawn at in its age's
+// MissionWords: the objective of its tier, the place and the twist.
+type OfferWords struct {
+	// Made is set on the words of an offer the game made.
+	Made      bool `json:"made"`
+	Objective int  `json:"objective"`
+	Place     int  `json:"place"`
+	Twist     int  `json:"twist"`
+	// Found, when not 0, is 1 and the place of the mission that found this
+	// offer by the road (a ruins offer): its description names that place.
+	Found int `json:"found,omitempty"`
+}
+
+// ruinsFound is what a ruins offer's description says before the place.
+const ruinsFound = "Found by this mission near the ruins at "
+
+// wordAt is list[i], with an index a hand-edited save may have put out of range
+// brought back into it.
+func wordAt(list []string, i int) string {
+	if len(list) == 0 {
+		return ""
+	}
+	return list[((i%len(list))+len(list))%len(list)]
+}
+
+// draw writes the offer's Title, Place and Description from its Words, in the
+// words of the script in force. An offer with no Words is left as it is.
+func (o *MissionOffer) draw(words config.MissionWords) {
+	w := o.Words
+	if !w.Made {
+		return
+	}
+	which := o.wordsKind()
+	objectives := words.ObjectivesFor(which)
+	place := wordAt(words.Places[:], w.Place)
+	o.Place = place
+	o.Title = fmt.Sprintf("%s: %s %s", words.Tiers[which], wordAt(objectives[:], w.Objective), place)
+	if o.Rare {
+		o.Title = config.RareTitleWord + " " + o.Title
+	}
+	o.Description = wordAt(words.Twists[:], w.Twist)
+	if w.Found > 0 {
+		o.Description = ruinsFound + wordAt(words.Places[:], w.Found-1) + "."
+	}
+}
+
+// forSave is the offer as a save holds it: the words it was drawn from and
+// none of the texts drawn.
+func (o MissionOffer) forSave() MissionOffer {
+	if o.Words.Made {
+		o.Title, o.Place, o.Description = "", "", ""
+	}
+	return o
 }
 
 // Military reports whether the offer is a military grand mission: the only
@@ -183,13 +245,15 @@ func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier
 			offer.Grand, which = GrandCivil, config.WordsGrandCivil
 		}
 	}
-	name, objectives := words.Tiers[which], words.ObjectivesFor(which)
+	objectives := words.ObjectivesFor(which)
 	offer.Rare = b.rollRare(rng, rareFactor)
-	objective := objectives[rng.Intn(len(objectives))]
-	place := words.Places[rng.Intn(len(words.Places))]
-	offer.Description = words.Twists[rng.Intn(len(words.Twists))]
-	offer.Title = fmt.Sprintf("%s: %s %s", name, objective, place)
-	offer.Place = place
+	offer.Words = OfferWords{
+		Made:      true,
+		Objective: rng.Intn(len(objectives)),
+		Place:     rng.Intn(len(words.Places)),
+		Twist:     rng.Intn(len(words.Twists)),
+	}
+	offer.draw(words)
 
 	tuning, _ := config.MissionKindTuning(offer.Kind())
 	base := tuning.BaseSuccess
@@ -204,7 +268,6 @@ func (b *MissionBoard) makeOffer(rng *rand.Rand, words config.MissionWords, tier
 		length *= config.RareLengthFactor
 		success = math.Max(config.RareSuccessFloor, success-config.RareSuccessCut)
 		haul *= config.RareHaulFactor
-		offer.Title = config.RareTitleWord + " " + offer.Title
 	}
 	offer.LengthMinutes, offer.SuccessChance, offer.HaulMinutes = length, success, haul
 	return offer

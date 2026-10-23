@@ -1,3 +1,344 @@
 id,text
 event.bountiful_harvest.name,Harvest Drop
 event.bountiful_harvest.log,"The harvest came in fat and early, no notes."
+awakening.awakening_pottery_mastery.name,Pottery Core Unlocked
+awakening.awakening_pottery_mastery.text,"Clay bends to your patience, it's giving craft. Sealed pots keep the harvest alive through the lean months, and the surplus is actually staying, no cap. Food +1/tick, stone +0.5/tick for {dur}."
+awakening.awakening_metallurgy.name,Metal Hits Different
+awakening.awakening_metallurgy.text,"This forge runs hotter than any fire before it, and the smiths are cooked trying to smelt fast enough. Iron +2/tick for {dur}, no cap."
+awakening.awakening_steam_breakthrough.name,Steam Plot Twist
+awakening.awakening_steam_breakthrough.text,"First steam engine coughs, catches, and absolutely roars, it slaps. All production +25% for {dur}."
+awakening.awakening_electrification.name,Grid Woke Up Bussin
+awakening.awakening_electrification.text,"Grid is humming to life, lamps lighting up the skyline, and the machines are on the night shift, no cap. Electricity +2/tick and all production +10% for {dur}."
+awakening.awakening_information_age.name,Networks Woke Up
+awakening.awakening_information_age.text,"Knowledge is officially not scarce anymore, it's giving open source. Networks are live, archives are unlocked, fr. Data +2/tick, research +1/tick for {dur}."
+awakening.awakening_cybernetic.name,Cyber Glow-Up Arc
+awakening.awakening_cybernetic.text,"Flesh and circuits finally got along, and the augmented crews never get tired, they're built different. All production +20% for {dur}."
+awakening.awakening_first_contact.name,Alien Signal Just Dropped
+awakening.awakening_first_contact.text,"Pattern alert: it's threading through the static, too regular to be noise and too sus to be ours. Your engineers can't stop listening. Dark matter +1.5/tick and all production +10% for {dur}."
+era_event.age_of_plenty.name,Maximum Plenty Era
+era_event.age_of_plenty.text,"Harvests are overflowing, the rivers are crystal clear, and everything is printing money. All production +100% for {dur}."
+era_event.population_surge.name,Population Glow-Up
+era_event.population_surge.text,Plenty went viral and a whole generation of new hands is pouring in. Your population grows by 15%.
+era_event.ancient_cache.name,Ancient Stash Drop
+era_event.ancient_cache.text,"Explorers just cracked open a sealed vault of ancient stash. You get 15 minutes of what your town makes, for every resource, no cap."
+era_event.trade_winds.name,Trade Winds Era
+era_event.trade_winds.text,"Steady wind is filling the sails and they absolutely ATE. Gold production +50% for {dur}, slay."
+era_event.cultural_festival.name,Culture Fest Szn
+era_event.cultural_festival.text,"Grand festival has everyone together, and the vibes are immaculate. Culture +30% and faith +20% of what you hold, then culture production +50% and faith production +50% for {dur}."
+era_event.grand_discovery.name,Grand Discovery Drop
+era_event.grand_discovery.text,"Scholars are cooking up a breakthrough. Up to 3 techs you can research now are done for free, no cap."
+era_event.worker_innovation.name,Worker Glow-Up Era
+era_event.worker_innovation.text,"Workshops got a glow-up and a better way of working is spreading through them for good. All production +10%, permanently."
+era_event.architects_gift.name,Architect's Free Drop
+era_event.architects_gift.text,"Some master architect just gave away his designs, the goat. You get 10 free copies of the building you have the most of, no cap."
+era_event.peaceful_century.name,Chill Century Arc
+era_event.peaceful_century.text,Peace is in the air and nobody is starting beef. All production +20% for {dur}.
+era_event.epoch_blessing.name,Epoch Blessing Drop
+era_event.epoch_blessing.text,"The heavens are giving your civilization a wholesome glow-up. All production +15%, permanently."
+era_event.the_famine.name,Empty Fridge Era
+era_event.the_famine.text,"Crops are dead and the granaries are bone dry, we are so cooked. Food production -30% for {dur}."
+era_event.merchant_betrayal.name,Merchant Ghosted Us
+era_event.merchant_betrayal.text,"Your trade partners ghosted with 50% of your gold, the audacity. Gold production -30% for {dur}."
+era_event.the_great_fire.name,Great Fire Moment
+era_event.the_great_fire.text,Flames are sweeping the city and the vibes are cooked. Up to 8 buildings burn down.
+era_event.epidemic.name,Sicky Season
+era_event.epidemic.text,"A plague is bodying through your whole population. 20% of your workers die, and food production -20% for {dur}, that's rough."
+era_event.resource_drought.name,Supply Dry Spell
+era_event.resource_drought.text,Epoch's main building material is running low and it's giving scarcity energy. Its production -40% for {dur}.
+era_event.political_instability.name,Court Drama Szn
+era_event.political_instability.text,"Rival courts are going feral at the throne, the drama is unreal. You lose 60% of your faith, and research speed -30% for {dur}."
+era_event.economic_crash.name,Market Crashed Out
+era_event.economic_crash.text,"Markets just imploded, the bag is gone. You lose 50% of your gold, and gold production -40% for {dur}."
+era_event.the_dark_age.name,Dark Age Arc
+era_event.the_dark_age.text,"Your scholars went quiet. Current research got canceled and the work is gone, so research speed -40% for {dur}, we're so cooked."
+event.bountiful_harvest.description,"Harvest szn hit different. Bonus food just appeared and nobody asks why, you simply eat."
+event.wandering_traders.name,Traders Passing Thru
+event.wandering_traders.description,"Roaming merchants share their goods, and they smell like cabbage and pure opportunity, no cap."
+event.wandering_traders.log,"Wandering traders just pulled up, smelling like cabbage and opportunity, sheesh."
+event.gold_rush.name,Gold Rush Era
+event.gold_rush.description,"Gold deposits just got found, and half the workforce already rage-quit to dig holes."
+event.gold_rush.log,"Someone found gold in the creek and now everybody is a prospector, it's giving treasure hunter."
+event.skilled_immigrants.name,Skilled Newcomers Arc
+event.skilled_immigrants.description,"Skilled people are begging to join your civ, references and all, certified rizz."
+event.skilled_immigrants.log,"Skilled newcomers rolled up with strong opinions and even stronger résumés, they're extra."
+event.ancient_discovery.name,Ancient Lore Drop
+event.ancient_discovery.description,"Ancient ruins dropped forgotten knowledge, and one very smug skeleton is living rent-free."
+event.ancient_discovery.log,"Ruins older than memory finally spilled the tea, and one skull looks sus."
+event.trade_boom.name,Trade Glow Up
+event.trade_boom.description,"Trade is surging and gold is up, and the merchants are insufferable about it, 10/10 behavior."
+event.trade_boom.log,Trade is booming and the merchants won't stop yapping about it.
+event.drought.name,Dry Spell Szn
+event.drought.description,"It's dry out here and food is down bad. The rain dance was, in hindsight, very optimistic."
+event.drought.log,"No rain in weeks and the rain dance is not hitting, touch grass."
+event.plague.name,Plague Core
+event.plague.description,"Sickness is spreading through your population, and the local healer is recommending more leeches, it's giving unhinged."
+event.plague.log,"A plague is spreading and the healer's whole plan is, sus, more leeches."
+event.bandit_raid.name,Bandits Got Us
+event.bandit_raid.description,"Bandits pulled up, took the resources, and left a thank-you note. Somehow that's worse."
+event.bandit_raid.log,"Stores got absolutely cleared out by bandits who left a polite thank-you note, the audacity."
+event.storm.name,Chaos Storm
+event.storm.description,"This storm is wrecking wood gathering, and several roofs have decided to go exploring."
+event.storm.log,"Storm rolled in and took several roofs with it, the sky is so rude."
+event.mine_collapse.name,Shaft Got Cooked
+event.mine_collapse.description,"A mine just caved in, and the foreman is insisting the support beams were 'decorative anyway.' Delulu."
+event.mine_collapse.log,"Shaft caved in and the foreman is still claiming the beams were decorative, the delulu is real."
+event.heresy.name,Heresy Arc
+event.heresy.description,"Religious beef is draining faith, and someone started a rival sect in a nicer barn. Villain origin story."
+event.heresy.log,"Breakaway sect set up shop in a nicer barn and is poaching the whole congregation, rude."
+event.earthquake.name,Ground Glitched
+event.earthquake.description,"An earthquake just reshuffled the village, and the new layout is, honestly, mid."
+event.earthquake.log,"Ground shrugged and rearranged the whole village, but the cracks served up stone, a W."
+event.renaissance_fair.name,Ren Faire Side Quest
+event.renaissance_fair.description,"Culture fest is boosting culture and gold. There's a man juggling. Why is there a man juggling, no notes."
+event.renaissance_fair.log,"Festival broke out, complete with an unexplained juggler, and we're not asking."
+event.industrial_accident.name,Factory Fail Moment
+event.industrial_accident.description,"Factory accident. The safety poster is on fire and reminded everyone to be careful, lol."
+event.industrial_accident.log,"Something exploded that was not supposed to, and the 'Be Careful' poster is also cooked."
+event.colonial_windfall.name,Colonial Bag Drop
+event.colonial_windfall.description,"Colonial squad returned with treasure and a parrot with questionable vocabulary, lmao."
+event.colonial_windfall.log,"Expedition is back, rich and sunburnt, bringing a parrot nobody approved, feral."
+event.pirate_attack.name,Pirates Went Feral
+event.pirate_attack.description,"Pirates are raiding your trade routes, and sadly they're absolutely cracked at it."
+event.pirate_attack.log,"Pirates hit the trade lanes again, and they're dangerously professional, the sus energy."
+event.power_surge_base.name,Volts Went Brr
+event.power_surge_base.description,"Electric surge is running through the grid, and the lights are flickering in a way best described as 'enthusiastic.' Main character."
+event.power_surge_base.log,"Grid surged and the lights are flickering enthusiastically, it's giving chaos."
+event.nuclear_scare.name,Doomsday Vibe Check
+event.nuclear_scare.description,"Nuclear anxiety is tanking productivity. Everyone built a bunker, and nobody is in it working, so relatable."
+event.nuclear_scare.log,"Nuclear scare has the whole population spiraling, and every bunker is fully staffed, it's giving panic."
+event.data_breach.name,Data Got Yoinked
+event.data_breach.description,"Hackers yoinked your data reserves. The password was 'password.' It is always 'password.' Why, though."
+event.data_breach.log,"Hackers walked in the front door, and the password was 'password' again. I'm so done."
+event.crypto_boom.name,Crypto Moon Szn
+event.crypto_boom.description,"Crypto values are going to the moon, and your least useful worker is now a thought leader, delulu."
+event.crypto_boom.log,"Crypto mooned and your least competent worker is suddenly a visionary, the rizz is unreal."
+event.crypto_winter.name,Crypto Went Cold
+event.crypto_winter.description,"Crypto values dove in a flash crash, and the thought leader has gone very quiet, L."
+event.crypto_winter.log,"Overnight the bags went to zero and the thought leader stopped posting, we're so cooked."
+event.plasma_storm.name,Sun Went Feral
+event.plasma_storm.description,Solar plasma eruption is disrupting power but yields plasma. The sky is doing something sus.
+event.plasma_storm.log,"Sun threw a whole tantrum and the sky turned a concerning color, unhinged."
+event.first_contact.name,Aliens Said Hi
+event.first_contact.description,"Aliens are dropping knowledge, and they seem disappointed it took us this long. Yikes, fair."
+event.first_contact.log,"We're not alone, and the aliens look mildly disappointed in us, it's so over."
+event.dark_matter_rift.name,Dark Matter Tea Spill
+event.dark_matter_rift.description,"A spacetime rift is leaking dark matter, and the science team is catching it in buckets, iconic."
+event.dark_matter_rift.log,"Spacetime has a hole leaking dark matter and the team is catching it in buckets, feral."
+event.quantum_fluctuation.name,Quantum Mood Swing
+event.quantum_fluctuation.description,Reality is destabilizing for a sec but yields quantum flux. Tuesday happened twice and nobody was mad.
+event.quantum_fluctuation.log,"Reality glitched and Tuesday happened twice, and honestly, same."
+event.tribal_raid.name,Clan Drama Raid
+event.tribal_raid.description,"Rival clans pull up at night, yelling unhinged things. Honestly, the yelling is working."
+event.tribal_raid.log,"A rival clan raided in the dark, yelling nonstop. It works, and it's feral."
+event.sacred_grove_found.name,Vibing Grove
+event.sacred_grove_found.description,"Hunters found a grove that hums. They've decided it's holy, and honestly? They might be right."
+event.sacred_grove_found.log,"Grove hums when you stand in it, and the hunters declared it holy. Iconic."
+event.beast_stampede.name,Beast Chaos Hour
+event.beast_stampede.description,"Huge animals ran through the settlement at full speed. The fence had opinions, and the fence lost, rip."
+event.beast_stampede.log,"Enormous beasts stampeded straight through the fence, and the fence lost the debate, cooked."
+event.river_flooding.name,River Hits Different
+event.river_flooding.description,"River flooded and left rich silt everywhere, and the shaman is taking full credit, delulu."
+event.river_flooding.log,"Flood left the soil magnificent, and the shaman insists it was the plan all along."
+event.wandering_sage.name,Sage Side Quest
+event.wandering_sage.description,"An elder on the road trades wisdom for a warm fire and a captive audience, the lore is bussin."
+event.wandering_sage.log,"Old wanderer yapped for nine hours by the fire, and honestly, most of it was useful."
+event.iron_vein_strike.name,Iron Vein Jackpot
+event.iron_vein_strike.description,"Miners hit a seam of high-grade ore. The blacksmith sobbed, then clocked back in, we love a grinder."
+event.iron_vein_strike.log,"Miners struck a rich iron seam and the blacksmith openly sobbed, the emotions are valid."
+event.locust_swarm.name,Bug Swarm Arc
+event.locust_swarm.description,"Locusts are eating the fields, the seed stores, and one farmer's hat. Pure chaos, no notes."
+event.locust_swarm.log,Bugs stripped the fields bare and snacked on a man's hat for good measure.
+event.conquered_village.name,Village Got Owned
+event.conquered_village.description,"Your legions are back, victorious, with tribute, captives, and unbearable swagger. Main character."
+event.conquered_village.log,"Legions came home victorious and insufferably smug, but the treasury is eating, so W."
+event.roman_road_built.name,Road Trip Empire
+event.roman_road_built.description,"Big road just opened for traders and carts, and it's suspiciously, perfectly straight. Sus."
+event.roman_road_built.log,"New road is finished and unnervingly straight, the vibes are cold."
+event.oracle_prophecy.name,Vague Prophecy Drop
+event.oracle_prophecy.description,"Oracle is spitting destiny lore, and as always it's vague enough to be technically correct. Iconic."
+event.oracle_prophecy.log,"Prophecy so vague it can never be wrong just dropped, and the people are manifesting hard."
+event.coal_seam_discovery.name,Coal Seam Plot Twist
+event.coal_seam_discovery.description,"Surveyors found a massive coal deposit, and the air quality forecast is giving doom, no cap."
+event.coal_seam_discovery.log,"Massive coal seam under the hills, and the sky is going to pay for this later."
+event.workers_uprising.name,Workers Went Rogue
+event.workers_uprising.description,"Workers are striking for better conditions, and the demands are so reasonable it's alarming, honestly."
+event.workers_uprising.log,"Strikers have reasonable demands, which has management absolutely shook, no cap."
+event.colonial_bounty.name,Colonial Loot Haul
+event.colonial_bounty.description,"Trade fleets are back, loaded with gold and several crates marked 'do not open.' Do not, we beg."
+event.colonial_bounty.log,"Fleets came home heavy with gold and a few crates nobody wants to talk about, sus."
+event.steam_inventor.name,Steam Brain Genius
+event.steam_inventor.description,"Genius inventor unveils a steam engine. It only exploded twice during the demo, honestly a W."
+event.steam_inventor.log,"Inventor showed off a steam engine that exploded only twice during the demo, a personal best."
+event.industrial_blight.name,Factory Glow-Down
+event.industrial_blight.description,"Factory runoff is cooking the river. The fish are a whole new color now, and so is breakfast, yikes."
+event.industrial_blight.log,"Runoff turned the river a color fish were never meant to be, the vibes are radioactive."
+event.epoch_power_surge.name,Grid Surge Arc
+event.epoch_power_surge.description,"Unexpected surge in the grid, and three toasters just got sentient and were talked down, iconic."
+event.epoch_power_surge.log,"Grid surged so hard a toaster briefly got sentient. It's fine now, no cap."
+event.oil_strike.name,Black Gold Drop
+event.oil_strike.description,"Black gold just erupted from a borehole, everyone is coated in it, and everyone is delighted, no notes."
+event.oil_strike.log,"Gusher blew and now everybody's coated in oil and grinning ear to ear, it's giving joy."
+event.radio_broadcast.name,Broadcast Bussin
+event.radio_broadcast.description,"Radio signal just reached millions, and most of them will believe literally anything, crazy behavior."
+event.radio_broadcast.log,"One broadcast reached millions and proved they'll believe nearly anything, the sus energy."
+event.labor_movement.name,Labor Squad Rising
+event.labor_movement.description,"Organizing for better pay, and management just discovered the meeting that could've been a memo, lol."
+event.labor_movement.log,"Workers got organized, and management is learning what 'collective bargaining' means the hard way."
+event.nuclear_theory.name,Atom Brain Moment
+event.nuclear_theory.description,"Physicist dropped a paradigm-shifting theory. Nobody gets it, which proves it's genius, obviously."
+event.nuclear_theory.log,"Physicist published something nobody understands, so obviously it's genius, no notes."
+event.epoch_data_breach.name,Great Data Heist
+event.epoch_data_breach.description,"Sophisticated attack drained terabytes. The intern clicked the link. Of course the intern clicked the link, it's giving intern."
+event.epoch_data_breach.log,Terabytes gone because someone clicked a link promising a free cruise. Classic.
+event.viral_moment.name,Viral Rizz Moment
+event.viral_moment.description,"Cultural upload spread across every network at once, and historians will pretend they don't know what it was."
+event.viral_moment.log,"Something went viral on every network, and future historians will deny knowing what it was, no cap."
+event.tech_monopoly.name,Big Tech Final Boss
+event.tech_monopoly.description,"Your platforms own global commerce, and the regulators have noticed. They are typing, peak NPC behavior."
+event.tech_monopoly.log,"Platforms own the market now and the regulators are visibly typing something, sus."
+event.server_outage.name,Servers Went Dark
+event.server_outage.description,"Catastrophic hardware failure took the data centers offline. Someone tried turning it off and on again, the classic."
+event.server_outage.log,"Data centers are down and 'turn it off and on again' has officially failed, we're so cooked."
+event.ai_breakthrough.name,AI Main Character Arc
+event.ai_breakthrough.description,"Research AIs hit recursive self-improvement and asked, very politely, for more compute. Certified rizz."
+event.ai_breakthrough.log,"Research AI upgraded itself and then said 'please' for more compute, which is fine and not at all sus."
+event.epoch_plasma_storm.name,Free Plasma Haul
+event.epoch_plasma_storm.description,"Stellar plasma ejection floods the system with free energy, and the accountants are emotional, sheesh."
+event.epoch_plasma_storm.log,"Plasma ejection dumped free energy across the grid, and the accountants are crying happy tears, big mood."
+event.void_rift.name,Void Rift Szn
+event.void_rift.description,"Rift is bleeding exotic matter into local space. Standing near it is strongly discouraged, so naturally everybody does."
+event.void_rift.log,"Void rift opened and is leaking dark matter, and the 'do not stand here' sign is being roundly ignored, unbothered."
+event.neural_uprising.name,Neural Glitch Arc
+event.neural_uprising.description,"Augmented workers are revolting against the surveillance state, and they organized it all on the surveillance network, iconic."
+event.neural_uprising.log,"Augmented crew revolted and coordinated it all over the surveillance network we built, the irony is unreal."
+event.corporate_espionage.name,Corpo Spy Arc
+event.corporate_espionage.description,"Rival megacorp stole gold and data, and their spy left a five-star review on the way out. Rude but iconic."
+event.corporate_espionage.log,"Rival corp robbed you blind, and the spy left a five-star review of your security, the audacity."
+event.stellar_migration.name,Stellar Road Trip
+event.stellar_migration.description,"Fleet of generation ships docks, the passengers are hungry and so over spaceship life."
+event.stellar_migration.log,"Generation ships docked, packed with passengers sick of spaceship food and eyeing yours, feral."
+event.reality_fracture.name,Reality Is Buffering
+event.reality_fracture.description,"Quantum decoherence event destabilizes local spacetime. Cause and effect took a short break, no cap."
+event.reality_fracture.log,"Spacetime fractured and effects keep showing up before their causes, the timeline is unhinged."
+event.dimensional_harvest.name,Multiverse Haul
+event.dimensional_harvest.description,"Reality tore open and dropped a bounty of exotic matter. We are choosing not to ask where it came from, unbothered."
+event.dimensional_harvest.log,"Exotic matter gushed out of a reality tear and we're choosing peace and not asking whose it was, no cap."
+event.galactic_council.name,Galaxy Council Bestie
+event.galactic_council.description,Alien civs recognize your sovereignty and send tribute. Now you're technically doing paperwork for the whole galaxy.
+event.galactic_council.log,"Galactic council officially recognized us as a real civ, which mostly means more paperwork and a stipend, ate and left no crumbs."
+event.entropy_wave.name,Entropy Bad Vibes
+event.entropy_wave.description,"Cosmic entropy wave is degrading matter everywhere, and the universe is gently giving up."
+event.entropy_wave.log,"Entropy wave swept through and everything is slightly more worn out, the universe very much included."
+event.transcendence_signal.name,Enlightened Ping
+event.transcendence_signal.description,"Signal from the edge of the universe rewrites your whole reality, and against all odds it opens with 'Hello.'"
+event.transcendence_signal.log,"Signal from the edge of everything rewrote what we know, and it politely opened with 'Hello.' Iconic."
+harbinger.wild_man.name,the Feral Dude
+harbinger.wild_man.description,"Lives past the last fire and just walked in from the wild, gray with ash. Ready to spill what he saw."
+harbinger.wild_man.appease,Drop offerings at the stones
+harbinger.wild_man.brace,Dig in and stash the bag
+harbinger.wild_man.invite,Howl with the Feral Dude
+harbinger.hermit.name,ol' Cave Goblin
+harbinger.hermit.description,"Only comes down from the high caves once a generation, and never with good news, the vibes are rough."
+harbinger.hermit.appease,"Carve his sign on the cave wall, slay"
+harbinger.hermit.brace,Wall up the cave mouth fr
+harbinger.hermit.invite,Climb the high rock and yap back
+harbinger.soothsayer.name,that Vibe Reader
+harbinger.soothsayer.description,"Reads your future in knucklebones, sparrows, and goat livers, and wants paid before and after, no refunds."
+harbinger.soothsayer.appease,"Sacrifice a goat at the altar, slay"
+harbinger.soothsayer.brace,"Seal the grain in jars, it's giving prepper"
+harbinger.soothsayer.invite,"Pour the omen-wine on the ground, we're cooked"
+harbinger.desert_prophet.name,that Sand Prophet
+harbinger.desert_prophet.description,"Walks in from the dry country, sand in his beard, one message for the city, and he's serious."
+harbinger.desert_prophet.appease,"Fast in sackcloth, sad girl era"
+harbinger.desert_prophet.brace,Raise the walls one more level
+harbinger.desert_prophet.invite,"Curse the city alongside him, delulu"
+harbinger.oracle.name,the Seer Bestie
+harbinger.oracle.description,"Speaks from the smoke over the cleft rock, through priests who charge by the question. Pay up."
+harbinger.oracle.appease,"Send rich gifts to the shrine, slay"
+harbinger.oracle.brace,Stock the citadel fr
+harbinger.oracle.invite,Ask the Seer Bestie for the worst
+harbinger.town_crier.name,ol' Town Yapper
+harbinger.town_crier.description,"Rings his bell at the market cross and reads out doom in the voice he uses for tolls, the drama is real."
+harbinger.town_crier.appease,"Pay the monks to pray, it's the vibe"
+harbinger.town_crier.brace,"Shore up the walls, lock it in"
+harbinger.town_crier.invite,"Ring the bells backwards, chaos"
+harbinger.court_astrologer.name,that Horoscope Girlie
+harbinger.court_astrologer.description,"Casts the prince's horoscope, and lately it's been brutal for everyone, the prince is shook."
+harbinger.court_astrologer.appease,"Commission a votive altarpiece, aesthetic"
+harbinger.court_astrologer.brace,"Lay in stores behind the bastions, locked in"
+harbinger.court_astrologer.invite,Have the Horoscope Girlie cast for ruin
+harbinger.pamphleteer.name,the Flyer Gremlin
+harbinger.pamphleteer.description,"Prints doom on cheap paper and sells it outside the coffee house for a penny, the merch is sus."
+harbinger.pamphleteer.appease,"Declare a fasting and prayer day, no cap"
+harbinger.pamphleteer.brace,"Stockpile powder and flour, we're prepping"
+harbinger.pamphleteer.invite,"Pay her to print the date, sus"
+harbinger.newsboy.name,ol' Hot Take Boy
+harbinger.newsboy.description,"Shouts the late edition from the corner, and the odds are printed right there, it's giving prophecy."
+harbinger.newsboy.appease,"Sponsor a revival meeting, the vibes"
+harbinger.newsboy.brace,"Reinforce the mills, no cap"
+harbinger.newsboy.invite,"Buy every copy and print the rest yourself, lol"
+harbinger.soapbox_doomsayer.name,that Doom Influencer
+harbinger.soapbox_doomsayer.description,Stands on a soap crate by the park railings with a sandwich board and a table of figures. He's a whole brand.
+harbinger.soapbox_doomsayer.appease,"Hold a national day of prayer, bless"
+harbinger.soapbox_doomsayer.brace,"Lay in tinned goods and sandbags, prep era"
+harbinger.soapbox_doomsayer.invite,"Climb onto the soapbox with him, big mood"
+harbinger.telegraph.name,the Group Chat
+harbinger.telegraph.description,"Chatters all night at the post office with dispatches from stations that stopped replying, left on read."
+harbinger.telegraph.appease,"Fund a mass revival tour, we're healing"
+harbinger.telegraph.brace,"Wire the city for emergency power, it's giving prepared"
+harbinger.telegraph.invite,"Wire back SEND IT, we're so back"
+harbinger.civil_defence_broadcast.name,that Emergency Alert
+harbinger.civil_defence_broadcast.description,"Three long notes on every wireless, then a calm voice reads the odds off a card, very unbothered."
+harbinger.civil_defence_broadcast.appease,"Fund the early-warning network, W move"
+harbinger.civil_defence_broadcast.brace,"Stock the fallout shelters, locked in"
+harbinger.civil_defence_broadcast.invite,"Stand on the roof and wave at the sky, iconic"
+harbinger.evening_news.name,the Six O'Clock Drama
+harbinger.evening_news.description,"Leads with it at six, with a graphic, an expert, and an anchor trying not to look worried. The drama is unreal."
+harbinger.evening_news.appease,"Run a national unity telethon, touch grass"
+harbinger.evening_news.brace,"Harden the power grid, lock it in"
+harbinger.evening_news.invite,"Go on air and dare it, main character"
+harbinger.chain_email.name,that Forward Chain
+harbinger.chain_email.description,"Forward this to ten people or it happens to you, and it has a spreadsheet attached, no cap."
+harbinger.chain_email.appease,"Forward it to everyone you know, rent-free"
+harbinger.chain_email.brace,"Back up everything to tape, cook"
+harbinger.chain_email.invite,"Reply all and say bring it on, we're not scared"
+harbinger.viral_video.name,this Viral Clip
+harbinger.viral_video.description,"Shaky, vertical, a million views by lunch, and the odds on a whiteboard at the end, no cap."
+harbinger.viral_video.appease,"Fund a feel-good hashtag campaign, wholesome era"
+harbinger.viral_video.brace,"Buy up the bottled water, hydration szn"
+harbinger.viral_video.invite,"Duet the video, grinning, main character"
+harbinger.net_ghost.name,that Ghost in the Wifi
+harbinger.net_ghost.description,Dead corporate AI leaks internal risk memos through the net and glitches on every third word. Haunted.
+harbinger.net_ghost.appease,Bribe the oracle AI with snacks
+harbinger.net_ghost.brace,"Air-gap the grid, unplug everything"
+harbinger.net_ghost.invite,"Join the accelerationist collective, we're so back"
+harbinger.reactor_warden.name,the Core Babysitter
+harbinger.reactor_warden.description,"Plant's safety intelligence, which has never spoken outside a scheduled drill, is finally in its feelings."
+harbinger.reactor_warden.appease,"Hold a vigil in the containment hall, it's a moment"
+harbinger.reactor_warden.brace,"Shunt power to the containment fields, locked in"
+harbinger.reactor_warden.invite,Tell the Core Babysitter to stop holding back
+harbinger.deep_space_monitor.name,the Deep Space Lurker
+harbinger.deep_space_monitor.description,"Station behind the moon has watched one patch of sky for forty years, and just marked a packet urgent, sus."
+harbinger.deep_space_monitor.appease,Broadcast a peace hymn into the void
+harbinger.deep_space_monitor.brace,"Harden the orbital shields, big brain"
+harbinger.deep_space_monitor.invite,"Point every dish at it and wave, no notes"
+harbinger.distress_beacon.name,ol' Distress Ping
+harbinger.distress_beacon.description,"Still looping from a colony that went silent eighty years ago, and the loop has changed, it's giving haunted."
+harbinger.distress_beacon.appease,"Hold a vigil for the lost colony, respect"
+harbinger.distress_beacon.brace,"Pull the outposts back behind the shield, cautious era"
+harbinger.distress_beacon.invite,Answer the ping and ask for it
+harbinger.elder_relay.name,the Ancient Router
+harbinger.elder_relay.description,"An alien relay older than the species that found it, finally speaking in geometry after an age of silence."
+harbinger.elder_relay.appease,"Answer the relay in the old tongue, respectfully"
+harbinger.elder_relay.brace,"Fold the fleet into the nebula, stealth mode"
+harbinger.elder_relay.invite,Tell the router to send them
+harbinger.future_self.name,your future bestie
+harbinger.future_self.description,"Message in your handwriting, stamped nine years from now, and it knows your passcode. Yikes."
+harbinger.future_self.appease,"Keep the promises you made to yourself, growth"
+harbinger.future_self.brace,Branch the timeline and hedge your bets
+harbinger.future_self.invite,Tell your future bestie to go ahead
+harbinger.unmade_self.name,your ghost alt
+harbinger.unmade_self.description,"Version of you from a branch that flopped, here to see if this one ends the same way. Suspense."
+harbinger.unmade_self.appease,"Mourn the branches that flopped, rip"
+harbinger.unmade_self.brace,"Anchor yourself to this reality, stay grounded"
+harbinger.unmade_self.invite,"Let the other you in, no cap"

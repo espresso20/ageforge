@@ -22,10 +22,8 @@ import (
 //
 //   - Price levels (PriceLevels): the median first-copy price of a resource
 //     among an age's buildings.
-//   - The reference town (Incomes, TypicalStorages): what TownCopies staffed
-//     copies of every producer make (FlowCopies is that number), and what five
-//     copies of every storage building (StorageRuleCopies) held, in the
-//     reference store (reference_store.go).
+//   - The reference town (Incomes): what TownCopies staffed copies of every
+//     producer make (FlowCopies is that number).
 //
 // A construction resource of an age is one that appears in the first-copy
 // price of at least one of that age's buildings (wonders aside), except the
@@ -402,36 +400,6 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 			}
 		}
 		out[age] = made
-	}
-	return out
-}
-
-// TypicalStorages is what a moderate builder's reference store holds of each
-// resource in each age, as age -> resource -> storage: the resource's base
-// storage and StorageRuleCopies copies of every storage building from the
-// Primitive Age up to and including the age, at the size a copy held
-// (ReferenceStoreSizes). Storage buildings store nothing now; this is the
-// measure the Brace ceiling is taken against. Techs' storage bonus is left
-// out. Pure.
-func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string) map[string]map[string]float64 {
-	idx := make(map[string]int, len(order))
-	for i, a := range order {
-		idx[a] = i
-	}
-	sizes, _ := ReferenceStoreSizes(defs, Ages(), ReferenceBaseStore())
-	out := make(map[string]map[string]float64, len(order))
-	for i, age := range order {
-		all := 0.0
-		for _, d := range defs {
-			if j, ok := idx[d.RequiredAge]; ok && j <= i && d.Category == "storage" {
-				all += float64(StorageRuleCopies * sizes[d.Key])
-			}
-		}
-		held := make(map[string]float64, len(resources))
-		for _, r := range resources {
-			held[r.Key] = r.BaseStorage + all
-		}
-		out[age] = held
 	}
 	return out
 }

@@ -106,47 +106,6 @@ func TestEndure_NeverDestroysStorage(t *testing.T) {
 	}
 }
 
-// The nightly's seed 1, second run: the storage it held entering the
-// Victorian Age, among a few hundred other buildings. Endure must leave every
-// cap where it was, so the first Victorian Vault still fits.
-func TestEndure_VictorianVaultStaysBuildable(t *testing.T) {
-	ge := catEngine(t, "victorian_age", 1)
-	for k, n := range map[string]int{
-		"stash": 3, "storage_pit": 3, "warehouse": 8, "granary": 3, "classical_vault": 10,
-		"keep": 7, "renaissance_vault": 13, "colonial_warehouse": 3, "industrial_depot": 2,
-	} {
-		ge.Buildings.counts[k] = n
-	}
-	for _, k := range pickWorkerBuildings(t, "food", "metallurgy") {
-		ge.Buildings.counts[k] = 100
-	}
-	ge.Buildings.UnlockBuilding("victorian_vault")
-	ge.recalculateRates()
-	vault := ge.Buildings.GetCost("victorian_vault")
-	for res, c := range vault {
-		if cap := ge.Resources.GetStorage(res); c > cap {
-			t.Fatalf("setup: the first vault costs %.4g %s, over the %.4g cap before any catastrophe", c, res, cap)
-		}
-	}
-	caps := ge.Resources.GetAllStorage()
-
-	ge.pendingCatastrophe = config.EpochForAge("victorian_age")
-	if err := ge.Endure(); err != nil {
-		t.Fatalf("Endure: %v", err)
-	}
-	ge.recalculateRates()
-	for _, res := range sortedKeys(caps) {
-		if got := ge.Resources.GetStorage(res); got != caps[res] {
-			t.Errorf("Endure moved the %s cap: %.4g -> %.4g", res, caps[res], got)
-		}
-	}
-	for res, c := range ge.Buildings.GetCost("victorian_vault") {
-		if cap := ge.Resources.GetStorage(res); c > cap {
-			t.Errorf("after Endure the first vault costs %.4g %s, over the %.4g cap: storage can never grow again", c, res, cap)
-		}
-	}
-}
-
 func TestGreatFire_SparesStorage(t *testing.T) {
 	ge := catEngine(t, "medieval_age", 1)
 	for _, k := range []string{"stash", "storage_pit", "warehouse", "granary", "classical_vault", "keep"} {

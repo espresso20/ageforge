@@ -27,8 +27,6 @@ func (s *Set) derive() {
 	s.built = config.BuildingOutputs(s.buildings, s.ageKeys, config.AnyResource)
 	s.flowStaffed = config.StaffedOutputs(s.buildings, s.ageKeys, config.IsFlowResource)
 	s.military = config.MilitaryScales(s.techs, s.ageKeys)
-	s.typStore = config.TypicalStorages(s.buildings, s.resources, s.ageKeys)
-	s.refSize, s.refStore = config.ReferenceStoreSizes(s.buildings, s.ages, config.ReferenceBaseStore())
 	army := config.RefSoldiers(s.buildings, s.ages)
 	s.refArmy = make(map[string]float64, len(s.ages))
 	s.charged = make(map[string][2]string, len(s.ages))
@@ -39,6 +37,11 @@ func (s *Set) derive() {
 		s.olderIn[a.Key] = s.olderKeys(a.Key)
 	}
 }
+
+// StockScale is the age's stock scale (config.StockScale): the amount of a
+// resource the age's economy calls a good stock, which the festival, Black
+// Market, deal and Brace-ceiling shares are shares of. 0 for an unknown age.
+func (s *Set) StockScale(age string) float64 { return config.StockScale(age) }
 
 // olderKeys is UpgradeKeys for age: each line's current rung is worked out
 // once, and every earlier rung of the line that its age and tier put behind it
@@ -98,22 +101,19 @@ func (s *Set) ChargedMaterials(age string) [2]string { return s.charged[age] }
 // is not one of the age's construction materials.
 func (s *Set) PriceLevel(age, res string) float64 { return s.priceLevels[age][res] }
 
-// TypicalStorage is what a moderate builder's store holds of res in age:
-// its base storage and config.StorageRuleCopies copies of every storage building
-// up to the age (config.TypicalStorages). 0 for an unknown age or resource.
-func (s *Set) TypicalStorage(res, age string) float64 { return s.typStore[age][res] }
+// StockMinutes is a share of the age's stock scale (config.StockScale) in
+// minutes of the age's typical income of res (config.StockMinutes): 0 where
+// the age has no typical income of it.
+func (s *Set) StockMinutes(res, age string, share float64) float64 {
+	return config.StockMinutes(age, share, s.typIncome[age][res])
+}
 
-// ReferenceStorePerCopy is what one copy of the storage building key held of
-// every resource, in the reference store (config.ReferenceStoreSizes): a
-// storage building holds nothing now, and the few rules that still read a
-// store size are measured on this. 0 for a building that is not a storage
-// building. S3 of the no-caps work retires the readers.
-func (s *Set) ReferenceStorePerCopy(key string) float64 { return s.refSize[key] }
-
-// ReferenceStore is the reference store on leaving age: the base store and
-// config.StorageRuleCopies copies of the storage building of every age up to
-// and including it. 0 for an unknown age.
-func (s *Set) ReferenceStore(age string) float64 { return s.refStore[age] }
+// StockOf is a share of a good stock of res for a town making income of it
+// per tick in age (config.StockOf): minutes of the town's own income, within
+// the band around the age's typical income.
+func (s *Set) StockOf(res, age string, share, income float64) float64 {
+	return config.StockOf(age, share, s.typIncome[age][res], income)
+}
 
 // AgeHasStorageBuilding reports whether age has a storage building of its own.
 func (s *Set) AgeHasStorageBuilding(age string) bool {

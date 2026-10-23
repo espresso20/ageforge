@@ -1,6 +1,7 @@
 package game
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -77,7 +78,7 @@ func TestReturnsLogIsSaved(t *testing.T) {
 		t.Fatalf("LoadGame: %v", err)
 	}
 	st := loaded.GetState().Military
-	if len(st.Returns) != 1 || st.Returns[0] != want[0] {
+	if len(st.Returns) != 1 || !reflect.DeepEqual(st.Returns[0], want[0]) {
 		t.Errorf("loaded log = %+v, want %+v", st.Returns, want)
 	}
 	if st.ReturnsMade != 1 || st.ReturnsSeen != 0 {

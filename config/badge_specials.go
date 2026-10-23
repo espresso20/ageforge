@@ -563,11 +563,11 @@ func Badges() []BadgeDef {
 		},
 		{
 			Key: "special.everything_full", Family: "special",
-			Name: "Everything Full", Desc: "Have every resource you can store at its storage limit at once, in the Industrial Age or later. A resource that is spent as it is made does not count.",
+			Name: "Everything Full", Desc: "Hold at least 6 hours of your income in every resource you can save up, all at once, in the Industrial Age or later. A resource that is spent as it is made does not count.",
 			Tier: BadgeGold, Scope: BadgeMoment, Event: BadgeEvCensus,
 			When:   []BadgeCond{atLeast("ev.full", 1), atLeast("ev.age", 8)},
 			Reveal: RevealUntilNextAge("industrial_age"), Emblem: "store",
-			Proof: Occurs("Every capped resource has a producer by its age, and a store that is left alone fills."),
+			Proof: Occurs("Every resource that can be saved up has a producer by its age, and income that is left alone piles up to the hours asked for."),
 		},
 		{
 			Key: "special.old_bones", Family: "special",

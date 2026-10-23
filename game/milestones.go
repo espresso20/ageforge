@@ -71,6 +71,7 @@ func (mm *MilestoneManager) Rebind(set *rules.Set) {
 	for i, def := range mm.defs {
 		mm.plans[i] = mm.planFor(def)
 	}
+	mm.recalculateTitle() // the title in the words of this set, at once
 }
 
 // CheckMilestones checks all milestones against current state.
@@ -241,10 +242,12 @@ func (mm *MilestoneManager) titleFor(chains []config.MilestoneChainDef, titles [
 // game is read in, so a save made under VibeMode reads the same as one made
 // without it. The title in play is worked out again every tick.
 func (mm *MilestoneManager) savedTitle() string {
-	plain := rules.CoreFor(false)
-	if mm.rules == plain || !rules.IsCore(mm.rules) {
+	if !rules.IsCore(mm.rules) {
 		return mm.currentTitle
 	}
+	// Worked out from what is completed, not read from currentTitle, which
+	// is the other script's until the next tick after a switch.
+	plain := rules.CoreFor(false)
 	return mm.titleFor(plain.MilestoneChains(), plain.MilestoneTitles())
 }
 

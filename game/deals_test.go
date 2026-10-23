@@ -18,7 +18,7 @@ import (
 func testDealEnv(age string) dealEnv {
 	order := config.AgeOrder()
 	ages := config.AgeByKey()
-	env := dealEnv{age: age, unlocked: map[string]bool{}, amount: map[string]float64{}, storage: map[string]float64{}}
+	env := dealEnv{age: age, unlocked: map[string]bool{}, amount: map[string]float64{}, size: map[string]float64{}}
 	for i, a := range order {
 		for _, r := range ages[a].UnlockResources {
 			env.unlocked[r] = true
@@ -31,7 +31,7 @@ func testDealEnv(age string) dealEnv {
 		}
 	}
 	for i, r := range config.BaseResources() {
-		env.storage[r.Key] = 1e21
+		env.size[r.Key] = 1e21
 		env.amount[r.Key] = float64(i+1) * 1e18
 	}
 	return env
@@ -151,7 +151,7 @@ func TestDeals_PerPersonality(t *testing.T) {
 // pair and never beats parity, a favor pays standing.
 func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv, d FactionDeal) {
 	t.Helper()
-	if !(d.GiveAmt >= 1) || d.GiveAmt > env.storage[d.Give] || !env.unlocked[d.Give] {
+	if !(d.GiveAmt >= 1) || d.GiveAmt > env.size[d.Give] || !env.unlocked[d.Give] {
 		t.Errorf("%s %+v: bad price", def.Key, d)
 	}
 	switch d.Kind {
@@ -173,7 +173,7 @@ func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv
 		t.Errorf("%s: unknown kind %q", def.Key, d.Kind)
 		return
 	}
-	if !(d.GetAmt >= 1) || d.GetAmt > dealGetShare*env.storage[d.Get]*1.001 {
+	if !(d.GetAmt >= 1) || d.GetAmt > dealGetShare*env.size[d.Get]*1.001 {
 		t.Errorf("%s %+v: bad goods amount", def.Key, d)
 	}
 	// A deal stands on its own: the ratio of the two price levels times its
