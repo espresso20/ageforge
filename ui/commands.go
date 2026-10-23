@@ -180,6 +180,8 @@ func registry() []*Command {
 				sub("list", "plan list", "Print the plan with each item's status"),
 				{Name: "remove", Aliases: []string{"rm"}, Args: []Arg{{Kind: ArgPlanItem}},
 					Help: []Usage{{"plan remove <n>", "Remove item n"}}},
+				{Name: "optimize", Aliases: []string{"reorder"},
+					Help: []Usage{{"plan optimize", "Reorder the planned buildings for the fastest growth (homes and producers mixed), and say how much sooner the plan finishes"}}},
 				sub("up", "plan up <n>", "Move item n one place up", Arg{Kind: ArgPlanItem}),
 				sub("down", "plan down <n>", "Move item n one place down", Arg{Kind: ArgPlanItem}),
 				{Name: "clear", Dangerous: true, Help: []Usage{{"plan clear", "Empty the plan"}}},
