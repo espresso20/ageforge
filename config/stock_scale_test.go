@@ -56,3 +56,22 @@ func TestStockOfFollowsTheIncome(t *testing.T) {
 		t.Error("minutes of an income that is not there")
 	}
 }
+
+// TestStakeMinutesHoldsTheShareToACeiling: a stake asks the minutes its share
+// of the scale comes to at the age's typical income, and no more than the
+// ceiling; with no typical income it asks nothing, ceiling or not.
+func TestStakeMinutesHoldsTheShareToACeiling(t *testing.T) {
+	const typical = 1000.0
+	for _, age := range AgeOrder() {
+		share := StockMinutes(age, 0.05, typical)
+		if got := StakeMinutes(age, 0.05, typical, 1e300); got != share {
+			t.Errorf("%s: below its ceiling the stake asks %v minutes, want %v", age, got, share)
+		}
+		if got := StakeMinutes(age, 0.05, typical, share/2); got != share/2 {
+			t.Errorf("%s: over its ceiling the stake asks %v minutes, want %v", age, got, share/2)
+		}
+		if got := StakeMinutes(age, 0.05, 0, 6000); got != 0 {
+			t.Errorf("%s: with no typical income the stake asks %v minutes, want 0", age, got)
+		}
+	}
+}

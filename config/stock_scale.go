@@ -64,6 +64,22 @@ func StockMinutes(age string, share, typical float64) float64 {
 	return float64(share*StockScale(age)) / float64(TicksPerMinute*typical)
 }
 
+// StakeMinutes is StockMinutes held to a ceiling of ceiling minutes: what a
+// culture stake (the festival, a Black Market deal) asks, in minutes of the
+// age's typical income. The scale is the size a store had, and the stores
+// followed the price of what they held, which climbs far faster than any
+// income: from the Classical Age to the Quantum Age the scale grows about
+// 2e14 times and a moderate town's culture income about 6e5 times, so a share
+// of the scale left alone asks hundreds of minutes of culture in the Classical
+// Age and hundreds of billions in the Quantum Age. The ceiling is written
+// where the stake is (game's festivalMaxMinutes and blackMarketMaxMinutes), a
+// little over the dearest the prices were tuned at, so the ages they were
+// tuned in keep their price and the later ones stop at the ceiling. 0 where
+// typical is not above 0, as StockMinutes. Pure.
+func StakeMinutes(age string, share, typical, ceiling float64) float64 {
+	return min(StockMinutes(age, share, typical), ceiling)
+}
+
 // StockOf is a share of a good stock of a resource for a town that makes
 // income of it per tick in the age: StockMinutes of the town's own income,
 // held to the band around the age's typical income (SizedIncome), so a town
