@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/words"
 )
 
 // vibeOff puts the process's VibeMode switch back where a test found it.
@@ -287,5 +288,120 @@ func TestVibeModeSwitchesWhileTheGameRuns(t *testing.T) {
 	wantManagersOn(t, ge, rules.CoreFor(false), "after the switching")
 	if ge.StateDigest() == "unencodable" {
 		t.Error("the state cannot be encoded after the switching")
+	}
+}
+
+// TestEveryTextCanChangeWithoutTouchingANumber is the strongest form of
+// "words only": a script that rewrites every text of the ruleset that has an
+// id, the names of ages, resources, buildings and techs included, and a run
+// under it comes out in the state of the same run in plain English, to the
+// last bit.
+func TestEveryTextCanChangeWithoutTouchingANumber(t *testing.T) {
+	vibeOff(t)
+	script := map[string]string{}
+	for _, c := range words.Cells(rules.FromConfig()) {
+		if c.Field == "config.TechDef.Code" {
+			continue // a code is five capital letters, not a line
+		}
+		script[c.ID] = "~" + c.Text + "~"
+	}
+	restore := vibe.UseScriptForTest(script)
+	set := rules.Compile(rules.Vibed(rules.FromConfig()))
+	restore()
+	if set.Digest() == rules.CoreFor(false).Digest() {
+		t.Fatal("the rewritten set reads the same as the plain one")
+	}
+	play := func(set *rules.Set) *GameEngine {
+		ge := NewGameEngineWith(set)
+		ge.SeedRNG(42)
+		ge.age = "industrial_age"
+		ageOrder := ge.progress.GetAgeOrder()
+		for key, def := range ge.Buildings.defs {
+			if ageOrder[def.RequiredAge] > ageOrder[ge.age] || def.Category == "wonder" {
+				continue
+			}
+			ge.Buildings.UnlockBuilding(key)
+			ge.Buildings.counts[key] = 3
+		}
+		ge.GrantTechsForTest()
+		ge.recalculateRates()
+		ge.StepTicks(400)
+		return ge
+	}
+	plain, vibed := play(rules.CoreFor(false)), play(set)
+	a, b := stateMap(t, plain), stateMap(t, vibed)
+	// An offer on the board and a party on the road keep the title, place and
+	// story they were generated with, in the save as in play: they are words
+	// frozen into the state when the offer was made, and the one place where a
+	// script reaches a save (open: the board's text should be drawn from the
+	// script in force, not stored).
+	dropText(a["military"])
+	dropText(b["military"])
+	// The title is written to a save in plain English for the two core sets
+	// (TestASaveHoldsThePlainTitle); this set is a set of its own.
+	delete(a, "current_title")
+	delete(b, "current_title")
+	for k := range a {
+		if !reflect.DeepEqual(a[k], b[k]) {
+			t.Errorf("under a script that rewrites every text, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
+		}
+	}
+}
+
+// dropText removes the keys that hold a generated line from a decoded JSON
+// value, wherever they sit in it.
+func dropText(v any) {
+	switch x := v.(type) {
+	case map[string]any:
+		for k, e := range x {
+			switch k {
+			case "title", "place", "description", "story", "ambush_story", "aux_story":
+				delete(x, k)
+			default:
+				dropText(e)
+			}
+		}
+	case []any:
+		for _, e := range x {
+			dropText(e)
+		}
+	}
+}
+
+// TestASaveHoldsThePlainTitle: the title a civilization wears is the one
+// text a save writes besides names the player gave, so a save made under
+// VibeMode holds the plain title, and the same save read in either script
+// shows the title of that script.
+func TestASaveHoldsThePlainTitle(t *testing.T) {
+	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
+	vibeOff(t)
+	titleOf := func(ge *GameEngine) (worn, saved string) {
+		ge.Milestones.recalculateTitle()
+		var save GameSave
+		b, err := ge.StateJSON()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(b, &save); err != nil {
+			t.Fatal(err)
+		}
+		return ge.Milestones.GetCurrentTitle(), save.CurrentTitle
+	}
+	ge := NewGameEngine()
+	for i, def := range ge.Milestones.defs {
+		if i < 5 {
+			ge.Milestones.completed[def.Key] = true
+		}
+	}
+	if worn, saved := titleOf(ge); worn != "Aspiring" || saved != "Aspiring" {
+		t.Fatalf("in plain English the title is %q and the save holds %q", worn, saved)
+	}
+	ge.followVibe(true)
+	if worn, saved := titleOf(ge); worn != "Lowkey Cooking" || saved != "Aspiring" {
+		t.Errorf("under VibeMode the title worn is %q (want Lowkey Cooking) and the save holds %q (want Aspiring)", worn, saved)
+	}
+	ge.followVibe(false)
+	if worn, saved := titleOf(ge); worn != "Aspiring" || saved != "Aspiring" {
+		t.Errorf("back in plain English the title is %q and the save holds %q", worn, saved)
 	}
 }

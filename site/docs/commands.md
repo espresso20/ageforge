@@ -538,7 +538,7 @@ vibemode on
 vibemode off
 ```
 
-VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are exactly what they are with it off, and a save made in one script loads in the other. This release carries the switch and a first handful of lines: a few buildings, a tech, a badge, an event, some of the words for the people of your town and two lines of the interface. Every line that has no VibeMode version yet reads as it always did. The setting is saved per account; with no account loaded it lasts for the session.
+VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are exactly what they are with it off, and a save made in one script loads in the other. This release carries the switch and a first handful of lines: a few buildings, a tech, a badge, an event, a title, some of the words for the people of your town and two lines of the interface. Every line that has no VibeMode version yet reads as it always did. The setting is saved per account; with no account loaded it lasts for the session.
 
 ---
 

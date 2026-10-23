@@ -707,7 +707,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		},
 		Milestones:       ge.Milestones.GetCompleted(),
 		ChainsCompleted:  ge.Milestones.GetChainsCompleted(),
-		CurrentTitle:     ge.Milestones.GetCurrentTitle(),
+		CurrentTitle:     ge.Milestones.savedTitle(),
 		PermanentBonuses: permBonuses,
 		Prestige: PrestigeSave{
 			Level:         ge.Prestige.level,
