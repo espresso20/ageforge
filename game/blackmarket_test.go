@@ -31,6 +31,19 @@ func bmEngine(culture float64) *GameEngine {
 	return ge
 }
 
+// bmFloorPayout is what a win on res pays a town that makes under a quarter
+// of the age's typical income of both culture and res (bmEngine's, which
+// makes next to none of either): both incomes are then held to the quarter,
+// and the stake's minutes of culture income come to winMult times that many
+// minutes of res income, worked from the age's typical incomes alone.
+func bmFloorPayout(ge *GameEngine, res string, stake float64) float64 {
+	typC, typR := ge.rules.TypicalIncome("culture", ge.age), ge.rules.TypicalIncome(res, ge.age)
+	if ge.incomeOf("culture") >= config.EventIncomeFloor*typC || ge.incomeOf(res) >= config.EventIncomeFloor*typR {
+		panic("the town makes too much for the floor")
+	}
+	return blackMarketWinMult * stake * typR / typC
+}
+
 // TestBlackMarket_WinDeterministic: a winning roll deducts the culture cost and
 // pays out gold at the configured multiplier.
 func TestBlackMarket_WinDeterministic(t *testing.T) {
@@ -49,9 +62,10 @@ func TestBlackMarket_WinDeterministic(t *testing.T) {
 	if !won {
 		t.Fatalf("expected a win with the winning seed")
 	}
-	// gold payout = cost × blackMarketWinMult.
-	if math.Abs(gain-wantCost*blackMarketWinMult) > 1e-6 {
-		t.Errorf("gain = %.1f, want %.1f", gain, wantCost*blackMarketWinMult)
+	// gold payout = blackMarketWinMult × the stake's minutes of culture income
+	// in minutes of gold income; this town makes next to none of either.
+	if want := bmFloorPayout(ge, "gold", wantCost); math.Abs(gain-want) > 1e-9*want {
+		t.Errorf("gain = %.1f, want %.1f", gain, want)
 	}
 	if got := ge.Resources.Get("gold"); math.Abs(got-gain) > 1e-6 {
 		t.Errorf("gold balance = %.1f, want %.1f", got, gain)
