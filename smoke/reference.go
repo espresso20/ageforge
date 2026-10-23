@@ -90,6 +90,11 @@ type refTables struct {
 	boosters bool
 	rungs    map[string][]config.BuildingDef // a line's rungs, first rung first
 	pos      map[string]int                  // an age's place in the order
+	// measures, when set, is the measured gate (AGEFORGE_GATES=v2): a stay in
+	// an age with a measure here ends when the town's population and the
+	// income of the age's main materials reach it, not when the town holds
+	// the reference counts. Nil is today's gate.
+	measures map[string]config.GateMeasure
 }
 
 func newRefTables() *refTables {
@@ -373,6 +378,20 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 	}
 	run := refRun{gate: -1}
 	st := t.state(counts, i, p.speed)
+	// reached says the town meets the gate's buildings or, under the measured
+	// gate, its measures.
+	reached := func() bool {
+		if m, ok := t.measures[t.ages[i].Key]; ok {
+			pop, income := t.measured(st, i, m.Materials)
+			return pop >= float64(m.People) && income >= m.Income
+		}
+		for k, n := range ref {
+			if counts[k] < n {
+				return false
+			}
+		}
+		return true
+	}
 	stock, wonder, now, next := 0.0, RefWonderUnits, 0.0, 2.0
 	if !p.wonder {
 		wonder = 0
@@ -380,13 +399,7 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 	for now < p.horizon {
 		dt := math.Max(1, now/200)
 		incU := float64(units(st.income, lv) * p.rate)
-		met := true
-		for k, n := range ref {
-			if counts[k] < n {
-				met = false
-				break
-			}
-		}
+		met := reached()
 		gain := float64(incU * dt)
 		if met && wonder > 0 {
 			pay := math.Min(stock+gain, wonder)
@@ -435,17 +448,8 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 				next *= 2
 			}
 		}
-		if run.gate < 0 && wonder <= 0 {
-			done := true
-			for k, n := range ref {
-				if counts[k] < n {
-					done = false
-					break
-				}
-			}
-			if done {
-				run.gate = now
-			}
+		if run.gate < 0 && wonder <= 0 && reached() {
+			run.gate = now
 		}
 		if p.leave != nil && run.gate >= 0 && p.leave(run.gate, now) {
 			break

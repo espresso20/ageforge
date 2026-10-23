@@ -275,6 +275,8 @@ var hiddenFields = map[string]string{
 	"config.BadgeReveal.Key":              "a key",
 	"config.BadgeReward.Theme":            "a theme key",
 	"config.AgeDef.BuildingReqs":          "building keys",
+	"config.GateMeasure.Materials":        "resource keys",
+	"config.GateMeasure.KeyTech":          "a tech key",
 	"config.BuildingDef.BaseCost":         "resource keys",
 	"config.BuildingDef.levelCost":        "resource keys",
 	"config.ColdStartCap.Building":        "a building key",
