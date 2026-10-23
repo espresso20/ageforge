@@ -673,11 +673,13 @@ func TestWonderFrameGuard(t *testing.T) {
 	}
 }
 
-// TestSkyWonderArt: the cosmic landmarks draw at every height too, exactly
-// that tall, so the sky arc's scenes can ask for any size.
-func TestSkyWonderArt(t *testing.T) {
-	for _, key := range []string{"dyson_scaffold", "warp_nexus", "cosmic_beacon", "reality_anchor", "singularity_core", "stellar_cradle"} {
-		for rows := 6; rows <= 40; rows++ {
+// TestWonderArtAtEveryHeight: every landmark draws at any height, exactly
+// that tall, so the sky arc's scenes (which size them their own way) and the
+// smallest terminals can ask for anything.
+func TestWonderArtAtEveryHeight(t *testing.T) {
+	for a := range catalog().ByAge {
+		key := wonderKeyOf(a)
+		for rows := 1; rows <= 60; rows++ {
 			s := wonderArt(key, rows)
 			if s.h != rows || s.w < 3 {
 				t.Fatalf("%s at %d rows: %dx%d", key, rows, s.w, s.h)

@@ -8,7 +8,7 @@ import "github.com/espresso20/ageforge/mapmodel"
 // still being built scaffoldArt shows how much of it is banked.
 
 // wonderFamily lets a landmark wear a later period's finish.
-var wonderFamily = map[string]int{"crystal_palace": 7, "great_monolith": 8, "hoover_dam": 7, "particle_accelerator": 9}
+var wonderFamily = map[string]int{"crystal_palace": 7, "great_monolith": 8, "hoover_dam": 32, "particle_accelerator": 30}
 
 // wonderNominal is each wonder's height in rows in a scene sized for a
 // 45-row terminal at scale 1. A wonder is drawn this tall times the scene's
@@ -16,7 +16,7 @@ var wonderFamily = map[string]int{"crystal_palace": 7, "great_monolith": 8, "hoo
 var wonderNominal = map[string]float64{
 	"sacred_grove": 14, "great_monolith": 22, "stonehenge": 22, "colosseum": 18, "parthenon": 20,
 	"great_library": 26, "sistine_chapel": 30, "grand_lighthouse": 32, "crystal_palace": 28,
-	"eiffel_tower": 34, "hoover_dam": 24, "particle_accelerator": 22, "space_program": 34,
+	"eiffel_tower": 34, "hoover_dam": 32, "particle_accelerator": 30, "space_program": 34,
 	"global_network": 34, "world_simulation": 32, "neon_citadel": 34, "stellar_cradle": 34,
 	"dyson_scaffold": 26, "warp_nexus": 24, "cosmic_beacon": 32, "reality_anchor": 24, "singularity_core": 22,
 }
