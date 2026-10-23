@@ -8,19 +8,16 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// The caps report: what each bonus pool has earned and what it applies, age
-// by age, for a player who holds everything a run can hold by then.
+// The caps report: what each bonus pool has earned, age by age, for a player
+// who holds everything a run can hold by then.
 //
 // A pool is the game's "+X%" bonuses on one thing added up: all production,
-// or one resource's output. A production pool follows the soft cap
-// (config.ProductionSoftCap): it applies in full up to its knee, +200%, and
-// a quarter of every point past it. Until that rule the pools stopped dead
-// at +200% (x3), and this report showed a full set of milestones and wonders
-// earning +661% by the last age for +200% applied. Techs are in a layer of
-// their own, applied after the pools, so what a pool holds is milestone
-// rewards, wonders and monuments (which stand for the run) and festivals,
-// awakenings and era events (which come and go). This report is the data on
-// how much of that counts.
+// or one resource's output. A production pool has no ceiling: it applies in
+// full, however large it grows. Techs are in a layer of their own, applied
+// after the pools, so what a pool holds is milestone rewards, wonders and
+// monuments (which stand for the run) and festivals, awakenings and era
+// events (which come and go). This report is the data on how much of that
+// a run can hold, and the bound the pacing model's pool is held under.
 //
 // "Everything a run can hold" is generous on purpose:
 //
@@ -35,12 +32,8 @@ import (
 //     the price being the only limit, so this is the least a town holds).
 //
 // A player who plays an age through holds less than that for most of it, so
-// the age a pool passes its knee here is the earliest it can.
+// the pool a row shows is the most a run can hold by then.
 const (
-	// PoolKnee is the most of a production pool the engine applies in
-	// full: +200% (config.ProductionKnee). Past it a point counts
-	// config.ProductionPastKnee, a quarter.
-	PoolKnee = config.ProductionKnee
 	// FestivalBonus is what a festival adds to all production while it
 	// lasts, and PlentyBonus the largest timed boost an era event gives: an
 	// Age of Plenty doubles production for its length. (The event named
@@ -48,10 +41,6 @@ const (
 	FestivalBonus = 0.20
 	PlentyBonus   = 1.00
 )
-
-// PoolApplied is what a production pool that has earned bonuses in all
-// applies under the soft cap.
-func PoolApplied(earned float64) float64 { return config.ProductionSoftCap().Applied(earned) }
 
 // CapRow is one age of the caps report.
 type CapRow struct {
@@ -68,9 +57,6 @@ type CapRow struct {
 
 // All is the all-production pool's standing total, as earned.
 func (r CapRow) All() float64 { return r.Milestones + r.Wonders + r.Monuments + r.Storage }
-
-// Applied is what the engine applies of All under the soft cap.
-func (r CapRow) Applied() float64 { return PoolApplied(r.All()) }
 
 // StaticCaps computes the caps report for the core ruleset, one row per age.
 func StaticCaps() []CapRow {
@@ -162,78 +148,36 @@ func StaticCaps() []CapRow {
 	return rows
 }
 
-// KneePassedIn is the first age the standing pool read by of is past the
-// knee with extra added on top ("" when it never is).
-func KneePassedIn(rows []CapRow, extra float64, of func(CapRow) float64) string {
-	for _, r := range rows {
-		if of(r)+extra > PoolKnee+1e-9 {
-			return r.Age
-		}
-	}
-	return ""
-}
-
 // writeCaps renders the caps report.
 func writeCaps(sb *strings.Builder, rows []CapRow) {
-	fmt.Fprintf(sb, "What each bonus pool has earned and what it applies, age by age, for a player who holds everything a run can hold by then: every milestone from the first age it can be completed in, every earlier age's wonder, every monument, five copies of every storage building. A production pool applies in full up to +%.0f%% and %.0f%% of every point past it (config.ProductionSoftCap), so nothing earned is lost; before that rule it applied +%.0f%% at most. Techs are not in these pools: a tech's bonus is applied after them and always counts in full. Timed boosts come on top while they last: a festival +%.0f%%, an awakening up to +25%%, an Age of Plenty +%.0f%%; a good era can add +10%% or +15%% for the run. A cell with an arrow reads earned → applied.\n\n",
-		PoolKnee*100, config.ProductionPastKnee*100, PoolKnee*100, FestivalBonus*100, PlentyBonus*100)
-	sb.WriteString("| age | all production: milestones | wonders | monuments | storage | earned | applied | share that counts | with a festival | with a festival and an Age of Plenty | knowledge | gold | tightest other pool | the pacing model holds |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+	fmt.Fprintf(sb, "What each bonus pool has earned, age by age, for a player who holds everything a run can hold by then: every milestone from the first age it can be completed in, every earlier age's wonder, every monument, five copies of every storage building. A production pool applies in full, however large it grows, so earned is applied. Techs are not in these pools: a tech's bonus is applied after them and always counts in full. Timed boosts come on top while they last: a festival +%.0f%%, an awakening up to +25%%, an Age of Plenty +%.0f%%; a good era can add +10%% or +15%% for the run.\n\n",
+		FestivalBonus*100, PlentyBonus*100)
+	sb.WriteString("| age | all production: milestones | wonders | monuments | storage | earned | with a festival | with a festival and an Age of Plenty | knowledge | gold | largest other pool | the pacing model holds |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	pct := func(v float64) string { return fmt.Sprintf("+%.0f%%", v*100) }
-	// both is a pool as earned, and what it applies when that is less.
-	both := func(earned float64) string {
-		if earned > PoolKnee+1e-9 {
-			return pct(earned) + " → " + pct(PoolApplied(earned))
-		}
-		return pct(earned)
-	}
 	for _, r := range rows {
 		other, top := "-", 0.0
 		for _, res := range sortedKeys(r.Resources) {
 			if res != "knowledge" && res != "gold" && r.Resources[res] > top {
-				other, top = res+" "+both(r.Resources[res]), r.Resources[res]
+				other, top = res+" "+pct(r.Resources[res]), r.Resources[res]
 			}
 		}
-		share := 100.0
-		if r.All() > 0 {
-			share = 100 * r.Applied() / r.All()
-		}
-		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %.0f%% | %s | %s | %s | %s | %s | %s |\n", ageName(r.Age),
-			pct(r.Milestones), pct(r.Wonders), pct(r.Monuments), pct(r.Storage), pct(r.All()), pct(r.Applied()), share,
-			both(r.All()+FestivalBonus), both(r.All()+FestivalBonus+PlentyBonus),
-			both(r.Resources["knowledge"]), both(r.Resources["gold"]), other, both(config.ProductionAllHeld[r.Age]))
+		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", ageName(r.Age),
+			pct(r.Milestones), pct(r.Wonders), pct(r.Monuments), pct(r.Storage), pct(r.All()),
+			pct(r.All()+FestivalBonus), pct(r.All()+FestivalBonus+PlentyBonus),
+			pct(r.Resources["knowledge"]), pct(r.Resources["gold"]), other, pct(config.ProductionAllHeld[r.Age]))
 	}
-	all := func(r CapRow) float64 { return r.All() }
-	when := func(age string) string {
-		if age == "" {
-			return "never"
-		}
-		return "from the " + ageName(age) + " Age"
-	}
-	fmt.Fprintf(sb, "\nAll production is past its knee %s on what stands alone, %s with a festival running, and %s with a festival and an Age of Plenty. ",
-		when(KneePassedIn(rows, 0, all)), when(KneePassedIn(rows, FestivalBonus, all)), when(KneePassedIn(rows, FestivalBonus+PlentyBonus, all)))
-	var reached []string
 	last := rows[len(rows)-1]
+	tops := make([]string, 0, len(last.Resources))
 	for _, res := range sortedKeys(last.Resources) {
-		if age := KneePassedIn(rows, 0, func(r CapRow) float64 { return r.Resources[res] }); age != "" {
-			reached = append(reached, fmt.Sprintf("%s (%s)", res, when(age)))
-		}
+		tops = append(tops, res)
 	}
-	if len(reached) == 0 {
-		tops := make([]string, 0, len(last.Resources))
-		for _, res := range sortedKeys(last.Resources) {
-			tops = append(tops, res)
-		}
-		sort.SliceStable(tops, func(i, j int) bool { return last.Resources[tops[i]] > last.Resources[tops[j]] })
-		if len(tops) > 3 {
-			tops = tops[:3]
-		}
-		for i, res := range tops {
-			tops[i] = fmt.Sprintf("%s %s", res, pct(last.Resources[res]))
-		}
-		fmt.Fprintf(sb, "No resource's own pool passes its knee in any age, so each applies all it has earned; the fullest at the end are %s.\n", strings.Join(tops, ", "))
-	} else {
-		fmt.Fprintf(sb, "A resource's own pool passes its knee for: %s.\n", strings.Join(reached, ", "))
+	sort.SliceStable(tops, func(i, j int) bool { return last.Resources[tops[i]] > last.Resources[tops[j]] })
+	if len(tops) > 3 {
+		tops = tops[:3]
 	}
-	fmt.Fprintf(sb, "\nIn the last age the full set has earned %s and applies %s; under the old clamp it applied %s, and the other %s did nothing.\n", pct(last.All()), pct(last.Applied()), pct(PoolKnee), pct(last.All()-PoolKnee))
-	fmt.Fprintf(sb, "\nThe pacing model's all-production pool (config.ProductionAllHeld, the last column) is held as earned and goes through the same soft cap. It must stay at or under the earned column: it is what a well-played game holds, never more than a game can.\n")
+	for i, res := range tops {
+		tops[i] = fmt.Sprintf("%s %s", res, pct(last.Resources[res]))
+	}
+	fmt.Fprintf(sb, "\nIn the last age the full set has earned %s of all production, all of it applied; the fullest resource pools are %s.\n", pct(last.All()), strings.Join(tops, ", "))
+	fmt.Fprintf(sb, "\nThe pacing model's all-production pool (config.ProductionAllHeld, the last column) is held as earned and applied in full. It must stay at or under the earned column: it is what a well-played game holds, never more than a game can.\n")
 }

@@ -39,26 +39,15 @@ game.buildings.BankResource.08,"you have zero %s to bank, big yikes."
 game.buildings.BankResource.09,"Not enough %s rn: need %s, have %s. It's cooked."
 game.buildings.BankResource.10,"Broke on %s, that's a no rn."
 game.caps.CapPhrase.01,is 
-game.caps.capNote.01, rn
 game.caps.capNote.02,"zero effect, fully maxed rn"
 game.caps.capNote.03,maxed out: 
 game.caps.capNote.04, of it counts rn
-game.caps.kneeText.01,counts 
-game.caps.kneeText.02, past 
-game.caps.shareText.01,one quarter
-game.caps.shareText.02,a third
 game.caps.PoolNote.01,"maxed out, bestie: a tech takes one tick at least, so only +100% counts."
-game.caps.PoolNote.02, earned
 game.caps.PoolNote.03,maxed at 
 game.caps.PoolNote.04, banked
 game.caps.PoolLine.01," earned, "
 game.caps.PoolLine.02, counts.
-game.caps.PoolLine.03, Past 
-game.caps.PoolLine.04, any bonus counts 
 game.caps.capLinesLocked.01,"A tech takes one tick at least, so research speed maxes out at +100%, and you've already earned "
-game.caps.capLinesLocked.02,You've earned 
-game.caps.capLinesLocked.03,", and "
-game.caps.capLinesLocked.04," of it counts, no cap."
 game.caps.capLinesLocked.05, tops out at 
 game.caps.capLinesLocked.06,", and you've earned "
 game.catastrophe.catastropheBlockErr.01,%s is upon you. Type 'catastrophe' to pick Endure or Succumb before %s

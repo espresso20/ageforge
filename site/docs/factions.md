@@ -162,7 +162,7 @@ production rate = normal rate × (1 + ally bonus)
 route income    = base income × (1 + harbor bonus + ally bonus)
 ```
 
-The bonus applies to your whole per-tick rate of that resource (buildings, workers and everything else), and to that resource on every trade route that brings it in. It is its own multiplier, outside [the all-production pool](resources.md#the-all-production-cap). Two allies with the same specialty would add their bonuses together. An ally at war with you gives nothing.
+The bonus applies to your whole per-tick rate of that resource (buildings, workers and everything else), and to that resource on every trade route that brings it in. It is its own multiplier, outside [the all-production pool](resources.md#the-all-production-pool). Two allies with the same specialty would add their bonuses together. An ally at war with you gives nothing.
 
 The **Concert of Nations**, the Industrial Age's Trade capstone, makes every ally give 25% more: a +20% bonus becomes +25%, a +15% one +18.75%. The **Federation Charter**, a Galactic Age tech, adds 25% more again (+31.25% and +23.4%). The Factions panel and the Trade panel list each bonus as it stands.
 
@@ -204,7 +204,7 @@ A boon is rolled from one catalog shared by every civilization:
 | Grand Cache (rare) | a bigger instant lump of a rarer resource (gold, uranium, plasma, ...) | grows with the age | instant |
 | Extra Hands | 3 to 8 temporary workers | | 2,600 to 5,200 ticks |
 
-The sizes are before scaling. Stronger civilizations give bigger boons (×0.98 at strength 1 up to ×1.30 at strength 5), and so do better relations: ×1.15 friendly, ×1.4 allied, ×0.7 from a rival or a civilization under embargo. Industrious Spell adds into [the all-production pool](resources.md#the-all-production-cap) like any all-production bonus, and a specialty boon into its resource's own pool. A pool applies in full up to +200% and a quarter of every point past it, and when a boon lands past +200% its log line says what it adds (`counts a quarter past +200%: +3.75% now`).
+The sizes are before scaling. Stronger civilizations give bigger boons (×0.98 at strength 1 up to ×1.30 at strength 5), and so do better relations: ×1.15 friendly, ×1.4 allied, ×0.7 from a rival or a civilization under embargo. Industrious Spell adds into [the all-production pool](resources.md#the-all-production-pool) like any all-production bonus, and a specialty boon into its resource's own pool. A pool applies in full, however large it grows.
 
 Which boon you get depends on the civilization's character. Every civilization favors sharing its specialty. A peaceful one leans toward gentle production and research gifts and rarely speeds time; an aggressive one toward Time Dilation and lumps of spoils; a mercantile one toward lumps of goods and resource surges; an isolationist one toward lumps and the rare Grand Cache. Allies make the Grand Cache more likely too.
 

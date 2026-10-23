@@ -280,22 +280,22 @@ func TestTeachingBonusHasItsOwnLine(t *testing.T) {
 	}
 }
 
-// A knowledge building shows its scholars a copy and its copies against its
-// cap, and at the cap says it can be built no further in the words the
-// Buildings panel gives a building at its limit.
-func TestKnowledgeBuildingShowsScholarsAndCap(t *testing.T) {
+// A knowledge building shows its scholars a copy and where its research
+// halves, in every list. Nothing refuses a copy at that count: the building is
+// not at a limit, and the lists say nothing of one.
+func TestKnowledgeBuildingShowsScholarsAndSoftCap(t *testing.T) {
 	ge := scholarGame(t)
 	st := ge.GetState()
 	bs := st.Buildings["story_circle"]
-	if bs.Scholars != 2 || bs.ScholarCap <= 0 {
+	if bs.Scholars != 2 || bs.FullRateCopies <= 0 {
 		t.Fatalf("staging: %+v", bs)
 	}
-	want := fmt.Sprintf("%d of %d built.", bs.Count, bs.ScholarCap)
+	want := fmt.Sprintf("Past %d copies, each researches at half rate.", bs.FullRateCopies)
 	if got := buildingText(bs); !strings.HasSuffix(got, want) || !strings.Contains(got, "2 scholars") {
 		t.Errorf("buildingText = %q, want 2 scholars and it to end %q", got, want)
 	}
 	// A description that does not name the scholars gets them added.
-	if got := buildingText(game.BuildingState{Description: "A hall.", Scholars: 3, ScholarCap: 5, Count: 1}); got != "A hall. 3 scholars a copy, 1 of 5 built." {
+	if got := buildingText(game.BuildingState{Description: "A hall.", Scholars: 3, FullRateCopies: 5, Count: 1}); got != "A hall. 3 scholars a copy. Past 5 copies, each researches at half rate." {
 		t.Errorf("buildingText without the scholars in the description = %q", got)
 	}
 	if !strings.Contains(buildingsProvider(st, 120), want) {
@@ -304,17 +304,19 @@ func TestKnowledgeBuildingShowsScholarsAndCap(t *testing.T) {
 	if !strings.Contains(cmdBuild(nil, ge).Message, want) {
 		t.Errorf("the build list lacks %q", want)
 	}
-	if atLimit(bs) != "" {
-		t.Errorf("a building under its cap says %q", atLimit(bs))
-	}
-	ge.SetTownForTest(map[string]int{"story_circle": bs.ScholarCap}, 0)
-	st = ge.GetState()
-	bs = st.Buildings["story_circle"]
-	if !bs.AtMaxCount || atLimit(bs) != "Building limit reached." {
-		t.Fatalf("at the cap: %+v", bs)
-	}
-	if !strings.Contains(buildingsProvider(st, 120), "Building limit reached.") || !strings.Contains(cmdBuild(nil, ge).Message, "Building limit reached.") {
-		t.Errorf("a knowledge building at its cap is not said to be at its limit")
+	// At the cap, and past it, the copy still builds: no limit is reached.
+	for _, copies := range []int{bs.FullRateCopies, bs.FullRateCopies + 3} {
+		ge.SetTownForTest(map[string]int{"story_circle": copies}, 0)
+		st = ge.GetState()
+		bs = st.Buildings["story_circle"]
+		if bs.AtMaxCount {
+			t.Fatalf("%d copies: the building is at a limit: %+v", copies, bs)
+		}
+		for name, out := range map[string]string{"overlay": buildingsProvider(st, 120), "build list": cmdBuild(nil, ge).Message} {
+			if strings.Contains(out, "limit reached") || strings.Contains(out, "MAX") {
+				t.Errorf("%d copies: the %s says a knowledge building is at a limit:\n%s", copies, name, out)
+			}
+		}
 	}
 	// A building that is not a knowledge building adds nothing.
 	if got := buildingText(game.BuildingState{Description: "A hut."}); got != "A hut." {
@@ -506,5 +508,54 @@ func TestEnlightenmentLineNamesScholarOutput(t *testing.T) {
 	plain, _ := effectMagnitude(game.EventEffectInfo{Type: "knowledge_rate", Target: "knowledge", Value: 0.2})
 	if plain != "+20% scholar output" {
 		t.Errorf("the active Enlightenment reads %q", plain)
+	}
+}
+
+// In the Buildings panel a knowledge building past its cap shows no MAX and no
+// limit line, only the half-rate words; a building with a real limit still does.
+func TestKnowledgeBuildingPastItsCapShowsNoLimitInThePanel(t *testing.T) {
+	restoreForge(t)
+	const lib = "monastery_library"
+	copies := config.KnowledgeCap(lib) + 3
+	d, pages, eng := wallTown(t, map[string]int{lib: copies, "grand_amphitheatre_monument": 1})
+	st := eng.GetState()
+	name := st.Buildings[lib].Name
+	if b := st.Buildings[lib]; b.AtMaxCount || b.Count != copies {
+		t.Fatalf("staging: the %s is %+v", name, b)
+	}
+	if !st.Buildings["grand_amphitheatre_monument"].AtMaxCount {
+		t.Fatal("staging: the monument is not at its limit")
+	}
+	for _, sz := range wallSizes {
+		w, h := sz[0], sz[1]
+		maxes, limits, halves, shown := 0, 0, 0, false
+		for _, rows := range panelPages(t, d, pages, w, h) {
+			for _, r := range rows {
+				if strings.Contains(r, " "+name+" x"+fmt.Sprint(copies)) {
+					shown = true
+					if strings.Contains(r, "MAX") {
+						t.Errorf("%dx%d: the %s shows MAX: %q", w, h, name, r)
+					}
+				}
+				if strings.Contains(r, "MAX") {
+					maxes++
+				}
+				if strings.Contains(r, "Building limit reached.") {
+					limits++
+				}
+			}
+			if strings.Contains(flat(rows), "each researches at half rate") {
+				halves++
+			}
+		}
+		if !shown {
+			t.Errorf("%dx%d: the %s is on no page of the panel", w, h, name)
+		}
+		if halves == 0 {
+			t.Errorf("%dx%d: no page says a copy past the cap researches at half rate", w, h)
+		}
+		if maxes != 1 || limits != 1 {
+			t.Errorf("%dx%d: the monument at its limit shows MAX %d times and its limit line %d times, want once each", w, h, maxes, limits)
+		}
 	}
 }

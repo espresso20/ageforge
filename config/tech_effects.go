@@ -12,11 +12,10 @@ import (
 // check that the engine delivers each one.
 //
 // A tech's bonus has its own layer. The game's other bonuses (milestones,
-// wonders, events, festivals, boons) add up in pools, and a pool has a soft
-// cap (soft_cap.go): all production and each resource's output apply in full
-// up to +200% and a quarter of every point past it. A tech's output bonus
-// joins no pool. It multiplies what the pools make, where Era
-// Mastery's speed does, so it counts in full whatever else the player holds.
+// wonders, events, festivals, boons) add up in pools, and a production pool
+// applies in full, however large it grows. A tech's output bonus joins no
+// pool. It multiplies what the pools make, where Era Mastery's speed does,
+// so it counts in full whatever else the player holds.
 // Inside the layer, bonuses on the same thing add up (two +5% give +10%) and
 // nothing caps the sum. A bonus that cuts a time or a price multiplies with
 // the others of its kind instead (two 3% cuts leave 0.97 x 0.97) and has a
@@ -164,7 +163,7 @@ func (k TechEffectKey) Clamp(term float64) float64 {
 // Pool is the bonus pool a fraction of this kind adds to, by the name the
 // rest of the game's bonuses use for it ("tick_speed", "military_power"):
 // game speed, military power and expedition rewards, which techs share with
-// milestones and wonders and which no soft cap holds. Every other kind is
+// milestones and wonders and which no cap holds. Every other kind is
 // applied in the tech layer and reports false, as an unknown kind does.
 func (k TechEffectKey) Pool() (string, bool) {
 	switch k.Kind {

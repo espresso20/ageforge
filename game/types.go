@@ -306,10 +306,11 @@ type BuildingState struct {
 	// rung of its line: what a requirement that names this building counts.
 	HeldWithLater int
 	// Scholars is the scholars one copy of this building comes with (0 for
-	// every building but a knowledge building) and ScholarCap the most copies
-	// that can be built (0 where there is no cap).
-	Scholars   int
-	ScholarCap int
+	// every building but a knowledge building) and FullRateCopies the copies
+	// that research at full rate: each copy past it researches at half rate,
+	// and still builds (0 where there is no such rule).
+	Scholars       int
+	FullRateCopies int
 	// Soldiers is the soldiers one copy of this building comes with (0 for
 	// every building but a military building).
 	Soldiers int
