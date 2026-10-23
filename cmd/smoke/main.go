@@ -5,8 +5,8 @@
 //
 // It exits 1 if any scenario failed: a panic, a soft-lock, an invariant violation, a
 // save/load divergence, a fuzz crash, an account failure, a docs mismatch or a blown
-// performance budget. It exits 2 on a bad flag or a failure to write the report. Pacing
-// fails nothing unless -pacing enforce.
+// performance budget. It exits 2 on a bad flag value or an error running, merging or
+// writing the reports. Pacing fails nothing unless -pacing enforce.
 //
 // Usage:
 //
