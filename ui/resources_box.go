@@ -12,11 +12,12 @@ import (
 )
 
 // resources_box.go lays the dashboard's Resources box out for the size it
-// is drawn at. Every resource is one row on one grid (name, amount over cap,
-// rate, bar, marker), so the columns line up whatever the widest name or
-// rate is, and a row never wraps: when the box is narrow it gives up the
-// least important part first (the bar shrinks, then goes; then the spacing;
-// then the cap; then the rate's unit shortens; then long names). When the
+// is drawn at. Every resource is one row on one grid (name, amount, rate,
+// marker; culture and faith add their progress toward something: a step and
+// a bar), so the columns line up whatever the widest name or rate is, and a
+// row never wraps: when the box is narrow it gives up the least important
+// part first (the bar shrinks, then goes; then the spacing; then the step;
+// then the rate's unit shortens; then long names). When the
 // box is short the rows close up, and when even that is not enough the box
 // shows a page of them and says how to turn it.
 
@@ -42,18 +43,18 @@ type resRow struct {
 	name     string
 	amt      string // the amount column
 	amtColor string
-	cap      string // the cap column
-	// status stands where "/ cap" does on a row that has no cap to show
+	cap      string // the step column (culture's next step); "" for the rest
+	// status stands where "/ step" does on a row that has no step to show
 	// (faith's strength, culture past its last step): the longest of these
 	// that fits, plain text, drawn in statusColor.
 	status      []string
 	statusColor string
 	rate        float64
-	fill        float64 // how full the bar is, 0 to 1
-	// progress draws the bar as progress toward something (faith strength,
-	// culture's next step) instead of as a store filling up.
+	fill        float64 // how far along the bar is, 0 to 1
+	// progress draws a bar of progress toward something (faith strength,
+	// culture's next step). A row without it has no bar.
 	progress bool
-	glyph    string // the marker after the bar: "◈" nearly full, "▼" falling
+	glyph    string // the marker after the bar: "▼" falling
 	glyphCol string
 	detail   string // a second line for a roomy box, tags and all
 }
@@ -83,24 +84,15 @@ func resourceRows(state game.GameState) []resRow {
 	return rows
 }
 
-// storeRow is an ordinary resource: what is held over what the store holds.
+// storeRow is an ordinary resource: what is held and which way it is going.
+// Stock has no ceiling, so there is no cap and no bar.
 func storeRow(rs game.ResourceState) resRow {
-	r := resRow{name: rs.Name, amt: FormatNumber(rs.Amount), amtColor: "white", cap: FormatNumber(rs.Storage), rate: rs.Rate}
-	if rs.Storage > 0 {
-		r.fill = rs.Amount / rs.Storage
-	}
+	r := resRow{name: rs.Name, amt: FormatNumber(rs.Amount), amtColor: "white", rate: rs.Rate}
 	switch {
-	case rs.Storage > 0 && rs.Amount >= rs.Storage*0.9:
-		r.amtColor = "yellow"
 	case rs.Rate > 0:
 		r.amtColor = "green"
 	case rs.Rate < 0:
 		r.amtColor = "red"
-	}
-	switch {
-	case rs.Storage > 0 && rs.Amount/rs.Storage >= 0.95:
-		r.glyph, r.glyphCol = "◈", "gold"
-	case rs.Rate < 0:
 		r.glyph, r.glyphCol = "▼", "red"
 	}
 	return r
@@ -156,7 +148,7 @@ func faithBandFor(held float64, o game.CatastropheOutlook) faithBand {
 // faithRow is faith: the amount column and the bar are the faith strength
 // the rolls read (o.FaithStrength: the faith the town's own faith buildings
 // made, against four and a half moderate sets'), not the fill of the store
-// faith is kept in. The band stands where a cap would, and the detail line
+// faith is kept in. The band stands where a step would, and the detail line
 // says it in full with the odds it gives.
 func faithRow(rs game.ResourceState, o game.CatastropheOutlook) resRow {
 	band := faithBandFor(rs.Amount, o)
@@ -172,13 +164,13 @@ func faithRow(rs game.ResourceState, o game.CatastropheOutlook) resRow {
 type resFormat struct {
 	nameW, amtW, capW, rateW int
 	gap                      int    // cells between columns
-	sep                      int    // cells between amount and cap: 3 is " / ", 1 is "/", 0 is no cap column
+	sep                      int    // cells between amount and step: 3 is " / ", 1 is "/", 0 is no step column
 	bar                      int    // cells of bar, 0 for none
-	unit                     string // the rate's unit: "/tick", or "/t" when even the cap had to go
+	unit                     string // the rate's unit: "/tick", or "/t" when even the step had to go
 }
 
 // midW is the cells between the amount and the rate columns' gaps: the
-// separator and the cap.
+// separator and the step.
 func (f resFormat) midW() int {
 	if f.sep == 0 {
 		return 0
@@ -200,7 +192,10 @@ func (f resFormat) width() int {
 func fitResourceFormat(rows []resRow, w int) resFormat {
 	f := resFormat{unit: "/tick", gap: 2, sep: 3}
 	longest := 0
+	needMid, needBar := false, false // does any row have a step or status, a bar?
 	for _, r := range rows {
+		needMid = needMid || r.cap != "" || len(r.status) > 0
+		needBar = needBar || r.progress
 		longest = max(longest, runeLen(r.name))
 		f.amtW = max(f.amtW, runeLen(r.amt))
 		f.capW = max(f.capW, runeLen(r.cap))
@@ -209,6 +204,9 @@ func fitResourceFormat(rows []resRow, w int) resFormat {
 	}
 	// spacings from roomy to tight; barIn is the widest bar w leaves.
 	spacings := [][2]int{{2, 3}, {1, 3}, {1, 1}}
+	if !needMid {
+		spacings = [][2]int{{2, 0}, {1, 0}}
+	}
 	barIn := func(f resFormat) int {
 		f.bar = 0
 		return min(resBarMax, w-f.width()-f.gap)
@@ -217,6 +215,13 @@ func fitResourceFormat(rows []resRow, w int) resFormat {
 		f.nameW = nameW
 		for _, s := range spacings {
 			f.gap, f.sep = s[0], s[1]
+			if !needBar {
+				f.bar = 0
+				if f.width() <= w {
+					return true
+				}
+				continue
+			}
 			if b := barIn(f); b >= least {
 				f.bar = b
 				return true
@@ -237,7 +242,7 @@ func fitResourceFormat(rows []resRow, w int) resFormat {
 			return f
 		}
 	}
-	// No bar: the roomiest spacing that fits, then without the cap, then
+	// No bar: the roomiest spacing that fits, then without the step, then
 	// with the short unit, then with the names cut to what is left.
 	f.bar, f.nameW = 0, capped
 	for _, s := range spacings {
@@ -283,6 +288,8 @@ func (f resFormat) line(r resRow) string {
 				}
 			}
 			fmt.Fprintf(&b, "[%s]%s[-]%s", r.statusColor, text, strings.Repeat(" ", mid-runeLen(text)))
+		case r.cap == "":
+			b.WriteString(strings.Repeat(" ", mid))
 		case f.sep == 3:
 			fmt.Fprintf(&b, "[gray] / %s[-]%s", r.cap, strings.Repeat(" ", f.capW-runeLen(r.cap)))
 		default:
@@ -296,7 +303,7 @@ func (f resFormat) line(r resRow) string {
 		if r.progress {
 			b.WriteString(progressCells(r.fill, f.bar))
 		} else {
-			b.WriteString(resourceBar(r.fill, 1, f.bar))
+			b.WriteString(strings.Repeat(" ", f.bar))
 		}
 	}
 	if r.glyph != "" {
@@ -306,7 +313,7 @@ func (f resFormat) line(r resRow) string {
 }
 
 // progressCells is a bar of width cells, ratio of it filled, in the accent
-// color: progress toward something, where resourceBar is a store filling.
+// color: progress toward something.
 func progressCells(ratio float64, width int) string {
 	ratio = min(1, max(0, ratio))
 	filled := int(ratio * float64(width))
@@ -331,13 +338,12 @@ func shortName(name string, n int) string {
 }
 
 // resLegends are the legend under the rows, from full to brief: what the
-// amount's color and the two markers mean, so neither carries meaning by
-// color alone. The box prints the fullest that fits.
+// amount's color and the marker mean, so neither carries meaning by color
+// alone. The box prints the fullest that fits.
 var resLegends = []string{
-	" [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]falling[-] [gray]·[-] [yellow]90%+ full[-] [gray]·[-] [gold]◈[-] [gray]95%+ full ·[-] [red]▼[-] [gray]falling[-]",
-	" [green]rising[-] [gray]·[-] [yellow]90%+ full[-] [gray]·[-] [gold]◈[-] [gray]95%+ full ·[-] [red]▼[-] [gray]falling[-]",
-	" [gold]◈[-] [gray]95%+ full ·[-] [red]▼[-] [gray]falling[-]",
-	" [gold]◈[-] [gray]full[-] [red]▼[-] [gray]falling[-]",
+	" [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]falling[-] [gray]·[-] [red]▼[-] [gray]falling[-]",
+	" [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling[-]",
+	" [red]▼[-] [gray]falling[-]",
 }
 
 func resLegend(w int) string {

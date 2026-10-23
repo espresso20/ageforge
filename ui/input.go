@@ -754,8 +754,8 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 		if !rs.Unlocked {
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("  %-12s %8.1f / %8.0f  rate: %+.3f/tick\n",
-			rs.Name, rs.Amount, rs.Storage, rs.Rate))
+		sb.WriteString(fmt.Sprintf("  %-12s %8.1f  rate: %+.3f/tick\n",
+			rs.Name, rs.Amount, rs.Rate))
 	}
 	sb.WriteString("\n--- Build Queue ---\n")
 	if len(state.BuildQueue) == 0 {
@@ -971,9 +971,8 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 		if !rs.Unlocked {
 			continue
 		}
-		bar := ProgressBar(rs.Amount, rs.Storage, 15)
-		lines = append(lines, fmt.Sprintf("  %-10s %s/%s %s %s",
-			rs.Name, FormatNumber(rs.Amount), FormatNumber(rs.Storage), FormatRateTick(rs.Rate), bar))
+		lines = append(lines, fmt.Sprintf("  %-10s %s %s",
+			rs.Name, FormatNumber(rs.Amount), FormatRateTick(rs.Rate)))
 	}
 	lines = append(lines, "")
 
