@@ -373,7 +373,7 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 		if !a.placed {
 			continue
 		}
-		route := routeCells(sc.town, a.at)
+		route := routeCells(t, sc.town, a.at, pinHash(a.act.Name, a.act.ExpiresTick), terrainSeed(state.Seed, state.Age))
 		lit := v.report && i == hi
 		for j, c := range route[1 : len(route)-1] {
 			p := abs(c)
@@ -404,7 +404,7 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 		g.set(p.x, p.y, '◆', kind)
 	}
 	if !v.report && hi >= 0 && hi < len(sc.offers) && sc.offers[hi].placed {
-		route := routeCells(sc.town, sc.offers[hi].at)
+		route := routeCells(t, sc.town, sc.offers[hi].at, pinHash(sc.offers[hi].offer.Name, sc.offers[hi].offer.ExpiresTick), terrainSeed(state.Seed, state.Age))
 		for j, c := range route[1:max(len(route)-1, 1)] {
 			p := abs(c)
 			g.set(p.x, p.y, dot(j), xAccent)

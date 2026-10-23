@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"container/heap"
 	"hash/fnv"
 	"math"
 	"strconv"
@@ -105,6 +106,17 @@ func (t *expTerrain) isWater(x, y int) bool {
 	return x < 0 || y < 0 || x >= t.w || y >= t.h || t.water[y*t.w+x]
 }
 
+func (t *expTerrain) routeCost(x, y int) float64 {
+	switch t.k[y*t.w+x] {
+	case xHill:
+		return 3
+	case xGrass:
+		return 1.4
+	default:
+		return 1
+	}
+}
+
 // pt is a cell of the map.
 type pt struct{ x, y int }
 
@@ -190,34 +202,131 @@ func abs(v int) int {
 
 func clamp(v, lo, hi int) int { return max(lo, min(hi, v)) }
 
-// routeCells is the cells of a straight route from a to b, ends included
-// (Bresenham's line).
-func routeCells(a, b pt) []pt {
-	var out []pt
-	dx, dy := abs(b.x-a.x), -abs(b.y-a.y)
-	sx, sy := 1, 1
-	if a.x > b.x {
-		sx = -1
+type routeNode struct {
+	p pt
+	f float64
+	g float64
+}
+type routeQueue []*routeNode
+
+func (q routeQueue) Len() int           { return len(q) }
+func (q routeQueue) Less(i, j int) bool { return q[i].f < q[j].f }
+func (q routeQueue) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
+func (q *routeQueue) Push(v any)        { *q = append(*q, v.(*routeNode)) }
+func (q *routeQueue) Pop() any          { old := *q; n := old[len(old)-1]; *q = old[:len(old)-1]; return n }
+
+type routeCacheKey struct {
+	a, b         pt
+	pin, terrain uint64
+	w, h         int
+}
+
+var routeCache = map[routeCacheKey][]pt{}
+
+// routeCells finds a deterministic low-cost path over the terrain, ends included.
+func routeCells(t *expTerrain, a, b pt, pin, terrain uint64) []pt {
+	tw, th := 0, 0
+	if t != nil {
+		tw, th = t.w, t.h
 	}
-	if a.y > b.y {
-		sy = -1
+	key := routeCacheKey{a: a, b: b, pin: pin, terrain: terrain, w: tw, h: th}
+	if c, ok := routeCache[key]; ok {
+		return append([]pt(nil), c...)
 	}
-	e := dx + dy
-	for {
-		out = append(out, a)
-		if a == b {
-			return out
+	straight := func() []pt {
+		p := a
+		out := []pt{}
+		dx, dy := abs(b.x-a.x), -abs(b.y-a.y)
+		sx, sy := 1, 1
+		if a.x > b.x {
+			sx = -1
 		}
-		e2 := 2 * e
-		if e2 >= dy {
-			e += dy
-			a.x += sx
+		if a.y > b.y {
+			sy = -1
 		}
-		if e2 <= dx {
-			e += dx
-			a.y += sy
+		e := dx + dy
+		for {
+			out = append(out, p)
+			if p == b {
+				return out
+			}
+			e2 := 2 * e
+			if e2 >= dy {
+				e += dy
+				p.x += sx
+			}
+			if e2 <= dx {
+				e += dx
+				p.y += sy
+			}
 		}
 	}
+	if t == nil || t.w <= 0 || t.h <= 0 || t.isWater(a.x, a.y) || t.isWater(b.x, b.y) {
+		return straight()
+	}
+	idx := func(p pt) int { return p.y*t.w + p.x }
+	start, end := idx(a), idx(b)
+	dist := make([]float64, t.w*t.h)
+	prev := make([]int, t.w*t.h)
+	for i := range dist {
+		dist[i] = math.Inf(1)
+		prev[i] = -1
+	}
+	dist[start] = 0
+	q := routeQueue{}
+	heap.Push(&q, &routeNode{p: a, f: math.Hypot(float64(b.x-a.x), float64(b.y-a.y))})
+	dirs := []pt{{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1}}
+	for q.Len() > 0 {
+		n := heap.Pop(&q).(*routeNode)
+		u := n.p
+		ui := idx(u)
+		if n.g > dist[ui] {
+			continue
+		}
+		if u == b {
+			break
+		}
+		for _, d := range dirs {
+			v := pt{u.x + d.x, u.y + d.y}
+			if t.isWater(v.x, v.y) {
+				continue
+			}
+			step := 1.0
+			if d.x != 0 && d.y != 0 {
+				step = 1.41
+			}
+			nd := dist[ui] + step*(t.routeCost(v.x, v.y)+.6*expNoise(pin, v.x, v.y))
+			vi := idx(v)
+			if nd >= dist[vi] {
+				continue
+			}
+			dist[vi] = nd
+			prev[vi] = ui
+			heap.Push(&q, &routeNode{p: v, f: nd + math.Hypot(float64(b.x-v.x), float64(b.y-v.y)), g: nd})
+		}
+	}
+	if math.IsInf(dist[end], 1) {
+		return straight()
+	}
+	out := []pt{}
+	for i := end; i >= 0; i = prev[i] {
+		out = append(out, pt{i % t.w, i / t.w})
+		if i == start {
+			break
+		}
+	}
+	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+		out[i], out[j] = out[j], out[i]
+	}
+	for i := 1; i+1 < len(out); {
+		if abs(out[i-1].x-out[i+1].x) <= 1 && abs(out[i-1].y-out[i+1].y) <= 1 {
+			out = append(out[:i], out[i+1:]...)
+		} else {
+			i++
+		}
+	}
+	routeCache[key] = append([]pt(nil), out...)
+	return out
 }
 
 // hopTo picks the pin to move to from pin cur in direction (dx, dy): the
