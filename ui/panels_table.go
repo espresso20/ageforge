@@ -33,6 +33,7 @@ var panelGroups = []panelGroup{
 	{"Progress", []panelInfo{
 		{"milestones", "goals and rewards"},
 		{"research", "the tech tree"},
+		{"charter", "what advance needs"},
 		{"epoch", "eras and disasters"},
 		{"history", "your story so far"},
 	}},

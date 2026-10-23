@@ -86,17 +86,20 @@ func renderCurrentWonderSummary(state game.GameState) string {
 }
 
 // wonderBankPercent returns the floored share of a wonder's price that has
-// been paid. A surplus in one resource cannot pay another part of the price.
-func wonderBankPercent(bank, cost map[string]float64) float64 {
-	totalNeed, totalBanked := 0.0, 0.0
-	for res, need := range cost {
-		totalNeed += need
-		totalBanked += math.Min(bank[res], need)
+// been paid, in whole percent: game.WonderBankShare, the one reading the Next
+// Age strip, this panel, the Map and the Advance panel all share. A surplus
+// in one resource cannot pay another part of the price, and each part counts
+// for what it is worth in the age's prices.
+func wonderBankPercent(state game.GameState, wonder string) float64 {
+	bs := state.Buildings[wonder]
+	if bs.WonderBankFull {
+		return 100
 	}
-	if totalNeed == 0 {
+	def, ok := state.Ruleset().Building(wonder)
+	if !ok {
 		return 0
 	}
-	return math.Floor(totalBanked / totalNeed * 100)
+	return math.Floor(game.WonderBankShare(state.Ruleset(), def.RequiredAge, def.BaseCost, bs.WonderBank) * 100)
 }
 
 // wondersProvider generates the Wonders panel text from the current game state.
@@ -152,7 +155,7 @@ func wondersProvider(state game.GameState, _ int) string {
 				}
 				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   %s\n", w.name, w.ageName, ready)
 			} else {
-				pct := wonderBankPercent(bs.WonderBank, w.def.BaseCost)
+				pct := wonderBankPercent(state, w.key)
 				if pct > 0 {
 					fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   [yellow](%.0f%% banked)[-]\n",
 						w.name, w.ageName, pct)

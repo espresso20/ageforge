@@ -129,6 +129,11 @@ func helpProvider(_ game.GameState, screenW int) string {
 	keys(peopleKeys...)
 	note("Shares are a command: roster <area> <percent|auto>. The panel opens with people or workers.")
 
+	sb.WriteString("\n[gold]═══ The Advance panel ═══[-]\n")
+	note("The gate into the next age as four pillars (Knowledge, People, Industry and Monument), with the march of ages and a calendar year that moves as you close in. The prompt keeps working while it is open; the panel takes the keys that print nothing.")
+	keys(advanceKeys...)
+	note("The panel opens with charter. Typing advance does the same as Enter on it.")
+
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string
 	for _, c := range reg {

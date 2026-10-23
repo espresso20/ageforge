@@ -917,6 +917,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
+	ge.resetCalendar()
 	ge.prestigeCueSeenAge = save.PrestigeCueSeenAge
 	ge.prestigeCue = PrestigeCue{}
 	// Restore the run's master seed and both streams' positions, so the loaded

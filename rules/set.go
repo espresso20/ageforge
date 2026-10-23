@@ -24,6 +24,10 @@ type Set struct {
 	agePos   map[string]int
 	ageByKey map[string]config.AgeDef
 	wonders  map[string]string // age key -> its wonder's building key
+	// years is the calendar year each age begins in, in age order, and
+	// yearLabels the ages shown by a word instead (calendar.go).
+	years      []int
+	yearLabels map[string]string
 
 	eras       []config.EpochDef
 	eraByKey   map[string]config.EpochDef

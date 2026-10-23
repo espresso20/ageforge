@@ -147,6 +147,10 @@ type Dashboard struct {
 	// peoplePanel is the People panel: Overview, Work, Army and Scholars.
 	peoplePanel *peoplePanel
 
+	// advancePanel is the Advance panel: the gate into the next age as four
+	// pillars (advance_panel.go).
+	advancePanel *advancePanel
+
 	miniMap *miniMap
 	// skyline is the skyline strip under the Buildings list (dash_skyline.go).
 	skyline  *skylineStrip
@@ -179,6 +183,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		badgePanel:    newBadgePanel(),
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
+		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
 		skyline:       newSkylineStrip(mv),
 		pages:         pages,
@@ -232,6 +237,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.researchPanel.toPrompt
 	d.overlayMgr.RegisterWidget("people", "People", d.peoplePanel.open, d.peoplePanel.update, true)
+	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
 	d.overlayMgr.Register("harbinger", "Harbinger", d.harbPanel.provider)
@@ -594,6 +600,12 @@ func (d *Dashboard) build() {
 			d.peoplePanel.routeKey(event, d.inputField.GetText()) {
 			return nil
 		}
+		// The open Advance panel, which takes the arrows and Enter while the
+		// bar is empty.
+		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "charter" && d.inputField.HasFocus() &&
+			d.advancePanel.routeKey(event, d.inputField.GetText()) {
+			return nil
+		}
 		switch event.Key() {
 		case resourcePageKey:
 			// The Resources box's next page, when it has more rows than it
@@ -640,7 +652,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 // sidebarPanels is the Panels list, in order.
-var sidebarPanels = []string{"milestones", "badges", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
+var sidebarPanels = []string{"milestones", "badges", "research", "plan", "charter", "expedition", "army", "trade", "factions", "stats", "wonders", "people", "logs", "epoch", "harbinger", "history", "map", "help"}
 
 // buildSidebarText is the Panels list in one column, the open panel
 // highlighted: the list as it shows when the screen is tall enough for it.
@@ -1257,10 +1269,7 @@ func ageGoals(state game.GameState) []ageGoal {
 	var goals []ageGoal
 	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
 	if state.CurrentAgeWonderKey != "" {
-		banked := 0.0
-		if wonder, ok := state.Ruleset().Building(state.CurrentAgeWonderKey); ok {
-			banked = wonderBankPercent(state.Buildings[state.CurrentAgeWonderKey].WonderBank, wonder.BaseCost)
-		}
+		banked := wonderBankPercent(state, state.CurrentAgeWonderKey)
 		goals = append(goals, ageGoal{fmt.Sprintf("Wonder: %s %.0f%% banked", state.CurrentAgeWonderName, banked), false})
 		// Its keystone tech, while that is still to research.
 		if tech := state.Buildings[state.CurrentAgeWonderKey].NeedsTech; tech != "" {
@@ -1286,6 +1295,24 @@ func ageGoals(state game.GameState) []ageGoal {
 // already met is counted instead of listed, and after that the list ends
 // with how many more there are.
 func ageProgressLines(state game.GameState, w, h int) []string {
+	lines := ageStripLines(state, w, h)
+	if state.NextAge == "" || len(lines) == 0 {
+		return lines
+	}
+	// The strip is the short form of the Advance panel: say how to open it
+	// when the last line has room for the words.
+	last := len(lines) - 1
+	if used := runeLen(plainLogText(lines[last])); used+2+runeLen(charterStripHint) <= w {
+		lines[last] += "  [gray]" + charterStripHint + "[-]"
+	}
+	return lines
+}
+
+// charterStripHint ends the Next Age strip when it has the room.
+const charterStripHint = "type charter"
+
+// ageStripLines is the strip without its hint.
+func ageStripLines(state game.GameState, w, h int) []string {
 	if w < 1 || h < 1 {
 		return nil
 	}
@@ -1608,7 +1635,7 @@ func (d *Dashboard) submitInput() {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
-		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" || result.OverlayName == "people" {
+		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" || result.OverlayName == "people" || result.OverlayName == "charter" {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
 		}
@@ -1620,6 +1647,10 @@ func (d *Dashboard) submitInput() {
 		// A command typed over the panel (roster, recruit): show what it
 		// changed now rather than at the next refresh.
 		d.peoplePanel.update(d.engine.GetState())
+	} else if d.overlayMgr.ActiveName() == "charter" {
+		// A command typed over the panel (build, advance): show what it
+		// changed now rather than at the next refresh.
+		d.advancePanel.update(d.engine.GetState())
 	} else if d.overlayMgr.ActiveName() == "expedition" {
 		// An offer sent by name: the map shows it gone now.
 		d.expPanel.update(d.engine.GetState())

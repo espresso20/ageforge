@@ -496,7 +496,7 @@ func TestPanelsListAlwaysWhole(t *testing.T) {
 		}
 	}
 	// 100x30 gives the list 14 rows: two columns. 120x40 gives it 24: one.
-	if two := untag(sidebarText("", 20, 14)); !strings.HasPrefix(two, "milestones wonders") {
+	if two := untag(sidebarText("", 20, 14)); !strings.HasPrefix(two, "milestones stats") {
 		t.Errorf("14 rows: want two columns read down then across, got:\n%s", two)
 	}
 	if one := sidebarText("", 20, 24); one != buildSidebarText("") {
@@ -629,7 +629,7 @@ func TestNextAgeStripShowsWonderBankProgress(t *testing.T) {
 		t.Fatalf("banking food: %+v", result)
 	}
 	st = eng.GetState()
-	pct := wonderBankPercent(st.Buildings[wonder].WonderBank, def.BaseCost)
+	pct := wonderBankPercent(st, wonder)
 	if pct == 0 {
 		t.Fatal("staging: the partly banked Sacred Grove reads 0%")
 	}

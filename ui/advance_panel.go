@@ -1,0 +1,192 @@
+package ui
+
+import (
+	"time"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+
+	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/textfmt"
+)
+
+// advance_panel.go is the Advance panel's overlay primitive: the whole screen
+// but the command bar (advance_view.go draws it). Like the People and
+// Expeditions panels it leaves the keyboard with the command bar and takes
+// only the keys that print nothing, and only while the bar is empty: Up and
+// Down pick a pillar, Enter advances when all four stand. Esc closes it.
+// Anything typed goes to the bar. Opening it, moving about it and closing it
+// change nothing in the game; only Enter on a met gate does, through the
+// call the advance command makes.
+
+// advFlashFor is how long a line stays on the status row.
+const advFlashFor = 8 * time.Second
+
+type advancePanel struct {
+	*tview.Box
+	engine *game.GameEngine
+	state  game.GameState
+	view   game.AdvanceView
+	ui     advanceUI
+	// flashAt is when the status row's line was set.
+	flashAt time.Time
+	w, h    int // the last size drawn at
+
+	// settings reads the glyph tier.
+	settings func() mapSettings
+	// prompt reads the command bar ("" when it is empty).
+	prompt func() string
+	// toPrompt hands a key the panel does not take to the command bar.
+	toPrompt func(ev *tcell.EventKey)
+
+	now func() time.Time
+}
+
+func newAdvancePanel() *advancePanel {
+	return &advancePanel{Box: tview.NewBox(), w: 100, h: 30, now: time.Now}
+}
+
+// advancePanelName is the overlay's name, and the command that opens it.
+const advancePanelName = "charter"
+
+// registerAdvancePanel gives the panel the dashboard's engine, settings and
+// command bar, and registers it as an overlay. Like the other panels it
+// leaves the keyboard with the command bar. (It is a method of its own and
+// not part of NewDashboard so that the panel's title does not move the
+// numbers of NewDashboard's text rows, which the VibeMode script names.)
+func (d *Dashboard) registerAdvancePanel() {
+	d.advancePanel.engine = d.engine
+	d.advancePanel.settings = d.mapSettings
+	d.advancePanel.prompt = d.researchPanel.prompt
+	d.advancePanel.toPrompt = d.researchPanel.toPrompt
+	d.overlayMgr.RegisterWidget(advancePanelName, "Advance", d.advancePanel.open, d.advancePanel.update, true)
+}
+
+// open is the overlay's build: it runs on every Show, on the first pillar.
+func (p *advancePanel) open(state game.GameState) tview.Primitive {
+	p.ui = advanceUI{}
+	p.update(state)
+	return tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(p, 0, 1, true).
+		AddItem(nil, promptRows, 0, false)
+}
+
+// setSize tells the panel how big it is drawn, for the tests; a draw does it
+// by itself.
+func (p *advancePanel) setSize(w, h int) { p.w, p.h = w, h }
+
+// update takes a new snapshot. The calendar is held by the engine, so the year
+// the panel shows does not go back within an age.
+func (p *advancePanel) update(state game.GameState) {
+	p.state = state
+	v := state.AdvanceView()
+	if p.engine != nil {
+		v = p.engine.HoldCalendar(v)
+	}
+	// A line on the foot is about the gate as it stood: when the gate has
+	// since been met or has slipped, the status says so instead.
+	if v.Ready != p.view.Ready || v.Age != p.view.Age {
+		p.ui.flash = ""
+	}
+	p.view = v
+	p.ui.sel = clamp(p.ui.sel, 0, max(0, len(v.Pillars)-1))
+}
+
+// Draw paints the panel.
+func (p *advancePanel) Draw(scr tcell.Screen) {
+	x, y, w, h := p.GetRect()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	p.w, p.h = w, h
+	plain := false
+	if p.settings != nil {
+		plain = p.settings().Tier == mapmodel.TierASCII
+	}
+	u := p.ui
+	if u.flash != "" && p.now().Sub(p.flashAt) > advFlashFor {
+		p.ui.flash, u.flash = "", ""
+	}
+	grid := renderAdvance(p.view, u, w, h)
+	if plain {
+		grid.fold()
+	}
+	paintExpedition(scr, grid, x, y, newExpPalette())
+}
+
+// InputHandler takes the panel's keys when it has the focus itself and hands
+// the rest to the command bar.
+func (p *advancePanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
+		prompt := ""
+		if p.prompt != nil {
+			prompt = p.prompt()
+		}
+		if !p.routeKey(ev, prompt) && p.toPrompt != nil {
+			p.toPrompt(ev)
+		}
+	})
+}
+
+// routeKey takes a key if it is one of the panel's and reports whether it
+// did. With something typed in the prompt every key belongs to the prompt.
+func (p *advancePanel) routeKey(ev *tcell.EventKey, prompt string) bool {
+	switch ev.Key() {
+	case tcell.KeyUp, tcell.KeyDown, tcell.KeyEnter:
+		if prompt != "" {
+			return false
+		}
+	default:
+		return false
+	}
+	p.handleKey(ev.Key())
+	return true
+}
+
+func (p *advancePanel) handleKey(key tcell.Key) {
+	p.ui.flash = ""
+	switch key {
+	case tcell.KeyUp:
+		p.ui.sel = max(0, p.ui.sel-1)
+	case tcell.KeyDown:
+		p.ui.sel = min(max(0, len(p.view.Pillars)-1), p.ui.sel+1)
+	case tcell.KeyEnter:
+		p.advance()
+	}
+}
+
+// say puts a line on the status row.
+func (p *advancePanel) say(text string, good bool) {
+	p.ui.flash, p.ui.flashGood, p.flashAt = text, good, p.now()
+}
+
+// advance asks for the advance when the four pillars stand, through the call
+// the advance command makes; the engine's own refusal (a doom in the way, a
+// catastrophe pending) is the panel's line when it says no.
+func (p *advancePanel) advance() {
+	v := p.view
+	switch {
+	case v.Final:
+		p.say("This is the final age. There is no age beyond it.", false)
+		return
+	case !v.AllStand:
+		var open []string
+		for _, pl := range v.Pillars {
+			if !pl.Met {
+				open = append(open, pl.Name)
+			}
+		}
+		p.say("Not yet: "+textfmt.List(open)+" still to stand.", false)
+		return
+	case p.engine == nil:
+		return
+	}
+	err := p.engine.AdvanceAge()
+	p.update(p.engine.GetState())
+	if err != nil {
+		p.say(textfmt.Sentence(err.Error()), false)
+	} else {
+		p.say("Advanced to the "+v.NextName+".", true)
+	}
+}
