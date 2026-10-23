@@ -21,7 +21,7 @@ import (
 //   - Kinds (keys are the civ's side; the player sees Buy, Sell, Favor and
 //     Rare, see DealTerms). A "sell" deal is the civ's specialty for one of your
 //     construction resources. A "want" deal is the civ asking for one of the
-//     resources you hold most of (fullest stores first) and paying in its
+//     resources you hold most of (most minutes of income first) and paying in its
 //     specialty, a little better than a sell. A "favor" deal pays for the
 //     same kind of ask in standing instead of goods. A "rare" deal is an
 //     isolationist's: a construction resource of the NEXT age that this age
@@ -42,7 +42,8 @@ import (
 //     a civ to the edge of an alliance, never past it, and never out of a war.
 //   - Size. A lot is 1.5 price units of the age, times 0.9 + 0.1 per point of
 //     strength, the standing and personality factors and a 0.75-1.25 roll,
-//     capped so the goods fit in half your store and the price in 80% of it.
+//     capped so the goods come to half a good stock of the resource and the
+//     price to 80% of one (dealEnv.size: minutes of your own income of it).
 //   - Refresh. Offers rotate every dealRefreshTicks ticks of play (stretched
 //     for the age, dealRefreshIn) and on an age advance. The timer counts
 //     ticks of live play only: offline catch-up does not advance it, so a
@@ -95,11 +96,12 @@ const (
 	dealLotMercantile   = 1.2
 	dealLotRare         = 2.0
 	dealLotJitter       = 0.5 // lots vary from 1 - J/2 to 1 + J/2
-	// dealGetShare / dealGiveShare cap a lot at these shares of your store.
+	// dealGetShare / dealGiveShare cap a lot at these shares of a good stock
+	// of the resource (dealEnv.size).
 	dealGetShare  = 0.5
 	dealGiveShare = 0.8
-	// dealWantPool is how many of your fullest stores a want or favor deal
-	// chooses from.
+	// dealWantPool is how many of the resources you hold most of (in minutes
+	// of your income of each) a want or favor deal chooses from.
 	dealWantPool = 3
 
 	// dealIDStride spaces deal IDs by round: ID = round*stride + slot + 1.
@@ -277,7 +279,11 @@ type dealEnv struct {
 	extraSlots int
 	unlocked   map[string]bool
 	amount     map[string]float64
-	storage    map[string]float64
+	// size is, per resource, what a good stock of it comes to for the town:
+	// minutes of the town's own income of it in the current age
+	// (rules.Set.StockOf). A lot is capped at shares of it and the resources
+	// held most are the ones whose amount is the most of it.
+	size map[string]float64
 }
 
 // newDealEnv captures the engine's side of deal generation. Under the lock.
@@ -293,24 +299,24 @@ func (ge *GameEngine) newDealEnv() dealEnv {
 		next:       ge.progress.GetNextAge(ge.age),
 		unlocked:   map[string]bool{},
 		amount:     map[string]float64{},
-		storage:    map[string]float64{},
+		size:       map[string]float64{},
 	}
 	for _, k := range ge.getUnlockedState().Resources {
 		env.unlocked[k] = true
 	}
 	for _, k := range ge.Resources.order {
 		env.amount[k] = ge.Resources.Get(k)
-		env.storage[k] = ge.Resources.GetStorage(k)
+		env.size[k] = ge.rules.StockOf(k, ge.age, 1, ge.incomeOf(k))
 	}
 	return env
 }
 
-// fullest is up to dealWantPool of res, fullest store first (amount over
-// storage, then key), which is what a want or favor deal asks for.
+// fullest is up to dealWantPool of res, the most held first (amount over a
+// good stock of it, then key), which is what a want or favor deal asks for.
 func (env dealEnv) fullest(res []string) []string {
 	out := append([]string(nil), res...)
 	fill := func(r string) float64 {
-		if s := env.storage[r]; s > 0 {
+		if s := env.size[r]; s > 0 {
 			return env.amount[r] / s
 		}
 		return 0
@@ -338,17 +344,17 @@ func dealPick(s []string, r float64) string {
 	return s[min(max(i, 0), len(s)-1)]
 }
 
-// fit sizes a goods deal: give and get scaled down together until get fits
-// dealGetShare of its store and give dealGiveShare of its store, then
-// rounded against you. ok is false when a side rounds below 1.
+// fit sizes a goods deal: give and get scaled down together until get is
+// within dealGetShare of a good stock of it and give within dealGiveShare of
+// one, then rounded against you. ok is false when a side rounds below 1.
 func (env dealEnv) fit(d *FactionDeal, rate float64) bool {
 	if d.Get != "" {
-		if cap := dealGetShare * env.storage[d.Get]; d.GetAmt > cap {
+		if cap := dealGetShare * env.size[d.Get]; d.GetAmt > cap {
 			d.GetAmt = cap
 			d.GiveAmt = d.GetAmt / rate
 		}
 	}
-	if cap := dealGiveShare * env.storage[d.Give]; d.GiveAmt > cap {
+	if cap := dealGiveShare * env.size[d.Give]; d.GiveAmt > cap {
 		d.GiveAmt = cap
 		if d.Get != "" {
 			d.GetAmt = d.GiveAmt * rate
@@ -361,7 +367,7 @@ func (env dealEnv) fit(d *FactionDeal, rate float64) bool {
 			return false
 		}
 	}
-	return d.GiveAmt >= 1 && d.GiveAmt <= env.storage[d.Give]
+	return d.GiveAmt >= 1 && d.GiveAmt <= env.size[d.Give]
 }
 
 // rollFactionDeals rolls a civ's offers for one round. Blocked civs get none

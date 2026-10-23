@@ -35,6 +35,25 @@ func (s *Set) derive() {
 	}
 }
 
+// StockScale is the age's stock scale (config.StockScale): the amount of a
+// resource the age's economy calls a good stock, which the festival, Black
+// Market, deal and Brace-ceiling shares are shares of. 0 for an unknown age.
+func (s *Set) StockScale(age string) float64 { return config.StockScale(age) }
+
+// StockMinutes is a share of the age's stock scale (config.StockScale) in
+// minutes of the age's typical income of res (config.StockMinutes): 0 where
+// the age has no typical income of it.
+func (s *Set) StockMinutes(res, age string, share float64) float64 {
+	return config.StockMinutes(age, share, s.typIncome[age][res])
+}
+
+// StockOf is a share of a good stock of res for a town making income of it
+// per tick in age (config.StockOf): minutes of the town's own income, within
+// the band around the age's typical income.
+func (s *Set) StockOf(res, age string, share, income float64) float64 {
+	return config.StockOf(age, share, s.typIncome[age][res], income)
+}
+
 // TypicalStorage is what a moderate builder's store holds of res in age:
 // its base storage and config.StorageRuleCopies copies of every storage building
 // up to the age (config.TypicalStorages). 0 for an unknown age or resource.

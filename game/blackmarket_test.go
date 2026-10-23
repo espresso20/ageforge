@@ -4,6 +4,8 @@ import (
 	"math"
 	"math/rand"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // blackMarketSeedWin yields a first Float64 of 0.167 (< blackMarketWinChance
@@ -11,18 +13,19 @@ import (
 func blackMarketSeedWin() *rand.Rand  { return rand.New(rand.NewSource(2)) }
 func blackMarketSeedLose() *rand.Rand { return rand.New(rand.NewSource(1)) }
 
-// bmEngine builds a colonial-age engine with a fixed culture cap + balance so the
-// deal cost is deterministic, and a gold sink with headroom for the payout.
+// bmEngine builds a colonial-age engine with a fixed culture income + balance so the
+// deal cost is deterministic: 10000, the minutes of that income the deal asks.
 func bmEngine(culture float64) *GameEngine {
 	ge := NewGameEngine()
 	ge.age = "colonial_age"
 	learn(ge, "mercantilism", "drama") // the techs that open the black market and festivals
 	if r, ok := ge.Resources.resources["culture"]; ok {
-		r.Storage = 100000 // cost = max(5000, 0.10×100000) = 10000
+		// cost = max(5000, blackMarketCostShare of the age's stock scale in
+		// minutes of this income) = 10000
+		r.Rate = 10000 / float64(ge.rules.StockMinutes("culture", ge.age, blackMarketCostShare)*config.TicksPerMinute)
 		r.Amount = culture
 	}
 	if r, ok := ge.Resources.resources["gold"]; ok {
-		r.Storage = 1e12
 		r.Amount = 0
 	}
 	return ge
@@ -34,7 +37,7 @@ func TestBlackMarket_WinDeterministic(t *testing.T) {
 	ge := bmEngine(50000)
 	ge.blackMarketRand = blackMarketSeedWin()
 
-	wantCost := ge.BlackMarketStatus().Cost // 10000 with the fixed cap
+	wantCost := ge.BlackMarketStatus().Cost // 10000 with the fixed income
 	if math.Abs(wantCost-10000) > 1e-6 {
 		t.Fatalf("setup: cost = %.1f, want 10000", wantCost)
 	}

@@ -56,13 +56,13 @@ const (
 	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
 	festivalCooldownTicks = 300  // ~10 minutes between festivals
 	festivalMinCost       = 2000.0
-	festivalCostFraction  = 0.05 // of culture storage cap
+	festivalCostShare     = 0.05 // of the age's stock scale, in minutes of your culture income (cultureStake)
 
 	// Black market (culture sink, high-risk/high-reward) tuning. The player
 	// spends a lump of culture for a gamble: on a win the imported resource is
 	// paid out at blackMarketWinMult × the stake's gold-value; on a loss the
 	// culture is simply gone. Gated behind colonial age + a cooldown.
-	blackMarketCostFraction  = 0.10           // of culture storage cap, per deal
+	blackMarketCostShare     = 0.10           // of the age's stock scale, in minutes of your culture income, per deal
 	blackMarketMinCost       = 5000.0         // floor so it's meaningful early
 	blackMarketWinChance     = 0.55           // probability of a payout
 	blackMarketWinMult       = 2.5            // payout = stake_gold_value × this on a win
@@ -3002,12 +3002,24 @@ func (ge *GameEngine) stretchTicks(ticks int) int {
 	return ge.rules.StretchTicks(ge.age, ticks)
 }
 
+// cultureStake is a share of the age's stock scale (config.StockScale) in
+// minutes of the town's culture income: the minutes are what the share comes
+// to at the age's typical culture income (rules.Set.StockMinutes), and the
+// price is that many minutes of what the town really makes. A town making
+// what the age's typical town does pays what a store of the age's scale used
+// to cost it; one making half as much pays half. A town making none pays
+// nothing here, which is why the prices keep a minimum. Under the lock.
+func (ge *GameEngine) cultureStake(share float64) float64 {
+	minutes := ge.rules.StockMinutes("culture", ge.age, share)
+	return float64(float64(minutes*config.TicksPerMinute) * ge.incomeOf("culture"))
+}
+
 // festivalCost returns the culture cost of a festival at the current progression:
-// max(festivalMinCost, festivalCostFraction × culture storage cap). It scales with
-// the player's culture cap so it stays a meaningful drain into the late game.
+// max(festivalMinCost, festivalCostShare of the age's stock scale in minutes of
+// your culture income). It follows what the town makes of culture, so it stays
+// a meaningful drain into the late game.
 func (ge *GameEngine) festivalCost() float64 {
-	cultureCap := ge.Resources.GetStorage("culture")
-	cost := cultureCap * festivalCostFraction
+	cost := ge.cultureStake(festivalCostShare)
 	if cost < festivalMinCost {
 		cost = festivalMinCost
 	}
@@ -3097,9 +3109,10 @@ func (ge *GameEngine) bmRandFloat() float64 {
 }
 
 // blackMarketCost returns the culture cost of one black-market deal at the
-// current progression: max(blackMarketMinCost, fraction × culture storage cap).
+// current progression: max(blackMarketMinCost, blackMarketCostShare of the
+// age's stock scale in minutes of your culture income).
 func (ge *GameEngine) blackMarketCost() float64 {
-	cost := ge.Resources.GetStorage("culture") * blackMarketCostFraction
+	cost := ge.cultureStake(blackMarketCostShare)
 	if cost < blackMarketMinCost {
 		cost = blackMarketMinCost
 	}
