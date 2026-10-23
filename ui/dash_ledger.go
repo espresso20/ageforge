@@ -60,15 +60,19 @@ const (
 	ledgerFullHead = 5
 
 	// ledgerStdCols and ledgerStdRows are the smallest terminal the standard
-	// Ledger is drawn on. The full one is the rich layout's.
-	ledgerStdCols = 100
-	ledgerStdRows = 30
+	// Ledger is drawn on. The full one is the rich layout's, from
+	// ledgerFullRows tall: under that the rich layout keeps the standard
+	// Ledger, so a terminal that is big enough for the mini map is never made
+	// too small for it by a bigger Ledger.
+	ledgerStdCols  = 100
+	ledgerStdRows  = 30
+	ledgerFullRows = 39
 )
 
 // ledgerTierFor is the Ledger a w by h terminal gets.
 func ledgerTierFor(w, h int) ledgerTier {
 	switch {
-	case dashRich(w, h):
+	case dashRich(w, h) && h >= ledgerFullRows:
 		return ledgerFull
 	case w >= ledgerStdCols && h >= ledgerStdRows:
 		return ledgerStandard
@@ -77,16 +81,9 @@ func ledgerTierFor(w, h int) ledgerTier {
 }
 
 // ledgerCardRows is how many rows of cards the full Ledger has on a terminal
-// h rows tall.
-func ledgerCardRows(h int) int {
-	switch {
-	case h >= 44:
-		return 3
-	case h >= 38:
-		return 2
-	}
-	return 1
-}
+// h rows tall: one more for every two rows past 38, up to three. (The boxes
+// under the Ledger keep the 26 rows the mini map needs at that.)
+func ledgerCardRows(h int) int { return clamp((h-37)/2, 1, 3) }
 
 // ledgerCardShape is how the cards sit on a w cell wide Ledger: how many to
 // a row and how wide each is, two cells of air between them. The full

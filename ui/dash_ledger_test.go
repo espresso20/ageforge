@@ -83,8 +83,8 @@ func checkFittedBox(t *testing.T, where string, b *ledgerBox, cells []tcell.SimC
 func TestLedgerHeights(t *testing.T) {
 	for _, c := range []struct{ w, h, slots, want int }{
 		{80, 24, 26, 2}, {99, 60, 26, 2}, {100, 29, 26, 2}, // the compact Ledger: the strip's two rows
-		{100, 30, 26, 4}, {119, 60, 3, 4}, // the standard one: bar, pillars, a card
-		{120, 36, 26, 7}, {120, 38, 26, 9}, {120, 43, 26, 9}, // the full one: five rows and the cards
+		{100, 30, 26, 4}, {119, 60, 3, 4}, {120, 36, 26, 4}, {120, 38, 26, 4}, // the standard one: bar, pillars, a card
+		{120, 39, 26, 7}, {120, 40, 26, 7}, {120, 41, 26, 9}, {120, 43, 26, 11}, // the full one: five rows and the cards
 		{160, 45, 26, 11}, {160, 45, 6, 9}, {160, 45, 3, 7}, {240, 60, 3, 7}, {240, 60, 26, 11},
 	} {
 		if got := ledgerHeight(c.w, c.h, c.slots); got != c.want {
@@ -742,7 +742,8 @@ func TestLedgerTierBoundaries(t *testing.T) {
 		want ledgerTier
 	}{
 		{80, 24, ledgerCompact}, {99, 40, ledgerCompact}, {100, 29, ledgerCompact}, {100, 30, ledgerStandard},
-		{119, 60, ledgerStandard}, {120, 35, ledgerStandard}, {120, 36, ledgerFull}, {160, 45, ledgerFull},
+		{119, 60, ledgerStandard}, {120, 35, ledgerStandard}, {120, 36, ledgerStandard}, {120, 38, ledgerStandard},
+		{120, 39, ledgerFull}, {160, 45, ledgerFull},
 	} {
 		if got := ledgerTierFor(c.w, c.h); got != c.want {
 			t.Errorf("%dx%d is tier %d, want %d", c.w, c.h, got, c.want)
