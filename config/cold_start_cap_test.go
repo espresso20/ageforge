@@ -29,12 +29,12 @@ func TestNoBridgePartIsPushedOverTheColdStartLimit(t *testing.T) {
 			c, wasHeld := held[d.Key+"/"+res]
 			if wasHeld {
 				if want := floorSig3(limit[res]); now != want || c.After != want || c.Before <= limit[res] {
-					t.Errorf("%s %s: held to %g (recorded %g, before %g), want the limit %g rounded down", d.Key, res, now, c.After, c.Before, want)
+					t.Errorf("%s %s: held to %s (recorded %s, before %s), want the limit %s rounded down", d.Key, res, GoLiteral(now), GoLiteral(c.After), GoLiteral(c.Before), GoLiteral(want))
 				}
 				continue
 			}
 			if now > limit[res] && now/NewCopyPriceFactor <= limit[res] {
-				t.Errorf("%s %s costs %g, over the %g the carried copies make in one target, and the factor pushed it there", d.Key, res, now, limit[res])
+				t.Errorf("%s %s costs %s, over the %s the carried copies make in one target, and the factor pushed it there", d.Key, res, GoLiteral(now), GoLiteral(limit[res]))
 			}
 		}
 	}

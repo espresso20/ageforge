@@ -88,7 +88,7 @@ func TestBlackMarketMakesCryptoAtTheStandard(t *testing.T) {
 	price := priceUnits(d.BaseCost, lv)
 	want := float64(price/MakerPaybackTicks[d.RequiredAge]) * lv["crypto"]
 	if math.Abs(crypto/want-1) > 0.005 { // the literal is written to three figures
-		t.Errorf("black_market makes %.4g crypto a tick, the standard is %.4g", crypto, want)
+		t.Errorf("black_market makes %s crypto a tick, the standard is %s", GoLiteral(roundSignificant(crypto, 4)), GoLiteral(roundSignificant(want, 4)))
 	}
 }
 
@@ -110,7 +110,7 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 				continue
 			}
 			if made := FlowIncome(res, d.RequiredAge) * LatePriceTargetTicks(d.RequiredAge); c > made {
-				t.Errorf("%s asks %.4g %s, more than the %.4g the age's income makes in its target", d.Key, c, res, made)
+				t.Errorf("%s asks %s %s, more than the %s the age's income makes in its target", d.Key, GoLiteral(roundSignificant(c, 4)), res, GoLiteral(roundSignificant(made, 4)))
 			}
 		}
 	}
@@ -130,6 +130,6 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 	sistine := BuildingByKey()["sistine_chapel"]
 	made := FlowIncome("culture", sistine.RequiredAge) * LatePriceTargetTicks(sistine.RequiredAge)
 	if got := sistine.BaseCost["culture"]; got != 960000 || made < 960000 || made >= 970000 {
-		t.Errorf("sistine_chapel culture = %.4g with %.4g made in the target: want 960000, the largest two-figure number the income covers", got, made)
+		t.Errorf("sistine_chapel culture = %s with %s made in the target: want 960_000, the largest two-figure number the income covers", GoLiteral(roundSignificant(got, 4)), GoLiteral(roundSignificant(made, 4)))
 	}
 }

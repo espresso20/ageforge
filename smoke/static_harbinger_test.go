@@ -177,10 +177,10 @@ func TestBraceTakesEffort(t *testing.T) {
 			for res, c := range r.BraceL1 {
 				limit, ok := r.BraceCeiling[res]
 				if !ok || limit <= 0 || r.StockScale <= 0 || r.BraceCeilingHours[res] <= 0 {
-					t.Errorf("a doom of %s in %s: no ceiling for %s (%v of a stock scale of %v, %v hours)", r.Epoch, r.Age, res, limit, r.StockScale, r.BraceCeilingHours[res])
+					t.Errorf("a doom of %s in %s: no ceiling for %s (%s of a stock scale of %s, %v hours)", r.Epoch, r.Age, res, config.GoLiteral(limit), config.GoLiteral(r.StockScale), r.BraceCeilingHours[res])
 				}
 				if c > limit {
-					t.Errorf("a doom of %s in %s: Brace asks %v %s, over its ceiling %v", r.Epoch, r.Age, c, res, limit)
+					t.Errorf("a doom of %s in %s: Brace asks %s %s, over its ceiling %s", r.Epoch, r.Age, config.GoLiteral(c), res, config.GoLiteral(limit))
 				}
 				if c >= braceAtCeiling*limit {
 					onCeiling++

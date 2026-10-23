@@ -38,7 +38,7 @@ func TestBraceCeilingKeepsTheAmountsItHad(t *testing.T) {
 		for res, got := range row.BraceCeiling {
 			checked++
 			if got != want {
-				t.Errorf("%s (Last Passage %v): the ceiling of %s is %v, it was %v", row.Age, row.LastPassage, res, got, want)
+				t.Errorf("%s (Last Passage %v): the ceiling of %s is %s, it was %s", row.Age, row.LastPassage, res, config.GoLiteral(got), config.GoLiteral(want))
 			}
 			hours := row.BraceCeilingHours[res]
 			if hours <= 0 {
@@ -49,7 +49,7 @@ func TestBraceCeilingKeepsTheAmountsItHad(t *testing.T) {
 			// come to the ceiling (before it is rounded down) in units.
 			unrounded := hours * config.TicksPerHour * set.TypicalIncome(res, row.Age)
 			if unrounded < got || unrounded > 1.1*got {
-				t.Errorf("%s: %s's ceiling %v is %.4g hours of its typical income, which comes to %v", row.Age, res, got, hours, unrounded)
+				t.Errorf("%s: %s's ceiling %s is %.4g hours of its typical income, which comes to %s", row.Age, res, config.GoLiteral(got), hours, config.GoLiteral(unrounded))
 			}
 		}
 	}
