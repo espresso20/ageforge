@@ -327,7 +327,7 @@ game.engine.SendGift.01,"Sent the %s a gift: %s, opinion %s. Love that for them.
 game.engine.SendTribute.01,"Paid the %s a tribute of %s. The war is over, bestie."
 game.engine.RaidCivRoute.01,"You ran up on a %s trade route. They declared war, periodt."
 game.engine.RaidCivRoute.02,"Hit a %s trade route. Opinion %s, oof."
-game.engine.upgradeBuildingLocked.01,%s has no upgrade this age. Type 'upgrade' to list the ones that do.
+game.engine.upgradeBuildingLocked.01,"%s has no upgrade this age, so it's a no. Type 'upgrade' to list the ones that do."
 game.engine.upgradeBuildingLocked.02,You've got zero %s to upgrade.
 game.engine.upgradeBuildingLocked.03,Glowed up %s to %s. Cost: %s. Slay.
 game.engine.upgradeBuildingLocked.04, Benched: 
@@ -526,7 +526,7 @@ game.plan_advance.planAdvanceView.02,advance to the
 game.plan_deal.PlanAddDeal.01,"No deal %d with the %s (they offer %d). Type diplomacy deals to see them, fr."
 game.plan_deal.PlanAddDeal.02,Deal %d with the %s got snatched already.
 game.plan_deal.PlanAddDeal.03,No trade with the %s: they're %s.
-game.plan_deal.PlanAddDeal.04,The plan already takes that deal.
+game.plan_deal.PlanAddDeal.04,"The plan already grabbed that deal, no cap."
 game.plan_deal.planDealGone.01,unknown civ
 game.plan_deal.planDealGone.02,the offer ghosted
 game.plan_deal.planDealGone.03,already claimed
