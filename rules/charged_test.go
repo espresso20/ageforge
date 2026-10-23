@@ -45,3 +45,31 @@ func TestChargedMaterials(t *testing.T) {
 		t.Errorf("an unknown age charges %v", got)
 	}
 }
+
+// TestUpgradeKeys: the upgrade table worked out at compile, per age, is
+// UpgradeTarget asked of every building one at a time.
+func TestUpgradeKeys(t *testing.T) {
+	set := Core()
+	asked := 0
+	for _, age := range append(set.AgeKeys(), "no_such_age") {
+		table := set.UpgradeKeys(age)
+		for _, b := range set.Buildings() {
+			target, ok := set.UpgradeTarget(b.Key, age)
+			got, has := table[b.Key]
+			if ok != has || (ok && got != target.Key) {
+				t.Errorf("%s in %s: UpgradeKeys has %q (%t), UpgradeTarget says %q (%t)", b.Key, age, got, has, target.Key, ok)
+			}
+			if ok {
+				asked++
+			}
+		}
+		for key := range table {
+			if _, known := set.Building(key); !known {
+				t.Errorf("%s: UpgradeKeys names %q, which is no building", age, key)
+			}
+		}
+	}
+	if asked == 0 {
+		t.Fatal("no building was older in any age; the test checked nothing")
+	}
+}

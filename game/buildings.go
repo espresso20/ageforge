@@ -1047,11 +1047,11 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		}
 		// An older building is functional but no more are built: its copies
 		// can be upgraded to the target.
-		if target, older := bm.UpgradeTarget(key); older {
+		if target, older := bm.UpgradeTargetKey(key); older {
 			state.IsLegacy = true
 			state.CanBuild = false
 			if count > 0 {
-				state.PendingUpgrade = target.Key
+				state.PendingUpgrade = target
 			}
 		}
 		out[key] = state

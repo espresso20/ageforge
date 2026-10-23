@@ -125,6 +125,9 @@ type Set struct {
 	// most (see ChargedMaterials).
 	charged map[string][2]string
 
+	// olderIn is, by age key, UpgradeKeys for that age.
+	olderIn map[string]map[string]string
+
 	names  [numKinds]map[string]string
 	counts map[string]int
 }
@@ -507,6 +510,12 @@ func (s *Set) UpgradeTarget(key, age string) (config.BuildingDef, bool) {
 	}
 	return config.UpgradeTarget(s.lineRungs[def.Line()], s.agePos, def, age)
 }
+
+// UpgradeKeys is UpgradeTarget for every building of the set in age at once:
+// the key of each older building to the key of the building it is upgraded to.
+// A building that is not older is not in it, nor is any building in an unknown
+// age. The map is the set's: do not write to it.
+func (s *Set) UpgradeKeys(age string) map[string]string { return s.olderIn[age] }
 
 // RungKeysFrom is the keys of a building and every later rung of its line, the
 // building first. A building in no line is alone. The slice is the set's: do

@@ -32,10 +32,32 @@ func (s *Set) derive() {
 	army := config.RefSoldiers(s.buildings, s.ages)
 	s.refArmy = make(map[string]float64, len(s.ages))
 	s.charged = make(map[string][2]string, len(s.ages))
+	s.olderIn = make(map[string]map[string]string, len(s.ages))
 	for i, a := range s.ages {
 		s.refArmy[a.Key] = army[i]
 		s.charged[a.Key] = s.chargedBy(a)
+		s.olderIn[a.Key] = s.olderKeys(a.Key)
 	}
+}
+
+// olderKeys is UpgradeKeys for age: each line's current rung is worked out
+// once, and every earlier rung of the line that its age and tier put behind it
+// upgrades to it (config.UpgradeTarget, a line at a time).
+func (s *Set) olderKeys(age string) map[string]string {
+	older := map[string]string{}
+	for _, rungs := range s.lineRungs {
+		cur, ok := config.CurrentRung(rungs, s.agePos, age)
+		if !ok {
+			continue
+		}
+		for i := range rungs {
+			d := &rungs[i]
+			if config.InLine(*d) && s.agePos[cur.RequiredAge] > s.agePos[d.RequiredAge] && cur.LineageTier > d.LineageTier {
+				older[d.Key] = cur.Key
+			}
+		}
+	}
+	return older
 }
 
 // chargedBy is the two resources most of the buildings age unlocks cost
