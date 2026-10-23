@@ -490,6 +490,8 @@ func (o *orb) drawSprite(lv *lotView, spr *sprite, col func(sx, sy int, sl slot,
 	dim := o.v.flows && flagged(lv)
 	warm := o.c(mapmodel.InkLight, iEmit, hz)
 	pale := theme.Mix(warm, white, 0.45)
+	solid := o.sc != mapmodel.SkyQuantum // the Quantum draws its own edges (wireCol)
+	edge := spr.edges()
 	for sy := 0; sy < spr.h; sy++ {
 		Y := o.Y(y0 + sy)
 		for sx := 0; sx < spr.w; sx++ {
@@ -499,6 +501,14 @@ func (o *orb) drawSprite(lv *lotView, spr *sprite, col func(sx, sy int, sl slot,
 				continue
 			}
 			fg := col(sx, sy, c.fg, hz)
+			if solid {
+				if hz > 0 && !c.fg.emissive() {
+					fg = theme.Shade(fg, rowDim[min(hz, 2)]) // the back rows recede
+				}
+				if edge[sy*spr.w+sx] {
+					fg = theme.Shade(fg, outlineK)
+				}
+			}
 			if c.fg == sWin && o.windowLit(lv, sx, sy) {
 				fg = warm
 				if hash(int(lv.ml.Seed), sx, sy)%4 == 0 {
@@ -854,7 +864,8 @@ func (v *view) skyLayoutFor(m *mapmodel.Model, sc mapmodel.SkyScene, groundY int
 			continue
 		}
 		b := m.Building(ml.Key)
-		lv := lotView{ml: ml, b: b, vr: int(hash(int(ml.Seed), 7) % 3), staff: staffOf(m, b), depth: rowDepth(ml.Row)}
+		lv := lotView{ml: ml, b: b, vr: int(hash(int(ml.Seed), 7) % 3), staff: staffOf(m, b), depth: rowDepth(ml.Row),
+			variant: variantOf(ml.Seed)}
 		// older sections are weathered: a step dimmer for every six ages
 		// back, legacy tiers a step more
 		lv.fam = clampInt((present-ml.Age)/6, 0, 2)
@@ -869,7 +880,7 @@ func (v *view) skyLayoutFor(m *mapmodel.Model, sc mapmodel.SkyScene, groundY int
 		lv.producer = b != nil && b.Rate > 0
 		h := float64(fm.height * lay.scale)
 		if !ml.Wonder {
-			h *= 0.82 + 0.36*hashf(int(ml.Seed), 11)
+			h *= (0.9 + 0.2*hashf(int(ml.Seed), 11)) * variantHeight[lv.variant]
 			h *= 1 + 0.05*mapmodel.Log2(1+float64(count))
 			h *= 0.78 + 0.22*clamp01(1-float64(present-ml.Age)/18) // the old core is smaller
 			if ml.Row > 0 {
@@ -892,6 +903,9 @@ func (v *view) skyLayoutFor(m *mapmodel.Model, sc mapmodel.SkyScene, groundY int
 		spr := v.sprites[sk]
 		if spr == nil {
 			spr = fm.fn(newRnd(ml.Seed), sk.h)
+			if !ml.Wonder {
+				spr = dress(spr, lv.variant, ml.Seed, ml.Age, maxH)
+			}
 			if !ml.Wonder && hash(int(ml.Seed), 5)%2 == 0 {
 				spr = spr.mirror()
 			}

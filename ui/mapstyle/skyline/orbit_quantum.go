@@ -85,8 +85,9 @@ func (o *orb) quantumBackdrop() {
 // ramp.
 func (o *orb) fringes() {
 	gy := o.groundY
-	ax := float64(o.W)*0.38 - float64(o.cam)*0.02
-	bx := float64(o.W)*0.62 - float64(o.cam)*0.02
+	dx := drift(o.cam, 0.02, 30)
+	ax := float64(o.W)*0.38 - dx
+	bx := float64(o.W)*0.62 - dx
 	c1, c2 := o.c(mapmodel.InkCloud, iEmit, 1), o.c(mapmodel.InkCloud2, iEmit, 1)
 	ph := float64(o.anim) / 36
 	for y := gy + 2; y < o.S; y++ {
