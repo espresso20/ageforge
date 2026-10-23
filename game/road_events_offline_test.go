@@ -42,12 +42,12 @@ func roadMissionEngineSkipping(t *testing.T, skip int) (*GameEngine, int) {
 	for seed := int64(1); seed <= 200; seed++ {
 		ge := missionReady(t, seed, "bronze_age")
 		setIncome(ge, "gold", 0)
-		// Gold sits at the town's real storage cap: a stock above it is clipped
-		// by the first live tick's rate pass, which would be the test's doing.
+		// The milestones the town has already earned pay out before the
+		// mission leaves, so the first live tick does not pay gold the
+		// offline catch-up would not (stock has no ceiling to hide it).
 		ge.mu.Lock()
 		ge.recalculateRates()
-		gold := ge.Resources.resources["gold"]
-		gold.Amount = gold.Storage
+		ge.checkMilestones()
 		ge.mu.Unlock()
 		if err := ge.LaunchExpedition(keyOffer(ge, "trade_caravan")); err != nil {
 			continue

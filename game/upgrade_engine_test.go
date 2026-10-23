@@ -222,47 +222,49 @@ func TestUpgrade_CountAndAll(t *testing.T) {
 	}
 }
 
-// `all` stops at the copy whose price is over a store, says how many it did,
-// and names the store.
-func TestUpgrade_AllStopsAtAStoreWall(t *testing.T) {
+// `all` stops at the copy it cannot pay for, however large the store: the
+// price is judged against what is held, not against what a store holds. It
+// says how many it did and what the next copy lacks.
+func TestUpgrade_AllStopsAtTheCopyYouCannotPay(t *testing.T) {
 	ge := campsInTheStoneAge(t, 6)
 	p0 := ge.Buildings.UpgradeCopyCost("gathering_camp", 0, nil)
 	p1 := ge.Buildings.UpgradeCopyCost("gathering_camp", 1, nil)
-	var wall string
+	var dear string
 	for res := range p1 {
-		if p1[res] > p0[res] && (wall == "" || p1[res] > p1[wall]) {
-			wall = res
+		if p1[res] > p0[res] && (dear == "" || p1[res] > p1[dear]) {
+			dear = res
 		}
 	}
-	if wall == "" {
+	if dear == "" {
 		t.Fatal("setup: no resource gets dearer from the first copy to the second")
 	}
-	// A store that holds the first copy's price but not the second's, full.
-	store := p1[wall] - 1
-	if store < p0[wall] {
-		t.Fatalf("setup: store %v is under the first price %v", store, p0[wall])
+	// Enough of every resource for six copies but one: the first copy's price
+	// of the dear one, and less than the two first copies' together.
+	for res, v := range p1 {
+		setAmount(ge, res, v*100)
 	}
-	fillStore(ge, wall, store, store)
+	have := p0[dear] + p1[dear] - 1
+	setAmount(ge, dear, have)
 	rows := ge.GetAvailableUpgrades()
-	if len(rows) != 1 || rows[0].Affordable != 1 || !strings.Contains(rows[0].Lock, "more than your "+ResourceName(wall)+" storage holds") {
-		t.Fatalf("list = %+v, want 1 affordable and the store named as the lock", rows)
+	if len(rows) != 1 || rows[0].Affordable != 1 || strings.Contains(rows[0].Lock, "storage") {
+		t.Fatalf("list = %+v, want 1 affordable and no lock about a store", rows)
 	}
 	if err := ge.UpgradeBuilding("gathering_camp", 0, true); err != nil {
 		t.Fatal(err)
 	}
 	if ge.Buildings.GetCount("forager_post") != 1 {
-		t.Errorf("upgrade all did %d copies, want the 1 the store allows", ge.Buildings.GetCount("forager_post"))
+		t.Errorf("upgrade all did %d copies, want the 1 it could pay", ge.Buildings.GetCount("forager_post"))
 	}
-	if !logHasAll(ge, "Upgraded 1 Gathering Camp to Forager Post", "Stopped: Upgrading the next Gathering Camp costs", "more than your "+ResourceName(wall)+" storage holds") {
-		t.Errorf("the reply does not name the store: %q", lastLine(ge))
+	if !logHasAll(ge, "Upgraded 1 Gathering Camp to Forager Post", "Stopped: Cannot afford to upgrade") || logHas(ge, "storage holds") {
+		t.Errorf("the reply does not say what the next copy lacks: %q", lastLine(ge))
 	}
-	// A copy over the wall from the start is refused with the same words and
+	// A copy that cannot be paid from the start is refused the same way and
 	// nothing moves.
 	fresh := campsInTheStoneAge(t, 3)
-	fillStore(fresh, wall, p0[wall]-1, p0[wall]-1)
+	setAmount(fresh, dear, p0[dear]-1)
 	err := fresh.UpgradeBuilding("gathering_camp", 0, true)
-	if err == nil || !strings.HasPrefix(err.Error(), "Upgrading 1 Gathering Camp costs") || !strings.Contains(err.Error(), ResourceName(wall)+" storage holds") {
-		t.Errorf("upgrade past the wall: err = %v", err)
+	if err == nil || !strings.HasPrefix(err.Error(), "Cannot afford to upgrade") {
+		t.Errorf("upgrade without the price: err = %v", err)
 	}
 	if fresh.Buildings.GetCount("gathering_camp") != 3 || fresh.Buildings.GetCount("forager_post") != 0 {
 		t.Error("the refused upgrade moved a copy")

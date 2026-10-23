@@ -109,10 +109,9 @@ func TestWallSave_KeepsEveryCopyAndEveryStock(t *testing.T) {
 	}
 }
 
-// Stock above a store gains nothing and is not cut by the ticks after the
-// load; it falls only when spent, and a store it falls under fills again, to
-// the cap and no further.
-func TestWallSave_StockAboveAStoreHoldsUntilSpent(t *testing.T) {
+// Stock above a store is not cut by the ticks after the load, and grows with
+// the income: a store is not a limit. Spending takes only the price.
+func TestWallSave_StockAboveAStoreKeepsGrowing(t *testing.T) {
 	ge := wallFixtureView(t)
 	ge.mu.Lock()
 	ge.plan = nil // nothing of the plan's spends during the ticks
@@ -120,25 +119,17 @@ func TestWallSave_StockAboveAStoreHoldsUntilSpent(t *testing.T) {
 	before := ge.Resources.GetAll()
 	var over []string
 	for res, v := range before {
-		if v > ge.Resources.GetStorage(res) {
+		if v > ge.Resources.GetStorage(res) && ge.Resources.GetRate(res) > 0 {
 			over = append(over, res)
-			if ge.Resources.GetRate(res) <= 0 {
-				t.Fatalf("setup: %s is over its store with a rate of %v: the test could not tell holding from draining", res, ge.Resources.GetRate(res))
-			}
 		}
 	}
 	if len(over) == 0 {
-		t.Fatal("setup: nothing is over its store")
+		t.Fatal("setup: nothing is over its store and rising")
 	}
 	ge.StepTicks(100)
 	for _, res := range over {
-		if got := ge.Resources.Get(res); got != before[res] {
-			t.Errorf("%s was %v over a store of %v and is %v after 100 ticks: it must neither grow nor be cut", res, before[res], ge.Resources.GetStorage(res), got)
-		}
-	}
-	for res, v := range before {
-		if v <= ge.Resources.GetStorage(res) && ge.Resources.Get(res) > ge.Resources.GetStorage(res) {
-			t.Errorf("%s grew past its store (%v of %v)", res, ge.Resources.Get(res), ge.Resources.GetStorage(res))
+		if got := ge.Resources.Get(res); got <= before[res] {
+			t.Errorf("%s was %v over a store of %v and is %v after 100 ticks of income: it must grow", res, before[res], ge.Resources.GetStorage(res), got)
 		}
 	}
 
@@ -153,17 +144,6 @@ func TestWallSave_StockAboveAStoreHoldsUntilSpent(t *testing.T) {
 	}
 	if got, want := ge.Resources.Get("wood"), woodBefore-cost["wood"]; got != want {
 		t.Errorf("wood = %v after buying a house for %v, want %v", got, cost["wood"], want)
-	}
-	// Below its store, wood fills again and stops at the cap: a few ticks'
-	// income short of it, twenty ticks later it is full and no more.
-	store := ge.Resources.GetStorage("wood")
-	low := store - float64(5*ge.Resources.GetRate("wood"))
-	ge.mu.Lock()
-	ge.Resources.Remove("wood", ge.Resources.Get("wood")-low)
-	ge.mu.Unlock()
-	ge.StepTicks(20)
-	if got := ge.Resources.Get("wood"); got != store {
-		t.Errorf("wood = %v after the stock fell to %v under a store of %v and 20 ticks, want it full at %v", got, low, store, store)
 	}
 }
 

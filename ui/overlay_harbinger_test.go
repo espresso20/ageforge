@@ -218,15 +218,16 @@ func TestHarbingerPanelKeys(t *testing.T) {
 		t.Error("refused brace changed the level")
 	}
 
-	// Appease: the Iron Era price is beyond a new settlement's storage, and
-	// the panel says what storage it needs.
+	// Appease: the Iron Era price is beyond a new settlement's stock, and
+	// the panel says what it lacks, and nothing about storage.
 	need := engine.GetState().Harbinger.AppeaseCost["faith"]
 	press('A')
 	if st := engine.GetState(); st.Harbinger.AppeaseLevel != 0 || d.harbPanel.noteGood {
 		t.Fatalf("appease: level %d note %q", st.Harbinger.AppeaseLevel, d.harbPanel.note)
 	}
-	if want := "faith storage must reach " + textfmt.Number(need); !strings.Contains(untag(renderText(t, pages, 160, 60)), want) {
-		t.Errorf("panel did not show the appease refusal %q", want)
+	panel := untag(renderText(t, pages, 160, 60))
+	if want := "more faith"; !strings.Contains(panel, want) || strings.Contains(panel, "storage must reach") {
+		t.Errorf("panel did not show the appease refusal %q (price %s) without a storage clause", want, textfmt.Number(need))
 	}
 
 	// Invite: first press only arms it.

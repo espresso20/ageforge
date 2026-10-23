@@ -36,22 +36,14 @@ func TestWonderWaitsForItsKeystone(t *testing.T) {
 		t.Fatalf("the Great Monolith: unlocked %v, needs %q, can be built %v; want open for banking, waiting for stoneworking", bs.Unlocked, bs.NeedsTech, bs.CanBuild)
 	}
 
-	// A deposit goes in, and so does what a full store would waste.
+	// A deposit goes in.
 	ge.Resources.resources["wood"].Storage = 1000
 	setAmount(ge, "wood", 400)
 	if got, err := ge.BankWonderResource("great_monolith", "wood", 300); err != nil || got != 300 {
 		t.Fatalf("a deposit while the keystone is missing: banked %v, %v", got, err)
 	}
-	ge.mu.Lock()
-	if w := ge.overflowWonder(); w != "great_monolith" {
-		t.Errorf("overflow banks into %q while the keystone is missing, want the Great Monolith", w)
-	}
-	if dep := ge.bankOverflow("great_monolith", "wood", 50); dep != 50 {
-		t.Errorf("overflow banked %v of 50 wood", dep)
-	}
-	ge.mu.Unlock()
-	if got := ge.Buildings.wonderBanks["great_monolith"]["wood"]; got != 350 {
-		t.Errorf("the bank holds %v wood, want the 300 deposited and the 50 that overflowed", got)
+	if got := ge.Buildings.wonderBanks["great_monolith"]["wood"]; got != 300 {
+		t.Errorf("the bank holds %v wood, want the 300 deposited", got)
 	}
 
 	// A full bank says what is still missing, and building is refused.

@@ -66,7 +66,7 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 var sweepCommands = []string{
 	"status", "rates", "build", "upgrade", "wonder", "festival", "blackmarket",
 	"prestige", "catastrophe", "theme", "theme list",
-	"saves", "account", "plan list", "wonder overflow", "map style", "map glyphs", "motion",
+	"saves", "account", "plan list", "map style", "map glyphs", "motion",
 }
 
 type sweeper struct {

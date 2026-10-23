@@ -1,6 +1,8 @@
 package mapstyle
 
 import (
+	"slices"
+
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -53,7 +55,10 @@ func NewPalette(epoch int) *Palette {
 		case mapmodel.CLegacy:
 			col = theme.Mix(bg, col, 0.75)
 		}
-		p.Fg[c] = theme.Legible(col, bg, s.MinContrast)
+		if !p.Light && terrainDims(c) {
+			col = theme.Mix(bg, col, terrainStep)
+		}
+		p.Fg[c] = theme.Legible(col, bg, MinContrast(c))
 	}
 	p.WaterBg = theme.Mix(bg, theme.MapHueColor(theme.HueWaterDeep), 0.10)
 	p.FreshBg = theme.Mix(bg, theme.Color(theme.RolePositive), 0.25)
@@ -61,6 +66,36 @@ func NewPalette(epoch int) *Palette {
 	p.FitCursor()
 	p.Chrome = tcell.StyleDefault.Foreground(theme.Color(theme.RoleText)).Background(theme.Color(theme.RoleSurface))
 	return p
+}
+
+// TerrainFloor is the contrast every map detail colour reads at least at
+// against its background (WCAG 3.0:1, the large-text floor), on every theme.
+const TerrainFloor = 3.0
+
+// TerrainClasses are the map's ground and detail: the classes held to
+// TerrainFloor. On dark themes the ground ones also sit a step quieter than
+// the pins, routes and labels.
+var TerrainClasses = []mapmodel.Class{mapmodel.CGround, mapmodel.CFlora, mapmodel.CWater,
+	mapmodel.CRock, mapmodel.CHill, mapmodel.CRoad, mapmodel.CLegacy, mapmodel.CMemory, mapmodel.CStar}
+
+// MinContrast is class c's floor on the map: its spec's, raised to
+// TerrainFloor for the terrain and detail.
+func MinContrast(c mapmodel.Class) float64 {
+	m := mapmodel.ClassSpecs[c].MinContrast
+	if slices.Contains(TerrainClasses, c) {
+		m = max(m, TerrainFloor)
+	}
+	return m
+}
+
+// terrainStep is how much of a dark theme's ground colour is kept: one step
+// quieter than the pins, routes and labels (the floor still holds).
+const terrainStep = 0.8
+
+// terrainDims reports whether class c is ground or detail that sits a step
+// quieter on a dark theme: all the terrain but the sky dots.
+func terrainDims(c mapmodel.Class) bool {
+	return c != mapmodel.CStar && slices.Contains(TerrainClasses, c)
 }
 
 // Style is class c on the palette background.

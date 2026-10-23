@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -142,6 +143,22 @@ func (it expPinItem) glyph() rune {
 	return '○'
 }
 
+// tone is the chip the pin is drawn as: the same tiers as its glyph.
+func (it expPinItem) tone() chipTone {
+	switch {
+	case it.rare:
+		return toneLegend
+	case it.tier == game.TierLong:
+		return toneLong
+	case it.tier == game.TierGrand:
+		if it.military() {
+			return toneMil
+		}
+		return toneCivic
+	}
+	return toneShort
+}
+
 func (it expPinItem) military() bool {
 	if it.offer != nil {
 		return it.offer.Grand == game.GrandMilitary
@@ -185,6 +202,13 @@ func buildScene(state game.GameState, w, h int) *expScene {
 		j := len(sc.acts) + i
 		sc.offers[i].at, sc.offers[i].placed = at[j], ok[j]
 	}
+	cells := []pt{sc.town}
+	for _, it := range append(append([]expPinItem{}, sc.acts...), sc.offers...) {
+		if it.placed {
+			cells = append(cells, it.at)
+		}
+	}
+	sc.terrain.haloAround(cells)
 	return sc
 }
 
@@ -379,15 +403,18 @@ func header(g *xgrid, state game.GameState, v expView, l expLayout) {
 	g.segs(l.w-3-len([]rune("Soldiers "+home+" of "+posted+" at home"))+1, 1, xseg{"Soldiers ", xDim}, xseg{home, xText}, xseg{" of ", xDim}, xseg{posted, xText}, xseg{" at home", xDim})
 }
 
-// drawMap draws the terrain, the town, the routes and the pins inside the
-// map box. hi is the highlighted pin (an offer's index in the Ready Room,
-// a party's in the Report; -1 for none).
+// drawMap draws the terrain, the town, the routes, the pins and their
+// names inside the map box. hi is the highlighted pin (an offer's index in
+// the Ready Room, a party's in the Report; -1 for none).
 func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScene, title string, hi int) {
 	g.box(1, l.mainY, l.mapW, l.mainH, xBorder, title, xTitle, false)
 	ox, oy := 2, l.mainY+1
 	t := sc.terrain
 	for y := 0; y < t.h; y++ {
 		for x := 0; x < t.w; x++ {
+			if t.halo != nil && t.halo[y*t.w+x] {
+				continue // next to a pin or the town: left clear
+			}
 			g.set(ox+x, oy+y, t.r[y*t.w+x], t.k[y*t.w+x])
 		}
 	}
@@ -398,8 +425,9 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 		}
 		return '·'
 	}
-	// Missions out: the route dotted faintly, the party at its progress, the
-	// goal a diamond. In the Report the highlighted one's route lights up.
+	bright := pulseBright(v.frame)
+	// Missions out: the route dotted, the party at its progress, the goal a
+	// chip. In the Report the highlighted one's route lights up.
 	for i, a := range sc.acts {
 		if !a.placed {
 			continue
@@ -409,9 +437,9 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 		for j, c := range route[1 : len(route)-1] {
 			p := abs(c)
 			if lit {
-				g.set(p.x, p.y, dot(j), xAccent)
+				g.set(p.x, p.y, dot(j), xRoute)
 			} else {
-				g.set(p.x, p.y, '·', xFaint)
+				g.set(p.x, p.y, '·', xRoute)
 			}
 		}
 		if len(route) >= 3 {
@@ -427,18 +455,13 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 			}
 			g.set(p.x, p.y, '@', kind)
 		}
-		p := abs(a.at)
-		kind := xGood
-		if lit {
-			kind = xTitle
-		}
-		g.set(p.x, p.y, '◆', kind)
+		drawChip(g, abs(a.at), '◆', chipKind(toneGoal, lit && bright))
 	}
 	if !v.report && hi >= 0 && hi < len(sc.offers) && sc.offers[hi].placed {
 		route := routeCells(t, sc.town, sc.offers[hi].at, pinHash(sc.offers[hi].offer.Name, sc.offers[hi].offer.ExpiresTick), terrainSeed(state.Seed, state.Age))
 		for j, c := range route[1:max(len(route)-1, 1)] {
 			p := abs(c)
-			g.set(p.x, p.y, dot(j), xAccent)
+			g.set(p.x, p.y, dot(j), xRoute)
 		}
 	}
 	tp := abs(sc.town)
@@ -448,53 +471,100 @@ func drawMap(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScen
 			if !o.placed {
 				continue
 			}
-			p := abs(o.at)
-			kind := xTitle
-			switch {
-			case !o.offer.CanLaunch:
-				kind = xDim
-			case o.rare && v.frame%2 == 1:
-				kind = xLegend2
-			case o.rare:
-				kind = xLegend
-			case o.military():
-				kind = xBad
-			}
-			if i == hi {
-				switch {
-				case v.frame%2 == 1 && o.rare:
-					kind = xSelGold
-				case v.frame%2 == 1:
-					kind = xSel
-				default:
-					kind = xBright
-				}
-			}
-			g.set(p.x, p.y, o.glyph(), kind)
+			drawChip(g, abs(o.at), o.glyph(), chipKind(o.tone(), i == hi && bright))
 		}
 	}
-	// The highlighted place's name beside its pin.
-	var at pt
-	var place string
-	switch {
-	case !v.report && hi >= 0 && hi < len(sc.offers) && sc.offers[hi].placed:
-		at, place = abs(sc.offers[hi].at), sc.offers[hi].offer.Place
-	case v.report && hi >= 0 && hi < len(sc.acts) && sc.acts[hi].placed:
-		at, place = abs(sc.acts[hi].at), sc.acts[hi].act.Place
+	drawPinNames(g, sc, v, hi, ox, oy)
+}
+
+// pulseBright is the bright phase of the selected chip: it lifts on the
+// even frames, and holds lifted while the motion is off (atRest).
+func pulseBright(frame int) bool { return frame < 0 || frame%2 == 0 }
+
+// drawChip draws a pin as a chip three cells wide, the glyph in the middle.
+func drawChip(g *xgrid, p pt, glyph rune, k xk) {
+	g.set(p.x-1, p.y, ' ', k)
+	g.set(p.x, p.y, glyph, k)
+	g.set(p.x+1, p.y, ' ', k)
+}
+
+// drawPinNames writes each drawn pin's place name beside its chip, the
+// selected one first and bright on the selection. A name goes to the right
+// of its chip, else to the left, and is left out when neither side has room
+// clear of the chips, the town and the other names.
+func drawPinNames(g *xgrid, sc *expScene, v expView, hi int, ox, oy int) {
+	t := sc.terrain
+	type named struct {
+		at   pt
+		name string
+		sel  bool
 	}
-	if place != "" {
-		label := " " + place + " "
-		lw := len([]rune(label))
-		lx := at.x + 2
-		switch {
-		case lx+lw <= ox+t.w: // to the right of the pin
-		case at.x-1-lw >= ox: // to the left
-			lx = at.x - 1 - lw
-		default: // neither fits: as much as the map holds
-			label, lx = fitText(label, t.w), ox
+	var pins []named
+	for i, a := range sc.acts {
+		if a.placed {
+			pins = append(pins, named{a.at, a.act.Place, v.report && i == hi})
 		}
-		g.put(lx, at.y, label, xLabel)
 	}
+	if !v.report {
+		for i, o := range sc.offers {
+			if o.placed {
+				pins = append(pins, named{o.at, o.offer.Place, i == hi})
+			}
+		}
+	}
+	slices.SortStableFunc(pins, func(a, b named) int { return boolRank(b.sel) - boolRank(a.sel) })
+	taken := make([]bool, t.w*t.h)
+	mark := func(x, y int) {
+		if x >= 0 && y >= 0 && x < t.w && y < t.h {
+			taken[y*t.w+x] = true
+		}
+	}
+	mark(sc.town.x, sc.town.y)
+	for _, p := range pins {
+		for dx := -1; dx <= 1; dx++ {
+			mark(p.at.x+dx, p.at.y)
+		}
+	}
+	free := func(x0, x1, y int) bool {
+		if x0 < 0 || x1 >= t.w {
+			return false
+		}
+		for x := x0; x <= x1; x++ {
+			if taken[y*t.w+x] {
+				return false
+			}
+		}
+		return true
+	}
+	for _, p := range pins {
+		n := len([]rune(p.name))
+		if n == 0 {
+			continue
+		}
+		lx := p.at.x + 3 // one clear cell after the chip
+		if !free(lx, lx+n-1, p.at.y) {
+			lx = p.at.x - 2 - n // one clear cell before it
+			if !free(lx, lx+n-1, p.at.y) {
+				continue
+			}
+		}
+		k := xPlace
+		if p.sel {
+			k = xSel
+		}
+		for x := lx; x < lx+n; x++ {
+			taken[p.at.y*t.w+x] = true
+		}
+		g.put(ox+lx, oy+p.at.y, p.name, k)
+	}
+}
+
+// boolRank sorts a true flag first.
+func boolRank(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // expKeyBar writes the key hints along the foot, as many as fit. Each is a

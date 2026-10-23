@@ -267,35 +267,11 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				imports[res] = float64(amount * (tm.RoutePay(1) + bonus))
 			}
 
-			// A full store is a wall: a run moves only as much as the tightest
-			// import store has room for, at the route's rate, and takes only
-			// that share of its export. With no room at all the run does not
-			// happen, as when the export stock is short.
-			scale := float64(1)
-			if canAfford {
-				for res, actual := range imports {
-					if !(actual > 0) || res == config.ResearchTarget {
-						continue // research is not stored: it has no store to fill
-					}
-					room := resources.GetStorage(res) - resources.Get(res)
-					if !(room > 0) {
-						scale = 0
-						break
-					}
-					if share := room / actual; share < scale {
-						scale = share
-					}
-				}
-				if !(scale > 0) {
-					canAfford = false
-				}
-			}
-
 			if canAfford {
 				// Consume exports
 				for res, amount := range def.Export {
-					resources.Remove(res, amount*scale)
-					tm.totalExported[res] += float64(amount * scale)
+					resources.Remove(res, amount)
+					tm.totalExported[res] += float64(amount)
 				}
 
 				// Add imports
@@ -303,14 +279,14 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				for res, actual := range imports {
 					if res == config.ResearchTarget {
 						if research != nil {
-							if said := research(actual * scale); said != "" {
+							if said := research(actual); said != "" {
 								messages = append(messages, "  → "+def.Name+" gave "+said+".")
 							}
 						}
 						continue
 					}
 					before := resources.Get(res)
-					resources.Add(res, actual*scale)
+					resources.Add(res, actual)
 					promised[res], took[res] = actual, resources.Get(res)-before
 					tm.totalImported[res] += took[res]
 				}

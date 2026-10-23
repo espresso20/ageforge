@@ -123,9 +123,6 @@ type GameState struct {
 	// Plan is the build plan in order, each item with the price of its next
 	// start and whether it could start now (plan.go).
 	Plan []PlanItemView
-	// WonderOverflow reports whether what the caps cut off is banked into the
-	// current age's wonder (overflow.go).
-	WonderOverflow bool
 	// PermanentBonuses is the authoritative runtime map of all cumulative
 	// permanent bonuses (epoch events, legacy, milestones, etc.).
 	// Populated in GetState(); not stored in save JSON.
@@ -265,10 +262,6 @@ type ResourceState struct {
 	Name      string
 	Unlocked  bool
 	Breakdown RateBreakdown
-	// OverCapGrace marks stock kept above a cap that shrank when Era
-	// Mastery's speed dropped (the grace rule, mastery.go): it stays until
-	// spent, and production adds nothing to it meanwhile.
-	OverCapGrace bool
 }
 
 // BuildingState represents a building type's current state
@@ -296,11 +289,6 @@ type BuildingState struct {
 	NextCost   map[string]float64
 	CanBuild   bool
 	AtMaxCount bool
-	// StoreLimit marks a storage building whose next copy costs more than
-	// the store would hold with every copy already queued built: the price
-	// curve has run past the store, so no more copies can be bought this
-	// age. It is not AtMaxCount: storage has no copy limit, only a price.
-	StoreLimit bool
 	// Wonder-specific: resources banked toward construction
 	WonderBank     map[string]float64
 	WonderBankFull bool

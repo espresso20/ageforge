@@ -345,62 +345,28 @@ func TestMasteryPassiveRetired(t *testing.T) {
 	}
 }
 
-// TestMasteryGraceRule: when k drops, stock above the new cap survives,
-// stops growing, can be spent, loses its grace once under the cap, and the
-// grace survives a save and load.
-func TestMasteryGraceRule(t *testing.T) {
+// TestMasteryDropKeepsStock: when k drops the stores get smaller, but stock
+// has no ceiling: nothing is cut, and production still adds to it.
+func TestMasteryDropKeepsStock(t *testing.T) {
 	isolateAccountDir(t)
 	_, ge := masteryTwins(t, 1)
 	ge.mu.Lock()
 	ge.recalculateRates()
 	r := ge.Resources.resources["wood"]
-	high := r.Storage // the k = 2 cap
+	high := r.Storage // the k = 2 store
 	r.Amount = high
 	ge.Prestige.SetMastery(ge.age, 0) // k drops to 1 (as entering new ground does)
 	ge.recalculateRates()
-	cap1 := r.Storage
+	small := r.Storage
 	ge.mu.Unlock()
-	if cap1 >= high || r.Amount != high || !ge.Resources.Graced("wood") {
-		t.Fatalf("after k dropped: wood %v (cap %v, was %v), graced %v; want the stock kept and graced", r.Amount, cap1, high, ge.Resources.Graced("wood"))
+	if small >= high || r.Amount != high {
+		t.Fatalf("after k dropped: wood %v (store %v, was %v); want the stock kept", r.Amount, small, high)
 	}
-	if !ge.GetState().Resources["wood"].OverCapGrace {
-		t.Error("the snapshot does not show the grace")
-	}
-	ge.StepTicks(20)
-	if r := ge.Resources.resources["wood"]; r.Amount > high {
-		t.Errorf("graced wood grew to %v past %v", r.Amount, high)
-	}
-
-	// Save and load keep it.
-	if err := ge.SaveGame("grace"); err != nil {
-		t.Fatal(err)
-	}
-	if g := readSaveFromDisk(t, "grace").OverCapGrace; !g["wood"] {
-		t.Errorf("the save's grace set is %v", g)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("grace"); err != nil {
-		t.Fatal(err)
-	}
-	lr := loaded.Resources.resources["wood"]
-	if !loaded.Resources.Graced("wood") || lr.Amount <= lr.Storage {
-		t.Fatalf("after load: wood %v, cap %v, graced %v", lr.Amount, lr.Storage, loaded.Resources.Graced("wood"))
-	}
-
-	// Spending works; under the cap the grace ends and the cap holds again.
-	loaded.mu.Lock()
-	if !loaded.Resources.Remove("wood", lr.Amount-lr.Storage/2) {
-		t.Fatal("could not spend graced wood")
-	}
-	loaded.recalculateRates()
-	graced := loaded.Resources.Graced("wood")
-	loaded.Resources.Add("wood", lr.Storage*3)
-	loaded.mu.Unlock()
-	if graced {
-		t.Error("wood under its cap is still graced")
-	}
-	if lr.Amount != lr.Storage {
-		t.Errorf("wood %v after a big add, want the cap %v", lr.Amount, lr.Storage)
+	ge.mu.Lock()
+	ge.Resources.Add("wood", small*3)
+	ge.mu.Unlock()
+	if r := ge.Resources.resources["wood"]; r.Amount != high+small*3 {
+		t.Errorf("wood %v after a big add, want %v: nothing clips a credit", r.Amount, high+small*3)
 	}
 }
 
@@ -455,7 +421,6 @@ func oldSave(t *testing.T, ge *GameEngine, name string) {
 	old := ge.buildSaveSnapshot()
 	ge.mu.RUnlock()
 	old.Prestige.Mastery, old.Prestige.Furthest, old.Prestige.RunFurthest, old.Prestige.MasterySeeded = nil, "", "", false
-	old.OverCapGrace = nil
 	// Nor the legacy kit (Pacing v2, PR 6): the first shop, no kit memory.
 	old.Prestige.ShopVersion = 0
 	old.Prestige.LegacyPlan, old.Prestige.LegacyFactions, old.Prestige.LegacyShares = nil, nil, nil
@@ -465,7 +430,7 @@ func oldSave(t *testing.T, ge *GameEngine, name string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, field := range []string{`"mastery"`, `"furthest"`, `"run_furthest"`, `"mastery_seeded"`, `"over_cap_grace"`,
+	for _, field := range []string{`"mastery"`, `"furthest"`, `"run_furthest"`, `"mastery_seeded"`,
 		`"shop_version"`, `"legacy_plan"`, `"legacy_factions"`, `"legacy_shares"`, `"plan_log"`} {
 		if strings.Contains(string(data), field) {
 			t.Fatalf("an old save still writes %s: the field must be omitempty", field)

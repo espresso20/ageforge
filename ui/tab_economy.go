@@ -421,7 +421,6 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			ageName = def.Name
 		}
 		head = fmt.Sprintf(" [gold]── %s ──[-]", truncate(ageName, w-7))
-		wall := &storeWall{state: state}
 		for _, key := range keys {
 			bs := state.Buildings[key]
 			if !bs.Unlocked {
@@ -447,9 +446,6 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 				sb.WriteString(hangingRow("   ", "[yellow]Building limit reached.[-]", w))
 			} else {
 				sb.WriteString(costRow("   Cost: ", buildingPrice(&state, key, bs), w))
-				if line := wall.line(bs); line != "" {
-					sb.WriteString(hangingRow("   ", "[yellow]"+line+"[-]", w))
-				}
 			}
 			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(buildingText(bs))+"[-]", w))
 			if bs.Flavor != "" {
@@ -672,42 +668,4 @@ func workerAssignBar(assigned, capacity, width int) string {
 		return BarEmptyColor() + strings.Repeat("░", width) + "[-]"
 	}
 	return progressCells(float64(assigned)/float64(capacity), width)
-}
-
-// resourceBar returns a width-char bar using █/░ characters with color based on fill level.
-// ratio >= 0.95 → gold (at cap), >= 0.60 → green, >= 0.30 → yellow, < 0.30 → red.
-func resourceBar(amount, storage float64, width int) string {
-	if storage <= 0 {
-		return strings.Repeat("░", width)
-	}
-	ratio := amount / storage
-	if ratio > 1 {
-		ratio = 1
-	}
-	if ratio < 0 {
-		ratio = 0
-	}
-	filled := int(ratio * float64(width))
-	empty := width - filled
-
-	var fillColor string
-	switch {
-	case ratio >= 0.95:
-		fillColor = "gold"
-	case ratio >= 0.60:
-		fillColor = "green"
-	case ratio >= 0.30:
-		fillColor = "yellow"
-	default:
-		fillColor = "red"
-	}
-
-	bar := ""
-	if filled > 0 {
-		bar += fmt.Sprintf("[%s]%s[-]", fillColor, strings.Repeat("█", filled))
-	}
-	if empty > 0 {
-		bar += fmt.Sprintf("[gray]%s[-]", strings.Repeat("░", empty))
-	}
-	return bar
 }

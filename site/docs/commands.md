@@ -260,9 +260,6 @@ You meet civilizations by running scouting expeditions, not by building anything
 |---|---|
 | `wonder` | Show the current wonder's bank: each resource, banked / needed, and its keystone tech with whether it is researched |
 | `wonder collect <res\|all> [amt\|all\|max]` (or `wonder bank …`) | Bank a resource toward the current wonder. With an amount, bank that much (at most what the wonder still needs). With `all`, `max` or no amount, bank as much as it still needs, up to what you have. `wonder collect all` does this for every resource the wonder still needs |
-| `wonder overflow` | Show whether overflow is on |
-| `wonder overflow on` | Bank what full stores would waste into the current wonder (the default) |
-| `wonder overflow off` | Stop banking overflow into the wonder. Production over a storage cap is lost |
 | `build <wonder>` | Build the wonder once its bank is full and its [keystone tech](wonders.md#the-keystone-tech) is researched |
 | `wonders` | Open the **Wonders** panel: a progress bar for each required resource, and a sprite of each completed wonder |
 

@@ -176,7 +176,7 @@ func (bm *BuildingManager) UnlockBuilding(key string) {
 
 // IsUnlocked returns whether a building type is available: its age has
 // unlocked it and its tech, if it needs one, is researched. A wonder is
-// available from its age alone: its bank takes deposits and overflow while
+// available from its age alone: its bank takes deposits while
 // its keystone tech is still to come, and only building it waits for the
 // tech (TechLocked).
 func (bm *BuildingManager) IsUnlocked(key string) bool {
@@ -332,8 +332,7 @@ func (bm *BuildingManager) BuildBatchCost(key string, n int, queue []BuildQueueI
 
 // NextCost is what the next copy of key costs in res, the copies in queue
 // counted: BuildBatchCost(key, 1, queue)[res], to the bit, without building a
-// map (overflow pays the plan prices every planned item each tick something
-// overflows). 0 for an unknown key or a resource it doesn't cost.
+// map (the plan prices every planned item each tick). 0 for an unknown key or a resource it doesn't cost.
 func (bm *BuildingManager) NextCost(key, res string, queue []BuildQueueItem) float64 {
 	def, ok := bm.defs[key]
 	if !ok {
@@ -991,51 +990,6 @@ func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]
 	return destroyed, names
 }
 
-// StorageLimit is the first resource (in key order) in which the next copy
-// of storage building key costs more than the store would hold with the
-// copies already queued built, and more than is held; "" when the next copy
-// fits, or key is not a storage building. A store is raised only by storage
-// buildings, so a storage building judged against the store it is meant to
-// raise has run out of copies: the price curve is its limit, and more storage
-// cannot be bought until the next age brings a bigger building. Judging the
-// queued copies in lets a town whose first Stash is still going up wait for
-// it, instead of being told the Stash is at its limit.
-//
-// storeIf is the engine's own store calculation (GameEngine.storeIf): the
-// size of res's store were all storage, or res's alone, to hold that much
-// more in raw building bonus. Queued copies go through it, so Era Mastery and
-// the techs' storage bonus multiply them as they do the copies that stand.
-func (bm *BuildingManager) StorageLimit(key string, resources *ResourceManager, queue []BuildQueueItem, storeIf func(res string, extraAll, extraOwn float64) float64) string {
-	def, ok := bm.defs[key]
-	if !ok || def.Category != "storage" {
-		return ""
-	}
-	cost, _ := bm.BuildBatchCost(key, 1, queue)
-	queued := float64(bm.GetQueueCount(key, queue))
-	for _, res := range sortedKeys(cost) {
-		store := resources.GetStorage(res)
-		if queued > 0 {
-			var all, own float64
-			for _, e := range def.Effects {
-				if e.Type != "storage" {
-					continue
-				}
-				switch e.Target {
-				case "all":
-					all += float64(e.Value * queued)
-				case res:
-					own += float64(e.Value * queued)
-				}
-			}
-			store = storeIf(res, all, own)
-		}
-		if cost[res] > store && cost[res] > resources.Get(res) {
-			return res
-		}
-	}
-	return ""
-}
-
 // ageLocked reports whether a building belongs to another age than the town's:
 // the age lock refuses to build it, whatever its line.
 func (bm *BuildingManager) ageLocked(def config.BuildingDef) bool {
@@ -1046,7 +1000,7 @@ func (bm *BuildingManager) ageLocked(def config.BuildingDef) bool {
 // queue is the engine's current build queue, used to compute queue-aware next costs.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
 // pass nil to skip worker field population.
-func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int, storeIf func(res string, extraAll, extraOwn float64) float64) map[string]BuildingState {
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int) map[string]BuildingState {
 	out := make(map[string]BuildingState)
 	for key, def := range bm.defs {
 		// NextCost uses BuildBatchCost so it reflects queue depth — the displayed
@@ -1067,7 +1021,6 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 			state.AtMaxCount = true
 		}
 		state.HeldWithLater = bm.CountFrom(key)
-		state.StoreLimit = bm.StorageLimit(key, resources, queue, storeIf) != ""
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)

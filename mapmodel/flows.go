@@ -2,14 +2,12 @@ package mapmodel
 
 import (
 	"sort"
-	"strconv"
 
 	"github.com/espresso20/ageforge/game"
 )
 
 // flows.go is the "flows" summary the maps can overlay: where the economy is
-// stuck. Full stores waste what flows into them, draining stores are about
-// to run dry, understaffed buildings and idle workers are labour in the
+// stuck. Draining stores are about to run dry, understaffed buildings and idle workers are labour in the
 // wrong place, and the per-lineage output share says what the settlement
 // actually runs on.
 
@@ -25,7 +23,7 @@ type Store struct {
 
 // Flows is the bottleneck summary.
 type Flows struct {
-	Full         []Store // at the cap and still rising
+	Full         []Store // always empty: stock has no ceiling (readers go in the UI pass)
 	Draining     []Store // falling, dry within about a minute
 	Understaffed []*Building
 	IdleWorkers  int
@@ -58,14 +56,12 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 	perSec := 1 / game.BaseTickInterval.Seconds()
 	for _, k := range keys {
 		r := st.Resources[k]
-		if !r.Unlocked || r.Storage <= 0 {
+		if !r.Unlocked {
 			continue
 		}
-		s := Store{Key: k, Name: r.Name, Fill: clamp01(r.Amount / r.Storage), Rate: float64(r.Rate * perSec)}
-		switch {
-		case s.Fill >= 0.98 && r.Rate > 0:
-			f.Full = append(f.Full, s)
-		case r.Rate < 0 && r.Amount > 0:
+		// Stock has no ceiling, so no store is ever full (Full stays empty).
+		if r.Rate < 0 && r.Amount > 0 {
+			s := Store{Key: k, Name: r.Name, Rate: float64(r.Rate * perSec)}
 			s.EmptyIn = r.Amount / -s.Rate
 			if s.EmptyIn < 60 {
 				f.Draining = append(f.Draining, s)
@@ -89,13 +85,6 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 	var worst []string
 	if len(f.Draining) > 0 {
 		worst = append(worst, f.Draining[0].Name+" runs dry")
-	}
-	if len(f.Full) > 0 {
-		s := f.Full[0].Name + " store full"
-		if len(f.Full) > 1 {
-			s = strconv.Itoa(len(f.Full)) + " stores full"
-		}
-		worst = append(worst, s)
 	}
 	if f.IdleWorkers > 0 {
 		worst = append(worst, plural(f.IdleWorkers, "idle worker", "idle workers"))

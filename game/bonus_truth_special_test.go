@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The promises that are not one effect of one config entry: Era Mastery's
@@ -508,39 +507,34 @@ func TestBonusTruthWorkerOutput(t *testing.T) {
 	}
 }
 
-// TestBonusTruthGrantsSayWhatFit: an event's line or a milestone's text
-// states its full grant. Storage takes only what fits, so when it cuts the
-// grant short the log says what the player got; with room it says nothing.
-func TestBonusTruthGrantsSayWhatFit(t *testing.T) {
-	lastLine := func(ge *GameEngine) string { return ge.log[len(ge.log)-1].Message }
+// TestBonusTruthGrantsLandInFull: an event's line or a milestone's text
+// states its full grant, and the whole grant lands: stock has no ceiling, so
+// nothing is cut short and no line says it was.
+func TestBonusTruthGrantsLandInFull(t *testing.T) {
 	harvest := config.EventByKey()["bountiful_harvest"] // minutes of food income
 	reward := []config.Effect{{Type: "instant_resource", Target: "food", Value: 250}}
 
-	// A new game holds 50 food at most, and starts with 25. It makes no
-	// food yet, so the harvest is sized on the floor: a share of what a
-	// moderate Primitive Age town makes.
+	// A new game holds 50 food at most in a store, and starts with 25. It
+	// makes no food yet, so the harvest is sized on the floor: a share of
+	// what a moderate Primitive Age town makes.
 	ge := NewGameEngine()
 	grant := config.EventSize(harvest.Effects[0], config.EventTown{Typical: ge.rules.TypicalIncome("food", ge.age)})
 	if grant <= 25 {
-		t.Fatalf("the harvest gives a new game %v food: the test needs it to overflow the store", grant)
+		t.Fatalf("the harvest gives a new game %v food: the test needs it to pass the store", grant)
 	}
+	lines := len(ge.log)
+	before := ge.Resources.Get("food")
 	ge.fireEvent(harvest)
-	if got, want := lastLine(ge), "  → Storage was nearly full: only 25 food (of "+textfmt.Number(grant)+") fit."; got != want {
-		t.Errorf("a clipped event grant logs %q, want %q", got, want)
+	if got := ge.Resources.Get("food"); math.Abs(got-(before+grant)) > 1e-9 {
+		t.Errorf("food after the harvest = %v, want %v: the whole grant", got, before+grant)
 	}
 	ge.applyMilestoneRewards(reward)
-	if got, want := lastLine(ge), "  → Storage was nearly full: only 0 food (of 250) fit."; got != want {
-		t.Errorf("a clipped milestone grant logs %q, want %q", got, want)
+	if got := ge.Resources.Get("food"); math.Abs(got-(before+grant+250)) > 1e-9 {
+		t.Errorf("food after the milestone = %v, want %v: the whole reward", got, before+grant+250)
 	}
-
-	// With room, the text is the whole truth: no extra line.
-	roomy := newTruthEngine("stone_age", truthClean)
-	lines := len(roomy.log)
-	roomy.fireEvent(harvest)
-	roomy.applyMilestoneRewards(reward)
-	for _, e := range roomy.log[lines:] {
-		if strings.Contains(e.Message, "Storage was nearly full") {
-			t.Errorf("a grant that fit logged %q", e.Message)
+	for _, e := range ge.log[lines:] {
+		if strings.Contains(e.Message, "nearly full") {
+			t.Errorf("a grant logged %q: nothing is cut short", e.Message)
 		}
 	}
 }

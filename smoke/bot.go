@@ -431,9 +431,7 @@ const planStoreTicks = 1800
 // planAhead is how a check-in player leaves the game: a build plan
 // (`plan build`, `plan research`) for the hours until the next
 // visit, so the income of those hours is spent as it comes in instead of
-// piling up at the caps. It replaces the previous visit's plan. Wonder
-// overflow stays on (the default), so what the plan doesn't spend and the
-// stores can't hold goes into the wonder.
+// piling up unspent. It replaces the previous visit's plan.
 //
 // The plan is budgeted: each resource's budget is what the bot holds plus
 // what it will make before the next visit (with some slack, see
@@ -1349,17 +1347,9 @@ func (b *Bot) bankWonder(p *plan) {
 		onlyWonder := p.target[res]-left <= keep
 		switch {
 		case p.invest && !onlyWonder && b.CheckInTicks > 0:
-			// Bank what would be lost at the cap before the next visit. With
-			// overflow on the game does that as it happens, and what the
-			// store holds now is better left to the build plan.
-			if p.st.WonderOverflow {
-				continue
-			}
-			over := p.amt[res] + float64(math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks) - p.storage[res]
-			if over <= 0 {
-				continue
-			}
-			keep = math.Max(keep, p.amt[res]-over)
+			// Nothing is lost at a cap, so what the store holds now is
+			// better left to the build plan.
+			continue
 		case p.invest && !onlyWonder:
 			if p.amt[res] < 0.9*p.storage[res] {
 				continue

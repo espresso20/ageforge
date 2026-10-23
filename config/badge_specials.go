@@ -107,15 +107,6 @@ func Badges() []BadgeDef {
 			Proof: Occurs("The build plan is a convenience: everything it starts can be started by hand, and nothing asks for it."),
 		},
 		{
-			Key: "special.exact_change", Family: "special",
-			Name: "Exact Change", Desc: "Raise five wonders in one run without overflow putting anything into a wonder's bank.",
-			Tier: BadgeSilver, Scope: BadgeRun, Event: BadgeEvWonderRaised,
-			Counter: "run." + BadgeEvWonderRaised, Threshold: 5,
-			When:   []BadgeCond{never("run." + BadgeEvWonderOverflow)},
-			Emblem: "wonder",
-			Proof:  StaticProof(BadgeRuleRunCount),
-		},
-		{
 			Key: "special.family_heirlooms", Family: "special", Subject: "iron_age",
 			Name: "Family Heirlooms", Desc: "Leave the Bronze Age without upgrading a single building in the run.",
 			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvAgeReached,
@@ -363,14 +354,6 @@ func Badges() []BadgeDef {
 			Tier: BadgeGold, Scope: BadgeLifetime, Counter: BadgeEvDayPlayed, Threshold: 30,
 			Emblem: "sun",
 			Proof:  StaticProof(BadgeRuleHabit),
-		},
-		{
-			Key: "special.nothing_wasted", Family: "special",
-			Name: "Nothing Wasted", Desc: "Let overflow finish banking a wonder while you are away.",
-			Tier: BadgeSilver, Scope: BadgeMoment, Event: BadgeEvWonderBanked,
-			When:   []BadgeCond{atLeast("ev.away", 1)},
-			Emblem: "wonder",
-			Proof:  BotProof("idle"),
 		},
 		{
 			Key: "special.long_game", Family: "special",
