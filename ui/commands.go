@@ -336,6 +336,8 @@ func registry() []*Command {
 			Help: []Usage{{"minimap [on|off]", "Show or set the mini map above the Buildings list (default off)"}}},
 		{Name: "motion", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"motion [on|off]", "Show or set motion: whether the maps, the badge case and theme effects move (default on)"}}},
+		{Name: "vibemode", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+			Help: []Usage{{"vibemode [on|off]", "Show or set VibeMode: the game's words in a second, GenZ script (default off)"}}},
 		{Name: "icons", Section: secGame,
 			Help: []Usage{{"icons", "Check whether your font shows Nerd Font icons, and install one if it doesn't"}}},
 		{Name: "save", Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},

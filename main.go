@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/ui"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 func main() {
@@ -16,16 +17,22 @@ func main() {
 		return
 	}
 
-	// Create game engine
-	engine := game.NewGameEngine()
-
-	// Load an EXISTING, established account and hand it to the engine so the UI/dashboard
+	// Load an EXISTING, established account first, so the engine's first words are in the
+	// script the account chose (VibeMode), then hand it to the engine so the UI/dashboard
 	// — which share this engine — can reach it via engine.Account() (the accounts design §6). We
 	// no longer auto-create here: on first run (no file, or a legacy unnamed account) the
 	// engine is left accountless and the UI prompts the player to name their account, which
 	// derives the identity (game.CreateNamedAccount). Loading is non-critical: ignore errors
 	// and run accountless rather than block play.
-	if acct, found, _ := game.LoadAccount(); found && acct.Established() {
+	acct, found, _ := game.LoadAccount()
+	loaded := found && acct.Established()
+	if loaded {
+		vibe.Set(acct.VibeOn())
+	}
+
+	// Create game engine
+	engine := game.NewGameEngine()
+	if loaded {
 		engine.SetAccount(acct)
 	}
 
