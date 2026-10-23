@@ -404,16 +404,45 @@ func (o *orb) mandalaLegend() []seg {
 	}
 }
 
-// mandalaHints is the status line at rest: the keys, and where you are.
+// mandalaHints is the status line at rest: the keys, and where you are. Close
+// in, with the cursor away, the arrows pan the window instead of moving the
+// cursor, and the line says so.
 func (o *orb) mandalaHints() []seg {
 	key, dim := theme.RoleAccent, theme.RoleDim
 	tail := []seg{{"│ ", dim}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.01", "beyond form, in light"), theme.RoleLabel}}
+	zoom := []seg{{"+ - ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.18", "zoom  "), dim}}
+	panning := o.zm == zClose && !o.v.inspect
+	var pan string
+	if panning {
+		pan = vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.19", "pan  ")
+	}
+	join := func(parts ...[]seg) []seg {
+		var out []seg
+		for _, p := range parts {
+			out = append(out, p...)
+		}
+		return out
+	}
+	// the arrows: round a ring and from ring to ring, or the window's
+	move := func(round, ring string) []seg {
+		if panning {
+			return []seg{{"◄► ↑↓ ", key}, {pan, dim}}
+		}
+		return []seg{{"◄► ", key}, {round, dim}, {"↑↓ ", key}, {ring, dim}}
+	}
+	moveShort := func(word string) []seg {
+		if panning {
+			return []seg{{"◄► ↑↓ ", key}, {pan, dim}}
+		}
+		return []seg{{"◄► ↑↓ ", key}, {word, dim}}
+	}
 	return fitHints(o.W, tail,
-		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.03", "inspect  "), dim}, {"◄► ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.04", "round a ring  "), dim}, {"↑↓ ", key},
-			{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.05", "ring to ring  "), dim}, {"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.07", "the core  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.08", "overlay  "), dim}},
-		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.10", "inspect  "), dim}, {"◄► ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.11", "round a ring  "), dim}, {"↑↓ ", key},
-			{vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.12", "ring to ring  "), dim}, {"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.14", "the core  "), dim}},
-		[]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.16", "inspect  "), dim}, {"◄► ↑↓ ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.17", "move  "), dim}},
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.03", "inspect  "), dim}}, move(vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.04", "round a ring  "), vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.05", "ring to ring  ")),
+			zoom, []seg{{"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.07", "the core  "), dim}, {"map flows ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.08", "overlay  "), dim}}),
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.10", "inspect  "), dim}}, move(vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.11", "round a ring  "), vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.12", "ring to ring  ")),
+			[]seg{{"Home ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.14", "the core  "), dim}}),
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.16", "inspect  "), dim}}, moveShort(vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.17", "move  ")), zoom),
+		join([]seg{{" Tab ", key}, {vibe.Line("ui.mapstyle.skyline.orbit_mandala.mandalaHints.20", "inspect  "), dim}}, zoom),
 		[]seg{{" Tab ◄► ↑↓  ", key}},
 	)
 }

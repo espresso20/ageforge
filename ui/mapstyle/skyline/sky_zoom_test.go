@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -257,6 +258,9 @@ func TestMandalaZoom(t *testing.T) {
 	}
 	if c := s.fb.at(3, h-2); c == nil || c.d != dBar {
 		t.Errorf("no horizontal bar on the bottom scene row")
+	}
+	if line := rowText(draw(v, m, w, h, 5, mapmodel.TierUnicode, false), h-1); !strings.Contains(line, "◄► ↑↓ pan") || !strings.Contains(line, "+ - zoom") {
+		t.Errorf("the status line does not say the arrows pan close in: %q", line)
 	}
 	for i := 0; i < 100; i++ {
 		press(v, m, tcell.KeyUp, 0, 0)

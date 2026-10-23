@@ -91,7 +91,7 @@ func panoramaHints(w int, where string, mode hintMode) []seg {
 	move := func(scroll string) []seg {
 		switch mode {
 		case hintPan:
-			return []seg{{" ◄►▲▼ ", key}, {pan, dim}}
+			return []seg{{" ◄► ↑↓ ", key}, {pan, dim}}
 		case hintFit:
 			return []seg{{" ", key}}
 		}
@@ -107,7 +107,7 @@ func panoramaHints(w int, where string, mode hintMode) []seg {
 	lead := " ◄► Tab  "
 	switch mode {
 	case hintPan:
-		lead = " ◄►▲▼ Tab  "
+		lead = " ◄► ↑↓ Tab  "
 	case hintFit:
 		lead = " Tab  "
 	}

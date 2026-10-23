@@ -299,7 +299,7 @@ func registry() []*Command {
 					Args: []Arg{{Kind: ArgWonderResource, Words: []string{"all"}}, {Kind: ArgNumber, Words: []string{"all", "max"}, Optional: true}},
 					Help: []Usage{{"wonder collect <resource|all> [amount|all|max]", vibe.Line("ui.help.commands.wonder.collect", "Bank resources into the current wonder (alias: bank; no amount: as much as it needs)")}}},
 			}},
-		panel("wonders", vibe.Line("ui.help.panels.wonders", "Wonder bank & built wonders")),
+		panel("wonders", vibe.Line("ui.help.panels.wonders", "Wonder bank, built wonders and a gallery of them (G)")),
 		{Name: "prestige", Section: secWonders, BareOK: true,
 			Help: []Usage{{"prestige", vibe.Line("ui.help.commands.prestige", "View prestige status")}},
 			Subs: []*Command{

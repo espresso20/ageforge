@@ -34,11 +34,11 @@ func TestPanoramaHintsFit(t *testing.T) {
 			}
 			// the arrows' hint says what they do, and the far level, where they do nothing, does not name them
 			switch {
-			case mode == hintPan && w >= 100 && !strings.Contains(line, "◄►▲▼ pan"):
+			case mode == hintPan && w >= 100 && !strings.Contains(line, "◄► ↑↓ pan"):
 				t.Errorf("at %d columns the close level's line does not name the pan keys: %q", w, line)
 			case mode == hintFit && strings.Contains(line, "◄►"):
 				t.Errorf("at %d columns the far level's line names arrows that do nothing: %q", w, line)
-			case mode == hintScroll && strings.Contains(line, "▲▼"):
+			case mode == hintScroll && strings.Contains(line, " pan"):
 				t.Errorf("at %d columns the scroll line names a pan: %q", w, line)
 			}
 		}
