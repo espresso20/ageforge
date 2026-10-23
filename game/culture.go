@@ -176,8 +176,8 @@ func (ge *GameEngine) restoreCultureState(save *GameSave) {
 }
 
 // SetCultureMeasureForTest puts ge's culture measure and its culture in
-// place: a test hook for other packages. The store is widened to hold the
-// culture. Not reachable from play. Takes the write lock.
+// place: a test hook for other packages. Not reachable from play. Takes the
+// write lock.
 func (ge *GameEngine) SetCultureMeasureForTest(held float64, m CultureSave) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -187,9 +187,6 @@ func (ge *GameEngine) SetCultureMeasureForTest(held float64, m CultureSave) {
 // setCultureMeasure is the lock-free body of SetCultureMeasureForTest.
 func (ge *GameEngine) setCultureMeasure(held float64, m CultureSave) {
 	ge.Resources.UnlockResource("culture")
-	if ge.Resources.GetStorage("culture") < held {
-		ge.Resources.LoadStorage(map[string]float64{"culture": held})
-	}
 	ge.Resources.LoadAmounts(map[string]float64{"culture": held})
 	ge.cultureMeasure = m
 }

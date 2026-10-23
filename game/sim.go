@@ -68,8 +68,7 @@ func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
 	ge.garrisonForTest, ge.garrisonForTestSet = n, true
 }
 
-// SetStockForTest sets what the engine holds of res to v (res unlocked, its
-// storage raised to fit). A test hook for other packages (the smoke bot's
+// SetStockForTest sets what the engine holds of res to v (res unlocked). A test hook for other packages (the smoke bot's
 // research order tests, which read one decision from one snapshot); not
 // reachable from play.
 func (ge *GameEngine) SetStockForTest(res string, v float64) {
@@ -79,9 +78,6 @@ func (ge *GameEngine) SetStockForTest(res string, v float64) {
 		return
 	}
 	ge.Resources.UnlockResource(res)
-	if short := v - ge.Resources.GetStorage(res); short > 0 {
-		ge.Resources.AddStorage(res, short)
-	}
 	ge.Resources.Add(res, v-ge.Resources.Get(res))
 }
 
