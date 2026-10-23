@@ -33,10 +33,10 @@ func TestParseRows(t *testing.T) {
 	}
 }
 
-// TestTheEmbeddedScriptIsSound: every sheet in words/vibe is in the binary,
-// reads without a problem, and gives each id once. This reads the folder the
-// source is in, not the binary, so a sheet the embed pattern would miss
-// (a file of another extension) shows.
+// TestTheEmbeddedScriptIsSound: every sheet in words/vibe is in the binary, reads
+// without a problem, gives each id once and has no em dash or exclamation mark.
+// This reads the folder the source is in, not the binary, so a sheet the embed
+// pattern would miss (a file of another extension) shows.
 func TestTheEmbeddedScriptIsSound(t *testing.T) {
 	rows, probs := VibeRows()
 	if len(probs) > 0 {
