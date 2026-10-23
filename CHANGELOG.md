@@ -10,6 +10,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **The skyline comes alive.** Bigger people walk the streets in groups, and every age has its own traffic on the road, the rails and in the sky, from camels and chariots to steam trains, bullet trains and starships.
 - **Help starts with how to get around.** The Help page opens with the keys to scroll and close panels, how commands work, and the prompt and dashboard keys, before the command lists.
 - **Winding routes.** Routes on the expedition map find their way around water and hills instead of running in a straight line.
 - **Every expedition takes a party.** Soldiers march with every mission and some do not come back; raids cost soldiers too. Your army, not a rule, decides how many missions are out at once, and empty posts train new soldiers from the reserve.
