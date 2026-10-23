@@ -20,30 +20,66 @@ import (
 type xk uint8
 
 const (
-	xText    xk = iota // body text
-	xDim               // quiet text, hints
-	xFaint             // the map's dust, separators
-	xBorder            // box edges
-	xTitle             // box titles, numbers that matter
-	xAccent            // keys, the tier label
-	xBright            // the strongest ink: names, the highlighted pin
-	xGood              // gains, affordable, a success
-	xBad               // a refusal, a failure, a short stock
-	xGold              // the twist: the offer's flavour, in italics
-	xLegend            // a Legendary pin, gold
-	xLegend2           // a Legendary pin, brighter (the blink)
-	xWater             // sea
-	xGrass             // meadow
-	xHill              // hills and mountains
-	xSel               // the selection
-	xSelGold           // the selection on a Legendary pin
-	xLabel             // a place name on the map
-	xWork              // people: workers
-	xRes               // people: the reserve
-	xArmy              // people: soldiers
-	xLore              // people: scholars
+	xText        xk = iota // body text
+	xDim                   // quiet text, hints
+	xFaint                 // the map's dust, separators
+	xBorder                // box edges
+	xTitle                 // box titles, numbers that matter
+	xAccent                // keys, the tier label
+	xBright                // the strongest ink: names, the highlighted pin
+	xGood                  // gains, affordable, a success
+	xBad                   // a refusal, a failure, a short stock
+	xGold                  // the twist: the offer's flavour, in italics
+	xLegend                // a Legendary pin, gold
+	xLegend2               // a Legendary pin, brighter (the blink)
+	xWater                 // sea
+	xGrass                 // meadow
+	xHill                  // hills and mountains
+	xSel                   // the selection
+	xSelGold               // the selection on a Legendary pin
+	xLabel                 // a place name on the map
+	xWork                  // people: workers
+	xRes                   // people: the reserve
+	xArmy                  // people: soldiers
+	xLore                  // people: scholars
+	xRoute                 // a route's dots and a party's road
+	xDust                  // the map's terrain dust
+	xPlace                 // a pin's place name, beside it
+	xChipShort             // a pin as a chip: the tier colours, Short ○
+	xChipLong              //   Long ◇
+	xChipMil               //   Military ▲
+	xChipCivic             //   Civil ■
+	xChipLegend            //   Legendary ◈
+	xChipGoal              // a party's goal ◆
+	xChipShortHi           // the same chips in their bright phase (the selected pin pulses)
+	xChipLongHi
+	xChipMilHi
+	xChipCivicHi
+	xChipLegendHi
+	xChipGoalHi
 	xCount
 )
+
+// chipTone is which pin chip an offer or a goal is drawn as.
+type chipTone uint8
+
+const (
+	toneShort chipTone = iota
+	toneLong
+	toneMil
+	toneCivic
+	toneLegend
+	toneGoal
+)
+
+// chipKind is the chip for a tone; hi is its bright phase.
+func chipKind(t chipTone, hi bool) xk {
+	k := xChipShort + xk(t)
+	if hi {
+		k = xChipShortHi + xk(t)
+	}
+	return k
+}
 
 // xcell is one cell.
 type xcell struct {
@@ -292,6 +328,33 @@ func newExpPalette() *expPalette {
 	s[xArmy] = role(theme.RoleNegative, 3)
 	s[xLore] = role(theme.RoleLabel, 3)
 	s[xLabel] = tcell.StyleDefault.Background(chip).Foreground(theme.Legible(theme.Color(theme.RoleHighlight), chip, 4.5))
+	s[xRoute] = role(theme.RoleAccent, 4.5)
+	s[xDust] = on(theme.Mix(bg, theme.Color(theme.RoleDim), 0.55), mapstyle.TerrainFloor)
+	s[xPlace] = role(theme.RoleDim, 4.5)
+	// The pins: each tone is a chip, its glyph in the ink that reads on it.
+	// A chip's bright phase is the same chip lifted toward the bright role.
+	tones := [6]struct {
+		bg  tcell.Color
+		ink tcell.Color
+	}{
+		{theme.Color(theme.RolePositive), theme.Color(theme.RoleBackground)},
+		{theme.Color(theme.RoleLabel), theme.Color(theme.RoleBackground)},
+		{theme.Color(theme.RoleNegative), theme.Color(theme.RoleOnNegative)},
+		{theme.Color(theme.RoleAccent), theme.Color(theme.RoleOnAccent)},
+		{gold, theme.Color(theme.RoleBackground)},
+		{theme.Color(theme.RolePositive), theme.Color(theme.RoleBackground)},
+	}
+	for t, c := range tones {
+		chipOn := func(bg tcell.Color) tcell.Style {
+			ink := theme.Legible(c.ink, bg, 4.5)
+			if theme.ContrastRatio(ink, bg) < 4.5 { // a mid tone: black or white reads
+				ink = theme.BestOn(bg)
+			}
+			return tcell.StyleDefault.Background(bg).Foreground(ink).Bold(true)
+		}
+		s[chipKind(chipTone(t), false)] = chipOn(c.bg)
+		s[chipKind(chipTone(t), true)] = chipOn(theme.Mix(c.bg, theme.Color(theme.RoleBright), 0.4))
+	}
 	return p
 }
 
