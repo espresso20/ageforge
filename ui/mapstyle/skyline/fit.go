@@ -2,9 +2,6 @@ package skyline
 
 import (
 	"math"
-	"sort"
-
-	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -112,7 +109,7 @@ func (s *scene) fitTown() {
 	dark := math.Max(p.night, p.twilight*0.8)
 	mega := s.megacity()
 	s.vis = lay.visible(0, lay.width+lay.maxW, s.vis)
-	paint := func(x int, lv *lotView, sx int, force bool) {
+	paint := func(x int, lv *lotView, sx int) {
 		spr := lv.spr
 		y0 := s.groundY - spr.h
 		hz := lv.ml.Row
@@ -134,8 +131,8 @@ func (s *scene) fitTown() {
 				lit := p.hue(windowHue(lv.ml.Age, hash(int(lv.ml.Seed), sx, sy)), mEmit, hz)
 				fg = theme.Mix(fg, lit, math.Min(1, (dark-0.25)*2))
 			}
-			if gold && !natural(c.fg) && spr.edges()[sy*spr.w+sx] {
-				fg = s.rimShade(fg, true, s.wonderGlow(lv, hz), clamp01((dark-0.2)*1.6))
+			if gold { // a landmark glows at night
+				fg = theme.Mix(fg, s.wonderGlow(lv, hz), 0.5*clamp01((dark-0.2)*1.6))
 			}
 			bg := fg
 			if c.bg != sNone {
@@ -149,7 +146,7 @@ func (s *scene) fitTown() {
 			continue
 		}
 		lv := &lay.lots[fc.lot]
-		paint(x, lv, int(fc.at)-lv.x0, false)
+		paint(x, lv, int(fc.at)-lv.x0)
 	}
 	// this age's wonder, on its own column however low it stands, and the
 	// scaffold of one going up
@@ -159,10 +156,10 @@ func (s *scene) fitTown() {
 			return
 		}
 		sx := lv.spr.w / 2
-		paint(x, lv, sx, true)
+		paint(x, lv, sx)
 		if lv.spr.w >= 3 { // a column either side keeps it from a single needle
-			paint(x-1, lv, sx-lv.spr.w/4, true)
-			paint(x+1, lv, sx+lv.spr.w/4, true)
+			paint(x-1, lv, sx-lv.spr.w/4)
+			paint(x+1, lv, sx+lv.spr.w/4)
 		}
 	}
 	for i := range lay.lots {
@@ -242,11 +239,9 @@ func (s *scene) districtNames() {
 				continue
 			}
 			x := a + (b-a-n)/2
-			bg := s.fb.showAt(x, y)
 			for i, r := range []rune(t) {
-				s.fb.set(x+i, y, r, theme.Legible(theme.Color(theme.RoleText), cbg, 4.5), cbg, dLabel)
+				s.fb.set(x+i, y, r, theme.Legible(theme.Color(theme.RoleText), cbg, 4.5), cbg, dTag)
 			}
-			_ = bg
 			break
 		}
 	}
@@ -277,6 +272,3 @@ func (s *scene) farFlags() {
 func ridgeItemsFar(m *mapmodel.Model, w int) []ridgeItem {
 	return ridgeItemsSpan(m, w, 0, w)
 }
-
-var _ = sort.Ints
-var _ tcell.Color

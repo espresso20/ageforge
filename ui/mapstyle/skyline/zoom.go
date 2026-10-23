@@ -177,6 +177,32 @@ func (s *scene) present() *scene {
 	return &sc
 }
 
+// panBar shows where the close level's window stands over the scene taller
+// than it: a thin line down the right edge with a thick stretch where the
+// window is. It is drawn on the screen, after the scene is scaled.
+func (s *scene) panBar() {
+	if s.zm != zClose || s.v.panHi <= s.v.panLo || s.W < 2 {
+		return
+	}
+	S := s.ls
+	hi := S - 1 - s.pan // the window's lowest world row
+	lo := hi - (S-1)/2  // and its highest
+	x := s.W - 1
+	acc := theme.Color(theme.RoleAccent)
+	for r := 0; r < S; r++ {
+		c := s.fb.at(x, s.Y(r))
+		if c == nil {
+			continue
+		}
+		bg := c.show()
+		if r >= lo && r <= hi {
+			s.fb.set(x, s.Y(r), '▐', theme.Legible(acc, bg, 3), bg, dBar)
+		} else {
+			s.fb.set(x, s.Y(r), '▕', theme.Legible(theme.Color(theme.RoleDim), bg, 2), bg, dBar)
+		}
+	}
+}
+
 // ------------------------------------------------------------ quadrants
 
 // quadRunes is the block glyph for each set of ink quadrants: bit 0 the

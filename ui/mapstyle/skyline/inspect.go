@@ -240,6 +240,7 @@ func (v *view) step(m *mapmodel.Model, anim, dx, drow, tab int) {
 	}
 	v.cur = ts[i].target
 	v.reveal = true
+	v.pan = 0 // the close view comes back to the foot of the scene, where the lots stand
 }
 
 func (v *view) inspection(m *mapmodel.Model, anim int) (in inspectionData, ok bool) {

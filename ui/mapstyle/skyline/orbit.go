@@ -789,7 +789,7 @@ func (o *orb) status(bg tcell.Color) {
 	if di := m.Skyline.DistrictAt(o.cam + o.W/2); di >= 0 {
 		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + " " + skyWhere[o.sc]
 	}
-	o.segs(0, y, bg, panoramaHints(o.W, where))
+	o.segs(0, y, bg, panoramaHints(o.W, where, o.arrowMode()))
 }
 
 // skyWhere names a district in each scene's terms.

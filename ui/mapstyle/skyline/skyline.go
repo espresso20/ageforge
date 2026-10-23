@@ -429,6 +429,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 		sc.districtNames()
 	}
 	sc.markers()
+	sc.panBar()
 	sc.chrome()
 	sc.clearCursorFill()
 	return sc
@@ -452,7 +453,6 @@ func (v *view) panFor(z zoom, S, def int) int {
 // revealTarget scrolls so the cursor's target is on screen.
 func (v *view) revealTarget(m *mapmodel.Model, t tgt, W int) {
 	v.reveal = false
-	v.pan = 0 // the view comes back to the foot of the scene, where the cursor's lots stand
 	x := t.x - v.cam
 	if t.kind != tLot && t.kind != tTether { // the tether stands in the world, like a building
 		x = t.x - v.cam // ridge targets are placed in screen terms already
