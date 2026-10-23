@@ -302,16 +302,21 @@ func TestALineIsToldAgainFromItsKey(t *testing.T) {
 		}
 		n++
 		key := res.Key()
-		if got, ok := Retell(key, req); !ok || got != res.Text {
-			t.Fatalf("%s: told again with VibeMode off it reads %q (%v), want %q", key, got, ok, res.Text)
+		for _, told := range []bool{false, true} {
+			if got, ok := Retell(key, req, told); !ok || got != res.Text {
+				t.Fatalf("%s: told again with VibeMode off (told %v) it reads %q (%v), want %q", key, told, got, ok, res.Text)
+			}
 		}
 		func() {
 			defer vibe.UseRewriterForTest(marked)()
 			vibe.Set(true)
 			defer vibe.Set(false)
-			got, ok := Retell(key, req)
+			got, ok := Retell(key, req, true)
 			if !ok || unmark.Replace(got) != res.Text || strings.Count(got, markOpen) < 1+len(res.draws) {
 				t.Fatalf("%s: told again under the script it reads %q (%v), plain %q", key, got, ok, res.Text)
+			}
+			if plain, ok := Retell(key, req, false); !ok || plain != res.Text {
+				t.Fatalf("%s: told again in plain English under the script it reads %q (%v), want %q", key, plain, ok, res.Text)
 			}
 			// What Generate told at the time is what the key tells now.
 			told := NewStream()
@@ -320,7 +325,7 @@ func TestALineIsToldAgainFromItsKey(t *testing.T) {
 			if again.Text == "" {
 				return
 			}
-			if got, ok := Retell(again.Key(), req); !ok || got != again.Text {
+			if got, ok := Retell(again.Key(), req, true); !ok || got != again.Text {
 				t.Fatalf("%s: told again it reads %q (%v), told at the time %q", again.Key(), got, ok, again.Text)
 			}
 		}()
@@ -346,12 +351,12 @@ func TestALineIsToldAgainFromItsKey(t *testing.T) {
 		withSlot + ":0,0",   // a word too many
 		noSlot + ":0",       // a word for a sentence with no slot
 	} {
-		if got, ok := Retell(key, Request{}); ok {
+		if got, ok := Retell(key, Request{}, true); ok {
 			t.Errorf("the key %q was told again as %q", key, got)
 		}
 	}
 	for _, key := range []string{noSlot, withSlot + ":0"} {
-		if got, ok := Retell(key, Request{}); !ok || got == "" {
+		if got, ok := Retell(key, Request{}, true); !ok || got == "" {
 			t.Errorf("the key %q was refused", key)
 		}
 	}

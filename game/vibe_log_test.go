@@ -360,6 +360,17 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 	if len(changed) < 400 {
 		t.Errorf("the script reached only %d different texts of the run", len(changed))
 	}
+	// The lines of story the log tells (package flavor) are among them.
+	stories := map[string]bool{}
+	for i := range plain {
+		if marked[i] != plain[i] && strings.Contains(plain[i], "|log|") && strings.Contains(plain[i], "[comment]") {
+			stories[marked[i]] = true
+		}
+	}
+	t.Logf("%d different lines of story were told in the script's words", len(stories))
+	if len(stories) < 300 {
+		t.Errorf("the script told only %d different lines of story in the run, want at least 300", len(stories))
+	}
 	// The things the code names itself and the save keeps as keys or in
 	// English are told in the script's words too, and every kind was met.
 	for _, what := range []struct {

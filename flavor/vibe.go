@@ -195,13 +195,14 @@ var templateByID = sync.OnceValue(func() map[string]tmpl {
 	return out
 })
 
-// Retell is the line a Key names, for req, as it reads now: in the words of
-// the script while VibeMode is on, and in plain English otherwise. req fills
-// the placeholders as Generate did (only the fields the line uses matter). It
+// Retell is the line a Key names, for req: in the words of the script when
+// told is set and VibeMode is on, and in plain English otherwise. req fills the
+// placeholders as Generate did (only the fields the line uses matter). It
 // reports false for a key this catalog does not know (one from a save of
 // another build, or one that is edited), and the caller keeps the plain line
-// it has.
-func Retell(key string, req Request) (string, bool) {
+// it has. To be sure a key still names the line it was made for, tell it in
+// plain English and compare.
+func Retell(key string, req Request, told bool) (string, bool) {
 	id, rest, hasDraws := strings.Cut(key, ":")
 	t, ok := templateByID()[id]
 	if !ok {
@@ -230,7 +231,7 @@ func Retell(key string, req Request) (string, bool) {
 	if slots != len(draws) {
 		return "", false
 	}
-	told := vibe.On()
+	told = told && vibe.On()
 	return fillAs(t.compose(draws, told), req, told), true
 }
 

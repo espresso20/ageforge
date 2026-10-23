@@ -443,3 +443,32 @@ func TestAStoryKeepsItsTagsInEveryScript(t *testing.T) {
 		t.Errorf("%d lines of story in the run, %d of them about the army", stories, raids)
 	}
 }
+
+// TestAKeyThatNamesAnotherLineIsNotTrusted: a key is only used to tell a line
+// again when it tells the line the thread holds, in plain English. A key from a
+// build whose catalog differed names some other sentence, and the line reads
+// as it was drawn.
+func TestAKeyThatNamesAnotherLineIsNotTrusted(t *testing.T) {
+	isolateAccountDir(t)
+	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeOff(t)
+	defer vibe.Set(false)
+	defer vibe.UseRewriterForTest(mark)()
+	vibe.Set(true)
+
+	ge := newSeededEngine(4)
+	if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
+		t.Fatal(err)
+	}
+	kept, keys, read := harborLines(ge)
+	if len(keys) != 2 || !strings.Contains(read[0], markOpen) || !strings.Contains(read[1], markOpen) {
+		t.Fatalf("the thread keeps %q (keys %q) and the view reads %q", kept, keys, read)
+	}
+	ge.mu.Lock()
+	ge.harbinger.LineKeys = []string{"nonesuch_0", keys[0]} // no such sentence, and the other line's key
+	ge.mu.Unlock()
+	_, _, read = harborLines(ge)
+	if read[0] != kept[0] || read[1] != kept[1] {
+		t.Errorf("with keys that do not name them the view reads %q, want the lines as they were drawn %q", read, kept)
+	}
+}

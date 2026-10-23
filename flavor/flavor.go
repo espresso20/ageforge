@@ -21,8 +21,9 @@
 // screenful no matter how big the catalog gets.
 //
 // Decoupling is the whole point, and it mirrors package boon exactly. This package
-// imports AT MOST config (for the resource vocabulary and the canonical age order)
-// and the standard library. It does NOT import game — that would be an import
+// imports AT MOST config (for the resource vocabulary and the canonical age order),
+// vibe (which reads the VibeMode script and imports nothing of the game) and the
+// standard library. It does NOT import game — that would be an import
 // cycle and would defeat the isolation that makes the generator unit-testable on
 // its own. All knowledge of the outside world enters through one seam:
 //
