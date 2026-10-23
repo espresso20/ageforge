@@ -10,6 +10,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **Winding routes.** Routes on the expedition map find their way around water and hills instead of running in a straight line.
 - **Every expedition takes a party.** Soldiers march with every mission and some do not come back; raids cost soldiers too. Your army, not a rule, decides how many missions are out at once, and empty posts train new soldiers from the reserve.
 - **Soldiers are people.** A military building comes with its soldiers: they fill its posts from the reserve and then as new arrivals, while the food allows, live in your homes and eat, and the army is the soldiers at their posts. Military buildings no longer train a stockpile.
 - **People.** Every person in your town is in one place: workers, the reserve, soldiers and scholars, each with its own name in every age. Scholars live in your homes and eat. A People box replaces the Workers box, and the People panel has tabs for your work, your army and your scholars.
