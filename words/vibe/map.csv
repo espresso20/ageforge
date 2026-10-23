@@ -2,363 +2,363 @@ id,text
 theme.theme.Group.String.01,Accessibility Era
 theme.theme.Group.String.02,Grind to Unlock
 theme.theme.Group.String.03,The Default Drip
-theme.theme.Variant.01,Light Mode
-theme.theme.Variant.02,Dark Mode
+theme.theme.Variant.01,Light Mode Szn
+theme.theme.Variant.02,Dark Mode Szn
 theme.deuteranopia.name,Deuteranopia-safe
-theme.deuteranopia.blurb,"Red-green safe, no cap: blue gains, orange losses, ▲/▼ signs, bestie."
+theme.deuteranopia.blurb,"Red-green safe, every eye is invited: blue is a W, orange is an L, plus ▲/▼ signs."
 theme.protanopia.name,Protanopia-safe
-theme.protanopia.blurb,"Red-green safe (L-cone) and lowkey iconic: blue gains, amber losses, ▲/▼ signs."
+theme.protanopia.blurb,"Red-green safe for L-cone eyes: blue means W, amber means L, with ▲/▼ signs."
 theme.high_contrast.name,High Contrast
-theme.high_contrast.blurb,"Max legibility, no cap: near-black on near-white, bold roles hitting different."
+theme.high_contrast.blurb,"Legibility maxxed: near-black on near-white, bold roles, zero squinting."
 theme.parchment.name,Old Paper Aesthetic
-theme.parchment.blurb,"Ink on warm parchment, a sepia manuscript page, very aesthetic."
-theme.parchment.unlock_hint,"Hit the Aesthetic Age to unlock it, bestie."
+theme.parchment.blurb,"Ink on warm parchment, sepia manuscript energy, very dark academia."
+theme.parchment.unlock_hint,"Reach the Aesthetic Age, it matches the vibe"
 theme.bronze.name,Bronze Glow-Up
-theme.bronze.blurb,"Burnished copper and amber over dark warm metal, it's giving glow-up."
-theme.bronze.unlock_hint,Hit the Glow-Up Age to unlock it. Real.
+theme.bronze.blurb,"Burnished copper and amber on dark warm metal, the metal is serving."
+theme.bronze.unlock_hint,Reach the Glow-Up Age to cop it
 theme.cyberpunk.name,Cyberpunk Core
-theme.cyberpunk.blurb,"Hot magenta and neon cyan over near-black violet, it's giving neon."
-theme.cyberpunk.unlock_hint,"Hit the Cyber Baddie Age to unlock it, no skips."
+theme.cyberpunk.blurb,"Hot magenta and neon cyan on near-black violet, rave-in-the-terminal energy."
+theme.cyberpunk.unlock_hint,"Reach the Cyber Baddie Age, baddies only"
 theme.monochrome.name,Black and White Era
 theme.monochrome.blurb,"Greyscale terminal, no color drama: meaning rides on lightness, not hue."
-theme.monochrome.unlock_hint,"Hit the Group Chat Age to unlock it, the chat is waiting."
+theme.monochrome.unlock_hint,"Reach the Group Chat Age, then it drops"
 theme.cosmic.name,Cosmic Drip
-theme.cosmic.blurb,"Deep indigo with starlight and nebula accents, very main character."
-theme.cosmic.unlock_hint,"Hit the Galaxy Brain Age to unlock it, big brain time."
+theme.cosmic.blurb,"Deep indigo sprinkled with starlight and nebula accents, the space aesthetic ate."
+theme.cosmic.unlock_hint,"Reach the Galaxy Brain Age, big brains only"
 theme.source.name,Source Code
-theme.source.blurb,"Phosphor green on black, code rain in the empty columns, the hacker era is real."
+theme.source.blurb,"Hacker core: phosphor green on black, and code rain drips down every empty column."
 theme.source.unlock_hint,"A secret badge drops it, no spoilers."
 theme.glitch.name,Glitchcore
-theme.glitch.blurb,"Cyan and magenta on violet black, with a static tear now and then, glitch is the bit."
-theme.glitch.unlock_hint,"A secret badge hands it over, keep it quiet."
+theme.glitch.blurb,"Cyan and magenta on violet black, and every so often the screen tears, glitch is the whole bit."
+theme.glitch.unlock_hint,"Comes with a secret badge, gatekept on purpose"
 theme.ashfall.name,Ashfall Mood
 theme.ashfall.blurb,"Ember orange on soot, sparks rising in the empty columns, cooked in the best way."
-theme.ashfall.unlock_hint,"A legendary badge unlocks it, a real W."
+theme.ashfall.unlock_hint,Comes with a goated badge
 theme.ledger.name,Ledger Energy
-theme.ledger.blurb,"Ink and bookkeeper's green on green-bar paper, spreadsheet core."
+theme.ledger.blurb,"Bookkeeper's green ink on green-bar paper, spreadsheet core."
 theme.ledger.unlock_hint,"The top rung of the badge ladder, the final boss of unlocks."
 theme.prismatic.name,Prismatic Vibes
-theme.prismatic.blurb,"Starlight on blue-black, glints cycling the spectrum, it's giving rainbow."
-theme.prismatic.unlock_hint,"Earn 400 badges, no shortcuts, the grind is the whole vibe."
+theme.prismatic.blurb,"Starlight on blue-black with glints that cycle the whole spectrum, rainbow aura."
+theme.prismatic.unlock_hint,"Collect 400 badges, then go touch grass"
 theme.forge.name,OG Forge
 theme.forge.blurb,"The OG dark-and-gold AgeForge look, the one that never gets old."
 theme.daylight.name,Daylight Era
-theme.daylight.blurb,"Clean light theme, charcoal ink on a bright page, amber accents, very clean, no notes."
+theme.daylight.blurb,"Clean girl aesthetic for your terminal: charcoal ink on a bright page, amber accents."
 theme.high_contrast_light.name,High Contrast Light
-theme.high_contrast_light.blurb,"Max legibility on a white page, black ink, bold roles, no filter needed."
+theme.high_contrast_light.blurb,"Legibility goes crazy on a white page: black ink, bold roles."
 map.lineage.housing,the crash pads
 map.lineage.food,farms and snacks
-map.lineage.organic_extraction,timber and fibre
-map.lineage.geological_extraction,rocks and mines
+map.lineage.organic_extraction,lumber lore
+map.lineage.geological_extraction,pickaxe era
 map.lineage.metallurgy,the metal glow-up
 map.lineage.engineering,big brain builds
 map.lineage.energy,the juice
-map.lineage.harbor,harbor vibes
-map.lineage.hacker,hacker hideouts
+map.lineage.harbor,harbor hustle
+map.lineage.hacker,hackerman dens
 map.lineage.knowledge,the brain zone
-map.lineage.faith,faith era
+map.lineage.faith,faith fam
 map.lineage.culture_arts,culture drip
 map.lineage.monument,big flex builds
 map.lineage.trade,the hustle
 map.lineage.storage,stash spot
 map.lineage.military,the squad
 map.lineage.diplomacy,diplo rizz
-map.lineage.wonder,wonder W's
+map.lineage.wonder,wonder Ws
 map.city.suburbs.name,the burbs
-map.city.suburbs.title,Suburb Life
-map.city.suburbs.line.01,"Houses with gardens, a drive and a car, the whole starter pack."
-map.city.suburbs.line.02,"Commuter houses, dead quiet by day, lowkey sleepy."
-map.city.park.name,fenced-off green
+map.city.suburbs.title,Suburbia Core
+map.city.suburbs.line.01,"The suburban starter pack: a garden, a drive and a car per house."
+map.city.suburbs.line.02,Commuter houses that go full ghost town by day.
+map.city.park.name,gatekept grass
 map.city.park.title,Touch Grass Zone
-map.city.park.line.01,"Still green, fenced into its block, touching grass for real."
-map.city.park.line.02,"A park, railed in on every side, the grass is lowkey caged."
-map.city.highway.name,the highway
+map.city.park.line.01,"The last green on the block, fenced in, touch grass at your own risk."
+map.city.park.line.02,"A park with rails on every side, the grass is lowkey in jail."
+map.city.highway.name,zoom road
 map.city.highway.title,Highway Era
-map.city.highway.line.01,"Four lanes each way, out of town, the commute is a whole arc."
-map.city.highway.line.02,"The highway, never empty, the traffic never chills."
-map.city.glass_tower.name,glass tower
+map.city.highway.line.01,"Eight lanes total, four each way, a speedrun lane for leaving town."
+map.city.highway.line.02,"The highway is never empty, that traffic is chronically online."
+map.city.glass_tower.name,glass flex tower
 map.city.glass_tower.title,Downtown Flex
-map.city.glass_tower.line.01,"Glass and steel downtown, the skyline is flexing."
-map.city.glass_tower.line.02,"Offices, forty floors of them, the nine-to-five arc."
-map.city.server_farm.name,the server farm
+map.city.glass_tower.line.01,"Steel and glass flexing downtown, skyline goals."
+map.city.glass_tower.line.02,"Forty floors of offices, a whole tower of nine-to-five NPCs."
+map.city.server_farm.name,"the cloud, IRL"
 map.city.server_farm.title,Server Farm Lore
-map.city.server_farm.line.01,"Racks humming behind blank walls, no one knows what's in there, sus."
-map.city.server_farm.line.02,"Cooling fans going day and night, they never clock out."
-map.city.dish.name,the satellite dish
+map.city.server_farm.line.01,"Blank walls with something humming behind them, mysterious and lowkey sus."
+map.city.server_farm.line.02,"Cooling fans on a no-sleep grind, day and night."
+map.city.dish.name,sky DM dish
 map.city.dish.title,Sky Listener Era
-map.city.dish.line.01,"Listening to the sky, it's giving radio ghost."
+map.city.dish.line.01,"Eavesdropping on the sky, lowkey nosy."
 map.city.dish.line.02,"A dish aimed at a satellite, it's locked in."
-map.city.fiber.name,the fiber line
+map.city.fiber.name,"fiber, no lag"
 map.city.fiber.title,Fiber Line Energy
-map.city.fiber.line.01,"The fiber, under the street, carrying data, the bandwidth is bussin."
-map.city.fiber.line.02,"Cable trenches, freshly dug, the road work is lowkey forever."
-map.city.garden.name,the rooftop garden
-map.city.garden.title,Rooftop Garden Vibes
-map.city.garden.line.01,"What is left of the green, up on a roof, the plant parents are still going."
-map.city.garden.line.02,"A garden on the roof, between the vents, very cottagecore."
-map.city.office_block.name,the office block
+map.city.fiber.line.01,"Fiber under the street, ferrying data at bussin speeds."
+map.city.fiber.line.02,"Freshly dug cable trenches, roadwork that never ends, the eternal side quest."
+map.city.garden.name,roof cottagecore
+map.city.garden.title,Rooftop Plant Parent
+map.city.garden.line.01,"The last of the green lives on a roof now, plant parents refusing to give up."
+map.city.garden.line.02,"A garden squeezed between roof vents, thriving out of spite."
+map.city.office_block.name,NPC office block
 map.city.office_block.title,Office Block Grind
-map.city.office_block.line.01,"Screens on every floor, the glow never clocks out."
-map.city.office_block.line.02,"Desks, glass, and air conditioning, the cubicle arc is real."
-map.city.scrub.name,the dry ground
+map.city.office_block.line.01,"A whole building of screens, every floor doomscrolling in sync."
+map.city.office_block.line.02,"Desks, glass panels and AC on blast, the corporate look at its most beige flag."
+map.city.scrub.name,cooked ground
 map.city.scrub.title,Crispy Ground
-map.city.scrub.line.01,"Scrub, browned by the smog, it's giving well-done."
-map.city.scrub.line.02,"The lawn gone crispy past the city, it got cooked."
+map.city.scrub.line.01,"Smog has browned the scrub, it's giving well-done."
+map.city.scrub.line.02,"Out past the city the grass is crispy, touch grass? Not this grass."
 map.city.smog.name,smog-core
 map.city.smog.title,Haze Check
-map.city.smog.line.01,"The air turning brown at the edges, not a great look, no cap."
-map.city.smog.line.02,"Haze over the outskirts, the sky is giving mid."
-map.city.concrete.name,the concrete
-map.city.concrete.title,Concrete Jungle
+map.city.smog.line.01,"The air is going brown at the edges, and that is a red flag."
+map.city.smog.line.02,"The outskirts are hazy, the sky is giving mid."
+map.city.concrete.name,concrete core
+map.city.concrete.title,Paved Szn
 map.city.concrete.line.01,"Paved over, where the fields used to be, we're sorry to the grass."
-map.city.concrete.line.02,"Car parks and loading bays, a whole parking lot era."
-map.city.landfill.name,the landfill
+map.city.concrete.line.02,"Car park, loading bay, car park again, peak NPC scenery."
+map.city.landfill.name,the L pile
 map.city.landfill.title,Trash Mountain
-map.city.landfill.line.01,"The city's trash, piled high, it's giving main character mess."
-map.city.landfill.line.02,"Old screens and packaging, a whole hill of it, delulu recycling."
-map.city.reserve.name,the reserve
-map.city.reserve.title,Green Pocket
-map.city.reserve.line.01,"The last green, behind a wall, the only real one left."
-map.city.reserve.line.02,"Old trees, kept like a museum, look but don't touch."
-map.city.data_glow.name,the data glow
+map.city.landfill.line.01,"The city's rubbish piled sky high, the mess is in its villain arc."
+map.city.landfill.line.02,"A whole hill of old screens and packaging, last season's tech in its flop era."
+map.city.reserve.name,"last green, fr"
+map.city.reserve.title,Rare Grass Drop
+map.city.reserve.line.01,"The last green, walled off and gatekept from the city."
+map.city.reserve.line.02,"Old trees preserved like museum pieces, the OG forest."
+map.city.data_glow.name,data aura
 map.city.data_glow.title,Data Glow Core
-map.city.data_glow.line.01,"Servers warm enough to light the street, the streetlights are servers now."
-map.city.data_glow.line.02,"The glow of a data hall, a whole aura."
-map.city.megablock.name,megablock
+map.city.data_glow.line.01,"Servers so hot they light the street, the glow-up nobody asked for."
+map.city.data_glow.line.02,A data hall glowing like it has an aura.
+map.city.megablock.name,stacked block
 map.city.megablock.title,Stacked Life
-map.city.megablock.line.01,"Towers on towers, lit all night, it never sleeps and neither do we."
-map.city.megablock.line.02,"A hundred floors, and no one knows the neighbors, the group chat is silent."
-map.city.alley.name,the alley
+map.city.megablock.line.01,"Towers stacked on towers with the lights on all night, insomnia core."
+map.city.megablock.line.02,"A hundred floors of strangers, zero neighbors in the group chat."
+map.city.alley.name,alley aesthetic
 map.city.alley.title,Alley Energy
-map.city.alley.line.01,"Dark, wet and crowded, the vibe is moody."
-map.city.alley.line.02,"Steam, noodle stalls and wires overhead, a whole aesthetic."
-map.city.corp_tower.name,the megacorp tower
+map.city.alley.line.01,"Dark, damp and packed, moody alley core."
+map.city.alley.line.02,"Noodle stall steam under a tangle of wires, the aesthetic is immaculate."
+map.city.corp_tower.name,corpo flex tower
 map.city.corp_tower.title,Corpo Tower Arc
-map.city.corp_tower.line.01,"Its initials in neon, a whole block high, very loud."
-map.city.corp_tower.line.02,"A megacorp's tower, watching the street, it's giving surveillance."
-map.city.arcology.name,the arcology
+map.city.corp_tower.line.01,"Its initials in neon a block tall, subtle is not the vibe."
+map.city.corp_tower.line.02,"The megacorp's tower keeps watching the street, sus."
+map.city.arcology.name,"arcology, ate"
 map.city.arcology.title,Arcology Flex
-map.city.arcology.line.01,"A whole city in one building, the ultimate flex."
-map.city.arcology.line.02,"Terraces stacked to the clouds, we're not even tired."
-map.city.neon_sign.name,the neon sign
+map.city.arcology.line.01,"One building, an entire city inside, ultimate flex."
+map.city.arcology.line.02,"Terraces piled up into the clouds, built different."
+map.city.neon_sign.name,neon drip
 map.city.neon_sign.title,Neon Sign Glow
-map.city.neon_sign.line.01,"Buzzing, flickering now and then, it's not even trying to hide it."
-map.city.neon_sign.line.02,"A holo-ad selling something, bestie, we are not the target market."
-map.city.vent.name,the steam vent
+map.city.neon_sign.line.01,"Buzzing away and glitching now and then, flicker era."
+map.city.neon_sign.line.02,"A holo-ad pushing some product, the ad break nobody asked for."
+map.city.vent.name,venting sesh
 map.city.vent.title,Vent Vibe Check
-map.city.vent.line.01,"Steam from the undercity, the underground is cooking."
-map.city.vent.line.02,"A vent, breathing hot air, the heat is real."
-map.city.scrap.name,the scrap heap
-map.city.scrap.title,Junk Drawer
-map.city.scrap.line.01,"Rusting where it got dumped, the glow-down is real."
-map.city.scrap.line.02,"Scrap, picked over by scavengers, the bin diving is elite."
+map.city.vent.line.01,"The undercity is cooking, and this is the steam."
+map.city.vent.line.02,A vent that is just yapping hot air all day.
+map.city.scrap.name,"junk pile, mid"
+map.city.scrap.title,Junk Drawer Core
+map.city.scrap.line.01,"Got dumped and left to rust, the ultimate glow-down."
+map.city.scrap.line.02,"Scavengers already picked this scrap clean, thrift haul secured."
 map.city.toxic_ground.name,toxic turf
-map.city.toxic_ground.title,Danger Zone
-map.city.toxic_ground.line.01,"Nothing grows here now, not even the weeds, it's bleak."
-map.city.toxic_ground.line.02,"Poisoned ground, fenced off and forgotten, we do not go there, not even for the aesthetic."
-map.city.toxic_canal.name,the toxic canal
+map.city.toxic_ground.title,Red Flag Ground
+map.city.toxic_ground.line.01,"Not even weeds will grow here now, it's so over for this dirt."
+map.city.toxic_ground.line.02,"Poisoned dirt behind a fence, ghosted by the whole city."
+map.city.toxic_canal.name,"toxic canal, ick"
 map.city.toxic_canal.title,Canal Chaos
-map.city.toxic_canal.line.01,"The water glows a sickly green, it's giving radioactive lemonade."
-map.city.toxic_canal.line.02,"A canal, thick with runoff, not the vibe."
-map.city.sky_rail.name,the sky rail
+map.city.toxic_canal.line.01,"Sickly green glowing water, it's giving radioactive lemonade."
+map.city.toxic_canal.line.02,"Runoff has turned the canal to sludge, absolutely not the vibe."
+map.city.sky_rail.name,"sky train, slay"
 map.city.sky_rail.title,Sky Rail Glow
-map.city.sky_rail.line.01,"An elevated line, high over the street, no fear of heights."
-map.city.maglev_skyway.name,the maglev skyway
+map.city.sky_rail.line.01,"Trains gliding high over the street, the commute got a glow-up."
+map.city.maglev_skyway.name,maglev zoom lane
 map.city.maglev_skyway.title,Maglev Main Quest
-map.city.maglev_skyway.line.01,"An elevated maglev line, humming with power, very smooth energy."
-map.city.reactor.name,the fusion reactor
+map.city.maglev_skyway.line.01,"Maglev trains floating overhead on pure power, frictionless era."
+map.city.reactor.name,big juice reactor
 map.city.reactor.title,Sun in a Box
-map.city.reactor.line.01,"Plasma held in a ring of magnets, the physics is lowkey insane."
-map.city.reactor.line.02,"A star in a bottle, powering the whole city, it's not even stressed."
-map.city.conduit.name,the power conduit
+map.city.reactor.line.01,"Magnets hold the plasma in a ring, physics went feral here."
+map.city.reactor.line.02,"A bottled star carrying the whole city on its back, no breaks."
+map.city.conduit.name,plasma juice line
 map.city.conduit.title,Juice Pipe
-map.city.conduit.line.01,"Plasma power, carried to the core, the juice is flowing."
-map.city.conduit.line.02,"A conduit pulsing with light, so bright, bestie."
-map.city.launch_tower.name,the launch tower
+map.city.conduit.line.01,"The juice flows straight to the core, plasma express."
+map.city.conduit.line.02,"Light pulses down the conduit like it has a heartbeat, rave energy."
+map.city.launch_tower.name,yeet tower
 map.city.launch_tower.title,Liftoff Zone
-map.city.launch_tower.line.01,"A rocket on its pad, waiting for its moment, the countdown is a vibe."
-map.city.launch_tower.line.02,"Launch gantry lit up for the night, it's giving space camp."
-map.city.tether.name,the space elevator
-map.city.tether.title,Ladder to the Stars
-map.city.tether.line.01,"A tether rising out of sight, the sky is not the limit."
-map.city.tether.line.02,"Climbers ride it up out of the sky, no fear, all vibes."
-map.city.cooling.name,the cooling channel
+map.city.launch_tower.line.01,"A rocket parked on its pad, waiting for its main character moment."
+map.city.launch_tower.line.02,"Floodlights on the gantry all night, it's giving space camp."
+map.city.tether.name,"orbit lift, goated"
+map.city.tether.title,Stairway to Space Rizz
+map.city.tether.line.01,"A tether so tall it ghosts the sky, out of sight."
+map.city.tether.line.02,"Climbers ride it right out of the sky, an elevator that touches space, not grass."
+map.city.cooling.name,chill channel
 map.city.cooling.title,Chill Zone
-map.city.cooling.line.01,"Water cooling the reactors, glowing blue, the chill is elite."
-map.city.cooling.line.02,"A channel of clean, cold water, very hydrated."
-mapmodel.commands.WarningLine.01,"keeps shouting about impending doom, fr"
+map.city.cooling.line.01,Glowing blue water keeping the reactors chill.
+map.city.cooling.line.02,"Clean cold water in a channel, hydration check passed, slay."
+mapmodel.commands.WarningLine.01,is yapping about impending doom
 mapmodel.commands.WarningLine.02,is spilling the tea on 
-mapmodel.flows.flowsFor.01, hit the empty zone
+mapmodel.flows.flowsFor.01, goes broke
 mapmodel.flows.flowsFor.02,NPC on a break
 mapmodel.flows.flowsFor.03,NPCs on a break
-mapmodel.flows.flowsFor.04,"building short-staffed, lowkey cooked"
-mapmodel.flows.flowsFor.05,buildings short-staffed and begging for help
+mapmodel.flows.flowsFor.04,"building short-staffed, down bad"
+mapmodel.flows.flowsFor.05,"buildings short-staffed, down bad"
 mapmodel.model.String.06,beefing
 mapmodel.model.world.01,Chaos Arc
 map.mover.walker.name,grinder on the grind
 map.mover.walker.title,Hustler
-map.mover.walker.line.01,"On the way to the grind, bestie."
-map.mover.walker.line.02,"Heading home after a shift, finally off the clock, touch grass time."
+map.mover.walker.line.01,"Commuting to the grind, coffee not yet kicked in."
+map.mover.walker.line.02,"Done for the day, logged off and heading home."
 map.mover.hunter.name,hunt bro
 map.mover.hunter.title,Prey Arc
-map.mover.hunter.line.01,"A hunter, off to the hills, on a whole quest."
-map.mover.hunter.line.02,"Tracking game, locked in on the prey, very focused."
-map.mover.ox_cart.name,the ox cart
+map.mover.hunter.line.01,Off to the hills on a hunting side quest.
+map.mover.hunter.line.02,"On the trail of some game, hunter mode fully locked in."
+map.mover.ox_cart.name,slow ox whip
 map.mover.ox_cart.title,Slow Life Cart
-map.mover.ox_cart.line.01,"An ox cart, creaking to market, slow and loyal, no notes."
-map.mover.ox_cart.line.02,"Loaded with grain on the ox cart, the snack run is real."
-map.mover.rider.name,the rider
+map.mover.ox_cart.line.01,"Creaking to market at ox speed, slow living core."
+map.mover.ox_cart.line.02,"An ox cart stacked with grain, carb loading era."
+map.mover.rider.name,saddle squad
 map.mover.rider.title,Gallop Mode
-map.mover.rider.line.01,"A rider carrying the news, delivering the tea."
-map.mover.rider.line.02,"Riding in no rush, the vibe is chill."
-map.mover.rowboat.name,the rowboat
+map.mover.rider.line.01,"Hot tea on horseback, the news is coming in fast."
+map.mover.rider.line.02,"A rider with zero urgency, taking the scenic route, unbothered."
+map.mover.rowboat.name,"rowboat, vibing"
 map.mover.rowboat.title,Paddle Squad
-map.mover.rowboat.line.01,"A rowboat out fishing, the catch of the day, main character energy."
-map.mover.rowboat.line.02,"Ferrying goods downriver, a whole shipping arc, no cap."
-map.mover.wagon.name,the wagon
-map.mover.wagon.title,Wagon Wheels
-map.mover.wagon.line.01,"A wagon hauling timber, a whole lumber run, slay."
-map.mover.wagon.line.02,"Covered wagon bound for market, the trade run is real."
-map.mover.sailing_ship.name,the sailing ship
+map.mover.rowboat.line.01,"Gone fishing in a rowboat, touching water instead of grass."
+map.mover.rowboat.line.02,"Paddling cargo downriver, small boat, big hustle."
+map.mover.wagon.name,wagon gang
+map.mover.wagon.title,Wagon Szn
+map.mover.wagon.line.01,"Hauling timber by wagon, the lumber run ate."
+map.mover.wagon.line.02,"A covered wagon rolling to market, merch drop incoming."
+map.mover.sailing_ship.name,big sail energy
 map.mover.sailing_ship.title,Sails Up Energy
-map.mover.sailing_ship.line.01,"A sailing ship riding the wind, the sails ate, no crumbs."
-map.mover.sailing_ship.line.02,"Heavy with cargo, a sailing ship on a whole mission."
-map.mover.steam_train.name,the steam train
+map.mover.sailing_ship.line.01,"The wind is doing all the work and the sails ate, no crumbs."
+map.mover.sailing_ship.line.02,"Packed with cargo, this ship is carrying the whole economy."
+map.mover.steam_train.name,steam train go brr
 map.mover.steam_train.title,Choo Choo Core
-map.mover.steam_train.line.01,"A steam train hauling ore, the rock run is cooking."
-map.mover.steam_train.line.02,"Hauling coal on a steam train, the smoke show is on."
-map.mover.tram.name,the tram
+map.mover.steam_train.line.01,"Ore on board and the boiler is cooking, steam train speedrun."
+map.mover.steam_train.line.02,"Coal train coughing smoke, the air quality is in its flop era."
+map.mover.tram.name,tram fam
 map.mover.tram.title,Ding Ding Energy
-map.mover.tram.line.01,"A tram full of commuters, a whole crowd, the morning is not it."
+map.mover.tram.line.01,"A tram packed with commuters, nobody is talking, NPC hour."
 map.mover.tram.line.02,"Ringing its bell, main character entrance."
-map.mover.steamship.name,the steamship
-map.mover.steamship.title,Smoke Boat
-map.mover.steamship.line.01,"A steamship trailing smoke, dramatic exit energy."
+map.mover.steamship.name,steamship szn
+map.mover.steamship.title,Smoke Show Boat
+map.mover.steamship.line.01,"Trailing smoke like a dramatic exit, the steamship has range."
 map.mover.steamship.line.02,"Bound for the coast on a steamship, the trip is giving vacation."
-map.mover.early_car.name,the motor car
+map.mover.early_car.name,OG motor car
 map.mover.early_car.title,Vroom Starter
-map.mover.early_car.line.01,"An early motor car, sputtering along, lowkey iconic."
-map.mover.early_car.line.02,"Scaring the horses, the chaos is real."
+map.mover.early_car.line.01,"Sputtering along like it runs on vibes and hope, an early car icon."
+map.mover.early_car.line.02,"The horses are shook, an early motor car just rolled past."
 map.mover.car.name,the whip
 map.mover.car.title,Ride Check
-map.mover.car.line.01,"A car stuck behind a truck, the traffic is a whole mood."
-map.mover.car.line.02,"Carpooling the kids to school, the drive is a whole mission."
-map.mover.truck.name,the truck
+map.mover.car.line.01,"Stuck behind a truck, this car is in its patience era."
+map.mover.car.line.02,"School run in progress, mom taxi era."
+map.mover.truck.name,big truck energy
 map.mover.truck.title,Hauler Mode
-map.mover.truck.line.01,"A truck making deliveries, the delivery arc is real."
+map.mover.truck.line.01,"Dropping off deliveries all day, the truck is on a grind."
 map.mover.truck.line.02,"Loaded to the roof, no room, it's giving packed suitcase energy."
-map.mover.plane.name,the plane
-map.mover.plane.title,Sky Bus
-map.mover.plane.line.01,"A plane passing overhead, the sky traffic is wild."
-map.mover.plane.line.02,"On its approach, the landing is a whole thing."
-map.mover.container_ship.name,the container ship
-map.mover.container_ship.title,Crate Stack Boat
-map.mover.container_ship.line.01,"A container ship stacked high, the cargo is flexing."
-map.mover.container_ship.line.02,"Low in the water, a container ship with a heavy load, no cap."
-map.mover.freight_train.name,freight train
+map.mover.plane.name,"plane, zooming"
+map.mover.plane.title,Sky Bus Szn
+map.mover.plane.line.01,"Overhead, a plane is just passing through, flyby era."
+map.mover.plane.line.02,"Lining up its approach, the pilot is locked in."
+map.mover.container_ship.name,"box boat, stacked"
+map.mover.container_ship.title,Stacked Box Boat
+map.mover.container_ship.line.01,"Containers piled sky high, the cargo is flexing."
+map.mover.container_ship.line.02,"Riding low in the water, this ship is carrying a lot, emotionally and literally."
+map.mover.freight_train.name,long haul gang
 map.mover.freight_train.title,Long Haul Arc
-map.mover.freight_train.line.01,"A freight train hauling containers, the boxes are endless."
-map.mover.freight_train.line.02,"Running on time, punctual and impressive, the timetable is bussin."
-map.mover.maglev.name,the maglev
-map.mover.maglev.title,Silent Glide
-map.mover.maglev.line.01,"A maglev gliding on its rail, smooth as butter."
+map.mover.freight_train.line.01,"Containers rolling by on a freight train, the box count is giving infinite scroll."
+map.mover.freight_train.line.02,"Right on schedule, this freight train understood the assignment."
+map.mover.maglev.name,zoom maglev
+map.mover.maglev.title,Quiet Luxury Glide
+map.mover.maglev.line.01,"Floating over its rail, smoothest ride in the lore."
 map.mover.maglev.line.02,"Running silent, the quiet flex."
-map.mover.drone.name,the drone
-map.mover.drone.title,Eye in the Sky
-map.mover.drone.line.01,"A delivery drone on its rounds, the snacks are coming."
-map.mover.drone.line.02,"Watching the streets, lowkey creepy, always on."
-map.mover.hovercar.name,the hovercar
-map.mover.hovercar.title,Float Mode
-map.mover.hovercar.line.01,"A hovercar skimming the street, it floats, bestie."
-map.mover.hovercar.line.02,"Cutting corners, traffic rules are more of a suggestion, lowkey iconic."
-map.mover.shuttle.name,the shuttle
-map.mover.shuttle.title,Orbit Run
-map.mover.shuttle.line.01,"A shuttle climbing to orbit, the ascent is giving rocket."
-map.mover.shuttle.line.02,"Outbound shuttle, see you on the other side, bestie."
-map.mover.satellite.name,the satellite
-map.mover.satellite.title,Sky Spy
-map.mover.satellite.line.01,"A satellite crossing the sky, very orbit core."
-map.mover.satellite.line.02,"Catching the sun, the glow is elite."
-map.mover.habitat.name,the orbital habitat
+map.mover.drone.name,"drone, lurking"
+map.mover.drone.title,Sky Lurker
+map.mover.drone.line.01,"Doing delivery rounds, the drone is bringing the snacks, W."
+map.mover.drone.line.02,"A drone that watches the streets nonstop, big lurker energy."
+map.mover.hovercar.name,hover whip
+map.mover.hovercar.title,Float Whip
+map.mover.hovercar.line.01,"Skimming over the street, wheels are so last era."
+map.mover.hovercar.line.02,"Cutting corners like traffic laws are a suggestion, menace behavior."
+map.mover.shuttle.name,"shuttle, yeet"
+map.mover.shuttle.title,Orbit Speedrun
+map.mover.shuttle.line.01,"Climbing to orbit, this shuttle is ascending fr."
+map.mover.shuttle.line.02,"Outbound and not looking back, the shuttle has left the chat."
+map.mover.satellite.name,sky mutual
+map.mover.satellite.title,Sus Sky Spy
+map.mover.satellite.line.01,"On its daily lap around the planet, consistent queen."
+map.mover.satellite.line.02,"Catching the sun just right, golden hour main character."
+map.mover.habitat.name,orbit crib
 map.mover.habitat.title,Space Crash Pad
-map.mover.habitat.line.01,"An orbital habitat, home to thousands, a whole space city."
-map.mover.habitat.line.02,"Turning slowly, the spin is chill."
-map.mover.news_helicopter.name,the news chopper
-map.mover.news_helicopter.title,Breaking News Chopper
-map.mover.news_helicopter.line.01,"A news chopper circling the story, the tea is hot."
-map.mover.news_helicopter.line.02,"Counting the jams, a traffic chopper with main character energy."
-map.mover.sky_train.name,the sky train
-map.mover.sky_train.title,Sky Metro Vibes
-map.mover.sky_train.line.01,"A sky train threading the towers, the transit is elite."
-map.mover.sky_train.line.02,"Packed to the doors, no personal space, lol."
-map.mover.crowd.name,the crowd
+map.mover.habitat.line.01,"Thousands live up here, the most exclusive neighborhood, no cap."
+map.mover.habitat.line.02,"Spinning slow and steady, zero stress, unbothered queen."
+map.mover.news_helicopter.name,tea chopper
+map.mover.news_helicopter.title,Breaking Tea Chopper
+map.mover.news_helicopter.line.01,"Circling the story from above, hungry for the tea."
+map.mover.news_helicopter.line.02,"A traffic chopper counting every jam, the commute is getting exposed."
+map.mover.sky_train.name,sky train szn
+map.mover.sky_train.title,Sky Metro Szn
+map.mover.sky_train.line.01,"Threading between towers like it has something to prove, transit flex."
+map.mover.sky_train.line.02,"Packed to the doors, personal space has left the chat."
+map.mover.crowd.name,NPC crowd
 map.mover.crowd.title,Hype Crowd
-map.mover.crowd.line.01,"A crowd under the neon, the night shift is on."
-map.mover.crowd.line.02,"Pushing for the sky train, everyone's late, it's chaos, bestie."
-map.mover.climber.name,the tether climber
-map.mover.climber.title,Up We Go
-map.mover.climber.line.01,"A climber riding the tether up, the climb is giving glow-up."
-map.mover.climber.line.02,"Hauling cargo to orbit, a real cargo run."
-map.mover.mining_drone.name,the mining drone
-map.mover.mining_drone.title,Rock Bot
-map.mover.mining_drone.line.01,"Hauling ore from the belt, the rock run never stops."
+map.mover.crowd.line.01,"Everyone out under the neon, the night is giving rave."
+map.mover.crowd.line.02,Everyone shoving for the sky train like it is a limited merch drop.
+map.mover.climber.name,tether speedrun
+map.mover.climber.title,Ascension Arc
+map.mover.climber.line.01,"Riding the tether up and up, a literal glow-up."
+map.mover.climber.line.02,"Hauling cargo all the way up to orbit, express delivery, no cap."
+map.mover.mining_drone.name,rock grinder bot
+map.mover.mining_drone.title,Rock Stan Bot
+map.mover.mining_drone.line.01,"Hauling ore off the belt nonstop, rock collector arc."
 map.mover.mining_drone.line.02,"Out for another rock, the grind is endless."
-map.mover.generation_ship.name,the generation ship
-map.mover.generation_ship.title,Multigen Vibes
-map.mover.generation_ship.line.01,"Its crew's grandkids will land, the long game is real."
-map.mover.generation_ship.line.02,"A whole town in a hull, the cruise is a lifestyle."
-map.mover.starship.name,the starship
+map.mover.generation_ship.name,generational flex
+map.mover.generation_ship.title,Multigen Lore
+map.mover.generation_ship.line.01,"The crew's grandkids will be the ones who land, generational side quest."
+map.mover.generation_ship.line.02,"A whole town packed into one hull, the cruise is their entire personality."
+map.mover.starship.name,warp whip
 map.mover.starship.title,Warp Core
-map.mover.starship.line.01,"About to jump to warp, the starship is so ready."
+map.mover.starship.line.01,"Spooling up for warp, the starship is about to send it."
 map.mover.starship.line.02,"Home from the far side of the arm, big trip, big W."
-map.mover.alien_ship.name,the alien ship
-map.mover.alien_ship.title,Visitor Vibes
-map.mover.alien_ship.line.01,"On ordinary business, the alien ship is so chill."
-map.mover.alien_ship.line.02,"Docking like everyone else, very normal energy."
-map.mover.phase_ship.name,the phase ship
+map.mover.alien_ship.name,alien mutual
+map.mover.alien_ship.title,Alien Mutual
+map.mover.alien_ship.line.01,"An alien ship running regular errands, aggressively normal, iconic."
+map.mover.alien_ship.line.02,"Waiting its turn to dock like everyone else, the most NPC alien ever."
+map.mover.phase_ship.name,glitch ship
 map.mover.phase_ship.title,Phase Glitch
-map.mover.phase_ship.line.01,"In several places at once, the phase ship is multitasking."
-map.mover.phase_ship.line.02,"Arriving before it left, the timeline is chaos."
-map.mover.mote.name,light mote
-map.mover.mote.title,Tiny Glow
-map.mover.mote.line.01,"Drifting home, a mote of light with zero plan, lowkey relatable."
-map.mover.mote.line.02,"Once a whole city, now a tiny glow, lowkey heartbreaking."
+map.mover.phase_ship.line.01,"In several places at once, the phase ship is doing too much."
+map.mover.phase_ship.line.02,"It arrived before it left, the timeline is in shambles."
+map.mover.mote.name,"tiny glow, aura"
+map.mover.mote.title,Tiny Aura
+map.mover.mote.line.01,"Drifting home with zero plan, this mote of light is a whole mood."
+map.mover.mote.line.02,"This mote of light used to be a whole city, the lore goes deep."
 map.city_look.modern_age.name,the doomscroll city
-map.city_look.modern_age.structure,"highways, a glass downtown, and parks fenced into blocks, the whole starter kit"
-map.city_look.modern_age.ambient,"headlights streaming down the highways at night, the commute never sleeps."
+map.city_look.modern_age.structure,"highway sprawl, a glass downtown flexing, and parks fenced into blocks"
+map.city_look.modern_age.ambient,"headlights streaming down the highways all night, the city never logs off"
 map.city_look.information_age.name,the group chat city
-map.city_look.information_age.structure,"server farms, fiber lines, and satellite dishes, all online."
-map.city_look.information_age.ambient,"screens flickering in every window, nobody sleeps."
+map.city_look.information_age.structure,"server farms, fiber everywhere, satellite dishes on every roof, chronically online"
+map.city_look.information_age.ambient,"screens flickering in every window, doomscroll hours"
 map.city_look.digital_age.name,the upload city
-map.city_look.digital_age.structure,"a walled reserve, the last green, all in concrete and landfill, a hot mess."
-map.city_look.digital_age.ambient,"data glow pulsing under the servers, it's glowing for real."
-map.city_look.cyberpunk_age.name,the neon megacity
-map.city_look.cyberpunk_age.structure,"megacorp towers flexing their initials, and arcologies, the skyline is loud."
-map.city_look.cyberpunk_age.ambient,"acid rain and flickering neon, the moody arc."
+map.city_look.digital_age.structure,"concrete and landfill everywhere, with the walled reserve as the last green, a hot mess"
+map.city_look.digital_age.ambient,"a data glow throbbing beneath the servers, server aura"
+map.city_look.cyberpunk_age.name,the baddie megacity
+map.city_look.cyberpunk_age.structure,"megacorp towers flexing their initials, and arcologies, a loud skyline"
+map.city_look.cyberpunk_age.ambient,"acid rain on flickering neon, sad girl autumn all year"
 map.city_look.fusion_age.name,the sun mode city
-map.city_look.fusion_age.structure,"fusion reactors in their plasma rings, and the space elevator, big flex."
-map.city_look.fusion_age.ambient,"plasma pulsing through the conduits, the juice is everywhere."
+map.city_look.fusion_age.structure,"fusion reactors in their plasma rings, plus the space elevator flexing on the skyline"
+map.city_look.fusion_age.ambient,plasma juice pulsing through every conduit
 mapmodel.recap.recap.01, is coming in hot
-mapmodel.recap.recap.02,finally entered the 
-mapmodel.recap.recap.03, is officially done
-mapmodel.recap.recap.04,and lowkey 
-mapmodel.recap.recap.05," more, no cap"
-mapmodel.recap.recap.06,just met the 
+mapmodel.recap.recap.02,glowed up into the 
+mapmodel.recap.recap.03," got cleared, gg"
+mapmodel.recap.recap.04,and 
+mapmodel.recap.recap.05, more
+mapmodel.recap.recap.06,linked up with the 
 mapmodel.recap.recap.07,the 
-mapmodel.recap.recap.08," declared war, the beef is real"
-mapmodel.recap.recap.09,making peace with the 
+mapmodel.recap.recap.08, started beef
+mapmodel.recap.recap.09,squashed beef with the 
 mapmodel.recap.recap.10,besties with the 
 mapmodel.recap.recap.11,hustle lane
-mapmodel.recap.recap.12,trade lanes
-mapmodel.recap.recap.13, popped open
-mapmodel.recap.recap.14,field trip
-mapmodel.recap.recap.15,road trips
-mapmodel.recap.recap.16, rolled home
-mapmodel.recap.recap.17," has come through, bestie"
+mapmodel.recap.recap.12,hustle lanes
+mapmodel.recap.recap.13, dropped
+mapmodel.recap.recap.14,side quest
+mapmodel.recap.recap.15,side quests
+mapmodel.recap.recap.16, pulled up home
+mapmodel.recap.recap.17, has pulled up
 mapmodel.recap.recap.18,build
 mapmodel.recap.recap.19,builds
 mapmodel.recap.recap.20, lost or glowed up
-mapmodel.recap.recap.21, besties
+mapmodel.recap.recap.21, NPCs
 mapmodel.recap.Headline.01,since you last logged on (
 map.sky.SkyOrbit.housing,crash pod
 map.sky.SkyOrbit.food,snack garden
@@ -372,28 +372,28 @@ map.sky.SkyOrbit.harbor,docking drip
 map.sky.SkyOrbit.hacker,signal boost
 map.sky.SkyOrbit.knowledge,star lab
 map.sky.SkyOrbit.faith,chill chapel
-map.sky.SkyOrbit.culture_arts,zero-g gallery
-map.sky.SkyOrbit.monument,big beacon
+map.sky.SkyOrbit.culture_arts,zero-g art drop
+map.sky.SkyOrbit.monument,aura beacon
 map.sky.SkyOrbit.trade,hustle dock
-map.sky.SkyOrbit.military,moon bunker
-map.sky.SkyOrbit.diplomacy,diplo embassy
-map.sky.SkyDeep.housing,colony ark
+map.sky.SkyOrbit.military,moon squad base
+map.sky.SkyOrbit.diplomacy,rizz embassy
+map.sky.SkyDeep.housing,new crib ark
 map.sky.SkyDeep.food,snack planet
 map.sky.SkyDeep.storage,stash moon
-map.sky.SkyDeep.organic_extraction,green world
-map.sky.SkyDeep.geological_extraction,rock world
+map.sky.SkyDeep.organic_extraction,plant mom planet
+map.sky.SkyDeep.geological_extraction,rock stan world
 map.sky.SkyDeep.metallurgy,forge planet
 map.sky.SkyDeep.engineering,warp gate glow-up
 map.sky.SkyDeep.energy,star siphon
 map.sky.SkyDeep.harbor,dock world
 map.sky.SkyDeep.hacker,ping tower
-map.sky.SkyDeep.knowledge,brain world
+map.sky.SkyDeep.knowledge,big brain world
 map.sky.SkyDeep.faith,chapel world
 map.sky.SkyDeep.culture_arts,aesthetic world
-map.sky.SkyDeep.monument,legacy world
+map.sky.SkyDeep.monument,core memory world
 map.sky.SkyDeep.trade,hustle world
 map.sky.SkyDeep.military,escort squad
-map.sky.SkyDeep.diplomacy,diplo world
+map.sky.SkyDeep.diplomacy,rizz world
 map.sky.SkyGalaxy.housing,crash deck
 map.sky.SkyGalaxy.food,snack deck
 map.sky.SkyGalaxy.storage,stash hold
@@ -404,15 +404,15 @@ map.sky.SkyGalaxy.engineering,fix-it pylon
 map.sky.SkyGalaxy.energy,quasar juice
 map.sky.SkyGalaxy.harbor,dock lounge
 map.sky.SkyGalaxy.hacker,uplink glow
-map.sky.SkyGalaxy.knowledge,brain deck
+map.sky.SkyGalaxy.knowledge,big brain deck
 map.sky.SkyGalaxy.faith,chapel deck
 map.sky.SkyGalaxy.culture_arts,archive vibe
-map.sky.SkyGalaxy.monument,big beacon spire
+map.sky.SkyGalaxy.monument,aura spire
 map.sky.SkyGalaxy.trade,hustle deck
 map.sky.SkyGalaxy.military,squad at dock
-map.sky.SkyGalaxy.diplomacy,diplo deck
+map.sky.SkyGalaxy.diplomacy,rizz deck
 map.sky.SkyQuantum.housing,folded crash pad
-map.sky.SkyQuantum.food,maybe garden
+map.sky.SkyQuantum.food,situationship garden
 map.sky.SkyQuantum.storage,linked stash
 map.sky.SkyQuantum.organic_extraction,reality crop
 map.sky.SkyQuantum.geological_extraction,what-if mine
@@ -421,22 +421,22 @@ map.sky.SkyQuantum.engineering,reality smithy
 map.sky.SkyQuantum.energy,zero-point juice
 map.sky.SkyQuantum.harbor,phase port
 map.sky.SkyQuantum.hacker,reality hack shop
-map.sky.SkyQuantum.knowledge,academy of maybes
+map.sky.SkyQuantum.knowledge,delulu academy
 map.sky.SkyQuantum.faith,echo chapel
-map.sky.SkyQuantum.culture_arts,art that might be
-map.sky.SkyQuantum.monument,anchor point
+map.sky.SkyQuantum.culture_arts,maybe-art drop
+map.sky.SkyQuantum.monument,canon point
 map.sky.SkyQuantum.trade,odds market
-map.sky.SkyQuantum.military,war room
-map.sky.SkyQuantum.diplomacy,embassy of selves
+map.sky.SkyQuantum.military,beef HQ
+map.sky.SkyQuantum.diplomacy,self-care embassy
 map.alien.01.color,matcha green
-map.alien.01.line.01,"A green saucer, waving its lights, the vibes are immaculate."
-map.alien.01.line.02,"Trading songs, a green saucer with a whole playlist."
+map.alien.01.line.01,A green saucer flashing its lights like it is hyped to see you.
+map.alien.01.line.02,"A green saucer swapping songs for goods, the playlist slaps."
 map.alien.02.color,grape
-map.alien.02.line.01,"A violet saucer humming a scale, vocal coach energy."
+map.alien.02.line.01,"Humming up and down a scale, this violet saucer is in its choir kid era."
 map.alien.02.line.02,"Here for the view, a violet saucer, no thoughts, just vibes."
 map.alien.03.color,golden hour
 map.alien.03.line.01,"Running late, an amber saucer with zero chill."
-map.alien.03.line.02,"An amber saucer haggling by light, the deals are bussin."
+map.alien.03.line.02,"Haggling in flashes of light, this amber saucer drives a hard bargain, no cap."
 mapmodel.world.syllA.01,Smoke
 mapmodel.world.syllA.02,Brim
 mapmodel.world.syllA.03,Zen
@@ -457,21 +457,21 @@ mapmodel.world.syllA.17,Thorn
 mapmodel.world.syllA.18,Umbra
 mapmodel.world.syllA.19,Vibe
 mapmodel.world.syllA.20,Wyn
-ui.mapstyle.roguelike.chrome.Draw.01,"No map yet, it's giving empty canvas."
+ui.mapstyle.roguelike.chrome.Draw.01,The map has not dropped yet.
 ui.mapstyle.roguelike.chrome.header.01,crew 
 ui.mapstyle.roguelike.chrome.header.02,chilling 
-ui.mapstyle.roguelike.chrome.header.03,  rivals 
+ui.mapstyle.roguelike.chrome.header.03,  mutuals 
 ui.mapstyle.roguelike.chrome.news.01,BIG YIKES: 
-ui.mapstyle.roguelike.chrome.news.02, is breathing down your neck
+ui.mapstyle.roguelike.chrome.news.02, is pulling up
 ui.mapstyle.roguelike.chrome.news.03,cooked: 
-ui.mapstyle.roguelike.chrome.news.04,"all quiet, bestie"
-ui.mapstyle.roguelike.chrome.bottom.01,arrows steer  Shift go fast  PgUp PgDn zoom  Tab next  Home center  map flows
+ui.mapstyle.roguelike.chrome.news.04,no drama
+ui.mapstyle.roguelike.chrome.bottom.01,arrows steer  Shift speedrun  PgUp PgDn zoom  Tab next  Home center  map flows
 ui.mapstyle.roguelike.chrome.bottom.02,Arrow keys steer  PgUp PgDn zoom  Tab next
-ui.mapstyle.roguelike.chrome.bottom.03,"cursor's ghosting; move it with the arrow keys, bestie"
-ui.mapstyle.roguelike.chrome.bottom.04,"nothing to type here, bestie; Tab jumps to the next building"
-ui.mapstyle.roguelike.chrome.bottom.05,type this: 
+ui.mapstyle.roguelike.chrome.bottom.03,cursor's ghosting you; bring it back with the arrow keys
+ui.mapstyle.roguelike.chrome.bottom.04,"no typing needed here, chill; Tab jumps to the next building"
+ui.mapstyle.roguelike.chrome.bottom.05,cheat code: 
 ui.mapstyle.roguelike.chrome.bottom.06, · the flow tea
-ui.mapstyle.roguelike.chrome.sidebar.01,FLOWS
+ui.mapstyle.roguelike.chrome.sidebar.01,FLOW TEA
 ui.mapstyle.roguelike.chrome.flowLines.01,LEAKY
 ui.mapstyle.roguelike.chrome.flowLines.02,LAZY 
 ui.mapstyle.roguelike.chrome.flowLines.03,grinder
@@ -479,11 +479,11 @@ ui.mapstyle.roguelike.chrome.flowLines.04,grinders
 ui.mapstyle.roguelike.chrome.flowLines.05,BROKE
 ui.mapstyle.roguelike.chrome.flowLines.06,build
 ui.mapstyle.roguelike.chrome.flowLines.07,builds
-ui.mapstyle.roguelike.chrome.flowLines.08,W   
-ui.mapstyle.roguelike.chrome.flowLines.09,"nothing stuck, bestie"
-ui.mapstyle.roguelike.chrome.box.01,FLOWS
-ui.mapstyle.roguelike.chrome.drawLegend.01,THE KEY
-ui.mapstyle.roguelike.chrome.DrawCompact.01,"Map? Not yet, bestie."
+ui.mapstyle.roguelike.chrome.flowLines.08,GG   
+ui.mapstyle.roguelike.chrome.flowLines.09,"zero drama, all flowing"
+ui.mapstyle.roguelike.chrome.box.01,FLOW TEA
+ui.mapstyle.roguelike.chrome.drawLegend.01,THE LORE
+ui.mapstyle.roguelike.chrome.DrawCompact.01,Map not dropped yet.
 ui.mapstyle.roguelike.chrome.DrawCompact.02, · crew 
 ui.mapstyle.roguelike.chrome.DrawCompact.03, · chilling 
 ui.mapstyle.roguelike.city.megacorps.01,Kessler-Oda Group
@@ -520,41 +520,41 @@ ui.mapstyle.roguelike.city.holoAds.08,FIRE
 ui.mapstyle.roguelike.city.holoAds.09,COP
 ui.mapstyle.roguelike.city.holoAds.10,DROP
 ui.mapstyle.roguelike.citylines.skyRails.01,the 
-ui.mapstyle.roguelike.citylines.skyRails.02," line, bestie"
+ui.mapstyle.roguelike.citylines.skyRails.02, line
 ui.mapstyle.roguelike.citylines.tetherLine.01,the sky ladder
-ui.mapstyle.roguelike.cityview.describeLine.01,", way up over the street, no fear"
+ui.mapstyle.roguelike.cityview.describeLine.01,", floating over the street like a flex"
 ui.mapstyle.roguelike.cityview.describeLine.02,", humming with pure juice"
 ui.mapstyle.roguelike.cityview.describeCity.01,Strip
-ui.mapstyle.roguelike.cityview.describeCity.02,tucked in between the blocks of 
-ui.mapstyle.roguelike.cityview.describeCity.03," tower, big flex"
-ui.mapstyle.roguelike.cityview.describeCity.04," in neon, a block high, very loud"
+ui.mapstyle.roguelike.cityview.describeCity.02,"squished in, rent free, among the blocks of "
+ui.mapstyle.roguelike.cityview.describeCity.03, flex tower
+ui.mapstyle.roguelike.cityview.describeCity.04," blasted in neon a block tall, main character signage"
 ui.mapstyle.roguelike.cityview.describeCity.05,Glow ad
 ui.mapstyle.roguelike.cityview.describeCity.06,flexing 
-ui.mapstyle.roguelike.cityview.describeCity.07," over the street, no cap"
+ui.mapstyle.roguelike.cityview.describeCity.07, at the whole street
 ui.mapstyle.roguelike.cityview.describeCity.08,Arcology
-ui.mapstyle.roguelike.cityview.describeCity.09,"home to a hundred thousand, a whole group chat"
+ui.mapstyle.roguelike.cityview.describeCity.09,"a hundred thousand live here, one giant group chat"
 ui.mapstyle.roguelike.glyph.lgInfo.08,crossing vibes
-ui.mapstyle.roguelike.glyph.lgInfo.09,trail to a rival
-ui.mapstyle.roguelike.glyph.lgInfo.11,the big wall
-ui.mapstyle.roguelike.glyph.lgInfo.12,lookout tower
+ui.mapstyle.roguelike.glyph.lgInfo.09,trail to a mutual
+ui.mapstyle.roguelike.glyph.lgInfo.11,gatekeep wall
+ui.mapstyle.roguelike.glyph.lgInfo.12,lurker tower
 ui.mapstyle.roguelike.glyph.lgInfo.13,hangout spot
 ui.mapstyle.roguelike.glyph.lgInfo.14,wonder loading
 ui.mapstyle.roguelike.glyph.lgInfo.16,legacy (OG town)
-ui.mapstyle.roguelike.glyph.lgInfo.17,short-staffed (dim)
+ui.mapstyle.roguelike.glyph.lgInfo.17,down bad staff (dim)
 ui.mapstyle.roguelike.glyph.lgInfo.18,new since last peek
 ui.mapstyle.roguelike.glyph.lgInfo.19,no hands on deck
-ui.mapstyle.roguelike.glyph.lgInfo.20,rival settlement
+ui.mapstyle.roguelike.glyph.lgInfo.20,mutual settlement
 ui.mapstyle.roguelike.glyph.lgInfo.21,grinder in the grind
 ui.mapstyle.roguelike.glyph.lgInfo.22,NPC on a break
 ui.mapstyle.roguelike.glyph.lgInfo.24,route got cooked
 ui.mapstyle.roguelike.glyph.lgInfo.27,beef on this trail
-ui.mapstyle.roguelike.glyph.lgInfo.28,smoke over the works
-ui.mapstyle.roguelike.glyph.lgInfo.30,maglev lane
+ui.mapstyle.roguelike.glyph.lgInfo.28,"smog over works, ick"
+ui.mapstyle.roguelike.glyph.lgInfo.30,maglev zoom line
 ui.mapstyle.roguelike.glyph.lgGroups.01,turf
 ui.mapstyle.roguelike.glyph.lgGroups.02,builds
-ui.mapstyle.roguelike.glyph.lgGroups.03,"roads, walls, vibes"
-ui.mapstyle.roguelike.glyph.lgGroups.04,rivals
-ui.mapstyle.roguelike.glyph.lgGroups.05,the powers
+ui.mapstyle.roguelike.glyph.lgGroups.03,roads and gatekeeping
+ui.mapstyle.roguelike.glyph.lgGroups.04,mutuals
+ui.mapstyle.roguelike.glyph.lgGroups.05,the vibe check
 ui.mapstyle.roguelike.glyph.lgGroups.06,vibes
 ui.mapstyle.roguelike.glyph.lgGroups.07,the jams
 ui.mapstyle.roguelike.inspect.Inspect.01,map spot 
@@ -566,49 +566,49 @@ ui.mapstyle.roguelike.inspect.terrainNames.05,Touch grass
 ui.mapstyle.roguelike.inspect.terrainNames.06,Woodsy
 ui.mapstyle.roguelike.inspect.terrainNames.07,Hill country
 ui.mapstyle.roguelike.inspect.terrainNames.08,Peak mode
-ui.mapstyle.roguelike.inspect.terrainNotes.01,"harbors and mills set up shop on its banks, the hustle is real."
-ui.mapstyle.roguelike.inspect.terrainNotes.02,"wood: woodcutters pitch camp at its edge, lowkey cozy."
-ui.mapstyle.roguelike.inspect.terrainNotes.03,"stone and ore: quarries dig here, the rock run is real."
-ui.mapstyle.roguelike.inspect.terrainNotes.04,"Ore and stone: mines dig here, deep rock grind."
-ui.mapstyle.roguelike.inspect.describe.01,"The edge of the known world, the map is blank, no cap."
-ui.mapstyle.roguelike.inspect.describe.02,chances 
+ui.mapstyle.roguelike.inspect.terrainNotes.01,harbors and mills set up their hustle on its banks
+ui.mapstyle.roguelike.inspect.terrainNotes.02,"wood: woodcutters camp at its edge, lumberjack core"
+ui.mapstyle.roguelike.inspect.terrainNotes.03,stone and ore: quarries go full rock stan here
+ui.mapstyle.roguelike.inspect.terrainNotes.04,"stone and ore: mines dig deep here, underground grind"
+ui.mapstyle.roguelike.inspect.describe.01,"Where the known world ends, past here is pure lore"
+ui.mapstyle.roguelike.inspect.describe.02,RNG 
 ui.mapstyle.roguelike.inspect.describe.03,beef level 
-ui.mapstyle.roguelike.inspect.describe.04,Chilling grinders
-ui.mapstyle.roguelike.inspect.describe.05,bestie
-ui.mapstyle.roguelike.inspect.describe.06,besties
-ui.mapstyle.roguelike.inspect.describe.07," with nothing to do, lowkey sad"
-ui.mapstyle.roguelike.inspect.describe.08, crowding the town
-ui.mapstyle.roguelike.inspect.describe.09,Nobody's been there
-ui.mapstyle.roguelike.inspect.describe.10,"send an expedition to lift the fog, bestie"
+ui.mapstyle.roguelike.inspect.describe.04,Chilling crew
+ui.mapstyle.roguelike.inspect.describe.05,NPC
+ui.mapstyle.roguelike.inspect.describe.06,NPCs
+ui.mapstyle.roguelike.inspect.describe.07," doing absolutely nothing, no thoughts"
+ui.mapstyle.roguelike.inspect.describe.08, lurking on the town
+ui.mapstyle.roguelike.inspect.describe.09,"Fog of war, no lore yet"
+ui.mapstyle.roguelike.inspect.describe.10,send an expedition to clear the fog and drop the lore
 ui.mapstyle.roguelike.inspect.describe.11,Recon squad: 
 ui.mapstyle.roguelike.inspect.describe.12, ticks until they spill the tea
 ui.mapstyle.roguelike.inspect.describe.13,Main hangout of 
-ui.mapstyle.roguelike.inspect.describe.14,bestie
-ui.mapstyle.roguelike.inspect.describe.15,besties
+ui.mapstyle.roguelike.inspect.describe.14,homie
+ui.mapstyle.roguelike.inspect.describe.15,homies
 ui.mapstyle.roguelike.inspect.describe.16, chilling
-ui.mapstyle.roguelike.inspect.describe.17,The main hearth of 
-ui.mapstyle.roguelike.inspect.describe.18," is within reach, no cap"
+ui.mapstyle.roguelike.inspect.describe.17,The cozy core of 
+ui.mapstyle.roguelike.inspect.describe.18, is lowkey within reach
 ui.mapstyle.roguelike.inspect.describe.19,Crossing
 ui.mapstyle.roguelike.inspect.describe.20,Loop road
 ui.mapstyle.roguelike.inspect.describe.21,Main drag
 ui.mapstyle.roguelike.inspect.describe.22,Side street
 ui.mapstyle.roguelike.inspect.describe.23,in 
-ui.mapstyle.roguelike.inspect.describe.24,Watch tower
-ui.mapstyle.roguelike.inspect.describe.25,Big wall
+ui.mapstyle.roguelike.inspect.describe.24,Lurker tower
+ui.mapstyle.roguelike.inspect.describe.25,Gatekeep wall
 ui.mapstyle.roguelike.inspect.describe.26,Stake fence
-ui.mapstyle.roguelike.inspect.describe.27,"the town is outgrowing it, lowkey"
+ui.mapstyle.roguelike.inspect.describe.27,"the town has outgrown it, glow-up mode"
 ui.mapstyle.roguelike.inspect.describe.28,"seen once, now ghosted"
 ui.mapstyle.roguelike.inspect.describeTile.01,Old bones
 ui.mapstyle.roguelike.inspect.describeTile.02,Busted ruins of 
-ui.mapstyle.roguelike.inspect.describeTile.03," in ruins, rip"
+ui.mapstyle.roguelike.inspect.describeTile.03, in shambles
 ui.mapstyle.roguelike.inspect.describeTile.04,", OG era"
 ui.mapstyle.roguelike.inspect.describeTile.05, grinders
 ui.mapstyle.roguelike.inspect.describeTile.06,", no hands on deck"
 ui.mapstyle.roguelike.inspect.describeTile.07,glows up to 
-ui.mapstyle.roguelike.inspect.describeTile.08,"superseded, but kept in the OG town, lowkey iconic."
+ui.mapstyle.roguelike.inspect.describeTile.08,"retired, but kept in the OG town as a throwback"
 ui.mapstyle.roguelike.inspect.describeTile.09, since your last peek
 ui.mapstyle.roguelike.inspect.describeTile.10, fewer since you last peeked
-ui.mapstyle.roguelike.inspect.describeTile.11," in shambles, rip"
+ui.mapstyle.roguelike.inspect.describeTile.11, fully cooked
 ui.mapstyle.roguelike.inspect.describeWonder.01,the W of the 
 ui.mapstyle.roguelike.inspect.describeWonder.03, (loading)
 ui.mapstyle.roguelike.inspect.describeWonder.04,% of its cost stashed
@@ -618,30 +618,30 @@ ui.mapstyle.roguelike.inspect.describeCiv.02,power level
 ui.mapstyle.roguelike.inspect.describeCiv.03,", hustles in "
 ui.mapstyle.roguelike.inspect.describeCiv.04,hustle
 ui.mapstyle.roguelike.inspect.describeCiv.05,hustles
-ui.mapstyle.roguelike.inspect.describeCiv.06," so far, no cap"
+ui.mapstyle.roguelike.inspect.describeCiv.06, so far
 ui.mapstyle.roguelike.inspect.describeCiv.07,grinder
 ui.mapstyle.roguelike.inspect.describeCiv.08,grinders
-ui.mapstyle.roguelike.inspect.describeCiv.09," lent to you, the W"
+ui.mapstyle.roguelike.inspect.describeCiv.09, lent out to your squad
 ui.mapstyle.roguelike.inspect.describeTrail.01,Path to the 
 ui.mapstyle.roguelike.inspect.describeTrail.02,beefing: the trail is closed
 ui.mapstyle.roguelike.inspect.describeTrail.03, got cooked
 ui.mapstyle.roguelike.inspect.describeTrail.04, the convoys bring 
 ui.mapstyle.roguelike.inspect.describeTrail.05, convoys
-ui.mapstyle.roguelike.inspect.describeTrail.06,"no convoys on it, so quiet"
-ui.mapstyle.roguelike.plates.plates.01,"charcoal on hide, aesthetic"
-ui.mapstyle.roguelike.plates.plates.02,"the lands we know, drawn by the fire of %s, certified aesthetic."
+ui.mapstyle.roguelike.inspect.describeTrail.06,"no convoys, ghost road"
+ui.mapstyle.roguelike.plates.plates.01,"charcoal scribbled on hide, cave core"
+ui.mapstyle.roguelike.plates.plates.02,"the lands we know, sketched by the fire of %s, the OG map"
 ui.mapstyle.roguelike.plates.plates.03,vintage map drip
-ui.mapstyle.roguelike.plates.plates.04,"Carta of %s, the OG"
+ui.mapstyle.roguelike.plates.plates.04,The OG Carta of %s
 ui.mapstyle.roguelike.plates.plates.05,etched and aesthetic
 ui.mapstyle.roguelike.plates.plates.06,"Totally Accurate Map of %s, no cap"
-ui.mapstyle.roguelike.plates.plates.07,scouting sheet
+ui.mapstyle.roguelike.plates.plates.07,recon receipts
 ui.mapstyle.roguelike.plates.plates.08,Recon of %s
 ui.mapstyle.roguelike.plates.plates.09,sky photo dump
-ui.mapstyle.roguelike.plates.plates.10,EARTH CHECK  %s
-ui.mapstyle.roguelike.plates.plates.11,orbit night shift
+ui.mapstyle.roguelike.plates.plates.10,EARTH VIBE CHECK  %s
+ui.mapstyle.roguelike.plates.plates.11,orbit night lurk
 ui.mapstyle.roguelike.plates.plates.12,NIGHT SHIFT  %s
 ui.mapstyle.roguelike.plates.plates.13,"planet, peeking from orbit"
-ui.mapstyle.roguelike.plates.plates.14,"%s from up high, bestie"
+ui.mapstyle.roguelike.plates.plates.14,"%s, orbit POV"
 ui.mapstyle.roguelike.plates.starNames.01,Vega
 ui.mapstyle.roguelike.plates.starNames.02,Altair
 ui.mapstyle.roguelike.plates.starNames.03,Deneb
@@ -652,138 +652,138 @@ ui.mapstyle.roguelike.plates.starNames.07,Arcturus
 ui.mapstyle.roguelike.plates.starNames.08,Procyon
 ui.mapstyle.roguelike.plates.starNames.09,Spica
 ui.mapstyle.roguelike.plates.starNames.10,Antares
-ui.mapstyle.roguelike.plates.furniture.01,"here be dragons, lowkey"
+ui.mapstyle.roguelike.plates.furniture.01,here be dragon lore
 ui.mapstyle.roguelike.plates.furniture.02,FLYBY 
 ui.mapstyle.roguelike.plates.furniture.03,DATA DROP
-ui.mapstyle.roguelike.scene.dials.01,"space rocks, bestie"
+ui.mapstyle.roguelike.scene.dials.01,space rocks yeeting down
 ui.mapstyle.roguelike.scene.dials.02,raid squad
-ui.mapstyle.roguelike.scene.dials.03,"toxic smog, very not it"
-ui.mapstyle.roguelike.scene.dials.05,glitch spiral
-ui.mapstyle.roguelike.scene.dials.06,"solar flare, the sun is cooking"
-ui.mapstyle.roguelike.scene.dials.07,"reality cracking, no cap"
-ui.mapstyle.roguelike.space_chrome.skyViewNames.01,HIGH SKY
+ui.mapstyle.roguelike.scene.dials.03,"smog, the air is cooked"
+ui.mapstyle.roguelike.scene.dials.05,glitchcore storm
+ui.mapstyle.roguelike.scene.dials.06,the sun crashing out
+ui.mapstyle.roguelike.scene.dials.07,reality glitching out
+ui.mapstyle.roguelike.space_chrome.skyViewNames.01,ORBIT LOBBY
 ui.mapstyle.roguelike.space_chrome.skyViewNames.02,DEEP VIBES
-ui.mapstyle.roguelike.space_chrome.skyViewNames.03,BASE CAMP
-ui.mapstyle.roguelike.space_chrome.skyViewNames.04,MAYBE STATE
+ui.mapstyle.roguelike.space_chrome.skyViewNames.03,STAR CRIB
+ui.mapstyle.roguelike.space_chrome.skyViewNames.04,SITUATIONSHIP
 ui.mapstyle.roguelike.space_chrome.skyViewNames.05,MANDALA
 ui.mapstyle.roguelike.space_chrome.viewName.01, UP CLOSE
-ui.mapstyle.roguelike.space_chrome.Draw.01,"Nothing mapped yet, lowkey empty."
+ui.mapstyle.roguelike.space_chrome.Draw.01,The map is still loading its lore.
 ui.mapstyle.roguelike.space_chrome.header.01,crew 
 ui.mapstyle.roguelike.space_chrome.header.02,chilling 
-ui.mapstyle.roguelike.space_chrome.header.03,  rivals 
-ui.mapstyle.roguelike.space_chrome.news.01,RED ALERT: 
-ui.mapstyle.roguelike.space_chrome.news.02, is about to hit
-ui.mapstyle.roguelike.space_chrome.news.03,stuck lowkey: 
-ui.mapstyle.roguelike.space_chrome.news.04,"all quiet, nothing sus"
-ui.mapstyle.roguelike.space_chrome.bottom.01,arrows steer  Shift go fast  PgUp world  PgDn close  Tab next  Home hub  map flows
+ui.mapstyle.roguelike.space_chrome.header.03,  mutuals 
+ui.mapstyle.roguelike.space_chrome.news.01,RED FLAG: 
+ui.mapstyle.roguelike.space_chrome.news.02, is about to crash out on you
+ui.mapstyle.roguelike.space_chrome.news.03,down bad: 
+ui.mapstyle.roguelike.space_chrome.news.04,nothing sus
+ui.mapstyle.roguelike.space_chrome.bottom.01,arrows steer  Shift speedrun  PgUp world  PgDn close  Tab next  Home hub  map flows
 ui.mapstyle.roguelike.space_chrome.bottom.02,arrow keys drive  PgUp PgDn zoom  Tab next
-ui.mapstyle.roguelike.space_chrome.bottom.03,"cursor is invisible; slide it with the arrow keys, bestie."
-ui.mapstyle.roguelike.space_chrome.bottom.04,no typing needed here; Tab hops to the next building
-ui.mapstyle.roguelike.space_chrome.bottom.05,drop in: 
-ui.mapstyle.roguelike.space_chrome.bottom.06," · flow tea, no cap"
-ui.mapstyle.roguelike.space_chrome.sidebar.01,FLOWS
+ui.mapstyle.roguelike.space_chrome.bottom.03,cursor went ghost; slide it back with the arrow keys
+ui.mapstyle.roguelike.space_chrome.bottom.04,"no typing needed here, just vibe; Tab hops to the next building"
+ui.mapstyle.roguelike.space_chrome.bottom.05,cheat code: 
+ui.mapstyle.roguelike.space_chrome.bottom.06, · the flow tea
+ui.mapstyle.roguelike.space_chrome.sidebar.01,FLOW TEA
 ui.mapstyle.roguelike.space_chrome.flowLines.01,BLEED
-ui.mapstyle.roguelike.space_chrome.flowLines.02,NAP 
+ui.mapstyle.roguelike.space_chrome.flowLines.02,LAZY 
 ui.mapstyle.roguelike.space_chrome.flowLines.03,grinder
 ui.mapstyle.roguelike.space_chrome.flowLines.04,grinders
-ui.mapstyle.roguelike.space_chrome.flowLines.05,THIN
+ui.mapstyle.roguelike.space_chrome.flowLines.05,BROKE
 ui.mapstyle.roguelike.space_chrome.flowLines.06,build
 ui.mapstyle.roguelike.space_chrome.flowLines.07,builds
-ui.mapstyle.roguelike.space_chrome.flowLines.08,A+   
-ui.mapstyle.roguelike.space_chrome.flowLines.09,"all clear, nothing stuck"
-ui.mapstyle.roguelike.space_chrome.box.01,FLOWS
-ui.mapstyle.roguelike.space_chrome.DrawCompact.01,"Still blank, no map yet."
+ui.mapstyle.roguelike.space_chrome.flowLines.08,GG   
+ui.mapstyle.roguelike.space_chrome.flowLines.09,"zero drama, all flowing"
+ui.mapstyle.roguelike.space_chrome.box.01,FLOW TEA
+ui.mapstyle.roguelike.space_chrome.DrawCompact.01,Map not dropped yet.
 ui.mapstyle.roguelike.space_chrome.DrawCompact.02, · crew 
 ui.mapstyle.roguelike.space_chrome.DrawCompact.03, · chilling 
-ui.mapstyle.roguelike.space_deep.gateFrame.01,"Gate scaffold, WIP"
-ui.mapstyle.roguelike.space_deep.gateFrame.02,"the warp gate's ring, still under construction, lowkey"
+ui.mapstyle.roguelike.space_deep.gateFrame.01,"Gate scaffold, soft launch"
+ui.mapstyle.roguelike.space_deep.gateFrame.02,"the warp gate's ring, still in its build era"
 ui.mapstyle.roguelike.space_deep.gateFrame.03,Warp gate era
-ui.mapstyle.roguelike.space_deep.gateFrame.04,"its ring rises segment by segment, slow and steady"
-ui.mapstyle.roguelike.space_deep.colonies.01,"a colony world, all yours, bestie"
+ui.mapstyle.roguelike.space_deep.gateFrame.04,its ring levels up segment by segment
+ui.mapstyle.roguelike.space_deep.colonies.01,"a whole colony world in your name, main character"
 ui.mapstyle.roguelike.space_deep.relayChain.01,Ping chain
 ui.mapstyle.roguelike.space_deep.relayChain.02,it carries the tea from world to world
-ui.mapstyle.roguelike.space_galaxy.starbase.01,Base core
-ui.mapstyle.roguelike.space_galaxy.starbase.02,"where the base's heart beats, lore central"
+ui.mapstyle.roguelike.space_galaxy.starbase.01,Star crib core
+ui.mapstyle.roguelike.space_galaxy.starbase.02,"the base's heartbeat lives here, main character room"
 ui.mapstyle.roguelike.space_galaxy.starbase.03,Crash ring
 ui.mapstyle.roguelike.space_galaxy.starbase.04,"decks of crash pads, snack farms and halls"
-ui.mapstyle.roguelike.space_galaxy.starbase.05,Dock ring
+ui.mapstyle.roguelike.space_galaxy.starbase.05,Pull-up ring
 ui.mapstyle.roguelike.space_galaxy.starbase.06,the base's hustle edge
-ui.mapstyle.roguelike.space_galaxy.starbase.07,Dock pylon
-ui.mapstyle.roguelike.space_galaxy.starbase.08,"ships park up at its tip, very neat"
-ui.mapstyle.roguelike.space_galaxy.pulsar.01,Pulsar Pal
+ui.mapstyle.roguelike.space_galaxy.starbase.07,Park-and-chill pylon
+ui.mapstyle.roguelike.space_galaxy.starbase.08,ships pull up and park at its tip
+ui.mapstyle.roguelike.space_galaxy.pulsar.01,Pulsar bestie
 ui.mapstyle.roguelike.space_galaxy.pulsar.02,"industry grinds its light and matter, no pause"
 ui.mapstyle.roguelike.space_inspect.skyVoidNames.01,Empty vibes
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.02,"low orbit, dead quiet tonight"
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.03,Deep void
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.04,"light-years of nothing much, lowkey boring"
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.05,"Between the stars, bestie"
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.06,the lanes are somewhere else
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.07,Kinda maybe
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.08,"nothing's certain here, the vibes are fuzzy"
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.09,Starlight
-ui.mapstyle.roguelike.space_inspect.skyVoidNames.10,"everything you built, remembered, the receipts"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.02,"low orbit, no drama tonight"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.03,Deep space lobby
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.04,"light-years of absolutely nothing, mid scenery"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.05,"In the star gap, vibing"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.06,the lanes ghosted this spot
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.07,A situationship
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.08,certainty left the chat here
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.09,Pure aura
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.10,"every build you ever made, kept as receipts"
 ui.mapstyle.roguelike.space_inspect.describe.01,Space junk
-ui.mapstyle.roguelike.space_inspect.describe.02,"spent stages and old satellites, still circling, lol."
+ui.mapstyle.roguelike.space_inspect.describe.02,"old rocket stages and satellites still circling, space has a clutter era"
 ui.mapstyle.roguelike.space_inspect.describe.03,The OG planet
-ui.mapstyle.roguelike.space_inspect.describe.04,"where it all began, the origin story"
-ui.mapstyle.roguelike.space_inspect.describe.05,bestie
-ui.mapstyle.roguelike.space_inspect.describe.06,besties
-ui.mapstyle.roguelike.space_inspect.describe.07," in total, no cap"
-ui.mapstyle.roguelike.space_inspect.describe.08,"A planet of the home system, the OG crew"
-ui.mapstyle.roguelike.space_inspect.describe.09,"it keeps its old orbit, very loyal"
+ui.mapstyle.roguelike.space_inspect.describe.04,origin story lore
+ui.mapstyle.roguelike.space_inspect.describe.05,NPC
+ui.mapstyle.roguelike.space_inspect.describe.06,NPCs
+ui.mapstyle.roguelike.space_inspect.describe.07, in all
+ui.mapstyle.roguelike.space_inspect.describe.08,"One of the home system planets, OG squad"
+ui.mapstyle.roguelike.space_inspect.describe.09,"it sticks to its old orbit, loyal queen"
 ui.mapstyle.roguelike.space_inspect.describe.10,build
 ui.mapstyle.roguelike.space_inspect.describe.11,builds
 ui.mapstyle.roguelike.space_inspect.describe.12, of 
 ui.mapstyle.roguelike.space_inspect.describe.13,room to cook
 ui.mapstyle.roguelike.space_inspect.describe.14,Space lift
-ui.mapstyle.roguelike.space_inspect.describe.15,that tether from 
-ui.mapstyle.roguelike.space_inspect.describe.16," to the ring, no cap"
-ui.mapstyle.roguelike.space_inspect.describe.17,"climbers ride it day and night, nonstop"
-ui.mapstyle.roguelike.space_inspect.describe.18,", from orbit, no cap"
-ui.mapstyle.roguelike.space_inspect.describe.19,bestie
-ui.mapstyle.roguelike.space_inspect.describe.20,besties
-ui.mapstyle.roguelike.space_inspect.describe.21," below, lowkey tiny"
-ui.mapstyle.roguelike.space_inspect.describe.22,dark side
-ui.mapstyle.roguelike.space_inspect.describe.23,City glow of 
+ui.mapstyle.roguelike.space_inspect.describe.15,the tether from 
+ui.mapstyle.roguelike.space_inspect.describe.16, to the ring
+ui.mapstyle.roguelike.space_inspect.describe.17,climbers grind it day and night
+ui.mapstyle.roguelike.space_inspect.describe.18,", orbit POV"
+ui.mapstyle.roguelike.space_inspect.describe.19,homie
+ui.mapstyle.roguelike.space_inspect.describe.20,homies
+ui.mapstyle.roguelike.space_inspect.describe.21, below
+ui.mapstyle.roguelike.space_inspect.describe.22,dark mode side
+ui.mapstyle.roguelike.space_inspect.describe.23,City aura of 
 ui.mapstyle.roguelike.space_inspect.describe.24,build
 ui.mapstyle.roguelike.space_inspect.describe.25,builds
 ui.mapstyle.roguelike.space_inspect.describe.26, napping
 ui.mapstyle.roguelike.space_inspect.describe.27,Rock belt
-ui.mapstyle.roguelike.space_inspect.describe.28,"free ore, no cap"
+ui.mapstyle.roguelike.space_inspect.describe.28,"ore up for grabs, free loot"
 ui.mapstyle.roguelike.space_inspect.describe.29,Moon bestie
-ui.mapstyle.roguelike.space_inspect.describe.30,"it used to be out of reach, now it's giving home"
+ui.mapstyle.roguelike.space_inspect.describe.30,"once out of reach, now it's giving home"
 ui.mapstyle.roguelike.space_inspect.describe.31,Big OG sun
-ui.mapstyle.roguelike.space_inspect.describe.32,"the orrery of the home system, the clockwork flex"
-ui.mapstyle.roguelike.space_inspect.describe.33," still spins around it, very hypnotic"
+ui.mapstyle.roguelike.space_inspect.describe.32,"the home system orrery, clockwork flex"
+ui.mapstyle.roguelike.space_inspect.describe.33," still circles it, no skips"
 ui.mapstyle.roguelike.space_inspect.describe.34,Home turf
-ui.mapstyle.roguelike.space_inspect.describe.35,"a world on every ring, stacked and proud"
+ui.mapstyle.roguelike.space_inspect.describe.35,"every ring has a world, stacked lineup"
 ui.mapstyle.roguelike.space_inspect.describe.36,Baby planet
-ui.mapstyle.roguelike.space_inspect.describe.37,"a world all yours, far out, bestie"
+ui.mapstyle.roguelike.space_inspect.describe.37,"your own far-off world, solo era"
 ui.mapstyle.roguelike.space_inspect.describe.38,Colony ping
-ui.mapstyle.roguelike.space_inspect.describe.39,"a world calling home, the group chat is pinging"
-ui.mapstyle.roguelike.space_inspect.describe.40,Warp zone
-ui.mapstyle.roguelike.space_inspect.describe.41,"open: the stars are one step away, bestie"
-ui.mapstyle.roguelike.space_inspect.describe.42,Glow cloud
-ui.mapstyle.roguelike.space_inspect.describe.43,"the first color out here, very aesthetic"
+ui.mapstyle.roguelike.space_inspect.describe.39,a far world blowing up the home group chat
+ui.mapstyle.roguelike.space_inspect.describe.40,Warp aura field
+ui.mapstyle.roguelike.space_inspect.describe.41,open: the stars are just a speedrun away
+ui.mapstyle.roguelike.space_inspect.describe.42,Aesthetic cloud
+ui.mapstyle.roguelike.space_inspect.describe.43,"the first pop of color out here, finally a vibe"
 ui.mapstyle.roguelike.space_inspect.describe.44,Galaxy brain
-ui.mapstyle.roguelike.space_inspect.describe.45,"its arms turn slower than history, lowkey wild"
-ui.mapstyle.roguelike.space_inspect.describe.46,Maybe cloud
-ui.mapstyle.roguelike.space_inspect.describe.47,"where the station might be, or not"
+ui.mapstyle.roguelike.space_inspect.describe.45,"its arms spin slower than all of history, slow-burn era"
+ui.mapstyle.roguelike.space_inspect.describe.46,Situationship cloud
+ui.mapstyle.roguelike.space_inspect.describe.47,"maybe the station is here, maybe not, delulu coordinates"
 ui.mapstyle.roguelike.space_inspect.describe.48,Echo of the OG town
-ui.mapstyle.roguelike.space_inspect.describe.49,", as it stood on the ground, the OG vibe"
-ui.mapstyle.roguelike.space_inspect.describe.50,Main star
+ui.mapstyle.roguelike.space_inspect.describe.49,", just like it stood on the ground, throwback"
+ui.mapstyle.roguelike.space_inspect.describe.50,"A star, main character"
 ui.mapstyle.roguelike.space_inspect.describeUnit.01,"Rubble, rip"
 ui.mapstyle.roguelike.space_inspect.describeUnit.02,Wreckage of 
 ui.mapstyle.roguelike.space_inspect.describeUnit.03," in ruins, F"
 ui.mapstyle.roguelike.space_inspect.describeUnit.04,", an OG section"
 ui.mapstyle.roguelike.space_inspect.describeUnit.05, grinders
-ui.mapstyle.roguelike.space_inspect.describeUnit.06,", short-staffed"
+ui.mapstyle.roguelike.space_inspect.describeUnit.06,", down bad on staff"
 ui.mapstyle.roguelike.space_inspect.describeUnit.07,levels up to 
-ui.mapstyle.roguelike.space_inspect.describeUnit.08," since your last peek, bestie"
-ui.mapstyle.roguelike.space_inspect.describeUnit.09," fewer since last time, bestie"
+ui.mapstyle.roguelike.space_inspect.describeUnit.08, since your last peek
+ui.mapstyle.roguelike.space_inspect.describeUnit.09, fewer since you last peeped
 ui.mapstyle.roguelike.space_inspect.describeUnit.10, in shambles
 ui.mapstyle.roguelike.space_inspect.describeSkyWonder.01,the big W of the 
-ui.mapstyle.roguelike.space_inspect.describeSkyWonder.02,"it shines among the stars, iconic"
+ui.mapstyle.roguelike.space_inspect.describeSkyWonder.02,"it outshines the stars, iconic behavior"
 ui.mapstyle.roguelike.space_inspect.describeSkyWonder.03, (loading)
 ui.mapstyle.roguelike.space_inspect.describeSkyWonder.04,% of its cost bagged
 ui.mapstyle.roguelike.space_inspect.describeSkyWonder.05,finished since your last log-on
@@ -791,81 +791,81 @@ ui.mapstyle.roguelike.space_inspect.describeLane.01,Route to the
 ui.mapstyle.roguelike.space_inspect.describeLane.02,"beefing, the lane is shut"
 ui.mapstyle.roguelike.space_inspect.describeLane.03, is glitching
 ui.mapstyle.roguelike.space_inspect.describeLane.04, hauls 
-ui.mapstyle.roguelike.space_inspect.describeLane.05,"no freight on it, ghost lane"
+ui.mapstyle.roguelike.space_inspect.describeLane.05,"empty, ghost lane"
 ui.mapstyle.roguelike.space_inspect.describeHub.01,Ring HQ of 
 ui.mapstyle.roguelike.space_inspect.describeHub.02,Home turf of 
 ui.mapstyle.roguelike.space_inspect.describeHub.03,Base 
 ui.mapstyle.roguelike.space_inspect.describeHub.04,Main anchor of 
 ui.mapstyle.roguelike.space_inspect.describeHub.05,Heart of 
-ui.mapstyle.roguelike.space_inspect.describeHub.06,bestie
-ui.mapstyle.roguelike.space_inspect.describeHub.07,besties
+ui.mapstyle.roguelike.space_inspect.describeHub.06,homie
+ui.mapstyle.roguelike.space_inspect.describeHub.07,homies
 ui.mapstyle.roguelike.space_inspect.describeHub.08, slacking
-ui.mapstyle.roguelike.space_inspect.describeHub.09, is in striking distance
+ui.mapstyle.roguelike.space_inspect.describeHub.09, is lowkey in reach
 ui.mapstyle.roguelike.space_legend.skyLgInfo.02,a W's star
 ui.mapstyle.roguelike.space_legend.skyLgInfo.03,W in the making
 ui.mapstyle.roguelike.space_legend.skyLgInfo.04,the OG world
-ui.mapstyle.roguelike.space_legend.skyLgInfo.06,city glow
-ui.mapstyle.roguelike.space_legend.skyLgInfo.07,the space lift
-ui.mapstyle.roguelike.space_legend.skyLgInfo.09,base ring
+ui.mapstyle.roguelike.space_legend.skyLgInfo.06,city aura
+ui.mapstyle.roguelike.space_legend.skyLgInfo.07,sky ladder
+ui.mapstyle.roguelike.space_legend.skyLgInfo.09,crib ring
 ui.mapstyle.roguelike.space_legend.skyLgInfo.10,outer loop
-ui.mapstyle.roguelike.space_legend.skyLgInfo.12,"slip, hull level up"
+ui.mapstyle.roguelike.space_legend.skyLgInfo.12,"slip, hull glow-up"
 ui.mapstyle.roguelike.space_legend.skyLgInfo.14,moon bae
 ui.mapstyle.roguelike.space_legend.skyLgInfo.16,the OG sun
-ui.mapstyle.roguelike.space_legend.skyLgInfo.18,warp gate
-ui.mapstyle.roguelike.space_legend.skyLgInfo.19,gate scaffolding
+ui.mapstyle.roguelike.space_legend.skyLgInfo.18,"warp gate, zoom"
+ui.mapstyle.roguelike.space_legend.skyLgInfo.19,"gate, soft launch"
 ui.mapstyle.roguelike.space_legend.skyLgInfo.20,warp aura
-ui.mapstyle.roguelike.space_legend.skyLgInfo.21,new colony
-ui.mapstyle.roguelike.space_legend.skyLgInfo.22,colony beam
+ui.mapstyle.roguelike.space_legend.skyLgInfo.21,baby planet
+ui.mapstyle.roguelike.space_legend.skyLgInfo.22,colony ping
 ui.mapstyle.roguelike.space_legend.skyLgInfo.23,relay squad
-ui.mapstyle.roguelike.space_legend.skyLgInfo.24,the big spiral
+ui.mapstyle.roguelike.space_legend.skyLgInfo.24,galaxy brain
 ui.mapstyle.roguelike.space_legend.skyLgInfo.25,bag route
 ui.mapstyle.roguelike.space_legend.skyLgInfo.26,star squad
-ui.mapstyle.roguelike.space_legend.skyLgInfo.27,base loop
-ui.mapstyle.roguelike.space_legend.skyLgInfo.28,docking tower
-ui.mapstyle.roguelike.space_legend.skyLgInfo.29,odds cloud
+ui.mapstyle.roguelike.space_legend.skyLgInfo.27,star crib loop
+ui.mapstyle.roguelike.space_legend.skyLgInfo.28,pull-up pylon
+ui.mapstyle.roguelike.space_legend.skyLgInfo.29,situationship cloud
 ui.mapstyle.roguelike.space_legend.skyLgInfo.30,echo of the OG town
-ui.mapstyle.roguelike.space_legend.skyLgInfo.31,the main crown
-ui.mapstyle.roguelike.space_legend.skyLgInfo.32,core glow
+ui.mapstyle.roguelike.space_legend.skyLgInfo.31,"the crown, ate"
+ui.mapstyle.roguelike.space_legend.skyLgInfo.32,"the core, aura"
 ui.mapstyle.roguelike.space_legend.skyLgInfo.35,OG section (dim)
-ui.mapstyle.roguelike.space_legend.skyLgInfo.36,no hands (dim)
+ui.mapstyle.roguelike.space_legend.skyLgInfo.36,down bad (dim)
 ui.mapstyle.roguelike.space_legend.skyLgInfo.37,new since you peeked
-ui.mapstyle.roguelike.space_legend.skyLgInfo.38,"no hands, no cap"
-ui.mapstyle.roguelike.space_legend.skyLgInfo.39,beam me up
-ui.mapstyle.roguelike.space_legend.skyLgInfo.40,the pulse
-ui.mapstyle.roguelike.space_legend.drawSkyLegend.01,KEY VIBES
-ui.mapstyle.roguelike.space_mandala.describeMark.01,The main core
-ui.mapstyle.roguelike.space_mandala.describeMark.02,"every age you lived through, in light, no skips"
-ui.mapstyle.roguelike.space_mandala.describeMark.03,bestie
-ui.mapstyle.roguelike.space_mandala.describeMark.04,besties
-ui.mapstyle.roguelike.space_mandala.describeMark.05,"A petal of the crown, lowkey serene"
-ui.mapstyle.roguelike.space_mandala.describeMark.06,"it glows with what you build in this age, bestie"
-ui.mapstyle.roguelike.space_mandala.describeMark.07,built in the 
+ui.mapstyle.roguelike.space_legend.skyLgInfo.38,down bad on hands
+ui.mapstyle.roguelike.space_legend.skyLgInfo.39,teleport zoom
+ui.mapstyle.roguelike.space_legend.skyLgInfo.40,pulsar bestie
+ui.mapstyle.roguelike.space_legend.drawSkyLegend.01,THE LORE
+ui.mapstyle.roguelike.space_mandala.describeMark.01,"The core, peak aura"
+ui.mapstyle.roguelike.space_mandala.describeMark.02,"every age you lived through, glowing, no skips"
+ui.mapstyle.roguelike.space_mandala.describeMark.03,homie
+ui.mapstyle.roguelike.space_mandala.describeMark.04,homies
+ui.mapstyle.roguelike.space_mandala.describeMark.05,"One petal of the crown, soft era"
+ui.mapstyle.roguelike.space_mandala.describeMark.06,it glows up with what you build this age
+ui.mapstyle.roguelike.space_mandala.describeMark.07,dropped in the 
 ui.mapstyle.roguelike.space_mandala.describeRing.01,an arc
 ui.mapstyle.roguelike.space_mandala.describeRing.02,the 
 ui.mapstyle.roguelike.space_mandala.describeRing.03,kind of build
 ui.mapstyle.roguelike.space_mandala.describeRing.04,kinds of builds
-ui.mapstyle.roguelike.space_mandala.describeRing.05," still standing, no cap"
+ui.mapstyle.roguelike.space_mandala.describeRing.05, still standing
 ui.mapstyle.roguelike.space_mandala.describeRing.06,flex
 ui.mapstyle.roguelike.space_mandala.describeRing.07,flexes
 ui.mapstyle.roguelike.space_mandala.describeRing.08,Loop of 
-ui.mapstyle.roguelike.space_orbit.station.01,Home ring
-ui.mapstyle.roguelike.space_orbit.station.02,"the main ring of the station, the crown jewel"
+ui.mapstyle.roguelike.space_orbit.station.01,Crib ring
+ui.mapstyle.roguelike.space_orbit.station.02,the main character ring of the station
 ui.mapstyle.roguelike.space_orbit.station.03,Spoke lane
-ui.mapstyle.roguelike.space_orbit.station.04,"from the hub to the ring, a short commute"
+ui.mapstyle.roguelike.space_orbit.station.04,"hub to ring, a commute that is lowkey short"
 ui.mapstyle.roguelike.space_orbit.station.05,Outer loop
-ui.mapstyle.roguelike.space_orbit.station.06,"the station grows outward, no notes"
+ui.mapstyle.roguelike.space_orbit.station.06,the station keeps glowing up outward
 ui.mapstyle.roguelike.space_orbit.wings.01,Spine
-ui.mapstyle.roguelike.space_orbit.wings.02,"it carries the solar wings, so sleek"
+ui.mapstyle.roguelike.space_orbit.wings.02,"the solar wings hang off it, it is carrying"
 ui.mapstyle.roguelike.space_orbit.slips.01,Launch slot
-ui.mapstyle.roguelike.space_orbit.slips.02,"a hull is rising here, it's giving glow-up"
+ui.mapstyle.roguelike.space_orbit.slips.02,a hull is mid glow-up here
 ui.mapstyle.roguelike.space_orbit.foundry.01,Forge pipes
-ui.mapstyle.roguelike.space_orbit.foundry.02,"ore in, metal out, bussin"
+ui.mapstyle.roguelike.space_orbit.foundry.02,"ore goes in, metal comes out, bussin"
 ui.mapstyle.roguelike.space_orbit.relays.01,Ping orbit
 ui.mapstyle.roguelike.space_orbit.relays.02,the ping sats' track
-ui.mapstyle.roguelike.space_quantum.recursion.01,Maybe base
-ui.mapstyle.roguelike.space_quantum.recursion.02,"it is also, smaller, inside itself, like a nesting doll"
-ui.mapstyle.roguelike.space_visitor.skyVisitorAt.01,Mystery craft
-ui.mapstyle.roguelike.traffic.railName.01,Glide rail
+ui.mapstyle.roguelike.space_quantum.recursion.01,Delulu base
+ui.mapstyle.roguelike.space_quantum.recursion.02,"it is also inside itself, smaller, very recursive core"
+ui.mapstyle.roguelike.space_visitor.skyVisitorAt.01,Sus craft
+ui.mapstyle.roguelike.traffic.railName.01,Zoom rail
 ui.mapstyle.roguelike.traffic.railName.02,Rail vibes
 ui.mapstyle.roguelike.traffic.railLine.01,s run through 
 ui.mapstyle.roguelike.traffic.railLine.02,in 
@@ -873,15 +873,15 @@ ui.mapstyle.roguelike.view.zoomNames.01,BIG VIEW
 ui.mapstyle.roguelike.view.zoomNames.02,TOWN VIBES
 ui.mapstyle.roguelike.view.zoomNames.03,THE BLOCK
 ui.mapstyle.roguelike.view.Entry.01,Roguelike
-ui.mapstyle.roguelike.view.Entry.02,"A glyph world with an inspect cursor, your town, its people and the lands around it, very cozy."
-ui.mapstyle.roguelike.visitor.saucerLines.01,"Not from around here, bestie."
+ui.mapstyle.roguelike.view.Entry.02,"A glyph world you poke at with an inspect cursor: your town, its people and the lands around it, retro gamer core."
+ui.mapstyle.roguelike.visitor.saucerLines.01,"Definitely not from around here, sus."
 ui.mapstyle.roguelike.visitor.saucerLines.02,"It hums, then it ghosts."
-ui.mapstyle.roguelike.visitor.saucerLines.03,"Lights in the sky. Nobody's gonna believe you, sorry."
-ui.mapstyle.roguelike.visitor.walkerLines.01,"It waves, then it's gone, no cap."
-ui.mapstyle.roguelike.visitor.walkerLines.02,"A small visitor, far from home, big heart."
-ui.mapstyle.roguelike.visitor.walkerLines.03,"It seems lost, and honestly fine with that."
-ui.mapstyle.roguelike.visitor.visitorAt.01,Random craft
-ui.mapstyle.roguelike.visitor.visitorAt.02,Guest
+ui.mapstyle.roguelike.visitor.saucerLines.03,"Lights in the sky, and the group chat will say pics or it did not happen."
+ui.mapstyle.roguelike.visitor.walkerLines.01,"It waves, then it logs off."
+ui.mapstyle.roguelike.visitor.walkerLines.02,"A tiny visitor far from home, on a solo side quest."
+ui.mapstyle.roguelike.visitor.walkerLines.03,"Lost and unbothered, it is in its wander era."
+ui.mapstyle.roguelike.visitor.visitorAt.01,Sus craft
+ui.mapstyle.roguelike.visitor.visitorAt.02,Mystery mutual
 ui.mapstyle.skyline.chrome.panoramaHints.01,slide  
 ui.mapstyle.skyline.chrome.panoramaHints.02,zoom  
 ui.mapstyle.skyline.chrome.panoramaHints.03,block  
@@ -912,19 +912,19 @@ ui.mapstyle.skyline.chrome.header.04, new since your last peek
 ui.mapstyle.skyline.chrome.header.05, chilling
 ui.mapstyle.skyline.chrome.header.06, grinders on pause
 ui.mapstyle.skyline.chrome.header.07, is posted up on the ridge
-ui.mapstyle.skyline.chrome.status.01,  type this: 
-ui.mapstyle.skyline.chrome.status.02,"nothing is stuck, no cap"
+ui.mapstyle.skyline.chrome.status.01,  cheat code: 
+ui.mapstyle.skyline.chrome.status.02,"zero drama, all flowing"
 ui.mapstyle.skyline.chrome.status.03, flow tea: 
-ui.mapstyle.skyline.chrome.status.04,  say it: 
-ui.mapstyle.skyline.chrome.status.05, glowing windows 
-ui.mapstyle.skyline.chrome.status.06,crewed  
+ui.mapstyle.skyline.chrome.status.04,  cheat code: 
+ui.mapstyle.skyline.chrome.status.05, lit windows 
+ui.mapstyle.skyline.chrome.status.06,locked in  
 ui.mapstyle.skyline.chrome.status.07,steam 
 ui.mapstyle.skyline.chrome.status.08,cooking  
-ui.mapstyle.skyline.chrome.status.09,fresh  
-ui.mapstyle.skyline.chrome.status.10,NAP LOW 
+ui.mapstyle.skyline.chrome.status.09,fresh drop  
+ui.mapstyle.skyline.chrome.status.10,AFK LOW 
 ui.mapstyle.skyline.chrome.status.11,flow tea  
 ui.mapstyle.skyline.chrome.status.12,W flags 
-ui.mapstyle.skyline.chrome.status.13,your rep with each rival
+ui.mapstyle.skyline.chrome.status.13,your rizz with each civ
 ui.mapstyle.skyline.chrome.status.14,the wild zone
 ui.mapstyle.skyline.chrome.status.15, block
 ui.mapstyle.skyline.chrome.status.16,zoom: 
@@ -936,15 +936,15 @@ ui.mapstyle.skyline.city.holoAds.05,DRIP
 ui.mapstyle.skyline.city.holoAds.06,OPEN NOW
 ui.mapstyle.skyline.city.holoAds.07,AUGS
 ui.mapstyle.skyline.city.holoAds.08,ZNA
-ui.mapstyle.skyline.compact.composeCompact.01, on break
-ui.mapstyle.skyline.inspect.inspection.01,Mystery ship
-ui.mapstyle.skyline.inspect.inspection.02,"Not one of ours, bestie."
+ui.mapstyle.skyline.compact.composeCompact.01, AFK
+ui.mapstyle.skyline.inspect.inspection.01,Sus ship
+ui.mapstyle.skyline.inspect.inspection.02,Not from our server.
 ui.mapstyle.skyline.inspect.inspection.03,the vibe: 
 ui.mapstyle.skyline.inspect.inspection.04,clout 
-ui.mapstyle.skyline.inspect.inspection.05, · the take 
+ui.mapstyle.skyline.inspect.inspection.05, · rizz 
 ui.mapstyle.skyline.inspect.inspection.06,main quest: 
 ui.mapstyle.skyline.inspect.inspection.07, hustles
-ui.mapstyle.skyline.inspect.inspection.08,the odds 
+ui.mapstyle.skyline.inspect.inspection.08,RNG 
 ui.mapstyle.skyline.inspect.inspection.09,shot 
 ui.mapstyle.skyline.inspect.inspection.10,heat 
 ui.mapstyle.skyline.inspect.lotInspection.01,W of the 
@@ -954,7 +954,7 @@ ui.mapstyle.skyline.inspect.lotInspection.04,"chilling, 0/"
 ui.mapstyle.skyline.inspect.lotInspection.05, grinders
 ui.mapstyle.skyline.inspect.lotInspection.06,grinders 
 ui.mapstyle.skyline.inspect.lotInspection.07,glow-up ready: 
-ui.mapstyle.skyline.inspect.lotInspection.08,"legacy: an older tier, retired, no more growing"
+ui.mapstyle.skyline.inspect.lotInspection.08,"legacy: an older tier, its growth era is over"
 ui.mapstyle.skyline.inspect.lotInspection.09, since your last peek
 ui.mapstyle.skyline.orbit.header.01,  day 
 ui.mapstyle.skyline.orbit.header.02,  crew 
@@ -963,46 +963,46 @@ ui.mapstyle.skyline.orbit.header.04, fresh since you peeked
 ui.mapstyle.skyline.orbit.header.05, napping
 ui.mapstyle.skyline.orbit.header.06, grinders on break
 ui.mapstyle.skyline.orbit.header.07, is side-eyeing
-ui.mapstyle.skyline.orbit.skyLegend.01,city glow below 
+ui.mapstyle.skyline.orbit.skyLegend.01,city aura below 
 ui.mapstyle.skyline.orbit.skyLegend.02,colony pings 
 ui.mapstyle.skyline.orbit.skyLegend.03,star squads 
-ui.mapstyle.skyline.orbit.skyLegend.04,old vibes 
+ui.mapstyle.skyline.orbit.skyLegend.04,throwbacks 
 ui.mapstyle.skyline.orbit.skyLegendWhat.01,your hoods  
-ui.mapstyle.skyline.orbit.skyLegendWhat.02,the family tree  
-ui.mapstyle.skyline.orbit.skyLegendWhat.03,rivals met  
+ui.mapstyle.skyline.orbit.skyLegendWhat.02,your lore lines  
+ui.mapstyle.skyline.orbit.skyLegendWhat.03,mutuals met  
 ui.mapstyle.skyline.orbit.skyLegendWhat.04,your OG town  
-ui.mapstyle.skyline.orbit.status.01,  slide in: 
-ui.mapstyle.skyline.orbit.status.02,  type this: 
-ui.mapstyle.skyline.orbit.status.03,"all clear, nothing's stuck"
+ui.mapstyle.skyline.orbit.status.01,  cheat code: 
+ui.mapstyle.skyline.orbit.status.02,  cheat code: 
+ui.mapstyle.skyline.orbit.status.03,"zero drama, all flowing"
 ui.mapstyle.skyline.orbit.status.04, flow tea: 
-ui.mapstyle.skyline.orbit.status.05,  type this: 
-ui.mapstyle.skyline.orbit.status.06, lit up windows 
-ui.mapstyle.skyline.orbit.status.07,manned  
-ui.mapstyle.skyline.orbit.status.08,steam vents 
-ui.mapstyle.skyline.orbit.status.09,pumping  
-ui.mapstyle.skyline.orbit.status.10,brand new  
+ui.mapstyle.skyline.orbit.status.05,  cheat code: 
+ui.mapstyle.skyline.orbit.status.06, lit windows 
+ui.mapstyle.skyline.orbit.status.07,locked in  
+ui.mapstyle.skyline.orbit.status.08,vents with aura 
+ui.mapstyle.skyline.orbit.status.09,cooking  
+ui.mapstyle.skyline.orbit.status.10,fresh drop  
 ui.mapstyle.skyline.orbit.status.11,CHILL LOW 
 ui.mapstyle.skyline.orbit.status.12,flow tea  
-ui.mapstyle.skyline.orbit.status.13,UFO traffic  
-ui.mapstyle.skyline.orbit.status.14,bunting 
-ui.mapstyle.skyline.orbit.status.15,your clout with each rival
-ui.mapstyle.skyline.orbit.status.16,"the void, no cap"
+ui.mapstyle.skyline.orbit.status.13,alien mutuals  
+ui.mapstyle.skyline.orbit.status.14,W flags 
+ui.mapstyle.skyline.orbit.status.15,your clout with each civ
+ui.mapstyle.skyline.orbit.status.16,"the void, empty lobby"
 ui.mapstyle.skyline.orbit_compact.composeSkyCompact.01, slacking
-ui.mapstyle.skyline.orbit_mandala.mandalaInspection.01,The soul
-ui.mapstyle.skyline.orbit_mandala.mandalaInspection.02,"you, no longer bound to form, bestie"
-ui.mapstyle.skyline.orbit_mandala.mandalaInspection.03,"every age you lived through, in light, the full playlist"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.01,"The core, final form"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.02,"you, in your final form, no body needed"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.03,"all your ages, lit up, the full playlist"
 ui.mapstyle.skyline.orbit_mandala.mandalaInspection.04,Loop of the 
-ui.mapstyle.skyline.orbit_mandala.mandalaInspection.05,"nothing of it still stands, lowkey tragic"
-ui.mapstyle.skyline.orbit_mandala.mandalaInspection.06,"the ring remembers, no cap"
-ui.mapstyle.skyline.orbit_mandala.mandalaInspection.07,"a petal of the crown, glowing"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.05,"none of it still stands, it's so over"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.06,the ring keeps the receipts
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.07,"a crown petal, glowing up"
 ui.mapstyle.skyline.orbit_mandala.mandalaInspection.08,one light on the loop of the 
 ui.mapstyle.skyline.orbit_mandala.mandalaInspection.09, of 
-ui.mapstyle.skyline.orbit_mandala.mandalaLegend.01,"the core: you, beyond form, bestie  "
-ui.mapstyle.skyline.orbit_mandala.mandalaLegend.02,Crown: this age's flexes  
-ui.mapstyle.skyline.orbit_mandala.mandalaLegend.03,"a ring for each era you lived, oldest innermost, lowkey aesthetic  "
-ui.mapstyle.skyline.orbit_mandala.mandalaLegend.04,the wave vibes: 
-ui.mapstyle.skyline.orbit_mandala.mandalaLegend.05,"light, rolling outward, smooth"
-ui.mapstyle.skyline.orbit_mandala.mandalaHints.01,"beyond form, glowing"
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.01,"the core: you, final form  "
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.02,the crown: this age's flexes  
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.03,"a ring per era you lived, OG era innermost  "
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.04,the aura wave: 
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.05,light rippling outward like a vibe shift
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.01,"final form, pure light"
 ui.mapstyle.skyline.orbit_mandala.mandalaHints.03,peek  
 ui.mapstyle.skyline.orbit_mandala.mandalaHints.04,orbit a ring  
 ui.mapstyle.skyline.orbit_mandala.mandalaHints.05,ring hop  
@@ -1014,8 +1014,8 @@ ui.mapstyle.skyline.orbit_mandala.mandalaHints.12,ring to ring
 ui.mapstyle.skyline.orbit_mandala.mandalaHints.14,the core  
 ui.mapstyle.skyline.orbit_mandala.mandalaHints.16,peek  
 ui.mapstyle.skyline.orbit_mandala.mandalaHints.17,steer  
-ui.mapstyle.skyline.scene.markers.01,NAP
+ui.mapstyle.skyline.scene.markers.01,AFK
 ui.mapstyle.skyline.scene.markers.02,LOW
 ui.mapstyle.skyline.skyline.Entry.01,Skyline
-ui.mapstyle.skyline.skyline.Entry.02,"Your empire side-on as an ANSI panorama, one block per age, lit by the besties working it."
+ui.mapstyle.skyline.skyline.Entry.02,"Your empire side-on as an ANSI panorama, one district per age, lit up by the grinders working it, skyline goals."
 ui.mapstyle.skyline.wonders_late.citadel.01,HQ GOAT
