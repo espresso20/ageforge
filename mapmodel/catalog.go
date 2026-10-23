@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Lineage keys the model groups buildings by. They are the config lineages,
@@ -41,14 +42,17 @@ var LineageOrder = []string{
 }
 
 // LineageNames are the player-facing names of each lineage.
-var LineageNames = map[string]string{
-	LinHousing: "housing", LinFood: "farms and food", LinWood: "wood and fibre",
-	LinMines: "quarries and mines", LinMetal: "metalworks", LinEngineer: "engineering",
-	LinEnergy: "power", LinHarbor: "harbor", LinHacker: "hacker dens",
-	LinKnowledge: "knowledge", LinFaith: "faith", LinCulture: "culture", LinMonument: "monuments",
-	LinTrade: "trade", LinStorage: "storage", LinMilitary: "military", LinDiplomacy: "diplomacy",
-	LinWonder: "wonders",
+var LineageNames = map[string]vibe.Entry{
+	LinHousing: vibe.E("map.lineage.housing", "housing"), LinFood: vibe.E("map.lineage.food", "farms and food"), LinWood: vibe.E("map.lineage.organic_extraction", "wood and fibre"),
+	LinMines: vibe.E("map.lineage.geological_extraction", "quarries and mines"), LinMetal: vibe.E("map.lineage.metallurgy", "metalworks"), LinEngineer: vibe.E("map.lineage.engineering", "engineering"),
+	LinEnergy: vibe.E("map.lineage.energy", "power"), LinHarbor: vibe.E("map.lineage.harbor", "harbor"), LinHacker: vibe.E("map.lineage.hacker", "hacker dens"),
+	LinKnowledge: vibe.E("map.lineage.knowledge", "knowledge"), LinFaith: vibe.E("map.lineage.faith", "faith"), LinCulture: vibe.E("map.lineage.culture_arts", "culture"), LinMonument: vibe.E("map.lineage.monument", "monuments"),
+	LinTrade: vibe.E("map.lineage.trade", "trade"), LinStorage: vibe.E("map.lineage.storage", "storage"), LinMilitary: vibe.E("map.lineage.military", "military"), LinDiplomacy: vibe.E("map.lineage.diplomacy", "diplomacy"),
+	LinWonder: vibe.E("map.lineage.wonder", "wonders"),
 }
+
+// LineageName is the name of a lineage as it reads now ("" for a key with none).
+func LineageName(lin string) string { return LineageNames[lin].String() }
 
 // Def is one building type as the map sees it: static catalogue data.
 type Def struct {

@@ -115,7 +115,7 @@ func lineageLabel(lin string) string {
 	if lin == mapmodel.LinHarbor {
 		return "harbor"
 	}
-	return mapmodel.LineageNames[lin]
+	return mapmodel.LineageName(lin)
 }
 
 func lineageIdx(lin string) int {

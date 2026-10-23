@@ -229,9 +229,17 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 					if name == "" {
 						continue
 					}
-					if s := m.constString(fpkg, val); s != "" {
+					// A sibling that is wired for VibeMode (vibe.E) is the text it carries:
+					// {title} in a row's description reads the same wired or not.
+					sibVal := val
+					if call, ok := val.(*ast.CallExpr); ok {
+						if inner, ok := vibeCarried(call); ok {
+							sibVal = inner
+						}
+					}
+					if s := m.constString(fpkg, sibVal); s != "" {
 						site.sib[name] = s
-					} else if s := m.constString(f.pkg, val); s != "" {
+					} else if s := m.constString(f.pkg, sibVal); s != "" {
 						site.sib[name] = s
 					}
 					if el == child || (pendingKV && val == child) {
@@ -364,6 +372,26 @@ func isVibeCall(call *ast.CallExpr) bool {
 		return true
 	}
 	return false
+}
+
+// isVibeLine reports whether call is, as written, vibe.Line(id, "text").
+func isVibeLine(call *ast.CallExpr) bool {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	return ok && isVibeCall(call) && len(call.Args) == 2 && sel.Sel.Name == "Line"
+}
+
+// vibeCarried is the string a vibe.Line, vibe.E or vibe.Same call carries: the
+// text of the entry it stands for.
+func vibeCarried(call *ast.CallExpr) (ast.Expr, bool) {
+	switch {
+	case isVibeSame(call):
+		return call.Args[0], true
+	case isVibeCall(call) && len(call.Args) == 2:
+		if n := call.Fun.(*ast.SelectorExpr).Sel.Name; n == "Line" || n == "E" {
+			return call.Args[1], true
+		}
+	}
+	return nil, false
 }
 
 // isVibeSame reports whether call is, as written, vibe.Same("text"): the entry

@@ -808,7 +808,7 @@ func (o *orb) skyLines(lines []string) []string {
 	}
 	part := mapmodel.SkyPartOf(o.sc, def.Lineage)
 	out := append([]string(nil), lines...)
-	if lin := mapmodel.LineageNames[def.Lineage]; lin != "" && part.Name != lin {
+	if lin := mapmodel.LineageName(def.Lineage); lin != "" && part.Name != lin {
 		if strings.HasPrefix(out[0], lin+" · ") {
 			out[0] = part.Name + " (" + lin + ") · " + strings.TrimPrefix(out[0], lin+" · ")
 		}

@@ -327,7 +327,7 @@ func lotInspection(m *mapmodel.Model, key string, cp int) inspectionData {
 		return in
 	}
 	in.title += " ×" + strconv.Itoa(b.Count)
-	in.lines = append(in.lines, mapmodel.LineageNames[b.Lineage]+" · "+m.Catalog.AgeNames[def.Age])
+	in.lines = append(in.lines, mapmodel.LineageName(b.Lineage)+" · "+m.Catalog.AgeNames[def.Age])
 	switch {
 	case b.Capacity <= 0:
 		in.lines = append(in.lines, vibe.Line("ui.mapstyle.skyline.inspect.lotInspection.03", "no workers needed"))

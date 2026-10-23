@@ -144,14 +144,13 @@ func newCodeReader(c *catalog, f *srcFile, units []*unit) *codeReader {
 				if kv, ok := el.(*ast.KeyValueExpr); ok {
 					v = kv.Value
 				}
-				// A text wired as an entry of the table (vibe.E, vibe.Same) is the
-				// text of the list still: it reads as it did before it was wired.
+				// A text wired for VibeMode is the text of the list still: it reads as
+				// it did before it was wired. (A vibe.Line in the log's and the
+				// screens' lists is not seen through: they were wired before this
+				// was known, and their export is held as it was.)
 				if call, ok := v.(*ast.CallExpr); ok {
-					switch {
-					case isVibeSame(call):
-						v = call.Args[0]
-					case isVibeCall(call) && call.Fun.(*ast.SelectorExpr).Sel.Name == "E" && len(call.Args) == 2:
-						v = call.Args[1]
+					if s, ok := vibeCarried(call); ok && (cr.note.area == areaMap || !isVibeLine(call)) {
+						v = s
 					}
 				}
 				lits[[2]int{c.m.fset.Position(v.Pos()).Offset, c.m.fset.Position(v.End()).Offset}] = cl

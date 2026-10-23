@@ -3,6 +3,7 @@ package mapmodel
 import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // palette_city.go is the Earth arc's look, age by age, the Modern Age to the
@@ -33,32 +34,37 @@ type CityLook struct {
 	Night bool
 	// Rain is the age's ambient rain (the megacity's acid streaks).
 	Rain bool
+
+	// the entries Name, Structure and Ambient were written as, read again
+	// while VibeMode is on
+	nameE, structureE, ambientE vibe.Entry
 }
 
 type cityLookDef struct {
-	key, name, structure, ambient string
-	palette                       []theme.CityHue
-	mover                         Mover
-	greenery, smog                float64
-	night, rain                   bool
+	key                      string
+	name, structure, ambient vibe.Entry
+	palette                  []theme.CityHue
+	mover                    Mover
+	greenery, smog           float64
+	night, rain              bool
 }
 
 // cityLookDefs is the Earth arc, oldest first.
 var cityLookDefs = []cityLookDef{
-	{key: "modern_age", name: "the glass city", structure: "highways, a glass downtown and parks fenced into blocks",
-		mover: MoverCar, ambient: "headlights streaming down the highways at night", greenery: 1,
+	{key: "modern_age", name: vibe.E("map.city_look.modern_age.name", "the glass city"), structure: vibe.E("map.city_look.modern_age.structure", "highways, a glass downtown and parks fenced into blocks"),
+		mover: MoverCar, ambient: vibe.E("map.city_look.modern_age.ambient", "headlights streaming down the highways at night"), greenery: 1,
 		palette: []theme.CityHue{theme.CityGlass, theme.CityConcrete, theme.CityAsphalt, theme.CityPark, theme.CityRoof}},
-	{key: "information_age", name: "the wired city", structure: "server farms, fiber lines and satellite dishes",
-		mover: MoverNewsHeli, ambient: "screens flickering in the windows", greenery: 0.5, smog: 0.25,
+	{key: "information_age", name: vibe.E("map.city_look.information_age.name", "the wired city"), structure: vibe.E("map.city_look.information_age.structure", "server farms, fiber lines and satellite dishes"),
+		mover: MoverNewsHeli, ambient: vibe.E("map.city_look.information_age.ambient", "screens flickering in the windows"), greenery: 0.5, smog: 0.25,
 		palette: []theme.CityHue{theme.CityServer, theme.CityConcrete, theme.CityData, theme.CityScreen, theme.CitySmog}},
-	{key: "digital_age", name: "the paved city", structure: "the walled reserve, the last green, in concrete and landfill",
-		mover: MoverDrone, ambient: "the data glow pulsing under the servers", greenery: 0.15, smog: 0.5,
+	{key: "digital_age", name: vibe.E("map.city_look.digital_age.name", "the paved city"), structure: vibe.E("map.city_look.digital_age.structure", "the walled reserve, the last green, in concrete and landfill"),
+		mover: MoverDrone, ambient: vibe.E("map.city_look.digital_age.ambient", "the data glow pulsing under the servers"), greenery: 0.15, smog: 0.5,
 		palette: []theme.CityHue{theme.CityConcreteDark, theme.CityLandfill, theme.CityGlow, theme.CitySmog, theme.CityReserve}},
-	{key: "cyberpunk_age", name: "the megacity", structure: "megacorp towers carrying their initials, and arcologies",
-		mover: MoverSkyTrain, ambient: "acid rain and flickering neon", smog: 0.8, night: true, rain: true,
+	{key: "cyberpunk_age", name: vibe.E("map.city_look.cyberpunk_age.name", "the megacity"), structure: vibe.E("map.city_look.cyberpunk_age.structure", "megacorp towers carrying their initials, and arcologies"),
+		mover: MoverSkyTrain, ambient: vibe.E("map.city_look.cyberpunk_age.ambient", "acid rain and flickering neon"), smog: 0.8, night: true, rain: true,
 		palette: []theme.CityHue{theme.CityNight, theme.CityTower, theme.CityNeonMagenta, theme.CityNeonCyan, theme.CityNeonYellow, theme.CityToxic}},
-	{key: "fusion_age", name: "the powered city", structure: "fusion reactors in their plasma rings, and the space elevator",
-		mover: MoverClimber, ambient: "plasma pulsing through the conduits", smog: 0.3, night: true,
+	{key: "fusion_age", name: vibe.E("map.city_look.fusion_age.name", "the powered city"), structure: vibe.E("map.city_look.fusion_age.structure", "fusion reactors in their plasma rings, and the space elevator"),
+		mover: MoverClimber, ambient: vibe.E("map.city_look.fusion_age.ambient", "plasma pulsing through the conduits"), smog: 0.3, night: true,
 		palette: []theme.CityHue{theme.CityNight, theme.CityElectric, theme.CityPlasma, theme.CityConduit, theme.CityNeonCyan}},
 }
 
@@ -75,21 +81,37 @@ func buildCityLooks() []CityLook {
 		if !ok {
 			continue // an unknown age key (TestCityLooks fails on it)
 		}
-		out = append(out, CityLook{Key: d.key, Age: a, Name: d.name, Palette: d.palette, Structure: d.structure,
-			Mover: d.mover, Ambient: d.ambient, Greenery: d.greenery, Smog: d.smog, Night: d.night, Rain: d.rain})
+		out = append(out, CityLook{Key: d.key, Age: a, Name: d.name.Plain(), Palette: d.palette, Structure: d.structure.Plain(),
+			Mover: d.mover, Ambient: d.ambient.Plain(), Greenery: d.greenery, Smog: d.smog, Night: d.night, Rain: d.rain,
+			nameE: d.name, structureE: d.structure, ambientE: d.ambient})
 	}
 	return out
 }
 
 // CityLooks lists the Earth arc's looks, oldest first.
-func CityLooks() []CityLook { return append([]CityLook(nil), cityLookTable...) }
+func CityLooks() []CityLook {
+	out := append([]CityLook(nil), cityLookTable...)
+	for i := range out {
+		out[i] = out[i].told()
+	}
+	return out
+}
+
+// told is the look with its words as they read now: itself while VibeMode is
+// off, else read again from the entries the table was written as.
+func (l CityLook) told() CityLook {
+	if vibe.On() {
+		l.Name, l.Structure, l.Ambient = l.nameE.String(), l.structureE.String(), l.ambientE.String()
+	}
+	return l
+}
 
 // CityLookAt is the look of the age with index age, if it is an Earth-arc
 // age.
 func CityLookAt(age int) (CityLook, bool) {
 	for _, l := range cityLookTable {
 		if l.Age == age {
-			return l, true
+			return l.told(), true
 		}
 	}
 	return CityLook{}, false
