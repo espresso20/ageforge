@@ -54,6 +54,9 @@ type expLayout struct {
 	cardW   int
 	outY    int
 	footY   int
+	// split is the Report's wide layout: the Out list and the field report
+	// stand in the card's column (see reportLayoutFor).
+	split bool
 }
 
 func layoutFor(w, h int) expLayout {
@@ -86,6 +89,26 @@ func layoutFor(w, h int) expLayout {
 		l.legendY = l.outY + l.outH
 	}
 	l.footY = h - 2
+	return l
+}
+
+// reportLayoutFor is the Report's layout: the map takes about 55% of the
+// width (at least 40 columns) and the right side the rest (at least 36).
+// When both minimums cannot fit it is the compact layout.
+func reportLayoutFor(w, h int) expLayout {
+	l := layoutFor(w, h)
+	if l.small {
+		return l
+	}
+	inner := w - 3
+	mapW := max(40, inner*55/100)
+	if inner-mapW < 36 {
+		return l
+	}
+	l.split = true
+	l.mapW = mapW
+	l.cardW = inner - mapW
+	l.cardX = 1 + mapW + 1
 	return l
 }
 
@@ -217,8 +240,11 @@ func capFirst(s string) string {
 // briefTitle is an offer's title without the mission's name and without
 // the Legendary mark, which the card already says: "Count the herds near
 // the Copper Hills".
-func briefTitle(o game.ExpeditionInfo) string {
-	title := o.Name
+func briefTitle(o game.ExpeditionInfo) string { return briefTitleOf(o.Name) }
+
+// briefTitleOf is a mission's title without its name (see briefTitle).
+func briefTitleOf(name string) string {
+	title := name
 	if i := strings.Index(title, ": "); i >= 0 {
 		title = title[i+2:]
 	}
@@ -304,6 +330,9 @@ func societyLine(state game.GameState) (string, xk) {
 func renderExpedition(state game.GameState, v expView, w, h int) *xgrid {
 	g := newXGrid(w, h)
 	l := layoutFor(w, h)
+	if v.report {
+		l = reportLayoutFor(w, h)
+	}
 	v.frame = max(v.frame, 0)
 	g.box(0, 0, w, h, xBorder, "Expeditions · "+state.AgeName, xTitle, false)
 	if l.small {
@@ -845,13 +874,9 @@ func returnLine(r game.MissionReturn) string {
 	return line
 }
 
-func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScene) {
-	hi := -1
-	if n := len(sc.acts); n > 0 {
-		hi = clamp(v.party, 0, n-1)
-	}
-	drawMap(g, state, v, l, sc, "Parties in the field", hi)
-
+// drawOutCard is the Report's card in the compact layout: the parties out,
+// the highlighted one's road beneath it.
+func drawOutCard(g *xgrid, state game.GameState, l expLayout, sc *expScene, hi int) {
 	x, y, w, h := l.cardX, l.mainY, l.cardW, l.mainH
 	cw := w - 2
 	g.box(x, y, w, h, xBorder, fmt.Sprintf("Out · %d", len(sc.acts)), xTitle, false)
@@ -925,6 +950,20 @@ func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expS
 			row += per
 		}
 	}
+}
+
+func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScene) {
+	hi := -1
+	if n := len(sc.acts); n > 0 {
+		hi = clamp(v.party, 0, n-1)
+	}
+	drawMap(g, state, v, l, sc, "Parties in the field", hi)
+
+	if l.split {
+		drawFieldReport(g, state, v, l, sc, hi)
+	} else {
+		drawOutCard(g, state, l, sc, hi)
+	}
 
 	// What came home, newest first, the new ones marked.
 	rets := state.Military.Returns
@@ -963,6 +1002,7 @@ func drawReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expS
 		}
 	}
 	if l.legendY >= 0 {
+		soc, socKind := societyLine(state)
 		g.putFit(2, l.legendY, l.w-4, soc, socKind)
 	}
 	keys := [][2]string{{"↑↓", "choose a party"}, {"Tab", "ready room"}, {"Esc", "close"}}

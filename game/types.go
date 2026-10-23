@@ -616,6 +616,12 @@ type ExpeditionSnapshot struct {
 	SuccessHaul   map[string]float64
 	FailureHaul   map[string]float64
 	RoadStories   []string
+	// RoadKinds is the kind of each road event that has fired, in the order of
+	// RoadStories. LaunchChance is the odds it was sent with (0 for a save from
+	// before it was kept) and HaulScale what the road did to its loot (0 is none).
+	RoadKinds    []string
+	LaunchChance float64
+	HaulScale    float64
 }
 
 // ExpeditionInfo represents an available expedition for UI
