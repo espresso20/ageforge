@@ -1,4 +1,9 @@
-// pkg/sprites/catalog.go — exported building catalog for the sprite system
+// Package sprites draws 16×16 pixel-art sprites. GenerateBuildingSprite builds a
+// building sprite from its lineage, tier and age, and cmd/spritegen writes those
+// sprites as PNG files. Canvas holds the drawing helpers, which ui/wonder_icon.go
+// also uses for the wonder icons.
+//
+// This file lists the buildings that get a generated sprite.
 package sprites
 
 // BuildingDef describes a single building entry for sprite generation.
@@ -9,7 +14,8 @@ type BuildingDef struct {
 	AgeKey  string
 }
 
-// AllBuildings is the full catalog of production buildings (246 entries across 13 lineages).
+// AllBuildings lists the buildings that get a generated sprite: 246 entries across
+// 13 lineages. The harbor and monument buildings and nano_foundry are not in it.
 var AllBuildings = []BuildingDef{
 	// Lineage 1: Housing
 	{"hut", 1, 0, "primitive_age"},

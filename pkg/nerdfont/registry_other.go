@@ -2,5 +2,5 @@
 
 package nerdfont
 
-// registerFonts is Windows only.
+// registerFonts is nil off Windows, where the build has no registry support.
 var registerFonts func(files []string) error
