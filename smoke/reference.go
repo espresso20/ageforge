@@ -519,7 +519,7 @@ func (t *refTables) walk(player string, speed float64, refIncome []float64) refW
 	var w refWalk
 	counts := map[string]int{}
 	for i := range t.ages {
-		p := refPlay{wonder: true, rate: 1, speed: speed, horizon: 4e7}
+		p := refPlay{wonder: true, rate: 1, speed: speed, horizon: 40 * config.Million}
 		switch player {
 		case "ordinary":
 			p.only = map[string]int{}

@@ -123,7 +123,7 @@ func TestFirstRungsComeEarly(t *testing.T) {
 	if most := set.ProductionThrough("food", "primitive_age") + 0.25*(set.ProductionThrough("food", "stone_age")-set.ProductionThrough("food", "primitive_age")); food.Need > most {
 		t.Errorf("the first food rung asks for %s; a town has made %s a quarter of the way through the Stone Age", config.FormatAmount(food.Need), config.FormatAmount(most))
 	}
-	if food.Need >= 1e6 {
+	if food.Need >= config.Million {
 		t.Errorf("the first food rung asks for %s: the playtest had made a million by the Bronze Age and was nowhere near the old one", config.FormatAmount(food.Need))
 	}
 
@@ -191,10 +191,10 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			b.Subject, b.Counter = "hovel", "standing.hovel"
 		}},
 		{"a ladder past 25 runs", "lineage.housing.2", "lifetime", func(src *rules.Source) {
-			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {14, 1e12}}
+			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {14, config.Trillion}}
 		}},
 		{"a first rung a first run does not build in time", "lineage.housing.1", "first_rung", func(src *rules.Source) {
-			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {1e8, 2e8, 3e8, 4e8, 5e8}}
+			family(t, src, "lineage").Ladders = map[string][]float64{"housing": {100 * config.Million, 200 * config.Million, 300 * config.Million, 400 * config.Million, 500 * config.Million}}
 		}},
 		{"a first rung of two runs' wonders", "ladder.wonders.1", "first_rung", func(src *rules.Source) {
 			ladderFamily(t, src, "Wonders raised").Ladders = map[string][]float64{"": {25, 100, 300}}
@@ -243,7 +243,7 @@ func TestBadgeGuardCatchesTheUnreachable(t *testing.T) {
 			b.Pred, b.Counter = "", "run."+config.BadgeEvStarved
 		}},
 		{"more sales than a run can make", sale, "run_count", func(src *rules.Source) {
-			special(t, src, sale).Threshold = 1e7
+			special(t, src, sale).Threshold = 10 * config.Million
 		}},
 		{"a run count the check cannot bound", sale, "run_count", func(src *rules.Source) {
 			special(t, src, sale).Counter = "run." + config.BadgeEvGiftSent
@@ -314,7 +314,7 @@ func TestBadgeProofsNameTheNumber(t *testing.T) {
 	src := rules.FromConfig()
 	for i := range src.Badges {
 		if src.Badges[i].Key == "special.hut_hoarder" {
-			src.Badges[i].Threshold = 1e6
+			src.Badges[i].Threshold = config.Million
 		}
 	}
 	problems, _ := staticBadges(rules.Compile(src), src.Badges, src.BadgeFamilies, config.BuildingByKey(), game.PrestigeRunAge)

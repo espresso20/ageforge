@@ -125,7 +125,7 @@ func TestStorageCheckCatchesBrokenStorage(t *testing.T) {
 		{"a slow Fusion Vault", edit("fusion_vault", func(d *config.BuildingDef) { d.CostScale = 1.2 }), ages, []string{"curve/fusion_age"}},
 		// A storage building that still stores, or boosts the wrong amount.
 		{"a Keep that stores", edit("keep", func(d *config.BuildingDef) {
-			d.Effects = append(d.Effects, config.Effect{Type: "storage", Target: "all", Value: 1e6})
+			d.Effects = append(d.Effects, config.Effect{Type: "storage", Target: "all", Value: config.Million})
 		}), ages, []string{"boost/medieval_age"}},
 		{"a Stash that boosts five percent", edit("stash", func(d *config.BuildingDef) {
 			d.Effects = []config.Effect{{Type: "bonus", Target: "production_all", Value: 0.05}}
@@ -195,10 +195,10 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	smithy.BaseCost = map[string]float64{"wood": 900, "coal": 100}
 	defs["smithy"] = smithy
 	sistine := defs["sistine_chapel"]
-	sistine.BaseCost = map[string]float64{"stone": 200e6, "gold": 10e6, "faith": 6e6, "culture": 8e6}
+	sistine.BaseCost = map[string]float64{"stone": 200 * config.Million, "gold": 10 * config.Million, "faith": 6 * config.Million, "culture": 8 * config.Million}
 	defs["sistine_chapel"] = sistine
 	cradle := defs["stellar_cradle"]
-	cradle.BaseCost = map[string]float64{"uranium": 940e12}
+	cradle.BaseCost = map[string]float64{"uranium": 940 * config.Trillion}
 	for k, v := range defs["stellar_cradle"].BaseCost {
 		cradle.BaseCost[k] = v
 	}
@@ -497,13 +497,13 @@ func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
 	oldWorks := func() map[string]config.BuildingDef {
 		defs := config.BuildingByKey()
 		works := defs["uranium_processing_works"]
-		works.BaseCost = map[string]float64{"steel": 1.5e10, "electricity": 6e9, "uranium": 1.2e9}
+		works.BaseCost = map[string]float64{"steel": 15 * config.Billion, "electricity": 6 * config.Billion, "uranium": 1.2 * config.Billion}
 		defs["uranium_processing_works"] = works
 		return defs
 	}
 	cs := coldStarts(ages, oldWorks())[atomic]
 	made := cs.made["uranium"] * config.AgeTargetTicks("atomic_age")
-	if made <= 0 || made >= 1.2e9 {
+	if made <= 0 || made >= 1.2*config.Billion {
 		t.Fatalf("setup: the carried mines make %.4g uranium in the Atomic Age's target, want something under the works' 1.2e9", made)
 	}
 	if !cs.affords("uranium", made/2) {

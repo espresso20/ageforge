@@ -252,7 +252,7 @@ func num(v float64) string {
 	switch {
 	case bad(v):
 		return fmt.Sprint(v)
-	case math.Abs(v) >= 1e4:
+	case math.Abs(v) >= 10_000:
 		return textfmt.Number(v)
 	default:
 		return fmt.Sprintf("%.0f", v)
