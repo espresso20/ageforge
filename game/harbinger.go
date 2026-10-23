@@ -1557,6 +1557,7 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 		ge.pendingBraceLevel = 0
 	}
 	ge.harbingerHistory = append([]HarbingerRecord(nil), save.HarbingerHistory...)
+	ge.redrawHarbingerHistory()
 	// The Last Passage's thread parked behind the Cosmic Era's doom: only
 	// while that doom's thread is live, else it is the live thread again.
 	ge.parkedHarbinger = nil
@@ -1595,4 +1596,46 @@ func capFirst(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// recordNames are the names a resolved thread's record carries, drawn from the
+// words of the ruleset in force: the last figure's, and the doom's era (or
+// the Last Passage). It reports false for a record whose figure the ruleset
+// does not have (one written by hand).
+func (ge *GameEngine) harbingerRecordNames(r HarbingerRecord) (name, target string, ok bool) {
+	def, found := ge.rules.Harbinger(r.Age)
+	if !found {
+		return "", "", false
+	}
+	if r.TargetEpochKey == "" {
+		target, _ = ge.rules.LastPassage()
+	} else {
+		target = eraName(ge.rules, r.TargetEpochKey)
+	}
+	return def.Name, target, true
+}
+
+// redrawHarbingerHistory writes the names in the record of resolved threads
+// again from the words of the ruleset in force; the records hold the names
+// they were told in, and this runs when the engine moves onto another ruleset
+// and after a load.
+func (ge *GameEngine) redrawHarbingerHistory() {
+	for i, r := range ge.harbingerHistory {
+		if name, target, ok := ge.harbingerRecordNames(r); ok {
+			ge.harbingerHistory[i].Name, ge.harbingerHistory[i].TargetEpochName = name, target
+		}
+	}
+}
+
+// harbingerHistoryForSave is the record as a save holds it: the keys the
+// names are drawn from and not the names, so a save reads the same in any
+// script (VibeMode).
+func (ge *GameEngine) harbingerHistoryForSave() []HarbingerRecord {
+	out := cloneHarbingerHistory(ge.harbingerHistory)
+	for i, r := range out {
+		if _, _, ok := ge.harbingerRecordNames(r); ok {
+			out[i].Name, out[i].TargetEpochName = "", ""
+		}
+	}
+	return out
 }

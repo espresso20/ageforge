@@ -1,6 +1,10 @@
 package game
 
-import "github.com/espresso20/ageforge/config"
+import (
+	"maps"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // The returns log: the last missions to come home, kept on the state and
 // saved with the game, so the Expedition Report can list them.
@@ -26,6 +30,40 @@ type MissionReturn struct {
 	Fell  int `json:"fell,omitempty"`
 	// Experience is what the mission gave the army (negative: took from it).
 	Experience float64 `json:"experience,omitempty"`
+
+	// Words, Age, Grand, Rare and Loot are what Label, Title, Place and Haul
+	// were drawn from: the offer's words, age, kind and Legendary mark, and
+	// the loot by resource. A save holds them in place of those four texts,
+	// so it reads the same in any script (VibeMode); draw writes the texts
+	// again. An entry with no Words is written by hand and its texts stay.
+	Words OfferWords         `json:"words,omitzero"`
+	Age   string             `json:"age,omitempty"`
+	Grand string             `json:"grand,omitempty"`
+	Rare  bool               `json:"rare,omitempty"`
+	Loot  map[string]float64 `json:"loot,omitempty"`
+}
+
+// draw writes the entry's Label, Title, Place and Haul from what it was drawn
+// from, in the words of the script mm plays by.
+func (r *MissionReturn) draw(mm *MilitaryManager) {
+	if !r.Words.Made || mm.rules == nil {
+		return
+	}
+	words, ok := mm.rules.MissionWords(r.Age)
+	if !ok {
+		return
+	}
+	offer := MissionOffer{Tier: r.Tier, Grand: r.Grand, Age: r.Age, Rare: r.Rare, Words: r.Words}
+	offer.draw(words)
+	r.Label, r.Title, r.Place, r.Haul = words.Tiers[offer.wordsKind()], offer.Title, offer.Place, amountsText(r.Loot)
+}
+
+// forSave is the entry as a save holds it: without the texts it can draw.
+func (r MissionReturn) forSave() MissionReturn {
+	if r.Words.Made {
+		r.Label, r.Title, r.Place, r.Haul = "", "", "", ""
+	}
+	return r
 }
 
 // wordsKind is the index of the offer's tier name in the age's words.
@@ -60,6 +98,7 @@ func (mm *MilitaryManager) recordReturn(res ExpeditionResult, tick int) {
 		Label: mm.Label(res.Offer), Tier: res.Offer.Tier, Title: res.Name, Place: res.Offer.Place,
 		Success: res.Success, Haul: amountsText(res.Rewards), Tick: tick, RoadEvents: res.RoadEvents,
 		Party: res.Party, Fell: res.Party - res.Marching + res.SoldiersFell, Experience: res.Experience,
+		Words: res.Offer.Words, Age: res.Offer.Age, Grand: res.Offer.Grand, Rare: res.Offer.Rare, Loot: maps.Clone(res.Rewards),
 	}
 	mm.returns = append([]MissionReturn{entry}, mm.returns...)
 	if len(mm.returns) > config.MissionReturnsKept {

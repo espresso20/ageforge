@@ -1,3 +1,645 @@
 id,text
 tech.language.name,Lingo
 tech.language.description,Sharing words means what one person figures out spreads to everyone fr.
+feature.trade_routes.name,Bag Routes
+feature.trade_routes.needs,gotta have
+feature.trade_routes.then,spin one up
+feature.trade_routes.opens,unlocks Bag Routes
+feature.diplomacy.name,"Gifts, allies, beef and deals"
+feature.diplomacy.needs,gotta have
+feature.diplomacy.then,slide into other civ DMs
+feature.diplomacy.opens,unlocks the diplomacy arc
+feature.festivals.name,Fest Szn
+feature.festivals.needs,gotta have
+feature.festivals.then,throw one
+feature.festivals.opens,unlocks Fest Szn
+feature.black_market.name,Shady Black Market
+feature.black_market.needs,gotta have
+feature.black_market.then,slide in there
+feature.black_market.opens,unlocks the Shady Black Market
+feature.route_rail_freight.name,The Rail Freight Pipeline (it slaps)
+feature.route_rail_freight.needs,gotta have
+feature.route_rail_freight.then,send it
+feature.route_rail_freight.opens,unlocks the Rail Freight Pipeline
+feature.route_warp_commerce.name,Warp Bag Route
+feature.route_warp_commerce.needs,gotta have
+feature.route_warp_commerce.then,launch it
+feature.route_warp_commerce.opens,unlocks the Warp Bag Route
+mechanic.gather_amount.name,hand grind
+mechanic.gather_amount.text,"hand grinding brings %s more, no cap"
+mechanic.route_ticks.name,bag route time
+mechanic.route_ticks.text,"bag routes run %s quicker, no cap"
+mechanic.expedition_ticks.name,quest time
+mechanic.expedition_ticks.text,"quests take %s less time, the grind is shorter"
+mechanic.raid_loss.name,raid Ls
+mechanic.raid_loss.text,"raids on you hurt %s less, we're so back"
+mechanic.deal_refresh_ticks.name,deal reset time
+mechanic.deal_refresh_ticks.text,"deals reset %s sooner, the menu keeps changing"
+mechanic.gift_cost.name,gift price
+mechanic.gift_cost.text,"gifts cost %s less, a total steal"
+mechanic.festival_cooldown_ticks.name,fest downtime
+mechanic.festival_cooldown_ticks.text,"fests come back %s sooner, the party never sleeps"
+mechanic.festival_cost.name,fest cost
+mechanic.festival_cost.text,"fests cost %s less, very budget friendly fr"
+mechanic.route_income.name,bag route income
+mechanic.route_income.text,"bag routes bring in %s more, the bag is heavy"
+mechanic.morale_cap.name,vibe ceiling
+mechanic.morale_cap.text,"morale can climb %s higher, the vibes are unlimited"
+mechanic.wonder_build_ticks.name,wonder build time
+mechanic.wonder_build_ticks.text,"wonders build %s quicker, speedrun era"
+mechanic.festival_ticks.name,fest length
+mechanic.festival_ticks.text,"fests last %s longer, the party is not ending"
+mechanic.gift_opinion.name,rep from gifts
+mechanic.gift_opinion.text,"gifts raise rep %s more, everybody is obsessed"
+mechanic.alliance_bonus.name,ally perks
+mechanic.alliance_bonus.text,"allies hand you %s more, the squad is stacked"
+mechanic.upgrade_cost.name,glow-up cost
+mechanic.upgrade_cost.text,"glow-ups cost %s less, the sale is real"
+mechanic.campaign_ticks.name,war arc time
+mechanic.campaign_ticks.text,"war arcs take %s less time, speedrun it"
+mechanic.soldier_posts.name,soldier spots
+mechanic.soldier_posts.text,"war buildings have %s more soldier spots, the roster is cooked"
+mechanic.campaign_reward.name,war loot
+mechanic.campaign_reward.text,"war arcs bring back %s more loot, we eat"
+mechanic.deal_slots.name,deals per civ
+mechanic.deal_slots.text,"every civ offers %s more deal, the menu is huge"
+mechanic.alliance_cost.name,ally cost
+mechanic.alliance_cost.text,"allies cost %s less, a whole discount era"
+mechanic.appease_cost.name,Peace fee
+mechanic.appease_cost.text,"buying peace from a harbinger costs %s less, the apology is cheap"
+tech.language.code,YAPS
+tech.fire_mastery.name,Fire Mastery Arc
+tech.fire_mastery.description,"Fire is on a leash now. Snacks keep longer and the cave stays toasty, no cap."
+tech.tool_making.name,Tool Glow-Up
+tech.tool_making.code,SKILZ
+tech.tool_making.description,"Rocks with edges, and suddenly every worker is the most productive person in the room."
+tech.ritual.name,Ritual Rizz
+tech.ritual.code,AURA
+tech.ritual.description,"Our tribe finally gets its first sacred spots. Group rituals hit different, and the group chat is holy now."
+tech.primitive_writing.name,Caveman Texting
+tech.primitive_writing.code,POSTS
+tech.primitive_writing.description,"Doodles that actually mean something. Ideas finally survive the telephone game, fr."
+tech.pottery.name,Clay Vibes
+tech.pottery.code,MUGS
+tech.pottery.description,"Clay jars for the snacks and the bag, storage and trade and zero spills."
+tech.animal_husbandry.name,Pet Squad
+tech.animal_husbandry.code,PETZ
+tech.animal_husbandry.description,"Animals clock in now, dinner and chores both. They are not thrilled, but they show up."
+tech.woodworking.name,Woodwork Era
+tech.woodworking.code,LOGZ
+tech.woodworking.description,"Pegs, joints and planks, and the timber finally stops being a log with ambitions."
+tech.stoneworking.name,Rock Sculpting Era
+tech.stoneworking.description,"Stone gets cut into something that stays up. Build the walls, bestie, the rocks are ready."
+tech.calendar.name,Date Check
+tech.calendar.code,DATES
+tech.calendar.description,Counting the days so the feasts land on time and nobody misses the season. Major planner energy.
+tech.map_making.name,Pin Drop Era
+tech.map_making.code,PINS
+tech.map_making.description,Drawn maps mean we know where things are and how to get there. We are not lost anymore.
+tech.currency.name,Bag Economy
+tech.currency.code,BAGS
+tech.currency.description,"Standard money and the gold goes up. Everybody's bag is heavier, and that's the vibe."
+tech.boatbuilding.name,Sail Squad
+tech.boatbuilding.code,SAILS
+tech.boatbuilding.description,Hulls and oars bring in the catch and haul goods along the coast. The fish never saw it coming.
+tech.agriculture.name,Snack Farm
+tech.agriculture.code,SNACK
+tech.agriculture.description,"Farming on a schedule, so the food shows up every day like a bestie who never cancels."
+tech.the_wheel.name,Wheel Energy
+tech.the_wheel.description,"Carts haul what backs never could, to the build site and the market. Backs said never mind."
+tech.masonry.name,Masonry Rizz
+tech.masonry.description,Stone building techniques that are advanced and aggressive. Walls with serious rizz.
+tech.bronze_working.name,Bronze Era Unlocked
+tech.bronze_working.description,"Copper and tin get mixed into tools that last. Sturdy and shiny, the girlies are obsessed."
+tech.military_tactics.name,Battle Strats
+tech.military_tactics.code,BEEF
+tech.military_tactics.description,"Organized fights and defense plans, and the army finally understood the assignment."
+tech.priesthood.name,Holy Bosses
+tech.priesthood.description,Full-time priests keep the rites and the spirits happy. They take the job very seriously.
+tech.mathematics.name,Math Brain
+tech.mathematics.code,MATHS
+tech.mathematics.description,Advanced calculation pumps out knowledge. The numbers do the math and we do the glowing.
+tech.exploration.name,Main Quest Era
+tech.exploration.description,"Maps or boats, and the will to see what's past the next ridge. Main character behavior, scenic route."
+tech.irrigation.name,Hydrate Era
+tech.irrigation.description,Channels bring the river to the fields. The crops are hydrated and thriving.
+tech.road_building.name,Road Trip Era
+tech.road_building.code,PATHS
+tech.road_building.description,"Paved roads speed up trade and movement. Smooth roads, smooth vibes, no potholes in this era."
+tech.iron_smelting.name,Iron Glow-Up
+tech.iron_smelting.description,Hotter furnaces mean more iron. The metal gets a glow-up and the furnaces are a little unhinged.
+tech.quarrying.name,Rock Grind
+tech.quarrying.code,ROCKS
+tech.quarrying.description,Open pits dig out marble and ore from the hills. The hills are getting ground down and nobody is sorry.
+tech.siege_warfare.name,Siege Mode
+tech.siege_warfare.description,"Siege engines and fort tricks for taking walls down. We are not sorry, we are just built different."
+tech.drama.name,Drama Arc
+tech.drama.description,Plays and choruses give the city its festival days. The plot twists are scheduled and the tea is hot.
+tech.philosophy.name,Big Brain Hours
+tech.philosophy.description,"Systematic thinking about the big questions. Sitting in the thinking chair until it clicks, no cap."
+tech.envoys.name,Envoy Bestie
+tech.envoys.code,PROXY
+tech.envoys.description,Trusted messengers speak for you in other courts. They are the friend who says the right thing at the party.
+tech.the_plough.name,Plow Era
+tech.the_plough.code,TILLS
+tech.the_plough.description,An iron share turns heavier soil than a digging stick ever could. The dirt did not stand a chance.
+tech.civil_engineering.name,City Builder Era
+tech.civil_engineering.description,"Large-scale construction and infrastructure. The city is getting a full glow-up, one road at a time."
+tech.metal_casting.name,Molten Drip
+tech.metal_casting.code,MOLDS
+tech.metal_casting.description,Molten metal poured into moulds makes the same part a hundred times. Drip on repeat.
+tech.imperial_legions.name,Imperial Legion Energy
+tech.imperial_legions.code,SQUAD
+tech.imperial_legions.description,Professional standing armies with serious discipline. They are on the clock 24/7 and nobody is upset.
+tech.theology.name,Faith Hot Takes
+tech.theology.description,Faith and a tight crew: organized religion keeps everybody together and the Sunday plans locked in.
+tech.alchemy.name,Potion Era
+tech.alchemy.description,"Mixing stuff in pots until something actually changes. Proto-chemistry, but make it a glow-up montage."
+tech.scholasticism.name,Debate Club Era
+tech.scholasticism.code,NOTES
+tech.scholasticism.description,"Every question gets debated in school, then written down so nobody can argue. Debate club is the flex."
+tech.banking.name,Vault Energy
+tech.banking.code,VAULT
+tech.banking.description,"Banks make the gold grow and stash it in a vault, so the bag stays secure."
+tech.feudalism.name,Land Lord Era
+tech.feudalism.description,"Land gets handed out and the workers move in. Real estate, but make it medieval."
+tech.chronometry.name,Clock Energy
+tech.chronometry.description,"Clocks that never lie, and everything runs faster. Speedrun the calendar."
+tech.guilds.name,Crew Era
+tech.guilds.code,CREWS
+tech.guilds.description,"Masters, apprentices and fixed prices. Every trade runs on the same drip, and it is a whole squad."
+tech.steel_forging.name,Steel Drip
+tech.steel_forging.description,Iron gets refined into steel for tools and weapons with serious main character glow.
+tech.fortification.name,Wall Mode
+tech.fortification.code,WALLS
+tech.fortification.description,"Curtain walls and gatehouses make a raid cost more than it takes. Not it, raiders."
+tech.patronage.name,Patron Energy
+tech.patronage.code,STANS
+tech.patronage.description,"Rich patrons pay for the arts and the science. Main character funding, no notes."
+tech.printing_press.name,Print Era
+tech.printing_press.description,Printed books carry one idea to a thousand readers at once. The hot take goes viral before lunch.
+tech.navigation.name,Compass Era
+tech.navigation.description,"Stars, a compass and a log line. Ships leave the coast and still find their way home, no GPS needed."
+tech.crop_rotation.name,Crop Rest Era
+tech.crop_rotation.code,TURNS
+tech.crop_rotation.description,"Fields take turns at wheat, roots and rest, and none of them burns out."
+tech.architecture.name,Blueprint Rizz
+tech.architecture.code,PLANS
+tech.architecture.description,"Drawn plans and worked proportions before the first stone is laid. Plan the aesthetic, then build it."
+tech.blast_furnace.name,Hot Oven Era
+tech.blast_furnace.description,"Taller stacks and a harder blast turn out metal by the ton. It is bigger, hotter and giving industrial."
+tech.gunpowder.name,Boom Energy
+tech.gunpowder.code,BOOMS
+tech.gunpowder.description,Explosive weapons raise military power. Things go boom and the enemy gets the message.
+tech.baroque_arts.name,Extra Art Era
+tech.baroque_arts.description,"Music and ornament on a scale built to overwhelm. Too much gold leaf, zero regrets."
+tech.scientific_method.name,Test It Era
+tech.scientific_method.description,"Guess, test, write it down, then let someone try to break it. Peer review is the ultimate flex."
+tech.cartography.name,Map Drip
+tech.cartography.description,Detailed maps bring expeditions home sooner and richer. The trips are shorter and the bag is fuller.
+tech.mercantilism.name,Trade Hustle
+tech.mercantilism.code,DEALZ
+tech.mercantilism.description,"Every nation hustles for the most bag, and national trade policy maximizes the wealth. The hustle is real."
+tech.embassies.name,Embassy Hangout
+tech.embassies.description,"Resident envoys in every court, and a house to keep them in. Bestie in every court, the house is the hangout."
+tech.new_world_crops.name,New World Snacks
+tech.new_world_crops.code,CORNZ
+tech.new_world_crops.description,"Maize, potatoes and beans cross the ocean and feed twice the mouths. The snacks multiplied and so did the crew."
+tech.surveying.name,Land Check
+tech.surveying.code,LINES
+tech.surveying.description,"Chain, level and theodolite: the ground gets measured before anything goes up. Measure twice, no cap."
+tech.coke_smelting.name,Coke Glow
+tech.coke_smelting.description,Coal baked into coke burns hot enough to smelt without a forest. No trees were harmed in this era.
+tech.colonialism.name,Overseas Land Grab
+tech.colonialism.code,TURFS
+tech.colonialism.description,"Overseas territory, claimed and expanded. The map gets bigger and so does the drama."
+tech.romanticism.name,Feelings Era
+tech.romanticism.description,"Feeling over reason, on the stage and on the page. Big emotions and dramatic monologues, we are so sensitive."
+tech.encyclopedia.name,Know-It-All Book
+tech.encyclopedia.description,"Everything known, set in order and put in print. The brain dump of the century, all in one book."
+tech.railroads.name,Rail Gang
+tech.railroads.code,TRACK
+tech.railroads.description,Rail networks connect your civilization. The trains run on time and so does the drama.
+tech.geographic_societies.name,Explorer Clubs
+tech.geographic_societies.code,CLUBS
+tech.geographic_societies.description,Learned societies fund the expeditions and publish what they find. The nerds fund the trips and drop the receipts.
+tech.concert_of_nations.name,Summit Squad
+tech.concert_of_nations.code,TABLE
+tech.concert_of_nations.description,"Big powers sort their beef at one table and keep the peace on paper. Summit energy, everyone is on their best behavior."
+tech.seed_drill.name,Seed Drip
+tech.seed_drill.code,SEEDS
+tech.seed_drill.description,"Seed sown in rows at an even depth, and none thrown to the birds. Perfect rows, zero wasted snacks."
+tech.industrialization.name,Factory Era
+tech.industrialization.description,Factory systems raise all production. Everything gets pumped out and the output hits different.
+tech.clockwork_automation.name,Clockwork Auto
+tech.clockwork_automation.description,Mechanical automation raises game speed. The gears do the work and the timeline gets faster.
+tech.interchangeable_parts.name,Swap-Ready Parts
+tech.interchangeable_parts.code,PARTS
+tech.interchangeable_parts.description,"Every part made to one gauge fits every machine of its kind. Swap it, click it, done, no drama."
+tech.steam_pumps.name,Pump Up Era
+tech.steam_pumps.code,PUMPS
+tech.steam_pumps.description,"Engines drain the deep workings, and the mines go further down. The deep mines are a full dive now."
+tech.rifling.name,Sharpshooter Era
+tech.rifling.code,SNIPE
+tech.rifling.description,Precision firearms improve military effectiveness. The aim is cracked and the army is locked in.
+tech.steam_power.name,Steam Era
+tech.steam_power.description,Steam engines drive the mills and the mines. The machines do the work and the workers do the vibes.
+tech.museums.name,Museum Clout
+tech.museums.code,RELIC
+tech.museums.description,"National treasures behind glass, open to anyone on a Sunday. Culture on display and the frames are aesthetic."
+tech.public_education.name,Free School Era
+tech.public_education.code,CLASS
+tech.public_education.description,"Every child in a schoolroom, and every schoolroom teaching the same lessons. School for everybody, nobody is left on read."
+tech.telecommunications.name,Ping Network
+tech.telecommunications.code,PINGS
+tech.telecommunications.description,"Telegraphs and early phone lines: dots, dashes and a ring that lands before the letter does."
+tech.sanitation.name,Clean Town Era
+tech.sanitation.description,"Sewers, clean water and paved streets let a city grow without getting sick. The streets are paved and everybody is thriving."
+tech.mass_production.name,Mass Drop
+tech.mass_production.description,"Standard goods, made in long runs by the thousand. Thousands of the same thing and nobody is ashamed."
+tech.geology.name,Rock Reading Era
+tech.geology.code,STRAT
+tech.geology.description,"Strata get read like a book, and the seam is found before the shaft is sunk. Rocks are the tea."
+tech.general_staff.name,Brass Energy
+tech.general_staff.code,BRASS
+tech.general_staff.description,"Officers whose whole job is planning the war before it is fought. Planning arc, never misses a beat."
+tech.electrification.name,Power Up Era
+tech.electrification.code,VOLTS
+tech.electrification.description,Electric power reaches homes and factories. The lights are on and the vibe is electric.
+tech.radio.name,Airwaves Era
+tech.radio.description,Wireless communication reaches the masses. Everyone hears the same hot take at the same time.
+tech.modern_physics.name,Quark Era
+tech.modern_physics.code,QUARK
+tech.modern_physics.description,"Relativity and the quantum: the old certainties, measured and found a little short. Physics is unhinged and we love it."
+tech.wire_transfers.name,Bag Teleport
+tech.wire_transfers.description,Money goes down a telegraph wire and lands before the letter that announces it. Bag delivered faster than the text.
+tech.fertilizers.name,Grow Mode
+tech.fertilizers.code,GROWS
+tech.fertilizers.description,Nitrogen fixed from the air feeds fields that manure never could. The soil is glowing.
+tech.assembly_line.name,Conveyor Hustle
+tech.assembly_line.description,"Work moves to the worker, one step at a time. Nobody walks, the job walks to you."
+tech.chemical_engineering.name,Lab Glow
+tech.chemical_engineering.code,LABZ
+tech.chemical_engineering.description,"Industrial chemistry and synthetic materials. Lab coat era, and the materials are made in house."
+tech.mechanized_warfare.name,Tank Era
+tech.mechanized_warfare.code,TANKS
+tech.mechanized_warfare.description,Engines and armor take the place of the horse and the charge. The horses retired and the tanks showed up.
+tech.power_distribution.name,Grid Glow
+tech.power_distribution.code,WIRES
+tech.power_distribution.description,AC power grids span entire regions. The grid covers the whole map and we are plugged in.
+tech.aviation.name,Sky Era
+tech.aviation.description,Powered flight shrinks every journey. The map got smaller and the sky is the limit.
+tech.cinema.name,Movie Night
+tech.cinema.code,REELS
+tech.cinema.description,"Entire towns sit in the dark watching the same plot twist. Popcorn, pure chaos."
+tech.big_science.name,Mega Lab Era
+tech.big_science.code,MEGAS
+tech.big_science.description,"Laboratories the size of towns, with budgets to match. The labs are massive and the budget is massive too."
+tech.corporations.name,Brand Empire
+tech.corporations.code,BRAND
+tech.corporations.description,Firms that outlive their founders and trade on every continent. The company is the main character now.
+tech.green_revolution.name,Green Era
+tech.green_revolution.description,"New strains of wheat and rice double the harvest of the same field. Same field, double the snacks."
+tech.prefabrication.name,Prefab Pop
+tech.prefabrication.code,BOLTS
+tech.prefabrication.description,"Buildings made in a factory, then bolted together on site. Pre-built and pre-hyped, zero drama."
+tech.plastics.name,Plastic Fantastic
+tech.plastics.description,"Oil turned into anything, in any shape, by the ton. The shelves are full and the shapes are unhinged."
+tech.nuclear_deterrence.name,Doomsday Stare-Off
+tech.nuclear_deterrence.code,PEACE
+tech.nuclear_deterrence.description,"Mutually assured destruction keeps the peace. Nobody blinks, and somehow everybody lives."
+tech.military_industrial_complex.name,Beef Industrial Complex
+tech.military_industrial_complex.code,WARCO
+tech.military_industrial_complex.description,"Armies, factories and laboratories on one budget, in peace as in war. The beef machine never sleeps."
+tech.nuclear_fission.name,Atom Split Era
+tech.nuclear_fission.code,SPLIT
+tech.nuclear_fission.description,"Splitting the atom for energy and weapons. Big power, big risk, and the vibes are electric."
+tech.civilian_reactors.name,Chill Reactors
+tech.civilian_reactors.code,POWER
+tech.civilian_reactors.description,"Reactors built for the arms race get a calmer job on the grid. Unlocks the Nuclear Plant, bestie."
+tech.rocketry.name,Rocket Energy
+tech.rocketry.code,BLAST
+tech.rocketry.description,"Rockets raise military power and expedition rewards. Boom up, and the trips pay out bigger."
+tech.television.name,Screen Time
+tech.television.code,SHOWS
+tech.television.description,"One screen in every front room, and the whole country is watching. Unlocks the Monument of Ages, no cap."
+tech.information_theory.name,Bits and Vibes
+tech.information_theory.code,BITS
+tech.information_theory.description,"Any message is a count of yes and no, and the count can travel without loss. Everything is yes or no, and the yeses arrive clean."
+tech.containerization.name,Box Hustle
+tech.containerization.code,BOXES
+tech.containerization.description,"One steel box fits every ship, train and truck, and the docks empty in hours. Box it, ship it, bestie."
+tech.suburbs.name,Cul-de-sac Era
+tech.suburbs.code,YARDS
+tech.suburbs.description,"Houses, lawns and cars for every family, an hour from work. The lawn is the main character."
+tech.nanofabrication.name,Tiny Factory Era
+tech.nanofabrication.code,TINY
+tech.nanofabrication.description,"Nanobot swarms assemble structures atom by atom, and construction costs drop. Tiny builders, huge savings."
+tech.titanium_alloys.name,Titanium Drip
+tech.titanium_alloys.code,SHINY
+tech.titanium_alloys.description,"Light, strong metal for anything that has to fly or last. Stunningly strong and completely unbothered."
+tech.special_forces.name,Elite Squad
+tech.special_forces.code,SNEAK
+tech.special_forces.description,"Small teams that are in and out before the war is declared. Quietly iconic, nobody even saw them."
+tech.electricity_tech.name,Hyper Volts
+tech.electricity_tech.code,WATTS
+tech.electricity_tech.description,High-voltage grids carry power across a continent. The power is high and the whole continent is lit.
+tech.satellite_tech.name,Sky Dish Era
+tech.satellite_tech.code,ORBIT
+tech.satellite_tech.description,"Orbital satellites for communication and surveillance. The sky is watching, and so is the group chat."
+tech.computers.name,Brain Boxes
+tech.computers.code,NERDZ
+tech.computers.description,Machines that do the math of a thousand clerks and never need a break. Nobody is clocking out.
+tech.social_media.name,Feed Era
+tech.social_media.code,FEEDS
+tech.social_media.description,Mass digital communication platforms. Everyone is online at once and the drama is trending.
+tech.search_engines.name,Look It Up Era
+tech.search_engines.code,QUERY
+tech.search_engines.description,"Everything written down, found in half a second. Ask anything, the answer is one tap away."
+tech.e_commerce.name,Online Shopping Spree
+tech.e_commerce.code,CARTS
+tech.e_commerce.description,"Shops are pages now, and the till never closes. Bestie, the cart is full again."
+tech.medical_nanobots.name,Tiny Doctors
+tech.medical_nanobots.code,HEALS
+tech.medical_nanobots.description,"Tiny doctors in the bloodstream keep workers healthy, and that means more housing and food."
+tech.internet_of_things.name,Everything Online
+tech.internet_of_things.code,GIZMO
+tech.internet_of_things.description,Fridges and tractors go online and start snitching. Unlocks the Smart Farm and the Smart Complex.
+tech.embedded_systems.name,Chip Squad
+tech.embedded_systems.code,CHIPS
+tech.embedded_systems.description,"Small computer brains sit inside every machine, minding it. Babysitting the whole factory."
+tech.precision_mining.name,Laser Mining
+tech.precision_mining.code,LASER
+tech.precision_mining.description,"Sensors read the rock ahead of the drill, and nothing is dug twice. No wasted digs, the rock is cooked."
+tech.cybersecurity.name,Firewall Glow
+tech.cybersecurity.code,GUARD
+tech.cybersecurity.description,"Defense against digital threats. Hackers are not on the guest list, bestie."
+tech.smart_grid.name,Brainy Grid
+tech.smart_grid.code,SMRTZ
+tech.smart_grid.description,"Power shows up where it is wanted before the switch is even thrown. Main character grid, no notes."
+tech.space_stations.name,Orbit Crew Era
+tech.space_stations.code,LOFTS
+tech.space_stations.description,"Crews that live in orbit for months and watch the whole world turn. Living room with a view, and the view is unreal."
+tech.internet.name,Web Era
+tech.internet.code,WEBZ
+tech.internet.description,Global network connecting all of humanity. Everybody is online and the group chat is the planet.
+tech.virtual_reality.name,VR Vacation
+tech.virtual_reality.description,"Anywhere you like, from a chair, and nearly as good. Touching grass is optional."
+tech.open_science.name,Open Lab Era
+tech.open_science.code,FREE
+tech.open_science.description,"Every paper and every dataset, free to read the day it is finished. No paywall, very generous."
+tech.automated_logistics.name,Robot Delivery Era
+tech.automated_logistics.code,SHIPZ
+tech.automated_logistics.description,"Warehouses that pick, pack and send without a hand on the parcel. Parcels fly out and nobody touched a thing."
+tech.global_village.name,Global Hood
+tech.global_village.code,HOOD
+tech.global_village.description,"Everyone is a neighbor now, and neighbors do business. The whole world is one hood, and the hood is open."
+tech.gene_editing.name,DNA Remix
+tech.gene_editing.code,EDITS
+tech.gene_editing.description,"Crops rewritten a letter at a time, for drought, blight and yield. The crops got a remix and it hits."
+tech.self_replication.name,Copy-Paste Era
+tech.self_replication.code,CLONE
+tech.self_replication.description,"Nanobots that build copies of themselves. Copy, paste, copy, paste, and the swarm never ends."
+tech.nano_alloys.name,Nano Shine
+tech.nano_alloys.code,GLOSS
+tech.nano_alloys.description,"Metal laid down grain by grain, with no flaw to start a crack. Flawless and shiny, no drama."
+tech.drone_warfare.name,Buzz Wars
+tech.drone_warfare.code,BUZZY
+tech.drone_warfare.description,"Pilots sit a thousand miles away and still make it home for dinner. Remote control, main character behavior."
+tech.grid_storage.name,Battery Bank
+tech.grid_storage.code,JUICE
+tech.grid_storage.description,"Batteries the size of buildings hold the noon sun for the evening. The sun gets saved for later, a W for planning."
+tech.reusable_launchers.name,Rockets Round Two
+tech.reusable_launchers.code,AGAIN
+tech.reusable_launchers.description,"Rockets land where they took off, and fly again next week. Round two, and the landing was clean."
+tech.machine_learning.name,Robot Study Arc
+tech.machine_learning.code,BRAIN
+tech.machine_learning.description,Algorithms that learn and improve on their own. The bots study nonstop and the grades are immaculate.
+tech.cloud_computing.name,Floaty Brains
+tech.cloud_computing.code,SKYZ
+tech.cloud_computing.description,"Distributed computing at global scale. Brains in the cloud, everywhere at once."
+tech.general_ai.name,Big Bot Energy
+tech.general_ai.code,BOTZ
+tech.general_ai.description,Machines that get any question and ask better ones back. The bot asks the real questions.
+tech.holography.name,Hologram Hype
+tech.holography.code,HOLOS
+tech.holography.description,"Light learns to lie convincingly, and every wall becomes an ad. Unlocks the Holographic Theater, the lighting is unreal."
+tech.neural_interface.name,Mind Link
+tech.neural_interface.code,MINDZ
+tech.neural_interface.description,Direct brain-computer interface technology. Plug into the brain and the brain plugs back in.
+tech.blockchain.name,Chain Gang
+tech.blockchain.code,CHAIN
+tech.blockchain.description,"Decentralized trustless systems. No boss, no middleman, just the ledger and the trust."
+tech.synthetic_food.name,Lab Snacks
+tech.synthetic_food.code,VATS
+tech.synthetic_food.description,"Protein grown in a vat, shaped like whatever sells. Snacks in any shape, and the vibes are wild."
+tech.cybernetics.name,Bot Body Era
+tech.cybernetics.code,ROBOS
+tech.cybernetics.description,"Mechanical augmentation of the human body. Upgrade the bod, add a few gears, and keep scrolling."
+tech.dark_crystal_mining.name,Dark Gem Hunt
+tech.dark_crystal_mining.code,GEMZ
+tech.dark_crystal_mining.description,"Crystals that bend light the wrong way, cut from the deepest rock. The gems are dark and the hunt is gorgeous."
+tech.augmented_soldiers.name,Super Soldiers
+tech.augmented_soldiers.code,BUFFS
+tech.augmented_soldiers.description,"Soldiers rebuilt to see in the dark and carry twice the load. Built different, and the load is no problem."
+tech.dark_energy.name,Dark Energy Era
+tech.dark_energy.code,DARKZ
+tech.dark_energy.description,Power drawn from the pressure that pushes the universe apart. The universe is pushing and we are pulling.
+tech.lunar_outposts.name,Moon Base Era
+tech.lunar_outposts.code,MOONZ
+tech.lunar_outposts.description,"Permanent crew on the Moon, and a harbor for everything going further. The Moon has a crew now."
+tech.darknets.name,Shadow Net
+tech.darknets.code,SHADE
+tech.darknets.description,"Networks under the network, where nobody is who they say. Nobody is who they say, and that is the whole vibe."
+tech.neural_art.name,Brainwave Art
+tech.neural_art.code,VIBES
+tech.neural_art.description,"Art played straight into the brain, no canvas in between. Canvas who?"
+tech.unified_theory.name,Everything Theory
+tech.unified_theory.code,ONEZ
+tech.unified_theory.description,One set of equations for the very large and the very small. Physics finally got its life together.
+tech.maglev_transit.name,Float Train
+tech.maglev_transit.code,FLOAT
+tech.maglev_transit.description,"Superconducting rails float the freight across the city at the speed of a mild panic. Unlocks the Energy Exchange, no cap."
+tech.closed_biospheres.name,Glass Bubble Era
+tech.closed_biospheres.code,GREEN
+tech.closed_biospheres.description,"Sealed domes that feed, water and air everyone inside. Cozy bubble, the vibes are contained."
+tech.molecular_assembly.name,Molecule Crafting
+tech.molecular_assembly.code,PRINT
+tech.molecular_assembly.description,"Parts grown to shape, molecule by molecule, with nothing to cut away. Zero waste, maximum drip."
+tech.superconductors.name,Zero Loss Drip
+tech.superconductors.code,ZEROS
+tech.superconductors.description,Zero-resistance materials lose nothing between the reactor and the store. Not a single watt gets ghosted.
+tech.plasma_weapons.name,Star Zap Weapons
+tech.plasma_weapons.code,ZAPZ
+tech.plasma_weapons.description,"Contained star, aimed like a bolt. Pew pew, but make it a sun."
+tech.fusion_power.name,Sun in a Box
+tech.fusion_power.code,STARZ
+tech.fusion_power.description,"Controlled fusion adds electricity and plasma. A sun on a leash, and the grid is buzzing."
+tech.plasma_physics.name,Hot Matter Science
+tech.plasma_physics.code,HOTZ
+tech.plasma_physics.description,"Mastery of superheated matter states. The stuff is hot, the science is hotter, and the lab is unbothered."
+tech.fusion_drives.name,Zoom Drive
+tech.fusion_drives.code,ZOOM
+tech.fusion_drives.description,"Torch burns for weeks, reaching the outer planets in one season. Long burn, big zoom."
+tech.quantum_networking.name,Spooky Network
+tech.quantum_networking.code,SPOOK
+tech.quantum_networking.description,"Two machines that share a state, and a line nobody can tap. Spooky action, untappable."
+tech.overview_effect.name,Big View Energy
+tech.overview_effect.code,WOWED
+tech.overview_effect.description,"Everyone who has seen the whole world from outside comes home changed. The planet looks different now, bestie."
+tech.deep_space_astronomy.name,Deep Space Stargazing
+tech.deep_space_astronomy.code,PEEKS
+tech.deep_space_astronomy.description,"Telescopes beyond the air and the glare, looking back to the first light. Stargazing, but make it ancient."
+tech.asteroid_claims.name,Space Rock Dibs
+tech.asteroid_claims.code,STAKE
+tech.asteroid_claims.description,"Rock, registry number and a company that owns what is inside it. Dibs called, the rock is ours."
+tech.stellar_cartography.name,Star Map Era
+tech.stellar_cartography.code,ATLAS
+tech.stellar_cartography.description,"Every star within reach, charted with its worlds and its hazards. The sky is mapped and nothing is a surprise."
+tech.hydroponics.name,Water Garden Glow
+tech.hydroponics.code,SIPZ
+tech.hydroponics.description,"Roots in running water under lamps: a harvest every month, anywhere. Plant parents in space, bestie."
+tech.zero_g_manufacturing.name,Floating Factory
+tech.zero_g_manufacturing.code,ZEROZ
+tech.zero_g_manufacturing.description,Space-based manufacturing for perfect materials. The factory floats and the materials come out flawless.
+tech.asteroid_refining.name,Space Rock Refinery
+tech.asteroid_refining.code,SMELT
+tech.asteroid_refining.description,"Ore smelted where it is mined, with the Sun for a furnace. Free furnace, and the sun is on the clock."
+tech.orbital_defense.name,Orbit Bodyguards
+tech.orbital_defense.code,FENCE
+tech.orbital_defense.description,"Nothing crosses the sky unseen, and nothing lands without permission. Security is not optional."
+tech.orbital_solar.name,Space Sunbeam
+tech.orbital_solar.code,SUNNY
+tech.orbital_solar.description,Mirrors in permanent daylight beam their haul down. The sun never clocks out.
+tech.orbital_mechanics.name,Orbit Math
+tech.orbital_mechanics.code,SPINS
+tech.orbital_mechanics.description,"Advanced spaceflight and orbital dynamics. Physics for the stars, and the math is bussin."
+tech.space_mining.name,Space Rock Grind
+tech.space_mining.code,ROIDZ
+tech.space_mining.description,"Asteroid and lunar resource extraction. Rocks from the sky and the Moon, and nobody asked for permission."
+tech.space_elevator.name,Sky Elevator
+tech.space_elevator.code,LIFTS
+tech.space_elevator.description,Cable from the ground to orbit: freight goes up for the price of the electricity. Cheap ride to the stars.
+tech.orbital_relays.name,Sky Relays
+tech.orbital_relays.code,NODES
+tech.orbital_relays.description,"Ring of relays, and no corner of the system out of touch. Nobody is left on read, even in space."
+tech.void_contemplation.name,Void Vibe Check
+tech.void_contemplation.code,ZENZ
+tech.void_contemplation.description,"Years between the stars teach a crew to sit with the dark, and to bargain with it. The void is watching."
+tech.xenology.name,Alien Studies
+tech.xenology.code,ALIEN
+tech.xenology.description,Study of life that owes nothing to ours. The aliens are living their best lives and we are reading about it.
+tech.interstellar_trade.name,Star Bag Trade
+tech.interstellar_trade.code,CARGO
+tech.interstellar_trade.description,Cargo that outruns the news of its own departure. The bag ships before the group chat hears about it.
+tech.protein_synthesis.name,Protein Lab
+tech.protein_synthesis.code,PROTZ
+tech.protein_synthesis.description,"Food built from its elements, to any recipe, with no field at all. The recipe is the vibe and the field is gone."
+tech.hull_printing.name,3D Ship Print
+tech.hull_printing.code,SHELL
+tech.hull_printing.description,"Ship hulls laid down in one piece, in the dark, by machines. Print it, sail it, the machines do the sweating."
+tech.stellar_core_mining.name,Star Core Gold Rush
+tech.stellar_core_mining.code,GOLDZ
+tech.stellar_core_mining.description,"Dead stars are mostly metal, if you can stand the heat of getting there. Dead stars are secretly loaded."
+tech.fleet_doctrine.name,Fleet Game Plan
+tech.fleet_doctrine.code,NAVY
+tech.fleet_doctrine.description,"How to fight a war where the order arrives after the battle. The plan is lagging, the fleet is not."
+tech.stellar_engineering.name,Star Shaping
+tech.stellar_engineering.code,SHAPE
+tech.stellar_engineering.description,Harnessing and shaping stars themselves. The sky is the workshop and the stars are the materials.
+tech.warp_drive.name,Warp Speed Era
+tech.warp_drive.code,WARPZ
+tech.warp_drive.description,Faster-than-light propulsion. The speed of light is so yesterday.
+tech.galactic_network.name,Galaxy Group Chat
+tech.galactic_network.code,HIVES
+tech.galactic_network.description,"Every colony on one network, whatever the distance. One group chat for the whole galaxy."
+tech.galactic_memory.name,Galaxy Memory Lane
+tech.galactic_memory.code,SAGAS
+tech.galactic_memory.description,"Every song, story and quarrel of every world, kept where none can be lost. Nobody gets to forget the drama."
+tech.cosmology.name,Universe Lore
+tech.cosmology.code,COSMZ
+tech.cosmology.description,"Where everything came from, and how long it has left. The origin story and the expiration date."
+tech.federation_charter.name,Galaxy Pact
+tech.federation_charter.code,PACTS
+tech.federation_charter.description,"One law of trade and passage for every signatory, whatever they breathe. Same rules for every crew, no drama."
+tech.matter_conversion.name,Rock to Bread
+tech.matter_conversion.code,MAKER
+tech.matter_conversion.description,"Rock in, bread out. Walls too, and fresh air, lowkey magic."
+tech.dyson_engineering.name,Sun Wrap Engineering
+tech.dyson_engineering.code,HALOZ
+tech.dyson_engineering.description,"Building at the scale of a star's whole output. Sun-sized flex, and the star is part of the build."
+tech.neutron_mining.name,Neutron Ore Hunt
+tech.neutron_mining.code,NUTZ
+tech.neutron_mining.description,"One teaspoon of the stuff outweighs a mountain, and it is all ore. Tiny spoon, huge bag."
+tech.armada_command.name,Armada Boss Mode
+tech.armada_command.code,ARMYZ
+tech.armada_command.description,"Thousands of ships answer to one mind. One boss, zero group projects."
+tech.antimatter_synthesis.name,Antimatter Lab Drip
+tech.antimatter_synthesis.code,ANTIZ
+tech.antimatter_synthesis.description,"Controlled production of antimatter. The opposite of stuff, made on purpose."
+tech.galactic_navigation.name,Galaxy GPS
+tech.galactic_navigation.code,COMPS
+tech.galactic_navigation.description,"Charting paths across the galaxy. Never lost, always on the route."
+tech.terraforming.name,Planet Makeover
+tech.terraforming.code,PLANT
+tech.terraforming.description,"Dead worlds get air and seas, and a few centuries to settle. The makeover takes time, bestie."
+tech.mind_uploading.name,Brain Backup
+tech.mind_uploading.code,SAVEZ
+tech.mind_uploading.description,People copied out of the body and still arguing. The backup is still in the group chat.
+tech.reality_art.name,Real Maybe Art
+tech.reality_art.code,REALZ
+tech.reality_art.description,"Works made of what might have happened, shown beside what did. Art about the timeline choices."
+tech.quantum_mechanics.name,Quantum Vibes
+tech.quantum_mechanics.code,WEIRD
+tech.quantum_mechanics.description,Mastery of quantum phenomena at all scales. The tiniest stuff is wild and we are in control.
+tech.timeless_archive.name,Forever Archive
+tech.timeless_archive.code,STASH
+tech.timeless_archive.description,"Everything ever known, and every answer already looked up. Nothing left to search for."
+tech.probability_markets.name,Odds Market
+tech.probability_markets.description,"Prices on every outcome, and buyers for the ones that never happen. Betting on the nevers."
+tech.quantum_cultivation.name,Quantum Farm Era
+tech.quantum_cultivation.code,REAPZ
+tech.quantum_cultivation.description,"Every harvest that could have been, and you pick the best one. Chef's kiss on the timeline."
+tech.reality_manipulation.name,Reality Editing
+tech.reality_manipulation.code,BENDS
+tech.reality_manipulation.description,"Bending the fabric of spacetime. Spacetime is getting edited, and the edit is clean."
+tech.reality_engineering.name,Reality Builders
+tech.reality_engineering.code,BLUEZ
+tech.reality_engineering.description,"Plans are drawn, and the building has always been there. The blueprint was there the whole time, fr."
+tech.quantum_metallurgy.name,Maybe Metal
+tech.quantum_metallurgy.code,MAYBE
+tech.quantum_metallurgy.description,Metals that only exist when they are needed. Ghost metal that shows up when it matters.
+tech.probability_warfare.name,Odds Warfare
+tech.probability_warfare.code,ODDZ
+tech.probability_warfare.description,"Battles fought in every way at once, and you keep the one you won. Parallel beef, and we keep the winning timeline."
+tech.zero_point_energy.name,Hum Power
+tech.zero_point_energy.code,HUMZ
+tech.zero_point_energy.description,"Power from the hum of empty space, which never runs down. Free hum, endless juice."
+tech.wormholes.name,Portal Shortcuts
+tech.wormholes.code,PORTL
+tech.wormholes.description,"Door in one sky that opens on another. Shortcut, no traffic."
+tech.quantum_computing.name,Qubit Brain
+tech.quantum_computing.code,QUBIT
+tech.quantum_computing.description,Quantum processing raises game speed. The brain goes fast and the timeline goes faster.
+tech.transcendence.name,Next Level Era
+tech.transcendence.code,LEVEL
+tech.transcendence.description,"Civilizations beyond physical limits. No body, no limits, peak main character."
+tech.omniversal_exchange.name,Multiverse Market
+tech.omniversal_exchange.code,MULTI
+tech.omniversal_exchange.description,Markets between every world that is and every world that might have been. Trade with universes that never happened.
+tech.singularity_engineering.name,Singularity Glow
+tech.singularity_engineering.code,HOLEZ
+tech.singularity_engineering.description,"Whole economies folded into a point that does the work. Compressed hustle, and the point is doing the heavy lifting."
+tech.omniversal_command.name,Multiverse Boss Mode
+tech.omniversal_command.code,BOSSZ
+tech.omniversal_command.description,"One council for every army in every version of events. Boss of every timeline, one group chat."
+tech_lane.faith.name,Vibes & Clout
+tech_lane.knowledge.name,Big Brain
+tech_lane.trade.name,Bags & Adventure
+tech_lane.agriculture.name,Snacks
+tech_lane.craft.name,Build & Glow
+tech_lane.materials.name,Drip
+tech_lane.military.name,Beef
+tech_lane.energy.name,Juice
+tech_lane.space.name,Sky & Space
+tech_lane.computing.name,Brainpower

@@ -43,7 +43,12 @@ type ActiveExpedition struct {
 	FailureRewards map[string]float64 `json:"failure_rewards,omitempty"`
 	Cost           map[string]float64 `json:"cost,omitempty"`
 	RoadEvents     []RoadEvent        `json:"road_events,omitempty"`
-	RoadEventsSeen []string           `json:"road_events_seen,omitempty"`
+	// RoadEventsSeen is the stories of the road events that fired, as read
+	// now. A save holds them as RoadTold (the same stories with the words of
+	// the script left to fill) and leaves this out, unless the mission was
+	// written by hand and has no RoadTold.
+	RoadEventsSeen []string   `json:"road_events_seen,omitempty"`
+	RoadTold       []RoadTold `json:"road_told,omitempty"`
 	// LuckSeed seeds the mission's own random stream, drawn from the game's
 	// RNG at launch; LuckDraws is how far that stream has been drawn, so a
 	// load resumes it where it stood. Luck is the first draw: the success
@@ -173,7 +178,47 @@ func (mm *MilitaryManager) CampaignPay(amount float64) float64 {
 func NewMilitaryManager() *MilitaryManager { return NewMilitaryManagerWith(rules.Core()) }
 
 // Rebind moves the manager onto set, whose clocks time its missions.
-func (mm *MilitaryManager) Rebind(set *rules.Set) { mm.rules = set }
+func (mm *MilitaryManager) Rebind(set *rules.Set) {
+	mm.rules = set
+	mm.redraw()
+}
+
+// redraw writes again every text the manager holds that was drawn from the
+// words of a script: the offers on the board, the missions under way (their
+// titles, places and road stories) and the returns log. Their words are held
+// by index, so the texts follow the script in force; the numbers are not
+// touched. It runs when the manager moves onto a ruleset and when a save is
+// loaded.
+func (mm *MilitaryManager) redraw() {
+	if mm.rules == nil {
+		return
+	}
+	for i := range mm.board.Slots {
+		if o := mm.board.Slots[i].Offer; o != nil {
+			if words, ok := mm.rules.MissionWords(o.Age); ok {
+				o.draw(words)
+			}
+		}
+	}
+	for _, a := range mm.active {
+		words, ok := mm.rules.MissionWords(a.Age)
+		if !ok {
+			continue
+		}
+		a.MissionOffer.draw(words)
+		if len(a.RoadTold) > 0 {
+			a.RoadEventsSeen = a.RoadEventsSeen[:0:0]
+			for _, rt := range a.RoadTold {
+				if rt.Event >= 0 && rt.Event < len(a.RoadEvents) {
+					a.RoadEventsSeen = append(a.RoadEventsSeen, tellRoadStory(words, a.roadPlace(), a.RoadEvents[rt.Event], rt.Text))
+				}
+			}
+		}
+	}
+	for i := range mm.returns {
+		mm.returns[i].draw(mm)
+	}
+}
 
 // NewMilitaryManagerWith creates a military manager on set.
 func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
@@ -439,7 +484,7 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		Experience:      mm.experience,
 		Rank:            mm.Rank(),
 		TotalLoot:       loot,
-		Returns:         slices.Clone(mm.returns),
+		Returns:         mm.returnsCopy(),
 		ReturnsMade:     mm.returnsMade,
 		ReturnsSeen:     mm.returnsSeen,
 	}
@@ -517,6 +562,7 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 		mission.luckSrc, mission.luckRNG = nil, nil
 		mission.RoadEvents = append([]RoadEvent(nil), entry.Mission.RoadEvents...)
 		mission.RoadEventsSeen = append([]string(nil), entry.Mission.RoadEventsSeen...)
+		mission.RoadTold = append([]RoadTold(nil), entry.Mission.RoadTold...)
 		mm.active = append(mm.active, &mission)
 	}
 	mm.board = MissionBoard{}
@@ -526,10 +572,14 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 	mm.completedCount = save.CompletedCount
 	mm.experience = max(0, save.Experience)
 	mm.returns = slices.Clone(save.Returns)
+	for i := range mm.returns {
+		mm.returns[i].Loot = maps.Clone(mm.returns[i].Loot)
+	}
 	mm.returnsMade, mm.returnsSeen = save.ReturnsMade, save.ReturnsSeen
 	if save.TotalLoot != nil {
 		mm.totalLoot = save.TotalLoot
 	}
+	mm.redraw()
 }
 
 // ActiveForSave returns deep copies of the missions under way, as a list
@@ -542,6 +592,13 @@ func (mm *MilitaryManager) ActiveForSave() []ActiveSlotSave {
 		c.FailureRewards, c.Cost = maps.Clone(active.FailureRewards), maps.Clone(active.Cost)
 		c.RoadEvents = append([]RoadEvent(nil), active.RoadEvents...)
 		c.RoadEventsSeen = append([]string(nil), active.RoadEventsSeen...)
+		c.RoadTold = append([]RoadTold(nil), active.RoadTold...)
+		// A save holds the words a text was drawn from, not the text, so it
+		// reads the same whichever script the game was read in (VibeMode).
+		c.MissionOffer = c.MissionOffer.forSave()
+		if len(c.RoadTold) > 0 {
+			c.RoadEventsSeen = nil
+		}
 		// The copy starts its own stream from the seed and draw count, so it
 		// never shares the live mission's stream.
 		c.LuckDraws, c.luckSrc, c.luckRNG = active.luckDraws(), nil, nil
@@ -556,5 +613,30 @@ func (mm *MilitaryManager) BoardForSave() *MissionBoard {
 		return nil
 	}
 	c := mm.board.clone()
+	for i := range c.Slots {
+		if c.Slots[i].Offer != nil {
+			offer := c.Slots[i].Offer.forSave()
+			c.Slots[i].Offer = &offer
+		}
+	}
 	return &c
+}
+
+// returnsCopy is the returns log, copied so that what it hands out shares
+// nothing with the manager (the loot maps included).
+func (mm *MilitaryManager) returnsCopy() []MissionReturn {
+	out := slices.Clone(mm.returns)
+	for i := range out {
+		out[i].Loot = maps.Clone(out[i].Loot)
+	}
+	return out
+}
+
+// ReturnsForSave is the returns log as a save holds it.
+func (mm *MilitaryManager) ReturnsForSave() []MissionReturn {
+	out := mm.returnsCopy()
+	for i := range out {
+		out[i] = out[i].forSave()
+	}
+	return out
 }

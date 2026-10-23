@@ -710,7 +710,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			CompletedCount: ge.Military.completedCount,
 			Experience:     ge.Military.experience,
 			TotalLoot:      totalLoot,
-			Returns:        slices.Clone(ge.Military.returns),
+			Returns:        ge.Military.ReturnsForSave(),
 			ReturnsMade:    ge.Military.returnsMade,
 			ReturnsSeen:    ge.Military.returnsSeen,
 
@@ -769,7 +769,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		AncientMemoryUsed:      ge.ancientMemoryUsed,
 		SurvivedEpochs:         copyBoolMap(ge.survivedEpochs),
 		PendingCatastrophe:     ge.pendingCatastrophe,
-		EpochEventHistory:      append([]EpochEventRecord(nil), ge.epochEventHistory...),
+		EpochEventHistory:      ge.epochHistoryForSave(),
 		SuccumbResearchDerived: true,
 		Ruins:                  ge.Buildings.GetAllRuins(),
 		LegacyBonuses:          copyBoolMap(ge.legacyBonuses),
@@ -778,7 +778,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		HarbingerArrived:       copyBoolMap(ge.harbingerArrived),
 		CatastropheInvited:     ge.catastropheInvited,
 		PendingBraceLevel:      ge.pendingBraceLevel,
-		HarbingerHistory:       append([]HarbingerRecord(nil), ge.harbingerHistory...),
+		HarbingerHistory:       ge.harbingerHistoryForSave(),
 		Fate:                   ge.fateSaveCopy(),
 		ParkedHarbinger:        copyHarbingerSave(ge.parkedHarbinger),
 		FaithMeasure:           ge.faithSaveCopy(),
@@ -1098,6 +1098,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	}
 	ge.pendingCatastrophe = save.PendingCatastrophe
 	ge.epochEventHistory = save.EpochEventHistory
+	ge.redrawHistory()
 	// A pending Last Passage only exists in the final epoch; restored before
 	// the harbinger, whose outlook check reads it.
 	ge.pendingLastPassage = save.PendingLastPassage && ge.pendingCatastrophe == "" && ge.rules.IsFinalEra(ge.currentEpoch)

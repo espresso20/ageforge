@@ -7,3 +7,189 @@ lexicon.plain.army_rank_0.one,Fresh Spawn
 lexicon.plain.army_rank_0.many,Fresh Spawn
 lexicon.plain.army_rank_4.one,Goated
 lexicon.plain.army_rank_4.many,Goated
+lexicon.primitive_age.reserve.one,Background Extra
+lexicon.primitive_age.reserve.many,Background Extras
+lexicon.primitive_age.scholars.one,Lore Dropper
+lexicon.primitive_age.scholars.many,Lore Droppers
+lexicon.primitive_age.soldiers.one,Hunt Leader
+lexicon.primitive_age.soldiers.many,Hunt Leaders
+lexicon.stone_age.reserve.one,Chill Guy
+lexicon.stone_age.reserve.many,Chill Guys
+lexicon.stone_age.scholars.one,Myth Maker
+lexicon.stone_age.scholars.many,Myth Makers
+lexicon.stone_age.soldiers.one,Club Bro
+lexicon.stone_age.soldiers.many,Club Bros
+lexicon.stone_age.workers.one,Rock Grinder
+lexicon.stone_age.workers.many,Rock Grinders
+lexicon.bronze_age.reserve.one,Glow-Up Rookie
+lexicon.bronze_age.reserve.many,Glow-Up Rookies
+lexicon.bronze_age.soldiers.one,Spear Stan
+lexicon.bronze_age.soldiers.many,Spear Stans
+lexicon.bronze_age.workers.one,Craft Goblin
+lexicon.bronze_age.workers.many,Craft Goblins
+lexicon.iron_age.reserve.one,Side Character
+lexicon.iron_age.reserve.many,Side Characters
+lexicon.iron_age.scholars.one,Brainiac
+lexicon.iron_age.scholars.many,Brainiacs
+lexicon.iron_age.soldiers.one,Blade Boss
+lexicon.iron_age.soldiers.many,Blade Bosses
+lexicon.iron_age.workers.one,Hard Hat
+lexicon.iron_age.workers.many,Hard Hats
+lexicon.classical_age.reserve.one,Side Hustler
+lexicon.classical_age.reserve.many,Side Hustlers
+lexicon.classical_age.scholars.one,Hot Take Guy
+lexicon.classical_age.scholars.many,Hot Take Guys
+lexicon.classical_age.soldiers.one,Shield Carrier
+lexicon.classical_age.soldiers.many,Shield Carriers
+lexicon.classical_age.workers.one,Free Agent
+lexicon.classical_age.workers.many,Free Agents
+lexicon.medieval_age.reserve.one,Townie
+lexicon.medieval_age.reserve.many,Townies
+lexicon.medieval_age.scholars.one,Hymn Hero
+lexicon.medieval_age.scholars.many,Hymn Heroes
+lexicon.medieval_age.soldiers.one,Chainmail Stan
+lexicon.medieval_age.soldiers.many,Chainmail Stans
+lexicon.medieval_age.workers.one,Field Hand
+lexicon.medieval_age.workers.many,Field Hands
+lexicon.renaissance_age.reserve.one,Market Regular
+lexicon.renaissance_age.reserve.many,Market Regulars
+lexicon.renaissance_age.scholars.one,Art Nerd
+lexicon.renaissance_age.scholars.many,Art Nerds
+lexicon.renaissance_age.soldiers.one,Musket Girlie
+lexicon.renaissance_age.soldiers.many,Musket Girlies
+lexicon.renaissance_age.workers.one,Guild Hand
+lexicon.renaissance_age.workers.many,Guild Hands
+lexicon.colonial_age.reserve.one,Passport Holder
+lexicon.colonial_age.reserve.many,Passport Holders
+lexicon.colonial_age.scholars.one,Bug Collector
+lexicon.colonial_age.scholars.many,Bug Collectors
+lexicon.colonial_age.soldiers.one,Boot Camp Alum
+lexicon.colonial_age.soldiers.many,Boot Camp Alums
+lexicon.colonial_age.workers.one,Plot Grinder
+lexicon.colonial_age.workers.many,Plot Grinders
+lexicon.industrial_age.reserve.one,Sidewalk Sitter
+lexicon.industrial_age.reserve.many,Sidewalk Sitters
+lexicon.industrial_age.scholars.one,Gear Head
+lexicon.industrial_age.scholars.many,Gear Heads
+lexicon.industrial_age.soldiers.one,Rifle Rookie
+lexicon.industrial_age.soldiers.many,Rifle Rookies
+lexicon.industrial_age.workers.one,Mill Rat
+lexicon.industrial_age.workers.many,Mill Rats
+lexicon.victorian_age.reserve.one,Tea Sipper
+lexicon.victorian_age.reserve.many,Tea Sippers
+lexicon.victorian_age.scholars.one,Lab Nerd
+lexicon.victorian_age.scholars.many,Lab Nerds
+lexicon.victorian_age.soldiers.one,Red Coat
+lexicon.victorian_age.soldiers.many,Red Coats
+lexicon.victorian_age.workers.one,Dock Hand
+lexicon.victorian_age.workers.many,Dock Hands
+lexicon.electric_age.reserve.one,Power Napper
+lexicon.electric_age.reserve.many,Power Nappers
+lexicon.electric_age.scholars.one,Idea Guy
+lexicon.electric_age.scholars.many,Idea Guys
+lexicon.electric_age.soldiers.one,Spark Sentry
+lexicon.electric_age.soldiers.many,Spark Sentries
+lexicon.electric_age.workers.one,Wire Gremlin
+lexicon.electric_age.workers.many,Wire Gremlins
+lexicon.atomic_age.reserve.one,Bunker Bestie
+lexicon.atomic_age.reserve.many,Bunker Besties
+lexicon.atomic_age.scholars.one,Particle Stan
+lexicon.atomic_age.scholars.many,Particle Stans
+lexicon.atomic_age.soldiers.one,Duck and Cover Kid
+lexicon.atomic_age.soldiers.many,Duck and Cover Kids
+lexicon.atomic_age.workers.one,Clock Puncher
+lexicon.atomic_age.workers.many,Clock Punchers
+lexicon.modern_age.reserve.one,Couch Gremlin
+lexicon.modern_age.reserve.many,Couch Gremlins
+lexicon.modern_age.scholars.one,Paper Chaser
+lexicon.modern_age.scholars.many,Paper Chasers
+lexicon.modern_age.soldiers.one,Drone Pilot
+lexicon.modern_age.soldiers.many,Drone Pilots
+lexicon.modern_age.workers.one,9-to-5er
+lexicon.modern_age.workers.many,9-to-5ers
+lexicon.information_age.reserve.one,Lurker
+lexicon.information_age.reserve.many,Lurkers
+lexicon.information_age.scholars.one,Spreadsheet Wizard
+lexicon.information_age.scholars.many,Spreadsheet Wizards
+lexicon.information_age.soldiers.one,Firewall Guard
+lexicon.information_age.soldiers.many,Firewall Guards
+lexicon.information_age.workers.one,Cubicle Dweller
+lexicon.information_age.workers.many,Cubicle Dwellers
+lexicon.digital_age.reserve.one,Doomscroller
+lexicon.digital_age.reserve.many,Doomscrollers
+lexicon.digital_age.scholars.one,Data Nerd
+lexicon.digital_age.scholars.many,Data Nerds
+lexicon.digital_age.soldiers.one,Byte Knight
+lexicon.digital_age.soldiers.many,Byte Knights
+lexicon.digital_age.workers.one,Vibe Coder
+lexicon.digital_age.workers.many,Vibe Coders
+lexicon.cyberpunk_age.reserve.one,Neon Drifter
+lexicon.cyberpunk_age.reserve.many,Neon Drifters
+lexicon.cyberpunk_age.scholars.one,Glitch Witch
+lexicon.cyberpunk_age.scholars.many,Glitch Witches
+lexicon.cyberpunk_age.soldiers.one,Hired Gun
+lexicon.cyberpunk_age.soldiers.many,Hired Guns
+lexicon.cyberpunk_age.workers.one,Gig Runner
+lexicon.cyberpunk_age.workers.many,Gig Runners
+lexicon.fusion_age.reserve.one,Sun Chaser
+lexicon.fusion_age.reserve.many,Sun Chasers
+lexicon.fusion_age.scholars.one,Theory Girlie
+lexicon.fusion_age.scholars.many,Theory Girlies
+lexicon.fusion_age.soldiers.one,Augmented Ace
+lexicon.fusion_age.soldiers.many,Augmented Aces
+lexicon.fusion_age.workers.one,Tech Tinkerer
+lexicon.fusion_age.workers.many,Tech Tinkerers
+lexicon.space_age.reserve.one,Hab Lurker
+lexicon.space_age.reserve.many,Hab Lurkers
+lexicon.space_age.scholars.one,Star Gazer
+lexicon.space_age.scholars.many,Star Gazers
+lexicon.space_age.soldiers.one,Space Bro
+lexicon.space_age.soldiers.many,Space Bros
+lexicon.space_age.workers.one,Crew Mate
+lexicon.space_age.workers.many,Crew Mates
+lexicon.interstellar_age.reserve.one,Star Hopper
+lexicon.interstellar_age.reserve.many,Star Hoppers
+lexicon.interstellar_age.scholars.one,Alien Whisperer
+lexicon.interstellar_age.scholars.many,Alien Whisperers
+lexicon.interstellar_age.soldiers.one,Warp Ranger
+lexicon.interstellar_age.soldiers.many,Warp Rangers
+lexicon.interstellar_age.workers.one,Airlock Ace
+lexicon.interstellar_age.workers.many,Airlock Aces
+lexicon.galactic_age.reserve.one,Galaxy Tourist
+lexicon.galactic_age.reserve.many,Galaxy Tourists
+lexicon.galactic_age.scholars.one,Lore Keeper
+lexicon.galactic_age.scholars.many,Lore Keepers
+lexicon.galactic_age.soldiers.one,Legion Main
+lexicon.galactic_age.soldiers.many,Legion Mains
+lexicon.galactic_age.workers.one,Star Hand
+lexicon.galactic_age.workers.many,Star Hands
+lexicon.quantum_age.reserve.one,Entangled Bestie
+lexicon.quantum_age.reserve.many,Entangled Besties
+lexicon.quantum_age.scholars.one,Quantum Brain
+lexicon.quantum_age.scholars.many,Quantum Brains
+lexicon.quantum_age.soldiers.one,Timeline Guard
+lexicon.quantum_age.soldiers.many,Timeline Guards
+lexicon.quantum_age.workers.one,Probability Pro
+lexicon.quantum_age.workers.many,Probability Pros
+lexicon.transcendent_age.reserve.one,Vibe Ghost
+lexicon.transcendent_age.reserve.many,Vibe Ghosts
+lexicon.transcendent_age.scholars.one,Oracle Queen
+lexicon.transcendent_age.scholars.many,Oracle Queens
+lexicon.transcendent_age.soldiers.one,Final Boss
+lexicon.transcendent_age.soldiers.many,Final Bosses
+lexicon.transcendent_age.workers.one,Reality Editor
+lexicon.transcendent_age.workers.many,Reality Editors
+lexicon.plain.army_rank_1.one,Got Some Reps
+lexicon.plain.army_rank_1.many,Got Some Reps
+lexicon.plain.army_rank_2.one,Built Different
+lexicon.plain.army_rank_2.many,Built Different
+lexicon.plain.army_rank_3.one,Top Tier
+lexicon.plain.army_rank_3.many,Top Tier
+lexicon.plain.reserve.one,Side Extra
+lexicon.plain.reserve.many,Side Extras
+lexicon.plain.scholars.one,Smarty
+lexicon.plain.scholars.many,Smarties
+lexicon.plain.soldiers.one,Squad Mate
+lexicon.plain.soldiers.many,Squad Mates
+lexicon.plain.workers.one,Hustler
+lexicon.plain.workers.many,Hustlers

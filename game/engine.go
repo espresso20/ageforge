@@ -530,6 +530,8 @@ func (ge *GameEngine) Rebind(set *rules.Set) {
 	ge.Diplomacy.Rebind(set)
 	ge.progress.Rebind(set)
 	ge.badges = newBadgeBook(set)
+	ge.redrawHistory()
+	ge.redrawHarbingerHistory()
 }
 
 // techLockErr is why a building can't be built yet when a tech it needs is
@@ -1995,6 +1997,8 @@ func (ge *GameEngine) startChainBoost(chain config.MilestoneChainDef, ticks int)
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       chain.Key + "_boost",
 		Name:      chain.Name + " Speed Boost",
+		Src:       nameFromChain,
+		Ref:       chain.Key,
 		TicksLeft: ticks,
 		Effects: []config.Effect{
 			{Type: "tick_speed", Target: "tick_speed", Value: chain.BoostValue},
@@ -2576,6 +2580,8 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       def.Key,
 		Name:      def.Name,
+		Src:       nameFromAwakening,
+		Ref:       def.Key,
 		TicksLeft: def.Duration,
 		Effects:   def.Effects,
 	})
@@ -2901,6 +2907,8 @@ func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, ef
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       key,
 		Name:      ev.Name,
+		Src:       nameFromEra,
+		Ref:       ev.Key,
 		TicksLeft: ev.Duration,
 		Effects:   effects,
 	})
@@ -5257,7 +5265,7 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			return out
 		}(),
-		CatastropheHistory:    slices.Clone(ge.catastropheHistory),
+		CatastropheHistory:    ge.historyLines(),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
 		SuccumbResearchFactor: ge.succumbResearchFactor(),

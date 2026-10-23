@@ -1,2 +1,255 @@
 id,text
 milestone_title.01,Lowkey Cooking
+milestone_chain.settlement_chain.name,Settlement Glow-Up
+milestone_chain.settlement_chain.title,The OG Founders
+milestone_chain.settlement_chain.flavor,"From one sad hut to a whole city, fr. The origin story is gonna skip the hut, no cap."
+milestone_chain.scholar_chain.name,Big Brain Era
+milestone_chain.scholar_chain.title,The Big Brains
+milestone_chain.scholar_chain.flavor,"Your scholars learned enough to be unbearable at dinner. Every party is a lecture now, no cap."
+milestone_chain.builder_chain.name,Build Different Arc
+milestone_chain.builder_chain.title,The Blueprint Crew
+milestone_chain.builder_chain.flavor,Monuments go up so fast your rivals are still on slide one of being impressed. Bussin construction.
+milestone_chain.military_chain.name,Military Hype Arc
+milestone_chain.military_chain.title,The Main Threat
+milestone_chain.military_chain.flavor,"Your neighbors stopped sending letters and started sending apology gift baskets. Respect, earned."
+milestone_chain.trade_chain.name,Bag Chase Arc
+milestone_chain.trade_chain.title,The Hustle Crew
+milestone_chain.trade_chain.flavor,"All roads lead to your market, and every road pays a little toll. Certified hustle, fr."
+milestone_chain.ancient_ages_chain.name,Ancient Era Speedrun
+milestone_chain.ancient_ages_chain.title,The Old Heads
+milestone_chain.ancient_ages_chain.flavor,"You speedran five ages and only set fire to most of them. Chaotic, but make it a W."
+milestone_title.02,Rising Star Era
+milestone_title.03,Built Different
+milestone_title.04,Full Main Character
+milestone_title.05,GOAT Status
+milestone_title.06,"Ascended, No Cap"
+milestone.first_shelter.name,Roof Goals Unlocked
+milestone.first_shelter.description,"Drop your first hut, bestie."
+milestone.first_shelter.flavor,"A roof and four walls, and the whole civ arc is officially in motion, fr."
+milestone.small_village.name,Village Vibe Check
+milestone.small_village.description,"Hit a population of 250, no cap."
+milestone.small_village.flavor,"Two hundred and fifty souls, and one of them already wants a committee. Power trip energy, fr."
+milestone.bustling_town.name,Town Is Poppin
+milestone.bustling_town.description,"Get your population to 1,500, bestie."
+milestone.bustling_town.flavor,"A real town now, with a market, a tavern, and at least one beef that's going nowhere. Sus and iconic."
+milestone.growing_city.name,City Level Up
+milestone.growing_city.description,"Let's gooo, hit a population of 5,000."
+milestone.growing_city.flavor,"Five thousand people, and the traffic jam just spawned out of thin air. Absolutely cooked, no cap."
+milestone.metropolis.name,Big City Rizz
+milestone.metropolis.description,"Crack a population of 15,000 and watch the rizz kick in."
+milestone.metropolis.flavor,"Fifteen thousand people, and you can't name a single one. Sis, that's not a city, that's a group chat."
+milestone.megalopolis.name,Mega City Era
+milestone.megalopolis.description,"Pull a population of 250,000, it's giving empire."
+milestone.megalopolis.flavor,"A quarter of a million people, and the census crew has filed for early retirement. Understood the assignment."
+milestone.urban_sprawl.name,Sprawl Out Loud
+milestone.urban_sprawl.description,"Keep spreading until the population hits 50,000, fr."
+milestone.urban_sprawl.flavor,"The city has no edges anymore, it's just vibing and being the city. Unbothered, honestly."
+milestone.global_city.name,Global Hub Rizz
+milestone.global_city.description,"Max out a population of 1,000,000, world domination energy."
+milestone.global_city.flavor,"A million people, and the planet has formally filed a complaint about the crowd. Certified menace."
+milestone.first_storehouse.name,Stuff Stash Era
+milestone.first_storehouse.description,"Cook up your first Stash, it's time to organize."
+milestone.first_storehouse.flavor,A place for your stuff so it stops wandering off to other people's houses. Real organization energy.
+milestone.storage_network.name,Hoard Network
+milestone.storage_network.description,Go full hoarder with 5 Storage Pits.
+milestone.storage_network.flavor,"Ten pits of premium hoarded surplus, and the hoarding instinct finally got its W. Iconic."
+milestone.granary_keeper.name,Snack Keeper
+milestone.granary_keeper.description,"Raise 5 Granaries, the snack game is strong."
+milestone.granary_keeper.flavor,"Twenty-five granaries, and the mice are taking it as a personal invite. Rude, but relatable."
+milestone.stone_mason.name,Rock Star Mason
+milestone.stone_mason.description,"Stack 22 Stone Pits, the rock game is bussin."
+milestone.stone_mason.flavor,"Thirty pits of honest stone, and the masons are done vibing with mud. Real craft era, fr."
+milestone.lumber_operation.name,Timber Squad
+milestone.lumber_operation.description,Put up 25 Wood Camps and let the log crew cook.
+milestone.lumber_operation.flavor,"Twenty-five camps, and the forest is owed a sincere apology. The trees are shook, no cap."
+milestone.early_builder.name,Early Bird Builder
+milestone.early_builder.description,"Rack up 250 structures total, the grind is real."
+milestone.early_builder.flavor,"Two hundred and fifty buildings, and you stopped naming them. Now it's just numbers, we're in our data era."
+milestone.mining_syndicate.name,Rock and Ore Crew
+milestone.mining_syndicate.description,"Dig 22 Stone Pits and 10 Iron Mines, rock and roll."
+milestone.mining_syndicate.flavor,"Stone and iron in industrial amounts, and the hills are visibly catching anxiety. Unhinged energy, fr."
+milestone.forge_master.name,Forge Gremlin
+milestone.forge_master.description,"Fire up 15 Smithies, we're forging legends."
+milestone.forge_master.flavor,"Fifteen forges roaring at once, and the whole valley smells like ambition. Hot metal, hotter vibes."
+milestone.seasoned_builder.name,Veteran Builder Era
+milestone.seasoned_builder.description,"Clock 500 structures total, keep the streak alive."
+milestone.seasoned_builder.flavor,"Five hundred buildings, and you could get lost in your own civ. Honestly you already do, every day."
+milestone.master_builder.name,Builder GOAT
+milestone.master_builder.description,"Crank out 1,000 structures total, certified grinder."
+milestone.master_builder.flavor,"A thousand structures. Future archaeologists are gonna assume you were flexing, and honestly, valid."
+milestone.wonder_builder.name,Wonder Maker Era
+milestone.wonder_builder.description,"Finish your first wonder, it's giving legacy."
+milestone.wonder_builder.flavor,"You built a Wonder and the neighbors are impressed. One is drafting a very strongly worded letter, sis."
+milestone.grand_architect.name,Grand Blueprint Boss
+milestone.grand_architect.description,"Log 1,365 structures total, the blueprint's getting spicy."
+milestone.grand_architect.flavor,"Two thousand buildings, and the mapmakers unionized and clocked out. Iconic, but they're owed a raise."
+milestone.wonder_collector.name,Wonder Drip Era
+milestone.wonder_collector.description,"Erect 8 wonders and collect the clout, bestie."
+milestone.wonder_collector.flavor,"Eight Wonders, and rival empire tourists now visit just to feel inadequate. Respectfully, ouch."
+milestone.wonder_empire.name,Wonder Mogul
+milestone.wonder_empire.description,"Stack 15 wonders, the flex is real."
+milestone.wonder_empire.flavor,"Fifteen Wonders, and at this point it's just a very expensive hobby. Financially irresponsible, iconic."
+milestone.knowledge_seeker.name,Brain Food Hunter
+milestone.knowledge_seeker.description,"Bank 10,000 research, we're learning fast."
+milestone.knowledge_seeker.flavor,"Ten thousand units of knowledge, and the dawning realization that you still know nothing. Humbling, but the vibe is immaculate."
+milestone.first_research.name,First Brain Drop
+milestone.first_research.description,"Crack open your first tech, nerdy era."
+milestone.first_research.flavor,"Your first real invention. Someone will glow it up tomorrow and take all the credit, sigh."
+milestone.tech_pioneer.name,Tech Trailblazer
+milestone.tech_pioneer.description,"Chew through 22 techs, keep the brain on the grind."
+milestone.tech_pioneer.flavor,"Breakthrough after breakthrough, and the wheel was in there somewhere. Bussin lineup, honestly."
+milestone.scholars_haven.name,Nerd Paradise
+milestone.scholars_haven.description,"Staff 50 scholars and build 3 Libraries, big brain zone unlocked."
+milestone.scholars_haven.flavor,"Three libraries, fifty scholars, and a full-on beef about quiet hours. Peak drama, zero silence."
+milestone.deep_thinker.name,Deep Thought Era
+milestone.deep_thinker.description,Think through 46 techs and stay in the think tank.
+milestone.deep_thinker.flavor,"Tech on tech on tech, and your scholars now end every sentence with 'well, actually.' Insufferable, fr."
+milestone.philosophes.name,Thinker Squad
+milestone.philosophes.description,"Load up 64 techs, the group chat is getting deep."
+milestone.philosophes.flavor,"Enough tech to fill a salon, and the philosophers now argue on purpose. Peak discourse, we love to see it."
+milestone.renaissance_mind.name,Renaissance Rizz
+milestone.renaissance_mind.description,Hoard 83 techs and feel the glow-up.
+milestone.renaissance_mind.flavor,"So many techs that the answer to everything now needs a sequel. Plot twist era, no cap."
+milestone.grand_library_built.name,Great Library Drop
+milestone.grand_library_built.description,"Finish the Great Library, the ultimate brain dump."
+milestone.grand_library_built.flavor,"Great Library: all the wisdom of the age and overdue fines to match. Big brain, bad return policy."
+milestone.tech_master.name,Tech Lord Era
+milestone.tech_master.description,Clear 114 techs and never log off.
+milestone.tech_master.flavor,"Techs mastered by the shelf. You understand the universe well enough to be properly worried, and that's the vibe check."
+milestone.tech_ascendant.name,Tech Tree Cleared
+milestone.tech_ascendant.flavor,"Every tech researched, and the tree is bald. You did this, bestie, don't let it go to your head."
+milestone.first_soldiers.name,Soldier Starter Pack
+milestone.first_soldiers.description,"Train 5 soldiers, the squad is small but mighty."
+milestone.first_soldiers.flavor,"Five soldiers. Technically an army if you squint and don't ask them to march in step. Mid, but make it military."
+milestone.war_machine.name,Chaos Machine
+milestone.war_machine.description,Recruit 250 soldiers and bring the drip.
+milestone.war_machine.flavor,"Two hundred and fifty soldiers, and the neighbors suddenly got very polite. Diplomacy by vibes."
+milestone.standing_army.name,Standing Squad
+milestone.standing_army.description,"Train 100 soldiers and drop 10 Barracks, the squad needs a crib."
+milestone.standing_army.flavor,"An army that actually stands where you tell it to. Discipline is a whole miracle, bestie."
+milestone.iron_legion.name,Iron Hype Squad
+milestone.iron_legion.description,"Field 500 soldiers and drop 10 Barracks, the squad is unhinged."
+milestone.iron_legion.flavor,"Five hundred soldiers in iron, and the blacksmiths are begging for one week off. Stop the grind, king."
+milestone.fortress_state.name,Fortress Lore Era
+milestone.fortress_state.description,Raise 13 Castle Keeps and go full medieval.
+milestone.fortress_state.flavor,"Twenty castle keeps, and your kingdom is less a country now, more a very pointed suggestion. Respectfully, unhinged."
+milestone.military_superpower.name,Army Superpower Era
+milestone.military_superpower.description,"Marshal 2,000 soldiers, the military rizz is unmatched."
+milestone.military_superpower.flavor,"Two thousand troops, and diplomacy is now just other people agreeing with you, real quick. Power move, no thoughts."
+milestone.first_market.name,First Hustle Stop
+milestone.first_market.description,"Set up your first Market, the hustle begins."
+milestone.first_market.flavor,"A market, so now your people can haggle over prices instead of just yoinking stuff. Civilized, peak."
+milestone.merchant_guild.name,Stall Town Era
+milestone.merchant_guild.description,"Open 8 Markets, the swap game is bussin."
+milestone.merchant_guild.flavor,"Eight markets and a guild with very strong opinions about everybody else's business. Unbothered, but nosy."
+milestone.caravan_network.name,Caravan Connect
+milestone.caravan_network.description,Plant 5 Trading Posts and get the route running.
+milestone.caravan_network.flavor,"Five trading posts, and the caravans have a route, a schedule, and a messy rivalry. Plot, drama, main character energy."
+milestone.merchant_princes.name,Trade Royalty
+milestone.merchant_princes.description,"Stack 12 Trading Posts and 4 Merchant Quarters, royal drip required."
+milestone.merchant_princes.flavor,"Merchant princes now. Nicer hats than you, and they know it, bestie."
+milestone.trade_empire.name,Trade Empire Era
+milestone.trade_empire.description,"Run 20 Trading Posts and Merchant Quarters in any mix, you pick the vibe."
+milestone.trade_empire.flavor,"Trade empire, and somewhere a coin is changing hands in your name right now. And now. And now."
+milestone.maritime_empire.name,Sea Lord Era
+milestone.maritime_empire.description,"Drop 5 Harbors, 5 Ports and 2 Seaports, the sea is your playground."
+milestone.maritime_empire.flavor,"Seas are highways now, and you're charging tolls on them. Big boss behavior, fr."
+milestone.guildhall_master.name,Guild Boss Energy
+milestone.guildhall_master.description,Found 10 Guildhalls and let them argue.
+milestone.guildhall_master.flavor,"Ten guildhalls, each one sure it runs the city in secret. One of them is right, and it's chaotic."
+milestone.colonial_trade.name,Overseas Bag Network
+milestone.colonial_trade.description,"Own 3 Ports and 5 Colonial Warehouses, the seas are yours."
+milestone.colonial_trade.flavor,"Oceans of trade, and one warehouse full of things best not inventoried. Sus, but the books look immaculate."
+milestone.gold_hoard.name,Gold Bag Hoard
+milestone.gold_hoard.description,"Bag up 1,000,000 gold, the bag is heavy."
+milestone.gold_hoard.flavor,"Gold for days: one million, and you could swim in it if your advisors stopped fainting at the idea."
+milestone.first_shrine.name,Shrine Starter
+milestone.first_shrine.description,Set up your first Shrine and pray for the vibes.
+milestone.first_shrine.flavor,"Shrine unlocked, and the people now have an official spot to beg for better weather. Pray for the W."
+milestone.devout_settlement.name,Blessed Settlement Era
+milestone.devout_settlement.description,"Line up 16 Shrines, it's a whole aesthetic."
+milestone.devout_settlement.flavor,"Twenty-five shrines, and the priests are quietly fighting over foot traffic. Holy beef, honestly."
+milestone.temple_city.name,Holy City Hype
+milestone.temple_city.description,"Spin up 18 Temples, faith is trending."
+milestone.temple_city.flavor,"Twenty-five temples, a holy city, and parking so aggressive it's basically a sport."
+milestone.cathedral_age.name,Cathedral Core Era
+milestone.cathedral_age.description,"Commission 10 Cathedrals, the architects are cooked."
+milestone.cathedral_age.flavor,"Ten cathedrals, each one a whole generation of work. The architects left the grandkids a very detailed group project."
+milestone.first_farmers.name,Crop Squad
+milestone.first_farmers.description,"Put 3 Gathering Camps down and play for ~1m, farm era."
+milestone.first_farmers.flavor,"No more wandering, you're farming now. Bold move, and we're all watching how it plays out."
+milestone.survivor.name,Still Here Era
+milestone.survivor.description,"Stick around for ~14h 26m, unbothered."
+milestone.survivor.flavor,"Twenty-six thousand ticks survived, and whatever you're doing, it's apparently working. Do not change a thing."
+milestone.enduring_civilization.name,Civ Never Dies
+milestone.enduring_civilization.description,"Stay locked in for ~3d, the commitment is real."
+milestone.enduring_civilization.flavor,"One hundred and thirty thousand ticks, and rival civs now study you in history class. Legendary, not a typo."
+milestone.age_hopper.name,Time Skip Era
+milestone.age_hopper.description,Pull up to the Classical Age and crack 10 techs.
+milestone.age_hopper.flavor,"Five ages and ten techs, and the time-travel vibes are frankly reckless. We stan the chaos."
+milestone.industrial_titan.name,Smoke Stack Boss
+milestone.industrial_titan.description,"Hoard 10,000 coal and 5,000 iron ore, the mountain is ours."
+milestone.industrial_titan.flavor,"Coal and ore piled high, and the sky is a color now. That color is 'industry.' Sus aesthetic, iconic results."
+milestone.power_grid.name,Lights On Era
+milestone.power_grid.description,"Wire up 13 Coal Plants and 10 Steam Turbines, the grid cannot go down."
+milestone.power_grid.flavor,"Lights never turn off now. Nobody is sure this is a W, but the night shift is thriving."
+milestone.bronze_pioneer.name,Bronze Glow Pioneer
+milestone.bronze_pioneer.description,"Level up into the Bronze Age, big glow-up."
+milestone.bronze_pioneer.flavor,"Mixing two soft metals makes a hard one. Revolutionary, slightly sus, and the bronze crowd is shook."
+milestone.iron_forged.name,Iron Drip Era
+milestone.iron_forged.description,"Unlock the Iron Age, we're going hard."
+milestone.iron_forged.flavor,"Iron is harder, cheaper, and everywhere now. The bronze merchants are coping badly, respectfully."
+milestone.classical_scholar.name,Toga Party Scholar
+milestone.classical_scholar.description,"Roll into the Classical Age, the lore is calling."
+milestone.classical_scholar.flavor,"Philosophy, democracy, and columns everywhere. So many columns, it's giving aesthetic overload."
+milestone.medieval_lord.name,Knight Mode On
+milestone.medieval_lord.description,"Dress up for the Medieval Age, it's giving knight."
+milestone.medieval_lord.flavor,"Castles, knights, and a firm belief that bathing is a disease. Hygiene is not the vibe here."
+milestone.enlightened.name,Lit Renaissance
+milestone.enlightened.description,"Hit the Renaissance Age, the glow-up is art."
+milestone.enlightened.flavor,"Art and science are back, and everyone is painting people who never asked to be painted. Iconic, rude."
+milestone.colonial_power.name,Colonial Flex
+milestone.colonial_power.description,"Make it to the Colonial Age, passport to chaos."
+milestone.colonial_power.flavor,"Distant lands discovered. The lands, for the record, were not lost, and they would like that noted."
+milestone.industrial_revolution.name,Industrial Glow-Up
+milestone.industrial_revolution.description,"Power up to the Industrial Age, it's time to grind."
+milestone.industrial_revolution.flavor,"Machines do the work now, and the workers got promoted to babysitting them. Same pay, new title."
+milestone.victorian_innovation.name,Victorian Plot Twist
+milestone.victorian_innovation.description,"Graduate to the Victorian Age, very proper, very sooty."
+milestone.victorian_innovation.flavor,"Progress, propriety, and a staggering amount of soot. The vibe is proper and absolutely filthy."
+milestone.electric_dawn.name,Electric Era Drop
+milestone.electric_dawn.description,"Step into the Electric Age, lights on, no cap."
+milestone.electric_dawn.flavor,"Lightning caught and stuffed in the walls. Zero downsides, surely, which is giving famous last words."
+milestone.atomic_pioneer.name,Atomic Hot Take
+milestone.atomic_pioneer.description,"Get to the Atomic Age, we're splitting things."
+milestone.atomic_pioneer.flavor,"You split the atom, and it is taking this so personally. Big yikes, no thoughts."
+milestone.modern_era.name,Modern Rizz Era
+milestone.modern_era.description,"Touch down in the Modern Age, we made it."
+milestone.modern_era.flavor,Modern life is so convenient that nobody can find the time. Peak busy era.
+milestone.information_pioneer.name,Info Drop Pioneer
+milestone.information_pioneer.description,"Log on to the Information Age, big data era."
+milestone.information_pioneer.flavor,"All of humankind's knowledge in everyone's pocket, and they use it to argue in the comments. Mid."
+milestone.digital_native.name,Digital Glow Native
+milestone.digital_native.description,"Boot up the Digital Age, the era is loaded."
+milestone.digital_native.flavor,"Everything is digital now, problems included, and those are even harder to log off from. Main character glitch."
+milestone.cyberpunk_milestone.name,Jacked In Era
+milestone.cyberpunk_milestone.description,"Jack into the Cyberpunk Age, neon is the vibe."
+milestone.cyberpunk_milestone.flavor,"High tech, low life, neon everywhere, and even the rain has a sponsor. Peak cyberpunk, we love it."
+milestone.fusion_pioneer.name,Tiny Sun Pioneer
+milestone.fusion_pioneer.description,"Ignite the Fusion Age, it's hot in here."
+milestone.fusion_pioneer.flavor,"Tiny sun in a box, and the fire department has no notes, just fear. Literally living on the edge."
+milestone.space_explorer.name,Space Side Quest
+milestone.space_explorer.description,"Blast off to the Space Age, bye Earth."
+milestone.space_explorer.flavor,You left the planet and the planet is honestly relieved to get some space. Real ones understand.
+milestone.star_voyager.name,Star Hopper Era
+milestone.star_voyager.description,"Warp to the Interstellar Age, the commute is wild."
+milestone.star_voyager.flavor,"Other stars now, and the commute is appalling. The views though, unmatched."
+milestone.galactic_emperor.name,Galaxy Brain Emperor
+milestone.galactic_emperor.description,"Conquer the Galactic Age, galaxy-brain move."
+milestone.galactic_emperor.flavor,"An empire across the galaxy, and the paperwork arrives at light speed, which is still too slow. Bureaucracy has no chill."
+milestone.quantum_master.name,Quantum Glow Master
+milestone.quantum_master.description,"Phase into the Quantum Age, both here and not here."
+milestone.quantum_master.flavor,"Quantum level now, where your civ exists and doesn't until somebody looks at it. Touch grass, observer."
+milestone.transcended.name,Beyond the Matrix
+milestone.transcended.description,"Ascend into the Transcendent Age, you're past the bare minimum."
+milestone.transcended.flavor,"Matter, time, and need, all transcended. You still, somehow, refresh the production graph."

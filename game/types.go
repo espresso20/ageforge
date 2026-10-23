@@ -219,6 +219,9 @@ type EpochEventRecord struct {
 	EventName string
 	EventType string // good_minor/good_major/good_legendary/bad_challenging/catastrophe
 	Tick      int
+	// Source is how a catastrophe came about (catastropheForced, catastropheInvited;
+	// empty when it was rolled), which its EventName says in brackets.
+	Source string `json:"Source,omitempty"`
 	// Outcome is set on catastrophe records only: CatastrophePending until the
 	// player chooses, then CatastropheEndured or CatastropheSuccumbed. Empty on
 	// other event types, and on catastrophe records from saves that predate it

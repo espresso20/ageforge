@@ -302,15 +302,13 @@ func (ge *GameEngine) logRunEnding() {
 // carry the markers countCatastropheOutcomes matches, so the Last Passage
 // counts as a catastrophe endured or succumbed to.
 func (ge *GameEngine) recordLastPassageOutcome(how prestigeEnding, points, full int) {
-	name, _ := ge.rules.LastPassage()
-	epName := eraName(ge.rules, ge.currentEpoch)
 	switch how {
 	case lastPassageEndured:
 		ge.catastropheHistory = append(ge.catastropheHistory,
-			fmt.Sprintf("Tick %d"+catHistEnduredMarker+"%s (%s). Prestige kept %d of %d points.", ge.tick, name, epName, points, full))
+			fmt.Sprintf("Tick %d"+catHistEnduredMarker+"%s (%s). Prestige kept %d of %d points.", ge.tick, passageMark, eraMark(ge.currentEpoch), points, full))
 	case lastPassageSuccumbed:
 		ge.catastropheHistory = append(ge.catastropheHistory,
-			fmt.Sprintf("Tick %d"+catHistSuccumbedMarker+"%s (%s). No prestige points. Cosmic Legacy earned.", ge.tick, name, epName))
+			fmt.Sprintf("Tick %d"+catHistSuccumbedMarker+"%s (%s). No prestige points. Cosmic Legacy earned.", ge.tick, passageMark, eraMark(ge.currentEpoch)))
 	}
 }
 
