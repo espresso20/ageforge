@@ -1,0 +1,301 @@
+id,text
+theme.theme.Group.String.01,Accessibility Era
+theme.theme.Group.String.02,Grind to Unlock
+theme.theme.Group.String.03,The Default Drip
+theme.theme.Variant.01,Light Mode
+theme.theme.Variant.02,Dark Mode
+theme.deuteranopia.name,Deuteranopia-safe
+theme.deuteranopia.blurb,"Red-green safe, no cap: blue gains, orange losses, ▲/▼ signs, bestie."
+theme.protanopia.name,Protanopia-safe
+theme.protanopia.blurb,"Red-green safe (L-cone) and lowkey iconic: blue gains, amber losses, ▲/▼ signs."
+theme.high_contrast.name,High Contrast
+theme.high_contrast.blurb,"Max legibility, no cap: near-black on near-white, bold roles hitting different."
+theme.parchment.name,Old Paper Aesthetic
+theme.parchment.blurb,"Ink on warm parchment, a sepia manuscript page, very aesthetic."
+theme.parchment.unlock_hint,"Hit the Aesthetic Age to unlock it, bestie."
+theme.bronze.name,Bronze Glow-Up
+theme.bronze.blurb,"Burnished copper and amber over dark warm metal, it's giving glow-up."
+theme.bronze.unlock_hint,Hit the Glow-Up Age to unlock it. Real.
+theme.cyberpunk.name,Cyberpunk Core
+theme.cyberpunk.blurb,"Hot magenta and neon cyan over near-black violet, it's giving neon."
+theme.cyberpunk.unlock_hint,"Hit the Cyber Baddie Age to unlock it, no skips."
+theme.monochrome.name,Black and White Era
+theme.monochrome.blurb,"Greyscale terminal, no color drama: meaning rides on lightness, not hue."
+theme.monochrome.unlock_hint,"Hit the Group Chat Age to unlock it, the chat is waiting."
+theme.cosmic.name,Cosmic Drip
+theme.cosmic.blurb,"Deep indigo with starlight and nebula accents, very main character."
+theme.cosmic.unlock_hint,"Hit the Galaxy Brain Age to unlock it, big brain time."
+theme.source.name,Source Code
+theme.source.blurb,"Phosphor green on black, code rain in the empty columns, the hacker era is real."
+theme.source.unlock_hint,"A secret badge drops it, no spoilers."
+theme.glitch.name,Glitchcore
+theme.glitch.blurb,"Cyan and magenta on violet black, with a static tear now and then, glitch is the bit."
+theme.glitch.unlock_hint,"A secret badge hands it over, keep it quiet."
+theme.ashfall.name,Ashfall Mood
+theme.ashfall.blurb,"Ember orange on soot, sparks rising in the empty columns, cooked in the best way."
+theme.ashfall.unlock_hint,"A legendary badge unlocks it, a real W."
+theme.ledger.name,Ledger Energy
+theme.ledger.blurb,"Ink and bookkeeper's green on green-bar paper, spreadsheet core."
+theme.ledger.unlock_hint,"The top rung of the badge ladder, the final boss of unlocks."
+theme.prismatic.name,Prismatic Vibes
+theme.prismatic.blurb,"Starlight on blue-black, glints cycling the spectrum, it's giving rainbow."
+theme.prismatic.unlock_hint,"Earn 400 badges, no shortcuts."
+theme.forge.name,OG Forge
+theme.forge.blurb,"The OG dark-and-gold AgeForge look, the one that never gets old."
+theme.daylight.name,Daylight Era
+theme.daylight.blurb,"Clean light theme, charcoal ink on a bright page, amber accents, very clean, no notes."
+theme.high_contrast_light.name,High Contrast Light
+theme.high_contrast_light.blurb,"Max legibility on a white page, black ink, bold roles, no filter needed."
+map.lineage.housing,the crash pads
+map.lineage.food,farms and snacks
+map.lineage.organic_extraction,timber and fibre
+map.lineage.geological_extraction,rocks and mines
+map.lineage.metallurgy,the metal glow-up
+map.lineage.engineering,big brain builds
+map.lineage.energy,the juice
+map.lineage.harbor,harbor vibes
+map.lineage.hacker,hacker hideouts
+map.lineage.knowledge,the brain zone
+map.lineage.faith,faith era
+map.lineage.culture_arts,culture drip
+map.lineage.monument,big flex builds
+map.lineage.trade,the hustle
+map.lineage.storage,stash spot
+map.lineage.military,the squad
+map.lineage.diplomacy,diplo rizz
+map.lineage.wonder,wonder W's
+map.city.suburbs.name,the burbs
+map.city.suburbs.title,Suburb Life
+map.city.suburbs.line.01,"Houses with gardens, a drive and a car, the whole starter pack."
+map.city.suburbs.line.02,"Commuter houses, dead quiet by day, lowkey sleepy."
+map.city.park.name,fenced-off green
+map.city.park.title,Touch Grass Zone
+map.city.park.line.01,"Still green, fenced into its block, touching grass for real."
+map.city.park.line.02,"A park, railed in on every side, the grass is lowkey caged."
+map.city.highway.name,the highway
+map.city.highway.title,Highway Era
+map.city.highway.line.01,"Four lanes each way, out of town, the commute is a whole arc."
+map.city.highway.line.02,"The highway, never empty, the traffic never chills."
+map.city.glass_tower.name,glass tower
+map.city.glass_tower.title,Downtown Flex
+map.city.glass_tower.line.01,"Glass and steel downtown, the skyline is flexing."
+map.city.glass_tower.line.02,"Offices, forty floors of them, the nine-to-five arc."
+map.city.server_farm.name,the server farm
+map.city.server_farm.title,Server Farm Lore
+map.city.server_farm.line.01,"Racks humming behind blank walls, no one knows what's in there, sus."
+map.city.server_farm.line.02,"Cooling fans going day and night, they never clock out."
+map.city.dish.name,the satellite dish
+map.city.dish.title,Sky Listener Era
+map.city.dish.line.01,"Listening to the sky, it's giving radio ghost."
+map.city.dish.line.02,"A dish aimed at a satellite, it's locked in."
+map.city.fiber.name,the fiber line
+map.city.fiber.title,Fiber Line Energy
+map.city.fiber.line.01,"The fiber, under the street, carrying data, the bandwidth is bussin."
+map.city.fiber.line.02,"Cable trenches, freshly dug, the road work never ends."
+map.city.garden.name,the rooftop garden
+map.city.garden.title,Rooftop Garden Vibes
+map.city.garden.line.01,"What is left of the green, up on a roof, the plant parents are still going."
+map.city.garden.line.02,"A garden on the roof, between the vents, very cottagecore."
+map.city.office_block.name,the office block
+map.city.office_block.title,Office Block Grind
+map.city.office_block.line.01,"Screens on every floor, the glow never clocks out."
+map.city.office_block.line.02,"Desks, glass, and air conditioning, the cubicle arc is real."
+map.city.scrub.name,the dry ground
+map.city.scrub.title,Crispy Ground
+map.city.scrub.line.01,"Scrub, browned by the smog, it's giving well-done."
+map.city.scrub.line.02,"The lawn gone crispy past the city, it got cooked."
+map.city.smog.name,smog-core
+map.city.smog.title,Haze Check
+map.city.smog.line.01,"The air turning brown at the edges, not a great look."
+map.city.smog.line.02,"Haze over the outskirts, the sky is giving mid."
+map.city.concrete.name,the concrete
+map.city.concrete.title,Concrete Jungle
+map.city.concrete.line.01,"Paved over, where the fields used to be, we're sorry to the grass."
+map.city.concrete.line.02,"Car parks and loading bays, a whole parking lot era."
+map.city.landfill.name,the landfill
+map.city.landfill.title,Trash Mountain
+map.city.landfill.line.01,"The city's trash, piled high, it's giving main character mess."
+map.city.landfill.line.02,"Old screens and packaging, a whole hill of it, delulu recycling."
+map.city.reserve.name,the reserve
+map.city.reserve.title,Green Pocket
+map.city.reserve.line.01,"The last green, behind a wall, the only real one left."
+map.city.reserve.line.02,"Old trees, kept like a museum, look but don't touch."
+map.city.data_glow.name,the data glow
+map.city.data_glow.title,Data Glow Core
+map.city.data_glow.line.01,"Servers warm enough to light the street, the streetlights are servers now."
+map.city.data_glow.line.02,"The glow of a data hall, a whole aura."
+map.city.megablock.name,megablock
+map.city.megablock.title,Stacked Life
+map.city.megablock.line.01,"Towers on towers, lit all night, it never sleeps and neither do we."
+map.city.megablock.line.02,"A hundred floors, and no one knows the neighbors, the group chat is silent."
+map.city.alley.name,the alley
+map.city.alley.title,Alley Energy
+map.city.alley.line.01,"Dark, wet and crowded, the vibe is moody."
+map.city.alley.line.02,"Steam, noodle stalls and wires overhead, a whole aesthetic."
+map.city.corp_tower.name,the megacorp tower
+map.city.corp_tower.title,Corpo Tower Arc
+map.city.corp_tower.line.01,"Its initials in neon, a whole block high, very loud."
+map.city.corp_tower.line.02,"A megacorp's tower, watching the street, it's giving surveillance."
+map.city.arcology.name,the arcology
+map.city.arcology.title,Arcology Flex
+map.city.arcology.line.01,"A whole city in one building, the ultimate flex."
+map.city.arcology.line.02,"Terraces stacked to the clouds, we're not even tired."
+map.city.neon_sign.name,the neon sign
+map.city.neon_sign.title,Neon Sign Glow
+map.city.neon_sign.line.01,"Buzzing, flickering now and then, it's not even trying to hide it."
+map.city.neon_sign.line.02,"A holo-ad, selling something, no thanks, we're good."
+map.city.vent.name,the steam vent
+map.city.vent.title,Vent Vibe Check
+map.city.vent.line.01,"Steam from the undercity, the underground is cooking."
+map.city.vent.line.02,"A vent, breathing hot air, the heat is real."
+map.city.scrap.name,the scrap heap
+map.city.scrap.title,Junk Drawer
+map.city.scrap.line.01,"Rusting where it got dumped, the glow-down is real."
+map.city.scrap.line.02,"Scrap, picked over by scavengers, the bin diving is elite."
+map.city.toxic_ground.name,toxic turf
+map.city.toxic_ground.title,Danger Zone
+map.city.toxic_ground.line.01,"Nothing grows here now, not even the weeds, it's bleak."
+map.city.toxic_ground.line.02,"Poisoned ground, fenced off and forgotten, we don't go there."
+map.city.toxic_canal.name,the toxic canal
+map.city.toxic_canal.title,Canal Chaos
+map.city.toxic_canal.line.01,"The water glows a sickly green, it's giving radioactive lemonade."
+map.city.toxic_canal.line.02,"A canal, thick with runoff, not the vibe."
+map.city.sky_rail.name,the sky rail
+map.city.sky_rail.title,Sky Rail Glow
+map.city.sky_rail.line.01,"An elevated line, high over the street, no fear of heights."
+map.city.maglev_skyway.name,the maglev skyway
+map.city.maglev_skyway.title,Maglev Main Quest
+map.city.maglev_skyway.line.01,"An elevated maglev line, humming with power, very smooth energy."
+map.city.reactor.name,the fusion reactor
+map.city.reactor.title,Sun in a Box
+map.city.reactor.line.01,"Plasma held in a ring of magnets, the physics is lowkey insane."
+map.city.reactor.line.02,"A star in a bottle, powering the whole city, it's not even stressed."
+map.city.conduit.name,the power conduit
+map.city.conduit.title,Juice Pipe
+map.city.conduit.line.01,"Plasma power, carried to the core, the juice is flowing."
+map.city.conduit.line.02,"A conduit pulsing with light, so bright, bestie."
+map.city.launch_tower.name,the launch tower
+map.city.launch_tower.title,Liftoff Zone
+map.city.launch_tower.line.01,"A rocket on its pad, waiting for its moment, the countdown is a vibe."
+map.city.launch_tower.line.02,"Launch gantry lit up for the night, it's giving space camp."
+map.city.tether.name,the space elevator
+map.city.tether.title,Ladder to the Stars
+map.city.tether.line.01,"A tether rising out of sight, the sky is not the limit."
+map.city.tether.line.02,"Climbers ride it up out of the sky, no fear, all vibes."
+map.city.cooling.name,the cooling channel
+map.city.cooling.title,Chill Zone
+map.city.cooling.line.01,"Water cooling the reactors, glowing blue, the chill is elite."
+map.city.cooling.line.02,"A channel of clean, cold water, very hydrated."
+mapmodel.commands.WarningLine.01,"keeps shouting about impending doom, fr"
+mapmodel.commands.WarningLine.02,is spilling the tea on 
+mapmodel.flows.flowsFor.01, hit the empty zone
+mapmodel.flows.flowsFor.02,NPC on a break
+mapmodel.flows.flowsFor.03,NPCs on a break
+mapmodel.flows.flowsFor.04,"building short-staffed, lowkey cooked"
+mapmodel.flows.flowsFor.05,buildings short-staffed and begging for help
+mapmodel.model.String.06,beefing
+mapmodel.model.world.01,Chaos Arc
+map.mover.walker.name,grinder on the grind
+map.mover.walker.title,Hustler
+map.mover.walker.line.01,"On the way to the grind, bestie."
+map.mover.walker.line.02,"Heading home after a shift, finally off the clock."
+map.mover.hunter.name,hunt bro
+map.mover.hunter.title,Prey Arc
+map.mover.hunter.line.01,"A hunter, off to the hills, on a whole quest."
+map.mover.hunter.line.02,"Tracking game, locked in on the prey, very focused."
+map.mover.ox_cart.name,the ox cart
+map.mover.ox_cart.title,Slow Life Cart
+map.mover.ox_cart.line.01,"An ox cart, creaking to market, slow and loyal, no notes."
+map.mover.ox_cart.line.02,"Loaded with grain on the ox cart, the snack run is real."
+map.mover.rider.name,the rider
+map.mover.rider.title,Gallop Mode
+map.mover.rider.line.01,"A rider carrying the news, delivering the tea."
+map.mover.rider.line.02,"Riding in no rush, the vibe is chill."
+map.mover.rowboat.name,the rowboat
+map.mover.rowboat.title,Paddle Squad
+map.mover.rowboat.line.01,"A rowboat out fishing, the catch of the day."
+map.mover.rowboat.line.02,"Ferrying goods downriver, a whole shipping arc, no cap."
+map.mover.wagon.name,the wagon
+map.mover.wagon.title,Wagon Wheels
+map.mover.wagon.line.01,"A wagon hauling timber, a whole lumber run, slay."
+map.mover.wagon.line.02,"Covered wagon bound for market, the trade run is real."
+map.mover.sailing_ship.name,the sailing ship
+map.mover.sailing_ship.title,Sails Up Energy
+map.mover.sailing_ship.line.01,"A sailing ship riding the wind, the sails ate, no crumbs."
+map.mover.sailing_ship.line.02,"Heavy with cargo, a sailing ship on a whole mission."
+map.mover.steam_train.name,the steam train
+map.mover.steam_train.title,Choo Choo Core
+map.mover.steam_train.line.01,"A steam train hauling ore, the rock run is cooking."
+map.mover.steam_train.line.02,"Hauling coal on a steam train, the smoke show is on."
+map.mover.tram.name,the tram
+map.mover.tram.title,Ding Ding Energy
+map.mover.tram.line.01,"A tram full of commuters, a whole crowd."
+map.mover.tram.line.02,"Ringing its bell, main character entrance."
+map.mover.steamship.name,the steamship
+map.mover.steamship.title,Smoke Boat
+map.mover.steamship.line.01,"A steamship trailing smoke, dramatic exit energy."
+map.mover.steamship.line.02,"Bound for the coast on a steamship, the trip is giving vacation."
+map.mover.early_car.name,the motor car
+map.mover.early_car.title,Vroom Starter
+map.mover.early_car.line.01,"An early motor car, sputtering along, lowkey iconic."
+map.mover.early_car.line.02,"Scaring the horses, the chaos is real."
+map.mover.car.name,the whip
+map.mover.car.title,Ride Check
+map.mover.car.line.01,"A car stuck behind a truck, the traffic is a whole mood."
+map.mover.car.line.02,"Carpooling the kids to school, the drive is a whole mission."
+map.mover.truck.name,the truck
+map.mover.truck.title,Hauler Mode
+map.mover.truck.line.01,"A truck making deliveries, the delivery arc is real."
+map.mover.truck.line.02,"Loaded to the roof, it's packed, no room."
+map.mover.plane.name,the plane
+map.mover.plane.title,Sky Bus
+map.mover.plane.line.01,"A plane passing overhead, the sky traffic is wild."
+map.mover.plane.line.02,"On its approach, the landing is a whole thing."
+map.mover.container_ship.name,the container ship
+map.mover.container_ship.title,Crate Stack Boat
+map.mover.container_ship.line.01,"A container ship stacked high, the cargo is flexing."
+map.mover.container_ship.line.02,"Low in the water, a container ship on a heavy load."
+map.mover.freight_train.name,freight train
+map.mover.freight_train.title,Long Haul Arc
+map.mover.freight_train.line.01,"A freight train hauling containers, the boxes are endless."
+map.mover.freight_train.line.02,"Running on time, punctual, impressive."
+map.mover.maglev.name,the maglev
+map.mover.maglev.title,Silent Glide
+map.mover.maglev.line.01,"A maglev gliding on its rail, smooth as butter."
+map.mover.maglev.line.02,"Running silent, the quiet flex."
+map.mover.drone.name,the drone
+map.mover.drone.title,Eye in the Sky
+map.mover.drone.line.01,"A delivery drone on its rounds, the snacks are coming."
+map.mover.drone.line.02,"Watching the streets, lowkey creepy, always on."
+map.mover.hovercar.name,the hovercar
+map.mover.hovercar.title,Float Mode
+map.mover.hovercar.line.01,"A hovercar skimming the street, it floats, bestie."
+map.mover.hovercar.line.02,"Cutting corners, the traffic rules are optional."
+map.mover.shuttle.name,the shuttle
+map.mover.shuttle.title,Orbit Run
+map.mover.shuttle.line.01,"A shuttle climbing to orbit, the ascent is giving rocket."
+map.mover.shuttle.line.02,"Outbound shuttle, see you on the other side."
+map.mover.satellite.name,the satellite
+map.mover.satellite.title,Sky Spy
+map.mover.satellite.line.01,"A satellite crossing the sky, very orbit core."
+map.mover.satellite.line.02,"Catching the sun, the glow is elite."
+map.mover.habitat.name,the orbital habitat
+map.mover.habitat.title,Space Crash Pad
+map.mover.habitat.line.01,"An orbital habitat, home to thousands, a whole space city."
+map.mover.habitat.line.02,"Turning slowly, the spin is chill."
+map.mover.news_helicopter.name,the news chopper
+map.mover.news_helicopter.title,Breaking News Chopper
+map.mover.news_helicopter.line.01,"A news chopper circling the story, the tea is hot."
+map.mover.news_helicopter.line.02,"Counting the jams, a traffic chopper with main character energy."
+map.mover.sky_train.name,the sky train
+map.mover.sky_train.title,Sky Metro Vibes
+map.mover.sky_train.line.01,"A sky train threading the towers, the transit is elite."
+map.mover.sky_train.line.02,"Packed to the doors, no personal space, lol."
+map.mover.crowd.name,the crowd
+map.mover.crowd.title,Hype Crowd
+map.mover.crowd.line.01,"A crowd under the neon, the night shift is on."
+map.mover.crowd.line.02,"Pushing for the sky train, everyone's late."
+map.mover.climber.name,the tether climber
+map.mover.climber.title,Up We Go
+map.mover.climber.line.01,"A climber riding the tether up, the climb is giving glow-up."
+map.mover.climber.line.02,"Hauling cargo to orbit, a real cargo run."
