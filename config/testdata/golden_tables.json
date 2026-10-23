@@ -6824,7 +6824,7 @@
   },
   "exploration": {
    "age": "iron_age",
-   "cost": 14700,
+   "cost": 12100,
    "ticks": 585
   },
   "federation_charter": {
@@ -6984,12 +6984,12 @@
   },
   "iron_smelting": {
    "age": "iron_age",
-   "cost": 19100,
+   "cost": 15700,
    "ticks": 585
   },
   "irrigation": {
    "age": "iron_age",
-   "cost": 41900,
+   "cost": 34500,
    "ticks": 731
   },
   "language": {
@@ -7029,7 +7029,7 @@
   },
   "mathematics": {
    "age": "iron_age",
-   "cost": 24800,
+   "cost": 20400,
    "ticks": 731
   },
   "matter_conversion": {
@@ -7219,7 +7219,7 @@
   },
   "priesthood": {
    "age": "iron_age",
-   "cost": 32200,
+   "cost": 26500,
    "ticks": 731
   },
   "primitive_writing": {
@@ -7279,7 +7279,7 @@
   },
   "quarrying": {
    "age": "iron_age",
-   "cost": 70800,
+   "cost": 58300,
    "ticks": 731
   },
   "radio": {
@@ -7324,7 +7324,7 @@
   },
   "road_building": {
    "age": "iron_age",
-   "cost": 54400,
+   "cost": 44800,
    "ticks": 731
   },
   "rocketry": {
@@ -7374,7 +7374,7 @@
   },
   "siege_warfare": {
    "age": "iron_age",
-   "cost": 92000,
+   "cost": 75700,
    "ticks": 731
   },
   "singularity_engineering": {

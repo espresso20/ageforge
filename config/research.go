@@ -234,7 +234,7 @@ func rawTechnologies() []TechDef {
 
 		// === IRON AGE ===
 		{
-			Name: "Priesthood", Key: "priesthood", Cost: 32200, ResearchTicks: 731, Emblem: "Ψ",
+			Name: "Priesthood", Key: "priesthood", Cost: 26500, ResearchTicks: 731, Emblem: "Ψ",
 			Age: "iron_age", Lane: LaneFaith,
 			Prerequisites: []string{"calendar"},
 			Description:   "A standing priesthood keeps the rites and the people's spirits.",
@@ -243,7 +243,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Mathematics", Key: "mathematics", Cost: 24800, ResearchTicks: 731, Code: "MATH", Emblem: "π",
+			Name: "Mathematics", Key: "mathematics", Cost: 20400, ResearchTicks: 731, Code: "MATH", Emblem: "π",
 			Age: "iron_age", Lane: LaneKnowledge,
 			Prerequisites: []string{"primitive_writing"},
 			Description:   "Advanced calculation raises knowledge output.",
@@ -253,13 +253,13 @@ func rawTechnologies() []TechDef {
 		},
 		{
 			// The tree's one either-or group: by map or by boat.
-			Name: "Exploration", Key: "exploration", Cost: 14700, ResearchTicks: 585, Emblem: "↗",
+			Name: "Exploration", Key: "exploration", Cost: 12100, ResearchTicks: 585, Emblem: "↗",
 			Age: "iron_age", Lane: LaneTrade,
 			AnyOf:       []string{"map_making", "boatbuilding"},
 			Description: "Maps or boats, and the will to see what lies past the next ridge.",
 		},
 		{
-			Name: "Irrigation", Key: "irrigation", Cost: 41900, ResearchTicks: 731, Emblem: "≈",
+			Name: "Irrigation", Key: "irrigation", Cost: 34500, ResearchTicks: 731, Emblem: "≈",
 			Age: "iron_age", Lane: LaneAgriculture,
 			Prerequisites: []string{"agriculture"},
 			Description:   "Channels bring the river to the fields.",
@@ -269,7 +269,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Road Building", Key: "road_building", Cost: 54400, ResearchTicks: 731, Code: "ROADS", Emblem: "═",
+			Name: "Road Building", Key: "road_building", Cost: 44800, ResearchTicks: 731, Code: "ROADS", Emblem: "═",
 			Age: "iron_age", Lane: LaneCraft,
 			Prerequisites: []string{"masonry", "the_wheel"},
 			Description:   "Paved roads improve trade and movement.",
@@ -279,7 +279,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Iron Smelting", Key: "iron_smelting", Cost: 19100, ResearchTicks: 585, Emblem: "■",
+			Name: "Iron Smelting", Key: "iron_smelting", Cost: 15700, ResearchTicks: 585, Emblem: "■",
 			Age: "iron_age", Lane: LaneMaterials,
 			Prerequisites: []string{"bronze_working"},
 			Description:   "Hotter furnaces raise iron output.",
@@ -288,7 +288,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Quarrying", Key: "quarrying", Cost: 70800, ResearchTicks: 731, Code: "QUARY", Emblem: "◢",
+			Name: "Quarrying", Key: "quarrying", Cost: 58300, ResearchTicks: 731, Code: "QUARY", Emblem: "◢",
 			Age: "iron_age", Lane: LaneMaterials,
 			Prerequisites: []string{"bronze_working"},
 			Description:   "Open pits cut marble and ore from the hills.",
@@ -298,7 +298,7 @@ func rawTechnologies() []TechDef {
 			},
 		},
 		{
-			Name: "Siege Warfare", Key: "siege_warfare", Cost: 92000, ResearchTicks: 731, Emblem: "✕",
+			Name: "Siege Warfare", Key: "siege_warfare", Cost: 75700, ResearchTicks: 731, Emblem: "✕",
 			Age: "iron_age", Lane: LaneMilitary,
 			Prerequisites: []string{"military_tactics"},
 			Description:   "Siege engines and fortification techniques.",
