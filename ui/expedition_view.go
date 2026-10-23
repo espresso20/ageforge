@@ -372,6 +372,8 @@ func header(g *xgrid, state game.GameState, v expView, l expLayout) {
 	if mil := state.Military; !v.report && mil.ReturnsMade > mil.ReturnsSeen {
 		g.put(x+1, 1, fmt.Sprintf("● %d new", mil.ReturnsMade-mil.ReturnsSeen), xLegend)
 	}
+	rank := " " + rankLine(state) + " "
+	g.put(l.w-3-len([]rune(rank)), 0, rank, xText)
 	home := FormatNumber(float64(state.Military.SoldierCount))
 	posted := FormatNumber(float64(state.Military.SoldierCount + state.Military.SoldiersAway))
 	g.segs(l.w-3-len([]rune("Soldiers "+home+" of "+posted+" at home"))+1, 1, xseg{"Soldiers ", xDim}, xseg{home, xText}, xseg{" of ", xDim}, xseg{posted, xText}, xseg{" at home", xDim})
@@ -865,6 +867,7 @@ func returnLine(r game.MissionReturn) string {
 	if r.RoadEvents > 0 {
 		line += fmt.Sprintf(" It met %d road events.", r.RoadEvents)
 	}
+	line += rankReturnText(r.Experience)
 	switch {
 	case r.Fell > 0:
 		line += fmt.Sprintf(" %s of %s %s fell.", FormatNumber(float64(r.Fell)), FormatNumber(float64(r.Party)), pluralize("soldier", r.Party))

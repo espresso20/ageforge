@@ -57,6 +57,7 @@ func TestMissionRolls_WithinRangesAndSeeded(t *testing.T) {
 		for seed := int64(1); seed <= 30; seed++ {
 			board := func() []boardSlot {
 				ge := missionReady(t, seed, age)
+				ge.Military.minTiers = 3 // every tier, whatever the era opens
 				ge.EnsureMissionBoard()
 				return ge.Military.board.clone().Slots
 			}

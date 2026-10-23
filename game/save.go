@@ -403,6 +403,8 @@ type MilitarySave struct {
 
 	CompletedCount int                `json:"completed_count"`
 	TotalLoot      map[string]float64 `json:"total_loot"`
+	// Experience is the army's experience (game/army.go).
+	Experience float64 `json:"experience,omitempty"`
 	// AutoExpeditionTicksLeft is the Geographic Society's dispatch countdown (see
 	// game/auto_expedition.go). Persisted so a save/reload cannot reset the wait and
 	// hand out a free instant dispatch. Absent in pre-Phase-3 saves, where the zero
@@ -692,6 +694,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Active:         ge.Military.ActiveForSave(),
 			Board:          ge.Military.BoardForSave(),
 			CompletedCount: ge.Military.completedCount,
+			Experience:     ge.Military.experience,
 			TotalLoot:      totalLoot,
 			Returns:        slices.Clone(ge.Military.returns),
 			ReturnsMade:    ge.Military.returnsMade,

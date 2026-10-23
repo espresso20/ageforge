@@ -310,7 +310,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | `the_wheel` | The Wheel | optional | 33m | `woodworking` | Opens trade routes, construction takes 5% less time |
 | `masonry` | Masonry | optional | 44m | `stoneworking` | +10% stone production, +10% storage |
 | `bronze_working` | Bronze Working | spine | 9m 8s | `stoneworking` | +10% stone production, +10% iron production |
-| `military_tactics` | Military Tactics | optional | 57m | `bronze_working` | Opens campaigns, opens the Barracks, +15% military power |
+| `military_tactics` | Military Tactics | optional | 57m | `bronze_working` | Opens the Barracks, +15% military power |
 
 ---
 
@@ -320,7 +320,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 |---|---|---|---|---|---|
 | `priesthood` | Priesthood | optional | 35m | `calendar` | Morale can rise 5 points higher |
 | `mathematics` | Mathematics | **keystone** (Colosseum) | 27m | `primitive_writing` | +8% scholar output |
-| `exploration` | Exploration | spine | 16m | one of `map_making` or `boatbuilding` | Opens long and grand mission offers |
+| `exploration` | Exploration | spine | 16m | one of `map_making` or `boatbuilding` |  |
 | `irrigation` | Irrigation | optional | 45m | `agriculture` | +8% food production, +5% housing |
 | `road_building` | Road Building | optional | 59m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
 | `iron_smelting` | Iron Smelting | spine | 20m | `bronze_working` | Opens the Smelter, +8% iron production |

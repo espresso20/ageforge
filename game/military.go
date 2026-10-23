@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"slices"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -118,8 +119,14 @@ type MilitaryManager struct {
 	active         []*ActiveExpedition
 	board          MissionBoard
 	completedCount int
-	totalLoot      map[string]float64
-	defenseRating  float64
+	// experience is the army's experience (army.go).
+	experience float64
+	// minTiers keeps that many tiers of the board open whatever the era and
+	// the rank say. Only tests set it, to plant an offer of a tier the era
+	// has not opened.
+	minTiers      int
+	totalLoot     map[string]float64
+	defenseRating float64
 	// returns is the returns log, newest first (mission_returns.go);
 	// returnsMade counts every mission that has come home this run and
 	// returnsSeen how many of those the Expedition Report has shown.
@@ -260,9 +267,14 @@ type ExpeditionResult struct {
 	SoldiersFell, Party, Marching int
 	// Offer is the offer the mission was sent from: its tier, age and
 	// Legendary mark are what the badges read.
-	Offer       MissionOffer
-	RoadEvents  int
-	RoadStories []string
+	Offer MissionOffer
+	// Experience is what the army's experience really changed by when the
+	// mission came home (negative on a loss, 0 at the floor); Rank and
+	// RankBefore are the army's rank index after and before.
+	Experience       float64
+	Rank, RankBefore int
+	RoadEvents       int
+	RoadStories      []string
 	// luck is the mission's own stream, for the encounter on return.
 	luck *rand.Rand
 }
@@ -352,6 +364,7 @@ func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResu
 		message = fmt.Sprintf("%s failed. You kept %.0f%% of the loot: %s.", active.Title, failedLootShare*100, amountsText(rewards))
 	}
 	fell := missionLosses(active.luckStream(), active.Soldiers, success, active.Rare)
+	gained, before, after := mm.gainExperience(config.ArmyExperienceFor(active.Kind(), success))
 
 	mm.completedCount++
 	return ExpeditionResult{
@@ -365,6 +378,9 @@ func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResu
 		Party:        active.Party,
 		Marching:     active.Soldiers,
 		Offer:        active.MissionOffer,
+		Experience:   gained,
+		Rank:         after,
+		RankBefore:   before,
 		RoadEvents:   len(active.RoadEventsSeen),
 		RoadStories:  slices.Clone(active.RoadEventsSeen),
 		luck:         active.luckStream(),
@@ -420,6 +436,8 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		ActiveScout:     activeScout,
 		ActiveMilitary:  activeGrand,
 		CompletedCount:  mm.completedCount,
+		Experience:      mm.experience,
+		Rank:            mm.Rank(),
 		TotalLoot:       loot,
 		Returns:         slices.Clone(mm.returns),
 		ReturnsMade:     mm.returnsMade,
@@ -506,6 +524,7 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 		mm.board = save.Board.clone()
 	}
 	mm.completedCount = save.CompletedCount
+	mm.experience = max(0, save.Experience)
 	mm.returns = slices.Clone(save.Returns)
 	mm.returnsMade, mm.returnsSeen = save.ReturnsMade, save.ReturnsSeen
 	if save.TotalLoot != nil {

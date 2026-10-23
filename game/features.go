@@ -70,8 +70,8 @@ func (ge *GameEngine) inTreeGrace() bool {
 }
 
 // featureErr is the refusal for the first of keys that is locked ("" keys are
-// skipped), nil when every one is open: "Campaigns need Military Tactics
-// first. Research it to send one." Caller holds the lock.
+// skipped), nil when every one is open: "Festivals need Drama
+// first. Research it to hold one." Caller holds the lock.
 func (ge *GameEngine) featureErr(keys ...string) error {
 	for _, key := range keys {
 		if key == "" {
@@ -99,19 +99,6 @@ func (ge *GameEngine) useFeature(keys ...string) {
 		}
 		ge.grantedFeatures[key] = true
 	}
-}
-
-// expeditionFeatures is the locks an offer sits behind: none for a short
-// mission, the expeditions lock for a long mission or a civil grand one, the
-// campaigns lock for a military grand one.
-func expeditionFeatures(offer MissionOffer) []string {
-	switch {
-	case offer.Military():
-		return []string{config.FeatureCampaigns}
-	case offer.Tier == TierLong, offer.Tier == TierGrand:
-		return []string{config.FeatureExpeditions}
-	}
-	return nil
 }
 
 // routeFeatures is the locks a trade route sits behind: trade routes, and
@@ -169,12 +156,6 @@ func (ge *GameEngine) loadGrantedFeatures(keys []string) {
 //   - trade routes: a route running, or anything a route ever imported or
 //     exported this run; Rail Freight and Warp Commerce when that route is
 //     running;
-//   - campaigns: a campaign under way;
-//   - long and grand mission offers (civil grand included): that
-//     expedition under way;
-//   - a finished expedition (the save counts them but not their kind) counts
-//     for campaigns and expeditions alike, and for the Naval Expedition once
-//     the save has reached the age it sails from;
 //   - festivals and the black market: their cooldown has been set this run;
 //   - diplomacy: a civilization is met.
 func featuresInUse(save *GameSave, set *rules.Set, ageIndex func(string) (int, bool)) []string {
@@ -187,14 +168,6 @@ func featuresInUse(save *GameSave, set *rules.Set, ageIndex func(string) (int, b
 		if f := config.RouteFeature(key); f != "" {
 			out = append(out, f)
 		}
-	}
-	for _, entry := range save.Military.Active {
-		if entry.Mission != nil {
-			out = append(out, expeditionFeatures(entry.Mission.MissionOffer)...)
-		}
-	}
-	if save.Military.CompletedCount > 0 {
-		out = append(out, config.FeatureCampaigns, config.FeatureExpeditions)
 	}
 	if save.FestivalReadyTick > 0 {
 		out = append(out, config.FeatureFestivals)

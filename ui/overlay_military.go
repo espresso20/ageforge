@@ -52,11 +52,10 @@ func militaryProvider(state game.GameState, _ int) string {
 	// === Campaigns ===
 	// The Army panel lists only military campaigns (they cost soldiers).
 	sb.WriteString("\n [gold]═══ Campaigns ═══[-]\n\n")
-	sb.WriteString(lockNotes(state, config.FeatureCampaigns))
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
 		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Campaigns open in %s and cost soldiers,", ageRef(state, "bronze_age"))) + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, " which come with military buildings.") + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, " Campaigns are grand missions and cost soldiers,") + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, " which come with military buildings. They open in the Steel Era, or an era early for a Veteran army.") + "\n")
 	} else {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}

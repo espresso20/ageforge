@@ -32,6 +32,13 @@ type roadRun struct {
 // toll decisions are compared through the event stories instead.
 func roadMissionEngine(t *testing.T) (*GameEngine, int) {
 	t.Helper()
+	return roadMissionEngineSkipping(t, 0)
+}
+
+// roadMissionEngineSkipping is roadMissionEngine on the (skip+1)th seed that
+// fits, for a test that needs a different mission than the first.
+func roadMissionEngineSkipping(t *testing.T, skip int) (*GameEngine, int) {
+	t.Helper()
 	for seed := int64(1); seed <= 200; seed++ {
 		ge := missionReady(t, seed, "bronze_age")
 		setIncome(ge, "gold", 0)
@@ -48,14 +55,21 @@ func roadMissionEngine(t *testing.T) (*GameEngine, int) {
 		ge.mu.RLock()
 		a := ge.Military.ActiveByTier(TierLong)
 		total := a.TotalTicks
-		due := 0
+		due, retimed := 0, false
 		for _, e := range a.RoadEvents {
 			if e.Tick <= total*6/10 {
 				due++
 			}
+			// The tests below count on the mission coming home at its own
+			// length, so a storm or a helping hand sends the seed away.
+			retimed = retimed || e.Kind == "storm" || e.Kind == "helpers"
 		}
 		ge.mu.RUnlock()
-		if due >= 2 {
+		if due >= 2 && !retimed {
+			if skip > 0 {
+				skip--
+				continue
+			}
 			return ge, total
 		}
 	}
@@ -93,8 +107,22 @@ func snapRoadRun(ge *GameEngine) roadRun {
 // played live, tick by tick, or caught up offline in one go. The mission
 // comes home in both, with the same returns entry.
 func TestRoadEventsFireOfflineLikeLive(t *testing.T) {
-	live, total := roadMissionEngine(t)
-	offline, _ := roadMissionEngine(t)
+	// The check of the encounter means something only if one happened, so a
+	// mission that brings none home is tried again with the next seed.
+	for skip := 0; skip < 20; skip++ {
+		if roadOfflineLikeLive(t, skip) {
+			return
+		}
+	}
+	t.Fatal("no mission of the first 20 seeds brought an encounter home; the encounter check needs one")
+}
+
+// roadOfflineLikeLive plays the test on the (skip+1)th fitting mission and
+// reports whether an encounter was met on return.
+func roadOfflineLikeLive(t *testing.T, skip int) bool {
+	t.Helper()
+	live, total := roadMissionEngineSkipping(t, skip)
+	offline, _ := roadMissionEngineSkipping(t, skip)
 	if before, after := snapRoadRun(live), snapRoadRun(offline); !reflect.DeepEqual(before, after) {
 		t.Fatalf("the two engines did not start from the same mission:\n live %+v\n away %+v", before, after)
 	}
@@ -138,10 +166,7 @@ func TestRoadEventsFireOfflineLikeLive(t *testing.T) {
 		t.Fatalf("live play wrote %d returns, want 1", len(want.returns))
 	}
 	compareRoadRuns(t, "home", want, got)
-	// The check of the encounter means something only if one happened.
-	if len(want.met) == 0 {
-		t.Fatal("live play brought the mission home with no civilization met; the encounter check needs one")
-	}
+	return len(want.met) > 0
 }
 
 // factionKeys is the civilizations the town has met, sorted: an encounter on

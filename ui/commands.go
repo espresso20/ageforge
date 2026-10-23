@@ -238,7 +238,7 @@ func registry() []*Command {
 		{Name: "expedition", Aliases: []string{"exp"}, Section: secResearch, Panel: "The Expeditions panel (Ready Room and Expedition Report)",
 			Args: []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{
-				{"expedition", "Open the Expeditions panel: the map of the age's lands with nine offers on it, and the report of the parties out"},
+				{"expedition", "Open the Expeditions panel: the map of the age's lands with its offers on it, and the report of the parties out"},
 				{"expedition <name>", "Send the offer with that name (a part of it will do); it takes a party of soldiers, and your army sets how many are out"},
 			},
 			Subs: []*Command{sub("list", "expedition list", "Print the mission board")}},

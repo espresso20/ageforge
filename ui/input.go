@@ -1868,9 +1868,6 @@ func cmdMissionBoard(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	mil := state.Military
 	lines := []string{"[gold]Mission board:[-]"}
-	if note := strings.TrimRight(lockNotes(state, config.FeatureExpeditions, config.FeatureCampaigns), "\n"); note != "" {
-		lines = append(lines, note)
-	}
 	tier := ""
 	for _, slot := range mil.Board {
 		if slot.Tier != tier {

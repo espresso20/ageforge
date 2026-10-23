@@ -266,7 +266,7 @@ func TestFlatOutputIsAFirstSource(t *testing.T) {
 	}
 }
 
-// TestFeatureLocks: the nine locks, which of them are live today and which
+// TestFeatureLocks: the locks, which of them are live today and which
 // wait for their tech, and what a refusal says.
 func TestFeatureLocks(t *testing.T) {
 	techs := TechByKey()
@@ -287,13 +287,13 @@ func TestFeatureLocks(t *testing.T) {
 		return strings.Join(out, " ")
 	}
 	live, waiting := LiveFeatureLocks(locks, isTech)
-	if got, want := keys(live), "trade_routes campaigns expeditions diplomacy festivals black_market route_rail_freight route_warp_commerce"; got != want {
+	if got, want := keys(live), "trade_routes diplomacy festivals black_market route_rail_freight route_warp_commerce"; got != want {
 		t.Errorf("live locks: %s; want %s", got, want)
 	}
 	if got := keys(waiting); got != "" {
 		t.Errorf("locks waiting for their tech: %s; want none: the tree holds every tech a lock names", got)
 	}
-	if got, want := FeatureLockByKey()[FeatureCampaigns].Refusal("Military Tactics"), "Campaigns need Military Tactics first. Research it to send one."; got != want {
+	if got, want := FeatureLockByKey()[FeatureFestivals].Refusal("Drama"), "Festivals need Drama first. Research it to hold one."; got != want {
 		t.Errorf("refusal %q, want %q", got, want)
 	}
 	if got, want := FeatureLockByKey()[FeatureBlackMarket].Refusal("Mercantilism"), "The black market needs Mercantilism first. Research it to deal there."; got != want {
@@ -311,8 +311,14 @@ func TestFeatureLocks(t *testing.T) {
 			t.Errorf("%s opens in the %s, before the %s that unlocks it can be researched (%s)", r.Name, r.MinAge, tech.Name, tech.Age)
 		}
 	}
-	if got := FeaturesOpenedBy("military_tactics"); len(got) != 1 || got[0].Key != FeatureCampaigns {
-		t.Errorf("Military Tactics opens %v, want campaigns", got)
+	if got := FeaturesOpenedBy("drama"); len(got) != 1 || got[0].Key != FeatureFestivals {
+		t.Errorf("Drama opens %v, want festivals", got)
+	}
+	// No tech locks a tier of the mission board: the era does.
+	for _, tech := range []string{"military_tactics", "exploration"} {
+		if got := FeaturesOpenedBy(tech); len(got) != 0 {
+			t.Errorf("%s opens %v, want no command", tech, got)
+		}
 	}
 }
 
@@ -325,7 +331,9 @@ func TestTechChecks(t *testing.T) {
 	}
 	for _, tech := range Technologies() {
 		checks := all[tech.Key]
-		if len(checks) == 0 {
+		// Exploration is a link in the tree and nothing more since the mission
+		// board stopped asking for it: the era opens the tiers.
+		if len(checks) == 0 && tech.Key != "exploration" {
 			t.Errorf("%s promises nothing: no effect, no building, no command", tech.Key)
 		}
 		for _, c := range checks {
@@ -346,12 +354,11 @@ func TestTechChecks(t *testing.T) {
 		"tool_making":                 "out:food:10; out:wood:10; p:gather_amount:2 | rate(food) x1.10; rate(wood) x1.10; gather_amount +2",
 		"stoneworking":                "out:stone:10; keystone:great_monolith | rate(stone) x1.10; can_build(great_monolith) 0>1",
 		"currency":                    "out:gold:10 | rate(gold) x1.10",
-		"military_tactics":            "mil:15; unlock:barracks; feature:campaigns | military_power +0.15; can_build(barracks) 0>1; allowed(campaigns) 0>1",
+		"military_tactics":            "mil:15; unlock:barracks | military_power +0.15; can_build(barracks) 0>1",
 		"calendar":                    "out:faith:10; unlock:altar; keystone:stonehenge | rate(faith) x1.10; can_build(altar) 0>1; can_build(stonehenge) 0>1",
 		"the_wheel":                   "time:5; feature:trade_routes | build_ticks x0.95; allowed(trade_routes) 0>1",
 		"boatbuilding":                "out:food:5; p:route_income:0.1 | rate(food) x1.05; route_income x1.10",
 		"priesthood":                  "p:morale_cap:0.05 | morale_cap +0.05",
-		"exploration":                 "feature:expeditions | allowed(expeditions) 0>1",
 		"envoys":                      "feature:diplomacy | allowed(diplomacy) 0>1",
 		"drama":                       "feature:festivals | allowed(festivals) 0>1",
 		"scholasticism":               "research:6 | research_ticks x0.94",
