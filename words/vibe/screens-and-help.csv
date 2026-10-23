@@ -1122,3 +1122,417 @@ ui.load_game.detailText.16,"[gray]Branched from: %s (detached, lowkey solo)[-]"
 ui.load_game.detailBadges.01,"[gold]★ autosave, on autopilot[-]"
 ui.load_game.detailBadges.02,"[gold]⭐ elite, goated[-]"
 ui.load_game.detailBadges.03,"[red]⚠ touched outside, sus[-]"
+ui.load_game.relativeTime.02,"just now, the freshest"
+ui.load_game.relativeTime.03,just now
+ui.load_game.relativeTime.04,"%dm ago, it's giving recent"
+ui.load_game.relativeTime.05,%dh ago
+ui.load_game.relativeTime.07,"%d days ago, ancient history"
+ui.load_game.pluralSaves.01,1 save
+ui.load_game.pluralSaves.02,%d saves
+ui.load_game.savesDirLabel.01,"This account, your crew"
+ui.locked_hint.lockedHintLines.01,"Locked. Your scholars are still beefing about it, no cap."
+ui.locked_hint.lockedHintLines.02,"Locked. Somebody has to read a book first. Not you, obviously, bruh."
+ui.locked_hint.lockedHintLines.03,"Locked. The blueprints exist, but nobody can read them yet, lowkey tragic."
+ui.locked_hint.lockedHintLines.04,"Locked. Research it, or keep staring. Staring has a bad track record, fr."
+ui.locked_hint.lockedHintLines.05,"Locked. Your scholars need a nudge. A firm, encouraging nudge, it's giving coach."
+ui.locked_hint.lockedHintLines.06,"Locked. Theory first, bricks later, the main character arc."
+ui.locked_hint.lockedHintLines.07,"Locked. The idea is out there. Send a scholar to go grab it, bet."
+ui.locked_hint.lockedHintLines.08,"Locked. Needs knowledge, which needs scholars, which need snacks, the chain is real."
+ui.locked_hint.lockedHintLines.09,"Locked. Your builders asked how. Nobody had an answer, L."
+ui.locked_hint.lockedHintLines.10,"Locked. Crack a book. Or crack the whip at the library, no cap."
+ui.locked_hint.lockedHintLines.11,"Locked. Science hasn't hit this one yet, bet."
+ui.locked_hint.lockedHintLines.12,"Locked. It's on the syllabus. Your town skipped class, sus."
+ui.locked_hint.lockedNeedsLine.01,"Needs %s (research), the prereq"
+ui.locked_hint.lockedNeedsLine.02,"Needs %s (research), after %s, the chain"
+ui.locked_hint.lockedBuildingEntry.01,"   The bill: "
+ui.map_mini.miniMap.Draw.01," Map, the vibe · "
+ui.map_panel.mapIconsHint.01,"Want real icons on your map? Type icons, it's giving upgrade."
+ui.map_panel.drawBar.02," runs the command below, bussin · "
+ui.map_panel.drawBar.04," types, fr "
+ui.map_panel.drawBar.06," bounce"
+ui.map_panel.drawBar.08," peace out"
+ui.map_panel.handleKey.01,"Nothing to type here. Move the cursor onto a building or a civilization, the lore spot."
+ui.map_panel.reply.01,"Ran, W "
+ui.map_settings.saveMapSettings.01,"The setting couldn't be saved to your account, L: "
+ui.map_settings.markMapHintShown.01,"The map setting couldn't be saved to your account, sus: "
+ui.mastery.masteryNowText.01,"new ground, 1x, the fresh start"
+ui.mastery.masteryNowText.02,"known ground, %s faster (catching up to your record), the glow-up"
+ui.mastery.masteryNowText.03,"known ground, %s faster (mastery %d), the flex"
+ui.mastery.masteryNextText.01,"the %s levels up its mastery, the glow-up"
+ui.mastery.masteryNextText.02,"the %s to the %s level up their mastery, each one, bussin"
+ui.mastery.masteryStatusLines.01,"  Era Mastery, the glow-up: %s"
+ui.mastery.masteryStatusLines.02,"  Next prestige, the reset: %s."
+ui.mastery.writeMasterySection.01,"[gold]── Era Mastery, the glow-up ──[-]
+
+"
+ui.mastery.writeMasterySection.02," This age, the vibe: %s
+"
+ui.mastery.writeMasterySection.03," [gray]An age runs faster once a run has finished it, the fast lane: 2x after one, up to 4.2x after ten, bussin.[-]
+"
+ui.mastery.writeMasterySection.04," [gray](catch-up, the comeback)[-]"
+ui.mastery.writeMasterySection.05," %s%-18s mastery %2d  %s%s, the flex
+"
+ui.mastery.writeMasterySection.06,"
+ [gray]Next prestige, the reset: %s.[-]
+"
+ui.mastery.writeMasterySection.07," [gray]Ages %s or more behind your record run, at least %s, real.[-]
+"
+ui.menu.eliteLines.01,MASTER FORGER
+ui.menu.eliteLines.02,TOUCHED BY THE SOURCE
+ui.menu.eliteLines.03,ARCHITECT OF THE FORGE
+ui.menu.eliteLines.04,REALITY.EXE PATCHED
+ui.menu.eliteLines.05,THE FIRST MAKER
+ui.menu.continueDetails.01,person
+ui.menu.continueDetails.02,people
+ui.menu.menuCaptions.01,"%s · %s · ★ Prestige level %d, the glow"
+ui.menu.buildViewWith.01,"Continue, let's go"
+ui.menu.buildViewWith.02,Fresh run
+ui.menu.buildViewWith.03,"Load game, rewind"
+ui.menu.buildViewWith.04,"Badges, the drip"
+ui.menu.buildViewWith.05,"Themes, the fit"
+ui.menu.buildViewWith.06,"Accounts, the cast"
+ui.menu.buildViewWith.07,"Check for updates, fr"
+ui.menu.buildViewWith.08,"Log off, bet"
+ui.menu.buildViewWith.09," · update available (u), W"
+ui.menu.buildViewWith.10," · update (u), bet"
+ui.menu.badgeExtras.01,"%d of %d, bussin"
+ui.menu.continueGame.01,"Couldn't open '%s'.
+
+%v"
+ui.menu.continueGame.02,"Game loaded, let's go."
+ui.menu_page.menuKeysHint.01,"↑ ↓ pick your path · Enter open, bet"
+ui.menu_page.renderTown.01," ages, one terminal, no cap "
+ui.menu_page.renderForge.01," Plate I, the forge era "
+ui.menu_page.renderForge.02," The forge, the lab "
+ui.menu_page.renderForge.03,AN ALMANAC OF 
+ui.menu_page.renderForge.04," AGES, FR"
+ui.menu_page.renderForge.05,AN ALMANAC OF 
+ui.menu_page.renderForge.06," AGES, LORE"
+ui.menu_page.renderForge.07,"begun at a campfire, lowkey humble"
+ui.menu_page.renderForge.08,begun at a campfire · the 
+ui.menu_page.renderForge.09," edition, much enlarged, the glow-up"
+ui.menu_page.renderForge.10,started at a campfire
+ui.menu_page.renderForge.11," CONTENTS, THE TEA "
+ui.menu_page.renderForge.12,the 
+ui.menu_page.renderForge.13," edition · "
+ui.menu_page.renderCompact.01,AGEFORGE
+ui.menu_scene.menuWord.01,AGEFORGE
+ui.menu_update.showUpdateCheck.01,"Checking for updates, one sec..."
+ui.menu_update.showUpdateCheck.02,"Update check flopped:
+
+"
+ui.menu_update.showUpdateCheck.03,"You're up to date, W.
+
+"
+ui.menu_update.showUpdateCheck.04," is the latest version, the newest drip."
+ui.menu_update.showUpdateMsg.01,Got it
+ui.menu_update.showUpdateConfirm.01,"  ✦  Update available, bussin  ✦
+
+  Latest:   %s
+  Current:  %s
+
+Download and install now, no cap?"
+ui.menu_update.showUpdateConfirm.02,"Update now, bet"
+ui.menu_update.showUpdateConfirm.03,"Later, fr"
+ui.menu_update.showUpdateInstall.01,"Downloading %s, bussin...
+
+%s"
+ui.menu_update.showUpdateInstall.02,"Update flopped:
+
+"
+ui.newgame_modal.showAccountNameModal.01," Name your AgeForge account, the identity "
+ui.newgame_modal.showAccountNameConfirmModal.01,"Create your AgeForge account as %q?
+This name is your identity, your main character tag. To restore your account on another device, enter it exactly as written here, no typos."
+ui.newgame_modal.showAccountNameConfirmModal.02,Lock it in
+ui.newgame_modal.showAccountNameConfirmModal.03,"Retype, fr"
+ui.newgame_modal.showNewGameNameModal.01," Name your civilization, the lore "
+ui.newgame_modal.showSaveNameModalOpts.01,The name: 
+ui.newgame_modal.showSaveNameModalOpts.02,"Esc: nah, cancel"
+ui.newgame_modal.showSaveNameModalOpts.03,"Esc: accept, bet"
+ui.newgame_modal.showSaveNameModalOpts.04,[gray]Enter: lock it in  ·  Tab: reroll name  ·  
+ui.overlay.Register.01," (Esc to bounce) "
+ui.overlay.buildWidgetRoot.01," (Esc to close, bet) "
+ui.overlay_buildings.buildingsProvider.01,"[gold]═══ Buildings, the stuff: %d built, %d unlocked ═══[-]
+"
+ui.overlay_buildings.buildingsProvider.02," [gray]Every age so far. Build with: build <key> (current age only), the current vibe.[-]
+
+"
+ui.overlay_buildings.buildingsProvider.03,"[gold]── %s (current, the main arc) ──[-]
+"
+ui.overlay_buildings.buildingsProvider.04,"   The bill: "
+ui.overlay_buildings.buildingsProvider.05," [gray](legacy, the OG)[-]"
+ui.overlay_buildings.buildingsProvider.06," [cyan]workers, the crew: %d/%d[-]"
+ui.overlay_buildings.buildingsProvider.07," [gray]workers: up to %d each, the cap[-]"
+ui.overlay_buildings.buildingsProvider.08,"   Price: "
+ui.overlay_epoch.epochProvider.01,"[gold]═══ Epoch, the era ═══[-]
+
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.01,"[gold]── Current epoch, the main era ──[-]
+
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.02," [gray]No epoch data yet, we're early.[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.03,"%d more to come, bet"
+ui.overlay_epoch.epochProviderCurrentEpoch.04," %s%s %s[-]   Ages, the timeline: %s
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.05," [gray]Primary resource, the bag: %s   Energy, the juice: %s[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.06," Epoch event: [gray]No event this epoch, quiet vibes[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.07," Epoch event, the plot: [%s]%s[-]   [red](catastrophe)[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.08,"   %s duration, the clock"
+ui.overlay_epoch.epochProviderCurrentEpoch.09," Epoch event, the plot: [%s]%s[-]%s
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.10," Good events at the next era, bussin: %s
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.11,"   Culture strength %s, the vibe. Major from %.0f%%, the Legendary from %.0f%%."
+ui.overlay_epoch.epochProviderCurrentEpoch.12," Catastrophe: [red]pending, brace up. Type catastrophe to choose Endure or Succumb.[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.13," [gray]  Advancing and prestige are blocked until you decide, fr.[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.14," Catastrophe: [red]the Last Passage, final boss. Type catastrophe to choose Endure or Succumb.[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.15," [gray]  Prestige waits until you decide; nothing else does, bet.[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.16," Catastrophe: %s, heads up
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.17,none in the 
+ui.overlay_epoch.epochProviderCurrentEpoch.18," Catastrophe, the vibe: %s
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.19," Catastrophe: [green]spared, W[-] [gray](nothing more will hit this era)[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.20," Catastrophe: [yellow]foretold, sus[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.21," Catastrophe: [gray]none so far, we're clear[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.22," Doom foretold, the warning: [yellow]%s[-] [gray](more faith, lower odds)[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.23," Next passage (prestige, the Last Passage): [yellow]%s[-] [gray](more faith, lower odds, real talk)[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.24," Outlook: [gray]no harbinger has come. Quiet, for now, we're safe.[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.25,"no word of when, rip"
+ui.overlay_epoch.epochProviderCurrentEpoch.26,doom 
+ui.overlay_epoch.epochProviderCurrentEpoch.27,the Last Passage is here
+ui.overlay_epoch.epochProviderCurrentEpoch.28,"invited, the Last Passage drops at prestige, sus"
+ui.overlay_epoch.epochProviderCurrentEpoch.29,"waiting on your prestige, lowkey patient"
+ui.overlay_epoch.epochProviderCurrentEpoch.30,"invited, the catastrophe is coming, L"
+ui.overlay_epoch.epochProviderCurrentEpoch.31," Harbinger, the omen: [warning]%s is here[-] [gray](%s; appease %d/%d, brace %d/%d; type 'harbinger')[-]
+"
+ui.overlay_epoch.epochProviderCurrentEpoch.32," Harbinger, the omen: %s
+"
+ui.overlay_epoch.epochProviderHarbingers.01," [yellow]── Harbingers, the omens ──[-]
+"
+ui.overlay_epoch.epochProviderHarbingers.02,"   [gray]None have come and gone this run, the quiet kind.[-]
+"
+ui.overlay_epoch.harbingerRecordText.01,[red]Fulfilled[-] [gray](invited)[-]
+ui.overlay_epoch.harbingerRecordText.02,"[red]Vindicated, the prophecy slaps[-]"
+ui.overlay_epoch.harbingerRecordText.03,"[green]Spared, W[-]"
+ui.overlay_epoch.harbingerRecordText.04,"[yellow]Discredited, L[-]"
+ui.overlay_epoch.harbingerRecordText.05,"[gray]unknown, the mystery[-]"
+ui.overlay_epoch.harbingerRecordText.06," [gray](a false prophet, cap)[-]"
+ui.overlay_epoch.harbingerRecordText.07,"appeased %d, the peace treaty"
+ui.overlay_epoch.harbingerRecordText.08,"braced %d, the shield up"
+ui.overlay_epoch.harbingerRecordText.09,doom in the 
+ui.overlay_epoch.harbingerRecordText.10," [gray](settled as you advanced, no cap)[-]"
+ui.overlay_epoch.epochProviderHistory.01," [yellow]── Epoch history, the timeline ──[-]
+"
+ui.overlay_epoch.epochProviderHistory.02,"   [gray](current, the vibe)[-]"
+ui.overlay_epoch.epochProviderHistory.03,"   [gray]no event, quiet era[-]"
+ui.overlay_epoch.epochProviderLegacyBonuses.01," [yellow]── Legacy bonuses (from Succumb), the goodies ──[-]
+"
+ui.overlay_epoch.epochProviderLegacyBonuses.02,"   [gray]None yet, we're early[-]
+"
+ui.overlay_epoch.epochProviderLegacyBonuses.03,"   [gray]None yet, bet[-]
+"
+ui.overlay_epoch.epochProviderCivilizationLog.01," [yellow]── Civilization log, the tea ──[-]
+"
+ui.overlay_epoch.epochProviderCivilizationLog.02,"   [gray]No catastrophes yet, we're blessed.[-]
+"
+ui.overlay_epoch.catastropheOutcomeLabel.01,"[green]✓ Endured, the comeback[-]"
+ui.overlay_epoch.catastropheOutcomeLabel.02,"[yellow]Succumbed (legacy bonus), the glow[-]"
+ui.overlay_epoch.catastropheOutcomeLabel.03,"[red]Pending, the suspense[-]"
+ui.overlay_epoch.catastropheOutcomeLabel.04,"[gray]catastrophe (outcome not recorded), lowkey unknown[-]"
+ui.overlay_factions.factionsProvider.01,"═══ Factions, the drama ═══"
+ui.overlay_factions.factionsProvider.02,"%d met · %d undiscovered, the mystery"
+ui.overlay_factions.factionsProvider.03,"
+ [yellow]── Civilizations you have met, the squad ──[-]
+
+"
+ui.overlay_factions.factionsProvider.04," [gray]You haven't met anyone yet. Your scouts make first contact[-]
+"
+ui.overlay_factions.factionsProvider.05," [gray]out in the field, so send scouting expeditions, no cap.[-]
+"
+ui.overlay_factions.factionsProvider.06," Tip, the pro move: assign workers to an Embassy (%s) or a Grand Embassy"
+ui.overlay_factions.factionsProvider.07," (%s) to raise opinion over time, it's a slow burn."
+ui.overlay_factions.factionsProvider.08,"
+ [gray]Commands, the menu: diplomacy ally/rival/embargo/gift/neutral/tribute/raid <civ>[-]
+"
+ui.overlay_factions.factionsProvider.09," [gray]Deals, the receipts: diplomacy deals <civ> · diplomacy accept <civ> <n> · plan deal <civ> <n>[-]
+"
+ui.overlay_factions.writeLiveFactionEffects.01,"── Boons and setbacks, the highs and lows ──"
+ui.overlay_factions.writeLiveFactionEffects.02,"boons %d/%d · setbacks %d/%d, the swings"
+ui.overlay_factions.writeLiveFactionEffects.04," [green]↳ %d workers on loan from %s (%s), bussin[-]
+"
+ui.overlay_factions.writeLiveFactionEffects.05,"crew on loan, the swap"
+ui.overlay_factions.writeLiveFactionEffects.06,worker
+ui.overlay_factions.writeLiveFactionEffects.07,workers
+ui.overlay_factions.writeLiveFactionEffects.08," [gray]No boons or setbacks in play, the quiet era.[-]
+"
+ui.overlay_factions.writeLiveFactionEffects.09," [gray]Civilizations grant boons after encounters on scouting expeditions, a real perk.[-]
+"
+ui.overlay_factions.writeGeographicSociety.01,"
+ [yellow]── Geographic Society, the scouts ──[-]
+
+"
+ui.overlay_factions.writeGeographicSociety.02," No Geographic Society yet, fr. %s brings one, and it sends"
+ui.overlay_factions.writeGeographicSociety.03," scouts out on standing orders, the autopilot."
+ui.overlay_factions.writeGeographicSociety.04," Societies: [cyan]%d[-] · Staffed: [cyan]%d/%d[-] (%d%%) · Sends a squad every %s, the rhythm
+"
+ui.overlay_factions.writeGeographicSociety.05," [yellow]⚠ A party is due, but you can't cover the expedition cost, L.[-]
+"
+ui.overlay_factions.writeGeographicSociety.06," [yellow]  It goes out once you've got the resources, bet.[-]
+"
+ui.overlay_factions.writeGeographicSociety.07," Next dispatch in %s, the countdown"
+ui.overlay_factions.writeGeographicSociety.08," [gray]The Society is running: parties go out on their own, autopilot.[-]
+"
+ui.overlay_factions.writeFactionCard.01,"   [red]⚔ At war, brace for raids. Sue for peace with: diplomacy tribute "
+ui.overlay_factions.writeFactionCard.02,"   Opinion, the vibe check: [%s]%4d[-]  [%s]%s[-]
+"
+ui.overlay_factions.writeFactionCard.03,"[gray]no active bonus, quiet[-]"
+ui.overlay_factions.writeFactionCard.04,"[green]%s %s trades, bussin[-]"
+ui.overlay_factions.writeFactionCard.05,"   Vibe check: [%s]%s[-]  %s  [gray](%s done)[-]
+"
+ui.overlay_factions.writeFactionCard.06,trade
+ui.overlay_factions.writeFactionCard.07,trades
+ui.overlay_factions.writeFactionCard.08,"   [green]↳ %d workers on loan (permanent), W[-]
+"
+ui.overlay_factions.writeFactionCard.09,"   [green]↳ %d workers on loan (temporary), it's a loan, fr[-]
+"
+ui.overlay_factions.writeFactionCard.10,"[gold]✦ %s active, the drip[-]"
+ui.overlay_factions.writeFactionCard.11,boon
+ui.overlay_factions.writeFactionCard.12,boons
+ui.overlay_factions.writeFactionCard.13,"[red]⚠ %s active, sus[-]"
+ui.overlay_factions.writeFactionCard.14,setback
+ui.overlay_factions.writeFactionCard.15,setbacks
+ui.overlay_factions.writeFactionCard.16,"   [gray]diplomacy tribute %s (sue for peace) · or wait them out, the patient route[-]
+
+"
+ui.overlay_factions.writeFactionCard.17,"   [gray]diplomacy rival/embargo/neutral %s, the spicy list[-]
+
+"
+ui.overlay_factions.writeFactionCard.18,"   [gray]Send a gift: %s for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s, the menu[-]
+
+"
+ui.overlay_factions.writeUndiscoveredRoster.01,"
+ [yellow]── Not yet met, the mystery ──[-]
+
+"
+ui.overlay_factions.writeUndiscoveredRoster.02," [gray]Every civilization has been met, W.[-]
+"
+ui.overlay_factions.writeUndiscoveredRoster.05," %s not yet discovered, so send expeditions to find %s, go explore."
+ui.overlay_factions.writeUndiscoveredRoster.06,civilization
+ui.overlay_factions.writeUndiscoveredRoster.07,civilizations
+ui.overlay_factions.effectMagnitude.01," all production"
+ui.overlay_factions.effectMagnitude.02," game speed"
+ui.overlay_factions.diplomacyThreshold.01,"[gray](maxed, we're cooking)[-]"
+ui.overlay_factions.diplomacyThreshold.02,"[yellow](opinion decaying, lowkey sus)[-]"
+ui.overlay_factions.diplomacyThreshold.03,"[gray](+%d opinion to friendly, bussin)[-]"
+ui.overlay_factions.diplomacyThreshold.04,"[gray](+%d opinion to ally-eligible, the goal)[-]"
+ui.overlay_factions.diplomacyThreshold.05,"[gray](can ally: diplomacy ally %s, %s), easy W[-]"
+ui.overlay_factions.writeFactionDeals.01,Deals: none while they're 
+ui.overlay_factions.writeFactionDeals.02,"Deals: nothing to offer right now, the board is blank."
+ui.overlay_factions.writeFactionDeals.03,"Deals, the bag:"
+ui.overlay_factions.writeFactionDeals.04,new offers drop in 
+ui.overlay_factions.dealLine.02,"next age's goods, the drop"
+ui.overlay_factions.dealLine.04,→ grab
+ui.overlay_harbinger.handleKey.01,"Appeased. The real odds are lower now, W."
+ui.overlay_harbinger.handleKey.02,"Braced. An Endure will cost you less, the shield is up."
+ui.overlay_harbinger.handleKey.03,"Press I again to invite the catastrophe. This can't be undone, bet."
+ui.overlay_harbinger.handleKey.04,"Invited. It'll come when it was fated to, no take-backs."
+ui.overlay_harbinger.handleKey.05,"Invited. It'll drop at your next prestige, sus."
+ui.overlay_harbinger.harbingerInviteRefusal.01,"no harbinger is here to invite, L"
+ui.overlay_harbinger.harbingerInviteRefusal.02,"can't invite, L: %s"
+ui.overlay_harbinger.harbingerPanelTextAt.01,"═══ Harbinger, the omen ═══"
+ui.overlay_harbinger.harbingerAbsentText.01," No harbinger is here, peace.
+
+"
+ui.overlay_harbinger.harbingerAbsentText.02," A harbinger shows up only when doom is on its way, some while before it hits,
+ and the figure changes with each age it lives through. A quiet era is safe, for
+ now, fr. In the last era the doom is prestige itself: the Last Passage."
+ui.overlay_harbinger.harbingerAbsentText.03,"── Outlook, the forecast ──"
+ui.overlay_harbinger.harbingerAbsentText.04," Prestige here could bring the Last Passage. The risk is %s, the coin toss.
+"
+ui.overlay_harbinger.harbingerAbsentText.05," Published odds, the receipts: %s
+"
+ui.overlay_harbinger.harbingerAbsentText.06," Faith strength, the vibe: "
+ui.overlay_harbinger.harbingerAbsentText.07,". Stronger faith makes it less likely, lowkey helpful."
+ui.overlay_harbinger.harbingerAbsentText.08,"The Last Passage is here. Type 'catastrophe' to choose, it's time."
+ui.overlay_harbinger.harbingerAbsentText.09," This is the final epoch, the endgame. Its passage is prestige, and no harbinger has come.
+"
+ui.overlay_harbinger.harbingerAbsentText.10," Faith strength, the vibe: "
+ui.overlay_harbinger.harbingerAbsentText.11,".
+ Stronger faith makes a doom less likely to hit, and faith and culture pay
+ for Appease if a harbinger comes, bet."
+ui.overlay_harbinger.harbingerAbsentText.12,"'s warning in this era was invented, the lore."
+ui.overlay_harbinger.harbingerPresentText.01," harbinger"
+ui.overlay_harbinger.harbingerPresentText.02,Picked up the warning from 
+ui.overlay_harbinger.harbingerPresentText.03,". Your answers stand, fr."
+ui.overlay_harbinger.harbingerPresentText.04," Warning of %s: the end of this civilization, when you next prestige, the plot twist.
+
+"
+ui.overlay_harbinger.harbingerPresentText.05," Warning of %s %s, the vibe check.
+
+"
+ui.overlay_harbinger.harbingerPresentText.06," Warning of %s. %s gives no word of when, rip.
+
+"
+ui.overlay_harbinger.harbingerPresentText.07,"The Last Passage still waits at your next prestige. Your answers to it stand, bet."
+ui.overlay_harbinger.harbingerPresentText.08,"The Last Passage is here. Prestige waits: type 'catastrophe' to choose, no cap."
+ui.overlay_harbinger.harbingerPresentText.09," Severity, the danger level: %s
+"
+ui.overlay_harbinger.harbingerPresentText.10," Published odds, the receipts: %s
+"
+ui.overlay_harbinger.harbingerPresentText.11," Severity, how bad: %s
+"
+ui.overlay_harbinger.harbingerPresentText.12," The omens give no figure. Their words are all you've got, bussin."
+ui.overlay_harbinger.harbingerPresentText.13," Faith strength, the vibe: "
+ui.overlay_harbinger.harbingerPresentText.14,". Stronger faith lowers the odds, real talk."
+ui.overlay_harbinger.harbingerPresentText.15,"You've invited it. The Last Passage will come when you prestige, sus."
+ui.overlay_harbinger.harbingerPresentText.16,"You've invited it. The catastrophe will come when it was fated to, L."
+ui.overlay_harbinger.harbingerPresentText.17,"── Answers, the picks ──"
+ui.overlay_harbinger.harbingerPresentText.18,"Appease, the calm move: "
+ui.overlay_harbinger.harbingerPresentText.19,"     Each level multiplies the real chance it hits by 0.6, the math is kind."
+ui.overlay_harbinger.harbingerPresentText.20,"Brace, the shield: "
+ui.overlay_harbinger.harbingerPresentText.21,"     If it comes and you Endure: you keep %d%% of the run's prestige points, the cut."
+ui.overlay_harbinger.harbingerPresentText.22,"     Next level: %d%% kept, bussin."
+ui.overlay_harbinger.harbingerPresentText.23,"     If it comes and you Endure: %d%% of buildings fall, %d%% of stock is kept, rough but fine."
+ui.overlay_harbinger.harbingerPresentText.24,"     Next level: %d%% fall, %d%% kept, the upgrade."
+ui.overlay_harbinger.harbingerPresentText.25,"Invite, the sus move: "
+ui.overlay_harbinger.harbingerPresentText.26,"     Guarantees the Last Passage at your next prestige; Succumb then earns the
+     Cosmic Legacy, free, can't be undone, big sus."
+ui.overlay_harbinger.harbingerPresentText.27,"     Guarantees the catastrophe; it still comes when it was fated to. Free.
+     Can't be undone, bet."
+ui.overlay_harbinger.harbingerPresentText.28,"Done, dusted: "
+ui.overlay_harbinger.harbingerPresentText.29,"Unavailable, L: "
+ui.overlay_harbinger.harbingerPresentText.30,"Press I again to confirm, bet."
+ui.overlay_harbinger.harbingerPresentText.31,Appease
+ui.overlay_harbinger.harbingerPresentText.32,Brace
+ui.overlay_harbinger.harbingerPresentText.33,"Invite (twice), no take-backs"
+ui.overlay_harbinger.harbingerPresentText.35,Bail
+ui.overlay_harbinger.harbingerPresentText.36," Nothing here expires, the price is the same in every age of the epoch, fr."
+ui.overlay_harbinger.harbingerCostLine.01,"Not available, sorry: "
+ui.overlay_harbinger.harbingerCostLine.02,"Nothing to pay with yet, we're broke."
+ui.overlay_harbinger.harbingerCostLine.03," (you've got "
+ui.overlay_harbinger.harbingerCostLine.04,"     Next level costs, the bill: "
+ui.overlay_harbinger.harbingerLevelText.01,"Level %d / %d, the grind"
+ui.overlay_harbinger.harbingerSeverityText.02,: the harbinger is in full panic mode
+ui.overlay_harbinger.harbingerSeverityText.04,": a real danger, worth paying to lessen, no cap"
+ui.overlay_harbinger.harbingerSeverityText.06,: kinda uneasy rather than afraid
+ui.overlay_harbinger.harbingerSeverityText.08,": nothing to fear, it's giving calm"
+ui.overlay_harbinger.harbingerGarrisonLine.01,"     No garrison counted: soldiers would soften an Endure further (Army panel), sus."
+ui.overlay_harbinger.harbingerGarrisonLine.02,"     Your garrison is counted: it blunts about %d%% of what Brace leaves, the shield."
+ui.overlay_harbinger.harbingerGarrisonLine.03,"     Brace and garrison together soften an Endure by at most %.0f%%, the cap is real."
+ui.overlay_help.helpProvider.01,"[gold]═══ Getting around, the tour ═══[-]
+"
