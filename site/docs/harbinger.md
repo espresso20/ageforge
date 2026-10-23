@@ -278,29 +278,29 @@ Both answers are priced by the age the harbinger arrives in, and keep that price
 |  | Electric Age | 65B steel, 33B electricity, 7.3B oil | 1.7 h | 760K faith, 9.8M culture | 5.2 h to 15.6 h |
 |  | Atomic Age | 340B steel, 270B electricity, 9.8B oil | 2.1 h | 1.9M faith, 26M culture | 6.2 h to 18.7 h |
 | Digital Era | Modern Age | 1.6T gold, 1.4T electricity, 46B data | 2.2 h | 4.1M faith, 56M culture | 6.2 h to 18.7 h |
-|  | Information Age | 10T electricity, 10T gold, 1.3T data | 3.4 h | 9.9M faith, 150M culture | 7.3 h to 21.8 h |
-|  | Digital Age | 38T electricity, 38T gold, 7.4T data | 5.5 h | 24M faith, 360M culture | 8.3 h to 25.0 h |
-| Neon Era | Cyberpunk Age | 360T electricity, 36T data | 8.7 h | 54M faith, 820M culture | 9.4 h to 28.1 h |
-|  | Fusion Age | 1.7Q electricity, 58T data | 13.4 h | 130M faith, 1.9B culture | 10.4 h to 31.2 h |
-|  | Space Age | 8.9Q electricity, 93T data | 20.6 h | 270M faith, 4.2B culture | 11.4 h to 34.3 h |
-| Cosmic Era: the Reality Tear | Interstellar Age | 27Q titanium, 3.4Q dark matter | 10.7 h | 600M faith, 9.3B culture | 12.5 h to 37.4 h |
-|  | Galactic Age | 170Q titanium, 95Q dark matter | 10.4 h | 1.3B faith, 20B culture | 12.5 h to 37.4 h |
-|  | Quantum Age | 3.3Qi dark matter, 240Q titanium | 10.7 h | 2.6B faith, 43B culture | 12.5 h to 37.4 h |
-|  | Transcendent Age | 3.6Qi dark matter, 270Q titanium | 10.7 h | 2.9B faith, 47B culture | 12.5 h to 37.4 h |
-| Cosmic Era: the Last Passage | Interstellar Age, as you enter the era | 27Q titanium, 6.7Q dark matter | 21.0 h | 2B faith, 31B culture | until you prestige |
+|  | Information Age | 10T electricity, 10T gold, 1.3T data | 3.4 h | 14M faith, 210M culture | 10.2 h to 30.6 h |
+|  | Digital Age | 38T electricity, 38T gold, 7.4T data | 5.5 h | 48M faith, 710M culture | 16.3 h to 48.9 h |
+| Neon Era | Cyberpunk Age | 360T electricity, 36T data | 8.7 h | 150M faith, 2.3B culture | 25.7 h to 77.1 h |
+|  | Fusion Age | 1.7Q electricity, 58T data | 13.4 h | 470M faith, 7.3B culture | 40.0 h to 119.9 h |
+|  | Space Age | 8.9Q electricity, 93T data | 20.6 h | 1.5B faith, 23B culture | 61.5 h to 184.6 h |
+| Cosmic Era: the Reality Tear | Interstellar Age | 260Q titanium, 25Q dark matter | 78.4 h | 4.5B faith, 70B culture | 94.0 h to 281.9 h |
+|  | Galactic Age | 2.3Qi titanium, 1.1Qi dark matter | 120.6 h | 14B faith, 220B culture | 131.6 h to 394.7 h |
+|  | Quantum Age | 48Qi dark matter, 3.6Qi titanium | 156.6 h | 39B faith, 640B culture | 184.2 h to 552.5 h |
+|  | Transcendent Age | 73Qi dark matter, 5.4Qi titanium | 216.0 h | 59B faith, 960B culture | 257.8 h to 773.5 h |
+| Cosmic Era: the Last Passage | Interstellar Age, as you enter the era | 260Q titanium, 50Q dark matter | 156.8 h | 15B faith, 240B culture | until you prestige |
 
 The warning times are for a first run. On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so the price is the same.
 
-In every row the shortest warning is long enough to earn level 1 of both answers: a moderate economy needs 76% to 80% of it in income for the Appease and at most 92% for the Brace (the Reality Tear's Brace is the closest, 83% to 92% of the warning; an ordinary doom's is a third of it, or less where the storage ceiling holds it down).
+In every row the shortest warning is long enough to earn level 1 of both answers: a moderate economy needs 76% to 80% of it in income for the Appease and at most 92% for the Brace (the Reality Tear's Brace is the closest, 83% to 92% of the warning; an ordinary doom's is 33% to 36% of it, or less where the storage ceiling holds it down).
 
 The Cosmic Era's passage is prestige, which you may take in any of its ages. The Last Passage's thread runs from your arrival in the era until you prestige, and nothing about its timing is hidden: you pick the moment. So where a doom's shortest warning is a fifth of an age, the Last Passage's is counted as two thirds of the age its harbinger arrives in, the Interstellar Age, on the same age target the table's prices are set from: longer than any doom's. Both of its answers are priced on that warning, at what a moderate economy (eight staffed copies of every producer) makes in it:
 
 - **Appease** level 1 is three quarters of what the warning makes in faith and culture, half of what the whole age does: 15B faith and 240B culture, a little over three times a doom foretold in the same age, and about 243 hours of income. Level 2 costs the same again, so both levels together cost what the whole Interstellar Age makes: more than the warning brings in, so the second takes playing the age out, or a stock you brought with you.
-- **Brace** level 1 is half of what the warning makes in dark matter and titanium, under the storage ceiling: 50Q dark matter and 300Q titanium, with the titanium on the ceiling, about 157 hours of income. Level 2 costs the same again. Each level fits the storage you can build in the Interstellar Age; if yours can't hold the price yet, the refusal says how much you need.
+- **Brace** level 1 is half of what the warning makes in dark matter and titanium, under the storage ceiling: 50Q dark matter and 260Q titanium, with the titanium on the ceiling, about 157 hours of income. Level 2 costs the same again. Each level fits the storage you can build in the Interstellar Age; if yours can't hold the price yet, the refusal says how much you need.
 
-If you prestige as soon as you arrive, only what you already hold can pay. A thread that begins in a later age (only a save from an older version that was already deeper in the era) is priced on that age: 44B faith, 710B culture, 2.1Qi dark matter and 2.7Qi titanium in the Galactic Age, and 130B faith, 2.2T culture, 96Qi dark matter and 7.1Qi titanium in the Quantum Age.
+If you prestige as soon as you arrive, only what you already hold can pay. A thread that begins in a later age (only a save from an older version that was already deeper in the era) is priced on that age: 44B faith, 710B culture, 2.1Qi dark matter and 2.3Qi titanium in the Galactic Age, and 130B faith, 2.2T culture, 96Qi dark matter and 7.1Qi titanium in the Quantum Age.
 
-The Reality Tear's thread is priced the same way on a doom's warning, which is at least a fifth of the age. Its Brace level 1 is five sixths of what a moderate economy makes of dark matter and titanium in that fifth, a sixth of what the whole age does, under the same ceiling: 25Q dark matter and 300Q titanium if its harbinger arrives in the Interstellar Age, about 78 hours of income. Its Appease is a doom's: 4.5B faith and 70B culture there, about 71 hours. Level 2 of each costs the same again. Each thread keeps its own levels, so answering one doesn't answer the other.
+The Reality Tear's thread is priced the same way on a doom's warning, which is at least a fifth of the age. Its Brace level 1 is five sixths of what a moderate economy makes of dark matter and titanium in that fifth, a sixth of what the whole age does, under the same ceiling: 25Q dark matter and 260Q titanium if its harbinger arrives in the Interstellar Age, about 78 hours of income. Its Appease is a doom's: 4.5B faith and 70B culture there, about 71 hours. Level 2 of each costs the same again. Each thread keeps its own levels, so answering one doesn't answer the other.
 
 #### Brace or Appease against the Last Passage
 
@@ -318,7 +318,7 @@ What each step costs, for the thread a run meets (foretold in the Interstellar A
 
 | Step | Price | Hours of income | Saves, with none of the other answer | Saves, with the other answer at level 1 |
 |------|-------|-----------------|--------------------------------------|-----------------------------------------|
-| Brace 1 | 50Q dark matter, 300Q titanium | 157 | 3.0% of the run's points | 1.8% |
+| Brace 1 | 50Q dark matter, 260Q titanium | 157 | 3.0% of the run's points | 1.8% |
 | Appease 1 | 15B faith, 240B culture | 243 | 3.0% | 1.8% |
 | Brace 2 | the same again | 157 more | 2.25% | 1.35% |
 | Appease 2 | the same again | 243 more | 1.8% | 1.08% |
@@ -355,9 +355,9 @@ A doom is fated in only 27% of eras, so these are 41 dooms across 24 runs: read 
 
 Level 1 stayed out of reach in 9 warnings. Four of them gave no time to work with: the harbinger came at the very advance its doom struck on, which leaves only what you already hold (see [No Outrunning a Doom](#no-outrunning-a-doom)). In the other five the bot, which keeps faith only for age requirements and the Sistine Chapel, ended the warning with 30% to 90% of the price in whichever of faith and culture it was shorter of.
 
-The Last Passage's row was measured at its old prices. Appease cost 3.1B faith and 48B culture: the bot had the faith in most runs and almost never the culture, so it could pay in 2 runs of 24. Brace cost the era's 1.56T dark matter and 75.6B titanium, which the bot held on arrival every time. Neither is the price now. Appease level 1 is 15B faith and 240B culture, about five times what it was. Brace level 1 is 50Q dark matter and 300Q titanium, about 32,000 times the dark matter and 4 million times the titanium. The new prices have not been run through the bot yet, so there is no count for them: what they rest on is the rule above. A player who keeps about eight copies of each producer running gathers Brace level 1 from about 157 hours of income and Appease level 1 from about 243. One who has let culture lie, or who spends titanium as fast as it comes, does not, and has to stay longer or go without.
+The Last Passage's row was measured at its old prices. Appease cost 3.1B faith and 48B culture: the bot had the faith in most runs and almost never the culture, so it could pay in 2 runs of 24. Brace cost the era's 1.56T dark matter and 75.6B titanium, which the bot held on arrival every time. Neither is the price now. Appease level 1 is 15B faith and 240B culture, about five times what it was. Brace level 1 is 50Q dark matter and 260Q titanium, about 32,000 times the dark matter and 3.4 million times the titanium. The new prices have not been run through the bot yet, so there is no count for them: what they rest on is the rule above. A player who keeps about eight copies of each producer running gathers Brace level 1 from about 157 hours of income and Appease level 1 from about 243. One who has let culture lie, or who spends titanium as fast as it comes, does not, and has to stay longer or go without.
 
-The Reality Tear's row is from the same runs, when its Brace was the era's price and its second Appease level cost double. Its Brace level 1 is now 25Q dark matter and 300Q titanium, about 78 hours of a moderate economy's income, and has no count yet either.
+The Reality Tear's row is from the same runs, when its Brace was the era's price and its second Appease level cost double. Its Brace level 1 is now 25Q dark matter and 260Q titanium, about 78 hours of a moderate economy's income, and has no count yet either.
 
 All of these runs were played while the faith bands read storage, so every doom in them rolled at the bottom band's 90% (see [Why it isn't a share of storage](faith.md#faith-threshold-bands)). That is still what a typical town rolls at, and the bot is one.
 
