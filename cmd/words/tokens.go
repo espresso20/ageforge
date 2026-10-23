@@ -9,7 +9,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// tokens.go finds, in a line of game text, the pieces a rewrite must carry
+// This file finds, in a line of game text, the pieces a rewrite must carry
 // over unchanged: format verbs, template slots, style tags, key names,
 // commands in quotes, line breaks and glyphs. The export lists them in the
 // keep column and the import holds a rewrite to them.
@@ -166,12 +166,13 @@ func bare(s string) string {
 var wordRe = regexp.MustCompile(`\pL[\pL']*\pL|\pL`)
 
 // shortWords are real words and abbreviations with no vowel in them, which
-// would otherwise read as art.
+// would otherwise read as sprite art.
 var shortWords = map[string]bool{"pts": true, "bld": true, "hrs": true, "ctrl": true, "pgdn": true, "vs": true, "tv": true, "dr": true, "mr": true, "st": true, "nd": true, "rd": true, "th": true}
 
 // realWord reports whether a run of letters is a word: two letters or more,
-// a vowel among them, and no letter three times in a row. A sprite's rows
-// ("ppppp", "FF S S FF", "xXxX") fail it.
+// a vowel among them (y counts, and so does any non-ASCII letter), and no
+// letter three times in a row. A sprite's rows ("ppppp", "FF S S FF", "xXxX")
+// fail it.
 func realWord(w string) bool {
 	rs := []rune(w)
 	if len(rs) < 2 {
@@ -214,7 +215,8 @@ func countWords(s string) int {
 }
 
 // colorNames are the names a style tag may carry: tcell's colors and the
-// theme's roles. It is the same set the game's own tag guard reads.
+// theme's roles. It is the same set as ui.knownColorNames, which the game's
+// own tag guard reads.
 var colorNames = func() map[string]bool {
 	m := map[string]bool{}
 	for k := range tcell.ColorNames {
