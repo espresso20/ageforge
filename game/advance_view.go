@@ -33,6 +33,10 @@ const (
 	// GateRowDone is one thing, done or not (Have 0 or 1 of Need 1): the
 	// keystone tech, the wonder built.
 	GateRowDone
+	// GateRowAmount is an amount the town has of what the gate measures
+	// (the measured gate): Value of Target, in Unit if it has one. Have and
+	// Need are the same amounts as whole numbers.
+	GateRowAmount
 )
 
 // GateRow is one requirement of a pillar.
@@ -43,7 +47,11 @@ type GateRow struct {
 	Label string
 	// Have and Need count the row in its kind's unit.
 	Have, Need int
-	Met        bool
+	// Value and Target are a GateRowAmount's amounts, and Unit what they are
+	// per ("a tick"; "" for a head count).
+	Value, Target float64
+	Unit          string
+	Met           bool
 	// Progress is how far along the row is, from 0 to 1 (1 once met).
 	Progress float64
 	// Note is a few plain words on where the row stands, for the rows that
@@ -224,8 +232,14 @@ func (st GameState) gatePillars(set *rules.Set, next string) []GatePillar {
 		rows[config.PillarKnowledge] = append(rows[config.PillarKnowledge], st.keystoneRow(set, tech, built, wonder))
 	}
 
+	// The measured gate asks for measures where today's asks for buildings.
+	measure, measured := st.measureFor(set)
+	if measured {
+		st.measuredRows(set, measure, rows)
+	}
+
 	// The buildings the gate asks for.
-	if age, ok := set.Age(next); ok {
+	if age, ok := set.Age(next); ok && !measured {
 		for key, need := range age.BuildingReqs {
 			def, known := set.Building(key)
 			pillar := config.PillarIndustry
