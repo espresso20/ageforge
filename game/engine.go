@@ -5159,7 +5159,7 @@ func (ge *GameEngine) GetState() GameState {
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,
 		Stats:                 ge.Stats.Snapshot(),
-		SaveExists:            SaveExists("autosave"),
+		SaveExists:            autosaveExists(),
 		TickSpeedBonus:        ge.tickSpeedBonus,
 		TickIntervalMs:        int(tickInterval.Milliseconds()),
 		CheaterBadge:          ge.cheaterBadge,
