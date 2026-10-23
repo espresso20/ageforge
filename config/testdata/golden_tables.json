@@ -6640,7 +6640,7 @@
   },
   "computers": {
    "age": "modern_age",
-   "cost": 75400000,
+   "cost": 76300000,
    "ticks": 2808
   },
   "concert_of_nations": {
@@ -6650,7 +6650,7 @@
   },
   "containerization": {
    "age": "modern_age",
-   "cost": 215000000,
+   "cost": 218000000,
    "ticks": 3510
   },
   "corporations": {
@@ -6725,7 +6725,7 @@
   },
   "electricity_tech": {
    "age": "modern_age",
-   "cost": 58000000,
+   "cost": 58700000,
    "ticks": 2808
   },
   "electrification": {
@@ -6890,7 +6890,7 @@
   },
   "information_theory": {
    "age": "modern_age",
-   "cost": 166000000,
+   "cost": 168000000,
    "ticks": 3510
   },
   "interchangeable_parts": {
@@ -7025,7 +7025,7 @@
   },
   "nanofabrication": {
    "age": "modern_age",
-   "cost": 364000000,
+   "cost": 368000000,
    "ticks": 3510
   },
   "navigation": {
@@ -7275,7 +7275,7 @@
   },
   "satellite_tech": {
    "age": "modern_age",
-   "cost": 98000000,
+   "cost": 99200000,
    "ticks": 3510
   },
   "scholasticism": {
@@ -7340,7 +7340,7 @@
   },
   "special_forces": {
    "age": "modern_age",
-   "cost": 615000000,
+   "cost": 622000000,
    "ticks": 3510
   },
   "steam_power": {
@@ -7380,7 +7380,7 @@
   },
   "suburbs": {
    "age": "modern_age",
-   "cost": 280000000,
+   "cost": 283000000,
    "ticks": 3510
   },
   "superconductors": {
@@ -7405,7 +7405,7 @@
   },
   "television": {
    "age": "modern_age",
-   "cost": 127000000,
+   "cost": 129000000,
    "ticks": 3510
   },
   "terraforming": {
@@ -7435,7 +7435,7 @@
   },
   "titanium_alloys": {
    "age": "modern_age",
-   "cost": 473000000,
+   "cost": 479000000,
    "ticks": 3510
   },
   "tool_making": {

@@ -457,20 +457,20 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 
 ---
 
-### Modern Age (~4h 49m to 51h 9m/tech)
+### Modern Age (~4h 52m to 51h 44m/tech)
 
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `television` | Television | optional | 10h 33m | `cinema` | Opens the Monument of Ages |
-| `information_theory` | Information Theory | optional | 13h 48m | `modern_physics` | +5% scholar output |
-| `containerization` | Containerization | optional | 17h 53m | `corporations` | Opens the Seaport, trade routes bring in 10% more |
-| `suburbs` | Suburbs | optional | 23h 17m | `green_revolution` | +5% housing |
-| `nanofabrication` | Nanofabrication | optional | 30h 16m | `computers` | Buildings cost 3% less |
-| `titanium_alloys` | Titanium Alloys | optional | 39h 20m | `chemical_engineering` | +5% steel production, +5% titanium ore production |
-| `special_forces` | Special Forces | optional | 51h 9m | `nuclear_deterrence` | Campaigns take 15% less time |
-| `electricity_tech` | Advanced Electrics | spine | 4h 49m | `nuclear_fission` | Opens the Power Grid Hub, +5% electricity production |
-| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 8h 9m | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
-| `computers` | Computers | spine | 6h 16m | `electricity_tech` | +5% scholar output, research takes 3% less time |
+| `television` | Television | optional | 10h 43m | `cinema` | Opens the Monument of Ages |
+| `information_theory` | Information Theory | optional | 13h 58m | `modern_physics` | +5% scholar output |
+| `containerization` | Containerization | optional | 18h 7m | `corporations` | Opens the Seaport, trade routes bring in 10% more |
+| `suburbs` | Suburbs | optional | 23h 32m | `green_revolution` | +5% housing |
+| `nanofabrication` | Nanofabrication | optional | 30h 36m | `computers` | Buildings cost 3% less |
+| `titanium_alloys` | Titanium Alloys | optional | 39h 50m | `chemical_engineering` | +5% steel production, +5% titanium ore production |
+| `special_forces` | Special Forces | optional | 51h 44m | `nuclear_deterrence` | Campaigns take 15% less time |
+| `electricity_tech` | Advanced Electrics | spine | 4h 52m | `nuclear_fission` | Opens the Power Grid Hub, +5% electricity production |
+| `satellite_tech` | Satellite Technology | **keystone** (Space Program) | 8h 15m | `rocketry`, `electricity_tech` | +1 data/tick, +10% expedition rewards |
+| `computers` | Computers | spine | 6h 20m | `electricity_tech` | +5% scholar output, research takes 3% less time |
 
 ---
 
