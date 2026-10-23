@@ -177,10 +177,10 @@ func TestIdleScholarsStillShowATechTime(t *testing.T) {
 		t.Fatal(err)
 	}
 	st = ge.GetState()
-	if card := cardOf(st, "ritual"); !strings.Contains(card, needsScholars) {
+	if card := cardOf(st, "ritual"); !strings.Contains(card, needsScholars.String()) {
 		t.Errorf("share 0 card:\n%s", card)
 	}
-	if list := cmdResearchList(ge).Message; !strings.Contains(list, "Ritual ("+needsScholarsShort+")") {
+	if list := cmdResearchList(ge).Message; !strings.Contains(list, "Ritual ("+needsScholarsShort.String()+")") {
 		t.Errorf("share 0 list:\n%s", list)
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // menu_page.go lays the main menu out and draws it. There are two pages:
@@ -299,7 +300,7 @@ func (sc *menuScene) render(pal *menuPalette, v *menuView, town *menuTown, mf ma
 }
 
 // menuKeysHint is the line that says how the menu is driven.
-const menuKeysHint = "↑ ↓ choose · Enter open"
+var menuKeysHint = vibe.E("ui.menu_page.menuKeysHint.01", "↑ ↓ choose · Enter open")
 
 // renderTown draws the town page.
 func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *menuTown, mf mapstyle.Frame) {
@@ -308,7 +309,7 @@ func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *m
 	town.draw(g, pal, 0, L.top, L.landW, L.h-L.top, mf, sc.strike > 0.45)
 	sc.sparks.draw(g, pal)
 	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, 0.5, v.plain)
-	if tag := fitOption([]string{" " + numberWords(v.ages) + " ages, one terminal "}, L.w); tag != "" {
+	if tag := fitOption([]string{" " + numberWords(v.ages) + vibe.Line("ui.menu_page.renderTown.01", " ages, one terminal ")}, L.w); tag != "" {
 		g.textOn(centred(L.w, runeLen(tag)), L.tag, tag, pal.ink, pal.bg, false)
 	}
 
@@ -323,7 +324,7 @@ func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *m
 
 	// The caption on the left and the keys on the right, under the land.
 	room := L.w - 4
-	hint := " " + menuKeysHint + " "
+	hint := " " + menuKeysHint.String() + " "
 	if capt := fitOption(spacedOptions(v.captions), room); capt != "" {
 		g.textOn(2, L.cap, capt, pal.groundInk, pal.ground, false)
 		room -= runeLen(capt) + 2
@@ -355,20 +356,20 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	// The plate: the fire, with the anvil standing in front of it.
 	sc.forge.draw(g, pal, L.px+1, L.py+1, sc.strike, v.plain)
 	g.box(L.px, L.py, L.pw, L.ph, true, pal.dim)
-	if plate := fitOption([]string{" Plate I. The forge ", " The forge "}, L.pw-4); plate != "" {
+	if plate := fitOption([]string{vibe.Line("ui.menu_page.renderForge.01", " Plate I. The forge "), vibe.Line("ui.menu_page.renderForge.02", " The forge ")}, L.pw-4); plate != "" {
 		g.textOn(L.px+centred(L.pw, runeLen(plate)), L.py+L.ph-1, plate, pal.dim, pal.bg, false)
 	}
 	sc.sparks.draw(g, pal)
 
 	inside := L.w - 8
-	if line := fitOption([]string{spaced("AN ALMANAC OF " + strings.ToUpper(numberWords(v.ages)) + " AGES"), "AN ALMANAC OF " + strings.ToUpper(numberWords(v.ages)) + " AGES"}, inside); line != "" {
+	if line := fitOption([]string{spaced(vibe.Line("ui.menu_page.renderForge.03", "AN ALMANAC OF ") + strings.ToUpper(numberWords(v.ages)) + vibe.Line("ui.menu_page.renderForge.04", " AGES")), vibe.Line("ui.menu_page.renderForge.05", "AN ALMANAC OF ") + strings.ToUpper(numberWords(v.ages)) + vibe.Line("ui.menu_page.renderForge.06", " AGES")}, inside); line != "" {
 		g.text(centred(L.w, runeLen(line)), L.line1, line, pal.dim, false)
 	}
 	ax, _ := sc.anvilAt()
 	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, (ax-float64(L.wx))/float64(menuWordW*L.sx), v.plain)
-	tags := []string{"begun at a campfire"}
+	tags := []string{vibe.Line("ui.menu_page.renderForge.07", "begun at a campfire")}
 	if v.edition != "" {
-		tags = []string{"begun at a campfire · the " + v.edition + " edition, much enlarged", "begun at a campfire"}
+		tags = []string{vibe.Line("ui.menu_page.renderForge.08", "begun at a campfire · the ") + v.edition + vibe.Line("ui.menu_page.renderForge.09", " edition, much enlarged"), vibe.Line("ui.menu_page.renderForge.10", "begun at a campfire")}
 	}
 	if tag := fitOption(tags, inside); tag != "" {
 		g.text(centred(L.w, runeLen(tag)), L.tag, tag, pal.ink, false)
@@ -377,7 +378,7 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	for x := L.mx - 1; x < L.px+L.pw; x++ {
 		g.put(x, L.rule, '─', pal.faint)
 	}
-	g.text(L.mx, L.rule, " CONTENTS ", pal.accent, true)
+	g.text(L.mx, L.rule, vibe.Line("ui.menu_page.renderForge.11", " CONTENTS "), pal.accent, true)
 	sc.drawElite(g, pal, v, L.mx+11, L.rule, L.px+L.pw-2-(L.mx+11), false)
 	sc.drawMenu(g, pal, v, true)
 
@@ -387,13 +388,13 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	var feet []string
 	for _, ver := range v.versions {
 		if v.edition != "" {
-			feet = append(feet, "the "+v.edition+" edition · "+ver)
+			feet = append(feet, vibe.Line("ui.menu_page.renderForge.12", "the ")+v.edition+vibe.Line("ui.menu_page.renderForge.13", " edition · ")+ver)
 		}
 	}
 	feet = append(feet, v.versions...)
-	if runeLen(menuKeysHint) <= room {
-		g.text(L.px+L.pw-runeLen(menuKeysHint), L.foot, menuKeysHint, pal.dim, false)
-		room -= runeLen(menuKeysHint) + 2
+	if runeLen(menuKeysHint.String()) <= room {
+		g.text(L.px+L.pw-runeLen(menuKeysHint.String()), L.foot, menuKeysHint.String(), pal.dim, false)
+		room -= runeLen(menuKeysHint.String()) + 2
 	}
 	if foot := fitOption(feet, room); foot != "" {
 		g.text(L.mx, L.foot, foot, pal.dim, false)
@@ -498,7 +499,7 @@ func ternaryColor(cond bool, a, b tcell.Color) tcell.Color {
 func (sc *menuScene) renderCompact(g *mGrid, pal *menuPalette, v *menuView) {
 	w := min(g.w, 44)
 	x := centred(g.w, w)
-	title := "AGEFORGE"
+	title := vibe.Line("ui.menu_page.renderCompact.01", "AGEFORGE")
 	if runeLen(title) <= g.w {
 		g.text(centred(g.w, runeLen(title)), 0, title, pal.accent, true)
 	}

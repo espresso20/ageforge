@@ -247,8 +247,8 @@ func TestKeyBarsFitTheirWidth(t *testing.T) {
 			}
 		}
 		for _, k := range accountsKeys {
-			if !strings.Contains(acc, " "+k.key+" ") || !strings.Contains(acc, " "+k.label+" ") {
-				t.Fatalf("Accounts key bar at %d columns lost %q %q", w, k.key, k.label)
+			if !strings.Contains(acc, " "+k.key+" ") || !strings.Contains(acc, " "+k.label.String()+" ") {
+				t.Fatalf("Accounts key bar at %d columns lost %q %q", w, k.key, k.label.String())
 			}
 		}
 	}

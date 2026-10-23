@@ -7,6 +7,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Era Mastery in the UI (game/mastery.go): the speed of the age you are in,
@@ -26,11 +27,11 @@ func masteryNowText(state game.GameState) string {
 	m := state.Mastery
 	switch {
 	case m.K <= 1:
-		return "new ground, 1x"
+		return vibe.Line("ui.mastery.masteryNowText.01", "new ground, 1x")
 	case m.CatchUp:
-		return fmt.Sprintf("known ground, %s faster (catching up to your record)", game.SpeedText(m.K))
+		return vibe.Sprintf("ui.mastery.masteryNowText.02", "known ground, %s faster (catching up to your record)", game.SpeedText(m.K))
 	}
-	return fmt.Sprintf("known ground, %s faster (mastery %d)", game.SpeedText(m.K), m.Level)
+	return vibe.Sprintf("ui.mastery.masteryNowText.03", "known ground, %s faster (mastery %d)", game.SpeedText(m.K), m.Level)
 }
 
 // masteryNextText is what a prestige now adds to mastery, or "" when it
@@ -41,16 +42,16 @@ func masteryNextText(state game.GameState) string {
 	case 0:
 		return ""
 	case 1:
-		return fmt.Sprintf("the %s gains a mastery level", game.AgeName(g[0]))
+		return vibe.Sprintf("ui.mastery.masteryNextText.01", "the %s gains a mastery level", game.AgeName(g[0]))
 	}
-	return fmt.Sprintf("the %s to the %s gain a mastery level each", game.AgeName(g[0]), game.AgeName(g[len(g)-1]))
+	return vibe.Sprintf("ui.mastery.masteryNextText.02", "the %s to the %s gain a mastery level each", game.AgeName(g[0]), game.AgeName(g[len(g)-1]))
 }
 
 // masteryStatusLines are the prestige status lines for Era Mastery.
 func masteryStatusLines(state game.GameState) []string {
-	lines := []string{fmt.Sprintf("  Era Mastery: %s", masteryNowText(state))}
+	lines := []string{vibe.Sprintf("ui.mastery.masteryStatusLines.01", "  Era Mastery: %s", masteryNowText(state))}
 	if next := masteryNextText(state); next != "" {
-		lines = append(lines, fmt.Sprintf("  Next prestige: %s.", next))
+		lines = append(lines, vibe.Sprintf("ui.mastery.masteryStatusLines.02", "  Next prestige: %s.", next))
 	}
 	return lines
 }
@@ -58,11 +59,11 @@ func masteryStatusLines(state game.GameState) []string {
 // writeMasterySection renders the ages you know, up to your record, with
 // each one's mastery and speed.
 func writeMasterySection(sb *strings.Builder, state game.GameState) {
-	sb.WriteString("[gold]── Era Mastery ──[-]\n\n")
+	sb.WriteString(vibe.Line("ui.mastery.writeMasterySection.01", "[gold]── Era Mastery ──[-]\n\n"))
 	m := state.Mastery
-	fmt.Fprintf(sb, " This age: %s\n", masteryNowText(state))
+	fmt.Fprint(sb, vibe.Sprintf("ui.mastery.writeMasterySection.02", " This age: %s\n", masteryNowText(state)))
 	if m.Record == "" || (len(m.Ages) == 0 && m.K <= 1) {
-		sb.WriteString(" [gray]An age runs faster once a run has completed it: 2x after one, up to 4.2x after ten.[-]\n")
+		sb.WriteString(vibe.Line("ui.mastery.writeMasterySection.03", " [gray]An age runs faster once a run has completed it: 2x after one, up to 4.2x after ten.[-]\n"))
 		return
 	}
 	sb.WriteString("\n")
@@ -79,16 +80,16 @@ func writeMasterySection(sb *strings.Builder, state game.GameState) {
 		}
 		note := ""
 		if k > config.MasteryK(level) {
-			note = " [gray](catch-up)[-]"
+			note = vibe.Line("ui.mastery.writeMasterySection.04", " [gray](catch-up)[-]")
 		}
-		fmt.Fprintf(sb, " %s%-18s mastery %2d  %s%s\n", mark, game.AgeName(a), level, speed, note)
+		fmt.Fprint(sb, vibe.Sprintf("ui.mastery.writeMasterySection.05", " %s%-18s mastery %2d  %s%s\n", mark, game.AgeName(a), level, speed, note))
 		if a == m.Record {
 			break
 		}
 	}
 	if next := masteryNextText(state); next != "" {
-		fmt.Fprintf(sb, "\n [gray]Next prestige: %s.[-]\n", next)
+		fmt.Fprint(sb, vibe.Sprintf("ui.mastery.writeMasterySection.06", "\n [gray]Next prestige: %s.[-]\n", next))
 	}
-	fmt.Fprintf(sb, " [gray]Ages %s or more behind your record run at least %s.[-]\n",
-		textfmt.Int(config.CatchUpGap), game.SpeedText(config.CatchUpK))
+	fmt.Fprint(sb, vibe.Sprintf("ui.mastery.writeMasterySection.07", " [gray]Ages %s or more behind your record run at least %s.[-]\n",
+		textfmt.Int(config.CatchUpGap), game.SpeedText(config.CatchUpK)))
 }

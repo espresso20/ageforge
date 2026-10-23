@@ -6,7 +6,7 @@
 //	go run ./cmd/words left           what the export leaves out, and why
 //	go run ./cmd/words vibe-export [dir]  write the rows VibeMode's script has no line for yet
 //	go run ./cmd/words vibe-lint [dir]    check the script's rows against the export and the source
-//	go run ./cmd/words vibe-wire [sheet]  write the vibe calls into the source for a sheet's texts (--dry-run to look)
+//	go run ./cmd/words vibe-wire [sheet]  write the vibe calls into the source for a sheet's texts (--dry-run to look, --only=ui.input. for a part)
 //
 // The export finds the text by parsing the Go source, so nothing in the game
 // has to register its strings anywhere. The import rewrites the same string
@@ -55,6 +55,7 @@ func run(args []string, wd string, out io.Writer) error {
 	fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	fs.SetOutput(out)
 	dry := fs.Bool("dry-run", false, "import: print what would change and what would be refused, and write nothing")
+	only := fs.String("only", "", "vibe-wire: wire only the rows whose id starts with this")
 	noSame := fs.Bool("no-same", false, "import: do not give a blank same_as row the rewrite of the row it points to")
 	if err := fs.Parse(flags); err != nil {
 		return err
@@ -64,6 +65,9 @@ func run(args []string, wd string, out io.Writer) error {
 	}
 	if *noSame && args[0] != "import" {
 		return fmt.Errorf("--no-same belongs to import")
+	}
+	if *only != "" && args[0] != "vibe-wire" {
+		return fmt.Errorf("--only belongs to vibe-wire")
 	}
 	if *dry && args[0] != "import" && args[0] != "vibe-wire" {
 		return fmt.Errorf("--dry-run belongs to import and vibe-wire")
@@ -88,7 +92,7 @@ func run(args []string, wd string, out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		return vibeWire(c, root, sheet, *dry, out)
+		return vibeWire(c, root, sheet, *only, *dry, out)
 	case "export":
 		c, err := read(root)
 		if err != nil {

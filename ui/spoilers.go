@@ -5,6 +5,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // spoilers.go holds the UI side of the no-spoiler rule (game/spoilers.go): a
@@ -34,7 +35,7 @@ func civRef(state game.GameState, key string) string {
 		}
 		return game.CivName(key)
 	}
-	return "a civilization you have not met"
+	return vibe.Line("ui.spoilers.civRef.01", "a civilization you have not met")
 }
 
 // buildingAge is the age that unlocks building key, from the snapshot, or
@@ -52,7 +53,7 @@ func currentEraName(state game.GameState) string {
 	if state.EpochName != "" {
 		return state.EpochName
 	}
-	return "this era"
+	return vibe.Line("ui.spoilers.currentEraName.01", "this era")
 }
 
 // themeUnlockHint is a locked theme's unlock condition in words the player
@@ -61,7 +62,7 @@ func currentEraName(state game.GameState) string {
 func themeUnlockHint(t theme.Theme, state game.GameState) string {
 	def, ok := state.Ruleset().Badge(t.UnlockBadge)
 	if ok && def.Event == config.BadgeEvAgeReached && def.Subject != "" && !game.SightOf(&state).Age(def.Subject) {
-		return "Reach a later age"
+		return vibe.Line("ui.spoilers.themeUnlockHint.01", "Reach a later age")
 	}
 	return t.UnlockHint
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // map_settings.go holds the display settings a command sets: "map style",
@@ -136,7 +137,7 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 		err = acct.SetMotion(s.Motion)
 	}
 	if err != nil {
-		d.engine.AddLog("warning", "The setting could not be saved to your account: "+err.Error())
+		d.engine.AddLog("warning", vibe.Line("ui.map_settings.saveMapSettings.01", "The setting could not be saved to your account: ")+err.Error())
 	}
 }
 
@@ -182,6 +183,6 @@ func (d *Dashboard) markMapHintShown() {
 		return
 	}
 	if err := acct.SetMapIconsHintShown(); err != nil {
-		d.engine.AddLog("warning", "The map setting could not be saved to your account: "+err.Error())
+		d.engine.AddLog("warning", vibe.Line("ui.map_settings.markMapHintShown.01", "The map setting could not be saved to your account: ")+err.Error())
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // earlyGameAges lists the age keys during which the "Getting Started" onboarding
@@ -38,18 +39,19 @@ func isEarlyGame(ageKey string) bool {
 type onboardingStep struct {
 	Commands []string
 	Join     string // "/", "and", "then"; unused for a single command
-	Note     string
+	Note     vibe.Entry
+	Comma    bool // the note follows the commands after a comma ("..., then build"), not a colon
 }
 
 // onboardingSteps is the first-steps guide in the Buildings panel. It is data
 // so onboarding_test.go can run every command through HandleCommand on a
 // fresh game: a step that teaches a failing command must break the build.
 var onboardingSteps = []onboardingStep{
-	{Commands: []string{"gather wood 5", "gather food"}, Join: "/", Note: "collect by hand"},
-	{Commands: []string{"build gathering_camp", "build wood_camp"}, Join: "and", Note: "food runs short first"},
-	{Commands: []string{"build hut"}, Note: "shelter; raises your housing"},
-	{Commands: []string{"workers"}, Note: "workers come on their own and staff the camps (staffed camps make 5x)"},
-	{Commands: []string{"wonder collect all"}, Note: "then build the [gold]wonder[-] once its bank is full. You need it to advance."},
+	{Commands: []string{"gather wood 5", "gather food"}, Join: "/", Note: vibe.E("ui.tab_economy.onboardingSteps.01", "collect by hand")},
+	{Commands: []string{"build gathering_camp", "build wood_camp"}, Join: "and", Note: vibe.E("ui.tab_economy.onboardingSteps.03", "food runs short first")},
+	{Commands: []string{"build hut"}, Note: vibe.E("ui.tab_economy.onboardingSteps.04", "shelter; raises your housing")},
+	{Commands: []string{"workers"}, Note: vibe.E("ui.tab_economy.onboardingSteps.05", "workers come on their own and staff the camps (staffed camps make 5x)")},
+	{Commands: []string{"wonder collect all"}, Comma: true, Note: vibe.E("ui.tab_economy.onboardingSteps.06", "then build the [gold]wonder[-] once its bank is full. You need it to advance.")},
 }
 
 // onboardingCommands flattens onboardingSteps into the commands in the order a
@@ -66,8 +68,8 @@ func onboardingCommands() []string {
 // gold header, cyan commands, white prose, each step wrapped under itself.
 func renderOnboarding(w int) string {
 	var sb strings.Builder
-	sb.WriteString("\n [gold]─── Getting started ───[-]\n")
-	sb.WriteString(" [white]First steps:[-]\n")
+	sb.WriteString(vibe.Line("ui.tab_economy.renderOnboarding.01", "\n [gold]─── Getting started ───[-]\n"))
+	sb.WriteString(vibe.Line("ui.tab_economy.renderOnboarding.02", " [white]First steps:[-]\n"))
 	for i, st := range onboardingSteps {
 		var text strings.Builder
 		for j, c := range st.Commands {
@@ -78,13 +80,13 @@ func renderOnboarding(w int) string {
 			fmt.Fprintf(&text, "[cyan]%s[-]", strings.ReplaceAll(c, " ", glue))
 		}
 		sep := ": "
-		if strings.HasPrefix(st.Note, "then ") {
+		if st.Comma {
 			sep = ", "
 		}
-		text.WriteString(sep + st.Note)
+		text.WriteString(sep + st.Note.String())
 		sb.WriteString(hangingRow(fmt.Sprintf(" [white]%d.[-] ", i+1), text.String(), w))
 	}
-	sb.WriteString(hangingRow(" ", "[white]Type[-] [cyan]help[-] [white]for all commands.[-]", w))
+	sb.WriteString(hangingRow(" ", vibe.Line("ui.tab_economy.renderOnboarding.03", "[white]Type[-] [cyan]help[-] [white]for all commands.[-]"), w))
 	return sb.String()
 }
 
@@ -95,18 +97,18 @@ var cultureThresholds = []float64{
 }
 
 // cultureThresholdLabels are short effect labels for each threshold (parallel to cultureThresholds).
-var cultureThresholdLabels = []string{
-	"+5% research speed",
-	"+10% research speed",
-	"+15% research speed, unlock wonder tier",
-	"+20% research speed",
-	"+25% research speed, culture events",
-	"+30% research speed",
-	"+research speed",
-	"+research speed",
-	"+research speed",
-	"+research speed",
-	"+research speed",
+var cultureThresholdLabels = []vibe.Entry{
+	vibe.E("ui.tab_economy.cultureThresholdLabels.01", "+5% research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.02", "+10% research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.03", "+15% research speed, unlock wonder tier"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.04", "+20% research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.05", "+25% research speed, culture events"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.06", "+30% research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.07", "+research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.08", "+research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.09", "+research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.10", "+research speed"),
+	vibe.E("ui.tab_economy.cultureThresholdLabels.11", "+research speed"),
 }
 
 // EconomyTab is the permanent background panel visible at all times on the Dashboard.
@@ -134,6 +136,14 @@ type EconomyTab struct {
 	bldFirst, bldShown, bldRows int
 }
 
+// retitle writes the titles on the borders of the tab's three boxes, in the
+// script now in force.
+func (t *EconomyTab) retitle() {
+	t.resourceTV.SetTitle(vibe.Line("ui.tab_economy.NewEconomyTab.01", " Resources "))
+	t.buildingTV.SetTitle(vibe.Line("ui.tab_economy.NewEconomyTab.02", " Buildings "))
+	t.constructionTV.SetTitle(vibe.Line("ui.tab_economy.NewEconomyTab.03", " Under construction "))
+}
+
 // NewEconomyTab constructs the economy tab widget tree: the left column
 // (econColumn: resources, construction and, once the Dashboard adds it, the
 // log) and the building list, side by side at 1:1.
@@ -146,7 +156,7 @@ func NewEconomyTab() *EconomyTab {
 		t.resPage = ((t.resPage % pages) + pages) % pages
 		return strings.Join(lines, "\n")
 	})
-	t.resourceTV.SetBorder(true).SetTitle(" Resources ")
+	t.resourceTV.SetBorder(true)
 
 	t.buildingTV = newFitView(func(w, h int) string {
 		head, entries := buildingEntries(t.state, w)
@@ -155,12 +165,13 @@ func NewEconomyTab() *EconomyTab {
 		return strings.Join(lines, "\n")
 	})
 	t.buildingTV.SetScrollable(false)
-	t.buildingTV.SetBorder(true).SetTitle(" Buildings ")
+	t.buildingTV.SetBorder(true)
 
 	t.constructionTV = newFitView(func(w, h int) string {
 		return strings.Join(layoutConstruction(t.state, w, h), "\n")
 	})
-	t.constructionTV.SetBorder(true).SetTitle(" Under construction ")
+	t.constructionTV.SetBorder(true)
+	t.retitle()
 
 	// Persistent tab chrome: enroll titles so a live theme switch restyles them.
 	theme.Track(func() {
@@ -344,7 +355,7 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 		return nil
 	}
 	if len(state.BuildQueue) == 0 {
-		for _, s := range []string{" (nothing under construction)", " (nothing building)", " (none)"} {
+		for _, s := range []string{vibe.Line("ui.tab_economy.layoutConstruction.01", " (nothing under construction)"), vibe.Line("ui.tab_economy.layoutConstruction.02", " (nothing building)"), vibe.Line("ui.tab_economy.layoutConstruction.03", " (none)")} {
 			if runeLen(s) <= w {
 				return []string{theme.Paint(theme.RoleDim, s)}
 			}
@@ -424,9 +435,9 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 			}
 		}
 		for _, s := range []string{
-			fmt.Sprintf(" %d under way, the first in %s", len(state.BuildQueue), times[soonest]),
-			fmt.Sprintf(" %d under way, %s", len(state.BuildQueue), times[soonest]),
-			fmt.Sprintf(" %d under way", len(state.BuildQueue)),
+			vibe.Sprintf("ui.tab_economy.layoutConstruction.07", " %d under way, the first in %s", len(state.BuildQueue), times[soonest]),
+			vibe.Sprintf("ui.tab_economy.layoutConstruction.08", " %d under way, %s", len(state.BuildQueue), times[soonest]),
+			vibe.Sprintf("ui.tab_economy.layoutConstruction.09", " %d under way", len(state.BuildQueue)),
 		} {
 			if lines = []string{theme.Paint(theme.RoleHighlight, s)}; runeLen(s) <= w {
 				break
@@ -434,7 +445,7 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 		}
 	default:
 		more := len(lines) - (h - 1)
-		lines = append(lines[:h-1], theme.Paint(theme.RoleDim, truncate(fmt.Sprintf(" +%d more under way", more), w)))
+		lines = append(lines[:h-1], theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutConstruction.10", " +%d more under way", more), w)))
 	}
 	return lines
 }
@@ -501,7 +512,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			icon, iconW := "[red]✗[-]", 1
 			switch {
 			case bs.AtMaxCount:
-				icon, iconW = "[yellow]MAX[-]", 3
+				icon, iconW = vibe.Line("ui.tab_economy.buildingEntries.01", "[yellow]MAX[-]"), 3
 			case bs.CanBuild:
 				icon = "[green]✓[-]"
 			}
@@ -513,9 +524,9 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			name := truncate(bs.Name, max(4, w-(1+iconW+1+1+runeLen(count))))
 			fmt.Fprintf(&sb, " %s [gold::b]%s[-:-:-] [%s]%s[-]\n", icon, name, countColor, count)
 			if bs.AtMaxCount {
-				sb.WriteString(hangingRow("   ", "[yellow]Building limit reached.[-]", w))
+				sb.WriteString(hangingRow("   ", vibe.Line("ui.tab_economy.buildingEntries.02", "[yellow]Building limit reached.[-]"), w))
 			} else {
-				sb.WriteString(costRow("   Cost: ", buildingPrice(&state, key, bs), w))
+				sb.WriteString(costRow(vibe.Line("ui.tab_economy.buildingEntries.03", "   Cost: "), buildingPrice(&state, key, bs), w))
 			}
 			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(buildingText(bs))+"[-]", w))
 			if bs.Flavor != "" {
@@ -523,7 +534,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			}
 			if bs.WorkerCapacity > 0 {
 				totalCap := bs.Count * bs.WorkerCapacity
-				domainLabel := domainToLabel[bs.WorkerDomain]
+				domainLabel := domainToLabel[bs.WorkerDomain].String()
 				if domainLabel == "" {
 					domainLabel = textfmt.Capitalize(bs.WorkerDomain)
 				}
@@ -538,7 +549,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 				if lead+runeLen(text) > w {
 					text = truncate(fmt.Sprintf("%d/%d", bs.WorkersAssigned, totalCap), max(1, w-lead))
 				}
-				line := "   [green]Workers:[-] " + text
+				line := vibe.Line("ui.tab_economy.buildingEntries.04", "   [green]Workers:[-] ") + text
 				if cells := min(10, w-lead-runeLen(text)-4); cells >= 4 {
 					line += "  [" + workerAssignBar(bs.WorkersAssigned, totalCap, cells) + "]"
 				}
@@ -550,14 +561,14 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 				if newName == "" {
 					newName = bs.PendingUpgrade
 				}
-				sb.WriteString(hangingRow("   ", fmt.Sprintf("[gold]↑ Upgrade available: %s. Type: upgrade %s[-]", newName, key), w))
+				sb.WriteString(hangingRow("   ", vibe.Sprintf("ui.tab_economy.buildingEntries.05", "[gold]↑ Upgrade available: %s. Type: upgrade %s[-]", newName, key), w))
 			}
 			entry(sb.String())
 		}
 	}
 
 	if len(entries) == 0 {
-		head = " [gray]No buildings unlocked yet[-]"
+		head = vibe.Line("ui.tab_economy.buildingEntries.06", " [gray]No buildings unlocked yet[-]")
 	}
 
 	// Early-game onboarding: fill the otherwise-empty lower Buildings space with a
@@ -614,7 +625,7 @@ func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []
 		end++
 	}
 	if from > 0 {
-		lines = append(lines, theme.Paint(theme.RoleDim, truncate(fmt.Sprintf(" ↑ %d more above: PgUp", from), w)))
+		lines = append(lines, theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutBuildings.01", " ↑ %d more above: PgUp", from), w)))
 	}
 	if end == from {
 		// Not even one entry fits whole: show the top of it.
@@ -627,7 +638,7 @@ func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []
 		}
 	}
 	if below := len(entries) - end; below > 0 {
-		lines = append(lines, theme.Paint(theme.RoleDim, truncate(fmt.Sprintf(" ↓ %d more below: PgDn", below), w)))
+		lines = append(lines, theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutBuildings.02", " ↓ %d more below: PgDn", below), w)))
 	}
 	if len(lines) > h {
 		lines = lines[:h] // a box of a row or two has no room for the notes
@@ -721,14 +732,14 @@ func (t *EconomyTab) ScrollDown() {
 }
 
 // domainToLabel maps domain strings to friendly display labels.
-var domainToLabel = map[string]string{
-	"food":        "Food",
-	"faith":       "Faith",
-	"military":    "Military",
-	"trade":       "Trade",
-	"engineering": "Engineering",
-	"hacker":      "Hacker",
-	"astronaut":   "Astronaut",
+var domainToLabel = map[string]vibe.Entry{
+	"food":        vibe.E("ui.tab_economy.domainToLabel.01", "Food"),
+	"faith":       vibe.E("ui.tab_economy.domainToLabel.02", "Faith"),
+	"military":    vibe.E("ui.tab_economy.domainToLabel.03", "Military"),
+	"trade":       vibe.E("ui.tab_economy.domainToLabel.04", "Trade"),
+	"engineering": vibe.E("ui.tab_economy.domainToLabel.05", "Engineering"),
+	"hacker":      vibe.E("ui.tab_economy.domainToLabel.06", "Hacker"),
+	"astronaut":   vibe.E("ui.tab_economy.domainToLabel.07", "Astronaut"),
 }
 
 // workerAssignBar returns a ▓/░ bar width cells wide for assigned/capacity.

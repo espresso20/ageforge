@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // militaryProvider generates the military overlay text from the current game state.
@@ -17,50 +18,50 @@ func militaryProvider(state game.GameState, _ int) string {
 	mil := state.Military
 
 	// === Army Overview ===
-	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
-	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s posted of %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.01", " [gold]═══ Army Overview ═══[-]\n\n"))
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.02", " [gold]Soldiers:[-]  %s posted of %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap))))
 	if len(mil.Posts) == 0 {
 		// Soldiers begin with the first military building: until one is built
 		// there is nobody at a post, and the panel says so.
-		fmt.Fprintf(&sb, " [gold]Posts:[-]     %s\n", theme.Paint(theme.RoleDim, "none yet. A military building comes with its soldiers."))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.03", " [gold]Posts:[-]     %s\n", theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_military.militaryProvider.04", "none yet. A military building comes with its soldiers."))))
 	} else {
 		for _, p := range mil.Posts {
-			fmt.Fprintf(&sb, " [gold]Posts:[-]     %s x%d: %s/%s\n", p.Name, p.Count, FormatNumber(float64(p.Posted)), FormatNumber(float64(p.Posts)))
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.05", " [gold]Posts:[-]     %s x%d: %s/%s\n", p.Name, p.Count, FormatNumber(float64(p.Posted)), FormatNumber(float64(p.Posts))))
 		}
 	}
-	fmt.Fprintf(&sb, " [gold]Defense:[-]   %s\n", FormatNumber(mil.DefenseRating))
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.06", " [gold]Defense:[-]   %s\n", FormatNumber(mil.DefenseRating)))
 	writeGarrison(&sb, state)
 
 	if mil.MilitaryBonus > 0 {
-		fmt.Fprintf(&sb, " [green]Military Bonus: +%.0f%%[-]\n", mil.MilitaryBonus*100)
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.07", " [green]Military Bonus: +%.0f%%[-]\n", mil.MilitaryBonus*100))
 	}
 	if mil.ExpeditionBonus > 0 {
-		fmt.Fprintf(&sb, " [green]Expedition Bonus: +%.0f%%[-]\n", mil.ExpeditionBonus*100)
+		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.08", " [green]Expedition Bonus: +%.0f%%[-]\n", mil.ExpeditionBonus*100))
 	}
 
 	// === Active Campaign ===
 	// Only the military campaign lives here; the active scout shows in the
 	// Expeditions panel (the two run concurrently, one per category).
-	sb.WriteString("\n [gold]═══ Active Campaign ═══[-]\n\n")
+	sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.09", "\n [gold]═══ Active Campaign ═══[-]\n\n"))
 	if mil.ActiveMilitary == nil {
-		sb.WriteString(" [gray]No active campaign[-]\n")
+		sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.10", " [gray]No active campaign[-]\n"))
 	} else {
-		writeActiveExpedition(&sb, "Campaign", mil.ActiveMilitary, state)
+		writeActiveExpedition(&sb, vibe.Line("ui.overlay_military.militaryProvider.11", "Campaign"), mil.ActiveMilitary, state)
 	}
-	fmt.Fprintf(&sb, "\n [gray]Completed: %d (expeditions and campaigns)[-]\n", mil.CompletedCount)
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.12", "\n [gray]Completed: %d (expeditions and campaigns)[-]\n", mil.CompletedCount))
 
 	// === Campaigns ===
 	// The Army panel lists only military campaigns (they cost soldiers).
-	sb.WriteString("\n [gold]═══ Campaigns ═══[-]\n\n")
+	sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.13", "\n [gold]═══ Campaigns ═══[-]\n\n"))
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
-		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, " Campaigns are grand missions and cost soldiers,") + "\n")
-		sb.WriteString(theme.Paint(theme.RoleDim, " which come with military buildings. They open as your civilization grows.") + "\n")
+		sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.14", " [gray]No campaigns available yet.[-]\n"))
+		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_military.militaryProvider.15", " Campaigns are grand missions and cost soldiers,")) + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_military.militaryProvider.16", " which come with military buildings. They open as your civilization grows.")) + "\n")
 	} else {
-		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
+		writeExpeditionGroup(&sb, vibe.Line("ui.overlay_military.militaryProvider.17", "Campaigns"), mil.Expeditions, game.ExpeditionMilitary, state)
 	}
 
-	sb.WriteString("\n [gray]Commands: expedition opens the Expeditions panel; expedition <name> sends an offer[-]\n")
+	sb.WriteString(vibe.Line("ui.overlay_military.militaryProvider.18", "\n [gray]Commands: expedition opens the Expeditions panel; expedition <name> sends an offer[-]\n"))
 
 	return sb.String()
 }
@@ -85,9 +86,9 @@ func writeActiveExpedition(sb *strings.Builder, label string, exp *game.Expediti
 	}
 	fmt.Fprintf(sb, " [yellow]%s:[-] %s", label, exp.Name)
 	if exp.Soldiers > 0 {
-		fmt.Fprintf(sb, ", %d soldiers deployed", exp.Soldiers)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeActiveExpedition.01", ", %d soldiers deployed", exp.Soldiers))
 	}
-	fmt.Fprintf(sb, " (%s left)\n", formatTicks(exp.TicksLeft, state))
+	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeActiveExpedition.02", " (%s left)\n", formatTicks(exp.TicksLeft, state)))
 }
 
 // writeExpeditionGroup renders the subset of exps matching category under a
@@ -123,21 +124,21 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 		durationStr := formatTickRange(exp.DurationMin, exp.DurationMax, state)
 		soldiers := ""
 		if exp.SoldiersNeeded > 0 {
-			soldiers = fmt.Sprintf("Soldiers: %d  ", exp.SoldiersNeeded)
+			soldiers = vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.01", "Soldiers: %d  ", exp.SoldiersNeeded)
 		}
 		// The listed difficulty, and what the army leaves of it today.
-		note := "(chance of failure before bonuses)"
+		note := vibe.Line("ui.overlay_military.writeExpeditionGroup.02", "(chance of failure before bonuses)")
 		if exp.Chance > 0 && exp.Chance < exp.Difficulty-0.0005 {
-			note = fmt.Sprintf("(chance of failure; %.0f%% with your army)", exp.Chance*100)
+			note = vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.03", "(chance of failure; %.0f%% with your army)", exp.Chance*100)
 		}
-		fmt.Fprintf(sb, "   %sDuration: %s  Difficulty: [%s]%.0f%%[-] %s\n",
-			soldiers, durationStr, diffColor, exp.Difficulty*100, note)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.04", "   %sDuration: %s  Difficulty: [%s]%.0f%%[-] %s\n",
+			soldiers, durationStr, diffColor, exp.Difficulty*100, note))
 		if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
-			fmt.Fprintf(sb, "   Cost: %s\n", cost)
+			fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeExpeditionGroup.05", "   Cost: %s\n", cost))
 		}
 
 		if exp.CanLaunch {
-			sb.WriteString("   [green]Ready: send it from the Expeditions panel[-]\n")
+			sb.WriteString(vibe.Line("ui.overlay_military.writeExpeditionGroup.06", "   [green]Ready: send it from the Expeditions panel[-]\n"))
 		} else {
 			fmt.Fprintf(sb, "   [red]%s[-]\n", exp.LaunchBlockReason)
 		}
@@ -168,7 +169,7 @@ func expeditionHaul(exp game.ExpeditionInfo, state game.GameState) string {
 	if haul := formatExpeditionCost(exp.ExpectedHaulMin, state); haul != "" {
 		return haul
 	}
-	return fmt.Sprintf("about %.0f min of income", exp.HaulMinutes)
+	return vibe.Sprintf("ui.overlay_military.expeditionHaul.01", "about %.0f min of income", exp.HaulMinutes)
 }
 
 func expeditionOfferCost(exp game.ExpeditionInfo, state game.GameState) string {
@@ -194,18 +195,18 @@ func writeGarrison(sb *strings.Builder, state game.GameState) {
 	if ageName == "" {
 		ageName = state.Age
 	}
-	fmt.Fprintf(sb, " [gold]Threat:[-]    %s (raids in the %s)\n", FormatNumber(mil.Threat), ageName)
+	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.01", " [gold]Threat:[-]    %s (raids in the %s)\n", FormatNumber(mil.Threat), ageName))
 	if mil.Mitigation <= 0 {
-		sb.WriteString(" [yellow]You have no garrison: raids hit you with full force.[-]\n")
-		fmt.Fprintf(sb, "   [gray]Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%).[-]\n", capPct)
+		sb.WriteString(vibe.Line("ui.overlay_military.writeGarrison.02", " [yellow]You have no garrison: raids hit you with full force.[-]\n"))
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.03", "   [gray]Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%).[-]\n", capPct))
 	} else {
-		fmt.Fprintf(sb, " [green]Your garrison would blunt about %.0f%% of a raid.[-]\n", mil.Mitigation*100)
-		sb.WriteString("   [gray]Raids, war raids and an Endure's losses all hit you that much softer.[-]\n")
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.04", " [green]Your garrison would blunt about %.0f%% of a raid.[-]\n", mil.Mitigation*100))
+		sb.WriteString(vibe.Line("ui.overlay_military.writeGarrison.05", "   [gray]Raids, war raids and an Endure's losses all hit you that much softer.[-]\n"))
 		twice := config.DefenseMitigation(mil.DefenseRating*2, mil.Threat)
-		fmt.Fprintf(sb, "   [gray]Twice the garrison: about %.0f%%. No army blunts more than %.0f%%.[-]\n", twice*100, capPct)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.06", "   [gray]Twice the garrison: about %.0f%%. No army blunts more than %.0f%%.[-]\n", twice*100, capPct))
 	}
 	if line := garrisonSavedSummary(mil.Saved); line != "" {
-		fmt.Fprintf(sb, " [gold]Saved this run:[-] %s\n", line)
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.07", " [gold]Saved this run:[-] %s\n", line))
 	}
 }
 
@@ -217,10 +218,10 @@ func garrisonSavedSummary(t *game.DefenseTally) string {
 	}
 	var parts []string
 	if t.Buildings > 0 {
-		parts = append(parts, fmt.Sprintf("%d %s", t.Buildings, pluralize("building", t.Buildings)))
+		parts = append(parts, fmt.Sprintf("%d %s", t.Buildings, pluralize(vibe.Line("ui.overlay_military.garrisonSavedSummary.01", "building"), t.Buildings)))
 	}
 	if t.Workers > 0 {
-		parts = append(parts, fmt.Sprintf("%d %s", t.Workers, pluralize("worker", t.Workers)))
+		parts = append(parts, fmt.Sprintf("%d %s", t.Workers, pluralize(vibe.Line("ui.overlay_military.garrisonSavedSummary.02", "worker"), t.Workers)))
 	}
 	keys := make([]string, 0, len(t.Resources))
 	for k, v := range t.Resources {
@@ -245,7 +246,7 @@ func garrisonSavedSummary(t *game.DefenseTally) string {
 	}
 	out := strings.Join(parts, ", ")
 	if t.Raids > 0 {
-		out += fmt.Sprintf(" [gray](%d %s blunted)[-]", t.Raids, pluralize("raid", t.Raids))
+		out += vibe.Sprintf("ui.overlay_military.garrisonSavedSummary.03", " [gray](%d %s blunted)[-]", t.Raids, pluralize(vibe.Line("ui.overlay_military.garrisonSavedSummary.04", "raid"), t.Raids))
 	}
 	return out
 }

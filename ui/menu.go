@@ -18,6 +18,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/all"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // menu.go is the main menu: the page the game opens on and returns to.
@@ -37,14 +38,25 @@ import (
 // menu is the page in use: opening a page or a game stops it. With the
 // motion setting off no clock runs and the page holds one still frame.
 
+// eliteLine is a mark, the words and a mark: the forge master's line.
+type eliteLine struct {
+	left  string
+	words vibe.Entry
+	right string
+}
+
+// strings is the line as the menu page lays it out: the mark, the words as
+// they read now, the mark.
+func (e eliteLine) strings() [3]string { return [3]string{e.left, e.words.String(), e.right} }
+
 // eliteLines are shown on the menu to an account that holds a save with a
 // forge master's proof: a mark, the words, a mark.
-var eliteLines = [][3]string{
-	{"⚒", "MASTER FORGER", "⚒"},
-	{"{", "TOUCHED BY THE SOURCE", "}"},
-	{"✦", "ARCHITECT OF THE FORGE", "✦"},
-	{"<", "REALITY.EXE PATCHED", ">"},
-	{"⚙", "THE FIRST MAKER", "⚙"},
+var eliteLines = []eliteLine{
+	{"⚒", vibe.E("ui.menu.eliteLines.01", "MASTER FORGER"), "⚒"},
+	{"{", vibe.E("ui.menu.eliteLines.02", "TOUCHED BY THE SOURCE"), "}"},
+	{"✦", vibe.E("ui.menu.eliteLines.03", "ARCHITECT OF THE FORGE"), "✦"},
+	{"<", vibe.E("ui.menu.eliteLines.04", "REALITY.EXE PATCHED"), ">"},
+	{"⚙", vibe.E("ui.menu.eliteLines.05", "THE FIRST MAKER"), "⚙"},
 }
 
 // menuStrikeHold is how long a choice waits for its strike to be drawn
@@ -76,8 +88,8 @@ type mainMenu struct {
 	set                     mapSettings
 	acct                    *game.Account
 	read                    string // what refresh last read from (fingerprint)
-	eliteMsg                [3]string
-	update                  bool // a newer version is out
+	eliteAt                 int    // which of eliteLines is shown, picked when the menu opens (-1: none)
+	update                  bool   // a newer version is out
 
 	// The scene, and the clock it runs on.
 	scene     *menuScene
@@ -125,7 +137,7 @@ func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEn
 	m := &mainMenu{
 		Box: tview.NewBox(), app: app, pages: pages, engine: engine, version: currentVersion,
 		reg: all.Registry(), now: time.Now, active: true,
-		eliteMsg: eliteLines[rand.Intn(len(eliteLines))],
+		eliteAt: rand.Intn(len(eliteLines)),
 	}
 	m.start = m.now()
 	m.later = func(fn func()) {
@@ -148,7 +160,7 @@ func (m *mainMenu) fingerprint() string {
 		mainGame, last := acct.GameRecord()
 		fmt.Fprintf(&sb, "%s|%s|%s|", acct.AccountID, mainGame, last)
 	}
-	fmt.Fprintf(&sb, "%s|%d|%v|", set.Style, set.Tier, set.Motion)
+	fmt.Fprintf(&sb, "%s|%d|%v|%v|", set.Style, set.Tier, set.Motion, vibe.On()) // the words follow VibeMode too
 	entries, _ := os.ReadDir(filepath.Join(game.DataDir(), "saves"))
 	for _, e := range entries {
 		if fi, err := e.Info(); err == nil {
@@ -184,8 +196,8 @@ func (m *mainMenu) refresh(force bool) {
 		}
 		_, elite := game.SavesOnSplash()
 		m.view.elite = [3]string{}
-		if elite {
-			m.view.elite = m.eliteMsg
+		if elite && m.eliteAt >= 0 {
+			m.view.elite = eliteLines[m.eliteAt].strings()
 		}
 	}
 	m.buildView()
@@ -199,7 +211,7 @@ func (m *mainMenu) continueDetails(st *game.GameState) {
 		age = ageDisplay(st.Age)
 	}
 	// Count writes a large population short ("8.31K people").
-	people := textfmt.Count(st.Workers.TotalPop, "person", "people")
+	people := textfmt.Count(st.Workers.TotalPop, vibe.Line("ui.menu.continueDetails.01", "person"), vibe.Line("ui.menu.continueDetails.02", "people"))
 	var details []string
 	if m.town != nil && m.town.name != "" {
 		details = append(details, m.town.name+" · "+age+" · "+people)
@@ -226,7 +238,7 @@ func menuCaptions(town *menuTown, st *game.GameState) []string {
 	}
 	var out []string
 	if name != "" && st.Prestige.Level > 0 {
-		out = append(out, fmt.Sprintf("%s · %s · ★ Prestige level %d", name, age, st.Prestige.Level))
+		out = append(out, vibe.Sprintf("ui.menu.menuCaptions.01", "%s · %s · ★ Prestige level %d", name, age, st.Prestige.Level))
 	}
 	if name != "" {
 		out = append(out, name+" · "+age)
@@ -246,16 +258,16 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	}
 	var items []menuItem
 	if m.hasCur {
-		items = append(items, menuItem{id: miContinue, label: "Continue", key: 'c', extras: m.contExtras, details: m.contDetails})
+		items = append(items, menuItem{id: miContinue, label: vibe.Line("ui.menu.buildViewWith.01", "Continue"), key: 'c', extras: m.contExtras, details: m.contDetails})
 	}
 	items = append(items,
-		menuItem{id: miNew, label: "New game", key: 'n'},
-		menuItem{id: miLoad, label: "Load game", key: 'l'},
-		menuItem{id: miBadges, label: "Badges", key: 'b', extras: badges},
-		menuItem{id: miThemes, label: "Themes", key: 't'},
-		menuItem{id: miAccounts, label: "Accounts", key: 'a'},
-		menuItem{id: miUpdates, label: "Check for updates", key: 'u'},
-		menuItem{id: miQuit, label: "Quit", key: 'q'},
+		menuItem{id: miNew, label: vibe.Line("ui.menu.buildViewWith.02", "New game"), key: 'n'},
+		menuItem{id: miLoad, label: vibe.Line("ui.menu.buildViewWith.03", "Load game"), key: 'l'},
+		menuItem{id: miBadges, label: vibe.Line("ui.menu.buildViewWith.04", "Badges"), key: 'b', extras: badges},
+		menuItem{id: miThemes, label: vibe.Line("ui.menu.buildViewWith.05", "Themes"), key: 't'},
+		menuItem{id: miAccounts, label: vibe.Line("ui.menu.buildViewWith.06", "Accounts"), key: 'a'},
+		menuItem{id: miUpdates, label: vibe.Line("ui.menu.buildViewWith.07", "Check for updates"), key: 'u'},
+		menuItem{id: miQuit, label: vibe.Line("ui.menu.buildViewWith.08", "Quit"), key: 'q'},
 	)
 	m.view.items = items
 	// Continue is selected by default; without it, New game, which is
@@ -272,7 +284,7 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	m.view.edition = menuEdition(m.version)
 	m.view.versions = []string{m.version}
 	if m.update {
-		m.view.versions = []string{m.version + " · update available (u)", m.version + " · update (u)", m.version}
+		m.view.versions = []string{m.version + vibe.Line("ui.menu.buildViewWith.09", " · update available (u)"), m.version + vibe.Line("ui.menu.buildViewWith.10", " · update (u)"), m.version}
 	}
 }
 
@@ -284,7 +296,7 @@ func (m *mainMenu) badgeExtras() []string {
 		return nil
 	}
 	_, sum := m.engine.Badges()
-	count := fmt.Sprintf("%d of %d", sum.Earned, sum.Shown)
+	count := vibe.Sprintf("ui.menu.badgeExtras.01", "%d of %d", sum.Earned, sum.Shown)
 	var out []string
 	if title := wornTitle(sum); title != "" {
 		out = append(out, count+" · "+title)
@@ -544,12 +556,12 @@ func (m *mainMenu) continueGame() {
 	name := m.cur.Save.Name
 	if err := m.engine.LoadGame(name); err != nil {
 		// It was readable a moment ago: say what happened and read again.
-		showUpdateMsg(m.app, m.pages, fmt.Sprintf("Could not open '%s'.\n\n%v", name, err))
+		showUpdateMsg(m.app, m.pages, vibe.Sprintf("ui.menu.continueGame.01", "Could not open '%s'.\n\n%v", name, err))
 		m.refresh(true)
 		return
 	}
 	m.leave()
-	m.engine.AddLog("success", "Game loaded.")
+	m.engine.AddLog("success", vibe.Line("ui.menu.continueGame.02", "Game loaded."))
 	m.pages.SwitchToPage("dashboard")
 	go m.engine.Start()
 }

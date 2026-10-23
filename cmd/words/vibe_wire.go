@@ -78,6 +78,8 @@ const (
 	wireLine             // vibe.Line(id, "text")
 	wireSprintf          // fmt.Sprintf("format", ...) becomes vibe.Sprintf(id, "format", ...)
 	wireErrorf           // fmt.Errorf likewise
+	wireEntry            // a text of a table made once (a package-level var) becomes vibe.E(id, "text")
+	wireFprintf          // fmt.Fprintf(w, "format", ...) becomes fmt.Fprint(w, vibe.Sprintf(id, "format", ...))
 )
 
 // verdict is what vibe-wire makes of a row.
@@ -91,6 +93,7 @@ type verdict struct {
 type nodeCtx struct {
 	inFunc  bool          // inside a function body (or a literal of one), so it runs when the game does
 	inConst bool          // inside a const declaration
+	inVar   bool          // inside a package-level var declaration
 	call    *ast.CallExpr // the fmt.Sprintf or fmt.Errorf the text is the format of
 	kind    wireKind
 }
@@ -117,6 +120,9 @@ func (m *module) nodeCtxs(f *srcFile) map[[2]int]nodeCtx {
 					if x.Tok == token.CONST {
 						ctx.inConst = true
 					}
+					if x.Tok == token.VAR {
+						ctx.inVar = true
+					}
 				}
 			}
 			j := len(stack) - 2
@@ -127,14 +133,16 @@ func (m *module) nodeCtxs(f *srcFile) map[[2]int]nodeCtx {
 				j--
 			}
 			if j >= 0 {
-				if call, ok := stack[j].(*ast.CallExpr); ok && len(call.Args) > 0 && call.Args[0] == e {
+				if call, ok := stack[j].(*ast.CallExpr); ok && len(call.Args) > 0 {
 					if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
 						if x, ok := sel.X.(*ast.Ident); ok && x.Name == "fmt" && f.imports["fmt"] {
-							switch sel.Sel.Name {
-							case "Sprintf":
+							switch {
+							case call.Args[0] == e && sel.Sel.Name == "Sprintf":
 								ctx.call, ctx.kind = call, wireSprintf
-							case "Errorf":
+							case call.Args[0] == e && sel.Sel.Name == "Errorf":
 								ctx.call, ctx.kind = call, wireErrorf
+							case len(call.Args) > 1 && call.Args[1] == e && sel.Sel.Name == "Fprintf":
+								ctx.call, ctx.kind = call, wireFprintf
 							}
 						}
 					}
@@ -170,10 +178,13 @@ func (c *catalog) wireVerdict(r *row) verdict {
 	if reason, ok := leftAlone[r.id]; ok {
 		return verdict{reason: reason}
 	}
+	if reason := screenReason(r); reason != "" {
+		return verdict{reason: reason}
+	}
 	if strings.HasPrefix(r.id, "config.lexicon.lexiconRows.") || strings.HasPrefix(r.id, "config.lexicon.plainTerms.") {
 		return verdict{reason: leftCovered}
 	}
-	if len(r.twins) > 0 {
+	if len(r.twins) > 0 && !wireDespiteTwins[r.id] {
 		return verdict{reason: leftCompared}
 	}
 	for _, cs := range r.u.calls {
@@ -190,6 +201,10 @@ func (c *catalog) wireVerdict(r *row) verdict {
 		c.ctxs[r.u.f] = idx
 	}
 	ctx, ok := idx[[2]int{r.u.start, r.u.end}]
+	if ok && r.area == areaScreens && !ctx.inFunc && !ctx.inConst && ctx.inVar && tableEntry(r.u.near) {
+		// A table made once: its entries carry their ids and read when used.
+		return verdict{kind: wireEntry}
+	}
 	if !ok || !ctx.inFunc || ctx.inConst {
 		return verdict{reason: leftOnce}
 	}
@@ -206,8 +221,10 @@ type edit struct {
 }
 
 // vibeWire writes the vibe calls for the rows of one sheet that can have
-// them and are not wired yet. With dry set it only reports.
-func vibeWire(c *catalog, root, sheet string, dry bool, out io.Writer) error {
+// them and are not wired yet. With dry set it only reports. With only set, it
+// takes just the rows whose id starts with it ("ui.input."), so a big sheet can
+// be wired a panel at a time.
+func vibeWire(c *catalog, root, sheet, only string, dry bool, out io.Writer) error {
 	var target *area
 	for _, a := range areas {
 		if a.file == sheet {
@@ -230,6 +247,9 @@ func vibeWire(c *catalog, root, sheet string, dry bool, out io.Writer) error {
 			already++
 			continue
 		}
+		if !strings.HasPrefix(r.id, only) {
+			continue
+		}
 		v := c.wireVerdict(r)
 		if v.kind == wireNone {
 			left[v.reason] = append(left[v.reason], r.id)
@@ -243,10 +263,26 @@ func vibeWire(c *catalog, root, sheet string, dry bool, out io.Writer) error {
 		}
 		id := strconv.Quote(r.id)
 		switch v.kind {
-		case wireLine:
+		case wireLine, wireEntry:
+			name := "vibe.Line("
+			if v.kind == wireEntry {
+				name = "vibe.E("
+			}
 			perFile[f] = append(perFile[f],
-				edit{r.u.start, r.u.start, "vibe.Line(" + id + ", "},
+				edit{r.u.start, r.u.start, name + id + ", "},
 				edit{r.u.end, r.u.end, ")"})
+		case wireFprintf:
+			// The writer keeps its place; the format becomes the vibe call's and the
+			// whole is written with Fprint, so vet reads the format and its arguments
+			// at vibe.Sprintf as it read them at Fprintf.
+			sel := v.call.Fun.(*ast.SelectorExpr)
+			lo := c.m.fset.Position(sel.Sel.Pos()).Offset
+			hi := c.m.fset.Position(sel.Sel.End()).Offset
+			rp := c.m.fset.Position(v.call.Rparen).Offset
+			perFile[f] = append(perFile[f],
+				edit{lo, hi, "Fprint"},
+				edit{r.u.start, r.u.start, "vibe.Sprintf(" + id + ", "},
+				edit{rp, rp, ")"})
 		case wireSprintf, wireErrorf:
 			name := "vibe.Sprintf"
 			if v.kind == wireErrorf {
@@ -260,8 +296,9 @@ func vibeWire(c *catalog, root, sheet string, dry bool, out io.Writer) error {
 		}
 	}
 
-	fmt.Fprintf(out, "%s: %d rows already wired, %d to wire now (%d vibe.Line, %d vibe.Sprintf, %d vibe.Errorf) in %d files\n",
-		sheet, already, count[wireLine]+count[wireSprintf]+count[wireErrorf], count[wireLine], count[wireSprintf], count[wireErrorf], len(files))
+	fmt.Fprintf(out, "%s: %d rows already wired, %d to wire now (%d vibe.Line, %d vibe.Sprintf, %d vibe.Errorf, %d vibe.E) in %d files\n",
+		sheet, already, count[wireLine]+count[wireSprintf]+count[wireFprintf]+count[wireErrorf]+count[wireEntry],
+		count[wireLine], count[wireSprintf]+count[wireFprintf], count[wireErrorf], count[wireEntry], len(files))
 	reasons := make([]string, 0, len(left))
 	for reason := range left {
 		reasons = append(reasons, reason)

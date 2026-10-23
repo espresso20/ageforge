@@ -11,6 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // accountsPage is the page name under which the Accounts panel is registered on the root
@@ -39,10 +40,12 @@ type accountsPanel struct {
 	engine         *game.GameEngine
 	currentVersion string
 
-	root   *tview.Flex
-	list   *tview.List
-	detail *tview.TextView
-	status *tview.TextView // transient confirmation line ("Now playing as …")
+	root     *tview.Flex
+	title    *tview.TextView
+	subtitle *tview.TextView
+	list     *tview.List
+	detail   *tview.TextView
+	status   *tview.TextView // transient confirmation line ("Now playing as …")
 
 	summaries []game.AccountSummary // current rows, 1:1 with list items
 
@@ -74,15 +77,15 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	}
 
 	// ── Title ──────────────────────────────────────────────────────────────────
-	title := tview.NewTextView().
+	p.title = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText("[gold]═══ Accounts ═══[-]")
+		SetTextAlign(tview.AlignCenter)
+	title := p.title
 
-	subtitle := tview.NewTextView().
+	p.subtitle = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText("[gray]Each account is its own slot. Switch between them, or back one up to a file.[-]")
+		SetTextAlign(tview.AlignCenter)
+	subtitle := p.subtitle
 
 	// ── Account list ───────────────────────────────────────────────────────────
 	p.list = tview.NewList()
@@ -105,8 +108,7 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	p.detail = tview.NewTextView().
 		SetDynamicColors(true).
 		SetWrap(true)
-	p.detail.SetBorder(true).
-		SetTitle(" Details ")
+	p.detail.SetBorder(true)
 	theme.Track(func() {
 		p.detail.SetBorderColor(theme.Color(theme.RoleAccent)).
 			SetTitleColor(theme.Color(theme.RoleAccent))
@@ -143,16 +145,25 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	return p
 }
 
+// retext writes the panel's own words in the script now in force. Switching to
+// an account can switch VibeMode, so refresh does it again.
+func (p *accountsPanel) retext() {
+	p.title.SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.01", "[gold]═══ Accounts ═══[-]"))
+	p.subtitle.SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.02", "[gray]Each account is its own slot. Switch between them, or back one up to a file.[-]"))
+	p.detail.SetTitle(vibe.Line("ui.accounts_panel.newAccountsPanel.03", " Details "))
+}
+
 // refresh re-reads the account listing, rebuilds the list rows, and restores a clamped
 // selection. wantIdx is the index to select after the rebuild (clamped to range); pass the
 // current index to keep position. Called after switch/new/import/wipe.
 func (p *accountsPanel) refresh(wantIdx int) {
+	p.retext()
 	p.summaries = p.engine.ListAccounts()
 
 	p.list.Clear()
 	if len(p.summaries) == 0 {
 		// Empty state — the action keys guard on len(p.summaries) and become no-ops.
-		p.detail.SetText("[gray]No accounts found.\n\nCreate one with 'n', or restore a backup with 'i'.[-]")
+		p.detail.SetText(vibe.Line("ui.accounts_panel.refresh.01", "[gray]No accounts found.\n\nCreate one with 'n', or restore a backup with 'i'.[-]"))
 		return
 	}
 
@@ -255,7 +266,7 @@ func (p *accountsPanel) doSwitch() {
 	// The panel lives on the main menu, where no game is running (Esc saved and stopped
 	// it), so the switch never has a live run to end.
 	if _, err := p.engine.SwitchAccount(s.AccountID); err != nil {
-		p.status.SetText(fmt.Sprintf("[red]Switch failed: %v[-]", err))
+		p.status.SetText(vibe.Sprintf("ui.accounts_panel.doSwitch.01", "[red]Switch failed: %v[-]", err))
 		return
 	}
 	// Re-apply the now-active account's persisted theme so the whole UI retints (the theming design
@@ -267,17 +278,17 @@ func (p *accountsPanel) doSwitch() {
 	p.refresh(0)
 	p.selectByID(s.AccountID)
 	name := displayNameOr(s)
-	p.status.SetText(fmt.Sprintf("[green]● Now playing as %s[-]", name))
+	p.status.SetText(vibe.Sprintf("ui.accounts_panel.doSwitch.02", "[green]● Now playing as %s[-]", name))
 }
 
 // doNew opens the name-entry modal (Esc cancels — escAccepts=false), creates the named account
 // with NO carry-over, re-applies its (default) theme, then rebuilds the list selecting the new
 // account.
 func (p *accountsPanel) doNew() {
-	showSaveNameModalOpts(p.app, p.pages, " Name new account ", accountNamePage, p.list, "", func(name string) {
+	showSaveNameModalOpts(p.app, p.pages, vibe.Line("ui.accounts_panel.doNew.01", " Name new account "), accountNamePage, p.list, "", func(name string) {
 		acct, err := p.engine.CreateAccount(name)
 		if err != nil {
-			p.showMessage("New account failed", fmt.Sprintf("[red]%v[-]", err))
+			p.showMessage(vibe.Line("ui.accounts_panel.doNew.02", "New account failed"), fmt.Sprintf("[red]%v[-]", err))
 			return
 		}
 		// A fresh (or reopened same-name) account resolves its own theme — a brand-new one
@@ -285,7 +296,7 @@ func (p *accountsPanel) doNew() {
 		applyAccountTheme(p.engine)
 		p.refresh(0)
 		p.selectByID(acct.AccountID)
-		p.status.SetText(fmt.Sprintf("[green]● Created %s[-]", displayNameOrName(acct.DisplayName)))
+		p.status.SetText(vibe.Sprintf("ui.accounts_panel.doNew.03", "[green]● Created %s[-]", displayNameOrName(acct.DisplayName)))
 	}, false)
 }
 
@@ -299,18 +310,18 @@ func (p *accountsPanel) doExport() {
 	}
 	blob, err := p.engine.ExportAccountByID(s.AccountID)
 	if err != nil {
-		p.showMessage("Export failed", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage(vibe.Line("ui.accounts_panel.doExport.01", "Export failed"), fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
 	path := game.AccountExportPath(s.AccountID)
 	if dir := filepath.Dir(path); dir != "" {
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			p.showMessage("Export failed", fmt.Sprintf("[red]Could not create %s: %v[-]", dir, err))
+			p.showMessage(vibe.Line("ui.accounts_panel.doExport.02", "Export failed"), vibe.Sprintf("ui.accounts_panel.doExport.03", "[red]Could not create %s: %v[-]", dir, err))
 			return
 		}
 	}
 	if err := os.WriteFile(path, blob, 0644); err != nil {
-		p.showMessage("Export failed", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage(vibe.Line("ui.accounts_panel.doExport.04", "Export failed"), fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
 	// Also take a FULL slot snapshot (account.json + saves/) alongside the progress blob. A
@@ -318,13 +329,13 @@ func (p *accountsPanel) doExport() {
 	// account is untouched.
 	backupLine := ""
 	if backupPath, bErr := p.engine.BackupAccount(s.AccountID); bErr == nil {
-		backupLine = fmt.Sprintf("\n\n[gold]Full backup (account files + saves):[-]\n%s", backupPath)
+		backupLine = vibe.Sprintf("ui.accounts_panel.doExport.05", "\n\n[gold]Full backup (account files + saves):[-]\n%s", backupPath)
 	}
-	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nbadges). Restore it with Import (i) on any machine.%s",
+	msg := vibe.Sprintf(
+		"ui.accounts_panel.doExport.06", "[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nbadges). Restore it with Import (i) on any machine.%s",
 		displayNameOr(s), path, backupLine,
 	)
-	p.showMessage("Account exported", msg)
+	p.showMessage(vibe.Line("ui.accounts_panel.doExport.07", "Account exported"), msg)
 	p.engine.NoteAccountExported(s.AccountID)
 }
 
@@ -338,14 +349,14 @@ func (p *accountsPanel) doBackup() {
 	}
 	backupPath, err := p.engine.BackupAccount(s.AccountID)
 	if err != nil {
-		p.showMessage("Backup failed", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage(vibe.Line("ui.accounts_panel.doBackup.01", "Backup failed"), fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
-	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis is a full snapshot: the account's files plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
+	msg := vibe.Sprintf(
+		"ui.accounts_panel.doBackup.02", "[gold]Backed up %s[-]\n\n%s\n\nThis is a full snapshot: the account's files plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
 		displayNameOr(s), backupPath,
 	)
-	p.showMessage("Account backed up", msg)
+	p.showMessage(vibe.Line("ui.accounts_panel.doBackup.03", "Account backed up"), msg)
 }
 
 // doImport opens a path-entry modal (defaulting to the selected account's export path), reads
@@ -366,7 +377,7 @@ func (p *accountsPanel) doImport() {
 	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	input := tview.NewInputField().
-		SetLabel("File path: ").
+		SetLabel(vibe.Line("ui.accounts_panel.doImport.01", "File path: ")).
 		SetText(defaultPath).
 		SetFieldWidth(48).
 		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
@@ -376,7 +387,7 @@ func (p *accountsPanel) doImport() {
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gray]Enter: import (merge)  ·  Esc: cancel[-]")
+		SetText(vibe.Line("ui.accounts_panel.doImport.02", "[gray]Enter: import (merge)  ·  Esc: cancel[-]"))
 	hintTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	close := func() {
@@ -387,13 +398,13 @@ func (p *accountsPanel) doImport() {
 	submit := func() {
 		path := strings.TrimSpace(input.GetText())
 		if path == "" {
-			errTV.SetText("[red]Enter a file path.[-]")
+			errTV.SetText(vibe.Line("ui.accounts_panel.doImport.03", "[red]Enter a file path.[-]"))
 			p.app.SetFocus(input)
 			return
 		}
 		blob, err := os.ReadFile(path)
 		if err != nil {
-			errTV.SetText(fmt.Sprintf("[red]Cannot read %s: %v[-]", path, err))
+			errTV.SetText(vibe.Sprintf("ui.accounts_panel.doImport.04", "[red]Cannot read %s: %v[-]", path, err))
 			p.app.SetFocus(input)
 			return
 		}
@@ -414,10 +425,10 @@ func (p *accountsPanel) doImport() {
 		if live := p.engine.Account(); live != nil && live.AccountID == imported.AccountID {
 			// A backup of the active account can bring a theme choice with it.
 			applyAccountTheme(p.engine)
-			p.status.SetText(fmt.Sprintf("[green]Imported the backup into %s, the active account.[-]", displayNameOrName(imported.Name())))
+			p.status.SetText(vibe.Sprintf("ui.accounts_panel.doImport.05", "[green]Imported the backup into %s, the active account.[-]", displayNameOrName(imported.Name())))
 			return
 		}
-		p.status.SetText(fmt.Sprintf("[green]Imported %s. Press Enter to switch to it.[-]", displayNameOrName(imported.DisplayName)))
+		p.status.SetText(vibe.Sprintf("ui.accounts_panel.doImport.06", "[green]Imported %s. Press Enter to switch to it.[-]", displayNameOrName(imported.DisplayName)))
 	}
 
 	input.SetDoneFunc(func(key tcell.Key) {
@@ -434,7 +445,7 @@ func (p *accountsPanel) doImport() {
 		AddItem(spacer(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Import account backup ").
+		SetTitle(vibe.Line("ui.accounts_panel.doImport.07", " Import account backup ")).
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
 	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
@@ -461,19 +472,19 @@ func (p *accountsPanel) doRecovery() {
 	}
 	code, err := p.engine.RecoveryCodeForID(s.AccountID)
 	if err != nil {
-		p.showMessage("Recovery code", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage(vibe.Line("ui.accounts_panel.doRecovery.01", "Recovery code"), fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
-	msg := fmt.Sprintf(
-		"[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your account ID on another machine or after\na reinstall. It does not restore progress (unlocks, stats,\nbadges); back those up with Export (e). It is not a\npassword: it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>",
+	msg := vibe.Sprintf(
+		"ui.accounts_panel.doRecovery.02", "[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your account ID on another machine or after\na reinstall. It does not restore progress (unlocks, stats,\nbadges); back those up with Export (e). It is not a\npassword: it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>",
 		displayNameOr(s), code,
 	)
-	p.showMessage("Recovery code", msg)
+	p.showMessage(vibe.Line("ui.accounts_panel.doRecovery.03", "Recovery code"), msg)
 	p.engine.NoteRecoveryShown(s.AccountID)
 }
 
 // wipeSavesLabel is the destructive button on the delete-all-saves dialog.
-const wipeSavesLabel = "Delete all saves"
+var wipeSavesLabel = vibe.E("ui.accounts_panel.wipeSavesLabel.01", "Delete all saves")
 
 // showWipeSavesConfirmation asks before every save of an account is deleted. It is the
 // dialog the main menu's "Delete all saves" always showed; the entry now lives here, away
@@ -481,11 +492,11 @@ const wipeSavesLabel = "Delete all saves"
 // done runs after either answer, once the dialog is gone.
 func showWipeSavesConfirmation(pages *tview.Pages, account string, confirmed, done func()) {
 	modal := tview.NewModal().
-		SetText(fmt.Sprintf("⚠  Delete all saves?\n\nEvery save of the account \"%s\" is deleted.\nThose runs and their prestige are lost.\nThe account (themes, lifetime stats, badges) is kept.\n\nThis cannot be undone.", account)).
-		AddButtons([]string{"Cancel", wipeSavesLabel}).
+		SetText(vibe.Sprintf("ui.accounts_panel.showWipeSavesConfirmation.01", "⚠  Delete all saves?\n\nEvery save of the account \"%s\" is deleted.\nThose runs and their prestige are lost.\nThe account (themes, lifetime stats, badges) is kept.\n\nThis cannot be undone.", account)).
+		AddButtons([]string{vibe.Line("ui.accounts_panel.showWipeSavesConfirmation.02", "Cancel"), wipeSavesLabel.String()}).
 		SetDoneFunc(func(_ int, buttonLabel string) {
 			pages.RemovePage(accountsSavesConfirm)
-			if buttonLabel == wipeSavesLabel {
+			if buttonLabel == wipeSavesLabel.String() {
 				confirmed()
 			}
 			done()
@@ -506,17 +517,17 @@ func (p *accountsPanel) doDeleteSaves() {
 	showWipeSavesConfirmation(p.pages, displayNameOr(s), func() {
 		n, err := p.engine.WipeSavesByID(s.AccountID)
 		if err != nil {
-			p.status.SetText(fmt.Sprintf("[red]Could not delete the saves: %v[-]", err))
+			p.status.SetText(vibe.Sprintf("ui.accounts_panel.doDeleteSaves.01", "[red]Could not delete the saves: %v[-]", err))
 			return
 		}
 		p.refresh(idx)
 		switch n {
 		case 0:
-			p.status.SetText(fmt.Sprintf("[gray]%s has no saves to delete.[-]", displayNameOr(s)))
+			p.status.SetText(vibe.Sprintf("ui.accounts_panel.doDeleteSaves.02", "[gray]%s has no saves to delete.[-]", displayNameOr(s)))
 		case 1:
-			p.status.SetText(fmt.Sprintf("[gray]Deleted the 1 save of %s.[-]", displayNameOr(s)))
+			p.status.SetText(vibe.Sprintf("ui.accounts_panel.doDeleteSaves.03", "[gray]Deleted the 1 save of %s.[-]", displayNameOr(s)))
 		default:
-			p.status.SetText(fmt.Sprintf("[gray]Deleted the %d saves of %s.[-]", n, displayNameOr(s)))
+			p.status.SetText(vibe.Sprintf("ui.accounts_panel.doDeleteSaves.04", "[gray]Deleted the %d saves of %s.[-]", n, displayNameOr(s)))
 		}
 	}, func() { p.app.SetFocus(p.list) })
 }
@@ -536,14 +547,14 @@ func (p *accountsPanel) doWipe() {
 
 	// STEP 1 — the are-you-sure gate.
 	step1 := tview.NewModal().
-		SetText(fmt.Sprintf(
-			"⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, badges and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
+		SetText(vibe.Sprintf(
+			"ui.accounts_panel.doWipe.01", "⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, badges and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
 			name,
 		)).
-		AddButtons([]string{"Keep it", "Wipe it"}).
-		SetDoneFunc(func(_ int, label string) {
+		AddButtons([]string{vibe.Line("ui.accounts_panel.doWipe.02", "Keep it"), vibe.Line("ui.accounts_panel.doWipe.03", "Wipe it")}).
+		SetDoneFunc(func(button int, _ string) {
 			p.pages.RemovePage(accountsWipeConfirm1)
-			if label == "Wipe it" {
+			if button == 1 { // "Wipe it"; the other button and Esc (-1) keep the account
 				p.showWipeTypeGate(s.AccountID, name, wasActive)
 				return
 			}
@@ -562,7 +573,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetTextAlign(tview.AlignCenter)
 
 	input := tview.NewInputField().
-		SetLabel("Account name: ").
+		SetLabel(vibe.Line("ui.accounts_panel.showWipeTypeGate.01", "Account name: ")).
 		SetLabelColor(theme.Color(theme.RoleOnNegative)).
 		SetFieldWidth(40).
 		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
@@ -572,14 +583,14 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(fmt.Sprintf(
-			dangerTag+"Type this name exactly to confirm:[-]\n"+dangerTagBold+"%s[-:-:-]\n"+dangerTagBold+"This permanently deletes the account.[-:-:-]\n"+dangerTag+"A backup (account and saves) goes to data/backups/ first; restoring it is manual.[-]",
+			dangerTag+vibe.Line("ui.accounts_panel.showWipeTypeGate.02", "Type this name exactly to confirm:[-]\n")+dangerTagBold+"%s[-:-:-]\n"+dangerTagBold+vibe.Line("ui.accounts_panel.showWipeTypeGate.03", "This permanently deletes the account.[-:-:-]\n")+dangerTag+vibe.Line("ui.accounts_panel.showWipeTypeGate.04", "A backup (account and saves) goes to data/backups/ first; restoring it is manual.[-]"),
 			expectedName,
 		))
 
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText(dangerTag + "Enter: confirm  ·  Esc: cancel[-]")
+		SetText(dangerTag + vibe.Line("ui.accounts_panel.showWipeTypeGate.05", "Enter: confirm  ·  Esc: cancel[-]"))
 
 	abort := func() {
 		p.pages.RemovePage(accountsWipeTypeGate)
@@ -588,13 +599,13 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 
 	confirm := func() {
 		if strings.TrimSpace(input.GetText()) != expectedName {
-			errTV.SetText(dangerTagBold + "Name doesn't match. The account was not wiped.[-:-:-]")
+			errTV.SetText(dangerTagBold + vibe.Line("ui.accounts_panel.showWipeTypeGate.06", "Name doesn't match. The account was not wiped.[-:-:-]"))
 			p.app.SetFocus(input)
 			return
 		}
 		backupPath, err := p.engine.WipeAccountByID(id)
 		if err != nil {
-			errTV.SetText(fmt.Sprintf(dangerTagBold+"Wipe failed: %v[-:-:-]", err))
+			errTV.SetText(fmt.Sprintf(dangerTagBold+vibe.Line("ui.accounts_panel.showWipeTypeGate.07", "Wipe failed: %v[-:-:-]"), err))
 			p.app.SetFocus(input)
 			return
 		}
@@ -623,7 +634,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		AddItem(spacer(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Confirm account wipe ").
+		SetTitle(vibe.Line("ui.accounts_panel.showWipeTypeGate.08", " Confirm account wipe ")).
 		SetTitleColor(theme.Color(theme.RoleOnNegative)).
 		SetBorderColor(theme.Color(theme.RoleOnNegative))
 	inner.SetBackgroundColor(theme.Color(theme.RoleNegative))
@@ -671,9 +682,9 @@ func (p *accountsPanel) resolveAfterWipe(wasActive bool, backupPath string) {
 	p.refresh(0)
 	p.app.SetFocus(p.list)
 	if backupPath != "" {
-		p.status.SetText(fmt.Sprintf("[gray]Account wiped. Backup saved to %s[-]", backupPath))
+		p.status.SetText(vibe.Sprintf("ui.accounts_panel.resolveAfterWipe.01", "[gray]Account wiped. Backup saved to %s[-]", backupPath))
 	} else {
-		p.status.SetText("[gray]Account wiped.[-]")
+		p.status.SetText(vibe.Line("ui.accounts_panel.resolveAfterWipe.02", "[gray]Account wiped.[-]"))
 	}
 }
 
@@ -690,7 +701,7 @@ func (p *accountsPanel) showMessage(title, body string) {
 	hint := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gray]Enter / Esc: close[-]")
+		SetText(vibe.Line("ui.accounts_panel.showMessage.01", "[gray]Enter / Esc: close[-]"))
 	hint.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface)) }
@@ -739,10 +750,10 @@ func accountRowLabel(s game.AccountSummary) string {
 	name := displayNameOr(s)
 	label := fmt.Sprintf("%s   [gray]%s[-]", name, shortAccountID(s.AccountID))
 	if s.Active {
-		label = "[label]● " + name + "[-]   [gray]" + shortAccountID(s.AccountID) + "[-]   [label](current)[-]"
+		label = "[label]● " + name + "[-]   [gray]" + shortAccountID(s.AccountID) + vibe.Line("ui.accounts_panel.accountRowLabel.01", "[-]   [label](current)[-]")
 	}
 	if s.Tampered {
-		label += "   [red]⚠ modified[-]"
+		label += vibe.Line("ui.accounts_panel.accountRowLabel.02", "   [red]⚠ modified[-]")
 	}
 	return label
 }
@@ -752,39 +763,39 @@ func accountRowLabel(s game.AccountSummary) string {
 func accountDetailText(s game.AccountSummary, recovery string) string {
 	var lines []string
 	lines = append(lines, fmt.Sprintf("[gold]%s[-]", displayNameOr(s)))
-	lines = append(lines, fmt.Sprintf("[gray]ID[-] [white]%s[-] [gray](%s)[-]", s.AccountID, shortAccountID(s.AccountID)))
-	lines = append(lines, fmt.Sprintf("[gray]Recovery code[-] [white]%s[-]", recovery))
+	lines = append(lines, vibe.Sprintf("ui.accounts_panel.accountDetailText.01", "[gray]ID[-] [white]%s[-] [gray](%s)[-]", s.AccountID, shortAccountID(s.AccountID)))
+	lines = append(lines, vibe.Sprintf("ui.accounts_panel.accountDetailText.02", "[gray]Recovery code[-] [white]%s[-]", recovery))
 	lines = append(lines, "")
-	lines = append(lines, fmt.Sprintf("[gray]Highest age[-] [white]%s[-]", ageDisplay(s.HighestAge)))
-	lines = append(lines, fmt.Sprintf("[gray]Total prestiges[-] [white]%d[-]", s.TotalPrestiges))
-	lines = append(lines, fmt.Sprintf("[gray]Badges[-] [white]%d[-]", s.Badges))
+	lines = append(lines, vibe.Sprintf("ui.accounts_panel.accountDetailText.03", "[gray]Highest age[-] [white]%s[-]", ageDisplay(s.HighestAge)))
+	lines = append(lines, vibe.Sprintf("ui.accounts_panel.accountDetailText.04", "[gray]Total prestiges[-] [white]%d[-]", s.TotalPrestiges))
+	lines = append(lines, vibe.Sprintf("ui.accounts_panel.accountDetailText.05", "[gray]Badges[-] [white]%d[-]", s.Badges))
 	lines = append(lines, "")
 
 	var status []string
 	if s.Active {
-		status = append(status, "[label]● current account[-]")
+		status = append(status, vibe.Line("ui.accounts_panel.accountDetailText.06", "[label]● current account[-]"))
 	}
 	if s.Tampered {
-		status = append(status, "[red]⚠ modified outside the game[-]")
+		status = append(status, vibe.Line("ui.accounts_panel.accountDetailText.07", "[red]⚠ modified outside the game[-]"))
 	}
 	if len(status) == 0 {
-		status = append(status, "[gray]idle[-]")
+		status = append(status, vibe.Line("ui.accounts_panel.accountDetailText.08", "[gray]idle[-]"))
 	}
-	lines = append(lines, "[gray]Status[-] "+strings.Join(status, "   "))
+	lines = append(lines, vibe.Line("ui.accounts_panel.accountDetailText.09", "[gray]Status[-] ")+strings.Join(status, "   "))
 	return strings.Join(lines, "\n")
 }
 
 // accountsKeys are the Accounts panel's actions. Each acts on the selected account.
 var accountsKeys = []footerKey{
-	{"Enter", "Switch", ""},
-	{"n", "New", ""},
-	{"e", "Export", ""},
-	{"b", "Backup", ""},
-	{"i", "Import", ""},
-	{"r", "Recovery", ""},
-	{"x", "Delete saves", ""},
-	{"w", "Wipe", ""},
-	{"Esc", "Back", ""},
+	{"Enter", vibe.E("ui.accounts_panel.accountsKeys.02", "Switch"), vibe.Entry{}},
+	{"n", vibe.E("ui.accounts_panel.accountsKeys.03", "New"), vibe.Entry{}},
+	{"e", vibe.E("ui.accounts_panel.accountsKeys.04", "Export"), vibe.Entry{}},
+	{"b", vibe.E("ui.accounts_panel.accountsKeys.05", "Backup"), vibe.Entry{}},
+	{"i", vibe.E("ui.accounts_panel.accountsKeys.06", "Import"), vibe.Entry{}},
+	{"r", vibe.E("ui.accounts_panel.accountsKeys.07", "Recovery"), vibe.Entry{}},
+	{"x", vibe.E("ui.accounts_panel.accountsKeys.08", "Delete saves"), vibe.Entry{}},
+	{"w", vibe.E("ui.accounts_panel.accountsKeys.09", "Wipe"), vibe.Entry{}},
+	{"Esc", vibe.E("ui.accounts_panel.accountsKeys.11", "Back"), vibe.Entry{}},
 }
 
 // accountsFooterBar is the Accounts panel action bar on one line: a keycap button per
@@ -801,7 +812,7 @@ func displayNameOr(s game.AccountSummary) string {
 // displayNameOrName returns name, or "(unnamed)" when empty.
 func displayNameOrName(name string) string {
 	if strings.TrimSpace(name) == "" {
-		return "(unnamed)"
+		return vibe.Line("ui.accounts_panel.displayNameOrName.01", "(unnamed)")
 	}
 	return name
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // advance_view.go draws the Advance panel: a pure function of the gate
@@ -18,10 +19,10 @@ import (
 // three rows each to one, and the boxes on the right give way to each other.
 
 // advanceKeys are the panel's keys as the Help panel lists them.
-var advanceKeys = [][2]string{
-	{"Up/Down", "Pick a pillar to see what it asks for"},
-	{"Enter", "Advance to the next age, when all four pillars stand (the same as the advance command)"},
-	{"Esc", "Close the panel"},
+var advanceKeys = []keyHelp{
+	{"Up/Down", vibe.E("ui.advance_view.advanceKeys.02", "Pick a pillar to see what it asks for")},
+	{"Enter", vibe.E("ui.advance_view.advanceKeys.04", "Advance to the next age, when all four pillars stand (the same as the advance command)")},
+	{"Esc", vibe.E("ui.advance_view.advanceKeys.06", "Close the panel")},
 }
 
 // advanceUI is what the player has picked and what the panel last said.
@@ -39,27 +40,27 @@ const (
 // renderAdvance draws the panel w by h.
 func renderAdvance(v game.AdvanceView, u advanceUI, w, h int) *xgrid {
 	g := newXGrid(w, h)
-	title := "Advance · " + v.AgeName
+	title := vibe.Line("ui.advance_view.renderAdvance.01", "Advance · ") + v.AgeName
 	if !v.Final {
-		title += " to " + v.NextName
+		title += vibe.Line("ui.advance_view.renderAdvance.02", " to ") + v.NextName
 	}
 	g.box(0, 0, w, h, xBorder, title, xTitle, false)
 	if w < advMinW || h < advMinH {
-		g.put(2, 2, fitText("The window is too small for the Advance panel. Esc closes it.", w-4), xBad)
+		g.put(2, 2, fitText(vibe.Line("ui.advance_view.renderAdvance.03", "The window is too small for the Advance panel. Esc closes it."), w-4), xBad)
 		return g
 	}
 	u.sel = clamp(u.sel, 0, max(0, len(v.Pillars)-1))
 
 	// The line under the title: what the panel is, and how many pillars stand.
 	if v.Final {
-		g.put(2, 1, "The final age", xDim)
+		g.put(2, 1, vibe.Line("ui.advance_view.renderAdvance.04", "The final age"), xDim)
 	} else {
-		g.putFit(2, 1, w-22, "What stands between you and the "+v.NextName, xDim)
+		g.putFit(2, 1, w-22, vibe.Line("ui.advance_view.renderAdvance.05", "What stands between you and the ")+v.NextName, xDim)
 		k := xText
 		if v.AllStand {
 			k = xGood
 		}
-		g.rput(w-3, 1, fmt.Sprintf("%d of %d stand", v.Stand, len(v.Pillars)), k)
+		g.rput(w-3, 1, vibe.Sprintf("ui.advance_view.renderAdvance.06", "%d of %d stand", v.Stand, len(v.Pillars)), k)
 	}
 
 	mh := 6
@@ -91,7 +92,7 @@ func marchName(name string) string { return strings.TrimSuffix(name, " Age") }
 // track, this one and the next lit, the town between them where the gate has
 // brought it, and the year.
 func advMarch(g *xgrid, v game.AdvanceView, w, mh int) {
-	g.box(1, 2, w-2, mh, xBorder, "The march of ages", xTitle, false)
+	g.box(1, 2, w-2, mh, xBorder, vibe.Line("ui.advance_view.advMarch.01", "The march of ages"), xTitle, false)
 	total := len(v.March)
 	if total == 0 {
 		return
@@ -189,13 +190,13 @@ func advMarch(g *xgrid, v game.AdvanceView, w, mh int) {
 	// The year, and how far the gate has brought the town.
 	var parts []xseg
 	if v.Final {
-		parts = []xseg{{"The final age", xText}, {" · ", xFaint}, {v.YearText, xBright}}
+		parts = []xseg{{vibe.Line("ui.advance_view.advMarch.02", "The final age"), xText}, {" · ", xFaint}, {v.YearText, xBright}}
 	} else {
-		parts = []xseg{{"Year ", xDim}, {v.YearText, xBright},
-			{fmt.Sprintf(" · %d%% of the way to the %s", sharePercent(v.Share, v.Share >= 1), v.NextName), xText}}
+		parts = []xseg{{vibe.Line("ui.advance_view.advMarch.03", "Year "), xDim}, {v.YearText, xBright},
+			{vibe.Sprintf("ui.advance_view.advMarch.04", " · %d%% of the way to the %s", sharePercent(v.Share, v.Share >= 1), v.NextName), xText}}
 	}
 	end := g.segsFit(3, sumY, w-8, parts...)
-	const legend = "● passed  ◉ now  ○ ahead"
+	legend := vibe.Line("ui.advance_view.advMarch.05", "● passed  ◉ now  ○ ahead")
 	if start := w - 4 - runeLen(legend); start > end+2 {
 		g.put(start, sumY, legend, xFaint)
 	}
@@ -214,13 +215,13 @@ func sharePercent(p float64, done bool) int {
 // advCharter draws the Charter box: the four pillars, and the picked one in
 // detail below them.
 func advCharter(g *xgrid, v game.AdvanceView, u advanceUI, x, y, bw, bh int) {
-	g.box(x, y, bw, bh, xBorder, "The Charter", xTitle, false)
+	g.box(x, y, bw, bh, xBorder, vibe.Line("ui.advance_view.advCharter.01", "The Charter"), xTitle, false)
 	if bh < 4 {
 		return
 	}
 	iw := bw - 4
 	if v.Final {
-		g.putFit(x+2, y+2, iw, "This is the final age. There is no age beyond it.", xText)
+		g.putFit(x+2, y+2, iw, vibe.Line("ui.advance_view.advCharter.02", "This is the final age. There is no age beyond it."), xText)
 		return
 	}
 	// Three rows to a pillar (name, bar, a blank) when the box is tall, two
@@ -250,7 +251,7 @@ func advCharter(g *xgrid, v game.AdvanceView, u advanceUI, x, y, bw, bh int) {
 // requirements stand.
 func pillarNote(p game.GatePillar) string {
 	if len(p.Rows) == 0 {
-		return "nothing needed this age"
+		return vibe.Line("ui.advance_view.pillarNote.01", "nothing needed this age")
 	}
 	met := 0
 	for _, r := range p.Rows {
@@ -258,13 +259,13 @@ func pillarNote(p game.GatePillar) string {
 			met++
 		}
 	}
-	return fmt.Sprintf("%d of %d met", met, len(p.Rows))
+	return vibe.Sprintf("ui.advance_view.pillarNote.02", "%d of %d met", met, len(p.Rows))
 }
 
 // pillarStatus is what a pillar's bar ends with: "✓ stands" or its percent.
 func pillarStatus(p game.GatePillar) (string, xk) {
 	if p.Met {
-		return "✓ stands", xGood
+		return vibe.Line("ui.advance_view.pillarStatus.01", "✓ stands"), xGood
 	}
 	return fmt.Sprintf("%d%%", sharePercent(p.Progress, false)), xText
 }
@@ -304,7 +305,7 @@ func advPillar(g *xgrid, p game.GatePillar, picked bool, x, y, iw int, roomy boo
 	if roomy {
 		g.put(x, y, mark+name, nk)
 		g.putFit(x+14, y, iw-14, note, xDim)
-		bw := clamp(iw-2-len([]rune("✓ stands"))-1, 10, 48)
+		bw := clamp(iw-2-len([]rune(vibe.Line("ui.advance_view.advPillar.01", "✓ stands")))-1, 10, 48)
 		advBar(g, x+2, y+1, bw, p.Progress, barK)
 		g.put(x+2+bw+1, y+1, status, sk)
 		return
@@ -312,7 +313,7 @@ func advPillar(g *xgrid, p game.GatePillar, picked bool, x, y, iw int, roomy boo
 	g.put(x, y, mark+name, nk)
 	const nameW = 12
 	room := iw - nameW
-	bw := clamp((room-len([]rune("✓ stands"))-1)/2, 6, 24)
+	bw := clamp((room-len([]rune(vibe.Line("ui.advance_view.advPillar.02", "✓ stands")))-1)/2, 6, 24)
 	advBar(g, x+nameW, y, bw, p.Progress, barK)
 	sx := g.put(x+nameW+bw+1, y, status, sk)
 	if left := x + iw - sx - 1; left >= 8 {
@@ -327,12 +328,12 @@ func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
 	if rows < 1 {
 		return
 	}
-	g.putFit(x, y, iw, p.Name+" in detail", xAccent)
+	g.putFit(x, y, iw, p.Name+vibe.Line("ui.advance_view.advDetail.01", " in detail"), xAccent)
 	rows--
 	y++
 	if len(p.Rows) == 0 {
 		if rows > 0 {
-			g.put(x, y, "Nothing needed this age.", xDim)
+			g.put(x, y, vibe.Line("ui.advance_view.advDetail.02", "Nothing needed this age."), xDim)
 		}
 		return
 	}
@@ -360,7 +361,7 @@ func advDetail(g *xgrid, p game.GatePillar, x, y, iw, rows int) {
 	y += len(show)
 	rows -= len(show)
 	if more > 0 && rows > 0 {
-		g.put(x, y, fmt.Sprintf("+%d more", more), xDim)
+		g.put(x, y, vibe.Sprintf("ui.advance_view.advDetail.03", "+%d more", more), xDim)
 		return
 	}
 	for _, f := range p.Facts {
@@ -383,7 +384,7 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 	var val string
 	switch r.Kind {
 	case game.GateRowCount:
-		val = fmt.Sprintf("%s of %s", num(r.Have), num(r.Need))
+		val = vibe.Sprintf("ui.advance_view.advRow.01", "%s of %s", num(r.Have), num(r.Need))
 	case game.GateRowShare:
 		val = fmt.Sprintf("%d%%", r.Have)
 	default:
@@ -406,11 +407,11 @@ func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 		lines []string
 	}
 	b := v.Brings
-	buildings := "none new"
+	buildings := vibe.Line("ui.advance_view.advRight.01", "none new")
 	if b.Buildings > 0 {
-		buildings = fmt.Sprintf("%d new", b.Buildings)
+		buildings = vibe.Sprintf("ui.advance_view.advRight.02", "%d new", b.Buildings)
 	}
-	resources := "none new"
+	resources := vibe.Line("ui.advance_view.advRight.03", "none new")
 	if len(b.Resources) > 0 {
 		resources = strings.Join(b.Resources, ", ")
 	}
@@ -419,12 +420,12 @@ func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 		resLines = wrapItems(b.Resources, vw)
 	}
 	rows := []brow{
-		{"Buildings", []string{buildings}},
-		{"Resources", resLines},
-		{"People", wrapItems(b.People, vw)},
+		{vibe.Line("ui.advance_view.advRight.04", "Buildings"), []string{buildings}},
+		{vibe.Line("ui.advance_view.advRight.05", "Resources"), resLines},
+		{vibe.Line("ui.advance_view.advRight.06", "People"), wrapItems(b.People, vw)},
 	}
 	if b.Wonder != "" {
-		rows = append(rows, brow{"Wonder", wrapText(b.Wonder, vw)})
+		rows = append(rows, brow{vibe.Line("ui.advance_view.advRight.07", "Wonder"), wrapText(b.Wonder, vw)})
 	}
 	need := 2
 	for _, r := range rows {
@@ -441,12 +442,12 @@ func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 		boxH = bh
 	}
 
-	title := "The " + v.NextName + " brings"
+	title := vibe.Line("ui.advance_view.advRight.08", "The ") + v.NextName + vibe.Line("ui.advance_view.advRight.09", " brings")
 	if runeLen(title) > bw-6 {
-		title = v.NextName + " brings"
+		title = v.NextName + vibe.Line("ui.advance_view.advRight.10", " brings")
 	}
 	if runeLen(title) > bw-6 {
-		title = "Brings"
+		title = vibe.Line("ui.advance_view.advRight.11", "Brings")
 	}
 	g.box(x, y, bw, boxH, xBorder, title, xTitle, false)
 	ly := y + 1
@@ -503,7 +504,7 @@ func wayLines(v game.AdvanceView, w int) int {
 
 // advWay draws what else stands in the way of the advance.
 func advWay(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
-	g.box(x, y, bw, bh, xBorder, "In the way", xTitle, false)
+	g.box(x, y, bw, bh, xBorder, vibe.Line("ui.advance_view.advWay.01", "In the way"), xTitle, false)
 	iw := bw - 4
 	ly := y + 1
 	put := func(lines []string, k xk) {
@@ -520,7 +521,7 @@ func advWay(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 	put(v.Blockers, xBad)
 	put(v.Notices, xAccent)
 	if len(v.Blockers)+len(v.Notices) == 0 {
-		g.putFit(x+2, ly, iw, "Nothing else stands in the way.", xDim)
+		g.putFit(x+2, ly, iw, vibe.Line("ui.advance_view.advWay.02", "Nothing else stands in the way."), xDim)
 	}
 }
 
@@ -545,7 +546,7 @@ func advFoot(g *xgrid, v game.AdvanceView, u advanceUI, w, h int) {
 		}
 	case v.Ready:
 		x := g.put(2, y, " Enter ", xSel)
-		x = g.put(x+1, y, "Advance to the "+v.NextName, xBright)
+		x = g.put(x+1, y, vibe.Line("ui.advance_view.advFoot.02", "Advance to the ")+v.NextName, xBright)
 		if len(v.Notices) > 0 && x+3 < w-2 {
 			g.putFit(x+2, y, w-3-x-2, v.Notices[0], xAccent)
 		}
@@ -558,15 +559,15 @@ func advFoot(g *xgrid, v game.AdvanceView, u advanceUI, w, h int) {
 				open = append(open, p.Name)
 			}
 		}
-		x := g.put(2, y, "Not yet: ", xBad)
-		g.putFit(x, y, w-3-x, textfmt.List(open)+" still to stand.", xText)
+		x := g.put(2, y, vibe.Line("ui.advance_view.advFoot.03", "Not yet: "), xBad)
+		g.putFit(x, y, w-3-x, textfmt.List(open)+vibe.Line("ui.advance_view.advFoot.04", " still to stand."), xText)
 	}
 	short := make([][2]string, 0, len(advanceKeys))
 	for _, k := range advanceKeys {
-		if v.Final && k[0] != "Esc" {
+		if v.Final && k.key != "Esc" {
 			continue // nothing to pick and nothing to advance to
 		}
-		short = append(short, [2]string{shortKeyName(k[0]), shortKeyUse(k[0])})
+		short = append(short, [2]string{shortKeyName(k.key), shortKeyUse(k.key)})
 	}
 	hint := "advance"
 	if v.Final {
@@ -587,7 +588,7 @@ func shortKeyName(key string) string {
 func shortKeyUse(key string) string {
 	switch key {
 	case "Up/Down":
-		return "pick a pillar"
+		return vibe.Line("ui.advance_view.shortKeyUse.01", "pick a pillar")
 	case "Enter":
 		return "advance"
 	}

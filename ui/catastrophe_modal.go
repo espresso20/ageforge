@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -51,8 +52,8 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	}
 
 	// The first line is long: it wraps under its bullet.
-	destroyed := []string{"[white]── ENDURE: weather the catastrophe ──[-]"}
-	for i, l := range tview.WordWrap(fmt.Sprintf("• %s of buildings destroyed (wonders, storage and knowledge buildings are spared)", endurePct(eo.DestroyPct)), inner-4) {
+	destroyed := []string{vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.01", "[white]── ENDURE: weather the catastrophe ──[-]")}
+	for i, l := range tview.WordWrap(vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.02", "• %s of buildings destroyed (wonders, storage and knowledge buildings are spared)", endurePct(eo.DestroyPct)), inner-4) {
 		lead := ""
 		if i > 0 {
 			lead = "  "
@@ -60,12 +61,12 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		destroyed = append(destroyed, "  [red]"+lead+strings.TrimSpace(l)+"[-]")
 	}
 	endureLines := append(destroyed,
-		fmt.Sprintf("  [red]• All resources reduced to %s[-]", endurePct(eo.KeepFrac*100)),
-		fmt.Sprintf("  [red]• %.0f%% of workers lost; workers of destroyed buildings go idle[-]", game.EndureWorkerLoss*100),
-		fmt.Sprintf("  [red]• All production %.0f%% for %s, morale %+.0f points[-]",
+		vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.03", "  [red]• All resources reduced to %s[-]", endurePct(eo.KeepFrac*100)),
+		vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.04", "  [red]• %.0f%% of workers lost; workers of destroyed buildings go idle[-]", game.EndureWorkerLoss*100),
+		vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.05", "  [red]• All production %.0f%% for %s, morale %+.0f points[-]",
 			game.EndureDebuffProduction*100, formatTicks(game.EndureDebuffTicksIn(st.Age), st), game.EndureMoraleHit*100),
-		"  [green]✓ Age, research, wonders and prestige preserved[-]",
-		"  [green]✓ The epoch badge records that you endured[-]",
+		vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.06", "  [green]✓ Age, research, wonders and prestige preserved[-]"),
+		vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.07", "  [green]✓ The epoch badge records that you endured[-]"),
 	)
 	endureLines = append(endureLines, endureDefenseLines(eo)...)
 	endure := strings.Join(endureLines, "\n")
@@ -74,29 +75,29 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		researchNow = 1
 	}
 	per := game.SuccumbResearchTimeFactor
-	researchLine := fmt.Sprintf("  [green]✓ Ancient Knowledge: research time %s (%s in all, permanent)[-]", game.ResearchFactorText(per), game.ResearchFactorText(researchNow*per))
-	legacyLine := fmt.Sprintf("  [gold]✓ %s legacy: %s (permanent)[-]", ep.Name, legacyBonusText(set, epochKey))
+	researchLine := vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.08", "  [green]✓ Ancient Knowledge: research time %s (%s in all, permanent)[-]", game.ResearchFactorText(per), game.ResearchFactorText(researchNow*per))
+	legacyLine := vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.09", "  [gold]✓ %s legacy: %s (permanent)[-]", ep.Name, legacyBonusText(set, epochKey))
 	if alreadyLegacy {
-		researchLine = fmt.Sprintf("  [gray]• Ancient Knowledge already earned here (research time stays %s)[-]", game.ResearchFactorText(researchNow))
-		legacyLine = fmt.Sprintf("  [gray]• %s legacy already held; no new legacy bonus[-]", ep.Name)
+		researchLine = vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.10", "  [gray]• Ancient Knowledge already earned here (research time stays %s)[-]", game.ResearchFactorText(researchNow))
+		legacyLine = vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.11", "  [gray]• %s legacy already held; no new legacy bonus[-]", ep.Name)
 	}
 	succumbLines := []string{
-		"[white]── SUCCUMB: let civilization fall ──[-]",
-		"  [red]• Full reset to the Primitive Age: buildings, resources, research[-]",
-		"  [red]• No prestige points earned (level and upgrades are kept)[-]",
-		fmt.Sprintf("  [green]✓ Up to %d buildings become ruins (50%% output, max %d ruins)[-]", game.SuccumbRuinCount, game.MaxRuins),
+		vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.12", "[white]── SUCCUMB: let civilization fall ──[-]"),
+		vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.13", "  [red]• Full reset to the Primitive Age: buildings, resources, research[-]"),
+		vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.14", "  [red]• No prestige points earned (level and upgrades are kept)[-]"),
+		vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.15", "  [green]✓ Up to %d buildings become ruins (50%% output, max %d ruins)[-]", game.SuccumbRuinCount, game.MaxRuins),
 	}
 	// A fall ends the run as a prestige does: the ages it completed gain a
 	// mastery level (none when every one of them is at the cap).
 	if len(st.Mastery.NextGains) > 0 {
-		succumbLines = append(succumbLines, "  [green]✓ Era Mastery: the ages this run completed gain a level and run faster[-]")
+		succumbLines = append(succumbLines, vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.16", "  [green]✓ Era Mastery: the ages this run completed gain a level and run faster[-]"))
 	}
 	succumb := strings.Join(append(succumbLines, researchLine, legacyLine), "\n")
 
-	hint := "[gray]Esc: decide later · advancing waits · type 'catastrophe' to reopen[-]"
+	hint := vibe.Line("ui.catastrophe_modal.buildCatastropheModalLayout.17", "[gray]Esc: decide later · advancing waits · type 'catastrophe' to reopen[-]")
 
 	l := catastropheModalLayout{
-		title:   fmt.Sprintf(" ☄ %s Catastrophe ", ep.Name),
+		title:   vibe.Sprintf("ui.catastrophe_modal.buildCatastropheModalLayout.18", " ☄ %s Catastrophe ", ep.Name),
 		header:  strings.Join(headerLines, "\n"),
 		endure:  endure,
 		succumb: succumb,
@@ -119,29 +120,29 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 	for _, l := range tview.WordWrap(flavorText, inner-2) {
 		headerLines = append(headerLines, "[comment]"+tview.Escape(strings.TrimSpace(l))+"[-]")
 	}
-	headerLines = append(headerLines, "[gray]Prestige waits on your answer. Nothing else does.[-]")
+	headerLines = append(headerLines, vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.01", "[gray]Prestige waits on your answer. Nothing else does.[-]"))
 
-	keepLine := fmt.Sprintf("  [red]• You keep %d%% of this run's prestige points: %d of %d[-]", lp.KeepPct, lp.PointsIfEndured, lp.PointsNow)
+	keepLine := vibe.Sprintf("ui.catastrophe_modal.buildLastPassageModalLayout.02", "  [red]• You keep %d%% of this run's prestige points: %d of %d[-]", lp.KeepPct, lp.PointsIfEndured, lp.PointsNow)
 	endureLines := []string{
-		"[white]── ENDURE: pass through, diminished ──[-]",
+		vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.03", "[white]── ENDURE: pass through, diminished ──[-]"),
 		keepLine,
 	}
 	if lp.BraceLevel > 0 {
-		endureLines = append(endureLines, fmt.Sprintf("  [green]✓ Braced (level %d): %d%% kept instead of %.0f%%[-]", lp.BraceLevel, lp.KeepPct, game.LastPassageKeep*100))
+		endureLines = append(endureLines, vibe.Sprintf("ui.catastrophe_modal.buildLastPassageModalLayout.04", "  [green]✓ Braced (level %d): %d%% kept instead of %.0f%%[-]", lp.BraceLevel, lp.KeepPct, game.LastPassageKeep*100))
 	}
-	endureLines = append(endureLines, "  [green]✓ Level, upgrades, legacies and ruins carry over as always[-]")
+	endureLines = append(endureLines, vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.05", "  [green]✓ Level, upgrades, legacies and ruins carry over as always[-]"))
 
 	succumbLines := []string{
-		"[white]── SUCCUMB: let it take the run ──[-]",
-		"  [red]• Prestige completes with no points from this run (level still rises)[-]",
+		vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.06", "[white]── SUCCUMB: let it take the run ──[-]"),
+		vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.07", "  [red]• Prestige completes with no points from this run (level still rises)[-]"),
 	}
 	if lp.CosmicLegacy {
 		succumbLines = append(succumbLines,
-			"  [gray]• You already carry the Cosmic Legacy. Succumb is closed to you.[-]")
+			vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.08", "  [gray]• You already carry the Cosmic Legacy. Succumb is closed to you.[-]"))
 	} else {
 		succumbLines = append(succumbLines,
-			fmt.Sprintf("  [gold]✓ Cosmic Legacy: production +%.0f%% after the caps, through every prestige[-]", game.CosmicLegacyProductionBonus*100),
-			"  [gold]✓ Earned once, kept forever[-]")
+			vibe.Sprintf("ui.catastrophe_modal.buildLastPassageModalLayout.09", "  [gold]✓ Cosmic Legacy: production +%.0f%% after the caps, through every prestige[-]", game.CosmicLegacyProductionBonus*100),
+			vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.10", "  [gold]✓ Earned once, kept forever[-]"))
 	}
 
 	l := catastropheModalLayout{
@@ -149,7 +150,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 		header:  strings.Join(headerLines, "\n"),
 		endure:  strings.Join(endureLines, "\n"),
 		succumb: strings.Join(succumbLines, "\n"),
-		hint:    "[gray]Esc: decide later · prestige waits · type 'catastrophe' to reopen[-]",
+		hint:    vibe.Line("ui.catastrophe_modal.buildLastPassageModalLayout.11", "[gray]Esc: decide later · prestige waits · type 'catastrophe' to reopen[-]"),
 	}
 	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + 1 + 1 + 2
 	return l
@@ -229,20 +230,20 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchFactor, outcome, st)
 	}
 
-	btnEndure := tview.NewButton(tview.Escape("[E] ENDURE")).
+	btnEndure := tview.NewButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.01", "[E] ENDURE"))).
 		SetSelectedFunc(func() {
 			if err := endure(); err != nil {
-				d.engine.AddLog("error", "Endure failed: "+err.Error())
+				d.engine.AddLog("error", vibe.Line("ui.catastrophe_modal.showCatastropheModal.02", "Endure failed: ")+err.Error())
 			}
 			d.closeCatastropheModal()
 		})
 	styleFilledButton(btnEndure, theme.RoleNegative)
 
-	btnSuccumb := tview.NewButton(tview.Escape("[S] SUCCUMB"))
+	btnSuccumb := tview.NewButton(tview.Escape(vibe.Line("ui.catastrophe_modal.showCatastropheModal.03", "[S] SUCCUMB")))
 	if succumbOpen {
 		btnSuccumb.SetSelectedFunc(func() {
 			if err := succumb(); err != nil {
-				d.engine.AddLog("error", "Succumb failed: "+err.Error())
+				d.engine.AddLog("error", vibe.Line("ui.catastrophe_modal.showCatastropheModal.04", "Succumb failed: ")+err.Error())
 			}
 			d.closeCatastropheModal()
 		})
@@ -374,22 +375,22 @@ func endurePct(p float64) string {
 func endureDefenseLines(o game.EndureOutcome) []string {
 	var lines []string
 	if o.BraceLevel > 0 {
-		lines = append(lines, fmt.Sprintf("  [green]✓ Braced (level %d): %s fall, %s kept, before your garrison[-]",
+		lines = append(lines, vibe.Sprintf("ui.catastrophe_modal.endureDefenseLines.01", "  [green]✓ Braced (level %d): %s fall, %s kept, before your garrison[-]",
 			o.BraceLevel, endurePct(o.BracedDestroyPct), endurePct(o.BracedKeepFrac*100)))
 	}
 	if o.Garrison <= 0 {
-		lines = append(lines, "  [gray]• No garrison: soldiers would soften this (see the Army panel)[-]")
+		lines = append(lines, vibe.Line("ui.catastrophe_modal.endureDefenseLines.02", "  [gray]• No garrison: soldiers would soften this (see the Army panel)[-]"))
 		return lines
 	}
 	if o.BuildingsSaved > 0 {
-		lines = append(lines, fmt.Sprintf("  [green]✓ Your garrison saves %d %s and keeps %s of stock, not %s[-]",
-			o.BuildingsSaved, pluralize("building", o.BuildingsSaved), endurePct(o.KeepFrac*100), endurePct(o.BracedKeepFrac*100)))
+		lines = append(lines, vibe.Sprintf("ui.catastrophe_modal.endureDefenseLines.03", "  [green]✓ Your garrison saves %d %s and keeps %s of stock, not %s[-]",
+			o.BuildingsSaved, pluralize(vibe.Line("ui.catastrophe_modal.endureDefenseLines.04", "building"), o.BuildingsSaved), endurePct(o.KeepFrac*100), endurePct(o.BracedKeepFrac*100)))
 	} else {
-		lines = append(lines, fmt.Sprintf("  [green]✓ Your garrison keeps %s of stock, not %s, and softens the fall[-]",
+		lines = append(lines, vibe.Sprintf("ui.catastrophe_modal.endureDefenseLines.05", "  [green]✓ Your garrison keeps %s of stock, not %s, and softens the fall[-]",
 			endurePct(o.KeepFrac*100), endurePct(o.BracedKeepFrac*100)))
 	}
 	if o.Capped {
-		lines = append(lines, fmt.Sprintf("  [gray]• Brace and garrison together soften an Endure by at most %.0f%%[-]", config.EndureReductionCap*100))
+		lines = append(lines, vibe.Sprintf("ui.catastrophe_modal.endureDefenseLines.06", "  [gray]• Brace and garrison together soften an Endure by at most %.0f%%[-]", config.EndureReductionCap*100))
 	}
 	return lines
 }

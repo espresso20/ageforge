@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Toast represents a single toast notification
@@ -106,7 +107,7 @@ func (tm *ToastManager) onShow() (text string, fit func(w int) string) {
 // config's base-curve length. The duration assumes speed 1x, since the bus
 // handler that calls this cannot read the engine's speed (hence the "~").
 func chainToast(name, title string, chain config.MilestoneChainDef, boostTicks int) string {
-	msg := fmt.Sprintf("Chain complete: %s. Title: %s.", name, title)
+	msg := vibe.Sprintf("ui.toast.chainToast.01", "Chain complete: %s. Title: %s.", name, title)
 	if boostTicks <= 0 {
 		boostTicks = chain.BoostDuration
 	}
@@ -117,6 +118,6 @@ func chainToast(name, title string, chain config.MilestoneChainDef, boostTicks i
 	if interval < game.MinTickInterval {
 		interval = game.MinTickInterval
 	}
-	return msg + fmt.Sprintf(" Game speed %s for %s.",
+	return msg + vibe.Sprintf("ui.toast.chainToast.02", " Game speed %s for %s.",
 		textfmt.SignedPercent(chain.BoostValue), game.DurationText(boostTicks, interval))
 }

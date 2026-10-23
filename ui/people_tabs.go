@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // people_tabs.go is the four tabs of the People panel.
@@ -68,20 +69,20 @@ func (c peopleBody) overview() {
 		rows--
 	}
 	ph := rows + 2
-	g.box(c.x, c.y, c.w, ph, xBorder, "Your people", xTitle, false)
+	g.box(c.x, c.y, c.w, ph, xBorder, vibe.Line("ui.people_tabs.overview.01", "Your people"), xTitle, false)
 	y := c.y + 1
-	held := "nothing, growing"
+	held := vibe.Line("ui.people_tabs.overview.02", "nothing, growing")
 	switch ws.HeldBy {
 	case game.HeldHousing:
 		held = "housing"
 	case game.HeldFood:
 		held = "food"
 		if t := heldByText(ws); strings.Contains(t, "(") {
-			held = "food " + t[strings.Index(t, "("):]
+			held = vibe.Line("ui.people_tabs.overview.03", "food ") + t[strings.Index(t, "("):]
 		}
 	}
-	g.segsFit(3, y, iw, xseg{"Homes ", xDim}, xseg{num(ws.MaxPop), xText}, xseg{"   empty ", xDim},
-		xseg{num(max(0, ws.MaxPop-ws.TotalPop)), xText}, xseg{"   held by ", xDim}, xseg{held, xText})
+	g.segsFit(3, y, iw, xseg{vibe.Line("ui.people_tabs.overview.04", "Homes "), xDim}, xseg{num(ws.MaxPop), xText}, xseg{vibe.Line("ui.people_tabs.overview.05", "   empty "), xDim},
+		xseg{num(max(0, ws.MaxPop-ws.TotalPop)), xText}, xseg{vibe.Line("ui.people_tabs.overview.06", "   held by "), xDim}, xseg{held, xText})
 	y++
 	stackBar(g, 3, y, iw, []stackPart{{ws.Working(), xWork}, {ws.Reserve(), xRes}, {ws.Soldiers, xArmy}, {ws.Scholars, xLore}}, ws.MaxPop)
 	y++
@@ -126,8 +127,8 @@ func (c peopleBody) overview() {
 	// Lately: what happened to the people.
 	ly := cy + ch
 	if lh := c.y + c.h - ly; lh >= 4 {
-		g.box(c.x, ly, c.w, lh, xBorder, "Lately", xTitle, false)
-		drawLog(g, 3, ly+1, c.w-4, lh-2, recentLog(st, peopleEvent, lh-2), "Nothing yet. People move in as you build homes.")
+		g.box(c.x, ly, c.w, lh, xBorder, vibe.Line("ui.people_tabs.overview.07", "Lately"), xTitle, false)
+		drawLog(g, 3, ly+1, c.w-4, lh-2, recentLog(st, peopleEvent, lh-2), vibe.Line("ui.people_tabs.overview.08", "Nothing yet. People move in as you build homes."))
 	}
 	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick"}, {"Esc", "close"}}, "people")
 }
@@ -147,7 +148,7 @@ func (c peopleBody) foodLine(x, y, w int) {
 	if rs.Rate < 0 {
 		net = xBad
 	}
-	parts := []xseg{{"Food ", xDim}, {textfmt.Rate(-ws.FoodDrain), xText}, {" for everyone", xDim}, {"   net ", xDim}, {textfmt.Rate(rs.Rate), net}}
+	parts := []xseg{{vibe.Line("ui.people_tabs.foodLine.01", "Food "), xDim}, {textfmt.Rate(-ws.FoodDrain), xText}, {vibe.Line("ui.people_tabs.foodLine.02", " for everyone"), xDim}, {vibe.Line("ui.people_tabs.foodLine.03", "   net "), xDim}, {textfmt.Rate(rs.Rate), net}}
 	// Morale, which the old Workers panel showed, before the figure that goes
 	// first on a narrow panel.
 	mk := xText
@@ -156,9 +157,9 @@ func (c peopleBody) foodLine(x, y, w int) {
 	} else if band.Penalty {
 		mk = xBad
 	}
-	parts = append(parts, xseg{"   morale ", xDim}, xseg{fmt.Sprintf("%.0f%%", c.st.Morale*100), mk})
+	parts = append(parts, xseg{vibe.Line("ui.people_tabs.foodLine.04", "   morale "), xDim}, xseg{fmt.Sprintf("%.0f%%", c.st.Morale*100), mk})
 	if grown := game.FoodBeforeMastery(rs.Rate, rs.Breakdown); per > 0 && grown > 0 && rs.Rate >= 0 {
-		parts = append(parts, xseg{"   feeds up to ", xDim}, xseg{num(int(grown / per)), xText})
+		parts = append(parts, xseg{vibe.Line("ui.people_tabs.foodLine.05", "   feeds up to "), xDim}, xseg{num(int(grown / per)), xText})
 	}
 	c.g.segsFit(x, y, w, parts...)
 }
@@ -176,20 +177,20 @@ func (c peopleBody) card(i int, k peopleKind) []string {
 		}
 		mode := "roster auto"
 		if len(st.Workers.Shares) > 0 {
-			mode = "roster set"
+			mode = vibe.Line("ui.people_tabs.card.01", "roster set")
 		}
-		return []string{num(k.count) + " at work", fmt.Sprintf("slots %s/%s", num(filled), num(slots)), textfmt.Count(areas, "work area", "work areas"), mode}
+		return []string{num(k.count) + vibe.Line("ui.people_tabs.card.02", " at work"), vibe.Sprintf("ui.people_tabs.card.03", "slots %s/%s", num(filled), num(slots)), textfmt.Count(areas, vibe.Line("ui.people_tabs.card.04", "work area"), vibe.Line("ui.people_tabs.card.05", "work areas")), mode}
 	case 1:
-		return []string{num(k.count) + " waiting", "fill jobs first", "grow with homes", "see Work"}
+		return []string{num(k.count) + vibe.Line("ui.people_tabs.card.06", " waiting"), vibe.Line("ui.people_tabs.card.07", "fill jobs first"), vibe.Line("ui.people_tabs.card.08", "grow with homes"), vibe.Line("ui.people_tabs.card.09", "see Work")}
 	case 2:
-		out := "none out"
+		out := vibe.Line("ui.people_tabs.card.10", "none out")
 		if k.out > 0 {
-			out = num(k.out) + " out"
+			out = num(k.out) + vibe.Line("ui.people_tabs.card.11", " out")
 		}
-		return []string{num(k.count-k.out) + " at their posts", out, "defense " + num(int(st.Military.DefenseRating)), "see Army"}
+		return []string{num(k.count-k.out) + vibe.Line("ui.people_tabs.card.12", " at their posts"), out, vibe.Line("ui.people_tabs.card.13", "defense ") + num(int(st.Military.DefenseRating)), vibe.Line("ui.people_tabs.card.14", "see Army")}
 	}
 	s := st.Scholars
-	return []string{num(k.count) + " at desks", num(s.Researching) + " researching", num(s.Teaching) + " teaching", "come with buildings"}
+	return []string{num(k.count) + vibe.Line("ui.people_tabs.card.15", " at desks"), num(s.Researching) + vibe.Line("ui.people_tabs.card.16", " researching"), num(s.Teaching) + vibe.Line("ui.people_tabs.card.17", " teaching"), vibe.Line("ui.people_tabs.card.18", "come with buildings")}
 }
 
 // ===== Work =====
@@ -198,17 +199,17 @@ func (c peopleBody) card(i int, k peopleKind) []string {
 func recruitText(st game.GameState) string {
 	switch game.RecruitStatus(st) {
 	case game.RecruitOff:
-		return "Auto-recruit is off. Turn it on with: workers auto-recruit on"
+		return vibe.Line("ui.people_tabs.recruitText.01", "Auto-recruit is off. Turn it on with: workers auto-recruit on")
 	case game.RecruitHeld:
-		return "Auto-recruit is waiting after your last worker command, " + formatTicks(st.Workers.HoldTicks, st) + " more."
+		return vibe.Line("ui.people_tabs.recruitText.02", "Auto-recruit is waiting after your last worker command, ") + formatTicks(st.Workers.HoldTicks, st) + vibe.Line("ui.people_tabs.recruitText.03", " more.")
 	case game.RecruitHousing:
-		return "Auto-recruit is held by housing: build more homes for more people."
+		return vibe.Line("ui.people_tabs.recruitText.04", "Auto-recruit is held by housing: build more homes for more people.")
 	case game.RecruitFood:
-		return "Auto-recruit is held by food: build or staff food buildings."
+		return vibe.Line("ui.people_tabs.recruitText.05", "Auto-recruit is held by food: build or staff food buildings.")
 	case game.RecruitStarve:
-		return "Auto-recruit is paused: food has run out."
+		return vibe.Line("ui.people_tabs.recruitText.06", "Auto-recruit is paused: food has run out.")
 	}
-	return "Auto-recruit is on: the town is growing toward its homes."
+	return vibe.Line("ui.people_tabs.recruitText.07", "Auto-recruit is on: the town is growing toward its homes.")
 }
 
 func (c peopleBody) work() {
@@ -216,17 +217,17 @@ func (c peopleBody) work() {
 	rows := game.ShareRows(st)
 	lw := c.w * 11 / 20
 	rw := c.w - lw
-	g.box(c.x, c.y, lw, c.h, xBorder, "Work areas", xTitle, false)
+	g.box(c.x, c.y, lw, c.h, xBorder, vibe.Line("ui.people_tabs.work.01", "Work areas"), xTitle, false)
 	g.box(c.x+lw, c.y, rw, c.h, xBorder, "", xTitle, false)
 	if len(rows) == 0 {
-		g.putFit(c.x+2, c.y+1, lw-4, "No worker buildings yet: every area is on auto.", xFaint)
+		g.putFit(c.x+2, c.y+1, lw-4, vibe.Line("ui.people_tabs.work.02", "No worker buildings yet: every area is on auto."), xFaint)
 		c.footer([][2]string{{"←→", "tabs"}, {"Esc", "close"}}, "roster <area> <%|auto>")
 		return
 	}
 	inner := lw - 4
-	g.segsFit(c.x+2, c.y+1, inner, xseg{"  Area", xDim})
-	g.put(c.x+2+2+11+1, c.y+1, "Share", xDim)
-	g.rput(rightOf(c.x, lw), c.y+1, "Filled", xDim)
+	g.segsFit(c.x+2, c.y+1, inner, xseg{vibe.Line("ui.people_tabs.work.06", "  Area"), xDim})
+	g.put(c.x+2+2+11+1, c.y+1, vibe.Line("ui.people_tabs.work.07", "Share"), xDim)
+	g.rput(rightOf(c.x, lw), c.y+1, vibe.Line("ui.people_tabs.work.08", "Filled"), xDim)
 	per := (c.h - 3) / 2
 	first := window(len(rows), per, c.v.row)
 	for n := 0; n < per && first+n < len(rows); n++ {
@@ -271,7 +272,7 @@ func (c peopleBody) work() {
 	bs := c.areaList(r.Domain)
 	for i, b := range bs {
 		if y >= c.y+c.h-8 {
-			g.putFit(rx, y, ri, fmt.Sprintf("and %d more", len(bs)-i), xFaint)
+			g.putFit(rx, y, ri, vibe.Sprintf("ui.people_tabs.work.09", "and %d more", len(bs)-i), xFaint)
 			y++
 			break
 		}
@@ -281,30 +282,33 @@ func (c peopleBody) work() {
 		y++
 	}
 	if len(bs) == 0 {
-		g.putFit(rx, y, ri, "No buildings here yet.", xFaint)
+		g.putFit(rx, y, ri, vibe.Line("ui.people_tabs.work.10", "No buildings here yet."), xFaint)
 		y++
 	}
 	y++
-	share := "auto, by its buildings' slots"
+	share := vibe.Line("ui.people_tabs.work.11", "auto, by its buildings' slots")
 	if r.Set {
-		share = "set to " + game.SharePercent(float64(int(r.Percent+0.5)))
+		share = vibe.Line("ui.people_tabs.work.12", "set to ") + game.SharePercent(float64(int(r.Percent+0.5)))
 	}
-	g.segsFit(rx, y, ri, xseg{"Share  ", xDim}, xseg{share, xText})
+	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.13", "Share  "), xDim}, xseg{share, xText})
 	y++
-	g.segsFit(rx, y, ri, xseg{"Set it  ", xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <%|auto>", xText})
+	g.segsFit(rx, y, ri, xseg{vibe.Line("ui.people_tabs.work.14", "Set it  "), xDim}, xseg{"roster " + strings.ToLower(r.Name) + " <%|auto>", xText})
 	y += 2
-	for _, l := range append(wrapText(recruitText(st), ri), wrapText("Open slots fill from the reserve.", ri)...) {
+	lines := wrapText(recruitText(st), ri)
+	openAt := len(lines) // the first line of the note after it is gold
+	lines = append(lines, wrapText(vibe.Line("ui.people_tabs.work.17", "Open slots fill from the reserve."), ri)...)
+	for i, l := range lines {
 		if y >= c.y+c.h-1 {
 			break
 		}
 		k := xDim
-		if strings.HasPrefix(l, "Open") {
+		if i == openAt {
 			k = xGold
 		}
 		g.put(rx, y, l, k)
 		y++
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick an area"}}, "roster <area> <%|auto>")
+	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.work.19", "pick an area")}}, "roster <area> <%|auto>")
 }
 
 // areaList is the built buildings of a work area that take workers.
@@ -332,14 +336,14 @@ func (c peopleBody) army() {
 	topH := max(8, c.h*3/5)
 	lw := c.w * 11 / 20
 	rw := c.w - lw
-	g.box(c.x, c.y, lw, topH, xBorder, "Military buildings", xTitle, false)
-	g.box(c.x+lw, c.y, rw, topH, xBorder, fmt.Sprintf("Away · %s", num(soldiers.out)), xTitle, false)
+	g.box(c.x, c.y, lw, topH, xBorder, vibe.Line("ui.people_tabs.army.01", "Military buildings"), xTitle, false)
+	g.box(c.x+lw, c.y, rw, topH, xBorder, vibe.Sprintf("ui.people_tabs.army.02", "Away · %s", num(soldiers.out)), xTitle, false)
 
 	// The buildings with their posts, then the army and the defense under them.
 	blds := militaryBuildings(st)
 	per := max(0, (topH-2-5)/2)
 	if len(blds) == 0 {
-		g.putFit(c.x+2, c.y+1, lw-4, "No military buildings yet.", xFaint)
+		g.putFit(c.x+2, c.y+1, lw-4, vibe.Line("ui.people_tabs.army.03", "No military buildings yet."), xFaint)
 	}
 	posts := map[string]game.SoldierPost{}
 	for _, p := range mil.Posts {
@@ -351,7 +355,7 @@ func (c peopleBody) army() {
 		b := blds[i]
 		y := c.y + 1 + n*2
 		p := posts[b.key]
-		staff := fmt.Sprintf("%s/%s posted", num(p.Posted), num(p.Posts))
+		staff := vibe.Sprintf("ui.people_tabs.army.04", "%s/%s posted", num(p.Posted), num(p.Posts))
 		pickName(g, c.x+2, y, lw-6-runeLen(staff), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
 		sk := xGood
 		if p.Posted < p.Posts {
@@ -361,11 +365,11 @@ func (c peopleBody) army() {
 		g.putFit(c.x+4, y+1, lw-8, b.Description, xDim)
 	}
 	sy := c.y + topH - 6
-	g.segsFit(c.x+2, sy, lw-4, xseg{soldiers.name + " ", xDim}, xseg{num(soldiers.count) + " posted of " + num(mil.SoldierCap), xText})
-	g.segsFit(c.x+2, sy+1, lw-4, xseg{"Defense ", xDim}, xseg{num(int(mil.DefenseRating)), xText},
-		xseg{"  threat " + num(int(mil.Threat)) + ", blunts " + textfmt.Percent(mil.Mitigation), xDim})
-	g.segsFit(c.x+2, sy+2, lw-4, xseg{"Rank ", xDim}, xseg{rankName(st, mil.Rank), xBright}, xseg{" · " + rankProgress(st) + " experience", xText})
-	g.segsFit(c.x+2, sy+3, lw-4, xseg{"Gives ", xDim}, xseg{rankGives(mil.Rank), xText})
+	g.segsFit(c.x+2, sy, lw-4, xseg{soldiers.name + " ", xDim}, xseg{num(soldiers.count) + vibe.Line("ui.people_tabs.army.05", " posted of ") + num(mil.SoldierCap), xText})
+	g.segsFit(c.x+2, sy+1, lw-4, xseg{vibe.Line("ui.people_tabs.army.06", "Defense "), xDim}, xseg{num(int(mil.DefenseRating)), xText},
+		xseg{vibe.Line("ui.people_tabs.army.07", "  threat ") + num(int(mil.Threat)) + vibe.Line("ui.people_tabs.army.08", ", blunts ") + textfmt.Percent(mil.Mitigation), xDim})
+	g.segsFit(c.x+2, sy+2, lw-4, xseg{vibe.Line("ui.people_tabs.army.09", "Rank "), xDim}, xseg{rankName(st, mil.Rank), xBright}, xseg{" · " + rankProgress(st) + vibe.Line("ui.people_tabs.army.10", " experience"), xText})
+	g.segsFit(c.x+2, sy+3, lw-4, xseg{vibe.Line("ui.people_tabs.army.11", "Gives "), xDim}, xseg{rankGives(mil.Rank), xText})
 	g.segsFit(c.x+2, sy+4, lw-4, xseg{rankNext(st), xDim})
 
 	// Away: each party out.
@@ -380,20 +384,20 @@ func (c peopleBody) army() {
 			break
 		}
 		g.putFit(c.x+lw+2, y, rw-4, m.Name, xBright)
-		g.putFit(c.x+lw+4, y+1, rw-6, fmt.Sprintf("%s · back in %s", textfmt.Count(m.Soldiers, soldiers.one, soldiers.name), formatTicks(m.TicksLeft, st)), xDim)
+		g.putFit(c.x+lw+4, y+1, rw-6, vibe.Sprintf("ui.people_tabs.army.12", "%s · back in %s", textfmt.Count(m.Soldiers, soldiers.one, soldiers.name), formatTicks(m.TicksLeft, st)), xDim)
 		y += 2
 	}
 	if away == 0 {
-		g.putFit(c.x+lw+2, y, rw-4, "Nobody is out.", xFaint)
+		g.putFit(c.x+lw+2, y, rw-4, vibe.Line("ui.people_tabs.army.13", "Nobody is out."), xFaint)
 	}
 
 	// The soldiers' news.
 	by := c.y + topH
 	if bh := c.h - topH; bh >= 4 {
-		g.box(c.x, by, c.w, bh, xBorder, "Fallen and filled", xTitle, false)
-		drawLog(g, 3, by+1, c.w-4, bh-2, recentLog(st, armyEvent, bh-2), "No news from the army.")
+		g.box(c.x, by, c.w, bh, xBorder, vibe.Line("ui.people_tabs.army.14", "Fallen and filled"), xTitle, false)
+		drawLog(g, 3, by+1, c.w-4, bh-2, recentLog(st, armyEvent, bh-2), vibe.Line("ui.people_tabs.army.15", "No news from the army."))
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick a building"}}, "army")
+	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.army.17", "pick a building")}}, "army")
 }
 
 // ===== Scholars =====
@@ -405,20 +409,20 @@ func (c peopleBody) scholars() {
 	topH := max(8, c.h*3/5)
 	lw := c.w * 11 / 20
 	rw := c.w - lw
-	g.box(c.x, c.y, lw, topH, xBorder, "Desks", xTitle, false)
-	g.box(c.x+lw, c.y, rw, topH, xBorder, "Research", xTitle, false)
+	g.box(c.x, c.y, lw, topH, xBorder, vibe.Line("ui.people_tabs.scholars.01", "Desks"), xTitle, false)
+	g.box(c.x+lw, c.y, rw, topH, xBorder, vibe.Line("ui.people_tabs.scholars.02", "Research"), xTitle, false)
 
 	blds := knowledgeBuildings(st)
 	per := max(0, (topH-2-1)/2)
 	if len(blds) == 0 {
-		g.putFit(c.x+2, c.y+1, lw-4, "No knowledge buildings yet: each one comes with its "+strings.ToLower(sch.name)+".", xFaint)
+		g.putFit(c.x+2, c.y+1, lw-4, vibe.Line("ui.people_tabs.scholars.03", "No knowledge buildings yet: each one comes with its ")+strings.ToLower(sch.name)+".", xFaint)
 	}
 	first := window(len(blds), per, c.v.row)
 	for n := 0; n < per && first+n < len(blds); n++ {
 		i := first + n
 		b := blds[i]
 		y := c.y + 1 + n*2
-		each := fmt.Sprintf("%s each", num(b.Scholars))
+		each := vibe.Sprintf("ui.people_tabs.scholars.04", "%s each", num(b.Scholars))
 		pickName(g, c.x+2, y, lw-6-runeLen(each), fmt.Sprintf("%s x%d", b.Name, b.Count), i == c.v.row)
 		g.rput(rightOf(c.x, lw), y, each, xDim)
 		const bw = 10
@@ -436,9 +440,9 @@ func (c peopleBody) scholars() {
 		total := fmt.Sprintf("%s %s", num(b.Count*b.Scholars), strings.ToLower(sch.name))
 		if b.FullRateCopies > 0 {
 			if b.Count > b.FullRateCopies {
-				total += fmt.Sprintf(", %d copies, %d at half rate", b.Count, b.Count-b.FullRateCopies)
+				total += vibe.Sprintf("ui.people_tabs.scholars.23", ", %d copies, %d at half rate", b.Count, b.Count-b.FullRateCopies)
 			} else {
-				total += fmt.Sprintf(", %d of %d copies", b.Count, b.FullRateCopies)
+				total += vibe.Sprintf("ui.people_tabs.scholars.05", ", %d of %d copies", b.Count, b.FullRateCopies)
 			}
 		}
 		g.putFit(c.x+4+bw+1, y+1, lw-4-bw-4, total, xText)
@@ -452,18 +456,18 @@ func (c peopleBody) scholars() {
 		studying = r.CurrentTechName
 		progress = fmt.Sprintf("%d%%, %s", researchPercent(st), researchLeft(st))
 	}
-	next := "nothing planned"
+	next := vibe.Line("ui.people_tabs.scholars.07", "nothing planned")
 	if q := queueLines(st); len(q) > 0 {
 		next = strings.TrimPrefix(q[0], "1. ")
 	}
 	s := st.Scholars
 	for i, row := range [][2]string{
-		{"Studying", studying},
-		{"Progress", progress},
-		{"Research", textfmt.RateValue(s.PerTick) + " a tick"},
-		{sch.name, fmt.Sprintf("%s: %s research, %s teach", num(s.Total), num(s.Researching), num(s.Teaching))},
-		{"Teaching", textfmt.SignedPercent(s.TeachingBonus) + " to what workers make"},
-		{"Next", next},
+		{vibe.Line("ui.people_tabs.scholars.08", "Studying"), studying},
+		{vibe.Line("ui.people_tabs.scholars.09", "Progress"), progress},
+		{vibe.Line("ui.people_tabs.scholars.10", "Research"), textfmt.RateValue(s.PerTick) + vibe.Line("ui.people_tabs.scholars.11", " a tick")},
+		{sch.name, vibe.Sprintf("ui.people_tabs.scholars.12", "%s: %s research, %s teach", num(s.Total), num(s.Researching), num(s.Teaching))},
+		{vibe.Line("ui.people_tabs.scholars.13", "Teaching"), textfmt.SignedPercent(s.TeachingBonus) + vibe.Line("ui.people_tabs.scholars.14", " to what workers make")},
+		{vibe.Line("ui.people_tabs.scholars.15", "Next"), next},
 	} {
 		y := c.y + 1 + i
 		if y >= c.y+topH-1 {
@@ -476,11 +480,11 @@ func (c peopleBody) scholars() {
 
 	by := c.y + topH
 	if bh := c.h - topH; bh >= 4 {
-		g.box(c.x, by, c.w, bh, xBorder, "How to speed research", xTitle, false)
+		g.box(c.x, by, c.w, bh, xBorder, vibe.Line("ui.people_tabs.scholars.16", "How to speed research"), xTitle, false)
 		tips := []string{
-			"Build knowledge buildings: each comes with its " + strings.ToLower(sch.name) + ".",
-			"Research techs that make your " + strings.ToLower(sch.name) + " faster.",
-			"Expeditions and events can bring back finds that add to the research in progress.",
+			vibe.Line("ui.people_tabs.scholars.17", "Build knowledge buildings: each comes with its ") + strings.ToLower(sch.name) + ".",
+			vibe.Line("ui.people_tabs.scholars.18", "Research techs that make your ") + strings.ToLower(sch.name) + vibe.Line("ui.people_tabs.scholars.19", " faster."),
+			vibe.Line("ui.people_tabs.scholars.20", "Expeditions and events can bring back finds that add to the research in progress."),
 		}
 		for i, t := range tips {
 			if i >= bh-2 {
@@ -489,5 +493,5 @@ func (c peopleBody) scholars() {
 			g.putFit(3, by+1+i, c.w-4, "· "+t, xText)
 		}
 	}
-	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick a building"}}, "scholars")
+	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", vibe.Line("ui.people_tabs.scholars.22", "pick a building")}}, "scholars")
 }
