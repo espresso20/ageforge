@@ -39,7 +39,7 @@ theme.ledger.blurb,"Ink and bookkeeper's green on green-bar paper, spreadsheet c
 theme.ledger.unlock_hint,"The top rung of the badge ladder, the final boss of unlocks."
 theme.prismatic.name,Prismatic Vibes
 theme.prismatic.blurb,"Starlight on blue-black, glints cycling the spectrum, it's giving rainbow."
-theme.prismatic.unlock_hint,"Earn 400 badges, no shortcuts."
+theme.prismatic.unlock_hint,"Earn 400 badges, no shortcuts, the grind is the whole vibe."
 theme.forge.name,OG Forge
 theme.forge.blurb,"The OG dark-and-gold AgeForge look, the one that never gets old."
 theme.daylight.name,Daylight Era
@@ -91,7 +91,7 @@ map.city.dish.line.02,"A dish aimed at a satellite, it's locked in."
 map.city.fiber.name,the fiber line
 map.city.fiber.title,Fiber Line Energy
 map.city.fiber.line.01,"The fiber, under the street, carrying data, the bandwidth is bussin."
-map.city.fiber.line.02,"Cable trenches, freshly dug, the road work never ends."
+map.city.fiber.line.02,"Cable trenches, freshly dug, the road work is lowkey forever."
 map.city.garden.name,the rooftop garden
 map.city.garden.title,Rooftop Garden Vibes
 map.city.garden.line.01,"What is left of the green, up on a roof, the plant parents are still going."
@@ -106,7 +106,7 @@ map.city.scrub.line.01,"Scrub, browned by the smog, it's giving well-done."
 map.city.scrub.line.02,"The lawn gone crispy past the city, it got cooked."
 map.city.smog.name,smog-core
 map.city.smog.title,Haze Check
-map.city.smog.line.01,"The air turning brown at the edges, not a great look."
+map.city.smog.line.01,"The air turning brown at the edges, not a great look, no cap."
 map.city.smog.line.02,"Haze over the outskirts, the sky is giving mid."
 map.city.concrete.name,the concrete
 map.city.concrete.title,Concrete Jungle
@@ -143,7 +143,7 @@ map.city.arcology.line.02,"Terraces stacked to the clouds, we're not even tired.
 map.city.neon_sign.name,the neon sign
 map.city.neon_sign.title,Neon Sign Glow
 map.city.neon_sign.line.01,"Buzzing, flickering now and then, it's not even trying to hide it."
-map.city.neon_sign.line.02,"A holo-ad, selling something, no thanks, we're good."
+map.city.neon_sign.line.02,"A holo-ad selling something, bestie, we are not the target market."
 map.city.vent.name,the steam vent
 map.city.vent.title,Vent Vibe Check
 map.city.vent.line.01,"Steam from the undercity, the underground is cooking."
@@ -155,7 +155,7 @@ map.city.scrap.line.02,"Scrap, picked over by scavengers, the bin diving is elit
 map.city.toxic_ground.name,toxic turf
 map.city.toxic_ground.title,Danger Zone
 map.city.toxic_ground.line.01,"Nothing grows here now, not even the weeds, it's bleak."
-map.city.toxic_ground.line.02,"Poisoned ground, fenced off and forgotten, we don't go there."
+map.city.toxic_ground.line.02,"Poisoned ground, fenced off and forgotten, we do not go there, not even for the aesthetic."
 map.city.toxic_canal.name,the toxic canal
 map.city.toxic_canal.title,Canal Chaos
 map.city.toxic_canal.line.01,"The water glows a sickly green, it's giving radioactive lemonade."
@@ -198,7 +198,7 @@ mapmodel.model.world.01,Chaos Arc
 map.mover.walker.name,grinder on the grind
 map.mover.walker.title,Hustler
 map.mover.walker.line.01,"On the way to the grind, bestie."
-map.mover.walker.line.02,"Heading home after a shift, finally off the clock."
+map.mover.walker.line.02,"Heading home after a shift, finally off the clock, touch grass time."
 map.mover.hunter.name,hunt bro
 map.mover.hunter.title,Prey Arc
 map.mover.hunter.line.01,"A hunter, off to the hills, on a whole quest."
@@ -213,7 +213,7 @@ map.mover.rider.line.01,"A rider carrying the news, delivering the tea."
 map.mover.rider.line.02,"Riding in no rush, the vibe is chill."
 map.mover.rowboat.name,the rowboat
 map.mover.rowboat.title,Paddle Squad
-map.mover.rowboat.line.01,"A rowboat out fishing, the catch of the day."
+map.mover.rowboat.line.01,"A rowboat out fishing, the catch of the day, main character energy."
 map.mover.rowboat.line.02,"Ferrying goods downriver, a whole shipping arc, no cap."
 map.mover.wagon.name,the wagon
 map.mover.wagon.title,Wagon Wheels
@@ -229,7 +229,7 @@ map.mover.steam_train.line.01,"A steam train hauling ore, the rock run is cookin
 map.mover.steam_train.line.02,"Hauling coal on a steam train, the smoke show is on."
 map.mover.tram.name,the tram
 map.mover.tram.title,Ding Ding Energy
-map.mover.tram.line.01,"A tram full of commuters, a whole crowd."
+map.mover.tram.line.01,"A tram full of commuters, a whole crowd, the morning is not it."
 map.mover.tram.line.02,"Ringing its bell, main character entrance."
 map.mover.steamship.name,the steamship
 map.mover.steamship.title,Smoke Boat
@@ -246,7 +246,7 @@ map.mover.car.line.02,"Carpooling the kids to school, the drive is a whole missi
 map.mover.truck.name,the truck
 map.mover.truck.title,Hauler Mode
 map.mover.truck.line.01,"A truck making deliveries, the delivery arc is real."
-map.mover.truck.line.02,"Loaded to the roof, it's packed, no room."
+map.mover.truck.line.02,"Loaded to the roof, no room, it's giving packed suitcase energy."
 map.mover.plane.name,the plane
 map.mover.plane.title,Sky Bus
 map.mover.plane.line.01,"A plane passing overhead, the sky traffic is wild."
@@ -254,11 +254,11 @@ map.mover.plane.line.02,"On its approach, the landing is a whole thing."
 map.mover.container_ship.name,the container ship
 map.mover.container_ship.title,Crate Stack Boat
 map.mover.container_ship.line.01,"A container ship stacked high, the cargo is flexing."
-map.mover.container_ship.line.02,"Low in the water, a container ship on a heavy load."
+map.mover.container_ship.line.02,"Low in the water, a container ship with a heavy load, no cap."
 map.mover.freight_train.name,freight train
 map.mover.freight_train.title,Long Haul Arc
 map.mover.freight_train.line.01,"A freight train hauling containers, the boxes are endless."
-map.mover.freight_train.line.02,"Running on time, punctual, impressive."
+map.mover.freight_train.line.02,"Running on time, punctual and impressive, the timetable is bussin."
 map.mover.maglev.name,the maglev
 map.mover.maglev.title,Silent Glide
 map.mover.maglev.line.01,"A maglev gliding on its rail, smooth as butter."
@@ -270,11 +270,11 @@ map.mover.drone.line.02,"Watching the streets, lowkey creepy, always on."
 map.mover.hovercar.name,the hovercar
 map.mover.hovercar.title,Float Mode
 map.mover.hovercar.line.01,"A hovercar skimming the street, it floats, bestie."
-map.mover.hovercar.line.02,"Cutting corners, the traffic rules are optional."
+map.mover.hovercar.line.02,"Cutting corners, traffic rules are more of a suggestion, lowkey iconic."
 map.mover.shuttle.name,the shuttle
 map.mover.shuttle.title,Orbit Run
 map.mover.shuttle.line.01,"A shuttle climbing to orbit, the ascent is giving rocket."
-map.mover.shuttle.line.02,"Outbound shuttle, see you on the other side."
+map.mover.shuttle.line.02,"Outbound shuttle, see you on the other side, bestie."
 map.mover.satellite.name,the satellite
 map.mover.satellite.title,Sky Spy
 map.mover.satellite.line.01,"A satellite crossing the sky, very orbit core."
@@ -294,7 +294,7 @@ map.mover.sky_train.line.02,"Packed to the doors, no personal space, lol."
 map.mover.crowd.name,the crowd
 map.mover.crowd.title,Hype Crowd
 map.mover.crowd.line.01,"A crowd under the neon, the night shift is on."
-map.mover.crowd.line.02,"Pushing for the sky train, everyone's late."
+map.mover.crowd.line.02,"Pushing for the sky train, everyone's late, it's chaos, bestie."
 map.mover.climber.name,the tether climber
 map.mover.climber.title,Up We Go
 map.mover.climber.line.01,"A climber riding the tether up, the climb is giving glow-up."
@@ -321,7 +321,7 @@ map.mover.phase_ship.line.01,"In several places at once, the phase ship is multi
 map.mover.phase_ship.line.02,"Arriving before it left, the timeline is chaos."
 map.mover.mote.name,light mote
 map.mover.mote.title,Tiny Glow
-map.mover.mote.line.01,"Drifting home, a mote of light with no plan."
+map.mover.mote.line.01,"Drifting home, a mote of light with zero plan, lowkey relatable."
 map.mover.mote.line.02,"Once a whole city, now a tiny glow, lowkey heartbreaking."
 map.city_look.modern_age.name,the doomscroll city
 map.city_look.modern_age.structure,"highways, a glass downtown, and parks fenced into blocks, the whole starter kit"
@@ -899,3 +899,123 @@ ui.mapstyle.skyline.chrome.panoramaHints.18,block
 ui.mapstyle.skyline.chrome.panoramaHints.21,peek  
 ui.mapstyle.skyline.chrome.panoramaHints.22,slide  
 ui.mapstyle.skyline.chrome.panoramaHints.23,zoom  
+ui.mapstyle.skyline.chrome.panoramaHints.25,peek  
+ui.mapstyle.skyline.chrome.panoramaHints.26,slide  
+ui.mapstyle.skyline.chrome.panoramaHints.27,zoom  
+ui.mapstyle.skyline.chrome.panoramaHints.29,peek  
+ui.mapstyle.skyline.chrome.panoramaHints.30,slide  
+ui.mapstyle.skyline.chrome.panoramaHints.32,peek  
+ui.mapstyle.skyline.chrome.header.01,  day 
+ui.mapstyle.skyline.chrome.header.02,  crew 
+ui.mapstyle.skyline.chrome.header.03,  builds 
+ui.mapstyle.skyline.chrome.header.04, new since your last peek
+ui.mapstyle.skyline.chrome.header.05, chilling
+ui.mapstyle.skyline.chrome.header.06, grinders on pause
+ui.mapstyle.skyline.chrome.header.07, is posted up on the ridge
+ui.mapstyle.skyline.chrome.status.01,  type this: 
+ui.mapstyle.skyline.chrome.status.02,"nothing is stuck, no cap"
+ui.mapstyle.skyline.chrome.status.03, flow tea: 
+ui.mapstyle.skyline.chrome.status.04,  say it: 
+ui.mapstyle.skyline.chrome.status.05, glowing windows 
+ui.mapstyle.skyline.chrome.status.06,crewed  
+ui.mapstyle.skyline.chrome.status.07,steam 
+ui.mapstyle.skyline.chrome.status.08,cooking  
+ui.mapstyle.skyline.chrome.status.09,fresh  
+ui.mapstyle.skyline.chrome.status.10,NAP LOW 
+ui.mapstyle.skyline.chrome.status.11,flow tea  
+ui.mapstyle.skyline.chrome.status.12,W flags 
+ui.mapstyle.skyline.chrome.status.13,your rep with each rival
+ui.mapstyle.skyline.chrome.status.14,the wild zone
+ui.mapstyle.skyline.chrome.status.15, block
+ui.mapstyle.skyline.chrome.status.16,zoom: 
+ui.mapstyle.skyline.city.holoAds.01,SLAY
+ui.mapstyle.skyline.city.holoAds.02,KOG
+ui.mapstyle.skyline.city.holoAds.03,LIVE NOW
+ui.mapstyle.skyline.city.holoAds.04,STEAL
+ui.mapstyle.skyline.city.holoAds.05,DRIP
+ui.mapstyle.skyline.city.holoAds.06,OPEN NOW
+ui.mapstyle.skyline.city.holoAds.07,AUGS
+ui.mapstyle.skyline.city.holoAds.08,ZNA
+ui.mapstyle.skyline.compact.composeCompact.01, on break
+ui.mapstyle.skyline.inspect.inspection.01,Mystery ship
+ui.mapstyle.skyline.inspect.inspection.02,"Not one of ours, bestie."
+ui.mapstyle.skyline.inspect.inspection.03,the vibe: 
+ui.mapstyle.skyline.inspect.inspection.04,clout 
+ui.mapstyle.skyline.inspect.inspection.05, · the take 
+ui.mapstyle.skyline.inspect.inspection.06,main quest: 
+ui.mapstyle.skyline.inspect.inspection.07, hustles
+ui.mapstyle.skyline.inspect.inspection.08,the odds 
+ui.mapstyle.skyline.inspect.inspection.09,shot 
+ui.mapstyle.skyline.inspect.inspection.10,heat 
+ui.mapstyle.skyline.inspect.lotInspection.01,W of the 
+ui.mapstyle.skyline.inspect.lotInspection.02,built since your last peek
+ui.mapstyle.skyline.inspect.lotInspection.03,no grinders needed
+ui.mapstyle.skyline.inspect.lotInspection.04,"chilling, 0/"
+ui.mapstyle.skyline.inspect.lotInspection.05, grinders
+ui.mapstyle.skyline.inspect.lotInspection.06,grinders 
+ui.mapstyle.skyline.inspect.lotInspection.07,glow-up ready: 
+ui.mapstyle.skyline.inspect.lotInspection.08,"legacy: an older tier, retired, no more growing"
+ui.mapstyle.skyline.inspect.lotInspection.09, since your last peek
+ui.mapstyle.skyline.orbit.header.01,  day 
+ui.mapstyle.skyline.orbit.header.02,  crew 
+ui.mapstyle.skyline.orbit.header.03,  builds 
+ui.mapstyle.skyline.orbit.header.04, fresh since you peeked
+ui.mapstyle.skyline.orbit.header.05, napping
+ui.mapstyle.skyline.orbit.header.06, grinders on break
+ui.mapstyle.skyline.orbit.header.07, is side-eyeing
+ui.mapstyle.skyline.orbit.skyLegend.01,city glow below 
+ui.mapstyle.skyline.orbit.skyLegend.02,colony pings 
+ui.mapstyle.skyline.orbit.skyLegend.03,star squads 
+ui.mapstyle.skyline.orbit.skyLegend.04,old vibes 
+ui.mapstyle.skyline.orbit.skyLegendWhat.01,your hoods  
+ui.mapstyle.skyline.orbit.skyLegendWhat.02,the family tree  
+ui.mapstyle.skyline.orbit.skyLegendWhat.03,rivals met  
+ui.mapstyle.skyline.orbit.skyLegendWhat.04,your OG town  
+ui.mapstyle.skyline.orbit.status.01,  slide in: 
+ui.mapstyle.skyline.orbit.status.02,  type this: 
+ui.mapstyle.skyline.orbit.status.03,"all clear, nothing's stuck"
+ui.mapstyle.skyline.orbit.status.04, flow tea: 
+ui.mapstyle.skyline.orbit.status.05,  type this: 
+ui.mapstyle.skyline.orbit.status.06, lit up windows 
+ui.mapstyle.skyline.orbit.status.07,manned  
+ui.mapstyle.skyline.orbit.status.08,steam vents 
+ui.mapstyle.skyline.orbit.status.09,pumping  
+ui.mapstyle.skyline.orbit.status.10,brand new  
+ui.mapstyle.skyline.orbit.status.11,CHILL LOW 
+ui.mapstyle.skyline.orbit.status.12,flow tea  
+ui.mapstyle.skyline.orbit.status.13,UFO traffic  
+ui.mapstyle.skyline.orbit.status.14,bunting 
+ui.mapstyle.skyline.orbit.status.15,your clout with each rival
+ui.mapstyle.skyline.orbit.status.16,"the void, no cap"
+ui.mapstyle.skyline.orbit_compact.composeSkyCompact.01, slacking
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.01,The soul
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.02,"you, no longer bound to form, bestie"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.03,"every age you lived through, in light, the full playlist"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.04,Loop of the 
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.05,"nothing of it still stands, lowkey tragic"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.06,"the ring remembers, no cap"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.07,"a petal of the crown, glowing"
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.08,one light on the loop of the 
+ui.mapstyle.skyline.orbit_mandala.mandalaInspection.09, of 
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.01,"the core: you, beyond form, bestie  "
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.02,Crown: this age's flexes  
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.03,"a ring for each era you lived, oldest innermost, lowkey aesthetic  "
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.04,the wave vibes: 
+ui.mapstyle.skyline.orbit_mandala.mandalaLegend.05,"light, rolling outward, smooth"
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.01,"beyond form, glowing"
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.03,peek  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.04,orbit a ring  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.05,ring hop  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.07,the main core  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.08,layer  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.10,peek  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.11,spin a ring  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.12,ring to ring  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.14,the core  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.16,peek  
+ui.mapstyle.skyline.orbit_mandala.mandalaHints.17,steer  
+ui.mapstyle.skyline.scene.markers.01,NAP
+ui.mapstyle.skyline.scene.markers.02,LOW
+ui.mapstyle.skyline.skyline.Entry.01,Skyline
+ui.mapstyle.skyline.skyline.Entry.02,"Your empire side-on as an ANSI panorama, one block per age, lit by the besties working it."
+ui.mapstyle.skyline.wonders_late.citadel.01,HQ GOAT
