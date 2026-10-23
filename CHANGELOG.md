@@ -10,6 +10,7 @@ All notable changes to AgeForge are documented here.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 
 ### Changed
+- **A new dashboard layout.** Your skyline sits under the Buildings box, the People box takes the right half of Under construction with more detail, and the Panels list says what each panel is for.
 - **The board grows with your civilization.** Scouts only in the Stone Era, longer missions from the Iron Era, grand missions from the Steel Era; no tech locks. Missions give your army experience: ranks raise odds, hauls and Legendary offers, and a Veteran army sees the next tier an era early.
 - **The skyline comes alive.** Bigger people walk the streets in groups, and every age has its own traffic on the road, the rails and in the sky, from camels and chariots to steam trains, bullet trains and starships.
 - **No more storage caps.** Resources pile up without limit and nothing you make is wasted; rising prices are the only brake. A building is never refused for costing more than a store holds.

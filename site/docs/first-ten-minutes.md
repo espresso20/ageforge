@@ -11,7 +11,7 @@ The game opens on its [main menu](how-to-play.md#the-main-menu). On a first visi
 You're in the **Primitive Age**. The screen shows:
 - The status bar: your account name, `Primitive Age`, `Pop: 0/0` and `Morale 50%`
 - The Next Age row: what the Stone Age asks for, each item marked ✓ or ✗
-- The Economy panel, which is always on screen: Resources, Under construction and the Log on the left, the Buildings list on the right, with the Getting started guide under it
+- The Economy panel, which is always on screen: Resources, Under construction (with the People box beside it on a big terminal) and the Log on the left, the Buildings list on the right, with the Getting started guide under it
 
 Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 34 rows or larger.
 
@@ -88,7 +88,7 @@ assign story_circle 1
 workers auto-recruit off
 ```
 
-The People box in the sidebar shows your reserve: workers without a slot. They take any slot that opens within seconds; after a worker command of yours, the game waits a minute first. See [The Roster](workers-and-domains.md#the-roster) for the details.
+The People box shows your reserve: workers without a slot. They take any slot that opens within seconds; after a worker command of yours, the game waits a minute first. See [The Roster](workers-and-domains.md#the-roster) for the details.
 
 ---
 
