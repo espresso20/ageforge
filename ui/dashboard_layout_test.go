@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -228,8 +226,8 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 				t.Errorf("%s: Under construction shows nothing with buildings under way", where)
 			}
 
-			// The Next Age strip, the Panels list and the Buildings list.
-			checkFitted(t, where+", Next Age", d.ageTV, cells, w)
+			// The Ledger, the Panels list and the Buildings list.
+			checkFitted(t, where+", Ledger", d.ledgerTV, cells, w)
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
 			for _, name := range sidebarPanels {
 				if !strings.Contains(panels, name) {
@@ -242,10 +240,10 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 				}
 			}
 
-			// The status bar and the People box are one line a fact.
+			// The status ribbon and the People box are one line a fact.
 			_, sy, _, _ := d.statusTV.GetInnerRect()
-			if status := rectText(cells, w, 0, sy, w, 1)[0]; !strings.Contains(status, st.AgeName) || !strings.Contains(status, "Pop:") || !strings.Contains(status, "Morale") {
-				t.Errorf("%s: the status bar lost the age, the population or morale: %q", where, status)
+			if status := rectText(cells, w, 0, sy, w, 1)[0]; !strings.Contains(status, st.AgeName) || !strings.Contains(status, "People") || !strings.Contains(status, "Morale") {
+				t.Errorf("%s: the status ribbon lost the age, the people or morale: %q", where, status)
 			}
 			mini := strings.Join(checkFitted(t, where+", People", d.workerMiniTV, cells, w), "\n")
 			// With something holding the population back the headcount moves to
@@ -504,220 +502,10 @@ func TestPanelsListAlwaysWhole(t *testing.T) {
 	}
 }
 
-// TestNextAgeRowKeepsGoalsWhole: a requirement is never broken across the
-// strip's two rows, and a strip too small for all of them counts the ones
-// already met instead of listing them, then the ones it has no room for.
-// It holds for a made-up gate and for the real ones, the longest of which
-// asks for fourteen kinds of building besides the wonder and its keystone.
-func TestNextAgeRowKeepsGoalsWhole(t *testing.T) {
-	st := game.GameState{
-		NextAge: "iron_age", NextAgeName: "Iron Age",
-		NextAgeBldReqs:      map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 5, "smelter": 6, "ironworks": 4, "temple": 5, "market": 3},
-		Buildings:           map[string]game.BuildingState{"lumber_mill": {Count: 4}, "quarry": {Count: 3}, "scriptorium": {Count: 5}, "smelter": {Count: 2}, "ironworks": {Count: 1}, "temple": {Count: 2}},
-		CurrentAgeWonderKey: "stonehenge", CurrentAgeWonderName: "Stonehenge",
-	}
-	checkNextAgeRow(t, st, 30, 160)
-	if all := untag(strings.Join(ageProgressLines(st, 140, 2), "\n")); !strings.Contains(all, "✓ "+game.BuildingName("scriptorium")+" 5/5") || !strings.Contains(all, "✗ Wonder: Stonehenge") {
-		t.Errorf("a wide strip lists every requirement:\n%s", all)
-	}
-	if small := untag(strings.Join(ageProgressLines(st, 60, 2), "\n")); !strings.Contains(small, "✓ 1 met") && !strings.Contains(small, "more") {
-		t.Errorf("a narrow strip counts what it leaves out:\n%s", small)
-	}
-	if done := untag(ageProgressLines(game.GameState{}, 80, 2)[0]); !strings.Contains(done, "final age") {
-		t.Errorf("the last age says so: %q", done)
-	}
-
-	// Every real gate, as the game states it, from nothing built and from half
-	// built, at the two smallest terminals and a wide one. The longest gate is
-	// held at every width.
-	ages, defs := config.Ages(), config.BaseBuildings()
-	longest := ""
-	for i := 0; i+1 < len(ages); i++ {
-		next := ages[i+1]
-		wonder, tech := "", ""
-		for _, d := range defs {
-			if d.Category == "wonder" && d.RequiredAge == ages[i].Key {
-				wonder, tech = d.Key, d.RequiredTech
-			}
-		}
-		for _, built := range []int{0, 2} { // 0: nothing; 2: half of each count
-			bs := map[string]game.BuildingState{wonder: {NeedsTech: tech}}
-			for k, n := range next.BuildingReqs {
-				if built > 0 {
-					bs[k] = game.BuildingState{Count: n / built}
-				}
-			}
-			gate := game.GameState{NextAge: next.Key, NextAgeName: next.Name, NextAgeBldReqs: next.BuildingReqs, Buildings: bs,
-				CurrentAgeWonderKey: wonder, CurrentAgeWonderName: game.BuildingName(wonder)}
-			lo := 80
-			if len(next.BuildingReqs) >= 14 {
-				lo = 30 // the longest gates: every width from a cramped one up
-			}
-			checkNextAgeRow(t, gate, lo, 160)
-			// The wonder and its keystone lead the strip, so no list of
-			// buildings, however long, pushes them out of sight.
-			for w := 80; w <= 160; w++ {
-				strip := untag(strings.Join(ageProgressLines(gate, w, 2), "\n"))
-				if !strings.Contains(strip, "✗ Wonder: "+game.BuildingName(wonder)) {
-					t.Errorf("%s at width %d, %d built: the wonder is not in the strip:\n%s", next.Key, w, built, strip)
-				}
-				if tech != "" && !strings.Contains(strip, "✗ Keystone: "+game.TechName(tech)) {
-					t.Errorf("%s at width %d, %d built: the keystone is not in the strip:\n%s", next.Key, w, built, strip)
-				}
-				if first := strings.Index(strip, "Wonder: "); first > strings.Index(strip, "/") && strings.Contains(strip, "/") {
-					t.Errorf("%s at width %d: a building is listed before the wonder:\n%s", next.Key, w, strip)
-				}
-			}
-			if len(next.BuildingReqs) >= 14 {
-				longest = next.Key
-				for _, w := range []int{80, 100} {
-					lines := untag(strings.Join(ageProgressLines(gate, w, 2), "\n"))
-					if !strings.Contains(lines, " more") {
-						t.Errorf("%s at width %d: a 14-kind gate must say how many it leaves out:\n%s", next.Key, w, lines)
-					}
-				}
-			}
-		}
-	}
-	if longest == "" {
-		t.Error("no real gate asks for 14 kinds of building: the test no longer holds the longest gate")
-	}
-}
-
-// TestNextAgeStripOnTheLongestGate draws the real dashboard in the age whose
-// gate asks for the most kinds of building, at the two smallest terminals,
-// and holds the Next Age strip to what it wrote: whole lines, none cut or
-// wrapped, with the count of what it leaves out.
-func TestNextAgeStripOnTheLongestGate(t *testing.T) {
-	restoreForge(t)
-	ages := config.Ages()
-	age, kinds := "", 0
-	for i := 0; i+1 < len(ages); i++ {
-		if n := len(ages[i+1].BuildingReqs); n > kinds {
-			age, kinds = ages[i].Key, n
-		}
-	}
-	d, pages, eng := stagedDashboard(t, age)
-	if got := len(eng.GetState().NextAgeBldReqs); got != kinds {
-		t.Fatalf("the game lists %d kinds for the gate out of %s, the table has %d", got, age, kinds)
-	}
-	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
-		w, h := sz[0], sz[1]
-		cells := drawnDashboard(t, d, pages, w, h)
-		rows := checkFitted(t, fmt.Sprintf("%s at %dx%d, Next Age", age, w, h), d.ageTV, cells, w)
-		strip := strings.Join(rows, "\n")
-		if wonder := game.BuildingName(eng.GetState().CurrentAgeWonderKey); !strings.Contains(strip, "✗ Wonder: "+wonder) {
-			t.Errorf("%s at %dx%d: the strip does not show the wonder %q:\n%s", age, w, h, wonder, strip)
-		}
-		if !strings.Contains(strip, "Next Age:") || !countedNote.MatchString(strip) {
-			t.Errorf("%s at %dx%d: the strip does not say what it leaves out:\n%s", age, w, h, strip)
-		}
-	}
-}
-
-func TestNextAgeStripShowsWonderBankProgress(t *testing.T) {
-	eng := game.NewGameEngine()
-	st := eng.GetState()
-	const wonder = "sacred_grove"
-	def, ok := st.Ruleset().Building(wonder)
-	if !ok {
-		t.Fatalf("the ruleset has no %s", wonder)
-	}
-	amount := def.BaseCost["food"] / 2
-	eng.SetStockForTest("food", amount)
-	if result := HandleCommand(fmt.Sprintf("wonder bank food %.0f", amount), eng); result.Type != "success" {
-		t.Fatalf("banking food: %+v", result)
-	}
-	st = eng.GetState()
-	pct := wonderBankPercent(st, wonder)
-	if pct == 0 {
-		t.Fatal("staging: the partly banked Sacred Grove reads 0%")
-	}
-	want := fmt.Sprintf("✗ Wonder: Sacred Grove %.0f%% banked", pct)
-	for _, width := range []int{80, 100} {
-		strip := untag(strings.Join(ageProgressLines(st, width, 2), "\n"))
-		if !strings.Contains(strip, want) {
-			t.Errorf("width %d: Next Age strip has no %q:\n%s", width, want, strip)
-		}
-	}
-	list := untag(wondersProvider(st, 0))
-	listWant := fmt.Sprintf("(%.0f%% banked)", pct)
-	if !strings.Contains(list, listWant) {
-		t.Errorf("Wonders list has no %q:\n%s", listWant, list)
-	}
-
-	bank := make(map[string]float64, len(def.BaseCost))
-	for resource, cost := range def.BaseCost {
-		bank[resource] = cost
-	}
-	eng.Buildings.LoadWonderBanks(map[string]map[string]float64{wonder: bank})
-	eng.StepTicks(1)
-	if err := eng.BuildBuilding(wonder); err != nil {
-		t.Fatalf("building Sacred Grove: %v", err)
-	}
-	eng.StepTicks(def.BuildTicks + 1)
-	built := untag(strings.Join(ageProgressLines(eng.GetState(), 100, 2), "\n"))
-	if strings.Contains(built, "% banked") {
-		t.Errorf("a built wonder still shows bank progress:\n%s", built)
-	}
-}
-
-// countedNote finds the strip's count of what it left out: "+4 more" or
-// "✓ 3 met".
-var countedNote = regexp.MustCompile(`(?:\+(\d+) more|✓ (\d+) met)`)
-
-// checkNextAgeRow holds the Next Age strip for st, two rows tall, to its
-// rules at every width from lo to hi: no line wider than the strip, no
-// requirement broken across the two rows, the title whole, and every
-// requirement either listed or counted (as met, or as more).
-func checkNextAgeRow(t *testing.T, st game.GameState, lo, hi int) {
-	t.Helper()
-	goals := ageGoals(st)
-	title := "Next Age: " + st.NextAgeName
-	for w := lo; w <= hi; w++ {
-		lines := ageProgressLines(st, w, 2)
-		if len(lines) > 2 {
-			t.Fatalf("%s, width %d: %d lines", st.NextAge, w, len(lines))
-		}
-		joined := untag(strings.Join(lines, "\n"))
-		for _, line := range strings.Split(joined, "\n") {
-			if runeLen(line) > w {
-				t.Errorf("%s, width %d: a line of %d cells: %q", st.NextAge, w, runeLen(line), line)
-			}
-		}
-		if w >= runeLen(title)+1 && !strings.Contains(joined, title) {
-			t.Errorf("%s, width %d: the title is cut: %q", st.NextAge, w, joined)
-		}
-		listed := 0
-		for _, g := range goals {
-			if strings.Contains(joined, g.text) {
-				listed++
-				continue
-			}
-			// A requirement that is not listed must not show in part: its name
-			// without the count ("Oil Refinery", not "Oil Refinery 0/15").
-			name := strings.TrimSpace(strings.TrimRight(g.text, "0123456789/"))
-			if name != "" && strings.Contains(strings.ReplaceAll(joined, title, ""), name) {
-				t.Errorf("%s, width %d: %q is broken across the strip:\n%s", st.NextAge, w, g.text, joined)
-			}
-		}
-		if listed < len(goals) {
-			counted := 0
-			if m := countedNote.FindStringSubmatch(joined); m != nil {
-				counted, _ = strconv.Atoi(m[1] + m[2])
-			}
-			if counted == 0 {
-				t.Errorf("%s, width %d: %d of %d requirements listed and no count of the rest:\n%s", st.NextAge, w, listed, len(goals), joined)
-			} else if listed+counted != len(goals) {
-				t.Errorf("%s, width %d: %d listed and %d counted, of %d requirements:\n%s", st.NextAge, w, listed, counted, len(goals), joined)
-			}
-		}
-	}
-}
-
-// TestStatusLineGivesUpTheHintFirst: the status bar keeps the age, the
-// epoch, the badges, the population and morale at any width, and sheds the
-// rest in order.
+// TestStatusLineGivesUpTheHintFirst: the status ribbon keeps the age, the
+// badges, the people and morale at any width, and sheds the rest in order:
+// the hint, the next age, the badge's words, what morale does, the title and
+// last the calendar year.
 func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 	// The widths below are counted without the DEV badge, and another test
 	// in this package leaves developer mode on.
@@ -727,47 +515,68 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 	st := game.GameState{AgeName: "Bronze Age", EpochKey: "stone_era", EpochName: "Stone Era", EpochIcon: "◈", EpochColor: "white",
 		Morale: 1.1, MoraleMultiplier: 1.2, Workers: game.WorkerState{TotalPop: 216, MaxPop: 875},
 		Milestones: game.MilestoneState{CurrentTitle: "Aspiring"}, Harbinger: &game.HarbingerView{}}
-	full := untag(statusLine(st, 0))
-	for _, want := range []string{"Bronze Age", "\"Aspiring\"", "⚑ Harbinger. Type harbinger to read it.", "Pop: 216/875", "Morale 110% (production +20%)", "type a panel name to open it · Esc: close or menu"} {
+	facts := ribbonFacts{year: "1,948 BC", next: "Iron Age"}
+	full := untag(statusLine(st, facts, 0))
+	for _, want := range []string{"Bronze Age", "\"Aspiring\"", "⚑ Harbinger. Type harbinger to read it.", "Year 1,948 BC", "People 216/875", "Morale 110% (production +20%)", "Next: Iron Age", "type a panel name to open it · Esc: close or menu"} {
 		if !strings.Contains(full, want) {
 			t.Errorf("the whole line is missing %q: %q", want, full)
 		}
 	}
-	for w := 60; w <= 200; w++ {
-		line := untag(statusLine(st, w))
+	// The facts come in the order the card names: age, year, people, morale, next age.
+	last := -1
+	for _, want := range []string{"Bronze Age", "Year 1,948 BC", "People 216/875", "Morale 110%", "Next: Iron Age"} {
+		at := strings.Index(full, want)
+		if at <= last {
+			t.Errorf("%q is out of order in %q", want, full)
+		}
+		last = at
+	}
+	for w := 70; w <= 220; w++ {
+		line := untag(statusLine(st, facts, w))
 		if runeLen(line) > w {
 			t.Errorf("width %d: the line is %d cells: %q", w, runeLen(line), line)
 		}
-		for _, want := range []string{"Bronze Age", "⚑ Harbinger", "Pop: 216/875", "Morale 110%"} {
+		for _, want := range []string{"Bronze Age", "⚑ Harbinger", "People 216/875", "Morale 110%"} {
 			if !strings.Contains(line, want) {
 				t.Errorf("width %d: the line lost %q: %q", w, want, line)
 			}
 		}
 	}
-	if line := untag(statusLine(st, 150)); strings.Contains(line, "type a panel") || !strings.Contains(line, "Esc: close or menu") || !strings.Contains(line, "Type harbinger to read it.") {
-		t.Errorf("150 cells: half the hint goes first: %q", line)
+	// What goes first needs the most room to stay: the narrowest bar each
+	// piece is still on never grows as the pieces go in the order above.
+	least := func(piece string) int {
+		for w := 70; w <= 260; w++ {
+			if strings.Contains(untag(statusLine(st, facts, w)), piece) {
+				return w
+			}
+		}
+		return 1 << 20
 	}
-	if line := untag(statusLine(st, 130)); strings.Contains(line, "Esc:") || !strings.Contains(line, "Type harbinger to read it.") {
-		t.Errorf("130 cells: the whole hint goes before the badge is shortened: %q", line)
+	order := []string{"type a panel name", "Esc: close or menu", "Next: Iron Age", "Type harbinger to read it.", "(production +20%)", "\"Aspiring\"", "Year 1,948 BC"}
+	for i := 1; i < len(order); i++ {
+		if least(order[i-1]) < least(order[i]) {
+			t.Errorf("%q stays on a narrower bar (%d) than %q (%d), but is given up first", order[i-1], least(order[i-1]), order[i], least(order[i]))
+		}
 	}
-	// note: the era badge used to take the room that shortens this badge at
-	// 120 cells; without it the full badge fits down to 113, so the shortened
-	// one is checked at 112.
-	if line := untag(statusLine(st, 112)); !strings.Contains(line, "⚑ Harbinger: type harbinger") || !strings.Contains(line, "(production +20%)") {
-		t.Errorf("112 cells: the badge is shortened before morale's effect goes: %q", line)
+	if least("type a panel name") <= least("Esc: close or menu") || least("Esc: close or menu") <= least("Type harbinger to read it.") {
+		t.Errorf("the hint does not go before the badge's words: %d, %d, %d", least("type a panel name"), least("Esc: close or menu"), least("Type harbinger to read it."))
 	}
 	// Developer mode adds its own badge, and the line still fits.
 	game.DevModeActive = true
-	for w := 60; w <= 200; w++ {
-		if line := untag(statusLine(st, w)); runeLen(line) > w || !strings.Contains(line, "DEV") || !strings.Contains(line, "Morale 110%") {
+	for w := 70; w <= 200; w++ {
+		if line := untag(statusLine(st, facts, w)); runeLen(line) > w || !strings.Contains(line, "DEV") || !strings.Contains(line, "Morale 110%") {
 			t.Errorf("width %d in developer mode: %d cells, %q", w, runeLen(line), line)
 		}
 	}
 	game.DevModeActive = false
 	// The worst case at the smallest size: both badges and long counts.
 	st.PendingCatastrophe, st.Workers = "iron_era", game.WorkerState{TotalPop: 8311, MaxPop: 51785785}
-	if line := untag(statusLine(st, 80)); runeLen(line) > 80 || !strings.Contains(line, "☄ Catastrophe") || !strings.Contains(line, "⚑ Harbinger") || !strings.Contains(line, "Pop: 8.31K/51.8M") || !strings.Contains(line, "Morale 110%") {
+	if line := untag(statusLine(st, facts, 80)); runeLen(line) > 80 || !strings.Contains(line, "☄ Catastrophe") || !strings.Contains(line, "⚑ Harbinger") || !strings.Contains(line, "People 8.31K/51.8M") || !strings.Contains(line, "Morale 110%") {
 		t.Errorf("80 cells with both badges: %d cells, %q", runeLen(line), line)
+	}
+	// The plain glyph tier sets the facts off with a bar, not a dot.
+	if line := untag(statusLine(st, ribbonFacts{year: "1,948 BC", plain: true}, 0)); !strings.Contains(line, "Year 1,948 BC  |  People") {
+		t.Errorf("the plain tier does not set the facts off with a bar: %q", line)
 	}
 }
 
@@ -782,7 +591,7 @@ func TestDashboardLayoutInEveryTheme(t *testing.T) {
 			t.Fatal(err)
 		}
 		d, pages, _ := stagedDashboard(t, "quantum_age")
-		for _, sz := range [][2]int{{80, 24}, {120, 40}, {240, 60}} {
+		for _, sz := range [][2]int{{80, 24}, {100, 30}, {120, 40}, {160, 45}, {240, 60}} {
 			w, h := sz[0], sz[1]
 			bad := 0
 			for i, c := range drawnDashboard(t, d, pages, w, h) {

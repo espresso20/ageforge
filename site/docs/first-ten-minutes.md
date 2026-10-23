@@ -13,7 +13,7 @@ You're in the **Primitive Age**. The screen shows:
 - The Next Age row: what the Stone Age asks for, each item marked ✓ or ✗
 - The Economy panel, which is always on screen: Resources, Under construction (with the People box beside it on a big terminal) and the Log on the left, the Buildings list on the right, with the Getting started guide under it
 
-Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 34 rows or larger.
+Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 36 rows or larger.
 
 <figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: almost nothing in stock, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 

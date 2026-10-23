@@ -185,7 +185,6 @@ game.engine.DoBlackMarket.07,"That smuggling run flopped. You lost %s, rip."
 game.engine.finishBuild.02,"%s built (you have %d), slay."
 game.engine.AdvanceAge.01,"Build the %s wonder before advancing, bestie. Research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' for the whole checklist, no cap."
 game.engine.AdvanceAge.02,"Main quest first: the %s wonder comes before advancing. Bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see the full to-do list."
-game.engine.AdvanceAge.03,"Not ready to advance, bestie. The Next Age bar lists what's missing. Type 'charter' for the whole vibe check."
 game.engine.AdvanceAge.04,"You're already in the final age, no more glow-ups."
 game.engine.GatherResource.01,Hand-gathering is cooked after the Medieval Age. Build producers and assign workers instead.
 game.engine.GatherResource.02,"No gathering %s yet, bestie. Gather food, wood or stone."
