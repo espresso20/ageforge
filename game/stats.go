@@ -9,9 +9,9 @@ type GameStats struct {
 	TotalGathered  map[string]float64 `json:"total_gathered"`
 	GameStarted    time.Time          `json:"game_started"`
 	AgesReached    []string           `json:"ages_reached"`
-	// SoldiersTrained is the cumulative lifetime count of soldiers actually
-	// added to the soldiers resource (post-storage-clamp). Soldiers spent on
-	// expeditions never decrement this — it only ever grows. Drives the soldier
+	// SoldiersTrained is the cumulative lifetime count of soldiers who
+	// took a post (a military building built or upgraded). Soldiers lost on
+	// missions or in raids never decrement this: it only ever grows. Drives the soldier
 	// milestone chain (first_soldiers, standing_army, …). Old saves without this
 	// field default to 0 and re-accrue progress as new soldiers are trained.
 	SoldiersTrained float64 `json:"soldiers_trained"`

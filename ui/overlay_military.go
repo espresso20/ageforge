@@ -19,7 +19,7 @@ func militaryProvider(state game.GameState, _ int) string {
 	// === Army Overview ===
 	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
 	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s posted of %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
-	if rs, ok := state.Resources["soldiers"]; ok && !rs.Unlocked {
+	if len(mil.Posts) == 0 {
 		// Soldiers begin with the first military building: until one is built
 		// there is nobody at a post, and the panel says so.
 		fmt.Fprintf(&sb, " [gold]Posts:[-]     %s\n", theme.Paint(theme.RoleDim, "none yet. A military building comes with its soldiers."))
@@ -36,28 +36,6 @@ func militaryProvider(state game.GameState, _ int) string {
 	}
 	if mil.ExpeditionBonus > 0 {
 		fmt.Fprintf(&sb, " [green]Expedition Bonus: +%.0f%%[-]\n", mil.ExpeditionBonus*100)
-	}
-
-	// Military worker domain assignments (if unlocked)
-	if domainState, ok := state.Workers.Types["military"]; ok && domainState.Unlocked {
-		sb.WriteString("\n")
-		fmt.Fprintf(&sb, " [gold]Military Workers:[-] %d total, %d idle\n",
-			domainState.Count, domainState.IdleCount)
-		if len(domainState.Assignments) > 0 {
-			bldKeys := make([]string, 0, len(domainState.Assignments))
-			for k := range domainState.Assignments {
-				bldKeys = append(bldKeys, k)
-			}
-			sort.Strings(bldKeys)
-			for _, bk := range bldKeys {
-				count := domainState.Assignments[bk]
-				bldName := bk
-				if bs, ok := state.Buildings[bk]; ok {
-					bldName = bs.Name
-				}
-				fmt.Fprintf(&sb, "   %-20s %d assigned\n", bldName, count)
-			}
-		}
 	}
 
 	// === Active Campaign ===

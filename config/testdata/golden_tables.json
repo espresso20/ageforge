@@ -465,7 +465,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 500,
-   "workers": 4,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 16
   },
@@ -595,7 +595,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 12,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 2245
   },
@@ -611,7 +611,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 1200,
-   "workers": 7,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 77
   },
@@ -861,7 +861,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 18,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 154503
   },
@@ -876,7 +876,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 12,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 2900
   },
@@ -1147,7 +1147,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 15,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 29780
   },
@@ -1452,7 +1452,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 16,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 46983
   },
@@ -1849,7 +1849,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 25,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 1513556
   },
@@ -1902,7 +1902,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 8,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 279
   },
@@ -1917,7 +1917,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 2400,
-   "workers": 7,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 145
   },
@@ -2083,7 +2083,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 10,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 1825
   },
@@ -2574,7 +2574,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 80,
-   "workers": 5,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 10
   },
@@ -2882,7 +2882,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 300,
-   "workers": 6,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 10
   },
@@ -3268,7 +3268,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 600,
-   "workers": 6,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 24
   },
@@ -3283,7 +3283,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 10,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 1287
   },
@@ -3863,7 +3863,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 35,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 6880954
   },
@@ -4159,7 +4159,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 20,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 178653
   },
@@ -4293,7 +4293,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 30,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 2495437
   },
@@ -5264,7 +5264,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 20,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 481364
   },
@@ -5306,7 +5306,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 14,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 21178
   },
@@ -5508,7 +5508,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 3600,
-   "workers": 25,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 3577940
   },
@@ -6300,7 +6300,7 @@
    "rate": 1.15,
    "effects": [],
    "build_ticks": 200,
-   "workers": 3,
+   "workers": 0,
    "max_count": 0,
    "soldiers": 9
   },
@@ -6824,7 +6824,7 @@
   },
   "exploration": {
    "age": "iron_age",
-   "cost": 14700,
+   "cost": 12100,
    "ticks": 585
   },
   "federation_charter": {
@@ -6984,12 +6984,12 @@
   },
   "iron_smelting": {
    "age": "iron_age",
-   "cost": 19100,
+   "cost": 15700,
    "ticks": 585
   },
   "irrigation": {
    "age": "iron_age",
-   "cost": 41900,
+   "cost": 34500,
    "ticks": 731
   },
   "language": {
@@ -7029,7 +7029,7 @@
   },
   "mathematics": {
    "age": "iron_age",
-   "cost": 24800,
+   "cost": 20400,
    "ticks": 731
   },
   "matter_conversion": {
@@ -7219,7 +7219,7 @@
   },
   "priesthood": {
    "age": "iron_age",
-   "cost": 32200,
+   "cost": 26500,
    "ticks": 731
   },
   "primitive_writing": {
@@ -7279,7 +7279,7 @@
   },
   "quarrying": {
    "age": "iron_age",
-   "cost": 70800,
+   "cost": 58300,
    "ticks": 731
   },
   "radio": {
@@ -7324,7 +7324,7 @@
   },
   "road_building": {
    "age": "iron_age",
-   "cost": 54400,
+   "cost": 44800,
    "ticks": 731
   },
   "rocketry": {
@@ -7374,7 +7374,7 @@
   },
   "siege_warfare": {
    "age": "iron_age",
-   "cost": 92000,
+   "cost": 75700,
    "ticks": 731
   },
   "singularity_engineering": {
@@ -8479,7 +8479,6 @@
    "oil": 659785062200,
    "plasma": 659785062180,
    "quantum_flux": 659785062160,
-   "soldiers": 659785062150,
    "steel": 659785062180,
    "stone": 659785062200,
    "titanium": 659785062180,
@@ -8506,7 +8505,6 @@
    "oil": 52200,
    "plasma": 52180,
    "quantum_flux": 52160,
-   "soldiers": 52150,
    "steel": 52180,
    "stone": 52200,
    "titanium": 52180,
@@ -8533,7 +8531,6 @@
    "oil": 1562200,
    "plasma": 1562180,
    "quantum_flux": 1562160,
-   "soldiers": 1562150,
    "steel": 1562180,
    "stone": 1562200,
    "titanium": 1562180,
@@ -8560,7 +8557,6 @@
    "oil": 235062200,
    "plasma": 235062180,
    "quantum_flux": 235062160,
-   "soldiers": 235062150,
    "steel": 235062180,
    "stone": 235062200,
    "titanium": 235062180,
@@ -8587,7 +8583,6 @@
    "oil": 614809785062200,
    "plasma": 614809785062180,
    "quantum_flux": 614809785062160,
-   "soldiers": 614809785062150,
    "steel": 614809785062180,
    "stone": 614809785062200,
    "titanium": 614809785062180,
@@ -8614,7 +8609,6 @@
    "oil": 64809785062200,
    "plasma": 64809785062180,
    "quantum_flux": 64809785062160,
-   "soldiers": 64809785062150,
    "steel": 64809785062180,
    "stone": 64809785062200,
    "titanium": 64809785062180,
@@ -8641,7 +8635,6 @@
    "oil": 109785062200,
    "plasma": 109785062180,
    "quantum_flux": 109785062160,
-   "soldiers": 109785062150,
    "steel": 109785062180,
    "stone": 109785062200,
    "titanium": 109785062180,
@@ -8668,7 +8661,6 @@
    "oil": 2964809785062200,
    "plasma": 2964809785062180,
    "quantum_flux": 2964809785062160,
-   "soldiers": 2964809785062150,
    "steel": 2964809785062180,
    "stone": 2964809785062200,
    "titanium": 2964809785062180,
@@ -8695,7 +8687,6 @@
    "oil": 3989964809785062400,
    "plasma": 3989964809785062400,
    "quantum_flux": 3989964809785062400,
-   "soldiers": 3989964809785062400,
    "steel": 3989964809785062400,
    "stone": 3989964809785062400,
    "titanium": 3989964809785062400,
@@ -8722,7 +8713,6 @@
    "oil": 785062200,
    "plasma": 785062180,
    "quantum_flux": 785062160,
-   "soldiers": 785062150,
    "steel": 785062180,
    "stone": 785062200,
    "titanium": 785062180,
@@ -8749,7 +8739,6 @@
    "oil": 17809785062200,
    "plasma": 17809785062180,
    "quantum_flux": 17809785062160,
-   "soldiers": 17809785062150,
    "steel": 17809785062180,
    "stone": 17809785062200,
    "titanium": 17809785062180,
@@ -8776,7 +8765,6 @@
    "oil": 439964809785062200,
    "plasma": 439964809785062140,
    "quantum_flux": 439964809785062140,
-   "soldiers": 439964809785062140,
    "steel": 439964809785062140,
    "stone": 439964809785062200,
    "titanium": 439964809785062140,
@@ -8803,7 +8791,6 @@
    "oil": 212200,
    "plasma": 212180,
    "quantum_flux": 212160,
-   "soldiers": 212150,
    "steel": 212180,
    "stone": 212200,
    "titanium": 212180,
@@ -8830,7 +8817,6 @@
    "oil": 11062200,
    "plasma": 11062180,
    "quantum_flux": 11062160,
-   "soldiers": 11062150,
    "steel": 11062180,
    "stone": 11062200,
    "titanium": 11062180,
@@ -8857,7 +8843,6 @@
    "oil": 2809785062200,
    "plasma": 2809785062180,
    "quantum_flux": 2809785062160,
-   "soldiers": 2809785062150,
    "steel": 2809785062180,
    "stone": 2809785062200,
    "titanium": 2809785062180,
@@ -8884,7 +8869,6 @@
    "oil": 700,
    "plasma": 680,
    "quantum_flux": 660,
-   "soldiers": 650,
    "steel": 680,
    "stone": 700,
    "titanium": 680,
@@ -8911,7 +8895,6 @@
    "oil": 313989964809785050000,
    "plasma": 313989964809785050000,
    "quantum_flux": 313989964809785050000,
-   "soldiers": 313989964809785050000,
    "steel": 313989964809785050000,
    "stone": 313989964809785050000,
    "titanium": 313989964809785050000,
@@ -8938,7 +8921,6 @@
    "oil": 50062200,
    "plasma": 50062180,
    "quantum_flux": 50062160,
-   "soldiers": 50062150,
    "steel": 50062180,
    "stone": 50062200,
    "titanium": 50062180,
@@ -8965,7 +8947,6 @@
    "oil": 14964809785062200,
    "plasma": 14964809785062180,
    "quantum_flux": 14964809785062160,
-   "soldiers": 14964809785062150,
    "steel": 14964809785062180,
    "stone": 14964809785062200,
    "titanium": 14964809785062180,
@@ -8992,7 +8973,6 @@
    "oil": 8200,
    "plasma": 8180,
    "quantum_flux": 8160,
-   "soldiers": 8150,
    "steel": 8180,
    "stone": 8200,
    "titanium": 8180,
@@ -9019,7 +8999,6 @@
    "oil": 313989964809785050000,
    "plasma": 313989964809785050000,
    "quantum_flux": 313989964809785050000,
-   "soldiers": 313989964809785050000,
    "steel": 313989964809785050000,
    "stone": 313989964809785050000,
    "titanium": 313989964809785050000,
@@ -9046,7 +9025,6 @@
    "oil": 9785062200,
    "plasma": 9785062180,
    "quantum_flux": 9785062160,
-   "soldiers": 9785062150,
    "steel": 9785062180,
    "stone": 9785062200,
    "titanium": 9785062180,

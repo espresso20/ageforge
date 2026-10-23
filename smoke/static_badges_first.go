@@ -99,7 +99,8 @@ func (c *badgeCheck) firstAge(counter string) int {
 				}
 			}
 		}
-		return max(first, m.resAge["soldiers"])
+		// Soldiers begin in the Iron Age (config.SoldierBeginAge).
+		return max(first, m.idx[config.SoldierBeginAge])
 	case config.BadgeEvBuildingUpgraded:
 		// The first upgrade: the first age a second tier of a lineage can
 		// be built in.

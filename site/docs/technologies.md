@@ -314,18 +314,18 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 
 ---
 
-### Iron Age (~19m to 2h 1m/tech)
+### Iron Age (~16m to 1h 40m/tech)
 
 | Key | Name | Kind | Time | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `priesthood` | Priesthood | optional | 42m | `calendar` | Morale can rise 5 points higher |
-| `mathematics` | Mathematics | **keystone** (Colosseum) | 32m | `primitive_writing` | +8% scholar output |
-| `exploration` | Exploration | spine | 19m | one of `map_making` or `boatbuilding` | Opens long and grand mission offers |
-| `irrigation` | Irrigation | optional | 55m | `agriculture` | +8% food production, +5% housing |
-| `road_building` | Road Building | optional | 1h 11m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
-| `iron_smelting` | Iron Smelting | spine | 25m | `bronze_working` | Opens the Smelter, +8% iron production |
-| `quarrying` | Quarrying | optional | 1h 33m | `bronze_working` | +8% marble production, +8% iron ore production |
-| `siege_warfare` | Siege Warfare | optional | 2h 1m | `military_tactics` | Opens the Legion Fort, +15% military power |
+| `priesthood` | Priesthood | optional | 35m | `calendar` | Morale can rise 5 points higher |
+| `mathematics` | Mathematics | **keystone** (Colosseum) | 27m | `primitive_writing` | +8% scholar output |
+| `exploration` | Exploration | spine | 16m | one of `map_making` or `boatbuilding` | Opens long and grand mission offers |
+| `irrigation` | Irrigation | optional | 45m | `agriculture` | +8% food production, +5% housing |
+| `road_building` | Road Building | optional | 59m | `masonry`, `the_wheel` | +8% gold production, trade routes take 15% less time |
+| `iron_smelting` | Iron Smelting | spine | 20m | `bronze_working` | Opens the Smelter, +8% iron production |
+| `quarrying` | Quarrying | optional | 1h 17m | `bronze_working` | +8% marble production, +8% iron ore production |
+| `siege_warfare` | Siege Warfare | optional | 1h 40m | `military_tactics` | Opens the Legion Fort, +15% military power |
 
 ---
 
@@ -450,7 +450,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | `prefabrication` | Prefabrication | optional | 10h 54m | `assembly_line` | Buildings cost 2% less, +5% storage |
 | `plastics` | Plastics | optional | 14h 9m | `chemical_engineering` | +5% oil production |
 | `nuclear_deterrence` | Nuclear Deterrence | optional | 18h 28m | `nuclear_fission`, `rocketry` | +10% military power, raids on you take 10% less |
-| `military_industrial_complex` | Military-Industrial Complex | capstone | 40h 32m | `mechanized_warfare`, `nuclear_deterrence` | Room for 20% more soldiers, campaigns bring back 20% more |
+| `military_industrial_complex` | Military-Industrial Complex | capstone | 40h 32m | `mechanized_warfare`, `nuclear_deterrence` | Military buildings have 10% more soldier posts, campaigns bring back 20% more |
 | `nuclear_fission` | Nuclear Fission | **keystone** (Particle Accelerator) | 3h 48m | `power_distribution`, `chemical_engineering` | +5% uranium production, +5% electricity production |
 | `civilian_reactors` | Civilian Reactors | optional | 23h 59m | `nuclear_deterrence` | Opens the Nuclear Plant |
 | `rocketry` | Rocketry | spine | 2h 56m | `aviation` | +10% expedition rewards, +10% military power |
@@ -522,7 +522,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 | `synthetic_food` | Synthetic Food | optional | 69h 44m | `gene_editing` | +4% food production |
 | `cybernetics` | Cybernetics | **keystone** (Neon Citadel) | 31h 39m | `neural_interface` | Opens the Combat Aug Center, +10% military power |
 | `dark_crystal_mining` | Dark Crystal Mining | optional | 90h 43m | `nano_alloys` | +4% dark matter crystals production |
-| `augmented_soldiers` | Augmented Soldiers | optional | 117h 52m | `cybernetics`, `drone_warfare` | +10% military power, room for 10% more soldiers |
+| `augmented_soldiers` | Augmented Soldiers | optional | 117h 52m | `cybernetics`, `drone_warfare` | +10% military power, military buildings have 10% more soldier posts |
 | `dark_energy` | Dark Energy | optional | 153h 3m | `grid_storage` | Opens the Dark Energy Tap, +4% electricity production |
 | `lunar_outposts` | Lunar Outposts | optional | 198h 43m | `reusable_launchers` | +8% expedition rewards |
 | `darknets` | Darknets | optional | 258h 34m | `cloud_computing` | +4% data production |
@@ -793,8 +793,8 @@ These techs move a single number of a game mechanic.
 | Interchangeable Parts | Industrial | Upgrades cost 15% less |
 | General Staff | Victorian | Campaigns take 15% less time |
 | Special Forces | Modern | Campaigns take 15% less time |
-| Military-Industrial Complex | Atomic | Room for 20% more soldiers |
-| Augmented Soldiers | Cyberpunk | Room for 10% more soldiers |
+| Military-Industrial Complex | Atomic | Military buildings have 10% more soldier posts |
+| Augmented Soldiers | Cyberpunk | Military buildings have 10% more soldier posts |
 | Military-Industrial Complex | Atomic | Campaigns bring back 20% more |
 | Probability Warfare | Quantum | Campaigns bring back 15% more |
 | Global Village | Digital | Every civilization offers 1 more deal |
@@ -803,7 +803,7 @@ These techs move a single number of a game mechanic.
 | Void Contemplation | Interstellar | Appeasing a harbinger costs 20% less |
 
 - **Trade route time, expedition time, deal refresh, festival cooldown.** A cut shortens the timer when it is next set: a route's next run, the next expedition sent, the next set of offers, the next festival. Cuts multiply (two 15% cuts leave 72% of a route's time) and none takes a timer under 40% of its length: the four cuts of a route's time leave 49% of it, and the six of an expedition's 45%. Expedition time is for scouting expeditions, and the Army panel lists their times with it; campaigns have a number of their own.
-- **Campaign time, campaign loot, soldier storage.** A General Staff and Special Forces each cut the time of every campaign sent after them by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and Probability Warfare 15% more again; the Military-Industrial Complex gives room for 20% more soldiers and Augmented Soldiers 10% more of that. See [Military](military.md).
+- **Campaign time, campaign loot, soldier posts.** A General Staff and Special Forces each cut the time of every campaign sent after them by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and Probability Warfare 15% more again; the Military-Industrial Complex and Augmented Soldiers each give every military building a tenth more soldier posts (two techs make it a fifth more), and the new posts fill as the food allows. See [Military](military.md).
 - **Wonder construction.** With Architecture a wonder takes three quarters of its listed time to build, and the cuts of all construction then apply to what is left. It is the one cut a wonder has to itself. See [Wonders](wonders.md).
 - **Festival length.** With Baroque Arts a festival's bonus lasts 25% longer; its price and the wait for the next are other numbers. See [Festival](commands.md#festival).
 - **Gifts and alliances.** With Embassies a gift earns 22 opinion where it earned 15 (half as much again, rounded down). With the Concert of Nations every ally adds 25% more to its specialty, and with the Federation Charter 25% more again: a +20% bonus becomes +25%, then +31.25%, and the Factions panel lists it so. See [Factions](factions.md).

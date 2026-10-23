@@ -29,7 +29,7 @@ const (
 	// massNoun is uncountable: "food", "your food stores", "a haul of food".
 	// NEVER "a food", never "foods", never "3 foods".
 	massNoun nounClass = iota
-	// countNoun is an already-PLURAL count noun: "soldiers", "nanobots". It takes
+	// countNoun is an already-PLURAL count noun: "nanobots", "dark matter crystals". It takes
 	// a number directly ("12 soldiers") and has a singular form for the n == 1
 	// case ("1 soldier"). It must never take the mass frames ("your soldiers
 	// stores" is not a sentence), which is why those frames are gated behind the
@@ -66,7 +66,6 @@ var resourceClass = map[string]nounClass{
 	"quantum_flux": massNoun,
 
 	// --- count nouns (already plural in their display name) ------------------
-	"soldiers":             countNoun,
 	"nanobots":             countNoun,
 	"dark_matter_crystals": countNoun,
 }
@@ -90,7 +89,6 @@ func isAbstract(key string) bool { return abstractResource[key] }
 // countSingular holds the SINGULAR label for each count noun, for the "1 X" case.
 // Mass nouns need no entry — they do not inflect.
 var countSingular = map[string]string{
-	"soldiers":             "soldier",
 	"nanobots":             "nanobot",
 	"dark_matter_crystals": "dark matter crystal",
 }

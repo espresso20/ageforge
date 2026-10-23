@@ -931,7 +931,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.Resources.LoadStorage(save.Storage)
 	}
 	ge.Buildings.LoadCounts(save.Buildings)
-	ge.loadSoldiersPosted(&save)
 	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
 		// Deep copy stats to avoid aliasing with the deserialized save
@@ -962,8 +961,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.Resources.UnlockResource(key)
 	}
 	// Reconcile resource unlocks against the loaded age. Old saves predating a
-	// resource's introduction (e.g. the `soldiers` resource added in the military
-	// rework) won't have it in their serialized unlock set even when the player is
+	// resource's introduction won't have it in their serialized unlock set even when the player is
 	// already past its unlock age — unlock anything whose unlock-age has been reached.
 	// The rule is live play's: the UnlockResources lists of every age up to the
 	// loaded one (what applyAgeUnlocks replays). It used to read ResourceDef.Age,
@@ -986,6 +984,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	// Restore Phase 3 systems
 	ge.loadResearch(&save)
+	// The posts come after the techs: a tech adds posts (config.MechanicSoldierPosts).
+	ge.loadSoldiersPosted(&save)
 	ge.Military.LoadState(save.Military)
 	ge.autoExpeditionTicksLeft = save.Military.AutoExpeditionTicksLeft
 	ge.autoExpeditionStarved = false
@@ -1379,7 +1379,7 @@ type SaveInfo struct {
 	Buildings          int    // total building instances built
 	Wonders            int    // built buildings whose Category == "wonder"
 	Techs              int    // number of researched techs
-	Soldiers           int    // resources["soldiers"], truncated to int
+	Soldiers           int    // soldiers at home: those at their posts less the parties away
 	PrestigeTotal      int    // prestige.total_earned (lifetime prestige points)
 	PendingCatastrophe string // pending_catastrophe → catastrophe display name ("" if none); "The Last Passage" for pending_last_passage
 	MilestonesDone     int    // count of completed milestones
@@ -1440,15 +1440,23 @@ func ListSaveDetails() ([]SaveInfo, error) {
 				Level       int `json:"level"`
 				TotalEarned int `json:"total_earned"`
 			} `json:"prestige"`
-			CurrentTitle       string                `json:"current_title"`
-			CurrentEpoch       string                `json:"current_epoch"`
-			PendingCatastrophe string                `json:"pending_catastrophe"`
-			PendingLastPassage bool                  `json:"pending_last_passage"`
-			Milestones         []string              `json:"milestones"`
-			Resources          map[string]float64    `json:"resources"`
-			Buildings          map[string]int        `json:"buildings"`
-			Workers            map[string]WorkerInfo `json:"workers"`
-			Research           struct {
+			CurrentTitle       string             `json:"current_title"`
+			CurrentEpoch       string             `json:"current_epoch"`
+			PendingCatastrophe string             `json:"pending_catastrophe"`
+			PendingLastPassage bool               `json:"pending_last_passage"`
+			Milestones         []string           `json:"milestones"`
+			Resources          map[string]float64 `json:"resources"`
+			SoldiersPosted     map[string]int     `json:"soldiers_posted"`
+			Military           struct {
+				Active []struct {
+					Mission *struct {
+						Soldiers int `json:"soldiers"`
+					} `json:"mission"`
+				} `json:"active"`
+			} `json:"military"`
+			Buildings map[string]int        `json:"buildings"`
+			Workers   map[string]WorkerInfo `json:"workers"`
+			Research  struct {
 				Researched []string `json:"researched"`
 			} `json:"research"`
 			CheaterBadge bool   `json:"cheater_badge"`
@@ -1478,6 +1486,20 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			}
 		}
 
+		// The soldiers at home: the posted soldiers of the military buildings
+		// that stand (never more than their posts), less the parties away.
+		soldiers := 0
+		for key, posted := range header.SoldiersPosted {
+			if header.Buildings[key] > 0 {
+				soldiers += posted
+			}
+		}
+		for _, slot := range header.Military.Active {
+			if slot.Mission != nil {
+				soldiers -= slot.Mission.Soldiers
+			}
+		}
+
 		saves = append(saves, SaveInfo{
 			Name:               name,
 			Timestamp:          header.Timestamp,
@@ -1493,7 +1515,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			Buildings:          buildings,
 			Wonders:            wonders,
 			Techs:              len(header.Research.Researched),
-			Soldiers:           int(header.Resources["soldiers"]),
+			Soldiers:           max(0, soldiers),
 			PrestigeTotal:      header.Prestige.TotalEarned,
 			PendingCatastrophe: pendingChoiceDisplayName(core, header.PendingCatastrophe, header.PendingLastPassage),
 			MilestonesDone:     len(header.Milestones),

@@ -251,7 +251,6 @@ func TestBoard_MissionsRunTogetherWhileTheArmyHolds(t *testing.T) {
 func TestBoard_EveryGrandOfferCostsItsParty(t *testing.T) {
 	ge := missionReady(t, 2, "iron_age")
 	setSoldiers(ge, 1000)
-	setIncome(ge, "soldiers", 0.02)
 	civil := plantOffer(ge, TierGrand, GrandCivil)
 	cost := ge.MissionCost(civil)
 	if cost["soldiers"] != float64(config.PartySize(config.PartyCivil, 3)) || len(cost) != 3 {
@@ -263,7 +262,7 @@ func TestBoard_EveryGrandOfferCostsItsParty(t *testing.T) {
 	if active := ge.Military.ActiveByTier(TierGrand); active.Soldiers != 52 || active.Military() {
 		t.Errorf("the civil mission is out as %+v, want 52 soldiers and no army term", active)
 	}
-	if got := ge.Resources.Get("soldiers"); got != 1000-52 {
+	if got := float64(ge.soldiersHome()); got != 1000-52 {
 		t.Errorf("a civil mission took %v soldiers from home, want 52", 1000-got)
 	}
 	// Its odds are its own: the army does not move them.

@@ -58,7 +58,7 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 	perSec := 1 / game.BaseTickInterval.Seconds()
 	for _, k := range keys {
 		r := st.Resources[k]
-		if !r.Unlocked || r.Storage <= 0 || k == "soldiers" {
+		if !r.Unlocked || r.Storage <= 0 {
 			continue
 		}
 		s := Store{Key: k, Name: r.Name, Fill: clamp01(r.Amount / r.Storage), Rate: float64(r.Rate * perSec)}

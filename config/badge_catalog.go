@@ -259,9 +259,18 @@ func BadgeFamilies() []BadgeFamilyDef {
 			Desc:  "Have {count} {lname} workers at work at the same time.",
 			Scope: BadgeRun, Event: BadgeEvCensus, Counter: "ev.staffed.{key}",
 			Rungs: payrollRungs,
+			// The military domain is the soldiers at their posts, and its two
+			// rungs are the shares the other payrolls ask (about an eighth
+			// and a fifth of what a reference run's buildings hold) of the
+			// posts the reference town holds at the end of a run (93,304 in
+			// the Atomic Age: config.RefSoldiers).
+			Descs: map[string]string{
+				"domain.military.1": "Have {count} soldiers at their posts at the same time.",
+				"domain.military.2": "Have {count} soldiers at their posts at the same time.",
+			},
 			Ladders: map[string][]float64{
 				"food": {270, 450}, "lumber": {270, 468}, "masonry": {270, 477}, "knowledge": {64, 110},
-				"faith": {160, 265}, "military": {270, 444}, "trade": {170, 237}, "engineering": {180, 305},
+				"faith": {160, 265}, "military": {11900, 19600}, "trade": {170, 237}, "engineering": {180, 305},
 				"metallurgy": {150, 248}, "energy": {76, 137}, "hacker": {260, 520},
 			},
 			RevealBySubject: true,

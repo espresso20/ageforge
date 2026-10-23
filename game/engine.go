@@ -165,7 +165,7 @@ type GameEngine struct {
 	// Soldiers (soldiers.go). soldiersSeen is the posted army the last rates
 	// pass saw (a load sets it to the army that stands, so that army is not
 	// counted as trained). garrisonForTest, when garrisonForTestSet, holds the
-	// soldiers resource instead of the posts: a hook for tests, not reachable
+	// soldiers at home instead of the posts: a hook for tests, not reachable
 	// from play.
 	soldiersSeen       int
 	soldiersPosted     map[string]int  // military building key: soldiers at its posts
@@ -2016,7 +2016,6 @@ func (ge *GameEngine) recalculateRates() {
 	production, workerOutput := ge.Buildings.productionWithWorkerOutput(ge.Workers.GetAssignedCount)
 	// A resource its own buildings unlock (ResourceDef.BuiltUnlocks) is
 	// unlocked by the first standing building that makes it, whatever the age.
-	// (The soldiers are unlocked by syncSoldiers: no building makes them.)
 	for _, def := range ge.Resources.defs {
 		if def.BuiltUnlocks && production[def.Key] > 0 && !ge.Resources.unlocked[def.Key] {
 			ge.Resources.UnlockResource(def.Key)
@@ -2306,8 +2305,7 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// The soldiers resource is the posted army, last, over the store above
-	// (soldiers.go).
+	// The posts settle last, over the stores above (soldiers.go).
 	ge.syncSoldiers()
 }
 
@@ -2336,8 +2334,7 @@ func (ge *GameEngine) permanentBonusMap() map[string]float64 {
 // the permanent bonuses give it (allBonus on every store, specific on this one).
 // Storage grows with Era Mastery's k, as production does, so a store holds
 // the same hours of income at any speed. The techs' storage bonus multiplies
-// beside it: +10% of everything the store holds. The soldiers' store has a
-// term of its own on top (config.MechanicSoldierStorage). The one place a
+// beside it: +10% of everything the store holds. The one place a
 // store's size is worked out: recalculateRates sets every store with it, and
 // storeIf asks it what a store would be with more storage built. Caller holds
 // the lock.
@@ -2345,9 +2342,6 @@ func (ge *GameEngine) storeSize(def config.ResourceDef, allBonus, specific, k, t
 	size := float64((def.BaseStorage + allBonus + specific) * k)
 	if techStorage != 1 {
 		size = float64(size * techStorage)
-	}
-	if def.Key == "soldiers" {
-		size = ge.soldierRoom(size)
 	}
 	return size
 }
@@ -5151,10 +5145,10 @@ func (ge *GameEngine) GetState() GameState {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	knowledgeCount := ge.scholarTotal()
-	// The military panel reflects the soldiers resource, which syncSoldiers
-	// holds at the posted army. The soldier milestones key off the cumulative
-	// lifetime trained count instead (ge.Stats.SoldiersTrained).
-	soldierResource := int(ge.Resources.Get("soldiers"))
+	// The military panel reflects the soldiers at home. The soldier milestones
+	// key off the cumulative lifetime trained count instead
+	// (ge.Stats.SoldiersTrained).
+	soldiersHome := ge.soldiersHome()
 	militaryBonus, expeditionBonus := ge.militaryPower(), ge.expeditionReward()
 
 	// Prestige snapshot with pending points
@@ -5187,7 +5181,7 @@ func (ge *GameEngine) GetState() GameState {
 	// MilitaryManager.Snapshot has no *GameEngine receiver, so it cannot see the
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
 	// snapshot here and graft the automatic-dispatch view on afterwards.
-	militarySnap := ge.Military.Snapshot(soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), militaryBonus, expeditionBonus)
+	militarySnap := ge.Military.Snapshot(soldiersHome, militaryBonus, expeditionBonus)
 	militarySnap.SoldierCap = ge.soldierPostsTotal()
 	militarySnap.Posts = ge.soldierPosts()
 	militarySnap.Board, militarySnap.Expeditions = ge.boardViewLocked(expeditionBonus)
@@ -5253,7 +5247,7 @@ func (ge *GameEngine) GetState() GameState {
 			Population:      ge.popLocked(),
 			TechCount:       ge.Research.ResearchedCount(),
 			TotalBuilt:      ge.Stats.TotalBuilt,
-			SoldierCount:    soldierResource,
+			SoldierCount:    soldiersHome,
 			SoldiersTrained: int(ge.Stats.SoldiersTrained),
 			WonderCount:     ge.countWonders(),
 			KnowledgeCount:  knowledgeCount,

@@ -118,7 +118,7 @@ var AgeTargets = map[string]time.Duration{
 // flowResources are never priced for the rules above, even where a building
 // costs them: their amounts drive other systems (food feeds workers, faith
 // sets morale and catastrophe odds, culture fills its own caps and pays for
-// festivals and monuments, soldiers are an army). Their producers keep their
+// festivals and monuments). Their producers keep their
 // literal rates, and requirements on them are sized to those rates.
 //
 // Nanobots are one of them for the second reason alone: a build material
@@ -131,7 +131,7 @@ var AgeTargets = map[string]time.Duration{
 // its 80 a tick: half of what it made was sold, a fifth to a third on top
 // of the Digital and Cyberpunk Ages' whole income, and an Ancient Cache's
 // 40% of a store, in nanobots, paid for an age outright.
-var flowResources = map[string]bool{"food": true, "faith": true, "culture": true, "soldiers": true, "nanobots": true}
+var flowResources = map[string]bool{"food": true, "faith": true, "culture": true, "nanobots": true}
 
 // IsFlowResource reports whether res is one of the flow resources, which have no price level.
 func IsFlowResource(res string) bool { return flowResources[res] }

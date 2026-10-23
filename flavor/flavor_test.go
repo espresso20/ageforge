@@ -56,7 +56,7 @@ func fuzzRequests(m Moment) []Request {
 	ages := []string{"", "primitive_age", "medieval_age", "industrial_age", "modern_age", "space_age", "transcendent_age", "not_a_real_age"}
 	kinds := []string{"", "scouting", "military", "aggressive", "mercantile", "NONSENSE"}
 	subjects := []string{"", "Raid Bandit Camp", "Scout Party", "Merchant Guild", "Void Reavers"}
-	resources := []string{"food", "knowledge", "gold", "quantum_flux", "soldiers", "nanobots"}
+	resources := []string{"food", "knowledge", "gold", "quantum_flux", "nanobots"}
 
 	var out []Request
 	for _, tone := range allTones {
@@ -963,7 +963,7 @@ func TestNoMassNounPluralization(t *testing.T) {
 	t.Logf("fuzzed %d lines across %d resources with no mass-noun pluralization", lines, len(config.BaseResources()))
 }
 
-// TestQuantityInflection pins the "1 soldier" / "12 soldiers" / "40 food" cases
+// TestQuantityInflection pins the "1 nanobot" / "12 nanobots" / "40 food" cases
 // directly, since they are the whole reason the countability table exists.
 func TestQuantityInflection(t *testing.T) {
 	cases := []struct {
@@ -974,9 +974,8 @@ func TestQuantityInflection(t *testing.T) {
 		{"food", 1, "1 food"},
 		{"food", 40, "40 food"},
 		{"knowledge", 3, "3 knowledge"},
-		{"soldiers", 1, "1 soldier"},
-		{"soldiers", 12, "12 soldiers"},
 		{"nanobots", 1, "1 nanobot"},
+		{"nanobots", 12, "12 nanobots"},
 		{"dark_matter_crystals", 2, "2 dark matter crystals"},
 		{"dark_matter", 2, "2 dark matter"},
 	}
@@ -998,7 +997,7 @@ func TestQuantityInflection(t *testing.T) {
 
 // TestMassOnlyFramesNeverReachCountNouns is the structural half of the
 // countability guarantee: the {res_stores} / {res_haul} frames are gated on
-// needMassRes, so no skeleton that uses them can be picked for "soldiers".
+// needMassRes, so no skeleton that uses them can be picked for "nanobots".
 func TestMassOnlyFramesNeverReachCountNouns(t *testing.T) {
 	massOnly := []string{"{res_stores}", "{res_haul}"}
 	for _, m := range Moments() {
@@ -1017,7 +1016,7 @@ func TestMassOnlyFramesNeverReachCountNouns(t *testing.T) {
 		}
 	}
 	for _, m := range Moments() {
-		for _, key := range []string{"soldiers", "nanobots", "dark_matter_crystals"} {
+		for _, key := range []string{"nanobots", "dark_matter_crystals"} {
 			for _, tpl := range eligible(Request{Moment: m, Resource: key, Amount: 5}) {
 				if tpl.Needs&needMassRes != 0 {
 					t.Errorf("%v: skeleton %q is eligible for count noun %q", m, tpl.ID, key)
@@ -1627,7 +1626,7 @@ func TestNoEraBleedInOutput(t *testing.T) {
 	tones := allTones
 	kinds := []string{"", "scouting", "military", "aggressive", "mercantile"}
 	subjects := []string{"", "Raid Bandit Camp", "Naval Expedition", "Orbital Strike", "Merchant Guild", "Void Reavers"}
-	resources := []string{"", "food", "gold", "soldiers", "quantum_flux"}
+	resources := []string{"", "food", "gold", "nanobots", "quantum_flux"}
 
 	foreign := map[era]*regexp.Regexp{}
 	for _, bucket := range eraBuckets {

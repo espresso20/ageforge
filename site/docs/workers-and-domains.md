@@ -291,11 +291,9 @@ Worker slots are **per building**: 3 shrines give 3 × 2 = 6 slots.
 | Shrine | `shrine` | faith | 2 | Primitive Age |
 | Forager Post | `forager_post` | food | 4 | Stone Age |
 | Stone Camp | `stone_camp` | masonry | 3 | Stone Age |
-| War Camp | `war_camp` | military | 3 | Stone Age |
 | Farm | `farm` | food | 5 | Bronze Age |
 | Smithy | `smithy` | engineering | 4 | Bronze Age |
 | Market | `market` | trade | 3 | Bronze Age |
-| Barracks | `barracks` | military | 4 | Bronze Age |
 
 For every building see [Buildings](buildings.md).
 
@@ -354,7 +352,7 @@ Morale multiplies the output of every worker-driven building:
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity) × morale_multiplier
 ```
 
-It starts at 50%, where it has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its cap. Starvation, military workers over 30% of your workers and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The People panel's Overview shows it beside the food figures, and the status bar shows it all the time. Everything else is on [Morale](morale.md).
+It starts at 50%, where it has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its cap. Starvation, workers in military buildings over 30% of your workers and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The People panel's Overview shows it beside the food figures, and the status bar shows it all the time. Everything else is on [Morale](morale.md).
 
 ---
 
@@ -368,7 +366,7 @@ A building's domain decides which worker class staffs it. "First Building" is th
 | `lumber` | Organic Extraction | wood, then coal, oil, nanobots and quantum flux | `wood_camp`, `woodcutter_camp`, `lumber_mill`, `coal_mine` | Primitive Age |
 | `faith` | Faith | faith | `shrine`, `standing_stones`, `altar`, `temple` | Primitive Age |
 | `masonry` | Geological Extraction | stone and iron, then [ores](resources.md#what-the-ores-are-for), uranium and antimatter | `stone_camp`, `stone_pit`, `quarry`, `uranium_mine` | Stone Age |
-| `military` | Military | nothing (its soldiers come with the building) | `war_camp`, `barracks`, `hunting_lodge`, `legion_fort` | Stone Age |
+| `military` | Military | nothing | `geographic_society` | Industrial Age |
 | `trade` | Trade, Harbor | gold | `market`, `trading_post`, `merchant_quarter`, `harbor` | Bronze Age |
 | `engineering` | Engineering | iron, steel, electricity, plasma, dark matter, quantum flux | `smithy`, `ironworks`, `mill`, `power_station`, `fusion_reactor` | Bronze Age |
 | `metallurgy` | Metallurgy | iron, steel, titanium, dark matter, antimatter, quantum flux | `smelter`, `forge`, `foundry`, `steel_mill`, `orbital_refinery` | Iron Age |
@@ -376,7 +374,7 @@ A building's domain decides which worker class staffs it. "First Building" is th
 | `hacker` | Hacker | data | `mainframe_hall`, `server_farm`, `data_center`, `cyber_hub` | Modern Age |
 | `astronaut` | none | nothing | none | No building uses it yet |
 
-- The Nano Foundry (nanobots) takes engineering workers. The Embassy and Grand Embassy take trade workers, and the Geographic Society takes military workers.
+- The Nano Foundry (nanobots) takes engineering workers. The Embassy and Grand Embassy take trade workers, and the Geographic Society takes military workers. Military buildings have no worker slots.
 - Metallurgy doesn't refine ore: its buildings consume nothing, like every other producer.
 - **Culture** has no worker domain. Culture buildings produce on their own and take no workers.
 
@@ -464,6 +462,8 @@ Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Ex
 
 ### military (starts Iron Age)
 
+Only the Geographic Society has military worker slots.
+
 Iron: Soldier → Classical: Legionary → Medieval: Knight → Renaissance: Musketeer → Colonial: Colonial Marine → Industrial: Industrial Rifleman → Victorian: Victorian Guard → Electric: Electric Trooper → Atomic: Atomic Soldier → Modern: Modern Soldier → Information: Information Warrior → Digital: Digital Soldier → Cyberpunk: Cyber Warrior → Fusion: Plasma Trooper → Space: Space Marine → Interstellar: Interstellar Commando → Galactic: Galactic Guardian → **Quantum: Quantum Soldier**
 
 ### trade (starts Bronze Age)
@@ -521,7 +521,7 @@ Build gathering camps and huts together. Each camp holds 3 workers and new worke
 ### Mid game (Bronze and Iron Age)
 
 - Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots: workers in the reserve take a new building's slots at once.
-- A `war_camp` comes with its soldiers the moment it stands: they live in your homes and eat, so watch your food after a military building. Its worker slots make nothing now; on auto they draw workers like any other building's, so `roster military 0` keeps those workers for your producers.
+- A `war_camp` comes with its soldiers the moment it stands: they live in your homes and eat, so watch your food after a military building. It has no worker slots, so no one needs to staff it.
 - From the Iron Age, this age's masonry building makes stone, iron and iron ore, and from the Iron Age to the Classical marble too. The routine fills the newest buildings first. A mine that makes only a raw (the titanium and crystal mines, later on) is worth building for the buildings that cost it (see [What the ores are for](resources.md#what-the-ores-are-for)).
 
 ### Late game

@@ -371,7 +371,7 @@ var ageIndex = sync.OnceValue(func() map[string]int {
 //	{subject}    Request.Subject verbatim — only ever appears inside an authored
 //	             frame that tolerates a verb-led order title or a proper noun of
 //	             uncertain grammatical number (see catalog.go).
-//	{res}        bare resource label: "food", "soldiers"
+//	{res}        bare resource label: "food", "nanobots"
 //	{res_stores} MASS ONLY: "your food stores"
 //	{res_haul}   MASS ONLY: "a haul of food"
 //	{amt_res}    inflected quantity: "40 food", "1 soldier", "12 soldiers"

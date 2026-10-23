@@ -94,7 +94,7 @@ func (ge *GameEngine) expeditionReward() float64 {
 
 // defenseRating is the live Defense Rating (MilitaryState.DefenseRating).
 func (ge *GameEngine) defenseRating() float64 {
-	return ge.Military.CalculateDefense(int(ge.Resources.Get("soldiers")), ge.militaryPower())
+	return ge.Military.CalculateDefense(ge.soldiersHome(), ge.militaryPower())
 }
 
 // ageThreat is the raid threat of age (the ruleset's AgeThreat by its order).

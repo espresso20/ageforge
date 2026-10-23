@@ -102,13 +102,29 @@ func (s *Set) expandFamily(f config.BadgeFamilyDef) []config.BadgeDef {
 	return out
 }
 
+// soldiersLadder is the subject of the soldiers' lifetime badge ladder. The
+// soldiers are people, not a resource, but their ladder is a resource ladder in
+// every other way: it counts the soldiers who take their posts, across runs
+// (produced.soldiers), against the army the reference town holds.
+var soldiersLadder = config.ResourceDef{Name: "Soldiers", Key: config.SoldiersKey, Age: "iron_age"}
+
+// ladderResource is a resource's definition for a production ladder: the
+// resources, and the soldiers' ladder beside them.
+func (s *Set) ladderResource(key string) (config.ResourceDef, bool) {
+	if key == config.SoldiersKey {
+		return soldiersLadder, true
+	}
+	def, ok := s.resourceByKey[key]
+	return def, ok
+}
+
 // RunProduction is what one run produces of a resource: the sum, over the
 // run's ages, of the resource's typical income times the age's pacing
 // target in ticks. A run is the ages before the one a full prestige is made
 // from (runEnd is the last of them); deep is true for a resource that comes
 // after them, which is measured over its own first two ages instead.
 func (s *Set) RunProduction(res string) (perRun float64, deep bool) {
-	def, ok := s.resourceByKey[res]
+	def, ok := s.ladderResource(res)
 	if !ok {
 		return 0, false
 	}
@@ -171,12 +187,12 @@ func (s *Set) ProductionThrough(res, age string) float64 {
 // it makes of it there: that income over the age's pacing target. "" and 0
 // for a resource no age makes.
 func (s *Set) FirstProduction(res string) (age string, made float64) {
-	def, ok := s.resourceByKey[res]
+	def, ok := s.ladderResource(res)
 	if !ok {
 		return "", 0
 	}
 	from := s.agePos[def.Age]
-	if def.BuiltUnlocks {
+	if def.BuiltUnlocks || res == config.SoldiersKey {
 		from = 0
 	}
 	if res == config.SoldiersKey {
@@ -436,6 +452,11 @@ func (s *Set) badgeSubjects(src config.BadgeSource) []badgeSubject {
 	case config.BadgeSourceResources:
 		for _, r := range s.resources {
 			out = append(out, badgeSubject{key: r.Key, name: r.Name, age: r.Age, reveal: s.revealAtAge(r.Age)})
+			if r.Key == "coal" {
+				// The soldiers' ladder, where the soldiers resource stood.
+				r := soldiersLadder
+				out = append(out, badgeSubject{key: r.Key, name: r.Name, age: r.Age, reveal: s.revealAtAge(r.Age)})
+			}
 		}
 	case config.BadgeSourceCivs:
 		for _, c := range s.factions {
@@ -464,18 +485,22 @@ func (s *Set) badgeSubjects(src config.BadgeSource) []badgeSubject {
 		}
 	case config.BadgeSourceDomains:
 		// A domain a building can be staffed in, with the age of the first
-		// such building.
+		// such building. The military domain is the soldiers at their posts
+		// (config.MilitaryDomain), counted from the first military building.
 		first := map[string]int{}
 		for _, b := range s.buildings {
-			if b.WorkerDomain == "" || b.WorkerCapacity <= 0 {
+			domain := b.WorkerDomain
+			if config.IsMilitaryBuilding(b) {
+				domain = config.MilitaryDomain
+			} else if domain == "" || b.WorkerCapacity <= 0 {
 				continue
 			}
 			pos, ok := s.agePos[b.RequiredAge]
 			if !ok {
 				continue
 			}
-			if cur, seen := first[b.WorkerDomain]; !seen || pos < cur {
-				first[b.WorkerDomain] = pos
+			if cur, seen := first[domain]; !seen || pos < cur {
+				first[domain] = pos
 			}
 		}
 		for _, d := range s.domains {

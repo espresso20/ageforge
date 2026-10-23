@@ -172,9 +172,8 @@ func resolveTarget(d Def, p Profile, rng *rand.Rand) string {
 // Deterministic: config slices are ordered and the index map is used only for
 // lookups.
 //
-// The BaseStorage > 0 filter is not cosmetic. A resource with no storage (today
-// that is "soldiers", which is spent rather than stockpiled) would silently
-// swallow a grant — ResourceManager.Add clamps to Storage, so the lump lands as
+// The BaseStorage > 0 filter is not cosmetic. A resource with no storage would
+// silently swallow a grant — ResourceManager.Add clamps to Storage, so the lump lands as
 // zero — and a "<res>_rate" buff on it is equally invisible. Excluding them
 // keeps the random target pools free of no-ops.
 func ageAppropriateResources(age string) []string {
