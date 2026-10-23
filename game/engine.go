@@ -5039,7 +5039,8 @@ func (ge *GameEngine) GetState() GameState {
 		nextAgeBldReqs = ge.progress.GetRequirementsForNext(ge.age)
 	}
 
-	ageOrder := ge.progress.GetAgeOrder()
+	// The snapshot only reads the age index (it is nowhere kept), so it is not copied.
+	ageOrder := ge.progress.ageOrder()
 	knowledgeCount := ge.scholarTotal()
 	// The military panel reflects the soldiers at home. The soldier milestones
 	// key off the cumulative lifetime trained count instead
@@ -5139,7 +5140,6 @@ func (ge *GameEngine) GetState() GameState {
 			Age:             ge.age,
 			AgeOrder:        ageOrder,
 			Resources:       ge.milestoneResources(),
-			Buildings:       ge.Buildings.GetAll(),
 			Population:      ge.popLocked(),
 			TechCount:       ge.Research.ResearchedCount(),
 			TotalBuilt:      ge.Stats.TotalBuilt,
@@ -5147,7 +5147,6 @@ func (ge *GameEngine) GetState() GameState {
 			SoldiersTrained: int(ge.Stats.SoldiersTrained),
 			WonderCount:     ge.countWonders(),
 			KnowledgeCount:  knowledgeCount,
-			ResearchedTechs: ge.getResearchedTechMap(),
 			Sight:           &sight,
 			activeEvents:    ge.Events.GetActive(),
 			held:            ge.Buildings,
@@ -5769,15 +5768,6 @@ func (ge *GameEngine) countWonders() int {
 		}
 	}
 	return count
-}
-
-// getResearchedTechMap returns a map of researched tech keys (must be called with lock held)
-func (ge *GameEngine) getResearchedTechMap() map[string]bool {
-	m := make(map[string]bool, len(ge.Research.researched))
-	for key := range ge.Research.researched {
-		m[key] = true
-	}
-	return m
 }
 
 // formatMilestoneRewards formats milestone reward effects for the toast:

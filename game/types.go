@@ -737,7 +737,6 @@ type MilestoneSnapshotParams struct {
 	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
 	KnowledgeCount  int // scholars
-	ResearchedTechs map[string]bool
 	// Sight, when set, hides every unfinished milestone that needs an age the
 	// player cannot see named yet (spoilers.go). nil shows them all.
 	Sight        *AgeSight
