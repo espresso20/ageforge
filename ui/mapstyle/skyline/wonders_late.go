@@ -1,6 +1,10 @@
 package skyline
 
-import "math"
+import (
+	"math"
+
+	"github.com/espresso20/ageforge/detmath"
+)
 
 // wonders_late.go: the landmarks of the modern and the future ages.
 
@@ -407,7 +411,7 @@ func cradle(h int) *sprite {
 			y := base - i
 			t := float64(i) / float64(gh)
 			// each gantry leans in toward the top, as one half of an arch
-			x := cx + side*(w/2-1-int(float64(w/2-3)*math.Pow(t, 2.2)))
+			x := cx + side*(w/2-1-int(float64(w/2-3)*detmath.Pow(t, 2.2)))
 			s.put(x, y, '█', sMetal, sNone)
 			s.put(x-side, y, '▐', sMetalDark, sNone)
 			if side > 0 {

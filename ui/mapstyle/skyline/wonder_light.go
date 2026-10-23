@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -54,7 +55,7 @@ func (s *scene) wonderLight(lv *lotView, spr *sprite, x0, y0 int, glow tcell.Col
 		case beamFan:
 			// a turning lamp: the beam heads out to one side, shortens as it comes
 			// round to face us and goes out the other
-			c := math.Cos(t/9 + ph)
+			c := mapmodel.Cos((t/9 + ph) / (2 * math.Pi))
 			n := int(float64(b.n) * math.Abs(c))
 			dir := 1
 			if c < 0 {
@@ -73,7 +74,7 @@ func (s *scene) wonderLight(lv *lotView, spr *sprite, x0, y0 int, glow tcell.Col
 			}
 		case beamDown:
 			// the same turning lamp, its light falling away toward the roofs
-			c := math.Cos(t/10 + ph)
+			c := mapmodel.Cos((t/10 + ph) / (2 * math.Pi))
 			n := int(float64(b.n) * math.Abs(c))
 			dir := 1
 			if c < 0 {
@@ -92,15 +93,15 @@ func (s *scene) wonderLight(lv *lotView, spr *sprite, x0, y0 int, glow tcell.Col
 			}
 		case beamSky:
 			// a searchlight swinging over the roofs
-			ang := 0.55 * math.Sin(t/13+ph)
+			ang := 0.55 * mapmodel.Sin((t/13+ph)/(2*math.Pi))
 			for j := 1; j <= b.n; j++ {
 				a := 0.42 * k * (1 - float64(j)/float64(b.n+1))
-				x := bx + int(math.Round(float64(j)*math.Tan(ang)))
+				x := bx + int(math.Round(float64(j)*mapmodel.Sin(ang/(2*math.Pi))/mapmodel.Cos(ang/(2*math.Pi))))
 				s.fb.tint(x, s.Y(by-j), glow, a, d)
 				s.fb.tint(x+1, s.Y(by-j), glow, a*0.5, d)
 			}
 		case beamPillar:
-			pulse := 0.75 + 0.25*math.Sin(t/6+ph)
+			pulse := 0.75 + 0.25*mapmodel.Sin((t/6+ph)/(2*math.Pi))
 			for j := 1; j <= b.n; j++ {
 				a := 0.55 * k * pulse * (1 - float64(j)/float64(b.n+1))
 				s.fb.tint(bx, s.Y(by-j), glow, a, d)

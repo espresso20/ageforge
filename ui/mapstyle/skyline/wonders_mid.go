@@ -1,6 +1,11 @@
 package skyline
 
-import "math"
+import (
+	"math"
+
+	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/mapmodel"
+)
 
 // wonders_mid.go: the landmarks from the Renaissance to the Atomic Age.
 
@@ -351,7 +356,7 @@ func lattice(h int) *sprite {
 	plats := [3]int{u(9), u(18), u(26)}
 	half := func(i int) int {
 		t := float64(i) / float64(body)
-		return 1 + int(float64(w/2-1)*math.Pow(1-t, 2.0)+0.5)
+		return 1 + int(float64(w/2-1)*(1-t)*(1-t)+0.5)
 	}
 	for i := 0; i < body; i++ {
 		y := base - i
@@ -452,7 +457,7 @@ func dam(h int) *sprite {
 		d := y - crest
 		// the face narrows toward the foot, curving in
 		t := float64(d) / float64(atLeast(rows, 1))
-		return crestHalf - int(float64(crestHalf-botHalf)*(1-math.Pow(1-t, 1.7))+0.5)
+		return crestHalf - int(float64(crestHalf-botHalf)*(1-detmath.Pow(1-t, 1.7))+0.5)
 	}
 	// the cliffs: everything outside the gap
 	for y := 0; y <= base; y++ {
@@ -545,7 +550,7 @@ func dam(h int) *sprite {
 		s.beacons = append(s.beacons, pt{px, max(0, top-1)})
 	}
 	for x := px0 + 1; x < px1; x++ {
-		sag := int(1.5 * math.Sin(math.Pi*float64(x-px0)/float64(px1-px0)))
+		sag := int(1.5 * mapmodel.Sin(0.5*float64(x-px0)/float64(px1-px0)))
 		s.put(x, top+1+sag, '─', sMetalDark, sNone)
 	}
 	// close: the form lines in the concrete, spray at the foot
@@ -597,8 +602,7 @@ func accelerator(h int) *sprite {
 	// ring inside it carrying the beam
 	ellipse(float64(w)/2, cpy, rx, ry, func(x, ppy int, dx, dy float64) {
 		r2 := dx*dx + dy*dy
-		ang := math.Atan2(dy*ry, dx*rx)
-		seg := int((ang + math.Pi) / (2 * math.Pi) * 28)
+		seg := int(pseudoAngle(dy*ry, dx*rx) / 4 * 28)
 		switch {
 		case r2 > 0.80:
 			sl := sMetal
@@ -650,4 +654,22 @@ func accelerator(h int) *sprite {
 		}
 	}
 	return s
+}
+
+// pseudoAngle orders directions round the circle like math.Atan2, from 0 up
+// to 4, with division only, so the ring's segments come out the same on
+// every machine.
+func pseudoAngle(y, x float64) float64 {
+	d := math.Abs(x) + math.Abs(y)
+	if d == 0 {
+		return 0
+	}
+	p := y / d
+	switch {
+	case x < 0:
+		return 2 - p
+	case y < 0:
+		return 4 + p
+	}
+	return p
 }
