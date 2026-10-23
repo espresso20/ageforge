@@ -3277,6 +3277,32 @@ func (ge *GameEngine) wonderModifiers() []Modifier {
 	return out
 }
 
+// storageModifiers emits the storage buildings' boost to all production as
+// one OpAdd Modifier on "production_all", attributed to Source "storage": each
+// standing copy adds its "bonus" effect (config.StorageBoostPercent percent).
+// Older ages' copies count too. Reads only held state.
+func (ge *GameEngine) storageModifiers() []Modifier {
+	sum := 0.0
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		if def.Category != "storage" {
+			return
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "bonus" && eff.Target == "production_all" {
+				sum += float64(eff.Value * float64(count))
+			}
+		}
+	})
+	if sum == 0 {
+		return nil
+	}
+	return []Modifier{{Source: storageBoostSource, Target: "production_all", Op: OpAdd, Value: sum}}
+}
+
+// storageBoostSource is the name of the storage buildings' boost in the
+// all-production pool's breakdown.
+const storageBoostSource = "storage"
+
 // permanentModifiers emits OpAdd Modifiers from ge.permanentBonuses (milestones,
 // legacy, epoch-permanent — already merged into that map), attributed to Source
 // "permanent". One modifier per (target, value) entry.
@@ -3335,6 +3361,7 @@ func (ge *GameEngine) buildResolver() *Resolver {
 	r.AddAll(ge.Research.Modifiers())
 	r.AddAll(ge.Prestige.Modifiers())
 	r.AddAll(ge.wonderModifiers())
+	r.AddAll(ge.storageModifiers())
 	r.AddAll(ge.permanentModifiers())
 	r.AddAll(ge.cosmicLegacyModifiers())
 	r.AddAll(ge.eventModifiers())

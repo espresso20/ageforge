@@ -398,9 +398,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 110000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 700,
@@ -736,9 +736,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 270000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 150,
@@ -813,9 +813,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 37000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 300,
@@ -1208,9 +1208,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 110000000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 1400,
@@ -1387,9 +1387,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 9400000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 1000,
@@ -1601,9 +1601,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 20000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 600,
@@ -2003,9 +2003,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 470000000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 1950,
@@ -2063,9 +2063,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 710000000000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 2340,
@@ -2176,9 +2176,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 32000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 120,
@@ -2628,9 +2628,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 110000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 400,
@@ -2668,9 +2668,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 3000000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 900,
@@ -2839,9 +2839,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 1900000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 200,
@@ -3342,9 +3342,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 430000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 800,
@@ -3956,9 +3956,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 2400000000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 2145,
@@ -4483,9 +4483,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 62000000000000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 2340,
@@ -4768,9 +4768,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 7800000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 250,
@@ -5368,9 +5368,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 130
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 9,
@@ -5638,9 +5638,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 85000000000000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 2340,
@@ -5768,9 +5768,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 1500
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 28,
@@ -6206,9 +6206,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 1800000000
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 500,
@@ -6315,9 +6315,9 @@
    "rate": 1.75,
    "effects": [
     {
-     "type": "storage",
-     "target": "all",
-     "value": 8800
+     "type": "bonus",
+     "target": "production_all",
+     "value": 0.01
     }
    ],
    "build_ticks": 80,

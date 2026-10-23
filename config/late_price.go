@@ -92,26 +92,3 @@ func applyWonderBuildFactor(defs []BuildingDef) {
 		}
 	}
 }
-
-// rederiveLatePriceStorage keeps storage on its existing price rule after the
-// late-age curve changes its inputs. Storage is expressed in resources, so it
-// has to be written back into the runtime table after the prices are scaled.
-func rederiveLatePriceStorage(defs []BuildingDef) {
-	base := 0.0
-	for _, resource := range BaseResources() {
-		if resource.Key == "wood" {
-			base = resource.BaseStorage
-			break
-		}
-	}
-	sizes, _ := StorageRuleSizes(defs, Ages(), base)
-	for i := range defs {
-		if size, ok := sizes[defs[i].Key]; ok {
-			for j := range defs[i].Effects {
-				if defs[i].Effects[j].Type == "storage" && defs[i].Effects[j].Target == "all" {
-					defs[i].Effects[j].Value = size
-				}
-			}
-		}
-	}
-}
