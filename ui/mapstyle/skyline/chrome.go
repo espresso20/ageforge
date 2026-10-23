@@ -72,11 +72,14 @@ func panoramaHints(w int, where string) []seg {
 	key, dim := theme.RoleAccent, theme.RoleDim
 	tail := []seg{{"│ ", dim}, {where, theme.RoleLabel}}
 	return fitHints(w, tail,
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"PgUp PgDn ", key}, {"half  ", dim}, {"Home End ", key},
-			{"oldest, present  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows ", key}, {"overlay  ", dim}},
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"PgUp PgDn ", key}, {"half  ", dim}, {"Home End ", key},
-			{"oldest, now  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows  ", key}},
-		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"PgUp PgDn ", key}, {"half  ", dim}, {"Tab ", key}, {"inspect  ", dim}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"district  ", dim},
+			{"Home End ", key}, {"oldest, present  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows ", key}, {"overlay  ", dim}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"district  ", dim},
+			{"Home End ", key}, {"oldest, now  ", dim}, {"Tab ", key}, {"inspect  ", dim}, {"map flows  ", key}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"district  ", dim},
+			{"Home End  ", key}, {"Tab ", key}, {"inspect  ", dim}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"[ ] ", key}, {"Tab ", key}, {"inspect  ", dim}},
+		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"+ - ", key}, {"zoom  ", dim}, {"Tab ", key}, {"inspect  ", dim}},
 		[]seg{{" ◄► ", key}, {"scroll  ", dim}, {"Tab ", key}, {"inspect  ", dim}},
 		[]seg{{" ◄► Tab  ", key}},
 	)
@@ -155,69 +158,176 @@ func (s *scene) header(bg tcell.Color) {
 
 var eighths = [9]rune{' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'}
 
-// minimap is the whole panorama in one row: the skyline profile in eighth
-// blocks, the viewport bracketed, age boundaries ticked and new buildings
-// in the positive colour.
+// overviewCell is the cell of an overview W wide that shows town column
+// col of a town ww columns wide.
+func overviewCell(col, ww, W int) int { return col * W / ww }
+
+// overviewBox is the cells [c0, c1) of an overview W wide that show the
+// part of a town ww columns wide that a view of vw columns starting at cam
+// sees: from the cell of its first column to the cell of its last. A view
+// that runs past the town's end ends the box at the bar's.
+func overviewBox(cam, vw, ww, W int) (c0, c1 int) {
+	if ww <= 0 || W <= 0 {
+		return 0, 0
+	}
+	last := max(cam, min(cam+vw, ww)-1)
+	c0 = clampInt(overviewCell(cam, ww, W), 0, W-1)
+	c1 = clampInt(overviewCell(last, ww, W)+1, c0+1, W)
+	return c0, c1
+}
+
+// overviewSpan is the town columns [a, b) the overview cell x stands for:
+// the columns overviewCell puts there.
+func overviewSpan(x, ww, W int) (a, b int) {
+	a = (x*ww + W - 1) / W
+	b = max(a+1, ((x+1)*ww+W-1)/W)
+	return a, min(b, max(a+1, ww))
+}
+
+// ageWord is the shortest name that tells an age: "Bronze" for "Bronze Age".
+func ageWord(name string) string { return strings.TrimSuffix(name, " Age") }
+
+// minimap is the overview bar: the whole town in one row, its skyline
+// as it stands (each column the height of the tallest building there in the
+// colour of its top, in eighth blocks), the wonders marked, each district
+// named where its name fits, buildings new since your last visit in the
+// positive colour, and a bright box over the part of the town in view at
+// the current zoom.
 func (s *scene) minimap() {
 	y := s.H - 2
 	W := s.W
-	prof := s.lay.prof
-	ww := s.lay.width
+	lay := s.lay
+	prof := lay.prof
+	ww := lay.width
 	bg := theme.Color(theme.RoleBackground)
 	chip := theme.Color(theme.RoleChip)
-	dim, txt := role(theme.RoleDim, bg), role(theme.RoleText, chip)
 	acc := role(theme.RoleAccent, bg)
 	pos := role(theme.RolePositive, bg)
-	vp0 := float64(s.cam) / float64(ww) * float64(W)
-	vp1 := float64(s.cam+W) / float64(ww) * float64(W)
+	// the box is the chip lifted toward the accent, so it reads in any theme
+	lit := theme.Mix(chip, theme.Color(theme.RoleAccent), 0.3)
+	c0, c1 := overviewBox(s.cam, s.lw, ww, W)
+	s.ovBox = [2]int{c0, c1}
 	maxH := 1
 	for _, h := range prof {
 		maxH = max(maxH, h)
 	}
 	isNew := make([]bool, W)
 	if s.v.changes {
-		for _, x := range s.lay.news {
-			if c := int(float64(x) / float64(ww) * float64(W)); c >= 0 && c < W {
+		for _, x := range lay.news {
+			if c := overviewCell(x, ww, W); c >= 0 && c < W {
 				isNew[c] = true
 			}
 		}
 	}
+	tops := make([]tcell.Color, W)
 	for x := 0; x < W; x++ {
-		a, b := x*ww/W, (x+1)*ww/W
-		h := 0
+		a, b := overviewSpan(x, ww, W)
+		h, lot, at := 0, int32(-1), 0
 		for i := a; i < b && i < len(prof); i++ {
-			h = max(h, prof[i])
+			if prof[i] > h {
+				h, lot, at = prof[i], lay.tallest[i], i
+			}
 		}
-		lvl := int(math.Ceil(float64(h) / float64(maxH) * 8))
-		in := float64(x) >= vp0 && float64(x) < vp1
-		cbg, fg := bg, dim
-		if in {
-			cbg, fg = chip, txt
+		cbg := bg
+		if x >= c0 && x < c1 {
+			cbg = lit
+		}
+		fg := role(theme.RoleDim, cbg)
+		if h > 0 && lot >= 0 {
+			lv := &lay.lots[lot]
+			sx := at - lv.x0
+			if t := lv.spr.topAt(sx); t >= 0 {
+				fg = theme.Legible(s.p.col(lv.fam, lv.vr, lv.spr.at(sx, t).fg, lv.ml.Row), cbg, 2)
+			}
 		}
 		if isNew[x] {
 			fg = theme.Legible(pos, cbg, 3)
 		}
-		ch := eighths[clampInt(lvl, 0, 8)]
+		tops[x] = fg
+		lvl := clampInt(int(math.Ceil(float64(h)/float64(maxH)*8)), 0, 8)
+		if h > 0 && lvl == 0 {
+			lvl = 1
+		}
+		ch := eighths[lvl]
 		if ch == '█' {
 			ch = '▇'
 		}
 		s.fb.set(x, y, ch, fg, cbg, dTop)
 	}
-	for _, d := range s.m.Skyline.Districts {
-		if c := d.X0 * W / ww; c > 0 && c < W {
+	cellBg := func(x int) tcell.Color {
+		if x >= c0 && x < c1 {
+			return lit
+		}
+		return bg
+	}
+	for _, d := range s.m.Skyline.Districts { // where each age begins
+		if c := overviewCell(d.X0, ww, W); c > 0 && c < W {
 			if cl := s.fb.at(c, y); cl.ch == ' ' {
-				s.fb.set(c, y, '╷', theme.Legible(dim, cl.bg, 2), cl.bg, dTop)
+				s.fb.set(c, y, '╷', theme.Legible(role(theme.RoleDim, cl.bg), cl.bg, 2), cl.bg, dTop)
 			}
+		}
+	}
+	wonder := make([]bool, W) // the wonders' columns, which a name keeps clear of
+	for _, w := range lay.lots {
+		if c := overviewCell(w.ml.X, ww, W); w.ml.Wonder && c >= 0 && c < W {
+			wonder[c] = true
+		}
+	}
+	named := make([]bool, W)
+	for _, d := range s.m.Skyline.Districts { // each district's name, where it fits
+		name := s.m.Catalog.AgeNames[d.Age]
+		a, b := overviewCell(d.X0, ww, W), overviewCell(d.X0+d.W, ww, W)
+		for _, t := range []string{name, ageWord(name)} {
+			if x, ok := nameSpot(wonder, a, b, textLen(t)); ok {
+				for i, r := range []rune(t) {
+					cbg := theme.Mix(cellBg(x+i), tops[x+i], 0.3)
+					s.fb.set(x+i, y, r, theme.Legible(theme.Color(theme.RoleText), cbg, 4.5), cbg, dTop)
+					named[x+i] = true
+				}
+				break
+			}
+		}
+	}
+	for c, on := range wonder { // the wonders
+		if on {
+			cbg := cellBg(c)
+			s.fb.set(c, y, '◆', theme.Legible(theme.Color(theme.RoleHighlight), cbg, 3), cbg, dTop)
 		}
 	}
 	for _, c := range []struct {
 		x  int
 		ch rune
-	}{{int(vp0), '▕'}, {min(W-1, int(vp1)), '▏'}} {
-		if cl := s.fb.at(clampInt(c.x, 0, W-1), y); cl != nil {
-			s.fb.set(clampInt(c.x, 0, W-1), y, c.ch, theme.Legible(acc, cl.bg, 3), cl.bg, dTop)
+	}{{c0, '▕'}, {c1 - 1, '▏'}} { // the box's edges, where nothing else stands
+		if cl := s.fb.at(c.x, y); cl != nil && !wonder[c.x] && !named[c.x] {
+			s.fb.set(c.x, y, c.ch, theme.Legible(acc, cl.bg, 3), cl.bg, dTop)
 		}
 	}
+}
+
+// nameSpot is where a name n cells wide goes in the cells [a, b) of the
+// overview with a cell of room each side and clear of the marked columns:
+// the middle when it can, else the nearest spot to it.
+func nameSpot(marked []bool, a, b, n int) (int, bool) {
+	room := b - a - n - 2
+	if room < 0 {
+		return 0, false
+	}
+	mid := a + 1 + room/2
+	for d := 0; d <= room; d++ {
+		for _, x := range []int{mid - d, mid + d} {
+			if x < a+1 || x > b-1-n {
+				continue
+			}
+			clear := true
+			for i := x - 1; i <= x+n && clear; i++ {
+				clear = i < 0 || i >= len(marked) || !marked[i]
+			}
+			if clear {
+				return x, true
+			}
+		}
+	}
+	return 0, false
 }
 
 func (s *scene) status(bg tcell.Color) {
@@ -266,8 +376,9 @@ func (s *scene) status(bg tcell.Color) {
 		return
 	}
 	where := "the wilds"
-	if di := m.Skyline.DistrictAt(s.cam + s.W/2); di >= 0 {
+	if di := m.Skyline.DistrictAt(s.cam + s.lw/2); di >= 0 {
 		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + " district"
 	}
+	where = "zoom: " + s.zm.String() + "  " + where
 	s.segs(0, y, bg, panoramaHints(s.W, where))
 }
