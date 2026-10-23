@@ -421,7 +421,15 @@ func (rm *ResearchManager) Modifiers() []Modifier {
 
 // Snapshot returns research state for UI
 func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) ResearchState {
-	techs := make(map[string]TechState)
+	techs := make(map[string]TechState, len(rm.defs))
+	// Every tech's prerequisite lists are copied into one backing array, each
+	// capped at its own length: a snapshot owns its slices (a caller may edit
+	// or append to one) without paying an allocation per tech.
+	var keys sliceArena[string]
+	for _, def := range rm.defs {
+		keys.reserve(def.Prerequisites)
+		keys.reserve(def.AnyOf)
+	}
 
 	for key, def := range rm.defs {
 		// Available: the age is reached and the prerequisites are met (every
@@ -433,8 +441,8 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 			Name:          def.Name,
 			Age:           def.Age,
 			Cost:          def.Cost,
-			Prerequisites: slices.Clone(def.Prerequisites), // def is the manager's table
-			AnyOf:         slices.Clone(def.AnyOf),
+			Prerequisites: keys.clone(def.Prerequisites), // def is the manager's table
+			AnyOf:         keys.clone(def.AnyOf),
 			Description:   def.Description,
 			Researched:    rm.researched[key],
 			Available:     available && !rm.researched[key],

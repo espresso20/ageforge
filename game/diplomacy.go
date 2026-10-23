@@ -906,7 +906,7 @@ func (dm *DiplomacyManager) RecordTrade() {
 
 // Snapshot returns diplomacy state for UI
 func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) DiplomacyState {
-	factions := make(map[string]FactionInfo)
+	factions := make(map[string]FactionInfo, len(dm.factionList))
 
 	for _, def := range dm.factionList {
 		fs, exists := dm.factions[def.Key]

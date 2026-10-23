@@ -3,6 +3,7 @@ package rules
 import (
 	"maps"
 	"slices"
+	"sort"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
@@ -30,10 +31,72 @@ func (s *Set) derive() {
 	s.refSize, s.refStore = config.ReferenceStoreSizes(s.buildings, s.ages, config.ReferenceBaseStore())
 	army := config.RefSoldiers(s.buildings, s.ages)
 	s.refArmy = make(map[string]float64, len(s.ages))
+	s.charged = make(map[string][2]string, len(s.ages))
+	s.olderIn = make(map[string]map[string]string, len(s.ages))
 	for i, a := range s.ages {
 		s.refArmy[a.Key] = army[i]
+		s.charged[a.Key] = s.chargedBy(a)
+		s.olderIn[a.Key] = s.olderKeys(a.Key)
 	}
 }
+
+// olderKeys is UpgradeKeys for age: each line's current rung is worked out
+// once, and every earlier rung of the line that its age and tier put behind it
+// upgrades to it (config.UpgradeTarget, a line at a time).
+func (s *Set) olderKeys(age string) map[string]string {
+	older := map[string]string{}
+	for _, rungs := range s.lineRungs {
+		cur, ok := config.CurrentRung(rungs, s.agePos, age)
+		if !ok {
+			continue
+		}
+		for i := range rungs {
+			d := &rungs[i]
+			if config.InLine(*d) && s.agePos[cur.RequiredAge] > s.agePos[d.RequiredAge] && cur.LineageTier > d.LineageTier {
+				older[d.Key] = cur.Key
+			}
+		}
+	}
+	return older
+}
+
+// chargedBy is the two resources most of the buildings age unlocks cost
+// something in, the more charged first and a tie broken by key; "" for a
+// place not filled.
+func (s *Set) chargedBy(age config.AgeDef) [2]string {
+	charges := map[string]int{}
+	for _, key := range age.UnlockBuildings {
+		b, found := s.buildingByKey[key]
+		if !found {
+			continue
+		}
+		for res := range b.BaseCost {
+			charges[res]++
+		}
+	}
+	keys := make([]string, 0, len(charges))
+	for res := range charges {
+		keys = append(keys, res)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if charges[keys[i]] != charges[keys[j]] {
+			return charges[keys[i]] > charges[keys[j]]
+		}
+		return keys[i] < keys[j]
+	})
+	var out [2]string
+	copy(out[:], keys)
+	return out
+}
+
+// ChargedMaterials is the two resources the buildings age unlocks charge most
+// (a mission's cost is minutes of the town's income in them), the more
+// charged first; "" for a place not filled. Both are "" for an unknown age.
+func (s *Set) ChargedMaterials(age string) [2]string { return s.charged[age] }
+
+// PriceLevel is res's price level in age (PriceLevels), 0 for a resource that
+// is not one of the age's construction materials.
+func (s *Set) PriceLevel(age, res string) float64 { return s.priceLevels[age][res] }
 
 // TypicalStorage is what a moderate builder's store holds of res in age:
 // its base storage and config.StorageRuleCopies copies of every storage building
@@ -63,6 +126,15 @@ func (s *Set) AgeHasStorageBuilding(age string) bool {
 // what it is now, and the two scales that put the difference back.
 func (s *Set) MilitaryScale(order int) config.MilitaryScaleDef {
 	return config.MilitaryScaleIn(s.military, order)
+}
+
+// MilitaryScaleAt is MilitaryScale for an order that is one of the set's ages,
+// and false for any other (MilitaryScale clamps it instead).
+func (s *Set) MilitaryScaleAt(order int) (config.MilitaryScaleDef, bool) {
+	if order < 0 || order >= len(s.military) {
+		return config.MilitaryScaleDef{}, false
+	}
+	return s.military[order], true
 }
 
 // AgeThreat is the raid threat of the age with the given order, on this

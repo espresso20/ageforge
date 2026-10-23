@@ -510,20 +510,6 @@ func (ge *GameEngine) withResearchTimes(rs ResearchState) ResearchState {
 	return rs
 }
 
-// withScholarFigures adds to a snapshot of the buildings what the scholars
-// say of each knowledge building: the scholars a copy comes with and the
-// most copies that can be built.
-func (ge *GameEngine) withScholarFigures(bs map[string]BuildingState) map[string]BuildingState {
-	for key, b := range bs {
-		if def, ok := ge.Buildings.defs[key]; ok && def.Scholars > 0 {
-			b.Scholars = def.Scholars
-			b.ScholarCap = def.MaxCount
-			bs[key] = b
-		}
-	}
-	return bs
-}
-
 // scholarShareSave is the research setting for a save: nil when it is the
 // default, so a town that never set it writes nothing.
 func (ge *GameEngine) scholarShareSave() *int {
