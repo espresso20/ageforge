@@ -53,7 +53,7 @@ func limbOf(W, S, gy int) []float64 {
 		if v := R*R - dx*dx; v > 0 {
 			out[x] = cy - math.Sqrt(v)
 		} else {
-			out[x] = 1e9
+			out[x] = 1_000_000_000
 		}
 	}
 	return out

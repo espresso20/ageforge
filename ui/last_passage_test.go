@@ -7,6 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -286,7 +287,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 
 	// The prices are printed in full whatever the number of materials: the
 	// thread's own two, and four, each on one row of an 80 by 24 screen.
-	four := map[string]float64{"titanium": 9.6e18, "dark_matter": 1.1e19, "plasma": 1.18e19, "nanobots": 7.3e18}
+	four := map[string]float64{"titanium": 9.6 * config.Quintillion, "dark_matter": 11 * config.Quintillion, "plasma": 11.8 * config.Quintillion, "nanobots": 7.3 * config.Quintillion}
 	for _, tc := range []struct {
 		name  string
 		brace map[string]float64

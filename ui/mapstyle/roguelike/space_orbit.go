@@ -52,7 +52,7 @@ func (p *planetGeom) limb(x int) float64 {
 	dx := (float64(x) - p.cx) / 2
 	d := p.r*p.r - dx*dx
 	if d <= 0 {
-		return 1e9
+		return billion
 	}
 	return p.cy - math.Sqrt(d)
 }

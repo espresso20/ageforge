@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -26,7 +27,7 @@ func TestFaithRowShowsTheStrengthTheRollsRead(t *testing.T) {
 		o := game.CatastropheOutlook{FaithStrength: c.strength, FaithBand: band, FaithDevotion: c.strength * game.FaithFullSets, FaithKept: 1}
 		odds := fmt.Sprintf("(epoch: %.0f%% good)", game.EpochGoodChanceIn(band)*100)
 		// A big stock: none of the row's business.
-		row, bar := faithRowText(game.ResourceState{Name: "Faith", Amount: 5e11, Rate: 0.5}, o)
+		row, bar := faithRowText(game.ResourceState{Name: "Faith", Amount: 500 * config.Billion, Rate: 0.5}, o)
 		if !strings.Contains(row, c.label) || !strings.Contains(row, odds) || !strings.Contains(row, fmt.Sprintf("%.0f%%", c.strength*100)) {
 			t.Errorf("strength %v (%s): row %q, want %q, %q and the strength as a percentage", c.strength, band, row, c.label, odds)
 		}

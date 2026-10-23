@@ -21,7 +21,7 @@ func statsProvider(state game.GameState, _ int) string {
 	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.01", "[gold]═══ Statistics ═══[-]\n\n"))
 	s := state.Stats
 
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.02", " [gold]Play time:[-]          %s\n", s.PlayTime.Truncate(1e9)))
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.02", " [gold]Play time:[-]          %s\n", s.PlayTime.Truncate(config.Billion)))
 	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.03", " [gold]Game ticks:[-]         %s\n", textfmt.Int(state.Tick)))
 	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.04", " [gold]Buildings built:[-]    %s\n", textfmt.Int(s.TotalBuilt)))
 	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_stats.statsProvider.05", " [gold]Workers recruited:[-]  %s\n", textfmt.Int(s.TotalRecruited)))
