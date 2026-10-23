@@ -164,8 +164,8 @@ func TestPlanPanelNeverWaitsOnStorage(t *testing.T) {
 	}
 }
 
-// The Next Age row lists the age's storage building like any other building
-// count, and the refusal to advance points at it.
+// The Ledger's waiting line lists the age's storage building like any other
+// building count, and the refusal to advance points at it.
 func TestNextAgeRowListsTheStorageRequirement(t *testing.T) {
 	restoreForge(t)
 	d, pages, eng := stagedDashboard(t, "medieval_age")
@@ -186,16 +186,16 @@ func TestNextAgeRowListsTheStorageRequirement(t *testing.T) {
 	all[st.CurrentAgeWonderKey] = 1
 	eng.Buildings.LoadCounts(all)
 	eng.StepTicks(1)
-	if r := HandleCommand("advance", eng); r.Type != "error" || !strings.Contains(r.Message, "Next Age bar") {
+	if r := HandleCommand("advance", eng); r.Type != "error" || !strings.Contains(r.Message, "waiting on") {
 		t.Errorf("advance with two stores short: %+v", r)
 	}
 	for _, sz := range wallSizes {
 		w, h := sz[0], sz[1]
 		cells := drawnDashboard(t, d, pages, w, h)
-		rows := checkFitted(t, fmt.Sprintf("Next Age at %dx%d", w, h), d.ageTV, cells, w)
+		rows := checkFittedBox(t, fmt.Sprintf("Ledger at %dx%d", w, h), d.ledgerTV, cells, w)
 		got := flat(rows)
-		if !strings.Contains(got, "✗ "+name+" 3/5") {
-			t.Errorf("%dx%d: the Next Age row does not list the %s still to build:\n%s", w, h, name, strings.Join(rows, "\n"))
+		if !strings.Contains(got, name+" 3/5") {
+			t.Errorf("%dx%d: the Ledger does not list the %s still to build:\n%s", w, h, name, strings.Join(rows, "\n"))
 		}
 	}
 }

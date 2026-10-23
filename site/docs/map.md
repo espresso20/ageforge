@@ -226,7 +226,7 @@ The mini map is off by default. Type `minimap on` and the dashboard shows a comp
 
 It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it again and gives the list the whole column. In the roguelike style it marks the tile the Map panel's cursor is on with the same highlighted cell.
 
-The mini map needs room: it appears on terminals of 105 columns by 34 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
+The mini map needs room: it appears on terminals of 105 columns by 36 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 
 ---
 

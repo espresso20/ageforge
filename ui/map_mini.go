@@ -34,14 +34,15 @@ const (
 	dockMinBody = 18
 
 	// miniMapMinCols and miniMapMinRows are the smallest terminal the
-	// dashboard shows the mini map on: 105 by 34. Beside the right column
+	// dashboard shows the mini map on: 105 by 36. Beside the right column
 	// the screen is split in two, the odd column going to the right half,
 	// where the mini map is, and that half must be miniMinW wide. Under the
-	// rows the dashboard keeps for itself the dock needs the shortest map,
-	// its border and dockMinBody rows of list. The wiki and the minimap
-	// command quote them (TestMiniMapAppearsWhereTheDocsSay).
+	// rows the dashboard keeps for itself (the Ledger is its standard size
+	// by then, ledgerExtraRows taller than the smallest) the dock needs the
+	// shortest map, its border and dockMinBody rows of list. The wiki and
+	// the minimap command quote them (TestMiniMapAppearsWhereTheDocsSay).
 	miniMapMinCols = 2*miniMinW - 1 + sidebarW
-	miniMapMinRows = dashHeaderRows + promptRows + miniMinInnerH + 2 + dockMinBody
+	miniMapMinRows = dashHeaderRows + ledgerExtraRows + promptRows + miniMinInnerH + 2 + dockMinBody
 )
 
 // miniHeight is the mini map's height, border included, in a w x h dock:
