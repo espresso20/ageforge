@@ -16,10 +16,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"maps"
-	"sync"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Source is the flat definitions a Set is compiled from: the tables package
@@ -175,15 +175,11 @@ func FromConfig() Source {
 	return src
 }
 
-// core is the one set built from package config: the process's only
-// once-built table of definitions. Every engine that is not handed a set of
-// its own shares it.
-var core = sync.OnceValue(func() *Set { return Compile(FromConfig()) })
-
 // Core returns the set compiled from package config, built on first use and
 // shared from then on. It is what an engine runs on unless it is given
-// another, and what code with no engine or snapshot to hand reads.
-func Core() *Set { return core() }
+// another, and what code with no engine or snapshot to hand reads. While
+// VibeMode is on it is the same set in VibeMode's words (CoreFor).
+func Core() *Set { return CoreFor(vibe.On()) }
 
 // Digest is a hash of everything the set holds. A set never changes, so its
 // digest never does: tests take one before and after a run to prove that
