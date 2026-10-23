@@ -19,17 +19,28 @@ func segsText(parts []seg) string {
 // off at 100 columns.
 func TestPanoramaHintsFit(t *testing.T) {
 	const where = "zoom: close  information age district" // the longest the place can be
-	for w := 80; w <= 200; w++ {
-		parts := panoramaHints(w, where, hintScroll)
-		line := segsText(parts)
-		if n := segsLen(parts); n > w {
-			t.Errorf("at %d columns the status line is %d wide: %q", w, n, line)
-		}
-		if !strings.HasSuffix(line, "│ "+where) {
-			t.Errorf("at %d columns the status line does not end with where the view is: %q", w, line)
-		}
-		if strings.Contains(line, "flows flows") {
-			t.Errorf("at %d columns the status line repeats itself: %q", w, line)
+	for _, mode := range []hintMode{hintScroll, hintPan, hintFit} {
+		for w := 80; w <= 200; w++ {
+			parts := panoramaHints(w, where, mode)
+			line := segsText(parts)
+			if n := segsLen(parts); n > w {
+				t.Errorf("mode %d at %d columns the status line is %d wide: %q", mode, w, n, line)
+			}
+			if !strings.HasSuffix(line, "│ "+where) {
+				t.Errorf("mode %d at %d columns the status line does not end with where the view is: %q", mode, w, line)
+			}
+			if strings.Contains(line, "flows flows") {
+				t.Errorf("mode %d at %d columns the status line repeats itself: %q", mode, w, line)
+			}
+			// the arrows' hint says what they do, and the far level, where they do nothing, does not name them
+			switch {
+			case mode == hintPan && w >= 100 && !strings.Contains(line, "◄►▲▼ pan"):
+				t.Errorf("at %d columns the close level's line does not name the pan keys: %q", w, line)
+			case mode == hintFit && strings.Contains(line, "◄►"):
+				t.Errorf("at %d columns the far level's line names arrows that do nothing: %q", w, line)
+			case mode == hintScroll && strings.Contains(line, "▲▼"):
+				t.Errorf("at %d columns the scroll line names a pan: %q", w, line)
+			}
 		}
 	}
 	if line := segsText(panoramaHints(120, "zoom: mid  bronze age district", hintScroll)); !strings.Contains(line, "map flows") || !strings.Contains(line, "Home End") {
