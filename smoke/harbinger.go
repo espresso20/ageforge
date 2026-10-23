@@ -298,7 +298,7 @@ type FateRow struct {
 	AtAdvance bool `json:"at_advance,omitempty"`
 	Invited   bool `json:"invited,omitempty"`
 	// WarningTicks is how long its harbinger was there before it resolved;
-	// WarningAgeFrac is that as a share of the resolving age's target.
+	// WarningAgeFrac is that as a share of the resolving age's price target.
 	WarningTicks   int     `json:"warning_ticks,omitempty"`
 	WarningAgeFrac float64 `json:"warning_age_frac,omitempty"`
 	ResolvedAge    string  `json:"resolved_age,omitempty"`
@@ -375,7 +375,7 @@ func (r *runner) onFateResolved(e game.EventData) {
 	tick, _ := e.Payload["tick"].(int)
 	if arrived, ok := e.Payload["arrived_tick"].(int); ok && tick >= arrived {
 		f.WarningTicks = tick - arrived
-		if t := r.rules.TargetTicks(f.ResolvedAge); t > 0 {
+		if t := r.rules.PriceTargetTicks(f.ResolvedAge); t > 0 {
 			f.WarningAgeFrac = float64(f.WarningTicks) / t
 		}
 	}
