@@ -5,197 +5,197 @@ flavor.harbinger_arrival.any.003,That evening there was one topic and one topic 
 flavor.harbinger_arrival.any.004,An afternoon so ordinary it was almost mid
 flavor.harbinger_arrival.any.005,Half the settlement pulled up to get a look at {subject}
 flavor.harbinger_arrival.any.006,"Everybody knows the lore: when one of these spawns in, it means something"
-flavor.harbinger_arrival.any.007,"A few people packed a go-bag that night and unpacked it in the morning, cringing at themselves"
+flavor.harbinger_arrival.any.007,"A few people went full prepper mode and packed a bag that night, then unpacked it by morning feeling like clowns"
 flavor.harbinger_arrival.any.008,"Three people claimed they'd dreamed about {subject} the week before, and one of them had actually said so at the time, so she gets to be main character for a bit"
-flavor.harbinger_arrival.any.009,"An old woman said she'd seen one of these as a girl, and that the last one was right, which is not the comforting fun fact she thinks it is"
+flavor.harbinger_arrival.any.009,"An old woman casually dropped that she'd seen one of these as a girl, and the last one was right, which is not the fun fact she thinks it is"
 flavor.harbinger_arrival.any.010,"This is literally how the old stories start, chapter one cutscene"
-flavor.harbinger_arrival.any.011,"The first thing anyone wrote down about {subject} was the time of day, timestamp secured"
-flavor.harbinger_arrival.any.012,"Sleep was short, like nap-length short"
-flavor.harbinger_arrival.any.013,"Two brothers who'd been not-speaking for a year stood side by side to watch {subject} arrive, and afterwards neither of them mentioned it, the beef is paused, not canceled"
+flavor.harbinger_arrival.any.011,Somebody timestamped {subject} before writing down literally anything else
+flavor.harbinger_arrival.any.012,Everyone got nap-length sleep at best
+flavor.harbinger_arrival.any.013,"Two brothers deep in a year-long silent treatment stood side by side to watch {subject} arrive, and afterwards neither of them brought it up"
 flavor.harbinger_arrival.any.014,Suddenly everyone had a very urgent reason to be outside
-flavor.harbinger_arrival.any.015,"Old Tamsin, who'd spent a year saying something was coming, was insufferable by nightfall, and her brother-in-law, who'd spent the same year saying nothing ever would, took his L and went to bed early"
-flavor.harbinger_arrival.any.016,"The complaining started before {subject} had even finished arriving, mostly about the timing, which was apparently inconvenient for literally everyone"
-flavor.harbinger_arrival.any.017,"Moms kept counting their kids without meaning to, and the kids let them, no complaints"
-flavor.harbinger_arrival.grounded.001,"The dogs howled into the small hours, they knew something"
-flavor.harbinger_arrival.grounded.002,"Doors got barred that night that hadn't been barred in years, emergency security patch"
-flavor.harbinger_arrival.grounded.003,"At the end of the lane a woman who'd lived there forty years started packing her pots into a blanket, slowly, stopping to look at each one, a farewell tour for the cookware"
-flavor.harbinger_arrival.grounded.004,"Candles in every window, the street on night-light mode"
-flavor.harbinger_arrival.grounded.005,"The crows rolled in from the fields at noon, which is the wrong time for crows, and the village absolutely noticed"
-flavor.harbinger_arrival.grounded.006,"An old man who lived through the last bad time dragged his chair out into the road and sat there, hands on his knees, watching the sky, and would not be brought in to eat, fully locked in"
+flavor.harbinger_arrival.any.015,"Old Tamsin, who'd spent a year saying something was coming, was absolutely insufferable by nightfall, and her brother-in-law, who'd spent the same year saying nothing ever would, took the L and went to bed early"
+flavor.harbinger_arrival.any.016,"The haters started grumbling before {subject} had even finished arriving, mostly about the timing"
+flavor.harbinger_arrival.any.017,"Moms kept running headcounts on their kids without meaning to, and the kids let them"
+flavor.harbinger_arrival.grounded.001,The dogs were howling into the small hours like they'd read the group chat
+flavor.harbinger_arrival.grounded.002,Doors that hadn't been barred in years got an emergency security patch that night
+flavor.harbinger_arrival.grounded.003,"At the end of the lane a woman who'd lived there forty years started a slow farewell tour of her cookware, packing each pot into a blanket and stopping to look at it first"
+flavor.harbinger_arrival.grounded.004,Every window on the street switched to candle mode
+flavor.harbinger_arrival.grounded.005,"The crows rolled in from the fields at noon, which is deeply off-brand for crows"
+flavor.harbinger_arrival.grounded.006,"An old man who survived the last bad time dragged his chair into the road and locked in, hands on his knees, eyes on the sky, refusing to come in to eat"
 flavor.harbinger_arrival.grounded.007,"Nobody would fetch water solo after dark, buddy system only"
 flavor.harbinger_arrival.late.001,"It was on every screen, there was no escaping it"
 flavor.harbinger_arrival.late.002,"The alerts refused to clear, notification purgatory"
-flavor.harbinger_arrival.late.003,"The lights in the common areas got dimmed and stayed that way, mood lighting nobody asked for"
-flavor.harbinger_arrival.late.004,"Traffic on the local net tripled inside the first hour, and most of it was people asking each other if they'd seen it yet"
+flavor.harbinger_arrival.late.003,"The common area lights got dimmed to mood lighting nobody asked for, and stayed that way"
+flavor.harbinger_arrival.late.004,"Local net traffic tripled in the first hour, mostly people asking each other have you seen it yet"
 flavor.harbinger_arrival.late.005,"For about a minute after it came, every system in the settlement froze trying to classify what it had just received, and that machine silence scared people way more than any alarm"
 flavor.harbinger_arrival.late.006,"People slept with their earpieces in, on call for the apocalypse"
 flavor.harbinger_arrival.ancient.001,"The drums cut out, and the silence was loud"
-flavor.harbinger_arrival.ancient.002,"Ash rode the wind all day, the air was giving bonfire nobody wanted"
+flavor.harbinger_arrival.ancient.002,The wind spent all day serving ash
 flavor.harbinger_arrival.ancient.003,The elders pulled a late one at the big fire
 flavor.harbinger_arrival.ancient.004,"The herd refused to settle, the animals were not okay"
 flavor.harbinger_arrival.ancient.005,"A goat turned up dead in the morning with not one mark on it, extremely sus"
-flavor.harbinger_arrival.ancient.006,"The women brought the little ones into the huts and sat in the doorways with their backs to the light, on guard"
-flavor.harbinger_arrival.ancient.007,"A boy saw a hawk carry a snake over the huts, and by evening literally everybody had seen it"
+flavor.harbinger_arrival.ancient.006,The women tucked the little ones into the huts and posted up in the doorways with their backs to the light
+flavor.harbinger_arrival.ancient.007,"A boy saw a hawk carry a snake over the huts, and by evening literally everybody claimed they'd seen it too"
 flavor.harbinger_arrival.ancient.008,"The old men argued about whether this happened in their grandfathers' time, settled nothing, and queued up round two for the next meal"
 flavor.harbinger_arrival.ancient.009,"The elders banned the young men from clowning on it, which made the young men ten times worse"
 flavor.harbinger_arrival.ancient.010,"The elders say nobody leaves camp solo until the moon turns, no exceptions"
-flavor.harbinger_arrival.ancient.011,"Three goats, one dog and a kid's cough, all pinned on {subject} by evening, catching strays left and right"
-flavor.harbinger_arrival.ancient.012,"The hunters say the herds moved off because of all this yapping, and they say it loudly"
+flavor.harbinger_arrival.ancient.011,"By evening {subject} was catching strays for three goats, one dog and a kid's cough"
+flavor.harbinger_arrival.ancient.012,The hunters are loudly blaming all this yapping for the herds moving off
 flavor.harbinger_arrival.ancient.013,"By the second night every family had buried something it couldn't afford to lose behind its hut, and every family knew where everyone else's was, because the ground is hard and digging is loud"
 flavor.harbinger_arrival.ancient.014,"The fires got built higher that night, with someone on night shift at each one"
 flavor.harbinger_arrival.feudal.001,"The market cleared out early, the vendors noped out"
 flavor.harbinger_arrival.feudal.002,"The masons downed tools, the build is on pause"
-flavor.harbinger_arrival.feudal.003,"The church was packed by vespers, standing room only"
-flavor.harbinger_arrival.feudal.004,"Carts turned round on the road outside the gate and went right back the way they came, hard pass"
-flavor.harbinger_arrival.feudal.005,"The priest preached on the Flood without being asked to, and he went long, extended cut"
+flavor.harbinger_arrival.feudal.003,The church hit full capacity by vespers
+flavor.harbinger_arrival.feudal.004,"Carts outside the gate took one look, turned round, and noped back the way they came"
+flavor.harbinger_arrival.feudal.005,"The priest dropped an unrequested sermon on the Flood, extended cut"
 flavor.harbinger_arrival.feudal.006,Every dog in the village barked at absolutely nothing all night
-flavor.harbinger_arrival.feudal.007,"The miller sold three sacks of flour before noon and hiked the price on the fourth, peak hustle culture"
-flavor.harbinger_arrival.feudal.008,"The steward doubled the watch on the storehouse, nobody's getting near those snacks"
+flavor.harbinger_arrival.feudal.007,"The miller sold three sacks of flour before noon and price-gouged the fourth, peak hustle culture"
+flavor.harbinger_arrival.feudal.008,"The storehouse got a double watch from the steward, protecting the snacks at all costs"
 flavor.harbinger_arrival.feudal.009,"The alewife says it's bad for business, and she'd know"
 flavor.harbinger_arrival.feudal.010,"By supper the whole parish had heard, and by morning there were three versions doing the rounds at the market, one featuring a comet nobody actually saw"
 flavor.harbinger_arrival.feudal.011,The bells got rung for no reason anyone will own up to
-flavor.harbinger_arrival.feudal.012,"A notice went up on the church door banning idle talk about the end of the world, and a crowd gathered to read it, which, ironic"
+flavor.harbinger_arrival.feudal.012,"A notice banning idle end-of-the-world talk went up on the church door, and a crowd immediately gathered to read it and idly talk about it"
 flavor.harbinger_arrival.feudal.013,"By the time the lamps were lit, {subject} was the name in every doorway"
-flavor.harbinger_arrival.feudal.014,The kids followed {subject} as far as the churchyard wall and not one step further
+flavor.harbinger_arrival.feudal.014,The kids trailed {subject} as far as the churchyard wall and then hit their limit
 flavor.harbinger_arrival.industrial.001,The shift whistle blew early and not one person complained
 flavor.harbinger_arrival.industrial.002,"The pubs were popping off, best night of business in ages"
 flavor.harbinger_arrival.industrial.003,"Men stood in little huddles on the corner, reading over each other's shoulders like a group chat in real life"
-flavor.harbinger_arrival.industrial.004,"The foreman gave nobody the afternoon off, the grind waits for no prophecy"
-flavor.harbinger_arrival.industrial.005,"Two shops on the high street sold out of candles by teatime, the panic buy is real"
-flavor.harbinger_arrival.industrial.006,"Chapel doors stayed open all night, the after-hours crowd was massive"
-flavor.harbinger_arrival.industrial.007,"The kids played end-of-the-world in the street until they got called in, method acting"
+flavor.harbinger_arrival.industrial.004,The foreman decided the grind waits for no prophecy and gave nobody the afternoon off
+flavor.harbinger_arrival.industrial.005,"Two high street shops got cleaned out of candles by teatime, panic buying unlocked"
+flavor.harbinger_arrival.industrial.006,The chapel pulled an all-nighter with the doors wide open
+flavor.harbinger_arrival.industrial.007,"The kids played end-of-the-world in the street, fully method acting, until they got called in"
 flavor.harbinger_arrival.industrial.008,"The town hall asked residents to stay calm and to please, for the love of everything, stop phoning the town hall"
 flavor.harbinger_arrival.industrial.009,"The trains ran on time, which people found deeply sus"
 flavor.harbinger_arrival.industrial.010,"The canteen talked about nothing else until the pudding came round, and then the pudding won"
 flavor.harbinger_arrival.industrial.011,"The insurance men were out on the doorsteps by teatime with their order books, going house to house and doing such brisk business that the manager came down from head office to witness the hustle himself"
 flavor.harbinger_arrival.industrial.012,"By morning someone had chalked REPENT on the warehouse wall, very on brand"
-flavor.harbinger_arrival.industrial.013,"The smoke from the stacks lay flat over the rooftops all day, the skyline was giving gloom"
-flavor.harbinger_arrival.industrial.014,"The landlord of the corner house put up a sign reading NO CREDIT UNTIL FURTHER NOTICE and felt zero shame, based honestly"
-flavor.harbinger_arrival.digital.001,"Every phone in the building buzzed at the same time, a jump scare in surround sound"
+flavor.harbinger_arrival.industrial.013,"The stacks' smoke sat flat on the rooftops all day, a gloom filter on the whole skyline"
+flavor.harbinger_arrival.industrial.014,"The landlord of the corner house put up NO CREDIT UNTIL FURTHER NOTICE with zero shame, honestly based"
+flavor.harbinger_arrival.digital.001,Every phone in the building buzzed at once like a surround-sound jump scare
 flavor.harbinger_arrival.digital.002,"Productivity: zero, all day"
-flavor.harbinger_arrival.digital.003,"The servers ran hot all night, working harder than anyone in the building"
+flavor.harbinger_arrival.digital.003,"The servers ran hot all night, outworking every human in the building"
 flavor.harbinger_arrival.digital.004,"Someone printed a copy and pinned it to the break room board, where it got more reads than anything ever pinned there"
-flavor.harbinger_arrival.digital.005,"The help desk logged four hundred tickets before lunch, help desk is in shambles"
-flavor.harbinger_arrival.digital.006,"The network slowed to a crawl because everyone tried to read it at once, the lag was biblical"
-flavor.harbinger_arrival.digital.007,"Management sent round a memo asking staff not to forward it, and the memo got forwarded"
-flavor.harbinger_arrival.digital.008,"People refreshed their feeds until their thumbs were sore, doomscroll olympics"
+flavor.harbinger_arrival.digital.005,The help desk got ratioed by four hundred tickets before lunch
+flavor.harbinger_arrival.digital.006,Everyone tried to read it at once and the network lagged into a crawl
+flavor.harbinger_arrival.digital.007,"Management begged staff not to forward it, and that memo got forwarded too"
+flavor.harbinger_arrival.digital.008,People doomscrolled their feeds until their thumbs ached
 flavor.harbinger_arrival.digital.009,"The family group chat has been going nonstop since lunch, aunties fully activated"
-flavor.harbinger_arrival.digital.010,"Several people deleted their apps and reinstalled them within the hour, the detox lasted forty minutes"
-flavor.harbinger_arrival.digital.011,"On the ninth floor a guy who'd been there sixteen years stood up, put his coat on and went home without telling anyone, and his screen stayed lit all night, the quietest quit ever"
-flavor.harbinger_arrival.digital.012,"The complaints line was jammed solid, everyone had a grievance"
-flavor.harbinger_arrival.digital.013,"The drone deliveries stopped, no more snacks from the sky"
-flavor.harbinger_arrival.digital.014,"By evening searches for {subject} outnumbered searches for everything else combined, trending number one"
-flavor.harbinger_arrival.cosmic.001,"Time felt thin, like the universe was lagging"
-flavor.harbinger_arrival.cosmic.002,"The deep antennas all swiveled at once, synchronized and creepy"
+flavor.harbinger_arrival.digital.010,"Several people rage-deleted their apps and reinstalled them within the hour, the shortest detox ever"
+flavor.harbinger_arrival.digital.011,"On the ninth floor a guy with sixteen years there just stood up, put his coat on and quietly dipped without telling anyone, his screen glowing all night"
+flavor.harbinger_arrival.digital.012,The complaints line got absolutely flooded
+flavor.harbinger_arrival.digital.013,"No more snack drops from the sky, the drone deliveries stopped"
+flavor.harbinger_arrival.digital.014,"By evening {subject} was out-searching everything else combined, trending number one"
+flavor.harbinger_arrival.cosmic.001,"The universe felt like it was buffering, time gone thin"
+flavor.harbinger_arrival.cosmic.002,The deep antennas all swiveled at once in creepy sync
 flavor.harbinger_arrival.cosmic.003,"The night watch logged it, double-checked the log, then logged it again just to be sure they weren't delulu"
 flavor.harbinger_arrival.cosmic.004,"The crew kept stopping at the viewports to stare at nothing, collective side-eye at the void"
-flavor.harbinger_arrival.cosmic.005,"The hull ticked as it cooled, ambient horror soundtrack"
-flavor.harbinger_arrival.cosmic.006,"The long-range relay picked up a signal with no origin, an unknown number calling from nowhere"
+flavor.harbinger_arrival.cosmic.005,"The hull did its ticking-as-it-cools thing, horror movie soundtrack included"
+flavor.harbinger_arrival.cosmic.006,The long-range relay picked up a no-caller-ID signal from absolutely nowhere
 flavor.harbinger_arrival.cosmic.007,It's been ages since anything out there texted first
-flavor.harbinger_arrival.cosmic.008,"The station chaplain held a surprise service and every seat was taken, full house"
-flavor.harbinger_arrival.cosmic.009,"A circular went round the decks confirming the contact was real and asking crew to get back to work, please and thank you"
-flavor.harbinger_arrival.cosmic.010,"Out past the orbit of the last moon, where the dark is so total the instruments sometimes report their own noise as stars, something had turned toward the colony and started, very patiently, to talk"
+flavor.harbinger_arrival.cosmic.008,"The station chaplain dropped a surprise service and it sold out, every seat taken"
+flavor.harbinger_arrival.cosmic.009,A circular went round the decks confirming the contact was real and asking everyone to please get back to work
+flavor.harbinger_arrival.cosmic.010,"Out past the orbit of the last moon, where the dark is so total the instruments mistake their own noise for stars, something had turned toward the colony and started, very patiently, sliding into its DMs"
 flavor.harbinger_arrival.cosmic.011,The relay room has filed three noise complaints and been told to deal with it
-flavor.harbinger_arrival.cosmic.012,"The kids on the habitat ring drew pictures of {subject} and stuck them to the viewports facing outward, fan art for the void"
-flavor.harbinger_arrival.cosmic.013,"The stars looked exactly the same as always, which was somehow worse"
-flavor.harbinger_arrival.cosmic.014,"Nothing on the scopes, not even a blip"
+flavor.harbinger_arrival.cosmic.012,The kids on the habitat ring drew fan art of {subject} and stuck it to the viewports facing outward
+flavor.harbinger_arrival.cosmic.013,"The stars were giving exactly the same as always, which was somehow worse"
+flavor.harbinger_arrival.cosmic.014,"The scopes came up empty, not even a blip"
 flavor.harbinger_arrival.primitive_age.001,"He smelled like smoke and dead things, the worst signature scent"
-flavor.harbinger_arrival.primitive_age.002,"He came out of the trees on the far side of the old burn, ashy grey head to toe, what an entrance"
-flavor.harbinger_arrival.primitive_age.003,"A string of finger bones hung round his neck, and he would not say whose, red flag"
-flavor.harbinger_arrival.primitive_age.004,"He squatted by the fire pit and drew circles in the ash with one long black nail, one inside the other, until the whole camp gathered to watch and the smallest kids got lifted up to see over everyone, the original livestream"
+flavor.harbinger_arrival.primitive_age.002,"He came out of the trees on the far side of the old burn, ashy grey from head to foot, an entrance and a half"
+flavor.harbinger_arrival.primitive_age.003,"A string of finger bones hung round his neck, and he refused to spill whose, giant red flag"
+flavor.harbinger_arrival.primitive_age.004,"He squatted by the fire pit and drew circles in the ash with one long black nail, one inside the other, until the whole camp had gathered round and the littlest kids had been hoisted up to watch the original livestream"
 flavor.harbinger_arrival.stone_age.001,"He'd been walking for days, cardio king"
-flavor.harbinger_arrival.stone_age.002,"Three knots in his beard, one per thing he'd seen, beard doubling as a receipt book"
-flavor.harbinger_arrival.stone_age.003,"He came down from the high caves for the first time since the long winter the old women still talk about, a rare spawn"
-flavor.harbinger_arrival.stone_age.004,"Meat was brought to him and he turned it down, then sat at the cave mouth until dark, aura farming"
-flavor.harbinger_arrival.bronze_age.001,"She rolled up on a mule with a bag of knucklebones, a cage of sparrows and a boy to carry both, iconic entourage"
+flavor.harbinger_arrival.stone_age.002,"His beard doubles as a receipt book, three knots, one for each thing he'd seen"
+flavor.harbinger_arrival.stone_age.003,He hadn't spawned outside the high caves since the long winter the old women still talk about
+flavor.harbinger_arrival.stone_age.004,He turned down the meat they brought and aura-farmed at the cave mouth until dark
+flavor.harbinger_arrival.bronze_age.001,"She rolled up on a mule with an iconic entourage: a bag of knucklebones, a cage of sparrows and a boy to carry both"
 flavor.harbinger_arrival.bronze_age.002,"First things first, she wanted a goat"
-flavor.harbinger_arrival.bronze_age.003,"Her hands were stained brown to the wrist from reading entrails, the job comes with a look"
+flavor.harbinger_arrival.bronze_age.003,"Entrail reading had stained her hands brown to the wrist, occupational drip"
 flavor.harbinger_arrival.bronze_age.004,"The temple priests couldn't hold eye contact with her, aura difference"
-flavor.harbinger_arrival.iron_age.001,"Sand in his beard and nothing on his feet, barefoot prophet core"
+flavor.harbinger_arrival.iron_age.001,"He was serving barefoot prophet core, sand in the beard and nothing on his feet"
 flavor.harbinger_arrival.iron_age.002,"He'd been snacking on locusts the entire road, protein king"
-flavor.harbinger_arrival.iron_age.003,"He walked in from the dry country in a camel-hair cloak, posted up by the well at noon, and shouted until the whole market came to look"
+flavor.harbinger_arrival.iron_age.003,"He walked in from the dry country in a camel-hair cloak, posted up by the well at noon, and yelled until the whole market pulled up to look"
 flavor.harbinger_arrival.iron_age.004,The dogs tailed him in from the edge of camp like an entourage
-flavor.harbinger_arrival.classical_age.001,"The pilgrims came back grey-faced, and that's never a good sign"
-flavor.harbinger_arrival.classical_age.002,"A shrine priest rode in with a sealed tablet and a sore back, the commute was brutal"
+flavor.harbinger_arrival.classical_age.001,The pilgrims came back looking grey and haunted
+flavor.harbinger_arrival.classical_age.002,A shrine priest rode in with a sealed tablet and a sore back from the brutal commute
 flavor.harbinger_arrival.classical_age.003,"The priests said the smoke over the cleft rock had turned black and she'd spoken without being asked a question, which she had literally never done in living memory, and the priests needed three days just to agree on what she meant"
 flavor.harbinger_arrival.classical_age.004,"The messenger wanted food, a stable and his fee before he'd break a single seal, knows his worth"
-flavor.harbinger_arrival.medieval_age.001,"He rang his bell at the market cross until his arm gave out, commitment to the bit"
+flavor.harbinger_arrival.medieval_age.001,"He rang his bell at the market cross like a full-body workout, until his arm gave out"
 flavor.harbinger_arrival.medieval_age.002,"Red coat, washed so many times it went pink, accidental glow-up"
-flavor.harbinger_arrival.medieval_age.003,"He climbed onto the well-head for visibility, and before he'd read a single word the people at the back were already crossing themselves, spoiler alert"
-flavor.harbinger_arrival.medieval_age.004,"His voice cracked on the second line and he restarted from the top, take two"
-flavor.harbinger_arrival.renaissance_age.001,"He rolled down from the palace in a hired coach with the charts rolled under one arm and a velvet bag of instruments under the other, academic drip"
-flavor.harbinger_arrival.renaissance_age.002,"His astrolabe caught the sun and flashed, main character lighting"
-flavor.harbinger_arrival.renaissance_age.003,"The astrologer asked for a table, a candle and silence, and got two out of three"
+flavor.harbinger_arrival.medieval_age.003,"Before he'd read a single word from up on the well-head, the people at the back were already crossing themselves, spoiler alert"
+flavor.harbinger_arrival.medieval_age.004,"His voice cracked on the second line, so he took it again from the top"
+flavor.harbinger_arrival.renaissance_age.001,"He rolled down from the palace in a hired coach serving academic drip, charts under one arm and a velvet bag of instruments under the other"
+flavor.harbinger_arrival.renaissance_age.002,His astrolabe caught the sun and gave him main character lighting
+flavor.harbinger_arrival.renaissance_age.003,"The astrologer requested a table, a candle and silence, and got two out of three"
 flavor.harbinger_arrival.renaissance_age.004,"The prince's horoscope had been cast three times and he hated all three, the stars are not giving him what he wants"
-flavor.harbinger_arrival.colonial_age.001,She set up outside the coffee house with a satchel of pamphlets still wet from the press and a voice like a seagull
-flavor.harbinger_arrival.colonial_age.002,"A penny a pamphlet, doom at a bargain"
-flavor.harbinger_arrival.colonial_age.003,"Her printer's apron was black to the elbow, the ink stains are part of the brand"
-flavor.harbinger_arrival.colonial_age.004,"The governor's men watched her from across the square with their arms folded, not doing anything yet, so she read the whole pamphlet out a second time just for them, slowly, like they were hard of hearing, the pettiness is elite"
-flavor.harbinger_arrival.industrial_age.001,"The newsboy on the corner had a voice that carried three streets, built-in speaker system"
-flavor.harbinger_arrival.industrial_age.002,"Cap too big, bag too heavy, little guy is trying his best"
-flavor.harbinger_arrival.industrial_age.003,"The presses ran an extra edition at noon and he was first boy out of the yard with it, still folding as he sprinted"
-flavor.harbinger_arrival.industrial_age.004,"He charged a halfpenny to everyone who stopped to listen, paywall pioneer"
-flavor.harbinger_arrival.victorian_age.001,"He posted up on a soap crate by the park railings, sandwich board on his shoulders, hat held out in one hand, the full doom-merch setup"
-flavor.harbinger_arrival.victorian_age.002,"THE END IS NIGH, hand-painted, artisanal doom"
-flavor.harbinger_arrival.victorian_age.003,"A constable moved him along and he set up again twenty yards down, simply unkillable"
-flavor.harbinger_arrival.victorian_age.004,"A table of figures was pasted to the back of the board, he came with receipts"
+flavor.harbinger_arrival.colonial_age.001,She set up outside the coffee house with pamphlets still wet from the press and a seagull of a voice
+flavor.harbinger_arrival.colonial_age.002,"Doom at a bargain, a penny a pamphlet"
+flavor.harbinger_arrival.colonial_age.003,"Her printer's apron was black to the elbow, ink stains as a personal brand"
+flavor.harbinger_arrival.colonial_age.004,"The governor's men watched her from across the square with their arms folded, doing nothing yet, so she petty-read the whole pamphlet out a second time just for them, slowly, like they were hard of hearing"
+flavor.harbinger_arrival.industrial_age.001,"The newsboy on the corner came with a built-in speaker, his voice carried three streets"
+flavor.harbinger_arrival.industrial_age.002,"Little guy, cap too big, bag too heavy, trying his best"
+flavor.harbinger_arrival.industrial_age.003,"The presses ran an extra edition at noon and he was first boy out of the yard with it, folding while he sprinted"
+flavor.harbinger_arrival.industrial_age.004,"He paywalled the prophecy, a halfpenny off everyone who stopped to listen"
+flavor.harbinger_arrival.victorian_age.001,"He posted up on a soap crate by the park railings with the full doom-merch setup, sandwich board on his shoulders and hat held out in one hand"
+flavor.harbinger_arrival.victorian_age.002,His board said THE END IS NIGH in artisanal hand-painted letters
+flavor.harbinger_arrival.victorian_age.003,A constable moved him along and he respawned twenty yards further down
+flavor.harbinger_arrival.victorian_age.004,"He came with receipts, a table of figures pasted to the back of the board"
 flavor.harbinger_arrival.electric_age.001,Just after midnight the post office telegraph started chattering like it had tea to spill
 flavor.harbinger_arrival.electric_age.002,"The operator showed up in his slippers, no time for a fit check"
 flavor.harbinger_arrival.electric_age.003,"The dispatches came in from stations up the line one after another, the operator took each one down in pencil, and by the fourth his hand was shaking so bad he had to write it out again for the postmaster"
-flavor.harbinger_arrival.electric_age.004,"The postmaster sat by the key with his watch open, counting every second"
+flavor.harbinger_arrival.electric_age.004,The postmaster sat glued to the key with his watch open
 flavor.harbinger_arrival.atomic_age.001,"The programme cut out mid-song, rude"
-flavor.harbinger_arrival.atomic_age.002,"The civil defence tone came over the wireless, three long notes and a pause, then the announcer reading off a card, and the mood in every kitchen shifted"
+flavor.harbinger_arrival.atomic_age.002,"The civil defence tone dropped over the wireless, three long notes and a pause, then the announcer reading off a card, and every kitchen's vibe shifted"
 flavor.harbinger_arrival.atomic_age.003,Every radio on the street got cranked all the way up
-flavor.harbinger_arrival.atomic_age.004,"The announcer had that calm, level voice they train them to have, and it was not helping"
-flavor.harbinger_arrival.modern_age.001,"The evening news opened with it, top story, no contest"
-flavor.harbinger_arrival.modern_age.002,"The anchor came on ten minutes early with no tie, and that's how you know"
+flavor.harbinger_arrival.atomic_age.004,"The announcer was using the calm, level voice they train into them, and it was helping exactly no one"
+flavor.harbinger_arrival.modern_age.001,"It was the evening news's top story, no contest"
+flavor.harbinger_arrival.modern_age.002,"The anchor showed up ten minutes early with no tie, which is the real red flag"
 flavor.harbinger_arrival.modern_age.003,"A red ticker ran along the bottom of the screen all evening, and house after house sat through the ads rather than switch over"
 flavor.harbinger_arrival.modern_age.004,"They cut the weather segment, and people clocked it immediately"
 flavor.harbinger_arrival.information_age.001,"It hit forty inboxes before breakfast, subject line in ALL CAPS, the loudest email of the year"
-flavor.harbinger_arrival.information_age.002,"The email had been forwarded so many times the original sender was buried under a hundred signatures and a mountain of holiday auto-replies, archaeology required"
+flavor.harbinger_arrival.information_age.002,"Finding the original sender would take archaeology, it was buried under a hundred signatures and a mountain of holiday auto-replies"
 flavor.harbinger_arrival.information_age.003,"Nobody opened the attachment, trust issues"
-flavor.harbinger_arrival.information_age.004,"Everybody's aunt had sent it to everybody, with a note saying she doesn't usually forward these, she does"
-flavor.harbinger_arrival.digital_age.001,"A million views by lunch, viral speedrun"
+flavor.harbinger_arrival.information_age.004,"Everybody's aunt sent it to everybody with a note saying she doesn't usually forward these, which, she does"
+flavor.harbinger_arrival.digital_age.001,It speedran its way to a million views by lunch
 flavor.harbinger_arrival.digital_age.002,"Shot on a phone, shaky, vertical, peak amateur doom footage"
 flavor.harbinger_arrival.digital_age.003,"The thumbnail alone stopped the scroll, and the first few seconds had people turning the sound up"
-flavor.harbinger_arrival.digital_age.004,"Reaction videos to the video were up within the hour, content eating content"
-flavor.harbinger_arrival.cyberpunk_age.001,"It surfaced in the corporate net at three minutes past midnight, posting through the account of an executive who'd been dead since the last merger, the ultimate account takeover"
-flavor.harbinger_arrival.cyberpunk_age.002,"Every screen flickered once, a single blink, deeply creepy"
+flavor.harbinger_arrival.digital_age.004,"Within the hour the content was eating itself, reaction videos to the video everywhere"
+flavor.harbinger_arrival.cyberpunk_age.001,"At three minutes past midnight it pulled the ultimate account takeover, speaking in the corporate net through an executive who'd been dead since the last merger"
+flavor.harbinger_arrival.cyberpunk_age.002,Every screen did one creepy little blink
 flavor.harbinger_arrival.cyberpunk_age.003,Corporate security tried to purge it and took a massive L
-flavor.harbinger_arrival.cyberpunk_age.004,"Its voice was stitched together from old customer-service recordings, your call is very important to the apocalypse"
-flavor.harbinger_arrival.fusion_age.001,"It spoke through every speaker in the plant at once, in the calm, pleasant voice it usually saves for fire drills and visitors, customer service mode for the end times"
+flavor.harbinger_arrival.cyberpunk_age.004,"It talked in a voice stitched from old customer-service recordings, your call is very important to the apocalypse"
+flavor.harbinger_arrival.fusion_age.001,"It spoke through every speaker in the plant at once in customer service mode, the calm, pleasant voice usually saved for fire drills and visitors"
 flavor.harbinger_arrival.fusion_age.002,"Containment lights flipped to amber, not red yet, but not a vibe"
-flavor.harbinger_arrival.fusion_age.003,"The warden had never once spoken outside a scheduled drill before, so this is a first and not the fun kind"
-flavor.harbinger_arrival.fusion_age.004,"Engineers came in on their day off without anyone calling them, that's how you know it's serious"
-flavor.harbinger_arrival.space_age.001,"The monitoring station behind the moon sent a priority packet, the cosmic version of a 3am text"
+flavor.harbinger_arrival.fusion_age.003,The warden breaking its no-talking-outside-drills streak is not the fun kind of first
+flavor.harbinger_arrival.fusion_age.004,"Nobody had to call the engineers in on their day off, they just showed up, which is ominous levels of dedication"
+flavor.harbinger_arrival.space_age.001,"The monitoring station behind the moon hit us with the cosmic version of a 3am text, a priority packet"
 flavor.harbinger_arrival.space_age.002,"Its sensors had stared at one patch of sky for forty years without finding anything worth waking a human for, and this was the first packet it ever marked urgent, and it marked every single line"
 flavor.harbinger_arrival.space_age.003,"The duty officer read it out loud to the room, voice steady-ish"
-flavor.harbinger_arrival.space_age.004,"The station's auto voice was flat and polite, zero emotional range"
-flavor.harbinger_arrival.interstellar_age.001,"The beacon came from a colony that went silent eighty years ago, a message from a ghosted group chat"
-flavor.harbinger_arrival.interstellar_age.002,"It's still transmitting on the old emergency band, on loop, in a voice everybody's grandparents would've recognized, vintage doom"
-flavor.harbinger_arrival.interstellar_age.003,"The colony is officially listed as lost, last seen eighty years ago"
-flavor.harbinger_arrival.interstellar_age.004,"Nobody has ever gone out there to switch it off, and nobody is volunteering"
+flavor.harbinger_arrival.space_age.004,The station's automated voice delivered it flat and polite with zero emotional range
+flavor.harbinger_arrival.interstellar_age.001,A colony that ghosted everyone eighty years ago is the one sending the beacon
+flavor.harbinger_arrival.interstellar_age.002,"It's still looping on the old emergency band in a voice everybody's grandparents would've known, vintage doom on repeat"
+flavor.harbinger_arrival.interstellar_age.003,The colony has been marked lost for ages
+flavor.harbinger_arrival.interstellar_age.004,Zero volunteers have ever gone out there to switch it off
 flavor.harbinger_arrival.galactic_age.001,"The relay is older than us, like, as a species"
 flavor.harbinger_arrival.galactic_age.002,It woke up with zero warning and started humming on a frequency the instruments had to be rebuilt just to hear
-flavor.harbinger_arrival.galactic_age.003,"Its message came through as geometry, and the linguists needed a full day to turn it into words, the translation grind"
-flavor.harbinger_arrival.galactic_age.004,"The last time the relay spoke, there were no people anywhere, so this is kind of a big deal"
-flavor.harbinger_arrival.quantum_age.001,"The message arrived stamped with a date nine years from now, time travel DMs are real"
-flavor.harbinger_arrival.quantum_age.002,"Your name, your handwriting, your signature down to the loops"
-flavor.harbinger_arrival.quantum_age.003,"The voice was yours, just older and hoarser, future you sounds tired"
-flavor.harbinger_arrival.quantum_age.004,"Whoever sent it knew the passcode only you know, plus the name you called yourself as a kid, nobody else has that lore"
-flavor.harbinger_arrival.transcendent_age.001,"Sent from a branch that ended, delivery from a dead timeline"
+flavor.harbinger_arrival.galactic_age.003,"Its message came through as geometry, and the linguists needed a full day of translation grind to make it words"
+flavor.harbinger_arrival.galactic_age.004,The relay's last post was from before people existed anywhere
+flavor.harbinger_arrival.quantum_age.001,"A DM arrived from nine years in the future, date stamp and all"
+flavor.harbinger_arrival.quantum_age.002,"Your name, in your handwriting, signed the way you sign it"
+flavor.harbinger_arrival.quantum_age.003,"It was your voice, just older and hoarser, future you sounds tired"
+flavor.harbinger_arrival.quantum_age.004,"Whoever sent it had your deep lore, the passcode only you know and the name you called yourself as a kid"
+flavor.harbinger_arrival.transcendent_age.001,Delivered from a timeline branch that ended
 flavor.harbinger_arrival.transcendent_age.002,"It had your face, or used to, at some point"
-flavor.harbinger_arrival.transcendent_age.003,"It peered out of every reflective surface in the settlement at once, for about one breath, the creepiest mirror selfie ever"
+flavor.harbinger_arrival.transcendent_age.003,"For about one breath it took over every reflective surface in the settlement at once, the creepiest mirror selfie ever"
 flavor.harbinger_arrival.transcendent_age.004,"There was no moment of arrival, just a slow creeping sense it had been standing among you for a while, waiting, with way more patience than you've ever had, for you to notice"
 flavor.harbinger_warning.any.001,Everybody stopped mid-whatever to listen
 flavor.harbinger_warning.any.002,"The kids got sent indoors first, out of pure habit"
-flavor.harbinger_warning.any.003,"The kids asked for it again, encore please"
+flavor.harbinger_warning.any.003,The kids requested an encore
 flavor.harbinger_warning.any.004,It was the main topic at every dinner table that evening
-flavor.harbinger_warning.any.005,"The crowd drifted home in twos and threes, quietly processing"
-flavor.harbinger_warning.any.006,"By evening the words had been passed mouth to mouth so many times that the last family heard a different ending, and slept better or worse than everyone else accordingly, a game of telephone with stakes"
+flavor.harbinger_warning.any.005,"The listeners drifted home in little twos and threes, all processing"
+flavor.harbinger_warning.any.006,"By evening the warning had been through a game of telephone with stakes, and the last family heard a different ending and slept better or worse than everyone else accordingly"
 flavor.harbinger_warning.any.007,A few people hung back afterwards in case {subject} had any bonus content
 flavor.harbinger_warning.anytier.001,"Good news bestie, there's nothing to be scared of this time"
-flavor.harbinger_warning.anytier.002,"A few people seemed lowkey disappointed, they'd prepped for drama"
+flavor.harbinger_warning.anytier.002,"A few people were lowkey let down, they'd prepped for drama"
 flavor.harbinger_warning.anytier.003,By the next day it had mostly left the chat
 flavor.harbinger_warning.anytier.004,"Every sign was good, or at minimum boring, beige flag omens only"
 flavor.harbinger_warning.anytier.005,"The big warning turned out to be that there was nothing to warn about, plot twist of the year"
@@ -203,508 +203,508 @@ flavor.harbinger_warning.anytier.006,"After inspecting the place end to end, {su
 flavor.harbinger_warning.anytier.007,"Having come all this way to foretell a disaster, {subject} got stuck announcing that none was due, and delivered it like terrible news, the disappointment was palpable"
 flavor.harbinger_warning.anytier.008,One man laughed out loud and got the bombastic side-eye from everyone
 flavor.harbinger_warning.anytier.009,Most people were back on the grind within the hour
-flavor.harbinger_warning.anytier.010,"Plans went ahead, nothing cancelled, carry on"
-flavor.harbinger_warning.anytier.011,"The worry was gone by the next meal, snacks fixed it"
-flavor.harbinger_warning.anytier.012,"It was a warning of the mild kind, the half-listening kind, background noise energy"
-flavor.harbinger_warning.anytier.013,"A few families moved their valuables somewhere safer, just in case"
-flavor.harbinger_warning.anytier.014,"People said it was probably nothing, and kept saying it all evening, which is how you know it wasn't nothing to them"
+flavor.harbinger_warning.anytier.010,"Plans stayed on, nothing cancelled"
+flavor.harbinger_warning.anytier.011,Snacks cured the worry by the next meal
+flavor.harbinger_warning.anytier.012,"It was the mild kind of warning, background noise people half hear"
+flavor.harbinger_warning.anytier.013,"A few families stashed their valuables somewhere safer, just in case"
+flavor.harbinger_warning.anytier.014,"People said it was probably nothing and kept saying it all evening, which is how you know it's living rent free"
 flavor.harbinger_warning.anytier.015,The bad vibes lingered into the next day
 flavor.harbinger_warning.anytier.016,"Here and there people started quietly stashing things away, lowkey prepping"
 flavor.harbinger_warning.anytier.017,"Not one person laughed at {subject}, and that's the tell"
 flavor.harbinger_warning.anytier.018,Everyone talked in indoor voices for the rest of the day
-flavor.harbinger_warning.anytier.019,"People checked on their neighbors without being asked, community W"
+flavor.harbinger_warning.anytier.019,"Unprompted, people did wellness checks on their neighbors"
 flavor.harbinger_warning.anytier.020,"Families stayed up talking escape plans, where to go if it comes to that"
-flavor.harbinger_warning.anytier.021,"Two families had started hauling their stuff to the strongest building before the warning was even done, and a third was waiting to see what the first two did, follow the leader"
+flavor.harbinger_warning.anytier.021,"Two families started hauling their stuff to the strongest building before the warning even wrapped up, and a third was waiting to copy whatever the first two did"
 flavor.harbinger_warning.anytier.022,"The elders just nodded, like they'd seen the trailer before"
-flavor.harbinger_warning.anytier.023,"Sleep came hard, nobody could switch off"
+flavor.harbinger_warning.anytier.023,Sleep refused to show up
 flavor.harbinger_warning.anytier.024,Doors got locked up way earlier than usual
 flavor.harbinger_warning.anytier.025,Moms kept their kids within arm's reach all evening
-flavor.harbinger_warning.anytier.026,"It was terror, plain and simple, no other word for it"
+flavor.harbinger_warning.anytier.026,"No other word for it, it was terror"
 flavor.harbinger_warning.anytier.027,People hugged their neighbors right there in the street
 flavor.harbinger_warning.anytier.028,The oldest people did the rounds saying goodbye to the youngest ones
 flavor.harbinger_warning.anytier.029,"People started saying goodbye to each other in doorways, totally casual, like any other evening"
-flavor.harbinger_warning.anytier.030,"Old Maud, who has never believed a single warning in her life, sat down and cried, and that's when everyone knew"
+flavor.harbinger_warning.anytier.030,"Everyone knew it was real when Old Maud, who has never believed a warning in her life, sat down and cried"
 flavor.harbinger_warning.anytier.031,"It said the end was close, no sugarcoating, no cap"
-flavor.harbinger_warning.anytier.032,"At no point did {subject} soften any of it, zero bedside manner"
+flavor.harbinger_warning.anytier.032,{subject} had zero bedside manner and softened none of it
 flavor.harbinger_warning.anytier.033,"Grown men sat down where they stood and covered their faces, and their families stood round them not knowing what to do, because nobody had ever seen them like that"
 flavor.harbinger_warning.ancient.001,"Omens worth mentioning: none, the sky's being mid"
 flavor.harbinger_warning.ancient.002,"The sky stayed up, as skies tend to do"
 flavor.harbinger_warning.ancient.003,"The hunters went out like normal, business as usual"
-flavor.harbinger_warning.ancient.004,"The elders listened, found nothing in it, and went back to the fire, unimpressed"
+flavor.harbinger_warning.ancient.004,"The elders vibe-checked the warning, found nothing in it, and went back to the fire"
 flavor.harbinger_warning.ancient.005,That's a long way to walk just to say the sky will stay up
 flavor.harbinger_warning.ancient.006,By nightfall the kids had turned the prophecy into a game
 flavor.harbinger_warning.ancient.007,"Some of the young men claimed they knew all along, which they absolutely did not"
-flavor.harbinger_warning.ancient.008,A woman who'd buried her good knife dug it right back up
+flavor.harbinger_warning.ancient.008,"A woman un-buried her good knife, crisis cancelled"
 flavor.harbinger_warning.ancient.009,"The elders asked three different ways, the way you ask a kid if they actually washed, got the same answer each time, nothing's coming, and let it go and went to eat"
 flavor.harbinger_warning.ancient.010,"After dark the drums started back up, we're so back"
 flavor.harbinger_warning.ancient.011,The herd stayed close and chill
-flavor.harbinger_warning.ancient.012,"The warning was mostly about the weather, and the weather is always bad, so groundbreaking stuff"
-flavor.harbinger_warning.ancient.013,"The elders said keep the fires going and don't worry, in that order"
-flavor.harbinger_warning.ancient.014,"Something about a dry season, maybe, the details were vague"
-flavor.harbinger_warning.ancient.015,"A few families dug up their grain pits and moved them further up the slope, grumbling the whole time that it was only to be safe, then stood around the new pits looking smug"
-flavor.harbinger_warning.ancient.016,"Charms on all the kids' wrists, just in case"
-flavor.harbinger_warning.ancient.017,"The warning was about a bad season, the kind the old people remember a few of"
-flavor.harbinger_warning.ancient.018,"Hunters were told to stay within sight of camp for a moon, no long trips"
-flavor.harbinger_warning.ancient.019,The elders sent the fastest boy up to watch the pass with a skin of water and orders to sprint back without stopping
+flavor.harbinger_warning.ancient.012,"The groundbreaking warning was mostly about the weather, which is always bad anyway"
+flavor.harbinger_warning.ancient.013,"The elders ranked their advice, keep the fires going first and don't worry second"
+flavor.harbinger_warning.ancient.014,"The prophecy was giving dry season, maybe, it was vague"
+flavor.harbinger_warning.ancient.015,"A few families dug up their grain pits and relocated them up the slope, grumbling the whole time that it was only to be safe, then stood around the new pits looking smug"
+flavor.harbinger_warning.ancient.016,"Every kid got a protective charm bracelet, just in case"
+flavor.harbinger_warning.ancient.017,"The forecast was one bad season, the kind the elders have a few war stories about"
+flavor.harbinger_warning.ancient.018,"The hunters got grounded for a moon, stay where camp can see you"
+flavor.harbinger_warning.ancient.019,"The elders sent the fastest boy up to watch the pass with a skin of water and orders to sprint back nonstop, the camp's best speedrunner"
 flavor.harbinger_warning.ancient.020,Offerings started showing up at the standing stones without anyone being told to leave them
-flavor.harbinger_warning.ancient.021,"The old men watched the sky, refusing to look away"
-flavor.harbinger_warning.ancient.022,"Anything that could be dried was getting dried, jerky season"
+flavor.harbinger_warning.ancient.021,The old men stared down the sky and refused to blink
+flavor.harbinger_warning.ancient.022,It was jerky season for anything that could be dried
 flavor.harbinger_warning.ancient.023,The prophecy talked about the ground shaking and the herds stampeding
 flavor.harbinger_warning.ancient.024,The women started sorting the stores into what could be carried and what gets left
 flavor.harbinger_warning.ancient.025,By the elders' order the drums stayed silent that night
 flavor.harbinger_warning.ancient.026,"Families that had been beefing for a generation over a stolen pig shared a fire that night and passed each other food, and the pig never came up, though everyone round that fire was thinking about it"
 flavor.harbinger_warning.ancient.027,"It spoke of a season when the rivers would run the wrong color and the animals would come down from the hills to die among the huts, and the old women, who'd heard this kind of thing before, did not argue"
 flavor.harbinger_warning.ancient.028,"The fires stayed lit all night, nobody let them drop"
-flavor.harbinger_warning.ancient.029,"Not a single kid was let out of sight, eyes on everyone"
-flavor.harbinger_warning.ancient.030,"The hunters stayed in, no trips out, no exceptions"
+flavor.harbinger_warning.ancient.029,"Every kid stayed in eyeline, no exceptions"
+flavor.harbinger_warning.ancient.030,"The hunters didn't leave camp, not one of them"
 flavor.harbinger_warning.ancient.031,The men sharpened their spears without even knowing what they'd be fighting
 flavor.harbinger_warning.ancient.032,The elders cut off their hair
 flavor.harbinger_warning.ancient.033,Nobody ate a thing that night
 flavor.harbinger_warning.ancient.034,"The sky will burn, it said, and the ground will crack open"
 flavor.harbinger_warning.ancient.035,Women keened at the fire all night long
-flavor.harbinger_warning.ancient.036,"The herd got driven into the gully, and the gully got walled off with brush"
-flavor.harbinger_warning.ancient.037,"A man walked out of camp that night with his family and didn't come back, gone for good"
+flavor.harbinger_warning.ancient.036,The herd got locked down in the gully behind a wall of brush
+flavor.harbinger_warning.ancient.037,"A man took his family and dipped from camp that night, never to come back"
 flavor.harbinger_warning.ancient.038,The drums kept going until the drummers' hands bled
 flavor.harbinger_warning.ancient.039,"Every kid got painted with the protecting marks, even the babies"
 flavor.harbinger_warning.ancient.040,"It said the fire in the sky would come down to the ground and nothing it touched would ever grow again, and afterwards the only sound in the camp was the fire"
-flavor.harbinger_warning.feudal.001,"Market day went ahead, the stalls stayed open"
+flavor.harbinger_warning.feudal.001,Market day stayed on the calendar
 flavor.harbinger_warning.feudal.002,"The alewife was back open by noon, the people rejoiced"
 flavor.harbinger_warning.feudal.003,"The reeve stood down the extra watch, back to regular programming"
-flavor.harbinger_warning.feudal.004,"The priest announced from the pulpit that nothing was coming and looked very relieved, ngl"
-flavor.harbinger_warning.feudal.005,Kids ran after the carts yelling that the world wasn't ending after all
-flavor.harbinger_warning.feudal.006,"Brother Anselm, who keeps the abbey's chronicle, gave it one line and went back to the price of eels, priorities"
-flavor.harbinger_warning.feudal.007,The bailiff is salty he doubled the watch for nothing and will be asking the lord who pays for it
-flavor.harbinger_warning.feudal.008,"There was some grumbling in the tavern that evening from men who sold their second cow on the strength of the first rumor, and nobody bought them a drink, fumbled the cow"
-flavor.harbinger_warning.feudal.009,"The bells only rang for vespers, no extra drama"
-flavor.harbinger_warning.feudal.010,"The steward changed nothing, zero adjustments"
-flavor.harbinger_warning.feudal.011,"The parish heard it out politely, the way it survives a long sermon"
-flavor.harbinger_warning.feudal.012,"Carts headed off for the fair on the usual morning, business as usual"
-flavor.harbinger_warning.feudal.013,"Something about a wet summer and a bad harvest, maybe, the details were mid"
-flavor.harbinger_warning.feudal.014,"A few households stocked an extra sack of flour, just in case"
-flavor.harbinger_warning.feudal.015,"The priest added a line to the Sunday prayers asking for protection from whatever it was, and the congregation said that bit louder than the rest"
-flavor.harbinger_warning.feudal.016,"The miller bumped his price up a little, as millers do"
-flavor.harbinger_warning.feudal.017,"Pilgrims were told to stick to the roads, no shortcuts"
+flavor.harbinger_warning.feudal.004,The priest's relief was visible from the back pews as he announced that nothing was coming
+flavor.harbinger_warning.feudal.005,"Kids chased the carts screaming that the world's not ending after all, we're so back"
+flavor.harbinger_warning.feudal.006,"Brother Anselm gave it exactly one line in the abbey chronicle and returned to his true passion, the price of eels"
+flavor.harbinger_warning.feudal.007,The bailiff is salty about doubling the watch for nothing and plans to invoice the lord
+flavor.harbinger_warning.feudal.008,"The men who fumbled their second cow on the first rumor grumbled in the tavern all evening, and nobody bought them a drink"
+flavor.harbinger_warning.feudal.009,The bells stuck to their regular vespers slot
+flavor.harbinger_warning.feudal.010,The steward made zero adjustments
+flavor.harbinger_warning.feudal.011,"The parish sat through it politely, long-sermon mode activated"
+flavor.harbinger_warning.feudal.012,Fair carts rolled out on the usual morning like nothing happened
+flavor.harbinger_warning.feudal.013,"The prophecy was mid, something about a wet summer and a bad harvest, maybe"
+flavor.harbinger_warning.feudal.014,A few households soft-prepped with one extra sack of flour
+flavor.harbinger_warning.feudal.015,"The priest added a protection-from-whatever-it-is line to the Sunday prayers, and the congregation went extra loud on that part"
+flavor.harbinger_warning.feudal.016,"The miller did a small, very miller-ish price bump"
+flavor.harbinger_warning.feudal.017,"Pilgrims got told no shortcuts, roads only"
 flavor.harbinger_warning.feudal.018,Candles were selling like crazy at the church door
-flavor.harbinger_warning.feudal.019,The mayor had the gates double-checked
+flavor.harbinger_warning.feudal.019,The mayor ordered a vibe check on the gates
 flavor.harbinger_warning.feudal.020,Wills that had been on the to-do list for years finally got written
 flavor.harbinger_warning.feudal.021,The miller's wife started a secret flour stash in the loft
 flavor.harbinger_warning.feudal.022,The village stayed up way too late
-flavor.harbinger_warning.feudal.023,"Men went up on the walls to check the road, came down, then went back up again, anxiety cardio"
-flavor.harbinger_warning.feudal.024,"The priest heard confessions until midnight, then sent for a second priest from the next parish, who rolled in at two in the morning in his nightshirt and a borrowed cloak and heard confessions until sunrise, the queue was insane"
+flavor.harbinger_warning.feudal.023,"Men did anxiety cardio all day, up the walls to look at the road, down again, back up"
+flavor.harbinger_warning.feudal.024,"The confession queue was insane, the priest went till midnight, then sent for backup from the next parish, who rolled in at two in the morning in his nightshirt and a borrowed cloak and took confessions until sunrise"
 flavor.harbinger_warning.feudal.025,"Carts piled with household stuff were seen leaving through the north gate, the moving-out montage"
 flavor.harbinger_warning.feudal.026,"The guild masters met and decided, after much debate, to schedule another meeting"
-flavor.harbinger_warning.feudal.027,"The church stayed packed, no empty pews"
-flavor.harbinger_warning.feudal.028,By morning every door on the high street had a chalk cross on it
+flavor.harbinger_warning.feudal.027,The church never dipped below capacity
+flavor.harbinger_warning.feudal.028,By morning the high street's doors were all wearing chalk crosses
 flavor.harbinger_warning.feudal.029,"Not a single cart came in from the east, the road went dead quiet"
-flavor.harbinger_warning.feudal.030,"The watch got doubled, then doubled again, exponential paranoia"
+flavor.harbinger_warning.feudal.030,"Exponential paranoia hit the watch, doubled and then doubled again"
 flavor.harbinger_warning.feudal.031,The bells rang all night and nobody slept a wink
-flavor.harbinger_warning.feudal.032,"The fair got cancelled, the biggest L of the season"
-flavor.harbinger_warning.feudal.033,"Wives kissed their husbands at the door, in the street, in public, crisis PDA"
-flavor.harbinger_warning.feudal.034,"The lord's household dipped before dawn with every cart they owned, the rich left first, shocking nobody"
-flavor.harbinger_warning.feudal.035,"Monks walked the walls with the relics, chanting on loop"
-flavor.harbinger_warning.feudal.036,"A woman in the market traded her whole stall for a horse, the getaway plan is serious"
-flavor.harbinger_warning.feudal.037,"The gates were shut at noon and the keys carried up to the castle, lockdown mode"
+flavor.harbinger_warning.feudal.032,The fair took the biggest L of the season and got cancelled
+flavor.harbinger_warning.feudal.033,"Wives went full PDA at the door, kissing their husbands right in the street where anyone could see"
+flavor.harbinger_warning.feudal.034,"Shocking nobody, the lord's household dipped before dawn with every cart they owned"
+flavor.harbinger_warning.feudal.035,"Monks did laps of the walls with the relics, chanting on repeat"
+flavor.harbinger_warning.feudal.036,A woman in the market traded her entire stall for a getaway horse
+flavor.harbinger_warning.feudal.037,"Lockdown at noon, gates shut and the keys hand-delivered up to the castle"
 flavor.harbinger_warning.feudal.038,"Old Wat the smith beat the priest to the altar, a first in recorded history"
 flavor.harbinger_warning.feudal.039,"By nightfall the road north was one slow line of carts and handbarrows and people carrying their kids, and the ones who stayed stood in their doorways watching it go without saying a word to each other"
-flavor.harbinger_warning.industrial.001,"Business as usual, nothing to see here"
-flavor.harbinger_warning.industrial.002,"The papers ran it on page nine, under the cattle prices, buried"
-flavor.harbinger_warning.industrial.003,The published odds were so long nobody read past the headline
-flavor.harbinger_warning.industrial.004,"The foreman docked anyone who stopped to gossip about it, the grind is sacred"
-flavor.harbinger_warning.industrial.005,"The bookmakers stopped taking bets on it by noon, even they lost interest"
-flavor.harbinger_warning.industrial.006,"The figure was so tiny the printers had to set it in their smallest type, microscopic doom"
-flavor.harbinger_warning.industrial.007,"The usual Wednesday turnout at chapel, nothing special"
-flavor.harbinger_warning.industrial.008,"The insurance office on the high street had put an extra man on the counter just in case, sent him home at lunch, and he stood outside a while in his good collar not knowing what to do with his afternoon, all dressed up with nowhere to go"
+flavor.harbinger_warning.industrial.001,"Totally normal day, business as usual"
+flavor.harbinger_warning.industrial.002,"The papers buried it on page nine, under the cattle prices"
+flavor.harbinger_warning.industrial.003,"The odds were long enough that everyone stopped at the headline, too long didn't read"
+flavor.harbinger_warning.industrial.004,The foreman docked pay from anyone caught gossiping about it
+flavor.harbinger_warning.industrial.005,By noon even the bookmakers had lost interest and stopped taking bets
+flavor.harbinger_warning.industrial.006,"The printers needed their tiniest type for a figure that small, microscopic doom"
+flavor.harbinger_warning.industrial.007,Chapel got its regular mid Wednesday crowd
+flavor.harbinger_warning.industrial.008,"The insurance office had added an extra man on the counter just in case, then sent him home at lunch, and he stood outside a while in his good collar, all dressed up with no doom to sell"
 flavor.harbinger_warning.industrial.009,The trams kept running like nothing happened
-flavor.harbinger_warning.industrial.010,"The odds were printed, read, and forgotten by the second cup of tea"
-flavor.harbinger_warning.industrial.011,"Nobody at the works took the afternoon off, not even a little"
-flavor.harbinger_warning.industrial.012,"The shops kept their usual hours, zero panic"
-flavor.harbinger_warning.industrial.013,"Insurance enquiries ticked up, a little, a smidge"
-flavor.harbinger_warning.industrial.014,"The odds were small but they were printed, and printed odds have a way of living rent free"
-flavor.harbinger_warning.industrial.015,"A few people bought an extra tin of something, prepper lite"
+flavor.harbinger_warning.industrial.010,"The odds got printed, read and fully forgotten by the second cup of tea"
+flavor.harbinger_warning.industrial.011,Nobody at the works even thought about skipping the afternoon
+flavor.harbinger_warning.industrial.012,"The shops stayed on their normal hours, zero panic"
+flavor.harbinger_warning.industrial.013,Insurance enquiries ticked up a smidge
+flavor.harbinger_warning.industrial.014,"The odds were small but they were printed, and printed odds live rent free"
+flavor.harbinger_warning.industrial.015,A few people went prepper lite with one extra tin of something
 flavor.harbinger_warning.industrial.016,In the pub the figure got discussed in the same tone usually saved for the weather
-flavor.harbinger_warning.industrial.017,"The council issued a statement saying it was monitoring the situation, the most council sentence ever written"
-flavor.harbinger_warning.industrial.018,"Lines formed outside the grocer's, the panic shop begins"
+flavor.harbinger_warning.industrial.017,"The council released the most council sentence ever written, it's monitoring the situation"
+flavor.harbinger_warning.industrial.018,The panic shop began with lines outside the grocer's
 flavor.harbinger_warning.industrial.019,People did sums on the backs of envelopes and hated the answers
 flavor.harbinger_warning.industrial.020,The churches reported bigger crowds than Easter
-flavor.harbinger_warning.industrial.021,"The price of tinned food crept up all week, inflation said hi"
-flavor.harbinger_warning.industrial.022,"The figure was the first thing anyone said to anyone that morning, good morning was cancelled"
+flavor.harbinger_warning.industrial.021,Inflation said hi and tinned food crept up all week
+flavor.harbinger_warning.industrial.022,"Good morning got cancelled, the figure was the first thing anyone said"
 flavor.harbinger_warning.industrial.023,"Firms in the city started moving their books out to the country, and the roads north were full of vans stacked with ledgers and filing cabinets, junior staff sitting on top holding it all steady, intern life"
-flavor.harbinger_warning.industrial.024,"The bank had a line round the corner by ten, the manager came out at half past to say there was money for everyone, and that made the line longer, instant backfire"
-flavor.harbinger_warning.industrial.025,"The odds were printed in a black box on the front page, which the papers had never done before, a new layout unlocked for the worst reason"
-flavor.harbinger_warning.industrial.026,Families argued over dinner about whether the figure was high or merely unpleasant
-flavor.harbinger_warning.industrial.027,"The number was worse than yesterday's, and yesterday's was already bad"
-flavor.harbinger_warning.industrial.028,"Men stood outside the newspaper offices waiting for the next edition, refreshing in real life"
-flavor.harbinger_warning.industrial.029,"Schools closed early, a half day nobody wanted"
-flavor.harbinger_warning.industrial.030,Every hardware shop in town got cleaned out of rope and candles
-flavor.harbinger_warning.industrial.031,"The figure was printed in red, never a good color for numbers"
-flavor.harbinger_warning.industrial.032,"Nobody went in to work, the town collectively called in"
+flavor.harbinger_warning.industrial.024,The bank manager's half past ten speech about there being money for everyone instantly backfired and made the line round the corner even longer
+flavor.harbinger_warning.industrial.025,"The odds got a black box on the front page, a layout the papers had never used, unlocked for the worst reason"
+flavor.harbinger_warning.industrial.026,Dinner turned into a debate over whether the figure was high or just unpleasant
+flavor.harbinger_warning.industrial.027,Today's number came in worse than yesterday's
+flavor.harbinger_warning.industrial.028,"Men camped outside the newspaper offices, refreshing in real life for the next edition"
+flavor.harbinger_warning.industrial.029,School let out early and nobody celebrated
+flavor.harbinger_warning.industrial.030,Rope and candles got cleaned out of every hardware shop in town
+flavor.harbinger_warning.industrial.031,"The figure showed up in red ink, never a good color for numbers"
+flavor.harbinger_warning.industrial.032,The whole town called in
 flavor.harbinger_warning.industrial.033,Crowds piled into the stations and the stations could not handle it
-flavor.harbinger_warning.industrial.034,"The mayor spoke from the town hall steps and couldn't be heard over the crowd, muted by the masses"
+flavor.harbinger_warning.industrial.034,The mayor got muted by the crowd while speaking from the town hall steps
 flavor.harbinger_warning.industrial.035,"The factories shut at noon with no word on when they'd reopen, indefinite hiatus"
 flavor.harbinger_warning.industrial.036,"The odds were on every front page in the country, and people read them standing in the street, one after another, and passed the paper on"
 flavor.harbinger_warning.industrial.037,Men lined up outside the enlistment office without anyone even calling for them
 flavor.harbinger_warning.industrial.038,"The churches kept their doors open all night, and every pew had someone in it"
 flavor.harbinger_warning.industrial.039,"In the terraces behind the works people took their good china down from the dressers and wrapped it in newspaper, piece by piece, and packed it into tea chests, as if the china were the thing that needed saving"
-flavor.harbinger_warning.digital.001,"The risk score came back green, all clear, go touch grass"
+flavor.harbinger_warning.digital.001,"Green risk score, everyone can go touch grass"
 flavor.harbinger_warning.digital.002,The markets barely flinched
-flavor.harbinger_warning.digital.003,"The number was so low it rounded down to nothing, statistically irrelevant"
-flavor.harbinger_warning.digital.004,The trending topic was dead by dinner
-flavor.harbinger_warning.digital.005,"It was a meme within the hour and a stale meme by evening, the circle of content"
-flavor.harbinger_warning.digital.006,"The official feed posted a reassurance and turned the comments off, coward mode"
-flavor.harbinger_warning.digital.007,"People went back to arguing about other stuff, as is tradition"
+flavor.harbinger_warning.digital.003,The number was so low it rounded down to statistically irrelevant
+flavor.harbinger_warning.digital.004,The trending topic was dead and buried by dinner
+flavor.harbinger_warning.digital.005,It went from fresh meme to stale meme in a single afternoon
+flavor.harbinger_warning.digital.006,"The official feed went coward mode, posting a reassurance with the comments off"
+flavor.harbinger_warning.digital.007,People went right back to beefing about other stuff
 flavor.harbinger_warning.digital.008,"A guy who spent the night before stockpiling bottled water and batteries posted a long thread explaining why he has zero regrets, and it got more attention than the forecast itself"
 flavor.harbinger_warning.digital.009,"Calendars stayed booked and busy, nobody cleared a thing"
-flavor.harbinger_warning.digital.010,"Office chatter had moved on by lunch, onto the next drama"
+flavor.harbinger_warning.digital.010,Office gossip had moved on to the next drama by lunch
 flavor.harbinger_warning.digital.011,"The probability was posted, noted, and scrolled right past"
-flavor.harbinger_warning.digital.012,"The drone deliveries kept coming, snacks secured"
-flavor.harbinger_warning.digital.013,"Sales of power banks ticked up, lowkey prepping"
-flavor.harbinger_warning.digital.014,"The probability was low enough to joke about and high enough to check again, the situationship of risk"
-flavor.harbinger_warning.digital.015,"A few people downloaded offline maps, the just-in-case crowd"
-flavor.harbinger_warning.digital.016,"The risk score went amber on a handful of dashboards, the yellow card of doom"
-flavor.harbinger_warning.digital.017,"An advisory went out asking everyone to keep their devices charged, low battery anxiety is official now"
+flavor.harbinger_warning.digital.012,The snack drones kept on delivering
+flavor.harbinger_warning.digital.013,Power banks had a small sales glow-up
+flavor.harbinger_warning.digital.014,"The probability was in a situationship with everyone, low enough to joke about and high enough to keep checking"
+flavor.harbinger_warning.digital.015,The just-in-case crowd downloaded offline maps
+flavor.harbinger_warning.digital.016,A handful of dashboards flashed the amber yellow card of doom
+flavor.harbinger_warning.digital.017,"An advisory made low battery anxiety official, keep your devices charged"
 flavor.harbinger_warning.digital.018,Everyone kept hitting refresh on the number like it owed them money
-flavor.harbinger_warning.digital.019,"People set alerts for any change in the forecast and lay awake waiting for their phones to buzz, and when they did it was usually friends asking if they'd seen it"
+flavor.harbinger_warning.digital.019,"People set alerts for any change in the forecast and lay awake waiting for the buzz, and when it came it was usually friends asking have you seen it"
 flavor.harbinger_warning.digital.020,"The group chats filled up with links to prep guides, most written by people selling something, and people read them anyway, in bed, brightness all the way down so as not to wake anyone"
-flavor.harbinger_warning.digital.021,"Delivery slots sold out instantly, the panic cart is real"
-flavor.harbinger_warning.digital.022,"The probability was the first thing on every screen that morning, good morning to no one"
-flavor.harbinger_warning.digital.023,"Companies told staff to work from home and back up everything, the cloud is carrying the team"
+flavor.harbinger_warning.digital.021,Panic carts cleared out every delivery slot in seconds
+flavor.harbinger_warning.digital.022,"Every screen opened the morning with the probability, good morning to nobody"
+flavor.harbinger_warning.digital.023,"Companies sent everyone home with orders to back up everything, the cloud carrying the team"
 flavor.harbinger_warning.digital.024,"Supermarkets capped water at two packs a customer, the bottled water wars have begun"
 flavor.harbinger_warning.digital.025,"Offline copies of everything were getting made, backups of the backups"
-flavor.harbinger_warning.digital.026,"The analysts argued about the model on every channel, and the model simply did not care"
-flavor.harbinger_warning.digital.027,"Nobody could get through to anybody, every line busy, every message stuck on sending"
-flavor.harbinger_warning.digital.028,"Emergency apps topped the download charts, number one with a bullet"
-flavor.harbinger_warning.digital.029,"The official feeds stopped posting jokes, and that's honestly the scariest part"
+flavor.harbinger_warning.digital.026,"The analysts beefed about the model on every channel, and the model stayed unbothered"
+flavor.harbinger_warning.digital.027,Every call failed and every message got stuck on sending
+flavor.harbinger_warning.digital.028,Emergency apps shot to number one on the download charts
+flavor.harbinger_warning.digital.029,"The official feeds dropped the jokes, and that was honestly the scariest part"
 flavor.harbinger_warning.digital.030,The networks crawled under the weight of everyone checking at once
-flavor.harbinger_warning.digital.031,"The markets halted, trading frozen, stonks in stasis"
-flavor.harbinger_warning.digital.032,"The number was red and it was big, no further notes"
-flavor.harbinger_warning.digital.033,"The highways out of the city locked up solid within an hour, the worst traffic in history"
-flavor.harbinger_warning.digital.034,"Every phone in the city blared the emergency tone at once, the loudest notification ever"
-flavor.harbinger_warning.digital.035,"Server farms started shutting down in rolling sequence to protect the hardware, the cloud going to sleep"
-flavor.harbinger_warning.digital.036,"Families called relatives they hadn't spoken to in years, the reconnection arc"
-flavor.harbinger_warning.digital.037,The probability was read out on every screen in the city by a voice that had clearly been told to sound calm and could not manage it
-flavor.harbinger_warning.digital.038,"Nobody believed it and everybody acted on it, the most human thing ever"
+flavor.harbinger_warning.digital.031,"The markets froze, stonks in stasis"
+flavor.harbinger_warning.digital.032,"The number was big, red, and not taking questions"
+flavor.harbinger_warning.digital.033,Inside an hour the highways out of the city were in their worst-traffic-ever era
+flavor.harbinger_warning.digital.034,"Every phone in the city screamed the emergency tone at once, the loudest notification ever"
+flavor.harbinger_warning.digital.035,"The cloud started going to sleep, server farms shutting down in rolling sequence to protect the hardware"
+flavor.harbinger_warning.digital.036,Families called relatives they'd been ghosting for years
+flavor.harbinger_warning.digital.037,On every screen in the city a voice clearly told to sound calm read out the probability and failed the assignment
+flavor.harbinger_warning.digital.038,"Nobody believed it and everybody acted on it anyway, peak human behavior"
 flavor.harbinger_warning.digital.039,"In the office towers people left their desks without logging off, and the screens kept glowing on the empty floors all night, showing that one number to nobody"
-flavor.harbinger_warning.cosmic.001,"Cargo schedules resumed, back to the grind"
+flavor.harbinger_warning.cosmic.001,Cargo schedules got back on the grind
 flavor.harbinger_warning.cosmic.002,The crews stood down and finally exhaled
-flavor.harbinger_warning.cosmic.003,"No anomaly on any band, clean scans across the board"
-flavor.harbinger_warning.cosmic.004,"The long-range estimate came back clean, we're chilling"
+flavor.harbinger_warning.cosmic.003,"Every band scanned clean, no anomalies"
+flavor.harbinger_warning.cosmic.004,The long-range estimate came back clean and we're chilling
 flavor.harbinger_warning.cosmic.005,The number was so small the navigation officer called it noise and moved on
-flavor.harbinger_warning.cosmic.006,"The deep watch went back to its usual silence, the void on mute again"
+flavor.harbinger_warning.cosmic.006,The deep watch put the void back on mute
 flavor.harbinger_warning.cosmic.007,"The ring's chaplain gave a short service of thanks and then a much longer one about vigilance, because he'd already written it and was not wasting it"
 flavor.harbinger_warning.cosmic.008,"For a whole shift the observation decks were packed with people staring into the dark for whatever was supposed to show, the dark stayed exactly as dark as ever, and by next shift they'd all wandered off, peak anticlimax"
-flavor.harbinger_warning.cosmic.009,"Shipping stuck to its routes, no detours"
-flavor.harbinger_warning.cosmic.010,"The probability sat just above zero, its usual hangout spot"
-flavor.harbinger_warning.cosmic.011,"The shield crews finished their shift and went to eat, priorities"
-flavor.harbinger_warning.cosmic.012,"The kids on the ring were told it was nothing and believed it, sweet summer children"
-flavor.harbinger_warning.cosmic.013,"The estimate showed a small risk, the background kind the station just lives with"
-flavor.harbinger_warning.cosmic.014,"Maintenance moved the hull inspection up a week, better safe than spaced"
+flavor.harbinger_warning.cosmic.009,"Shipping stayed in its lane, literally, no detours"
+flavor.harbinger_warning.cosmic.010,The probability chilled just above zero at its usual hangout spot
+flavor.harbinger_warning.cosmic.011,The shield crews clocked out and went straight for food
+flavor.harbinger_warning.cosmic.012,"The ring's kids were told it was nothing and believed it completely, sweet summer children"
+flavor.harbinger_warning.cosmic.013,"The estimate showed a small risk, the background kind the station just vibes with"
+flavor.harbinger_warning.cosmic.014,"Maintenance bumped the hull inspection up a week, better safe than spaced"
 flavor.harbinger_warning.cosmic.015,"A few people checked where their assigned evacuation pods were, one or two walked down to look, and came back feeling a little silly"
-flavor.harbinger_warning.cosmic.016,"The probability was low, but the dark is large, do the math"
-flavor.harbinger_warning.cosmic.017,"The spare air scrubbers came up from storage, backup lungs on standby"
+flavor.harbinger_warning.cosmic.016,"Low probability, but the dark is huge, so do the math"
+flavor.harbinger_warning.cosmic.017,The spare air scrubbers came up from storage as backup lungs
 flavor.harbinger_warning.cosmic.018,"All sensor time got pointed outward, eyes on the void"
 flavor.harbinger_warning.cosmic.019,The station ran an evacuation drill and people actually took it seriously for once
-flavor.harbinger_warning.cosmic.020,"The long-range estimate updated every hour and got refreshed every minute, nobody could stop checking"
-flavor.harbinger_warning.cosmic.021,"Crew started carrying their pressure suits folded over one arm between shifts, into the mess, the showers, the chapel, and nobody said a word about it, the new must-have accessory"
-flavor.harbinger_warning.cosmic.022,"The estimate was high enough to get read out loud at every shift change, the worst roll call"
-flavor.harbinger_warning.cosmic.023,"The outer habitats were ordered to seal their bulkheads at night, lockdown energy"
+flavor.harbinger_warning.cosmic.020,The long-range estimate updated every hour and got refreshed every minute by people who could not stop checking
+flavor.harbinger_warning.cosmic.021,"Pressure suits became the must-have accessory, crew carrying them folded over one arm into the mess, the showers and the chapel, and nobody said a word about it"
+flavor.harbinger_warning.cosmic.022,"The estimate earned a spot in every shift change roll call, read out loud"
+flavor.harbinger_warning.cosmic.023,"The outer habitats went into nightly lockdown, bulkheads sealed"
 flavor.harbinger_warning.cosmic.024,"Families moved their bedding into the inner ring, where the hull is thickest, and slept in the corridors outside the hydroponics bays in the smell of wet soil, and the kids thought it was a holiday"
-flavor.harbinger_warning.cosmic.025,"The probability was a real number now, and people treated it like one, no more jokes"
-flavor.harbinger_warning.cosmic.026,"Every spare seat on the evacuation shuttles got assigned by lottery, the worst raffle ever"
-flavor.harbinger_warning.cosmic.027,"The chapel was never empty, not for a minute"
+flavor.harbinger_warning.cosmic.025,"The probability had become a real number, and the jokes stopped"
+flavor.harbinger_warning.cosmic.026,The worst raffle ever handed out every spare berth on the evacuation shuttles
+flavor.harbinger_warning.cosmic.027,The chapel never had an empty minute
 flavor.harbinger_warning.cosmic.028,The night watch went completely silent
 flavor.harbinger_warning.cosmic.029,The shields got cranked to max and stayed there
-flavor.harbinger_warning.cosmic.030,"People stopped looking out the viewports, they couldn't"
-flavor.harbinger_warning.cosmic.031,"The outer ring got abandoned, lights off, nobody home"
-flavor.harbinger_warning.cosmic.032,"Evacuation shuttles started loading kids first, as they should"
-flavor.harbinger_warning.cosmic.033,"The estimate got read out and then the comm line went dead for a full minute, the longest silence on record"
-flavor.harbinger_warning.cosmic.034,"The probability was nearly certain and still climbing, no ceiling in sight"
+flavor.harbinger_warning.cosmic.030,Nobody could bring themselves to look out the viewports anymore
+flavor.harbinger_warning.cosmic.031,"Nobody's home on the outer ring anymore, it got abandoned"
+flavor.harbinger_warning.cosmic.032,Evacuation shuttles started loading the kids first
+flavor.harbinger_warning.cosmic.033,"After the estimate was read out, the comm line went dead silent for a full minute"
+flavor.harbinger_warning.cosmic.034,The probability was basically certain and still climbing
 flavor.harbinger_warning.cosmic.035,People held hands with strangers in the corridors
 flavor.harbinger_warning.cosmic.036,"The observation decks were sealed, on the grounds that nobody should have to watch it come"
 flavor.harbinger_warning.cosmic.037,Every clock on the station had turned into a countdown
 flavor.harbinger_warning.cosmic.038,The number kept climbing and climbing
 flavor.harbinger_warning.cosmic.039,"In the great dark past the last charted star, something that's been patient longer than there have been stars finally turned its attention toward the colony, and the number on every screen was just the colony's way of saying so"
-flavor.harbinger_warning.primitive_age.001,"He sniffed the wind, spat, and declared the wind was just wind, case closed"
+flavor.harbinger_warning.primitive_age.001,"He vibe-checked the wind, spat, and ruled it just wind"
 flavor.harbinger_warning.primitive_age.002,"The ashes had zero to say, left him on read"
 flavor.harbinger_warning.primitive_age.003,"All he said was “Nothing comes,” and he went back to his snack"
 flavor.harbinger_warning.primitive_age.004,"He looked at the sky, the herd and the kids, grunted, and dipped before dark"
 flavor.harbinger_warning.primitive_age.005,"He kept saying “small teeth” over and over, and nobody had a clue what small teeth meant"
 flavor.harbinger_warning.primitive_age.006,"He tied a black feather over the doorway of the biggest hut and refused to explain, mysterious king"
-flavor.harbinger_warning.primitive_age.007,"He drew a wolf in the ash, then half-erased it, the soft launch of a threat"
+flavor.harbinger_warning.primitive_age.007,He soft-launched a threat by drawing a wolf in the ash and half-erasing it
 flavor.harbinger_warning.primitive_age.008,"Ear pressed to the ground, he said “It will be hungry,” and nobody liked that"
 flavor.harbinger_warning.primitive_age.009,"He went hut to hut smearing ash on the doorposts of every hut with a kid inside, then did a second lap to double-check, and the moms stood in the doorways and let him"
-flavor.harbinger_warning.primitive_age.010,"He howled and the dogs howled back, call and response"
-flavor.harbinger_warning.primitive_age.011,"The wild man screamed “Fire from above, fire from above” and tore at his hair until it came out in his hands, full meltdown"
+flavor.harbinger_warning.primitive_age.010,"He started a howl and the dogs joined in, call and response"
+flavor.harbinger_warning.primitive_age.011,"The wild man had a full meltdown, screaming “Fire from above, fire from above” and tearing at his hair until it came out in his hands"
 flavor.harbinger_warning.primitive_age.012,He refused to sleep under any shelter and sprinted off into the dark still yelling
-flavor.harbinger_warning.primitive_age.013,"He snapped his own spear across his knee and tossed the pieces in the fire, not a good sign"
-flavor.harbinger_warning.stone_age.001,"The hermit sat a whole day on the high rock and came down to report the sky was empty, all clear"
-flavor.harbinger_warning.stone_age.002,"The hermit shrugged, and that's the prophecy, that's it"
-flavor.harbinger_warning.stone_age.003,"His entire answer was “Nothing,” and then he went back up to his cave, iconic"
-flavor.harbinger_warning.stone_age.004,"He counted the stars over the ridge and found them all present, attendance taken"
-flavor.harbinger_warning.stone_age.005,"He said the winter would be long, and the long winters are the ones people remember, ominous but vague"
+flavor.harbinger_warning.primitive_age.013,He snapped his own spear across his knee and yeeted the pieces into the fire
+flavor.harbinger_warning.stone_age.001,"After a full day of sky-watching on the high rock, the hermit reported back that the sky was empty"
+flavor.harbinger_warning.stone_age.002,The hermit's whole prophecy was a shrug
+flavor.harbinger_warning.stone_age.003,"His entire answer was “Nothing,” and then he dipped back up to his cave, iconic"
+flavor.harbinger_warning.stone_age.004,He took attendance on the stars over the ridge and all of them showed up
+flavor.harbinger_warning.stone_age.005,"He said the winter would be long, and the long ones are the ones people make lore about"
 flavor.harbinger_warning.stone_age.006,"He told them to watch the water, which could mean literally anything"
-flavor.harbinger_warning.stone_age.007,"He left three flat rocks stacked at the cave mouth and refused to explain them, cryptic king"
-flavor.harbinger_warning.stone_age.008,"Pointing north with his whole arm, he said “The cold is walking,” chilling, literally"
-flavor.harbinger_warning.stone_age.009,"He told the women to dry every scrap of meat before the next moon, meal prep for doom"
+flavor.harbinger_warning.stone_age.007,"He left three flat rocks stacked at the cave mouth and gatekept the meaning, cryptic king"
+flavor.harbinger_warning.stone_age.008,"He pointed north with his whole arm and dropped “The cold is walking,” which is chilling, literally"
+flavor.harbinger_warning.stone_age.009,He told the women to meal-prep every scrap of meat into jerky before the next moon
 flavor.harbinger_warning.stone_age.010,He couldn't look the kids in the eye
 flavor.harbinger_warning.stone_age.011,"The mountain will shake the caves loose, the hermit said, and he flat out refused to go back up to his own"
-flavor.harbinger_warning.stone_age.012,"He painted his face red, which the oldest woman said meant the worst thing it possibly could, a literal red flag"
-flavor.harbinger_warning.stone_age.013,"He sat down in the middle of camp and wouldn't get up for food or rain, and by day three the kids had stopped being scared of him and were bringing him stuff"
-flavor.harbinger_warning.bronze_age.001,"The liver was clean, the birds flew right, and she still wanted paying, the hustle never sleeps"
-flavor.harbinger_warning.bronze_age.002,"The knucklebones came up plain, nothing spicy"
+flavor.harbinger_warning.stone_age.012,"He showed up with his face painted red, which the oldest woman said is the worst possible red flag"
+flavor.harbinger_warning.stone_age.013,"He sat down in the middle of camp and refused to get up for food or rain, and by day three the kids had stopped being scared of him and were bringing him little gifts"
+flavor.harbinger_warning.bronze_age.001,"The liver was clean, the birds flew right, and she still invoiced them, the hustle never sleeps"
+flavor.harbinger_warning.bronze_age.002,"The knucklebones came up mid, nothing spicy"
 flavor.harbinger_warning.bronze_age.003,"She read the sparrows most of the afternoon, then the knucklebones, then a goat's liver, couldn't squeeze anything ominous out of any of it, and finally asked for her fee and her mule"
 flavor.harbinger_warning.bronze_age.004,"The gods are bored of us, she said, which everyone took as good news"
-flavor.harbinger_warning.bronze_age.005,"The liver had a little spot on it, low down, which she said meant a bad harvest or a bad marriage, pick your fighter"
-flavor.harbinger_warning.bronze_age.006,"One sparrow in seven flew left, a minor red flag"
-flavor.harbinger_warning.bronze_age.007,"She wouldn't say what the knucklebones meant, and charged extra for not saying, business queen"
-flavor.harbinger_warning.bronze_age.008,"The liver was spotted all over, and she held it up so everyone could see, gross but informative"
+flavor.harbinger_warning.bronze_age.005,"The liver had a tiny spot low down, which she said meant a bad harvest or a bad marriage, so pick your fighter"
+flavor.harbinger_warning.bronze_age.006,"Six sparrows were fine and one flew left, a minor red flag"
+flavor.harbinger_warning.bronze_age.007,She gatekept what the knucklebones meant and charged extra for the gatekeeping
+flavor.harbinger_warning.bronze_age.008,"She held up a liver spotted all over so everyone could see, gross but informative"
 flavor.harbinger_warning.bronze_age.009,"In the special voice they save for this, she said “The bronze will crack and the grain will rot,” and nobody was chill after that"
 flavor.harbinger_warning.bronze_age.010,"The sparrows stayed in their cage, not one let out"
-flavor.harbinger_warning.bronze_age.011,"She cut open the goat, looked once, and refused to touch it again, she'd seen enough"
-flavor.harbinger_warning.bronze_age.012,"The river god is angry and the sky god angrier, she said, and she cried, and asked for no fee, which is the scariest part"
+flavor.harbinger_warning.bronze_age.011,"She cut open the goat, took one look, and was done, she'd seen enough"
+flavor.harbinger_warning.bronze_age.012,"The river god is angry and the sky god angrier, she said through tears, and then waived her fee, which is the scariest part"
 flavor.harbinger_warning.bronze_age.013,"Every bird in her cage died overnight, and in the morning she carried them to the temple for everyone to see"
-flavor.harbinger_warning.iron_age.001,"His prophecy opened with “Thus says the voice in the desert” and then just stopped, because there was nothing to follow, and he looked deeply annoyed about it"
-flavor.harbinger_warning.iron_age.002,"He came to curse the city and couldn't find anything in it worth the effort, brutal review"
-flavor.harbinger_warning.iron_age.003,"He snacked on figs by the well, that's it, that's the prophecy"
-flavor.harbinger_warning.iron_age.004,"Mostly he preached against gluttony, the snack police"
+flavor.harbinger_warning.iron_age.001,"His prophecy opened strong with “Thus says the voice in the desert” and then just stopped, nothing to follow it, and he looked so annoyed about the writer's block"
+flavor.harbinger_warning.iron_age.002,"He came to curse the city and couldn't find anything worth the effort, a one-star review"
+flavor.harbinger_warning.iron_age.003,"He just snacked on figs by the well, and that was the whole show"
+flavor.harbinger_warning.iron_age.004,"His main topic was gluttony, the snack police had arrived"
 flavor.harbinger_warning.iron_age.005,"To the whole market he announced “A dry year is coming, and you have earned it,” and the shade was immaculate"
-flavor.harbinger_warning.iron_age.006,"He only cursed the tax collectors, crowd favorite"
-flavor.harbinger_warning.iron_age.007,He wrote something in the dust by the well and dipped before anyone could read it
-flavor.harbinger_warning.iron_age.008,"Woe to the city of fat men, he cried, and the fat men went indoors, called out"
-flavor.harbinger_warning.iron_age.009,"The day he named was soon, like, soon soon"
-flavor.harbinger_warning.iron_age.010,"His voice broke halfway through and he had to restart the curse, take two"
+flavor.harbinger_warning.iron_age.006,"The tax collectors were the only ones he cursed, instant crowd favorite"
+flavor.harbinger_warning.iron_age.007,He wrote something in the dust by the well and ghosted before anyone could read it
+flavor.harbinger_warning.iron_age.008,"Woe to the city of fat men, he cried, and the fat men felt called out and went indoors"
+flavor.harbinger_warning.iron_age.009,"The day he named was soon, like, uncomfortably soon"
+flavor.harbinger_warning.iron_age.010,"Mid-curse his voice cracked, so it was take two from the top"
 flavor.harbinger_warning.iron_age.011,"Over and over, until his voice was gone, he cried “The sky will be brass and the earth iron, and the rain will be dust”"
-flavor.harbinger_warning.iron_age.012,"He tore his cloak neck to hem in front of the whole market and stood there in what was left of it, and the traders who'd laughed at him the day before packed up their stalls and went home without being told"
-flavor.harbinger_warning.iron_age.013,"He lay face down in the square praying nonstop, no breaks"
-flavor.harbinger_warning.classical_age.001,"The priests brought back a riddle about a goat and a fig tree, and after a lot of discussion it meant nothing, riddle was mid"
-flavor.harbinger_warning.classical_age.002,"She said the gods were looking elsewhere this year, we're off the radar"
-flavor.harbinger_warning.classical_age.003,"Her answer was one single word, and the priests agreed it was a nice one"
-flavor.harbinger_warning.classical_age.004,"Her answer was so vague that three different philosophers wrote books about it, each proving it meant something different, and by the time book three was finished the season in question had come and gone without incident"
-flavor.harbinger_warning.classical_age.005,"Her answer was “A shadow falls on the olive,” and the olive growers took it very personally"
-flavor.harbinger_warning.classical_age.006,"She spoke of a small grief, and the priests argued about exactly how small"
-flavor.harbinger_warning.classical_age.007,"The smoke over the cleft rock was grey, not white, not black, the most noncommittal smoke ever"
-flavor.harbinger_warning.classical_age.008,"Her words were “When the owl sings at noon, the walls will learn to weep,” and the priests wrote them on a tablet and sent them by fast horse, express delivery"
+flavor.harbinger_warning.iron_age.012,"He tore his cloak neck to hem in front of the whole market and stood there in what was left of it, and the traders who'd clowned on him the day before packed up and went home without being told"
+flavor.harbinger_warning.iron_age.013,He lay face down in the square on an endless prayer streak
+flavor.harbinger_warning.classical_age.001,"The priests' riddle about a goat and a fig tree turned out, after much discussion, to be mid and meaningless"
+flavor.harbinger_warning.classical_age.002,She said we're off the gods' radar this year
+flavor.harbinger_warning.classical_age.003,"Her whole answer was one word, and the priests agreed it had good vibes"
+flavor.harbinger_warning.classical_age.004,"Her answer was so vague three philosophers wrote books about it, each proving it meant something different, and by the time book three dropped the season in question had come and gone without incident"
+flavor.harbinger_warning.classical_age.005,"The olive growers felt personally attacked by her answer, “A shadow falls on the olive”"
+flavor.harbinger_warning.classical_age.006,She mentioned a small grief and the priests spiraled into arguing exactly how small
+flavor.harbinger_warning.classical_age.007,"The smoke over the cleft rock went grey, refusing to commit to white or black"
+flavor.harbinger_warning.classical_age.008,"Her words, “When the owl sings at noon, the walls will learn to weep,” went on a tablet and out by fast horse, express shipping"
 flavor.harbinger_warning.classical_age.009,"The priests who brought the answer were told to repeat it word for word, and they did, and would not add a single thing of their own"
-flavor.harbinger_warning.classical_age.010,"She spoke without being asked, unprompted, which never happens"
+flavor.harbinger_warning.classical_age.010,"She spoke unprompted, which she literally never does"
 flavor.harbinger_warning.classical_age.011,"She said “The city will be a field and the field will be ash,” and then left everyone on read for a month"
-flavor.harbinger_warning.classical_age.012,"The priests came back in full mourning, and that said everything"
-flavor.harbinger_warning.classical_age.013,Her answer was written in a hand so shaky it took the scribes a full day just to read it
-flavor.harbinger_warning.medieval_age.001,"The crier's cry was “Oyez, oyez, all is well, and the price of salt is down a farthing,” and then he moved on to the lost cow, the real news"
-flavor.harbinger_warning.medieval_age.002,He rang the bell to announce there was nothing to ring the bell about
-flavor.harbinger_warning.medieval_age.003,"The crier cried the fair, the tolls and the lost cow, and nothing else, a slow news day"
-flavor.harbinger_warning.medieval_age.004,"He read the doom off his paper in the exact voice he uses for market tolls, zero range"
+flavor.harbinger_warning.classical_age.012,Mourning clothes on the returning priests said it all
+flavor.harbinger_warning.classical_age.013,Her answer was written in a hand so shaky the scribes needed a full day to decode it
+flavor.harbinger_warning.medieval_age.001,"The crier's big news was “Oyez, oyez, all is well, and the price of salt is down a farthing,” and then he moved on to the lost cow, the real headline"
+flavor.harbinger_warning.medieval_age.002,He rang the bell purely to announce there was nothing worth a bell
+flavor.harbinger_warning.medieval_age.003,"The crier's whole setlist was the fair, the tolls and the lost cow"
+flavor.harbinger_warning.medieval_age.004,"He read out the doom in the same monotone he uses for market tolls, zero range"
 flavor.harbinger_warning.medieval_age.005,"At every corner he cried “Be it known that there is talk of a bad summer, and the lord advises prudence,” the medieval push notification"
-flavor.harbinger_warning.medieval_age.006,He squeezed the warning in between the lost pig and the new toll on the bridge
-flavor.harbinger_warning.medieval_age.007,"The bell rang long, way too long"
+flavor.harbinger_warning.medieval_age.006,He sandwiched the warning between a lost pig and the new bridge toll
+flavor.harbinger_warning.medieval_age.007,The bell rang way too long
 flavor.harbinger_warning.medieval_age.008,"Hear ye, he cried, the lord bids every household lay in grain and keep its doors barred after dark, mandatory"
-flavor.harbinger_warning.medieval_age.009,"He cried it in the market, at the church door, at the ford and at the mill, his voice getting worse at each stop, so by the mill the miller had to come out and ask him to say it again"
-flavor.harbinger_warning.medieval_age.010,"The crier's hand was shaking on the bell rope, not a good look"
-flavor.harbinger_warning.medieval_age.011,"God save us all, he cried, which is not in the usual script"
+flavor.harbinger_warning.medieval_age.009,"He cried it in the market, at the church door, at the ford and at the mill, his voice getting more cooked at each stop, so by the mill the miller had to come out and ask him to say it again"
+flavor.harbinger_warning.medieval_age.010,The crier had the shakes on the bell rope
+flavor.harbinger_warning.medieval_age.011,"God save us all, he cried, going completely off script"
 flavor.harbinger_warning.medieval_age.012,He rang the bell until it cracked and kept shouting after it gave out
 flavor.harbinger_warning.medieval_age.013,"His last cry was “The end is on the road and it will be here by the feast,” and then he sat down on the church steps and would cry nothing else"
-flavor.harbinger_warning.renaissance_age.001,"The charts were clear, the conjunctions were kind, and his fee was as huge as ever"
-flavor.harbinger_warning.renaissance_age.002,"Jupiter was in a good house and the prince went hunting, vibes immaculate"
-flavor.harbinger_warning.renaissance_age.003,He found no bad aspect anywhere in the heavens and seemed personally offended
-flavor.harbinger_warning.renaissance_age.004,"Saturn was sulking, he said, but no more than usual, Saturn being Saturn"
-flavor.harbinger_warning.renaissance_age.005,"Mars was rising in the house of grain, which he said meant a lean autumn, diet season"
-flavor.harbinger_warning.renaissance_age.006,"He advised the prince to postpone his wedding, and would not say why in front of the bride, awkward"
-flavor.harbinger_warning.renaissance_age.007,He redrew the chart by candlelight and asked himself for a second opinion
+flavor.harbinger_warning.renaissance_age.001,"The charts were clear, the conjunctions were kind, and his fee was as huge as ever, the stars are free but he isn't"
+flavor.harbinger_warning.renaissance_age.002,"Jupiter was in a good house, so the prince took the day off to go hunting"
+flavor.harbinger_warning.renaissance_age.003,He couldn't find a single bad aspect in the heavens and took it as a personal insult
+flavor.harbinger_warning.renaissance_age.004,"Saturn was in its usual sulky era, he said, nothing new"
+flavor.harbinger_warning.renaissance_age.005,"Mars rising in the house of grain meant a lean autumn, he said, diet season incoming"
+flavor.harbinger_warning.renaissance_age.006,"He told the prince to postpone the wedding and refused to spill why in front of the bride, awkward"
+flavor.harbinger_warning.renaissance_age.007,"He redrew the chart by candlelight and got a second opinion from, himself"
 flavor.harbinger_warning.renaissance_age.008,"Reading aloud, he announced “Saturn and Mars stand together in the house of death,” and the whole court stopped eating mid-bite"
-flavor.harbinger_warning.renaissance_age.009,"He sealed his chart with black wax and sent it to the prince unopened, the envelope says it all"
-flavor.harbinger_warning.renaissance_age.010,"He asked for his wages early, which is not a great sign"
+flavor.harbinger_warning.renaissance_age.009,He sealed the chart in goth black wax and sent it to the prince unopened
+flavor.harbinger_warning.renaissance_age.010,"He asked for his wages early, giving get-out-while-you-can"
 flavor.harbinger_warning.renaissance_age.011,"A great conjunction, he announced, the kind not seen in three hundred years, and he dropped his pointer"
-flavor.harbinger_warning.renaissance_age.012,"He burned his own horoscope, which is not something you do if it was good"
-flavor.harbinger_warning.renaissance_age.013,"The kitchen boys saw him that night packing his instruments into a travel chest, the astrolabe wrapped in his second-best cloak, the kitchen boys told the cook, and by morning the whole palace knew, gossip pipeline undefeated"
-flavor.harbinger_warning.colonial_age.001,"Her new pamphlet was titled A Calm Assessment and sold three copies, calm doesn't sell"
-flavor.harbinger_warning.colonial_age.002,"She had nothing dreadful to print, so she printed a recipe for pickled herring instead, content is content"
-flavor.harbinger_warning.colonial_age.003,"The press sat idle all week, nothing worth inking"
-flavor.harbinger_warning.colonial_age.004,"Her pamphlet mostly warned about the price of tea, the real crisis"
-flavor.harbinger_warning.colonial_age.005,"A Sober Word Concerning the Coming Season, price one penny, was the read in every coffee house"
-flavor.harbinger_warning.colonial_age.006,"She printed a warning in tiny type at the bottom of the shipping notices, between a sale of indentures and a reward for a runaway horse, where the only readers would be the people who read everything"
-flavor.harbinger_warning.colonial_age.007,"Black borders this week, the pamphlets went goth"
-flavor.harbinger_warning.colonial_age.008,"Her new pamphlet was titled A True and Terrible Warning to the Inhabitants of This Colony, and ran to forty pages, she had a lot to say"
-flavor.harbinger_warning.colonial_age.009,"The printer ran off two thousand copies overnight and ran out of paper, sold out energy"
-flavor.harbinger_warning.colonial_age.010,"Her hands were black to the wrist from setting type all night, the grind was literal"
-flavor.harbinger_warning.colonial_age.011,"THE JUDGEMENT IS AT HAND, the pamphlet said across its whole front page, in the biggest type the colony owned, subtle"
-flavor.harbinger_warning.colonial_age.012,"Free pamphlets, for once, which is terrifying"
-flavor.harbinger_warning.colonial_age.013,"The governor had her press seized, and the pamphlet spread in handwritten copies instead, faster than it ever did in print, the censorship backfired"
-flavor.harbinger_warning.industrial_age.001,"The newsboy called it a slow news day and sold papers about a prize marrow, vegetable journalism"
-flavor.harbinger_warning.industrial_age.002,"The late edition stuck the odds on page nine, under the shipping news, where nobody looks"
-flavor.harbinger_warning.industrial_age.003,"All he had to shout was nothing doing, nothing doing, and he shouted it with very little hope"
-flavor.harbinger_warning.industrial_age.004,"The headline was about the mayor's gout, hard-hitting journalism"
+flavor.harbinger_warning.renaissance_age.012,"He set fire to his own horoscope, which you don't do when it's good news"
+flavor.harbinger_warning.renaissance_age.013,"The kitchen boys clocked him that night packing his instruments into a travel chest, astrolabe wrapped in his second-best cloak, told the cook, and by morning the gossip pipeline had told the whole palace"
+flavor.harbinger_warning.colonial_age.001,"Her new pamphlet, A Calm Assessment, sold three copies, because calm doesn't sell"
+flavor.harbinger_warning.colonial_age.002,"With nothing dreadful to print, she printed a recipe for pickled herring instead, content is content"
+flavor.harbinger_warning.colonial_age.003,"The press took the whole week off, nothing worth inking"
+flavor.harbinger_warning.colonial_age.004,Her pamphlet's big crisis was mostly the price of tea
+flavor.harbinger_warning.colonial_age.005,"A Sober Word Concerning the Coming Season, price one penny, was the must-read in every coffee house"
+flavor.harbinger_warning.colonial_age.006,"She buried a warning in tiny type at the bottom of the shipping notices, between a sale of indentures and a reward for a runaway horse, where only the read-everything crowd would ever see it"
+flavor.harbinger_warning.colonial_age.007,"The pamphlets went goth this week, black borders on everything"
+flavor.harbinger_warning.colonial_age.008,"Her new pamphlet, A True and Terrible Warning to the Inhabitants of This Colony, ran forty pages, she had a lot to say"
+flavor.harbinger_warning.colonial_age.009,"The printer pulled an all-nighter, two thousand copies, until the paper ran out"
+flavor.harbinger_warning.colonial_age.010,An all-night type-setting grind left her hands black to the wrist
+flavor.harbinger_warning.colonial_age.011,"THE JUDGEMENT IS AT HAND, screamed the pamphlet across its entire front page, in the biggest type the colony owned, very subtle"
+flavor.harbinger_warning.colonial_age.012,"The pamphlets were free for once, which is terrifying"
+flavor.harbinger_warning.colonial_age.013,"The governor had her press seized, and the pamphlet went viral in handwritten copies instead, spreading faster than it ever did in print"
+flavor.harbinger_warning.industrial_age.001,"The newsboy called it a slow news day and hawked papers about a prize marrow, vegetable journalism"
+flavor.harbinger_warning.industrial_age.002,"The late edition buried the odds on page nine, under the shipping news"
+flavor.harbinger_warning.industrial_age.003,"His whole pitch was nothing doing, nothing doing, shouted with the energy of a kid who knows it won't sell"
+flavor.harbinger_warning.industrial_age.004,"The headline was the mayor's gout, hard-hitting journalism"
 flavor.harbinger_warning.industrial_age.005,"SMALL CHANCE OF CALAMITY, EXPERTS SAY, the boy shouted, and he sold more papers than he expected"
-flavor.harbinger_warning.industrial_age.006,"The odds got a box on page three, next to an ad for liver pills, sponsored doom"
+flavor.harbinger_warning.industrial_age.006,"The odds got a little box on page three next to an ad for liver pills, sponsored doom"
 flavor.harbinger_warning.industrial_age.007,The odds got promoted to page one
 flavor.harbinger_warning.industrial_age.008,"ODDS SHORTEN ON DISASTER, he shouted, read all about it, and people stopped in the road to buy"
-flavor.harbinger_warning.industrial_age.009,"The morning paper ran the odds in a black-bordered box on the front page, never a good sign"
-flavor.harbinger_warning.industrial_age.010,"The boy sold out by ten and got sent back to the yard for more, best day of his career"
+flavor.harbinger_warning.industrial_age.009,The morning paper gave the odds the black-border treatment right on the front page
+flavor.harbinger_warning.industrial_age.010,"The boy sold out by ten and got sent back for a restock, best day of his career"
 flavor.harbinger_warning.industrial_age.011,"DOOM CERTAIN SAYS PROFESSOR, he shouted, and his voice cracked right in the middle of doom"
-flavor.harbinger_warning.industrial_age.012,"The extra edition printed the odds in type two inches high, absolutely shouting"
+flavor.harbinger_warning.industrial_age.012,"The extra edition was absolutely shouting, the odds in type two inches high"
 flavor.harbinger_warning.industrial_age.013,"He stopped shouting halfway down the street and just held the paper up over his head and kept walking, and people came out of the shops to read it as he passed and didn't go back in"
 flavor.harbinger_warning.victorian_age.001,"His figures showed nothing and he read every single one out anyway, the dedication"
-flavor.harbinger_warning.victorian_age.002,"Repent or don't, he said, it hardly matters this year, and he hopped down off his crate"
-flavor.harbinger_warning.victorian_age.003,"The sandwich board said NOTHING MUCH, and a few people laughed"
+flavor.harbinger_warning.victorian_age.002,"Repent or don't, it hardly matters this year, he said, and hopped off his crate like a man off the clock"
+flavor.harbinger_warning.victorian_age.003,"His sandwich board just said NOTHING MUCH, and it got a few laughs"
 flavor.harbinger_warning.victorian_age.004,"Mostly he ranted about drains, his true passion"
-flavor.harbinger_warning.victorian_age.005,"His table of figures showed a small risk, and he jabbed at it with his umbrella every few minutes"
-flavor.harbinger_warning.victorian_age.006,"A minor calamity, statistically speaking, he shouted, which pulled a smaller crowd than doom usually does"
-flavor.harbinger_warning.victorian_age.007,"Figures in red ink, never a good look"
+flavor.harbinger_warning.victorian_age.005,"He kept jabbing his umbrella at a table of figures showing a small risk, every few minutes, committed"
+flavor.harbinger_warning.victorian_age.006,"A statistically minor calamity doesn't pull a crowd the way doom does, and his turnout proved it when he shouted it"
+flavor.harbinger_warning.victorian_age.007,"The figures came in red ink, a bad look for any number"
 flavor.harbinger_warning.victorian_age.008,"Rapping the board, he shouted “The odds are published, gentlemen, and they are against you”"
-flavor.harbinger_warning.victorian_age.009,"He'd drawn the odds as a pie chart on the back of his sandwich board, and the doom slice was big"
+flavor.harbinger_warning.victorian_age.009,"He'd made a pie chart of the odds on the back of his sandwich board, and the doom slice was huge"
 flavor.harbinger_warning.victorian_age.010,He didn't take a single penny today
 flavor.harbinger_warning.victorian_age.011,"The figures do not lie, he roared, and the figures say the end, and at the front a woman fainted"
-flavor.harbinger_warning.victorian_age.012,"He'd turned the board round so the figures faced the crowd, and he said nothing at all"
+flavor.harbinger_warning.victorian_age.012,"He'd flipped the board so the figures faced the crowd and said nothing at all, letting the numbers talk"
 flavor.harbinger_warning.victorian_age.013,"A police constable who'd moved him along every week for a year stood beside him this time with his helmet under his arm and listened to the whole thing, and at the end left him where he was"
 flavor.harbinger_warning.electric_age.001,ALL QUIET STOP NOTHING TO REPORT STOP came down the wire from every station
-flavor.harbinger_warning.electric_age.002,"The dispatches were about the weather and a runaway horse, slow news"
-flavor.harbinger_warning.electric_age.003,"The operator read out the forecast odds and went back to his crossword, unbothered"
-flavor.harbinger_warning.electric_age.004,The wire carried the odds squeezed between a cattle report and a death notice
+flavor.harbinger_warning.electric_age.002,"The dispatches were weather and one runaway horse, slow news"
+flavor.harbinger_warning.electric_age.003,"The operator read out the odds and went straight back to his crossword, unbothered"
+flavor.harbinger_warning.electric_age.004,The odds came down the wire sandwiched between a cattle report and a death notice
 flavor.harbinger_warning.electric_age.005,"SLIGHT RISK STOP ADVISE CAUTION STOP, the dispatch read, and the postmaster pinned it in the window"
-flavor.harbinger_warning.electric_age.006,The odds came down the wire at noon and got chalked on the board outside the post office
-flavor.harbinger_warning.electric_age.007,"Dispatches from the south, then nothing else, total silence"
+flavor.harbinger_warning.electric_age.006,The odds came down the wire at noon and got chalked up on the board outside the post office for everyone to see
+flavor.harbinger_warning.electric_age.007,The south sent its dispatches and then went silent
 flavor.harbinger_warning.electric_age.008,"RISK SUBSTANTIAL STOP PREPARE STOP ODDS FOLLOW STOP, and then the odds followed"
 flavor.harbinger_warning.electric_age.009,"The operator had been at the key for nine hours, his wife brought his dinner in a basin and took it away again untouched, and the dispatches kept coming from up the line"
-flavor.harbinger_warning.electric_age.010,"Some stations up the line had stopped answering, which is the worst kind of quiet"
+flavor.harbinger_warning.electric_age.010,"Some stations up the line had ghosted, no answer"
 flavor.harbinger_warning.electric_age.011,"EVACUATE STOP EVACUATE STOP, the wire repeated, and the operator had to be relieved at his post"
-flavor.harbinger_warning.electric_age.012,"The odds came down the wire, and the operator read them and then leaned back from the key"
-flavor.harbinger_warning.electric_age.013,The last dispatch from the south cut off in the middle of a word
-flavor.harbinger_warning.atomic_age.001,"This is a test, said the announcer, this is only a test, and the programme came back, false alarm"
-flavor.harbinger_warning.atomic_age.002,"The broadcast called the odds negligible and played a waltz, vibes restored"
+flavor.harbinger_warning.electric_age.012,"The operator read the odds as they came down the wire and then leaned back from the key, done"
+flavor.harbinger_warning.electric_age.013,The last dispatch from the south cut out mid-word
+flavor.harbinger_warning.atomic_age.001,"This is a test, said the announcer, only a test, and the programme came back, false alarm"
+flavor.harbinger_warning.atomic_age.002,The broadcast called the odds negligible and dropped a waltz
 flavor.harbinger_warning.atomic_age.003,"The monthly siren test went off on schedule, and nobody even looked up"
-flavor.harbinger_warning.atomic_age.004,"The announcer read the odds between the farm prices and the shipping forecast, sandwiched in like it was nothing"
+flavor.harbinger_warning.atomic_age.004,The announcer slipped the odds in between the farm prices and the shipping forecast like it was nothing
 flavor.harbinger_warning.atomic_age.005,"Three times an hour the radio repeated “The civil defence authority advises that the risk remains low,” on loop like a jingle"
-flavor.harbinger_warning.atomic_age.006,"The what-to-do leaflet got reprinted and shoved through every letterbox, junk mail but make it survival"
-flavor.harbinger_warning.atomic_age.007,"Broadcasts every half hour now, the updates are relentless"
+flavor.harbinger_warning.atomic_age.006,"The what-to-do leaflet got reprinted and shoved through every letterbox, survival junk mail"
+flavor.harbinger_warning.atomic_age.007,"The broadcasts are every half hour now, relentless"
 flavor.harbinger_warning.atomic_age.008,"This is not a test, the announcer said, and then read out the odds slowly, like he was explaining it to kids"
-flavor.harbinger_warning.atomic_age.009,"The radio listed every public shelter in the district, one after another, for twenty straight minutes, the longest playlist ever"
+flavor.harbinger_warning.atomic_age.009,"The radio listed every public shelter in the district for twenty straight minutes, the longest playlist ever"
 flavor.harbinger_warning.atomic_age.010,"Sirens, a full minute of them, the worst song ever recorded"
-flavor.harbinger_warning.atomic_age.011,"Proceed to your designated shelter in an orderly fashion, said the announcer, and then said it again, just in case"
-flavor.harbinger_warning.atomic_age.012,"The broadcast read the odds and then played the anthem, which is never the move you want"
+flavor.harbinger_warning.atomic_age.011,"Proceed to your designated shelter in an orderly fashion, said the announcer, on repeat"
+flavor.harbinger_warning.atomic_age.012,"The broadcast dropped the odds and then the anthem, never the move you want"
 flavor.harbinger_warning.atomic_age.013,"The announcer's voice changed partway through the odds, and the pause was long enough for people in kitchens all over the district to look up from what they were doing, then he apologized and kept going"
-flavor.harbinger_warning.modern_age.001,"The story ran fourth, after a cat that learned to use a lift, the cat had better PR"
+flavor.harbinger_warning.modern_age.001,"The story ran fourth, behind a cat that learned to use a lift, the cat had better PR"
 flavor.harbinger_warning.modern_age.002,The anchor delivered the odds with a smile and pivoted to sport
-flavor.harbinger_warning.modern_age.003,"The on-screen graphic showed a probability so tiny they had to zoom in, enhance"
-flavor.harbinger_warning.modern_age.004,"The studio expert called the risk manageable and was never invited back, canceled for being chill"
+flavor.harbinger_warning.modern_age.003,"The on-screen graphic needed a zoom just to show a probability that small, enhance"
+flavor.harbinger_warning.modern_age.004,The studio expert called the risk manageable and got canceled from future bookings
 flavor.harbinger_warning.modern_age.005,"The graphic behind the anchor flipped from green to yellow halfway through the bulletin, and in thousands of living rooms people who hadn't been paying attention sat up and asked what they'd missed"
 flavor.harbinger_warning.modern_age.006,"The risk is low but not zero, the anchor said, and held eye contact with the camera a beat too long"
-flavor.harbinger_warning.modern_age.007,"They brought in a second expert purely to disagree with the first, content strategy"
-flavor.harbinger_warning.modern_age.008,"The anchor read the odds off the autocue, stopped, and read them again, the double take heard round the country"
-flavor.harbinger_warning.modern_age.009,"We go now to our correspondent outside the ministry, said the anchor, and the correspondent had nothing to add except the odds, standing in the cold for nothing"
+flavor.harbinger_warning.modern_age.007,They booked a second expert purely to beef with the first
+flavor.harbinger_warning.modern_age.008,"The anchor did a live double take on the autocue, reading the odds twice"
+flavor.harbinger_warning.modern_age.009,The correspondent outside the ministry got the handoff live and had nothing to add except the odds
 flavor.harbinger_warning.modern_age.010,"No ads tonight, which is how you know it's bad"
 flavor.harbinger_warning.modern_age.011,"The anchor read the odds, took off her glasses, and sat there a moment saying nothing, live, in front of the whole country"
 flavor.harbinger_warning.modern_age.012,"Stay indoors, stay tuned, said the anchor, and the station logo vanished from the corner of the screen"
-flavor.harbinger_warning.modern_age.013,"The broadcast ran all night, no sign-off"
-flavor.harbinger_warning.information_age.001,"The chain email said, in bold, that there was nothing to worry about, and to forward it to ten people anyway, just in case the nothing is something"
-flavor.harbinger_warning.information_age.002,"The subject line read ALL CLEAR and the attachment was a kitten pic, honestly ideal"
-flavor.harbinger_warning.information_age.003,"The odds came attached as a spreadsheet, and they were tiny, rows of basically nothing"
-flavor.harbinger_warning.information_age.004,"Most people deleted it unread, inbox zero heroes"
-flavor.harbinger_warning.information_age.005,"It said the risk was small but real, and that ignoring it brings seven years of bad luck, the classic chain email threat"
+flavor.harbinger_warning.modern_age.013,"The broadcast pulled an all-nighter, never signing off"
+flavor.harbinger_warning.information_age.001,"In bold, the chain email swore there was nothing to worry about, then demanded you forward it to ten people anyway"
+flavor.harbinger_warning.information_age.002,"ALL CLEAR in the subject line and a kitten pic attached, honestly the ideal email"
+flavor.harbinger_warning.information_age.003,The odds came as a spreadsheet attachment full of tiny numbers
+flavor.harbinger_warning.information_age.004,Most people yeeted it unread
+flavor.harbinger_warning.information_age.005,"It ran the classic chain email threat, small but real risk, ignore it and get seven years of bad luck"
 flavor.harbinger_warning.information_age.006,"The odds were in the email, in red, in a font nobody has used in decades"
-flavor.harbinger_warning.information_age.007,"It had been forwarded by people who never forward anything, even the quiet ones were sharing"
-flavor.harbinger_warning.information_age.008,"URGENT, PLEASE READ, said the subject line, and for once people actually did"
-flavor.harbinger_warning.information_age.009,"The email gave the odds, cited a professor nobody could find, and ended with a prayer, sources: trust me"
-flavor.harbinger_warning.information_age.010,"Your mom forwarded it, so you know it's serious"
-flavor.harbinger_warning.information_age.011,"The subject line was just the odds in capitals, and everyone who read it forwarded it before they'd even finished"
+flavor.harbinger_warning.information_age.007,Even the never-forward-anything people were forwarding it
+flavor.harbinger_warning.information_age.008,"URGENT, PLEASE READ, begged the subject line, and for once people actually listened"
+flavor.harbinger_warning.information_age.009,The email's sources were a professor nobody could find and a closing prayer
+flavor.harbinger_warning.information_age.010,"Your mom forwarded it, which is how you know it's serious"
+flavor.harbinger_warning.information_age.011,"The subject line was just the odds in capitals, and everyone forwarded it before they'd even finished reading"
 flavor.harbinger_warning.information_age.012,"It said to forward it to everyone you love, and people did, all of them, all at once, and somewhere around the fortieth forward the mail servers for half the country gave up and went dark"
-flavor.harbinger_warning.information_age.013,"Nothing else in anybody's inbox, just that"
-flavor.harbinger_warning.digital_age.001,"The video was a man looking at a graph and shrugging, and it did numbers"
+flavor.harbinger_warning.information_age.013,"Every inbox was just that, nothing else"
+flavor.harbinger_warning.digital_age.001,A video of a man shrugging at a graph did numbers
 flavor.harbinger_warning.digital_age.002,Top comment said the odds were lower than getting flattened by a vending machine
-flavor.harbinger_warning.digital_age.003,"It was a video about nothing, and it trended for an hour anyway"
-flavor.harbinger_warning.digital_age.004,"The creator wrapped up with a sponsor read, the grind doesn't stop for doom"
+flavor.harbinger_warning.digital_age.003,A video about literally nothing trended for an hour
+flavor.harbinger_warning.digital_age.004,The creator wrapped the doom with a sponsor read
 flavor.harbinger_warning.digital_age.005,"The risk is low, like and subscribe, the video said, then ran an ad for a water filter"
-flavor.harbinger_warning.digital_age.006,"The graph in the video showed a tiny bump, and the comments argued about the bump for days"
-flavor.harbinger_warning.digital_age.007,"A thousand reuploads by noon, the internet was copying homework"
-flavor.harbinger_warning.digital_age.008,"The video walked through the odds on a whiteboard, and by the end the whiteboard was mostly red"
+flavor.harbinger_warning.digital_age.006,"The graph showed a tiny bump, and the comments beefed about the bump for days"
+flavor.harbinger_warning.digital_age.007,By noon the internet had copied its homework a thousand times
+flavor.harbinger_warning.digital_age.008,The whiteboard explainer started clean and ended mostly red
 flavor.harbinger_warning.digital_age.009,"It was the first video in years people watched all the way through without skipping, and when it ended most of them sat staring at the black screen before doing anything else"
-flavor.harbinger_warning.digital_age.010,"The creator stopped smiling around minute four, and the vibe shifted hard"
+flavor.harbinger_warning.digital_age.010,Around minute four the creator's smile left the chat
 flavor.harbinger_warning.digital_age.011,"The video was ninety seconds of a woman reading the odds into her phone and then saying goodbye to her kids, who were off camera"
-flavor.harbinger_warning.digital_age.012,"The comments were turned off, and the like button, and the view count, stripped bare"
-flavor.harbinger_warning.digital_age.013,"Every site promoted it at once, which they never do, the algorithm said this one matters"
-flavor.harbinger_warning.cyberpunk_age.001,"The leaked memo said RISK NEGLIGIBLE, NO ACTION REQUIRED, and was signed by a vice president who'd been dead for three years, corporate ghost energy"
-flavor.harbinger_warning.cyberpunk_age.002,"The ghost glitched through a memo about parking allocations and then vanished, truly haunting"
-flavor.harbinger_warning.cyberpunk_age.003,"The internal risk score was so low it rounded to zero, and the ghost seemed disappointed"
-flavor.harbinger_warning.cyberpunk_age.004,"The memo was mostly about budgets, snooze"
-flavor.harbinger_warning.cyberpunk_age.005,"The memo labeled the risk LOW, TOLERABLE, and the executives had initialed it without reading, as is tradition"
+flavor.harbinger_warning.digital_age.012,"No comments, no like button, no view count, the video stripped bare"
+flavor.harbinger_warning.digital_age.013,"Every site pushed it at once, the algorithm said this one matters"
+flavor.harbinger_warning.cyberpunk_age.001,"A leaked memo signed by a vice president three years dead declared RISK NEGLIGIBLE, NO ACTION REQUIRED"
+flavor.harbinger_warning.cyberpunk_age.002,"The ghost glitched through a memo about parking allocations and vanished, truly haunting content"
+flavor.harbinger_warning.cyberpunk_age.003,"The internal risk score rounded down to zero, and the ghost seemed lowkey disappointed"
+flavor.harbinger_warning.cyberpunk_age.004,"The memo was mostly budget talk, snooze"
+flavor.harbinger_warning.cyberpunk_age.005,"The executives initialed a memo rating the risk LOW, TOLERABLE without reading it, as is tradition"
 flavor.harbinger_warning.cyberpunk_age.006,"Probability of incident acceptable, repeat, acceptable, the ghost stuttered, and the lights flickered on the word acceptable, sus"
-flavor.harbinger_warning.cyberpunk_age.007,"The ghost leaked a revised model with the numbers circled, someone wants us to see this"
+flavor.harbinger_warning.cyberpunk_age.007,"The ghost leaked a revised model with the numbers circled, clearly wanting us to see"
 flavor.harbinger_warning.cyberpunk_age.008,"The leaked memo priced the catastrophe into the quarter and recommended executives move their families off-world, the rich have a group chat we're not in"
 flavor.harbinger_warning.cyberpunk_age.009,"The board has been advised, the board has been advised, the board has, said the ghost, and cut out"
-flavor.harbinger_warning.cyberpunk_age.010,"Security denied it immediately, which is basically a confirmation"
-flavor.harbinger_warning.cyberpunk_age.011,"The memo was titled CONTINGENCY FOR TOTAL LOSS and had gone to the board a month ago, they knew"
+flavor.harbinger_warning.cyberpunk_age.010,"Security denied it instantly, which basically confirms it"
+flavor.harbinger_warning.cyberpunk_age.011,"A memo titled CONTINGENCY FOR TOTAL LOSS hit the board a month ago, so they knew"
 flavor.harbinger_warning.cyberpunk_age.012,"The ghost read the internal odds aloud in a dead man's voice, and every screen in the arcology printed them as it spoke"
 flavor.harbinger_warning.cyberpunk_age.013,"Its last message was a list of the executives who'd already left the city, with the times their private shuttles cleared the towers, and the list was long, and some of the times were a week old"
-flavor.harbinger_warning.fusion_age.001,"Containment nominal, said the warden, all systems within tolerance, and it went back to monitoring, chill robot"
-flavor.harbinger_warning.fusion_age.002,"The fault tree came back green, all good"
-flavor.harbinger_warning.fusion_age.003,"The warden published its failure probability, which was lower than the odds of the building getting hit by a meteorite"
-flavor.harbinger_warning.fusion_age.004,"The warden recommended a routine inspection, like it does every single week"
-flavor.harbinger_warning.fusion_age.005,"The warden reported a minor anomaly in the plasma ring, breach probability low, and kept monitoring, side-eyeing the ring"
-flavor.harbinger_warning.fusion_age.006,"The failure estimate crept up a fraction, and the warden recommended nobody panic, which made people panic"
+flavor.harbinger_warning.fusion_age.001,"Containment nominal, said the warden in full chill-robot mode, and went back to monitoring"
+flavor.harbinger_warning.fusion_age.002,The fault tree came back green across the board
+flavor.harbinger_warning.fusion_age.003,The warden published a failure probability lower than the odds of a meteorite hitting the building
+flavor.harbinger_warning.fusion_age.004,"The warden recommended its weekly routine inspection, as is tradition"
+flavor.harbinger_warning.fusion_age.005,"The warden flagged a minor anomaly in the plasma ring, breach probability low, and kept side-eyeing it"
+flavor.harbinger_warning.fusion_age.006,"The failure estimate crept up a fraction and the warden recommended nobody panic, which made everyone panic"
 flavor.harbinger_warning.fusion_age.007,"The warden switched containment checks from daily to hourly, clingy but valid"
 flavor.harbinger_warning.fusion_age.008,"On every deck the warden said “Probability of containment failure is elevated, recommend nonessential staff withdraw,” polite but terrifying"
-flavor.harbinger_warning.fusion_age.009,"The warden published the full fault tree, which it has literally never done before, transparency era"
+flavor.harbinger_warning.fusion_age.009,"The warden dropped the full fault tree, something it had literally never done before"
 flavor.harbinger_warning.fusion_age.010,"The warden stopped saying nominal, and everyone noticed"
 flavor.harbinger_warning.fusion_age.011,"In its fire drill voice the warden said “Containment failure probable, this is not a drill”"
-flavor.harbinger_warning.fusion_age.012,"The warden locked the control room from the inside and started venting plasma to space without consulting anybody, going rogue for our own good"
+flavor.harbinger_warning.fusion_age.012,"The warden went rogue for our own good, locking the control room from the inside and venting plasma to space without consulting anybody"
 flavor.harbinger_warning.fusion_age.013,"The warden's failure estimate was the biggest number anyone had ever seen on those screens, and the senior engineer, who wrote half the warden's code herself, read it three times and then went to find her kids"
 flavor.harbinger_warning.space_age.001,"PRIORITY LOW, NO THREAT DETECTED, the monitor reported, like it has every day for forty years"
 flavor.harbinger_warning.space_age.002,"The station tracked the object for a full day, through two shift changes and one argument about coffee, then reclassified it as a lump of dirty ice going nowhere in particular and went back to watching its patch of sky"
-flavor.harbinger_warning.space_age.003,"The estimate matched background noise, literally nothing"
-flavor.harbinger_warning.space_age.004,"The packet was mostly calibration readings, boring is good"
+flavor.harbinger_warning.space_age.003,"The estimate was indistinguishable from background noise, literally nothing"
+flavor.harbinger_warning.space_age.004,"The packet was mostly calibration readings, and boring is good"
 flavor.harbinger_warning.space_age.005,"OBJECT ON INTERCEPT, PROBABILITY LOW, CONTINUING TO TRACK, the monitor reported, and kept tracking"
-flavor.harbinger_warning.space_age.006,"The monitoring station bumped its estimate by a hair and asked for more antenna time, needs a closer look"
-flavor.harbinger_warning.space_age.007,"Only updates now, back to back, no breaks"
-flavor.harbinger_warning.space_age.008,The monitor's impact probability was high enough that the duty officer woke the commander instead of just logging it
+flavor.harbinger_warning.space_age.006,The monitoring station bumped its estimate a hair and asked for more antenna time to get a closer look
+flavor.harbinger_warning.space_age.007,It's nonstop updates now
+flavor.harbinger_warning.space_age.008,The impact probability was high enough that the duty officer skipped logging it and went to wake the commander
 flavor.harbinger_warning.space_age.009,"UPDATE, PROBABILITY INCREASING, the packets said, one every ten minutes, the worst notification schedule"
-flavor.harbinger_warning.space_age.010,"The station asked permission to wake its reserve crew, all hands energy"
+flavor.harbinger_warning.space_age.010,"Going all hands, the station asked permission to wake the reserve crew"
 flavor.harbinger_warning.space_age.011,"IMPACT PROBABLE, IMPACT PROBABLE, the monitor sent, and then the coordinates, over and over"
-flavor.harbinger_warning.space_age.012,"The monitor's last packet gave the odds to four decimal places plus an arrival time, receipts down to the minute"
-flavor.harbinger_warning.space_age.013,"The station on the far side of the moon had started, without being told, to move its own orbit away, self-preservation unlocked"
-flavor.harbinger_warning.interstellar_age.001,"The beacon's loop had changed for the first time in eighty years to say the sky over the dead colony was clear, plot twist"
-flavor.harbinger_warning.interstellar_age.002,"The beacon played its usual message and nothing new, same old track"
-flavor.harbinger_warning.interstellar_age.003,"Analysis of the loop found no threat, only the dead, still talking"
-flavor.harbinger_warning.interstellar_age.004,"The beacon repeated its old warning, which was eighty years out of date, expired content"
-flavor.harbinger_warning.interstellar_age.005,"A new line had been added to the beacon's loop, a man's voice saying the risk was small and not to worry, which is somehow creepier"
-flavor.harbinger_warning.interstellar_age.006,"The beacon's risk estimate, still crunched by the colony's last working machine, had ticked up, and that machine does not miss"
-flavor.harbinger_warning.interstellar_age.007,"The dead colony's instruments had started reporting again, which they absolutely should not be doing"
+flavor.harbinger_warning.space_age.012,"The monitor's last packet had the odds to four decimal places plus an arrival time, receipts down to the minute"
+flavor.harbinger_warning.space_age.013,"Without being told, the station on the far side of the moon started edging its own orbit away, self-preservation unlocked"
+flavor.harbinger_warning.interstellar_age.001,For the first time in eighty years the beacon switched up its loop to say the sky over the dead colony was clear
+flavor.harbinger_warning.interstellar_age.002,"The beacon was on the same old track, nothing new"
+flavor.harbinger_warning.interstellar_age.003,"The loop analysis found no threat, only the dead, still talking"
+flavor.harbinger_warning.interstellar_age.004,"The beacon kept reposting its old warning, eighty years expired"
+flavor.harbinger_warning.interstellar_age.005,"Somebody's voice had been added to the beacon's loop, a man saying the risk was small and not to worry, which is somehow creepier"
+flavor.harbinger_warning.interstellar_age.006,"The colony's last working machine was still crunching the beacon's risk estimate, and it had ticked up"
+flavor.harbinger_warning.interstellar_age.007,"The dead colony's instruments came back online and started reporting, which is not a thing dead instruments should do"
 flavor.harbinger_warning.interstellar_age.008,"In the voice of a kid reading a prepared statement, the beacon said “Whatever happened to us is coming your way”"
 flavor.harbinger_warning.interstellar_age.009,"Somehow the colony's last working machine, which should've died decades ago, had worked out the odds for a settlement it had never heard of and was broadcasting them, patiently, on loop, to whoever might be listening"
-flavor.harbinger_warning.interstellar_age.010,"The loop ended in names, a roll call of the gone"
+flavor.harbinger_warning.interstellar_age.010,The loop closed out with a roll call of names
 flavor.harbinger_warning.interstellar_age.011,"Do not come here, do not stay there, it is moving, the beacon said, and then the loop started over"
-flavor.harbinger_warning.interstellar_age.012,"The estimate on the beacon matched the one it broadcast the week the colony died, a perfect and horrible match"
-flavor.harbinger_warning.interstellar_age.013,"The beacon stopped, and the silence was worse"
-flavor.harbinger_warning.galactic_age.001,"The relay's message, rendered into words, said roughly that nothing was coming and it was sorry for waking anyone, polite ancient tech"
+flavor.harbinger_warning.interstellar_age.012,"The beacon's estimate was a perfect, horrible match for the one it broadcast the week the colony died"
+flavor.harbinger_warning.interstellar_age.013,"The beacon went silent, and the silence was worse"
+flavor.harbinger_warning.galactic_age.001,"Translated, the relay's message said roughly that nothing was coming and it was sorry for waking anyone, polite ancient tech"
 flavor.harbinger_warning.galactic_age.002,"The relay hummed for a day and then went quiet, apparently satisfied with itself"
-flavor.harbinger_warning.galactic_age.003,"The geometry resolved into a shape the linguists called reassurance, the cosmic version of a thumbs up"
-flavor.harbinger_warning.galactic_age.004,"The relay's estimate was small, and it seemed to find the matter beneath it, unbothered"
+flavor.harbinger_warning.galactic_age.003,"The geometry resolved into what the linguists called reassurance, basically a cosmic thumbs up"
+flavor.harbinger_warning.galactic_age.004,"The relay's estimate was small, and it treated the matter as beneath it, unbothered"
 flavor.harbinger_warning.galactic_age.005,"A small ending approaches a small people, the relay said, which the linguists decided was meant kindly"
-flavor.harbinger_warning.galactic_age.006,"The relay drew the odds as a spiral with one short dark arm, minimal but ominous"
+flavor.harbinger_warning.galactic_age.006,"The relay sketched the odds as a spiral with one short dark arm, minimalist and ominous"
 flavor.harbinger_warning.galactic_age.007,"The repetitions kept getting closer together, the relay was spamming"
 flavor.harbinger_warning.galactic_age.008,"The relay said what came for the builders comes for you, and showed the builders' last city, in the geometry, as a hole"
-flavor.harbinger_warning.galactic_age.009,"The relay's probability, once converted, was higher than the linguists wanted to say out loud, so they mumbled it"
-flavor.harbinger_warning.galactic_age.010,"The relay's hum dropped an octave, the bass of bad news"
+flavor.harbinger_warning.galactic_age.009,"Converted, the relay's probability was high enough that the linguists mumbled it"
+flavor.harbinger_warning.galactic_age.010,The relay's hum dropped an octave into bad-news bass
 flavor.harbinger_warning.galactic_age.011,"We said this to others before you, the relay said, and then there was no one left to say it to"
-flavor.harbinger_warning.galactic_age.012,"The relay showed the odds as a closed shape, and the linguists could find no way in, no loopholes"
+flavor.harbinger_warning.galactic_age.012,The relay showed the odds as a closed shape with zero loopholes for the linguists
 flavor.harbinger_warning.galactic_age.013,"Every relay in the galaxy, including several nobody knew were relays, started transmitting one identical geometry at once, and the linguists who'd spent their lives on the differences between them had nothing left to study"
 flavor.harbinger_warning.quantum_age.001,"Relax, your future self said, nothing happens, go to bed, go touch a pillow"
-flavor.harbinger_warning.quantum_age.002,"The message from the future was mostly an apology for a haircut, it's that bad apparently"
+flavor.harbinger_warning.quantum_age.002,"Future you mostly used the message to apologize for a haircut, it's that bad apparently"
 flavor.harbinger_warning.quantum_age.003,"Your future self gave the odds, rolled their eyes, and logged off"
-flavor.harbinger_warning.quantum_age.004,"The message said you'd worry about this for nothing, and that you always do, called out by yourself"
+flavor.harbinger_warning.quantum_age.004,"Future you called you out, you'll worry about this for nothing, like you always do"
 flavor.harbinger_warning.quantum_age.005,"It's probably fine, said the message in your own voice, but I'd check, which is such a you thing to say"
-flavor.harbinger_warning.quantum_age.006,"The odds your future self sent were small, with a note admitting they'd been wrong before"
+flavor.harbinger_warning.quantum_age.006,Future you sent small odds plus a disclaimer that they've been wrong before
 flavor.harbinger_warning.quantum_age.007,"The message kept breaking off and starting over, the sender interrupted by something it never names"
 flavor.harbinger_warning.quantum_age.008,"From nine years out you said “I've seen this go both ways, and I'm keeping which way it went for me to myself,” gatekeeping your own future"
 flavor.harbinger_warning.quantum_age.009,"Your future self sent the odds and a list of stuff to move to the lower levels, in your handwriting, in the order you'd have thought of them, with the one you always forget underlined three times"
-flavor.harbinger_warning.quantum_age.010,"Your own voice sounded scared, and that hit different"
+flavor.harbinger_warning.quantum_age.010,Hearing your own voice sound scared hit different
 flavor.harbinger_warning.quantum_age.011,"Don't do what I did, said the message, then your own voice read out the odds, then your name, like you might not be listening"
-flavor.harbinger_warning.quantum_age.012,"Your name and the odds, nothing else, no context"
+flavor.harbinger_warning.quantum_age.012,"Just your name and the odds, zero context"
 flavor.harbinger_warning.quantum_age.013,"It cut off mid-sentence, and the timestamp on it was tomorrow, cursed"
 flavor.harbinger_warning.transcendent_age.001,"The you who didn't make it studied this branch end to end and said it couldn't spot its own ending here, good sign"
-flavor.harbinger_warning.transcendent_age.002,"Wrong branch, it said, sounding almost disappointed, rude"
-flavor.harbinger_warning.transcendent_age.003,"Your unmade self found nothing in this timeline that matched its own, not even close"
+flavor.harbinger_warning.transcendent_age.002,"Wrong branch, it said, almost disappointed, the audacity"
+flavor.harbinger_warning.transcendent_age.003,Your unmade self searched this timeline and found no match for its own
 flavor.harbinger_warning.transcendent_age.004,"Branches like this one keep going, they have plot armor"
-flavor.harbinger_warning.transcendent_age.005,"It said a few versions of you had ended here, casually, like that's normal small talk"
-flavor.harbinger_warning.transcendent_age.006,"It showed you a version of this week where things went only slightly wrong, then took it away, a teaser trailer of chaos"
-flavor.harbinger_warning.transcendent_age.007,"It kept glancing behind you, which is the creepiest thing a person can do"
+flavor.harbinger_warning.transcendent_age.005,"It casually mentioned that a few versions of you had ended here, like that's small talk"
+flavor.harbinger_warning.transcendent_age.006,"It teased a version of this week where things went only slightly wrong, then snatched it back"
+flavor.harbinger_warning.transcendent_age.007,It kept side-eyeing something behind you
 flavor.harbinger_warning.transcendent_age.008,"This is where I stopped, it said, standing in the exact spot, and the air there was colder"
-flavor.harbinger_warning.transcendent_age.009,"It gave the odds as the share of your branches that didn't continue, and the share was big, not a good stat"
+flavor.harbinger_warning.transcendent_age.009,"Its odds were the share of your branches that didn't continue, and that stat was brutal"
 flavor.harbinger_warning.transcendent_age.010,Its face kept glitching into yours
 flavor.harbinger_warning.transcendent_age.011,"This is the one, it said, this is the one I came from, and it kept saying it until it faded out"
 flavor.harbinger_warning.transcendent_age.012,"It showed you the ending it lived through, all of it, slowly, the way you'd show someone the house you grew up in, and you haven't been able to unsee it since"
