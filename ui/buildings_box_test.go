@@ -14,8 +14,12 @@ import (
 // 160 people with 32 huts, 20 stashes and 15 gathering camps. The mini map
 // took the top third of that column and the Buildings list was cut off
 // mid-entry at the bottom ("Stash x20" showed its name and nothing else).
+//
+// The playtest's terminal is big enough for the rich layout, whose Panels
+// column is richSidebarW wide, so the screen is the 120 columns of the two
+// middle columns and that.
 const (
-	playtestCols = 2*60 + sidebarW
+	playtestCols = 2*60 + richSidebarW
 	playtestRows = 45 + dashHeaderRows + promptRows
 )
 

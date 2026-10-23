@@ -57,8 +57,8 @@ type Dashboard struct {
 	sidebar       *fitView
 	sidebarActive string // the open panel, highlighted in the list
 	workerMiniTV  *fitView
-	workerCol     *tview.Flex // the right column, which sizes the People box to its lines
-	workerDetail  bool        // the terminal has the rows for the People box's food detail line
+	peopleH       int  // the People box's height in the classic layout, border included: its lines
+	workerDetail  bool // the terminal has the rows for the People box's food detail line
 
 	// Shared UI
 	logTV            *tview.TextView
@@ -75,7 +75,7 @@ type Dashboard struct {
 	toastMgr            *ToastManager
 	toastTV             *tview.TextView
 	toastW              int // the toast bar's width as last drawn; 0 before that
-	contentArea         *tview.Flex
+	contentArea         tview.Primitive
 
 	// Shame badge — set once on first load when CheaterBadge is true
 	cheaterTV        *tview.TextView
@@ -140,7 +140,9 @@ type Dashboard struct {
 	// peoplePanel is the People panel: Overview, Work, Army and Scholars.
 	peoplePanel *peoplePanel
 
-	miniMap  *miniMap
+	miniMap *miniMap
+	// skyline is the skyline strip under the Buildings list (dash_skyline.go).
+	skyline  *skylineStrip
 	mapDock  *mapDock
 	mapLocal *mapSettings
 	// icons is the guided icons check (icons.go).
@@ -171,6 +173,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		expPanel:      newExpeditionPanel(),
 		peoplePanel:   newPeoplePanel(),
 		miniMap:       newMiniMap(mv),
+		skyline:       newSkylineStrip(mv),
 		pages:         pages,
 		stopCh:        make(chan struct{}),
 		histIdx:       -1,
@@ -497,36 +500,40 @@ func (d *Dashboard) build() {
 	d.economyTab.AddToLeftColumn(d.logTV)
 
 	// The mini map docks above the Buildings list and hides itself when the
-	// terminal is too small for it (mapDock).
+	// terminal is too small for it (mapDock). So does the skyline strip,
+	// under the list, which is half the Log's height.
 	d.economyTab.WrapBuildings(func(list tview.Primitive) tview.Primitive {
 		d.mapDock = newMapDock(d.miniMap, list)
+		d.mapDock.strip, d.mapDock.logRows, d.mapDock.screen = d.skyline, d.economyTab.LogRows, d.screenSize
 		return d.mapDock
 	})
 
-	// People box: the population and its four kinds, below the sidebar in the right column
-	d.workerMiniTV = newFitView(func(w, _ int) string {
+	// People box: the population and its four kinds. In the classic layout it
+	// is below the Panels list in the right column, as tall as its lines; in
+	// the rich layout it is the right half of the Under construction row
+	// (dash_layout.go).
+	d.workerMiniTV = newFitView(func(w, h int) string {
 		if d.lastState == nil {
 			return ""
+		}
+		if d.richLayout() {
+			return peopleRichText(*d.lastState, w, h)
 		}
 		return peopleBoxText(*d.lastState, w, d.workerDetail)
 	})
 	d.workerMiniTV.SetBorder(true).SetTitle(" People ")
 	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
+	d.economyTab.AddPeopleBox(d.workerMiniTV, d.richLayout, func() int {
+		_, th := d.screenSize()
+		return richPeopleHeight(th)
+	})
 
-	// The People box is its lines (five, and one or two that say what holds
-	// the population back) and its border: every other row of the column is
-	// the Panels list's (refreshWorkerMini sizes the box).
-	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(d.sidebar, 0, 1, false).
-		AddItem(d.workerMiniTV, workerMiniBaseRows+2, 0, false)
-	d.workerCol = rightCol
+	// Main horizontal: the economy tab (the full height) and the Panels
+	// column, with the People box under the list unless the layout is rich.
+	d.peopleH = workerMiniBaseRows + 2
+	mainHoriz := newDashBody(d.economyTab.Root(), d.sidebar, d.workerMiniTV, d.screenSize, func() int { return d.peopleH })
 
-	// Main horizontal: economy (permanent, full height) + right column (sidebar + worker mini)
-	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(d.economyTab.Root(), 0, 1, false).
-		AddItem(rightCol, sidebarW, 0, false)
-
-	// Content area is just mainHoriz — no bottom strip
+	// Content area is just mainHoriz: no bottom strip
 	d.contentArea = mainHoriz
 
 	// Root layout (no tab bar)
@@ -640,8 +647,13 @@ func buildSidebarText(active string) string {
 // there is a row to spare), else two columns read down then across, so a
 // short screen still lists every panel. When even two columns are too
 // many rows (the smallest screen), the first column stays a name a row and
-// the rest are packed beside it, as many to a row as fit.
+// the rest are packed beside it, as many to a row as fit. A box wide and
+// tall enough for it (the rich layout's) lists the panels in groups, each
+// with a line on what it is for (panelsRichText).
 func sidebarText(active string, w, h int) string {
+	if w >= panelsRichWidth() && h >= panelsRichRows() {
+		return panelsRichText(active, w, h)
+	}
 	n := len(sidebarPanels)
 	if h > n {
 		return buildSidebarText(active)
@@ -908,6 +920,10 @@ func (d *Dashboard) refresh() {
 		d.miniMap.update(set, &state)
 		d.miniMap.pointAt(d.mapPanel)
 	}
+	// The skyline strip's model, the same way.
+	if d.mapDock.wantsStrip() {
+		d.skyline.update(set, &state)
+	}
 
 	// Update overlay content and sidebar highlight
 	d.overlayMgr.Refresh(state)
@@ -945,18 +961,38 @@ func (d *Dashboard) announceBadges() {
 
 func (d *Dashboard) refreshWorkerMini(game.GameState) {
 	// Written from d.lastState for the box's width at its next draw
-	// (workerMiniText). The box is as tall as its lines.
-	if d.workerCol != nil && d.lastState != nil {
-		// The food detail line is the one that goes first on a short terminal:
-		// at 24 rows the Panels list needs every row the box leaves it.
-		_, _, _, rootH := d.root.GetRect()
-		d.workerDetail = rootH >= workerDetailMinRows
-		rows := strings.Count(peopleBoxText(*d.lastState, sidebarW-2, d.workerDetail), "\n")
-		d.workerCol.ResizeItem(d.workerMiniTV, rows+2, 0)
-		d.workerMiniTV.SetTitle(peopleBoxTitle(*d.lastState, d.workerDetail))
+	// (peopleBoxText, peopleRichText).
+	if d.lastState != nil {
+		_, rootH := d.screenSize()
+		if d.richLayout() {
+			// The box has the Under construction row's height (the
+			// economy tab sizes it), and its title carries the headcount
+			// only when the box is too short for the row that does.
+			d.workerDetail = true
+			d.workerMiniTV.SetTitle(peopleRichTitle(*d.lastState, richPeopleHeight(rootH)-2))
+		} else {
+			// The box is as tall as its lines. The food detail line is the
+			// one that goes first on a short terminal: at 24 rows the Panels
+			// list needs every row the box leaves it.
+			d.workerDetail = rootH >= workerDetailMinRows
+			d.peopleH = strings.Count(peopleBoxText(*d.lastState, sidebarW-2, d.workerDetail), "\n") + 2
+			d.workerMiniTV.SetTitle(peopleBoxTitle(*d.lastState, d.workerDetail))
+		}
 	}
 	d.workerMiniTV.changed()
 }
+
+// screenSize is the terminal's size as the dashboard was last laid out in it.
+func (d *Dashboard) screenSize() (w, h int) {
+	if d.root == nil {
+		return 0, 0
+	}
+	_, _, w, h = d.root.GetRect()
+	return w, h
+}
+
+// richLayout says whether the dashboard is in the rich layout (dash_layout.go).
+func (d *Dashboard) richLayout() bool { return dashRich(d.screenSize()) }
 
 // workerDetailMinRows is the terminal height from which the People box adds
 // the line that says how much food is spare and how many it feeds.
