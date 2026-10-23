@@ -402,13 +402,13 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 		t.Errorf("stats overlay without the Cosmic Legacy:\n%s", out)
 	}
 	// It is applied after the pools: a multiplier of its own beside the
-	// all-production pool, and never tagged as counting a quarter, however
-	// full the pool is (here milestone rewards put it far past +200%).
+	// all-production pool, however full the pool is (here milestone rewards
+	// put it far past +200%).
 	engine.GrantTechsForTest()
 	engine.GrantBonusForTest("production_all", 4)
 	st := engine.GetState()
-	if p := st.Pools["production_all"]; !p.Soft {
-		t.Fatalf("the all-production pool is not past its knee in the Quantum Age with +400%% of milestone rewards: %+v", p)
+	if p := st.Pools["production_all"]; p.Earned <= 2 || p.Limited {
+		t.Fatalf("the all-production pool is not far past +200%% and in full in the Quantum Age with +400%% of milestone rewards: %+v", p)
 	}
 	out = untag(statsProvider(st, 140))
 	for _, want := range []string{

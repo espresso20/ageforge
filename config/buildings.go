@@ -40,7 +40,12 @@ type BuildingDef struct {
 	RequiredAge  string // minimum age key the player must be in to build
 	RequiredTech string // tech key that must be researched first; "" = no requirement
 	MaxCount     int    // maximum instances allowed; 0 = unlimited
-	Description  string
+	// FullRateCopies is, for a knowledge building, the copies that research
+	// at full rate: each copy past it researches at half rate
+	// (KnowledgePastCapShare). It is a soft cap, not a limit: copies past it
+	// still build. 0 for every other building.
+	FullRateCopies int
+	Description    string
 	// Flavor is optional, purely-cosmetic personality text rendered as a dim line
 	// beneath the functional Description. Never holds load-bearing info (costs,
 	// rates, worker counts) — it is additive humor only and is safe to be empty.

@@ -87,11 +87,11 @@ func TestCosmicThreadStartsAndHandsOff(t *testing.T) {
 	}
 
 	// Answers carry across the handoffs.
-	setStock(ge, map[string][2]float64{"faith": {config.Trillion, config.Trillion}, "culture": {config.Trillion, config.Trillion}})
+	setStock(ge, map[string][2]float64{"faith": {1e12, 1e12}, "culture": {1e12, 1e12}})
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatalf("appease: %v", err)
 	}
-	fillBraceStock(ge, 100*config.Quintillion)
+	fillBraceStock(ge, 1e20)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Fatalf("brace: %v", err)
 	}
@@ -139,10 +139,10 @@ func TestCosmicThreadCostsByArrivalAge(t *testing.T) {
 	// No plasma: the era's Brace materials are a written list
 	// (config.EpochDef.BraceMaterials), not what its gates name.
 	prices := map[string][4]float64{ // faith, culture; dark matter, titanium
-		"interstellar_age": {16 * config.Billion, 240 * config.Billion, 52 * config.Quadrillion, 290 * config.Quadrillion},
-		"galactic_age":     {46 * config.Billion, 730 * config.Billion, 2.1 * config.Quintillion, 2.6 * config.Quintillion},
-		"quantum_age":      {140 * config.Billion, 2.2 * config.Trillion, 99 * config.Quintillion, 7.3 * config.Quintillion},
-		"transcendent_age": {200 * config.Billion, 3.3 * config.Trillion, 160 * config.Quintillion, 12 * config.Quintillion},
+		"interstellar_age": {1.8e10, 2.8e11, 6e16, 2.9e17},
+		"galactic_age":     {5.8e10, 9.3e11, 2.6e18, 2.6e18},
+		"quantum_age":      {1.9e11, 3e12, 1.4e20, 1.1e19},
+		"transcendent_age": {3e11, 5e12, 2e20, 1.7e19},
 	}
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
@@ -248,11 +248,11 @@ func TestLastPassageChoice(t *testing.T) {
 	first := ages[0]
 	appeaseHours := incomeHours(t, lastPassageAppeaseCost("cosmic_era", first, 1), first)
 	braceHours := incomeHours(t, lastPassageBraceCost("cosmic_era", first, 1), first)
-	if math.Abs(braceHours-157.01) > 0.05 || math.Abs(appeaseHours-245.11) > 0.05 {
-		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 157.01 and 245.11", first, braceHours, appeaseHours)
+	if math.Abs(braceHours-158.52) > 0.05 || math.Abs(appeaseHours-241.28) > 0.05 {
+		t.Errorf("foretold in %s: Brace level 1 is %.2f h of income and Appease level 1 %.2f h, want 158.52 and 241.28", first, braceHours, appeaseHours)
 	}
-	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.641) > 0.005 {
-		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.641", first, ratio)
+	if ratio := valueRatio(appeaseHours, braceHours); math.Abs(ratio-0.657) > 0.005 {
+		t.Errorf("foretold in %s: the value ratio is %.3f, want 0.657", first, ratio)
 	}
 
 	// The faith band moves the odds, not the choice: both savings scale with
@@ -959,21 +959,20 @@ func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 	}
 }
 
-// The Cosmic Legacy multiplies production after the pools, so it counts in
-// full in every age. In the all-production pool it would count a quarter
-// once the pool is past +200%. Each age from the Victorian on is read with
-// the pool far past that knee, where a pooled +10% is worth +2.5%.
-func TestCosmicLegacyCountsAfterTheCap(t *testing.T) {
+// The Cosmic Legacy multiplies production after the pools, a tenth of what is
+// made whatever the pools hold. Each age from the Victorian on is read with
+// the all-production pool far past +200%.
+func TestCosmicLegacyMultipliesAfterThePools(t *testing.T) {
 	keys := ageKeys()
 	from := ageOrders()["victorian_age"]
 	for _, age := range append([]string{keys[0]}, keys[from:]...) {
 		ge := newTruthEngine(age, truthTypical)
 		if ageOrders()[age] >= from {
-			// Milestone rewards on top of the wonders: the pool is past its knee.
+			// Milestone rewards on top of the wonders: the pool is large.
 			ge.permanentBonuses["production_all"] += 3
 			ge.recalculateRates()
-			if p := ge.bonusPoolLocked(ge.buildResolver(), "production_all"); !p.Soft {
-				t.Fatalf("%s: the all-production pool is not past its knee (%+v): the test would prove nothing", age, p)
+			if p := ge.bonusPoolLocked(ge.buildResolver(), "production_all"); p.Earned <= 2 {
+				t.Fatalf("%s: the all-production pool is not past +200%% (%+v): the test would prove nothing", age, p)
 			}
 		}
 		pool := ge.buildResolver().AddTotal("production_all")
@@ -994,9 +993,6 @@ func TestCosmicLegacyCountsAfterTheCap(t *testing.T) {
 		on := read()
 		if got := ge.buildResolver().AddTotal("production_all"); got != pool {
 			t.Errorf("%s: the legacy moved the all-production pool from %v to %v", age, pool, got)
-		}
-		if note := ge.capNoteLocked(config.Effect{Type: "production_all", Value: CosmicLegacyProductionBonus}, false); ageOrders()[age] >= from && note == "" {
-			t.Errorf("%s: a pooled +10%% would count in full here: the test would prove nothing", age)
 		}
 		moved := 0
 		for _, key := range ge.Resources.order {

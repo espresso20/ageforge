@@ -172,11 +172,6 @@ func (s *Set) StretchTicks(age string, ticks int) int {
 	return config.StretchTicksBy(ticks, factor)
 }
 
-// SoftCap is the rule every production bonus pool follows (all production,
-// and each resource's own production): a pool applies in full up to the
-// knee, and a share of each point past it (config.SoftCap).
-func (s *Set) SoftCap() config.SoftCap { return s.softCap }
-
 // TeachingBonus is the bonus to what workers make with every scholar
 // teaching, in the age at 0-based position pos in the order of ages.
 func (s *Set) TeachingBonus(pos int) float64 {

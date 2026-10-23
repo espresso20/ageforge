@@ -561,7 +561,7 @@ func (b *Bot) planNextAge(next string) {
 	bestV := map[string]float64{}
 	for _, k := range sortedKeys(b.defs) {
 		d := b.defs[k]
-		if d.RequiredAge != next || d.Category == "wonder" || d.Category == "storage" || d.MaxCount > 0 {
+		if d.RequiredAge != next || d.Category == "wonder" || d.Category == "storage" || d.ModelCopyLimit() > 0 {
 			continue
 		}
 		fundable := true
@@ -770,7 +770,7 @@ func (b *Bot) buildable(p *plan, key string) bool {
 	if def.RequiredAge != "" && def.RequiredAge != p.st.Age {
 		return false
 	}
-	if def.MaxCount > 0 && bs.Count+p.queued[key]+p.extra[key] >= def.MaxCount {
+	if limit := def.ModelCopyLimit(); limit > 0 && bs.Count+p.queued[key]+p.extra[key] >= limit {
 		return false
 	}
 	return true

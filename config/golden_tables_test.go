@@ -22,6 +22,9 @@ type goldenBuilding struct {
 	Workers    int                `json:"workers"`
 	MaxCount   int                `json:"max_count"`
 	Soldiers   int                `json:"soldiers,omitempty"`
+	// FullRateCopies is a knowledge building's soft cap: the copies that
+	// research at full rate, half past it.
+	FullRateCopies int `json:"full_rate_copies,omitempty"`
 }
 
 type goldenEffect struct {
@@ -65,7 +68,7 @@ func liveGoldenTables() goldenTables {
 	defs := BaseBuildings()
 	for _, d := range defs {
 		b := goldenBuilding{Category: d.Category, Age: d.RequiredAge, Cost: d.BaseCost, Rate: d.CostScale,
-			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Soldiers: d.Soldiers, Effects: []goldenEffect{}}
+			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Soldiers: d.Soldiers, FullRateCopies: d.FullRateCopies, Effects: []goldenEffect{}}
 		for _, e := range d.Effects {
 			b.Effects = append(b.Effects, goldenEffect{Type: e.Type, Target: e.Target, Value: e.Value})
 		}

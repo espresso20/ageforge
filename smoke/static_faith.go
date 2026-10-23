@@ -215,8 +215,8 @@ func flowIncomes(set *rules.Set, res string) []faithIncome {
 	for _, ep := range set.Eras() {
 		for _, a := range ep.Ages {
 			// What config.Incomes multiplies the resource's output by in the
-			// age: the all-production pool the model holds by then, through
-			// the soft cap as the engine applies it, times the tech layer.
+			// age: the all-production pool the model holds by then, in full
+			// as the engine applies it, times the tech layer.
 			bonus := config.IncomeFactor(set.Techs(), set.Indexes(), a, res)
 			in := faithIncome{epoch: ep.Key, age: a, ticks: set.TargetTicks(a),
 				set: float64(set.FlowBuildingOutput(res, a) * bonus), givenWonder: float64(wonder[a] * bonus)}

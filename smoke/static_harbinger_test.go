@@ -62,9 +62,10 @@ func TestAppeasePricesFitTheWarning(t *testing.T) {
 		}
 	}
 
-	// The check fires on broken numbers. The old era price (3.1B faith, 48B
-	// culture in every age, on the late price climb) is more than the
-	// Interstellar Age makes; a doom's
+	// The check fires on broken numbers. A price half as much again as the
+	// Interstellar Age makes in the warning is caught (the old era price,
+	// 3.1B faith and 48B culture in every age on the late price climb, was
+	// such a price when it was set); a doom's
 	// own price is not above a doom's; a price with the culture left out is
 	// caught too.
 	income := rules.Core().FlowIncome
@@ -91,9 +92,11 @@ func TestAppeasePricesFitTheWarning(t *testing.T) {
 			}
 		}
 	}
-	want("the old era price", alter(func(r *PriceRow) {
-		c := config.LatePriceMultiplier(cosmic[0])
-		r.AppeaseL1 = map[string]float64{"faith": float64(3.1 * config.Billion * c), "culture": float64(48 * config.Billion * c)}
+	want("a price above the warning", alter(func(r *PriceRow) {
+		r.AppeaseL1 = map[string]float64{
+			"faith":   float64(1.5 * float64(income("faith", r.Age)*r.WarningTicks)),
+			"culture": float64(1.5 * float64(income("culture", r.Age)*r.WarningTicks)),
+		}
 	}), AppeaseRuleWarning, "culture", "faith")
 	var ordinary map[string]float64
 	for _, r := range rows {
@@ -177,10 +180,10 @@ func TestBraceTakesEffort(t *testing.T) {
 			for res, c := range r.BraceL1 {
 				limit, ok := r.BraceCeiling[res]
 				if !ok || limit <= 0 || r.StockScale <= 0 || r.BraceCeilingHours[res] <= 0 {
-					t.Errorf("a doom of %s in %s: no ceiling for %s (%s of a stock scale of %s, %v hours)", r.Epoch, r.Age, res, config.GoLiteral(limit), config.GoLiteral(r.StockScale), r.BraceCeilingHours[res])
+					t.Errorf("a doom of %s in %s: no ceiling for %s (%v of a stock scale of %v, %v hours)", r.Epoch, r.Age, res, limit, r.StockScale, r.BraceCeilingHours[res])
 				}
 				if c > limit {
-					t.Errorf("a doom of %s in %s: Brace asks %s %s, over its ceiling %s", r.Epoch, r.Age, config.GoLiteral(c), res, config.GoLiteral(limit))
+					t.Errorf("a doom of %s in %s: Brace asks %v %s, over its ceiling %v", r.Epoch, r.Age, c, res, limit)
 				}
 				if c >= braceAtCeiling*limit {
 					onCeiling++
@@ -316,9 +319,9 @@ func TestBraceTakesEffort(t *testing.T) {
 		// (dark matter its dearest part, under 7 ticks), the Electric Era's
 		// 56.4M steel, 924K oil and 3.96M electricity (steel, 3 ticks of the
 		// Electric Age's income; the electricity is under one).
-		old, dearest := map[string]float64{"dark_matter": 1.56 * config.Trillion, "titanium": 75.6 * config.Billion}, "dark_matter"
+		old, dearest := map[string]float64{"dark_matter": 1.56e12, "titanium": 7.56e10}, "dark_matter"
 		if tg.epoch == "electric_era" {
-			old, dearest = map[string]float64{"steel": 56.4 * config.Million, "oil": 924_000, "electricity": 3.96 * config.Million}, "steel"
+			old, dearest = map[string]float64{"steel": 5.64e7, "oil": 9.24e5, "electricity": 3.96e6}, "steel"
 		}
 		want("the era's old price", alter(func(r *PriceRow) { r.BraceL1 = maps.Clone(old) }), BraceRuleEffort, dearest)
 		// Nine tenths of the least it may take is still too little.
@@ -435,17 +438,17 @@ func TestHarbingerSecondLevelPrices(t *testing.T) {
 
 // TestNumReadsAsTheGameDoes: the report prints large numbers the way the
 // game does, quadrillions included. It stopped at T and printed the Last
-// Passage's Brace as 8900T in scientific form.
+// Passage's Brace as 8.9e+03T.
 func TestNumReadsAsTheGameDoes(t *testing.T) {
 	for _, c := range []struct {
 		v    float64
 		want string
 	}{
 		{0, "0"}, {950, "950"}, {8050, "8050"}, {9999, "9999"},
-		{10000, "10K"}, {80000, "80K"}, {1.2 * config.Million, "1.2M"}, {4.43 * config.Million, "4.43M"},
-		{75.6 * config.Billion, "75.6B"}, {1.56 * config.Trillion, "1.56T"}, {999.96 * config.Trillion, "1Q"},
-		{8.9 * config.Quadrillion, "8.9Q"}, {11 * config.Quadrillion, "11Q"}, {56.09 * config.Quadrillion, "56.1Q"}, {5.556 * config.Quintillion, "5.56Qi"},
-		{-2.5 * config.Quadrillion, "-2.5Q"},
+		{10000, "10K"}, {80000, "80K"}, {1.2e6, "1.2M"}, {4.43e6, "4.43M"},
+		{7.56e10, "75.6B"}, {1.56e12, "1.56T"}, {9.9996e14, "1Q"},
+		{8.9e15, "8.9Q"}, {1.1e16, "11Q"}, {5.609e16, "56.1Q"}, {5.556e18, "5.56Qi"},
+		{-2.5e15, "-2.5Q"},
 	} {
 		if got := num(c.v); got != c.want {
 			t.Errorf("num(%v) = %q, want %q", c.v, got, c.want)

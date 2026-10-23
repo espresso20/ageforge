@@ -16,11 +16,9 @@ import (
 // "+20% all production" make +50%), and the engine applies some pools only up
 // to a limit:
 //
-//   - all production, and each resource's own production: a soft cap
-//     (config.SoftCap, read through the ruleset). The pool applies in full
-//     up to its knee, +200%, and a quarter of every point past it, so a
-//     pool that has earned +320% applies +230%. The multiplier 1 + pool is
-//     never under productionFloor (x0.1);
+//   - all production, and each resource's own production: no ceiling. The
+//     pool applies in full, however large it grows. The multiplier 1 + pool
+//     is never under productionFloor (x0.1);
 //   - worker output: no cap, the same floor;
 //   - research speed: a tech always takes at least one tick, so +100% is the
 //     most that counts;
@@ -35,8 +33,7 @@ import (
 // says what of a pool counts, the engine applies the pools through it, and
 // every list of bonuses (the Stats panel, milestone and wonder rewards, the
 // rates breakdown, the log line a bonus is earned with) reads the same
-// numbers through BonusPool. A bonus a hard limit holds back says "capped";
-// one past a knee says it counts a quarter, and how much that is now.
+// numbers through BonusPool. A bonus a limit holds back says "capped".
 
 // BonusPool is one pool of bonuses and what the engine applies of it.
 type BonusPool struct {
@@ -45,23 +42,16 @@ type BonusPool struct {
 	Target string
 	// Earned is every bonus in the pool added together (+4.05 is +405%).
 	Earned float64
-	// Applied is what counts (+2.5125 of a production pool that has earned
-	// +4.05: +200% in full and a quarter of the rest).
+	// Applied is what counts (+1.00 of a research speed pool that has
+	// earned +1.5: a tech takes one tick at least).
 	Applied float64
-	// Limit is the cap, floor or knee holding the pool, as a bonus (+2.00,
+	// Limit is the cap or floor holding the pool, as a bonus (+1.00,
 	// -0.90), and Limited whether one is: Applied differs from Earned.
 	Limit   float64
 	Limited bool
-	// Soft says the limit is a knee, not a wall: the pool still grows past
-	// it, at a share of each point (config.SoftCap.PastKnee). False at a
-	// hard cap or a floor.
-	Soft bool
 	// limitArg is the one input a limit depends on besides the pool's total:
 	// the player speed multiplier, for game speed.
 	limitArg float64
-	// soft is the rule a production pool's knee follows, from the ruleset
-	// of the engine (or snapshot) the pool was read off.
-	soft config.SoftCap
 }
 
 // Counts is how much of one bonus of v counts right now: all of it, part of
@@ -73,33 +63,31 @@ func (p BonusPool) Counts(v float64, held bool) float64 {
 	if held {
 		without -= v
 	}
-	a, _, _ := poolApplied(p.Target, without+v, p.limitArg, p.soft)
-	b, _, _ := poolApplied(p.Target, without, p.limitArg, p.soft)
+	a, _, _ := poolApplied(p.Target, without+v, p.limitArg)
+	b, _, _ := poolApplied(p.Target, without, p.limitArg)
 	return a - b
 }
 
 // PoolOf is st's pool for target: the one the engine reported, or, for a
-// pool nothing has joined yet, an empty one under the same rules.
+// pool nothing has joined yet, an empty one.
 func PoolOf(st GameState, target string) BonusPool {
 	if p, ok := st.Pools[target]; ok {
 		return p
 	}
-	return BonusPool{Target: target, soft: st.Ruleset().SoftCap()}
+	return BonusPool{Target: target}
 }
 
 // poolLimitEps is the slack under which a bonus counts as applied in full.
 const poolLimitEps = 1e-9
 
 // poolBounds is the range a pool's multiplier, 1 + its total, is held to
-// (an infinite end is no limit), and whether the pool has a knee instead of
-// a top: a production pool follows the soft cap. arg is the player speed
-// multiplier for "tick_speed" and unused otherwise. Every limit on a bonus
-// pool lives here.
-func poolBounds(target string, arg float64) (lo, hi float64, knee bool) {
+// (an infinite end is no limit). arg is the player speed multiplier for
+// "tick_speed" and unused otherwise. Every limit on a bonus pool lives here.
+func poolBounds(target string, arg float64) (lo, hi float64) {
 	lo, hi = math.Inf(-1), math.Inf(1)
 	switch {
 	case target == "production_all":
-		lo, knee = productionFloor, true
+		lo = productionFloor
 	case target == "gather_rate":
 		lo = productionFloor
 	case target == "research_speed":
@@ -109,44 +97,30 @@ func poolBounds(target string, arg float64) (lo, hi float64, knee bool) {
 	case target == "tick_speed":
 		hi = float64(BaseTickInterval) / float64(MinTickInterval) / math.Max(arg, 1)
 	case strings.HasSuffix(target, "_rate"):
-		lo, knee = productionFloor, true
+		lo = productionFloor
 	}
-	return lo, hi, knee
+	return lo, hi
 }
 
 // poolFactor is the multiplier the engine applies for a pool that has
-// earned bonuses in all: 1 + what the soft cap leaves of earned for a
-// production pool, 1 + earned for any other, held to the pool's bounds.
-func poolFactor(target string, earned float64, soft config.SoftCap) float64 {
-	lo, hi, knee := poolBounds(target, 1)
-	if knee {
-		earned = soft.Applied(earned)
-	}
+// earned bonuses in all: 1 + earned, held to the pool's bounds.
+func poolFactor(target string, earned float64) float64 {
+	lo, hi := poolBounds(target, 1)
 	return clamp(1.0+earned, lo, hi)
 }
 
 // poolApplied is what counts of a pool that has earned bonuses in all: the
 // applied bonus, the limit it ran into (as a bonus) and whether it ran into
-// one. Past a knee the limit is the knee and the applied bonus goes on
-// growing.
-func poolApplied(target string, earned, arg float64, soft config.SoftCap) (applied, limit float64, limited bool) {
-	lo, hi, knee := poolBounds(target, arg)
+// one.
+func poolApplied(target string, earned, arg float64) (applied, limit float64, limited bool) {
+	lo, hi := poolBounds(target, arg)
 	switch f := 1.0 + earned; {
-	case knee && earned > soft.Knee+poolLimitEps:
-		return soft.Applied(earned), soft.Knee, true
 	case f > hi+poolLimitEps:
 		return hi - 1, hi - 1, true
 	case f < lo-poolLimitEps:
 		return lo - 1, lo - 1, true
 	}
 	return earned, 0, false
-}
-
-// poolPastKnee reports whether a pool that has earned bonuses in all is
-// past its knee.
-func poolPastKnee(target string, earned float64, soft config.SoftCap) bool {
-	_, _, knee := poolBounds(target, 1)
-	return knee && earned > soft.Knee+poolLimitEps
 }
 
 // hasPoolLimit reports whether target is a pool a limit can hold.
@@ -175,10 +149,8 @@ func (ge *GameEngine) bonusPoolsLocked(r *Resolver) map[string]BonusPool {
 
 // bonusPoolLocked is one pool as it stands. Caller holds the lock.
 func (ge *GameEngine) bonusPoolLocked(r *Resolver, target string) BonusPool {
-	soft := ge.rules.SoftCap()
-	p := BonusPool{Target: target, Earned: r.AddTotal(target), limitArg: ge.speedMultiplier, soft: soft}
-	p.Applied, p.Limit, p.Limited = poolApplied(target, p.Earned, p.limitArg, soft)
-	p.Soft = p.Limited && poolPastKnee(target, p.Earned, soft)
+	p := BonusPool{Target: target, Earned: r.AddTotal(target), limitArg: ge.speedMultiplier}
+	p.Applied, p.Limit, p.Limited = poolApplied(target, p.Earned, p.limitArg)
 	return p
 }
 
@@ -203,73 +175,31 @@ func effectPool(e config.Effect) (string, bool) {
 func EffectPool(e config.Effect) (string, bool) { return effectPool(e) }
 
 // CapNote is the short note beside one bonus (or penalty) of v in pool p: ""
-// when all of it counts. Past a production pool's knee it is "counts a
-// quarter past +200%: +2.5% now". At a hard limit it is "capped: no effect
-// now" when none of it counts and "capped: +5% of it counts now" in between.
-// held says it is already in the pool.
+// when all of it counts. At a limit it is "capped: no effect now" when none
+// of it counts and "capped: +5% of it counts now" in between. held says it is
+// already in the pool.
 func CapNote(p BonusPool, v float64, held bool) string {
-	note, _ := capNote(p, v, held)
-	return note
-}
-
-// CapPhrase is CapNote as the rest of a sentence about the bonus: "counts a
-// quarter past +200%: +2.5% now", "is capped: no effect now". "" when all of
-// it counts.
-func CapPhrase(p BonusPool, v float64, held bool) string {
-	note, knee := capNote(p, v, held)
-	if note == "" || knee {
-		return note
-	}
-	return vibe.Line("game.caps.CapPhrase.01", "is ") + note
-}
-
-// capNote is CapNote, and whether a knee (not a hard limit) is what holds
-// the bonus back.
-func capNote(p BonusPool, v float64, held bool) (note string, knee bool) {
 	if !hasPoolLimit(p.Target) || v == 0 {
-		return "", false
+		return ""
 	}
 	counts := p.Counts(v, held)
 	if math.Abs(counts-v) <= 1e-6*math.Max(1, math.Abs(v)) {
-		return "", false
-	}
-	without := p.Earned
-	if held {
-		without -= v
-	}
-	if poolPastKnee(p.Target, math.Max(without, without+v), p.soft) && !floored(p.Target, math.Min(without, without+v)) {
-		return kneeText(p.soft) + ": " + pointsText(counts) + vibe.Line("game.caps.capNote.01", " now"), true
+		return ""
 	}
 	if math.Abs(counts) <= 1e-6 {
-		return vibe.Line("game.caps.capNote.02", "capped: no effect now"), false
+		return vibe.Line("game.caps.capNote.02", "capped: no effect now")
 	}
-	return vibe.Line("game.caps.capNote.03", "capped: ") + textfmt.SignedPercent(counts) + vibe.Line("game.caps.capNote.04", " of it counts now"), false
+	return vibe.Line("game.caps.capNote.03", "capped: ") + textfmt.SignedPercent(counts) + vibe.Line("game.caps.capNote.04", " of it counts now")
 }
 
-// floored reports whether a pool that has earned bonuses in all sits under
-// its floor.
-func floored(target string, earned float64) bool {
-	lo, _, _ := poolBounds(target, 1)
-	return 1.0+earned < lo-poolLimitEps
-}
-
-// kneeText is the soft cap in a few words: "counts a quarter past +200%".
-func kneeText(soft config.SoftCap) string {
-	return vibe.Line("game.caps.kneeText.01", "counts ") + shareText(soft.PastKnee) + vibe.Line("game.caps.kneeText.02", " past ") + textfmt.SignedPercent(soft.Knee)
-}
-
-// shareText names a share the way a person would: "a quarter", "half", "a
-// third", or the percentage.
-func shareText(share float64) string {
-	switch {
-	case math.Abs(share-0.25) < 1e-9:
-		return vibe.Line("game.caps.shareText.01", "a quarter")
-	case math.Abs(share-0.5) < 1e-9:
-		return "half"
-	case math.Abs(share-1.0/3) < 1e-9:
-		return vibe.Line("game.caps.shareText.02", "a third")
+// CapPhrase is CapNote as the rest of a sentence about the bonus: "is capped:
+// no effect now". "" when all of it counts.
+func CapPhrase(p BonusPool, v float64, held bool) string {
+	note := CapNote(p, v, held)
+	if note == "" {
+		return note
 	}
-	return textfmt.Percent(share)
+	return vibe.Line("game.caps.CapPhrase.01", "is ") + note
 }
 
 // pointsText is a bonus as percentage points to three figures, signed:
@@ -282,8 +212,7 @@ func pointsText(frac float64) string {
 }
 
 // PoolNote is the note beside a pool's total: "" when all of it counts,
-// "counts a quarter past +200%: +405% earned" for a production pool past
-// its knee, "capped at -90%: -120% earned" when a hard limit holds it.
+// "capped at -90%: -120% earned" when a limit holds it.
 func PoolNote(p BonusPool) string {
 	if !p.Limited {
 		return ""
@@ -291,24 +220,17 @@ func PoolNote(p BonusPool) string {
 	if p.Target == "research_speed" {
 		return vibe.Line("game.caps.PoolNote.01", "capped: a tech takes one tick at least, so only +100% counts")
 	}
-	if p.Soft {
-		return kneeText(p.soft) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolNote.02", " earned")
-	}
 	return vibe.Line("game.caps.PoolNote.03", "capped at ") + textfmt.SignedPercent(p.Limit) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolNote.04", " earned")
 }
 
 // PoolLine is a pool that applies less (or more) than it has earned, as one
-// line for the rates breakdown: "All production: +405% earned, +251%
-// counts. Past +200% a bonus counts a quarter." "" when all of it counts.
+// line for the rates breakdown: "Research speed: +150% earned, +100%
+// counts." "" when all of it counts.
 func PoolLine(p BonusPool) string {
 	if !p.Limited {
 		return ""
 	}
-	line := textfmt.Capitalize(EffectTargetName(p.Target)) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolLine.01", " earned, ") + pointsText(p.Applied) + vibe.Line("game.caps.PoolLine.02", " counts.")
-	if p.Soft {
-		return line + vibe.Line("game.caps.PoolLine.03", " Past ") + textfmt.SignedPercent(p.soft.Knee) + vibe.Line("game.caps.PoolLine.04", " a bonus counts ") + shareText(p.soft.PastKnee) + "."
-	}
-	return line
+	return textfmt.Capitalize(EffectTargetName(p.Target)) + ": " + textfmt.SignedPercent(p.Earned) + vibe.Line("game.caps.PoolLine.01", " earned, ") + pointsText(p.Applied) + vibe.Line("game.caps.PoolLine.02", " counts.")
 }
 
 // capNoteLocked is CapNote for a bonus the engine is about to add to, or has
@@ -322,10 +244,8 @@ func (ge *GameEngine) capNoteLocked(e config.Effect, held bool) string {
 }
 
 // capLinesLocked is one log line for every effect a limit keeps from
-// counting in full. Past a production pool's knee: "  → +20% all production
-// counts a quarter past +200%: +5% now. You have earned +405% all
-// production, and +251% of it counts." At a hard limit: "  → +20% research
-// speed is capped: no effect now. ..." Empty when every effect counts.
+// counting in full: "  → +20% research speed is capped: no effect now. ..."
+// Empty when every effect counts.
 // Caller holds the lock.
 func (ge *GameEngine) capLinesLocked(effects []config.Effect, held bool) []string {
 	var out []string
@@ -348,12 +268,10 @@ func (ge *GameEngine) capLinesLocked(effects []config.Effect, held bool) []strin
 		}
 		name := EffectTargetName(target)
 		line := "  → " + textfmt.SignedPercent(e.Value) + " " + name + " " + phrase + ". "
-		applied, limit, _ := poolApplied(target, earned, ge.speedMultiplier, p.soft)
+		_, limit, _ := poolApplied(target, earned, ge.speedMultiplier)
 		switch {
 		case target == "research_speed":
 			line += vibe.Line("game.caps.capLinesLocked.01", "A tech takes one tick at least, so research speed counts up to +100%, and you have earned ") + textfmt.SignedPercent(earned) + "."
-		case poolPastKnee(target, earned, p.soft):
-			line += vibe.Line("game.caps.capLinesLocked.02", "You have earned ") + textfmt.SignedPercent(earned) + " " + name + vibe.Line("game.caps.capLinesLocked.03", ", and ") + pointsText(applied) + vibe.Line("game.caps.capLinesLocked.04", " of it counts.")
 		default:
 			line += textfmt.Capitalize(name) + vibe.Line("game.caps.capLinesLocked.05", " counts up to ") + textfmt.SignedPercent(limit) + vibe.Line("game.caps.capLinesLocked.06", ", and you have earned ") + textfmt.SignedPercent(earned) + "."
 		}
