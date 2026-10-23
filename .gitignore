@@ -52,3 +52,4 @@ smoke-report/
 
 # Copy-editing sheets (go run ./cmd/words export): working files, not source
 words/export/
+words/vibe-todo/
