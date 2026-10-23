@@ -11,7 +11,9 @@ package main
 func init() {
 	leftAloneFor(leftState,
 		// The history of dooms is kept in the save as the line it was written
-		// as, with the names in it as keys (see doomMark and eraMark).
+		// as, with the names in it as keys (see doomMark and eraMark). It is
+		// told in the script's words from that line when it is read
+		// (vibeHistoryLine, the rows game.catastrophe.historyLines.*).
 		"game.catastrophe.Endure.10", "game.catastrophe.Endure.11",
 		"game.catastrophe.Succumb.02", "game.catastrophe.Succumb.03",
 		"game.catastrophe.Succumb.04", "game.catastrophe.Succumb.05",

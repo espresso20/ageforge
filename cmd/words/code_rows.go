@@ -175,7 +175,9 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 		return nil, whyNoWords
 	}
 	for _, marker := range cr.c.rules.readBack {
-		if strings.Contains(u.text, marker) {
+		// A text a vibe call carries is the line told from what is kept, not
+		// the kept text, which the call's id would not be on.
+		if u.vibeID == "" && strings.Contains(u.text, marker) {
 			return nil, whyReadBack
 		}
 	}
