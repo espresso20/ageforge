@@ -24,18 +24,20 @@ import (
 //	vibe.Sprintf("game.engine.finishBuild.02", "%s built (you have %d).", name, n)
 //	vibe.Errorf("game.engine.RecruitMax.02", "No housing left (%d/%d).", a, b)
 //
-// The call returns the string itself while VibeMode is off, and the script's
-// line for the id while it is on. A format goes through Sprintf or Errorf, so
-// the script's line is the format the arguments go into, and vet reads the
-// call as it read fmt's.
+// The call returns the string itself while VibeMode is off or the script has
+// no line for the id, and the script's line while it is on and has one. A
+// format goes through Sprintf or Errorf, so the script's line is the format
+// the arguments go into, and vet reads the call as it read fmt's.
 //
 // Nobody writes these by hand for a sheet of a thousand lines: vibe-wire
 // reads the export, decides for each text of the sheet whether it can follow
-// the switch, and rewrites the source. It decides only from the syntax, so it
-// can be run again after the code has moved. What it will not wire (a text
-// the code compares, one that ends up in a save, a key) it leaves as it is,
-// and says why; a text that cannot follow the switch as it is written (it is
-// made once, at start-up) it reports and leaves for the code to change.
+// the switch, and rewrites the source. It decides from the syntax and from
+// the lists of texts judged by hand (vibe_left.go, vibe_screens.go,
+// vibe_map.go), so it can be run again after the code has moved. What it will
+// not wire (a text the code compares, one that ends up in a save, a key) it
+// leaves as it is, and says why. A text that cannot follow the switch as it
+// is written (it is made once, at start-up) it reports and leaves for the code
+// to change.
 
 // Why a text of the code is not wired. A reason that is "for good" is not
 // asked of the script's writer; the others (compared, once) are work for
@@ -95,7 +97,7 @@ type nodeCtx struct {
 	inFunc  bool          // inside a function body (or a literal of one), so it runs when the game does
 	inConst bool          // inside a const declaration
 	inVar   bool          // inside a package-level var declaration
-	call    *ast.CallExpr // the fmt.Sprintf or fmt.Errorf the text is the format of
+	call    *ast.CallExpr // the call the text is the format of (fmt.Sprintf, Errorf or Fprintf), or the vibe.Same it is the argument of
 	kind    wireKind
 }
 

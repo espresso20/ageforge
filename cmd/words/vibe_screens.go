@@ -52,8 +52,8 @@ func init() {
 	leftAloneFor(leftArticle, "ui.overlay_stats.statsProvider.42")
 }
 
-// wireDespiteTwins are texts the exporter takes for compared because another
-// literal of the same words sits in an operation, which on a look is not a
+// wireDespiteTwins are texts that link marks as compared because another
+// literal of the same words sits in a text operation, but that are not a
 // comparison.
 var wireDespiteTwins = map[string]bool{
 	"ui.research_tree.canvas.01": true, // " or " between two lines of the tree; the other " or " is a Join separator

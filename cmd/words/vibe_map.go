@@ -67,16 +67,16 @@ func idEndsWith(suffix string) func(*row) bool {
 func shortMark(r *row) bool { return len([]rune(r.current)) <= 3 }
 
 // mapWidths are the widths the map's code gives labels. The legend's labels
-// are cut at 20 cells: the sidebar is 26 cells (sideW), the legend starts 2 in
-// and takes 3 off for its margin and the glyph before the label; the longest
-// labels it was written with, "new since last visit" and "echo of the old
-// town", are exactly 20. A group heading in it has 23. The flows panel keeps
-// its tags (DRAIN, IDLE, SHORT, OK) in a column 5 cells wide, and the
-// megacity's holo-ads and towers draw their letters one to a cell: a block
-// carries four letters of an ad and three of a corporation's initials (the
-// skyline's ads are two cells to a letter in a block 31 wide, so 8 at most
-// before one meets the next), and the Citadel's sign runs down the face of its
-// tower.
+// are cut at 20 cells. The sidebar is 26 cells wide (sideW) and the legend 23:
+// it starts 2 cells in and stops 1 before the right edge. A label sits 1 cell
+// in and follows a glyph and a space, which leaves 20. The longest labels the
+// legend was written with, "new since last visit" and "echo of the old town",
+// are exactly 20. A group heading has the full 23. The flows panel keeps its
+// tags (DRAIN, IDLE, SHORT, OK) in a column 5 cells wide. The megacity's
+// holo-ads and towers draw their letters one to a cell: a block carries four
+// letters of an ad and three of a corporation's initials. The skyline's ads
+// are two cells to a letter in a block 31 wide, so 8 letters at most before
+// one meets the next. The Citadel's sign runs down the face of its tower.
 var mapWidths = []mapWidth{
 	{prefix: "ui.mapstyle.roguelike.glyph.lgInfo.", max: 20},
 	{prefix: "ui.mapstyle.roguelike.space_legend.skyLgInfo.", max: 20},

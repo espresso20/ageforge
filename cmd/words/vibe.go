@@ -24,10 +24,11 @@ import (
 //	vibe-lint     whether what the script has is sound
 //
 // The script is words/vibe/*.csv: a row id and a line. The ids are the
-// export's. A row reaches the screen by one of three ways, and only those
-// are "wired": the ruleset overlay (a text of a definition), the lexicon
-// (a word for a kind of person) or a vibe.Line call in the code. A row in
-// the script that nothing reads yet is harmless and lint says so.
+// export's. A row is "wired" when the game reads the script's line for it:
+// through the ruleset overlay (a text of a definition), the lexicon (a word
+// for a kind of person), a vibe call in the code, a table entry that carries
+// its row id, or the flavor package. A row in the script that nothing reads
+// yet is harmless, and vibe-lint says so.
 
 // vibeTodoDir is where vibe-export writes, from the repository root. It is in
 // .gitignore: the sheets are working files for filling the script in.
@@ -37,7 +38,7 @@ const vibeTodoDir = "words/vibe-todo"
 // script reads back; text is left empty to be filled in.
 var vibeColumns = []string{"id", "where", "kind", "age", "keep", "max", "plain", "wired", "text"}
 
-// lineCall is a vibe call in the source: vibe.Line(id, plain), or
+// lineCall is a vibe call in the source: vibe.Line or vibe.E(id, plain), or
 // vibe.Sprintf or vibe.Errorf(id, format, args...).
 type lineCall struct {
 	id, plain string
@@ -158,7 +159,8 @@ func scriptDir(root, dir string) string {
 }
 
 // readScript reads every sheet in dir. It returns the rows with text, in file
-// order, and what was wrong with the sheets.
+// order, and what was wrong with the sheets. A repeated id is reported and the
+// first row is kept.
 func readScript(dir string) ([]words.Row, []string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -381,7 +383,7 @@ func vibeLint(c *catalog, root, dir string, out io.Writer) (int, error) {
 			notWired[row.area.file]++
 		}
 	}
-	// A vibe.Line call must name a row of the export, and quote its text.
+	// A vibe call must name a row of the export, and quote its text.
 	for _, lc := range wiring.calls {
 		where := fmt.Sprintf("%s:%d: vibe.%s(%q)", lc.file, lc.line, lc.kind, lc.id)
 		row, ok := c.byID[lc.id]

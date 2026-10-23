@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// units.go finds every piece of text in a source file and records where it
+// This file finds every piece of text in a source file and records where it
 // sits in the syntax tree: the function or declaration around it, the calls
 // it is an argument of, the struct literal and field it fills, its place in a
 // list or map. The readers (flavor, data, code) decide from that whether a
@@ -30,17 +30,16 @@ type unit struct {
 	structs  []structSite // the struct literals around it, innermost first
 	coll     []collStep   // its place in lists and maps, out to the innermost struct field
 	chain    *chain       // set when it is joined with + to things that are not text
-	caseKey  string       // the first value of the switch case it is under, if any
+	caseKey  string       // the first value of the case clause whose body it is in ("default" for a default clause), if any
 	ret      int          // its place among the values a return statement gives back
 
-	vibeID    string // the row id of the vibe call it is the string of (vibe.Line, Sprintf, Errorf), if it is
-	vibeKey   bool   // it is the row id a vibe call carries, not text
+	vibeID    string // the row id of the vibe call it is the string of (Line, E, Sprintf, Errorf), or of the table entry it is in (vibeTable); "" if neither
+	vibeKey   bool   // it is a row id (the first argument of a vibe call, or a vibeRow field), not text
 	vibeTable bool   // its vibeID is the vibeRow field of the table entry it is in, read by vibe.Line when the entry is drawn
 }
 
 // vibeRowField is the name of the struct field that holds the row id of a
-// table entry (see unit.vibeTable): config's road event templates are the
-// first.
+// table entry (see unit.vibeTable). config's road event templates use it.
 const vibeRowField = "vibeRow"
 
 // callSite is a call the text is an argument of.
@@ -153,9 +152,9 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 			}
 		case *ast.CallExpr:
 			if kind, ok := vibeCallKind(f, p); ok && child != p.Fun {
-				// A vibe call is the string it carries, said another way: it adds no
-				// call of its own to what is around the text (vibe.Line), or is the
-				// fmt call it stands for, with the id left out of the arguments.
+				// A vibe call is the string it carries, said another way. vibe.Line adds
+				// no call to what is around the text. vibe.Sprintf and vibe.Errorf count
+				// as the fmt call they stand for, with the id left out of the arguments.
 				idx := -1
 				for i, a := range p.Args {
 					if a == child {
@@ -358,7 +357,7 @@ func (m *module) newUnit(f *srcFile, stack []ast.Node, litTypes map[*ast.Composi
 }
 
 // isVibeCall reports whether call is, as written, a call of vibe.Line,
-// vibe.Sprintf or vibe.Errorf.
+// vibe.Sprintf, vibe.Errorf or vibe.E with at least two arguments.
 func isVibeCall(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || len(call.Args) < 2 {
@@ -406,7 +405,8 @@ func isVibeSame(call *ast.CallExpr) bool {
 }
 
 // vibeCallKind says whether call is a call of the vibe package that carries a
-// row id and a string (Line, Sprintf, Errorf), and which.
+// row id and a string (Line, Sprintf, Errorf), and which. vibe.E counts as
+// Line.
 func vibeCallKind(f *srcFile, call *ast.CallExpr) (string, bool) {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || len(call.Args) < 2 {
