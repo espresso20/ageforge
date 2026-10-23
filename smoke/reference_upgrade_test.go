@@ -15,7 +15,7 @@ func refHours(upgrades bool) []float64 {
 	for i := range t.ages {
 		refIncome[i] = units(t.state(t.refTown(i), i, 1).income, t.levels[i])
 	}
-	return t.walk("ordinary", 1, refIncome, false).Hours
+	return t.walk("ordinary", 1, refIncome).Hours
 }
 
 // TestReferenceUpgradesShortenTheGame: buying older copies up at half price is

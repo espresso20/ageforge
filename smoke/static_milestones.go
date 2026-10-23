@@ -14,8 +14,8 @@ import (
 
 // The Milestone Covenant: every milestone, every chain and the title ladder
 // can be completed. It is proven from config alone with the Gate Covenant's
-// model: the most storage buildable in an age (MaxStorage), undiscounted
-// prices, and the cold start for what an age can supply.
+// model: the age lock, the max counts and the cold start for what an age can
+// supply. Stock has no cap, so no price or amount is held against a store.
 //
 // Milestones reset with the run, so a milestone is due by the end of the last
 // age a normal run plays through (the age before game.PrestigeRunAge, the Modern Age), or by
@@ -24,26 +24,24 @@ import (
 // requirement must fit by then:
 //
 //   - a building count: a building can only be built in its own age (the age
-//     lock), so the last required copy must cost no more than the most storage
-//     buildable in that age, in every resource it costs, and stay within its
-//     max count. A building sum fits the sum of its buildings' ceilings.
+//     lock) and stay within its max count (copyLimit when it has none). A
+//     building sum fits the sum of its buildings' ceilings.
 //   - a population: at most MilestonePopShare of the housing ceiling, which is
-//     every housing building of every age so far raised to its storage limit
-//     and never upgraded, plus the techs' housing.
+//     every housing building of every age so far at its ceiling and never
+//     upgraded, plus the techs' housing.
 //   - structures built in the run: at most MilestoneBuildShare of the build
-//     ceiling, which is every building of every age so far raised to its
-//     storage limit, each copy built once. Selling and rebuilding (the
-//     counter counts those too) and rebuilding after a catastrophe are churn,
-//     not play, so they are left out.
-//   - a resource amount: fits the most storage buildable with
-//     GateResourceMargin to spare, in an age from MinAge on that supplies it.
+//     ceiling, which is every building of every age so far at its ceiling,
+//     each copy built once. Selling and rebuilding (the counter counts those
+//     too) and rebuilding after a catastrophe are churn, not play, so they
+//     are left out.
+//   - a resource amount: some age from MinAge on supplies the resource (a
+//     stock has no cap to hold it under).
 //   - a tech count or named techs: researchable by then, counting
 //     prerequisites and the knowledge storage each price needs.
-//   - wonders: built by then, one per age, each part fitting one full store
-//     (the Gate Covenant's wonder rule).
+//   - wonders: built by then, one per age (the Gate Covenant's wonder rule).
 //   - knowledge workers: at most MilestonePopShare of the worker slots in
-//     knowledge buildings (every copy at its storage limit), and no more
-//     than housing holds.
+//     knowledge buildings (every copy at its ceiling), and no more than
+//     housing holds.
 //   - soldiers trained: the soldiers the reference town's military buildings
 //     have brought by then (each copy brings its own, once)
 //     (config.FlowIncome, the Gate Covenant's flow model) over each age's
@@ -57,8 +55,8 @@ import (
 const (
 	// MilestonePopShare is the most of the housing ceiling a population
 	// milestone may ask for. The ceiling keeps every old housing tier
-	// standing at its storage limit. A player upgrades old tiers and seldom
-	// maxes storage, and the newest tier alone is about half the ceiling.
+	// standing at its ceiling. A player upgrades old tiers, and the newest
+	// tier alone is about half the ceiling.
 	MilestonePopShare = 0.4
 	// MilestoneBuildShare is the most of the build ceiling a structures-built
 	// milestone may ask for: half of everything a run can hold.
@@ -172,7 +170,6 @@ type milestoneModel struct {
 	cold   []*coldStart
 	runEnd int // the last age a normal run plays through
 
-	store  map[[2]string]float64 // MaxStorage by age and resource
 	copies map[string]copyCeiling
 	unlock map[string]int // building: the first age that unlocks it
 	resAge map[string]int // resource: the age it unlocks in
@@ -187,10 +184,6 @@ type milestoneModel struct {
 type copyCeiling struct {
 	age int // the only age it can be built in; -1 when never
 	n   int // the most copies that can stand
-	// What stops copy n+1: a resource that runs over storage, with the
-	// copy's price and that storage, or "" for the max count.
-	res          string
-	price, store float64
 }
 
 // copyLimit caps the copy count of a building that nothing else caps.
@@ -202,7 +195,7 @@ func newMilestoneModel(defs map[string]config.BuildingDef, prestigeAge string) *
 	ages := config.Ages()
 	n := len(ages)
 	m := &milestoneModel{ages: ages, idx: map[string]int{}, defs: defs, runEnd: n - 1,
-		store: map[[2]string]float64{}, copies: map[string]copyCeiling{},
+		copies: map[string]copyCeiling{},
 		unlock: map[string]int{}, resAge: map[string]int{}, techAt: map[string]int{},
 		builds: make([]int, n), techs: make([]int, n), wonders: make([]int, n),
 		housing: make([]float64, n), staff: make([]float64, n), soldiers: make([]float64, n)}
@@ -282,20 +275,10 @@ func newMilestoneModel(defs map[string]config.BuildingDef, prestigeAge string) *
 	return m
 }
 
-// maxStorage is MaxStorage over the model's buildings, cached.
-func (m *milestoneModel) maxStorage(i int, res string) float64 {
-	k := [2]string{m.ages[i].Key, res}
-	v, ok := m.store[k]
-	if !ok {
-		v = maxStorageIn(m.defs, m.ages[i].Key, res)
-		m.store[k] = v
-	}
-	return v
-}
-
 // ceiling is how many copies of building k can ever stand: copies are built
-// only in the building's own age, so each must fit the most storage
-// buildable there. A wonder is 1 whatever it costs: it is paid through its bank.
+// only in the building's own age, up to its max count, or copyLimit when it
+// has none (a price is its own limit, and no store holds one). A wonder is 1
+// whatever it costs: it is paid through its bank.
 func (m *milestoneModel) ceiling(k string) copyCeiling {
 	if c, ok := m.copies[k]; ok {
 		return c
@@ -314,45 +297,20 @@ func (m *milestoneModel) ceiling(k string) copyCeiling {
 		// never buildable: no copies
 	case d.Category == "wonder":
 		// One copy, whatever it costs: a wonder is paid into its bank in
-		// rounds and may cost more than a store (the one price allowed to,
-		// config/storage_rule.go). Whether each part of it has a source is the
-		// Gate Covenant's question.
+		// rounds. Whether each part of it has a source is the Gate
+		// Covenant's question.
 		c.n = 1
+	case d.MaxCount > 0:
+		c.n = min(d.MaxCount, copyLimit)
 	default:
-		for c.n < copyLimit && (d.MaxCount <= 0 || c.n < d.MaxCount) {
-			res, price, store := m.hardest(d, c.n+1, c.age)
-			if price > store {
-				c.res, c.price, c.store = res, price, store
-				break
-			}
-			c.n++
-		}
+		c.n = copyLimit
 	}
 	m.copies[k] = c
 	return c
 }
 
-// hardest is the resource copy n of d comes closest to running out of
-// storage in, in age i: the copy's undiscounted price in it and the most
-// storage buildable for it.
-func (m *milestoneModel) hardest(d config.BuildingDef, n, i int) (res string, price, store float64) {
-	best := math.Inf(1)
-	for _, r := range sortedKeys(d.BaseCost) {
-		p := lastCopyPrice(d, r, n)
-		if p <= 0 {
-			continue
-		}
-		s := m.maxStorage(i, r)
-		if s/p < best {
-			best, res, price, store = s/p, r, p, s
-		}
-	}
-	return res, price, store
-}
-
 // techAge is the first age tech k can be researched in: its own age, after
-// its prerequisites (and the earliest key of its either-or group), and once
-// the most knowledge storage holds its price.
+// its prerequisites (and the earliest key of its either-or group).
 // len(ages) means never.
 func (m *milestoneModel) techAge(k string, byKey map[string]config.TechDef, depth int) int {
 	if a, ok := m.techAt[k]; ok {
@@ -475,7 +433,7 @@ func (m *milestoneModel) requirements(def config.MilestoneDef, from int) []miles
 	}
 	if def.MinPopulation > 0 {
 		reqs = append(reqs, m.shareReq("population", "population", float64(def.MinPopulation), MilestonePopShare, m.housing,
-			"a population of %s", "housing tops out at %s", "every housing building %s raised to its storage limit and never upgraded", "a population milestone"))
+			"a population of %s", "housing tops out at %s", "every housing building %s at its ceiling and never upgraded", "a population milestone"))
 	}
 	if def.MinTechCount > 0 {
 		reqs = append(reqs, m.countReq("techs", "technologies", def.MinTechCount, m.techs, "can be researched"))
@@ -488,7 +446,7 @@ func (m *milestoneModel) requirements(def config.MilestoneDef, from int) []miles
 	}
 	if def.MinTotalBuilt > 0 {
 		reqs = append(reqs, m.shareReq("builds", "structures built", float64(def.MinTotalBuilt), MilestoneBuildShare, intsToFloats(m.builds),
-			"%s structures built in one run", "building every structure once, up to its storage limit, makes %s", "every building %s, each copy built once", "a build-count milestone"))
+			"%s structures built in one run", "building every structure once, up to its ceiling, makes %s", "every building %s, each copy built once", "a build-count milestone"))
 	}
 	if def.MinSoldiersTrained > 0 {
 		reqs = append(reqs, m.soldiersReq(def.MinSoldiersTrained))
@@ -502,7 +460,7 @@ func (m *milestoneModel) requirements(def config.MilestoneDef, from int) []miles
 			slots[i] = math.Min(m.staff[i], m.housing[i])
 		}
 		reqs = append(reqs, m.shareReq("knowledge_workers", "knowledge workers", float64(def.MinKnowledgeWorkers), MilestonePopShare, slots,
-			"%s knowledge workers", "knowledge buildings (capped by housing) hold %s workers", "every knowledge building %s raised to its storage limit", "a staffing milestone"))
+			"%s knowledge workers", "knowledge buildings (capped by housing) hold %s workers", "every knowledge building %s at its ceiling", "a staffing milestone"))
 	}
 	return reqs
 }
@@ -542,22 +500,13 @@ func (m *milestoneModel) buildingReq(k string, need int) milestoneReq {
 		q.why = func(int) string {
 			return fmt.Sprintf("needs %s, but %s is never unlocked in time to be built (it can only be built in the %s).", count, d.Name, game.AgeName(d.RequiredAge))
 		}
-	case need > c.n && c.res == "":
-		q.first = -1
-		q.why = func(int) string {
-			return fmt.Sprintf("needs %s, but at most %d may exist (its max count).", count, c.n)
-		}
-	case need > c.n && d.Category == "wonder":
-		q.first = -1
-		q.why = func(int) string {
-			return fmt.Sprintf("needs %s, but it costs %s, over the most %s storage buildable in the %s (%s).", count, num(c.price), game.ResourceName(c.res), m.ageName(c.age), num(c.store))
-		}
 	case need > c.n:
 		q.first = -1
-		res, price, store := m.hardest(d, need, c.age)
 		q.why = func(int) string {
-			return fmt.Sprintf("needs %s, but %s can only be built in the %s, and copy #%d costs %s %s, over the most %s storage buildable there (%s). At most %d can ever stand.",
-				count, pluralName(k), m.ageName(c.age), need, num(price), game.ResourceName(res), game.ResourceName(res), num(store), c.n)
+			if d.MaxCount > 0 {
+				return fmt.Sprintf("needs %s, but at most %d may exist (its max count).", count, c.n)
+			}
+			return fmt.Sprintf("needs %s, but a run can hold at most %s of them (the model's ceiling for a building with no max count).", count, grouped(c.n))
 		}
 	default:
 		q.why = func(due int) string {
@@ -675,12 +624,13 @@ func (m *milestoneModel) resourceReq(res string, amount float64, from int) miles
 	}
 	name := game.ResourceName(res)
 	start := max(from, unlock)
-	// The amount has to be held once, in any age from start to i that
-	// supplies it; storage only grows, so the latest such age is the best.
+	// A stock has no cap, so any amount can be held once an age from start
+	// to i supplies the resource: the limit is unbounded there, nothing
+	// elsewhere.
 	limit := func(i int) float64 {
 		for a := i; a >= start; a-- {
 			if m.supplied(a, res) {
-				return m.maxStorage(a, res) / GateResourceMargin
+				return math.Inf(1)
 			}
 		}
 		return 0
@@ -688,16 +638,8 @@ func (m *milestoneModel) resourceReq(res string, amount float64, from int) miles
 	q := milestoneReq{kind: "resource", what: name, need: amount, limit: limit, first: m.firstAge(start, amount, limit)}
 	q.why = func(due int) string {
 		hold := fmt.Sprintf("to hold %s", game.Amount(amount, res))
-		last := len(m.ages) - 1
 		if q.first < 0 {
-			if l := limit(last); l > 0 {
-				return fmt.Sprintf("needs %s, but the most %s storage buildable (%s) holds less than %gx that.", hold, name, num(float64(l*GateResourceMargin)), GateResourceMargin)
-			}
 			return fmt.Sprintf("needs %s, but nothing supplies %s from the %s on.", hold, name, m.ageName(start))
-		}
-		if l := limit(due); l > 0 {
-			return fmt.Sprintf("needs %s %s, but the most %s storage buildable by then (%s) holds less than %gx that. It first fits in the %s.",
-				hold, m.due(due), name, num(float64(l*GateResourceMargin)), GateResourceMargin, m.ageName(q.first))
 		}
 		return fmt.Sprintf("needs %s %s, but nothing supplies %s by then. It first fits in the %s.", hold, m.due(due), name, m.ageName(q.first))
 	}
@@ -761,8 +703,8 @@ func grouped(n int) string {
 
 // writeMilestones renders the milestone feasibility check.
 func writeMilestones(sb *strings.Builder, problems []MilestoneProblem, reach []MilestoneReach) {
-	fmt.Fprintf(sb, "From config alone: every milestone must be completable by the end of the last age a run plays before prestige opens, or of its own age when that is later. A building count must fit the most storage buildable in the building's own age (the only age it can be built in), undiscounted, within its max count; a population at most %g%% of the housing ceiling (every housing building so far at its storage limit, never upgraded); structures built at most %g%% of the build ceiling (every building so far at its storage limit, built once); a resource the most storage buildable with %gx to spare; techs and wonders what can be researched and built by then; soldiers what the reference town's military buildings bring. Every chain and the title ladder must be completable too. `go test ./smoke` fails on any problem here.\n\n",
-		MilestonePopShare*100, MilestoneBuildShare*100, GateResourceMargin)
+	fmt.Fprintf(sb, "From config alone: every milestone must be completable by the end of the last age a run plays before prestige opens, or of its own age when that is later. Stock has no cap, so nothing is held against a store. A building count must be buildable in the building's own age (the only age it can be built in), within its max count; a population at most %g%% of the housing ceiling (every housing building so far at its ceiling, never upgraded); structures built at most %g%% of the build ceiling (every building so far at its ceiling, built once); a resource must be supplied by some age from the milestone's own on; techs and wonders what can be researched and built by then; soldiers what the reference town's military buildings bring. Every chain and the title ladder must be completable too. `go test ./smoke` fails on any problem here.\n\n",
+		MilestonePopShare*100, MilestoneBuildShare*100)
 	if len(problems) == 0 {
 		sb.WriteString("No problems.\n\n")
 	} else {

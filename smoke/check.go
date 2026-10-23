@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -21,10 +20,10 @@ func (r *runner) checkInvariants(st game.GameState) {
 	}
 }
 
-// checkStorageFeasible flags a next-age requirement that no amount of
+// checkRequiredBuildings flags a next-age requirement that no amount of
 // building in this age can satisfy.
-func (r *runner) checkStorageFeasible(st game.GameState) {
-	for _, p := range storageProblems(st, r.bot.defs) {
+func (r *runner) checkRequiredBuildings(st game.GameState) {
+	for _, p := range requiredBuildingProblems(st, r.bot.defs) {
 		r.anomaly(KindInvariant, p.check, p.msg, st, true)
 	}
 }
@@ -93,272 +92,35 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 	if ws.TotalIdle < 0 {
 		add("negative_idle", fmt.Sprintf("idle workers is %d", ws.TotalIdle))
 	}
-	return append(out, storageProblems(st, defs)...)
+	return append(out, requiredBuildingProblems(st, defs)...)
 }
 
-// storageProblems flags storage that can never grow again in this age, a
-// required building that can't be built or whose last copy can't fit under any
-// reachable cap.
-func storageProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
+// requiredBuildingProblems flags a building the next age asks for that can no
+// longer be built: its age has passed (or it was upgraded away) and fewer
+// copies stand than the gate wants. Stock has no cap, so a price is never
+// "over the storage" and nothing else can strand a required copy.
+func requiredBuildingProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
 	var out []problem
-	caps, stall := storageLadder(st, defs)
-	if stall != nil {
-		out = append(out, problem{"storage_unreachable", stall.message(st)})
-	}
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
 		need, bs, def := st.NextAgeBldReqs[bld], st.Buildings[bld], defs[bld]
 		if bs.Count < need && (bs.IsLegacy || (def.RequiredAge != "" && def.RequiredAge != st.Age)) {
 			out = append(out, problem{"required_building_unbuildable",
 				fmt.Sprintf("advancing to %s needs %d %s but only %d exist and %s can't be built in %s",
 					st.NextAge, need, bld, bs.Count, bld, st.Age)})
-			continue
 		}
-		res, cost, capacity, ok := lastCopyOverStorage(st, bld, defs, caps)
-		if !ok {
-			continue
-		}
-		out = append(out, problem{"required_building_over_storage",
-			fmt.Sprintf("advancing to %s needs %d %s; copy #%d costs %s %s but the most %s storage reachable in %s is %s",
-				st.NextAge, need, bld, need, num(cost), res, res, st.Age, num(capacity))})
 	}
 	return out
-}
-
-// storageStall is a purchase the player must make to finish the age that
-// costs more than any store he can reach. A store is a wall since the storage
-// rule (config/storage_rule.go): the last copy of this age's storage building
-// he can buy is the one that fits under the store the copies before it give,
-// the next copy costs more than the cap, and the age lock forbids every older
-// storage building. That wall is the normal state, not a stall; it is a stall
-// only when something the gate needs (a resource requirement, a required
-// building's last copy, the keystone tech's knowledge) is over the store at
-// the wall. A gate that forced too little storage would cause it, and so did
-// a storage loss (an Endure took both Industrial Depots on the way into the
-// Victorian Age).
-type storageStall struct {
-	key       string  // this age's storage building, whose next copy is the wall
-	res       string  // the resource whose cap its next copy overflows most
-	cost, cap float64 // that copy's price in res, and the res cap
-	needs     string  // what the player must buy that the reachable store cannot hold
-}
-
-func (s *storageStall) message(st game.GameState) string {
-	return fmt.Sprintf("storage can never grow in %s: the next %s costs %s %s, over the %s cap, and no older storage can be built; %s is over the most storage reachable",
-		st.Age, s.key, num(s.cost), s.res, num(s.cap), s.needs)
-}
-
-// ladderCopies bounds the copies one building adds to the ladder: a price
-// climbing at its CostScale outruns a store that grows by a fixed amount a
-// copy, so the walk ends within a few copies unless the price barely climbs,
-// and past this many it is called unbounded.
-const ladderCopies = 1000
-
-// storageLadder is the most storage reachable in this age, built a copy at a
-// time the way a player has to: a copy counts only once its price fits under
-// the caps the copies before it reached, so storage whose next copy costs
-// more than today's cap adds nothing. Copies under construction are paid for
-// and count from the start. Only this age's buildings can be bought (the age
-// lock). A building whose price barely climbs (ladderCopies copies bought)
-// raises its caps without top. stall is set when the walk ends at a wall (this
-// age's storage building has a next copy that does not fit) and something the
-// player must buy to finish the age is over the caps reached.
-func storageLadder(st game.GameState, defs map[string]config.BuildingDef) (map[string]float64, *storageStall) {
-	caps := make(map[string]float64, len(st.Resources))
-	for _, k := range sortedKeys(st.Resources) {
-		caps[k] = st.Resources[k].Storage
-	}
-	// Storage grows with Era Mastery's k, a building's share included.
-	k := st.Mastery.K
-	if k <= 0 {
-		k = 1
-	}
-	raise := func(def config.BuildingDef, n float64) {
-		for _, e := range def.Effects {
-			if e.Type != "storage" || e.Value <= 0 {
-				continue
-			}
-			add := float64(float64(e.Value*n) * k)
-			if e.Target != "all" {
-				caps[e.Target] += add
-				continue
-			}
-			for _, r := range sortedKeys(caps) {
-				caps[r] += add
-			}
-		}
-	}
-	keyByName := make(map[string]string, len(st.Buildings))
-	for _, k := range sortedKeys(st.Buildings) {
-		keyByName[st.Buildings[k].Name] = k
-	}
-	queued := map[string]int{}
-	for _, q := range st.BuildQueue {
-		if k, ok := keyByName[q.Name]; ok {
-			queued[k]++
-			raise(defs[k], 1)
-		}
-	}
-
-	type rung struct {
-		key    string
-		def    config.BuildingDef
-		next   map[string]float64 // price of the next copy
-		left   int                // copies left under MaxCount; -1 when uncapped
-		bought int                // copies the walk has bought
-	}
-	var rungs []*rung
-	for _, key := range sortedKeys(st.Buildings) {
-		bs, def := st.Buildings[key], defs[key]
-		if !bs.Unlocked || bs.IsLegacy || def.Category == "wonder" {
-			continue
-		}
-		if def.RequiredAge != "" && def.RequiredAge != st.Age {
-			continue
-		}
-		stores := false
-		for _, e := range def.Effects {
-			stores = stores || (e.Type == "storage" && e.Value > 0)
-		}
-		if !stores {
-			continue
-		}
-		left := -1
-		if def.MaxCount > 0 {
-			if left = def.MaxCount - bs.Count - queued[key]; left <= 0 {
-				continue
-			}
-		}
-		next := make(map[string]float64, len(bs.NextCost))
-		for r, c := range bs.NextCost {
-			next[r] = c
-		}
-		rungs = append(rungs, &rung{key: key, def: def, next: next, left: left})
-	}
-	fits := func(cost map[string]float64) bool {
-		for r, c := range cost {
-			if c > caps[r] {
-				return false
-			}
-		}
-		return true
-	}
-
-	for progress := true; progress; {
-		progress = false
-		for _, g := range rungs {
-			if g.left == 0 || !fits(g.next) {
-				continue
-			}
-			raise(g.def, 1)
-			g.bought++
-			progress = true
-			if g.left > 0 {
-				g.left--
-			}
-			for r, c := range g.next {
-				g.next[r] = float64(c * g.def.CostScale)
-			}
-			if g.left < 0 && g.bought >= ladderCopies {
-				// The price barely climbs: its caps have no top.
-				for _, e := range g.def.Effects {
-					if e.Type != "storage" || e.Value <= 0 {
-						continue
-					}
-					for _, r := range sortedKeys(caps) {
-						if (e.Target == "all" && r != "knowledge") || e.Target == r {
-							caps[r] = math.Inf(1)
-						}
-					}
-				}
-				g.left = 0
-			}
-		}
-	}
-	needs := requiredOverStorage(st, defs, caps)
-	if needs == "" {
-		return caps, nil
-	}
-	for _, g := range rungs {
-		if g.def.Category != "storage" || g.left == 0 {
-			continue
-		}
-		s := &storageStall{key: g.key, needs: needs}
-		for _, r := range sortedKeys(g.next) {
-			if c := g.next[r]; c > caps[r] && (s.res == "" || c/caps[r] > s.cost/s.cap) {
-				s.res, s.cost, s.cap = r, c, caps[r]
-			}
-		}
-		return caps, s
-	}
-	return caps, nil
-}
-
-// lastCopyOverStorage checks whether the last copy of bld the next age asks
-// for costs more of some resource than caps, the most storage reachable in
-// this age (storageLadder). Costs use the current build_cost multiplier
-// (already in NextCost).
-func lastCopyOverStorage(st game.GameState, bld string, defs map[string]config.BuildingDef, caps map[string]float64) (res string, cost, capacity float64, over bool) {
-	need := st.NextAgeBldReqs[bld]
-	bs := st.Buildings[bld]
-	// A copy in the build queue is paid for, and the next cost is already the
-	// price of the copy after it.
-	queued := 0
-	for _, q := range st.BuildQueue {
-		if q.Name == bs.Name {
-			queued++
-		}
-	}
-	if bs.Count+queued >= need || len(bs.NextCost) == 0 {
-		return "", 0, 0, false
-	}
-	steps := float64(need - 1 - bs.Count - queued)
-	if steps < 0 {
-		steps = 0
-	}
-	mult := detmath.Pow(defs[bld].CostScale, steps)
-	for _, r := range sortedKeys(bs.NextCost) {
-		c := bs.NextCost[r] * mult
-		if got := caps[r]; c > got {
-			return r, c, got, true
-		}
-	}
-	return "", 0, 0, false
-}
-
-// requiredOverStorage names the first thing the player must buy to finish the
-// age that the caps cannot hold, or "" when the caps hold all of it: the last
-// copy of a required building, or the knowledge of a tech the age's wonder
-// waits for.
-func requiredOverStorage(st game.GameState, defs map[string]config.BuildingDef, caps map[string]float64) string {
-	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
-		if def, ok := defs[bld]; ok && def.Category != "wonder" {
-			if res, cost, _, over := lastCopyOverStorage(st, bld, defs, caps); over {
-				return fmt.Sprintf("%s #%d, %s %s", bld, st.NextAgeBldReqs[bld], num(cost), res)
-			}
-		}
-	}
-	return ""
 }
 
 // Blockers lists what stands between st and the next age, one clause per
 // unmet requirement.
 func Blockers(st game.GameState) string {
 	var out []string
-	defs := st.Ruleset().BuildingMap()
-	caps, stall := storageLadder(st, defs)
-	if stall != nil {
-		// The root cause when it is there: nothing below can be fixed.
-		out = append(out, fmt.Sprintf("storage stuck (next %s costs %s %s, over the %s cap)", stall.key, num(stall.cost), stall.res, num(stall.cap)))
-	}
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
 		need := st.NextAgeBldReqs[bld]
 		bs := st.Buildings[bld]
 		if bs.Count < need {
-			note := ""
-			if res, c, capacity, over := lastCopyOverStorage(st, bld, defs, caps); over {
-				note = fmt.Sprintf("; copy #%d costs %s %s, over the %s storage reachable this age", need, num(c), res, num(capacity))
-			}
-			out = append(out, fmt.Sprintf("%s %d/%d (next costs %s%s)", bld, bs.Count, need, costStr(bs.NextCost), note))
+			out = append(out, fmt.Sprintf("%s %d/%d (next costs %s)", bld, bs.Count, need, costStr(bs.NextCost)))
 		}
 	}
 	if w := st.CurrentAgeWonderKey; w != "" {

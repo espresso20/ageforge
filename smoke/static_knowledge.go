@@ -68,8 +68,17 @@ func ladderPrices(total float64, n int, q float64) []float64 {
 // KnowledgeMade is, for each age, what the ordinary reference player's
 // knowledge buildings make during the age's stay: the same quantity property
 // 10 divides the age's techs by.
+//
+// It is worked out on the economy the tables describe, without the storage
+// buildings' boost to all production (refTables.boosters off): the ladder
+// prices the techs on what the buildings make, and a bonus that speeds the
+// stay up on top of that is not in the tables the prices were set against.
+// Moving the prices with the boost would retune research; that is a decision
+// for the pacing reading (the storage boost shortens the ages), not for this
+// check.
 func KnowledgeMade() []float64 {
 	t := newRefTables()
+	t.boosters = false
 	n := len(t.ages)
 	refIncome := make([]float64, n)
 	ref := make([]townState, n)
@@ -77,7 +86,7 @@ func KnowledgeMade() []float64 {
 		ref[i] = t.state(t.refTown(i), i, 1)
 		refIncome[i] = units(ref[i].income, t.levels[i])
 	}
-	ordinary := t.walk("ordinary", 1, refIncome, false)
+	ordinary := t.walk("ordinary", 1, refIncome)
 	out := make([]float64, n)
 	for i := range t.ages {
 		out[i] = float64(ref[i].income[config.ResearchTarget] * ordinary.Hours[i] * refTicksPerHour)

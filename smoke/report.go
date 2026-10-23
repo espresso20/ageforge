@@ -21,7 +21,6 @@ type Summary struct {
 	Runs      []*RunResult  `json:"runs"`
 	Pacing    []PacingRow   `json:"pacing"`
 	Gates     []GateProblem `json:"static_gate_problems"`
-	Slack     []GateSlack   `json:"static_gate_slack"`
 	Prices    []PriceRow    `json:"harbinger_prices"`
 	Failed    bool          `json:"failed"`
 	Anomalies int           `json:"anomaly_count"`
@@ -234,7 +233,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		prestiged bool
 	}
 	s.Prices = HarbingerPrices()
-	s.Gates, s.Slack = StaticGates()
+	s.Gates = StaticGates()
 	secs := map[key][]float64{}
 	ticks := map[key][]float64{}
 	quiet := map[key][]float64{}

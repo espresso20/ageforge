@@ -10,14 +10,13 @@ import (
 )
 
 // TestGateCovenant is the regression guard for the whole "requirement you
-// can never store" class of soft-lock (the stash deadlock, the 50-longhouse
-// Stone Age wall, the Atomic 30-bunker wall): every age advance must pass the
+// can never meet" class of soft-lock (a building only an older age can build,
+// a price in a resource nothing makes yet): every age advance must pass the
 // Gate Covenant from config alone. It runs in plain `go test ./...`, so CI
 // catches a balance change that breaks a gate before any bot has to play
 // into it. The covenant's rules are listed at the top of static.go.
 func TestGateCovenant(t *testing.T) {
-	problems, slack := StaticGates()
-	for _, g := range problems {
+	for _, g := range StaticGates() {
 		switch g.Kind {
 		case "unbuildable":
 			t.Errorf("%s -> %s: requires %d %s, which can only be built in %s; name the building its lineage has in %s",
@@ -27,35 +26,33 @@ func TestGateCovenant(t *testing.T) {
 				g.From, g.To, g.Resource, g.Key, g.From)
 		case "dead_building":
 			t.Errorf("%s (%s) costs %s, which has no source in that age", g.Key, g.From, g.Resource)
-		case "building":
-			t.Errorf("%s -> %s: copy #%d of %s costs %s %s, over 1/%g of the %s storage buildable in %s",
-				g.From, g.To, g.Count, g.Key, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.From)
-		case "ladder":
-			t.Errorf("%s -> %s: the first %s costs %s %s, over 1/%g of the %s storage the gate forces (%s); a player who met the gate with nothing to spare could never raise a cap in %s",
-				g.From, g.To, g.Key, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.ForcedBy, g.To)
 		default:
-			t.Errorf("%s -> %s: needs %s %s, more than 1/%g of the %s storage buildable in %s",
-				g.From, g.To, num(g.Need), g.Resource, g.Margin, num(g.MaxStorage), g.From)
+			t.Errorf("%s -> %s: %s needs %s %s (%s)", g.From, g.To, g.Key, num(g.Need), g.Resource, g.Kind)
 		}
-	}
-	if want := len(config.Ages()) - 1; len(slack) != want {
-		t.Errorf("slack rows = %d, want one per advance (%d)", len(slack), want)
 	}
 }
 
-// TestStorageCovenant: the storage tables follow the storage rule, checked
-// from the tables alone (see static_storage.go): sizes that hold the dearest
-// price of the age and a quarter more, copies that each fit under the ones
-// before, a town that arrives able to pay the next age's first storage and
-// housing, gates that ask for the five copies and a quarter of each store, and
-// the wall in the first four ages at exactly five copies.
-func TestStorageCovenant(t *testing.T) {
+// TestStorageCheck: the storage tables hold what is left of the storage
+// rule, checked from the tables alone (see static_storage.go): the price
+// curve with no copy limit, a building that only boosts production, gates that
+// ask for the five copies, and the five copies payable from the age's income.
+func TestStorageCheck(t *testing.T) {
 	problems, rows := StaticStorage()
 	if len(rows) < 20 {
 		t.Fatalf("only %d ages have a storage building", len(rows))
 	}
 	for _, p := range problems {
 		t.Errorf("%s (%s)", p, p.Rule)
+	}
+	for _, r := range rows {
+		if r.Share <= 0 || r.Share > 1 {
+			t.Errorf("%s: the fifth copy costs %.3fx of the age's income over one target, want a share in (0, 1]", r.Age, r.Share)
+		}
+	}
+	var sb strings.Builder
+	writeStorage(&sb, problems, rows)
+	if out := sb.String(); !strings.Contains(out, "No problems.") || strings.Count(out, "\n| ") != len(rows)+1 {
+		t.Errorf("the report section:\n%s", out)
 	}
 }
 
@@ -77,12 +74,13 @@ func editedGate(to string, change func(b map[string]int)) []config.AgeDef {
 	return ages
 }
 
-// TestStorageCovenantCatchesBrokenStorage keeps the guard honest: each way
-// the tables can part from the storage rule must be flagged under the rule
-// that names it, in the age it breaks, and the real tables must flag nothing.
-func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
+// TestStorageCheckCatchesBrokenStorage keeps the guard honest: each way the
+// tables can part from the storage check must be flagged under the rule that
+// names it, in the age it breaks, and the real tables must flag nothing.
+func TestStorageCheckCatchesBrokenStorage(t *testing.T) {
+	income := config.Incomes(config.BaseBuildings(), config.Technologies(), config.AgeOrder(), config.AnyResource)
 	flagged := func(defs map[string]config.BuildingDef, ages []config.AgeDef) map[string]bool {
-		problems, _ := staticStorage(defs, ages)
+		problems, _ := staticStorage(defs, ages, income)
 		out := map[string]bool{}
 		for _, p := range problems {
 			out[p.Rule+"/"+p.Age] = true
@@ -98,16 +96,15 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 		defs[key] = d
 		return defs
 	}
-	scaleSize := func(by float64) func(d *config.BuildingDef) {
+	priceTimes := func(k float64) func(d *config.BuildingDef) {
 		return func(d *config.BuildingDef) {
-			for i, e := range d.Effects {
-				if e.Type == "storage" {
-					d.Effects[i].Value = e.Value * by
-				}
+			cost := map[string]float64{}
+			for r, v := range d.BaseCost {
+				cost[r] = v * k
 			}
+			d.BaseCost = cost
 		}
 	}
-	editGate := editedGate
 	defs, ages := config.BuildingByKey(), config.Ages()
 	if got := flagged(defs, ages); len(got) > 0 {
 		t.Fatalf("the real tables are flagged: %v", got)
@@ -118,27 +115,26 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 		ages  []config.AgeDef
 		wants []string
 	}{
-		// A store a tenth too small for what the age asks: five copies must
-		// hold the dearest price and a quarter more.
-		{"a small Classical Vault", edit("classical_vault", scaleSize(0.1)), ages, []string{"hold/classical_age"}},
-		{"a small Stash", edit("stash", scaleSize(0.1)), ages, []string{"hold/primitive_age"}},
-		// A store the next age's first storage building does not fit in.
-		{"a Victorian Vault priced past the Industrial store", edit("victorian_vault", func(d *config.BuildingDef) {
-			cost := map[string]float64{}
-			for k, v := range d.BaseCost {
-				cost[k] = v * 100
-			}
-			d.BaseCost = cost
-		}), ages, []string{"arrive/industrial_age", "climb/victorian_age"}},
+		// A first storage copy nobody can pay: its fifth copy costs more than
+		// the age's income makes in a target.
+		{"a Victorian Vault priced at a hundred times", edit("victorian_vault", priceTimes(100)), ages, []string{"afford/victorian_age"}},
+		{"a dear Stash", edit("stash", priceTimes(1000)), ages, []string{"afford/primitive_age"}},
 		// Storage with a copy limit, or climbing at the wrong rate.
 		{"a copy limit on the Warehouse", edit("warehouse", func(d *config.BuildingDef) { d.MaxCount = 25 }), ages, []string{"curve/bronze_age"}},
 		{"a slow Granary", edit("granary", func(d *config.BuildingDef) { d.CostScale = 1.15 }), ages, []string{"curve/iron_age"}},
 		{"a slow Fusion Vault", edit("fusion_vault", func(d *config.BuildingDef) { d.CostScale = 1.2 }), ages, []string{"curve/fusion_age"}},
+		// A storage building that still stores, or boosts the wrong amount.
+		{"a Keep that stores", edit("keep", func(d *config.BuildingDef) {
+			d.Effects = append(d.Effects, config.Effect{Type: "storage", Target: "all", Value: 1e6})
+		}), ages, []string{"boost/medieval_age"}},
+		{"a Stash that boosts five percent", edit("stash", func(d *config.BuildingDef) {
+			d.Effects = []config.Effect{{Type: "bonus", Target: "production_all", Value: 0.05}}
+		}), ages, []string{"boost/primitive_age"}},
+		{"a Storage Pit that boosts nothing", edit("storage_pit", func(d *config.BuildingDef) { d.Effects = nil }), ages, []string{"boost/stone_age"}},
 		// Gates.
-		{"a gate without the storage copies", config.BuildingByKey(), editGate("iron_age", func(b map[string]int) { delete(b, "warehouse") }), []string{"gate_copies/bronze_age"}},
-		{"a gate asking for three copies", config.BuildingByKey(), editGate("classical_age", func(b map[string]int) { b["granary"] = 3 }), []string{"gate_copies/iron_age"}},
+		{"a gate without the storage copies", config.BuildingByKey(), editedGate("iron_age", func(b map[string]int) { delete(b, "warehouse") }), []string{"gate_copies/bronze_age"}},
+		{"a gate asking for three copies", config.BuildingByKey(), editedGate("classical_age", func(b map[string]int) { b["granary"] = 3 }), []string{"gate_copies/iron_age"}},
 	}
-	// The wall rules were retired in #235: a storage building's next copy always fits.
 	for _, c := range cases {
 		got := flagged(c.defs, c.ages)
 		for _, w := range c.wants {
@@ -150,10 +146,7 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 }
 
 // TestGateCovenantCatchesBrokenGates keeps the guard honest: numbers that
-// break the covenant must each be flagged, added to the real gates (the
-// gates carry the five storage copies each; take those away and the covenant
-// has a different thing to say, and the last case does). 52 longhouses is the
-// Stone Age wall: the 52nd copy outgrows the store the gates force; 30
+// break the covenant must each be flagged, added to the real gates. 30
 // barracks for Medieval named a Bronze Age building the age lock forbids
 // building later; and a Bronze Age smithy priced in coal (which unlocks in
 // the Renaissance) could never be built. The smithy is also the Bronze Age's
@@ -165,21 +158,23 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 // part of the chain: the Stone Age's elders hall, which an earlier gate
 // asked for, still makes it.)
 //
-// The flow and sourcing checks, with numbers that slip past a store check:
-// the Sistine Chapel's 6M faith, more than the age's income makes in its
+// The flow and sourcing checks, with numbers a source check passes: the
+// Sistine Chapel's 6M faith, more than the age's income makes in its
 // target; the Stellar Cradle's 940T uranium, which only the Atomic Age's
 // mines make and a Fusion Age town carries as 8 works, 0.9M a tick against
 // the 94,000 ticks of the age's target. (No gate asks for an amount of a
 // resource, so none of the cases is a gate's resource amount.)
 //
-// The wonder is the one price allowed over a store, so a Sistine Chapel whose
-// stone outgrows every Renaissance warehouse is not a problem, and the covenant
-// reports no "wonder" row at all: the case below would show it as unexpected.
+// A price over what any store held is no problem now that stock has no cap
+// (52 longhouses, once the Stone Age wall, are simply built), and the covenant
+// reports no "building", "wonder" or "ladder" row at all: the case below
+// would show one as unexpected.
 func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	ages := config.Ages()
 	for i := range ages {
 		switch ages[i].Key {
 		case "bronze_age":
+			// 52 longhouses: nothing to flag without a store to outgrow.
 			b := map[string]int{"longhouse": 52}
 			for k, v := range ages[i].BuildingReqs {
 				if _, set := b[k]; !set {
@@ -208,8 +203,8 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 		cradle.BaseCost[k] = v
 	}
 	defs["stellar_cradle"] = cradle
-	problems, _ := staticGates(ages, defs)
-	want := map[string]bool{"building/longhouse": false, "unbuildable/barracks": false,
+	problems := staticGates(ages, defs)
+	want := map[string]bool{"unbuildable/barracks": false,
 		"dead_building/smithy": false, "flow/sistine_chapel": false,
 		"unsourced/stellar_cradle": false,
 		// the chain from the smithy's coal: no iron, so no market (gold)
@@ -229,19 +224,6 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 		if !seen {
 			t.Errorf("guard missed %s", k)
 		}
-	}
-
-	// A gate that forgets the storage copies it should ask for: the Iron Age
-	// gate asks for five Warehouses, and with the Bronze Age's five Storage
-	// Pits left out of the gate into the Bronze Age the first of them costs
-	// more than the store the town is sure to hold.
-	problems, _ = staticGates(editedGate("bronze_age", func(b map[string]int) { delete(b, "storage_pit") }), config.BuildingByKey())
-	found := false
-	for _, g := range problems {
-		found = found || (g.Kind == "building" && g.Key == "warehouse" && g.From == "bronze_age")
-	}
-	if !found {
-		t.Errorf("a Bronze Age gate without its Storage Pits: want the Warehouses flagged, got %+v", problems)
 	}
 }
 
@@ -270,11 +252,11 @@ func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 		defs["trading_post"] = post
 		return defs
 	}
-	if problems, _ := staticGates(config.Ages(), config.BuildingByKey()); len(problems) > 0 {
+	if problems := staticGates(config.Ages(), config.BuildingByKey()); len(problems) > 0 {
 		t.Fatalf("setup: the real tables, and no trap, should break nothing: %+v", problems)
 	}
 	withoutMarketBuilding := editedGate("iron_age", func(b map[string]int) { delete(b, "market") })
-	problems, _ := staticGates(withoutMarketBuilding, oldPost())
+	problems := staticGates(withoutMarketBuilding, oldPost())
 	want := map[string]bool{"dead_building/trading_post": false, "dead_building/agora": false,
 		"dead_building/legion_fort": false, "dead_building/temple": false,
 		"unsourced/agora/gold": false}
@@ -296,7 +278,7 @@ func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 	}
 
 	// The real gate asks for the market, so the town arrives making gold.
-	if problems, _ := staticGates(config.Ages(), oldPost()); len(problems) > 0 {
+	if problems := staticGates(config.Ages(), oldPost()); len(problems) > 0 {
 		t.Errorf("with the Bronze Age market asked for by the gate, want no problems, got %+v", problems)
 	}
 }
@@ -322,11 +304,11 @@ func TestGateCovenantCatchesAnUnpayableFirstCopy(t *testing.T) {
 	if made <= 0 {
 		t.Fatalf("setup: the Classical Age makes no culture (%g)", made)
 	}
-	problems, _ := staticGates(config.Ages(), priced(made/100))
+	problems := staticGates(config.Ages(), priced(made/100))
 	if len(problems) > 0 {
 		t.Errorf("a first copy at a hundredth of what the age makes: want no problems, got %+v", problems)
 	}
-	problems, _ = staticGates(config.Ages(), priced(made*100))
+	problems = staticGates(config.Ages(), priced(made*100))
 	found := false
 	for _, g := range problems {
 		if g.Kind == "flow" && g.Key == "cultural_obelisk" && g.Resource == "culture" && g.To == "classical_age" {
@@ -335,86 +317,6 @@ func TestGateCovenantCatchesAnUnpayableFirstCopy(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("a first copy at a hundred times what the age makes: want a flow row for the obelisk, got %+v", problems)
-	}
-}
-
-// vaultBetween is the multiple of today's Victorian Vault price that sits
-// between the gate's biggest single price without the depots (the eighth
-// Harbor Authority) and the store the depots give: the first copy at that
-// price, with the ladder's margin, is over the one and under the other.
-const vaultBetween = 2.5
-
-// TestGateCovenantCatchesBrokenLadder: the storage ladder. Entering the
-// Victorian Age, the only storage a player can build is the Victorian Vault
-// (210M steel for the first copy), so the gate must make them hold more than
-// that first. The gate asks for five Industrial Depots, which hold 599M with
-// the stores before them, and so the vault fits whatever else the gate asks.
-// Without those copies the gate's biggest single price is all it forces. Since
-// the gate asks for eight of everything that makes something, that is the
-// eighth Harbor Authority (479M steel), which already outgrows today's vault;
-// so a vault at two and a half times today's price is the case that sits
-// between the two (525M, with the ladder's margin 551M: over 479M and under
-// the depots' 599M), and a vault at three times today's outgrows even the
-// depots. Without the depots, 10 tenements change nothing: the gate's biggest
-// price is not the tenements'. (The case between was twice today's price while
-// the gate asked for five Harbor Authorities, 315M: any multiple from 2.2 to
-// 2.7 sits between these two.)
-func TestGateCovenantCatchesBrokenLadder(t *testing.T) {
-	ladderRows := func(problems []GateProblem) []GateProblem {
-		var out []GateProblem
-		for _, g := range problems {
-			if g.Kind == "ladder" {
-				out = append(out, g)
-			}
-		}
-		return out
-	}
-	tenements10 := func(b map[string]int) { b["tenement"] = 10 }
-	vaultTimes := func(k float64) map[string]config.BuildingDef {
-		defs := config.BuildingByKey()
-		vault := defs["victorian_vault"]
-		vault.BaseCost = map[string]float64{}
-		for r, v := range defs["victorian_vault"].BaseCost {
-			vault.BaseCost[r] = k * v
-		}
-		defs["victorian_vault"] = vault
-		return defs
-	}
-
-	// With the depots in the gate, 10 tenements leave the ladder whole.
-	problems, _ := staticGates(editedGate("victorian_age", tenements10), config.BuildingByKey())
-	if len(problems) > 0 {
-		t.Errorf("10 tenements with the five depots asked for: want no problems, got %+v", problems)
-	}
-
-	// With the depots, a vault between the two fits the store they give.
-	problems, _ = staticGates(config.Ages(), vaultTimes(vaultBetween))
-	if rows := ladderRows(problems); len(rows) != 0 {
-		t.Errorf("a vault at %gx with the depots: want no ladder row, got %+v", vaultBetween, rows)
-	}
-
-	// Without them the gate forces only its biggest price, the eighth Harbor
-	// Authority, and today's vault is under it (the gate rule did that) ...
-	noDepots := func(b map[string]int) {
-		tenements10(b)
-		delete(b, "industrial_depot")
-	}
-	problems, _ = staticGates(editedGate("victorian_age", noDepots), config.BuildingByKey())
-	if rows := ladderRows(problems); len(rows) != 0 {
-		t.Errorf("10 tenements and no depots: today's vault fits under the eighth Harbor Authority, want no ladder row, got %+v", rows)
-	}
-	// ... and a vault between the two is over it.
-	problems, _ = staticGates(editedGate("victorian_age", noDepots), vaultTimes(vaultBetween))
-	rows := ladderRows(problems)
-	if len(rows) != 1 || rows[0].Key != "victorian_vault" || rows[0].From != "industrial_age" || rows[0].Resource != "steel" || !strings.Contains(rows[0].ForcedBy, "harbor_authority #8") {
-		t.Errorf("10 tenements, no depots and a vault at %gx: want one ladder row for the vault's steel against the eighth Harbor Authority, got %+v", vaultBetween, rows)
-	}
-
-	// A vault at three times today's price outgrows the store the five depots give.
-	problems, _ = staticGates(config.Ages(), vaultTimes(3))
-	rows = ladderRows(problems)
-	if len(rows) != 1 || rows[0].Key != "victorian_vault" || rows[0].From != "industrial_age" || !strings.Contains(rows[0].ForcedBy, "storage copies the gates ask for") {
-		t.Errorf("a tripled vault: want one ladder row against the store the gates' copies give, got %+v", rows)
 	}
 }
 
@@ -445,29 +347,26 @@ func TestStaticFeatureLocks(t *testing.T) {
 }
 
 // TestStaticCaps pins the caps report's reading: with techs in a layer of
-// their own, a player who holds every milestone, wonder and monument still
-// takes the all-production pool past its knee, from the Electric Age at the
-// earliest, and no resource's own pool passes its knee in any age. Past the
-// knee the pool applies a quarter of each point: the last age's +661%
-// applies +315%, where the old clamp applied +200%. And the pacing model's
-// all-production pool never holds more than such a player can.
+// their own, a player who holds every milestone, wonder and monument, and the
+// five copies of every storage building the gates ask for, still takes the
+// all-production pool past its knee, from the Victorian Age at the earliest,
+// and no resource's own pool passes its knee in any age. Past the knee the
+// pool applies a quarter of each point: the last age's +766% applies +342%,
+// where the old clamp applied +200%. And the pacing model's all-production
+// pool never holds more than such a player can.
 func TestStaticCaps(t *testing.T) {
 	rows := StaticCaps()
 	if len(rows) != len(config.AgeOrder()) {
 		t.Fatalf("%d rows for %d ages", len(rows), len(config.AgeOrder()))
 	}
 	all := func(r CapRow) float64 { return r.All() }
-	// The Electric Age holds +196%, four points short of the knee (+200%): the
-	// Atomic Age passes it. It was the Electric Age before the storage wall,
-	// when Grand Architect (+5%) could be finished in the Victorian Age; the
-	// wall cut the structures a run holds by an age, and 1,365 of them (half
-	// of the 2,731 a run holds by the Atomic Age, the most a count may ask)
-	// is not within reach before the Atomic Age.
-	if got := KneePassedIn(rows, 0, all); got != "atomic_age" {
-		t.Errorf("all production passes its knee on what stands alone in %q, want the Atomic Age", got)
+	// The storage buildings' five copies each (1% a copy) bring the knee
+	// forward: they stand from the age they are built in, 5% an age.
+	if got := KneePassedIn(rows, 0, all); got != "victorian_age" {
+		t.Errorf("all production passes its knee on what stands alone in %q, want the Victorian Age", got)
 	}
-	if got := KneePassedIn(rows, FestivalBonus+PlentyBonus, all); got != "industrial_age" {
-		t.Errorf("all production passes its knee with a festival and an Age of Plenty in %q, want the Industrial Age", got)
+	if got := KneePassedIn(rows, FestivalBonus+PlentyBonus, all); got != "classical_age" {
+		t.Errorf("all production passes its knee with a festival and an Age of Plenty in %q, want the Classical Age", got)
 	}
 	last := rows[len(rows)-1]
 	for res := range last.Resources {
@@ -476,13 +375,13 @@ func TestStaticCaps(t *testing.T) {
 		}
 	}
 	near := func(got, want float64) bool { return math.Abs(got-want) < 1e-9 }
-	if !near(last.Milestones, 4.35) || !near(last.Wonders, 2.15) || !near(last.Monuments, 0.11) || !near(last.Resources["knowledge"], 1.45) || !near(last.Resources["gold"], 0.70) {
+	if !near(last.Milestones, 4.35) || !near(last.Wonders, 2.15) || !near(last.Monuments, 0.11) || !near(last.Storage, 1.05) || !near(last.Resources["knowledge"], 1.45) || !near(last.Resources["gold"], 0.70) {
 		t.Errorf("the last age holds %+v", last)
 	}
 	// Earned against applied, by the rule written out: all of it up to
 	// +200%, a quarter of the rest.
-	if !near(last.All(), 6.61) || !near(last.Applied(), 2+4.61*0.25) {
-		t.Errorf("the last age has earned %+.4f and applies %+.4f, want +6.61 and +3.1525", last.All(), last.Applied())
+	if !near(last.All(), 7.66) || !near(last.Applied(), 2+5.66*0.25) {
+		t.Errorf("the last age has earned %+.4f and applies %+.4f, want +7.66 and +3.415", last.All(), last.Applied())
 	}
 	for i, r := range rows {
 		if i > 0 && r.All() < rows[i-1].All() {
@@ -522,7 +421,7 @@ func TestGateCovenantCatchesABuildingBehindAnOptionalTech(t *testing.T) {
 	if got := defs["market"].RequiredTech; got != "" {
 		t.Fatalf("the Market waits for %q, want no tech: the test's premise", got)
 	}
-	if problems, _ := staticGates(config.Ages(), defs); len(problems) != 0 {
+	if problems := staticGates(config.Ages(), defs); len(problems) != 0 {
 		t.Fatalf("today's tables break the covenant: %+v", problems)
 	}
 	// Behind a tech every run researches (the Bronze Age's keystone chain
@@ -530,14 +429,14 @@ func TestGateCovenantCatchesABuildingBehindAnOptionalTech(t *testing.T) {
 	market := defs["market"]
 	market.RequiredTech = "language"
 	defs["market"] = market
-	if problems, _ := staticGates(config.Ages(), defs); len(problems) != 0 {
+	if problems := staticGates(config.Ages(), defs); len(problems) != 0 {
 		t.Errorf("with the Market behind a spine tech nothing should break: %+v", problems)
 	}
 	// Behind one a run may never research, it does not: the Market is the
 	// Bronze Age's only gold, and the Iron Age asks for it.
 	market.RequiredTech = "alchemy"
 	defs["market"] = market
-	problems, _ := staticGates(config.Ages(), defs)
+	problems := staticGates(config.Ages(), defs)
 	found := false
 	for _, g := range problems {
 		if g.Kind == "unsourced" && g.Resource == "gold" && g.From == "bronze_age" {
@@ -556,7 +455,7 @@ func TestGateCovenantCatchesABuildingBehindAnOptionalTech(t *testing.T) {
 // covenant reports no problem for any age, and its report says nothing of
 // buying.
 func TestEveryAgeStandsWithoutTheMarket(t *testing.T) {
-	problems, _ := StaticGates()
+	problems := StaticGates()
 	byAge := map[string][]GateProblem{}
 	for _, g := range problems {
 		byAge[g.From] = append(byAge[g.From], g)
@@ -614,7 +513,7 @@ func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
 		t.Errorf("a price of twice what the carried copies make in a target: want it a trickle against the price")
 	}
 	dead := func(defs map[string]config.BuildingDef) int {
-		problems, _ := staticGates(ages, defs)
+		problems := staticGates(ages, defs)
 		n := 0
 		for _, g := range problems {
 			if g.From == "atomic_age" && g.Resource == "uranium" {
@@ -637,7 +536,7 @@ func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
 // delete the exception; if anything else breaks, it is reported with the
 // covenant's other problems and not hidden here.
 func TestColdStartOpenIsTheOneException(t *testing.T) {
-	all, _ := staticGatesAll(config.Ages(), config.BuildingByKey())
+	all := staticGatesAll(config.Ages(), config.BuildingByKey())
 	if len(all) != len(ColdStartOpen) {
 		t.Fatalf("the real tables have %d cold-start problems, ColdStartOpen names %d: %+v", len(all), len(ColdStartOpen), all)
 	}

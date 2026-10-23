@@ -2,11 +2,8 @@ package smoke
 
 import (
 	"math"
-	"sort"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -420,14 +417,14 @@ func (r *runner) closeFate(ifOpen string) {
 	}
 }
 
-// PriceRow is the static price of one thread's harbinger answers against the
-// most storage the player can build in the age its harbinger arrives in.
+// PriceRow is the static price of one thread's harbinger answers, in the age
+// its harbinger arrives in.
 type PriceRow struct {
 	Epoch       string `json:"epoch"`
 	TargetEpoch string `json:"target_epoch"`
 	// Age is the age the harbinger arrives in. Appease is priced on it (what
 	// that age makes in the thread's shortest warning); the price then holds
-	// for the whole thread, and storage only grows after it.
+	// for the whole thread.
 	Age string `json:"age"`
 	// WarningTicks is that shortest warning in ticks at 1x: a fifth of the
 	// age's pacing target for a doom, two thirds of it for the Last Passage.
@@ -449,8 +446,6 @@ type PriceRow struct {
 	// every storage building up to the arrival age.
 	BraceCeiling map[string]float64 `json:"brace_ceiling,omitempty"`
 	TypicalStore map[string]float64 `json:"typical_store,omitempty"`
-	// MaxStorage is -1 where an uncapped storage building covers the resource.
-	MaxStorage map[string]float64 `json:"max_storage_in_age"`
 }
 
 // HarbingerPrices is the prices of every thread whose doom can be
@@ -464,146 +459,12 @@ func HarbingerPrices() []PriceRow {
 		row := PriceRow{
 			Epoch: p.Epoch, TargetEpoch: p.Epoch, Age: p.Age, WarningTicks: p.WarningTicks,
 			AppeaseL1: p.AppeaseL1, AppeaseL2: p.AppeaseL2, BraceL1: p.BraceL1, BraceL2: p.BraceL2,
-			FinalEra: p.FinalEra, BraceCeiling: p.BraceCeiling, TypicalStore: p.TypicalStore, MaxStorage: map[string]float64{},
+			FinalEra: p.FinalEra, BraceCeiling: p.BraceCeiling, TypicalStore: p.TypicalStore,
 		}
 		if p.LastPassage {
 			row.TargetEpoch = ""
 		}
-		for _, c := range []map[string]float64{p.AppeaseL1, p.BraceL1} {
-			for res := range c {
-				m := MaxStorage(p.Age, res)
-				if math.IsInf(m, 1) {
-					m = -1 // JSON has no Inf; -1 means no cap
-				}
-				row.MaxStorage[res] = m
-			}
-		}
 		rows = append(rows, row)
 	}
 	return rows
-}
-
-// MaxStorage is the most storage for res a player can have in ageKey: base
-// storage, every storage building up to that age bought until the wall
-// stops it, and no storage tech (see maxStorageIn). It assumes every earlier
-// storage copy was built in its own age, which is the best case.
-func MaxStorage(ageKey, res string) float64 {
-	return maxStorageIn(config.BuildingByKey(), ageKey, res)
-}
-
-// TechStorage is what every tech up to ageKey adds to every store, as a
-// fraction (0.2 is +20%): the storage the Storage Covenant counts on top of
-// MaxStorage, since the income it compares against assumes every tech too.
-func TechStorage(ageKey string) float64 {
-	order := config.AgePositions(config.AgeOrder())
-	pct := 0.0
-	for _, t := range config.Technologies() {
-		if order[t.Age] > order[ageKey] {
-			continue
-		}
-		for _, e := range t.Effects {
-			if e.Kind == config.EffectStorage {
-				pct += e.Value
-			}
-		}
-	}
-	return pct
-}
-
-// maxStorageIn is MaxStorage over defs (the static checks' broken-number
-// tests feed in altered storage buildings).
-//
-// A store is a wall: a price larger than it cannot be bought, and a storage
-// building's own price climbs with every copy (config.StorageRate). So the
-// most storage of an age is not a copy limit times a size. It is what a
-// player reaches by buying each age's storage building, in its own age, for
-// as long as the next copy's price fits under the store the copies before it
-// give, in every resource the copy costs (walledCopies). A storage building
-// with a copy limit stops there if the wall has not stopped it first.
-func maxStorageIn(defs map[string]config.BuildingDef, ageKey, res string) float64 {
-	return walledStores(defs, ageKey)[res]
-}
-
-// wallCopyLimit bounds the walk for a storage building whose price never
-// outgrows what it holds (CostScale 1, or a broken table): past it the store
-// is unbounded for every purpose the checks have.
-const wallCopyLimit = 400
-
-// walledStores is every resource's store with each storage building up to
-// ageKey bought to the wall, in age order: base storage plus what the copies
-// hold. +Inf for a resource a storage building never walls. The techs'
-// storage bonus (a percentage of every store) is left out: most of the techs
-// that give it are optional, and what a gate or a price is proven to fit
-// must fit without them. TechStorage has it for the checks that assume every
-// tech.
-func walledStores(defs map[string]config.BuildingDef, ageKey string) map[string]float64 {
-	stores, _ := walledCopies(defs, ageKey)
-	return stores
-}
-
-// walledCopies is walledStores with the copies of each storage building the
-// walk bought.
-func walledCopies(defs map[string]config.BuildingDef, ageKey string) (stores map[string]float64, copies map[string]int) {
-	order := map[string]int{}
-	for i, k := range config.AgeOrder() {
-		order[k] = i
-	}
-	limit, known := order[ageKey]
-	stores = map[string]float64{}
-	for _, r := range config.BaseResources() {
-		stores[r.Key] = r.BaseStorage
-	}
-	copies = map[string]int{}
-	if !known {
-		return stores, copies
-	}
-	// Age order, then key order: the float sums must come out the same on
-	// every run or the report's storage caps wobble in the last digit.
-	keys := sortedKeys(defs)
-	sort.SliceStable(keys, func(i, j int) bool { return order[defs[keys[i]].RequiredAge] < order[defs[keys[j]].RequiredAge] })
-	for _, key := range keys {
-		d := defs[key]
-		if _, ok := order[d.RequiredAge]; !ok || order[d.RequiredAge] > limit || d.Category == "wonder" {
-			continue
-		}
-		holds := map[string]float64{}
-		for _, e := range d.Effects {
-			if e.Type == "storage" {
-				holds[e.Target] += e.Value
-			}
-		}
-		if len(holds) == 0 {
-			continue
-		}
-		scale := d.CostScale
-		if scale <= 0 {
-			scale = 1
-		}
-		n := 0
-		for ; d.MaxCount == 0 || n < d.MaxCount; n++ {
-			if n >= wallCopyLimit {
-				for res := range stores {
-					if holds["all"] > 0 || holds[res] > 0 {
-						stores[res] = math.Inf(1)
-					}
-				}
-				break
-			}
-			fits := true
-			f := detmath.Pow(scale, float64(n))
-			for _, r := range sortedKeys(d.BaseCost) {
-				if math.Max(1, math.Floor(float64(d.BaseCost[r]*f))) > stores[r] {
-					fits = false
-				}
-			}
-			if !fits {
-				break
-			}
-			for res := range stores {
-				stores[res] += holds["all"] + holds[res]
-			}
-		}
-		copies[key] = n
-	}
-	return stores, copies
 }

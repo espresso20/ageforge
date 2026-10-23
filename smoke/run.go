@@ -595,7 +595,7 @@ func (r *runner) play() {
 
 	st := r.ge.GetState()
 	r.enterAge(st)
-	r.checkStorageFeasible(st)
+	r.checkRequiredBuildings(st)
 	for !r.step() {
 	}
 }
@@ -1084,7 +1084,7 @@ func (r *runner) control(st *game.GameState) bool {
 			if r.cfg.StopAge != "" && r.ageIdx[after.Age] >= r.ageIdx[r.cfg.StopAge] {
 				return true
 			}
-			r.checkStorageFeasible(after)
+			r.checkRequiredBuildings(after)
 			*st = after
 		} else if after := r.ge.GetState(); after.PendingCatastrophe != pendingBefore || after.Harbinger != nil {
 			// The era's fated doom would have been outrun: its harbinger
