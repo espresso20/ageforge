@@ -16,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/flavor"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 const (
@@ -479,7 +480,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	ge.Resources.Add("wood", 50)
 	// Startup flavor — the step-by-step onboarding now lives in the Buildings panel
 	// (main-screen polish part 1), so the log stays clean for live events.
-	ge.addLog("event", "Welcome to AgeForge. You have nothing but your hands.")
+	ge.addLog("event", vibe.Line("game.engine.NewGameEngineWith.01", "Welcome to AgeForge. You have nothing but your hands."))
 	// Subscribe to age advances to record markers in history.
 	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().
 	ge.Bus.Subscribe(EventAgeAdvanced, func(e EventData) {
@@ -1046,6 +1047,39 @@ func (ge *GameEngine) SetAccount(a *Account) {
 	}
 	if a != nil {
 		_ = a.FlushIfDirty()
+		// The words follow the account: its setting, not the last one's.
+		ge.followVibe(a.VibeOn())
+	}
+}
+
+// SetVibeMode turns VibeMode on or off: the words of the game read in the
+// VibeMode script, or in plain English again, at once. The setting is saved
+// to the account when there is one (with none it lasts for the session). Only
+// words change: the run, its numbers and its saves are as they were. Never
+// call it from a Bus handler or with ge.mu held.
+func (ge *GameEngine) SetVibeMode(on bool) error {
+	if acct := ge.Account(); acct != nil {
+		if err := acct.SetVibe(on); err != nil {
+			return err
+		}
+	}
+	ge.followVibe(on)
+	return nil
+}
+
+// followVibe puts the process's text switch where on says, and moves the
+// engine onto the matching core ruleset (Rebind) unless it plays by a set of
+// its own, which has its own words.
+func (ge *GameEngine) followVibe(on bool) {
+	vibe.Set(on)
+	ge.mu.RLock()
+	cur := ge.rules
+	ge.mu.RUnlock()
+	if !rules.IsCore(cur) {
+		return
+	}
+	if want := rules.CoreFor(on); want != cur {
+		ge.Rebind(want)
 	}
 }
 

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
@@ -127,6 +128,15 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 
 	entry.root = root
 	om.entries[name] = entry
+}
+
+// Retitle sets the title of the named text overlay, for a title that is
+// written again when VibeMode is switched. Unknown names are ignored.
+func (om *OverlayManager) Retitle(name, title string) {
+	if e, ok := om.entries[name]; ok {
+		e.tv.SetTitle(strings.Replace(e.tv.GetTitle(), e.title, title, 1))
+		e.title = title
+	}
 }
 
 // SetKeyHandler gives the named text overlay a key handler (see

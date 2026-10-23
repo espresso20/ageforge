@@ -529,6 +529,21 @@ Your theme is saved per account, not in any game save, so it carries across ever
 
 ---
 
+## VibeMode
+
+| Command | Description |
+|---|---|
+| `vibemode [on\|off]` | Bare, show whether VibeMode is on. `on` swaps the game's words for a second script, written in GenZ: the names and descriptions of buildings and techs, the log, the words for the people of your town. `off` brings the plain words back. The words change at once, with no restart (default off). Saved per account |
+
+```
+vibemode on
+vibemode off
+```
+
+VibeMode changes words and nothing else. Costs, rates, rules, saves and badges are exactly what they are with it off, and a save made in one script loads in the other. This release carries the switch and a first handful of lines: a few buildings, a tech, a badge, an event, a title, some of the words for the people of your town and two lines of the interface. Every line that has no VibeMode version yet reads as it always did. The setting is saved per account; with no account loaded it lasts for the session.
+
+---
+
 ## Command shortcuts
 
 These commands have a shorter name. The short name takes everything the full one does: `b hut 3` is `build hut 3`, `r max` is `recruit max`.

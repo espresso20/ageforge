@@ -203,26 +203,43 @@ func (mm *MilestoneManager) CheckChains() []config.MilestoneChainDef {
 // the count-based fallback sequence. Among chain titles the last completed
 // chain (in config order) wins, giving later chains a natural prestige upgrade.
 func (mm *MilestoneManager) recalculateTitle() {
+	mm.currentTitle = mm.titleFor(mm.chains, mm.titles)
+}
+
+// titleFor is the title the completed milestones earn from these chains and
+// this ladder of count-based titles.
+func (mm *MilestoneManager) titleFor(chains []config.MilestoneChainDef, titles []config.TitleDef) string {
 	// Chain titles take priority (use latest completed chain's title)
 	bestChainTitle := ""
-	for _, chain := range mm.chains {
+	for _, chain := range chains {
 		if mm.chainsCompleted[chain.Key] {
 			bestChainTitle = chain.Title
 		}
 	}
 	if bestChainTitle != "" {
-		mm.currentTitle = bestChainTitle
-		return
+		return bestChainTitle
 	}
 
 	// Fallback to count-based titles
 	count := len(mm.completed)
-	mm.currentTitle = ""
-	for _, t := range mm.titles {
+	title := ""
+	for _, t := range titles {
 		if count >= t.MinMilestones {
-			mm.currentTitle = t.Title
+			title = t.Title
 		}
 	}
+	return title
+}
+
+// savedTitle is the title a save holds: in plain English whatever script the
+// game is read in, so a save made under VibeMode reads the same as one made
+// without it. The title in play is worked out again every tick.
+func (mm *MilestoneManager) savedTitle() string {
+	plain := rules.CoreFor(false)
+	if mm.rules == plain || !rules.IsCore(mm.rules) {
+		return mm.currentTitle
+	}
+	return mm.titleFor(plain.MilestoneChains(), plain.MilestoneTitles())
 }
 
 // IsCompleted checks if a milestone has been achieved

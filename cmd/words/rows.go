@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"sort"
-	"strings"
 )
 
 // rows.go turns the text units of the source into the rows of the sheets.
@@ -239,24 +238,4 @@ func (c *catalog) ageText(r *row) string {
 		return "00 Main menu"
 	}
 	return fmt.Sprintf("%02d %s", r.age, c.w.ageNames[r.age-1])
-}
-
-// idSafe makes a piece of an id out of free text: lower case, with anything
-// that is not a letter, digit, dash or underscore turned into an underscore.
-func idSafe(s string) string {
-	var b strings.Builder
-	gap := false
-	for _, r := range s {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r >= 'A' && r <= 'Z', r == '-':
-			if gap && b.Len() > 0 {
-				b.WriteByte('_')
-			}
-			gap = false
-			b.WriteRune(r)
-		default:
-			gap = true
-		}
-	}
-	return b.String()
 }
