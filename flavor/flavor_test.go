@@ -939,7 +939,7 @@ func TestNoMassNounPluralization(t *testing.T) {
 	for _, m := range Moments() {
 		rng := rand.New(rand.NewSource(int64(m) * 104729))
 		for _, r := range config.BaseResources() {
-			for _, amt := range []float64{0, 1, 2, 7.4, 999, 1e6} {
+			for _, amt := range []float64{0, 1, 2, 7.4, 999, config.Million} {
 				for i := 0; i < 40; i++ {
 					line := Line(Request{
 						Moment: m, Age: "medieval_age", Kind: "military",

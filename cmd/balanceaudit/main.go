@@ -57,14 +57,14 @@ func prodRate(b config.BuildingDef) (float64, bool) {
 func fmtNum(v float64) string {
 	abs := math.Abs(v)
 	switch {
-	case abs >= 1e12:
-		return trim(v/1e12) + "T"
-	case abs >= 1e9:
-		return trim(v/1e9) + "B"
-	case abs >= 1e6:
-		return trim(v/1e6) + "M"
-	case abs >= 1e3:
-		return trim(v/1e3) + "K"
+	case abs >= config.Trillion:
+		return trim(v/config.Trillion) + "T"
+	case abs >= config.Billion:
+		return trim(v/config.Billion) + "B"
+	case abs >= config.Million:
+		return trim(v/config.Million) + "M"
+	case abs >= 1000:
+		return trim(v/1000) + "K"
 	default:
 		// Whole numbers print without a decimal point.
 		if v == math.Trunc(v) {

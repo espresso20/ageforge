@@ -303,7 +303,7 @@ func TestHygieneOverFuzzedRequests(t *testing.T) {
 	for _, def := range config.BaseResources() {
 		keys = append(keys, def.Key)
 	}
-	amounts := []float64{0, 0.4, 0.6, 1, 2, 1e9, -5}
+	amounts := []float64{0, 0.4, 0.6, 1, 2, config.Billion, -5}
 	subjects := append([]string{""}, realExpeditionNames...)
 	subjects = append(subjects, realFactionNames...)
 	rng := rand.New(rand.NewSource(424242))
