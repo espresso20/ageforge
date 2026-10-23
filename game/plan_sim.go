@@ -450,18 +450,23 @@ func (r *simRun) flow(dt float64) {
 	}
 }
 
-// advanceTo runs the town forward to tick t, copies arriving on the way.
-func (r *simRun) advanceTo(t float64) {
-	for len(r.pending) > 0 && r.pending[0].at <= t {
+// advanceBy runs the town forward dt ticks, copies arriving on the way. It
+// works in steps of time, not in clock readings, so a step too small for the
+// clock to show still moves the stores.
+func (r *simRun) advanceBy(dt float64) {
+	target := r.t + dt
+	for len(r.pending) > 0 && r.pending[0].at <= target {
 		a := r.pending[0]
 		r.pending = r.pending[1:]
-		r.flow(a.at - r.t)
+		step := math.Min(dt, math.Max(0, a.at-r.t))
+		r.flow(step)
 		r.t = math.Max(r.t, a.at)
+		dt = math.Max(0, dt-step)
 		r.arrived[a.key]++
 		r.fresh = false
 	}
-	r.flow(t - r.t)
-	r.t = math.Max(r.t, t)
+	r.flow(dt)
+	r.t += dt
 }
 
 // nextArrival is the ticks until the next copy stands (+Inf for none).
@@ -485,7 +490,7 @@ func (r *simRun) waitFor(cost []float64) bool {
 			return false
 		}
 		if w <= next {
-			r.advanceTo(r.t + w)
+			r.advanceBy(w)
 			for i, c := range cost {
 				if c > 0 && r.stock[i] < c && c-r.stock[i] <= costTol(c) {
 					r.stock[i] = c
@@ -493,7 +498,7 @@ func (r *simRun) waitFor(cost []float64) bool {
 			}
 			return true
 		}
-		r.advanceTo(r.t + next)
+		r.advanceBy(next)
 	}
 }
 
@@ -639,7 +644,7 @@ func (m *planModel) walk(items []simItem) simOutcome {
 		}
 		// A step that would not move the clock (a start that rounding
 		// puts a hair away) still has to make progress.
-		r.advanceTo(r.t + math.Max(dt, 1e-9))
+		r.advanceBy(math.Max(dt, 1e-9))
 	}
 	return out
 }
