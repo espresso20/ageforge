@@ -60,7 +60,9 @@ func TestGatePillarSamples(t *testing.T) {
 	for key, want := range map[string]string{
 		"story_circle":   PillarKnowledge,
 		"scriptorium":    PillarKnowledge,
-		"shrine":         PillarKnowledge,
+		"shrine":         PillarPeople,
+		"temple":         PillarPeople,
+		"cathedral":      PillarPeople,
 		"hut":            PillarPeople,
 		"longhouse":      PillarPeople,
 		"gathering_camp": PillarPeople,

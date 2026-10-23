@@ -24,8 +24,8 @@ The Charter is the four pillars the next age asks for, each with a bar and a per
 
 | Pillar | What it holds |
 |---|---|
-| **Knowledge** | The age's keystone tech, and the research and faith buildings the next age asks for |
-| **People** | The homes and the food buildings the next age asks for |
+| **Knowledge** | The age's keystone tech, and the research buildings the next age asks for |
+| **People** | The homes, the food buildings and the faith buildings the next age asks for |
 | **Industry** | Every other building the next age asks for: producers, trade, military and storage |
 | **Monument** | The age's wonder: its bank filled, and the wonder built |
 

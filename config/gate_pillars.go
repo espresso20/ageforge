@@ -36,12 +36,14 @@ func PillarName(pillar string) string {
 
 // GatePillar is the pillar a building counts toward when a gate asks for it:
 //
-//   - Knowledge: the research category (the knowledge buildings that bring
-//     scholars, and the faith buildings, which are research buildings too);
-//   - People: housing, and the food lineage (the buildings that feed a town);
 //   - Monument: a wonder (no gate asks for one by count; the age's wonder is
 //     the Monument pillar's own row);
-//   - Industry: everything else (producers, trade, military, storage).
+//   - People: housing, the food lineage (the buildings that feed a town) and
+//     the faith lineage (shrines, temples and the rest, which are research
+//     buildings by category but serve the town's people, not its scholars);
+//   - Knowledge: the rest of the research category (the knowledge buildings
+//     that bring scholars);
+//   - Industry: everything else (producers, trade, military and storage).
 //
 // It reads only the building's category, lineage and worker domain, so a
 // ruleset with other buildings sorts them the same way.
@@ -49,10 +51,11 @@ func GatePillar(d BuildingDef) string {
 	switch {
 	case d.Category == "wonder":
 		return PillarMonument
+	case d.Category == "housing", d.LineageKey == "food", d.WorkerDomain == "food",
+		d.LineageKey == "faith", d.WorkerDomain == "faith":
+		return PillarPeople
 	case d.Category == "research":
 		return PillarKnowledge
-	case d.Category == "housing", d.LineageKey == "food", d.WorkerDomain == "food":
-		return PillarPeople
 	}
 	return PillarIndustry
 }
