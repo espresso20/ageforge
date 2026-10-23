@@ -1536,3 +1536,651 @@ ui.overlay_harbinger.harbingerGarrisonLine.02,"     Your garrison is counted: it
 ui.overlay_harbinger.harbingerGarrisonLine.03,"     Brace and garrison together soften an Endure by at most %.0f%%, the cap is real."
 ui.overlay_help.helpProvider.01,"[gold]═══ Getting around, the tour ═══[-]
 "
+ui.overlay_help.helpProvider.02,"Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open on top of the town, and the prompt keeps working while one is open, bestie."
+ui.overlay_help.helpProvider.04,"Scroll a panel that's longer than the screen, like this one"
+ui.overlay_help.helpProvider.06,"Close the panel (with no panel open: save and go to the main menu), bounce"
+ui.overlay_help.helpProvider.08,Finish the word you're typing (press again for the next match)
+ui.overlay_help.helpProvider.10,"Open this page again at any time, it's always here"
+ui.overlay_help.helpProvider.11,"New here? Try: build hut, then status, then research. Each panel below lists its own keys, no cap."
+ui.overlay_help.helpProvider.12,"
+[gold]═══ The dashboard, the home base ═══[-]
+"
+ui.overlay_help.helpProvider.13,"With no panel open, it's the main stage."
+ui.overlay_help.helpProvider.15,"Scroll the Buildings list, the long scroll"
+ui.overlay_help.helpProvider.16,"The next page of the Resources box, when it's got more than it can show, the overflow"
+ui.overlay_help.helpProvider.18,"Save and go to the main menu (with a panel open: close it), peace out"
+ui.overlay_help.helpProvider.19,"
+[gold]═══ The prompt, your command line ═══[-]
+"
+ui.overlay_help.helpProvider.20,"As you type, the best completion shows in dim text after the cursor, it's giving autocomplete."
+ui.overlay_help.helpProvider.22,"Take the completion, then press again for the next one, the chain"
+ui.overlay_help.helpProvider.23,"Take the completion (cursor at the end of the line), real easy"
+ui.overlay_help.helpProvider.25,"Run the line; an unfinished line runs its completion (irreversible ones, like sell, are only filled in: Enter again runs them), ngl wild"
+ui.overlay_help.helpProvider.26,"Command history, the replay"
+ui.overlay_help.helpProvider.27,"
+[gold]═══ Panels, the menus ═══[-]
+"
+ui.overlay_help.helpProvider.28,"Type the command to pull up the panel, bet."
+ui.overlay_help.helpProvider.29,Accounts
+ui.overlay_help.helpProvider.30,"Swap, make, or stash accounts [gray](main-menu panel, not a command)[-]"
+ui.overlay_help.helpProvider.31,"
+[gold]═══ The Map panel, the vibe check ═══[-]
+"
+ui.overlay_help.helpProvider.32,"The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = [ ] while the prompt is empty, lowkey clever."
+ui.overlay_help.helpProvider.34,"Move the cursor (roguelike) or scroll (skyline); Shift goes further, half a screen in the skyline, the big jump"
+ui.overlay_help.helpProvider.36,"Next building, wonder or civilization, the next stop (Shift-Tab: the one before)"
+ui.overlay_help.helpProvider.38,"Zoom out and in, the lens"
+ui.overlay_help.helpProvider.39,"Zoom in and out in the skyline (= works as +): far shows the whole town, close every building twice the size; the level is kept for next time, no cap"
+ui.overlay_help.helpProvider.40,"Skyline: jump to the previous and next district, the hop (the bar at the bottom shows your skyline and a box where you are looking)"
+ui.overlay_help.helpProvider.42,"The town square (roguelike), the lore; the oldest district and the present (skyline)"
+ui.overlay_help.helpProvider.44,"Put the command for what the cursor is on in the prompt, bussin (with something typed, Tab and Enter act on the prompt instead)"
+ui.overlay_help.helpProvider.46,"Close the panel, bail"
+ui.overlay_help.helpProvider.47,"Settings are commands: map style, map glyphs, map flows, minimap. Easy."
+ui.overlay_help.helpProvider.48,"
+[gold]═══ The Research panel, the brain ═══[-]
+"
+ui.overlay_help.helpProvider.49,"The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing, the vibe check."
+ui.overlay_help.helpProvider.50,"Zoom is a command too, fr: research tree close, research tree far."
+ui.overlay_help.helpProvider.51,"
+[gold]═══ The badge case, the trophy room ═══[-]
+"
+ui.overlay_help.helpProvider.52,"Your account's badges, the trophy wall. The prompt keeps working while it is open; the case takes the keys that print nothing, no cap."
+ui.overlay_help.helpProvider.53,"Finding one is a command: badges next, badges <family>, badges <name>. Motion is a setting: motion off holds everything still, the calm mode."
+ui.overlay_help.helpProvider.54,"
+[gold]═══ The Expeditions panel, the adventure hub ═══[-]
+"
+ui.overlay_help.helpProvider.55,"The Ready Room shows the age's lands with every offer as a pin; the Expedition Report follows the parties out. The prompt keeps working while it is open; the panel takes the keys that print nothing, real."
+ui.overlay_help.helpProvider.56,"Sending by name is a command: expedition <name>, with just enough of the name to tell the offers apart, lowkey easy."
+ui.overlay_help.helpProvider.57,"
+[gold]═══ The People panel, the crew ═══[-]
+"
+ui.overlay_help.helpProvider.58,"Every person in the town: workers, the reserve, soldiers and scholars, each by the name the age gives them, the whole crew. The prompt keeps working while it is open; the panel takes the keys that print nothing."
+ui.overlay_help.helpProvider.59,"Shares are a command: roster <area> <percent|auto>. The panel opens with people or workers, bet."
+ui.overlay_help.helpProvider.60,"
+[gold]═══ The Advance panel, the gate ═══[-]
+"
+ui.overlay_help.helpProvider.61,"The gate into the next age as four pillars (Knowledge, People, Industry and Monument), with the march of ages and a calendar year that moves as you close in. The prompt keeps working while it is open; the panel takes the keys that print nothing, lowkey iconic."
+ui.overlay_help.helpProvider.62,"The panel opens with charter, the vibe check. Typing advance does the same as Enter on it."
+ui.overlay_help.helpProvider.63,"
+[gold]═══ Shortcuts, the cheat codes ═══[-]
+"
+ui.overlay_help.helpProvider.64,"
+[gold]═══ Developer console, dev only ═══[-]
+"
+ui.overlay_help.helpProvider.65,"[gray]Dev mode is on, bussin. Type these in the [-][cyan]>[-][gray] prompt:[-]
+"
+ui.overlay_history.renderHistoryOverlay.01,"
+[gray] No history yet. Play for a while and check back, the story starts soon.[-]
+"
+ui.overlay_history.renderHistoryOverlay.02,"Population, the crew"
+ui.overlay_history.renderHistoryOverlay.03," workers"
+ui.overlay_history.renderHistoryOverlay.04,"Food rate, the munchies"
+ui.overlay_history.renderHistoryOverlay.05,"Research rate, the brain work"
+ui.overlay_history.renderHistoryOverlay.06,"Faith, the vibe"
+ui.overlay_history.renderHistoryOverlay.07,"Morale, the mood"
+ui.overlay_history.renderHistoryOverlay.08,"All production, the full drip"
+ui.overlay_history.renderHistoryOverlay.09,"Game speed, the vibe"
+ui.overlay_history.renderHistoryOverlay.10,"
+[gold]═══ Civilization history, the replay ═══[-]
+"
+ui.overlay_history.renderHistoryOverlay.11,"[gray]Ticks %d – %d  │  %d samples  │  age advances marked, the milestones │[-]
+
+"
+ui.overlay_history.renderHistoryOverlay.12,"%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s, the range[-]
+"
+ui.overlay_history.renderHistoryOverlay.13,"[gray]  Ages, the timeline: "
+ui.overlay_logs.logsProvider.01,"[gold]═══ Game log, the tea ═══[-]
+"
+ui.overlay_logs.logsProvider.02," Every line, with tick numbers, the full receipts. Routine confirmations are marked ·."
+ui.overlay_logs.logsProvider.03,"[gray]No game logs yet, the feed is quiet.[-]
+"
+ui.overlay_logs.logsProvider.04,"
+[gold]═══ Engine state, the under the hood ═══[-]
+"
+ui.overlay_logs.logsProvider.05," Tick, the clock: [cyan]%d[-]  Age: [cyan]%s[-]  Population: [cyan]%d/%d, the crew[-]
+"
+ui.overlay_logs.logsProvider.06," Food use, the munchies: [yellow]%s[-]  Reserve: [yellow]%d, the stash[-]
+"
+ui.overlay_logs.logsProvider.07," Game speed, the tempo: [green]%s[-] (one tick every [cyan]%dms[-])
+"
+ui.overlay_logs.logsProvider.08," Game speed, the tempo: [gray]base[-] (one tick every [cyan]%dms[-])
+"
+ui.overlay_logs.logsProvider.09,"
+ [gold]Active events, the plot:[-]
+"
+ui.overlay_logs.logsProvider.10,"  [yellow]⚡ %s[-] (%s left), bussin
+"
+ui.overlay_logs.logsProvider.11,"
+ [gold]Build queue, the to-do:[-]
+"
+ui.overlay_logs.logsProvider.12,"
+ [gold]Researching, cooking:[-]
+"
+ui.overlay_logs.logsProvider.13,"
+ [gold]Workers, the crew:[-]
+"
+ui.overlay_logs.logsProvider.14,"  [cyan]%s[-] ×%d (reserve: %d), the bench
+"
+ui.overlay_milestones.milestonesProvider.01," [gold]Progress, the grind:[-] %d/%d"
+ui.overlay_milestones.milestonesProvider.02," [cyan]⚡ boost active, W[-]"
+ui.overlay_milestones.milestonesProvider.03,"     [gray]Reward, the drop: %s[-]%s
+"
+ui.overlay_milestones.milestonesProvider.04,hidden milestone
+ui.overlay_milestones.milestonesProvider.05,hidden milestones
+ui.overlay_military.militaryProvider.01," [gold]═══ Army Overview, the war room ═══[-]
+
+"
+ui.overlay_military.militaryProvider.02," [gold]Soldiers, the muscle:[-]  %s posted of %s
+"
+ui.overlay_military.militaryProvider.03," [gold]Posts, the stations:[-]     %s
+"
+ui.overlay_military.militaryProvider.04,"none yet. A military building comes with its soldiers, bet."
+ui.overlay_military.militaryProvider.05," [gold]Posts, the stations:[-]     %s x%d: %s/%s
+"
+ui.overlay_military.militaryProvider.06," [gold]Defense, the shield:[-]   %s
+"
+ui.overlay_military.militaryProvider.07," [green]Military Bonus, the W: +%.0f%%[-]
+"
+ui.overlay_military.militaryProvider.08," [green]Expedition Bonus, the drip: +%.0f%%[-]
+"
+ui.overlay_military.militaryProvider.09,"
+ [gold]═══ Active Campaign, the big mission ═══[-]
+
+"
+ui.overlay_military.militaryProvider.10," [gray]No active campaign, lowkey quiet[-]
+"
+ui.overlay_military.militaryProvider.11,Campaign
+ui.overlay_military.militaryProvider.12,"
+ [gray]Completed, the scoreboard: %d (expeditions and campaigns)[-]
+"
+ui.overlay_military.militaryProvider.13,"
+ [gold]═══ Campaigns, the big missions ═══[-]
+
+"
+ui.overlay_military.militaryProvider.14," [gray]No campaigns available yet, we're early.[-]
+"
+ui.overlay_military.militaryProvider.15," Campaigns are grand missions and cost soldiers, the big ask,"
+ui.overlay_military.militaryProvider.16," which come with military buildings. They open as your civilization grows, the main arc."
+ui.overlay_military.militaryProvider.17,"Campaigns, the big missions"
+ui.overlay_military.militaryProvider.18,"
+ [gray]Commands, the menu: expedition opens the Expeditions panel; expedition <name> sends an offer[-]
+"
+ui.overlay_military.writeActiveExpedition.01,", %d soldiers deployed, on mission"
+ui.overlay_military.writeActiveExpedition.02," (%s left), the countdown
+"
+ui.overlay_military.writeExpeditionGroup.01,"Soldiers, the squad: %d  "
+ui.overlay_military.writeExpeditionGroup.02,"(chance of failure before bonuses, the raw odds)"
+ui.overlay_military.writeExpeditionGroup.03,"(chance of failure; %.0f%% with your army, bussin)"
+ui.overlay_military.writeExpeditionGroup.04,"   %sDuration, the clock: %s  Difficulty: [%s]%.0f%%[-] %s
+"
+ui.overlay_military.writeExpeditionGroup.05,"   Cost, the bill: %s
+"
+ui.overlay_military.writeExpeditionGroup.06,"   [green]Ready: send it from the Expeditions panel, bussin[-]
+"
+ui.overlay_military.expeditionHaul.01,"about %.0f min of income, the bag"
+ui.overlay_military.writeGarrison.01," [gold]Threat, the sus meter:[-]    %s (raids in the %s)
+"
+ui.overlay_military.writeGarrison.02," [yellow]You have no garrison: raids hit you with full force, L.[-]
+"
+ui.overlay_military.writeGarrison.03,"   [gray]Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%), the shield.[-]
+"
+ui.overlay_military.writeGarrison.04," [green]Your garrison would blunt about %.0f%% of a raid, the shield.[-]
+"
+ui.overlay_military.writeGarrison.05,"   [gray]Raids, war raids and an Endure's losses all hit you that much softer, real.[-]
+"
+ui.overlay_military.writeGarrison.06,"   [gray]Twice the garrison: about %.0f%%. No army blunts more than %.0f%%, that's the cap.[-]
+"
+ui.overlay_military.writeGarrison.07," [gold]Saved this run, the bag:[-] %s
+"
+ui.overlay_military.garrisonSavedSummary.01,building
+ui.overlay_military.garrisonSavedSummary.02,worker
+ui.overlay_military.garrisonSavedSummary.03," [gray](%d %s blunted, the shield)[-]"
+ui.overlay_military.garrisonSavedSummary.04,raid
+ui.overlay_plan.handleKey.01,"The plan is empty, bestie."
+ui.overlay_plan.handleKey.02,"The plan is empty, fr."
+ui.overlay_plan.handleKey.03,Yeeted 
+ui.overlay_plan.handleKey.04,"The plan is empty, we're at zero."
+ui.overlay_plan.handleKey.05,"Press C again to clear the whole plan, no take-backs."
+ui.overlay_plan.handleKey.06,"Plan cleared, fresh start."
+ui.overlay_plan.planItemTitle.01,research 
+ui.overlay_plan.planItemTitle.02,"upgrade %d %s → %s, the glow-up"
+ui.overlay_plan.planItemTitle.03," (%d started, rolling)"
+ui.overlay_plan.planItemTitle.04," (%d started, on tour)"
+ui.overlay_plan.planItemDetailGlued.01," banked from overflow, the surplus)"
+ui.overlay_plan.planItemDetailGlued.02," banked, stashed"
+ui.overlay_plan.planItemDetailGlued.03," held for items above, the buffer"
+ui.overlay_plan.planItemDetailGlued.04,"starts next tick, bet"
+ui.overlay_plan.planItemDetailGlued.05,"starts next tick, paid from its bank, bussin"
+ui.overlay_plan.planItemDetailGlued.06,starts next tick for 
+ui.overlay_plan.planItemDetailGlued.07," and its bank, the stash"
+ui.overlay_plan.planItemDetailGlued.08,starts next tick for 
+ui.overlay_plan.planPanelText.01,"═══ Build plan, the to-do stack ═══"
+ui.overlay_plan.planPanelText.02," Started in order as resources come in, while you play and while you are away.
+ Each item is paid when it starts. A waiting item holds its price back from the
+ items below it; items below may still start with what it doesn't need, no cap."
+ui.overlay_plan.planPanelText.03," The plan is empty, bestie.
+
+"
+ui.overlay_plan.planPanelText.06,"            with what it needs first, in order, the queue"
+ui.overlay_plan.planPanelText.07,"%d of %d items, the to-do stack"
+ui.overlay_plan.planPanelText.08,", and %s queued (research takes no room), the brain bonus"
+ui.overlay_plan.planPanelText.09,tech
+ui.overlay_plan.planPanelText.10,techs
+ui.overlay_plan.planPanelText.11," pick it  "
+ui.overlay_plan.planPanelText.14," yeet  "
+ui.overlay_plan.planPanelText.15," nuke it
+"
+ui.overlay_plan.planPanelText.16,"Add with plan build / plan upgrade / plan research; plan list, remove, up, down and clear work as commands too, bet."
+ui.overlay_plan.planListText.01,"The plan is empty, bestie. Add items with: plan build <building> [count[], or plan research <tech>."
+ui.overlay_plan.planListText.02,"Build plan, the to-do stack"
+ui.overlay_plan.planListText.03,"waiting, %.0f%%, the wait"
+ui.overlay_plan.planListText.04," (short of "
+ui.overlay_plan.planListText.05,"blocked, sus: "
+ui.overlay_plan.planListText.06," banked, stashed"
+ui.overlay_research.formatTechEffect.01,"speeds research, the brain bonus"
+ui.overlay_research.formatTechEffect.02,"unlocks, the drop "
+ui.overlay_research.formatTechEffect.03," housing, the crib"
+ui.overlay_research.researchSummaryLines.01,"  [green]%-7s[-] Worker output from teaching, the brain tax [gray](%s with every scholar teaching)[-]
+"
+ui.overlay_research.researchSummaryLines.02,"  [gray]Research speed %s: techs take %s of their base time, the math. The times on the tech tree include it.[-]%s
+"
+ui.overlay_research.researchSummaryLines.03,"  [gray]Research techs: research time %s, the clock. The times on the tech tree include it.[-]
+"
+ui.overlay_research.researchSummaryLines.04,"  [gray]Ancient Knowledge: research time %s, the lore. The times on the tech tree include it.[-]
+"
+ui.overlay_research.researchBonusLines.01,"All production, the whole bag"
+ui.overlay_research.researchBonusLines.02," production, bussin"
+ui.overlay_research.researchBonusLines.03,"Housing, the crib"
+ui.overlay_research.researchBonusLines.04,"Building costs, the bill"
+ui.overlay_research.researchBonusLines.05,"Construction time, the clock"
+ui.overlay_research.researchBonusLines.06,"Research time, the grind"
+ui.overlay_research.researchBonusLines.07,", in points, the scoreboard"
+ui.overlay_research.researchBonusLines.08,"  [gray]Output, the bag:[-]  %s
+"
+ui.overlay_research.researchBonusLines.09,"  [gray]No research bonuses yet, we're early.[-]
+"
+ui.overlay_stats.statsProvider.01,"[gold]═══ Statistics, the numbers ═══[-]
+
+"
+ui.overlay_stats.statsProvider.02," [gold]Play time, the grind:[-]          %s
+"
+ui.overlay_stats.statsProvider.03," [gold]Game ticks, the clock:[-]         %s
+"
+ui.overlay_stats.statsProvider.04," [gold]Buildings built, the stuff:[-]    %s
+"
+ui.overlay_stats.statsProvider.05," [gold]Workers recruited, the crew:[-]  %s
+"
+ui.overlay_stats.statsProvider.06," [gold]Techs researched, the brains:[-]   %s
+"
+ui.overlay_stats.statsProvider.07," [gold]Expeditions and campaigns done, the quests:[-] %s
+"
+ui.overlay_stats.statsProvider.08,"
+ [gold]Ages reached, the timeline:[-]
+"
+ui.overlay_stats.statsProvider.09,"
+ [gold]Ages this run, the lap[-]
+"
+ui.overlay_stats.statsProvider.10,"   %-14s %s so far, the lap
+"
+ui.overlay_stats.statsProvider.11,"
+ [gold]Total gathered, the haul:[-]
+"
+ui.overlay_stats.statsProvider.12,"
+ [yellow]── Lifetime (account), the long game ──[-]
+"
+ui.overlay_stats.statsProvider.13," [gray]No account loaded, so nothing to show, fr.[-]
+"
+ui.overlay_stats.statsProvider.14," [gray]Account, your ID:[-] [white]%s[-]
+"
+ui.overlay_stats.statsProvider.15," [gold]Total prestiges, the glow-ups:[-]        %d
+"
+ui.overlay_stats.statsProvider.16," [gold]Civilizations started, the squads:[-]  %d
+"
+ui.overlay_stats.statsProvider.18," [gold]Peak era ever:[-]       %s
+"
+ui.overlay_stats.statsProvider.19,"
+ [yellow]── Epoch and legacy, the lore ──[-]
+"
+ui.overlay_stats.statsProvider.21,"Now, the epoch:"
+ui.overlay_stats.statsProvider.22," %-20s %d  (endured %d, succumbed %d), the scorecard
+"
+ui.overlay_stats.statsProvider.23,"Catastrophes, rip:"
+ui.overlay_stats.statsProvider.24," [red]  One catastrophe is pending. Type catastrophe to choose, the vibe check.[-]
+"
+ui.overlay_stats.statsProvider.25," [red]  The Last Passage is pending, brace up. Type catastrophe to choose.[-]
+"
+ui.overlay_stats.statsProvider.26,"
+ [gold]Legacy bonuses, the goodies:[-]
+"
+ui.overlay_stats.statsProvider.27,"  [gray]None yet, bet[-]
+"
+ui.overlay_stats.statsProvider.28,"  [gray]None yet, we're early[-]
+"
+ui.overlay_stats.statsProvider.29,"  %-16s research time %s (permanent, %s for each epoch succumbed in), the glow
+"
+ui.overlay_stats.statsProvider.30,Ancient lore:
+ui.overlay_stats.statsProvider.31,"  %-16s all production %s, counted in full after every other bonus (permanent, through every prestige), W
+"
+ui.overlay_stats.statsProvider.32,Cosmic Legacy:
+ui.overlay_stats.statsProvider.33,"
+ [gray]Milestones, the checkpoints: %d/%d. Type [white]milestones[-][gray] to see them, bussin.[-]
+"
+ui.overlay_stats.statsProvider.34,"
+[gold]═══ Active events, the plot ═══[-]
+
+"
+ui.overlay_stats.statsProvider.35," [gray]No active events, the quiet kind.[-]
+"
+ui.overlay_stats.statsProvider.36," [yellow]⚡[-] [yellow]%s[-] (%s left), bussin
+"
+ui.overlay_stats.statsProvider.37,"
+[gold]═══ Prestige, the glow-up ═══[-]
+
+"
+ui.overlay_stats.statsProvider.38," [gold]Level, the rank:[-] [cyan]%d[-]
+"
+ui.overlay_stats.statsProvider.39," [gold]Prestige, the reset:[-] [green]x%.2f[-] production
+"
+ui.overlay_stats.statsProvider.40," [gray]A new run would pass this age in about %s; finishing it takes about %s at today's income, the math.[-]
+"
+ui.overlay_stats.statsProvider.41," [gold]After this glow-up:[-] [green]x%.2f[-] production
+"
+ui.overlay_stats.statsProvider.43," [yellow]Prestige opens once you pass %s, the furthest an earlier run got, the bar.[-]
+"
+ui.overlay_stats.statsProvider.44," [gold]Era Mastery, the glow-up:[-] %s
+"
+ui.overlay_stats.statsProvider.45," [gray]Next prestige, the reset: %s.[-]
+"
+ui.overlay_stats.statsProvider.46," [gold]Points bagged:[-] [cyan]%d[-] total
+"
+ui.overlay_stats.statsProvider.47," [green]Prestige now for %s, bussin.[-]
+"
+ui.overlay_stats.statsProvider.48,point
+ui.overlay_stats.statsProvider.49,points
+ui.overlay_stats.statsProvider.50," [gray]From %s: %s, the receipts.[-]
+"
+ui.overlay_stats.statsProvider.51,point
+ui.overlay_stats.statsProvider.52,points
+ui.overlay_stats.statsProvider.53," [gray]Reach %s to prestige, the goal.[-]
+"
+ui.overlay_stats.statsProvider.54," [yellow]Reach %s to prestige again, the rematch.[-]
+"
+ui.overlay_stats.statsProvider.55,"
+[gold]═══ Research bonuses, the brain perks ═══[-]
+
+"
+ui.overlay_stats.statsProvider.56,"
+[gold]═══ Resource rates, the bag ═══[-]
+
+"
+ui.overlay_stats.statsProvider.57," [gray]No unlocked resources, the bag is empty, fr.[-]
+"
+ui.overlay_stats.statsProvider.58,"
+[gold]═══ Active multipliers, the boost ═══[-]
+
+"
+ui.overlay_stats.renderActiveMultipliers.01," [gray]No active multipliers, quiet vibes.[-]
+"
+ui.overlay_stats.multiplierSourceLabel.01,"Event, the plot: "
+ui.overlay_stats.multiplierSourceLabel.02,Brain work
+ui.overlay_stats.multiplierSourceLabel.03,"Prestige, the reset"
+ui.overlay_stats.multiplierSourceLabel.04,"Wonders, the flex"
+ui.overlay_stats.multiplierSourceLabel.05,Forever
+ui.overlay_stats.multiplierSourceLabel.06,"Morale, the mood"
+ui.overlay_stats.multiplierSourceLabel.07,"Event, the plot"
+ui.overlay_stats.multiplierSourceLabel.08,"Diplomacy, the deals"
+ui.overlay_stats.multiplierSourceLabel.09,"Legacy, the goodies"
+ui.overlay_stats.multiplierSourceLabel.10,"Cosmic Legacy, goated"
+ui.overlay_trade.tradeProvider.01," [gold]═══ Trade routes, the bag bridge ═══[-]
+
+"
+ui.overlay_trade.tradeProvider.02," [red]⚠ Routes importing %s are suspended (a war, or your embargo), L.[-]
+"
+ui.overlay_trade.tradeProvider.03," [gray]Lift your embargo with: diplomacy neutral <civ>, easy W[-]
+
+"
+ui.overlay_trade.tradeProvider.04," [gold]Active routes, rolling:[-]
+
+"
+ui.overlay_trade.tradeProvider.05,"   Export, the outbound: %s
+"
+ui.overlay_trade.tradeProvider.06,"   Import, the inbound: %s
+"
+ui.overlay_trade.tradeProvider.07,"   [red]Suspended: %s imports are blockaded, L[-]
+
+"
+ui.overlay_trade.tradeProvider.08,"   %s left in this cycle  [gray](%s done), the progress[-]
+
+"
+ui.overlay_trade.tradeProvider.09,cycle
+ui.overlay_trade.tradeProvider.10,cycles
+ui.overlay_trade.tradeProvider.11," [gold]Available routes, up for grabs:[-]
+
+"
+ui.overlay_trade.tradeProvider.12,"   Export: %s → Import: %s, the pair
+"
+ui.overlay_trade.tradeProvider.13,"   [green]trade route start %s, the go-button[-]
+"
+ui.overlay_trade.tradeProvider.14,"   [red]needs %s (have %s), the bill[-]
+"
+ui.overlay_trade.tradeProvider.15," [gray]No trade routes in this age yet, we're early.[-]
+"
+ui.overlay_trade.tradeProvider.16," [gray]Commands, the menu: trade route start/stop <key>[-]
+"
+ui.overlay_trade.tradeProvider.17,"
+ [gray]Opinion and deals with other civilizations, the social scene: type factions[-]
+"
+ui.overlay_trade.writeAllyTradeBonuses.01," [gold]Allied bonuses, the squad perks:[-]
+"
+ui.overlay_trade.writeAllyTradeBonuses.02,"   %s: [green]%s %s[-] [gray](route imports and production), bussin[-]
+"
+ui.overlay_wonders.renderCurrentWonderSummary.01,"[gold]═══ This age's wonder, the flex ═══[-]
+"
+ui.overlay_wonders.renderCurrentWonderSummary.02," %s [gold]★ %s[-]  [green]Built, W[-]  [gray]%s, the flex[-]
+"
+ui.overlay_wonders.renderCurrentWonderSummary.03," [yellow]○ %s[-]  [gray]%s, not built yet, the queue[-]
+"
+ui.overlay_wonders.renderCurrentWonderSummary.04,"
+ [cyan]Wonder bank, the vault:[-]
+"
+ui.overlay_wonders.wondersProvider.01,"[gold]═══ Wonders: %d / %d, the W wall ═══[-]
+"
+ui.overlay_wonders.wondersProvider.02,"   [green]Built, W[-]
+"
+ui.overlay_wonders.wondersProvider.03,"   [cyan]Effects, the perks:[-]
+"
+ui.overlay_wonders.wondersProvider.04,"[green](bank full, ready to build, let's go)[-]"
+ui.overlay_wonders.wondersProvider.05,"[yellow](bank full, waiting for its keystone, sus)[-]"
+ui.overlay_wonders.wondersProvider.06," [yellow]○ %s[-]   [gray]%s, the stash[-]   [yellow](%.0f%% banked)[-]
+"
+ui.overlay_wonders.wondersProvider.07,"   [gray]Bank resources to build it, the stash: "
+ui.overlay_wonders.wondersProvider.08,"   [cyan]Effects when built, the payoff:[-]
+"
+ui.overlay_wonders.wondersProvider.09," [gray]? ???[-]   [gray]%s, locked, the mystery[-]
+"
+ui.overlay_wonders.wondersProvider.10,"? ???   %s in ages still to come, locked, the mystery"
+ui.overlay_wonders.wondersProvider.11,more wonder
+ui.overlay_wonders.wondersProvider.12,more wonders
+ui.overlay_wonders.wondersProvider.13,"[gray]No wonders built yet, the W wall is blank.[-]
+"
+ui.overlay_wonders.wondersProvider.14,"[gold]Built, the W list:[-] %s
+"
+ui.panels_table.panelGroups.01,"Town, the home base"
+ui.panels_table.panelGroups.02,"the squad, bet"
+ui.panels_table.panelGroups.03,"queue, then build"
+ui.panels_table.panelGroups.04,the big flexes
+ui.panels_table.panelGroups.05,"your town, vibed"
+ui.panels_table.panelGroups.06,"Progress, the grind"
+ui.panels_table.panelGroups.07,goals & W's
+ui.panels_table.panelGroups.08,the brain tree
+ui.panels_table.panelGroups.09,what advance wants
+ui.panels_table.panelGroups.10,eras and doom
+ui.panels_table.panelGroups.11,the story so far
+ui.panels_table.panelGroups.12,"World, the lore"
+ui.panels_table.panelGroups.13,send the squad
+ui.panels_table.panelGroups.14,"soldiers, the rank"
+ui.panels_table.panelGroups.15,"routes, the bag"
+ui.panels_table.panelGroups.16,the nosy neighbors
+ui.panels_table.panelGroups.17,"warnings, sus"
+ui.panels_table.panelGroups.18,"You, main character"
+ui.panels_table.panelGroups.19,the trophy drip
+ui.panels_table.panelGroups.20,"numbers, the math"
+ui.panels_table.panelGroups.21,the full tea
+ui.panels_table.panelGroups.22,how to vibe
+ui.people_kinds.boxLine.01," out, on tour"
+ui.people_kinds.boxLine.02," out, bussin"
+ui.people_rich.peopleRichTitle.01," People, the crew "
+ui.people_rich.peopleRichTitle.02," Crowd %s/%s, the squad "
+ui.people_rich.peopleRichHeld.01,"Held by, the crib: "
+ui.people_rich.peopleRichHeld.02,"every home is packed, bussin"
+ui.people_rich.peopleRichHeld.03,"%s homes empty, the vacancy"
+ui.people_rich.peopleRichHeld.04,"%s empty, lowkey roomy"
+ui.people_rich.peopleRichHeld.05,Room to glow up
+ui.people_rich.peopleRichText.02,"%sPop, the crowd[-] %s%s[-]/%s%s[-]"
+ui.people_rich.peopleRichText.03,"%d%% full, the vibe"
+ui.people_tabs.overview.01,"Your people, the squad"
+ui.people_tabs.overview.02,"nothing, glowing up"
+ui.people_tabs.overview.03,"food, the munchies "
+ui.people_tabs.overview.04,"Homes, the crib "
+ui.people_tabs.overview.05,"   empty, roomy "
+ui.people_tabs.overview.06,"   locked up by "
+ui.people_tabs.overview.07,"Lately, the recap"
+ui.people_tabs.overview.08,"Nothing yet. People slide in as you build homes, bet."
+ui.people_tabs.foodLine.01,"Food, the munchies "
+ui.people_tabs.foodLine.02," for everyone, bussin"
+ui.people_tabs.foodLine.03,"   net, the math "
+ui.people_tabs.foodLine.04,"   morale, the mood "
+ui.people_tabs.foodLine.05,"   feeds, like, up to "
+ui.people_tabs.card.01,roster locked in
+ui.people_tabs.card.02," at work, the grind"
+ui.people_tabs.card.03,"slots %s/%s, the bench"
+ui.people_tabs.card.04,work area
+ui.people_tabs.card.05,work areas
+ui.people_tabs.card.06," waiting, bet"
+ui.people_tabs.card.07,"fill the jobs first, bussin"
+ui.people_tabs.card.08,glow up with homes
+ui.people_tabs.card.09,peep Work
+ui.people_tabs.card.10,"none out, chilling"
+ui.people_tabs.card.11," out, on the road"
+ui.people_tabs.card.12," at their posts, locked in"
+ui.people_tabs.card.13,"defense, the shield "
+ui.people_tabs.card.14,"check Army, real"
+ui.people_tabs.card.15," at desks, the brain squad"
+ui.people_tabs.card.16," researching, the brain work"
+ui.people_tabs.card.17," teaching, the mentor arc"
+ui.people_tabs.card.18,"come with buildings, the freebies"
+ui.people_tabs.recruitText.01,"Auto-recruit is off, so turn it on with: workers auto-recruit on, bet"
+ui.people_tabs.recruitText.02,"Auto-recruit is waiting after your last worker command, lowkey patient, "
+ui.people_tabs.recruitText.03," more, the wait."
+ui.people_tabs.recruitText.04,"Auto-recruit is held by housing, so build more homes for more people, real talk."
+ui.people_tabs.recruitText.05,"Auto-recruit is held by food, so build or staff food buildings, the munchies."
+ui.people_tabs.recruitText.06,"Auto-recruit is paused: the food ran out, L."
+ui.people_tabs.recruitText.07,"Auto-recruit is on: the town is glowing up toward its homes, bussin."
+ui.people_tabs.work.01,"Work areas, the stations"
+ui.people_tabs.work.02,"No worker buildings yet, so every area is on auto, chill."
+ui.people_tabs.work.06,"  Spot"
+ui.people_tabs.work.07,Slice
+ui.people_tabs.work.08,Packed
+ui.people_tabs.work.09,"and %d more, the rest"
+ui.people_tabs.work.10,"No buildings here yet, we're early."
+ui.people_tabs.work.11,"auto, by its buildings' slots, the vibe"
+ui.people_tabs.work.12,locked to 
+ui.people_tabs.work.13,Slice  
+ui.people_tabs.work.14,Bet it  
+ui.people_tabs.work.17,"Open slots fill from the reserve, bussin."
+ui.people_tabs.work.19,"pick an area, fr"
+ui.people_tabs.army.01,"Military buildings, the muscle"
+ui.people_tabs.army.02,"Away, on tour · %s"
+ui.people_tabs.army.03,"No military buildings yet, the barracks are quiet."
+ui.people_tabs.army.04,"%s/%s posted, the squad"
+ui.people_tabs.army.05," posted of "
+ui.people_tabs.army.06,"Defense, the shield "
+ui.people_tabs.army.07,"  threat, the sus meter "
+ui.people_tabs.army.08,", blunts, the shield "
+ui.people_tabs.army.09,"Rank, the glow "
+ui.people_tabs.army.10," experience, the XP"
+ui.people_tabs.army.11,"Gives, the perk "
+ui.people_tabs.army.12,"%s · back in %s, the countdown"
+ui.people_tabs.army.13,"Nobody's out, couch era."
+ui.people_tabs.army.14,"Fallen and packed, real"
+ui.people_tabs.army.15,"No news from the army, quiet vibes."
+ui.people_tabs.army.17,"pick a building, fr"
+ui.people_tabs.scholars.01,"Desks, the brains"
+ui.people_tabs.scholars.02,"Research, the brain work"
+ui.people_tabs.scholars.03,"No knowledge buildings yet, real talk: each one comes with its "
+ui.people_tabs.scholars.04,"%s each, the rate"
+ui.people_tabs.scholars.05,", %d of %d copies, the stack"
+ui.people_tabs.scholars.07,"nothing planned, the blank slate"
+ui.people_tabs.scholars.08,"Studying, the grind"
+ui.people_tabs.scholars.09,"Progress, the glow"
+ui.people_tabs.scholars.10,"Research, bussin"
+ui.people_tabs.scholars.11," a tick, the clock"
+ui.people_tabs.scholars.12,"%s: %s research, %s teach, the split"
+ui.people_tabs.scholars.13,"Teaching, the mentors"
+ui.people_tabs.scholars.14," to what workers make, the bonus"
+ui.people_tabs.scholars.15,Up next
+ui.people_tabs.scholars.16,"How to speed research, the cheat code"
+ui.people_tabs.scholars.17,"Build knowledge buildings, bet: each comes with its "
+ui.people_tabs.scholars.18,Research techs that glow up your 
+ui.people_tabs.scholars.19," faster, big brain."
+ui.people_tabs.scholars.20,"Expeditions and events can bring back finds that add to the research in progress, the loot bonus, bet."
+ui.people_tabs.scholars.22,"pick a building, bet"
+ui.people_view.peopleTabs.01,"OVERVIEW, THE TEA"
+ui.people_view.peopleTabs.02,"WORK, THE GRIND"
+ui.people_view.peopleTabs.03,"ARMY, THE MUSCLE"
+ui.people_view.peopleTabs.04,"SCHOLARS, THE BRAINS"
+ui.people_view.peopleKeys.01,"Flip between Overview, Work, Army and Scholars, easy"
+ui.people_view.peopleKeys.02,"Pick a card, a work area or a building, bet"
+ui.people_view.peopleKeys.04,Bounce from the panel
+ui.people_view.renderPeople.01,"People, the crew · "
+ui.people_view.renderPeople.02,"This window is too small for the People panel, fr. Esc closes it."
+ui.people_view.peopleHeader.04,"People, the crew "
+ui.people_view.peopleHeader.05," of "
+ui.people_view.peopleHeader.06," homes, the crib"
+ui.plan_optimize.planOptimizeText.01,"Nothing to reorder: none of the buildings in the plan changes how fast the town grows, so nothing to shuffle, fr."
+ui.plan_optimize.planOptimizeText.02,"Reordered the plan for faster growth, W."
+ui.plan_optimize.planOptimizeText.03,"  and %d more, the tail"
+ui.plan_optimize.planOptimizeText.04,"The plan is already in the fastest order I could find, so I left it alone, the vibe is right."
+ui.plan_optimize.planOptimizeText.05,"
+Only the first %s copies were reordered; the other %s keep their order after them, fr."
+ui.plan_optimize.planOptimizeText.06,"
+%s can't start until the town makes what they cost, bet."
+ui.plan_optimize.planOptimizeText.07,copy
+ui.plan_optimize.planOptimizeText.08,copies
+ui.plan_optimize.planOptimizeTimes.01," The last building should start in about %s, the countdown."
+ui.plan_optimize.planOptimizeTimes.02," The last building should start in about %s instead of %s, W."
+ui.prestige_cue_notice.prestigeCueText.01,"Time to prestige, fr?"
+ui.prestige_cue_notice.prestigeCueText.02,"Finishing the %s takes about %s at today's income, the math."
+ui.prestige_cue_notice.prestigeCueText.03,"A new run with x%.2f production would be back here and past it in about %s, the glow."
+ui.prestige_cue_notice.prestigeCueText.04,"Type prestige to see what you keep, the receipts."
+ui.prestige_kit.prestigePointsLines.01,"
+  [green]You can prestige now for %s, bussin.[-]"
+ui.prestige_kit.prestigePointsLines.02,point
+ui.prestige_kit.prestigePointsLines.03,points
+ui.prestige_kit.prestigePointsLines.04,"
+  [yellow]Reach %s to prestige; a prestige there pays %s, W.[-]"
+ui.prestige_kit.prestigePointsLines.05,point
+ui.prestige_kit.prestigePointsLines.06,points
+ui.prestige_kit.prestigePointsLines.07,"  From %s it would pay %s (%s more), the bag."
+ui.prestige_kit.prestigePointsLines.08,point
+ui.prestige_kit.prestigePointsLines.09,points
+ui.prestige_kit.prestigePointsLines.10,"  [gray]This is an early taste: each era's ages pay 3 times what the era before paid, so going deeper pays far more per day, bussin.[-]"
+ui.prestige_kit.carryoverStatusLines.01,"  Plan Template: [gray]not yet, we're early[-]"
+ui.prestige_kit.carryoverStatusLines.02,"  Roster: [gray]not yet, bet[-]"
+ui.prestige_kit.carryoverStatusLines.03,"  Old Friends: [gray]not yet, lowkey[-]"
+ui.prestige_kit.carryoverStatusLines.04,"  Plan Template: [green]on, bussin[-]"
+ui.prestige_kit.carryoverStatusLines.05,"  Roster: [green]on, locked in[-]"
+ui.prestige_kit.carryoverStatusLines.06,"  Old Friends: [green]on, W[-]"
+ui.prestige_kit.kitMemoryLines.01,"  [gray]The kit remembers your plan, roster and the civilizations you meet, the lore. Nothing is remembered yet: it starts with your first prestige, fr.[-]"
+ui.prestige_kit.kitMemoryLines.02,"  [gold]What the kit remembers from your runs, the receipts[-]"
+ui.prestige_kit.kitMemoryLines.03,"  Plan: %s over %s, the stack."
+ui.prestige_kit.kitMemoryLines.04,item
+ui.prestige_kit.kitMemoryLines.05,items
+ui.prestige_kit.kitMemoryLines.06,age
+ui.prestige_kit.kitMemoryLines.07,ages
+ui.prestige_kit.kitMemoryLines.08,"  Roster, the squad: %s."
+ui.prestige_kit.kitMemoryLines.09,domain
+ui.prestige_kit.kitMemoryLines.10,domains
+ui.prestige_kit.kitMemoryLines.11,"  Civilizations met, the squads: %d."
+ui.research_panel.researchKeys.02,"Move to the nearest tech that way, the view follows along"
+ui.research_panel.researchKeys.04,"Next tech you can start, the glow (Shift-Tab: the one before)"
