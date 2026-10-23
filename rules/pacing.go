@@ -65,6 +65,15 @@ func (s *Set) MilitaryScale(order int) config.MilitaryScaleDef {
 	return config.MilitaryScaleIn(s.military, order)
 }
 
+// MilitaryScaleAt is MilitaryScale for an order that is one of the set's ages,
+// and false for any other (MilitaryScale clamps it instead).
+func (s *Set) MilitaryScaleAt(order int) (config.MilitaryScaleDef, bool) {
+	if order < 0 || order >= len(s.military) {
+		return config.MilitaryScaleDef{}, false
+	}
+	return s.military[order], true
+}
+
 // AgeThreat is the raid threat of the age with the given order, on this
 // set's military yardstick.
 func (s *Set) AgeThreat(order int) float64 {

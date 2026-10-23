@@ -4494,9 +4494,8 @@ func (ge *GameEngine) offerSuccessLocked(offer MissionOffer) float64 {
 	success := offer.SuccessChance
 	if offer.Military() {
 		if index, ok := ge.progress.ageOrder()[ge.age]; ok {
-			scales := config.MilitaryScales(ge.rules.Techs(), ge.rules.AgeKeys())
-			if index >= 0 && index < len(scales) && scales[index].Then > 0 {
-				success += armyTerm(ge.missionPower(), scales[index].Then)
+			if scale, ok := ge.rules.MilitaryScaleAt(index); ok && scale.Then > 0 {
+				success += armyTerm(ge.missionPower(), scale.Then)
 			}
 		}
 	}
@@ -4659,9 +4658,11 @@ func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64) 
 		haul[res] *= multiplier
 	}
 	info.ExpectedHaulMin, info.ExpectedHaulMax = haul, maps.Clone(haul)
+	// The refusal reads the party too, so it is judged on the cost before the
+	// panel's copy drops the soldiers.
+	reason, err := ge.offerRefusalLocked(offer, cost)
 	delete(cost, "soldiers")
 	info.Cost = cost
-	reason, err := ge.offerRefusalLocked(offer, ge.missionCostLocked(offer))
 	info.CanLaunch, info.LaunchBlockReason = err == nil, reason
 	return info
 }

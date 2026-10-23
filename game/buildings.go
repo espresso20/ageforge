@@ -1007,7 +1007,7 @@ func (bm *BuildingManager) ageLocked(def config.BuildingDef) bool {
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
 // pass nil to skip worker field population.
 func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int) map[string]BuildingState {
-	out := make(map[string]BuildingState)
+	out := make(map[string]BuildingState, len(bm.defs))
 	for key, def := range bm.defs {
 		// NextCost uses BuildBatchCost so it reflects queue depth — the displayed
 		// price is the actual cost the player will pay for the next build.
