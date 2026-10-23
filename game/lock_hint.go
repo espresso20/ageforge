@@ -1,19 +1,26 @@
 package game
 
-// withLockHints fills LockTech and LockTechPath on every building that its
-// age has unlocked and a tech still locks (the buildings NeedsTech names),
-// so the panels can show them greyed out with the research they need.
-func (ge *GameEngine) withLockHints(bs map[string]BuildingState) map[string]BuildingState {
-	for key, b := range bs {
-		if !ge.Buildings.AgeUnlocked(key) || !ge.Buildings.TechLocked(key) {
-			continue
-		}
-		tech := ge.Buildings.defs[key].RequiredTech
-		b.LockTech = ge.techName(tech)
-		b.LockTechPath = ge.lockTechPath(tech)
-		bs[key] = b
+import "github.com/espresso20/ageforge/config"
+
+// buildingExtras is what the engine says of one building for its snapshot:
+// the scholars a copy comes with and the most copies that can be built (a
+// knowledge building), the soldiers a copy comes with (a military building),
+// and, so the panels can show a building its age has unlocked greyed out, the
+// research a tech still locks it behind: LockTech and LockTechPath, for the
+// buildings whose needsTech names one.
+func (ge *GameEngine) buildingExtras(scholars, maxCount, soldiers int, needsTech string) buildingExtra {
+	var x buildingExtra
+	if scholars > 0 {
+		x.scholars, x.scholarCap = scholars, maxCount
 	}
-	return bs
+	if soldiers > 0 {
+		x.soldiers = ge.soldierPerCopy(config.BuildingDef{Soldiers: soldiers})
+	}
+	if needsTech != "" {
+		x.lockTech = ge.techName(needsTech)
+		x.lockTechPath = ge.lockTechPath(needsTech)
+	}
+	return x
 }
 
 // lockTechPath is the display names of the prerequisites of tech that are

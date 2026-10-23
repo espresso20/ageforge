@@ -195,6 +195,12 @@ func (bm *BuildingManager) AgeUnlocked(key string) bool {
 // A building of the grace age needs none, its wonder included (graceAge).
 func (bm *BuildingManager) TechLocked(key string) bool {
 	def := bm.defs[key]
+	return bm.techLocked(&def)
+}
+
+// techLocked is TechLocked of a definition in hand: the snapshot asks it of all
+// of them, and a definition is too big to look up and copy again for each ask.
+func (bm *BuildingManager) techLocked(def *config.BuildingDef) bool {
 	if def.RequiredTech == "" || bm.researched == nil || bm.researched(def.RequiredTech) {
 		return false
 	}
@@ -315,10 +321,15 @@ func (bm *BuildingManager) BuildBatchCost(key string, n int, queue []BuildQueueI
 	if !ok {
 		return nil, false
 	}
+	return bm.batchCost(key, &def, n, queue), true
+}
+
+// batchCost is BuildBatchCost of a definition in hand.
+func (bm *BuildingManager) batchCost(key string, def *config.BuildingDef, n int, queue []BuildQueueItem) map[string]float64 {
 	built := bm.counts[key]
 	queued := bm.GetQueueCount(key, queue)
 
-	total := make(map[string]float64)
+	total := make(map[string]float64, len(def.BaseCost))
 	for i := 0; i < n; i++ {
 		exp := float64(built + queued + i)
 		for resource, base := range def.BaseCost {
@@ -327,7 +338,7 @@ func (bm *BuildingManager) BuildBatchCost(key string, n int, queue []BuildQueueI
 			total[resource] += applyCostMult(base*detmath.Pow(def.CostScale, exp), bm.costMult)
 		}
 	}
-	return total, true
+	return total
 }
 
 // NextCost is what the next copy of key costs in res, the copies in queue
@@ -998,28 +1009,44 @@ func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]
 
 // ageLocked reports whether a building belongs to another age than the town's:
 // the age lock refuses to build it, whatever its line.
-func (bm *BuildingManager) ageLocked(def config.BuildingDef) bool {
+func (bm *BuildingManager) ageLocked(def *config.BuildingDef) bool {
 	return bm.age != nil && def.RequiredAge != "" && def.RequiredAge != bm.age()
+}
+
+// buildingExtra is what the engine adds to a building's state: the scholars and
+// soldiers a copy comes with, and the research a tech still locks it behind.
+type buildingExtra struct {
+	scholars, scholarCap, soldiers int
+	lockTech                       string
+	lockTechPath                   []string
 }
 
 // Snapshot returns building states for UI.
 // queue is the engine's current build queue, used to compute queue-aware next costs.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
 // pass nil to skip worker field population.
-func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int) map[string]BuildingState {
+// extras, when set, is asked for what only the engine knows of each building
+// (see buildingExtra). It takes its figures by value on purpose: handed a
+// pointer to the definition or the state, the compiler could not tell it keeps
+// neither and would move both to the heap for every building.
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int, extras func(scholars, maxCount, soldiers int, needsTech string) buildingExtra) map[string]BuildingState {
 	out := make(map[string]BuildingState, len(bm.defs))
 	for key, def := range bm.defs {
 		// NextCost uses BuildBatchCost so it reflects queue depth — the displayed
 		// price is the actual cost the player will pay for the next build.
-		cost, _ := bm.BuildBatchCost(key, 1, queue)
+		cost := bm.batchCost(key, &def, 1, queue)
 		count := bm.counts[key]
+		// Asked once: it reads the research, and a definition is too big to look
+		// up again for each place that wants it.
+		techLocked := bm.techLocked(&def)
+		unlocked := bm.unlocked[key]
 		state := BuildingState{
 			Count:       count,
 			Name:        def.Name,
 			Category:    def.Category,
 			Description: def.Description,
 			Flavor:      def.Flavor,
-			Unlocked:    bm.IsUnlocked(key),
+			Unlocked:    unlocked && (def.Category == "wonder" || !techLocked),
 			AgeKey:      def.RequiredAge,
 			NextCost:    cost,
 		}
@@ -1030,11 +1057,11 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)
-			state.CanBuild = state.Unlocked && count == 0 && state.WonderBankFull && !bm.TechLocked(key)
+			state.CanBuild = state.Unlocked && count == 0 && state.WonderBankFull && !techLocked
 		} else {
-			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost) && !bm.ageLocked(def)
+			state.CanBuild = state.Unlocked && !state.AtMaxCount && resources.CanAfford(cost) && !bm.ageLocked(&def)
 		}
-		if bm.unlocked[key] && bm.TechLocked(key) {
+		if unlocked && techLocked {
 			state.NeedsTech = def.RequiredTech
 		}
 		// Phase 6: worker fields
@@ -1053,6 +1080,11 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 			if count > 0 {
 				state.PendingUpgrade = target
 			}
+		}
+		if extras != nil {
+			x := extras(def.Scholars, def.MaxCount, def.Soldiers, state.NeedsTech)
+			state.Scholars, state.ScholarCap, state.Soldiers = x.scholars, x.scholarCap, x.soldiers
+			state.LockTech, state.LockTechPath = x.lockTech, x.lockTechPath
 		}
 		out[key] = state
 	}
