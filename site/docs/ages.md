@@ -74,7 +74,7 @@ Every age can be finished, and an automated test checks this in every release. T
 
 - Every building requirement names a building you can build in the age you are advancing **from**, never an older one you can no longer build.
 - A town that passes a gate arrives with five copies of the age's storage building, because the gate asks for them, so it already has the production boost they give (see [Storage](buildings.md#storage-buildings-21-tiers)).
-- A town that passes a gate has the age's knowledge building built to its cap, because the gate asks for that many copies, and the scholars that come with them (see [Scholars and Research](knowledge.md#what-a-scholar-is)).
+- A town that passes a gate has the age's knowledge building built to its full-rate count, because the gate asks for that many copies, and the scholars that come with them (see [Scholars and Research](knowledge.md#what-a-scholar-is)).
 - The wonder's keystone tech, and every tech it stands on, can be researched by the wonder's own age.
 - Every resource a required building, the wonder or the keystone costs has a source in the age itself, even for a town that skipped every building no earlier gate asked for. See [The Maker Rule](buildings.md#the-maker-rule).
 - A food, faith or culture cost is something a moderate economy makes in the age.

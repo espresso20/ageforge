@@ -7,13 +7,12 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // cappedState is a Modern Age player holding every tech so far and enough
-// milestone rewards to put all production, gold and knowledge past +200%,
-// where a bonus counts a quarter, with iron under it. The techs are in a
-// layer of their own and fill no pool.
+// milestone rewards to put all production, gold and knowledge far past +200%,
+// where a production pool still counts in full, with iron under it. The
+// techs are in a layer of their own and fill no pool.
 func cappedState(t *testing.T) (*game.GameEngine, game.GameState) {
 	t.Helper()
 	ge := game.NewGameEngine()
@@ -29,20 +28,18 @@ func cappedState(t *testing.T) (*game.GameEngine, game.GameState) {
 	return ge, ge.GetState()
 }
 
-// earned is the "counts a quarter past +200%: +N% earned" note for pool as
-// st has it. The fixture's epoch event may add to a pool, so the tests read
-// the figure off the state instead of typing it. The rule itself is typed:
-// +200% in full and a quarter of the rest.
-func earned(t *testing.T, st game.GameState, pool string) string {
+// large reads pool off st and fails unless it is far past +200% and applied
+// in full: nothing is held back.
+func large(t *testing.T, st game.GameState, pool string) game.BonusPool {
 	t.Helper()
 	p := st.Pools[pool]
-	if want := 2 + (p.Earned-2)*0.25; !p.Limited || !p.Soft || p.Earned <= 2 || math.Abs(p.Applied-want) > 1e-9 {
-		t.Fatalf("%s: earned %v, applied %v (want %v), limited %v, soft %v; this fixture needs it past +200%%", pool, p.Earned, p.Applied, want, p.Limited, p.Soft)
+	if p.Limited || p.Earned <= 2 || math.Abs(p.Applied-p.Earned) > 1e-9 {
+		t.Fatalf("%s: earned %v, applied %v, limited %v; this fixture needs it past +200%% and in full", pool, p.Earned, p.Applied, p.Limited)
 	}
-	return "counts a quarter past +200%: " + textfmt.SignedPercent(p.Earned) + " earned"
+	return p
 }
 
-// applied is the headline a pool past +200% shows: what the engine applies.
+// applied is the headline a pool shows: what the engine applies.
 func applied(st game.GameState, pool string) string {
 	return fmt.Sprintf("%+.0f%%", st.Pools[pool].Applied*100)
 }
@@ -60,29 +57,31 @@ func section(t *testing.T, out, from, to string) string {
 	return out
 }
 
-// TestStatsPanelShowsCappedPools: the Active multipliers headline is what
-// the engine applies, and a pool past +200% says so with what was earned.
-func TestStatsPanelShowsCappedPools(t *testing.T) {
+// TestStatsPanelShowsLargePoolsInFull: the Active multipliers headline is the
+// whole of a production pool, however far past +200% it is, and carries no
+// note. Only a pool a limit holds says so.
+func TestStatsPanelShowsLargePoolsInFull(t *testing.T) {
 	_, st := cappedState(t)
+	for _, pool := range []string{"production_all", "gold_rate", "knowledge_rate"} {
+		large(t, st, pool)
+	}
 	out := renderActiveMultipliers(st)
-	if got := applied(st, "gold_rate"); got != "+245%" {
-		t.Fatalf("gold has earned +380%% and applies %s, want +245%% (+200%% and a quarter of the other +180%%)", got)
+	if got := applied(st, "gold_rate"); got != "+380%" {
+		t.Fatalf("gold has earned +380%% and applies %s, want +380%%", got)
 	}
 	for _, want := range []string{
-		"Gold production     [-] [green]+245%[-] [yellow]" + earned(t, st, "gold_rate") + "[-]",
-		"Scholar output      [-] [green]" + applied(st, "knowledge_rate") + "[-] [yellow]" + earned(t, st, "knowledge_rate") + "[-]",
-		"[yellow]" + earned(t, st, "production_all") + "[-]", // morale rides on top of its headline
-		"Iron production     [-] [green]+70%[-]   ",          // under +200%: no note
+		"Gold production     [-] [green]+380%[-]   ",
+		"Scholar output      [-] [green]" + applied(st, "knowledge_rate") + "[-]   ",
+		"Iron production     [-] [green]+70%[-]   ",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("Active multipliers is missing %q:\n%s", want, out)
 		}
 	}
-	if strings.Contains(out, "+380%[-]   ") || strings.Contains(out, "[green]+335%[-] ") {
-		t.Errorf("a pool past +200%% still shows the raw sum as its headline:\n%s", out)
-	}
-	if strings.Contains(out, "[green]+200%[-] ") || strings.Contains(out, "capped at +200%") {
-		t.Errorf("a pool past +200%% reads as stopped at +200%%:\n%s", out)
+	for _, bad := range []string{"quarter", "earned", "capped at +200%", "[green]+200%[-] "} {
+		if strings.Contains(out, bad) {
+			t.Errorf("a pool far past +200%% carries %q:\n%s", bad, out)
+		}
 	}
 }
 
@@ -93,8 +92,8 @@ func TestStatsPanelShowsCappedPools(t *testing.T) {
 // read as what they are, and a first source's flat output as an amount.
 func TestResearchPanelBonuses(t *testing.T) {
 	_, st := cappedState(t)
-	earned(t, st, "production_all") // the fixture's pools are past +200%
-	earned(t, st, "gold_rate")
+	large(t, st, "production_all") // the fixture's pools are past +200%
+	large(t, st, "gold_rate")
 	out := section(t, statsProvider(st, 120), "Research bonuses", "Resource rates")
 	for _, want := range []string{
 		"[green]+7%    [-] All production\n",
@@ -126,63 +125,55 @@ func TestResearchPanelBonuses(t *testing.T) {
 	}
 }
 
-// TestFestivalSaysWhatItAddsPastTheKnee: the festival costs culture, so the
-// command says before the player pays what it would add: with all production
-// past +200% its +20% counts a quarter, +5%. It never reads as doing nothing.
-func TestFestivalSaysWhatItAddsPastTheKnee(t *testing.T) {
-	ge, _ := cappedState(t)
-	if note := ge.FestivalStatus().CapNote; note != "counts a quarter past +200%: +5% now" {
-		t.Fatalf("FestivalStatus().CapNote = %q past +200%%, want %q", note, "counts a quarter past +200%: +5% now")
+// TestFestivalSaysNothingOnALargePool: the festival's +20% counts in full
+// whatever all production holds, so the command has no note to show before
+// the player pays.
+func TestFestivalSaysNothingOnALargePool(t *testing.T) {
+	ge, st := cappedState(t)
+	large(t, st, "production_all")
+	if note := ge.FestivalStatus().CapNote; note != "" {
+		t.Fatalf("FestivalStatus().CapNote = %q on a large pool, want none", note)
 	}
 	out := cmdFestivalStatus(ge).Message
-	if want := "Held now, the festival counts a quarter past +200%: +5% now (see stats)."; !strings.Contains(out, want) {
-		t.Errorf("festival status is missing %q:\n%s", want, out)
-	}
-	if strings.Contains(out, "no effect") || strings.Contains(out, "capped") {
-		t.Errorf("festival status reads as if the festival did nothing:\n%s", out)
-	}
-	fresh := game.NewGameEngine()
-	if st := fresh.FestivalStatus(); st.CapNote != "" || st.CapPhrase != "" {
-		t.Errorf("a new game's festival carries the note %q (%q), want none", st.CapNote, st.CapPhrase)
-	}
-	if out := cmdFestivalStatus(fresh).Message; strings.Contains(out, "capped") || strings.Contains(out, "a quarter") {
-		t.Errorf("a new game's festival status mentions a cap:\n%s", out)
+	for _, bad := range []string{"Held now", "no effect", "capped", "a quarter"} {
+		if strings.Contains(out, bad) {
+			t.Errorf("festival status says %q on a pool that counts in full:\n%s", bad, out)
+		}
 	}
 }
 
-// TestMilestonesAndWondersTagRewardsPastTheKnee: a milestone reward and a
-// wonder effect in a pool past +200% say what they would add before the
-// player works for them: a quarter of what they promise, never nothing and
-// never the full figure.
-func TestMilestonesAndWondersTagRewardsPastTheKnee(t *testing.T) {
-	ge, st := cappedState(t)
-	ms := milestonesProvider(st, 120)
+// TestMilestonesAndWondersTagOnlyLimitedRewards: a reward in a production
+// pool far past +200% carries no note, since all of it counts. A reward in a
+// pool a limit holds back (research speed, past +100%) still says what it
+// would add: nothing.
+func TestMilestonesAndWondersTagOnlyLimitedRewards(t *testing.T) {
+	ge, _ := cappedState(t)
+	ge.GrantBonusForTest("research_speed", 1.2)
+	ms := milestonesProvider(ge.GetState(), 120)
 	for _, want := range []string{
-		"+20% all production[-] [yellow](counts a quarter past +200%: +5% now)[-]",
-		"+10% all production[-] [yellow](counts a quarter past +200%: +2.5% now)[-]",
-		"+5% all production[-] [yellow](counts a quarter past +200%: +1.25% now)[-]",
+		"+20% all production[-]\n",
+		"+10% all production[-]\n",
+		"+5% all production[-]\n",
+		"+5% research speed[-] [yellow](capped: no effect now)[-]",
 	} {
 		if !strings.Contains(ms, want) {
-			t.Errorf("the Milestones panel has no reward tagged %q:\n%s", want, ms)
+			t.Errorf("the Milestones panel is missing %q:\n%s", want, ms)
 		}
 	}
-	if strings.Contains(ms, "no effect") {
-		t.Errorf("the Milestones panel shows a reward as doing nothing:\n%s", ms)
-	}
-	if strings.Contains(ms, "all production[-]\n") {
-		t.Errorf("the Milestones panel lists an all-production reward with no note, as if all of it counted:\n%s", ms)
-	}
-	if want := "+5% research speed[-]\n"; !strings.Contains(ms, want) {
-		t.Errorf("a research speed reward with room carries a note, or is gone (want %q)", want)
+	if strings.Contains(ms, "a quarter") {
+		t.Errorf("the Milestones panel still talks of a quarter:\n%s", ms)
 	}
 	// The Information Age's wonder, the Global Network, adds scholar
-	// output to a pool that is already past +200%.
+	// output to a pool that is already far past +200%.
 	if err := ge.EnterAgeForTest("information_age"); err != nil {
 		t.Fatal(err)
 	}
 	wonders := wondersProvider(ge.GetState(), 120)
-	if want := "+30% scholar output[-] [yellow](counts a quarter past +200%: +7.5% now)[-]"; !strings.Contains(wonders, want) {
-		t.Errorf("the Wonders panel has no wonder effect tagged %q:\n%s", want, wonders)
+	if want := "+30% scholar output[-]\n"; !strings.Contains(wonders, want) {
+		t.Errorf("the Wonders panel tags a scholar output effect that counts in full (want %q):\n%s", want, wonders)
+	}
+	if strings.Contains(wonders, "a quarter") {
+		t.Errorf("the Wonders panel still talks of a quarter:\n%s", wonders)
 	}
 	if want := "+30 data/tick[-]\n"; !strings.Contains(wonders, want) {
 		t.Errorf("the Global Network's flat output carries a note, or is gone (want %q)", want)
@@ -190,25 +181,20 @@ func TestMilestonesAndWondersTagRewardsPastTheKnee(t *testing.T) {
 }
 
 // TestRatesShowsEarnedAgainstApplied: the rates breakdown says what a pool
-// has earned and what counts when the two differ: all production once, at
-// the top, and a resource's own pool under that resource. A pool that
-// applies all it has earned adds no line.
+// has earned and what counts when the two differ, and only then: a pool far
+// past +200% applies all it has earned and adds no line, and one held at the
+// floor says so.
 func TestRatesShowsEarnedAgainstApplied(t *testing.T) {
-	ge, st := cappedState(t)
-	out := HandleCommand("rates", ge).Message
-	all := st.Pools["production_all"]
-	for _, want := range []string{
-		"  [yellow]All production: " + textfmt.SignedPercent(all.Earned) + " earned, " + applied(st, "production_all") + " counts. Past +200% a bonus counts a quarter.[-]",
-		"  [yellow]Scholar output: +335% earned, +234% counts. Past +200% a bonus counts a quarter.[-]",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("rates is missing %q:\n%s", want, out)
-		}
+	ge, _ := cappedState(t)
+	if out := HandleCommand("rates", ge).Message; strings.Contains(out, "earned") || strings.Contains(out, "counts.") {
+		t.Errorf("rates lists a pool that applies all it has earned:\n%s", out)
 	}
-	// Nothing makes gold or iron in this fixture, so neither is listed, and
-	// a pool is only ever shown under its resource.
-	if strings.Contains(out, "Iron production:") || strings.Contains(out, "Gold production:") {
-		t.Errorf("rates lists the pool of a resource it does not list:\n%s", out)
+	// A debuff stack the floor holds: -140% earned, the pool counts -90%.
+	floored := game.NewGameEngine()
+	floored.GrantBonusForTest("production_all", -1.4)
+	out := HandleCommand("rates", floored).Message
+	if want := "  [yellow]All production: -140% earned, -90% counts.[-]"; !strings.Contains(out, want) {
+		t.Errorf("rates is missing %q:\n%s", want, out)
 	}
 	if fresh := HandleCommand("rates", game.NewGameEngine()).Message; strings.Contains(fresh, "earned") {
 		t.Errorf("a new game's rates mention a pool:\n%s", fresh)

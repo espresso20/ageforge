@@ -106,7 +106,7 @@ Build two early so there is room to hold what comes in. The Stone Age asks for *
 
 ## Step 6: Build story circles and a shrine
 
-Story circles come with **2 scholars** each. Scholars are not workers: they need no assignment, and they start research the moment the circle stands. They are people, though: they live in your homes and eat like anyone. The Stone Age needs **5 story circles**, and a circle cannot be built past 5. A story circle costs 86 wood and takes 75 ticks (2m 30s) to build, so start them early.
+Story circles come with **2 scholars** each. Scholars are not workers: they need no assignment, and they start research the moment the circle stands. They are people, though: they live in your homes and eat like anyone. The Stone Age needs **5 story circles**, and a circle past the fifth researches at half rate. A story circle costs 86 wood and takes 75 ticks (2m 30s) to build, so start them early.
 
 ```
 build story_circle

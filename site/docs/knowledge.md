@@ -20,8 +20,8 @@ A scholar's **kind** is the worker class of the age of his building: a Shaman in
 
 Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monastery Library → University → Natural Philosophy Hall → Research Institute → Academy → Physics Laboratory → Research Campus → Think Tank → Innovation Hub → AI Research Lab → Neuro Research Center → Theoretical Institute → Deep Space Observatory → Xenology Institute → Cosmic Research Station → Reality Academy
 
-| Building | Age | Scholar | Scholars a copy | Most copies |
-|----------|-----|---------|-----------------|-------------|
+| Building | Age | Scholar | Scholars a copy | Copies at full rate |
+|----------|-----|---------|-----------------|---------------------|
 | Story Circle | Primitive | Shaman | 2 | 5 |
 | Elders' Hall | Stone | Elder | 2 | 5 |
 | Scriptorium | Bronze | Scribe | 3 | 5 |
@@ -44,7 +44,7 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 | Cosmic Research Station | Galactic | Galactic Researcher | 15 | 5 |
 | Reality Academy | Quantum | Quantum Theorist | 20 | 10 |
 
-**The cap.** A knowledge building cannot be built past its most copies, the count its age's gate asks for. Each copy costs 50% more than the one before it. The Buildings panel shows a knowledge building's scholars a copy and its copies against its cap (`2 scholars a copy, 3 of 5 built.`), and at the cap it reads `Building limit reached.`
+**The soft cap.** A knowledge building researches at full rate up to the count its age's gate asks for, the last column of the table. Past that count nothing stops you: another copy builds, at the same climb in price (each copy costs 50% more than the one before it), and each copy past the count researches at half rate. Its scholars come with it as before. The Buildings panel says it beside the building (`2 scholars a copy. Past 5 copies, each researches at half rate.`), and the Scholars screen counts the copies past the cap that work at half rate.
 
 **Work.** The scholars do their work whether or not you look at them. The game shows it as a time on a tech, not as a number. Later buildings do far more than earlier ones, and they all keep working. [Morale](morale.md) multiplies the work, like every building's output, and so do the bonuses under [Research Speed](#research-speed).
 
@@ -69,7 +69,7 @@ Primitive Writing ████░░░░░░ 40% (~4m 20s left)
 
 **The time.** A tech's time is its remaining work over the work the researching scholars do each tick. A tech you have not started shows the time it would take the scholars your research setting puts on research, with research speed, Ancient Knowledge and Era Mastery counted. That holds even when nothing is in progress and every scholar teaches: the time is what the tech would take once started. If the setting leaves no scholar researching, the screens say the tech needs scholars researching to go on, and the bar stays where it is. Change who researches and every time changes with it.
 
-**The tables.** The [tech tables](technologies.md#tech-tree-by-age) give each tech's time for a full set of scholars at its age: every knowledge building up to that age built to its cap, researching, before any bonus. A tech costs 1.3 times the one before it inside an age.
+**The tables.** The [tech tables](technologies.md#tech-tree-by-age) give each tech's time for a full set of scholars at its age: every knowledge building up to that age built to its full-rate count, researching, before any bonus. A tech costs 1.3 times the one before it inside an age.
 
 **Research simmers.** From the Stone Age on, an age's techs add up to about one and a half times the work the scholars of a typical town do while the town stays in that age. The research of an age takes longer than the age, and the part you have not finished carries forward into the next. The Primitive Age asks for less than a stay's work, so a new player sees a tech finish early. The keystone, the tech the age's wonder needs, is priced to finish inside its age, because you cannot leave without it.
 

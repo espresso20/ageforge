@@ -173,7 +173,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | Epoch Blessing | +15% all production for the rest of the run, recorded in history | Rest of run |
 
-> Worker Innovation and Epoch Blessing last until you Succumb or prestige. Like Age of Plenty and Peaceful Century, they add to all production, and every all-production bonus but a tech's shares one pool. The pool applies in full up to +200% and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). A full set of milestones passes +200% from about the Electric Age, so these events lift output most when they land early in a run, and a quarter as much once the pool is past +200%.
+> Worker Innovation and Epoch Blessing last until you Succumb or prestige. Like Age of Plenty and Peaceful Century, they add to all production, and every all-production bonus but a tech's shares one pool. The pool applies in full, however large it grows (see [The all-production pool](resources.md#the-all-production-pool)). Both add their whole percentage to the pool, so each is worth the same number of points whenever it lands.
 
 ---
 
@@ -322,7 +322,7 @@ Best for: players who want steady income and dislike variance. It also suits run
 
 Put culture buildings first: three and a half times a moderate set, kept from the Classical Age on, and spend as little culture as you can, aiming for a culture strength over 75% before each epoch boundary.
 
-The Legendary tier is the goal. Epoch Blessing (+15% all production) and Worker Innovation (+10%) are the two strongest transition events, and both last the rest of the run. They pay off most when they land at the Iron or Steel Era transition: from about the Electric Age a full set of milestones takes the all-production pool past +200%, where a bonus counts a quarter, and a late Blessing then adds about 4 points.
+The Legendary tier is the goal. Epoch Blessing (+15% all production) and Worker Innovation (+10%) are the two strongest transition events, and both last the rest of the run. They pay off most when they land at the Iron or Steel Era transition: each adds its whole percentage to the all-production pool, so the earlier it lands, the more of the run it multiplies.
 
 Culture also opens Major events (a culture strength over 40%, about twice a moderate set of culture buildings), which are strictly better than Minor events. The Grand Discovery (up to 3 free techs) and The Architect's Gift (10 free buildings) can skip you ahead a long way.
 

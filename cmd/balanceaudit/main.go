@@ -142,6 +142,8 @@ func main() {
 		maxStr := "-"
 		if b.MaxCount > 0 {
 			maxStr = fmt.Sprintf("%d", b.MaxCount)
+		} else if b.FullRateCopies > 0 {
+			maxStr = fmt.Sprintf("%d soft", b.FullRateCopies) // half rate past it
 		}
 		rateStr := ""
 		if r, ok := prodRate(b); ok {

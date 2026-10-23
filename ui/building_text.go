@@ -9,9 +9,10 @@ import (
 )
 
 // buildingText is a building's description as the lists show it. A knowledge
-// building also gives its copies against the most that can be built ("3 of 5
-// built.") and, when the description does not say it (it does: "comes with 2
-// scholars"), its scholars a copy.
+// building also says where its research halves ("Past 5 copies, each
+// researches at half rate.") and, when the description does not say it (it
+// does: "comes with 2 scholars"), its scholars a copy. Nothing refuses a copy
+// past that count, so the line is all it says about the count.
 func buildingText(bs game.BuildingState) string {
 	if bs.Scholars <= 0 {
 		return bs.Description
@@ -19,26 +20,16 @@ func buildingText(bs game.BuildingState) string {
 	count := textfmt.Count(bs.Scholars, vibe.Line("ui.building_text.buildingText.01", "scholar"), vibe.Line("ui.building_text.buildingText.02", "scholars"))
 	line := ""
 	if !strings.Contains(bs.Description, count) {
-		line = count + vibe.Line("ui.building_text.buildingText.03", " a copy")
+		line = textfmt.Capitalize(count+vibe.Line("ui.building_text.buildingText.03", " a copy")) + "."
 	}
-	if bs.ScholarCap > 0 {
+	if bs.FullRateCopies > 0 {
 		if line != "" {
-			line += ", "
+			line += " "
 		}
-		line += vibe.Sprintf("ui.building_text.buildingText.04", "%d of %d built", bs.Count, bs.ScholarCap)
+		line += vibe.Sprintf("ui.building_text.buildingText.07", "Past %s, each researches at half rate.", textfmt.Count(bs.FullRateCopies, vibe.Line("ui.building_text.buildingText.05", "copy"), vibe.Line("ui.building_text.buildingText.06", "copies")))
 	}
 	if line == "" {
 		return bs.Description
 	}
-	return strings.TrimSpace(bs.Description + " " + textfmt.Capitalize(line) + ".")
-}
-
-// atLimit is the words the Buildings panel gives a building that can be
-// built no further, for a knowledge building at its cap in the lists that do
-// not show them already.
-func atLimit(bs game.BuildingState) string {
-	if bs.Scholars > 0 && bs.AtMaxCount {
-		return vibe.Line("ui.building_text.atLimit.01", "Building limit reached.")
-	}
-	return ""
+	return strings.TrimSpace(bs.Description + " " + line)
 }

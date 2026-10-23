@@ -18,22 +18,21 @@ func rateOf(ge *GameEngine, res string) float64 {
 	return ge.Resources.resources[res].Rate
 }
 
-// TestTechLayerCountsAfterTheCap: a tech's output bonus multiplies what the
-// pools make after their soft cap, so it counts in full on a pool that is
-// far past its knee. Bonuses on the same thing add up inside the layer, a bonus on
-// all production adds to the one on the resource, and the breakdown's
-// research line is exactly what the layer added.
-func TestTechLayerCountsAfterTheCap(t *testing.T) {
+// TestTechLayerCountsAfterThePools: a tech's output bonus multiplies what the
+// pools make, so it counts in full on pools that are far past +200%. Bonuses
+// on the same thing add up inside the layer, a bonus on all production adds
+// to the one on the resource, and the breakdown's research line is exactly
+// what the layer added.
+func TestTechLayerCountsAfterThePools(t *testing.T) {
 	ge := newTruthEngine("industrial_age", truthClean)
 	// Milestone rewards worth +500% on all production and on stone: both
-	// pools are far past their knee and apply +275% (+200% and a quarter of
-	// the other +300%), x3.75 each.
+	// pools apply in full, x6 each.
 	ge.permanentBonuses["production_all"] = 5
 	ge.permanentBonuses["stone_rate"] = 5
 	base := rateOf(ge, "stone")
 	b := ge.Resources.resources["stone"].Breakdown
-	if got := (b.BuildingRate + b.BonusRate) / b.BuildingRate; math.Abs(got-3.75*3.75) > 1e-9 {
-		t.Fatalf("setup: stone runs at x%v of what its buildings make, want both pools past their knee (x3.75 each, x14.0625)", got)
+	if got := (b.BuildingRate + b.BonusRate) / b.BuildingRate; math.Abs(got-6*6) > 1e-9 {
+		t.Fatalf("setup: stone runs at x%v of what its buildings make, want both pools in full (x6 each, x36)", got)
 	}
 	if b.ResearchRate != 0 {
 		t.Fatalf("setup: research adds %v to stone with no tech researched", b.ResearchRate)

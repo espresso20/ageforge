@@ -94,7 +94,7 @@ Culture has two jobs. Your **culture strength** decides which tier of good epoch
 
 ### Culture sinks
 
-**Cultural Monuments** are four one-off buildings (one of each) built with the normal `build <key>` command. Each costs a large lump of culture plus other materials and gives a small **permanent** all-production bonus once built (it adds into [the all-production pool](#the-all-production-cap)).
+**Cultural Monuments** are four one-off buildings (one of each) built with the normal `build <key>` command. Each costs a large lump of culture plus other materials and gives a small **permanent** all-production bonus once built (it adds into [the all-production pool](#the-all-production-pool)).
 
 | Monument | Age | Culture Cost | Permanent Bonus |
 |----------|-----|--------------|-----------------|
@@ -159,7 +159,7 @@ The quarries and mines of the Iron to the Industrial Age make stone, iron and ir
 
 **No rule reads a store size.** A few prices used to be a share of one: the [festival](#culture), the [black market](trade.md#black-market), [faction deals](factions.md#trade-deals) and the harbinger's [Brace](harbinger.md#brace-soften-an-endure). They follow your income now. The festival, the black market and a deal's size are minutes of what your own town makes of the resource, so a town that makes twice the culture pays twice. Brace is priced on what a moderate town of the age makes, and capped at the same figure for every town.
 
-**Storage buildings no longer hold anything.** There is one per age, from the Stash to the Quantum Vault, with no limit on copies, each copy costing 1.75 times the one before it. Each copy you own adds **1% to all production**, in the same pool as the wonders' and monuments' bonuses to all production (see [the all-production cap](#the-all-production-cap)). See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the list. Every age gate still asks for five copies of the storage building of the age you are leaving.
+**Storage buildings no longer hold anything.** There is one per age, from the Stash to the Quantum Vault, with no limit on copies, each copy costing 1.75 times the one before it. Each copy you own adds **1% to all production**, in the same pool as the wonders' and monuments' bonuses to all production (see [the all-production pool](#the-all-production-pool)). See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the list. Every age gate still asks for five copies of the storage building of the age you are leaving.
 
 **Storage is permanent.**
 
@@ -172,42 +172,40 @@ When you advance to a new age, the stock you carry over is trimmed to a few copi
 
 ---
 
-## The all-production cap
+## The all-production pool
 
-Every "+X% all production" bonus in the game adds into one pool, except a technology's: wonders, milestones, cultural monuments, [storage buildings](buildings.md#storage-buildings-21-tiers) (1% a copy), events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + what the pool applies**, and never by less than **x0.1**.
+Every "+X% all production" bonus in the game adds into one pool, except a technology's: wonders, milestones, cultural monuments, [storage buildings](buildings.md#storage-buildings-21-tiers) (1% a copy), events (festivals included) and faction boons. Penalties, like the -10% Reconstruction Effort after you [Endure](catastrophe.md#endure) a catastrophe, come out of the same pool. The game multiplies your output by **1 + the pool**, and never by less than **x0.1**.
 
-**The cap is soft.** Up to **+200%** the pool applies in full. Past +200%, every further point still counts, at **a quarter** of its value. Nothing you earn is thrown away.
+**There is no ceiling.** The pool applies in full, however large it grows. Nothing you earn counts for less because of what you already hold, and a bonus is worth the same number of points at any point in a run.
 
-> **A worked example.** Your milestones, wonders and monuments have earned +320% all production. The first +200% counts in full. The other +120% counts a quarter, which is +30%. The pool applies +230%, so your output is multiplied by 3.3. Then you finish a milestone worth +10%. The pool has now earned +330% and applies +232.5%: the milestone added 2.5 points.
+> **A worked example.** Your milestones, wonders and monuments have earned +320% all production, so your output is multiplied by 4.2. Then you finish a milestone worth +10%. The pool is now +330% and your output is multiplied by 4.3: the milestone added 10 points.
 
-Milestone rewards fill most of the pool, and the five copies of every storage building the age gates ask for add 5% for each age. A player who earns every milestone as early as it can be earned passes +200% in the Victorian Age; most runs pass it a few ages later, and a run that skips milestones may never get there. By the last age a full set of milestones, wonders and monuments, with five copies of every storage building, has earned +766% and applies +341.5%. The pool used to stop at +200%, and the other +566% did nothing.
+Milestone rewards fill most of the pool, and the five copies of every storage building the age gates ask for add 5% for each age. By the last age a full set of milestones, wonders and monuments, with five copies of every storage building, has earned +766%, and your output is multiplied by 8.66.
 
-| The pool has earned | It applies | Output is multiplied by |
-|---|---|---|
-| +100% | +100% | 2 |
-| +200% | +200% | 3 |
-| +240% | +210% | 3.1 |
-| +320% | +230% | 3.3 |
-| +400% | +250% | 3.5 |
-| +766% | +341.5% | 4.4 |
+| The pool holds | Output is multiplied by |
+|---|---|
+| +100% | 2 |
+| +200% | 3 |
+| +320% | 4.2 |
+| +400% | 5 |
+| +766% | 8.66 |
 
-Timed bonuses follow the same rule. A festival's +20% or an Age of Plenty's +100% counts in full while the pool is under +200% and a quarter past it. Penalties do too: while the pool stays past +200%, a -10% setback costs 2.5 points.
+Timed bonuses follow the same rule. A festival's +20% or an Age of Plenty's +100% adds exactly that to the pool, whatever it holds. So do penalties: a -10% setback costs 10 points.
 
 Two things sit outside the pool and are applied after it, so they count in full in every age however much the pool holds:
 
 - **Technologies.** A tech's "+X% production" multiplies your output after the pool has been applied, and tech bonuses add up among themselves with no cap of their own. See [How Tech Bonuses Stack](technologies.md#how-tech-bonuses-stack).
 - The [Cosmic Legacy](prestige.md#cosmic-legacy), +10% on everything a resource makes.
 
-Bonuses to one resource ("+10% gold production" from a milestone or a wonder) have their own pool for that resource, with the same rule: in full up to +200%, a quarter past it, never under x0.1. No pool reaches +200% in any age: the fullest, the scholars' work (research speed), holds +145% with every scholar milestone and both research wonders.
+Bonuses to one resource ("+10% gold production" from a milestone or a wonder) have their own pool for that resource, with the same rule: in full, however large, never under x0.1. The fullest in any age, the scholars' work (scholar output), holds +145% with every scholar milestone and both research wonders.
 
-**The game tells you what counts.** Nothing is hidden past +200%:
+**The game shows the pool as it is.** The few limits that remain are named where they bite:
 
-- The Stats panel's Active Multipliers shows what the pool applies, with a note when it is past +200%: `All production +251% counts a quarter past +200%: +405% earned`. The sources beside it still list everything you earned.
-- The `rates` command adds a line when a pool applies less than it has earned: `All production: +405% earned, +251% counts. Past +200% a bonus counts a quarter.`
-- The Milestones and Wonders panels put a note beside every reward and wonder effect in a pool past +200%, and one still to earn says what it would add before you work for it: `+10% all production (counts a quarter past +200%: +2.5% now)`.
+- The Stats panel's Active Multipliers shows the whole pool as its total, with the sources beside it. It adds a note only when a limit holds a pool back: the x0.1 floor, or research speed past +100%.
+- The `rates` command adds a line only for a pool a limit holds below what it has earned: `All production: -140% earned, -90% counts.`
+- The Milestones and Wonders panels list every all-production reward and wonder effect as it is, with no note. A reward in a pool a limit holds says what it would add before you work for it: `+5% research speed (capped: no effect now)`.
 - The tech tree never shows one: no cap holds a tech's bonus.
-- The `festival` command tells you before you pay what a festival held now would add.
-- The log adds a line when a bonus you just earned counts a quarter: a milestone, a wonder, an awakening, an epoch event, a festival or a boon.
+- The log adds a line only when a bonus you just earned is held back by a limit.
 
 <figure class="screen" data-screen="rates"><figcaption>The foot of the Stats panel in the Bronze Age: the rate of every resource, then the multipliers in play and where each one comes from.</figcaption></figure>
 
