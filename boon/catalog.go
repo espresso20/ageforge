@@ -11,7 +11,9 @@ const (
 // instantGrowthPerAge is the per-age growth factor for instant lump grants (Kind
 // InstantResource). A fixed crate of 50 to 200 is a fortune in the primitive age
 // and a rounding error in the quantum age, so the lump is multiplied by
-// instantGrowthPerAge^ageIndex (see Profile.instantScale).
+// instantGrowthPerAge^ageIndex (see Profile.instantScale). 2.2 is meant to follow
+// the growth of one building's output per age, so a lump stays worth about the
+// same number of ticks of production through the whole run.
 const instantGrowthPerAge = 2.2
 
 // maxDrainFraction is the ceiling on a ResourceDrain after the profile's
