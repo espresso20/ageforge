@@ -51,7 +51,7 @@ The tech tree draws each keystone with a ★ on a double frame and each capstone
 
 ### How Research is Priced
 
-A tech's price follows its age's ladder: inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. The tables below give every tech's **time for a full set of scholars at its age**: every knowledge building up to that age built to its cap, all researching, before any bonus. Your own times are the ones the tree shows. The Transcendent Age has no knowledge building of its own, so its techs are researched by the scholars of the ages before it.
+A tech's price follows its age's ladder: inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. The tables below give every tech's **time for a full set of scholars at its age**: every knowledge building up to that age built to its full-rate count, all researching, before any bonus. Your own times are the ones the tree shows. The Transcendent Age has no knowledge building of its own, so its techs are researched by the scholars of the ages before it.
 
 **Research simmers.** From the Stone Age on, the techs of an age ask for about one and a half times the work that the scholars of a typical town do while the town stays in that age. Researching all of an age takes longer than the age, and what you have not finished carries forward into the ages after it: it is an idle game, and you get every tech, but it takes some time. The Primitive Age is the exception, where the techs ask for less than the scholars do in a stay, so a new player sees a tech finish early. The keystone is the other exception. It is priced to finish inside its age, because its wonder needs it before you can leave.
 
@@ -221,12 +221,12 @@ The glyphs follow your `map glyphs` setting: with `map glyphs ascii` the tree is
 
 ## How Tech Bonuses Stack
 
-A tech's bonus is applied in a layer of its own, after every other bonus and after the pools' soft cap.
+A tech's bonus is applied in a layer of its own, after every other bonus and after the pools.
 
-The game's other bonuses (milestone rewards, wonders, monuments, festivals, events, boons) add up in pools, and a pool has a soft cap: all production and each resource's own output apply in full up to +200%, and a quarter of every point past it (see [The all-production cap](resources.md#the-all-production-cap)). So a pool that has earned +320% applies +230%. Techs join no pool. A tech's output bonus multiplies what the pools make, where [Era Mastery](prestige.md#era-mastery) does, so it counts in full whatever else you hold.
+The game's other bonuses (milestone rewards, wonders, monuments, festivals, events, boons) add up in pools, and a pool has no ceiling: all production and each resource's own output apply in full, however large the pool grows (see [The all-production pool](resources.md#the-all-production-pool)). So a pool that has earned +320% applies +320%. Techs join no pool. A tech's output bonus multiplies what the pools make, where [Era Mastery](prestige.md#era-mastery) does, so it counts in full whatever else you hold.
 
 ```
-what a resource makes = buildings and workers × pools (in full to +200%, a quarter past it) × (1 + tech bonuses)
+what a resource makes = buildings and workers × pools (in full, at any size) × (1 + tech bonuses)
 ```
 
 - **Bonuses on the same thing add up.** Two +5% techs on the same resource give +10%, not ×1.1025. A tech's bonus on all production adds to its bonuses on one resource: with +20% stone and +5% all production, stone runs at ×1.25.
@@ -234,7 +234,7 @@ what a resource makes = buildings and workers × pools (in full to +200%, a quar
 - **Flat amounts stay amounts.** Steel Forging's +0.25 steel a tick and Satellite Technology's +1 data are the first source of a resource, not a bonus, and the layer does not multiply them.
 - **Cuts multiply, and each has a floor.** A tech that cuts a price or a time takes its share of what the cuts before it left: two 3% cuts on building costs leave 0.97 × 0.97. Building costs never fall under 10% of the listed price, construction under 40% of its time, or research under 50% of its time, however many cuts stack. All of today's techs together stay far from every floor.
 - **Housing is a percentage** of the housing you have: +5% housing is 5% more housing, rounded up to a whole person.
-- **Game speed, military power and expedition rewards** are added to the pools of those names, shared with milestones and wonders. None of the three has the soft cap.
+- **Game speed, military power and expedition rewards** are added to the pools of those names, shared with milestones and wonders.
 - The `rates` command shows what the techs add to a resource on its **Research** line, and the Stats panel lists what all your techs come to together, under Research bonuses.
 
 A tech's bonus is never permanent. Prestige, Succumb and a new game wipe every tech and everything it gave.
@@ -267,7 +267,7 @@ Prerequisites are listed by tech key. A tech needs every prerequisite it lists.
 
 **Changed prerequisites.** Thirteen techs need different techs than they used to. Fire Mastery needs nothing now, and Rocketry follows Aviation, no longer Rifling and Chemical Engineering. Primitive Writing follows Language, Feudalism follows The Plough, Road Building needs The Wheel as well as Masonry, and Navigation needs Exploration as well as Mathematics. Mathematics no longer needs Currency, Philosophy no longer lists Primitive Writing (Mathematics already needs it), Civil Engineering no longer lists Masonry (Road Building already needs it), Navigation no longer needs Road Building, and Mass Production no longer needs Railroads. Alchemy needs Philosophy instead of Mathematics, and Quantum Computing needs Quantum Mechanics as well as Clockwork Automation. A save from before the change keeps everything it had: a tech you already researched stays researched and still opens the techs that need it, a research in progress finishes, and a tech in your plan waits for what it now needs.
 
-Time is what a tech takes a full set of scholars at its age: every knowledge building up to that age built to its cap, all researching (see [How Research is Priced](#how-research-is-priced)). It is before any bonus and at 2 seconds a tick; your own times are on the tree. Every effect in the tables counts in full in every age (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)).
+Time is what a tech takes a full set of scholars at its age: every knowledge building up to that age built to its full-rate count, all researching (see [How Research is Priced](#how-research-is-priced)). It is before any bonus and at 2 seconds a tick; your own times are on the tree. Every effect in the tables counts in full in every age (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)).
 
 **Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). What times them is where they stand in the tree: each needs most of its age's other techs first, so it comes after them. Civilian Reactors stands behind Nuclear Deterrence, Internet of Things behind three Information Age techs, Holography behind Cybernetics and Blockchain, and in the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another. A gated building stays hidden from the build list until its tech is done, and `build` and `upgrade` refuse it until then; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built. See [Buildings a tech opens](buildings.md#buildings-a-tech-opens). A wonder's keystone works the same way for building, but the wonder is listed and its bank is open from the start of the age.
 
@@ -682,7 +682,7 @@ Each raises what one resource's buildings and workers make. Bonuses on the same 
 | Space Elevator | Space | +0.6% |
 | Transcendence | Transcendent | +5% |
 
-Together +14.2%, on top of each resource's own bonus. Nothing here joins the all-production pool that milestones and wonders fill, so that pool's soft cap never touches it.
+Together +14.2%, on top of each resource's own bonus. Nothing here joins the all-production pool that milestones and wonders fill.
 
 ### First sources
 
@@ -817,7 +817,7 @@ These techs move a single number of a game mechanic.
 
 ### Game speed
 
-Three techs raise game speed: ticks come more often, so production, construction, research and every timer run faster in real time. Game speed is a pool of its own, shared with milestone chain boosts and boons; the soft cap is not on it. The bonuses add together:
+Three techs raise game speed: ticks come more often, so production, construction, research and every timer run faster in real time. Game speed is a pool of its own, shared with milestone chain boosts and boons. The bonuses add together:
 
 | Source | Bonus | Lasts |
 |---|---|---|
@@ -921,7 +921,7 @@ Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige
 
 ### Late-Game Research Scaling
 
-Prices rise steeply from the first age to the last. The work of your scholars rises with them, so build your age's knowledge building up to its cap.
+Prices rise steeply from the first age to the last. The work of your scholars rises with them, so build your age's knowledge building up to its full-rate count; a copy past that count still helps, at half rate.
 
 ---
 
