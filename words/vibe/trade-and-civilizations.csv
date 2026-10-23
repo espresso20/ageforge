@@ -1,0 +1,1044 @@
+id,text
+mission.primitive_age.weather.01,a sand tantrum
+mission.primitive_age.weather.02,a flash flood era
+mission.primitive_age.weather.03,a hail hissy fit
+mission.primitive_age.foes.01,wolf squad
+mission.primitive_age.foes.02,salty rival clan
+mission.primitive_age.foes.03,raider goons
+mission.primitive_age.helpers.01,a bestie camp
+mission.primitive_age.helpers.02,a sheep whisperer
+mission.primitive_age.helpers.03,a trade hype squad
+mission.primitive_age.finds.01,a bone stash
+mission.primitive_age.finds.02,a flint jackpot
+mission.primitive_age.finds.03,a sus buried shrine
+mission.primitive_age.tier.01,Snack Run
+mission.primitive_age.tier.02,Hunt Szn
+mission.primitive_age.tier.03,Raid Arc
+mission.primitive_age.tier.04,Great Migration Era
+mission.primitive_age.place.01,Dry Crick
+mission.primitive_age.place.02,Birchy Hollow
+mission.primitive_age.place.03,Mud Flat Mansion
+mission.primitive_age.place.04,Flint Ridge Rizz
+mission.primitive_age.place.05,Fern Valley Vibes
+mission.primitive_age.place.06,Long Meadow Lore
+mission.primitive_age.short.01,bag roots along the
+mission.primitive_age.short.02,snatch berries near the
+mission.primitive_age.short.03,trace the animal tracks to the
+mission.primitive_age.short.04,dig up grubs by the
+mission.primitive_age.long.01,trail a herd across the
+mission.primitive_age.long.02,push game toward the
+mission.primitive_age.long.03,chase a mammoth over the
+mission.primitive_age.long.04,lock in on elk along the
+mission.primitive_age.military.01,yoink food from camps near the
+mission.primitive_age.military.02,cancel the strangers at the
+mission.primitive_age.military.03,jump the hunters on the
+mission.primitive_age.military.04,run it back and get the stolen fire from the
+mission.primitive_age.civil.01,lead the squad past the
+mission.primitive_age.civil.02,manifest a winter camp beyond the
+mission.primitive_age.civil.03,carry the fire across the
+mission.primitive_age.civil.04,settle the clan by the
+mission.primitive_age.twist.01,"Rain wiped out the first night's tracks, so that's a whole L."
+mission.primitive_age.twist.02,Wolves are tailing the party like it's a side quest.
+mission.primitive_age.twist.03,"Night two, the fire said nope and went out."
+mission.primitive_age.twist.04,"Bestie swears they heard a roar, and it's giving horror movie."
+mission.primitive_age.twist.05,"Wind is carrying smoke in from way off, big spooky energy."
+mission.primitive_age.twist.06,"Frost showed up early this year, rude."
+mission.stone_age.weather.01,a grit bomb
+mission.stone_age.weather.02,a sudden flash flood
+mission.stone_age.weather.03,a hail-bomb
+mission.stone_age.foes.01,bandit squad
+mission.stone_age.foes.02,raider drama
+mission.stone_age.foes.03,rival clan NPCs
+mission.stone_age.helpers.01,a bestie village
+mission.stone_age.helpers.02,a flock fixer
+mission.stone_age.helpers.03,a rizz trade post
+mission.stone_age.finds.01,a flint stash
+mission.stone_age.finds.02,a rock stash
+mission.stone_age.finds.03,a deep buried shrine
+mission.stone_age.tier.01,Forage Glow-Up
+mission.stone_age.tier.02,Trek Arc
+mission.stone_age.tier.03,Raid Drama
+mission.stone_age.tier.04,Hill Fort Glow-Up
+mission.stone_age.place.01,Salty Lick
+mission.stone_age.place.02,Flint Pit Drama
+mission.stone_age.place.03,Cozy Cave Mouth
+mission.stone_age.place.04,Standing Stone Stans
+mission.stone_age.place.05,Rusty Clay Bank
+mission.stone_age.place.06,Bone Hills Hype
+mission.stone_age.short.01,stock up on flint at the
+mission.stone_age.short.02,snag herbs around the
+mission.stone_age.short.03,scout game trails near the
+mission.stone_age.short.04,fish the ponds below the
+mission.stone_age.long.01,trek out to the far side of the
+mission.stone_age.long.02,tail the river past the
+mission.stone_age.long.03,flip hides at the
+mission.stone_age.long.04,chart the high ground above the
+mission.stone_age.military.01,raid the rival clan at the
+mission.stone_age.military.02,torch the stockade by the
+mission.stone_age.military.03,claim the stone quarry at the
+mission.stone_age.military.04,send the raiders packing from the
+mission.stone_age.civil.01,stack stone walls on the
+mission.stone_age.civil.02,haul massive stones to the
+mission.stone_age.civil.03,dig a ditch that slaps around the
+mission.stone_age.civil.04,level up the long house at the
+mission.stone_age.twist.01,"Rival clan smoke is rising out there, so it's giving threat."
+mission.stone_age.twist.02,Elders swear the signs are a W.
+mission.stone_age.twist.03,"Somebody rolled an ankle on loose scree, rough one."
+mission.stone_age.twist.04,"Stone here rings like a bell, sheesh."
+mission.stone_age.twist.05,"Cold nights have the party huddled by the fire, big cuddle energy."
+mission.stone_age.twist.06,"Some kid's carving turns up along the trail, lowkey iconic."
+mission.bronze_age.weather.01,a sandy meltdown
+mission.bronze_age.weather.02,a flood plot twist
+mission.bronze_age.weather.03,a hail tantrum
+mission.bronze_age.foes.01,bandit crew
+mission.bronze_age.foes.02,raider squad
+mission.bronze_age.foes.03,beefy rival clan
+mission.bronze_age.helpers.01,a bussin village
+mission.bronze_age.helpers.02,a herd whisperer
+mission.bronze_age.helpers.03,a drip trade post
+mission.bronze_age.finds.01,an amber stash
+mission.bronze_age.finds.02,a tin fortune
+mission.bronze_age.finds.03,a rizzy buried shrine
+mission.bronze_age.tier.01,Vibe Check
+mission.bronze_age.tier.02,Bag Trek
+mission.bronze_age.tier.03,Mini Beef
+mission.bronze_age.tier.04,Trade Mission Era
+mission.bronze_age.place.01,Copper Hills Drip
+mission.bronze_age.place.02,Tin Road Arc
+mission.bronze_age.place.03,Harbor Town Lore
+mission.bronze_age.place.04,Clay Terrace Cafe
+mission.bronze_age.place.05,Amber Coast Aura
+mission.bronze_age.place.06,Cedar Pass Glow
+mission.bronze_age.short.01,scout the road to the
+mission.bronze_age.short.02,vibe-check the herds near the
+mission.bronze_age.short.03,rate the wells along the
+mission.bronze_age.short.04,babysit the border at the
+mission.bronze_age.long.01,haul copper to the
+mission.bronze_age.long.02,swap pots for tin at the
+mission.bronze_age.long.03,ride the amber road to the
+mission.bronze_age.long.04,bodyguard a caravan through the
+mission.bronze_age.military.01,start beef with raiders at the
+mission.bronze_age.military.02,hold the ford down near the
+mission.bronze_age.military.03,claim the watchtower at the
+mission.bronze_age.military.04,boot bandits out of the
+mission.bronze_age.civil.01,launch a trade house at the
+mission.bronze_age.civil.02,slide gifts to the chiefs of the
+mission.bronze_age.civil.03,plot a trade route through the
+mission.bronze_age.civil.04,lock in a pact at the
+mission.bronze_age.twist.01,"Merchant offers a bad price but a good story, peak storytelling."
+mission.bronze_age.twist.02,"Tin seller keeps flip-flopping, it's giving indecisive."
+mission.bronze_age.twist.03,"Smiths on the road want a peek at your bronze, bet."
+mission.bronze_age.twist.04,"Bridge is out and the detour costs a whole day, rough."
+mission.bronze_age.twist.05,"Bandits were spotted here last month, so be careful, bestie."
+mission.bronze_age.twist.06,"Harvest fest jams the road with carts, peak Fest Szn."
+mission.iron_age.weather.01,a sad rain era
+mission.iron_age.weather.02,an ice-cold snap
+mission.iron_age.weather.03,a gusty meltdown
+mission.iron_age.foes.01,raid bros
+mission.iron_age.foes.02,warrior bros
+mission.iron_age.foes.03,clan beef squad
+mission.iron_age.helpers.01,a roadside hype village
+mission.iron_age.helpers.02,a sheep sommelier
+mission.iron_age.helpers.03,a trading hub era
+mission.iron_age.finds.01,an iron horde
+mission.iron_age.finds.02,a coin bag
+mission.iron_age.finds.03,a buried shrine with sauce
+mission.iron_age.tier.01,Sus Check
+mission.iron_age.tier.02,Caravan Era
+mission.iron_age.tier.03,Siege Szn
+mission.iron_age.tier.04,Founder Era Trip
+mission.iron_age.place.01,Ironhill Lounge
+mission.iron_age.place.02,Black Gate Gang
+mission.iron_age.place.03,Salty Road
+mission.iron_age.place.04,Stone Bridge Bussin
+mission.iron_age.place.05,Border Keep Hangout
+mission.iron_age.place.06,Wolf Forest Haunt
+mission.iron_age.short.01,suss out the roads around the
+mission.iron_age.short.02,tap the iron seams under the
+mission.iron_age.short.03,vet the milestones near the
+mission.iron_age.short.04,eyeball the wall at the
+mission.iron_age.long.01,run a caravan to the
+mission.iron_age.long.02,lug iron ore to the
+mission.iron_age.long.03,grind the long road to the
+mission.iron_age.long.04,bring grain through the
+mission.iron_age.military.01,put the siege on the
+mission.iron_age.military.02,smash the gates of the
+mission.iron_age.military.03,starve out the keep at the
+mission.iron_age.military.04,rush the walls of the
+mission.iron_age.civil.01,spin up a town near the
+mission.iron_age.civil.02,build a fort beside the
+mission.iron_age.civil.03,move farmers in at the
+mission.iron_age.civil.04,carve a canal toward the
+mission.iron_age.twist.01,"Toll collector asks way too many questions, unhinged."
+mission.iron_age.twist.02,"Forge smoke is giving lighthouse energy, seen for miles."
+mission.iron_age.twist.03,"Rain has the road looking like a mud bath, not it."
+mission.iron_age.twist.04,"Deserter begs to join, lowkey desperate."
+mission.iron_age.twist.05,"Harvest has been mid all along the way, hard pass."
+mission.iron_age.twist.06,"Old beacon still burning on the hill, legacy fr."
+mission.classical_age.weather.01,a salty squall
+mission.classical_age.weather.02,a sweaty heat wave
+mission.classical_age.weather.03,a soggy downpour
+mission.classical_age.foes.01,pirate crew
+mission.classical_age.foes.02,hired goons
+mission.classical_age.foes.03,rival city with beef
+mission.classical_age.helpers.01,a bestie guide
+mission.classical_age.helpers.02,a hustle merchant
+mission.classical_age.helpers.03,a pit stop
+mission.classical_age.finds.01,a coin stack
+mission.classical_age.finds.02,a bronze drop
+mission.classical_age.finds.03,a sauced buried shrine
+mission.classical_age.tier.01,Vibe Check
+mission.classical_age.tier.02,Trade Voyage Arc
+mission.classical_age.tier.03,Legion Main Quest
+mission.classical_age.tier.04,Embassy Era
+mission.classical_age.place.01,Marble Harbor Drip
+mission.classical_age.place.02,Olive Coast Glow
+mission.classical_age.place.03,Forum Road Drama
+mission.classical_age.place.04,Hill of Oaks Hangout
+mission.classical_age.place.05,Amber Strait Rizz
+mission.classical_age.place.06,Mega Aqueduct
+mission.classical_age.short.01,scope out the roads of the
+mission.classical_age.short.02,tally the columns at the
+mission.classical_age.short.03,vibe-check the aqueduct near the
+mission.classical_age.short.04,pin the coast near the
+mission.classical_age.long.01,sail wine out to the
+mission.classical_age.long.02,tote marble to the
+mission.classical_age.long.03,move oil and grain at the
+mission.classical_age.long.04,roadtrip around the cape of the
+mission.classical_age.military.01,send the legion marching to the
+mission.classical_age.military.02,besiege the walls of the
+mission.classical_age.military.03,hold down the pass above the
+mission.classical_age.military.04,cut off the supply road to the
+mission.classical_age.civil.01,slide an embassy over to the
+mission.classical_age.civil.02,bring bougie gifts to the senate of the
+mission.classical_age.civil.03,throw the games at the
+mission.classical_age.civil.04,raise a theater at the
+mission.classical_age.twist.01,"Rhetorician argues with the party for a whole day, touch grass."
+mission.classical_age.twist.02,"Omens get read at dawn and everybody disagrees, mid."
+mission.classical_age.twist.03,"Magistrate insists on a long speech, it's giving filibuster."
+mission.classical_age.twist.04,"Storm shut the harbor for two days, cancelled."
+mission.classical_age.twist.05,"Scribe wants to log every single thing, big docu energy."
+mission.classical_age.twist.06,Statues line the road like a crowd of extras.
+mission.medieval_age.weather.01,a whiteout moment
+mission.medieval_age.weather.02,a rude downpour
+mission.medieval_age.weather.03,a gale with rizz
+mission.medieval_age.foes.01,brigand bros
+mission.medieval_age.foes.02,soldier NPCs
+mission.medieval_age.foes.03,villain era lord
+mission.medieval_age.helpers.01,a local guide with rizz
+mission.medieval_age.helpers.02,a ferry bestie
+mission.medieval_age.helpers.03,an innkeeper bestie
+mission.medieval_age.finds.01,a silver haul
+mission.medieval_age.finds.02,a locked-up chest
+mission.medieval_age.finds.03,a glow-up buried shrine
+mission.medieval_age.tier.01,Patrol Szn
+mission.medieval_age.tier.02,Pilgrim Arc
+mission.medieval_age.tier.03,Siege Era
+mission.medieval_age.tier.04,Grand Pilgrim Glow-Up
+mission.medieval_age.place.01,Oak Abbey Vibes
+mission.medieval_age.place.02,Grey Castle Gloom
+mission.medieval_age.place.03,Pilgrim's Ford Pit Stop
+mission.medieval_age.place.04,Wolf Moor Mood
+mission.medieval_age.place.05,King's Road Era
+mission.medieval_age.place.06,Mill Town Chill
+mission.medieval_age.short.01,run laps on the lanes around the
+mission.medieval_age.short.02,ride the edges of the
+mission.medieval_age.short.03,stalk the road near the
+mission.medieval_age.short.04,judge the beacon fires at the
+mission.medieval_age.long.01,stroll the pilgrim road to the
+mission.medieval_age.long.02,drop relics off at the
+mission.medieval_age.long.03,chaperone monks to the
+mission.medieval_age.long.04,flex wool and tin at the
+mission.medieval_age.military.01,park a siege on the
+mission.medieval_age.military.02,mob the walls of the
+mission.medieval_age.military.03,roast the siege camp at the
+mission.medieval_age.military.04,hold down the ford at the
+mission.medieval_age.civil.01,lead the mega pilgrimage to the
+mission.medieval_age.civil.02,raise a cathedral beside the
+mission.medieval_age.civil.03,open an abbey near the
+mission.medieval_age.civil.04,bring the king's gift to the
+mission.medieval_age.twist.01,"Friar sells blessings for a small fee, very sus."
+mission.medieval_age.twist.02,Fog is thicker than the plot on this road.
+mission.medieval_age.twist.03,"Minstrel is already singing about the party, way too early."
+mission.medieval_age.twist.04,"Local lord wants a toll, the audacity."
+mission.medieval_age.twist.05,"Bells are ringing in the next valley, it's a vibe."
+mission.medieval_age.twist.06,Bad harvest has the villages on edge.
+mission.renaissance_age.weather.01,a spring tantrum
+mission.renaissance_age.weather.02,a nonstop soggy rain
+mission.renaissance_age.weather.03,a choppy sea mood
+mission.renaissance_age.foes.01,privateer gang
+mission.renaissance_age.foes.02,mercenary bros
+mission.renaissance_age.foes.03,rival court drama
+mission.renaissance_age.helpers.01,a local fixer
+mission.renaissance_age.helpers.02,a bag chaser
+mission.renaissance_age.helpers.03,a harbor boss
+mission.renaissance_age.finds.01,a coin jackpot
+mission.renaissance_age.finds.02,a spice drop
+mission.renaissance_age.finds.03,a bussin buried shrine
+mission.renaissance_age.tier.01,Explore Szn
+mission.renaissance_age.tier.02,Sail Era
+mission.renaissance_age.tier.03,Campaign Drama
+mission.renaissance_age.tier.04,Grand Voyage Glow-Up
+mission.renaissance_age.place.01,Gilded Coast Glam
+mission.renaissance_age.place.02,Spicy Isles
+mission.renaissance_age.place.03,Painted Harbor Pop
+mission.renaissance_age.place.04,Inkwell Bay Tea
+mission.renaissance_age.place.05,Silk Quarter Slay
+mission.renaissance_age.place.06,Far Meridian Trip
+mission.renaissance_age.short.01,tour the shore of the
+mission.renaissance_age.short.02,cook up maps of the
+mission.renaissance_age.short.03,sprint inland from the
+mission.renaissance_age.short.04,ping the depths off the
+mission.renaissance_age.long.01,ship out for the
+mission.renaissance_age.long.02,flex cloth and glass at the
+mission.renaissance_age.long.03,tote letters of credit to the
+mission.renaissance_age.long.04,quest for a new passage past the
+mission.renaissance_age.military.01,pull up on the garrison at the
+mission.renaissance_age.military.02,siege the fortress of the
+mission.renaissance_age.military.03,drop troops at the
+mission.renaissance_age.military.04,cancel the pirates from the
+mission.renaissance_age.civil.01,unlock a western passage beyond the
+mission.renaissance_age.civil.02,open a trade house on the
+mission.renaissance_age.civil.03,kit out a huge fleet for the
+mission.renaissance_age.civil.04,bring the brainiacs to the
+mission.renaissance_age.twist.01,"Patron demands the party name something after him, ego check."
+mission.renaissance_age.twist.02,"Astronomer swears the stars moved, and nobody wants to hear it."
+mission.renaissance_age.twist.03,"Pirates were clocked off the coast, be careful."
+mission.renaissance_age.twist.04,"Painter begs to join the voyage, aesthetic over everything."
+mission.renaissance_age.twist.05,"Compass drifts a few degrees, delulu north."
+mission.renaissance_age.twist.06,"Pamphlets about the trip show up before you do, the hype is real."
+mission.colonial_age.weather.01,a monsoon drama
+mission.colonial_age.weather.02,a sorry downpour
+mission.colonial_age.weather.03,a salty sea mood
+mission.colonial_age.foes.01,privateer goons
+mission.colonial_age.foes.02,raider crew
+mission.colonial_age.foes.03,salty rival company
+mission.colonial_age.helpers.01,a map-savvy local
+mission.colonial_age.helpers.02,a W-energy trader
+mission.colonial_age.helpers.03,a harbor main character
+mission.colonial_age.finds.01,a silver jackpot
+mission.colonial_age.finds.02,a spicy hoard
+mission.colonial_age.finds.03,a shrine buried in lore
+mission.colonial_age.tier.01,Survey Szn
+mission.colonial_age.tier.02,Colony Grind
+mission.colonial_age.tier.03,Campaign Mode
+mission.colonial_age.tier.04,Colony Glow-Up
+mission.colonial_age.place.01,Cape Harbor Bop
+mission.colonial_age.place.02,Fresh Bay Era
+mission.colonial_age.place.03,Tobacco Coast Mood
+mission.colonial_age.place.04,Fur River Fits
+mission.colonial_age.place.05,Fort Haven Zone
+mission.colonial_age.place.06,Green Islands Oasis
+mission.colonial_age.short.01,scope the coast of the
+mission.colonial_age.short.02,sketch the river mouth at the
+mission.colonial_age.short.03,hike trails inland from the
+mission.colonial_age.short.04,bean-count the stores at the
+mission.colonial_age.long.01,ship supplies out to the
+mission.colonial_age.long.02,pick up furs from the
+mission.colonial_age.long.03,link up with the settlers at the
+mission.colonial_age.long.04,slip the blockade to the
+mission.colonial_age.military.01,pull up on the rival fort at the
+mission.colonial_age.military.02,blitz the harbor of the
+mission.colonial_age.military.03,lock the colony line at the
+mission.colonial_age.military.04,scorch the stockade at the
+mission.colonial_age.civil.01,spin up a colony on the
+mission.colonial_age.civil.02,tuck families in beside the
+mission.colonial_age.civil.03,stack a fort and a mill at the
+mission.colonial_age.civil.04,seed the first crops at the
+mission.colonial_age.twist.01,"Fever is running through the crew, not a vibe."
+mission.colonial_age.twist.02,"Locals trade fish for iron needles, the rate is wild."
+mission.colonial_age.twist.03,"Charter is late and the ink is smudged, very sus."
+mission.colonial_age.twist.04,"Storm blew the party off course, big plot twist."
+mission.colonial_age.twist.05,"Map turns out to be wrong, and nobody sees it coming."
+mission.colonial_age.twist.06,Settlers are beefing over who owns the land.
+mission.industrial_age.weather.01,a smoky haze era
+mission.industrial_age.weather.02,a grimy downpour
+mission.industrial_age.weather.03,a boiler meltdown
+mission.industrial_age.foes.01,bandit crew
+mission.industrial_age.foes.02,salty rival workers
+mission.industrial_age.foes.03,block crew
+mission.industrial_age.helpers.01,a rail bestie
+mission.industrial_age.helpers.02,a station hype man
+mission.industrial_age.helpers.03,a trade stop with drip
+mission.industrial_age.finds.01,a tool haul
+mission.industrial_age.finds.02,a coin pile
+mission.industrial_age.finds.03,a buried shop
+mission.industrial_age.tier.01,Prospect Glow
+mission.industrial_age.tier.02,Rail Expedition Era
+mission.industrial_age.tier.03,Offensive Mode
+mission.industrial_age.tier.04,Great Railway Glow
+mission.industrial_age.place.01,Coal Valley Gloom
+mission.industrial_age.place.02,Iron Basin Drama
+mission.industrial_age.place.03,Canal Junction Hot Spot
+mission.industrial_age.place.04,Smoke Hills Haze
+mission.industrial_age.place.05,Steam Harbor Bussin
+mission.industrial_age.place.06,Mill Row Gossip
+mission.industrial_age.short.01,mine for coal in the
+mission.industrial_age.short.02,stress-test the seams of the
+mission.industrial_age.short.03,scope a rail line through the
+mission.industrial_age.short.04,clock the furnaces of the
+mission.industrial_age.long.01,lay the track to the
+mission.industrial_age.long.02,truck ore across the
+mission.industrial_age.long.03,push a freight line past the
+mission.industrial_age.long.04,crank a canal toward the
+mission.industrial_age.military.01,launch a whole offensive on the
+mission.industrial_age.military.02,shell the works at the
+mission.industrial_age.military.03,cancel the rail line to the
+mission.industrial_age.military.04,take over the foundry at the
+mission.industrial_age.civil.01,build the mega railway through the
+mission.industrial_age.civil.02,bridge the gorge of the
+mission.industrial_age.civil.03,hook up a trunk line to the
+mission.industrial_age.civil.04,stand up a station at the
+mission.industrial_age.twist.01,"Boiler burst and the whole line just got delayed, rough."
+mission.industrial_age.twist.02,"Foreman wants more pay and more coal, the audacity."
+mission.industrial_age.twist.03,"Soot is hanging over everything, aesthetic in a bad way."
+mission.industrial_age.twist.04,"Inventor begs the party to test his engine, and it's giving desperation."
+mission.industrial_age.twist.05,"Whistle blows and the whole town freezes, main character moment."
+mission.industrial_age.twist.06,"Telegraph wires hum with rumors, the group chat is loud."
+mission.victorian_age.weather.01,a foggy London mood
+mission.victorian_age.weather.02,a bone-soaking rain
+mission.victorian_age.weather.03,a whole gale
+mission.victorian_age.foes.01,highway goons
+mission.victorian_age.foes.02,sus rival agents
+mission.victorian_age.foes.03,gang with beef
+mission.victorian_age.helpers.01,a porter bestie
+mission.victorian_age.helpers.02,a ride-or-die guide
+mission.victorian_age.helpers.03,a glow trade post
+mission.victorian_age.finds.01,a brass horde
+mission.victorian_age.finds.02,a coin bonanza
+mission.victorian_age.finds.03,a buried vault
+mission.victorian_age.tier.01,Prospect Hype
+mission.victorian_age.tier.02,Expedition Trip
+mission.victorian_age.tier.03,Offensive Drama
+mission.victorian_age.tier.04,Polar Expedition Arc
+mission.victorian_age.place.01,Ice Barrier Chill
+mission.victorian_age.place.02,Cape Frost Trip
+mission.victorian_age.place.03,Amber Falls Bop
+mission.victorian_age.place.04,Brass Harbor Bussin
+mission.victorian_age.place.05,Gaslight Quarter Shade
+mission.victorian_age.place.06,Silver River Splash
+mission.victorian_age.short.01,chase gold rumors in the
+mission.victorian_age.short.02,sketch the foothills of the
+mission.victorian_age.short.03,suss out the coast near the
+mission.victorian_age.short.04,pocket specimens from the
+mission.victorian_age.long.01,lead a whole expedition up the
+mission.victorian_age.long.02,cross the uncharted turf of the
+mission.victorian_age.long.03,hunt the source of the
+mission.victorian_age.long.04,haul back specimens from the
+mission.victorian_age.military.01,run an offensive on the
+mission.victorian_age.military.02,bombard the fort at the
+mission.victorian_age.military.03,roll up on the capital of the
+mission.victorian_age.military.04,hold it down at the
+mission.victorian_age.civil.01,beeline for the pole beyond the
+mission.victorian_age.civil.02,stage the great exhibition at the
+mission.victorian_age.civil.03,chart the ice around the
+mission.victorian_age.civil.04,hunker down at the
+mission.victorian_age.twist.01,"Naturalist insists on a whole day for beetles, the lore is deep."
+mission.victorian_age.twist.02,"Tea runs out on day two, and the vibe dies."
+mission.victorian_age.twist.03,"Newspaper slid a reporter into the group, eek."
+mission.victorian_age.twist.04,"Trunks are heavier than the map says, the math is off."
+mission.victorian_age.twist.05,"Fog rolls in thick as soup, the vibe is cursed."
+mission.victorian_age.twist.06,"Telegram brings good news and bad news, the group chat is spiraling."
+mission.electric_age.weather.01,a lights-out L
+mission.electric_age.weather.02,a sizzling heat era
+mission.electric_age.weather.03,a thunder tantrum
+mission.electric_age.foes.01,gangster bros
+mission.electric_age.foes.02,rival agent squad
+mission.electric_age.foes.03,gang with drip
+mission.electric_age.helpers.01,a station bestie
+mission.electric_age.helpers.02,a local with the goods
+mission.electric_age.helpers.03,a relay wizard
+mission.electric_age.finds.01,a parts stash
+mission.electric_age.finds.02,a coin mountain
+mission.electric_age.finds.03,a buried safe
+mission.electric_age.tier.01,Aerial Vibe Check
+mission.electric_age.tier.02,Expedition Era
+mission.electric_age.tier.03,Offensive Arc
+mission.electric_age.tier.04,Grand Exhibition Glow
+mission.electric_age.place.01,Sparkly Plains
+mission.electric_age.place.02,Lightning Ridge Glitch
+mission.electric_age.place.03,Dynamo Hill Glow-Up
+mission.electric_age.place.04,Copper Valley Rizz
+mission.electric_age.place.05,Lamp City Aura
+mission.electric_age.place.06,Power Gorge Slay
+mission.electric_age.short.01,scope from the air above the
+mission.electric_age.short.02,snap pics of the
+mission.electric_age.short.03,vet the power lines across the
+mission.electric_age.short.04,audit the pylons of the
+mission.electric_age.long.01,lead an expedition across the
+mission.electric_age.long.02,string cables through the
+mission.electric_age.long.03,road-trip motor cars over the
+mission.electric_age.long.04,hook the grid up to the
+mission.electric_age.military.01,roll the armor onto the
+mission.electric_age.military.02,flatten the depots at the
+mission.electric_age.military.03,ghost the telegraph to the
+mission.electric_age.military.04,crack the line at the
+mission.electric_age.civil.01,light up the grand exhibition at the
+mission.electric_age.civil.02,throw a world's fair at the
+mission.electric_age.civil.03,wire a whole city near the
+mission.electric_age.civil.04,glow up a grand hall at the
+mission.electric_age.twist.01,"Generator coughs and the lights start flickering, the energy is off."
+mission.electric_age.twist.02,"Crowd gathers to watch the machine, everyone is recording."
+mission.electric_age.twist.03,"Radio crackles with a faint voice, very spooky."
+mission.electric_age.twist.04,"Bulb shatters, then another, and the vibe goes cold."
+mission.electric_age.twist.05,"Inventor refuses to explain how it works, very mysterious."
+mission.electric_age.twist.06,"Dust rolls across the airfield, chic and gritty."
+mission.atomic_age.weather.01,a glowy storm
+mission.atomic_age.weather.02,a power cut era
+mission.atomic_age.weather.03,a sandy chaos
+mission.atomic_age.foes.01,raid squad
+mission.atomic_age.foes.02,salty patrol
+mission.atomic_age.foes.03,gang with the ick
+mission.atomic_age.helpers.01,a medic bestie
+mission.atomic_age.helpers.02,a relay queen
+mission.atomic_age.helpers.03,a trade stop with glow
+mission.atomic_age.finds.01,a supply drop
+mission.atomic_age.finds.02,a reactor drop
+mission.atomic_age.finds.03,a buried bunker
+mission.atomic_age.tier.01,Recon Fly-By
+mission.atomic_age.tier.02,Nerd Expedition
+mission.atomic_age.tier.03,Op Mode
+mission.atomic_age.tier.04,Manhattan-scale Main Quest
+mission.atomic_age.place.01,Desert Range Oasis
+mission.atomic_age.place.02,Radar Hill Ping
+mission.atomic_age.place.03,Blue Lab Chaos
+mission.atomic_age.place.04,Silver Coast Bussin
+mission.atomic_age.place.05,Pine Ridge Aura
+mission.atomic_age.place.06,Test Flats Drama
+mission.atomic_age.short.01,buzz recon over the
+mission.atomic_age.short.02,screenshot the
+mission.atomic_age.short.03,chart weather over the
+mission.atomic_age.short.04,eye the coast by air near the
+mission.atomic_age.long.01,lead a nerd expedition to the
+mission.atomic_age.long.02,gauge radiation near the
+mission.atomic_age.long.03,tote instruments to the
+mission.atomic_age.long.04,decode the rocks of the
+mission.atomic_age.military.01,launch an op against the
+mission.atomic_age.military.02,drop paratroops on the
+mission.atomic_age.military.03,stake a bridgehead at the
+mission.atomic_age.military.04,mute the radar at the
+mission.atomic_age.civil.01,build a vast laboratory at the
+mission.atomic_age.civil.02,split the very first atom at the
+mission.atomic_age.civil.03,raise a research city beside the
+mission.atomic_age.civil.04,bankroll a program for the
+mission.atomic_age.twist.01,"Geiger counter is clicking louder than it should, not a vibe."
+mission.atomic_age.twist.02,"Sirens test at noon and everybody gets a scare, lol."
+mission.atomic_age.twist.03,"Secret memo went missing, very sus."
+mission.atomic_age.twist.04,Coffee is terrible and the scientists are somehow worse.
+mission.atomic_age.twist.05,"Static fills the radio for a full hour, painful."
+mission.atomic_age.twist.06,"Officer demands everyone sign the forms, bureaucracy is cooked."
+mission.modern_age.weather.01,a thunder fit
+mission.modern_age.weather.02,a flash flood moment
+mission.modern_age.weather.03,a toasty heat wave
+mission.modern_age.foes.01,smuggler squad
+mission.modern_age.foes.02,rival crew of NPCs
+mission.modern_age.foes.03,gang with rizz
+mission.modern_age.helpers.01,a local guru
+mission.modern_age.helpers.02,a chill relief station
+mission.modern_age.helpers.03,a trade stop that slaps
+mission.modern_age.finds.01,a supply stash
+mission.modern_age.finds.02,a rare rizz mineral
+mission.modern_age.finds.03,a buried lockbox
+mission.modern_age.tier.01,Recon Glide
+mission.modern_age.tier.02,Field Op Arc
+mission.modern_age.tier.03,Strike Mode
+mission.modern_age.tier.04,Moonshot Era
+mission.modern_age.place.01,Harbor Terminal Hub
+mission.modern_age.place.02,Border Ridge Glow
+mission.modern_age.place.03,Silicon Park Glow
+mission.modern_age.place.04,Salt Desert Hype
+mission.modern_age.place.05,Grey Tower Chill
+mission.modern_age.place.06,Ring Road Loop
+mission.modern_age.short.01,buzz recon on the
+mission.modern_age.short.02,ring the perimeter of the
+mission.modern_age.short.03,stalk a convoy near the
+mission.modern_age.short.04,eye the airstrip at the
+mission.modern_age.long.01,run a field op in the
+mission.modern_age.long.02,yank a team from the
+mission.modern_age.long.03,guard a convoy across the
+mission.modern_age.long.04,scan the coast with drones near the
+mission.modern_age.military.01,fire off a strike on the
+mission.modern_age.military.02,hit the depot at the
+mission.modern_age.military.03,claim the airfield at the
+mission.modern_age.military.04,shut down the port of the
+mission.modern_age.civil.01,send a rocket up from the
+mission.modern_age.civil.02,set up a lunar base for the
+mission.modern_age.civil.03,bankroll a moon mission at the
+mission.modern_age.civil.04,ship a moon lander from the
+mission.modern_age.twist.01,"Phone buzzes at the worst moment, bestie."
+mission.modern_age.twist.02,"Satellite photo is a day old, so it's basically ancient history."
+mission.modern_age.twist.03,"Traffic is jamming the way out, unbearable."
+mission.modern_age.twist.04,"Reporter already broke the story, ratio'd."
+mission.modern_age.twist.05,"Generator coughs twice and somehow holds, the luck is unreal."
+mission.modern_age.twist.06,"Somebody left the headlights on, the energy is off."
+mission.information_age.weather.01,a storm meltdown
+mission.information_age.weather.02,a flash flood glitch
+mission.information_age.weather.03,a sweaty heat dome
+mission.information_age.foes.01,hacker squad
+mission.information_age.foes.02,rival crew of goons
+mission.information_age.foes.03,block crew with beef
+mission.information_age.helpers.01,a local with the Wi-Fi
+mission.information_age.helpers.02,a relay hype hub
+mission.information_age.helpers.03,a trade post on a roll
+mission.information_age.finds.01,a data jackpot
+mission.information_age.finds.02,a drippy server part
+mission.information_age.finds.03,a buried tea drive
+mission.information_age.tier.01,Data Dash
+mission.information_age.tier.02,Sat Op Szn
+mission.information_age.tier.03,Cyber Strike Era
+mission.information_age.tier.04,Global Drop
+mission.information_age.place.01,Server Farm Cafe
+mission.information_age.place.02,Fiber Trunk Lore
+mission.information_age.place.03,Data Haven Chill
+mission.information_age.place.04,Relay Hub Drama
+mission.information_age.place.05,Glass Campus Bop
+mission.information_age.place.06,Cable Landing Lounge
+mission.information_age.short.01,sniff packets through the
+mission.information_age.short.02,doomscroll records from the
+mission.information_age.short.03,stalk the network of the
+mission.information_age.short.04,poke the firewall of the
+mission.information_age.long.01,aim a satellite over the
+mission.information_age.long.02,hook up a fiber line to the
+mission.information_age.long.03,hook the exchange up at the
+mission.information_age.long.04,comb the airwaves above the
+mission.information_age.military.01,fire a cyber strike on the
+mission.information_age.military.02,fry the grid of the
+mission.information_age.military.03,jam the uplink at the
+mission.information_age.military.04,snatch the servers of the
+mission.information_age.civil.01,spin up a global network from the
+mission.information_age.civil.02,pop open a world portal at the
+mission.information_age.civil.03,boot up the search engine at the
+mission.information_age.civil.04,livestream the first broadcast from the
+mission.information_age.twist.01,"Connection drops at the worst second, so unfair."
+mission.information_age.twist.02,"Modem screeches in the next room, and the vibe is cursed."
+mission.information_age.twist.03,"Email chain keeps getting longer, the thread is cooked."
+mission.information_age.twist.04,"Logs are filling with strange pings, very eerie."
+mission.information_age.twist.05,"Coffee spill took out a terminal, rough luck."
+mission.information_age.twist.06,"Somebody is already in the system, the plot thickens."
+mission.digital_age.weather.01,a packet tantrum
+mission.digital_age.weather.02,a power spike era
+mission.digital_age.weather.03,a data tsunami
+mission.digital_age.foes.01,rogue NPCs
+mission.digital_age.foes.02,malware goblins
+mission.digital_age.foes.03,rival app with beef
+mission.digital_age.helpers.01,a helper bot with rizz
+mission.digital_age.helpers.02,a relay stan spot
+mission.digital_age.helpers.03,a trusted node fr
+mission.digital_age.finds.01,an OG server
+mission.digital_age.finds.02,a data stash
+mission.digital_age.finds.03,a buried backup that slaps
+mission.digital_age.tier.01,Data Run Era
+mission.digital_age.tier.02,Network Op Szn
+mission.digital_age.tier.03,Cyber Strike Arc
+mission.digital_age.tier.04,Network Glow-Up
+mission.digital_age.place.01,Cloud Vault Chill
+mission.digital_age.place.02,Packet Plaza Hype
+mission.digital_age.place.03,Mirror Site Glam
+mission.digital_age.place.04,Dark Port Chaos
+mission.digital_age.place.05,Deep Cache Aura
+mission.digital_age.place.06,Open Grid Hangout
+mission.digital_age.short.01,run a data sweep through the
+mission.digital_age.short.02,crawl the index of the
+mission.digital_age.short.03,audit the keys of the
+mission.digital_age.short.04,trace a signal into the
+mission.digital_age.long.01,run a network op through the
+mission.digital_age.long.02,port the archive over to the
+mission.digital_age.long.03,slip under the
+mission.digital_age.long.04,sync the nodes of the
+mission.digital_age.military.01,unleash a cyber strike on the
+mission.digital_age.military.02,take down the relays of the
+mission.digital_age.military.03,poison the cache of the
+mission.digital_age.military.04,ghost the admins of the
+mission.digital_age.civil.01,found a new network at the
+mission.digital_age.civil.02,bring the whole city online at the
+mission.digital_age.civil.03,stack a data commons in the
+mission.digital_age.civil.04,drop a public ledger on the
+mission.digital_age.twist.01,"Server in another time zone just woke up, the timing is wild."
+mission.digital_age.twist.02,"Latency spikes and nobody knows why, the lag is real."
+mission.digital_age.twist.03,"Patch broke something totally unrelated, so annoying."
+mission.digital_age.twist.04,"Cache is holding way more than it should, plot twist."
+mission.digital_age.twist.05,"Two messages land with the same timestamp, timeline is glitched."
+mission.digital_age.twist.06,"Stranger in the channel offers help, very sus but iconic."
+mission.cyberpunk_age.weather.01,a smog spiral
+mission.cyberpunk_age.weather.02,a volt surge
+mission.cyberpunk_age.weather.03,an acid rain drama
+mission.cyberpunk_age.foes.01,chrome street crew
+mission.cyberpunk_age.foes.02,corpo enforcers
+mission.cyberpunk_age.foes.03,rat energy rivals
+mission.cyberpunk_age.helpers.01,a gritty medic
+mission.cyberpunk_age.helpers.02,a hot fixer
+mission.cyberpunk_age.helpers.03,a relay hub bestie
+mission.cyberpunk_age.finds.01,a data haul
+mission.cyberpunk_age.finds.02,a chrome drop
+mission.cyberpunk_age.finds.03,a buried server with lore
+mission.cyberpunk_age.tier.01,Recon Drift
+mission.cyberpunk_age.tier.02,Heist Glow
+mission.cyberpunk_age.tier.03,Assault Arc
+mission.cyberpunk_age.tier.04,Arcology Glow-Up
+mission.cyberpunk_age.place.01,Chrome Market Hype
+mission.cyberpunk_age.place.02,Neon Alley Rizz
+mission.cyberpunk_age.place.03,Rain Towers Gloom
+mission.cyberpunk_age.place.04,Static Docks Hangout
+mission.cyberpunk_age.place.05,Ash Arcade Aura
+mission.cyberpunk_age.place.06,Black Plaza Glow
+mission.cyberpunk_age.short.01,scout the streets of the
+mission.cyberpunk_age.short.02,tap the cameras of the
+mission.cyberpunk_age.short.03,tail a courier through the
+mission.cyberpunk_age.short.04,rake the rooftops above the
+mission.cyberpunk_age.long.01,yoink a data core from the
+mission.cyberpunk_age.long.02,crack into the vault of the
+mission.cyberpunk_age.long.03,swipe prototypes from the
+mission.cyberpunk_age.long.04,ghost a shipment out of the
+mission.cyberpunk_age.military.01,storm the corpo tower at the
+mission.cyberpunk_age.military.02,hit the checkpoint at the
+mission.cyberpunk_age.military.03,fry the security grid of the
+mission.cyberpunk_age.military.04,raid the gang's hideout under the
+mission.cyberpunk_age.civil.01,stack a sealed arcology above the
+mission.cyberpunk_age.civil.02,juice up a whole block in the
+mission.cyberpunk_age.civil.03,wire a free city under the
+mission.cyberpunk_age.civil.04,house the broke in a tower over the
+mission.cyberpunk_age.twist.01,"Guards switch shifts at dawn, perfect window."
+mission.cyberpunk_age.twist.02,"Acid rain is eating the paint off the van, it's giving rust."
+mission.cyberpunk_age.twist.03,"Street doc offers a sketchy eye deal, bad idea."
+mission.cyberpunk_age.twist.04,"Billboard flashes the party's faces, we're famous, unwillingly."
+mission.cyberpunk_age.twist.05,"Neon flickers in a pattern, very cryptic."
+mission.cyberpunk_age.twist.06,"Drone has been tailing for three blocks, ick."
+mission.fusion_age.weather.01,a solar meltdown
+mission.fusion_age.weather.02,a plasma tantrum
+mission.fusion_age.weather.03,a coolant drip
+mission.fusion_age.foes.01,raid goons
+mission.fusion_age.foes.02,cooked rival crew
+mission.fusion_age.foes.03,rogue drone squad
+mission.fusion_age.helpers.01,a W-energy crew
+mission.fusion_age.helpers.02,a relay drip spot
+mission.fusion_age.helpers.03,a trade hype hub
+mission.fusion_age.finds.01,a fuel bag
+mission.fusion_age.finds.02,a reactor drip
+mission.fusion_age.finds.03,a buried module with glow
+mission.fusion_age.tier.01,Sweep Mode
+mission.fusion_age.tier.02,Salvage Run
+mission.fusion_age.tier.03,Assault Glow
+mission.fusion_age.tier.04,Fusion City Era
+mission.fusion_age.place.01,Reactor Ring Drip
+mission.fusion_age.place.02,Slag Fields Mood
+mission.fusion_age.place.03,Coolant Lake Glow
+mission.fusion_age.place.04,Burned Quarter Lore
+mission.fusion_age.place.05,Flux Yard Vibes
+mission.fusion_age.place.06,Bright Dome Rizz
+mission.fusion_age.short.01,comb the ruins around the
+mission.fusion_age.short.02,scan the shielding of the
+mission.fusion_age.short.03,stalk the coolant lines near the
+mission.fusion_age.short.04,tap the heat vents of the
+mission.fusion_age.long.01,loot cores from the
+mission.fusion_age.long.02,pull superconductors out of the
+mission.fusion_age.long.03,drag a hull from the
+mission.fusion_age.long.04,gut a dead plant at the
+mission.fusion_age.military.01,assault the rival plant at the
+mission.fusion_age.military.02,crack the shield of the
+mission.fusion_age.military.03,seize the control room of the
+mission.fusion_age.military.04,kill the power to the
+mission.fusion_age.civil.01,light a fusion city at the
+mission.fusion_age.civil.02,bottle up a sun for the
+mission.fusion_age.civil.03,pipe cheap power to the
+mission.fusion_age.civil.04,raise a glass tower beside the
+mission.fusion_age.twist.01,"Reactor hums a note just off, the vibe is off."
+mission.fusion_age.twist.02,"Hot spots are drifting across the map, big scary energy."
+mission.fusion_age.twist.03,"Coolant leak made the air smell sweet, suspicious."
+mission.fusion_age.twist.04,"Radiation badges ticked over early, not ideal."
+mission.fusion_age.twist.05,"Lights dim and brighten on their own, lowkey haunted."
+mission.fusion_age.twist.06,"Dust glows faintly at night, aesthetic."
+mission.space_age.weather.01,a solar hissy fit
+mission.space_age.weather.02,a meteor party
+mission.space_age.weather.03,a radioactive tantrum
+mission.space_age.foes.01,pirate bros
+mission.space_age.foes.02,raider crew
+mission.space_age.foes.03,beefy rival fleet
+mission.space_age.helpers.01,a relay pit stop
+mission.space_age.helpers.02,a hot station crew
+mission.space_age.helpers.03,a cargo queen
+mission.space_age.finds.01,a mineral bag
+mission.space_age.finds.02,an OG probe
+mission.space_age.finds.03,a buried mod
+mission.space_age.tier.01,Probe Run
+mission.space_age.tier.02,Orbital Main Quest
+mission.space_age.tier.03,Orbital Strike Arc
+mission.space_age.tier.04,Colony Ship Glow
+mission.space_age.place.01,Low Orbit Chill
+mission.space_age.place.02,Moon Shadow Drama
+mission.space_age.place.03,Red Plain Rizz
+mission.space_age.place.04,Ring of Ice Hype
+mission.space_age.place.05,Dust Belt Chill
+mission.space_age.place.06,Sunward Station Glam
+mission.space_age.short.01,yeet a probe past the
+mission.space_age.short.02,rake the surface of the
+mission.space_age.short.03,skim the dust of the
+mission.space_age.short.04,tour the craters of the
+mission.space_age.long.01,fly an orbital mission around the
+mission.space_age.long.02,link up with the wreck above the
+mission.space_age.long.03,mine ice from the
+mission.space_age.long.04,drop a relay beyond the
+mission.space_age.military.01,wreck the enemy station above the
+mission.space_age.military.02,bonk the satellite over the
+mission.space_age.military.03,jump the raider near the
+mission.space_age.military.04,blockade the lanes of the
+mission.space_age.civil.01,beam a colony ship toward the
+mission.space_age.civil.02,raise a ring habitat over the
+mission.space_age.civil.03,seed gardens on the
+mission.space_age.civil.04,build a lunar town in the
+mission.space_age.twist.01,"Micrometeor pinged the hull, that was close, no cap."
+mission.space_age.twist.02,"Mission control repeats the same order twice, the audacity."
+mission.space_age.twist.03,"Solar flare shut the window, bad timing."
+mission.space_age.twist.04,"Somebody's cup just floated away, zero gravity chaos."
+mission.space_age.twist.05,"Comm lag adds a dramatic pause, very tense."
+mission.space_age.twist.06,"Bolt shook loose in the night, the hull is screaming."
+mission.interstellar_age.weather.01,a solar flare meltdown
+mission.interstellar_age.weather.02,a meteor rave
+mission.interstellar_age.weather.03,a glow storm meltdown
+mission.interstellar_age.foes.01,pirate squad
+mission.interstellar_age.foes.02,raid bros
+mission.interstellar_age.foes.03,shady rival fleet
+mission.interstellar_age.helpers.01,a relay stop with rizz
+mission.interstellar_age.helpers.02,a colony squad
+mission.interstellar_age.helpers.03,a cargo bro
+mission.interstellar_age.finds.01,an alien W relic
+mission.interstellar_age.finds.02,a mineral jackpot
+mission.interstellar_age.finds.03,a ghosted probe
+mission.interstellar_age.tier.01,Probe Glow
+mission.interstellar_age.tier.02,Deep-Space Glow-Up
+mission.interstellar_age.tier.03,Invasion Mode
+mission.interstellar_age.tier.04,Gen Ship Era
+mission.interstellar_age.place.01,Proxima Gate Lounge
+mission.interstellar_age.place.02,Cold Giant Drama
+mission.interstellar_age.place.03,Long Dark Lore
+mission.interstellar_age.place.04,Twin Suns Glam
+mission.interstellar_age.place.05,Drift Station Chaos
+mission.interstellar_age.place.06,Ember Nebula Aura
+mission.interstellar_age.short.01,fling a probe toward the
+mission.interstellar_age.short.02,doomscroll the planets of the
+mission.interstellar_age.short.03,sniff the dust of the
+mission.interstellar_age.short.04,listen for signals from the
+mission.interstellar_age.long.01,fly a deep-space run to the
+mission.interstellar_age.long.02,build a relay chain toward the
+mission.interstellar_age.long.03,chart the lanes beyond the
+mission.interstellar_age.long.04,scoop comet ice near the
+mission.interstellar_age.military.01,invade the colony at the
+mission.interstellar_age.military.02,land troops on a world of the
+mission.interstellar_age.military.03,take over the orbital yards at the
+mission.interstellar_age.military.04,smash the garrison at the
+mission.interstellar_age.civil.01,launch a generation ship for the
+mission.interstellar_age.civil.02,seed a new world near the
+mission.interstellar_age.civil.03,carry a million sleepers to the
+mission.interstellar_age.civil.04,raise a star colony by the
+mission.interstellar_age.twist.01,"Long dark is quiet and so is the crew, mood."
+mission.interstellar_age.twist.02,"Star winks out on the charts, that's sus."
+mission.interstellar_age.twist.03,"Cargo shifted and the ship hums, vibes are off."
+mission.interstellar_age.twist.04,"Message from home showed up years late, ouch."
+mission.interstellar_age.twist.05,"Sleepers are all dreaming the same dream, creepy."
+mission.interstellar_age.twist.06,"Engines purr and then cough, nervous energy."
+mission.galactic_age.weather.01,a nebula tantrum
+mission.galactic_age.weather.02,a sun tantrum
+mission.galactic_age.weather.03,a meteor rave
+mission.galactic_age.foes.01,pirate goons
+mission.galactic_age.foes.02,raid crew
+mission.galactic_age.foes.03,salty rival fleet
+mission.galactic_age.helpers.01,a relay bestie
+mission.galactic_age.helpers.02,a goated colony crew
+mission.galactic_age.helpers.03,a slay trade envoy
+mission.galactic_age.finds.01,an aura relic
+mission.galactic_age.finds.02,a tea star map
+mission.galactic_age.finds.03,a probe left on read
+mission.galactic_age.tier.01,Drone Vibe Check
+mission.galactic_age.tier.02,Star Voyage Szn
+mission.galactic_age.tier.03,Invasion Drama
+mission.galactic_age.tier.04,Stellar Settlement Glow
+mission.galactic_age.place.01,Orion Reach Hype
+mission.galactic_age.place.02,Crimson Rim Aura
+mission.galactic_age.place.03,Quiet Arm Lore
+mission.galactic_age.place.04,Core Gate Slay
+mission.galactic_age.place.05,Lantern Cluster Lounge
+mission.galactic_age.place.06,Pale Spiral Lore
+mission.galactic_age.short.01,zoom a survey drone through the
+mission.galactic_age.short.02,count the stars of the
+mission.galactic_age.short.03,scan the worlds of the
+mission.galactic_age.short.04,map the lanes around the
+mission.galactic_age.long.01,take a star voyage across the
+mission.galactic_age.long.02,pop a jump lane through the
+mission.galactic_age.long.03,flip goods across the
+mission.galactic_age.long.04,carry seed ships to the
+mission.galactic_age.military.01,invade the fleet at the
+mission.galactic_age.military.02,storm the throneworld of the
+mission.galactic_age.military.03,shut down the star gates of the
+mission.galactic_age.military.04,cancel the armada from the
+mission.galactic_age.civil.01,settle a thousand worlds in the
+mission.galactic_age.civil.02,raise a star ring around the
+mission.galactic_age.civil.03,found a stellar city in the
+mission.galactic_age.civil.04,rally a council at the
+mission.galactic_age.twist.01,"Pulsar keeps perfect time on the ship's clock, unbothered."
+mission.galactic_age.twist.02,"Hail from an unknown fleet, and nobody is replying, ghosted."
+mission.galactic_age.twist.03,"Map has a hole where a star should be, the lore is missing."
+mission.galactic_age.twist.04,"Comet crosses the lane right on schedule, perfect timing."
+mission.galactic_age.twist.05,"Old beacon keeps repeating a dead language, so cryptic."
+mission.galactic_age.twist.06,"Jump left everyone a little dizzy, the ride was rough."
+mission.quantum_age.weather.01,a what-if storm
+mission.quantum_age.weather.02,a phase glitch
+mission.quantum_age.weather.03,a timey squall
+mission.quantum_age.foes.01,rogue copies
+mission.quantum_age.foes.02,beefy rival timeline
+mission.quantum_age.foes.03,quantum mosh pit
+mission.quantum_age.helpers.01,a big-brain relay
+mission.quantum_age.helpers.02,a phase guru
+mission.quantum_age.helpers.03,a trade node bestie
+mission.quantum_age.finds.01,a qubit stash
+mission.quantum_age.finds.02,an archive left on read
+mission.quantum_age.finds.03,a buried sim that slaps
+mission.quantum_age.tier.01,Phase Probe Run
+mission.quantum_age.tier.02,Rift Trip
+mission.quantum_age.tier.03,Incursion Drama
+mission.quantum_age.tier.04,Pocket Universe Glow
+mission.quantum_age.place.01,Fold Garden Cafe
+mission.quantum_age.place.02,Mirror Gap Chaos
+mission.quantum_age.place.03,Null Shore Ick
+mission.quantum_age.place.04,Still Point Hype
+mission.quantum_age.place.05,Hollow Spiral Glow
+mission.quantum_age.place.06,Echo Vault Glam
+mission.quantum_age.short.01,phase a probe through the
+mission.quantum_age.short.02,measure the noise of the
+mission.quantum_age.short.03,sample a mirror from the
+mission.quantum_age.short.04,trace the edges of the
+mission.quantum_age.long.01,lead a rift expedition into the
+mission.quantum_age.long.02,peel the layers of the
+mission.quantum_age.long.03,drag a ghost back from the
+mission.quantum_age.long.04,prop open the door to the
+mission.quantum_age.military.01,stage an incursion into the
+mission.quantum_age.military.02,collapse the guard of the
+mission.quantum_age.military.03,slip a strike squad into the
+mission.quantum_age.military.04,shred the defenses of the
+mission.quantum_age.civil.01,flex a pocket universe in the
+mission.quantum_age.civil.02,fold a new crib inside the
+mission.quantum_age.civil.03,weave a stable bubble in the
+mission.quantum_age.civil.04,coach the rift to hold at the
+mission.quantum_age.twist.01,"Everybody remembers the departure differently, so mid timeline."
+mission.quantum_age.twist.02,"Second copy of the map shows up, double vision."
+mission.quantum_age.twist.03,"Time stutters for about a second, rough."
+mission.quantum_age.twist.04,"Compass is pointing at a bunch of places at once, chaotic."
+mission.quantum_age.twist.05,"Door shows up and then changes its mind, lol."
+mission.quantum_age.twist.06,"Familiar voice answers from nowhere, it's giving deja vu."
+mission.transcendent_age.weather.01,a reality glitch
+mission.transcendent_age.weather.02,a timeline tide
+mission.transcendent_age.weather.03,a time tantrum
+mission.transcendent_age.foes.01,rogue brains
+mission.transcendent_age.foes.02,beefy rival cosmos
+mission.transcendent_age.foes.03,void goblin swarm
+mission.transcendent_age.helpers.01,a guide mind with rizz
+mission.transcendent_age.helpers.02,a chill relay mind
+mission.transcendent_age.helpers.03,a trade nexus with glow
+mission.transcendent_age.finds.01,a memory vault
+mission.transcendent_age.finds.02,a world left on read
+mission.transcendent_age.finds.03,a buried drip universe
+mission.transcendent_age.tier.01,Peek Szn
+mission.transcendent_age.tier.02,Light Pilgrim Arc
+mission.transcendent_age.tier.03,Reality Drama
+mission.transcendent_age.tier.04,Ascension Rite Glow-Up
+mission.transcendent_age.place.01,First Dawn Aura
+mission.transcendent_age.place.02,Silent Choir Slay
+mission.transcendent_age.place.03,Open Horizon Bop
+mission.transcendent_age.place.04,Hour Garden Glow
+mission.transcendent_age.place.05,Last Shore Tea
+mission.transcendent_age.place.06,Shining Stair Glow
+mission.transcendent_age.short.01,catch a peek at the
+mission.transcendent_age.short.02,lurk at the edge of the
+mission.transcendent_age.short.03,chase a thread of light to the
+mission.transcendent_age.short.04,harvest echoes from the
+mission.transcendent_age.long.01,trek the pilgrimage of light to the
+mission.transcendent_age.long.02,pass a spark across the
+mission.transcendent_age.long.03,sing a path through the
+mission.transcendent_age.long.04,trace the light back to the
+mission.transcendent_age.military.01,hack into the reality of the
+mission.transcendent_age.military.02,bend the law of the
+mission.transcendent_age.military.03,rip the veil around the
+mission.transcendent_age.military.04,delete the wall of the
+mission.transcendent_age.civil.01,perform the ascension rite at the
+mission.transcendent_age.civil.02,gather every voice at the
+mission.transcendent_age.civil.03,open the final door at the
+mission.transcendent_age.civil.04,turn up the last choir at the
+mission.transcendent_age.twist.01,"Light feels warmer than it should, that's a red flag."
+mission.transcendent_age.twist.02,"Nobody remembers who spoke first, so mid lore."
+mission.transcendent_age.twist.03,"Silence drags on a little too long, awkward."
+mission.transcendent_age.twist.04,"Thought shows up before the question even does, unsettling."
+mission.transcendent_age.twist.05,"Ground seems to be listening, vibes are spooky."
+mission.transcendent_age.twist.06,"Bell rings with nobody holding it, very eerie."
+route.local_barter.name,Local Barter Hustle
+route.local_barter.description,"Send your spare food to nearby villages for wood, it's giving neighborly."
+route.stone_trade.name,Stone Trade Glow
+route.stone_trade.description,"Send wood to the quarries for stone, no cap."
+route.gold_caravan.name,Gold Caravan Glam
+route.gold_caravan.description,"Send stone caravans out for gold, bussin."
+route.silk_road.name,Silk Road Drip
+route.silk_road.description,"Send gold along the Silk Road for culture, main character trade."
+route.spice_trade.name,Spicy Trade Hustle
+route.spice_trade.description,"Pay gold to distant lands for spiced food and culture, worth every coin."
+route.colonial_exports.name,Colonial Exports Era
+route.colonial_exports.description,"Sell food to colonial settlements for gold, big W."
+route.mercantile_convoy.name,Merch Convoy
+route.mercantile_convoy.description,"Run armed convoys of stone and wood between city-states for gold, beef included."
+route.triangular_trade.name,Triangle Trade Era
+route.triangular_trade.description,Three-way colonial hustle: send food and gold for culture and research.
+route.tea_clippers.name,Tea Clipper Glow
+route.tea_clippers.description,"Fast clippers trade gold in distant ports for food and culture, sheesh."
+route.coal_barges.name,Coal Barge Drip
+route.coal_barges.description,"Barge coal downriver to the foundries for gold and iron, it slaps."
+route.cotton_exchange.name,Cotton Exchange Glam
+route.cotton_exchange.description,"Pay gold at the cotton exchange for culture and research, the hype is real."
+route.steamship_line.name,Steamship Line Bussin
+route.steamship_line.description,"Steamship line hauls steel and coal across the ocean for gold, main character route."
+route.rail_freight.name,Rail Freight Rizz
+route.rail_freight.description,"Ship iron by rail for gold and coal, rail goes hard."
+route.oil_pipeline.name,Oil Pipe Dreams
+route.oil_pipeline.description,"Pipe oil to the refineries for gold, no notes."
+route.power_exchange.name,Power Exchange Glow
+route.power_exchange.description,"Sell spare electricity on the grid for gold, pure profit energy."
+route.data_trade.name,Data Trade Era
+route.data_trade.description,"Sell data on digital marketplaces for gold, the algorithm loves it."
+route.crypto_market.name,Crypto Market Hype
+route.crypto_market.description,"Sell crypto on underground exchanges for gold, sus but lucrative."
+route.fusion_export.name,Fusion Export Drip
+route.fusion_export.description,"Sell fusion electricity to nearby civs for gold, big W energy."
+route.warp_commerce.name,Warp Commerce Rizz
+route.warp_commerce.description,"Send gold through the warp gates for dark matter, no cap."
+route.stellar_exchange.name,Stellar Freight Hype
+route.stellar_exchange.description,"Ship dark matter between star systems for gold, the lanes are bussin."
+route.quantum_trade.name,Quantum Trade Glitch
+route.quantum_trade.description,"Send quantum flux across dimensional boundaries for gold, cursed but profitable."
+civ.riverlands_tribes.name,Riverlands Tribe Squad
+civ.riverlands_tribes.backstory,"Fisherfolk and farmers of the big delta, super generous with grain and slow to get heated. They remember every neighbor who ever shared a harvest, no cap."
+civ.riverlands_tribes.description,"Settled farm clans who put hospitality above everything, peak bestie energy."
+civ.ironhold_clans.name,Ironhold Clan Bros
+civ.ironhold_clans.backstory,"Mountain smiths and raiders who measure honor in steel. They respect strength and have zero time for weakness. Cross them and the war horns go off, it's giving danger."
+civ.ironhold_clans.description,"Warlike highland clans, forged on the anvil and built on beef."
+civ.merchant_guild.name,Merch Guild Bosses
+civ.merchant_guild.backstory,"Continent-wide cartel of traders and financiers, loyal to the ledger and nothing else. Trade with them often and their coffers open up for you."
+civ.merchant_guild.description,"Powerful guild of traders and financiers, very bag-focused."
+civ.artisan_league.name,Artisan Clout League
+civ.artisan_league.backstory,"Master craftspeople and culture keepers who lend their guild hands to allies they admire, asking only that beauty gets protected. Cute, but serious."
+civ.artisan_league.description,"Master craftspeople and culture keepers, very aesthetic."
+civ.atomic_directorate.name,Atomic Directorate Sus
+civ.atomic_directorate.backstory,"Secretive technocracy behind sealed borders, hoarding reactor science. They don't flirt and they don't start beef. They just wait and watch."
+civ.atomic_directorate.description,"Insular technocracy guarding the secrets of the atom, very lowkey secretive."
+civ.tech_consortium.name,Tech Consortium Rizz
+civ.tech_consortium.backstory,"Coalition of tech firms trading in pure information. Data is their currency, and your trade volume buys their goodwill."
+civ.tech_consortium.description,"Coalition of tech companies and innovators, the group chat is huge."
+civ.shadow_syndicate.name,Shady Syndicate
+civ.shadow_syndicate.backstory,"Underground network dealing in digital currencies and quieter goods. They lend muscle to friends and launch data raids on enemies, very shady."
+civ.shadow_syndicate.description,"Underground network dealing in digital currencies, shady but iconic."
+civ.plasma_nomads.name,Plasma Nomad Squad
+civ.plasma_nomads.backstory,"Wandering fusion-ship caravans with no homeworld and no grudges. Welcome them and they gift willing crews and bright plasma, a total vibe."
+civ.plasma_nomads.description,"Stateless caravans drifting between the inner worlds, just here for the drip."
+civ.stellar_federation.name,Stellar Fed Hive
+civ.stellar_federation.backstory,Interstellar alliance of spacefaring civs bound by strict non-interference. Hard to befriend and even harder to make mad.
+civ.stellar_federation.description,"Interstellar alliance of spacefaring civs, very chill, very organized."
+civ.void_reavers.name,Void Reaver Gang
+civ.void_reavers.backstory,"Antimatter corsairs who strip dead stars and weaker empires alike. They take what they want, and only overwhelming respect keeps their fleets off you."
+civ.void_reavers.description,"Antimatter corsairs feared across the galactic rim, the scariest squad out there."
+civ.quantum_collective.name,Quantum Collective Vibes
+civ.quantum_collective.backstory,"Beings who exist across multiple dimensions, and they see your civ as a fun little curiosity. Indifferent by nature, but their favor bends reality."
+civ.quantum_collective.description,"Beings living across multiple dimensions, very unbothered."
