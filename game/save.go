@@ -177,12 +177,11 @@ type GameSave struct {
 	// invariant: stamp only via SaveGame, never an in-place JSON edit). On load it is
 	// informational only and does NOT switch the active account (set once at boot).
 	AccountID string `json:"account_id,omitempty"`
-	// Plan is the build plan (plan.go), in order. WonderOverflowOff records
-	// that the player turned wonder overflow off (overflow.go); it is on by
-	// default, so saves from before either existed load with an empty plan
-	// and overflow on. Both omitempty, so those saves keep their bytes.
-	Plan              []PlanItem `json:"plan,omitempty"`
-	WonderOverflowOff bool       `json:"wonder_overflow_off,omitempty"`
+	// Plan is the build plan (plan.go), in order; saves from before it
+	// existed load with an empty plan. omitempty, so those saves keep their
+	// bytes. (Saves from before wonder overflow went carry a
+	// wonder_overflow_off field, which is ignored.)
+	Plan []PlanItem `json:"plan,omitempty"`
 	// WorkerShares, AutoRecruitOff and StaffHoldUntil are the worker shares
 	// (shares.go): the split the player set (domain → percent; none means
 	// every domain is on auto), auto-recruit turned off (it is on by
@@ -201,9 +200,6 @@ type GameSave struct {
 	// on load saying the ages ahead are longer (pacingNotice). omitempty, so
 	// those saves keep their bytes and signatures.
 	PacingWeek bool `json:"pacing_week,omitempty"`
-	// OverCapGrace is the resources kept above a cap that shrank when Era
-	// Mastery's speed dropped (the grace rule, mastery.go). omitempty.
-	OverCapGrace map[string]bool `json:"over_cap_grace,omitempty"`
 	// StorageRules is the storage rules the save was written under
 	// (config.StorageRules; absent on saves from before the storage wall).
 	// A save from before them keeps its stock and its plan's banks
@@ -774,13 +770,11 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		History:                ge.History,
 		AccountID:              ge.saveAccountIDLocked(),
 		Plan:                   clonePlan(ge.plan),
-		WonderOverflowOff:      ge.wonderOverflowOff,
 		WorkerShares:           cloneShares(ge.workerShares),
 		AutoRecruitOff:         ge.autoRecruitOff,
 		StaffHoldUntil:         ge.staffHoldUntil,
 		PlanLog:                clonePlanTemplate(ge.planLog),
 		PacingWeek:             true,
-		OverCapGrace:           ge.Resources.graceSave(),
 		StorageRules:           config.StorageRules,
 		ScholarRules:           scholarRules,
 		ScholarShare:           ge.scholarShareSave(),
@@ -1127,23 +1121,18 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	}
 	ge.lowMoraleWarned = false
 
-	// The build plan and the overflow switch. A hand-edited plan is trimmed
+	// The build plan. A hand-edited plan is trimmed
 	// to what the plan accepts; items that can no longer start drop out, with
 	// a log line, on the next tick.
 	ge.plan = loadPlanIn(ge.rules, save.Plan)
 	sellOrders := retiredSellOrders(save.Plan)
 	ge.planLog = loadPlanTemplate(ge.rules, save.PlanLog)
-	ge.wonderOverflowOff = save.WonderOverflowOff
 	// The worker shares: a hand-edited map keeps its known domains, each
 	// percent from 0 to 100, and the wait can't outlast one worker command.
 	ge.workerShares = cleanSharesIn(ge.rules, save.WorkerShares)
 	ge.autoRecruitOff = save.AutoRecruitOff
 	ge.staffHoldUntil = min(max(save.StaffHoldUntil, 0), ge.tick+staffHoldTicks)
 
-	// The graced resources come back (Era Mastery's grace rule), and the
-	// rule starts from the loaded age's speed, not the one this engine ran
-	// at before.
-	ge.Resources.loadGrace(save.OverCapGrace)
 	beforeTheWall := save.StorageRules < config.StorageRules
 	if beforeTheWall {
 		ge.keepStockFromBeforeTheWall()
@@ -1152,7 +1141,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if beforeScholars {
 		ge.turnKnowledgeIntoWork(&save)
 	}
-	ge.lastK = ge.speedK()
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
@@ -1845,14 +1833,12 @@ const scholarsNotice = "Knowledge is no longer stored. Your scholars now work on
 
 // storageWallNotice is the line a save from before the storage wall gets on
 // its first load.
-const storageWallNotice = "Storage changed. A storage building's price now climbs much faster with each copy, a price larger than a store can no longer be bought, and overflow no longer pays the plan. You keep every building you have. Stock above a store's new limit stays until you spend it, and what your plan had banked went back to your stores."
+const storageWallNotice = "Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked went back to your stores."
 
 // keepStockFromBeforeTheWall carries a save written under the old storage
 // rules across to the new ones without taking anything: what the plan's
-// items had banked from overflow goes back to the stores, over their caps if
-// need be, and every stock is marked to stay above its cap until it is spent
-// (the grace rule the stores already keep for a drop in Era Mastery's
-// speed). Called on load, before the stores are worked out.
+// items had banked from overflow goes back to the stores. Called on load,
+// before the stores are worked out.
 func (ge *GameEngine) keepStockFromBeforeTheWall() {
 	for i := range ge.plan {
 		for _, res := range sortedKeys(ge.plan[i].Banked) {
@@ -1862,5 +1848,4 @@ func (ge *GameEngine) keepStockFromBeforeTheWall() {
 		}
 		ge.plan[i].Banked = nil
 	}
-	ge.Resources.markGraceAll()
 }

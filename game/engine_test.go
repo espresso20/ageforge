@@ -431,17 +431,10 @@ func TestEngine_BuildMax_CostCurve(t *testing.T) {
 	}
 	fifthCost := math.Floor(base * math.Pow(scale, 4))
 
-	// Set storage to budget4 exactly, then fill to storage (existing 50 wood
-	// gets capped, so we zero it by setting storage to 0 first, then expand).
-	// Simplest: set storage = budget4, add a large amount (gets capped to budget4).
+	// Stock has no ceiling: set the wood to exactly budget4.
 	ge.mu.Lock()
-	// Replace storage so that existing wood + any added = exactly budget4.
-	// Get current wood first.
 	currentWood := ge.Resources.Get("wood")
-	// We need total = budget4 after setup. Existing currentWood may be > budget4.
-	// Set storage to budget4 so amount gets capped.
-	ge.Resources.AddStorage("wood", budget4-ge.Resources.GetStorage("wood"))
-	ge.Resources.Add("wood", budget4) // capped to budget4
+	ge.Resources.resources["wood"].Amount = budget4
 	finalWood := ge.Resources.Get("wood")
 	ge.mu.Unlock()
 

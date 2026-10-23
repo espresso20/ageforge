@@ -319,9 +319,6 @@ func sortedKeysOf[V any](m map[string]V) []string {
 }
 
 func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) >= 1 && strings.ToLower(args[0]) == "overflow" {
-		return cmdWonderOverflow(args[1:], engine)
-	}
 	state := engine.GetState()
 
 	// Find the wonder for the current age
@@ -343,7 +340,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		case "collect", "bank":
 			deposit = true
 		default:
-			return CommandResult{Message: fmt.Sprintf("Unknown wonder command %q. %s, or 'wonder overflow [on|off]'.", args[0], wonderBankUsage), Type: "error"}
+			return CommandResult{Message: fmt.Sprintf("Unknown wonder command %q. %s.", args[0], wonderBankUsage), Type: "error"}
 		}
 	}
 
@@ -499,23 +496,6 @@ func lowerFirst(s string) string {
 		return s
 	}
 	return strings.ToLower(s[:1]) + s[1:]
-}
-
-// cmdWonderOverflow is `wonder overflow [on|off]`: show or set whether
-// production a full store would waste goes into the current wonder's bank.
-func cmdWonderOverflow(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) == 0 {
-		return CommandResult{Message: wonderOverflowLine(engine.WonderOverflow()), Type: "info"}
-	}
-	switch strings.ToLower(args[0]) {
-	case "on":
-		engine.SetWonderOverflow(true)
-		return CommandResult{Message: "Wonder overflow on: what a full store would waste now goes into the current wonder's bank.", Type: "info"}
-	case "off":
-		engine.SetWonderOverflow(false)
-		return CommandResult{Message: "Wonder overflow off: production over a storage cap is lost again.", Type: "info"}
-	}
-	return CommandResult{Message: "Usage: wonder overflow [on|off]", Type: "error"}
 }
 
 // cmdWorkers is `workers`: bare opens the People panel (as `people` does) and `workers
@@ -774,8 +754,8 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 		if !rs.Unlocked {
 			continue
 		}
-		sb.WriteString(fmt.Sprintf("  %-12s %8.1f / %8.0f  rate: %+.3f/tick\n",
-			rs.Name, rs.Amount, rs.Storage, rs.Rate))
+		sb.WriteString(fmt.Sprintf("  %-12s %8.1f  rate: %+.3f/tick\n",
+			rs.Name, rs.Amount, rs.Rate))
 	}
 	sb.WriteString("\n--- Build Queue ---\n")
 	if len(state.BuildQueue) == 0 {
@@ -855,7 +835,6 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 		state := engine.GetState()
 		var lines []string
 		lines = append(lines, "[gold]Available buildings:[-]")
-		wall := &storeWall{state: state}
 		for _, key := range sortedKeysOf(state.Buildings) {
 			b := state.Buildings[key]
 			if !b.Unlocked {
@@ -869,9 +848,6 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 			}
 			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] (%d built) - Cost: %s %s",
 				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
-			if line := wall.line(b); line != "" {
-				lines = append(lines, "      [yellow]"+line+"[-]")
-			}
 			if limit := atLimit(b); limit != "" {
 				lines = append(lines, "      [yellow]"+limit+"[-]")
 			}
@@ -995,9 +971,8 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 		if !rs.Unlocked {
 			continue
 		}
-		bar := ProgressBar(rs.Amount, rs.Storage, 15)
-		lines = append(lines, fmt.Sprintf("  %-10s %s/%s %s %s",
-			rs.Name, FormatNumber(rs.Amount), FormatNumber(rs.Storage), FormatRateTick(rs.Rate), bar))
+		lines = append(lines, fmt.Sprintf("  %-10s %s %s",
+			rs.Name, FormatNumber(rs.Amount), FormatRateTick(rs.Rate)))
 	}
 	lines = append(lines, "")
 

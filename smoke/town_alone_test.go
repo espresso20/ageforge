@@ -2,23 +2,24 @@ package smoke
 
 import (
 	"fmt"
+	"math"
 	"testing"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
 )
 
-// Storage always fits its next copy, so a town left alone keeps buying
-// storage, but its income stops growing.
+// A town left alone slows down: prices climb with every copy, so its income
+// grows more slowly the longer it is left.
 //
 // The reference town of an early age (reference.go) is stood up on the
-// engine with every tech of the ages so far, wonder overflow on, and a plan
+// engine with every tech of the ages so far, and a plan
 // that buys every building of the age without limit (1000 copies of each,
 // the most a plan item takes). It is then left alone, a day at a time
 // (SimulateOffline, the engine's own catch-up, which runs the plan, the
-// builds and the stores as play does), and must show that income on the last
-// sampled day has grown less than 1% from seven sampled days earlier. Every
-// store holds no more than its cap, every day.
+// builds and the stores as play does), and must slow down: the income it gains in the last third
+// of the samples is at most half of what it gained in the first third. Every
+// store holds a finite amount, never negative, every day.
 
 // A day is 43200 ticks here (a tick is two seconds). The Iron Age stops on
 // day 8, so the default form allows a month (1,296,000 ticks); the long form
@@ -64,7 +65,6 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 	_ = ge.ForceQuietFateForTest(tb.ages[i].EpochKey)
 	ge.GrantTechsForTest()
 	ge.SetTownForTest(town, int(ref.workers))
-	ge.SetWonderOverflow(true)
 	for _, d := range tb.byAge[i] {
 		n := 1000
 		if d.MaxCount > 0 {
@@ -85,8 +85,8 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 		inc := map[string]float64{}
 		for res, r := range st.Resources {
 			inc[res] = r.Rate
-			if r.Amount > r.Storage {
-				t.Errorf("%s, day %d: %s holds %v in a store of %v", out.age, day, res, r.Amount, r.Storage)
+			if math.IsNaN(r.Amount) || math.IsInf(r.Amount, 0) || r.Amount < 0 {
+				t.Errorf("%s, day %d: %s holds %v", out.age, day, res, r.Amount)
 			}
 		}
 		for _, d := range tb.byAge[i] {
@@ -119,10 +119,21 @@ func checkAlone(t *testing.T, r aloneAge, horizon int) {
 		t.Errorf("%s: only %d income samples; need at least eight", r.age, len(r.income))
 		return
 	}
-	earlier, last := r.income[len(r.income)-8], r.income[len(r.income)-1]
-	t.Logf("%s: income seven sampled days before last %.4f; last sampled day %.4f", r.age, earlier, last)
-	if last >= earlier*1.01 {
-		t.Errorf("%s: income grew from %.4f to %.4f (want less than 1%% over seven samples)", r.age, earlier, last)
+	n := len(r.income)
+	for _, v := range r.income {
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			t.Errorf("%s: income is not finite (%v)", r.age, r.income)
+			return
+		}
+	}
+	// A town left alone slows down: what its income grows in the last third
+	// of the samples is at most half of what it grew in the first third.
+	first := r.income[n/3] - r.income[0]
+	lastThird := r.income[n-1] - r.income[n-1-n/3]
+	t.Logf("%s: income %.4f at the start, %.4f a third in, %.4f two thirds in, %.4f at the end (grew %.4f in the first third, %.4f in the last)",
+		r.age, r.income[0], r.income[n/3], r.income[n-1-n/3], r.income[n-1], first, lastThird)
+	if lastThird > first*0.5 {
+		t.Errorf("%s: income grew %.4f in the last third of the samples and %.4f in the first (want the last at most half the first)", r.age, lastThird, first)
 	}
 }
 

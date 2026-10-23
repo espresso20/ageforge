@@ -60,12 +60,10 @@ type Config struct {
 	// differing entry brackets where they parted. The final digest is
 	// always recorded (RunResult.StateDigest).
 	DigestEvery int
-	// NoPlan and NoOverflow switch off, for a check-in player, the two tools
-	// the game gives one: leaving a build plan at each visit (Bot.planAhead)
-	// and wonder overflow. Both are on by default; the switches exist to
-	// measure what each is worth (-no-plan, -no-overflow).
-	NoPlan     bool
-	NoOverflow bool
+	// NoPlan switches off, for a check-in player, a tool the game gives one:
+	// leaving a build plan at each visit (Bot.planAhead). It is on by
+	// default; the switch exists to measure what it is worth (-no-plan).
+	NoPlan bool
 	// NoShares makes a check-in player recruit and assign by hand at each
 	// visit, with auto-recruit off, instead of leaving its workers to worker
 	// shares (Bot.UseShares), to measure what shares are worth (-no-shares).
@@ -538,9 +536,6 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.bot.Deals = cfg.Deals
 	r.bot.Army = cfg.Army
 	r.bot.RecordPlan = cfg.DumpLegacy != ""
-	if cfg.NoOverflow {
-		ge.SetWonderOverflow(false)
-	}
 	r.subscribe()
 	return r
 }

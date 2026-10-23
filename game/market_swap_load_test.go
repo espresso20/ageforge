@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 // A save from before the market lost its swap, loaded by the game after it.
@@ -61,7 +62,10 @@ func countLines(ge *GameEngine, msg string) int {
 func TestMarketSwapSave_LoadsDropsTheSellOrdersAndSaysSoOnce(t *testing.T) {
 	isolateAccountDir(t)
 	save := marketSwapFixtureSave(t)
-	ge := loadFixture(t, marketSwapFixture, "swap")
+	// Loaded as if just saved: the fixture's own old timestamp would play a
+	// day of offline catch-up, and with stock uncapped the plan's builds
+	// would be bought along the way; this test is about the load.
+	ge := loadFixtureAway(t, marketSwapFixture, "swap", time.Second)
 	if ge.cheaterBadge {
 		t.Fatal("the old game's signature no longer verifies")
 	}

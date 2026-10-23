@@ -30,7 +30,7 @@ func (r *runner) checkStorageFeasible(st game.GameState) {
 }
 
 // invariantProblems is every invariant st breaks: non-finite or negative
-// resources, amounts over their cap, bad multipliers, worker bookkeeping,
+// resources, bad multipliers, worker bookkeeping,
 // and requirements no storage can hold. Scenarios other than progression
 // (offline, fuzz, saveload) share it.
 func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
@@ -43,9 +43,6 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 			add("nan_resource", fmt.Sprintf("%s has a non-finite value: amount=%v rate=%v storage=%v", key, rs.Amount, rs.Rate, rs.Storage))
 		case rs.Amount < 0:
 			add("negative_resource", fmt.Sprintf("%s is negative: %v", key, rs.Amount))
-		case rs.Amount > float64(rs.Storage*(1+1e-9))+1e-6 && !rs.OverCapGrace:
-			// Graced stock (Era Mastery's grace rule) may sit over the cap.
-			add("over_storage", fmt.Sprintf("%s amount %s is above its storage cap %s", key, num(rs.Amount), num(rs.Storage)))
 		}
 	}
 	for _, v := range []struct {

@@ -199,7 +199,6 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			} else {
 				fmt.Fprintf(&sb, "  [gray]%s[-]\n", wonderCollectHint())
 			}
-			fmt.Fprintf(&sb, "  %s\n", wonderOverflowLine(state.WonderOverflow))
 		}
 		if line := wonderKeystoneLine(state, current.key); line != "" {
 			fmt.Fprintf(&sb, "  %s\n", line)

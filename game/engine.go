@@ -412,23 +412,15 @@ type GameEngine struct {
 	// Plan Template's source. Saved; folded into the template and cleared by
 	// prestige and Succumb, cleared by Reset.
 	planLog []PlanTemplateItem
-	// wonderOverflowOff turns off banking what the caps would cut off into
-	// the current age's wonder (overflow.go). The player's preference: saved,
-	// kept across prestige and Succumb, cleared by Reset.
-	wonderOverflowOff bool
 	// Worker shares (shares.go). workerShares is the split the player set,
 	// domain → percent (nil: every domain on auto); saved, put back on auto
 	// by prestige, Succumb and Reset. autoRecruitOff turns off the routine's
-	// recruiting; a preference like wonderOverflowOff. staffHoldUntil is the
+	// recruiting; a preference. staffHoldUntil is the
 	// tick the routine's wait after a worker command ends; saved, so a loaded
 	// game waits as the saved one would have.
 	workerShares   map[string]float64
 	autoRecruitOff bool
 	staffHoldUntil int
-	// lastK is the Era Mastery speed the last rates pass ran at, so the next
-	// one sees a drop and applies the grace rule (noteGraceLocked). Not
-	// saved: LoadGame sets it to the loaded age's speed. 0 before any pass.
-	lastK float64
 }
 
 // BuildQueueItem represents a building under construction
@@ -1452,10 +1444,9 @@ func (ge *GameEngine) doTick() {
 	// Apply building production
 	ge.recalculateRates()
 
-	// Apply resource rates (production - consumption); what a cap cuts off
-	// goes to the wonder bank while overflow is on (overflow.go).
+	// Apply resource rates (production - consumption).
 	ge.noteProduced(1)
-	ge.applyTickRates()
+	ge.Resources.ApplyRates()
 	// The faith and culture measures follow the tick's income (faith.go,
 	// culture.go).
 	ge.accrueFaith(1)
@@ -1480,12 +1471,6 @@ func (ge *GameEngine) doTick() {
 		snap := ge.Resources.Snapshot()
 		if f, ok := snap["food"]; ok {
 			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Workers.TotalPop()))
-		}
-		for _, key := range sortedKeys(snap) {
-			rs := snap[key]
-			if rs.Unlocked && rs.Amount >= rs.Storage && rs.Storage > 0 {
-				ge.addLog("debug", fmt.Sprintf("Resource at cap: %s (%.0f/%.0f)", key, rs.Amount, rs.Storage))
-			}
 		}
 	}
 
@@ -2212,7 +2197,6 @@ func (ge *GameEngine) recalculateRates() {
 	// after the pools, flat tech and event output, trade bonuses and the
 	// food drain. Its own breakdown line says why.
 	k := ge.speedK()
-	ge.noteGraceLocked(k)
 	if k != 1 {
 		for _, def := range ge.Resources.defs {
 			if r := ge.Resources.resources[def.Key]; r != nil && r.Rate != 0 {
@@ -2291,18 +2275,6 @@ func (ge *GameEngine) recalculateRates() {
 		r.Storage = ge.storeSize(def, allBonus, specific, k, techStorage)
 		// Owned storage keeps its next queued-aware copy price within reach.
 		r.Storage = floorStore(floors, def.Key, r.Storage)
-		// Storage can shrink (a storage building sold or destroyed). Add clamps
-		// on the way in, but a resource with no production never passes through
-		// Add again, so without this it sat above its new cap indefinitely.
-		// Graced stock (the grace rule: k dropped) is the exception: it stays
-		// until spent, and loses the grace once it is under the cap.
-		if r.Amount > r.Storage {
-			if !ge.Resources.grace[def.Key] {
-				r.Amount = r.Storage
-			}
-		} else if ge.Resources.grace[def.Key] {
-			delete(ge.Resources.grace, def.Key)
-		}
 	}
 
 	// The posts settle last, over the stores above (soldiers.go).
@@ -2314,8 +2286,7 @@ func (ge *GameEngine) recalculateRates() {
 // production_all, knowledge_rate, expedition_reward). The wonders' are computed
 // dynamically from built wonders each time rather than stored in
 // permanentBonuses, so save/load and prestige resets need no special
-// migration. recalculateRates and storeIf both read it, so a store is the
-// same size to each.
+// migration.
 func (ge *GameEngine) permanentBonusMap() map[string]float64 {
 	out := make(map[string]float64)
 	for k, v := range ge.permanentBonuses {
@@ -2335,9 +2306,9 @@ func (ge *GameEngine) permanentBonusMap() map[string]float64 {
 // Storage grows with Era Mastery's k, as production does, so a store holds
 // the same hours of income at any speed. The techs' storage bonus multiplies
 // beside it: +10% of everything the store holds. The one place a
-// store's size is worked out: recalculateRates sets every store with it, and
-// storeIf asks it what a store would be with more storage built. Caller holds
-// the lock.
+// store's size is worked out: recalculateRates sets every store with it.
+// Caller holds the lock. A store is a measure now, not a limit: stock is not
+// held to it.
 func (ge *GameEngine) storeSize(def config.ResourceDef, allBonus, specific, k, techStorage float64) float64 {
 	size := float64((def.BaseStorage + allBonus + specific) * k)
 	if techStorage != 1 {
@@ -2373,22 +2344,6 @@ func (ge *GameEngine) storageFloors() map[string]float64 {
 // floorStore is size raised to the storage floor for res.
 func floorStore(floors map[string]float64, res string, size float64) float64 {
 	return math.Max(size, floors[res])
-}
-
-// storeIf is the size of res's store were the buildings to give extraAll more
-// on every store and extraOwn more on res alone, in raw building bonus, before
-// Era Mastery and the techs multiply it: what the copies in the build queue
-// will make it. With both 0 it is the store as recalculateRates sets it.
-func (ge *GameEngine) storeIf(res string, extraAll, extraOwn float64) float64 {
-	def, ok := ge.Resources.defs[res]
-	if !ok {
-		return 0
-	}
-	bonuses, permanent := ge.Buildings.GetStorageBonuses(), ge.permanentBonusMap()
-	allBonus := bonuses["all"] + permanent["all"] + extraAll
-	specific := bonuses[res] + permanent[res] + extraOwn
-	size := ge.storeSize(def, allBonus, specific, ge.speedK(), 1+ge.Research.Bonus(config.EffectStorage, ""))
-	return floorStore(ge.storageFloors(), res, size)
 }
 
 // Age-transition resource carryover tuning (EPIC: age-pacing economy rebalance).
@@ -2473,9 +2428,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// uses fall back to a small residual percentage. Players who didn't over-
 	// accumulate keep what they had (amount below the cap is untouched).
 	// Faith is excluded — it's cumulative.
-	// The plan's overflow banks go back to the stores first, so the trim
-	// treats them like anything else held: a bank never carries more into the
-	// new age than the stores could (overflow.go).
+	// The plan's banks (from old saves) go back to the stores first, so the
+	// trim treats them like anything else held (overflow.go).
 	ge.returnPlanBanks("for the advance")
 	entryCosts := ge.rules.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
@@ -3546,15 +3500,7 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 		ge.note(config.BadgeEvGathered, resource)
 	}
 	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
-	// Log what storage actually took, not what was asked for.
-	switch gained := actual - before; {
-	case gained <= 0:
-		ge.addLog("warning", fmt.Sprintf("%s storage is full. Gathered nothing.", textfmt.Capitalize(ResourceName(resource))))
-	case gained < amount:
-		ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s (%s storage is now full).", Amount(gained, resource), ResourceName(resource)))
-	default:
-		ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s.", Amount(gained, resource)))
-	}
+	ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s.", Amount(actual-before, resource)))
 	return actual, nil
 }
 
@@ -3681,9 +3627,6 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 		if len(prepaid) > 0 {
 			cost, _ = splitBank(cost, prepaid)
 		}
-		if res := ge.overStore(cost); res != "" {
-			return fmt.Errorf("%s", ge.buildWallText(def, res, cost[res]))
-		}
 		if !ge.Resources.Pay(cost) {
 			return fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
 		}
@@ -3764,8 +3707,6 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 
 	built := 0
-	var overRes string // the store that stopped the loop, if one did
-	var overAmt float64
 	for i := 0; i < count; i++ {
 		// Check MaxCount against fully-built + queued + what we're about to add
 		if def.MaxCount > 0 {
@@ -3779,12 +3720,6 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		// instances so the exponential curve is not bypassed by batch purchases.
 		unitCost, ok := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		if !ok {
-			break
-		}
-		// A copy priced over a store cannot be bought however long the player
-		// waits: the same check, and the same refusal, as a single build.
-		if res := ge.overStore(unitCost); res != "" {
-			overRes, overAmt = res, unitCost[res]
 			break
 		}
 		if !ge.Resources.Pay(unitCost) {
@@ -3816,9 +3751,6 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 			if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
 				return 0, fmt.Errorf("%s is at its max count of %d.", def.Name, def.MaxCount)
 			}
-		}
-		if overRes != "" {
-			return 0, fmt.Errorf("%s", ge.buildWallText(def, overRes, overAmt))
 		}
 		unitCost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		return 0, fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(unitCost))
@@ -4088,61 +4020,6 @@ func (ge *GameEngine) staffableBuilding(key string) (config.BuildingDef, error) 
 // shortfallText names what a cost is short of: "10 gold (have 5)" for each
 // resource the player lacks, or the whole cost when nothing is short.
 // Caller holds ge.mu.
-// overStore is the first resource (in key order) of which cost asks more
-// than its store can hold and more than is held, or "": a price like that
-// cannot be paid however long the player waits. Stock kept above a store
-// from an older save can still be spent, so a price it covers is not over.
-func (ge *GameEngine) overStore(cost map[string]float64) string {
-	for _, res := range sortedKeys(cost) {
-		if cost[res] > ge.Resources.GetStorage(res) && cost[res] > ge.Resources.Get(res) {
-			return res
-		}
-	}
-	return ""
-}
-
-// storeTooSmallText is the refusal for a price larger than a store: which
-// store, how much it holds, and what to build to enlarge it (the age's
-// storage building, when the age has one and can still be built). When the
-// age's storage building has run out of copies it says so instead of sending
-// the player to it.
-func (ge *GameEngine) storeTooSmallText(what, res string, amount float64) string {
-	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", what, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
-	for _, d := range ge.rules.Buildings() {
-		if d.Category == "storage" && d.RequiredAge == ge.age {
-			if ge.Buildings.StorageLimit(d.Key, ge.Resources, ge.buildQueue, ge.storeIf) != "" {
-				return line + ge.storageLimitTail()
-			}
-			return line + " Build more storage first: " + d.Name + "."
-		}
-	}
-	return line
-}
-
-// storageLimitTail ends the refusal for a store that cannot grow: the age's
-// storage building has no copy left that the store could pay for.
-func (ge *GameEngine) storageLimitTail() string {
-	tail := " Your storage is at its limit for this age."
-	if next := ge.progress.GetNextAge(ge.age); next != "" && ge.rules.AgeHasStorageBuilding(next) {
-		tail += " The next age has a bigger storage building."
-	}
-	return tail
-}
-
-// buildWallText is the refusal for a building priced over a store. A storage
-// building is never sent to itself: with a copy still going up it waits for
-// it, and with none it is at its limit.
-func (ge *GameEngine) buildWallText(def config.BuildingDef, res string, amount float64) string {
-	if def.Category != "storage" {
-		return ge.storeTooSmallText(def.Name, res, amount)
-	}
-	line := fmt.Sprintf("%s costs %s, more than your %s storage holds (%s).", def.Name, Amount(amount, res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
-	if ge.Buildings.StorageLimit(def.Key, ge.Resources, ge.buildQueue, ge.storeIf) != "" {
-		return line + ge.storageLimitTail()
-	}
-	return line + " The " + def.Name + " already under construction will raise it."
-}
-
 func (ge *GameEngine) shortfallText(cost map[string]float64) string {
 	var short []string
 	for _, res := range sortedKeys(cost) {
@@ -4227,22 +4104,15 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 		}
 	}
 
-	// Add refund to resources, keeping what storage actually took.
+	// Add the refund to resources.
 	got := make(map[string]float64, len(refund))
-	clipped := false
 	for _, res := range sortedKeys(refund) {
 		got[res] = ge.gainResource(res, refund[res])
-		if got[res] < refund[res] {
-			clipped = true
-		}
 	}
 
 	ge.holdStaffing()
 	ge.recalculateRates()
 	line := fmt.Sprintf("Sold %s. Refund: %s.", buildingCountIn(ge.rules, n, key), Amounts(got))
-	if clipped {
-		line += " Storage was full, so part of the refund was lost."
-	}
 	ge.addLog(LogRoutine, line)
 	return nil
 }
@@ -5049,7 +4919,6 @@ func (ge *GameEngine) Reset() {
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.tickSpeedBonus = 0
-	ge.lastK = 0 // no mastery left: the wiped game runs at 1x
 	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
 	ge.plan = nil
@@ -5068,7 +4937,6 @@ func (ge *GameEngine) Reset() {
 	ge.devTouched = false
 	ge.runAccountID = ""
 	ge.runOrphaned = false
-	ge.wonderOverflowOff = false
 	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
@@ -5232,7 +5100,7 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.withLockHints(ge.withSoldierFigures(ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.storeIf)))),
+		Buildings:            ge.withLockHints(ge.withSoldierFigures(ge.withScholarFigures(ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount)))),
 		Scholars:             ge.scholarsStateLocked(),
 		BuildQueue:           queue,
 		Workers:              workers,
@@ -5307,7 +5175,6 @@ func (ge *GameEngine) GetState() GameState {
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
 		Plan:                  ge.planViews(),
-		WonderOverflow:        !ge.wonderOverflowOff,
 		PermanentBonuses: func() map[string]float64 {
 			out := make(map[string]float64, len(ge.permanentBonuses))
 			for k, v := range ge.permanentBonuses {
@@ -5388,8 +5255,7 @@ const (
 	MaxOfflineTime    = 24 * time.Hour
 	OfflineEfficiency = 0.5
 	// OfflineStepTicks is the step the offline catch-up advances by: each
-	// step credits that many ticks of production (at OfflineEfficiency, up
-	// to the caps, overflow to the wonder bank, then to the plan's banks),
+	// step credits that many ticks of production (at OfflineEfficiency),
 	// moves construction and research on, and lets the build plan start what
 	// the step paid for. A minute at 1x: 24 hours away is 1,440 steps.
 	OfflineStepTicks = 30
@@ -5397,12 +5263,11 @@ const (
 
 // applyOfflineProgress applies simulated progress for time spent offline
 // (must be called with lock held). Time passes in OfflineStepTicks steps, so
-// the build plan starts items as the resources for them come in, the caps
-// apply along the way, construction and research finish while the player is
+// the build plan starts items as the resources for them come in, construction and research finish while the player is
 // away, and the worker shares routine staffs and recruits (shares.go). With
-// an empty plan, nothing under construction, overflow off and nothing for the
-// shares routine to do, it pays exactly the old lump sum: rate x ticks x
-// OfflineEfficiency, capped.
+// an empty plan, nothing under construction and nothing for the shares
+// routine to do, it pays exactly the old lump sum: rate x ticks x
+// OfflineEfficiency.
 func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if elapsed < 5*time.Second {
 		return // too short to matter
@@ -5435,8 +5300,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	ge.away = true
 
 	gains := make(map[string]float64)
-	banked := make(map[string]float64)
-	bankedInto := ""
 	var starts planStarts
 	var staffed staffCounts
 	for done := 0; done < offlineTicks; {
@@ -5446,16 +5309,9 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		if k := ge.fateNextEventIn(); k > 0 && k < n {
 			n = k
 		}
-		w := ge.overflowWonder()
 		ge.noteProduced(float64(n) * OfflineEfficiency)
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
-			func(res string, g float64) { gains[res] += g },
-			func(res string, lost float64) {
-				if b := ge.bankOverflow(w, res, lost); b > 0 {
-					banked[res] += b
-					bankedInto = w
-				}
-			})
+			func(res string, g float64) { gains[res] += g })
 		ge.accrueFaith(float64(n) * OfflineEfficiency)
 		ge.accrueCulture(float64(n) * OfflineEfficiency)
 		// Missions move tick by tick, as doTick runs them, so a road event
@@ -5518,9 +5374,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		for _, res := range sortedKeys(gains) {
 			ge.addLog("info", "  +"+Amount(gains[res], res))
 		}
-	}
-	if len(banked) > 0 {
-		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, Amounts(banked)))
 	}
 	if !starts.empty() {
 		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.rules)+".")
@@ -5707,7 +5560,7 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 	done := 0
 	var stop error
 	for done < limit {
-		cost, err := ge.upgradeOneLocked(key, oldDef, target, done > 0)
+		cost, err := ge.upgradeOneLocked(key, oldDef, target)
 		if err != nil {
 			stop = err
 			break
@@ -5746,9 +5599,8 @@ func (ge *GameEngine) upgradeBuildingLocked(key string, count int, all bool) err
 
 // upgradeOneLocked upgrades one copy of key to target: every check, the
 // payment, and the move. The copy keeps its workers; target is what the key's
-// line has for the age. next says an earlier copy of this run went through, so
-// a refusal reads as the next copy's. It returns the price paid.
-func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.BuildingDef, next bool) (map[string]float64, error) {
+// line has for the age. It returns the price paid.
+func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.BuildingDef) (map[string]float64, error) {
 	if err := ge.upgradeTechErr(target); err != nil {
 		return nil, err
 	}
@@ -5756,13 +5608,6 @@ func (ge *GameEngine) upgradeOneLocked(key string, oldDef, target config.Buildin
 		return nil, fmt.Errorf("%s is at its max count of %d.", target.Name, target.MaxCount)
 	}
 	cost := ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue)
-	what := "Upgrading 1 " + oldDef.Name
-	if next {
-		what = "Upgrading the next " + oldDef.Name
-	}
-	if res := ge.overStore(cost); res != "" {
-		return nil, fmt.Errorf("%s", ge.storeTooSmallText(what, res, cost[res]))
-	}
 	if !ge.Resources.CanAfford(cost) {
 		return nil, fmt.Errorf("Cannot afford to upgrade %s: need %s.", articleName(oldDef.Name), ge.shortfallText(cost))
 	}
@@ -5858,9 +5703,6 @@ func (ge *GameEngine) upgradesAffordableLocked(key string, target config.Buildin
 			return i, fmt.Sprintf("%s is at its max count of %d.", target.Name, target.MaxCount)
 		}
 		cost := ge.Buildings.UpgradeCopyCost(key, i, ge.buildQueue)
-		if res := ge.overStore(cost); res != "" {
-			return i, fmt.Sprintf("costs %s, more than your %s storage holds (%s).", Amount(cost[res], res), ResourceName(res), textfmt.Number(ge.Resources.GetStorage(res)))
-		}
 		for res, amt := range cost {
 			total[res] += amt
 		}

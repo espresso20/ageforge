@@ -258,12 +258,6 @@ const (
 	// BadgeEvPlanQueued: something was added to the build plan. Attribute:
 	// "size" (items waiting now).
 	BadgeEvPlanQueued = "plan_queued"
-	// BadgeEvWonderOverflow: overflow fed a wonder's bank for the first
-	// time in the run.
-	BadgeEvWonderOverflow = "wonder_overflow"
-	// BadgeEvWonderBanked: a wonder's bank was filled by overflow.
-	// Attribute: "away" (1 when it filled during time away).
-	BadgeEvWonderBanked = "wonder_banked"
 	// BadgeEvRuinsCarried: a run began with ruins of a civilization that
 	// fell.
 	BadgeEvRuinsCarried = "ruins_carried"
@@ -314,7 +308,7 @@ func BadgeEventKinds() []string {
 		BadgeEvDevUnlocked, BadgeEvSaveModified, BadgeEvSaveElite,
 		BadgeEvProduced, BadgeEvCensus, BadgeEvWarStarted, BadgeEvWarEnded, BadgeEvGiftSent,
 		BadgeEvWorkersLent, BadgeEvDoomNamed, BadgeEvEraLeft, BadgeEvPlanQueued,
-		BadgeEvWonderOverflow, BadgeEvWonderBanked, BadgeEvRuinsCarried, BadgeEvLegacyPrestige,
+		BadgeEvRuinsCarried, BadgeEvLegacyPrestige,
 		BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
 	}
 }
