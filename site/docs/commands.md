@@ -344,7 +344,7 @@ A prestige pays for every age the run completed, and each era's ages pay three t
 | `festival` | Show festival status: culture cost, current culture, and the boost it grants |
 | `festival confirm yes` | Hold a cultural festival now: spend culture for a temporary production boost. Festivals wait for Drama, a Classical Age tech |
 
-A festival costs the larger of 2K culture or a number of minutes of your own culture income (the age sets the number), and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). Three techs help: Baroque Arts makes the boost last 25% longer (487 ticks, about 16 minutes), Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus. It counts in full whatever that pool holds (see [The all-production pool](resources.md#the-all-production-pool)).
+A festival costs the larger of 2K culture or a number of hours of your own culture income, and gives **+20% to all production for 390 ticks** (~13 minutes). Festivals have a **780-tick cooldown** (~26 minutes). The age sets the hours up to the Industrial Age, between 8 and 100; from the Victorian Age on a festival costs 100 hours of your culture income in every age, so it stays in step with what you make. Three techs help: Baroque Arts makes the boost last 25% longer (487 ticks, about 16 minutes), Radio brings the next festival back 20% sooner and Social Media makes each one cost 20% less. The boost adds to the same pool as every other all-production bonus. It counts in full whatever that pool holds (see [The all-production pool](resources.md#the-all-production-pool)).
 
 ---
 
