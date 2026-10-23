@@ -123,15 +123,12 @@ func TestRawMaterialsSave_TitaniumOreOpensAndTheMinesMakeIt(t *testing.T) {
 			}
 			ge.StepTicks(5)
 			after := ge.GetState().Resources["titanium_ore"]
-			t.Logf("%s: rate %.4g/s (mines state %.4g/s base), amount %.4g of %.4g after 5 ticks", c.name, after.Rate, want, after.Amount, after.Storage)
+			t.Logf("%s: rate %.4g/s (mines state %.4g/s base), amount %.4g after 5 ticks", c.name, after.Rate, want, after.Amount)
 			if after.Rate <= 0 {
 				t.Errorf("titanium ore has no rate after the load: %v", after.Rate)
 			}
 			if !(after.Amount > 0) {
-				t.Errorf("the mines made no titanium ore in 5 ticks (amount %v of %v)", after.Amount, after.Storage)
-			}
-			if after.Amount > after.Storage+1e-6 {
-				t.Errorf("titanium ore %v is over its store %v", after.Amount, after.Storage)
+				t.Errorf("the mines made no titanium ore in 5 ticks (amount %v)", after.Amount)
 			}
 		})
 	}

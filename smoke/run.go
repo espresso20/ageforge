@@ -218,8 +218,8 @@ type AgeSplit struct {
 	// for an age the run did not sample.
 	Quiet *QuietStretch `json:"quiet,omitempty"`
 	// Entry is what the store held at the age's first sampled tick (amounts
-	// of a whole unit or more), and EntryStore the general store's cap then
-	// (gold's): what a run carried in.
+	// of a whole unit or more), and EntryStore a good stock of gold then
+	// (goodStockOf): what a run carried in.
 	Entry      map[string]float64 `json:"stock_at_entry,omitempty"`
 	EntryStore float64            `json:"store_at_entry,omitempty"`
 	// Gates is when each thing the advance waits for was first in place
@@ -757,7 +757,7 @@ func (r *runner) trackGates(st game.GameState) {
 				r.entry[k] = rs.Amount
 			}
 		}
-		r.entryStore = st.Resources["gold"].Storage
+		r.entryStore = goodStockOf(rules.Core(), st, "gold")
 	}
 }
 

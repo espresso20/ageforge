@@ -14,18 +14,15 @@ import (
 // most.
 var bigFigure = regexp.MustCompile(`[0-9]{4,}[A-Za-z]`)
 
-// TestLateGameStoresPrintInThreeDigits: the smallest store the game builds
-// and the largest, at any count of copies up to well past the late game's
+// TestLateGameStoresPrintInThreeDigits: the smallest stock the game's prices
+// are measured on and the largest (the stock scale of each age,
+// config.StockScale), at any count of copies up to well past the late game's
 // top (about 25 quintillion), print in at most three digits before the unit,
 // and the formatter's ceiling is far past them.
 func TestLateGameStoresPrintInThreeDigits(t *testing.T) {
 	smallest, largest := 0.0, 0.0
-	// A storage building holds nothing now; the size a copy held is the
-	// reference store (config.ReferenceStoreSizes), which the few prices that
-	// are a share of a store are measured on and the late game's figures
-	// still reach.
-	sizes, _ := config.ReferenceStoreSizes(config.BaseBuildings(), config.Ages(), config.ReferenceBaseStore())
-	for _, size := range sizes {
+	for _, age := range config.AgeOrder() {
+		size := config.StockScale(age)
 		if size <= 0 {
 			continue
 		}
@@ -34,11 +31,11 @@ func TestLateGameStoresPrintInThreeDigits(t *testing.T) {
 		}
 		largest = max(largest, size)
 	}
-	if got := FormatNumber(smallest); got != "150" {
-		t.Errorf("the smallest store prints %q, want 150", got)
+	if got := FormatNumber(smallest); got != "800" {
+		t.Errorf("the smallest stock prints %q, want 800", got)
 	}
-	if got := FormatNumber(largest); got != "68Qi" {
-		t.Errorf("the largest store prints %q, want 68Qi", got)
+	if got := FormatNumber(largest); got != "344Qi" {
+		t.Errorf("the largest stock prints %q, want 344Qi", got)
 	}
 	for copies := 1; copies <= 40; copies++ {
 		for _, size := range []float64{smallest, largest} {

@@ -37,6 +37,18 @@ func (ge *GameEngine) townIncome(res string) float64 {
 	return max(made, 0)
 }
 
+// incomeOf is townIncome as the player sees it: scaled by Era Mastery's
+// speed on known ground, as the rates on screen are. The prices that are a
+// number of minutes of income (the festival, the Black Market, deals) are
+// worked out on it. Under the lock.
+func (ge *GameEngine) incomeOf(res string) float64 {
+	income := ge.townIncome(res)
+	if k := ge.speedK(); k > 0 {
+		income = float64(income * k)
+	}
+	return income
+}
+
 // eventTown is what an event's size is read from for res in the current
 // age: the stock, the town's income and the age's typical income. perTick
 // asks for the units a rate is applied in (before Era Mastery scales the
@@ -105,9 +117,8 @@ func (ge *GameEngine) sizeEffects(effects []config.Effect) []config.Effect {
 
 // eventOutcome is what a random event did when it fired.
 type eventOutcome struct {
-	// gained is what the event gave, by resource, in full: what storage
-	// took of it is in fit.
-	gained, fit map[string]float64
+	// gained is what the event gave, by resource.
+	gained map[string]float64
 	// lost is what left the stores, after a garrison's share.
 	lost    map[string]float64
 	workers int

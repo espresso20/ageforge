@@ -361,9 +361,9 @@ func (ge *GameEngine) capLinesLocked(effects []config.Effect, held bool) []strin
 	return out
 }
 
-// grantLocked adds a one-off grant of amount of res to the store (an event,
-// a milestone reward) and returns what the store took: the storage cap cuts
-// off the rest. Caller holds the lock.
+// grantLocked adds a one-off grant of amount of res to the stock (an event,
+// a milestone reward) in full and returns what was added. Caller holds the
+// lock.
 func (ge *GameEngine) grantLocked(res string, amount float64) (took float64) {
 	if res == config.ResearchTarget {
 		// Research is not stored: it lands on the tech in progress, or is
@@ -374,20 +374,4 @@ func (ge *GameEngine) grantLocked(res string, amount float64) (took float64) {
 	}
 	before := ge.Resources.Get(res)
 	return ge.Resources.Add(res, amount) - before
-}
-
-// clippedLine is the log line for grants a full store cut short: "  →
-// Storage was nearly full: only 30 food (of 250) fit." promised and took are
-// by resource; "" when everything fit.
-func clippedLine(promised, took map[string]float64) string {
-	var parts []string
-	for _, res := range sortedKeys(promised) {
-		if want := promised[res]; want > 0 && took[res] < want-float64(1e-9*want) {
-			parts = append(parts, Amount(math.Max(took[res], 0), res)+" (of "+textfmt.Number(want)+")")
-		}
-	}
-	if len(parts) == 0 {
-		return ""
-	}
-	return "  → Storage was nearly full: only " + joinAnd(parts) + " fit."
 }

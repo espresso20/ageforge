@@ -1,10 +1,10 @@
 package smoke
 
 import (
-	"math"
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // Harbinger policies for the bot (--harbinger).
@@ -34,7 +34,6 @@ func (b *Bot) harbingerTargets(p *plan) {
 	add := func(cost map[string]float64) {
 		for r, c := range cost {
 			p.target[r] += c
-			p.capNeed[r] = math.Max(p.capNeed[r], c)
 		}
 	}
 	if b.wantsAppease() && v.AppeaseBlocked == "" {
@@ -81,7 +80,8 @@ func (b *Bot) spareFor(st game.GameState, cost map[string]float64) bool {
 	return true
 }
 
-// ResourcePoint is one resource's stock and cap at a moment.
+// ResourcePoint is one resource's stock and a good stock of it (the field is
+// called Storage for the reports that read it) at a moment.
 type ResourcePoint struct {
 	Stock   float64 `json:"stock"`
 	Storage float64 `json:"storage"`
@@ -136,7 +136,7 @@ func affordableIn(st game.GameState, cost map[string]float64) (afford, fits bool
 		if rs.Amount < c {
 			afford = false
 		}
-		if rs.Storage < c {
+		if goodStockOf(rules.Core(), st, r) < c {
 			fits = false
 		}
 	}
@@ -148,7 +148,7 @@ func pricedPoints(st game.GameState, costs ...map[string]float64) map[string]Res
 	for _, c := range costs {
 		for r := range c {
 			rs := st.Resources[r]
-			out[r] = ResourcePoint{Stock: rs.Amount, Storage: rs.Storage}
+			out[r] = ResourcePoint{Stock: rs.Amount, Storage: goodStockOf(rules.Core(), st, r)}
 		}
 	}
 	return out
@@ -440,12 +440,14 @@ type PriceRow struct {
 	BraceL1  map[string]float64 `json:"brace_l1_cost"`
 	BraceL2  map[string]float64 `json:"brace_l2_cost"`
 	FinalEra bool               `json:"final_era,omitempty"`
-	// BraceCeiling is the most an ordinary doom's Brace level 1 may ask of
-	// each material (three fifths of a moderate builder's store; nil for the
-	// final era's threads), and TypicalStore that store: five copies of
-	// every storage building up to the arrival age.
-	BraceCeiling map[string]float64 `json:"brace_ceiling,omitempty"`
-	TypicalStore map[string]float64 `json:"typical_store,omitempty"`
+	// BraceCeiling is the most a thread's Brace level 1 may ask of each
+	// material (three fifths of the arrival age's stock scale, rounded down
+	// to two figures), BraceCeilingHours the same ceiling in hours of a
+	// moderate economy's income of the material, and StockScale the age's
+	// scale (config.StockScale).
+	BraceCeiling      map[string]float64 `json:"brace_ceiling,omitempty"`
+	BraceCeilingHours map[string]float64 `json:"brace_ceiling_hours,omitempty"`
+	StockScale        float64            `json:"stock_scale,omitempty"`
 }
 
 // HarbingerPrices is the prices of every thread whose doom can be
@@ -459,7 +461,7 @@ func HarbingerPrices() []PriceRow {
 		row := PriceRow{
 			Epoch: p.Epoch, TargetEpoch: p.Epoch, Age: p.Age, WarningTicks: p.WarningTicks,
 			AppeaseL1: p.AppeaseL1, AppeaseL2: p.AppeaseL2, BraceL1: p.BraceL1, BraceL2: p.BraceL2,
-			FinalEra: p.FinalEra, BraceCeiling: p.BraceCeiling, TypicalStore: p.TypicalStore,
+			FinalEra: p.FinalEra, BraceCeiling: p.BraceCeiling, BraceCeilingHours: p.BraceCeilingHours, StockScale: p.StockScale,
 		}
 		if p.LastPassage {
 			row.TargetEpoch = ""

@@ -41,20 +41,19 @@ type goldenGate struct {
 }
 
 // goldenTables is the record of every number the economy's tables hold once
-// the game has loaded them: prices, rates, outputs, storage sizes, build and
+// the game has loaded them: prices, rates, outputs, build and
 // research times, gates, and the price levels worked out from them.
 type goldenTables struct {
-	Buildings      map[string]goldenBuilding     `json:"buildings"`
-	Techs          map[string]goldenTech         `json:"techs"`
-	Gates          map[string]goldenGate         `json:"gates"`
-	AgeTargetSecs  map[string]float64            `json:"age_target_seconds"`
-	PriceLevels    map[string]map[string]float64 `json:"price_levels"`
-	TypicalIncome  map[string]map[string]float64 `json:"typical_income"`
-	TypicalStorage map[string]map[string]float64 `json:"typical_storage"`
-	EpochEvents    map[string]int                `json:"epoch_event_ticks"`
-	Awakenings     map[string]int                `json:"awakening_ticks"`
-	TradeRoutes    map[string]int                `json:"trade_route_ticks"`
-	DealLevels     map[string]map[string]float64 `json:"deal_flow_levels"`
+	Buildings     map[string]goldenBuilding     `json:"buildings"`
+	Techs         map[string]goldenTech         `json:"techs"`
+	Gates         map[string]goldenGate         `json:"gates"`
+	AgeTargetSecs map[string]float64            `json:"age_target_seconds"`
+	PriceLevels   map[string]map[string]float64 `json:"price_levels"`
+	TypicalIncome map[string]map[string]float64 `json:"typical_income"`
+	EpochEvents   map[string]int                `json:"epoch_event_ticks"`
+	Awakenings    map[string]int                `json:"awakening_ticks"`
+	TradeRoutes   map[string]int                `json:"trade_route_ticks"`
+	DealLevels    map[string]map[string]float64 `json:"deal_flow_levels"`
 }
 
 func liveGoldenTables() goldenTables {
@@ -83,7 +82,6 @@ func liveGoldenTables() goldenTables {
 		g.PriceLevels[a.Key] = PriceLevels(a.Key)
 	}
 	g.TypicalIncome = Incomes(defs, techs, order, AnyResource)
-	g.TypicalStorage = TypicalStorages(defs, BaseResources(), order)
 	g.DealLevels = FlowDealLevels(defs, AgePositions(order))
 	for _, e := range append(GoodEpochEvents(), ChallengingEpochEvents()...) {
 		g.EpochEvents[e.Key] = e.Duration

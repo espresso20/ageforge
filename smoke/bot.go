@@ -23,7 +23,6 @@ import (
 //   - keep food positive: food producers get workers first, and a food
 //     building is bought whenever the net food rate goes negative
 //   - buy the next age's required buildings as soon as they are affordable
-//   - buy storage whenever a requirement or a needed cost exceeds a cap
 //   - buy housing when the population is capped and worker slots are free
 //   - while the slowest requirement is more than the horizon away, invest in
 //     the best producer for it; otherwise save
@@ -51,8 +50,7 @@ type Bot struct {
 	// CheckInTicks is the time to the next decision for a player who only
 	// checks in now and then (the idle style); 0 for one who is always
 	// there. A check-in player plans for what happens before the next
-	// visit: storage for what production will bring in by then, and the
-	// wonder banked with what would otherwise be lost at the cap. See
+	// visit: the buildings and techs the income of those hours pays for. See
 	// CheckIn.
 	CheckInTicks float64
 	// Deals makes the bot take faction trade deals (takeDeals). Off by
@@ -130,20 +128,19 @@ func NewBot(ge *game.GameEngine) *Bot {
 
 // plan is the bot's working view of one decision.
 type plan struct {
-	// storeK is Era Mastery's speed in this age: a storage building adds
-	// its effect × storeK (storage grows with k).
-	storeK   float64
-	st       game.GameState
-	amt      map[string]float64 // spendable amounts, decremented as the bot spends
-	storage  map[string]float64 // caps, raised locally as storage is bought
+	st  game.GameState
+	amt map[string]float64 // spendable amounts, decremented as the bot spends
+	// stock is a good stock of each resource for the town (goodStock): what
+	// the bot treats as a full store. Nothing caps stock, so it holds the
+	// bot to nothing; it is the scale the bot weighs a pile by.
+	stock    map[string]float64
 	target   map[string]float64 // total amount still to generate this age
 	eta      map[string]float64 // ticks until target, +Inf if unreachable at the current rate
 	maxEta   float64
-	worst    []string           // target resources, slowest first
-	needBld  map[string]int     // required building deficits (built + queued)
-	queued   map[string]int     // queued copies per key
-	extra    map[string]int     // copies bought this decision, for cost scaling
-	capNeed  map[string]float64 // amounts that must fit under a cap
+	worst    []string       // target resources, slowest first
+	needBld  map[string]int // required building deficits (built + queued)
+	queued   map[string]int // queued copies per key
+	extra    map[string]int // copies bought this decision, for cost scaling
 	invest   bool
 	foodRate float64
 	slots    int // worker slots across all buildings
@@ -171,23 +168,29 @@ func sortedKeys[V any](m map[string]V) []string {
 	return out
 }
 
+// goodStock is what the bot counts as a full store of res: a good stock of it
+// for the town as it stands (rules.Set.StockOf): the age's stock scale in
+// minutes of the town's own income of res. Stock has no ceiling, so nothing
+// holds the bot to it; it is the scale the bot weighs a pile of res by.
+func (b *Bot) goodStock(st game.GameState, res string) float64 {
+	return goodStockOf(b.rules, st, res)
+}
+
 func (b *Bot) newPlan(st game.GameState) *plan {
 	p := &plan{
 		st:      st,
 		amt:     make(map[string]float64),
-		storage: make(map[string]float64),
+		stock:   make(map[string]float64),
 		target:  make(map[string]float64),
 		eta:     make(map[string]float64),
 		needBld: make(map[string]int),
 		queued:  make(map[string]int),
 		extra:   make(map[string]int),
-		capNeed: make(map[string]float64),
 		hold:    make(map[string]float64),
 	}
-	p.storeK = max(st.Mastery.K, 1)
 	for k, r := range st.Resources {
 		p.amt[k] = r.Amount
-		p.storage[k] = r.Storage
+		p.stock[k] = b.goodStock(st, k)
 	}
 	p.foodRate = st.Resources["food"].Rate
 	for key, bs := range st.Buildings {
@@ -227,24 +230,6 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 	// scholars do its work.
 	p.must = b.mustTechs(p)
 	b.harbingerTargets(p)
-	if b.CheckInTicks > 0 {
-		// Room for what comes in before the next visit, up to what the age
-		// still needs: anything over the cap by then is lost. A player who
-		// leaves a build plan spends most of it as it comes in, so they
-		// store an hour's worth (the Storage Covenant's scale) rather than
-		// the whole interval's: storage bought for eight hours of income
-		// would cost more than the income it saves.
-		ahead := b.CheckInTicks
-		if b.UsePlan {
-			ahead = math.Min(ahead, planStoreTicks)
-		}
-		for _, res := range sortedKeys(p.target) {
-			if rate := st.Resources[res].Rate; rate > 0 && p.target[res] > 0 {
-				want := math.Min(p.target[res], p.amt[res]+float64(rate*ahead))
-				p.capNeed[res] = math.Max(p.capNeed[res], want)
-			}
-		}
-	}
 	p.maxEta = 0
 	for _, res := range sortedKeys(p.target) {
 		deficit := p.target[res] - p.amt[res]
@@ -358,21 +343,16 @@ func (b *Bot) takeDeals(p *plan) {
 			if d.Taken || p.amt[d.Give] < d.GiveAmt {
 				continue
 			}
-			atCap := p.amt[d.Give] >= 0.95*p.storage[d.Give]
 			spare := p.amt[d.Give] - d.GiveAmt - p.target[d.Give] - p.blockCost[d.Give]
-			switch {
-			case atCap:
-			case spare < 0:
+			if spare < 0 {
 				continue
 			}
 			if d.Kind == game.DealSell || d.Kind == game.DealWant {
-				short := p.target[d.Get] - p.amt[d.Get]
-				room := p.storage[d.Get] - p.amt[d.Get]
-				if short <= 0 || room < d.GetAmt {
+				if short := p.target[d.Get] - p.amt[d.Get]; short <= 0 {
 					continue
 				}
-			} else if !atCap {
-				continue
+			} else {
+				continue // favor and rare deals are for what a full store would lose
 			}
 			if got, err := b.ge.AcceptFactionDeal(key, d.Num); b.act("deal", fmt.Sprintf("%s#%d %s->%s", key, d.Num, d.Give, d.Get), err) {
 				p.amt[d.Give] -= got.GiveAmt
@@ -390,15 +370,12 @@ const maxCheckInRounds = 30
 
 // CheckIn is one visit by a player who checks in now and then: rounds of
 // Play on a fresh snapshot until one changes nothing, so a visit spends and
-// queues everything worthwhile (several producers, storage for the hours
-// ahead, staffing, the wonder) instead of making one decision and leaving.
+// queues everything worthwhile (several producers, staffing, the wonder)
+// instead of making one decision and leaving.
 // No time passes during a visit. Returns the rounds played.
 func (b *Bot) CheckIn(st game.GameState) int {
 	if b.Trace != nil {
 		b.traceCheckIn("checkin", st)
-	}
-	if b.UsePlan && b.expandStorage(st) {
-		st = b.ge.GetState()
 	}
 	for round := 1; ; round++ {
 		before := b.actionCount()
@@ -424,10 +401,6 @@ const maxPlanCopies = 40
 // and an item the income doesn't reach just waits for the next visit.
 const planIncomeSlack = 1.5
 
-// planStoreTicks is how much of the income ahead a check-in player who
-// leaves a plan buys storage for: an hour at 1x.
-const planStoreTicks = 1800
-
 // planAhead is how a check-in player leaves the game: a build plan
 // (`plan build`, `plan research`) for the hours until the next
 // visit, so the income of those hours is spent as it comes in instead of
@@ -439,20 +412,18 @@ const planStoreTicks = 1800
 // requirement. Items go in priority order, each with as many copies as the
 // budget left covers (along the cost curve):
 //
-//  1. the age's wonder, which starts once overflow and deposits fill its bank;
-//  2. storage for anything that must fit under a cap (requirements, the
-//     income ahead, prices over a cap);
-//  3. the next age's required buildings;
-//  4. housing when the population is capped and worker slots stand empty;
-//  5. producers of the slowest requirements, slowest first;
-//  6. techs the knowledge budget covers, a missing producer's tech first.
+//  1. the age's wonder, which starts once deposits fill its bank;
+//  2. the next age's required buildings;
+//  3. housing when the population is capped and worker slots stand empty;
+//  4. producers of the slowest requirements, slowest first;
+//  5. techs the knowledge budget covers, a missing producer's tech first.
 //
 // While the goal is beyond the horizon (investing), producers go before
-// storage and required buildings: a waiting item holds its price back, and a
-// required building waiting on stone would hold back the stone pits that
-// bootstrap it. Storage and required buildings get a copy even when the
-// budget can't cover one, as long as what they lack is coming in: they are
-// what the age needs, and the plan waits for them.
+// required buildings: a waiting item holds its price back, and a required
+// building waiting on stone would hold back the stone pits that bootstrap
+// it. Required buildings get a copy even when the budget can't cover one, as
+// long as what they lack is coming in: they are what the age needs, and the
+// plan waits for them.
 func (b *Bot) planAhead(st game.GameState) {
 	if b.CheckInTicks <= 0 {
 		return
@@ -499,9 +470,6 @@ func (b *Bot) planAhead(st game.GameState) {
 		n := 0
 		for n < want && n < maxPlanCopies && b.buildable(p, key) {
 			c := b.cost(p, key)
-			if !p.fits(c) {
-				break
-			}
 			if !covers(c) && !(essential && accrues(c)) {
 				break
 			}
@@ -528,38 +496,6 @@ func (b *Bot) planAhead(st game.GameState) {
 		return got
 	}
 
-	storage := func() {
-		for _, key := range sortedKeys(p.needBld) {
-			p.fits(b.cost(p, key)) // record prices over a cap in capNeed
-		}
-		for _, res := range sortedKeys(p.capNeed) {
-			if p.capNeed[res] <= p.storage[res]*0.98 {
-				continue
-			}
-			key, ok := b.bestFor(p, storer(res))
-			if !ok {
-				continue
-			}
-			per := 0.0
-			for _, e := range b.defs[key].Effects {
-				per += float64(storer(res)(e) * p.storeK)
-			}
-			want := 1
-			if per > 0 {
-				want = int(math.Ceil((p.capNeed[res] - p.storage[res]) / per))
-			}
-			n := add(key, "storage", want, true)
-			for _, e := range b.defs[key].Effects {
-				if e.Type == "storage" {
-					for r := range p.storage {
-						if e.Target == r || e.Target == "all" {
-							p.storage[r] += float64(float64(e.Value*float64(n)) * p.storeK)
-						}
-					}
-				}
-			}
-		}
-	}
 	required := func() {
 		for _, key := range sortedKeys(p.needBld) {
 			add(key, "required", p.needBld[key], true)
@@ -586,11 +522,9 @@ func (b *Bot) planAhead(st game.GameState) {
 
 	if p.invest {
 		producers()
-		storage()
 		required()
 		housingFor()
 	} else {
-		storage()
 		required()
 		housingFor()
 		producers()
@@ -613,7 +547,7 @@ func (b *Bot) planAhead(st game.GameState) {
 }
 
 // planNextAge queues the next age's opening moves behind the advance item:
-// a few copies of its storage building, its wonder, and its share of the
+// a few copies of its storage building (a gate asks for them), its wonder, and its share of the
 // following gate (the next age's buildings the age after it requires). They
 // wait, reserving nothing, until the advance unlocks them, so a long absence
 // that finishes one age keeps going in the next.
@@ -641,7 +575,7 @@ func (b *Bot) planNextAge(next string) {
 		}
 		units := 0.0
 		for _, r := range sortedKeys(d.BaseCost) { // a float sum: sorted, not map order
-			units += d.BaseCost[r] / math.Max(st.Resources[r].Storage, 1)
+			units += d.BaseCost[r] / math.Max(b.goodStock(st, r), 1)
 		}
 		for _, e := range d.Effects {
 			if e.Type == "production" && e.Value > 0 && !config.IsFlowResource(e.Target) {
@@ -726,48 +660,14 @@ func (b *Bot) planTechs(p *plan, st game.GameState, budget map[string]float64) {
 	}
 }
 
-// expandStorage is the first thing a check-in player does on arriving to
-// full stores: build the storage the hours until the next visit call for
-// (newPlan's capNeed: requirements, prices, and the income ahead up to what
-// the age still needs), with what sits at the caps before anything else
-// spends it. Reports whether it built anything.
-func (b *Bot) expandStorage(st game.GameState) bool {
-	p := b.newPlan(st)
-	built := false
-	skip := map[string]bool{}
-	for i := 0; i < 25; i++ {
-		res := ""
-		for _, r := range sortedKeys(p.capNeed) {
-			if !skip[r] && p.capNeed[r] > p.storage[r]*0.98 {
-				res = r
-				break
-			}
-		}
-		if res == "" {
-			break
-		}
-		key, ok := b.bestFor(p, storer(res))
-		if !ok {
-			skip[res] = true
-			continue
-		}
-		if !b.tryBuild(p, key, "build_storage") {
-			skip[res] = true
-			continue
-		}
-		built = true
-	}
-	return built
-}
-
 // traceCheckIn writes what a visit finds or leaves: each resource the age
-// still needs, as held/cap (+rate per tick, still to make), slowest first.
+// still needs, as held/a good stock (+rate per tick, still to make), slowest first.
 func (b *Bot) traceCheckIn(what string, st game.GameState) {
 	p := b.newPlan(st)
 	var parts []string
 	for _, res := range p.worst {
 		r := st.Resources[res]
-		parts = append(parts, fmt.Sprintf("%s %s/%s (%+.3g/t, need %s)", res, num(r.Amount), num(r.Storage), r.Rate, num(p.target[res])))
+		parts = append(parts, fmt.Sprintf("%s %s/%s (%+.3g/t, need %s)", res, num(r.Amount), num(p.stock[res]), r.Rate, num(p.target[res])))
 	}
 	// Required buildings not yet built or queued, whose price is in hand
 	// (the ones it isn't show up above as resources).
@@ -897,19 +797,6 @@ func (p *plan) affordable(cost map[string]float64) bool {
 	return true
 }
 
-// fits reports whether every part of cost fits under its cap; misses are
-// recorded in capNeed so the storage pass raises them.
-func (p *plan) fits(cost map[string]float64) bool {
-	ok := true
-	for r, c := range cost {
-		if c > p.storage[r] {
-			p.capNeed[r] = math.Max(p.capNeed[r], c)
-			ok = false
-		}
-	}
-	return ok
-}
-
 // cheapFor reports whether cost is at most frac of what the bot holds.
 func (p *plan) cheapFor(cost map[string]float64, frac float64) bool {
 	for r, c := range cost {
@@ -920,11 +807,12 @@ func (p *plan) cheapFor(cost map[string]float64, frac float64) bool {
 	return true
 }
 
-// costFrac is the price as the largest fraction of any cap it touches.
+// costFrac is the price as the largest fraction of a good stock of any
+// resource it touches.
 func (p *plan) costFrac(cost map[string]float64) float64 {
 	f := 0.0
 	for r, c := range cost {
-		s := math.Max(p.storage[r], 1)
+		s := math.Max(p.stock[r], 1)
 		f = math.Max(f, c/s)
 	}
 	return math.Max(f, 1e-9)
@@ -932,7 +820,7 @@ func (p *plan) costFrac(cost map[string]float64) float64 {
 
 func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 	c := b.cost(p, key)
-	if !p.fits(c) || !p.affordable(c) {
+	if !p.affordable(c) {
 		return false
 	}
 	// What the copy really costs is read off the stores: the game floors
@@ -953,17 +841,6 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 		p.amt[r] -= held[r] - b.ge.Resources.Get(r)
 	}
 	p.extra[key]++
-	for _, e := range b.defs[key].Effects {
-		if e.Type == "storage" {
-			if e.Target == "all" {
-				for r := range p.storage {
-					p.storage[r] += float64(e.Value * p.storeK)
-				}
-			} else {
-				p.storage[e.Target] += float64(e.Value * p.storeK)
-			}
-		}
-	}
 	return true
 }
 
@@ -972,11 +849,6 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 // a producer of that resource instead. Reports whether key itself was bought.
 func (b *Bot) buyOrBootstrap(p *plan, key, kind string, depth int) bool {
 	c := b.cost(p, key)
-	if !p.fits(c) {
-		// Over a cap: fits noted it in capNeed and the storage pass comes
-		// first. Chasing the capped resource itself would only waste it.
-		return false
-	}
 	if p.affordable(c) {
 		return b.tryBuild(p, key, kind)
 	}
@@ -1074,7 +946,7 @@ func (b *Bot) weights(p *plan) map[string]float64 {
 		if !r.Unlocked {
 			continue
 		}
-		goal := math.Max(math.Max(p.target[res], r.Storage), 1)
+		goal := math.Max(math.Max(p.target[res], p.stock[res]), 1)
 		v := 1 / goal
 		if p.target[res] > 0 && p.eta[res] > 0 {
 			boost := 5.0
@@ -1088,7 +960,7 @@ func (b *Bot) weights(p *plan) map[string]float64 {
 		w[res] = v
 	}
 	food := p.st.Resources["food"]
-	if p.foodRate < 0 || food.Amount < 0.2*food.Storage {
+	if p.foodRate < 0 || food.Amount < 0.2*p.stock["food"] {
 		w["food"] *= 20
 	}
 	return w
@@ -1119,7 +991,7 @@ func (b *Bot) recruit(p *plan) int {
 	}
 	food := p.st.Resources["food"]
 	n := room
-	if food.Amount < 0.3*food.Storage {
+	if food.Amount < 0.3*p.stock["food"] {
 		// Thin buffer: as many as the surplus feeds, plus whoever fills the
 		// empty food slots (they grow more than they eat).
 		n = int(math.Max(0, p.foodRate)/per) + p.freeFoodSlots
@@ -1210,9 +1082,6 @@ func (b *Bot) bestFor(p *plan, match func(config.Effect) float64) (string, bool)
 			continue
 		}
 		c := b.cost(p, key)
-		if !p.fits(c) {
-			continue
-		}
 		s := v / p.costFrac(c)
 		if b.payEta(p, c) > 4*b.HorizonTicks {
 			if s > farScore {
@@ -1257,15 +1126,6 @@ func producer(res string) func(config.Effect) float64 {
 	}
 }
 
-func storer(res string) func(config.Effect) float64 {
-	return func(e config.Effect) float64 {
-		if e.Type == "storage" && (e.Target == res || e.Target == "all") && e.Value > 0 {
-			return e.Value
-		}
-		return 0
-	}
-}
-
 func housing(e config.Effect) float64 {
 	if e.Type == "capacity" && e.Target == "population" && e.Value > 0 {
 		return e.Value
@@ -1285,17 +1145,6 @@ func (b *Bot) build(p *plan) {
 	for _, key := range sortedKeys(p.needBld) {
 		for i := 0; i < p.needBld[key] && i < 200; i++ {
 			if !b.buildable(p, key) || !b.buyOrBootstrap(p, key, "build_required", 0) {
-				break
-			}
-		}
-	}
-
-	// 3. Storage for anything that must fit under a cap. A storage building
-	// the bot can't pay for records its blocker.
-	for _, res := range sortedKeys(p.capNeed) {
-		for i := 0; i < 50 && p.capNeed[res] > p.storage[res]*0.98; i++ {
-			key, ok := b.bestFor(p, storer(res))
-			if !ok || !b.buyOrBootstrap(p, key, "build_storage", 0) {
 				break
 			}
 		}
@@ -1351,10 +1200,10 @@ func (b *Bot) bankWonder(p *plan) {
 			// better left to the build plan.
 			continue
 		case p.invest && !onlyWonder:
-			if p.amt[res] < 0.9*p.storage[res] {
+			if p.amt[res] < 0.9*p.stock[res] {
 				continue
 			}
-			keep = math.Max(keep, 0.5*p.storage[res])
+			keep = math.Max(keep, 0.5*p.stock[res])
 		}
 		dep := math.Min(left, p.amt[res]-keep)
 		if dep < left {
@@ -1409,7 +1258,7 @@ func (b *Bot) startResearch(p *plan, key string) bool {
 // festival spends culture on a production buff when it is piling up.
 func (b *Bot) festival(p *plan) {
 	c, ok := p.st.Resources["culture"]
-	if !ok || !c.Unlocked || c.Amount < 0.8*c.Storage {
+	if !ok || !c.Unlocked || c.Amount < 0.8*p.stock["culture"] {
 		return
 	}
 	if !p.open(config.FeatureFestivals) {
@@ -1428,7 +1277,7 @@ func (b *Bot) gather(p *plan) {
 		return
 	}
 	pick := ""
-	if g := p.blocker; (g == "food" || g == "wood" || g == "stone") && p.st.Resources[g].Unlocked && p.amt[g] < p.storage[g] {
+	if g := p.blocker; (g == "food" || g == "wood" || g == "stone") && p.st.Resources[g].Unlocked && p.amt[g] < p.stock[g] {
 		pick = g
 	}
 	for _, res := range p.worst {
@@ -1436,7 +1285,7 @@ func (b *Bot) gather(p *plan) {
 			break
 		}
 		if res == "food" || res == "wood" || res == "stone" {
-			if p.st.Resources[res].Unlocked && p.amt[res] < p.storage[res] {
+			if p.st.Resources[res].Unlocked && p.amt[res] < p.stock[res] {
 				pick = res
 				break
 			}

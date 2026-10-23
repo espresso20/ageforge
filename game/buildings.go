@@ -58,7 +58,6 @@ type BuildingManager struct {
 	wonderMonumentKeys []string
 	scholarKeys        []string
 	soldierKeys        []string
-	storageKeys        []string
 
 	// costMult is the global build-cost multiplier applied to every computed
 	// building cost (GetCost / BuildBatchCost / UpgradeCost new-copy side). It is
@@ -112,7 +111,6 @@ func (bm *BuildingManager) rebuildOrder() {
 	bm.wonderMonumentKeys = nil
 	bm.scholarKeys = nil
 	bm.soldierKeys = nil
-	bm.storageKeys = nil
 	for i, key := range bm.order {
 		def := bm.defs[key]
 		bm.orderedDefs[i] = def
@@ -127,9 +125,6 @@ func (bm *BuildingManager) rebuildOrder() {
 		}
 		if def.Soldiers > 0 {
 			bm.soldierKeys = append(bm.soldierKeys, key)
-		}
-		if def.Category == "storage" {
-			bm.storageKeys = append(bm.storageKeys, key)
 		}
 	}
 }
@@ -566,15 +561,13 @@ func (bm *BuildingManager) GetPopCapacity() int {
 
 // GetStorageBonuses returns per-resource storage bonuses from buildings
 // "all" key means it applies to every resource. A storage building holds
-// nothing now (it boosts production): each copy counts for the size it held
-// in the reference store (rules.Set.ReferenceStorePerCopy), which the rules that
-// still read a store size are measured on until they are redone.
+// nothing (it boosts production): only the "storage" effects of other
+// buildings count, such as the culture lineage's. No rule reads a store size
+// any more, so this is a measure the promises of those effects are held to
+// (the bonus truth guard) and nothing else.
 func (bm *BuildingManager) GetStorageBonuses() map[string]float64 {
 	bonuses := make(map[string]float64)
 	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
-		if def.Category == "storage" {
-			bonuses["all"] += float64(bm.rules.ReferenceStorePerCopy(key) * float64(count))
-		}
 		for _, eff := range def.Effects {
 			if eff.Type == "storage" {
 				bonuses[eff.Target] += float64(eff.Value * float64(count))

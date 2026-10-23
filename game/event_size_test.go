@@ -21,9 +21,14 @@ const eventSizeAges = 8
 // holds.
 const maxedCopies = 100
 
+// maxedStockShare is how many times the age's stock scale the maxed-out town
+// holds of every resource.
+const maxedStockShare = 20
+
 // newMaxedEngine builds a town that has built everything: every building up
 // to age at its max count (maxedCopies of one with none), fully staffed,
-// every tech up to age, every earlier wonder, and every store full.
+// every tech up to age, every earlier wonder, and a stock of twenty times the
+// age's stock scale of every resource (the moderate town holds half of it).
 func newMaxedEngine(age string) *GameEngine {
 	ge := newTruthEngine(age, truthTypical)
 	order := ageOrders()
@@ -50,8 +55,7 @@ func newMaxedEngine(age string) *GameEngine {
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 	for _, key := range ge.Resources.order {
-		r := ge.Resources.resources[key]
-		r.Amount = r.Storage
+		ge.Resources.resources[key].Amount = maxedStockShare * ge.rules.StockScale(age)
 	}
 	return ge
 }

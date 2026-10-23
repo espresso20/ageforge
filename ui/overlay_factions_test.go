@@ -661,7 +661,7 @@ func TestDiplomacyDealCommands(t *testing.T) {
 		if res := HandleCommand("diplomacy accept riverlands_tribes 1", engine); res.Type != "error" || !strings.Contains(res.Message, "already taken") {
 			t.Errorf("second accept: %+v", res)
 		}
-	case !strings.Contains(res.Message, "not enough"):
+	case !strings.Contains(strings.ToLower(res.Message), "not enough"):
 		t.Errorf("accept: %+v", res)
 	}
 	for _, bad := range []string{"diplomacy accept", "diplomacy accept riverlands_tribes", "diplomacy accept riverlands_tribes x", "diplomacy accept riverlands_tribes 9"} {

@@ -1320,10 +1320,10 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 					made := config.TypicalIncome(res, age) * config.LatePriceTargetTicks(age) * th.warning
 					// Rounded up to two significant figures: within 10% of the
 					// share; every Brace, the final era's two threads included,
-					// no more than its ceiling, three fifths of a moderate
-					// store, rounded down to two figures, where the share is
+					// no more than its ceiling, three fifths of the age's stock
+					// scale, rounded down to two figures, where the share is
 					// over it.
-					ceiling := floorSignificant(rules.Core().TypicalStorage(res, age)*ordinaryDoomBraceStoreShare, 2)
+					ceiling := braceCeilingIn(rules.Core(), res, age)
 					onCeiling := l1 == ceiling && made*th.share > ceiling
 					if !onCeiling && (l1 < made*th.share || l1 > 1.1*made*th.share || l1 > made) {
 						t.Errorf("%s in %s: %s's level 1 %s (%v) is not its share of what the warning makes (%v)", ep.Key, age, th.name, res, l1, made*th.share)
@@ -1337,7 +1337,7 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 			// A material the Last Passage's ceiling holds is no longer in that
 			// ratio: the doom has no ceiling.
 			for res, lp := range lastPassageBraceCost(ep.Key, age, 1) {
-				if lp == floorSignificant(rules.Core().TypicalStorage(res, age)*ordinaryDoomBraceStoreShare, 2) {
+				if lp == braceCeilingIn(rules.Core(), res, age) {
 					continue
 				}
 				if ratio := doomBraceCost(ep.Key, age, 1)[res] / lp; ratio < 0.45 || ratio > 0.55 {

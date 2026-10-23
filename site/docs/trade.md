@@ -31,7 +31,7 @@ A route **stops itself** if you fall below its required building count while it 
 
 If a cycle comes round and you don't have enough of what the route gives away, that cycle is skipped with no penalty (the log says so once per shortage), and the route tries again next cycle.
 
-A route also respects your stores. A run brings in only as much as the import store has room for, and takes only the matching share of what it gives away. A run with room for half of what it pays takes half of its export. A route with several imports scales the whole run to the tightest store, and the log says `Storage was nearly full: only ... fit.` when a run came in short. If an import store has no room at all, the run does not happen: nothing is taken and nothing comes in. That skip is silent, and the route tries again next cycle. Only the amounts that actually moved count toward the route's totals.
+Stock has no limit, so a run brings in all of its import however much you hold. The one thing that stops a run is not having what it gives away: then the cycle is skipped, silently, and the route tries again next cycle. Only the amounts that actually moved count toward the route's totals.
 
 Every completed cycle also raises opinion by +1 with every civilization you have met that isn't at war with you. See [What routes are worth](#what-routes-are-worth).
 
@@ -109,7 +109,7 @@ trade black <resource>   # the same, through the trade command
 
 `bm` works in place of `blackmarket`.
 
-A run costs `max(5K, 10% of your culture storage)` culture, so the price grows as you do. It has a **55% chance** to pay out. A win pays **2.5×** the culture you staked, counted as gold, in the resource you chose, converted at the smugglers' own rate for that resource. So the smugglers deal only in gold and nine resources, at these rates in gold for one unit: iron 2, coal 0.08, steel 5, oil 3, electricity 0.5, data 5, crypto 20, dark matter 50 and quantum flux 100. For example, a 5K culture stake that wins pays 12.5K gold, 6,250 iron or 156K coal. A haul bigger than the room in that store is cut to fit. The culture is spent up front, win or lose. After each run there's a cooldown of 624 ticks (about 21 minutes).
+A run costs the larger of 5K culture and a number of minutes of your own culture income (the age sets the number, and it rises with the age), so the price grows as you do. A town that makes twice the culture pays twice. It has a **55% chance** to pay out. A win pays **2.5×** the culture you staked, counted as gold, in the resource you chose, converted at the smugglers' own rate for that resource. So the smugglers deal only in gold and nine resources, at these rates in gold for one unit: iron 2, coal 0.08, steel 5, oil 3, electricity 0.5, data 5, crypto 20, dark matter 50 and quantum flux 100. For example, a 5K culture stake that wins pays 12.5K gold, 6,250 iron or 156K coal. The culture is spent up front, win or lose. After each run there's a cooldown of 624 ticks (about 21 minutes).
 
 Use it to turn a culture surplus into whatever you're short on, if you can live with the odds.
 
@@ -135,4 +135,4 @@ So:
 
 - A route needs its building. `trade route start <route>` refuses with an error if you don't have the required building at the required count. In `trade route list`, routes with a red ✗ are waiting on buildings.
 - An embargo mostly hurts you. It cancels that civilization's ally bonus, stops its deals, disrupts your routes that bring in its specialty and counts as a provocation. See [Factions & Diplomacy](factions.md#war-amp-peace).
-- Routes skip a cycle, they don't fail, when you run short. If you don't have what a route gives away when its cycle comes round, that cycle is skipped and the route stays active. Top up the stockpile and it carries on next cycle. A route whose import store is full skips its cycle the same way, without taking anything.
+- Routes skip a cycle, they don't fail, when you run short. If you don't have what a route gives away when its cycle comes round, that cycle is skipped and the route stays active. Top up the stockpile and it carries on next cycle.

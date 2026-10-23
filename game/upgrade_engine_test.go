@@ -13,13 +13,11 @@ import (
 // copy at a time, to its line's building for the town's age at
 // config.UpgradeShare of what the next new copy of that building costs.
 
-// richTown gives the town stores that hold far more than any price here (the
-// storage comes from buildings, so a recount keeps it) and fills them.
+// richTown gives the town a stock of every resource far above any price here.
 func richTown(ge *GameEngine) {
-	ge.Buildings.counts["stash"] = 500
 	ge.recalculateRates()
-	for res, store := range ge.Resources.GetAllStorage() {
-		setAmount(ge, res, math.Min(store, 40000))
+	for res := range ge.Resources.GetAll() {
+		setAmount(ge, res, 40000)
 	}
 }
 

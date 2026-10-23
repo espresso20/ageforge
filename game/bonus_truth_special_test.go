@@ -44,9 +44,9 @@ func TestBonusTruthEraMastery(t *testing.T) {
 				case strings.HasPrefix(meter, "rate:"):
 					want *= k
 				case strings.HasPrefix(meter, "storage:"):
-					// The next-copy floor is an explicit exception to the
-					// otherwise linear store scaling under Era Mastery.
-					want = truthStoreWithNextCopyFloor(ge, strings.TrimPrefix(meter, "storage:"))
+					// A store scales with k, as production does, and the techs'
+					// storage bonus beside it: read it as the flat calculation.
+					want = truthStoreSize(ge, strings.TrimPrefix(meter, "storage:"))
 				case meter == "research", meter == "buildtime":
 					want = math.Ceil(before[meter]*truthRefTicks/k) / truthRefTicks
 				case meter == "morale":
