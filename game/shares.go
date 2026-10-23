@@ -660,8 +660,13 @@ func (ge *GameEngine) foodLossOfOne(sv *staffView, factor float64) float64 {
 // population bonuses, raised by the techs' housing bonus. Caller holds the
 // lock.
 func (ge *GameEngine) popCapLocked() int {
-	base := ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
-	return TechHousing(base, ge.Research.Bonus(config.EffectHousing, ""))
+	return TechHousing(ge.popCapBaseLocked(), ge.Research.Bonus(config.EffectHousing, ""))
+}
+
+// popCapBaseLocked is the housing before the techs' bonus: what the housing
+// buildings hold plus the population bonuses. Caller holds the lock.
+func (ge *GameEngine) popCapBaseLocked() int {
+	return ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
 }
 
 // TechHousing is housing of base with the techs' housing bonus (a fraction:

@@ -168,8 +168,7 @@ func TestTechChainTakesTheCheaperBranch(t *testing.T) {
 }
 
 // TestBlockersNameTheKeystone: the line a soft-lock or a timeout prints says
-// which tech the wonder waits for and the work it takes. A tech has no price
-// to hold, so no storage can stand in its way.
+// which tech the wonder waits for and the work it takes.
 func TestBlockersNameTheKeystone(t *testing.T) {
 	ge, _ := botIn(t, "stone_age")
 	st := ge.GetState()
@@ -180,11 +179,6 @@ func TestBlockersNameTheKeystone(t *testing.T) {
 	for _, want := range []string{"wonder great_monolith", "needs tool_making researched (", "needs stoneworking researched ("} {
 		if !strings.Contains(line, want) {
 			t.Errorf("blockers %q do not name %q", line, want)
-		}
-	}
-	for _, p := range storageProblems(st, st.Ruleset().BuildingMap()) {
-		if p.check == "keystone_over_storage" {
-			t.Errorf("a new Stone Age game: %s", p.msg)
 		}
 	}
 	ge.GrantTechsForTest("tool_making", "stoneworking")

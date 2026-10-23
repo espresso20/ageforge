@@ -15,8 +15,8 @@ import (
 // The Badge Covenant: every badge can be earned. Each badge states how
 // (config.BadgeProof), and this checks the statement against the game's
 // own numbers, with the Milestone Covenant's model: a building is built
-// only in its own age, so each copy must fit the most storage buildable
-// there, at undiscounted prices.
+// only in its own age, up to its max count (stock has no cap, so no price is
+// held against a store).
 //
 // One run is the Primitive Age through the last age before a Modern Age
 // prestige (game.PrestigeRunAge), played once. Lifetime thresholds are
@@ -32,7 +32,7 @@ import (
 //   - static "lifetime": a run adds nothing to its counter, or the
 //     threshold takes more than config.BadgeMaxRuns runs. A run adds one
 //     prestige, and config.BadgeRunShare of a lineage's ceiling (every tier
-//     up to the run's last age raised to its storage limit);
+//     up to the run's last age at its ceiling);
 //   - first rung: it is the first rung of a lifetime ladder, asks for more
 //     than one, and an ordinary first run does not have that much by the
 //     time it reaches the Bronze Age, or the second age after the one its
@@ -239,11 +239,8 @@ func (c *badgeCheck) static(def config.BadgeDef, label string, r *BadgeReach) {
 		r.Need, r.Limit = def.Threshold, limit
 		r.Basis = fmt.Sprintf("%d%% of the %d %s that can stand in the %s", int(config.BadgeCopiesShare*100), ceil.n, pluralName(def.Subject), m.ageName(ceil.age))
 		if def.Threshold > limit {
-			why := fmt.Sprintf("%s needs %s %s in the %s, but at most %d can stand there", label, grouped(int(def.Threshold)), pluralName(def.Subject), m.ageName(ceil.age), ceil.n)
-			if ceil.res != "" {
-				why += fmt.Sprintf(" (copy #%d costs %s %s, over the most %s storage buildable there, %s)",
-					ceil.n+1, config.FormatAmount(ceil.price), game.ResourceName(ceil.res), game.ResourceName(ceil.res), config.FormatAmount(ceil.store))
-			} else if d.MaxCount > 0 {
+			why := fmt.Sprintf("%s needs %s %s in the %s, but at most %s can stand there", label, grouped(int(def.Threshold)), pluralName(def.Subject), m.ageName(ceil.age), grouped(ceil.n))
+			if d.MaxCount > 0 {
 				why += " (its max count)"
 			}
 			c.fail(def.Key, "copies", fmt.Sprintf("%s, and a copies badge may ask for at most %d%% of that (%s).", why, int(config.BadgeCopiesShare*100), grouped(int(limit))))

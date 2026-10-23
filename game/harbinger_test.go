@@ -524,21 +524,21 @@ func TestHarbingerCostExamples(t *testing.T) {
 		epoch, age string
 		brace      map[string]float64
 	}{
-		{"iron_era", "iron_age", map[string]float64{"gold": 120000, "iron": 120000, "stone": 120000}},
-		{"iron_era", "classical_age", map[string]float64{"gold": 930000, "iron": 930000, "stone": 600000}},
-		{"iron_era", "medieval_age", map[string]float64{"gold": 6600000, "iron": 6300000, "stone": 6100000}},
-		{"steel_era", "renaissance_age", map[string]float64{"gold": 30000000, "steel": 7200000}},
-		{"steel_era", "colonial_age", map[string]float64{"gold": 140000000, "steel": 120000000}},
-		{"steel_era", "industrial_age", map[string]float64{"gold": 470000000, "steel": 470000000}},
-		{"electric_era", "victorian_age", map[string]float64{"electricity": 2700000, "oil": 2200000000, "steel": 5800000000}},
-		{"electric_era", "electric_age", map[string]float64{"electricity": 33000000000.0, "oil": 7300000000, "steel": 65000000000.0}},
+		{"iron_era", "iron_age", map[string]float64{"gold": 130000, "iron": 130000, "stone": 120000}},
+		{"iron_era", "classical_age", map[string]float64{"gold": 1000000, "iron": 1000000, "stone": 600000}},
+		{"iron_era", "medieval_age", map[string]float64{"gold": 7300000, "iron": 6300000, "stone": 6100000}},
+		{"steel_era", "renaissance_age", map[string]float64{"gold": 33000000, "steel": 7200000}},
+		{"steel_era", "colonial_age", map[string]float64{"gold": 150000000, "steel": 120000000}},
+		{"steel_era", "industrial_age", map[string]float64{"gold": 510000000, "steel": 510000000}},
+		{"electric_era", "victorian_age", map[string]float64{"electricity": 2700000, "oil": 2200000000, "steel": 6500000000}},
+		{"electric_era", "electric_age", map[string]float64{"electricity": 33000000000.0, "oil": 7300000000, "steel": 72000000000.0}},
 		{"electric_era", "atomic_age", map[string]float64{"electricity": 270000000000.0, "oil": 9800000000, "steel": 340000000000.0}},
 		{"digital_era", "modern_age", map[string]float64{"data": 46000000000.0, "electricity": 1400000000000.0, "gold": 1600000000000.0}},
-		{"digital_era", "information_age", map[string]float64{"data": 1300000000000.0, "electricity": 10000000000000.0, "gold": 10000000000000.0}},
-		{"digital_era", "digital_age", map[string]float64{"data": 7400000000000.0, "electricity": 38000000000000.0, "gold": 38000000000000.0}},
-		{"neon_era", "cyberpunk_age", map[string]float64{"data": 36000000000000.0, "electricity": 360000000000000.0}},
-		{"neon_era", "fusion_age", map[string]float64{"data": 58000000000000.0, "electricity": 1700000000000000.0}},
-		{"neon_era", "space_age", map[string]float64{"data": 93000000000000.0, "electricity": 8900000000000000.0}},
+		{"digital_era", "information_age", map[string]float64{"data": 1300000000000.0, "electricity": 11000000000000.0, "gold": 11000000000000.0}},
+		{"digital_era", "digital_age", map[string]float64{"data": 7400000000000.0, "electricity": 44000000000000.0, "gold": 44000000000000.0}},
+		{"neon_era", "cyberpunk_age", map[string]float64{"data": 36000000000000.0, "electricity": 400000000000000.0}},
+		{"neon_era", "fusion_age", map[string]float64{"data": 58000000000000.0, "electricity": 1900000000000000.0}},
+		{"neon_era", "space_age", map[string]float64{"data": 93000000000000.0, "electricity": 9700000000000000.0}},
 	}
 	listed := 0
 	for _, ep := range config.Epochs() {
@@ -594,8 +594,8 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// Mining add 8% to titanium.
 		// Then Quantum Metallurgy adds 4% to titanium, and Cosmology and
 		// Zero-Point Energy add 8% to dark matter, on the output standard.
-		{"interstellar_age", map[string]float64{"dark_matter": 2.5e16, "titanium": 2.6e17}},
-		{"galactic_age", map[string]float64{"dark_matter": 1.1e18, "titanium": 2.3e18}},
+		{"interstellar_age", map[string]float64{"dark_matter": 2.5e16, "titanium": 2.9e17}},
+		{"galactic_age", map[string]float64{"dark_matter": 1.1e18, "titanium": 2.4e18}},
 		{"quantum_age", map[string]float64{"dark_matter": 4.8e19, "titanium": 3.6e18}},
 		{"transcendent_age", map[string]float64{"dark_matter": 7.3e19, "titanium": 5.4e18}},
 	}
@@ -666,8 +666,8 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// the soft cap, as the Reality Tear's rows above: 5% to 20%.
 		// And by the tree's last techs: 4% more culture each from Neural
 		// Art, Galactic Memory and Reality Art, 8% more titanium.
-		{"interstellar_age", map[string]float64{"faith": 1.5e10, "culture": 2.4e11}, map[string]float64{"dark_matter": 5e16, "titanium": 2.6e17}},
-		{"galactic_age", map[string]float64{"faith": 4.4e10, "culture": 7.1e11}, map[string]float64{"dark_matter": 2.1e18, "titanium": 2.3e18}},
+		{"interstellar_age", map[string]float64{"faith": 1.5e10, "culture": 2.4e11}, map[string]float64{"dark_matter": 5e16, "titanium": 2.9e17}},
+		{"galactic_age", map[string]float64{"faith": 4.4e10, "culture": 7.1e11}, map[string]float64{"dark_matter": 2.1e18, "titanium": 2.6e18}},
 		{"quantum_age", map[string]float64{"faith": 1.3e11, "culture": 2.2e12}, map[string]float64{"dark_matter": 9.6e19, "titanium": 7.1e18}},
 		{"transcendent_age", map[string]float64{"faith": 2e11, "culture": 3.2e12}, map[string]float64{"dark_matter": 1.5e20, "titanium": 1.1e19}},
 	}

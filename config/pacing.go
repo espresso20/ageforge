@@ -23,8 +23,9 @@ import (
 //   - Price levels (PriceLevels): the median first-copy price of a resource
 //     among an age's buildings.
 //   - The reference town (Incomes, TypicalStorages): what TownCopies staffed
-//     copies of every producer make (FlowCopies is that number), and what the
-//     storage rule's five copies of every store hold (StorageRuleCopies).
+//     copies of every producer make (FlowCopies is that number), and what five
+//     copies of every storage building (StorageRuleCopies) held, in the
+//     reference store (reference_store.go).
 //
 // A construction resource of an age is one that appears in the first-copy
 // price of at least one of that age's buildings (wonders aside), except the
@@ -357,8 +358,7 @@ func FlowIncome(res, age string) float64 {
 // TypicalIncome is FlowIncome's "what the age produces" for any resource,
 // construction resources included: FlowCopies fully staffed copies of every
 // producer of res up to age, every earlier wonder and every tech up to age,
-// times the all-production pool held by then, times the tech layer. It is
-// what the Storage Covenant (StorageHold) sizes storage against.
+// times the all-production pool held by then, times the tech layer.
 func TypicalIncome(res, age string) float64 {
 	return Incomes(BaseBuildings(), Technologies(), AgeOrder(), AnyResource)[age][res]
 }
@@ -375,36 +375,6 @@ func flowCopiesOf(d BuildingDef) float64 {
 
 // AnyResource accepts every resource: Incomes' filter for TypicalIncome.
 func AnyResource(string) bool { return true }
-
-// The Storage Covenant (the economy design's Law 1): the most storage buildable in an
-// age must hold at least StorageHold(age) hours of the age's TypicalIncome at
-// 1x, for every construction resource of the age. Typical income is a
-// moderate investment (TownCopies copies of each producer); the smoke bot ends an
-// age making one to three times it.
-//
-//   - StorageHoldHours, 4.5 hours from the Bronze Age on: about three hours
-//     of a well-built economy, so a player who checks in every few hours
-//     loses little at a cap. Longer absences lean on the build plan, which
-//     overflow now pays, and on wonder overflow, so storage keeps its
-//     pressure. Pacing v2's away-proofing raised it from 1.5 hours; on the
-//     one-week curve most ages already held about 3.9, and the ages that
-//     didn't reach 4.5 had their storage per copy raised (Bronze the most).
-//   - EarlyStorageHoldHours, 1.5 hours for the Primitive and Stone Ages: the
-//     first hour of the game, which keeps its pace (the ages AgeStretch
-//     leaves at 1x), where storage is meant to fill fast and be built often.
-const (
-	StorageHoldHours      = 4.5
-	EarlyStorageHoldHours = 1.5
-)
-
-// StorageHold is the Storage Covenant's hours for age: EarlyStorageHoldHours
-// for the Primitive and Stone Ages, StorageHoldHours from the Bronze Age on.
-func StorageHold(age string) float64 {
-	if unstretchedAges[age] {
-		return EarlyStorageHoldHours
-	}
-	return StorageHoldHours
-}
 
 // BuildingOutputs is the part of Incomes that the moderate economy's own
 // buildings make, before any bonus: FlowCopies fully staffed copies of every
@@ -436,41 +406,30 @@ func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bo
 	return out
 }
 
-// TypicalStorages is what a moderate builder's store holds of each resource
-// in each age, as age -> resource -> storage: the resource's base storage
-// and StorageRuleCopies copies of every storage building from the Primitive
-// Age up to and including the age (the ones that store everything, and any
-// that store that resource alone): the reference store of the storage rule.
-// Techs' storage bonus is left out: it is what
-// a town holds for building its vaults, the count the moderate economy
-// keeps of everything. Pure.
+// TypicalStorages is what a moderate builder's reference store holds of each
+// resource in each age, as age -> resource -> storage: the resource's base
+// storage and StorageRuleCopies copies of every storage building from the
+// Primitive Age up to and including the age, at the size a copy held
+// (ReferenceStoreSizes). Storage buildings store nothing now; this is the
+// measure the Brace ceiling is taken against. Techs' storage bonus is left
+// out. Pure.
 func TypicalStorages(defs []BuildingDef, resources []ResourceDef, order []string) map[string]map[string]float64 {
 	idx := make(map[string]int, len(order))
 	for i, a := range order {
 		idx[a] = i
 	}
+	sizes, _ := ReferenceStoreSizes(defs, Ages(), ReferenceBaseStore())
 	out := make(map[string]map[string]float64, len(order))
 	for i, age := range order {
 		all := 0.0
-		own := map[string]float64{}
 		for _, d := range defs {
-			if j, ok := idx[d.RequiredAge]; !ok || j > i || d.Category != "storage" {
-				continue
-			}
-			for _, e := range d.Effects {
-				if e.Type != "storage" || e.Value <= 0 {
-					continue
-				}
-				if e.Target == "all" {
-					all += float64(StorageRuleCopies * e.Value)
-				} else {
-					own[e.Target] += float64(StorageRuleCopies * e.Value)
-				}
+			if j, ok := idx[d.RequiredAge]; ok && j <= i && d.Category == "storage" {
+				all += float64(StorageRuleCopies * sizes[d.Key])
 			}
 		}
 		held := make(map[string]float64, len(resources))
 		for _, r := range resources {
-			held[r.Key] = r.BaseStorage + all + own[r.Key]
+			held[r.Key] = r.BaseStorage + all
 		}
 		out[age] = held
 	}

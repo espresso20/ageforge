@@ -34,13 +34,11 @@ type Property struct {
 var KnownPropertyFailures = map[int]string{
 	1:  "22 buildings climb at another rate (1.13)",
 	2:  "fails in 2 of 22 ages; worst 0.30 of the age in the Primitive Age",
-	3:  "fails in 5 of 22 ages; worst 3.0 times in the Primitive Age",
-	4:  "fails in 3 of 22 ages; worst 2.4 times in the Quantum Age",
-	8:  "fails in 7 of 22 ages; worst 26.4% eaten in the Atomic Age",
+	8:  "fails in 5 of 22 ages; worst 21.4% eaten in the Atomic Age",
 	9:  "fails in 22 of 22 ages; worst room for 22534 people per job in the Transcendent Age",
 	12: "27 of 27 trade route payments fall outside it",
 	15: "in 11 ages the shortest warning is under 8 hours; the last of them is the Information Age",
-	16: "fails in 2 of 22 ages; worst 3.0 times in the Primitive Age",
+	16: "fails in 3 of 22 ages; worst 4.5 times in the Primitive Age",
 	18: "not worked out here yet",
 }
 
@@ -91,8 +89,7 @@ func (p Properties) Problems() []string {
 
 // The shares the properties are held to.
 const (
-	propWallIncome   = 2.5  // income at the storage wall, over the reference town's
-	propWallStore    = 2.0  // the store at the wall, over the reference store
+	propIncomeHigh   = 2.5  // income a player leaves an age with, over the reference town's
 	propFoodLow      = 0.30 // workers eat at least this share of the food grown
 	propFoodHigh     = 0.80
 	propRoomHigh     = 1.5  // houses hold at most this many people per job
@@ -117,21 +114,19 @@ func StaticProperties() Properties {
 		ref[i] = t.state(towns[i], i, 1)
 		refIncome[i] = units(ref[i].income, t.levels[i])
 	}
-	ordinary := t.walk("ordinary", 1, refIncome, false)
-	lingering := t.walk("lingering", 1, refIncome, false)
-	checkIn := t.walk("check-in", 1, refIncome, false)
+	ordinary := t.walk("ordinary", 1, refIncome)
+	lingering := t.walk("lingering", 1, refIncome)
+	checkIn := t.walk("check-in", 1, refIncome)
 	out := Properties{Ordinary: ordinary.Hours, Lingering: lingering.Hours, CheckIn: checkIn.Hours}
 	for _, a := range t.ages {
 		out.Ages = append(out.Ages, a.Name)
 		out.Target = append(out.Target, config.AgeTargetTicks(a.Key)/refTicksPerHour)
 	}
-	// The storage wall: the reference town left to buy every copy whose
-	// price fits under the store, with nothing banked past it.
-	wall := make([]refRun, n)
-	wallTop := make([]refRun, n)
+	// The reference town left to buy the cheapest thing it can, with no limit,
+	// until its income has doubled.
+	grown := make([]refRun, n)
 	for i := range t.ages {
-		wall[i] = t.stay(i, towns[i], refPlay{rate: 1, speed: 1, refIncome: refIncome[i], horizon: 2e7})
-		wallTop[i] = t.stay(i, towns[i], refPlay{rate: 1, speed: RefTopMastery, horizon: 2e7})
+		grown[i] = t.stay(i, towns[i], refPlay{rate: 1, speed: 1, refIncome: refIncome[i], horizon: 2e7, stopAtDouble: true})
 	}
 	add := func(num int, says string, holds bool, today string) {
 		out.List = append(out.List, Property{N: num, Says: says, Holds: holds, Today: today})
@@ -160,11 +155,13 @@ func StaticProperties() Properties {
 	// 2. The first doubling takes at least the ordinary player's age.
 	bad, where, val := 0, "", ""
 	low := math.Inf(1)
+	high := 0.0
+	today := ""
 	for i := range t.ages {
-		if len(wall[i].doubles) == 0 {
+		if len(grown[i].doubles) == 0 {
 			continue
 		}
-		share := wall[i].doubles[0] / float64(ordinary.Hours[i]*refTicksPerHour)
+		share := grown[i].doubles[0] / float64(ordinary.Hours[i]*refTicksPerHour)
 		if share < 1 {
 			bad++
 			if share < low {
@@ -174,96 +171,10 @@ func StaticProperties() Properties {
 	}
 	add(2, "from the reference town, doubling income takes at least as long as the ordinary player's stay in that age", bad == 0, worst(bad, where, val))
 
-	// 3 and 4. Income and store at the wall.
-	bad, where, val = 0, "", ""
-	high := 0.0
-	bad4, where4, val4, high4 := 0, "", "", 0.0
-	for i := range t.ages {
-		x := units(wall[i].end.income, t.levels[i]) / refIncome[i]
-		if x > propWallIncome {
-			bad++
-		}
-		if x > high {
-			high, where, val = x, t.ages[i].Name, fmt.Sprintf("%.1f times", x)
-		}
-		s := wall[i].end.caps["wood"] / ref[i].caps["wood"]
-		if s > propWallStore {
-			bad4++
-		}
-		if s > high4 {
-			high4, where4, val4 = s, t.ages[i].Name, fmt.Sprintf("%.1f times", s)
-		}
-	}
-	add(3, fmt.Sprintf("income at the storage wall is at most %g times the reference town's", propWallIncome), bad == 0, worst(bad, where, val))
-	add(4, fmt.Sprintf("the store at the wall is at most %g times the reference store", propWallStore), bad4 == 0, worst(bad4, where4, val4))
-
 	// 5. (gone) It held what a full knowledge store carried into an age
 	// could pay for. Knowledge is not stored now: a tech is work the scholars
 	// do and there is no stock to carry. The numbers of the others stay as
 	// they are, so the list has no 5.
-
-	// 6. Every price the ordinary player meets fits a store he has reached.
-	bad, where = 0, ""
-	for i := range t.ages {
-		var start map[string]int
-		if i > 0 {
-			start = towns[i-1]
-		}
-		only := map[string]int{}
-		for _, d := range t.byAge[i] {
-			only[d.Key] = t.refCount(d)
-		}
-		run := t.stay(i, start, refPlay{only: only, wonder: false, rate: 1, speed: 1, horizon: 2e7, leave: func(gate, now float64) bool { return true }})
-		if run.gate < 0 {
-			bad++
-			if where == "" {
-				where = t.ages[i].Name
-			}
-		}
-	}
-	today := "holds in all 22 ages"
-	if bad > 0 {
-		today = fmt.Sprintf("in %d of %d ages the reference town cannot be finished without banking past the store; first the %s", bad, n, where)
-	}
-	add(6, "every price the ordinary player meets fits under a store he has already reached", bad == 0, today)
-
-	// 7. First copies fit the store a town arrives with.
-	bad, where = 0, ""
-	for i := 1; i < n; i++ {
-		c := map[string]int{}
-		for k, v := range towns[i-1] {
-			c[k] = v
-		}
-		ok := true
-		for _, d := range t.byAge[i] {
-			if d.Category != "storage" {
-				continue
-			}
-			for k := 0; k < refCopies(d); k++ {
-				if overCap(copyPrice(d, k), t.state(c, i, 1).caps) {
-					ok = false
-				}
-				c[d.Key] = k + 1
-			}
-		}
-		caps := t.state(c, i, 1).caps
-		for _, d := range t.byAge[i] {
-			if d.Category != "storage" && overCap(copyPrice(d, 0), caps) {
-				ok = false
-			}
-		}
-		if !ok {
-			bad++
-			if where == "" {
-				where = t.ages[i].Name
-			}
-		}
-	}
-	today = "holds in all 22 ages"
-	if bad > 0 {
-		today = fmt.Sprintf("fails in %d of %d ages; first the %s", bad, n, where)
-	}
-	add(7, "the first copy of every building fits the store a reference town arrives with, once it has bought its five storage copies in order", bad == 0, today)
 
 	// 8 and 9. Food and houses.
 	bad, where, val = 0, "", ""
@@ -392,14 +303,14 @@ func StaticProperties() Properties {
 	bad, where, val = 0, "", ""
 	high = 0
 	for i, a := range t.ages {
-		if checkIn.Income[i] > propWallIncome {
+		if checkIn.Income[i] > propIncomeHigh {
 			bad++
 		}
 		if checkIn.Income[i] > high {
 			high, where, val = checkIn.Income[i], a.Name, fmt.Sprintf("%.1f times", checkIn.Income[i])
 		}
 	}
-	add(16, fmt.Sprintf("the check-in player leaves each age making at most %g times what it is priced for", propWallIncome), bad == 0, worst(bad, where, val))
+	add(16, fmt.Sprintf("the check-in player leaves each age making at most %g times what it is priced for", propIncomeHigh), bad == 0, worst(bad, where, val))
 
 	// 17. (gone) The same as 5, at the top of the mastery table. It goes
 	// with 5, and the list has no 17.
@@ -434,14 +345,15 @@ func StaticProperties() Properties {
 	// 19. Prestige points no longer have a shop sink.
 	add(19, "prestige points have no shop sink", len(config.ActivePrestigeUpgrades()) == 0, "the prestige shop has no items")
 
-	// 20. The largest amount any of the three players can hold in a store or
-	// be quoted (the next copy of any building of the age, the age's wonder
-	// and techs), at Era Mastery 1 and at the top of the
-	// table, against the largest number the game can print.
+	// 20. The largest amount any of the three players can be quoted (the next
+	// copy of any building of the age, the age's wonder and techs), at Era
+	// Mastery 1 and at the top of the table, against the largest number the
+	// game can print. (Stock has no cap, so what a town holds has no bound
+	// to read here: it follows what it is quoted.)
 	topWalks := map[string]refWalk{
-		"ordinary":  t.walk("ordinary", RefTopMastery, refIncome, false),
-		"lingering": t.walk("lingering", RefTopMastery, refIncome, false),
-		"check-in":  t.walk("check-in", RefTopMastery, refIncome, false),
+		"ordinary":  t.walk("ordinary", RefTopMastery, refIncome),
+		"lingering": t.walk("lingering", RefTopMastery, refIncome),
+		"check-in":  t.walk("check-in", RefTopMastery, refIncome),
 	}
 	baseWalks := map[string]refWalk{"ordinary": ordinary, "lingering": lingering, "check-in": checkIn}
 	wonders := map[string]map[string]float64{}
@@ -462,9 +374,6 @@ func StaticProperties() Properties {
 			mastery := []string{"Era Mastery 1", "top of the Era Mastery table"}[m]
 			for i, run := range w.Runs {
 				age := t.ages[i].Name
-				for r, v := range run.end.caps {
-					see(v, r+" store", player, mastery, age)
-				}
 				for _, d := range t.byAge[i] {
 					for r, v := range copyPrice(d, run.counts[d.Key]) {
 						see(v, "next "+d.Name+", "+r, player, mastery, age)
@@ -479,7 +388,7 @@ func StaticProperties() Properties {
 			}
 		}
 	}
-	add(20, "nothing any of the three reference players can hold or be quoted is larger than the largest printable number", biggest <= textfmt.MaxNumber(),
+	add(20, "nothing any of the three reference players can be quoted is larger than the largest printable number", biggest <= textfmt.MaxNumber(),
 		fmt.Sprintf("the largest is %s, against %s printable", biggestAt, textfmt.Number(textfmt.MaxNumber())))
 	add(21, "the ordinary player's length of each age is printed beside its design target", true, "printed below")
 	return out
@@ -497,8 +406,8 @@ func hoursText(h float64) string {
 
 // writeProperties renders the check for the report.
 func writeProperties(sb *strings.Builder, p Properties) {
-	sb.WriteString("What must be true of the economy's numbers, worked out from the game's tables alone for three reference players: an ordinary one who builds eight of everything but storage and five of each store (or what the gate asks), pays the wonder and advances; a lingering one who buys everything and stays three times as long; and a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. No bot is involved.\n\n")
-	sb.WriteString("A property marked \"known failure\" does not hold today and is written down as such, with today's reading. The check fails when one of those starts to hold, when any other stops holding, or when a reading changes. There is no property 13: it was about the amounts a gate asks for, and no gate asks for one now.\n\n")
+	sb.WriteString("What must be true of the economy's numbers, worked out from the game's tables alone for three reference players: an ordinary one who builds eight of everything but storage and five of each storage building (or what the gate asks), pays the wonder and advances; a lingering one who buys everything and stays three times as long; and a check-in one who is away at half rate and advances at the first eight-hour visit after the gate opens. No bot is involved.\n\n")
+	sb.WriteString("A property marked \"known failure\" does not hold today and is written down as such, with today's reading. The check fails when one of those starts to hold, when any other stops holding, or when a reading changes. There is no property 13: it was about the amounts a gate asks for, and no gate asks for one now. There are no properties 3, 4, 6 and 7 either: they were about the storage wall (income and store at the wall, prices and first copies against the stores), and stock has no cap.\n\n")
 	sb.WriteString("| # | property | today | |\n|---|---|---|---|\n")
 	for _, pr := range p.List {
 		mark := "holds"

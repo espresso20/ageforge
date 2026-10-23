@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
 )
@@ -17,20 +16,12 @@ import (
 // into a new era).
 //
 //   - A moderate town (config.FlowCopies copies of every culture building)
-//     must stay on Minor events throughout: that is where every town stood
-//     when the tier read the fill of culture's store. So must a town with no
-//     culture buildings at all, whatever its wonders hand it.
+//     must stay on Minor events throughout. So must a town with no culture
+//     buildings at all, whatever its wonders hand it.
 //   - A town with twice the culture buildings must have Major events open.
 //   - A town with CultureTopSets times the culture buildings must have the
 //     Legendary tier open.
 //
-// Beside it, the rule this replaced, as it stood: culture is kept in the
-// general store, so the old tier read a town's culture against that. OldFill
-// is a moderate town's whole run of culture, never spent, on leaving the
-// age, over the least general store the gate it has just met leaves it
-// holding, and OldFillTop the same for CultureTopSets times the buildings:
-// neither ever reached the 40% Major events asked.
-
 // The towns the check walks, in moderate sets of culture buildings.
 const (
 	CultureTwiceSets  = 2.0
@@ -55,10 +46,6 @@ type CultureStrengthRow struct {
 	Twice    FaithSpan `json:"twice"`
 	Thrice   FaithSpan `json:"three_times"`
 	Top      FaithSpan `json:"top_sets"`
-	// The old rule (see the file comment): the fill it read on leaving the
-	// age.
-	OldFill    float64 `json:"old_fill_moderate"`
-	OldFillTop float64 `json:"old_fill_top_sets"`
 }
 
 // The rules a CultureStrengthProblem can break.
@@ -136,36 +123,6 @@ func StaticCultureStrength() ([]CultureStrengthProblem, []CultureStrengthRow) {
 	problems, rows := cultureStrengthProblems(flowIncomes(set, "culture"), func(held float64, m game.CultureSave) float64 {
 		return game.CultureStrengthOf(held, m)
 	})
-	// The old rule's reading, on leaving each age.
-	least := leastGeneralStore()
-	hoard := map[string]float64{}
-	sum := 0.0
-	for _, a := range set.AgeKeys() {
-		sum += float64(set.FlowIncome("culture", a) * set.TargetTicks(a))
-		hoard[a] = sum
-	}
-	set1 := map[string]float64{} // a moderate set's own part of the hoard
-	sum = 0
-	for _, in := range flowIncomes(set, "culture") {
-		sum += float64(in.set * in.ticks)
-		set1[in.age] = sum
-	}
-	keys := set.AgeKeys()
-	next := map[string]string{}
-	for i, a := range keys {
-		next[a] = a
-		if i+1 < len(keys) {
-			next[a] = keys[i+1]
-		}
-	}
-	for i := range rows {
-		a := rows[i].Age
-		// On leaving the age the gate into the next one is met: the store
-		// is at least what that gate forces.
-		store := least[next[a]]
-		rows[i].OldFill = hoard[a] / store
-		rows[i].OldFillTop = (hoard[a] + float64((CultureTopSets-1)*set1[a])) / store
-	}
 	return problems, rows
 }
 
@@ -231,65 +188,9 @@ func cultureStrengthProblems(incomes []faithIncome, strengthOf func(held float64
 	return problems, kept
 }
 
-// leastGeneralStore is, per age, the least general storage a player can be
-// holding on entering it: the base store plus the most any age gate so far
-// has forced them to hold at once (ladderForced; storage is never lost).
-// Faith and culture are kept in the general store.
-func leastGeneralStore() map[string]float64 {
-	ages, defs := config.Ages(), config.BuildingByKey()
-	base := 0.0
-	for _, r := range config.BaseResources() {
-		if r.Key == "faith" {
-			base = r.BaseStorage
-		}
-	}
-	out := map[string]float64{}
-	least := base
-	for i, a := range ages {
-		if i > 0 {
-			if forced, _ := ladderForced(ages[i-1], a, defs); forced+base > least {
-				least = forced + base
-			}
-		}
-		out[a.Key] = least
-	}
-	return out
-}
-
-// typicalGeneralStore is, per age, the general storage of a moderate builder:
-// the base store and config.StorageRuleCopies copies of every storage
-// building up to that age.
-func typicalGeneralStore() map[string]float64 {
-	idx := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		idx[a] = i
-	}
-	out := map[string]float64{}
-	for i, a := range config.AgeOrder() {
-		total := 0.0
-		for _, r := range config.BaseResources() {
-			if r.Key == "faith" {
-				total = r.BaseStorage
-			}
-		}
-		for _, d := range config.BaseBuildings() {
-			if j, ok := idx[d.RequiredAge]; !ok || j > i || d.Category != "storage" {
-				continue
-			}
-			for _, e := range d.Effects {
-				if e.Type == "storage" && (e.Target == "all" || e.Target == "faith") {
-					total += float64(e.Value * config.StorageRuleCopies)
-				}
-			}
-		}
-		out[a] = total
-	}
-	return out
-}
-
 // writeCultureStrength renders the check for the static scenario.
 func writeCultureStrength(sb *strings.Builder, problems []CultureStrengthProblem, rows []CultureStrengthRow) {
-	fmt.Fprintf(sb, "Culture strength is the culture a town holds that its own culture buildings made, against %g moderate sets' worth (config.FlowCopies copies of every culture building): over %s opens Major good epoch events, over %s the Legendary one. Towns that never spend are walked through the run at the pacing targets, as for faith. A moderate town, and one with no culture buildings, must stay on Minor events; twice the culture buildings must open Major events; %g times, the Legendary. The last two columns are the rule this replaced, which read the fill of culture's store (the general one): a never-spending town's whole run of culture over the least store its gates leave it holding, for a moderate town and for %g times the buildings.\n\n", game.CultureFullSets, sharePct(game.CultureMajorAbove), sharePct(game.CultureLegendaryAbove), CultureTopSets, CultureTopSets)
+	fmt.Fprintf(sb, "Culture strength is the culture a town holds that its own culture buildings made, against %g moderate sets' worth (config.FlowCopies copies of every culture building): over %s opens Major good epoch events, over %s the Legendary one. Towns that never spend are walked through the run at the pacing targets, as for faith. A moderate town, and one with no culture buildings, must stay on Minor events; twice the culture buildings must open Major events; %g times, the Legendary.\n\n", game.CultureFullSets, sharePct(game.CultureMajorAbove), sharePct(game.CultureLegendaryAbove), CultureTopSets)
 	if len(problems) == 0 {
 		sb.WriteString("No problems.\n\n")
 	} else {
@@ -298,10 +199,9 @@ func writeCultureStrength(sb *strings.Builder, problems []CultureStrengthProblem
 		}
 		sb.WriteString("\n")
 	}
-	fmt.Fprintf(sb, "| era | age | a moderate set makes, per tick | wonders and techs make | no culture buildings | moderate | twice | three times | %g times | old rule: moderate hoard, of the least store | old rule: %g times |\n|---|---|---|---|---|---|---|---|---|---|---|\n", CultureTopSets, CultureTopSets)
+	fmt.Fprintf(sb, "| era | age | a moderate set makes, per tick | wonders and techs make | no culture buildings | moderate | twice | three times | %g times |\n|---|---|---|---|---|---|---|---|---|\n", CultureTopSets)
 	for _, r := range rows {
-		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", r.Epoch, r.Age, faithAmount(r.ModerateSet), faithAmount(r.Given),
-			cultureSpan(r.None), cultureSpan(r.Moderate), cultureSpan(r.Twice), cultureSpan(r.Thrice), cultureSpan(r.Top),
-			sharePct(r.OldFill), sharePct(r.OldFillTop))
+		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", r.Epoch, r.Age, faithAmount(r.ModerateSet), faithAmount(r.Given),
+			cultureSpan(r.None), cultureSpan(r.Moderate), cultureSpan(r.Twice), cultureSpan(r.Thrice), cultureSpan(r.Top))
 	}
 }

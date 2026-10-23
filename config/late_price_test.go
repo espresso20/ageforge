@@ -55,13 +55,13 @@ func TestNewCopyPriceScalesEveryBuildingButWondersAndMonuments(t *testing.T) {
 		{Key: "obelisk", Category: "monument", RequiredAge: "stone_age", BaseCost: map[string]float64{"culture": 500}},
 	}
 	applyNewCopyPrice(defs)
-	if got, want := defs[0].BaseCost["wood"], 100*NewCopyPriceFactor; got != want {
+	if got, want := defs[0].BaseCost["wood"], 100*NewCopyPriceFactor; math.Abs(got-want) > 1e-9 {
 		t.Errorf("production wood = %g, want %g", got, want)
 	}
-	if got, want := defs[0].BaseCost["stone"], 40*NewCopyPriceFactor; got != want {
+	if got, want := defs[0].BaseCost["stone"], 40*NewCopyPriceFactor; math.Abs(got-want) > 1e-9 {
 		t.Errorf("production stone = %g, want %g", got, want)
 	}
-	if got, want := defs[1].BaseCost["wood"], 10*NewCopyPriceFactor; got != want {
+	if got, want := defs[1].BaseCost["wood"], 10*NewCopyPriceFactor; math.Abs(got-want) > 1e-9 {
 		t.Errorf("storage wood = %g, want %g", got, want)
 	}
 	if got := defs[2].BaseCost["wood"]; got != 1000 {
