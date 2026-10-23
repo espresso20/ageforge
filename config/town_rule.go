@@ -4,12 +4,11 @@ package config
 // for holds.
 //
 // Two numbers, not one. StorageRuleCopies is the copies of an age's storage
-// building the reference town holds (the storage rule, and the storage
-// buildings a gate asks for). TownCopies is the copies of every other
-// building: the gate rule's count, and the count the storage rule prices its
-// dearest ask at. Storage climbs at StorageRate and is a wall; everything
-// else climbs at ProducerRate and is bought for what it makes, which is why
-// the two are sized apart.
+// building the reference town holds (the storage buildings a gate asks for).
+// TownCopies is the copies of every other building: the gate rule's count, and
+// the count the reference store prices its dearest ask at. Storage climbs at
+// StorageRate; everything else climbs at ProducerRate and is bought for what
+// it makes, which is why the two are sized apart.
 //
 // Where TownCopies comes from. A building that makes the same amount in every
 // copy and whose price climbs by r a copy costs P r^(n-1) for copy n, and the

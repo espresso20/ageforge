@@ -8,7 +8,7 @@ package config
 //
 // No gate asks for an amount of a resource. A gate asks for the town its age
 // is priced for: the reference town, which holds TownCopies copies of every
-// building that is not storage (the storage rule's town, and smoke's
+// building that is not storage (the reference store's town, and smoke's
 // RefCopies; the town rule, town_rule.go, says why eight). For the
 // gate that leaves age A, on top of whatever the gate asks for today (a
 // count is never lowered):
@@ -35,9 +35,8 @@ package config
 //     rate and the gate asks the spend it always did (knowledge_rule.go).
 //
 // The covenants on gates (smoke.StaticGates) hold the result: each building
-// asked for is buildable in A, and its last required copy fits the store with
-// the covenant's margin. A building a covenant rules out is not silently
-// dropped: it is named in GateTownLeftOut, with the reason, and the test
+// asked for is buildable in A and sourced from a cold start. A building a
+// covenant rules out is not silently dropped: it is named in GateTownLeftOut, with the reason, and the test
 // proves the list is true.
 
 // GateTownLeftOut names the buildings the gate rule would ask for and a

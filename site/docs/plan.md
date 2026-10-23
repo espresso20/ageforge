@@ -13,9 +13,10 @@ plan research imperial_legions # a tech that needs others: they go in first, in 
 plan advance                   # advance as soon as the requirements are met
 plan deal merchant_guild 2     # take the Merchant Guild's deal 2 once its price is there
 plan build longhouse 15        # a next-age building waits for the advance
+plan optimize                  # reorder the buildings for the fastest growth
 ```
 
-`plan list` prints it; `plan remove <n>`, `plan up <n>`, `plan down <n>` and `plan clear` edit it (the panel does the same with keys). See [Commands](commands.md#build-plan). The plan holds at most 60 items; a full plan refuses a new one until you remove one (adding more of the building at the end of the plan still adds to that item). Research takes no room: the 60 are for builds, deals and the advance, and a research queue is bounded by the tree, each tech once. One build item holds at most 1,000 copies.
+`plan list` prints it; `plan remove <n>`, `plan up <n>`, `plan down <n>` and `plan clear` edit it (the panel does the same with keys), and `plan optimize` reorders the buildings for you (see [Optimizing the order](#optimizing-the-order)). See [Commands](commands.md#build-plan). The plan holds at most 60 items; a full plan refuses a new one until you remove one (adding more of the building at the end of the plan still adds to that item). Research takes no room: the 60 are for builds, deals and the advance, and a research queue is bounded by the tree, each tech once. One build item holds at most 1,000 copies.
 
 ---
 
@@ -37,6 +38,30 @@ plan build longhouse 15        # a next-age building waits for the advance
 - **Staffed.** Copies the plan builds are staffed when they finish, from idle workers first: into the copy, or, with a [roster](workers-and-domains.md#the-roster) set, wherever the shares say. If those run out, the plan moves workers out of buildings an advance superseded (a higher tier of their line is open), the same line's first; with shares set, only from the copy's own domain, so the split holds. It never moves food workers or workers in this age's buildings. Then the roster routine recruits for what is still empty (with auto-recruit on, the default), as housing and food allow, so the next age's producers built after `plan advance` don't sit empty until you come back.
 
 Each tick's starts are summed up in one log line (`Plan started: 3 × Hut, research Pottery`), and the welcome-back message says what the plan did while you were away.
+
+## Optimizing the order
+
+Which building to plan first is a puzzle: a hut gives a camp someone to work it, a camp gives the hut something to be for, and food keeps them both. `plan optimize` (or `plan reorder`) solves it for you. If you ran `plan build hut 10`, `plan build wood_camp 10` and `plan build gathering_camp 10`, it mixes them: a few camps, a hut or two for the people they need, more camps, and so on, in the order that gets the town growing fastest.
+
+```
+> plan optimize
+Reordered the plan for faster growth. The last building should start in about 7m 55s instead of 13m 5s.
+  1. 6 Wood Camps
+  2. 4 Huts
+  3. 3 Gathering Camps
+  4. 4 Wood Camps
+  5. 6 Huts
+  6. 7 Gathering Camps
+```
+
+- **It plays your town forward.** It uses the prices, the crews and the homes the game itself uses: a camp makes 20% of its output with nobody in it and up to the full amount with a full crew, the crews are the people your homes can hold and your food can feed, and each new copy costs more than the last. Every step it buys the building that pays itself back soonest, counting the wait to afford it, the time it takes to build, and the income it adds. A producer that has no one to staff it brings the home or the food it needs ahead of it.
+- **The reply shows the new order** (the first 12 items, then how many more) and how long the plan should take to start its last building, before and after. Both come from the same simulation, which plays the plan by the rules above, so the estimate moves with your income and your prices.
+- **It only keeps a faster order.** If no order it finds is faster, the plan stays as it was and the reply says so. Running it again on a plan it has already reordered changes nothing.
+- **Nothing is added or removed.** Every building keeps its total. Items are split and merged to fit the new order, and never go over the plan's 60 items (when the best order would need more, it buys in bigger steps).
+- **Other items keep their place.** Research, deals and upgrades stay where they were among the builds, counted in copies, and keep their order. So do storage, knowledge buildings, the army, wonders and anything that cannot start yet (another age's buildings, a building whose tech is not researched). Only buildings that make something or house people move.
+- **An advance ends the reordering.** The buildings before it are what it waits for, so they are reordered among themselves; the advance and everything after it stay as they are.
+- **It plays the first 2,000 copies.** A plan can hold 1,000 copies of one building. Past the first 2,000 copies of the plan, the rest keep their order after the reordered ones, and the reply says how many.
+- **The same town gives the same order,** every time.
 
 ## The research queue
 
@@ -69,13 +94,13 @@ A save from before stock had no limit had banked part of its items' prices in th
 ```
 ═══ Build Plan ═══
  ▸  1. Hut ×3
-       ready    starts next tick for 18 wood
+       ready    starts next tick for 20 wood
     2. Story Circle
        blocked  too little wood coming in
     3. Wood Camp
-       ready    starts next tick for 20 wood
+       ready    starts next tick for 23 wood
     4. Stash ×2
-       waiting  ████░░░░  57%  wood 26 / 45 (35 held for items above)
+       waiting  ████░░░░  58%  wood 29 / 50 (35 held for items above)
     5. research Tool Making
        blocked  research slot busy
 

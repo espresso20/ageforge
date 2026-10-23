@@ -20,15 +20,21 @@ import (
 //
 //   - The ordinary player buys the cheapest thing he can afford, only up to
 //     the reference town (RefCopies of every building but storage, the
-//     storage rule's copies of each store, or the gate's count where the gate
-//     asks for more), then pays the wonder, and advances the
+//     gate's copies of each storage building, or the gate's count where the
+//     gate asks for more), then pays the wonder, and advances the
 //     moment both are done.
-//   - The lingering player buys the cheapest thing he can afford and that
-//     fits under his stores, with no other limit, pays the wonder once the reference counts are met, and stays
-//     RefLinger times as long as it took him to open the gate.
+//   - The lingering player buys the cheapest thing he can afford, with no
+//     other limit, pays the wonder once the reference counts are met, and
+//     stays RefLinger times as long as it took him to open the gate.
 //   - The check-in player is always away: his income runs at RefAwayRate (the
 //     offline rule), the plan buys the cheapest thing with no limit, and he
 //     advances at the first visit, RefVisitHours apart, after the gate opens.
+//
+// Stock has no cap, so no price is held against a store. A storage building
+// holds nothing: each copy a town stands adds config.StorageBoostPercent
+// percent to all production, in the all-production pool the pacing model's
+// ProductionAllHeld already sits in and through its soft cap (refTables.boosters,
+// on unless a reading wants the model without them).
 //
 // Every player also upgrades (refTables.upgrades, on unless a reading wants
 // "buy new only"): in each age, for each line, the town upgrades as many
@@ -43,15 +49,16 @@ const (
 	// RefCopies is the reference town's copies of every building that is not
 	// storage: the gate rule's number (config.TownCopies), so the town a gate
 	// asks for is the town these players build. Storage is held to the
-	// storage rule's own (config.StorageRuleCopies: refCopies).
+	// gate's copies of each storage building (config.StorageRuleCopies:
+	// refCopies).
 	RefCopies      = config.TownCopies
 	RefWonderUnits = config.WonderPriceUnitsToday
 	RefLinger      = 3.0
 	RefAwayRate    = 0.5
 	RefVisitHours  = 8.0
 	// RefTopMastery is the speed of an age at the top of the Era Mastery
-	// table (1 + the square root of 10): production and storage are
-	// multiplied by it and prices are not.
+	// table (1 + the square root of 10): production is multiplied by it and
+	// prices are not.
 	RefTopMastery = 4.16
 	// RefHandGather is the wood and food per tick a player gathers by hand
 	// in the first age. It is an assumption of the reference players, not a
@@ -72,18 +79,21 @@ type refTables struct {
 	levels []map[string]float64   // an age's price levels
 	factor []map[string]float64   // the reference town's income bonus, by resource
 	food   []float64              // food one worker eats per tick
-	base   map[string]float64     // a resource's storage before any building
 	techs  [][]float64            // an age's tech prices, cheapest first
 	defs   map[string]config.BuildingDef
 	// upgrades says the players upgrade older copies (the game's rule). Off,
 	// every copy is bought new: the model as it was before upgrades.
 	upgrades bool
+	// boosters says each storage building copy a town stands speeds all its
+	// production up by config.StorageBoost. Off, the model as it was before
+	// storage buildings boosted anything.
+	boosters bool
 	rungs    map[string][]config.BuildingDef // a line's rungs, first rung first
 	pos      map[string]int                  // an age's place in the order
 }
 
 func newRefTables() *refTables {
-	t := &refTables{ages: config.Ages(), idx: map[string]int{}, base: map[string]float64{}, defs: map[string]config.BuildingDef{}, upgrades: true}
+	t := &refTables{ages: config.Ages(), idx: map[string]int{}, defs: map[string]config.BuildingDef{}, upgrades: true, boosters: true}
 	order := make([]string, len(t.ages))
 	for i, a := range t.ages {
 		t.idx[a.Key] = i
@@ -110,9 +120,6 @@ func newRefTables() *refTables {
 		if i, ok := t.idx[tc.Age]; ok && tc.Cost > 0 {
 			t.techs[i] = append(t.techs[i], tc.Cost)
 		}
-	}
-	for _, r := range resources {
-		t.base[r.Key] = r.BaseStorage
 	}
 	for i, a := range t.ages {
 		sort.Float64s(t.techs[i])
@@ -201,7 +208,6 @@ func units(vals, levels map[string]float64) float64 {
 // townState is what a town makes and holds.
 type townState struct {
 	income  map[string]float64
-	caps    map[string]float64
 	workers float64 // people at work
 	room    float64 // people the houses hold
 	jobs    float64
@@ -217,10 +223,9 @@ type townState struct {
 // of the age: production and storage are multiplied by it.
 func (t *refTables) state(counts map[string]int, i int, speed float64) townState {
 	staffed, free := map[string]float64{}, map[string]float64{}
-	capAll := 0.0
 	posts := 0.0 // the soldiers' posts the town's military buildings have
-	own := map[string]float64{}
-	s := townState{income: map[string]float64{}, caps: map[string]float64{}}
+	boost := 0.0 // what the town's storage buildings add to all production
+	s := townState{income: map[string]float64{}}
 	keys := make([]string, 0, len(counts))
 	for k := range counts {
 		keys = append(keys, k)
@@ -235,6 +240,9 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 		s.jobs += float64(n * float64(d.WorkerCapacity))
 		s.scholars += float64(n * float64(d.Scholars))
 		posts += float64(n * float64(d.Soldiers))
+		if d.Category == "storage" && t.boosters {
+			boost += float64(n * config.StorageBoost())
+		}
 		for _, e := range d.Effects {
 			switch {
 			case e.Type == "research":
@@ -248,14 +256,23 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 				free[e.Target] += float64(n * e.Value)
 			case e.Type == "capacity" && e.Target == "population":
 				s.room += float64(n * e.Value)
-			case e.Type == "storage" && e.Target == "all":
-				capAll += float64(n * e.Value)
-			case e.Type == "storage":
-				own[e.Target] += float64(n * e.Value)
 			}
 		}
 	}
 	fac := t.factor[i]
+	if boost > 0 {
+		// The boost joins the all-production pool the pacing model holds, and
+		// goes through its soft cap with it: the factor scales by what the
+		// pool with the boost applies over what it applied without.
+		held := config.ProductionAllHeld[t.ages[i].Key]
+		soft := config.ProductionSoftCap()
+		scale := (1 + soft.Applied(held+boost)) / (1 + soft.Applied(held))
+		scaled := make(map[string]float64, len(fac))
+		for r, v := range fac {
+			scaled[r] = float64(v * scale)
+		}
+		fac = scaled
+	}
 	fc := t.food[i]
 	// The scholars live in the houses and eat before anyone is recruited.
 	s.workers = math.Min(math.Max(s.room-s.scholars, 0), s.jobs)
@@ -301,9 +318,6 @@ func (t *refTables) state(counts map[string]int, i int, speed float64) townState
 	s.grown = s.income["food"]
 	s.eaten = float64((s.workers + s.scholars + s.soldiers) * fc * speed)
 	s.income["food"] -= s.eaten
-	for r, b := range t.base {
-		s.caps[r] = float64((b + capAll + own[r]) * speed)
-	}
 	return s
 }
 
@@ -313,20 +327,21 @@ type refRun struct {
 	end     townState
 	ticks   float64   // how long the stay lasted
 	gate    float64   // when the reference counts were met and the wonder paid
-	wall    bool      // nothing more could be bought (only without overflow)
 	doubles []float64 // ticks at which income first reached 2, 4, 8... times refIncome
 }
 
 // refPlay is how a stay is played.
 type refPlay struct {
-	only      map[string]int // buy only up to these counts (the ordinary player)
-	wonder    bool           // pay the wonder once the reference counts are met
-	overflow  bool           // a price over the store can still be bought (the plan banks overflow)
-	rate      float64        // share of income earned (the away player earns RefAwayRate)
-	speed     float64        // Era Mastery speed of the age
-	leave     func(gate, now float64) bool
-	refIncome float64 // income, in price units, that doublings are counted against
-	horizon   float64
+	only   map[string]int // buy only up to these counts (the ordinary player)
+	wonder bool           // pay the wonder once the reference counts are met
+	// stopAtDouble ends the stay at the first doubling of income (the
+	// properties only read that moment).
+	stopAtDouble bool
+	rate         float64 // share of income earned (the away player earns RefAwayRate)
+	speed        float64 // Era Mastery speed of the age
+	leave        func(gate, now float64) bool
+	refIncome    float64 // income, in price units, that doublings are counted against
+	horizon      float64
 }
 
 // stay plays age i from start. Time moves in steps that lengthen as the stay
@@ -365,7 +380,6 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 	for now < p.horizon {
 		dt := math.Max(1, now/200)
 		incU := float64(units(st.income, lv) * p.rate)
-		capU := units(st.caps, lv)
 		met := true
 		for k, n := range ref {
 			if counts[k] < n {
@@ -381,43 +395,18 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 		} else {
 			stock += gain
 		}
-		if !p.overflow {
-			stock = math.Min(stock, capU)
-		}
 		now += dt
-		feasible := false
 		for !(met && wonder > 0) {
 			best, bestCost, bestUp := -1, 0.0, false
-			blocked := false
-			if p.only != nil && !p.overflow {
-				for _, d := range blds {
-					if d.Category != "storage" && counts[d.Key] < p.only[d.Key] {
-						if pr, _ := price(d, counts[d.Key]); overCap(pr, st.caps) {
-							blocked = true
-							break
-						}
-					}
-				}
-			}
 			for bi, d := range blds {
 				n := counts[d.Key]
 				if d.MaxCount > 0 && n >= d.MaxCount {
 					continue
 				}
-				if p.only != nil {
-					limit := p.only[d.Key]
-					if d.Category == "storage" && blocked {
-						limit = max(limit, n+1)
-					}
-					if n >= limit {
-						continue
-					}
-				}
-				pr, up := price(d, n)
-				if !p.overflow && overCap(pr, st.caps) {
+				if p.only != nil && n >= p.only[d.Key] {
 					continue
 				}
-				feasible = true
+				pr, up := price(d, n)
 				if u := units(pr, lv); u <= stock && (best < 0 || u < bestCost) {
 					best, bestCost, bestUp = bi, u, up
 				}
@@ -459,8 +448,7 @@ func (t *refTables) stay(i int, start map[string]int, p refPlay) refRun {
 		if p.leave != nil && run.gate >= 0 && p.leave(run.gate, now) {
 			break
 		}
-		if p.leave == nil && !p.overflow && !feasible {
-			run.wall = true
+		if p.stopAtDouble && len(run.doubles) > 0 {
 			break
 		}
 	}
@@ -517,15 +505,6 @@ func (t *refTables) upgradePlan(i int, counts, ref map[string]int) (older map[st
 	return older, nUp
 }
 
-func overCap(price, caps map[string]float64) bool {
-	for r, v := range price {
-		if v > caps[r] {
-			return true
-		}
-	}
-	return false
-}
-
 // refWalk is one player's path through every age: how long each stay lasted
 // and what the town made on leaving, against the reference town's income.
 type refWalk struct {
@@ -536,14 +515,11 @@ type refWalk struct {
 }
 
 // walk sends a player through all 22 ages at the given Era Mastery speed.
-// overflow plays the rule the game had before the storage wall, where a
-// price over the store could still be bought; the properties read the walk
-// without it.
-func (t *refTables) walk(player string, speed float64, refIncome []float64, overflow bool) refWalk {
+func (t *refTables) walk(player string, speed float64, refIncome []float64) refWalk {
 	var w refWalk
 	counts := map[string]int{}
 	for i := range t.ages {
-		p := refPlay{wonder: true, overflow: overflow, rate: 1, speed: speed, horizon: 4e7}
+		p := refPlay{wonder: true, rate: 1, speed: speed, horizon: 4e7}
 		switch player {
 		case "ordinary":
 			p.only = map[string]int{}

@@ -68,7 +68,7 @@ Once completed, the wonder appears as a landmark on the Map (`map` command).
 
 ## What wonders cost
 
-Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **50 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). A wonder is priced against what your town earns, which new copies costing 1.29 times as much did not change, so wonders kept their prices; the price unit rose with the buildings, and a wonder is that many fewer of them (64 before). Each wonder has its own resource mix.
+Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **50 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). A wonder is priced against what your town earns, which new copies costing 1.43 times as much did not change, so wonders kept their prices; the price unit rose with the buildings, and a wonder is that many fewer of them (64 before). Each wonder has its own resource mix.
 
 From the Modern Age on, the age price level rises by 1.4 times per age. Each wonder follows that price level, and its construction time follows the same curve, so its share of the age stays the same.
 

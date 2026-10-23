@@ -12,7 +12,7 @@ Every resource you use comes from buildings, and the workers assigned to product
 
 - **More production.** Each extra building of the same tier adds its base rate to your total.
 - **More worker slots.** Worker capacity grows with building count, which raises your production ceiling.
-- **More storage.** Storage buildings add storage for every resource at once. A store's size does not limit what you hold; see [Storage Buildings](#storage-buildings-21-tiers).
+- **More output from everything.** Each storage building adds 1% to all production; see [Storage Buildings](#storage-buildings-21-tiers).
 - **Progress toward the next age.** Many ages require a minimum building count or specific buildings.
 
 Most of the game comes down to this: build more buildings and fill them with workers.
@@ -40,7 +40,7 @@ A building from an earlier age is an **older building**. It keeps producing what
 
 A building is older when its line has a newer building for the age you are in. Nothing is stored or marked: it is read from the line and the age, so it follows you through every advance. A Hut in the Iron Age is an older building, and it upgrades straight to the Iron Age's house, not one step at a time. A building only upgrades along its own line, to a building that makes the same resource (see [The 39 Building Lines](#the-39-building-lines)). A line that has no newer building for your age keeps its last building as its current one, so the last building of a line, such as the Sawmill, is never older, and a line that pauses for an age or two has nothing to upgrade to until it resumes.
 
-Some buildings are in no line and are never older: storage (your stashes, storage pits and vaults keep counting toward your storage for the rest of the run, see [Storage Buildings](#storage-buildings-21-tiers)), knowledge buildings (they keep their tier, and each age's knowledge building is built new in its own age, see [Scholars and Research](knowledge.md#what-a-scholar-is)), wonders and monuments.
+Some buildings are in no line and are never older: storage (your stashes, storage pits and vaults keep adding their boost to production for the rest of the run, see [Storage Buildings](#storage-buildings-21-tiers)), knowledge buildings (they keep their tier, and each age's knowledge building is built new in its own age, see [Scholars and Research](knowledge.md#what-a-scholar-is)), wonders and monuments.
 
 When you advance, the log names the buildings that became older (`↑ 12 Gathering Camps can upgrade to Forager Post. Type 'upgrade gathering_camp'.`). Leaving them as they are costs nothing: they keep producing at their old rate. You cannot build new copies of an older building; `build` says so and names the building it upgrades to.
 
@@ -110,7 +110,7 @@ You can sell any building except wonders and storage from the **Stone Age onward
 
 From the Modern Age on, every age's first-copy prices rise by **1.4 times** the previous age's. Modern prices are unchanged; Information is 1.4 times its authored price, Digital is 1.96 times, and the same curve continues through the Transcendent Age. Outputs do not change. Storage, wonders and upgrades read the resulting prices through their own rules.
 
-In every age, a new copy of a building costs **1.29 times** what it was first written at. That holds for production, military, trade, housing, knowledge and storage buildings alike; wonders and monuments keep their prices. The stores were sized again to hold the dearer first copies, and an [upgrade](#older-buildings) costs half of a new copy, so upgrading an older building is the cheaper road. Where the factor would put one part of a first-copy price (the Coal Plant's coal, the Atomic Vault's stone, the Orbital Refinery's plasma) past what the buildings your age's gate asked for make of it in one target of the age, that part is held to that amount, so a town arriving with empty stores can always make its way to the building.
+In every age, a new copy of a building costs **1.43 times** what it was first written at. That holds for production, military, trade, housing, knowledge and storage buildings alike; wonders and monuments keep their prices. An [upgrade](#older-buildings) costs half of a new copy, so upgrading an older building is the cheaper road. Where the factor would put one part of a first-copy price (the Agricultural Works' and Coal Plant's coal, the Atomic Vault's stone, the Orbital Refinery's plasma) past what the buildings your age's gate asked for make of it in one target of the age, that part is held to that amount, so a town arriving with empty stores can always make its way to the building.
 
 Each building has a first-copy price, and every copy after that costs a fixed percentage more than the one before. The price of the next copy depends on how many are already **built** plus how many are **in the build queue**:
 
@@ -288,9 +288,9 @@ A building can have one or more of these effects. Knowing them helps you decide 
 | Effect | What It Does |
 |--------|-------------|
 | Production | Adds an amount of a resource each tick, scaled by how many workers it has (see below). Most production buildings do this. |
-| Storage | Raises the storage of one resource, or storage for every resource (storage buildings). A knowledge building comes with scholars. |
+| Storage | Raises the size of one resource's store (culture buildings and a few wonders). Storage buildings no longer have it: they boost production. A knowledge building comes with scholars. |
 | Housing | Raises your housing, the number of workers you can have (housing buildings). |
-| Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production (which adds into [the all-production pool](resources.md#the-all-production-cap)). |
+| Bonus | A percentage bonus to a rate, such as a wonder's or monument's bonus to all production, or the 1% each storage building adds (which add into [the all-production pool](resources.md#the-all-production-cap)). |
 | Trade route income | Raises the income of every trade route (Harbor lineage). |
 | Morale | Restores a little morale every tick (Faith and Culture/Arts buildings). |
 | Opinion | Raises opinion with the non-hostile civilizations you have met, each tick, scaled by workers (the two embassies; see [Factions & Diplomacy](factions.md#embassy-buildings)). |
@@ -313,42 +313,42 @@ Buildings without a worker domain (Housing, Culture/Arts) produce exactly `base_
 
 `base_rate` is the **fully staffed** rate, and it is the number each building's description shows.
 
-For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/9 in the Iron Age, a sixth in the Renaissance (stretched to a third there; see below) and a fifth in the Industrial Age. From the Victorian Age on it grows faster: over a third of the age there, nearly a half in the Modern Age and seven tenths in the Interstellar. The table lists it before production bonuses, which multiply a late age's output six or seven times over. Every new copy costs **1.29 times** its authored price and outputs did not move, so each payback is 1.29 times what the shares above give; the table has the 1.29 in it. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
+For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/9 in the Iron Age, a sixth in the Renaissance (stretched to a third there; see below) and a fifth in the Industrial Age. From the Victorian Age on it grows faster: over a third of the age there, nearly a half in the Modern Age and seven tenths in the Interstellar. The table lists it before production bonuses, which multiply a late age's output six or seven times over. Every new copy costs **1.43 times** its authored price and outputs did not move, so each payback is 1.43 times what the shares above give; the table has the 1.43 in it. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
 
 Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them, in proportion to what the age's gate asks of each. Because rates follow prices, they grow roughly 5 to 8x per age.
 
 **Examples:**
-- Wood Camp (Primitive): costs 20 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 36 ticks (73 seconds).
-- Stone Pit (Stone): costs 232 stone and 387 wood. At Stone Age parity (310 stone = 464 wood) that is worth 490 stone, and at 3.48 stone/tick it repays in about 4 minutes 40 seconds.
+- Wood Camp (Primitive): costs 23 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 40 ticks (80 seconds).
+- Stone Pit (Stone): costs 257 stone and 429 wood. At Stone Age parity (343 stone = 515 wood) that is worth 543 stone, and at 3.48 stone/tick it repays in about 5 minutes 10 seconds.
 
 **Flow resources keep hand-set rates:** food, faith and culture. They feed workers, set morale and epoch odds or fill culture storage. Soldiers are no flow: a military building comes with its soldiers and makes no resource. **Nanobots** keep theirs too: they are a build material, asked for in the hundreds of thousands where an age's other prices are in the trillions, so a Nanobot Vat makes the 6.55K a tick it is listed at and a building that asks for nanobots is not valued by them. Research keeps fixed rates too: a knowledge building's work is a hand-set figure (see [Scholars and Research](knowledge.md#what-a-scholar-is)), and nothing is priced in it.
 
 | Age | Target time | Payback (fully staffed) | Build-time cap | Storage build cap |
 |-----|-------------|-------------------------|----------------|-------------------|
-| Primitive | 15m | 1m 12s | 2m 30s | 18s |
+| Primitive | 15m | 1m 20s | 2m 30s | 18s |
 | Stone | 45m | 5m | 7m 30s | 56s |
-| Bronze | 3h 54m | 33m | 39m | 4m 52s |
-| Iron | 6h 30m | 59m | 1h 5m | 8m 6s |
-| Classical | 9h 6m | 1.6h | 1h 31m | 11m 22s |
-| Medieval | 11h 42m | 2.3h | 1h 57m | 14m 36s |
-| Renaissance | 15h 36m | 6.8h | 2h 36m | 19m 30s |
-| Colonial | 18h 12m | 4.3h | 3h 2m | 22m 44s |
-| Industrial | 20h 48m | 6.2h | 3h 28m | 26m |
-| Victorian | 23h 24m | 10.7h | 3h 54m | 29m 14s |
-| Electric | 26h | 14.4h | 4h 20m | 32m 30s |
-| Atomic | 31h 12m | 18.2h | 5h 12m | 39m |
-| Modern | 31h 12m | 18.6h | 5h 12m | 39m |
-| Information | 36h 24m | 10.9h | 6h 4m | 45m 30s |
-| Digital | 41h 36m | 29.3h | 6h 56m | 52m |
-| Cyberpunk | 46h 48m | 36.0h | 7h 48m | 58m 30s |
-| Fusion | 52h | 92.7h | 8h 40m | 1h 5m |
-| Space | 57h 12m | 69.2h | 9h 32m | 1h 11m 30s |
-| Interstellar | 62h 24m | 57.3h | 10h 24m | 1h 18m |
-| Galactic | 62h 24m | 121.4h | 10h 24m | 1h 18m |
-| Quantum | 62h 24m | 36.8h | 10h 24m | 1h 18m |
-| Transcendent | 62h 24m | 33.8h | 10h 24m | 1h 18m |
+| Bronze | 3h 54m | 36m | 39m | 4m 52s |
+| Iron | 6h 30m | 1.1h | 1h 5m | 8m 6s |
+| Classical | 9h 6m | 1.7h | 1h 31m | 11m 22s |
+| Medieval | 11h 42m | 2.5h | 1h 57m | 14m 36s |
+| Renaissance | 15h 36m | 7.5h | 2h 36m | 19m 30s |
+| Colonial | 18h 12m | 4.8h | 3h 2m | 22m 44s |
+| Industrial | 20h 48m | 6.9h | 3h 28m | 26m |
+| Victorian | 23h 24m | 11.8h | 3h 54m | 29m 14s |
+| Electric | 26h | 16.0h | 4h 20m | 32m 30s |
+| Atomic | 31h 12m | 20.2h | 5h 12m | 39m |
+| Modern | 31h 12m | 20.6h | 5h 12m | 39m |
+| Information | 36h 24m | 12.1h | 6h 4m | 45m 30s |
+| Digital | 41h 36m | 32.5h | 6h 56m | 52m |
+| Cyberpunk | 46h 48m | 39.9h | 7h 48m | 58m 30s |
+| Fusion | 52h | 102.8h | 8h 40m | 1h 5m |
+| Space | 57h 12m | 76.7h | 9h 32m | 1h 11m 30s |
+| Interstellar | 62h 24m | 63.5h | 10h 24m | 1h 18m |
+| Galactic | 62h 24m | 134.6h | 10h 24m | 1h 18m |
+| Quantum | 62h 24m | 40.8h | 10h 24m | 1h 18m |
+| Transcendent | 62h 24m | 37.5h | 10h 24m | 1h 18m |
 
-The Renaissance's payback is 2x what the curve gives (about 3.4 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with cheaper, quicker building, and the age had dropped to three quarters of its target. Its Exchange makes 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
+The Renaissance's payback is 2x what the curve gives (about 3.7 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target length. It was 1.7x until the Stone and Iron Eras gained their techs: a run now arrives with cheaper, quicker building, and the age had dropped to three quarters of its target. Its Exchange makes 1.38K gold, Mill 191 steel, Foundry 261 steel and Coal Mine 106 coal.
 
 **From the Victorian Age on the curve is steeper.** The finished tech tree took research off the critical path of every age from the Victorian on: a wonder's keystone takes a small part of what the age's scholars do. What paces those ages is what their buildings make and what their requirements ask, and on the old curve a full run played the ages from the Modern to the Galactic at 0.38 to 0.56 of their targets (the Information Age aside, at 0.84). The Victorian, Electric and Atomic Ages had each been set by hand, at 1.7, 1.45 and 1.75 times the old curve; the steeper curve gives them 1.62, 1.67 and 1.71 and carries the Digital, Cyberpunk and Interstellar Ages as well. A Bessemer Plant makes 148K steel/tick (was 141K), an Electric Arc Furnace 690K (was 874K) and a Breeder Reactor 1.29M electricity (was 1.26M). The Bronze Age's payback is 1.1x (a Lumber Mill makes 7.91 wood/tick; a Quarry 4 stone): the age ran at under two thirds of its target.
 
@@ -473,35 +473,35 @@ Your 20 Gathering Camps stay Gathering Camps, producing at their full rate, unti
 
 ## Storage Buildings (21 tiers)
 
-Storage buildings form their own lineage and add storage for **every** resource at once. They need no workers: build them and your storage goes up.
+Storage buildings form their own lineage. Stock has no limit, so there is nothing for a storage building to hold: each copy you own adds **1%** to all production instead. They need no workers: build them and everything you make rises.
 
-Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Their sizes follow one written rule: five copies of an age's storage building, added to the stores of the earlier ages, hold the dearest single price that age asks of a full town (eight copies of every building that makes something), with a quarter to spare. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
+The boost goes into the same pool as the wonders' and monuments' bonuses to all production (see [the all-production cap](resources.md#the-all-production-cap)), so it adds to theirs, shows as "Storage" among the sources in the Stats panel, and counts in full up to +200% and a quarter of every point past it. Every copy counts the same, whatever its age: five copies of each of the 21 buildings add up to 105%.
 
-| Building | Age | Storage per copy (every resource) |
-|----------|-----|--------|
-| Stash | Primitive | +130 |
-| Storage Pit | Stone | +1.5K |
-| Warehouse | Bronze | +8.8K |
-| Granary | Iron | +32K |
-| Classical Vault | Classical | +270K |
-| Strongroom | Medieval | +1.9M |
-| Renaissance Vault | Renaissance | +7.8M |
-| Colonial Warehouse | Colonial | +37M |
-| Industrial Depot | Industrial | +110M |
-| Victorian Vault | Victorian | +1.8B |
-| Electric Warehouse | Electric | +20B |
-| Atomic Vault | Atomic | +110B |
-| Modern Depot | Modern | +430B |
-| Info Vault | Information | +3T |
-| Digital Archive | Digital | +9.4T |
-| Cyber Vault | Cyberpunk | +110T |
-| Fusion Vault | Fusion | +470T |
-| Orbital Depot | Space | +2.4Q |
-| Stellar Vault | Interstellar | +85Q |
-| Galactic Vault | Galactic | +710Q |
-| Quantum Vault | Quantum | +62Qi |
+Storage buildings have **no copy limit**. Each copy costs **1.75 times** the one before it, so a tall stack gets dear fast. Every age gate asks for **five copies** of the storage building of the age you are leaving (see [The 22 Ages](ages.md#advancement-requirements)).
 
-Pottery and Masonry add 10% each to every store, and Cloud Computing and Superconductors 8% each later.
+| Building | Age |
+|----------|-----|
+| Stash | Primitive |
+| Storage Pit | Stone |
+| Warehouse | Bronze |
+| Granary | Iron |
+| Classical Vault | Classical |
+| Strongroom | Medieval |
+| Renaissance Vault | Renaissance |
+| Colonial Warehouse | Colonial |
+| Industrial Depot | Industrial |
+| Victorian Vault | Victorian |
+| Electric Warehouse | Electric |
+| Atomic Vault | Atomic |
+| Modern Depot | Modern |
+| Info Vault | Information |
+| Digital Archive | Digital |
+| Cyber Vault | Cyberpunk |
+| Fusion Vault | Fusion |
+| Orbital Depot | Space |
+| Stellar Vault | Interstellar |
+| Galactic Vault | Galactic |
+| Quantum Vault | Quantum |
 
 ### No storage wall
 
@@ -509,11 +509,11 @@ Stock has no limit, so no building is refused for costing more than a store hold
 
 Nothing you make is wasted, and nothing overflows. The age's wonder is still paid through its bank, which you fill by hand (see [Wonders](wonders.md)).
 
-A store still has a size, and storage buildings still raise it. Some prices are a share of a store's size (the festival, the black market and the harbinger's Brace), but no store stops you holding more.
+A few prices are still a share of a store's size (the festival, the black market and the harbinger's Brace). That size is what the storage buildings used to hold, and it still grows with them, but no store stops you holding more.
 
 The gate out of each age asks for five copies of its storage building. Build each age's storage while it is current.
 
-Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its size for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
+Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its 1% for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
 
 Storage is also permanent: catastrophes never destroy it or turn it into ruins, and it can't be sold.
 

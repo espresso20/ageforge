@@ -66,8 +66,8 @@ func ladderPrices(total float64, n int, q float64) []float64 {
 }
 
 // KnowledgeMade is, for each age, what the ordinary reference player's
-// knowledge buildings make during the age's stay: the same quantity property
-// 10 divides the age's techs by.
+// knowledge buildings make during the age's stay: the quantity property 10
+// divides the age's techs by.
 func KnowledgeMade() []float64 {
 	t := newRefTables()
 	n := len(t.ages)
@@ -77,7 +77,7 @@ func KnowledgeMade() []float64 {
 		ref[i] = t.state(t.refTown(i), i, 1)
 		refIncome[i] = units(ref[i].income, t.levels[i])
 	}
-	ordinary := t.walk("ordinary", 1, refIncome, false)
+	ordinary := t.walk("ordinary", 1, refIncome)
 	out := make([]float64, n)
 	for i := range t.ages {
 		out[i] = float64(ref[i].income[config.ResearchTarget] * ordinary.Hours[i] * refTicksPerHour)

@@ -2713,6 +2713,15 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 			return errorResult(err)
 		}
 		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: game.LogRoutine}
+	case "optimize", "reorder":
+		if len(rest) != 0 {
+			return CommandResult{Message: usageFor("plan optimize"), Type: "error"}
+		}
+		res, err := engine.PlanOptimize()
+		if err != nil {
+			return errorResult(err)
+		}
+		return CommandResult{Message: planOptimizeText(res), Type: "info"}
 	case "clear":
 		n := engine.PlanClear()
 		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%s).", textfmt.Count(n, "item", "items")), Type: game.LogRoutine}
