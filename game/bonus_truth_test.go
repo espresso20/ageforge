@@ -318,7 +318,7 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 	out[config.MechanicUpgradeCost] = ge.Buildings.upgradePrice(truthRefCost) / truthRefCost
 	// A festival's price is minutes of the culture income: read it against
 	// what it would be with no tech, so only the techs' cut moves it.
-	if full := math.Max(festivalMinCost, ge.cultureStake(festivalCostShare)); full > 0 {
+	if full := festivalPriceOf(ge.rules, ge.age, ge.incomeOf("culture")); full > 0 {
 		out[config.MechanicFestivalCost] = ge.festivalCost() / full
 	}
 	// A mission of each kind, launched off a fixed offer.

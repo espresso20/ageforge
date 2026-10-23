@@ -251,6 +251,10 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range cp {
 		res.fail("culture_"+p.Rule, "%s", p)
 	}
+	pp, pr := StaticCulturePrices()
+	for _, p := range pp {
+		res.fail("culture_price_"+p.Rule, "%s", p)
+	}
 	dp := StaticDepth()
 	for _, p := range dp {
 		res.fail("depth_points", "%s", p)
@@ -267,7 +271,7 @@ func runStatic(e *Env, res *Result) {
 	for _, p := range bp {
 		res.fail("badge_"+p.Kind, "%s", p.Why)
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s); %d departure(s) from the storage check; %d milestone problem(s); %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(sp), len(mp), len(ar), len(br), len(fp), len(cp), len(dp), research, len(bp))
+	res.Summary = fmt.Sprintf("%d gate problem(s); %d departure(s) from the storage check; %d milestone problem(s); %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d culture price(s) out of band; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(sp), len(mp), len(ar), len(br), len(fp), len(cp), len(pp), len(dp), research, len(bp))
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
 	var st strings.Builder
 	writeStorage(&st, sp, rows)
@@ -284,6 +288,9 @@ func runStatic(e *Env, res *Result) {
 	var cuf strings.Builder
 	writeCultureStrength(&cuf, cp, cr)
 	res.section("Culture strength", "%s", cuf.String())
+	var cpf strings.Builder
+	writeCulturePrices(&cpf, pp, pr)
+	res.section("Culture prices", "%s", cpf.String())
 	var df strings.Builder
 	writeDepthStatic(&df, dp)
 	res.section("Depth points", "%s", df.String())

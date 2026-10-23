@@ -109,6 +109,12 @@ func (s *Set) StockMinutes(res, age string, share float64) float64 {
 	return config.StockMinutes(age, share, s.typIncome[age][res])
 }
 
+// StakeMinutes is StockMinutes held to a ceiling of ceiling minutes
+// (config.StakeMinutes): what a culture stake asks.
+func (s *Set) StakeMinutes(res, age string, share, ceiling float64) float64 {
+	return config.StakeMinutes(age, share, s.typIncome[age][res], ceiling)
+}
+
 // StockOf is a share of a good stock of res for a town making income of it
 // per tick in age (config.StockOf): minutes of the town's own income, within
 // the band around the age's typical income.
