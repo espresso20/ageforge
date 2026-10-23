@@ -2183,129 +2183,129 @@ ui.prestige_kit.kitMemoryLines.11,"  Civs in the group chat: %d."
 ui.research_panel.researchKeys.02,Hop to the nearest tech that way; the camera tags along
 ui.research_panel.researchKeys.04,Next tech ready to cook (Shift-Tab: the one before)
 ui.research_panel.researchKeys.05,"Zoom out to one tech a line, then back in for the HD view"
-ui.research_panel.researchKeys.07,"Back to your current age, the home base"
-ui.research_panel.researchKeys.09,"Open the selected tech's card; on the card, do what its last line says, bussin (with something typed, Tab and Enter act on the prompt instead)"
+ui.research_panel.researchKeys.07,Back to your home era
+ui.research_panel.researchKeys.09,"Open the selected tech's card; on the card, follow the last line like it is the assignment (with something typed, Tab and Enter act on the prompt instead)"
 ui.research_panel.researchKeys.11,"Bounce from the card, then the panel"
-ui.research_tree.words.02,"in progress, the grind"
-ui.research_tree.words.03,"you can start it, bet"
-ui.research_tree.words.04,"waits for what it needs, the prereq chain"
-ui.research_tree.words.05,"in the next age, the sneak peek"
-ui.research_tree.standing.01,waiting on the 
+ui.research_tree.words.02,cooking
+ui.research_tree.words.03,ready to cook
+ui.research_tree.words.04,gatekept by its prereqs
+ui.research_tree.words.05,drops next age
+ui.research_tree.standing.01,gatekept by the 
 ui.research_tree.canvas.01," or "
 ui.research_tree.renderTree.01,"Research: make the window bigger, it's cramped rn."
-ui.research_tree.renderTree.02," RESEARCH  %d of %d known, the progress"
-ui.research_tree.renderTree.03," · %d ahead, the queue"
-ui.research_tree.renderTree.04," · %d next age, the sneak peek"
-ui.research_tree.renderTree.05," · %d beyond, the lore"
-ui.research_tree.renderTree.06," RESEARCH %d/%d, the grind"
-ui.research_tree.renderTree.07," RESEARCH %d/%d, the glow"
-ui.research_tree.renderTree.08,"%d research, %d teach, %s, the split"
-ui.research_tree.renderTree.09,"%d research, %d teach, the duo"
-ui.research_tree.renderTree.10," now, bussin"
-ui.research_tree.renderTree.13,"next you can start, bet"
-ui.research_tree.renderTree.17,"your age, the home turf"
-ui.research_tree.renderTree.23,"runs the command below, bussin"
-ui.research_tree.renderTree.26,"does what the card says, the fine print"
-ui.research_tree.renderTree.28,"shuts the card, bounce"
-ui.research_tree.beyondLine.01,"┄┄┄ %s in later ages, the horizon ┄┄┄"
-ui.research_tree.beyondLine.02,"more tech waits, the teaser"
-ui.research_tree.beyondLine.03,"more techs wait, the teaser"
-ui.research_tree.statusLine.01," No tech in sight yet, we're early."
-ui.research_tree.statusLine.03,"item %d in your plan, the stack"
-ui.research_tree.statusLine.04,"Enter opens its card, bet"
+ui.research_tree.renderTree.02," BIG BRAIN  %d of %d unlocked"
+ui.research_tree.renderTree.03," · %d on deck"
+ui.research_tree.renderTree.04," · %d drop next age"
+ui.research_tree.renderTree.05," · %d gatekept further out"
+ui.research_tree.renderTree.06," BIG BRAIN %d/%d"
+ui.research_tree.renderTree.07," BRAIN %d/%d"
+ui.research_tree.renderTree.08,"%d cooking research, %d mentoring, %s"
+ui.research_tree.renderTree.09,"%d cooking research, %d mentoring"
+ui.research_tree.renderTree.10," rn"
+ui.research_tree.renderTree.13,next one ready to cook
+ui.research_tree.renderTree.17,your era rn
+ui.research_tree.renderTree.23,sends the command below
+ui.research_tree.renderTree.26,"does what the card says, say less"
+ui.research_tree.renderTree.28,yeets the card shut
+ui.research_tree.beyondLine.01,┄┄┄ %s for later ages ┄┄┄
+ui.research_tree.beyondLine.02,more tech is loading
+ui.research_tree.beyondLine.03,more techs are loading
+ui.research_tree.statusLine.01," Zero techs on the radar yet."
+ui.research_tree.statusLine.03,"plan slot %d, on deck"
+ui.research_tree.statusLine.04,Enter pulls up its card
 ui.research_tree.opensText.01,the 
-ui.research_tree.opensText.02,"opens, the reveal "
+ui.research_tree.opensText.02,drops 
 ui.research_tree.opensText.03,the 
-ui.research_tree.opensText.04," needs it, real"
+ui.research_tree.opensText.04," is gatekept behind it"
 ui.research_tree.joinAnd.01," and "
-ui.research_tree.cardSentences.01," gives, the perk "
-ui.research_tree.cardSentences.02,"With it, we're cooking, "
+ui.research_tree.cardSentences.01," buffs you with "
+ui.research_tree.cardSentences.02,"With it in the bag, "
 ui.research_tree.cardSentences.03,It 
-ui.research_tree.cardSentences.04,"It's this age's keystone, the main piece: the "
-ui.research_tree.cardSentences.05," can't be built without it, no cap."
+ui.research_tree.cardSentences.04,It is this age's main character tech: the 
+ui.research_tree.cardSentences.05," is gatekept behind it."
 ui.research_tree.cardSentences.06,the 
-ui.research_tree.cardSentences.07,It opens up 
-ui.research_tree.cardSentences.08,"You already hold this, we're maxed."
-ui.research_tree.cardSentences.09,"It's being researched: %s done. %s, the grind"
-ui.research_tree.cardSentences.10,"It's being researched: %s done, %s left, the countdown."
-ui.research_tree.cardSentences.11,"It takes %s, the clock."
-ui.research_tree.cardSentences.12,"a tech of a later age, the teaser"
-ui.research_tree.cardSentences.13,"It needs nothing before it, free W."
-ui.research_tree.cardSentences.14,It stacks on 
-ui.research_tree.cardSentences.15," It needs one of, pick your path "
-ui.research_tree.cardSentences.16," You hold, the flex "
-ui.research_tree.cardSentences.17," One later tech stacks on it, bussin."
-ui.research_tree.cardSentences.18," %s later techs build on it, bussin."
-ui.research_tree.cardSentences.20,"  starts the research, let's go."
-ui.research_tree.cardSentences.22,"  adds it to your plan, the stack."
-ui.research_tree.cardSentences.24,"  adds it to your plan, after the wait "
-ui.research_tree.cardSentences.25," They run in that order, bussin, and it starts once you reach the "
-ui.research_tree.cardSentences.26," It kicks off once you reach the "
-ui.research_tree.cardSentences.27," and hold what it needs, the bills."
-ui.research_tree.cardSentences.28," They run in that order, one at a time, the queue."
-ui.research_tree.cardSentences.29," It starts once you hold what it needs, bet."
+ui.research_tree.cardSentences.07,It drops 
+ui.research_tree.cardSentences.08,"You already own this, flex."
+ui.research_tree.cardSentences.09,It is cooking: %s done. %s
+ui.research_tree.cardSentences.10,"It is cooking: %s done, %s left."
+ui.research_tree.cardSentences.11,It cooks for %s.
+ui.research_tree.cardSentences.12,a tech gatekept to a later age
+ui.research_tree.cardSentences.13,"No prereqs, it is a free W."
+ui.research_tree.cardSentences.14,Its prereq lore: 
+ui.research_tree.cardSentences.15," Pick-one prereqs: "
+ui.research_tree.cardSentences.16," You already flex "
+ui.research_tree.cardSentences.17," One later tech builds off it, so it is lowkey important."
+ui.research_tree.cardSentences.18," %s later techs build off it, foundational lore."
+ui.research_tree.cardSentences.20,"  gets the research cooking."
+ui.research_tree.cardSentences.22,"  puts it on deck in your plan."
+ui.research_tree.cardSentences.24,"  puts it on deck in your plan, behind "
+ui.research_tree.cardSentences.25," They cook in that order, and it starts once you reach the "
+ui.research_tree.cardSentences.26," It starts cooking once you reach the "
+ui.research_tree.cardSentences.27," and own its prereqs."
+ui.research_tree.cardSentences.28," They cook in that order, one at a time."
+ui.research_tree.cardSentences.29," It starts cooking once you own its prereqs."
 ui.research_tree.cardSentences.30," %s is cooking, so it starts in %s."
-ui.research_tree.cardSentences.31,"It's item %d in your plan, the stack."
-ui.research_tree.cardSentences.32,"Type research cancel to stop it; the work done on it is lost, L."
-ui.research_tree.neededFirst.01,", which it needs first, the prereq"
-ui.research_tree.neededFirst.02,"the %d techs it needs first (%s, then %s), the chain"
-ui.research_tree.neededFirst.03,"the %d techs it needs first (%s and %d more), the chain"
-ui.research_tree.kindWords.03,"on the spine, the main line"
-ui.research_tree.drawCard.01," Esc closes, bounce "
-ui.resources_box.cultureRow.01,"[gray]at, the time: "
-ui.resources_box.cultureRow.02,"✦ Culture mastered, W"
-ui.resources_box.cultureRow.03,"✦ mastered, bussin"
-ui.resources_box.faithBandFor.01,"%.0f%% good, the vibe"
-ui.resources_box.faithBandFor.02,"✝ No faith, sus"
-ui.resources_box.faithBandFor.03,"✝ None, the void"
-ui.resources_box.faithBandFor.04,"◈ Dim faith, lowkey"
-ui.resources_box.faithBandFor.05,"◈ Dim, kinda"
-ui.resources_box.faithBandFor.06,"✦ Faith full, W"
-ui.resources_box.faithBandFor.07,"✦ Full, bussin"
-ui.resources_box.faithBandFor.08,"◈ Strong faith, the glow"
-ui.resources_box.faithBandFor.09,"◈ Strong, the flex"
-ui.resources_box.faithBandFor.10,"◈ Low faith, rough"
-ui.resources_box.faithBandFor.11,"◈ Low, sus"
-ui.resources_box.faithBandFor.12,"◈ Faith, the vibe"
-ui.resources_box.faithBandFor.13,"◈ Faith, the vibe check"
-ui.resources_box.faithRow.01,"[%s]%s[-] [gray](epoch: %s), the era[-]"
-ui.resources_box.resLegends.01," [gray]Amount, the vibe:[-] [green]rising[-] [gray]·[-] [red]falling[-] [gray]·[-] [red]▼[-] [gray]falling[-]"
-ui.resources_box.resLegends.02," [green]rising, up[-] [gray]·[-] [red]▼[-] [gray]falling, down[-]"
-ui.resources_box.resLegends.03," [red]▼[-] [gray]falling, down, rip[-]"
+ui.research_tree.cardSentences.31,"It sits at slot %d in your plan, on deck."
+ui.research_tree.cardSentences.32,Type research cancel to stop it; the progress gets yeeted.
+ui.research_tree.neededFirst.01,", its prereq"
+ui.research_tree.neededFirst.02,"the %d techs gatekeeping it (%s, then %s)"
+ui.research_tree.neededFirst.03,the %d techs gatekeeping it (%s and %d more)
+ui.research_tree.kindWords.03,on the main quest line
+ui.research_tree.drawCard.01," Esc to dip "
+ui.resources_box.cultureRow.01,[gray]clocked at 
+ui.resources_box.cultureRow.02,✦ Culture maxed out
+ui.resources_box.cultureRow.03,✦ maxed
+ui.resources_box.faithBandFor.01,%.0f%% good vibes
+ui.resources_box.faithBandFor.02,✝ Faithless era
+ui.resources_box.faithBandFor.03,✝ Nada
+ui.resources_box.faithBandFor.04,◈ Faith is mid
+ui.resources_box.faithBandFor.05,◈ Mid
+ui.resources_box.faithBandFor.06,✦ Faith maxed
+ui.resources_box.faithBandFor.07,✦ Maxed
+ui.resources_box.faithBandFor.08,◈ Faith is bussin
+ui.resources_box.faithBandFor.09,◈ Bussin
+ui.resources_box.faithBandFor.10,◈ Faith is down bad
+ui.resources_box.faithBandFor.11,◈ Down bad
+ui.resources_box.faithBandFor.12,◈ Faith vibes
+ui.resources_box.faithBandFor.13,◈ Faith aura
+ui.resources_box.faithRow.01,[%s]%s[-] [gray](epoch lore: %s)[-]
+ui.resources_box.resLegends.01," [gray]Bag:[-] [green]going up[-] [gray]·[-] [red]going down[-] [gray]·[-] [red]▼[-] [gray]tanking[-]"
+ui.resources_box.resLegends.02," [green]going up[-] [gray]·[-] [red]▼[-] [gray]tanking[-]"
+ui.resources_box.resLegends.03," [red]▼[-] [gray]tanking[-]"
 ui.resources_box.resMoreLine.01,"%d-%d of %d, the page"
-ui.resources_box.resMoreLine.02," next page, the overflow"
-ui.save_modal.showSaveChoiceModal.01,"Save %q, the run?"
-ui.save_modal.showSaveChoiceModal.02,"Overwrite, bet"
-ui.save_modal.showSaveChoiceModal.03,Branch fresh
-ui.save_modal.showSaveChoiceModal.04,"Nah, cancel"
-ui.save_modal.showSaveChoiceModal.05,"[positive]Saved, W → "
-ui.save_modal.showSaveChoiceModal.06," Branch a fresh save, bet "
-ui.save_modal.showSaveChoiceModal.07,"[positive]Branched, bussin → "
-ui.save_modal.showSaveChoiceModal.08," (autosave now follows it, W)"
-ui.scholars_text.needsScholars.01,"It needs scholars researching to go on, the brains are required."
-ui.scholars_text.needsScholarsShort.01,"needs scholars researching, brains only"
-ui.scholars_text.noScholars.01,"no scholars yet, we're early: knowledge buildings come with them"
-ui.scholars_text.scholarsLine.01,You've got 
-ui.scholars_text.scholarsLine.02,"%d research, %d teach. Teaching adds %s to what workers make, the bonus."
-ui.scholars_text.scholarsShort.01,"Scholars %d research, %d teach, %s, the squad"
-ui.spoilers.civRef.01,"a civilization you haven't met, the mystery"
-ui.spoilers.currentEraName.01,"this era, the vibe"
-ui.spoilers.themeUnlockHint.01,"Reach a later age, the glow-up"
-ui.tab_economy.onboardingSteps.01,"collect by hand, the grind"
-ui.tab_economy.onboardingSteps.03,"food runs short first, sus"
-ui.tab_economy.onboardingSteps.04,"shelter; raises your housing, the crib"
-ui.tab_economy.onboardingSteps.05,"workers come on their own and staff the camps, autopilot (staffed camps make 5x)"
-ui.tab_economy.onboardingSteps.06,"then build the [gold]wonder[-] once its bank is full, bussin. You need it to advance."
+ui.resources_box.resMoreLine.02," more drip"
+ui.save_modal.showSaveChoiceModal.01,Lock in %q?
+ui.save_modal.showSaveChoiceModal.02,Yeet the old one
+ui.save_modal.showSaveChoiceModal.03,Spawn a branch
+ui.save_modal.showSaveChoiceModal.04,Nah
+ui.save_modal.showSaveChoiceModal.05,[positive]Locked in → 
+ui.save_modal.showSaveChoiceModal.06," Spawn a New Save Branch "
+ui.save_modal.showSaveChoiceModal.07,[positive]Branch spawned → 
+ui.save_modal.showSaveChoiceModal.08," (autosave is following it now, ride or die)"
+ui.scholars_text.needsScholars.01,It needs scholars on research duty to keep cooking.
+ui.scholars_text.needsScholarsShort.01,needs big brains on research
+ui.scholars_text.noScholars.01,no scholars yet: they spawn with knowledge buildings
+ui.scholars_text.scholarsLine.01,Your squad has 
+ui.scholars_text.scholarsLine.02,"%d cooking research, %d mentoring. The teaching buff adds %s to what workers make."
+ui.scholars_text.scholarsShort.01,"Big brains: %d research, %d teach, %s"
+ui.spoilers.civRef.01,a civilization not in your group chat yet
+ui.spoilers.currentEraName.01,this era rn
+ui.spoilers.themeUnlockHint.01,Glow up to a later age
+ui.tab_economy.onboardingSteps.01,grind it by hand
+ui.tab_economy.onboardingSteps.03,snacks run out first
+ui.tab_economy.onboardingSteps.04,a crib; raises your housing
+ui.tab_economy.onboardingSteps.05,workers spawn on their own and staff the camps (staffed camps make 5x)
+ui.tab_economy.onboardingSteps.06,"then build the [gold]wonder[-] once its bag is full. You need it to advance, no skips."
 ui.tab_economy.renderOnboarding.01,"
- [gold]─── Getting started, the tutorial ───[-]
+ [gold]─── Getting Started, Tutorial Era ───[-]
 "
-ui.tab_economy.renderOnboarding.02," [white]First steps, the warm-up:[-]
+ui.tab_economy.renderOnboarding.02," [white]Starter pack:[-]
 "
-ui.tab_economy.renderOnboarding.03,"[white]Type[-] [cyan]help[-] [white]for all commands, no cap.[-]"
-ui.tab_economy.cultureThresholdLabels.01,"+5% research speed, the warmup"
-ui.tab_economy.cultureThresholdLabels.02,"+10% research speed, bussin"
-ui.tab_economy.cultureThresholdLabels.03,"+15% research speed, unlock wonder tier, the glow"
-ui.tab_economy.cultureThresholdLabels.04,"+20% research speed, lowkey big"
+ui.tab_economy.renderOnboarding.03,[white]Type[-] [cyan]help[-] [white]for the whole command lore.[-]
+ui.tab_economy.cultureThresholdLabels.01,+5% big brain speed
+ui.tab_economy.cultureThresholdLabels.02,+10% big brain speed
+ui.tab_economy.cultureThresholdLabels.03,"+15% big brain speed, wonder tier unlocked"
+ui.tab_economy.cultureThresholdLabels.04,+20% big brain speed
 ui.tab_economy.cultureThresholdLabels.05,"+25% research speed, culture events, the party"
 ui.tab_economy.cultureThresholdLabels.06,"+30% research speed, goated"
 ui.tab_economy.cultureThresholdLabels.07,"+research speed, the boost"
