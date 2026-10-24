@@ -32,7 +32,7 @@ type quoter struct {
 
 // loadQuoters reads the files that can quote a name: README.md, the pages and
 // scripts under site/, the generated screens under site/docs/screens, and
-// every test file. It skips hidden folders, node_modules, and the root folders
+// every test file. It skips hidden folders, node_modules and the root folders
 // words, data and dist.
 func loadQuoters(root string) []quoter {
 	var out []quoter
@@ -143,10 +143,9 @@ func followUps(c *catalog, root string, changes []change, o importOptions, out i
 }
 
 // wikiQuotes returns one line for each wiki page that still holds the old
-// text of a rewritten line that is not a name: the page, then the ids of the
-// lines it quotes (all of them for up to three, else their count and the first
-// three). Only lines long enough to be found reliably (twelve characters) are
-// looked for.
+// text of a rewritten line that is not a name: the page and the ids of the
+// lines it quotes (the first three, with a count, when there are more). Only
+// lines long enough to be found reliably (twelve characters) are looked for.
 func wikiQuotes(root string, changes []change) []string {
 	var lines []change
 	for _, ch := range changes {
