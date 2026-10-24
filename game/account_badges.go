@@ -712,7 +712,7 @@ func mergeBadges(a, b map[string]BadgeEarned) map[string]BadgeEarned {
 	if len(a) == 0 && len(b) == 0 {
 		return nil
 	}
-	out := make(map[string]BadgeEarned, len(a)+len(b))
+	out := make(map[string]BadgeEarned, max(len(a), len(b))) // a hint; the map grows past it (no sum of lengths to overflow)
 	for k, v := range a {
 		out[k] = v
 	}
@@ -737,7 +737,7 @@ func mergeCounters(a, b map[string]float64) map[string]float64 {
 	if len(a) == 0 && len(b) == 0 {
 		return nil
 	}
-	out := make(map[string]float64, len(a)+len(b))
+	out := make(map[string]float64, max(len(a), len(b))) // a hint; the map grows past it (no sum of lengths to overflow)
 	for k, v := range a {
 		out[k] = v
 	}

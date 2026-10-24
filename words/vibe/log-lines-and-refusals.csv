@@ -721,3 +721,4 @@ config.missions.RareTitleWord.01,Goated
 game.engine.ancientMemoryFlavor.01,"You found an old cache, and the lore inside is wild: memories of a civilization that went extinct."
 game.harbinger.lastPassageCame.01,the Last Passage already pulled up
 game.mission_board.ruinsFound.01,"Side quest loot, found near the ruins at "
+game.engine.AdvanceAge.05,"Not advancing yet, this age is still on the loading screen. The bar up top spills the tea on what it's waiting on. Type 'charter' for the full receipts on everything the advance needs."
