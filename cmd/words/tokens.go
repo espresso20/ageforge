@@ -43,7 +43,6 @@ var (
 	// A bracketed word tview would take for a style tag, and its escaped
 	// form ("[count[]").
 	tagRe = regexp.MustCompile(`\[[A-Za-z0-9#:\-]*(?:\]|\[\])`)
-	// The names of keys.
 	keyRe = regexp.MustCompile(`\b(?:Ctrl\+[A-Za-z]|Enter|Esc|Tab|Shift|PgUp|PgDn|Backspace)\b`)
 	// A command quoted in a sentence: Type 'catastrophe' to choose.
 	quoteRe = regexp.MustCompile(`(?:^|[\s(])('[a-z][^'\n]{0,40}')(?:[\s.,;:)!?]|$)`)
@@ -105,7 +104,7 @@ func tokensOf(s string, slotMark bool) []kept {
 		}
 	}
 	flush(len(s))
-	// In order of appearance.
+	// Sort by position: the kinds were added one pass at a time.
 	for i := 1; i < len(out); i++ {
 		for j := i; j > 0 && out[j].at < out[j-1].at; j-- {
 			out[j], out[j-1] = out[j-1], out[j]

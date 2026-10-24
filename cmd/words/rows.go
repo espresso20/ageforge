@@ -7,7 +7,6 @@ import (
 
 // This file turns the text units of the source into the rows of the sheets.
 
-// The four kinds of row.
 const (
 	kindVoice   = "voice"   // descriptions, flavor, story
 	kindMessage = "message" // log lines, refusals, hints, help

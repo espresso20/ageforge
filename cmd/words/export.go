@@ -14,7 +14,8 @@ import (
 
 // This file writes the sheets.
 
-// The columns of every sheet, in order.
+// columns are the columns of every sheet. The col constants below are their
+// positions and must stay in the same order.
 var columns = []string{"id", "where", "kind", "age", "keep", "max", "current", "yours", "notes", "same_as"}
 
 const (
