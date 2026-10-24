@@ -1,36 +1,34 @@
-// pkg/sprites/sprites.go — shared parametric 16×16 building sprite generator
+// This file has the era palettes, the Canvas and the building sprite generator.
 package sprites
 
 import "math"
-
-// ── Era color palettes ────────────────────────────────────────────────────────
 
 // EraPalette holds the six color slots for a single era.
 type EraPalette struct {
 	Wall, Roof, Window, Door, Accent, Glow uint32
 }
 
-// EraPalettes is the ordered set of 7 era palettes (index 0–6).
+// EraPalettes is the ordered set of 7 era palettes (index 0 to 6).
 var EraPalettes = [7]EraPalette{
 	// Era 0: Primitive/Ancient (primitive→iron age)
 	{0x8b6a40, 0x5a3a20, 0xc8a060, 0x5a3a20, 0xc89040, 0xffe080},
 	// Era 1: Classical/Medieval (classical→renaissance)
 	{0xd0c8b0, 0x8b1a1a, 0xa0c0d0, 0x6b3a1a, 0xd4a017, 0xffe0a0},
-	// Era 2: Colonial/Industrial (age_of_sail→gilded)
+	// Era 2: Colonial/Industrial (colonial→victorian)
 	{0x8a6050, 0x4a3a30, 0xc0c0a0, 0x3a2a20, 0xc87941, 0xffa060},
-	// Era 3: Modern/Atomic (modern→information)
+	// Era 3: Modern/Atomic (electric→information)
 	{0x808890, 0x505860, 0x80c0e0, 0x404850, 0xc0c8d0, 0xe0f0ff},
 	// Era 4: Digital/Cyber (digital→cyberpunk)
 	{0x202030, 0x101020, 0x40c0ff, 0x181828, 0xff40c0, 0x40ffff},
-	// Era 5: Fusion/Space (nanotech→interstellar)
+	// Era 5: Fusion/Space (fusion→interstellar)
 	{0x0a1530, 0x050a20, 0x4080ff, 0x030810, 0xffe040, 0x80c0ff},
-	// Era 6: Cosmic/Transcendent (galactic→divine)
+	// Era 6: Cosmic/Transcendent (galactic→transcendent)
 	{0x080810, 0x040408, 0xc0a0ff, 0x020206, 0xffd040, 0xff80ff},
 }
 
-// ── Age → era mapping ─────────────────────────────────────────────────────────
-
-// AgeEraMap maps age key strings to era indices (0–6).
+// AgeEraMap maps age keys to era indices (0 to 6). Every age in config has an
+// entry. age_of_sail, gilded_age, nanotech_age, singularity_age, divine_age and
+// cosmic_age are not ages in config and are unused.
 var AgeEraMap = map[string]int{
 	"primitive_age": 0, "stone_age": 0, "bronze_age": 0, "iron_age": 0,
 	"classical_age": 1, "medieval_age": 1, "renaissance_age": 1,
@@ -48,8 +46,6 @@ func GetEra(ageKey string) int {
 	}
 	return 0
 }
-
-// ── Canvas type and drawing helpers ──────────────────────────────────────────
 
 // Canvas is a 16×16 pixel art canvas with uint32 packed RGB pixels (0xRRGGBB; 0 = transparent).
 type Canvas struct {
@@ -81,7 +77,8 @@ func (c *Canvas) hline(x, y, w int, col uint32) { c.fillRect(x, y, w, 1, col) }
 // vline draws a vertical line.
 func (c *Canvas) vline(x, y, h int, col uint32) { c.fillRect(x, y, 1, h, col) }
 
-// pitchedRoof draws a pitched roof: peak at (cx, peakY), base from (x, baseY) to (x+w-1, baseY).
+// pitchedRoof draws a pitched roof centered on cx: one pixel at row peakY, widening
+// each row to about baseW pixels at row baseY.
 func (c *Canvas) pitchedRoof(cx, peakY, baseY, baseW int, col uint32) {
 	for y := peakY; y <= baseY; y++ {
 		spread := (y - peakY) * (baseW / 2) / (baseY - peakY + 1)
@@ -89,7 +86,8 @@ func (c *Canvas) pitchedRoof(cx, peakY, baseY, baseW int, col uint32) {
 	}
 }
 
-// dome draws a dome: center cx,cy, radius r.
+// dome draws a dome: the upper half of a circle with center (cx, cy) and radius r,
+// with its flat side on row cy.
 func (c *Canvas) dome(cx, cy, r int, col uint32) {
 	for dy := -r; dy <= 0; dy++ {
 		hw := int(math.Sqrt(float64(r*r - dy*dy)))
@@ -112,7 +110,9 @@ func (c *Canvas) Vline(x, y, h int, col uint32) { c.vline(x, y, h, col) }
 // Dome is the exported version of dome for use outside the package.
 func (c *Canvas) Dome(cx, cy, r int, col uint32) { c.dome(cx, cy, r, col) }
 
-// darken darkens a color by factor (0.0–1.0).
+// darken scales each channel of a color by factor, which darkens it for a factor
+// from 0 to 1. A factor above 1 lightens, but a channel scaled past 255 is not
+// clamped.
 func darken(col uint32, factor float64) uint32 {
 	r := uint8(float64(col>>16&0xff) * factor)
 	g := uint8(float64(col>>8&0xff) * factor)
@@ -120,7 +120,7 @@ func darken(col uint32, factor float64) uint32 {
 	return uint32(r)<<16 | uint32(g)<<8 | uint32(b)
 }
 
-// lighten lightens a color by adding to each channel.
+// lighten adds add to each channel of a color, up to 255.
 func lighten(col uint32, add uint8) uint32 {
 	r := min16(int(col>>16&0xff)+int(add), 255)
 	g := min16(int(col>>8&0xff)+int(add), 255)
@@ -135,10 +135,8 @@ func min16(a, b int) int {
 	return b
 }
 
-// ── Core building composer ────────────────────────────────────────────────────
-
-// buildingCompose draws the shared structural frame. lineage and era control shapes.
-// variation (0-2) adds small stable differences.
+// buildingCompose draws the shared frame of a building sprite. lin and era pick the
+// shapes. variation (0 to 2) adds small differences.
 func buildingCompose(lin, tier, era, variation int) Canvas {
 	var c Canvas
 	pal := EraPalettes[era]
@@ -156,22 +154,21 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 	}
 
 	bx := 8 - bodyW/2 // body left x
-	by := 14 - bodyH  // body top y (foundation is 14-15)
+	by := 14 - bodyH  // body top y (the foundation is rows 14 and 15)
 
 	// Foundation
 	c.fillRect(bx-2, 14, bodyW+4, 2, darken(pal.Wall, 0.6))
-	// ground shadow: full-width dark strip at very bottom
+	// Ground shadow: a full-width dark strip at the very bottom
 	c.hline(0, 15, 16, darken(pal.Wall, 0.4))
 
-	// Body walls
 	c.fillRect(bx, by, bodyW, bodyH, pal.Wall)
 
-	// Body outline (slightly darker)
-	c.hline(bx, by, bodyW, darken(pal.Wall, 0.7))         // top edge
-	c.vline(bx, by, bodyH, darken(pal.Wall, 0.7))         // left edge
-	c.vline(bx+bodyW-1, by, bodyH, darken(pal.Wall, 0.7)) // right edge
+	// Outline on the top and sides, slightly darker than the wall
+	c.hline(bx, by, bodyW, darken(pal.Wall, 0.7))
+	c.vline(bx, by, bodyH, darken(pal.Wall, 0.7))
+	c.vline(bx+bodyW-1, by, bodyH, darken(pal.Wall, 0.7))
 
-	// Windows: 1×2 px each, spaced across body
+	// Windows: 1×2 px each, spaced across the body
 	numWindows := 1 + tier*2/10 + variation%2
 	if numWindows > 3 {
 		numWindows = 3
@@ -182,7 +179,7 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 		c.fillRect(wx, wy, 1, 2, pal.Window)
 	}
 
-	// Door: 2 wide, at bottom of body, center
+	// Door: 2 wide, centered at the bottom of the body
 	dx := bx + bodyW/2 - 1
 	if pal.Door == 0 {
 		c.fillRect(dx, by+bodyH-2, 2, 2, 0x1a1008)
@@ -190,12 +187,12 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 		c.fillRect(dx, by+bodyH-2, 2, 2, pal.Door)
 	}
 
-	// Roof — shape varies by lineage group
+	// Roof: the shape depends on the lineage group
 	roofTop := by - 1
 	switch {
 	case lin <= 2: // housing, food → pitched roof
 		if era == 0 {
-			// primitive: flat thatched roof — no peaked silhouette
+			// primitive: flat thatched roof, no peak
 			c.hline(bx-1, roofTop, bodyW+2, pal.Roof)
 			c.hline(bx, roofTop-1, bodyW, darken(pal.Roof, 0.8)) // second layer
 		} else {
@@ -266,28 +263,27 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 		c.set(bx+bodyW, by+bodyH, pal.Glow)
 	}
 
-	// Full-width base anchors the building — prevents floating/humanoid look
+	// A full-width base row anchors the building so it does not look like it floats
 	c.hline(0, 15, 16, darken(pal.Wall, 0.35))
 
 	return c
 }
 
-// ── Public sprite generator ───────────────────────────────────────────────────
-
-// GenerateBuildingSprite returns a 16×16 sprite for a building given its lineage (1-13),
-// tier (0-20), age key, and variation (0, 1, or 2).
+// GenerateBuildingSprite returns a 16×16 sprite for a building given its lineage
+// (1 to 13), tier (0 to 21; the body stops growing at tier 20), age key and
+// variation (0, 1 or 2). A zero pixel is transparent.
 func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16][16]uint32 {
 	era := GetEra(ageKey)
 	pal := EraPalettes[era]
 	_ = pal
 	c := buildingCompose(lineage, tier, era, variation)
 
-	// Lineage-specific overrides that make shapes more recognizable
+	// Lineage-specific details that make shapes more recognizable
 	switch lineage {
-	case 1: // Housing — normal compose is good, vary roof color slightly per variation
-		// already handled in compose
+	case 1: // Housing: no extra detail
+		// buildingCompose is enough
 
-	case 2: // Food — add crop rows at base
+	case 2: // Food: add crop rows at the base
 		bw := 4 + tier*6/20
 		if bw > 10 {
 			bw = 10
@@ -300,8 +296,8 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			}
 		}
 
-	case 3: // Organic extraction (lumber/oil) — show resource indicator
-		if era <= 1 { // show tree stump
+	case 3: // Organic extraction (lumber/oil): show a resource marker
+		if era <= 1 { // show a small tree
 			c.set(5, 12, 0x5a3a20)
 			c.set(6, 12, 0x5a3a20)
 			c.set(5, 11, 0x2d6b1a)
@@ -313,14 +309,14 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			c.hline(4, 10, 3, darken(pal.Roof, 0.8))
 		}
 
-	case 4: // Geological (quarry/mine) — show pit marker
+	case 4: // Geological (quarry/mine): show a pit marker
 		if era <= 2 {
 			c.hline(3, 14, 3, 0x4a4a4a)
 			c.hline(3, 15, 3, 0x333333)
 			c.set(3, 13, 0x666666)
 		}
 
-	case 5: // Knowledge — show book/scroll detail
+	case 5: // Knowledge: show a book or scroll
 		if era <= 1 {
 			bw := 4 + tier*6/20
 			if bw > 10 {
@@ -331,7 +327,7 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			c.vline(bx+2, 7, 3, 0xd0c8b0)
 		}
 
-	case 6: // Faith — add cross or star symbol
+	case 6: // Faith: add a cross or a star
 		if era <= 2 {
 			bx := 8 - (4+tier*6/20)/2
 			bw := 4 + tier*6/20
@@ -352,7 +348,7 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			c.set(8, 4, pal.Glow)
 		}
 
-	case 7: // Military — add battlements on top
+	case 7: // Military: add battlements on top
 		bw := 4 + tier*6/20
 		if bw > 10 {
 			bw = 10
@@ -365,13 +361,13 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			}
 		}
 
-	case 8: // Trade — add coin/scale symbol
+	case 8: // Trade: add a coin
 		if era <= 3 {
 			c.set(8, 4, 0xd4a017) // gold coin dot
 			c.set(7, 4, 0xd4a017)
 		}
 
-	case 9: // Engineering — add gear on roof
+	case 9: // Engineering: add a gear on the roof
 		if era >= 2 {
 			c.set(8, 3, pal.Accent)
 			c.set(7, 3, pal.Accent)
@@ -380,7 +376,7 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			c.set(8, 4, pal.Accent)
 		}
 
-	case 10: // Culture — arched facade
+	case 10: // Culture: arched facade
 		bx := 8 - (4+tier*6/20)/2
 		bw := 4 + tier*6/20
 		if bw > 10 {
@@ -391,12 +387,12 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 		c.set(bx+bw-1, by2, 0)
 		c.hline(bx+1, by2-1, bw-2, pal.Accent) // decorative top bar
 
-	case 11: // Metallurgy — add fire/glow at base
+	case 11: // Metallurgy: add fire at the base
 		c.set(7, 13, 0xff6000)
 		c.set(8, 13, 0xff8000)
 		c.set(7, 12, 0xffb000)
 
-	case 12: // Energy — add energy conduit lines
+	case 12: // Energy: add energy conduit lines
 		if era >= 3 {
 			c.hline(2, 8, 12, pal.Glow)
 		} else {
@@ -404,7 +400,7 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			c.vline(12, 8, 4, pal.Accent)
 		}
 
-	case 13: // Hacker — show server rack pattern on body
+	case 13: // Hacker: show a server rack pattern on the body
 		bx := 8 - (4+tier*6/20)/2
 		bw := 4 + tier*6/20
 		if bw > 10 {
@@ -420,7 +416,7 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 	return c.Pixels
 }
 
-// PalacePixels returns a 16×16 palace sprite for the given era (0–6).
+// PalacePixels returns a 16×16 palace sprite for the given era (0 to 6).
 func PalacePixels(era int) [16][16]uint32 {
 	switch era {
 	case 0: // Primitive: chief's longhouse
@@ -537,7 +533,7 @@ func PalacePixels(era int) [16][16]uint32 {
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		}
-	default: // Era 6: Cosmic — glowing transcendent pillar
+	default: // Era 6: Cosmic, a glowing transcendent pillar
 		return [16][16]uint32{
 			{0, 0, 0, 0, 0, 0, 0, 0xff80ff, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0xffd040, 0xff80ff, 0xffd040, 0, 0, 0, 0, 0, 0, 0},

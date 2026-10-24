@@ -38,8 +38,10 @@ var padded = regexp.MustCompile(`^[A-Za-z][A-Za-z' ]*[A-Za-z] {2,}$`)
 // fieldVerb is a format verb with a width: %-20s, %14s.
 var fieldVerb = regexp.MustCompile(`%[-+# 0]*(\d+)?(?:\.\d+)?[a-zA-Z%]`)
 
-// fixedWidths gives every row of the screens sheet that is laid out in a fixed
-// width its max.
+// fixedWidths gives a row its max when the code lays its text out in a fixed
+// width. Rows of the screens sheet are read from the code (widthOf), rows of
+// the map sheet from the table in vibe_map.go (mapWidthOf). A row that already
+// has a max keeps it.
 func (c *catalog) fixedWidths() {
 	ints := map[*srcFile]map[string]int{}
 	for _, r := range c.rows {

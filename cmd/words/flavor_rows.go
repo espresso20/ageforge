@@ -9,9 +9,9 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// flavor_rows.go reads the flavor catalogs: the sentences each catalog can
-// say, grouped into pools by the ages they fit, and the word lists some of
-// those sentences draw a phrase from.
+// This file reads the flavor catalogs: the sentences each catalog can say,
+// grouped into pools by the ages they fit, and the word lists some of those
+// sentences draw a phrase from.
 //
 // A catalog file declares its pools with pool(), agePool() and agePools().
 // The reader takes the pool's name and ages from those calls, so a sentence's
@@ -22,14 +22,15 @@ type moment struct {
 	prefix string // what its pool names start with ("exp_fail")
 	key    string // its part of an id ("expedition_fail")
 	title  string // what the README calls it
-	when   string // "when an expedition fails", for where sentences
+	when   string // "after an expedition or campaign fails", for where sentences
 	about  string // for a kind restriction: what the kind describes
 	from   string // the age key before which it cannot happen, "" for the first age
 	area   *area
 }
 
-// moments are the catalogs, longest prefix first where one prefix starts
-// another. TestFlavorPoolsAreAllRead fails when a pool matches none.
+// moments are the catalogs, in the order of the guide. momentOf picks the
+// longest prefix that matches a pool name, so one prefix may start another.
+// TestFlavorPoolsAreAllRead fails when a pool matches none.
 var moments = []*moment{
 	{"exp_success", "expedition_success", "Expedition comes back well", "after an expedition or campaign succeeds", "expedition", "", areaFlavorExp},
 	{"exp_fail", "expedition_fail", "Expedition comes back badly", "after an expedition or campaign fails", "expedition", "", areaFlavorExp},
@@ -48,9 +49,9 @@ var moments = []*moment{
 	{"run_end", "run_ending", "The end of a run", "at every prestige, as the run ends", "", "medieval_age", areaFlavorEnd},
 }
 
-// The flavor package sorts the ages into five spans, and a pool fits one or
-// more of them (flavor/render.go, eraOf). First and last age of each, by
-// place in the age order.
+// flavorSpans gives the first and last age of each of the flavor package's
+// five spans (flavor/render.go, eraOf), by place in the age order from 1. A
+// pool fits one or more of them.
 var flavorSpans = map[string][2]int{
 	"eraAncient":    {1, 5},
 	"eraFeudal":     {6, 8},
@@ -63,7 +64,7 @@ var flavorSpans = map[string][2]int{
 type flavorPool struct {
 	m      *moment
 	bucket string   // the pool's part of an id ("any", "ancient", "stone_age")
-	spans  []string // the spans it fits (flavorSpans keys); all five for an ungated pool
+	spans  []string // the spans it fits (flavorSpans keys); empty for a pool open to every age
 	ages   []string // the age keys it is held to, for a per-age pool
 	size   int
 	tmpl   string // what the flavor package's own ids for its sentences start with
@@ -73,16 +74,16 @@ type flavorReader struct {
 	m       *module
 	pools   map[string]*flavorPool // by the variable that holds the sentences
 	setPool map[string]*moment     // by the variable that holds per-age sets (agePools)
-	setPre  map[string]string      // that variable's pool-name prefix after the moment's
+	setPre  map[string]string      // that variable's pool-name prefix, as agePools was given it
 	spans   map[string][]string    // erasAny, erasEarly ... -> spans
 	lists   map[string][]string    // named string lists (tLow, runEndPlainAges)
 	bankUse map[string][]*row      // word list -> the sentences that draw on it
 	bankLen map[string]int         // word list -> its longest entry
 	bankN   map[string]int
-	made    map[string]*flavorPool // per-age pools, by id prefix
+	made    map[string]*flavorPool // per-age pools, by set variable and first age
 	unread  []string               // pools no moment claims
 	byTmpl  map[string]*row        // sentences by the flavor package's own id
-	order   []*flavorPool          // pools in the order they are declared
+	order   []*flavorPool          // pools in the order the reader finds them
 }
 
 func newFlavorReader(m *module) *flavorReader {
@@ -176,7 +177,8 @@ func newFlavorReader(m *module) *flavorReader {
 			return true
 		})
 	}
-	// Then which sentences use which word list, and how long its entries run.
+	// Then the size of each pool, and the number of entries and the longest
+	// entry of each word list.
 	for _, f := range files {
 		for _, u := range m.units(f) {
 			if name, ok := bankOf(u); ok {
@@ -398,8 +400,8 @@ func (fr *flavorReader) read(c *catalog, u *unit) (*row, string) {
 	}
 	sb.WriteString(" The game adds the full stop.")
 	if unanswerable(p) {
-		// A false prophet can come in the first era, but the game refuses
-		// every answer to one there.
+		// A false prophet can come in the first era (the Stone Era), but the game
+		// refuses every answer to one there.
 		r.unsure = true
 		sb.WriteString(" No catastrophe can strike in the first era, so the game refuses to appease, brace or invite there, and as things stand this line is never reached.")
 	}
