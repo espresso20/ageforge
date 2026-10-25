@@ -32,7 +32,7 @@ var researchKeys = []keyHelp{
 
 // researchPanel is the Research overlay primitive.
 type researchPanel struct {
-	*tview.Box
+	barPanel
 	state game.GameState
 	view  treeView
 	model *treeModel
@@ -42,22 +42,18 @@ type researchPanel struct {
 	engine *game.GameEngine
 	// tier reads the glyph tier (the map glyphs setting).
 	tier func() mapmodel.GlyphTier
-	// prompt reads the command bar ("" when it is empty).
-	prompt func() string
-	// toPrompt hands a key the panel does not take to the command bar.
-	toPrompt func(ev *tcell.EventKey)
 }
 
 func newResearchPanel() *researchPanel {
-	return &researchPanel{Box: tview.NewBox(), w: 120, h: 37}
+	p := &researchPanel{w: 120, h: 37}
+	p.barPanel = newBarPanel(p.routeKey)
+	return p
 }
 
 // open is the overlay's build: it runs on every Show.
 func (p *researchPanel) open(state game.GameState) tview.Primitive {
 	p.update(state)
-	return tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(p, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+	return overBar(p)
 }
 
 // request sets what the next open shows: a zoom ("close", "far" or "" to
@@ -144,20 +140,6 @@ func (p *researchPanel) Draw(scr tcell.Screen) {
 // for art; text roles are the theme's own.
 func paintTree(scr tcell.Screen, g *tGrid, x0, y0 int, lanes []config.TechLaneDef) {
 	paintGrid(scr, g, x0, y0, newGridPalette(len(lanes), func(i int) string { return lanes[i].Hue }))
-}
-
-// InputHandler takes the panel's keys when it has the focus itself and
-// hands the rest to the command bar.
-func (p *researchPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		prompt := ""
-		if p.prompt != nil {
-			prompt = p.prompt()
-		}
-		if !p.routeKey(ev, prompt) && p.toPrompt != nil {
-			p.toPrompt(ev)
-		}
-	})
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

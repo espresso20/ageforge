@@ -102,7 +102,7 @@ func (ss *styleSet) get(name string) mapstyle.Style {
 
 // mapPanel is the Map overlay primitive.
 type mapPanel struct {
-	*tview.Box
+	barPanel
 	mv     *mapViews
 	styles styleSet
 	set    mapSettings
@@ -121,14 +121,9 @@ type mapPanel struct {
 	hintShown func()
 	// stage puts a command in the prompt, unrun, for the player's Enter.
 	stage func(cmd string)
-	// prompt reads the command bar ("" when it is empty).
-	prompt func() string
 	// zoomed is told the new level when a key changed a style's zoom, to
 	// save it in the map settings.
 	zoomed func(level string)
-	// toPrompt hands a key the map does not take to the command bar, and
-	// the keyboard with it, when the panel itself has the focus.
-	toPrompt func(ev *tcell.EventKey)
 	// spotted is told when the cursor is on the rare visitor, once a
 	// visit; onVisitor is whether it was there at the last look.
 	spotted   func(kind string)
@@ -136,7 +131,8 @@ type mapPanel struct {
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
-	p := &mapPanel{Box: tview.NewBox(), mv: mv, styles: styleSet{reg: mv.reg}, now: time.Now}
+	p := &mapPanel{mv: mv, styles: styleSet{reg: mv.reg}, now: time.Now}
+	p.barPanel = newBarPanel(p.routeKey)
 	p.start = p.now()
 	p.set = defaultMapSettings(mv.reg)
 	return p
@@ -161,12 +157,7 @@ func (p *mapPanel) open(state game.GameState) tview.Primitive {
 		p.set.HintShown = true
 	}
 	p.update(state)
-	// The panel leaves the command bar's rows to the dashboard underneath
-	// (a Flex does not clear the cells it leaves empty), so the prompt stays
-	// in sight, and in use, while the map is open.
-	return tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(p, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+	return overBar(p)
 }
 
 // update is the overlay's refresh (every UI tick while open).
@@ -295,21 +286,6 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 			}
 		}
 	}
-}
-
-// InputHandler is for when the panel itself has the focus (the command bar
-// normally keeps it): the map's own keys work, and anything else goes to the
-// command bar, which takes the keyboard back.
-func (p *mapPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		prompt := ""
-		if p.prompt != nil {
-			prompt = p.prompt()
-		}
-		if !p.routeKey(ev, prompt) && p.toPrompt != nil {
-			p.toPrompt(ev)
-		}
-	})
 }
 
 // routeKey decides who takes a key while the panel is open, given the

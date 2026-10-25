@@ -25,7 +25,7 @@ import (
 const advFlashFor = 8 * time.Second
 
 type advancePanel struct {
-	*tview.Box
+	barPanel
 	engine *game.GameEngine
 	view   game.AdvanceView
 	ui     advanceUI
@@ -34,16 +34,14 @@ type advancePanel struct {
 
 	// settings reads the glyph tier.
 	settings func() mapSettings
-	// prompt reads the command bar ("" when it is empty).
-	prompt func() string
-	// toPrompt hands a key the panel does not take to the command bar.
-	toPrompt func(ev *tcell.EventKey)
 
 	now func() time.Time
 }
 
 func newAdvancePanel() *advancePanel {
-	return &advancePanel{Box: tview.NewBox(), now: time.Now}
+	p := &advancePanel{now: time.Now}
+	p.barPanel = newBarPanel(p.routeKey)
+	return p
 }
 
 // advancePanelName is the overlay's name, and the command that opens it.
@@ -66,9 +64,7 @@ func (d *Dashboard) registerAdvancePanel() {
 func (p *advancePanel) open(state game.GameState) tview.Primitive {
 	p.ui = advanceUI{}
 	p.update(state)
-	return tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(p, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+	return overBar(p)
 }
 
 // update takes a new snapshot. The calendar is held by the engine, so the year
@@ -106,20 +102,6 @@ func (p *advancePanel) Draw(scr tcell.Screen) {
 		grid.fold()
 	}
 	paintExpedition(scr, grid, x, y, newExpPalette())
-}
-
-// InputHandler takes the panel's keys when it has the focus itself and hands
-// the rest to the command bar.
-func (p *advancePanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		prompt := ""
-		if p.prompt != nil {
-			prompt = p.prompt()
-		}
-		if !p.routeKey(ev, prompt) && p.toPrompt != nil {
-			p.toPrompt(ev)
-		}
-	})
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it
