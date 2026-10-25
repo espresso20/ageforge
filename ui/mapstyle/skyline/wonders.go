@@ -38,12 +38,6 @@ func wonderRows(key string, scale float64, ref int) int {
 	return clampInt(h, wonderMinRows, max(wonderMinRows, ref-2))
 }
 
-// wonderSprite is the wonder key drawn for a ground scene of this scale and
-// room.
-func wonderSprite(key string, scale float64, ref int) *sprite {
-	return wonderArt(key, wonderRows(key, scale, ref))
-}
-
 // fitRows makes s exactly rows tall: a taller one loses its top, a shorter
 // one gains empty rows above.
 func fitRows(s *sprite, rows int) *sprite {

@@ -292,14 +292,6 @@ func glassHall(h int) *sprite {
 			s.pset(x, py, sGlass)
 		}
 	})
-	// the facade glazing under the vault
-	for x := cx - tw/2 + 1; x <= cx+tw/2-1; x++ {
-		for y := eaves + 1; y <= base; y++ {
-			if y > base-nave {
-				continue
-			}
-		}
-	}
 	// a pennant on the crown
 	s.put(cx, 0, '▸', sNeon1, sNone)
 	s.put(cx, 1, '│', sMetal, sNone)

@@ -246,17 +246,16 @@ var fileNotes = map[string]fileNote{
 // skipDecls are functions and variables whose strings are left out, by
 // "file:name", each with its reason.
 var skipDecls = map[string]string{
-	"config/tech_effects.go:Check":                whyDev,
-	"ui/commands.go:devCommands":                  whyDev,
-	"config/tech_tree.go:TechTreeProblems":        whyDev,
-	"config/badge_catalog.go:mastery":             "a note for developers: how a badge is proved or judged",
-	"rules/badges.go:BadgeProblems":               whyDev,
-	"mapmodel/commands.go:BuildingCommand":        whySyntax,
-	"mapmodel/commands.go:FactionCommand":         whySyntax,
-	"mapmodel/commands.go:IdleCommand":            whySyntax,
-	"mapmodel/commands.go:RouteCommand":           whySyntax,
-	"mapmodel/commands.go:WonderCommand":          whySyntax,
-	"ui/mapstyle/skyline/wonders.go:wonderSprite": whyArt,
+	"config/tech_effects.go:Check":         whyDev,
+	"ui/commands.go:devCommands":           whyDev,
+	"config/tech_tree.go:TechTreeProblems": whyDev,
+	"config/badge_catalog.go:mastery":      "a note for developers: how a badge is proved or judged",
+	"rules/badges.go:BadgeProblems":        whyDev,
+	"mapmodel/commands.go:BuildingCommand": whySyntax,
+	"mapmodel/commands.go:FactionCommand":  whySyntax,
+	"mapmodel/commands.go:IdleCommand":     whySyntax,
+	"mapmodel/commands.go:RouteCommand":    whySyntax,
+	"mapmodel/commands.go:WonderCommand":   whySyntax,
 }
 
 // newRow starts a row a special rule fills.

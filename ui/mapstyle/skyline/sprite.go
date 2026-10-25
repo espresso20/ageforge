@@ -1,9 +1,6 @@
 package skyline
 
-import (
-	"math"
-	"strings"
-)
+import "math"
 
 // sprite.go is the cell grammar every building, wonder and vehicle is drawn
 // in. A sprite cell names what it is made of (a slot: wall, roof, window,
@@ -303,75 +300,6 @@ func (s *sprite) crenels(x, w, y int, sl slot) {
 		}
 		s.put(x+i, y, ch, sl, sNone)
 	}
-}
-
-// maskSlots maps the letters of hand-drawn art masks to slots.
-var maskSlots = map[rune]slot{
-	'w': sWall, 'W': sWallLit, 's': sWallShade, 'd': sWallDark,
-	'r': sRoof, 'R': sRoofShade, 't': sTrim, 'l': sWin,
-	'm': sMetal, 'M': sMetalDark, 'g': sGlass, 'G': sGlassHi,
-	'n': sNeon1, 'N': sNeon2, 'v': sNeon3, 'o': sGlow, 'b': sBeacon,
-	'f': sLeaf, 'F': sLeafDark, 'k': sTrunk, 'c': sField1, 'C': sField2,
-	'x': sRock, 'X': sRockDark, 'i': sFire, 'K': sInk, 'a': sWater, 'S': sSmoke,
-}
-
-// art builds a sprite from drawn lines, a foreground mask and an optional
-// background mask. A space is transparent; '*' marks a smoke mouth, '+' a
-// beacon, '^' a flame.
-func art(lines, fgMask, bgMask string) *sprite {
-	al, fl, bl := splitArt(lines), splitArt(fgMask), splitArt(bgMask)
-	w := 0
-	for _, l := range al {
-		if n := len([]rune(l)); n > w {
-			w = n
-		}
-	}
-	s := newSprite(w, len(al))
-	for y, l := range al {
-		fr, br := runesAt(fl, y), runesAt(bl, y)
-		for x, ch := range []rune(l) {
-			switch ch {
-			case ' ':
-				continue
-			case '*':
-				s.smoke = append(s.smoke, pt{x, y})
-				continue
-			case '+':
-				s.beacons = append(s.beacons, pt{x, y})
-				continue
-			case '^':
-				s.flame = append(s.flame, pt{x, y})
-				continue
-			}
-			fg, bg := sWall, sNone
-			if x < len(fr) {
-				if v, ok := maskSlots[fr[x]]; ok {
-					fg = v
-				}
-			}
-			if x < len(br) {
-				if v, ok := maskSlots[br[x]]; ok {
-					bg = v
-				}
-			}
-			s.put(x, y, ch, fg, bg)
-		}
-	}
-	return s
-}
-
-func splitArt(s string) []string {
-	if s == "" {
-		return nil
-	}
-	return strings.Split(strings.Trim(s, "\n"), "\n")
-}
-
-func runesAt(ls []string, y int) []rune {
-	if y < len(ls) {
-		return []rune(ls[y])
-	}
-	return nil
 }
 
 var mirrorRunes = map[rune]rune{'▌': '▐', '▐': '▌', '/': '\\', '\\': '/', '╱': '╲', '╲': '╱', '(': ')', ')': '(',

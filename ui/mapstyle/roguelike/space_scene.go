@@ -162,7 +162,6 @@ type skyScene struct {
 	targets []mapmodel.Pt
 	labels  []skyLabel
 	movers  []skyMover
-	units   int // units placed
 	// unitAt maps a building key to its first unit's cell (inspect, labels)
 	anchor map[string]mapmodel.Pt
 	// the mandala (Transcendent): the eras' rings, the crown, the layout
@@ -245,8 +244,6 @@ func newSkyBase(m *mapmodel.Model, sky mapmodel.SkyScene) *skyBase {
 		b.layGalaxy()
 	case mapmodel.SkyQuantum:
 		b.layQuantum()
-	case mapmodel.SkyMandala:
-		b.layMandala()
 	}
 	return b
 }
@@ -347,7 +344,6 @@ func (s *skyScene) placeUnits() {
 					s.anchor[tt.Key] = p
 				}
 			}
-			s.units++
 		}
 	}
 }
@@ -494,23 +490,6 @@ func sq(x float64) float64 { return x * x }
 // inEllipse reports whether a cell centre lies inside the ellipse.
 func inEllipse(x, y int, cx, cy, rx, ry float64) bool {
 	return sq((float64(x)-cx)/rx)+sq((float64(y)-cy)/ry) < 1
-}
-
-// ringCells is an ellipse's outline as the one-cell, 4-connected boundary
-// of its inside (what box drawing needs to draw it unbroken), clockwise
-// from the top.
-func ringCells(cx, cy, rx, ry float64) []mapmodel.Pt {
-	inside := func(x, y int) bool { return inEllipse(x, y, cx, cy, rx, ry) }
-	var out []mapmodel.Pt
-	for y := int(cy-ry) - 2; y <= int(cy+ry)+2; y++ {
-		for x := int(cx-rx) - 2; x <= int(cx+rx)+2; x++ {
-			if onRing(x, y, inside) {
-				out = append(out, pt(x, y))
-			}
-		}
-	}
-	sortClockwise(out, cx, cy)
-	return out
 }
 
 // sortClockwise orders points by their angle round (cx, cy), clockwise from

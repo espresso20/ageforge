@@ -58,11 +58,6 @@ func (c *Canvas) isWide(r rune) bool {
 	return w
 }
 
-// Sym writes a model symbol in the canvas's tier.
-func (c *Canvas) Sym(x, y int, s mapmodel.Sym, st tcell.Style) {
-	c.Put(x, y, mapmodel.R(s, c.Tier), st)
-}
-
 // Text writes s from (x, y), at most max cells (max <= 0: to the edge), and
 // returns the column after it.
 func (c *Canvas) Text(x, y, max int, s string, st tcell.Style) int {

@@ -264,20 +264,6 @@ func (b *skyBase) starbase() {
 	}
 }
 
-// strokeOf is the line stroke for a direction t turns clockwise from up.
-func strokeOf(t float64) rune {
-	t -= math.Floor(t)
-	switch k := int(math.Round(t * 8)); k % 4 {
-	case 0:
-		return '│'
-	case 1:
-		return '╱'
-	case 2:
-		return '─'
-	}
-	return '╲'
-}
-
 // pulsar draws industry's own star in the corner, a pulsar with its beams,
 // and reserves its works on three orbits (mines, metal, organic) and the
 // energy taps along a conduit to the base.
