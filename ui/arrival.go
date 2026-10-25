@@ -102,10 +102,10 @@ type arrival struct {
 	// arrivalSettle). keys counts every key the screen was given, heeded or
 	// not, and auto records that the celebration moved on by itself: the
 	// freeze harness reads both.
-	quiet   time.Time
-	keys    int
-	auto    bool
-	stop    chan struct{}
+	quiet time.Time
+	keys  int
+	auto  bool
+	redrawClock
 	cancels []func()
 	// after runs fn on the event loop once d has passed, and returns how to
 	// call it off (tests run it by hand).
@@ -367,18 +367,25 @@ func (a *arrival) rebase() {
 	}
 }
 
+// redrawClock is what the arrival and the ending film redraw on while they
+// move: a goroutine that asks for a draw at the map's rate.
+type redrawClock struct {
+	// stop ends the goroutine, which runs while it is set.
+	stop chan struct{}
+}
+
 // startClock starts the redraw clock, at the map's rate. Draw calls it.
 // The clock waits for each frame to be drawn before it counts toward the
 // next, and always leaves a breath between them: the script runs on the
 // time, not on the frames drawn, so a slow terminal skips frames and still
 // answers its keys.
-func (a *arrival) startClock() {
-	if a.stop != nil || a.om == nil || a.om.app == nil {
+func (c *redrawClock) startClock(om *OverlayManager) {
+	if c.stop != nil || om == nil || om.app == nil {
 		return
 	}
 	stop := make(chan struct{})
-	a.stop = stop
-	app := a.om.app
+	c.stop = stop
+	app := om.app
 	go func() {
 		t := time.NewTimer(mapAnimStep)
 		defer t.Stop()
@@ -395,10 +402,10 @@ func (a *arrival) startClock() {
 	}()
 }
 
-func (a *arrival) stopClock() {
-	if a.stop != nil {
-		close(a.stop)
-		a.stop = nil
+func (c *redrawClock) stopClock() {
+	if c.stop != nil {
+		close(c.stop)
+		c.stop = nil
 	}
 }
 
@@ -448,7 +455,7 @@ func (a *arrival) Draw(scr tcell.Screen) {
 		}
 	}
 	if a.view.motion {
-		a.startClock()
+		a.startClock(a.om)
 	} else {
 		a.stopClock()
 	}
