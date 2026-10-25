@@ -27,7 +27,7 @@ import (
 //     plan log, in the order it made them (Config.DumpLegacy,
 //     -dump-legacy). Regenerate it when content moves:
 //
-//     go run ./cmd/smoke -scenario veteran -tier full -seeds 1 -dump-legacy smoke/testdata/veteran_kit.json
+//     go run -tags smokebot ./cmd/smoke -scenario veteran -tier full -seeds 1 -dump-legacy smoke/testdata/veteran_kit.json
 //
 //   - Depth pays (DepthRow): points per day of a first run that prestiges
 //     from the Medieval Age, the Modern Age, and the Cyberpunk Age (a run

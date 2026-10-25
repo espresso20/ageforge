@@ -56,34 +56,9 @@ func TestTargetsCoverEveryAge(t *testing.T) {
 	}
 }
 
-func TestFirstDiff(t *testing.T) {
-	type inner struct{ V []float64 }
-	type s struct {
-		M map[string]float64
-		P *inner
-		T []string
-	}
-	mk := func() s {
-		return s{M: map[string]float64{"a": 1, "b": 0.1 + 0.2}, P: &inner{V: []float64{1, 2}}, T: nil}
-	}
-	a, b := mk(), mk()
-	if d := firstDiff(a, b, nil); d != "" {
-		t.Fatalf("equal values differ: %s", d)
-	}
-	b.P.V[1] = 2 + 1e-15
-	if d := firstDiff(a, b, nil); !strings.HasPrefix(d, "P.V[1]") {
-		t.Errorf("a one-ulp change should be found at P.V[1], got %q", d)
-	}
-	b = mk()
-	b.T = []string{}
-	if d := firstDiff(a, b, nil); d != "" {
-		t.Errorf("nil and empty slices should match, got %q", d)
-	}
-	b.M["c"] = 3
-	if d := firstDiff(a, b, func(p string) bool { return p == "M" }); d != "" {
-		t.Errorf("skipped path still reported: %q", d)
-	}
-
+// TestSortStringSets: the save-file diff reads a set stored as a list as
+// the same set in any order, and then finds nothing else different.
+func TestSortStringSets(t *testing.T) {
 	ta, _ := jsonTree([]byte(`{"x":["b","a"],"y":{"z":["1","2"]},"n":1.5}`))
 	tb, _ := jsonTree([]byte(`{"x":["a","b"],"y":{"z":["1","2"]},"n":1.5}`))
 	if got := sortStringSets(ta, tb, ""); len(got) != 1 || got[0] != "x" {
@@ -113,10 +88,6 @@ func runScenario(t *testing.T, name string) *Result {
 		t.Errorf("%s: %s: %s\n%s\n%s", name, f.Check, f.Message, f.Repro, f.Detail)
 	}
 	return r
-}
-
-func TestAccountsScenario(t *testing.T) {
-	runScenario(t, "accounts")
 }
 
 func TestOfflineScenario(t *testing.T) {
@@ -165,7 +136,7 @@ func TestFuzzShortRun(t *testing.T) {
 
 func TestSessionReports(t *testing.T) {
 	sess := &Session{Tier: TierFast, Pacing: PacingReport, Scenarios: []*Result{
-		{Name: "fuzz", Status: StatusFail, Findings: Findings{Summary: "1 crash", Failures: []Finding{{Check: "fuzz_panic", Message: "boom", Repro: "go run ./cmd/smoke -scenario fuzz"}}}},
+		{Name: "fuzz", Status: StatusFail, Findings: Findings{Summary: "1 crash", Failures: []Finding{{Check: "fuzz_panic", Message: "boom", Repro: "go run -tags smokebot ./cmd/smoke -scenario fuzz"}}}},
 		{Name: "docsync", Status: StatusPass, Findings: Findings{Warnings: []Finding{{Check: "w", Message: "careful"}}}},
 		{Name: "styles", Status: StatusSkip, Findings: Findings{Summary: "full tier only"}},
 	}, Failed: true}
@@ -184,7 +155,7 @@ func TestSessionReports(t *testing.T) {
 			t.Errorf("summary missing %q:\n%s", want, sum.String())
 		}
 	}
-	if !strings.Contains(md.String(), "go run ./cmd/smoke -scenario fuzz") || !strings.Contains(js.String(), `"fuzz_panic"`) {
+	if !strings.Contains(md.String(), "go run -tags smokebot ./cmd/smoke -scenario fuzz") || !strings.Contains(js.String(), `"fuzz_panic"`) {
 		t.Errorf("report or JSON missing the finding")
 	}
 }

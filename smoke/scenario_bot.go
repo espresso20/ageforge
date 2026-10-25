@@ -95,7 +95,7 @@ func foldBotSet(e *Env, res *Result, name, scenario string, cfg Config, started 
 
 // reproCmd is the command line that replays one seed of a bot scenario.
 func reproCmd(tier, scenario string, cfg Config, seed int64) string {
-	parts := []string{"go run ./cmd/smoke"}
+	parts := []string{"go run -tags smokebot ./cmd/smoke"}
 	if tier != "" && tier != TierFast {
 		parts = append(parts, "-tier "+tier)
 	}

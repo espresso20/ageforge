@@ -8,7 +8,8 @@ import (
 )
 
 // botTestsEnv is the one switch for the unit tests in this package that need
-// the test bot to play well under the economy's current numbers. The owner
+// the test bot to play well under the economy's current numbers. (The bot's
+// code, and so this file, builds only with -tags smokebot.) The owner
 // switched the bot off on 2026-10-10 ("until i say turn it back on") because
 // its play was being used to choose numbers; the same note, and the way to
 // switch the bot back on in CI, is in .github/workflows/go.yml. To turn these

@@ -134,11 +134,6 @@ type Result struct {
 	Data        interface{} `json:"data,omitempty"`
 }
 
-func (r *Findings) warn(check, format string, args ...interface{}) *Finding {
-	r.Warnings = append(r.Warnings, Finding{Check: check, Message: fmt.Sprintf(format, args...)})
-	return &r.Warnings[len(r.Warnings)-1]
-}
-
 // Scenario is one named, individually runnable check.
 type Scenario struct {
 	Name string
@@ -164,7 +159,7 @@ func Scenarios() []Scenario {
 		{Name: "saveload", Desc: "save at a checkpoint per age, load into a fresh engine, continue, and compare against the uninterrupted run", Run: runSaveload},
 		{Name: "offline", Desc: "close the game for 1h, 8h and 30h through the offline-gains path: positive, sane, capped at 24h", Run: runOffline},
 		{Name: "fuzz", Desc: "random, malformed and hostile commands through the real command handler: no panics, invariants hold, ticks go on", Run: runFuzz},
-		{Name: "accounts", Desc: "create, switch, export, import, back up, recover and wipe accounts in a temp data dir", Run: runAccounts},
+		{Name: "accounts", Desc: "create, switch, export, import, back up, recover and wipe accounts in a temp data dir", Run: func(e *Env, res *Result) { runAccounts(e.SeedBase, &res.Findings) }},
 		{Name: "perf", Desc: "late-game tick and GetState latency against budgets, and memory growth over a long run", Run: runPerf},
 		{Name: "ui", Desc: "UI sweep under the themes, plus the dashboard and every overlay at 80x24 and 100x30", Run: runUI},
 		{Name: "styles", Desc: "the bot under different play styles: greedy, idle check-ins, harbinger buyer, succumber, cosmic legacy hunter, garrison keeper (report-only), early taste (prestige at the Medieval Age)", FullOnly: true, Run: runStyles},

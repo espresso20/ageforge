@@ -36,6 +36,11 @@ func (r *Findings) fail(check, format string, args ...interface{}) *Finding {
 	return &r.Failures[len(r.Failures)-1]
 }
 
+func (r *Findings) warn(check, format string, args ...interface{}) *Finding {
+	r.Warnings = append(r.Warnings, Finding{Check: check, Message: fmt.Sprintf(format, args...)})
+	return &r.Warnings[len(r.Warnings)-1]
+}
+
 func (r *Findings) section(title, format string, args ...interface{}) {
 	r.Sections = append(r.Sections, Section{Title: title, Body: fmt.Sprintf(format, args...)})
 }

@@ -65,7 +65,7 @@ func hookedEngine(e *Env, seed int64) *game.GameEngine {
 
 func prestigeHooked(e *Env, res *Result) (steps []string) {
 	seed := e.SeedBase
-	repro := fmt.Sprintf("go run ./cmd/smoke -scenario prestige -seed-base %d -v", seed)
+	repro := fmt.Sprintf("go run -tags smokebot ./cmd/smoke -scenario prestige -seed-base %d -v", seed)
 	check := func(name string, ok bool, format string, args ...interface{}) bool {
 		if ok {
 			steps = append(steps, fmt.Sprintf("| %s | ok |", name))

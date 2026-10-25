@@ -1,5 +1,3 @@
-//go:build smokebot
-
 package smoke
 
 import (
@@ -24,7 +22,7 @@ import (
 // that bad input (tampered exports, garbage codes) is refused cleanly.
 
 type acctRun struct {
-	res   *Result
+	res   *Findings
 	steps []string
 }
 
@@ -105,7 +103,7 @@ func contains(xs []string, s string) bool {
 	return false
 }
 
-func runAccounts(e *Env, res *Result) {
+func runAccounts(seed int64, res *Findings) {
 	a := &acctRun{res: res}
 	themeKey := theme.All()[len(theme.All())-1].Key
 	var alpha, beta *game.Account
@@ -121,7 +119,7 @@ func runAccounts(e *Env, res *Result) {
 		}
 		ge := game.NewGameEngine()
 		ge.SetAccount(alpha)
-		ge.SeedRNG(e.SeedBase)
+		ge.SeedRNG(seed)
 		ge.StepTicks(50)
 		return ge.SaveGame("alpha-run")
 	})

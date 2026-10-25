@@ -1,5 +1,3 @@
-//go:build smokebot
-
 package smoke
 
 import (
