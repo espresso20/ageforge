@@ -188,6 +188,23 @@ func pool(prefix string, eras []era, ss []skel) []tmpl {
 	return out
 }
 
+// eraPools builds the eight pools most Moments have, in a fixed order: one open
+// to every age, the grounded and late spans, then one pool per era. Each pool is
+// named prefix plus its suffix ("exp_fail_late") and gated by the era shorthand
+// of the same name. cmd/words reads the eight sentence variables off a call to
+// this function by their position, so keep the order in step with it.
+func eraPools(prefix string, ungated, grounded, late, ancient, feudal, industrial, digital, cosmic []skel) []tmpl {
+	out := pool(prefix+"_any", erasAny, ungated)
+	out = append(out, pool(prefix+"_grounded", erasGrounded, grounded)...)
+	out = append(out, pool(prefix+"_late", erasLate, late)...)
+	out = append(out, pool(prefix+"_ancient", erasAncient, ancient)...)
+	out = append(out, pool(prefix+"_feudal", erasFeudal, feudal)...)
+	out = append(out, pool(prefix+"_industrial", erasIndustrial, industrial)...)
+	out = append(out, pool(prefix+"_digital", erasDigital, digital)...)
+	out = append(out, pool(prefix+"_cosmic", erasCosmic, cosmic)...)
+	return out
+}
+
 // anchorOf returns a template's SIGNATURE: the leading run of authored text that
 // is guaranteed to reach the output verbatim.
 //

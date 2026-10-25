@@ -19,27 +19,15 @@ package flavor
 // back. None of them describes the damage.
 
 func harbVindicatedTemplates() []tmpl {
-	out := pool("harb_vindicated_any", erasAny, harbVindicatedAny)
-	out = append(out, pool("harb_vindicated_grounded", erasGrounded, harbVindicatedGrounded)...)
-	out = append(out, pool("harb_vindicated_late", erasLate, harbVindicatedLate)...)
-	out = append(out, pool("harb_vindicated_ancient", erasAncient, harbVindicatedAncient)...)
-	out = append(out, pool("harb_vindicated_feudal", erasFeudal, harbVindicatedFeudal)...)
-	out = append(out, pool("harb_vindicated_industrial", erasIndustrial, harbVindicatedIndustrial)...)
-	out = append(out, pool("harb_vindicated_digital", erasDigital, harbVindicatedDigital)...)
-	out = append(out, pool("harb_vindicated_cosmic", erasCosmic, harbVindicatedCosmic)...)
-	return out
+	return eraPools("harb_vindicated",
+		harbVindicatedAny, harbVindicatedGrounded, harbVindicatedLate, harbVindicatedAncient,
+		harbVindicatedFeudal, harbVindicatedIndustrial, harbVindicatedDigital, harbVindicatedCosmic)
 }
 
 func harbSparedTemplates() []tmpl {
-	out := pool("harb_spared_any", erasAny, harbSparedAny)
-	out = append(out, pool("harb_spared_grounded", erasGrounded, harbSparedGrounded)...)
-	out = append(out, pool("harb_spared_late", erasLate, harbSparedLate)...)
-	out = append(out, pool("harb_spared_ancient", erasAncient, harbSparedAncient)...)
-	out = append(out, pool("harb_spared_feudal", erasFeudal, harbSparedFeudal)...)
-	out = append(out, pool("harb_spared_industrial", erasIndustrial, harbSparedIndustrial)...)
-	out = append(out, pool("harb_spared_digital", erasDigital, harbSparedDigital)...)
-	out = append(out, pool("harb_spared_cosmic", erasCosmic, harbSparedCosmic)...)
-	return out
+	return eraPools("harb_spared",
+		harbSparedAny, harbSparedGrounded, harbSparedLate, harbSparedAncient,
+		harbSparedFeudal, harbSparedIndustrial, harbSparedDigital, harbSparedCosmic)
 }
 
 func harbDiscreditedTemplates() []tmpl {

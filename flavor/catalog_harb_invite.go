@@ -1,5 +1,7 @@
 package flavor
 
+import "slices"
+
 // The third answer to a harbinger: invite it. The player chooses doom, and the
 // catastrophe is certain to come when it was fated to, usually because they
 // want to Succumb for the legacy bonuses.
@@ -23,28 +25,18 @@ const KindFalseProphet = "false_prophet"
 var tFalse = []string{KindFalseProphet}
 
 func harbInvitedTemplates() []tmpl {
-	out := pool("harb_invited_any", erasAny, harbInvitedAny)
-	out = append(out, pool("harb_invited_grounded", erasGrounded, harbInvitedGrounded)...)
-	out = append(out, pool("harb_invited_late", erasLate, harbInvitedLate)...)
-	out = append(out, pool("harb_invited_ancient", erasAncient, harbInvitedAncient)...)
-	out = append(out, pool("harb_invited_feudal", erasFeudal, harbInvitedFeudal)...)
-	out = append(out, pool("harb_invited_industrial", erasIndustrial, harbInvitedIndustrial)...)
-	out = append(out, pool("harb_invited_digital", erasDigital, harbInvitedDigital)...)
-	out = append(out, pool("harb_invited_cosmic", erasCosmic, harbInvitedCosmic)...)
-	out = append(out, agePools("harb_invited_age", harbInvitedAges)...)
-	return out
+	return slices.Concat(
+		eraPools("harb_invited",
+			harbInvitedAny, harbInvitedGrounded, harbInvitedLate, harbInvitedAncient,
+			harbInvitedFeudal, harbInvitedIndustrial, harbInvitedDigital, harbInvitedCosmic),
+		agePools("harb_invited_age", harbInvitedAges),
+	)
 }
 
 func harbFulfilledTemplates() []tmpl {
-	out := pool("harb_fulfilled_any", erasAny, harbFulfilledAny)
-	out = append(out, pool("harb_fulfilled_grounded", erasGrounded, harbFulfilledGrounded)...)
-	out = append(out, pool("harb_fulfilled_late", erasLate, harbFulfilledLate)...)
-	out = append(out, pool("harb_fulfilled_ancient", erasAncient, harbFulfilledAncient)...)
-	out = append(out, pool("harb_fulfilled_feudal", erasFeudal, harbFulfilledFeudal)...)
-	out = append(out, pool("harb_fulfilled_industrial", erasIndustrial, harbFulfilledIndustrial)...)
-	out = append(out, pool("harb_fulfilled_digital", erasDigital, harbFulfilledDigital)...)
-	out = append(out, pool("harb_fulfilled_cosmic", erasCosmic, harbFulfilledCosmic)...)
-	return out
+	return eraPools("harb_fulfilled",
+		harbFulfilledAny, harbFulfilledGrounded, harbFulfilledLate, harbFulfilledAncient,
+		harbFulfilledFeudal, harbFulfilledIndustrial, harbFulfilledDigital, harbFulfilledCosmic)
 }
 
 // --- Invited ------------------------------------------------------------------
