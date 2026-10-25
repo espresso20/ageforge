@@ -3,7 +3,7 @@ package config
 // buildingsLineageGeologicalExtraction returns all production, housing, research, and military buildings
 // for the 13 lineage chains introduced in Phase 10 of the economy redesign.
 // Storage buildings and wonders remain in baseBuildingsRaw().
-// All fields are set inline; no separate buildingMeta() entries needed for these buildings.
+// A row sets its own fields; the ones every row shares come from the lineageSpec at the foot.
 func buildingsLineageGeologicalExtraction() []BuildingDef {
 	b := []BuildingDef{}
 
