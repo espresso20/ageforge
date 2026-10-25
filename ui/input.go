@@ -2007,8 +2007,8 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 
 // cmdBlackMarket handles the `blackmarket` / `trade black` command. Bare form
 // shows the status panel (cost, odds, cooldown). `blackmarket <resource>` spends
-// a lump of culture on a high-risk/high-reward deal that may pay out a large
-// amount of the chosen resource — or vanish with the culture.
+// a lump of culture on a deal that pays the same worth in the chosen resource
+// five times in six, and the sixth time vanishes with the culture.
 func cmdBlackMarket(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return cmdBlackMarketStatus(engine)
@@ -2031,9 +2031,9 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, "  "+theme.Paint(theme.RoleDim, vibe.Line("ui.input.cmdBlackMarketStatus.02", "Smuggling networks open in ")+ageRef(engine.GetState(), "colonial_age")+"."))
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
-	lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.03", "  Spend culture on a smuggling run: a gamble on a big haul of one resource."))
+	lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.09", "  Spend culture on a smuggling run: it pays back the minutes of income the culture cost you, as minutes of your income of the resource you pick."))
 	lines = append(lines, vibe.Sprintf("ui.input.cmdBlackMarketStatus.04", "  Cost: [cyan]%s[-] per run  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
-	lines = append(lines, vibe.Sprintf("ui.input.cmdBlackMarketStatus.05", "  Odds: [green]%.0f%%[-] chance of a haul worth [green]%.1fx[-] the culture; otherwise the culture is lost.", st.WinChance*100, st.WinMult))
+	lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.10", "  Odds: five in six it goes through; one in six the smugglers vanish with the culture and pay nothing."))
 	if st.Ready {
 		if st.Culture >= st.Cost {
 			lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.06", "  Status: [green]ready[-]. Type [cyan]blackmarket <resource>[-] (for example, blackmarket gold)."))

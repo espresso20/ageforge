@@ -1,6 +1,8 @@
 package game
 
 import (
+	"sort"
+
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 )
@@ -50,4 +52,58 @@ func cultureStakeOf(set *rules.Set, age string, income, share, ceiling float64) 
 // of the town. Pure.
 func CulturePrices(set *rules.Set, age string, income float64) (festival, blackMarket float64) {
 	return festivalPriceOf(set, age, income), blackMarketPriceOf(set, age, income)
+}
+
+// blackMarketDeals is the resources the smugglers deal in: gold and nine
+// others, and no others.
+var blackMarketDeals = map[string]bool{
+	"gold": true, "iron": true, "coal": true, "steel": true, "oil": true, "electricity": true,
+	"data": true, "crypto": true, "dark_matter": true, "quantum_flux": true,
+}
+
+// A deal that goes through on the Black Market pays the same worth whichever
+// resource it is taken in: the stake's minutes of culture income, times
+// blackMarketWinMult (1), as minutes of the town's income of the resource. It
+// was the stake as gold at a fixed rate for each resource, which paid from a
+// few minutes of income to tens of thousands depending on the item (gold
+// against coal), for the same stake. Each income is held to the band around the
+// age's typical income (config.SizedIncome), as an event's gain is, so a town
+// that makes none of the resource is still paid and one that makes a great
+// deal is not paid without bound; the minutes are the stake over the culture
+// income so held, so a town paying the price in its own income gets exactly
+// blackMarketWinMult of them.
+
+// blackMarketPayoutOf is the payout for a deal that goes through on resource, with a stake of
+// stake culture, for a town whose culture income and income of resource are
+// culture and have (each with the age's typical income, at the town's speed),
+// held to its band by set. 0 for a resource the smugglers do not deal in or
+// the age makes none of. Pure.
+func blackMarketPayoutOf(set *rules.Set, stake float64, culture config.EventTown, resource string, have config.EventTown) float64 {
+	if !blackMarketDeals[resource] || culture.Typical <= 0 || have.Typical <= 0 {
+		return 0
+	}
+	paid := set.SizedIncome(culture.Income, culture.Typical)
+	made := set.SizedIncome(have.Income, have.Typical)
+	return float64(float64(blackMarketWinMult*stake)*made) / paid
+}
+
+// BlackMarketPayout is what a win on resource pays in age, for a town making
+// cultureIncome of culture and income of resource per tick that paid stake
+// culture: the engine's own figure, for the checks that read it against
+// another measure of the town. Pure.
+func BlackMarketPayout(set *rules.Set, age, resource string, stake, cultureIncome, income float64) float64 {
+	return blackMarketPayoutOf(set, stake,
+		config.EventTown{Income: cultureIncome, Typical: set.TypicalIncome("culture", age)},
+		resource, config.EventTown{Income: income, Typical: set.TypicalIncome(resource, age)})
+}
+
+// BlackMarketResources lists the resources the smugglers deal in, sorted: the
+// ones a win can be taken in (if the age makes any of them).
+func BlackMarketResources() []string {
+	out := make([]string, 0, len(blackMarketDeals))
+	for r := range blackMarketDeals {
+		out = append(out, r)
+	}
+	sort.Strings(out)
+	return out
 }
