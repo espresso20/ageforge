@@ -454,7 +454,7 @@ func TestAdvancePanelFoldsToASCII(t *testing.T) {
 	}
 	_, _, p := advanceFixture(t, "bronze_age")
 	p.settings = func() mapSettings { return mapSettings{Tier: mapmodel.TierASCII} }
-	for _, c := range drawPanel(t, p, 100, 27) {
+	for _, c := range drawPanel(t, p, 100, 27).Cells() {
 		for _, r := range c.Runes {
 			if r > 0x7e {
 				t.Fatalf("the drawn panel keeps %q on the plain glyph tier", r)
@@ -463,19 +463,15 @@ func TestAdvancePanelFoldsToASCII(t *testing.T) {
 	}
 }
 
-// drawPanel paints the panel on a simulation screen and returns its cells.
-func drawPanel(t *testing.T, p *advancePanel, w, h int) []tcell.SimCell {
+// drawPanel paints the panel on a simulation screen and returns what it drew.
+func drawPanel(t *testing.T, p *advancePanel, w, h int) frame {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	t.Cleanup(sim.Fini)
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	screen := theme.WrapScreen(sim)
 	p.SetRect(0, 0, w, h)
 	p.Draw(screen)
 	screen.Show()
-	cells, _, _ := sim.GetContents()
-	return append([]tcell.SimCell(nil), cells...)
+	return simCells(sim)
 }
 
 // Every theme, light ones included, reads: each letter and figure the panel
@@ -504,14 +500,7 @@ func TestAdvancePanelReadsInEveryTheme(t *testing.T) {
 		must(t, theme.SetActive(key))
 		_, _, p := advanceFixture(t, "bronze_age")
 		for _, size := range [][2]int{{80, 21}, {100, 27}, {160, 42}} {
-			cells := drawPanel(t, p, size[0], size[1])
-			var text strings.Builder
-			for _, c := range cells {
-				if len(c.Runes) > 0 {
-					text.WriteRune(c.Runes[0])
-				}
-			}
-			wantAll(t, fmt.Sprintf("theme %s at %dx%d: the screen", key, size[0], size[1]), text.String(), "KNOWLEDGE", "MONUMENT", "The march of ages")
+			wantAll(t, fmt.Sprintf("theme %s at %dx%d: the screen", key, size[0], size[1]), drawPanel(t, p, size[0], size[1]).Text(), "KNOWLEDGE", "MONUMENT", "The march of ages")
 		}
 	}
 }
@@ -522,7 +511,7 @@ func TestAdvanceFlashGivesWay(t *testing.T) {
 	clock := time.Now()
 	p.now = func() time.Time { return clock }
 	p.handleKey(tcell.KeyEnter)
-	if !strings.Contains(strings.Join(strings.Fields(cellsText(drawPanel(t, p, 100, 27))), " "), "Not yet: ") {
+	if !strings.Contains(strings.Join(strings.Fields(drawPanel(t, p, 100, 27).Text()), " "), "Not yet: ") {
 		t.Fatal("the flash is not on screen")
 	}
 	clock = clock.Add(advFlashFor + time.Second)
@@ -530,18 +519,6 @@ func TestAdvanceFlashGivesWay(t *testing.T) {
 	if p.ui.flash != "" {
 		t.Errorf("the flash %q outlived its time", p.ui.flash)
 	}
-}
-
-func cellsText(cells []tcell.SimCell) string {
-	var b strings.Builder
-	for _, c := range cells {
-		if len(c.Runes) > 0 {
-			b.WriteRune(c.Runes[0])
-		} else {
-			b.WriteRune(' ')
-		}
-	}
-	return b.String()
 }
 
 // The Ledger's long bar says how to open the panel when it has room, and
