@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -158,7 +157,7 @@ func screenWith(t *testing.T, d *Dashboard, pages *tview.Pages, name, marker str
 	last := ""
 	for row := start; row < start+400; row++ {
 		tv.ScrollTo(row, 0)
-		screen := renderText(t, pages, w, h)
+		screen := drawPrimitive(t, pages, w, h).Text()
 		lines := strings.Split(screen, "\n")
 		for i, l := range lines {
 			if strings.Contains(l, marker) {
@@ -228,7 +227,7 @@ func TestLongPricesFitTheBuildPlan(t *testing.T) {
 				if !d.overlayMgr.Show("plan", eng.GetState()) {
 					t.Fatal("plan overlay not registered")
 				}
-				screen := renderText(t, pages, w, h)
+				screen := drawPrimitive(t, pages, w, h).Text()
 				if lost := partsNotWhole(strings.Split(screen, "\n"), parts); len(lost) > 0 {
 					t.Errorf("%s at %dx%d: the plan does not show %v whole on a row:\n%s", key, w, h, lost, screen)
 				}
@@ -277,28 +276,8 @@ func TestLongPricesFitTheWonderPanel(t *testing.T) {
 func tallRows(t *testing.T, tv *tview.TextView, lw int) []string {
 	t.Helper()
 	const tall = 2000
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(lw+2, tall)
-	tv.SetRect(0, 0, lw+2, tall)
 	tv.ScrollToBeginning()
-	tv.Draw(sim)
-	sim.Show()
-	cells, cw, ch := sim.GetContents()
-	var rows []string
-	for y := 1; y < ch-1; y++ {
-		var b strings.Builder
-		for x := 1; x < cw-1; x++ {
-			if rs := cells[y*cw+x].Runes; len(rs) > 0 {
-				b.WriteRune(rs[0])
-			} else {
-				b.WriteByte(' ')
-			}
-		}
-		rows = append(rows, strings.TrimRight(b.String(), " "))
-	}
-	return rows
+	return drawPrimitive(t, tv, lw+2, tall).Region(1, 1, lw, tall-2)
 }
 
 // TestLongPricesFitTheBuildList: `build` prints a line a building, price
