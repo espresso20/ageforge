@@ -58,6 +58,7 @@ All notable changes to AgeForge are documented here.
 - Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
 - **The top bar no longer shows the era badge.** The age name is enough; the next age is in the Next Age bar.
 - **What a tech does stands out.** The effect of a tech is shown in its own colour in the research screens.
+- **The test bot is parked.** Its code builds only with a build tag now, so everyday builds and tests skip it; the static checks still run on every change.
 
 ### Fixed
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.
