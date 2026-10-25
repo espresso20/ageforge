@@ -191,8 +191,10 @@ type GameEngine struct {
 	// their time: they completed on load (loadResearch).
 	loadedCompletions []string
 
-	// Dynamic tick speed. speedMultiplier is only ever above 1 through the dev
-	// console's /speed: players have no speed setting (see playerSpeedCap).
+	// Dynamic tick speed. Game speed is fixed so the calendar paces the game:
+	// there is no player speed setting and wonders raise no cap.
+	// speedMultiplier is only ever above 1 through the dev console's /speed,
+	// for the session: a load, prestige, Succumb or wipe puts it back to 1.
 	tickSpeedBonus  float64
 	speedMultiplier float64
 
@@ -965,24 +967,6 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	}
 }
 
-// playerSpeedCap is the most game speed a player runs at. Game speed is fixed
-// so the calendar paces the game: there is no player speed setting, and
-// wonders raise no cap. Only the dev console's /speed goes past it, for the
-// session: a load clamps the saved multiplier back (clampPlayerSpeed) and a
-// prestige, Succumb or wipe resets it.
-const playerSpeedCap = 1.0
-
-// clampPlayerSpeed limits a saved speed multiplier to what a player may run
-// at: 1x at least (a NaN counts as 1x), playerSpeedCap at most. A save from
-// before the speed setting was retired carries whatever the player had set,
-// up to 12x with every wonder built.
-func clampPlayerSpeed(mult float64) float64 {
-	if !(mult >= 1.0) {
-		return 1.0
-	}
-	return min(mult, playerSpeedCap)
-}
-
 // starvationDeathInterval is how many ticks pass between starvation deaths
 // while food sits at zero.
 const starvationDeathInterval = 5
@@ -1363,8 +1347,8 @@ func (ge *GameEngine) StartNewNamedGame(name string) error {
 
 // accountForRecordsLocked returns the account this run's badges and lifetime stats go to,
 // or nil when the run records nothing: accountless play, or a run that belongs to another
-// account (the game still in memory after an account switch). The dashboard's theme unlocks
-// follow the same rule through GameState.AccountRecords. Callers hold ge.mu.
+// account (the game still in memory after an account switch). GameState.AccountRecords
+// carries the same answer. Callers hold ge.mu.
 //
 // Nothing about the developer console is here. Dev mode, and a run a dev command has
 // changed, record like any other: if a badge's condition is met, the badge is earned.

@@ -53,11 +53,12 @@ type GameState struct {
 	// DevTouched is true once the developer console has changed this run (saved with
 	// the run; see GameEngine.markDevTouchedLocked).
 	DevTouched bool
-	// AccountRecords is true when this run records to the held account: badges,
-	// lifetime stats and theme unlocks. It is false for accountless play and for a run
-	// that belongs to another account (the game in memory after a switch). A run the
-	// developer console has changed records like any other. The dashboard grants
-	// milestone themes only while it is true.
+	// AccountRecords is true when this run records to the held account: badges (the
+	// themes they unlock come with them) and lifetime stats. It is false for accountless
+	// play and for a run that belongs to another account (the game in memory after a
+	// switch). A run the developer console has changed records like any other. The engine
+	// applies the same rule when it records (accountForRecordsLocked); the snapshot
+	// carries the answer for callers that ask.
 	AccountRecords bool
 	// Seed is this run's master RNG seed (see GameEngine.seed) — surfaced for
 	// reproducibility/debugging. Persisted via GameSave.Seed, not through this

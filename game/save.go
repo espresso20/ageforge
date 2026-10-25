@@ -1037,10 +1037,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// written), and before the offline catch-up, which may build a wonder.
 	treeGraced := ge.graceTreeLocked(&save)
 
-	// Restore the speed multiplier, clamped to the player cap: a save written
+	// The speed multiplier loads as 1x whatever the save carries: a save written
 	// while wonders raised a speed cap (or with the dev console's /speed on)
 	// would otherwise load, and run its offline catch-up below, at that speed.
-	ge.speedMultiplier = clampPlayerSpeed(save.SpeedMultiplier)
+	ge.speedMultiplier = 1.0
 
 	// Restore badge state (verified above)
 	ge.cheaterBadge = save.CheaterBadge
