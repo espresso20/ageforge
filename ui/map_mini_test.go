@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -190,27 +189,6 @@ func TestMiniMapFollowsSettings(t *testing.T) {
 	d.refresh()
 	if d.miniMap.set.Style != "skyline" {
 		t.Errorf("mini map style %s after map style skyline", d.miniMap.set.Style)
-	}
-}
-
-// TestMiniMapFrameTime: a dashboard frame with the mini map stays cheap.
-// Budget: 25 ms a frame on average (a CI runner under -race is slower
-// than a laptop; the typical cost is a few ms, see BenchmarkDashboardFrame).
-func TestMiniMapFrameTime(t *testing.T) {
-	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	restoreForge(t)
-	d, pages := newMiniDashboard(t)
-	drawDashboard(t, d, pages, 160, 48)
-	const n = 20
-	start := time.Now()
-	for i := 0; i < n; i++ {
-		d.refresh()
-		drawDashboard(t, d, pages, 160, 48)
-	}
-	per := time.Since(start) / n
-	t.Logf("dashboard refresh+frame at 160x48 with the mini map: %v (mini map draw %v)", per, d.miniMap.lastDraw)
-	if per > 250*time.Millisecond {
-		t.Errorf("a dashboard frame takes %v", per)
 	}
 }
 

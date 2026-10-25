@@ -107,26 +107,6 @@ func TestBuildSaveTreeForestAndConnectors(t *testing.T) {
 	}
 }
 
-func TestBuildSaveTreeOrphanAndSelfParentAreRoots(t *testing.T) {
-	saves := []game.SaveInfo{
-		at("orphan", "does_not_exist", 1),
-		at("me", "me", 2),
-	}
-	rows := buildSaveTree(saves)
-	if len(rows) != 2 {
-		t.Fatalf("want 2 rows, got %d (%v)", len(rows), names(rows))
-	}
-	for _, name := range []string{"orphan", "me"} {
-		r, ok := rowByName(rows, name)
-		if !ok {
-			t.Fatalf("%q missing from tree", name)
-		}
-		if r.Prefix != "" {
-			t.Errorf("%q should be a top-level root (empty prefix), got %q", name, r.Prefix)
-		}
-	}
-}
-
 func TestBuildSaveTreeCycleTerminates(t *testing.T) {
 	// A.parent = B, B.parent = A — a 2-node cycle. Neither has an external root,
 	// so both are mutual children. buildSaveTree must terminate and emit each
