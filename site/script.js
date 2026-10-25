@@ -6,9 +6,9 @@ const $ = id => document.getElementById(id);
 const reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 const BASE = "https://github.com/espresso20/ageforge/releases/latest/download/";
 const OS = {
-  mac: ["curl -fLo ageforge " + BASE + "ageforge-macos-arm64 && chmod +x ageforge && ./ageforge", "Apple Silicon. On an Intel Mac, put ageforge-macos-amd64 in its place."],
-  linux: ["curl -fLo ageforge " + BASE + "ageforge-linux-amd64 && chmod +x ageforge && ./ageforge", "For x86_64. On ARM, put ageforge-linux-arm64 in its place."],
-  win: ["iwr " + BASE + "ageforge-windows-amd64.exe -OutFile ageforge.exe; .\\ageforge.exe", "In PowerShell, in Windows Terminal."],
+  mac: ["curl -fLo ageforge " + BASE + "ageforge-macos-arm64 && chmod +x ageforge && ./ageforge", "For Apple Silicon. On an Intel Mac, put ageforge-macos-amd64 in its stead."],
+  linux: ["curl -fLo ageforge " + BASE + "ageforge-linux-amd64 && chmod +x ageforge && ./ageforge", "For x86_64. On ARM, put ageforge-linux-arm64 in its stead."],
+  win: ["iwr " + BASE + "ageforge-windows-amd64.exe -OutFile ageforge.exe; .\\ageforge.exe", "Give it to PowerShell, in Windows Terminal."],
 };
 function setOS(k) {
   $("cmd").textContent = OS[k][0];

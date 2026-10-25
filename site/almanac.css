@@ -88,6 +88,7 @@ code{font-family:var(--mono);font-size:.78em;background:var(--plate);padding:.08
 .ages th{font-family:var(--caps);font-weight:400;letter-spacing:.06em;white-space:nowrap}
 .ages td:first-child{font-family:var(--caps);color:var(--rubric);white-space:nowrap;width:3.2em}
 .ages td:last-child{font-style:italic;color:var(--ink-2)}
+.ages th small{display:block;font-family:var(--note);font-style:italic;font-size:15px;letter-spacing:0;color:var(--ink-3)}
 
 /* ---- obtaining a copy ---- */
 .get{display:grid;gap:10px;max-width:33em;margin-block:4px 12px}
