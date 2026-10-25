@@ -85,6 +85,33 @@ func unreached(st game.GameState) []string {
 	return out
 }
 
+// meetOnly forgets every civilization but the first n of those met, in the
+// game's order, and ends any war with the ones forgotten.
+func meetOnly(st *game.GameState, n int) {
+	met := 0
+	for _, f := range config.BaseFactions() {
+		fi := st.Diplomacy.Factions[f.Key]
+		if fi.Discovered && met < n {
+			met++
+		} else {
+			fi.Discovered, fi.AtWar = false, false
+		}
+		st.Diplomacy.Factions[f.Key] = fi
+	}
+}
+
+// assertNoWords fails for each word the text of a map shows, with the text
+// around it; who says whose map it is.
+func assertNoWords(t *testing.T, who, txt string, words []string) {
+	t.Helper()
+	for _, word := range words {
+		if i := strings.Index(txt, word); i >= 0 {
+			lo, hi := max(0, i-60), min(len(txt), i+len(word)+60)
+			t.Errorf("%s: the map shows %q:\n...%s...", who, word, txt[lo:hi])
+		}
+	}
+}
+
 // TestNoSpoilers: the maps name no civilization the player has not met and
 // no age or era not yet reached: not on screen, not on the inspect line,
 // not in the mini map. Adam asked for no spoilers after his first playtest.
@@ -95,35 +122,19 @@ func TestNoSpoilers(t *testing.T) {
 	}{
 		{"a new game in the Primitive Age", func() game.GameState {
 			st := fixture.State(fixture.Options{Age: "primitive_age", Seed: 7, Harbinger: true, Idle: 4})
-			for k, f := range st.Diplomacy.Factions {
-				f.Discovered = false
-				st.Diplomacy.Factions[k] = f
-			}
+			meetOnly(&st, 0)
 			st.Harbinger.TargetEpochName = "impending doom" // as the game words it
 			return st
 		}},
 		{"the Primitive Age, ready to advance", func() game.GameState {
 			st := fixture.State(fixture.Options{Age: "primitive_age", Seed: 3, Harbinger: true})
-			for k, f := range st.Diplomacy.Factions {
-				f.Discovered = false
-				st.Diplomacy.Factions[k] = f
-			}
+			meetOnly(&st, 0)
 			st.AgeReady = true
 			return st
 		}},
 		{"the Medieval Age with two civs met", func() game.GameState {
 			st := fixture.State(fixture.Options{Age: "medieval_age", Seed: 7, Harbinger: true, Wars: 1, Routes: 2})
-			met := 0
-			for _, f := range config.BaseFactions() {
-				fi := st.Diplomacy.Factions[f.Key]
-				fi.Discovered = met < 2 && fi.Discovered
-				if fi.Discovered {
-					met++
-				} else {
-					fi.AtWar = false
-				}
-				st.Diplomacy.Factions[f.Key] = fi
-			}
+			meetOnly(&st, 2)
 			return st
 		}},
 	}
@@ -131,12 +142,7 @@ func TestNoSpoilers(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			st := c.st()
 			txt := mapText(t, st)
-			for _, word := range unreached(st) {
-				if i := strings.Index(txt, word); i >= 0 {
-					lo, hi := max(0, i-60), min(len(txt), i+len(word)+60)
-					t.Errorf("the map shows %q:\n...%s...", word, txt[lo:hi])
-				}
-			}
+			assertNoWords(t, c.name, txt, unreached(st))
 			if st.AgeReady && !strings.Contains(txt, st.NextAgeName) {
 				t.Errorf("ready to advance, but the map never names the next age %q", st.NextAgeName)
 			}

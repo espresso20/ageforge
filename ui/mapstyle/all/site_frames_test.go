@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -149,7 +150,7 @@ func TestWriteSiteFrames(t *testing.T) {
 			}
 			if i > 0 {
 				for y, r := range rows {
-					if f := a.Frames[0][y]; f.T == r.T && equalInts(f.R, r.R) {
+					if f := a.Frames[0][y]; f.T == r.T && slices.Equal(f.R, r.R) {
 						rows[y] = nil
 					}
 				}
@@ -248,16 +249,4 @@ func staticFrame(rows []*row, styles [][3]int, palette []string) string {
 type row struct {
 	T string `json:"t"`
 	R []int  `json:"r"`
-}
-
-func equalInts(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }

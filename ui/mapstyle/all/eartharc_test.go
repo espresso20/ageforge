@@ -2,8 +2,8 @@ package all
 
 import (
 	"math"
+	"slices"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
@@ -270,18 +270,8 @@ func TestEarthArcNoSpoilers(t *testing.T) {
 	for _, age := range []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
 		st := fixture.State(fixture.Options{Age: age, Seed: 5, Harbinger: true, Routes: 2})
 		txt := mapText(t, st)
-		for _, word := range unreached(st) {
-			if i := strings.Index(txt, word); i >= 0 {
-				lo, hi := max(0, i-60), min(len(txt), i+len(word)+60)
-				t.Errorf("%s: the map shows %q:\n...%s...", age, word, txt[lo:hi])
-			}
-		}
-		ai := 0
-		for i, k := range config.AgeOrder() {
-			if k == age {
-				ai = i
-			}
-		}
+		assertNoWords(t, age, txt, unreached(st))
+		ai := slices.Index(config.AgeOrder(), age)
 		var later []string
 		for f := mapmodel.CityFeature(1); f < mapmodel.NumCityFeatures; f++ {
 			if i := f.Info(); i.From > ai {
@@ -289,21 +279,6 @@ func TestEarthArcNoSpoilers(t *testing.T) {
 			}
 		}
 		sort.Strings(later)
-		for _, word := range later {
-			if strings.Contains(txt, word) && !earlierNamed(word, ai) {
-				t.Errorf("%s: the map names %q, which a later age builds", age, word)
-			}
-		}
+		assertNoWords(t, age+" (a later age's city features)", txt, later)
 	}
-}
-
-// earlierNamed reports a later feature's name that an age's own feature
-// shares (none do today; the check keeps a shared word from failing).
-func earlierNamed(word string, age int) bool {
-	for f := mapmodel.CityFeature(1); f < mapmodel.NumCityFeatures; f++ {
-		if i := f.Info(); i.From <= age && (i.Name == word || i.Title == word) {
-			return true
-		}
-	}
-	return false
 }

@@ -5,12 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
 
 // TestSceneInsetIsTheChrome: every standard style says which rows of its
@@ -33,21 +32,9 @@ func TestSceneInsetIsTheChrome(t *testing.T) {
 				for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges} {
 					sty.SetOption(o, false)
 				}
-				sim := tcell.NewSimulationScreen("UTF-8")
-				if err := sim.Init(); err != nil {
-					t.Fatal(err)
-				}
-				sim.SetSize(w, h)
+				sim := capture.NewScreen(w, h)
 				sty.Draw(theme.WrapScreen(sim), mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: m, Anim: 3, Clock: 3})
-				rows := make([]string, h)
-				for y := range rows {
-					var sb strings.Builder
-					for x := 0; x < w; x++ {
-						r, _, _, _ := sim.GetContent(x, y)
-						sb.WriteRune(r)
-					}
-					rows[y] = sb.String()
-				}
+				rows := strings.Split(strings.TrimSuffix(capture.Text(sim), "\n"), "\n")
 				sim.Fini()
 
 				top, bottom := sc.SceneInset(w, h)
