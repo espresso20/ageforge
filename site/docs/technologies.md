@@ -1,69 +1,69 @@
 # Technologies
 
-Research is your civilization's strongest long-term lever. 203 technologies span all 22 ages, and each one changes your production, military strength, housing, a command you can use, or the pace of the game, for the rest of the run. A tech's bonus is small and always counts in full: no cap holds it back (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)). Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
+Research gives your civilization lasting bonuses. 203 technologies span all 22 ages, and each one changes your production, military power, housing, building costs or times, research time, a number in one of the game's mechanics, or what you can build or do, for the rest of the run. A tech's bonus is small and counts in full: no cap holds it back (see [How tech bonuses stack](#how-tech-bonuses-stack)). Only one technology is researched at a time, but the [build plan](plan.md) can queue the next ones and start each as soon as the slot frees up.
 
 <figure class="screen" data-screen="research"><figcaption>The Research panel in the Classical Age: the tech tree as a map. Philosophy is part way through, Civil Engineering can start, and the Medieval Age waits below the dotted line.</figcaption></figure>
 
 ---
 
-## How Research Works
+## How research works
 
-### Starting Research
+### Starting research
 
-Starting a tech costs nothing: it needs its prerequisites and its age, and the research slot free. Once started, your [scholars](knowledge.md) fill its **bar** with the work they do each tick, and the tech is done when the bar reads 100%. Its effects apply at once and last for the run. If you cancel it, the work done on it is lost.
+Starting a tech costs nothing. It needs its age and its prerequisites, and the research slot must be free. Once started, your [scholars](knowledge.md) fill its bar with the work they do each tick, and the tech is done when the bar reads 100%. Its effects apply at once and last for the run. If you cancel it, the work done on it is lost.
 
-A tech has a **price**, the work it needs, and a **time**, which is what is left of the price over the work the researching scholars do each tick:
+A tech has a price, the work it needs, and a time, which is what is left of the price over the work the researching scholars do each tick:
 
 ```
 time = work still to do ÷ work a tick
 ```
 
-A tick is 2 seconds of real time at base; game speed bonuses make each tick shorter (see [Game speed](#game-speed)). The time is worked out from the scholars researching **now**, so it changes when they do: a new knowledge building, a bonus, or a change to the research share with `scholars <percent>` changes the time left on the tech in progress and the time every other tech shows. The times on the tree, in `research list` and on a tech's card are the ones your scholars would take if you started it now. With no scholar researching they say the tech needs scholars researching to go on.
+A tick is 2 seconds of real time at base; game speed makes each tick shorter (see [Game speed](#game-speed)). The time is worked out from the scholars researching now, so it changes when they do: a new knowledge building, a bonus, or a change to the research share with `scholars <percent>` changes the time left on the tech in progress and the time every other tech shows. The times on the tree, in `research list` and on a tech's card are the ones your scholars would take if you started it now. With no scholar researching, they say the tech needs scholars researching.
 
-What makes up the work a tick:
+The work a tick is:
 
 ```
 work a tick = researching scholars' work × output bonuses × Era Mastery speed ÷ (1 − research speed) ÷ the techs' cut ÷ 0.8 ^ epochs succumbed in
 ```
 
-The three divisors are cuts of time, and between them they never bring a tech under 5% of its time.
+The scholars' work is the research of your knowledge buildings (each copy at full rate up to the building's full-rate count, then at half rate), shared out by how many of your scholars research. Output bonuses include morale, the all-production and knowledge-output pools, and the techs that raise research output. The three divisors are cuts of time, and between them they never bring a tech under 5% of its time.
 
-**Ancient Knowledge.** For each distinct epoch you have [Succumbed](catastrophe.md#ancient-knowledge) in, the time is multiplied by 0.8: ×0.8 after one epoch, ×0.64 after two, ×0.26 with all six. The Stats panel has a line for it (`Ancient Knowledge: research time ×0.64. The times on the tech tree include it.`).
+- Ancient Knowledge: for each distinct epoch you have [Succumbed](catastrophe.md#ancient-knowledge) in, the time is multiplied by 0.8: ×0.8 after one epoch, ×0.64 after two, ×0.26 with all six. The Stats panel has a line for it (`Ancient Knowledge: research time ×0.64. The times on the tech tree include it.`).
+- Era Mastery: on known ground (an age a past run completed) the scholars' work is multiplied by the age's [Era Mastery](prestige.md#era-mastery) speed: 2x after one completion, up to 4.2x after ten. A tech's card shows the shortened time.
+- Research techs: thirteen techs cut research time. The four Knowledge and Computing capstones (Scholasticism, Big Science, General AI and the Timeless Archive) cut it by 6% each, Scientific Method by 4%, and Printing Press, Public Education, Computers, Search Engines, Machine Learning, Unified Theory, Xenology and Cosmology by 3% each. Their cuts multiply (×0.587 with all thirteen), and research never takes less than 50% of its time on their account. The Stats panel has a line for it (`Research techs: research time ×0.94. The times on the tech tree include it.`).
 
-**Era Mastery.** On known ground (an age a past run completed) the scholars' work is multiplied by the age's [Era Mastery](prestige.md#era-mastery) speed: 2x after one completion, up to 4.2x after ten. A tech's card shows the shortened time.
+### The bar and the time
 
-**Research techs.** Thirteen techs cut research time: the four Knowledge and Computing capstones (Scholasticism, Big Science, General AI and the Timeless Archive) by 6% each, Scientific Method by 4%, and Printing Press, Public Education, Computers, Search Engines, Machine Learning, Unified Theory, Xenology and Cosmology by 3% each. Their cuts multiply (×0.587 with all thirteen), and research never takes less than 50% of its time on their account. The Stats panel has a line for it (`Research techs: research time ×0.94. The times on the tech tree include it.`).
+The tech in progress shows a bar that fills to 100%, its percent and the time left, in the header of the Research panel, on its card, in `research list` and in the Logs panel. The Scholars tab of the People panel shows its percent and the time left. The Stats panel says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
 
-### The Bar and the Time
+Events, loot, milestone rewards, the Ancient Cache and two trade routes can add work to the tech in progress, at most half its price. See [Scholars and Research](knowledge.md).
 
-The tech in progress shows a bar that fills to 100%, its percent and the time left, in the header of the Research panel, on its card, in `research list` and in the Activity panel. The Stats panel says what your research speed does (`Research speed +30%: techs take 70% of their base time.`).
+### Keystones, the spine and the rest
 
-### Keystones, the Spine and the Rest
+Every tech has a kind, and its kind says what it is for.
 
-Every tech has a **kind**, and its kind decides what it is for.
+- A keystone is the tech an age's wonder needs before it can be built. There is one in each age from the Stone Age on. The next age needs the wonder, so the keystone is the one tech an age asks of you, together with the techs it stands on. See [Keystone Techs](ages.md#keystone-techs) for the list.
+- The spine is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 48 of the 203.
+- A capstone ends a lane for its era: a bigger step that is one of its age's two dearest. No run has to research one. Each era from the Iron Era on has two, twelve in all: Scholasticism and Guilds in the Medieval Age, the Concert of Nations and Interchangeable Parts in the Industrial Age, Big Science and the Military-Industrial Complex in the Atomic Age, the Global Village and General AI in the Digital Age, Stellar Cartography and the Space Elevator in the Space Age, the Timeless Archive and Reality Engineering in the Quantum Age.
+- Everything else is optional: yours to take or leave.
 
-- A **keystone** is the tech an age's wonder needs before it can be built. There is one in each age from the Stone Age on, and since the next age needs the wonder, the keystone is the one tech an age asks of you. See [Keystone Techs](ages.md#keystone-techs) for the list.
-- The **spine** is every tech a keystone stands on, all the way down: Tool Making under Stoneworking, Steam Power under Industrialization. Keystones and the spine are the only techs a run has to research, 48 of the 203.
-- A **capstone** ends a lane for its era: a bigger step that is one of its age's two dearest. No run has to research one. Each era from the Iron Era on has two, twelve in all: Scholasticism and Guilds in the Medieval Age, the Concert of Nations and Interchangeable Parts in the Industrial Age, Big Science and the Military-Industrial Complex in the Atomic Age, the Global Village and General AI in the Digital Age, Stellar Cartography and the Space Elevator in the Space Age, the Timeless Archive and Reality Engineering in the Quantum Age.
-- Everything else is **optional**: yours to take or leave.
+The tech tree draws each keystone with a ★ on a double frame and each capstone in half blocks. A keystone's card names the wonder that waits for it, and `research list` marks it too (`★ keystone: Colosseum`).
 
-The tech tree draws each keystone with a ★ on a double frame and each capstone in half blocks, a keystone's card names the wonder that waits for it, and `research list` marks it too (`★ keystone: Colosseum`).
+### How research is priced
 
-### How Research is Priced
+A tech's price follows its age's ladder: inside an age each tech costs 1.3 times the one before it, from the cheapest to the dearest. The tables below give every tech's time for a full set of scholars at its age: every knowledge building up to that age built to its full-rate count, all researching, before any bonus. Your own times are the ones the tree shows. The Transcendent Age has no knowledge building of its own, so its techs are researched by the scholars of the ages before it.
 
-A tech's price follows its age's ladder: inside an age each tech costs **1.3 times the one before it**, from the cheapest to the dearest. The tables below give every tech's **time for a full set of scholars at its age**: every knowledge building up to that age built to its full-rate count, all researching, before any bonus. Your own times are the ones the tree shows. The Transcendent Age has no knowledge building of its own, so its techs are researched by the scholars of the ages before it.
+Research simmers. From the Stone Age on, the techs of an age together ask for 1.2 times the work that the scholars of a typical town do while the town stays in that age. Researching all of an age takes more work than those scholars do in it, and what you have not finished carries forward into the ages after it. It is an idle game: you can get every tech, but it takes some time. The Primitive Age is the exception. Its techs together ask for 0.8 times that work, so a new player sees a tech finish early. The keystone is the other exception. It is priced to finish inside its age, because its wonder needs it before you can leave.
 
-**Research simmers.** From the Stone Age on, the techs of an age ask for about one and a half times the work that the scholars of a typical town do while the town stays in that age. Researching all of an age takes longer than the age, and what you have not finished carries forward into the ages after it: it is an idle game, and you get every tech, but it takes some time. The Primitive Age is the exception, where the techs ask for less than the scholars do in a stay, so a new player sees a tech finish early. The keystone is the other exception. It is priced to finish inside its age, because its wonder needs it before you can leave.
+### One slot, and the plan as a queue
 
-### One Slot, and the Plan as a Queue
-
-There is one research slot. If you type `research` for a second tech while one is in progress, you get an error naming the active tech and the time it has left.
+There is one research slot. If you type `research` for a second tech while one is in progress, you get an error naming the active tech.
 
 To line techs up, add them to the [build plan](plan.md) with `plan research <tech>` (or `plan res`). The plan starts each one as soon as the slot is free, in plan order, and it keeps doing so while you are away:
 
 - Only the first research item in the plan can take the slot when it frees up. A tech further down waits its turn even if it is cheaper.
-- **A tech brings what it needs.** `plan research imperial_legions` adds every prerequisite that is not researched, in progress or planned yet, each after its own, and then Imperial Legions. One command queues a whole chain toward a goal, and the answer lists what went in, in order. For an either-or group the plan takes the branch you already hold or have planned, else the one that costs the least work to add.
-- **Any tech you can see.** The plan takes a tech of any age on your [tech tree](#reading-the-tech-tree): up to the next age on a first run, and every age your account has reached on a later one. A tech of a later age waits for its age (`waits for the Iron Age`) without holding up this age's techs below it.
+- A tech brings what it needs. `plan research imperial_legions` adds every prerequisite that is not researched, in progress or planned yet, each after its own, and then Imperial Legions. One command queues a whole chain toward a goal, and the answer lists what went in, in order. For an either-or group the plan takes the branch you already hold or have planned, else the one that costs the least work to add.
+- The plan takes a tech of any age you can see on your [tech tree](#reading-the-tech-tree): up to the next age on a first run, and every age your account has reached on a later one. A tech of a later age waits for its age (`waits for the Iron Age`) without holding up this age's techs below it.
 - A tech already in the plan that loses a prerequisite (you removed it, moved it below, canceled it mid-research, or a game update changed what the tech needs) is not dropped: it waits, and the plan shows what it needs (`needs Philosophy first`). While it waits it does not hold the slot's turn, so you can plan the missing tech below it and that one starts first.
 - On the tree, a planned tech shows its place in the plan (`▸3`), and the second `Enter` on a locked tech's card plans it with its chain.
 
@@ -71,29 +71,35 @@ The plan is the only research queue, and the game never chooses what you researc
 
 See [The research queue](plan.md#the-research-queue) and [How it runs](plan.md#how-it-runs) for the rest of the plan's rules.
 
-### When Research Completes
+### When research completes
 
-Effects are applied the tick the counter hits zero. You'll see a success message in the log. The tech is marked researched, and its bonuses apply to your rates from the next tick.
+The log says `Research complete: <tech>.` and the tech's effects apply at once. A tech that opens a command says so (`Drama opens festivals.`), and a keystone says which wonder it opens.
 
 ---
 
-## Research Speed Sources
+## Research speed sources
 
-Research speed cuts the time of every tech, the one in progress included. Its sources add together:
+Research speed cuts the time of every tech, the one in progress included. Its sources add together. A tech takes this long:
+
+```
+ticks = base × (1 − research speed) × the techs' cut × Ancient Knowledge
+```
 
 | Source | Research speed | Notes |
 |---|---|---|
-| **Tech Pioneer** milestone (research 22 techs) | +5% | Scholar Chain |
-| **Philosophes** milestone (64 techs, from the Classical Age) | +5% | |
-| **Renaissance Mind** milestone (83 techs, from the Renaissance Age) | +10% | Scholar Chain, hidden until you get close |
-| **Tech Master** milestone (114 techs, from the Information Age) | +10% | Scholar Chain, hidden; also +5% all production |
-| **Tech Ascendant** milestone (all 203 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
-| **Ancient Knowledge** (Succumb) | not research speed: research time ×0.8 per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, ×0.26 with all six). It multiplies the time research speed leaves, so it is not in this pool and no cap holds it. Kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
-| Thirteen techs, from **Scholasticism** to the **Timeless Archive** (see [Building costs, construction time and research time](#building-costs-construction-time-and-research-time)) | not research speed: research time ×0.94 to ×0.97 each | They multiply the time research speed leaves, ×0.587 with all thirteen, and never take it under 50% between them. They are not in this pool |
+| Tech Pioneer milestone (research 22 techs) | +5% | In the Scholar Chain |
+| Philosophes milestone (64 techs, from the Classical Age) | +5% | |
+| Renaissance Mind milestone (83 techs, from the Renaissance Age) | +10% | In the Scholar Chain; hidden |
+| Tech Master milestone (114 techs, from the Information Age) | +10% | In the Scholar Chain; hidden; also +5% all production |
+| Tech Ascendant milestone (all 203 techs, Transcendent Age) | +20% | Hidden. It arrives with your last tech, so it never shortens one |
+| Ancient Knowledge (Succumb) | not research speed: research time ×0.8 per epoch | For each distinct epoch you Succumb in (Iron to Cosmic, ×0.26 with all six). It multiplies the time research speed leaves, so it is not in this pool and no cap holds it. Kept through Succumb, prestige and save/load. See [Ancient Knowledge](catastrophe.md#ancient-knowledge) |
+| Thirteen techs, from Scholasticism to the Timeless Archive (see [Building costs, construction time and research time](#building-costs-construction-time-and-research-time)) | not research speed: research time ×0.94 to ×0.97 each | They multiply the time research speed leaves, ×0.587 with all thirteen, and never take it under 50% between them. They are not in this pool |
 
-Milestone research speed lasts for the run: milestones start over at prestige and at Succumb. Five milestones add +50% in total, +30% of it before your last tech. See [Milestones](milestones.md).
+Milestone research speed lasts for the run: milestones start over at prestige and at Succumb. Five milestones add +50% in total, +30% of it before your last tech. Hidden milestones show once you are well on the way to them. See [Milestones](milestones.md).
 
-> **Research speed is not research output.** Fifteen techs raise research output, the work your scholars do (see [Output of one resource](#output-of-one-resource) below). More work lets the tech in progress fill its bar sooner; research speed cuts the time the same work takes. Both shorten the time on the screens.
+Research speed counts up to +100%, because a tech always takes a tick at least. The sources above come to +50% at most.
+
+> Research speed is not research output. Fifteen techs raise research output, the work your scholars do. Their effect lists call it scholar output (see [Output of one resource](#output-of-one-resource) below). More work lets the tech in progress fill its bar sooner; research speed cuts the time the same work takes. Both shorten the time on the screens. A civilization's Enlightenment boon is worded as research speed, but it raises the work your scholars do, so it counts as output.
 
 ---
 
@@ -104,7 +110,7 @@ research <tech_key>
 ```
 Start researching a technology. It costs nothing. Fails if: unknown key, already researched, another tech in progress, age requirement not met, or prerequisites missing.
 
-You can also type multi-word tech names with spaces; they are joined with underscores:
+You can also type multi-word tech names with spaces; they are joined with `_`:
 ```
 research bronze working
 ```
@@ -115,7 +121,7 @@ is equivalent to `research bronze_working`.
 ```
 plan research <tech_key>
 ```
-Adds a tech to the build plan, with the techs it still needs before it. The plan starts each when the research slot is free (see [One Slot, and the Plan as a Queue](#one-slot-and-the-plan-as-a-queue)). It takes any tech on your tree, the next age's included. `plan res` is the short form.
+Adds a tech to the build plan, with the techs it still needs before it. The plan starts each when the research slot is free (see [One slot, and the plan as a queue](#one-slot-and-the-plan-as-a-queue)). It takes any tech on your tree, the next age's included. `plan res` is the short form.
 
 ---
 
@@ -129,14 +135,14 @@ Prints the techs you can start now (age reached, prerequisites done, not yet res
 ```
 research cancel
 ```
-Cancels the current research. The work done on it is lost. Only use this when pivoting is worth more than the work done.
+Cancels the current research. The work done on it is lost.
 
 ---
 
 ```
 research
 ```
-With no arguments, opens the **Research panel**, the tech tree as a map (so do `techs` and `research tree`). See [Reading the Tech Tree](#reading-the-tech-tree).
+With no arguments, opens the Research panel, the tech tree as a map (so do `techs` and `research tree`). See [Reading the tech tree](#reading-the-tech-tree).
 
 ---
 
@@ -144,7 +150,7 @@ With no arguments, opens the **Research panel**, the tech tree as a map (so do `
 research tree close
 research tree far
 ```
-Opens the tree at that zoom: big badges with full names (close, the default), or one-line pills that fit every lane on screen (far). `PgUp` and `PgDn` (`Option+↑` and `Option+↓` on a Mac keyboard) do the same from inside the panel.
+Opens the tree at that zoom: big badges with the tech's name over each (close, the default), or one-line pills so more lanes fit on screen (far). `PgUp` and `PgDn` (`Option+↑` and `Option+↓` on a Mac keyboard) do the same from inside the panel.
 
 ---
 
@@ -155,18 +161,19 @@ Opens the tree on that tech's card. It works for any tech you can see on the map
 
 ---
 
-**Shortcut:** `res` is an alias for `research`. All subcommands work identically.
+Shortcut: `res` is an alias for `research`. All subcommands work identically.
 
 ---
 
-## Reading the Tech Tree
+## Reading the tech tree
 
 `research` opens the tree as a map. It covers the whole screen but the command bar, and it does not have to fit: the view follows the tech you select.
 
-- **Lanes run across, ages run down.** Each lane is a column with its name at the top (Knowledge, Trade, Craft, and so on); a lane appears once one of its techs is in sight. When lanes are off screen, an arrow at that end of the lane row counts them (`2▸`), and a wide terminal names the nearest on the left (`◂ FAITH`). Each age is a band, named in the gutter on the left with how many of its techs you hold.
-- **A tech is a badge with its name over it.** The glyph in the middle is the tech's emblem, or its lane's.
-- **Lines show what a tech needs.** A line leaves the notch under a badge and comes down on the name of the tech that needs it. A solid line is needed outright. Dashed lines marked `or` are an either-or group: one of them will do. Selecting a tech lights the chain that leads to it.
-- **One line under the map** names the selected tech, its state, its price and time, and what it opens. A key bar sits under that.
+- The top bar counts the techs you know out of those in the ages you have reached (`RESEARCH 23/33`). While a tech is in progress it shows the tech's name, bar, percent and time left, and your scholars on the right.
+- Lanes run across, ages run down. Each lane is a column with its name in capitals at the top. From left to right they are Faith & Culture, Knowledge, Trade & Exploration, Agriculture, Craft & Engineering, Materials, Military, Energy, Flight & Space and Computing; a lane appears once one of its techs is in sight. When lanes are off screen, an arrow at that end of the lane row counts them (`2▸`), and a wide terminal names the nearest on the left (`◂ FAITH`). Each age is a band, named in the gutter on the left with how many of its techs you hold.
+- A tech is a badge with its name over it. The glyph in the middle is the tech's emblem, or its lane's.
+- Lines show what a tech needs. A line leaves the notch under a badge and comes down on the name of the tech that needs it. A solid line is needed outright. Dashed lines marked `or` are an either-or group: one of them will do. Selecting a tech lights the chain that leads to it.
+- One line under the map names the selected tech, its state, its time and what it opens. A key bar sits under that.
 
 <figure class="screen" data-screen="research-far"><figcaption>The same tree zoomed out with PgUp: every lane on screen, a tech a line. A tick is researched, round brackets can start, dashed bars wait for something, and a shaded pair is the next age. The two techs led by ▸ are in the build plan: one plan research for Fortification, a tech of the next age, queued Imperial Legions before it.</figcaption></figure>
 
@@ -185,20 +192,20 @@ The shape says it as well as the color, so the tree reads in every theme.
 | A solid, bright frame and no mark | You can start it |
 | `▸1` at the top right | It is in your build plan, at that place |
 | A dashed frame `╭┄┄┄┄┄╮` | It waits for a tech it needs |
-| A shaded block `░░░░░░░` | A tech of the next age: you can read its card and plan it |
+| A shaded block `░░░░░░░` | A tech of an age you have not reached yet but may see: you can read its card and plan it |
 | A `◇` at the bottom right | It opens a command or a building |
 
 Zoomed out, a tech is one line: `✓` before the emblem is researched, `⟳` is in progress, `( )` round it can start, `┆ ┆` waits, `░ ░` is the next age, `▸` before it is in your plan, and a `★` after the letterhead is a keystone.
 
-Ages past the next one are not drawn. One line at the foot of the map counts their techs, and nothing names them: not the map, not a card, not `research card`.
+Ages beyond what you may see are not drawn: the next age on a first run, and further on a later one. One line at the foot of the map counts their techs, and nothing names them: not the map, not a card, not `research card`.
 
 ### The card
 
-`Enter` on a tech opens its card over the map. It says what the tech does in plain sentences, what it opens, what it costs and how long it takes at your current research speed, what it builds on (techs you hold in green) and how many later techs build on it.
+`Enter` on a tech opens its card over the map. It says what the tech does in plain sentences, what it opens, how long it takes your scholars now, what it builds on (techs you hold in green) and how many later techs build on it.
 
 <figure class="screen" data-screen="research-card"><figcaption>Civil Engineering's card. Research is busy, so Enter would add it to the build plan.</figcaption></figure>
 
-The card is also the confirmation. Cancelling research loses its work, so nothing happens on the first `Enter`. The last line of the card says what a second `Enter` does: start the tech if it can start now, or add it to your [build plan](plan.md) if the research slot is busy or the tech still waits for something. A tech that needs others goes in with them, in order, and the line names them first (`adds it to your plan, after Military Tactics, which it needs first`). `Esc` closes the card.
+The first `Enter` only opens the card. The last line of the card says what a second `Enter` does: start the tech if it can start now, or add it to your [build plan](plan.md) if the research slot is busy or the tech still waits for something. A tech that needs others goes in with them, in order, and the line names them first (`adds it to your plan, after Military Tactics, which it needs first`). `Esc` closes the card.
 
 ### Keys
 
@@ -209,71 +216,68 @@ The panel takes only keys that print nothing. Letters always go to the command b
 | Arrows | Move to the nearest tech that way; the view follows | Nothing |
 | `Tab`, `Shift-Tab` | The next or previous tech you can start | Nothing |
 | `PgUp`, `PgDn` (`Option+↑`, `Option+↓`) | Zoom out and in | Nothing |
-| `Home` | Jump back to your current age | Nothing |
+| `Home` | Jump to the tech in progress, or else the first tech you can start in your current age | Nothing |
 | `Enter` | Open the selected tech's card | Do what the card says |
 | `Esc` | Close the panel | Close the card |
 
 With something typed in the command bar, `Tab` and `Enter` belong to the command, as on the Map.
 
-The glyphs follow your `map glyphs` setting: with `map glyphs ascii` the tree is drawn in plain ASCII, with letters for emblems. What research adds up to (every bonus your techs give together, and what research speed does to the times) is on the Stats panel, under **Research bonuses**.
+The glyphs follow your `map glyphs` setting: with `map glyphs ascii` the tree is drawn in plain ASCII, with letters for emblems. What research adds up to (every bonus your techs give together, and what research speed does to the times) is on the Stats panel, under Research bonuses.
 
 ---
 
-## How Tech Bonuses Stack
+## How tech bonuses stack
 
 A tech's bonus is applied in a layer of its own, after every other bonus and after the pools.
 
-The game's other bonuses (milestone rewards, wonders, monuments, festivals, events, boons) add up in pools, and a pool has no ceiling: all production and each resource's own output apply in full, however large the pool grows (see [The all-production pool](resources.md#the-all-production-pool)). So a pool that has earned +320% applies +320%. Techs join no pool. A tech's output bonus multiplies what the pools make, where [Era Mastery](prestige.md#era-mastery) does, so it counts in full whatever else you hold.
+The game's other bonuses (milestone rewards, wonders, monuments, festivals, events, boons) add up in pools, and a production pool has no ceiling: all production and each resource's own output apply in full, however large the pool grows (see [The all-production pool](resources.md#the-all-production-pool)). So a pool that has earned +320% applies +320%. Techs join no pool. A tech's output bonus multiplies what the pools make, where [Era Mastery](prestige.md#era-mastery) does, so it counts in full whatever else you hold.
 
 ```
 what a resource makes = buildings and workers × pools (in full, at any size) × (1 + tech bonuses)
 ```
 
-- **Bonuses on the same thing add up.** Two +5% techs on the same resource give +10%, not ×1.1025. A tech's bonus on all production adds to its bonuses on one resource: with +20% stone and +5% all production, stone runs at ×1.25.
-- **Nothing caps the layer.** The tree is finite, and all of its techs together come to +99% research production, +119% food, +42% steel, +40% gold, +4% crypto and +14.2% all production. The last tech you take does its full step.
-- **Flat amounts stay amounts.** Steel Forging's +0.25 steel a tick and Satellite Technology's +1 data are the first source of a resource, not a bonus, and the layer does not multiply them.
-- **Cuts multiply, and each has a floor.** A tech that cuts a price or a time takes its share of what the cuts before it left: two 3% cuts on building costs leave 0.97 × 0.97. Building costs never fall under 10% of the listed price, construction under 40% of its time, or research under 50% of its time, however many cuts stack. All of today's techs together stay far from every floor.
-- **Housing is a percentage** of the housing you have: +5% housing is 5% more housing, rounded up to a whole person.
-- **Game speed, military power and expedition rewards** are added to the pools of those names, shared with milestones and wonders.
-- The `rates` command shows what the techs add to a resource on its **Research** line, and the Stats panel lists what all your techs come to together, under Research bonuses.
+- Bonuses on the same thing add up. Two +5% techs on the same resource give +10%, not ×1.1025. A tech's bonus on all production adds to its bonuses on one resource: with +20% stone and +5% all production, stone runs at ×1.25.
+- Nothing caps the layer. The tree is finite, and all of its techs together come to +99% scholar output, +119% food, +42% steel, +40% gold, +4% crypto and +14.2% all production. The last tech you take does its full step.
+- Flat amounts stay amounts. Steel Forging's +0.25 steel a tick and Satellite Technology's +1 data are the first source of a resource, not a bonus, and the layer does not multiply them.
+- Cuts multiply, and each has a floor. A tech that cuts a price or a time takes its share of what the cuts before it left: two 3% cuts on building costs leave 0.97 × 0.97. Building costs never fall under 10% of the listed price, construction under 40% of its time, or research under 50% of its time, however many cuts stack. All of today's techs together stay far from every floor.
+- Housing is a percentage of the housing you have: +5% housing is 5% more housing, rounded up to a whole person.
+- Game speed, military power and expedition rewards are added to the pools of those names, shared with milestones and wonders.
+- The `rates` command shows what the techs add to a resource on its Research line, and the Stats panel lists what all your techs come to together, under Research bonuses.
 
-A tech's bonus is never permanent. Prestige, Succumb and a new game wipe every tech and everything it gave.
+A tech's bonus lasts for the run. Prestige, Succumb and a new game wipe every tech and everything it gave.
 
 ---
 
-## Commands a Tech Opens
+## Commands a tech opens
 
-Some commands wait for a tech. Until it is researched, the command is refused with the name of the tech that opens it (`Campaigns need Military Tactics first. Research it to send one.`). The tech's effect list says what it opens, and the log says it again when the research finishes (`Military Tactics opens campaigns.`).
+Some commands wait for a tech. Until it is researched, the command is refused with the name of the tech that opens it (`Festivals need Drama first. Research it to hold one.`). The tech's effect list says what it opens, and the log says it again when the research finishes (`Drama opens festivals.`).
 
 | Command | Opened by | Age |
 |---|---|---|
 | Trade routes (`trade route start <route>`) | The Wheel | Bronze |
-| Military grand offers (`expedition <name>`) | Military Tactics | Bronze |
 | Diplomacy: gifts, alliances, rivalries, embargoes and deals (`diplomacy ...`, `plan deal`) | Envoys | Classical |
 | Festivals (`festival confirm yes`) | Drama | Classical |
 | The black market (`blackmarket <resource>`) | Mercantilism | Colonial |
 | The Rail Freight route (`trade route start rail_freight`) | Railroads | Industrial |
 | The Warp Commerce route (`trade route start warp_commerce`) | Interstellar Trade | Interstellar |
 
-The panels say which tech a command waits for (the Trade, Expeditions, Army and Factions panels, and `festival`). Every lock has its tech now: Warp Commerce's, Interstellar Trade, was the last to arrive.
+The Trade and Factions panels say which tech a command waits for, and so does `festival`.
 
-**Saves from before a lock.** A game saved before a command waited for its tech keeps every command open in the age it was in, and keeps for the rest of that run any command it was already using: a campaign under way, a route running, an ally, a festival held. In that age its buildings and its wonder wait for no tech either. One line in the log says so when the save is first loaded. The locks start with the next age for what that run never used, and with the next run for the rest. This covers the four commands and the seven buildings that found their tech with the Stone and Iron Eras' new techs, Stonehenge's keystone, the nine buildings that found theirs with the Steel and Electric Eras' techs, and the Warp Commerce route and the nineteen buildings that found theirs with the Digital, Neon and Cosmic Eras' (a game saved in one of those ages keeps its age's buildings open until it advances, and a Warp Commerce route it was running stays open for the run).
+A save written before the tree locked something gets a grace age, the age it was in. In that age nothing waits for a tech: every command is open, and so is every building of the age, its wonder included. A command the save was already using (a route running, a festival held, a civilization met) stays open for the rest of that run. Nothing you researched or built is touched, and the log says so once when the save is loaded. The locks start when you next advance.
 
 ---
 
-## Tech Tree by Age
+## Tech tree by age
 
-Prerequisites are listed by tech key. A tech needs every prerequisite it lists.
+Prerequisites are listed by tech key. A tech needs every prerequisite it lists, and one of an either-or group where the row says so. If a game update changes what a tech needs, a save keeps what it holds: a researched tech stays researched, a research in progress finishes, and a tech in your plan waits for what it now needs.
 
-**Changed prerequisites.** Thirteen techs need different techs than they used to. Fire Mastery needs nothing now, and Rocketry follows Aviation, no longer Rifling and Chemical Engineering. Primitive Writing follows Language, Feudalism follows The Plough, Road Building needs The Wheel as well as Masonry, and Navigation needs Exploration as well as Mathematics. Mathematics no longer needs Currency, Philosophy no longer lists Primitive Writing (Mathematics already needs it), Civil Engineering no longer lists Masonry (Road Building already needs it), Navigation no longer needs Road Building, and Mass Production no longer needs Railroads. Alchemy needs Philosophy instead of Mathematics, and Quantum Computing needs Quantum Mechanics as well as Clockwork Automation. A save from before the change keeps everything it had: a tech you already researched stays researched and still opens the techs that need it, a research in progress finishes, and a tech in your plan waits for what it now needs.
+Time is what a tech takes a full set of scholars at its age: every knowledge building up to that age built to its full-rate count, all researching (see [How research is priced](#how-research-is-priced)). It is before any bonus and at 2 seconds a tick; your own times are on the tree. Every effect in the tables counts in full in every age (see [How tech bonuses stack](#how-tech-bonuses-stack)).
 
-Time is what a tech takes a full set of scholars at its age: every knowledge building up to that age built to its full-rate count, all researching (see [How Research is Priced](#how-research-is-priced)). It is before any bonus and at 2 seconds a tick; your own times are on the tree. Every effect in the tables counts in full in every age (see [How Tech Bonuses Stack](#how-tech-bonuses-stack)).
+Forty buildings wait for a tech of their own age instead of opening with the age. [Buildings a tech opens](buildings.md#buildings-a-tech-opens) lists them all, from the Standing Stones (Ritual) to the Omniversal Bazaar (Omniversal Exchange). A gated building stays hidden from the build list until its tech is done, and `build` and `upgrade` refuse it until then; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built. The gate out of an age asks for such a building only when you cannot leave the age without its tech (see [Ages](ages.md)), so an optional tech never holds an age shut. A wonder's keystone works the same way for building, but the wonder is listed and its bank is open from the start of the age.
 
-**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). What times them is where they stand in the tree: each needs most of its age's other techs first, so it comes after them. Civilian Reactors stands behind Nuclear Deterrence, Internet of Things behind three Information Age techs, Holography behind Cybernetics and Blockchain, and in the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another. A gated building stays hidden from the build list until its tech is done, and `build` and `upgrade` refuse it until then; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built. See [Buildings a tech opens](buildings.md#buildings-a-tech-opens). A wonder's keystone works the same way for building, but the wonder is listed and its bank is open from the start of the age.
+Some of those techs sit deep in their age's chain, so their building comes late in the age: Civilian Reactors (Atomic Age, the Nuclear Plant), Internet of Things (Information Age, the Smart Farm and the Smart Complex), Holography (Cyberpunk Age, the Holographic Theater) and Maglev Transit (Fusion Age, the Energy Exchange). Civilian Reactors stands behind Nuclear Deterrence, Internet of Things behind three Information Age techs, Holography behind Cybernetics and Blockchain, and in the Fusion Age, Plasma Physics, Superconductors and Maglev Transit run one after another.
 
-**Buildings that wait for a tech.** Forty buildings wait for a tech of their own age in the same way; [Buildings a tech opens](buildings.md#buildings-a-tech-opens) lists them all, from the Standing Stones (Ritual) to the Omniversal Bazaar (Omniversal Exchange). Each either has another building of its age that makes the same thing, or waits for a tech no run leaves the age without, so no age is ever stuck behind an optional tech. A building that is its age's only source of what it makes stays open from the start of its age: every age's knowledge and culture building and most of its military ones, the Steam Mine, the Uranium Mine, the Nano Foundry, the titanium smelters and mines, the Cyber Hub and the data buildings after it, and the gold buildings of the ages that have only one. The Transcendent Age is the exception: nothing comes after it, so nothing can be stuck, and its three last buildings each wait for one of its three last techs.
-
-**Either-or.** Exploration is the tree's one tech with two ways in: it needs Map Making or Boatbuilding, whichever you hold. The tree draws both lines dashed with an `or`, and `plan research exploration` takes the one you have or, with neither, the cheaper.
+Exploration is the tree's one tech with two ways in: it needs Map Making or Boatbuilding, whichever you hold. The tree draws both lines dashed with an `or`, and `plan research exploration` takes the one you have or, with neither, the cheaper.
 
 ### Primitive Age (~10m to 17m/tech)
 
@@ -632,7 +636,7 @@ Time is what a tech takes a full set of scholars at its age: every knowledge bui
 
 ---
 
-## Tech Effects Reference
+## Tech effects reference
 
 Every number here counts in full in every age: see [How Tech Bonuses Stack](#how-tech-bonuses-stack).
 
@@ -643,7 +647,7 @@ Each raises what one resource's buildings and workers make. Bonuses on the same 
 | Resource | Techs | Together |
 |---|---|---|
 | Food | Fire Mastery +10%, Tool Making +10%, Animal Husbandry +10%, Boatbuilding +5%, Agriculture +10%, Irrigation +8%, The Plough +8%, Crop Rotation +6%, New World Crops +6%, Seed Drill +6%, Fertilizers +5%, Green Revolution +5%, Medical Nanobots +5%, Gene Editing +5%, Synthetic Food +4%, Hydroponics +4%, Protein Synthesis +4%, Matter Conversion +4%, Quantum Cultivation +4% | +119% |
-| Research | Language +10%, Primitive Writing +10%, Map Making +10%, Mathematics +8%, Philosophy +8%, Alchemy +8%, Printing Press +6%, Encyclopedia +6%, Public Education +5%, Modern Physics +5%, Information Theory +5%, Computers +5%, Open Science +5%, Neural Interface +4%, Deep Space Astronomy +4% | +99% |
+| Research (scholar output) | Language +10%, Primitive Writing +10%, Map Making +10%, Mathematics +8%, Philosophy +8%, Alchemy +8%, Printing Press +6%, Encyclopedia +6%, Public Education +5%, Modern Physics +5%, Information Theory +5%, Computers +5%, Open Science +5%, Neural Interface +4%, Deep Space Astronomy +4% | +99% |
 | Steel | Blast Furnace +6%, Coke Smelting +6%, Steam Power +6%, Chemical Engineering +5%, Titanium Alloys +5%, Precision Mining +5%, Nano Alloys +5%, Space Mining +4% | +42% |
 | Electricity | Electrification +5%, Power Distribution +5%, Nuclear Fission +5%, Advanced Electrics +5%, Smart Grid +5%, Dark Energy +4%, Fusion Power +4%, Orbital Solar +4%, Stellar Engineering +4% | +41% |
 | Gold | Currency +10%, Road Building +8%, Banking +8%, Wire Transfers +5%, Corporations +5%, Probability Markets +4% | +40% |
@@ -802,36 +806,36 @@ These techs move a single number of a game mechanic.
 | Global Village | Digital | Alliances cost 50% less |
 | Void Contemplation | Interstellar | Appeasing a harbinger costs 20% less |
 
-- **Trade route time, expedition time, deal refresh, festival cooldown.** A cut shortens the timer when it is next set: a route's next run, the next expedition sent, the next set of offers, the next festival. Cuts multiply (two 15% cuts leave 72% of a route's time) and none takes a timer under 40% of its length: the four cuts of a route's time leave 49% of it, and the six of an expedition's 45%. Expedition time is for scouting expeditions, and the Army panel lists their times with it; campaigns have a number of their own.
-- **Campaign time, campaign loot, soldier posts.** A General Staff and Special Forces each cut the time of every campaign sent after them by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and Probability Warfare 15% more again; the Military-Industrial Complex and Augmented Soldiers each give every military building a tenth more soldier posts (two techs make it a fifth more), and the new posts fill as the food allows. See [Military](military.md).
-- **Wonder construction.** With Architecture a wonder takes three quarters of its listed time to build, and the cuts of all construction then apply to what is left. It is the one cut a wonder has to itself. See [Wonders](wonders.md).
-- **Festival length.** With Baroque Arts a festival's bonus lasts 25% longer; its price and the wait for the next are other numbers. See [Festival](commands.md#festival).
-- **Gifts and alliances.** With Embassies a gift earns 22 opinion where it earned 15 (half as much again, rounded down). With the Concert of Nations every ally adds 25% more to its specialty, and with the Federation Charter 25% more again: a +20% bonus becomes +25%, then +31.25%, and the Factions panel lists it so. See [Factions](factions.md).
-- **Deals and alliances.** The Global Village and the Federation Charter each add one deal to every set a civilization offers, and the Global Village halves what an alliance costs (250 gold).
-- **Appease cost.** With Void Contemplation every Appease level costs 20% less, in every harbinger's thread, the Last Passage's included. See [Harbingers](harbinger.md).
-- **Upgrade cost.** With Interchangeable Parts, `upgrade` asks for 15% less of every resource, on top of the half price, after the cut of building costs on the new copy. Building new is not an upgrade.
-- **Raid losses.** The cut comes off what a raid would take before your garrison meets it, so it stacks with the garrison's own share (see [Military](military.md)). Cuts multiply: with Imperial Legions, Fortification, Nuclear Deterrence and Orbital Defense a raid takes 0.9 × 0.85 × 0.9 × 0.9, about 62% of what it would.
-- **Trade route income.** Boatbuilding, Containerization and Asteroid Claims each make every run of every route bring in 10% more of what the route lists, 33% with all three. A harbor's and an ally's share are added to that, each as its own share of the listed amount (see [Trade](trade.md)).
-- **Morale ceiling.** Priesthood, Virtual Reality and the Overview Effect each let morale rise 5 points higher than 100% plus what your wonders add (see [Morale](morale.md)).
-- **Hand gathering.** Every `gather` brings 2 more than you asked for, the bare `gather` (3) and the largest (25) alike.
+- Trade route time, expedition time, deal refresh and festival cooldown: a cut shortens the timer when it is next set (a route's next run, the next expedition sent, the next set of offers, the next festival). Cuts multiply (two 15% cuts leave 72% of a route's time) and none takes a timer under 40% of its length: the four cuts of a route's time leave 49% of it, and the six of an expedition's 45%. Expedition time is for short, long and civil grand missions, the scouting group; military grand missions have a campaign time of their own.
+- Campaign time, campaign loot and soldier posts: General Staff and Special Forces each cut the time of every military grand mission (campaign) sent after them by 15%. The Military-Industrial Complex makes every campaign bring back 20% more of its listed loot, won or lost, on top of your expedition rewards, and Probability Warfare 15% more again. The Military-Industrial Complex and Augmented Soldiers each give every military building a tenth more soldier posts (two techs make it a fifth more), and the new posts fill as the food allows. See [Military](military.md).
+- Wonder construction: with Architecture a wonder takes three quarters of its listed time to build, and the cuts of all construction then apply to what is left. It is the one cut a wonder has to itself. See [Wonders](wonders.md).
+- Festival length: with Baroque Arts a festival's bonus lasts 25% longer; its price and the wait for the next are other numbers. See [Festival](commands.md#festival).
+- Gifts and alliances: with Embassies a gift earns 22 opinion where it earned 15 (half as much again, rounded down). With the Concert of Nations every ally adds 25% more to its specialty, and with the Federation Charter 25% more again: a +20% bonus becomes +25%, then +31.25%, and the Factions panel lists it so. See [Factions](factions.md).
+- Deals and alliances: the Global Village and the Federation Charter each add one deal to every set a civilization offers, and the Global Village halves what an alliance costs (250 gold).
+- Appease cost: with Void Contemplation every Appease level costs 20% less, in every harbinger's thread, the Last Passage's included. See [Harbingers](harbinger.md).
+- Upgrade cost: with Interchangeable Parts, `upgrade` asks for 15% less of every resource, on top of the half price, after the cut of building costs on the new copy. Building new is not an upgrade.
+- Raid losses: the cut comes off what a raid would take before your garrison meets it, so it stacks with the garrison's own share (see [Military](military.md)). Cuts multiply: with Imperial Legions, Fortification, Nuclear Deterrence and Orbital Defense a raid takes 0.9 × 0.85 × 0.9 × 0.9, about 62% of what it would.
+- Trade route income: Boatbuilding, Containerization and Asteroid Claims each make every run of every route bring in 10% more of what the route lists, 33% with all three. A harbor's and an ally's share are added to that, each as its own share of the listed amount (see [Trade](trade.md)).
+- Morale ceiling: Priesthood, Virtual Reality and the Overview Effect each let morale rise 5 points higher than 100% plus what your wonders add (see [Morale](morale.md)).
+- Hand gathering: every `gather` brings 2 more than you asked for, whether it is the default amount (3) or the largest (25).
 
 ### Game speed
 
-Three techs raise game speed: ticks come more often, so production, construction, research and every timer run faster in real time. Game speed is a pool of its own, shared with milestone chain boosts and boons. The bonuses add together:
+Three techs raise game speed: ticks come more often, so everything that counts in ticks (production, construction, research, expeditions) runs faster in real time. Game speed is a pool of its own, shared with milestone chain boosts and boons. The bonuses add together:
 
 | Source | Bonus | Lasts |
 |---|---|---|
 | Chronometry (Medieval) | +5% | the run |
 | Clockwork Automation (Industrial) | +10% | the run |
 | Quantum Computing (Quantum) | +15% | the run |
-| Milestone chain boosts | +250% or +300% | a few minutes, once per chain |
-| Time Dilation boons | +8% to +15%, before scaling | 1,950 to 3,900 ticks |
+| Milestone chain boosts | +250% or +300% | 150 or 180 ticks, once per chain; longer from the Bronze Age on |
+| Time Dilation boons | +8% to +15% | 1,950 to 3,900 ticks |
 
-With all three techs the game runs 30% faster, and that multiplies with research speed. See [Milestones](milestones.md) and [Boons](factions.md#boons). [Era Mastery](prestige.md#era-mastery) is a different thing: it leaves the tick alone and makes each tick of an age you know do more.
+With all three techs the game runs 30% faster, and that multiplies with research speed. A tick is never shorter than 0.2 seconds, however much game speed you hold. See [Milestones](milestones.md) and [Boons](factions.md#boons). [Era Mastery](prestige.md#era-mastery) is a different thing: it leaves the tick alone and makes each tick of an age you know do more.
 
 ### Military power
 
-Military power lowers mission difficulty and raises your defense rating. See [Military Power Bonus](military.md#military-power-bonus). The bonuses add together, with the military milestones' and with nothing to cap them.
+Military power raises the odds of military grand offers and feeds your defense rating. See [Military power bonus](military.md#military-power-bonus). The bonuses add together, with the military milestones' and with nothing to cap them.
 
 | Tech | Age | Bonus |
 |---|---|---|
@@ -860,6 +864,7 @@ Together +201%.
 
 | Tech | Age | Bonus |
 |---|---|---|
+| Exploration | Iron | +10% |
 | Navigation | Renaissance | +10% |
 | Cartography | Colonial | +10% |
 | Rocketry | Atomic | +10% |
@@ -871,73 +876,67 @@ Together +201%.
 | Warp Drive | Interstellar | +10% |
 | Galactic Navigation | Galactic | +10% |
 
-Together +96%, added to the wonders' and milestones' expedition rewards.
+Together +106%, added to the wonders' and milestones' expedition rewards.
 
 ---
 
-## Paying for Research
+## Paying for research
 
-Research costs no resource. It is done by your [scholars](knowledge.md), who come with the knowledge lineage (Story Circle, Elders' Hall and on up to the Reality Academy): **Shamans** in the Primitive Age, **Quantum Theorists** by the Quantum Age. They need no assignment. The work of every tier is on the [Scholars and Research](knowledge.md) page.
+Research costs no resource. It is done by your [scholars](knowledge.md), who come with the knowledge buildings (Story Circle, Elders' Hall and on up to the Reality Academy): Shamans in the Primitive Age, Quantum Theorists in the Quantum Age. They need no assignment. The work of every tier is on the [Scholars and Research](knowledge.md) page.
 
-The market sells nothing for research, so your knowledge buildings are what you plan around. The tables give each tech's time for a full set of scholars.
+Research is not a resource you hold or trade, so your knowledge buildings are what you plan around. The tables give each tech's time for a full set of scholars.
 
 ---
 
 ## Strategy
 
-### Raise Research Output Early
+### Raise research output early
 
-Your first research bottleneck is the work your scholars do. Rush `primitive_writing` → `mathematics` → `philosophy` to stack research output bonuses in the first ages. Each percent you earn early pays off across every later tech.
+Your first research bottleneck is the work your scholars do. The techs that raise research output start with `language`, `primitive_writing`, `map_making`, `mathematics` and `philosophy`. Each percent you earn early shortens every later tech.
 
-### The Research Snowball
+### The research snowball
 
-Research bonuses feed on themselves: each one makes the next tech arrive sooner. The chain looks like:
+Research bonuses feed on themselves: each one makes the next tech arrive sooner. One chain through the tree runs:
+
 ```
-language → primitive_writing → mathematics → philosophy → printing_press → encyclopedia → …
+language → primitive_writing → mathematics → philosophy → alchemy → printing_press → scientific_method → encyclopedia
 ```
-Each of these raises research output, so the next tech arrives sooner in real time. The steps are small (+4% to +10%), they add up to +99% with all fifteen, and no cap stops them (see [Output of one resource](#output-of-one-resource)).
 
-### Game Speed: A Hidden Multiplier
+Each of these raises research output except Scientific Method, which cuts research time. The output steps are small (+4% to +10%), they add up to +99% with all fifteen, and no cap stops them (see [Output of one resource](#output-of-one-resource)).
 
-`chronometry` (Medieval, no prerequisites) is one of the cheapest techs for what it does. +5% game speed runs everything that counts in ticks (production, building, research, expeditions) 5% faster. Research it early, then chain `clockwork_automation` in the Industrial Age for another +10%. Line them up with `plan research chronometry` as soon as you enter the Medieval Age.
+### Getting game speed early
 
-### When to Cancel
+`chronometry` (Medieval Age, no prerequisites) gives +5% game speed, which runs everything that counts in ticks (production, building, research, expeditions) 5% faster. `clockwork_automation` in the Industrial Age follows it for another +10%. Line them up with `plan research chronometry` as soon as you enter the Medieval Age.
 
-Canceling costs you the work done on the tech. It only makes sense when a different tech gives a bonus you need now, badly enough to do the first one's work twice. As a rule: if the bar is more than halfway, finish it, and put the urgent tech at the top of your plan so it starts next.
+### When to cancel
 
-### The Grand Discovery Epoch Event
+Canceling costs you the work done on the tech. It makes sense only when a different tech gives a bonus you need now, badly enough to do the first one's work twice. If the bar is more than halfway, finishing it is usually cheaper, and you can put the urgent tech at the top of your plan so it starts next.
 
-**The Grand Discovery**, a major good epoch event, instantly completes up to 3 techs you could start now (their age reached and their prerequisites done), cheapest first, for free. It can come at an epoch transition when your culture strength is over 40% (see [Good Epoch Events](epochs.md#good-epoch-events)).
+### The Grand Discovery epoch event
 
-It takes the cheapest of the techs you could start now, up to three. A tech whose prerequisites you have not all researched, or whose either-or group you have none of, is not one of them. If fewer than three can be started, it completes the ones there are.
+The Grand Discovery, a major good epoch event, instantly completes up to 3 techs you could start now (their age reached and their prerequisites done), cheapest first, for free. It can come at an epoch transition when your culture strength is over 40% (see [Good Epoch Events](epochs.md#good-epoch-events)).
 
-If Grand Discovery completes the tech you are researching, the research slot clears automatically.
+A tech whose prerequisites you have not all researched, or whose either-or group you have none of, is not one of them. If fewer than three can be started, it completes the ones there are. If it completes the tech you are researching, the research slot clears.
 
 ### The Ancient Civilization Memory
 
-A second way to skip the research grind comes only at the start of a new run, after a prestige or a Succumb, while you are still in the Primitive or Stone Age. An **ancient cache** has a ~40% chance (once per run) to offer one technology suited to your age that you haven't researched. Accepting it starts that tech at once, **free of prerequisites and the age requirement**, but at **half the work a tick** (twice the normal time). The reachable tier scales with prestige level (one extra age of reach per two levels), so a high-prestige run can pull in a tech from an age it hasn't reached yet.
+A second way to skip research comes only at the start of a new run, after a prestige or a Succumb, in the Primitive Age. An ancient cache has a 40% chance (once per run) to offer one technology that you have not researched. Accepting it starts that tech at once, free of prerequisites and the age requirement, but at half the work a tick (twice the normal time). The offer reaches one extra age for every two prestige levels, so a high-prestige run can be offered a tech from an age it has not reached yet.
 
-Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige level 1 or higher. See [Prestige](prestige.md#ancient-civilization-memory) for full conditions.
+Unlike Grand Discovery, it never comes on your first-ever run: it needs prestige level 1 or higher. See [Prestige](prestige.md#ancient-civilization-memory) for the full conditions.
 
-### Late-Game Research Scaling
+### Late-game research scaling
 
 Prices rise steeply from the first age to the last. The work of your scholars rises with them, so build your age's knowledge building up to its full-rate count; a copy past that count still helps, at half rate.
 
 ---
 
-## Tips and Common Mistakes
+## Tips and common mistakes
 
-**Cancelling loses the work.** One bad event (The Dark Age cancels your active research and loses its work) can set you back a long way.
-
-**Prerequisites stack.** Before typing `research banking`, check that you have both `currency` and `mathematics`. `research list` shows only the techs you can start now; on the tech tree a tech that still waits has a dashed frame, and its card names what it builds on, with the techs you lack dimmed.
-
-**The Dark Age epoch event** cancels your active research and loses its work. If an epoch transition is close, consider whether to delay a long research start until after its event resolves.
-
-**Prestige resets research** entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is **Ancient Knowledge** (research time ×0.8 per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, after the first prestige, the techs [Plan Template](prestige.md#plan-template) reads from your build plan.
-
-**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but cuts research time to ×0.8 permanently, and each further epoch you Succumb in multiplies it by 0.8 again. The fallen run's completed ages also gain an [Era Mastery](prestige.md#era-mastery) level, so the rebuild is quicker. Players who Succumb at least once begin each later run with faster research from tick one. See [Succumb](catastrophe.md#succumb).
-
-**Don't overlook `civil_engineering`.** Buildings cost 3% less from the Classical Age on, for the rest of the run, and the cut multiplies with every build-cost milestone reward you earn after it. It also adds 8% to stone output.
+- Canceling loses the work. The Dark Age epoch event also cancels your active research and loses its work, and takes 40% off the work your scholars do for a while. If an epoch transition is close, consider whether to delay a long research start until after its event resolves.
+- Prerequisites stack. Before typing `research banking`, check that you have both `currency` and `mathematics`. `research list` shows only the techs you can start now; on the tech tree a tech that still waits has a dashed frame, and its card names what it builds on, with the techs you lack dimmed.
+- Prestige resets research entirely, with every tech, its bonus and the milestones that gave research speed. What survives a prestige is Ancient Knowledge (research time ×0.8 per epoch) from Succumbing, faster research times in the ages a past run completed ([Era Mastery](prestige.md#era-mastery)), and, after the first prestige, the techs [Plan Template](prestige.md#plan-template) reads from your build plan.
+- A Succumb ends the run but keeps Ancient Knowledge. Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) cuts research time to ×0.8 permanently, and each further epoch you Succumb in multiplies it by 0.8 again. The fallen run's completed ages also gain an [Era Mastery](prestige.md#era-mastery) level. Every later run begins with the faster research from the first tick. See [Succumb](catastrophe.md#succumb).
+- Civil Engineering (`civil_engineering`) makes buildings cost 3% less from the Classical Age on, for the rest of the run, and the cut multiplies with every build-cost milestone reward you earn after it. It also adds 8% to stone output.
 
 ---
 
