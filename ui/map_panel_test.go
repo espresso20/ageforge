@@ -24,10 +24,7 @@ func mapTestDashboard(t *testing.T, acct bool) (*Dashboard, *game.GameEngine) {
 		must(t, err)
 		eng.SetAccount(a)
 	}
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, _ := newTestDashboard(eng)
 	d.refresh()
 	return d, eng
 }
@@ -41,33 +38,7 @@ func (d *Dashboard) runForTest(line string) {
 // drawMapPanel draws the open Map panel on a w x h screen and returns it as text.
 func drawMapPanel(t *testing.T, d *Dashboard, w, h int) string {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(w, h)
-	d.mapPanel.SetRect(0, 0, w, h)
-	d.mapPanel.Draw(sim)
-	sim.Show()
-	return simText(sim)
-}
-
-func simText(sim tcell.SimulationScreen) string {
-	cells, w, h := sim.GetContents()
-	var sb strings.Builder
-	for y := 0; y < h; y++ {
-		var line strings.Builder
-		for x := 0; x < w; x++ {
-			c := cells[y*w+x]
-			if len(c.Runes) == 0 {
-				line.WriteByte(' ')
-			} else {
-				line.WriteRune(c.Runes[0])
-			}
-		}
-		sb.WriteString(strings.TrimRight(line.String(), " "))
-		sb.WriteByte('\n')
-	}
-	return sb.String()
+	return drawPrimitive(t, d.mapPanel, w, h).Text()
 }
 
 func key(r rune) *tcell.EventKey { return tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone) }
@@ -368,7 +339,7 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	sim.InjectKey(tcell.KeyEnter, 0, tcell.ModNone)
 	waitFor("the Map panel", func() bool { look(); return active == "map" && prompt == "" && focused })
 	var txt string
-	onLoop(func() { txt = simText(sim) })
+	onLoop(func() { txt = simCells(sim).Text() })
 	if !strings.Contains(txt, "Command") || !strings.Contains(txt, "Esc close") {
 		t.Errorf("the command bar or the key bar is missing with the map open:\n%s", txt)
 	}
@@ -381,7 +352,7 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	waitFor("Backspace in the prompt", func() bool { look(); return prompt == "" })
 
 	sim.InjectKey(tcell.KeyPgUp, 0, tcell.ModNone)
-	waitFor("PgUp to zoom out to the region", func() bool { return strings.Contains(simText(sim), "REGION") })
+	waitFor("PgUp to zoom out to the region", func() bool { return strings.Contains(simCells(sim).Text(), "REGION") })
 	onLoop(look)
 	before := title
 	sim.InjectKey(tcell.KeyTab, 0, tcell.ModNone)
