@@ -18,6 +18,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 9,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 7
   },
@@ -44,6 +47,12 @@
    ],
    "build_ticks": 9360,
    "workers": 10,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 8,
+   "line_key": "metallurgy_steel",
+   "worker_domain": "metallurgy",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "aerospace_foundry": {
@@ -70,6 +79,12 @@
    ],
    "build_ticks": 10920,
    "workers": 12,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 10,
+   "line_key": "metallurgy_titanium",
+   "worker_domain": "metallurgy",
+   "output_resource": "titanium",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "agora": {
@@ -92,6 +107,9 @@
    ],
    "build_ticks": 300,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 3,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 7
   },
@@ -114,6 +132,11 @@
    ],
    "build_ticks": 3600,
    "workers": 14,
+   "lineage_key": "food",
+   "lineage_tier": 12,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "agricultural_complex": {
@@ -134,6 +157,11 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "food",
+   "lineage_tier": 11,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "agricultural_works": {
@@ -154,6 +182,11 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "food",
+   "lineage_tier": 8,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "ai_research_lab": {
@@ -175,6 +208,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 14,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 8
   },
@@ -201,6 +237,11 @@
    ],
    "build_ticks": 150,
    "workers": 3,
+   "lineage_key": "faith",
+   "lineage_tier": 2,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "amphitheater": {
@@ -227,6 +268,10 @@
    ],
    "build_ticks": 2730,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 0,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "antimatter_forge": {
@@ -252,6 +297,12 @@
    ],
    "build_ticks": 18720,
    "workers": 20,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 15,
+   "line_key": "metallurgy_antimatter",
+   "worker_domain": "metallurgy",
+   "output_resource": "antimatter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "apartment_block": {
@@ -271,6 +322,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 10,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "aqueduct": {
@@ -293,6 +347,12 @@
    ],
    "build_ticks": 600,
    "workers": 5,
+   "lineage_key": "engineering",
+   "lineage_tier": 2,
+   "line_key": "engineering_iron",
+   "worker_domain": "engineering",
+   "output_resource": "iron",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "arcology_pod": {
@@ -313,6 +373,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 15,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "art_studio": {
@@ -337,6 +400,10 @@
    ],
    "build_ticks": 4680,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 2,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "asteroid_crystal_mine": {
@@ -357,6 +424,12 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 17,
+   "line_key": "geological_extraction_dark_matter_crystals",
+   "worker_domain": "masonry",
+   "output_resource": "dark_matter_crystals",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "asteroid_market": {
@@ -378,6 +451,12 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "trade",
+   "lineage_tier": 15,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "atomic_vault": {
@@ -398,6 +477,9 @@
    ],
    "build_ticks": 700,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 11,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "augmentation_foundry": {
@@ -425,6 +507,12 @@
    ],
    "build_ticks": 3600,
    "workers": 15,
+   "lineage_key": "engineering",
+   "lineage_tier": 13,
+   "line_key": "engineering_plasma",
+   "worker_domain": "engineering",
+   "output_resource": "plasma",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "bank": {
@@ -445,6 +533,12 @@
    ],
    "build_ticks": 3600,
    "workers": 6,
+   "lineage_key": "trade",
+   "lineage_tier": 7,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "barracks": {
@@ -459,6 +553,9 @@
    "effects": [],
    "build_ticks": 500,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 1,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 16
   },
@@ -484,6 +581,11 @@
    ],
    "build_ticks": 2400,
    "workers": 5,
+   "lineage_key": "faith",
+   "lineage_tier": 6,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "bessemer_plant": {
@@ -509,6 +611,12 @@
    ],
    "build_ticks": 7020,
    "workers": 8,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 6,
+   "line_key": "metallurgy_steel",
+   "worker_domain": "metallurgy",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "bio_fabrication_lab": {
@@ -530,6 +638,12 @@
    ],
    "build_ticks": 3600,
    "workers": 16,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 14,
+   "line_key": "organic_extraction_nanobots",
+   "worker_domain": "lumber",
+   "output_resource": "nanobots",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "bio_reactor_farm": {
@@ -551,6 +665,11 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "food",
+   "lineage_tier": 16,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "black_market": {
@@ -575,6 +694,12 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "trade",
+   "lineage_tier": 13,
+   "line_key": "trade_crypto",
+   "worker_domain": "trade",
+   "output_resource": "crypto",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "bunker_complex": {
@@ -589,6 +714,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 11,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 2245
   },
@@ -605,6 +733,9 @@
    "effects": [],
    "build_ticks": 1200,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 5,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 77
   },
@@ -630,6 +761,11 @@
    ],
    "build_ticks": 1200,
    "workers": 5,
+   "lineage_key": "faith",
+   "lineage_tier": 5,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "church": {
@@ -656,6 +792,11 @@
    ],
    "build_ticks": 3600,
    "workers": 5,
+   "lineage_key": "faith",
+   "lineage_tier": 8,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "cinema": {
@@ -681,6 +822,10 @@
    ],
    "build_ticks": 9360,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 7,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "civilization_archive": {
@@ -706,6 +851,10 @@
    ],
    "build_ticks": 18720,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 15,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "classical_vault": {
@@ -726,6 +875,9 @@
    ],
    "build_ticks": 150,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 5,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "coal_mine": {
@@ -745,6 +897,12 @@
    ],
    "build_ticks": 2400,
    "workers": 7,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 6,
+   "line_key": "organic_extraction_coal",
+   "worker_domain": "lumber",
+   "output_resource": "coal",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "coal_plant": {
@@ -765,6 +923,12 @@
    ],
    "build_ticks": 6240,
    "workers": 6,
+   "lineage_key": "energy",
+   "lineage_tier": 0,
+   "line_key": "energy_coal",
+   "worker_domain": "energy",
+   "output_resource": "coal",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "coal_works": {
@@ -784,6 +948,12 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 7,
+   "line_key": "organic_extraction_coal",
+   "worker_domain": "lumber",
+   "output_resource": "coal",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "colonial_warehouse": {
@@ -803,6 +973,9 @@
    ],
    "build_ticks": 300,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 7,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "colosseum": {
@@ -830,6 +1003,10 @@
    ],
    "build_ticks": 3900,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 3,
+   "output_resource": "culture",
+   "cost_scale": 1,
    "max_count": 1
   },
   "combat_aug_center": {
@@ -845,6 +1022,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 15,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 154503
   },
@@ -860,6 +1040,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 10,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 2900
   },
@@ -886,6 +1069,10 @@
    ],
    "build_ticks": 5460,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 3,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "consciousness_upload_hub": {
@@ -906,6 +1093,11 @@
    ],
    "build_ticks": 18720,
    "workers": 20,
+   "lineage_key": "hacker",
+   "lineage_tier": 7,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "container_terminal": {
@@ -931,6 +1123,11 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "harbor",
+   "lineage_tier": 3,
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "corporate_hq": {
@@ -951,6 +1148,12 @@
    ],
    "build_ticks": 3600,
    "workers": 7,
+   "lineage_key": "trade",
+   "lineage_tier": 9,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "cosmic_beacon": {
@@ -976,6 +1179,10 @@
    ],
    "build_ticks": 394668,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 19,
+   "output_resource": "antimatter",
+   "cost_scale": 1,
    "max_count": 1
   },
   "cosmic_organic_works": {
@@ -996,6 +1203,12 @@
    ],
    "build_ticks": 3600,
    "workers": 25,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 19,
+   "line_key": "organic_extraction_quantum_flux",
+   "worker_domain": "lumber",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "cosmic_research_station": {
@@ -1016,6 +1229,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 19,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -1036,6 +1252,12 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "trade",
+   "lineage_tier": 12,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "crystal_palace": {
@@ -1063,6 +1285,9 @@
    ],
    "build_ticks": 12480,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 8,
+   "cost_scale": 1,
    "max_count": 1
   },
   "cultural_beacon": {
@@ -1088,6 +1313,10 @@
    ],
    "build_ticks": 18720,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 14,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "cultural_obelisk": {
@@ -1108,6 +1337,9 @@
    ],
    "build_ticks": 2000,
    "workers": 0,
+   "lineage_key": "monument",
+   "lineage_tier": 0,
+   "cost_scale": 1.15,
    "max_count": 1
   },
   "cyber_command": {
@@ -1122,6 +1354,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 13,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 29780
   },
@@ -1145,6 +1380,11 @@
    ],
    "build_ticks": 14040,
    "workers": 12,
+   "lineage_key": "hacker",
+   "lineage_tier": 3,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "cyber_shrine": {
@@ -1169,6 +1409,11 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "faith",
+   "lineage_tier": 14,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "cyber_vault": {
@@ -1189,6 +1434,9 @@
    ],
    "build_ticks": 1400,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 15,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "dark_crystal_mine": {
@@ -1209,6 +1457,12 @@
    ],
    "build_ticks": 3600,
    "workers": 18,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 15,
+   "line_key": "geological_extraction_dark_matter_crystals",
+   "worker_domain": "masonry",
+   "output_resource": "dark_matter_crystals",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "dark_energy_tap": {
@@ -1231,6 +1485,12 @@
    ],
    "build_ticks": 14040,
    "workers": 13,
+   "lineage_key": "energy",
+   "lineage_tier": 7,
+   "line_key": "energy_electricity",
+   "worker_domain": "energy",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "dark_matter_refinery": {
@@ -1257,6 +1517,12 @@
    ],
    "build_ticks": 14040,
    "workers": 14,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 12,
+   "line_key": "metallurgy_dark_matter",
+   "worker_domain": "metallurgy",
+   "output_resource": "dark_matter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "data_center": {
@@ -1279,6 +1545,11 @@
    ],
    "build_ticks": 12480,
    "workers": 10,
+   "lineage_key": "hacker",
+   "lineage_tier": 2,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "deep_iron_mine": {
@@ -1308,6 +1579,12 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 7,
+   "line_key": "geological_extraction_iron_ore",
+   "worker_domain": "masonry",
+   "output_resource": "iron_ore",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "deep_space_observatory": {
@@ -1329,6 +1606,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 17,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -1349,6 +1629,11 @@
    ],
    "build_ticks": 1200,
    "workers": 6,
+   "lineage_key": "food",
+   "lineage_tier": 5,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "digital_archive": {
@@ -1369,6 +1654,9 @@
    ],
    "build_ticks": 1000,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 14,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "digital_temple": {
@@ -1394,6 +1682,11 @@
    ],
    "build_ticks": 3600,
    "workers": 7,
+   "lineage_key": "faith",
+   "lineage_tier": 13,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "dockyard": {
@@ -1413,6 +1706,12 @@
    ],
    "build_ticks": 3600,
    "workers": 7,
+   "lineage_key": "engineering",
+   "lineage_tier": 5,
+   "line_key": "engineering_steel",
+   "worker_domain": "engineering",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "drone_warfare_center": {
@@ -1428,6 +1727,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 14,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 46983
   },
@@ -1449,6 +1751,12 @@
    ],
    "build_ticks": 3600,
    "workers": 25,
+   "lineage_key": "engineering",
+   "lineage_tier": 17,
+   "line_key": "engineering_dark_matter",
+   "worker_domain": "engineering",
+   "output_resource": "dark_matter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "dyson_scaffold": {
@@ -1474,6 +1782,10 @@
    ],
    "build_ticks": 184582,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 17,
+   "output_resource": "electricity",
+   "cost_scale": 1,
    "max_count": 1
   },
   "dyson_sphere_habitat": {
@@ -1494,6 +1806,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 19,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "eiffel_tower": {
@@ -1519,6 +1834,10 @@
    ],
    "build_ticks": 14040,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 9,
+   "output_resource": "culture",
+   "cost_scale": 1,
    "max_count": 1
   },
   "elders_hall": {
@@ -1538,6 +1857,9 @@
    ],
    "build_ticks": 200,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 1,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -1564,6 +1886,12 @@
    ],
    "build_ticks": 7800,
    "workers": 9,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 7,
+   "line_key": "metallurgy_steel",
+   "worker_domain": "metallurgy",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "electric_warehouse": {
@@ -1584,6 +1912,9 @@
    ],
    "build_ticks": 600,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 10,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "embassy": {
@@ -1604,6 +1935,10 @@
    ],
    "build_ticks": 3600,
    "workers": 5,
+   "lineage_key": "",
+   "lineage_tier": 0,
+   "worker_domain": "trade",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "energy_exchange": {
@@ -1625,6 +1960,12 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "trade",
+   "lineage_tier": 14,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "estate": {
@@ -1644,6 +1985,9 @@
    ],
    "build_ticks": 2400,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 6,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "estate_farm": {
@@ -1666,6 +2010,11 @@
    ],
    "build_ticks": 600,
    "workers": 6,
+   "lineage_key": "food",
+   "lineage_tier": 4,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "eternal_library_monument": {
@@ -1686,6 +2035,9 @@
    ],
    "build_ticks": 6240,
    "workers": 0,
+   "lineage_key": "monument",
+   "lineage_tier": 0,
+   "cost_scale": 1.15,
    "max_count": 1
   },
   "exchange": {
@@ -1705,6 +2057,12 @@
    ],
    "build_ticks": 2400,
    "workers": 5,
+   "lineage_key": "trade",
+   "lineage_tier": 4,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "exotic_matter_forge": {
@@ -1731,6 +2089,12 @@
    ],
    "build_ticks": 15600,
    "workers": 16,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 13,
+   "line_key": "metallurgy_dark_matter",
+   "worker_domain": "metallurgy",
+   "output_resource": "dark_matter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "exotic_mineral_extractor": {
@@ -1751,6 +2115,12 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 16,
+   "line_key": "geological_extraction_dark_matter_crystals",
+   "worker_domain": "masonry",
+   "output_resource": "dark_matter_crystals",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "farm": {
@@ -1770,6 +2140,11 @@
    ],
    "build_ticks": 150,
    "workers": 5,
+   "lineage_key": "food",
+   "lineage_tier": 2,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "field_works": {
@@ -1792,6 +2167,11 @@
    ],
    "build_ticks": 300,
    "workers": 5,
+   "lineage_key": "food",
+   "lineage_tier": 3,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "financial_district": {
@@ -1812,6 +2192,12 @@
    ],
    "build_ticks": 3600,
    "workers": 7,
+   "lineage_key": "trade",
+   "lineage_tier": 8,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "fleet_command": {
@@ -1826,6 +2212,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 18,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 1513556
   },
@@ -1846,6 +2235,11 @@
    ],
    "build_ticks": 30,
    "workers": 4,
+   "lineage_key": "food",
+   "lineage_tier": 1,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "forge": {
@@ -1866,6 +2260,12 @@
    ],
    "build_ticks": 600,
    "workers": 4,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 1,
+   "line_key": "metallurgy_iron",
+   "worker_domain": "metallurgy",
+   "output_resource": "iron",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "fort": {
@@ -1879,6 +2279,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 7,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 279
   },
@@ -1894,6 +2297,9 @@
    "effects": [],
    "build_ticks": 2400,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 6,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 145
   },
@@ -1915,6 +2321,12 @@
    ],
    "build_ticks": 2400,
    "workers": 5,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 3,
+   "line_key": "metallurgy_steel",
+   "worker_domain": "metallurgy",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "fusion_reactor": {
@@ -1940,6 +2352,12 @@
    ],
    "build_ticks": 3600,
    "workers": 18,
+   "lineage_key": "engineering",
+   "lineage_tier": 14,
+   "line_key": "engineering_plasma",
+   "worker_domain": "engineering",
+   "output_resource": "plasma",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "fusion_reactor_array": {
@@ -1966,6 +2384,12 @@
    ],
    "build_ticks": 15600,
    "workers": 15,
+   "lineage_key": "energy",
+   "lineage_tier": 8,
+   "line_key": "energy_plasma",
+   "worker_domain": "energy",
+   "output_resource": "plasma",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "fusion_vault": {
@@ -1986,6 +2410,9 @@
    ],
    "build_ticks": 1950,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 16,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "galactic_network_node": {
@@ -2006,6 +2433,11 @@
    ],
    "build_ticks": 18720,
    "workers": 18,
+   "lineage_key": "hacker",
+   "lineage_tier": 6,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "galactic_trade_hub": {
@@ -2026,6 +2458,12 @@
    ],
    "build_ticks": 3600,
    "workers": 15,
+   "lineage_key": "trade",
+   "lineage_tier": 16,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "galactic_vault": {
@@ -2046,6 +2484,9 @@
    ],
    "build_ticks": 2340,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 19,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "garrison": {
@@ -2060,6 +2501,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 9,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 1825
   },
@@ -2079,6 +2523,11 @@
    ],
    "build_ticks": 12,
    "workers": 3,
+   "lineage_key": "food",
+   "lineage_tier": 0,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "generation_ship": {
@@ -2099,6 +2548,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 18,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "geographic_society": {
@@ -2113,6 +2565,10 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "",
+   "lineage_tier": 0,
+   "worker_domain": "military",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "global_network": {
@@ -2140,6 +2596,10 @@
    ],
    "build_ticks": 30576,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 13,
+   "output_resource": "data",
+   "cost_scale": 1,
    "max_count": 1
   },
   "granary": {
@@ -2159,6 +2619,9 @@
    ],
    "build_ticks": 120,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 3,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "grand_amphitheatre_monument": {
@@ -2179,6 +2642,9 @@
    ],
    "build_ticks": 3510,
    "workers": 0,
+   "lineage_key": "monument",
+   "lineage_tier": 0,
+   "cost_scale": 1.15,
    "max_count": 1
   },
   "grand_cathedral": {
@@ -2204,6 +2670,11 @@
    ],
    "build_ticks": 3600,
    "workers": 6,
+   "lineage_key": "faith",
+   "lineage_tier": 9,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "grand_embassy": {
@@ -2223,6 +2694,10 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "",
+   "lineage_tier": 0,
+   "worker_domain": "trade",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "grand_lighthouse": {
@@ -2248,6 +2723,10 @@
    ],
    "build_ticks": 10920,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 7,
+   "output_resource": "gold",
+   "cost_scale": 1,
    "max_count": 1
   },
   "grand_museum": {
@@ -2273,6 +2752,10 @@
    ],
    "build_ticks": 7020,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 5,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "great_hall": {
@@ -2299,6 +2782,10 @@
    ],
    "build_ticks": 3510,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 1,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "great_library": {
@@ -2323,6 +2810,10 @@
    ],
    "build_ticks": 7020,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 5,
+   "output_resource": "knowledge",
+   "cost_scale": 1,
    "max_count": 1
   },
   "great_monolith": {
@@ -2343,6 +2834,10 @@
    ],
    "build_ticks": 450,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 1,
+   "output_resource": "knowledge",
+   "cost_scale": 1,
    "max_count": 1
   },
   "guildhall": {
@@ -2362,6 +2857,12 @@
    ],
    "build_ticks": 1200,
    "workers": 4,
+   "lineage_key": "trade",
+   "lineage_tier": 3,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "habitat_ring": {
@@ -2382,6 +2883,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 16,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "harbor": {
@@ -2406,6 +2910,11 @@
    ],
    "build_ticks": 3000,
    "workers": 4,
+   "lineage_key": "harbor",
+   "lineage_tier": 0,
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "harbor_authority": {
@@ -2431,6 +2940,11 @@
    ],
    "build_ticks": 3300,
    "workers": 5,
+   "lineage_key": "harbor",
+   "lineage_tier": 1,
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "holographic_theater": {
@@ -2457,6 +2971,10 @@
    ],
    "build_ticks": 14040,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 11,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "hoover_dam": {
@@ -2481,6 +2999,10 @@
    ],
    "build_ticks": 15600,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 10,
+   "output_resource": "electricity",
+   "cost_scale": 1,
    "max_count": 1
   },
   "house": {
@@ -2500,6 +3022,9 @@
    ],
    "build_ticks": 150,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 2,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "housing_project": {
@@ -2519,6 +3044,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 11,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "hunting_lodge": {
@@ -2531,6 +3059,9 @@
    "effects": [],
    "build_ticks": 80,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 2,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 10
   },
@@ -2550,6 +3081,9 @@
    ],
    "build_ticks": 8,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 0,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "hydroponic_bay": {
@@ -2571,6 +3105,11 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "food",
+   "lineage_tier": 17,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "industrial_depot": {
@@ -2591,6 +3130,9 @@
    ],
    "build_ticks": 400,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 8,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "industrial_farm": {
@@ -2611,6 +3153,11 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "food",
+   "lineage_tier": 10,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "info_vault": {
@@ -2631,6 +3178,9 @@
    ],
    "build_ticks": 900,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 13,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "innovation_hub": {
@@ -2651,6 +3201,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 13,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 8
   },
@@ -2673,6 +3226,12 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "trade",
+   "lineage_tier": 10,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "iron_mine": {
@@ -2702,6 +3261,12 @@
    ],
    "build_ticks": 2400,
    "workers": 7,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 6,
+   "line_key": "geological_extraction_iron_ore",
+   "worker_domain": "masonry",
+   "output_resource": "iron_ore",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "iron_works": {
@@ -2721,6 +3286,12 @@
    ],
    "build_ticks": 3600,
    "workers": 6,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 4,
+   "line_key": "metallurgy_steel",
+   "worker_domain": "metallurgy",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "iron_works_complex": {
@@ -2741,6 +3312,12 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "engineering",
+   "lineage_tier": 6,
+   "line_key": "engineering_steel",
+   "worker_domain": "engineering",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "ironmonger": {
@@ -2762,6 +3339,12 @@
    ],
    "build_ticks": 1200,
    "workers": 5,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 2,
+   "line_key": "metallurgy_iron",
+   "worker_domain": "metallurgy",
+   "output_resource": "iron",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "ironworks": {
@@ -2783,6 +3366,12 @@
    ],
    "build_ticks": 300,
    "workers": 5,
+   "lineage_key": "engineering",
+   "lineage_tier": 1,
+   "line_key": "engineering_iron",
+   "worker_domain": "engineering",
+   "output_resource": "iron",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "keep": {
@@ -2803,6 +3392,9 @@
    ],
    "build_ticks": 200,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 4,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "launch_complex": {
@@ -2824,6 +3416,12 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "engineering",
+   "lineage_tier": 15,
+   "line_key": "engineering_plasma",
+   "worker_domain": "engineering",
+   "output_resource": "plasma",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "legion_fort": {
@@ -2840,6 +3438,9 @@
    "effects": [],
    "build_ticks": 300,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 3,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 10
   },
@@ -2863,6 +3464,9 @@
    ],
    "build_ticks": 600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 4,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 8
   },
@@ -2888,6 +3492,11 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "harbor",
+   "lineage_tier": 4,
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "longhouse": {
@@ -2907,6 +3516,9 @@
    ],
    "build_ticks": 60,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 1,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "lumber_mill": {
@@ -2927,6 +3539,12 @@
    ],
    "build_ticks": 150,
    "workers": 5,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 2,
+   "line_key": "organic_extraction_wood",
+   "worker_domain": "lumber",
+   "output_resource": "wood",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "mainframe_hall": {
@@ -2946,6 +3564,11 @@
    ],
    "build_ticks": 9360,
    "workers": 8,
+   "lineage_key": "hacker",
+   "lineage_tier": 0,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "manor": {
@@ -2965,6 +3588,9 @@
    ],
    "build_ticks": 1200,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 5,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "marble_quarry": {
@@ -2999,6 +3625,12 @@
    ],
    "build_ticks": 300,
    "workers": 5,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 3,
+   "line_key": "geological_extraction_stone",
+   "worker_domain": "masonry",
+   "output_resource": "stone",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "marble_works": {
@@ -3034,6 +3666,12 @@
    ],
    "build_ticks": 600,
    "workers": 6,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 4,
+   "line_key": "geological_extraction_stone",
+   "worker_domain": "masonry",
+   "output_resource": "stone",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "market": {
@@ -3054,6 +3692,12 @@
    ],
    "build_ticks": 150,
    "workers": 3,
+   "lineage_key": "trade",
+   "lineage_tier": 0,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "market_garden": {
@@ -3073,6 +3717,11 @@
    ],
    "build_ticks": 2400,
    "workers": 7,
+   "lineage_key": "food",
+   "lineage_tier": 6,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "matter_converter": {
@@ -3093,6 +3742,11 @@
    ],
    "build_ticks": 3600,
    "workers": 25,
+   "lineage_key": "food",
+   "lineage_tier": 19,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "mechanized_farm": {
@@ -3113,6 +3767,11 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "food",
+   "lineage_tier": 9,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "media_center": {
@@ -3138,6 +3797,10 @@
    ],
    "build_ticks": 10920,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 9,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "meditation_center": {
@@ -3164,6 +3827,11 @@
    ],
    "build_ticks": 3600,
    "workers": 7,
+   "lineage_key": "faith",
+   "lineage_tier": 12,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "megaplex": {
@@ -3184,6 +3852,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 14,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "merchant_quarter": {
@@ -3206,6 +3877,12 @@
    ],
    "build_ticks": 600,
    "workers": 4,
+   "lineage_key": "trade",
+   "lineage_tier": 2,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "military_academy": {
@@ -3222,6 +3899,9 @@
    "effects": [],
    "build_ticks": 600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 4,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 24
   },
@@ -3237,6 +3917,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 8,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 1287
   },
@@ -3258,6 +3941,12 @@
    ],
    "build_ticks": 2400,
    "workers": 6,
+   "lineage_key": "engineering",
+   "lineage_tier": 4,
+   "line_key": "engineering_steel",
+   "worker_domain": "engineering",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "mission": {
@@ -3282,6 +3971,11 @@
    ],
    "build_ticks": 3600,
    "workers": 5,
+   "lineage_key": "faith",
+   "lineage_tier": 7,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "modern_depot": {
@@ -3302,6 +3996,9 @@
    ],
    "build_ticks": 800,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 12,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "molecular_synthesizer": {
@@ -3323,6 +4020,12 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 16,
+   "line_key": "organic_extraction_nanobots",
+   "worker_domain": "lumber",
+   "output_resource": "nanobots",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "monastery_library": {
@@ -3342,6 +4045,9 @@
    ],
    "build_ticks": 1200,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 5,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -3362,6 +4068,9 @@
    ],
    "build_ticks": 9360,
    "workers": 0,
+   "lineage_key": "monument",
+   "lineage_tier": 0,
+   "cost_scale": 1.15,
    "max_count": 1
   },
   "nano_alloy_plant": {
@@ -3389,6 +4098,12 @@
    ],
    "build_ticks": 12480,
    "workers": 13,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 11,
+   "line_key": "metallurgy_titanium",
+   "worker_domain": "metallurgy",
+   "output_resource": "titanium",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "nano_drill_complex": {
@@ -3409,6 +4124,12 @@
    ],
    "build_ticks": 3600,
    "workers": 16,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 14,
+   "line_key": "geological_extraction_titanium_ore",
+   "worker_domain": "masonry",
+   "output_resource": "titanium_ore",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "nano_farm": {
@@ -3430,6 +4151,11 @@
    ],
    "build_ticks": 3600,
    "workers": 16,
+   "lineage_key": "food",
+   "lineage_tier": 14,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "nano_foundry": {
@@ -3451,6 +4177,10 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "",
+   "lineage_tier": 0,
+   "worker_domain": "engineering",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "nanobot_vat": {
@@ -3472,6 +4202,12 @@
    ],
    "build_ticks": 3600,
    "workers": 18,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 15,
+   "line_key": "organic_extraction_nanobots",
+   "worker_domain": "lumber",
+   "output_resource": "nanobots",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "natural_philosophy_hall": {
@@ -3491,6 +4227,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 7,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -3519,6 +4258,10 @@
    ],
    "build_ticks": 77052,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 15,
+   "output_resource": "crypto",
+   "cost_scale": 1,
    "max_count": 1
   },
   "neon_sanctuary": {
@@ -3545,6 +4288,11 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "faith",
+   "lineage_tier": 15,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "neural_art_complex": {
@@ -3571,6 +4319,10 @@
    ],
    "build_ticks": 15600,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 12,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "neural_grid": {
@@ -3593,6 +4345,12 @@
    ],
    "build_ticks": 3600,
    "workers": 14,
+   "lineage_key": "engineering",
+   "lineage_tier": 12,
+   "line_key": "engineering_electricity",
+   "worker_domain": "engineering",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "neuro_research_center": {
@@ -3614,6 +4372,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 15,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -3635,6 +4396,12 @@
    ],
    "build_ticks": 3600,
    "workers": 25,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 19,
+   "line_key": "geological_extraction_antimatter",
+   "worker_domain": "masonry",
+   "output_resource": "antimatter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "nuclear_extraction_plant": {
@@ -3654,6 +4421,12 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 10,
+   "line_key": "geological_extraction_uranium",
+   "worker_domain": "masonry",
+   "output_resource": "uranium",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "nuclear_plant": {
@@ -3674,6 +4447,12 @@
    ],
    "build_ticks": 3600,
    "workers": 11,
+   "lineage_key": "engineering",
+   "lineage_tier": 9,
+   "line_key": "engineering_electricity",
+   "worker_domain": "engineering",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "nuclear_reactor": {
@@ -3694,6 +4473,12 @@
    ],
    "build_ticks": 9360,
    "workers": 9,
+   "lineage_key": "energy",
+   "lineage_tier": 3,
+   "line_key": "energy_electricity",
+   "worker_domain": "energy",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "oil_derrick": {
@@ -3714,6 +4499,12 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 9,
+   "line_key": "organic_extraction_oil",
+   "worker_domain": "lumber",
+   "output_resource": "oil",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "oil_field": {
@@ -3734,6 +4525,12 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 10,
+   "line_key": "organic_extraction_oil",
+   "worker_domain": "lumber",
+   "output_resource": "oil",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "oil_platform": {
@@ -3755,6 +4552,12 @@
    ],
    "build_ticks": 3600,
    "workers": 14,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 12,
+   "line_key": "organic_extraction_oil",
+   "worker_domain": "lumber",
+   "output_resource": "oil",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "oil_refinery": {
@@ -3781,6 +4584,12 @@
    ],
    "build_ticks": 9360,
    "workers": 10,
+   "lineage_key": "energy",
+   "lineage_tier": 4,
+   "line_key": "energy_oil",
+   "worker_domain": "energy",
+   "output_resource": "oil",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "omniversal_bazaar": {
@@ -3801,6 +4610,12 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "trade",
+   "lineage_tier": 19,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "omniversal_war_council": {
@@ -3815,6 +4630,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 21,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 6880954
   },
@@ -3841,6 +4659,10 @@
    ],
    "build_ticks": 6240,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 4,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "oracle_house": {
@@ -3868,6 +4690,11 @@
    ],
    "build_ticks": 600,
    "workers": 4,
+   "lineage_key": "faith",
+   "lineage_tier": 4,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "orbital_data_relay": {
@@ -3889,6 +4716,11 @@
    ],
    "build_ticks": 17160,
    "workers": 16,
+   "lineage_key": "hacker",
+   "lineage_tier": 5,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "orbital_depot": {
@@ -3909,6 +4741,9 @@
    ],
    "build_ticks": 2145,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 17,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "orbital_habitat": {
@@ -3929,6 +4764,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 17,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "orbital_refinery": {
@@ -3954,6 +4792,12 @@
    ],
    "build_ticks": 17160,
    "workers": 18,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 14,
+   "line_key": "metallurgy_titanium",
+   "worker_domain": "metallurgy",
+   "output_resource": "titanium",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "orbital_sanctuary": {
@@ -3980,6 +4824,11 @@
    ],
    "build_ticks": 3600,
    "workers": 9,
+   "lineage_key": "faith",
+   "lineage_tier": 17,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "parthenon": {
@@ -4007,6 +4856,10 @@
    ],
    "build_ticks": 5000,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 4,
+   "output_resource": "culture",
+   "cost_scale": 1,
    "max_count": 1
   },
   "particle_accelerator": {
@@ -4032,6 +4885,10 @@
    ],
    "build_ticks": 18720,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 11,
+   "output_resource": "knowledge",
+   "cost_scale": 1,
    "max_count": 1
   },
   "petroleum_refinery": {
@@ -4052,6 +4909,12 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 11,
+   "line_key": "organic_extraction_oil",
+   "worker_domain": "lumber",
+   "output_resource": "oil",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "physics_laboratory": {
@@ -4072,6 +4935,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 10,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 8
   },
@@ -4092,6 +4958,11 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "food",
+   "lineage_tier": 7,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "plasma_command": {
@@ -4107,6 +4978,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 16,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 178653
   },
@@ -4127,6 +5001,12 @@
    ],
    "build_ticks": 3600,
    "workers": 5,
+   "lineage_key": "trade",
+   "lineage_tier": 5,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "power_generator": {
@@ -4147,6 +5027,12 @@
    ],
    "build_ticks": 7800,
    "workers": 8,
+   "lineage_key": "energy",
+   "lineage_tier": 2,
+   "line_key": "energy_electricity",
+   "worker_domain": "energy",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "power_grid_hub": {
@@ -4168,6 +5054,12 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "engineering",
+   "lineage_tier": 10,
+   "line_key": "engineering_electricity",
+   "worker_domain": "engineering",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "power_station": {
@@ -4187,6 +5079,12 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "engineering",
+   "lineage_tier": 8,
+   "line_key": "engineering_electricity",
+   "worker_domain": "engineering",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "precision_mine": {
@@ -4207,6 +5105,12 @@
    ],
    "build_ticks": 3600,
    "workers": 15,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 13,
+   "line_key": "geological_extraction_titanium_ore",
+   "worker_domain": "masonry",
+   "output_resource": "titanium_ore",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "probability_market": {
@@ -4227,6 +5131,12 @@
    ],
    "build_ticks": 3600,
    "workers": 18,
+   "lineage_key": "trade",
+   "lineage_tier": 18,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "probability_war_room": {
@@ -4241,6 +5151,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 20,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 2495437
   },
@@ -4262,6 +5175,11 @@
    ],
    "build_ticks": 3600,
    "workers": 25,
+   "lineage_key": "food",
+   "lineage_tier": 18,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "pulsar_tap": {
@@ -4287,6 +5205,12 @@
    ],
    "build_ticks": 18720,
    "workers": 18,
+   "lineage_key": "energy",
+   "lineage_tier": 10,
+   "line_key": "energy_plasma",
+   "worker_domain": "energy",
+   "output_resource": "plasma",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quantum_battery_array": {
@@ -4309,6 +5233,12 @@
    ],
    "build_ticks": 12480,
    "workers": 12,
+   "lineage_key": "energy",
+   "lineage_tier": 6,
+   "line_key": "energy_electricity",
+   "worker_domain": "energy",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quantum_chapel": {
@@ -4335,6 +5265,11 @@
    ],
    "build_ticks": 3600,
    "workers": 9,
+   "lineage_key": "faith",
+   "lineage_tier": 16,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quantum_cultivator": {
@@ -4355,6 +5290,11 @@
    ],
    "build_ticks": 3600,
    "workers": 30,
+   "lineage_key": "food",
+   "lineage_tier": 20,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quantum_metal_works": {
@@ -4375,6 +5315,12 @@
    ],
    "build_ticks": 18720,
    "workers": 25,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 17,
+   "line_key": "metallurgy_quantum_flux",
+   "worker_domain": "metallurgy",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quantum_organic_extractor": {
@@ -4396,6 +5342,12 @@
    ],
    "build_ticks": 3600,
    "workers": 20,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 17,
+   "line_key": "organic_extraction_quantum_flux",
+   "worker_domain": "lumber",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quantum_server_farm": {
@@ -4417,6 +5369,11 @@
    ],
    "build_ticks": 15600,
    "workers": 14,
+   "lineage_key": "hacker",
+   "lineage_tier": 4,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quantum_vault": {
@@ -4437,6 +5394,9 @@
    ],
    "build_ticks": 2340,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 20,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "quarry": {
@@ -4457,6 +5417,12 @@
    ],
    "build_ticks": 150,
    "workers": 5,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 2,
+   "line_key": "geological_extraction_stone",
+   "worker_domain": "masonry",
+   "output_resource": "stone",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "quasar_tap": {
@@ -4477,6 +5443,12 @@
    ],
    "build_ticks": 18720,
    "workers": 20,
+   "lineage_key": "energy",
+   "lineage_tier": 11,
+   "line_key": "energy_dark_matter",
+   "worker_domain": "energy",
+   "output_resource": "dark_matter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "radio_station": {
@@ -4502,6 +5474,10 @@
    ],
    "build_ticks": 7800,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 6,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "reality_academy": {
@@ -4522,6 +5498,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 20,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 10
   },
@@ -4548,6 +5527,10 @@
    ],
    "build_ticks": 552536,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 20,
+   "output_resource": "quantum_flux",
+   "cost_scale": 1,
    "max_count": 1
   },
   "reality_art_engine": {
@@ -4573,6 +5556,10 @@
    ],
    "build_ticks": 18720,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 16,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "reality_excavator": {
@@ -4591,6 +5578,12 @@
    ],
    "build_ticks": 3600,
    "workers": 30,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 20,
+   "line_key": "geological_extraction_antimatter",
+   "worker_domain": "masonry",
+   "output_resource": "antimatter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "reality_fold": {
@@ -4611,6 +5604,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 20,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "reality_forge": {
@@ -4635,6 +5631,12 @@
    ],
    "build_ticks": 3600,
    "workers": 30,
+   "lineage_key": "engineering",
+   "lineage_tier": 18,
+   "line_key": "engineering_quantum_flux",
+   "worker_domain": "engineering",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "reality_harvester": {
@@ -4653,6 +5655,12 @@
    ],
    "build_ticks": 3600,
    "workers": 30,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 20,
+   "line_key": "organic_extraction_quantum_flux",
+   "worker_domain": "lumber",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "reality_matter_weaver": {
@@ -4673,6 +5681,12 @@
    ],
    "build_ticks": 3600,
    "workers": 25,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 18,
+   "line_key": "organic_extraction_quantum_flux",
+   "worker_domain": "lumber",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "reality_processor": {
@@ -4693,6 +5707,11 @@
    ],
    "build_ticks": 18720,
    "workers": 25,
+   "lineage_key": "hacker",
+   "lineage_tier": 8,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "renaissance_vault": {
@@ -4713,6 +5732,9 @@
    ],
    "build_ticks": 250,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 6,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "research_campus": {
@@ -4733,6 +5755,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 11,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 9
   },
@@ -4754,6 +5779,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 8,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -4780,6 +5808,11 @@
    ],
    "build_ticks": 3600,
    "workers": 6,
+   "lineage_key": "faith",
+   "lineage_tier": 10,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "row_house": {
@@ -4799,6 +5832,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 9,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "sacred_grove": {
@@ -4823,6 +5859,10 @@
    ],
    "build_ticks": 150,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 0,
+   "output_resource": "knowledge",
+   "cost_scale": 1,
    "max_count": 1
   },
   "sawmill": {
@@ -4842,6 +5882,12 @@
    ],
    "build_ticks": 1200,
    "workers": 6,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 5,
+   "line_key": "organic_extraction_wood",
+   "worker_domain": "lumber",
+   "output_resource": "wood",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "scriptorium": {
@@ -4862,6 +5908,9 @@
    ],
    "build_ticks": 150,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 2,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -4889,6 +5938,11 @@
    ],
    "build_ticks": 3600,
    "workers": 6,
+   "lineage_key": "harbor",
+   "lineage_tier": 2,
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "server_farm": {
@@ -4909,6 +5963,11 @@
    ],
    "build_ticks": 10920,
    "workers": 8,
+   "lineage_key": "hacker",
+   "lineage_tier": 1,
+   "worker_domain": "hacker",
+   "output_resource": "data",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "settlement_block": {
@@ -4927,6 +5986,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 7,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "shrine": {
@@ -4950,6 +6012,11 @@
    ],
    "build_ticks": 75,
    "workers": 2,
+   "lineage_key": "faith",
+   "lineage_tier": 0,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "singularity_core": {
@@ -4975,6 +6042,10 @@
    ],
    "build_ticks": 773550,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 21,
+   "output_resource": "quantum_flux",
+   "cost_scale": 1,
    "max_count": 1
   },
   "singularity_engine": {
@@ -4995,6 +6066,12 @@
    ],
    "build_ticks": 3600,
    "workers": 35,
+   "lineage_key": "engineering",
+   "lineage_tier": 19,
+   "line_key": "engineering_quantum_flux",
+   "worker_domain": "engineering",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "sistine_chapel": {
@@ -5021,6 +6098,10 @@
    ],
    "build_ticks": 9360,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 6,
+   "output_resource": "culture",
+   "cost_scale": 1,
    "max_count": 1
   },
   "smart_complex": {
@@ -5041,6 +6122,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 13,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "smart_energy_grid": {
@@ -5062,6 +6146,12 @@
    ],
    "build_ticks": 10920,
    "workers": 11,
+   "lineage_key": "energy",
+   "lineage_tier": 5,
+   "line_key": "energy_electricity",
+   "worker_domain": "energy",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "smart_farm": {
@@ -5083,6 +6173,11 @@
    ],
    "build_ticks": 3600,
    "workers": 15,
+   "lineage_key": "food",
+   "lineage_tier": 13,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "smart_grid_node": {
@@ -5104,6 +6199,12 @@
    ],
    "build_ticks": 3600,
    "workers": 13,
+   "lineage_key": "engineering",
+   "lineage_tier": 11,
+   "line_key": "engineering_electricity",
+   "worker_domain": "engineering",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "smart_refinery": {
@@ -5125,6 +6226,12 @@
    ],
    "build_ticks": 3600,
    "workers": 15,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 13,
+   "line_key": "organic_extraction_oil",
+   "worker_domain": "lumber",
+   "output_resource": "oil",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "smelter": {
@@ -5146,6 +6253,12 @@
    ],
    "build_ticks": 400,
    "workers": 4,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 0,
+   "line_key": "metallurgy_iron",
+   "worker_domain": "metallurgy",
+   "output_resource": "iron",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "smithy": {
@@ -5165,6 +6278,12 @@
    ],
    "build_ticks": 150,
    "workers": 4,
+   "lineage_key": "engineering",
+   "lineage_tier": 0,
+   "line_key": "engineering_iron",
+   "worker_domain": "engineering",
+   "output_resource": "iron",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "solar_collector_array": {
@@ -5191,6 +6310,12 @@
    ],
    "build_ticks": 17160,
    "workers": 16,
+   "lineage_key": "energy",
+   "lineage_tier": 9,
+   "line_key": "energy_plasma",
+   "worker_domain": "energy",
+   "output_resource": "plasma",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "space_force_base": {
@@ -5206,6 +6331,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 17,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 481364
   },
@@ -5233,6 +6361,10 @@
    ],
    "build_ticks": 18720,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 12,
+   "output_resource": "knowledge",
+   "cost_scale": 1,
    "max_count": 1
   },
   "special_ops_hq": {
@@ -5248,6 +6380,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 12,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 21178
   },
@@ -5274,6 +6409,11 @@
    ],
    "build_ticks": 3600,
    "workers": 6,
+   "lineage_key": "faith",
+   "lineage_tier": 11,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "standing_stones": {
@@ -5298,6 +6438,11 @@
    ],
    "build_ticks": 200,
    "workers": 2,
+   "lineage_key": "faith",
+   "lineage_tier": 1,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stash": {
@@ -5316,6 +6461,9 @@
    ],
    "build_ticks": 9,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 0,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "steam_coal_plant": {
@@ -5336,6 +6484,12 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 8,
+   "line_key": "organic_extraction_coal",
+   "worker_domain": "lumber",
+   "output_resource": "coal",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "steam_mine": {
@@ -5366,6 +6520,12 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 8,
+   "line_key": "geological_extraction_iron_ore",
+   "worker_domain": "masonry",
+   "output_resource": "iron_ore",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "steam_turbine": {
@@ -5391,6 +6551,12 @@
    ],
    "build_ticks": 7020,
    "workers": 7,
+   "lineage_key": "energy",
+   "lineage_tier": 1,
+   "line_key": "energy_electricity",
+   "worker_domain": "energy",
+   "output_resource": "electricity",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "steam_works": {
@@ -5416,6 +6582,12 @@
    ],
    "build_ticks": 3600,
    "workers": 9,
+   "lineage_key": "engineering",
+   "lineage_tier": 7,
+   "line_key": "engineering_steel",
+   "worker_domain": "engineering",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "steel_mill": {
@@ -5436,6 +6608,12 @@
    ],
    "build_ticks": 5000,
    "workers": 7,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 5,
+   "line_key": "metallurgy_steel",
+   "worker_domain": "metallurgy",
+   "output_resource": "steel",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stellar_armada_hq": {
@@ -5450,6 +6628,9 @@
    "effects": [],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 19,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 3577940
   },
@@ -5471,6 +6652,12 @@
    ],
    "build_ticks": 3600,
    "workers": 25,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 18,
+   "line_key": "geological_extraction_antimatter",
+   "worker_domain": "masonry",
+   "output_resource": "antimatter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stellar_cradle": {
@@ -5497,6 +6684,10 @@
    ],
    "build_ticks": 119858,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 16,
+   "output_resource": "plasma",
+   "cost_scale": 1,
    "max_count": 1
   },
   "stellar_exchange": {
@@ -5517,6 +6708,12 @@
    ],
    "build_ticks": 3600,
    "workers": 15,
+   "lineage_key": "trade",
+   "lineage_tier": 17,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stellar_metallurgy": {
@@ -5541,6 +6738,12 @@
    ],
    "build_ticks": 18720,
    "workers": 22,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 16,
+   "line_key": "metallurgy_antimatter",
+   "worker_domain": "metallurgy",
+   "output_resource": "antimatter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stellar_shrine": {
@@ -5566,6 +6769,11 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "faith",
+   "lineage_tier": 19,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stellar_vault": {
@@ -5586,6 +6794,9 @@
    ],
    "build_ticks": 2340,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 18,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "stock_exchange": {
@@ -5606,6 +6817,12 @@
    ],
    "build_ticks": 3600,
    "workers": 6,
+   "lineage_key": "trade",
+   "lineage_tier": 6,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stone_camp": {
@@ -5624,6 +6841,12 @@
    ],
    "build_ticks": 80,
    "workers": 3,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 0,
+   "line_key": "geological_extraction_stone",
+   "worker_domain": "masonry",
+   "output_resource": "stone",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stone_pit": {
@@ -5643,6 +6866,12 @@
    ],
    "build_ticks": 200,
    "workers": 4,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 1,
+   "line_key": "geological_extraction_stone",
+   "worker_domain": "masonry",
+   "output_resource": "stone",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "stonehenge": {
@@ -5668,6 +6897,10 @@
    ],
    "build_ticks": 2340,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 2,
+   "output_resource": "knowledge",
+   "cost_scale": 1,
    "max_count": 1
   },
   "stonemasons_guild": {
@@ -5697,6 +6930,12 @@
    ],
    "build_ticks": 1200,
    "workers": 6,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 5,
+   "line_key": "geological_extraction_iron_ore",
+   "worker_domain": "masonry",
+   "output_resource": "iron_ore",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "storage_pit": {
@@ -5716,6 +6955,9 @@
    ],
    "build_ticks": 28,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 1,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "story_circle": {
@@ -5734,6 +6976,9 @@
    ],
    "build_ticks": 75,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 0,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -5762,6 +7007,11 @@
    ],
    "build_ticks": 300,
    "workers": 3,
+   "lineage_key": "faith",
+   "lineage_tier": 3,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "tenement": {
@@ -5781,6 +7031,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 8,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "theoretical_institute": {
@@ -5802,6 +7055,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 16,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -5824,6 +7080,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 12,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 10
   },
@@ -5847,6 +7106,12 @@
    ],
    "build_ticks": 300,
    "workers": 5,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 3,
+   "line_key": "organic_extraction_wood",
+   "worker_domain": "lumber",
+   "output_resource": "wood",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "titanium_mine": {
@@ -5867,6 +7132,12 @@
    ],
    "build_ticks": 3600,
    "workers": 14,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 12,
+   "line_key": "geological_extraction_titanium_ore",
+   "worker_domain": "masonry",
+   "output_resource": "titanium_ore",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "titanium_smelter": {
@@ -5893,6 +7164,12 @@
    ],
    "build_ticks": 9360,
    "workers": 11,
+   "lineage_key": "metallurgy",
+   "lineage_tier": 9,
+   "line_key": "metallurgy_titanium",
+   "worker_domain": "metallurgy",
+   "output_resource": "titanium",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "tower_block": {
@@ -5912,6 +7189,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 12,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "townhouse": {
@@ -5931,6 +7211,9 @@
    ],
    "build_ticks": 300,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 3,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "trading_post": {
@@ -5952,6 +7235,12 @@
    ],
    "build_ticks": 300,
    "workers": 3,
+   "lineage_key": "trade",
+   "lineage_tier": 1,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "transcendence_hall": {
@@ -5977,6 +7266,11 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "faith",
+   "lineage_tier": 20,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "transcendent_nexus": {
@@ -5997,6 +7291,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 21,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "tv_studio": {
@@ -6023,6 +7320,10 @@
    ],
    "build_ticks": 9360,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 8,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "university": {
@@ -6042,6 +7343,9 @@
    ],
    "build_ticks": 2400,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 6,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 7
   },
@@ -6068,6 +7372,12 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 9,
+   "line_key": "geological_extraction_uranium",
+   "worker_domain": "masonry",
+   "output_resource": "uranium",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "uranium_processing_works": {
@@ -6092,6 +7402,12 @@
    ],
    "build_ticks": 3600,
    "workers": 12,
+   "lineage_key": "geological_extraction",
+   "lineage_tier": 11,
+   "line_key": "geological_extraction_uranium",
+   "worker_domain": "masonry",
+   "output_resource": "uranium",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "vat_farm": {
@@ -6113,6 +7429,11 @@
    ],
    "build_ticks": 3600,
    "workers": 18,
+   "lineage_key": "food",
+   "lineage_tier": 15,
+   "worker_domain": "food",
+   "output_resource": "food",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "venture_hub": {
@@ -6133,6 +7454,12 @@
    ],
    "build_ticks": 3600,
    "workers": 8,
+   "lineage_key": "trade",
+   "lineage_tier": 11,
+   "line_key": "trade_gold",
+   "worker_domain": "trade",
+   "output_resource": "gold",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "victorian_vault": {
@@ -6153,6 +7480,9 @@
    ],
    "build_ticks": 500,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 9,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "villa": {
@@ -6172,6 +7502,9 @@
    ],
    "build_ticks": 600,
    "workers": 0,
+   "lineage_key": "housing",
+   "lineage_tier": 4,
+   "cost_scale": 1.13,
    "max_count": 0
   },
   "void_monastery": {
@@ -6197,6 +7530,11 @@
    ],
    "build_ticks": 3600,
    "workers": 10,
+   "lineage_key": "faith",
+   "lineage_tier": 18,
+   "worker_domain": "faith",
+   "output_resource": "faith",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "vr_studio": {
@@ -6223,6 +7561,10 @@
    ],
    "build_ticks": 12480,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 10,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "war_camp": {
@@ -6236,6 +7578,9 @@
    "effects": [],
    "build_ticks": 200,
    "workers": 0,
+   "lineage_key": "military",
+   "lineage_tier": 0,
+   "cost_scale": 1.15,
    "max_count": 0,
    "soldiers": 9
   },
@@ -6257,6 +7602,9 @@
    ],
    "build_ticks": 80,
    "workers": 0,
+   "lineage_key": "storage",
+   "lineage_tier": 2,
+   "cost_scale": 1.75,
    "max_count": 0
   },
   "warp_drive_plant": {
@@ -6281,6 +7629,12 @@
    ],
    "build_ticks": 3600,
    "workers": 22,
+   "lineage_key": "engineering",
+   "lineage_tier": 16,
+   "line_key": "engineering_dark_matter",
+   "worker_domain": "engineering",
+   "output_resource": "dark_matter",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "warp_nexus": {
@@ -6306,6 +7660,10 @@
    ],
    "build_ticks": 281906,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 18,
+   "output_resource": "dark_matter",
+   "cost_scale": 1,
    "max_count": 1
   },
   "wood_camp": {
@@ -6324,6 +7682,12 @@
    ],
    "build_ticks": 20,
    "workers": 3,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 0,
+   "line_key": "organic_extraction_wood",
+   "worker_domain": "lumber",
+   "output_resource": "wood",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "wood_workshop": {
@@ -6346,6 +7710,12 @@
    ],
    "build_ticks": 600,
    "workers": 6,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 4,
+   "line_key": "organic_extraction_wood",
+   "worker_domain": "lumber",
+   "output_resource": "wood",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "woodcutter_camp": {
@@ -6365,6 +7735,12 @@
    ],
    "build_ticks": 50,
    "workers": 4,
+   "lineage_key": "organic_extraction",
+   "lineage_tier": 1,
+   "line_key": "organic_extraction_wood",
+   "worker_domain": "lumber",
+   "output_resource": "wood",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "workshop": {
@@ -6386,6 +7762,12 @@
    ],
    "build_ticks": 1200,
    "workers": 6,
+   "lineage_key": "engineering",
+   "lineage_tier": 3,
+   "line_key": "engineering_iron",
+   "worker_domain": "engineering",
+   "output_resource": "iron",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "world_simulation": {
@@ -6412,6 +7794,10 @@
    ],
    "build_ticks": 48922,
    "workers": 0,
+   "lineage_key": "wonder",
+   "lineage_tier": 14,
+   "output_resource": "data",
+   "cost_scale": 1,
    "max_count": 1
   },
   "xenology_institute": {
@@ -6432,6 +7818,9 @@
    ],
    "build_ticks": 3600,
    "workers": 0,
+   "lineage_key": "knowledge",
+   "lineage_tier": 18,
+   "cost_scale": 1.5,
    "max_count": 0,
    "full_rate_copies": 5
   },
@@ -6459,6 +7848,10 @@
    ],
    "build_ticks": 17160,
    "workers": 0,
+   "lineage_key": "culture_arts",
+   "lineage_tier": 13,
+   "output_resource": "culture",
+   "cost_scale": 1.15,
    "max_count": 0
   },
   "zero_point_generator": {
@@ -6479,6 +7872,12 @@
    ],
    "build_ticks": 18720,
    "workers": 25,
+   "lineage_key": "energy",
+   "lineage_tier": 12,
+   "line_key": "energy_quantum_flux",
+   "worker_domain": "energy",
+   "output_resource": "quantum_flux",
+   "cost_scale": 1.15,
    "max_count": 0
   }
  },

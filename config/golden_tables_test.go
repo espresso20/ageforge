@@ -20,8 +20,17 @@ type goldenBuilding struct {
 	Effects    []goldenEffect     `json:"effects"`
 	BuildTicks int                `json:"build_ticks"`
 	Workers    int                `json:"workers"`
-	MaxCount   int                `json:"max_count"`
-	Soldiers   int                `json:"soldiers,omitempty"`
+	// The lineage fields sit before MaxCount so a record written before they
+	// existed is only added to, never changed. LineKey, WorkerDomain and
+	// OutputResource are left out when empty.
+	LineageKey     string  `json:"lineage_key"`
+	LineageTier    int     `json:"lineage_tier"`
+	LineKey        string  `json:"line_key,omitempty"`
+	WorkerDomain   string  `json:"worker_domain,omitempty"`
+	OutputResource string  `json:"output_resource,omitempty"`
+	CostScale      float64 `json:"cost_scale"`
+	MaxCount       int     `json:"max_count"`
+	Soldiers       int     `json:"soldiers,omitempty"`
 	// FullRateCopies is a knowledge building's soft cap: the copies that
 	// research at full rate, half past it.
 	FullRateCopies int `json:"full_rate_copies,omitempty"`
@@ -67,7 +76,8 @@ func liveGoldenTables() goldenTables {
 	defs := BaseBuildings()
 	for _, d := range defs {
 		b := goldenBuilding{Category: d.Category, Age: d.RequiredAge, Cost: d.BaseCost, Rate: d.CostScale,
-			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Soldiers: d.Soldiers, FullRateCopies: d.FullRateCopies, Effects: []goldenEffect{}}
+			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Soldiers: d.Soldiers, FullRateCopies: d.FullRateCopies, Effects: []goldenEffect{},
+			LineageKey: d.LineageKey, LineageTier: d.LineageTier, LineKey: d.LineKey, WorkerDomain: d.WorkerDomain, OutputResource: d.OutputResource, CostScale: d.CostScale}
 		for _, e := range d.Effects {
 			b.Effects = append(b.Effects, goldenEffect{Type: e.Type, Target: e.Target, Value: e.Value})
 		}
