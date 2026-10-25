@@ -7,88 +7,68 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
+// sectionFrom adds a report section whose body is what write renders, less
+// the heading write opens with (trim; "" for none), which the section's own
+// title replaces.
+func sectionFrom(res *Findings, title, trim string, write func(sb *strings.Builder)) {
+	var sb strings.Builder
+	write(&sb)
+	res.section(title, "%s", strings.TrimPrefix(sb.String(), trim))
+}
+
+// failEach records a failure for every problem: check names the check it
+// broke, msg says what is wrong.
+func failEach[T any](res *Findings, problems []T, check, msg func(T) string) {
+	for _, p := range problems {
+		res.fail(check(p), "%s", msg(p))
+	}
+}
+
+// say is a problem as the report prints it: its String.
+func say[T any](p T) string { return fmt.Sprint(p) }
+
 // runStatic is the static scenario: every check that reads config alone, with
 // a failure for each problem and a report section for each check.
 func runStatic(res *Findings) {
 	problems := StaticGates()
-	var sb strings.Builder
-	writeGates(&sb, problems)
-	for _, g := range problems {
-		res.fail("gate_"+g.Kind, "%s -> %s: %s %s (need %s)", g.From, g.To, g.Key, g.Resource, num(g.Need))
-	}
+	failEach(res, problems, func(g GateProblem) string { return "gate_" + g.Kind }, func(g GateProblem) string {
+		return fmt.Sprintf("%s -> %s: %s %s (need %s)", g.From, g.To, g.Key, g.Resource, num(g.Need))
+	})
 	sp, rows := StaticStorage()
-	for _, p := range sp {
-		res.fail("storage_"+p.Rule, "%s", p)
-	}
+	failEach(res, sp, func(p StorageProblem) string { return "storage_" + p.Rule }, say[StorageProblem])
 	mp, mr := StaticMilestones()
-	for _, p := range mp {
-		res.fail("milestone_"+p.Kind, "%s", p.Why)
-	}
+	failEach(res, mp, func(p MilestoneProblem) string { return "milestone_" + p.Kind }, func(p MilestoneProblem) string { return p.Why })
 	ar := StaticAppeaseRules()
-	for _, p := range ar {
-		res.fail("appease_"+p.Rule, "%s", p)
-	}
+	failEach(res, ar, func(p AppeaseRuleProblem) string { return "appease_" + p.Rule }, say[AppeaseRuleProblem])
 	br := StaticBraceRules()
-	for _, p := range br {
-		res.fail("brace_"+p.Rule, "%s", p)
-	}
+	failEach(res, br, func(p BraceRuleProblem) string { return "brace_" + p.Rule }, say[BraceRuleProblem])
 	fp, fr := StaticFaithStrength()
-	for _, p := range fp {
-		res.fail("faith_"+p.Rule, "%s", p)
-	}
+	failEach(res, fp, func(p FaithStrengthProblem) string { return "faith_" + p.Rule }, say[FaithStrengthProblem])
 	cp, cr := StaticCultureStrength()
-	for _, p := range cp {
-		res.fail("culture_"+p.Rule, "%s", p)
-	}
+	failEach(res, cp, func(p CultureStrengthProblem) string { return "culture_" + p.Rule }, say[CultureStrengthProblem])
 	pp, pr := StaticCulturePrices()
-	for _, p := range pp {
-		res.fail("culture_price_"+p.Rule, "%s", p)
-	}
+	failEach(res, pp, func(p CulturePriceProblem) string { return "culture_price_" + p.Rule }, say[CulturePriceProblem])
 	dp := StaticDepth()
-	for _, p := range dp {
-		res.fail("depth_points", "%s", p)
-	}
+	failEach(res, dp, func(string) string { return "depth_points" }, say[string])
 	rr := StaticResearch()
-	research := 0
+	var research []string
 	for _, r := range rr {
-		for _, p := range r.Problems() {
-			research++
-			res.fail("research_covenant", "%s", p)
-		}
+		research = append(research, r.Problems()...)
 	}
+	failEach(res, research, func(string) string { return "research_covenant" }, say[string])
 	bp, breach, bfirst := staticBadgesFull()
-	for _, p := range bp {
-		res.fail("badge_"+p.Kind, "%s", p.Why)
-	}
-	res.Summary = fmt.Sprintf("%d gate problem(s); %d departure(s) from the storage check; %d milestone problem(s); %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d culture price(s) out of band; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(sp), len(mp), len(ar), len(br), len(fp), len(cp), len(pp), len(dp), research, len(bp))
-	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
-	var st strings.Builder
-	writeStorage(&st, sp, rows)
-	res.section("Storage check", "%s", st.String())
-	var mf strings.Builder
-	writeMilestones(&mf, mp, mr)
-	res.section("Milestone feasibility", "%s", mf.String())
-	var hf strings.Builder
-	writeHarbingerPrices(&hf, ar, br)
-	res.section("Harbinger prices against the warning", "%s", hf.String())
-	var ff strings.Builder
-	writeFaithStrength(&ff, fp, fr)
-	res.section("Faith strength", "%s", ff.String())
-	var cuf strings.Builder
-	writeCultureStrength(&cuf, cp, cr)
-	res.section("Culture strength", "%s", cuf.String())
-	var cpf strings.Builder
-	writeCulturePrices(&cpf, pp, pr)
-	res.section("Culture prices", "%s", cpf.String())
-	var df strings.Builder
-	writeDepthStatic(&df, dp)
-	res.section("Depth points", "%s", df.String())
-	var rf strings.Builder
-	writeResearch(&rf, rr)
-	res.section("Research Covenant", "%s", rf.String())
-	var lf strings.Builder
-	writeFeatureLocks(&lf, StaticFeatureLocks())
-	res.section("Feature locks", "%s", lf.String())
+	failEach(res, bp, func(p BadgeProblem) string { return "badge_" + p.Kind }, func(p BadgeProblem) string { return p.Why })
+	res.Summary = fmt.Sprintf("%d gate problem(s); %d departure(s) from the storage check; %d milestone problem(s); %d Appease price(s) off the warning; %d Brace price(s) off their warning; %d faith band(s) out of reach; %d culture tier(s) out of reach; %d culture price(s) out of band; %d depth point problem(s); %d research problem(s); %d badge problem(s)", len(problems), len(sp), len(mp), len(ar), len(br), len(fp), len(cp), len(pp), len(dp), len(research), len(bp))
+	sectionFrom(res, "Static gate check", "\n## Static gate check\n\n", func(sb *strings.Builder) { writeGates(sb, problems) })
+	sectionFrom(res, "Storage check", "", func(sb *strings.Builder) { writeStorage(sb, sp, rows) })
+	sectionFrom(res, "Milestone feasibility", "", func(sb *strings.Builder) { writeMilestones(sb, mp, mr) })
+	sectionFrom(res, "Harbinger prices against the warning", "", func(sb *strings.Builder) { writeHarbingerPrices(sb, ar, br) })
+	sectionFrom(res, "Faith strength", "", func(sb *strings.Builder) { writeFaithStrength(sb, fp, fr) })
+	sectionFrom(res, "Culture strength", "", func(sb *strings.Builder) { writeCultureStrength(sb, cp, cr) })
+	sectionFrom(res, "Culture prices", "", func(sb *strings.Builder) { writeCulturePrices(sb, pp, pr) })
+	sectionFrom(res, "Depth points", "", func(sb *strings.Builder) { writeDepthStatic(sb, dp) })
+	sectionFrom(res, "Research Covenant", "", func(sb *strings.Builder) { writeResearch(sb, rr) })
+	sectionFrom(res, "Feature locks", "", func(sb *strings.Builder) { writeFeatureLocks(sb, StaticFeatureLocks()) })
 	// The model's all-production pool is held to what a game can hold.
 	caps := StaticCaps()
 	for _, r := range caps {
@@ -96,18 +76,10 @@ func runStatic(res *Findings) {
 			res.fail("pool_model", "%s: the pacing model holds +%.0f%% all production, more than the +%.0f%% a player with every milestone, wonder and monument can", r.Age, held*100, r.All()*100)
 		}
 	}
-	var cf strings.Builder
-	writeCaps(&cf, caps)
-	res.section("Bonus pools against their caps", "%s", cf.String())
+	sectionFrom(res, "Bonus pools against their caps", "", func(sb *strings.Builder) { writeCaps(sb, caps) })
 	// The economy's properties, for the three reference players.
 	props := StaticProperties()
-	for _, p := range props.Problems() {
-		res.fail("property", "%s", p)
-	}
-	var pf strings.Builder
-	writeProperties(&pf, props)
-	res.section("The economy's properties, by calculation", "%s", pf.String())
-	var bf strings.Builder
-	writeBadges(&bf, bp, breach, bfirst)
-	res.section("Badge Covenant", "%s", strings.TrimPrefix(bf.String(), "\n### Badges\n\n"))
+	failEach(res, props.Problems(), func(string) string { return "property" }, say[string])
+	sectionFrom(res, "The economy's properties, by calculation", "", func(sb *strings.Builder) { writeProperties(sb, props) })
+	sectionFrom(res, "Badge Covenant", "\n### Badges\n\n", func(sb *strings.Builder) { writeBadges(sb, bp, breach, bfirst) })
 }
