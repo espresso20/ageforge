@@ -3,55 +3,14 @@ package ui
 import (
 	"strings"
 	"testing"
-
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
-
-	"github.com/espresso20/ageforge/game"
 )
-
-// renderPages draws pages onto a fresh w×h SimulationScreen and returns the
-// screen as plain text, one line per row.
-func renderPages(t *testing.T, pages *tview.Pages, w, h int) string {
-	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatalf("sim.Init: %v", err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
-	pages.SetRect(0, 0, w, h)
-	pages.Draw(sim)
-	sim.Show()
-
-	cells, cw, ch := sim.GetContents()
-	var sb strings.Builder
-	for y := 0; y < ch; y++ {
-		for x := 0; x < cw; x++ {
-			b := cells[y*cw+x].Bytes
-			if len(b) == 0 {
-				b = []byte{' '}
-			}
-			sb.Write(b)
-		}
-		sb.WriteByte('\n')
-	}
-	return sb.String()
-}
-
-func newLabelTestDashboard() (*Dashboard, *tview.Pages) {
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), game.NewGameEngine(), pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
-	return d, pages
-}
 
 // Button labels like "[ENDURE]" parse as tview style tags and render blank
 // unless escaped. These check what actually lands on screen, shortcuts included.
 func TestCatastropheModalButtonLabelsVisible(t *testing.T) {
-	d, pages := newLabelTestDashboard()
+	d, pages := newTestDashboard(nil)
 	d.showCatastropheModal("iron_era")
-	screen := renderPages(t, pages, 160, 50)
+	screen := drawPrimitive(t, pages, 160, 50).Text()
 	wantAll(t, "catastrophe modal", screen, "[E] ENDURE", "[S] SUCCUMB", "type 'catastrophe' to reopen")
 	// Defer is gone: the choice waits behind Esc + the `catastrophe` command.
 	if strings.Contains(screen, "Defer") {
@@ -60,8 +19,8 @@ func TestCatastropheModalButtonLabelsVisible(t *testing.T) {
 }
 
 func TestAncientMemoryModalButtonLabelsVisible(t *testing.T) {
-	d, pages := newLabelTestDashboard()
+	d, pages := newTestDashboard(nil)
 	d.showAncientMemoryModal("fire_mastery", "")
-	screen := renderPages(t, pages, 160, 50)
+	screen := drawPrimitive(t, pages, 160, 50).Text()
 	wantAll(t, "ancient memory modal", screen, "[A] Accept", "[D] Decline")
 }
