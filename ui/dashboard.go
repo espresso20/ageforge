@@ -200,6 +200,8 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.updateSidebar("")
 		d.returnFocus()
 	})
+	// The text panels' frames fold to ASCII with the map glyphs.
+	d.overlayMgr.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
 	d.overlayMgr.Register("milestones", vibe.E("ui.dashboard.NewDashboard.01", "Milestones"), milestonesProvider)
 	// The Research panel: the tech tree as a map. Like the Map it leaves
 	// the keyboard with the command bar.
@@ -212,20 +214,20 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 			h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
 		}
 	}
-	d.overlayMgr.RegisterWidget("techs", vibe.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update, true)
+	d.overlayMgr.RegisterWidget("techs", vibe.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
 	// The badge case: the account's badges. It leaves the keyboard with the
 	// command bar too.
 	d.badgePanel.settings = d.mapSettings
 	d.badgePanel.prompt = d.researchPanel.prompt
 	d.badgePanel.toPrompt = d.researchPanel.toPrompt
-	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update, true)
+	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
 	d.overlayMgr.Register("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), militaryProvider)
 	// The Expeditions panel leaves the keyboard with the command bar too.
 	d.expPanel.engine = d.engine
 	d.expPanel.settings = d.mapSettings
 	d.expPanel.prompt = d.researchPanel.prompt
 	d.expPanel.toPrompt = d.researchPanel.toPrompt
-	d.overlayMgr.RegisterWidget("expedition", vibe.E("ui.dashboard.NewDashboard.05", "Expeditions"), d.expPanel.open, d.expPanel.update, true)
+	d.overlayMgr.RegisterWidget("expedition", vibe.E("ui.dashboard.NewDashboard.05", "Expeditions"), d.expPanel.open, d.expPanel.update)
 	d.overlayMgr.Register("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradeProvider)
 	// The Factions panel, under two names pointing at one provider (the
 	// citymap/map precedent below). "factions" is the primary — it is what the
@@ -243,6 +245,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)
 	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
 	d.overlayMgr.SetBackHandler("wonders", d.wonders.back)
+	d.overlayMgr.SetFooter("wonders", d.wonders.footer)
 	d.overlayMgr.SetKeyHandler("wonders", func(event *tcell.EventKey) *tcell.EventKey {
 		// tview goroutine, no engine lock held (see the harbinger handler).
 		if !d.wonders.handleKey(event, d.engine.GetState()) {
@@ -255,11 +258,12 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	// the command bar as well.
 	d.peoplePanel.settings = d.mapSettings
 	d.peoplePanel.toPrompt = d.researchPanel.toPrompt
-	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update, true)
+	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
 	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), epochProvider)
 	d.overlayMgr.Register("harbinger", vibe.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
+	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
 	d.overlayMgr.SetKeyHandler("harbinger", func(event *tcell.EventKey) *tcell.EventKey {
 		// tview goroutine, no engine lock held: the engine's action methods and
 		// GetState take their own locks.
@@ -270,6 +274,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		return nil
 	})
 	d.overlayMgr.Register("plan", vibe.E("ui.dashboard.NewDashboard.15", "Build Plan"), d.planPanel.provider)
+	d.overlayMgr.SetFooter("plan", planFooter)
 	d.overlayMgr.SetKeyHandler("plan", func(event *tcell.EventKey) *tcell.EventKey {
 		// tview goroutine, no engine lock held (see the harbinger handler).
 		if !d.planPanel.handleKey(event, d.engine) {
@@ -311,7 +316,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 			h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
 		}
 	}
-	d.overlayMgr.RegisterWidget("map", vibe.E("ui.dashboard.NewDashboard.19", "Map"), d.mapPanel.open, d.mapPanel.update, true)
+	d.overlayMgr.RegisterWidget("map", vibe.E("ui.dashboard.NewDashboard.19", "Map"), d.mapPanel.open, d.mapPanel.update)
 
 	// The icons check is a window of its own (icons.go). It logs through
 	// the engine and brings the install's progress and outcome back to the
@@ -632,6 +637,11 @@ func (d *Dashboard) build() {
 			d.advancePanel.routeKey(event, d.inputField.GetText()) {
 			return nil
 		}
+		// The open text panels (Milestones, Stats, Help and the rest) scroll
+		// with the keys that print nothing while the bar is empty.
+		if d.overlayMgr != nil && d.inputField.HasFocus() && d.overlayMgr.scrollKey(event, d.inputField.GetText()) {
+			return nil
+		}
 		switch event.Key() {
 		case resourcePageKey:
 			// The Resources box's next page, when it has more rows than it
@@ -878,7 +888,6 @@ func (d *Dashboard) syncVibe() {
 		d.vibeSeen = on
 		d.retitle()
 		d.economyTab.retitle()
-		d.overlayMgr.RetitleAll()
 		// A box that keeps the text it wrote for its size writes it again.
 		for _, v := range []*fitView{d.sidebar, d.statusTV, d.workerMiniTV,
 			d.economyTab.resourceTV, d.economyTab.buildingTV, d.economyTab.constructionTV} {
@@ -1609,7 +1618,7 @@ func (d *Dashboard) submitInput() {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
-		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" || result.OverlayName == "people" || result.OverlayName == "charter" {
+		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" || result.OverlayName == "people" || result.OverlayName == "charter" || d.overlayMgr.keepsBar(result.OverlayName) {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
 		}

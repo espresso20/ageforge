@@ -132,6 +132,14 @@ func (wv *wondersView) sync(list []wonderInfo) {
 	}
 }
 
+// footer is the keys on the panel's foot: the list's, or the gallery's.
+func (wv *wondersView) footer() [][2]string {
+	if wv.gallery {
+		return [][2]string{{"←→", "step"}, {"Home End", vibe.Line("ui.wonders_view.footer.03", "first, last")}, {"Tab", "list"}, {"Esc", "back"}}
+	}
+	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", vibe.Line("ui.wonders_view.footer.09", "page")}, {"Tab", "gallery"}, {"Esc", "close"}}
+}
+
 // galleryKeys is the line of keys under the picture.
 func galleryKeys(many bool) string {
 	if !many {

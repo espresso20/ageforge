@@ -1241,8 +1241,6 @@ ui.newgame_modal.showSaveNameModalOpts.01,Drop a name:
 ui.newgame_modal.showSaveNameModalOpts.02,Esc: nah
 ui.newgame_modal.showSaveNameModalOpts.03,"Esc: bet, keep it"
 ui.newgame_modal.showSaveNameModalOpts.04,[gray]Enter: lock it in  ·  Tab: reroll name  ·  
-ui.overlay.Register.01," (Esc to bounce) "
-ui.overlay.buildWidgetRoot.01," (Esc to dip) "
 ui.overlay_buildings.buildingsProvider.01,"[gold]═══ Builds: %d dropped, %d unlocked ═══[-]
 "
 ui.overlay_buildings.buildingsProvider.02," [gray]Every age so far, full lore. Drop one with: build <key> (current age only).[-]
