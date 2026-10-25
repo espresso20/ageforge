@@ -317,19 +317,6 @@ func hubSprite(W, H int) *sprite {
 			s.pset(x, py, sl)
 		}
 	}
-	ellipse := func(ex, ey, rx, ry float64, fill func(dx, dy float64) slot) {
-		for py := int(ey - ry - 1); py <= int(ey+ry+1); py++ {
-			for x := int(ex - rx - 1); x <= int(ex+rx+1); x++ {
-				dx := (float64(x) + 0.5 - ex) / rx
-				dy := (float64(py) + 0.5 - ey) / ry
-				if float64(dx*dx)+float64(dy*dy) <= 1 {
-					if sl := fill(dx, dy); sl != sNone {
-						set(x, py, sl)
-					}
-				}
-			}
-		}
-	}
 	curve := func(x0, y0, x1, y1, x2, y2 float64, sl slot, thick int) {
 		for i := 0; i <= 80; i++ {
 			t := float64(i) / 80
@@ -368,7 +355,7 @@ func hubSprite(W, H int) *sprite {
 		set(tx+1, int(mid-P*0.37)-1, sNeon1)
 	}
 	// the docking ring, a great flat ellipse with a gold rim
-	ellipse(cx, mid, float64(W)*0.47, P*0.075, func(dx, dy float64) slot {
+	disc(s, cx, mid, float64(W)*0.47, P*0.075, func(dx, dy float64) slot {
 		switch {
 		case dy < -0.25:
 			return sTrim
@@ -378,8 +365,8 @@ func hubSprite(W, H int) *sprite {
 		return sWall
 	})
 	// the habitat ring above it and the core's bulge
-	ellipse(cx, mid-P*0.09, float64(W)*0.22, P*0.06, lit(sWallLit, sWall, sWallShade))
-	ellipse(cx, mid+P*0.05, float64(W)*0.06, P*0.12, lit(sWallLit, sWall, sWallShade))
+	disc(s, cx, mid-P*0.09, float64(W)*0.22, P*0.06, lit(sWallLit, sWall, sWallShade))
+	disc(s, cx, mid+P*0.05, float64(W)*0.06, P*0.12, lit(sWallLit, sWall, sWallShade))
 	// windows on the habitat ring, lights on the rim, the reactor's glow
 	wy := int(mid-P*0.09) / 2
 	for x := int(cx - float64(W)*0.2); x < int(cx+float64(W)*0.2); x += 2 {
