@@ -344,39 +344,30 @@ func TestHelpListsResearchKeys(t *testing.T) {
 // cell the panel draws can be told from its background.
 func TestResearchTreePaintsInEveryTheme(t *testing.T) {
 	st := classicalGame(t).GetState()
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		must(t, theme.SetActive(th.Key))
+	eachThemeInline(t, func(th theme.Theme) {
 		for _, size := range treeSizes {
 			w, h := size[0], size[1]-promptRows
-			scr := tcell.NewSimulationScreen("UTF-8")
-			must(t, scr.Init())
-			scr.SetSize(w, h)
 			p := newResearchPanel()
 			p.view.sel = "road_building"
 			p.SetRect(0, 0, w, h)
 			p.update(st)
-			p.Draw(scr)
-			scr.Show()
-			cells, cw, _ := scr.GetContents()
+			f := drawPrimitive(t, p, w, h)
 			seen := 0
-			for i, c := range cells {
+			for i, c := range f.Cells() {
 				if len(c.Runes) == 0 || c.Runes[0] == ' ' {
 					continue
 				}
 				seen++
 				fg, bg, _ := c.Style.Decompose()
 				if fg == bg {
-					t.Fatalf("theme %s at %dx%d: cell %d,%d (%q) is drawn in its own background colour", th.Key, w, h, i%cw, i/cw, c.Runes[0])
+					t.Fatalf("theme %s at %dx%d: cell %d,%d (%q) is drawn in its own background colour", th.Key, w, h, i%f.w, i/f.w, c.Runes[0])
 				}
 			}
 			if seen < w {
 				t.Errorf("theme %s at %dx%d: the panel drew %d cells", th.Key, w, h, seen)
 			}
-			scr.Fini()
 		}
-	}
+	})
 }
 
 // TestResearchTreeTellsStatesApartByShape: each state has a mark or a
