@@ -97,7 +97,7 @@ jobs:
           ARGS: ${{ matrix.args }}
         run: go run -tags smokebot ./cmd/smoke -tier full -scenario "$SCENARIOS" -only "$ONLY" -skip "$SKIP" $ARGS -v -out smoke-report
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: smoke-nightly-${{ matrix.id }}
@@ -124,7 +124,7 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: smoke-nightly-*
           path: shards
@@ -158,7 +158,7 @@ jobs:
             echo "The smoke run wrote no report; see the step log." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: smoke-report
@@ -177,7 +177,7 @@ jobs:
       - name: Email the report
         if: ${{ always() && env.MAIL_ENABLED == 'true' && steps.email.outcome == 'success' }}
         # dawidd6/action-send-mail v22
-        uses: dawidd6/action-send-mail@67ce3558d613188179559c61d3565140cf389968
+        uses: dawidd6/action-send-mail@47af4a10b540781705f283a2cf1a9650713ac795
         with:
           server_address: smtp.gmail.com
           server_port: 465
@@ -219,7 +219,7 @@ jobs:
       - name: Play seed ${{ matrix.seed }} to a Quantum Age prestige
         run: go run -tags smokebot ./cmd/smoke -tier deep -scenario progression -seed-base ${{ matrix.seed }} -seeds 1 -pacing report -v -out smoke-report
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: smoke-deep-seed-${{ matrix.seed }}
@@ -244,7 +244,7 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: smoke-deep-seed-*
           path: seeds
@@ -278,7 +278,7 @@ jobs:
             echo "The merge wrote no report; see the step log." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:
           name: smoke-report-deep
@@ -297,7 +297,7 @@ jobs:
       - name: Email the report
         if: ${{ always() && env.MAIL_ENABLED == 'true' && steps.email.outcome == 'success' }}
         # dawidd6/action-send-mail v22
-        uses: dawidd6/action-send-mail@67ce3558d613188179559c61d3565140cf389968
+        uses: dawidd6/action-send-mail@47af4a10b540781705f283a2cf1a9650713ac795
         with:
           server_address: smtp.gmail.com
           server_port: 465
