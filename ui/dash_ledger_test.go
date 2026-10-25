@@ -751,9 +751,7 @@ func TestLedgerResizeShowsTheRightLedger(t *testing.T) {
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "bronze_age")
 	drawnDashboard(t, d, pages, 80, 24)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	t.Cleanup(sim.Fini)
+	sim := newSimScreen(t, 160, 45)
 	screen := theme.WrapScreen(sim)
 	for _, sz := range []struct{ w, h int }{{160, 45}, {80, 24}, {100, 30}, {160, 45}} {
 		sim.SetSize(sz.w, sz.h)
