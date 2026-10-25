@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -73,10 +72,7 @@ func BackupAccount(id string) (string, error) {
 		}
 	}
 
-	id8 := id
-	if len(id8) > 8 {
-		id8 = id8[:8]
-	}
+	id8 := shortID(id)
 
 	backupsRoot := filepath.Join(rootDataDir(), backupsDirName)
 	if err := os.MkdirAll(backupsRoot, 0755); err != nil {
@@ -98,23 +94,11 @@ func BackupAccount(id string) (string, error) {
 	if err := copyFile(srcAccount, filepath.Join(dst, accountFileName)); err != nil {
 		return "", fmt.Errorf("failed to back up account.json: %w", err)
 	}
-	// And the badge file beside it, when the account has one.
-	srcBadges := filepath.Join(slot, badgeFileName)
-	if _, err := os.Stat(srcBadges); err == nil {
-		if err := copyFile(srcBadges, filepath.Join(dst, badgeFileName)); err != nil {
-			return "", fmt.Errorf("failed to back up badges.json: %w", err)
+	// And the badge and settings files beside it, when the account has them.
+	for _, file := range []string{badgeFileName, settingsFileName} {
+		if err := copyIfExists(slot, dst, file); err != nil {
+			return "", err
 		}
-	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("failed to stat badges.json for backup: %w", err)
-	}
-	// And the settings file, when the account has one.
-	srcSettings := filepath.Join(slot, settingsFileName)
-	if _, err := os.Stat(srcSettings); err == nil {
-		if err := copyFile(srcSettings, filepath.Join(dst, settingsFileName)); err != nil {
-			return "", fmt.Errorf("failed to back up settings.json: %w", err)
-		}
-	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("failed to stat settings.json for backup: %w", err)
 	}
 
 	// Copy the slot's saves/ subtree if present (a slot may legitimately have none yet).
@@ -221,80 +205,60 @@ func (ge *GameEngine) BackupAccount(id string) (string, error) {
 
 // backupNameSlug FS-safe-cleans a display name for use in a backup dir name. It first reuses
 // cleanSaveName (trim + collapse internal whitespace), then replaces any character that is not
-// a letter, digit, dash, or underscore with a dash, and finally collapses the spaces it kept
-// into single dashes. The result never contains a path separator or other shell/FS-hostile
-// character, so the backup dir name is always safe. Returns "" when nothing usable remains.
+// a letter, digit, dash, or underscore with a dash, and finally collapses runs of dashes into
+// one and trims them from the ends. The result never contains a path separator or other
+// shell/FS-hostile character, so the backup dir name is always safe. Returns "" when nothing
+// usable remains.
 func backupNameSlug(name string) string {
-	cleaned := cleanSaveName(name)
-	if cleaned == "" {
-		return ""
-	}
-	var b strings.Builder
-	for _, r := range cleaned {
+	slug := strings.Map(func(r rune) rune {
 		switch {
 		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_':
-			b.WriteRune(r)
-		case r == ' ':
-			b.WriteByte('-')
-		default:
-			b.WriteByte('-')
+			return r
 		}
-	}
-	// Collapse runs of dashes and trim leading/trailing dashes for a tidy slug.
-	slug := b.String()
-	for strings.Contains(slug, "--") {
-		slug = strings.ReplaceAll(slug, "--", "-")
-	}
-	return strings.Trim(slug, "-")
+		return '-'
+	}, cleanSaveName(name))
+	return strings.Join(strings.FieldsFunc(slug, func(r rune) bool { return r == '-' }), "-")
 }
 
 // pruneAccountBackups keeps only the newest backupRetention backup dirs whose name carries the
 // "-<id8>-" infix for THIS account, os.RemoveAll-ing the rest. It matches by the id8 segment so
-// it is robust to the cleanname prefix and never touches a DIFFERENT account's backups. Dirs
-// are ordered by name (the trailing YYYYMMDD-HHMMSS[-nanos] stamp sorts chronologically), with
-// ModTime as a tiebreaker, so "newest" is well-defined. Best-effort: errors are swallowed (a
-// failed prune must not fail an already-successful backup).
+// it is robust to the cleanname prefix and never touches a DIFFERENT account's backups. ReadDir
+// lists the dirs by name, and the trailing YYYYMMDD-HHMMSS[-nanos] stamp sorts chronologically,
+// so the oldest come first. Best-effort: errors are swallowed (a failed prune must not fail an
+// already-successful backup).
 func pruneAccountBackups(backupsRoot, id8 string) {
 	entries, err := os.ReadDir(backupsRoot)
 	if err != nil {
 		return
 	}
+	// Match this account's snapshots by the id8 infix; the cleanname prefix varies and the
+	// timestamp suffix follows, so the infix is the stable, account-specific key.
 	infix := "-" + id8 + "-"
-	type backupEntry struct {
-		name    string
-		modTime time.Time
-	}
-	var mine []backupEntry
+	var mine []string
 	for _, e := range entries {
-		if !e.IsDir() {
-			continue
+		if e.IsDir() && strings.Contains(e.Name(), infix) {
+			mine = append(mine, e.Name())
 		}
-		// Match this account's snapshots by the id8 infix; the cleanname prefix varies and the
-		// timestamp suffix follows, so the infix is the stable, account-specific key.
-		if !strings.Contains(e.Name(), infix) {
-			continue
-		}
-		info, infoErr := e.Info()
-		mt := time.Time{}
-		if infoErr == nil {
-			mt = info.ModTime()
-		}
-		mine = append(mine, backupEntry{name: e.Name(), modTime: mt})
 	}
-	if len(mine) <= backupRetention {
-		return
+	for _, old := range mine[:max(0, len(mine)-backupRetention)] {
+		_ = os.RemoveAll(filepath.Join(backupsRoot, old))
 	}
-	// Newest first: name descending (the trailing timestamp sorts chronologically), ModTime as
-	// a tiebreaker for same-named edge cases.
-	sort.Slice(mine, func(i, j int) bool {
-		if mine[i].name != mine[j].name {
-			return mine[i].name > mine[j].name
+}
+
+// copyIfExists copies the file name from the slot dir into dst when the slot has one. A
+// slot without it is fine; a file that cannot be read or copied is an error.
+func copyIfExists(slot, dst, name string) error {
+	src := filepath.Join(slot, name)
+	if _, err := os.Stat(src); err != nil {
+		if os.IsNotExist(err) {
+			return nil
 		}
-		return mine[i].modTime.After(mine[j].modTime)
-	})
-	for _, old := range mine[backupRetention:] {
-		_ = os.RemoveAll(filepath.Join(backupsRoot, old.name))
+		return fmt.Errorf("failed to stat %s for backup: %w", name, err)
 	}
+	if err := copyFile(src, filepath.Join(dst, name)); err != nil {
+		return fmt.Errorf("failed to back up %s: %w", name, err)
+	}
+	return nil
 }
 
 // copyFile copies the file at src to dst, creating dst's parent dirs as needed and preserving
