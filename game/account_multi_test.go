@@ -26,8 +26,8 @@ func TestCreateAccountMintsEmpty(t *testing.T) {
 	if a.DisplayName != "Alice" {
 		t.Errorf("DisplayName = %q, want Alice", a.DisplayName)
 	}
-	if a.AccountID != accountIDFromName("Alice") {
-		t.Errorf("AccountID = %q, want name-derived %q", a.AccountID, accountIDFromName("Alice"))
+	if a.AccountID != AccountIDForName("Alice") {
+		t.Errorf("AccountID = %q, want name-derived %q", a.AccountID, AccountIDForName("Alice"))
 	}
 	if !a.Established() {
 		t.Error("created account is not Established (DisplayName empty?)")

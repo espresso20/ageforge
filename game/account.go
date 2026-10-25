@@ -1,6 +1,7 @@
 package game
 
 import (
+	"cmp"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -11,6 +12,7 @@ import (
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -406,23 +408,19 @@ func normalizeAccountName(name string) string {
 	return strings.Join(strings.Fields(strings.ToLower(name)), " ")
 }
 
-// accountIDFromName derives the 32-char hex account ID from a name:
+// AccountIDForName derives the 32-char hex account ID from a name:
 // hex(sha256(normalize(name))[:16]). Deterministic — the same name always yields the
 // same ID — and it keeps the existing 16-byte / 32-hex-char ID format intact, so the
 // recovery code and save attribution keep working unchanged. The leading 16 bytes of
 // the SHA-256 digest are ample collision resistance for a local-only cosmetic identity.
-func accountIDFromName(name string) string {
+//
+// It is exported so UI/command paths can resolve a typed account name to its slot id
+// WITHOUT duplicating the hashing rule (e.g. `account switch <name>` checks whether
+// accountDir(AccountIDForName(name)) holds an account). It is side-effect-free — a pure
+// function of the (normalized) name, never touching disk or the active account.
+func AccountIDForName(name string) string {
 	sum := sha256.Sum256([]byte(normalizeAccountName(name)))
 	return hex.EncodeToString(sum[:16])
-}
-
-// AccountIDForName is the exported name→id derivation, so UI/command paths can resolve a typed
-// account name to its slot id WITHOUT duplicating the hashing rule (e.g. `account switch <name>`
-// checks whether accountDir(AccountIDForName(name)) holds an account). It is deterministic and
-// side-effect-free — a pure function of the (normalized) name, never touching disk or the active
-// account.
-func AccountIDForName(name string) string {
-	return accountIDFromName(name)
 }
 
 // Established reports whether this account has been named (DisplayName set). An account
@@ -491,7 +489,7 @@ func LoadAccount() (*Account, bool, error) {
 }
 
 // CreateNamedAccount mints a signed account whose identity is derived from name:
-// AccountID = accountIDFromName(name), DisplayName = the trimmed ORIGINAL name (display
+// AccountID = AccountIDForName(name), DisplayName = the trimmed ORIGINAL name (display
 // keeps casing/whitespace; the ID does not). Re-entering the same name reproduces the
 // same ID — that IS the cross-machine recovery story (the accounts design §3.5).
 //
@@ -512,7 +510,7 @@ func CreateNamedAccount(name string) (*Account, error) {
 	now := time.Now()
 	acct := &Account{
 		Version:        accountSchemaVersion,
-		AccountID:      accountIDFromName(trimmed),
+		AccountID:      AccountIDForName(trimmed),
 		DisplayName:    trimmed,
 		Created:        now,
 		LastSeen:       now,
@@ -748,7 +746,7 @@ func SwitchAccount(id string) (*Account, error) {
 // the first-run name-derivation flow, where re-keying a legacy random-id account to a name
 // must preserve earned progress; it is left untouched.)
 //
-// Identity is name-derived (accountIDFromName), so the same name always maps to the same
+// Identity is name-derived (AccountIDForName), so the same name always maps to the same
 // slot. Behavior by slot state:
 //
 //   - Slot already exists (this name maps to an existing account): do NOT clobber it. Open
@@ -759,7 +757,7 @@ func SwitchAccount(id string) (*Account, error) {
 //     Save it in, and persist the active pointer. No prior account's DATA rides along.
 func CreateAccount(name string) (*Account, error) {
 	trimmed := strings.TrimSpace(name)
-	id := accountIDFromName(trimmed)
+	id := AccountIDForName(trimmed)
 
 	// Same-name → open the existing account rather than overwrite it. Slot existence is
 	// keyed on its account.json, so a bare/empty slot dir doesn't count as "exists".
@@ -935,7 +933,7 @@ func verifyAccount(a *Account) bool {
 }
 
 // validAccountID reports whether id has the shape every account ID has: 32 lowercase
-// hex characters (16 bytes, from newAccountID, accountIDFromName or a recovery code). An
+// hex characters (16 bytes, from newAccountID, AccountIDForName or a recovery code). An
 // ID names a directory under <root>/accounts/, so anything else (an empty ID, which
 // would collapse onto the shared accounts root, or a path from a hand-made export) is
 // refused before it reaches the disk.
@@ -1092,17 +1090,7 @@ func createFreshActive(freshlyCreated bool) (*Account, error) {
 func (a *Account) HasTheme(key string) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.hasThemeLocked(key)
-}
-
-// hasThemeLocked is the lock-free core of HasTheme. Callers must hold a.mu.
-func (a *Account) hasThemeLocked(key string) bool {
-	for _, k := range a.Unlocks.Themes {
-		if k == key {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(a.Unlocks.Themes, key)
 }
 
 // UnlockTheme records key as an unlocked theme and persists the account. If the
@@ -1114,7 +1102,7 @@ func (a *Account) hasThemeLocked(key string) bool {
 func (a *Account) UnlockTheme(key string) (newly bool, err error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.hasThemeLocked(key) {
+	if slices.Contains(a.Unlocks.Themes, key) {
 		return false, nil
 	}
 	a.Unlocks.Themes = append(a.Unlocks.Themes, key)
@@ -1633,37 +1621,27 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	// of each, never the sum, so importing your own backup doubles nothing.
 	a.takeBadgeStoreLocked(exp.BadgeStore, true)
 	// Max each numeric lifetime stat — bests don't regress.
-	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
+	a.Stats.TotalPrestiges = max(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
 	for _, age := range sortedKeys(exp.Stats.PrestigesByAge) {
 		if a.Stats.PrestigesByAge == nil {
 			a.Stats.PrestigesByAge = map[string]int{}
 		}
-		a.Stats.PrestigesByAge[age] = maxInt(a.Stats.PrestigesByAge[age], exp.Stats.PrestigesByAge[age])
+		a.Stats.PrestigesByAge[age] = max(a.Stats.PrestigesByAge[age], exp.Stats.PrestigesByAge[age])
 	}
-	a.Stats.CivilizationsStarted = maxInt(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
-	a.Stats.SavesCompleted = maxInt(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
+	a.Stats.CivilizationsStarted = max(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
+	a.Stats.SavesCompleted = max(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
 	// HighestAge is a key, not a number: the later age of the two wins.
 	if ageOrderOf(exp.Stats.HighestAge) > ageOrderOf(a.Stats.HighestAge) {
 		a.Stats.HighestAge = exp.Stats.HighestAge
 	}
-	// Active theme: keep local if set, else adopt the blob's.
-	if a.Prefs.ActiveTheme == "" {
-		a.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
-	}
-	// Map settings: the same rule.
-	if a.Prefs.MapStyle == "" {
-		a.Prefs.MapStyle = exp.Prefs.MapStyle
-	}
-	if a.Prefs.MapGlyphs == "" {
-		a.Prefs.MapGlyphs = exp.Prefs.MapGlyphs
-	}
-	if a.Prefs.MapZoom == "" {
-		a.Prefs.MapZoom = exp.Prefs.MapZoom
-	}
-	if a.Prefs.Minimap == "" {
-		a.Prefs.Minimap = exp.Prefs.Minimap
-	}
-	a.Prefs.MapIconsHint = a.Prefs.MapIconsHint || exp.Prefs.MapIconsHint
+	// Active theme and map settings: keep local if set, else adopt the blob's.
+	p := &a.Prefs
+	p.ActiveTheme = cmp.Or(p.ActiveTheme, exp.Prefs.ActiveTheme)
+	p.MapStyle = cmp.Or(p.MapStyle, exp.Prefs.MapStyle)
+	p.MapGlyphs = cmp.Or(p.MapGlyphs, exp.Prefs.MapGlyphs)
+	p.MapZoom = cmp.Or(p.MapZoom, exp.Prefs.MapZoom)
+	p.Minimap = cmp.Or(p.Minimap, exp.Prefs.Minimap)
+	p.MapIconsHint = p.MapIconsHint || exp.Prefs.MapIconsHint
 }
 
 // importExport folds a verified export into this LIVE account and saves it: the engine's
@@ -1710,14 +1688,6 @@ func unionStrings(a, b []string) []string {
 		}
 	}
 	return out
-}
-
-// maxInt returns the larger of a and b.
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 // --- Lifetime stats + achievements (the accounts design §3.3 / §8 / §9 Phase 6) ---
