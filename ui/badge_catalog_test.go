@@ -115,10 +115,7 @@ func TestLegendSprites(t *testing.T) {
 // TestLegendSpritesInEveryTheme: the hand-drawn legendary badges paint in
 // every theme with every cell legible on the canvas.
 func TestLegendSpritesInEveryTheme(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		must(t, theme.SetActive(th.Key))
+	eachThemeInline(t, func(th theme.Theme) {
 		pal := newGridPalette(0, nil)
 		for key := range legendSprites {
 			g := newTGrid(specialW, specialH)
@@ -133,7 +130,7 @@ func TestLegendSpritesInEveryTheme(t *testing.T) {
 				}
 			}
 		}
-	}
+	})
 }
 
 // TestEveryFamilyHasAHeading: every family in the catalog has a heading of
