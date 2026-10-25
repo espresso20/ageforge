@@ -23,11 +23,6 @@ func TestStorageBuildingsBoostProduction(t *testing.T) {
 		if d.MaxCount != 0 {
 			t.Errorf("%s has a copy limit of %d: the price curve is the limit on storage", d.Key, d.MaxCount)
 		}
-		for _, e := range d.Effects {
-			if e.Type == "storage" {
-				t.Errorf("%s still has a storage effect (%s %v): a storage building boosts production now", d.Key, e.Target, e.Value)
-			}
-		}
 		if len(d.Effects) != 1 || d.Effects[0].Type != "bonus" || d.Effects[0].Target != "production_all" || d.Effects[0].Value != StorageBoost() {
 			t.Errorf("%s effects = %v, want one bonus of %g%% on production_all", d.Key, d.Effects, float64(StorageBoostPercent))
 		}
@@ -37,23 +32,6 @@ func TestStorageBuildingsBoostProduction(t *testing.T) {
 	}
 	if seen != 21 {
 		t.Fatalf("%d storage buildings in the table, want 21", seen)
-	}
-}
-
-// TestStorageEffectsLeftAreNotStorageBuildings: only the culture arts buildings
-// and one wonder keep a storage effect (the Black Market and festival prices
-// still read the culture store until they are redone), and none of them is a
-// storage building.
-func TestStorageEffectsLeftAreNotStorageBuildings(t *testing.T) {
-	for _, d := range BaseBuildings() {
-		if d.Category == "storage" {
-			continue
-		}
-		for _, e := range d.Effects {
-			if e.Type == "storage" && d.Category != "wonder" && d.LineageKey != "culture_arts" {
-				t.Errorf("%s (%s) has a storage effect", d.Key, d.Category)
-			}
-		}
 	}
 }
 

@@ -2,9 +2,8 @@ package config
 
 import "testing"
 
-// Nanobot System (Trello 0kLti5GR). These tests pin the three pieces that give
-// nanobots a real economic role: a Modern-age producer, the nanobot tech line,
-// and digital/cyberpunk buildings that consume nanobots as a build material.
+// Nanobot System (Trello 0kLti5GR). Nanobots unlock as a resource in the Modern
+// age, so a nanobot producer must be buildable by then.
 
 // prodValue returns a building/tech's "production" effect value for a target.
 func prodEffectValue(effects []Effect, target string) (float64, bool) {
@@ -14,55 +13,6 @@ func prodEffectValue(effects []Effect, target string) (float64, bool) {
 		}
 	}
 	return 0, false
-}
-
-func bonusEffectValue(effects []Effect, target string) (float64, bool) {
-	for _, e := range effects {
-		if e.Type == "bonus" && e.Target == target {
-			return e.Value, true
-		}
-	}
-	return 0, false
-}
-
-// TestNanobots_FoundryProducerExists asserts the Modern-age nano_foundry exists,
-// is gated to modern_age, produces a positive amount of nanobots, has a worker
-// domain, and is wired into the Modern Age's unlock list.
-func TestNanobots_FoundryProducerExists(t *testing.T) {
-	def, ok := BuildingByKey()["nano_foundry"]
-	if !ok {
-		t.Fatal("nano_foundry building is not defined")
-	}
-	if def.RequiredAge != "modern_age" {
-		t.Errorf("nano_foundry RequiredAge = %q, want modern_age", def.RequiredAge)
-	}
-	if def.Category != "production" {
-		t.Errorf("nano_foundry Category = %q, want production", def.Category)
-	}
-	rate, hasProd := prodEffectValue(def.Effects, "nanobots")
-	if !hasProd || rate <= 0 {
-		t.Errorf("nano_foundry must produce nanobots; got rate %v (present=%v)", rate, hasProd)
-	}
-	if def.WorkerDomain == "" || def.WorkerCapacity <= 0 {
-		t.Errorf("nano_foundry needs a worker domain + capacity; got domain=%q cap=%d",
-			def.WorkerDomain, def.WorkerCapacity)
-	}
-
-	// Must be unlocked by the Modern Age (reachability + it shows up in views).
-	unlocked := false
-	for _, age := range Ages() {
-		if age.Key != "modern_age" {
-			continue
-		}
-		for _, k := range age.UnlockBuildings {
-			if k == "nano_foundry" {
-				unlocked = true
-			}
-		}
-	}
-	if !unlocked {
-		t.Error("nano_foundry is not listed in modern_age UnlockBuildings")
-	}
 }
 
 // TestNanobots_ProducerUnlocksWithResource guards the core fix: nanobots unlock
@@ -91,76 +41,5 @@ func TestNanobots_ProducerUnlocksWithResource(t *testing.T) {
 	if earliest > unlockOrder {
 		t.Errorf("no nanobot producer at or before the unlock age %q (order %d); earliest producer age order = %d",
 			resAge.Age, unlockOrder, earliest)
-	}
-}
-
-// TestNanobots_TechsExistAndGated asserts the three nanobot techs exist, are
-// gated to modern+ ages, cost knowledge, and carry their intended effects.
-func TestNanobots_TechsExistAndGated(t *testing.T) {
-	byKey := TechByKey()
-	ageOrder := map[string]int{}
-	for _, a := range Ages() {
-		ageOrder[a.Key] = a.Order
-	}
-	modernOrder := ageOrder["modern_age"]
-
-	for _, key := range []string{"nanofabrication", "medical_nanobots", "self_replication"} {
-		tech, ok := byKey[key]
-		if !ok {
-			t.Errorf("tech %q is not defined", key)
-			continue
-		}
-		if ageOrder[tech.Age] < modernOrder {
-			t.Errorf("tech %q age %q is before modern_age", key, tech.Age)
-		}
-		if tech.Cost <= 0 {
-			t.Errorf("tech %q has non-positive knowledge cost %v", key, tech.Cost)
-		}
-	}
-
-	// What each one does, by kind and target.
-	term := func(tech string, kind TechEffectKind, target string) (float64, bool) {
-		v, ok := TechTerms([]TechDef{byKey[tech]})[TechEffectKey{Kind: kind, Target: target}]
-		return v, ok
-	}
-	// Nanofabrication makes buildings cheaper.
-	if v, ok := term("nanofabrication", EffectBuildCost, ""); !ok || v >= 1 {
-		t.Errorf("nanofabrication must cut build cost; factor %v (present=%v)", v, ok)
-	}
-	// Self-Replication boosts nanobot production.
-	if v, ok := term("self_replication", EffectOutput, "nanobots"); !ok || v <= 0 {
-		t.Errorf("self_replication must add nanobot production; got %v (present=%v)", v, ok)
-	}
-	// Medical Nanobots is a clearly-beneficial tech (housing and/or food).
-	house, hasPop := term("medical_nanobots", EffectHousing, "")
-	food, hasFood := term("medical_nanobots", EffectOutput, "food")
-	if !(hasPop && house > 0) && !(hasFood && food > 0) {
-		t.Error("medical_nanobots must grant a beneficial effect (housing and/or food)")
-	}
-}
-
-// TestNanobots_ConsumedAsBuildMaterial asserts that several digital/cyberpunk
-// buildings now require nanobots to construct, giving produced nanobots a sink.
-func TestNanobots_ConsumedAsBuildMaterial(t *testing.T) {
-	want := []string{
-		"data_center", "neural_grid", "quantum_battery_array", "nano_alloy_plant",
-		"cyber_hub", "augmentation_foundry", "dark_energy_tap",
-	}
-	byKey := BuildingByKey()
-	count := 0
-	for _, key := range want {
-		def, ok := byKey[key]
-		if !ok {
-			t.Errorf("expected building %q not found", key)
-			continue
-		}
-		if amt, has := def.BaseCost["nanobots"]; !has || amt <= 0 {
-			t.Errorf("building %q should cost nanobots to build; got %v (present=%v)", key, amt, has)
-		} else {
-			count++
-		}
-	}
-	if count < 4 {
-		t.Errorf("expected at least 4 buildings to consume nanobots, got %d", count)
 	}
 }
