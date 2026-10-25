@@ -1,5 +1,7 @@
-// export_config serializes all static game config data to JSON files
-// for consumption by the Godot 4 C# project.
+// Command export_config writes the static game config (ages, resources, techs,
+// milestones, epochs, events, trade routes, factions, worker classes, prestige upgrades
+// and buildings) as JSON files in one output directory. The files are for a Godot 4 C#
+// project outside this repository. scripts/determinism.sh hashes them to compare platforms.
 //
 // Usage:
 //
@@ -46,27 +48,27 @@ func main() {
 	write(outDir, "worker_classes.json", config.WorkerClasses())
 	write(outDir, "prestige_upgrades.json", config.PrestigeUpgrades())
 
-	// Buildings: one file per lineage + storage/wonders
 	writeBuildingLineages(outDir)
 
 	fmt.Println("Done.")
 }
 
-// writeBuildingLineages splits production buildings by lineage and writes
-// storage/wonder buildings to a separate file — matching the architecture.md
-// project structure.
+// writeBuildingLineages writes production buildings to one file per lineage under
+// buildings/ (lineage_<key>.json, "misc" for a building with no lineage). All other
+// buildings (storage, wonder and diplomacy) go to storage_and_wonders.json, and a map of
+// every building by key goes to all_buildings.json.
 func writeBuildingLineages(outDir string) {
 	production := config.NewProductionBuildings()
-	allBuildings := config.BaseBuildings() // production + storage + wonders combined
+	allBuildings := config.BaseBuildings() // production, storage, wonder and diplomacy
 
-	// Index production keys so we can separate out storage/wonders
 	productionKeys := make(map[string]bool, len(production))
 	for _, b := range production {
 		productionKeys[b.Key] = true
 	}
 
-	// Split production buildings by lineage, from the combined list so the
-	// export carries the prices the game charges (the late price climb).
+	// Take the buildings from BaseBuildings, not from NewProductionBuildings: only
+	// BaseBuildings applies the price adjustments, so the export carries the prices the
+	// game charges.
 	byLineage := make(map[string][]config.BuildingDef)
 	for _, b := range allBuildings {
 		if !productionKeys[b.Key] {
@@ -82,7 +84,6 @@ func writeBuildingLineages(outDir string) {
 		write(filepath.Join(outDir, "buildings"), "lineage_"+lineage+".json", defs)
 	}
 
-	// Storage and wonders are everything in BaseBuildings() not in production
 	var storageAndWonders []config.BuildingDef
 	for _, b := range allBuildings {
 		if !productionKeys[b.Key] {
@@ -91,7 +92,6 @@ func writeBuildingLineages(outDir string) {
 	}
 	write(filepath.Join(outDir, "buildings"), "storage_and_wonders.json", storageAndWonders)
 
-	// Combined map keyed by building key — convenient for ConfigLoader.cs
 	combined := make(map[string]config.BuildingDef, len(allBuildings))
 	for _, b := range allBuildings {
 		combined[b.Key] = b

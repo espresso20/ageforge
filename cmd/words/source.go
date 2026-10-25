@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// source.go loads the game's Go source for the export and the import: every
+// This file loads the game's Go source for the export and the import: every
 // non-test file of the packages that hold player text, parsed once, with the
 // tables the reader needs to say what a string literal is part of (which
 // struct type a composite literal builds, what a named constant holds).
@@ -248,7 +248,8 @@ func (m *module) named(t typeRef) string {
 	return ""
 }
 
-// under follows named types to the definition underneath.
+// under follows named types to the definition underneath. It gives up after
+// 16 steps.
 func (m *module) under(t typeRef) typeRef {
 	for i := 0; i < 16 && t.expr != nil; i++ {
 		switch x := t.expr.(type) {
@@ -285,7 +286,8 @@ type structField struct {
 	typ  ast.Expr
 }
 
-// fields lists a struct type's fields, or nil when t is not a struct.
+// fields lists a struct type's fields and the package that defines it, or nil
+// when t is not a struct.
 func (m *module) fields(t typeRef) ([]structField, string) {
 	u := m.under(t)
 	st, ok := u.expr.(*ast.StructType)

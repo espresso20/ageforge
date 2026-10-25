@@ -14,9 +14,9 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// main_test.go: what a signal that ends the program does, through the same
-// handler main installs (exitOnSignal) and the same engine main builds.
-// Every test has a data root of its own; none touches the player's.
+// These tests cover leaving the program: a signal, through the same handler main
+// installs (exitOnSignal), and the normal exit (leave). Each test has its own data
+// root, so none touches the player's.
 
 // dataTree reads every file under root: its bytes and its modification time.
 func dataTree(t *testing.T, root string) map[string]string {
@@ -45,8 +45,8 @@ func dataTree(t *testing.T, root string) map[string]string {
 	return out
 }
 
-// stage makes an account in a new data root with a game saved under each
-// name, and returns the root.
+// stage makes an account in a new data root, with a game saved under each name, and
+// returns the root.
 func stage(t *testing.T, games ...string) string {
 	t.Helper()
 	root := t.TempDir()
@@ -73,7 +73,7 @@ func stage(t *testing.T, games ...string) string {
 	return root
 }
 
-// launch is the engine as main makes it: new, holding the account on disk.
+// launch returns an engine set up as main sets it up: new, holding the account on disk.
 func launch(t *testing.T) *game.GameEngine {
 	t.Helper()
 	engine := game.NewGameEngine()
@@ -86,8 +86,7 @@ func launch(t *testing.T) *game.GameEngine {
 	return engine
 }
 
-// signalled sends the handler a terminate signal and waits for it to close
-// the UI.
+// signalled sends the handler SIGTERM and waits for it to close the UI.
 func signalled(t *testing.T, engine *game.GameEngine) {
 	t.Helper()
 	sigs := make(chan os.Signal, 1)
@@ -113,10 +112,9 @@ func playing(t *testing.T, engine *game.GameEngine) {
 	}
 }
 
-// TestSignalAtTheMenuWritesNothing: a signal while the player is at the
-// menu leaves every file under the data root byte for byte as it was, the
-// account's autosave included. (The handler used to write the engine's
-// empty game to "autosave".)
+// TestSignalAtTheMenuWritesNothing: a signal while the player is at the menu leaves
+// every file under the data root byte for byte as it was, the account's autosave
+// included.
 func TestSignalAtTheMenuWritesNothing(t *testing.T) {
 	root := stage(t, game.AutosaveName, "rome")
 	engine := launch(t)
@@ -147,9 +145,9 @@ func TestSignalAtTheMenuWritesNothing(t *testing.T) {
 	}
 }
 
-// TestSignalInANamedGameSavesItUnderItsName: a signal during a game saves
-// that game to its own save, last moment included, writes no autosave
-// beside it, and leaves Continue pointing at it.
+// TestSignalInANamedGameSavesItUnderItsName: a signal during a game saves that game to
+// its own save, last moment included, writes no autosave beside it, and leaves Continue
+// pointing at it.
 func TestSignalInANamedGameSavesItUnderItsName(t *testing.T) {
 	stage(t, "carthage", "rome")
 	engine := launch(t)
@@ -159,8 +157,8 @@ func TestSignalInANamedGameSavesItUnderItsName(t *testing.T) {
 	if err := engine.LoadGame("rome"); err != nil {
 		t.Fatal(err)
 	}
-	// Nothing on record, as on an account from an older version: it is the
-	// exit's save that must name the game.
+	// Clear the account's records of a current game, as on an account from an older
+	// version. The exit save must record rome as the game last played.
 	if err := engine.Account().ForgetGame(""); err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +192,7 @@ func TestSignalInANamedGameSavesItUnderItsName(t *testing.T) {
 		t.Errorf("Continue opens %q (%s), want rome, the game last played", cur.Save.Name, cur.Why)
 	}
 
-	// Run returns after the handler closed the UI, and main leaves again:
+	// Run returns after the handler closes the UI, and main calls leave again:
 	// nothing more is written.
 	root := filepath.Dir(filepath.Dir(game.DataDir()))
 	before := dataTree(t, root)
@@ -204,8 +202,8 @@ func TestSignalInANamedGameSavesItUnderItsName(t *testing.T) {
 	}
 }
 
-// TestSignalInAnUnnamedGameSavesTheAutosave: a game that was never given a
-// name is still saved to the autosave.
+// TestSignalInAnUnnamedGameSavesTheAutosave: a game that was never named is saved to
+// the autosave.
 func TestSignalInAnUnnamedGameSavesTheAutosave(t *testing.T) {
 	stage(t)
 	engine := launch(t)
@@ -226,9 +224,9 @@ func TestSignalInAnUnnamedGameSavesTheAutosave(t *testing.T) {
 	}
 }
 
-// TestLeaveWithoutASignal: Ctrl+C in the terminal is a key, not a signal,
-// and the menu's Quit and the quit command end Run the same way. main's
-// way out after Run saves a game in play, and nothing at the menu.
+// TestLeaveWithoutASignal: Ctrl+C in the terminal is a key, not a signal, and the menu's
+// Quit and the quit command end Run the same way. leave, which main calls after Run,
+// saves a game in play and writes nothing at the menu.
 func TestLeaveWithoutASignal(t *testing.T) {
 	root := stage(t, "rome")
 	engine := launch(t)

@@ -1757,8 +1757,12 @@ func (a *Account) importExport(exp *progressExport, merge bool, book *badgeBook)
 // then appending any of b not already present. Used to merge themes/achievements so an
 // import never drops an entry either side already holds.
 func unionStrings(a, b []string) []string {
-	seen := make(map[string]bool, len(a)+len(b))
-	out := make([]string, 0, len(a)+len(b))
+	// note: the hint is the larger input, not len(a)+len(b). The copies overlap in
+	// practice (a backup of your own account), and append grows the result if they
+	// do not. No sum of two lengths means nothing to overflow.
+	hint := max(len(a), len(b))
+	seen := make(map[string]bool, hint)
+	out := make([]string, 0, hint)
 	for _, s := range a {
 		if !seen[s] {
 			seen[s] = true

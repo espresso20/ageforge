@@ -5,9 +5,8 @@ import (
 	"sort"
 )
 
-// rows.go turns the text units of the source into the rows of the sheets.
+// This file turns the text units of the source into the rows of the sheets.
 
-// The four kinds of row.
 const (
 	kindVoice   = "voice"   // descriptions, flavor, story
 	kindMessage = "message" // log lines, refusals, hints, help
@@ -20,14 +19,14 @@ type row struct {
 	id      string
 	where   string
 	kind    string
-	age     int // position in the age order from 1; 0 for before the first age; -1 when not known
+	age     int // position in the age order from 1; 0 for the main menu, before the first age; -1 when not known
 	max     int // longest the line may be, in characters; 0 for no limit
 	current string
 	sameAs  string
 
 	area   *area
 	u      *unit
-	twins  []*unit // literals the code compares this text with, rewritten along with it
+	twins  []*unit // literals in the same file that the code matches this text against, rewritten along with it
 	unsure bool    // the reader could not confirm a player sees it
 	seen   int     // how often a player meets it: lower is more often
 	rules  ruleSet // which of the game's copy rules a rewrite must pass
@@ -79,7 +78,7 @@ const (
 	rulesUI      ruleSet = 1 << iota // the wording guards over ui, game and boon
 	rulesConfig                      // the style guard over config's player text
 	rulesDocs                        // the wiki's rules, for text the wiki quotes
-	rulesNoMark                      // no square brackets and no % (written into a format the game owns)
+	rulesNoMark                      // no square brackets and no % directive (the line goes into a style tag and a format the game owns)
 	rulesSkel                        // a flavor catalog sentence
 	rulesBank                        // a flavor catalog word-list entry
 	rulesSaveNam                     // letters and single spaces only
@@ -100,10 +99,10 @@ type catalog struct {
 	commands map[string]bool // the words a command can start with
 	cmdWords map[string]bool // the subcommands and argument words that can follow
 	rules    *copyRules      // the game's copy rules, read from its lint tests
-	matched  map[string]bool // "package\x00text" for every text a package compares or looks up
+	matched  map[string]bool // "dir\x00text" for every text that code in the package folder dir compares or looks up
 	left     []left
 	byID     map[string]*row
-	ctxs     map[*srcFile]map[[2]int]nodeCtx // what the syntax around each text says, filled as vibe-wire asks
+	ctxs     map[*srcFile]map[[2]int]nodeCtx // what the syntax around each text says, filled by wireVerdict file by file
 }
 
 // read builds the catalog from the source under root.
@@ -193,7 +192,8 @@ func (c *catalog) link() {
 	}
 }
 
-// finish orders the rows, checks the ids and fills same_as.
+// finish orders the rows, checks the ids, fills same_as and records each
+// flavor sentence for the duplicate check.
 func (c *catalog) finish() error {
 	order := map[*area]int{}
 	for i, a := range areas {

@@ -393,7 +393,9 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 		t.Fatal("precondition: the dev command did not mark the run")
 	}
 	advanceTo(ge, "stone_age")
-	for i := 0; i < 20; i++ {
+	first, _ := rules.Core().Badge(badgeHousing1)
+	houses := int(first.Threshold)
+	for i := 0; i < houses; i++ {
 		finishOne(ge, "hut")
 	}
 	ge.mu.Lock()
@@ -411,8 +413,8 @@ func TestDevTouchedRunEarnsBadges(t *testing.T) {
 			t.Errorf("%s earned in a dev-touched run is %+v, want dated and uncrossed", key, e)
 		}
 	}
-	if got := counter(acct, config.BadgeEvBuiltLineage+".housing"); got != 20 {
-		t.Errorf("the housing counter is %v, want 20", got)
+	if got := counter(acct, config.BadgeEvBuiltLineage+".housing"); got != float64(houses) {
+		t.Errorf("the housing counter is %v, want %d", got, houses)
 	}
 	stats, _ := acct.LifetimeStats()
 	if stats.TotalPrestiges != 1 || stats.HighestAge != "stone_age" {
@@ -1045,7 +1047,8 @@ func TestSessionEventsStayOutOfTheRun(t *testing.T) {
 // food while the first food rung asked for a billion, with the food count
 // carried over to the town of eight: the food rungs are an ordinary town's
 // income over the age, which that town grew by 1.6, so the second rung is
-// 1.4 million now and the million that proved it then does not.
+// 1.4 million now and the million that proved it then does not. The housing
+// count is a round figure between the first rung and the second.
 func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
 	isolateAccountDir(t)
 	acct, err := CreateAccount("Ada")
@@ -1057,7 +1060,7 @@ func TestLoweredLaddersCatchUpInOneLine(t *testing.T) {
 	acct.Counters = map[string]float64{
 		config.BadgeEvProduced + ".food":        1.712 * config.Million, // 1.07M then, times the 1.6 the town grew by
 		config.BadgeEvProduced + ".wood":        900_000,
-		config.BadgeEvBuiltLineage + ".housing": 32,
+		config.BadgeEvBuiltLineage + ".housing": 900, // over the first rung (610), under the second (1.5K)
 		config.BadgeEvWonderRaised:              2,
 	}
 	acct.mu.Unlock()

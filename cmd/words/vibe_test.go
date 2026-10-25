@@ -16,12 +16,13 @@ import (
 	"github.com/espresso20/ageforge/words"
 )
 
-// knownGaps are the texts of the ruleset that the export names differently
-// or not at all, by field, so a script row for them cannot reach the game
-// yet: the badge families, the mission badges' era names and one
-// reward title, which the code reader finds by their calls and names its
-// own way, and the tech codes, which the export leaves out. The test pins
-// the count so a new gap, or one that closes, is noticed.
+// knownGaps counts, by field, the texts of the ruleset that have words and no
+// row of the export under the ruleset's id, so a script row for them cannot
+// reach the game yet: the badge families, the mission badges' era names and
+// one reward title, which the code reader finds by their calls and names its
+// own way, one milestone description, and the codes of the techs that set none
+// (a code taken from the tech's name has no literal to export). The test pins
+// the counts so a new gap, or one that closes, is noticed.
 var knownGaps = map[string]int{
 	"config.BadgeExpeditionDef.Name":  21,
 	"config.BadgeFamilyDef.Desc":      22,
@@ -103,8 +104,9 @@ func TestTheVibeScriptIsSound(t *testing.T) {
 	}
 }
 
-// TestVibeLintCatches: each way a row can be wrong is an error, in a sheet of
-// its own, and a sound row is not.
+// TestVibeLintCatches: a row the export does not have, a missing slot, a line
+// over its limit, a repeated id and a sheet with the wrong header are each an
+// error (five in all), and a sound row is not.
 func TestVibeLintCatches(t *testing.T) {
 	c := realCatalog(t)
 	dir := t.TempDir()
@@ -165,8 +167,9 @@ func TestVibeLintCatches(t *testing.T) {
 	}
 }
 
-// TestVibeLintReadsTheLineCalls: a vibe call (Line, Sprintf, Errorf) must name
-// an export row and quote its text.
+// TestVibeLintReadsTheLineCalls: lineCalls finds the vibe calls (Line,
+// Sprintf, Errorf) that carry an id and a string, and says whether the plain
+// text is a literal.
 func TestVibeLintReadsTheLineCalls(t *testing.T) {
 	src := `package game
 import "github.com/espresso20/ageforge/vibe"
@@ -225,8 +228,10 @@ func TestVibeExport(t *testing.T) {
 		have[r.ID] = true
 	}
 	files, _ := filepath.Glob(filepath.Join(dir, "*.csv"))
-	if len(files) < 10 {
-		t.Fatalf("%d sheets written", len(files))
+	// Sheets drop out of the to-do list as their script is finished, so only
+	// check that the export wrote something.
+	if len(files) == 0 {
+		t.Fatal("no sheets written")
 	}
 	ids := map[string]string{}
 	for _, f := range files {
@@ -294,7 +299,8 @@ func TestVibeExport(t *testing.T) {
 	if !strings.Contains(out.String(), "total") {
 		t.Errorf("the summary has no total:\n%s", out.String())
 	}
-	// A second run starts clean: a row the script has since gained leaves.
+	// The sheets are named for the areas of the export, and badges.csv sorts
+	// first.
 	names := []string{}
 	for _, f := range files {
 		names = append(names, filepath.Base(f))

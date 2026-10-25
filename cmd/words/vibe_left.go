@@ -5,15 +5,16 @@ package main
 // vibe-export does not ask the script for them. The rest are decided from the
 // syntax (see wireVerdict).
 //
-// A row id moves only with the text itself (a wired text keeps its id for
-// good), so an entry here stays right until the text is wired or deleted.
+// Wiring a text does not renumber the others in its function (a wired text
+// keeps its id for good). Adding or removing a text earlier in the same
+// function does, and an entry here must then be checked.
 
 func init() {
 	leftAloneFor(leftState,
-		// The history of dooms is kept in the save as the line it was written
-		// as, with the names in it as keys (see doomMark and eraMark). It is
-		// told in the script's words from that line when it is read
-		// (vibeHistoryLine, the rows game.catastrophe.historyLines.*).
+		// The history of dooms is kept in the save as the line it was written,
+		// with the names in it as markers (see doomMark and eraMark). It is told
+		// in the script's words when it is read (vibeHistoryLine; the rows
+		// game.catastrophe.historyLines.*).
 		"game.catastrophe.Endure.10", "game.catastrophe.Endure.11",
 		"game.catastrophe.Succumb.02", "game.catastrophe.Succumb.03",
 		"game.catastrophe.Succumb.04", "game.catastrophe.Succumb.05",
@@ -22,8 +23,8 @@ func init() {
 		// The description of a ruins offer written by hand is kept in the save as it was written.
 		"game.mission_board.ruinsFoundPlain.01",
 		// A road event's story is kept in the save in plain English with its
-		// numbers written in, the span of time included (RoadTold); it is told
-		// in the script's words from that when it is read (sayRoadDuration).
+		// numbers written in, the span of time included (RoadTold). It is told in
+		// the script's words when it is read (sayRoadDuration).
 		"game.road_events.plainRoadDuration.01", "game.road_events.plainRoadDuration.02",
 	)
 	leftAloneFor(leftKey,

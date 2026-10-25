@@ -1,10 +1,12 @@
-// Command balanceaudit reads the real building config and prints true cost
-// curves so we can make data-driven balance decisions. It is intentionally
-// dependency-free beyond the standard library and the project's config package.
+// Command balanceaudit prints a cost table for every building in the base config, then
+// a summary of buildings per CostScale and per age band. It uses only the standard
+// library and the config package.
 //
-// Cost of the N-th copy (1-indexed) mirrors game/buildings.go GetCost:
+// The cost of the N-th copy (1-indexed) follows game/buildings.go GetCost:
 //
 //	floor(BaseCost[res] * CostScale^(N-1))
+//
+// It leaves out the global build-cost multiplier that GetCost applies.
 //
 // Usage:
 //
@@ -22,13 +24,15 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// costAt returns the cost of the N-th copy (1-indexed) of a given base amount.
+// costAt returns the cost of the N-th copy (1-indexed) of a base amount. math.Pow with
+// an integer exponent gives the same bits as the game's detmath.Pow.
 func costAt(base, scale float64, n int) float64 {
 	return math.Floor(base * math.Pow(scale, float64(n-1)))
 }
 
-// primaryCost returns the resource with the largest base amount and that amount.
-// Ties are broken alphabetically by resource key for deterministic output.
+// primaryCost returns the resource with the largest base amount, and that amount.
+// Ties go to the alphabetically first resource key, so the output is stable. An empty
+// cost returns "-" and 0.
 func primaryCost(cost map[string]float64) (string, float64) {
 	res := ""
 	var amt float64 = -1
@@ -43,7 +47,8 @@ func primaryCost(cost map[string]float64) (string, float64) {
 	return res, amt
 }
 
-// prodRate returns the primary "production" effect value, or false if none.
+// prodRate returns the value of the building's first "production" effect, or false if it
+// has none.
 func prodRate(b config.BuildingDef) (float64, bool) {
 	for _, e := range b.Effects {
 		if e.Type == "production" {
@@ -66,7 +71,6 @@ func fmtNum(v float64) string {
 	case abs >= 1000:
 		return trim(v/1000) + "K"
 	default:
-		// Whole numbers print without a decimal point.
 		if v == math.Trunc(v) {
 			return fmt.Sprintf("%d", int64(v))
 		}
@@ -82,13 +86,14 @@ func trim(v float64) string {
 	return s
 }
 
-// ageBand groups an age key into early / mid / late buckets.
+// ageBand puts an age key in the "early", "mid" or "late" band.
 func ageBand(age string) string {
 	switch age {
 	case "primitive_age", "stone_age", "bronze_age", "iron_age":
 		return "early"
 	}
-	// Anything in the second third of the age order is "mid", the rest "late".
+	// By position in the age order: first third "early", second third "mid", the rest
+	// "late". An age missing from the order is "late".
 	order := ageIndex()
 	idx, ok := order[age]
 	if !ok {
@@ -104,7 +109,8 @@ func ageBand(age string) string {
 	return "late"
 }
 
-// ageIndex memoizes the age key -> position lookup from config.AgeOrder().
+// ageIndexCache is the age key -> position in config.AgeOrder() lookup that ageIndex
+// builds on first use.
 var ageIndexCache map[string]int
 
 func ageIndex() map[string]int {
@@ -173,9 +179,8 @@ func printSummary(buildings []config.BuildingDef) {
 	fmt.Println()
 	fmt.Println("==== SUMMARY ====")
 
-	// Count per CostScale value.
 	byScale := map[string]int{}
-	// Count per (ageBand x costScale).
+	// Age band -> formatted CostScale -> building count.
 	byBandScale := map[string]map[string]int{}
 	bands := []string{"early", "mid", "late"}
 	for _, band := range bands {
@@ -226,7 +231,7 @@ func printSummary(buildings []config.BuildingDef) {
 	w.Flush()
 }
 
-// parseFloat is a tiny helper so we don't import strconv just for sorting.
+// parseFloat reads a number formatted by trim. It returns 0 if s does not parse.
 func parseFloat(s string) float64 {
 	var f float64
 	fmt.Sscanf(s, "%g", &f)

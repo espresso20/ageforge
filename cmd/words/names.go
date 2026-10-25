@@ -13,24 +13,27 @@ import (
 	"strings"
 )
 
-// names.go is what the import does after a name is rewritten. The game
-// looks things up by key, so the rename itself is complete; but the old
-// name is still written in places the import does not edit: the wiki, the
-// landing page and tests. It lists them. The one set of wiki tables that
-// has a generator, it regenerates.
+// This file holds what the import does after a name is rewritten. The game
+// looks things up by key, so the rename itself is complete. The old name can
+// still be written where the import does not edit: the wiki, the landing page
+// and tests. followUps lists those places. It also regenerates the one set of
+// wiki tables that has a generator (the tech tables).
 
 // wikiGenerator is the command that rewrites the wiki's tech tables from
 // config (config/tech_wiki_test.go).
 var wikiGenerator = []string{"go", "test", "./config", "-run", "TestTechWikiTables", "-count=1"}
 
-// quoters are the places a name can be written outside the game's source.
+// quoter is a file outside the game's source where a name can be written.
 type quoter struct {
 	rel  string
 	text string
 	kind string // "wiki", "generated" or "test"
 }
 
-// loadQuoters reads the wiki, the landing page, the README and every test.
+// loadQuoters reads the files that can quote a name: README.md, the pages and
+// scripts under site/, the generated screens under site/docs/screens, and
+// every test file. It skips hidden folders, node_modules and the root folders
+// words, data and dist.
 func loadQuoters(root string) []quoter {
 	var out []quoter
 	add := func(rel, kind string) {
@@ -139,10 +142,10 @@ func followUps(c *catalog, root string, changes []change, o importOptions, out i
 	}
 }
 
-// wikiQuotes lists the wiki pages that still hold the old text of a
-// rewritten line that is not a name, a page a line: the page, how many
-// lines, and the first few ids. Only lines long enough to be found
-// reliably (twelve characters) are looked for.
+// wikiQuotes returns one line for each wiki page that still holds the old
+// text of a rewritten line that is not a name: the page and the ids of the
+// lines it quotes (the first three, with a count, when there are more). Only
+// lines long enough to be found reliably (twelve characters) are looked for.
 func wikiQuotes(root string, changes []change) []string {
 	var lines []change
 	for _, ch := range changes {
