@@ -51,7 +51,7 @@ func loadFixtureAway(t *testing.T, path, name string, away time.Duration) *GameE
 		t.Fatalf("setup: the fixture %s is not signed and valid as the old game wrote it", path)
 	}
 	save.Timestamp = time.Now().Add(-away)
-	save.Signature = signSave(save, saveHMACKey)
+	save.Signature = signSave(save)
 	data, err := json.Marshal(save)
 	if err != nil {
 		t.Fatal(err)

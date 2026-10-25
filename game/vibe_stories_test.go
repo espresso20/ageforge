@@ -396,7 +396,7 @@ func TestASaveWithoutKeysStillLoadsAndReadsPlain(t *testing.T) {
 		t.Fatal("the save holds no keys to take away")
 	}
 	old.Harbinger.LineKeys = nil
-	old.Signature = signSave(old, saveHMACKey)
+	old.Signature = signSave(old)
 	data, err := json.MarshalIndent(old, "", "  ")
 	if err != nil {
 		t.Fatal(err)

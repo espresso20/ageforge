@@ -247,24 +247,29 @@ type GameSave struct {
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
-// shared integrity-signing core used by both saves (signSave) and the account file
-// (Account.Save) — one construction, reused, per the accounts design's "reuse, don't
-// reinvent" rule. The key is always saveHMACKey in practice; it stays a parameter
-// so signSave's existing signature is unchanged.
+// shared integrity-signing core used by saves (signSave), the elite proof (proofOf) and
+// the account files (Account.Save) — one construction, reused, per the accounts design's
+// "reuse, don't reinvent" rule.
 func hmacSign(payload []byte, key string) string {
 	mac := hmac.New(sha256.New, []byte(key))
 	mac.Write(payload)
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-// signSave returns the HMAC-SHA256 hex of the save payload.
+// signSave returns the HMAC-SHA256 hex of the save payload under saveHMACKey.
 // Signature and Proof are zeroed before marshalling so the signature covers
 // the game data only, not a prior signature value.
-func signSave(gs GameSave, key string) string {
+func signSave(gs GameSave) string {
 	gs.Signature = ""
 	gs.Proof = ""
 	data, _ := json.Marshal(gs)
-	return hmacSign(data, key)
+	return hmacSign(data, saveHMACKey)
+}
+
+// proofOf is the elite proof for a save signed as sig: sig itself signed under
+// forgeMasterKey.
+func proofOf(sig string) string {
+	return hmacSign([]byte(sig), forgeMasterKey)
 }
 
 // verifySave checks the save's HMAC signature and optional elite proof.
@@ -279,14 +284,10 @@ func verifySave(gs *GameSave) (sigValid, eliteValid bool) {
 		return true, false
 	}
 
-	expectedSig := signSave(*gs, saveHMACKey)
-	sigValid = hmac.Equal([]byte(savedSig), []byte(expectedSig))
+	sigValid = hmac.Equal([]byte(savedSig), []byte(signSave(*gs)))
 
 	if sigValid && savedProof != "" {
-		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
-		mac.Write([]byte(savedSig))
-		expectedProof := hex.EncodeToString(mac.Sum(nil))
-		eliteValid = hmac.Equal([]byte(savedProof), []byte(expectedProof))
+		eliteValid = hmac.Equal([]byte(savedProof), []byte(proofOf(savedSig)))
 	}
 	return
 }
@@ -591,12 +592,9 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	}
 	save := ge.buildSaveSnapshot()
 	// Sign the payload (sig/proof are empty in snapshot)
-	sig := signSave(save, saveHMACKey)
-	save.Signature = sig
+	save.Signature = signSave(save)
 	if ge.eliteBadge {
-		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
-		mac.Write([]byte(sig))
-		save.Proof = hex.EncodeToString(mac.Sum(nil))
+		save.Proof = proofOf(save.Signature)
 	}
 	data, err := json.MarshalIndent(save, "", "  ")
 	ge.mu.RUnlock()
@@ -608,14 +606,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 		return fmt.Errorf("could not create the save folder: %w", err)
 	}
 
-	// Atomic write: temp file + rename to prevent corruption on crash
-	path := filepath.Join(dir, filename+".json")
-	tmpPath := path + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-		return fmt.Errorf("could not write the save file: %w", err)
-	}
-	err = os.Rename(tmpPath, path)
-	if err != nil {
+	if err := writeFileAtomic(filepath.Join(dir, filename+".json"), data); err != nil {
 		return fmt.Errorf("could not write the save file: %w", err)
 	}
 	if played != nil {
@@ -1278,21 +1269,44 @@ func (ge *GameEngine) getUnlockedState() UnlockedState {
 	return state
 }
 
+// writeFileAtomic writes data to path through path+".tmp" and a rename, so a crash never
+// leaves half a file. The temp file is removed when either step fails.
+func writeFileAtomic(path string, data []byte) error {
+	tmp := path + ".tmp"
+	err := os.WriteFile(tmp, data, 0644)
+	if err == nil {
+		err = os.Rename(tmp, path)
+	}
+	if err != nil {
+		os.Remove(tmp)
+	}
+	return err
+}
+
+// saveFiles lists the save files (*.json, no folders) in dir, in directory order. A folder
+// that does not exist holds none.
+func saveFiles(dir string) ([]os.DirEntry, error) {
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return slices.DeleteFunc(entries, func(e os.DirEntry) bool {
+		return e.IsDir() || filepath.Ext(e.Name()) != ".json"
+	}), nil
+}
+
 // ListSaves returns available save files
 func ListSaves() ([]string, error) {
-	entries, err := os.ReadDir(saveDirectory())
+	files, err := saveFiles(saveDirectory())
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
 	var saves []string
-	for _, e := range entries {
-		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
-			name := e.Name()
-			saves = append(saves, name[:len(name)-5]) // strip .json
-		}
+	for _, e := range files {
+		saves = append(saves, strings.TrimSuffix(e.Name(), ".json"))
 	}
 	return saves, nil
 }
@@ -1363,22 +1377,16 @@ type SaveInfo struct {
 // listing for the rest.
 func ListSaveDetails() ([]SaveInfo, error) {
 	dir := saveDirectory()
-	entries, err := os.ReadDir(dir)
+	files, err := saveFiles(dir)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
 	// The saves on disk are the core game's: no engine is held here, so the
 	// names and totals come from the core ruleset.
 	core := rules.Core()
 	var saves []SaveInfo
-	for _, e := range entries {
-		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
-			continue
-		}
-		name := e.Name()[:len(e.Name())-5]
+	for _, e := range files {
+		name := strings.TrimSuffix(e.Name(), ".json")
 		path := filepath.Join(dir, e.Name())
 
 		data, readErr := os.ReadFile(path)
@@ -1538,17 +1546,12 @@ func modTime(e os.DirEntry) time.Time {
 // WipeAllSaves deletes all save files
 func WipeAllSaves() error {
 	dir := saveDirectory()
-	entries, err := os.ReadDir(dir)
+	files, err := saveFiles(dir)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
 		return err
 	}
-	for _, e := range entries {
-		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
-			os.Remove(filepath.Join(dir, e.Name()))
-		}
+	for _, e := range files {
+		os.Remove(filepath.Join(dir, e.Name()))
 	}
 	return nil
 }
@@ -1711,26 +1714,18 @@ func reparentSaveFile(name, newParent string) error {
 		return nil // nothing to do
 	}
 	gs.ParentName = newParent
-	sig := signSave(gs, saveHMACKey)
-	gs.Signature = sig
+	gs.Signature = signSave(gs)
+	gs.Proof = ""
 	if eliteValid {
-		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
-		mac.Write([]byte(sig))
-		gs.Proof = hex.EncodeToString(mac.Sum(nil))
-	} else {
-		gs.Proof = ""
+		gs.Proof = proofOf(gs.Signature)
 	}
 	out, err := json.MarshalIndent(gs, "", "  ")
 	if err != nil {
 		return err
 	}
-	// Atomic write into the file's own directory (matches SaveGame's pattern and
+	// Written into the file's own directory (matches SaveGame's pattern and
 	// keeps a legacy-dir save in its dir).
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return writeFileAtomic(path, out)
 }
 
 // DuplicateSave copies a save to a new name and returns the new base name. The
@@ -1763,14 +1758,7 @@ func DuplicateSave(filename string) (string, error) {
 	}
 	// Place the copy alongside the source (canonical or legacy dir) for the same
 	// reason as RenameSave. Write atomically (temp + rename).
-	dir := filepath.Dir(srcPath)
-	dstPath := filepath.Join(dir, dst+".json")
-	tmpPath := dstPath + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-		return "", fmt.Errorf("could not write the copy: %w", err)
-	}
-	if err := os.Rename(tmpPath, dstPath); err != nil {
-		os.Remove(tmpPath)
+	if err := writeFileAtomic(filepath.Join(filepath.Dir(srcPath), dst+".json"), data); err != nil {
 		return "", fmt.Errorf("could not write the copy: %w", err)
 	}
 	return dst, nil

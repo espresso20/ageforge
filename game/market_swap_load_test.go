@@ -185,7 +185,7 @@ func TestMarketSwapSave_NoSellOrdersNoLine(t *testing.T) {
 	save := ge.buildSaveSnapshot()
 	save.Trade.SupplyPressure = map[string]float64{"wood:gold": 0.4}
 	save.Trade.TotalExchanged = map[string]float64{"wood": 10}
-	save.Signature = signSave(save, saveHMACKey)
+	save.Signature = signSave(save)
 	writeRawSave(t, "pressure_only", save)
 	again := NewGameEngine()
 	if err := again.LoadGame("pressure_only"); err != nil {

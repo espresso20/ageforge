@@ -415,7 +415,7 @@ func oldSave(t *testing.T, ge *GameEngine, name string) {
 	old.Prestige.ShopVersion = 0
 	old.Prestige.LegacyPlan, old.Prestige.LegacyFactions, old.Prestige.LegacyShares = nil, nil, nil
 	old.PlanLog = nil
-	old.Signature = signSave(old, saveHMACKey)
+	old.Signature = signSave(old)
 	data, err := json.MarshalIndent(old, "", "  ")
 	if err != nil {
 		t.Fatal(err)

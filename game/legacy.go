@@ -659,7 +659,7 @@ func (ge *GameEngine) WriteShopV1SaveForTest(name string, level, totalEarned, av
 	gs := ge.buildSaveSnapshot()
 	ge.mu.Unlock()
 	stripShopV2(&gs)
-	gs.Signature = signSave(gs, saveHMACKey)
+	gs.Signature = signSave(gs)
 	data, err := json.MarshalIndent(gs, "", "  ")
 	if err != nil {
 		return err

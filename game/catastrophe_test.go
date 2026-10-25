@@ -949,7 +949,7 @@ func TestLoadIgnoresDeprecatedCatastropheFired(t *testing.T) {
 	ge := catEngine(t, "iron_age", 3)
 	snap := ge.buildSaveSnapshot()
 	snap.CatastropheFired = map[string]bool{"iron_era": true}
-	snap.Signature = signSave(snap, saveHMACKey)
+	snap.Signature = signSave(snap)
 	if err := os.MkdirAll(saveDirectory(), 0755); err != nil {
 		t.Fatal(err)
 	}
