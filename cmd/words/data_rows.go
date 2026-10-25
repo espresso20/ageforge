@@ -172,8 +172,6 @@ var fieldRules = map[string]fieldRule{
 	// ----- events, catastrophes and harbingers -----
 	"config.EventDef.Name": {kind: kindName, area: areaEvents, age: "{MinAge}", seen: seenNews,
 		where: "The name of a random event: in the Events box of the main window while it lasts, and in the toast when it starts."},
-	"config.EventDef.Description": {kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenRare,
-		where: "The description of the event {Name}, shown with it while it lasts."},
 	"config.EventDef.LogMessage": {kind: kindVoice, area: areaEvents, age: "{MinAge}", seen: seenNews, rules: rulesNoMark,
 		where: "What the log says when the event {Name} happens. It carries no numbers: the game writes what the event did after it (what was lost and gained, each rate and how long it lasts), so leave numbers out."},
 	"config.EpochEventDef.Name": {kind: kindName, area: areaEvents, age: "iron_age", seen: seenRare,

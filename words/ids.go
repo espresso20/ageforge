@@ -95,7 +95,6 @@ var FieldIDs = map[string]string{
 
 	// ----- events, catastrophes and harbingers -----
 	"config.EventDef.Name":             "event.{Key}.name",
-	"config.EventDef.Description":      "event.{Key}.description",
 	"config.EventDef.LogMessage":       "event.{Key}.log",
 	"config.EpochEventDef.Name":        "era_event.{Key}.name",
 	"config.EpochEventDef.FlavorText":  "era_event.{Key}.text",

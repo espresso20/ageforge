@@ -14,8 +14,8 @@ func allEventDefs() []EventDef {
 	return out
 }
 
-// TestEventTextIsSane verifies every event's player-facing LogMessage and its
-// Description are non-empty and free of broken tview color tags / stray printf
+// TestEventTextIsSane verifies every event's player-facing LogMessage is
+// non-empty and free of broken tview color tags / stray printf
 // directives. LogMessage is what the engine writes to the log on trigger
 // (engine.processEvents); it must stay clean. Humour is additive — this guards
 // against a rewrite that accidentally dropped text or introduced a bad token.
@@ -24,13 +24,10 @@ func TestEventTextIsSane(t *testing.T) {
 		if strings.TrimSpace(e.LogMessage) == "" {
 			t.Errorf("event %q has an empty LogMessage", e.Key)
 		}
-		if strings.TrimSpace(e.Description) == "" {
-			t.Errorf("event %q has an empty Description", e.Key)
-		}
 		// The base-event LogMessages are written verbatim to the log; none use
 		// dynamic-color tags, so a square bracket signals a typo, and a % is a
 		// leftover format directive.
-		for label, s := range map[string]string{"LogMessage": e.LogMessage, "Description": e.Description} {
+		for label, s := range map[string]string{"LogMessage": e.LogMessage} {
 			if strings.ContainsAny(s, "[]") {
 				t.Errorf("event %q %s contains a square bracket (tview tag risk): %q", e.Key, label, s)
 			}

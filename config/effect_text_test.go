@@ -74,7 +74,7 @@ var bannedEffectClaims = []string{
 // (game.TestEventLineStatesWhatHappened checks that line).
 func TestEventTextCarriesNoNumbers(t *testing.T) {
 	for _, e := range allEventDefs() {
-		for label, s := range map[string]string{"log line": e.LogMessage, "description": e.Description} {
+		for label, s := range map[string]string{"log line": e.LogMessage} {
 			if digitRe.MatchString(s) {
 				t.Errorf("%s: the %s quotes a number: %q", e.Key, label, s)
 			}
@@ -364,7 +364,6 @@ func playerText() map[string]string {
 			continue
 		}
 		add("event "+x.Key+" name", x.Name)
-		add("event "+x.Key+" description", x.Description)
 		add("event "+x.Key+" log", x.LogMessage)
 	}
 	for _, x := range Awakenings() {
