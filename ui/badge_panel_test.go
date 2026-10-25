@@ -275,10 +275,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 
 	// Colours: the mark in the tier's ink, and everything legible, in
 	// every theme.
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		must(t, theme.SetActive(th.Key))
+	eachThemeInline(t, func(th theme.Theme) {
 		bg := theme.Color(theme.RoleBackground)
 		_, cells := render(badgeToast(hut, mapmodel.TierUnicode, 0))
 		for x, c := range cells {
@@ -294,7 +291,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 		if fg, _, _ := cells[0].Style.Decompose(); fg != pal.inkOn(inkGold, false) {
 			t.Errorf("theme %s: the toast's mark is %06x, not gold (%06x)", th.Key, fg.Hex(), pal.inkOn(inkGold, false).Hex())
 		}
-	}
+	})
 }
 
 // TestBadgeToastOnTheLiveScreen: an earned badge's toast is on the toast
@@ -399,10 +396,7 @@ func TestMotionCommand(t *testing.T) {
 // text; the same frame is the same picture; motion off draws none of it;
 // and a theme without an effect is never touched.
 func TestThemeEffectsStayInEmptyCells(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		must(t, theme.SetActive(th.Key))
+	eachThemeInline(t, func(th theme.Theme) {
 		for _, size := range treeSizes {
 			w, h := size[0], size[1]
 			d, pages, eng := badgeDashboard(t)
@@ -474,7 +468,7 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 				t.Errorf("theme %s: effect on is %v", th.Key, d.fxOn.Load())
 			}
 		}
-	}
+	})
 	// A frame is a function of its number.
 	must(t, theme.SetActive("source"))
 	frame := func(n int, plain bool) string {
@@ -572,8 +566,7 @@ func TestStatusBarWearsTheTitle(t *testing.T) {
 // and the theme command refuses it with the same words. Earning the badge
 // unlocks it at once.
 func TestHackerThemesInTheList(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	_, _, eng := badgeDashboard(t)
 	acct := eng.Account()
 	st := eng.GetState()
