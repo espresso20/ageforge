@@ -243,22 +243,11 @@ func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 			return 0, vibe.Errorf("game.plan.PlanAddUpgrade.04", "%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
 		}
 	}
-	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == PlanUpgrade && ge.plan[n-1].Key == key {
-		add := min(count, maxPlanCount-ge.plan[n-1].Count)
-		if add <= 0 {
-			return 0, vibe.Errorf("game.plan.PlanAddUpgrade.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
-		}
-		ge.plan[n-1].Count += add
-		ge.logPlanAddLocked(ge.plan[n-1], add)
-		return add, nil
+	added, atMax, err := ge.planAppendLocked(PlanUpgrade, key, count)
+	if atMax {
+		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
 	}
-	if planLoad(ge.plan) >= MaxPlanItems {
-		return 0, errPlanFull()
-	}
-	ge.plan = append(ge.plan, PlanItem{Kind: PlanUpgrade, Key: key, Count: count})
-	ge.notePlanSize()
-	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
-	return count, nil
+	return added, err
 }
 
 // ===== Public API =====
@@ -288,22 +277,35 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 		room := def.MaxCount - ge.Buildings.GetCount(key) - ge.Buildings.GetQueueCount(key, ge.buildQueue) - planned
 		count = min(count, room)
 	}
-	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == PlanBuild && ge.plan[n-1].Key == key {
-		add := min(count, maxPlanCount-ge.plan[n-1].Count)
-		if add <= 0 {
-			return 0, vibe.Errorf("game.plan.PlanAddBuild.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
+	added, atMax, err := ge.planAppendLocked(PlanBuild, key, count)
+	if atMax {
+		return 0, vibe.Errorf("game.plan.PlanAddBuild.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
+	}
+	return added, err
+}
+
+// planAppendLocked adds count copies of key to the plan as a kind item (PlanBuild
+// or PlanUpgrade): onto the last item when that is the same kind and key,
+// otherwise as a new item. It returns how many it added; atMax when the last
+// item already holds the most one item can (the caller says so, in its own
+// words), and errPlanFull when a new item has no room. The caller holds the
+// write lock and has checked the count.
+func (ge *GameEngine) planAppendLocked(kind, key string, count int) (added int, atMax bool, err error) {
+	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == kind && ge.plan[n-1].Key == key {
+		if added = min(count, maxPlanCount-ge.plan[n-1].Count); added <= 0 {
+			return 0, true, nil
 		}
-		ge.plan[n-1].Count += add
-		ge.logPlanAddLocked(ge.plan[n-1], add)
-		return add, nil
+		ge.plan[n-1].Count += added
+		ge.logPlanAddLocked(ge.plan[n-1], added)
+		return added, false, nil
 	}
 	if planLoad(ge.plan) >= MaxPlanItems {
-		return 0, errPlanFull()
+		return 0, false, errPlanFull()
 	}
-	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: key, Count: count})
+	ge.plan = append(ge.plan, PlanItem{Kind: kind, Key: key, Count: count})
 	ge.notePlanSize()
 	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
-	return count, nil
+	return count, false, nil
 }
 
 // PlanAddResearch plans tech key, with what it still needs before it
