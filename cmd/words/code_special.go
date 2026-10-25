@@ -255,6 +255,7 @@ var skipDecls = map[string]string{
 	"mapmodel/commands.go:IdleCommand":            whySyntax,
 	"mapmodel/commands.go:RouteCommand":           whySyntax,
 	"mapmodel/commands.go:WonderCommand":          whySyntax,
+	"theme/theme.go:roleNames":                    whyDev,
 	"ui/mapstyle/skyline/wonders.go:wonderSprite": whyArt,
 }
 
