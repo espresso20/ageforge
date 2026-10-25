@@ -962,16 +962,7 @@ func (s *sprite) cropTop(h int) *sprite {
 	cut := s.h - h
 	o := newSprite(s.w, h)
 	copy(o.c, s.c[cut*s.w:])
-	sh := func(ps []pt) []pt {
-		out := make([]pt, 0, len(ps))
-		for _, p := range ps {
-			if p.y-cut >= 0 {
-				out = append(out, pt{p.x, p.y - cut})
-			}
-		}
-		return out
-	}
-	o.smoke, o.beacons, o.blades, o.flame = sh(s.smoke), sh(s.beacons), sh(s.blades), sh(s.flame)
+	o.addMarks(s, func(p pt) (pt, bool) { return pt{p.x, p.y - cut}, p.y-cut >= 0 })
 	o.carryExtras(s, 0, -cut)
 	return o
 }

@@ -166,18 +166,24 @@ func (s *sprite) blit(o *sprite, x, y int) {
 			}
 		}
 	}
-	mv := func(ps []pt) []pt {
-		out := make([]pt, 0, len(ps))
-		for _, p := range ps {
-			out = append(out, pt{p.x + x, p.y + y})
-		}
-		return out
-	}
-	s.smoke = append(s.smoke, mv(o.smoke)...)
-	s.beacons = append(s.beacons, mv(o.beacons)...)
-	s.blades = append(s.blades, mv(o.blades)...)
-	s.flame = append(s.flame, mv(o.flame)...)
+	s.addMarks(o, func(p pt) (pt, bool) { return pt{p.x + x, p.y + y}, true })
 	s.carryExtras(o, x, y)
+}
+
+// addMarks appends from's chimney mouths, beacons, windmill hubs and flames
+// to s, each point moved by mv; mv drops a point by returning false.
+func (s *sprite) addMarks(from *sprite, mv func(pt) (pt, bool)) {
+	add := func(dst *[]pt, src []pt) {
+		for _, p := range src {
+			if q, ok := mv(p); ok {
+				*dst = append(*dst, q)
+			}
+		}
+	}
+	add(&s.smoke, from.smoke)
+	add(&s.beacons, from.beacons)
+	add(&s.blades, from.blades)
+	add(&s.flame, from.flame)
 }
 
 // halves decodes a cell into its top and bottom half-cell slots.
@@ -324,14 +330,7 @@ func (s *sprite) mirror() *sprite {
 			o.c[y*s.w+(s.w-1-x)] = c
 		}
 	}
-	fl := func(ps []pt) []pt {
-		out := make([]pt, 0, len(ps))
-		for _, p := range ps {
-			out = append(out, pt{s.w - 1 - p.x, p.y})
-		}
-		return out
-	}
-	o.smoke, o.beacons, o.blades, o.flame = fl(s.smoke), fl(s.beacons), fl(s.blades), fl(s.flame)
+	o.addMarks(s, func(p pt) (pt, bool) { return pt{s.w - 1 - p.x, p.y}, true })
 	for _, b := range s.beams {
 		b.x = s.w - 1 - b.x
 		o.beams = append(o.beams, b)
@@ -377,14 +376,7 @@ func (s *sprite) trimTop() *sprite {
 	}
 	o := newSprite(s.w, s.h-top)
 	copy(o.c, s.c[top*s.w:])
-	sh := func(ps []pt) []pt {
-		out := make([]pt, 0, len(ps))
-		for _, p := range ps {
-			out = append(out, pt{p.x, p.y - top})
-		}
-		return out
-	}
-	o.smoke, o.beacons, o.blades, o.flame = sh(s.smoke), sh(s.beacons), sh(s.blades), sh(s.flame)
+	o.addMarks(s, func(p pt) (pt, bool) { return pt{p.x, p.y - top}, true })
 	o.carryExtras(s, 0, -top)
 	return o
 }
