@@ -576,15 +576,19 @@ func TestReproAgeSplashWithCatastrophe(t *testing.T) {
 	}
 }
 
-// reachBronze advances until the next advance crosses into the Iron Era,
-// where catastrophes become possible.
+// reachBronze jumps to the age before the Iron Era (the dev console's /age,
+// as the other tests do), where the next advance crosses into the Iron Era
+// and catastrophes become possible. The walk to it by typed `advance`s is
+// TestReproAgeSplashAllAges; here the Stone Age's two splashes, and the
+// buildings each asks for, would only be time spent before the test's own part.
 func (h *reproHarness) reachBronze() {
 	h.t.Helper()
-	for i := 0; h.eng.GetState().Age != "bronze_age"; i++ {
-		if !h.grantNextAge() || i > 5 {
-			h.t.Fatalf("could not reach the Bronze Age (at %s)", h.eng.GetState().Age)
-		}
-		h.advanceAndCheck(i, 'e')
+	if msg := h.dev("/age bronze_age"); msg != "jumped to bronze_age" {
+		h.t.Fatalf("/age bronze_age: %q", msg)
+	}
+	h.refresh() // the dashboard takes the age the way it does after any change
+	if age := h.eng.GetState().Age; age != "bronze_age" {
+		h.t.Fatalf("could not reach the Bronze Age (at %s)", age)
 	}
 }
 
