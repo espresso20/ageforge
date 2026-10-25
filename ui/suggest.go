@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -324,33 +325,11 @@ func closestCommand(word string) string {
 	sort.Strings(names)
 	best, bestDist := "", limit+1
 	for _, n := range names {
-		if d := editDistance(word, n); d < bestDist {
+		if d := textfmt.EditDistance(word, n); d < bestDist {
 			best, bestDist = n, d
 		}
 	}
 	return best
-}
-
-// editDistance is the Levenshtein distance between a and b, by rune.
-func editDistance(a, b string) int {
-	ra, rb := []rune(a), []rune(b)
-	prev := make([]int, len(rb)+1)
-	for j := range prev {
-		prev[j] = j
-	}
-	for i := 1; i <= len(ra); i++ {
-		curr := make([]int, len(rb)+1)
-		curr[0] = i
-		for j := 1; j <= len(rb); j++ {
-			cost := 1
-			if ra[i-1] == rb[j-1] {
-				cost = 0
-			}
-			curr[j] = min(curr[j-1]+1, prev[j]+1, prev[j-1]+cost)
-		}
-		prev = curr
-	}
-	return prev[len(rb)]
 }
 
 func sortedSubs(c *Command) []*Command {

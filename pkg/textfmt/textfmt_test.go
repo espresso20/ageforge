@@ -192,3 +192,28 @@ func TestCapitalizeKeepsALineWhole(t *testing.T) {
 		}
 	}
 }
+
+func TestEditDistance(t *testing.T) {
+	cases := []struct {
+		a, b string
+		want int
+	}{
+		{"farm", "farm", 0},
+		{"", "farm", 4},
+		{"farm", "", 4},
+		{"farm", "fam", 1},  // one deletion
+		{"farm", "farn", 1}, // one substitution
+		{"kitten", "sitting", 3},
+		// "é" is two bytes but one rune: a byte-based distance would say 2.
+		{"café", "cafe", 1},
+		{"日本", "日本語", 1},
+	}
+	for _, c := range cases {
+		if got := EditDistance(c.a, c.b); got != c.want {
+			t.Errorf("EditDistance(%q, %q) = %d, want %d", c.a, c.b, got, c.want)
+		}
+		if got := EditDistance(c.b, c.a); got != c.want {
+			t.Errorf("EditDistance(%q, %q) = %d, want %d (symmetric)", c.b, c.a, got, c.want)
+		}
+	}
+}
