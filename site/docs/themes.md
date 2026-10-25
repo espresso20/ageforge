@@ -54,7 +54,7 @@ Nothing is hidden with motion off, and nothing in a game changes: the same badge
 
 ## 🔀 How to switch
 
-You can change theme from the **`theme` command** at the `>` prompt, or from the **Themes** entry on the main menu. Both open the same picker.
+You can change theme from the **`theme` command** at the prompt, or from the **Themes** entry on the main menu. Both open the same picker.
 
 | Command | What it does |
 |---|---|

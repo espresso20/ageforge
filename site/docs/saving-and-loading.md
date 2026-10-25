@@ -180,7 +180,7 @@ A game saved before wonders needed a keystone tech, or before some commands wait
 
 ### Saves from before the pacing update
 
-A game saved before the pacing update carries on where you left it. The log says once that the ages ahead are longer and that events, raids, trade routes and other timers stretch with them.
+A game saved before the pacing update carries on where you left it. The log says once that the pacing changed.
 
 ### Saves from before the storage wall
 
@@ -192,7 +192,7 @@ Storage changed. A storage building's price now climbs much faster with each cop
 
 ### Saves from before scholars
 
-A game saved before scholars keeps every building copy, even above a knowledge building's cap. Knowledge was a stock before, and it is not any more:
+A game saved before scholars keeps every building copy, even above a knowledge building's cap. Knowledge is not held as a stock, so what the save held is turned into work:
 
 - Knowledge you held becomes a gift of work for the tech in progress, at most half of that tech's price. With nothing in progress it is lost.
 - A tech that was paid for and waiting out its research time completes on load.
