@@ -1,77 +1,67 @@
 # The Harbinger
 
-Harbingers are figures who warn you that a [catastrophe](catastrophe.md) is coming, and tell you how worried to be. From the Iron Era on, a harbinger comes only when a doom is fated to strike in your era, some while before it does. In the Cosmic Era, the last one, a second thread also warns of your next prestige: the [Last Passage](#the-last-passage). You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
+Harbingers are figures who warn you that a [catastrophe](catastrophe.md) is coming, and tell you how worried to be. From the Iron Era on, a harbinger comes when a doom is fated to strike in your era, some while before it does. The Stone Era always sends false prophets, and the Iron and Steel Eras sometimes do. In the Cosmic Era, the last one, a second thread also warns of your next prestige: the [Last Passage](#the-last-passage). You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
 
-A harbinger never blocks anything and never expires. You can ignore it completely and the game plays on as normal.
+A harbinger never expires, and you can ignore it completely: the game plays on as normal. The one thing it can do is hold an advance once, when it arrives at the very advance you are making (see [No outrunning a doom](#no-outrunning-a-doom)).
 
 ---
 
-## When Harbingers Come
+## When harbingers come
 
 ### A doom fated in secret
 
-When you enter an era from the Iron Era on, the Cosmic Era included, a hidden roll decides whether a doom is fated there: 27% of the time, one is. Nothing is ever fated in the Stone Era.
+When you enter an era from the Iron Era on, the Cosmic Era included, a hidden roll decides whether a doom is fated there. One is fated 27% of the time. Nothing is ever fated in the Stone Era.
 
-A fated doom strikes at a random moment anywhere in the era: in any of its ages, early or late, mid-age included. The moment is drawn across the era's expected length, counted from when you entered it. The expected length is the target times of the era's ages added up:
+A fated doom strikes at a random moment anywhere in the era, in any of its ages, early or late, mid-age included. The moment is drawn across the era's expected length, counted from when you entered it. That length is the expected lengths of the era's ages added up.
 
-| Era | Expected length at 1x | Figures, in order | Can a doom be fated? |
-|-----|-----------------------|-------------------|----------------------|
-| Stone Era | 4.9 h | the Wild Man, the Hermit, the Soothsayer | No. Its harbingers are always [false prophets](#false-prophets). |
-| Iron Era | 27.3 h | the Desert Prophet, the Oracle, the Town Crier | Yes, 27% of the time |
-| Steel Era | 54.6 h | the Court Astrologer, the Pamphleteer, the Newsboy | Yes, 27% of the time |
-| Electric Era | 80.6 h | the Doomsayer, the Telegraph, the Civil Defense Broadcast | Yes, 27% of the time |
-| Digital Era | 109.2 h | the Evening News, the Chain Email, the Viral Video | Yes, 27% of the time |
-| Neon Era | 156 h | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Yes, 27% of the time |
-| Cosmic Era | 249.6 h | the Distress Beacon, the Elder Relay, your future self, your unmade self | Yes, 27% of the time: the Reality Tear. A second thread warns of [the Last Passage](#the-last-passage). |
+| Era | Figures, in order | Can a doom be fated? |
+|-----|-------------------|----------------------|
+| Stone Era | the Wild Man, the Hermit, the Soothsayer | No. Its harbingers are always [false prophets](#false-prophets). |
+| Iron Era | the Desert Prophet, the Oracle, the Town Crier | Yes, 27% of the time |
+| Steel Era | the Court Astrologer, the Pamphleteer, the Newsboy | Yes, 27% of the time |
+| Electric Era | the Doomsayer, the Telegraph, the Civil Defense Broadcast | Yes, 27% of the time |
+| Digital Era | the Evening News, the Chain Email, the Viral Video | Yes, 27% of the time |
+| Neon Era | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Yes, 27% of the time |
+| Cosmic Era | the Distress Beacon, the Elder Relay, your future self, your unmade self | Yes, 27% of the time: the Reality Tear. A second thread warns of [the Last Passage](#the-last-passage). |
 
 The fate is saved with your game, so reloading can't re-roll it.
 
-Until a harbinger arrives, nothing in the game tells a fated era from a quiet one: not the panels, the Epoch panel, the `catastrophe` command, the status bar, the log or the map. A quiet era is safe, for now.
+Until a harbinger arrives, nothing in the game tells a fated era from a quiet one: not the panels, the Epoch panel, the `catastrophe` command, the status ribbon, the log or the map. A quiet era is safe, for now.
 
-The era's length and what a figure means by "this age" are measured against the ages' target times, so the hours for them follow the target table. The harbinger's lead is measured on the same age length the Appease and Brace prices are set from: the age's target time with the price climb from the Information Age on (see [Ages](ages.md)). The two are the same up to the Modern Age and the lead is longer in every age after it. All hours here are the hours at 1x, on the frontier. On known ground each age's target is first divided by its [Era Mastery](prestige.md#era-mastery) speed, so a mastered era is shorter and its doom and its warning both fall inside it: at 4x every window here is a quarter as long. Mastery is fixed for a run, so a fate rolled when you enter an era never shifts.
+The harbinger's lead is measured on the same age length that the Appease and Brace prices are set from: the age's expected length, stretched by a factor of 1.4 for each age after the Modern Age (see [Ages](ages.md)). Up to the Modern Age the two lengths are the same, and in every age after it the lead is longer. On known ground each age's expected length is first divided by its [Era Mastery](prestige.md#era-mastery) speed, so a mastered era is shorter and its doom and its warning both fall inside it. At 4x every window here is a quarter as long. Mastery is fixed for a run, so a fate rolled when you enter an era never shifts.
 
 ### When the harbinger arrives
 
 A harbinger comes only when a doom is fated, or as a false prophet (see [False prophets](#false-prophets)). It arrives a random lead before the strike: 20% to 60% of the age you are in, measured on the same length its Appease and Brace prices are set from, drawn once per fate.
 
-| Era | Lead in its first age | Lead in its last age |
-|-----|-----------------------|----------------------|
-| Iron Era | 1.3 to 3.9 hours (Iron Age) | 2.3 to 7 hours (Medieval Age) |
-| Steel Era | 3.1 to 9.4 hours (Renaissance Age) | 4.2 to 12.5 hours (Industrial Age) |
-| Electric Era | 4.7 to 14 hours (Victorian Age) | 6.2 to 18.7 hours (Atomic Age) |
-| Digital Era | 6.2 to 18.7 hours (Modern Age) | 16.3 to 48.9 hours (Digital Age) |
-| Neon Era | 25.7 to 77.1 hours (Cyberpunk Age) | 61.5 to 184.6 hours (Space Age) |
-| Cosmic Era | 94.0 to 281.9 hours (Interstellar Age) | 257.8 to 773.5 hours (Transcendent Age) |
-
-Rules:
-
-- **The lead follows the age you are in.** Advancing into a longer age lengthens it, so a harbinger can arrive the moment you advance.
-- **In the later ages a warning can outlast the age.** From the Digital Age on the longest lead is longer than the age's target time, and in the Cosmic Era even the shortest is. A lead that reaches back past the moment you entered the era brings the harbinger as you enter it, which happens often in the Neon Era and in most Cosmic Era dooms; the doom is then held at least the shortest lead after it. You are not made to wait the warning out: the doom strikes at the latest at your last advance out of the era (in the Cosmic Era, before your prestige), as it always has (see [No Outrunning a Doom](#no-outrunning-a-doom)). How often a doom comes does not change: it is still fated in 27% of eras.
-- **Never before the era began.** If the lead would reach back past the moment you entered the era, the harbinger comes as soon as you enter it.
-- **Always some warning.** A doom always gets at least the shortest lead, 20% of the current age. If it was fated for the era's first moments, before any lead could reach back, the strike is held until that long after the harbinger arrives.
-- **One per era per run.** Once an era's doom has struck, passed you by, or been exposed as a false prophet's invention, no other harbinger comes in that era. Succumb and prestige start a new run, and each era rolls its fate again.
-- **Offline too.** While you are away, the harbinger arrives and the doom strikes at their own moments.
-- **The Cosmic Era also warns of prestige.** Beside its fated doom, a second thread warns of the Last Passage from the moment you enter the era until you prestige. See [The Last Passage](#the-last-passage).
+- The lead follows the age you are in. Advancing into a longer age lengthens it, so a harbinger can arrive the moment you advance.
+- In the later ages a warning can outlast the age. From the Digital Age on the longest lead is longer than the age's expected length, and from the Space Age on even the shortest is. A lead that reaches back past the moment you entered the era brings the harbinger as you enter it, which happens to about a third of Neon Era dooms and to most Cosmic Era dooms. The doom is then held at least the shortest lead after it. You are not made to wait the warning out: the doom strikes at the latest at your last advance out of the era (in the Cosmic Era, before your prestige), as it always does (see [No outrunning a doom](#no-outrunning-a-doom)). How often a doom is fated does not change: it is still fated in 27% of eras.
+- A doom always gets some warning. It gets at least the shortest lead, 20% of the current age. If it was fated for the era's first moments, before any lead could reach back, the strike is held until that long after the harbinger arrives.
+- One harbinger per era per run. Once an era's doom has struck, passed you by, or been exposed as a false prophet's invention, no other harbinger comes in that era. Succumb and prestige start a new run, and each era rolls its fate again.
+- Harbingers come while you are away, too. The harbinger arrives and the doom strikes at their own moments.
+- The Cosmic Era also warns of prestige. Beside its fated doom, a second thread warns of the Last Passage from the moment you enter the era until you prestige. See [The Last Passage](#the-last-passage).
 
 ### The figures
 
-A harbinger and the figures who take up its warning make one **harbinger thread**, which lasts until the doom resolves. The speaker changes with the age: each time you advance while the thread lasts, the new age's figure takes up the warning, with its own word on when (see [Reading the Warning](#reading-the-warning)). Levels you bought and an Invite carry over, and the price is the same in every age of the era.
+A harbinger and the figures who take up its warning make one harbinger thread, which lasts until the doom resolves. The speaker changes with the age: each time you advance while the thread lasts, the new age's figure takes up the warning, with its own word on when (see [Reading the warning](#reading-the-warning)). Levels you bought and an Invite carry over, and the price is the same in every age of the era.
 
 When a harbinger arrives, or a new figure takes up the warning, you get:
 
 - a log entry naming the figure and what it warns of, for example "⚑ The Oracle has come, warning of impending doom before this age is out. Type 'harbinger' to answer.", followed by its arrival and warning lines,
-- a toast announcing the figure (the first one arriving, or a later one taking up the warning),
-- a **⚑ Harbinger** badge in the status bar for as long as the thread lasts.
+- a toast naming the figure (a new arrival, or a figure taking up the warning),
+- a **⚑ Harbinger** badge on the status ribbon for as long as the thread lasts.
 
-Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current figure and, after a handoff, who it took up the warning from.
+Type `harbinger` (or `harb`) to open the Harbinger panel. It opens full screen and shows the current figure and, after a handoff, who it took up the warning from.
 
 <figure class="screen" data-screen="harbinger"><figcaption>The Harbinger panel in the Iron Age: the warning of the Desert Prophet, its severity, and what the next level of Appease and of Brace would cost.</figcaption></figure>
 
-A harbinger never names an era you haven't reached. It warns of **impending doom** in the era you are in (in the Cosmic Era, also of the Last Passage), and the only era it ever names is your current one.
+A harbinger never names an era you haven't reached. It warns of impending doom in the era you are in (in the Cosmic Era, also of the Last Passage), and the only era it ever names is your current one.
+
+With VibeMode on, a harbinger's lines come in the second script's words. Prices, odds and rules do not change. See [VibeMode](commands.md#vibemode).
 
 ---
 
-## The Roster
+## The roster
 
 Every age has a figure written for it, and all 22 appear in play: three for each era from the Stone Era to the Neon Era, and four for the Cosmic Era, who warn of its doom and of the Last Passage.
 
@@ -102,9 +92,9 @@ Every age has a figure written for it, and all 22 appear in play: three for each
 | Quantum | your future self | Numeric | Age or era | 0 | A message in your handwriting, stamped nine years from now, that knows your passcode. |
 | Transcendent | your unmade self | Numeric | Age or era | 0 | A version of you from a branch that ended, come to see whether this one ends the same way. |
 
-**Odds:** Vague figures give a severity only; Numeric figures also publish the chance. **Timing:** None means no word of when; Age or era means "before this age is out" or "before the era ends" (see [Reading the Warning](#reading-the-warning)). The Cosmic Era's figures also warn of the Last Passage, which needs no timing: it comes at your next prestige.
+Vague figures give a severity only. Numeric figures also publish the chance. For timing, None means no word of when, and Age or era means "before this age is out" or "before the era ends" (see [Reading the warning](#reading-the-warning)). The Cosmic Era's figures also warn of the Last Passage, which needs no timing: it comes at your next prestige.
 
-Only the figure of an era's first age rolls its false-prophet chance, and only when nothing is fated there: the Wild Man for the Stone Era, the Desert Prophet for the Iron Era and the Court Astrologer for the Steel Era. The other ages' chances only come into play when a save from an older version loads partway through an era. See [False prophets](#false-prophets).
+Only the figure of an era's first age rolls its false-prophet chance, and only when nothing is fated there: the Wild Man for the Stone Era, the Desert Prophet for the Iron Era and the Court Astrologer for the Steel Era. See [False prophets](#false-prophets).
 
 ### What the actions are called
 
@@ -137,7 +127,7 @@ Each figure names the three actions in its own terms. The effect is the same who
 
 ---
 
-## Reading the Warning
+## Reading the warning
 
 The figure's words tell you how worried to be, and from the Classical Age on, roughly when. What you learn depends on who is speaking now.
 
@@ -146,17 +136,17 @@ The figure's words tell you how worried to be, and from the Classical Age on, ro
 | Who is speaking | What they say about when |
 |-----------------|--------------------------|
 | Before the Classical Age: the Wild Man, the Hermit, the Soothsayer, the Desert Prophet | Nothing. They warn of impending doom, and the panel says so: "The Desert Prophet gives no word of when." |
-| From the Classical Age on: the Oracle and every figure after her | **before this age is out**, or **before the Iron Era ends** (naming the era you are in) |
+| From the Classical Age on: the Oracle and every figure after her | "before this age is out", or "before the Iron Era ends" (naming the era you are in) |
 
-A figure who tells time says **before this age is out** when the doom falls in the current age on the era's expected schedule: each of its ages at its target time, counted from when you entered the era. In the era's last age it always says so, since the doom can't outlast the era. Otherwise it says the doom comes before the era ends.
+A figure who tells time says "before this age is out" when the doom falls in the current age on the era's expected schedule: each of its ages at its expected length, counted from when you entered the era. In the era's last age it always says so, since the doom can't outlast the era. Otherwise it says the doom comes before the era ends.
 
-For a real doom the words always hold. Its moment is fixed, and if you would advance past it first, it strikes at that advance instead (see [No Outrunning a Doom](#no-outrunning-a-doom)). Each new figure gives its own word, so the warning can narrow as the thread passes from age to age.
+For a real doom the words always hold. Its moment is fixed, and if you would advance past it first, it strikes at that advance instead (see [No outrunning a doom](#no-outrunning-a-doom)). Each new figure gives its own word, so the warning can narrow as the thread passes from age to age.
 
 ### How likely
 
-**Before the Industrial Age**, the panel shows only the figure's words and a severity: **low**, **medium** or **high risk**.
+Before the Industrial Age, the panel shows only the figure's words and a severity: low, medium or high.
 
-**From the Industrial Age on**, the panel also prints the odds as a percentage. The number already includes any Appease you have bought. In the Steel Era this means a thread that starts vague turns numeric when the Newsboy takes it up.
+From the Industrial Age on, the panel also prints the odds as a percentage ("Published odds"). The number already includes any Appease you have bought. In the Steel Era this means a thread that starts vague turns numeric when the Newsboy takes it up.
 
 For an era's doom, the severity follows the chance it strikes:
 
@@ -166,7 +156,7 @@ For an era's doom, the severity follows the chance it strikes:
 | 70% to under 85% | medium risk |
 | 85% or more | high risk |
 
-Without any Appease that works out to **low** at high faith (60%), **medium** at mid faith (75%), and **high** at low faith (90%). For a real doom, one level of Appease brings any band down to low. See [Faith and the odds](faith.md#faith-threshold-bands). The severity is live: if your faith strength changes band, or you Appease, it moves.
+Without any Appease that works out to low at high faith (60%), medium at mid faith (75%), and high at low faith (90%). For a real doom, one level of Appease brings any band down to low. See [Faith and the odds](faith.md#faith-threshold-bands). The severity is live: if your faith strength changes band, or you Appease, it moves.
 
 The Last Passage keeps its own scale: low under 14%, medium from 14% to under 17%, high at 17% or more.
 
@@ -183,26 +173,26 @@ A warning may be a lie. False prophets come only before the Industrial Age, and 
 | Steel Era (the Court Astrologer's chance) | 2/64 of the Steel Eras with nothing fated: about 2.3% of all Steel Eras |
 | Electric, Digital, Neon and Cosmic Eras | none |
 
-A false prophet picks its foretold moment and its lead exactly like a real doom, and arrives the same way. It claims **medium** or **high** risk (picked at random), and every figure in its thread repeats the claim, with the same warning lines a real harbinger would use. The `catastrophe` command and the Epoch panel repeat it too, so nothing the game shows tells a false prophet apart from a real one.
+A false prophet picks its foretold moment and its lead exactly like a real doom, and arrives the same way. It claims medium or high risk (picked at random), and every figure in its thread repeats the claim, with the same warning lines a real harbinger would use. The `catastrophe` command and the Epoch panel repeat it too, so nothing the game shows tells a false prophet apart from a real one.
 
 The claim is kept as a fixed multiple of what a real doom's chance would be. Appease, a change in faith, or an Invite move it exactly as they would move a real warning. It never drops below low risk. A false Steel Era thread that reaches the Newsboy prints the claimed figure.
 
 At the foretold moment nothing happens. The lie comes out once the foretold window has passed:
 
-- if the figure speaking said **before this age is out**, when you advance out of that age;
+- if the figure speaking said "before this age is out", when you advance out of that age;
 - otherwise, when you advance out of the era. That includes every figure who gives no word of when.
 
-The log then says so, for example "⚑ This age ends without the doom the Oracle foretold. The warning had been invented from the start." or "⚑ The Iron Era ends without the doom the Desert Prophet foretold. The warning had been invented from the start." The verdict is **Discredited**.
+The log then says so, for example "⚑ This age ends without the doom the Oracle foretold. The warning had been invented from the start." or "⚑ The Iron Era ends without the doom the Desert Prophet foretold. The warning had been invented from the start." The verdict is Discredited.
 
 Appease and Brace bought against a false prophet buy nothing, since no doom is coming, unless you [Invite](#invite-choose-the-catastrophe) it.
 
-**The Stone Era.** Nothing can strike in the Stone Era, so every harbinger there (the Wild Man, the Hermit or the Soothsayer) is a false prophet, and all three answers are refused: "Unavailable: no catastrophe can strike in the Stone Era." It is a harmless first taste of harbingers.
+The Stone Era is the exception to everything above. Nothing can strike in the Stone Era, so every harbinger there (the Wild Man, the Hermit or the Soothsayer) is a false prophet, and all three answers are refused: "Unavailable: no catastrophe can strike in the Stone Era." It is a harmless first taste of harbingers.
 
 ---
 
-## Answering the Harbinger
+## Answering the harbinger
 
-While a harbinger is present you can Appease, Brace or Invite, in any age of the era. Your answers belong to the doom, not to the figure: levels you buy and an Invite carry over when the next figure takes up the warning. Nothing expires, but a real doom's thread lasts only until the strike: usually its lead, 20% to 60% of an age, and less if an advance brings the strike forward (see [No Outrunning a Doom](#no-outrunning-a-doom)). In the Cosmic Era your answers go to the thread that is speaking (see [The Last Passage](#the-last-passage)).
+While a harbinger is present you can Appease, Brace or Invite, in any age of the era. Your answers belong to the doom, not to the figure: levels you buy and an Invite carry over when the next figure takes up the warning. Nothing expires, but a real doom's thread lasts only until the strike: usually its lead, 20% to 60% of an age, and less if an advance brings the strike forward (see [No outrunning a doom](#no-outrunning-a-doom)). In the Cosmic Era your answers go to the thread that is speaking (see [The Last Passage](#the-last-passage)).
 
 A thread's price is set when its harbinger arrives and stays the same for as long as the thread lasts, whoever is speaking.
 
@@ -214,14 +204,14 @@ A thread's price is set when its harbinger arrives and stays the same for as lon
 | 1 | 15% of what the age the harbinger arrives in makes, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
 | 2 | the same again as level 1 | ×0.36 (×0.6 again) |
 
-- **15% of the age** is three quarters of what the shortest warning makes. A harbinger comes 20% to 60% of an age before its doom, measured on the length the price is set from, and an advance can cut that short. So level 1 is priced on faith you can gather while the warning lasts, not on faith you had to save before it. Level 2 costs the same again, so both levels together cost 30% of what the age makes, about what an average warning brings in: the second level takes a warning of ordinary length or faith you saved up.
-- **What an age makes** is what a player who invests moderately in faith makes in it: eight fully staffed copies of every faith building so far, the faith of every wonder already built, the flat faith of the techs, all multiplied by the production bonuses a typical player holds by then: the all-production pool of milestones and wonders, in full, and the techs' own bonus on top. Culture is counted the same way.
+- 15% of the age is three quarters of what the shortest warning makes. A harbinger comes 20% to 60% of an age before its doom, measured on the length the price is set from, and an advance can cut that short. So level 1 is priced on faith you can gather while the warning lasts, not on faith you had to save before it. Level 2 costs the same again, so both levels together cost 30% of what the age makes. The second level takes a long warning or faith you saved up.
+- What an age makes is what a player who invests moderately in faith makes in it: eight fully staffed copies of every faith building so far, the faith of every wonder built in earlier ages, the flat faith of the techs, all multiplied by the production bonuses a typical player holds by then (the all-production pool of milestones and wonders, in full, and the techs' own bonus on top). Culture is counted the same way.
 - The price belongs to the thread. It is set from the age the harbinger arrives in and does not change when the thread passes to the next age's figure. It is the same on known ground: a mastered age makes more per tick for a shorter warning.
 - Culture is only charged if you already had it when the era began. It unlocks in the Classical Age, so Iron Era threads cost faith only.
-- The Last Passage's thread is priced by the same rule on a longer warning. It comes as you enter the Cosmic Era and lasts until you prestige, so its shortest warning counts as two thirds of the Interstellar Age, not a fifth of it: level 1 is half of what that age makes, a little over three times a doom foretold there, and level 2 costs the same again (see [What it costs](#what-it-costs-by-epoch)).
+- The Last Passage's thread is priced by the same rule on a longer warning. It comes as you enter the Cosmic Era and lasts until you prestige, so its shortest warning counts as two thirds of the Interstellar Age, not a fifth of it. Level 1 is half of what that age makes, a little over three times a doom foretold there, and level 2 costs the same again (see [What it costs](#what-it-costs-by-epoch)).
 - Two levels at most.
 - Appease always lowers the chance a real doom strikes. Against a false prophet it only lowers the claim, since nothing is coming.
-- **Not after Invite.** Once you invite the catastrophe, Appease is refused: it will come whatever you offer.
+- Not after Invite. Once you invite the catastrophe, Appease is refused: it will come whatever you offer.
 
 Example: at mid faith a fated doom strikes 75% of the time. One level of Appease takes it to 45%, two levels to 27%.
 
@@ -229,13 +219,13 @@ Spending faith lowers the share of your faith you have kept, and your [faith str
 
 ### Brace: soften an Endure
 
-Brace spends the materials your age makes. Level 1 costs a third of what a moderate economy makes of each of them during the doom's shortest warning: a fifth of the age the harbinger arrives in, so a fifteenth of what that age makes. That is 27 minutes of income in the Iron Age and 21.3 hours in the Space Age: the effort grows with the age, as the warning does.
+Brace spends the materials your age makes. Level 1 costs a third of what a moderate economy makes of each of them during the doom's shortest warning: a fifth of the age the harbinger arrives in, so a fifteenth of what that age makes. The effort grows with the age, as the warning does.
 
-- **The materials** come from a written list for each era, and of that list only the ones the buildings of a moderate economy make by then. The Iron Era's list is gold, iron and stone. The Steel Era's is gold and steel. The Electric Era's is electricity, oil and steel. The Digital Era's is data, electricity and gold. The Neon Era's is data and electricity. The Cosmic Era's is dark matter and titanium. The Stone Era has no list: nothing can strike there.
-- **A moderate economy** is eight fully staffed copies of every producer so far, with the bonuses a typical player holds by then: the same measure Appease uses for faith.
+- The materials come from a written list for each era, and of that list only the ones the buildings of a moderate economy make by then. The Iron Era's list is gold, iron and stone. The Steel Era's is gold and steel. The Electric Era's is electricity, oil and steel. The Digital Era's is data, electricity and gold. The Neon Era's is data and electricity. The Cosmic Era's is dark matter and titanium. The Stone Era asks for nothing: no answer works there.
+- A moderate economy is eight fully staffed copies of every producer so far, with the bonuses a typical player holds by then: the same measure Appease uses for faith.
 - The price belongs to the thread, like Appease's: it is set from the age the harbinger arrives in and keeps that price through every age the thread lives in.
 - Level 2 costs the same again as level 1.
-- **It never asks for more than a ceiling.** No material costs more than a fixed number of hours of what a moderate economy makes of it, set by the age so that it comes to the same amount for every material of that age. Every thread has that ceiling, the Reality Tear's and the Last Passage's included. In most ages one or two of the materials sit on it: gold, steel or electricity, and titanium in the Cosmic Era.
+- No material costs more than a ceiling, set by the age so that it comes to the same amount for every material of that age. Every thread has that ceiling, the Reality Tear's and the Last Passage's included. In many ages the price of one or two of the materials sits on it.
 
 The Cosmic Era's two threads are priced by the same rule and cost more of the warning: the Reality Tear's five sixths of its shortest warning, the Last Passage's half of its much longer one, both under the same ceiling (see [What it costs](#what-it-costs-by-epoch)).
 
@@ -245,62 +235,62 @@ The Cosmic Era's two threads are priced by the same rule and cost more of the wa
 | 1 | a third of what the shortest warning makes of each material, or the ceiling for that age if that is less | 15% | 30% |
 | 2 | the same again | 10% | 45% |
 
-Buildings destroyed are counted from your buildings other than wonders, storage and knowledge buildings, rounded down, with at least 1 if you have any. Wonders, storage and knowledge buildings are never destroyed. The rest of Endure (25% of workers lost, the 562-tick reconstruction debuff, −10 morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
+Buildings destroyed are counted from your buildings other than wonders, storage and knowledge buildings, rounded down, with at least 1 if you have any. Wonders, storage and knowledge buildings are never destroyed. The rest of Endure (25% of workers lost, the reconstruction debuff, 10 points of morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
 
-**Brace and your garrison.** The table is Brace alone. If you have soldiers, Brace applies first and then your garrison blunts its share of what Brace leaves: fewer buildings fall and more stock is kept. The garrison's share is measured against the raid threat of the age the doom strikes in. The panel measures it against the age you are in now; if the doom strikes after you advance, the threat there is double and your garrison blunts less than the preview shows. Brace and garrison together can cut the unbraced loss by at most **60%**: at least 8% of buildings fall and at most 66% of stock is kept. That cap only bites at level 2. For example, level 1 with a garrison that blunts 20% of a raid means 12% of buildings fall and 44% of stock is kept; level 2 with a strong garrison stops at 8% and 66%. See [Your garrison](catastrophe.md#your-garrison) and [Defense: what your army blunts](military.md#defense-what-your-army-blunts).
+Brace and your garrison. The table is Brace alone. If you have soldiers, Brace applies first and then your garrison blunts its share of what Brace leaves: fewer buildings fall and more stock is kept. The garrison's share is measured against the raid threat of the age the doom strikes in. The panel measures it against the age you are in now. The threat doubles with each age, so if the doom strikes after you advance, your garrison blunts less than the preview shows. Brace and garrison together can cut the unbraced loss by at most 60%: at least 8% of buildings fall and at most 66% of stock is kept. That cap only bites at level 2. For example, level 1 with a garrison that blunts 20% of a raid means 12% of buildings fall and 44% of stock is kept. Level 2 with a strong garrison stops at 8% and 66%. See [Your garrison](catastrophe.md#your-garrison) and [Defense: what your army blunts](military.md#defense-what-your-army-blunts).
 
 The panel's Brace preview ("If it comes and you Endure: N% of buildings fall, N% of stock is kept", and the same for the next level) already counts your garrison, so it shows what you would face in your current age. A line under it says so: "Your garrison is counted: it blunts about N% of what Brace leaves." With no soldiers it reads "No garrison counted: soldiers would soften an Endure further (Army panel)." When the 60% cap cuts in, a further line says so.
 
 Things to know:
 
 - Two levels at most.
-- Brace only matters if the catastrophe comes **and** you choose Endure. If no catastrophe comes, or you Succumb, the resources are simply spent.
+- Brace only matters if the catastrophe comes and you choose Endure. If no catastrophe comes, or you Succumb, the resources are simply spent.
 - The Brace is attached to the pending catastrophe. If you close the choice with Esc and Endure later, or save and load in between, it still applies.
 - Brace is allowed after Invite.
-- **Against the Last Passage, Brace protects points, not your civilization, and it takes real effort.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there, and your garrison doesn't count. It costs more than a doom's: each level costs a third of what the Interstellar Age makes of dark matter and titanium at a moderate economy, under the ceiling, about 159 hours of income. See [Brace or Appease against the Last Passage](#brace-or-appease-against-the-last-passage) and [The Last Passage](prestige.md#the-last-passage). Against the Cosmic Era's fated doom, the Reality Tear, Brace works as above, garrison included, under the same ceiling: a sixth of what the age makes, about 79 hours of income a level.
+- Against the Last Passage, Brace protects points, not your civilization. An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there, and your garrison doesn't count. It costs more than a doom's: each level costs half of what a moderate economy makes of dark matter and titanium during the Last Passage's warning, under the ceiling. See [Brace or Appease against the Last Passage](#brace-or-appease-against-the-last-passage) and [The Last Passage](prestige.md#the-last-passage). Against the Cosmic Era's fated doom, the Reality Tear, Brace works as above, garrison included, under the same ceiling: five sixths of its shortest warning, a sixth of what the age makes.
 
 ### What it costs, by epoch
 
 Level 1 prices. Level 2 of either answer costs the same again.
 
-Both answers are priced by the age the harbinger arrives in, and keep that price for the whole thread. **Brace** is a third of what the shortest warning makes of each material, and no more than its ceiling, a fixed number of hours of a moderate economy's income of it (the Cosmic Era's threads cost more of the warning and have the same ceiling); the hours are how long a moderate economy takes to make it. **Appease** is three quarters of what the shortest warning makes of faith and culture. One tech cuts Appease: with **Void Contemplation** (Interstellar Age) every Appease level costs 20% less, on every thread, the Last Passage's included, and the Harbinger panel shows the price you would pay.
+Both answers are priced by the age the harbinger arrives in, and keep that price for the whole thread. Brace is a third of what the shortest warning makes of each material, and no more than its ceiling (the Cosmic Era's threads cost more of the warning and have the same ceiling). Appease is three quarters of what the shortest warning makes of faith and culture. One tech cuts Appease: with Void Contemplation (Interstellar Age) every Appease level costs 20% less, on every thread, the Last Passage's included, and the Harbinger panel shows the price you would pay. The table shows the prices without it.
 
-| Era | Harbinger arrives in | Brace (level 1) | Hours of income | Appease (level 1) | The warning lasts |
-|-----|----------------------|-----------------|-----------------|-------------------|-------------------|
-| Stone Era | any age | refused: nothing can strike there | | refused | |
-| Iron Era | Iron Age | 130K gold, 130K iron, 120K stone | 27 min | 1.8K faith | 1.3 h to 3.9 h |
-|  | Classical Age | 1M gold, 1M iron, 610K stone | 37 min | 3.3K faith | 1.8 h to 5.5 h |
-|  | Medieval Age | 7.3M gold, 6.4M iron, 6.1M stone | 47 min | 6.6K faith | 2.3 h to 7.0 h |
-| Steel Era | Renaissance Age | 33M gold, 7.3M steel | 1.0 h | 15K faith, 150K culture | 3.1 h to 9.4 h |
-|  | Colonial Age | 150M gold, 120M steel | 1.3 h | 42K faith, 360K culture | 3.6 h to 10.9 h |
-|  | Industrial Age | 510M gold, 510M steel | 11 min | 150K faith, 1.7M culture | 4.2 h to 12.5 h |
-| Electric Era | Victorian Age | 6.5B steel, 2.2B oil, 2.7M electricity | 1.6 h | 320K faith, 3.9M culture | 4.7 h to 14.0 h |
-|  | Electric Age | 72B steel, 34B electricity, 7.4B oil | 1.8 h | 770K faith, 10M culture | 5.2 h to 15.6 h |
-|  | Atomic Age | 340B steel, 280B electricity, 10B oil | 2.1 h | 1.9M faith, 26M culture | 6.2 h to 18.7 h |
-| Digital Era | Modern Age | 1.7T gold, 1.4T electricity, 47B data | 2.2 h | 4.1M faith, 57M culture | 6.2 h to 18.7 h |
-|  | Information Age | 11T electricity, 11T gold, 1.4T data | 3.6 h | 15M faith, 210M culture | 10.2 h to 30.6 h |
-|  | Digital Age | 44T electricity, 44T gold, 8T data | 5.5 h | 51M faith, 760M culture | 16.3 h to 48.9 h |
-| Neon Era | Cyberpunk Age | 400T electricity, 39T data | 8.8 h | 160M faith, 2.4B culture | 25.7 h to 77.1 h |
-|  | Fusion Age | 1.9Q electricity, 65T data | 13.4 h | 520M faith, 8.1B culture | 40.0 h to 119.9 h |
-|  | Space Age | 9.7Q electricity, 110T data | 21.3 h | 1.7B faith, 26B culture | 61.5 h to 184.6 h |
-| Cosmic Era: the Reality Tear | Interstellar Age | 290Q titanium, 30Q dark matter | 79.3 h | 5.3B faith, 82B culture | 94.0 h to 281.9 h |
-|  | Galactic Age | 2.6Qi titanium, 1.4Qi dark matter | 115.5 h | 18B faith, 280B culture | 131.6 h to 394.7 h |
-|  | Quantum Age | 68Qi dark matter, 5.1Qi titanium | 155.4 h | 55B faith, 900B culture | 184.2 h to 552.5 h |
-|  | Transcendent Age | 120Qi dark matter, 8.4Qi titanium | 229.1 h | 90B faith, 1.5T culture | 257.8 h to 773.5 h |
-| Cosmic Era: the Last Passage | Interstellar Age, as you enter the era | 290Q titanium, 60Q dark matter | 158.5 h | 18B faith, 280B culture | until you prestige |
+| Era | Harbinger arrives in | Brace (level 1) | Appease (level 1) |
+|-----|----------------------|-----------------|-------------------|
+| Stone Era | any age | refused: nothing can strike there | refused |
+| Iron Era | Iron Age | 130K gold, 130K iron, 120K stone | 1.8K faith |
+|  | Classical Age | 1M gold, 1M iron, 610K stone | 3.3K faith |
+|  | Medieval Age | 7.3M gold, 6.4M iron, 6.1M stone | 6.6K faith |
+| Steel Era | Renaissance Age | 33M gold, 7.3M steel | 15K faith, 150K culture |
+|  | Colonial Age | 150M gold, 120M steel | 42K faith, 360K culture |
+|  | Industrial Age | 510M gold, 510M steel | 150K faith, 1.7M culture |
+| Electric Era | Victorian Age | 6.5B steel, 2.2B oil, 2.7M electricity | 320K faith, 3.9M culture |
+|  | Electric Age | 72B steel, 34B electricity, 7.4B oil | 770K faith, 10M culture |
+|  | Atomic Age | 340B steel, 280B electricity, 10B oil | 1.9M faith, 26M culture |
+| Digital Era | Modern Age | 1.7T gold, 1.4T electricity, 47B data | 4.1M faith, 57M culture |
+|  | Information Age | 11T electricity, 11T gold, 1.4T data | 15M faith, 210M culture |
+|  | Digital Age | 44T electricity, 44T gold, 8T data | 51M faith, 760M culture |
+| Neon Era | Cyberpunk Age | 400T electricity, 39T data | 160M faith, 2.4B culture |
+|  | Fusion Age | 1.9Q electricity, 65T data | 520M faith, 8.1B culture |
+|  | Space Age | 9.7Q electricity, 110T data | 1.7B faith, 26B culture |
+| Cosmic Era: the Reality Tear | Interstellar Age | 290Q titanium, 30Q dark matter | 5.3B faith, 82B culture |
+|  | Galactic Age | 2.6Qi titanium, 1.4Qi dark matter | 18B faith, 280B culture |
+|  | Quantum Age | 68Qi dark matter, 5.1Qi titanium | 55B faith, 900B culture |
+|  | Transcendent Age | 120Qi dark matter, 8.4Qi titanium | 90B faith, 1.5T culture |
+| Cosmic Era: the Last Passage | Interstellar Age, as you enter the era | 290Q titanium, 60Q dark matter | 18B faith, 280B culture |
 
-The warning times are for a first run. On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so the price is the same.
+On known ground an age and its warning are both shorter by the age's [Era Mastery](prestige.md#era-mastery) speed, and the age makes that much more per tick, so these prices are the same.
 
-In every row the shortest warning is long enough to earn level 1 of both answers: a moderate economy needs 76% to 80% of it in income for the Appease and at most 92% for the Brace (the Reality Tear's Brace is the closest, 83% to 92% of the warning; an ordinary doom's is 33% to 36% of it, or less where the ceiling holds it down).
+Level 1 of both answers can be paid inside the shortest warning. Appease level 1 takes 75% to 80% of what a moderate economy makes of faith and culture in that warning, and Brace level 1 takes at most 89% of what it makes of any one material (the Reality Tear's Brace is the closest, 84% to 89%). An ordinary doom's Brace takes about a third of the warning's income, or less where the ceiling holds the price down.
 
-The Cosmic Era's passage is prestige, which you may take in any of its ages. The Last Passage's thread runs from your arrival in the era until you prestige, and nothing about its timing is hidden: you pick the moment. So where a doom's shortest warning is a fifth of an age, the Last Passage's is counted as two thirds of the age its harbinger arrives in, the Interstellar Age, on the same age target the table's prices are set from: longer than any doom's. Both of its answers are priced on that warning, at what a moderate economy (eight staffed copies of every producer) makes in it:
+The Cosmic Era's passage is prestige, which you may take in any of its ages. The Last Passage's thread runs from your arrival in the era until you prestige, and nothing about its timing is hidden: you pick the moment. So where a doom's shortest warning is a fifth of an age, the Last Passage's is counted as two thirds of the age its harbinger arrives in, the Interstellar Age: longer than any doom's. Both of its answers are priced on that warning, at what a moderate economy (eight staffed copies of every producer) makes in it:
 
-- **Appease** level 1 is three quarters of what the warning makes in faith and culture, half of what the whole age does: 18B faith and 280B culture, a little over three times a doom foretold in the same age, and about 241 hours of income. Level 2 costs the same again, so both levels together cost what the whole Interstellar Age makes: more than the warning brings in, so the second takes playing the age out, or a stock you brought with you.
-- **Brace** level 1 is half of what the warning makes in dark matter and titanium, under the ceiling: 60Q dark matter and 290Q titanium, with the titanium on the ceiling, about 159 hours of income. Level 2 costs the same again.
+- Appease level 1 is three quarters of what the warning makes in faith and culture, half of what the whole age does: 18B faith and 280B culture, a little over three times a doom foretold in the same age. Level 2 costs the same again, so both levels together cost what the whole Interstellar Age makes. That is more than the warning brings in, so the second level takes playing the age out, or a stock you brought with you.
+- Brace level 1 is half of what the warning makes in dark matter and titanium, under the ceiling: 60Q dark matter and 290Q titanium, with the titanium on the ceiling. Level 2 costs the same again.
 
-If you prestige as soon as you arrive, only what you already hold can pay. A thread that begins in a later age (only a save from an older version that was already deeper in the era) is priced on that age: 58B faith, 930B culture, 2.6Qi dark matter and 2.6Qi titanium in the Galactic Age, and 190B faith, 3T culture, 140Qi dark matter and 11Qi titanium in the Quantum Age.
+If you prestige as soon as you arrive, only what you already hold can pay.
 
-The Reality Tear's thread is priced the same way on a doom's warning, which is at least a fifth of the age. Its Brace level 1 is five sixths of what a moderate economy makes of dark matter and titanium in that fifth, a sixth of what the whole age does, under the same ceiling: 30Q dark matter and 290Q titanium if its harbinger arrives in the Interstellar Age, about 79 hours of income. Its Appease is a doom's: 5.3B faith and 82B culture there, about 71 hours. Level 2 of each costs the same again. Each thread keeps its own levels, so answering one doesn't answer the other.
+The Reality Tear's thread is priced the same way on a doom's warning, which is at least a fifth of the age. Its Brace level 1 is five sixths of what a moderate economy makes of dark matter and titanium in that fifth, a sixth of what the whole age does, under the same ceiling: 30Q dark matter and 290Q titanium if its harbinger arrives in the Interstellar Age. Its Appease is a doom's: 5.3B faith and 82B culture there. Level 2 of each costs the same again. Each thread keeps its own levels, so answering one doesn't answer the other.
 
 #### Brace or Appease against the Last Passage
 
@@ -312,118 +302,78 @@ For a player who would Endure, the two answers work on the same loss from opposi
 | Appease 1 (9%) | 4.5% | 2.7% | 1.35% |
 | Appease 2 (5.4%) | 2.7% | 1.62% | 0.81% |
 
-In the bottom band, where a typical town sits, the chance is 18% and every figure is a fifth higher; in the top band, a fifth lower. A run that prestiges in the Interstellar Age is worth 1,092 points, so 3% of it is 33 points; from the Galactic Age it is 1,821 and 55.
+In the bottom band, where a typical town sits, the chance is 18% and every figure is a fifth higher. In the top band, every figure is a fifth lower. A run that prestiges in the Interstellar Age is worth 1,092 points, so 3% of it is 33 points. From the Galactic Age it is worth 1,821 points and 3% is 55.
 
-What each step costs, for the thread a run meets (foretold in the Interstellar Age), in hours of a moderate economy's income:
+What each step saves, for the thread a run meets (foretold in the Interstellar Age):
 
-| Step | Price | Hours of income | Saves, with none of the other answer | Saves, with the other answer at level 1 |
-|------|-------|-----------------|--------------------------------------|-----------------------------------------|
-| Brace 1 | 60Q dark matter, 290Q titanium | 159 | 3.0% of the run's points | 1.8% |
-| Appease 1 | 18B faith, 280B culture | 241 | 3.0% | 1.8% |
-| Brace 2 | the same again | 159 more | 2.25% | 1.35% |
-| Appease 2 | the same again | 241 more | 1.8% | 1.08% |
+| Step | Price | Saves, with none of the other answer | Saves, with the other answer at level 1 |
+|------|-------|--------------------------------------|-----------------------------------------|
+| Brace 1 | 60Q dark matter, 290Q titanium | 3.0% of the run's points | 1.8% |
+| Appease 1 | 18B faith, 280B culture | 3.0% | 1.8% |
+| Brace 2 | the same again | 2.25% | 1.35% |
+| Appease 2 | the same again | 1.8% | 1.08% |
 
-- The first level of each saves the same share. Brace level 1 is the cheaper: per hour of income, Appease level 1 saves about two thirds of what Brace level 1 does.
-- The two are paid in different resources, so you gather both at once. Holding both first levels leaves 2.7% at risk, for 159 hours of dark matter and titanium and 241 of faith and culture.
-- Once you hold Brace level 1, Brace level 2 is the next best step for an hour of income: it saves 2.25% for another 159 hours, where Appease level 1 saves 1.8% for 241. They are still paid in different resources.
+- The first level of each saves the same share. Brace level 1 is the cheaper: Brace takes half of the warning's income and Appease three quarters, so per unit of income Appease level 1 saves about two thirds of what Brace level 1 does.
+- The two are paid in different resources, so you gather both at once. Holding both first levels leaves 2.7% at risk.
+- Once you hold Brace level 1, Brace level 2 is the next best step for the income: it saves 2.25% for the same price again, where Appease level 1 saves 1.8% for three halves of that price. They are still paid in different resources.
 - A second level costs what the first did and saves a little less: Brace level 2 saves three quarters of what level 1 did, Appease level 2 three fifths.
-- Appease is paid in faith, and the share of your faith you have kept is half of your [faith strength](faith.md#faith-threshold-bands). A typical town is in the bottom band before and after it pays, so the tables above hold for it as they stand (at the bottom band's 18%: every figure a fifth higher). A town that has worked its way into the top band can pay itself out of it: one with three and a half times the moderate set of faith buildings holds about 176B faith by the end of the Interstellar Age, and paying 18B takes its faith strength from 78% to about 70%, the middle band. The roll's chance then goes up a step (12% to 15%), which takes back part of what Appease bought, never all of it.
+- Appease is paid in faith, and the share of your faith you have kept is half of your [faith strength](faith.md#faith-threshold-bands). A typical town is in the bottom band before and after it pays, so the tables above hold for it as they stand (at the bottom band's 18%: every figure a fifth higher). A town that has worked its way into the top band can pay itself out of it. Paying can take its faith strength down to the middle band, and the roll's chance then goes up a step (12% to 15%), which takes back part of what Appease bought, never all of it.
 - All of it is spent whether or not the Last Passage comes, and none of it helps if you mean to Succumb for the [Cosmic Legacy](prestige.md#cosmic-legacy): Invite instead.
 
 #### Can you afford it?
 
-Against a doom: Appease level 1, in about three warnings out of four. Brace, whenever your stock is about what the age's gates leave a town holding: on the prices as they stood then the bot's stock held the price in four dooms' threads of six, and it had the whole price in hand in two without saving for it. Level 2 was affordable in about half while it cost double; it costs the same again now. The table below was measured before an ordinary doom's Brace was priced on the warning and before second levels came down, and the Cosmic Era's two threads have not been measured at their prices either (see the notes under the table).
+A doom's Brace is priced in materials the age makes, a third of the shortest warning's worth. A player who keeps their producers running gathers it well inside the warning, and it sits under its ceiling (see [Brace](#brace-soften-an-endure)). Appease is priced in faith, plus culture from the Steel Era on. Level 1 costs less than the shortest warning makes at a moderate faith economy, so a player who keeps faith buildings staffed can pay it from what they hold or gather it before the doom's moment. Level 2 takes a long warning, or faith and culture kept in storage.
 
-A doom's Brace is priced in materials the age makes, a third of the shortest warning's worth: a player who keeps their producers running gathers it well inside the warning, and it sits under its ceiling (see [Brace](#brace-soften-an-endure)). Appease is priced in faith (plus culture from the Steel Era on). Level 1 costs less than the shortest warning makes at a moderate faith economy, so a player who keeps faith buildings staffed can pay it from what they hold or gather it before the doom's moment. Level 2 takes a long warning, or faith and culture kept in storage.
+Some warnings leave no time to work with. If the harbinger comes at the very advance its doom strikes on, only what you already hold can pay (see [No outrunning a doom](#no-outrunning-a-doom)).
 
-The bot runs below were made before the warnings in the Information Age and later were measured on the same age length as their prices (see [When the harbinger arrives](#when-the-harbinger-arrives)): those warnings, and so the threads, were then a fifth to three fifths of the plain target time, shorter than they are now, and the bot has not been run since. Up to the Modern Age nothing changed.
+The Last Passage's thread is longer and dearer. Level 1 of its Appease is half of what the Interstellar Age makes of faith and culture, and its Brace level 1 is half of what a moderate economy makes of dark matter and titanium in its warning. A player who keeps about eight copies of each producer running makes enough in the Interstellar Age to pay level 1 of both. One who has let culture lie, or who spends titanium as fast as it comes, has to stay longer or go without.
 
-In the smoke-test bot's runs (24 seeds from a new game to a Quantum Age prestige: a first run on the one-week curve, so every age at 1x), the bot saved toward both answers and bought each level as soon as it could, keeping what its next advance needed. Each real doom's thread, from the harbinger's arrival until the doom struck or passed, went like this (false prophets left out):
-
-| Thread | Threads seen | Thread length (median) | Appease level 1 affordable | Appease level 2 affordable | Brace level 1 affordable |
-|--------|--------------|------------------------|----------------------------|----------------------------|--------------------------|
-| Iron Era | 7 | 2.0 h | 7 of 7, on arrival | 6 of 7 | 6 of 7: 3 on arrival |
-| Steel Era | 6 | 2.6 h | 5 of 6, on arrival | 4 of 6 | 6 of 6: 5 on arrival |
-| Electric Era | 8 | 5.7 h | 6 of 8: 2 on arrival, the rest after 1.9 h to 12.9 h | 2 of 8 | 8 of 8: 7 on arrival |
-| Digital Era | 8 | 12.0 h | 5 of 8, after 2.7 h to 11.0 h | 3 of 8 | 7 of 8: 6 on arrival |
-| Neon Era | 6 | 19.5 h | 6 of 6: 4 on arrival, the others within 8.3 h | 4 of 6 | 6 of 6, on arrival |
-| Cosmic Era: the Reality Tear, at its old Brace price of 1.56T dark matter and 75.6B titanium, and with Appease level 2 at double | 6 | 5.4 h | 3 of 6: 2 on arrival, one after 13.3 h | 2 of 6 | 3 of 6, on arrival |
-| All dooms | 41 | | **32 of 41** (20 on arrival) | **21 of 41** | **36 of 41** |
-| Cosmic Era: the Last Passage, at its old prices: Appease 3.1B faith and 48B culture, Brace 1.56T dark matter and 75.6B titanium (to a Quantum Age prestige) | 24 runs | 5.9 days | 2 of 24 | 2 of 24 | 24 of 24, on arrival |
-
-A doom is fated in only 27% of eras, so these are 41 dooms across 24 runs: read the shares, not the exact counts. Before Appease was priced on the warning, the same bot on the same seeds could afford level 1 in 15 of 46 warnings and level 2 in 6, nearly always from faith it already held, against Brace in 41.
-
-Level 1 stayed out of reach in 9 warnings. Four of them gave no time to work with: the harbinger came at the very advance its doom struck on, which leaves only what you already hold (see [No Outrunning a Doom](#no-outrunning-a-doom)). In the other five the bot, which keeps faith only for age requirements and the Sistine Chapel, ended the warning with 30% to 90% of the price in whichever of faith and culture it was shorter of.
-
-The Last Passage's row was measured at its old prices. Appease cost 3.1B faith and 48B culture: the bot had the faith in most runs and almost never the culture, so it could pay in 2 runs of 24. Brace cost the era's 1.56T dark matter and 75.6B titanium, which the bot held on arrival every time. Neither is the price now. Appease level 1 is 18B faith and 280B culture, about six times what it was. Brace level 1 is 60Q dark matter and 290Q titanium, about 38,000 times the dark matter and 3.8 million times the titanium. The new prices have not been run through the bot yet, so there is no count for them: what they rest on is the rule above. A player who keeps about eight copies of each producer running gathers Brace level 1 from about 159 hours of income and Appease level 1 from about 241. One who has let culture lie, or who spends titanium as fast as it comes, does not, and has to stay longer or go without.
-
-The Reality Tear's row is from the same runs, when its Brace was the era's price and its second Appease level cost double. Its Brace level 1 is now 30Q dark matter and 290Q titanium, about 79 hours of a moderate economy's income, and has no count yet either.
-
-All of these runs were played while the faith bands read a share of the faith held, so every doom in them rolled at the bottom band's 90% (see [Faith threshold bands](faith.md#faith-threshold-bands)). That is still what a typical town rolls at, and the bot is one.
-
-Faith you spend on Appease is faith the Sistine Chapel can't use: keep what it still needs before you appease.
+The Sistine Chapel (Renaissance Age) costs faith too, so keep what it still needs before you appease.
 
 ### Invite: choose the catastrophe
 
 - Free.
 - Guarantees the strike. It still comes at its fated moment, or at an advance that would outrun it.
-- **Can't be undone.** It stays with the thread when the next figure takes over.
+- Can't be undone. It stays with the thread when the next figure takes over.
 - After inviting, Appease is refused. Brace is still allowed.
 - Only while a harbinger is present, so at most once per era (in the Cosmic Era, once per thread). In the Stone Era it is refused like the other answers.
-- **Inviting a false prophet** makes its invented doom real: it strikes at the foretold moment (at once, if that moment has passed), the verdict is Fulfilled, and the log notes that the warning had been invented.
+- Inviting a false prophet makes its invented doom real: it strikes at the foretold moment (at once, if that moment has passed), the verdict is Fulfilled, and the log notes that the warning had been invented.
 
 Invite is for players who want to Succumb on purpose, to collect an era's legacy bonus and Ancient Knowledge. It is the only way to choose a catastrophe; there is no command to trigger one directly. You can't choose where a doom is fated, only answer one when its harbinger comes. See [Succumb](catastrophe.md#succumb).
 
 In the Cosmic Era, Invite answers the thread that is speaking. Invite the Reality Tear's harbinger and that doom is certain, like any era's. Invite the Last Passage's thread and your next prestige brings the Last Passage: it is how you choose the [Cosmic Legacy](prestige.md#cosmic-legacy) on purpose.
 
-### Why Appease is priced on the warning
-
-A doom's harbinger gives you a fifth to three fifths of an age. Appease used to cost a quarter of what the whole era makes in faith, which no warning is long enough to earn: it could only be paid from faith saved before anyone had warned you, and in test games it was affordable in a third of the warnings (15 of 46). Now level 1 is 15% of what the age makes, three quarters of the shortest warning, so the warning itself can pay for it, and level 2 is the stretch.
-
-From the Information Age on the warning was once the shorter of the two. The price was set on an age length that grows 1.4 times per age, while the warning stayed on the plain target time, so in the Interstellar Age Appease level 1 asked 71 hours of a moderate economy's income of a warning that lasted 12.5 hours at the shortest, and in the Cyberpunk Age 19.9 hours of one that lasted 9.4. The warning now uses the length the price does, so in every age the shortest warning is longer than the income either answer needs.
-
-The Last Passage's thread kept an era price for longer, because it lasts days, not hours: a quarter of what the Interstellar, Galactic and Quantum Ages make together, 3.1B faith and 48B culture. That is 1.8 times the culture the whole Interstellar Age makes, so the price of lowering the odds on the roll that ends your run was most of the era, and in test games it could be paid in 2 runs of 24. It now follows the rule every other thread does, with two thirds of the arrival age as its warning: dearer than any doom's Appease, since it guards the end of the run, but something the age it arrives in can pay for.
-
-The price is fixed when the harbinger arrives, so it doesn't climb if the thread carries into the next age, and it comes from what the age makes, not from what you hold: a harbinger who comes while you hold little is no cheaper to answer than the age warrants.
-
-Brace is priced the same way. It used to be priced by the era: 12% of the most the era's advances ask of each resource, the same in every age of it. Requirements grow far slower than income, so the price collapsed as the ages passed. The Electric Era's (56.4M steel, 924K oil, 3.96M electricity) took over three hours of a moderate Victorian Age's income, seven seconds of the Electric Age's and two of the Atomic Age's, and the Digital Era's asked the Modern Age for 19.2B data, which it makes three of a tick. Now every doom's Brace is a third of what its shortest warning makes, in materials the age makes, so it takes the same share of the warning in nearly every age, and no material asks for more than three fifths of a modest store (without that ceiling the price ran past what five copies of each storage building hold in nine of the eleven ages from the Colonial Age on, and in the Information Age to fourteen times it). The Iron Age's price is about what it was (24 minutes of income then, 26 now), with more of it in gold and iron and less in stone.
-
-The Cosmic Era's threads got there first. Both once shared the era's price, 12% of the most its advances ask of the resources you have held since the Interstellar Age (1.56T dark matter and 75.6B titanium), and the smoke-test bot could brace against the Last Passage on arrival in 24 runs of 24. Next to a Brace that close to free, Appease bought little: with Brace level 2 held, Appease level 1 took the expected loss from 2.25% of the run's points to 1.35%, for two days of culture.
-
-Second levels cost the same again as the first, in every era. They used to cost double, and a second level bought less for more: per hour of income the Last Passage's Brace level 2 saved three eighths of what level 1 did, and any thread's Appease level 2 three tenths. At the same price they save three quarters and three fifths, and a doom's Brace level 2 softens an Endure by as much as level 1 for the same price. The Cosmic Era's threads changed first; every other era's followed.
-
-**Brace or Appease against a doom.** Appease level 1 takes two fifths off the chance the doom strikes. Brace level 1 softens the Endure if it does: a quarter of the buildings that would fall stand, and you keep 30% of your stock in place of 15%. Appease is the dearer (three quarters of the shortest warning in faith and culture, against a third of it in materials), and per hour of income it saves about seven tenths of what Brace does. In the Industrial Age, where the ceiling holds every material of the price, Brace costs only 7 minutes of income: it is the plain bargain there. They are paid in different resources, so a town that keeps faith buildings and producers both running can hold both.
-
 ---
 
-## No Outrunning a Doom
+## No outrunning a doom
 
 Advancing faster doesn't dodge a fated doom:
 
-- **Leaving the era.** If you advance out of the era before the doom's moment, the strike rolls at that advance, before it goes through. If it hits, the advance waits behind the pending catastrophe. If it misses, you are spared and the advance goes through.
-- **Leaving the age it falls in.** Once the figure speaking has said **before this age is out**, any advance out of that age works the same way.
-- **No harbinger yet.** If you reach the era's last advance and no harbinger has come, it comes at that advance, and the advance waits for one more try: "The Town Crier stands in your way, warning of impending doom before this age is out. Type 'harbinger' to answer, or advance again to meet it." Your next advance brings the strike, or reveals a false prophet. In the Stone Era, where nothing can strike, a false prophet who hasn't come by the era's end never comes, and the advance goes through.
-- **The build plan** follows the same rules. A `plan advance` waits behind a pending catastrophe, and if a harbinger comes at the plan's advance, the plan tries again on the next tick.
-- **Offline** changes nothing: the harbinger arrives and the doom strikes at their own moments while you are away. A doom that strikes waits, pending, until you come back, and the log shows the warning and the strike.
-- **Prestige before the Cosmic Era** (it opens at the Medieval Age) ends the run: a doom that hasn't struck there is gone with it. An early taste in the Medieval Age escapes an Iron Era doom this way, at the price of the run.
-- **Prestige from the Cosmic Era** is the era's passage, so an open doom settles before the Last Passage rolls. If its harbinger hasn't come, it comes at the prestige, and the prestige waits for one more try: "... Type 'harbinger' to answer, or confirm prestige again to meet it." Then the strike rolls first. A hit holds the prestige behind the pending Reality Tear: Endure it, then prestige again, which rolls the Last Passage (or Succumb, which resets the run with no prestige). A miss lets the same confirm go on to the Last Passage roll.
+- Leaving the era. If you advance out of the era before the doom's moment, the strike rolls at that advance, before it goes through. If it hits, the advance waits behind the pending catastrophe. If it misses, you are spared and the advance goes through.
+- Leaving the age it falls in. Once the figure speaking has said "before this age is out", any advance out of that age works the same way.
+- No harbinger yet. If you reach the era's last advance and no harbinger has come, it comes at that advance, and the advance waits for one more try: "The Town Crier stands in your way, warning of impending doom before this age is out. Type 'harbinger' to answer, or advance again to meet it." Your next advance brings the strike, or reveals a false prophet. In the Stone Era, where nothing can strike, a false prophet who hasn't come by the era's end never comes, and the advance goes through.
+- The Advance panel (`charter`) shows a notice when an advance would meet a doom. The notice says the figure stands in your way and tells you to type `harbinger` to answer.
+- The build plan follows the same rules. A `plan advance` waits behind a pending catastrophe, and if a harbinger comes at the plan's advance, the plan tries again on the next tick.
+- Time away changes nothing: the harbinger arrives and the doom strikes at their own moments while you are away. A doom that strikes waits, pending, until you come back, and the log shows the warning and the strike.
+- Prestige before the Cosmic Era (prestige opens at the Medieval Age) ends the run: a doom that hasn't struck there is gone with it. An early taste in the Medieval Age escapes an Iron Era doom this way, at the price of the run.
+- Prestige from the Cosmic Era is the era's passage, so an open doom settles before the Last Passage rolls. If its harbinger hasn't come, it comes at the prestige, and the prestige waits for one more try: "... Type 'harbinger' to answer, or confirm prestige again to meet it." Then the strike rolls first. A hit holds the prestige behind the pending Reality Tear: Endure it, then prestige again, which rolls the Last Passage (or Succumb, which resets the run with no prestige). A miss lets the same confirm go on to the Last Passage roll.
 
 ---
 
-## When the Doom Resolves
+## When the doom resolves
 
 The thread is settled when its doom resolves: at the fated moment, at an advance (in the Cosmic Era, a prestige) that would outrun it, or, for a false prophet, when its foretold window passes. The last figure speaks the verdict, and the log records one of four:
 
 | Verdict | What happened |
 |---------|---------------|
-| **Fulfilled** | You invited the catastrophe, and it came. An invited false prophet ends this way too; the log notes that its warning had been invented. |
-| **Vindicated** | It warned you, you didn't invite it, and the catastrophe came. |
-| **Spared** | A real warning, and the strike missed. |
-| **Discredited** | A false prophet, revealed when its foretold window passed. |
+| Fulfilled | You invited the catastrophe, and it came. An invited false prophet ends this way too; the log notes that its warning had been invented. |
+| Vindicated | It warned you, you didn't invite it, and the catastrophe came. |
+| Spared | A real warning, and the strike missed. |
+| Discredited | A false prophet, revealed when its foretold window passed. |
 
 A miss reads "⚑ The doom the Oracle foretold passed you by. The warning was real, and you were spared." After a strike or a miss nothing more strikes in that era: the Epoch panel shows "Catastrophe: spared (nothing more will strike this era)" after a miss, and the `catastrophe` command and the Harbinger panel say nothing more will strike before the era ends.
 
-If the catastrophe came and you had braced, the log also says what Endure will cost you at that Brace level. Then the thread ends and the catastrophe choice works as usual (see [Catastrophe System](catastrophe.md)).
+If the catastrophe came and you had braced, the log also says what Endure will cost you at that Brace level. Then the thread ends and the catastrophe choice works as usual (see [Catastrophe system](catastrophe.md)).
 
 The Epoch panel (`epoch`) shows the current thread's status and, for past threads this run, the whole chain of figures and the verdict, for example "The Oracle, The Town Crier → doom in the Iron Era: Spared (settled as you advanced)".
 
@@ -433,22 +383,22 @@ The Cosmic Era runs two threads. Its fated doom, the Reality Tear, gets a harbin
 
 While the Reality Tear's harbinger speaks, the Last Passage's thread waits behind it with its answers intact. Appease, Brace and Invite go to the thread that is speaking, and the panel says "The Last Passage still waits at your next prestige. Your answers to it stand." When the doom resolves (struck or spared), the Last Passage's thread takes up the warning again in the current age's voice, with a log line if the age moved on while it waited. The `catastrophe` command and the Epoch panel show both: the doom's warning, for example "Your future self warns of doom before this age is out: 90% catastrophe chance (high), faith strength 18% (devotion 0.8x, 100% of your faith kept).", and the Last Passage at its own odds.
 
-Confirming prestige settles an open doom first (see [No Outrunning a Doom](#no-outrunning-a-doom)). Then the Last Passage rolls once, with the odds for your faith band (18%, 15% or 12%), times 0.6 per level of Appease on its own thread, or certain if you invited it. If nothing comes, the verdict is Spared and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
+Confirming prestige settles an open doom first (see [No outrunning a doom](#no-outrunning-a-doom)). Then the Last Passage rolls once, with the odds for your faith band (18%, 15% or 12%), times 0.6 per level of Appease on its own thread, or certain if you invited it. If nothing comes, the verdict is Spared and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
 
 If both are ever pending at once, the Reality Tear is answered first: the choice window shows it first, and the Last Passage's Endure and Succumb are refused until it is ("The Reality Tear came first. Answer it before the Last Passage.").
 
 ---
 
-## Saving, Succumb and Prestige
+## Saving, Succumb and prestige
 
 - Your current era's fate is saved with your game, so reloading can't re-roll it. So is the thread: the figures who have spoken, what the current one said, your Appease and Brace levels, whether you invited the catastrophe, and in the Cosmic Era a Last Passage thread waiting behind the doom's. A Brace attached to a pending catastrophe is saved too.
-- **Succumb** clears the live thread, the era's fate, the invite and any Brace. Past verdicts are kept, like the epoch event history. The new run's Stone Era rolls its fate on the first tick.
-- **Prestige** clears all of it, past verdicts included. Before the Cosmic Era a doom that hasn't struck ends with the run; in the Cosmic Era it settles before the Last Passage rolls.
+- Succumb clears the live thread, the era's fate, the invite and any Brace. Past verdicts are kept, like the epoch event history. The new run's Stone Era rolls its fate on the first tick.
+- Prestige clears all of it, past verdicts included. Before the Cosmic Era a doom that hasn't struck ends with the run; in the Cosmic Era it settles before the Last Passage rolls.
 - A pending Last Passage is saved with your game, and the choice is still waiting when you load.
 
 ---
 
-## Commands and Keys
+## Commands and keys
 
 | Command | What it does |
 |---------|--------------|
@@ -464,6 +414,7 @@ In the panel:
 | **A** | Appease |
 | **B** | Brace |
 | **I** | Invite. Press **I** twice to confirm, since it can't be undone. |
+| **↑↓** | Scroll |
 | **Esc** | Close the panel |
 
 With no harbinger present, the panel says so, explains that a harbinger comes only when doom is on its way, some while before it strikes, and shows the outlook in plain words: "No harbinger has come: the Iron Era is quiet, for now. A doom is always foretold before it strikes." In the Stone Era it says no catastrophe can strike there. Once the era's doom has struck or passed you by, it says nothing more will strike before the era ends. In the Cosmic Era it shows the risk of the Last Passage at your next prestige.
@@ -472,10 +423,10 @@ With no harbinger present, the panel says so, explains that a harbinger comes on
 
 ## Strategy
 
-- **Keep some faith in hand.** A harbinger gives you 20% to 60% of an age's time before its doom strikes, and sometimes less. Faith you already hold pays for Appease level 1 the moment the harbinger comes, and is what puts level 2 within reach. It does not buy better odds by itself: the strike chance (90%, 75% or 60%) follows your [faith strength](faith.md#faith-threshold-bands), which is about how much your town has put into faith buildings, and a typical town rolls at 90%.
-- **Answer before the moment.** The price doesn't change once the harbinger has come, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance (in the Cosmic Era, so does prestige).
-- **Want to keep your run?** Appease is the direct answer. One level cuts the chance it strikes by 40%, and it can't hurt the odds.
-- **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes, and it is paid in materials your producers are making anyway: a third of the shortest warning's worth.
-- **Early warnings deserve a little doubt.** Before the Industrial Age a warning may be false: in the Stone Era it always is, and in the Iron and Steel Eras now and then. Your own faith strength tells you the real band (see [Faith and the odds](faith.md#faith-threshold-bands)).
-- **Prestiging from the Cosmic Era?** An open Reality Tear settles first, so answer its harbinger if one is speaking. The Last Passage then costs you points, not buildings. On its thread, Appease to lower the odds, Brace to keep more points on an Endure, Invite if you want the Cosmic Legacy. Both answers cost hours of income, about 22 for each level of Brace (dark matter and titanium) and 33 for each level of Appease (faith and culture): keep your faith and culture buildings going from the moment you enter the era, and set titanium aside. Per hour of income Brace is the better value at both levels, but the two are paid in different resources, and faith you keep also holds up your faith strength (see [Brace or Appease against the Last Passage](#brace-or-appease-against-the-last-passage)).
-- **Hunting legacy bonuses?** Invite, then Succumb when it strikes. Skip Appease; it is refused after Invite anyway. Brace only if you think you might change your mind and Endure. You can't choose where a doom is fated, so collecting every era's legacy takes several runs.
+- Keep some faith in hand. A harbinger gives you 20% to 60% of an age before its doom strikes, and sometimes less. Faith you already hold pays for Appease level 1 the moment the harbinger comes, and is what puts level 2 within reach. It does not buy better odds by itself: the strike chance (90%, 75% or 60%) follows your [faith strength](faith.md#faith-threshold-bands), which is about how much your town has put into faith buildings, and a typical town rolls at 90%.
+- Answer before the moment. The price doesn't change once the harbinger has come, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance (in the Cosmic Era, so does prestige).
+- Want to keep your run? Appease is the direct answer. One level cuts the chance it strikes by 40%, and it can't hurt the odds.
+- Worried but short on faith? Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes, and it is paid in materials your producers are making anyway: a third of the shortest warning's worth.
+- Early warnings deserve a little doubt. Before the Industrial Age a warning may be false: in the Stone Era it always is, and in the Iron and Steel Eras now and then. Your own faith strength tells you the real band (see [Faith and the odds](faith.md#faith-threshold-bands)).
+- Prestiging from the Cosmic Era? An open Reality Tear settles first, so answer its harbinger if one is speaking. The Last Passage then costs you points, not buildings. On its thread, Appease to lower the odds, Brace to keep more points on an Endure, Invite if you want the Cosmic Legacy. Brace level 1 takes half of the warning's income and Appease level 1 three quarters, so keep your faith and culture buildings going from the moment you enter the era, and set titanium aside. Per unit of income Brace is the better value at both levels, but the two are paid in different resources, and faith you keep also holds up your faith strength (see [Brace or Appease against the Last Passage](#brace-or-appease-against-the-last-passage)).
+- Hunting legacy bonuses? Invite, then Succumb when it strikes. Skip Appease; it is refused after Invite anyway. Brace only if you think you might change your mind and Endure. You can't choose where a doom is fated, so collecting every era's legacy takes several runs.
