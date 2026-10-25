@@ -61,50 +61,35 @@ const (
 // NumRoles is the number of roles, exported for tests and iteration.
 const NumRoles = int(numRoles)
 
+// roleNames is each Role's display name, indexed by Role.
+var roleNames = [numRoles]string{
+	RoleBackground:    "Background",
+	RoleText:          "Text",
+	RoleDim:           "Dim",
+	RoleLabel:         "Label",
+	RoleAccent:        "Accent",
+	RoleHighlight:     "Highlight",
+	RolePositive:      "Positive",
+	RoleNegative:      "Negative",
+	RoleSelection:     "Selection",
+	RoleSurface:       "Surface",
+	RoleBorder:        "Border",
+	RoleSelectionText: "SelectionText",
+	RoleBright:        "Bright",
+	RoleWarning:       "Warning",
+	RoleOnAccent:      "OnAccent",
+	RoleChip:          "Chip",
+	RoleOnNegative:    "OnNegative",
+	RoleComment:       "Comment",
+	RoleEffect:        "Effect",
+}
+
 // String renders a Role for diagnostics and test failure messages.
 func (r Role) String() string {
-	switch r {
-	case RoleBackground:
-		return "Background"
-	case RoleText:
-		return "Text"
-	case RoleDim:
-		return "Dim"
-	case RoleLabel:
-		return "Label"
-	case RoleAccent:
-		return "Accent"
-	case RoleHighlight:
-		return "Highlight"
-	case RolePositive:
-		return "Positive"
-	case RoleNegative:
-		return "Negative"
-	case RoleSelection:
-		return "Selection"
-	case RoleSurface:
-		return "Surface"
-	case RoleBorder:
-		return "Border"
-	case RoleSelectionText:
-		return "SelectionText"
-	case RoleBright:
-		return "Bright"
-	case RoleWarning:
-		return "Warning"
-	case RoleOnAccent:
-		return "OnAccent"
-	case RoleChip:
-		return "Chip"
-	case RoleOnNegative:
-		return "OnNegative"
-	case RoleComment:
-		return "Comment"
-	case RoleEffect:
-		return "Effect"
-	default:
+	if r < 0 || r >= numRoles {
 		return "Role(?)"
 	}
+	return roleNames[r]
 }
 
 // Theme is a complete, code-defined palette plus picker metadata. Colors carry

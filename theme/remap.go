@@ -30,6 +30,12 @@ var roleTagNames = [numRoles]string{
 	RoleEffect:        "effect",
 }
 
+// tagName pairs a tcell color name the theme owns with the role it resolves to.
+type tagName struct {
+	name string
+	role Role
+}
+
 // legacyAliases are the pre-role color names the UI was written with (~900
 // inline tags). They are remapped onto roles so every existing [gold]/[green]
 // tag retints with no edit. They are part of the theme-owned vocabulary: the
@@ -43,10 +49,7 @@ var roleTagNames = [numRoles]string{
 // ALL of them on every switch so no name is ever left pointing at a stale value.
 // Do NOT reach for tcell.ColorNames["gold"] expecting tcell's gold once a theme
 // is active — it's the active Accent.
-var legacyAliases = []struct {
-	name string
-	role Role
-}{
+var legacyAliases = []tagName{
 	{"gold", RoleAccent},
 	{"gray", RoleDim},
 	{"cyan", RoleLabel},
@@ -58,20 +61,11 @@ var legacyAliases = []struct {
 
 // remappedNames is every tcell color name the theme owns (role names + legacy
 // aliases). Exposed to tests via TagNames.
-func remappedNames() []struct {
-	name string
-	role Role
-} {
-	out := make([]struct {
-		name string
-		role Role
-	}, 0, len(legacyAliases)+int(numRoles))
+func remappedNames() []tagName {
+	out := make([]tagName, 0, len(legacyAliases)+int(numRoles))
 	out = append(out, legacyAliases...)
 	for r := Role(0); r < numRoles; r++ {
-		out = append(out, struct {
-			name string
-			role Role
-		}{roleTagNames[r], r})
+		out = append(out, tagName{roleTagNames[r], r})
 	}
 	return out
 }
