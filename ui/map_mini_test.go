@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -36,23 +35,17 @@ func miniTestGame(t testing.TB) *game.GameEngine {
 // theme screen wrapper, as the app does), returning the screen text.
 func drawDashboard(t testing.TB, d *Dashboard, pages *tview.Pages, w, h int) string {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	scr := theme.WrapScreen(sim)
 	pages.SetRect(0, 0, w, h)
 	pages.Draw(scr)
 	scr.Show()
-	return simText(sim)
+	return simCells(sim).Text()
 }
 
 func newMiniDashboard(t testing.TB) (*Dashboard, *tview.Pages) {
 	t.Helper()
-	eng := miniTestGame(t)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(miniTestGame(t))
 	miniOn(t, d)
 	return d, pages
 }
@@ -197,10 +190,7 @@ func TestMiniMapFollowsSettings(t *testing.T) {
 func BenchmarkMiniMapDraw(b *testing.B) {
 	b.Cleanup(game.SetDataDirForTest(b.TempDir()))
 	d, _ := newMiniDashboard(b)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	_ = sim.Init()
-	defer sim.Fini()
-	sim.SetSize(160, 48)
+	sim := newSimScreen(b, 160, 48)
 	for _, style := range d.mapViews.reg.Names() {
 		b.Run(style, func(b *testing.B) {
 			s := d.mapSettings()
@@ -237,7 +227,7 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 			d.refresh()
 			txt := drawDashboard(t, d, pages, sz[0], sz[1])
 			name := filepath.Join(dir, fmt.Sprintf("dashboard_%s_%dx%d.txt", style, sz[0], sz[1]))
-			must(t, os.WriteFile(name, []byte(txt), 0o644))
+			must(t, os.WriteFile(name, []byte(txt+"\n"), 0o644))
 		}
 	}
 }
@@ -247,10 +237,7 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 // not show the mini map. It is off until the player turns it on, so the
 // dock starts off and a refresh reads the account's setting.
 func TestMiniMapNotShownBeforeFirstRefresh(t *testing.T) {
-	eng := game.NewGameEngine()
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(nil)
 	txt := drawDashboard(t, d, pages, 180, 56)
 	if d.mapDock.shown || strings.Contains(txt, " Map · ") {
 		t.Fatalf("the mini map shows before the first refresh, on a dashboard nobody turned it on for:\n%s", txt)
