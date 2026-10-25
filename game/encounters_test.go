@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -11,16 +12,6 @@ import (
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
 )
-
-// containsStr reports whether s is in xs.
-func containsStr(xs []string, s string) bool {
-	for _, x := range xs {
-		if x == s {
-			return true
-		}
-	}
-	return false
-}
 
 // encounterSignature captures everything a run of encounters produced — the
 // discovered roster, the active timed boons (key/duration/effect), and the log
@@ -142,7 +133,7 @@ func TestDiscoverFactions_AgeFallbackAndFloor(t *testing.T) {
 	// ageFallbackGap ages past MinAge: the fallback fires with no expeditions.
 	dm := NewDiplomacyManager()
 	got := dm.DiscoverFactions("classical_age", order) // bronze + 2
-	if !containsStr(got, "riverlands_tribes") {
+	if !slices.Contains(got, "riverlands_tribes") {
 		t.Fatalf("age fallback did not auto-discover the long-eligible founding civ; got %v", got)
 	}
 	fs := dm.factions["riverlands_tribes"]

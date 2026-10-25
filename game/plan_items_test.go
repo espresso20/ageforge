@@ -6,20 +6,6 @@ import (
 	"time"
 )
 
-// bronzeEngine is a Bronze Age game with a market, big stores and no
-// catastrophe pending, for trade and advance items.
-func bronzeEngine(t *testing.T) *GameEngine {
-	t.Helper()
-	ge := newSeededEngine(1)
-	ge.advanceAge("stone_age")
-	ge.pendingCatastrophe = ""
-	ge.advanceAge("bronze_age")
-	ge.pendingCatastrophe = ""
-	ge.Buildings.counts["market"] = 1
-	ge.recalculateRates()
-	return ge
-}
-
 func TestPlanAdvance_AdvancesWhenReadyAndDropsTheOldAge(t *testing.T) {
 	ge := newSeededEngine(1)
 	noErr(t, ge.PlanAddAdvance())

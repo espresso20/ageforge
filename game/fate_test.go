@@ -704,7 +704,7 @@ func TestPlanAdvanceCannotOutrunTheDoom(t *testing.T) {
 	ge.plan = []PlanItem{{Kind: PlanAdvance, Count: 1}}
 	ge.pendingCatastrophe = ""
 	// Meet the requirements the easy way: the plan asks CheckAdvancement.
-	ge.progress = newProgressManagerMet(t, ge)
+	ge.progress = newProgressManagerMet()
 	var s planStarts
 	ge.runPlan(&s)
 	if ge.age != "medieval_age" || ge.harbinger == nil || len(ge.plan) != 1 {
@@ -1109,10 +1109,9 @@ func TestNoCosmicFateLeaksBeforeItsHarbinger(t *testing.T) {
 	}
 }
 
-// newProgressManagerMet is ge's progress manager with the current age's
-// requirements met (every building requirement removed).
-func newProgressManagerMet(t *testing.T, ge *GameEngine) *ProgressManager {
-	t.Helper()
+// newProgressManagerMet is a progress manager with every age's requirements
+// met (every building requirement removed).
+func newProgressManagerMet() *ProgressManager {
 	pm := NewProgressManager()
 	for i := range pm.ages {
 		pm.ages[i].BuildingReqs = nil

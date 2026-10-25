@@ -15,19 +15,6 @@ import (
 
 // --- helpers ------------------------------------------------------------------
 
-// prevAge returns the age before age in the canonical order.
-func prevAge(t *testing.T, age string) string {
-	t.Helper()
-	order := config.AgeOrder()
-	for i, a := range order {
-		if a == age && i > 0 {
-			return order[i-1]
-		}
-	}
-	t.Fatalf("no age before %s", age)
-	return ""
-}
-
 // epochAges returns the ages of epochKey.
 func epochAges(t *testing.T, epochKey string) []string {
 	t.Helper()
