@@ -121,11 +121,7 @@ func TestIconsFlowInstalls(t *testing.T) {
 		t.Fatalf("installer ran %d times, stage %d", h.install, h.flow.stage)
 	}
 	txt := h.shown()
-	for _, want := range []string{"is installed", "In iTerm2:", "1. Open iTerm2", nerdfont.FamilyName, "Restart your terminal, then type icons again to check."} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("the window lacks %q:\n%s", want, txt)
-		}
-	}
+	wantAll(t, "the window", txt, "is installed", "In iTerm2:", "1. Open iTerm2", nerdfont.FamilyName, "Restart your terminal, then type icons again to check.")
 	if h.nerd != 0 {
 		t.Errorf("the install set the glyphs (%d)", h.nerd)
 	}
@@ -310,11 +306,7 @@ func TestIconsWindowOnScreen(t *testing.T) {
 		t.Fatalf("front page %q after icons, want the icons window", front)
 	}
 	scr := screenAt(t, pages, 80, 24)
-	for _, want := range []string{" Icons check ", "[I] I see icons", "[B] I see boxes", "[Esc] Close", "Nerd Font icons"} {
-		if !strings.Contains(scr, want) {
-			t.Errorf("80x24 screen lacks %q:\n%s", want, scr)
-		}
-	}
+	wantAll(t, "80x24 screen", scr, " Icons check ", "[I] I see icons", "[B] I see boxes", "[Esc] Close", "Nerd Font icons")
 	if strings.Contains(scr, "[accent]") || strings.Contains(scr, "[text]") {
 		t.Errorf("a color tag leaked onto the screen:\n%s", scr)
 	}
@@ -334,11 +326,7 @@ func TestIconsWindowOnScreen(t *testing.T) {
 		t.Fatalf("Enter on Install ran the installer %d times", installs)
 	}
 	scr = screenAt(t, pages, 100, 30)
-	for _, want := range []string{"is installed", "In iTerm2:", "Restart your terminal, then type icons again to check."} {
-		if !strings.Contains(scr, want) {
-			t.Errorf("screen lacks %q:\n%s", want, scr)
-		}
-	}
+	wantAll(t, "screen", scr, "is installed", "In iTerm2:", "Restart your terminal, then type icons again to check.")
 
 	pressKey(d, pages, tcell.KeyEsc, 0)
 	if pages.HasPage(iconsPage) || !d.inputField.HasFocus() {

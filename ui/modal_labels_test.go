@@ -52,11 +52,7 @@ func TestCatastropheModalButtonLabelsVisible(t *testing.T) {
 	d, pages := newLabelTestDashboard()
 	d.showCatastropheModal("iron_era")
 	screen := renderPages(t, pages, 160, 50)
-	for _, want := range []string{"[E] ENDURE", "[S] SUCCUMB", "type 'catastrophe' to reopen"} {
-		if !strings.Contains(screen, want) {
-			t.Errorf("catastrophe modal: label %q not on screen\n%s", want, screen)
-		}
-	}
+	wantAll(t, "catastrophe modal", screen, "[E] ENDURE", "[S] SUCCUMB", "type 'catastrophe' to reopen")
 	// Defer is gone: the choice waits behind Esc + the `catastrophe` command.
 	if strings.Contains(screen, "Defer") {
 		t.Errorf("catastrophe modal still offers Defer\n%s", screen)
@@ -67,9 +63,5 @@ func TestAncientMemoryModalButtonLabelsVisible(t *testing.T) {
 	d, pages := newLabelTestDashboard()
 	d.showAncientMemoryModal("fire_mastery", "")
 	screen := renderPages(t, pages, 160, 50)
-	for _, want := range []string{"[A] Accept", "[D] Decline"} {
-		if !strings.Contains(screen, want) {
-			t.Errorf("ancient memory modal: button label %q not on screen\n%s", want, screen)
-		}
-	}
+	wantAll(t, "ancient memory modal", screen, "[A] Accept", "[D] Decline")
 }

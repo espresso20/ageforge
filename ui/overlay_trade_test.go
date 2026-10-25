@@ -56,11 +56,7 @@ func TestTradeProvider_AllyBonuses(t *testing.T) {
 		t.Fatalf("an ally with a trade bonus should get an Allied bonuses block:\n%s", out)
 	}
 	line := lineContaining(out, "Merchant Guild")
-	for _, want := range []string{"+20% gold", "route imports and production"} {
-		if !strings.Contains(line, want) {
-			t.Errorf("ally bonus line %q missing %q", line, want)
-		}
-	}
+	wantAll(t, "ally bonus line", line, "+20% gold", "route imports and production")
 	// A friendly civ grants nothing, and neither does an ally at war.
 	for _, none := range []string{"Riverlands Tribes", "Ironhold Clans"} {
 		if strings.Contains(out, none) {
@@ -80,11 +76,7 @@ func TestTradeProvider_RouteNeeds(t *testing.T) {
 	s.Trade.AvailableRoutes = []game.TradeRouteInfo{{Name: "Crypto Market", Key: "crypto_market",
 		RequiredBld: "black_market", MinCount: 1, Export: map[string]float64{"crypto": 50}, Import: map[string]float64{"gold": 1000}}}
 	out := plainText(tradeProvider(s, panelWidth))
-	for _, want := range []string{"needs 1 Black Market Hub (have 0)"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("trade panel missing %q:\n%s", want, out)
-		}
-	}
+	wantAll(t, "trade panel", out, "needs 1 Black Market Hub (have 0)")
 	for _, gone := range []string{"given plus received", "black_market"} {
 		if strings.Contains(out, gone) {
 			t.Errorf("trade panel still shows %q:\n%s", gone, out)

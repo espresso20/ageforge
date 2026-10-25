@@ -27,7 +27,7 @@ func TestAccountBadgesCommand(t *testing.T) {
 	if res.Type != "info" {
 		t.Fatalf("account badges: %+v", res)
 	}
-	for _, want := range []string{
+	wantAll(t, "the list", res.Message,
 		fmt.Sprintf("0 of %d earned", sum.Shown), "0 points", "??? hidden",
 		"Rock Solid", "Reach the Stone Age.",
 		"Faith Hobbyist", "(0 of 10)", "more to earn.",
@@ -35,11 +35,7 @@ func TestAccountBadgesCommand(t *testing.T) {
 		"secret badges, each with a hint in the badge case.",
 		"Ages", "Lineages", "Ladders", "Specials", "Payrolls", "Resources",
 		"Type badges to open the badge case",
-	} {
-		if !strings.Contains(res.Message, want) {
-			t.Errorf("the list does not have %q:\n%s", want, res.Message)
-		}
-	}
+	)
 	for _, hidden := range []string{
 		"Iron", "Modern", "Liquidation", "Cookie", "Creative Accounting",
 		// Families with nothing in sight yet are not named.
@@ -56,11 +52,7 @@ func TestAccountBadgesCommand(t *testing.T) {
 
 	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
 	res = HandleCommand("account badges", eng)
-	for _, want := range []string{fmt.Sprintf("1 of %d earned", sum.Shown), "5 points", "★[-] Rock Solid"} {
-		if !strings.Contains(res.Message, want) {
-			t.Errorf("after earning a badge the list does not have %q:\n%s", want, res.Message)
-		}
-	}
+	wantAll(t, "after earning a badge the list", res.Message, fmt.Sprintf("1 of %d earned", sum.Shown), "5 points", "★[-] Rock Solid")
 
 	// The bare `account` reply points at it.
 	if res := HandleCommand("account", eng); !strings.Contains(res.Message, "account badges") {
@@ -86,15 +78,11 @@ func TestStatsPanelListsBadges(t *testing.T) {
 	_, sum := eng.Badges()
 
 	text := statsProvider(eng.GetState(), 0)
-	for _, want := range []string{
+	wantAll(t, "the Stats panel", text,
 		"Lifetime (account)", "Badges:", fmt.Sprintf("1 of %d earned", sum.Shown),
 		"Title:[-] Settler", "Ladders", "1 of ", "Latest:[-] [green]★[-] First Prestige",
 		"Type badges to open the badge case",
-	} {
-		if !strings.Contains(text, want) {
-			t.Errorf("the Stats panel does not have %q", want)
-		}
-	}
+	)
 	if strings.Contains(text, "Achievements") {
 		t.Error("the Stats panel still has an Achievements heading")
 	}

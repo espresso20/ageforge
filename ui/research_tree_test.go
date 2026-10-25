@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -329,22 +330,14 @@ func TestHelpListsResearchKeys(t *testing.T) {
 				t.Errorf("%d columns: the Help panel's Research section does not list %s", screenW, k.key)
 			}
 		}
-		for _, want := range []string{"Shift-Tab", "research tree far"} {
-			if !strings.Contains(section, want) {
-				t.Errorf("%d columns: the Help panel's Research section does not mention %s", screenW, want)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%d columns: the Help panel's Research section", screenW), section, "Shift-Tab", "research tree far")
 	}
 	// Every key the panel routes is one the Help panel names.
 	listed := ""
 	for _, k := range researchKeys {
 		listed += k.key + " " + k.what.String() + " "
 	}
-	for _, name := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "Enter", "Esc"} {
-		if !strings.Contains(listed, name) {
-			t.Errorf("the Research panel's key list leaves out %s", name)
-		}
-	}
+	wantAll(t, "the Research panel's key list", listed, "Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "Enter", "Esc")
 }
 
 // TestResearchTreePaintsInEveryTheme: in every theme, at every size, every
@@ -513,11 +506,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 		"tool_making":      {"gives +10% food production and +10% wood production. With it, gathering by hand brings 2 more.", "It needs nothing before it."},
 	} {
 		card := cardOf(st, key)
-		for _, want := range wants {
-			if !strings.Contains(card, want) {
-				t.Errorf("%s's card is missing %q:\n%s", key, want, card)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%s's card", key), card, wants...)
 		if strings.Contains(card, "capped") {
 			t.Errorf("%s's card tags a tech's bonus as capped:\n%s", key, card)
 		}
@@ -721,11 +710,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 		must(t, ge.EnterAgeForTest(a))
 	}
 	out := tradeProvider(ge.GetState(), 120)
-	for _, want := range []string{"The Rail Freight route needs Railroads first. Research it to start it.", "The black market needs Mercantilism first. Research it to deal there."} {
-		if !strings.Contains(out, want) {
-			t.Errorf("the Trade panel is missing %q:\n%s", want, out)
-		}
-	}
+	wantAll(t, "the Trade panel", out, "The Rail Freight route needs Railroads first. Research it to start it.", "The black market needs Mercantilism first. Research it to deal there.")
 	// Their ages reached: each panel names the tech its command waits for,
 	// and stops once it is researched.
 	late := ge.GetState()

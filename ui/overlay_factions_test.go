@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -66,15 +67,11 @@ func TestFactionsProvider_RendersAllFactions(t *testing.T) {
 		}
 	}
 	// Section headers, status labels and the count of unmet civilizations.
-	for _, want := range []string{
+	wantAll(t, "overlay output", out,
 		"Factions", "Opinion", "Status", "allied",
 		"Boons and setbacks", "Geographic Society", "Civilizations you have met", "Not yet met",
 		"1 civilization not yet discovered. Send expeditions to find it.",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("overlay output missing expected token %q", want)
-		}
-	}
+	)
 }
 
 // TestFactionsProvider_EmptyState confirms the provider is safe on a zero-value
@@ -137,11 +134,7 @@ func TestFactionsProvider_RendersExpandedCivData(t *testing.T) {
 		t.Fatal("factionsProvider returned empty output for expanded roster")
 	}
 	// Personality labels, a war banner, and lent-worker status should all surface.
-	for _, want := range []string{"At war", "on loan", "tribute"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("expanded overlay missing expected token %q", want)
-		}
-	}
+	wantAll(t, "expanded overlay", out, "At war", "on loan", "tribute")
 	// Each civ's personality string should render somewhere.
 	for _, def := range defs {
 		if !strings.Contains(out, def.Personality) {
@@ -194,11 +187,7 @@ func TestFactionsProvider_LiveFavoursAndSetbacks(t *testing.T) {
 	if favour == "" {
 		t.Fatalf("live favour missing from panel:\n%s", out)
 	}
-	for _, want := range []string{"✦", "Riverlands Tribes", "+13% food", "~4m 44s"} {
-		if !strings.Contains(favour, want) {
-			t.Errorf("favour line %q missing %q", favour, want)
-		}
-	}
+	wantAll(t, "favour line", favour, "✦", "Riverlands Tribes", "+13% food", "~4m 44s")
 	if global := lineContaining(out, "Industrious Spell"); !strings.Contains(global, "+8% all prod") {
 		t.Errorf("production_all favour should render its magnitude, got %q", global)
 	}
@@ -208,11 +197,7 @@ func TestFactionsProvider_LiveFavoursAndSetbacks(t *testing.T) {
 	if setback == "" {
 		t.Fatalf("live setback missing from panel:\n%s", out)
 	}
-	for _, want := range []string{"⚠", "Ironhold Clans", "-11% iron", "[red]"} {
-		if !strings.Contains(setback, want) {
-			t.Errorf("setback line %q missing %q", setback, want)
-		}
-	}
+	wantAll(t, "setback line", setback, "⚠", "Ironhold Clans", "-11% iron", "[red]")
 
 	// Capacity counters, straight off the exported caps.
 	if !strings.Contains(out, "boons 2/5") || !strings.Contains(out, "setbacks 1/3") {
@@ -290,11 +275,7 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 		}
 		out := factionsProvider(state, panelWidth)
 		line := lineContaining(out, "Societies:")
-		for _, want := range []string{"Societies: [cyan]2", "7/10", "(70%)", "~6m 24s"} {
-			if !strings.Contains(line, want) {
-				t.Errorf("Society status line %q missing %q", line, want)
-			}
-		}
+		wantAll(t, "Society status line", line, "Societies: [cyan]2", "7/10", "(70%)", "~6m 24s")
 		next := lineContaining(out, "Next dispatch")
 		if !strings.Contains(next, "~2m 34s") {
 			t.Errorf("dispatch countdown should be wall-clock, got %q", next)
@@ -576,18 +557,14 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	}
 	raw := factionsProvider(state, panelWidth)
 	out := plainText(raw)
-	for _, want := range []string{
+	wantAll(t, "panel", out,
 		"Deals: new offers in",
 		"1. Sell: give 2.1K stone → get 3K food",
 		"2. Goodwill: give 727 iron → get +5 opinion",
 		"3. Buy: give 10 iron → get 12 food  taken",
 		"Deals: none while they are at war with you.",
 		"diplomacy accept <civ> <n>",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("panel missing %q:\n%s", want, out)
-		}
-	}
+	)
 	// 100 stone can't pay 2.1K: the price is painted Negative; the favor's
 	// iron is affordable and painted Highlight.
 	if l := lineContaining(raw, "1."); !strings.Contains(l, "[negative]2.1K stone") {
@@ -708,11 +685,7 @@ func TestFactionsProvider_ShowsBoonCrews(t *testing.T) {
 		{"Merchant Guild", "3 workers", "~30m"},
 		{"A civilization you have not met", "4 workers", "~2m"},
 	} {
-		for _, w := range want {
-			if !strings.Contains(rows[i], w) {
-				t.Errorf("crew row %d %q missing %q", i, rows[i], w)
-			}
-		}
+		wantAll(t, fmt.Sprintf("crew row %d", i), rows[i], want...)
 	}
 	if strings.Contains(out, "Ironhold Clans") {
 		t.Errorf("the panel names Ironhold Clans, a civilization not met yet:\n%s", out)

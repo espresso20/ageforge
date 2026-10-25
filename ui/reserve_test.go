@@ -44,19 +44,11 @@ func TestReserve_DashboardBox(t *testing.T) {
 	for _, c := range cases {
 		st := reserveState(t, c.by, c.net, c.feeds)
 		text := plainText(peopleBoxText(st, sidebarW-2, true))
-		for _, want := range []string{"Pop ", "Gatherers", "Clanfolk", "Hunters", "Elders"} {
-			if !strings.Contains(text, want) {
-				t.Errorf("held by %q: the box does not show %q:\n%s", c.by, want, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("held by %q: the box", c.by), text, "Pop ", "Gatherers", "Clanfolk", "Hunters", "Elders")
 		if reserve := lineContaining(text, "Clanfolk"); !strings.HasSuffix(reserve, " 3") {
 			t.Errorf("held by %q: the reserve's line should end with its count, 3: %q", c.by, reserve)
 		}
-		for _, want := range c.want {
-			if !strings.Contains(text, want) {
-				t.Errorf("held by %q: the box does not show %q:\n%s", c.by, want, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("held by %q: the box", c.by), text, c.want...)
 		if c.want == nil && strings.Contains(text, "Held by") {
 			t.Errorf("growing, but the box says it is held:\n%s", text)
 		}
@@ -148,11 +140,7 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 				t.Errorf("%s: the title %q does not carry the headcount", where, title)
 			}
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
-			for _, name := range sidebarPanels {
-				if !strings.Contains(panels, name) {
-					t.Errorf("%s: the Panels list does not show %q", where, name)
-				}
-			}
+			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
 		}
 	}
 }
@@ -187,15 +175,7 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 	if title := d.workerMiniTV.GetTitle(); !strings.Contains(title, "People") {
 		t.Errorf("the title %q lost the box's name", title)
 	}
-	for _, s := range []string{"Operators", "Entangled", "Wardens", "Quantum minds", "Held by: food"} {
-		if !strings.Contains(text, s) {
-			t.Errorf("the People box does not show %q:\n%s", s, text)
-		}
-	}
+	wantAll(t, "the People box", text, "Operators", "Entangled", "Wardens", "Quantum minds", "Held by: food")
 	panels := strings.Join(checkFitted(t, "big town, Panels", d.sidebar, cells, 80), "\n")
-	for _, name := range sidebarPanels {
-		if !strings.Contains(panels, name) {
-			t.Errorf("the Panels list does not show %q", name)
-		}
-	}
+	wantAll(t, "the Panels list", panels, sidebarPanels...)
 }

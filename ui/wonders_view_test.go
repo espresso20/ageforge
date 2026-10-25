@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -272,11 +273,7 @@ func TestGalleryDrawsEveryWonder(t *testing.T) {
 				if ink < 8 {
 					t.Errorf("%s at %dx%d %v: the picture has %d glyphs", win.key, w, h, tier, ink)
 				}
-				for _, want := range []string{win.name, win.ageName, "Esc back"} {
-					if !strings.Contains(screen, want) {
-						t.Errorf("%s at %dx%d: the page does not say %q:\n%s", win.key, w, h, want, screen)
-					}
-				}
+				wantAll(t, fmt.Sprintf("%s at %dx%d: the page", win.key, w, h), screen, win.name, win.ageName, "Esc back")
 				if strings.Contains(screen, "—") {
 					t.Errorf("%s: an em dash on the page", win.key)
 				}

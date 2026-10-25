@@ -167,11 +167,7 @@ func TestBadgeCaseOnTheLiveScreen(t *testing.T) {
 			t.Errorf("%s: the command bar is not under the case:\n%s", where, strings.Join(lines[h-promptRows:], "\n"))
 		}
 		text := strings.Join(lines, "\n")
-		for _, want := range []string{"Serial Reincarnator", "Gold · Rare · 25 pts", "Prestige 10 times.", "Rung 3 of 4 · Prestiges"} {
-			if !strings.Contains(text, want) {
-				t.Errorf("%s: the detail does not say %q:\n%s", where, want, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%s: the detail", where), text, "Serial Reincarnator", "Gold · Rare · 25 pts", "Prestige 10 times.", "Rung 3 of 4 · Prestiges")
 		// The gold ring, whole, somewhere on the screen.
 		g := newTGrid(13, 7)
 		drawMedal(g, 0, 0, medal{tier: config.BadgeGold, emblem: '★'}, atRest, false)
@@ -343,21 +339,13 @@ func TestHelpListsBadgeKeys(t *testing.T) {
 			}
 		}
 		flat := strings.Join(strings.Fields(help), " ")
-		for _, want := range []string{"badges next", "badges <family>", "badges <name>", "motion [on|off]", "achievements=badges", "The badge case: every badge"} {
-			if !strings.Contains(flat, want) {
-				t.Errorf("%d columns: the Help panel does not mention %q", screenW, want)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%d columns: the Help panel", screenW), flat, "badges next", "badges <family>", "badges <name>", "motion [on|off]", "achievements=badges", "The badge case: every badge")
 	}
 	listed := ""
 	for _, k := range badgeKeys {
 		listed += k.key + " " + k.what.String() + " "
 	}
-	for _, name := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "End", "Enter", "Esc"} {
-		if !strings.Contains(listed, name) {
-			t.Errorf("the badge case's key list leaves out %s", name)
-		}
-	}
+	wantAll(t, "the badge case's key list", listed, "Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "End", "Enter", "Esc")
 	found := false
 	for _, name := range sidebarPanels {
 		found = found || name == "badges"

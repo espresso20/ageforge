@@ -56,20 +56,12 @@ func TestRowTagPrecedence(t *testing.T) {
 func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
 	legend := legendText()
 	// Every player-facing row symbol must be explained in the Key box.
-	for _, sym := range []string{"★ auto", "● active", "◆ main game", "⚠ modified", "⚠ corrupt"} {
-		if !strings.Contains(legend, sym) {
-			t.Errorf("legendText() missing symbol %q\n%s", sym, legend)
-		}
-	}
+	wantAll(t, "legendText()", legend, "★ auto", "● active", "◆ main game", "⚠ modified", "⚠ corrupt")
 	// Colours must match the row tags exactly: gold for ★, red for ⚠.
 	if goldTag := "[gold]★ auto[-]"; !strings.Contains(legend, goldTag) {
 		t.Errorf("legendText() missing gold-tagged %q\n%s", goldTag, legend)
 	}
-	for _, redTag := range []string{"[red]⚠ modified[-]", "[red]⚠ corrupt[-]"} {
-		if !strings.Contains(legend, redTag) {
-			t.Errorf("legendText() missing red-tagged %q\n%s", redTag, legend)
-		}
-	}
+	wantAll(t, "legendText()", legend, "[red]⚠ modified[-]", "[red]⚠ corrupt[-]")
 	// The elite easter-egg badge must NOT be advertised in the legend, even
 	// though a real elite save still renders its ⭐ row tag.
 	if strings.Contains(legend, "elite") {

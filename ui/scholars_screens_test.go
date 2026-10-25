@@ -42,11 +42,7 @@ func TestResearchBarFillsToOneHundred(t *testing.T) {
 			t.Fatalf("staging: %+v", st.Research)
 		}
 		row := headerRow(st, sz[0], sz[1])
-		for _, want := range []string{"Primitive Writing", fmt.Sprintf("%d%%", researchPercent(st)), "left"} {
-			if !strings.Contains(row, want) {
-				t.Errorf("%dx%d: the header lacks %q: %q", sz[0], sz[1], want, row)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%dx%d: the header", sz[0], sz[1]), row, "Primitive Writing", fmt.Sprintf("%d%%", researchPercent(st)), "left")
 	}
 	last := -1
 	for i := 0; i < 4000 && ge.GetState().Research.CurrentTech != ""; i++ {
@@ -326,11 +322,7 @@ func TestScholarsCommand(t *testing.T) {
 			t.Errorf("scholars lacks %q:\n%s", want, res.Message)
 		}
 	}
-	for _, want := range []string{fmt.Sprintf("Scholars[-] %d", st.Scholars.Total), scholarsLine(st), "100% of your scholars research. Set it with 'scholars <percent>'."} {
-		if !strings.Contains(res.Message, want) {
-			t.Errorf("scholars lacks %q:\n%s", want, res.Message)
-		}
-	}
+	wantAll(t, "scholars", res.Message, fmt.Sprintf("Scholars[-] %d", st.Scholars.Total), scholarsLine(st), "100% of your scholars research. Set it with 'scholars <percent>'.")
 	for _, in := range []string{"scholars 50", "scholars 50%"} {
 		res = HandleCommand(in, ge)
 		want, _ := ge.SetResearchShare(50)

@@ -109,11 +109,7 @@ func TestMapPanelLettersAreThePrompts(t *testing.T) {
 		t.Errorf("letters changed the settings: %s/%s", p.set.Style, p.set.Tier)
 	}
 	txt := drawMapPanel(t, d, 160, 48)
-	for _, want := range []string{"map style Roguelike", "map glyphs unicode", "Esc close"} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("key bar has no %q:\n%s", want, txt)
-		}
-	}
+	wantAll(t, "key bar", txt, "map style Roguelike", "map glyphs unicode", "Esc close")
 	d.runForTest("map style skyline")
 	d.runForTest("map glyphs ascii")
 	if d.overlayMgr.ActiveName() != "map" {

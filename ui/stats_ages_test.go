@@ -26,12 +26,8 @@ func TestStatsShowsAgesThisRun(t *testing.T) {
 		t.Fatalf("stats panel has no Ages this run block:\n%s", text)
 	}
 	// 300 ticks at 2s is 10 minutes; the current age has run 150 ticks, 5 minutes.
-	for _, want := range []string{
+	wantAll(t, "stats panel", text,
 		fmt.Sprintf("   %-14s ~10m\n", game.AgeName("primitive_age")),
 		fmt.Sprintf("   %-14s ~5m so far\n", game.AgeName("stone_age")),
-	} {
-		if !strings.Contains(text, want) {
-			t.Errorf("stats panel missing line %q:\n%s", want, text)
-		}
-	}
+	)
 }

@@ -23,11 +23,7 @@ func TestUpgradeCommandListsAndUpgrades(t *testing.T) {
 	}
 
 	list := cmdUpgrade(nil, eng).Message
-	for _, want := range []string{"Older buildings you can upgrade", "gathering_camp", "forager_post", "3 held", "next copy", "affordable now"} {
-		if !strings.Contains(list, want) {
-			t.Errorf("the list lacks %q:\n%s", want, list)
-		}
-	}
+	wantAll(t, "the list", list, "Older buildings you can upgrade", "gathering_camp", "forager_post", "3 held", "next copy", "affordable now")
 	if strings.Contains(list, "stash") {
 		t.Errorf("the list holds storage, which is never older:\n%s", list)
 	}

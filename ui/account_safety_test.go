@@ -146,11 +146,7 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	if res.Type != "warning" || !strings.Contains(res.Message, "confirm") {
 		t.Fatalf("an account with badges but no themes was not guarded: %+v", res)
 	}
-	for _, want := range []string{"1 badge", "1 prestige", "account switch Alice"} {
-		if !strings.Contains(res.Message, want) {
-			t.Errorf("the guard does not mention %q: %q", want, res.Message)
-		}
-	}
+	wantAll(t, "the guard", res.Message, "1 badge", "1 prestige", "account switch Alice")
 	if eng.Account() != alice {
 		t.Fatal("the guard let the recovery through")
 	}

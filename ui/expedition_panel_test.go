@@ -431,11 +431,7 @@ func TestExpeditionRoadStoriesFitCompactReports(t *testing.T) {
 		if !strings.Contains(g.String(), "On the road") {
 			t.Errorf("%dx%d omitted the road event heading", sz[0], sz[1])
 		}
-		for _, storyWord := range []string{"amber", "friendly village", "Bandits"} {
-			if !strings.Contains(g.String(), storyWord) {
-				t.Errorf("%dx%d omitted newest road story %q:\n%s", sz[0], sz[1], storyWord, g.String())
-			}
-		}
+		wantAll(t, fmt.Sprintf("%dx%d, newest road story", sz[0], sz[1]), g.String(), "amber", "friendly village", "Bandits")
 	}
 }
 

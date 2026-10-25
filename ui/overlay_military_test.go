@@ -18,14 +18,10 @@ const armyGarrison = 2000
 
 func TestArmyPanel_NoGarrison(t *testing.T) {
 	txt := untag(militaryProvider(game.NewGameEngine().GetState(), 0))
-	for _, want := range []string{
+	wantAll(t, "Army panel", txt,
 		"Threat:", "You have no garrison: raids hit you with full force.",
 		"Soldiers blunt raids, war raids and what an Endure takes (up to 45%).",
-	} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("Army panel missing %q:\n%s", want, txt)
-		}
-	}
+	)
 	if strings.Contains(txt, "Your garrison would blunt") {
 		t.Errorf("Army panel claims a garrison with no soldiers:\n%s", txt)
 	}
@@ -57,11 +53,7 @@ func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 	state := engine.GetState()
 	txt = untag(militaryProvider(state, 0))
 	blunt := config.DefenseMitigation(state.Military.DefenseRating, config.AgeThreat(config.AgeByKey()["stone_age"].Order)) * 100
-	for _, want := range []string{"Soldiers:  1.5K posted of", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt)} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("the Stone Age Army panel with a garrison is missing %q:\n%s", want, txt)
-		}
-	}
+	wantAll(t, "the Stone Age Army panel with a garrison", txt, "Soldiers:  1.5K posted of", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt))
 	must(t, engine.EnterAgeForTest("bronze_age"))
 	must(t, engine.EnterAgeForTest("iron_age"))
 	if txt = untag(militaryProvider(engine.GetState(), 0)); strings.Contains(txt, "Training:") || strings.Contains(txt, "/tick") {
@@ -73,17 +65,13 @@ func TestArmyPanel_Garrison(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	for _, want := range []string{
+	wantAll(t, "Army panel", txt,
 		// The Classical Age's threat in soldiers at their posts: 1.94K.
 		"Threat:    1.94K (raids in the Classical Age)",
 		"Your garrison would blunt about 30% of a raid.",
 		"Raids, war raids and an Endure's losses all hit you that much softer.",
 		"Twice the garrison: about 36%. No army blunts more than 45%.",
-	} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("Army panel missing %q:\n%s", want, txt)
-		}
-	}
+	)
 }
 
 // The same garrison a few ages on is outmatched: the threat doubles per age.
@@ -156,11 +144,7 @@ func TestCatastropheModal_EndureCountsGarrison(t *testing.T) {
 	// Without soldiers the modal shows the old numbers and says so.
 	l := buildCatastropheModalLayout("iron_era", false, 0, game.DefaultEndureOutcome(), game.GameState{})
 	endure := untag(l.endure)
-	for _, want := range []string{"20% of buildings destroyed", "All resources reduced to 15%", "No garrison: soldiers would soften this"} {
-		if !strings.Contains(endure, want) {
-			t.Errorf("garrison-free Endure missing %q:\n%s", want, endure)
-		}
-	}
+	wantAll(t, "garrison-free Endure", endure, "20% of buildings destroyed", "All resources reduced to 15%", "No garrison: soldiers would soften this")
 }
 
 // Every Endure variant (Brace level x garrison, capped or not) fits the box.

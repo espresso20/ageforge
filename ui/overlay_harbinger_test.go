@@ -47,11 +47,7 @@ func renderText(t *testing.T, pages *tview.Pages, w, h int) string {
 func TestHarbingerPanelWithNoHarbinger(t *testing.T) {
 	engine := game.NewGameEngine() // Primitive Age: nothing can strike in the Stone Era
 	txt := untag(harbingerPanelText(engine.GetState(), "", false, false))
-	for _, want := range []string{"No harbinger is here", "A harbinger comes only when doom is on its way", "No catastrophe can strike in the Stone Era"} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("panel missing %q:\n%s", want, txt)
-		}
-	}
+	wantAll(t, "panel", txt, "No harbinger is here", "A harbinger comes only when doom is on its way", "No catastrophe can strike in the Stone Era")
 	if strings.Contains(txt, "%") {
 		t.Errorf("pre-industrial outlook must not print a figure:\n%s", txt)
 	}
@@ -141,22 +137,14 @@ func TestHarbingerPanelPreIndustrial(t *testing.T) {
 	}
 	txt := untag(harbingerPanelText(st, "", false, false))
 	assertNoLaterEras(t, txt, "iron_era")
-	for _, want := range []string{
+	wantAll(t, "panel", txt,
 		"The Oracle", h.Description, "Warning of impending doom before this age is out.", "Severity:", "The omens give no figure",
-		"Appease: " + h.AppeaseLabel, "Brace: " + h.BraceLabel, "Invite: " + h.InviteLabel,
+		"Appease: "+h.AppeaseLabel, "Brace: "+h.BraceLabel, "Invite: "+h.InviteLabel,
 		"Level 0 / 2", "Next level costs:", "20% of buildings fall, 15% of stock is kept", "Next level: 15% fall, 30% kept",
 		"it still comes when it was fated to",
 		" A ", " B ", " I ", "Esc",
-	} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("panel missing %q:\n%s", want, txt)
-		}
-	}
-	for _, l := range h.Lines {
-		if !strings.Contains(txt, l) {
-			t.Errorf("panel missing warning line %q", l)
-		}
-	}
+	)
+	wantAll(t, "panel", txt, h.Lines...)
 	if strings.Contains(txt, "Published odds") {
 		t.Error("pre-industrial panel printed the odds")
 	}
@@ -165,11 +153,7 @@ func TestHarbingerPanelPreIndustrial(t *testing.T) {
 	// can strike, a harbinger is a false prophet with nothing to answer.
 	_, stone, _ := harbDashboard(t, "bronze_age")
 	txt = untag(harbingerPanelText(stone.GetState(), "", false, false))
-	for _, want := range []string{"Warning of impending doom. The Soothsayer gives no word of when.", "Unavailable: no catastrophe can strike in the Stone Era."} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("stone era panel missing %q:\n%s", want, txt)
-		}
-	}
+	wantAll(t, "stone era panel", txt, "Warning of impending doom. The Soothsayer gives no word of when.", "Unavailable: no catastrophe can strike in the Stone Era.")
 	assertNoLaterEras(t, txt, "stone_era")
 }
 
@@ -320,16 +304,12 @@ func TestEpochOverlayHarbingerHistory(t *testing.T) {
 	st.HarbingerHistory = append(st.HarbingerHistory, game.HarbingerRecord{Age: "classical_age", Name: "the Oracle",
 		EpochKey: "iron_era", TargetEpochKey: "iron_era", TargetEpochName: "Iron Era", Outcome: game.HarbingerOutcomeSpared, AtAdvance: true})
 	txt := untag(epochProvider(st, 120))
-	for _, want := range []string{
+	wantAll(t, "epoch overlay", txt,
 		"── Harbingers ──",
 		"The Wild Man, The Hermit, The Soothsayer → Iron Era: Discredited",
 		"The Town Crier → Steel Era: Vindicated (appeased 2, braced 1)",
 		"The Oracle → doom in the Iron Era: Spared (settled as you advanced)",
-	} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("epoch overlay missing %q:\n%s", want, txt)
-		}
-	}
+	)
 }
 
 // A handoff toasts the new figure, and the panel names who spoke before.

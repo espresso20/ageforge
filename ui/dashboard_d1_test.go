@@ -267,11 +267,7 @@ func TestPeopleBoxBesideUnderConstruction(t *testing.T) {
 			if !bar {
 				t.Errorf("%s: the People box has no bar across the homes:\n%s", where, text)
 			}
-			for _, want := range []string{"Pop ", st.Term("workers").Many, st.Term("reserve").Many, st.Term("soldiers").Many, st.Term("scholars").Many} {
-				if !strings.Contains(text, want) {
-					t.Errorf("%s: the People box does not show %q:\n%s", where, want, text)
-				}
-			}
+			wantAll(t, fmt.Sprintf("%s: the People box", where), text, "Pop ", st.Term("workers").Many, st.Term("reserve").Many, st.Term("soldiers").Many, st.Term("scholars").Many)
 			if !strings.Contains(text, "Room to grow") && !strings.Contains(text, "Held by") {
 				t.Errorf("%s: the People box does not say what holds the population back:\n%s", where, text)
 			}
@@ -325,11 +321,7 @@ func TestPeopleRichBoxLines(t *testing.T) {
 				t.Errorf("%d rows: a line of %d cells in a box 22 wide: %q", c.rows, runeLen(line), line)
 			}
 		}
-		for _, s := range c.has {
-			if !strings.Contains(text, s) {
-				t.Errorf("%d rows: no %q:\n%s", c.rows, s, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%d rows", c.rows), text, c.has...)
 		for _, s := range c.lacks {
 			if strings.Contains(text, s) {
 				t.Errorf("%d rows: still has %q:\n%s", c.rows, s, text)
@@ -467,11 +459,7 @@ func TestPanelsRichText(t *testing.T) {
 		if strings.Contains(text, "TOWN") || strings.Contains(text, "tech tree") {
 			t.Errorf("%dx%d: a box too small for descriptions has them:\n%s", c[0], c[1], text)
 		}
-		for _, name := range sidebarPanels {
-			if !strings.Contains(text, name) {
-				t.Errorf("%dx%d: %q is missing", c[0], c[1], name)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%dx%d panel names", c[0], c[1]), text, sidebarPanels...)
 	}
 	// With room to spare the groups are set apart by a blank row.
 	spare := strings.Split(untag(panelsRichText("", 40, panelsRichRows()+len(panelGroups)-1)), "\n")
@@ -497,11 +485,7 @@ func TestPanelsListOnTheDashboard(t *testing.T) {
 		where := fmt.Sprintf("%dx%d", w, h)
 		cells := drawnDashboard(t, d, pages, w, h)
 		panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
-		for _, name := range sidebarPanels {
-			if !strings.Contains(panels, name) {
-				t.Errorf("%s: the Panels list does not show %q", where, name)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
 		described := strings.Contains(panels, "the tech tree") && strings.Contains(panels, "TOWN") && strings.Contains(panels, "YOU")
 		if rich := dashRich(w, h); described != rich {
 			t.Errorf("%s: the Panels list has descriptions = %v, want %v:\n%s", where, described, rich, panels)

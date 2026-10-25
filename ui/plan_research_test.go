@@ -47,11 +47,7 @@ func TestPlanResearchCommandAddsTheChain(t *testing.T) {
 		t.Errorf("plan research tool_making:\n got %q\nwant %q", res.Message, want)
 	}
 	list := plainText(HandleCommand("plan list", engine).Message)
-	for _, want := range []string{"research Fire Mastery", "research Pottery", "waits for the Stone Age"} {
-		if !strings.Contains(list, want) {
-			t.Errorf("plan list lacks %q:\n%s", want, list)
-		}
-	}
+	wantAll(t, "plan list", list, "research Fire Mastery", "research Pottery", "waits for the Stone Age")
 
 	// An age still hidden: no name, no suggestion from it, nothing planned.
 	for _, c := range []string{"plan research philosophy", "plan research philosophi", "plan research mathematics"} {
@@ -162,11 +158,7 @@ func TestPlanningAcrossKnownAges(t *testing.T) {
 	}
 	st := ge.GetState()
 	list := plainText(planListText(st))
-	for _, want := range []string{"research Mathematics  blocked: waits for the Iron Age", "research Philosophy  blocked: waits for the Classical Age", "research Language  ready"} {
-		if !strings.Contains(list, want) {
-			t.Errorf("plan list lacks %q:\n%s", want, list)
-		}
-	}
+	wantAll(t, "plan list", list, "research Mathematics  blocked: waits for the Iron Age", "research Philosophy  blocked: waits for the Classical Age", "research Language  ready")
 	// Fire Mastery, this age's, planned last: it waits only for the slot's
 	// turn behind Language and Tool Making, not for the later ages above it.
 	last := st.Plan[len(st.Plan)-1]

@@ -428,11 +428,7 @@ func TestLedgerHidesIdleResources(t *testing.T) {
 				t.Errorf("tier %d draws a card for %q:\n%s", c.tier, hidden, text)
 			}
 		}
-		for _, shown := range []string{"Food", "Wood", "Stone", "Gold"} {
-			if !strings.Contains(text, shown) {
-				t.Errorf("tier %d has no card for %q:\n%s", c.tier, shown, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("tier %d cards", c.tier), text, "Food", "Wood", "Stone", "Gold")
 	}
 }
 

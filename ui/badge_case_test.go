@@ -822,11 +822,7 @@ func TestBadgeCaseLadders(t *testing.T) {
 		t.Errorf("the ladder's next rung is %+v, want the third", housing.next)
 	}
 	text := g.String()
-	for _, want := range []string{"Housing", "131 / 180", "Next rung: Housing Magnate", "Rung 2 of 5"} {
-		if !strings.Contains(text, want) {
-			t.Errorf("the case does not say %q:\n%s", want, text)
-		}
-	}
+	wantAll(t, "the case", text, "Housing", "131 / 180", "Next rung: Housing Magnate", "Rung 2 of 5")
 	m, _, g = drawCase(views, sum, 100, 27, caseView{tab: caseTabNext, tier: mapmodel.TierUnicode}, atRest)
 	var order []string
 	for _, it := range m.items {

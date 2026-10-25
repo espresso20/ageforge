@@ -43,11 +43,7 @@ func TestPlanCommands(t *testing.T) {
 		t.Errorf("plan up 2: %+v", res)
 	}
 	list := plainText(HandleCommand("plan list", engine).Message)
-	for _, want := range []string{"1. Hut ×3", "2. Stash", "research Tool Making", "research Fire Mastery"} {
-		if !strings.Contains(list, want) {
-			t.Errorf("plan list lacks %q:\n%s", want, list)
-		}
-	}
+	wantAll(t, "plan list", list, "1. Hut ×3", "2. Stash", "research Tool Making", "research Fire Mastery")
 	if res := HandleCommand("plan remove 2", engine); res.Type == "error" || len(engine.GetState().Plan) != 3 {
 		t.Errorf("plan remove 2: %+v", res)
 	}
@@ -103,11 +99,7 @@ func TestPlanPanel_KeysAndText(t *testing.T) {
 		HandleCommand(c, engine)
 	}
 	text := plainText(p.provider(engine.GetState(), 100))
-	for _, want := range []string{"1. Hut ×2", "ready", "blocked", "too little wood coming in", "3. Stash"} {
-		if !strings.Contains(text, want) {
-			t.Errorf("panel lacks %q:\n%s", want, text)
-		}
-	}
+	wantAll(t, "panel", text, "1. Hut ×2", "ready", "blocked", "too little wood coming in", "3. Stash")
 	key := func(k tcell.Key, r rune) {
 		if !p.handleKey(tcell.NewEventKey(k, r, tcell.ModNone), engine) {
 			t.Fatalf("key %v %q not consumed", k, r)

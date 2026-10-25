@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -37,11 +38,7 @@ func TestArmyRankShown(t *testing.T) {
 	st.Military.Experience, st.Military.Rank = 12.5, 1
 	for _, size := range [][2]int{{80, 24}, {100, 30}} {
 		army := renderPeople(st, peopleView{tab: tabArmy}, size[0], size[1]).String()
-		for _, want := range []string{"Rank Seasoned", "12.5/30", "odds +2 points, hauls +5%"} {
-			if !strings.Contains(army, want) {
-				t.Errorf("the Army tab at %dx%d lacks %q:\n%s", size[0], size[1], want, army)
-			}
-		}
+		wantAll(t, fmt.Sprintf("the Army tab at %dx%d", size[0], size[1]), army, "Rank Seasoned", "12.5/30", "odds +2 points, hauls +5%")
 	}
 }
 

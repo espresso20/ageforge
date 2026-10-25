@@ -45,9 +45,5 @@ func TestHelpKeepsTwoColumns(t *testing.T) {
 	}
 	// The dashboard's own keys are listed, the new one among them.
 	help := visible(safeTags(helpProvider(game.GameState{}, 0)))
-	for _, want := range []string{"The dashboard", "PgUp/PgDn - Scroll the Buildings list", resourcePageKeyName + "    - The next page of the Resources box"} {
-		if !strings.Contains(help, want) {
-			t.Errorf("the Help panel does not list %q", want)
-		}
-	}
+	wantAll(t, "the Help panel", help, "The dashboard", "PgUp/PgDn - Scroll the Buildings list", resourcePageKeyName+"    - The next page of the Resources box")
 }

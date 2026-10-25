@@ -93,11 +93,7 @@ func TestCommandRepliesReachTheMainLog(t *testing.T) {
 	// The main log keeps its look: each category's color, the message's own
 	// marker (✦), no category tag. The logs panel keeps its tags.
 	raw := d.logTV.GetText(false)
-	for _, want := range []string{"[red]Unknown building", "[gold]" + ready, "[white]Gathered "} {
-		if !strings.Contains(raw, want) {
-			t.Errorf("the main log lacks %q:\n%s", want, raw)
-		}
-	}
+	wantAll(t, "the main log", raw, "[red]Unknown building", "[gold]"+ready, "[white]Gathered ")
 	for _, c := range []struct{ line, tag string }{{"Unknown building", "[X]"}, {ready, "[*]"}, {"Gathered ", "·"}} {
 		if got := logLineWith(main, c.line); strings.Contains(got, c.tag) {
 			t.Errorf("the main log line carries the logs panel's tag %q: %q", c.tag, got)

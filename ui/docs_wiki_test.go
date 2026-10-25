@@ -74,13 +74,9 @@ func TestWikiPhoneColumnHasOneGutter(t *testing.T) {
 		t.Fatal("site/docs/custom.css has no phone rules")
 	}
 	phone := css[at:]
-	for _, want := range []string{
+	wantAll(t, "the phone rules of site/docs/custom.css", phone,
 		".content { padding: 16px !important; }",
 		".markdown-section { padding-left: 0; padding-right: 0; }",
 		".markdown-section .screen-pair { margin-left: 0; margin-right: 0; }",
-	} {
-		if !strings.Contains(phone, want) {
-			t.Errorf("the phone rules of site/docs/custom.css lack %q", want)
-		}
-	}
+	)
 }

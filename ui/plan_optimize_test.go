@@ -44,11 +44,7 @@ func TestPlanOptimizeCommand(t *testing.T) {
 		t.Fatalf("plan optimize: %s", res.Message)
 	}
 	text := plainText(res.Message)
-	for _, want := range []string{"Reordered the plan", "instead of", "  1. "} {
-		if !strings.Contains(text, want) {
-			t.Errorf("reply lacks %q:\n%s", want, text)
-		}
-	}
+	wantAll(t, "reply", text, "Reordered the plan", "instead of", "  1. ")
 	items := engine.GetState().Plan
 	if len(items) <= 3 {
 		t.Errorf("plan has %d items, want the three kinds mixed", len(items))
@@ -73,7 +69,7 @@ func TestPlanOptimizeText(t *testing.T) {
 	}
 	res := game.PlanOptimizeResult{Changed: true, Order: order, Before: 3 * time.Hour, After: 2*time.Hour + 5*time.Minute, Beyond: 1500, Waiting: 4}
 	text := planOptimizeText(res)
-	for _, want := range []string{
+	wantAll(t, "text", text,
 		"Reordered the plan",
 		"about 2h 5m instead of 3h",
 		"  1. 1 Huts",
@@ -81,11 +77,7 @@ func TestPlanOptimizeText(t *testing.T) {
 		"  and 3 more",
 		"Only the first 2K copies were reordered; the other 1.5K keep their order after them.",
 		"4 copies cannot start until the town makes what they cost.",
-	} {
-		if !strings.Contains(text, want) {
-			t.Errorf("text lacks %q:\n%s", want, text)
-		}
-	}
+	)
 	if strings.Contains(text, "13. ") {
 		t.Errorf("text lists more than 12 items:\n%s", text)
 	}

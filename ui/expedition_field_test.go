@@ -64,13 +64,9 @@ func TestFieldReportShowsTheWholeParty(t *testing.T) {
 	state := fieldState(t)
 	g := renderExpedition(state, expView{report: true}, 160, 45)
 	text := g.String()
-	for _, want := range []string{"Field report", "Count the herds near the Copper Hills", "Scout · short",
+	wantAll(t, "the field report", text, "Field report", "Count the herds near the Copper Hills", "Scout · short",
 		"Party  8 soldiers · 2 fell so far", "64% (was 72%)", "x1.4 from the road", "On the road",
-		"to go", "about 20 min of income", "+120 food", "+40 wood"} {
-		if !strings.Contains(text, want) {
-			t.Errorf("the field report lacks %q:\n%s", want, text)
-		}
-	}
+		"to go", "about 20 min of income", "+120 food", "+40 wood")
 	// Every fired road event, newest first.
 	last := -1
 	for _, story := range []string{"amber hoard", "Bandits shadowed", "dry ford"} {

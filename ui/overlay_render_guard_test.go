@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -230,11 +231,7 @@ func TestPanelsKeepBracketedWords(t *testing.T) {
 			for _, m := range guardEscapedWordRe.FindAllStringSubmatch(raw, -1) {
 				want = append(want, "["+m[1]+"]")
 			}
-			for _, w := range want {
-				if !strings.Contains(shown, w) {
-					t.Errorf("%s panel (%s): %q is eaten as a color tag", name, sname, w)
-				}
-			}
+			wantAll(t, fmt.Sprintf("%s panel (%s), words in brackets", name, sname), shown, want...)
 		}
 	}
 }

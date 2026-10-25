@@ -180,11 +180,7 @@ func TestPeopleOverviewContent(t *testing.T) {
 	eng.AddLog("info", "Something about trade that is not about people.")
 	st := eng.GetState()
 	text := renderPeople(st, peopleView{}, 100, 30).String()
-	for _, want := range []string{"Your people", "Homes ", "Craftsfolk", "Villagers", "Spearmen", "Scribes", "Food ", "Lately", "3 scribes moved in with the Scriptorium."} {
-		if !strings.Contains(text, want) {
-			t.Errorf("the Overview lacks %q:\n%s", want, text)
-		}
-	}
+	wantAll(t, "the Overview", text, "Your people", "Homes ", "Craftsfolk", "Villagers", "Spearmen", "Scribes", "Food ", "Lately", "3 scribes moved in with the Scriptorium.")
 	if strings.Contains(text, "not about people") {
 		t.Errorf("Lately lists a line that is not about people:\n%s", text)
 	}
@@ -195,17 +191,9 @@ func TestPeopleOverviewContent(t *testing.T) {
 func TestPeopleArmyAndScholarsTabs(t *testing.T) {
 	st := peopleTown(t)
 	army := renderPeople(st, peopleView{tab: tabArmy}, 100, 30).String()
-	for _, want := range []string{"Military buildings", "Away", "Trade Trek to the Cedar Pass", "20 Spearmen", "Defense"} {
-		if !strings.Contains(army, want) {
-			t.Errorf("the Army tab lacks %q:\n%s", want, army)
-		}
-	}
+	wantAll(t, "the Army tab", army, "Military buildings", "Away", "Trade Trek to the Cedar Pass", "20 Spearmen", "Defense")
 	scholars := renderPeople(st, peopleView{tab: tabScholars}, 100, 30).String()
-	for _, want := range []string{"Desks", "Research", "Studying", "scribes", "How to speed research"} {
-		if !strings.Contains(scholars, want) {
-			t.Errorf("the Scholars tab lacks %q:\n%s", want, scholars)
-		}
-	}
+	wantAll(t, "the Scholars tab", scholars, "Desks", "Research", "Studying", "scribes", "How to speed research")
 }
 
 // The stacked bar gives each kind its share of the homes and leaves the empty
@@ -257,11 +245,7 @@ func TestPeopleArmyTabShowsPosts(t *testing.T) {
 	}
 	for _, size := range [][2]int{{80, 24}, {100, 30}} {
 		army := renderPeople(st, peopleView{tab: tabArmy}, size[0], size[1]).String()
-		for _, want := range []string{"27/27 posted", "32/32 posted"} {
-			if !strings.Contains(army, want) {
-				t.Errorf("the Army tab at %dx%d lacks %q:\n%s", size[0], size[1], want, army)
-			}
-		}
+		wantAll(t, fmt.Sprintf("the Army tab at %dx%d", size[0], size[1]), army, "27/27 posted", "32/32 posted")
 	}
 	// A building short of its posts says so in the same words.
 	st.Military.Posts[0].Posted = 20

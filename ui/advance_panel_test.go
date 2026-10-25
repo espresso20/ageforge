@@ -511,11 +511,7 @@ func TestAdvancePanelReadsInEveryTheme(t *testing.T) {
 					text.WriteRune(c.Runes[0])
 				}
 			}
-			for _, want := range []string{"KNOWLEDGE", "MONUMENT", "The march of ages"} {
-				if !strings.Contains(text.String(), want) {
-					t.Errorf("theme %s at %dx%d: the screen lacks %q", key, size[0], size[1], want)
-				}
-			}
+			wantAll(t, fmt.Sprintf("theme %s at %dx%d: the screen", key, size[0], size[1]), text.String(), "KNOWLEDGE", "MONUMENT", "The march of ages")
 		}
 	}
 }
@@ -577,9 +573,5 @@ func TestLedgerPointsAtTheCharter(t *testing.T) {
 // The Help panel lists the command, the panel and its keys.
 func TestHelpListsTheAdvancePanel(t *testing.T) {
 	help := strings.Join(strings.Fields(untag(helpProvider(game.GameState{}, 100))), " ")
-	for _, want := range []string{"charter", "The Advance panel", "Pick a pillar", "the same as the advance command"} {
-		if !strings.Contains(help, want) {
-			t.Errorf("the Help panel lacks %q", want)
-		}
-	}
+	wantAll(t, "the Help panel", help, "charter", "The Advance panel", "Pick a pillar", "the same as the advance command")
 }
