@@ -313,8 +313,6 @@ var hiddenFields = map[string]string{
 	"config.MakerFill.Material":           "a resource key in the maker tables",
 	"config.MakerFill.Building":           "a building key in the maker tables",
 	"config.MakerOpenHole.Material":       "a resource key in the maker tables",
-	"config.MakerHole.Material":           "a resource key in the maker tables",
-	"config.MakerHole.Building":           "a building key in the maker tables",
 	"config.MakerShortage.Material":       "a resource key in the maker tables",
 	"config.BadgeFamilyDef.Only":          "keys",
 	"config.BadgeFamilyDef.Except":        "keys",
