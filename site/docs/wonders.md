@@ -46,7 +46,7 @@ The **Wonders** panel (`wonders`) shows progress with a bar for each resource. E
 
 ### The gallery
 
-Press `G` (or `Tab`) in the Wonders panel for the **gallery**: a picture of every wonder you have built, one at a time, drawn the way the skyline map draws it, as large as the panel, with its name, its age and the year that age began under it. It opens on the newest. `←` `→` (or `↑` `↓`, `PgUp` `PgDn`) step through the wonders in age order, `Home` and `End` go to the first and the last, `G` or `Tab` goes back to the list, and `Esc` goes back to the list too (a second `Esc` closes the panel). A wonder you have not built is not in it, and the gallery works in every glyph set and theme, down to the smallest terminal.
+Press `G` (or `Tab`) in the Wonders panel for the **gallery**: a picture of every wonder you have built, one at a time, drawn the way the skyline map draws it, as large as the panel, with its name, its age and the year that age began under it. It opens on the newest. `←` `→` (or `↑` `↓`, `PgUp` `PgDn`, `Option+↑` `Option+↓`) step through the wonders in age order, `Home` and `End` go to the first and the last, `G` or `Tab` goes back to the list, and `Esc` goes back to the list too (a second `Esc` closes the panel). A wonder you have not built is not in it, and the gallery works in every glyph set and theme, down to the smallest terminal.
 
 <figure class="screen" data-screen="wonders-gallery"><figcaption>The gallery in the Bronze Age: a wonder built earlier, drawn at dusk with its lamps lit.</figcaption></figure>
 

@@ -13,6 +13,7 @@ All notable changes to AgeForge are documented here.
 - **plan optimize.** Reorders your planned buildings for the fastest growth, interleaving homes and producers, and says how much sooner the plan finishes.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
 - **An experimental gate.** Start the game with AGEFORGE_GATES=v2 to try pillars measured by population, industry income and key techs instead of building counts.
+- **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
 - **Lineage badges on a real idle scale.** Each lineage's badges now count to numbers set by how much of that lineage a dedicated player builds across many runs, with Legendary a long-term goal.
