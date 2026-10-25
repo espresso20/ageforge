@@ -55,15 +55,17 @@ const (
 	festivalCostShare     = 0.05   // of the age's stock scale, in minutes of your culture income (culture_price.go)
 	festivalMaxMinutes    = 6000.0 // the most minutes of your culture income a festival asks in any age: 100 hours
 
-	// Black market (culture sink, high-risk/high-reward) tuning. The player
-	// spends a lump of culture for a gamble: on a win the imported resource is
-	// paid out at blackMarketWinMult × the stake's gold-value; on a loss the
-	// culture is simply gone. Gated behind colonial age + a cooldown.
+	// Black market (culture sink, a risk of one in six) tuning. The player
+	// spends a lump of culture on a deal: five times in six the imported
+	// resource is paid out at blackMarketWinMult times the stake's minutes of
+	// culture income, in minutes of income of that resource (culture_price.go);
+	// the sixth time the smugglers vanish with the culture and nothing comes
+	// back. Gated behind colonial age + a cooldown.
 	blackMarketCostShare     = 0.10           // of the age's stock scale, in minutes of your culture income, per deal
 	blackMarketMaxMinutes    = 12_000.0       // the most minutes of your culture income a deal asks in any age: 200 hours
 	blackMarketMinCost       = 5000.0         // floor so it's meaningful early
-	blackMarketWinChance     = 0.55           // probability of a payout
-	blackMarketWinMult       = 2.5            // payout = stake_gold_value × this on a win
+	blackMarketWinChance     = 5.0 / 6        // probability of a payout: five deals in six
+	blackMarketWinMult       = 1.0            // payout = the stake's minutes of culture income × this, in minutes of the resource's income, on a win
 	blackMarketCooldownTicks = 240            // ~8 minutes between deals
 	blackMarketMinAge        = "colonial_age" // smuggling networks open in the colonial era
 
@@ -1583,28 +1585,8 @@ func (ge *GameEngine) doTick() {
 	ge.recalculateTickSpeed()
 
 	// Record periodic history sample (every historySampleInterval ticks).
-	// All data is read directly from engine fields — no GetState() call here.
 	if ge.tick%historySampleInterval == 0 {
-		ageOrderMap := ge.progress.GetAgeOrder()
-		ageOrder := ageOrderMap[ge.age]
-		snap := ge.Resources.Snapshot()
-		foodRate := 0.0
-		knowRate := 0.0
-		if fr, ok := snap["food"]; ok {
-			foodRate = fr.Rate
-		}
-		knowRate = ge.researchPerTick
-		faith := snap["faith"].Amount
-		ge.History.Sample(ge.tick, HistorySample{
-			Population: float64(ge.popLocked()),
-			FoodRate:   foodRate,
-			KnowRate:   knowRate,
-			Faith:      faith,
-			ProdAll:    ge.bonusPoolLocked(ge.buildResolver(), "production_all").Applied,
-			TickSpeed:  ge.tickSpeedBonus,
-			Morale:     ge.morale,
-			AgeOrder:   ageOrder,
-		})
+		ge.recordHistorySample(ge.tick)
 	}
 }
 
@@ -3059,50 +3041,14 @@ func (ge *GameEngine) blackMarketCost() float64 {
 }
 
 // blackMarketReward computes the resource payout for a winning deal on the given
-// resource. The culture stake is treated as its own gold-value; the win pays
-// blackMarketWinMult × that, converted into the chosen resource via the
-// smugglers' own gold rate for it (blackMarketGoldRate: a unit of a "more
-// valuable" resource pays out fewer units). Gold pays out directly. Returns 0
-// if the resource has no defined gold valuation (and thus can't be a
-// black-market target).
+// resource for a stake of stake culture: the same worth whichever resource it
+// is paid in, blackMarketWinMult times the stake's minutes of culture income
+// as minutes of the town's income of the resource (blackMarketPayoutOf).
+// Returns 0 if the smugglers do not deal in the resource, or the age makes
+// none of it (nothing to measure the haul in), and so can't be a black-market
+// target. Under the lock.
 func (ge *GameEngine) blackMarketReward(resource string, stake float64) float64 {
-	goldValue := stake * blackMarketWinMult
-	if resource == "gold" {
-		return goldValue
-	}
-	rate, ok := blackMarketGoldRate(resource)
-	if !ok || rate <= 0 {
-		return 0
-	}
-	return goldValue / rate
-}
-
-// blackMarketGoldRate is how much gold the smugglers count one unit of res
-// worth: the nine resources they deal in, and no others. (They are the rates
-// the market used to list for selling each of these for gold; the black
-// market keeps its own copy now that the market does not swap.)
-func blackMarketGoldRate(res string) (float64, bool) {
-	switch res {
-	case "iron":
-		return 2, true
-	case "coal":
-		return 0.08, true
-	case "steel":
-		return 5, true
-	case "oil":
-		return 3, true
-	case "electricity":
-		return 0.5, true
-	case "data":
-		return 5, true
-	case "crypto":
-		return 20, true
-	case "dark_matter":
-		return 50, true
-	case "quantum_flux":
-		return 100, true
-	}
-	return 0, false
+	return blackMarketPayoutOf(ge.rules, stake, ge.eventTown("culture", false), resource, ge.eventTown(resource, false))
 }
 
 // BlackMarketStatus is the snapshot the `blackmarket` command renders.
@@ -3140,11 +3086,11 @@ func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
 	}
 }
 
-// DoBlackMarket runs one high-risk/high-reward black-market deal for the given
-// resource: it spends a lump of culture (always consumed) and rolls; on a win it
-// pays out blackMarketWinMult × the stake's gold-value in the chosen resource, on
-// a loss the smugglers vanish with the culture and nothing comes back. Gated by
-// the colonial-age unlock and a cooldown. Returns (won, gain, error).
+// DoBlackMarket runs one black-market deal for the given resource: it spends a
+// lump of culture (always consumed) and rolls; five times in six it pays out
+// the stake's worth in the chosen resource (blackMarketReward), the sixth the
+// smugglers vanish with the culture and nothing comes back. Gated by the
+// colonial-age unlock and a cooldown. Returns (won, gain, error).
 func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -4830,6 +4776,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.buildQueue = nil
 	ge.plan = nil
 	ge.log = nil
+	// The history overlay is this run's: the ring starts over with the run.
+	ge.History = NewHistoryCollector()
 	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
@@ -4977,6 +4925,8 @@ func (ge *GameEngine) Reset() {
 	ge.plan = nil
 	ge.planLog = nil
 	ge.log = nil
+	// The history overlay is this run's: the ring starts over with the run.
+	ge.History = NewHistoryCollector()
 
 	ge.applyAgeUnlocks("primitive_age")
 	ge.Resources.Add("food", 25)
@@ -5362,6 +5312,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	planStartsBefore := ge.runFacts.Counts[config.BadgeEvPlanStarted]
 	ge.away = true
 
+	end := ge.tick + offlineTicks
 	gains := make(map[string]float64)
 	var starts planStarts
 	var staffed staffCounts
@@ -5419,6 +5370,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		// A fated doom keeps its hour offline: the harbinger comes and the doom
 		// strikes at its tick, and a struck doom waits, pending, for the player.
 		ge.harbingerTickCheck()
+		ge.sampleOfflineTicks(base, base+n, end)
 	}
 	ge.away = false
 	// What the time away produced is counted as it is on a live tick

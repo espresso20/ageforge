@@ -77,3 +77,45 @@ func (h *HistoryCollector) MarkAge(tick int, ageName string) {
 		h.AgeMarkers = kept
 	}
 }
+
+// recordHistorySample takes the sample for tick from the engine's state now,
+// as live play does every historySampleInterval ticks. It reads engine fields
+// directly, with no GetState() call. Callers hold the write lock.
+func (ge *GameEngine) recordHistorySample(tick int) {
+	ageOrderMap := ge.progress.GetAgeOrder()
+	ageOrder := ageOrderMap[ge.age]
+	snap := ge.Resources.Snapshot()
+	foodRate := 0.0
+	knowRate := 0.0
+	if fr, ok := snap["food"]; ok {
+		foodRate = fr.Rate
+	}
+	knowRate = ge.researchPerTick
+	faith := snap["faith"].Amount
+	ge.History.Sample(tick, HistorySample{
+		Population: float64(ge.popLocked()),
+		FoodRate:   foodRate,
+		KnowRate:   knowRate,
+		Faith:      faith,
+		ProdAll:    ge.bonusPoolLocked(ge.buildResolver(), "production_all").Applied,
+		TickSpeed:  ge.tickSpeedBonus,
+		Morale:     ge.morale,
+		AgeOrder:   ageOrder,
+	})
+}
+
+// sampleOfflineTicks takes the samples live play would have taken on the ticks
+// (from, to] that offline catch-up passed, so the samples stay evenly spaced in
+// ticks. The History panel draws samples by index and places age markers by
+// tick, and the two agree only over an even spacing. Each sample is taken at the
+// end of the step it falls in. Only the ticks the ring keeps are taken: the
+// last historyMaxSamples samples of the span, which ends at end. Earlier ones
+// would be dropped before anything reads them.
+func (ge *GameEngine) sampleOfflineTicks(from, to, end int) {
+	keep := end - historyMaxSamples*historySampleInterval
+	for t := max(from, keep) + 1; t <= to; t++ {
+		if t%historySampleInterval == 0 {
+			ge.recordHistorySample(t)
+		}
+	}
+}

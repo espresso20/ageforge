@@ -928,7 +928,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	// The status line and the key bar.
 	status := clipRunes(m.statusLine(state, v), w)
 	out.text(0, h-2, status, tsText, -1)
-	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", vibe.Line("ui.research_tree.renderTree.13", "next you can start")}, {"PgUp PgDn", vibe.Line("ui.research_tree.renderTree.15", "zoom")}, {"Home", vibe.Line("ui.research_tree.renderTree.17", "your age")}, {"Enter", "card"}, {"Esc", "close"}}
+	keys := [][2]string{{"←↑↓→", "move"}, {"Tab", vibe.Line("ui.research_tree.renderTree.13", "next you can start")}, {"PgUp PgDn " + pageKeysHint(v.ascii), vibe.Line("ui.research_tree.renderTree.15", "zoom")}, {"Home", vibe.Line("ui.research_tree.renderTree.17", "your age")}, {"Enter", "card"}, {"Esc", "close"}}
 	if v.ascii {
 		keys[0][0] = "Arrows"
 	}

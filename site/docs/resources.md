@@ -107,7 +107,7 @@ Culture has two jobs. Your **culture strength** decides which tier of good epoch
 
 Culture also pays for:
 
-- **Smuggling runs** on the black market (Colonial Age on): a culture stake that may pay out a haul of the resource you pick. See [Trade](trade.md).
+- **Smuggling runs** on the black market (Colonial Age on): a culture stake that pays the same worth back in the resource you pick, five times in six; the sixth time it is lost. See [Trade](trade.md).
 - **Appease**, together with faith, when a [harbinger](harbinger.md) warns of a catastrophe.
 - **Tribute**, together with gold, to end a war with a civilization. See [Factions](factions.md).
 - The **Sistine Chapel** wonder in the Renaissance Age.

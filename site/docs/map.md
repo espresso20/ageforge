@@ -23,13 +23,13 @@ Because typing goes to the command bar, the Map takes only the keys that print n
 |---|---|
 | Arrows | Move the cursor or scroll (see each style below) |
 | `Tab` / `Shift-Tab` | Jump to the next or previous thing to inspect |
-| `PgUp` / `PgDn` | Zoom out and in |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in |
 | `Enter` | Put the command for what the cursor is on into the prompt. It is not run: press Enter again to run it |
 | `Esc` | Close the Map |
 
 Once you have typed something, `Tab`, `Shift-Tab` and `Enter` act on the prompt instead (complete the command, run it), as they do everywhere else. The arrows stay with the Map.
 
-The skyline also takes five keys that print: `+`, `-` and `=` zoom and `[` and `]` jump between districts. They are the Map's only while the prompt is empty (no command begins with one), and the roguelike does not use them.
+Five keys that print are the Map's too, while the prompt is empty (no command begins with one): `+`, `-` and `=` zoom in both styles, and `[` and `]` jump between districts in the skyline. A keyboard with no Page keys (a Mac's, for one) can zoom with `-` and `=` alone. `Option+↑` and `Option+↓` also work as `PgUp` and `PgDn` here, and `Option+←` and `Option+→` as `Home` and `End` (see [All Commands](commands.md#the-prompt)).
 
 The settings are commands you can type with the Map open: `map style`, `map glyphs`, `map flows` and `minimap` (see Settings below).
 
@@ -109,8 +109,8 @@ The district zoom names only a handful of building types at a time (those neares
 |---|---|
 | `←` `→` `↑` `↓` | Move the cursor |
 | `Shift`+arrow | Move the cursor by 8 |
-| `PgUp` | Zoom out (settlement, then region) |
-| `PgDn` | Zoom in (settlement, then district) |
+| `PgUp` or `-` | Zoom out (settlement, then region) |
+| `PgDn` or `=` | Zoom in (settlement, then district) |
 | `Tab` / `Shift-Tab` | Jump between buildings and wonders (and civilizations at region zoom) |
 | `Home` | Center on the town square |
 
@@ -226,7 +226,7 @@ The mini map is off by default. Type `minimap on` and the dashboard shows a comp
 
 It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it again and gives the list the whole column. In the roguelike style it marks the tile the Map panel's cursor is on with the same highlighted cell.
 
-The mini map needs room: it appears on terminals of 105 columns by 36 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
+The mini map needs room: it appears on terminals of 105 columns by 34 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 
 ---
 
