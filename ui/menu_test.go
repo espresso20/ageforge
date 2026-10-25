@@ -139,8 +139,7 @@ func TestMenuDump(t *testing.T) {
 	if out == "" {
 		t.Skip("set MENU_DUMP to a folder to write the pages")
 	}
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	cases := []struct {
 		name, age string
 		forge     bool
@@ -569,10 +568,7 @@ func TestMenuRampsInEveryTheme(t *testing.T) {
 // the theme's, and the plain glyph set puts nothing on the screen that is
 // not ASCII.
 func TestMenuPaintsInEveryTheme(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		must(t, theme.SetActive(th.Key))
+	eachThemeInline(t, func(th theme.Theme) {
 		pal := newMenuPalette(th)
 		for _, size := range [][2]int{{80, 24}, {120, 40}} {
 			for _, st := range []menuStage{{"the first visit", "", true}, {"the town", "bronze_age", false}} {
@@ -588,18 +584,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 					sim := tcell.NewSimulationScreen("UTF-8")
 					must(t, sim.Init())
 					sim.SetSize(w, h)
-					g.flush(theme.WrapScreen(sim), 0, 0, pal, v.plain)
-					rows := make([][]rune, h)
-					for y := range rows {
-						rows[y] = make([]rune, w)
-						for x := range rows[y] {
-							r, _, _, _ := sim.GetContent(x, y)
-							rows[y][x] = r
-							if v.plain && r > 0x7e {
-								t.Fatalf("%s: cell (%d,%d) holds %q, which the plain glyph set does not have", where, x, y, r)
-							}
-						}
-					}
+					rows := flushRows(t, where, sim, g, pal, v.plain)
 					_, _, corner, _ := sim.GetContent(0, 0)
 					if _, bg, _ := corner.Decompose(); bg != pal.bg || bg != th.Color(theme.RoleBackground) {
 						t.Errorf("%s: the page's corner is not on the theme's ground", where)
@@ -612,35 +597,13 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 						words = append(words, "Continue", "ashford", "Bronze Age", "216 people", "ages, one terminal")
 					}
 					for _, word := range words {
-						found := false
-						for y := 0; y < h && !found; y++ {
-							at := strings.Index(string(rows[y]), word)
-							if at < 0 {
-								continue
-							}
-							found = true
-							x0 := len([]rune(string(rows[y])[:at]))
-							for i, r := range []rune(word) {
-								if r == ' ' {
-									continue
-								}
-								_, _, cst, _ := sim.GetContent(x0+i, y)
-								fg, bg, _ := cst.Decompose()
-								if c := theme.ContrastRatio(fg, bg); c < 3-0.02 {
-									t.Errorf("%s: %q is drawn at a contrast of %.2f (%06x on %06x)", where, word, c, fg.Hex(), bg.Hex())
-									break
-								}
-							}
-						}
-						if !found {
-							t.Errorf("%s: %q is not on the screen", where, word)
-						}
+						wordReadable(t, where, sim, rows, word)
 					}
 					sim.Fini()
 				}
 			}
 		}
-	}
+	})
 }
 
 // TestMenuGlyphsAreOneColumnWide: every glyph the menu itself puts on the
