@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -20,6 +19,82 @@ import (
 // ruleset: vibe.Line, Sprintf and Errorf swap them for the script's line while
 // VibeMode is on. These tests play one run, with refusals asked for at every
 // stage, and read every text the player would have read.
+
+// refusal is a command asked for something it has to turn down.
+type refusal struct {
+	name string
+	do   func(ge *GameEngine) error
+}
+
+// refusalCases are the refusals playRun asks for at every stage, in order.
+var refusalCases = []refusal{
+	{"build0", func(ge *GameEngine) error { _, e := ge.BuildMultiple("hut", 0); return e }},
+	{"buildunknown", func(ge *GameEngine) error { _, e := ge.BuildMultiple("hutt", 1); return e }},
+	{"buildnope", func(ge *GameEngine) error { _, e := ge.BuildMultiple("zzz", 1); return e }},
+	{"buildmany", func(ge *GameEngine) error { _, e := ge.BuildMultiple("hut", 100000); return e }},
+	{"buildwonder", func(ge *GameEngine) error { _, e := ge.BuildMultiple("great_pyramid", 1); return e }},
+	{"recruit0", func(ge *GameEngine) error { return ge.RecruitWorker("worker", 0) }},
+	{"recruitbig", func(ge *GameEngine) error { return ge.RecruitWorker("worker", config.Million) }},
+	{"recruitodd", func(ge *GameEngine) error { return ge.RecruitWorker("nonesuch", 1) }},
+	{"assign0", func(ge *GameEngine) error { return ge.AssignWorker("hut", 0) }},
+	{"assignbig", func(ge *GameEngine) error { return ge.AssignWorker("hut", 100000) }},
+	{"assignnone", func(ge *GameEngine) error { return ge.AssignWorker("zzz", 1) }},
+	{"assignall", func(ge *GameEngine) error { _, e := ge.AssignAll("zzz"); return e }},
+	{"assignallhut", func(ge *GameEngine) error { _, e := ge.AssignAll("hut"); return e }},
+	{"unassign0", func(ge *GameEngine) error { return ge.UnassignWorker("hut", 0) }},
+	{"unassignbig", func(ge *GameEngine) error { return ge.UnassignWorker("hut", 1000) }},
+	{"unassignall", func(ge *GameEngine) error { _, e := ge.UnassignAll("hut"); return e }},
+	{"dismiss", func(ge *GameEngine) error { return ge.DismissWorkers("hut", 5, false) }},
+	{"sell0", func(ge *GameEngine) error { return ge.SellBuilding("hut", 0) }},
+	{"sellhut", func(ge *GameEngine) error { return ge.SellBuilding("hut", 1) }},
+	{"sellnone", func(ge *GameEngine) error { return ge.SellBuilding("zzz", 1) }},
+	{"research", func(ge *GameEngine) error { return ge.StartResearch("zzz") }},
+	{"researchfar", func(ge *GameEngine) error { return ge.StartResearch("quantum_computing") }},
+	{"cancelresearch", func(ge *GameEngine) error { return ge.CancelResearch() }},
+	{"gather", func(ge *GameEngine) error { _, e := ge.GatherResource("gold", 5); return e }},
+	{"gatherneg", func(ge *GameEngine) error { _, e := ge.GatherResource("food", -1); return e }},
+	{"festival", func(ge *GameEngine) error { return ge.DoFestival() }},
+	{"blackmarket", func(ge *GameEngine) error { _, _, e := ge.DoBlackMarket("zzz"); return e }},
+	{"blackmarket2", func(ge *GameEngine) error { _, _, e := ge.DoBlackMarket("gold"); return e }},
+	{"advance", func(ge *GameEngine) error { return ge.AdvanceAge() }},
+	{"prestige", func(ge *GameEngine) error { return ge.DoPrestige() }},
+	{"upgrade", func(ge *GameEngine) error { return ge.UpgradeBuilding("hut", 1, false) }},
+	{"upgradeall", func(ge *GameEngine) error { return ge.UpgradeBuilding("zzz", 1, true) }},
+	{"route", func(ge *GameEngine) error { return ge.StartTradeRoute("zzz") }},
+	{"routestop", func(ge *GameEngine) error { return ge.StopTradeRoute("zzz") }},
+	{"status", func(ge *GameEngine) error { return ge.SetDiplomaticStatus("zzz", "allied") }},
+	{"statusbad", func(ge *GameEngine) error { return ge.SetDiplomaticStatus("zzz", "bogus") }},
+	{"gift", func(ge *GameEngine) error { return ge.SendGift("zzz") }},
+	{"tribute", func(ge *GameEngine) error { return ge.SendTribute("zzz") }},
+	{"deal", func(ge *GameEngine) error { _, e := ge.AcceptFactionDeal("zzz", 1); return e }},
+	{"dealnone", func(ge *GameEngine) error { _, e := ge.AcceptFactionDeal("", 0); return e }},
+	{"expedition", func(ge *GameEngine) error { return ge.LaunchExpedition(99) }},
+	{"expedition0", func(ge *GameEngine) error { return ge.LaunchExpedition(0) }},
+	{"memory", func(ge *GameEngine) error { return ge.AcceptAncientMemory() }},
+	{"endure", func(ge *GameEngine) error { return ge.Endure() }},
+	{"succumb", func(ge *GameEngine) error { return ge.Succumb() }},
+	{"endurelp", func(ge *GameEngine) error { return ge.EndureLastPassage() }},
+	{"succumblp", func(ge *GameEngine) error { return ge.SuccumbLastPassage() }},
+	{"appease", func(ge *GameEngine) error { return ge.HarbingerAppease() }},
+	{"brace", func(ge *GameEngine) error { return ge.HarbingerBrace() }},
+	{"invite", func(ge *GameEngine) error { return ge.HarbingerInvite() }},
+	{"planupgrade", func(ge *GameEngine) error { _, e := ge.PlanAddUpgrade("hut", 1); return e }},
+	{"planupgrade0", func(ge *GameEngine) error { _, e := ge.PlanAddUpgrade("zzz", 0); return e }},
+	{"planbuild", func(ge *GameEngine) error { _, e := ge.PlanAddBuild("zzz", 1); return e }},
+	{"planbuildhut", func(ge *GameEngine) error { _, e := ge.PlanAddBuild("hutt", 1); return e }},
+	{"planremove", func(ge *GameEngine) error { _, e := ge.PlanRemove(99); return e }},
+	{"planresearch", func(ge *GameEngine) error { _, e := ge.PlanAddResearchChain("zzz"); return e }},
+	{"planadvance", func(ge *GameEngine) error { return ge.PlanAddAdvance() }},
+	{"share", func(ge *GameEngine) error { _, e := ge.SetWorkerShare("zzz", 50); return e }},
+	{"share2", func(ge *GameEngine) error { _, e := ge.SetWorkerShare("food", 500); return e }},
+	{"scholarshare", func(ge *GameEngine) error { _, e := ge.SetResearchShare(500); return e }},
+	{"scholarshare2", func(ge *GameEngine) error { _, e := ge.SetResearchShare(50); return e }},
+	{"switch", func(ge *GameEngine) error { _, e := ge.SwitchAccount("zzz"); return e }},
+	{"branch", func(ge *GameEngine) error { return ge.BranchSave("") }},
+	{"load", func(ge *GameEngine) error { return ge.LoadGame("zzz-nosuch") }},
+	{"bank", func(ge *GameEngine) error { _, e := ge.BankWonderResource("zzz", "gold", 5); return e }},
+	{"bank2", func(ge *GameEngine) error { _, e := ge.BankWonderResource("great_pyramid", "gold", 5); return e }},
+}
 
 // playForText plays a deterministic run on set and returns the text of it in
 // order: every log line (as the log held it after each stage) and every
@@ -60,85 +135,14 @@ func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
 		}
 	}
 	refuse := func(label string) {
-		errs := []struct {
-			name string
-			do   func() error
-		}{
-			{"build0", func() error { _, e := ge.BuildMultiple("hut", 0); return e }},
-			{"buildunknown", func() error { _, e := ge.BuildMultiple("hutt", 1); return e }},
-			{"buildnope", func() error { _, e := ge.BuildMultiple("zzz", 1); return e }},
-			{"buildmany", func() error { _, e := ge.BuildMultiple("hut", 100000); return e }},
-			{"buildwonder", func() error { _, e := ge.BuildMultiple("great_pyramid", 1); return e }},
-			{"recruit0", func() error { return ge.RecruitWorker("worker", 0) }},
-			{"recruitbig", func() error { return ge.RecruitWorker("worker", config.Million) }},
-			{"recruitodd", func() error { return ge.RecruitWorker("nonesuch", 1) }},
-			{"assign0", func() error { return ge.AssignWorker("hut", 0) }},
-			{"assignbig", func() error { return ge.AssignWorker("hut", 100000) }},
-			{"assignnone", func() error { return ge.AssignWorker("zzz", 1) }},
-			{"assignall", func() error { _, e := ge.AssignAll("zzz"); return e }},
-			{"assignallhut", func() error { _, e := ge.AssignAll("hut"); return e }},
-			{"unassign0", func() error { return ge.UnassignWorker("hut", 0) }},
-			{"unassignbig", func() error { return ge.UnassignWorker("hut", 1000) }},
-			{"unassignall", func() error { _, e := ge.UnassignAll("hut"); return e }},
-			{"dismiss", func() error { return ge.DismissWorkers("hut", 5, false) }},
-			{"sell0", func() error { return ge.SellBuilding("hut", 0) }},
-			{"sellhut", func() error { return ge.SellBuilding("hut", 1) }},
-			{"sellnone", func() error { return ge.SellBuilding("zzz", 1) }},
-			{"research", func() error { return ge.StartResearch("zzz") }},
-			{"researchfar", func() error { return ge.StartResearch("quantum_computing") }},
-			{"cancelresearch", func() error { return ge.CancelResearch() }},
-			{"gather", func() error { _, e := ge.GatherResource("gold", 5); return e }},
-			{"gatherneg", func() error { _, e := ge.GatherResource("food", -1); return e }},
-			{"festival", func() error { return ge.DoFestival() }},
-			{"blackmarket", func() error { _, _, e := ge.DoBlackMarket("zzz"); return e }},
-			{"blackmarket2", func() error { _, _, e := ge.DoBlackMarket("gold"); return e }},
-			{"advance", func() error { return ge.AdvanceAge() }},
-			{"prestige", func() error { return ge.DoPrestige() }},
-			{"upgrade", func() error { return ge.UpgradeBuilding("hut", 1, false) }},
-			{"upgradeall", func() error { return ge.UpgradeBuilding("zzz", 1, true) }},
-			{"route", func() error { return ge.StartTradeRoute("zzz") }},
-			{"routestop", func() error { return ge.StopTradeRoute("zzz") }},
-			{"status", func() error { return ge.SetDiplomaticStatus("zzz", "allied") }},
-			{"statusbad", func() error { return ge.SetDiplomaticStatus("zzz", "bogus") }},
-			{"gift", func() error { return ge.SendGift("zzz") }},
-			{"tribute", func() error { return ge.SendTribute("zzz") }},
-			{"deal", func() error { _, e := ge.AcceptFactionDeal("zzz", 1); return e }},
-			{"dealnone", func() error { _, e := ge.AcceptFactionDeal("", 0); return e }},
-			{"expedition", func() error { return ge.LaunchExpedition(99) }},
-			{"expedition0", func() error { return ge.LaunchExpedition(0) }},
-			{"memory", func() error { return ge.AcceptAncientMemory() }},
-			{"endure", func() error { return ge.Endure() }},
-			{"succumb", func() error { return ge.Succumb() }},
-			{"endurelp", func() error { return ge.EndureLastPassage() }},
-			{"succumblp", func() error { return ge.SuccumbLastPassage() }},
-			{"appease", func() error { return ge.HarbingerAppease() }},
-			{"brace", func() error { return ge.HarbingerBrace() }},
-			{"invite", func() error { return ge.HarbingerInvite() }},
-			{"planupgrade", func() error { _, e := ge.PlanAddUpgrade("hut", 1); return e }},
-			{"planupgrade0", func() error { _, e := ge.PlanAddUpgrade("zzz", 0); return e }},
-			{"planbuild", func() error { _, e := ge.PlanAddBuild("zzz", 1); return e }},
-			{"planbuildhut", func() error { _, e := ge.PlanAddBuild("hutt", 1); return e }},
-			{"planremove", func() error { _, e := ge.PlanRemove(99); return e }},
-			{"planresearch", func() error { _, e := ge.PlanAddResearchChain("zzz"); return e }},
-			{"planadvance", func() error { return ge.PlanAddAdvance() }},
-			{"share", func() error { _, e := ge.SetWorkerShare("zzz", 50); return e }},
-			{"share2", func() error { _, e := ge.SetWorkerShare("food", 500); return e }},
-			{"scholarshare", func() error { _, e := ge.SetResearchShare(500); return e }},
-			{"scholarshare2", func() error { _, e := ge.SetResearchShare(50); return e }},
-			{"switch", func() error { _, e := ge.SwitchAccount("zzz"); return e }},
-			{"branch", func() error { return ge.BranchSave("") }},
-			{"load", func() error { return ge.LoadGame("zzz-nosuch") }},
-			{"bank", func() error { _, e := ge.BankWonderResource("zzz", "gold", 5); return e }},
-			{"bank2", func() error { _, e := ge.BankWonderResource("great_pyramid", "gold", 5); return e }},
-		}
-		for _, e := range errs {
+		for _, e := range refusalCases {
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
 						rec("%s|refuse|%s|PANIC %v", label, e.name, r)
 					}
 				}()
-				err := e.do()
+				err := e.do(ge)
 				if err == nil {
 					rec("%s|refuse|%s|<nil>", label, e.name)
 				} else {
@@ -176,22 +180,7 @@ func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
 		ge.StepTicks(350)
 		grab(age + "-b")
 	}
-	steps := []struct {
-		name string
-		do   func() error
-	}{
-		{"enter the quantum age", func() error { return ge.EnterAgeForTest("quantum_age") }},
-		{"a harbinger", func() error { return ge.SummonHarbingerForTest("quantum_age") }},
-		{"step", func() error { ge.StepTicks(300); return nil }},
-		{"clear the doom", func() error { _ = ge.Endure(); return nil }},
-		{"the Last Passage", func() error { return ge.ForceLastPassageForTest("transcendent_age") }},
-		{"step", func() error { ge.StepTicks(100); return nil }},
-		{"endure it", ge.EndureLastPassage},
-		{"step", func() error { ge.StepTicks(300); return nil }},
-		{"an earlier age", func() error { return ge.EnterAgeForTest(config.AgeOrder()[8]) }},
-		{"step", func() error { ge.StepTicks(300); return nil }},
-	}
-	for _, st := range steps {
+	for _, st := range endingSteps(ge) {
 		if err := st.do(); err != nil {
 			t.Fatalf("%s: %v", st.name, err)
 		}
@@ -246,11 +235,7 @@ func sendRoadMission(t *testing.T, ge *GameEngine, turn int) {
 func playWith(t *testing.T, on bool, rewrite func(id, plain string) string) ([]string, *GameEngine) {
 	t.Helper()
 	vibeOff(t)
-	if rewrite != nil {
-		defer vibe.UseRewriterForTest(rewrite)()
-	}
-	vibe.Set(on)
-	defer vibe.Set(false)
+	defer vibeRead(on, rewrite)()
 	return playForText(t, rules.CoreFor(false))
 }
 
@@ -276,6 +261,29 @@ var unmark = strings.NewReplacer(markOpen, "", markClose, "")
 // idShaped matches a row id: dotted words that begin with a package.
 var idShaped = regexp.MustCompile(`\b(game|config|rules|pkg)\.[a-z_]+\.[A-Za-z_]+\.[0-9]{2}\b`)
 
+// asIs is a script that leaves every text as it is.
+func asIs(id, plain string) string { return plain }
+
+// noMarks stops the test at the first of texts, read in plain English, that has
+// a mark of the script in it.
+func noMarks(t *testing.T, what string, texts []string) {
+	t.Helper()
+	for _, s := range texts {
+		if strings.Contains(s, markOpen) || strings.Contains(s, markClose) {
+			t.Fatalf("%s has the script's mark in it: %q", what, s)
+		}
+	}
+}
+
+// noScript fails the test when doc (the state as JSON, a save) has a mark of
+// the script in it: nothing a script writes is kept.
+func noScript[D string | []byte](t *testing.T, what string, doc D) {
+	t.Helper()
+	if strings.Contains(string(doc), markOpen) {
+		t.Errorf("%s holds a text of the script", what)
+	}
+}
+
 func sameTexts(t *testing.T, what string, got, want []string) {
 	t.Helper()
 	if len(got) != len(want) {
@@ -294,28 +302,24 @@ func sameTexts(t *testing.T, what string, got, want []string) {
 // holds: a script that rewrites every text does not reach them.
 func TestLogTextIsPlainWhileVibeModeIsOff(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeSession(t)
 	plain, _ := playWith(t, false, nil)
 	if len(plain) < 5000 {
 		t.Fatalf("the run read only %d texts", len(plain))
 	}
 	scripted, _ := playWith(t, false, mark)
 	sameTexts(t, "VibeMode off, a script that rewrites every text", scripted, plain)
-	for _, s := range plain {
-		if strings.Contains(s, markOpen) || strings.Contains(s, markClose) {
-			t.Fatalf("a plain text has the script's mark in it: %q", s)
-		}
-	}
+	noMarks(t, "a plain text", plain)
 }
 
 // TestLogTextFallsBackToPlain: with VibeMode on and no line in the script for
 // a text, it reads plain. It never reads as an id, and never as nothing.
 func TestLogTextFallsBackToPlain(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeSession(t)
 	// The run in the words of the shipped script for everything the ruleset
 	// writes, and the code's own texts as they are written.
-	want, _ := playWith(t, true, func(id, plain string) string { return plain })
+	want, _ := playWith(t, true, asIs)
 	for _, script := range []map[string]string{
 		{}, // no row at all
 		{"building.hut.name": "Crash Pad", "game.engine.nonesuch.01": "A row no text has"}, // rows for other things
@@ -340,8 +344,8 @@ func TestLogTextFallsBackToPlain(t *testing.T) {
 // run's own, to the last bit, with no text of the script in either.
 func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	plain, plainGE := playWith(t, true, func(id, plain string) string { return plain })
+	vibeSession(t)
+	plain, plainGE := playWith(t, true, asIs)
 	marked, markedGE := playWith(t, true, mark)
 	if len(marked) != len(plain) {
 		t.Fatalf("the run under the script read %d texts, in plain English %d", len(marked), len(plain))
@@ -387,12 +391,7 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 		}
 	}
 
-	a, b := stateMap(t, plainGE), stateMap(t, markedGE)
-	for k := range a {
-		if !reflect.DeepEqual(a[k], b[k]) {
-			t.Errorf("under the script, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
-		}
-	}
+	sameState(t, plainGE, markedGE, "under the script")
 	if plainGE.StateDigest() != markedGE.StateDigest() {
 		t.Error("the state digests differ")
 	}
@@ -400,23 +399,17 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(js), markOpen) {
-		t.Error("the state holds a text of the script")
-	}
+	noScript(t, "the state", js)
 	if strings.Contains(string(js), `"Tags"`) {
 		t.Error("the state holds the tags of a log line")
 	}
-	vibe.Set(true)
-	defer vibe.Set(false)
-	defer vibe.UseRewriterForTest(mark)()
+	defer vibeRead(true, mark)()
 	noErr(t, markedGE.SaveGame("marked"))
 	raw, err := os.ReadFile(savePath("marked"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(raw), markOpen) {
-		t.Error("the save holds a text of the script")
-	}
+	noScript(t, "the save", raw)
 	if strings.Contains(string(raw), `"Tags"`) || strings.Contains(string(raw), `"log"`) {
 		t.Error("the save holds the log or the tags of its lines")
 	}
@@ -429,7 +422,7 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 // is valid text, with nothing cut out of it.
 func TestALineThatStartsWithASymbolIsNeverCut(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeSession(t)
 	texts, _ := playWith(t, true, func(id, plain string) string { return "💀 " + plain })
 	reached := 0
 	for _, s := range texts {
@@ -450,7 +443,7 @@ func TestALineThatStartsWithASymbolIsNeverCut(t *testing.T) {
 // has a line for them, in plain English when it is off, and the arguments go
 // into the script's format.
 func TestALogLineFollowsTheSwitch(t *testing.T) {
-	vibeOff(t)
+	vibeSession(t)
 	gathered := func() string {
 		ge := NewGameEngine()
 		if _, err := ge.GatherResource("food", 1); err != nil {
@@ -470,17 +463,15 @@ func TestALogLineFollowsTheSwitch(t *testing.T) {
 	if !strings.HasPrefix(plainLine, "Gathered ") || plainRefusal != "Build count must be positive (got 0)." {
 		t.Fatalf("plain English reads %q and %q", plainLine, plainRefusal)
 	}
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
 	defer vibe.UseScriptForTest(map[string]string{
 		"game.engine.GatherResource.04": "Snagged %s, no cap.",
 		"game.engine.BuildMultiple.01":  "Zero builds? Bet. (got %d)",
 	})()
 	vibe.Set(true)
-	defer vibe.Set(false)
 	// What the amount reads as is the ruleset's word for it (the script
 	// has one for food); the rest of the line is the script's.
 	middle := strings.TrimSuffix(strings.TrimPrefix(func() string {
-		defer vibe.UseRewriterForTest(func(id, plain string) string { return plain })()
+		defer vibe.UseRewriterForTest(asIs)()
 		return gathered()
 	}(), "Gathered "), ".")
 	if got := gathered(); got != "Snagged "+middle+", no cap." {
@@ -503,14 +494,9 @@ func TestALogLineFollowsTheSwitch(t *testing.T) {
 // a line under the script is read by its tags and never by its words.
 func TestAScriptDoesNotMoveALineOutOfAPanel(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
+	vibeSession(t)
 	run := func(on bool, rewrite func(id, plain string) string) []LogEntry {
-		if rewrite != nil {
-			defer vibe.UseRewriterForTest(rewrite)()
-		}
-		vibe.Set(on)
-		defer vibe.Set(false)
+		defer vibeRead(on, rewrite)()
 		_, entries, _ := playRun(t, rules.CoreFor(false))
 		return entries
 	}
@@ -583,9 +569,7 @@ func TestALineIsReadByItsWordsOnlyInPlainEnglish(t *testing.T) {
 // unassigns or dismisses writes a line about the people, in whatever script;
 // a loss is bad news, and an arrival good.
 func TestTheLinesOfTheCommandsAreTagged(t *testing.T) {
-	vibeOff(t)
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	defer vibe.Set(false)
+	vibeSession(t)
 	for _, on := range []bool{false, true} {
 		vibe.Set(on)
 		ge := newSeededEngine(1)

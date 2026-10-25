@@ -22,6 +22,30 @@ func vibeOff(t *testing.T) {
 	vibe.Set(false)
 }
 
+// vibeSession opens a test of the script: the real VibeMode set is built
+// before any script is loaned (so a loaned script never gets into it), the
+// switch is off, and it goes back where the test found it when the test ends.
+func vibeSession(t *testing.T) {
+	t.Helper()
+	rules.CoreFor(true)
+	vibeOff(t)
+}
+
+// vibeRead sets the switch to on and, when rewrite is not nil, has every text
+// the code writes itself read through it. Defer what it returns: it puts the
+// switch off and the script back.
+func vibeRead(on bool, rewrite func(id, plain string) string) (restore func()) {
+	undo := func() {}
+	if rewrite != nil {
+		undo = vibe.UseRewriterForTest(rewrite)
+	}
+	vibe.Set(on)
+	return func() {
+		vibe.Set(false)
+		undo()
+	}
+}
+
 // TestVibeSettingLivesBesideTheAccountFile: VibeMode is off by default.
 // Turning it on writes settings.json in the account's slot and leaves
 // account.json byte for byte as it was. A fresh load reads it, a save of the
@@ -297,10 +321,26 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 		}
 		ge.StepTicks(350)
 	}
-	steps := []struct {
-		name string
-		do   func() error
-	}{
+	for _, st := range endingSteps(ge) {
+		if err := st.do(); err != nil {
+			t.Fatalf("%s: %v", st.name, err)
+		}
+	}
+	return ge
+}
+
+// runStep is one step of the end of a whole run.
+type runStep struct {
+	name string
+	do   func() error
+}
+
+// endingSteps are the steps wholeRun and playRun both end on, once the ages are
+// played: the quantum age, a harbinger, the Last Passage endured and a step
+// back to an earlier age. Making the list does nothing; each step acts when it
+// is called, so the two runs keep their own calls in their own order.
+func endingSteps(ge *GameEngine) []runStep {
+	return []runStep{
 		{"enter the quantum age", func() error { return ge.EnterAgeForTest("quantum_age") }},
 		{"a harbinger", func() error { return ge.SummonHarbingerForTest("quantum_age") }},
 		{"step", func() error { ge.StepTicks(300); return nil }},
@@ -312,12 +352,6 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 		{"an earlier age", func() error { return ge.EnterAgeForTest(config.AgeOrder()[8]) }},
 		{"step", func() error { ge.StepTicks(300); return nil }},
 	}
-	for _, st := range steps {
-		if err := st.do(); err != nil {
-			t.Fatalf("%s: %v", st.name, err)
-		}
-	}
-	return ge
 }
 
 // thenPrestige ends the run wholeRun played with a prestige and plays on in
@@ -367,21 +401,29 @@ func TestEveryTextCanChangeWithoutTouchingANumber(t *testing.T) {
 	}
 }
 
-// sameStateButTheTitle fails the test for every key of the two engines' states
-// that differs, but current_title, which the core sets alone write in plain
-// English (TestASaveHoldsThePlainTitle).
-func sameStateButTheTitle(t *testing.T, plain, vibed *GameEngine, when string) {
+// sameState fails the test for every key of the two engines' states that
+// differs, but the keys in skip.
+func sameState(t *testing.T, plain, vibed *GameEngine, when string, skip ...string) {
 	t.Helper()
 	a, b := stateMap(t, plain), stateMap(t, vibed)
-	// The title is written to a save in plain English for the two core sets
-	// (TestASaveHoldsThePlainTitle); this set is a set of its own.
-	delete(a, "current_title")
-	delete(b, "current_title")
+	for _, k := range skip {
+		delete(a, k)
+		delete(b, k)
+	}
 	for k := range a {
 		if !reflect.DeepEqual(a[k], b[k]) {
 			t.Errorf("%s, %q is not what it is in plain English: %.300v vs %.300v", when, k, a[k], b[k])
 		}
 	}
+}
+
+// sameStateButTheTitle is sameState but for current_title, which the core sets
+// alone write in plain English (TestASaveHoldsThePlainTitle).
+func sameStateButTheTitle(t *testing.T, plain, vibed *GameEngine, when string) {
+	t.Helper()
+	// The title is written to a save in plain English for the two core sets
+	// (TestASaveHoldsThePlainTitle); this set is a set of its own.
+	sameState(t, plain, vibed, when, "current_title")
 }
 
 // TestAWholeRunUnderTheShippedScript is the same on the two core sets: a
@@ -391,12 +433,7 @@ func TestAWholeRunUnderTheShippedScript(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
 	vibeOff(t)
 	plain, vibed := wholeRun(t, rules.CoreFor(false)), wholeRun(t, rules.CoreFor(true))
-	a, b := stateMap(t, plain), stateMap(t, vibed)
-	for k := range a {
-		if !reflect.DeepEqual(a[k], b[k]) {
-			t.Errorf("under the shipped script, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
-		}
-	}
+	sameState(t, plain, vibed, "under the shipped script")
 	if plain.StateDigest() != vibed.StateDigest() {
 		t.Error("the state digests differ")
 	}
