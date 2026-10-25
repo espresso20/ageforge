@@ -64,6 +64,7 @@ All notable changes to AgeForge are documented here.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
 - **Late-game festival and Black Market prices.** They now stay in step with your culture income in every age instead of running away after the middle ages.
 - **History graphs start over with each run.** They no longer mix a new run with the last one, and age markers stay in the right place after time away.
+- **Black Market payouts.** A deal now pays the same worth whichever resource you take, and goes through five times in six; the sixth time the smugglers vanish with your culture.
 
 ### Added
 - **Locked buildings show up.** The Buildings panel lists this age's buildings that still need a tech, greyed out, with the research they need and a word from your scholars.
