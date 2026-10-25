@@ -2643,9 +2643,7 @@ func TestBonusTruth(t *testing.T) {
 		}
 	}
 	if path := os.Getenv("BONUS_TRUTH_REPORT"); path != "" {
-		if err := os.WriteFile(path, []byte(truthReport(verdicts)), 0o644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(path, []byte(truthReport(verdicts)), 0o644))
 	}
 }
 

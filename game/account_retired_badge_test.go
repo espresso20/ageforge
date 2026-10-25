@@ -40,9 +40,7 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 
 	// The badge file as the game that still had the ladder signed it.
 	var bf badgeFile
-	if err := json.Unmarshal(slotBadgeFile(t, id), &bf); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(slotBadgeFile(t, id), &bf))
 	if bf.Badges == nil {
 		bf.Badges = map[string]BadgeEarned{}
 	}
@@ -59,9 +57,7 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(accountDir(id), badgeFileName)
-	if err := os.WriteFile(path, out, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(path, out, 0644))
 
 	ge, loaded := openIn(t, id)
 	if loaded.BadgesTampered || loaded.Tampered {
@@ -92,16 +88,12 @@ func TestAccountWithRetiredTradeRungsLoadsClean(t *testing.T) {
 	// verifies.
 	diskBefore := slotBadgeFile(t, id)
 	recordPrestige(loaded, "stone_age")
-	if err := loaded.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.FlushIfDirty())
 	if string(slotBadgeFile(t, id)) == string(diskBefore) {
 		t.Fatal("precondition: the save did not write the badge file")
 	}
 	var saved badgeFile
-	if err := json.Unmarshal(slotBadgeFile(t, id), &saved); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(slotBadgeFile(t, id), &saved))
 	if !verifyBadgeFile(&saved) || saved.Tampered {
 		t.Errorf("the badge file after a save: verifies %v, tampered %v", verifyBadgeFile(&saved), saved.Tampered)
 	}

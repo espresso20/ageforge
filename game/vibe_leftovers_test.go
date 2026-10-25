@@ -341,51 +341,31 @@ func historyOf(t *testing.T) *GameEngine {
 	ge := newSeededEngine(7)
 	var struck []string
 	for _, age := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		if ge.ForceCatastropheForTest() != nil {
 			continue
 		}
 		struck = append(struck, age)
 		if len(struck) == 1 {
-			if err := ge.Endure(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.Endure())
 			continue
 		}
-		if err := ge.Succumb(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.Succumb())
 		if len(struck) == 2 {
 			// The same doom again, with its legacy already held.
-			if err := ge.EnterAgeForTest(age); err != nil {
-				t.Fatal(err)
-			}
-			if err := ge.ForceCatastropheForTest(); err != nil {
-				t.Fatal(err)
-			}
-			if err := ge.Succumb(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.EnterAgeForTest(age))
+			noErr(t, ge.ForceCatastropheForTest())
+			noErr(t, ge.Succumb())
 			break
 		}
 	}
 	if len(struck) < 2 {
 		t.Fatalf("only %d dooms struck", len(struck))
 	}
-	if err := ge.ForceLastPassageForTest("transcendent_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.ForceLastPassageForTest("transcendent_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.SuccumbLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.ForceLastPassageForTest("transcendent_age"))
+	noErr(t, ge.EndureLastPassage())
+	noErr(t, ge.ForceLastPassageForTest("transcendent_age"))
+	noErr(t, ge.SuccumbLastPassage())
 	return ge
 }
 
@@ -548,29 +528,21 @@ func TestAnOldSaveGetsItsNoticeInTheScript(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath("old-curve"), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath("old-curve"), data, 0o644))
 
 	plainNotice := pacingNotice()
 	defer vibe.UseRewriterForTest(mark)()
 	vibe.Set(true)
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("old-curve"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("old-curve"))
 	if n := countLines(loaded, mark("game.save.pacingNotice.01", plainNotice)); n != 1 {
 		t.Errorf("the old save's notice was told in the script %d times, want once", n)
 	}
 	if n := countLines(loaded, plainNotice); n != 0 {
 		t.Errorf("the old save's notice was told in plain English %d times under the script", n)
 	}
-	if err := loaded.SaveGame("old-curve-next"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.SaveGame("old-curve-next"))
 	raw, err := os.ReadFile(savePath("old-curve-next"))
 	if err != nil {
 		t.Fatal(err)

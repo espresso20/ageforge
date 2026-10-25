@@ -18,16 +18,10 @@ func loadFixture(t *testing.T, path, name string) *GameEngine {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath(name), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath(name), data, 0o644))
 	ge := NewGameEngine()
-	if err := ge.LoadGame(name); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LoadGame(name))
 	return ge
 }
 
@@ -46,9 +40,7 @@ func TestPrestigeFromMedieval(t *testing.T) {
 		t.Errorf("in the Medieval Age: can %v, pending %d, next %q pays %d; want true, 9, renaissance_age, 12",
 			st.CanPrestige, st.PendingPoints, st.NextAge, st.NextAgePoints)
 	}
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if p := ge.GetState().Prestige; p.Level != 1 || p.Available != 9 || p.TotalEarned != 9 {
 		t.Errorf("after a Medieval prestige: level %d, available %d, total %d; want 1, 9, 9", p.Level, p.Available, p.TotalEarned)
 	}
@@ -68,15 +60,11 @@ func TestPlanLogRecordsThePlanAsWritten(t *testing.T) {
 	if _, err := ge.PlanAddBuild("hut", 3); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tool_making"))
 	if _, err := ge.PlanAddBuild("hut", 2); err != nil { // not merged into the last item: research sits between
 		t.Fatal(err)
 	}
-	if err := ge.PlanAddAdvance(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddAdvance())
 	// Remove the second hut item before it starts anything: its 2 copies go.
 	if _, err := ge.PlanRemove(3); err != nil {
 		t.Fatal(err)
@@ -101,13 +89,9 @@ func TestPlanLogRecordsThePlanAsWritten(t *testing.T) {
 	if _, err := ge.PlanAddBuild("hut", 4); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.PlanAddAdvance(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddAdvance())
 	_ = ge.SummonHarbingerForTest("medieval_age")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	kit := ge.LegacyForTest()
 	want = []PlanTemplateItem{
 		{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 5},
@@ -140,9 +124,7 @@ func TestPlanTemplateChainsAcrossAdvance(t *testing.T) {
 	ge.plan = nil // as if this run's copy was built: the log keeps it as written
 	ge.mu.Unlock()
 	_ = ge.SummonHarbingerForTest("medieval_age")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	kinds := func() []string {
 		var out []string
 		for _, it := range ge.GetState().Plan {
@@ -213,9 +195,7 @@ func TestPlanTemplateCarriesPlannedResearch(t *testing.T) {
 	ge.Prestige.upgrades[config.LegacyPlan] = 1
 	ge.mu.Unlock()
 	for _, key := range []string{"tool_making", "fire_mastery"} {
-		if err := ge.PlanAddResearch(key); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.PlanAddResearch(key))
 	}
 	ge.mu.Lock()
 	var s planStarts
@@ -226,9 +206,7 @@ func TestPlanTemplateCarriesPlannedResearch(t *testing.T) {
 		t.Fatalf("after the plan ran: researching %q with %d items left; want tool_making, 1", started, left)
 	}
 	_ = ge.SummonHarbingerForTest("medieval_age")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	var planned []string
 	for _, it := range ge.GetState().Plan {
 		if it.Kind == PlanResearch {
@@ -292,9 +270,7 @@ func TestWorkerSharesCarryOver(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = ge.SummonHarbingerForTest("medieval_age")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if got := ge.WorkerShares(); got["faith"] != 40 {
 		t.Errorf("shares after first prestige %v, want faith 40", got)
 	}
@@ -311,9 +287,7 @@ func TestLegacyKitIsFreeAfterFirstPrestige(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = ge.SummonHarbingerForTest("modern_age")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if p := ge.GetState().Plan; len(p) != 1 || p[0].Key != "hut" || p[0].Count != 2 {
 		t.Errorf("plan after first prestige: %+v, want 2 huts", p)
 	}
@@ -337,12 +311,8 @@ func TestSuccumbReappliesTemplate(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = ge.SummonHarbingerForTest("iron_age")
-	if err := ge.ForceCatastropheForTest(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.ForceCatastropheForTest())
+	noErr(t, ge.Succumb())
 	if p := ge.GetState().Plan; len(p) != 1 || p[0].Key != "hut" || p[0].Count != 3 {
 		t.Errorf("plan after Succumb: %+v, want 3 huts", p)
 	}
@@ -366,13 +336,9 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 	ge.mu.Lock()
 	log := clonePlanTemplate(ge.planLog)
 	ge.mu.Unlock()
-	if err := ge.SaveGame("kit"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("kit"))
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("kit"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("kit"))
 	if loaded.cheaterBadge {
 		t.Fatal("the save failed its own signature check")
 	}
@@ -393,9 +359,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 func TestNewSaveWritesNoEmptyKitFields(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(20)
-	if err := ge.SaveGame("fresh"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("fresh"))
 	data, err := os.ReadFile(savePath("fresh"))
 	if err != nil {
 		t.Fatal(err)
@@ -428,13 +392,9 @@ func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
 	ge.Prestige.LoadState(1, 120, 120, old)
 	ge.Prestige.LoadLegacy(2, []PlanTemplateItem{{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 1}}, []string{"riverlands_tribes"}, map[string]float64{"food": 40})
 	ge.mu.Unlock()
-	if err := ge.SaveGame("old-shop"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("old-shop"))
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("old-shop"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("old-shop"))
 	p := loaded.GetState().Prestige
 	if p.TotalEarned != 120 || p.Available != 120 || p.ProductionMultiplier <= 1 {
 		t.Errorf("unspent old points loaded as %+v", p)
@@ -444,9 +404,7 @@ func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
 			t.Errorf("first-prestige old save does not carry %s", key)
 		}
 	}
-	if err := loaded.SaveGame("old-shop-rewritten"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.SaveGame("old-shop-rewritten"))
 	if saved := readSaveFromDisk(t, "old-shop-rewritten"); saved.Prestige.Upgrades != nil || saved.Prestige.ShopVersion != 0 {
 		t.Errorf("rewritten old save keeps shop state: %+v", saved.Prestige)
 	}
@@ -455,13 +413,9 @@ func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
 	never.mu.Lock()
 	never.Prestige.LoadState(0, 0, 0, map[string]int{config.LegacyPlan: 1, config.LegacyWorkers: 1, config.LegacyFactions: 1})
 	never.mu.Unlock()
-	if err := never.SaveGame("never-prestiged"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, never.SaveGame("never-prestiged"))
 	loaded = NewGameEngine()
-	if err := loaded.LoadGame("never-prestiged"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("never-prestiged"))
 	p = loaded.GetState().Prestige
 	if p.ProductionMultiplier != 1 {
 		t.Errorf("never-prestiged multiplier = %v, want 1", p.ProductionMultiplier)

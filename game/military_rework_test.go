@@ -455,9 +455,7 @@ func TestOldActiveFieldsAreIgnoredOnLoad(t *testing.T) {
 	var save MilitarySave
 	old := `{"active_scout":{"Key":"scouting_party","Name":"Scout","TicksLeft":7},` +
 		`"active_military":{"Key":"raid_the_rival_clan","Soldiers":5,"TicksLeft":9},"completed_count":4}`
-	if err := json.Unmarshal([]byte(old), &save); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal([]byte(old), &save))
 	mm := NewMilitaryManager()
 	mm.LoadState(save)
 	if mm.HasActive() {

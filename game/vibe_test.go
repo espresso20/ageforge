@@ -44,9 +44,7 @@ func TestVibeSettingLivesBesideTheAccountFile(t *testing.T) {
 	}
 	before := slotFile(t, acct.AccountID)
 	badges := slotBadgeFile(t, acct.AccountID)
-	if err := acct.SetVibe(true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetVibe(true))
 	if !acct.VibeOn() {
 		t.Error("VibeMode is still off")
 	}
@@ -67,16 +65,12 @@ func TestVibeSettingLivesBesideTheAccountFile(t *testing.T) {
 	if !loaded.VibeOn() || loaded.Tampered {
 		t.Errorf("after a load: VibeMode %v, flagged %v", loaded.VibeOn(), loaded.Tampered)
 	}
-	if err := loaded.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.Save())
 	if !slotAccount(t, acct.AccountID).VibeOn() {
 		t.Error("saving the account lost the setting")
 	}
 	// Motion and VibeMode sit side by side in the one file.
-	if err := loaded.SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.SetMotion(false))
 	if again := slotAccount(t, acct.AccountID); !again.VibeOn() || again.MotionOn() {
 		t.Errorf("motion and VibeMode in one file: VibeMode %v, motion %v", again.VibeOn(), again.MotionOn())
 	}
@@ -89,9 +83,7 @@ func TestVibeSettingLivesBesideTheAccountFile(t *testing.T) {
 	if other.VibeOn() {
 		t.Error("a new account inherited VibeMode from another")
 	}
-	if err := slotAccount(t, acct.AccountID).SetVibe(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, slotAccount(t, acct.AccountID).SetVibe(false))
 	if slotAccount(t, acct.AccountID).VibeOn() {
 		t.Error("turning VibeMode off did not stick")
 	}
@@ -114,9 +106,7 @@ func TestVibeModeFollowsTheAccount(t *testing.T) {
 		t.Fatal("an account with VibeMode off did not leave the engine on the plain set")
 	}
 
-	if err := ge.SetVibeMode(true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SetVibeMode(true))
 	wantManagersOn(t, ge, rules.CoreFor(true), "after vibemode on")
 	if !vibe.On() || !alpha.VibeOn() || !slotAccount(t, alpha.AccountID).VibeOn() {
 		t.Error("vibemode on was not kept in the switch and the account")
@@ -139,9 +129,7 @@ func TestVibeModeFollowsTheAccount(t *testing.T) {
 	}
 	wantManagersOn(t, ge, rules.CoreFor(true), "after a switch back to the account with it on")
 
-	if err := ge.SetVibeMode(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SetVibeMode(false))
 	wantManagersOn(t, ge, rules.CoreFor(false), "after vibemode off")
 	if got, _ := ge.Rules().Building("hut"); got.Name != "Hut" {
 		t.Errorf("the hut reads %q with VibeMode off again", got.Name)
@@ -150,9 +138,7 @@ func TestVibeModeFollowsTheAccount(t *testing.T) {
 	// An engine with a set of its own keeps it.
 	own := NewGameEngineWith(secondSet())
 	set := own.Rules()
-	if err := own.SetVibeMode(true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, own.SetVibeMode(true))
 	if own.Rules() != set {
 		t.Error("VibeMode moved an engine off its own ruleset")
 	}
@@ -173,9 +159,7 @@ func stateMap(t *testing.T, ge *GameEngine) map[string]any {
 		t.Fatal(err)
 	}
 	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(b, &m))
 	if len(m) < 20 {
 		t.Fatalf("the state has only %d keys", len(m))
 	}
@@ -221,20 +205,14 @@ func TestVibeModeChangesWordsNotNumbers(t *testing.T) {
 
 	// A save made under VibeMode is the save made in plain English: loaded
 	// into a fresh engine each, the two are in one state, and play on alike.
-	if err := moved.SaveGame("vibe"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, moved.SaveGame("vibe"))
 	moved.followVibe(false)
-	if err := moved.SaveGame("plain"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, moved.SaveGame("plain"))
 	fromVibe, fromPlain := NewGameEngine(), NewGameEngine()
 	if err := fromVibe.LoadGame("vibe"); err != nil {
 		t.Fatalf("a save made under VibeMode does not load: %v", err)
 	}
-	if err := fromPlain.LoadGame("plain"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, fromPlain.LoadGame("plain"))
 	if fromVibe.StateDigest() != fromPlain.StateDigest() {
 		t.Error("a save made under VibeMode loads as another state than the same run saved in plain English")
 	}
@@ -303,9 +281,7 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 	ge := NewGameEngineWith(set)
 	ge.SeedRNG(7)
 	for i, age := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		ge.GrantTechsForTest()
 		for _, f := range rules.CoreFor(false).Factions() {
 			_ = ge.MeetFactionForTest(f.Key, 40)
@@ -349,9 +325,7 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 func thenPrestige(t *testing.T, ge *GameEngine) {
 	t.Helper()
 	_ = ge.Endure()
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	ge.StepTicks(300)
 }
 
@@ -431,21 +405,15 @@ func TestAWholeRunUnderTheShippedScript(t *testing.T) {
 	if plain.StateDigest() != vibed.StateDigest() {
 		t.Error("the state digests differ after a prestige")
 	}
-	if err := vibed.SaveGame("vibed"); err != nil {
-		t.Fatal(err)
-	}
-	if err := plain.SaveGame("plain"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, vibed.SaveGame("vibed"))
+	noErr(t, plain.SaveGame("plain"))
 	read := func(name string) map[string]any {
 		raw, err := os.ReadFile(savePath(name))
 		if err != nil {
 			t.Fatal(err)
 		}
 		var m map[string]any
-		if err := json.Unmarshal(raw, &m); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, json.Unmarshal(raw, &m))
 		for _, k := range []string{"timestamp", "_sig"} {
 			delete(m, k)
 		}

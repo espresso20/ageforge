@@ -292,14 +292,10 @@ func TestPostedSoldiersSurviveASaveAndLoad(t *testing.T) {
 	ge := peopleEngine(t)
 	standWarCamps(ge, 2)
 	isolateAccountDir(t)
-	if err := ge.SaveGame("posted"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("posted"))
 	trained := ge.Stats.SoldiersTrained
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("posted"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("posted"))
 	st := loaded.GetState()
 	if want := 2 * warCampPosts(t); st.Workers.Soldiers != want || st.Military.SoldierCount != want {
 		t.Errorf("after a load %d soldiers in the town and %d in the army, want %d", st.Workers.Soldiers, st.Military.SoldierCount, want)

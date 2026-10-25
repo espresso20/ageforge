@@ -64,16 +64,12 @@ func TestWriteKeystoneFixtures(t *testing.T) {
 		ge.Research.rebuildBonuses()
 		ge.recalculateRates()
 		ge.mu.Unlock()
-		if err := ge.SaveGame(name); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SaveGame(name))
 		data, err := os.ReadFile(savePath(name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(path, data, 0o644))
 	}
 	write(keystoneFixtureBanked, "pre_keystone_iron", "iron_age", func(ge *GameEngine) {
 		bank := map[string]float64{}
@@ -149,9 +145,7 @@ func savedTree(t *testing.T, name string) (version int, grace string) {
 		t.Fatal(err)
 	}
 	var gs GameSave
-	if err := json.Unmarshal(data, &gs); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &gs))
 	return gs.TreeVersion, gs.TreeGraceAge
 }
 
@@ -357,9 +351,7 @@ func TestKeystoneOldSaveKeepsItsWonders(t *testing.T) {
 	if n, line := treeNotices(ge); n != 1 || !strings.Contains(line, "Fusion Age") {
 		t.Errorf("%d research update lines, the last %q; want one naming the Fusion Age", n, line)
 	}
-	if err := ge.EnterAgeForTest("space_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("space_age"))
 	if ge.Buildings.graceAge != "" {
 		t.Errorf("the grace age is still %q after the advance", ge.Buildings.graceAge)
 	}
@@ -410,9 +402,7 @@ func TestKeystoneGraceIsOneAgeOfOneRun(t *testing.T) {
 		t.Errorf("a new run kept the grace age %q", old.Buildings.graceAge)
 	}
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age"} {
-		if err := old.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, old.EnterAgeForTest(age))
 	}
 	if !old.Buildings.TechLocked("colosseum") {
 		t.Error("back in the Iron Age on a new run, the Colosseum does not wait for Mathematics")

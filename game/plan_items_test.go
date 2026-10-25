@@ -22,9 +22,7 @@ func bronzeEngine(t *testing.T) *GameEngine {
 
 func TestPlanAdvance_AdvancesWhenReadyAndDropsTheOldAge(t *testing.T) {
 	ge := newSeededEngine(1)
-	if err := ge.PlanAddAdvance(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddAdvance())
 	if err := ge.PlanAddAdvance(); err == nil {
 		t.Error("planned two advances")
 	}
@@ -71,9 +69,7 @@ func TestPlan_StaffsWhatItBuilds(t *testing.T) {
 	ge := planTestEngine(t)
 	ge.Buildings.counts["hut"] = 5
 	ge.recalculateRates()
-	if err := ge.RecruitWorker("worker", 3); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.RecruitWorker("worker", 3))
 	setAmount(ge, "wood", 1000)
 	if _, err := ge.PlanAddBuild("gathering_camp", 1); err != nil {
 		t.Fatal(err)
@@ -102,17 +98,11 @@ func planAdvanceAway(t *testing.T, autoRecruit bool) *GameEngine {
 	if !autoRecruit {
 		ge.SetAutoRecruit(false)
 	}
-	if err := ge.RecruitWorker("worker", 60); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.RecruitWorker("worker", 60))
 	for _, k := range []string{"wood_camp", "gathering_camp"} {
-		if err := ge.AssignWorker(k, 30); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.AssignWorker(k, 30))
 	}
-	if err := ge.PlanAddAdvance(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddAdvance())
 	if _, err := ge.PlanAddBuild("stone_camp", 3); err != nil {
 		t.Fatal(err)
 	}
@@ -180,12 +170,8 @@ func TestPlan_StaffingLeavesCurrentBuildingsAlone(t *testing.T) {
 	ge.Buildings.counts["hut"] = 5
 	ge.Buildings.counts["wood_camp"] = 3
 	ge.recalculateRates()
-	if err := ge.RecruitWorker("worker", 9); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.AssignWorker("wood_camp", 9); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.RecruitWorker("worker", 9))
+	noErr(t, ge.AssignWorker("wood_camp", 9))
 	setAmount(ge, "wood", 1000)
 	if _, err := ge.PlanAddBuild("gathering_camp", 1); err != nil {
 		t.Fatal(err)

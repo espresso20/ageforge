@@ -299,9 +299,7 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	// A route started now takes the shorter run.
 	def := ge.Trade.routeDefs["local_barter"]
 	ge.Buildings.counts[def.RequiredBld] = def.MinCount
-	if err := ge.StartTradeRoute("local_barter"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartTradeRoute("local_barter"))
 	if got, want := ge.Trade.activeRoutes["local_barter"].TicksLeft, int(float64(def.TicksPerRun)*0.85*0.85); got != want {
 		t.Errorf("Local Barter runs every %d ticks with both route techs, want %d (listed %d)", got, want, def.TicksPerRun)
 	}

@@ -16,9 +16,7 @@ func savedFixture(t *testing.T, path string) GameSave {
 		t.Fatal(err)
 	}
 	var gs GameSave
-	if err := json.Unmarshal(data, &gs); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &gs))
 	return gs
 }
 

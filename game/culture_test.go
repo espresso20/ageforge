@@ -201,9 +201,7 @@ func TestCultureStrengthAfterSpendingAndBuying(t *testing.T) {
 	th.setFaithMeasure(10*price["faith"], FaithSave{Moderate: 10 * price["faith"], Own: 10 * price["faith"]})
 	th.setCultureMeasure(4*price["culture"], CultureSave{Moderate: price["culture"], Own: 4 * price["culture"]})
 	before := th.cultureStrength()
-	if err := th.HarbingerAppease(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, th.HarbingerAppease())
 	if got, want := th.cultureStrength(), before*0.75; math.Abs(got-want) > 1e-9 || CultureTierAt(before) != CultureTierLegendary || CultureTierAt(got) != CultureTierMajor {
 		t.Errorf("Appease took a quarter of the culture: strength %.4f after %.4f, want %.4f (the Legendary tier down to Major)", got, before, want)
 	}
@@ -261,13 +259,9 @@ func TestCultureMeasureSaveLoadAndReset(t *testing.T) {
 	if want.Moderate <= 0 || want.Own <= 0 {
 		t.Fatalf("measure after 100 ticks: %+v", want)
 	}
-	if err := ge.SaveGame("culture"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("culture"))
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("culture"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("culture"))
 	if ge2.cultureMeasure != want || math.Abs(ge2.cultureStrength()-strength) > 1e-12 {
 		t.Errorf("after load: measure %+v strength %v, want %+v and %v", ge2.cultureMeasure, ge2.cultureStrength(), want, strength)
 	}

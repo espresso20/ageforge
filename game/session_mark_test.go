@@ -15,13 +15,9 @@ func TestSessionMark(t *testing.T) {
 	if st := ge.GetState(); st.SessionStart != nil {
 		t.Fatal("a game that was never loaded has a session mark")
 	}
-	if err := ge.SaveGame("mark"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("mark"))
 	b := NewGameEngine()
-	if err := b.LoadGame("mark"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, b.LoadGame("mark"))
 	st := b.GetState()
 	m := st.SessionStart
 	if m == nil {

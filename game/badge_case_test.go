@@ -98,9 +98,7 @@ func TestBadgeListIsKeptAndNeverStale(t *testing.T) {
 	check("an import")
 
 	// A load from disk starts from the file, with a list of its own.
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	ge2, _ := openIn(t, acct.AccountID)
 	got, _ := ge2.Badges()
 	want, _ := freshViews(ge2)
@@ -257,9 +255,7 @@ func TestHackerThemesComeWithTheirBadges(t *testing.T) {
 		if !hasBadge(acct, c.badge) || !acct.HasTheme(c.theme) {
 			t.Errorf("%s: earned %v, theme %v", c.badge, hasBadge(acct, c.badge), acct.HasTheme(c.theme))
 		}
-		if err := acct.FlushIfDirty(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, acct.FlushIfDirty())
 		assertOldShape(t, slotFile(t, acct.AccountID))
 
 		// The badge held from before it gave a theme: take the theme away,
@@ -267,9 +263,7 @@ func TestHackerThemesComeWithTheirBadges(t *testing.T) {
 		acct.mu.Lock()
 		acct.Unlocks.Themes = slices.DeleteFunc(acct.Unlocks.Themes, func(k string) bool { return k == c.theme })
 		acct.mu.Unlock()
-		if err := acct.Save(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, acct.Save())
 		if slotAccount(t, acct.AccountID).HasTheme(c.theme) {
 			t.Fatal("precondition: the theme is still on the saved account")
 		}
@@ -307,9 +301,7 @@ func TestMotionSettingLivesBesideTheAccountFile(t *testing.T) {
 	}
 	before := slotFile(t, acct.AccountID)
 	badges := slotBadgeFile(t, acct.AccountID)
-	if err := acct.SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetMotion(false))
 	if acct.MotionOn() {
 		t.Error("motion is still on")
 	}
@@ -332,9 +324,7 @@ func TestMotionSettingLivesBesideTheAccountFile(t *testing.T) {
 		t.Errorf("after a load: motion on %v, flagged %v", loaded.MotionOn(), loaded.Tampered)
 	}
 	// And a save of the account leaves the setting where it is.
-	if err := loaded.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.Save())
 	if slotAccount(t, acct.AccountID).MotionOn() {
 		t.Error("saving the account lost the setting")
 	}
@@ -348,16 +338,12 @@ func TestMotionSettingLivesBesideTheAccountFile(t *testing.T) {
 	}
 
 	// On again: the file says so by saying nothing.
-	if err := loaded.SetMotion(true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.SetMotion(true))
 	if !slotAccount(t, acct.AccountID).MotionOn() {
 		t.Error("motion did not come back on")
 	}
 	// A settings file that does not parse reads as the defaults.
-	if err := os.WriteFile(settings, []byte("{not json"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(settings, []byte("{not json"), 0644))
 	if !slotAccount(t, acct.AccountID).MotionOn() {
 		t.Error("a damaged settings file turned motion off")
 	}

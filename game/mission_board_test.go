@@ -96,9 +96,7 @@ func TestBoard_TakenOfferIsRefilledAfterFiveMinutes(t *testing.T) {
 	before := ge.Military.board.clone()
 
 	const n = 5 // the second long offer
-	if err := ge.LaunchExpedition(n); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(n))
 	if slot := ge.Military.board.Slots[n-1]; slot.Offer != nil {
 		t.Fatalf("a taken offer is still on the board: %+v", *slot.Offer)
 	}
@@ -165,13 +163,9 @@ func TestBoard_UntakenOfferExpiresAfterAnHour(t *testing.T) {
 // the old age carries on.
 func TestBoard_RegeneratedOnAnAgeAdvance(t *testing.T) {
 	ge := boardEngine(t, 4, "stone_age")
-	if err := ge.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(1))
 	old := ge.Military.ActiveByTier(TierShort).Title
-	if err := ge.EnterAgeForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("bronze_age"))
 	words, _ := config.MissionWordsFor("bronze_age")
 	if ge.Military.board.Age != "bronze_age" {
 		t.Fatalf("the board is for %q after the advance", ge.Military.board.Age)
@@ -256,9 +250,7 @@ func TestBoard_EveryGrandOfferCostsItsParty(t *testing.T) {
 	if cost["soldiers"] != float64(config.PartySize(config.PartyCivil, 3)) || len(cost) != 3 {
 		t.Errorf("a civil grand mission costs %v, want its party of %d and two materials", cost, config.PartySize(config.PartyCivil, 3))
 	}
-	if err := ge.LaunchExpedition(civil); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(civil))
 	if active := ge.Military.ActiveByTier(TierGrand); active.Soldiers != 52 || active.Military() {
 		t.Errorf("the civil mission is out as %+v, want 52 soldiers and no army term", active)
 	}
@@ -276,9 +268,7 @@ func TestBoard_EveryGrandOfferCostsItsParty(t *testing.T) {
 	if cost["soldiers"] != float64(config.PartySize(config.PartyMilitary, 3)) || len(cost) != 1 {
 		t.Errorf("a military grand mission costs %v, want its party of %d and nothing else", cost, config.PartySize(config.PartyMilitary, 3))
 	}
-	if err := ge.LaunchExpedition(military); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(military))
 	if active := ge.Military.ActiveByTier(TierGrand); active.Soldiers != int(cost["soldiers"]) || !active.Military() {
 		t.Errorf("the military mission is out as %+v, want %v soldiers", active, cost["soldiers"])
 	}
@@ -504,13 +494,9 @@ func TestBoard_SaveRoundTrip(t *testing.T) {
 	learn(ge, "exploration", "military_tactics")
 	setSoldiers(ge, 5000)
 	if err := ge.LaunchExpedition(8); err != nil {
-		if err := ge.LaunchExpedition(7); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.LaunchExpedition(7))
 	}
-	if err := ge.LaunchExpedition(2); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(2))
 	stepBoard(ge, 400)
 	before := boardJSON(t, ge)
 	if !strings.Contains(before, `"made":`) {
@@ -552,9 +538,7 @@ func TestBoard_LegendaryBadge(t *testing.T) {
 		ge.mu.Lock()
 		ge.Military.board.Slots[n-1].Offer.Rare = rare
 		ge.mu.Unlock()
-		if err := ge.LaunchExpedition(n); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.LaunchExpedition(n))
 		ge.mu.Lock()
 		active := ge.Military.ActiveByTier(TierShort)
 		active.TicksLeft = 1

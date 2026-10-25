@@ -12,9 +12,7 @@ import (
 func stoneAgeEngine(t *testing.T) *GameEngine {
 	t.Helper()
 	ge := newSeededEngine(3)
-	if err := ge.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("stone_age"))
 	if ge.Research.IsResearched("stoneworking") || !ge.Buildings.TechLocked("great_monolith") {
 		t.Fatal("setup: the Great Monolith does not wait for Stoneworking")
 	}
@@ -73,9 +71,7 @@ func TestWonderWaitsForItsKeystone(t *testing.T) {
 
 	// The keystone arrives through research, and says what it opened.
 	learn(ge, "tool_making")
-	if err := ge.StartResearch("stoneworking"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("stoneworking"))
 	researchOut(ge)
 	if !logHas(ge, "With Stoneworking researched, Great Monolith can be built once its bank is full.") {
 		t.Error("finishing the keystone did not say what it opened")
@@ -126,9 +122,7 @@ func TestWondersWithoutAKeystone(t *testing.T) {
 	}
 	for _, c := range []struct{ age, wonder string }{{"primitive_age", "sacred_grove"}} {
 		for ge.age != c.age {
-			if err := ge.EnterAgeForTest(ge.progress.GetNextAge(ge.age)); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.EnterAgeForTest(ge.progress.GetNextAge(ge.age)))
 		}
 		if bs := ge.GetState().Buildings[c.wonder]; !bs.Unlocked || bs.NeedsTech != "" {
 			t.Errorf("%s: unlocked %v, needs %q; want open with no tech", c.wonder, bs.Unlocked, bs.NeedsTech)

@@ -594,9 +594,7 @@ func TestLastPassageOnlyRollsFromTheCosmicEra(t *testing.T) {
 	ge := catEngine(t, "space_age", 3)
 	ge.catastropheInvited = true
 	ge.rng = riggedRNG(0.0)
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if ge.pendingLastPassage || ge.Prestige.GetLevel() != 1 || ge.age != "primitive_age" {
 		t.Errorf("space-age prestige: pending %v level %d age %s", ge.pendingLastPassage, ge.Prestige.GetLevel(), ge.age)
 	}
@@ -619,9 +617,7 @@ func TestLastPassageSparedCompletesPrestige(t *testing.T) {
 	ge := lpEngine(t, "transcendent_age", 4)
 	full := ge.GetState().Prestige.PendingPoints
 	ge.rng = riggedRNG(0.99, 0.3, 0.6, 0.1)
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if ge.pendingLastPassage || ge.Prestige.GetLevel() != 1 || ge.Prestige.Snapshot().Available != full || ge.age != "primitive_age" {
 		t.Fatalf("spared: pending %v level %d points %d (want %d) age %s", ge.pendingLastPassage,
 			ge.Prestige.GetLevel(), ge.Prestige.Snapshot().Available, full, ge.age)
@@ -683,9 +679,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 		t.Fatal("legacy before Succumb")
 	}
 	makeLastPassagePending(t, ge)
-	if err := ge.SuccumbLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SuccumbLastPassage())
 	snap := ge.Prestige.Snapshot()
 	if snap.Level != 3 || snap.Available != 4 || snap.TotalEarned != 10 || !ge.cosmicLegacy || ge.age != "primitive_age" {
 		t.Fatalf("after Succumb: %+v legacy %v age %s", snap, ge.cosmicLegacy, ge.age)
@@ -722,9 +716,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	ge.age, ge.currentEpoch = "modern_age", config.EpochForAge("modern_age")
 	// This test checks Cosmic Legacy carryover, not when prestige opens.
 	ge.SetPrestigeFloorForTest("")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	check("after a Modern Age prestige")
 	ge.age, ge.currentEpoch = "galactic_age", config.EpochForAge("galactic_age")
 	ge.SetPrestigeFloorForTest("")
@@ -738,25 +730,17 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	if err := ge.Succumb(); err == nil || !ge.pendingLastPassage {
 		t.Fatalf("Succumb() routed past the refusal: err %v pending %v", err, ge.pendingLastPassage)
 	}
-	if err := ge.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EndureLastPassage())
 	check("after a Cosmic Era prestige")
 	// The epoch catastrophe's Succumb resets the run too.
 	ge.age, ge.currentEpoch = "iron_age", "iron_era"
 	ge.pendingCatastrophe = "iron_era"
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Succumb())
 	check("after an epoch Succumb")
 
-	if err := ge.SaveGame("legacy"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("legacy"))
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("legacy"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("legacy"))
 	ge = ge2
 	check("after save/load")
 	// It multiplies production after the caps: the pool is as it was, and
@@ -781,9 +765,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 func TestInviteGuaranteesTheLastPassage(t *testing.T) {
 	ge := lpEngine(t, "quantum_age", 8)
 	ge.harbinger.BraceLevel = 2
-	if err := ge.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerInvite())
 	if countLogs(ge, "Your next prestige will bring the Last Passage") != 1 {
 		t.Errorf("invite log:\n%s", strings.Join(logMessages(ge), "\n"))
 	}
@@ -792,18 +774,14 @@ func TestInviteGuaranteesTheLastPassage(t *testing.T) {
 	}
 	full := ge.GetState().Prestige.PendingPoints
 	ge.rng = riggedRNG(0.999) // would miss any real odds
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if !ge.pendingLastPassage || ge.catastropheInvited {
 		t.Fatalf("invited: pending %v invite still armed %v", ge.pendingLastPassage, ge.catastropheInvited)
 	}
 	if !ge.GetState().LastPassage.Invited {
 		t.Error("state does not say the Last Passage was invited")
 	}
-	if err := ge.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EndureLastPassage())
 	if indexOfLog(ge, "You invited it, and it came") < 0 {
 		t.Errorf("no Fulfilled verdict:\n%s", strings.Join(logMessages(ge), "\n"))
 	}
@@ -831,17 +809,13 @@ func TestPendingLastPassageBlocksOnlyPrestigeAndSurvivesSaveLoad(t *testing.T) {
 		t.Error("an epoch catastrophe was stacked on the pending Last Passage")
 	}
 
-	if err := ge.SaveGame("pending_lp"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("pending_lp"))
 	infos, err := ListSaveDetails()
 	if err != nil || len(infos) != 1 || infos[0].PendingCatastrophe != "The Last Passage" {
 		t.Errorf("save details = %+v, err %v", infos, err)
 	}
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("pending_lp"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("pending_lp"))
 	if ge2.cheaterBadge {
 		t.Error("pending save failed its signature")
 	}
@@ -865,9 +839,7 @@ func TestPendingLastPassageBlocksOnlyPrestigeAndSurvivesSaveLoad(t *testing.T) {
 	}
 
 	full := ge2.GetState().Prestige.PendingPoints
-	if err := ge2.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.EndureLastPassage())
 	if got := ge2.Prestige.Snapshot().Available; got != int(float64(full)*0.70) {
 		t.Errorf("Endure after load: %d points, want 70%% of %d", got, full)
 	}
@@ -876,14 +848,10 @@ func TestPendingLastPassageBlocksOnlyPrestigeAndSurvivesSaveLoad(t *testing.T) {
 func TestLastPassageIsDeterministic(t *testing.T) {
 	run := func(seed int64) (bool, []string) {
 		ge := lpEngine(t, "transcendent_age", seed)
-		if err := ge.DoPrestige(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.DoPrestige())
 		came := ge.pendingLastPassage
 		if came {
-			if err := ge.EndureLastPassage(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.EndureLastPassage())
 		}
 		return came, logMessages(ge)
 	}
@@ -929,9 +897,7 @@ func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 		quietFate(ge)
 		ge.harbingerTickCheck()
 		ge.rng = rand.New(&seqSource{vals: []float64{0.99, 0.41, 0.07, 0.63, 0.29, 0.85}})
-		if err := ge.DoPrestige(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.DoPrestige())
 		if ge.pendingLastPassage {
 			t.Fatalf("%s: rolled a Last Passage on 0.99", age)
 		}

@@ -114,14 +114,10 @@ func TestBoonTempWorkersSaved(t *testing.T) {
 
 	lendBoonCrew(ge, "merchant_guild", 4, 10)
 	ge.StepTicks(4)
-	if err := ge.SaveGame("boon-crew"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("boon-crew"))
 
 	b := NewGameEngine()
-	if err := b.LoadGame("boon-crew"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, b.LoadGame("boon-crew"))
 	loans := b.Diplomacy.boonLoans
 	if len(loans) != 1 || loans[0] != (BoonWorkerLoan{FactionKey: "merchant_guild", Count: 4, TicksLeft: 6}) {
 		t.Fatalf("loaded boon loans = %+v, want one crew of 4 from merchant_guild with 6 ticks left", loans)
@@ -139,13 +135,9 @@ func TestBoonTempWorkersSaved(t *testing.T) {
 	// A load replaces the loans held in memory: the save above had one, a
 	// fresh save has none.
 	c := newSeededEngine(2)
-	if err := c.SaveGame("no-crew"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, c.SaveGame("no-crew"))
 	lendBoonCrew(b, "merchant_guild", 3, 50)
-	if err := b.LoadGame("no-crew"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, b.LoadGame("no-crew"))
 	if n := len(b.Diplomacy.boonLoans); n != 0 {
 		t.Errorf("loading a save with no boon crew kept %d loans from the game in memory", n)
 	}

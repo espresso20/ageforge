@@ -74,9 +74,7 @@ func TestDigitalToCosmicMechanics(t *testing.T) {
 	village.Resources.UnlockResource("gold")
 	village.Resources.resources["gold"].Amount = 1000
 	village.mu.Unlock()
-	if err := village.SetDiplomaticStatus("riverlands_tribes", "allied"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, village.SetDiplomaticStatus("riverlands_tribes", "allied"))
 	if got := village.Resources.Get("gold"); got != 1000-AllyCost/2 {
 		t.Errorf("allying with the Global Village left %v gold of 1000, want %v", got, 1000-AllyCost/2)
 	}

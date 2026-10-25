@@ -65,17 +65,11 @@ func TestLoadClampsSavedSpeed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath("seven_x"), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath("seven_x"), data, 0o644))
 
 	b := NewGameEngine()
-	if err := b.LoadGame("seven_x"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, b.LoadGame("seven_x"))
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 	if b.speedMultiplier != 1 {
@@ -130,13 +124,9 @@ func TestWondersDoNotRaiseSpeed(t *testing.T) {
 		t.Errorf("%d wonders built moved the tick interval from %v to %v", wonders, before, after)
 	}
 
-	if err := ge.SaveGame("wonders"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("wonders"))
 	b := NewGameEngine()
-	if err := b.LoadGame("wonders"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, b.LoadGame("wonders"))
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 	built := 0

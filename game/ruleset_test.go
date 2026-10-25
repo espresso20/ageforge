@@ -106,17 +106,13 @@ func TestRunEndsKeepTheRuleset(t *testing.T) {
 	ge := NewGameEngineWith(other)
 	ge.SeedRNG(11)
 
-	if err := ge.EnterAgeForTest(PrestigeMinAge); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest(PrestigeMinAge))
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatalf("prestige: %v", err)
 	}
 	wantManagersOn(t, ge, other, "after a prestige")
 
-	if err := ge.EnterAgeForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("iron_age"))
 	if err := ge.ForceCatastropheForTest(); err != nil {
 		t.Fatalf("forcing a catastrophe: %v", err)
 	}
@@ -232,9 +228,7 @@ func TestPlayLeavesTheRulesetUnchanged(t *testing.T) {
 		t.Fatalf("load: %v", err)
 	}
 	ge.SimulateOffline(MaxOfflineTime)
-	if err := ge.EnterAgeForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("iron_age"))
 	// The day away may have brought the era's own doom: one pending is as
 	// good as one forced.
 	if err := ge.ForceCatastropheForTest(); err != nil && ge.GetState().PendingCatastrophe == "" {
@@ -243,9 +237,7 @@ func TestPlayLeavesTheRulesetUnchanged(t *testing.T) {
 	if err := ge.Succumb(); err != nil {
 		t.Fatalf("succumb: %v", err)
 	}
-	if err := ge.EnterAgeForTest(PrestigeRunAge); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest(PrestigeRunAge))
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatalf("prestige: %v", err)
 	}

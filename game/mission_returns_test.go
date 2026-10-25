@@ -91,9 +91,7 @@ func TestReturnsLogIsSaved(t *testing.T) {
 func TestActiveMissionKnowsItsPlaceAndLength(t *testing.T) {
 	ge := NewGameEngine()
 	stoneEraReady(ge, "bronze_age")
-	if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(keyOffer(ge, "scouting_party")))
 	active := ge.GetState().Military.ActiveShort
 	if active == nil || active.Place == "" || active.Label == "" {
 		t.Fatalf("the mission under way has no place or label: %+v", active)

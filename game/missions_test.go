@@ -357,9 +357,7 @@ func TestCampaign_LeavesThePostsFull(t *testing.T) {
 			}
 		}
 		if c.held >= float64(cost) {
-			if err := ge.LaunchExpedition(n); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.LaunchExpedition(n))
 		} else {
 			if err := ge.LaunchExpedition(n); err == nil {
 				t.Fatalf("income %v: launched with %v soldiers at home for a cost of %d", c.income, c.held, cost)
@@ -526,9 +524,7 @@ func TestMissionRolls_SurviveASave(t *testing.T) {
 	defer SetDataDirForTest(t.TempDir())()
 	ge := missionReady(t, 7, "iron_age")
 	setSoldiers(ge, 5000)
-	if err := ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)))
 	before := *ge.Military.ActiveByCategory(ExpeditionMilitary)
 	again := saveAndLoad(t, ge, "mission_rolls")
 	after := again.Military.ActiveByCategory(ExpeditionMilitary)

@@ -224,9 +224,7 @@ func TestDeals_NoneWhenHostile(t *testing.T) {
 	if n := len(ge.GetState().Diplomacy.Factions["riverlands_tribes"].Deals); n == 0 {
 		t.Fatal("no offers while neutral")
 	}
-	if err := ge.SetDiplomaticStatus("riverlands_tribes", "embargo"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SetDiplomaticStatus("riverlands_tribes", "embargo"))
 	f := ge.GetState().Diplomacy.Factions["riverlands_tribes"]
 	if len(f.Deals) != 0 || f.DealsBlocked == "" {
 		t.Errorf("embargoed civ still shows %d deals (blocked %q)", len(f.Deals), f.DealsBlocked)
@@ -458,13 +456,9 @@ func TestDeals_SaveLoadRoundTrip(t *testing.T) {
 	}
 	want := ge.Diplomacy.GetFactionsForSave()
 	ge.mu.Unlock()
-	if err := ge.SaveGame("deals-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("deals-roundtrip"))
 	b := NewGameEngine()
-	if err := b.LoadGame("deals-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, b.LoadGame("deals-roundtrip"))
 	b.mu.RLock()
 	got := b.Diplomacy.GetFactionsForSave()
 	b.mu.RUnlock()
@@ -516,9 +510,7 @@ func TestDeals_Plan(t *testing.T) {
 	d := ge.Diplomacy.factions["merchant_guild"].Deals[0]
 	ge.Resources.resources[d.Give].Amount = d.GiveAmt / 2
 	ge.mu.Unlock()
-	if err := ge.PlanAddDeal("merchant_guild", 1); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddDeal("merchant_guild", 1))
 	if err := ge.PlanAddDeal("merchant_guild", 1); err == nil {
 		t.Error("planned the same deal twice")
 	}
@@ -544,9 +536,7 @@ func TestDeals_Plan(t *testing.T) {
 	}
 
 	// A planned deal whose offers rotate away drops out with a log line.
-	if err := ge.PlanAddDeal("merchant_guild", 2); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddDeal("merchant_guild", 2))
 	ge.mu.Lock()
 	ge.Diplomacy.factions["merchant_guild"].DealTicks = dealRefreshFor(ge.age)
 	ge.tickFactionDeals()
@@ -593,9 +583,7 @@ func TestDeals_Wording(t *testing.T) {
 
 	ge := dealEngine(t, "colonial_age")
 	meet(ge, "merchant_guild", 30)
-	if err := ge.PlanAddDeal("merchant_guild", 2); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddDeal("merchant_guild", 2))
 	ge.mu.Lock()
 	d1, d2 := ge.Diplomacy.factions["merchant_guild"].Deals[0], ge.Diplomacy.factions["merchant_guild"].Deals[1]
 	held := ge.Resources.resources[d2.Give].Amount

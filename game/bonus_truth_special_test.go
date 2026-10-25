@@ -535,9 +535,7 @@ func TestBonusTruthAncientMemory(t *testing.T) {
 		t.Fatal("setup: five Story Circles do no work")
 	}
 	ge.Research.currentTech = ""
-	if err := ge.Research.StartMemoryResearch("stoneworking"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Research.StartMemoryResearch("stoneworking"))
 	ge.recalculateRates()
 	if got, want := ge.researchPerTick, normal*memoryResearchSlowdown; got != want {
 		t.Errorf("an ancient memory does %v work a tick, want %v (half of %v)", got, want, normal)

@@ -72,9 +72,7 @@ func TestRunEndingRecord(t *testing.T) {
 	ge := catEngine(t, "medieval_age", 5)
 	got := heard(ge)
 	want := ge.GetState().Prestige.PendingPoints
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	end := check("a prestige", ge, got, RunEndPrestige, "medieval_age", 1)
 	if end.Points != want || end.Full != want || want <= 0 || !end.Prestige() || end.Came() || end.Catastrophe != "" {
 		t.Errorf("a prestige: %d of %d points, want %d", end.Points, end.Full, want)
@@ -96,9 +94,7 @@ func TestRunEndingRecord(t *testing.T) {
 	if len(*got) != 0 {
 		t.Fatal("a prestige that waits on the Last Passage has not ended the run")
 	}
-	if err := ge.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EndureLastPassage())
 	end = check("the Last Passage endured", ge, got, RunEndEndured, "transcendent_age", 1)
 	if end.Full != full || end.Points <= 0 || end.Points >= full || !end.Came() || end.Catastrophe == "" {
 		t.Errorf("the Last Passage endured: %d of %d points, %q", end.Points, end.Full, end.Catastrophe)
@@ -111,9 +107,7 @@ func TestRunEndingRecord(t *testing.T) {
 	ge = lpEngine(t, "transcendent_age", 6)
 	got = heard(ge)
 	makeLastPassagePending(t, ge)
-	if err := ge.SuccumbLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SuccumbLastPassage())
 	end = check("the Last Passage succumbed to", ge, got, RunEndSuccumbed, "transcendent_age", 1)
 	if end.Points != 0 || end.Full <= 0 || !hasKind(end, EndLineLegacy) || lineKinds(end)[0] != EndLineVerdict {
 		t.Errorf("the Last Passage succumbed to: %d of %d points (%v)", end.Points, end.Full, lineKinds(end))

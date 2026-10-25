@@ -68,14 +68,10 @@ func TestAgeLogSurvivesSaveAndLoad(t *testing.T) {
 	ge.advanceAge("stone_age")
 	ge.tick = 900
 	ge.advanceAge("bronze_age")
-	if err := ge.SaveGame("age_log"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("age_log"))
 
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("age_log"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("age_log"))
 	want, got := ge.Stats.AgeLog, ge2.Stats.AgeLog
 	if len(got) != len(want) {
 		t.Fatalf("loaded AgeLog has %d entries, want %d: %+v", len(got), len(want), got)

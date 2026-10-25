@@ -184,18 +184,12 @@ func TestCivilizationsStartedCountsEveryRun(t *testing.T) {
 		t.Fatalf("a new account has started %d civilizations", started())
 	}
 
-	if err := ge.StartNewNamedGame("first"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("first"))
 	if started() != 1 {
 		t.Fatalf("after a new game: %d, want 1", started())
 	}
-	if err := ge.SaveGame("first"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.LoadGame("first"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("first"))
+	noErr(t, ge.LoadGame("first"))
 	if started() != 1 {
 		t.Errorf("loading a game counted a civilization: %d", started())
 	}
@@ -219,9 +213,7 @@ func TestCivilizationsStartedCountsEveryRun(t *testing.T) {
 	ge.SetPrestigeFloorForTest("") // This test measures run accounting, not floor progression.
 
 	// It is saved with the account, in a key every build signs.
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	if disk := slotAccount(t, acct.AccountID); disk.Stats.CivilizationsStarted != 3 || disk.Tampered {
 		t.Errorf("on disk: %d civilizations started, tampered %v", disk.Stats.CivilizationsStarted, disk.Tampered)
 	}

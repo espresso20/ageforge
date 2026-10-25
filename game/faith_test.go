@@ -362,13 +362,9 @@ func TestFaithMeasureSaveLoadAndReset(t *testing.T) {
 	if want.Moderate <= 0 || want.Own <= 0 || want.Other <= 0 {
 		t.Fatalf("measure after 100 ticks with Stonehenge standing: %+v", want)
 	}
-	if err := ge.SaveGame("faith"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("faith"))
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("faith"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("faith"))
 	if ge2.faithMeasure != want || math.Abs(ge2.faithStrength()-strength) > 1e-12 {
 		t.Errorf("after load: measure %+v strength %v, want %+v and %v", ge2.faithMeasure, ge2.faithStrength(), want, strength)
 	}

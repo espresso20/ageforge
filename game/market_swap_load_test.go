@@ -24,9 +24,7 @@ func marketSwapFixtureSave(t *testing.T) GameSave {
 		t.Fatal(err)
 	}
 	var save GameSave
-	if err := json.Unmarshal(data, &save); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &save))
 	if len(save.Trade.SupplyPressure) == 0 || len(save.Trade.TotalExchanged) == 0 ||
 		len(save.Trade.TotalSold) == 0 || len(save.Trade.TotalBought) == 0 {
 		t.Fatal("setup: the fixture holds no swap history")
@@ -124,9 +122,7 @@ func TestMarketSwapSave_LoadsDropsTheSellOrdersAndSaysSoOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	var saved GameSave
-	if err := json.Unmarshal(data, &saved); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &saved))
 	if saved.Signature == "" || again.cheaterBadge {
 		t.Errorf("the re-saved game is not signed and valid (signature %q, cheater %v)", saved.Signature, again.cheaterBadge)
 	}
@@ -137,9 +133,7 @@ func TestMarketSwapSave_LoadsDropsTheSellOrdersAndSaysSoOnce(t *testing.T) {
 		Trade map[string]json.RawMessage `json:"trade"`
 		Plan  []PlanItem                 `json:"plan"`
 	}
-	if err := json.Unmarshal(data, &raw); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &raw))
 	for _, key := range []string{"supply_pressure", "total_exchanged"} {
 		if v, ok := raw.Trade[key]; !ok || string(v) != "{}" {
 			t.Errorf("trade.%s is %s in the re-saved game, want it written empty ({})", key, v)
@@ -188,9 +182,7 @@ func TestMarketSwapSave_NoSellOrdersNoLine(t *testing.T) {
 	save.Signature = signSave(save, saveHMACKey)
 	writeRawSave(t, "pressure_only", save)
 	again := NewGameEngine()
-	if err := again.LoadGame("pressure_only"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, again.LoadGame("pressure_only"))
 	if again.cheaterBadge {
 		t.Error("a save with leftover pressure failed its signature check")
 	}

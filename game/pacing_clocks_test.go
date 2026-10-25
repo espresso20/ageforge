@@ -248,9 +248,7 @@ func TestFestivalAndBlackMarketStretch(t *testing.T) {
 	if st := ge.FestivalStatus(); st.BuffTicks != buff || st.CooldownTicks != cd {
 		t.Errorf("festival status %d/%d ticks, want %d/%d", st.BuffTicks, st.CooldownTicks, buff, cd)
 	}
-	if err := ge.DoFestival(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoFestival())
 	for _, ae := range ge.Events.active {
 		if ae.Key == "cultural_festival" && ae.TicksLeft != buff {
 			t.Errorf("festival buff lasts %d ticks, want %d", ae.TicksLeft, buff)
@@ -322,12 +320,8 @@ func TestEndureDebuffStretch(t *testing.T) {
 		t.Errorf("iron debuff = %d, want 562 (216 x 2.6)", got)
 	}
 	ge := catEngine(t, stretchedAge, 1)
-	if err := ge.forceCatastrophe(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.forceCatastrophe())
+	noErr(t, ge.Endure())
 	found := false
 	for _, ae := range ge.Events.active {
 		if ae.Key == "endure_reconstruction" {

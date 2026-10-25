@@ -59,9 +59,7 @@ func playStories(t *testing.T, seed int64) ([]string, []LogEntry, *GameEngine) {
 		view(label)
 	}
 	for i, age := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		ge.GrantTechsForTest()
 		for _, f := range rules.CoreFor(false).Factions() {
 			_ = ge.MeetFactionForTest(f.Key, 40)
@@ -86,9 +84,7 @@ func playStories(t *testing.T, seed int64) ([]string, []LogEntry, *GameEngine) {
 		ge.logRunEnding()
 		ge.mu.Unlock()
 		grab(age + "-stories")
-		if err := ge.SummonHarbingerForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SummonHarbingerForTest(age))
 		view(age + "-summoned")
 		_ = ge.HarbingerAppease()
 		_ = ge.HarbingerBrace()
@@ -248,9 +244,7 @@ func TestStoriesFollowTheScriptAndTheStateDoesNot(t *testing.T) {
 	vibe.Set(true)
 	defer vibe.Set(false)
 	defer vibe.UseRewriterForTest(mark)()
-	if err := markedGE.SaveGame("stories"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, markedGE.SaveGame("stories"))
 	raw, err := os.ReadFile(savePath("stories"))
 	if err != nil {
 		t.Fatal(err)
@@ -286,9 +280,7 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 
 	// In plain English the thread keeps its lines and the view reads them as they are.
 	plainGE := newSeededEngine(4)
-	if err := plainGE.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, plainGE.SummonHarbingerForTest("bronze_age"))
 	if kept, keys, read := harborLines(plainGE); len(kept) != 2 || len(keys) != 2 || !reflect.DeepEqual(kept, read) {
 		t.Fatalf("in plain English the thread keeps %q (keys %q) and the view reads %q", kept, keys, read)
 	}
@@ -301,9 +293,7 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 	wantKept, wantKeys, wantRead := func() ([]string, []string, []string) {
 		defer vibe.UseRewriterForTest(func(id, plain string) string { return plain })()
 		ge := newSeededEngine(4)
-		if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SummonHarbingerForTest("bronze_age"))
 		return harborLines(ge)
 	}()
 	if len(wantKept) != 2 {
@@ -321,9 +311,7 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 
 	defer vibe.UseRewriterForTest(mark)()
 	ge := newSeededEngine(4)
-	if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SummonHarbingerForTest("bronze_age"))
 	kept, keys, read := harborLines(ge)
 	if !reflect.DeepEqual(kept, wantKept) || !reflect.DeepEqual(keys, wantKeys) {
 		t.Errorf("under the script the thread keeps %q (keys %q), under one that changes nothing %q (keys %q)", kept, keys, wantKept, wantKeys)
@@ -349,9 +337,7 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 	}
 
 	// The save keeps English and the keys; a load tells them in the script in force.
-	if err := ge.SaveGame("harbor"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("harbor"))
 	raw, err := os.ReadFile(savePath("harbor"))
 	if err != nil {
 		t.Fatal(err)
@@ -360,9 +346,7 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 		t.Fatal("the save holds a text of the script")
 	}
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("harbor"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("harbor"))
 	if k, _, r := harborLines(loaded); !reflect.DeepEqual(k, wantKept) || !reflect.DeepEqual(r, read) {
 		t.Errorf("a load under the script keeps %q and reads %q, want %q and %q", k, r, wantKept, read)
 	}
@@ -385,9 +369,7 @@ func TestASaveWithoutKeysStillLoadsAndReadsPlain(t *testing.T) {
 	defer vibe.Set(false)
 
 	ge := newSeededEngine(4)
-	if err := ge.SummonHarbingerForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SummonHarbingerForTest("iron_age"))
 	wantKept, _, _ := harborLines(ge)
 	ge.mu.RLock()
 	old := ge.buildSaveSnapshot()
@@ -404,12 +386,8 @@ func TestASaveWithoutKeysStillLoadsAndReadsPlain(t *testing.T) {
 	if strings.Contains(string(data), "line_keys") {
 		t.Fatal("the save still has its keys")
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath("before-keys"), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath("before-keys"), data, 0o644))
 	for _, on := range []bool{false, true} {
 		func() {
 			defer vibe.UseRewriterForTest(mark)()
@@ -470,9 +448,7 @@ func TestAKeyThatNamesAnotherLineIsNotTrusted(t *testing.T) {
 	vibe.Set(true)
 
 	ge := newSeededEngine(4)
-	if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SummonHarbingerForTest("bronze_age"))
 	kept, keys, read := harborLines(ge)
 	if len(keys) != 2 || !strings.Contains(read[0], markOpen) || !strings.Contains(read[1], markOpen) {
 		t.Fatalf("the thread keeps %q (keys %q) and the view reads %q", kept, keys, read)

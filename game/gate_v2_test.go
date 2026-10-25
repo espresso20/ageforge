@@ -127,9 +127,7 @@ func TestMeasuredPillarsAgreeWithCheckAdvancement(t *testing.T) {
 		if notReady < 5 {
 			t.Errorf("%s: only %d of the checks left the gate shut", from.Key, notReady)
 		}
-		if err := ge.EnterAgeForTest(set.Next(from.Key)); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(set.Next(from.Key)))
 	}
 }
 
@@ -175,9 +173,7 @@ func TestMeasuredPillarRows(t *testing.T) {
 		if _, ok := set.Tech(m.KeyTech); !ok {
 			t.Errorf("%s: key tech %s is not a tech", m.Age, m.KeyTech)
 		}
-		if err := ge.EnterAgeForTest(set.Next(m.Age)); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(set.Next(m.Age)))
 	}
 }
 
@@ -225,9 +221,7 @@ func TestMeasuredGateReachesThePlanAndTheAdvance(t *testing.T) {
 	ge.SeedRNG(1)
 	_ = ge.ForceQuietFateForTest(set.Ages()[0].EpochKey)
 	m, _ := set.GateMeasure("primitive_age")
-	if err := ge.PlanAddAdvance(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddAdvance())
 
 	setMeasuredTown(ge, m, measuredTownState{pop: m.People - 1, income: m.Income, keyTech: true, wonder: true})
 	if b := ge.planAdvanceBlocker(); b == "" {

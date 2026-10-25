@@ -150,9 +150,7 @@ func playRun(t *testing.T, set *rules.Set) ([]string, []LogEntry, *GameEngine) {
 	}
 	refuse("start")
 	for i, age := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		ge.GrantTechsForTest()
 		for _, f := range rules.CoreFor(false).Factions() {
 			_ = ge.MeetFactionForTest(f.Key, 40)
@@ -411,9 +409,7 @@ func TestLogTextFollowsTheScriptAndTheStateDoesNot(t *testing.T) {
 	vibe.Set(true)
 	defer vibe.Set(false)
 	defer vibe.UseRewriterForTest(mark)()
-	if err := markedGE.SaveGame("marked"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, markedGE.SaveGame("marked"))
 	raw, err := os.ReadFile(savePath("marked"))
 	if err != nil {
 		t.Fatal(err)

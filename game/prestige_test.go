@@ -63,20 +63,12 @@ func TestPrestigeFloorSurvivesSaveLoad(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := NewGameEngine()
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 	}
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.SaveGame("floor"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
+	noErr(t, ge.SaveGame("floor"))
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("floor"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("floor"))
 	if got := loaded.GetState().Prestige.Floor; got != "medieval_age" {
 		t.Fatalf("loaded floor = %q", got)
 	}
@@ -86,17 +78,11 @@ func TestSuccumbRaisesPrestigeFloorToLaterRunRecord(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := NewGameEngine()
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 	}
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	for _, age := range []string{"renaissance_age", "colonial_age", "industrial_age", "victorian_age", "electric_age", "atomic_age", "modern_age"} {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 	}
 	succumbIn(t, ge, "modern_age")
 	order := ge.progress.GetAgeOrder()
@@ -134,17 +120,11 @@ func TestPrestigeFloorBlocksMatchesFloorGate(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := NewGameEngine()
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 	}
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	for _, age := range []string{"primitive_age", "medieval_age", "renaissance_age"} {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		state := ge.GetState()
 		blockedByFloor := age == "primitive_age" || age == "medieval_age"
 		if state.Prestige.FloorBlocks != blockedByFloor {

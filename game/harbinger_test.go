@@ -52,16 +52,12 @@ func threadEngine(t *testing.T, epochKey string, seed int64) *GameEngine {
 	case config.IsFinalEpoch(epochKey):
 		// The Last Passage thread started on the first tick; keep the era's
 		// own doom out of the way.
-		if err := ge.ForceQuietFateForTest(epochKey); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.ForceQuietFateForTest(epochKey))
 	case config.FateAllowed(epochKey):
 		forceFate(t, ge, late)
 		ge.fateArrive()
 	default:
-		if err := ge.ForceFalseProphetForTest(epochKey, late); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.ForceFalseProphetForTest(epochKey, late))
 		ge.fateArrive()
 	}
 	if ge.harbinger == nil {
@@ -302,9 +298,7 @@ func TestNoHarbingerInAQuietEra(t *testing.T) {
 			continue
 		}
 		ge := fateEngine(t, ep.Ages[0], 3)
-		if err := ge.ForceQuietFateForTest(ep.Key); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.ForceQuietFateForTest(ep.Key))
 		tick := 0
 		for _, age := range ep.Ages {
 			walkTo(t, ge, age)
@@ -372,9 +366,7 @@ func TestHandoffKeepsTheFalseProphetFlag(t *testing.T) {
 func TestFalseThreadClaim(t *testing.T) {
 	ge := fateEngine(t, "renaissance_age", 1)
 	setFaithStrength(ge, 0.5) // mid faith: a real doom would strike 75% of the time
-	if err := ge.ForceFalseProphetForTest("steel_era", int(baseEraTicks("steel_era"))-1); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.ForceFalseProphetForTest("steel_era", int(baseEraTicks("steel_era"))-1))
 	ge.fateArrive()
 	if tier, p := ge.harbingerDisplay(); tier != CatastropheTierHigh || math.Abs(p-0.90) > 1e-9 {
 		t.Errorf("claim = %s %.3f, want high 0.90", tier, p)
@@ -392,16 +384,12 @@ func TestFalseThreadClaim(t *testing.T) {
 	}
 	// Appease ×0.6 moves the claim as it would move the real odds (read
 	// live, so a band change from the faith spend counts too).
-	if err := ge.HarbingerAppease(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerAppease())
 	wantP := ge.strikeChance() * ge.harbinger.ClaimFactor
 	if _, p := ge.harbingerDisplay(); math.Abs(p-wantP) > 1e-9 || p >= 0.90 {
 		t.Errorf("claim after appease = %.4f, want %.4f (< 0.90)", p, wantP)
 	}
-	if err := ge.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerInvite())
 	if tier, p := ge.harbingerDisplay(); tier != CatastropheTierHigh || p != 1 {
 		t.Errorf("claim after invite = %s %.3f, want high 1", tier, p)
 	}
@@ -782,9 +770,7 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 
 	// Level 1. Nine prices of ten are left: strength 0.9 → high band: a 60%
 	// strike, ×0.6.
-	if err := ge.HarbingerAppease(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerAppease())
 	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); math.Abs(f-9*pf) > 1e-6*pf || math.Abs(c-12*pc) > 1e-6*pc {
 		t.Errorf("after level 1: faith %v culture %v, want %v and %v", f, c, 9*pf, 12*pc)
 	}
@@ -799,9 +785,7 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	// 0.8 → still the high band: 60%, ×0.36. (At double, seven were left and
 	// the town fell to the mid band, 75%: the second level paid for itself
 	// in strength lost.)
-	if err := ge.HarbingerAppease(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerAppease())
 	left := 8 * pf
 	if f := ge.Resources.Get("faith"); math.Abs(f-left) > 1e-6*pf {
 		t.Errorf("after level 2: faith %v, want %v (level 2 costs the same again)", f, left)
@@ -874,9 +858,7 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 			res := sortedKeys(price)[0]
 			for i := 1; i <= tc.level; i++ {
 				stockBefore := ge.Resources.Get(res)
-				if err := ge.HarbingerBrace(); err != nil {
-					t.Fatal(err)
-				}
+				noErr(t, ge.HarbingerBrace())
 				if got, want := stockBefore-ge.Resources.Get(res), price[res]; got != want || want <= 0 {
 					t.Errorf("level %d took %v %s, want %v", i, got, res, want)
 				}
@@ -896,22 +878,16 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 				t.Fatalf("pendingBraceLevel = %d, want %d", ge.pendingBraceLevel, tc.level)
 			}
 
-			if err := ge.SaveGame("braced"); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.SaveGame("braced"))
 			ge2 := NewGameEngine()
-			if err := ge2.LoadGame("braced"); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge2.LoadGame("braced"))
 			if ge2.pendingBraceLevel != tc.level {
 				t.Fatalf("pendingBraceLevel after load = %d, want %d", ge2.pendingBraceLevel, tc.level)
 			}
 			b := pickWorkerBuildings(t, "food", "metallurgy")
 			ge2.Buildings.counts = map[string]int{b[0]: 10, b[1]: 10}
 			setStock(ge2, map[string][2]float64{"wood": {1000, 10000}})
-			if err := ge2.Endure(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge2.Endure())
 			if got := nonWonderTotal(ge2); got != tc.wantBuildings {
 				t.Errorf("buildings after Endure = %d, want %d", got, tc.wantBuildings)
 			}
@@ -933,9 +909,7 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 func TestInviteForcesCatastropheAndDisablesAppease(t *testing.T) {
 	ge := threadEngine(t, "iron_era", 7)
 	setStock(ge, map[string][2]float64{"faith": {config.Million, config.Million}})
-	if err := ge.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerInvite())
 	if !ge.fate.Invited || !ge.harbinger.Invited || ge.catastropheInvited {
 		t.Fatal("invite not armed on the fate")
 	}
@@ -1000,17 +974,13 @@ func TestHarbingerResolutionOutcomes(t *testing.T) {
 			ge := fateEngine(t, "medieval_age", 9)
 			late := int(baseEraTicks("iron_era")) - 1
 			if tc.falseProphet {
-				if err := ge.ForceFalseProphetForTest("iron_era", late); err != nil {
-					t.Fatal(err)
-				}
+				noErr(t, ge.ForceFalseProphetForTest("iron_era", late))
 			} else {
 				forceFate(t, ge, late)
 			}
 			ge.fateArrive()
 			if tc.invite {
-				if err := ge.HarbingerInvite(); err != nil {
-					t.Fatal(err)
-				}
+				noErr(t, ge.HarbingerInvite())
 			}
 			// The player reaches the era's end first: the doom settles there.
 			ge.rng = riggedRNG(tc.roll)
@@ -1048,24 +1018,14 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	ge.advanceAge("classical_age")
 	setStock(ge, map[string][2]float64{"faith": {config.Million, config.Million}})
 	fillBraceStock(ge, config.Billion)
-	if err := ge.HarbingerAppease(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.HarbingerBrace(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerAppease())
+	noErr(t, ge.HarbingerBrace())
+	noErr(t, ge.HarbingerInvite())
 	want, wantFate := *ge.harbinger, *ge.fate
-	if err := ge.SaveGame("harb_mid"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("harb_mid"))
 
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("harb_mid"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("harb_mid"))
 	if ge2.cheaterBadge {
 		t.Error("save with a harbinger failed signature verification")
 	}
@@ -1103,13 +1063,9 @@ func TestHarbingerFieldsOmittedWhenAbsent(t *testing.T) {
 			t.Errorf("save without a harbinger contains %q", k)
 		}
 	}
-	if err := ge.SaveGame("no_harb"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("no_harb"))
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("no_harb"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("no_harb"))
 	ge2.harbingerTickCheck()
 	if h := ge2.harbinger; h == nil || h.TargetEpoch != "" || h.Age != "quantum_age" || ge2.catastropheInvited || ge2.cheaterBadge {
 		t.Errorf("cosmic save loaded as harbinger=%+v invited=%v cheater=%v",
@@ -1126,9 +1082,7 @@ func TestSuccumbAndPrestigeResetHarbinger(t *testing.T) {
 		t.Fatalf("setup: pending %q", ge.pendingCatastrophe)
 	}
 	ge.pendingBraceLevel = 2
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Succumb())
 	if ge.harbinger != nil || ge.fate != nil || ge.catastropheInvited || ge.pendingBraceLevel != 0 || len(ge.harbingerArrived) != 0 {
 		t.Errorf("after Succumb: thread %v fate %v invited %v brace %d arrived %v",
 			ge.harbinger, ge.fate, ge.catastropheInvited, ge.pendingBraceLevel, ge.harbingerArrived)
@@ -1143,13 +1097,9 @@ func TestSuccumbAndPrestigeResetHarbinger(t *testing.T) {
 
 	ge = threadEngine(t, "digital_era", 13)
 	walkTo(t, ge, "digital_age")
-	if err := ge.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerInvite())
 	ge.harbingerHistory = []HarbingerRecord{{Outcome: HarbingerOutcomeSpared}}
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if ge.harbinger != nil || ge.fate != nil || ge.catastropheInvited || len(ge.harbingerArrived) != 0 || ge.harbingerHistory != nil {
 		t.Errorf("after prestige: thread %v fate %v invited %v arrived %v history %v",
 			ge.harbinger, ge.fate, ge.catastropheInvited, ge.harbingerArrived, ge.harbingerHistory)
@@ -1400,9 +1350,7 @@ func TestThreadBraceCost(t *testing.T) {
 		t.Errorf("the Last Passage's level 2 asks %v, want level 1's %v again", want2, want1)
 	}
 	fillBraceStock(lp, config.Quintillion) // every material the price names
-	if err := lp.HarbingerBrace(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, lp.HarbingerBrace())
 	for res, c := range want1 {
 		if paid := config.Quintillion - lp.Resources.Get(res); paid != c {
 			t.Errorf("level 1 took %v %s, want %v", paid, res, c)
