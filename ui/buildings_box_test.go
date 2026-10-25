@@ -38,9 +38,7 @@ func playtestTown(t *testing.T) (*Dashboard, *tview.Pages) {
 	eng.SetTownForTest(map[string]int{
 		"hut": 32, "stash": 20, "gathering_camp": 15, "wood_camp": 12, "story_circle": 6, "shrine": 4, "sacred_grove": 2,
 	}, 160)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	d.refresh()
 	return d, pages
 }
