@@ -798,12 +798,6 @@ var accountsKeys = []footerKey{
 	{"Esc", vibe.E("ui.accounts_panel.accountsKeys.11", "Back"), vibe.Entry{}},
 }
 
-// accountsFooterBar is the Accounts panel action bar on one line: a keycap button per
-// action (footerButton lives in load_game.go). The panel fits it to its width (keyBar).
-func accountsFooterBar() string {
-	return keyBar(accountsKeys, 1<<16, 1)
-}
-
 // displayNameOr returns the summary's DisplayName, or "(unnamed)" when empty.
 func displayNameOr(s game.AccountSummary) string {
 	return displayNameOrName(s.DisplayName)

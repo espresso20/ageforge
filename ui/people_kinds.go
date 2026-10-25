@@ -5,7 +5,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -85,7 +84,3 @@ func (k peopleKind) boxLine(w int) string {
 	}
 	return theme.Tag(k.role) + name + "[-]" + pad + "[white]" + count + "[-]"
 }
-
-// countOf prints n people of the kind in the age's words: "3 Scribes", "1
-// Scribe".
-func (k peopleKind) countOf(n int) string { return textfmt.Count(n, k.one, k.name) }

@@ -1030,7 +1030,6 @@ ui.keystone.wonderKeystoneLine.03,"[red]✗ Keystone: %s, not big brained yet (r
 ui.keystone.wonderBuildLine.01,"[yellow]✓ Bag is full. Research %s, then build it with: build %s[-]"
 ui.keystone.wonderBuildLine.02,"[green]✓ The bag is full, time to cook. Build it with: build %s[-]"
 ui.keystone.keystoneMark.01,"  [gold]★ main character tech: %s[-]"
-ui.keystone.keystoneLegend.01,[gray]★ keystone: the one tech its age's wonder is gatekept behind.[-]
 ui.load_game.newLoadGameBrowser.01,[gold]═══ Run It Back ═══[-]
 ui.load_game.newLoadGameBrowser.02," Key, iykyk "
 ui.load_game.newLoadGameBrowser.03," Deets "
@@ -2162,17 +2161,6 @@ ui.prestige_kit.carryoverStatusLines.03,"  Old Friends: [gray]gatekept for now[-
 ui.prestige_kit.carryoverStatusLines.04,"  Plan Template: [green]locked in[-]"
 ui.prestige_kit.carryoverStatusLines.05,"  Roster: [green]on, it ate[-]"
 ui.prestige_kit.carryoverStatusLines.06,"  Old Friends: [green]on, besties[-]"
-ui.prestige_kit.kitMemoryLines.01,"  [gray]The kit remembers your plan, roster and the civs you meet, like a group chat that never forgets. Nothing saved yet: it starts with your first prestige.[-]"
-ui.prestige_kit.kitMemoryLines.02,"  [gold]Receipts the kit keeps from your runs[-]"
-ui.prestige_kit.kitMemoryLines.03,"  Plan receipts: %s over %s."
-ui.prestige_kit.kitMemoryLines.04,item
-ui.prestige_kit.kitMemoryLines.05,items
-ui.prestige_kit.kitMemoryLines.06,age
-ui.prestige_kit.kitMemoryLines.07,ages
-ui.prestige_kit.kitMemoryLines.08,"  Fam roster: %s."
-ui.prestige_kit.kitMemoryLines.09,domain
-ui.prestige_kit.kitMemoryLines.10,domains
-ui.prestige_kit.kitMemoryLines.11,"  Civs in the group chat: %d."
 ui.research_panel.researchKeys.02,Hop to the nearest tech that way; the camera is a ride or die and follows
 ui.research_panel.researchKeys.04,Next tech ready to cook (Shift-Tab: the one before)
 ui.research_panel.researchKeys.05,"Zoom out to one tech a line, then back in for the HD view"

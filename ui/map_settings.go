@@ -69,29 +69,6 @@ func styleTitle(reg *mapstyle.Registry, name string) string {
 	return name
 }
 
-// nextStyle is the style after name in registry order, wrapping.
-func nextStyle(reg *mapstyle.Registry, name string) string {
-	names := reg.Names()
-	for i, n := range names {
-		if n == name {
-			return names[(i+1)%len(names)]
-		}
-	}
-	return reg.Default()
-}
-
-// nextTier is the glyph tier after t in the setting's order
-// (ascii, unicode, nerd), wrapping.
-func nextTier(t mapmodel.GlyphTier) mapmodel.GlyphTier {
-	for i, n := range mapmodel.TierNames {
-		if n == t.String() {
-			next, _ := mapmodel.ParseTier(mapmodel.TierNames[(i+1)%len(mapmodel.TierNames)])
-			return next
-		}
-	}
-	return mapmodel.TierUnicode
-}
-
 // mapSettings is the dashboard's current map settings: the account's, or
 // the session's when no account is loaded.
 func (d *Dashboard) mapSettings() mapSettings {

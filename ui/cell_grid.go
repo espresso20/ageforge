@@ -112,18 +112,6 @@ func (g *tGrid) text(x, y int, s string, st tStyle, lane int) int {
 	return x
 }
 
-// stamp copies src onto g with its top left corner at (x, y). Cells of
-// src outside g are dropped.
-func (g *tGrid) stamp(x, y int, src *tGrid) {
-	for sy := 0; sy < src.h; sy++ {
-		for sx := 0; sx < src.w; sx++ {
-			if g.in(x+sx, y+sy) {
-				g.c[(y+sy)*g.w+x+sx] = src.c[sy*src.w+sx]
-			}
-		}
-	}
-}
-
 // String is the grid as lines of text, trailing spaces kept.
 func (g *tGrid) String() string {
 	var sb strings.Builder

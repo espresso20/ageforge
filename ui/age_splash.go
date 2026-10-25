@@ -10,12 +10,6 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// ShowAgeSplash is the simplified variant of ShowAgeSplashFull for callers that
-// don't have an AgeAdvanceSummary or EpochEventRecord available.
-func ShowAgeSplash(om *OverlayManager, oldAge, newAge string) {
-	ShowAgeSplashFull(om, oldAge, newAge, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
-}
-
 // ShowAgeSplashFull puts up the arrival screen for an advance into newAge
 // (arrival.go): the moment first, the age's name struck in iron over the
 // player's town, then what the age opens, the upgrades on offer and the

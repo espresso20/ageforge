@@ -33,22 +33,12 @@ func FormatNumber(n float64) string {
 	return textfmt.Number(n)
 }
 
-// FormatRate formats a rate with sign and suffix notation and no unit, for
-// tables whose header or trailing text already says "/tick". Uses higher
-// precision for small rates so values like 0.02 show as +0.02 rather than
-// rounding to +0.0.
-func FormatRate(rate float64) string {
-	return formatRate(rate, "")
-}
-
-// FormatRateTick is FormatRate with the "/tick" unit inside the color tag:
-// "+3.25/tick". Use it wherever a rate stands on its own.
+// FormatRateTick formats a rate with sign and suffix notation and the
+// "/tick" unit inside the color tag: "+3.25/tick". It uses higher precision
+// for small rates so values like 0.02 show as +0.02 rather than rounding to
+// +0.0. Use it wherever a rate stands on its own.
 func FormatRateTick(rate float64) string {
-	return formatRate(rate, "/tick")
-}
-
-func formatRate(rate float64, unit string) string {
-	text, color := rateParts(rate, unit)
+	text, color := rateParts(rate, "/tick")
 	return "[" + color + "]" + text + "[-]"
 }
 
@@ -88,28 +78,4 @@ func FormatCost(cost map[string]float64) string {
 		return "free"
 	}
 	return game.Amounts(cost)
-}
-
-// FormatETA formats milliseconds into a human-readable duration string
-func FormatETA(ms int) string {
-	secs := ms / 1000
-	if secs < 60 {
-		return fmt.Sprintf("%ds", secs)
-	}
-	mins := secs / 60
-	remainSecs := secs % 60
-	if mins < 60 {
-		return fmt.Sprintf("%dm%02ds", mins, remainSecs)
-	}
-	hours := mins / 60
-	remainMins := mins % 60
-	return fmt.Sprintf("%dh%02dm", hours, remainMins)
-}
-
-// Pad right-pads a string to a minimum width
-func Pad(s string, width int) string {
-	if len(s) >= width {
-		return s
-	}
-	return s + strings.Repeat(" ", width-len(s))
 }

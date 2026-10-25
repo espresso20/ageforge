@@ -186,17 +186,6 @@ type stackPart struct {
 	kind xk
 }
 
-// kindCount is a legend entry: the block in the kind's colour, the name, the
-// count.
-func kindLegend(g *xgrid, x, y int, k peopleKind, housed bool) int {
-	mark := "█"
-	if !housed {
-		mark = "·"
-	}
-	x = g.put(x, y, mark+" "+k.name+" ", k.kind)
-	return g.put(x, y, FormatNumber(float64(k.count)), xText)
-}
-
 // A log line is picked for a panel by what it is about (LogEntry.About): by
 // its words if it was written in the game's own English, as it always was, and
 // by the tags it was given where it was written if it was written under

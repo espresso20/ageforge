@@ -119,7 +119,7 @@ var cultureThresholdLabels = []vibe.Entry{
 //
 // Each pane writes its text for the size it is drawn at (fitView), so no row
 // is ever left for the terminal to wrap: see resources_box.go for the
-// Resources box, and layoutConstruction and buildingLines below.
+// Resources box, and layoutConstruction and buildingEntries below.
 type EconomyTab struct {
 	root           *tview.Flex
 	leftCol        *econColumn
@@ -449,21 +449,6 @@ func layoutConstruction(state game.GameState, w, h int) []string {
 		lines = append(lines[:h-1], theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutConstruction.10", " +%d more under way", more), w)))
 	}
 	return lines
-}
-
-// buildingLines writes the whole Buildings list for a list w cells wide,
-// every entry of it (the box itself shows a page of whole entries:
-// layoutBuildings).
-func buildingLines(state game.GameState, w int) string {
-	head, entries := buildingEntries(state, w)
-	var lines []string
-	if head != "" {
-		lines = append(lines, head)
-	}
-	for _, e := range entries {
-		lines = append(lines, e...)
-	}
-	return strings.Join(lines, "\n")
 }
 
 // buildingEntries writes the Buildings list for a list w cells wide as its
