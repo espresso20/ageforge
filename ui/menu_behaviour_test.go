@@ -538,9 +538,7 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	if !m.hasCur || m.view.forge || m.cur.Save.Name != "brackwater" {
 		t.Fatalf("the menu should show the town of brackwater: current %q, forge page %v", m.cur.Save.Name, m.view.forge)
 	}
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
+	sim := newSimScreen(t, 120, 40)
 	scr := theme.WrapScreen(sim)
 	key := func(k tcell.Key, ch rune) {
 		pages.InputHandler()(tcell.NewEventKey(k, ch, tcell.ModNone), func(p tview.Primitive) { app.SetFocus(p) })
