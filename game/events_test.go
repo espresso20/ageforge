@@ -1,6 +1,7 @@
 package game
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -19,13 +20,9 @@ func TestEventManager_InjectEvent(t *testing.T) {
 	})
 
 	effects := em.GetActiveEffects()
-	found := false
-	for _, e := range effects {
-		if e.Type == "tick_speed" && e.Value == 2.0 {
-			found = true
-		}
-	}
-	if !found {
+	if !slices.ContainsFunc(effects, func(e config.Effect) bool {
+		return e.Type == "tick_speed" && e.Value == 2.0
+	}) {
 		t.Error("injected event effect not found in GetActiveEffects")
 	}
 
@@ -33,13 +30,9 @@ func TestEventManager_InjectEvent(t *testing.T) {
 	if len(active) < 1 {
 		t.Fatal("expected at least 1 active event")
 	}
-	foundActive := false
-	for _, a := range active {
-		if a.Key == "test_boost" && a.TicksLeft == 10 {
-			foundActive = true
-		}
-	}
-	if !foundActive {
+	if !slices.ContainsFunc(active, func(a ActiveEventState) bool {
+		return a.Key == "test_boost" && a.TicksLeft == 10
+	}) {
 		t.Error("injected event not found in GetActive")
 	}
 }
@@ -95,25 +88,13 @@ func TestEventManager_InjectedEventExpires(t *testing.T) {
 	// Tick 1: still active
 	em.Tick(testRNG(), 1, "primitive_age", ageOrder, "stone_era")
 	active := em.GetActive()
-	found := false
-	for _, a := range active {
-		if a.Key == "short_boost" {
-			found = true
-		}
-	}
-	if !found {
+	if !slices.ContainsFunc(active, func(a ActiveEventState) bool { return a.Key == "short_boost" }) {
 		t.Error("event should still be active after 1 tick")
 	}
 
 	// Tick 2: should expire
 	_, expired := em.Tick(testRNG(), 2, "primitive_age", ageOrder, "stone_era")
-	foundExpired := false
-	for _, ae := range expired {
-		if ae.Key == "short_boost" {
-			foundExpired = true
-		}
-	}
-	if !foundExpired {
+	if !slices.ContainsFunc(expired, func(ae ActiveEvent) bool { return ae.Key == "short_boost" }) {
 		t.Error("event should have expired after 2 ticks")
 	}
 }
@@ -137,13 +118,7 @@ func TestEventManager_SaveLoadRoundTrip(t *testing.T) {
 	em2.LoadState(lastFired, activeForSave, nextTick, 0, 0)
 
 	active := em2.GetActive()
-	found := false
-	for _, a := range active {
-		if a.Key == "save_test" {
-			found = true
-		}
-	}
-	if !found {
+	if !slices.ContainsFunc(active, func(a ActiveEventState) bool { return a.Key == "save_test" }) {
 		t.Error("loaded event manager should have save_test active")
 	}
 }

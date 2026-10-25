@@ -20,8 +20,17 @@ type goldenBuilding struct {
 	Effects    []goldenEffect     `json:"effects"`
 	BuildTicks int                `json:"build_ticks"`
 	Workers    int                `json:"workers"`
-	MaxCount   int                `json:"max_count"`
-	Soldiers   int                `json:"soldiers,omitempty"`
+	// The lineage fields sit before MaxCount so a record written before they
+	// existed is only added to, never changed. LineKey, WorkerDomain and
+	// OutputResource are left out when empty.
+	LineageKey     string  `json:"lineage_key"`
+	LineageTier    int     `json:"lineage_tier"`
+	LineKey        string  `json:"line_key,omitempty"`
+	WorkerDomain   string  `json:"worker_domain,omitempty"`
+	OutputResource string  `json:"output_resource,omitempty"`
+	CostScale      float64 `json:"cost_scale"`
+	MaxCount       int     `json:"max_count"`
+	Soldiers       int     `json:"soldiers,omitempty"`
 	// FullRateCopies is a knowledge building's soft cap: the copies that
 	// research at full rate, half past it.
 	FullRateCopies int `json:"full_rate_copies,omitempty"`
@@ -33,10 +42,17 @@ type goldenEffect struct {
 	Value  float64 `json:"value"`
 }
 
+// goldenTech is a tech's place in the tree and its price. Cost stays last so
+// a record written before the tree fields existed is only added to. Needs is
+// Prerequisites in declared order; AnyOf is the either-or group in declared
+// order. Both are left out when empty.
 type goldenTech struct {
-	Age   string  `json:"age"`
-	Cost  float64 `json:"cost"`
-	Ticks int     `json:"ticks"`
+	Age   string   `json:"age"`
+	Lane  string   `json:"lane"`
+	Kind  TechKind `json:"kind"`
+	Needs []string `json:"needs,omitempty"`
+	AnyOf []string `json:"any_of,omitempty"`
+	Cost  float64  `json:"cost"`
 }
 
 type goldenGate struct {
@@ -68,15 +84,17 @@ func liveGoldenTables() goldenTables {
 	defs := BaseBuildings()
 	for _, d := range defs {
 		b := goldenBuilding{Category: d.Category, Age: d.RequiredAge, Cost: d.BaseCost, Rate: d.CostScale,
-			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Soldiers: d.Soldiers, FullRateCopies: d.FullRateCopies, Effects: []goldenEffect{}}
+			BuildTicks: d.BuildTicks, Workers: d.WorkerCapacity, MaxCount: d.MaxCount, Soldiers: d.Soldiers, FullRateCopies: d.FullRateCopies, Effects: []goldenEffect{},
+			LineageKey: d.LineageKey, LineageTier: d.LineageTier, LineKey: d.LineKey, WorkerDomain: d.WorkerDomain, OutputResource: d.OutputResource, CostScale: d.CostScale}
 		for _, e := range d.Effects {
 			b.Effects = append(b.Effects, goldenEffect{Type: e.Type, Target: e.Target, Value: e.Value})
 		}
 		g.Buildings[d.Key] = b
 	}
 	techs := Technologies()
+	kinds := TechKinds(techs, defs)
 	for _, t := range techs {
-		g.Techs[t.Key] = goldenTech{Age: t.Age, Cost: t.Cost, Ticks: t.ResearchTicks}
+		g.Techs[t.Key] = goldenTech{Age: t.Age, Lane: t.Lane, Kind: kinds[t.Key], Needs: t.Prerequisites, AnyOf: t.AnyOf, Cost: t.Cost}
 	}
 	order := AgeOrder()
 	for _, a := range Ages() {

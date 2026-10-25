@@ -609,6 +609,6 @@ Your culture strength decides which good epoch events you can get, so a civiliza
 
 ## Economy Panel
 
-The Economy panel is always visible behind the other panels. Its right side lists your buildings grouped by age, with their workers and any upgrade hint; the left side shows your resource rates and the construction queue. Scroll the building list with PgUp and PgDn (Option+↑ and Option+↓ on a Mac keyboard), and turn the Resources box to its next page with Ctrl+R when it has more resources than it can show. Buildings a tech still locks show greyed out, with the research they need.
+The Economy panel is the dashboard: it is what you see with no panel open, and every other panel takes the screen over it until you press `Esc`. Its right side lists your buildings grouped by age, with their workers and any upgrade hint; the left side shows your resource rates and the construction queue. Scroll the building list with PgUp and PgDn (Option+↑ and Option+↓ on a Mac keyboard), and turn the Resources box to its next page with Ctrl+R when it has more resources than it can show. Buildings a tech still locks show greyed out, with the research they need.
 
 Use `rates` to print the current production and consumption rates for all resources in the command output, and `status` for a detailed status summary.

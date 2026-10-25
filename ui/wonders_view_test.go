@@ -204,21 +204,12 @@ func galleryArt(t *testing.T, screen, name string) []string {
 		t.Fatalf("no gallery with %q on the page (header row %d, caption row %d):\n%s", name, top, cap, screen)
 	}
 	art := rows[top+1 : cap]
-	for i, r := range art { // between the box's own borders (the page shows through round it)
+	for i, r := range art { // between the frame's own edges and the air inside them
 		cs := []rune(r)
-		a, b := -1, -1
-		for j, c := range cs {
-			if c == '║' {
-				if a < 0 {
-					a = j
-				}
-				b = j
-			}
+		if len(cs) < 2*panelPadX || cs[0] != '│' || cs[len(cs)-1] != '│' {
+			t.Fatalf("no frame round the picture's row %d: %q", i, r)
 		}
-		if a < 0 || b <= a {
-			t.Fatalf("no box round the picture's row %d: %q", i, r)
-		}
-		art[i] = string(cs[a+1 : b])
+		art[i] = string(cs[panelPadX : len(cs)-panelPadX])
 	}
 	return art
 }

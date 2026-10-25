@@ -16,9 +16,7 @@ func TestRouteIncomeAndMoraleCeiling(t *testing.T) {
 	run := func(boats bool, harbor float64) (got, listed float64) {
 		ge := newSeededEngine(9)
 		for _, a := range []string{"stone_age", "bronze_age"} {
-			if err := ge.EnterAgeForTest(a); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.EnterAgeForTest(a))
 		}
 		learn(ge, "the_wheel")
 		if boats {

@@ -40,8 +40,8 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 		markerNames = append(markerNames, name)
 	}
 
-	// 85% overlay, minus y-axis label (8 chars), border/padding (6 chars)
-	graphW := max(int(float64(w)*0.85)-14, 20)
+	// The panel's text width, minus y-axis label (8 chars) and the gap after it (6 chars)
+	graphW := max(overlayTextWidth(w)-14, 20)
 	const graphH = 4 // rows tall per graph
 
 	ageCols := AgeMarkerCols(markerTicks, firstTick, lastTick, graphW)

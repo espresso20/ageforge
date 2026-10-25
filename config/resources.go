@@ -13,7 +13,6 @@ type ResourceDef struct {
 	Key         string
 	BaseStorage float64 // starting storage cap before storage buildings; units match production rates (per-tick)
 	Age         string  // the age whose UnlockResources list unlocks it (TestResourceAgesMatchAgeUnlocks)
-	Description string
 	// BuiltUnlocks: the first standing building that makes the resource
 	// unlocks it, whatever the age. Soldiers are the one: a War Camp can be
 	// built two ages before the age that brings soldiers to every town, and
@@ -36,54 +35,50 @@ var WoodBaseStorage = math.Ceil(50*NewCopyPriceFactor/5) * 5
 func BaseResources() []ResourceDef {
 	return []ResourceDef{
 		// Primitive Age (Stone Era)
-		{Name: "Food", Key: "food", BaseStorage: 50, Age: "primitive_age", Description: "Feeds your population"},
-		{Name: "Wood", Key: "wood", BaseStorage: WoodBaseStorage, Age: "primitive_age", Description: "Basic building material"},
-		{Name: "Faith", Key: "faith", BaseStorage: 50, Age: "primitive_age", Description: "Spiritual influence. Faith income raises morale"},
+		{Name: "Food", Key: "food", BaseStorage: 50, Age: "primitive_age"},
+		{Name: "Wood", Key: "wood", BaseStorage: WoodBaseStorage, Age: "primitive_age"},
+		{Name: "Faith", Key: "faith", BaseStorage: 50, Age: "primitive_age"},
 		// Stone Age (Stone Era)
-		{Name: "Stone", Key: "stone", BaseStorage: 50, Age: "stone_age", Description: "Durable building material"},
+		{Name: "Stone", Key: "stone", BaseStorage: 50, Age: "stone_age"},
 		// Bronze Age (Stone Era)
-		{Name: "Iron", Key: "iron", BaseStorage: 50, Age: "bronze_age", Description: "Metal for tools and weapons"},
-		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age", Description: "Currency and trade"},
+		{Name: "Iron", Key: "iron", BaseStorage: 50, Age: "bronze_age"},
+		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age"},
 		// Iron Age (Iron Era); coal unlocks in the Renaissance Age (Steel Era)
-		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "renaissance_age", Description: "Fuel for smelting and industry"},
+		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "renaissance_age"},
 		// Iron Age (Iron Era): intermediate ores for Geological Extraction and Metallurgy
-		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "iron_age", Description: "Polished stone from quarries"},
-		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "iron_age", Description: "Raw iron ore from mines and quarries"},
+		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "iron_age"},
+		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "iron_age"},
 		// Medieval Age (Iron Era)
-		{Name: "Steel", Key: "steel", BaseStorage: 30, Age: "medieval_age", Description: "Refined metal for advanced construction"},
+		{Name: "Steel", Key: "steel", BaseStorage: 30, Age: "medieval_age"},
 		// Classical Age (Iron Era)
-		{Name: "Culture", Key: "culture", BaseStorage: 50, Age: "classical_age", Description: "Art and cultural influence. Spent on monuments, festivals and appeasing harbingers"},
+		{Name: "Culture", Key: "culture", BaseStorage: 50, Age: "classical_age"},
 		// Industrial Age
-		{Name: "Oil", Key: "oil", BaseStorage: 50, Age: "industrial_age", Description: "Fuel for machines and industry"},
+		{Name: "Oil", Key: "oil", BaseStorage: 50, Age: "industrial_age"},
 		// Victorian Age
-		{Name: "Electricity", Key: "electricity", BaseStorage: 50, Age: "victorian_age", Description: "Powers modern infrastructure"},
+		{Name: "Electricity", Key: "electricity", BaseStorage: 50, Age: "victorian_age"},
 		// Atomic Age
-		{Name: "Uranium", Key: "uranium", BaseStorage: 30, Age: "atomic_age", Description: "Radioactive fuel for reactors"},
+		{Name: "Uranium", Key: "uranium", BaseStorage: 30, Age: "atomic_age"},
 		// Modern Age (Digital Era); titanium ore unlocks in the Space Age
-		{Name: "Data", Key: "data", BaseStorage: 50, Age: "modern_age", Description: "Digital information and analytics"},
-		{Name: "Nanobots", Key: "nanobots", BaseStorage: 20, Age: "modern_age", Description: "Microscopic machines, made by the Nano Foundry from the Modern Age"},
-		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "modern_age", Description: "Raw titanium ore from mines"},
+		{Name: "Data", Key: "data", BaseStorage: 50, Age: "modern_age"},
+		{Name: "Nanobots", Key: "nanobots", BaseStorage: 20, Age: "modern_age"},
+		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "modern_age"},
 		// Cyberpunk Age (Neon Era)
-		{Name: "Crypto", Key: "crypto", BaseStorage: 50, Age: "cyberpunk_age", Description: "Decentralized digital currency"},
-		{Name: "Dark Matter Crystals", Key: "dark_matter_crystals", BaseStorage: 10, Age: "cyberpunk_age", Description: "Crystallized dark matter from deep mines"},
+		{Name: "Crypto", Key: "crypto", BaseStorage: 50, Age: "cyberpunk_age"},
+		{Name: "Dark Matter Crystals", Key: "dark_matter_crystals", BaseStorage: 10, Age: "cyberpunk_age"},
 		// Fusion Age
-		{Name: "Plasma", Key: "plasma", BaseStorage: 30, Age: "fusion_age", Description: "Superheated ionized gas for energy"},
+		{Name: "Plasma", Key: "plasma", BaseStorage: 30, Age: "fusion_age"},
 		// Space Age
-		{Name: "Titanium", Key: "titanium", BaseStorage: 30, Age: "space_age", Description: "Lightweight metal for space construction"},
+		{Name: "Titanium", Key: "titanium", BaseStorage: 30, Age: "space_age"},
 		// Interstellar Age
-		{Name: "Dark Matter", Key: "dark_matter", BaseStorage: 20, Age: "interstellar_age", Description: "Exotic matter for warp technology"},
+		{Name: "Dark Matter", Key: "dark_matter", BaseStorage: 20, Age: "interstellar_age"},
 		// Galactic Age
-		{Name: "Antimatter", Key: "antimatter", BaseStorage: 20, Age: "galactic_age", Description: "Annihilation fuel for megastructures"},
+		{Name: "Antimatter", Key: "antimatter", BaseStorage: 20, Age: "galactic_age"},
 		// Quantum Age
-		{Name: "Quantum Flux", Key: "quantum_flux", BaseStorage: 10, Age: "quantum_age", Description: "Unstable quantum energy for reality manipulation"},
+		{Name: "Quantum Flux", Key: "quantum_flux", BaseStorage: 10, Age: "quantum_age"},
 	}
 }
 
 // ResourceByKey returns a map of key -> ResourceDef
 func ResourceByKey() map[string]ResourceDef {
-	m := make(map[string]ResourceDef)
-	for _, r := range BaseResources() {
-		m[r.Key] = r
-	}
-	return m
+	return indexBy(BaseResources(), func(r ResourceDef) string { return r.Key })
 }

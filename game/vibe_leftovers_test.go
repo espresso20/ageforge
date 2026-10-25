@@ -111,20 +111,14 @@ func (p roadPlay) read() (seen []string, kept []string, logged []string) {
 // the script holds.
 func TestRoadStoriesFollowTheSwitchAndTheSaveKeepsEnglish(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 
 	plain := playRoad(t)
 	wantSeen, wantKept, wantLogged := plain.read()
 	if len(wantSeen) != 72 || len(wantKept) != len(wantSeen) {
 		t.Fatalf("the road met %d stories and kept %d, want a story for each template on three missions", len(wantSeen), len(wantKept))
 	}
-	for _, s := range append(append([]string(nil), wantSeen...), wantKept...) {
-		if strings.Contains(s, markOpen) {
-			t.Fatalf("a plain story has the script's mark in it: %q", s)
-		}
-	}
+	noMarks(t, "a plain story", append(append([]string(nil), wantSeen...), wantKept...))
 
 	// Off, with a script that rewrites everything: nothing changes.
 	restore := vibe.UseRewriterForTest(mark)
@@ -139,7 +133,7 @@ func TestRoadStoriesFollowTheSwitchAndTheSaveKeepsEnglish(t *testing.T) {
 	// always did (the words of the place are the script's, in the ruleset's
 	// own rows), and what is kept is what is kept with VibeMode off.
 	vibe.Set(true)
-	restore = vibe.UseRewriterForTest(func(id, plain string) string { return plain })
+	restore = vibe.UseRewriterForTest(asIs)
 	same := playRoad(t)
 	restore()
 	baseSeen, kept, baseLogged := same.read()
@@ -194,9 +188,7 @@ func TestRoadStoriesFollowTheSwitchAndTheSaveKeepsEnglish(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(js), markOpen) {
-		t.Error("the save of the missions holds a text of the script")
-	}
+	noScript(t, "the save of the missions", js)
 	for _, s := range saved {
 		if len(s.Mission.RoadTold) == 0 || len(s.Mission.RoadEventsSeen) != 0 {
 			t.Errorf("a saved mission holds %d told stories and %d read ones", len(s.Mission.RoadTold), len(s.Mission.RoadEventsSeen))
@@ -245,9 +237,7 @@ func TestPlainRoadSpansAreTheSpansOfPlainEnglish(t *testing.T) {
 // raid, a loan and a festival are saved as the key they are named by, and
 // named again from the script in force when the game starts and loads them.
 func TestTimedEffectsAreKeptAsKeysAndNamedInTheScript(t *testing.T) {
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 	keys := map[string]string{
 		"endure_reconstruction": "Reconstruction Effort",
 		"war_raid":              "Under Raid",
@@ -341,51 +331,31 @@ func historyOf(t *testing.T) *GameEngine {
 	ge := newSeededEngine(7)
 	var struck []string
 	for _, age := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		if ge.ForceCatastropheForTest() != nil {
 			continue
 		}
 		struck = append(struck, age)
 		if len(struck) == 1 {
-			if err := ge.Endure(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.Endure())
 			continue
 		}
-		if err := ge.Succumb(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.Succumb())
 		if len(struck) == 2 {
 			// The same doom again, with its legacy already held.
-			if err := ge.EnterAgeForTest(age); err != nil {
-				t.Fatal(err)
-			}
-			if err := ge.ForceCatastropheForTest(); err != nil {
-				t.Fatal(err)
-			}
-			if err := ge.Succumb(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.EnterAgeForTest(age))
+			noErr(t, ge.ForceCatastropheForTest())
+			noErr(t, ge.Succumb())
 			break
 		}
 	}
 	if len(struck) < 2 {
 		t.Fatalf("only %d dooms struck", len(struck))
 	}
-	if err := ge.ForceLastPassageForTest("transcendent_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.ForceLastPassageForTest("transcendent_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.SuccumbLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.ForceLastPassageForTest("transcendent_age"))
+	noErr(t, ge.EndureLastPassage())
+	noErr(t, ge.ForceLastPassageForTest("transcendent_age"))
+	noErr(t, ge.SuccumbLastPassage())
 	return ge
 }
 
@@ -394,9 +364,7 @@ func historyOf(t *testing.T) *GameEngine {
 // script's words when it is read with VibeMode on. Off, it reads as it did.
 func TestTheCivilizationLogIsToldInTheScriptAndSavedInEnglish(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 
 	ge := historyOf(t)
 	if len(ge.catastropheHistory) < 5 {
@@ -420,7 +388,7 @@ func TestTheCivilizationLogIsToldInTheScriptAndSavedInEnglish(t *testing.T) {
 
 	// On, and the script has no line: the same lines.
 	vibe.Set(true)
-	restore := vibe.UseRewriterForTest(func(id, plain string) string { return plain })
+	restore := vibe.UseRewriterForTest(asIs)
 	sameTexts(t, "on, no line in the script", ge.historyLines(), plain)
 	restore()
 
@@ -465,9 +433,7 @@ func TestTheCivilizationLogIsToldInTheScriptAndSavedInEnglish(t *testing.T) {
 // are written by functions that read the script, and plain English with
 // VibeMode off.
 func TestTheNoticesAndTheNamedWordsFollowTheSwitch(t *testing.T) {
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 	texts := map[string]func() string{
 		"pacing":      pacingNotice,
 		"market":      marketSwapNotice,
@@ -533,9 +499,7 @@ func TestTheNoticesAndTheNamedWordsFollowTheSwitch(t *testing.T) {
 // the save it writes next holds nothing of the script.
 func TestAnOldSaveGetsItsNoticeInTheScript(t *testing.T) {
 	isolateAccountDir(t)
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 
 	ge := newSeededEngine(1)
 	ge.StepTicks(20)
@@ -548,36 +512,25 @@ func TestAnOldSaveGetsItsNoticeInTheScript(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath("old-curve"), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath("old-curve"), data, 0o644))
 
 	plainNotice := pacingNotice()
-	defer vibe.UseRewriterForTest(mark)()
-	vibe.Set(true)
+	defer vibeRead(true, mark)()
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("old-curve"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("old-curve"))
 	if n := countLines(loaded, mark("game.save.pacingNotice.01", plainNotice)); n != 1 {
 		t.Errorf("the old save's notice was told in the script %d times, want once", n)
 	}
 	if n := countLines(loaded, plainNotice); n != 0 {
 		t.Errorf("the old save's notice was told in plain English %d times under the script", n)
 	}
-	if err := loaded.SaveGame("old-curve-next"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.SaveGame("old-curve-next"))
 	raw, err := os.ReadFile(savePath("old-curve-next"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(raw), markOpen) {
-		t.Error("the save holds a text of the script")
-	}
+	noScript(t, "the save", raw)
 }
 
 // TestRoadStoriesReadInTheShippedScript: with the script the game ships, every
@@ -586,9 +539,7 @@ func TestAnOldSaveGetsItsNoticeInTheScript(t *testing.T) {
 // stories are not the plain ones.
 func TestRoadStoriesReadInTheShippedScript(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 	vibe.Set(true)
 	told := playRoad(t)
 	seen, kept, _ := told.read()

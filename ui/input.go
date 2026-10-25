@@ -90,7 +90,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		}
 		run := c.Run
 		if run == nil {
-			run = openPanel(c.Name)
+			run = runPanel(c.Name)
 		}
 		res := run(args, engine)
 		// worldmap is map, opened on the known world.
@@ -102,8 +102,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
 }
 
-// openPanel is the Run of a command that only opens the panel of that name.
-func openPanel(name string) func(args []string, engine *game.GameEngine) CommandResult {
+// runPanel is the Run of a command that only opens the panel of that name.
+func runPanel(name string) func(args []string, engine *game.GameEngine) CommandResult {
 	return func([]string, *game.GameEngine) CommandResult { return CommandResult{OverlayName: name} }
 }
 

@@ -60,7 +60,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.inputField.Blur()
 	d.inputField.SetText("")
 
-	for _, name := range []string{"stats", "help", "trade"} {
+	for _, name := range []string{"stats", "help", "trade", "milestones", "logs", "history", "buildings", "wonders"} {
 		shot("overlay:"+name, name)
 	}
 

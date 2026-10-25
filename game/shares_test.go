@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -82,11 +83,9 @@ func TestShares_FreshRunGetsStaffed(t *testing.T) {
 	if !logHas(ge, "Roster: recruited") {
 		t.Error("no routine line for the recruits")
 	}
-	found := false
-	for _, l := range ge.log {
-		found = found || l.Type == "info" && strings.HasPrefix(l.Message, "Workers arrive on their own")
-	}
-	if !found {
+	if !slices.ContainsFunc(ge.log, func(l LogEntry) bool {
+		return l.Type == "info" && strings.HasPrefix(l.Message, "Workers arrive on their own")
+	}) {
 		t.Error("the first recruits came without the main-log line that says why")
 	}
 }
@@ -150,9 +149,7 @@ func TestShares_NewBuildingsGetStaffed(t *testing.T) {
 		t.Fatalf("setup: population %d with %d in the reserve, want the housing's 30 and 18 waiting", pop, idle)
 	}
 	setAmount(ge, "wood", 1000)
-	if err := ge.BuildBuilding("shrine"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.BuildBuilding("shrine"))
 	for i := 0; i < 500 && len(ge.buildQueue) > 0; i++ {
 		ge.StepTicks(1)
 	}
@@ -172,9 +169,7 @@ func TestShares_WaitsAfterAWorkerCommand(t *testing.T) {
 	ge := sharesEngine(t, 3, map[string]int{"gathering_camp": 2, "wood_camp": 2})
 	growFully(ge)
 	reserve := ge.Workers.IdleCount("worker")
-	if err := ge.UnassignWorker("wood_camp", 3); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UnassignWorker("wood_camp", 3))
 	if st := ge.GetState(); st.Workers.HoldTicks != staffHoldTicks {
 		t.Errorf("HoldTicks = %d right after the command, want %d", st.Workers.HoldTicks, staffHoldTicks)
 	}
@@ -367,12 +362,8 @@ func TestShares_SettingAShareMovesWorkersOnce(t *testing.T) {
 	if !strings.Contains(reply.Line, "Faith 60%") || !strings.Contains(reply.Line, "Moved") {
 		t.Errorf("reply %q doesn't name the share and the move", reply.Line)
 	}
-	if err := ge.UnassignWorker("shrine", 2); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.AssignWorker("wood_camp", 2); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UnassignWorker("shrine", 2))
+	noErr(t, ge.AssignWorker("wood_camp", 2))
 	ge.StepTicks(staffHoldTicks + staffEveryTicks)
 	if know := ge.Workers.GetDomainCount("faith"); know != 10 {
 		t.Errorf("knowledge has %d workers after the player moved 2 out, want the 10 they left", know)
@@ -444,16 +435,8 @@ func TestShares_SurviveSaveAndLoad(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge.SetAutoRecruit(false)
-	if err := ge.RecruitWorker("worker", 1); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.SaveGame("shares-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("shares-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.RecruitWorker("worker", 1))
+	loaded := saveAndLoad(t, ge, "shares-roundtrip")
 	if loaded.cheaterBadge {
 		t.Error("the save failed its signature check")
 	}
@@ -472,9 +455,7 @@ func TestShares_SurviveSaveAndLoad(t *testing.T) {
 
 	// The defaults write nothing new into a save.
 	fresh := sharesEngine(t, 1, nil)
-	if err := fresh.SaveGame("shares-default"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, fresh.SaveGame("shares-default"))
 	raw, err := os.ReadFile(savePath("shares-default"))
 	if err != nil {
 		t.Fatal(err)
@@ -485,9 +466,7 @@ func TestShares_SurviveSaveAndLoad(t *testing.T) {
 		}
 	}
 	var gs GameSave
-	if err := json.Unmarshal(raw, &gs); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(raw, &gs))
 	if gs.WorkerShares != nil || gs.AutoRecruitOff || gs.StaffHoldUntil != 0 {
 		t.Errorf("default save carries shares %v, auto-recruit off %v, wait %d", gs.WorkerShares, gs.AutoRecruitOff, gs.StaffHoldUntil)
 	}
@@ -607,12 +586,8 @@ func TestShares_PlanStaffingFollowsTheShares(t *testing.T) {
 		ge.recalculateRates()
 		setAmount(ge, "food", 1000)
 		ge.SetAutoRecruit(false)
-		if err := ge.RecruitWorker("worker", 30); err != nil {
-			t.Fatal(err)
-		}
-		if err := ge.AssignWorker("wood_camp", 30); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.RecruitWorker("worker", 30))
+		noErr(t, ge.AssignWorker("wood_camp", 30))
 		if shares {
 			if _, err := ge.SetWorkerShare("faith", 50); err != nil {
 				t.Fatal(err)

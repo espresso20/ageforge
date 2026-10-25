@@ -59,9 +59,7 @@ func playStories(t *testing.T, seed int64) ([]string, []LogEntry, *GameEngine) {
 		view(label)
 	}
 	for i, age := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		ge.GrantTechsForTest()
 		for _, f := range rules.CoreFor(false).Factions() {
 			_ = ge.MeetFactionForTest(f.Key, 40)
@@ -86,9 +84,7 @@ func playStories(t *testing.T, seed int64) ([]string, []LogEntry, *GameEngine) {
 		ge.logRunEnding()
 		ge.mu.Unlock()
 		grab(age + "-stories")
-		if err := ge.SummonHarbingerForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SummonHarbingerForTest(age))
 		view(age + "-summoned")
 		_ = ge.HarbingerAppease()
 		_ = ge.HarbingerBrace()
@@ -130,11 +126,7 @@ func playStories(t *testing.T, seed int64) ([]string, []LogEntry, *GameEngine) {
 func playStoriesWith(t *testing.T, on bool, rewrite func(id, plain string) string) ([]string, []LogEntry, *GameEngine) {
 	t.Helper()
 	vibeOff(t)
-	if rewrite != nil {
-		defer vibe.UseRewriterForTest(rewrite)()
-	}
-	vibe.Set(on)
-	defer vibe.Set(false)
+	defer vibeRead(on, rewrite)()
 	return playStories(t, 21)
 }
 
@@ -142,18 +134,16 @@ func playStoriesWith(t *testing.T, on bool, rewrite func(id, plain string) strin
 // stories it always did, whatever the script holds.
 func TestStoriesReadPlainWhileVibeModeIsOff(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeSession(t)
 	plain, _, _ := playStoriesWith(t, false, nil)
 	if len(plain) < 5000 {
 		t.Fatalf("the run read only %d texts", len(plain))
 	}
 	scripted, _, _ := playStoriesWith(t, false, mark)
 	sameTexts(t, "VibeMode off, a script that rewrites every text", scripted, plain)
+	noMarks(t, "a plain text", plain)
 	kinds := map[string]int{}
 	for _, s := range plain {
-		if strings.Contains(s, markOpen) || strings.Contains(s, markClose) {
-			t.Fatalf("a plain text has the script's mark in it: %q", s)
-		}
 		kinds[strings.SplitN(s, "|", 2)[0]]++
 	}
 	for _, k := range []string{kindExpedition, kindEncounter, kindRaid, kindView, kindLog} {
@@ -170,8 +160,8 @@ func TestStoriesReadPlainWhileVibeModeIsOff(t *testing.T) {
 // run's own, with no text of the script in them.
 func TestStoriesFollowTheScriptAndTheStateDoesNot(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	plain, _, plainGE := playStoriesWith(t, true, func(id, plain string) string { return plain })
+	vibeSession(t)
+	plain, _, plainGE := playStoriesWith(t, true, asIs)
 	marked, _, markedGE := playStoriesWith(t, true, mark)
 	if len(marked) != len(plain) {
 		t.Fatalf("the run under the script read %d texts, in plain English %d", len(marked), len(plain))
@@ -229,12 +219,7 @@ func TestStoriesFollowTheScriptAndTheStateDoesNot(t *testing.T) {
 		t.Error("the closing line of the run was not told in the script's words")
 	}
 
-	a, b := stateMap(t, plainGE), stateMap(t, markedGE)
-	for k := range a {
-		if !reflect.DeepEqual(a[k], b[k]) {
-			t.Errorf("under the script, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
-		}
-	}
+	sameState(t, plainGE, markedGE, "under the script")
 	if plainGE.StateDigest() != markedGE.StateDigest() {
 		t.Error("the state digests differ")
 	}
@@ -242,22 +227,14 @@ func TestStoriesFollowTheScriptAndTheStateDoesNot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(js), markOpen) {
-		t.Error("the state holds a text of the script")
-	}
-	vibe.Set(true)
-	defer vibe.Set(false)
-	defer vibe.UseRewriterForTest(mark)()
-	if err := markedGE.SaveGame("stories"); err != nil {
-		t.Fatal(err)
-	}
+	noScript(t, "the state", js)
+	defer vibeRead(true, mark)()
+	noErr(t, markedGE.SaveGame("stories"))
 	raw, err := os.ReadFile(savePath("stories"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(raw), markOpen) {
-		t.Error("the save holds a text of the script")
-	}
+	noScript(t, "the save", raw)
 }
 
 // harborLines are what the engine's thread holds and what a reader of it is
@@ -280,15 +257,11 @@ func harborLines(ge *GameEngine) (kept, keys, read []string) {
 // again from the keys, in whichever script is in force when they are read.
 func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 	isolateAccountDir(t)
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 
 	// In plain English the thread keeps its lines and the view reads them as they are.
 	plainGE := newSeededEngine(4)
-	if err := plainGE.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, plainGE.SummonHarbingerForTest("bronze_age"))
 	if kept, keys, read := harborLines(plainGE); len(kept) != 2 || len(keys) != 2 || !reflect.DeepEqual(kept, read) {
 		t.Fatalf("in plain English the thread keeps %q (keys %q) and the view reads %q", kept, keys, read)
 	}
@@ -299,11 +272,9 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 	// Read the twin while that script is still in force: the real script
 	// has its own lines for these warnings.
 	wantKept, wantKeys, wantRead := func() ([]string, []string, []string) {
-		defer vibe.UseRewriterForTest(func(id, plain string) string { return plain })()
+		defer vibe.UseRewriterForTest(asIs)()
 		ge := newSeededEngine(4)
-		if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SummonHarbingerForTest("bronze_age"))
 		return harborLines(ge)
 	}()
 	if len(wantKept) != 2 {
@@ -321,9 +292,7 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 
 	defer vibe.UseRewriterForTest(mark)()
 	ge := newSeededEngine(4)
-	if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SummonHarbingerForTest("bronze_age"))
 	kept, keys, read := harborLines(ge)
 	if !reflect.DeepEqual(kept, wantKept) || !reflect.DeepEqual(keys, wantKeys) {
 		t.Errorf("under the script the thread keeps %q (keys %q), under one that changes nothing %q (keys %q)", kept, keys, wantKept, wantKeys)
@@ -349,20 +318,14 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 	}
 
 	// The save keeps English and the keys; a load tells them in the script in force.
-	if err := ge.SaveGame("harbor"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("harbor"))
 	raw, err := os.ReadFile(savePath("harbor"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(raw), markOpen) {
-		t.Fatal("the save holds a text of the script")
-	}
+	noScript(t, "the save", raw)
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("harbor"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("harbor"))
 	if k, _, r := harborLines(loaded); !reflect.DeepEqual(k, wantKept) || !reflect.DeepEqual(r, read) {
 		t.Errorf("a load under the script keeps %q and reads %q, want %q and %q", k, r, wantKept, read)
 	}
@@ -380,14 +343,10 @@ func TestAHarborLineIsKeptInEnglishAndToldWhenItIsRead(t *testing.T) {
 // drawn, in any script.
 func TestASaveWithoutKeysStillLoadsAndReadsPlain(t *testing.T) {
 	isolateAccountDir(t)
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
+	vibeSession(t)
 
 	ge := newSeededEngine(4)
-	if err := ge.SummonHarbingerForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SummonHarbingerForTest("iron_age"))
 	wantKept, _, _ := harborLines(ge)
 	ge.mu.RLock()
 	old := ge.buildSaveSnapshot()
@@ -404,17 +363,11 @@ func TestASaveWithoutKeysStillLoadsAndReadsPlain(t *testing.T) {
 	if strings.Contains(string(data), "line_keys") {
 		t.Fatal("the save still has its keys")
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath("before-keys"), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath("before-keys"), data, 0o644))
 	for _, on := range []bool{false, true} {
 		func() {
-			defer vibe.UseRewriterForTest(mark)()
-			vibe.Set(on)
-			defer vibe.Set(false)
+			defer vibeRead(on, mark)()
 			loaded := NewGameEngine()
 			if err := loaded.LoadGame("before-keys"); err != nil {
 				t.Fatalf("VibeMode %v: %v", on, err)
@@ -434,7 +387,7 @@ func TestASaveWithoutKeysStillLoadsAndReadsPlain(t *testing.T) {
 // lines with the same tags.
 func TestAStoryKeepsItsTagsInEveryScript(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
+	vibeSession(t)
 	_, plain, _ := playStoriesWith(t, false, nil)
 	_, marked, _ := playStoriesWith(t, true, mark)
 	if len(plain) != len(marked) {
@@ -463,16 +416,11 @@ func TestAStoryKeepsItsTagsInEveryScript(t *testing.T) {
 // as it was drawn.
 func TestAKeyThatNamesAnotherLineIsNotTrusted(t *testing.T) {
 	isolateAccountDir(t)
-	rules.CoreFor(true) // the real VibeMode set, built before any script is loaned
-	vibeOff(t)
-	defer vibe.Set(false)
-	defer vibe.UseRewriterForTest(mark)()
-	vibe.Set(true)
+	vibeSession(t)
+	defer vibeRead(true, mark)()
 
 	ge := newSeededEngine(4)
-	if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SummonHarbingerForTest("bronze_age"))
 	kept, keys, read := harborLines(ge)
 	if len(keys) != 2 || !strings.Contains(read[0], markOpen) || !strings.Contains(read[1], markOpen) {
 		t.Fatalf("the thread keeps %q (keys %q) and the view reads %q", kept, keys, read)

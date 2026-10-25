@@ -23,13 +23,7 @@ func TestLoadGame_ResourceUnlocksMatchLivePlay(t *testing.T) {
 		}
 		ge.age = age
 		ge.currentEpoch = config.EpochForAge(age)
-		if err := ge.SaveGame("unlocks"); err != nil {
-			t.Fatal(err)
-		}
-		loaded := NewGameEngine()
-		if err := loaded.LoadGame("unlocks"); err != nil {
-			t.Fatal(err)
-		}
+		loaded := saveAndLoad(t, ge, "unlocks")
 		for _, def := range config.BaseResources() {
 			live, got := ge.Resources.IsUnlocked(def.Key), loaded.Resources.IsUnlocked(def.Key)
 			if live != got {

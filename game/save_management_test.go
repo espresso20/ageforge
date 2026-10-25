@@ -410,15 +410,8 @@ func TestParentNameRoundTrips(t *testing.T) {
 
 	// Same-package test → set the unexported field directly (no setter needed).
 	ge.activeParentName = "RootGame"
-	if err := ge.SaveGame(name); err != nil {
-		t.Fatalf("SaveGame(%q) failed: %v", name, err)
-	}
-
 	// A fresh engine loading the child must adopt the persisted parent.
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame(name); err != nil {
-		t.Fatalf("LoadGame(%q) failed: %v", name, err)
-	}
+	loaded := saveAndLoad(t, ge, name)
 	if loaded.activeParentName != "RootGame" {
 		t.Errorf("activeParentName after load = %q, want %q", loaded.activeParentName, "RootGame")
 	}

@@ -113,6 +113,11 @@ func (p *harbingerPanel) handleKey(event *tcell.EventKey, engine *game.GameEngin
 	return true
 }
 
+// harbingerFooter is the keys on the panel's foot.
+func harbingerFooter() [][2]string {
+	return [][2]string{{"A", "appease"}, {"B", "brace"}, {"I", "invite"}, {"↑↓", "scroll"}, {"Esc", "close"}}
+}
+
 // harbingerInviteRefusal is the error for an I press that cannot invite.
 func harbingerInviteRefusal(st game.GameState) error {
 	if st.Harbinger == nil {

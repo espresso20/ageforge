@@ -15,11 +15,13 @@ import (
 type OverlayProvider func(state game.GameState, w int) string
 
 // overlayEntry holds the tview widgets and content provider for a text-based overlay.
-// The root Flex uses nested nil spacers to centre the TextView at ~85%×85% of the terminal.
+// The root Flex is the whole screen: the panel's frame (panel_frame.go) over the
+// command bar's rows.
 type overlayEntry struct {
 	title   vibe.Entry
 	tv      *tview.TextView
-	root    tview.Primitive // centered flex wrapper — added/removed from pages.Pages
+	frame   *panelFrame     // the box, name and keys the TextView is drawn in
+	root    tview.Primitive // the frame over the command bar — added/removed from pages.Pages
 	provide OverlayProvider
 	// keys, when set, sees every key but Esc while the overlay has focus and
 	// returns nil to consume it (SetKeyHandler). Runs on the tview goroutine,
@@ -31,20 +33,22 @@ type overlayEntry struct {
 	// the overlay is shown, before its text is made (SetOpenHandler).
 	back func() bool
 	open func()
+	// footer, when set, is the keys on the panel's foot in place of the
+	// scrolling ones (SetFooter).
+	footer func() [][2]string
 }
 
 // widgetEntry backs an overlay whose content is any tview.Primitive (e.g. a custom
 // map canvas). When refreshFn is set, Refresh calls it in-place instead of
 // rebuilding and replacing the page (used for panels that manage their own state).
 type widgetEntry struct {
-	title      vibe.Entry
-	build      func(state game.GameState) tview.Primitive
-	refreshFn  func(state game.GameState) // optional; nil means full rebuild on each Refresh
-	fullScreen bool                       // true = fills whole terminal; false = 85×85% modal
+	title     vibe.Entry
+	build     func(state game.GameState) tview.Primitive
+	refreshFn func(state game.GameState) // optional; nil means full rebuild on each Refresh
 }
 
-// OverlayManager manages the set of named floating panels shown over the Dashboard.
-// Only one overlay is visible at a time. Panels are added/removed from d.pages.Pages
+// OverlayManager manages the set of named panels shown over the Dashboard, each the
+// whole screen but the command bar. Only one overlay is visible at a time. Panels are added/removed from d.pages.Pages
 // rather than toggled via ShowPage/HidePage so that the underlying dashboard stays live.
 type OverlayManager struct {
 	entries       map[string]*overlayEntry
@@ -58,6 +62,9 @@ type OverlayManager struct {
 	onClose func() // called after hide to restore focus to the command input field
 	screenW int    // updated every frame via SetBeforeDrawFunc
 	screenH int
+	// plain, when set, reports the ASCII glyph tier, which the text panels'
+	// frames fold to.
+	plain func() bool
 
 	// seen is the last snapshot Refresh was given: for the arrival screen
 	// it is the game as it stood before the advance (arrival.go). arrival is
@@ -94,24 +101,23 @@ func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func(
 }
 
 // Register adds a named text overlay backed by a TextView. Must be called before Show.
-// The overlay is rendered as a centred 85%×85% modal box using nested Flex nil-spacers
-// (tview's idiomatic way to achieve percentage-based positioning in a fixed terminal).
-// NOTE: The ratio 17/20 = 85% — if you change this, update both inner and root Flex items.
+// The overlay is the whole screen but the command bar: a framed panel (panel_frame.go)
+// with the TextView inside it, over the rows the bar keeps.
 func (om *OverlayManager) Register(name string, title vibe.Entry, provide OverlayProvider) {
 	tv := tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true).
 		SetWrap(true)
-	tv.SetBorder(true).
-		SetTitle(overlayTitle(title))
 	// Persistent overlay chrome (built once, reused on every Show): enroll so a live
-	// theme switch restyles the border/title/background.
+	// theme switch restyles the background.
 	theme.Track(func() {
-		tv.SetBorderColor(theme.Color(theme.RoleAccent)).
-			SetTitleColor(theme.Color(theme.RoleAccent)).
-			SetBackgroundColor(theme.Color(theme.RoleSurface))
+		tv.SetBackgroundColor(theme.Color(theme.RoleBackground))
 	})
-	entry := &overlayEntry{title: title, tv: tv, provide: provide}
+	frame := newPanelFrame(title, tv)
+	frame.plain = func() bool { return om.plain != nil && om.plain() }
+	entry := &overlayEntry{title: title, tv: tv, frame: frame, provide: provide}
+	frame.keys = func() [][2]string { return om.footerKeys(entry) }
+	frame.hint = func() string { return om.typeHint(entry) }
 	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			if entry.back != nil && entry.back() {
@@ -128,33 +134,64 @@ func (om *OverlayManager) Register(name string, title vibe.Entry, provide Overla
 		return event
 	})
 
-	// Centered 85%×85% box via nested Flex spacers (nil items act as flexible spacers)
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(nil, 0, 1, false).
-		AddItem(tv, 0, 17, true). // 17/20 = 85% of height
-		AddItem(nil, 0, 1, false)
-
-	root := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(inner, 0, 17, true). // 17/20 = 85% of width
-		AddItem(nil, 0, 1, false)
-
-	entry.root = root
+	// The frame is the whole screen but the command bar's rows, which stay
+	// the dashboard's.
+	entry.root = overBar(frame)
 	om.entries[name] = entry
 }
 
-// overlayTitle is the title on the border of an overlay: its name, and how to
-// close it.
-func overlayTitle(title vibe.Entry) string {
-	return " " + title.String() + vibe.Line("ui.overlay.Register.01", " (Esc to close) ")
+// keepsBar says whether the named text overlay leaves the keyboard with the
+// command bar, as the People and Expeditions panels do: it takes the keys
+// that print nothing (scrolling, see scrollKey) and the bar gets the rest. A
+// panel whose own keys are letters (SetKeyHandler) keeps the keyboard.
+func (om *OverlayManager) keepsBar(name string) bool {
+	e, ok := om.entries[name]
+	return ok && e.keys == nil
 }
 
-// RetitleAll writes the titles of the text overlays again, for when VibeMode
-// has been switched. The widget overlays are built each time they open, so they
-// read the title then.
-func (om *OverlayManager) RetitleAll() {
-	for _, e := range om.entries {
-		e.tv.SetTitle(overlayTitle(e.title))
+// typeHint is what the foot of a panel says may be typed: for a panel that
+// leaves the keyboard with the command bar, a command; for one that keeps it,
+// nothing.
+func (om *OverlayManager) typeHint(e *overlayEntry) string {
+	if e.keys != nil {
+		return ""
+	}
+	return vibe.Line("ui.overlay.typeHint.01", "a command")
+}
+
+// footerKeys are the keys on a text panel's foot: what the panel set for
+// itself, or the keys that scroll it.
+func (om *OverlayManager) footerKeys(e *overlayEntry) [][2]string {
+	if e.footer != nil {
+		return e.footer()
+	}
+	return [][2]string{{"↑↓", "scroll"}, {"PgUp PgDn", vibe.Line("ui.overlay.footerKeys.03", "page")}, {"Esc", "close"}}
+}
+
+// scrollKey gives a key that prints nothing to the open text panel when it
+// leaves the keyboard with the command bar and the bar is empty, and reports
+// whether it took it. The caller is the dashboard's input capture, which sees
+// the keys the bar has before the bar does.
+func (om *OverlayManager) scrollKey(ev *tcell.EventKey, prompt string) bool {
+	e, ok := om.entries[om.active]
+	if !ok || e.keys != nil || prompt != "" {
+		return false
+	}
+	switch ev.Key() {
+	case tcell.KeyUp, tcell.KeyDown, tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyHome, tcell.KeyEnd:
+		if h := e.tv.InputHandler(); h != nil {
+			h(ev, func(tview.Primitive) {})
+		}
+		return true
+	}
+	return false
+}
+
+// SetFooter gives the named text overlay the keys on its foot, in place of the
+// scrolling ones. Unknown names are ignored.
+func (om *OverlayManager) SetFooter(name string, keys func() [][2]string) {
+	if e, ok := om.entries[name]; ok {
+		e.footer = keys
 	}
 }
 
@@ -192,79 +229,39 @@ func (om *OverlayManager) seenState() *game.GameState {
 	return om.seen
 }
 
-// textSize is the inner size of the named text overlay's box: what it was
-// drawn at, or before its first draw what the screen makes it (the box is
-// 17/19 of the screen each way, less its border).
+// textSize is the size of the text area of the named text overlay: what it was
+// drawn at, or before its first draw what the screen makes it.
 func (om *OverlayManager) textSize(name string) (w, h int) {
-	if e, ok := om.entries[name]; ok {
-		// (a box that has not been laid out yet is tview's default 15 by 10)
-		if _, _, iw, ih := e.tv.GetInnerRect(); iw > 0 && ih > 0 && (iw != 13 || ih != 8) {
-			return iw, ih
-		}
+	if e, ok := om.entries[name]; ok && e.frame.iw > 0 && e.frame.ih > 0 {
+		return e.frame.iw, e.frame.ih
 	}
-	return max(20, om.screenW*17/19-2), max(8, om.screenH*17/19-2)
+	return panelTextSize(max(om.screenW, 24), max(om.screenH-promptRows, panelMinRows+2))
 }
 
 // RegisterWidget registers an overlay backed by any tview.Primitive instead of a TextView.
-// The build function receives the current GameState and returns a ready-to-display primitive.
-// When fullScreen is false the primitive is wrapped in the same centered 85%×85% modal box
-// (gold border, title, ESC to close). When fullScreen is true the primitive fills the entire
-// screen — useful for the Map which needs every pixel.
-func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) tview.Primitive, refresh func(state game.GameState), fullScreen bool) {
+// The build function receives the current GameState and returns a ready-to-display primitive,
+// which fills the entire screen (the panel leaves the command bar's rows to the dashboard).
+func (om *OverlayManager) RegisterWidget(name string, title vibe.Entry, build func(state game.GameState) tview.Primitive, refresh func(state game.GameState)) {
 	om.widgetEntries[name] = &widgetEntry{
-		title:      title,
-		build:      build,
-		refreshFn:  refresh,
-		fullScreen: fullScreen,
+		title:     title,
+		build:     build,
+		refreshFn: refresh,
 	}
 }
 
 // buildWidgetRoot creates the display tree for a widget overlay given a freshly-built primitive.
-func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive) tview.Primitive {
-	if we.fullScreen {
-		// Wrap in a Box so we can set ESC capture without touching the inner primitive's handler.
-		wrapper := tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(prim, 0, 1, true)
-		wrapper.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-			if event.Key() == tcell.KeyEsc {
-				om.Hide()
-				return nil
-			}
-			return event
-		})
-		return wrapper
-	}
-
-	// Centered 85%×85% modal, same look as text overlays.
-	// Use tview.Frame to add the gold border and title around any arbitrary primitive.
-	frame := tview.NewFrame(prim).
-		SetBorders(0, 0, 0, 0, 0, 0)
-	// Rebuilt per Show, so construction-read theme.Color (no Track needed): a later
-	// theme switch re-runs buildWidgetRoot on next open.
-	frame.SetBorder(true).
-		SetBorderColor(theme.Color(theme.RoleAccent)).
-		SetTitle(" " + we.title.String() + vibe.Line("ui.overlay.buildWidgetRoot.01", " (Esc to close) ")).
-		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBackgroundColor(theme.Color(theme.RoleSurface))
-	frame.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+func (om *OverlayManager) buildWidgetRoot(_ *widgetEntry, prim tview.Primitive) tview.Primitive {
+	// Wrap in a Flex so we can set ESC capture without touching the inner primitive's handler.
+	wrapper := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(prim, 0, 1, true)
+	wrapper.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			om.Hide()
 			return nil
 		}
 		return event
 	})
-
-	inner := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(nil, 0, 1, false).
-		AddItem(frame, 0, 17, true).
-		AddItem(nil, 0, 1, false)
-
-	root := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(inner, 0, 17, true).
-		AddItem(nil, 0, 1, false)
-
-	return root
+	return wrapper
 }
 
 // Show displays the named overlay with current state. Returns false if name unknown.

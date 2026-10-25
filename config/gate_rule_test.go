@@ -92,39 +92,8 @@ func TestGateTownRuleAsksOnlyForWhatARunCanBuild(t *testing.T) {
 			case !makesSomething(d):
 			case d.RequiredTech != "" && !held[from][d.RequiredTech]:
 			default:
-				if _, listed := GateTownLeftOut()[d.Key]; !listed {
-					t.Errorf("%s (%s) is passed over by the rule for no reason it names", d.Key, ages[from].Key)
-				}
+				t.Errorf("%s (%s) is passed over by the rule for no reason it names", d.Key, ages[from].Key)
 			}
-		}
-	}
-}
-
-// TestGateTownLeftOutIsTrue: each building the rule leaves out because a
-// covenant stops it exists, would otherwise be asked for, and carries a
-// reason.
-func TestGateTownLeftOutIsTrue(t *testing.T) {
-	defs, ages, techs := BaseBuildings(), Ages(), Technologies()
-	byKey := map[string]BuildingDef{}
-	for _, d := range defs {
-		byKey[d.Key] = d
-	}
-	held := GateTownHeldTechs(defs, ages, techs)
-	idx := map[string]int{}
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
-	for k, why := range GateTownLeftOut() {
-		d, ok := byKey[k]
-		if !ok {
-			t.Errorf("%s is left out of the gate rule and does not exist", k)
-			continue
-		}
-		if why == "" {
-			t.Errorf("%s is left out of the gate rule with no reason", k)
-		}
-		if !makesSomething(d) || (d.RequiredTech != "" && !held[idx[d.RequiredAge]][d.RequiredTech]) {
-			t.Errorf("%s is left out of the gate rule, and the rule would not ask for it anyway", k)
 		}
 	}
 }
@@ -143,4 +112,61 @@ func TestGateTownRuleCatchesAGateThatAsksForLess(t *testing.T) {
 	if len(got) != 2 {
 		t.Fatalf("want the two broken gates reported, got %v", got)
 	}
+}
+
+// makesSomething reports whether d has a production effect: it makes a
+// resource (food, gold, knowledge, faith, culture and the rest), or it is a
+// military building, which comes with its soldiers.
+func makesSomething(d BuildingDef) bool {
+	if d.Soldiers > 0 {
+		return true
+	}
+	for _, e := range d.Effects {
+		if _, ok := producedBy(e); ok && e.Value > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// GateTown works the gate rule out: what the gate that leaves each age must
+// ask for besides what it asks for today, by building key, keyed by the age
+// the gate leads into (as the ages' BuildingReqs are read). Each count is the
+// reference town's, TownCopies, or the building's MaxCount when that
+// is smaller; a knowledge building's is the knowledge rule's
+// (KnowledgeGateCount).
+func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map[string]int {
+	held := GateTownHeldTechs(defs, ages, techs)
+	out := map[string]map[string]int{}
+	for i := 0; i+1 < len(ages); i++ {
+		for _, d := range defs {
+			if d.RequiredAge != ages[i].Key {
+				continue
+			}
+			switch d.Category {
+			case "wonder", "monument", "storage", "housing":
+				continue
+			}
+			if !makesSomething(d) {
+				continue
+			}
+			if d.RequiredTech != "" && !held[i][d.RequiredTech] {
+				continue
+			}
+			n := TownCopies
+			if IsKnowledgeBuilding(d) {
+				// A knowledge building climbs at KnowledgeRate: the gate
+				// asks the spend it asked before (knowledge_rule.go).
+				n = KnowledgeGateCount(KnowledgeGateWas()[d.Key])
+			}
+			if d.MaxCount > 0 {
+				n = min(n, d.MaxCount)
+			}
+			if out[ages[i+1].Key] == nil {
+				out[ages[i+1].Key] = map[string]int{}
+			}
+			out[ages[i+1].Key][d.Key] = n
+		}
+	}
+	return out
 }

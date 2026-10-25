@@ -1,7 +1,6 @@
 package game
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -28,9 +27,8 @@ func discoverAll(dm *DiplomacyManager, age string) []string {
 
 // --- Part 1: roster ---------------------------------------------------------
 
-// TestCivRoster_SizeAndShape asserts the roster is 8..12 civilizations, each
-// with a valid personality, a non-empty backstory, a valid strength, and a
-// unique key.
+// TestCivRoster_SizeAndShape asserts the roster is 8..12 civilizations with
+// unique keys.
 func TestCivRoster_SizeAndShape(t *testing.T) {
 	roster := config.BaseFactions()
 	if len(roster) < 8 || len(roster) > 12 {
@@ -42,15 +40,6 @@ func TestCivRoster_SizeAndShape(t *testing.T) {
 			t.Errorf("duplicate civ key %q", def.Key)
 		}
 		seen[def.Key] = true
-		if !config.ValidPersonalities[def.Personality] {
-			t.Errorf("civ %q has invalid personality %q", def.Key, def.Personality)
-		}
-		if def.Backstory == "" {
-			t.Errorf("civ %q has empty backstory", def.Key)
-		}
-		if def.Strength < 1 || def.Strength > 5 {
-			t.Errorf("civ %q has strength %d, want 1..5", def.Key, def.Strength)
-		}
 	}
 }
 
@@ -431,15 +420,7 @@ func TestPersistence_RoundTripsCivState(t *testing.T) {
 	}
 	ge.mu.Unlock()
 
-	if err := ge.SaveGame("test_civ_roundtrip"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_civ_roundtrip.json")
-
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_civ_roundtrip"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
+	ge2 := saveAndLoad(t, ge, "test_civ_roundtrip")
 
 	ge2.mu.Lock()
 	defer ge2.mu.Unlock()

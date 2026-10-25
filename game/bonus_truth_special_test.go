@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -312,13 +313,9 @@ func TestBonusTruthPrestige(t *testing.T) {
 			t.Errorf("%s = %v, want %v after prestige multiplier %v", meter, after[meter], value*want, want)
 		}
 	}
-	found := false
-	for _, mod := range ge.GetState().Modifiers {
-		if mod.Source == "prestige" && mod.Target == "prestige_production" && near(mod.Value, want) {
-			found = true
-		}
-	}
-	if !found {
+	if !slices.ContainsFunc(ge.GetState().Modifiers, func(mod Modifier) bool {
+		return mod.Source == "prestige" && mod.Target == "prestige_production" && near(mod.Value, want)
+	}) {
 		t.Errorf("prestige multiplier missing from breakdown: %+v", ge.GetState().Modifiers)
 	}
 }
@@ -535,9 +532,7 @@ func TestBonusTruthAncientMemory(t *testing.T) {
 		t.Fatal("setup: five Story Circles do no work")
 	}
 	ge.Research.currentTech = ""
-	if err := ge.Research.StartMemoryResearch("stoneworking"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Research.StartMemoryResearch("stoneworking"))
 	ge.recalculateRates()
 	if got, want := ge.researchPerTick, normal*memoryResearchSlowdown; got != want {
 		t.Errorf("an ancient memory does %v work a tick, want %v (half of %v)", got, want, normal)

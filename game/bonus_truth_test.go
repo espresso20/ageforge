@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -186,10 +187,37 @@ type truthLab struct {
 	// one it is earned in, not only the first three and the last: slower,
 	// and what the report needs to name the age a cap starts to bite in.
 	everyAge bool
+	// blds and techs are the config tables by key, built on first use: a
+	// promise's age is looked up in them once per milestone, and each build
+	// reconstructs every definition.
+	blds  map[string]config.BuildingDef
+	techs map[string]config.TechDef
+	res   map[string]config.ResourceDef
 }
 
 func newTruthLab() *truthLab {
 	return &truthLab{engines: map[string]*GameEngine{}}
+}
+
+func (l *truthLab) buildingsByKey() map[string]config.BuildingDef {
+	if l.blds == nil {
+		l.blds = config.BuildingByKey()
+	}
+	return l.blds
+}
+
+func (l *truthLab) techsByKey() map[string]config.TechDef {
+	if l.techs == nil {
+		l.techs = config.TechByKey()
+	}
+	return l.techs
+}
+
+func (l *truthLab) resourcesByKey() map[string]config.ResourceDef {
+	if l.res == nil {
+		l.res = config.ResourceByKey()
+	}
+	return l.res
 }
 
 func (l *truthLab) engine(age string, mode truthMode) *GameEngine {
@@ -412,10 +440,7 @@ func truthMoraleLift(t *testing.T, ge *GameEngine) float64 {
 	wonder := ""
 	for _, key := range ge.Buildings.order {
 		def := ge.Buildings.defs[key]
-		lifts := false
-		for _, e := range def.Effects {
-			lifts = lifts || e.Type == "morale"
-		}
+		lifts := slices.ContainsFunc(def.Effects, func(e config.Effect) bool { return e.Type == "morale" })
 		if def.Category == "wonder" && !lifts {
 			wonder = key
 			break
@@ -1751,7 +1776,7 @@ func truthMilestoneAge(l *truthLab, def config.MilestoneDef) string {
 		}
 	}
 	later(def.MinAge)
-	blds := config.BuildingByKey()
+	blds := l.buildingsByKey()
 	for key := range def.MinBuildings {
 		later(blds[key].RequiredAge)
 	}
@@ -1762,12 +1787,12 @@ func truthMilestoneAge(l *truthLab, def config.MilestoneDef) string {
 		}
 		later(keys[first])
 	}
-	techs := config.TechByKey()
+	techs := l.techsByKey()
 	for _, key := range def.RequiredTechs {
 		later(techs[key].Age)
 	}
 	for res := range def.MinResources {
-		later(config.ResourceByKey()[res].Age)
+		later(l.resourcesByKey()[res].Age)
 	}
 	if def.MinSoldiersTrained > 0 {
 		later("iron_age") // where the soldiers begin
@@ -2006,9 +2031,10 @@ func truthEpochEventPromises(t *testing.T) []truthPromise {
 			entries = append(entries, ep.Ages[0])
 		}
 	}
+	resources := config.ResourceByKey()
 	entryFor := func(res string) string {
 		for _, age := range entries {
-			if ageOrders()[config.ResourceByKey()[res].Age] <= ageOrders()[age] {
+			if ageOrders()[resources[res].Age] <= ageOrders()[age] {
 				return age
 			}
 		}
@@ -2643,9 +2669,7 @@ func TestBonusTruth(t *testing.T) {
 		}
 	}
 	if path := os.Getenv("BONUS_TRUTH_REPORT"); path != "" {
-		if err := os.WriteFile(path, []byte(truthReport(verdicts)), 0o644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(path, []byte(truthReport(verdicts)), 0o644))
 	}
 }
 

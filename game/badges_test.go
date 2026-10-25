@@ -116,9 +116,7 @@ func TestAgeBadgeEarnedOnAdvance(t *testing.T) {
 	if again := ge.DrainEarnedBadges(); len(again) != 0 {
 		t.Errorf("an earned badge was earned again: %+v", again)
 	}
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	if disk := slotAccount(t, acct.AccountID); !hasBadge(disk, badgeStone) || disk.Version != accountSchemaVersion || disk.Tampered {
 		t.Errorf("on disk: version %d, tampered %v, badges %v", disk.Version, disk.Tampered, disk.Badges)
 	}
@@ -260,14 +258,10 @@ func TestLineageLadderCountsABuildOnce(t *testing.T) {
 	}
 
 	// The marks are the run's: they are saved with it and come back.
-	if err := ge.SaveGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("run"))
 	ge2 := NewGameEngine()
 	ge2.SetAccount(acct)
-	if err := ge2.LoadGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("run"))
 	sellSome(ge2, "hut", 3)
 	for i := 0; i < 3; i++ {
 		finishOne(ge2, "hut")
@@ -469,29 +463,21 @@ func TestCookieJar(t *testing.T) {
 func TestModifiedSaveCrossesItsBadges(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
-	if err := ge.SaveGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("run"))
 	path := filepath.Join(accountDir(acct.AccountID), "saves", "run.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &raw))
 	raw["resources"] = json.RawMessage(`{"food": 999999, "wood": 999999}`)
 	edited, _ := json.Marshal(raw)
-	if err := os.WriteFile(path, edited, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(path, edited, 0644))
 
 	ge2 := NewGameEngine()
 	ge2.SetAccount(acct)
-	if err := ge2.LoadGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("run"))
 	if !ge2.GetState().CheaterBadge {
 		t.Fatal("precondition: the edited save did not load as modified")
 	}
@@ -539,9 +525,7 @@ func TestEditedAccountCrossesItsBadges(t *testing.T) {
 	if e.Flags&BadgeFlagCrossed == 0 {
 		t.Errorf("a badge earned on a flagged account is not crossed: %+v", e)
 	}
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	if disk := slotAccount(t, acct.AccountID); !disk.Tampered || disk.Badges[badgeStone].Flags&BadgeFlagCrossed == 0 {
 		t.Errorf("on disk: tampered %v, badge %+v", disk.Tampered, disk.Badges[badgeStone])
 	}
@@ -630,9 +614,7 @@ func TestBadgesHideWhatTheSpoilerRulesHide(t *testing.T) {
 		t.Errorf("the Modern Age badge showed in the Bronze Age: %+v", v)
 	}
 	// What the account has seen stays seen in a new run.
-	if err := ge.StartNewNamedGame("second"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("second"))
 	views, _ = ge.Badges()
 	if v := viewOf(t, views, badgeIron); v.Hidden {
 		t.Errorf("a new run hid a badge the account had seen: %+v", v)
@@ -684,9 +666,7 @@ func TestBadgesDoNotChangeTheRun(t *testing.T) {
 			t.Fatal(err)
 		}
 		var raw map[string]json.RawMessage
-		if err := json.Unmarshal(b, &raw); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, json.Unmarshal(b, &raw))
 		delete(raw, "account_id") // whose save it is, not what happened in it
 		return raw
 	}
@@ -740,9 +720,7 @@ func TestBadgeForEarningBadges(t *testing.T) {
 	}
 	ge := NewGameEngineWith(rules.Compile(src))
 	ge.SetAccount(acct)
-	if err := ge.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("run"))
 
 	ge.NoteDevUnlocked() // an integrity badge: not counted
 	advanceTo(ge, "stone_age")
@@ -786,9 +764,7 @@ func TestConditionsOnARun(t *testing.T) {
 		}
 		ge := NewGameEngineWith(set)
 		ge.SetAccount(acct)
-		if err := ge.StartNewNamedGame("run"); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.StartNewNamedGame("run"))
 		return ge, acct
 	}
 
@@ -836,9 +812,7 @@ func TestListAccountsCountsBadges(t *testing.T) {
 	ge, acct := devEngine(t, "Ada")
 	advanceTo(ge, "stone_age")
 	ge.NoteDevUnlocked()
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	before := slotFile(t, acct.AccountID)
 	want := 0
 	for _, key := range acct.EarnedBadges() {
@@ -909,45 +883,13 @@ func TestEveryDeclaredEventIsReported(t *testing.T) {
 	}
 
 	// Every one is used in the engine's own code (test files left out).
-	files, err := filepath.Glob("*.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	used := map[string]bool{}
-	for _, f := range files {
-		if strings.HasSuffix(f, "_test.go") {
-			continue
-		}
-		src, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		for name := range names {
-			if strings.Contains(string(src), "config."+name) {
-				used[name] = true
-			}
-		}
-	}
+	src := engineSource(t)
 	for _, name := range sortedKeys(names) {
-		_, retired := retiredBadgeEvents[name]
-		switch {
-		case !used[name] && !retired:
+		if !strings.Contains(src, "config."+name) {
 			t.Errorf("config.%s is declared but the engine never reports it", name)
-		case used[name] && retired:
-			t.Errorf("config.%s is reported again: remove it from retiredBadgeEvents", name)
-		}
-	}
-	for name := range retiredBadgeEvents {
-		if _, ok := names[name]; !ok {
-			t.Errorf("retiredBadgeEvents lists config.%s, which is no longer declared: remove it", name)
 		}
 	}
 }
-
-// retiredBadgeEvents are events the catalog still declares and the engine no
-// longer reports, each with why. None today: the market's trade event went
-// with its ladder.
-var retiredBadgeEvents = map[string]string{}
 
 // TestDayPlayedIsNotedOncePerDay: starting or loading a game notes the
 // calendar day on the account, once.
@@ -958,15 +900,9 @@ func TestDayPlayedIsNotedOncePerDay(t *testing.T) {
 	if !slices.Equal(acct.Days, []string{today}) {
 		t.Fatalf("days after starting a game: %v, want [%s]", acct.Days, today)
 	}
-	if err := ge.SaveGame("run"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.LoadGame("run"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.StartNewNamedGame("again"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("run"))
+	noErr(t, ge.LoadGame("run"))
+	noErr(t, ge.StartNewNamedGame("again"))
 	if len(acct.Days) != 1 {
 		t.Errorf("the same day was noted again: %v", acct.Days)
 	}
@@ -997,9 +933,7 @@ func TestBadgeThemeReward(t *testing.T) {
 	}
 	ge := NewGameEngineWith(rules.Compile(src))
 	ge.SetAccount(acct)
-	if err := ge.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("run"))
 	if acct.HasTheme("bronze") {
 		t.Fatal("precondition: the account already has the theme")
 	}

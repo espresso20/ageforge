@@ -27,9 +27,7 @@ func TestASaveWritesNoStorage(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(3)
 	ge.StepTicks(20)
-	if err := ge.SaveGame("nostorage"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("nostorage"))
 	data, err := os.ReadFile(savePath("nostorage"))
 	if err != nil {
 		t.Fatal(err)

@@ -23,9 +23,7 @@ func wallFixtureSave(t *testing.T) GameSave {
 		t.Fatal(err)
 	}
 	var save GameSave
-	if err := json.Unmarshal(data, &save); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &save))
 	if save.StorageRules != 0 {
 		t.Fatalf("the fixture carries storage_rules %d: it is not from before the wall", save.StorageRules)
 	}
@@ -42,16 +40,10 @@ func wallFixtureView(t *testing.T) *GameEngine {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath("wall"), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath("wall"), data, 0o644))
 	ge := NewGameEngine()
-	if err := ge.loadSave("wall", true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.loadSave("wall", true))
 	return ge
 }
 
@@ -177,9 +169,7 @@ func TestWallSave_NoticeOnceAndSavedInTheNewShape(t *testing.T) {
 		t.Fatal(err)
 	}
 	var saved GameSave
-	if err := json.Unmarshal(data, &saved); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &saved))
 	if saved.StorageRules != config.StorageRules {
 		t.Errorf("the re-saved game carries storage_rules %d, want %d", saved.StorageRules, config.StorageRules)
 	}

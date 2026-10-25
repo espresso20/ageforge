@@ -157,11 +157,7 @@ func Mechanics() []MechanicDef {
 // mechanicIndex is Mechanics by key, built once: the table never changes,
 // and the tech layer looks a mechanic up for every effect it folds.
 var mechanicIndex = sync.OnceValue(func() map[string]MechanicDef {
-	m := make(map[string]MechanicDef)
-	for _, d := range Mechanics() {
-		m[d.Key] = d
-	}
-	return m
+	return indexBy(Mechanics(), func(d MechanicDef) string { return d.Key })
 })
 
 // MechanicByKey is Mechanics by key. The map is shared: read it, never

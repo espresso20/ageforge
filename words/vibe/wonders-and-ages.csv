@@ -146,53 +146,29 @@ era.neon_era.description,"Augmented reality and a takeover of the solar system, 
 era.cosmic_era.name,Starry Eyed Era
 era.cosmic_era.description,"Between the stars and beyond time itself, the cosmic lore is unhinged."
 resource.food.name,Snacks
-resource.food.description,"Feeds your whole population, and the snack bar never closes."
 resource.wood.name,Sticks
-resource.wood.description,"Basic building material, lowkey the backbone of the whole vibe."
 resource.faith.name,Good Vibes
-resource.faith.description,"Spiritual influence, and it's giving divine. Faith income raises morale, and morale is literally bussin."
 resource.stone.name,Rocks
-resource.stone.description,"Durable building material, built different and unbothered."
 resource.iron.name,Hard Metal
-resource.iron.description,"Metal for tools and weapons, hard mode all the way."
 resource.gold.name,Bling
-resource.gold.description,"Currency and trade, the bag is always the main focus."
 resource.coal.name,Hot Rocks
-resource.coal.description,"Fuel for smelting and industry, lit and very hot, no cap."
 resource.marble.name,Bougie Rocks
-resource.marble.description,"Polished stone from quarries, aesthetic on purpose and zero apologies."
 resource.iron_ore.name,Sus Ore
-resource.iron_ore.description,"Raw iron ore from mines and quarries, lowkey sus but it's the starter pack."
 resource.steel.name,Flex Metal
-resource.steel.description,"Refined metal for advanced construction, the buildings get the full glow-up."
 resource.culture.name,Clout
-resource.culture.description,"Art and cultural influence. Spent on monuments, festivals and appeasing harbingers, the clout is real."
 resource.oil.name,Crude
-resource.oil.description,"Fuel for machines and industry, crude but it slaps."
 resource.electricity.name,Zap Juice
-resource.electricity.description,"Powers modern infrastructure, the grid is giving main character."
 resource.uranium.name,Glow Rocks
-resource.uranium.description,"Radioactive fuel for reactors, glowing hard, maybe a little too much rizz."
 resource.data.name,Tea
-resource.data.description,"Digital information and analytics, the tea is hot and the receipts are attached."
 resource.nanobots.name,Tiny Bots
-resource.nanobots.description,"Microscopic machines, made by the Nano Foundry in the Doomscroll Age, tiny but mighty."
 resource.titanium_ore.name,Feather Ore
-resource.titanium_ore.description,"Raw titanium ore from mines, light as a feather but tough as a boss."
 resource.crypto.name,Meme Coin
-resource.crypto.description,"Decentralized digital currency, no bank, pure chaos."
 resource.dark_matter_crystals.name,Void Gems
-resource.dark_matter_crystals.description,"Crystallized dark matter from deep mines, the vibes are void and the gems are real."
 resource.plasma.name,Spicy Gas
-resource.plasma.description,"Superheated ionized gas for energy, spicy on purpose."
 resource.titanium.name,Featherweight
-resource.titanium.description,"Lightweight metal for space construction, so light it's almost unfair."
 resource.dark_matter.name,Void Vibes
-resource.dark_matter.description,"Exotic matter for warp technology, a bit sus but it's the only speedrun route."
 resource.antimatter.name,Evil Twin
-resource.antimatter.description,"Annihilation fuel for megastructures, the cleanup crew is cooked."
 resource.quantum_flux.name,Maybe Energy
-resource.quantum_flux.description,"Unstable quantum energy for reality manipulation, the vibes are chaotic and we love that."
 worker_class.food.primitive_age,Berry Goblin
 worker_class.food.stone_age,Crop Queen
 worker_class.food.bronze_age,Plant Parent

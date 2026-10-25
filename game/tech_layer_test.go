@@ -162,7 +162,7 @@ func TestTechCutsMultiplyAndHoldAtTheirFloor(t *testing.T) {
 	// The floors: a made-up tree whose every tech halves all three.
 	src := rules.FromConfig()
 	for _, key := range []string{"zz_half_a", "zz_half_b", "zz_half_c", "zz_half_d"} {
-		src.Techs = append(src.Techs, config.TechDef{Key: key, Name: key, Age: "primitive_age", Lane: config.LaneCraft, Cost: 1, ResearchTicks: 1,
+		src.Techs = append(src.Techs, config.TechDef{Key: key, Name: key, Age: "primitive_age", Lane: config.LaneCraft, Cost: 1,
 			Effects: []config.TechEffect{
 				{Kind: config.EffectBuildCost, Value: -0.5},
 				{Kind: config.EffectBuildTime, Value: -0.5},
@@ -299,9 +299,7 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	// A route started now takes the shorter run.
 	def := ge.Trade.routeDefs["local_barter"]
 	ge.Buildings.counts[def.RequiredBld] = def.MinCount
-	if err := ge.StartTradeRoute("local_barter"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartTradeRoute("local_barter"))
 	if got, want := ge.Trade.activeRoutes["local_barter"].TicksLeft, int(float64(def.TicksPerRun)*0.85*0.85); got != want {
 		t.Errorf("Local Barter runs every %d ticks with both route techs, want %d (listed %d)", got, want, def.TicksPerRun)
 	}

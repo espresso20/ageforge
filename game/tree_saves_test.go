@@ -66,16 +66,12 @@ func TestWriteTreeFixtures(t *testing.T) {
 		setup(ge)
 		ge.Research.rebuildBonuses()
 		ge.mu.Unlock()
-		if err := ge.SaveGame(name); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SaveGame(name))
 		data, err := os.ReadFile(savePath(name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(path, data, 0o644))
 	}
 	write(treeFixtureResearched, "pre_tree_medieval", "medieval_age", func(ge *GameEngine) {
 		ge.Research.researched["alchemy"] = true
@@ -105,22 +101,6 @@ func loadTreeFixture(t *testing.T, path, name string) *GameEngine {
 		t.Fatalf("%s failed its signature check", path)
 	}
 	return ge
-}
-
-// saveAndLoad saves ge and loads the save into a new engine: a second load.
-func saveAndLoad(t *testing.T, ge *GameEngine, name string) *GameEngine {
-	t.Helper()
-	if err := ge.SaveGame(name); err != nil {
-		t.Fatal(err)
-	}
-	again := NewGameEngine()
-	if err := again.LoadGame(name); err != nil {
-		t.Fatal(err)
-	}
-	if again.cheaterBadge {
-		t.Fatalf("the re-saved %s failed its signature check", name)
-	}
-	return again
 }
 
 // treeFixtureKnowledge is the knowledge output the fixtures' techs add once

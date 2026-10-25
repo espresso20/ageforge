@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- helpers ------------------------------------------------------------------
@@ -37,9 +38,7 @@ func quietFate(ge *GameEngine) {
 // forceFate fates a doom in ge's era striking offset ticks after it began.
 func forceFate(t *testing.T, ge *GameEngine, offset int) {
 	t.Helper()
-	if err := ge.ForceFateForTest(ge.currentEpoch, offset); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.ForceFateForTest(ge.currentEpoch, offset))
 }
 
 // tickTo moves the clock to tick and runs the fate's tick hook there.
@@ -198,14 +197,10 @@ func TestFateSurvivesSaveLoadWithoutReroll(t *testing.T) {
 	}{
 		{"fated", func(ge *GameEngine) { forceFate(t, ge, 21000) }},
 		{"quiet", func(ge *GameEngine) {
-			if err := ge.ForceQuietFateForTest(ge.currentEpoch); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.ForceQuietFateForTest(ge.currentEpoch))
 		}},
 		{"false prophet", func(ge *GameEngine) {
-			if err := ge.ForceFalseProphetForTest(ge.currentEpoch, 21000); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.ForceFalseProphetForTest(ge.currentEpoch, 21000))
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -214,13 +209,7 @@ func TestFateSurvivesSaveLoadWithoutReroll(t *testing.T) {
 			ge.tick = 100
 			want := *ge.fate
 			draws, _ := ge.rngDraws()
-			if err := ge.SaveGame("fate_" + strings.ReplaceAll(tc.name, " ", "_")); err != nil {
-				t.Fatal(err)
-			}
-			ge2 := NewGameEngine()
-			if err := ge2.LoadGame("fate_" + strings.ReplaceAll(tc.name, " ", "_")); err != nil {
-				t.Fatal(err)
-			}
+			ge2 := saveAndLoad(t, ge, "fate_"+strings.ReplaceAll(tc.name, " ", "_"))
 			if ge2.cheaterBadge {
 				t.Error("a save with a fate failed its signature check")
 			}
@@ -246,13 +235,7 @@ func TestOldSavesMigrateToFates(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := catEngine(t, "classical_age", 1)
 	ge.tick = 5000
-	if err := ge.SaveGame("old_no_thread"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("old_no_thread"); err != nil {
-		t.Fatal(err)
-	}
+	ge2 := saveAndLoad(t, ge, "old_no_thread")
 	if ge2.fate != nil || ge2.harbinger != nil {
 		t.Fatalf("load started something: fate %+v thread %+v", ge2.fate, ge2.harbinger)
 	}
@@ -273,9 +256,7 @@ func TestOldSavesMigrateToFates(t *testing.T) {
 	snap.Signature = signSave(snap, saveHMACKey)
 	writeRawSave(t, "old_thread", snap)
 	ge3 := NewGameEngine()
-	if err := ge3.LoadGame("old_thread"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge3.LoadGame("old_thread"))
 	h, f := ge3.harbinger, ge3.fate
 	if h == nil || h.TargetEpoch != "iron_era" || h.AppeaseLevel != 1 || !h.Invited || h.When != WhenThisEra {
 		t.Fatalf("migrated thread = %+v", h)
@@ -299,9 +280,7 @@ func TestOldSavesMigrateToFates(t *testing.T) {
 	snap.Signature = signSave(snap, saveHMACKey)
 	writeRawSave(t, "old_stone", snap)
 	ge4 := NewGameEngine()
-	if err := ge4.LoadGame("old_stone"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge4.LoadGame("old_stone"))
 	if ge4.harbinger != nil {
 		t.Errorf("an old Stone Era thread survived: %+v", ge4.harbinger)
 	}
@@ -321,9 +300,7 @@ func TestFateSaveFields(t *testing.T) {
 		}
 	}
 	quiet := fateEngine(t, "iron_age", 1)
-	if err := quiet.ForceQuietFateForTest("iron_era"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, quiet.ForceQuietFateForTest("iron_era"))
 	raw, _ = json.Marshal(quiet.buildSaveSnapshot().Fate)
 	for _, k := range []string{"fated", "strike_tick", "lead_frac", "false_prophet"} {
 		if strings.Contains(string(raw), `"`+k+`"`) {
@@ -546,9 +523,7 @@ func TestMidAgeStrikeBlocksAdvanceAndPrestige(t *testing.T) {
 	if st := ge.GetState(); st.PendingCatastrophe != "digital_era" {
 		t.Errorf("snapshot pending %q; the popup reads it", st.PendingCatastrophe)
 	}
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	if ge.ageReady {
 		t.Error("Endure left the old readiness standing: the requirements must be checked afresh")
 	}
@@ -647,9 +622,7 @@ func TestStrikeLandsAtTheTransitionWhenOutrun(t *testing.T) {
 		if !ge.fate.AtAdvance || ge.fate.Resolved != FateStruck {
 			t.Errorf("fate = %+v, want struck at the advance", ge.fate)
 		}
-		if err := ge.Endure(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.Endure())
 		readyToAdvance(ge)
 		if err := ge.AdvanceAge(); err != nil || ge.age != "renaissance_age" {
 			t.Errorf("advance after Endure: %v, age %s", err, ge.age)
@@ -731,7 +704,7 @@ func TestPlanAdvanceCannotOutrunTheDoom(t *testing.T) {
 	ge.plan = []PlanItem{{Kind: PlanAdvance, Count: 1}}
 	ge.pendingCatastrophe = ""
 	// Meet the requirements the easy way: the plan asks CheckAdvancement.
-	ge.progress = newProgressManagerMet(t, ge)
+	ge.progress = newProgressManagerMet()
 	var s planStarts
 	ge.runPlan(&s)
 	if ge.age != "medieval_age" || ge.harbinger == nil || len(ge.plan) != 1 {
@@ -750,18 +723,14 @@ func TestPlanAdvanceCannotOutrunTheDoom(t *testing.T) {
 // while a harbinger is, once per era; in the Stone Era it is refused.
 func TestInviteGuaranteesTheStrike(t *testing.T) {
 	ge := fateEngine(t, "classical_age", 13)
-	if err := ge.ForceQuietFateForTest("iron_era"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.ForceQuietFateForTest("iron_era"))
 	if err := ge.HarbingerInvite(); err == nil || !strings.Contains(err.Error(), "No harbinger") {
 		t.Errorf("invite without a harbinger: %v", err)
 	}
 	forceFate(t, ge, 26000)
 	tickTo(ge, arrivalTick(ge))
 	setStock(ge, map[string][2]float64{"faith": {config.Million, config.Million}})
-	if err := ge.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerInvite())
 	if !ge.fate.Invited || !ge.harbinger.Invited || ge.catastropheInvited {
 		t.Errorf("invite state: fate %+v thread invited %v flag %v", ge.fate, ge.harbinger.Invited, ge.catastropheInvited)
 	}
@@ -790,13 +759,9 @@ func TestInviteGuaranteesTheStrike(t *testing.T) {
 
 	// A false prophet's invented doom becomes real.
 	fp := fateEngine(t, "classical_age", 14)
-	if err := fp.ForceFalseProphetForTest("iron_era", 26000); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, fp.ForceFalseProphetForTest("iron_era", 26000))
 	tickTo(fp, arrivalTick(fp))
-	if err := fp.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, fp.HarbingerInvite())
 	tickTo(fp, fp.fate.StrikeTick)
 	if fp.pendingCatastrophe != "iron_era" {
 		t.Fatalf("invited false prophet: pending %q", fp.pendingCatastrophe)
@@ -807,9 +772,7 @@ func TestInviteGuaranteesTheStrike(t *testing.T) {
 
 	// Nothing can strike in the Stone Era: every answer is refused there.
 	stone := fateEngine(t, "stone_age", 15)
-	if err := stone.ForceFalseProphetForTest("stone_era", 100); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, stone.ForceFalseProphetForTest("stone_era", 100))
 	tickTo(stone, 100)
 	if stone.harbinger == nil {
 		t.Fatal("no stone era harbinger")
@@ -829,9 +792,7 @@ func TestInviteGuaranteesTheStrike(t *testing.T) {
 func TestFalseProphetRevealedAfterItsWindow(t *testing.T) {
 	t.Run("untimed, revealed at the era's end", func(t *testing.T) {
 		ge := fateEngine(t, "iron_age", 16)
-		if err := ge.ForceFalseProphetForTest("iron_era", 2000); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.ForceFalseProphetForTest("iron_era", 2000))
 		tickTo(ge, arrivalTick(ge))
 		h := ge.harbinger
 		if h == nil || !h.FalseProphet || h.When != WhenUntold || (h.AnnouncedTier != CatastropheTierHigh && h.AnnouncedTier != CatastropheTierMedium) {
@@ -870,9 +831,7 @@ func TestFalseProphetRevealedAfterItsWindow(t *testing.T) {
 	t.Run("timed, revealed at the age's end", func(t *testing.T) {
 		ge := fateEngine(t, "classical_age", 17)
 		ages := config.EpochByKey()["iron_era"].Ages
-		if err := ge.ForceFalseProphetForTest("iron_era", int(baseAgeTicks(ages[0])+0.7*baseAgeTicks(ages[1]))); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.ForceFalseProphetForTest("iron_era", int(baseAgeTicks(ages[0])+0.7*baseAgeTicks(ages[1]))))
 		tickTo(ge, arrivalTick(ge))
 		if ge.harbinger == nil || ge.harbinger.When != WhenThisAge {
 			t.Fatalf("setup: %+v", ge.harbinger)
@@ -896,9 +855,7 @@ func TestFalseProphetRevealedAfterItsWindow(t *testing.T) {
 		// In the Stone Era nothing can strike: a false prophet who has not
 		// come by its end never comes, and the advance is not held up.
 		ge := fateEngine(t, "bronze_age", 18)
-		if err := ge.ForceFalseProphetForTest("stone_era", int(baseEraTicks("stone_era"))-1); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.ForceFalseProphetForTest("stone_era", int(baseEraTicks("stone_era"))-1))
 		tickTo(ge, 10)
 		if ge.harbinger != nil {
 			t.Fatal("setup: the false prophet came early")
@@ -910,9 +867,7 @@ func TestFalseProphetRevealedAfterItsWindow(t *testing.T) {
 	})
 	t.Run("stone era", func(t *testing.T) {
 		ge := fateEngine(t, "primitive_age", 18)
-		if err := ge.ForceFalseProphetForTest("stone_era", 200); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.ForceFalseProphetForTest("stone_era", 200))
 		tickTo(ge, arrivalTick(ge))
 		if ge.harbinger == nil || ge.harbinger.Age != "primitive_age" || ge.harbinger.When != WhenUntold {
 			t.Fatalf("the Wild Man should come, untimed: %+v", ge.harbinger)
@@ -972,13 +927,9 @@ func TestCosmicEraRollsAFateBesideTheLastPassage(t *testing.T) {
 		}
 	}
 	ge.harbingerTickCheck()
-	if err := ge.ForceQuietFateForTest("neon_era"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.ForceQuietFateForTest("neon_era"))
 	readyToAdvance(ge)
-	if err := ge.AdvanceAge(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.AdvanceAge())
 	if f := ge.fate; f == nil || f.EpochKey != "cosmic_era" || f.FalseProphet || f.Window != int(math.Round(baseEraTicks("cosmic_era"))) {
 		t.Fatalf("cosmic fate = %+v", ge.fate)
 	}
@@ -1025,9 +976,7 @@ func TestCosmicDoomParksTheLastPassageThread(t *testing.T) {
 	}
 	// Appease goes to the doom's thread; the Last Passage's keeps its level.
 	setStock(ge, map[string][2]float64{"faith": {config.Trillion, config.Trillion}, "culture": {config.Trillion, config.Trillion}})
-	if err := ge.HarbingerAppease(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerAppease())
 	if ge.harbinger.AppeaseLevel != 1 || ge.parkedHarbinger.AppeaseLevel != 1 {
 		t.Errorf("appease levels: doom %d, Last Passage %d", ge.harbinger.AppeaseLevel, ge.parkedHarbinger.AppeaseLevel)
 	}
@@ -1065,9 +1014,7 @@ func TestCosmicDoomSettlesBeforeThePrestige(t *testing.T) {
 	if name, _ := config.CatastropheInfo(ge.pendingCatastrophe); name != "The Reality Tear" {
 		t.Errorf("pending %q", name)
 	}
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	if h := ge.harbinger; h == nil || h.TargetEpoch != "" {
 		t.Errorf("the Last Passage thread did not resume: %+v", h)
 	}
@@ -1106,9 +1053,7 @@ func TestCosmicDoomAndLastPassageBothPending(t *testing.T) {
 		t.Errorf("Last Passage answered before the doom: %v", err)
 	}
 	level := ge.Prestige.GetLevel()
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	if ge.pendingCatastrophe != "" || !ge.pendingLastPassage || ge.Prestige.GetLevel() != level {
 		t.Fatalf("Endure answered the wrong one: pending %q passage %v level %d", ge.pendingCatastrophe, ge.pendingLastPassage, ge.Prestige.GetLevel())
 	}
@@ -1123,13 +1068,7 @@ func TestParkedLastPassageThreadSurvivesSaveLoad(t *testing.T) {
 	ge := cosmicDoom(t, "galactic_age", 60000)
 	tickTo(ge, arrivalTick(ge))
 	want, wantParked := *ge.harbinger, *ge.parkedHarbinger
-	if err := ge.SaveGame("parked"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("parked"); err != nil {
-		t.Fatal(err)
-	}
+	ge2 := saveAndLoad(t, ge, "parked")
 	if ge2.harbinger == nil || ge2.parkedHarbinger == nil || !reflect.DeepEqual(*ge2.harbinger, want) || !reflect.DeepEqual(*ge2.parkedHarbinger, wantParked) {
 		t.Fatalf("after load: live %+v parked %+v", ge2.harbinger, ge2.parkedHarbinger)
 	}
@@ -1170,10 +1109,9 @@ func TestNoCosmicFateLeaksBeforeItsHarbinger(t *testing.T) {
 	}
 }
 
-// newProgressManagerMet is ge's progress manager with the current age's
-// requirements met (every building requirement removed).
-func newProgressManagerMet(t *testing.T, ge *GameEngine) *ProgressManager {
-	t.Helper()
+// newProgressManagerMet is a progress manager with every age's requirements
+// met (every building requirement removed).
+func newProgressManagerMet() *ProgressManager {
 	pm := NewProgressManager()
 	for i := range pm.ages {
 		pm.ages[i].BuildingReqs = nil
@@ -1206,9 +1144,7 @@ func TestCosmicDoomSparesStorage(t *testing.T) {
 				t.Fatalf("pending %q at the strike, want the Reality Tear", ge.pendingCatastrophe)
 			}
 			if choice == "endure" {
-				if err := ge.Endure(); err != nil {
-					t.Fatal(err)
-				}
+				noErr(t, ge.Endure())
 				for k, n := range before {
 					if got := ge.Buildings.GetCount(k); got != n {
 						t.Errorf("%s: %d after Endure, want %d (storage is permanent)", k, got, n)
@@ -1219,15 +1155,14 @@ func TestCosmicDoomSparesStorage(t *testing.T) {
 				}
 				return
 			}
-			if err := ge.Succumb(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.Succumb())
 			ruins := ge.Buildings.GetAllRuins()
 			if len(ruins) == 0 {
 				t.Fatal("Succumb left no ruins")
 			}
+			byKey := config.BuildingByKey()
 			for k, n := range ruins {
-				if config.BuildingByKey()[k].Category == "storage" {
+				if byKey[k].Category == "storage" {
 					t.Errorf("Succumb ruined %d %s: storage is permanent", n, k)
 				}
 			}
@@ -1298,10 +1233,10 @@ func TestShortestWarningCoversTheAnswers(t *testing.T) {
 			}
 			return res, worst
 		}
-		if res, ticks := slowest(r.BraceL1, config.TypicalIncome); ticks > shortest {
+		if res, ticks := slowest(r.BraceL1, rules.Core().TypicalIncome); ticks > shortest {
 			t.Errorf("%s in %s: Brace level 1 takes %.1f hours of %s income, the shortest warning lasts %.1f", r.Epoch, r.Age, hours(ticks), res, hours(shortest))
 		}
-		if res, ticks := slowest(r.AppeaseL1, config.FlowIncome); ticks > shortest {
+		if res, ticks := slowest(r.AppeaseL1, rules.Core().FlowIncome); ticks > shortest {
 			t.Errorf("%s in %s: Appease level 1 takes %.1f hours of %s income, the shortest warning lasts %.1f", r.Epoch, r.Age, hours(ticks), res, hours(shortest))
 		}
 	}

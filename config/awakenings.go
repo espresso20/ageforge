@@ -124,15 +124,6 @@ func Awakenings() []AwakeningDef {
 	return defs
 }
 
-// AwakeningByKey returns a map of awakening key -> AwakeningDef.
-func AwakeningByKey() map[string]AwakeningDef {
-	m := make(map[string]AwakeningDef)
-	for _, a := range Awakenings() {
-		m[a.Key] = a
-	}
-	return m
-}
-
 // AwakeningForAge returns the awakening whose TriggerAge matches ageKey, and true,
 // or a zero AwakeningDef and false if no awakening triggers on that age.
 func AwakeningForAge(ageKey string) (AwakeningDef, bool) {

@@ -55,3 +55,10 @@ func TestHeldMakerKeepsItsPayback(t *testing.T) {
 		t.Errorf("the held Orbital Refinery pays back in %.3f of payback(%s)", r, d.RequiredAge)
 	}
 }
+
+// ColdStartCaps lists the price parts the cold-start rule held on the loaded
+// table (capColdStartBridge), in age order.
+func ColdStartCaps() []ColdStartCap {
+	_, caps := buildBase()
+	return caps
+}

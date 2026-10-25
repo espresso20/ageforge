@@ -11,8 +11,9 @@ import "fmt"
 // inert: the command is open, as it was before the locks. So the table lists
 // the locks the tree is designed around, and some of them may wait for
 // content: adding a tech with the key a lock names switches that lock on,
-// with nothing else to change (LiveFeatureLocks tells the two apart, and the
-// static research check lists the ones still waiting).
+// with nothing else to change (LiveFeatureLocks, in tech_effects_test.go,
+// tells the two apart, and the static research check lists the ones still
+// waiting).
 //
 // Old saves: a game that already used a command keeps it for the rest of its
 // run, whatever it has researched (the game's GameSave.GrantedFeatures), and
@@ -65,45 +66,11 @@ func FeatureLocks() []FeatureLockDef {
 	}
 }
 
-// FeatureLockByKey is FeatureLocks by key.
-func FeatureLockByKey() map[string]FeatureLockDef {
-	m := make(map[string]FeatureLockDef)
-	for _, d := range FeatureLocks() {
-		m[d.Key] = d
-	}
-	return m
-}
-
 // Refusal is what the game says when the command is used before its tech,
 // given the tech's name: "Festivals need Drama first. Research it
 // to hold one."
 func (d FeatureLockDef) Refusal(techName string) string {
 	return fmt.Sprintf("%s %s %s first. Research it to %s.", d.Name, d.Needs, techName, d.Then)
-}
-
-// LiveFeatureLocks splits locks by whether isTech knows each one's tech: a
-// lock is live when its tech is in the tree, and waiting (inert, its command
-// open) when it is not.
-func LiveFeatureLocks(locks []FeatureLockDef, isTech func(string) bool) (live, waiting []FeatureLockDef) {
-	for _, d := range locks {
-		if isTech(d.Tech) {
-			live = append(live, d)
-		} else {
-			waiting = append(waiting, d)
-		}
-	}
-	return live, waiting
-}
-
-// FeaturesOpenedBy lists the locks tech opens, in FeatureLocks order.
-func FeaturesOpenedBy(tech string) []FeatureLockDef {
-	var out []FeatureLockDef
-	for _, d := range FeatureLocks() {
-		if d.Tech == tech {
-			out = append(out, d)
-		}
-	}
-	return out
 }
 
 // RouteFeature is the lock a trade route sits behind on top of the lock on

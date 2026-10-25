@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- faith strength -----------------------------------------------------------
@@ -16,7 +17,7 @@ import (
 func faithBuildingsUpTo(age string) []string {
 	order := ageOrders()
 	var keys []string
-	for _, d := range config.BaseBuildings() {
+	for _, d := range rules.Core().Buildings() {
 		if d.Category == "wonder" {
 			continue
 		}
@@ -53,7 +54,7 @@ func faithTown(t *testing.T, age string, sets float64) *GameEngine {
 		}
 	}
 	setFaithBuildings(ge, age, sets)
-	for _, d := range config.BaseBuildings() {
+	for _, d := range rules.Core().Buildings() {
 		if d.Category != "wonder" || order[d.RequiredAge] >= order[age] {
 			continue
 		}
@@ -362,13 +363,7 @@ func TestFaithMeasureSaveLoadAndReset(t *testing.T) {
 	if want.Moderate <= 0 || want.Own <= 0 || want.Other <= 0 {
 		t.Fatalf("measure after 100 ticks with Stonehenge standing: %+v", want)
 	}
-	if err := ge.SaveGame("faith"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("faith"); err != nil {
-		t.Fatal(err)
-	}
+	ge2 := saveAndLoad(t, ge, "faith")
 	if ge2.faithMeasure != want || math.Abs(ge2.faithStrength()-strength) > 1e-12 {
 		t.Errorf("after load: measure %+v strength %v, want %+v and %v", ge2.faithMeasure, ge2.faithStrength(), want, strength)
 	}

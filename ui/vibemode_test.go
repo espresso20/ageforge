@@ -16,8 +16,8 @@ func vibeOffAfter(t *testing.T) {
 	vibe.Set(false)
 }
 
-// helpTitleOf is the title on the border of the Help panel.
-func helpTitleOf(d *Dashboard) string { return d.overlayMgr.entries["help"].tv.GetTitle() }
+// helpTitleOf is the title on the frame of the Help panel.
+func helpTitleOf(d *Dashboard) string { return d.overlayMgr.entries["help"].frame.title.String() }
 
 // TestVibemodeCommand: vibemode shows the setting, turns it on and off, saves
 // it to the account, and the words change live: the Buildings panel, the Help

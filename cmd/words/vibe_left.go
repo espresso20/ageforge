@@ -56,8 +56,6 @@ func init() {
 		"game.log_tags.logWords.16", "game.log_tags.logWords.17", "game.log_tags.logWords.18",
 	)
 	leftAloneFor(leftDev,
-		"config.maker_rule.RawLeftOut.01", "config.maker_rule.RawLeftOut.02",
-		"config.maker_rule.MakerHoles.01", "config.maker_rule.MakerHoles.02", "config.maker_rule.MakerHoles.03",
 		"game.catastrophe.forceCatastrophe.01", "game.catastrophe.forceCatastrophe.02",
 		"game.fate.forceFate.01", "game.fate.forceFate.02",
 		"game.harbinger.SummonHarbingerForTest.01",

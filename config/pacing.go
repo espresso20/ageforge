@@ -1,7 +1,9 @@
 package config
 
 import (
+	"maps"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -13,7 +15,7 @@ import (
 //
 // The numbers of the economy are written in the tables themselves: a
 // building's first price, rate and output per copy (the buildings_*.go
-// files), a tech's price and research time (research.go), a gate's amounts
+// files), a tech's price (research.go), a gate's amounts
 // and counts (ages.go), and how long each age is meant to last (AgeTargets,
 // below). Nothing rewrites them when the game loads; a golden record of all
 // of them (testdata/golden_tables.json) fails the build when one moves.
@@ -254,13 +256,9 @@ func median(v []float64) float64 {
 // that costs the median of one resource. Resources without a level (flow
 // resources) do not count.
 func priceUnits(cost map[string]float64, levels map[string]float64) float64 {
-	keys := make([]string, 0, len(cost))
-	for res := range cost {
-		keys = append(keys, res)
-	}
-	sort.Strings(keys) // summed in key order: a float sum over a map's own order differs in its last digit from run to run
 	u := 0.0
-	for _, res := range keys {
+	// summed in key order: a float sum over a map's own order differs in its last digit from run to run
+	for _, res := range slices.Sorted(maps.Keys(cost)) {
 		if pl := levels[res]; pl > 0 {
 			u += cost[res] / pl
 		}
@@ -376,10 +374,7 @@ func AnyResource(string) bool { return true }
 // those whatever it builds, so this is the part that measures what a town
 // put into a resource (the engine's faith strength reads it). Pure.
 func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bool) map[string]map[string]float64 {
-	idx := make(map[string]int, len(order))
-	for i, a := range order {
-		idx[a] = i
-	}
+	idx := AgePositions(order)
 	out := make(map[string]map[string]float64, len(order))
 	for i, age := range order {
 		made := map[string]float64{}
@@ -438,10 +433,7 @@ func IncomeFactor(techs []TechDef, pos map[string]int, age, res string) float64 
 // include accepts, as age -> resource -> income per tick: IsFlowResource
 // gives FlowIncome's table, AnyResource TypicalIncome's. Pure.
 func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(string) bool) map[string]map[string]float64 {
-	idx := make(map[string]int, len(order))
-	for i, a := range order {
-		idx[a] = i
-	}
+	idx := AgePositions(order)
 	out := make(map[string]map[string]float64, len(order))
 	for i, age := range order {
 		inc := map[string]float64{}
@@ -479,17 +471,4 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 		out[age] = inc
 	}
 	return out
-}
-
-// BuildingBuildCapTicks gives wonders WonderBuildFactor times the general cap: the long build that ends an age.
-func BuildingBuildCapTicks(age, category string) float64 {
-	div := 6.0
-	if category == "storage" {
-		div = 48
-	}
-	limit := LatePriceTargetTicks(age) / div
-	if category == "wonder" {
-		limit *= WonderBuildFactor
-	}
-	return limit
 }

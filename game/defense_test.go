@@ -354,9 +354,7 @@ func TestEndure_BraceAndGarrison(t *testing.T) {
 		return ge
 	}
 	plain := setup(0)
-	if err := plain.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, plain.Endure())
 	if got := nonWonderTotal(plain); got != 85 {
 		t.Errorf("braced Endure left %d of 100 buildings, want 85", got)
 	}
@@ -369,9 +367,7 @@ func TestEndure_BraceAndGarrison(t *testing.T) {
 	if want.Garrison <= 0 || want.BuildingsSaved == 0 {
 		t.Fatalf("preview shows no garrison: %+v", want)
 	}
-	if err := guarded.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, guarded.Endure())
 	if got := nonWonderTotal(guarded); got != 100-want.DestroyCount {
 		t.Errorf("guarded Endure left %d buildings, preview promised %d", got, 100-want.DestroyCount)
 	}
@@ -396,9 +392,7 @@ func TestEndure_GarrisonDeterministic(t *testing.T) {
 		}
 		giveSoldiers(ge, soldiersFor("iron_age"))
 		ge.pendingCatastrophe = "iron_era"
-		if err := ge.Endure(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.Endure())
 		out := map[string]int{}
 		for _, k := range keys {
 			out[k] = ge.Buildings.counts[k]
@@ -414,9 +408,7 @@ func TestEndure_GarrisonDeterministic(t *testing.T) {
 
 func TestHarbingerViewCountsGarrison(t *testing.T) {
 	ge := catEngine(t, "iron_age", 5)
-	if err := ge.SummonHarbingerForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SummonHarbingerForTest("iron_age"))
 	v := ge.GetState().Harbinger
 	if v == nil || v.GarrisonPct != 0 || v.EndureDestroyPct != 20 || v.EndureKeepPct != 15 {
 		t.Fatalf("no garrison: view = %+v, want 20%% / 15%% and no garrison", v)
@@ -453,13 +445,7 @@ func TestDefenseTally_SaveLoad(t *testing.T) {
 	if want == nil || want.Raids != 1 {
 		t.Fatalf("tally before save = %+v", want)
 	}
-	if err := ge.SaveGame("defense"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("defense"); err != nil {
-		t.Fatal(err)
-	}
+	ge2 := saveAndLoad(t, ge, "defense")
 	if ge2.cheaterBadge {
 		t.Error("save with a defense tally failed signature verification")
 	}

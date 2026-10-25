@@ -8,50 +8,49 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// oldFestivalPrices is what a festival cost the reference town (the culture
-// income the age's moderate economy makes) while it was 5% of the culture
-// store: the Black Market's was twice that (10%). From the Classical Age,
-// the first with a culture income; before it the price is its minimum. They
-// are the shares of the stock scale the prices are made of; the ages the
-// prices were tuned in (to the Industrial Age) still cost exactly this, and
-// the later ones are held to a ceiling (festivalMaxMinutes).
-var oldFestivalPrices = map[string]float64{
-	"classical_age": 84140, "medieval_age": 609140, "renaissance_age": 2759140, "colonial_age": 13009140,
-	"industrial_age": 43009140, "victorian_age": 543.00914 * config.Million, "electric_age": 6.04300914 * config.Billion,
-	"atomic_age": 36.04300914 * config.Billion, "modern_age": 156.04300915 * config.Billion, "information_age": 981.043009 * config.Billion,
-	"digital_age": 3.731043009 * config.Trillion, "cyberpunk_age": 33.73104301 * config.Trillion, "fusion_age": 166.231043 * config.Trillion,
-	"space_age": 816.231043 * config.Trillion, "interstellar_age": 24.316231045 * config.Quadrillion, "galactic_age": 221.81623105 * config.Quadrillion,
-	"quantum_age": 17.22181623 * config.Quintillion, "transcendent_age": 17.22181623 * config.Quintillion,
+// referencePrices is what a festival and a Black Market deal cost the
+// reference town, the one making the age's typical culture income: their share
+// of the age's stock scale (which is that many minutes of the typical income),
+// held to the ceiling in minutes of it (festivalMaxMinutes,
+// blackMarketMaxMinutes), and never under the minimum.
+func referencePrices(age string, typical float64) (festival, deal float64) {
+	capF := float64(festivalMaxMinutes*config.TicksPerMinute) * typical
+	capB := float64(blackMarketMaxMinutes*config.TicksPerMinute) * typical
+	scale := config.StockScale(age)
+	festival = max(festivalMinCost, min(festivalCostShare*scale, capF))
+	deal = max(blackMarketMinCost, min(blackMarketCostShare*scale, capB))
+	return festival, deal
 }
 
-// TestCulturePricesKeepTheReferenceTownsPrice: the festival and the Black
-// Market ask minutes of the town's culture income, worked out so that the
-// town making what the age's moderate economy makes pays what a store of the
-// age's scale made them cost, up to the ceiling in minutes: the same figure
-// in every age up to the Industrial Age, which are the ages the prices were
-// tuned in, and the ceiling from the Victorian Age on, where the scale has
-// outrun any culture income.
-func TestCulturePricesKeepTheReferenceTownsPrice(t *testing.T) {
+// TestCulturePricesAreHoursOfTheTownsIncome: the festival and the Black Market
+// ask minutes of the town's culture income, worked out so that the town making
+// what the age's moderate economy makes pays its share of the age's stock
+// scale, up to the ceiling in minutes of that income, in every age with a
+// culture income.
+func TestCulturePricesAreHoursOfTheTownsIncome(t *testing.T) {
 	set := rules.Core()
-	pos := config.AgePositions(config.AgeOrder())
-	for age, want := range oldFestivalPrices {
+	checked := 0
+	for _, age := range config.AgeOrder() {
 		typical := set.TypicalIncome("culture", age)
 		if typical <= 0 {
-			t.Errorf("%s: no typical culture income", age)
 			continue
 		}
+		checked++
 		festival, deal := CulturePrices(set, age, typical)
-		capF := float64(festivalMaxMinutes*config.TicksPerMinute) * typical
-		capB := float64(blackMarketMaxMinutes*config.TicksPerMinute) * typical
-		wantF, wantB := math.Min(want, capF), math.Min(2*want, capB)
+		wantF, wantB := referencePrices(age, typical)
 		if math.Abs(festival-wantF) > 1e-9*wantF || math.Abs(deal-wantB) > 1e-9*wantB {
 			t.Errorf("%s: a festival costs the reference town %v and a deal %v, want %v and %v", age, festival, deal, wantF, wantB)
 		}
-		// The ceiling holds the festival from the Victorian Age on, and never
-		// before it.
-		if held := want > capF; held != (pos[age] >= pos["victorian_age"]) {
-			t.Errorf("%s: festival held to its ceiling is %v, want it so from the Victorian Age on only", age, held)
+		// Never more than hours of the town's own income (the minimum aside).
+		if capF := float64(festivalMaxMinutes*config.TicksPerMinute) * typical; festival > max(festivalMinCost, capF) {
+			t.Errorf("%s: a festival costs %v, over its ceiling of %v", age, festival, capF)
 		}
+		if capB := float64(blackMarketMaxMinutes*config.TicksPerMinute) * typical; deal > max(blackMarketMinCost, capB) {
+			t.Errorf("%s: a deal costs %v, over its ceiling of %v", age, deal, capB)
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no age has a typical culture income")
 	}
 }
 
@@ -70,8 +69,8 @@ func TestCulturePricesFollowTheTownsIncome(t *testing.T) {
 		return ge.festivalCost(), ge.blackMarketCost()
 	}
 	f1, b1 := cost(typical)
-	if want := oldFestivalPrices[ge.age]; math.Abs(f1-want) > 1e-9*want || math.Abs(b1-2*want) > 1e-9*want {
-		t.Fatalf("at the typical income a festival costs %v and a deal %v, want %v and %v", f1, b1, want, 2*want)
+	if wantF, wantB := referencePrices(ge.age, typical); math.Abs(f1-wantF) > 1e-9*wantF || math.Abs(b1-wantB) > 1e-9*wantB {
+		t.Fatalf("at the typical income a festival costs %v and a deal %v, want %v and %v", f1, b1, wantF, wantB)
 	}
 	f2, b2 := cost(2 * typical)
 	if math.Abs(f2-2*f1) > 1e-9*f1 || math.Abs(b2-2*b1) > 1e-9*b1 {

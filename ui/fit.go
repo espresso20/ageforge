@@ -21,15 +21,10 @@ func visibleLen(s string) int {
 }
 
 // overlayTextWidth is the width of the text area of a panel opened over a
-// terminal screenW columns wide: the middle 17 of 19 parts (the way the
-// overlay's Flex divides them), less the border.
+// terminal screenW columns wide: the whole width, less the frame's edges and
+// the air inside them (panel_frame.go).
 func overlayTextWidth(screenW int) int {
-	side := screenW / 19
-	w := (screenW-side)*17/18 - 2
-	if w < 20 {
-		w = 20
-	}
-	return w
+	return max(20, screenW-2*panelPadX)
 }
 
 // glue stands for a space that must not break: wrapWords keeps the words on

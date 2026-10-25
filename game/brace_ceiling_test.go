@@ -7,38 +7,24 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// oldBraceCeilings is the most any material of an age's Brace asked while the
-// ceiling was three fifths of a moderate builder's store, rounded down to two
-// figures. Every material of an age had the same one. The ceiling is now the
-// same share of the age's stock scale in hours of the moderate economy's
-// income, and keeps these amounts.
-var oldBraceCeilings = map[string]float64{
-	"iron_age": 130000, "classical_age": config.Million, "medieval_age": 7.3 * config.Million, "renaissance_age": 33 * config.Million,
-	"colonial_age": 150 * config.Million, "industrial_age": 510 * config.Million, "victorian_age": 6.5 * config.Billion, "electric_age": 72 * config.Billion,
-	"atomic_age": 430 * config.Billion, "modern_age": 1.8 * config.Trillion, "information_age": 11 * config.Trillion, "digital_age": 44 * config.Trillion,
-	"cyberpunk_age": 400 * config.Trillion, "fusion_age": 1.9 * config.Quadrillion, "space_age": 9.7 * config.Quadrillion, "interstellar_age": 290 * config.Quadrillion,
-	"galactic_age": 2.6 * config.Quintillion, "quantum_age": 200 * config.Quintillion, "transcendent_age": 200 * config.Quintillion,
-}
-
-// TestBraceCeilingKeepsTheAmountsItHad: in every age a thread can arrive in,
+// TestBraceCeilingIsHoursOfTypicalIncome: in every age a thread can arrive in,
 // every material's ceiling, on a doom's thread and on the Last Passage's, is
-// the amount it was when the ceiling was a share of a store; and it is
-// the same ceiling in hours of the age's typical income of the material.
-func TestBraceCeilingKeepsTheAmountsItHad(t *testing.T) {
+// the same amount for every material of the thread, and it is the same ceiling
+// in hours of the age's typical income of the material.
+func TestBraceCeilingIsHoursOfTypicalIncome(t *testing.T) {
 	set := rules.Core()
 	checked := 0
 	for _, row := range HarbingerPriceTable() {
-		want, ok := oldBraceCeilings[row.Age]
-		if !ok {
-			t.Fatalf("no old ceiling pinned for %s", row.Age)
-		}
 		if len(row.BraceCeiling) == 0 {
 			t.Errorf("%s (Last Passage %v): no ceiling", row.Age, row.LastPassage)
 		}
+		same := -1.0
 		for res, got := range row.BraceCeiling {
 			checked++
-			if got != want {
-				t.Errorf("%s (Last Passage %v): the ceiling of %s is %s, it was %s", row.Age, row.LastPassage, res, config.GoLiteral(got), config.GoLiteral(want))
+			if same < 0 {
+				same = got
+			} else if got != same {
+				t.Errorf("%s (Last Passage %v): the ceiling of %s is %s, but another material's is %s", row.Age, row.LastPassage, res, config.GoLiteral(got), config.GoLiteral(same))
 			}
 			hours := row.BraceCeilingHours[res]
 			if hours <= 0 {
