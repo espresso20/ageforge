@@ -21,9 +21,7 @@ func bronzeTown(t *testing.T, techs ...string) (*Dashboard, *tview.Pages) {
 	if len(techs) > 0 {
 		eng.GrantTechsForTest(techs...)
 	}
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	d.refresh()
 	return d, pages
 }
