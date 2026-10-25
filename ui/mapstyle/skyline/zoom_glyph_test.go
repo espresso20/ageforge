@@ -8,6 +8,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
+	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
 
 // block is the four cells (upper left, upper right, lower left, lower right)
@@ -173,6 +174,48 @@ func TestCloseFramesHaveNoClumps(t *testing.T) {
 					for k := 0; k < 3; k++ {
 						draw(v, m, 160, 45, 40+k*5, tier, false)
 						assertNoClump(t, &v.fb, tier, age)
+					}
+				}
+			}
+		}
+	}
+}
+
+// TestCloseTextOnce: text is never scaled: the labels, the district names and
+// the status words are drawn once on the screen at the close level, not twice
+// one above the other as a 2x2 repeat of each letter would draw them.
+func TestCloseTextOnce(t *testing.T) {
+	isLetter := func(r rune) bool { return r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' }
+	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "medieval_age", "industrial_age", "modern_age"} {
+		m := build(fixture.Options{Age: age, Seed: 3, Routes: 4, Tick: tickAt(0.45)}, 1)
+		for _, inspect := range []bool{false, true} {
+			for di := range m.Skyline.Districts {
+				v := newView()
+				v.zoom, v.sw, v.inspect = zClose, 160, inspect
+				v.follow = false
+				v.cam = m.Skyline.Districts[di].Centre - zClose.cols(160)/2
+				txt := capture.Text(draw(v, m, 160, 45, 40, mapmodel.TierUnicode, false))
+				rows := strings.Split(txt, "\n")
+				for r := 0; r+1 < len(rows); r++ {
+					a, b := []rune(rows[r]), []rune(rows[r+1])
+					for c := 0; c < len(a); {
+						if !isLetter(a[c]) {
+							c++
+							continue
+						}
+						e := c
+						for e < len(a) && isLetter(a[e]) {
+							e++
+						}
+						if e-c >= 4 && e <= len(b) && string(a[c:e]) == string(b[c:e]) {
+							t.Errorf("%s district %d: %q is written twice, rows %d and %d, column %d", age, di, string(a[c:e]), r, r+1, c)
+						}
+						c = e
+					}
+				}
+				for _, f := range m.Factions {
+					if f.Discovered && strings.Count(txt, f.Name) > 1 {
+						t.Errorf("%s district %d: %q is on the screen %d times", age, di, f.Name, strings.Count(txt, f.Name))
 					}
 				}
 			}
