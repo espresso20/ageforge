@@ -152,6 +152,15 @@ func (h *reproHarness) onUI(f func()) {
 	}
 }
 
+// refresh runs, on the UI goroutine, the refresh the dashboard's 500 ms ticker
+// runs (Dashboard.StartUpdates). A test that needs "a refresh has happened
+// since" calls this instead of sleeping past the ticker: the refresh is done
+// when it returns.
+func (h *reproHarness) refresh() {
+	h.t.Helper()
+	h.onUI(func() { h.a.dashboard.refresh() })
+}
+
 func (h *reproHarness) key(k tcell.Key, r rune) {
 	h.t.Helper()
 	done := make(chan struct{})
@@ -439,8 +448,8 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 	after := h.eng.GetState()
 	label := fmt.Sprintf("#%d %s→%s (epoch %s→%s, pendingCat=%q)", i, before.Age, after.Age, before.EpochKey, after.EpochKey, after.PendingCatastrophe)
 
-	// Let refresh() (500ms) surface anything else pending (e.g. catastrophe modal).
-	time.Sleep(550 * time.Millisecond)
+	// Let refresh() surface anything else pending (e.g. catastrophe modal).
+	h.refresh()
 	h.t.Logf("%s front=%s", label, h.frontPage())
 
 	dk := dismissKeys[i%len(dismissKeys)]
@@ -448,7 +457,7 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 
 	for step := 0; step < 4; step++ {
 		// Let refresh() surface a catastrophe held back while the splash was up.
-		time.Sleep(550 * time.Millisecond)
+		h.refresh()
 		switch h.frontPage() {
 		case prestigeCuePage:
 			// A valid prestige cue can surface after the arrival closes; dismiss
@@ -662,14 +671,15 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	h.reachBronze()
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })
-	time.Sleep(550 * time.Millisecond)
+	h.refresh()
 	h.dismissArrival("into the Iron Age", tcell.KeyEnter, 0)
 	h.waitFor("catastrophe modal", 3*time.Second, func() bool { return h.frontPage() == "catastrophe" })
 
 	h.key(tcell.KeyEsc, 0)
 	h.waitFor("Esc closes the modal", 2*time.Second, func() bool { return !h.hasPage("catastrophe") && h.inputHasFocus() })
 	// Two refresh cycles: the modal must stay closed until asked for.
-	time.Sleep(1100 * time.Millisecond)
+	h.refresh()
+	h.refresh()
 	if h.hasPage("catastrophe") {
 		t.Fatalf("refresh() re-popped the modal after Esc\n%s", h.describeUI())
 	}
@@ -692,7 +702,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	if st := h.eng.GetState(); st.PendingCatastrophe != "" {
 		t.Fatalf("still pending after Endure: %q", st.PendingCatastrophe)
 	}
-	time.Sleep(600 * time.Millisecond) // one refresh so the status bar updates
+	h.refresh() // one refresh so the status bar updates
 	if scr := h.screenText(); strings.Contains(scr, "Catastrophe pending") {
 		t.Errorf("pending badge still shown after Endure:\n%s", scr)
 	}

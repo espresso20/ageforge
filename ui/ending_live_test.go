@@ -23,7 +23,7 @@ func (h *reproHarness) film() (e *ending) {
 // keyboard, and is declined here.
 func (h *reproHarness) promptAfterFilm() {
 	h.t.Helper()
-	time.Sleep(650 * time.Millisecond) // a refresh, for that window to open if it will
+	h.refresh() // a refresh, for that window to open if it will
 	if h.frontPage() == ancientMemoryPage {
 		if h.inputHasFocus() {
 			h.t.Fatalf("an Ancient Memory is in front and the keyboard is with the prompt under it\n%s", h.describeUI())
@@ -170,7 +170,7 @@ func (h *reproHarness) fallFilm() {
 		}
 	})
 	h.waitFor("the arrival screen", 3*time.Second, func() bool { return h.hasPage(arrivalPageName) })
-	time.Sleep(550 * time.Millisecond)
+	h.refresh()
 	if h.hasPage("catastrophe") {
 		t.Fatalf("the catastrophe's window opened over the arrival\n%s", h.describeUI())
 	}
