@@ -492,7 +492,9 @@ func TestUpgrade_MilestoneKeepsItsProgress(t *testing.T) {
 			t.Errorf("progress shows %v of %v after the upgrade, want 25 of 25", p.Current, p.Target)
 		}
 	}
-	done := ge.Milestones.CheckMilestones(10000, "stone_age", ge.progress.GetAgeOrder(), ge.Resources, ge.Buildings, 0, 0, 100, map[string]bool{}, 0, 0, 0)
+	params := checkParams(10000, "stone_age", ge.progress.GetAgeOrder(), ge.Resources, ge.Buildings)
+	params.TotalBuilt = 100
+	done := ge.Milestones.CheckMilestones(params, map[string]bool{})
 	var got bool
 	for _, d := range done {
 		got = got || d.Key == "lumber_operation"

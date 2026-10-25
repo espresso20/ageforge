@@ -377,7 +377,6 @@ func (ge *GameEngine) workResearch(w float64) string {
 		return ""
 	}
 	ge.Stats.ResearchWork += w
-	ge.Milestones.researchDone = ge.Stats.ResearchWork
 	return ge.Research.AddWork(w)
 }
 
@@ -401,7 +400,6 @@ func (ge *GameEngine) grantResearch(work float64) string {
 	def := ge.Research.defs[key]
 	before := ge.Research.progress
 	ge.Stats.ResearchWork += work
-	ge.Milestones.researchDone = ge.Stats.ResearchWork
 	landed, completed := ge.Research.Grant(work)
 	if landed < work {
 		ge.addLogAbout("info", TagPeople, vibe.Sprintf("game.scholars.grantResearch.02", "Your scholars gained some ground on %s.", def.Name))

@@ -110,17 +110,9 @@ func TestFirstSoldiersMilestone_TriggersOnCumulativeTrained(t *testing.T) {
 	bm := NewBuildingManager()
 
 	check := func(soldiersTrained int) []config.MilestoneDef {
-		return mm.CheckMilestones(
-			100, "iron_age", ageOrder,
-			rm, bm,
-			0,   // population
-			0,   // techCount
-			0,   // totalBuilt
-			nil, // researchedTechs
-			soldiersTrained,
-			0, // wonderCount
-			0, // knowledgeCount
-		)
+		params := checkParams(100, "iron_age", ageOrder, rm, bm)
+		params.SoldiersTrained = soldiersTrained
+		return mm.CheckMilestones(params, nil)
 	}
 
 	// 4 trained: not enough.

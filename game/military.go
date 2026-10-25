@@ -461,11 +461,6 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		activeScout = activeLong
 	}
 
-	loot := make(map[string]float64)
-	for k, v := range mm.totalLoot {
-		loot[k] = v
-	}
-
 	return MilitaryState{
 		SoldierCount:    soldierCount,
 		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
@@ -481,7 +476,7 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		CompletedCount:  mm.completedCount,
 		Experience:      mm.experience,
 		Rank:            mm.Rank(),
-		TotalLoot:       loot,
+		TotalLoot:       maps.Clone(mm.totalLoot),
 		Returns:         mm.returnsCopy(),
 		ReturnsMade:     mm.returnsMade,
 		ReturnsSeen:     mm.returnsSeen,

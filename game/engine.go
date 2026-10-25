@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"slices"
@@ -948,22 +949,7 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	ge.tickSpeedBonus = bonus
 
 	if bonus != oldBonus {
-		mult := ge.speedMultiplier
-		if mult < 1.0 {
-			mult = 1.0
-		}
-		// Mirror getTickInterval's guard: a denominator ≤ 0 (tick_speed ≤ -1.0)
-		// would yield a +Inf/garbage duration in the debug log. The real interval
-		// the loop uses comes from getTickInterval, which guards identically.
-		denom := (1.0 + bonus) * mult
-		interval := MinTickInterval
-		if denom > 0 {
-			interval = time.Duration(float64(BaseTickInterval) / denom)
-			if interval < MinTickInterval {
-				interval = MinTickInterval
-			}
-		}
-		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, interval.Milliseconds()))
+		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, ge.tickIntervalLocked().Milliseconds()))
 	}
 }
 
@@ -1876,38 +1862,29 @@ func (ge *GameEngine) processDiplomacy() {
 	ge.tickFactionDeals()
 }
 
+// milestoneParamsLocked is the town's numbers as the milestones read them. The
+// check each tick and the snapshot both take them from here. Caller holds ge.mu.
+func (ge *GameEngine) milestoneParamsLocked(ageOrder map[string]int) MilestoneSnapshotParams {
+	return MilestoneSnapshotParams{
+		Tick:       ge.tick,
+		Age:        ge.age,
+		AgeOrder:   ageOrder,
+		Resources:  ge.milestoneResources(),
+		Population: ge.popLocked(),
+		TechCount:  ge.Research.ResearchedCount(),
+		TotalBuilt: ge.Stats.TotalBuilt,
+		// Soldier milestones key off cumulative lifetime soldiers trained, not
+		// the live military-worker count. The scholars are a live count.
+		SoldiersTrained: int(ge.Stats.SoldiersTrained),
+		WonderCount:     ge.countWonders(),
+		KnowledgeCount:  ge.scholarTotal(),
+		held:            ge.Buildings,
+	}
+}
+
 // checkMilestones checks for newly completed milestones and chains
 func (ge *GameEngine) checkMilestones() {
-	ageOrder := ge.progress.ageOrder()
-	researchedTechs := make(map[string]bool, len(ge.Research.researched))
-	for key := range ge.Research.researched {
-		researchedTechs[key] = true
-	}
-
-	// Soldier milestones key off cumulative lifetime soldiers trained, not the
-	// live military-worker count. The scholars are a live count.
-	soldiersTrained := int(ge.Stats.SoldiersTrained)
-	knowledgeCount := ge.scholarTotal()
-
-	// Count wonders
-	wonderCount := 0
-	for key, count := range ge.Buildings.counts {
-		if def, ok := ge.Buildings.defs[key]; ok && def.Category == "wonder" && count > 0 {
-			wonderCount += count
-		}
-	}
-
-	completed := ge.Milestones.CheckMilestones(
-		ge.tick, ge.age, ageOrder,
-		ge.Resources, ge.Buildings,
-		ge.popLocked(),
-		ge.Research.ResearchedCount(),
-		ge.Stats.TotalBuilt,
-		researchedTechs,
-		soldiersTrained,
-		wonderCount,
-		knowledgeCount,
-	)
+	completed := ge.Milestones.CheckMilestones(ge.milestoneParamsLocked(ge.progress.ageOrder()), ge.Research.researched)
 
 	for _, ms := range completed {
 		rewardText := formatMilestoneRewards(ms.Rewards)
@@ -5031,7 +5008,6 @@ func (ge *GameEngine) GetState() GameState {
 
 	// The snapshot only reads the age index (it is nowhere kept), so it is not copied.
 	ageOrder := ge.progress.ageOrder()
-	knowledgeCount := ge.scholarTotal()
 	// The military panel reflects the soldiers at home. The soldier milestones
 	// key off the cumulative lifetime trained count instead
 	// (ge.Stats.SoldiersTrained).
@@ -5056,14 +5032,7 @@ func (ge *GameEngine) GetState() GameState {
 		prestigeSnap.NextAge, prestigeSnap.NextAgePoints = next, ge.Prestige.CalculatePoints(next)
 	}
 
-	speedMult := ge.speedMultiplier
-	if speedMult < 1.0 {
-		speedMult = 1.0
-	}
-	tickInterval := time.Duration(float64(BaseTickInterval) / ((1.0 + ge.tickSpeedBonus) * speedMult))
-	if tickInterval < MinTickInterval {
-		tickInterval = MinTickInterval
-	}
+	tickInterval := ge.tickIntervalLocked()
 
 	// MilitaryManager.Snapshot has no *GameEngine receiver, so it cannot see the
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
@@ -5107,39 +5076,29 @@ func (ge *GameEngine) GetState() GameState {
 	workers.TotalPop += workers.Scholars + workers.Soldiers
 	workers.FoodDrain = ge.foodDrainLocked()
 
+	milestoneParams := ge.milestoneParamsLocked(ageOrder)
+	milestoneParams.Sight = &sight
+	milestoneParams.activeEvents = ge.Events.GetActive()
+
 	return GameState{
-		Rules:                ge.rules,
-		Tick:                 ge.tick,
-		Age:                  ge.age,
-		AgeName:              ge.progress.GetAgeName(ge.age),
-		AgeReady:             ge.ageReady,
-		CurrentAgeWonderKey:  currentAgeWonderKey,
-		CurrentAgeWonderName: currentAgeWonderName,
-		NextAge:              nextAge,
-		NextAgeName:          nextAgeName,
-		NextAgeBldReqs:       nextAgeBldReqs,
-		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras),
-		Scholars:             ge.scholarsStateLocked(),
-		BuildQueue:           queue,
-		Workers:              workers,
-		Research:             ge.withResearchTimes(ge.Research.Snapshot(ge.age, ageOrder)),
-		Military:             militarySnap,
-		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
-			Tick:            ge.tick,
-			Age:             ge.age,
-			AgeOrder:        ageOrder,
-			Resources:       ge.milestoneResources(),
-			Population:      ge.popLocked(),
-			TechCount:       ge.Research.ResearchedCount(),
-			TotalBuilt:      ge.Stats.TotalBuilt,
-			SoldiersTrained: int(ge.Stats.SoldiersTrained),
-			WonderCount:     ge.countWonders(),
-			KnowledgeCount:  knowledgeCount,
-			Sight:           &sight,
-			activeEvents:    ge.Events.GetActive(),
-			held:            ge.Buildings,
-		}),
+		Rules:                 ge.rules,
+		Tick:                  ge.tick,
+		Age:                   ge.age,
+		AgeName:               ge.progress.GetAgeName(ge.age),
+		AgeReady:              ge.ageReady,
+		CurrentAgeWonderKey:   currentAgeWonderKey,
+		CurrentAgeWonderName:  currentAgeWonderName,
+		NextAge:               nextAge,
+		NextAgeName:           nextAgeName,
+		NextAgeBldReqs:        nextAgeBldReqs,
+		Resources:             ge.Resources.Snapshot(),
+		Buildings:             ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras),
+		Scholars:              ge.scholarsStateLocked(),
+		BuildQueue:            queue,
+		Workers:               workers,
+		Research:              ge.withResearchTimes(ge.Research.Snapshot(ge.age, ageOrder)),
+		Military:              militarySnap,
+		Milestones:            ge.Milestones.Snapshot(milestoneParams),
 		ActiveEvents:          ge.Events.GetActive(),
 		Prestige:              prestigeSnap,
 		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
@@ -5171,13 +5130,7 @@ func (ge *GameEngine) GetState() GameState {
 		Harbinger:             ge.harbingerView(),
 		SessionStart:          ge.sessionStart.clone(),
 		HarbingerHistory:      cloneHarbingerHistory(ge.harbingerHistory),
-		LegacyBonuses: func() map[string]bool {
-			out := make(map[string]bool, len(ge.legacyBonuses))
-			for k, v := range ge.legacyBonuses {
-				out[k] = v
-			}
-			return out
-		}(),
+		LegacyBonuses:         maps.Clone(ge.legacyBonuses),
 		CatastropheHistory:    ge.historyLines(),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
@@ -5188,13 +5141,7 @@ func (ge *GameEngine) GetState() GameState {
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
 		Plan:                  ge.planViews(),
-		PermanentBonuses: func() map[string]float64 {
-			out := make(map[string]float64, len(ge.permanentBonuses))
-			for k, v := range ge.permanentBonuses {
-				out[k] = v
-			}
-			return out
-		}(),
+		PermanentBonuses:      maps.Clone(ge.permanentBonuses),
 		// Snapshot the resolver's aggregated modifiers for the UI's Active
 		// Multipliers panel. buildResolver reads only already-held state and
 		// pure config.*, so it's safe under the RLock held here (it never
@@ -5301,15 +5248,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		elapsed = MaxOfflineTime
 	}
 
-	bonus := ge.tickSpeedBonus
-	mult := ge.speedMultiplier
-	if mult < 1.0 {
-		mult = 1.0
-	}
-	tickInterval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
-	if tickInterval < MinTickInterval {
-		tickInterval = MinTickInterval
-	}
+	tickInterval := ge.tickIntervalLocked()
 
 	offlineTicks := int(elapsed / tickInterval)
 	if offlineTicks <= 0 {

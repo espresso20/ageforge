@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"slices"
 	"time"
 
 	"github.com/espresso20/ageforge/detmath"
@@ -243,15 +244,9 @@ func (ge *GameEngine) planLabels(plan []PlanItem) []string {
 // planItemsEqual reports whether two plans hold the same items in the same
 // order.
 func planItemsEqual(a, b []PlanItem) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i].Kind != b[i].Kind || a[i].Key != b[i].Key || a[i].Count != b[i].Count || a[i].Deal != b[i].Deal {
-			return false
-		}
-	}
-	return true
+	return slices.EqualFunc(a, b, func(x, y PlanItem) bool {
+		return x.Kind == y.Kind && x.Key == y.Key && x.Count == y.Count && x.Deal == y.Deal
+	})
 }
 
 // greedy plays the town forward and returns the order it bought remaining

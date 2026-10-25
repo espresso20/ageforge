@@ -1,6 +1,9 @@
 package game
 
-import "time"
+import (
+	"slices"
+	"time"
+)
 
 // GameStats tracks game statistics
 type GameStats struct {
@@ -70,20 +73,11 @@ func (gs *GameStats) RecordSoldiersTrained(amount float64) {
 // RecordAge records reaching a new age, and the tick it was entered.
 // The log entry is added only the first time an age is entered this run.
 func (gs *GameStats) RecordAge(age string, tick int) {
-	seen := false
-	for _, a := range gs.AgesReached {
-		if a == age {
-			seen = true
-			break
-		}
-	}
-	if !seen {
+	if !slices.Contains(gs.AgesReached, age) {
 		gs.AgesReached = append(gs.AgesReached, age)
 	}
-	for _, e := range gs.AgeLog {
-		if e.Age == age {
-			return
-		}
+	if slices.ContainsFunc(gs.AgeLog, func(e AgeEntry) bool { return e.Age == age }) {
+		return
 	}
 	gs.AgeLog = append(gs.AgeLog, AgeEntry{Age: age, Tick: tick})
 }

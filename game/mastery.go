@@ -1,6 +1,7 @@
 package game
 
 import (
+	"maps"
 	"math"
 	"strconv"
 	"strings"
@@ -182,11 +183,7 @@ func (pm *PrestigeManager) masterySave() map[string]int {
 	if len(pm.mastery) == 0 {
 		return nil
 	}
-	out := make(map[string]int, len(pm.mastery))
-	for a, m := range pm.mastery {
-		out[a] = m
-	}
-	return out
+	return maps.Clone(pm.mastery)
 }
 
 // MasterySnapshot is the mastery state for the UI, with current the age the
@@ -197,17 +194,11 @@ func (pm *PrestigeManager) MasterySnapshot(current string) MasteryState {
 		Level:       pm.mastery[current],
 		Record:      pm.record,
 		RunFurthest: pm.runFurthest,
-		Ages:        make(map[string]int, len(pm.mastery)),
-		Speeds:      make(map[string]float64, len(pm.speeds)),
+		Ages:        maps.Clone(pm.mastery), // never nil: the manager makes both maps
+		Speeds:      maps.Clone(pm.speeds),
 		NextGains:   pm.masteryGains(),
 	}
 	st.CatchUp = st.K > config.MasteryK(st.Level)
-	for a, m := range pm.mastery {
-		st.Ages[a] = m
-	}
-	for a, k := range pm.speeds {
-		st.Speeds[a] = k
-	}
 	return st
 }
 

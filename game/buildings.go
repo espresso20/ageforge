@@ -379,16 +379,7 @@ func (bm *BuildingManager) RemoveBuilding(key string, n int) int {
 // Cost scales exponentially: base × CostScale^count, floored to the nearest
 // integer. This makes later copies progressively more expensive.
 func (bm *BuildingManager) GetCost(key string) map[string]float64 {
-	def, ok := bm.defs[key]
-	if !ok {
-		return nil
-	}
-	count := bm.counts[key]
-	cost := make(map[string]float64)
-	for res, base := range def.BaseCost {
-		cost[res] = applyCostMult(base*detmath.Pow(def.CostScale, float64(count)), bm.costMult)
-	}
-	return cost
+	return bm.CopyCost(key, 0, nil)
 }
 
 // applyCostMult folds the global build-cost factor into a single resource's raw

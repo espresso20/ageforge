@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -402,12 +403,8 @@ func (ge *GameEngine) PlanMove(n, delta int) (int, error) {
 	}
 	to := min(max(n-1+delta, 0), len(ge.plan)-1)
 	it := ge.plan[n-1]
-	rest := append(ge.plan[:n-1:n-1], ge.plan[n:]...)
-	out := make([]PlanItem, 0, len(ge.plan))
-	out = append(out, rest[:to]...)
-	out = append(out, it)
-	out = append(out, rest[to:]...)
-	ge.plan = out
+	// A new array: what a snapshot holds of the old one stays as it was.
+	ge.plan = slices.Insert(slices.Delete(slices.Clone(ge.plan), n-1, n), to, it)
 	return to + 1, nil
 }
 

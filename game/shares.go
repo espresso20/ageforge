@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 
@@ -180,12 +181,7 @@ func cloneShares(m map[string]float64) map[string]float64 {
 
 // IsWorkerDomain reports whether key is one of set's worker domains.
 func IsWorkerDomain(set *rules.Set, key string) bool {
-	for _, d := range set.WorkerDomains() {
-		if d == key {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(set.WorkerDomains(), key)
 }
 
 // SharePercent prints a share's percent: "40%", "12.5%".
@@ -843,12 +839,7 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 
 // domainIndex is key's place in set's worker domains, -1 if it is none.
 func domainIndex(set *rules.Set, key string) int {
-	for i, d := range set.WorkerDomains() {
-		if d == key {
-			return i
-		}
-	}
-	return -1
+	return slices.Index(set.WorkerDomains(), key)
 }
 
 // sharesLine names the shares: "Knowledge 40%, Food 25%, the rest on auto",

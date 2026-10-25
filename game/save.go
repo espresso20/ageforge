@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -638,10 +639,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	}
 
 	// Deep copy military loot
-	totalLoot := make(map[string]float64, len(ge.Military.totalLoot))
-	for k, v := range ge.Military.totalLoot {
-		totalLoot[k] = v
-	}
+	totalLoot := maps.Clone(ge.Military.totalLoot)
 
 	// Deep copy trade state
 	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))

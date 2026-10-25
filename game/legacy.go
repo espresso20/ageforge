@@ -65,7 +65,7 @@ func clonePlanTemplate(t []PlanTemplateItem) []PlanTemplateItem {
 	if len(t) == 0 {
 		return nil
 	}
-	return append([]PlanTemplateItem(nil), t...)
+	return slices.Clone(t)
 }
 
 // templateAgeLoad is how many of the items t holds for age count against
