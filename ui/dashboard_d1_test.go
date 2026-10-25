@@ -560,16 +560,7 @@ func TestSkylineStripInEveryTheme(t *testing.T) {
 func TestPeopleBoxFollowsAResize(t *testing.T) {
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "bronze_age")
-	drawn := func(w, h int) {
-		sim := tcell.NewSimulationScreen("UTF-8")
-		must(t, sim.Init())
-		defer sim.Fini()
-		sim.SetSize(w, h)
-		scr := theme.WrapScreen(sim)
-		pages.SetRect(0, 0, w, h)
-		pages.Draw(scr)
-		scr.Show()
-	}
+	drawn := func(w, h int) { drawWrapped(t, pages, w, h, 1) }
 	hasBar := func() bool { return strings.Contains(d.workerMiniTV.GetText(true), "█") }
 	drawnDashboard(t, d, pages, 100, 30)
 	if hasBar() {
