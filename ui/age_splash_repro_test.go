@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -613,6 +614,7 @@ func (h *reproHarness) screenText() string {
 // TestReproAgeSplashCatastropheAutoDismiss: an advance that also leaves a
 // catastrophe pending (what an epoch-transition roll does) and a player who
 // just reads the screen for >20s, so the splash's auto-dismiss timer fires.
+// (The hold is cut to 300 ms here; the timer is still the real one.)
 // Afterwards whatever modal is on screen must still own the keyboard, and the
 // player must be able to get back to the dashboard (Esc) and then return to
 // the choice with the `catastrophe` command.
@@ -623,16 +625,40 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	h := newReproHarness(t)
 	h.still()
 	h.reachBronze()
+	// The splash closes itself once arrivalHold (20 s) has passed. Cut that to
+	// 300 ms, for this splash only (the walk above keeps the real hold, and
+	// closes each splash with a key): the timer is still a real one that
+	// reaches the screen through the event loop. It is let run only after the
+	// refresh below has run under the splash, so that refresh happens with
+	// the splash up whatever the machine's speed.
+	underSplash := make(chan struct{})
+	release := sync.OnceFunc(func() { close(underSplash) })
+	t.Cleanup(release)
+	h.onUI(func() {
+		h.a.dashboard.overlayMgr.after = func(d time.Duration, fn func()) func() {
+			run := func() { h.a.tviewApp.QueueUpdateDraw(fn) }
+			if d == arrivalHold {
+				d = 300 * time.Millisecond
+				run = func() {
+					<-underSplash
+					h.a.tviewApp.QueueUpdateDraw(fn)
+				}
+			}
+			tm := time.AfterFunc(d, run)
+			return func() { tm.Stop() }
+		}
+	})
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })
-	time.Sleep(700 * time.Millisecond)
+	h.refresh() // the catastrophe must not stack on the splash
 	t.Logf("shown:\n%s", h.describeUI())
-	// No key pressed: wait out the splash's 20s auto-dismiss timer, then for
-	// the catastrophe modal (shown now, or held back until the splash left).
-	h.waitFor("splash auto-dismiss", 25*time.Second, func() bool { return !h.hasPage("age_splash") })
+	// No key pressed: the splash's auto-dismiss timer runs out, then the
+	// catastrophe modal (shown now, or held back until the splash left).
+	release()
+	h.waitFor("splash auto-dismiss", 3*time.Second, func() bool { return !h.hasPage("age_splash") })
 	h.waitFor("catastrophe modal", 3*time.Second, func() bool { return h.hasPage("catastrophe") })
 	time.Sleep(100 * time.Millisecond) // let any focus change queued with it land
-	t.Logf("after 20s auto-dismiss:\n%s", h.describeUI())
+	t.Logf("after the auto-dismiss:\n%s", h.describeUI())
 	if h.inputHasFocus() {
 		t.Logf("SCREEN (modal visible, keyboard on hidden input):\n%s", h.screenText())
 	}
