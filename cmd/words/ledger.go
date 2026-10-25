@@ -10,15 +10,16 @@ import (
 	"path/filepath"
 )
 
-// ledger.go keeps count of what has been rewritten. The ledger is a small
-// file in the repository: for each row the import has applied, the row's id
-// and a hash of the text it was given. status compares it with the source,
-// so it needs no sheets.
+// This file keeps count of what has been rewritten. The ledger is a small file
+// in the repository: for each row the import has applied, the row's id and a
+// hash of the text it was given. status compares it with the source, so it
+// needs no sheets.
 
 // ledgerPath is where the ledger lives, from the repository root.
 const ledgerPath = "words/ledger.json"
 
-// hashText is the hash the ledger stores for a row's text.
+// hashText is the hash the ledger stores for a row's text: the first 8 bytes
+// of its SHA-256, in hex.
 func hashText(s string) string {
 	sum := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(sum[:8])
@@ -55,10 +56,11 @@ func saveLedger(root string, led map[string]string) error {
 type tally struct {
 	lines, words         int
 	doneLines, doneWords int // rewritten, and still reading as rewritten
-	changed              int // rewritten once, and different in the source now
+	changed              int // rewritten once, and reading differently in the source since
 }
 
-// count works out the tallies by sheet from the source and the ledger.
+// count works out the tallies by sheet and in total from the source and the
+// ledger. gone is the number of ledger ids that no row in the source has.
 func count(c *catalog, led map[string]string) (by map[*area]*tally, total tally, gone int) {
 	by = map[*area]*tally{}
 	for _, a := range areas {

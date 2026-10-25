@@ -55,8 +55,11 @@ func (a *App) setup() {
 	// Esc reaches the dashboard before it reaches an overlay, and the
 	// dashboard answers it by closing the overlay at once. On the arrival
 	// screen Esc is a key like any other (the first moves on to what the age
-	// opens, the next closes), so that screen is offered it first.
+	// opens, the next closes), so that screen is offered it first. Before
+	// either, Option+arrows become PgUp, PgDn, Home and End (mac_keys.go), so
+	// every screen and panel sees keys a MacBook does not have.
 	a.tviewApp.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
+		ev = macKeys(ev, a.tviewApp.GetFocus())
 		if ev.Key() == tcell.KeyEsc && a.dashboard.overlayMgr.arrivalKey() {
 			return nil
 		}

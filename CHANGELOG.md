@@ -12,11 +12,12 @@ All notable changes to AgeForge are documented here.
 - **VibeMode (early).** A setting that swaps the game's words for a GenZ script; this release has the switch and a first handful of lines.
 - **plan optimize.** Reorders your planned buildings for the fastest growth, interleaving homes and producers, and says how much sooner the plan finishes.
 - **Road events.** Expeditions meet storms, helpers, finds, tolls, foes, ambushes, fair weather and ruins on the way, rolled by the game and told in the log and the Expedition Report. Ruins become new offers on the board.
+- **An experimental gate.** Start the game with AGEFORGE_GATES=v2 to try pillars measured by population, industry income and key techs instead of building counts.
+- **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
 - **Lineage badges on a real idle scale.** Each lineage's badges now count to numbers set by how much of that lineage a dedicated player builds across many runs, with Legendary a long-term goal.
-- **A new top panel.** The top of the dashboard is a ledger: the age and the year, your people and morale, the four pillars to the next age, a long bar to the next age with what it is waiting on, and every resource with its rate and a trend line.
-- **The mini map shows from 105x36.** The new top panel takes two more rows at that size, so the mini map needs two more (it was 105x34); the wiki and the `minimap on` reply say so.
+- **A new top panel.** The top of the dashboard is a ledger: the age and the year, your people and morale, the four pillars to the next age, and a long bar to the next age with what it is waiting on.
 - **No ceiling on bonuses.** Production bonuses apply in full however large they grow, and knowledge buildings past their cap still build and research at half rate.
 - **A wonder's banked share counts each resource at its worth.** The percent the top of the dashboard, the Wonders panel and the Map show for a wonder's bank weighs each resource by its price in the age, so a resource named in huge amounts no longer outweighs a dear one.
 - **VibeMode reaches the log.** Log lines and refusals switch to the slang script too.
@@ -57,11 +58,14 @@ All notable changes to AgeForge are documented here.
 - Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
 - **The top bar no longer shows the era badge.** The age name is enough; the next age is in the Next Age bar.
 - **What a tech does stands out.** The effect of a tech is shown in its own colour in the research screens.
+- **The test bot is parked.** Its code builds only with a build tag now, so everyday builds and tests skip it; the static checks still run on every change.
 
 ### Fixed
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
 - **Late-game festival and Black Market prices.** They now stay in step with your culture income in every age instead of running away after the middle ages.
+- **History graphs start over with each run.** They no longer mix a new run with the last one, and age markers stay in the right place after time away.
+- **Black Market payouts.** A deal now pays the same worth whichever resource you take, and goes through five times in six; the sixth time the smugglers vanish with your culture.
 
 ### Added
 - **Locked buildings show up.** The Buildings panel lists this age's buildings that still need a tech, greyed out, with the research they need and a word from your scholars.

@@ -66,13 +66,17 @@ func (ge *GameEngine) prestigeCueLocked() PrestigeCue {
 			remaining = math.Max(remaining, float64(item.TicksLeft))
 		}
 	}
-	if keystone := ge.rules.Keystone(ge.age); keystone != "" && !ge.Research.IsResearched(keystone) {
-		def, ok := ge.Research.defs[keystone]
+	// The keystone, and under the measured gate the key tech beside it.
+	for _, tech := range []string{ge.rules.Keystone(ge.age), keyTechOf(ge.rules, ge.age)} {
+		if tech == "" || ge.Research.IsResearched(tech) {
+			continue
+		}
+		def, ok := ge.Research.defs[tech]
 		if !ok {
 			return cue
 		}
 		var ticks int
-		if ge.Research.currentTech == keystone {
+		if ge.Research.currentTech == tech {
 			if ge.researchPerTick <= 0 {
 				return cue
 			}

@@ -55,7 +55,7 @@ func TestEveryWiredTextReadsPlainWhileVibeModeIsOff(t *testing.T) {
 	}
 	was := vibe.On()
 	defer vibe.Set(was)
-	var none []any // a format is put together with no arguments, as vet wants of a format it cannot see
+	var none []any // spread into a format that is not a constant: vet flags such a call with no arguments at all
 	read := func(lc lineCall) string {
 		switch lc.kind {
 		case "Sprintf":
@@ -144,7 +144,7 @@ func TestVibeWireAddsTheImportToAFileWithNone(t *testing.T) {
 
 // TestATableEntryCarriesItsRowIdAndCountsAsWired: the road event templates are a
 // table made once, so each entry holds its own row id (vibeRow) and whoever
-// draws one reads it through vibe.Line. The export honours the id, takes the
+// draws one reads it through vibe.Line. The export uses the id, takes the
 // id's own string for a key, and calls the row wired.
 func TestATableEntryCarriesItsRowIdAndCountsAsWired(t *testing.T) {
 	c := realCatalog(t)

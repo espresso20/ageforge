@@ -13,8 +13,8 @@ import (
 	"strings"
 )
 
-// apply.go is the import: it reads the sheets, decides row by row whether a
-// rewrite can go in, and writes the ones that can into the string literals
+// This file is the import. It reads the sheets, decides row by row whether a
+// rewrite can go in, and writes the accepted ones into the string literals
 // they came from.
 
 type importOptions struct {
@@ -52,7 +52,7 @@ type result struct {
 	settled   map[string]string // id -> text, for rows whose rewrite is already in the source
 }
 
-// blank reports whether a yours cell is empty.
+// blank reports whether a yours cell is empty or only white space.
 func blank(s string) bool { return strings.TrimSpace(s) == "" }
 
 // decide reads the sheets in dir and sorts their filled rows into changes,
@@ -96,7 +96,8 @@ func decide(c *catalog, dir string, noSame bool) (*result, error) {
 		res.refused = append(res.refused, refusal{file, id, why})
 		refusedID[id] = true
 	}
-	// try runs every check on one rewrite of one row.
+	// try runs every check on one rewrite of one row. after is the id of the
+	// row the rewrite was taken from, for a same_as row.
 	try := func(e entry, after string) {
 		r, ok := c.byID[e.id]
 		if !ok {
@@ -169,9 +170,10 @@ func decide(c *catalog, dir string, noSame bool) (*result, error) {
 	return res, nil
 }
 
-// checkKeep holds a rewrite to the pieces of the original it must carry
-// over: the same format verbs in the same order, and the same slots, style
-// tags, key names, quoted commands, line breaks and glyphs.
+// checkKeep returns a message for each piece of the original that a rewrite
+// drops, adds or (for format verbs) reorders: format verbs, slots, style tags,
+// key names, quoted commands, line breaks and glyphs. It also reports style
+// tags left open or closed twice, unless the original had the same fault.
 func checkKeep(r *row, yours string) []string {
 	slotMark := r.rules&rulesSkel != 0
 	was, now := tokensOf(r.current, slotMark), tokensOf(yours, slotMark)
@@ -234,7 +236,7 @@ func checkKeep(r *row, yours string) []string {
 	return out
 }
 
-// show writes a kept piece for a message.
+// show writes a kept piece for a message, spelling out a line break.
 func show(t kept) string {
 	if t.kind == tokBreak {
 		return `a line break (\n)`

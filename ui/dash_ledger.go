@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"math"
 	"sort"
 	"strings"
 	"sync"
@@ -23,25 +22,24 @@ import (
 
 // dash_ledger.go is the top of the dashboard under the status ribbon: the
 // Ledger. From the top it holds a long bar to the next age with what it is
-// waiting on, the four pillars of the gate as small meters, and a card for
-// each resource that has something going on (name, amount, rate, a trend line
-// of the last few minutes).
+// waiting on and, in the full size, the resources a blocker is short of, and
+// the four pillars of the gate as small meters. (The resources themselves are
+// the Resources panel's, below.)
 //
 // What it says about the gate is the Advance panel's: the pillars, their
 // percents, the share of the way and the year are read from the same
 // game.AdvanceView (and the engine's held calendar), so the two cannot
-// disagree. The trend lines are the Ledger's own memory (ledgerTrail): a few
-// samples of each amount, kept here in the UI and never in the game or a save.
+// disagree.
 //
 // It is drawn in three sizes, by the terminal it is drawn on:
 //
-//	compact   under 100x30   the long bar with what it waits on, one row of cards
-//	standard  from 100x30    that, the four pillars on one row, a row of two-line cards
-//	full      the rich layout  the bar and the waiting line apart, pillars with their
-//	                           notes, and as many rows of cards as the height allows
+//	compact   under 100x30   the long bar, with what it waits on after it
+//	standard  from 100x30    that, and the four pillars on one row
+//	full      the rich layout  the bar and the waiting line apart (with what the
+//	                           gate is short of), pillars with their notes
 //
 // The rows a size takes are fixed (ledgerHeight), so nothing under the Ledger
-// moves when a number changes or a resource turns up.
+// moves when a number changes.
 
 type ledgerTier int
 
@@ -52,19 +50,18 @@ const (
 )
 
 const (
-	// ledgerCompactRows is the Next Age strip's old height: two rows.
-	ledgerCompactRows = 2
-	// ledgerStandardRows: the bar and what it waits on, the pillars, a card (two lines).
-	ledgerStandardRows = 4
-	// ledgerFullHead: the bar, what it waits on, the pillars' names, their
-	// meters and a blank row; the cards follow, two lines a row of them.
-	ledgerFullHead = 5
+	// ledgerCompactRows: the long bar and what it waits on, on one row.
+	ledgerCompactRows = 1
+	// ledgerStandardRows: that, and the pillars on a row.
+	ledgerStandardRows = 2
+	// ledgerFullHeight: the bar, what it waits on, the pillars' names and
+	// their meters.
+	ledgerFullHeight = 4
 
 	// ledgerStdCols and ledgerStdRows are the smallest terminal the standard
 	// Ledger is drawn on. The full one is the rich layout's, from
 	// ledgerFullRows tall: under that the rich layout keeps the standard
-	// Ledger, so a terminal that is big enough for the mini map is never made
-	// too small for it by a bigger Ledger.
+	// Ledger and the boxes under it keep the rows.
 	ledgerStdCols  = 100
 	ledgerStdRows  = 30
 	ledgerFullRows = 39
@@ -81,33 +78,13 @@ func ledgerTierFor(w, h int) ledgerTier {
 	return ledgerCompact
 }
 
-// ledgerCardRows is how many rows of cards the full Ledger has on a terminal
-// h rows tall: one more for every two rows past 38, up to three. (The boxes
-// under the Ledger keep the 26 rows the mini map needs at that.)
-func ledgerCardRows(h int) int { return clamp((h-37)/2, 1, 3) }
-
-// ledgerCardShape is how the cards sit on a w cell wide Ledger: how many to
-// a row and how wide each is, two cells of air between them. The full
-// Ledger on a wide terminal writes the wide card, the rest the narrow one.
-func ledgerCardShape(w int) (per, cw int) {
-	if w >= ledgerWideCols {
-		per = max(1, (w-2)/(ledgerWideMinW+2))
-		return per, min(28, (w-2)/per-2)
-	}
-	per = max(1, (w-2)/(ledgerNarrowW+2))
-	return per, min(25, (w-2)/per-2)
-}
-
 // ledgerHeight is the height of the Ledger, under the status ribbon, on a
-// w by h terminal for an age with slots resources to show. The full Ledger
-// has the rows of cards the slots call for, up to what the height allows,
-// so the rows change when the age does and at no other time.
-func ledgerHeight(w, h, slots int) int {
+// w by h terminal. It changes with the size of the terminal and at no other
+// time.
+func ledgerHeight(w, h int) int {
 	switch ledgerTierFor(w, h) {
 	case ledgerFull:
-		per, _ := ledgerCardShape(w)
-		rows := min(ledgerCardRows(h), max(1, (slots+per-1)/per))
-		return ledgerFullHead + 2*rows
+		return ledgerFullHeight
 	case ledgerStandard:
 		return ledgerStandardRows
 	}
@@ -117,146 +94,6 @@ func ledgerHeight(w, h, slots int) int {
 // ledgerExtraRows is the rows the standard Ledger takes over the compact one
 // (the mini map's smallest terminal is worked out from the standard size).
 const ledgerExtraRows = ledgerStandardRows - ledgerCompactRows
-
-// ===== The trend lines =====
-
-const (
-	// ledgerTrailLen is the samples kept of each amount, ledgerSampleTicks the
-	// ticks between two samples: with a 2 second tick, four minutes.
-	ledgerTrailLen    = 24
-	ledgerSampleTicks = 5
-	// ledgerSteady is the change over a trail, as a share of the larger end,
-	// under which an amount is called steady.
-	ledgerSteady = 0.01
-)
-
-// ledgerRing keeps the last ledgerTrailLen samples of one amount.
-type ledgerRing struct {
-	v    [ledgerTrailLen]float64
-	n    int // samples held, up to ledgerTrailLen
-	head int // where the next goes
-}
-
-func (r *ledgerRing) push(x float64) {
-	r.v[r.head] = x
-	r.head = (r.head + 1) % ledgerTrailLen
-	if r.n < ledgerTrailLen {
-		r.n++
-	}
-}
-
-// appendTo adds the samples to out, oldest first.
-func (r *ledgerRing) appendTo(out []float64) []float64 {
-	start := (r.head - r.n + ledgerTrailLen) % ledgerTrailLen
-	for i := 0; i < r.n; i++ {
-		out = append(out, r.v[(start+i)%ledgerTrailLen])
-	}
-	return out
-}
-
-// ledgerTrail is the Ledger's memory of the resources' amounts. It samples
-// by the game's tick, so a faster game fills it faster, and starts over when
-// the tick goes back (a new game, a new run) or reset is called (a load).
-type ledgerTrail struct {
-	rings   map[string]*ledgerRing
-	last    int
-	started bool
-}
-
-func (t *ledgerTrail) reset() {
-	clear(t.rings)
-	t.started = false
-}
-
-// observe takes a sample of every unlocked resource when ledgerSampleTicks
-// have passed since the last.
-func (t *ledgerTrail) observe(state game.GameState) {
-	if t.rings == nil {
-		t.rings = map[string]*ledgerRing{}
-	}
-	if t.started && state.Tick < t.last {
-		t.reset()
-	}
-	if t.started && state.Tick-t.last < ledgerSampleTicks {
-		return
-	}
-	t.started, t.last = true, state.Tick
-	for key, rs := range state.Resources {
-		if !rs.Unlocked {
-			continue
-		}
-		r := t.rings[key]
-		if r == nil {
-			r = &ledgerRing{}
-			t.rings[key] = r
-		}
-		r.push(rs.Amount)
-	}
-}
-
-// ledgerTrend says which way an amount has gone over its trail: 1 rising,
-// -1 falling, 0 steady. A stock that is going down now is falling, whatever
-// the trail says of the minutes before; with fewer than two samples the rate
-// says.
-func ledgerTrend(trail []float64, rate float64) int {
-	if rate < 0 {
-		return -1
-	}
-	if len(trail) < 2 {
-		switch {
-		case rate > 0:
-			return 1
-		case rate < 0:
-			return -1
-		}
-		return 0
-	}
-	first, last := trail[0], trail[len(trail)-1]
-	scale := math.Max(math.Abs(first), math.Abs(last))
-	if scale == 0 || math.Abs(last-first) < scale*ledgerSteady {
-		return 0
-	}
-	if last > first {
-		return 1
-	}
-	return -1
-}
-
-// ledgerSparkLevels are the eight heights of a trend line, lowest first, and
-// their plain ASCII twins.
-const (
-	ledgerSparkUnicode = "▁▂▃▄▅▆▇█"
-	ledgerSparkASCII   = "_.-:=+*#"
-)
-
-// ledgerSpark draws trail as width cells of heights, the newest at the right
-// and the cells before the first sample blank, scaled between the trail's own
-// lowest and highest. A flat trail sits at the middle.
-func ledgerSpark(trail []float64, width int, plain bool) string {
-	levels := []rune(ledgerSparkUnicode)
-	if plain {
-		levels = []rune(ledgerSparkASCII)
-	}
-	if len(trail) > width {
-		trail = trail[len(trail)-width:]
-	}
-	lo, hi := math.Inf(1), math.Inf(-1)
-	for _, v := range trail {
-		lo, hi = math.Min(lo, v), math.Max(hi, v)
-	}
-	out := make([]rune, 0, width)
-	for i := len(trail); i < width; i++ {
-		out = append(out, ' ')
-	}
-	for _, v := range trail {
-		level := 3
-		if hi > lo {
-			level = clamp(int((v-lo)/(hi-lo)*float64(len(levels)-1)+0.5), 0, len(levels)-1)
-		}
-		out = append(out, levels[level])
-	}
-	return string(out)
-}
 
 // ===== What the Ledger knows =====
 
@@ -273,14 +110,6 @@ type ledgerPillar struct {
 	Status string
 }
 
-// ledgerCard is one resource's card.
-type ledgerCard struct {
-	Key, Name    string
-	Amount, Rate float64
-	Trail        []float64
-	Trend        int
-}
-
 // ledgerData is everything the Ledger draws, worked out once a refresh.
 type ledgerData struct {
 	v game.AdvanceView
@@ -291,37 +120,26 @@ type ledgerData struct {
 	// Then is the wonder that comes after them.
 	Waits []string
 	Then  string
-	// Need are the resources a blocker is short of, and Worst the one that
-	// will take longest to find.
+	// Need are the resources a blocker is short of; Short their names, in
+	// the ruleset's order.
 	Need  map[string]bool
-	Worst string
-	// Short are the names of Need, in the order of the cards.
 	Short []string
-	Cards []ledgerCard
 }
 
-// ledger is the dashboard's Ledger: its memory and the last thing it worked out.
+// ledger is the dashboard's Ledger: the last thing it worked out.
 type ledger struct {
-	trail ledgerTrail
 	data  ledgerData
 	ready bool
 
-	// slots is how many resources the age has to show (the ones that have
-	// come by it), which sets the rows of cards (ledgerHeight).
-	slots int
-
 	// order is the resources in the ruleset's order, cached for the ruleset
-	// it was read from; slotsAge is the age slots was counted for.
-	set      *rules.Set
-	order    []string
-	slotsAge string
-	buf      []float64
+	// it was read from.
+	set   *rules.Set
+	order []string
 }
 
 // update works the Ledger out from a snapshot. eng holds the calendar (the
 // year never runs back within an age); it may be nil.
 func (l *ledger) update(state game.GameState, eng *game.GameEngine) {
-	l.trail.observe(state)
 	v := state.AdvanceView()
 	if eng != nil {
 		v = eng.HoldCalendar(v)
@@ -335,8 +153,6 @@ func (l *ledger) update(state game.GameState, eng *game.GameEngine) {
 		d.Pillars = append(d.Pillars, ledgerPillar{Name: p.Name, Share: p.Progress, Pct: sharePercent(p.Progress, false), Met: p.Met, Note: pillarNote(p), Status: status})
 	}
 	l.blockers(state)
-	l.cardsFor(state)
-	l.countSlots(state)
 	l.ready = true
 }
 
@@ -363,49 +179,21 @@ func (l *ledger) resourceOrder(state game.GameState) []string {
 	return l.order
 }
 
-// countSlots counts the resources that have come by the age: the places the
-// Ledger keeps for cards. It is the same all through an age.
-func (l *ledger) countSlots(state game.GameState) {
-	set := state.Ruleset()
-	if l.slotsAge == state.Age && l.slots > 0 && set == l.set {
-		return
-	}
-	l.slotsAge, l.slots = state.Age, 0
-	here, _ := set.Index(state.Age)
-	for _, def := range set.Resources() {
-		if i, ok := set.Index(def.Age); ok && i <= here {
-			l.slots++
-		}
-	}
-}
-
 // blockers lists what the gate is waiting on and which resources a blocker is
 // short of: for a building, the price of its next copy against the stock; for
 // the wonder's bank, what is left to bank against the stock.
 func (l *ledger) blockers(state game.GameState) {
 	d := &l.data
-	d.Waits, d.Then, d.Worst, d.Short = d.Waits[:0], "", "", d.Short[:0]
+	d.Waits, d.Then, d.Short = d.Waits[:0], "", d.Short[:0]
 	if d.Need == nil {
 		d.Need = map[string]bool{}
 	}
 	clear(d.Need)
-	scores := map[string]float64{}
 
 	short := func(cost map[string]float64, banked map[string]float64) {
 		for res, price := range cost {
-			left := price - banked[res]
-			rs := state.Resources[res]
-			if left <= rs.Amount {
-				continue
-			}
-			// How many ticks the stock needs to cover what is left.
-			score := math.MaxFloat64
-			if rs.Rate > 0 {
-				score = (left - rs.Amount) / rs.Rate
-			}
-			d.Need[res] = true
-			if score > scores[res] {
-				scores[res] = score
+			if price-banked[res] > state.Resources[res].Amount {
+				d.Need[res] = true
 			}
 		}
 	}
@@ -422,6 +210,8 @@ func (l *ledger) blockers(state game.GameState) {
 			case game.GateRowCount:
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d/%d", r.Label, r.Have, r.Need))
 				short(buildingPrice(&state, r.Key, state.Buildings[r.Key]), nil)
+			case game.GateRowAmount:
+				d.Waits = append(d.Waits, fmt.Sprintf("%s %s/%s", r.Label, textfmt.Number(r.Value), textfmt.Number(r.Target)))
 			case game.GateRowShare:
 				bankOpen = true
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d%%", r.Label, r.Have))
@@ -453,41 +243,12 @@ func (l *ledger) blockers(state game.GameState) {
 		}
 	}
 
-	// The resource that will take longest to find; ties go to the one the
-	// ruleset lists first, so the choice does not change from frame to frame.
-	best := -1.0
+	// The names go in the ruleset's order, so the line does not change from
+	// frame to frame.
 	for _, key := range l.resourceOrder(state) {
-		if !d.Need[key] {
-			continue
+		if d.Need[key] {
+			d.Short = append(d.Short, state.Resources[key].Name)
 		}
-		d.Short = append(d.Short, state.Resources[key].Name)
-		if scores[key] > best {
-			best, d.Worst = scores[key], key
-		}
-	}
-}
-
-// cardsFor makes a card of each resource that has something going on, in the
-// ruleset's order. A resource with nothing held, no rate or not unlocked has
-// none.
-func (l *ledger) cardsFor(state game.GameState) {
-	d := &l.data
-	d.Cards, l.buf = d.Cards[:0], l.buf[:0]
-	for _, key := range l.resourceOrder(state) {
-		rs, ok := state.Resources[key]
-		// A resource with nothing held and no rate has no card, unless the
-		// gate is short of it: that is the one to look at.
-		if !ok || !rs.Unlocked || (rs.Amount <= 0 && rs.Rate == 0 && !d.Need[key]) {
-			continue
-		}
-		var trail []float64
-		if r := l.trail.rings[key]; r != nil {
-			// The samples, then the amount now, so the line ends where the stock is.
-			at := len(l.buf)
-			l.buf = append(r.appendTo(l.buf), rs.Amount)
-			trail = l.buf[at:len(l.buf):len(l.buf)]
-		}
-		d.Cards = append(d.Cards, ledgerCard{Key: key, Name: rs.Name, Amount: rs.Amount, Rate: rs.Rate, Trail: trail, Trend: ledgerTrend(trail, rs.Rate)})
 	}
 }
 
@@ -509,7 +270,7 @@ func (r *lrow) put(role theme.Role, s string) {
 	r.w += runeLen(s)
 }
 
-// chip puts s on the accent, as the bottleneck is marked.
+// chip puts s on the accent, as the resources a blocker is short of are.
 func (r *lrow) chip(s string) {
 	r.sb.WriteString(theme.TagFgBg(theme.RoleOnAccent, theme.RoleAccent))
 	r.sb.WriteString(s)
@@ -554,7 +315,7 @@ func ledgerLines(m *ledgerData, tier ledgerTier, w, h int, glyphs mapmodel.Glyph
 	var lines []string
 	switch tier {
 	case ledgerFull:
-		lines = lv.full(max(1, (h-ledgerFullHead)/2))
+		lines = lv.full()
 	case ledgerStandard:
 		lines = lv.standard()
 	default:
@@ -573,7 +334,7 @@ func ledgerLines(m *ledgerData, tier ledgerTier, w, h int, glyphs mapmodel.Glyph
 
 // ledgerFold are the marks the plain glyph tier writes the Ledger's marks as.
 var ledgerFold = map[rune]rune{
-	'█': '#', '░': '-', '▲': '^', '▼': 'v', '▬': '=', '▶': '>', '✓': '+', '·': '|', '…': '~',
+	'█': '#', '░': '-', '✓': '+', '·': '|', '…': '~',
 }
 
 // foldLedger writes s in ASCII.
@@ -870,298 +631,19 @@ func (lv ledgerView) pillarsTwoRows() (names, meters string) {
 	return a.String(), b.String()
 }
 
-// ===== The cards =====
-
-const (
-	ledgerAmtW = 6 // the widest amount: "123Qi", "11.8Qi"
-	// The cards come in three shapes, by the room: inline (the compact Ledger's
-	// one-row strip), narrow (two lines) and wide (two lines, with the trend in
-	// words).
-	ledgerInlineW  = 6 + 1 + ledgerAmtW + 1 + 7 + 1 + 1
-	ledgerNarrowW  = 17
-	ledgerWideMinW = 26
-	ledgerWideCols = 142 // the full Ledger writes wide cards from this many columns
-)
-
-// trendText is the trend as a mark and a word, padded to its column.
-func trendText(trend int) string {
-	switch {
-	case trend > 0:
-		return padRight(vibe.Line("ui.dash_ledger.trendText.01", "▲ rising"), 9)
-	case trend < 0:
-		return padRight(vibe.Line("ui.dash_ledger.trendText.02", "▼ falling"), 9)
-	}
-	return padRight(vibe.Line("ui.dash_ledger.trendText.03", "▬ steady"), 9)
-}
-
-func trendGlyph(trend int) (string, theme.Role) {
-	switch {
-	case trend > 0:
-		return "▲", theme.RolePositive
-	case trend < 0:
-		return "▼", theme.RoleNegative
-	}
-	return "▬", theme.RoleDim
-}
-
-// rateCell is a rate as text in width cells, right aligned, with the unit
-// when it fits.
-func rateCell(rate float64, width int) (string, theme.Role) {
-	text, color := rateParts(rate, "/t")
-	if runeLen(text) > width {
-		text, _ = rateParts(rate, "")
-	}
-	role := theme.RolePositive
-	switch color {
-	case "red":
-		role = theme.RoleNegative
-	case "gray":
-		role = theme.RoleDim
-	}
-	if n := runeLen(text); n < width {
-		text = strings.Repeat(" ", width-n) + text
-	}
-	return truncate(text, width), role
-}
-
-// amountCell is an amount right aligned in width cells.
-func amountCell(amount float64, width int) string {
-	text := textfmt.Number(amount)
-	if n := runeLen(text); n < width {
-		text = strings.Repeat(" ", width-n) + text
-	}
-	return truncate(text, width)
-}
-
-// nameCell puts a card's mark and name in width cells, in the style its
-// place calls for: on the accent for the resource that holds the gate up
-// longest, in the warning colour for the others a blocker is short of.
-func (lv ledgerView) nameCell(r *lrow, c ledgerCard, width int) {
-	name := padRight(shortName(c.Name, width-1), width-1)
-	mark := " "
-	if lv.m.Worst == c.Key {
-		mark = "▶"
-	}
-	switch {
-	case lv.m.Worst == c.Key:
-		r.chip(mark + name)
-	case lv.m.Need[c.Key]:
-		r.put(theme.RoleWarning, mark+name)
-	default:
-		r.put(theme.RoleLabel, mark+name)
-	}
-}
-
-// cardLines writes one card in two lines at x offsets decided by the caller;
-// it returns the two lines, both exactly cw cells wide.
-func (lv ledgerView) cardLines(c ledgerCard, cw int) (l1, l2 string) {
-	var a, b lrow
-	wide := cw >= ledgerWideMinW
-	arrow, arrowRole := trendGlyph(c.Trend)
-	if wide {
-		nameW := cw - 17 // the mark and name; then the amount (6) and the rate (9), a space before each
-		lv.nameCell(&a, c, nameW)
-		a.raw(" ", 1)
-		a.put(theme.RoleBright, amountCell(c.Amount, ledgerAmtW))
-		a.raw(" ", 1)
-		rate, role := rateCell(c.Rate, 9)
-		a.put(role, rate)
-		sw := min(12, cw-11)
-		b.raw(" ", 1)
-		b.put(theme.RoleLabel, ledgerSpark(c.Trail, sw, lv.plain))
-		b.raw(" ", 1)
-		b.put(arrowRole, trendText(c.Trend))
-	} else {
-		nameW := cw - 1 - ledgerAmtW // the mark and name; then a space and the amount
-		lv.nameCell(&a, c, nameW)
-		a.raw(" ", 1)
-		a.put(theme.RoleBright, amountCell(c.Amount, ledgerAmtW))
-		sw := cw - 1 - 1 - 7 - 1 - 1
-		b.raw(" ", 1)
-		b.put(theme.RoleLabel, ledgerSpark(c.Trail, sw, lv.plain))
-		b.raw(" ", 1)
-		rate, role := rateCell(c.Rate, 7)
-		b.put(role, rate)
-		b.raw(" ", 1)
-		b.put(arrowRole, arrow)
-	}
-	a.pad(cw)
-	b.pad(cw)
-	return a.String(), b.String()
-}
-
-// pickCards chooses the cards that fit slots places. When there are more
-// than that, the last place is the count of the rest.
-func (lv ledgerView) pickCards(slots int) (cards []ledgerCard, more int) {
-	if len(lv.m.Cards) <= slots {
-		return lv.m.Cards, 0
-	}
-	cards = lv.chooseCards(max(0, slots-1))
-	return cards, len(lv.m.Cards) - len(cards)
-}
-
-// chooseCards keeps keep of the cards: the ones a blocker is short of first,
-// then the ones going down, then the newest resources. They keep the
-// ruleset's order, so a card does not move unless the gate's needs or a rate
-// do.
-func (lv ledgerView) chooseCards(keep int) []ledgerCard {
-	all := lv.m.Cards
-	chosen := make([]bool, len(all))
-	left := keep
-	take := func(i int) {
-		if left > 0 && !chosen[i] {
-			chosen[i] = true
-			left--
-		}
-	}
-	for i, c := range all {
-		if lv.m.Need[c.Key] {
-			take(i)
-		}
-	}
-	for i, c := range all {
-		if c.Rate < 0 {
-			take(i)
-		}
-	}
-	for i := len(all) - 1; i >= 0; i-- {
-		take(i)
-	}
-	cards := make([]ledgerCard, 0, keep)
-	for i, c := range all {
-		if chosen[i] {
-			cards = append(cards, c)
-		}
-	}
-	return cards
-}
-
-// moreText is the count of the resources there is no card for.
-func moreText(n int, short bool) string {
-	if short {
-		return fmt.Sprintf("+%d", n)
-	}
-	return vibe.Sprintf("ui.dash_ledger.moreText.01", "+%d more", n)
-}
-
-// cardRows lays cards out in rows of per cards, each cw cells wide at the
-// pitch of the row, two lines a row; rows is how many rows there are room for.
-func (lv ledgerView) cardRows(rows, per, cw int) []string {
-	if per < 1 || rows < 1 || cw < ledgerNarrowW-3 {
-		return nil
-	}
-	cards, more := lv.pickCards(rows * per)
-	pitch := (lv.w - 2) / per
-	out := make([]string, 0, rows*2)
-	for row := 0; row < rows; row++ {
-		var a, b lrow
-		a.raw(" ", 1)
-		b.raw(" ", 1)
-		for col := 0; col < per; col++ {
-			i := row*per + col
-			a.pad(1 + col*pitch)
-			b.pad(1 + col*pitch)
-			switch {
-			case i < len(cards):
-				l1, l2 := lv.cardLines(cards[i], cw)
-				a.raw(l1, cw)
-				b.raw(l2, cw)
-			case i == rows*per-1 && more > 0:
-				a.put(theme.RoleDim, moreText(more, false))
-			}
-		}
-		out = append(out, strings.TrimRight(a.String(), " "), strings.TrimRight(b.String(), " "))
-	}
-	return out
-}
-
-// inlineStrip is the compact Ledger's one row of cards: name, amount, rate
-// and which way it is going, a card to ledgerInlineW cells.
-func (lv ledgerView) inlineStrip() string {
-	all := lv.m.Cards
-	if len(all) == 0 {
-		return ""
-	}
-	const gap = 2
-	width := func(n int) int { return 1 + n*ledgerInlineW + (n-1)*gap }
-	slots := 0
-	for width(slots+1) <= lv.w-1 {
-		slots++
-	}
-	if slots == 0 {
-		return ""
-	}
-	cards, more := all, 0
-	if len(all) > slots {
-		// The count of the rest takes room too: in words if they fit, else a number.
-		short := false
-		for slots > 1 && width(slots)+gap+runeLen(moreText(len(all)-slots, short)) > lv.w-1 {
-			if !short {
-				short = true
-				continue
-			}
-			slots--
-		}
-		cards = lv.chooseCards(slots)
-		more = len(all) - len(cards)
-	}
-	var r lrow
-	r.raw(" ", 1)
-	for i, c := range cards {
-		if i > 0 {
-			r.raw(strings.Repeat(" ", gap), gap)
-		}
-		lv.inlineCard(&r, c)
-	}
-	if more > 0 {
-		for _, short := range []bool{false, true} {
-			if t := moreText(more, short); r.w+gap+runeLen(t) <= lv.w-1 {
-				r.raw(strings.Repeat(" ", gap), gap)
-				r.put(theme.RoleDim, t)
-				break
-			}
-		}
-	}
-	return r.String()
-}
-
-func (lv ledgerView) inlineCard(r *lrow, c ledgerCard) {
-	name := padRight(shortName(c.Name, 6), 6)
-	switch {
-	case lv.m.Worst == c.Key:
-		r.chip(name)
-	case lv.m.Need[c.Key]:
-		r.put(theme.RoleWarning, name)
-	default:
-		r.put(theme.RoleLabel, name)
-	}
-	r.raw(" ", 1)
-	r.put(theme.RoleBright, amountCell(c.Amount, ledgerAmtW))
-	r.raw(" ", 1)
-	rate, role := rateCell(c.Rate, 7)
-	r.put(role, rate)
-	r.raw(" ", 1)
-	arrow, arole := trendGlyph(c.Trend)
-	r.put(arole, arrow)
-}
-
 // ===== The three sizes =====
 
 func (lv ledgerView) compact() []string {
-	return []string{lv.barRow(true), lv.inlineStrip()}
+	return []string{lv.barRow(true)}
 }
 
 func (lv ledgerView) standard() []string {
-	lines := []string{lv.barRow(true), lv.pillarsRow()}
-	per, cw := ledgerCardShape(lv.w)
-	return append(lines, lv.cardRows(1, per, cw)...)
+	return []string{lv.barRow(true), lv.pillarsRow()}
 }
 
-func (lv ledgerView) full(rows int) []string {
+func (lv ledgerView) full() []string {
 	names, meters := lv.pillarsTwoRows()
-	lines := []string{lv.barRow(false), lv.waitRow(), names, meters, ""}
-	per, cw := ledgerCardShape(lv.w)
-	return append(lines, lv.cardRows(rows, per, cw)...)
+	return []string{lv.barRow(false), lv.waitRow(), names, meters}
 }
 
 // ===== The box =====

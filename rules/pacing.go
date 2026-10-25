@@ -115,6 +115,12 @@ func (s *Set) StakeMinutes(res, age string, share, ceiling float64) float64 {
 	return config.StakeMinutes(age, share, s.typIncome[age][res], ceiling)
 }
 
+// SizedIncome is income held to the band an event gain is sized in around the
+// typical income of a resource (config.SizedIncome).
+func (s *Set) SizedIncome(income, typical float64) float64 {
+	return config.SizedIncome(income, typical)
+}
+
 // StockOf is a share of a good stock of res for a town making income of it
 // per tick in age (config.StockOf): minutes of the town's own income, within
 // the band around the age's typical income.

@@ -38,7 +38,7 @@ func init() {
 		"ui.input.cmdTradeRoute.01",                                            // Usage: trade route start|stop <route>
 		"ui.overlay_plan.planPanelText.04", "ui.overlay_plan.planPanelText.05", // plan build <building> [count], and an example of it
 		"ui.people_tabs.work.05", "ui.people_tabs.work.15", "ui.people_tabs.work.16", "ui.people_tabs.work.20", // roster <area> <%|auto>
-		"ui.overlay_help.helpProvider.09", // the word help, as it is typed
+		"ui.overlay_help.helpProvider.09", // the key name Tab in the help page (the word help beside it is not a row)
 	)
 	leftAloneFor(leftKey,
 		"ui.research_tree.laneLabel.01", // AEIOU: the vowels a letter is tested against
@@ -52,8 +52,8 @@ func init() {
 	leftAloneFor(leftArticle, "ui.overlay_stats.statsProvider.42")
 }
 
-// wireDespiteTwins are texts the exporter takes for compared because another
-// literal of the same words sits in an operation, which on a look is not a
+// wireDespiteTwins are texts that link marks as compared because another
+// literal of the same words sits in a text operation, but that are not a
 // comparison.
 var wireDespiteTwins = map[string]bool{
 	"ui.research_tree.canvas.01": true, // " or " between two lines of the tree; the other " or " is a Join separator
@@ -64,7 +64,7 @@ var wireDespiteTwins = map[string]bool{
 var keycapWords = map[string]bool{
 	"enter": true, "esc": true, "tab": true, "shift": true, "arrows": true, "up": true, "down": true,
 	"left": true, "right": true, "pgup": true, "pgdn": true, "home": true, "end": true, "backspace": true,
-	"space": true, "delete": true,
+	"space": true, "delete": true, "option": true, "alt": true,
 	"◄►": true, "↑↓": true, // the marks the map's key hints use for the arrow keys
 }
 

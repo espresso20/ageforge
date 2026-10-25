@@ -1078,7 +1078,7 @@ func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	if v.plain() {
 		move[0], card[0] = "Arrows", "Left Right"
 	}
-	tab, enter, page, ends, esc := [2]string{"Tab", "family"}, [2]string{"Enter", "detail"}, [2]string{"PgUp PgDn", vibe.Line("ui.badge_case.drawKeys.10", "page")}, [2]string{"Home End", vibe.Line("ui.badge_case.drawKeys.12", "first, last")}, [2]string{"Esc", "close"}
+	tab, enter, page, ends, esc := [2]string{"Tab", "family"}, [2]string{"Enter", "detail"}, [2]string{"PgUp PgDn " + pageKeysHint(v.plain()), vibe.Line("ui.badge_case.drawKeys.10", "page")}, [2]string{"Home End", vibe.Line("ui.badge_case.drawKeys.12", "first, last")}, [2]string{"Esc", "close"}
 	// Each set gives up one more key; the first that fits is drawn.
 	sets := [][][2]string{
 		{move, tab, enter, page, ends, esc},

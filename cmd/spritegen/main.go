@@ -1,4 +1,5 @@
-// cmd/spritegen/main.go — generates 16×16 pixel art domain icons + sprite sheet + preview
+// This file writes one icon per domain to assets/sprites, then spritesheet.png (all the
+// icons in one row) and preview.png (the icons scaled up, in a grid).
 package main
 
 import (
@@ -27,7 +28,8 @@ type sprite struct {
 	pixels [16][16]uint32
 }
 
-// ── Color palette ─────────────────────────────────────────────────────────────
+// Colors. Each group below holds the colors of one icon. A name starts with a short
+// prefix for that icon.
 
 // food: wheat bundle
 const (
@@ -150,10 +152,8 @@ const (
 	stO  = 0xd4a017 // gold hinge
 )
 
-// ── Sprite definitions ────────────────────────────────────────────────────────
-
 func spriteFood() [16][16]uint32 {
-	_ = fB // used in rows 13-14
+	_ = fB // used in rows 13-14 (counting from 0)
 	return [16][16]uint32{
 		{0, 0, 0, fG, 0, 0, fG, 0, 0, fG, 0, 0, 0, 0, 0, 0},
 		{0, 0, fG, fG, fG, 0, fG, fG, 0, fG, fG, 0, 0, 0, 0, 0},
@@ -468,8 +468,6 @@ func spriteStorage() [16][16]uint32 {
 	}
 }
 
-// ── Sprite table ──────────────────────────────────────────────────────────────
-
 var domainSprites = []sprite{
 	{name: "food", pixels: spriteFood()},
 	{name: "wood", pixels: spriteWood()},
@@ -487,8 +485,6 @@ var domainSprites = []sprite{
 	{name: "wonder", pixels: spriteWonder()},
 	{name: "storage", pixels: spriteStorage()},
 }
-
-// ── Image helpers ─────────────────────────────────────────────────────────────
 
 func spriteToImage(s sprite) *image.NRGBA {
 	img := image.NewNRGBA(image.Rect(0, 0, 16, 16))
@@ -531,7 +527,8 @@ const (
 	spriteDisplay = 16 * previewScale // 96px
 )
 
-// buildPreview scales each sprite 6× and arranges them 5 per row with 4px gaps.
+// buildPreview scales each sprite by previewScale and arranges them previewPerRow to a
+// row, previewGap pixels apart.
 func buildPreview(imgs []*image.NRGBA) *image.NRGBA {
 	n := len(imgs)
 	rows := (n + previewPerRow - 1) / previewPerRow
@@ -571,7 +568,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Generate per-building sprites for every building in the catalog (3 variations each)
 	if err := GenerateAllBuildingSprites("assets/sprites/buildings"); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to generate building sprites: %v\n", err)
 		os.Exit(1)
@@ -589,14 +585,12 @@ func main() {
 		}
 	}
 
-	// Sprite sheet: all 15 sprites in a single row (240×16).
 	sheet := buildSpriteSheet(imgs)
 	if err := savePNG(outDir+"/spritesheet.png", sheet); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to save spritesheet: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Preview: 5 per row, scaled 6× (96px each), with 4px gaps.
 	preview := buildPreview(imgs)
 	if err := savePNG(outDir+"/preview.png", preview); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to save preview: %v\n", err)

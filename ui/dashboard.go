@@ -69,11 +69,9 @@ type Dashboard struct {
 	logTV    *tview.TextView
 	statusTV *fitView
 	// ledgerTV is the Ledger under the status ribbon (dash_ledger.go) and
-	// ledger what it draws; ledgerReset asks for its trends to start over
-	// (a game was loaded).
+	// ledger what it draws.
 	ledgerTV         *ledgerBox
 	ledger           ledger
-	ledgerReset      atomic.Bool
 	inputField       *commandInput
 	lastAge          string
 	pendingAgeSplash string // set by bus handler, consumed by refresh()
@@ -348,9 +346,8 @@ func (d *Dashboard) build() {
 		return statusLine(*d.lastState, d.ribbonFacts(), w)
 	})
 
-	// The Ledger: the long bar to the next age with what it waits on, the
-	// four pillars and a card for each resource, written for the size it is
-	// drawn at (ledgerLines).
+	// The Ledger: the long bar to the next age with what it waits on and the
+	// four pillars, written for the size it is drawn at (ledgerLines).
 	d.ledgerTV = newLedgerBox(func(w, h int) []string {
 		if d.lastState == nil || !d.ledger.ready {
 			return nil
@@ -442,9 +439,8 @@ func (d *Dashboard) build() {
 		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", textfmt.Capitalize(name), verb), "warning", 8*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
-		// Runs under the engine write lock: only flip the flags, never touch the engine.
+		// Runs under the engine write lock: only flip the flag, never touch the engine.
 		d.catReshow.Store(true)
-		d.ledgerReset.Store(true)
 	})
 	d.engine.Bus.Subscribe(game.EventEpochEventFired, func(e game.EventData) {
 		eventName, _ := e.Payload["event_name"].(string)
@@ -579,7 +575,7 @@ func (d *Dashboard) build() {
 	// The Ledger is as tall as the terminal calls for, chosen before the
 	// rows are shared out, so a resize shows the right one at once.
 	d.root.SetDrawFunc(func(_ tcell.Screen, x, y, w, h int) (int, int, int, int) {
-		d.root.ResizeItem(d.ledgerTV, ledgerHeight(w, h, d.ledger.slots), 0)
+		d.root.ResizeItem(d.ledgerTV, ledgerHeight(w, h), 0)
 		return x, y, w, h
 	})
 
@@ -1313,9 +1309,6 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 	// The Ledger is worked out here, once, from the snapshot: the status
 	// ribbon reads its year and next age, and both are written from it at
 	// their next draw (ledgerLines).
-	if d.ledgerReset.Swap(false) {
-		d.ledger.trail.reset()
-	}
 	d.ledger.update(state, d.engine)
 	d.ledgerTV.changed()
 }

@@ -601,7 +601,7 @@ func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []
 		end++
 	}
 	if from > 0 {
-		lines = append(lines, theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutBuildings.01", " ↑ %d more above: PgUp", from), w)))
+		lines = append(lines, theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutBuildings.01", " ↑ %d more above: PgUp (⌥↑)", from), w)))
 	}
 	if end == from {
 		// Not even one entry fits whole: show the top of it.
@@ -614,7 +614,7 @@ func layoutBuildings(head string, entries [][]string, w, h, first int) (lines []
 		}
 	}
 	if below := len(entries) - end; below > 0 {
-		lines = append(lines, theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutBuildings.02", " ↓ %d more below: PgDn", below), w)))
+		lines = append(lines, theme.Paint(theme.RoleDim, truncate(vibe.Sprintf("ui.tab_economy.layoutBuildings.02", " ↓ %d more below: PgDn (⌥↓)", below), w)))
 	}
 	if len(lines) > h {
 		lines = lines[:h] // a box of a row or two has no room for the notes

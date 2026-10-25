@@ -96,8 +96,8 @@ func TestMaxNumber(t *testing.T) {
 	if got := Number(1000 * units[len(units)-1].threshold); got != "1000Dc" {
 		t.Errorf("Number(1000Dc) = %q, want 1000Dc (the first value past the table)", got)
 	}
-	// The late game's stores reach about 25 quintillion; the table runs
-	// well past that, by at least three units.
+	// The table must run well past the late game's largest amounts, taken here
+	// as 25 quintillion: by at least three units.
 	const topStore = 25 * quintillion
 	if max < topStore*billion {
 		t.Errorf("MaxNumber() = %v is not three units past the late game's top store %v", max, topStore)

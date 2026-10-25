@@ -2,11 +2,11 @@
 // text a player reads, and the VibeMode script itself.
 //
 // Every line of text in the game has a row id (building.lumber_mill.name,
-// tech.pottery.description). cmd/words reads the Go source to export the
-// rows to sheets, and the ruleset overlay reads the same ids off the live
-// definitions to swap a row's text for its VibeMode line. The one table
-// both use is here: FieldIDs says how a definition's text field becomes an
-// id, so the two can never name a row differently.
+// tech.pottery.description). cmd/words reads the Go source to export the rows to
+// sheets, and the ruleset overlay reads the same ids off the live definitions to
+// swap a row's text for its VibeMode line. The table both use is here: FieldIDs
+// says how a definition's text field becomes an id, so the two cannot name a row
+// differently.
 package words
 
 import (
@@ -25,9 +25,8 @@ import (
 //	{decl}    the variable or function it is declared in (the source only)
 //	{aN}      the Nth argument of the call around it (the source only)
 //
-// A template with {decl} or {aN} can be filled from the source but not from
-// a running ruleset, so the overlay skips those rows (they are in the export
-// all the same).
+// A template with {decl} or {aN} can be filled from the source but not from a
+// running ruleset, so the overlay skips those rows. The export still has them.
 var FieldIDs = map[string]string{
 	// ----- ages and eras -----
 	"config.AgeDef.Name":              "age.{Key}.name",
@@ -137,20 +136,22 @@ var FieldIDs = map[string]string{
 	"mapmodel.AlienKind.Lines":       "map.alien.{sn}.line.{n}",
 }
 
-// FieldID is the id template of the field Type.Field of a package, or "".
+// FieldID returns the id template for a field, or "" if it has none. typ is
+// "package.Type" and field is the field's name.
 func FieldID(typ, field string) string { return FieldIDs[typ+"."+field] }
 
 // TemplateRe finds the slots of an id or "where" template.
 var TemplateRe = regexp.MustCompile(`\{(name:)?(\^)?([A-Za-z]+[0-9]*)\}`)
 
-// Slot answers one slot of a template: the name between the braces, and
-// whether it was written {^name} (a field of the struct around). A slot it
-// does not know it reports as known false, and Expand leaves it as written.
+// Slot answers one slot of a template. It gets the name between the braces and
+// whether the slot was written {^name} (a field of the struct around). For a
+// slot it does not know it returns known false, and Expand leaves the slot as
+// written.
 type Slot func(name string, outer bool) (value string, known bool)
 
-// Expand fills the slots of t. For an id (forID) each value is made safe to
-// be part of one. A {name:X} slot goes through called, which says what the
-// game calls the key X; with no called it is left as written.
+// Expand fills the slots of t. For an id (forID) each value is made safe to be
+// part of one (IDSafe). A {name:X} slot goes through called, which says what the
+// game calls the key X. With no called it is left as written.
 func Expand(t string, slot Slot, forID bool, called func(string) string) string {
 	return TemplateRe.ReplaceAllStringFunc(t, func(m string) string {
 		parts := TemplateRe.FindStringSubmatch(m)
@@ -171,8 +172,10 @@ func Expand(t string, slot Slot, forID bool, called func(string) string) string 
 	})
 }
 
-// IDSafe makes a piece of an id out of free text: lower case, with anything
-// that is not a letter, digit, dash or underscore turned into an underscore.
+// IDSafe makes a piece of an id out of free text. It keeps ASCII letters (in
+// their case), digits and dashes. Each run of any other characters (spaces,
+// underscores, punctuation, other letters) becomes one underscore between kept
+// characters, and a run at the start or end is dropped.
 func IDSafe(s string) string {
 	var b strings.Builder
 	gap := false

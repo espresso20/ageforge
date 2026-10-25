@@ -112,7 +112,7 @@ Everything is typed at the prompt. The full reference is the in-game `help` pane
 ### Keys
 - Tab or →: take the completion shown in dim text after the cursor; Tab again cycles through the others
 - ↑ / ↓: step through command history
-- PgUp / PgDn: scroll the main view
+- PgUp / PgDn: scroll the main view (Option+↑ / Option+↓ on a Mac, which has no Page keys; Option+← / Option+→ are Home / End, and - and = zoom the Map)
 - Esc: close the open panel; with no panel open, save, stop the game and return to the main menu
 
 ## Contributing

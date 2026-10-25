@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -5,6 +7,7 @@ import (
 	"math/rand"
 	"runtime"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -385,7 +388,7 @@ func runFuzz(e *Env, res *Result) {
 				switch {
 				case len(fs) == 0:
 					byFirst["(empty)"]++
-				case contains(gen.commands, strings.ToLower(fs[0])):
+				case slices.Contains(gen.commands, strings.ToLower(fs[0])):
 					byFirst[strings.ToLower(fs[0])]++
 				default:
 					byFirst["(not a command)"]++
@@ -407,7 +410,7 @@ func runFuzz(e *Env, res *Result) {
 			fd := res.fail("fuzz_"+f.check, "seed %d, command %d: %s", seed, ran, f.msg)
 			fd.Seed = seed
 			fd.Detail = f.detail
-			fd.Repro = fmt.Sprintf("go run ./cmd/smoke -scenario fuzz -seed-base %d -seeds 1 -v   # replays the whole script\n# shrunk to %d step(s) from a fresh engine seeded %d:\n%s",
+			fd.Repro = fmt.Sprintf("go run -tags smokebot ./cmd/smoke -scenario fuzz -seed-base %d -seeds 1 -v   # replays the whole script\n# shrunk to %d step(s) from a fresh engine seeded %d:\n%s",
 				seed, len(min), seed, strings.Join(lines, "\n"))
 		}
 		rows = append(rows, fmt.Sprintf("| %d | %d | %s | %s |", seed, ran, time.Since(start).Round(100*time.Millisecond), verdict))

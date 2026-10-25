@@ -1,6 +1,6 @@
 package boon
 
-// Rarity weights. Higher = more likely to be drawn. These are the neutral base
+// Rarity weights. Higher means more likely to be drawn. These are the base
 // weights; a Profile's WeightMult and RarityScale reshape them at roll time.
 const (
 	weightCommon   = 10
@@ -8,69 +8,43 @@ const (
 	weightRare     = 2
 )
 
-// instantGrowthPerAge is the per-age growth factor applied to INSTANT lump
-// grants (Kind InstantResource). A fixed 50–200 crate of goods is a fortune in
-// the primitive age and a rounding error in the quantum age, so the lump is
-// multiplied by instantGrowthPerAge^ageIndex (see Profile.instantScale).
-//
-// Calibration: per-BUILDING production in this game roughly doubles per age
-// (engineering lineage: 0.10 iron/tick at bronze → 26,214 quantum_flux/tick at
-// quantum, ~2.0x per age over 18 ages). 2.2 tracks that curve with a little
-// headroom for growing building counts, so a lump stays worth a broadly
-// constant number of TICKS of production across the whole run. Storage caps
-// grow far faster (~4.5x/age), which is why the lump never threatens to fill
-// a late-game stockpile — it is a gift, not a shortcut.
+// instantGrowthPerAge is the per-age growth factor for instant lump grants (Kind
+// InstantResource). A fixed crate of 50 to 200 is a fortune in the primitive age
+// and a rounding error in the quantum age, so the lump is multiplied by
+// instantGrowthPerAge^ageIndex (see Profile.instantScale). 2.2 is meant to follow
+// the growth of one building's output per age, so a lump stays worth about the
+// same number of ticks of production through the whole run.
 const instantGrowthPerAge = 2.2
 
-// maxDrainFraction is the hard ceiling on a ResourceDrain malus after the
-// profile's MagnitudeScale is folded in. A setback empties part of a store,
-// never the whole thing by design.
+// maxDrainFraction is the ceiling on a ResourceDrain after the profile's
+// MagnitudeScale is applied. A setback takes part of a store, never all of it.
 const maxDrainFraction = 0.50
 
-// --- Duration calibration ----------------------------------------------------
+// Duration calibration.
 //
-// Durations are the load-bearing number in this table, because the consumer that
-// draws from it (faction encounters) holds timed boons in a fixed number of
-// SLOTS. Landed-boon throughput is therefore capped at slots/duration, and if
-// that is smaller than the rate encounters arrive, almost every encounter bounces
-// off a full inventory and the reward loop stops rewarding.
+// Durations matter more than any other number in this table, because the consumer
+// (faction encounters) holds timed boons in a fixed number of slots
+// (game.MaxConcurrentFactionBoons). Throughput is slots/duration. If that is
+// lower than the rate at which encounters arrive, most encounters bounce off a
+// full inventory and the reward loop stops rewarding.
 //
-// A measured pass (game/boon_tuning_test.go) reported exactly that — a 2-3% land
-// rate at 97% saturation — and durations were cut ~5x to fix it. That measurement
-// was WRONG: the harness derived its expedition cadence from a legacy fixed
-// Duration field on ExpeditionDef, which the runtime ignored whenever a def
-// carried a [DurationMin, DurationMax] range, so it simulated encounters arriving
-// ~8x faster than the game can produce them. That field has since been deleted so
-// nothing can read it again. With the instrument fixed, the same catalogue
-// measured the opposite failure: offered load of 0.75 slot-equivalents against 5
-// slots, boons live only 53% of the time, and a combined uplift of x1.16 — under
-// the band. Durations were given back 2.5x of that 5x cut (alongside 2x of the
-// matching 4x cut to encounter odds in game/encounters.go), which lands offered
-// load at ~3.7 of 5 slots: ~3 boons live at a time, ~18% saturation, and a
-// median uplift inside the x1.2-1.6 band.
+// Rule of thumb for re-tuning, as offered load in slot-equivalents:
 //
-// The rule of thumb if these are ever re-tuned — offered load in slot-equivalents:
+//	encounters_per_tick x (share of rolls that hold a slot, ~0.70) x avg_duration  ~=  0.75 x slots
 //
-//	encounters_per_tick x (timed share ~0.70) x avg_duration  ~=  0.75 x slots
+// Below ~0.2 x slots the buffs stop overlapping and exploring feels unrewarded.
+// Above ~1.3 x slots more than 40% of timed rolls are refused and the loop
+// starts to read as rejection. The target is a median combined uplift of x1.2 to
+// x1.6 (measure it with go test ./game -run TestBoonTuning -v).
 //
-// i.e. ~3.7 at today's 5 slots. Below ~0.2 x slots the buffs stop overlapping and
-// exploring feels unrewarded; above ~1.3 x slots more than 40% of timed rolls are
-// refused and the loop starts reading as rejection.
-//
-// Setback durations sit at ~40% of the boon scale (a boon averages ~2000 ticks, a
-// timed setback ~740) for a different reason: a timed setback must expire
-// NOTICEABLY sooner than a boon of the same magnitude, or a run of bad luck
-// outlasts every gift that could offset it. They were scaled by the same 2.5x so
-// that ratio did not drift.
+// Timed setbacks last about 40% as long as boons. A setback must expire
+// noticeably sooner than a boon of the same magnitude, or a run of bad luck
+// outlasts every gift that could offset it.
 
-// Catalog returns the starting boon table. Everything here is plain, tunable
-// DATA — magnitudes, durations, lump ranges, weights, and flavor pools live in
-// these literals, so balancing is an edit here and nowhere else.
+// Catalog returns the boon table. Magnitudes, durations, lump ranges, weights and
+// flavor pools are plain data in these literals, so balancing is an edit here.
 //
-// StorageCap and TradeIncome are deliberately absent: they need engine plumbing
-// that does not exist yet (a storage-cap pool, a trade-income modifier). The
-// Kinds are reserved in boon.go; add their Defs — and the matching Applier
-// methods — once that machinery lands.
+// StorageCap and TradeIncome have no entries (see Kind in boon.go).
 func Catalog() []Def {
 	return []Def{
 		{
@@ -171,17 +145,16 @@ func Catalog() []Def {
 	}
 }
 
-// MalusCatalog returns the SETBACK table, the negative mirror of Catalog().
-// Same engine, same Def shape, same weighted pick; only the sign changes. It is
-// drawn instead of Catalog() when a Profile's Polarity is Negative.
+// MalusCatalog returns the setback table, the negative mirror of Catalog. It has
+// the same Def shape and the same weighted pick. RollBoon draws from it when a
+// Profile's Polarity is Negative.
 //
-// Magnitudes here are deliberately modest: a malus should sting for a while, not
-// end a run. The timed entries lean on the engine's existing "<res>_rate" /
-// "production_all" pools with a NEGATIVE value; the drain and worker-loss
-// entries use the two malus-only Kinds and their dedicated Applier methods.
+// Magnitudes are modest on purpose: a malus should sting for a while, not end a
+// run. The timed entries use the engine's "<res>_rate" and "production_all"
+// pools with a negative value. The drain and worker-loss entries use the two
+// malus-only Kinds and their own Applier methods.
 //
-// Flavor is dry and in-world, matching the boon table. These strings are
-// player-facing production text — keep them that way.
+// The flavor strings are player-facing text.
 func MalusCatalog() []Def {
 	return []Def{
 		{

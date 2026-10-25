@@ -1,9 +1,9 @@
-// Package textfmt is the one place player-facing numbers, counts and
-// durations are formatted. ui, game, boon and flavor all import it, so a
-// panel, a log line and a flavor sentence print the same amount the same way:
-// 950, 12.5K, 1.23M.
+// Package textfmt is the one place player-facing numbers, counts and durations
+// are formatted. ui, game, boon and flavor all import it, so a panel, a log line
+// and a flavor sentence print the same amount the same way: 950, 12.5K, 1.23M.
 //
-// It is a leaf package (standard library only) so anything can import it.
+// It imports only the standard library and vibe (for the one word List adds), and
+// nothing of the game, so any package may import it.
 package textfmt
 
 import (
@@ -18,11 +18,10 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// units are the suffixes Number prints, smallest first, each a thousand of
-// the one before: thousand, million, billion, trillion, quadrillion, and
-// from there quintillion, sextillion, septillion, octillion, nonillion and
-// decillion. The largest store in the game is tens of quintillions, so the
-// table runs five units past what an amount in play needs.
+// units are the suffixes Number prints, smallest first, each a thousand of the
+// one before: thousand, million, billion, trillion, quadrillion, and from there
+// quintillion, sextillion, septillion, octillion, nonillion and decillion. The
+// table runs far past the largest amount in the config.
 var units = []struct {
 	threshold float64
 	suffix    string
@@ -41,20 +40,19 @@ var units = []struct {
 }
 
 // MaxNumber is the largest amount Number is sure to print with at most three
-// digits before its unit: 999 of the last unit. Past it there is no unit
-// left to move to, and the digits pile up in front of the last one
-// (1000Dc, 25000Dc). Nothing a player can hold or be quoted should reach it.
+// digits before its unit: 999 of the last unit. Past it there is no unit left to
+// move to, and the digits pile up in front of the last one (1000Dc, 25000Dc).
+// Nothing a player can hold or be quoted should reach it.
 func MaxNumber() float64 {
 	return 999 * units[len(units)-1].threshold
 }
 
 // Number formats an amount or rate for display: three significant figures,
-// trailing zeros dropped, and a unit from a thousand up, K M B T Q and then
-// Qi Sx Sp Oc No Dc (950, 12.5, 0.711, 1.5K, 1.23M, 876M, 11.8Qi). Up to
-// MaxNumber it never prints more than three digits before the unit. Rounding
-// goes through strconv, so the output is identical on every architecture
-// (config descriptions built with it are part of the determinism
-// fingerprint).
+// trailing zeros dropped, and a unit from a thousand up, K M B T Q and then Qi Sx
+// Sp Oc No Dc (950, 12.5, 0.711, 1.5K, 1.23M, 876M, 11.8Qi). Up to MaxNumber it
+// never prints more than three digits before the unit. Rounding goes through
+// strconv, so the output is identical on every architecture (config descriptions
+// built with it are part of the determinism fingerprint).
 func Number(n float64) string {
 	if math.IsNaN(n) || math.IsInf(n, 0) {
 		return "0"
@@ -85,8 +83,8 @@ func Number(n float64) string {
 	return prefix + s + units[i].suffix
 }
 
-// sig3 prints v (0 < v < ~1000) with three significant figures and no
-// exponent or trailing zeros.
+// sig3 prints v (0 < v < ~1000) with three significant figures and no exponent or
+// trailing zeros. Below 0.001 it prints six decimal places instead.
 func sig3(v float64) string {
 	if v < 0.001 {
 		return trimZeros(strconv.FormatFloat(v, 'f', 6, 64))
@@ -116,8 +114,8 @@ func Rate(r float64) string {
 	return RateValue(r) + "/tick"
 }
 
-// RateValue is Rate without the "/tick" unit, for tables whose header
-// already names the unit.
+// RateValue is Rate without the "/tick" unit, for tables whose header already
+// names the unit.
 func RateValue(r float64) string {
 	abs := math.Abs(r)
 	sign := "+"
@@ -130,7 +128,8 @@ func RateValue(r float64) string {
 	return sign + Number(abs)
 }
 
-// Percent formats a fraction as a whole percentage: 0.125 → "13%".
+// Percent formats a fraction as a whole percentage: 0.123 → "12%". An exact half
+// rounds to even (0.125 gives "12%").
 func Percent(frac float64) string {
 	return fmt.Sprintf("%.0f%%", frac*100)
 }
@@ -186,9 +185,9 @@ func Duration(d time.Duration) string {
 	}
 }
 
-// Ticks renders a tick count as an approximate wall-clock duration ("~2m")
-// given the length of one tick. The tilde is honest: the reading moves with
-// game speed.
+// Ticks renders a tick count as an approximate wall-clock duration ("~2m") given
+// the length of one tick. The tilde marks it as approximate: the reading changes
+// with game speed.
 func Ticks(ticks int, interval time.Duration) string {
 	return "~" + Duration(time.Duration(ticks)*interval)
 }
@@ -207,7 +206,8 @@ func Capitalize(s string) string {
 	return s
 }
 
-// Sentence capitalizes s and makes sure it ends with terminal punctuation.
+// Sentence trims s, capitalizes it and adds a period unless it already ends in
+// . ? ! ) or :
 func Sentence(s string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {

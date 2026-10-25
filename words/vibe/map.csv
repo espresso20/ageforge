@@ -465,8 +465,8 @@ ui.mapstyle.roguelike.chrome.news.01,BIG YIKES:
 ui.mapstyle.roguelike.chrome.news.02, is pulling up
 ui.mapstyle.roguelike.chrome.news.03,cooked: 
 ui.mapstyle.roguelike.chrome.news.04,no drama
-ui.mapstyle.roguelike.chrome.bottom.01,arrows steer  Shift speedrun  PgUp PgDn zoom  Tab next  Home center  map flows
-ui.mapstyle.roguelike.chrome.bottom.02,Arrow keys steer  PgUp PgDn zoom  Tab next
+ui.mapstyle.roguelike.chrome.bottom.01,arrows steer  Shift speedrun  -/= or PgUp/PgDn zoom  Tab next  Home center  map flows
+ui.mapstyle.roguelike.chrome.bottom.02,Arrow keys steer  -/= or PgUp/PgDn zoom  Tab next
 ui.mapstyle.roguelike.chrome.bottom.03,cursor's ghosting you; bring it back with the arrow keys
 ui.mapstyle.roguelike.chrome.bottom.04,"no typing needed here, chill; Tab jumps to the next building"
 ui.mapstyle.roguelike.chrome.bottom.05,cheat code: 
@@ -675,8 +675,8 @@ ui.mapstyle.roguelike.space_chrome.news.01,RED FLAG:
 ui.mapstyle.roguelike.space_chrome.news.02, is about to crash out on you
 ui.mapstyle.roguelike.space_chrome.news.03,down bad: 
 ui.mapstyle.roguelike.space_chrome.news.04,nothing sus
-ui.mapstyle.roguelike.space_chrome.bottom.01,arrows steer  Shift speedrun  PgUp world  PgDn close  Tab next  Home hub  map flows
-ui.mapstyle.roguelike.space_chrome.bottom.02,arrow keys drive  PgUp PgDn zoom  Tab next
+ui.mapstyle.roguelike.space_chrome.bottom.01,arrows steer  Shift speedrun  -/PgUp world  =/PgDn close  Tab next  Home hub  map flows
+ui.mapstyle.roguelike.space_chrome.bottom.02,arrow keys drive  -/= or PgUp/PgDn zoom  Tab next
 ui.mapstyle.roguelike.space_chrome.bottom.03,cursor went ghost; slide it back with the arrow keys
 ui.mapstyle.roguelike.space_chrome.bottom.04,"no typing needed here, just vibe; Tab hops to the next building"
 ui.mapstyle.roguelike.space_chrome.bottom.05,cheat code: 
