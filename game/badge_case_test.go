@@ -73,7 +73,12 @@ func TestBadgeListIsKeptAndNeverStale(t *testing.T) {
 	changed("a prestige")
 	ge.NoteDevUnlocked()
 	changed("an integrity badge")
-	// A tick changes nothing the list shows.
+	// A tick changes nothing the list shows. The prestige started a run on a
+	// clock seed, and about one roll in a hundred brings a harbinger (a badge
+	// earned); a fixed seed keeps this tick a quiet one.
+	ge.mu.Lock()
+	ge.SeedRNG(testSeed)
+	ge.mu.Unlock()
 	before, _ := ge.Badges()
 	ge.doTick()
 	if after := check("a tick"); !same(before, after) {
