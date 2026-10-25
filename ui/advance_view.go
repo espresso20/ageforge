@@ -391,6 +391,8 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 		val = vibe.Sprintf("ui.advance_view.advRow.01", "%s of %s", num(r.Have), num(r.Need))
 	case game.GateRowShare:
 		val = fmt.Sprintf("%d%%", r.Have)
+	case game.GateRowAmount:
+		val = advAmount(r)
 	default:
 		val = r.Note
 	}
@@ -398,6 +400,16 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 	g.put(x, y, mark, mk)
 	g.putFit(x+2, y, iw-2-runeLen(val)-1, r.Label, tk)
 	g.rput(x+iw-1, y, val, tk)
+}
+
+// advAmount is a measured row's amounts at the right edge: "412 / 500", or
+// "210 / 300 a tick" for an income.
+func advAmount(r game.GateRow) string {
+	val := FormatNumber(r.Value) + " / " + FormatNumber(r.Target)
+	if r.Unit != "" {
+		val += " " + r.Unit
+	}
+	return val
 }
 
 // ===== The right column =====
