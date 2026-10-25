@@ -374,10 +374,7 @@ func AnyResource(string) bool { return true }
 // those whatever it builds, so this is the part that measures what a town
 // put into a resource (the engine's faith strength reads it). Pure.
 func BuildingOutputs(defs []BuildingDef, order []string, include func(string) bool) map[string]map[string]float64 {
-	idx := make(map[string]int, len(order))
-	for i, a := range order {
-		idx[a] = i
-	}
+	idx := AgePositions(order)
 	out := make(map[string]map[string]float64, len(order))
 	for i, age := range order {
 		made := map[string]float64{}
@@ -436,10 +433,7 @@ func IncomeFactor(techs []TechDef, pos map[string]int, age, res string) float64 
 // include accepts, as age -> resource -> income per tick: IsFlowResource
 // gives FlowIncome's table, AnyResource TypicalIncome's. Pure.
 func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(string) bool) map[string]map[string]float64 {
-	idx := make(map[string]int, len(order))
-	for i, a := range order {
-		idx[a] = i
-	}
+	idx := AgePositions(order)
 	out := make(map[string]map[string]float64, len(order))
 	for i, age := range order {
 		inc := map[string]float64{}

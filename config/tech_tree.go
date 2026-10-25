@@ -250,10 +250,7 @@ func TechTreeProblems(techs []TechDef, buildings []BuildingDef, ages []string) [
 	bad := func(format string, args ...any) { out = append(out, fmt.Sprintf(format, args...)) }
 
 	byKey := indexBy(techs, func(t TechDef) string { return t.Key })
-	ageAt := make(map[string]int, len(ages))
-	for i, a := range ages {
-		ageAt[a] = i
-	}
+	ageAt := AgePositions(ages)
 	lanes := TechLaneByKey()
 
 	codes := map[string]string{}

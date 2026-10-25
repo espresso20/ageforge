@@ -68,16 +68,24 @@ func gateOutOf(ages []AgeDef, i int) map[string]int {
 	return ages[i+1].BuildingReqs
 }
 
+// runningSum is the total up to and including each entry, added in order.
+func runningSum(each []float64) []float64 {
+	out := make([]float64, len(each))
+	sum := 0.0
+	for i, v := range each {
+		sum += v
+		out[i] = sum
+	}
+	return out
+}
+
 // RefHousing is the housing of the reference town at the end of each age, by
 // the age's place in ages: the sum of the population capacity of every
 // building the town holds, each at its reference count, over this age and all
 // before it (wonders and monuments aside, as in the reference players).
 // smoke.refTables.state works out the same sum.
 func RefHousing(defs []BuildingDef, ages []AgeDef) []float64 {
-	idx := make(map[string]int, len(ages))
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
+	idx := AgePositions(ageKeys(ages))
 	perAge := make([]float64, len(ages))
 	for _, d := range defs {
 		i, ok := idx[d.RequiredAge]
@@ -91,13 +99,7 @@ func RefHousing(defs []BuildingDef, ages []AgeDef) []float64 {
 			}
 		}
 	}
-	out := make([]float64, len(ages))
-	sum := 0.0
-	for i := range ages {
-		sum += perAge[i]
-		out[i] = sum
-	}
-	return out
+	return runningSum(perAge)
 }
 
 // GateMilitaryCopies is the copies of military buildings of each age the
@@ -106,10 +108,7 @@ func RefHousing(defs []BuildingDef, ages []AgeDef) []float64 {
 // copies the gate out of the age asks for, with TownCopies standing in for a
 // building the gate leaves out.
 func GateMilitaryCopies(defs []BuildingDef, ages []AgeDef) []int {
-	idx := make(map[string]int, len(ages))
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
+	idx := AgePositions(ageKeys(ages))
 	out := make([]int, len(ages))
 	for _, d := range defs {
 		if !IsMilitaryBuilding(d) {
@@ -127,10 +126,7 @@ func GateMilitaryCopies(defs []BuildingDef, ages []AgeDef) []int {
 // and before at its reference count, with its soldiers a copy. (smoke's
 // reference town posts these as far as its food margin allows.)
 func RefSoldiers(defs []BuildingDef, ages []AgeDef) []float64 {
-	idx := make(map[string]int, len(ages))
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
+	idx := AgePositions(ageKeys(ages))
 	perAge := make([]float64, len(ages))
 	for _, d := range defs {
 		if !IsMilitaryBuilding(d) {
@@ -140,13 +136,7 @@ func RefSoldiers(defs []BuildingDef, ages []AgeDef) []float64 {
 			perAge[i] += float64(d.Soldiers * refCopiesOf(d, gateOutOf(ages, i)))
 		}
 	}
-	out := make([]float64, len(ages))
-	sum := 0.0
-	for i := range ages {
-		sum += perAge[i]
-		out[i] = sum
-	}
-	return out
+	return runningSum(perAge)
 }
 
 // SoldierPostsFor is the posts a copy of a military building comes with, from
@@ -163,10 +153,7 @@ func applySoldierPosts(defs []BuildingDef) {
 	ages := Ages()
 	housing := RefHousing(defs, ages)
 	gate := GateMilitaryCopies(defs, ages)
-	idx := make(map[string]int, len(ages))
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
+	idx := AgePositions(ageKeys(ages))
 	for i := range defs {
 		if !IsMilitaryBuilding(defs[i]) {
 			continue
