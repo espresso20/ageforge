@@ -64,7 +64,7 @@ var wireDespiteTwins = map[string]bool{
 var keycapWords = map[string]bool{
 	"enter": true, "esc": true, "tab": true, "shift": true, "arrows": true, "up": true, "down": true,
 	"left": true, "right": true, "pgup": true, "pgdn": true, "home": true, "end": true, "backspace": true,
-	"space": true, "delete": true,
+	"space": true, "delete": true, "option": true, "alt": true,
 	"◄►": true, "↑↓": true, // the marks the map's key hints use for the arrow keys
 }
 

@@ -70,31 +70,12 @@ func (r ResearchRow) TimeShare() float64 {
 // when it keeps it).
 func (r ResearchRow) Problems() []string {
 	var out []string
-	if r.Keystone == "" {
-		return out
-	}
-	known, isKnown := ResearchTimeKnown[r.Age]
-	if isKnown && r.TimeShare() <= 1 {
-		out = append(out, fmt.Sprintf("%s: the keystone, its research and the wonder now fit the age (%.0f%% of it); take %s out of ResearchTimeKnown (it was listed at %.0f%%)",
-			r.Age, 100*r.TimeShare(), r.Age, 100*known))
-	}
-	if r.TimeShare() > 1 && !isKnown {
+	if r.Keystone != "" && r.TimeShare() > 1 {
 		out = append(out, fmt.Sprintf("%s: %s waits for %s (%s of work, %.0f%% of what the scholars do in the age's target time); with %.0f%% of the target to build the wonder that is %.0f%% of the age, over 100%%",
 			r.Age, r.Wonder, strings.Join(r.Chain, ", "), num(r.ChainCost), 100*r.KnowledgeShare, 100*r.BuildShare, 100*r.TimeShare()))
 	}
 	return out
 }
-
-// ResearchTimeKnown lists the ages where, for the reference town, the
-// keystone, its research and the wonder take more than the age's target, with
-// the share they take today. The Time rule used to count knowledge at a rate
-// read off bot runs; it counts what eight staffed copies of the knowledge
-// buildings make now. One age did not fit with five copies (the Electric Age,
-// at 102%); the town of eight makes 1.6 times the knowledge its buildings
-// give and the age takes 72%, so none is listed. An age listed here that
-// starts to fit, or an age not listed that stops fitting, fails the check, so
-// this table only ever gets shorter on purpose.
-var ResearchTimeKnown = map[string]float64{}
 
 // StaticResearch checks every age against the Research Covenant and returns
 // one row per age, failing or not.

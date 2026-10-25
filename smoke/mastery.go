@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -308,7 +310,7 @@ func runVeteran(e *Env, res *Result) {
 		msg := fmt.Sprintf(format, args...)
 		steps = append(steps, fmt.Sprintf("| %s | %s |", name, cell(msg)))
 		f := res.fail("veteran_"+strings.ReplaceAll(name, " ", "_"), "%s", msg)
-		f.Seed, f.Repro = seed, fmt.Sprintf("go run ./cmd/smoke -scenario veteran -seed-base %d -v", seed)
+		f.Seed, f.Repro = seed, fmt.Sprintf("go run -tags smokebot ./cmd/smoke -scenario veteran -seed-base %d -v", seed)
 		return false
 	}
 	prestigeKitHooked(e, check)

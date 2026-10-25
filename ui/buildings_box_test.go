@@ -21,9 +21,8 @@ import (
 const (
 	playtestCols = 2*60 + richSidebarW
 	// The rows over the boxes there are the badge line, the status ribbon and
-	// the toast line, and the full Ledger with the one row of cards that the
-	// three resources of a Primitive Age town call for.
-	playtestRows = 45 + (dashHeaderRows - ledgerCompactRows) + ledgerFullHead + 2 + promptRows
+	// the toast line, and the full Ledger.
+	playtestRows = 45 + (dashHeaderRows - ledgerCompactRows) + ledgerFullHeight + promptRows
 )
 
 // playtestTown is a dashboard on a town like the playtest's.
@@ -125,7 +124,7 @@ func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 		rows = rows[:len(rows)-1]
 		last = rows[len(rows)-1]
 	}
-	if want := "↓ " + itoa(len(entries)-first) + " more below: PgDn"; strings.TrimSpace(last) != want {
+	if want := "↓ " + itoa(len(entries)-first) + " more below: PgDn (⌥↓)"; strings.TrimSpace(last) != want {
 		t.Errorf("the box does not end by saying what is below it: %q, want %q", last, want)
 	}
 	if strings.Contains(strings.Join(rows, "\n"), "more above") {
@@ -149,7 +148,7 @@ func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 		d.economyTab.ScrollDown()
 		rows = buildingsBox(t, d, pages, playtestCols, playtestRows)
 		wholeEntries(t, "page "+itoa(page), d, rows)
-		if want := "↑ " + itoa(d.economyTab.bldFirst) + " more above: PgUp"; !strings.Contains(strings.Join(rows, "\n"), want) {
+		if want := "↑ " + itoa(d.economyTab.bldFirst) + " more above: PgUp (⌥↑)"; !strings.Contains(strings.Join(rows, "\n"), want) {
 			t.Errorf("page %d does not say what is above it (%q):\n%s", page, want, strings.Join(rows, "\n"))
 		}
 		note(rows)
@@ -181,7 +180,7 @@ func TestBuildingsBoxUnderTheMiniMap(t *testing.T) {
 	shown := wholeEntries(t, "under the mini map", d, rows)
 	_, _, bw, _ := d.economyTab.buildingTV.GetInnerRect()
 	_, entries := buildingEntries(d.economyTab.state, bw)
-	if want := "↓ " + itoa(len(entries)-shown) + " more below: PgDn"; !strings.Contains(strings.Join(rows, "\n"), want) {
+	if want := "↓ " + itoa(len(entries)-shown) + " more below: PgDn (⌥↓)"; !strings.Contains(strings.Join(rows, "\n"), want) {
 		t.Errorf("under the mini map the box does not say what is below it (%q):\n%s", want, strings.Join(rows, "\n"))
 	}
 }
@@ -203,17 +202,17 @@ func TestLayoutBuildings(t *testing.T) {
 	}
 	// One row short: d does not fit whole, so it is left out and counted.
 	lines, from, shown = layoutBuildings("head", entries, 40, 18, 0)
-	if from != 0 || shown != 3 || len(lines) != 14 || untag(lines[len(lines)-1]) != " ↓ 1 more below: PgDn" {
+	if from != 0 || shown != 3 || len(lines) != 14 || untag(lines[len(lines)-1]) != " ↓ 1 more below: PgDn (⌥↓)" {
 		t.Errorf("a box one row short: from %d, %d shown, %v", from, shown, lines)
 	}
 	// The next page: what is above, then d whole.
 	lines, from, shown = layoutBuildings("head", entries, 40, 18, 3)
-	if from != 3 || shown != 1 || untag(lines[1]) != " ↑ 3 more above: PgUp" || len(lines) != 8 {
+	if from != 3 || shown != 1 || untag(lines[1]) != " ↑ 3 more above: PgUp (⌥↑)" || len(lines) != 8 {
 		t.Errorf("the last page: from %d, %d shown, %v", from, shown, lines)
 	}
 	// A middle page says both.
 	lines, _, shown = layoutBuildings("head", entries, 40, 9, 1)
-	if shown != 1 || untag(lines[1]) != " ↑ 1 more above: PgUp" || untag(lines[len(lines)-1]) != " ↓ 2 more below: PgDn" {
+	if shown != 1 || untag(lines[1]) != " ↑ 1 more above: PgUp (⌥↑)" || untag(lines[len(lines)-1]) != " ↓ 2 more below: PgDn (⌥↓)" {
 		t.Errorf("a middle page: %d shown, %v", shown, lines)
 	}
 	// No box ever holds more rows than it has.

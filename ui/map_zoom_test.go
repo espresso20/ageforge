@@ -19,16 +19,36 @@ func zoomLevel(d *Dashboard) string {
 }
 
 // TestMapZoomKeys: + - = [ ] are the map's while the prompt is empty and the
-// style zooms (the skyline), and the prompt's otherwise; the roguelike has
-// none of them, so they stay the prompt's there.
+// prompt's otherwise. + and = zoom in and - and _ zoom out in both styles,
+// the roguelike too (a keyboard with no Page keys zooms with them); [ and ]
+// are the skyline's district keys, so they stay the prompt's in the
+// roguelike.
 func TestMapZoomKeys(t *testing.T) {
 	d, _ := mapTestDashboard(t, true)
 	p := d.mapPanel
 	d.runForTest("map")
-	drawMapPanel(t, d, 160, 48)
-	for _, r := range "+-=_[]" {
+	if !strings.Contains(drawMapPanel(t, d, 160, 48), "SETTLEMENT") {
+		t.Fatal("the roguelike does not open at the settlement zoom")
+	}
+	for _, step := range []struct {
+		r    rune
+		want string
+	}{{'-', "REGION"}, {'-', "REGION"}, {'=', "SETTLEMENT"}, {'+', "DISTRICT"}, {'_', "SETTLEMENT"}} {
+		if !p.routeKey(key(step.r), "") {
+			t.Fatalf("%q did not go to the roguelike map", step.r)
+		}
+		if got := drawMapPanel(t, d, 160, 48); !strings.Contains(got, step.want) {
+			t.Errorf("after %q the roguelike does not show %s:\n%s", step.r, step.want, got)
+		}
+	}
+	for _, r := range "[]" {
 		if p.routeKey(key(r), "") {
-			t.Errorf("%q went to the roguelike map; it has no use for it", r)
+			t.Errorf("%q went to the roguelike map; it has no district keys", r)
+		}
+	}
+	for _, r := range "+-=_" {
+		if p.routeKey(key(r), "bui") {
+			t.Errorf("%q went to the roguelike map with text in the prompt", r)
 		}
 	}
 	d.overlayMgr.Hide()
@@ -180,8 +200,8 @@ func TestHelpListsMapZoomKeys(t *testing.T) {
 			section = section[:end]
 		}
 		flat := strings.Join(strings.Fields(section), " ")
-		for _, want := range []string{"+/- - Zoom in and out in the skyline", "far shows the whole town", "close every building twice the size", "[ ] - Skyline: jump to the previous and next district",
-			"PgUp/PgDn - Zoom out and in", "Shift moves further, half a screen in the skyline", "and + - = [ ] while the prompt is empty"} {
+		for _, want := range []string{"+/- - Zoom in and out with no Page keys, in either style", "far shows the whole town", "close every building twice the size", "[ ] - Skyline: jump to the previous and next district",
+			"PgUp/PgDn - Zoom out and in (Option+Up and Option+Down do the same)", "Shift moves further, half a screen in the skyline", "and + - = [ ] while the prompt is empty"} {
 			if !strings.Contains(flat, want) {
 				t.Errorf("%d columns: the Map section does not say %q:\n%s", screenW, want, section)
 			}

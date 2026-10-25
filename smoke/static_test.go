@@ -1,7 +1,9 @@
 package smoke
 
 import (
+	"maps"
 	"math"
+	"slices"
 	"strings"
 	"testing"
 
@@ -56,22 +58,52 @@ func TestStorageCheck(t *testing.T) {
 	}
 }
 
-// editedGate returns the real ages with the building requirements of the gate
-// into `to` changed by change, which is handed a copy (the real map is shared).
-func editedGate(to string, change func(b map[string]int)) []config.AgeDef {
-	ages := config.Ages()
+// editedGate changes the building requirements of the gate into `to` in
+// ages by change, which is handed a copy (the real map is shared), and
+// returns ages.
+func editedGate(ages []config.AgeDef, to string, change func(b map[string]int)) []config.AgeDef {
 	for i := range ages {
 		if ages[i].Key != to {
 			continue
 		}
-		b := map[string]int{}
-		for k, v := range ages[i].BuildingReqs {
-			b[k] = v
-		}
+		b := maps.Clone(ages[i].BuildingReqs)
 		change(b)
 		ages[i].BuildingReqs = b
 	}
 	return ages
+}
+
+// withDef changes the building key in defs by change, which is handed a copy
+// whose BaseCost and Effects it may edit freely (the real ones are shared),
+// and returns defs.
+func withDef(defs map[string]config.BuildingDef, key string, change func(d *config.BuildingDef)) map[string]config.BuildingDef {
+	d := defs[key]
+	d.BaseCost = maps.Clone(d.BaseCost)
+	d.Effects = slices.Clone(d.Effects)
+	change(&d)
+	defs[key] = d
+	return defs
+}
+
+// expectProblems holds problems to exactly the wanted ones: key names each by
+// kind and subject, a problem nobody wanted is unexpected, and a wanted one
+// that never came is a guard that missed.
+func expectProblems(t *testing.T, problems []GateProblem, key func(GateProblem) string, want ...string) {
+	t.Helper()
+	seen := map[string]bool{}
+	for _, g := range problems {
+		k := key(g)
+		if !slices.Contains(want, k) {
+			t.Errorf("unexpected problem %+v", g)
+			continue
+		}
+		seen[k] = true
+	}
+	for _, k := range want {
+		if !seen[k] {
+			t.Errorf("guard missed %s", k)
+		}
+	}
 }
 
 // TestStorageCheckCatchesBrokenStorage keeps the guard honest: each way the
@@ -89,12 +121,7 @@ func TestStorageCheckCatchesBrokenStorage(t *testing.T) {
 	}
 	// edit returns the real tables with one storage building changed.
 	edit := func(key string, change func(d *config.BuildingDef)) map[string]config.BuildingDef {
-		defs := config.BuildingByKey()
-		d := defs[key]
-		d.Effects = append([]config.Effect(nil), d.Effects...)
-		change(&d)
-		defs[key] = d
-		return defs
+		return withDef(config.BuildingByKey(), key, change)
 	}
 	priceTimes := func(k float64) func(d *config.BuildingDef) {
 		return func(d *config.BuildingDef) {
@@ -132,8 +159,8 @@ func TestStorageCheckCatchesBrokenStorage(t *testing.T) {
 		}), ages, []string{"boost/primitive_age"}},
 		{"a Storage Pit that boosts nothing", edit("storage_pit", func(d *config.BuildingDef) { d.Effects = nil }), ages, []string{"boost/stone_age"}},
 		// Gates.
-		{"a gate without the storage copies", config.BuildingByKey(), editedGate("iron_age", func(b map[string]int) { delete(b, "warehouse") }), []string{"gate_copies/bronze_age"}},
-		{"a gate asking for three copies", config.BuildingByKey(), editedGate("classical_age", func(b map[string]int) { b["granary"] = 3 }), []string{"gate_copies/iron_age"}},
+		{"a gate without the storage copies", config.BuildingByKey(), editedGate(config.Ages(), "iron_age", func(b map[string]int) { delete(b, "warehouse") }), []string{"gate_copies/bronze_age"}},
+		{"a gate asking for three copies", config.BuildingByKey(), editedGate(config.Ages(), "classical_age", func(b map[string]int) { b["granary"] = 3 }), []string{"gate_copies/iron_age"}},
 	}
 	for _, c := range cases {
 		got := flagged(c.defs, c.ages)
@@ -170,61 +197,23 @@ func TestStorageCheckCatchesBrokenStorage(t *testing.T) {
 // reports no "building", "wonder" or "ladder" row at all: the case below
 // would show one as unexpected.
 func TestGateCovenantCatchesBrokenGates(t *testing.T) {
-	ages := config.Ages()
-	for i := range ages {
-		switch ages[i].Key {
-		case "bronze_age":
-			// 52 longhouses: nothing to flag without a store to outgrow.
-			b := map[string]int{"longhouse": 52}
-			for k, v := range ages[i].BuildingReqs {
-				if _, set := b[k]; !set {
-					b[k] = v
-				}
-			}
-			ages[i].BuildingReqs = b
-		case "medieval_age":
-			b := map[string]int{"barracks": 30}
-			for k, v := range ages[i].BuildingReqs {
-				b[k] = v
-			}
-			ages[i].BuildingReqs = b
-		}
-	}
-	defs := config.BuildingByKey()
-	smithy := defs["smithy"]
-	smithy.BaseCost = map[string]float64{"wood": 900, "coal": 100}
-	defs["smithy"] = smithy
-	sistine := defs["sistine_chapel"]
-	sistine.BaseCost = map[string]float64{"stone": 200 * config.Million, "gold": 10 * config.Million, "faith": 6 * config.Million, "culture": 8 * config.Million}
-	defs["sistine_chapel"] = sistine
-	cradle := defs["stellar_cradle"]
-	cradle.BaseCost = map[string]float64{"uranium": 940 * config.Trillion}
-	for k, v := range defs["stellar_cradle"].BaseCost {
-		cradle.BaseCost[k] = v
-	}
-	defs["stellar_cradle"] = cradle
-	problems := staticGates(ages, defs)
-	want := map[string]bool{"unbuildable/barracks": false,
-		"dead_building/smithy": false, "flow/sistine_chapel": false,
-		"unsourced/stellar_cradle": false,
+	// 52 longhouses: nothing to flag without a store to outgrow.
+	ages := editedGate(config.Ages(), "bronze_age", func(b map[string]int) { b["longhouse"] = 52 })
+	ages = editedGate(ages, "medieval_age", func(b map[string]int) { b["barracks"] = 30 })
+	defs := withDef(config.BuildingByKey(), "smithy", func(d *config.BuildingDef) {
+		d.BaseCost = map[string]float64{"wood": 900, "coal": 100}
+	})
+	withDef(defs, "sistine_chapel", func(d *config.BuildingDef) {
+		d.BaseCost = map[string]float64{"stone": 200 * config.Million, "gold": 10 * config.Million, "faith": 6 * config.Million, "culture": 8 * config.Million}
+	})
+	withDef(defs, "stellar_cradle", func(d *config.BuildingDef) { d.BaseCost["uranium"] = 940 * config.Trillion })
+	expectProblems(t, staticGates(ages, defs), func(g GateProblem) string { return g.Kind + "/" + g.Key },
+		"unbuildable/barracks", "dead_building/smithy", "flow/sistine_chapel", "unsourced/stellar_cradle",
 		// the chain from the smithy's coal: no iron, so no market (gold)
-		"unsourced/smithy": false, "unsourced/lumber_mill": false, "unsourced/altar": false,
-		"dead_building/altar": false, "dead_building/barracks": false,
-		"dead_building/lumber_mill": false, "dead_building/market": false, "dead_building/quarry": false,
-		"dead_building/scriptorium": false, "dead_building/warehouse": false}
-	for _, g := range problems {
-		k := g.Kind + "/" + g.Key
-		if _, ok := want[k]; ok {
-			want[k] = true
-			continue
-		}
-		t.Errorf("unexpected problem %+v", g)
-	}
-	for k, seen := range want {
-		if !seen {
-			t.Errorf("guard missed %s", k)
-		}
-	}
+		"unsourced/smithy", "unsourced/lumber_mill", "unsourced/altar",
+		"dead_building/altar", "dead_building/barracks",
+		"dead_building/lumber_mill", "dead_building/market", "dead_building/quarry",
+		"dead_building/scriptorium", "dead_building/warehouse")
 }
 
 // TestGateCovenantCatchesColdStartTraps feeds the covenant the Iron Age
@@ -241,41 +230,18 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 // the market building, the first.
 func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 	oldPost := func() map[string]config.BuildingDef {
-		defs := config.BuildingByKey()
-		post := defs["trading_post"]
-		cost := map[string]float64{}
-		for k, v := range post.BaseCost {
-			cost[k] = v
-		}
-		cost["gold"] = 8800
-		post.BaseCost = cost
-		defs["trading_post"] = post
-		return defs
+		return withDef(config.BuildingByKey(), "trading_post", func(d *config.BuildingDef) { d.BaseCost["gold"] = 8800 })
 	}
 	if problems := staticGates(config.Ages(), config.BuildingByKey()); len(problems) > 0 {
 		t.Fatalf("setup: the real tables, and no trap, should break nothing: %+v", problems)
 	}
-	withoutMarketBuilding := editedGate("iron_age", func(b map[string]int) { delete(b, "market") })
-	problems := staticGates(withoutMarketBuilding, oldPost())
-	want := map[string]bool{"dead_building/trading_post": false, "dead_building/agora": false,
-		"dead_building/legion_fort": false, "dead_building/temple": false,
-		"unsourced/agora/gold": false}
-	for _, g := range problems {
-		k := g.Kind + "/" + g.Key
+	withoutMarketBuilding := editedGate(config.Ages(), "iron_age", func(b map[string]int) { delete(b, "market") })
+	expectProblems(t, staticGates(withoutMarketBuilding, oldPost()), func(g GateProblem) string {
 		if g.Kind == "unsourced" {
-			k += "/" + g.Resource
+			return g.Kind + "/" + g.Key + "/" + g.Resource
 		}
-		if _, ok := want[k]; ok {
-			want[k] = true
-			continue
-		}
-		t.Errorf("unexpected problem %+v", g)
-	}
-	for k, seen := range want {
-		if !seen {
-			t.Errorf("guard missed %s", k)
-		}
-	}
+		return g.Kind + "/" + g.Key
+	}, "dead_building/trading_post", "dead_building/agora", "dead_building/legion_fort", "dead_building/temple", "unsourced/agora/gold")
 
 	// The real gate asks for the market, so the town arrives making gold.
 	if problems := staticGates(config.Ages(), oldPost()); len(problems) > 0 {
@@ -294,11 +260,9 @@ func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
 // unsourced.
 func TestGateCovenantCatchesAnUnpayableFirstCopy(t *testing.T) {
 	priced := func(culture float64) map[string]config.BuildingDef {
-		defs := config.BuildingByKey()
-		d := defs["cultural_obelisk"]
-		d.BaseCost = map[string]float64{"stone": 17000, "culture": culture}
-		defs["cultural_obelisk"] = d
-		return defs
+		return withDef(config.BuildingByKey(), "cultural_obelisk", func(d *config.BuildingDef) {
+			d.BaseCost = map[string]float64{"stone": 17000, "culture": culture}
+		})
 	}
 	made := float64(rules.Core().FlowIncome("culture", "classical_age") * config.AgeTargetTicks("classical_age"))
 	if made <= 0 {
@@ -403,16 +367,13 @@ func TestGateCovenantCatchesABuildingBehindAnOptionalTech(t *testing.T) {
 	}
 	// Behind a tech every run researches (the Bronze Age's keystone chain
 	// starts with Language), the Market still counts as the age's gold.
-	market := defs["market"]
-	market.RequiredTech = "language"
-	defs["market"] = market
+	withDef(defs, "market", func(d *config.BuildingDef) { d.RequiredTech = "language" })
 	if problems := staticGates(config.Ages(), defs); len(problems) != 0 {
 		t.Errorf("with the Market behind a spine tech nothing should break: %+v", problems)
 	}
 	// Behind one a run may never research, it does not: the Market is the
 	// Bronze Age's only gold, and the Iron Age asks for it.
-	market.RequiredTech = "alchemy"
-	defs["market"] = market
+	withDef(defs, "market", func(d *config.BuildingDef) { d.RequiredTech = "alchemy" })
 	problems := staticGates(config.Ages(), defs)
 	found := false
 	for _, g := range problems {
@@ -445,7 +406,7 @@ func TestEveryAgeStandsWithoutTheMarket(t *testing.T) {
 		})
 	}
 	var sb strings.Builder
-	(&Summary{Gates: []GateProblem{{From: "a", To: "b", Kind: "flow", Key: "k", Resource: "culture", Need: 2, Made: 1}}}).writeGates(&sb)
+	writeGates(&sb, []GateProblem{{From: "a", To: "b", Kind: "flow", Key: "k", Resource: "culture", Need: 2, Made: 1}})
 	for _, word := range []string{"market", "bought", "price units"} {
 		if strings.Contains(strings.ToLower(sb.String()), word) {
 			t.Errorf("the gate report still talks of %q:\n%s", word, sb.String())
@@ -472,11 +433,9 @@ func TestColdStartIgnoresThinCarriedSources(t *testing.T) {
 		}
 	}
 	oldWorks := func() map[string]config.BuildingDef {
-		defs := config.BuildingByKey()
-		works := defs["uranium_processing_works"]
-		works.BaseCost = map[string]float64{"steel": 15 * config.Billion, "electricity": 6 * config.Billion, "uranium": 1.2 * config.Billion}
-		defs["uranium_processing_works"] = works
-		return defs
+		return withDef(config.BuildingByKey(), "uranium_processing_works", func(d *config.BuildingDef) {
+			d.BaseCost = map[string]float64{"steel": 15 * config.Billion, "electricity": 6 * config.Billion, "uranium": 1.2 * config.Billion}
+		})
 	}
 	cs := coldStarts(ages, oldWorks())[atomic]
 	made := cs.made["uranium"] * config.AgeTargetTicks("atomic_age")

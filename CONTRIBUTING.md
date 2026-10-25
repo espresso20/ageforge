@@ -247,7 +247,7 @@ The numbers of the economy are written where they are used. A building's first p
 go test ./config -run TestGoldenTables                  # every number against the record, to the unit
 go test ./config -run TestGoldenTables -update-golden   # record a change you meant; commit the diff
 go test ./smoke -run TestProperties -v                  # the properties table, as below
-go run ./cmd/smoke -scenario static -out smoke-report   # the same, in the static report
+go run -tags smokebot ./cmd/smoke -scenario static -out smoke-report   # the same, in the static report (cmd/smoke needs the tag, see Smoke testing)
 AGEFORGE_LONG_TESTS=1 go test ./smoke -run TestOrdinaryPath   # the engine walk on the frontier, time away from every age
 go test ./smoke -run '^$' -fuzz=FuzzCommand -fuzztime=1m      # fuzz the command handler from its kept corpus
 ```
@@ -261,29 +261,38 @@ go test ./smoke -run '^$' -fuzz=FuzzCommand -fuzztime=1m      # fuzz the command
 
 The unit tests prove pieces work. The smoke suite proves the game holds together: it boots the real engine with no UI and plays it, saves and reloads it, closes it for hours, types garbage at it, and checks the docs against it. It is one runner (`cmd/smoke`, package `smoke`) with named scenarios that share a report. Ticks run synchronously through `GameEngine.StepTicks`, so days of play take seconds, and seeds are fully reproducible: the same seed gives the same report.
 
+**The test bot is parked.** The owner switched it off on 2026-10-10 ("math, not bot"): the economy's numbers are derived by calculation and held by the static checks, not by a bot's play. The bot, its runner, the scenarios that play it (`progression`, `veteran`, `saveload`, `offline`, `fuzz`, `perf`, `styles`, `idle`, `prestige`), the report and merge code, the invariants it checks as it plays and the tests of all of that sit behind the `smokebot` build tag. Without the tag, `go build`, `go vet` and `go test ./...` never see them, and `go run ./cmd/smoke` prints how to build it and exits 2. What `go test ./smoke` runs without the tag: the static checks (gates, storage, milestones, harbinger prices, faith, culture, depth, research, badges, lineages, caps), the docs check (`docsync`), the accounts scenario, the reference players and their gate measures, the properties, and the engine walk in `ordinary_path_test.go`.
+
+To turn the bot back on:
+
+- Run it with the tag: `go run -tags smokebot ./cmd/smoke ...` (`make smoke`, `make smoke-full` and `make smoke-deep` already pass it, and so do the workflows and `scripts/determinism.sh`).
+- Run its unit tests with the tag too: `go test -tags smokebot ./smoke`. The ones that need the bot to play well under the current numbers also want `AGEFORGE_BOT_TESTS=1` (see `smoke/bot_switch_test.go`); delete `needBotPlay` and its calls to drop that second switch.
+- Run `gh workflow enable Smoke` and `gh workflow enable Determinism`, and put the bot's pacing run back on the `smoke` job in `.github/workflows/go.yml` (the comment there says how).
+- The `check` job in `go.yml` runs `go vet -tags smokebot ./...` on every change, so the parked code keeps compiling while nothing runs it. `go vet -tags 'smoke smokebot mapcapture' ./...` is every tag at once. The map capture that plays the bot (`ui/mapstyle/capture`) needs `-tags "mapcapture smokebot"`.
+
 ```bash
 make smoke                                   # fast tier (a few minutes); on a PR only when asked
 make smoke-full                              # full tier, what the nightly runs
 make smoke-deep                              # deep tier, what the weekly runs (five seeds to a Quantum Age prestige; about 13 minutes of work per seed on a CI runner)
-go run ./cmd/smoke -list                     # the scenarios
-go run ./cmd/smoke -scenario saveload -v     # one scenario (comma-separate several)
-go run ./cmd/smoke -scenario progression -seed-base 7 -seeds 1 -trace -v   # one seed, every bot action in smoke-report/trace-7.log
-go run ./cmd/smoke -scenario styles -style idle -tier full   # one play style
-go run ./cmd/smoke -scenario styles -style idle -check-in 8h -max-sim 2000h   # idle check-ins every 8 game-hours, to the first prestige
-go run ./cmd/smoke -scenario styles -style idle -no-shares   # the idle style recruiting and assigning by hand (auto-recruit off), to measure what worker shares are worth
-go run ./cmd/smoke -scenario progression -army on -v   # from the Iron Age the bot keeps 4 of the age's newest military building, bought when one costs at most a quarter of its stock (off by default: the pacing targets assume no army)
-go run ./cmd/smoke -scenario idle -tier full -pacing enforce   # the idle targets: 1h, 3h and 8h check-ins, 3 seeds each, plus the greedy bot on the same seeds
-go run ./cmd/smoke -scenario veteran -tier full -v   # Era Mastery's veteran preset to a Modern Age prestige on 3 seeds, then the legacy kit and the shop refund through test hooks
-go run ./cmd/smoke -scenario progression -preset returning -seeds 1 -v   # start each run as a returning player (-preset veteran|returning); ages are graded against their target ÷ k
-go run ./cmd/smoke -scenario styles -style taste -tier full   # the early taste: the bot prestiges as soon as prestige opens, at the Medieval Age (by default it prestiges at the Modern Age; -prestige-age picks any age)
-go run ./cmd/smoke -scenario progression -kit -seeds 1 -v   # every bot run starts with the veteran's legacy kit: every item bought, with the canned memory in smoke/testdata/veteran_kit.json
-go run ./cmd/smoke -scenario veteran -tier full -seeds 1 -dump-legacy smoke/testdata/veteran_kit.json   # regenerate the canned kit: the bot's builds (an upgrade as a build of the new tier), the techs it researched (as planned research items), its trades and its advances go into the plan log as if planned, and the kit's memory is written after the first prestige
-go run ./cmd/smoke -scenario progression -tier full -seeds 1 -cycles 3 -v   # every cycle after the first is a push: it plays as long as cycle 1 took, then prestiges (-push-cycles, which the full tier's progression turns on)
-go run ./cmd/smoke -tier deep -merge a/report.json,b/report.json -pacing enforce   # pool per-seed reports and grade the median
-go run ./cmd/smoke -tier full -only progression -seed-base 1 -seeds 4 -out shard-1   # one nightly shard: progression seeds 1-4 (-only/-skip narrow what -scenario picks)
-go run ./cmd/smoke -tier full -skip progression,styles,idle -pacing enforce -out shard-rest   # the nightly's "rest" shard
-go run ./cmd/smoke -tier full -merge shard-1,shard-2,shard-idle,shard-rest -pacing enforce   # merge shards like the nightly: progression pooled and graded, static run again, the rest carried over
-go run ./cmd/smoke -h                        # every flag
+go run -tags smokebot ./cmd/smoke -list                     # the scenarios
+go run -tags smokebot ./cmd/smoke -scenario saveload -v     # one scenario (comma-separate several)
+go run -tags smokebot ./cmd/smoke -scenario progression -seed-base 7 -seeds 1 -trace -v   # one seed, every bot action in smoke-report/trace-7.log
+go run -tags smokebot ./cmd/smoke -scenario styles -style idle -tier full   # one play style
+go run -tags smokebot ./cmd/smoke -scenario styles -style idle -check-in 8h -max-sim 2000h   # idle check-ins every 8 game-hours, to the first prestige
+go run -tags smokebot ./cmd/smoke -scenario styles -style idle -no-shares   # the idle style recruiting and assigning by hand (auto-recruit off), to measure what worker shares are worth
+go run -tags smokebot ./cmd/smoke -scenario progression -army on -v   # from the Iron Age the bot keeps 4 of the age's newest military building, bought when one costs at most a quarter of its stock (off by default: the pacing targets assume no army)
+go run -tags smokebot ./cmd/smoke -scenario idle -tier full -pacing enforce   # the idle targets: 1h, 3h and 8h check-ins, 3 seeds each, plus the greedy bot on the same seeds
+go run -tags smokebot ./cmd/smoke -scenario veteran -tier full -v   # Era Mastery's veteran preset to a Modern Age prestige on 3 seeds, then the legacy kit and the shop refund through test hooks
+go run -tags smokebot ./cmd/smoke -scenario progression -preset returning -seeds 1 -v   # start each run as a returning player (-preset veteran|returning); ages are graded against their target ÷ k
+go run -tags smokebot ./cmd/smoke -scenario styles -style taste -tier full   # the early taste: the bot prestiges as soon as prestige opens, at the Medieval Age (by default it prestiges at the Modern Age; -prestige-age picks any age)
+go run -tags smokebot ./cmd/smoke -scenario progression -kit -seeds 1 -v   # every bot run starts with the veteran's legacy kit: every item bought, with the canned memory in smoke/testdata/veteran_kit.json
+go run -tags smokebot ./cmd/smoke -scenario veteran -tier full -seeds 1 -dump-legacy smoke/testdata/veteran_kit.json   # regenerate the canned kit: the bot's builds (an upgrade as a build of the new tier), the techs it researched (as planned research items), its trades and its advances go into the plan log as if planned, and the kit's memory is written after the first prestige
+go run -tags smokebot ./cmd/smoke -scenario progression -tier full -seeds 1 -cycles 3 -v   # every cycle after the first is a push: it plays as long as cycle 1 took, then prestiges (-push-cycles, which the full tier's progression turns on)
+go run -tags smokebot ./cmd/smoke -tier deep -merge a/report.json,b/report.json -pacing enforce   # pool per-seed reports and grade the median
+go run -tags smokebot ./cmd/smoke -tier full -only progression -seed-base 1 -seeds 4 -out shard-1   # one nightly shard: progression seeds 1-4 (-only/-skip narrow what -scenario picks)
+go run -tags smokebot ./cmd/smoke -tier full -skip progression,styles,idle -pacing enforce -out shard-rest   # the nightly's "rest" shard
+go run -tags smokebot ./cmd/smoke -tier full -merge shard-1,shard-2,shard-idle,shard-rest -pacing enforce   # merge shards like the nightly: progression pooled and graded, static run again, the rest carried over
+go run -tags smokebot ./cmd/smoke -h                        # every flag
 ```
 
 #### Scenarios

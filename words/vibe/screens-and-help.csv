@@ -392,7 +392,7 @@ ui.help.commands.trade.route.list,"All your trade routes, receipts included"
 ui.help.commands.trade.route.start,Spin up a trade route and let the bread flow
 ui.help.commands.trade.route.stop,Ghost a trade route
 ui.help.commands.trade.black,"blackmarket, speedrun spelling"
-ui.help.commands.blackmarket,"Smuggling run: bet your culture on a haul of one resource, high risk, high drip (bare blackmarket shows the odds, or when it opens)"
+ui.help.commands.blackmarket,"Smuggling run: spend culture, get the same worth in one resource, five times in six (bare blackmarket shows the odds, or when it opens)"
 ui.help.panels.factions,"Boons, the Geographic Society & what every civilization thinks of you, the tea (alias: diplomacy)"
 ui.help.commands.factions,"Pull up the Factions panel for the social tea (boons, the Geographic Society, opinion)"
 ui.help.commands.diplomacy,factions with a different fit on (opens the same panel)
@@ -897,12 +897,12 @@ ui.input.cmdFestivalStatus.07,"  Vibe check: [yellow]not enough culture yet, bro
 ui.input.cmdFestivalStatus.08,"  Vibe check: [yellow]on cooldown[-], %s left to recover."
 ui.input.cmdBlackMarketStatus.01,"[gold]Black Market, sus side of town[-]"
 ui.input.cmdBlackMarketStatus.02,The smuggling plug opens in 
-ui.input.cmdBlackMarketStatus.03,"  Blow culture on a smuggling run: one gamble, one resource, potentially a massive bag."
 ui.input.cmdBlackMarketStatus.04,"  Damage: [cyan]%s[-] per run  (pockets: %s)"
-ui.input.cmdBlackMarketStatus.05,"  RNG: [green]%.0f%%[-] chance of a haul worth [green]%.1fx[-] the culture; miss and the culture is gone, rip."
 ui.input.cmdBlackMarketStatus.06,"  The tea: [green]ready[-]. Type [cyan]blackmarket <resource>[-] (for example, blackmarket gold)."
 ui.input.cmdBlackMarketStatus.07,"  The tea: [yellow]not enough culture yet, too broke.[-]"
 ui.input.cmdBlackMarketStatus.08,"  The tea: [yellow]lying low[-]. Next run unlocks in %s, stay lowkey."
+ui.input.cmdBlackMarketStatus.09,"  Blow culture on a smuggling run: it pays back the minutes of income your culture cost, as minutes of your income of whichever resource you pick."
+ui.input.cmdBlackMarketStatus.10,"  RNG: five in six it goes through; one in six the smugglers ghost you with the culture and pay nothing, rip."
 ui.input.cmdPrestige.01,☄ The Last Passage has pulled up. Prestige is on hold until you choose Endure or Succumb.
 ui.input.cmdPrestige.02,[yellow]⚠ Prestige PSA[-]
 ui.input.cmdPrestige.03,"  You will bag [cyan]%d[-] prestige points."
@@ -1560,8 +1560,8 @@ ui.overlay_help.helpProvider.31,"
 ui.overlay_help.helpProvider.32,"The prompt keeps working while the Map is open: type commands like normal. The map yoinks the keys that print nothing, plus + - = [ ] while the prompt is empty."
 ui.overlay_help.helpProvider.34,"Move the cursor (roguelike) or scroll (skyline); Shift speedruns it, half a screen at a time in the skyline"
 ui.overlay_help.helpProvider.36,"Hop to the next building, wonder or civilization (Shift-Tab: run it back one)"
-ui.overlay_help.helpProvider.38,"Main character camera: zoom out, zoom in"
-ui.overlay_help.helpProvider.39,"Zoom in and out in the skyline (= works as +): far is the whole town, close gives every building a 2x glow-up; the level is kept for next time"
+ui.overlay_help.helpProvider.38,"Main character camera: zoom out, zoom in (Option+Up and Option+Down do the same)"
+ui.overlay_help.helpProvider.39,"Zoom in and out with no Page keys, in either style (= works as +). In the skyline far is the whole town, close gives every building a 2x glow-up; the level is kept for next time"
 ui.overlay_help.helpProvider.40,Skyline: speedrun to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)
 ui.overlay_help.helpProvider.42,The town square (roguelike); the OG district and the present (skyline)
 ui.overlay_help.helpProvider.44,"Drop the command for whatever the cursor is on into the prompt (with something typed, Tab and Enter act on the prompt instead)"
@@ -2322,8 +2322,8 @@ ui.tab_economy.buildingEntries.03,"   Damage: "
 ui.tab_economy.buildingEntries.04,"   [green]Grinders[-] "
 ui.tab_economy.buildingEntries.05,[gold]↑ Glow-up ready: %s. Type: upgrade %s[-]
 ui.tab_economy.buildingEntries.06," [gray]Zero buildings unlocked, so early[-]"
-ui.tab_economy.layoutBuildings.01," ↑ %d more up top, bestie: PgUp"
-ui.tab_economy.layoutBuildings.02," ↓ %d more down there, keep doomscrolling: PgDn"
+ui.tab_economy.layoutBuildings.01," ↑ %d more up top, bestie: PgUp (⌥↑)"
+ui.tab_economy.layoutBuildings.02," ↓ %d more down there, keep doomscrolling: PgDn (⌥↓)"
 ui.tab_economy.domainToLabel.01,Food gang
 ui.tab_economy.domainToLabel.02,Faith gang
 ui.tab_economy.domainToLabel.03,Military gang
@@ -2404,7 +2404,6 @@ ui.wonders_view.galleryText.03,[gray]%d of %d flexed[-]
 ui.wonders_view.galleryText.04,"  [gray]the age dropped %s[-]"
 ui.dash_ledger.finalRow.01,"You've hit the final age, the endgame."
 ui.dash_ledger.waitText.04,"+%d more, bet"
-ui.dash_ledger.moreText.01,"+%d more, lowkey a lot"
 ui.dash_ledger.leadText.01,%s speedrun
 ui.dash_ledger.readyText.01,"Every pillar ate, no notes. Type advance, it's go time."
 ui.dash_ledger.readyText.02,"Every pillar's up, but the catastrophe is sitting in your DMs. Answer it first (type catastrophe)."
@@ -2412,9 +2411,6 @@ ui.dash_ledger.waitText.01,then the %s boss
 ui.dash_ledger.waitText.02,Manifesting: 
 ui.dash_ledger.waitText.03,Pls: 
 ui.dash_ledger.shortText.01,Broke on: 
-ui.dash_ledger.trendText.01,▲ so back
-ui.dash_ledger.trendText.02,▼ so over
-ui.dash_ledger.trendText.03,▬ vibing
 ui.dashboard.statusLine.19,%s rn
 ui.dashboard.statusLine.17,Squad %s
 ui.dashboard.statusLine.18,[gray]Next arc: %s[-]

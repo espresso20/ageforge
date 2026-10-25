@@ -48,10 +48,7 @@ func TestProperties(t *testing.T) {
 // gate). The reading is in targets of the age.
 func TestAcceptedShortagesFitTheLingeringPlayer(t *testing.T) {
 	p := StaticProperties()
-	pos := map[string]int{}
-	for i, a := range p.Ages {
-		pos[a] = i
-	}
+	pos := config.AgePositions(p.Ages)
 	for _, a := range config.MakerAcceptedShortages() {
 		i, ok := pos[config.AgeByKey()[a.Age].Name]
 		if !ok {

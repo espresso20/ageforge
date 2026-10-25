@@ -92,22 +92,7 @@ func faithBandWord(b game.FaithBand) string {
 }
 
 // FaithStrengthRow is one age of the faith strength check.
-type FaithStrengthRow struct {
-	Epoch string `json:"epoch"`
-	Age   string `json:"age"`
-	// ModerateSet is what the moderate set of faith buildings makes per tick
-	// in the age, and Given what the wonders and techs every town has make
-	// (with the age's own wonder standing), both at the model's bonuses.
-	ModerateSet float64 `json:"moderate_set_per_tick"`
-	Given       float64 `json:"given_per_tick"`
-	// The towns: no faith buildings, the moderate set, twice, three times
-	// and FaithTopSets times it.
-	None     FaithSpan `json:"no_faith_buildings"`
-	Moderate FaithSpan `json:"moderate"`
-	Twice    FaithSpan `json:"twice"`
-	Thrice   FaithSpan `json:"three_times"`
-	Top      FaithSpan `json:"top_sets"`
-}
+type FaithStrengthRow = StrengthRow
 
 // The rules a FaithStrengthProblem can break.
 const (
@@ -123,18 +108,7 @@ const (
 )
 
 // FaithStrengthProblem is one moment at which a town reads the wrong band.
-type FaithStrengthProblem struct {
-	Epoch string `json:"epoch"`
-	Age   string `json:"age"`
-	Rule  string `json:"rule"`
-	// Sets is the town's faith buildings in moderate sets, Moment where in
-	// the age it was read, WonderEarly whether the age's wonder stood from
-	// its first tick.
-	Sets        float64 `json:"sets"`
-	Moment      string  `json:"moment"`
-	WonderEarly bool    `json:"wonder_early"`
-	Strength    float64 `json:"strength"`
-}
+type FaithStrengthProblem struct{ StrengthProblem }
 
 // String says what is wrong in plain words.
 func (p FaithStrengthProblem) String() string {
@@ -233,56 +207,20 @@ func flowIncomes(set *rules.Set, res string) []faithIncome {
 // faith held, the town's run totals and the age it is read in): the check's
 // broken-number tests feed in the measures this one replaced.
 func faithStrengthProblems(incomes []faithIncome, strengthOf func(held float64, m game.FaithSave, in faithIncome) float64) ([]FaithStrengthProblem, []FaithStrengthRow) {
-	towns := []struct {
-		sets float64
-		rule string
-		want game.FaithBand
-	}{
-		{0, FaithRuleModerate, game.FaithBandLow},
-		{1, FaithRuleModerate, game.FaithBandLow},
-		{FaithTwiceSets, FaithRuleTwice, game.FaithBandMid},
-		{FaithThriceSets, "", ""}, // reported, not held to a band
-		{FaithTopSets, FaithRuleTop, game.FaithBandHigh},
+	in := func(band game.FaithBand) func(float64) bool {
+		return func(strength float64) bool { return game.FaithBandAt(strength) == band }
 	}
+	towns := []strengthTown{
+		{0, FaithRuleModerate, in(game.FaithBandLow)},
+		{1, FaithRuleModerate, in(game.FaithBandLow)},
+		{FaithTwiceSets, FaithRuleTwice, in(game.FaithBandMid)},
+		{FaithThriceSets, "", nil}, // reported, not held to a band
+		{FaithTopSets, FaithRuleTop, in(game.FaithBandHigh)},
+	}
+	walked, rows := strengthWalk(incomes, towns, strengthOf)
 	var problems []FaithStrengthProblem
-	rows := make([]FaithStrengthRow, len(incomes))
-	for i, in := range incomes {
-		rows[i] = FaithStrengthRow{Epoch: in.epoch, Age: in.age, ModerateSet: in.set, Given: in.given + in.givenWonder}
-	}
-	for ti, town := range towns {
-		// The town's totals on entering each age: every earlier age in full.
-		carried := game.FaithSave{}
-		for i, in := range incomes {
-			spans := []*FaithSpan{&rows[i].None, &rows[i].Moderate, &rows[i].Twice, &rows[i].Thrice, &rows[i].Top}
-			first := true
-			for _, wonderEarly := range []bool{true, false} {
-				for _, mom := range faithMoments {
-					span := float64(in.ticks * mom.at)
-					m := carried
-					m.Moderate += float64(in.set * span)
-					m.Own += float64(float64(town.sets*in.set) * span)
-					m.Other += float64(in.given * span)
-					if wonderEarly {
-						m.Other += float64(in.givenWonder * span)
-					}
-					if m.Moderate <= 0 {
-						continue // the run's first tick: nothing to read yet
-					}
-					// It has spent nothing: it holds all its income made.
-					strength := strengthOf(m.Own+m.Other, m, in)
-					spans[ti].add(strength, first)
-					first = false
-					if town.rule != "" && game.FaithBandAt(strength) != town.want {
-						problems = append(problems, FaithStrengthProblem{Epoch: in.epoch, Age: in.age, Rule: town.rule,
-							Sets: town.sets, Moment: mom.name, WonderEarly: wonderEarly, Strength: strength})
-					}
-				}
-			}
-			carried.Moderate += float64(in.set * in.ticks)
-			carried.Own += float64(float64(town.sets*in.set) * in.ticks)
-			// The age's wonder went up during it: carried as standing for half.
-			carried.Other += float64(in.given*in.ticks) + float64(float64(in.givenWonder*in.ticks)*0.5)
-		}
+	for _, p := range walked {
+		problems = append(problems, FaithStrengthProblem{p})
 	}
 	return problems, rows
 }

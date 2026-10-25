@@ -22,6 +22,8 @@ As you type, the best completion of the line shows in dim text after the cursor:
 
 Two more keys belong to the dashboard, with no panel open: `PgUp` and `PgDn` turn the Buildings list a page of whole entries (the box says how many are above and below), and `Ctrl+R` turns the Resources box to its next page when it has more resources than it can show. The Help panel lists every key.
 
+A keyboard with no Page Up, Page Down, Home or End (a Mac's, for one) is covered too: `Option+↑` and `Option+↓` work as `PgUp` and `PgDn`, and `Option+←` and `Option+→` as `Home` and `End`, on the dashboard and in every panel. Other keyboards can use `Alt` for the same chords. Some terminals, Apple Terminal by default, send Option+← and Option+→ as `Esc b` and `Esc f`; the game reads those as `Home` and `End` while the prompt is empty, and with something typed they still jump a word, as the prompt always has. If your terminal does not pass Option+arrows through, turn on "Use Option as Meta key" (Apple Terminal: Settings, Profiles, Keyboard) or set the Option key to `Esc+` (iTerm2: Settings, Profiles, Keys). In the Map, `-` and `=` zoom with no modifier at all.
+
 Commands that can't be undone are never run from a completion: `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
 
 ## The log
@@ -172,7 +174,7 @@ The **Research** panel (`research`) is a map of the tech tree. Like the Map it l
 |---|---|
 | Arrows | Move to the nearest tech that way; the view follows |
 | `Tab` / `Shift-Tab` | Next or previous tech you can start |
-| `PgUp` / `PgDn` | Zoom out to a tech a line, and back in |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`) | Zoom out to a tech a line, and back in |
 | `Home` | Back to your current age |
 | `Enter` | Open the selected tech's card; on the card, do what its last line says (start the tech, or add it to the build plan) |
 | `Esc` | Close the card, then the panel |
@@ -214,8 +216,8 @@ The board has short offers from the start, long offers from the Iron Era and gra
 | `trade route` (or `trade route list`) | List your active trade routes and the routes you can start |
 | `trade route start <route>` | Start a trade route. Routes wait for The Wheel, a Bronze Age tech |
 | `trade route stop <route>` | Stop an active trade route |
-| `blackmarket` (or `bm`) | Show the black market's status: culture cost, payout odds and cooldown. Opens in the Colonial Age |
-| `blackmarket <resource>` | Make a smuggling run: spend culture for a chance at a big haul of the chosen resource. Waits for the Mercantilism tech |
+| `blackmarket` (or `bm`) | Show the black market's status: culture cost, the odds and cooldown. Opens in the Colonial Age |
+| `blackmarket <resource>` | Make a smuggling run: spend culture for the same worth in the chosen resource. Five runs in six go through; the sixth time the smugglers vanish with the culture. Waits for the Mercantilism tech |
 | `trade black [resource]` | Same as `blackmarket` |
 
 ```
@@ -304,7 +306,7 @@ worldmap
 icons
 ```
 
-`map style`, `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The **mini map** is off until you type `minimap on`. Then, on terminals of 105 columns by 36 rows and larger, the dashboard shows a short mini map of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
+`map style`, `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The **mini map** is off until you type `minimap on`. Then, on terminals of 105 columns by 34 rows and larger, the dashboard shows a short mini map of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
 
 The command bar keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing, in every style:
 
@@ -312,11 +314,11 @@ The command bar keeps working while the Map is open: type commands as usual. The
 |---|---|
 | Arrows | Move the cursor or scroll |
 | `Tab` / `Shift-Tab` | Next or previous thing to inspect |
-| `PgUp` / `PgDn` | Zoom out and in |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in |
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press Enter again to run it) |
 | `Esc` | Close the Map |
 
-The skyline also takes `+`, `-` and `=` (zoom: far, wide, mid, close) and `[` and `]` (the previous and next district) while the prompt is empty; its zoom level is saved with your account. At the close level `↑` and `↓` raise and lower the view over a tall tower, and `Home` brings it back. With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
+While the prompt is empty, `-`, `=` and `+` zoom in both styles, so a keyboard with no Page keys can zoom, and the skyline also takes `[` and `]` (the previous and next district). The skyline zooms in four steps (far, wide, mid, close) and its level is saved with your account. At the close level `↑` and `↓` raise and lower the view over a tall tower, and `Home` brings it back. With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
 
 ---
 
@@ -480,7 +482,7 @@ The badge case leaves the command bar working and takes only the keys that print
 |---|---|
 | Arrows | Move from badge to badge; the grid follows |
 | `Tab` / `Shift-Tab` | The next or the previous family's tab |
-| `PgUp` / `PgDn` | A page up and down |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`) | A page up and down |
 | `Home` / `End` | The first badge and the last |
 | `Enter` | Open the selected badge's detail, and close it |
 | `Esc` | Close the detail, then the case |
