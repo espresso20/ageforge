@@ -120,3 +120,10 @@ func TestReferenceArmyBluntsWhatTheModerateGarrisonDid(t *testing.T) {
 		}
 	}
 }
+
+// MissionPower is military power as a mission's difficulty reads it in the
+// age with the given order on this package's own tree: power × the age's
+// MilitaryScale.Mission. For tests and tools (rules.Set.MissionPower).
+func MissionPower(power float64, order int) float64 {
+	return float64(power * MilitaryScaleAt(order).Mission)
+}

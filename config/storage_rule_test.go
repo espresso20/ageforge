@@ -131,3 +131,22 @@ func TestStorageCopiesAreAffordableFromTheAgesIncome(t *testing.T) {
 		t.Fatalf("%d storage buildings checked, want 21", checked)
 	}
 }
+
+// GateStorageCopies is what the gate out of each age asks for in storage
+// buildings, by the age the gate leads into: StorageRuleCopies copies of the
+// storage building of the age left. An age with no storage building of its
+// own asks for none.
+func GateStorageCopies(defs []BuildingDef, ages []AgeDef) map[string]map[string]int {
+	out := map[string]map[string]int{}
+	for i := 0; i+1 < len(ages); i++ {
+		for _, d := range defs {
+			if d.Category == "storage" && d.RequiredAge == ages[i].Key {
+				if out[ages[i+1].Key] == nil {
+					out[ages[i+1].Key] = map[string]int{}
+				}
+				out[ages[i+1].Key][d.Key] = StorageRuleCopies
+			}
+		}
+	}
+	return out
+}

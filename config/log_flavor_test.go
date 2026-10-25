@@ -91,3 +91,13 @@ func TestPickLogFlavorUnknownMoment(t *testing.T) {
 		t.Errorf("PickLogFlavor(empty) = %q, want empty string", got)
 	}
 }
+
+// LogFlavorMoments returns the set of registered moment keys (sorted-order
+// not guaranteed). Exposed for tests that assert every moment has a sane pool.
+func LogFlavorMoments() []string {
+	out := make([]string, 0, len(logFlavorPools))
+	for k := range logFlavorPools {
+		out = append(out, k)
+	}
+	return out
+}

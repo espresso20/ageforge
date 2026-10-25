@@ -3,6 +3,8 @@ package config
 import (
 	"math"
 	"testing"
+
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // The market's exchange is going, so a resource must have a maker in the town
@@ -132,4 +134,30 @@ func TestWonderPartsFitTheirAge(t *testing.T) {
 	if got := sistine.BaseCost["culture"]; got != 960000 || made < 960000 || made >= 970000 {
 		t.Errorf("sistine_chapel culture = %s with %s made in the target: want 960_000, the largest two-figure number the income covers", GoLiteral(roundSignificant(got, 4)), GoLiteral(roundSignificant(made, 4)))
 	}
+}
+
+// roundSignificant rounds v to `sig` significant figures for readability
+// (e.g. 46.3→46, 644→640, 6420→6400, 90150→90000). A positive value is never
+// rounded down to 0 — it floors at 1 so a real cost never becomes free.
+func roundSignificant(v float64, sig int) float64 {
+	if v <= 0 {
+		return v
+	}
+	d := math.Ceil(detmath.Log10(v))
+	power := float64(sig) - d
+	var rounded float64
+	if power >= 0 {
+		mag := detmath.Pow(10, power)
+		rounded = math.Round(v*mag) / mag
+	} else {
+		// Multiply by an exact power of ten rather than divide by an inexact
+		// fraction: 10/1e-5 came out as 999999.9999999999, and a wonder bank
+		// filled in whole units could then never reach its price.
+		mag := detmath.Pow(10, -power)
+		rounded = math.Round(v/mag) * mag
+	}
+	if rounded < 1 {
+		return 1
+	}
+	return rounded
 }

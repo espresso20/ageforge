@@ -1,11 +1,5 @@
 package config
 
-import (
-	"math"
-
-	"github.com/espresso20/ageforge/detmath"
-)
-
 // Effect represents a single game effect applied by a building, tech, or milestone.
 // The semantics of Value depend on Type:
 //   - "production":     +Value of Target resource per tick
@@ -823,32 +817,6 @@ func buildingMeta() map[string]buildingMetaEntry {
 	}
 }
 
-// roundSignificant rounds v to `sig` significant figures for readability
-// (e.g. 46.3→46, 644→640, 6420→6400, 90150→90000). A positive value is never
-// rounded down to 0 — it floors at 1 so a real cost never becomes free.
-func roundSignificant(v float64, sig int) float64 {
-	if v <= 0 {
-		return v
-	}
-	d := math.Ceil(detmath.Log10(v))
-	power := float64(sig) - d
-	var rounded float64
-	if power >= 0 {
-		mag := detmath.Pow(10, power)
-		rounded = math.Round(v*mag) / mag
-	} else {
-		// Multiply by an exact power of ten rather than divide by an inexact
-		// fraction: 10/1e-5 came out as 999999.9999999999, and a wonder bank
-		// filled in whole units could then never reach its price.
-		mag := detmath.Pow(10, -power)
-		rounded = math.Round(v/mag) * mag
-	}
-	if rounded < 1 {
-		return 1
-	}
-	return rounded
-}
-
 // BaseBuildings returns all building definitions.
 // Production/housing/military/research buildings come from NewProductionBuildings() (Phase 10
 // lineage redesign). Storage buildings and wonders come from baseBuildingsRaw(), enriched
@@ -856,13 +824,6 @@ func roundSignificant(v float64, sig int) float64 {
 func BaseBuildings() []BuildingDef {
 	defs, _ := buildBase()
 	return defs
-}
-
-// ColdStartCaps lists the price parts the cold-start rule held on the loaded
-// table (capColdStartBridge), in age order.
-func ColdStartCaps() []ColdStartCap {
-	_, caps := buildBase()
-	return caps
 }
 
 func buildBase() ([]BuildingDef, []ColdStartCap) {
@@ -943,23 +904,4 @@ func (d BuildingDef) Line() string {
 		return d.LineKey
 	}
 	return d.LineageKey
-}
-
-// NextRung is the building one rung up the line from tier: the one with the
-// lowest tier above it in the same line. A line that pauses (titanium after
-// Modern, electricity while oil runs) has its next rung in a later age, which
-// is still the next rung. ok is false when tier is the last of its line.
-func NextRung(defs []BuildingDef, line string, tier int) (next BuildingDef, ok bool) {
-	if line == "" {
-		return BuildingDef{}, false
-	}
-	for _, b := range defs {
-		if b.Line() != line || b.LineageTier <= tier {
-			continue
-		}
-		if !ok || b.LineageTier < next.LineageTier {
-			next, ok = b, true
-		}
-	}
-	return next, ok
 }

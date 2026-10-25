@@ -94,3 +94,8 @@ func TestSurvivorMilestonesStretched(t *testing.T) {
 		}
 	}
 }
+
+// epochEventAge is the age epoch events are timed for. They fire on entering
+// an era, and the first era they can fire in, the Iron Era, already runs at
+// PacingStretch, so every one does.
+const epochEventAge = "iron_age"

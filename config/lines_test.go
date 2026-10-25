@@ -152,3 +152,22 @@ func TestLastRungOfALineHasNoUpgrade(t *testing.T) {
 		t.Errorf("nano_alloy_plant should be below orbital_refinery in the Space Age, got %v", next)
 	}
 }
+
+// NextRung is the building one rung up the line from tier: the one with the
+// lowest tier above it in the same line. A line that pauses (titanium after
+// Modern, electricity while oil runs) has its next rung in a later age, which
+// is still the next rung. ok is false when tier is the last of its line.
+func NextRung(defs []BuildingDef, line string, tier int) (next BuildingDef, ok bool) {
+	if line == "" {
+		return BuildingDef{}, false
+	}
+	for _, b := range defs {
+		if b.Line() != line || b.LineageTier <= tier {
+			continue
+		}
+		if !ok || b.LineageTier < next.LineageTier {
+			next, ok = b, true
+		}
+	}
+	return next, ok
+}

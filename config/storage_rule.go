@@ -7,8 +7,8 @@ package config
 // on them:
 //
 //   - a gate asks for StorageRuleCopies copies of the storage building of the
-//     age it leaves (GateStorageCopies), so a town that passes arrives with
-//     five of each;
+//     age it leaves (GateStorageCopies, in storage_rule_test.go), so a town
+//     that passes arrives with five of each;
 //   - a storage building climbs at StorageRate a copy (Kittens Game's barn),
 //     and its price is its only limit: it has no copy cap;
 //   - an older age's storage building cannot be built in a later age.
@@ -26,25 +26,6 @@ const (
 	// copy owned: Kittens Game's barn.
 	StorageRate = 1.75
 )
-
-// GateStorageCopies is what the gate out of each age asks for in storage
-// buildings, by the age the gate leads into: StorageRuleCopies copies of the
-// storage building of the age left. An age with no storage building of its
-// own asks for none.
-func GateStorageCopies(defs []BuildingDef, ages []AgeDef) map[string]map[string]int {
-	out := map[string]map[string]int{}
-	for i := 0; i+1 < len(ages); i++ {
-		for _, d := range defs {
-			if d.Category == "storage" && d.RequiredAge == ages[i].Key {
-				if out[ages[i+1].Key] == nil {
-					out[ages[i+1].Key] = map[string]int{}
-				}
-				out[ages[i+1].Key][d.Key] = StorageRuleCopies
-			}
-		}
-	}
-	return out
-}
 
 // AgeHasStorageBuilding reports whether the age has a storage building of its
 // own. The last age has none.

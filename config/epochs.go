@@ -181,11 +181,6 @@ type EpochEventDef struct {
 	Rates []Effect
 }
 
-// epochEventAge is the age epoch events are timed for. They fire on entering
-// an era, and the first era they can fire in, the Iron Era, already runs at
-// PacingStretch, so every one does.
-const epochEventAge = "iron_age"
-
 // AncientCacheMinutes is what the Ancient Cache pays: this many minutes of
 // the town's own income of every unlocked resource, sized like any other
 // gain (EventSize). In knowledge it pays at most the price of the cheapest

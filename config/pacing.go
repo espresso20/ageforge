@@ -472,16 +472,3 @@ func Incomes(defs []BuildingDef, techs []TechDef, order []string, include func(s
 	}
 	return out
 }
-
-// BuildingBuildCapTicks gives wonders WonderBuildFactor times the general cap: the long build that ends an age.
-func BuildingBuildCapTicks(age, category string) float64 {
-	div := 6.0
-	if category == "storage" {
-		div = 48
-	}
-	limit := LatePriceTargetTicks(age) / div
-	if category == "wonder" {
-		limit *= WonderBuildFactor
-	}
-	return limit
-}

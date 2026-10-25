@@ -168,3 +168,16 @@ const (
 	buildShare        = 6.0  // no building takes longer than a sixth of its age's target
 	storageBuildShare = 48.0 // a storage building, a forty-eighth
 )
+
+// BuildingBuildCapTicks gives wonders WonderBuildFactor times the general cap: the long build that ends an age.
+func BuildingBuildCapTicks(age, category string) float64 {
+	div := 6.0
+	if category == "storage" {
+		div = 48
+	}
+	limit := LatePriceTargetTicks(age) / div
+	if category == "wonder" {
+		limit *= WonderBuildFactor
+	}
+	return limit
+}

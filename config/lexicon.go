@@ -196,17 +196,3 @@ func LexiconCells() []words.Cell {
 	}
 	return cells
 }
-
-// TermsFor is every term the lexicon holds for age, by key; a term the age
-// has no entry for is left out (Term answers it with the plain word).
-func TermsFor(age string) map[string]Word {
-	out := map[string]Word{}
-	for _, row := range lexiconRows {
-		if row.age == age {
-			for k, w := range row.terms {
-				out[k] = w
-			}
-		}
-	}
-	return out
-}

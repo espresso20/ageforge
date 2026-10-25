@@ -493,3 +493,8 @@ func TestScholarOutputAndResearchSpeedHaveTheirOwnLabels(t *testing.T) {
 		}
 	}
 }
+
+// RateText is a per-tick change to one resource: "gold +5/tick".
+func RateText(res string, v float64) string {
+	return ResourceLabel(res) + " " + signed(v, FormatAmount(v)) + "/tick"
+}
