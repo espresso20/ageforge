@@ -1,8 +1,9 @@
 package mapmodel
 
 import (
+	"cmp"
 	"math"
-	"sort"
+	"slices"
 )
 
 // plan.go is the static half of the town layout: a pure function of the
@@ -83,11 +84,8 @@ func NewPlan(w *World, cat *Catalog) *Plan {
 			}
 		}
 	}
-	sort.Slice(lots, func(a, b int) bool {
-		if lots[a].d != lots[b].d {
-			return lots[a].d < lots[b].d
-		}
-		return lots[a].p.Y*w.W+lots[a].p.X < lots[b].p.Y*w.W+lots[b].p.X
+	slices.SortFunc(lots, func(a, b lot) int {
+		return cmp.Or(cmp.Compare(a.d, b.d), cmp.Compare(a.p.Y*w.W+a.p.X, b.p.Y*w.W+b.p.X))
 	})
 	used := make([]bool, n)
 	jit := make([]float64, len(lots))

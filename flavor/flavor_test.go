@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -74,16 +75,6 @@ func fuzzRequests(m Moment) []Request {
 				}
 			}
 		}
-	}
-	return out
-}
-
-// generateMany runs one request n times off a fresh rng and returns the lines.
-func generateMany(req Request, seed int64, n int) []string {
-	rng := rand.New(rand.NewSource(seed))
-	out := make([]string, n)
-	for i := range out {
-		out[i] = Line(req, rng)
 	}
 	return out
 }
@@ -250,34 +241,6 @@ func TestZeroRequestIsGrammatical(t *testing.T) {
 
 // --- determinism -----------------------------------------------------------
 
-// TestDeterministicStream pins the purity contract: same seed + same Request ⇒
-// identical prose stream, and a different seed diverges (so the rng is genuinely
-// driving the draws rather than the output being constant).
-func TestDeterministicStream(t *testing.T) {
-	req := Request{
-		Moment: ExpeditionSuccess, Tone: Triumphant, Age: "medieval_age",
-		Subject: "Raid Bandit Camp", Kind: "military", Resource: "gold", Amount: 420, Count: 4, Ticks: 60,
-	}
-	a := generateMany(req, 20260808, 400)
-	b := generateMany(req, 20260808, 400)
-	for i := range a {
-		if a[i] != b[i] {
-			t.Fatalf("line %d differs between identical seeds:\n  %q\n  %q", i, a[i], b[i])
-		}
-	}
-	c := generateMany(req, 99999, 400)
-	same := true
-	for i := range a {
-		if a[i] != c[i] {
-			same = false
-			break
-		}
-	}
-	if same {
-		t.Fatal("different seeds produced identical streams — rng is not driving the draws")
-	}
-}
-
 // TestGenerateUsesOnlyPassedRNG is a smoke check that Generate makes a bounded,
 // FIXED number of draws (skeleton + one per slot) — the property that lets a
 // caller share one rng across systems without the prose stream desynchronising
@@ -301,10 +264,10 @@ func TestGenerateUsesOnlyPassedRNG(t *testing.T) {
 
 // --- THE quality gate: how many separate things can it SAY -----------------
 
-// TestSkeletonFloors is the metric that replaced Capacity as the quality bar.
+// TestSkeletonFloors is the quality bar.
 //
-// Capacity multiplies bank sizes together and so reports a number in the
-// thousands for a Moment a player experiences as seven sentences on a loop:
+// Multiplying bank sizes together reports a number in the thousands for a
+// Moment a player experiences as seven sentences on a loop:
 // perceived repetition is governed by the SMALLEST pool a line draws from, and
 // for a one-sentence-per-line catalog that pool is the sentences themselves.
 // The floor that matters is therefore per ERA-ELIGIBLE POOL — the sentences an
@@ -321,7 +284,7 @@ func TestSkeletonFloors(t *testing.T) {
 		if total == 0 {
 			t.Fatalf("%v has no skeletons", m)
 		}
-		t.Logf("%-20v DistinctSkeletons = %3d   (Capacity = %d)", m, total, Capacity(m))
+		t.Logf("%-20v DistinctSkeletons = %3d", m, total)
 		for _, bucket := range eraBuckets {
 			n := len(eligible(Request{Moment: m, Age: eraAges[bucket.era]}))
 			if n < perEraFloor {
@@ -739,7 +702,6 @@ func TestRegisterQuotas(t *testing.T) {
 		minNonNarr  = 0.15
 		minEachForm = 3
 	)
-	regName := map[register]string{regUnset: "UNSET", rPlain: "plain", rWry: "wry", rJoke: "joke"}
 	formName := map[form]string{fNarr: "narration", fLedger: "ledger", fComplaint: "complaint", fOverheard: "overheard", fNotice: "notice"}
 
 	for _, m := range Moments() {
@@ -780,7 +742,6 @@ func TestRegisterQuotas(t *testing.T) {
 		t.Logf("%-20v plain %2.0f%%  wry %2.0f%%  joke %2.0f%%   |  narration %2.0f%%  ledger %d  complaint %d  overheard %d  notice %d",
 			m, plain*100, float64(regs[rWry])/n*100, joke*100, float64(forms[fNarr])/n*100,
 			forms[fLedger], forms[fComplaint], forms[fOverheard], forms[fNotice])
-		_ = regName
 	}
 }
 
@@ -980,18 +941,18 @@ func TestQuantityInflection(t *testing.T) {
 		{"dark_matter", 2, "2 dark matter"},
 	}
 	for _, c := range cases {
-		if got := phraseQuantity(c.key, c.n); got != c.want {
-			t.Errorf("phraseQuantity(%q, %d) = %q, want %q", c.key, c.n, got, c.want)
+		if got := phraseQuantityAs(c.key, c.n, false); got != c.want {
+			t.Errorf("phraseQuantityAs(%q, %d) = %q, want %q", c.key, c.n, got, c.want)
 		}
 	}
-	if got := phraseStores("food"); got != "your food stores" {
-		t.Errorf("phraseStores(food) = %q", got)
+	if got := phraseStoresAs("food", false); got != "your food stores" {
+		t.Errorf("phraseStoresAs(food) = %q", got)
 	}
-	if got := phraseHaul("quantum_flux"); got != "a haul of quantum flux" {
-		t.Errorf("phraseHaul(quantum_flux) = %q", got)
+	if got := phraseHaulAs("quantum_flux", false); got != "a haul of quantum flux" {
+		t.Errorf("phraseHaulAs(quantum_flux) = %q", got)
 	}
-	if got := phraseBare(""); got != "supplies" {
-		t.Errorf("phraseBare(\"\") = %q, want the generic fallback", got)
+	if got := resourceLabel(""); got != "supplies" {
+		t.Errorf("resourceLabel(\"\") = %q, want the generic fallback", got)
 	}
 }
 
@@ -1218,15 +1179,14 @@ func TestTemplatesAreWellFormed(t *testing.T) {
 			if len(tpl.Parts) == 0 {
 				t.Errorf("skeleton %q has no parts", tpl.ID)
 			}
-			if tpl.capacity() == 0 {
-				t.Errorf("skeleton %q has zero capacity — a referenced bank is missing or empty", tpl.ID)
-			}
 			for _, p := range tpl.Parts {
 				if p.bank == "" {
 					continue
 				}
 				if _, ok := banks[p.bank]; !ok {
 					t.Errorf("skeleton %q references unknown bank %q", tpl.ID, p.bank)
+				} else if len(banks[p.bank]) == 0 {
+					t.Errorf("skeleton %q references the empty bank %q", tpl.ID, p.bank)
 				}
 			}
 			joined := text
@@ -1564,16 +1524,6 @@ func markerRE(word string) *regexp.Regexp {
 	return regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(word) + `\b`)
 }
 
-// atHome reports whether a marker is at home in era e.
-func atHome(homes []era, e era) bool {
-	for _, h := range homes {
-		if h == e {
-			return true
-		}
-	}
-	return false
-}
-
 // TestNoEraBleedInAuthoredText is the static half of the guard: a lint over every
 // authored string in the catalog — the sentences AND the noun banks — that
 // catches an anachronism at the exact line carrying it.
@@ -1591,7 +1541,7 @@ func TestNoEraBleedInAuthoredText(t *testing.T) {
 				continue
 			}
 			for e := range u.eras {
-				if atHome(homes, e) {
+				if slices.Contains(homes, e) {
 					continue
 				}
 				t.Errorf("era bleed: %s can fire in the %s era but %q carries the era-coded "+
@@ -1629,15 +1579,8 @@ func TestNoEraBleedInOutput(t *testing.T) {
 	resources := []string{"", "food", "gold", "nanobots", "quantum_flux"}
 
 	foreign := map[era]*regexp.Regexp{}
-	for _, bucket := range eraBuckets {
-		var words []string
-		for word, homes := range eraMarkers {
-			if !atHome(homes, bucket.era) {
-				words = append(words, regexp.QuoteMeta(word))
-			}
-		}
-		sort.Strings(words) // stable pattern, so a failure reproduces
-		foreign[bucket.era] = regexp.MustCompile(`(?i)\b(?:` + strings.Join(words, "|") + `)\b`)
+	for _, a := range ages {
+		foreign[a.era] = foreignMarkers(a.era)
 	}
 
 	lines := 0
@@ -1662,14 +1605,7 @@ func TestNoEraBleedInOutput(t *testing.T) {
 								}
 								line := Line(req, rng)
 								lines++
-								scan := line
-								if subj != "" {
-									scan = strings.ReplaceAll(scan, subj, " ")
-								}
-								if key != "" {
-									scan = strings.ReplaceAll(scan, resourceLabel(key), " ")
-								}
-								if hit := foreign[a.era].FindString(scan); hit != "" {
+								if hit := foreign[a.era].FindString(callerText(line, req)); hit != "" {
 									t.Fatalf("era bleed in %v at %s (%s era): %q contains %q, "+
 										"which is at home in the %s era only", m, a.age,
 										eraName(a.era), line, hit,
@@ -1810,24 +1746,10 @@ func TestToneAndKindBiasSelection(t *testing.T) {
 		return ""
 	}
 	hasTone := func(want Tone) func(tmpl) bool {
-		return func(tp tmpl) bool {
-			for _, x := range tp.Tones {
-				if x == want {
-					return true
-				}
-			}
-			return false
-		}
+		return func(tp tmpl) bool { return slices.Contains(tp.Tones, want) }
 	}
 	hasKind := func(want string) func(tmpl) bool {
-		return func(tp tmpl) bool {
-			for _, x := range tp.Kinds {
-				if x == want {
-					return true
-				}
-			}
-			return false
-		}
+		return func(tp tmpl) bool { return slices.Contains(tp.Kinds, want) }
 	}
 	hasEra := func(want era) func(tmpl) bool {
 		return func(tp tmpl) bool {
@@ -1892,59 +1814,5 @@ func TestToneAndKindBiasSelection(t *testing.T) {
 	unset := reach(base, 3, 3000)
 	if !unset[cosmicID] || !unset[ancientID] {
 		t.Error("an unset Age should not exclude era-specific skeletons")
-	}
-}
-
-// --- read it as a stream ---------------------------------------------------
-
-// TestReadTheStream prints CONSECUTIVE lines exactly as a player meets them, in
-// one age, off one rng. No assertion here can judge prose; the point is that a
-// reviewer reads thirty lines in a row and sees whether the catalog holds up.
-// Run with -v.
-//
-// What to look for, in order of severity: two adjacent lines about the same
-// thing, a run of lines the same LENGTH, a false-contrast construction, three wry
-// observations in a row with no flat line between them, or a line that just says
-// the thing succeeded again.
-func TestReadTheStream(t *testing.T) {
-	streams := []struct {
-		label string
-		n     int
-		req   Request
-	}{
-		{"ExpeditionSuccess — medieval age, military, gold", 40, Request{
-			Moment: ExpeditionSuccess, Tone: Triumphant, Age: "medieval_age",
-			Kind: "military", Subject: "Siege Enemy Castle", Resource: "gold", Amount: 340,
-		}},
-		{"ExpeditionFailure — iron age, scouting", 20, Request{
-			Moment: ExpeditionFailure, Age: "iron_age", Kind: "scouting",
-			Subject: "Scout Nearby Ruins", Resource: "iron", Amount: 30,
-		}},
-		{"WarRaid — galactic age, aggressive", 12, Request{
-			Moment: WarRaid, Tone: Grim, Age: "galactic_age",
-			Kind: "aggressive", Subject: "Void Reavers", Resource: "antimatter",
-		}},
-		{"EncounterStandoff — cyberpunk age", 12, Request{
-			Moment: EncounterStandoff, Age: "cyberpunk_age",
-			Kind: "aggressive", Subject: "Shadow Syndicate",
-		}},
-		{"EncounterAtCapacity — classical age, mercantile", 12, Request{
-			Moment: EncounterAtCapacity, Tone: Wry, Age: "classical_age",
-			Kind: "mercantile", Subject: "Merchant Guild",
-		}},
-		{"ExpeditionSuccess — primitive age, zero request otherwise", 12, Request{
-			Moment: ExpeditionSuccess, Age: "primitive_age",
-		}},
-		{"ExpeditionSuccess — transcendent age", 12, Request{
-			Moment: ExpeditionSuccess, Age: "transcendent_age",
-		}},
-	}
-	for _, s := range streams {
-		rng := rand.New(rand.NewSource(20260809))
-		st := NewStream()
-		t.Logf("--- %s ---", s.label)
-		for i := 0; i < s.n; i++ {
-			t.Logf("  %2d  %s", i+1, st.Line(s.req, rng))
-		}
 	}
 }

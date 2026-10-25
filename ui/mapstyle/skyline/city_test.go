@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 var cityAges = []string{"modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"}
@@ -22,8 +21,6 @@ var cityAges = []string{"modern_age", "information_age", "digital_age", "cyberpu
 // ASCII in the ASCII tier, with no '?' fallback elsewhere), no glyph in its
 // own background colour.
 func TestCitySweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	var models []*mapmodel.Model
 	for _, a := range cityAges {
 		for _, tod := range []float64{0.45, 0.95} {
@@ -45,23 +42,14 @@ func TestCitySweep(t *testing.T) {
 					if len(c.Runes) == 0 {
 						continue
 					}
-					r := c.Runes[0]
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s ascii compact=%v: non-ASCII rune %q", m.Age, compact, r)
-					case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-						t.Fatalf("%s %s compact=%v: rune %q is not one cell wide", m.Age, tier, compact, r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %s compact=%v: a '?' fallback leaked into the frame", m.Age, tier, compact)
+					if f := frameRules.Fault(c.Runes[0], tier); f != "" {
+						t.Fatalf("%s %s compact=%v: rune %q: %s", m.Age, tier, compact, c.Runes[0], f)
 					}
 				}
 			}
 		}
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, m := range models {
 			for _, compact := range []bool{false, true} {
 				w, h := 120, 36
@@ -71,8 +59,7 @@ func TestCitySweep(t *testing.T) {
 				scr := draw(newView(), m, w, h, 7, mapmodel.TierUnicode, compact)
 				cells, sw, _ := scr.GetContents()
 				for i, c := range cells {
-					fg, bg, _ := c.Style.Decompose()
-					if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg == bg {
+					if styletest.HiddenInk(c) {
 						t.Errorf("theme %s, %s compact=%v: %q at (%d,%d) has fg == bg", th.Key, m.Age, compact, c.Runes[0], i%sw, i/sw)
 						break
 					}
@@ -145,25 +132,11 @@ func TestCityWorks(t *testing.T) {
 // TestCityPerformance: the Earth arc's busiest skylines keep inside the
 // frame budget (the map redraws every 125 ms).
 func TestCityPerformance(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"cyberpunk_age", "fusion_age", "digital_age"} {
 		m := build(fixture.Options{Age: age, Seed: 7, Routes: 5, Tick: tickAt(0.9), Scale: 2}, 1)
-		v := newView()
-		scr := capture.NewScreen(200, 60)
-		f := mapstyle.Frame{Model: m}
-		v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-		const n = 30
-		start := time.Now()
-		for i := 0; i < n; i++ {
-			f.Anim = i
-			v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-		}
-		per := time.Since(start) / n
-		t.Logf("200x60 %s frame: %v", age, per)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
+		styletest.FrameBudget(t, age, newView(), m, 200, 60, 30, 25*time.Millisecond)
 	}
 }

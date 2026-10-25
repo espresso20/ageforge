@@ -3,10 +3,10 @@ package roguelike
 import (
 	"testing"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // mandalaModel is the Transcendent Age reached through the first eras
@@ -15,13 +15,7 @@ import (
 func mandalaModel(t *testing.T, eras int) *mapmodel.Model {
 	t.Helper()
 	st := fixture.State(fixture.Options{Age: "transcendent_age", Seed: 7, Scale: 1.5})
-	if eras < 7 {
-		st.Stats.AgesReached = nil
-		for _, e := range config.Epochs()[:eras] {
-			st.Stats.AgesReached = append(st.Stats.AgesReached, e.Ages...)
-		}
-		st.Stats.AgesReached = append(st.Stats.AgesReached, st.Age)
-	}
+	fixture.ReachedEras(&st, eras)
 	return testBuilder.Build(&st, nil)
 }
 
@@ -52,7 +46,7 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 					r, _, sty, _ := scr.GetContent(hx+dx, hy+dy)
 					for i, o := range [2][2]int{{-dx, dy}, {dx, -dy}} {
 						or, _, osty, _ := scr.GetContent(hx+o[0], hy+o[1])
-						if mirrored(or, i == 0) != r || osty != sty {
+						if styletest.MirrorRune(or, i == 0) != r || osty != sty {
 							t.Errorf("%d eras, frame %d: %q at (%d,%d) from the core, %q at (%d,%d)", eras, anim, r, dx, dy, or, o[0], o[1])
 						}
 					}
@@ -102,26 +96,6 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 			}
 		}
 	}
-}
-
-// mirrored is r seen in a mirror: across the vertical axis (lr) or the
-// horizontal one. The mandala's petal points and the core's rays turn with
-// the mirror; every other glyph it draws is its own mirror image.
-func mirrored(r rune, lr bool) rune {
-	pairs := map[rune]rune{'╱': '╲', '╲': '╱'}
-	if lr {
-		for a, b := range map[rune]rune{'◄': '►', '◤': '◥', '◣': '◢'} {
-			pairs[a], pairs[b] = b, a
-		}
-	} else {
-		for a, b := range map[rune]rune{'▲': '▼', '◤': '◣', '◥': '◢', '▀': '▄'} {
-			pairs[a], pairs[b] = b, a
-		}
-	}
-	if m, ok := pairs[r]; ok {
-		return m
-	}
-	return r
 }
 
 // TestSkyMandalaStill: the breath changes brightness only: every frame

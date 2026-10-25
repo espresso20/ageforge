@@ -382,9 +382,6 @@ func TestTheFramesThatNameAResourceAreTheScriptsToo(t *testing.T) {
 	if got := fillAs("{res_stores}; {res_haul}", req, false); got != "your food stores; a haul of food" {
 		t.Errorf("the frames in plain English, with VibeMode on, read %q", got)
 	}
-	if got := fill("{res_stores}", req); got != "your food stores" {
-		t.Errorf("fill reads %q", got)
-	}
 	nano := Request{Resource: "nanobots", Amount: 1}
 	if got := fillAs("{amt_res}", nano, true); got != "1 bot" {
 		t.Errorf("the singular of a count noun under the script reads %q", got)
@@ -393,8 +390,8 @@ func TestTheFramesThatNameAResourceAreTheScriptsToo(t *testing.T) {
 		t.Errorf("the singular of a count noun in plain English reads %q", got)
 	}
 	vibe.Set(false)
-	if got := phraseStores("food"); got != "your food stores" {
-		t.Errorf("phraseStores reads %q with VibeMode off", got)
+	if got := phraseStoresAs("food", false); got != "your food stores" {
+		t.Errorf("phraseStoresAs reads %q with VibeMode off", got)
 	}
 }
 

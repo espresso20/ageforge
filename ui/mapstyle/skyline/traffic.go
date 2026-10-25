@@ -487,14 +487,7 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		if v.west {
 			speed = -speed
 		}
-		pad := 12
-		span := w + 2*pad
-		pos := float64(hash(seed, 23)%uint64(span)) + float64(anim)*speed - float64(cam)
-		x := int(math.Floor(pos)) % span
-		if x < 0 {
-			x += span
-		}
-		v.x = x - pad
+		v.x = wrapPad(seed, anim, cam, w, 12, speed)
 		if t == &tCar || t == &tFlyCar {
 			v.body = [4]theme.SkyHue{theme.SkyCarRed, theme.SkyCarBlue, theme.SkyCarWhite, theme.SkyCarYellow}[hash(seed, 3)%4]
 		}
@@ -580,14 +573,7 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		if west {
 			speed = -speed
 		}
-		pad := 12
-		span := w + 2*pad
-		pos := float64(hash(seed, 23)%uint64(span)) + float64(float64(anim)*speed) - float64(cam)
-		x := int(math.Floor(pos)) % span
-		if x < 0 {
-			x += span
-		}
-		v.x = x - pad + dx
+		v.x = wrapPad(seed, anim, cam, w, 12, speed) + dx
 		if t == &tCar || t == &tFlyCar {
 			v.body = [4]theme.SkyHue{theme.SkyCarRed, theme.SkyCarBlue, theme.SkyCarWhite, theme.SkyCarYellow}[hash(seed, 3)%4]
 		}

@@ -7,13 +7,12 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // skyAges are the ages with a scene of their own, in order.
@@ -133,17 +132,12 @@ func TestSkyDeterministicAndAlive(t *testing.T) {
 // TestSkyThemeSweep: in every theme no glyph is drawn in its background
 // colour, in any sky scene.
 func TestSkyThemeSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	var models []*mapmodel.Model
 	for i, age := range skyAges {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 5, Harbinger: true, Wars: 1, Catastrophe: i%2 == 0})
 		models = append(models, m)
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, m := range models {
 			st := skyStyleFor()
 			st.g.flows = true
@@ -151,10 +145,7 @@ func TestSkyThemeSweep(t *testing.T) {
 				s := drawStyle(st, m, 140, 44, 2, mapmodel.TierUnicode, compact)
 				cells, _, _ := s.GetContents()
 				for i, c := range cells {
-					if len(c.Runes) == 0 || c.Runes[0] == ' ' || c.Runes[0] == sentinel {
-						continue
-					}
-					if fg, bg, _ := c.Style.Decompose(); fg == bg {
+					if styletest.HiddenInk(c) && c.Runes[0] != sentinel {
 						t.Errorf("theme %s, %s: cell %d rune %q has fg == bg", th.Key, m.Age, i, c.Runes[0])
 						break
 					}
@@ -183,13 +174,11 @@ func TestSkyGlyphWidths(t *testing.T) {
 								continue
 							}
 							r := c.Runes[0]
-							switch {
-							case r == '?' && i/sw != 46:
-								t.Fatalf("%s %s zoom %d frame %d: fallback '?' at row %d", age, tier, z, anim, i/sw)
-							case tier == mapmodel.TierASCII && r >= 0x80:
-								t.Fatalf("%s ascii zoom %d frame %d: non-ASCII rune %q", age, z, anim, r)
-							case uniseg.StringWidth(string(r)) != 1:
-								t.Fatalf("%s %s zoom %d: rune %q is not one cell", age, tier, z, r)
+							if r == '?' && i/sw == 46 {
+								continue
+							}
+							if f := glyphRules.Fault(r, tier); f != "" {
+								t.Fatalf("%s %s zoom %d frame %d: rune %q at row %d: %s", age, tier, z, anim, r, i/sw, f)
 							}
 						}
 					}
@@ -392,47 +381,21 @@ func TestSkyNoLaterAge(t *testing.T) {
 // TestSkyPerformance: a sky frame and a scene build stay well inside the
 // map's 125 ms redraw.
 func TestSkyPerformance(t *testing.T) {
-	if testing.Short() || raceOn {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range skyAges {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 7, Harbinger: true, Scale: 2})
-		st := skyStyleFor()
-		scr := capture.NewScreen(200, 60)
-		r := mapstyle.Rect{W: 200, H: 60}
-		st.Draw(scr, r, mapstyle.Frame{Model: m})
-		const n = 20
+		styletest.FrameBudget(t, age, skyStyleFor(), m, 200, 60, 20, 25*time.Millisecond)
 		start := time.Now()
-		for i := 0; i < n; i++ {
-			st.Draw(scr, r, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-		}
-		per := time.Since(start) / n
-		start = time.Now()
 		for i := 0; i < 5; i++ {
 			newSkyScene(m, newSkyBase(m, m.Sky()))
 		}
 		build := time.Since(start) / 5
-		t.Logf("%s: a 200x60 frame %v, a scene build %v", age, per, build)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
+		t.Logf("%s: a scene build %v", age, build)
 		if build > 60*time.Millisecond {
 			t.Errorf("%s: a scene build takes %v", age, build)
 		}
-	}
-}
-
-func BenchmarkSkyDraw200x60(b *testing.B) {
-	for _, age := range skyAges {
-		b.Run(age, func(b *testing.B) {
-			m, _ := grown(b, fixture.Options{Age: age, Seed: 7, Harbinger: true})
-			st := skyStyleFor()
-			scr := capture.NewScreen(200, 60)
-			r := mapstyle.Rect{W: 200, H: 60}
-			for i := 0; i < b.N; i++ {
-				st.Draw(scr, r, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-			}
-		})
 	}
 }
 

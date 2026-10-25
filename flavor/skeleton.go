@@ -1,6 +1,9 @@
 package flavor
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // The SKELETON model — the unit of authorship in this package.
 //
@@ -24,7 +27,8 @@ import "strings"
 // The consequence for the quality metric is the whole point. Perceived repetition
 // is governed by the SMALLEST bank a line draws from, never by the product of the
 // bank sizes, so the number worth asserting a floor on is DistinctSkeletons — how
-// many separate sentences a Moment can say — and not Capacity.
+// many separate sentences a Moment can say — and not the product of its bank
+// sizes.
 
 // slotMark is the single slot marker inside an authored sentence. A tilde never
 // occurs in English prose, so it needs no escaping and reads as a gap on the page.
@@ -177,26 +181,28 @@ func pool(prefix string, eras []era, ss []skel) []tmpl {
 	out := make([]tmpl, 0, len(ss))
 	key, bucket := rowParts(prefix)
 	for i, s := range ss {
-		t := s.template(prefix+"_"+itoa(i), eras)
+		t := s.template(prefix+"_"+strconv.Itoa(i), eras)
 		t.Row = sentenceRow(key, bucket, i)
 		out = append(out, t)
 	}
 	return out
 }
 
-// itoa is strconv.Itoa without the import, for ids that are always small.
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var buf [4]byte
-	i := len(buf)
-	for n > 0 {
-		i--
-		buf[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(buf[i:])
+// eraPools builds the eight pools most Moments have, in a fixed order: one open
+// to every age, the grounded and late spans, then one pool per era. Each pool is
+// named prefix plus its suffix ("exp_fail_late") and gated by the era shorthand
+// of the same name. cmd/words reads the eight sentence variables off a call to
+// this function by their position, so keep the order in step with it.
+func eraPools(prefix string, ungated, grounded, late, ancient, feudal, industrial, digital, cosmic []skel) []tmpl {
+	out := pool(prefix+"_any", erasAny, ungated)
+	out = append(out, pool(prefix+"_grounded", erasGrounded, grounded)...)
+	out = append(out, pool(prefix+"_late", erasLate, late)...)
+	out = append(out, pool(prefix+"_ancient", erasAncient, ancient)...)
+	out = append(out, pool(prefix+"_feudal", erasFeudal, feudal)...)
+	out = append(out, pool(prefix+"_industrial", erasIndustrial, industrial)...)
+	out = append(out, pool(prefix+"_digital", erasDigital, digital)...)
+	out = append(out, pool(prefix+"_cosmic", erasCosmic, cosmic)...)
+	return out
 }
 
 // anchorOf returns a template's SIGNATURE: the leading run of authored text that

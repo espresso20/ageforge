@@ -52,15 +52,9 @@ var encStandoffBanks = map[string][]string{
 // that lands in any age, plus one pool per era bucket for the imagery that does
 // not travel.
 func encStandoffTemplates() []tmpl {
-	out := pool("enc_standoff_any", erasAny, encStandoffAny)
-	out = append(out, pool("enc_standoff_grounded", erasGrounded, encStandoffGrounded)...)
-	out = append(out, pool("enc_standoff_late", erasLate, encStandoffLate)...)
-	out = append(out, pool("enc_standoff_ancient", erasAncient, encStandoffAncient)...)
-	out = append(out, pool("enc_standoff_feudal", erasFeudal, encStandoffFeudal)...)
-	out = append(out, pool("enc_standoff_industrial", erasIndustrial, encStandoffIndustrial)...)
-	out = append(out, pool("enc_standoff_digital", erasDigital, encStandoffDigital)...)
-	out = append(out, pool("enc_standoff_cosmic", erasCosmic, encStandoffCosmic)...)
-	return out
+	return eraPools("enc_standoff",
+		encStandoffAny, encStandoffGrounded, encStandoffLate, encStandoffAncient,
+		encStandoffFeudal, encStandoffIndustrial, encStandoffDigital, encStandoffCosmic)
 }
 
 // encStandoffAny fires in every age. Watching, waiting, shouting, water,

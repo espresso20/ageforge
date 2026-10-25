@@ -1,6 +1,8 @@
 package mapstyle
 
 import (
+	"unicode/utf8"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/uniseg"
 
@@ -58,11 +60,6 @@ func (c *Canvas) isWide(r rune) bool {
 	return w
 }
 
-// Sym writes a model symbol in the canvas's tier.
-func (c *Canvas) Sym(x, y int, s mapmodel.Sym, st tcell.Style) {
-	c.Put(x, y, mapmodel.R(s, c.Tier), st)
-}
-
 // Text writes s from (x, y), at most max cells (max <= 0: to the edge), and
 // returns the column after it.
 func (c *Canvas) Text(x, y, max int, s string, st tcell.Style) int {
@@ -99,10 +96,4 @@ func (c *Canvas) Get(x, y int) (rune, tcell.Style) {
 }
 
 // TextLen is the number of cells s takes.
-func TextLen(s string) int {
-	n := 0
-	for range s {
-		n++
-	}
-	return n
-}
+func TextLen(s string) int { return utf8.RuneCountInString(s) }

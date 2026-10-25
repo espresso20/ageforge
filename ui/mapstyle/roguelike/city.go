@@ -170,10 +170,6 @@ func greenWindow(w *mapmodel.World) [4]int {
 	return [4]int{x0, y0, min(w.W-1, x0+greenWinW-1), min(w.H-1, y0+greenWinH-1)}
 }
 
-func (cl *cityLand) inWin(x, y int) bool {
-	return x >= cl.win[0] && x <= cl.win[2] && y >= cl.win[1] && y <= cl.win[3]
-}
-
 // townLots marks where the town can ever build (cityLand.lots).
 func (s *scene) townLots() []bool {
 	w, p := s.w, s.m.Town.Plan

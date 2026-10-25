@@ -55,15 +55,9 @@ var warRaidBanks = map[string][]string{
 // warRaidTemplates is the WarRaid skeleton set: one ungated pool that lands in
 // any age, plus one pool per era bucket for the imagery that does not travel.
 func warRaidTemplates() []tmpl {
-	out := pool("war_raid_any", erasAny, warRaidAny)
-	out = append(out, pool("war_raid_grounded", erasGrounded, warRaidGrounded)...)
-	out = append(out, pool("war_raid_late", erasLate, warRaidLate)...)
-	out = append(out, pool("war_raid_ancient", erasAncient, warRaidAncient)...)
-	out = append(out, pool("war_raid_feudal", erasFeudal, warRaidFeudal)...)
-	out = append(out, pool("war_raid_industrial", erasIndustrial, warRaidIndustrial)...)
-	out = append(out, pool("war_raid_digital", erasDigital, warRaidDigital)...)
-	out = append(out, pool("war_raid_cosmic", erasCosmic, warRaidCosmic)...)
-	return out
+	return eraPools("war_raid",
+		warRaidAny, warRaidGrounded, warRaidLate, warRaidAncient,
+		warRaidFeudal, warRaidIndustrial, warRaidDigital, warRaidCosmic)
 }
 
 // warRaidAny fires in every age, so nothing in it may name an era-coded object.

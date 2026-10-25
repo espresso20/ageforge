@@ -53,15 +53,9 @@ var encCapacityBanks = map[string][]string{
 // that lands in any age, plus one pool per era bucket for the imagery that does
 // not travel.
 func encCapacityTemplates() []tmpl {
-	out := pool("enc_cap_any", erasAny, encCapacityAny)
-	out = append(out, pool("enc_cap_grounded", erasGrounded, encCapacityGrounded)...)
-	out = append(out, pool("enc_cap_late", erasLate, encCapacityLate)...)
-	out = append(out, pool("enc_cap_ancient", erasAncient, encCapacityAncient)...)
-	out = append(out, pool("enc_cap_feudal", erasFeudal, encCapacityFeudal)...)
-	out = append(out, pool("enc_cap_industrial", erasIndustrial, encCapacityIndustrial)...)
-	out = append(out, pool("enc_cap_digital", erasDigital, encCapacityDigital)...)
-	out = append(out, pool("enc_cap_cosmic", erasCosmic, encCapacityCosmic)...)
-	return out
+	return eraPools("enc_cap",
+		encCapacityAny, encCapacityGrounded, encCapacityLate, encCapacityAncient,
+		encCapacityFeudal, encCapacityIndustrial, encCapacityDigital, encCapacityCosmic)
 }
 
 // encCapacityAny fires in every age, so nothing in it may name an era-coded

@@ -3,6 +3,7 @@ package roguelike
 import (
 	"testing"
 
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 )
@@ -11,12 +12,7 @@ import (
 // map floor: its night dial and the Earth arc's city inks both rebuild the
 // terrain colours, on every theme, epoch and age.
 func TestTerrainFloorInTheRoguelike(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		v := &view{}
 		for epoch := 0; epoch < 7; epoch++ {
 			for age := -1; age <= 25; age++ {

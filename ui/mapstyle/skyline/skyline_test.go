@@ -1,24 +1,20 @@
 package skyline
 
 import (
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 const sentinel = 'Ж'
@@ -97,21 +93,13 @@ func TestTinySizes(t *testing.T) {
 
 func screenCells(s tcell.SimulationScreen) []tcell.SimCell {
 	c, _, _ := s.GetContents()
-	out := make([]tcell.SimCell, len(c))
-	copy(out, c)
-	return out
+	return slices.Clone(c)
 }
 
 func sameCells(a, b []tcell.SimCell) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i].Style != b[i].Style || string(a[i].Runes) != string(b[i].Runes) {
-			return false
-		}
-	}
-	return true
+	return slices.EqualFunc(a, b, func(x, y tcell.SimCell) bool {
+		return x.Style == y.Style && string(x.Runes) == string(y.Runes)
+	})
 }
 
 func TestDeterminism(t *testing.T) {
@@ -309,8 +297,6 @@ func TestPlacementStable(t *testing.T) {
 }
 
 func TestThemeSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	ages := []string{"stone_age", "medieval_age", "industrial_age", "cyberpunk_age", "quantum_age"}
 	models := map[string]*mapmodel.Model{}
 	for _, a := range ages {
@@ -319,10 +305,7 @@ func TestThemeSweep(t *testing.T) {
 				Harbinger: true, Routes: 3}, 1)
 		}
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for name, m := range models {
 			for _, compact := range []bool{false, true} {
 				w, h := 120, 36
@@ -334,8 +317,7 @@ func TestThemeSweep(t *testing.T) {
 				scr := draw(v, m, w, h, 7, mapmodel.TierUnicode, compact)
 				cells, sw, _ := scr.GetContents()
 				for i, c := range cells {
-					fg, bg, _ := c.Style.Decompose()
-					if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg == bg {
+					if styletest.HiddenInk(c) {
 						t.Errorf("theme %s, %s compact=%v: %q at (%d,%d) has fg == bg", th.Key, name, compact, c.Runes[0], i%sw, i/sw)
 						break
 					}
@@ -346,6 +328,8 @@ func TestThemeSweep(t *testing.T) {
 }
 
 func TestGlyphWidths(t *testing.T) {
+	rules := frameRules
+	rules.EmDash = true
 	for _, age := range []string{"primitive_age", "medieval_age", "victorian_age", "cyberpunk_age", "space_age", "transcendent_age"} {
 		m := build(fixture.Options{Age: age, Seed: 6, Routes: 4, Harbinger: true, Catastrophe: true, Wars: 1, Tick: tickAt(0.9)}, 1)
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierNerd, mapmodel.TierASCII} {
@@ -362,16 +346,8 @@ func TestGlyphWidths(t *testing.T) {
 					if len(c.Runes) == 0 {
 						continue
 					}
-					r := c.Runes[0]
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s ascii compact=%v: non-ASCII rune %q", age, compact, r)
-					case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-						t.Fatalf("%s %s compact=%v: rune %q is not one cell wide", age, tier, compact, r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %s compact=%v: a '?' fallback leaked into the frame", age, tier, compact)
-					case r == '—':
-						t.Fatalf("%s: an em dash in the frame", age)
+					if f := rules.Fault(c.Runes[0], tier); f != "" {
+						t.Fatalf("%s %s compact=%v: rune %q: %s", age, tier, compact, c.Runes[0], f)
 					}
 				}
 			}
@@ -491,52 +467,20 @@ func TestKeys(t *testing.T) {
 	}
 }
 
-// TestCopy: player-visible strings have no em dashes or exclamation marks.
-func TestCopy(t *testing.T) {
-	files, _ := filepath.Glob("*.go")
-	fset := token.NewFileSet()
-	for _, fn := range files {
-		if strings.HasSuffix(fn, "_test.go") {
-			continue
-		}
-		f, err := parser.ParseFile(fset, fn, nil, 0)
-		if err != nil {
-			t.Fatal(err)
-		}
-		ast.Inspect(f, func(n ast.Node) bool {
-			if lit, ok := n.(*ast.BasicLit); ok && lit.Kind == token.STRING {
-				if s, err := strconv.Unquote(lit.Value); err == nil && (strings.Contains(s, "—") || strings.Contains(s, "!")) {
-					t.Errorf("%s: %q", fset.Position(lit.Pos()), s)
-				}
-			}
-			return true
-		})
-	}
+// TestEntry: the style registers itself under its name, with a title, a
+// blurb and a constructor.
+func TestEntry(t *testing.T) {
 	if e := Entry(); e.Name != "skyline" || e.Title.Plain() != "Skyline" || e.Blurb.Plain() == "" || e.New() == nil {
 		t.Errorf("bad entry %+v", e)
 	}
 }
 
 func TestPerformance(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	m := build(fixture.Options{Age: "cyberpunk_age", Seed: 7, Routes: 5, Tick: tickAt(0.9), Scale: 2}, 1)
-	v := newView()
-	scr := capture.NewScreen(200, 60)
-	f := mapstyle.Frame{Model: m}
-	v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-	const n = 30
-	start := time.Now()
-	for i := 0; i < n; i++ {
-		f.Anim = i
-		v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-	}
-	per := time.Since(start) / n
-	t.Logf("200x60 cyberpunk frame: %v", per)
-	if per > 25*time.Millisecond {
-		t.Errorf("a frame takes %v", per)
-	}
+	styletest.FrameBudget(t, "cyberpunk_age", newView(), m, 200, 60, 30, 25*time.Millisecond)
 }
 
 // TestFlowsNeverSayFull: stock has no ceiling, so the flows overlay and the
@@ -549,12 +493,7 @@ func TestFlowsNeverSayFull(t *testing.T) {
 			v.flows, v.legend = true, legend
 			for _, sz := range [][2]int{{200, 60}, {120, 40}, {80, 24}} {
 				scr := draw(v, m, sz[0], sz[1], 10, mapmodel.TierUnicode, false)
-				cells, _, _ := scr.GetContents()
-				var b strings.Builder
-				for _, c := range cells {
-					b.WriteString(string(c.Runes))
-				}
-				text := b.String()
+				text := capture.Text(scr)
 				if strings.Contains(text, "FULL") || strings.Contains(text, "full:") {
 					t.Errorf("%s at %dx%d (legend %v) still says full", age, sz[0], sz[1], legend)
 				}

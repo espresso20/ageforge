@@ -1,7 +1,6 @@
 package skyline
 
 import (
-	"sort"
 	"strconv"
 	"strings"
 
@@ -119,24 +118,8 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 		return v.composeMandala(f, W, H) // no panorama: the mandala alone
 	}
 	m := f.Model
-	v.sw, v.worldW = W, m.Skyline.Width
-	z := v.zoom
-	fit := z == zFar && v.fitOK(W)
-	if z == zFar && !fit {
-		z = zWide
-	}
-	lw, lh := z.cols(W), z.frameRows(H)
-	wcols, kx := lw, 1.0
-	if fit {
-		wcols, kx = m.Skyline.Width, float64(m.Skyline.Width)/float64(lw)
-	}
-	world := &v.fb
-	if z != zMid {
-		world = &v.lfb
-	}
-	v.lastW = wcols
-	s := &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: lw, H: lh, S: lh - 3, top: 1, sel: -1,
-		zm: z, lw: wcols, ls: lh - 3, sw: W, sh: H, fit: fit, kx: kx}
+	s := v.frameScene(f, W, H)
+	fit := s.fit
 	s.groundY = skyGround(s.S)
 	ref := skyGround(H - 3) // the baseline the forms are sized for: the screen's own
 	s.band = bandOf(m.AgeIdx)
@@ -147,33 +130,8 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 	s.lay = v.skyLayoutSized(m, sc, s.groundY, ref, false)
 	s.vis = v.vis
 	defer func() { v.vis = s.vis }()
-	if v.follow && !fit {
-		v.cam = presentCam(m, lw)
-	}
-	if v.inspect {
-		ts := v.targetsFor(m, wcols, v.camX())
-		if i := v.resolve(m, ts, f.VisitFrame()); i >= 0 && v.reveal {
-			v.revealTarget(m, ts[i], wcols)
-		}
-	}
-	if !fit {
-		v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-lw))
-	}
-	s.cam = v.camX()
-	s.pan = v.panFor(z, s.S, skyPanDefault(s.S))
-	if fit {
-		s.ridge = ridgeItemsFar(m, lw)
-	} else {
-		s.ridge = ridgeItems(m, lw, s.cam)
-	}
-	if v.inspect && v.cur.kind == tLot {
-		s.sel = s.lay.find(v.cur.key, v.cur.cp)
-	}
-	if ep := m.Catastrophe.Pending; ep != "" {
-		e := m.Catalog.EpochIdx[ep]
-		s.gridOut = e == 3 || e == 4 || e == 5
-	}
-	world.reset(lw, lh)
+	v.placeCamera(s, f, skyPanDefault(s.S))
+	s.fb.reset(s.W, s.H)
 	o := newOrb(s, sc)
 	if !fit {
 		s.vis = s.lay.visible(s.cam-16, s.cam+s.W+16, s.vis)
@@ -414,13 +372,7 @@ func (o *orb) farStation(it ridgeItem) {
 	// the pennant
 	rc := o.mp.Fg[mapmodel.RelationClass(f.Relation)]
 	put(0, -1, '│', dim)
-	flag := '►'
-	if f.Relation == mapmodel.RelWar {
-		flag = mapmodel.R(mapmodel.SymWar, o.tier)
-	} else if o.tier == mapmodel.TierNerd {
-		flag = mapmodel.R(mapmodel.SymCiv, o.tier)
-	}
-	put(1, -1, flag, rc)
+	put(1, -1, pennantGlyph(f.Relation, o.tier), rc)
 	o.labels = append(o.labels, label{x: x - textLen(f.Name)/2, y: y - 2, text: f.Name, fg: rc})
 }
 
@@ -922,7 +874,7 @@ func (v *view) skyLayoutSized(m *mapmodel.Model, sc mapmodel.SkyScene, groundY, 
 		if b != nil {
 			count = b.Count
 		}
-		fm := skyFormFor(sc, def, ml, ml.Key == keystone && ml.Age == present)
+		fm := skyFormFor(sc, def, ml.Key == keystone && ml.Age == present)
 		lv.producer = b != nil && b.Rate > 0
 		h := float64(fm.height * lay.scale)
 		if !ml.Wonder {
@@ -968,49 +920,7 @@ func (v *view) skyLayoutSized(m *mapmodel.Model, sc mapmodel.SkyScene, groundY, 
 		lay.maxW = max(lay.maxW, spr.w)
 		lay.lots = append(lay.lots, lv)
 	}
-	sort.SliceStable(lay.lots, func(i, j int) bool {
-		a, b := &lay.lots[i], &lay.lots[j]
-		if a.depth != b.depth {
-			return a.depth > b.depth
-		}
-		if a.spr.h != b.spr.h {
-			return a.spr.h > b.spr.h
-		}
-		return a.ml.Seed < b.ml.Seed
-	})
-	lay.index = make(map[lotID]int, len(lay.lots))
-	for i := range lay.lots {
-		ml := lay.lots[i].ml
-		lay.index[lotID{ml.Key, ml.Copy}] = i
-		if ml.New {
-			lay.news = append(lay.news, ml.X)
-		}
-	}
-	lay.byX = make([]int32, len(lay.lots))
-	for i := range lay.byX {
-		lay.byX[i] = int32(i)
-	}
-	sort.SliceStable(lay.byX, func(i, j int) bool { return lay.lots[lay.byX[i]].x0 < lay.lots[lay.byX[j]].x0 })
-	lay.prof = make([]int, lay.width)
-	lay.tallest = make([]int32, lay.width)
-	for i := range lay.tallest {
-		lay.tallest[i] = -1
-	}
-	for i := range lay.lots {
-		l := &lay.lots[i]
-		for x := 0; x < l.spr.w; x++ {
-			wx := l.x0 + x
-			if wx < 0 || wx >= lay.width {
-				continue
-			}
-			if t := l.spr.topAt(x); t >= 0 {
-				if h := l.spr.h - t; h > lay.prof[wx] {
-					lay.prof[wx] = h
-					lay.tallest[wx] = int32(i)
-				}
-			}
-		}
-	}
+	lay.finish()
 	*slotp = lay
 	return lay
 }
@@ -1046,16 +956,7 @@ func (s *sprite) cropTop(h int) *sprite {
 	cut := s.h - h
 	o := newSprite(s.w, h)
 	copy(o.c, s.c[cut*s.w:])
-	sh := func(ps []pt) []pt {
-		out := make([]pt, 0, len(ps))
-		for _, p := range ps {
-			if p.y-cut >= 0 {
-				out = append(out, pt{p.x, p.y - cut})
-			}
-		}
-		return out
-	}
-	o.smoke, o.beacons, o.blades, o.flame = sh(s.smoke), sh(s.beacons), sh(s.blades), sh(s.flame)
+	o.addMarks(s, func(p pt) (pt, bool) { return pt{p.x, p.y - cut}, p.y-cut >= 0 })
 	o.carryExtras(s, 0, -cut)
 	return o
 }

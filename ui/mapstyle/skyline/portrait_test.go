@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // TestPortraitEveryWonder: every wonder of the game is drawn alone, whatever
@@ -16,8 +17,6 @@ import (
 // written, the wonder's own cells in it, nothing outside ASCII in the plain
 // tier and no glyph in its own colour.
 func TestPortraitEveryWonder(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	themes := theme.All()
 	c := catalog()
 	keys := 0
@@ -30,9 +29,7 @@ func TestPortraitEveryWonder(t *testing.T) {
 		keys++
 		for si, sz := range [][2]int{{66, 13}, {100, 30}, {40, 9}, {160, 42}} {
 			for ti, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
-				if err := theme.SetActive(themes[(a+si+ti)%len(themes)].Key); err != nil {
-					t.Fatal(err)
-				}
+				fixture.WithTheme(t, themes[(a+si+ti)%len(themes)].Key)
 				v := newView()
 				scr := capture.NewScreen(sz[0], sz[1])
 				if !v.Portrait(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, mapstyle.Frame{Model: m, Anim: 3, Tier: tier}, key) {
@@ -46,13 +43,10 @@ func TestPortraitEveryWonder(t *testing.T) {
 						t.Fatalf("%s at %dx%d: cell %d,%d was never written", key, sz[0], sz[1], i%w, i/w)
 					}
 					r := cell.Runes[0]
-					fg, bg, _ := cell.Style.Decompose()
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s %dx%d ascii: non-ASCII rune %q", key, sz[0], sz[1], r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %dx%d %v: a '?' fallback", key, sz[0], sz[1], tier)
-					case r != ' ' && fg == bg:
+					if f := queryRules.Fault(r, tier); f != "" {
+						t.Fatalf("%s %dx%d %v: rune %q: %s", key, sz[0], sz[1], tier, r, f)
+					}
+					if styletest.HiddenInk(cell) {
 						t.Fatalf("%s %dx%d %v: %q has fg == bg", key, sz[0], sz[1], tier, r)
 					}
 					if r != ' ' {

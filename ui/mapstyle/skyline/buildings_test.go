@@ -1,6 +1,8 @@
 package skyline
 
 import (
+	"fmt"
+	"math"
 	"strconv"
 	"testing"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // buildings_test.go pins the skyline's buildings: a silhouette for every
@@ -24,20 +27,11 @@ func TestSkyCopiesFollowTheCount(t *testing.T) {
 	if mapmodel.SkyCopies(0) != 0 || mapmodel.SkyCopies(-3) != 0 {
 		t.Error("no buildings, no silhouettes")
 	}
-	prev := 0
 	for n := 1; n <= 200; n++ {
-		want := (n + mapmodel.SkyCopiesPer - 1) / mapmodel.SkyCopiesPer
-		if want > mapmodel.SkyMaxCopies {
-			want = mapmodel.SkyMaxCopies
-		}
-		got := mapmodel.SkyCopies(n)
-		if got != want {
+		want := min((n+mapmodel.SkyCopiesPer-1)/mapmodel.SkyCopiesPer, mapmodel.SkyMaxCopies)
+		if got := mapmodel.SkyCopies(n); got != want {
 			t.Fatalf("%d buildings draw %d silhouettes, want %d", n, got, want)
 		}
-		if got < prev {
-			t.Fatalf("%d buildings draw fewer silhouettes (%d) than %d did (%d)", n, got, n-1, prev)
-		}
-		prev = got
 	}
 	if mapmodel.SkyMaxCopies < 24 {
 		t.Errorf("the cap is %d, want at least 24", mapmodel.SkyMaxCopies)
@@ -189,12 +183,7 @@ func blueShare(c tcell.Color) float64 {
 // in a built material: in a dark theme each row behind is dimmer and cooler
 // than the one in front; in a light theme it fades toward the paper.
 func TestBackRowsRecede(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, tod := range []float64{0.5, 0.95} {
 			m := build(fixture.Options{Age: "medieval_age", Seed: 5, Tick: tickAt(tod)}, 0)
 			p := newPal(m)
@@ -209,7 +198,7 @@ func TestBackRowsRecede(t *testing.T) {
 					}
 					for r := 1; r < 3; r++ {
 						if p.light {
-							if gap := func(c tcell.Color) float64 { return absf(luma(c) - luma(p.horizon)) }; gap(row[r]) > gap(row[r-1])+0.5 {
+							if gap := func(c tcell.Color) float64 { return math.Abs(luma(c) - luma(p.horizon)) }; gap(row[r]) > gap(row[r-1])+0.5 {
 								t.Errorf("%s: row %d is farther from the paper than row %d", at(), r, r-1)
 							}
 							continue
@@ -229,13 +218,6 @@ func TestBackRowsRecede(t *testing.T) {
 			}
 		}
 	}
-}
-
-func absf(v float64) float64 {
-	if v < 0 {
-		return -v
-	}
-	return v
 }
 
 // spriteSig is a sprite's picture as a number.
@@ -350,9 +332,7 @@ func windowColours(t *testing.T, m *mapmodel.Model, anim int) map[[2]int]tcell.C
 // waver slowly from frame to frame, and with the animation held (motion off)
 // the same frame is the same picture.
 func TestLitWindows(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	_ = theme.SetActive("forge")
+	fixture.WithTheme(t, "forge")
 	for _, age := range []string{"bronze_age", "medieval_age", "modern_age", "cyberpunk_age"} {
 		// seed 6: the Bronze Age has a dozen windowed buildings and few
 		// elsewhere; the landmark on the plot hides some of any seed's, so the
@@ -412,7 +392,7 @@ func TestWindowGlowBounds(t *testing.T) {
 					t.Fatalf("age %d: glow is not a function of the frame", age)
 				}
 				if styleOfAge(age) == wTorch || styleOfAge(age) == wLamp {
-					if d := absf(g - prev); d > 0.12 {
+					if d := math.Abs(g - prev); d > 0.12 {
 						t.Fatalf("age %d: glow jumped %.2f in one frame", age, d)
 					}
 				}
@@ -464,27 +444,12 @@ func TestNothingDrawsOutsideTheScene(t *testing.T) {
 // the frame guard, in six ages at 160x45, at night when every window is
 // working.
 func TestBuildingFrameBudget(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "modern_age", "cyberpunk_age"} {
 		m := build(fixture.Options{Age: age, Seed: 7, Routes: 4, Scale: 6, Tick: tickAt(0.95)}, 1)
-		v := newView()
-		scr := capture.NewScreen(160, 45)
-		f := mapstyle.Frame{Model: m}
-		v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		const n = 40
-		start := time.Now()
-		for i := 0; i < n; i++ {
-			f.Anim = i
-			v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		}
-		per := time.Since(start) / n
-		t.Logf("160x45 %s (%d silhouettes): frame %v", age, len(m.Skyline.Lots), per)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
-		scr.Fini()
+		styletest.FrameBudget(t, fmt.Sprintf("%s (%d silhouettes)", age, len(m.Skyline.Lots)), newView(), m, 160, 45, 40, 25*time.Millisecond)
 	}
 }
 

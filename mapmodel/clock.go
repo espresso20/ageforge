@@ -103,8 +103,6 @@ func (k WeatherKind) String() string {
 // weather-like, seeded per day otherwise.
 type Weather struct {
 	Kind WeatherKind
-	// Cause names the event behind it, "" for ordinary weather.
-	Cause string
 }
 
 func weatherFor(st *game.GameState, c Clock, epoch int) Weather {
@@ -112,13 +110,13 @@ func weatherFor(st *game.GameState, c Clock, epoch int) Weather {
 		k := strings.ToLower(e.Key)
 		switch {
 		case strings.Contains(k, "storm"):
-			return Weather{Kind: Storm, Cause: e.Name}
+			return Weather{Kind: Storm}
 		case strings.Contains(k, "flood"), strings.Contains(k, "plague"), strings.Contains(k, "blight"), strings.Contains(k, "rain"):
-			return Weather{Kind: Rain, Cause: e.Name}
+			return Weather{Kind: Rain}
 		case strings.Contains(k, "winter"), strings.Contains(k, "frost"), strings.Contains(k, "ice"):
-			return Weather{Kind: Snow, Cause: e.Name}
+			return Weather{Kind: Snow}
 		case strings.Contains(k, "drought"), strings.Contains(k, "festival"):
-			return Weather{Kind: Clear, Cause: e.Name}
+			return Weather{Kind: Clear}
 		}
 	}
 	switch Hash(int64(c.Day), st.Seed, 17) % 20 {

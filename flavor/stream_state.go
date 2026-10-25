@@ -19,16 +19,16 @@ type StreamState struct {
 // State returns a copy of the Stream's memory, or nil for a Stream that has
 // not generated anything yet (nothing to save).
 func (s *Stream) State() *StreamState {
-	if s == nil || !slices.ContainsFunc(s.recent, func(x string) bool { return x != "" }) {
+	if s == nil || !slices.ContainsFunc(s.recent.buf, func(x string) bool { return x != "" }) {
 		return nil // every line lands in recent, so an empty ring means nothing to save
 	}
 	return &StreamState{
-		Recent:  append([]string(nil), s.recent...),
-		At:      s.at,
-		Topics:  append([]string(nil), s.topics...),
-		TopicAt: s.tat,
-		Slots:   append([]string(nil), s.slots...),
-		SlotAt:  s.sat,
+		Recent:  slices.Clone(s.recent.buf),
+		At:      s.recent.at,
+		Topics:  slices.Clone(s.topics.buf),
+		TopicAt: s.topics.at,
+		Slots:   slices.Clone(s.slots.buf),
+		SlotAt:  s.slots.at,
 	}
 }
 
@@ -43,11 +43,8 @@ func StreamFromState(st *StreamState) *Stream {
 		st.SlotAt < 0 || st.SlotAt >= slotMemory {
 		return s
 	}
-	s.recent = append([]string(nil), st.Recent...)
-	s.at = st.At
-	s.topics = append([]string(nil), st.Topics...)
-	s.tat = st.TopicAt
-	s.slots = append([]string(nil), st.Slots...)
-	s.sat = st.SlotAt
+	s.recent = ring{slices.Clone(st.Recent), st.At}
+	s.topics = ring{slices.Clone(st.Topics), st.TopicAt}
+	s.slots = ring{slices.Clone(st.Slots), st.SlotAt}
 	return s
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -215,7 +216,7 @@ func TestHygieneCatchesKnownDefects(t *testing.T) {
 func foreignMarkers(e era) *regexp.Regexp {
 	var words []string
 	for word, homes := range eraMarkers {
-		if !atHome(homes, e) {
+		if !slices.Contains(homes, e) {
 			words = append(words, regexp.QuoteMeta(word))
 		}
 	}
@@ -240,7 +241,7 @@ func callerText(line string, req Request) string {
 // singularLabel is the n == 1 form of a count-noun resource label, which the
 // quantity frame can emit ("1 nanobot"). Mass nouns return their label.
 func singularLabel(key string) string {
-	return strings.TrimSpace(phraseQuantity(key, 1)[1:])
+	return strings.TrimSpace(phraseQuantityAs(key, 1, false)[1:])
 }
 
 // TestEveryAgeEveryMomentYieldsCleanLines is the coverage matrix the task is
@@ -338,12 +339,25 @@ func TestHygieneOverFuzzedRequests(t *testing.T) {
 	t.Logf("%d fuzzed lines, all clean", n)
 }
 
-// TestSeedsReproduceAndDiverge pins determinism for EVERY Moment in every era, on
-// both paths: the raw generator and a Stream. Same seed, same request, same
-// history ⇒ the identical run of lines. Different seed ⇒ a materially different
-// run (not merely one line off), which proves the rng is driving the choice.
+// poolID names the skeleton pool a request draws from. Two requests with the
+// same poolID differ only in the words the caller supplies, so they draw the
+// same way.
+func poolID(req Request) string {
+	ids := []string{req.Moment.String()}
+	for _, tp := range eligible(req) {
+		ids = append(ids, tp.ID)
+	}
+	return strings.Join(ids, " ")
+}
+
+// TestSeedsReproduceAndDiverge pins determinism for EVERY pool the game can draw
+// from, on both paths: the raw generator and a Stream. Same seed, same request,
+// same history ⇒ the identical run of lines. Different seed ⇒ a materially
+// different run (not merely one line off), which proves the rng is driving the
+// choice. Every Moment is run at every age, in every kind and tone the game
+// sends and with and without a count and a duration, once per distinct pool.
 func TestSeedsReproduceAndDiverge(t *testing.T) {
-	const n = 300
+	const n = 120
 	run := func(req Request, seed int64, stream bool) []string {
 		rng := rand.New(rand.NewSource(seed))
 		st := NewStream()
@@ -357,28 +371,41 @@ func TestSeedsReproduceAndDiverge(t *testing.T) {
 		}
 		return out
 	}
+	pools := map[string]bool{}
 	for _, m := range Moments() {
-		for _, bucket := range eraBuckets {
-			req := Request{Moment: m, Age: eraAges[bucket.era], Kind: gameKinds[m][0], Subject: "Void Reavers", Resource: "gold", Amount: 90}
-			for _, stream := range []bool{false, true} {
-				a, b, c := run(req, 77, stream), run(req, 77, stream), run(req, 78, stream)
-				differ := 0
-				for i := range a {
-					if a[i] != b[i] {
-						t.Fatalf("%v %s stream=%v: line %d differs under the same seed:\n  %q\n  %q",
-							m, bucket.suffix, stream, i, a[i], b[i])
+		for _, age := range config.AgeOrder() {
+			kinds := gameKinds[m]
+			if isHarbinger(m) {
+				kinds = harbKinds(m, age)
+			}
+			for _, kind := range kinds {
+				for _, tone := range allTones {
+					for _, count := range []int{0, 4} {
+						req := Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: "Void Reavers", Resource: "gold", Amount: 90, Count: count, Ticks: count * 15}
+						if id := poolID(req); !pools[id] {
+							pools[id] = true
+							for _, stream := range []bool{false, true} {
+								a, b, c := run(req, 77, stream), run(req, 77, stream), run(req, 78, stream)
+								differ := 0
+								for i := range a {
+									if a[i] != b[i] {
+										t.Fatalf("%+v stream=%v: line %d differs under the same seed:\n  %q\n  %q", req, stream, i, a[i], b[i])
+									}
+									if a[i] != c[i] {
+										differ++
+									}
+								}
+								if differ < n*8/10 {
+									t.Errorf("%+v stream=%v: seeds 77 and 78 agree on %d of %d lines; want them to diverge", req, stream, n-differ, n)
+								}
+							}
+						}
 					}
-					if a[i] != c[i] {
-						differ++
-					}
-				}
-				if differ < n*8/10 {
-					t.Errorf("%v %s stream=%v: seeds 77 and 78 agree on %d of %d lines; want them to diverge",
-						m, bucket.suffix, stream, n-differ, n)
 				}
 			}
 		}
 	}
+	t.Logf("%d distinct pools, each run on both paths", len(pools))
 }
 
 // TestStreamNeverRepeatsInsideItsWindow is the repeat-avoidance guarantee as a
@@ -481,10 +508,8 @@ func TestSharedStreamAcrossMoments(t *testing.T) {
 		age := config.AgeOrder()[(i/1000)%22]
 		kinds := gameKinds[m]
 		res := st.Generate(Request{Moment: m, Age: age, Kind: kinds[rng.Intn(len(kinds))], Subject: "Merchant Guild"}, rng)
-		for _, id := range window {
-			if id == res.Template {
-				t.Fatalf("draw %d: skeleton %s came back inside the shared window", i, id)
-			}
+		if slices.Contains(window, res.Template) {
+			t.Fatalf("draw %d: skeleton %s came back inside the shared window", i, res.Template)
 		}
 		window = append(window, res.Template)
 		if len(window) > streamMemory {
@@ -503,9 +528,9 @@ func TestNarrowPoolDegradesGracefully(t *testing.T) {
 	req := Request{Moment: WarRaid, Age: "stone_age", Kind: "aggressive"}
 	pool := eligible(req)
 	st := NewStream()
-	st.recent = make([]string, len(pool)+1)
+	st.recent = newRing(len(pool) + 1)
 	for i, tpl := range pool {
-		st.recent[i] = tpl.ID
+		st.recent.buf[i] = tpl.ID
 	}
 	rng := rand.New(rand.NewSource(3))
 	for i := 0; i < 50; i++ {

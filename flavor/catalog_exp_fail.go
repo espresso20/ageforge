@@ -46,15 +46,9 @@ var expFailBanks = map[string][]string{
 // lands in any age, plus one pool per era bucket for the imagery that does not
 // travel.
 func expFailTemplates() []tmpl {
-	out := pool("exp_fail_any", erasAny, expFailAny)
-	out = append(out, pool("exp_fail_grounded", erasGrounded, expFailGrounded)...)
-	out = append(out, pool("exp_fail_late", erasLate, expFailLate)...)
-	out = append(out, pool("exp_fail_ancient", erasAncient, expFailAncient)...)
-	out = append(out, pool("exp_fail_feudal", erasFeudal, expFailFeudal)...)
-	out = append(out, pool("exp_fail_industrial", erasIndustrial, expFailIndustrial)...)
-	out = append(out, pool("exp_fail_digital", erasDigital, expFailDigital)...)
-	out = append(out, pool("exp_fail_cosmic", erasCosmic, expFailCosmic)...)
-	return out
+	return eraPools("exp_fail",
+		expFailAny, expFailGrounded, expFailLate, expFailAncient,
+		expFailFeudal, expFailIndustrial, expFailDigital, expFailCosmic)
 }
 
 // expFailAny fires in every age, so nothing in it may name an era-coded object.

@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -11,7 +12,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 var allTiers = []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII, mapmodel.TierNerd}
@@ -62,12 +63,7 @@ func TestRosterLanes(t *testing.T) {
 		if rare {
 			l = ageRoster[age][lane].rare
 		}
-		for _, e := range l {
-			if e.name == name {
-				return true
-			}
-		}
-		return false
+		return slices.ContainsFunc(l, func(e *rentry) bool { return e.name == name })
 	}
 	for a := 0; a < numAges; a++ {
 		rail := len(ageRoster[a][laneRail].common) + len(ageRoster[a][laneRail].rare)
@@ -119,8 +115,8 @@ func TestRosterLanes(t *testing.T) {
 
 // TestRosterSprites: every drawing is 1 to 4 cells wide and 1 to 2 tall (a
 // train: every unit), the same size in every glyph tier and frame, with a
-// mask to match, nothing the ASCII tier cannot show, one cell for the Nerd
-// tier's mark, and fits its lane.
+// mask to match, nothing the ASCII tier cannot show, and one cell for the Nerd
+// tier's mark.
 func TestRosterSprites(t *testing.T) {
 	check := func(name string, tp *vtemplate, maxW int) {
 		t.Helper()
@@ -165,18 +161,11 @@ func TestRosterSprites(t *testing.T) {
 		}
 	}
 	for _, e := range rosterEntries {
-		for i, tp := range e.art {
+		for _, tp := range e.art {
 			check(e.name, tp, 4+20) // the longest train: four carriages and an engine
-			_ = i
 		}
 		for _, p := range e.parts {
 			check(e.name+" unit", p, 4)
-		}
-		// fits its lane: the road, the rail and the sky are two rows deep
-		for _, tp := range e.art {
-			if len(tp.rows) > 2 {
-				t.Errorf("%s does not fit its lane", e.name)
-			}
 		}
 	}
 	for _, p := range []*vtemplate{pMan, pWoman, pChild, pBundle, pSpear} {
@@ -490,27 +479,13 @@ func TestSkyLaneBehindBuildings(t *testing.T) {
 // inside the 25 ms budget (the map redraws every 125 ms) at 160x45, in every
 // roster band.
 func TestSkylineFrameTime(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"primitive_age", "iron_age", "renaissance_age", "industrial_age", "electric_age", "modern_age",
 		"digital_age", "cyberpunk_age", "fusion_age"} {
 		m := build(fixture.Options{Age: age, Seed: 7, Routes: 5, Tick: tickAt(0.5), Scale: 2}, 1)
 		m.Activity.Staffed, m.Activity.Wealth, m.Activity.Traffic = 20000, 1, 1
-		v := newView()
-		scr := capture.NewScreen(160, 45)
-		f := mapstyle.Frame{Model: m}
-		v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		const n = 60
-		start := time.Now()
-		for i := 0; i < n; i++ {
-			f.Anim = i
-			v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		}
-		per := time.Since(start) / n
-		t.Logf("160x45 %s frame: %v", age, per)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
+		styletest.FrameBudget(t, age, newView(), m, 160, 45, 60, 25*time.Millisecond)
 	}
 }

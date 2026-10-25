@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // zoomed returns a view at zoom z, free of the present, whose view is
@@ -688,7 +690,7 @@ func TestZoomTransforms(t *testing.T) {
 // TestZoomFrameGuard: a frame at every zoom stays inside the 25 ms guard at
 // 160x45 and 240x60 for six ages (and logs the times).
 func TestZoomFrameGuard(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, sz := range [][2]int{{160, 45}, {240, 60}} {
@@ -697,20 +699,7 @@ func TestZoomFrameGuard(t *testing.T) {
 			for _, z := range zoomSteps {
 				v := newView()
 				v.zoom = z
-				scr := capture.NewScreen(sz[0], sz[1])
-				f := mapstyle.Frame{Model: m}
-				v.Draw(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
-				const n = 20
-				start := time.Now()
-				for i := 0; i < n; i++ {
-					f.Anim = i
-					v.Draw(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
-				}
-				per := time.Since(start) / n
-				t.Logf("%dx%d %-14s %-5s frame %v", sz[0], sz[1], age, z, per)
-				if per > 25*time.Millisecond {
-					t.Errorf("%dx%d %s at %s: a frame takes %v", sz[0], sz[1], age, z, per)
-				}
+				styletest.FrameBudget(t, fmt.Sprintf("%s at %s", age, z), v, m, sz[0], sz[1], 20, 25*time.Millisecond)
 			}
 		}
 	}
@@ -720,17 +709,13 @@ func TestZoomFrameGuard(t *testing.T) {
 // without a panic, nothing '?', no glyph in its own colour, and in the ASCII
 // tier nothing outside ASCII.
 func TestZoomSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	ages := []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "modern_age", "cyberpunk_age", "fusion_age"}
 	themes := theme.All()
 	for i, age := range ages {
 		m := build(fixture.Options{Age: age, Seed: 4, Routes: 3, Harbinger: true, Tick: tickAt(0.95)}, 1)
 		for _, z := range zoomSteps {
 			for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
-				if err := theme.SetActive(themes[(i+int(z))%len(themes)].Key); err != nil {
-					t.Fatal(err)
-				}
+				fixture.WithTheme(t, themes[(i+int(z))%len(themes)].Key)
 				v := newView()
 				v.zoom, v.inspect, v.legend, v.flows = z, true, true, true
 				scr := draw(v, m, 120, 36, 7, tier, false)
@@ -739,15 +724,11 @@ func TestZoomSweep(t *testing.T) {
 					if len(c.Runes) == 0 {
 						continue
 					}
-					r := c.Runes[0]
-					fg, bg, _ := c.Style.Decompose()
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s %s ascii: non-ASCII rune %q", age, z, r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %s %s: a '?' fallback leaked into the frame", age, z, tier)
-					case r != ' ' && fg == bg:
-						t.Fatalf("%s %s %s: %q has fg == bg", age, z, tier, r)
+					if f := queryRules.Fault(c.Runes[0], tier); f != "" {
+						t.Fatalf("%s %s %s: rune %q: %s", age, z, tier, c.Runes[0], f)
+					}
+					if styletest.HiddenInk(c) {
+						t.Fatalf("%s %s %s: %q has fg == bg", age, z, tier, c.Runes[0])
 					}
 				}
 			}

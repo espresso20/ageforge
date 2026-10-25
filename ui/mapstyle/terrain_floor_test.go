@@ -3,6 +3,7 @@ package mapstyle
 import (
 	"testing"
 
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -11,12 +12,7 @@ import (
 // all 16 themes and all seven epochs. Light themes darken the ground and
 // dark themes lighten it until it reads.
 func TestTerrainFloorOnEveryThemeAndEpoch(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for epoch := 0; epoch < 7; epoch++ {
 			p := NewPalette(epoch)
 			for _, c := range TerrainClasses {

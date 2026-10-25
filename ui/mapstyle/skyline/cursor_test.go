@@ -34,12 +34,7 @@ func filled(s tcell.SimulationScreen, c tcell.Color) int {
 // lights), which no theme changes: the fill is held to the theme's palette
 // and to what a scene really shows, not to every paint in those tables.
 func TestCursorIsHighlighted(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, age := range []string{"stone_age", "bronze_age", "medieval_age", "industrial_age"} {
 			m := build(fixture.Options{Age: age, Seed: 3, Tick: tickAt(0.5)}, 0)
 			v := newView()

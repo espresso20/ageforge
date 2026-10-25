@@ -2,8 +2,8 @@ package all
 
 import (
 	"math"
+	"slices"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
@@ -11,7 +11,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
@@ -123,22 +122,13 @@ func earthFrame(t *testing.T, style, age string, seed int64, tod float64, anim i
 	return frameSignature(scr, 0, 1, 160, 48-2)
 }
 
-func withTheme(t *testing.T, key string) {
-	t.Helper()
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	if err := theme.SetActive(key); err != nil {
-		t.Fatal(err)
-	}
-}
-
 // TestEarthArcDisparity is the disparity guard: in both styles, by day and
 // by night, on two seeds, every Earth-arc age's frame differs from its
 // neighbour's (the Atomic Age's before the Modern Age) by at least
 // disparityMin, so no two neighbours look alike. The owner found the late
 // ages too alike ("space kinda looks like cyber"); this keeps them apart.
 func TestEarthArcDisparity(t *testing.T) {
-	withTheme(t, "forge")
+	fixture.WithTheme(t, "forge")
 	ages := []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"}
 	for _, seed := range []int64{7, 11} {
 		for _, style := range []string{"roguelike", "skyline"} {
@@ -168,7 +158,7 @@ func TestEarthArcDisparity(t *testing.T) {
 // neon flickered, the clouds drifted) differs from itself by well under
 // the threshold, so the guard measures the ages, not the animation.
 func TestEarthArcDisparityThreshold(t *testing.T) {
-	withTheme(t, "forge")
+	fixture.WithTheme(t, "forge")
 	worst := 0.0
 	for _, style := range []string{"roguelike", "skyline"} {
 		for _, age := range []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
@@ -220,7 +210,7 @@ func greenShare(s tcell.SimulationScreen, x0, y0, x1, y1 int) float64 {
 // skyline by day): the Information Age shows well under the Modern Age's
 // green, the Digital Age less again (its reserve), and the megacity none.
 func TestEarthArcGreeneryOnScreen(t *testing.T) {
-	withTheme(t, "forge")
+	fixture.WithTheme(t, "forge")
 	for _, style := range []string{"roguelike", "skyline"} {
 		for _, seed := range []int64{7, 11} {
 			share := map[string]float64{}
@@ -270,18 +260,8 @@ func TestEarthArcNoSpoilers(t *testing.T) {
 	for _, age := range []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
 		st := fixture.State(fixture.Options{Age: age, Seed: 5, Harbinger: true, Routes: 2})
 		txt := mapText(t, st)
-		for _, word := range unreached(st) {
-			if i := strings.Index(txt, word); i >= 0 {
-				lo, hi := max(0, i-60), min(len(txt), i+len(word)+60)
-				t.Errorf("%s: the map shows %q:\n...%s...", age, word, txt[lo:hi])
-			}
-		}
-		ai := 0
-		for i, k := range config.AgeOrder() {
-			if k == age {
-				ai = i
-			}
-		}
+		assertNoWords(t, age, txt, unreached(st))
+		ai := slices.Index(config.AgeOrder(), age)
 		var later []string
 		for f := mapmodel.CityFeature(1); f < mapmodel.NumCityFeatures; f++ {
 			if i := f.Info(); i.From > ai {
@@ -289,21 +269,6 @@ func TestEarthArcNoSpoilers(t *testing.T) {
 			}
 		}
 		sort.Strings(later)
-		for _, word := range later {
-			if strings.Contains(txt, word) && !earlierNamed(word, ai) {
-				t.Errorf("%s: the map names %q, which a later age builds", age, word)
-			}
-		}
+		assertNoWords(t, age+" (a later age's city features)", txt, later)
 	}
-}
-
-// earlierNamed reports a later feature's name that an age's own feature
-// shares (none do today; the check keeps a shared word from failing).
-func earlierNamed(word string, age int) bool {
-	for f := mapmodel.CityFeature(1); f < mapmodel.NumCityFeatures; f++ {
-		if i := f.Info(); i.From <= age && (i.Name == word || i.Title == word) {
-			return true
-		}
-	}
-	return false
 }

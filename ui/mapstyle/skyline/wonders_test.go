@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // The ground ages are the first seventeen (Primitive to Fusion); from the
@@ -23,7 +25,8 @@ import (
 const groundAges = 17
 
 // wonderKeys is the key of each age's wonder, by age index ("" for none).
-func wonderKeys(c *mapmodel.Catalog) []string {
+var wonderKeys = sync.OnceValue(func() []string {
+	c := catalog()
 	out := make([]string, len(c.ByAge))
 	for a, ds := range c.ByAge {
 		for _, d := range ds {
@@ -33,10 +36,10 @@ func wonderKeys(c *mapmodel.Catalog) []string {
 		}
 	}
 	return out
-}
+})
 
 // wonderKeyOf is the key of the wonder of age index a.
-func wonderKeyOf(a int) string { return wonderKeys(catalog())[a] }
+func wonderKeyOf(a int) string { return wonderKeys()[a] }
 
 // wonderModel is the model of age a with its wonder built, or, when share is
 // above zero (and built is false), under way with that share of its cost
@@ -410,19 +413,18 @@ func TestWonderGlyphs(t *testing.T) {
 			s := wonderArt(key, rows)
 			for _, spr := range []*sprite{s, s.closeUp()} {
 				for _, cell := range spr.c {
-					for _, r := range []rune{cell.ch} {
-						if r == 0 {
-							continue
-						}
-						if uniseg.StringWidth(string(r)) != 1 {
-							t.Fatalf("%s: %q is not one cell wide", key, r)
-						}
-						if f := mapmodel.Fold(r, mapmodel.TierASCII); f == '?' || f >= 0x80 {
-							t.Fatalf("%s: %q folds to %q in the ASCII tier", key, r, f)
-						}
-						if r == '—' {
-							t.Fatalf("%s: an em dash", key)
-						}
+					r := cell.ch
+					if r == 0 {
+						continue
+					}
+					if uniseg.StringWidth(string(r)) != 1 {
+						t.Fatalf("%s: %q is not one cell wide", key, r)
+					}
+					if f := mapmodel.Fold(r, mapmodel.TierASCII); f == '?' || f >= 0x80 {
+						t.Fatalf("%s: %q folds to %q in the ASCII tier", key, r, f)
+					}
+					if r == '—' {
+						t.Fatalf("%s: an em dash", key)
 					}
 				}
 			}
@@ -436,8 +438,6 @@ func TestWonderGlyphs(t *testing.T) {
 // no panic, no '?', nothing outside ASCII in the ASCII tier, no glyph in its
 // own colour.
 func TestWonderTiersAndThemes(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	themes := theme.All()
 	n := 0
 	for i, age := range ageKeys(0, groundAges) {
@@ -452,9 +452,7 @@ func TestWonderTiersAndThemes(t *testing.T) {
 					x := wonderX(m.Skyline.Districts[m.AgeIdx], wonderKeyOf(m.AgeIdx))
 					for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
 						n++
-						if err := theme.SetActive(themes[(i+n)%len(themes)].Key); err != nil {
-							t.Fatal(err)
-						}
+						fixture.WithTheme(t, themes[(i+n)%len(themes)].Key)
 						v := newView()
 						v.zoom, v.follow, v.inspect = zm, false, true
 						v.cam = x - zm.cols(110)/2
@@ -475,17 +473,11 @@ func TestWonderTiersAndThemes(t *testing.T) {
 							if len(c.Runes) == 0 {
 								continue
 							}
-							r := c.Runes[0]
-							fg, bg, _ := c.Style.Decompose()
-							switch {
-							case tier == mapmodel.TierASCII && r >= 0x80:
-								t.Fatalf("%s built=%v night=%v %s ascii: non-ASCII rune %q", age, built, night, zm, r)
-							case tier != mapmodel.TierASCII && r == '?':
-								t.Fatalf("%s built=%v night=%v %s %s: a '?' leaked into the frame", age, built, night, zm, tier)
-							case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-								t.Fatalf("%s %s: %q is not one cell wide", age, tier, r)
-							case r != ' ' && fg == bg:
-								t.Fatalf("%s built=%v night=%v %s %s: %q has fg == bg", age, built, night, zm, tier, r)
+							if f := frameRules.Fault(c.Runes[0], tier); f != "" {
+								t.Fatalf("%s built=%v night=%v %s %s: rune %q: %s", age, built, night, zm, tier, c.Runes[0], f)
+							}
+							if styletest.HiddenInk(c) {
+								t.Fatalf("%s built=%v night=%v %s %s: %q has fg == bg", age, built, night, zm, tier, c.Runes[0])
 							}
 						}
 					}
@@ -684,7 +676,7 @@ func TestWonderPlaque(t *testing.T) {
 // its scaffold, a night frame at 160x45 stays inside the 25 ms guard at each
 // zoom for six ages (the times are logged).
 func TestWonderFrameGuard(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"bronze_age", "classical_age", "industrial_age", "modern_age", "cyberpunk_age", "fusion_age"} {
@@ -692,25 +684,11 @@ func TestWonderFrameGuard(t *testing.T) {
 		for _, zm := range zoomSteps {
 			v := newView()
 			v.zoom, v.inspect = zm, true
-			scr := capture.NewScreen(160, 45)
-			f := mapstyle.Frame{Model: m}
 			// in the middle of the wonder's district, where the landmark and its glow are
 			d := m.Skyline.Districts[len(m.Skyline.Districts)-1]
 			v.follow = false
 			v.cam = wonderX(d, wonderKeyOf(m.AgeIdx)) - zm.cols(160)/2
-			v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-			const n = 30
-			start := time.Now()
-			for i := 0; i < n; i++ {
-				f.Anim = i
-				v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-			}
-			per := time.Since(start) / n
-			t.Logf("160x45 %-14s %-5s night frame %v", age, zm, per)
-			if per > 25*time.Millisecond {
-				t.Errorf("%s at %s: a frame takes %v", age, zm, per)
-			}
-			scr.Fini()
+			styletest.FrameBudget(t, fmt.Sprintf("%s at %s, night", age, zm), v, m, 160, 45, 30, 25*time.Millisecond)
 		}
 	}
 }

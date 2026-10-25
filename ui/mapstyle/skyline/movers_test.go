@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -232,10 +233,6 @@ func TestMoverFallbacks(t *testing.T) {
 			models[c.age] = moverModels(build(fixture.Options{Age: c.age, Seed: 4, Routes: 5, Wars: 1, Tick: tickAt(0.5)}, 0))
 		}
 		m := models[c.age][c.model]
-		ok := map[*vtemplate]bool{}
-		for _, w := range c.want {
-			ok[w] = true
-		}
 		found := 0
 		gys := []int{39, 30}
 		if c.small {
@@ -249,7 +246,7 @@ func TestMoverFallbacks(t *testing.T) {
 				}
 				n++
 				found++
-				if !ok[v.t] {
+				if !slices.Contains(c.want, v.t) {
 					t.Errorf("%s (routes %d): drew %+v, want one of %d templates", c.age, c.model, *v.t, len(c.want))
 					return
 				}
@@ -385,12 +382,7 @@ func TestVisitorSaucer(t *testing.T) {
 	}
 
 	// legible in every theme, and never in a legend
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		_, scr, x, y, r, _, _ := domeAt(m, shown, mapmodel.TierUnicode)
 		for dx := -1; dx <= 1; dx++ {
 			c, _, st, _ := scr.GetContent(x+dx, y)
@@ -399,7 +391,6 @@ func TestVisitorSaucer(t *testing.T) {
 			}
 		}
 	}
-	_ = theme.SetActive(orig)
 	lv := newView()
 	lv.SetOption(mapstyle.OptLegend, true)
 	if scr := draw(lv, m, 160, 45, shown, mapmodel.TierUnicode, false); strings.ContainsRune(rowText(scr, 44), dome) {

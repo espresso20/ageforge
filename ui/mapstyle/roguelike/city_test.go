@@ -11,8 +11,8 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 var earthAges = []string{"modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"}
@@ -308,13 +308,12 @@ func TestCityTraffic(t *testing.T) {
 // in every view including the mini map, and on every theme no glyph is
 // drawn in its own background colour.
 func TestCityTiersAndThemes(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	var models []*mapmodel.Model
 	for i, age := range earthAges {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 4 + int64(i), Routes: 2, Harbinger: true, Wars: 1})
 		models = append(models, m)
 	}
+	noQuery := styletest.Rules{Query: styletest.Every}
 	for _, m := range models {
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
 			for z := zRegion; z <= zDistrict; z++ {
@@ -332,18 +331,15 @@ func TestCityTiersAndThemes(t *testing.T) {
 							continue
 						}
 						r := c.Runes[0]
-						if r == '?' || tier == mapmodel.TierASCII && r >= 0x80 {
-							t.Fatalf("%s %s zoom %d compact %v: rune %q at %d,%d", m.Age, tier, z, compact, r, i%sw, i/sw)
+						if f := noQuery.Fault(r, tier); f != "" {
+							t.Fatalf("%s %s zoom %d compact %v: rune %q at %d,%d: %s", m.Age, tier, z, compact, r, i%sw, i/sw, f)
 						}
 					}
 				}
 			}
 		}
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, m := range models {
 			for _, z := range []int{zRegion, zSettlement} {
 				v := newView()
@@ -351,10 +347,7 @@ func TestCityTiersAndThemes(t *testing.T) {
 				s := draw(v, m, 140, 44, 3, mapmodel.TierUnicode, false)
 				cells, sw, _ := s.GetContents()
 				for i, c := range cells {
-					if len(c.Runes) == 0 || c.Runes[0] == ' ' || c.Runes[0] == sentinel {
-						continue
-					}
-					if fg, bg, _ := c.Style.Decompose(); fg == bg {
+					if styletest.HiddenInk(c) && c.Runes[0] != sentinel {
 						t.Errorf("theme %s, %s zoom %d: %q at %d,%d has fg == bg", th.Key, m.Age, z, c.Runes[0], i%sw, i/sw)
 						break
 					}
@@ -367,7 +360,7 @@ func TestCityTiersAndThemes(t *testing.T) {
 // TestCityPerf holds the Earth arc to the map's frame budget (it redraws
 // every 125 ms): laying a megacity scene and drawing its frames stay cheap.
 func TestCityPerf(t *testing.T) {
-	if testing.Short() || raceOn {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"cyberpunk_age", "fusion_age", "information_age"} {
@@ -378,20 +371,10 @@ func TestCityPerf(t *testing.T) {
 			newScene(m)
 		}
 		lay := time.Since(start) / scenes
-		v := newView()
-		scr := draw(v, m, 200, 60, 0, mapmodel.TierUnicode, false)
-		const n = 30
-		start = time.Now()
-		for i := 0; i < n; i++ {
-			v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-		}
-		frame := time.Since(start) / n
-		t.Logf("%s: scene %v, 200x60 frame %v", age, lay, frame)
+		t.Logf("%s: scene %v", age, lay)
 		if lay > 80*time.Millisecond {
 			t.Errorf("%s: laying the scene takes %v", age, lay)
 		}
-		if frame > 20*time.Millisecond {
-			t.Errorf("%s: a 200x60 frame takes %v", age, frame)
-		}
+		styletest.FrameBudget(t, age, newView(), m, 200, 60, 30, 20*time.Millisecond)
 	}
 }

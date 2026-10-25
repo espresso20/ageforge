@@ -13,14 +13,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-var skyCat = mapmodel.NewCatalog()
-
-func skyModel(t testing.TB, o fixture.Options) *mapmodel.Model {
-	t.Helper()
-	st := fixture.State(o)
-	return mapmodel.NewBuilder(skyCat).Build(&st, nil)
-}
-
 // TestSkyScenes: the ground lasts to the Fusion Age; each of the last five
 // ages opens a scene of its own, in order.
 func TestSkyScenes(t *testing.T) {
@@ -28,14 +20,14 @@ func TestSkyScenes(t *testing.T) {
 		"galactic_age": mapmodel.SkyGalaxy, "quantum_age": mapmodel.SkyQuantum, "transcendent_age": mapmodel.SkyMandala}
 	ground := true
 	for i, age := range config.AgeOrder() {
-		got := skyCat.SkySceneAt(i)
+		got := cat.SkySceneAt(i)
 		if s, ok := want[age]; ok {
 			ground = false
 			if got != s {
 				t.Errorf("%s: scene %d, want %d", age, got, s)
 			}
-			if skyCat.SkySceneAge(s) != i {
-				t.Errorf("scene %d opens at %d, want %d", s, skyCat.SkySceneAge(s), i)
+			if cat.SkySceneAge(s) != i {
+				t.Errorf("scene %d opens at %d, want %d", s, cat.SkySceneAge(s), i)
 			}
 			continue
 		}
@@ -43,7 +35,7 @@ func TestSkyScenes(t *testing.T) {
 			t.Errorf("%s: scene %d before the Space Age", age, got)
 		}
 	}
-	m := skyModel(t, fixture.Options{Age: "galactic_age", Seed: 3})
+	m := build(t, fixture.State(fixture.Options{Age: "galactic_age", Seed: 3}), nil)
 	if m.Sky() != mapmodel.SkyGalaxy {
 		t.Errorf("the Galactic model's scene is %d", m.Sky())
 	}
@@ -84,7 +76,7 @@ func TestSkyParts(t *testing.T) {
 func TestSkyUnitsGrow(t *testing.T) {
 	for _, age := range []string{"space_age", "interstellar_age", "galactic_age", "quantum_age"} {
 		st := fixture.State(fixture.Options{Age: age, Seed: 5})
-		b := mapmodel.NewBuilder(skyCat)
+		b := mapmodel.NewBuilder(cat)
 		m0 := b.Build(&st, nil)
 		slots := func(m *mapmodel.Model) map[string]map[int]bool {
 			out := map[string]map[int]bool{}
@@ -139,12 +131,12 @@ func TestSkyUnitsGrow(t *testing.T) {
 // ages and nothing from the Transcendent Age, whose buildings are the
 // crown; owning more types adds marks.
 func TestMandala(t *testing.T) {
-	m := skyModel(t, fixture.Options{Age: "transcendent_age", Seed: 7})
+	m := build(t, fixture.State(fixture.Options{Age: "transcendent_age", Seed: 7}), nil)
 	rings := m.Mandala()
-	if len(rings) != len(skyCat.Epochs) {
-		t.Fatalf("%d rings for %d eras", len(rings), len(skyCat.Epochs))
+	if len(rings) != len(cat.Epochs) {
+		t.Fatalf("%d rings for %d eras", len(rings), len(cat.Epochs))
 	}
-	last := skyCat.SkySceneAge(mapmodel.SkyMandala)
+	last := cat.SkySceneAge(mapmodel.SkyMandala)
 	marks := 0
 	for e, r := range rings {
 		if r.Epoch != e {
@@ -155,7 +147,7 @@ func TestMandala(t *testing.T) {
 			switch {
 			case b == nil || b.Count <= 0:
 				t.Errorf("ring %d marks %s, which is not owned", e, mk.Key)
-			case mk.Age >= last || skyCat.AgeEpoch[mk.Age] != e:
+			case mk.Age >= last || cat.AgeEpoch[mk.Age] != e:
 				t.Errorf("ring %d marks %s of age %d", e, mk.Key, mk.Age)
 			case mk.Sym == mapmodel.SymNone:
 				t.Errorf("ring %d: %s has no symbol", e, mk.Key)
@@ -184,7 +176,7 @@ func TestMandala(t *testing.T) {
 			st.Buildings[k] = bs
 		}
 	}
-	more := mapmodel.NewBuilder(skyCat).Build(&st, nil)
+	more := mapmodel.NewBuilder(cat).Build(&st, nil)
 	n := 0
 	for _, r := range more.Mandala() {
 		n += len(r.Marks)
@@ -192,7 +184,7 @@ func TestMandala(t *testing.T) {
 	if n <= marks {
 		t.Errorf("owning more types left the mandala at %d marks (was %d)", n, marks)
 	}
-	if skyModel(t, fixture.Options{Age: "space_age", Seed: 7}).Mandala() == nil {
+	if build(t, fixture.State(fixture.Options{Age: "space_age", Seed: 7}), nil).Mandala() == nil {
 		t.Error("the mandala needs a catalogue, nothing else")
 	}
 }
@@ -206,7 +198,7 @@ func TestMandalaErasReached(t *testing.T) {
 	build := func(reached []string) *mapmodel.Model {
 		st := fixture.State(fixture.Options{Age: "transcendent_age", Seed: 7})
 		st.Stats.AgesReached = reached
-		return mapmodel.NewBuilder(skyCat).Build(&st, nil)
+		return mapmodel.NewBuilder(cat).Build(&st, nil)
 	}
 	epochs := config.Epochs()
 	all := build(nil)
@@ -253,7 +245,7 @@ func TestMandalaErasReached(t *testing.T) {
 // to and travel open space, with the roster's house style.
 func TestSkyMoverRoster(t *testing.T) {
 	ages := config.AgeOrder()
-	space := skyCat.SkySceneAge(mapmodel.SkyOrbit)
+	space := cat.SkySceneAge(mapmodel.SkyOrbit)
 	keys := map[string]bool{}
 	for k := mapmodel.Mover(1); k < mapmodel.NumMovers; k++ {
 		keys[k.Info().Key] = true

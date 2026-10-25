@@ -10,9 +10,9 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // sky_test.go checks the sky arc across both styles: each age looks like
@@ -30,20 +30,15 @@ func arcModel(age string) *mapmodel.Model {
 	return skyBuilder.Build(&st, nil)
 }
 
-// skySignature is what a frame's picture is made of (not the header, legend
-// or status lines every age shares): how often each glyph is drawn, and how
-// often each colour is (the ink of every drawn glyph and every background
-// that is not the picture's own void, on an 8x8x8 grid, with the void
-// itself counted at a quarter weight). Empty space is left out of the glyph
-// count: every age has plenty of it, and it is what is drawn on it that
-// makes an age look like itself.
-type skySignature struct {
-	glyph  map[rune]float64
-	colour map[int]float64
-}
-
-func skySigOf(scr tcell.SimulationScreen, x0, y0, x1, y1 int) skySignature {
-	s := skySignature{glyph: map[rune]float64{}, colour: map[int]float64{}}
+// skySigOf signs a sky frame's picture (not the header, legend or status
+// lines every age shares): how often each glyph is drawn, and how often each
+// colour is (the ink of every drawn glyph and every background that is not
+// the picture's own void, on an 8x8x8 grid, with the void itself counted at a
+// quarter weight). Empty space is left out of the glyph count: every age has
+// plenty of it, and it is what is drawn on it that makes an age look like
+// itself.
+func skySigOf(scr tcell.SimulationScreen, x0, y0, x1, y1 int) signature {
+	s := signature{glyph: map[rune]float64{}, color: map[int]float64{}}
 	bucket := func(c tcell.Color) int {
 		r, g, b := c.RGB()
 		if r < 0 {
@@ -74,65 +69,37 @@ func skySigOf(scr tcell.SimulationScreen, x0, y0, x1, y1 int) skySignature {
 			if r != ' ' {
 				s.glyph[r]++
 				glyphs++
-				s.colour[bucket(fg)]++
+				s.color[bucket(fg)]++
 				inks++
 			}
 			if bg != void {
-				s.colour[bucket(bg)]++
+				s.color[bucket(bg)]++
 				inks++
 			}
 		}
 	}
-	s.colour[1<<12+bucket(void)] += inks / 4
+	s.color[1<<12+bucket(void)] += inks / 4
 	inks += inks / 4
 	for k := range s.glyph {
 		s.glyph[k] /= max(1, glyphs)
 	}
-	for k := range s.colour {
-		s.colour[k] /= max(1, inks)
+	for k := range s.color {
+		s.color[k] /= max(1, inks)
 	}
 	return s
 }
 
-// skyTV is the total variation distance of two distributions: 0 alike, 1
-// nothing in common.
-func skyTV[K comparable](a, b map[K]float64) float64 {
-	d := 0.0
-	for k, v := range a {
-		d += skyAbs(v - b[k])
-	}
-	for k, v := range b {
-		if _, ok := a[k]; !ok {
-			d += v
-		}
-	}
-	return d / 2
-}
-
-func skyAbs(v float64) float64 {
-	if v < 0 {
-		return -v
-	}
-	return v
-}
-
-// skyDistance is how unlike two frames are: the mean of the glyph and the
-// colour distances.
-func skyDistance(a, b skySignature) float64 {
-	return (skyTV(a.glyph, b.glyph) + skyTV(a.colour, b.colour)) / 2
-}
-
 // disparityFloor is how unlike two next-door ages of the sky arc must look,
-// on the scale of skyDistance (0 the same picture, 1 nothing in common). The
-// same age a few frames later sits under 0.02 (things move, stars twinkle).
-// When the guard was written next-door ages measured from 0.40 (the
-// skyline's Interstellar to Galactic) to 0.74 (the roguelike's Fusion to
-// Space), so 0.30 leaves room to tune an age without letting two
+// on the scale of signatureDistance (0 the same picture, 1 nothing in
+// common). The same age a few frames later sits under 0.02 (things move,
+// stars twinkle). When the guard was written next-door ages measured from
+// 0.40 (the skyline's Interstellar to Galactic) to 0.74 (the roguelike's
+// Fusion to Space), so 0.30 leaves room to tune an age without letting two
 // neighbours drift into looking like one.
 const disparityFloor = 0.30
 
 // skyFrameSig draws a model in a style at 160x48 and signs the picture.
-func skyFrameSig(t *testing.T, style string, m *mapmodel.Model, anim int) skySignature {
+func skyFrameSig(t *testing.T, style string, m *mapmodel.Model, anim int) signature {
 	t.Helper()
 	v, _ := Registry().New(style)
 	scr := capture.NewScreen(160, 48)
@@ -146,27 +113,23 @@ func skyFrameSig(t *testing.T, style string, m *mapmodel.Model, anim int) skySig
 // Age before it, looks unlike its neighbours by at least disparityFloor,
 // while the same age a moment later looks like itself.
 func TestSkyDisparity(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	if err := theme.SetActive("forge"); err != nil {
-		t.Fatal(err)
-	}
+	fixture.WithTheme(t, "forge")
 	models := make([]*mapmodel.Model, len(arcAges))
 	for i, a := range arcAges {
 		models[i] = arcModel(a)
 	}
 	for _, style := range Registry().Names() {
-		sigs := make([]skySignature, len(arcAges))
+		sigs := make([]signature, len(arcAges))
 		for i, m := range models {
 			sigs[i] = skyFrameSig(t, style, m, 400)
-			if self := skyDistance(sigs[i], skyFrameSig(t, style, m, 403)); self > disparityFloor/3 {
+			if self := signatureDistance(sigs[i], skyFrameSig(t, style, m, 403)); self > disparityFloor/3 {
 				t.Errorf("%s %s: a frame later it is already %.2f away from itself", style, arcAges[i], self)
 			}
 		}
 		for i := 1; i < len(arcAges); i++ {
-			d := skyDistance(sigs[i-1], sigs[i])
+			d := signatureDistance(sigs[i-1], sigs[i])
 			t.Logf("%s: %s to %s %.2f (glyphs %.2f, colours %.2f)", style, arcAges[i-1], arcAges[i], d,
-				skyTV(sigs[i-1].glyph, sigs[i].glyph), skyTV(sigs[i-1].colour, sigs[i].colour))
+				tvd(sigs[i-1].glyph, sigs[i].glyph), tvd(sigs[i-1].color, sigs[i].color))
 			if d < disparityFloor {
 				t.Errorf("%s: %s and %s look too alike: %.2f, under %.2f", style, arcAges[i-1], arcAges[i], d, disparityFloor)
 			}
@@ -181,24 +144,10 @@ func TestSkyNoSpoilers(t *testing.T) {
 	for _, age := range arcAges[1:] {
 		for _, ready := range []bool{false, true} {
 			st := fixture.State(fixture.Options{Age: age, Seed: 5, Harbinger: true, Wars: 1, Routes: 2})
-			met := 0
-			for k, f := range st.Diplomacy.Factions {
-				if f.Discovered && met >= 3 { // forget all but three of the civs
-					f.Discovered, f.AtWar = false, false
-				}
-				if f.Discovered {
-					met++
-				}
-				st.Diplomacy.Factions[k] = f
-			}
+			meetOnly(&st, 3)
 			st.AgeReady = ready
 			txt := mapText(t, st)
-			for _, word := range unreached(st) {
-				if i := strings.Index(txt, word); i >= 0 {
-					lo, hi := max(0, i-60), min(len(txt), i+len(word)+60)
-					t.Errorf("%s: the map shows %q:\n...%s...", age, word, txt[lo:hi])
-				}
-			}
+			assertNoWords(t, age, txt, unreached(st))
 			if ready && st.NextAgeName != "" && !strings.Contains(txt, st.NextAgeName) {
 				t.Errorf("%s: ready to advance, but the map never names %q", age, st.NextAgeName)
 			}
@@ -244,28 +193,13 @@ func TestSkyVisitorRules(t *testing.T) {
 // under the map's 125 ms redraw (the budget is a fifth of it, generous for
 // a busy CI runner; actuals are logged).
 func TestSkyFrameBudget(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
-	const budget = 25 * time.Millisecond
 	for _, style := range Registry().Names() {
 		for _, age := range arcAges[1:] {
-			m := arcModel(age)
 			v, _ := Registry().New(style)
-			scr := capture.NewScreen(200, 60)
-			r := mapstyle.Rect{W: 200, H: 60}
-			v.Draw(scr, r, mapstyle.Frame{Model: m})
-			const n = 15
-			start := time.Now()
-			for i := 0; i < n; i++ {
-				v.Draw(scr, r, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-			}
-			per := time.Since(start) / n
-			t.Logf("%s %s: %v a frame", style, age, per)
-			if per > budget {
-				t.Errorf("%s %s: a frame takes %v, over %v", style, age, per, budget)
-			}
-			scr.Fini()
+			styletest.FrameBudget(t, style+" "+age, v, arcModel(age), 200, 60, 15, 25*time.Millisecond)
 		}
 	}
 }

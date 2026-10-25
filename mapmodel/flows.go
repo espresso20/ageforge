@@ -1,7 +1,9 @@
 package mapmodel
 
 import (
-	"sort"
+	"cmp"
+	"maps"
+	"slices"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
@@ -40,20 +42,10 @@ type LineageShare struct {
 	Share   float64
 }
 
-// Stuck reports whether anything is flagged.
-func (f Flows) Stuck() bool {
-	return len(f.Draining) > 0 || len(f.Understaffed) > 0 || f.IdleWorkers > 0
-}
-
 func flowsFor(m *Model, st *game.GameState) Flows {
 	f := Flows{IdleWorkers: m.Workers.Idle}
-	keys := make([]string, 0, len(st.Resources))
-	for k := range st.Resources {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
 	perSec := 1 / game.BaseTickInterval.Seconds()
-	for _, k := range keys {
+	for _, k := range slices.Sorted(maps.Keys(st.Resources)) {
 		r := st.Resources[k]
 		if !r.Unlocked {
 			continue
@@ -79,7 +71,7 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 	for _, l := range m.Lineages {
 		f.Shares = append(f.Shares, LineageShare{l.Key, l.Share})
 	}
-	sort.SliceStable(f.Shares, func(i, j int) bool { return f.Shares[i].Share > f.Shares[j].Share })
+	slices.SortStableFunc(f.Shares, func(a, b LineageShare) int { return cmp.Compare(b.Share, a.Share) })
 	var worst []string
 	if len(f.Draining) > 0 {
 		worst = append(worst, f.Draining[0].Name+vibe.Line("mapmodel.flows.flowsFor.01", " runs dry"))
@@ -104,9 +96,7 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 // patrols. Every field comes from real state, so a busier economy is a
 // busier picture.
 type Activity struct {
-	Routes int // trade routes running
-	// ByMode counts the running routes by RouteMode (land, sea, air).
-	ByMode    [3]int
+	Routes    int // trade routes running
 	Disrupted int // routes blockaded
 	Staffed   int // workers at work
 	Idle      int
@@ -126,7 +116,6 @@ func activityFor(m *Model) Activity {
 			a.Disrupted++
 		} else {
 			a.Routes++
-			a.ByMode[r.Mode]++
 		}
 	}
 	for _, f := range m.Factions {

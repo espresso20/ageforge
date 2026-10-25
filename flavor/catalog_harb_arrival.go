@@ -1,5 +1,7 @@
 package flavor
 
+import "slices"
+
 // HarbingerArrival — the age's harbinger has turned up. The log line above
 // this one names the figure; these sentences are what the settlement saw,
 // smelled and said while it happened, and the one detail about the figure a
@@ -11,16 +13,12 @@ package flavor
 // email and "it arrived in forty inboxes" is wrong for an oracle.
 
 func harbArrivalTemplates() []tmpl {
-	out := pool("harb_arrival_any", erasAny, harbArrivalAny)
-	out = append(out, pool("harb_arrival_grounded", erasGrounded, harbArrivalGrounded)...)
-	out = append(out, pool("harb_arrival_late", erasLate, harbArrivalLate)...)
-	out = append(out, pool("harb_arrival_ancient", erasAncient, harbArrivalAncient)...)
-	out = append(out, pool("harb_arrival_feudal", erasFeudal, harbArrivalFeudal)...)
-	out = append(out, pool("harb_arrival_industrial", erasIndustrial, harbArrivalIndustrial)...)
-	out = append(out, pool("harb_arrival_digital", erasDigital, harbArrivalDigital)...)
-	out = append(out, pool("harb_arrival_cosmic", erasCosmic, harbArrivalCosmic)...)
-	out = append(out, agePools("harb_arrival_age", harbArrivalAges)...)
-	return out
+	return slices.Concat(
+		eraPools("harb_arrival",
+			harbArrivalAny, harbArrivalGrounded, harbArrivalLate, harbArrivalAncient,
+			harbArrivalFeudal, harbArrivalIndustrial, harbArrivalDigital, harbArrivalCosmic),
+		agePools("harb_arrival_age", harbArrivalAges),
+	)
 }
 
 // harbArrivalAny fires in every age, so it describes the settlement and never

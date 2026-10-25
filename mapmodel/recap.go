@@ -1,7 +1,9 @@
 package mapmodel
 
 import (
-	"sort"
+	"cmp"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -65,12 +67,8 @@ func VisitFromSession(s *game.SessionMark) *Visit {
 	v := &Visit{Tick: s.Tick, SavedAt: s.SavedAt, Age: s.Age, Buildings: map[string]int{}, Ruins: map[string]int{},
 		Pop: s.Pop, Relations: map[string]Relation{}, Routes: s.Routes, Harbinger: s.Harbinger,
 		Completed: s.Expeditions}
-	for k, n := range s.Buildings {
-		v.Buildings[k] = n
-	}
-	for k, n := range s.Ruins {
-		v.Ruins[k] = n
-	}
+	maps.Copy(v.Buildings, s.Buildings)
+	maps.Copy(v.Ruins, s.Ruins)
 	for k, st := range s.Civs {
 		v.Relations[k] = relationOf(st)
 	}
@@ -154,19 +152,9 @@ func recap(m *Model, st *game.GameState, v *Visit) Recap {
 	for _, b := range m.Buildings {
 		cur[b.Key] = b.Count
 	}
-	keys := map[string]bool{}
-	for k := range cur {
-		keys[k] = true
-	}
-	for k := range v.Buildings {
-		keys[k] = true
-	}
-	sorted := make([]string, 0, len(keys))
-	for k := range keys {
-		sorted = append(sorted, k)
-	}
-	sort.Strings(sorted)
-	for _, k := range sorted {
+	keys := maps.Clone(cur)
+	maps.Copy(keys, v.Buildings)
+	for _, k := range slices.Sorted(maps.Keys(keys)) {
 		d := m.Catalog.Defs[k]
 		if d == nil || d.Wonder {
 			continue // wonders make their own news
@@ -180,8 +168,9 @@ func recap(m *Model, st *game.GameState, v *Visit) Recap {
 			r.Lost = append(r.Lost, Change{k, d.Name, -delta})
 		}
 	}
-	sort.SliceStable(r.Built, func(i, j int) bool { return r.Built[i].N > r.Built[j].N })
-	sort.SliceStable(r.Lost, func(i, j int) bool { return r.Lost[i].N > r.Lost[j].N })
+	byN := func(a, b Change) int { return cmp.Compare(b.N, a.N) }
+	slices.SortStableFunc(r.Built, byN)
+	slices.SortStableFunc(r.Lost, byN)
 	for _, w := range m.Wonders {
 		if w.Delta {
 			r.Items = append(r.Items, NewsItem{Kind: NewsWonder, Text: w.Name + vibe.Line("mapmodel.recap.recap.03", " completed")})
