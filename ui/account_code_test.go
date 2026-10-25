@@ -39,7 +39,7 @@ func TestAccountShowCodeIsVisible(t *testing.T) {
 		if front, _ := d.pages.GetFrontPage(); front != codeWindowPage {
 			t.Fatalf("front page %q, want the code window", front)
 		}
-		scr := screenAt(t, d.pages, sz[0], sz[1])
+		scr := drawPrimitive(t, d.pages, sz[0], sz[1]).Text()
 		if !strings.Contains(scr, code) {
 			t.Errorf("%dx%d: the window does not show the whole code %q:\n%s", sz[0], sz[1], code, scr)
 		}
@@ -69,7 +69,7 @@ func TestAccountShowCodeIsNotKept(t *testing.T) {
 		t.Error("the state snapshot holds the code")
 	}
 	d.pages.RemovePage(codeWindowPage)
-	if scr := screenAt(t, d.pages, 100, 30); strings.Contains(scr, code) {
+	if scr := drawPrimitive(t, d.pages, 100, 30).Text(); strings.Contains(scr, code) {
 		t.Errorf("the code is on screen after its window closed:\n%s", scr)
 	}
 	must(t, eng.SaveGame("after-code"))
