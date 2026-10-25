@@ -271,7 +271,7 @@ Each copy of a military building (War Camp, Barracks and their successors) has a
 
 Soldiers are people, so they take a place in your homes and eat the same food as a worker. If your homes are full when a military building stands, its soldiers still arrive (as far as the food margin allows) and your reserve stops growing until there is room.
 
-Every mission takes a party out of the soldiers at home, and some of the party can fall (see [Parties and losses](military.md#parties-and-losses)). A raid that lands against the garrison costs soldiers too. An Endure leaves the soldiers at their posts.
+Every mission takes a party out of the soldiers at home, and some of the party can fall (see [Parties and losses](military.md#parties-and-losses)). A raid that lands against the garrison costs soldiers too. An Endure can destroy military buildings (it spares only wonders, storage and knowledge buildings), and a destroyed copy takes its soldiers with it.
 
 Soldiers are one of the four kinds of [people](workers-and-domains.md#the-people-of-your-town), so the People box lists them (with how many are out on missions) rather than the Resources box, and the Army tab of the People panel shows them building by building.
 
