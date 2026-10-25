@@ -22,9 +22,7 @@ func TestSplashSeesNamedSaves(t *testing.T) {
 	}
 
 	ge, acct := devEngine(t, "Ada") // starts and saves a game named "run"
-	if err := ge.SaveGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("run"))
 	// What the menu used to ask: nothing is there under the autosave name.
 	if SaveExists(AutosaveName) {
 		t.Fatal("precondition: a named game wrote an autosave file")
@@ -43,9 +41,7 @@ func TestSplashSeesNamedSaves(t *testing.T) {
 		t.Fatal(err)
 	}
 	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &raw))
 	var sig string
 	if err := json.Unmarshal(raw["_sig"], &sig); err != nil || sig == "" {
 		t.Fatalf("the save has no signature: %v", err)
@@ -54,9 +50,7 @@ func TestSplashSeesNamedSaves(t *testing.T) {
 	mac.Write([]byte(sig))
 	raw["_proof"], _ = json.Marshal(hex.EncodeToString(mac.Sum(nil)))
 	proved, _ := json.Marshal(raw)
-	if err := os.WriteFile(path, proved, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(path, proved, 0644))
 
 	if _, elite := PeekSaveBadges("run"); !elite {
 		t.Fatal("precondition: the proved save does not read as elite")

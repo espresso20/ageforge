@@ -26,7 +26,7 @@ func chainSet() *rules.Set {
 	src := rules.FromConfig()
 	tech := func(key, name string, cost float64, def config.TechDef) config.TechDef {
 		def.Key, def.Name, def.Age, def.Lane = key, name, src.Ages[0].Key, config.LaneKnowledge
-		def.Cost, def.ResearchTicks = cost, 4
+		def.Cost = cost
 		return def
 	}
 	src.Techs = append(src.Techs,
@@ -98,9 +98,7 @@ func TestPlanResearchAddsWhatATechNeeds(t *testing.T) {
 	}
 	ge = chainEngine(t)
 	learn(ge, "q_a")
-	if err := ge.StartResearch("q_left"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("q_left"))
 	if chain, _ := ge.PlanAddResearchChain("q_goal"); !reflect.DeepEqual(chain, []string{"q_goal"}) {
 		t.Errorf("with Alpha researched and Left in progress the chain is %v, want Goal alone", chain)
 	}
@@ -239,9 +237,7 @@ func TestPlanTechOfALaterAgeWaitsItsTurn(t *testing.T) {
 		}
 	}
 	// Its age comes: it starts.
-	if err := ge.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("stone_age"))
 	ge.runPlanTick()
 	if ge.Research.currentTech != "pottery" {
 		t.Errorf("in the Stone Age: researching %q, want pottery; views %+v", ge.Research.currentTech, ge.planViews())

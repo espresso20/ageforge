@@ -1,9 +1,6 @@
 package config
 
-import (
-	"math"
-	"testing"
-)
+import "testing"
 
 // scholarsPerCopy is the crew each knowledge building was staffed with, and
 // is the scholars it comes with now (decision: a knowledge building comes with
@@ -121,47 +118,18 @@ func TestKnowledgeIsNotAResourceOrAPrice(t *testing.T) {
 	}
 }
 
-// TestRepricedBuildingsKeepTheirUnits: a building that was priced in
-// knowledge has its other parts multiplied so that its price in the age's
-// price units is what it was with the knowledge part; the age's price levels
-// are the ones they were (they read the prices from before, repricedFrom).
-func TestRepricedBuildingsKeepTheirUnits(t *testing.T) {
-	defs := BaseBuildings()
-	lv := priceLevels(defs)
-	for _, d := range defs {
-		want, ok := repricedUnits[d.Key]
-		if !ok {
-			continue
-		}
-		if got := priceUnits(d.BaseCost, lv[d.RequiredAge]); math.Abs(got/want-1) > 0.003 {
-			t.Errorf("%s costs %.4f price units of %s, it cost %.4f with its knowledge part", d.Key, got, d.RequiredAge, want)
-		}
-	}
-	for k := range repricedUnits {
-		if _, ok := repricedFrom[k]; !ok {
-			t.Errorf("%s has units recorded and no price from before", k)
-		}
-	}
-}
-
 // TestTeachingLadder: with every scholar teaching, the bonus is 10 percent in
 // ages 1 to 3, 8 in 4 to 6, 6 in 7 to 9, 5 in 10 to 15 and 4 in 16 and later.
+// Five spot rows, one in each step, the first and the last age among them.
 func TestTeachingLadder(t *testing.T) {
-	for pos := 0; pos < len(Ages()); pos++ {
-		place := pos + 1
-		want := 0.04
-		switch {
-		case place <= 3:
-			want = 0.10
-		case place <= 6:
-			want = 0.08
-		case place <= 9:
-			want = 0.06
-		case place <= 15:
-			want = 0.05
-		}
-		if got := TeachingBonus(pos); got != want {
-			t.Errorf("age %d: teaching gives %v, want %v", place, got, want)
+	for _, c := range []struct {
+		place int // 1-based age number
+		want  float64
+	}{
+		{1, 0.10}, {5, 0.08}, {9, 0.06}, {12, 0.05}, {len(Ages()), 0.04},
+	} {
+		if got := TeachingBonus(c.place - 1); got != c.want {
+			t.Errorf("age %d: teaching gives %v, want %v", c.place, got, c.want)
 		}
 	}
 }

@@ -47,19 +47,13 @@ func installThemes(t *testing.T, name string) (id string, accountRaw, badgesRaw 
 	var head struct {
 		AccountID string `json:"account_id"`
 	}
-	if err := json.Unmarshal(accountRaw, &head); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(accountRaw, &head))
 	id = head.AccountID
-	if err := os.MkdirAll(filepath.Join(accountDir(id), "saves"), 0755); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(filepath.Join(accountDir(id), "saves"), 0755))
 	for file, data := range map[string][]byte{
 		accountFileName: accountRaw, badgeFileName: badgesRaw, filepath.Join("saves", "run.json"): read("run.json"),
 	} {
-		if err := os.WriteFile(filepath.Join(accountDir(id), file), data, 0644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(filepath.Join(accountDir(id), file), data, 0644))
 	}
 	return id, accountRaw, badgesRaw
 }
@@ -99,9 +93,7 @@ func TestAgeThemesMoveToBadgesWithNothingLost(t *testing.T) {
 			isolateAccountDir(t)
 			id, accountRaw, badgesRaw := installThemes(t, tc.name)
 			var old Account
-			if err := json.Unmarshal(accountRaw, &old); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, json.Unmarshal(accountRaw, &old))
 			if !verifyAccount(&old) || old.Stats.HighestAge != tc.reach || old.Prefs.ActiveTheme != tc.active {
 				t.Fatalf("precondition: the fixture verifies %v, reached %q, wears %q", verifyAccount(&old), old.Stats.HighestAge, old.Prefs.ActiveTheme)
 			}
@@ -197,15 +189,11 @@ func TestAgeThemesMoveToBadgesWithNothingLost(t *testing.T) {
 			if got := acct.UnlockedThemes(); !slices.Equal(got, themesBefore) {
 				t.Errorf("loading the run changed the themes: %v, were %v", got, themesBefore)
 			}
-			if err := acct.FlushIfDirty(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, acct.FlushIfDirty())
 
 			// A second load changes nothing, in either file.
 			_, again := openIn(t, id)
-			if err := again.FlushIfDirty(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, again.FlushIfDirty())
 			if second := slotFile(t, id); string(second) != string(first) {
 				t.Errorf("the second load rewrote account.json:\nfirst  %s\nsecond %s", first, second)
 			}
@@ -246,9 +234,7 @@ func TestAgeBadgeUnlocksItsThemeInPlay(t *testing.T) {
 	if got := acct.UnlockedThemes(); !slices.Equal(got, []string{"bronze"}) {
 		t.Errorf("themes after reaching the age twice: %v", got)
 	}
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	assertOldShape(t, slotFile(t, acct.AccountID))
 
 	// Another account takes over the engine while the first one's run is

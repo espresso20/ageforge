@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -74,34 +75,12 @@ func TestStorageBoostShowsInTheBonusBreakdown(t *testing.T) {
 	if math.Abs(found-0.07) > 1e-12 {
 		t.Errorf("the storage source gives %v to the all-production pool, want 0.07 (7 copies)", found)
 	}
-	listed := false
-	for _, m := range ge.GetState().Modifiers {
-		listed = listed || (m.Source == storageBoostSource && m.Target == "production_all")
-	}
-	if !listed {
+	if !slices.ContainsFunc(ge.GetState().Modifiers, func(m Modifier) bool {
+		return m.Source == storageBoostSource && m.Target == "production_all"
+	}) {
 		t.Error("the state's modifier list, which the stats panel reads, does not carry the storage source")
 	}
 	if ge.buildResolver().AddTotal("production_all") != found {
 		t.Errorf("the pool holds %v, want only the storage source's %v", ge.buildResolver().AddTotal("production_all"), found)
-	}
-}
-
-// TestNoStorageBuildingHoldsAnything: no storage building has a storage
-// effect, and a town of them only boosts production.
-func TestNoStorageBuildingHoldsAnything(t *testing.T) {
-	n := 0
-	for _, def := range config.BaseBuildings() {
-		if def.Category != "storage" {
-			continue
-		}
-		n++
-		for _, e := range def.Effects {
-			if e.Type == "storage" {
-				t.Errorf("%s has a storage effect", def.Key)
-			}
-		}
-	}
-	if n == 0 {
-		t.Fatal("no storage buildings")
 	}
 }

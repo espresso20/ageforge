@@ -155,10 +155,195 @@ func addWonder(ge *GameEngine, key, target string, value float64, count int) {
 	ge.Buildings.counts[key] = count
 }
 
-func TestResolverGolden_FreshGame(t *testing.T) {
-	ge := NewGameEngine()
-	// Fresh engine: morale defaults to 1.0 in NewGameEngine; no bonuses anywhere.
-	assertResolverGolden(t, ge, "wood", true)
+// goldenCase is one engine state for TestResolverGolden: set builds it from a
+// fresh engine, sanity (optional) pins a value the debuff cases must reach
+// before the comparison, res and gather say which pools the comparison reads.
+type goldenCase struct {
+	name   string
+	set    func(ge *GameEngine)
+	sanity func(t *testing.T, ge *GameEngine)
+	res    string
+	gather bool
+}
+
+func TestResolverGolden(t *testing.T) {
+	for _, tc := range []goldenCase{
+		{
+			// Fresh engine: morale defaults to 1.0 in NewGameEngine; no bonuses anywhere.
+			name: "FreshGame", res: "wood", gather: true,
+		},
+		{
+			name: "PrestigeLevel", res: "iron", gather: true,
+			set: func(ge *GameEngine) {
+				ge.Prestige.level = 7 // passive +14% production_all, +7% tick_speed
+			},
+		},
+		{
+			name: "BuiltWonder", res: "gold", gather: true,
+			set: func(ge *GameEngine) {
+				addWonder(ge, "test_wonder_prodall", "production_all", 0.20, 1)
+				addWonder(ge, "test_wonder_gold", "gold_rate", 0.30, 2) // count-scaled -> +0.60
+			},
+		},
+		{
+			name: "ActiveEventProdAll", res: "stone", gather: true,
+			set: func(ge *GameEngine) {
+				ge.Events.InjectEvent(ActiveEvent{
+					Key:       "golden_age",
+					Name:      "Golden Age",
+					TicksLeft: 50,
+					Effects:   []config.Effect{{Type: "production_all", Value: 0.50}},
+				})
+			},
+		},
+		{
+			// The Fix B fixture: a Reconstruction-like catastrophe debuff (active
+			// event with production_all -0.10) must actually apply now that the >0
+			// gate is gone. Morale is pinned neutral (x1.0), so both the engine's
+			// now-ungated factor and the resolver's Total are exactly x0.90 - the
+			// debuff lands. Pre-Fix-B the gate would have made expectedProductionAll
+			// return 1.0 (swallowing the debuff) and this assertion would have
+			// FAILED, which is the point: it pins the new behavior.
+			name: "NegativeProdAll", res: "wood", gather: true,
+			set: func(ge *GameEngine) {
+				ge.morale = moraleNeutral // 0.50 -> moraleMultiplier() == 1.0, isolates the debuff
+				ge.Events.InjectEvent(ActiveEvent{
+					Key:       "endure_reconstruction",
+					Name:      "Reconstruction Effort",
+					TicksLeft: 216,
+					Effects:   []config.Effect{{Type: "production_all", Value: -0.10}},
+				})
+			},
+			// Sanity: the factor must be exactly 0.90 (1 - 0.10), and the floor must
+			// NOT bind (0.90 > productionFloor). If this drifts to 1.0 the gate has
+			// crept back.
+			sanity: func(t *testing.T, ge *GameEngine) {
+				if got, want := ge.buildResolver().Total("production_all"), 0.90; math.Abs(got-want) > goldenEps {
+					t.Fatalf("negative production_all: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
+				}
+			},
+		},
+		{
+			// The Part D anti-tautology fixture for the per-resource pool: a negative
+			// <res>_rate additive (here permanent food_rate -0.20) must now apply.
+			// Before the gate->floor change, recalculateRates ran
+			// `if bonus > 0 { rate *= 1+bonus }`, which SILENTLY DROPPED any negative
+			// pool - the panel showed the debuff but the rate was untouched.
+			// expectedResRate models the floored form max(productionFloor, 1+add);
+			// for -0.20 that is 0.80 (floor not binding), so the resolver Total and
+			// the engine factor agree at x0.80. If the gate ever creeps back the
+			// expected side would still want 0.80 while a re-gated engine would apply
+			// 1.0, and this assertion would catch the divergence.
+			name: "NegativeResRate", res: "food",
+			set: func(ge *GameEngine) {
+				ge.permanentBonuses["food_rate"] = -0.20
+			},
+			// Sanity: the additive pool is exactly -0.20 and the floored factor is
+			// 0.80 (well above productionFloor), so the debuff lands - it is not
+			// swallowed.
+			sanity: func(t *testing.T, ge *GameEngine) {
+				if got, want := ge.buildResolver().Total("food_rate"), 0.80; math.Abs(got-want) > goldenEps {
+					t.Fatalf("negative food_rate: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
+				}
+			},
+		},
+		{
+			// The Part D anti-tautology fixture for the gather pool: a negative
+			// gather_rate additive (permanent -0.30) must now reduce worker output.
+			// Same story as the per-resource case - the old `if gatherBonus > 0` gate
+			// dropped negatives. expectedGatherRate models max(productionFloor,
+			// 1-0.30) = 0.70, so resolver Total and engine agree at x0.70.
+			name: "NegativeGatherRate", gather: true,
+			set: func(ge *GameEngine) {
+				ge.permanentBonuses["gather_rate"] = -0.30
+			},
+			sanity: func(t *testing.T, ge *GameEngine) {
+				if got, want := ge.buildResolver().Total("gather_rate"), 0.70; math.Abs(got-want) > goldenEps {
+					t.Fatalf("negative gather_rate: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
+				}
+			},
+		},
+		{
+			name: "ActiveEventTickSpeed", res: "food", gather: true,
+			set: func(ge *GameEngine) {
+				ge.Events.InjectEvent(ActiveEvent{
+					Key:       "industrious_era",
+					Name:      "Industrious Era",
+					TicksLeft: 30,
+					Effects: []config.Effect{
+						{Type: "tick_speed", Value: 0.25},
+						{Type: "production_all", Value: 0.10},
+					},
+				})
+			},
+		},
+		{
+			name: "MoraleHigh", res: "wood", gather: true,
+			set: func(ge *GameEngine) {
+				plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
+				// Above the 0.50 pivot -> moraleMultiplier ramps the bonus in. At/above
+				// cap 1.0 this saturates to x1.20; production_all Total must include the
+				// curve's bonus factor, not the raw 0.90 morale field.
+				ge.morale = 0.90
+			},
+		},
+		{
+			name: "MoraleNeutral", res: "wood", gather: true,
+			set: func(ge *GameEngine) {
+				plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
+				// Exactly at the 0.50 pivot -> moraleMultiplier exactly 1.0.
+				ge.morale = moraleNeutral // 0.50
+			},
+		},
+		{
+			name: "MoraleLow", res: "wood", gather: true,
+			set: func(ge *GameEngine) {
+				plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
+				// Below the 0.50 pivot -> moraleMultiplier penalty. production_all Total
+				// must drop to moraleMultiplier()x(1+adds), well below 1.
+				ge.morale = 0.15
+			},
+		},
+		{
+			// The integration case: every source contributes to overlapping targets
+			// at once. This is where an additive-vs-multiplicative mistake or a
+			// missed source would show up.
+			name: "AllSourcesStacked", res: "iron", gather: true,
+			set: func(ge *GameEngine) {
+				plantResearchBonus(ge, config.EffectAllOutput, "", 0.10)
+				plantResearchBonus(ge, config.EffectOutput, "iron", 0.20)
+				plantResearchBonus(ge, config.EffectGameSpeed, "", 0.08)
+				ge.Prestige.level = 3 // +6% production_all, +3% tick_speed
+				addWonder(ge, "test_wonder_stack", "production_all", 0.15, 1)
+				addWonder(ge, "test_wonder_iron", "iron_rate", 0.10, 1)
+				ge.permanentBonuses["production_all"] = 0.12
+				ge.permanentBonuses["iron_rate"] = 0.07
+				ge.permanentBonuses["gather_rate"] = 0.04
+				ge.permanentBonuses["tick_speed"] = 0.06
+				ge.Events.InjectEvent(ActiveEvent{
+					Key:       "boom",
+					Name:      "Economic Boom",
+					TicksLeft: 40,
+					Effects: []config.Effect{
+						{Type: "production_all", Value: 0.20},
+						{Type: "tick_speed", Value: 0.15},
+					},
+				})
+				ge.morale = 0.85 // high band -> moraleMultiplier applies a banded bonus
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ge := NewGameEngine()
+			if tc.set != nil {
+				tc.set(ge)
+			}
+			if tc.sanity != nil {
+				tc.sanity(t, ge)
+			}
+			assertResolverGolden(t, ge, tc.res, tc.gather)
+		})
+	}
 }
 
 // TestResolverGolden_ResearchBonuses: of what techs give, only game speed
@@ -180,181 +365,5 @@ func TestResolverGolden_ResearchBonuses(t *testing.T) {
 	}
 	if got := r.Total("tick_speed"); math.Abs(got-1.10) > goldenEps {
 		t.Errorf("tick_speed reads %v, want 1.10: game speed is a pool techs share", got)
-	}
-}
-
-func TestResolverGolden_PrestigeLevel(t *testing.T) {
-	ge := NewGameEngine()
-	ge.Prestige.level = 7 // passive +14% production_all, +7% tick_speed
-	assertResolverGolden(t, ge, "iron", true)
-}
-
-func TestResolverGolden_BuiltWonder(t *testing.T) {
-	ge := NewGameEngine()
-	addWonder(ge, "test_wonder_prodall", "production_all", 0.20, 1)
-	addWonder(ge, "test_wonder_gold", "gold_rate", 0.30, 2) // count-scaled → +0.60
-	assertResolverGolden(t, ge, "gold", true)
-}
-
-func TestResolverGolden_ActiveEventProdAll(t *testing.T) {
-	ge := NewGameEngine()
-	ge.Events.InjectEvent(ActiveEvent{
-		Key:       "golden_age",
-		Name:      "Golden Age",
-		TicksLeft: 50,
-		Effects:   []config.Effect{{Type: "production_all", Value: 0.50}},
-	})
-	assertResolverGolden(t, ge, "stone", true)
-}
-
-// TestResolverGolden_NegativeProdAll is the Fix B fixture: a Reconstruction-like
-// catastrophe debuff (active event with production_all -0.10) must actually apply
-// now that the >0 gate is gone. Morale is pinned neutral (×1.0), so both the
-// engine's now-ungated factor and the resolver's Total are exactly ×0.90 — the
-// debuff lands. Pre-Fix-B the gate would have made expectedProductionAll return
-// 1.0 (swallowing the debuff) and this assertion would have FAILED, which is the
-// point: it pins the new behavior.
-func TestResolverGolden_NegativeProdAll(t *testing.T) {
-	ge := NewGameEngine()
-	ge.morale = moraleNeutral // 0.50 → moraleMultiplier() == 1.0, isolates the debuff
-	ge.Events.InjectEvent(ActiveEvent{
-		Key:       "endure_reconstruction",
-		Name:      "Reconstruction Effort",
-		TicksLeft: 216,
-		Effects:   []config.Effect{{Type: "production_all", Value: -0.10}},
-	})
-
-	// Sanity: the factor must be exactly 0.90 (1 - 0.10), and the floor must NOT
-	// bind (0.90 > productionFloor). If this drifts to 1.0 the gate has crept back.
-	if got, want := ge.buildResolver().Total("production_all"), 0.90; math.Abs(got-want) > goldenEps {
-		t.Fatalf("negative production_all: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
-	}
-	assertResolverGolden(t, ge, "wood", true)
-}
-
-// TestResolverGolden_NegativeResRate is the Part D anti-tautology fixture for the
-// per-resource pool: a negative <res>_rate additive (here permanent food_rate
-// -0.20) must now apply. Before the gate→floor change, recalculateRates ran
-// `if bonus > 0 { rate *= 1+bonus }`, which SILENTLY DROPPED any negative pool —
-// the panel showed the debuff but the rate was untouched. expectedResRate models
-// the floored form max(productionFloor, 1+add); for -0.20 that is 0.80 (floor not
-// binding), so the resolver Total and the engine factor agree at ×0.80. If the
-// gate ever creeps back the expected side would still want 0.80 while a re-gated
-// engine would apply 1.0, and this assertion would catch the divergence.
-func TestResolverGolden_NegativeResRate(t *testing.T) {
-	ge := NewGameEngine()
-	ge.permanentBonuses["food_rate"] = -0.20
-
-	// Sanity: the additive pool is exactly -0.20 and the floored factor is 0.80
-	// (well above productionFloor), so the debuff lands — it is not swallowed.
-	if got, want := ge.buildResolver().Total("food_rate"), 0.80; math.Abs(got-want) > goldenEps {
-		t.Fatalf("negative food_rate: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
-	}
-	assertResolverGolden(t, ge, "food", false)
-}
-
-// TestResolverGolden_NegativeGatherRate is the Part D anti-tautology fixture for
-// the gather pool: a negative gather_rate additive (permanent -0.30) must now
-// reduce worker output. Same story as the per-resource case — the old
-// `if gatherBonus > 0` gate dropped negatives. expectedGatherRate models
-// max(productionFloor, 1-0.30) = 0.70, so resolver Total and engine agree at ×0.70.
-func TestResolverGolden_NegativeGatherRate(t *testing.T) {
-	ge := NewGameEngine()
-	ge.permanentBonuses["gather_rate"] = -0.30
-
-	if got, want := ge.buildResolver().Total("gather_rate"), 0.70; math.Abs(got-want) > goldenEps {
-		t.Fatalf("negative gather_rate: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
-	}
-	assertResolverGolden(t, ge, "", true)
-}
-
-func TestResolverGolden_ActiveEventTickSpeed(t *testing.T) {
-	ge := NewGameEngine()
-	ge.Events.InjectEvent(ActiveEvent{
-		Key:       "industrious_era",
-		Name:      "Industrious Era",
-		TicksLeft: 30,
-		Effects: []config.Effect{
-			{Type: "tick_speed", Value: 0.25},
-			{Type: "production_all", Value: 0.10},
-		},
-	})
-	assertResolverGolden(t, ge, "food", true)
-}
-
-func TestResolverGolden_MoraleHigh(t *testing.T) {
-	ge := NewGameEngine()
-	plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
-	// Above the 0.50 pivot → moraleMultiplier ramps the bonus in. At/above cap 1.0
-	// this saturates to ×1.20; production_all Total must include the curve's bonus
-	// factor, not the raw 0.90 morale field.
-	ge.morale = 0.90
-	assertResolverGolden(t, ge, "wood", true)
-}
-
-func TestResolverGolden_MoraleNeutral(t *testing.T) {
-	ge := NewGameEngine()
-	plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
-	// Exactly at the 0.50 pivot → moraleMultiplier exactly 1.0.
-	ge.morale = moraleNeutral // 0.50
-	assertResolverGolden(t, ge, "wood", true)
-}
-
-func TestResolverGolden_MoraleLow(t *testing.T) {
-	ge := NewGameEngine()
-	plantResearchBonus(ge, config.EffectAllOutput, "", 0.20)
-	// Below the 0.50 pivot → moraleMultiplier penalty. production_all Total must
-	// drop to moraleMultiplier()×(1+adds), well below 1.
-	ge.morale = 0.15
-	assertResolverGolden(t, ge, "wood", true)
-}
-
-// TestResolverGolden_AllSourcesStacked is the integration case: every source
-// contributes to overlapping targets at once. This is where an additive-vs-
-// multiplicative mistake or a missed source would show up.
-func TestResolverGolden_AllSourcesStacked(t *testing.T) {
-	ge := NewGameEngine()
-	plantResearchBonus(ge, config.EffectAllOutput, "", 0.10)
-	plantResearchBonus(ge, config.EffectOutput, "iron", 0.20)
-	plantResearchBonus(ge, config.EffectGameSpeed, "", 0.08)
-	ge.Prestige.level = 3 // +6% production_all, +3% tick_speed
-	addWonder(ge, "test_wonder_stack", "production_all", 0.15, 1)
-	addWonder(ge, "test_wonder_iron", "iron_rate", 0.10, 1)
-	ge.permanentBonuses["production_all"] = 0.12
-	ge.permanentBonuses["iron_rate"] = 0.07
-	ge.permanentBonuses["gather_rate"] = 0.04
-	ge.permanentBonuses["tick_speed"] = 0.06
-	ge.Events.InjectEvent(ActiveEvent{
-		Key:       "boom",
-		Name:      "Economic Boom",
-		TicksLeft: 40,
-		Effects: []config.Effect{
-			{Type: "production_all", Value: 0.20},
-			{Type: "tick_speed", Value: 0.15},
-		},
-	})
-	ge.morale = 0.85 // high band → moraleMultiplier applies a banded bonus
-	assertResolverGolden(t, ge, "iron", true)
-}
-
-// TestResolverGolden_IsRealCheck is a guard on the harness itself: it confirms
-// the golden assertion would actually FAIL if the resolver disagreed with the
-// expected formula. We deliberately compute a wrong "expected" and require the
-// resolver to differ — catching the failure mode where the assertion is
-// accidentally a no-op (e.g. both sides return 1.0 for everything).
-func TestResolverGolden_IsRealCheck(t *testing.T) {
-	ge := NewGameEngine()
-	ge.permanentBonuses["production_all"] = 0.25
-	ge.morale = 0.90 // high band → moraleMultiplier() saturates to ×1.20 at cap 1.0
-
-	got := ge.buildResolver().Total("production_all")
-	correct := expectedProductionAll(ge) // moraleMultiplier() × 1.25 = 1.20 × 1.25 = 1.50
-	wrong := correct + 0.5
-
-	if math.Abs(got-correct) > goldenEps {
-		t.Fatalf("sanity: resolver should match correct expected (%.6f), got %.6f", correct, got)
-	}
-	if math.Abs(got-wrong) <= goldenEps {
-		t.Fatalf("sanity: resolver must NOT match a deliberately wrong expected — assertion is not discriminating")
 	}
 }

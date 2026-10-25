@@ -2,7 +2,6 @@ package game
 
 import (
 	"math/rand"
-	"os"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -88,6 +87,7 @@ func TestAncientMemory_OnlyFiresInEarlyAges(t *testing.T) {
 func TestAncientMemory_TechSelectionTierGating(t *testing.T) {
 	ge := NewGameEngine()
 	ageOrder := ge.progress.GetAgeOrder()
+	techs := config.TechByKey()
 	// orders: primitive_age=0, stone_age=1, bronze_age=2, iron_age=3, classical_age=4
 
 	// Low prestige at primitive_age: maxOrder = 0 + 1/2 = 0 -> only primitive techs.
@@ -97,7 +97,7 @@ func TestAncientMemory_TechSelectionTierGating(t *testing.T) {
 		if key == "" {
 			t.Fatal("expected a primitive-age candidate at prestige 1")
 		}
-		o := ageOrder[config.TechByKey()[key].Age]
+		o := ageOrder[techs[key].Age]
 		if o != 0 {
 			t.Fatalf("prestige 1 should only offer primitive techs (order 0), got %q order %d", key, o)
 		}
@@ -112,7 +112,7 @@ func TestAncientMemory_TechSelectionTierGating(t *testing.T) {
 		if key == "" {
 			t.Fatal("expected candidates at prestige 8")
 		}
-		o := ageOrder[config.TechByKey()[key].Age]
+		o := ageOrder[techs[key].Age]
 		if o < 0 || o > 4 {
 			t.Fatalf("prestige 8 from primitive should stay within orders [0,4], got order %d", o)
 		}
@@ -242,15 +242,7 @@ func TestAncientMemory_PersistsAcrossSaveLoad(t *testing.T) {
 		t.Fatalf("accept failed: %v", err)
 	}
 
-	if err := ge.SaveGame("test_ancient_memory"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_ancient_memory.json")
-
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_ancient_memory"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
+	ge2 := saveAndLoad(t, ge, "test_ancient_memory")
 
 	if !ge2.ancientMemoryUsed {
 		t.Error("ancientMemoryUsed should persist across save/load (true)")

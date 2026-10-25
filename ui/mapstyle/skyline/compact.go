@@ -2,6 +2,7 @@ package skyline
 
 import (
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -116,9 +117,12 @@ func (s *scene) compactScene() {
 		}
 	}
 	ridge := p.hill(theme.SkyRidge, 0.45)
-	for x := 0; x < W; x++ {
+	ridgeTop := func(x int) float64 {
 		n := fbm1(float64(x)/9, 300+int(m.Seed%1000), 3)
-		top := float64(S) - 1 - n*float64(S)*0.35
+		return float64(S) - 1 - n*float64(S)*0.35
+	}
+	for x := 0; x < W; x++ {
+		top := ridgeTop(x)
 		for y := int(math.Ceil(top)); y < S; y++ {
 			s.fb.fill(x, s.Y(y), ridge, dRidge)
 		}
@@ -127,41 +131,67 @@ func (s *scene) compactScene() {
 		}
 	}
 	if h := m.Harbinger; h != nil && S >= 2 {
+		// a lone figure standing on the ridge, not hanging in the sky
 		hx := W/6 + int(hash(int(mapmodel.HashStr(h.Key)))%uint64(max(1, W/2)))
-		s.fb.fg(hx, s.Y(S/2), mapmodel.R(mapmodel.SymHarbinger, s.tier), s.mp.Fg[mapmodel.CIdle], dHarbinger)
+		hy := clampInt(int(math.Ceil(ridgeTop(hx)))-1, 0, S-1)
+		s.fb.fg(hx, s.Y(hy), mapmodel.R(mapmodel.SymHarbinger, s.tier), s.mp.Fg[mapmodel.CIdle], dHarbinger)
 	}
 	a0, a1 := compactSpan(m)
-	maxH := 1
-	for x := a0; x < a1 && x < len(lay.prof); x++ {
-		maxH = max(maxH, lay.prof[x])
+	// Each strip column is the tallest building in the stretch of town it
+	// stands for. The tallest of all would set the scale for the rest (one
+	// tower or wonder flattens a town into a band), so the scale is held to
+	// the tall end of the ordinary columns: those fill most of the strip and a
+	// landmark reaches its top.
+	type colInfo struct {
+		h     int
+		lot   int32
+		isNew bool
 	}
-	top := float64(max(1, S-1)) * 0.75
+	cols := make([]colInfo, W)
+	var hs []int
+	for x := 0; x < W; x++ {
+		a := a0 + x*(a1-a0)/W
+		b := max(a+1, a0+(x+1)*(a1-a0)/W)
+		ci := colInfo{lot: -1}
+		for i := a; i < b && i < len(lay.prof); i++ {
+			if lay.prof[i] > ci.h {
+				ci.h, ci.lot = lay.prof[i], lay.tallest[i]
+			}
+			if t := lay.tallest[i]; t >= 0 && lay.lots[t].ml.New {
+				ci.isNew = true
+			}
+		}
+		cols[x] = ci
+		if ci.h > 0 && ci.lot >= 0 {
+			hs = append(hs, ci.h)
+		}
+	}
+	ref := 1
+	if len(hs) > 0 {
+		sort.Ints(hs)
+		// the tallest sets the scale, but no more than half again the tall
+		// end of the ordinary columns: a landmark reaches the top and the
+		// rest still fill the strip
+		ref = max(1, min(hs[len(hs)-1], hs[len(hs)*85/100]*3/2))
+	}
+	top := float64(max(1, S-1))
 	fire := m.Catastrophe.Pending != ""
 	win := p.hue(theme.SkyWinWarm, mEmit, 0)
 	if s.inCity { // the age's own light in the windows (city.go)
 		win = s.compactWindow()
 	}
-	smoke := p.hue(theme.SkySmoke, mLit, 0)
 	fresh := s.mp.Fg[mapmodel.CFresh]
 	gold := p.hue(theme.SkyWonderGold, mEmit, 0)
 	for x := 0; x < W; x++ {
-		a := a0 + x*(a1-a0)/W
-		b := max(a+1, a0+(x+1)*(a1-a0)/W)
-		h, li, isNew := 0, int32(-1), false
-		for i := a; i < b && i < len(lay.prof); i++ {
-			if lay.prof[i] > h {
-				h, li = lay.prof[i], lay.tallest[i]
-			}
-			if t := lay.tallest[i]; t >= 0 && lay.lots[t].ml.New {
-				isNew = true
-			}
-		}
-		if h == 0 || li < 0 {
+		ci := cols[x]
+		if ci.h == 0 || ci.lot < 0 {
 			continue
 		}
-		lv := &lay.lots[li]
+		a := a0 + x*(a1-a0)/W
+		b := max(a+1, a0+(x+1)*(a1-a0)/W)
+		lv := &lay.lots[ci.lot]
 		wall := p.col(lv.fam, lv.vr, sWall, 0)
-		hh := float64(h) / float64(maxH) * top
+		hh := math.Min(float64(ci.h)/float64(ref)*top, float64(max(1, S-1)))
 		full := int(hh)
 		for k := 0; k < full; k++ {
 			y := S - 1 - k
@@ -170,23 +200,23 @@ func (s *scene) compactScene() {
 				s.fb.set(x, s.Y(y), '·', win, wall, dRow0)
 			}
 		}
-		if f := hh - float64(full); f > 0.06 {
+		if f := hh - float64(full); f > 0.06 || full == 0 {
 			s.fb.fg(x, s.Y(S-1-full), eighths[clampInt(int(f*8), 1, 7)], wall, dRow0)
 		}
-		ay := S - 2 - full
-		if ay >= 0 {
-			switch {
-			case s.v.changes && isNew:
-				s.fb.fg(x, s.Y(ay), '▼', fresh, dTag)
-			case lv.ml.Wonder && lv.ml.X >= a && lv.ml.X < b: // one star, on the wonder's own column
-				s.fb.fg(x, s.Y(ay), mapmodel.R(mapmodel.SymWonder, s.tier), gold, dTag)
-			case lv.producer && lv.staff > 0.05 && hash(x, 3)%3 == 0:
-				s.fb.fg(x, s.Y(ay), [2]rune{'░', '▒'}[(s.anim/4+x)%2], smoke, dTag)
-			}
-			if fire && hash(x, 5)%5 == 0 {
-				k := int(hash(x, s.anim/2) % 4)
-				s.fb.fg(x, s.Y(ay+1), flameGlyphs[k], p.hue(flameHues[k], mEmit, 0), dTag)
-			}
+		// What the building says about itself is drawn in its own top cell,
+		// never above it: nothing floats over the skyline.
+		ty := S - 1 - full
+		if f := hh - float64(full); f <= 0.06 && full > 0 {
+			ty = S - full
+		}
+		switch {
+		case s.v.changes && ci.isNew:
+			s.stripCap(x, ty, '▼', fresh)
+		case lv.ml.Wonder && lv.ml.X >= a && lv.ml.X < b: // one star, on the wonder's own column
+			s.stripCap(x, ty, mapmodel.R(mapmodel.SymWonder, s.tier), gold)
+		case fire && hash(x, 5)%5 == 0:
+			k := int(hash(x, s.anim/2) % 4)
+			s.stripCap(x, ty, flameGlyphs[k], p.hue(flameHues[k], mEmit, 0))
 		}
 	}
 	s.compactCity(a0, a1)
@@ -204,11 +234,14 @@ func (s *scene) compactScene() {
 		case i >= c.route+min(3, c.foot/3):
 			sym, h = mapmodel.SymRaider, theme.SkyWarRed
 		case i >= c.route:
-			sym, h = mapmodel.SymWorker, theme.SkyWhite
+			sym, h = mapmodel.SymWorker, theme.SkyInk
 		}
 		ch := mapmodel.R(sym, s.tier)
-		if s.tier != mapmodel.TierNerd && sym == mapmodel.SymCaravan {
+		switch {
+		case s.tier != mapmodel.TierNerd && sym == mapmodel.SymCaravan:
 			ch = '▪'
+		case sym == mapmodel.SymWorker: // a person is a speck at this scale, not a white face as big as a house
+			ch = '·'
 		}
 		s.fb.fg(x, s.Y(S), ch, theme.Legible(p.hue(h, mEmit, 0), road, 2), dStreet)
 	}
@@ -241,4 +274,15 @@ func compactSkySym(band, age int) mapmodel.Sym {
 		}
 	}
 	return mapmodel.SymNone
+}
+
+// stripCap draws a mark in the top cell of a strip column: the glyph in its
+// colour over what that cell shows, so it is the top of the skyline and not
+// something hung above it.
+func (s *scene) stripCap(x, y int, ch rune, fg tcell.Color) {
+	if y < 0 {
+		return
+	}
+	bg := s.fb.showAt(x, s.Y(y))
+	s.fb.set(x, s.Y(y), ch, theme.Legible(fg, bg, 3), bg, dTag)
 }

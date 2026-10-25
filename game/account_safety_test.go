@@ -128,9 +128,7 @@ func TestRecoverSetsAsideUnreadableSlot(t *testing.T) {
 		t.Fatalf("CreateAccount: %v", err)
 	}
 	path := filepath.Join(accountDir(bob.AccountID), accountFileName)
-	if err := os.WriteFile(path, []byte("not json {"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(path, []byte("not json {"), 0644))
 	if _, err := ImportRecoveryCode(bob.RecoveryCode()); err != nil {
 		t.Fatalf("ImportRecoveryCode: %v", err)
 	}
@@ -261,17 +259,13 @@ func TestTamperFlagSurvivesResave(t *testing.T) {
 	editFile := func(edit func(map[string]any)) {
 		t.Helper()
 		var raw map[string]any
-		if err := json.Unmarshal(slotFile(t, id), &raw); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, json.Unmarshal(slotFile(t, id), &raw))
 		edit(raw)
 		b, err := json.MarshalIndent(raw, "", "  ")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, b, 0644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(path, b, 0644))
 	}
 
 	// A fake achievement, added by hand without re-signing.
@@ -381,13 +375,9 @@ const (
 func TestOlderFilesStillVerify(t *testing.T) {
 	isolateAccountDir(t)
 
-	if err := os.MkdirAll(accountDir(fixtureAccountID), 0755); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(accountDir(fixtureAccountID), 0755))
 	path := filepath.Join(accountDir(fixtureAccountID), accountFileName)
-	if err := os.WriteFile(path, []byte(fixtureAccountJSON), 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(path, []byte(fixtureAccountJSON), 0644))
 	old := slotAccount(t, fixtureAccountID)
 	if old.Tampered || !verifyAccount(old) {
 		t.Errorf("an account.json from the previous version reads as modified (tampered=%v)", old.Tampered)
@@ -403,9 +393,7 @@ func TestOlderFilesStillVerify(t *testing.T) {
 		t.Fatalf("CreateAccount: %v", err)
 	}
 	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(slotFile(t, clean.AccountID), &raw); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(slotFile(t, clean.AccountID), &raw))
 	if _, ok := raw["tampered"]; ok {
 		t.Error("a clean account.json carries a tampered key")
 	}

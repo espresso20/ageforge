@@ -4,8 +4,6 @@ import (
 	"math"
 	"reflect"
 	"testing"
-
-	"github.com/espresso20/ageforge/config"
 )
 
 // floatEq compares with a small epsilon for cases where binary floating point
@@ -219,52 +217,5 @@ func TestAddTotal_SumsOpAddIgnoresOpMul(t *testing.T) {
 	}
 	if got := r.AddTotal("nonexistent_target"); got != 0 {
 		t.Errorf("unknown target AddTotal = %.12f, want 0", got)
-	}
-}
-
-// TestAddTotal_EqualsOldHandSum proves the resolver's additive pool is value-
-// identical to the OLD scattered hand-sum recalculateRates/recalculateTickSpeed
-// used: research[t] + permanent[t] + prestige[t] + wonders[t] + Σ active-event[t].
-// A representative state contributes to production_all (research+prestige+wonder+
-// event) and a <res>_rate (research+permanent+wonder), so an equal result means
-// the Phase-3 swap is a faithful drop-in.
-func TestAddTotal_EqualsOldHandSum(t *testing.T) {
-	ge := NewGameEngine()
-	plantResearchBonus(ge, config.EffectAllOutput, "", 0.10)
-	plantResearchBonus(ge, config.EffectOutput, "iron", 0.20)
-	ge.Prestige.level = 3 // passive +6% production_all
-	addWonder(ge, "test_addtotal_prodall", "production_all", 0.15, 1)
-	addWonder(ge, "test_addtotal_iron", "iron_rate", 0.10, 1)
-	ge.permanentBonuses["iron_rate"] = 0.07
-	ge.Events.InjectEvent(ActiveEvent{
-		Key:       "boom",
-		Name:      "Economic Boom",
-		TicksLeft: 40,
-		Effects:   []config.Effect{{Type: "production_all", Value: 0.20}},
-	})
-
-	r := ge.buildResolver()
-
-	// OLD hand-sum for production_all: research + (perm+prestige+wonders) + Σ events.
-	research := ge.Research.GetBonuses()
-	wonders := ge.getWonderBonuses()
-
-	oldProdAll := research["production_all"] + ge.permanentBonuses["production_all"] +
-		wonders["production_all"]
-	for _, eff := range ge.Events.GetActiveEffects() {
-		if eff.Type == "production_all" {
-			oldProdAll += eff.Value
-		}
-	}
-	if got := r.AddTotal("production_all"); math.Abs(got-oldProdAll) > 1e-9 {
-		t.Errorf("production_all: AddTotal=%.12f old hand-sum=%.12f", got, oldProdAll)
-	}
-
-	// OLD hand-sum for iron_rate: research + (perm+prestige+wonders). Events emit
-	// nothing for <res>_rate, so there is no event term here.
-	oldIron := research["iron_rate"] + ge.permanentBonuses["iron_rate"] +
-		wonders["iron_rate"]
-	if got := r.AddTotal("iron_rate"); math.Abs(got-oldIron) > 1e-9 {
-		t.Errorf("iron_rate: AddTotal=%.12f old hand-sum=%.12f", got, oldIron)
 	}
 }

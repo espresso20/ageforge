@@ -33,9 +33,7 @@ func loadSaveFile(t *testing.T, path string) GameSave {
 		t.Fatal(err)
 	}
 	var save GameSave
-	if err := json.Unmarshal(data, &save); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &save))
 	return save
 }
 
@@ -56,16 +54,10 @@ func loadFixtureAway(t *testing.T, path, name string, away time.Duration) *GameE
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath(name), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath(name), data, 0o644))
 	ge := NewGameEngine()
-	if err := ge.LoadGame(name); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LoadGame(name))
 	if ge.cheaterBadge {
 		t.Fatalf("%s: the save fails its signature check after the load", path)
 	}

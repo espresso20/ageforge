@@ -42,9 +42,7 @@ func backdate(t *testing.T, name string, ago time.Duration) {
 		t.Fatal(err)
 	}
 	var gs GameSave
-	if err := json.Unmarshal(data, &gs); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &gs))
 	_, elite := verifySave(&gs)
 	gs.Timestamp = time.Now().Add(-ago)
 	gs.Signature, gs.Proof = "", ""
@@ -59,9 +57,7 @@ func backdate(t *testing.T, name string, ago time.Duration) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, out, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(path, out, 0644))
 	if valid, _ := verifySave(&gs); !valid {
 		t.Fatalf("the backdated save %q does not verify", name)
 	}
@@ -190,9 +186,7 @@ func TestViewSaveLooksAndChangesNothing(t *testing.T) {
 	if _, err := ViewSave("no_such_game"); err == nil {
 		t.Error("ViewSave of a missing save returned no error")
 	}
-	if err := os.WriteFile(filepath.Join(saveDirectory(), "torn.json"), []byte("{not json"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(filepath.Join(saveDirectory(), "torn.json"), []byte("{not json"), 0644))
 	if _, err := ViewSave("torn"); err == nil {
 		t.Error("ViewSave of a damaged save returned no error")
 	}
@@ -222,47 +216,35 @@ func TestCurrentGameRule(t *testing.T) {
 		t.Errorf("many saves: got %q (%s), want corvale, the game last played", cur.Save.Name, cur.Why)
 	}
 	// Loading another makes that one the game last played.
-	if err := ge.LoadGame("ashford"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LoadGame("ashford"))
 	if cur, _ := ge.CurrentGame(); cur.Save.Name != "ashford" || cur.Why != CurrentLast {
 		t.Errorf("after a load: got %q (%s), want ashford", cur.Save.Name, cur.Why)
 	}
 	// A copy saved under another name (the exit handler's autosave) is not
 	// the game in play and names nothing.
-	if err := ge.SaveGame(AutosaveName); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame(AutosaveName))
 	if _, last := acct.GameRecord(); last != "ashford" {
 		t.Errorf("a save under another name changed the game last played to %q", last)
 	}
 
 	// A marked game wins over the game last played.
-	if err := acct.SetMainGame("brackwater"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetMainGame("brackwater"))
 	if cur, _ := ge.CurrentGame(); cur.Save.Name != "brackwater" || cur.Why != CurrentMain {
 		t.Errorf("a marked game: got %q (%s), want brackwater as the main game", cur.Save.Name, cur.Why)
 	}
-	if err := ge.LoadGame("corvale"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LoadGame("corvale"))
 	if cur, _ := ge.CurrentGame(); cur.Save.Name != "brackwater" {
 		t.Errorf("playing another game unseated the marked one: got %q", cur.Save.Name)
 	}
 
 	// The marked game is deleted: the game last played is current again,
 	// with the mark still on record and ignored.
-	if err := DeleteSave("brackwater"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, DeleteSave("brackwater"))
 	if cur, _ := ge.CurrentGame(); cur.Save.Name != "corvale" || cur.Why != CurrentLast {
 		t.Errorf("a deleted marked game: got %q (%s), want corvale, the game last played", cur.Save.Name, cur.Why)
 	}
 	// Forgetting it drops the mark, so a new save of that name is not it.
-	if err := acct.ForgetGame("brackwater"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.ForgetGame("brackwater"))
 	if mainGame, _ := acct.GameRecord(); mainGame != "" {
 		t.Errorf("the mark outlived ForgetGame: %q", mainGame)
 	}
@@ -276,9 +258,7 @@ func TestCurrentGameRule(t *testing.T) {
 
 	// The record names a save that is gone, and nothing is marked: the save
 	// written most recently.
-	if err := DeleteSave("corvale"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, DeleteSave("corvale"))
 	backdate(t, AutosaveName, 72*time.Hour)
 	if cur, _ := ge.CurrentGame(); cur.Save.Name != "ashford" || cur.Why != CurrentRecent {
 		t.Errorf("a record with no save behind it: got %q (%s), want ashford, the newest", cur.Save.Name, cur.Why)
@@ -287,30 +267,22 @@ func TestCurrentGameRule(t *testing.T) {
 	// A rename carries the records.
 	_ = acct.SetMainGame("ashford")
 	_ = acct.NoteGamePlayed("ashford")
-	if err := RenameSave("ashford", "ashford_reborn"); err != nil {
-		t.Fatal(err)
-	}
-	if err := acct.RenameGame("ashford", "ashford_reborn"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, RenameSave("ashford", "ashford_reborn"))
+	noErr(t, acct.RenameGame("ashford", "ashford_reborn"))
 	if mainGame, last := acct.GameRecord(); mainGame != "ashford_reborn" || last != "ashford_reborn" {
 		t.Errorf("after a rename the records are %q and %q", mainGame, last)
 	}
 
 	// A save that cannot be read is never the current game, even when it is
 	// the newest file and the one on record.
-	if err := os.WriteFile(filepath.Join(saveDirectory(), "torn.json"), []byte("{not json"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(filepath.Join(saveDirectory(), "torn.json"), []byte("{not json"), 0644))
 	_ = acct.SetMainGame("torn")
 	if cur, _ := ge.CurrentGame(); cur.Save.Name == "torn" {
 		t.Error("a damaged save is the current game")
 	}
 
 	// Every save gone: no current game, whatever is on record.
-	if err := WipeAllSaves(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, WipeAllSaves())
 	if cur, ok := ge.CurrentGame(); ok {
 		t.Errorf("no saves, but the current game is %q", cur.Save.Name)
 	}
@@ -357,33 +329,25 @@ func TestPickCurrentGameNewest(t *testing.T) {
 // survives a reload of the account.
 func TestGameRecordLivesInSettings(t *testing.T) {
 	ge, acct := menuAccount(t)
-	accountFile := accountFilePath()
+	accountFile := accountPath()
 	settingsFile := filepath.Join(accountDir(acct.AccountID), settingsFileName)
 
 	// A settings file as a build before the records wrote it.
-	if err := acct.SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetMotion(false))
 	if mainGame, last := acct.GameRecord(); mainGame != "" || last != "" {
 		t.Fatalf("a settings file without the records reads %q and %q", mainGame, last)
 	}
 
 	startGame(t, ge, "ashford")
 	// Flush whatever starting a game wrote to the account, then hold its bytes.
-	if err := acct.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.Save())
 	accountBytes, err := os.ReadFile(accountFile)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := acct.SetMainGame("ashford"); err != nil {
-		t.Fatal(err)
-	}
-	if err := acct.NoteGamePlayed("brackwater"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetMainGame("ashford"))
+	noErr(t, acct.NoteGamePlayed("brackwater"))
 	after, err := os.ReadFile(accountFile)
 	if err != nil {
 		t.Fatal(err)
@@ -396,9 +360,7 @@ func TestGameRecordLivesInSettings(t *testing.T) {
 		t.Fatal(err)
 	}
 	var onDisk map[string]any
-	if err := json.Unmarshal(raw, &onDisk); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(raw, &onDisk))
 	if onDisk["main_game"] != "ashford" || onDisk["last_played"] != "brackwater" || onDisk["motion"] != "off" {
 		t.Errorf("settings.json holds %v", onDisk)
 	}

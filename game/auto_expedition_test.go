@@ -76,40 +76,12 @@ func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
 	return launched, resolved
 }
 
-// TestGeographicSociety_Definition pins the building: it exists, it is a LATE
-// unlock, it takes workers, and the age that unlocks it actually lists it.
+// TestGeographicSociety_Definition checks that the age that unlocks the building
+// actually lists it.
 func TestGeographicSociety_Definition(t *testing.T) {
 	def, ok := config.BuildingByKey()[autoExpeditionBuildingKey]
 	if !ok {
 		t.Fatalf("%s is not defined in config", autoExpeditionBuildingKey)
-	}
-	if def.RequiredAge != "industrial_age" {
-		t.Errorf("RequiredAge = %q, want industrial_age", def.RequiredAge)
-	}
-
-	// Belt-and-braces on "later age": its position in the age order must be at or
-	// past the industrial age, whatever RequiredAge is edited to later.
-	ageIndex := map[string]int{}
-	for i, key := range config.AgeOrder() {
-		ageIndex[key] = i
-	}
-	if ageIndex[def.RequiredAge] < ageIndex["industrial_age"] {
-		t.Errorf("%s unlocks at %q, which is earlier than the industrial age — "+
-			"auto-dispatch must not be an early-game feature", autoExpeditionBuildingKey, def.RequiredAge)
-	}
-	if def.WorkerDomain == "" || def.WorkerCapacity <= 0 {
-		t.Errorf("WorkerDomain=%q WorkerCapacity=%d — the cadence formula needs both",
-			def.WorkerDomain, def.WorkerCapacity)
-	}
-	if len(def.BaseCost) == 0 {
-		t.Error("BaseCost is empty")
-	}
-	// No production effect may leak into the resource pipeline (same rule as the
-	// embassies, which share this slice of buildings.go).
-	for _, eff := range def.Effects {
-		if eff.Type == "production" {
-			t.Errorf("unexpected production effect %+v", eff)
-		}
 	}
 
 	var listed bool

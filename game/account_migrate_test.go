@@ -70,11 +70,8 @@ func TestMigrateLegacyMovesAccountAndSaves(t *testing.T) {
 	id := seedLegacyFlatAccount(t, root)
 	seedLegacySave(t, root, "old_run")
 
-	// LoadOrCreate runs migrateLegacyAccountIfNeeded at the top, then resolves the pointer.
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (post-seed): %v", err)
-	}
+	// LoadAccount runs migrateLegacyAccountIfNeeded at the top, then resolves the pointer.
+	acct := reloadAccount(t)
 	if acct.AccountID != id {
 		t.Errorf("loaded account id = %q, want migrated id %q", acct.AccountID, id)
 	}

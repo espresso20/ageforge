@@ -114,9 +114,7 @@ func TestReserve_ManualRecruitWithNoFreeSlot(t *testing.T) {
 	ge := sharesEngine(t, 2, nil)
 	ge.Workers.UnlockType("worker")
 	ge.SetAutoRecruit(false)
-	if err := ge.RecruitWorker("worker", 7); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.RecruitWorker("worker", 7))
 	if got := ge.Workers.IdleCount("worker"); got != 7 {
 		t.Errorf("reserve %d, want 7", got)
 	}

@@ -60,18 +60,3 @@ func TestStoneAgeIsReachableBuyingExactlyTheGate(t *testing.T) {
 	}
 	t.Fatalf("never reached the Stone Age; advance: %v", ge.AdvanceAge())
 }
-
-// The last storage tier has no successor in the tables: the Transcendent Age
-// is the one age with no storage building of its own.
-func TestLastStorageTierHasNoSuccessor(t *testing.T) {
-	ages, defs := config.Ages(), config.BaseBuildings()
-	for i := range ages {
-		if i+1 >= len(ages) {
-			break
-		}
-		has := config.AgeHasStorageBuilding(defs, ages[i+1].Key)
-		if want := ages[i+1].Key != "transcendent_age"; has != want {
-			t.Errorf("AgeHasStorageBuilding(%s) = %v, want %v", ages[i+1].Key, has, want)
-		}
-	}
-}

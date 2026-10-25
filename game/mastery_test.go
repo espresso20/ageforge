@@ -184,9 +184,7 @@ func TestMasteryCommitAtPrestige(t *testing.T) {
 	if err := ge.SummonHarbingerForTest("modern_age"); err != nil {
 		t.Log(err) // places the game; a missing harbinger is fine
 	}
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if m := ge.Prestige.Mastery("atomic_age"); m != 1 {
 		t.Fatalf("the Atomic Age has mastery %d after a Modern prestige, want 1", m)
 	}
@@ -231,9 +229,7 @@ func TestSuccumbCommitsMastery(t *testing.T) {
 		t.Fatalf("before the fall the run would raise %v, want Primitive to Medieval", g)
 	}
 	ge.pendingCatastrophe = ge.currentEpoch
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Succumb())
 	if got, want := ge.Prestige.masterySave(), masteryThrough("renaissance_age", 1); !sameMastery(got, want) {
 		t.Fatalf("after the Succumb mastery is %v, want %v: the six ages the run completed, one level each", got, want)
 	}
@@ -268,9 +264,7 @@ func TestSuccumbCommitsMastery(t *testing.T) {
 	}
 	ge.age, ge.currentEpoch = "medieval_age", config.EpochForAge("medieval_age")
 	ge.Prestige.floor = "" // Keep this focused on per-run mastery accounting.
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	want := masteryThrough("medieval_age", 2)
 	want["medieval_age"] = 1
 	if got := ge.Prestige.masterySave(); !sameMastery(got, want) {
@@ -278,13 +272,7 @@ func TestSuccumbCommitsMastery(t *testing.T) {
 	}
 
 	// It is saved like any mastery.
-	if err := ge.SaveGame("fallen"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("fallen"); err != nil {
-		t.Fatal(err)
-	}
+	ge2 := saveAndLoad(t, ge, "fallen")
 	if got := ge2.Prestige.masterySave(); !sameMastery(got, want) || ge2.cheaterBadge {
 		t.Errorf("after a save and load mastery is %v (tampered: %v), want %v", got, ge2.cheaterBadge, want)
 	}
@@ -297,9 +285,7 @@ func TestSuccumbCommitsMastery(t *testing.T) {
 	top.Prestige.NoteAgeEntered("iron_age")
 	top.age, top.currentEpoch = "iron_age", config.EpochForAge("iron_age")
 	top.pendingCatastrophe = top.currentEpoch
-	if err := top.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, top.Succumb())
 	for _, a := range ageKeys() {
 		if m := top.Prestige.Mastery(a); m != config.MasteryCap {
 			t.Errorf("%s has mastery %d after a Succumb at the cap, want %d", a, m, config.MasteryCap)
@@ -324,9 +310,7 @@ func sameMastery(a, b map[string]int) bool {
 func TestMasteryPassiveRetired(t *testing.T) {
 	ge := newSeededEngine(5)
 	_ = ge.SummonHarbingerForTest("modern_age")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	st := ge.GetState()
 	if st.TickSpeedBonus != 0 {
 		t.Errorf("after a prestige: tick speed %v; the passive retired into Era Mastery", st.TickSpeedBonus)
@@ -426,12 +410,8 @@ func oldSave(t *testing.T, ge *GameEngine, name string) {
 			t.Fatalf("an old save still writes %s: the field must be omitempty", field)
 		}
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath(name), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath(name), data, 0o644))
 }
 
 func masteryLines(ge *GameEngine) []string {
@@ -462,9 +442,7 @@ func TestMasterySeedingLevel5(t *testing.T) {
 	oldSave(t, ge, "level5")
 
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("level5"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("level5"))
 	if loaded.cheaterBadge {
 		t.Fatal("the old signed save failed its signature check")
 	}
@@ -489,16 +467,12 @@ func TestMasterySeedingLevel5(t *testing.T) {
 		t.Errorf("seeding logged %q, want once %q", lines, want)
 	}
 
-	if err := loaded.SaveGame("level5"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.SaveGame("level5"))
 	if s := readSaveFromDisk(t, "level5"); !s.Prestige.MasterySeeded || s.Prestige.Mastery["atomic_age"] != 5 || s.Prestige.Furthest != "modern_age" {
 		t.Errorf("the next save carries seeded %v, atomic %d, furthest %q", s.Prestige.MasterySeeded, s.Prestige.Mastery["atomic_age"], s.Prestige.Furthest)
 	}
 	again := NewGameEngine()
-	if err := again.LoadGame("level5"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, again.LoadGame("level5"))
 	if n := len(masteryLines(again)); n != 0 || again.Prestige.Mastery("atomic_age") != 5 || again.cheaterBadge {
 		t.Errorf("second load: %d seeding lines, atomic mastery %d, tamper %v", n, again.Prestige.Mastery("atomic_age"), again.cheaterBadge)
 	}
@@ -512,9 +486,7 @@ func TestMasterySeedingLevel0(t *testing.T) {
 	ge.StepTicks(30)
 	oldSave(t, ge, "level0")
 	loaded := NewGameEngine()
-	if err := loaded.LoadGame("level0"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("level0"))
 	if len(loaded.Prestige.masterySave()) != 0 || len(masteryLines(loaded)) != 0 || loaded.cheaterBadge {
 		t.Errorf("level 0: mastery %v, lines %v, tamper %v", loaded.Prestige.masterySave(), masteryLines(loaded), loaded.cheaterBadge)
 	}
@@ -531,13 +503,7 @@ func TestMasterySaveRoundTrip(t *testing.T) {
 	ge := newSeededEngine(23)
 	ge.StepTicks(10)
 	ge.SetMasteryForTest(map[string]int{"primitive_age": 7, "stone_age": 2, "bronze_age": 1}, "iron_age")
-	if err := ge.SaveGame("round"); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("round"); err != nil {
-		t.Fatal(err)
-	}
+	loaded := saveAndLoad(t, ge, "round")
 	a, b := ge.GetState().Mastery, loaded.GetState().Mastery
 	if !sameMastery(a.Ages, b.Ages) || a.Record != b.Record || a.RunFurthest != b.RunFurthest || a.K != b.K || !loaded.Prestige.masterySeeded {
 		t.Errorf("round trip: %+v -> %+v", a, b)

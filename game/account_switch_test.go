@@ -121,9 +121,7 @@ func TestEngineSwitchToMissingAccountChangesNothing(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(carol)
-	if err := ge.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("Rome"))
 	startedLoop(t, ge)
 	t.Cleanup(ge.Stop)
 
@@ -159,9 +157,7 @@ func TestSwitchMidGameNeverCrossWrites(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(alice)
-	if err := ge.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("Rome"))
 	done := startedLoop(t, ge)
 	t.Cleanup(ge.Stop)
 	recordPrestige(alice, "modern_age") // earned in the run since the last autosave
@@ -207,9 +203,7 @@ func TestSwitchMidGameNeverCrossWrites(t *testing.T) {
 		t.Error("Alice's run still records to the account after switching to Bob")
 	}
 	prestigeNow(t, ge)
-	if err := bob.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, bob.FlushIfDirty())
 	if b := ge.Account(); b.Stats.TotalPrestiges != 0 || len(b.Badges) != 0 {
 		t.Errorf("Alice's run credited Bob: %+v %v", b.Stats, b.Badges)
 	}
@@ -218,9 +212,7 @@ func TestSwitchMidGameNeverCrossWrites(t *testing.T) {
 	}
 
 	// Loading one of Bob's games makes the run his: it records to him again.
-	if err := ge.StartNewNamedGame("Carthage"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("Carthage"))
 	if !ge.GetState().AccountRecords {
 		t.Error("a new game under Bob does not record to Bob")
 	}
@@ -252,9 +244,7 @@ func TestImportMidGameNeverCrossWrites(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(alice)
-	if err := ge.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("Rome"))
 	startedLoop(t, ge)
 	t.Cleanup(ge.Stop)
 	aliceBefore := slotFile(t, alice.AccountID)
@@ -346,9 +336,7 @@ func TestRecoverAccountSwitchesAndKeepsOriginal(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(alice)
-	if err := ge.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("Rome"))
 	startedLoop(t, ge)
 	t.Cleanup(ge.Stop)
 	recordPrestige(alice, "modern_age")
@@ -396,9 +384,7 @@ func TestWipeOfRunOwnerOrphansRun(t *testing.T) {
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(alice)
-	if err := ge.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("Rome"))
 	recordPrestige(alice, "modern_age") // dirty: detaching must not flush it back into the wiped slot
 
 	if _, err := ge.WipeAccountByID(alice.AccountID); err != nil {

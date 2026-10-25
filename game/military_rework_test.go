@@ -2,7 +2,6 @@ package game
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -129,13 +128,7 @@ func TestFirstSoldiersMilestone_TriggersOnCumulativeTrained(t *testing.T) {
 
 	// 5 trained: triggers.
 	got := check(5)
-	found := false
-	for _, d := range got {
-		if d.Key == "first_soldiers" {
-			found = true
-		}
-	}
-	if !found {
+	if !containsKey(got, "first_soldiers") {
 		t.Fatalf("first_soldiers should trigger at 5 cumulative trained")
 	}
 	if !mm.completed["first_soldiers"] {
@@ -152,15 +145,8 @@ func TestSoldiersTrained_SaveLoadRoundTrip(t *testing.T) {
 	ge.Stats.SoldiersTrained = 137
 	ge.mu.Unlock()
 
-	if err := ge.SaveGame("test_soldiers_trained_roundtrip"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_soldiers_trained_roundtrip.json")
+	ge2 := saveAndLoad(t, ge, "test_soldiers_trained_roundtrip")
 
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_soldiers_trained_roundtrip"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
 	if got := ge2.Stats.SoldiersTrained; got != 137 {
 		t.Errorf("SoldiersTrained after load = %v, want 137", got)
 	}
@@ -447,9 +433,7 @@ func TestOldActiveFieldsAreIgnoredOnLoad(t *testing.T) {
 	var save MilitarySave
 	old := `{"active_scout":{"Key":"scouting_party","Name":"Scout","TicksLeft":7},` +
 		`"active_military":{"Key":"raid_the_rival_clan","Soldiers":5,"TicksLeft":9},"completed_count":4}`
-	if err := json.Unmarshal([]byte(old), &save); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal([]byte(old), &save))
 	mm := NewMilitaryManager()
 	mm.LoadState(save)
 	if mm.HasActive() {

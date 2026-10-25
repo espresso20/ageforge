@@ -197,9 +197,7 @@ func TestAdvancePillarsAgreeWithCheckAdvancement(t *testing.T) {
 			t.Errorf("%s: only %d of the checks left the gate shut", from.Key, notReady)
 		}
 
-		if err := ge.EnterAgeForTest(to.Key); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(to.Key))
 	}
 }
 
@@ -309,9 +307,7 @@ func TestHoldCalendarNeverRunsBackward(t *testing.T) {
 		t.Errorf("a new age kept the old mark: %.3f", e.Share)
 	}
 	ge.HoldCalendar(high.AdvanceView())
-	if err := ge.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("stone_age"))
 	if ge.calendar != (calendarMark{}) {
 		t.Errorf("advancing kept the mark: %+v", ge.calendar)
 	}

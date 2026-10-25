@@ -33,9 +33,7 @@ func TestUpgradeBuilding_PartialUpgradeRehomesWorkers(t *testing.T) {
 	}
 	pop := ge.Workers.TotalPop()
 
-	if err := ge.UpgradeBuilding("gathering_camp", 3, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 3, false))
 	oldAssigned := ge.Workers.GetAssignedCount("worker", "gathering_camp")
 	newAssigned := ge.Workers.GetAssignedCount("worker", newKey)
 	if max := oldCap * ge.Buildings.GetCount("gathering_camp"); oldAssigned > max {

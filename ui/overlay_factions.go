@@ -37,7 +37,7 @@ import (
 // Geographic Society's automation status, a detail card per civilization you
 // have met, and a compact roster of the ones you have not.
 //
-// w is the full terminal width; the overlay box is roughly 85% of it, and long
+// w is the full terminal width; the panel's text is that less its frame, and long
 // text is truncated to fit because tview's soft-wrap does not carry colour tags
 // across the break.
 func factionsProvider(state game.GameState, w int) string {
@@ -407,18 +407,13 @@ func writeUndiscoveredRoster(sb *strings.Builder, pending int) {
 // === shared formatting helpers ===
 
 // panelUsableWidth converts the terminal width a provider is handed into the
-// text width actually available inside the overlay box (roughly 85% of the
-// terminal, less the border and padding). Clamped so a tiny or absent width
-// still yields a sane budget rather than a negative one.
+// text width the panel lays out for: the width inside its frame, held between
+// 56 and 110 cells (the panel right-aligns its summaries and sets some columns
+// at fixed widths, which stop reading well further apart than that). Clamped
+// so a tiny or absent width still yields a sane budget rather than a negative
+// one.
 func panelUsableWidth(w int) int {
-	usable := int(float64(w)*0.85) - 4
-	if usable < 56 {
-		usable = 56
-	}
-	if usable > 110 {
-		usable = 110
-	}
-	return usable
+	return min(110, max(56, overlayTextWidth(w)))
 }
 
 // writeHeadedLine writes a section header with a right-aligned summary on the

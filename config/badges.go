@@ -29,39 +29,49 @@ const (
 	BadgeLegendary
 )
 
+// badgeTierNames is the tiers in words, by tier. BadgeNoTier has no name.
+var badgeTierNames = [...]string{
+	BadgeBronze:    "bronze",
+	BadgeSilver:    "silver",
+	BadgeGold:      "gold",
+	BadgePlatinum:  "platinum",
+	BadgeLegendary: "legendary",
+}
+
+// badgeTierRow is what else a tier carries.
+type badgeTierRow struct {
+	points int
+	rarity BadgeRarity // the rarity a badge of the tier takes when it sets none
+}
+
+// badgeTierRows is the tiers' points and rarities, by tier. BadgeNoTier has
+// no row: it adds nothing and takes no rarity.
+var badgeTierRows = [...]badgeTierRow{
+	BadgeBronze:    {5, BadgeCommon},
+	BadgeSilver:    {10, BadgeUncommon},
+	BadgeGold:      {25, BadgeRare},
+	BadgePlatinum:  {50, BadgeEpic},
+	BadgeLegendary: {100, BadgeMythic},
+}
+
+// row is the tier's row; a tier outside the table has an empty one.
+func (t BadgeTier) row() badgeTierRow {
+	if int(t) >= len(badgeTierRows) {
+		return badgeTierRow{}
+	}
+	return badgeTierRows[t]
+}
+
 // Name is the tier in words ("bronze"); "" for no tier.
 func (t BadgeTier) Name() string {
-	switch t {
-	case BadgeBronze:
-		return "bronze"
-	case BadgeSilver:
-		return "silver"
-	case BadgeGold:
-		return "gold"
-	case BadgePlatinum:
-		return "platinum"
-	case BadgeLegendary:
-		return "legendary"
+	if int(t) >= len(badgeTierNames) {
+		return ""
 	}
-	return ""
+	return badgeTierNames[t]
 }
 
 // Points is what a badge of the tier adds to the account's score.
-func (t BadgeTier) Points() int {
-	switch t {
-	case BadgeBronze:
-		return 5
-	case BadgeSilver:
-		return 10
-	case BadgeGold:
-		return 25
-	case BadgePlatinum:
-		return 50
-	case BadgeLegendary:
-		return 100
-	}
-	return 0
-}
+func (t BadgeTier) Points() int { return t.row().points }
 
 // BadgeRarity is a design label for how much play a badge takes. It is not
 // measured from players.
@@ -78,21 +88,22 @@ const (
 	BadgeMythic
 )
 
+// badgeRarityNames is the rarities in words, by rarity. The top one, Mythic,
+// is called "legendary", as its tier is.
+var badgeRarityNames = [...]string{
+	BadgeCommon:   "common",
+	BadgeUncommon: "uncommon",
+	BadgeRare:     "rare",
+	BadgeEpic:     "epic",
+	BadgeMythic:   "legendary",
+}
+
 // Name is the rarity in words ("common"); "" for BadgeRarityByTier.
 func (r BadgeRarity) Name() string {
-	switch r {
-	case BadgeCommon:
-		return "common"
-	case BadgeUncommon:
-		return "uncommon"
-	case BadgeRare:
-		return "rare"
-	case BadgeEpic:
-		return "epic"
-	case BadgeMythic:
-		return "legendary"
+	if int(r) >= len(badgeRarityNames) {
+		return ""
 	}
-	return ""
+	return badgeRarityNames[r]
 }
 
 // BadgeScope says what a badge is judged on.
@@ -698,19 +709,7 @@ func (d BadgeDef) RarityName() string {
 	if d.Rarity != BadgeRarityByTier {
 		return d.Rarity.Name()
 	}
-	switch d.Tier {
-	case BadgeBronze:
-		return BadgeCommon.Name()
-	case BadgeSilver:
-		return BadgeUncommon.Name()
-	case BadgeGold:
-		return BadgeRare.Name()
-	case BadgePlatinum:
-		return BadgeEpic.Name()
-	case BadgeLegendary:
-		return BadgeMythic.Name()
-	}
-	return ""
+	return d.Tier.row().rarity.Name()
 }
 
 // BadgeSource is the config table a family takes its subjects from.

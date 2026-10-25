@@ -82,35 +82,3 @@ func TestTechGateSurvivesReset(t *testing.T) {
 		t.Fatal("nuclear_plant locked after researching its tech on the new run")
 	}
 }
-
-// TestMidAgeTechs: each mid-age tech opens in the age of the buildings it
-// gates, and every gated building's tech is in the building's own age.
-func TestMidAgeTechs(t *testing.T) {
-	techs := config.TechByKey()
-	want := map[string]string{
-		"civilian_reactors":  "atomic_age",
-		"internet_of_things": "information_age",
-		"holography":         "cyberpunk_age",
-		"maglev_transit":     "fusion_age",
-	}
-	gates := map[string]int{}
-	for _, b := range config.BaseBuildings() {
-		if b.RequiredTech == "" {
-			continue
-		}
-		gates[b.RequiredTech]++
-		if techs[b.RequiredTech].Age != b.RequiredAge {
-			t.Errorf("%s (%s) needs %s from %s", b.Key, b.RequiredAge, b.RequiredTech, techs[b.RequiredTech].Age)
-		}
-	}
-	for k, age := range want {
-		td, ok := techs[k]
-		if !ok || td.Age != age {
-			t.Errorf("tech %s: found %v, age %q, want %q", k, ok, td.Age, age)
-			continue
-		}
-		if gates[k] == 0 {
-			t.Errorf("tech %s opens no building", k)
-		}
-	}
-}

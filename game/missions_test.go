@@ -357,9 +357,7 @@ func TestCampaign_LeavesThePostsFull(t *testing.T) {
 			}
 		}
 		if c.held >= float64(cost) {
-			if err := ge.LaunchExpedition(n); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.LaunchExpedition(n))
 		} else {
 			if err := ge.LaunchExpedition(n); err == nil {
 				t.Fatalf("income %v: launched with %v soldiers at home for a cost of %d", c.income, c.held, cost)
@@ -413,13 +411,9 @@ func TestMissionBoard_TitlesComeFromTheAgesWords(t *testing.T) {
 				}
 			}
 			names, objs := []string{words.Tiers[which]}, words.ObjectivesFor(which)
-			ok := false
-			for _, obj := range objs {
-				for _, place := range words.Places {
-					ok = ok || title == names[0]+": "+obj+" "+place
-				}
-			}
-			if !ok {
+			if !slices.ContainsFunc(objs[:], func(obj string) bool {
+				return slices.ContainsFunc(words.Places[:], func(place string) bool { return title == names[0]+": "+obj+" "+place })
+			}) {
 				t.Errorf("%s slot %d: %q is not built from the age's words", age.Key, i+1, o.Title)
 			}
 			if !slices.Contains(words.Twists[:], o.Description) {
@@ -526,9 +520,7 @@ func TestMissionRolls_SurviveASave(t *testing.T) {
 	defer SetDataDirForTest(t.TempDir())()
 	ge := missionReady(t, 7, "iron_age")
 	setSoldiers(ge, 5000)
-	if err := ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(plantOffer(ge, TierGrand, GrandMilitary)))
 	before := *ge.Military.ActiveByCategory(ExpeditionMilitary)
 	again := saveAndLoad(t, ge, "mission_rolls")
 	after := again.Military.ActiveByCategory(ExpeditionMilitary)

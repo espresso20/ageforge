@@ -421,7 +421,7 @@ func (o *orb) farStation(it ridgeItem) {
 		flag = mapmodel.R(mapmodel.SymCiv, o.tier)
 	}
 	put(1, -1, flag, rc)
-	o.labels = append(o.labels, label{x - textLen(f.Name)/2, y - 2, f.Name, rc})
+	o.labels = append(o.labels, label{x: x - textLen(f.Name)/2, y: y - 2, text: f.Name, fg: rc})
 }
 
 // hologram is the harbinger: a flickering figure far off, facing the
@@ -451,7 +451,7 @@ func (o *orb) hologram(it ridgeItem) {
 	if o.tier == mapmodel.TierNerd {
 		o.fb.fg(x, o.Y(y-3), mapmodel.R(mapmodel.SymHarbinger, o.tier), o.mp.Fg[mapmodel.CDanger], d)
 	}
-	o.labels = append(o.labels, label{x - textLen(h.Name)/2, y - 4, h.Name, o.mp.Fg[mapmodel.CIdle]})
+	o.labels = append(o.labels, label{x: x - textLen(h.Name)/2, y: y - 4, text: h.Name, fg: o.mp.Fg[mapmodel.CIdle]})
 }
 
 // farCursorRows makes the cursor's ▼ land just above each far object (the

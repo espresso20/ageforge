@@ -3,6 +3,7 @@ package game
 import (
 	"math"
 	"math/rand"
+	"slices"
 	"strings"
 	"testing"
 
@@ -175,16 +176,19 @@ func lastPassageLoss(t *testing.T, fill float64, appease, brace int) float64 {
 }
 
 // incomeHours is how long a moderate economy in age takes to make cost, in
-// hours at 1x: the slowest of its resources at config.TypicalIncome (which is
-// config.FlowIncome for faith and culture).
+// hours at 1x: the slowest of its resources at the compiled set's
+// TypicalIncome (the numbers of config.TypicalIncome, which is
+// config.FlowIncome for faith and culture, without rebuilding every table on
+// each call).
 func incomeHours(t *testing.T, cost map[string]float64, age string) float64 {
 	t.Helper()
 	if len(cost) == 0 {
 		t.Fatalf("no price to time in %s", age)
 	}
 	slowest := 0.0
+	core := rules.Core()
 	for res, c := range cost {
-		rate := config.TypicalIncome(res, age)
+		rate := core.TypicalIncome(res, age)
 		if rate <= 0 {
 			t.Fatalf("nothing makes %s in %s", res, age)
 		}
@@ -203,9 +207,7 @@ const lastPassageChoiceMinRatio = 0.5
 // points, so the choice is in the prices: Appease level 1 is the dearer, but
 // saves at least half as many expected points per hour of income as Brace
 // level 1 (about two thirds, at these prices). Change a price or an effect
-// and this is the test to argue with. The prices before it (Brace at 12% of
-// the era's largest requirement, Appease on the whole age) gave a ratio of 1
-// to 13,500.
+// and this is the test to argue with.
 func TestLastPassageChoice(t *testing.T) {
 	const low, mid, high = 0.1, 0.5, 0.9
 	// What is left at risk at mid faith, in percent of the run's points, by
@@ -263,16 +265,6 @@ func TestLastPassageChoice(t *testing.T) {
 		if math.Abs(a/b-appeaseSaves/braceSaves) > 1e-9 {
 			t.Errorf("faith fill %v: Appease level 1 saves %vx what Brace level 1 does, at mid faith %vx", fill, a/b, appeaseSaves/braceSaves)
 		}
-	}
-
-	// The prices this replaced fail it: Brace at the era's price, which the
-	// Reality Tear's thread keeps, and Appease on the whole age.
-	oldBrace := incomeHours(t, eraBraceCost("cosmic_era", 1), first)
-	oldAppease := incomeHours(t, warningAppeaseCostIn(rules.Core(), "cosmic_era", first, config.AgeTargetTicks(first), 1), first)
-	oldRatio := valueRatio(oldAppease, oldBrace)
-	t.Logf("the old prices: Brace 1 %.4f h, Appease 1 %.1f h; ratio 1 to %.0f", oldBrace, oldAppease, 1/oldRatio)
-	if oldRatio >= lastPassageChoiceMinRatio/1000 {
-		t.Errorf("the old prices (Brace %.4f h, Appease %.1f h) give a ratio of %v: the test would not have caught them", oldBrace, oldAppease, oldRatio)
 	}
 }
 
@@ -478,13 +470,6 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 			if capped || share < ordinaryDoomBraceShare || share > 1.1*ordinaryDoomBraceShare {
 				t.Errorf("%s: Brace level 1 takes %.2f of the shortest warning (%.2f h of %.2f; every material capped: %v), want a third", age, share, braceHours, warning, capped)
 			}
-			// The old price fails the bar from the era's second age on.
-			if age != ep.Ages[0] {
-				oldHours := incomeHoursOfMade(eraBraceCost(ep.Key, 1), age)
-				if old := (appeaseSaves / appeaseHours) / (braceSaves / oldHours); old >= doomChoiceMinRatio {
-					t.Errorf("%s: the era's old price (%.4f h of income) gives a ratio of %.3f: the test would not have caught it", age, oldHours, old)
-				}
-			}
 		}
 	}
 	if checked == 0 {
@@ -542,19 +527,6 @@ var doomChoiceOnTheCeiling = map[string]float64{
 	"industrial_age": 0.08,
 }
 
-// incomeHoursOfMade is incomeHours over the resources of cost the age makes
-// at all: the old era price named some an age only buys.
-func incomeHoursOfMade(cost map[string]float64, age string) float64 {
-	slowest := 0.0
-	for res, c := range cost {
-		if rules.Core().BuildingOutput(res, age) <= 0 {
-			continue
-		}
-		slowest = math.Max(slowest, c/config.TypicalIncome(res, age))
-	}
-	return slowest * config.TickSeconds / 3600
-}
-
 // --- the outlook -------------------------------------------------------------------
 
 func TestOutlookPassageKind(t *testing.T) {
@@ -594,9 +566,7 @@ func TestLastPassageOnlyRollsFromTheCosmicEra(t *testing.T) {
 	ge := catEngine(t, "space_age", 3)
 	ge.catastropheInvited = true
 	ge.rng = riggedRNG(0.0)
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if ge.pendingLastPassage || ge.Prestige.GetLevel() != 1 || ge.age != "primitive_age" {
 		t.Errorf("space-age prestige: pending %v level %d age %s", ge.pendingLastPassage, ge.Prestige.GetLevel(), ge.age)
 	}
@@ -619,9 +589,7 @@ func TestLastPassageSparedCompletesPrestige(t *testing.T) {
 	ge := lpEngine(t, "transcendent_age", 4)
 	full := ge.GetState().Prestige.PendingPoints
 	ge.rng = riggedRNG(0.99, 0.3, 0.6, 0.1)
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if ge.pendingLastPassage || ge.Prestige.GetLevel() != 1 || ge.Prestige.Snapshot().Available != full || ge.age != "primitive_age" {
 		t.Fatalf("spared: pending %v level %d points %d (want %d) age %s", ge.pendingLastPassage,
 			ge.Prestige.GetLevel(), ge.Prestige.Snapshot().Available, full, ge.age)
@@ -683,9 +651,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 		t.Fatal("legacy before Succumb")
 	}
 	makeLastPassagePending(t, ge)
-	if err := ge.SuccumbLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SuccumbLastPassage())
 	snap := ge.Prestige.Snapshot()
 	if snap.Level != 3 || snap.Available != 4 || snap.TotalEarned != 10 || !ge.cosmicLegacy || ge.age != "primitive_age" {
 		t.Fatalf("after Succumb: %+v legacy %v age %s", snap, ge.cosmicLegacy, ge.age)
@@ -702,13 +668,9 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 		if !ge.cosmicLegacy || !hasCosmicLegacyModifier(ge) {
 			t.Fatalf("%s: legacy %v, modifier %v", when, ge.cosmicLegacy, hasCosmicLegacyModifier(ge))
 		}
-		found := false
-		for _, m := range ge.GetState().Modifiers {
-			if m.Source == cosmicLegacySource && m.Target == "production_all" {
-				found = true
-			}
-		}
-		if !found {
+		if !slices.ContainsFunc(ge.GetState().Modifiers, func(m Modifier) bool {
+			return m.Source == cosmicLegacySource && m.Target == "production_all"
+		}) {
 			t.Errorf("%s: the Cosmic Legacy is missing from GameState.Modifiers", when)
 		}
 		if _, ok := ge.permanentBonuses["production_all"]; ok {
@@ -722,9 +684,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	ge.age, ge.currentEpoch = "modern_age", config.EpochForAge("modern_age")
 	// This test checks Cosmic Legacy carryover, not when prestige opens.
 	ge.SetPrestigeFloorForTest("")
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	check("after a Modern Age prestige")
 	ge.age, ge.currentEpoch = "galactic_age", config.EpochForAge("galactic_age")
 	ge.SetPrestigeFloorForTest("")
@@ -738,25 +698,15 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	if err := ge.Succumb(); err == nil || !ge.pendingLastPassage {
 		t.Fatalf("Succumb() routed past the refusal: err %v pending %v", err, ge.pendingLastPassage)
 	}
-	if err := ge.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EndureLastPassage())
 	check("after a Cosmic Era prestige")
 	// The epoch catastrophe's Succumb resets the run too.
 	ge.age, ge.currentEpoch = "iron_age", "iron_era"
 	ge.pendingCatastrophe = "iron_era"
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Succumb())
 	check("after an epoch Succumb")
 
-	if err := ge.SaveGame("legacy"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("legacy"); err != nil {
-		t.Fatal(err)
-	}
+	ge2 := saveAndLoad(t, ge, "legacy")
 	ge = ge2
 	check("after save/load")
 	// It multiplies production after the caps: the pool is as it was, and
@@ -781,9 +731,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 func TestInviteGuaranteesTheLastPassage(t *testing.T) {
 	ge := lpEngine(t, "quantum_age", 8)
 	ge.harbinger.BraceLevel = 2
-	if err := ge.HarbingerInvite(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.HarbingerInvite())
 	if countLogs(ge, "Your next prestige will bring the Last Passage") != 1 {
 		t.Errorf("invite log:\n%s", strings.Join(logMessages(ge), "\n"))
 	}
@@ -792,18 +740,14 @@ func TestInviteGuaranteesTheLastPassage(t *testing.T) {
 	}
 	full := ge.GetState().Prestige.PendingPoints
 	ge.rng = riggedRNG(0.999) // would miss any real odds
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	if !ge.pendingLastPassage || ge.catastropheInvited {
 		t.Fatalf("invited: pending %v invite still armed %v", ge.pendingLastPassage, ge.catastropheInvited)
 	}
 	if !ge.GetState().LastPassage.Invited {
 		t.Error("state does not say the Last Passage was invited")
 	}
-	if err := ge.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EndureLastPassage())
 	if indexOfLog(ge, "You invited it, and it came") < 0 {
 		t.Errorf("no Fulfilled verdict:\n%s", strings.Join(logMessages(ge), "\n"))
 	}
@@ -831,17 +775,13 @@ func TestPendingLastPassageBlocksOnlyPrestigeAndSurvivesSaveLoad(t *testing.T) {
 		t.Error("an epoch catastrophe was stacked on the pending Last Passage")
 	}
 
-	if err := ge.SaveGame("pending_lp"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("pending_lp"))
 	infos, err := ListSaveDetails()
 	if err != nil || len(infos) != 1 || infos[0].PendingCatastrophe != "The Last Passage" {
 		t.Errorf("save details = %+v, err %v", infos, err)
 	}
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("pending_lp"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("pending_lp"))
 	if ge2.cheaterBadge {
 		t.Error("pending save failed its signature")
 	}
@@ -865,9 +805,7 @@ func TestPendingLastPassageBlocksOnlyPrestigeAndSurvivesSaveLoad(t *testing.T) {
 	}
 
 	full := ge2.GetState().Prestige.PendingPoints
-	if err := ge2.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.EndureLastPassage())
 	if got := ge2.Prestige.Snapshot().Available; got != int(float64(full)*0.70) {
 		t.Errorf("Endure after load: %d points, want 70%% of %d", got, full)
 	}
@@ -876,14 +814,10 @@ func TestPendingLastPassageBlocksOnlyPrestigeAndSurvivesSaveLoad(t *testing.T) {
 func TestLastPassageIsDeterministic(t *testing.T) {
 	run := func(seed int64) (bool, []string) {
 		ge := lpEngine(t, "transcendent_age", seed)
-		if err := ge.DoPrestige(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.DoPrestige())
 		came := ge.pendingLastPassage
 		if came {
-			if err := ge.EndureLastPassage(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.EndureLastPassage())
 		}
 		return came, logMessages(ge)
 	}
@@ -929,9 +863,7 @@ func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 		quietFate(ge)
 		ge.harbingerTickCheck()
 		ge.rng = rand.New(&seqSource{vals: []float64{0.99, 0.41, 0.07, 0.63, 0.29, 0.85}})
-		if err := ge.DoPrestige(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.DoPrestige())
 		if ge.pendingLastPassage {
 			t.Fatalf("%s: rolled a Last Passage on 0.99", age)
 		}

@@ -1240,8 +1240,6 @@ ui.newgame_modal.showSaveNameModalOpts.01,Drop a name:
 ui.newgame_modal.showSaveNameModalOpts.02,Esc: nah
 ui.newgame_modal.showSaveNameModalOpts.03,"Esc: bet, keep it"
 ui.newgame_modal.showSaveNameModalOpts.04,[gray]Enter: lock it in  ·  Tab: reroll name  ·  
-ui.overlay.Register.01," (Esc to bounce) "
-ui.overlay.buildWidgetRoot.01," (Esc to dip) "
 ui.overlay_buildings.buildingsProvider.01,"[gold]═══ Builds: %d dropped, %d unlocked ═══[-]
 "
 ui.overlay_buildings.buildingsProvider.02," [gray]Every age so far, full lore. Drop one with: build <key> (current age only).[-]
@@ -1526,7 +1524,7 @@ ui.overlay_harbinger.harbingerGarrisonLine.02,"     Your garrison counts: it tan
 ui.overlay_harbinger.harbingerGarrisonLine.03,"     Brace plus garrison soften an Endure by %.0f%% max; they can only carry so hard."
 ui.overlay_help.helpProvider.01,"[gold]═══ Getting Around, the Starter Pack ═══[-]
 "
-ui.overlay_help.helpProvider.02,"In AgeForge everything is a command: type it at the prompt at the bottom of the screen and smash Enter. Panels pop up on top of the town, and the prompt stays locked in while one is open."
+ui.overlay_help.helpProvider.02,"In AgeForge everything is a command: type it at the prompt at the bottom of the screen and smash Enter. Panels take over the whole screen and the prompt stays locked in for most of them. The Wonders, Harbinger and Build Plan panels run on letter keys, so press Esc before you type a command there, no cap."
 ui.overlay_help.helpProvider.04,"Scroll a panel that is too long for the screen, like this whole lore dump"
 ui.overlay_help.helpProvider.06,Close the panel (with no panel open: save and dip to the main menu)
 ui.overlay_help.helpProvider.08,"Finish the word for you, autocomplete carry (press again for the next match)"

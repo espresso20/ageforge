@@ -180,7 +180,7 @@ func (o *orb) starSystems() {
 			flag = mapmodel.R(mapmodel.SymCiv, o.tier)
 		}
 		o.fb.fg(s.x+2, o.Y(s.y-1), flag, rc, dSystem)
-		o.labels = append(o.labels, label{s.x - textLen(s.f.Name)/2, s.y - 2, s.f.Name, rc})
+		o.labels = append(o.labels, label{x: s.x - textLen(s.f.Name)/2, y: s.y - 2, text: s.f.Name, fg: rc})
 	}
 }
 

@@ -3,7 +3,6 @@ package game
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -35,23 +34,43 @@ func isolateAccountDir(t *testing.T) string {
 	return tmp
 }
 
-// accountFilePath returns the account.json path for the ACTIVE account's slot inside the
-// isolated data root: <root>/accounts/<activeID>/account.json. It resolves through the same
-// scoped accountPath() the production code uses, so a test that creates/loads an account
-// then checks accountFilePath() sees the file where it was actually written.
-func accountFilePath() string {
-	return accountPath()
+// mustAccount creates the named account and makes it active, failing the test on error.
+// Call isolateAccountDir first so the account lands in a throwaway data root.
+func mustAccount(t *testing.T, name string) *Account {
+	t.Helper()
+	acct, err := CreateNamedAccount(name)
+	if err != nil {
+		t.Fatalf("CreateNamedAccount(%q): %v", name, err)
+	}
+	return acct
 }
 
-// TestLoadOrCreateCreatesAndSigns covers the absent-file path: a fresh account is
+// testAccount creates a throwaway active account for tests that do not care about its name.
+func testAccount(t *testing.T) *Account {
+	t.Helper()
+	return mustAccount(t, "Tester")
+}
+
+// reloadAccount reads the active account back from disk, the way a restart would, failing
+// the test on an error or when no account is found.
+func reloadAccount(t *testing.T) *Account {
+	t.Helper()
+	acct, found, err := LoadAccount()
+	if err != nil {
+		t.Fatalf("LoadAccount: %v", err)
+	}
+	if !found {
+		t.Fatal("LoadAccount: no account on disk")
+	}
+	return acct
+}
+
+// TestCreateNamedAccountCreatesAndSigns covers the absent-file path: a fresh account is
 // created, signed, persisted, and re-loadable with a valid signature.
-func TestLoadOrCreateCreatesAndSigns(t *testing.T) {
+func TestCreateNamedAccountCreatesAndSigns(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (create): %v", err)
-	}
+	acct := testAccount(t)
 	if acct.AccountID == "" {
 		t.Fatal("created account has empty AccountID")
 	}
@@ -72,7 +91,7 @@ func TestLoadOrCreateCreatesAndSigns(t *testing.T) {
 	}
 
 	// File must exist on disk and verify.
-	if _, err := os.Stat(accountFilePath()); err != nil {
+	if _, err := os.Stat(accountPath()); err != nil {
 		t.Fatalf("account.json not written: %v", err)
 	}
 	if !verifyAccount(acct) {
@@ -80,19 +99,13 @@ func TestLoadOrCreateCreatesAndSigns(t *testing.T) {
 	}
 }
 
-// TestLoadOrCreateRoundTrips covers create → load: a second LoadOrCreate returns
-// the same account (same ID), with a valid signature and no tamper flag.
-func TestLoadOrCreateRoundTrips(t *testing.T) {
+// TestLoadAccountRoundTrips covers create → load: LoadAccount returns the account
+// that was created (same ID), with a valid signature and no tamper flag.
+func TestLoadAccountRoundTrips(t *testing.T) {
 	isolateAccountDir(t)
 
-	first, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (first): %v", err)
-	}
-	second, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (second): %v", err)
-	}
+	first := testAccount(t)
+	second := reloadAccount(t)
 	if first.AccountID != second.AccountID {
 		t.Errorf("ID changed across load: %q != %q", first.AccountID, second.AccountID)
 	}
@@ -109,10 +122,7 @@ func TestLoadOrCreateRoundTrips(t *testing.T) {
 func TestSaveRoundTripsDataFields(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	id := acct.AccountID
 	acct.DisplayName = "Adam"
 	acct.Unlocks.Themes = []string{"amber_crt", "obsidian"}
@@ -124,10 +134,7 @@ func TestSaveRoundTripsDataFields(t *testing.T) {
 		t.Fatalf("Save: %v", err)
 	}
 
-	reloaded, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (reload): %v", err)
-	}
+	reloaded := reloadAccount(t)
 	if reloaded.AccountID != id {
 		t.Errorf("ID changed: %q != %q", reloaded.AccountID, id)
 	}
@@ -151,20 +158,17 @@ func TestSaveRoundTripsDataFields(t *testing.T) {
 	}
 }
 
-// TestLoadOrCreateTamperedSetsFlag covers the tampered path: a field is changed on
-// disk WITHOUT re-signing, so the signature no longer matches. LoadOrCreate must
+// TestLoadAccountTamperedSetsFlag covers the tampered path: a field is changed on
+// disk WITHOUT re-signing, so the signature no longer matches. LoadAccount must
 // still return the account but with Tampered=true, and must NOT delete the file.
-func TestLoadOrCreateTamperedSetsFlag(t *testing.T) {
+func TestLoadAccountTamperedSetsFlag(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (create): %v", err)
-	}
+	acct := testAccount(t)
 	id := acct.AccountID
 
 	// Read the signed file, mutate a field without re-signing, write it back.
-	path := accountFilePath()
+	path := accountPath()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read account: %v", err)
@@ -182,10 +186,7 @@ func TestLoadOrCreateTamperedSetsFlag(t *testing.T) {
 		t.Fatalf("write tampered account: %v", err)
 	}
 
-	loaded, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (tampered): %v", err)
-	}
+	loaded := reloadAccount(t)
 	if !loaded.Tampered {
 		t.Error("tampered account not flagged Tampered")
 	}
@@ -204,39 +205,26 @@ func TestLoadOrCreateTamperedSetsFlag(t *testing.T) {
 	}
 }
 
-// TestLoadOrCreateCorruptBacksUpAndRecreates covers the unparseable path: garbage
-// JSON on disk must be renamed to account.json.corrupt and a fresh account created.
-func TestLoadOrCreateCorruptBacksUpAndRecreates(t *testing.T) {
+// TestLoadAccountCorruptBacksUp covers the unparseable path: garbage JSON on disk must
+// be renamed to account.json.corrupt, and LoadAccount reports no account (found=false, no
+// error) without minting one: the caller prompts for a name.
+func TestLoadAccountCorruptBacksUp(t *testing.T) {
 	isolateAccountDir(t)
 
 	// Seed a valid account first so the file lives at the resolved path, then
 	// clobber it with non-JSON.
-	first, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (seed): %v", err)
-	}
-	path := accountFilePath()
+	first := testAccount(t)
+	path := accountPath()
 	if err := os.WriteFile(path, []byte("this is not json {{{"), 0644); err != nil {
 		t.Fatalf("write corrupt account: %v", err)
 	}
 
-	fresh, err := LoadOrCreate()
+	loaded, found, err := LoadAccount()
 	if err != nil {
-		t.Fatalf("LoadOrCreate (corrupt): %v", err)
+		t.Fatalf("LoadAccount (corrupt): %v", err)
 	}
-	// A brand-new account: valid sig, no tamper flag, and a different ID than the
-	// (now-corrupted) original.
-	if fresh.AccountID == "" {
-		t.Fatal("fresh account after corrupt has empty AccountID")
-	}
-	if fresh.AccountID == first.AccountID {
-		t.Error("fresh account reused the corrupt account's ID (should be regenerated)")
-	}
-	if fresh.Tampered {
-		t.Error("fresh account after corrupt flagged Tampered")
-	}
-	if !verifyAccount(fresh) {
-		t.Error("fresh account after corrupt fails signature verification")
+	if found || loaded != nil {
+		t.Errorf("LoadAccount (corrupt) = (%v, found=%v), want (nil, false)", loaded, found)
 	}
 
 	// The .corrupt backup must exist and hold the original garbage bytes.
@@ -248,20 +236,17 @@ func TestLoadOrCreateCorruptBacksUpAndRecreates(t *testing.T) {
 	if string(got) != "this is not json {{{" {
 		t.Errorf(".corrupt backup = %q, want the original garbage bytes", string(got))
 	}
-	// The fresh account has its own ID, so it lives in its own slot and is the active
-	// account now; the old slot keeps only the .corrupt backup.
-	freshPath := filepath.Join(accountDir(fresh.AccountID), accountFileName)
-	if _, err := os.Stat(freshPath); err != nil {
-		t.Errorf("fresh account.json not written to its own slot after corrupt recovery: %v", err)
-	}
-	if got := getActiveAccountID(); got != fresh.AccountID {
-		t.Errorf("active account after corrupt recovery = %q, want the fresh account %q", got, fresh.AccountID)
-	}
-	if ptr, err := readActivePointer(); err != nil || ptr != fresh.AccountID {
-		t.Errorf("active pointer after corrupt recovery = %q (err %v), want %q", ptr, err, fresh.AccountID)
-	}
+	// Nothing is recreated: the slot keeps only the backup, and the active pointer
+	// still names the old account.
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Errorf("the corrupt slot still has an account.json (stat err = %v); only the backup should remain", err)
+	}
+	if ptr, err := readActivePointer(); err != nil || ptr != first.AccountID {
+		t.Errorf("active pointer after corrupt load = %q (err %v), want it unchanged at %q", ptr, err, first.AccountID)
+	}
+	// With the bad file set aside, the next load finds nothing.
+	if again, found, err := LoadAccount(); err != nil || found || again != nil {
+		t.Errorf("second LoadAccount = (%v, found=%v, err=%v), want (nil, false, nil)", again, found, err)
 	}
 }
 
@@ -273,15 +258,12 @@ func TestWipeAccount(t *testing.T) {
 	isolateAccountDir(t)
 
 	// Create a named account and confirm the file exists.
-	acct, err := CreateNamedAccount("Adam")
-	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
-	}
+	acct := mustAccount(t, "Adam")
 	if acct.DisplayName != "Adam" {
 		t.Fatalf("DisplayName = %q, want Adam", acct.DisplayName)
 	}
 	id := acct.AccountID
-	path := accountFilePath()
+	path := accountPath()
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("account.json not written: %v", err)
 	}
@@ -320,35 +302,12 @@ func TestWipeAccount(t *testing.T) {
 
 // --- Phase 4: recovery code (the accounts design §3.5 / §8 / §9) ---
 
-// TestRecoveryCodeRoundTrip covers the core contract: a.RecoveryCode() →
-// ImportRecoveryCode(thatCode) yields an account with the SAME AccountID.
-func TestRecoveryCodeRoundTrip(t *testing.T) {
-	isolateAccountDir(t)
-
-	orig, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
-	code := orig.RecoveryCode()
-
-	restored, err := ImportRecoveryCode(code)
-	if err != nil {
-		t.Fatalf("ImportRecoveryCode(%q): %v", code, err)
-	}
-	if restored.AccountID != orig.AccountID {
-		t.Errorf("round-trip ID mismatch: %q != %q", restored.AccountID, orig.AccountID)
-	}
-}
-
 // TestRecoveryCodeFormat checks the produced shape: AGEF- prefix, all uppercase,
 // dash-grouped in 4-char groups, and that it decodes back to the same ID.
 func TestRecoveryCodeFormat(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	code := acct.RecoveryCode()
 
 	if !strings.HasPrefix(code, "AGEF-") {
@@ -383,10 +342,7 @@ func TestRecoveryCodeFormat(t *testing.T) {
 func TestRecoveryCodeTypoGuard(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	code := acct.RecoveryCode()
 
 	// Flip an early body character (a high-order payload bit, well inside the real
@@ -418,10 +374,7 @@ func TestRecoveryCodeTypoGuard(t *testing.T) {
 func TestImportRecoveryCodeWritesSignedEmptyAccount(t *testing.T) {
 	isolateAccountDir(t)
 
-	orig, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	orig := testAccount(t)
 	code := orig.RecoveryCode()
 
 	restored, err := ImportRecoveryCode(code)
@@ -442,10 +395,7 @@ func TestImportRecoveryCodeWritesSignedEmptyAccount(t *testing.T) {
 	}
 
 	// And the on-disk file must reload, verify, and be untampered.
-	reloaded, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (reload after import): %v", err)
-	}
+	reloaded := reloadAccount(t)
 	if reloaded.AccountID != orig.AccountID {
 		t.Errorf("reloaded ID = %q, want %q", reloaded.AccountID, orig.AccountID)
 	}
@@ -462,10 +412,7 @@ func TestImportRecoveryCodeWritesSignedEmptyAccount(t *testing.T) {
 func TestImportRecoveryCodeLenient(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	code := acct.RecoveryCode()
 	want := acct.AccountID
 

@@ -77,11 +77,8 @@ func TestCreateNamedAccount(t *testing.T) {
 func TestCreateNamedAccountCarriesOverData(t *testing.T) {
 	isolateAccountDir(t)
 
-	// Seed a legacy random-id account with an unlock + a lifetime stat.
-	legacy, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (legacy seed): %v", err)
-	}
+	// Seed an earlier account (a different identity) with an unlock + a lifetime stat.
+	legacy := mustAccount(t, "Legacy")
 	legacy.Unlocks.Themes = []string{"obsidian"}
 	legacy.Stats.TotalPrestiges = 7
 	legacy.Achievements = []string{"first_prestige"}
@@ -97,7 +94,7 @@ func TestCreateNamedAccountCarriesOverData(t *testing.T) {
 		t.Errorf("AccountID = %q, want name-derived", named.AccountID)
 	}
 	if named.AccountID == legacy.AccountID {
-		t.Error("named account kept the legacy random ID; should be name-derived")
+		t.Error("named account kept the earlier account's ID; should be name-derived")
 	}
 	if len(named.Unlocks.Themes) != 1 || named.Unlocks.Themes[0] != "obsidian" {
 		t.Errorf("unlock not carried over: %v", named.Unlocks.Themes)

@@ -28,9 +28,7 @@ func TestFullProgressCompletesOnATickWithNoWork(t *testing.T) {
 	if _, err := ge.SetResearchShare(0); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	ge.mu.Lock()
 	ge.Research.progress = ge.Research.defs["tool_making"].Cost
 	ge.processResearch()
@@ -50,12 +48,8 @@ func TestFinishedTechsOverflowIsGone(t *testing.T) {
 	if _, err := ge.SetResearchShare(0); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.PlanAddResearch("pottery"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("pottery"))
+	noErr(t, ge.StartResearch("tool_making"))
 	price := ge.GetState().Research.Techs["tool_making"].Cost
 	ge.mu.Lock()
 	if done := ge.workResearch(price * 1.5); done != "" {
@@ -88,9 +82,7 @@ func TestGiftWithNothingInProgressIsLost(t *testing.T) {
 	if n := logCount(ge, "Your scholars had nothing to study, so the insight was lost."); n != 1 {
 		t.Errorf("the lost gift was logged %d times, want one line", n)
 	}
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	if p := ge.GetState().Research.Progress; p != 0 {
 		t.Errorf("a tech started after a lost gift has progress %v, want 0", p)
 	}
@@ -101,9 +93,7 @@ func TestGiftWithNothingInProgressIsLost(t *testing.T) {
 // scholars gained some ground.
 func TestGiftLandsAtMostHalfATech(t *testing.T) {
 	ge := scholarEngine(t)
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	price := ge.GetState().Research.Techs["tool_making"].Cost
 	ge.mu.Lock()
 	said := ge.grantResearch(price * 0.9)
@@ -124,9 +114,7 @@ func TestGiftLandsAtMostHalfATech(t *testing.T) {
 
 	// A gift of a quarter fits and says nothing about a cut.
 	ge = scholarEngine(t)
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	ge.mu.Lock()
 	said = ge.grantResearch(price / 4)
 	ge.mu.Unlock()
@@ -139,9 +127,7 @@ func TestGiftLandsAtMostHalfATech(t *testing.T) {
 
 	// Progress already past half: a capped gift completes the tech.
 	ge = scholarEngine(t)
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	ge.mu.Lock()
 	ge.Research.progress = price * 0.6
 	said = ge.grantResearch(price * 0.9)
@@ -161,9 +147,7 @@ func TestGiftLandsAtMostHalfATech(t *testing.T) {
 
 	// Progress below half: a capped gift stops short of the price.
 	ge = scholarEngine(t)
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	ge.mu.Lock()
 	ge.Research.progress = price * 0.3
 	ge.grantResearch(price * 0.9)
@@ -281,9 +265,7 @@ func TestAncientMemoryStartsAtZero(t *testing.T) {
 	ge.mu.Lock()
 	ge.pendingMemoryTech = "tool_making"
 	ge.mu.Unlock()
-	if err := ge.AcceptAncientMemory(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.AcceptAncientMemory())
 	st := ge.GetState().Research
 	if st.CurrentTech != "tool_making" || st.Progress != 0 || st.Techs["tool_making"].Researched {
 		t.Errorf("Ancient Memory: in progress %q at %v, researched %v; want tool_making at 0 and unfinished", st.CurrentTech, st.Progress, st.Techs["tool_making"].Researched)
@@ -299,9 +281,7 @@ func twinTown(t *testing.T) *GameEngine {
 	t.Helper()
 	ge := scholarEngine(t)
 	for _, key := range []string{"language", "primitive_writing"} {
-		if err := ge.PlanAddResearch(key); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.PlanAddResearch(key))
 	}
 	ge.mu.Lock()
 	ge.runPlanTick() // the first tech starts

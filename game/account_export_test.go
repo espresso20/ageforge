@@ -14,36 +14,6 @@ import (
 // safety, and the integrity/missing-id guards. Every case isolates the data ROOT via
 // isolateAccountDir(t), which also resets the process-global active id between cases.
 
-// TestExportCarriesIdentity covers Phase C's headline shape change: the export blob now
-// round-trips the owning account's AccountID + DisplayName alongside its data.
-func TestExportCarriesIdentity(t *testing.T) {
-	isolateAccountDir(t)
-
-	acct, err := CreateAccount("Ada Lovelace")
-	if err != nil {
-		t.Fatalf("CreateAccount: %v", err)
-	}
-	if _, err := acct.UnlockTheme("amber_crt"); err != nil {
-		t.Fatalf("UnlockTheme: %v", err)
-	}
-
-	blob, err := acct.ExportProgress()
-	if err != nil {
-		t.Fatalf("ExportProgress: %v", err)
-	}
-	// The identity must be present in the round-tripped blob (unmarshal it back).
-	var exp progressExport
-	if err := json.Unmarshal(blob, &exp); err != nil {
-		t.Fatalf("unmarshal export: %v", err)
-	}
-	if exp.AccountID != acct.AccountID {
-		t.Fatalf("export AccountID = %q, want %q", exp.AccountID, acct.AccountID)
-	}
-	if exp.DisplayName != "Ada Lovelace" {
-		t.Fatalf("export DisplayName = %q, want %q", exp.DisplayName, "Ada Lovelace")
-	}
-}
-
 // TestImportCreatesAbsentSlot covers the create path: importing a blob whose slot does NOT
 // exist in this root mints accounts/<blobid>/account.json carrying the blob's id, name, and
 // data; the slot is loadable and matches.

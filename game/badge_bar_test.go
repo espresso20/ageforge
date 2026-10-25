@@ -51,9 +51,7 @@ func writeOldFile(t *testing.T) (id string) {
 	acct.Counters = map[string]float64{stoneCount: r2.Threshold * 2, "built.lineage.housing": config.Billion}
 	acct.dirty = true
 	acct.mu.Unlock()
-	if err := acct.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.Save())
 	return acct.AccountID
 }
 
@@ -127,9 +125,7 @@ func TestRungKeepsItsBarWhenTheBarRises(t *testing.T) {
 		t.Fatalf("the earned rung remembers %v, want %v", got, r3.Threshold)
 	}
 	wasText, _ := rules.Core().BadgeDescAt(stoneRung3, r3.Threshold)
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 
 	// Raise every production ladder's top through the ruleset.
 	src := rules.FromConfig()
@@ -203,14 +199,10 @@ func TestRememberedCountIsNotSigned(t *testing.T) {
 		Tampered  bool                 `json:"tampered,omitempty"`
 		Signature string               `json:"_sig,omitempty"`
 	}
-	if err := json.Unmarshal(raw, &old); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(raw, &old))
 	out, _ := json.Marshal(old)
 	var asOld badgeFile
-	if err := json.Unmarshal(out, &asOld); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(out, &asOld))
 	for _, e := range asOld.Badges {
 		if e.Count != 0 {
 			t.Fatal("the stand-in for the old build kept a count")
@@ -255,9 +247,7 @@ func TestRungsThatGiveSomethingAreLeftAlone(t *testing.T) {
 	if len(given) == 0 {
 		t.Fatal("no counted ladder rung gives a theme or a title")
 	}
-	if err := acct.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.Save())
 	_, loaded := openIn(t, acct.AccountID)
 	for _, key := range given {
 		if !hasBadge(loaded, key) {

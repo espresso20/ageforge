@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -12,16 +12,6 @@ import (
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
 )
-
-// containsStr reports whether s is in xs.
-func containsStr(xs []string, s string) bool {
-	for _, x := range xs {
-		if x == s {
-			return true
-		}
-	}
-	return false
-}
 
 // encounterSignature captures everything a run of encounters produced — the
 // discovered roster, the active timed boons (key/duration/effect), and the log
@@ -143,7 +133,7 @@ func TestDiscoverFactions_AgeFallbackAndFloor(t *testing.T) {
 	// ageFallbackGap ages past MinAge: the fallback fires with no expeditions.
 	dm := NewDiplomacyManager()
 	got := dm.DiscoverFactions("classical_age", order) // bronze + 2
-	if !containsStr(got, "riverlands_tribes") {
+	if !slices.Contains(got, "riverlands_tribes") {
 		t.Fatalf("age fallback did not auto-discover the long-eligible founding civ; got %v", got)
 	}
 	fs := dm.factions["riverlands_tribes"]
@@ -358,15 +348,8 @@ func TestSeedPersists_RoundTrip(t *testing.T) {
 	want := ge.seed
 	ge.mu.Unlock()
 
-	if err := ge.SaveGame("test_seed_roundtrip"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_seed_roundtrip.json")
+	ge2 := saveAndLoad(t, ge, "test_seed_roundtrip")
 
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_seed_roundtrip"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
 	if got := ge2.Seed(); got != want {
 		t.Errorf("seed did not round-trip: got %d, want %d", got, want)
 	}
