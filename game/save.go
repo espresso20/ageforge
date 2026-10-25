@@ -328,8 +328,8 @@ type TradeSave struct {
 
 // DiplomacySave holds diplomacy state for save
 type DiplomacySave struct {
-	Factions    map[string]FactionStateSave `json:"factions"`
-	LentWorkers []LentWorkerBatch           `json:"lent_workers,omitempty"`
+	Factions    map[string]FactionState `json:"factions"`
+	LentWorkers []LentWorkerBatch       `json:"lent_workers,omitempty"`
 	// BoonWorkers are the faction-boon crews still on loan. omitempty, so a
 	// save with none keeps its bytes.
 	BoonWorkers []BoonWorkerLoan `json:"boon_workers,omitempty"`

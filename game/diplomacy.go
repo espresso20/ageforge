@@ -2,6 +2,7 @@ package game
 
 import (
 	"math/rand"
+	"slices"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -151,30 +152,31 @@ type DiplomacyManager struct {
 // Status transitions: neutral → friendly (opinion ≥ 25 after gift) → allied (opinion ≥ 50, 500 gold).
 // rival and embargo both cause -5 opinion per 50 ticks.
 type FactionState struct {
-	Discovered bool
-	Opinion    int    // -100 to 100
-	Status     string // "neutral", "friendly", "allied", "rival", "embargo"
-	TradeCount int
+	Discovered bool   `json:"discovered"`
+	Opinion    int    `json:"opinion"` // -100 to 100
+	Status     string `json:"status"`  // "neutral", "friendly", "allied", "rival", "embargo"
+	TradeCount int    `json:"trade_count"`
 
 	// OpinionAccum is a transient sub-1.0/tick accumulator (e.g. embassy
 	// trickle). Not persisted — it spills into Opinion as it crosses 1.0.
-	OpinionAccum float64
+	OpinionAccum float64 `json:"-"`
 
 	// War state (event-driven; no combat). War begins only when Opinion <
 	// warOpinionThreshold AND Provocations >= warProvocationThreshold.
-	AtWar               bool
-	Provocations        int // count of crossed provocations (raids on their routes + embargoes)
-	RaidedRoutes        int // times the player raided this civ's trade route
-	Embargoes           int // times the player embargoed this civ
-	LastProvocationTick int // tick of the most recent provocation (drives the wait-out timer)
+	AtWar               bool `json:"at_war"`
+	Provocations        int  `json:"provocations"`          // count of crossed provocations (raids on their routes + embargoes)
+	RaidedRoutes        int  `json:"raided_routes"`         // times the player raided this civ's trade route
+	Embargoes           int  `json:"embargoes"`             // times the player embargoed this civ
+	LastProvocationTick int  `json:"last_provocation_tick"` // tick of the most recent provocation (drives the wait-out timer)
 
 	// Trade deals (deals.go): the current offers, how many times they have
 	// been rolled, ticks of live play since the last roll, and the age they
-	// were priced for.
-	Deals     []FactionDeal
-	DealRound int
-	DealTicks int
-	DealsFor  string
+	// were priced for. Absent from saves before them, which roll a fresh set
+	// on the first tick.
+	Deals     []FactionDeal `json:"deals,omitempty"`
+	DealRound int           `json:"deal_round,omitempty"`
+	DealTicks int           `json:"deal_ticks,omitempty"`
+	DealsFor  string        `json:"deals_for,omitempty"`
 }
 
 // LentWorkerBatch records one outstanding worker loan from a civilization.
@@ -946,23 +948,11 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 }
 
 // LoadState restores diplomacy state from save.
-func (dm *DiplomacyManager) LoadState(factions map[string]FactionStateSave, lent []LentWorkerBatch) {
+func (dm *DiplomacyManager) LoadState(factions map[string]FactionState, lent []LentWorkerBatch) {
 	for k, v := range factions {
-		dm.factions[k] = &FactionState{
-			Discovered:          v.Discovered,
-			Opinion:             v.Opinion,
-			Status:              v.Status,
-			TradeCount:          v.TradeCount,
-			AtWar:               v.AtWar,
-			Provocations:        v.Provocations,
-			RaidedRoutes:        v.RaidedRoutes,
-			Embargoes:           v.Embargoes,
-			LastProvocationTick: v.LastProvocationTick,
-			Deals:               append([]FactionDeal(nil), v.Deals...),
-			DealRound:           v.DealRound,
-			DealTicks:           v.DealTicks,
-			DealsFor:            v.DealsFor,
-		}
+		v.OpinionAccum = 0
+		v.Deals = slices.Clone(v.Deals)
+		dm.factions[k] = &v
 	}
 	if lent != nil {
 		dm.lentBatches = append([]LentWorkerBatch(nil), lent...)
@@ -979,44 +969,14 @@ func (dm *DiplomacyManager) LentWorkerTotal() int {
 	return total
 }
 
-// FactionStateSave is the serializable form of FactionState
-type FactionStateSave struct {
-	Discovered          bool   `json:"discovered"`
-	Opinion             int    `json:"opinion"`
-	Status              string `json:"status"`
-	TradeCount          int    `json:"trade_count"`
-	AtWar               bool   `json:"at_war"`
-	Provocations        int    `json:"provocations"`
-	RaidedRoutes        int    `json:"raided_routes"`
-	Embargoes           int    `json:"embargoes"`
-	LastProvocationTick int    `json:"last_provocation_tick"`
-	// Trade deals (deals.go); absent from saves before them, which roll a
-	// fresh set on the first tick.
-	Deals     []FactionDeal `json:"deals,omitempty"`
-	DealRound int           `json:"deal_round,omitempty"`
-	DealTicks int           `json:"deal_ticks,omitempty"`
-	DealsFor  string        `json:"deals_for,omitempty"`
-}
-
 // GetFactionsForSave returns faction states for serialization
-func (dm *DiplomacyManager) GetFactionsForSave() map[string]FactionStateSave {
-	out := make(map[string]FactionStateSave, len(dm.factions))
+func (dm *DiplomacyManager) GetFactionsForSave() map[string]FactionState {
+	out := make(map[string]FactionState, len(dm.factions))
 	for k, fs := range dm.factions {
-		out[k] = FactionStateSave{
-			Discovered:          fs.Discovered,
-			Opinion:             fs.Opinion,
-			Status:              fs.Status,
-			TradeCount:          fs.TradeCount,
-			AtWar:               fs.AtWar,
-			Provocations:        fs.Provocations,
-			RaidedRoutes:        fs.RaidedRoutes,
-			Embargoes:           fs.Embargoes,
-			LastProvocationTick: fs.LastProvocationTick,
-			Deals:               append([]FactionDeal(nil), fs.Deals...),
-			DealRound:           fs.DealRound,
-			DealTicks:           fs.DealTicks,
-			DealsFor:            fs.DealsFor,
-		}
+		c := *fs
+		c.OpinionAccum = 0
+		c.Deals = slices.Clone(fs.Deals)
+		out[k] = c
 	}
 	return out
 }
