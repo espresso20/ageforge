@@ -112,6 +112,36 @@ func (g *tGrid) text(x, y int, s string, st tStyle, lane int) int {
 	return x
 }
 
+// card draws a rounded frame cw by ch at (x0, y0), blank inside, with name
+// on its top edge and, when the edge has the room, esc (the hint that Esc
+// closes it) at the right.
+func (g *tGrid) card(x0, y0, cw, ch int, name, esc string) {
+	for y := 0; y < ch; y++ {
+		for x := 0; x < cw; x++ {
+			r := ' '
+			switch {
+			case y == 0 && x == 0:
+				r = '╭'
+			case y == 0 && x == cw-1:
+				r = '╮'
+			case y == ch-1 && x == 0:
+				r = '╰'
+			case y == ch-1 && x == cw-1:
+				r = '╯'
+			case y == 0 || y == ch-1:
+				r = '─'
+			case x == 0 || x == cw-1:
+				r = '│'
+			}
+			g.put(x0+x, y0+y, r, tsBorder, -1)
+		}
+	}
+	g.text(x0+2, y0, clipRunes(" "+name+" ", cw-4), tsBright, -1)
+	if cw > runeLen(esc)+runeLen(name)+8 {
+		g.text(x0+cw-2-runeLen(esc), y0, esc, tsDim, -1)
+	}
+}
+
 // String is the grid as lines of text, trailing spaces kept.
 func (g *tGrid) String() string {
 	var sb strings.Builder

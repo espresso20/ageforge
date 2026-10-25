@@ -1428,30 +1428,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		lines = lines[:max(ch-2, 0)]
 	}
 	x0, y0 := ox+(mw-cw)/2, oy+(mh-ch)/2
-	for y := 0; y < ch; y++ {
-		for x := 0; x < cw; x++ {
-			r := ' '
-			switch {
-			case y == 0 && x == 0:
-				r = '╭'
-			case y == 0 && x == cw-1:
-				r = '╮'
-			case y == ch-1 && x == 0:
-				r = '╰'
-			case y == ch-1 && x == cw-1:
-				r = '╯'
-			case y == 0 || y == ch-1:
-				r = '─'
-			case x == 0 || x == cw-1:
-				r = '│'
-			}
-			out.put(x0+x, y0+y, r, tsBorder, -1)
-		}
-	}
-	out.text(x0+2, y0, clipRunes(" "+n.def.Name+" ", cw-4), tsBright, -1)
-	if esc := vibe.Line("ui.research_tree.drawCard.01", " Esc closes "); cw > len(esc)+len([]rune(n.def.Name))+8 {
-		out.text(x0+cw-2-len([]rune(esc)), y0, esc, tsDim, -1)
-	}
+	out.card(x0, y0, cw, ch, n.def.Name, vibe.Line("ui.research_tree.drawCard.01", " Esc closes "))
 	if badge {
 		ring := tsLane
 		if n.def.Capstone {
