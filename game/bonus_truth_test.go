@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -412,10 +413,7 @@ func truthMoraleLift(t *testing.T, ge *GameEngine) float64 {
 	wonder := ""
 	for _, key := range ge.Buildings.order {
 		def := ge.Buildings.defs[key]
-		lifts := false
-		for _, e := range def.Effects {
-			lifts = lifts || e.Type == "morale"
-		}
+		lifts := slices.ContainsFunc(def.Effects, func(e config.Effect) bool { return e.Type == "morale" })
 		if def.Category == "wonder" && !lifts {
 			wonder = key
 			break

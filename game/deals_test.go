@@ -544,13 +544,7 @@ func TestDeals_Plan(t *testing.T) {
 	if left != 0 {
 		t.Error("a deal item outlived its offer")
 	}
-	found := false
-	for _, l := range ge.GetState().Log {
-		if strings.Contains(l.Message, "the offer is gone") {
-			found = true
-		}
-	}
-	if !found {
+	if !logHas(ge, "the offer is gone") {
 		t.Error("no log line for the dropped deal item")
 	}
 }
@@ -596,11 +590,7 @@ func TestDeals_Wording(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "Deal with the Merchant Guild. " + dealLogTerms(d1) + "."
-	found := false
-	for _, l := range ge.GetState().Log {
-		found = found || l.Message == want
-	}
-	if !found {
+	if !logHasLine(ge, want) {
 		t.Errorf("no log line %q", want)
 	}
 }

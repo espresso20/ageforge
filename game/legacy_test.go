@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -172,13 +173,9 @@ func TestPlanTemplateWithinPlanCap(t *testing.T) {
 	if st := ge.GetState(); PlanLoad(st.Plan) != MaxPlanItems || len(st.Plan) != MaxPlanItems+1 {
 		t.Errorf("the plan holds %d items, %d of them counted; want the cap of %d and one tech on top", len(st.Plan), PlanLoad(st.Plan), MaxPlanItems)
 	}
-	found := false
-	for _, l := range ge.GetLogs() {
-		if strings.HasPrefix(l.Message, "Plan Template: added ") && strings.Contains(l.Message, "The plan is full (60 items, not counting research)") {
-			found = true
-		}
-	}
-	if !found {
+	if !slices.ContainsFunc(ge.GetLogs(), func(l LogEntry) bool {
+		return strings.HasPrefix(l.Message, "Plan Template: added ") && strings.Contains(l.Message, "The plan is full (60 items, not counting research)")
+	}) {
 		t.Error("no Plan Template line saying the plan was full")
 	}
 }

@@ -411,13 +411,9 @@ func TestMissionBoard_TitlesComeFromTheAgesWords(t *testing.T) {
 				}
 			}
 			names, objs := []string{words.Tiers[which]}, words.ObjectivesFor(which)
-			ok := false
-			for _, obj := range objs {
-				for _, place := range words.Places {
-					ok = ok || title == names[0]+": "+obj+" "+place
-				}
-			}
-			if !ok {
+			if !slices.ContainsFunc(objs[:], func(obj string) bool {
+				return slices.ContainsFunc(words.Places[:], func(place string) bool { return title == names[0]+": "+obj+" "+place })
+			}) {
 				t.Errorf("%s slot %d: %q is not built from the age's words", age.Key, i+1, o.Title)
 			}
 			if !slices.Contains(words.Twists[:], o.Description) {

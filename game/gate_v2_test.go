@@ -304,13 +304,7 @@ func TestMeasuredGateOpensThroughTheTick(t *testing.T) {
 	if !st.AgeReady || !st.AdvanceView().AllStand {
 		t.Fatalf("the gate is shut with the measures met: ready %v, pillars %v", st.AgeReady, st.AdvanceView().AllStand)
 	}
-	logged := false
-	for _, e := range st.Log {
-		if strings.Contains(e.Message, "Ready to advance") {
-			logged = true
-		}
-	}
-	if !logged {
+	if !logHas(ge, "Ready to advance") {
 		t.Error("no notice that the age is ready")
 	}
 	if err := ge.AdvanceAge(); err != nil {

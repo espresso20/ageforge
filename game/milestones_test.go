@@ -31,13 +31,7 @@ func TestMilestoneManager_CheckFirstShelter(t *testing.T) {
 	bm.counts["hut"] = 1
 	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 
-	found := false
-	for _, ms := range completed {
-		if ms.Key == "first_shelter" {
-			found = true
-		}
-	}
-	if !found {
+	if !containsKey(completed, "first_shelter") {
 		t.Error("first_shelter should complete when hut count >= 1")
 	}
 
@@ -70,13 +64,7 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	}
 
 	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, need, 0, 0, nil, 0, 0, 0)
-	found := false
-	for _, ms := range completed {
-		if ms.Key == "small_village" {
-			found = true
-		}
-	}
-	if !found {
+	if !containsKey(completed, "small_village") {
 		t.Errorf("small_village should trigger at pop %d", need)
 	}
 }
@@ -219,13 +207,7 @@ func TestMilestoneManager_AgeMilestone(t *testing.T) {
 	}
 
 	completed = mm.CheckMilestones(2, "bronze_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
-	found := false
-	for _, ms := range completed {
-		if ms.Key == "bronze_pioneer" {
-			found = true
-		}
-	}
-	if !found {
+	if !containsKey(completed, "bronze_pioneer") {
 		t.Error("bronze_pioneer should trigger in bronze_age")
 	}
 }

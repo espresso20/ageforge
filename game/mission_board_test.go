@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 	"testing"
 
@@ -175,11 +176,9 @@ func TestBoard_RegeneratedOnAnAgeAdvance(t *testing.T) {
 			t.Fatalf("slot %d after the advance: %+v", i+1, slot.Offer)
 		}
 		tier := strings.TrimPrefix(slot.Offer.Title, config.RareTitleWord()+" ")
-		found := false
-		for _, name := range words.Tiers {
-			found = found || strings.HasPrefix(tier, name+": ")
-		}
-		if !found {
+		if !slices.ContainsFunc(words.Tiers[:], func(name string) bool {
+			return strings.HasPrefix(tier, name+": ")
+		}) {
 			t.Errorf("slot %d reads %q, which is no tier of the Bronze Age", i+1, slot.Offer.Title)
 		}
 	}

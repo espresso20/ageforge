@@ -136,13 +136,7 @@ func TestFirstSoldiersMilestone_TriggersOnCumulativeTrained(t *testing.T) {
 
 	// 5 trained: triggers.
 	got := check(5)
-	found := false
-	for _, d := range got {
-		if d.Key == "first_soldiers" {
-			found = true
-		}
-	}
-	if !found {
+	if !containsKey(got, "first_soldiers") {
 		t.Fatalf("first_soldiers should trigger at 5 cumulative trained")
 	}
 	if !mm.completed["first_soldiers"] {

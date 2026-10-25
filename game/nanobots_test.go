@@ -2,7 +2,10 @@ package game
 
 import (
 	"math"
+	"slices"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // Nanobot System (Trello 0kLti5GR) — engine-level checks that the new content
@@ -18,13 +21,9 @@ func TestNanobots_FoundryProducesThroughEngine(t *testing.T) {
 	if !ok {
 		t.Fatal("engine BuildingManager has no nano_foundry def")
 	}
-	found := false
-	for _, eff := range def.Effects {
-		if eff.Type == "production" && eff.Target == "nanobots" && eff.Value > 0 {
-			found = true
-		}
-	}
-	if !found {
+	if !slices.ContainsFunc(def.Effects, func(eff config.Effect) bool {
+		return eff.Type == "production" && eff.Target == "nanobots" && eff.Value > 0
+	}) {
 		t.Errorf("nano_foundry def carries no positive nanobots production effect: %+v", def.Effects)
 	}
 }

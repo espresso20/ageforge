@@ -3,6 +3,7 @@ package game
 import (
 	"math"
 	"math/rand"
+	"slices"
 	"strings"
 	"testing"
 
@@ -696,13 +697,9 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 		if !ge.cosmicLegacy || !hasCosmicLegacyModifier(ge) {
 			t.Fatalf("%s: legacy %v, modifier %v", when, ge.cosmicLegacy, hasCosmicLegacyModifier(ge))
 		}
-		found := false
-		for _, m := range ge.GetState().Modifiers {
-			if m.Source == cosmicLegacySource && m.Target == "production_all" {
-				found = true
-			}
-		}
-		if !found {
+		if !slices.ContainsFunc(ge.GetState().Modifiers, func(m Modifier) bool {
+			return m.Source == cosmicLegacySource && m.Target == "production_all"
+		}) {
 			t.Errorf("%s: the Cosmic Legacy is missing from GameState.Modifiers", when)
 		}
 		if _, ok := ge.permanentBonuses["production_all"]; ok {

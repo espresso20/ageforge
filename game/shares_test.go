@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -82,11 +83,9 @@ func TestShares_FreshRunGetsStaffed(t *testing.T) {
 	if !logHas(ge, "Roster: recruited") {
 		t.Error("no routine line for the recruits")
 	}
-	found := false
-	for _, l := range ge.log {
-		found = found || l.Type == "info" && strings.HasPrefix(l.Message, "Workers arrive on their own")
-	}
-	if !found {
+	if !slices.ContainsFunc(ge.log, func(l LogEntry) bool {
+		return l.Type == "info" && strings.HasPrefix(l.Message, "Workers arrive on their own")
+	}) {
 		t.Error("the first recruits came without the main-log line that says why")
 	}
 }

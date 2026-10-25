@@ -1,6 +1,7 @@
 package game
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -196,14 +197,7 @@ func TestAwakening_AllDefinitionsValid(t *testing.T) {
 			t.Errorf("awakening %q trigger age %q does not belong to epoch %q",
 				a.Key, a.TriggerAge, a.EpochKey)
 		}
-		ageInEpoch := false
-		for _, age := range ep.Ages {
-			if age == a.TriggerAge {
-				ageInEpoch = true
-				break
-			}
-		}
-		if !ageInEpoch {
+		if !slices.Contains(ep.Ages, a.TriggerAge) {
 			t.Errorf("awakening %q trigger age %q not listed in epoch %q ages %v",
 				a.Key, a.TriggerAge, a.EpochKey, ep.Ages)
 		}

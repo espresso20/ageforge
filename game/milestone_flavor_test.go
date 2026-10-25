@@ -122,14 +122,7 @@ func TestEventLogMessageEmittedOnTrigger(t *testing.T) {
 		t.Fatal("bountiful_harvest lost its LogMessage")
 	}
 	ge.AddLog("event", def.LogMessage)
-	logs := ge.GetLogs()
-	found := false
-	for _, e := range logs {
-		if e.Message == def.LogMessage {
-			found = true
-		}
-	}
-	if !found {
+	if !logHasLine(ge, def.LogMessage) {
 		t.Errorf("event LogMessage %q did not round-trip through the log", def.LogMessage)
 	}
 }

@@ -335,13 +335,7 @@ func TestEndureDebuffStretch(t *testing.T) {
 		t.Fatal("no Reconstruction Effort after Endure")
 	}
 	want := approxTicks(562, ge.tickIntervalLocked())
-	quoted := false
-	for _, l := range ge.log {
-		if strings.Contains(l.Message, "Reconstruction: all production") && strings.Contains(l.Message, want) {
-			quoted = true
-		}
-	}
-	if !quoted {
+	if !logHasAll(ge, "Reconstruction: all production", want) {
 		t.Errorf("no reconstruction log line quoting %s", want)
 	}
 }
