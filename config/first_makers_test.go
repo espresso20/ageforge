@@ -15,11 +15,12 @@ import (
 // town already makes. The first building to make a resource (in age order,
 // wonders aside) is not priced in that resource, or a town could never build
 // the building that starts it. The hand-gathered raws of the early ages (wood,
-// stone, steel) are not held to this; the rule starts with the Modern Age.
+// stone) and the Renaissance foundry's steel are not held to this; the rule
+// starts with the Colonial Age.
 func TestFirstMakerIsNotPricedInWhatItMakes(t *testing.T) {
 	made := map[string]bool{}
 	defs := BaseBuildings()
-	modern := AgeByKey()["modern_age"].Order
+	from := AgeByKey()["colonial_age"].Order
 	for _, a := range Ages() {
 		var started []string // resources first made in this age
 		for _, d := range defs {
@@ -31,7 +32,7 @@ func TestFirstMakerIsNotPricedInWhatItMakes(t *testing.T) {
 					continue
 				}
 				started = append(started, e.Target)
-				if _, has := d.BaseCost[e.Target]; has && a.Order >= modern {
+				if _, has := d.BaseCost[e.Target]; has && a.Order >= from {
 					t.Errorf("%s is priced in %s, a resource it is a first maker of in %s", d.Key, e.Target, a.Key)
 				}
 			}
