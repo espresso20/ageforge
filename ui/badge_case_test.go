@@ -556,8 +556,7 @@ func TestLegendaryShimmerShowsInThePlainTier(t *testing.T) {
 //     in one ink are told apart by shape alone).
 func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 	views, sum := caseFixture()
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	for _, th := range theme.All() {
 		must(t, theme.SetActive(th.Key))
 		pal := newGridPalette(0, nil)
