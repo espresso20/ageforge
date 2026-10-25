@@ -65,21 +65,6 @@ type splashLine struct {
 	kind splashKind
 }
 
-// buildAgeSplashText assembles the full text of an age advance: the age's
-// name, description and quip, what it opens, the upgrades on offer and the
-// epoch's event. It is the arrival screen's words, every one of them; the
-// screen lays the same lines out (ageSplashLines). Pure function: same
-// inputs → same string, no side effects.
-func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
-	epochChanged bool, epochEvent game.EpochEventRecord) string {
-	lines := ageSplashLines(newAge, summary, epochChanged, epochEvent)
-	out := make([]string, len(lines))
-	for i, l := range lines {
-		out[i] = l.text
-	}
-	return strings.Join(out, "\n")
-}
-
 // ageSplashLines is the text of an age advance, line by line.
 func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 	epochChanged bool, epochEvent game.EpochEventRecord) []splashLine {
