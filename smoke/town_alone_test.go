@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -26,22 +25,14 @@ import (
 // day 8, so the default form allows a month (1,296,000 ticks); the long form
 // allows 1000 days, for a Colonial Age that takes about 750.
 const (
-	aloneQuietDays    = 14   // days without a purchase that count as stopped
 	aloneShortHorizon = 30   // days the default form may take to stop
 	aloneLongHorizon  = 1000 // days the long form may take to stop
 )
 
 // aloneAge is one age left alone.
 type aloneAge struct {
-	age          string
-	income       []float64 // income over the reference town's, each sampled day
-	days         []int
-	final        float64
-	model        float64 // the tables' own reading of the same
-	startTick    int
-	stopTick     int // the tick of the last sample
-	buyTick      int // the tick of the last purchase
-	purchaseDays []int
+	age    string
+	income []float64 // income over the reference town's, each sampled day
 }
 
 // leaveTownAlone stands age i's reference town on the engine and leaves it
@@ -53,8 +44,7 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 	town := tb.refTown(i)
 	ref := tb.state(town, i, 1)
 	refIncome := units(ref.income, tb.levels[i])
-	wall := tb.stay(i, town, refPlay{rate: 1, speed: 1, refIncome: refIncome, horizon: 20 * config.Million})
-	out := aloneAge{age: tb.ages[i].Name, model: units(wall.end.income, tb.levels[i]) / refIncome}
+	out := aloneAge{age: tb.ages[i].Name}
 
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
@@ -81,7 +71,7 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 		}
 	}
 
-	sample := func(day int) (built int) {
+	sample := func(day int) {
 		st := ge.GetState()
 		inc := map[string]float64{}
 		for res, r := range st.Resources {
@@ -90,27 +80,15 @@ func leaveTownAlone(t *testing.T, tb *refTables, i, horizon, step int) aloneAge 
 				t.Errorf("%s, day %d: %s holds %v", out.age, day, res, r.Amount)
 			}
 		}
-		for _, d := range tb.byAge[i] {
-			built += st.Buildings[d.Key].Count
-		}
-		built += len(st.BuildQueue)
 		out.income = append(out.income, units(inc, tb.levels[i])/refIncome)
-		out.days = append(out.days, day)
-		out.stopTick = st.Tick
-		return built
 	}
-	out.startTick = ge.GetState().Tick
-	out.buyTick = out.startTick
-	built := sample(0)
+	sample(0)
 	for day := step; day <= horizon; day += step {
 		for d := 0; d < step; d++ {
 			ge.SimulateOffline(24 * time.Hour) // the most one catch-up credits (MaxOfflineTime)
 		}
-		if b := sample(day); b != built {
-			built = b
-		}
+		sample(day)
 	}
-	out.final = out.income[len(out.income)-1]
 	return out
 }
 

@@ -31,22 +31,7 @@ const (
 )
 
 // CultureStrengthRow is one age of the culture strength check.
-type CultureStrengthRow struct {
-	Epoch string `json:"epoch"`
-	Age   string `json:"age"`
-	// ModerateSet is what the moderate set of culture buildings makes per
-	// tick in the age, and Given what the wonders and techs every town has
-	// make, both at the model's bonuses.
-	ModerateSet float64 `json:"moderate_set_per_tick"`
-	Given       float64 `json:"given_per_tick"`
-	// The towns: no culture buildings, the moderate set, twice, three times
-	// and CultureTopSets times it.
-	None     FaithSpan `json:"no_culture_buildings"`
-	Moderate FaithSpan `json:"moderate"`
-	Twice    FaithSpan `json:"twice"`
-	Thrice   FaithSpan `json:"three_times"`
-	Top      FaithSpan `json:"top_sets"`
-}
+type CultureStrengthRow = StrengthRow
 
 // The rules a CultureStrengthProblem can break.
 const (
@@ -62,15 +47,7 @@ const (
 )
 
 // CultureStrengthProblem is one moment at which a town reads the wrong tier.
-type CultureStrengthProblem struct {
-	Epoch       string  `json:"epoch"`
-	Age         string  `json:"age"`
-	Rule        string  `json:"rule"`
-	Sets        float64 `json:"sets"`
-	Moment      string  `json:"moment"`
-	WonderEarly bool    `json:"wonder_early"`
-	Strength    float64 `json:"strength"`
-}
+type CultureStrengthProblem struct{ StrengthProblem }
 
 // cultureTierWord names a tier as the report and the wiki do.
 func cultureTierWord(t game.CultureTier) string {
@@ -130,53 +107,22 @@ func StaticCultureStrength() ([]CultureStrengthProblem, []CultureStrengthRow) {
 // rule (the culture held and the town's run totals): the check's
 // broken-number tests feed in other rules.
 func cultureStrengthProblems(incomes []faithIncome, strengthOf func(held float64, m game.CultureSave) float64) ([]CultureStrengthProblem, []CultureStrengthRow) {
-	towns := []struct {
-		sets float64
-		rule string
-		want game.CultureTier
-	}{
-		{0, CultureRuleModerate, game.CultureTierMinor},
-		{1, CultureRuleModerate, game.CultureTierMinor},
-		{CultureTwiceSets, CultureRuleTwice, game.CultureTierMajor},
-		{CultureThriceSets, "", ""}, // reported, not held to a tier
-		{CultureTopSets, CultureRuleTop, game.CultureTierLegendary},
+	in := func(tier game.CultureTier) func(float64) bool {
+		return func(strength float64) bool { return game.CultureTierAt(strength) == tier }
 	}
+	towns := []strengthTown{
+		{0, CultureRuleModerate, in(game.CultureTierMinor)},
+		{1, CultureRuleModerate, in(game.CultureTierMinor)},
+		{CultureTwiceSets, CultureRuleTwice, in(game.CultureTierMajor)},
+		{CultureThriceSets, "", nil}, // reported, not held to a tier
+		{CultureTopSets, CultureRuleTop, in(game.CultureTierLegendary)},
+	}
+	walked, rows := strengthWalk(incomes, towns, func(held float64, m game.FaithSave, _ faithIncome) float64 {
+		return strengthOf(held, m)
+	})
 	var problems []CultureStrengthProblem
-	rows := make([]CultureStrengthRow, len(incomes))
-	for i, in := range incomes {
-		rows[i] = CultureStrengthRow{Epoch: in.epoch, Age: in.age, ModerateSet: in.set, Given: in.given + in.givenWonder}
-	}
-	for ti, town := range towns {
-		carried := game.CultureSave{}
-		for i, in := range incomes {
-			spans := []*FaithSpan{&rows[i].None, &rows[i].Moderate, &rows[i].Twice, &rows[i].Thrice, &rows[i].Top}
-			first := true
-			for _, wonderEarly := range []bool{true, false} {
-				for _, mom := range faithMoments {
-					span := float64(in.ticks * mom.at)
-					m := carried
-					m.Moderate += float64(in.set * span)
-					m.Own += float64(float64(town.sets*in.set) * span)
-					m.Other += float64(in.given * span)
-					if wonderEarly {
-						m.Other += float64(in.givenWonder * span)
-					}
-					if m.Moderate <= 0 {
-						continue // before culture: nothing to read yet
-					}
-					strength := strengthOf(m.Own+m.Other, m)
-					spans[ti].add(strength, first)
-					first = false
-					if town.rule != "" && game.CultureTierAt(strength) != town.want {
-						problems = append(problems, CultureStrengthProblem{Epoch: in.epoch, Age: in.age, Rule: town.rule,
-							Sets: town.sets, Moment: mom.name, WonderEarly: wonderEarly, Strength: strength})
-					}
-				}
-			}
-			carried.Moderate += float64(in.set * in.ticks)
-			carried.Own += float64(float64(town.sets*in.set) * in.ticks)
-			carried.Other += float64(in.given*in.ticks) + float64(float64(in.givenWonder*in.ticks)*0.5)
-		}
+	for _, p := range walked {
+		problems = append(problems, CultureStrengthProblem{p})
 	}
 	// Ages before culture have nothing to show.
 	kept := rows[:0]

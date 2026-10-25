@@ -28,10 +28,7 @@ func (p EndedProblem) String() string {
 // building's age.
 func StaticEnded() []EndedProblem {
 	defs := config.BaseBuildings()
-	pos := map[string]int{}
-	for i, a := range config.Ages() {
-		pos[a.Key] = i
-	}
+	pos := config.AgePositions(config.AgeOrder())
 	makes := map[string]map[int]bool{}
 	for _, d := range defs {
 		p, ok := pos[d.RequiredAge]
