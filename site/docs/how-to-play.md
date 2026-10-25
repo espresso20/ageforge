@@ -92,7 +92,7 @@ The **Ledger** is under it:
 
 The Ledger comes in three sizes. Under 100 columns by 30 rows it is two rows: the long bar with what it waits on, and one row of cards (a few of them, with the ones the gate is short of first and a count of the rest). From 100 columns by 30 rows it adds the four pillars and a card row with trend lines. From 120 columns by 39 rows the bar and the waiting line have a row each, the pillars have two, and the cards fill one to three rows by the height of the terminal and how many resources your age has; those rows change when you advance an age and at no other time. A big-layout terminal under 39 rows keeps the 100-column Ledger. On the plain glyph tier (`map glyphs ascii`) the bars and trend lines are drawn in plain characters.
 
-Panels you open (`research`, `trade`, `map` and so on) open over the dashboard, and the prompt keeps working while they are open.
+Every panel you open (`research`, `trade`, `map`, `help` and so on) takes the whole screen but the command bar. Its name is on the top edge, the keys it takes are on the line along its foot, and `Esc` closes it back to the dashboard. The prompt keeps working while a panel is open. On the panels that are text (Milestones, Army, Trade, Factions, Statistics, Logs, Epoch, History, Buildings and Help), `↑` `↓` `PgUp` `PgDn` `Home` and `End` scroll the panel while the prompt is empty, and anything else you type goes to the prompt. The Wonders, Harbinger and Build Plan panels have keys that are letters (`G`, `A` `B` `I`, `U` `D` `X` `C`), so they keep the keyboard: press `Esc` before you type a command.
 
 <figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: the status ribbon and the Ledger across the top; then resources, construction and the People box side by side, and the log on the left; the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
 
@@ -111,9 +111,9 @@ The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it 
 - Type a panel's name to open it: `research`, `army`, `trade`, `factions`, `map`, `help` and so on.
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open.
 - **Tab** or **→** takes the completion shown in dim text after the cursor; press **Tab** again for the next one.
-- **PgUp / PgDn** turn the Buildings list a page. The list never shows part of an entry: an entry that does not fit whole waits for the next page, and the box says how many are above and below.
+- **PgUp / PgDn** turn the Buildings list a page (with a text panel open, they scroll the panel). The list never shows part of an entry: an entry that does not fit whole waits for the next page, and the box says how many are above and below.
 - **Ctrl+R** turns the Resources box to its next page, when it has more resources than it can show.
-- **↑ / ↓** step through your command history.
+- **↑ / ↓** step through your command history (with a text panel open and the prompt empty, they scroll the panel).
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the [main menu](#the-main-menu), where **Continue** takes you back in.
 - Common commands have short names: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade`. See [Command shortcuts](commands.md#command-shortcuts) for the full list.
 
