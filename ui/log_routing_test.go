@@ -16,9 +16,7 @@ func logRoutingDashboard(t *testing.T) (*Dashboard, *game.GameEngine, *tview.Pag
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := newCaseTestEngine(t, "")
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	return d, eng, pages
 }
 
