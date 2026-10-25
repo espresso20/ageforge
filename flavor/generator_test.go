@@ -241,7 +241,7 @@ func callerText(line string, req Request) string {
 // singularLabel is the n == 1 form of a count-noun resource label, which the
 // quantity frame can emit ("1 nanobot"). Mass nouns return their label.
 func singularLabel(key string) string {
-	return strings.TrimSpace(phraseQuantity(key, 1)[1:])
+	return strings.TrimSpace(phraseQuantityAs(key, 1, false)[1:])
 }
 
 // TestEveryAgeEveryMomentYieldsCleanLines is the coverage matrix the task is
@@ -528,9 +528,9 @@ func TestNarrowPoolDegradesGracefully(t *testing.T) {
 	req := Request{Moment: WarRaid, Age: "stone_age", Kind: "aggressive"}
 	pool := eligible(req)
 	st := NewStream()
-	st.recent = make([]string, len(pool)+1)
+	st.recent = newRing(len(pool) + 1)
 	for i, tpl := range pool {
-		st.recent[i] = tpl.ID
+		st.recent.buf[i] = tpl.ID
 	}
 	rng := rand.New(rand.NewSource(3))
 	for i := 0; i < 50; i++ {

@@ -3,6 +3,7 @@ package flavor
 import (
 	"math"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -129,20 +130,6 @@ type tmpl struct {
 	// Row is the row id of the sentence in the copy export and in the VibeMode
 	// script (see vibe.go): the catalog, the pool and the place in it.
 	Row string
-}
-
-// capacity is the number of distinct lines this template can produce: the product
-// of its bank sizes (1 for a literal-only template). A reference to a missing
-// bank contributes 0, which makes the omission loudly visible in Capacity().
-func (t tmpl) capacity() int {
-	n := 1
-	for _, p := range t.Parts {
-		if p.bank == "" {
-			continue
-		}
-		n *= len(banks[p.bank])
-	}
-	return n
 }
 
 // Generate produces one line for req. It is PURE given (req, rng): the draws are
@@ -284,59 +271,24 @@ func satisfied(req Request) need {
 
 // toneOK reports whether a template accepts this tone (nil Tones = any).
 func toneOK(t tmpl, tone Tone) bool {
-	if len(t.Tones) == 0 {
-		return true
-	}
-	for _, x := range t.Tones {
-		if x == tone {
-			return true
-		}
-	}
-	return false
+	return len(t.Tones) == 0 || slices.Contains(t.Tones, tone)
 }
 
 // kindOK reports whether a template accepts this (already lowercased) kind. A
 // template with no Kinds accepts anything; a template WITH Kinds never matches an
 // empty kind, so a zero Request only ever sees the unconstrained templates.
 func kindOK(t tmpl, kind string) bool {
-	if len(t.Kinds) == 0 {
-		return true
-	}
-	if kind == "" {
-		return false
-	}
-	for _, x := range t.Kinds {
-		if x == kind {
-			return true
-		}
-	}
-	return false
+	return len(t.Kinds) == 0 || (kind != "" && slices.Contains(t.Kinds, kind))
 }
 
 // eraOK reports whether a template accepts this era (nil Eras = any).
 func eraOK(t tmpl, e era) bool {
-	if len(t.Eras) == 0 {
-		return true
-	}
-	for _, x := range t.Eras {
-		if x == e {
-			return true
-		}
-	}
-	return false
+	return len(t.Eras) == 0 || slices.Contains(t.Eras, e)
 }
 
 // ageOK reports whether a template accepts this age key (nil Ages = any).
 func ageOK(t tmpl, age string) bool {
-	if len(t.Ages) == 0 {
-		return true
-	}
-	for _, a := range t.Ages {
-		if a == age {
-			return true
-		}
-	}
-	return false
+	return len(t.Ages) == 0 || slices.Contains(t.Ages, age)
 }
 
 // eraOf maps a config age key to its era bucket. bounded is false for an empty or
@@ -375,9 +327,11 @@ var ageIndex = sync.OnceValue(func() map[string]int {
 	return out
 })
 
-// fill substitutes the placeholders in an assembled sentence. Every placeholder
-// this package understands is listed here; anything unrecognised is left alone
-// (and caught by TestNoUnfilledPlaceholders).
+// fillAs substitutes the placeholders in an assembled sentence. Every
+// placeholder this package understands is listed here; anything unrecognised is
+// left alone (and caught by TestNoUnfilledPlaceholders). The frames the game
+// words itself ("your ... stores", "a haul of ...") are the script's when told is
+// set, and the game's own English when it is not.
 //
 // Placeholders:
 //
@@ -391,11 +345,6 @@ var ageIndex = sync.OnceValue(func() map[string]int {
 //	{amt}        Request.Amount rounded, K/M formatted ("1.23M")
 //	{n}          Request.Count, bare
 //	{ticks}      Request.Ticks, bare
-func fill(s string, req Request) string { return fillAs(s, req, false) }
-
-// fillAs is fill in the reading asked for: the frames the game words itself
-// ("your ... stores", "a haul of ...") are the script's when told is set, and
-// the game's own English when it is not.
 func fillAs(s string, req Request, told bool) string {
 	if !strings.ContainsRune(s, '{') {
 		return s
@@ -403,7 +352,7 @@ func fillAs(s string, req Request, told bool) string {
 	amt := roundAmount(req.Amount)
 	return strings.NewReplacer(
 		"{subject}", req.Subject,
-		"{res}", phraseBareAs(req.Resource, told),
+		"{res}", resourceLabelAs(req.Resource, told),
 		"{res_stores}", phraseStoresAs(req.Resource, told),
 		"{res_haul}", phraseHaulAs(req.Resource, told),
 		"{amt_res}", phraseQuantityAs(req.Resource, amt, told),

@@ -14,7 +14,7 @@
 //
 // The number that follows from it: repetition is governed by how many separate
 // things a Moment can SAY, which is DistinctSkeletons, and not by the product of
-// its bank sizes, which is Capacity. Reach for Capacity only when sizing storage.
+// its bank sizes.
 //
 // For anything a player reads as a RUN of lines, use a Stream rather than Line —
 // Generate is memoryless, and memoryless uniform sampling repeats inside a
@@ -82,6 +82,7 @@ package flavor
 
 import (
 	"math/rand"
+	"slices"
 	"sort"
 	"sync"
 )
@@ -323,12 +324,26 @@ func Line(req Request, rng *rand.Rand) string {
 // topic window is deliberately short — a catalog only has thirty topics, so a
 // long one would starve the pool — while the skeleton window stays a screenful.
 type Stream struct {
-	recent []string
-	at     int
-	topics []string
-	tat    int
-	slots  []string
-	sat    int
+	recent ring
+	topics ring
+	slots  ring
+}
+
+// ring is a window of the last few entries, the oldest overwritten first.
+type ring struct {
+	buf []string
+	at  int
+}
+
+func newRing(n int) ring { return ring{buf: make([]string, n)} }
+
+// has reports whether x is in the window.
+func (r *ring) has(x string) bool { return slices.Contains(r.buf, x) }
+
+// add puts x in the window, over the oldest entry.
+func (r *ring) add(x string) {
+	r.buf[r.at] = x
+	r.at = (r.at + 1) % len(r.buf)
 }
 
 const (
@@ -353,11 +368,7 @@ const (
 
 // NewStream returns an empty Stream.
 func NewStream() *Stream {
-	return &Stream{
-		recent: make([]string, streamMemory),
-		topics: make([]string, topicMemory),
-		slots:  make([]string, slotMemory),
-	}
+	return &Stream{recent: newRing(streamMemory), topics: newRing(topicMemory), slots: newRing(slotMemory)}
 }
 
 // topicIndex maps a skeleton id to its authored Topic. Built once: ids are unique
@@ -384,14 +395,14 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 	if s == nil {
 		return Generate(req, rng)
 	}
-	if s.recent == nil {
-		s.recent = make([]string, streamMemory)
+	if s.recent.buf == nil {
+		s.recent = newRing(streamMemory)
 	}
-	if s.topics == nil {
-		s.topics = make([]string, topicMemory)
+	if s.topics.buf == nil {
+		s.topics = newRing(topicMemory)
 	}
-	if s.slots == nil {
-		s.slots = make([]string, slotMemory)
+	if s.slots.buf == nil {
+		s.slots = newRing(slotMemory)
 	}
 	topics := topicIndex()
 	// The eligible pool is computed once per line, not once per retry. Each
@@ -407,7 +418,7 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 	for i := 0; i <= streamRetries; i++ {
 		res = render(pool[rng.Intn(len(pool))], req, rng)
 		topic = topics[res.Template]
-		if !s.seen(res.Template) && !s.sameTopicRecently(topic) && !s.sameSlotRecently(res.slot) {
+		if !s.recent.has(res.Template) && !s.sameTopicRecently(topic) && !s.sameSlotRecently(res.slot) {
 			break
 		}
 	}
@@ -425,7 +436,7 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 	// accordingly) the unseen remainder is two or three sentences, and picking
 	// blind among them put two same-topic lines side by side about one time in
 	// thirty. Still one rng draw, so the draw count is unchanged.
-	if res.Template != "" && s.seen(res.Template) {
+	if res.Template != "" && s.recent.has(res.Template) {
 		if fresh := s.unseen(pool); len(fresh) > 0 {
 			if calm := s.offTopic(fresh, topics); len(calm) > 0 {
 				fresh = calm
@@ -435,15 +446,12 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 		}
 	}
 	if res.Template != "" {
-		s.recent[s.at] = res.Template
-		s.at = (s.at + 1) % len(s.recent)
+		s.recent.add(res.Template)
 		if topic != "" {
-			s.topics[s.tat] = topic
-			s.tat = (s.tat + 1) % len(s.topics)
+			s.topics.add(topic)
 		}
 		if res.slot != "" {
-			s.slots[s.sat] = res.slot
-			s.sat = (s.sat + 1) % len(s.slots)
+			s.slots.add(res.slot)
 		}
 	}
 	return res
@@ -452,15 +460,7 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 // sameSlotRecently reports whether this noun-phrase draw is in the recent slot
 // ring. A slotless sentence (empty draw) never suppresses.
 func (s *Stream) sameSlotRecently(slot string) bool {
-	if slot == "" {
-		return false
-	}
-	for _, x := range s.slots {
-		if x == slot {
-			return true
-		}
-	}
-	return false
+	return slot != "" && s.slots.has(slot)
 }
 
 // unseen returns the templates in pool that are not in the recent skeleton ring,
@@ -468,7 +468,7 @@ func (s *Stream) sameSlotRecently(slot string) bool {
 func (s *Stream) unseen(pool []tmpl) []tmpl {
 	out := make([]tmpl, 0, len(pool))
 	for _, t := range pool {
-		if !s.seen(t.ID) {
+		if !s.recent.has(t.ID) {
 			out = append(out, t)
 		}
 	}
@@ -487,29 +487,11 @@ func (s *Stream) offTopic(pool []tmpl, topics map[string]string) []tmpl {
 	return out
 }
 
-// seen reports whether id is in the recent skeleton ring.
-func (s *Stream) seen(id string) bool {
-	for _, x := range s.recent {
-		if x == id {
-			return true
-		}
-	}
-	return false
-}
-
 // sameTopicRecently reports whether topic is in the recent topic ring. An untagged
 // sentence (empty topic) never suppresses, so a partially tagged catalog degrades
 // to plain skeleton suppression rather than to nothing.
 func (s *Stream) sameTopicRecently(topic string) bool {
-	if topic == "" {
-		return false
-	}
-	for _, x := range s.topics {
-		if x == topic {
-			return true
-		}
-	}
-	return false
+	return topic != "" && s.topics.has(topic)
 }
 
 // Moments returns the registered Moments in a stable order. Anything not in this
@@ -532,25 +514,6 @@ func Moments() []Moment {
 		HarbingerFulfilled,
 		RunEnding,
 	}
-}
-
-// Capacity reports how many distinct STRINGS a Moment can produce: the sum over
-// skeletons of its slot bank size (1 for a slotless sentence).
-//
-// It is kept for compatibility and for rough sizing, and it is NOT the quality
-// bar. It never was a good one: a Moment whose lines all draw a noun from a bank
-// of forty reports a capacity of forty per skeleton while a player sees the same
-// sentence over and over with a different noun in it. Perceived repetition is
-// governed by DistinctSkeletons — how many separate things a Moment can SAY — and
-// that is the number tests assert a floor on.
-//
-// Returns 0 for an unregistered Moment.
-func Capacity(m Moment) int {
-	total := 0
-	for _, t := range templatesFor(m) {
-		total += t.capacity()
-	}
-	return total
 }
 
 // DistinctSkeletons reports how many separate authored sentences a Moment has.

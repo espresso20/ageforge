@@ -1,6 +1,7 @@
 package flavor
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -79,13 +80,7 @@ func wordRow(list string, n int) string {
 }
 
 // place is the place of the n-th entry (from 0) in a row id: from 001.
-func place(n int) string {
-	s := strconv.Itoa(n + 1)
-	for len(s) < 3 {
-		s = "0" + s
-	}
-	return s
-}
+func place(n int) string { return fmt.Sprintf("%03d", n+1) }
 
 // sentence is the sentence a template was made from, as the export reads it:
 // the slot as the slot mark and no full stop at the end (compose puts it back).

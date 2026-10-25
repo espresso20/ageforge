@@ -264,10 +264,10 @@ func TestGenerateUsesOnlyPassedRNG(t *testing.T) {
 
 // --- THE quality gate: how many separate things can it SAY -----------------
 
-// TestSkeletonFloors is the metric that replaced Capacity as the quality bar.
+// TestSkeletonFloors is the quality bar.
 //
-// Capacity multiplies bank sizes together and so reports a number in the
-// thousands for a Moment a player experiences as seven sentences on a loop:
+// Multiplying bank sizes together reports a number in the thousands for a
+// Moment a player experiences as seven sentences on a loop:
 // perceived repetition is governed by the SMALLEST pool a line draws from, and
 // for a one-sentence-per-line catalog that pool is the sentences themselves.
 // The floor that matters is therefore per ERA-ELIGIBLE POOL — the sentences an
@@ -284,7 +284,7 @@ func TestSkeletonFloors(t *testing.T) {
 		if total == 0 {
 			t.Fatalf("%v has no skeletons", m)
 		}
-		t.Logf("%-20v DistinctSkeletons = %3d   (Capacity = %d)", m, total, Capacity(m))
+		t.Logf("%-20v DistinctSkeletons = %3d", m, total)
 		for _, bucket := range eraBuckets {
 			n := len(eligible(Request{Moment: m, Age: eraAges[bucket.era]}))
 			if n < perEraFloor {
@@ -941,18 +941,18 @@ func TestQuantityInflection(t *testing.T) {
 		{"dark_matter", 2, "2 dark matter"},
 	}
 	for _, c := range cases {
-		if got := phraseQuantity(c.key, c.n); got != c.want {
-			t.Errorf("phraseQuantity(%q, %d) = %q, want %q", c.key, c.n, got, c.want)
+		if got := phraseQuantityAs(c.key, c.n, false); got != c.want {
+			t.Errorf("phraseQuantityAs(%q, %d) = %q, want %q", c.key, c.n, got, c.want)
 		}
 	}
-	if got := phraseStores("food"); got != "your food stores" {
-		t.Errorf("phraseStores(food) = %q", got)
+	if got := phraseStoresAs("food", false); got != "your food stores" {
+		t.Errorf("phraseStoresAs(food) = %q", got)
 	}
-	if got := phraseHaul("quantum_flux"); got != "a haul of quantum flux" {
-		t.Errorf("phraseHaul(quantum_flux) = %q", got)
+	if got := phraseHaulAs("quantum_flux", false); got != "a haul of quantum flux" {
+		t.Errorf("phraseHaulAs(quantum_flux) = %q", got)
 	}
-	if got := phraseBare(""); got != "supplies" {
-		t.Errorf("phraseBare(\"\") = %q, want the generic fallback", got)
+	if got := resourceLabel(""); got != "supplies" {
+		t.Errorf("resourceLabel(\"\") = %q, want the generic fallback", got)
 	}
 }
 
@@ -1179,15 +1179,14 @@ func TestTemplatesAreWellFormed(t *testing.T) {
 			if len(tpl.Parts) == 0 {
 				t.Errorf("skeleton %q has no parts", tpl.ID)
 			}
-			if tpl.capacity() == 0 {
-				t.Errorf("skeleton %q has zero capacity — a referenced bank is missing or empty", tpl.ID)
-			}
 			for _, p := range tpl.Parts {
 				if p.bank == "" {
 					continue
 				}
 				if _, ok := banks[p.bank]; !ok {
 					t.Errorf("skeleton %q references unknown bank %q", tpl.ID, p.bank)
+				} else if len(banks[p.bank]) == 0 {
+					t.Errorf("skeleton %q references the empty bank %q", tpl.ID, p.bank)
 				}
 			}
 			joined := text

@@ -94,7 +94,6 @@ var (
 	// Spans, for imagery that genuinely covers two neighbouring buckets — a road
 	// and a river crossing belong to every age that has ground under it.
 	erasEarly = []era{eraAncient, eraFeudal}
-	erasMid   = []era{eraFeudal, eraIndustrial}
 	erasLate  = []era{eraDigital, eraCosmic}
 
 	// erasGrounded is every age with lanes, dogs and a washing line. The
