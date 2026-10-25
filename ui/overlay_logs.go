@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -117,28 +117,16 @@ func logsProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, "  [gray]%s[-]\n", scholarsLine(state))
 	}
 
-	// Worker assignments (compact)
-	anyWorkers := false
+	// Worker assignments (compact), in the order of the domains' names
+	type domainEntry struct {
+		name        string
+		count       int
+		idle        int
+		assignments map[string]int
+	}
+	var domains []domainEntry
 	for _, vt := range state.Workers.Types {
 		if vt.Unlocked && vt.Count > 0 {
-			anyWorkers = true
-			break
-		}
-	}
-	if anyWorkers {
-		sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.13", "\n [gold]Workers:[-]\n"))
-		// Stable domain order: sort by name
-		type domainEntry struct {
-			name        string
-			count       int
-			idle        int
-			assignments map[string]int
-		}
-		var domains []domainEntry
-		for _, vt := range state.Workers.Types {
-			if !vt.Unlocked || vt.Count == 0 {
-				continue
-			}
 			domains = append(domains, domainEntry{
 				name:        vt.Name,
 				count:       vt.Count,
@@ -146,24 +134,13 @@ func logsProvider(state game.GameState, _ int) string {
 				assignments: vt.Assignments,
 			})
 		}
-		// Sort by name for stable output
-		for i := 0; i < len(domains); i++ {
-			for j := i + 1; j < len(domains); j++ {
-				if domains[i].name > domains[j].name {
-					domains[i], domains[j] = domains[j], domains[i]
-				}
-			}
-		}
+	}
+	slices.SortFunc(domains, func(a, b domainEntry) int { return strings.Compare(a.name, b.name) })
+	if len(domains) > 0 {
+		sb.WriteString(vibe.Line("ui.overlay_logs.logsProvider.13", "\n [gold]Workers:[-]\n"))
 		for _, d := range domains {
 			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_logs.logsProvider.14", "  [cyan]%s[-] ×%d (reserve: %d)\n", d.name, d.count, d.idle))
-			bldKeys := make([]string, 0, len(d.assignments))
-			for k, count := range d.assignments {
-				if count > 0 {
-					bldKeys = append(bldKeys, k)
-				}
-			}
-			sort.Strings(bldKeys)
-			for _, k := range bldKeys {
+			for _, k := range keysWhere(d.assignments, func(_ string, n int) bool { return n > 0 }) {
 				fmt.Fprintf(&sb, "    → %s: %d\n", game.BuildingName(k), d.assignments[k])
 			}
 		}
