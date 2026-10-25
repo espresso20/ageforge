@@ -91,7 +91,8 @@ import (
 // is deliberately MomentUnknown so an unset field can never silently pick a real
 // moment; an unregistered Moment yields "" rather than panicking.
 //
-// The list is additive: adding a Moment plus its templates is a data edit.
+// The list is additive: adding a Moment plus its templates is a data edit. It is
+// a constant here, a row in momentTable and an entry in builders (catalog.go).
 type Moment int
 
 const (
@@ -149,42 +150,15 @@ const (
 
 // String returns a stable, flavor-free identifier for a Moment. Safe to log.
 func (m Moment) String() string {
-	switch m {
-	case ExpeditionSuccess:
-		return "ExpeditionSuccess"
-	case ExpeditionFailure:
-		return "ExpeditionFailure"
-	case EncounterStandoff:
-		return "EncounterStandoff"
-	case EncounterAtCapacity:
-		return "EncounterAtCapacity"
-	case WarRaid:
-		return "WarRaid"
-	case HarbingerArrival:
-		return "HarbingerArrival"
-	case HarbingerWarning:
-		return "HarbingerWarning"
-	case HarbingerAppeased:
-		return "HarbingerAppeased"
-	case HarbingerBraced:
-		return "HarbingerBraced"
-	case HarbingerVindicated:
-		return "HarbingerVindicated"
-	case HarbingerSpared:
-		return "HarbingerSpared"
-	case HarbingerDiscredited:
-		return "HarbingerDiscredited"
-	case HarbingerInvited:
-		return "HarbingerInvited"
-	case HarbingerFulfilled:
-		return "HarbingerFulfilled"
-	case RunEnding:
-		return "RunEnding"
-	case MomentUnknown:
+	if m == MomentUnknown {
 		return "MomentUnknown"
-	default:
-		return "Moment(?)"
 	}
+	for _, e := range momentTable {
+		if e.m == m {
+			return e.name
+		}
+	}
+	return "Moment(?)"
 }
 
 // Tone biases which templates are eligible. The zero value is Neutral, so a
@@ -497,23 +471,11 @@ func (s *Stream) sameTopicRecently(topic string) bool {
 // Moments returns the registered Moments in a stable order. Anything not in this
 // slice generates an empty Result.
 func Moments() []Moment {
-	return []Moment{
-		ExpeditionSuccess,
-		ExpeditionFailure,
-		EncounterStandoff,
-		EncounterAtCapacity,
-		WarRaid,
-		HarbingerArrival,
-		HarbingerWarning,
-		HarbingerAppeased,
-		HarbingerBraced,
-		HarbingerVindicated,
-		HarbingerSpared,
-		HarbingerDiscredited,
-		HarbingerInvited,
-		HarbingerFulfilled,
-		RunEnding,
+	out := make([]Moment, len(momentTable))
+	for i, e := range momentTable {
+		out[i] = e.m
 	}
+	return out
 }
 
 // DistinctSkeletons reports how many separate authored sentences a Moment has.
