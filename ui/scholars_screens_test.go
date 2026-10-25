@@ -343,15 +343,15 @@ func TestScholarsCommand(t *testing.T) {
 			t.Errorf("%s = %+v, want the usage line %q", in, res, usage)
 		}
 	}
-	if !strings.Contains(usage, "scholars [percent]") && !strings.Contains(usage, "scholars") {
+	if !strings.Contains(usage, "scholars <percent>") {
 		t.Errorf("usage = %q", usage)
 	}
 	// Completion and help know it like its neighbors.
 	if got := NewAutoCompleter(ge)("schol"); !slices.Contains(got, "scholars") {
 		t.Errorf("completing schol = %v", got)
 	}
-	if help := HandleCommand("help scholars", ge); !strings.Contains(help.Message+help.OverlayName, "scholars") {
-		t.Logf("help scholars = %+v", help)
+	if help := HandleCommand("help scholars", ge); help.OverlayName != "help" || !strings.Contains(untag(helpProvider(ge.GetState(), 120)), "scholars <percent>") {
+		t.Errorf("help scholars = %+v, or the Help panel does not list scholars <percent>", help)
 	}
 	// A town with no scholars says so in the engine's words.
 	fresh := game.NewGameEngine()

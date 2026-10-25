@@ -892,7 +892,7 @@ func TestCapstonesReadByShape(t *testing.T) {
 	if got := buildTree(st, treeGeomFor(120, false), false, "guilds").statusLine(st, treeView{sel: "guilds"}); !strings.Contains(got, "waits for what it needs") {
 		t.Errorf("the status line for Guilds: %q", got)
 	}
-	if card := cardOf(st, "guilds"); !strings.Contains(card, "Guilds gives") && !strings.Contains(card, "With it, buildings cost 4% less and construction takes 8% less time") {
+	if card := cardOf(st, "guilds"); !strings.Contains(card, "With it, buildings cost 4% less and construction takes 8% less time") {
 		t.Errorf("Guilds's card does not say what it does:\n%s", card)
 	}
 
