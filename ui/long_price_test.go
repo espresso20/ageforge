@@ -8,6 +8,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Prices got longer when four raw materials were priced: 24 buildings list
@@ -258,12 +259,12 @@ func TestLongPricesFitTheWonderPanel(t *testing.T) {
 				line := game.ResourceName(res)
 				found := false
 				for _, r := range rows {
-					if strings.Contains(r, line) && strings.Contains(r, FormatNumber(need)) {
+					if strings.Contains(r, line) && strings.Contains(r, textfmt.Number(need)) {
 						found = true
 					}
 				}
 				if !found {
-					t.Errorf("%s at %dx%d: the wonder bank has no whole row for %s / %s:\n%s", wonder, w, h, line, FormatNumber(need), screen)
+					t.Errorf("%s at %dx%d: the wonder bank has no whole row for %s / %s:\n%s", wonder, w, h, line, textfmt.Number(need), screen)
 				}
 			}
 			d.overlayMgr.Hide()

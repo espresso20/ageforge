@@ -74,7 +74,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 				clr = "yellow"
 			}
 			bar := wonderProgressBar(pct, 8)
-			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, FormatNumber(banked), FormatNumber(need))
+			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, textfmt.Number(banked), textfmt.Number(need))
 		}
 		if bs.WonderBankFull {
 			fmt.Fprintf(&sb, "   %s\n", wonderBuildLine(state, current.key))
@@ -191,7 +191,7 @@ func wondersProvider(state game.GameState, _ int) string {
 							clr = "yellow"
 						}
 						fmt.Fprintf(&sb, "     [%s]%s: %s / %s[-]\n",
-							clr, game.ResourceName(k), FormatNumber(banked), FormatNumber(need))
+							clr, game.ResourceName(k), textfmt.Number(banked), textfmt.Number(need))
 					}
 				}
 				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.07", "   [gray]Bank resources to build it: ") + wonderCollectHint() + "[-]\n")

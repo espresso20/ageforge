@@ -98,7 +98,7 @@ func milestonesProvider(state game.GameState, _ int) string {
 					} else {
 						bar := ProgressBar(p.Current, p.Target, 10)
 						fmt.Fprintf(&sb, "     [yellow]%s/%s %s %s[-]\n",
-							FormatNumber(p.Current), FormatNumber(p.Target), bar, p.Label)
+							textfmt.Number(p.Current), textfmt.Number(p.Target), bar, p.Label)
 					}
 				}
 				if m.RewardText != "" {

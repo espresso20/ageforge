@@ -173,13 +173,13 @@ func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 			cost := v.Cost[v.Short]
 			covered := v.Progress * cost
 			banked := v.Banked[v.Short]
-			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), FormatNumber(covered), FormatNumber(cost))
+			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), textfmt.Number(covered), textfmt.Number(cost))
 			var notes []string
 			if banked >= 1 {
-				notes = append(notes, FormatNumber(banked)+vibe.Line("ui.overlay_plan.planItemDetailGlued.02", " banked"))
+				notes = append(notes, textfmt.Number(banked)+vibe.Line("ui.overlay_plan.planItemDetailGlued.02", " banked"))
 			}
 			if held := state.Resources[v.Short].Amount - (covered - banked); held >= 1 {
-				notes = append(notes, FormatNumber(held)+vibe.Line("ui.overlay_plan.planItemDetailGlued.03", " held for items above"))
+				notes = append(notes, textfmt.Number(held)+vibe.Line("ui.overlay_plan.planItemDetailGlued.03", " held for items above"))
 			}
 			if len(notes) > 0 {
 				line += " (" + strings.Join(notes, ", ") + ")"

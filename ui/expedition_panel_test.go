@@ -11,6 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // offerNumber matches an offer number as a list prints it: "3. Scout".
@@ -560,7 +561,7 @@ func TestBriefingShowsThePartyOfEveryTier(t *testing.T) {
 	}
 	for _, o := range state.Military.Expeditions {
 		text, kind := partyLine(state, o)
-		if want := FormatNumber(float64(o.SoldiersNeeded)) + " soldiers"; text != want || o.SoldiersNeeded < 1 {
+		if want := textfmt.Number(float64(o.SoldiersNeeded)) + " soldiers"; text != want || o.SoldiersNeeded < 1 {
 			t.Errorf("offer %d (%s): Party line %q, want %q", o.Number, o.Tier, text, want)
 		}
 		if kind != xGood {

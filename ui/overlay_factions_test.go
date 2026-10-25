@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // panelWidth is the terminal width these tests render at. Wide enough that the
@@ -597,7 +598,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	}
 	// Every deal line, painted or not, reads exactly as game.DealTerms words it.
 	for _, d := range state.Diplomacy.Factions["riverlands_tribes"].Deals {
-		want := strconv.Itoa(d.Num) + ". " + game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber)
+		want := strconv.Itoa(d.Num) + ". " + game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, textfmt.Number)
 		if got := plainText(dealLine(d, state, panelWidth)); !strings.HasPrefix(got, want) {
 			t.Errorf("deal line %q does not start with %q", got, want)
 		}

@@ -1142,7 +1142,7 @@ func peopleBoxTitle(state game.GameState, detail bool) string {
 	ws := state.Workers
 	for _, t := range []string{
 		vibe.Sprintf("ui.dashboard.peopleBoxTitle.02", " People %d/%d ", ws.TotalPop, ws.MaxPop),
-		vibe.Sprintf("ui.dashboard.peopleBoxTitle.03", " People %s/%s ", FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))),
+		vibe.Sprintf("ui.dashboard.peopleBoxTitle.03", " People %s/%s ", textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))),
 	} {
 		if runeLen(t) <= sidebarW-2 {
 			return t
@@ -1174,7 +1174,7 @@ func peopleBoxText(state game.GameState, w int, detail bool) string {
 			return vibe.Sprintf("ui.dashboard.peopleBoxText.02", "[gray]Pop[white] [%s]%s[white]/[green]%s[-]\n", popColor, pop, housing)
 		}
 		if w > 0 && visibleLen(strings.TrimRight(popLine(), "\n")) > w {
-			pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
+			pop, housing = textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))
 		}
 		fmt.Fprint(&sb, popLine())
 	}
@@ -1307,7 +1307,7 @@ func statusLine(state game.GameState, f ribbonFacts, w int) string {
 		}
 		pop := groupedCount(state.Workers.TotalPop) + "/" + groupedCount(state.Workers.MaxPop)
 		if level >= 3 {
-			pop = FormatNumber(float64(state.Workers.TotalPop)) + "/" + FormatNumber(float64(state.Workers.MaxPop))
+			pop = textfmt.Number(float64(state.Workers.TotalPop)) + "/" + textfmt.Number(float64(state.Workers.MaxPop))
 		}
 		facts := make([]string, 0, 4)
 		if f.year != "" && level < 8 {
@@ -1335,7 +1335,7 @@ func statusLine(state game.GameState, f ribbonFacts, w int) string {
 // (1,094), and a count of a million or more as a short number (41.2M).
 func groupedCount(n int) string {
 	if n < 1000 || n >= 1_000_000 {
-		return FormatNumber(float64(n))
+		return textfmt.Number(float64(n))
 	}
 	return fmt.Sprintf("%d,%03d", n/1000, n%1000)
 }

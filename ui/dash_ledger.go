@@ -15,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
@@ -925,7 +926,7 @@ func rateCell(rate float64, width int) (string, theme.Role) {
 
 // amountCell is an amount right aligned in width cells.
 func amountCell(amount float64, width int) string {
-	text := FormatNumber(amount)
+	text := textfmt.Number(amount)
 	if n := runeLen(text); n < width {
 		text = strings.Repeat(" ", width-n) + text
 	}

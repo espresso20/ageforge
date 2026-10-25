@@ -27,12 +27,6 @@ func ProgressBar(current, max float64, width int) string {
 	return BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
 }
 
-// FormatNumber formats an amount for display (950, 12.5K, 1.23M). It is
-// textfmt.Number, the one number formatter the whole game uses.
-func FormatNumber(n float64) string {
-	return textfmt.Number(n)
-}
-
 // FormatRateTick formats a rate with sign and suffix notation and the
 // "/tick" unit inside the color tag: "+3.25/tick". It uses higher precision
 // for small rates so values like 0.02 show as +0.02 rather than rounding to
@@ -68,7 +62,7 @@ func rateParts(rate float64, unit string) (text, color string) {
 		}
 		return fmt.Sprintf("%s%.*f%s", sign, prec, rate, unit), color
 	}
-	return sign + FormatNumber(rate) + unit, color
+	return sign + textfmt.Number(rate) + unit, color
 }
 
 // FormatCost formats a cost map as "50 food, 30 wood" (display names, sorted

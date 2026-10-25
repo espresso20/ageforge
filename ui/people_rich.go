@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -85,7 +86,7 @@ func peopleRichTitle(state game.GameState, rows int) string {
 		return vibe.Line("ui.people_rich.peopleRichTitle.01", " People ")
 	}
 	ws := state.Workers
-	return vibe.Sprintf("ui.people_rich.peopleRichTitle.02", " People %s/%s ", FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop)))
+	return vibe.Sprintf("ui.people_rich.peopleRichTitle.02", " People %s/%s ", textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop)))
 }
 
 // peopleRichHeld is the two lines on what holds the population back: what it
@@ -108,7 +109,7 @@ func peopleRichHeld(ws game.WorkerState, w int) (first, second string) {
 	}
 	empty := max(0, ws.MaxPop-ws.TotalPop)
 	note := ""
-	for _, t := range []string{vibe.Sprintf("ui.people_rich.peopleRichHeld.03", "%s homes empty", FormatNumber(float64(empty))), vibe.Sprintf("ui.people_rich.peopleRichHeld.04", "%s empty", FormatNumber(float64(empty)))} {
+	for _, t := range []string{vibe.Sprintf("ui.people_rich.peopleRichHeld.03", "%s homes empty", textfmt.Number(float64(empty))), vibe.Sprintf("ui.people_rich.peopleRichHeld.04", "%s empty", textfmt.Number(float64(empty)))} {
 		if runeLen(t) <= w {
 			note = t
 			break
@@ -137,7 +138,7 @@ func peopleRichText(state game.GameState, w, h int) string {
 	}
 	popLine := say()
 	if visibleLen(popLine) > w {
-		pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
+		pop, housing = textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))
 		popLine = say()
 	}
 	if ws.MaxPop > 0 {

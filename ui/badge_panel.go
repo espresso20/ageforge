@@ -226,9 +226,9 @@ func (p *badgePanel) handleKey(key tcell.Key) {
 	p.view.note = ""
 	switch key {
 	case tcell.KeyUp:
-		p.moveLine(-1)
+		p.jump(-1, 1)
 	case tcell.KeyDown:
-		p.moveLine(1)
+		p.jump(1, 1)
 	case tcell.KeyLeft:
 		p.step(-1)
 	case tcell.KeyRight:
@@ -264,12 +264,6 @@ func (p *badgePanel) step(dir int) {
 	if j := i + dir; j >= 0 && j < len(p.model.items) {
 		p.view.sel = p.model.items[j].id
 	}
-}
-
-// moveLine selects the badge on the line above or below, in the nearest
-// column.
-func (p *badgePanel) moveLine(dir int) {
-	p.jump(dir, 1)
 }
 
 // page moves the selection up or down by as many lines as the grid shows.

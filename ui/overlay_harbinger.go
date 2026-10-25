@@ -313,7 +313,7 @@ func harbingerCostLine(sb *strings.Builder, state game.GameState, width int, blo
 		if have >= need {
 			parts = append(parts, theme.Paint(theme.RolePositive, item))
 		} else {
-			parts = append(parts, theme.Paint(theme.RoleNegative, item+vibe.Line("ui.overlay_harbinger.harbingerCostLine.03", " (have ")+FormatNumber(math.Floor(have))+")"))
+			parts = append(parts, theme.Paint(theme.RoleNegative, item+vibe.Line("ui.overlay_harbinger.harbingerCostLine.03", " (have ")+textfmt.Number(math.Floor(have))+")"))
 		}
 	}
 	lead := vibe.Line("ui.overlay_harbinger.harbingerCostLine.04", "     Next level costs: ")

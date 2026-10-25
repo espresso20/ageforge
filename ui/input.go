@@ -398,7 +398,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		} else if pct > 0 {
 			clr = "yellow"
 		}
-		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, game.ResourceName(res), FormatNumber(banked), FormatNumber(need), pct)
+		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, game.ResourceName(res), textfmt.Number(banked), textfmt.Number(need), pct)
 	}
 
 	if line := wonderKeystoneLine(state, curWonder.key); line != "" {
@@ -987,7 +987,7 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  %-10s %s %s",
-			rs.Name, FormatNumber(rs.Amount), FormatRateTick(rs.Rate)))
+			rs.Name, textfmt.Number(rs.Amount), FormatRateTick(rs.Rate)))
 	}
 	lines = append(lines, "")
 

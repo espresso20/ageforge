@@ -561,8 +561,8 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	// Raw keys go in; game.DealGets and DealTerms name the resources, so the
 	// painted skeleton below and plain use the same words ("iron ore").
-	give := FormatNumber(d.GiveAmt) + " " + game.ResourceName(d.Give)
-	get := game.DealGets(d.Get, d.GetAmt, d.Standing, FormatNumber)
+	give := textfmt.Number(d.GiveAmt) + " " + game.ResourceName(d.Give)
+	get := game.DealGets(d.Get, d.GetAmt, d.Standing, textfmt.Number)
 	note := ""
 	switch {
 	case d.Taken:
@@ -570,7 +570,7 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	case d.Kind == game.DealRare:
 		note = vibe.Line("ui.overlay_factions.dealLine.02", "next age's goods")
 	}
-	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber))
+	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, textfmt.Number))
 	if d.Taken {
 		return theme.Paint(theme.RoleDim, truncate(plain+"  "+note, width))
 	}

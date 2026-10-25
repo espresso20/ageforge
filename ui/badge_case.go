@@ -550,7 +550,7 @@ func barSegs(progress, target float64, w int, k ink) []seg {
 }
 
 func countText(progress, target float64) string {
-	return FormatNumber(progress) + " / " + FormatNumber(target)
+	return textfmt.Number(progress) + " / " + textfmt.Number(target)
 }
 
 // metaLine is a badge's tier, rarity and points on one line.

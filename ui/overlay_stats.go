@@ -57,7 +57,7 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 	sort.Strings(gKeys)
 	for _, k := range gKeys {
-		fmt.Fprintf(&sb, "   %-14s %s\n", textfmt.Capitalize(game.ResourceName(k)), FormatNumber(s.TotalGathered[k]))
+		fmt.Fprintf(&sb, "   %-14s %s\n", textfmt.Capitalize(game.ResourceName(k)), textfmt.Number(s.TotalGathered[k]))
 	}
 
 	// ─── Lifetime (Account) ───

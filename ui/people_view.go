@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -125,8 +126,8 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 		x = g.put(x, 1, " "+name+" ", k) + 1
 	}
 	ws := st.Workers
-	pop := FormatNumber(float64(ws.TotalPop))
-	homes := FormatNumber(float64(ws.MaxPop))
+	pop := textfmt.Number(float64(ws.TotalPop))
+	homes := textfmt.Number(float64(ws.MaxPop))
 	people, of, homesWord := vibe.Line("ui.people_view.peopleHeader.04", "People "), vibe.Line("ui.people_view.peopleHeader.05", " of "), vibe.Line("ui.people_view.peopleHeader.06", " homes")
 	n := runeLen(people + pop + of + homes + homesWord)
 	if start := g.w - 3 - n + 1; start > x+1 {

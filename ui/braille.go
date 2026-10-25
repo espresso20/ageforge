@@ -1,10 +1,6 @@
 package ui
 
-import (
-	"slices"
-
-	"github.com/espresso20/ageforge/pkg/textfmt"
-)
+import "slices"
 
 // braille dot bit positions: [col: 0=left, 1=right][row: 0=top .. 3=bottom]
 var brailleDot = [2][4]rune{
@@ -104,10 +100,4 @@ func AgeMarkerCols(markerTicks []int, firstTick, lastTick, width int) []int {
 		}
 	}
 	return cols
-}
-
-// fmtVal formats a float64 for compact display. It delegates to the shared
-// number formatter (950, 12.5K, 1.23M) so graphs read like the rest of the UI.
-func fmtVal(v float64) string {
-	return textfmt.Number(v)
 }

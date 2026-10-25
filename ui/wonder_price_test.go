@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // A wonder is paid through its bank at the ruleset's price. The engine's
@@ -67,7 +68,7 @@ func TestEveryScreenShowsTheBanksPriceForAWonder(t *testing.T) {
 			// The wonder panel: a line a part, against the same price.
 			text := untag(wondersProvider(eng.GetState(), 100))
 			for res, c := range def.BaseCost {
-				if want := game.ResourceName(res) + ": 0 / " + FormatNumber(c); !strings.Contains(text, want) {
+				if want := game.ResourceName(res) + ": 0 / " + textfmt.Number(c); !strings.Contains(text, want) {
 					// The panel lists only the age's current wonder in full.
 					if key == st.CurrentAgeWonderKey {
 						t.Errorf("%s: the wonder panel has no line %q", key, want)
