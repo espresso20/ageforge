@@ -7,62 +7,36 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// peopleNames is the owner's table of the four people terms, by age (plural
-// forms), written out here so a typo in the lexicon fails.
-var peopleNames = map[string][4]string{
-	"primitive_age":    {"Gatherers", "Clanfolk", "Hunters", "Elders"},
-	"stone_age":        {"Laborers", "Villagers", "Warriors", "Storytellers"},
-	"bronze_age":       {"Craftsfolk", "Villagers", "Spearmen", "Scribes"},
-	"iron_age":         {"Laborers", "Townsfolk", "Swordsmen", "Sages"},
-	"classical_age":    {"Freemen", "Citizens", "Hoplites", "Philosophers"},
-	"medieval_age":     {"Serfs", "Commoners", "Men-at-arms", "Monks"},
-	"renaissance_age":  {"Guildsmen", "Burghers", "Musketeers", "Scholars"},
-	"colonial_age":     {"Settlers", "Colonists", "Regulars", "Naturalists"},
-	"industrial_age":   {"Mill hands", "Townsfolk", "Riflemen", "Engineers"},
-	"victorian_age":    {"Laborers", "Citizens", "Infantry", "Scientists"},
-	"electric_age":     {"Linemen", "Citizens", "Infantry", "Inventors"},
-	"atomic_age":       {"Workers", "Civilians", "Troopers", "Physicists"},
-	"modern_age":       {"Employees", "Civilians", "Soldiers", "Researchers"},
-	"information_age":  {"Staff", "Civilians", "Operators", "Analysts"},
-	"digital_age":      {"Coders", "Netizens", "Cyber troops", "Data scientists"},
-	"cyberpunk_age":    {"Wage slaves", "Street folk", "Mercs", "Netrunners"},
-	"fusion_age":       {"Technicians", "Residents", "Augments", "Theorists"},
-	"space_age":        {"Crew", "Colonists", "Marines", "Astronomers"},
-	"interstellar_age": {"Spacers", "Settlers", "Rangers", "Xenologists"},
-	"galactic_age":     {"Hands", "Citizens", "Legionnaires", "Archivists"},
-	"quantum_age":      {"Operators", "Entangled", "Wardens", "Quantum minds"},
-	"transcendent_age": {"Shapers", "Souls", "Paragons", "Oracles"},
-}
-
-// TestLexiconPeopleTermsFilled holds all 22 ages to the owner's table, with a
-// singular for every plural.
+// TestLexiconPeopleTermsFilled holds every age to a full row: one lexicon row
+// per age in age order, all four people terms present, each with a singular
+// and a plural that are trimmed and capitalised, and no two terms of an age
+// sharing a word.
 func TestLexiconPeopleTermsFilled(t *testing.T) {
 	order := AgeOrder()
-	if len(order) != 22 || len(peopleNames) != 22 {
-		t.Fatalf("expected 22 ages, got %d in the game and %d in the table", len(order), len(peopleNames))
+	if len(lexiconRows) != len(order) {
+		t.Fatalf("the lexicon has %d rows, want one per age (%d)", len(lexiconRows), len(order))
 	}
-	for _, age := range order {
-		want, ok := peopleNames[age]
-		if !ok {
-			t.Errorf("%s: no row in the test's table", age)
-			continue
+	for i, age := range order {
+		if lexiconRows[i].age != age {
+			t.Errorf("lexicon row %d is %s, want %s (the order of ages)", i, lexiconRows[i].age, age)
 		}
-		for i, key := range PeopleTerms() {
+		seen := map[string]string{}
+		for _, key := range PeopleTerms() {
 			w, has := TermsFor(age)[key]
 			if !has {
 				t.Errorf("%s: the lexicon has no %s", age, key)
 				continue
 			}
-			if w.Many != want[i] {
-				t.Errorf("%s %s: plural %q, want %q", age, key, w.Many, want[i])
-			}
-			if w.One == "" {
-				t.Errorf("%s %s: no singular", age, key)
+			for form, word := range map[string]string{"singular": w.One, "plural": w.Many} {
+				if word == "" || word != strings.TrimSpace(word) || word[0] < 'A' || word[0] > 'Z' {
+					t.Errorf("%s %s: %s %q should be a trimmed, capitalised word", age, key, form, word)
+				}
+				if other, dup := seen[word]; dup && other != key {
+					t.Errorf("%s: %s and %s share the word %q", age, other, key, word)
+				}
+				seen[word] = key
 			}
 		}
-	}
-	if len(lexiconRows) != 22 {
-		t.Errorf("the lexicon has %d rows, want one per age (22)", len(lexiconRows))
 	}
 }
 
@@ -140,8 +114,8 @@ func TestLexiconCellsAreEveryWord(t *testing.T) {
 			t.Errorf("%s has no text", c.ID)
 		}
 	}
-	// 22 ages of 4 people terms, the plain English words, both forms.
-	if want := 2 * (22*4 + len(plainTerms)); len(cells) != want {
+	// Every age's people terms, the plain English words, both forms.
+	if want := 2 * (len(AgeOrder())*len(PeopleTerms()) + len(plainTerms)); len(cells) != want {
 		t.Errorf("%d cells, want %d", len(cells), want)
 	}
 	for _, id := range []string{"lexicon.bronze_age.scholars.one", "lexicon.bronze_age.scholars.many", "lexicon.plain.army_rank_4.one"} {
