@@ -24,24 +24,11 @@ func untag(s string) string { return tagRe.ReplaceAllString(s, "") }
 func harbDashboard(t *testing.T, age string) (*Dashboard, *game.GameEngine, *tview.Pages) {
 	t.Helper()
 	engine := game.NewGameEngine()
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	if age != "" {
 		must(t, engine.SummonHarbingerForTest(age))
 	}
 	return d, engine, pages
-}
-
-// renderText draws pages at w×h into a SimulationScreen and returns the rows.
-func renderText(t *testing.T, pages *tview.Pages, w, h int) string {
-	t.Helper()
-	var rows []string
-	for _, r := range screenGrid(t, pages, w, h) {
-		rows = append(rows, strings.TrimRight(string(r), " "))
-	}
-	return strings.Join(rows, "\n")
 }
 
 func TestHarbingerPanelWithNoHarbinger(t *testing.T) {
@@ -201,7 +188,7 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	if st := engine.GetState(); st.Harbinger.AppeaseLevel != 0 || d.harbPanel.noteGood {
 		t.Fatalf("appease: level %d note %q", st.Harbinger.AppeaseLevel, d.harbPanel.note)
 	}
-	panel := untag(renderText(t, pages, 160, 60))
+	panel := untag(drawPrimitive(t, pages, 160, 60).Text())
 	if want := "more faith"; !strings.Contains(panel, want) || strings.Contains(panel, "storage must reach") {
 		t.Errorf("panel did not show the appease refusal %q (price %s) without a storage clause", want, textfmt.Number(need))
 	}
