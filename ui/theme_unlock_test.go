@@ -70,24 +70,3 @@ func TestCmdThemeListShowsLockHints(t *testing.T) {
 		t.Errorf("theme list should show a 🔒 marker for locked themes\ngot: %s", res.Message)
 	}
 }
-
-// --- small slice helpers (test-local) ---
-
-func sliceContains(s []string, v string) bool {
-	for _, x := range s {
-		if x == v {
-			return true
-		}
-	}
-	return false
-}
-
-func countOccurrences(s []string, v string) int {
-	n := 0
-	for _, x := range s {
-		if x == v {
-			n++
-		}
-	}
-	return n
-}

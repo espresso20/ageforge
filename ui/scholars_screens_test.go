@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -346,7 +347,7 @@ func TestScholarsCommand(t *testing.T) {
 		t.Errorf("usage = %q", usage)
 	}
 	// Completion and help know it like its neighbors.
-	if got := NewAutoCompleter(ge)("schol"); !containsWord(got, "scholars") {
+	if got := NewAutoCompleter(ge)("schol"); !slices.Contains(got, "scholars") {
 		t.Errorf("completing schol = %v", got)
 	}
 	if help := HandleCommand("help scholars", ge); !strings.Contains(help.Message+help.OverlayName, "scholars") {
@@ -459,7 +460,7 @@ func TestSuggestResearchGameAware(t *testing.T) {
 		t.Errorf("research offers %v; want the available techs", got)
 	}
 	for key, ts := range st.Research.Techs {
-		if ts.Available && !containsWord(got, "research "+key) {
+		if ts.Available && !slices.Contains(got, "research "+key) {
 			t.Errorf("research does not offer %s, which can start", key)
 		}
 	}

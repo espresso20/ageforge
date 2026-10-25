@@ -4,6 +4,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -196,12 +198,12 @@ func TestRegistryMatchesDispatcher(t *testing.T) {
 		reg := map[string]bool{}
 		treeWords(c, reg)
 		got := handled[inSwitch[c.Name]]
-		for _, w := range sortedSet(reg) {
+		for _, w := range slices.Sorted(maps.Keys(reg)) {
 			if !got[w] {
 				t.Errorf("registry: %s takes %q, but its handler never checks for it", c.Name, w)
 			}
 		}
-		for _, w := range sortedSet(got) {
+		for _, w := range slices.Sorted(maps.Keys(got)) {
 			if !reg[w] && !notSubcommands[w] {
 				t.Errorf("the %s handler reacts to %q, but the registry doesn't list it under %s", c.Name, w, c.Name)
 			}
@@ -305,13 +307,4 @@ func TestRegistryShape(t *testing.T) {
 	if got := strings.Join(dangerous, ","); got != want {
 		t.Errorf("Dangerous commands = %s\nwant %s", got, want)
 	}
-}
-
-func sortedSet(m map[string]bool) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
 }

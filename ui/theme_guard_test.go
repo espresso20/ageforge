@@ -25,16 +25,10 @@ import (
 //     [white:#30363d]) — theme-owned names are the role vocabulary ([accent],
 //     [onaccent:accent]) plus the legacy aliases ([gold], [green], …);
 //   - a named tcell color constant (tcell.ColorGold …) — use theme.Color(role);
-//   - tcell.NewRGBColor / tcell.NewHexColor / tcell.GetColor outside the short
-//     allow-list below, each of which is pixel-streaming or color math, not a
-//     palette choice.
+//   - tcell.NewRGBColor / tcell.NewHexColor / tcell.GetColor — derive the
+//     color from theme roles.
 func TestNoRawColorsOutsideTheme(t *testing.T) {
 	owned := theme.TagNames()
-
-	// Files allowed to construct literal tcell colors, and why. There are
-	// none: the last one was the old main menu's starfield, and the menu
-	// that replaced it mixes every colour from theme roles (menu_scene.go).
-	rgbAllowed := map[string]string{}
 
 	// A tag is [fg], [fg:bg] or [fg:bg:attrs]; fg/bg may be empty or "-".
 	tagRe := regexp.MustCompile(`\[([a-zA-Z#][a-zA-Z0-9#]*|-)?(?::([a-zA-Z#][a-zA-Z0-9#]*|-)?)?(?::[a-zA-Z-]*)?\]`)
@@ -65,8 +59,6 @@ func TestNoRawColorsOutsideTheme(t *testing.T) {
 			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}
-			rel, _ := filepath.Rel(root, path)
-			rel = filepath.ToSlash(rel)
 			f, perr := parser.ParseFile(fset, path, nil, 0)
 			if perr != nil {
 				return perr
@@ -98,9 +90,7 @@ func TestNoRawColorsOutsideTheme(t *testing.T) {
 					case strings.HasPrefix(name, "Color") && len(name) > 5 && name[5] >= 'A' && name[5] <= 'Z':
 						t.Errorf("%s: tcell.%s — use theme.Color(role)", fset.Position(x.Pos()), name)
 					case name == "NewRGBColor" || name == "NewHexColor" || name == "GetColor":
-						if _, ok := rgbAllowed[rel]; !ok {
-							t.Errorf("%s: tcell.%s outside the allow-list — derive from theme roles", fset.Position(x.Pos()), name)
-						}
+						t.Errorf("%s: tcell.%s — derive from theme roles", fset.Position(x.Pos()), name)
 					}
 				}
 				return true

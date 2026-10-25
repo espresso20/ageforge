@@ -2,6 +2,7 @@ package ui
 
 import (
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -176,7 +177,7 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 		checkSpoilers(t, cmd, reply, terms)
 		typed := strings.Fields(cmd)
 		for _, f := range config.BaseFactions() {
-			if strings.Contains(reply, f.Key) && !containsWord(typed, f.Key) {
+			if strings.Contains(reply, f.Key) && !slices.Contains(typed, f.Key) {
 				t.Errorf("%q: the reply names %s, which the player never typed: %q", cmd, f.Key, reply)
 			}
 		}
@@ -189,13 +190,4 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 			t.Errorf("completion for %q offers %v before first contact", line, got)
 		}
 	}
-}
-
-func containsWord(words []string, w string) bool {
-	for _, x := range words {
-		if x == w {
-			return true
-		}
-	}
-	return false
 }

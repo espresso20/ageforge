@@ -250,50 +250,16 @@ var guardKeyEchoes = []*regexp.Regexp{
 	regexp.MustCompile(`\b(build|research|expedition|campaign|trade route start|trade route stop|plan deal|diplomacy [a-z/]+|ally/rival/embargo/neutral)\s+$`),
 }
 
-// guardKeyExemptPanels are panels whose text another change owns.
-var guardKeyExemptPanels = map[string]string{}
-
-// guardKeyWords are snake_case words that are English, not keys.
-var guardKeyWords = map[string]bool{}
-
-// guardKnownLeaks are raw keys that come from text outside ui/ and are still
-// being fixed at the source. Each entry names the panel and a pattern on the
-// line; delete it once the source is fixed so the guard covers that text too.
-var guardKnownLeaks = []struct {
-	panel string
-	line  *regexp.Regexp
-	why   string
-}{}
-
-// guardKnownLeak reports whether line on panel is a listed known leak.
-func guardKnownLeak(panel, line string) bool {
-	for _, k := range guardKnownLeaks {
-		if k.panel == panel && k.line.MatchString(line) {
-			return true
-		}
-	}
-	return false
-}
-
 // TestPanelsShowNoRawKeys: the tag-stripped panel text carries no config key
 // outside the key-echo spots above.
 func TestPanelsShowNoRawKeys(t *testing.T) {
 	states, engine := guardStates(t)
 	for name, provide := range guardPanels(t, engine) {
-		if _, skip := guardKeyExemptPanels[name]; skip {
-			continue
-		}
 		for sname, st := range states {
 			shown := guardRendered(provide(st, guardPanelWidth))
 			for _, line := range strings.Split(shown, "\n") {
-				if guardKnownLeak(name, line) {
-					continue
-				}
 				for _, m := range guardKeyRe.FindAllStringIndex(line, -1) {
 					key := line[m[0]:m[1]]
-					if guardKeyWords[key] {
-						continue
-					}
 					before := line[:m[0]]
 					echo := false
 					for _, re := range guardKeyEchoes {

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -125,7 +126,7 @@ func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 		rows = rows[:len(rows)-1]
 		last = rows[len(rows)-1]
 	}
-	if want := "↓ " + itoa(len(entries)-first) + " more below: PgDn"; strings.TrimSpace(last) != want {
+	if want := "↓ " + strconv.Itoa(len(entries)-first) + " more below: PgDn"; strings.TrimSpace(last) != want {
 		t.Errorf("the box does not end by saying what is below it: %q, want %q", last, want)
 	}
 	if strings.Contains(strings.Join(rows, "\n"), "more above") {
@@ -148,8 +149,8 @@ func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 	for page := 2; page < 10 && d.economyTab.bldFirst+d.economyTab.bldShown < len(entries); page++ {
 		d.economyTab.ScrollDown()
 		rows = buildingsBox(t, d, pages, playtestCols, playtestRows)
-		wholeEntries(t, "page "+itoa(page), d, rows)
-		if want := "↑ " + itoa(d.economyTab.bldFirst) + " more above: PgUp"; !strings.Contains(strings.Join(rows, "\n"), want) {
+		wholeEntries(t, "page "+strconv.Itoa(page), d, rows)
+		if want := "↑ " + strconv.Itoa(d.economyTab.bldFirst) + " more above: PgUp"; !strings.Contains(strings.Join(rows, "\n"), want) {
 			t.Errorf("page %d does not say what is above it (%q):\n%s", page, want, strings.Join(rows, "\n"))
 		}
 		note(rows)
@@ -181,7 +182,7 @@ func TestBuildingsBoxUnderTheMiniMap(t *testing.T) {
 	shown := wholeEntries(t, "under the mini map", d, rows)
 	_, _, bw, _ := d.economyTab.buildingTV.GetInnerRect()
 	_, entries := buildingEntries(d.economyTab.state, bw)
-	if want := "↓ " + itoa(len(entries)-shown) + " more below: PgDn"; !strings.Contains(strings.Join(rows, "\n"), want) {
+	if want := "↓ " + strconv.Itoa(len(entries)-shown) + " more below: PgDn"; !strings.Contains(strings.Join(rows, "\n"), want) {
 		t.Errorf("under the mini map the box does not say what is below it (%q):\n%s", want, strings.Join(rows, "\n"))
 	}
 }
@@ -191,7 +192,7 @@ func TestLayoutBuildings(t *testing.T) {
 	entry := func(name string, n int) []string {
 		out := []string{name}
 		for i := 1; i < n; i++ {
-			out = append(out, name+" line "+itoa(i+1))
+			out = append(out, name+" line "+strconv.Itoa(i+1))
 		}
 		return out
 	}
@@ -224,22 +225,4 @@ func TestLayoutBuildings(t *testing.T) {
 			}
 		}
 	}
-}
-
-// itoa is strconv.Itoa, for the short messages above.
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	neg, s := n < 0, ""
-	if neg {
-		n = -n
-	}
-	for ; n > 0; n /= 10 {
-		s = string(rune('0'+n%10)) + s
-	}
-	if neg {
-		s = "-" + s
-	}
-	return s
 }

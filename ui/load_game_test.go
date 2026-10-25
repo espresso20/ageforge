@@ -76,7 +76,7 @@ func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
 func TestDetailTextCorrupt(t *testing.T) {
 	s := game.SaveInfo{Name: "broken", Corrupt: true, Timestamp: time.Now()}
 	got := detailText(s, false, "")
-	if want := "Corrupt save"; !contains(got, want) {
+	if want := "Corrupt save"; !strings.Contains(got, want) {
 		t.Errorf("detailText(corrupt) = %q, should mention %q", got, want)
 	}
 }
@@ -111,7 +111,7 @@ func TestDetailTextPopulated(t *testing.T) {
 		"Prestige", "level 2", "1.5K points", "Morale", "75%",
 		"Pending", "The Great Plague",
 	} {
-		if !contains(got, want) {
+		if !strings.Contains(got, want) {
 			t.Errorf("detailText(populated) missing %q\ngot: %q", want, got)
 		}
 	}
@@ -130,19 +130,19 @@ func TestDetailTextOmitsEmptyTitleAndCatastrophe(t *testing.T) {
 	got := detailText(s, false, "")
 
 	// Empty title → no quoted segment leaking through.
-	if contains(got, "\"\"") {
+	if strings.Contains(got, "\"\"") {
 		t.Errorf("detailText with empty Title rendered empty quotes\ngot: %q", got)
 	}
 	// No looming catastrophe → the whole warning line is omitted.
-	if contains(got, "Pending") {
+	if strings.Contains(got, "Pending") {
 		t.Errorf("detailText with empty PendingCatastrophe still shows a Pending line\ngot: %q", got)
 	}
 	// With no total known, Milestones shows a bare count (no slash).
-	if contains(got, "Milestones") && contains(got, "1/") {
+	if strings.Contains(got, "Milestones") && strings.Contains(got, "1/") {
 		t.Errorf("detailText showed Milestones with a total when none was set\ngot: %q", got)
 	}
 	// The age must still anchor line 1.
-	if !contains(got, ageDisplay("stone_age")) {
+	if !strings.Contains(got, ageDisplay("stone_age")) {
 		t.Errorf("detailText missing the age display for an untitled save\ngot: %q", got)
 	}
 }
@@ -152,7 +152,7 @@ func TestDetailTextAccountAttribution(t *testing.T) {
 
 	// Save belongs to the current account → "this account".
 	mine := game.SaveInfo{Name: "mine", Age: "iron_age", AccountID: current}
-	if got := detailText(mine, false, current); !contains(got, "this account") {
+	if got := detailText(mine, false, current); !strings.Contains(got, "this account") {
 		t.Errorf("detailText(own save) should say 'this account'\ngot: %q", got)
 	}
 
@@ -160,54 +160,45 @@ func TestDetailTextAccountAttribution(t *testing.T) {
 	const other = "9999888877776666555544443333222"
 	theirs := game.SaveInfo{Name: "theirs", Age: "iron_age", AccountID: other}
 	got := detailText(theirs, false, current)
-	if !contains(got, "another account") {
+	if !strings.Contains(got, "another account") {
 		t.Errorf("detailText(other save) should say 'another account'\ngot: %q", got)
 	}
-	if !contains(got, other[:8]) {
+	if !strings.Contains(got, other[:8]) {
 		t.Errorf("detailText(other save) should show the short id prefix %q\ngot: %q", other[:8], got)
 	}
-	if contains(got, other) {
+	if strings.Contains(got, other) {
 		t.Errorf("detailText must never show the full account id\ngot: %q", got)
 	}
 
 	// Pre-account / legacy save → "pre-account".
 	legacy := game.SaveInfo{Name: "legacy", Age: "iron_age", AccountID: ""}
-	if got := detailText(legacy, false, current); !contains(got, "pre-account") {
+	if got := detailText(legacy, false, current); !strings.Contains(got, "pre-account") {
 		t.Errorf("detailText(legacy save) should say 'pre-account'\ngot: %q", got)
 	}
-}
-
-func contains(s, sub string) bool {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
 }
 
 func TestFooterBarShowsHotkeyButtons(t *testing.T) {
 	bar := footerBar()
 	// Every action label must be present.
 	for _, label := range []string{"Navigate", "Load", "Delete", "Rename", "Duplicate", "Main game", "Back"} {
-		if !contains(bar, label) {
+		if !strings.Contains(bar, label) {
 			t.Errorf("footerBar() missing action label %q", label)
 		}
 	}
 	// Every hotkey must render as a keycap (between the gold cap tag and the label tag).
 	for _, cap := range []string{"] ↑↓ [", "] Enter [", "] D [", "] R [", "] C [", "] M [", "] Esc ["} {
-		if !contains(bar, cap) {
+		if !strings.Contains(bar, cap) {
 			t.Errorf("footerBar() missing keycap %q", cap)
 		}
 	}
 	// Buttons must be styled with a real color tag, not plain text.
-	if !contains(bar, "[onaccent:accent:b]") {
+	if !strings.Contains(bar, "[onaccent:accent:b]") {
 		t.Errorf("footerBar() should style keycaps with a color tag, got %q", bar)
 	}
 	// Regression guard: the old footer used bare [Enter]/[d]/[r]/[c]/[Esc], which
 	// tview parses as color tags and SWALLOWS — the hotkeys vanished on screen.
 	for _, naked := range []string{"[Enter]", "[Esc]", "[d]", "[r]", "[c]"} {
-		if contains(bar, naked) {
+		if strings.Contains(bar, naked) {
 			t.Errorf("footerBar() contains swallowable tag %q — keys will vanish in tview", naked)
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
@@ -253,7 +255,7 @@ func TestTitleCommand(t *testing.T) {
 	}
 	d.refresh()
 	_, sum := eng.Badges()
-	if !sliceContains(sum.Titles, "Survivor") || wornTitle(sum) != "Settler" {
+	if !slices.Contains(sum.Titles, "Survivor") || wornTitle(sum) != "Settler" {
 		t.Fatalf("after the gold rung: titles %v, worn %q", sum.Titles, wornTitle(sum))
 	}
 	if res := HandleCommand("title", eng); !strings.Contains(res.Message, "Survivor") || !strings.Contains(res.Message, "Settler (worn)") {
@@ -335,7 +337,7 @@ func TestLookingAtAVisitorEarnsItsBadge(t *testing.T) {
 	p.spotted = func(kind string) { told++; spotted(kind) }
 
 	p.update(eng.GetState())
-	if told != 0 || sliceContains(eng.Account().EarnedBadges(), badge) {
+	if told != 0 || slices.Contains(eng.Account().EarnedBadges(), badge) {
 		t.Fatal("a cursor on a hut told the account of a visitor")
 	}
 	stub.on = true
@@ -344,7 +346,7 @@ func TestLookingAtAVisitorEarnsItsBadge(t *testing.T) {
 	if told != 1 {
 		t.Errorf("the account was told %d times of one look", told)
 	}
-	if !sliceContains(eng.Account().EarnedBadges(), badge) {
+	if !slices.Contains(eng.Account().EarnedBadges(), badge) {
 		t.Fatalf("looking at a visitor with motion off did not earn %s: %v", badge, eng.Account().EarnedBadges())
 	}
 	// It leaves and another comes: a key that moves the cursor onto it tells again.
@@ -462,7 +464,7 @@ func TestBadgeLooksMatchTheGame(t *testing.T) {
 		tiers = append(tiers, tier.String())
 	}
 	for _, g := range config.BadgeMapGlyphs {
-		if !sliceContains(tiers, g) {
+		if !slices.Contains(tiers, g) {
 			t.Errorf("the catalog names the glyph set %q; the game has %v", g, tiers)
 		}
 	}
@@ -548,7 +550,7 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 	}
 	has("the last title", "| "+config.BadgeCompleteTitle+" |")
 	worn := set.BadgeWornTitles()
-	has("the number of badge titles", fmt.Sprintf("%s more titles come with badges", strings.ToUpper(wikiNumber(len(worn))[:1])+wikiNumber(len(worn))[1:]))
+	has("the number of badge titles", fmt.Sprintf("%s more titles come with badges", textfmt.Capitalize(numberWords(len(worn)))))
 	for _, tt := range worn {
 		has("the title "+tt.Title, "| "+tt.Title+" |")
 	}
@@ -559,9 +561,9 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 			has("the theme "+th.Name.Plain(), "| "+th.Name.Plain()+" |")
 		}
 	}
-	has("the number of themes badges give", fmt.Sprintf("%s [themes](themes.md) are the reward of a badge", strings.ToUpper(wikiNumber(given)[:1])+wikiNumber(given)[1:]))
+	has("the number of themes badges give", fmt.Sprintf("%s [themes](themes.md) are the reward of a badge", textfmt.Capitalize(numberWords(given))))
 	has("the census period", fmt.Sprintf("every %d ticks", config.BadgeCensusTicks))
-	has("the number of drawn badges", fmt.Sprintf("%s badges have a drawing of their own", strings.ToUpper(wikiNumber(len(legendSprites))[:1])+wikiNumber(len(legendSprites))[1:]))
+	has("the number of drawn badges", fmt.Sprintf("%s badges have a drawing of their own", textfmt.Capitalize(numberWords(len(legendSprites)))))
 
 	// No wiki page names a secret badge, or one of the three that are not
 	// listed until earned.
@@ -583,13 +585,4 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 			}
 		}
 	}
-}
-
-// wikiNumber is a small count in words, as the wiki writes one.
-func wikiNumber(n int) string {
-	words := []string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"}
-	if n >= 0 && n < len(words) {
-		return words[n]
-	}
-	return fmt.Sprint(n)
 }

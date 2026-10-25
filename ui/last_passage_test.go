@@ -31,7 +31,6 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 		t.Fatal("refresh did not show the Last Passage modal")
 	}
 	screen := renderPages(t, pages, 160, 50)
-	t.Logf("Last Passage modal:\n%s", modalCapture(screen, "The Last Passage"))
 	wantAll(t, "modal", screen,
 		"✦ The Last Passage", "☄ The Last Passage", "Prestige waits on your answer",
 		"ENDURE: pass through, diminished", "You keep 50% of this run's prestige points",
@@ -90,7 +89,6 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 	d, engine, pages := lastPassageDashboard(t, "quantum_age", true)
 	d.refresh()
 	screen := renderPages(t, pages, 160, 50)
-	t.Logf("Last Passage modal, legacy held:\n%s", modalCapture(screen, "The Last Passage"))
 	if !strings.Contains(screen, "You already carry the Cosmic Legacy. Succumb is closed to you.") {
 		t.Errorf("no reason for the closed Succumb\n%s", screen)
 	}
@@ -106,49 +104,6 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 	if b, ok := d.catFocus.(*tview.Button); !ok || b.GetLabel() != tview.Escape("[E] ENDURE") {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}
-}
-
-// modalCapture returns the rows of screen from the one holding title down to
-// the box's bottom border, for the test log.
-func modalCapture(screen, title string) string {
-	rows := strings.Split(screen, "\n")
-	start := -1
-	for i, r := range rows {
-		if strings.Contains(r, title) {
-			start = i
-			break
-		}
-	}
-	if start < 0 {
-		return ""
-	}
-	// Cut each row to the box's columns: from the top-left corner to the
-	// matching right edge.
-	top := []rune(rows[start])
-	left, right := -1, -1
-	for i, r := range top {
-		if r == '╔' && left < 0 {
-			left = i
-		}
-		if r == '╗' {
-			right = i
-		}
-	}
-	if left < 0 || right < 0 {
-		return ""
-	}
-	var out []string
-	for _, row := range rows[start:] {
-		rr := []rune(row)
-		if len(rr) <= right {
-			break
-		}
-		out = append(out, string(rr[left:right+1]))
-		if rr[left] == '╚' {
-			break
-		}
-	}
-	return strings.Join(out, "\n")
 }
 
 // The layout fits the box at every Brace level, legacy held or not.
