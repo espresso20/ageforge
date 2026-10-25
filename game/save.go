@@ -614,7 +614,6 @@ func (ge *GameEngine) SaveGame(filename string) error {
 		return fmt.Errorf("could not write the save file: %w", err)
 	}
 	err = os.Rename(tmpPath, path)
-	forgetAutosaveProbe()
 	if err != nil {
 		return fmt.Errorf("could not write the save file: %w", err)
 	}
@@ -1603,7 +1602,6 @@ func WipeAllSaves() error {
 			os.Remove(filepath.Join(dir, e.Name()))
 		}
 	}
-	forgetAutosaveProbe()
 	return nil
 }
 
@@ -1611,43 +1609,6 @@ func WipeAllSaves() error {
 func SaveExists(filename string) bool {
 	_, err := os.Stat(savePath(filename))
 	return err == nil
-}
-
-// autosaveProbeTTL is how long GetState trusts its last look for the autosave
-// file. The snapshot is taken twice a second and the look is three stat calls
-// (the canonical path, the legacy path, then the file itself); a save made or
-// removed by this process forgets the look at once, so only a change made from
-// outside waits out the second.
-const autosaveProbeTTL = time.Second
-
-var autosaveProbe struct {
-	mu     sync.Mutex
-	path   string // the saves folder's autosave path the look was taken for
-	at     time.Time
-	exists bool
-}
-
-// autosaveExists is SaveExists(AutosaveName) for the snapshot: the same answer,
-// looked up at most once per autosaveProbeTTL for a given saves folder.
-func autosaveExists() bool {
-	key := filepath.Join(saveDirectory(), AutosaveName+".json")
-	now := time.Now()
-	autosaveProbe.mu.Lock()
-	defer autosaveProbe.mu.Unlock()
-	if p := &autosaveProbe; !p.at.IsZero() && p.path == key && now.Sub(p.at) < autosaveProbeTTL {
-		return p.exists
-	}
-	exists := SaveExists(AutosaveName)
-	autosaveProbe.path, autosaveProbe.at, autosaveProbe.exists = key, now, exists
-	return exists
-}
-
-// forgetAutosaveProbe drops the remembered look: call it after anything in
-// this process wrote, removed or renamed a save file.
-func forgetAutosaveProbe() {
-	autosaveProbe.mu.Lock()
-	autosaveProbe.at = time.Time{}
-	autosaveProbe.mu.Unlock()
 }
 
 // maxSaveNameLen bounds save base-names. Generous for player-chosen names while
@@ -1723,7 +1684,6 @@ func DeleteSave(filename string) error {
 		return noSaveError{name: name, err: fs.ErrNotExist}
 	}
 	err = os.Remove(savePath(name))
-	forgetAutosaveProbe()
 	if err != nil {
 		return fmt.Errorf("could not delete the save file: %w", err)
 	}
@@ -1757,7 +1717,6 @@ func RenameSave(oldName, newName string) error {
 	// save in the legacy CWD location isn't orphaned by a canonical-dir write.
 	dstPath := filepath.Join(filepath.Dir(srcPath), dst+".json")
 	err = os.Rename(srcPath, dstPath)
-	forgetAutosaveProbe()
 	if err != nil {
 		return fmt.Errorf("could not rename the save file: %w", err)
 	}

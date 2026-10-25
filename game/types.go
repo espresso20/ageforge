@@ -46,7 +46,6 @@ type GameState struct {
 	Diplomacy      DiplomacyState
 	Log            []LogEntry
 	Stats          StatsSnapshot
-	SaveExists     bool
 	TickSpeedBonus float64
 	TickIntervalMs int
 	CheaterBadge   bool
