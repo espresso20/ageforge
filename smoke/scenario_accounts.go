@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 
@@ -94,15 +95,6 @@ func saveNames() []string {
 	return names
 }
 
-func contains(xs []string, s string) bool {
-	for _, x := range xs {
-		if x == s {
-			return true
-		}
-	}
-	return false
-}
-
 func runAccounts(seed int64, res *Findings) {
 	a := &acctRun{res: res}
 	themeKey := theme.All()[len(theme.All())-1].Key
@@ -144,7 +136,7 @@ func runAccounts(seed int64, res *Findings) {
 		res.fail("account_ids", "two differently named accounts got the same id %s", alpha.AccountID)
 	}
 	a.step("saves are per account", func() error {
-		if s := saveNames(); !contains(s, "beta-run") || contains(s, "alpha-run") {
+		if s := saveNames(); !slices.Contains(s, "beta-run") || slices.Contains(s, "alpha-run") {
 			return fmt.Errorf("with beta active the save list is %v", s)
 		}
 		return nil
@@ -156,7 +148,7 @@ func runAccounts(seed int64, res *Findings) {
 		if activeID() != alpha.AccountID {
 			return fmt.Errorf("active account is %q after switching to alpha", activeID())
 		}
-		if s := saveNames(); !contains(s, "alpha-run") || contains(s, "beta-run") {
+		if s := saveNames(); !slices.Contains(s, "alpha-run") || slices.Contains(s, "beta-run") {
 			return fmt.Errorf("with alpha active the save list is %v", s)
 		}
 		return nil

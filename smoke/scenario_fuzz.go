@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"runtime"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -387,7 +388,7 @@ func runFuzz(e *Env, res *Result) {
 				switch {
 				case len(fs) == 0:
 					byFirst["(empty)"]++
-				case contains(gen.commands, strings.ToLower(fs[0])):
+				case slices.Contains(gen.commands, strings.ToLower(fs[0])):
 					byFirst[strings.ToLower(fs[0])]++
 				default:
 					byFirst["(not a command)"]++

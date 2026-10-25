@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -36,18 +37,15 @@ import (
 //     gates so far asked for, so the first copy of every building of that age
 //     a run can build (the age's storage building among them), and its first
 //     tech, must be payable from that cold start, and a flow resource in one
-//     is held to the bound below, with its constant (firstCopyProblems);
+//     is held to what the reference income makes in the age's pacing target
+//     (firstCopyProblems);
 //   - every flow resource (food, faith, culture) the gate asks for is made
 //     within the age's pacing target at config.FlowIncome.
 //
 // What this used to hold against the most storage buildable (the last
 // required copy fitting a store, the first storage copy fitting the least
 // store a gate forces) went with the stores: see the report.
-const (
-	GateResourceMargin = 1.25
-	GateWonderMargin   = 1.0 // no longer checked: see the wonder, above
-	GateTrickleHours   = 48.0
-)
+const GateTrickleHours = 48.0
 
 // GateProblem is an age requirement that breaks the Gate Covenant, found from
 // config alone. A run only ever meets the first one, so the report lists them
@@ -159,7 +157,6 @@ type coldStart struct {
 	boot     map[string]bool    // steady carried supply: bootstraps a gate's total and a first copy it is not too thin for
 	made     map[string]float64 // per tick, at listed output: the carried required copies of what they make
 	reach    map[string]bool    // resources the age itself supplies in bulk
-	carried  map[string]bool    // buildings carried over
 	held     map[string]bool    // techs no run leaves the age without
 }
 
@@ -195,10 +192,7 @@ func techReachable(tech, age string) bool {
 // tech needs every one of its Prerequisites and, when it has an either-or
 // group, one of its keys: one branch that opens in time is enough.
 func techReachableIn(techs map[string]config.TechDef, ages []string, tech, age string) bool {
-	order := map[string]int{}
-	for i, a := range ages {
-		order[a] = i
-	}
+	order := config.AgePositions(ages)
 	limit, known := order[age]
 	if !known {
 		return false
@@ -269,9 +263,9 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 				}
 			}
 		}
-		cs := &coldStart{age: a.Key, unlocked: cloneSet(unlocked),
-			trickle: cloneMap(trickle), boot: map[string]bool{}, made: map[string]float64{}, reach: map[string]bool{},
-			carried: cloneSet(carried), held: held[i]}
+		cs := &coldStart{age: a.Key, unlocked: maps.Clone(unlocked),
+			trickle: maps.Clone(trickle), boot: map[string]bool{}, made: map[string]float64{}, reach: map[string]bool{},
+			held: held[i]}
 		for _, k := range sortedKeys(carried) {
 			d := defs[k]
 			for _, e := range d.Effects {
@@ -290,24 +284,6 @@ func coldStarts(ages []config.AgeDef, defs map[string]config.BuildingDef) []*col
 		}
 		cs.solve(defs)
 		out[i] = cs
-	}
-	return out
-}
-
-func cloneSet(m map[string]bool) map[string]bool {
-	out := make(map[string]bool, len(m))
-	for k, v := range m {
-		if v {
-			out[k] = true
-		}
-	}
-	return out
-}
-
-func cloneMap(m map[string]float64) map[string]float64 {
-	out := make(map[string]float64, len(m))
-	for k, v := range m {
-		out[k] = v
 	}
 	return out
 }
@@ -488,7 +464,7 @@ func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) []
 		// deposits. What its price is made of is checked above, with the
 		// gate's other needs: every part of it must have a source from a
 		// cold start.
-		out = append(out, firstCopyProblems(from, to, cold[i+1], defs, config.Technologies())...)
+		out = append(out, firstCopyProblems(from, to, cold[i+1], defs)...)
 	}
 	// Buildings nobody can ever afford: a price in a resource that has no
 	// source in the building's own age (coal before the Renaissance, crypto
@@ -519,13 +495,13 @@ func staticGatesAll(ages []config.AgeDef, defs map[string]config.BuildingDef) []
 
 // firstCopyProblems checks what a town can do on arriving in `to` from `from`
 // with empty stores and the buildings the gates so far asked for: the first
-// copy of every building of `to` that a run can build, and the first tech of
-// `to` (the cheapest), must each be payable in every resource they cost. A
-// resource is payable when the cold start sources it (dead_building says so
-// for a building; the first tech is checked here). A flow resource is held to
-// the bound the covenant puts on a gate's flow resource: what the reference
-// income makes in the age's pacing target. No number is new.
-func firstCopyProblems(from, to config.AgeDef, cs *coldStart, defs map[string]config.BuildingDef, techs []config.TechDef) []GateProblem {
+// copy of every building of `to` that a run can build must be payable in every
+// resource it costs. A resource is payable when the cold start sources it
+// (dead_building says so for a building). A flow resource is held to the bound
+// the covenant puts on a gate's flow resource: what the reference income makes
+// in the age's pacing target. No number is new. (A tech's price is work now,
+// not a resource, so there is no tech to source here.)
+func firstCopyProblems(from, to config.AgeDef, cs *coldStart, defs map[string]config.BuildingDef) []GateProblem {
 	var out []GateProblem
 	check := func(key, res string, price float64) {
 		if price <= 0 {
