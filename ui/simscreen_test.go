@@ -6,6 +6,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"github.com/espresso20/ageforge/game"
 )
 
 // newSimScreen is an initialised w×h UTF-8 SimulationScreen, finished when
@@ -82,3 +84,15 @@ func (f frame) Rows() []string {
 
 // Text is the whole screen as text, a line a row.
 func (f frame) Text() string { return strings.Join(f.Rows(), "\n") }
+
+// newTestDashboard is a dashboard over eng (a fresh game when eng is nil)
+// on the "dashboard" page of its own Pages, as the app lays them out.
+func newTestDashboard(eng *game.GameEngine) (*Dashboard, *tview.Pages) {
+	if eng == nil {
+		eng = game.NewGameEngine()
+	}
+	pages := tview.NewPages()
+	d := NewDashboard(tview.NewApplication(), eng, pages)
+	pages.AddPage("dashboard", d.Root(), true, true)
+	return d, pages
+}

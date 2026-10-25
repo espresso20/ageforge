@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/rivo/tview"
 )
 
 // medievalAges are the ages a run has passed when it stands in the Medieval Age.
@@ -72,14 +71,12 @@ func TestPrestigedStateShowsLastingBonus(t *testing.T) {
 		t.Errorf("retired prestige buy did not use the unknown-subcommand usage: %q", got)
 	}
 
-	pages := tview.NewPages()
-	dashboard := NewDashboard(tview.NewApplication(), engine, pages)
-	pages.AddPage("dashboard", dashboard.Root(), true, true)
+	dashboard, pages := newTestDashboard(engine)
 	dashboard.inputField.SetText("stats")
 	dashboard.submitInput()
 	for _, size := range [][2]int{{80, 24}, {100, 30}} {
 		dashboard.overlayMgr.entries["stats"].tv.ScrollTo(29, 0)
-		if screen := screenAt(t, pages, size[0], size[1]); !strings.Contains(screen, want) {
+		if screen := drawPrimitive(t, pages, size[0], size[1]).Text(); !strings.Contains(screen, want) {
 			t.Errorf("%dx%d stats screen omitted %q:\n%s", size[0], size[1], want, screen)
 		}
 	}
