@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -13,8 +12,8 @@ import (
 
 // drawPrompt draws a focused command input holding text on a w-wide
 // simulated line, through theme.WrapScreen like the real app, and returns
-// the line's cells.
-func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) []tcell.SimCell {
+// the line.
+func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) frame {
 	t.Helper()
 	in := newCommandInput(newCompleter(eng, nil))
 	in.SetLabel("❯ ").SetFieldWidth(0).
@@ -22,36 +21,19 @@ func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) []tcell.
 		SetLabelColor(theme.Color(theme.RoleHighlight))
 	in.SetText(text)
 	in.Focus(func(tview.Primitive) {})
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	t.Cleanup(sim.Fini)
-	sim.SetSize(w, 1)
+	sim := newSimScreen(t, w, 1)
 	screen := theme.WrapScreen(sim)
 	in.SetRect(0, 0, w, 1)
 	in.Draw(screen)
 	screen.Show()
-	cells, _, _ := sim.GetContents()
-	return cells
-}
-
-// lineText is the cells as text, trailing blanks trimmed.
-func lineText(cells []tcell.SimCell) string {
-	var sb strings.Builder
-	for _, c := range cells {
-		if len(c.Runes) == 0 {
-			sb.WriteByte(' ')
-		} else {
-			sb.WriteRune(c.Runes[0])
-		}
-	}
-	return strings.TrimRight(sb.String(), " ")
+	return simCells(sim)
 }
 
 // dimRun is the text drawn in the Dim role's colour.
-func dimRun(cells []tcell.SimCell) string {
+func dimRun(f frame) string {
 	dim := theme.Color(theme.RoleDim).Hex()
 	var sb strings.Builder
-	for _, c := range cells {
+	for _, c := range f.Cells() {
 		fg, _, _ := c.Style.Decompose()
 		if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg.Hex() == dim {
 			sb.WriteRune(c.Runes[0])
@@ -65,24 +47,24 @@ func TestCommandInputGhostText(t *testing.T) {
 	restoreForge(t)
 	eng := game.NewGameEngine()
 
-	cells := drawPrompt(t, eng, "adv", 40)
-	if got := lineText(cells); got != "❯ advance" {
+	f := drawPrompt(t, eng, "adv", 40)
+	if got := f.Text(); got != "❯ advance" {
 		t.Errorf("prompt line = %q, want %q", got, "❯ advance")
 	}
-	if got := dimRun(cells); got != "ance" {
+	if got := dimRun(f); got != "ance" {
 		t.Errorf("dim text = %q, want %q", got, "ance")
 	}
 	// The typed part is not dim.
-	if fg, _, _ := cells[2].Style.Decompose(); fg.Hex() == theme.Color(theme.RoleDim).Hex() {
+	if fg, _, _ := f.Cells()[2].Style.Decompose(); fg.Hex() == theme.Color(theme.RoleDim).Hex() {
 		t.Error("the typed text is drawn dim")
 	}
 
 	for _, text := range []string{"advance", "research list", "zzqx", "build nosuchbuilding", ""} {
-		cells := drawPrompt(t, eng, text, 40)
-		if got := dimRun(cells); got != "" {
+		f := drawPrompt(t, eng, text, 40)
+		if got := dimRun(f); got != "" {
 			t.Errorf("%q: dim text %q, want none", text, got)
 		}
-		if got := lineText(cells); got != strings.TrimRight("❯ "+text, " ") {
+		if got := f.Text(); got != strings.TrimRight("❯ "+text, " ") {
 			t.Errorf("%q: prompt line = %q", text, got)
 		}
 	}
@@ -91,7 +73,7 @@ func TestCommandInputGhostText(t *testing.T) {
 	if got := dimRun(drawPrompt(t, eng, "plan bu", 40)); got != "ild" {
 		t.Errorf("plan bu: dim text %q, want %q", got, "ild")
 	}
-	if got := lineText(drawPrompt(t, eng, "adv", 7)); got != "❯ advan" {
+	if got := drawPrompt(t, eng, "adv", 7).Text(); got != "❯ advan" {
 		t.Errorf("narrow field: %q, want the ghost clipped to %q", got, "❯ advan")
 	}
 }
@@ -104,12 +86,12 @@ func TestCommandInputGhostEveryTheme(t *testing.T) {
 	eng := game.NewGameEngine()
 	for _, th := range theme.All() {
 		must(t, theme.SetActive(th.Key))
-		cells := drawPrompt(t, eng, "adv", 40)
-		if got := dimRun(cells); got != "ance" {
+		f := drawPrompt(t, eng, "adv", 40)
+		if got := dimRun(f); got != "ance" {
 			t.Errorf("%s: dim text %q, want %q", th.Key, got, "ance")
 		}
 		for i := 5; i < 9; i++ {
-			fg, bg, _ := cells[i].Style.Decompose()
+			fg, bg, _ := f.Cells()[i].Style.Decompose()
 			if fg.Hex() == bg.Hex() {
 				t.Errorf("%s: ghost cell %d is invisible (fg == bg == %06x)", th.Key, i, fg.Hex())
 			}
