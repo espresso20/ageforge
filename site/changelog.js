@@ -57,7 +57,7 @@ function parseChangelog(text) {
 
 // Convert the body of a changelog entry (### sections + lists) to HTML.
 function renderBody(md) {
-    if (!md) return "<em style='color:var(--dim)'>No notes for this release.</em>";
+    if (!md) return "<em style='color:var(--dim)'>No notes were set down for this edition.</em>";
     const lines = md.split("\n");
     let html = "";
     let inList = false;
@@ -105,7 +105,7 @@ async function loadChangelog() {
         const entries = parseChangelog(text);
 
         if (!entries.length) {
-            feed.innerHTML = `<div class="cl-empty">No releases yet.</div>`;
+            feed.innerHTML = `<div class="cl-empty">No edition has yet been printed.</div>`;
             return;
         }
 
@@ -125,13 +125,13 @@ async function loadChangelog() {
         `).join("");
     } catch (err) {
         clearTimeout(timeout);
-        const msg = err.name === "AbortError" ? "Request timed out." : escHtml(err.message);
+        const msg = err.name === "AbortError" ? "The request timed out." : escHtml(err.message);
         feed.innerHTML = `
             <div class="cl-error">
-                Could not load changelog: ${msg}<br><br>
+                The chronicle could not be fetched: ${msg}<br><br>
                 <a href="${GH_RELEASES}" target="_blank" rel="noopener"
                    style="color:var(--dim);text-decoration:underline">
-                    View releases on GitHub ↗
+                    Read the releases on GitHub ↗
                 </a>
             </div>`;
     }
