@@ -27,10 +27,7 @@ func badgeDashboard(t *testing.T) (*Dashboard, *tview.Pages, *game.GameEngine) {
 	must(t, err)
 	eng.SetAccount(a)
 	must(t, eng.StartNewNamedGame("run"))
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	d.refresh()
 	return d, pages, eng
 }
