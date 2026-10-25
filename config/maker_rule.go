@@ -164,19 +164,6 @@ func MakerOpenHoles() []MakerOpenHole {
 // makerSkipped are the materials the maker rule leaves alone.
 func makerSkipped(res string) bool { return res == "knowledge" || flowResources[res] }
 
-// MakerExcluded is the set of (building, material) pairs MakerFills put into
-// the tables (Rules 2 to 6), keyed "building/material": the tables as they
-// stood before the fills read without them.
-func MakerExcluded() map[string]bool {
-	out := map[string]bool{}
-	for _, f := range MakerFills() {
-		if f.Rule != 1 { // a Rule 1 fill re-derives an output the building already had
-			out[f.Building+"/"+f.Material] = true
-		}
-	}
-	return out
-}
-
 // makerUnits is the price of d's first copy, and its output per tick, in the
 // price units of levels. Output of a material in skip is not counted.
 func makerUnits(d BuildingDef, lv map[string]float64, skip map[string]bool) (price, out float64) {
