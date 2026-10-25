@@ -215,7 +215,7 @@ func planDetailRows(detail string, width int) string {
 	return strings.Join(wrapWords(detail, width), "\n"+strings.Repeat(" ", planDetailLead))
 }
 
-// planPriceWhole is formatPlanCost with each material's spaces glued.
+// planPriceWhole is a plan cost in key order, with each material's spaces glued.
 func planPriceWhole(cost map[string]float64) string {
 	var parts []string
 	for _, k := range sortedKeysOf(cost) {
@@ -237,15 +237,6 @@ func planDue(v game.PlanItemView) map[string]float64 {
 		}
 	}
 	return due
-}
-
-// formatPlanCost is "48 wood, 20 stone", resources in key order.
-func formatPlanCost(cost map[string]float64) string {
-	var parts []string
-	for _, k := range sortedKeysOf(cost) {
-		parts = append(parts, game.Amount(cost[k], k))
-	}
-	return strings.Join(parts, ", ")
 }
 
 // planPanelText renders the panel. Pure: state in, text out.
@@ -316,7 +307,7 @@ func planListText(state game.GameState) string {
 			status = vibe.Line("ui.overlay_plan.planListText.05", "blocked: ") + v.Note
 		}
 		if len(v.Banked) > 0 {
-			status += ", " + formatPlanCost(v.Banked) + vibe.Line("ui.overlay_plan.planListText.06", " banked")
+			status += ", " + game.Amounts(v.Banked) + vibe.Line("ui.overlay_plan.planListText.06", " banked")
 		}
 		fmt.Fprintf(&sb, "  %d. %s  %s\n", i+1, tview.Escape(planItemTitle(v)), theme.Paint(theme.RoleDim, status))
 	}

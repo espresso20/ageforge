@@ -43,8 +43,8 @@ func tradeProvider(state game.GameState, _ int) string {
 				marker = "[red]✖[-]"
 			}
 			fmt.Fprintf(&sb, " %s [cyan]%s[-]\n", marker, route.Name)
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.05", "   Export: %s\n", formatResMap(route.Export)))
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.06", "   Import: %s\n", formatResMap(route.Import)))
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.05", "   Export: %s\n", game.Amounts(route.Export)))
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.06", "   Import: %s\n", game.Amounts(route.Import)))
 			if route.Disrupted {
 				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.07", "   [red]Suspended: %s imports are blockaded[-]\n\n", game.ResourceName(route.DisruptedBy)))
 			} else {
@@ -64,7 +64,7 @@ func tradeProvider(state game.GameState, _ int) string {
 			fmt.Fprintf(&sb, " %s [cyan]%s[-]\n", statusIcon, route.Name)
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", route.Description)
 			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.12", "   Export: %s → Import: %s\n",
-				formatResMap(route.Export), formatResMap(route.Import)))
+				game.Amounts(route.Export), game.Amounts(route.Import)))
 			if route.CanStart {
 				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.13", "   [green]trade route start %s[-]\n", route.Key))
 			} else {
@@ -115,22 +115,4 @@ func writeAllyTradeBonuses(sb *strings.Builder, dip game.DiplomacyState) {
 			f.Name, textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty)))
 	}
 	sb.WriteString("\n")
-}
-
-// formatResMap formats a resource→amount map as "50 food, 20 wood", sorted by
-// key so the order is stable. Returns "none" for an empty map.
-func formatResMap(m map[string]float64) string {
-	if len(m) == 0 {
-		return "none"
-	}
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	parts := make([]string, 0, len(keys))
-	for _, k := range keys {
-		parts = append(parts, game.Amount(m[k], k))
-	}
-	return strings.Join(parts, ", ")
 }
