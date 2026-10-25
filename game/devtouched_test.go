@@ -81,9 +81,7 @@ func TestDevTouchedRunStillRecords(t *testing.T) {
 	if got := counter(acct, config.BadgeEvPrestige); got != 1 {
 		t.Errorf("the prestige counter is %v, want 1", got)
 	}
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	if disk := slotAccount(t, acct.AccountID); disk.Stats.TotalPrestiges != 1 || !hasBadge(disk, badgePrestige1) || disk.Tampered || disk.BadgesTampered {
 		t.Errorf("on disk: %+v, badges %v, flags %v %v", disk.Stats, disk.EarnedBadges(), disk.Tampered, disk.BadgesTampered)
 	}
@@ -102,15 +100,11 @@ func TestDevTouchedSurvivesSaveLoadAndPrestige(t *testing.T) {
 	ge, acct := devEngine(t, "Dev Tester")
 
 	DevExecCommand("/give food 100", ge)
-	if err := ge.SaveGame("dev"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("dev"))
 
 	ge2 := NewGameEngine()
 	ge2.SetAccount(acct)
-	if err := ge2.LoadGame("dev"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("dev"))
 	if !ge2.GetState().DevTouched {
 		t.Fatal("reloading cleared the dev-touched flag")
 	}
@@ -127,14 +121,10 @@ func TestDevTouchedSurvivesSaveLoadAndPrestige(t *testing.T) {
 	}
 
 	// Still set after another save and load.
-	if err := ge2.SaveGame("dev"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.SaveGame("dev"))
 	ge3 := NewGameEngine()
 	ge3.SetAccount(acct)
-	if err := ge3.LoadGame("dev"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge3.LoadGame("dev"))
 	if !ge3.GetState().DevTouched {
 		t.Error("the flag did not survive a second save and load")
 	}
@@ -212,17 +202,13 @@ func TestNewGameClearsDevTouched(t *testing.T) {
 	ge, _ := devEngine(t, "Dev Tester")
 
 	DevExecCommand("/fill", ge)
-	if err := ge.StartNewNamedGame("fresh"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("fresh"))
 	if st := ge.GetState(); st.DevTouched || !st.AccountRecords {
 		t.Errorf("a new game kept the flag: DevTouched=%v AccountRecords=%v", st.DevTouched, st.AccountRecords)
 	}
 
 	DevExecCommand("/god", ge) // on, and left on
-	if err := ge.StartNewNamedGame("godly"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("godly"))
 	if !ge.GetState().DevTouched {
 		t.Error("a new game with god mode still on was not marked")
 	}
@@ -232,14 +218,10 @@ func TestNewGameClearsDevTouched(t *testing.T) {
 
 	// Loading a clean save with god mode on marks that run too.
 	DevGodMode = false
-	if err := ge.StartNewNamedGame("clean"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("clean"))
 	DevGodMode = true
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("clean"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("clean"))
 	if !ge2.GetState().DevTouched {
 		t.Error("loading a save with god mode on did not mark the run")
 	}

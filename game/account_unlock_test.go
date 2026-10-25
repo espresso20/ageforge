@@ -11,10 +11,7 @@ import (
 func TestUnlockThemeNewlyAndHasTheme(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 
 	if acct.HasTheme("amber_crt") {
 		t.Fatal("HasTheme(amber_crt) true before any unlock")
@@ -46,23 +43,17 @@ func TestUnlockThemeNewlyAndHasTheme(t *testing.T) {
 }
 
 // TestUnlockThemePersistsAcrossRestart confirms an unlock survives a fresh
-// LoadOrCreate (the on-disk store), with the signature still valid and no tamper
+// LoadAccount (the on-disk store), with the signature still valid and no tamper
 // flag — i.e. UnlockTheme persisted via a properly-signed Save.
 func TestUnlockThemePersistsAcrossRestart(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (first): %v", err)
-	}
+	acct := testAccount(t)
 	if _, err := acct.UnlockTheme("obsidian"); err != nil {
 		t.Fatalf("UnlockTheme: %v", err)
 	}
 
-	reloaded, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (reload): %v", err)
-	}
+	reloaded := reloadAccount(t)
 	if !reloaded.HasTheme("obsidian") {
 		t.Error("HasTheme(obsidian) false after restart")
 	}
@@ -74,41 +65,12 @@ func TestUnlockThemePersistsAcrossRestart(t *testing.T) {
 	}
 }
 
-// TestUnlockThemeSurvivesReset asserts unlocks live at the account layer, not in a
-// save: an account-level unlock is unaffected by a new-game flow. Reset() preserves
-// the *Account (engine-level coverage is TestResetPreservesAccount); here we assert
-// the account store itself keeps the unlock when reloaded fresh, mimicking the
-// account a new game would carry forward.
-func TestUnlockThemeSurvivesReset(t *testing.T) {
-	isolateAccountDir(t)
-
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
-	if _, err := acct.UnlockTheme("cyberpunk"); err != nil {
-		t.Fatalf("UnlockTheme: %v", err)
-	}
-
-	// A new game reloads the persisted account — the unlock must still be present.
-	afterNewGame, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (new game): %v", err)
-	}
-	if !afterNewGame.HasTheme("cyberpunk") {
-		t.Error("HasTheme(cyberpunk) false after new-game reload; unlocks must be account-wide")
-	}
-}
-
 // TestActiveThemePersistsAcrossRestart covers the active-theme pref: it is "" before
-// any set, persists via SetActiveTheme, and reloads across a fresh LoadOrCreate.
+// any set, persists via SetActiveTheme, and reloads across a fresh LoadAccount.
 func TestActiveThemePersistsAcrossRestart(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (first): %v", err)
-	}
+	acct := testAccount(t)
 	if got := acct.ActiveTheme(); got != "" {
 		t.Errorf("ActiveTheme() = %q before any set, want \"\"", got)
 	}
@@ -120,10 +82,7 @@ func TestActiveThemePersistsAcrossRestart(t *testing.T) {
 		t.Errorf("ActiveTheme() = %q after set, want obsidian", got)
 	}
 
-	reloaded, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (reload): %v", err)
-	}
+	reloaded := reloadAccount(t)
 	if got := reloaded.ActiveTheme(); got != "obsidian" {
 		t.Errorf("ActiveTheme() = %q after restart, want obsidian", got)
 	}
@@ -137,10 +96,7 @@ func TestActiveThemePersistsAcrossRestart(t *testing.T) {
 func TestSetActiveThemeIsKeyAgnostic(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	if err := acct.SetActiveTheme("never_unlocked"); err != nil {
 		t.Fatalf("SetActiveTheme rejected an unvalidated key: %v", err)
 	}
@@ -154,10 +110,7 @@ func TestSetActiveThemeIsKeyAgnostic(t *testing.T) {
 func TestUnlockedThemesSorted(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	for _, k := range []string{"obsidian", "amber_crt", "parchment", "cyberpunk"} {
 		if _, err := acct.UnlockTheme(k); err != nil {
 			t.Fatalf("UnlockTheme(%q): %v", k, err)

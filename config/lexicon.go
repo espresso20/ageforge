@@ -1,7 +1,8 @@
 package config
 
 import (
-	"sort"
+	"maps"
+	"slices"
 
 	"github.com/espresso20/ageforge/vibe"
 	"github.com/espresso20/ageforge/words"
@@ -186,36 +187,12 @@ func LexiconCells() []words.Cell {
 			words.Cell{ID: lexiconID(scope, key, "many"), Field: "config.Word.Many", Text: w.Many})
 	}
 	for _, row := range lexiconRows {
-		keys := make([]string, 0, len(row.terms))
-		for k := range row.terms {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
+		for _, k := range slices.Sorted(maps.Keys(row.terms)) {
 			add(row.age, k, row.terms[k])
 		}
 	}
-	keys := make([]string, 0, len(plainTerms))
-	for k := range plainTerms {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
+	for _, k := range slices.Sorted(maps.Keys(plainTerms)) {
 		add(lexiconPlain, k, plainTerms[k])
 	}
 	return cells
-}
-
-// TermsFor is every term the lexicon holds for age, by key; a term the age
-// has no entry for is left out (Term answers it with the plain word).
-func TermsFor(age string) map[string]Word {
-	out := map[string]Word{}
-	for _, row := range lexiconRows {
-		if row.age == age {
-			for k, w := range row.terms {
-				out[k] = w
-			}
-		}
-	}
-	return out
 }

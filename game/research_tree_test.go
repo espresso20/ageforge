@@ -20,7 +20,7 @@ func treeSet() *rules.Set {
 	src := rules.FromConfig()
 	tech := func(key, name string, def config.TechDef) config.TechDef {
 		def.Key, def.Name, def.Age, def.Lane = key, name, src.Ages[0].Key, config.LaneKnowledge
-		def.Cost, def.ResearchTicks = 10, 4
+		def.Cost = 10
 		return def
 	}
 	src.Techs = append(src.Techs,
@@ -110,13 +110,9 @@ func TestStartResearchWithAnEitherOrGroup(t *testing.T) {
 // they cost the same), and the plan runs the chain in order.
 func TestPlanTakesAnEitherOrGroup(t *testing.T) {
 	ge := treeEngine(t)
-	if err := ge.PlanAddResearch("tree_right"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tree_right"))
 	// Right is planned, so Join brings Base and no second branch.
-	if err := ge.PlanAddResearch("tree_join"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tree_join"))
 	for _, want := range []string{"tree_right", "tree_base", "tree_join"} {
 		ge.runPlanTick()
 		if ge.Research.currentTech != want {
@@ -137,9 +133,7 @@ func TestPlanTakesAnEitherOrGroup(t *testing.T) {
 	// A branch already researched or in progress counts too.
 	ge = treeEngine(t)
 	learn(ge, "tree_base")
-	if err := ge.StartResearch("tree_left"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tree_left"))
 	if chain, err := ge.PlanAddResearchChain("tree_join"); err != nil || !reflect.DeepEqual(chain, []string{"tree_join"}) {
 		t.Errorf("with Left in progress Join planned %v (%v)", chain, err)
 	}
@@ -175,9 +169,7 @@ func TestPlanTechWaitsForWhatItNeeds(t *testing.T) {
 
 	// The missing branch goes in below Join. With knowledge for one tech
 	// only, it is the one that starts: Join held nothing back.
-	if err := ge.PlanAddResearch("tree_right"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tree_right"))
 	if v := ge.planViews(); len(v) != 2 || v[0].Note != "needs Left or Right first" || v[1].Status != PlanStatusReady {
 		t.Errorf("views = %+v, want Join waiting and Right ready below it", v)
 	}
@@ -271,18 +263,14 @@ func TestResearchTimeIsAKindATechCanCarry(t *testing.T) {
 	ge := treeEngine(t)
 	ge.Buildings.counts["story_circle"] = 5
 	ge.recalculateRates()
-	if err := ge.StartResearch("tree_base"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tree_base"))
 	full := ge.researchTicksLeft()
 	researchOut(ge)
 	learn(ge, "tree_method")
 	if got := ge.Research.TimeFactor(); got != 0.5 {
 		t.Fatalf("research time factor = %v, want 0.5", got)
 	}
-	if err := ge.StartResearch("tree_left"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tree_left"))
 	if got := ge.researchTicksLeft(); full <= 0 || got <= 0 || math.Abs(float64(got)*2-float64(full)) > 1 {
 		t.Errorf("research took %d ticks before the tech and %d after, want twice as long before", full, got)
 	}

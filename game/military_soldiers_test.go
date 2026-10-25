@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // warCampPosts is the soldiers one War Camp comes with, from the tables.
 func warCampPosts(t *testing.T) int {
 	t.Helper()
-	def, ok := config.BuildingByKey()["war_camp"]
+	def, ok := rules.Core().Building("war_camp")
 	if !ok || def.Soldiers <= 0 {
 		t.Fatalf("the War Camp has %d posts", def.Soldiers)
 	}
@@ -292,14 +293,8 @@ func TestPostedSoldiersSurviveASaveAndLoad(t *testing.T) {
 	ge := peopleEngine(t)
 	standWarCamps(ge, 2)
 	isolateAccountDir(t)
-	if err := ge.SaveGame("posted"); err != nil {
-		t.Fatal(err)
-	}
 	trained := ge.Stats.SoldiersTrained
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("posted"); err != nil {
-		t.Fatal(err)
-	}
+	loaded := saveAndLoad(t, ge, "posted")
 	st := loaded.GetState()
 	if want := 2 * warCampPosts(t); st.Workers.Soldiers != want || st.Military.SoldierCount != want {
 		t.Errorf("after a load %d soldiers in the town and %d in the army, want %d", st.Workers.Soldiers, st.Military.SoldierCount, want)

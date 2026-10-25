@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // testDealEnv is a dealEnv for age with every resource the ages up to it
@@ -161,7 +162,7 @@ func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv
 		}
 		return
 	case DealRare:
-		if def.Personality != "isolationist" || config.DealPriceLevel(d.Get, env.age) > 0 {
+		if def.Personality != "isolationist" || rules.Core().DealPriceLevel(d.Get, env.age) > 0 {
 			t.Errorf("%s %+v: rare deal from a non-isolationist or for goods this age prices", def.Key, d)
 		}
 		return
@@ -180,7 +181,7 @@ func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv
 	// multiple (dealRateMin to 1 of parity, good to the 3 figures an amount
 	// is rounded to), whatever any market would pay.
 	rate := d.GetAmt / d.GiveAmt
-	lf, lt := config.DealPriceLevel(d.Give, env.age), config.DealPriceLevel(d.Get, env.age)
+	lf, lt := rules.Core().DealPriceLevel(d.Give, env.age), rules.Core().DealPriceLevel(d.Get, env.age)
 	if lf > 0 && lt > 0 {
 		if rate > lt/lf*1.001 {
 			t.Errorf("%s %+v: rate %v beats parity %v", def.Key, d, rate, lt/lf)
@@ -224,9 +225,7 @@ func TestDeals_NoneWhenHostile(t *testing.T) {
 	if n := len(ge.GetState().Diplomacy.Factions["riverlands_tribes"].Deals); n == 0 {
 		t.Fatal("no offers while neutral")
 	}
-	if err := ge.SetDiplomaticStatus("riverlands_tribes", "embargo"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SetDiplomaticStatus("riverlands_tribes", "embargo"))
 	f := ge.GetState().Diplomacy.Factions["riverlands_tribes"]
 	if len(f.Deals) != 0 || f.DealsBlocked == "" {
 		t.Errorf("embargoed civ still shows %d deals (blocked %q)", len(f.Deals), f.DealsBlocked)
@@ -458,13 +457,7 @@ func TestDeals_SaveLoadRoundTrip(t *testing.T) {
 	}
 	want := ge.Diplomacy.GetFactionsForSave()
 	ge.mu.Unlock()
-	if err := ge.SaveGame("deals-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
-	b := NewGameEngine()
-	if err := b.LoadGame("deals-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
+	b := saveAndLoad(t, ge, "deals-roundtrip")
 	b.mu.RLock()
 	got := b.Diplomacy.GetFactionsForSave()
 	b.mu.RUnlock()
@@ -516,9 +509,7 @@ func TestDeals_Plan(t *testing.T) {
 	d := ge.Diplomacy.factions["merchant_guild"].Deals[0]
 	ge.Resources.resources[d.Give].Amount = d.GiveAmt / 2
 	ge.mu.Unlock()
-	if err := ge.PlanAddDeal("merchant_guild", 1); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddDeal("merchant_guild", 1))
 	if err := ge.PlanAddDeal("merchant_guild", 1); err == nil {
 		t.Error("planned the same deal twice")
 	}
@@ -544,9 +535,7 @@ func TestDeals_Plan(t *testing.T) {
 	}
 
 	// A planned deal whose offers rotate away drops out with a log line.
-	if err := ge.PlanAddDeal("merchant_guild", 2); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddDeal("merchant_guild", 2))
 	ge.mu.Lock()
 	ge.Diplomacy.factions["merchant_guild"].DealTicks = dealRefreshFor(ge.age)
 	ge.tickFactionDeals()
@@ -556,13 +545,7 @@ func TestDeals_Plan(t *testing.T) {
 	if left != 0 {
 		t.Error("a deal item outlived its offer")
 	}
-	found := false
-	for _, l := range ge.GetState().Log {
-		if strings.Contains(l.Message, "the offer is gone") {
-			found = true
-		}
-	}
-	if !found {
+	if !logHas(ge, "the offer is gone") {
 		t.Error("no log line for the dropped deal item")
 	}
 }
@@ -593,9 +576,7 @@ func TestDeals_Wording(t *testing.T) {
 
 	ge := dealEngine(t, "colonial_age")
 	meet(ge, "merchant_guild", 30)
-	if err := ge.PlanAddDeal("merchant_guild", 2); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddDeal("merchant_guild", 2))
 	ge.mu.Lock()
 	d1, d2 := ge.Diplomacy.factions["merchant_guild"].Deals[0], ge.Diplomacy.factions["merchant_guild"].Deals[1]
 	held := ge.Resources.resources[d2.Give].Amount
@@ -610,11 +591,7 @@ func TestDeals_Wording(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := "Deal with the Merchant Guild. " + dealLogTerms(d1) + "."
-	found := false
-	for _, l := range ge.GetState().Log {
-		found = found || l.Message == want
-	}
-	if !found {
+	if !logHasLine(ge, want) {
 		t.Errorf("no log line %q", want)
 	}
 }

@@ -174,7 +174,7 @@ func (o *orb) starSystems() {
 		o.fb.fg(s.x, o.Y(s.y), mapmodel.R(mapmodel.SymStarBig, o.tier), c, dSystem)
 		rc := o.mp.Fg[mapmodel.RelationClass(s.f.Relation)]
 		o.fb.fg(s.x+2, o.Y(s.y-1), pennantGlyph(s.f.Relation, o.tier), rc, dSystem)
-		o.labels = append(o.labels, label{s.x - textLen(s.f.Name)/2, s.y - 2, s.f.Name, rc})
+		o.labels = append(o.labels, label{x: s.x - textLen(s.f.Name)/2, y: s.y - 2, text: s.f.Name, fg: rc})
 	}
 }
 

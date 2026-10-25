@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // The reference players: three ways of playing, each a rule anyone can
@@ -111,6 +112,7 @@ func newRefTables() *refTables {
 	t.rungs = config.LineRungs(all)
 	lv := config.PriceLevelsByAge(all)
 	resources := config.BaseResources()
+	set := rules.Core()
 	t.byAge = make([][]config.BuildingDef, len(t.ages))
 	t.techs = make([][]float64, len(t.ages))
 	for _, d := range all {
@@ -136,7 +138,7 @@ func newRefTables() *refTables {
 		f[config.ResearchTarget] = config.IncomeFactor(techs, pos, a.Key, config.ResearchTarget)
 		t.factor = append(t.factor, f)
 		fc := 0.1
-		if c, ok := config.WorkerClassByDomainAndAge("food", a.Key); ok {
+		if c, ok := set.WorkerClass("food", a.Key); ok {
 			fc = c.FoodCost
 		}
 		t.food = append(t.food, fc)

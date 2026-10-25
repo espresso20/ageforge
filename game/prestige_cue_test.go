@@ -162,13 +162,7 @@ func TestPrestigeCueSeenPersistsAndResets(t *testing.T) {
 	if !ge.GetState().PrestigeCue.Seen {
 		t.Fatal("seen cue missing from state")
 	}
-	if err := ge.SaveGame("prestige_cue"); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("prestige_cue"); err != nil {
-		t.Fatal(err)
-	}
+	loaded := saveAndLoad(t, ge, "prestige_cue")
 	if !loaded.GetState().PrestigeCue.Seen {
 		t.Fatal("seen cue did not survive save and load")
 	}

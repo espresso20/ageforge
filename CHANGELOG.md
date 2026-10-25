@@ -16,6 +16,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- **Every panel is full screen.** Panels open over the whole screen with the same frame, title and key line, instead of some opening as a box over the dashboard.
 - **Lineage badges on a real idle scale.** Each lineage's badges now count to numbers set by how much of that lineage a dedicated player builds across many runs, with Legendary a long-term goal.
 - **A new top panel.** The top of the dashboard is a ledger: the age and the year, your people and morale, the four pillars to the next age, and a long bar to the next age with what it is waiting on.
 - **No ceiling on bonuses.** Production bonuses apply in full however large they grow, and knowledge buildings past their cap still build and research at half rate.
@@ -64,6 +65,9 @@ All notable changes to AgeForge are documented here.
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
 - **Late-game festival and Black Market prices.** They now stay in step with your culture income in every age instead of running away after the middle ages.
+- **Close zoom faces.** People no longer show four eyes (and couples four hearts) at the closest skyline zoom.
+- **Civ names on the ridge.** At the closest skyline zoom a met civ's name stands right above its pole instead of hanging in the sky, and a name that has no room is left out.
+- **The skyline strip fills its box.** One tall wonder no longer flattens the dashboard's skyline into a thin band; people are specks, and the new, wonder and fire marks sit on the buildings instead of floating over them.
 - **History graphs start over with each run.** They no longer mix a new run with the last one, and age markers stay in the right place after time away.
 - **Black Market payouts.** A deal now pays the same worth whichever resource you take, and goes through five times in six; the sixth time the smugglers vanish with your culture.
 

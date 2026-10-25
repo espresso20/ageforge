@@ -161,12 +161,10 @@ func resolveTarget(d Def, p Profile, rng *rand.Rand) string {
 	}
 }
 
-// ageAppropriateResources returns the keys of resources unlocked at or before age
-// that have a BaseStorage above zero (ones a town can save up). An empty or
-// unknown age gives every such resource, so a caller that omits Age still gets a
-// usable pool. No resource has BaseStorage <= 0 today, so the filter excludes
-// nothing. The order follows config.BaseResources, and the index map is used only
-// for lookups, so the result is deterministic.
+// ageAppropriateResources returns the keys of resources unlocked at or before age.
+// An empty or unknown age gives every resource, so a caller that omits Age still
+// gets a usable pool. The order follows config.BaseResources, and the index map is
+// used only for lookups, so the result is deterministic.
 func ageAppropriateResources(age string) []string {
 	order := config.AgeOrder()
 	idx := make(map[string]int, len(order))
@@ -179,9 +177,6 @@ func ageAppropriateResources(age string) []string {
 	}
 	var out []string
 	for _, r := range config.BaseResources() {
-		if r.BaseStorage <= 0 {
-			continue // not a resource a town can save up
-		}
 		ri, ok := idx[r.Age]
 		if !ok || ri <= cur {
 			out = append(out, r.Key)

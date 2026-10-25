@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- helpers ---------------------------------------------------------------
@@ -38,7 +39,7 @@ func badThenEscalate() *rand.Rand { return riggedRNG(0.99, 0.01) }
 // from a distinct WorkerDomain where possible.
 func pickWorkerBuildings(t *testing.T, domains ...string) []string {
 	t.Helper()
-	byKey := config.BuildingByKey()
+	byKey := rules.Core().BuildingMap()
 	keys := make([]string, 0, len(byKey))
 	for k := range byKey {
 		keys = append(keys, k)
@@ -124,9 +125,7 @@ func TestEndure_AtLeastOneBuildingDestroyed(t *testing.T) {
 	b := pickWorkerBuildings(t, "food")
 	ge.Buildings.counts[b[0]] = 3 // floor(3/5) = 0 → clamp to 1
 	ge.pendingCatastrophe = "iron_era"
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	if got := ge.Buildings.counts[b[0]]; got != 2 {
 		t.Errorf("count = %d, want 2", got)
 	}
@@ -144,9 +143,7 @@ func TestEndure_ReleasesWorkersOfDestroyedBuildings(t *testing.T) {
 	}
 	ge.pendingCatastrophe = "iron_era"
 
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	// 4 destroyed → cap 16×c; release first, then the 25% loss scales the
 	// remaining assignment: 16c - int(16c×0.25). Without the release the loss
 	// would scale the stranded 20c instead (15c).
@@ -180,9 +177,7 @@ func TestEndure_WorkerLossIsProportionalAcrossDomains(t *testing.T) {
 		}
 	}
 	ge.pendingCatastrophe = "iron_era"
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	for k, n := range assigned {
 		want := n - int(float64(n)*0.25)
 		if got := ge.Workers.GetAssignedCount("worker", k); got != want {
@@ -202,9 +197,7 @@ func TestEndure_ResourcesDebuffMoraleAndRecord(t *testing.T) {
 	if err := ge.forceCatastrophe(); err != nil {
 		t.Fatalf("force in iron era: %v", err)
 	}
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	if got := ge.Resources.Get("wood"); math.Abs(got-120) > 1e-9 {
 		t.Errorf("wood = %v, want 120 (15%%)", got)
 	}
@@ -347,9 +340,7 @@ func TestSuccumb_StartingStockLands(t *testing.T) {
 	}
 	pr := fallen(22)
 	withStartingStock(pr, 100, 150)
-	if err := pr.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, pr.DoPrestige())
 	ps := pr.GetState()
 	for _, res := range []string{"food", "wood"} {
 		if st.Resources[res].Amount != ps.Resources[res].Amount {
@@ -458,13 +449,7 @@ func TestSuccumb_ResearchBonusSurvivesPrestigeAndSaveLoad(t *testing.T) {
 	if got := ge.succumbResearchFactor(); got != twoEpochs {
 		t.Fatalf("after DoPrestige: x%v, want x%v", got, twoEpochs)
 	}
-	if err := ge.SaveGame("cat_research"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("cat_research"); err != nil {
-		t.Fatal(err)
-	}
+	ge2 := saveAndLoad(t, ge, "cat_research")
 	if got := ge2.succumbResearchFactor(); got != twoEpochs {
 		t.Errorf("after load: x%v, want x%v", got, twoEpochs)
 	}
@@ -533,9 +518,7 @@ func TestPendingBlocksAdvanceUntilResolved(t *testing.T) {
 	if ge.age != "iron_age" {
 		t.Fatalf("age moved while blocked: %s", ge.age)
 	}
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	ge.ageReady = true
 	if err := ge.AdvanceAge(); err != nil {
 		t.Fatalf("AdvanceAge after Endure: %v", err)
@@ -555,9 +538,7 @@ func TestPendingBlocksPrestigeUntilResolved(t *testing.T) {
 	if ge.Prestige.GetLevel() != 0 {
 		t.Fatal("prestige happened while blocked")
 	}
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatalf("DoPrestige after Endure: %v", err)
 	}
@@ -738,9 +719,7 @@ func endureOutcome(t *testing.T, seed int64) map[string]int {
 		ge.Buildings.counts[k] = 15
 	}
 	ge.pendingCatastrophe = "iron_era"
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	out := make(map[string]int)
 	for _, k := range keys[:12] {
 		out[k] = ge.Buildings.counts[k]
@@ -843,12 +822,8 @@ func TestCatastropheOutlook(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			quiet := catEngine(t, "classical_age", 1)
 			fated := catEngine(t, "classical_age", 1)
-			if err := quiet.ForceQuietFateForTest("iron_era"); err != nil {
-				t.Fatal(err)
-			}
-			if err := fated.ForceFateForTest("iron_era", 20000); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, quiet.ForceQuietFateForTest("iron_era"))
+			noErr(t, fated.ForceFateForTest("iron_era", 20000))
 			for _, ge := range []*GameEngine{quiet, fated} {
 				setFaithStrength(ge, c.strength)
 			}
@@ -861,9 +836,7 @@ func TestCatastropheOutlook(t *testing.T) {
 				t.Errorf("quiet outlook = %+v, want possible, unwarned, no odds, strength %v (%s)", oq, c.strength, c.wantBand)
 			}
 			// A harbinger comes: the outlook says what its warning says.
-			if err := fated.SummonHarbingerForTest("classical_age"); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, fated.SummonHarbingerForTest("classical_age"))
 			setFaithStrength(fated, c.strength)
 			o := fated.CatastropheOutlook()
 			if !o.Possible || !o.Warned || math.Abs(o.Probability-c.wantP) > 1e-9 || o.Tier != c.wantTier {
@@ -890,9 +863,7 @@ func TestCatastropheOutlook(t *testing.T) {
 	}
 	// An era whose doom has been lifted has nothing more to bring.
 	spared := catEngine(t, "classical_age", 2)
-	if err := spared.SummonHarbingerForTest("classical_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, spared.SummonHarbingerForTest("classical_age"))
 	spared.rng = riggedRNG(0.999)
 	spared.fate.StrikeTick = spared.tick
 	spared.harbingerTickCheck()
@@ -909,18 +880,12 @@ func TestCatastropheOutlook(t *testing.T) {
 func TestSaveLoadKeepsPendingAndItStillBlocks(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := catEngine(t, "iron_age", 8)
-	if err := ge.forceCatastrophe(); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.SaveGame("cat_pending"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.forceCatastrophe())
+	noErr(t, ge.SaveGame("cat_pending"))
 	ge2 := NewGameEngine()
 	loaded := 0
 	ge2.Bus.Subscribe(EventGameLoaded, func(EventData) { loaded++ })
-	if err := ge2.LoadGame("cat_pending"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("cat_pending"))
 	if loaded != 1 {
 		t.Errorf("EventGameLoaded published %d times, want 1", loaded)
 	}
@@ -937,9 +902,7 @@ func TestSaveLoadKeepsPendingAndItStillBlocks(t *testing.T) {
 	if r.Outcome != CatastrophePending {
 		t.Errorf("record outcome after load = %q, want pending", r.Outcome)
 	}
-	if err := ge2.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.Endure())
 }
 
 // Saves written by early builds of this change carry catastrophe_fired. The
@@ -950,15 +913,11 @@ func TestLoadIgnoresDeprecatedCatastropheFired(t *testing.T) {
 	snap := ge.buildSaveSnapshot()
 	snap.CatastropheFired = map[string]bool{"iron_era": true}
 	snap.Signature = signSave(snap, saveHMACKey)
-	if err := os.MkdirAll(saveDirectory(), 0755); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0755))
 	writeRawSave(t, "cat_deprecated", snap)
 
 	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("cat_deprecated"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("cat_deprecated"))
 	if ge2.cheaterBadge {
 		t.Error("save with catastrophe_fired failed signature verification")
 	}

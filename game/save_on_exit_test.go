@@ -33,9 +33,7 @@ func savedFood(t *testing.T, name string) float64 {
 		t.Fatalf("the save %q: %v", name, err)
 	}
 	var gs GameSave
-	if err := json.Unmarshal(data, &gs); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &gs))
 	return gs.Resources["food"]
 }
 
@@ -62,9 +60,7 @@ func TestSaveOnExitAtTheMenuWritesNothing(t *testing.T) {
 	// An autosave with a game in it, and a named game.
 	startGame(t, mk, AutosaveName)
 	startGame(t, mk, "ashford")
-	if err := acct.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.Save())
 	autosaveFood := savedFood(t, AutosaveName)
 
 	ge, _ := launch(t)
@@ -87,14 +83,10 @@ func TestSaveOnExitAtTheMenuWritesNothing(t *testing.T) {
 
 	// A game is played and left with Esc (which saves and stops), and the
 	// program is left from the menu after it: the exit adds nothing.
-	if err := ge.LoadGame("ashford"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LoadGame("ashford"))
 	go ge.Start()
 	waitLoop(t, ge)
-	if err := ge.SaveGame(ge.ActiveSaveName()); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame(ge.ActiveSaveName()))
 	ge.Stop()
 	before = treeOf(t, root)
 	if name, err := ge.SaveOnExit(); name != "" || err != nil {
@@ -114,19 +106,13 @@ func TestSaveOnExitSavesTheGameInPlayUnderItsName(t *testing.T) {
 	mk, acct := menuAccount(t)
 	startGame(t, mk, "carthage")
 	startGame(t, mk, "rome")
-	if err := acct.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.Save())
 
 	ge, acct := launch(t)
-	if err := ge.LoadGame("rome"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LoadGame("rome"))
 	// An account with nothing on record (as one from before the records
 	// is), so that it is the exit's save that names the game.
-	if err := acct.ForgetGame(""); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.ForgetGame(""))
 	go ge.Start()
 	waitLoop(t, ge)
 	had := savedFood(t, "rome")
@@ -189,9 +175,7 @@ func TestSaveOnExitUnnamedGameSavesTheAutosave(t *testing.T) {
 // and the save is whole.
 func TestSaveOnExitFromTwoGoroutines(t *testing.T) {
 	ge, _ := menuAccount(t)
-	if err := ge.StartNewNamedGame("rome"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("rome"))
 	go ge.Start()
 	waitLoop(t, ge)
 	var wg sync.WaitGroup

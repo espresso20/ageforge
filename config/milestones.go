@@ -157,11 +157,7 @@ func MilestoneChains() []MilestoneChainDef {
 
 // MilestoneChainByKey returns a map of key -> MilestoneChainDef
 func MilestoneChainByKey() map[string]MilestoneChainDef {
-	m := make(map[string]MilestoneChainDef)
-	for _, c := range MilestoneChains() {
-		m[c.Key] = c
-	}
-	return m
+	return indexBy(MilestoneChains(), func(c MilestoneChainDef) string { return c.Key })
 }
 
 // MilestoneTitles returns the fallback title ladder sorted by MinMilestones ascending.
@@ -1150,11 +1146,7 @@ func Milestones() []MilestoneDef {
 
 // MilestoneByKey returns a map of key -> MilestoneDef
 func MilestoneByKey() map[string]MilestoneDef {
-	m := make(map[string]MilestoneDef)
-	for _, ms := range Milestones() {
-		m[ms.Key] = ms
-	}
-	return m
+	return indexBy(Milestones(), func(ms MilestoneDef) string { return ms.Key })
 }
 
 // MilestoneCategoryOrder returns the display order of milestone categories

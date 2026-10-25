@@ -191,9 +191,7 @@ func TestUncapped_EveryCreditKeepsTheWholeAmount(t *testing.T) {
 		setAmount(ge, res, 10*baseStore(res)+1000)
 	}
 	held := ge.Resources.GetAll()
-	if err := ge.SellBuilding("hut", 3); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SellBuilding("hut", 3))
 	for res, r := range refund {
 		if got := ge.Resources.Get(res); got < held[res]+r-1e-6 {
 			t.Errorf("refund of %v %s past the store: %v, was %v", r, res, got, held[res])
@@ -290,9 +288,7 @@ func TestUncapped_DealIntoAFullStoreIsTaken(t *testing.T) {
 func TestUncapped_RouteRunIntoAFullStoreMovesTheWholeRun(t *testing.T) {
 	ge := newSeededEngine(9)
 	for _, a := range []string{"stone_age", "bronze_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(a))
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()

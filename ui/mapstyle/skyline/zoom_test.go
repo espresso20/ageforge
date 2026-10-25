@@ -605,7 +605,7 @@ func TestZoomTextIsNotScaled(t *testing.T) {
 }
 
 // TestZoomTransforms pins the cell maths: a block glyph magnifies exactly
-// into four solid cells, other glyphs repeat, and shrinking keeps the nearest
+// into four solid cells, strokes repeat, and shrinking keeps the nearest
 // thing of each quadrant.
 func TestZoomTransforms(t *testing.T) {
 	red, blue := tcell.NewRGBColor(200, 0, 0), tcell.NewRGBColor(0, 0, 200)
@@ -623,14 +623,20 @@ func TestZoomTransforms(t *testing.T) {
 		{'▟', [4]tcell.Color{blue, red, red, red}},
 	} {
 		for q := 0; q < 4; q++ {
-			got := zoomCell(cell{ch: tc.ch, fg: red, bg: blue, d: 20}, q)
+			got := zoomCell(cell{ch: tc.ch, fg: red, bg: blue, d: 20}, q, mapmodel.TierUnicode)
 			if gotc := got.show(); gotc != tc.want[q] || got.d != 20 {
 				t.Errorf("%q quadrant %d magnifies to %q on %v, want %v", tc.ch, q, got.ch, gotc, tc.want[q])
 			}
 		}
 	}
-	if g := zoomCell(cell{ch: '╱', fg: red, bg: blue, d: 20}, 3); g.ch != '╱' || g.fg != red {
-		t.Errorf("a line glyph is not repeated: %q", g.ch)
+	if g := zoomCell(cell{ch: '─', fg: red, bg: blue, d: 20}, 3, mapmodel.TierUnicode); g.ch != '─' || g.fg != red {
+		t.Errorf("a line glyph is repeated in every cell: %q", g.ch)
+	}
+	if g := zoomCell(cell{ch: '╱', fg: red, bg: blue, d: 20}, 1, mapmodel.TierUnicode); g.ch != '╱' || g.fg != red {
+		t.Errorf("a diagonal runs across the block: %q", g.ch)
+	}
+	if g := zoomCell(cell{ch: '╱', fg: red, bg: blue, d: 20}, 3, mapmodel.TierUnicode); g.ch != ' ' {
+		t.Errorf("a diagonal leaves the far corner empty: %q", g.ch)
 	}
 
 	// magnify: the foot of the world frame, bottom-aligned, each cell 2x2
@@ -643,7 +649,7 @@ func TestZoomTransforms(t *testing.T) {
 	}
 	dst := &fb{}
 	dst.reset(6, 3+5) // 5 scene rows: two and a half world rows
-	magnify(dst, src, 5, 0, 0)
+	magnify(dst, src, 5, 0, 0, mapmodel.TierUnicode)
 	for r := 0; r < 5; r++ {
 		wantRow := 3 - (4-r)/2 // the bottom screen row is half of the last world row
 		for x := 0; x < 6; x++ {
@@ -745,6 +751,8 @@ func TestZoomCaptures(t *testing.T) {
 		z       zoom
 		inspect bool
 	}{
+		{"stone", "stone_age", 0.45, 160, 45, zMid, false},
+		{"stone", "stone_age", 0.45, 160, 45, zClose, false},
 		{"bronze", "bronze_age", 0.45, 160, 45, zFar, false},
 		{"bronze", "bronze_age", 0.45, 160, 45, zMid, false},
 		{"bronze", "bronze_age", 0.45, 160, 45, zClose, false},

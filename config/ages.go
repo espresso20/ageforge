@@ -281,11 +281,7 @@ func Ages() []AgeDef {
 
 // AgeByKey returns a map of key -> AgeDef
 func AgeByKey() map[string]AgeDef {
-	m := make(map[string]AgeDef)
-	for _, a := range Ages() {
-		m[a.Key] = a
-	}
-	return m
+	return indexBy(Ages(), func(a AgeDef) string { return a.Key })
 }
 
 // AgeOrder returns an ordered list of age keys

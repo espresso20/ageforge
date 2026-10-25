@@ -46,11 +46,7 @@ func PrestigeUpgrades() []PrestigeUpgradeDef { return nil }
 
 // PrestigeUpgradeByKey returns no entries now that the shop is gone.
 func PrestigeUpgradeByKey() map[string]PrestigeUpgradeDef {
-	m := make(map[string]PrestigeUpgradeDef)
-	for _, u := range PrestigeUpgrades() {
-		m[u.Key] = u
-	}
-	return m
+	return indexBy(PrestigeUpgrades(), func(u PrestigeUpgradeDef) string { return u.Key })
 }
 
 // ActivePrestigeUpgrades is retained for callers during the UI transition.

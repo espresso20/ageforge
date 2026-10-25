@@ -14,10 +14,7 @@ import (
 func TestRecordPrestigeIncrementsAndUnlocks(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 
 	recordPrestige(acct, "modern_age")
 	if acct.Stats.TotalPrestiges != 1 {
@@ -66,10 +63,7 @@ func TestRecordPrestigeIncrementsAndUnlocks(t *testing.T) {
 func TestRecordAgeReachedRanksByOrder(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 
 	recordAge(t, acct, "iron_age")
 	if acct.Stats.HighestAge != "iron_age" {
@@ -99,15 +93,12 @@ func TestRecordAgeReachedRanksByOrder(t *testing.T) {
 }
 
 // TestFlushIfDirtyPersistsAndClears covers the write-debounce lifecycle: a Record* call
-// marks the account dirty; FlushIfDirty Saves and clears the flag; a fresh LoadOrCreate
+// marks the account dirty; FlushIfDirty Saves and clears the flag; a fresh LoadAccount
 // reflects the persisted stats (survives a "restart"); a flush when clean is a no-op.
 func TestFlushIfDirtyPersistsAndClears(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 
 	recordPrestige(acct, "modern_age")
 	recordAge(t, acct, "iron_age")
@@ -130,11 +121,8 @@ func TestFlushIfDirtyPersistsAndClears(t *testing.T) {
 		t.Fatalf("FlushIfDirty (clean no-op): %v", err)
 	}
 
-	// Persisted across a "restart": a fresh LoadOrCreate reads the same data root.
-	reloaded, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (reload): %v", err)
-	}
+	// Persisted across a "restart": a fresh LoadAccount reads the same data root.
+	reloaded := reloadAccount(t)
 	if reloaded.Stats.TotalPrestiges != 1 {
 		t.Fatalf("reloaded TotalPrestiges = %d, want 1", reloaded.Stats.TotalPrestiges)
 	}
@@ -158,10 +146,7 @@ func TestFlushIfDirtyPersistsAndClears(t *testing.T) {
 func TestLifetimeStatsReturnsCopy(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	recordPrestige(acct, "modern_age")
 
 	stats, earned := acct.LifetimeStats()
@@ -199,18 +184,12 @@ func TestCivilizationsStartedCountsEveryRun(t *testing.T) {
 		t.Fatalf("a new account has started %d civilizations", started())
 	}
 
-	if err := ge.StartNewNamedGame("first"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("first"))
 	if started() != 1 {
 		t.Fatalf("after a new game: %d, want 1", started())
 	}
-	if err := ge.SaveGame("first"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.LoadGame("first"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("first"))
+	noErr(t, ge.LoadGame("first"))
 	if started() != 1 {
 		t.Errorf("loading a game counted a civilization: %d", started())
 	}
@@ -234,9 +213,7 @@ func TestCivilizationsStartedCountsEveryRun(t *testing.T) {
 	ge.SetPrestigeFloorForTest("") // This test measures run accounting, not floor progression.
 
 	// It is saved with the account, in a key every build signs.
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	if disk := slotAccount(t, acct.AccountID); disk.Stats.CivilizationsStarted != 3 || disk.Tampered {
 		t.Errorf("on disk: %d civilizations started, tampered %v", disk.Stats.CivilizationsStarted, disk.Tampered)
 	}

@@ -25,10 +25,20 @@ type emitter struct {
 	depth    uint8
 }
 
+// label is a name on the scene: x its left column and y the world row it
+// sits at. A name on the ground scene's far ridge also has top, the world row
+// of the highest cell of what it names (the town's pole, the harbinger's
+// head), and is on the ridge: the text is drawn on the screen and keeps its
+// size, so at the close level, where the world is twice as tall, it stands
+// directly above top and not at the row the unscaled scene gave it, and below
+// the far level it is left out rather than pushed up into the sky (the far
+// level's town covers the ridge: there a name rides above the skyline).
 type label struct {
-	x, y int
-	text string
-	fg   tcell.Color
+	x, y  int
+	text  string
+	fg    tcell.Color
+	top   int
+	ridge bool
 }
 
 type scene struct {
@@ -462,7 +472,7 @@ func (s *scene) ridgeTowns() {
 		s.fb.fg(it.x, s.Y(py+2), '│', col, dRidgeTown)
 		s.fb.fg(it.x, s.Y(py+3), '│', col, dRidgeTown)
 		s.fb.fg(it.x+1, s.Y(py+1), pennantGlyph(f.Relation, s.tier), rc, dRidgeTown)
-		s.labels = append(s.labels, label{it.x - textLen(f.Name)/2, py, f.Name, rc})
+		s.labels = append(s.labels, label{it.x - textLen(f.Name)/2, py, f.Name, rc, py + 1, true})
 	}
 }
 
@@ -521,7 +531,7 @@ func (s *scene) harbinger() {
 	if s.tier == mapmodel.TierNerd {
 		s.fb.fg(x, s.Y(y-3), mapmodel.R(mapmodel.SymHarbinger, s.tier), s.mp.Fg[mapmodel.CDanger], dHarbinger)
 	}
-	s.labels = append(s.labels, label{x - textLen(h.Name)/2, y - 5, h.Name, s.mp.Fg[mapmodel.CIdle]})
+	s.labels = append(s.labels, label{x - textLen(h.Name)/2, y - 5, h.Name, s.mp.Fg[mapmodel.CIdle], y - 2, true})
 }
 
 func (s *scene) nearLayer() {
@@ -1416,6 +1426,9 @@ func (s *scene) markers() {
 	for _, lb := range s.labels {
 		n := textLen(lb.text)
 		x, y := s.sx(lb.x+n/2)-n/2, s.sy(lb.y)
+		if lb.ridge && s.zm == zClose { // the row above the top of what it names, whatever the scale
+			y = s.sy(lb.top) - 1
+		}
 		for dy := 0; dy < 3; dy++ {
 			if s.labelFree(x, y-dy, n) {
 				for i, r := range []rune(lb.text) {
@@ -1424,6 +1437,9 @@ func (s *scene) markers() {
 					}
 				}
 				break
+			}
+			if lb.ridge && !s.fit {
+				break // a name pushed up past something in front of it would hang in the sky
 			}
 		}
 	}

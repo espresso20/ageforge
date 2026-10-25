@@ -135,17 +135,11 @@ func TestPlanOptimize_HomesBeforeCampsThatNeedPeople(t *testing.T) {
 func TestPlanOptimize_KeepsTheOtherItemsInOrder(t *testing.T) {
 	ge := optimizeTown(t)
 	planBuilds(t, ge, "hut", 4)
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tool_making"))
 	planBuilds(t, ge, "wood_camp", 5, "stash", 2, "gathering_camp", 5)
-	if err := ge.PlanAddResearch("fire_mastery"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("fire_mastery"))
 	planBuilds(t, ge, "hut", 3)
-	if err := ge.PlanAddAdvance(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddAdvance())
 	before := append([]PlanItem(nil), ge.plan...)
 	res, err := ge.PlanOptimize()
 	if err != nil {
@@ -194,9 +188,7 @@ func TestPlanOptimize_KeepsTheOtherItemsInOrder(t *testing.T) {
 func TestPlanOptimize_LeavesWhatFollowsAnAdvance(t *testing.T) {
 	ge := optimizeTown(t)
 	planBuilds(t, ge, "hut", 5, "wood_camp", 5)
-	if err := ge.PlanAddAdvance(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddAdvance())
 	planBuilds(t, ge, "longhouse", 4, "woodcutter_camp", 2, "longhouse", 1)
 	tail := append([]PlanItem(nil), ge.plan[2:]...)
 	if _, err := ge.PlanOptimize(); err != nil {
@@ -310,9 +302,7 @@ func TestPlanOptimize_NothingToDo(t *testing.T) {
 	if _, err := ge.PlanOptimize(); err == nil {
 		t.Error("an empty plan was reordered")
 	}
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tool_making"))
 	planBuilds(t, ge, "stash", 2)
 	res, err := ge.PlanOptimize()
 	if err != nil || res.Changed || res.Reason != PlanOptimizeNothing {

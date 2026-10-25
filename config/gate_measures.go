@@ -121,10 +121,7 @@ func GateMainMaterials(age string, buildings []BuildingDef, levels map[string]fl
 // are built on. Ties go to the cheaper tech, then to the key. "" when the age
 // has no such tech. wonder is the age's wonder, whose tech is the keystone.
 func GateKeyTech(age, wonder string, buildings []BuildingDef, techs []TechDef) string {
-	byKey := make(map[string]TechDef, len(techs))
-	for _, t := range techs {
-		byKey[t.Key] = t
-	}
+	byKey := indexBy(techs, func(t TechDef) string { return t.Key })
 	keystone := ""
 	needs := map[string]int{}
 	for _, d := range buildings {

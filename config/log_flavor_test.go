@@ -6,18 +6,14 @@ import (
 	"testing"
 )
 
-// TestLogFlavorPoolsAreSane verifies every flavour pool is non-empty and every
-// line is plain, safe text. The engine wraps each line as fmt.Sprintf("  [gray]%s[-]", q),
-// so the line itself must carry no tview tags (square brackets) and no stray
-// printf directives — either would corrupt the rendered log entry.
+// TestLogFlavorPoolsAreSane verifies every flavour pool has at least two
+// distinct, non-blank lines. TestConfigPlayerTextStyle holds each line to the
+// style rules (no tview tags, no printf directives).
 func TestLogFlavorPoolsAreSane(t *testing.T) {
 	if len(logFlavorPools) == 0 {
 		t.Fatal("logFlavorPools is empty")
 	}
 	for moment, pool := range logFlavorPools {
-		if len(pool) == 0 {
-			t.Errorf("log flavor moment %q has an empty pool", moment)
-		}
 		// A single-variant pool can never vary; require at least two so the
 		// "picked at random, stays fresh" promise actually holds.
 		if len(pool) < 2 {
@@ -27,12 +23,6 @@ func TestLogFlavorPoolsAreSane(t *testing.T) {
 		for i, line := range pool {
 			if strings.TrimSpace(line) == "" {
 				t.Errorf("log flavor moment %q line %d is empty/blank", moment, i)
-			}
-			if strings.ContainsAny(line, "[]") {
-				t.Errorf("log flavor moment %q line %d has a square bracket (tview tag risk): %q", moment, i, line)
-			}
-			if strings.Contains(line, "%") {
-				t.Errorf("log flavor moment %q line %d has a %% directive: %q", moment, i, line)
 			}
 			if seen[line] {
 				t.Errorf("log flavor moment %q has a duplicate line: %q", moment, line)
@@ -90,4 +80,14 @@ func TestPickLogFlavorUnknownMoment(t *testing.T) {
 	if got := PickLogFlavor("", rng); got != "" {
 		t.Errorf("PickLogFlavor(empty) = %q, want empty string", got)
 	}
+}
+
+// LogFlavorMoments returns the set of registered moment keys (sorted-order
+// not guaranteed). Exposed for tests that assert every moment has a sane pool.
+func LogFlavorMoments() []string {
+	out := make([]string, 0, len(logFlavorPools))
+	for k := range logFlavorPools {
+		out = append(out, k)
+	}
+	return out
 }
