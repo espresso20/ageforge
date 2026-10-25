@@ -337,22 +337,6 @@ func (bm *BuildingManager) batchCost(key string, def *config.BuildingDef, n int,
 	return total
 }
 
-// NextCost is what the next copy of key costs in res, the copies in queue
-// counted: BuildBatchCost(key, 1, queue)[res], to the bit, without building a
-// map (the plan prices every planned item each tick). 0 for an unknown key or a resource it doesn't cost.
-func (bm *BuildingManager) NextCost(key, res string, queue []BuildQueueItem) float64 {
-	def, ok := bm.defs[key]
-	if !ok {
-		return 0
-	}
-	base, ok := def.BaseCost[res]
-	if !ok {
-		return 0
-	}
-	exp := float64(bm.counts[key] + bm.GetQueueCount(key, queue))
-	return applyCostMult(base*detmath.Pow(def.CostScale, exp), bm.costMult)
-}
-
 // SellCost returns the 50% refund for selling n copies of a building,
 // assuming current copies are currently built.
 // Sells from the top (most expensive first): copy current, current-1, … current-n+1.
@@ -421,49 +405,6 @@ func applyCostMult(raw, mult float64) float64 {
 		c = 1
 	}
 	return c
-}
-
-// Build constructs a building. Returns false if can't afford or not
-// unlocked, or if it still waits for a tech.
-func (bm *BuildingManager) Build(key string, resources *ResourceManager) bool {
-	if !bm.IsUnlocked(key) || bm.TechLocked(key) {
-		return false
-	}
-	def, ok := bm.defs[key]
-	if !ok {
-		return false
-	}
-	if def.MaxCount > 0 && bm.counts[key] >= def.MaxCount {
-		return false
-	}
-	cost := bm.GetCost(key)
-	if !resources.Pay(cost) {
-		return false
-	}
-	bm.counts[key]++
-	return true
-}
-
-// GetEffects returns the aggregate non-production effects from all built buildings
-// (e.g. capacity, storage). Production effects are intentionally excluded here
-// because they depend on the worker fill ratio; use WorkerScaledProduction for those.
-func (bm *BuildingManager) GetEffects() []config.Effect {
-	var effects []config.Effect
-	for key, count := range bm.counts {
-		if count == 0 {
-			continue
-		}
-		def := bm.defs[key]
-		for _, eff := range def.Effects {
-			scaled := config.Effect{
-				Type:   eff.Type,
-				Target: eff.Target,
-				Value:  eff.Value * float64(count),
-			}
-			effects = append(effects, scaled)
-		}
-	}
-	return effects
 }
 
 // unstaffedShare is what a building with worker slots makes with nobody in

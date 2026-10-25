@@ -325,7 +325,7 @@ type Account struct {
 	FreshlyCreated bool `json:"-"`
 
 	// dirty is the in-memory, non-persisted write-debounce flag for the lifetime-stats
-	// hooks (the accounts design §8 "debounce writes"). RecordPrestige/RecordAgeReached mutate
+	// hooks (the accounts design §8 "debounce writes"). RecordPrestigeFrom/RecordAgeReached mutate
 	// the in-memory stats and set dirty=true WITHOUT touching the disk — they run under
 	// the engine write lock (advanceAge/DoPrestige) where file I/O is forbidden. The
 	// engine's periodic autosave block (outside ge.mu) calls FlushIfDirty, which Saves
@@ -794,35 +794,6 @@ func CreateAccount(name string) (*Account, error) {
 	return acct, nil
 }
 
-// WipeAccount permanently deletes the ACTIVE account's slot —
-// <root>/accounts/<activeID>/ and everything under it (account.json, its .corrupt
-// sibling, and the slot's own saves/) — then clears the active-account pointer and the
-// in-memory active id, so the next boot starts from a clean slate and re-prompts for a
-// name. It is the account analogue of WipeAllSaves — destructive and irreversible (no
-// server backup).
-//
-// SCOPE (Phase A): it removes only the ACTIVE account's slot. OTHER accounts' slots under
-// <root>/accounts/ are spared, and any user progress-export file (account-export.json,
-// which lives outside the slots) is never touched — those are independent backups the
-// player may have deliberately created. With no active account (empty id) it is a clean
-// no-op: it never falls back to removing the shared <root>/accounts root. Wiping twice (or
-// with nothing active) is a clean no-op — os.RemoveAll on a missing path is not an error.
-//
-// BACKUP: it delegates to WipeAccountByID(activeID), which snapshots the slot into
-// <root>/backups/ BEFORE removing it (the wipe is permanent, so we leave a recoverable copy).
-// The backup path is discarded here — the active-wipe callers don't surface it — and a backup
-// failure never blocks the wipe (only the wipe's own error is returned).
-func WipeAccount() error {
-	id := getActiveAccountID()
-	if id == "" {
-		// Nothing active to wipe. Do NOT remove accountDir("") — that is the shared
-		// <root>/accounts root, never a single account's slot.
-		return nil
-	}
-	_, err := WipeAccountByID(id)
-	return err
-}
-
 // ExportAccountByID exports the progress blob for the account in slot id WITHOUT touching the
 // active account (Phase D). It is the by-id sibling of (a *Account) ExportProgress, used by the
 // Accounts panel to back up the SELECTED account (which may not be the live one). It loads the
@@ -869,15 +840,14 @@ func AccountExportPath(id string) string {
 }
 
 // WipeAccountByID permanently deletes the slot for account id — <root>/accounts/<id>/ and
-// everything under it (Phase D). It is the by-id sibling of WipeAccount (which targets the
-// ACTIVE slot): the Accounts panel uses it to wipe the SELECTED account, which may not be the
-// live one. OTHER slots are always spared (os.RemoveAll(accountDir(id)) touches only that one
+// everything under it (Phase D): the Accounts panel uses it to wipe the SELECTED account,
+// which may not be the live one. OTHER slots are always spared (os.RemoveAll(accountDir(id)) touches only that one
 // directory), and any user export file outside the slots is untouched.
 //
 // Guard: an empty id is refused (a no-op error), since accountDir("") collapses to the shared
 // <root>/accounts root — removing it would nuke EVERY account. When id IS the active account,
-// it also clears the active-account pointer + resets the in-memory active id (mirroring
-// WipeAccount), so the next boot starts clean and the UI re-prompts. Wiping a non-active slot
+// it also clears the active-account pointer + resets the in-memory active id, so the next
+// boot starts clean and the UI re-prompts. Wiping a non-active slot
 // leaves the active pointer alone.
 //
 // BACKUP (best-effort, BEFORE removal): the wipe is permanent, so we snapshot the slot into
@@ -1793,26 +1763,20 @@ func maxInt(a, b int) int {
 // (account_badges.go) are judged from the engine's reports, not by these hooks.
 //
 // LOCKING DISCIPLINE (the load-bearing constraint, the accounts design §8 + project rule):
-// the engine calls RecordPrestige/RecordAgeReached from UNDER the engine write lock
+// the engine calls RecordPrestigeFrom/RecordAgeReached from UNDER the engine write lock
 // (ge.mu — advanceAge and DoPrestige both hold it). Those methods therefore MUST be
 // in-memory only: they take the account's OWN mutex (a.mu, fully independent of ge.mu),
 // do NO file I/O, and NEVER call back into ge.* (AddLog/GetState/…), or the non-reentrant
 // ge.mu would deadlock. The actual Save happens later via FlushIfDirty, called from the
 // engine's periodic-autosave block which runs OUTSIDE ge.mu (the accounts design §8 write cadence).
 
-// RecordPrestige increments the lifetime prestige count and marks the account dirty for
-// the next flush (the accounts design §8). It is IN-MEMORY ONLY: it takes a.mu, performs no
-// file I/O, and never calls back into the engine — so it is safe to call from DoPrestige
-// while the engine write lock is held. The write is deferred to FlushIfDirty (engine
-// autosave block, outside ge.mu). The prestige badges are judged from the engine's own
-// report of the prestige (badges.go), not here.
-func (a *Account) RecordPrestige() {
-	a.RecordPrestigeFrom("")
-}
-
-// RecordPrestigeFrom is RecordPrestige for a prestige made from age, which it
-// also counts in PrestigesByAge ("" counts nowhere but the total). Same
-// IN-MEMORY-ONLY discipline as RecordPrestige.
+// RecordPrestigeFrom increments the lifetime prestige count, and PrestigesByAge for the
+// age the prestige was made from ("" counts nowhere but the total), and marks the account
+// dirty for the next flush (the accounts design §8). It is IN-MEMORY ONLY: it takes a.mu,
+// performs no file I/O, and never calls back into the engine — so it is safe to call from
+// DoPrestige while the engine write lock is held. The write is deferred to FlushIfDirty
+// (engine autosave block, outside ge.mu). The prestige badges are judged from the engine's
+// own report of the prestige (badges.go), not here.
 func (a *Account) RecordPrestigeFrom(age string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -1827,7 +1791,7 @@ func (a *Account) RecordPrestigeFrom(age string) {
 }
 
 // RecordCivilizationStarted counts one more civilization started on the account: a run
-// began. IN-MEMORY ONLY (same discipline as RecordPrestige): the engine calls it under its
+// began. IN-MEMORY ONLY (same discipline as RecordPrestigeFrom): the engine calls it under its
 // write lock when a new game starts and when a prestige or a Succumb starts the next run.
 func (a *Account) RecordCivilizationStarted() {
 	a.mu.Lock()
@@ -1839,7 +1803,7 @@ func (a *Account) RecordCivilizationStarted() {
 // RecordAgeReached records that the account's player has reached the given age, lifting
 // HighestAge only when ageOrder exceeds the order of the currently-stored highest age (so
 // a lower age never regresses the lifetime best), and marks the account dirty (the accounts
-// design §8). IN-MEMORY ONLY (same discipline as RecordPrestige). The age badges are judged
+// design §8). IN-MEMORY ONLY (same discipline as RecordPrestigeFrom). The age badges are judged
 // from the engine's report of the advance (badges.go).
 //
 // DEVIATION from the accounts design §8: the doc sketches RecordAgeReached(ageKey) with no order.

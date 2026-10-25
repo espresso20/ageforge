@@ -204,13 +204,6 @@ type BuildingTransform struct {
 	Count   int
 }
 
-// RuinState represents one ruin entry (building type + count) persisting across Succumb resets.
-type RuinState struct {
-	Key   string
-	Name  string
-	Count int
-}
-
 // EpochEventRecord records one epoch transition event for the civilization history log.
 type EpochEventRecord struct {
 	EpochKey  string

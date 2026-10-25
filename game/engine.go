@@ -860,7 +860,7 @@ func (ge *GameEngine) Start() {
 				}
 
 				// Account lifetime-stats flush (Phase 6): persist any pending
-				// RecordPrestige/RecordAgeReached deltas. MUST be here, outside the
+				// RecordPrestigeFrom/RecordAgeReached deltas. MUST be here, outside the
 				// tick write lock — Save does file I/O. Use the locking accessor, not
 				// ge.account directly, since we're outside ge.mu. No-op when not dirty.
 				if acct := ge.Account(); acct != nil {
@@ -1302,9 +1302,8 @@ func (ge *GameEngine) RecoveryCodeForID(id string) (string, error) {
 	return RecoveryCodeForID(id)
 }
 
-// WipeAccountByID deletes the slot for account id (Phase D). It is the by-id sibling of the
-// active-only WipeAccount, used by the Accounts panel to wipe the SELECTED account. game.
-// WipeAccountByID snapshots the slot into <root>/backups/ BEFORE removal and returns that
+// WipeAccountByID deletes the slot for account id (Phase D), used by the Accounts panel to wipe
+// the SELECTED account. game.WipeAccountByID snapshots the slot into <root>/backups/ BEFORE removal and returns that
 // backupPath (empty if the backup failed — the wipe still proceeds), removes only that slot,
 // and, if id was the active account, clears the active pointer + in-memory id. When the wiped
 // id matches ge's current account we also detach ge.account (under the write lock) so the UI
@@ -4905,7 +4904,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.addLog("info", vibe.Line("game.engine.completePrestige.12", "Type [cyan]help[-] to get started again."))
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
-	// ge.mu here, so RecordPrestige must not do I/O or re-enter the engine. The write
+	// ge.mu here, so RecordPrestigeFrom must not do I/O or re-enter the engine. The write
 	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A run that
 	// belongs to another account records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
@@ -5721,14 +5720,13 @@ func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 	var result []UpgradeInfo
 	for _, key := range ge.Buildings.OlderKeys() {
 		target, ok := ge.Buildings.UpgradeTarget(key)
-		oldDef, ok2 := ge.rules.Building(key)
+		_, ok2 := ge.rules.Building(key)
 		if !ok || !ok2 {
 			continue
 		}
 		held := ge.Buildings.counts[key]
 		info := UpgradeInfo{
 			FromKey: key, ToKey: target.Key,
-			FromName: oldDef.Name, ToName: target.Name,
 			Count: held,
 			Cost:  ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue),
 		}
@@ -5765,10 +5763,8 @@ func (ge *GameEngine) upgradesAffordableLocked(key string, target config.Buildin
 
 // UpgradeInfo describes one older building the town holds, for display.
 type UpgradeInfo struct {
-	FromKey  string
-	ToKey    string
-	FromName string
-	ToName   string
+	FromKey string
+	ToKey   string
 	// Count is the copies held; Cost the price of the next one.
 	Count int
 	Cost  map[string]float64

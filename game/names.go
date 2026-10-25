@@ -82,16 +82,6 @@ func CivName(key string) string {
 	return rules.Core().Name(rules.KindCiv, key)
 }
 
-// RouteName returns a trade route's display name ("Silk Road").
-func RouteName(key string) string {
-	return rules.Core().Name(rules.KindRoute, key)
-}
-
-// PrestigeUpgradeName returns a prestige upgrade's display name.
-func PrestigeUpgradeName(key string) string {
-	return rules.Core().Name(rules.KindPrestigeUpgrade, key)
-}
-
 // EffectTargetName names a bonus target the way the glossary does:
 // production_all → "all production", gather_rate → "worker output",
 // food_rate → "food production", tick_speed → "game speed". It extends

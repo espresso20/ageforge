@@ -60,9 +60,6 @@ func TestWonderWaitsForItsKeystone(t *testing.T) {
 	if n, err := ge.BuildMultiple("great_monolith", 1); err == nil || n != 0 {
 		t.Errorf("building one through the batch path without the keystone: built %d, %v", n, err)
 	}
-	if ge.Buildings.Build("great_monolith", ge.Resources) {
-		t.Error("the building manager built the wonder without its keystone")
-	}
 	err = ge.AdvanceAge()
 	if err == nil || !strings.Contains(err.Error(), "research Stoneworking, its keystone") {
 		t.Errorf("advancing without the wonder: %v", err)

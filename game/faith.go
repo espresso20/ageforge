@@ -226,16 +226,8 @@ func (ge *GameEngine) restoreFaithState(save *GameSave) {
 // maxFaithMeasure bounds a loaded measure: far past anything a run makes.
 const maxFaithMeasure = 1e300
 
-// SetFaithMeasureForTest puts ge's faith measure and its faith in place: a
-// test hook for other packages (the UI's panels, the smoke suite's checks).
-// Not reachable from play. Takes the write lock.
-func (ge *GameEngine) SetFaithMeasureForTest(held float64, m FaithSave) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.setFaithMeasure(held, m)
-}
-
-// setFaithMeasure is the lock-free body of SetFaithMeasureForTest.
+// setFaithMeasure puts ge's faith measure and its faith in place, for tests.
+// Not reachable from play; the caller holds ge.mu or owns ge alone.
 func (ge *GameEngine) setFaithMeasure(held float64, m FaithSave) {
 	ge.Resources.UnlockResource("faith")
 	ge.Resources.LoadAmounts(map[string]float64{"faith": held})

@@ -266,7 +266,7 @@ func TestLoadOrCreateCorruptBacksUpAndRecreates(t *testing.T) {
 }
 
 // TestWipeAccount covers the destructive wipe: an established account is created,
-// confirmed present, then WipeAccount() must delete the file so a subsequent
+// confirmed present, then WipeAccountByID must delete the file so a subsequent
 // LoadAccount reports found=false; the corrupt-backup sibling is also removed; and
 // wiping with no file present is a clean no-op (no error).
 func TestWipeAccount(t *testing.T) {
@@ -280,20 +280,21 @@ func TestWipeAccount(t *testing.T) {
 	if acct.DisplayName != "Adam" {
 		t.Fatalf("DisplayName = %q, want Adam", acct.DisplayName)
 	}
+	id := acct.AccountID
 	path := accountFilePath()
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("account.json not written: %v", err)
 	}
 
-	// Seed a corrupt-backup sibling to prove WipeAccount sweeps it too.
+	// Seed a corrupt-backup sibling to prove WipeAccountByID sweeps it too.
 	backup := path + ".corrupt"
 	if err := os.WriteFile(backup, []byte("garbage"), 0644); err != nil {
 		t.Fatalf("seed .corrupt backup: %v", err)
 	}
 
 	// Wipe: file and its .corrupt sibling must be gone, with no error.
-	if err := WipeAccount(); err != nil {
-		t.Fatalf("WipeAccount: %v", err)
+	if _, err := WipeAccountByID(id); err != nil {
+		t.Fatalf("WipeAccountByID: %v", err)
 	}
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Errorf("account.json still present after wipe (stat err = %v)", err)
@@ -312,8 +313,8 @@ func TestWipeAccount(t *testing.T) {
 	}
 
 	// Wiping again (no file present) is a clean no-op.
-	if err := WipeAccount(); err != nil {
-		t.Errorf("WipeAccount on missing file returned error: %v", err)
+	if _, err := WipeAccountByID(id); err != nil {
+		t.Errorf("WipeAccountByID on missing file returned error: %v", err)
 	}
 }
 

@@ -481,7 +481,7 @@ func TestPrestigeRecordedByAge(t *testing.T) {
 	acct.RecordPrestigeFrom("medieval_age")
 	acct.RecordPrestigeFrom("medieval_age")
 	acct.RecordPrestigeFrom("modern_age")
-	acct.RecordPrestige()
+	acct.RecordPrestigeFrom("")
 	st, _ := acct.LifetimeStats()
 	if st.TotalPrestiges != 4 || st.PrestigesByAge["medieval_age"] != 2 || st.PrestigesByAge["modern_age"] != 1 || len(st.PrestigesByAge) != 2 {
 		t.Errorf("stats %+v; want 4 prestiges, 2 from the Medieval Age, 1 from the Modern Age", st)

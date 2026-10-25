@@ -73,9 +73,6 @@ func (tm *TradeManager) routeDisruptedBy(def config.TradeRouteDef, disrupted map
 	return ""
 }
 
-// NewTradeManager creates a new trade manager on the core ruleset.
-func NewTradeManager() *TradeManager { return NewTradeManagerWith(rules.Core()) }
-
 // NewTradeManagerWith creates a new trade manager with set's routes.
 func NewTradeManagerWith(set *rules.Set) *TradeManager {
 	tm := &TradeManager{

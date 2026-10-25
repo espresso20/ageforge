@@ -202,22 +202,3 @@ func TestPlan_HoldsSixtyItems(t *testing.T) {
 		t.Errorf("a saved plan of 70 loads %d items, want 60", got)
 	}
 }
-
-// NextCost is BuildBatchCost's price for one copy, to the bit, queue and
-// cost multiplier included.
-func TestNextCost_MatchesBuildBatchCost(t *testing.T) {
-	ge := newLateGameEngine(t)
-	ge.buildQueue = append(ge.buildQueue, BuildQueueItem{BuildingKey: "factory", TicksLeft: 5, TotalTicks: 5})
-	ge.Buildings.costMult = 0.93
-	for _, k := range sortedKeys(ge.Buildings.defs) {
-		cost, _ := ge.Buildings.BuildBatchCost(k, 1, ge.buildQueue)
-		for res, c := range cost {
-			if got := ge.Buildings.NextCost(k, res, ge.buildQueue); got != c {
-				t.Fatalf("NextCost(%s, %s) = %v, BuildBatchCost says %v", k, res, got, c)
-			}
-		}
-		if got := ge.Buildings.NextCost(k, "no_such_resource", nil); got != 0 {
-			t.Fatalf("NextCost of a resource %s doesn't cost = %v", k, got)
-		}
-	}
-}

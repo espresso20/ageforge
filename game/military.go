@@ -300,12 +300,11 @@ func (mm *MilitaryManager) SoldiersAway() int {
 // else) — see GameEngine.expeditionFlavorLine. Message stays the mechanical
 // line; flavour rides alongside it, never in place of it.
 type ExpeditionResult struct {
-	Rewards      map[string]float64
-	Message      string
-	Name         string // the offer's title
-	Category     string // ExpeditionScouting or ExpeditionMilitary
-	Success      bool   // true if the mission succeeded
-	SoldiersSent int
+	Rewards  map[string]float64
+	Message  string
+	Name     string // the offer's title
+	Category string // ExpeditionScouting or ExpeditionMilitary
+	Success  bool   // true if the mission succeeded
 	// SoldiersFell is the soldiers who fell on the way home (the failure's or
 	// the success's losses, drawn from the mission's own stream); Party the
 	// party that set out and Marching the soldiers still with it on return.
@@ -418,7 +417,6 @@ func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResu
 		Name:         active.Title,
 		Category:     active.Category(),
 		Success:      success,
-		SoldiersSent: active.Soldiers,
 		SoldiersFell: fell,
 		Party:        active.Party,
 		Marching:     active.Soldiers,
