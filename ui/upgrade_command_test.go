@@ -17,9 +17,7 @@ func TestUpgradeCommandListsAndUpgrades(t *testing.T) {
 		t.Fatalf("with nothing older held, upgrade says %q", got.Message)
 	}
 	eng.Buildings.LoadCounts(map[string]int{"gathering_camp": 3, "stash": 40})
-	if err := eng.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EnterAgeForTest("stone_age"))
 	for _, r := range []string{"wood", "stone", "food"} {
 		eng.Resources.Add(r, 5000)
 	}

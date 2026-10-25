@@ -231,17 +231,13 @@ func TestDashboardPlaysTheFilm(t *testing.T) {
 	om.engine = eng
 	om.after = func(time.Duration, func()) func() { return func() {} }
 
-	if err := eng.ForceLastPassageForTest("interstellar_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.ForceLastPassageForTest("interstellar_age"))
 	d.refresh()
 	if !pages.HasPage(catastrophePage) || om.film != nil {
 		t.Fatal("the Last Passage's window did not open, or a film played before the choice")
 	}
 	full := eng.GetState().LastPassage.PointsNow
-	if err := eng.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EndureLastPassage())
 	d.closeCatastropheModal()
 	d.refresh()
 	e := om.film

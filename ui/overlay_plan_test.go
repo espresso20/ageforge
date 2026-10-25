@@ -169,9 +169,7 @@ func upgradeCommandEngine(t *testing.T, count int) *game.GameEngine {
 	t.Helper()
 	engine := game.NewGameEngine()
 	engine.SetTownForTest(map[string]int{"gathering_camp": count}, 0)
-	if err := engine.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.EnterAgeForTest("stone_age"))
 	return engine
 }
 

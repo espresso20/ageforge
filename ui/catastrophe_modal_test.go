@@ -39,9 +39,7 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 func screenGrid(t *testing.T, pages *tview.Pages, w, h int) [][]rune {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	pages.SetRect(0, 0, w, h)

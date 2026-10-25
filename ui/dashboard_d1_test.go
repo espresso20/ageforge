@@ -548,9 +548,7 @@ func TestEconHeightsRich(t *testing.T) {
 func TestSkylineStripInEveryTheme(t *testing.T) {
 	restoreForge(t)
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		d, pages, _ := stagedDashboard(t, "medieval_age")
 		f, cells := stripAt(t, d, pages, 240, 60)
 		if !f.shown {
@@ -580,9 +578,7 @@ func TestPeopleBoxFollowsAResize(t *testing.T) {
 	d, pages, _ := stagedDashboard(t, "bronze_age")
 	drawn := func(w, h int) {
 		sim := tcell.NewSimulationScreen("UTF-8")
-		if err := sim.Init(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, sim.Init())
 		defer sim.Fini()
 		sim.SetSize(w, h)
 		scr := theme.WrapScreen(sim)

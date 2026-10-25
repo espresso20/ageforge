@@ -244,9 +244,7 @@ func TestGalleryDrawsEveryWonder(t *testing.T) {
 		for ti, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
 			d.wonders.tier = func() mapmodel.GlyphTier { return tier }
 			for i, win := range list {
-				if err := theme.SetActive(themes[(i+ti)%len(themes)].Key); err != nil {
-					t.Fatal(err)
-				}
+				must(t, theme.SetActive(themes[(i+ti)%len(themes)].Key))
 				d.wonders.open()
 				om.Show("wonders", st)
 				d.wonders.gallery, d.wonders.idx, d.wonders.key = true, i, win.key

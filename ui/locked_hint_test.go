@@ -17,9 +17,7 @@ func bronzeTown(t *testing.T, techs ...string) (*Dashboard, *tview.Pages) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	restoreForge(t)
 	eng := game.NewGameEngine()
-	if err := eng.EnterAgeForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EnterAgeForTest("bronze_age"))
 	if len(techs) > 0 {
 		eng.GrantTechsForTest(techs...)
 	}

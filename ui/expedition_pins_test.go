@@ -19,9 +19,7 @@ func eachTheme(t *testing.T, fn func(t *testing.T)) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		t.Run(th.Key, fn)
 	}
 }

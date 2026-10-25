@@ -29,9 +29,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.refresh()
 
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	t.Cleanup(sim.Fini)
 	sim.SetSize(w, h)
 	screen := theme.WrapScreen(sim)
@@ -95,9 +93,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		key     string
 		opinion int
 	}{{"riverlands_tribes", 30}, {"ironhold_clans", -80}} {
-		if err := engine.MeetFactionForTest(c.key, c.opinion); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.MeetFactionForTest(c.key, c.opinion))
 	}
 	if len(engine.GetState().Diplomacy.Factions["riverlands_tribes"].Deals) == 0 {
 		t.Fatal("the Factions panel sweep has no deals to draw")
@@ -150,15 +146,11 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	// Endure preview counts that garrison. Endured afterwards so nothing stays
 	// pending for the harbinger screens below, which then count it too.
 	engine.SetGarrisonForTest("iron_age", 640000)
-	if err := engine.ForceCatastropheForTest(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceCatastropheForTest())
 	d.showCatastropheModal(engine.GetState().PendingCatastrophe)
 	out["catastrophe_modal_garrison"] = draw()
 	d.closeCatastropheModal()
-	if err := engine.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.Endure())
 	engine.SetGarrisonForTest("iron_age", 640000)
 	if !d.overlayMgr.Show("army", engine.GetState()) {
 		t.Fatal("overlay army not registered")
@@ -168,9 +160,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 
 	// Harbinger: the panel (severity, keycaps, affordable and unaffordable
 	// costs), the Epoch overlay's harbinger lines and the status-bar badge.
-	if err := engine.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.SummonHarbingerForTest("bronze_age"))
 	d.refresh()
 	out["dashboard_harbinger_badge"] = draw()
 	for _, name := range []string{"harbinger", "epoch"} {
@@ -183,17 +173,13 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 
 	// The Last Passage: the Cosmic Era panel, the modal variant with Succumb
 	// open and closed (chip-filled), and its status-bar badge.
-	if err := engine.SummonHarbingerForTest("galactic_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.SummonHarbingerForTest("galactic_age"))
 	if !d.overlayMgr.Show("harbinger", engine.GetState()) {
 		t.Fatal("overlay harbinger not registered")
 	}
 	out["overlay:harbinger_last_passage"] = draw()
 	d.overlayMgr.Hide()
-	if err := engine.ForceLastPassageForTest("galactic_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceLastPassageForTest("galactic_age"))
 	d.refresh()
 	out["last_passage_modal"] = draw()
 	d.closeCatastropheModal()
@@ -225,9 +211,7 @@ func TestThemeRender_NoInvisibleText(t *testing.T) {
 	const w, h = 160, 48
 	for _, th := range theme.All() {
 		t.Run(th.Key, func(t *testing.T) {
-			if err := theme.SetActive(th.Key); err != nil {
-				t.Fatal(err)
-			}
+			must(t, theme.SetActive(th.Key))
 			for name, cells := range renderScreens(t, w, h) {
 				bad := 0
 				for i, c := range cells {
@@ -279,9 +263,7 @@ func TestThemeRender_CanvasIsThemeBackground(t *testing.T) {
 	d.refresh()
 
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(120, 40)
 	screen := theme.WrapScreen(sim)
@@ -331,9 +313,7 @@ func TestThemeRender_DumpANSI(t *testing.T) {
 		_ = theme.SetActive(key)
 		for name, cells := range renderScreens(t, w, h) {
 			base := fmt.Sprintf("%s/%s_%s", dir, key, strings.ReplaceAll(name, ":", "_"))
-			if err := os.WriteFile(base+".html", []byte(cellsHTML(cells, w, h, key+" / "+name)), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(base+".html", []byte(cellsHTML(cells, w, h, key+" / "+name)), 0o644))
 			var sb strings.Builder
 			for y := 0; y < h; y++ {
 				for x := 0; x < w; x++ {
@@ -349,9 +329,7 @@ func TestThemeRender_DumpANSI(t *testing.T) {
 				}
 				sb.WriteString("\x1b[0m\n")
 			}
-			if err := os.WriteFile(base+".ans", []byte(sb.String()), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(base+".ans", []byte(sb.String()), 0o644))
 		}
 	}
 }

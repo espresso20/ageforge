@@ -20,9 +20,7 @@ import (
 // not the heading of a family the player has not come to yet.
 func TestAccountBadgesCommand(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	_, sum := eng.Badges()
 
 	res := HandleCommand("account badges", eng)
@@ -83,9 +81,7 @@ func TestAccountBadgesWithoutAnAccount(t *testing.T) {
 // one earned last), where it used to list four achievement names.
 func TestStatsPanelListsBadges(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 	_, sum := eng.Badges()
 
@@ -116,9 +112,7 @@ func TestStatsPanelListsBadges(t *testing.T) {
 // log line, once.
 func TestDashboardAnnouncesBadges(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	eng.ReportForTest(config.BadgeEvAgeReached, "stone_age")
 
 	const line = "Badge earned: Rock Solid (bronze). Reach the Stone Age."
@@ -198,9 +192,7 @@ func TestBadgeLines(t *testing.T) {
 // about saves completed, which never was and is retired.
 func TestStatsPanelShowsCivilizationsStarted(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	text := statsProvider(eng.GetState(), 0)
 	if !strings.Contains(text, "Civilizations started:[-]  1") {
 		t.Errorf("the Stats panel does not show one civilization started:\n%s", text)

@@ -158,9 +158,7 @@ func TestEndingDump(t *testing.T) {
 	var page strings.Builder
 	page.WriteString("<!doctype html><meta charset=\"utf-8\"><title>Ending</title><style>body{background:#222;color:#ddd;font:13px sans-serif}pre{font:10px/12px 'JetBrains Mono',Menlo,monospace;display:inline-block;margin:4px 12px 16px 0;vertical-align:top}h3{margin:10px 0 2px}</style>\n")
 	for _, key := range themes {
-		if err := theme.SetActive(key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(key))
 		for _, sz := range strings.Split(sizes, ",") {
 			var w, h int
 			if _, err := fmt.Sscanf(sz, "%dx%d", &w, &h); err != nil {
@@ -206,18 +204,14 @@ func TestEndingDump(t *testing.T) {
 				for _, f := range frames {
 					g := r.at(w, h, f)
 					name := fmt.Sprintf("%s_%s_%dx%d_f%03d", key, c.name, w, h, f)
-					if err := os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644); err != nil {
-						t.Fatal(err)
-					}
+					must(t, os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644))
 					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.e.pal, r.e.view.plain))
 				}
 				r.e.close()
 			}
 		}
 	}
-	if err := os.WriteFile(filepath.Join(out, "ending.html"), []byte(page.String()), 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(filepath.Join(out, "ending.html"), []byte(page.String()), 0644))
 }
 
 // ---- what it says ----
@@ -784,9 +778,7 @@ func TestEndingStill(t *testing.T) {
 	const w, h = 100, 30
 	r.om.app = tview.NewApplication()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	e.SetRect(0, 0, w, h)
@@ -888,15 +880,11 @@ func TestEndingInEveryTheme(t *testing.T) {
 	r := stagedEnding(t, sampleEnding(game.RunEndEndured, 5), mapmodel.TierUnicode, true, false)
 	t.Cleanup(r.e.close)
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 			r.restart(tier, true)
 			r.at(w, h, 0)
@@ -998,9 +986,7 @@ func TestEndingAmbientIsThePrestiges(t *testing.T) {
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	const w, h = 100, 30
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	extra := func(r *endingRig, frames ...int) (n int) {
@@ -1029,9 +1015,7 @@ func TestEndingAmbientIsThePrestiges(t *testing.T) {
 			continue
 		}
 		with++
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		film.restart(mapmodel.TierUnicode, true)
 		film.at(w, h, 0)
 		strike, _ := endSpanOf(film.e.sc, beatStrike)

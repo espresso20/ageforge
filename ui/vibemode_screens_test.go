@@ -28,9 +28,7 @@ func TestTheScreensSwitchAtOnce(t *testing.T) {
 	// in the log, which the screens would then differ by.
 	set := func(on bool) {
 		t.Helper()
-		if err := eng.SetVibeMode(on); err != nil {
-			t.Fatal(err)
-		}
+		must(t, eng.SetVibeMode(on))
 		d.refresh()
 	}
 
@@ -97,9 +95,7 @@ func TestTheBoxTitlesFollowTheSwitch(t *testing.T) {
 	d, _, eng := badgeDashboard(t)
 	set := func(on bool) {
 		t.Helper()
-		if err := eng.SetVibeMode(on); err != nil {
-			t.Fatal(err)
-		}
+		must(t, eng.SetVibeMode(on))
 		d.refresh()
 	}
 	titles := func() []string {

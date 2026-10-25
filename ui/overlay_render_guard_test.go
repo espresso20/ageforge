@@ -51,13 +51,9 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	fresh := engine.GetState()
 
 	for key, opinion := range map[string]int{"riverlands_tribes": 60, "ironhold_clans": -40, "merchant_guild": 30} {
-		if err := engine.MeetFactionForTest(key, opinion); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.MeetFactionForTest(key, opinion))
 	}
-	if err := engine.SummonHarbingerForTest("industrial_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.SummonHarbingerForTest("industrial_age"))
 	s := engine.GetState()
 	s.Age, s.AgeName = "industrial_age", "Industrial Age"
 	s.TickIntervalMs = 2000

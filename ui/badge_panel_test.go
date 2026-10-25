@@ -26,9 +26,7 @@ func badgeDashboard(t *testing.T) (*Dashboard, *tview.Pages, *game.GameEngine) {
 	a, err := game.CreateNamedAccount("Badge Tester")
 	must(t, err)
 	eng.SetAccount(a)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	app := tview.NewApplication()
 	pages := tview.NewPages()
 	d := NewDashboard(app, eng, pages)
@@ -51,9 +49,7 @@ func settle(d *Dashboard) {
 // ladder.
 func earnForTest(t *testing.T, eng *game.GameEngine) {
 	t.Helper()
-	if err := eng.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EnterAgeForTest("stone_age"))
 	for i := 0; i < 20; i++ {
 		eng.ReportForTest(config.BadgeEvBuiltLineage, "housing")
 	}
@@ -236,9 +232,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 		tv := tview.NewTextView().SetDynamicColors(true)
 		tv.SetText(safeTags(markup))
 		sim := tcell.NewSimulationScreen("UTF-8")
-		if err := sim.Init(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, sim.Init())
 		defer sim.Fini()
 		sim.SetSize(200, 1)
 		tv.SetRect(0, 0, 200, 1)
@@ -291,9 +285,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		bg := theme.Color(theme.RoleBackground)
 		_, cells := render(badgeToast(hut, mapmodel.TierUnicode, 0))
 		for x, c := range cells {
@@ -425,17 +417,13 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		for _, size := range treeSizes {
 			w, h := size[0], size[1]
 			d, pages, eng := badgeDashboard(t)
 			drawnDashboard(t, d, pages, w, h) // every box gets its size
 			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, sim.Init())
 			sim.SetSize(w, h)
 			scr := theme.WrapScreen(sim)
 			snap := func() []tcell.SimCell {
@@ -448,16 +436,12 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 			scr.Clear()
 			d.root.Draw(scr)
 			still := snap()
-			if err := eng.Account().SetMotion(false); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.Account().SetMotion(false))
 			d.drawEffect(scr, 0, 0, w, h)
 			if off := snap(); d.fxOn.Load() || fmt.Sprint(off) != fmt.Sprint(still) {
 				t.Errorf("theme %s at %dx%d: an effect draws with motion off", th.Key, w, h)
 			}
-			if err := eng.Account().SetMotion(true); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.Account().SetMotion(true))
 			bg := theme.Color(theme.RoleBackground)
 			drawn := 0
 			frames := 4
@@ -507,14 +491,10 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 		}
 	}
 	// A frame is a function of its number.
-	if err := theme.SetActive("source"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, theme.SetActive("source"))
 	frame := func(n int, plain bool) string {
 		sim := tcell.NewSimulationScreen("UTF-8")
-		if err := sim.Init(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, sim.Init())
 		defer sim.Fini()
 		sim.SetSize(40, 12)
 		scr := theme.WrapScreen(sim)

@@ -22,9 +22,7 @@ func scholarGame(t *testing.T) *game.GameEngine {
 	ge := gameIn(t, "stone_age")
 	ge.GrantTechsForTest("language")
 	ge.SetTownForTest(map[string]int{"story_circle": 2, "elders_hall": 1}, 0)
-	if err := ge.StartResearch("primitive_writing"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("primitive_writing"))
 	return ge
 }
 
@@ -155,9 +153,7 @@ func TestTechTimeIsComputedFromTheScholarsResearching(t *testing.T) {
 // share at 0 the screens say it needs scholars.
 func TestIdleScholarsStillShowATechTime(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	st := ge.GetState()
 	if st.Research.CurrentTech != "" || st.Scholars.Researching != 0 || st.Scholars.Total == 0 {
 		t.Fatalf("staging: %+v", st.Scholars)
@@ -189,12 +185,8 @@ func TestIdleScholarsStillShowATechTime(t *testing.T) {
 // and teach and what teaching adds.
 func TestResearchListShowsQueueAndScholars(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.PlanAddResearch("ritual"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddResearch("pottery"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.PlanAddResearch("ritual"))
+	must(t, ge.PlanAddResearch("pottery"))
 	st := ge.GetState()
 	list := cmdResearchList(ge).Message
 	i, j := strings.Index(list, "1. "), strings.Index(list, "2. ")
@@ -246,9 +238,7 @@ func TestScholarsLineWhereResearchIsShown(t *testing.T) {
 // the state.
 func TestTeachingBonusHasItsOwnLine(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	st := ge.GetState()
 	if st.Scholars.Teaching != st.Scholars.Total || st.Scholars.TeachingBonus <= 0 {
 		t.Fatalf("staging: %+v", st.Scholars)
@@ -263,9 +253,7 @@ func TestTeachingBonusHasItsOwnLine(t *testing.T) {
 		t.Errorf("rates lack %q:\n%s", want, rates)
 	}
 	// Half research: the bonus is half, and both screens say so.
-	if err := ge.StartResearch("primitive_writing"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("primitive_writing"))
 	if _, err := ge.SetResearchShare(50); err != nil {
 		t.Fatal(err)
 	}
@@ -409,9 +397,7 @@ var knowledgeHeld = regexp.MustCompile(`(?i)knowledge (storage|store|price|cost|
 
 func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.PlanAddResearch("ritual"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.PlanAddResearch("ritual"))
 	st := ge.GetState()
 	screens := map[string]string{
 		"research list":   cmdResearchList(ge).Message,
@@ -462,9 +448,7 @@ func TestResourcesBoxHasNoKnowledgeRow(t *testing.T) {
 // `research` completes to the techs that can start now, and to no other.
 func TestSuggestResearchGameAware(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	st := ge.GetState()
 	got := NewAutoCompleter(ge)("research ")
 	techs := 0

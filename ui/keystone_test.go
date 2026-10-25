@@ -14,9 +14,7 @@ func stoneAgeGame(t *testing.T) *game.GameEngine {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
-	if err := ge.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.EnterAgeForTest("stone_age"))
 	return ge
 }
 

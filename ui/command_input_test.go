@@ -23,9 +23,7 @@ func drawPrompt(t *testing.T, eng *game.GameEngine, text string, w int) []tcell.
 	in.SetText(text)
 	in.Focus(func(tview.Primitive) {})
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	t.Cleanup(sim.Fini)
 	sim.SetSize(w, 1)
 	screen := theme.WrapScreen(sim)
@@ -105,9 +103,7 @@ func TestCommandInputGhostEveryTheme(t *testing.T) {
 	restoreForge(t)
 	eng := game.NewGameEngine()
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		cells := drawPrompt(t, eng, "adv", 40)
 		if got := dimRun(cells); got != "ance" {
 			t.Errorf("%s: dim text %q, want %q", th.Key, got, "ance")

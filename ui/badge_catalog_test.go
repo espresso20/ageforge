@@ -116,9 +116,7 @@ func TestLegendSpritesInEveryTheme(t *testing.T) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		pal := newGridPalette(0, nil)
 		for key := range legendSprites {
 			g := newTGrid(specialW, specialH)
@@ -240,9 +238,7 @@ func TestPayrollLadderNamesItsNextRung(t *testing.T) {
 // one worn. A title the account does not hold is refused.
 func TestTitleCommand(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	res := HandleCommand("title", eng)
 	if res.Type != "info" || !strings.Contains(res.Message, "Settler (worn)") || strings.Contains(res.Message, "Survivor") {
 		t.Fatalf("title on a new account: %+v", res)
@@ -325,12 +321,8 @@ func (s *alienStyle) HandleKey(*tcell.EventKey, mapstyle.Frame) bool { return tr
 func TestLookingAtAVisitorEarnsItsBadge(t *testing.T) {
 	const badge = "special.we_are_not_alone"
 	d, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
-	if err := eng.Account().SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
+	must(t, eng.Account().SetMotion(false))
 	p := d.mapPanel
 	p.set = d.mapSettings()
 	if p.set.Motion {
@@ -382,9 +374,7 @@ func TestLookingAtAVisitorEarnsItsBadge(t *testing.T) {
 // age names the age only once the player can see it.
 func TestBadgeThemesSayHowTheyAreEarned(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	st := eng.GetState()
 	acct := eng.Account()
 	for key, badge := range map[string]string{
@@ -421,16 +411,12 @@ func TestBadgeThemesSayHowTheyAreEarned(t *testing.T) {
 		t.Errorf("Cosmic's hint in the first age is %q", got)
 	}
 	bronze, _ := theme.ByKey("bronze")
-	if err := eng.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EnterAgeForTest("stone_age"))
 	if got := themeUnlockHint(bronze, eng.GetState()); got != "Reach the Bronze Age" {
 		t.Errorf("Bronze's hint with the Bronze Age next is %q", got)
 	}
 	// Earning the age's badge unlocks its theme at once, and says so once.
-	if err := eng.EnterAgeForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EnterAgeForTest("bronze_age"))
 	if !acct.HasTheme("bronze") {
 		t.Fatal("reaching the Bronze Age did not unlock Bronze")
 	}

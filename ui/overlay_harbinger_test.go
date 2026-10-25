@@ -29,9 +29,7 @@ func harbDashboard(t *testing.T, age string) (*Dashboard, *game.GameEngine, *tvi
 	d := NewDashboard(app, engine, pages)
 	pages.AddPage("dashboard", d.Root(), true, true)
 	if age != "" {
-		if err := engine.SummonHarbingerForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.SummonHarbingerForTest(age))
 	}
 	return d, engine, pages
 }
@@ -61,12 +59,8 @@ func TestHarbingerPanelWithNoHarbinger(t *testing.T) {
 
 	// An era that can be fated reads quiet, for now.
 	iron := game.NewGameEngine()
-	if err := iron.SummonHarbingerForTest("classical_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := iron.ForceQuietFateForTest("iron_era"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, iron.SummonHarbingerForTest("classical_age"))
+	must(t, iron.ForceQuietFateForTest("iron_era"))
 	txt = untag(harbingerPanelText(iron.GetState(), "", false, false))
 	if !strings.Contains(txt, "No harbinger has come: the Iron Era is quiet, for now.") {
 		t.Errorf("quiet era panel:\n%s", txt)
@@ -287,9 +281,7 @@ func TestHarbingerCommand(t *testing.T) {
 	if r := HandleCommand("harbinger dance", engine); r.Type != "info" || !strings.Contains(r.Message, "Usage") {
 		t.Errorf("bad subcommand → %+v", r)
 	}
-	if err := engine.SummonHarbingerForTest("medieval_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.SummonHarbingerForTest("medieval_age"))
 	if r := HandleCommand("harb invite", engine); r.Type != "success" || !engine.GetState().Harbinger.Invited {
 		t.Errorf("harb invite → %+v", r)
 	}
@@ -378,9 +370,7 @@ func TestCosmicDoomScreens(t *testing.T) {
 	if h := engine.GetState().Harbinger; h == nil || !h.LastPassage {
 		t.Fatalf("setup: harbinger %+v", h)
 	}
-	if err := engine.ForceFateForTest("cosmic_era", 2000); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceFateForTest("cosmic_era", 2000))
 	engine.StepTicks(1)
 	st := engine.GetState()
 	h := st.Harbinger

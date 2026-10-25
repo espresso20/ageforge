@@ -42,9 +42,7 @@ func (d *Dashboard) runForTest(line string) {
 func drawMapPanel(t *testing.T, d *Dashboard, w, h int) string {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	d.mapPanel.SetRect(0, 0, w, h)
@@ -163,13 +161,9 @@ func TestMapInspectStagesCommand(t *testing.T) {
 	for _, style := range all.Registry().Names() {
 		t.Run(style, func(t *testing.T) {
 			d, eng := mapTestDashboard(t, true)
-			if err := eng.Account().SetMapStyle(style); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.Account().SetMapStyle(style))
 			// A civ met: something on the map with a command in every style.
-			if err := eng.MeetFactionForTest("riverlands_tribes", 30); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
 			d.runForTest("map")
 			p := d.mapPanel
 			drawMapPanel(t, d, 160, 48)
@@ -240,13 +234,9 @@ func TestMapSettingsPersist(t *testing.T) {
 	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII {
 		t.Fatalf("after the commands: %s/%s", s.Style, s.Tier)
 	}
-	if err := eng.SaveGame("maptest"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SaveGame("maptest"))
 	d.runForTest("map style roguelike")
-	if err := eng.LoadGame("maptest"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.LoadGame("maptest"))
 	if s := d.mapSettings(); s.Style != "roguelike" || s.Tier != mapmodel.TierASCII {
 		t.Errorf("a load changed the account's map settings: %s/%s", s.Style, s.Tier)
 	}
@@ -331,9 +321,7 @@ func TestStyleShortcut(t *testing.T) {
 func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	// A civ met: a target for Tab at the region zoom, with a command.
-	if err := eng.MeetFactionForTest("riverlands_tribes", 30); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
 	sim := tcell.NewSimulationScreen("UTF-8")
 	sim.SetSize(160, 48)
 	d.app.SetScreen(sim).SetRoot(d.pages, true).SetFocus(d.inputField)

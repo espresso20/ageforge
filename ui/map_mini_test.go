@@ -27,15 +27,9 @@ func miniTestGame(t testing.TB) *game.GameEngine {
 	}
 	HandleCommand("build hut 2", eng)
 	HandleCommand("build stash", eng)
-	if err := eng.SaveGame("minimap"); err != nil {
-		t.Fatal(err)
-	}
-	if err := eng.LoadGame("minimap"); err != nil {
-		t.Fatal(err)
-	}
-	if err := eng.MeetFactionForTest("riverlands_tribes", 30); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SaveGame("minimap"))
+	must(t, eng.LoadGame("minimap"))
+	must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
 	return eng
 }
 
@@ -44,9 +38,7 @@ func miniTestGame(t testing.TB) *game.GameEngine {
 func drawDashboard(t testing.TB, d *Dashboard, pages *tview.Pages, w, h int) string {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	scr := theme.WrapScreen(sim)
@@ -267,9 +259,7 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 			d.refresh()
 			txt := drawDashboard(t, d, pages, sz[0], sz[1])
 			name := filepath.Join(dir, fmt.Sprintf("dashboard_%s_%dx%d.txt", style, sz[0], sz[1]))
-			if err := os.WriteFile(name, []byte(txt), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(name, []byte(txt), 0o644))
 		}
 	}
 }

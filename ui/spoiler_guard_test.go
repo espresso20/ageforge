@@ -110,9 +110,7 @@ func freshSpoilerEngine(t *testing.T) *game.GameEngine {
 	engine.SeedRNG(1)
 	engine.StepTicks(1)
 	if engine.GetState().Harbinger == nil {
-		if err := engine.SummonHarbingerForTest("primitive_age"); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.SummonHarbingerForTest("primitive_age"))
 	}
 	if engine.GetState().Harbinger == nil {
 		t.Fatal("no harbinger; the guard would miss its text")

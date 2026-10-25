@@ -626,9 +626,7 @@ func TestDiplomacyDealCommands(t *testing.T) {
 	if res := HandleCommand("diplomacy deals", engine); !strings.Contains(res.Message, "not met anyone") {
 		t.Errorf("deals before first contact: %q", res.Message)
 	}
-	if err := engine.MeetFactionForTest("riverlands_tribes", 30); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.MeetFactionForTest("riverlands_tribes", 30))
 	deals := engine.GetState().Diplomacy.Factions["riverlands_tribes"].Deals
 	if len(deals) == 0 {
 		t.Fatal("no deals rolled")

@@ -109,9 +109,7 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 			d.lastState = &st
 			d.refreshWorkerMini(st)
 			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, sim.Init())
 			sim.SetSize(w, h)
 			screen := theme.WrapScreen(sim)
 			for i := 0; i < 2; i++ {
@@ -173,9 +171,7 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 	d.lastState = &st
 	d.refreshWorkerMini(st)
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(80, 24)
 	screen := theme.WrapScreen(sim)

@@ -278,9 +278,7 @@ func tallRows(t *testing.T, tv *tview.TextView, lw int) []string {
 	t.Helper()
 	const tall = 2000
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(lw+2, tall)
 	tv.SetRect(0, 0, lw+2, tall)

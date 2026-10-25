@@ -28,9 +28,7 @@ func BenchmarkDashboardFrame(b *testing.B) {
 			vibe.Set(false)
 			d, pages := newMiniDashboard(b)
 			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				b.Fatal(err)
-			}
+			must(b, sim.Init())
 			defer sim.Fini()
 			sim.SetSize(160, 48)
 			scr := theme.WrapScreen(sim)

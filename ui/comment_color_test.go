@@ -105,9 +105,7 @@ func TestAgeQuipIsTheOnlyCommentOnTheSplash(t *testing.T) {
 // the theme's comment color, kept legible on the page.
 func TestCommentInkReadsOnThePage(t *testing.T) {
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		pal := &menuPalette{bg: theme.Color(theme.RoleBackground)}
 		if r := theme.ContrastRatio(commentInk(pal), pal.bg); r < 4.5 {
 			t.Errorf("%s: comment ink is %.2f:1 on the page", th.Key, r)

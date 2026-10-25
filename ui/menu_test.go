@@ -150,9 +150,7 @@ func TestMenuDump(t *testing.T) {
 			v, town := stagedMenuView(c.age, c.forge, mapmodel.TierUnicode)
 			g, _ := menuPage(v, town, size[0], size[1], 0)
 			name := fmt.Sprintf("%s_%dx%d.txt", c.name, size[0], size[1])
-			if err := os.WriteFile(filepath.Join(out, name), []byte(gridText(g)), 0644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(filepath.Join(out, name), []byte(gridText(g)), 0644))
 		}
 	}
 
@@ -170,9 +168,7 @@ func TestMenuDump(t *testing.T) {
 	var page strings.Builder
 	page.WriteString("<!doctype html><meta charset=\"utf-8\"><title>Menu pages</title><style>body{background:#222;color:#ddd;font:13px sans-serif}pre{font:10px/12px 'JetBrains Mono',Menlo,monospace;display:inline-block;margin:4px 12px 16px 0;vertical-align:top}h3{margin:10px 0 2px}</style>\n")
 	for _, key := range themes {
-		if err := theme.SetActive(key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(key))
 		pal := newMenuPalette(theme.Active())
 		for _, sz := range strings.Split(sizes, ",") {
 			var w, h int
@@ -195,9 +191,7 @@ func TestMenuDump(t *testing.T) {
 			}
 		}
 	}
-	if err := os.WriteFile(filepath.Join(out, "menu.html"), []byte(page.String()), 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(filepath.Join(out, "menu.html"), []byte(page.String()), 0644))
 }
 
 // menuStage is one staged page of the menu.
@@ -578,9 +572,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		pal := newMenuPalette(th)
 		for _, size := range [][2]int{{80, 24}, {120, 40}} {
 			for _, st := range []menuStage{{"the first visit", "", true}, {"the town", "bronze_age", false}} {
@@ -594,9 +586,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 					g := sc.render(pal, v, town, mapstyle.Frame{Anim: 3, Clock: 3, Tier: tier})
 
 					sim := tcell.NewSimulationScreen("UTF-8")
-					if err := sim.Init(); err != nil {
-						t.Fatal(err)
-					}
+					must(t, sim.Init())
 					sim.SetSize(w, h)
 					g.flush(theme.WrapScreen(sim), 0, 0, pal, v.plain)
 					rows := make([][]rune, h)

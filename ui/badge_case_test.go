@@ -559,15 +559,11 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		pal := newGridPalette(0, nil)
 		check := func(where string, g *tGrid) {
 			scr := tcell.NewSimulationScreen("UTF-8")
-			if err := scr.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, scr.Init())
 			defer scr.Fini()
 			scr.SetSize(g.w, g.h)
 			paintGrid(scr, g, 0, 0, pal)
@@ -861,9 +857,7 @@ func TestBadgePanelKeysAndMotion(t *testing.T) {
 	p.SetRect(0, 0, 100, 27)
 	draw := func() string {
 		scr := tcell.NewSimulationScreen("UTF-8")
-		if err := scr.Init(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, scr.Init())
 		defer scr.Fini()
 		scr.SetSize(100, 27)
 		p.Draw(scr)

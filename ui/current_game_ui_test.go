@@ -109,9 +109,7 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 	}
 
 	// A rename carries the mark.
-	if err := game.RenameSave("ashford", "ashford_ii"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, game.RenameSave("ashford", "ashford_ii"))
 	_ = r.acct.RenameGame("ashford", "ashford_ii") // the browser's rename does this
 	// M on the main game unmarks it: the game last played is current again.
 	b = browserFor(r)
@@ -191,9 +189,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 	must(t, err)
 	mk := game.NewGameEngine()
 	mk.SetAccount(second)
-	if err := mk.StartNewNamedGame("delmere"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, mk.StartNewNamedGame("delmere"))
 	if _, err := game.SwitchAccount(first.AccountID); err != nil {
 		t.Fatal(err)
 	}
@@ -277,9 +273,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 // written beside it.
 func TestQuitCommandSavesTheGameUnderItsName(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	go eng.Start()
 	t.Cleanup(eng.Stop)
 	waitRunning(t, eng)
@@ -315,9 +309,7 @@ func TestMenuQuitWritesNothing(t *testing.T) {
 	// A game is played and left with Esc, as the dashboard does it.
 	r.press('c')
 	waitRunning(t, r.eng)
-	if err := r.eng.SaveGame(r.eng.ActiveSaveName()); err != nil {
-		t.Fatal(err)
-	}
+	must(t, r.eng.SaveGame(r.eng.ActiveSaveName()))
 	r.eng.Stop()
 	r.pages.SwitchToPage("splash")
 	before := dataTree(t, root)

@@ -46,9 +46,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 		if a == "primitive_age" {
 			continue
 		}
-		if err := eng.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, eng.EnterAgeForTest(a))
 	}
 	if got := eng.GetState().Age; got != age {
 		t.Fatalf("staged the %s, want the %s", got, age)
@@ -106,9 +104,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 func drawnDashboard(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []tcell.SimCell {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	t.Cleanup(sim.Fini)
 	sim.SetSize(w, h)
 	screen := theme.WrapScreen(sim)
@@ -587,9 +583,7 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 func TestDashboardLayoutInEveryTheme(t *testing.T) {
 	restoreForge(t)
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		d, pages, _ := stagedDashboard(t, "quantum_age")
 		for _, sz := range [][2]int{{80, 24}, {100, 30}, {120, 40}, {160, 45}, {240, 60}} {
 			w, h := sz[0], sz[1]
@@ -622,9 +616,7 @@ func TestDashboardLayoutDump(t *testing.T) {
 		for _, sz := range layoutSizes {
 			cells := drawnDashboard(t, d, pages, sz[0], sz[1])
 			text := strings.Join(rectText(cells, sz[0], 0, 0, sz[0], sz[1]), "\n") + "\n"
-			if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s_%dx%d.txt", age, sz[0], sz[1])), []byte(text), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s_%dx%d.txt", age, sz[0], sz[1])), []byte(text), 0o644))
 		}
 	}
 }

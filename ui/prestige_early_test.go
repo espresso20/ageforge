@@ -17,9 +17,7 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SeedRNG(1)
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := engine.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.EnterAgeForTest(age))
 	}
 	confirm := untag(HandleCommand("prestige confirm", engine).Message)
 	for _, want := range []string{
@@ -36,9 +34,7 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 	}
 
 	for _, age := range []string{"renaissance_age", "colonial_age", "industrial_age", "victorian_age", "electric_age", "atomic_age", "modern_age"} {
-		if err := engine.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.EnterAgeForTest(age))
 	}
 	confirm = untag(HandleCommand("prestige confirm", engine).Message)
 	if strings.Contains(confirm, "early taste") || !strings.Contains(confirm, "You will earn 120 prestige points.") {
@@ -54,13 +50,9 @@ func TestPrestigedStateShowsLastingBonus(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	engine := game.NewGameEngine()
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := engine.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.EnterAgeForTest(age))
 	}
-	if err := engine.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.DoPrestige())
 	state := engine.GetState()
 	want := fmt.Sprintf("x%.2f", state.Prestige.ProductionMultiplier)
 	for _, got := range []string{untag(HandleCommand("prestige", engine).Message), untag(statsProvider(state, 0))} {
@@ -89,21 +81,15 @@ func TestStatsShowsPrestigeFloorOnlyUntilPassed(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	engine := game.NewGameEngine()
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := engine.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.EnterAgeForTest(age))
 	}
-	if err := engine.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.DoPrestige())
 	below := untag(statsProvider(engine.GetState(), 0))
 	want := "Prestige opens once you pass the Medieval Age, the furthest an earlier run reached."
 	if !strings.Contains(below, want) {
 		t.Fatalf("stats omitted floor sentence %q:\n%s", want, below)
 	}
-	if err := engine.EnterAgeForTest("renaissance_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.EnterAgeForTest("renaissance_age"))
 	past := untag(statsProvider(engine.GetState(), 0))
 	if strings.Contains(past, want) {
 		t.Fatalf("stats still shows floor sentence after passing it:\n%s", past)
@@ -126,13 +112,9 @@ func TestPrestigeCommandExplainsFloor(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	engine := game.NewGameEngine()
 	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := engine.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.EnterAgeForTest(age))
 	}
-	if err := engine.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.DoPrestige())
 	got := untag(HandleCommand("prestige confirm yes", engine).Message)
 	if !strings.Contains(got, "Prestige opens once you pass the Medieval Age, the furthest an earlier run reached.") {
 		t.Fatalf("prestige refusal omitted floor sentence:\n%s", got)

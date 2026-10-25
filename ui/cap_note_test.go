@@ -17,9 +17,7 @@ func cappedState(t *testing.T) (*game.GameEngine, game.GameState) {
 	t.Helper()
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1) // entering an era rolls an epoch event: the same one every run
-	if err := ge.EnterAgeForTest("modern_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.EnterAgeForTest("modern_age"))
 	ge.GrantTechsForTest()
 	ge.GrantBonusForTest("production_all", 2.4)
 	ge.GrantBonusForTest("gold_rate", 3.8)
@@ -165,9 +163,7 @@ func TestMilestonesAndWondersTagOnlyLimitedRewards(t *testing.T) {
 	}
 	// The Information Age's wonder, the Global Network, adds scholar
 	// output to a pool that is already far past +200%.
-	if err := ge.EnterAgeForTest("information_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.EnterAgeForTest("information_age"))
 	wonders := wondersProvider(ge.GetState(), 120)
 	if want := "+30% scholar output[-]\n"; !strings.Contains(wonders, want) {
 		t.Errorf("the Wonders panel tags a scholar output effect that counts in full (want %q):\n%s", want, wonders)

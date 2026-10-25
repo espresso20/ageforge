@@ -156,9 +156,7 @@ func TestArrivalDump(t *testing.T) {
 	var page strings.Builder
 	page.WriteString("<!doctype html><meta charset=\"utf-8\"><title>Arrival</title><style>body{background:#222;color:#ddd;font:13px sans-serif}pre{font:10px/12px 'JetBrains Mono',Menlo,monospace;display:inline-block;margin:4px 12px 16px 0;vertical-align:top}h3{margin:10px 0 2px}</style>\n")
 	for _, key := range themes {
-		if err := theme.SetActive(key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(key))
 		for _, sz := range strings.Split(sizes, ",") {
 			var w, h int
 			if _, err := fmt.Sscanf(sz, "%dx%d", &w, &h); err != nil {
@@ -188,18 +186,14 @@ func TestArrivalDump(t *testing.T) {
 					if c.tier == mapmodel.TierASCII {
 						name += "_plain"
 					}
-					if err := os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644); err != nil {
-						t.Fatal(err)
-					}
+					must(t, os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644))
 					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.a.pal, r.a.view.plain))
 				}
 				r.a.close()
 			}
 		}
 	}
-	if err := os.WriteFile(filepath.Join(out, "arrival.html"), []byte(page.String()), 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(filepath.Join(out, "arrival.html"), []byte(page.String()), 0644))
 }
 
 // ---- the alphabet ----
@@ -1144,9 +1138,7 @@ func TestArrivalStill(t *testing.T) {
 			// No clock runs behind a still frame.
 			r.om.app = tview.NewApplication()
 			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, sim.Init())
 			sim.SetSize(w, h)
 			r.a.SetRect(0, 0, w, h)
 			r.a.Draw(theme.WrapScreen(sim))
@@ -1183,9 +1175,7 @@ func TestArrivalClock(t *testing.T) {
 	r := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
 	r.om.app = tview.NewApplication()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(100, 30)
 	r.a.SetRect(0, 0, 100, 30)
@@ -1369,15 +1359,11 @@ func TestArrivalInEveryTheme(t *testing.T) {
 	t.Cleanup(age.a.close)
 	t.Cleanup(era.a.close)
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 			for _, shot := range []struct {
 				name  string
@@ -1497,9 +1483,7 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	const w, h = 100, 30
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	// extra counts the cells the screen shows that the page did not draw.
@@ -1536,9 +1520,7 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 			continue
 		}
 		with++
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		era.restart(mapmodel.TierUnicode, true)
 		if n := extra(era, 0, arrEraBlow2, arrEraStrike-1); n != 0 {
 			t.Errorf("%s: the effect plays before an epoch's heavy blow (%d cells)", th.Key, n)

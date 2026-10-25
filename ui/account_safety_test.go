@@ -44,9 +44,7 @@ func TestAccountSwitchInGameGoesToMenu(t *testing.T) {
 	if _, err := game.SwitchAccount(first.AccountID); err != nil { // creating made Second active
 		t.Fatal(err)
 	}
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	go eng.Start()
 	t.Cleanup(eng.Stop)
 	waitRunning(t, eng)
@@ -100,16 +98,12 @@ func TestAccountImportInGameDoesNotSwitch(t *testing.T) {
 	blob, err := bob.ExportProgress()
 	must(t, err)
 	path := filepath.Join(t.TempDir(), "bob.json")
-	if err := os.WriteFile(path, blob, 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(path, blob, 0644))
 	alice, err := game.CreateAccount("Alice")
 	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	go eng.Start()
 	t.Cleanup(eng.Stop)
 	waitRunning(t, eng)
@@ -192,9 +186,7 @@ func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 	prev := game.DevModeActive
 	game.DevModeActive = true
 	t.Cleanup(func() { game.DevModeActive = prev })
-	if err := eng.StartNewNamedGame("dev"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("dev"))
 	eng.StepTicks(1)
 	d.refresh()
 
@@ -233,9 +225,7 @@ func TestAccountWipeWordingMatchesWipe(t *testing.T) {
 	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	save := slotSavePath(filepath.Dir(game.DataDir()), alice.AccountID, "Rome")
 	if _, err := os.Stat(save); err != nil {
 		t.Fatalf("no save in the slot to wipe: %v", err)

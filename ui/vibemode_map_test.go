@@ -29,9 +29,7 @@ func TestTheMapSwitchesAtOnce(t *testing.T) {
 	d.mapPanel.start, d.mapPanel.now = pinned, func() time.Time { return pinned }
 	set := func(on bool) {
 		t.Helper()
-		if err := eng.SetVibeMode(on); err != nil {
-			t.Fatal(err)
-		}
+		must(t, eng.SetVibeMode(on))
 		d.refresh()
 	}
 

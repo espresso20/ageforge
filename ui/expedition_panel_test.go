@@ -60,9 +60,7 @@ func TestExpeditionPanelOpensOnTheRightView(t *testing.T) {
 		t.Errorf("the Ready Room has no map:\n%s", text)
 	}
 
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	p.open(engine.GetState())
 	if !p.view.report {
 		t.Error("with a party out the panel opens on the Ready Room, not the Report")
@@ -90,9 +88,7 @@ func TestExpeditionPanelOpensOnTheRightView(t *testing.T) {
 
 func TestExpeditionPanelTabSwitchesAndClearsTheNewCount(t *testing.T) {
 	engine, p := expFixture(t)
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	runUntilHome(t, engine)
 	p.state, p.view = engine.GetState(), expView{}
 	if text := panelText(p); !strings.Contains(text, "● 1 new") {
@@ -232,9 +228,7 @@ func TestExpeditionPanelEnterEnterSends(t *testing.T) {
 
 func TestExpeditionPanelShowsAnOfferThatCannotBeSentItsRefusal(t *testing.T) {
 	engine, p := expFixture(t)
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	p.open(engine.GetState())
 	p.view.report = false
 	p.update(engine.GetState())
@@ -362,9 +356,7 @@ func TestTerrainHoldsForTheAgeAndChangesWithIt(t *testing.T) {
 func TestExpeditionPanelFitsItsSizes(t *testing.T) {
 	engine, _ := expFixture(t)
 	for _, n := range []int{1, 4, 7} {
-		if err := engine.LaunchExpedition(n); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.LaunchExpedition(n))
 	}
 	runUntilHome(t, engine)
 	for _, n := range []int{1, 4, 7} {
@@ -493,9 +485,7 @@ func TestExpeditionPanelKeysBelongToThePromptWhenItHasText(t *testing.T) {
 
 func TestExpeditionReportListsWhatCameHome(t *testing.T) {
 	engine, p := expFixture(t)
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	runUntilHome(t, engine)
 	p.open(engine.GetState())
 	text := panelText(p)
@@ -584,9 +574,7 @@ func TestBriefingShowsThePartyOfEveryTier(t *testing.T) {
 func TestPartiesOnEveryScreen(t *testing.T) {
 	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
 		engine, p := expFixture(t)
-		if err := engine.LaunchExpedition(1); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.LaunchExpedition(1))
 		state := engine.GetState()
 		away := state.Military.SoldiersAway
 		if away != 8 {

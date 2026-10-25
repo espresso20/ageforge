@@ -47,9 +47,7 @@ func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 	if !strings.Contains(txt, "come with military buildings") && !strings.Contains(txt, "needs a party of") && !strings.Contains(txt, "A military building comes with its soldiers") {
 		t.Errorf("the Army panel should say where soldiers come from:\n%s", txt)
 	}
-	if err := engine.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.EnterAgeForTest("stone_age"))
 	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Posts:     none yet.") {
 		t.Errorf("a Stone Age town with no War Camp should still say nobody is posted:\n%s", txt)
 	}
@@ -64,12 +62,8 @@ func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 			t.Errorf("the Stone Age Army panel with a garrison is missing %q:\n%s", want, txt)
 		}
 	}
-	if err := engine.EnterAgeForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := engine.EnterAgeForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.EnterAgeForTest("bronze_age"))
+	must(t, engine.EnterAgeForTest("iron_age"))
 	if txt = untag(militaryProvider(engine.GetState(), 0)); strings.Contains(txt, "Training:") || strings.Contains(txt, "/tick") {
 		t.Errorf("nothing trains soldiers any more, yet the Iron Age Army panel shows a rate:\n%s", txt)
 	}
@@ -137,9 +131,7 @@ func TestCatastropheModal_EndureCountsGarrison(t *testing.T) {
 	const w, h = 160, 50
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("iron_age", config.AgeThreat(3)/2) // defense == the Iron Age threat
-	if err := engine.ForceCatastropheForTest(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceCatastropheForTest())
 	st := engine.GetState()
 	if st.PendingEndure.Garrison <= 0 {
 		t.Fatalf("pending Endure has no garrison: %+v", st.PendingEndure)

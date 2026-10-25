@@ -236,9 +236,7 @@ func TestDiplomacyPricesMatchEngine(t *testing.T) {
 	ge := game.NewGameEngine()
 	ge.GrantTechsForTest("envoys") // the tech that opens gifts and alliances
 	const civ = "riverlands_tribes"
-	if err := ge.MeetFactionForTest(civ, game.AllyOpinion-game.GiftOpinion); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.MeetFactionForTest(civ, game.AllyOpinion-game.GiftOpinion))
 	ge.Resources.LoadAmounts(map[string]float64{"gold": 5000})
 	opinion := func() int { return ge.GetState().Diplomacy.Factions[civ].Opinion }
 	gold := func() float64 { return ge.GetState().Resources["gold"].Amount }
@@ -247,9 +245,7 @@ func TestDiplomacyPricesMatchEngine(t *testing.T) {
 		t.Errorf("allied at opinion %d, but the help says it needs %d", opinion(), game.AllyOpinion)
 	}
 	before, op := gold(), opinion()
-	if err := ge.SendGift(civ); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.SendGift(civ))
 	if spent := before - gold(); spent != game.GiftCost {
 		t.Errorf("a gift cost %v gold, the help says %v", spent, game.GiftCost)
 	}

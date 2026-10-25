@@ -18,9 +18,7 @@ func lastPassageDashboard(t *testing.T, age string, legacy bool) (*Dashboard, *g
 	t.Helper()
 	d, engine, pages := harbDashboard(t, age)
 	engine.SetCosmicLegacyForTest(legacy)
-	if err := engine.ForceLastPassageForTest(age); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceLastPassageForTest(age))
 	return d, engine, pages
 }
 
@@ -302,9 +300,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 		})
 	}
 
-	if err := engine.ForceLastPassageForTest("interstellar_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceLastPassageForTest("interstellar_age"))
 	txt = untag(harbingerPanelText(engine.GetState(), "", false, false))
 	t.Logf("Cosmic Era harbinger panel, Last Passage pending:\n%s", txt)
 	if !strings.Contains(txt, "The Last Passage has come. Prestige waits") ||

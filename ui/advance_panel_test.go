@@ -467,9 +467,7 @@ func TestAdvancePanelFoldsToASCII(t *testing.T) {
 func drawPanel(t *testing.T, p *advancePanel, w, h int) []tcell.SimCell {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, sim.Init())
 	t.Cleanup(sim.Fini)
 	sim.SetSize(w, h)
 	screen := theme.WrapScreen(sim)
@@ -487,9 +485,7 @@ func TestAdvancePanelReadsInEveryTheme(t *testing.T) {
 	restoreForge(t)
 	states := advanceStates(t)
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		pal := newExpPalette()
 		for name, v := range states {
 			g := renderAdvance(v, advanceUI{sel: 2}, 100, 27)
@@ -505,9 +501,7 @@ func TestAdvancePanelReadsInEveryTheme(t *testing.T) {
 		}
 	}
 	for _, key := range []string{"forge", "daylight"} {
-		if err := theme.SetActive(key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(key))
 		_, _, p := advanceFixture(t, "bronze_age")
 		for _, size := range [][2]int{{80, 21}, {100, 27}, {160, 42}} {
 			cells := drawPanel(t, p, size[0], size[1])

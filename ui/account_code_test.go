@@ -52,9 +52,7 @@ func TestAccountShowCodeIsVisible(t *testing.T) {
 func TestAccountShowCodeIsNotKept(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	code := eng.Account().RecoveryCode()
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	d.runForTest("account show code")
 	d.refresh()
 	for _, e := range eng.GetLogs() {
@@ -74,9 +72,7 @@ func TestAccountShowCodeIsNotKept(t *testing.T) {
 	if scr := screenAt(t, d.pages, 100, 30); strings.Contains(scr, code) {
 		t.Errorf("the code is on screen after its window closed:\n%s", scr)
 	}
-	if err := eng.SaveGame("after-code"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SaveGame("after-code"))
 	files, _ := filepath.Glob(filepath.Join(game.DataDir(), "saves", "*.json"))
 	if len(files) == 0 {
 		t.Fatal("no save was written")

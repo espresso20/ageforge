@@ -24,20 +24,14 @@ func classicalGame(t *testing.T) *game.GameEngine {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range []string{"stone_age", "bronze_age", "iron_age", "classical_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	ge.GrantTechsForTest("language", "tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "woodworking", "bronze_working", "currency", "masonry", "the_wheel", "mathematics", "iron_smelting")
 	// A town of scholars: the times on the screens come from the scholars
 	// researching, so there must be some.
 	ge.SetTownForTest(map[string]int{"story_circle": 5, "elders_hall": 5, "scriptorium": 5, "agora": 7}, 0)
-	if err := ge.StartResearch("philosophy"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddResearch("road_building"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("philosophy"))
+	must(t, ge.PlanAddResearch("road_building"))
 	return ge
 }
 
@@ -360,15 +354,11 @@ func TestResearchTreePaintsInEveryTheme(t *testing.T) {
 	prev := theme.Active().Key
 	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		for _, size := range treeSizes {
 			w, h := size[0], size[1]-promptRows
 			scr := tcell.NewSimulationScreen("UTF-8")
-			if err := scr.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, scr.Init())
 			scr.SetSize(w, h)
 			p := newResearchPanel()
 			p.view.sel = "road_building"
@@ -658,9 +648,7 @@ func TestResearchPanelKeys(t *testing.T) {
 		t.Error("Esc should close the card once, and then have nothing to close")
 	}
 	// With the slot free, the card starts it.
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	p.update(ge.GetState())
 	p.view.sel = "animal_husbandry"
 	p.layout()
@@ -708,9 +696,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range []string{"stone_age", "bronze_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	ge.SetGarrisonForTest("bronze_age", 1000) // an army at home to make up a party
 	st := ge.GetState()
@@ -732,9 +718,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 		t.Errorf("a panel names a tech of an age not in sight:\n%s", out)
 	}
 	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	out := tradeProvider(ge.GetState(), 120)
 	for _, want := range []string{"The Rail Freight route needs Railroads first. Research it to start it.", "The black market needs Mercantilism first. Research it to deal there."} {
@@ -776,9 +760,7 @@ func medievalGame(t *testing.T) *game.GameEngine {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	ge.GrantTechsForTest("language", "tool_making", "stoneworking", "primitive_writing", "woodworking", "masonry", "the_wheel",
 		"mathematics", "road_building", "philosophy", "civil_engineering", "alchemy", "theology")
@@ -801,9 +783,7 @@ func gameIn(t *testing.T, age string) *game.GameEngine {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 		if a == age {
 			break
 		}
@@ -932,9 +912,7 @@ func TestCapstonesReadByShape(t *testing.T) {
 	}
 
 	// In progress: the bar; then done: the tick.
-	if err := ge.StartResearch("scholasticism"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("scholasticism"))
 	st = ge.GetState()
 	geom := treeGeomFor(120, false)
 	m := buildTree(st, geom, false, "scholasticism")

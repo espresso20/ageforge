@@ -12,9 +12,7 @@ import (
 // the time spent in each. The last age is the current one and is marked so far.
 func TestStatsShowsAgesThisRun(t *testing.T) {
 	_, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("run"))
 	st := eng.GetState()
 	st.TickIntervalMs = 2000
 	st.Tick = 450
