@@ -224,7 +224,6 @@ func TestThemeRender_NoInvisibleText(t *testing.T) {
 	restoreForge(t)
 	const w, h = 160, 48
 	for _, th := range theme.All() {
-		th := th
 		t.Run(th.Key, func(t *testing.T) {
 			if err := theme.SetActive(th.Key); err != nil {
 				t.Fatal(err)

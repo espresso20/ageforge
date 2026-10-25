@@ -26,21 +26,6 @@ func restoreColorNames(t *testing.T) {
 	})
 }
 
-// TestRemap_MapDrivesResolution is the floor assertion (§3.6): after remapping
-// ColorNames["gold"], tcell.GetColor("gold") — the SAME lookup tview's tag parser
-// uses — returns the sentinel. If this fails, the name-remap strategy is dead at
-// the root.
-func TestRemap_MapDrivesResolution(t *testing.T) {
-	restoreColorNames(t)
-
-	tcell.ColorNames["gold"] = sentinel
-	got := tcell.GetColor("gold")
-	if got.Hex() != sentinel.Hex() {
-		t.Fatalf("GetColor(\"gold\") = %06x, want sentinel %06x; ColorNames does not drive resolution",
-			got.Hex(), sentinel.Hex())
-	}
-}
-
 // TestRemap_RenderedCellRetints is the real §3.6 guard: render a "[gold]X" TextView
 // to a SimulationScreen with gold remapped to the sentinel, then read back the
 // rendered cell and assert its foreground IS the sentinel. tview re-resolves named

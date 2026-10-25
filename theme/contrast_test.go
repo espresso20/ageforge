@@ -18,7 +18,6 @@ const (
 // here cannot ship.
 func TestContrast_AllThemes(t *testing.T) {
 	for _, th := range All() {
-		th := th
 		t.Run(th.Key, func(t *testing.T) {
 			bg := th.Color(RoleBackground)
 
@@ -57,7 +56,6 @@ func TestContrast_AccessibleColorblind(t *testing.T) {
 		if !th.Accessible {
 			continue
 		}
-		th := th
 		t.Run(th.Key, func(t *testing.T) {
 			pos := th.Color(RolePositive)
 			neg := th.Color(RoleNegative)

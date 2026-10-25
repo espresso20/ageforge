@@ -53,7 +53,6 @@ var surfacePairs = func() []contrastPair {
 // theme ship: its roles are tuned against this matrix, not by eye.
 func TestContrast_RoleMatrix(t *testing.T) {
 	for _, th := range All() {
-		th := th
 		t.Run(th.Key, func(t *testing.T) {
 			for _, p := range surfacePairs {
 				floor := p.floor
