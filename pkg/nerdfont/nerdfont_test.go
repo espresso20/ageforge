@@ -17,9 +17,10 @@ import (
 	"testing"
 )
 
-// fakeZip is a small stand-in for the release zip: two Mono TTFs, the NL
-// and proportional variants the installer must skip, a readme, and an
-// entry with a path that tries to leave the font folder.
+// fakeZip is a small stand-in for the release zip: two Mono TTFs, the NL and
+// proportional variants the installer must skip, a readme, and a Mono entry
+// whose path tries to leave the font folder (the installer keeps only its base
+// name).
 func fakeZip(t *testing.T) []byte {
 	t.Helper()
 	var buf bytes.Buffer

@@ -166,7 +166,7 @@ func TestImportRoundTrip(t *testing.T) {
 		}
 	}
 
-	// The source now reads as rewritten, and the ledger knows it.
+	// After the import the source reads as rewritten, and the ledger knows it.
 	c2, err := read(root)
 	if err != nil {
 		t.Fatal(err)
@@ -259,7 +259,7 @@ func TestDryRunWritesNothing(t *testing.T) {
 func TestImportRefusals(t *testing.T) {
 	c := realCatalog(t)
 	// The rows are chosen by what they are; each rewrite is built from the
-	// row's own text, so the cases hold whatever the game says today.
+	// row's own text, so the cases hold whatever the game says.
 	two := pick(t, c, "a log line with two different format verbs", func(r *row) bool {
 		v := verbsOf(r)
 		return r.rules&rulesUI != 0 && len(v) == 2 && v[0] != v[1] && len(r.kept()) == 2

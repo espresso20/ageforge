@@ -12,9 +12,10 @@ import (
 	"strings"
 )
 
-// export.go writes the sheets.
+// This file writes the sheets.
 
-// The columns of every sheet, in order.
+// columns are the columns of every sheet. The col constants below are their
+// positions and must stay in the same order.
 var columns = []string{"id", "where", "kind", "age", "keep", "max", "current", "yours", "notes", "same_as"}
 
 const (
@@ -46,7 +47,7 @@ const firstHoursAges = 6
 // bom is the byte-order mark Excel needs to read a CSV file as UTF-8.
 const bom = "\xEF\xBB\xBF"
 
-// record writes a row as a line of a sheet.
+// record returns the cells of a row for a sheet, with the given yours and notes.
 func (c *catalog) record(r *row, yours, notes string) []string {
 	rec := make([]string, len(columns))
 	rec[colID] = r.id
@@ -84,7 +85,7 @@ func sheetWith(header []string, records [][]string) []byte {
 	return buf.Bytes()
 }
 
-// filled is what the owner had typed against one id in an earlier export.
+// filled is what the owner typed against one id in an earlier export.
 type filled struct {
 	current, yours, notes string
 	file                  string
@@ -98,7 +99,7 @@ func export(c *catalog, dir string, out io.Writer) error {
 		return err
 	}
 	// Cells filled in an earlier export of this folder are carried into the
-	// new sheets, so exporting again never loses typed work.
+	// new sheets. Cells with no place there go to keptFile.
 	old, oldRecs, err := readFilled(dir)
 	if err != nil {
 		return err
@@ -117,7 +118,7 @@ func export(c *catalog, dir string, out io.Writer) error {
 		case f.current == r.current:
 			return f.yours, f.notes
 		case f.yours != "" && restoreEdges(r.current, f.yours) == r.current:
-			return "", f.notes // the rewrite is in the source now
+			return "", f.notes // the source already has the rewrite
 		}
 		used[r.id] = false
 		return "", ""
@@ -192,7 +193,8 @@ func export(c *catalog, dir string, out io.Writer) error {
 	return nil
 }
 
-// inFirstHours reports whether a row belongs in first-hours.csv.
+// inFirstHours reports whether a row belongs in first-hours.csv: a row of the
+// main menu or the first six ages that is not unsure and not a save name.
 func inFirstHours(r *row) bool {
 	return r.age >= 0 && r.age <= firstHoursAges && !r.unsure && r.area != areaSaveNames
 }
@@ -216,7 +218,7 @@ func writeCounts(c *catalog, out io.Writer) {
 	fmt.Fprintf(out, "%-34s %7d %8d\n", "total", rows, words)
 }
 
-// dedupe drops repeated records.
+// dedupe drops repeated records and keeps the first of each.
 func dedupe(recs [][]string) [][]string {
 	seen := map[string]bool{}
 	var out [][]string
@@ -230,8 +232,9 @@ func dedupe(recs [][]string) [][]string {
 	return out
 }
 
-// readSheet reads one CSV file written by export (or saved over by a
-// spreadsheet): the byte-order mark is optional, the header row is checked.
+// readSheet reads one CSV file written by export, or saved over by a
+// spreadsheet. The byte-order mark is optional, the separator may be a comma,
+// semicolon or tab, and the header row is checked.
 func readSheet(path string) ([][]string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

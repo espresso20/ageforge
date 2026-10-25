@@ -101,7 +101,8 @@ func TestTheMapsTablesCarryTheirIds(t *testing.T) {
 }
 
 // TestMapLabelsCarryTheirWidths: a label the map lays out in a width of its own
-// has that width as its max in the export, so the slang is held to it.
+// has that width as its max in the export, so vibe-lint holds the script's
+// line to it.
 func TestMapLabelsCarryTheirWidths(t *testing.T) {
 	c := realCatalog(t)
 	for id, want := range map[string]int{
@@ -136,8 +137,8 @@ func TestMapLabelsCarryTheirWidths(t *testing.T) {
 			t.Errorf("%s (%q): max %d, want %d", id, r.current, r.max, want)
 		}
 	}
-	// The longest legend labels the map was written with fit the width it gives
-	// them: a limit below the plain English would refuse the line it replaces.
+	// Every plain text fits its own limit: a limit below the plain English
+	// would refuse the line it replaces.
 	for _, r := range c.rows {
 		if r.area == areaMap && r.max > 0 && len([]rune(r.current)) > r.max {
 			t.Errorf("%s: %q is %d characters and the row allows %d", r.id, r.current, len([]rune(r.current)), r.max)

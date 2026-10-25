@@ -11,16 +11,13 @@ import (
 	"github.com/espresso20/ageforge/detmath"
 )
 
-// malus_test.go covers the negative half of the engine (Polarity, MalusCatalog,
-// the two malus-only Kinds and their Applier paths) plus the two roll-side
-// robustness fixes that landed with it: no-op target exclusion and age-scaled
-// instant lumps.
+// These tests cover the negative half of the engine (Polarity, MalusCatalog, the
+// two malus-only Kinds and their Applier paths), the exclusion of resources with
+// no BaseStorage from random targets, and age-scaled instant lumps.
 
-// --- polarity / table selection --------------------------------------------
-
-// TestCatalogPolaritiesAreConsistent pins the invariant the table split rests
-// on: every Catalog() entry is Positive and every MalusCatalog() entry is
-// Negative. A Def in the wrong table would silently hand a gift to a war party.
+// TestCatalogPolaritiesAreConsistent checks the invariant the table split rests
+// on: every Catalog entry is Positive and every MalusCatalog entry is Negative. A
+// Def in the wrong table would hand a gift to a war party.
 func TestCatalogPolaritiesAreConsistent(t *testing.T) {
 	for _, d := range Catalog() {
 		if d.Polarity != Positive {
@@ -37,9 +34,9 @@ func TestCatalogPolaritiesAreConsistent(t *testing.T) {
 	}
 }
 
-// TestNegativeProfileDrawsOnlyFromMalusCatalog proves Profile.Polarity really is
-// the table selector: a Negative profile never yields a boon name, and over many
-// rolls it reaches every malus entry.
+// TestNegativeProfileDrawsOnlyFromMalusCatalog checks that Profile.Polarity selects
+// the table: a Negative profile never yields a boon name, and over many rolls it
+// reaches every malus entry.
 func TestNegativeProfileDrawsOnlyFromMalusCatalog(t *testing.T) {
 	malus := map[string]bool{}
 	for _, d := range MalusCatalog() {
@@ -72,7 +69,7 @@ func TestNegativeProfileDrawsOnlyFromMalusCatalog(t *testing.T) {
 }
 
 // TestMalusMagnitudesAreNegative checks the sign of every timed setback: a
-// "buff" with a positive value would be a reward for losing.
+// positive value would reward the player for losing.
 func TestMalusMagnitudesAreNegative(t *testing.T) {
 	p := DefaultProfile()
 	p.Polarity = Negative
@@ -136,13 +133,13 @@ func TestMalusSeverityScalesWithMagnitudeScale(t *testing.T) {
 	}
 }
 
-// TestDrainFractionIsClamped: even an absurd MagnitudeScale cannot make a
-// setback take the whole stockpile.
+// TestDrainFractionIsClamped: even an extreme MagnitudeScale cannot make a setback
+// take the whole stockpile.
 func TestDrainFractionIsClamped(t *testing.T) {
 	p := DefaultProfile()
 	p.Polarity = Negative
 	p.Age = "atomic_age"
-	p.MagnitudeScale = 50 // pathological
+	p.MagnitudeScale = 50 // extreme
 
 	for i, b := range rollN(p, 3, 1500) {
 		if b.Kind == ResourceDrain && b.InstantAmount > maxDrainFraction+1e-9 {
@@ -150,8 +147,6 @@ func TestDrainFractionIsClamped(t *testing.T) {
 		}
 	}
 }
-
-// --- apply dispatch: malus kinds -------------------------------------------
 
 func TestApplyResourceDrainRoutesToDrain(t *testing.T) {
 	f := &fakeApplier{}
@@ -167,7 +162,7 @@ func TestApplyResourceDrainRoutesToDrain(t *testing.T) {
 
 func TestApplyResourceDrainWithDipAlsoInjectsNegativeEffect(t *testing.T) {
 	f := &fakeApplier{}
-	// Lost Scouts shape: drain + a short NEGATIVE production dip.
+	// Lost Scouts shape: a drain plus a short negative production dip.
 	Apply(Boon{
 		Kind: ResourceDrain, Polarity: Negative, Resource: "wood",
 		InstantAmount: 0.04, Magnitude: -0.05, DurationTicks: 900,
@@ -201,7 +196,7 @@ func TestApplyWorkerLossRoutesToLoseWorkers(t *testing.T) {
 }
 
 // TestApplyMalusKindsIgnoreEmptyPayloads: a zero drain or a zero head-count must
-// not reach the Applier at all — nothing happened, so nothing should be called.
+// not reach the Applier. Nothing happened, so nothing should be called.
 func TestApplyMalusKindsIgnoreEmptyPayloads(t *testing.T) {
 	f := &fakeApplier{}
 	Apply(Boon{Kind: ResourceDrain, Resource: "", InstantAmount: 0, Flavor: "f"}, f)
@@ -232,18 +227,15 @@ func TestRollThenApplyMalusEndToEnd(t *testing.T) {
 	}
 }
 
-// --- A2: random targets are never no-ops ------------------------------------
-
-// TestRandomTargetsAreStorable guards the fix for silently vanishing rewards: a
-// resource with BaseStorage <= 0 (today "soldiers") can hold neither a lump grant
-// nor a meaningful rate buff, so it must never surface as a random target.
+// TestRandomTargetsAreStorable checks that a resource with BaseStorage <= 0 never
+// becomes a random target. Config has no such resource today, so the test skips.
 func TestRandomTargetsAreStorable(t *testing.T) {
 	storage := map[string]float64{}
 	for _, r := range config.BaseResources() {
 		storage[r.Key] = r.BaseStorage
 	}
 
-	// Sanity: the fixture is only meaningful if such a resource actually exists.
+	// The test means nothing unless such a resource exists.
 	unstorable := 0
 	for _, r := range config.BaseResources() {
 		if r.BaseStorage <= 0 {
@@ -274,8 +266,8 @@ func TestRandomTargetsAreStorable(t *testing.T) {
 	}
 }
 
-// TestAgeAppropriateResourcesNeverEmpty: filtering must not be able to starve the
-// pool, at any age.
+// TestAgeAppropriateResourcesNeverEmpty: filtering must not empty the pool at any
+// age.
 func TestAgeAppropriateResourcesNeverEmpty(t *testing.T) {
 	for _, age := range append(config.AgeOrder(), "", "not_an_age") {
 		if len(ageAppropriateResources(age)) == 0 {
@@ -286,8 +278,6 @@ func TestAgeAppropriateResourcesNeverEmpty(t *testing.T) {
 		}
 	}
 }
-
-// --- A3: instant lumps scale with age and standing --------------------------
 
 // meanInstant rolls an InstantResource-only profile and returns the mean lump.
 func meanInstant(t *testing.T, age string, scale float64) float64 {
@@ -309,10 +299,10 @@ func meanInstant(t *testing.T, age string, scale float64) float64 {
 	return sum / n
 }
 
-// TestInstantLumpsScaleWithAge asserts monotonic growth across the whole age
-// order — a fixed 50–200 crate must not stay a rounding error into the late game.
-// Growth is measured in ticks of production, what a lump is tuned to: the lump
-// times its age's pacing stretch (from the Bronze Age on a tick makes
+// TestInstantLumpsScaleWithAge checks that the lump grows with every age, so a
+// fixed crate of 50 to 200 does not stay a rounding error late in the game.
+// Growth is measured in ticks of production, which is what a lump is tuned to: the
+// lump times its age's pacing stretch (from the Bronze Age on a tick makes
 // 1/config.PacingStretch as much, and the lump is divided by it).
 func TestInstantLumpsScaleWithAge(t *testing.T) {
 	order := config.AgeOrder()
@@ -324,8 +314,8 @@ func TestInstantLumpsScaleWithAge(t *testing.T) {
 		}
 		prev = got
 	}
-	// The stretch itself: the same roll in the Bronze Age, unstretched, is
-	// PacingStretch times what it pays.
+	// The stretch itself: the Bronze Age scale is the unstretched scale divided by
+	// PacingStretch.
 	p := DefaultProfile()
 	p.Age = "bronze_age"
 	want := float64(detmath.Pow(instantGrowthPerAge, 2)) / config.PacingStretch
@@ -334,9 +324,9 @@ func TestInstantLumpsScaleWithAge(t *testing.T) {
 	}
 }
 
-// TestInstantLumpsScaleWithMagnitude asserts standing/strength is visible in the
-// size of a gift — the second half of the A3 fix. A late-age allied str-5 profile
-// must dwarf an early-age neutral one.
+// TestInstantLumpsScaleWithMagnitude checks that standing and strength show in the
+// size of a gift. A late-age allied strength-5 profile must dwarf an early-age
+// neutral one.
 func TestInstantLumpsScaleWithMagnitude(t *testing.T) {
 	const bronze = "bronze_age"
 	neutral := meanInstant(t, bronze, 1.0)
@@ -352,8 +342,8 @@ func TestInstantLumpsScaleWithMagnitude(t *testing.T) {
 	}
 }
 
-// TestAgeIndexGuardsUnknownAges: an unrecognised or empty age resolves to index 0,
-// the smallest (safest) scaling, rather than panicking or over-granting.
+// TestAgeIndexGuardsUnknownAges: an unknown or empty age gives index 0, the
+// smallest scaling, rather than panicking or over-granting.
 func TestAgeIndexGuardsUnknownAges(t *testing.T) {
 	for _, age := range []string{"", "not_an_age", "AGE_OF_TYPOS"} {
 		if got := ageIndex(age); got != 0 {

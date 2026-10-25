@@ -7,11 +7,11 @@ import (
 	"strconv"
 )
 
-// walk.go reads the ids off a running ruleset. The export finds a row by
-// parsing the source; this finds the same row on the value the game built
-// from that source, by the same FieldIDs table, so a text the overlay
-// replaces is the text the export called by that id. A test in cmd/words
-// holds the two together (TestRuntimeIdsAreTheExportsOwn).
+// This file reads the ids off a running ruleset. The export finds a row by
+// parsing the source. This finds the same row on the value the game built from
+// that source, with the same FieldIDs table, so a text the overlay replaces is
+// the text the export gave that id. A test in cmd/words holds the two together
+// (TestRuntimeIdsAreTheExportsOwn).
 
 // Cell is one string of a definition that a player reads.
 type Cell struct {
@@ -21,24 +21,26 @@ type Cell struct {
 	Owner any // the struct the text is a field of, as it stands
 }
 
-// Rewrite walks the definitions under v and offers every text that has a row
-// id to fn, which answers the text to put there or false to leave it. It
-// returns v with the answers in, and how many it put in.
+// Rewrite walks the definitions under v and offers every text that has a row id
+// to fn, which answers the text to put there or false to leave it. It returns v
+// with the answers in, and how many texts it changed (an answer equal to the
+// text does not count).
 //
-// Nothing v shares with the caller is written to: a struct, slice or map
-// with a text to change is copied first, so the tables of package config
-// that a definition was built from stay as they were. v may be a struct, a
-// slice, a map with string keys or a pointer to one.
+// Nothing v shares with the caller is written to: a struct, slice or map with a
+// text to change is copied first, so the tables of package config that a
+// definition was built from stay as they were. v may be a struct, a slice, a map
+// with string keys or a pointer to one.
 //
-// A text that is empty is never offered: an empty description or hint is
-// the game saying there is none, and a script has none to swap in.
+// A text that is empty is never offered: an empty description or hint is the
+// game saying there is none, and a script has none to swap in.
 func Rewrite[T any](v T, fn func(c Cell) (string, bool)) (T, int) {
 	w := &walker{fn: fn}
 	out, _ := w.walk(reflect.ValueOf(&v).Elem(), pos{idx: -1}, 0)
 	return out.Interface().(T), w.changed
 }
 
-// Cells lists every text under v that has a row id, in walking order.
+// Cells lists every text under v that has a row id, in the order Rewrite walks
+// them. A map of structs is walked in map order, which varies.
 func Cells[T any](v T) []Cell {
 	var cells []Cell
 	Rewrite(v, func(c Cell) (string, bool) {
@@ -49,7 +51,7 @@ func Cells[T any](v T) []Cell {
 }
 
 // Resolvable reports whether an id template can be filled from a running
-// ruleset: it names no slot that only the source has ({decl}, {a0}).
+// ruleset: it names no slot that only the source has ({decl}, {a0} to {a9}).
 func Resolvable(tmpl string) bool {
 	for _, m := range TemplateRe.FindAllStringSubmatch(tmpl, -1) {
 		if n := m[3]; n == "decl" || (len(n) == 2 && n[0] == 'a' && n[1] >= '0' && n[1] <= '9') {
@@ -82,7 +84,7 @@ type walker struct {
 
 const maxDepth = 16
 
-// walk returns v with the answers in and whether anything changed. A value
+// walk returns v with the answers in and whether anything changed. A value that
 // nothing changed in is returned as it came.
 func (w *walker) walk(v reflect.Value, at pos, depth int) (reflect.Value, bool) {
 	if depth > maxDepth {
@@ -267,8 +269,8 @@ func (w *walker) walkStruct(v reflect.Value, at pos, depth int) (reflect.Value, 
 	return out, true
 }
 
-// sortedKeys is the keys of a string-keyed map in order, so the walk is the
-// same every time.
+// sortedKeys returns the keys of a string-keyed map in order, so the texts of a
+// map field are offered in the same order every time.
 func sortedKeys(m reflect.Value) []reflect.Value {
 	keys := m.MapKeys()
 	for i := 1; i < len(keys); i++ {
@@ -340,7 +342,7 @@ func (w *walker) slot(name string, outer bool, at pos) (string, bool) {
 }
 
 // fieldText is a field of a struct value as the text of an id: a string as it
-// is, a number in digits, anything else nothing.
+// is, a signed integer in digits, anything else "".
 func fieldText(v reflect.Value, name string) string {
 	f := v.FieldByName(name)
 	if !f.IsValid() {

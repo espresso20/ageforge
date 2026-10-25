@@ -9,7 +9,7 @@ import (
 	"github.com/espresso20/ageforge/flavor"
 )
 
-// readme.go writes the one-page guide that goes out with the sheets.
+// This file writes the guide, README.md, that goes out with the sheets.
 
 // flavorMoments ties each catalog to the flavor package's own name for it,
 // so the guide can ask the real generator for assembled lines.
@@ -37,8 +37,10 @@ type example struct {
 	line string // the line as the log shows it
 }
 
-// request builds the request the game would send for a catalog, in an early
-// age where the catalog can happen at all.
+// request builds the request the game would send for a catalog, in an age
+// where the catalog can happen: Bronze for expeditions, Iron for
+// civilizations, Medieval for harbingers and Modern for the rest. It returns
+// the request and the age's name.
 func (c *catalog) request(mo *moment) (flavor.Request, string) {
 	req := flavor.Request{Moment: flavorMoments[mo.prefix]}
 	switch mo.about {
@@ -71,6 +73,7 @@ func (c *catalog) request(mo *moment) (flavor.Request, string) {
 
 // examples asks the flavor package for lines of one catalog and returns up
 // to n, preferring sentences that are filled in from a word list or a slot.
+// The draws use a fixed seed, so the guide is the same on every export.
 func (c *catalog) examples(mo *moment, n int) ([]example, string) {
 	req, age := c.request(mo)
 	stream := flavor.NewStream()
@@ -98,7 +101,7 @@ func (c *catalog) examples(mo *moment, n int) ([]example, string) {
 	return out, age
 }
 
-// readme returns the guide.
+// readme returns the text of README.md.
 func readme(c *catalog) string {
 	var b strings.Builder
 	p := func(format string, args ...any) { fmt.Fprintf(&b, format+"\n", args...) }
