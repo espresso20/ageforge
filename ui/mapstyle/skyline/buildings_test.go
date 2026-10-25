@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"math"
 	"strconv"
 	"testing"
 	"time"
@@ -24,20 +25,11 @@ func TestSkyCopiesFollowTheCount(t *testing.T) {
 	if mapmodel.SkyCopies(0) != 0 || mapmodel.SkyCopies(-3) != 0 {
 		t.Error("no buildings, no silhouettes")
 	}
-	prev := 0
 	for n := 1; n <= 200; n++ {
-		want := (n + mapmodel.SkyCopiesPer - 1) / mapmodel.SkyCopiesPer
-		if want > mapmodel.SkyMaxCopies {
-			want = mapmodel.SkyMaxCopies
-		}
-		got := mapmodel.SkyCopies(n)
-		if got != want {
+		want := min((n+mapmodel.SkyCopiesPer-1)/mapmodel.SkyCopiesPer, mapmodel.SkyMaxCopies)
+		if got := mapmodel.SkyCopies(n); got != want {
 			t.Fatalf("%d buildings draw %d silhouettes, want %d", n, got, want)
 		}
-		if got < prev {
-			t.Fatalf("%d buildings draw fewer silhouettes (%d) than %d did (%d)", n, got, n-1, prev)
-		}
-		prev = got
 	}
 	if mapmodel.SkyMaxCopies < 24 {
 		t.Errorf("the cap is %d, want at least 24", mapmodel.SkyMaxCopies)
@@ -209,7 +201,7 @@ func TestBackRowsRecede(t *testing.T) {
 					}
 					for r := 1; r < 3; r++ {
 						if p.light {
-							if gap := func(c tcell.Color) float64 { return absf(luma(c) - luma(p.horizon)) }; gap(row[r]) > gap(row[r-1])+0.5 {
+							if gap := func(c tcell.Color) float64 { return math.Abs(luma(c) - luma(p.horizon)) }; gap(row[r]) > gap(row[r-1])+0.5 {
 								t.Errorf("%s: row %d is farther from the paper than row %d", at(), r, r-1)
 							}
 							continue
@@ -229,13 +221,6 @@ func TestBackRowsRecede(t *testing.T) {
 			}
 		}
 	}
-}
-
-func absf(v float64) float64 {
-	if v < 0 {
-		return -v
-	}
-	return v
 }
 
 // spriteSig is a sprite's picture as a number.
@@ -412,7 +397,7 @@ func TestWindowGlowBounds(t *testing.T) {
 					t.Fatalf("age %d: glow is not a function of the frame", age)
 				}
 				if styleOfAge(age) == wTorch || styleOfAge(age) == wLamp {
-					if d := absf(g - prev); d > 0.12 {
+					if d := math.Abs(g - prev); d > 0.12 {
 						t.Fatalf("age %d: glow jumped %.2f in one frame", age, d)
 					}
 				}

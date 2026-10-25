@@ -389,15 +389,7 @@ func visitorRunes(tier mapmodel.GlyphTier) []rune {
 }
 
 func screenHas(s tcell.SimulationScreen, rs []rune) bool {
-	cells, _, _ := s.GetContents()
-	for _, c := range cells {
-		for _, r := range rs {
-			if len(c.Runes) > 0 && c.Runes[0] == r {
-				return true
-			}
-		}
-	}
-	return false
+	return strings.ContainsAny(capture.Text(s), string(rs))
 }
 
 // TestVisitor: from the Space Age the visitor shows when the schedule says,

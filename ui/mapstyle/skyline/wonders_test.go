@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -23,7 +24,8 @@ import (
 const groundAges = 17
 
 // wonderKeys is the key of each age's wonder, by age index ("" for none).
-func wonderKeys(c *mapmodel.Catalog) []string {
+var wonderKeys = sync.OnceValue(func() []string {
+	c := catalog()
 	out := make([]string, len(c.ByAge))
 	for a, ds := range c.ByAge {
 		for _, d := range ds {
@@ -33,10 +35,10 @@ func wonderKeys(c *mapmodel.Catalog) []string {
 		}
 	}
 	return out
-}
+})
 
 // wonderKeyOf is the key of the wonder of age index a.
-func wonderKeyOf(a int) string { return wonderKeys(catalog())[a] }
+func wonderKeyOf(a int) string { return wonderKeys()[a] }
 
 // wonderModel is the model of age a with its wonder built, or, when share is
 // above zero (and built is false), under way with that share of its cost
@@ -410,19 +412,18 @@ func TestWonderGlyphs(t *testing.T) {
 			s := wonderArt(key, rows)
 			for _, spr := range []*sprite{s, s.closeUp()} {
 				for _, cell := range spr.c {
-					for _, r := range []rune{cell.ch} {
-						if r == 0 {
-							continue
-						}
-						if uniseg.StringWidth(string(r)) != 1 {
-							t.Fatalf("%s: %q is not one cell wide", key, r)
-						}
-						if f := mapmodel.Fold(r, mapmodel.TierASCII); f == '?' || f >= 0x80 {
-							t.Fatalf("%s: %q folds to %q in the ASCII tier", key, r, f)
-						}
-						if r == '—' {
-							t.Fatalf("%s: an em dash", key)
-						}
+					r := cell.ch
+					if r == 0 {
+						continue
+					}
+					if uniseg.StringWidth(string(r)) != 1 {
+						t.Fatalf("%s: %q is not one cell wide", key, r)
+					}
+					if f := mapmodel.Fold(r, mapmodel.TierASCII); f == '?' || f >= 0x80 {
+						t.Fatalf("%s: %q folds to %q in the ASCII tier", key, r, f)
+					}
+					if r == '—' {
+						t.Fatalf("%s: an em dash", key)
 					}
 				}
 			}

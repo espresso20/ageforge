@@ -256,9 +256,6 @@ func TestSkyInspect(t *testing.T) {
 			if st := rowText(scr, 47); !strings.Contains(st, part.Name) || !strings.Contains(st, "type: ") {
 				t.Errorf("%s: the status line for %s does not say %q with its command: %q", age, tg.key, part.Name, st)
 			}
-			if c := v.fb.at(0, 47); c == nil {
-				t.Fatal("no status line")
-			}
 		}
 		// the cursor lands on a lot: its bracket under the baseline
 		for tg := range want {
@@ -490,10 +487,7 @@ func tabKey() *tcell.EventKey { return tcell.NewEventKey(tcell.KeyTab, 0, tcell.
 func TestSkyTetherCarriesOn(t *testing.T) {
 	fus := skyModel("fusion_age", 6, 0)
 	spc := skyModel("space_age", 6, 0)
-	vf := newView()
-	sf := vf.compose(mapstyle.Frame{Model: fus}, 160, 48)
-	wf := sf.elevatorX() + sf.cam
-	if sf.elevatorX() < 0 {
+	if newView().compose(mapstyle.Frame{Model: fus}, 160, 48).elevatorX() < 0 {
 		t.Fatal("the Fusion Age has no tether")
 	}
 	// (A district widens to fit its buildings: the tether keeps its place
@@ -505,7 +499,7 @@ func TestSkyTetherCarriesOn(t *testing.T) {
 	if a, b := rel(spc), rel(fus); a != b {
 		t.Errorf("the Space Age's tether stands %d columns in from the Fusion district's edge, the Fusion Age's %d", a, b)
 	}
-	wf = tetherX(spc)
+	wf := tetherX(spc)
 	vs := newView()
 	vs.follow, vs.cam = false, max(0, wf-80)
 	ss := vs.compose(mapstyle.Frame{Model: spc}, 160, 48)

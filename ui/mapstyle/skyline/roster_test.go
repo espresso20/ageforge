@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -62,12 +63,7 @@ func TestRosterLanes(t *testing.T) {
 		if rare {
 			l = ageRoster[age][lane].rare
 		}
-		for _, e := range l {
-			if e.name == name {
-				return true
-			}
-		}
-		return false
+		return slices.ContainsFunc(l, func(e *rentry) bool { return e.name == name })
 	}
 	for a := 0; a < numAges; a++ {
 		rail := len(ageRoster[a][laneRail].common) + len(ageRoster[a][laneRail].rare)
@@ -119,8 +115,8 @@ func TestRosterLanes(t *testing.T) {
 
 // TestRosterSprites: every drawing is 1 to 4 cells wide and 1 to 2 tall (a
 // train: every unit), the same size in every glyph tier and frame, with a
-// mask to match, nothing the ASCII tier cannot show, one cell for the Nerd
-// tier's mark, and fits its lane.
+// mask to match, nothing the ASCII tier cannot show, and one cell for the Nerd
+// tier's mark.
 func TestRosterSprites(t *testing.T) {
 	check := func(name string, tp *vtemplate, maxW int) {
 		t.Helper()
@@ -165,18 +161,11 @@ func TestRosterSprites(t *testing.T) {
 		}
 	}
 	for _, e := range rosterEntries {
-		for i, tp := range e.art {
+		for _, tp := range e.art {
 			check(e.name, tp, 4+20) // the longest train: four carriages and an engine
-			_ = i
 		}
 		for _, p := range e.parts {
 			check(e.name+" unit", p, 4)
-		}
-		// fits its lane: the road, the rail and the sky are two rows deep
-		for _, tp := range e.art {
-			if len(tp.rows) > 2 {
-				t.Errorf("%s does not fit its lane", e.name)
-			}
 		}
 	}
 	for _, p := range []*vtemplate{pMan, pWoman, pChild, pBundle, pSpear} {

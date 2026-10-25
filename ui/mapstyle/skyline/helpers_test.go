@@ -15,15 +15,8 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
 
-var (
-	catOnce sync.Once
-	testCat *mapmodel.Catalog
-)
-
-func catalog() *mapmodel.Catalog {
-	catOnce.Do(func() { testCat = mapmodel.NewCatalog() })
-	return testCat
-}
+// catalog is the one catalogue the tests share, made on first use.
+var catalog = sync.OnceValue(mapmodel.NewCatalog)
 
 // build makes a model from fixture options; with grow > 0 the state is
 // grown that many steps past a baseline, so the recap and ▼ markers show.

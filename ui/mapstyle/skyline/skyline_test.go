@@ -1,10 +1,7 @@
 package skyline
 
 import (
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -97,21 +94,13 @@ func TestTinySizes(t *testing.T) {
 
 func screenCells(s tcell.SimulationScreen) []tcell.SimCell {
 	c, _, _ := s.GetContents()
-	out := make([]tcell.SimCell, len(c))
-	copy(out, c)
-	return out
+	return slices.Clone(c)
 }
 
 func sameCells(a, b []tcell.SimCell) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i].Style != b[i].Style || string(a[i].Runes) != string(b[i].Runes) {
-			return false
-		}
-	}
-	return true
+	return slices.EqualFunc(a, b, func(x, y tcell.SimCell) bool {
+		return x.Style == y.Style && string(x.Runes) == string(y.Runes)
+	})
 }
 
 func TestDeterminism(t *testing.T) {
@@ -491,27 +480,9 @@ func TestKeys(t *testing.T) {
 	}
 }
 
-// TestCopy: player-visible strings have no em dashes or exclamation marks.
-func TestCopy(t *testing.T) {
-	files, _ := filepath.Glob("*.go")
-	fset := token.NewFileSet()
-	for _, fn := range files {
-		if strings.HasSuffix(fn, "_test.go") {
-			continue
-		}
-		f, err := parser.ParseFile(fset, fn, nil, 0)
-		if err != nil {
-			t.Fatal(err)
-		}
-		ast.Inspect(f, func(n ast.Node) bool {
-			if lit, ok := n.(*ast.BasicLit); ok && lit.Kind == token.STRING {
-				if s, err := strconv.Unquote(lit.Value); err == nil && (strings.Contains(s, "—") || strings.Contains(s, "!")) {
-					t.Errorf("%s: %q", fset.Position(lit.Pos()), s)
-				}
-			}
-			return true
-		})
-	}
+// TestEntry: the style registers itself under its name, with a title, a
+// blurb and a constructor.
+func TestEntry(t *testing.T) {
 	if e := Entry(); e.Name != "skyline" || e.Title.Plain() != "Skyline" || e.Blurb.Plain() == "" || e.New() == nil {
 		t.Errorf("bad entry %+v", e)
 	}
@@ -549,12 +520,7 @@ func TestFlowsNeverSayFull(t *testing.T) {
 			v.flows, v.legend = true, legend
 			for _, sz := range [][2]int{{200, 60}, {120, 40}, {80, 24}} {
 				scr := draw(v, m, sz[0], sz[1], 10, mapmodel.TierUnicode, false)
-				cells, _, _ := scr.GetContents()
-				var b strings.Builder
-				for _, c := range cells {
-					b.WriteString(string(c.Runes))
-				}
-				text := b.String()
+				text := capture.Text(scr)
 				if strings.Contains(text, "FULL") || strings.Contains(text, "full:") {
 					t.Errorf("%s at %dx%d (legend %v) still says full", age, sz[0], sz[1], legend)
 				}

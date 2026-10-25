@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -303,12 +304,9 @@ func TestSkyMandalaInspect(t *testing.T) {
 
 	// an era reached with nothing of it left standing is still a ring to read
 	st := mandalaState(7)
-	gone := map[string]bool{}
-	for _, a := range config.Epochs()[0].Ages {
-		gone[a] = true
-	}
+	gone := config.Epochs()[0].Ages
 	for k, b := range st.Buildings {
-		if gone[b.AgeKey] {
+		if slices.Contains(gone, b.AgeKey) {
 			delete(st.Buildings, k)
 		}
 	}
