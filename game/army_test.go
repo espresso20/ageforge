@@ -113,9 +113,7 @@ func comeHome(t *testing.T, ge *GameEngine, tier, grand string, success bool) {
 	clearArmy(ge)
 	n := plantOffer(ge, tier, grand)
 	stockFor(ge, n)
-	if err := ge.LaunchExpedition(n); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(n))
 	ge.mu.Lock()
 	a := ge.Military.ActiveByTier(tier)
 	a.TicksLeft = 1
@@ -271,9 +269,7 @@ func TestExperienceIsTheRuns(t *testing.T) {
 	// the rest of the run.
 	pr := newSeededEngine(2)
 	for _, a := range pr.Rules().AgeKeys()[1:] {
-		if err := pr.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, pr.EnterAgeForTest(a))
 		_ = pr.ForceQuietFateForTest(pr.Rules().EraOf(a))
 		if a == PrestigeRunAge {
 			break
@@ -283,9 +279,7 @@ func TestExperienceIsTheRuns(t *testing.T) {
 	pr.Military.experience = 120
 	pr.mu.Unlock()
 	_ = pr.SummonHarbingerForTest(PrestigeRunAge)
-	if err := pr.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, pr.DoPrestige())
 	if got := pr.Military.Experience(); got != 0 {
 		t.Errorf("after a prestige the army holds %v experience, want 0", got)
 	}

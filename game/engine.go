@@ -316,7 +316,8 @@ type GameEngine struct {
 	// boot (the accounts design §2/§8) and held here so the UI/dashboard — already sharing
 	// this engine — can reach it via Account(). It is player-level, NOT per-save, so
 	// Reset() must NOT clear it (a new game keeps the same player). May be nil if
-	// LoadOrCreate failed at boot — account state is non-critical, the game runs anyway.
+	// boot (LoadAccount in main.go) found no named account — account state is
+	// non-critical, the game runs anyway, and the UI asks the player to name one.
 	account *Account
 
 	// runAccountID is the account that owns the run in memory: the held account when the

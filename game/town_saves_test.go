@@ -16,9 +16,7 @@ func savedFixture(t *testing.T, path string) GameSave {
 		t.Fatal(err)
 	}
 	var gs GameSave
-	if err := json.Unmarshal(data, &gs); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &gs))
 	return gs
 }
 
@@ -50,10 +48,11 @@ func TestSaveFromBeforeTheBiggerTownLoads(t *testing.T) {
 	}
 	// The price is the tables' price now, and the bank that was half of the
 	// old one is short of it.
-	if want := config.BuildingByKey()["colosseum"].BaseCost; len(def.BaseCost) != len(want) {
-		t.Fatalf("the game prices the Colosseum in %d parts, the tables in %d", len(def.BaseCost), len(want))
+	colosseumCost := config.BuildingByKey()["colosseum"].BaseCost
+	if len(def.BaseCost) != len(colosseumCost) {
+		t.Fatalf("the game prices the Colosseum in %d parts, the tables in %d", len(def.BaseCost), len(colosseumCost))
 	}
-	for res, need := range config.BuildingByKey()["colosseum"].BaseCost {
+	for res, need := range colosseumCost {
 		if got := def.BaseCost[res]; got != need {
 			t.Errorf("the Colosseum costs %v %s, the tables say %v", got, res, need)
 		}
@@ -62,7 +61,7 @@ func TestSaveFromBeforeTheBiggerTownLoads(t *testing.T) {
 		whole := need
 		for form, raw := range map[string]string{"iron": "iron_ore", "stone": "marble"} {
 			if res == form {
-				whole += config.BuildingByKey()["colosseum"].BaseCost[raw]
+				whole += colosseumCost[raw]
 			}
 		}
 		if had := saved.WonderBanks["colosseum"][res]; had >= whole/2 {

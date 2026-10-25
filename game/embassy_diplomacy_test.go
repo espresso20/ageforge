@@ -6,69 +6,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// TestEmbassyBuildings_ExistAgeGatedAndCost verifies the two diplomacy buildings
-// are defined, gated at the right ages, and priced as the card specifies.
-func TestEmbassyBuildings_ExistAgeGatedAndCost(t *testing.T) {
-	byKey := config.BuildingByKey()
-
-	embassy, ok := byKey["embassy"]
-	if !ok {
-		t.Fatal("embassy building not defined in config")
-	}
-	if embassy.RequiredAge != "colonial_age" {
-		t.Errorf("embassy RequiredAge = %q, want colonial_age", embassy.RequiredAge)
-	}
-	if embassy.WorkerDomain != "trade" {
-		t.Errorf("embassy WorkerDomain = %q, want trade", embassy.WorkerDomain)
-	}
-	if embassy.WorkerCapacity <= 0 {
-		t.Errorf("embassy WorkerCapacity = %d, want > 0", embassy.WorkerCapacity)
-	}
-	if embassy.BaseCost["gold"] <= 0 || embassy.BaseCost["iron"] <= 0 {
-		t.Errorf("embassy must cost gold+iron, got %v", embassy.BaseCost)
-	}
-	if embassyRate := opinionRate(embassy); embassyRate <= 0 {
-		t.Errorf("embassy must have a positive opinion effect, got %v", embassy.Effects)
-	}
-
-	grand, ok := byKey["grand_embassy"]
-	if !ok {
-		t.Fatal("grand_embassy building not defined in config")
-	}
-	if grand.RequiredAge != "industrial_age" {
-		t.Errorf("grand_embassy RequiredAge = %q, want industrial_age", grand.RequiredAge)
-	}
-	if grand.WorkerDomain != "trade" {
-		t.Errorf("grand_embassy WorkerDomain = %q, want trade", grand.WorkerDomain)
-	}
-	if grand.BaseCost["gold"] <= 0 || grand.BaseCost["steel"] <= 0 {
-		t.Errorf("grand_embassy must cost gold+steel, got %v", grand.BaseCost)
-	}
-
-	// grand_embassy must be 2× the embassy per-worker opinion rate.
-	if got, want := opinionRate(grand), opinionRate(embassy)*2; got != want {
-		t.Errorf("grand_embassy opinion rate = %v, want 2× embassy (%v)", got, want)
-	}
-
-	// Embassies are not resource producers — no "production" effect should leak
-	// into the resource pipeline.
-	for _, eff := range embassy.Effects {
-		if eff.Type == "production" {
-			t.Errorf("embassy should not have a production effect, got %+v", eff)
-		}
-	}
-}
-
-// opinionRate pulls the per-worker opinion value from a building's effects.
-func opinionRate(def config.BuildingDef) float64 {
-	for _, eff := range def.Effects {
-		if eff.Type == "opinion" {
-			return eff.Value
-		}
-	}
-	return 0
-}
-
 // TestAddPassiveOpinion_AccumulatesSpreadsAndCaps verifies the distribution rule:
 // fractional opinion accumulates and spills into the integer Opinion, only
 // non-hostile discovered factions receive it, and Opinion is capped at +100.

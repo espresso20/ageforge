@@ -72,10 +72,7 @@ func TestLegacySaveWithoutAccountIDLoadsClean(t *testing.T) {
 func TestSaveStampsAccountIDAndStaysSigned(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	if acct.AccountID == "" {
 		t.Fatal("created account has empty AccountID")
 	}
@@ -133,10 +130,7 @@ func TestSaveStampsAccountIDAndStaysSigned(t *testing.T) {
 func TestResetPreservesAccount(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate: %v", err)
-	}
+	acct := testAccount(t)
 	ge := NewGameEngine()
 	ge.SetAccount(acct)
 
@@ -151,29 +145,5 @@ func TestResetPreservesAccount(t *testing.T) {
 	}
 	if got != acct {
 		t.Error("Reset swapped the account pointer; it should be the same instance")
-	}
-}
-
-// TestFreshlyCreatedFlagOnlyOnFirstRun confirms the first-run signal: LoadOrCreate
-// sets FreshlyCreated only when it mints a brand-new account (no file present), and
-// a subsequent load of the existing file leaves it false. Boot code keys the
-// one-time welcome notice off this (the accounts design §6).
-func TestFreshlyCreatedFlagOnlyOnFirstRun(t *testing.T) {
-	isolateAccountDir(t)
-
-	first, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (first): %v", err)
-	}
-	if !first.FreshlyCreated {
-		t.Error("first LoadOrCreate did not set FreshlyCreated on a genuine first run")
-	}
-
-	second, err := LoadOrCreate()
-	if err != nil {
-		t.Fatalf("LoadOrCreate (second): %v", err)
-	}
-	if second.FreshlyCreated {
-		t.Error("second LoadOrCreate set FreshlyCreated on an existing-file load")
 	}
 }

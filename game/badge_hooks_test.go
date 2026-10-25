@@ -88,9 +88,7 @@ func TestProductionCountsTowardTheResourceLadders(t *testing.T) {
 
 	// No account: nothing is batched at all.
 	bare := NewGameEngine()
-	if err := bare.StartNewNamedGame("bare"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, bare.StartNewNamedGame("bare"))
 	finishOne(bare, "hut")
 	finishOne(bare, "gathering_camp")
 	bare.StepTicks(200)
@@ -376,15 +374,9 @@ func TestLendsGiftsAndAlliances(t *testing.T) {
 func TestLooksWornAtAnAdvance(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
-	if err := acct.SetActiveTheme("daylight"); err != nil {
-		t.Fatal(err)
-	}
-	if err := acct.SetMapStyle("skyline"); err != nil {
-		t.Fatal(err)
-	}
-	if err := acct.SetMapGlyphs("ascii"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetActiveTheme("daylight"))
+	noErr(t, acct.SetMapStyle("skyline"))
+	noErr(t, acct.SetMapGlyphs("ascii"))
 	advanceTo(ge, "stone_age")
 	wantBadges(t, acct, "an advance in Daylight, skyline, plain glyphs",
 		[]string{"theme.daylight", "map.style.skyline", "map.glyphs.ascii"},
@@ -475,25 +467,17 @@ func TestInvitedDoomsAreMarked(t *testing.T) {
 		ge.mu.Unlock()
 	}
 	strike(false)
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	wantBadges(t, acct, "a doom endured that nobody asked for", []string{"doom.iron_era.endured", "ladder.endured.1"}, "special.asked_for_it")
 	strike(true)
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Endure())
 	wantBadges(t, acct, "an invited doom endured", []string{"special.asked_for_it"})
 
 	strike(false)
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Succumb())
 	wantBadges(t, acct, "a doom succumbed to", []string{"doom.iron_era.succumbed", "ladder.succumbed.1"}, "special.signed_the_guest_book")
 	strike(true)
-	if err := ge.Succumb(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.Succumb())
 	wantBadges(t, acct, "an invited doom succumbed to", []string{"special.signed_the_guest_book"})
 }
 
@@ -678,9 +662,7 @@ func TestTitlesFromBadges(t *testing.T) {
 	if !slices.Contains(sum.Titles, "Survivor") {
 		t.Fatalf("the gold rung of the endured ladder did not give Survivor: %v", sum.Titles)
 	}
-	if err := acct.SetTitle("survivor", sum.Titles); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetTitle("survivor", sum.Titles))
 	if _, sum = ge.Badges(); sum.Worn != "Survivor" {
 		t.Errorf("worn %q, want Survivor", sum.Worn)
 	}
@@ -700,9 +682,7 @@ func TestTitlesFromBadges(t *testing.T) {
 		}
 	}
 	// It is written beside the account, not in it.
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	assertOldShape(t, slotFile(t, acct.AccountID))
 	if strings.Contains(string(slotFile(t, acct.AccountID)), "Survivor") {
 		t.Error("the title worn was written into account.json")
@@ -753,14 +733,10 @@ func TestAgeJumpTellsEveryAgePassed(t *testing.T) {
 	ge.DrainEarnedBadges()
 
 	// Saved and loaded in a fresh engine: the run is where it is.
-	if err := ge.SaveGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("run"))
 	ge2 := NewGameEngine()
 	ge2.SetAccount(acct)
-	if err := ge2.LoadGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("run"))
 	ge2.StepTicks(3)
 	if earned := mainViews(ge2.DrainEarnedBadges()); len(earned) != 0 {
 		t.Errorf("loading a run in a later age announced %v", earnedKeysOf(earned))

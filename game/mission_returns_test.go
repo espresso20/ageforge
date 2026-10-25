@@ -69,14 +69,8 @@ func TestReturnsLogIsSaved(t *testing.T) {
 	stoneEraReady(ge, "bronze_age")
 	sendAndResolve(t, ge)
 	want := ge.GetState().Military.Returns
-	if err := ge.SaveGame("returns_log"); err != nil {
-		t.Fatalf("SaveGame: %v", err)
-	}
+	loaded := saveAndLoad(t, ge, "returns_log")
 
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("returns_log"); err != nil {
-		t.Fatalf("LoadGame: %v", err)
-	}
 	st := loaded.GetState().Military
 	if len(st.Returns) != 1 || !reflect.DeepEqual(st.Returns[0], want[0]) {
 		t.Errorf("loaded log = %+v, want %+v", st.Returns, want)
@@ -91,9 +85,7 @@ func TestReturnsLogIsSaved(t *testing.T) {
 func TestActiveMissionKnowsItsPlaceAndLength(t *testing.T) {
 	ge := NewGameEngine()
 	stoneEraReady(ge, "bronze_age")
-	if err := ge.LaunchExpedition(keyOffer(ge, "scouting_party")); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(keyOffer(ge, "scouting_party")))
 	active := ge.GetState().Military.ActiveShort
 	if active == nil || active.Place == "" || active.Label == "" {
 		t.Fatalf("the mission under way has no place or label: %+v", active)

@@ -29,13 +29,7 @@ func TestPlanAddUpgrade(t *testing.T) {
 		t.Fatalf("plan = %+v", ge.plan)
 	}
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
-	if err := ge.SaveGame("plan_upgrade_roundtrip"); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("plan_upgrade_roundtrip"); err != nil {
-		t.Fatal(err)
-	}
+	loaded := saveAndLoad(t, ge, "plan_upgrade_roundtrip")
 	st := loaded.GetState()
 	if len(st.Plan) != 1 || st.Plan[0].Kind != PlanUpgrade || st.Plan[0].Count != 5 {
 		t.Fatalf("loaded plan = %+v", st.Plan)

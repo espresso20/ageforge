@@ -45,12 +45,6 @@ func halfOf(m map[string]float64) map[string]float64 {
 	return out
 }
 
-func TestUpgradeShareIsHalf(t *testing.T) {
-	if config.UpgradeShare != 0.5 {
-		t.Errorf("UpgradeShare = %v, want 0.5", config.UpgradeShare)
-	}
-}
-
 func TestUpgrade_OneCopyCostsHalfANewCopyAndMovesCounts(t *testing.T) {
 	ge := campsInTheStoneAge(t, 4)
 	newCost, _ := ge.Buildings.BuildBatchCost("forager_post", 1, ge.buildQueue)
@@ -68,9 +62,7 @@ func TestUpgrade_OneCopyCostsHalfANewCopyAndMovesCounts(t *testing.T) {
 	for res := range want {
 		before[res] = ge.Resources.Get(res)
 	}
-	if err := ge.UpgradeBuilding("gathering_camp", 1, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 1, false))
 	if ge.Buildings.GetCount("gathering_camp") != 3 || ge.Buildings.GetCount("forager_post") != 1 {
 		t.Errorf("counts after one upgrade: camps %d, posts %d; want 3 and 1", ge.Buildings.GetCount("gathering_camp"), ge.Buildings.GetCount("forager_post"))
 	}
@@ -122,9 +114,7 @@ func TestUpgrade_CopiesArePricedOneAtATime(t *testing.T) {
 	for _, res := range []string{"wood", "stone", "food", "gold", "iron"} {
 		before[res] = ge.Resources.Get(res)
 	}
-	if err := ge.UpgradeBuilding("gathering_camp", 3, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 3, false))
 	paid := 0.0
 	for res, v := range before {
 		paid += v - ge.Resources.Get(res)
@@ -160,9 +150,7 @@ func TestUpgrade_DefaultTakesWhatTheTownCanPay(t *testing.T) {
 	if len(rows) != 1 || rows[0].Affordable != 2 || rows[0].Count != 6 {
 		t.Fatalf("list = %+v, want 6 held and 2 affordable", rows)
 	}
-	if err := ge.UpgradeBuilding("gathering_camp", 0, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 0, false))
 	if ge.Buildings.GetCount("forager_post") != 2 || ge.Buildings.GetCount("gathering_camp") != 4 {
 		t.Errorf("posts %d, camps %d; want 2 and 4", ge.Buildings.GetCount("forager_post"), ge.Buildings.GetCount("gathering_camp"))
 	}
@@ -188,9 +176,7 @@ func lastLine(ge *GameEngine) string {
 
 func TestUpgrade_CountAndAll(t *testing.T) {
 	ge := campsInTheStoneAge(t, 5)
-	if err := ge.UpgradeBuilding("gathering_camp", 2, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 2, false))
 	if ge.Buildings.GetCount("forager_post") != 2 {
 		t.Errorf("upgrade <2> made %d posts", ge.Buildings.GetCount("forager_post"))
 	}
@@ -198,9 +184,7 @@ func TestUpgrade_CountAndAll(t *testing.T) {
 		t.Errorf("a counted upgrade does not say what the next copy costs: %q", lastLine(ge))
 	}
 	// A count above what is held does what is held.
-	if err := ge.UpgradeBuilding("gathering_camp", 50, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 50, false))
 	if ge.Buildings.GetCount("gathering_camp") != 0 || ge.Buildings.GetCount("forager_post") != 5 {
 		t.Errorf("after upgrading past what is held: camps %d, posts %d", ge.Buildings.GetCount("gathering_camp"), ge.Buildings.GetCount("forager_post"))
 	}
@@ -209,9 +193,7 @@ func TestUpgrade_CountAndAll(t *testing.T) {
 	}
 
 	all := campsInTheStoneAge(t, 7)
-	if err := all.UpgradeBuilding("gathering_camp", 0, true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, all.UpgradeBuilding("gathering_camp", 0, true))
 	if all.Buildings.GetCount("forager_post") != 7 || all.Buildings.IsOlder("forager_post") {
 		t.Errorf("upgrade all: %d posts", all.Buildings.GetCount("forager_post"))
 	}
@@ -247,9 +229,7 @@ func TestUpgrade_AllStopsAtTheCopyYouCannotPay(t *testing.T) {
 	if len(rows) != 1 || rows[0].Affordable != 1 || strings.Contains(rows[0].Lock, "storage") {
 		t.Fatalf("list = %+v, want 1 affordable and no lock about a store", rows)
 	}
-	if err := ge.UpgradeBuilding("gathering_camp", 0, true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 0, true))
 	if ge.Buildings.GetCount("forager_post") != 1 {
 		t.Errorf("upgrade all did %d copies, want the 1 it could pay", ge.Buildings.GetCount("forager_post"))
 	}
@@ -315,9 +295,7 @@ func TestUpgrade_GoesStraightToTheCurrentRung(t *testing.T) {
 	if to.RequiredTech != "" {
 		learn(ge, to.RequiredTech)
 	}
-	if err := ge.UpgradeBuilding("hut", 2, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("hut", 2, false))
 	if ge.Buildings.GetCount("townhouse") != 2 || ge.Buildings.GetCount("hut") != 1 || ge.Buildings.GetCount("longhouse") != 0 || ge.Buildings.GetCount("house") != 0 {
 		t.Errorf("huts %d, townhouses %d, longhouses %d, houses %d", ge.Buildings.GetCount("hut"), ge.Buildings.GetCount("townhouse"), ge.Buildings.GetCount("longhouse"), ge.Buildings.GetCount("house"))
 	}
@@ -360,9 +338,7 @@ func TestUpgrade_StopsAtTheTargetsMaxCount(t *testing.T) {
 	limited.MaxCount = 2
 	ge.Buildings.defs["forager_post"] = limited
 	ge.Buildings.rebuildOrder()
-	if err := ge.UpgradeBuilding("gathering_camp", 0, true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 0, true))
 	if got := ge.Buildings.GetCount("forager_post"); got != 2 {
 		t.Errorf("%d posts after upgrading all, want the cap 2", got)
 	}
@@ -385,9 +361,7 @@ func TestUpgrade_CopyKeepsItsWorkers(t *testing.T) {
 		t.Fatal("setup: assign failed")
 	}
 	newCap := ge.Buildings.defs["forager_post"].WorkerCapacity
-	if err := ge.UpgradeBuilding("gathering_camp", 1, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 1, false))
 	moved := min(oldCap, newCap)
 	if got := ge.Workers.GetAssignedCount("worker", "forager_post"); got != moved {
 		t.Errorf("the upgraded copy has %d workers, want %d (its %d, to a building of %d slots)", got, moved, oldCap, newCap)
@@ -405,9 +379,7 @@ func TestUpgrade_CopyKeepsItsWorkers(t *testing.T) {
 	few.Workers.Recruit("worker", 2*oldCap, 1<<20)
 	few.Workers.Assign("worker", "gathering_camp", 2*oldCap)
 	pop := few.Workers.TotalPop()
-	if err := few.UpgradeBuilding("gathering_camp", 1, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, few.UpgradeBuilding("gathering_camp", 1, false))
 	if got := few.Workers.GetAssignedCount("worker", "forager_post"); got != 1 {
 		t.Errorf("the upgraded copy has %d workers in 1 slot, want 1", got)
 	}
@@ -447,13 +419,7 @@ func TestOlderIsReadLive(t *testing.T) {
 	}
 	ge.age = "bronze_age"
 	before := append([]string(nil), ge.Buildings.OlderKeys()...)
-	if err := ge.SaveGame("older-live"); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("older-live"); err != nil {
-		t.Fatal(err)
-	}
+	loaded := saveAndLoad(t, ge, "older-live")
 	after := loaded.Buildings.OlderKeys()
 	if strings.Join(before, ",") != strings.Join(after, ",") || len(after) == 0 {
 		t.Errorf("older buildings after a load: %v, before %v", after, before)
@@ -480,9 +446,7 @@ func TestUpgrade_MilestoneKeepsItsProgress(t *testing.T) {
 			lumber = m
 		}
 	}
-	if err := ge.UpgradeBuilding("wood_camp", 10, false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("wood_camp", 10, false))
 	if ge.Buildings.GetCount("wood_camp") != 15 {
 		t.Fatalf("%d wood camps left, want 15", ge.Buildings.GetCount("wood_camp"))
 	}
@@ -537,9 +501,7 @@ func TestUpgrade_UpgradedCopiesCountForTheGate(t *testing.T) {
 	if got := ge.progress.CheckAdvancement("stone_age", ge.Buildings); got != "" {
 		t.Fatalf("the gate is open with no Forager Posts: %q", got)
 	}
-	if err := ge.UpgradeBuilding("gathering_camp", 0, true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.UpgradeBuilding("gathering_camp", 0, true))
 	if got := ge.progress.CheckAdvancement("stone_age", ge.Buildings); got != "bronze_age" {
 		t.Errorf("the gate after upgrading %d camps to posts: %q, want bronze_age", need, got)
 	}

@@ -40,12 +40,8 @@ func installV1(t *testing.T, name string) (id string, raw []byte) {
 	if head.Version != 1 {
 		t.Fatalf("fixture %s is version %d, want 1", name, head.Version)
 	}
-	if err := os.MkdirAll(accountDir(head.AccountID), 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(accountDir(head.AccountID), accountFileName), raw, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(accountDir(head.AccountID), 0755))
+	noErr(t, os.WriteFile(filepath.Join(accountDir(head.AccountID), accountFileName), raw, 0644))
 	return head.AccountID, raw
 }
 
@@ -142,12 +138,8 @@ func sortedUnion(a, b []string) []string {
 func assertOnlyUnlocksDiffer(t *testing.T, was, now []byte) {
 	t.Helper()
 	var a, b map[string]json.RawMessage
-	if err := json.Unmarshal(was, &a); err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(now, &b); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(was, &a))
+	noErr(t, json.Unmarshal(now, &b))
 	for _, key := range accountFileKeys {
 		if key == "unlocks" || key == "_sig" {
 			continue
@@ -205,9 +197,7 @@ func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 			isolateAccountDir(t)
 			id, raw := installV1(t, tc.file)
 			var old Account
-			if err := json.Unmarshal(raw, &old); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, json.Unmarshal(raw, &old))
 
 			ge, acct := openIn(t, id)
 			if acct.Tampered != tc.tampered {
@@ -298,9 +288,7 @@ func TestOldAccountGetsItsBadgeFile(t *testing.T) {
 
 			// A second load changes nothing, in either file.
 			ge2, again := openIn(t, id)
-			if err := again.FlushIfDirty(); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, again.FlushIfDirty())
 			if second := slotFile(t, id); string(second) != string(first) {
 				t.Errorf("the second load rewrote account.json:\nfirst  %s\nsecond %s", first, second)
 			}
@@ -321,9 +309,7 @@ func TestMigratedAccountKeepsEarning(t *testing.T) {
 	isolateAccountDir(t)
 	id, _ := installV1(t, "account_v1_partial.json")
 	ge, acct := openIn(t, id)
-	if err := ge.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("run"))
 	// This test is about migrated badge counters; the imported mastery record
 	// would otherwise correctly gate these deliberately shallow prestige runs.
 	ge.SetPrestigeFloorForTest("")
@@ -436,9 +422,7 @@ func TestExportCarriesBadges(t *testing.T) {
 	}
 
 	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(blob, &raw); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(blob, &raw))
 	reblob := func(change func(m map[string]json.RawMessage)) []byte {
 		m := map[string]json.RawMessage{}
 		for k, v := range raw {
@@ -464,9 +448,7 @@ func TestExportCarriesBadges(t *testing.T) {
 	}
 	// Another account's badge store, validly signed for that account, is not this one's.
 	var otherRaw map[string]json.RawMessage
-	if err := json.Unmarshal(otherBlob, &otherRaw); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(otherBlob, &otherRaw))
 	if _, err := ImportAccountExport(reblob(func(m map[string]json.RawMessage) { m["badge_store"] = otherRaw["badge_store"] }), true); err == nil {
 		t.Error("an export carrying another account's badges was accepted")
 	}
@@ -586,15 +568,9 @@ func TestSaveFromBeforeRunFacts(t *testing.T) {
 		t.Fatal(err)
 	}
 	saves := filepath.Join(accountDir(id), "saves")
-	if err := os.MkdirAll(saves, 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(saves, "fixture.json"), raw, 0644); err != nil {
-		t.Fatal(err)
-	}
-	if err := makeActive(id); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saves, 0755))
+	noErr(t, os.WriteFile(filepath.Join(saves, "fixture.json"), raw, 0644))
+	noErr(t, makeActive(id))
 
 	ge, acct := openIn(t, id)
 	if err := ge.LoadGame("fixture"); err != nil {
@@ -625,14 +601,10 @@ func TestSaveFromBeforeRunFacts(t *testing.T) {
 	if got := counter(acct, config.BadgeEvBuiltLineage+".housing"); got != 1 {
 		t.Errorf("a hut built after the load left the counter at %v", got)
 	}
-	if err := ge.SaveGame("fixture"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("fixture"))
 	ge2 := NewGameEngine()
 	ge2.SetAccount(acct)
-	if err := ge2.LoadGame("fixture"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("fixture"))
 	if ge2.GetState().CheaterBadge {
 		t.Error("the save reads as modified after run facts were added to it")
 	}
@@ -658,14 +630,10 @@ func TestRunFactsRoundTrip(t *testing.T) {
 	if !want.Whole || want.Counts[config.BadgeEvAgeReached] != 1 || want.Counts[config.BadgeEvBuildingSold] != 1 {
 		t.Fatalf("facts of a new run: %+v", want)
 	}
-	if err := ge.SaveGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("run"))
 	ge2 := NewGameEngine()
 	ge2.SetAccount(acct)
-	if err := ge2.LoadGame("run"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.LoadGame("run"))
 	ge2.mu.RLock()
 	got := ge2.runFacts.clone()
 	ge2.mu.RUnlock()
@@ -693,9 +661,7 @@ func earnSome(t *testing.T, name string) (*GameEngine, *Account) {
 		finishOne(ge, "hut")
 	}
 	prestigeNow(t, ge)
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	return ge, acct
 }
 
@@ -712,9 +678,7 @@ func editBadgeFile(t *testing.T, id string, change func(m map[string]json.RawMes
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(accountDir(id), badgeFileName), out, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(filepath.Join(accountDir(id), badgeFileName), out, 0644))
 }
 
 // TestAccountFileHoldsNoBadges: the badges are in badges.json, signed for
@@ -741,17 +705,13 @@ func TestAccountFileHoldsNoBadges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := plain.SetActiveTheme("bronze"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, plain.SetActiveTheme("bronze"))
 	if b := slotBadgeFile(t, plain.AccountID); b != nil {
 		t.Errorf("an account with no badges has a badge file: %s", b)
 	}
 	// A save that changes no badge leaves the badge file's bytes alone.
 	before := slotBadgeFile(t, acct.AccountID)
-	if err := acct.SetMapGlyphs("ascii"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetMapGlyphs("ascii"))
 	if after := slotBadgeFile(t, acct.AccountID); string(after) != string(before) {
 		t.Error("saving a pref rewrote the badge file with different bytes")
 	}
@@ -805,9 +765,7 @@ func TestEditedBadgeFileCrossesItsBadges(t *testing.T) {
 	}
 	// What is earned from here on is crossed too.
 	ge2, flagged := openIn(t, id)
-	if err := ge2.StartNewNamedGame("later"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge2.StartNewNamedGame("later"))
 	advanceTo(ge2, "stone_age")
 	advanceTo(ge2, "bronze_age")
 	advanceTo(ge2, "iron_age")
@@ -818,15 +776,11 @@ func TestEditedBadgeFileCrossesItsBadges(t *testing.T) {
 	// Throwing the edited file away does not keep what the edit bought: the
 	// badges come back from account.json's record, which never took it (a
 	// crossed badge is not written to the old achievements list).
-	if err := flagged.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, flagged.FlushIfDirty())
 	if slices.Contains(slotAccount(t, id).Achievements, "prestige_x10") {
 		t.Error("the edit reached account.json's achievements list")
 	}
-	if err := os.Remove(filepath.Join(accountDir(id), badgeFileName)); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.Remove(filepath.Join(accountDir(id), badgeFileName)))
 	_, rebuilt := openIn(t, id)
 	if hasBadge(rebuilt, badgePrestige10) || hasBadge(rebuilt, badgePrestige25) || rebuilt.BadgesTampered {
 		t.Errorf("after deleting the edited file: %v, badge file tampered %v", rebuilt.EarnedBadges(), rebuilt.BadgesTampered)
@@ -842,9 +796,7 @@ func TestBadgeFileIsBoundToItsAccount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(accountDir(poor.AccountID), badgeFileName), slotBadgeFile(t, rich.AccountID), 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(filepath.Join(accountDir(poor.AccountID), badgeFileName), slotBadgeFile(t, rich.AccountID), 0644))
 	got := slotAccount(t, poor.AccountID)
 	if !got.BadgesTampered || got.Tampered {
 		t.Fatalf("another account's badge file: badge file tampered %v, account tampered %v; want true and false", got.BadgesTampered, got.Tampered)
@@ -867,14 +819,10 @@ func TestEditedAccountLeavesBadgeFileAlone(t *testing.T) {
 	_, acct := earnSome(t, "Ada")
 	id := acct.AccountID
 	var m map[string]json.RawMessage
-	if err := json.Unmarshal(slotFile(t, id), &m); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(slotFile(t, id), &m))
 	m["stats"] = json.RawMessage(`{"total_prestiges": 99}`)
 	edited, _ := json.MarshalIndent(m, "", "  ")
-	if err := os.WriteFile(filepath.Join(accountDir(id), accountFileName), edited, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(filepath.Join(accountDir(id), accountFileName), edited, 0644))
 
 	loaded := slotAccount(t, id)
 	if !loaded.Tampered || loaded.BadgesTampered {
@@ -893,9 +841,7 @@ func TestMissingBadgeFileIsRebuiltFromTheRecord(t *testing.T) {
 	isolateAccountDir(t)
 	_, acct := earnSome(t, "Ada")
 	id := acct.AccountID
-	if err := os.Remove(filepath.Join(accountDir(id), badgeFileName)); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.Remove(filepath.Join(accountDir(id), badgeFileName)))
 	_, again := openIn(t, id)
 	if again.Tampered || again.BadgesTampered {
 		t.Errorf("a missing badge file flagged the account: %v %v", again.Tampered, again.BadgesTampered)
@@ -920,9 +866,7 @@ func TestUnreadableBadgeFileIsSetAside(t *testing.T) {
 	_, acct := earnSome(t, "Ada")
 	id := acct.AccountID
 	path := filepath.Join(accountDir(id), badgeFileName)
-	if err := os.WriteFile(path, []byte("{ not json"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(path, []byte("{ not json"), 0644))
 	accountBefore := slotFile(t, id)
 
 	_, again := openIn(t, id) // rebuilds from the record and saves
@@ -988,19 +932,14 @@ func TestSwitchAndRecoverKeepBadges(t *testing.T) {
 	}
 }
 
-// TestRenamedAccountCarriesItsBadges: naming an unnamed account gives it a
-// new ID. Its badges come along and are signed for the new ID, the one way
-// a badge file changes owner.
+// TestRenamedAccountCarriesItsBadges: making an account under a new name
+// while another is live gives it a new ID. The live account's badges come
+// along and are signed for the new ID, the one way a badge file changes owner.
 func TestRenamedAccountCarriesItsBadges(t *testing.T) {
 	isolateAccountDir(t)
-	legacy, err := LoadOrCreate()
-	if err != nil {
-		t.Fatal(err)
-	}
+	legacy := mustAccount(t, "Legacy")
 	recordAge(t, legacy, "stone_age")
-	if err := legacy.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, legacy.FlushIfDirty())
 	earned := legacy.Badges[badgeStone]
 
 	named, err := CreateNamedAccount("Carthage")
@@ -1025,9 +964,7 @@ func TestBadgeFileSurvivesALostAccountFile(t *testing.T) {
 	_, acct := earnSome(t, "Ada")
 	id := acct.AccountID
 	earned := acct.Badges[badgeStone]
-	if err := os.Remove(filepath.Join(accountDir(id), accountFileName)); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.Remove(filepath.Join(accountDir(id), accountFileName)))
 
 	again, err := CreateAccount("Ada")
 	if err != nil {
@@ -1041,9 +978,7 @@ func TestBadgeFileSurvivesALostAccountFile(t *testing.T) {
 	}
 	// Earning and saving keeps what was there.
 	recordAge(t, again, "iron_age")
-	if err := again.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, again.FlushIfDirty())
 	disk := slotAccount(t, id)
 	if disk.Badges[badgeStone] != earned || !hasBadge(disk, badgeIron) || disk.BadgesTampered || disk.Tampered {
 		t.Errorf("on disk: %+v, flags %v %v", disk.Badges, disk.Tampered, disk.BadgesTampered)
@@ -1053,9 +988,7 @@ func TestBadgeFileSurvivesALostAccountFile(t *testing.T) {
 	isolateAccountDir(t)
 	_, bea := earnSome(t, "Bea")
 	code, beaStone := bea.RecoveryCode(), bea.Badges[badgeStone]
-	if err := os.Remove(filepath.Join(accountDir(bea.AccountID), accountFileName)); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.Remove(filepath.Join(accountDir(bea.AccountID), accountFileName)))
 	recovered, err := ImportRecoveryCode(code)
 	if err != nil {
 		t.Fatal(err)

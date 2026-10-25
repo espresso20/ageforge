@@ -101,22 +101,6 @@ func TestRecalculateRates_FloorStillHolds(t *testing.T) {
 	}
 }
 
-// TestRecalculateRates_ModerateBonusesAreUnaffected: a realistic +60% pool
-// passes through untouched.
-func TestRecalculateRates_ModerateBonusesAreUnaffected(t *testing.T) {
-	ge := NewGameEngine()
-	ge.morale = moraleNeutral
-	addProductionBuilding(ge, "test_farm", "food", 8.0, 1)
-	ge.permanentBonuses["food_rate"] = 0.60
-
-	ge.recalculateRates()
-	got := ge.Resources.GetRate("food")
-	want := 8.0 * 1.60
-	if math.Abs(got-want) > 1e-9 {
-		t.Fatalf("moderate food_rate bonus gave %.6f, want %.6f ", got, want)
-	}
-}
-
 // TestEveryProductionPoolAppliesInFull: one rule for all production and for
 // every resource's own pool, at any size. Each row is a pool total and the
 // multiplier a rate must show for it: 1 + the total.

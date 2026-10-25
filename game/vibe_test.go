@@ -22,6 +22,30 @@ func vibeOff(t *testing.T) {
 	vibe.Set(false)
 }
 
+// vibeSession opens a test of the script: the real VibeMode set is built
+// before any script is loaned (so a loaned script never gets into it), the
+// switch is off, and it goes back where the test found it when the test ends.
+func vibeSession(t *testing.T) {
+	t.Helper()
+	rules.CoreFor(true)
+	vibeOff(t)
+}
+
+// vibeRead sets the switch to on and, when rewrite is not nil, has every text
+// the code writes itself read through it. Defer what it returns: it puts the
+// switch off and the script back.
+func vibeRead(on bool, rewrite func(id, plain string) string) (restore func()) {
+	undo := func() {}
+	if rewrite != nil {
+		undo = vibe.UseRewriterForTest(rewrite)
+	}
+	vibe.Set(on)
+	return func() {
+		vibe.Set(false)
+		undo()
+	}
+}
+
 // TestVibeSettingLivesBesideTheAccountFile: VibeMode is off by default.
 // Turning it on writes settings.json in the account's slot and leaves
 // account.json byte for byte as it was. A fresh load reads it, a save of the
@@ -44,9 +68,7 @@ func TestVibeSettingLivesBesideTheAccountFile(t *testing.T) {
 	}
 	before := slotFile(t, acct.AccountID)
 	badges := slotBadgeFile(t, acct.AccountID)
-	if err := acct.SetVibe(true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.SetVibe(true))
 	if !acct.VibeOn() {
 		t.Error("VibeMode is still off")
 	}
@@ -67,16 +89,12 @@ func TestVibeSettingLivesBesideTheAccountFile(t *testing.T) {
 	if !loaded.VibeOn() || loaded.Tampered {
 		t.Errorf("after a load: VibeMode %v, flagged %v", loaded.VibeOn(), loaded.Tampered)
 	}
-	if err := loaded.Save(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.Save())
 	if !slotAccount(t, acct.AccountID).VibeOn() {
 		t.Error("saving the account lost the setting")
 	}
 	// Motion and VibeMode sit side by side in the one file.
-	if err := loaded.SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.SetMotion(false))
 	if again := slotAccount(t, acct.AccountID); !again.VibeOn() || again.MotionOn() {
 		t.Errorf("motion and VibeMode in one file: VibeMode %v, motion %v", again.VibeOn(), again.MotionOn())
 	}
@@ -89,9 +107,7 @@ func TestVibeSettingLivesBesideTheAccountFile(t *testing.T) {
 	if other.VibeOn() {
 		t.Error("a new account inherited VibeMode from another")
 	}
-	if err := slotAccount(t, acct.AccountID).SetVibe(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, slotAccount(t, acct.AccountID).SetVibe(false))
 	if slotAccount(t, acct.AccountID).VibeOn() {
 		t.Error("turning VibeMode off did not stick")
 	}
@@ -114,9 +130,7 @@ func TestVibeModeFollowsTheAccount(t *testing.T) {
 		t.Fatal("an account with VibeMode off did not leave the engine on the plain set")
 	}
 
-	if err := ge.SetVibeMode(true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SetVibeMode(true))
 	wantManagersOn(t, ge, rules.CoreFor(true), "after vibemode on")
 	if !vibe.On() || !alpha.VibeOn() || !slotAccount(t, alpha.AccountID).VibeOn() {
 		t.Error("vibemode on was not kept in the switch and the account")
@@ -139,9 +153,7 @@ func TestVibeModeFollowsTheAccount(t *testing.T) {
 	}
 	wantManagersOn(t, ge, rules.CoreFor(true), "after a switch back to the account with it on")
 
-	if err := ge.SetVibeMode(false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SetVibeMode(false))
 	wantManagersOn(t, ge, rules.CoreFor(false), "after vibemode off")
 	if got, _ := ge.Rules().Building("hut"); got.Name != "Hut" {
 		t.Errorf("the hut reads %q with VibeMode off again", got.Name)
@@ -150,9 +162,7 @@ func TestVibeModeFollowsTheAccount(t *testing.T) {
 	// An engine with a set of its own keeps it.
 	own := NewGameEngineWith(secondSet())
 	set := own.Rules()
-	if err := own.SetVibeMode(true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, own.SetVibeMode(true))
 	if own.Rules() != set {
 		t.Error("VibeMode moved an engine off its own ruleset")
 	}
@@ -173,9 +183,7 @@ func stateMap(t *testing.T, ge *GameEngine) map[string]any {
 		t.Fatal(err)
 	}
 	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(b, &m))
 	if len(m) < 20 {
 		t.Fatalf("the state has only %d keys", len(m))
 	}
@@ -221,20 +229,14 @@ func TestVibeModeChangesWordsNotNumbers(t *testing.T) {
 
 	// A save made under VibeMode is the save made in plain English: loaded
 	// into a fresh engine each, the two are in one state, and play on alike.
-	if err := moved.SaveGame("vibe"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, moved.SaveGame("vibe"))
 	moved.followVibe(false)
-	if err := moved.SaveGame("plain"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, moved.SaveGame("plain"))
 	fromVibe, fromPlain := NewGameEngine(), NewGameEngine()
 	if err := fromVibe.LoadGame("vibe"); err != nil {
 		t.Fatalf("a save made under VibeMode does not load: %v", err)
 	}
-	if err := fromPlain.LoadGame("plain"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, fromPlain.LoadGame("plain"))
 	if fromVibe.StateDigest() != fromPlain.StateDigest() {
 		t.Error("a save made under VibeMode loads as another state than the same run saved in plain English")
 	}
@@ -303,9 +305,7 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 	ge := NewGameEngineWith(set)
 	ge.SeedRNG(7)
 	for i, age := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(age); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.EnterAgeForTest(age))
 		ge.GrantTechsForTest()
 		for _, f := range rules.CoreFor(false).Factions() {
 			_ = ge.MeetFactionForTest(f.Key, 40)
@@ -321,10 +321,26 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 		}
 		ge.StepTicks(350)
 	}
-	steps := []struct {
-		name string
-		do   func() error
-	}{
+	for _, st := range endingSteps(ge) {
+		if err := st.do(); err != nil {
+			t.Fatalf("%s: %v", st.name, err)
+		}
+	}
+	return ge
+}
+
+// runStep is one step of the end of a whole run.
+type runStep struct {
+	name string
+	do   func() error
+}
+
+// endingSteps are the steps wholeRun and playRun both end on, once the ages are
+// played: the quantum age, a harbinger, the Last Passage endured and a step
+// back to an earlier age. Making the list does nothing; each step acts when it
+// is called, so the two runs keep their own calls in their own order.
+func endingSteps(ge *GameEngine) []runStep {
+	return []runStep{
 		{"enter the quantum age", func() error { return ge.EnterAgeForTest("quantum_age") }},
 		{"a harbinger", func() error { return ge.SummonHarbingerForTest("quantum_age") }},
 		{"step", func() error { ge.StepTicks(300); return nil }},
@@ -336,12 +352,6 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 		{"an earlier age", func() error { return ge.EnterAgeForTest(config.AgeOrder()[8]) }},
 		{"step", func() error { ge.StepTicks(300); return nil }},
 	}
-	for _, st := range steps {
-		if err := st.do(); err != nil {
-			t.Fatalf("%s: %v", st.name, err)
-		}
-	}
-	return ge
 }
 
 // thenPrestige ends the run wholeRun played with a prestige and plays on in
@@ -349,9 +359,7 @@ func wholeRun(t *testing.T, set *rules.Set) *GameEngine {
 func thenPrestige(t *testing.T, ge *GameEngine) {
 	t.Helper()
 	_ = ge.Endure()
-	if err := ge.DoPrestige(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.DoPrestige())
 	ge.StepTicks(300)
 }
 
@@ -393,21 +401,29 @@ func TestEveryTextCanChangeWithoutTouchingANumber(t *testing.T) {
 	}
 }
 
-// sameStateButTheTitle fails the test for every key of the two engines' states
-// that differs, but current_title, which the core sets alone write in plain
-// English (TestASaveHoldsThePlainTitle).
-func sameStateButTheTitle(t *testing.T, plain, vibed *GameEngine, when string) {
+// sameState fails the test for every key of the two engines' states that
+// differs, but the keys in skip.
+func sameState(t *testing.T, plain, vibed *GameEngine, when string, skip ...string) {
 	t.Helper()
 	a, b := stateMap(t, plain), stateMap(t, vibed)
-	// The title is written to a save in plain English for the two core sets
-	// (TestASaveHoldsThePlainTitle); this set is a set of its own.
-	delete(a, "current_title")
-	delete(b, "current_title")
+	for _, k := range skip {
+		delete(a, k)
+		delete(b, k)
+	}
 	for k := range a {
 		if !reflect.DeepEqual(a[k], b[k]) {
 			t.Errorf("%s, %q is not what it is in plain English: %.300v vs %.300v", when, k, a[k], b[k])
 		}
 	}
+}
+
+// sameStateButTheTitle is sameState but for current_title, which the core sets
+// alone write in plain English (TestASaveHoldsThePlainTitle).
+func sameStateButTheTitle(t *testing.T, plain, vibed *GameEngine, when string) {
+	t.Helper()
+	// The title is written to a save in plain English for the two core sets
+	// (TestASaveHoldsThePlainTitle); this set is a set of its own.
+	sameState(t, plain, vibed, when, "current_title")
 }
 
 // TestAWholeRunUnderTheShippedScript is the same on the two core sets: a
@@ -417,12 +433,7 @@ func TestAWholeRunUnderTheShippedScript(t *testing.T) {
 	defer SetDataDirForTest(filepath.Join(t.TempDir(), "data"))()
 	vibeOff(t)
 	plain, vibed := wholeRun(t, rules.CoreFor(false)), wholeRun(t, rules.CoreFor(true))
-	a, b := stateMap(t, plain), stateMap(t, vibed)
-	for k := range a {
-		if !reflect.DeepEqual(a[k], b[k]) {
-			t.Errorf("under the shipped script, %q is not what it is in plain English: %.300v vs %.300v", k, a[k], b[k])
-		}
-	}
+	sameState(t, plain, vibed, "under the shipped script")
 	if plain.StateDigest() != vibed.StateDigest() {
 		t.Error("the state digests differ")
 	}
@@ -431,21 +442,15 @@ func TestAWholeRunUnderTheShippedScript(t *testing.T) {
 	if plain.StateDigest() != vibed.StateDigest() {
 		t.Error("the state digests differ after a prestige")
 	}
-	if err := vibed.SaveGame("vibed"); err != nil {
-		t.Fatal(err)
-	}
-	if err := plain.SaveGame("plain"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, vibed.SaveGame("vibed"))
+	noErr(t, plain.SaveGame("plain"))
 	read := func(name string) map[string]any {
 		raw, err := os.ReadFile(savePath(name))
 		if err != nil {
 			t.Fatal(err)
 		}
 		var m map[string]any
-		if err := json.Unmarshal(raw, &m); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, json.Unmarshal(raw, &m))
 		for _, k := range []string{"timestamp", "_sig"} {
 			delete(m, k)
 		}

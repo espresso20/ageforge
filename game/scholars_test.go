@@ -106,9 +106,7 @@ func TestScholarPostsSplitExactly(t *testing.T) {
 	if st.Research.PerTick != 0 {
 		t.Errorf("idle scholars do %v work", st.Research.PerTick)
 	}
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	full := ge.GetState().Research.PerTick
 	for _, pct := range []int{100, 70, 50, 40, 0} {
 		if _, err := ge.SetResearchShare(pct); err != nil {
@@ -165,15 +163,11 @@ func TestTechTimeInAnIdleTownCountsTheScholarsWhoWouldResearch(t *testing.T) {
 			t.Errorf("%d%%: idle tool_making takes %d ticks, want %d", pct, got, want)
 		}
 		// Starting it changes nothing about the time.
-		if err := ge.StartResearch("tool_making"); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.StartResearch("tool_making"))
 		if after := ge.GetState().Research.TotalTicks; after != got {
 			t.Errorf("%d%%: once started it takes %d ticks, before it said %d", pct, after, got)
 		}
-		if err := ge.CancelResearch(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.CancelResearch())
 	}
 	if _, err := ge.SetResearchShare(0); err != nil {
 		t.Fatal(err)
@@ -207,9 +201,7 @@ func TestTeachingIsDelivered(t *testing.T) {
 	if !found {
 		t.Error("teaching is no source of the worker output pool")
 	}
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	if got := ge.teachingBonus(); got != 0 {
 		t.Errorf("with every scholar researching teaching gives %v", got)
 	}
@@ -227,12 +219,8 @@ func TestTeachingIsDelivered(t *testing.T) {
 // reached does not keep the scholars from teaching.
 func TestQueueAdvances(t *testing.T) {
 	ge := scholarEngine(t)
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddResearch("fire_mastery"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tool_making"))
+	noErr(t, ge.PlanAddResearch("fire_mastery"))
 	ge.mu.Lock()
 	ge.runPlanTick()
 	ge.recalculateRates()
@@ -326,9 +314,7 @@ func TestResearchGrantsLandOnTheTechInProgress(t *testing.T) {
 	if n := logCount(ge, "Your scholars had nothing to study, so the insight was lost."); n != 1 {
 		t.Errorf("the lost gift was logged %d times, want one line", n)
 	}
-	if err := ge.StartResearch("fire_mastery"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("fire_mastery"))
 	price := ge.Research.defs["fire_mastery"].Cost
 	ge.Research.progress = 0
 	// In progress: the share of the tech.
@@ -372,16 +358,10 @@ func scholarsFixtureLoad(t *testing.T, path string, view bool) *GameEngine {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(savePath("scholars_old"), data, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
+	noErr(t, os.WriteFile(savePath("scholars_old"), data, 0o644))
 	ge := NewGameEngine()
-	if err := ge.loadSave("scholars_old", view); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.loadSave("scholars_old", view))
 	return ge
 }
 
@@ -438,16 +418,12 @@ func TestScholarsSave_LoadsClean(t *testing.T) {
 		t.Error("the town holds a knowledge resource")
 	}
 	// The next tech starts at zero progress: nothing carried over.
-	if err := ge.StartResearch("steel_forging"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("steel_forging"))
 	if ge.Research.IsResearched("steel_forging") || ge.Research.currentTech != "steel_forging" || ge.Research.progress != 0 {
 		t.Errorf("steel_forging starts: researched %v, in progress %q at %v, want in progress at 0", ge.Research.IsResearched("steel_forging"), ge.Research.currentTech, ge.Research.progress)
 	}
 	// A save written after carries no old fields and no notice.
-	if err := ge.SaveGame("scholars_new"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("scholars_new"))
 	again := loadSaveFile(t, savePath("scholars_new"))
 	if again.ScholarRules != scholarRules || again.Research.TicksLeft != 0 || again.Research.TotalTicks != 0 {
 		t.Errorf("the new save: scholar rules %d, ticks %d/%d", again.ScholarRules, again.Research.TicksLeft, again.Research.TotalTicks)
@@ -456,9 +432,7 @@ func TestScholarsSave_LoadsClean(t *testing.T) {
 		t.Error("the new save holds knowledge")
 	}
 	back := NewGameEngine()
-	if err := back.loadSave("scholars_new", true); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, back.loadSave("scholars_new", true))
 	if back.cheaterBadge {
 		t.Error("reloading the new save raised the tamper flag")
 	}
@@ -477,13 +451,9 @@ func TestScholarsSave_SaysItOnce(t *testing.T) {
 	if n := countLines(ge, scholarsNotice()); n != 1 {
 		t.Fatalf("the notice was said %d times, want once", n)
 	}
-	if err := ge.SaveGame("scholars_new"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.SaveGame("scholars_new"))
 	back := NewGameEngine()
-	if err := back.loadSave("scholars_new", false); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, back.loadSave("scholars_new", false))
 	if back.cheaterBadge || countLines(back, scholarsNotice()) != 0 {
 		t.Errorf("reloading the new save: tamper flag %v, notice %d times", back.cheaterBadge, countLines(back, scholarsNotice()))
 	}
@@ -534,9 +504,7 @@ func TestEnlightenmentBoonRaisesTheScholarsWork(t *testing.T) {
 		t.Fatal("no Enlightenment boon in the catalog")
 	}
 	ge := scholarEngine(t)
-	if err := ge.StartResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartResearch("tool_making"))
 	before := ge.GetState().Research.PerTick
 	if before <= 0 {
 		t.Fatalf("staging: the scholars do %v work", before)

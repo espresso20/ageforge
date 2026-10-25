@@ -56,17 +56,11 @@ func installSplit(t *testing.T, accountFile string, badges bool) (id string, acc
 		t.Fatalf("fixture %s: %v", accountFile, err)
 	}
 	id = head.AccountID
-	if err := os.MkdirAll(accountDir(id), 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(accountDir(id), accountFileName), accountRaw, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.MkdirAll(accountDir(id), 0755))
+	noErr(t, os.WriteFile(filepath.Join(accountDir(id), accountFileName), accountRaw, 0644))
 	if badges {
 		badgesRaw = read("new/badges.json")
-		if err := os.WriteFile(filepath.Join(accountDir(id), badgeFileName), badgesRaw, 0644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(filepath.Join(accountDir(id), badgeFileName), badgesRaw, 0644))
 	}
 	return id, accountRaw, badgesRaw
 }
@@ -155,9 +149,7 @@ func TestOldBuildResaveKeepsBadges(t *testing.T) {
 		if earned := ge.DrainEarnedBadges(); len(earned) != 0 {
 			t.Errorf("load %d announced badges: %+v", load, earned)
 		}
-		if err := acct.FlushIfDirty(); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, acct.FlushIfDirty())
 		if got := slotFile(t, id); string(got) != string(accountRaw) {
 			t.Errorf("load %d rewrote account.json:\nwas %s\nnow %s", load, accountRaw, got)
 		}
@@ -244,9 +236,7 @@ func TestOldBuildAchievementsBecomeBadges(t *testing.T) {
 
 	// A second load changes nothing.
 	ge2, again := openIn(t, id)
-	if err := again.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, again.FlushIfDirty())
 	if again.Tampered || again.BadgesTampered || len(ge2.DrainEarnedBadges()) != 0 {
 		t.Errorf("the second load: flags %v %v", again.Tampered, again.BadgesTampered)
 	}
@@ -271,12 +261,8 @@ func TestOldBuildImportsNewExport(t *testing.T) {
 		t.Fatal(err)
 	}
 	var want, got Account
-	if err := json.Unmarshal(source, &want); err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(importedRaw, &got); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(source, &want))
+	noErr(t, json.Unmarshal(importedRaw, &got))
 	if !verifyAccount(&got) || got.Tampered {
 		t.Fatalf("the account the older build imported: verifies %v, tampered %v", verifyAccount(&got), got.Tampered)
 	}
@@ -308,9 +294,7 @@ func TestBothBuildsTakeTurns(t *testing.T) {
 	isolateAccountDir(t)
 	id, _, _ := installSplit(t, "after_old_play/account.json", true)
 	ge, acct := openIn(t, id)
-	if err := ge.StartNewNamedGame("turn"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.StartNewNamedGame("turn"))
 	for i := 0; i < 15; i++ {
 		// This test checks account compatibility, not when prestige opens.
 		ge.SetPrestigeFloorForTest("")
@@ -319,9 +303,7 @@ func TestBothBuildsTakeTurns(t *testing.T) {
 	if !hasBadge(acct, badgePrestige25) {
 		t.Fatalf("precondition: 25 prestiges did not earn the top rung: %v", acct.EarnedBadges())
 	}
-	if err := acct.FlushIfDirty(); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, acct.FlushIfDirty())
 	assertOldShape(t, slotFile(t, id))
 	disk := slotAccount(t, id)
 	if disk.Tampered || disk.BadgesTampered || disk.Stats.TotalPrestiges != 25 {
@@ -340,9 +322,7 @@ func TestBothBuildsTakeTurns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(accountDir(id), accountFileName), older, 0644); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, os.WriteFile(filepath.Join(accountDir(id), accountFileName), older, 0644))
 	_, back := openIn(t, id)
 	if back.Tampered || back.BadgesTampered {
 		t.Fatalf("after the older build's turn: flags %v %v", back.Tampered, back.BadgesTampered)

@@ -1,7 +1,7 @@
 package game
 
 import (
-	"os"
+	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -105,15 +105,7 @@ func TestAwakening_ReloadDoesNotRefire(t *testing.T) {
 		t.Fatalf("precondition: awakening %q should be fired", def.Key)
 	}
 
-	if err := ge.SaveGame("test_awakening_reload"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_awakening_reload.json")
-
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_awakening_reload"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
+	ge2 := saveAndLoad(t, ge, "test_awakening_reload")
 
 	// Fired set must have survived the round-trip.
 	if !ge2.awakeningsFired[def.Key] {
@@ -205,14 +197,7 @@ func TestAwakening_AllDefinitionsValid(t *testing.T) {
 			t.Errorf("awakening %q trigger age %q does not belong to epoch %q",
 				a.Key, a.TriggerAge, a.EpochKey)
 		}
-		ageInEpoch := false
-		for _, age := range ep.Ages {
-			if age == a.TriggerAge {
-				ageInEpoch = true
-				break
-			}
-		}
-		if !ageInEpoch {
+		if !slices.Contains(ep.Ages, a.TriggerAge) {
 			t.Errorf("awakening %q trigger age %q not listed in epoch %q ages %v",
 				a.Key, a.TriggerAge, a.EpochKey, ep.Ages)
 		}

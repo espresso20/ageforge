@@ -122,9 +122,7 @@ func TestPlan_LaterItemsCannotSpendAnEarlierItemsReservation(t *testing.T) {
 // A waiting item doesn't hold back resources it doesn't need.
 func TestPlan_SkipsPastAWaitingItemForOtherResources(t *testing.T) {
 	ge := planTestEngine(t)
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tool_making"))
 	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
 		t.Fatal(err)
 	}
@@ -220,12 +218,8 @@ func TestPlan_InvalidItemsDropOut(t *testing.T) {
 	if _, err := ge.PlanAddBuild("hut", 2); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddResearch("fire_mastery"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tool_making"))
+	noErr(t, ge.PlanAddResearch("fire_mastery"))
 	ge.Research.researched["tool_making"] = true
 	ge.age = "stone_age" // the huts belong to the Primitive Age now
 	ge.runPlanTick()
@@ -423,17 +417,9 @@ func TestPlan_SurvivesSaveAndLoad(t *testing.T) {
 	if _, err := ge.PlanAddBuild("hut", 4); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.PlanAddResearch("tool_making"))
 	ge.plan[0].Started = 3
-	if err := ge.SaveGame("plan-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("plan-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
+	loaded := saveAndLoad(t, ge, "plan-roundtrip")
 	if !reflect.DeepEqual(loaded.plan, ge.plan) {
 		t.Errorf("plan after load = %+v, want %+v", loaded.plan, ge.plan)
 	}

@@ -64,9 +64,7 @@ func TestSaveGame_ByteStable(t *testing.T) {
 	// signature over it) may differ.
 	stamp := regexp.MustCompile(`(?m)^  "(timestamp|_sig|_proof)": .*$`)
 	read := func(name string) []byte {
-		if err := ge.SaveGame(name); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SaveGame(name))
 		data, err := os.ReadFile(savePath(name))
 		if err != nil {
 			t.Fatal(err)

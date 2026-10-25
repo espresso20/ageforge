@@ -275,9 +275,6 @@ func TestLoseWorkersFloorsAtZero(t *testing.T) {
 	}
 
 	a.LoseWorkers(10_000) // far more than exist
-	if got := ge.Workers.TotalPop(); got < 0 {
-		t.Fatalf("worker pool went negative: %d", got)
-	}
 	if got := ge.Workers.TotalPop(); got != 0 {
 		t.Fatalf("after losing 10000 workers population is %d, want 0", got)
 	}

@@ -64,16 +64,12 @@ func TestWriteFeatureFixtures(t *testing.T) {
 		ge.Research.rebuildBonuses()
 		ge.recalculateRates()
 		ge.mu.Unlock()
-		if err := ge.SaveGame(name); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.SaveGame(name))
 		data, err := os.ReadFile(savePath(name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(path, data, 0o644); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, os.WriteFile(path, data, 0o644))
 	}
 	write(featureFixtureInUse, "pre_features_bronze", "bronze_age", func(ge *GameEngine) {
 		ge.Military.setActive(TierGrand, &ActiveExpedition{MissionOffer: MissionOffer{Tier: TierGrand, Grand: GrandMilitary, Title: "Raid Bandit Camp"}, Soldiers: 5, TicksLeft: 200})
@@ -109,9 +105,7 @@ func savedFeatures(t *testing.T, name string) []string {
 		t.Fatal(err)
 	}
 	var gs GameSave
-	if err := json.Unmarshal(data, &gs); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, json.Unmarshal(data, &gs))
 	return gs.GrantedFeatures
 }
 
@@ -171,9 +165,7 @@ func TestFeatureOldSaveKeepsWhatItUses(t *testing.T) {
 	}
 
 	// The next age ends the grace.
-	if err := ge.EnterAgeForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("iron_age"))
 	if ge.Buildings.graceAge != "" {
 		t.Fatalf("after the advance the grace age is still %q", ge.Buildings.graceAge)
 	}
@@ -225,9 +217,7 @@ func TestFeatureOldSaveLocksWhatItNeverUsed(t *testing.T) {
 		}
 	}
 
-	if err := ge.EnterAgeForTest("victorian_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("victorian_age"))
 	stock(ge)
 	clearArmy(ge)
 	// No mission waits for a tech: the era opens the tiers.
@@ -274,9 +264,7 @@ func TestFeatureGraceCoversASaveFromBeforeTheTree(t *testing.T) {
 	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
 		t.Errorf("a campaign in the grace age of a save from before the tree: %v", err)
 	}
-	if err := ge.EnterAgeForTest("classical_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("classical_age"))
 	clearArmy(ge)
 	stock(ge)
 	if err := ge.LaunchExpedition(keyOffer(ge, "siege_campaign")); err != nil {
@@ -297,9 +285,7 @@ func TestFeatureLocksRefuseAndOpen(t *testing.T) {
 			if a == "primitive_age" {
 				continue
 			}
-			if err := ge.EnterAgeForTest(a); err != nil {
-				t.Fatal(err)
-			}
+			noErr(t, ge.EnterAgeForTest(a))
 			if a == age {
 				break
 			}
@@ -460,9 +446,7 @@ func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 	if f := old.GetState().Features[config.FeatureRouteWarpCommerce]; f.Live || !f.Open || !f.Granted {
 		t.Errorf("Warp Commerce reads %+v, want an inert lock, open, granted", f)
 	}
-	if err := old.SaveGame("before_wormhole_charters"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, old.SaveGame("before_wormhole_charters"))
 	if got := strings.Join(savedFeatures(t, "before_wormhole_charters"), " "); got != "route_warp_commerce" {
 		t.Errorf("the save carries granted features %q, want route_warp_commerce", got)
 	}
@@ -481,9 +465,7 @@ func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 	// The game saved before the tech existed, loaded on the new tree: its
 	// route is running, and it can stop it and start it again.
 	loaded := NewGameEngineWith(withTech)
-	if err := loaded.LoadGame("before_wormhole_charters"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, loaded.LoadGame("before_wormhole_charters"))
 	if loaded.Research.IsResearched("wormhole_charters") {
 		t.Fatal("the lock's tech is researched: the save does not test the grant")
 	}
@@ -499,12 +481,8 @@ func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 // it, in the game's words.
 func TestResearchSaysWhatItOpens(t *testing.T) {
 	ge := newSeededEngine(8)
-	if err := ge.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.EnterAgeForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.EnterAgeForTest("stone_age"))
+	noErr(t, ge.EnterAgeForTest("bronze_age"))
 	ge.mu.Lock()
 	ge.Research.currentTech = "drama"
 	ge.Research.progress = ge.Research.defs["drama"].Cost - 1

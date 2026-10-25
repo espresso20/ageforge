@@ -52,9 +52,7 @@ func TestPartyLeavesItsPostsAndStaysPeople(t *testing.T) {
 	popBefore := ge.GetState().Workers.TotalPop
 	drainBefore := ge.GetState().Workers.FoodDrain
 
-	if err := ge.LaunchExpedition(plantOffer(ge, TierShort, "")); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(plantOffer(ge, TierShort, "")))
 	st := ge.GetState()
 	if st.Military.SoldierCount != posted-party || st.Military.SoldiersAway != party {
 		t.Errorf("%d at home and %d away, want %d and %d", st.Military.SoldierCount, st.Military.SoldiersAway, posted-party, party)
@@ -181,9 +179,7 @@ func forceReturn(ge *GameEngine, success bool) (a *ActiveExpedition, wantFell in
 func TestFailedMissionLosesSoldiersAndSurvivorsReturn(t *testing.T) {
 	ge := partyTown(t, 3, 0)
 	posted := 3 * warCampPosts(t)
-	if err := ge.LaunchExpedition(plantOffer(ge, TierLong, "")); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(plantOffer(ge, TierLong, "")))
 	party := ge.Military.active[0].Soldiers
 	popBefore := ge.GetState().Workers.TotalPop
 	_, fell := forceReturn(ge, false)
@@ -223,9 +219,7 @@ func TestSucceededMissionBringsTheParty(t *testing.T) {
 		ge := partyTown(t, 3, 0)
 		ge.SeedRNG(seed)
 		posted := 3 * warCampPosts(t)
-		if err := ge.LaunchExpedition(plantOffer(ge, TierLong, "")); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.LaunchExpedition(plantOffer(ge, TierLong, "")))
 		party := ge.Military.active[0].Soldiers
 		_, fell := forceReturn(ge, true)
 		ge.mu.Lock()
@@ -248,9 +242,7 @@ func TestSucceededMissionBringsTheParty(t *testing.T) {
 // An ambush on the road costs a tenth of the party of any tier.
 func TestAmbushCostsAnyTiersParty(t *testing.T) {
 	ge := partyTown(t, 3, 0)
-	if err := ge.LaunchExpedition(plantOffer(ge, TierLong, "")); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(plantOffer(ge, TierLong, "")))
 	a := ge.Military.active[0]
 	party := a.Soldiers
 	words, _ := ge.rules.MissionWords(a.Age)
@@ -424,9 +416,7 @@ func TestVacantPostsSurviveASaveAndLoad(t *testing.T) {
 func TestMissionLossesOfflineMatchLive(t *testing.T) {
 	build := func() (*GameEngine, int) {
 		ge := partyTown(t, 3, 0)
-		if err := ge.LaunchExpedition(plantOffer(ge, TierLong, "")); err != nil {
-			t.Fatal(err)
-		}
+		noErr(t, ge.LaunchExpedition(plantOffer(ge, TierLong, "")))
 		ge.mu.Lock()
 		a := ge.Military.active[0]
 		a.Luck, a.SuccessChance = .999, .1 // a failure: the party loses most of its soldiers
@@ -534,9 +524,7 @@ func TestPrimitiveAgeSendsWithoutAParty(t *testing.T) {
 	}
 	// An ambush on a party-less mission takes haul only, with no soldiers line.
 	learn(ge, "exploration")
-	if err := ge.LaunchExpedition(plantOffer(ge, TierLong, "")); err != nil {
-		t.Fatal(err)
-	}
+	noErr(t, ge.LaunchExpedition(plantOffer(ge, TierLong, "")))
 	b := ge.Military.ActiveByTier(TierLong)
 	words, _ := ge.rules.MissionWords(b.Age)
 	ge.mu.Lock()
