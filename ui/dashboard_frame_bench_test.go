@@ -3,8 +3,6 @@ package ui
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
@@ -27,10 +25,7 @@ func BenchmarkDashboardFrame(b *testing.B) {
 			b.Cleanup(func() { vibe.Set(was) })
 			vibe.Set(false)
 			d, pages := newMiniDashboard(b)
-			sim := tcell.NewSimulationScreen("UTF-8")
-			must(b, sim.Init())
-			defer sim.Fini()
-			sim.SetSize(160, 48)
+			sim := newSimScreen(b, 160, 48)
 			scr := theme.WrapScreen(sim)
 			pages.SetRect(0, 0, 160, 48)
 			frame := func() {
