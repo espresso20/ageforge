@@ -294,11 +294,17 @@ func storageRows() []BuildingDef {
 	return finishLineage(rows, lineageSpec{Key: "storage", Category: "storage", Scale: StorageRate})
 }
 
-// wonderRows returns the 22 wonders, oldest age first.
+// wonderRows returns the 22 wonders, oldest age first. A row writes what is its
+// own; the loop below adds what is the same on every wonder: the category, a
+// price rate of 1.0, MaxCount 1 and the "wonder" lineage, whose tier is the
+// row's place in the list. OutputResource stays on the row, because it is not
+// the first production effect (Stonehenge makes faith and reports knowledge)
+// and the Crystal Palace reports none, so lineageSpec would not give it.
+//
 // There is exactly one wonder per age (22 wonders total). Building a wonder
 // unlocks +0.5x game speed — the primary long-term speed upgrade mechanic.
 // Wonder costs use WonderBank: resources must be "banked" via 'wonder collect'
-// before 'build <key>' queues construction. CostScale is always 1.0.
+// before 'build <key>' queues construction.
 // Build ticks are extremely long to make each wonder a meaningful milestone.
 //
 // RequiredTech is the wonder's keystone: a tech of its own age that must
@@ -307,336 +313,300 @@ func storageRows() []BuildingDef {
 // asks for. The Sacred Grove has none (nothing blocks the first age),
 // and Stonehenge has none yet (see there).
 func wonderRows() []BuildingDef {
-	return []BuildingDef{
+	rows := []BuildingDef{
 		// Primitive Age — normal costs: 30-300
 		{
-			Name: "Sacred Grove", Key: "sacred_grove", Category: "wonder",
-			BaseCost:  map[string]float64{"wood": 1600, "food": 800},
-			CostScale: 1,
+			Name: "Sacred Grove", Key: "sacred_grove", OutputResource: "knowledge",
+			BaseCost: map[string]float64{"wood": 1600, "food": 800},
 			Effects: []Effect{
 				{Type: "research", Value: 0.02},
 				{Type: "production", Target: "food", Value: 0.05},
 			},
 			RequiredAge: "primitive_age",
-			MaxCount:    1,
 			BuildTicks:  75,
 			Description: "An ancient clearing where nature's power flows.",
 		},
 		// Stone Age — normal costs: 200-1000
 		{
-			Name: "Great Monolith", Key: "great_monolith", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 10080, "wood": 8000, "food": 2400},
-			CostScale: 1,
+			Name: "Great Monolith", Key: "great_monolith", OutputResource: "knowledge",
+			BaseCost: map[string]float64{"stone": 10080, "wood": 8000, "food": 2400},
 			Effects: []Effect{
 				{Type: "research", Value: 0.05},
 			},
 			RequiredAge:  "stone_age",
 			RequiredTech: "stoneworking",
-			MaxCount:     1,
 			BuildTicks:   225,
 			Description:  "A towering stone pillar visible for miles.",
 		},
 		// Bronze Age — normal costs: 1500-2500
 		{
-			Name: "Stonehenge", Key: "stonehenge", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 54400, "wood": 30400, "iron": 5440},
-			CostScale: 1,
+			Name: "Stonehenge", Key: "stonehenge", OutputResource: "knowledge",
+			BaseCost: map[string]float64{"stone": 54400, "wood": 30400, "iron": 5440},
 			Effects: []Effect{
 				{Type: "research", Value: 0.8},
 				{Type: "production", Target: "faith", Value: 0.6},
 			},
 			RequiredAge:  "bronze_age",
 			RequiredTech: "calendar",
-			MaxCount:     1,
 			BuildTicks:   1170,
 			Description:  "Massive stone circle aligned to the cosmos.",
 		},
 		// Iron Age — normal costs: 8k-12k
 		{
-			Name: "Colosseum", Key: "colosseum", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 256000, "marble": 256000, "iron": 56800, "iron_ore": 56800, "gold": 100800},
-			CostScale: 1,
+			Name: "Colosseum", Key: "colosseum", OutputResource: "culture",
+			BaseCost: map[string]float64{"stone": 256000, "marble": 256000, "iron": 56800, "iron_ore": 56800, "gold": 100800},
 			Effects: []Effect{
 				{Type: "capacity", Target: "population", Value: 100},
 				{Type: "production", Target: "culture", Value: 2},
 			},
 			RequiredAge:  "iron_age",
 			RequiredTech: "mathematics",
-			MaxCount:     1,
 			BuildTicks:   1950,
 			Description:  "Grand arena of blood and glory.",
 		},
 		// Classical Age — normal costs: 40k-80k
 		{
-			Name: "Parthenon", Key: "parthenon", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 800000, "marble": 800000, "gold": 704000, "iron": 352000, "iron_ore": 352000},
-			CostScale: 1,
+			Name: "Parthenon", Key: "parthenon", OutputResource: "culture",
+			BaseCost: map[string]float64{"stone": 800000, "marble": 800000, "gold": 704000, "iron": 352000, "iron_ore": 352000},
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 2},
 				{Type: "research", Value: 1.2},
 			},
 			RequiredAge:  "classical_age",
 			RequiredTech: "philosophy",
-			MaxCount:     1,
 			BuildTicks:   2500,
 			Description:  "Perfect temple of marble and wisdom.",
 		},
 		// Medieval Age — normal costs: 180k-360k
 		{
-			Name: "Great Library", Key: "great_library", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 10.5 * Million, "gold": 8.07 * Million},
-			CostScale: 1,
+			Name: "Great Library", Key: "great_library", OutputResource: "knowledge",
+			BaseCost: map[string]float64{"stone": 10.5 * Million, "gold": 8.07 * Million},
 			Effects: []Effect{
 				{Type: "research", Value: 2},
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.3},
 			},
 			RequiredAge:  "medieval_age",
 			RequiredTech: "theology",
-			MaxCount:     1,
 			BuildTicks:   3510,
 			Description:  "Repository of all knowledge.",
 		},
 		// Renaissance Age — normal costs: 400k-600k
 		{
-			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 38.4 * Million, "gold": 38.4 * Million, "faith": 32000, "culture": 960000},
-			CostScale: 1,
+			Name: "Sistine Chapel", Key: "sistine_chapel", OutputResource: "culture",
+			BaseCost: map[string]float64{"stone": 38.4 * Million, "gold": 38.4 * Million, "faith": 32000, "culture": 960000},
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
 				{Type: "production", Target: "faith", Value: 1.8},
 			},
 			RequiredAge:  "renaissance_age",
 			RequiredTech: "patronage",
-			MaxCount:     1,
 			BuildTicks:   4680,
 			Description:  "Ceiling painted by divine hands.",
 		},
 		// Colonial Age — normal costs: 1.2M-2M
 		{
-			Name: "Grand Lighthouse", Key: "grand_lighthouse", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 320 * Million, "gold": 192 * Million, "steel": 36.8 * Million},
-			CostScale: 1,
+			Name: "Grand Lighthouse", Key: "grand_lighthouse", OutputResource: "gold",
+			BaseCost: map[string]float64{"stone": 320 * Million, "gold": 192 * Million, "steel": 36.8 * Million},
 			Effects: []Effect{
 				{Type: "production", Target: "gold", Value: 5},
 				{Type: "bonus", Target: "expedition_reward", Value: 0.8},
 			},
 			RequiredAge:  "colonial_age",
 			RequiredTech: "cartography",
-			MaxCount:     1,
 			BuildTicks:   5460,
 			Description:  "Beacon visible across oceans.",
 		},
 		// Industrial Age — normal costs: 12M-25M
 		{
-			Name: "Crystal Palace", Key: "crystal_palace", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 720 * Million, "iron": 320 * Million, "iron_ore": 320 * Million, "gold": 496 * Million, "coal": 640 * Million},
-			CostScale: 1,
+			Name: "Crystal Palace", Key: "crystal_palace",
+			BaseCost: map[string]float64{"steel": 720 * Million, "iron": 320 * Million, "iron_ore": 320 * Million, "gold": 496 * Million, "coal": 640 * Million},
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.15},
 				{Type: "production", Target: "gold", Value: 8},
 			},
 			RequiredAge:  "industrial_age",
 			RequiredTech: "industrialization",
-			MaxCount:     1,
 			BuildTicks:   6240,
 			Description:  "Glass cathedral of industry.",
 		},
 		// Victorian Age — normal costs: 90M-150M
 		{
-			Name: "Eiffel Tower", Key: "eiffel_tower", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 7.52 * Billion, "iron": 6.08 * Billion, "gold": 8.16 * Billion},
-			CostScale: 1,
+			Name: "Eiffel Tower", Key: "eiffel_tower", OutputResource: "culture",
+			BaseCost: map[string]float64{"steel": 7.52 * Billion, "iron": 6.08 * Billion, "gold": 8.16 * Billion},
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 5},
 				{Type: "research", Value: 2},
 			},
 			RequiredAge:  "victorian_age",
 			RequiredTech: "mass_production",
-			MaxCount:     1,
 			BuildTicks:   7020,
 			Description:  "Iron monument piercing the sky.",
 		},
 		// Electric Age — normal costs: 500M-1B
 		{
-			Name: "Hoover Dam", Key: "hoover_dam", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 113.6 * Billion, "electricity": 32 * Billion},
-			CostScale: 1,
+			Name: "Hoover Dam", Key: "hoover_dam", OutputResource: "electricity",
+			BaseCost: map[string]float64{"steel": 113.6 * Billion, "electricity": 32 * Billion},
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 10},
 				{Type: "bonus", Target: "production_all", Value: 0.2},
 			},
 			RequiredAge:  "electric_age",
 			RequiredTech: "power_distribution",
-			MaxCount:     1,
 			BuildTicks:   7800,
 			Description:  "Taming a river to power a nation.",
 		},
 		// Atomic Age — normal costs: 3B-10B
 		{
-			Name: "Particle Accelerator", Key: "particle_accelerator", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 186 * Billion, "electricity": 260 * Billion, "uranium": 29.8 * Billion},
-			CostScale: 1,
+			Name: "Particle Accelerator", Key: "particle_accelerator", OutputResource: "knowledge",
+			BaseCost: map[string]float64{"steel": 186 * Billion, "electricity": 260 * Billion, "uranium": 29.8 * Billion},
 			Effects: []Effect{
 				{Type: "research", Value: 10},
 				{Type: "production", Target: "uranium", Value: 1.5},
 			},
 			RequiredAge:  "atomic_age",
 			RequiredTech: "nuclear_fission",
-			MaxCount:     1,
 			BuildTicks:   9360,
 			Description:  "Smashes atoms for science.",
 		},
 		// Modern Age — normal costs: 15B-40B
 		{
-			Name: "Space Program", Key: "space_program", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 660 * Billion, "titanium_ore": 660 * Billion, "gold": 1.19 * Trillion, "electricity": 738 * Billion},
-			CostScale: 1,
+			Name: "Space Program", Key: "space_program", OutputResource: "knowledge",
+			BaseCost: map[string]float64{"steel": 660 * Billion, "titanium_ore": 660 * Billion, "gold": 1.19 * Trillion, "electricity": 738 * Billion},
 			Effects: []Effect{
 				{Type: "research", Value: 6},
 				{Type: "production", Target: "culture", Value: 8},
 			},
 			RequiredAge:  "modern_age",
 			RequiredTech: "satellite_tech",
-			MaxCount:     1,
 			BuildTicks:   9360,
 			Description:  "Reaching for the stars.",
 		},
 		// Information Age — normal costs: 75B-125B
 		{
-			Name: "Global Network", Key: "global_network", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 3.84 * Trillion, "titanium_ore": 3.84 * Trillion, "data": 928 * Billion, "electricity": 1.536 * Trillion, "gold": 3.84 * Trillion},
-			CostScale: 1,
+			Name: "Global Network", Key: "global_network", OutputResource: "data",
+			BaseCost: map[string]float64{"steel": 3.84 * Trillion, "titanium_ore": 3.84 * Trillion, "data": 928 * Billion, "electricity": 1.536 * Trillion, "gold": 3.84 * Trillion},
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 30},
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.3},
 			},
 			RequiredAge:  "information_age",
 			RequiredTech: "internet",
-			MaxCount:     1,
 			BuildTicks:   10920,
 			Description:  "Every mind connected.",
 		},
 		// Digital Age — normal costs: 400B-750B
 		{
-			Name: "World Simulation", Key: "world_simulation", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 27.2 * Trillion, "titanium_ore": 27.2 * Trillion, "data": 1.6 * Trillion, "electricity": 32 * Trillion},
-			CostScale: 1,
+			Name: "World Simulation", Key: "world_simulation", OutputResource: "data",
+			BaseCost: map[string]float64{"steel": 27.2 * Trillion, "titanium_ore": 27.2 * Trillion, "data": 1.6 * Trillion, "electricity": 32 * Trillion},
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 60},
 				{Type: "research", Value: 15},
 			},
 			RequiredAge:  "digital_age",
 			RequiredTech: "machine_learning",
-			MaxCount:     1,
 			BuildTicks:   12480,
 			Description:  "A digital twin of reality itself.",
 		},
 		// Cyberpunk Age — normal costs: 2T-4T
 		{
-			Name: "Neon Citadel", Key: "neon_citadel", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 160 * Trillion, "electricity": 61.6 * Trillion, "dark_matter_crystals": 61.6 * Trillion, "crypto": 19.2 * Trillion, "data": 10.24 * Trillion},
-			CostScale: 1,
+			Name: "Neon Citadel", Key: "neon_citadel", OutputResource: "crypto",
+			BaseCost: map[string]float64{"steel": 160 * Trillion, "electricity": 61.6 * Trillion, "dark_matter_crystals": 61.6 * Trillion, "crypto": 19.2 * Trillion, "data": 10.24 * Trillion},
 			Effects: []Effect{
 				{Type: "production", Target: "crypto", Value: 10},
 				{Type: "capacity", Target: "population", Value: 500},
 			},
 			RequiredAge:  "cyberpunk_age",
 			RequiredTech: "cybernetics",
-			MaxCount:     1,
 			BuildTicks:   14040,
 			Description:  "A city within a city, lit by eternal neon.",
 		},
 		// Fusion Age — normal costs: 10T-15T
 		{
-			Name: "Stellar Cradle", Key: "stellar_cradle", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 688 * Trillion, "plasma": 544 * Trillion, "electricity": 368 * Trillion, "dark_matter_crystals": 368 * Trillion},
-			CostScale: 1,
+			Name: "Stellar Cradle", Key: "stellar_cradle", OutputResource: "plasma",
+			BaseCost: map[string]float64{"steel": 688 * Trillion, "plasma": 544 * Trillion, "electricity": 368 * Trillion, "dark_matter_crystals": 368 * Trillion},
 			Effects: []Effect{
 				{Type: "production", Target: "plasma", Value: 15},
 				{Type: "production", Target: "electricity", Value: 200},
 			},
 			RequiredAge:  "fusion_age",
 			RequiredTech: "fusion_power",
-			MaxCount:     1,
 			BuildTicks:   15600,
 			Description:  "A miniature star harnessed for power.",
 		},
 		// Space Age — normal costs: 50T-80T
 		{
-			Name: "Dyson Scaffold", Key: "dyson_scaffold", Category: "wonder",
-			BaseCost:  map[string]float64{"titanium": 1.456 * Quadrillion, "plasma": 1.056 * Quadrillion, "steel": 8.8 * Quadrillion},
-			CostScale: 1,
+			Name: "Dyson Scaffold", Key: "dyson_scaffold", OutputResource: "electricity",
+			BaseCost: map[string]float64{"titanium": 1.456 * Quadrillion, "plasma": 1.056 * Quadrillion, "steel": 8.8 * Quadrillion},
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 200},
 				{Type: "production", Target: "plasma", Value: 30},
 			},
 			RequiredAge:  "space_age",
 			RequiredTech: "orbital_mechanics",
-			MaxCount:     1,
 			BuildTicks:   17160,
 			Description:  "Framework for a Dyson sphere.",
 		},
 		// Interstellar Age — normal costs: 250T-500T
 		{
-			Name: "Warp Nexus", Key: "warp_nexus", Category: "wonder",
-			BaseCost:  map[string]float64{"titanium": 49.6 * Quadrillion, "dark_matter": 3.52 * Quadrillion, "plasma": 46.4 * Quadrillion},
-			CostScale: 1,
+			Name: "Warp Nexus", Key: "warp_nexus", OutputResource: "dark_matter",
+			BaseCost: map[string]float64{"titanium": 49.6 * Quadrillion, "dark_matter": 3.52 * Quadrillion, "plasma": 46.4 * Quadrillion},
 			Effects: []Effect{
 				{Type: "production", Target: "dark_matter", Value: 8},
 				{Type: "bonus", Target: "production_all", Value: 0.8},
 			},
 			RequiredAge:  "interstellar_age",
 			RequiredTech: "warp_drive",
-			MaxCount:     1,
 			BuildTicks:   18720,
 			Description:  "Hub of faster-than-light corridors.",
 		},
 		// Galactic Age — normal costs: 1Q-1.5Q
 		{
-			Name: "Cosmic Beacon", Key: "cosmic_beacon", Category: "wonder",
-			BaseCost:  map[string]float64{"dark_matter": 36.8 * Quadrillion, "antimatter": 27.2 * Quadrillion, "titanium": 104 * Quadrillion},
-			CostScale: 1,
+			Name: "Cosmic Beacon", Key: "cosmic_beacon", OutputResource: "antimatter",
+			BaseCost: map[string]float64{"dark_matter": 36.8 * Quadrillion, "antimatter": 27.2 * Quadrillion, "titanium": 104 * Quadrillion},
 			Effects: []Effect{
 				{Type: "production", Target: "antimatter", Value: 10},
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 			},
 			RequiredAge:  "galactic_age",
 			RequiredTech: "galactic_navigation",
-			MaxCount:     1,
 			BuildTicks:   18720,
 			Description:  "A signal fire across the galaxy.",
 		},
 		// Quantum Age — normal costs: 2.5Q-5Q
 		{
-			Name: "Reality Anchor", Key: "reality_anchor", Category: "wonder",
-			BaseCost:  map[string]float64{"quantum_flux": 56 * Quadrillion, "antimatter": 91.1 * Quadrillion, "dark_matter": 103 * Quadrillion},
-			CostScale: 1,
+			Name: "Reality Anchor", Key: "reality_anchor", OutputResource: "quantum_flux",
+			BaseCost: map[string]float64{"quantum_flux": 56 * Quadrillion, "antimatter": 91.1 * Quadrillion, "dark_matter": 103 * Quadrillion},
 			Effects: []Effect{
 				{Type: "production", Target: "quantum_flux", Value: 15},
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 			},
 			RequiredAge:  "quantum_age",
 			RequiredTech: "quantum_mechanics",
-			MaxCount:     1,
 			BuildTicks:   18720,
 			Description:  "Stabilizes reality across dimensions.",
 		},
 		// Transcendent Age
 		{
-			Name: "Singularity Core", Key: "singularity_core", Category: "wonder",
-			BaseCost:  map[string]float64{"quantum_flux": 576 * Quadrillion, "antimatter": 592 * Quadrillion, "dark_matter": 592 * Quadrillion},
-			CostScale: 1,
+			Name: "Singularity Core", Key: "singularity_core", OutputResource: "quantum_flux",
+			BaseCost: map[string]float64{"quantum_flux": 576 * Quadrillion, "antimatter": 592 * Quadrillion, "dark_matter": 592 * Quadrillion},
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 2},
 				{Type: "production", Target: "quantum_flux", Value: 20},
 			},
 			RequiredAge:  "transcendent_age",
 			RequiredTech: "transcendence",
-			MaxCount:     1,
 			BuildTicks:   18720,
 			Description:  "The final wonder.",
 		},
 	}
+	for i := range rows {
+		rows[i].Category = "wonder"
+		rows[i].LineageKey = "wonder"
+		rows[i].LineageTier = i
+		rows[i].CostScale = 1
+		rows[i].MaxCount = 1
+	}
+	return rows
 }
 
 // diplomacyRows returns the diplomacy / foreign affairs buildings — these act
@@ -696,58 +666,9 @@ func diplomacyRows() []BuildingDef {
 	}
 }
 
-// buildingMetaEntry holds the economy-redesign metadata for a single building.
-// It supplements the legacy BuildingDef entries in baseBuildingsRaw() which
-// were defined before lineage metadata existed.
-type buildingMetaEntry struct {
-	LineageKey     string
-	LineageTier    int
-	WorkerDomain   string
-	WorkerCapacity int
-	OutputResource string
-}
-
-// buildingMeta returns the economy-redesign metadata for all buildings, keyed by building key.
-// Lineages: housing, storage, food, organic_extraction, geological_extraction, knowledge,
-//
-//	faith, culture_arts, trade, military, engineering, metallurgy, energy, hacker,
-//	astronaut, wonder
-//
-// Worker domains: food, lumber, masonry, faith, military, trade, engineering,
-//
-//	metallurgy, energy, hacker, astronaut  (culture_arts has no domain)
-func buildingMeta() map[string]buildingMetaEntry {
-	return map[string]buildingMetaEntry{
-		// ── WONDER lineage (no workers, max 1 each) ───────────────────────────────
-		"sacred_grove":         {LineageKey: "wonder", LineageTier: 0, OutputResource: "knowledge"},
-		"great_monolith":       {LineageKey: "wonder", LineageTier: 1, OutputResource: "knowledge"},
-		"stonehenge":           {LineageKey: "wonder", LineageTier: 2, OutputResource: "knowledge"},
-		"colosseum":            {LineageKey: "wonder", LineageTier: 3, OutputResource: "culture"},
-		"parthenon":            {LineageKey: "wonder", LineageTier: 4, OutputResource: "culture"},
-		"great_library":        {LineageKey: "wonder", LineageTier: 5, OutputResource: "knowledge"},
-		"sistine_chapel":       {LineageKey: "wonder", LineageTier: 6, OutputResource: "culture"},
-		"grand_lighthouse":     {LineageKey: "wonder", LineageTier: 7, OutputResource: "gold"},
-		"crystal_palace":       {LineageKey: "wonder", LineageTier: 8},
-		"eiffel_tower":         {LineageKey: "wonder", LineageTier: 9, OutputResource: "culture"},
-		"hoover_dam":           {LineageKey: "wonder", LineageTier: 10, OutputResource: "electricity"},
-		"particle_accelerator": {LineageKey: "wonder", LineageTier: 11, OutputResource: "knowledge"},
-		"space_program":        {LineageKey: "wonder", LineageTier: 12, OutputResource: "knowledge"},
-		"global_network":       {LineageKey: "wonder", LineageTier: 13, OutputResource: "data"},
-		"world_simulation":     {LineageKey: "wonder", LineageTier: 14, OutputResource: "data"},
-		"neon_citadel":         {LineageKey: "wonder", LineageTier: 15, OutputResource: "crypto"},
-		"stellar_cradle":       {LineageKey: "wonder", LineageTier: 16, OutputResource: "plasma"},
-		"dyson_scaffold":       {LineageKey: "wonder", LineageTier: 17, OutputResource: "electricity"},
-		"warp_nexus":           {LineageKey: "wonder", LineageTier: 18, OutputResource: "dark_matter"},
-		"cosmic_beacon":        {LineageKey: "wonder", LineageTier: 19, OutputResource: "antimatter"},
-		"reality_anchor":       {LineageKey: "wonder", LineageTier: 20, OutputResource: "quantum_flux"},
-		"singularity_core":     {LineageKey: "wonder", LineageTier: 21, OutputResource: "quantum_flux"},
-	}
-}
-
 // BaseBuildings returns all building definitions.
 // Production/housing/military/research buildings come from NewProductionBuildings() (Phase 10
-// lineage redesign). Storage buildings and wonders come from baseBuildingsRaw(), enriched
-// with lineage metadata from buildingMeta().
+// lineage redesign). Storage, wonder and diplomacy buildings come from baseBuildingsRaw().
 func BaseBuildings() []BuildingDef {
 	defs, _ := buildBase()
 	return defs
@@ -757,21 +678,8 @@ func buildBase() ([]BuildingDef, []ColdStartCap) {
 	// Start with the new 13-lineage production buildings (all metadata inline).
 	result := NewProductionBuildings()
 
-	// Append storage and wonder buildings from legacy definitions, enriched with meta.
-	meta := buildingMeta()
-	for _, b := range baseBuildingsRaw() {
-		if b.Category != "storage" && b.Category != "wonder" && b.Category != "diplomacy" {
-			continue // production buildings are now in NewProductionBuildings()
-		}
-		if m, ok := meta[b.Key]; ok {
-			b.LineageKey = m.LineageKey
-			b.LineageTier = m.LineageTier
-			b.WorkerDomain = m.WorkerDomain
-			b.WorkerCapacity = m.WorkerCapacity
-			b.OutputResource = m.OutputResource
-		}
-		result = append(result, b)
-	}
+	// Append the storage, wonder and diplomacy buildings.
+	result = append(result, baseBuildingsRaw()...)
 	// Attach cosmetic Flavor text at the single chokepoint so every consumer
 	// (BuildingByKey, the engine, the UI overlays) sees it without each lineage
 	// file having to carry the strings inline. Flavor is purely additive humor;
