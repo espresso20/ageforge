@@ -224,9 +224,7 @@ func TestDashboardPlaysTheFilm(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
 	eng.SeedRNG(3)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	om := d.overlayMgr
 	om.engine = eng
 	om.after = func(time.Duration, func()) func() { return func() {} }
@@ -275,10 +273,8 @@ func TestDashboardPlaysTheFilm(t *testing.T) {
 // no key could reach it.
 func TestAWindowThatWaitsGetsTheKeyboardBack(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	pages := tview.NewPages()
-	app := tview.NewApplication()
-	d := NewDashboard(app, game.NewGameEngine(), pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(nil)
+	app := d.app
 	d.overlayMgr.after = func(time.Duration, func()) func() { return func() {} }
 	d.showAncientMemoryModal("pottery", "Pottery")
 	button := app.GetFocus()
