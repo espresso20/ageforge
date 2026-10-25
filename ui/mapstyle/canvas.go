@@ -1,6 +1,8 @@
 package mapstyle
 
 import (
+	"unicode/utf8"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/uniseg"
 
@@ -94,10 +96,4 @@ func (c *Canvas) Get(x, y int) (rune, tcell.Style) {
 }
 
 // TextLen is the number of cells s takes.
-func TextLen(s string) int {
-	n := 0
-	for range s {
-		n++
-	}
-	return n
-}
+func TextLen(s string) int { return utf8.RuneCountInString(s) }

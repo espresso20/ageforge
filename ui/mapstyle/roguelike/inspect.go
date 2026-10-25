@@ -1,6 +1,7 @@
 package roguelike
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -49,14 +50,7 @@ func floorDiv(a, b int) int {
 	return a / b
 }
 
-func has(ps []mapmodel.Pt, p mapmodel.Pt) bool {
-	for _, q := range ps {
-		if q == p {
-			return true
-		}
-	}
-	return false
-}
+func has(ps []mapmodel.Pt, p mapmodel.Pt) bool { return slices.Contains(ps, p) }
 
 var terrainNames = [8]vibe.Entry{vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.01", "Open water"), vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.02", "Shallows"), vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.03", "River"), vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.04", "Shore"), vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.05", "Grassland"), vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.06", "Forest"), vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.07", "Hills"), vibe.E("ui.mapstyle.roguelike.inspect.terrainNames.08", "Mountains")}
 var terrainNotes = [8]vibe.Entry{2: vibe.E("ui.mapstyle.roguelike.inspect.terrainNotes.01", "harbors and mills settle on its banks"), 5: vibe.E("ui.mapstyle.roguelike.inspect.terrainNotes.02", "wood: woodcutters settle at its edge"),

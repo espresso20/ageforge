@@ -151,10 +151,8 @@ var prefabs = [7][2]string{
 var scaffold = [2]string{"┌┬┐╫╫╫", "/-\\|#|"}
 
 func runeAt(s string, i int) rune {
-	for k, r := range []rune(s) {
-		if k == i {
-			return r
-		}
+	if rs := []rune(s); i >= 0 && i < len(rs) {
+		return rs[i]
 	}
 	return ' '
 }

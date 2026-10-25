@@ -123,12 +123,7 @@ func defaultTarget(m *mapmodel.Model, ts []tgt) int {
 	return best
 }
 
-func abs(v int) int {
-	if v < 0 {
-		return -v
-	}
-	return v
-}
+func abs(v int) int { return max(v, -v) }
 
 // resolve returns the cursor's index in ts at frame anim, putting it on the
 // default target when it is on nothing that exists. The saucer is in no

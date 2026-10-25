@@ -376,9 +376,4 @@ func EraLight(epoch int) tcell.Color {
 
 func clampF(v, lo, hi float64) float64 { return math.Max(lo, math.Min(hi, v)) }
 
-func absI(v int) int {
-	if v < 0 {
-		return -v
-	}
-	return v
-}
+func absI(v int) int { return max(v, -v) }

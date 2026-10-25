@@ -2,6 +2,7 @@ package roguelike
 
 import (
 	"math"
+	"slices"
 	"sort"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -611,9 +612,7 @@ func smoothRing(cx, cy, rx, ry float64) ([]mapmodel.Pt, []rune) {
 				continue
 			}
 			if abs(p.X-q.X) > 1 || abs(p.Y-q.Y) > 1 {
-				for _, f := range lineCells(q, p)[1:] {
-					ps = append(ps, f)
-				}
+				ps = append(ps, lineCells(q, p)[1:]...)
 				continue
 			}
 		}
@@ -626,7 +625,7 @@ func smoothRing(cx, cy, rx, ry float64) ([]mapmodel.Pt, []rune) {
 	for i := 0; i < len(ps) && len(ps) > 8; {
 		a, c := ps[(i+len(ps)-1)%len(ps)], ps[(i+1)%len(ps)]
 		if abs(a.X-c.X) <= 1 && abs(a.Y-c.Y) <= 1 {
-			ps = append(ps[:i], ps[i+1:]...)
+			ps = slices.Delete(ps, i, i+1)
 			continue
 		}
 		i++

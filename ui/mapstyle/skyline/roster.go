@@ -2,6 +2,7 @@ package skyline
 
 import (
 	"math"
+	"strings"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -245,7 +246,7 @@ func joinGap(ps []*vtemplate, gap int, digits []byte) *vtemplate {
 				}
 				off := h - len(rows) // bottoms aligned: short drawings start lower
 				if r < off {
-					return []rune(spaces(w))
+					return []rune(strings.Repeat(" ", w))
 				}
 				return []rune(rows[r-off])
 			}
@@ -290,14 +291,6 @@ func (t *vtemplate) width() int {
 		w = max(w, len([]rune(r)))
 	}
 	return w
-}
-
-func spaces(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = ' '
-	}
-	return string(b)
 }
 
 func one1(t *vtemplate) []*vtemplate { return []*vtemplate{t} }

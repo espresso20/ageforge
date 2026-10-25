@@ -596,7 +596,10 @@ func (s *scene) midTown() {
 		col := cols[hash(blk, 5)%3]
 		hgt := int(float64(dh) * (0.4 + 0.5*hashf(blk, 61)))
 		if a <= 5 {
-			hgt = int(float64(s.groundY)*0.12) + 2*b2i(blk%5 == 0)
+			hgt = int(float64(s.groundY) * 0.12)
+			if blk%5 == 0 {
+				hgt += 2
+			}
 		}
 		top := s.groundY - hgt
 		if last && hgt > 2 {
@@ -640,13 +643,6 @@ func (s *scene) midTown() {
 			}
 		}
 	}
-}
-
-func b2i(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }
 
 // ------------------------------------------------------------------ city

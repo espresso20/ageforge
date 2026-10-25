@@ -167,9 +167,4 @@ func unit(rows int, design float64) func(n float64) int {
 }
 
 // atLeast returns v or lo, whichever is larger.
-func atLeast(v, lo int) int {
-	if v < lo {
-		return lo
-	}
-	return v
-}
+func atLeast(v, lo int) int { return max(v, lo) }

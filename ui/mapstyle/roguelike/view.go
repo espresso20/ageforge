@@ -8,6 +8,8 @@
 package roguelike
 
 import (
+	"math"
+
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -267,11 +269,7 @@ func ceilDiv(a, b float64) float64 {
 	if b <= 0 {
 		return a
 	}
-	q := a / b
-	if f := float64(int(q)); f < q {
-		return f + 1
-	}
-	return q
+	return math.Ceil(a / b)
 }
 
 // cellOf maps a tile to its cell on the canvas, if it is in the map area.

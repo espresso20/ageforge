@@ -584,8 +584,5 @@ func clamp(a, lo, hi int) int {
 	if a < lo {
 		return lo
 	}
-	if a > hi {
-		return hi
-	}
-	return a
+	return min(a, hi)
 }
