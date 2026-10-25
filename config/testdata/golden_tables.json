@@ -7884,814 +7884,1866 @@
  "techs": {
   "agriculture": {
    "age": "bronze_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "animal_husbandry"
+   ],
    "cost": 12400
   },
   "alchemy": {
    "age": "medieval_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "philosophy"
+   ],
    "cost": 533000
   },
   "animal_husbandry": {
    "age": "stone_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "fire_mastery"
+   ],
    "cost": 2820
   },
   "antimatter_synthesis": {
    "age": "galactic_age",
+   "lane": "energy",
+   "kind": "spine",
+   "needs": [
+    "galactic_navigation"
+   ],
    "cost": 58504494719.99996
   },
   "architecture": {
    "age": "renaissance_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "civil_engineering"
+   ],
    "cost": 7940000
   },
   "armada_command": {
    "age": "galactic_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "fleet_doctrine"
+   ],
    "cost": 477523173119.9997
   },
   "assembly_line": {
    "age": "electric_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "mass_production"
+   ],
    "cost": 182000000
   },
   "asteroid_claims": {
    "age": "space_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "maglev_transit"
+   ],
    "cost": 23126431999.999992
   },
   "asteroid_refining": {
    "age": "space_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "space_mining"
+   ],
    "cost": 39046022399.999985
   },
   "augmented_soldiers": {
    "age": "cyberpunk_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "cybernetics",
+    "drone_warfare"
+   ],
    "cost": 5734959999.999999
   },
   "automated_logistics": {
    "age": "digital_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "e_commerce"
+   ],
    "cost": 305759999.99999994
   },
   "aviation": {
    "age": "electric_age",
+   "lane": "space",
+   "kind": "spine",
+   "needs": [
+    "mass_production"
+   ],
    "cost": 37800000
   },
   "banking": {
    "age": "medieval_age",
+   "lane": "trade",
+   "kind": "spine",
+   "needs": [
+    "currency",
+    "mathematics"
+   ],
    "cost": 243000
   },
   "baroque_arts": {
    "age": "colonial_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "patronage"
+   ],
    "cost": 11800000
   },
   "big_science": {
    "age": "atomic_age",
+   "lane": "knowledge",
+   "kind": "capstone",
+   "needs": [
+    "modern_physics"
+   ],
    "cost": 287000000
   },
   "blast_furnace": {
    "age": "renaissance_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "steel_forging"
+   ],
    "cost": 10300000
   },
   "blockchain": {
    "age": "cyberpunk_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "cybersecurity",
+    "cloud_computing"
+   ],
    "cost": 2612287999.9999995
   },
   "boatbuilding": {
    "age": "bronze_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "woodworking"
+   ],
    "cost": 9550
   },
   "bronze_working": {
    "age": "bronze_age",
+   "lane": "materials",
+   "kind": "spine",
+   "needs": [
+    "stoneworking"
+   ],
    "cost": 4350
   },
   "calendar": {
    "age": "bronze_age",
+   "lane": "faith",
+   "kind": "keystone",
+   "needs": [
+    "ritual"
+   ],
    "cost": 5650
   },
   "cartography": {
    "age": "colonial_age",
+   "lane": "trade",
+   "kind": "keystone",
+   "needs": [
+    "navigation"
+   ],
    "cost": 9050000
   },
   "chemical_engineering": {
    "age": "electric_age",
+   "lane": "materials",
+   "kind": "spine",
+   "needs": [
+    "mass_production"
+   ],
    "cost": 29000000
   },
   "chronometry": {
    "age": "medieval_age",
+   "lane": "craft",
+   "kind": "optional",
    "cost": 902000
   },
   "cinema": {
    "age": "atomic_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "radio"
+   ],
    "cost": 45700000
   },
   "civil_engineering": {
    "age": "classical_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "road_building"
+   ],
    "cost": 173000
   },
   "civilian_reactors": {
    "age": "atomic_age",
+   "lane": "energy",
+   "kind": "optional",
+   "needs": [
+    "nuclear_deterrence"
+   ],
    "cost": 220000000
   },
   "clockwork_automation": {
    "age": "industrial_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "chronometry"
+   ],
    "cost": 23300000
   },
   "closed_biospheres": {
    "age": "fusion_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "synthetic_food"
+   ],
    "cost": 16749375999.999994
   },
   "cloud_computing": {
    "age": "digital_age",
+   "lane": "computing",
+   "kind": "optional",
+   "needs": [
+    "internet"
+   ],
    "cost": 1922759999.9999998
   },
   "coke_smelting": {
    "age": "colonial_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "blast_furnace"
+   ],
    "cost": 56800000
   },
   "colonialism": {
    "age": "colonial_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "cartography",
+    "gunpowder"
+   ],
    "cost": 73800000
   },
   "computers": {
    "age": "modern_age",
+   "lane": "computing",
+   "kind": "spine",
+   "needs": [
+    "electricity_tech"
+   ],
    "cost": 76300000
   },
   "concert_of_nations": {
    "age": "industrial_age",
+   "lane": "trade",
+   "kind": "capstone",
+   "needs": [
+    "embassies",
+    "geographic_societies"
+   ],
    "cost": 51100000
   },
   "containerization": {
    "age": "modern_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "corporations"
+   ],
    "cost": 218000000
   },
   "corporations": {
    "age": "atomic_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "mercantilism",
+    "wire_transfers"
+   ],
    "cost": 59400000
   },
   "cosmology": {
    "age": "galactic_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "xenology"
+   ],
    "cost": 128604474879.99992
   },
   "crop_rotation": {
    "age": "renaissance_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "feudalism"
+   ],
    "cost": 6110000
   },
   "currency": {
    "age": "bronze_age",
+   "lane": "trade",
+   "kind": "spine",
+   "needs": [
+    "primitive_writing"
+   ],
    "cost": 3350
   },
   "cybernetics": {
    "age": "cyberpunk_age",
+   "lane": "craft",
+   "kind": "keystone",
+   "needs": [
+    "neural_interface"
+   ],
    "cost": 1547615999.9999995
   },
   "cybersecurity": {
    "age": "information_age",
+   "lane": "military",
+   "kind": "spine",
+   "needs": [
+    "computers"
+   ],
    "cost": 54320000
   },
   "dark_crystal_mining": {
    "age": "cyberpunk_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "nano_alloys"
+   ],
    "cost": 4417839999.999999
   },
   "dark_energy": {
    "age": "cyberpunk_age",
+   "lane": "energy",
+   "kind": "optional",
+   "needs": [
+    "grid_storage"
+   ],
    "cost": 7463679999.999998
   },
   "darknets": {
    "age": "cyberpunk_age",
+   "lane": "computing",
+   "kind": "optional",
+   "needs": [
+    "cloud_computing"
+   ],
    "cost": 12622399999.999996
   },
   "deep_space_astronomy": {
    "age": "space_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "unified_theory"
+   ],
    "cost": 17801974399.999992
   },
   "drama": {
    "age": "classical_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "priesthood"
+   ],
    "cost": 78600
   },
   "drone_warfare": {
    "age": "digital_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "cybersecurity"
+   ],
    "cost": 876119999.9999999
   },
   "dyson_engineering": {
    "age": "galactic_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "stellar_engineering",
+    "hull_printing"
+   ],
    "cost": 282508190719.9998
   },
   "e_commerce": {
    "age": "information_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "containerization",
+    "internet"
+   ],
    "cost": 155400000
   },
   "electricity_tech": {
    "age": "modern_age",
+   "lane": "energy",
+   "kind": "spine",
+   "needs": [
+    "nuclear_fission"
+   ],
    "cost": 58700000
   },
   "electrification": {
    "age": "victorian_age",
+   "lane": "energy",
+   "kind": "spine",
+   "needs": [
+    "industrialization"
+   ],
    "cost": 20200000
   },
   "embassies": {
    "age": "colonial_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "envoys"
+   ],
    "cost": 25800000
   },
   "embedded_systems": {
    "age": "information_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "nanofabrication"
+   ],
    "cost": 341600000
   },
   "encyclopedia": {
    "age": "industrial_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "scientific_method"
+   ],
    "cost": 8140000
   },
   "envoys": {
    "age": "classical_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "exploration"
+   ],
    "cost": 102000
   },
   "exploration": {
    "age": "iron_age",
+   "lane": "trade",
+   "kind": "spine",
+   "any_of": [
+    "map_making",
+    "boatbuilding"
+   ],
    "cost": 13600
   },
   "federation_charter": {
    "age": "galactic_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "interstellar_trade",
+    "xenology"
+   ],
    "cost": 167607471359.9999
   },
   "fertilizers": {
    "age": "electric_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "sanitation"
+   ],
    "cost": 140000000
   },
   "feudalism": {
    "age": "medieval_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "the_plough"
+   ],
    "cost": 693000
   },
   "fire_mastery": {
    "age": "primitive_age",
+   "lane": "agriculture",
+   "kind": "optional",
    "cost": 537
   },
   "fleet_doctrine": {
    "age": "interstellar_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "orbital_defense"
+   ],
    "cost": 487160979199.99976
   },
   "fortification": {
    "age": "medieval_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "imperial_legions"
+   ],
    "cost": 1170000
   },
   "fusion_drives": {
    "age": "fusion_age",
+   "lane": "space",
+   "kind": "optional",
+   "needs": [
+    "fusion_power",
+    "lunar_outposts"
+   ],
    "cost": 36764111999.999985
   },
   "fusion_power": {
    "age": "fusion_age",
+   "lane": "energy",
+   "kind": "keystone",
+   "needs": [
+    "nuclear_fission",
+    "cybernetics"
+   ],
    "cost": 5877647999.999998
   },
   "galactic_memory": {
    "age": "galactic_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "void_contemplation"
+   ],
    "cost": 98877866751.99994
   },
   "galactic_navigation": {
    "age": "galactic_age",
+   "lane": "space",
+   "kind": "keystone",
+   "needs": [
+    "warp_drive",
+    "stellar_engineering"
+   ],
    "cost": 76108549887.99995
   },
   "galactic_network": {
    "age": "interstellar_age",
+   "lane": "computing",
+   "kind": "optional",
+   "needs": [
+    "orbital_relays"
+   ],
    "cost": 633986931199.9998
   },
   "gene_editing": {
    "age": "digital_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "medical_nanobots"
+   ],
    "cost": 397879999.99999994
   },
   "general_ai": {
    "age": "digital_age",
+   "lane": "computing",
+   "kind": "capstone",
+   "needs": [
+    "machine_learning",
+    "cloud_computing"
+   ],
    "cost": 3253599999.9999995
   },
   "general_staff": {
    "age": "victorian_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "rifling"
+   ],
    "cost": 127000000
   },
   "geographic_societies": {
    "age": "industrial_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "cartography"
+   ],
    "cost": 13800000
   },
   "geology": {
    "age": "victorian_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "steam_pumps"
+   ],
    "cost": 97700000
   },
   "global_village": {
    "age": "digital_age",
+   "lane": "trade",
+   "kind": "capstone",
+   "needs": [
+    "e_commerce",
+    "social_media"
+   ],
    "cost": 2508799999.9999995
   },
   "green_revolution": {
    "age": "atomic_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "fertilizers"
+   ],
    "cost": 77200000
   },
   "grid_storage": {
    "age": "digital_age",
+   "lane": "energy",
+   "kind": "optional",
+   "needs": [
+    "smart_grid"
+   ],
    "cost": 1138759999.9999998
   },
   "guilds": {
    "age": "medieval_age",
+   "lane": "craft",
+   "kind": "capstone",
+   "needs": [
+    "civil_engineering",
+    "metal_casting"
+   ],
    "cost": 1980000
   },
   "gunpowder": {
    "age": "renaissance_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "alchemy",
+    "siege_warfare"
+   ],
    "cost": 13400000
   },
   "holography": {
    "age": "cyberpunk_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "cybernetics",
+    "blockchain"
+   ],
    "cost": 2011351999.9999995
   },
   "hull_printing": {
    "age": "interstellar_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "zero_g_manufacturing"
+   ],
    "cost": 288381228799.9999
   },
   "hydroponics": {
    "age": "space_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "closed_biospheres"
+   ],
    "cost": 30064361599.99999
   },
   "imperial_legions": {
    "age": "classical_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "siege_warfare",
+    "iron_smelting"
+   ],
    "cost": 292000
   },
   "industrialization": {
    "age": "industrial_age",
+   "lane": "craft",
+   "kind": "keystone",
+   "needs": [
+    "steam_power"
+   ],
    "cost": 4820000
   },
   "information_theory": {
    "age": "modern_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "modern_physics"
+   ],
    "cost": 168000000
   },
   "interchangeable_parts": {
    "age": "industrial_age",
+   "lane": "craft",
+   "kind": "capstone",
+   "needs": [
+    "industrialization",
+    "clockwork_automation"
+   ],
    "cost": 66400000
   },
   "internet": {
    "age": "information_age",
+   "lane": "computing",
+   "kind": "keystone",
+   "needs": [
+    "computers",
+    "satellite_tech"
+   ],
    "cost": 70700000
   },
   "internet_of_things": {
    "age": "information_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "social_media",
+    "cybersecurity",
+    "medical_nanobots"
+   ],
    "cost": 263199999.99999997
   },
   "interstellar_trade": {
    "age": "interstellar_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "asteroid_claims",
+    "warp_drive"
+   ],
    "cost": 170920467199.99994
   },
   "iron_smelting": {
    "age": "iron_age",
+   "lane": "materials",
+   "kind": "spine",
+   "needs": [
+    "bronze_working"
+   ],
    "cost": 17700
   },
   "irrigation": {
    "age": "iron_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "agriculture"
+   ],
    "cost": 38800
   },
   "language": {
    "age": "primitive_age",
+   "lane": "knowledge",
+   "kind": "spine",
    "cost": 318
   },
   "lunar_outposts": {
    "age": "cyberpunk_age",
+   "lane": "space",
+   "kind": "optional",
+   "needs": [
+    "reusable_launchers"
+   ],
    "cost": 9713759999.999998
   },
   "machine_learning": {
    "age": "digital_age",
+   "lane": "computing",
+   "kind": "keystone",
+   "needs": [
+    "internet",
+    "cybersecurity"
+   ],
    "cost": 139551999.99999997
   },
   "maglev_transit": {
    "age": "fusion_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "superconductors"
+   ],
    "cost": 12869359999.999996
   },
   "map_making": {
    "age": "bronze_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "primitive_writing"
+   ],
    "cost": 7350
   },
   "masonry": {
    "age": "bronze_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "stoneworking"
+   ],
    "cost": 21000
   },
   "mass_production": {
    "age": "victorian_age",
+   "lane": "craft",
+   "kind": "keystone",
+   "needs": [
+    "industrialization"
+   ],
    "cost": 26300000
   },
   "mathematics": {
    "age": "iron_age",
+   "lane": "knowledge",
+   "kind": "keystone",
+   "needs": [
+    "primitive_writing"
+   ],
    "cost": 23000
   },
   "matter_conversion": {
    "age": "galactic_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "protein_synthesis"
+   ],
    "cost": 217151818239.99988
   },
   "mechanized_warfare": {
    "age": "electric_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "general_staff"
+   ],
    "cost": 237000000
   },
   "medical_nanobots": {
    "age": "information_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "nanofabrication"
+   ],
    "cost": 201600000
   },
   "mercantilism": {
    "age": "colonial_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "banking",
+    "navigation"
+   ],
    "cost": 19900000
   },
   "metal_casting": {
    "age": "classical_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "iron_smelting"
+   ],
    "cost": 224000
   },
   "military_industrial_complex": {
    "age": "atomic_age",
+   "lane": "military",
+   "kind": "capstone",
+   "needs": [
+    "mechanized_warfare",
+    "nuclear_deterrence"
+   ],
    "cost": 372000000
   },
   "military_tactics": {
    "age": "bronze_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "bronze_working"
+   ],
    "cost": 27300
   },
   "mind_uploading": {
    "age": "galactic_age",
+   "lane": "computing",
+   "kind": "optional",
+   "needs": [
+    "galactic_network"
+   ],
    "cost": 806413305599.9995
   },
   "modern_physics": {
    "age": "electric_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "public_education"
+   ],
    "cost": 83000000
   },
   "molecular_assembly": {
    "age": "fusion_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "cybernetics",
+    "self_replication"
+   ],
    "cost": 21743455999.999992
   },
   "museums": {
    "age": "victorian_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "romanticism"
+   ],
    "cost": 34200000
   },
   "nano_alloys": {
    "age": "digital_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "precision_mining"
+   ],
    "cost": 674239999.9999999
   },
   "nanofabrication": {
    "age": "modern_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "computers"
+   ],
    "cost": 368000000
   },
   "navigation": {
    "age": "renaissance_age",
+   "lane": "trade",
+   "kind": "spine",
+   "needs": [
+    "exploration",
+    "mathematics"
+   ],
    "cost": 2780000
   },
   "neural_art": {
    "age": "fusion_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "holography"
+   ],
    "cost": 7606367999.999997
   },
   "neural_interface": {
    "age": "cyberpunk_age",
+   "lane": "knowledge",
+   "kind": "spine",
+   "needs": [
+    "machine_learning"
+   ],
    "cost": 1188151999.9999998
   },
   "neutron_mining": {
    "age": "galactic_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "stellar_core_mining"
+   ],
    "cost": 366838993919.99976
   },
   "new_world_crops": {
    "age": "colonial_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "crop_rotation"
+   ],
    "cost": 33600000
   },
   "nuclear_deterrence": {
    "age": "atomic_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "nuclear_fission",
+    "rocketry"
+   ],
    "cost": 170000000
   },
   "nuclear_fission": {
    "age": "atomic_age",
+   "lane": "energy",
+   "kind": "keystone",
+   "needs": [
+    "power_distribution",
+    "chemical_engineering"
+   ],
    "cost": 35100000
   },
   "omniversal_command": {
    "age": "transcendent_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "probability_warfare"
+   ],
    "cost": 3533039000063.9976
   },
   "omniversal_exchange": {
    "age": "transcendent_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "probability_markets"
+   ],
    "cost": 2086765725183.9985
   },
   "open_science": {
    "age": "digital_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "search_engines"
+   ],
    "cost": 235199999.99999997
   },
   "orbital_defense": {
    "age": "space_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "plasma_weapons",
+    "orbital_mechanics"
+   ],
    "cost": 50770585599.999985
   },
   "orbital_mechanics": {
    "age": "space_age",
+   "lane": "space",
+   "kind": "keystone",
+   "needs": [
+    "rocketry",
+    "plasma_physics"
+   ],
    "cost": 10541350399.999996
   },
   "orbital_relays": {
    "age": "space_age",
+   "lane": "computing",
+   "kind": "optional",
+   "needs": [
+    "quantum_networking",
+    "orbital_mechanics"
+   ],
    "cost": 86051839999.99997
   },
   "orbital_solar": {
    "age": "space_age",
+   "lane": "energy",
+   "kind": "optional",
+   "needs": [
+    "plasma_physics"
+   ],
    "cost": 66152351999.99998
   },
   "overview_effect": {
    "age": "space_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "neural_art"
+   ],
    "cost": 13660729599.999996
   },
   "patronage": {
    "age": "renaissance_age",
+   "lane": "faith",
+   "kind": "keystone",
+   "needs": [
+    "banking"
+   ],
    "cost": 3610000
   },
   "philosophy": {
    "age": "classical_age",
+   "lane": "knowledge",
+   "kind": "keystone",
+   "needs": [
+    "mathematics"
+   ],
    "cost": 60400
   },
   "plasma_physics": {
    "age": "fusion_age",
+   "lane": "energy",
+   "kind": "spine",
+   "needs": [
+    "fusion_power"
+   ],
    "cost": 4494671999.999999
   },
   "plasma_weapons": {
    "age": "fusion_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "augmented_soldiers",
+    "plasma_physics"
+   ],
    "cost": 28274175999.999992
   },
   "plastics": {
    "age": "atomic_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "chemical_engineering"
+   ],
    "cost": 130000000
   },
   "pottery": {
    "age": "stone_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "fire_mastery"
+   ],
    "cost": 2170
   },
   "power_distribution": {
    "age": "electric_age",
+   "lane": "energy",
+   "kind": "keystone",
+   "needs": [
+    "electrification"
+   ],
    "cost": 49100000
   },
   "precision_mining": {
    "age": "information_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "titanium_alloys"
+   ],
    "cost": 443800000
   },
   "prefabrication": {
    "age": "atomic_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "assembly_line"
+   ],
    "cost": 100000000
   },
   "priesthood": {
    "age": "iron_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "calendar"
+   ],
    "cost": 29900
   },
   "primitive_writing": {
    "age": "stone_age",
+   "lane": "knowledge",
+   "kind": "spine",
+   "needs": [
+    "language"
+   ],
    "cost": 1280
   },
   "printing_press": {
    "age": "renaissance_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "alchemy",
+    "theology"
+   ],
    "cost": 4700000
   },
   "probability_markets": {
    "age": "quantum_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "federation_charter"
+   ],
    "cost": 332052537599.9998
   },
   "probability_warfare": {
    "age": "quantum_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "armada_command"
+   ],
    "cost": 730515582719.9995
   },
   "protein_synthesis": {
    "age": "interstellar_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "hydroponics"
+   ],
    "cost": 222121311999.9999
   },
   "public_education": {
    "age": "victorian_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "encyclopedia"
+   ],
    "cost": 44500000
   },
   "quantum_computing": {
    "age": "quantum_age",
+   "lane": "computing",
+   "kind": "optional",
+   "needs": [
+    "clockwork_automation",
+    "quantum_mechanics"
+   ],
    "cost": 1608610071039.999
   },
   "quantum_cultivation": {
    "age": "quantum_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "matter_conversion"
+   ],
    "cost": 432406193407.99976
   },
   "quantum_mechanics": {
    "age": "quantum_age",
+   "lane": "knowledge",
+   "kind": "keystone",
+   "needs": [
+    "antimatter_synthesis"
+   ],
    "cost": 196279944447.99988
   },
   "quantum_metallurgy": {
    "age": "quantum_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "neutron_mining"
+   ],
    "cost": 562275630335.9996
   },
   "quantum_networking": {
    "age": "fusion_age",
+   "lane": "computing",
+   "kind": "optional",
+   "needs": [
+    "darknets"
+   ],
    "cost": 47635839999.999985
   },
   "quarrying": {
    "age": "iron_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "bronze_working"
+   ],
    "cost": 65600
   },
   "radio": {
    "age": "electric_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "telecommunications"
+   ],
    "cost": 63800000
   },
   "railroads": {
    "age": "industrial_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "steam_power",
+    "road_building"
+   ],
    "cost": 10600000
   },
   "reality_art": {
    "age": "quantum_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "galactic_memory"
+   ],
    "cost": 255311506687.99985
   },
   "reality_engineering": {
    "age": "quantum_age",
+   "lane": "craft",
+   "kind": "capstone",
+   "needs": [
+    "reality_manipulation",
+    "dyson_engineering"
+   ],
    "cost": 2715451863039.9985
   },
   "reality_manipulation": {
    "age": "quantum_age",
+   "lane": "craft",
+   "kind": "spine",
+   "needs": [
+    "quantum_mechanics"
+   ],
    "cost": 150530483711.9999
   },
   "reusable_launchers": {
    "age": "digital_age",
+   "lane": "space",
+   "kind": "optional",
+   "needs": [
+    "space_stations"
+   ],
    "cost": 1479799999.9999998
   },
   "rifling": {
    "age": "industrial_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "gunpowder"
+   ],
    "cost": 39300000
   },
   "ritual": {
    "age": "stone_age",
+   "lane": "faith",
+   "kind": "spine",
+   "needs": [
+    "language"
+   ],
    "cost": 987
   },
   "road_building": {
    "age": "iron_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "masonry",
+    "the_wheel"
+   ],
    "cost": 50500
   },
   "rocketry": {
    "age": "atomic_age",
+   "lane": "space",
+   "kind": "spine",
+   "needs": [
+    "aviation"
+   ],
    "cost": 27000000
   },
   "romanticism": {
    "age": "industrial_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "baroque_arts"
+   ],
    "cost": 6260000
   },
   "sanitation": {
    "age": "victorian_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "seed_drill"
+   ],
    "cost": 75200000
   },
   "satellite_tech": {
    "age": "modern_age",
+   "lane": "space",
+   "kind": "keystone",
+   "needs": [
+    "rocketry",
+    "electricity_tech"
+   ],
    "cost": 99200000
   },
   "scholasticism": {
    "age": "medieval_age",
+   "lane": "knowledge",
+   "kind": "capstone",
+   "needs": [
+    "alchemy",
+    "theology"
+   ],
    "cost": 1520000
   },
   "scientific_method": {
    "age": "colonial_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "printing_press"
+   ],
    "cost": 15300000
   },
   "search_engines": {
    "age": "information_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "internet"
+   ],
    "cost": 119419999.99999999
   },
   "seed_drill": {
    "age": "industrial_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "new_world_crops"
+   ],
    "cost": 17900000
   },
   "self_replication": {
    "age": "digital_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "medical_nanobots",
+    "machine_learning"
+   ],
    "cost": 517439999.99999994
   },
   "siege_warfare": {
    "age": "iron_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "military_tactics"
+   ],
    "cost": 85300
   },
   "singularity_engineering": {
    "age": "transcendent_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "reality_manipulation"
+   ],
    "cost": 2706597128703.998
   },
   "smart_grid": {
    "age": "information_age",
+   "lane": "energy",
+   "kind": "optional",
+   "needs": [
+    "electricity_tech"
+   ],
    "cost": 576800000
   },
   "social_media": {
    "age": "information_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "internet"
+   ],
    "cost": 91840000
   },
   "space_elevator": {
    "age": "space_age",
+   "lane": "space",
+   "kind": "capstone",
+   "needs": [
+    "zero_g_manufacturing",
+    "space_mining"
+   ],
    "cost": 145212479999.99994
   },
   "space_mining": {
    "age": "space_age",
+   "lane": "space",
+   "kind": "spine",
+   "needs": [
+    "orbital_mechanics"
+   ],
    "cost": 8067359999.999997
   },
   "space_stations": {
    "age": "information_age",
+   "lane": "space",
+   "kind": "optional",
+   "needs": [
+    "satellite_tech"
+   ],
    "cost": 750400000
   },
   "special_forces": {
    "age": "modern_age",
+   "lane": "military",
+   "kind": "optional",
+   "needs": [
+    "nuclear_deterrence"
+   ],
    "cost": 622000000
   },
   "steam_power": {
    "age": "industrial_age",
+   "lane": "energy",
+   "kind": "spine",
+   "needs": [
+    "steel_forging"
+   ],
    "cost": 3710000
   },
   "steam_pumps": {
    "age": "industrial_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "coke_smelting"
+   ],
    "cost": 30200000
   },
   "steel_forging": {
    "age": "medieval_age",
+   "lane": "materials",
+   "kind": "spine",
+   "needs": [
+    "iron_smelting"
+   ],
    "cost": 316000
   },
   "stellar_cartography": {
    "age": "space_age",
+   "lane": "trade",
+   "kind": "capstone",
+   "needs": [
+    "asteroid_claims",
+    "deep_space_astronomy"
+   ],
    "cost": 111329567999.99995
   },
   "stellar_core_mining": {
    "age": "interstellar_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "asteroid_refining"
+   ],
    "cost": 374970892799.9998
   },
   "stellar_engineering": {
    "age": "interstellar_age",
+   "lane": "energy",
+   "kind": "spine",
+   "needs": [
+    "warp_drive"
+   ],
    "cost": 59784515839.99998
   },
   "stoneworking": {
    "age": "stone_age",
+   "lane": "materials",
+   "kind": "keystone",
+   "needs": [
+    "tool_making"
+   ],
    "cost": 1670
   },
   "suburbs": {
    "age": "modern_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "green_revolution"
+   ],
    "cost": 283000000
   },
   "superconductors": {
    "age": "fusion_age",
+   "lane": "materials",
+   "kind": "spine",
+   "needs": [
+    "plasma_physics"
+   ],
    "cost": 3465123199.999999
   },
   "surveying": {
    "age": "colonial_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "architecture"
+   ],
    "cost": 43700000
   },
   "synthetic_food": {
    "age": "cyberpunk_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "gene_editing"
+   ],
    "cost": 3402559999.999999
   },
   "telecommunications": {
    "age": "victorian_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "electrification"
+   ],
    "cost": 57800000
   },
   "television": {
    "age": "modern_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "cinema"
+   ],
    "cost": 129000000
   },
   "terraforming": {
    "age": "galactic_age",
+   "lane": "space",
+   "kind": "optional",
+   "needs": [
+    "warp_drive"
+   ],
    "cost": 620885538559.9996
   },
   "the_plough": {
    "age": "classical_age",
+   "lane": "agriculture",
+   "kind": "optional",
+   "needs": [
+    "irrigation"
+   ],
    "cost": 133000
   },
   "the_wheel": {
    "age": "bronze_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "woodworking"
+   ],
    "cost": 16100
   },
   "theology": {
    "age": "medieval_age",
+   "lane": "faith",
+   "kind": "keystone",
+   "needs": [
+    "philosophy"
+   ],
    "cost": 410000
   },
   "timeless_archive": {
    "age": "quantum_age",
+   "lane": "knowledge",
+   "kind": "capstone",
+   "needs": [
+    "cosmology",
+    "quantum_mechanics"
+   ],
    "cost": 2080862568959.9988
   },
   "titanium_alloys": {
    "age": "modern_age",
+   "lane": "materials",
+   "kind": "optional",
+   "needs": [
+    "chemical_engineering"
+   ],
    "cost": 479000000
   },
   "tool_making": {
    "age": "primitive_age",
+   "lane": "craft",
+   "kind": "spine",
    "cost": 413
   },
   "transcendence": {
    "age": "transcendent_age",
+   "lane": "faith",
+   "kind": "keystone",
+   "needs": [
+    "reality_manipulation"
+   ],
    "cost": 1607429439795.199
   },
   "unified_theory": {
    "age": "fusion_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "neural_interface",
+    "plasma_physics"
+   ],
    "cost": 9911327999.999996
   },
   "virtual_reality": {
    "age": "digital_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "social_media"
+   ],
    "cost": 181299999.99999997
   },
   "void_contemplation": {
    "age": "interstellar_age",
+   "lane": "faith",
+   "kind": "optional",
+   "needs": [
+    "overview_effect"
+   ],
    "cost": 100895782399.99995
   },
   "warp_drive": {
    "age": "interstellar_age",
+   "lane": "space",
+   "kind": "keystone",
+   "needs": [
+    "space_mining",
+    "zero_g_manufacturing"
+   ],
    "cost": 77554220799.99997
   },
   "wire_transfers": {
    "age": "electric_age",
+   "lane": "trade",
+   "kind": "optional",
+   "needs": [
+    "telecommunications"
+   ],
    "cost": 108000000
   },
   "woodworking": {
    "age": "stone_age",
+   "lane": "craft",
+   "kind": "optional",
+   "needs": [
+    "tool_making"
+   ],
    "cost": 3660
   },
   "wormholes": {
    "age": "quantum_age",
+   "lane": "space",
+   "kind": "optional",
+   "needs": [
+    "galactic_navigation"
+   ],
    "cost": 1233759650815.9993
   },
   "xenology": {
    "age": "interstellar_age",
+   "lane": "knowledge",
+   "kind": "optional",
+   "needs": [
+    "deep_space_astronomy"
+   ],
    "cost": 131013926399.99994
   },
   "zero_g_manufacturing": {
    "age": "space_age",
+   "lane": "craft",
+   "kind": "spine",
+   "needs": [
+    "orbital_mechanics",
+    "superconductors"
+   ],
    "cost": 6238758399.999998
   },
   "zero_point_energy": {
    "age": "quantum_age",
+   "lane": "energy",
+   "kind": "optional",
+   "needs": [
+    "antimatter_synthesis"
+   ],
    "cost": 948932363007.9994
   }
  },

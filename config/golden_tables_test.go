@@ -42,9 +42,17 @@ type goldenEffect struct {
 	Value  float64 `json:"value"`
 }
 
+// goldenTech is a tech's place in the tree and its price. Cost stays last so
+// a record written before the tree fields existed is only added to. Needs is
+// Prerequisites in declared order; AnyOf is the either-or group in declared
+// order. Both are left out when empty.
 type goldenTech struct {
-	Age  string  `json:"age"`
-	Cost float64 `json:"cost"`
+	Age   string   `json:"age"`
+	Lane  string   `json:"lane"`
+	Kind  TechKind `json:"kind"`
+	Needs []string `json:"needs,omitempty"`
+	AnyOf []string `json:"any_of,omitempty"`
+	Cost  float64  `json:"cost"`
 }
 
 type goldenGate struct {
@@ -84,8 +92,9 @@ func liveGoldenTables() goldenTables {
 		g.Buildings[d.Key] = b
 	}
 	techs := Technologies()
+	kinds := TechKinds(techs, defs)
 	for _, t := range techs {
-		g.Techs[t.Key] = goldenTech{Age: t.Age, Cost: t.Cost}
+		g.Techs[t.Key] = goldenTech{Age: t.Age, Lane: t.Lane, Kind: kinds[t.Key], Needs: t.Prerequisites, AnyOf: t.AnyOf, Cost: t.Cost}
 	}
 	order := AgeOrder()
 	for _, a := range Ages() {
