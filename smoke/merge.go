@@ -103,7 +103,7 @@ func MergeSessions(e *Env, parts []*Session) (*Session, error) {
 		switch {
 		case sc.Name == "static" && static:
 			r = &Result{Name: "static"}
-			runStatic(e, r)
+			runStatic(&r.Findings)
 		case sc.Name == "progression" && len(runs) > 0:
 			sort.Slice(runs, func(i, j int) bool { return runs[i].Seed < runs[j].Seed })
 			cfg := configFromJSON(*cfgJSON)

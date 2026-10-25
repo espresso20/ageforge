@@ -340,13 +340,13 @@ func documentedShortcuts(md string) map[string]string {
 // requiredForms are command shapes with no keyword to find them by.
 var requiredForms = []struct{ cmd, prefix, what string }{}
 
-func runDocsync(e *Env, res *Result) {
-	if e.RepoRoot == "" {
+func runDocsync(root string, res *Findings) {
+	if root == "" {
 		res.fail("docsync_unavailable", "repository root unknown; run from the repo")
 		return
 	}
 	counts := GameCounts()
-	claims, err := docClaims(e.RepoRoot)
+	claims, err := docClaims(root)
 	if err != nil {
 		res.fail("docsync_read", "%v", err)
 		return
@@ -363,7 +363,7 @@ func runDocsync(e *Env, res *Result) {
 		}
 		rows = append(rows, fmt.Sprintf("| %s:%d | %s | %d | %s |", c.file, c.line, cell(c.text), c.got, mark))
 	}
-	heading, tableRows, err := lineageTable(e.RepoRoot)
+	heading, tableRows, err := lineageTable(root)
 	if err != nil {
 		res.fail("doc_lineages", "%v", err)
 	} else {
@@ -376,7 +376,7 @@ func runDocsync(e *Env, res *Result) {
 	}
 
 	cmds, accepts := registryCommands()
-	mdRaw, err := os.ReadFile(filepath.Join(e.RepoRoot, "site/docs/commands.md"))
+	mdRaw, err := os.ReadFile(filepath.Join(root, "site/docs/commands.md"))
 	if err != nil {
 		res.fail("docsync_read", "%v", err)
 		return

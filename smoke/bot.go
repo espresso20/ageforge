@@ -159,15 +159,6 @@ type plan struct {
 	blockCost map[string]float64
 }
 
-func sortedKeys[V any](m map[string]V) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
-}
-
 // goodStock is what the bot counts as a full store of res: a good stock of it
 // for the town as it stands (rules.Set.StockOf): the age's stock scale in
 // minutes of the town's own income of res. Stock has no ceiling, so nothing

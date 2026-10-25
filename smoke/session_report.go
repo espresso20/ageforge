@@ -41,12 +41,6 @@ func (s *Session) scenarioTable(sb *strings.Builder) {
 	}
 }
 
-// cell keeps a table cell on one line.
-func cell(s string) string {
-	s = strings.ReplaceAll(s, "\n", " ")
-	return strings.ReplaceAll(s, "|", "\\|")
-}
-
 // pacing returns the first progression summary, the one the pacing table
 // is drawn from.
 func (s *Session) pacing() *Summary {

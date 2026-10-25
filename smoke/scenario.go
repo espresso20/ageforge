@@ -121,50 +121,15 @@ func runSeeds[T any](e *Env, seeds []int64, f func(seed int64) T) []T {
 	return out
 }
 
-// Finding is one problem a scenario found (a failure) or one thing worth
-// knowing that does not fail the run (a warning).
-type Finding struct {
-	Check   string `json:"check"`
-	Message string `json:"message"`
-	Seed    int64  `json:"seed,omitempty"`
-	// Repro is how to reproduce it: a command line, a seed and command list.
-	Repro string `json:"repro,omitempty"`
-	// Detail is long text for the full report only (a state dump, a stack).
-	Detail string `json:"detail,omitempty"`
-}
-
-// Section is one titled block of Markdown in the full report.
-type Section struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
-}
-
 // Result is one scenario's outcome.
 type Result struct {
-	Name     string    `json:"name"`
-	Status   string    `json:"status"`
-	WallMs   int64     `json:"wall_ms"`
-	Summary  string    `json:"summary"`
-	Failures []Finding `json:"failures"`
-	Warnings []Finding `json:"warnings,omitempty"`
-	Sections []Section `json:"-"`
+	Name   string `json:"name"`
+	Status string `json:"status"`
+	WallMs int64  `json:"wall_ms"`
+	Findings
 	// Progression holds bot-run summaries (progression, styles, prestige).
 	Progression []*Summary  `json:"progression,omitempty"`
 	Data        interface{} `json:"data,omitempty"`
-}
-
-func (r *Result) fail(check, format string, args ...interface{}) *Finding {
-	r.Failures = append(r.Failures, Finding{Check: check, Message: fmt.Sprintf(format, args...)})
-	return &r.Failures[len(r.Failures)-1]
-}
-
-func (r *Result) warn(check, format string, args ...interface{}) *Finding {
-	r.Warnings = append(r.Warnings, Finding{Check: check, Message: fmt.Sprintf(format, args...)})
-	return &r.Warnings[len(r.Warnings)-1]
-}
-
-func (r *Result) section(title, format string, args ...interface{}) {
-	r.Sections = append(r.Sections, Section{Title: title, Body: fmt.Sprintf(format, args...)})
 }
 
 // Scenario is one named, individually runnable check.
@@ -185,8 +150,8 @@ type Scenario struct {
 // Scenarios is the suite, in run order.
 func Scenarios() []Scenario {
 	return []Scenario{
-		{Name: "static", Desc: "Gate Covenant check from config alone: every age gate fits storage and has a source, and every milestone can be completed", Run: runStatic},
-		{Name: "docsync", Desc: "site and README headline numbers, lineage count and command reference match config and the command table", Run: runDocsync},
+		{Name: "static", Desc: "Gate Covenant check from config alone: every age gate fits storage and has a source, and every milestone can be completed", Run: func(e *Env, res *Result) { runStatic(&res.Findings) }},
+		{Name: "docsync", Desc: "site and README headline numbers, lineage count and command reference match config and the command table", Run: func(e *Env, res *Result) { runDocsync(e.RepoRoot, &res.Findings) }},
 		{Name: "progression", Desc: "greedy bot plays seeds end to end: panics, soft-locks, invariants, and the pacing table", Paced: true, Run: runProgression},
 		{Name: "veteran", Desc: "Era Mastery's veteran preset (mastery 10 through the Space Age): each age against its target ÷ k, the Primitive and Stone Ages under an hour, the Modern Age in 1.1 to 1.5 days; then the legacy kit bought after a scripted prestige, and the shop refund", Paced: true, Run: runVeteran},
 		{Name: "saveload", Desc: "save at a checkpoint per age, load into a fresh engine, continue, and compare against the uninterrupted run", Run: runSaveload},

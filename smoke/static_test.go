@@ -445,7 +445,7 @@ func TestEveryAgeStandsWithoutTheMarket(t *testing.T) {
 		})
 	}
 	var sb strings.Builder
-	(&Summary{Gates: []GateProblem{{From: "a", To: "b", Kind: "flow", Key: "k", Resource: "culture", Need: 2, Made: 1}}}).writeGates(&sb)
+	writeGates(&sb, []GateProblem{{From: "a", To: "b", Kind: "flow", Key: "k", Resource: "culture", Need: 2, Made: 1}})
 	for _, word := range []string{"market", "bought", "price units"} {
 		if strings.Contains(strings.ToLower(sb.String()), word) {
 			t.Errorf("the gate report still talks of %q:\n%s", word, sb.String())

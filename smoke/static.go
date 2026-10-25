@@ -72,15 +72,15 @@ type GateProblem struct {
 }
 
 // writeGates renders the static gate check.
-func (s *Summary) writeGates(sb *strings.Builder) {
+func writeGates(sb *strings.Builder, gates []GateProblem) {
 	sb.WriteString("\n## Static gate check\n\n")
 	sb.WriteString("From config alone, with no build_cost discounts. Stock has no cap, so no price is held against a store. Every building a gate asks for must be buildable in the age you advance from, and the tech it waits for, if any, must be finishable in that age. The wonder is paid through its bank, so it is held to no amount. Every resource a gate needs, the wonder's included, must be obtainable in that age from a cold start: a town with empty stores and only the buildings the gates so far asked for. Every flow resource a gate needs must be made within the age's target at a moderate income. On arrival, the first copy of every building of the new age that a run can build (its storage building included), and the cheapest tech of the new age, must be payable from that same cold start. No building may cost a resource with no source in its own age. Together these checks are the Gate Covenant. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n")
-	if len(s.Gates) == 0 {
+	if len(gates) == 0 {
 		sb.WriteString("No problems.\n")
 		return
 	}
 	sb.WriteString("| advance | requirement | needs | rule |\n|---|---|---|---|\n")
-	for _, g := range s.Gates {
+	for _, g := range gates {
 		switch g.Kind {
 		case "unbuildable":
 			fmt.Fprintf(sb, "| %s → %s | %d %s | built only in %s | must be buildable in %s |\n", g.From, g.To, g.Count, g.Key, g.BuiltIn, g.From)

@@ -138,8 +138,8 @@ func TestMergeShards(t *testing.T) {
 	other := func(results ...*Result) *Session {
 		return roundTrip(&Session{Tier: TierFull, Pacing: PacingEnforce, Started: time.Now(), Scenarios: results})
 	}
-	idle := &Result{Name: "idle", Status: StatusFail, Summary: "1h: slow", Failures: []Finding{{Check: "idle_target", Message: "slow"}}}
-	fuzz := &Result{Name: "fuzz", Status: StatusPass, Summary: "no crashes"}
+	idle := &Result{Name: "idle", Status: StatusFail, Findings: Findings{Summary: "1h: slow", Failures: []Finding{{Check: "idle_target", Message: "slow"}}}}
+	fuzz := &Result{Name: "fuzz", Status: StatusPass, Findings: Findings{Summary: "no crashes"}}
 	empty := other()
 	e := &Env{Tier: TierFull, Pacing: PacingEnforce}
 	sess, err := MergeSessions(e, []*Session{prog(1), prog(2), other(idle), other(fuzz), empty})
