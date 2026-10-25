@@ -92,7 +92,7 @@ The flow resources (food, faith, culture) aren't priced that way. Those parts ar
 
 A wonder is paid through its bank, a deposit at a time. Stock has no limit (see [No storage wall](buildings.md#no-storage-wall)), so the whole price can sit in your stock until you bank it.
 
-Build times in the list are in ticks, with the real time beside them at the base tick of 2 seconds. They are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed. Architecture, a Renaissance Age tech, takes a quarter off the time of every wonder you start after it, and the techs that cut all construction time then take their share of what is left. When you start a wonder, the log says how long it will take.
+Build times in the list above are in ticks, with the real time beside them at the base tick of 2 seconds. They are first-run times: on known ground [Era Mastery](prestige.md#era-mastery) divides them by the age's speed. Architecture, a Renaissance Age tech, takes a quarter off the time of every wonder you start after it, and the techs that cut all construction time then take their share of what is left. When you start a wonder, the log says how long it will take.
 
 ---
 
