@@ -63,6 +63,9 @@ All notable changes to AgeForge are documented here.
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
 - **Late-game festival and Black Market prices.** They now stay in step with your culture income in every age instead of running away after the middle ages.
+- **Close zoom faces.** People no longer show four eyes (and couples four hearts) at the closest skyline zoom.
+- **Civ names on the ridge.** At the closest skyline zoom a met civ's name stands right above its pole instead of hanging in the sky, and a name that has no room is left out.
+- **The skyline strip fills its box.** One tall wonder no longer flattens the dashboard's skyline into a thin band; people are specks, and the new, wonder and fire marks sit on the buildings instead of floating over them.
 
 ### Added
 - **Locked buildings show up.** The Buildings panel lists this age's buildings that still need a tech, greyed out, with the research they need and a word from your scholars.
