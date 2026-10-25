@@ -7,8 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
@@ -138,11 +136,9 @@ func TestFreshGameShowsNoSpoilers(t *testing.T) {
 	}
 
 	// The main window.
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	d.refresh()
-	screen := screenAt(t, pages, 180, 56)
+	screen := drawPrimitive(t, pages, 180, 56).Text()
 	checkSpoilers(t, "screen", screen, terms)
 	if !strings.Contains(screen, "To the Stone Age") {
 		t.Errorf("the Next Age goal should name the next age:\n%s", screen)
