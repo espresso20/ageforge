@@ -245,6 +245,8 @@ func newSkyBase(m *mapmodel.Model, sky mapmodel.SkyScene) *skyBase {
 		b.layGalaxy()
 	case mapmodel.SkyQuantum:
 		b.layQuantum()
+	case mapmodel.SkyMandala:
+		b.hub = pt(mdX, mdY) // the core, which need not stay the plane's middle
 	}
 	return b
 }
