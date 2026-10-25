@@ -52,7 +52,7 @@ The share is weighted by what each resource is worth in the age's prices, so a r
 
 ### The gallery
 
-Press `G` (or `Tab`) in the Wonders panel for the gallery: a picture of every wonder you have built, one at a time, drawn the way the skyline map draws it and as large as the panel. Under the picture are the wonder's name, its age, the year that age began and its description. The gallery opens on the newest wonder. `←` `→` (or `↑` `↓`, `PgUp` `PgDn`, `Option+↑` `Option+↓`) step through the wonders in age order. `Home` and `End` (or `Option+←` and `Option+→`) go to the first and the last. `G` or `Tab` goes back to the list, and so does `Esc` (a second `Esc` closes the panel). A wonder you have not built is not in the gallery. It works in every glyph set and theme, at 80 columns by 24 rows and larger.
+Press `G` (or `Tab`) in the Wonders panel for the gallery: a picture of every wonder you have built, one at a time, drawn the way the skyline map draws it and as large as the panel. A line above the picture counts the wonders you have built (`2 of 2 built`). Under the picture are the wonder's name, its age, the year that age began and its description. The gallery opens on the newest wonder. `←` `→` (or `↑` `↓`, `PgUp` `PgDn`, `Option+↑` `Option+↓`) step through the wonders in age order. `Home` and `End` (or `Option+←` and `Option+→`) go to the first and the last. `G` or `Tab` goes back to the list, and so does `Esc` (a second `Esc` closes the panel). A wonder you have not built is not in the gallery. It works in every glyph set and theme, at 80 columns by 24 rows and larger.
 
 <figure class="screen" data-screen="wonders-gallery"><figcaption>The gallery in the Bronze Age: a wonder built earlier, drawn at dusk with its lamps lit.</figcaption></figure>
 
