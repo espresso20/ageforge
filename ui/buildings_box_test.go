@@ -21,9 +21,8 @@ import (
 const (
 	playtestCols = 2*60 + richSidebarW
 	// The rows over the boxes there are the badge line, the status ribbon and
-	// the toast line, and the full Ledger with the one row of cards that the
-	// three resources of a Primitive Age town call for.
-	playtestRows = 45 + (dashHeaderRows - ledgerCompactRows) + ledgerFullHead + 2 + promptRows
+	// the toast line, and the full Ledger.
+	playtestRows = 45 + (dashHeaderRows - ledgerCompactRows) + ledgerFullHeight + promptRows
 )
 
 // playtestTown is a dashboard on a town like the playtest's.

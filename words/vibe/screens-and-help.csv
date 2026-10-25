@@ -2404,7 +2404,6 @@ ui.wonders_view.galleryText.03,[gray]%d of %d flexed[-]
 ui.wonders_view.galleryText.04,"  [gray]the age dropped %s[-]"
 ui.dash_ledger.finalRow.01,"You've hit the final age, the endgame."
 ui.dash_ledger.waitText.04,"+%d more, bet"
-ui.dash_ledger.moreText.01,"+%d more, lowkey a lot"
 ui.dash_ledger.leadText.01,%s speedrun
 ui.dash_ledger.readyText.01,"Every pillar ate, no notes. Type advance, it's go time."
 ui.dash_ledger.readyText.02,"Every pillar's up, but the catastrophe is sitting in your DMs. Answer it first (type catastrophe)."
@@ -2412,9 +2411,6 @@ ui.dash_ledger.waitText.01,then the %s boss
 ui.dash_ledger.waitText.02,Manifesting: 
 ui.dash_ledger.waitText.03,Pls: 
 ui.dash_ledger.shortText.01,Broke on: 
-ui.dash_ledger.trendText.01,▲ so back
-ui.dash_ledger.trendText.02,▼ so over
-ui.dash_ledger.trendText.03,▬ vibing
 ui.dashboard.statusLine.19,%s rn
 ui.dashboard.statusLine.17,Squad %s
 ui.dashboard.statusLine.18,[gray]Next arc: %s[-]

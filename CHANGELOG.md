@@ -16,8 +16,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - **Lineage badges on a real idle scale.** Each lineage's badges now count to numbers set by how much of that lineage a dedicated player builds across many runs, with Legendary a long-term goal.
-- **A new top panel.** The top of the dashboard is a ledger: the age and the year, your people and morale, the four pillars to the next age, a long bar to the next age with what it is waiting on, and every resource with its rate and a trend line.
-- **The mini map shows from 105x36.** The new top panel takes two more rows at that size, so the mini map needs two more (it was 105x34); the wiki and the `minimap on` reply say so.
+- **A new top panel.** The top of the dashboard is a ledger: the age and the year, your people and morale, the four pillars to the next age, and a long bar to the next age with what it is waiting on.
 - **No ceiling on bonuses.** Production bonuses apply in full however large they grow, and knowledge buildings past their cap still build and research at half rate.
 - **A wonder's banked share counts each resource at its worth.** The percent the top of the dashboard, the Wonders panel and the Map show for a wonder's bank weighs each resource by its price in the age, so a resource named in huge amounts no longer outweighs a dear one.
 - **VibeMode reaches the log.** Log lines and refusals switch to the slang script too.

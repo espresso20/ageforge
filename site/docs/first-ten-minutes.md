@@ -10,10 +10,10 @@ The game opens on its [main menu](how-to-play.md#the-main-menu). On a first visi
 
 You're in the **Primitive Age**. The screen shows:
 - The status ribbon: your account name, `Primitive Age`, the year, `People 0/0` and `Morale 50%`
-- The Ledger under it: a long bar to the Stone Age with what it is waiting on, and a card for each resource you have
+- The Ledger under it: a long bar to the Stone Age with what it is waiting on, and the four pillars
 - The Economy panel, which is always on screen: Resources, Under construction (with the People box beside it on a big terminal) and the Log on the left, the Buildings list on the right, with the Getting started guide under it
 
-Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 36 rows or larger.
+Type `map` any time to open the [Map](map.md) (Esc closes it): it draws your town from your real buildings, so it grows as you build. Type `icons` if you want real icons on it. `minimap on` puts a short mini map above the Buildings list, on a terminal of 105 columns by 34 rows or larger.
 
 <figure class="screen" data-screen="new-game"><figcaption>The screen a new game opens on, at 120 columns by 40 rows: almost nothing in stock, nothing built, and the first buildings waiting in the Buildings list.</figcaption></figure>
 
