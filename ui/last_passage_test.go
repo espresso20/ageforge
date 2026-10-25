@@ -30,7 +30,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 	if !pages.HasPage(catastrophePage) {
 		t.Fatal("refresh did not show the Last Passage modal")
 	}
-	screen := renderPages(t, pages, 160, 50)
+	screen := drawPrimitive(t, pages, 160, 50).Text()
 	wantAll(t, "modal", screen,
 		"✦ The Last Passage", "☄ The Last Passage", "Prestige waits on your answer",
 		"ENDURE: pass through, diminished", "You keep 50% of this run's prestige points",
@@ -88,7 +88,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 	d, engine, pages := lastPassageDashboard(t, "quantum_age", true)
 	d.refresh()
-	screen := renderPages(t, pages, 160, 50)
+	screen := drawPrimitive(t, pages, 160, 50).Text()
 	if !strings.Contains(screen, "You already carry the Cosmic Legacy. Succumb is closed to you.") {
 		t.Errorf("no reason for the closed Succumb\n%s", screen)
 	}
@@ -169,7 +169,7 @@ func checkCostBlock(t *testing.T, d *Dashboard, pages *tview.Pages, state game.G
 		t.Fatalf("the panel has %d price lines, want one at index %d", len(at), nth)
 	}
 	tv.ScrollTo(at[nth]-1, 0)
-	rows := strings.Split(renderText(t, pages, w, h), "\n")
+	rows := drawPrimitive(t, pages, w, h).Rows()
 	first, last := -1, -1
 	for _, item := range items {
 		row := -1
@@ -264,7 +264,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	if !d.overlayMgr.Show("harbinger", engine.GetState()) {
 		t.Fatal("harbinger overlay not registered")
 	}
-	screen := renderText(t, pages, 160, 50)
+	screen := drawPrimitive(t, pages, 160, 50).Text()
 	if !strings.Contains(screen, "Warning of the Last Passage") {
 		t.Errorf("overlay not on screen:\n%s", screen)
 	}
