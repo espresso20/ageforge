@@ -14,7 +14,9 @@ import (
 //   - mid is the frame itself.
 //   - close composes a view half as wide and shows a window half as tall,
 //     every cell drawn as 2x2 (a half block becomes two solid cells, so a
-//     roofline is chunky and exact). The window starts at the foot of the
+//     roofline is chunky and exact; a shape glyph such as a head is redrawn
+//     at twice the size, and any other single glyph is drawn once, never
+//     four times: see zoomCell). The window starts at the foot of the
 //     scene and the up and down arrows raise it over a tall tower (pan).
 //   - wide composes a view twice as wide and twice as tall (the buildings
 //     keep the size the screen's own height gives them) and shrinks it 2x2
@@ -173,7 +175,7 @@ func (s *scene) present() *scene {
 	}
 	sc.fb.reset(sc.W, sc.H)
 	if s.zm == zClose {
-		magnify(sc.fb, &s.v.lfb, sc.S, s.pan, s.offX)
+		magnify(sc.fb, &s.v.lfb, sc.S, s.pan, s.offX, s.tier)
 	} else {
 		shrink(sc.fb, &s.v.lfb, s.tier == mapmodel.TierASCII)
 	}
@@ -253,8 +255,8 @@ func bgDepth(d uint8) uint8 {
 // cell is a 2x2 block. The window is the foot of the frame, raised by pan
 // world rows and starting offX columns in; S is the scene rows of dst. A
 // block glyph is exact (each of its four quadrants becomes one solid cell);
-// any other glyph is repeated.
-func magnify(dst, src *fb, S, pan, offX int) {
+// the other glyphs are scaled by what they are (zoomCell).
+func magnify(dst, src *fb, S, pan, offX int, tier mapmodel.GlyphTier) {
 	srows := src.h - (dst.h - S) // the frame's scene rows: it has the same bars
 	for r := 0; r < S; r++ {
 		k := S - 1 - r // rows above the bottom one
@@ -273,29 +275,9 @@ func magnify(dst, src *fb, S, pan, offX int) {
 				q = 2
 			}
 			q += x & 1
-			dst.c[(r+1)*dst.w+x] = zoomCell(*c, q)
+			dst.c[(r+1)*dst.w+x] = zoomCell(*c, q, tier)
 		}
 	}
-}
-
-// zoomCell is the cell of the 2x2 block that quadrant q (0 upper left … 3
-// lower right) of c becomes.
-func zoomCell(c cell, q int) cell {
-	m, ok := quadMask[c.ch]
-	if !ok {
-		return c
-	}
-	if m == 0 {
-		return cell{ch: ' ', fg: c.fg, bg: c.bg, d: c.d}
-	}
-	if m == 15 {
-		return c
-	}
-	col := c.bg
-	if m&(1<<q) != 0 {
-		col = c.fg
-	}
-	return cell{ch: '█', fg: col, bg: col, d: c.d}
 }
 
 // shrink draws src (a world frame twice dst's size) into dst: each 2x2
