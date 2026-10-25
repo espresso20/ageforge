@@ -1079,7 +1079,6 @@ func (r *runner) control(st *game.GameState) bool {
 			r.res.Stats.AgesAdvanced++
 			r.closeAge()
 			r.enterAge(after)
-			r.checkKitOnAdvance(after)
 			if r.cfg.StopAge != "" && r.ageIdx[after.Age] >= r.ageIdx[r.cfg.StopAge] {
 				return true
 			}
@@ -1160,7 +1159,6 @@ func (r *runner) control(st *game.GameState) bool {
 		r.cycle++
 		r.succ = 0
 		r.cycT0, r.cycS0 = r.ticks, r.sim
-		r.buyPrestigeUpgrades()
 		*st = r.ge.GetState()
 		r.enterAge(*st)
 		if r.cycle > r.cfg.Cycles && r.cfg.FinalAge == "" {
@@ -1168,24 +1166,6 @@ func (r *runner) control(st *game.GameState) bool {
 		}
 	}
 	return false
-}
-
-// buyPrestigeUpgrades spends points on the cheapest shop items first: the
-// legacy kit in its order (9, 18, 36, 54). Retired perks show no price.
-func (r *runner) buyPrestigeUpgrades() {
-	for i := 0; i < 100; i++ {
-		ps := r.ge.GetState().Prestige
-		best, bestCost := "", math.MaxInt
-		for _, k := range sortedKeys(ps.Upgrades) {
-			u := ps.Upgrades[k]
-			if u.NextCost > 0 && u.NextCost <= ps.Available && u.NextCost < bestCost {
-				best, bestCost = k, u.NextCost
-			}
-		}
-		if best == "" || !r.bot.act("prestige_upgrade", best, r.ge.BuyPrestigeUpgrade(best)) {
-			return
-		}
-	}
 }
 
 // foldDefense adds what the engine's defense tally gained since the last look.

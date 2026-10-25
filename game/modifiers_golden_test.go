@@ -15,7 +15,7 @@ import (
 // IMPORTANT: the "expected" side below does NOT call buildResolver or any
 // Modifier code. It independently re-derives the multiplier the engine applies
 // today, reading the same source getters the engine reads (Research.GetBonuses,
-// Prestige.GetBonuses, getWonderBonuses, permanentBonuses, Events.GetActiveEffects,
+// getWonderBonuses, permanentBonuses, Events.GetActiveEffects,
 // moraleMultiplier) and applying the same fixed formula + gates. So an equal
 // result means two genuinely different code paths agree — not a tautology. If
 // the resolver and the live math diverge, this test fails. That is its whole job.
@@ -27,7 +27,7 @@ const goldenEps = 1e-9
 // AFTER Fix B (ungated + floored):
 //
 //	prodAllAdd = research[production_all] + permanent[production_all]
-//	           + prestige[production_all] + wonders[production_all]
+//	           + wonders[production_all]
 //	           + Σ active-event production_all effects
 //	factor     = moraleMultiplier() × max(productionFloor, 1 + prodAllAdd)
 //
@@ -45,11 +45,10 @@ const goldenEps = 1e-9
 // resolver carries the additive pool and morale; the floor is engine-side only.
 func expectedProductionAll(ge *GameEngine) float64 {
 	research := ge.Research.GetBonuses()
-	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
 
 	add := research["production_all"] + ge.permanentBonuses["production_all"] +
-		prestige["production_all"] + wonders["production_all"]
+		wonders["production_all"]
 	for _, eff := range ge.Events.GetActiveEffects() {
 		if eff.Type == "production_all" {
 			add += eff.Value
@@ -69,43 +68,40 @@ func expectedPoolFactor(add float64) float64 {
 // expectedResRate re-derives the per-resource rate multiplier (Fix B: ungated +
 // floored; no ceiling):
 //
-//	add    = research[<res>_rate] + permanent[<res>_rate] + prestige[<res>_rate] + wonders[<res>_rate]
+//	add    = research[<res>_rate] + permanent[<res>_rate] + wonders[<res>_rate]
 //	factor = max(productionFloor, 1 + add)
 //
-// (permanentBonuses already absorbs milestone/legacy/epoch; prestige and wonders
-// are merged into the same effective per-resource pool in recalculateRates.) As
+// (permanentBonuses already absorbs milestone/legacy/epoch; wonders are merged
+// into the same effective per-resource pool in recalculateRates.) As
 // with production_all the floor only binds under 0.10; fixtures here are
 // non-binding, so this equals the resolver's Total.
 func expectedResRate(ge *GameEngine, res string) float64 {
 	key := res + "_rate"
 	research := ge.Research.GetBonuses()
-	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
 
-	add := research[key] + ge.permanentBonuses[key] + prestige[key] + wonders[key]
+	add := research[key] + ge.permanentBonuses[key] + wonders[key]
 	return expectedPoolFactor(add)
 }
 
 // expectedGatherRate re-derives the gather_rate multiplier the same way (Fix B).
 func expectedGatherRate(ge *GameEngine) float64 {
 	research := ge.Research.GetBonuses()
-	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
 
 	add := research["gather_rate"] + ge.permanentBonuses["gather_rate"] +
-		prestige["gather_rate"] + wonders["gather_rate"]
+		wonders["gather_rate"]
 	return math.Max(productionFloor, 1.0+add)
 }
 
 // expectedTickSpeed re-derives the (1 + Σ tick_speed) factor recalculateTickSpeed
 // computes (it does NOT gate on > 0):
 //
-//	add    = research[tick_speed] + permanent[tick_speed] + prestige[tick_speed]
+//	add    = research[tick_speed] + permanent[tick_speed]
 //	       + Σ active-event tick_speed effects
 //	factor = 1 + add
 func expectedTickSpeed(ge *GameEngine) float64 {
-	prestige := ge.Prestige.GetBonuses()
-	add := ge.Research.Bonus(config.EffectGameSpeed, "") + ge.permanentBonuses["tick_speed"] + prestige["tick_speed"]
+	add := ge.Research.Bonus(config.EffectGameSpeed, "") + ge.permanentBonuses["tick_speed"]
 	for _, eff := range ge.Events.GetActiveEffects() {
 		if eff.Type == "tick_speed" {
 			add += eff.Value

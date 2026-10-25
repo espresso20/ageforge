@@ -336,7 +336,9 @@ type DiplomacySave struct {
 	BoonWorkers []BoonWorkerLoan `json:"boon_workers,omitempty"`
 }
 
-// PrestigeSave holds prestige state for save
+// PrestigeSave holds prestige state for save. Upgrades was the shop's tiers:
+// the shop is gone, every save writes it null and a load ignores it; it stays
+// so each save's signature bytes keep their "upgrades" line.
 type PrestigeSave struct {
 	Level         int            `json:"level"`
 	PrestigeFloor string         `json:"prestige_floor,omitempty"`
@@ -353,8 +355,9 @@ type PrestigeSave struct {
 	Furthest      string         `json:"furthest,omitempty"`
 	RunFurthest   string         `json:"run_furthest,omitempty"`
 	MasterySeeded bool           `json:"mastery_seeded,omitempty"`
-	// ShopVersion and the legacy-kit memory remain for signed old saves. They
-	// are read but no longer affect point spending or carry-over eligibility.
+	// ShopVersion stays so a signed old save re-marshals to the bytes it was
+	// signed over; nothing reads it. The legacy-kit memory is read but no
+	// longer affects point spending or carry-over eligibility.
 	ShopVersion    int                `json:"shop_version,omitempty"`
 	LegacyPlan     []PlanTemplateItem `json:"legacy_plan,omitempty"`
 	LegacyFactions []string           `json:"legacy_factions,omitempty"`
@@ -965,10 +968,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	}
 
 	// Restore prestige
-	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
+	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available)
 	ge.Prestige.floor = save.Prestige.PrestigeFloor
 	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest, save.Prestige.MasterySeeded)
-	ge.Prestige.LoadLegacy(save.Prestige.ShopVersion, save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
+	ge.Prestige.LoadLegacy(save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
 
 	// Restore trade
 	ge.Trade.LoadState(save.Trade)

@@ -663,7 +663,7 @@ func (ge *GameEngine) popCapLocked() int {
 // popCapBaseLocked is the housing before the techs' bonus: what the housing
 // buildings hold plus the population bonuses. Caller holds the lock.
 func (ge *GameEngine) popCapBaseLocked() int {
-	return ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"])
+	return ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"])
 }
 
 // TechHousing is housing of base with the techs' housing bonus (a fraction:

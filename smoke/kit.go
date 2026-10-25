@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -31,10 +30,8 @@ import (
 //     from the Medieval Age, the Modern Age, and the Cyberpunk Age (a run
 //     through the Digital Age), from the first cycle's age times. Each must
 //     beat the one before by DepthPaysMin.
-//   - Kit carry-over (kitCarryProblems, checkKitOnAdvance): with the kit
-//     bought, a prestige keeps the shares and remembers the run, a new age
-//     gets its template slice, and remembered civilizations are met at
-//     their age.
+//   - Kit carry-over (kitCarryProblems): a prestige remembers the
+//     civilizations the run met.
 
 //go:embed testdata/veteran_kit.json
 var veteranKitJSON []byte
@@ -173,20 +170,10 @@ func (s *Summary) writeDepth(sb *strings.Builder) {
 
 // ===== Kit carry-over =====
 
-// kitOwned reports whether st has kit item key.
-func kitOwned(st game.GameState, key string) bool { return st.Prestige.Upgrades[key].Tier > 0 }
-
-// kitCarryProblems checks the legacy kit across a prestige: the kit stays
-// bought, the civilizations met are remembered, Worker Shares keeps the
-// shares, and Plan Template starts the new run's plan from the first age's
-// slice.
+// kitCarryProblems checks the legacy kit across a prestige: the
+// civilizations met are remembered.
 func kitCarryProblems(before, after game.GameState) []problem {
 	var out []problem
-	for _, key := range after.Ruleset().LegacyKit() {
-		if kitOwned(before, key) && !kitOwned(after, key) {
-			out = append(out, problem{"prestige_lost_kit", fmt.Sprintf("the legacy kit's %s did not survive prestige", key)})
-		}
-	}
 	bk, ak := before.Prestige.Kit, after.Prestige.Kit
 	met := 0
 	for _, f := range before.Diplomacy.Factions {
@@ -198,53 +185,5 @@ func kitCarryProblems(before, after game.GameState) []problem {
 		out = append(out, problem{"kit_factions_memory",
 			fmt.Sprintf("%d civilizations remembered after a prestige (before: %d, the run met %d)", ak.Factions, bk.Factions, met)})
 	}
-	if kitOwned(before, config.LegacyWorkers) && len(before.Workers.Shares) > 0 && !sameShares(before.Workers.Shares, after.Workers.Shares) {
-		out = append(out, problem{"kit_shares", fmt.Sprintf("Worker Shares owned, but the shares went %v -> %v at a prestige", before.Workers.Shares, after.Workers.Shares)})
-	}
-	if kitOwned(before, config.LegacyPlan) && ak.PlanByAge[after.Age] > 0 && ak.PlanAppliedAge != after.Age {
-		out = append(out, problem{"kit_template", fmt.Sprintf("Plan Template owned with %d items for %s, but the new run's plan did not get them", ak.PlanByAge[after.Age], after.Age)})
-	}
 	return out
-}
-
-func sameShares(a, b map[string]float64) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k, v := range a {
-		if b[k] != v {
-			return false
-		}
-	}
-	return true
-}
-
-// checkKitOnAdvance checks the kit after the runner's own advance: the new
-// age's template slice went into the plan, and every remembered
-// civilization of this age or earlier has been met.
-func (r *runner) checkKitOnAdvance(st game.GameState) {
-	k := st.Prestige.Kit
-	if kitOwned(st, config.LegacyPlan) && k.PlanByAge[st.Age] > 0 && k.PlanAppliedAge != st.Age {
-		r.anomaly(KindInvariant, "kit_template", fmt.Sprintf("Plan Template owned with %d items for %s, but the advance did not add them", k.PlanByAge[st.Age], st.Age), st, true)
-	}
-	if !kitOwned(st, config.LegacyFactions) {
-		return
-	}
-	set := st.Ruleset()
-	here, _ := set.Age(st.Age)
-	var missing []string
-	for _, key := range k.FactionKeys {
-		def, ok := set.Faction(key)
-		from, _ := set.Age(def.MinAge)
-		if !ok || from.Order > here.Order {
-			continue
-		}
-		if f := st.Diplomacy.Factions[key]; !f.Discovered {
-			missing = append(missing, key)
-		}
-	}
-	if len(missing) > 0 {
-		sort.Strings(missing)
-		r.anomaly(KindInvariant, "kit_old_friends", fmt.Sprintf("Old Friends owned, but %s not met again in %s", strings.Join(missing, ", "), st.Age), st, true)
-	}
 }

@@ -350,11 +350,6 @@ game.engine.diplomaticStatusLine.03,The %s are officially your opps now.
 game.engine.diplomaticStatusLine.04,Embargo slapped on the %s.
 game.engine.diplomaticStatusLine.05,"Neutral with the %s now, no beef."
 game.engine.diplomaticStatusLine.06,Your situationship with the %s is now %s.
-game.engine.prestigeUpgradeLine.01,Copped %s.
-game.engine.prestigeUpgradeLine.02,Secured the bag: %s. %s.
-game.engine.prestigeUpgradeLine.04,every run spawns with +
-game.engine.prestigeUpgradeLine.05,"Copped %s, tier %d unlocked."
-game.engine.prestigeUpgradeLine.06,Bagged %s (tier %d): %s.
 game.event_size.eventLine.01,Took an L on 
 game.event_size.eventLine.02,Bagged 
 game.event_size.eventLine.03, for 
@@ -557,11 +552,6 @@ game.prestige.EarlyPrestigeLine.12,aura point
 game.prestige.EarlyPrestigeLine.13,aura points
 game.prestige.EarlyPrestigeLine.14,age
 game.prestige.EarlyPrestigeLine.15,ages
-game.prestige.BuyUpgrade.01,"prestige points now work as a permanent production buff; the upgrade shop closed for good, no more drops"
-game.prestige.formatPrestigeEffect.01,Retired: refunded when the old shop logged off
-game.prestige.formatPrestigeEffect.02,Not copped
-game.prestige.formatPrestigeEffect.03,In the bag
-game.prestige.formatPrestigeEffect.05, starting 
 game.research.StartResearch.01,tech
 game.research.StartResearch.02,"Type research list to see the whole tech menu, no gatekeeping."
 game.research.StartResearch.03,%s is already in the big-brain archive.

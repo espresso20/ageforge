@@ -769,11 +769,9 @@ type PrestigeState struct {
 	Floor         string
 	TotalEarned   int
 	Available     int
-	Upgrades      map[string]PrestigeUpgradeState
 	PendingPoints int // points you'd get if you prestige now
 	CanPrestige   bool
-	FloorBlocks   bool    // true only when the prestige age floor is the current blocker
-	PassiveBonus  float64 // retired: always 0 (the passive became Era Mastery)
+	FloorBlocks   bool // true only when the prestige age floor is the current blocker
 	// ProductionMultiplier is the lasting multiplier from all points ever
 	// earned; NextProductionMultiplier includes PendingPoints.
 	ProductionMultiplier     float64
@@ -783,25 +781,8 @@ type PrestigeState struct {
 	// screen can say what one more age adds.
 	NextAge       string
 	NextAgePoints int
-	// ShopVersion is the shop the game is on (config.PrestigeShopVersion
-	// once any old perks are refunded).
-	ShopVersion int
 	// Kit is what the legacy kit remembers (legacy.go).
 	Kit LegacyKitState
-}
-
-// PrestigeUpgradeState represents one prestige upgrade for UI
-type PrestigeUpgradeState struct {
-	Name        string
-	Description string
-	Tier        int
-	MaxTier     int
-	NextCost    int // 0 if maxed or retired
-	Effect      string
-	// Retired marks a perk of the first shop: hidden, no effect, refunded.
-	Retired bool
-	// Kit marks a legacy kit item (one tier).
-	Kit bool
 }
 
 // === Event Types ===

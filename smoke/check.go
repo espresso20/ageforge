@@ -51,7 +51,6 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 	}{
 		{"morale", st.Morale}, {"morale_cap", st.MoraleCap}, {"morale_multiplier", st.MoraleMultiplier},
 		{"tick_speed_bonus", st.TickSpeedBonus}, {"succumb_research_factor", st.SuccumbResearchFactor},
-		{"prestige_passive_bonus", st.Prestige.PassiveBonus},
 	} {
 		if bad(v.val) {
 			add("nan_value", fmt.Sprintf("%s is non-finite: %v", v.name, v.val))

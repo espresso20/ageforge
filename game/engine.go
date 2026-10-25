@@ -4753,12 +4753,9 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// tick: they have to be in the first snapshot of the new run.
 	ge.recalculateRates()
 
-	// Apply starting resources (base + prestige bonus)
+	// Apply the starting resources
 	ge.Resources.Add("food", 15)
 	ge.Resources.Add("wood", 12)
-	for res, amount := range ge.Prestige.GetStartingResources() {
-		ge.Resources.Add(res, amount)
-	}
 
 	ge.recalculateTickSpeed()
 
@@ -4879,17 +4876,6 @@ func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.autoExpeditionTicksLeft = 0
 	ge.autoExpeditionStarved = false
 	ge.startRunShares()
-}
-
-// BuyPrestigeUpgrade purchases a prestige upgrade tier
-func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-
-	if err := ge.Prestige.BuyUpgrade(key); err != nil {
-		return err
-	}
-	return nil
 }
 
 // Reset completely reinitializes the engine to a fresh state (including prestige)
@@ -5765,32 +5751,6 @@ func (ge *GameEngine) civOpinion(key string) int {
 		return fs.Opinion
 	}
 	return 0
-}
-
-// prestigeUpgradeLine announces a prestige purchase with its total effect at
-// the new tier: "Bought Gather Boost (tier 2): worker output +10%."
-func (ge *GameEngine) prestigeUpgradeLine(key string) string {
-	def, ok := ge.rules.PrestigeUpgrade(key)
-	if !ok {
-		return vibe.Sprintf("game.engine.prestigeUpgradeLine.01", "Bought %s.", ge.rules.Name(rules.KindPrestigeUpgrade, key))
-	}
-	if def.EffectType == "legacy" {
-		// A one-tier kit item: say what it does from now on.
-		return vibe.Sprintf("game.engine.prestigeUpgradeLine.02", "Bought %s. %s.", def.Name, def.Description)
-	}
-	tier := ge.Prestige.upgrades[key]
-	total := float64(def.PerTier * float64(tier))
-	var effect string
-	switch def.EffectType {
-	case "rate_bonus":
-		effect = EffectTargetName(def.EffectKey) + " " + textfmt.SignedPercent(total)
-	case "starting_resource":
-		effect = vibe.Line("game.engine.prestigeUpgradeLine.04", "each run starts with +") + Amount(total, def.EffectKey)
-	}
-	if effect == "" {
-		return vibe.Sprintf("game.engine.prestigeUpgradeLine.05", "Bought %s (tier %d).", def.Name, tier)
-	}
-	return vibe.Sprintf("game.engine.prestigeUpgradeLine.06", "Bought %s (tier %d): %s.", def.Name, tier, effect)
 }
 
 // cheapestTechPrice is the price of the cheapest tech of the current age, or

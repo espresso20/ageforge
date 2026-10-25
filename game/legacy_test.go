@@ -209,9 +209,6 @@ func TestPlanTemplateWithinPlanCap(t *testing.T) {
 func TestPlanTemplateCarriesPlannedResearch(t *testing.T) {
 	isolateAccountDir(t)
 	ge := newSeededEngine(13)
-	ge.mu.Lock()
-	ge.Prestige.upgrades[config.LegacyPlan] = 1
-	ge.mu.Unlock()
 	for _, key := range []string{"tool_making", "fire_mastery"} {
 		if err := ge.PlanAddResearch(key); err != nil {
 			t.Fatal(err)
@@ -320,9 +317,6 @@ func TestLegacyKitIsFreeAfterFirstPrestige(t *testing.T) {
 	if got := ge.WorkerShares(); got["food"] != 50 {
 		t.Errorf("shares after buying Worker Shares: %v, want food 50", got)
 	}
-	if err := ge.BuyPrestigeUpgrade(config.LegacyPlan); err == nil {
-		t.Error("a legacy kit item was still sold")
-	}
 }
 
 // TestSuccumbReappliesTemplate: a Succumb folds the run's plan into the
@@ -380,11 +374,11 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 		t.Errorf("kit after load: %+v, want %+v", got, kit)
 	}
 	loaded.mu.RLock()
-	gotLog, ver := clonePlanTemplate(loaded.planLog), loaded.Prestige.shopVersion
+	gotLog := clonePlanTemplate(loaded.planLog)
 	owned := loaded.Prestige.Owns(config.LegacyFactions)
 	loaded.mu.RUnlock()
-	if !reflect.DeepEqual(gotLog, log) || len(log) == 0 || ver != 0 || !owned {
-		t.Errorf("after load: plan log %+v (want %+v), legacy field %d, owns Old Friends %v", gotLog, log, ver, owned)
+	if !reflect.DeepEqual(gotLog, log) || len(log) == 0 || !owned {
+		t.Errorf("after load: plan log %+v (want %+v), owns Old Friends %v", gotLog, log, owned)
 	}
 }
 
@@ -417,23 +411,51 @@ func TestNewSaveWritesNoEmptyKitFields(t *testing.T) {
 	}
 }
 
+// writeShopSave writes ge's state as a signed save that mutate has changed:
+// a stand-in for a build from the days of the prestige shop, which wrote
+// tiers and a shop version that no build writes now.
+func writeShopSave(t *testing.T, ge *GameEngine, name string, mutate func(*GameSave)) {
+	t.Helper()
+	ge.mu.RLock()
+	gs := ge.buildSaveSnapshot()
+	ge.mu.RUnlock()
+	mutate(&gs)
+	gs.Signature = signSave(gs)
+	data, err := json.MarshalIndent(gs, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(savePath(name), data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestLegacyShopSavesKeepTheirCarryOverAndPoints verifies old signed save
 // fields still load, while level rather than a former purchase turns on the
 // three free carry-overs.
 func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
 	isolateAccountDir(t)
-	old := map[string]int{config.LegacyPlan: 1}
 	ge := newSeededEngine(31)
 	ge.mu.Lock()
-	ge.Prestige.LoadState(1, 120, 120, old)
-	ge.Prestige.LoadLegacy(2, []PlanTemplateItem{{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 1}}, []string{"riverlands_tribes"}, map[string]float64{"food": 40})
+	ge.Prestige.LoadState(1, 120, 120)
+	ge.Prestige.LoadLegacy([]PlanTemplateItem{{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 1}}, []string{"riverlands_tribes"}, map[string]float64{"food": 40})
 	ge.mu.Unlock()
-	if err := ge.SaveGame("old-shop"); err != nil {
-		t.Fatal(err)
+	writeShopSave(t, ge, "old-shop", func(gs *GameSave) {
+		gs.Prestige.Upgrades = map[string]int{config.LegacyPlan: 1, "gather_boost": 3}
+		gs.Prestige.ShopVersion = 2
+	})
+	if saved := readSaveFromDisk(t, "old-shop"); saved.Prestige.Upgrades[config.LegacyPlan] != 1 || saved.Prestige.ShopVersion != 2 {
+		t.Fatalf("setup: the old save lost its shop state: %+v", saved.Prestige)
 	}
 	loaded := NewGameEngine()
 	if err := loaded.LoadGame("old-shop"); err != nil {
 		t.Fatal(err)
+	}
+	if loaded.cheaterBadge {
+		t.Fatal("the old signed save failed its signature check")
 	}
 	p := loaded.GetState().Prestige
 	if p.TotalEarned != 120 || p.Available != 120 || p.ProductionMultiplier <= 1 {
@@ -452,12 +474,10 @@ func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
 	}
 
 	never := newSeededEngine(32)
-	never.mu.Lock()
-	never.Prestige.LoadState(0, 0, 0, map[string]int{config.LegacyPlan: 1, config.LegacyWorkers: 1, config.LegacyFactions: 1})
-	never.mu.Unlock()
-	if err := never.SaveGame("never-prestiged"); err != nil {
-		t.Fatal(err)
-	}
+	writeShopSave(t, never, "never-prestiged", func(gs *GameSave) {
+		gs.Prestige.Upgrades = map[string]int{config.LegacyPlan: 1, config.LegacyWorkers: 1, config.LegacyFactions: 1}
+		gs.Prestige.ShopVersion = 2
+	})
 	loaded = NewGameEngine()
 	if err := loaded.LoadGame("never-prestiged"); err != nil {
 		t.Fatal(err)

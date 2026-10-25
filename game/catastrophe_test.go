@@ -293,22 +293,6 @@ func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	}
 }
 
-// withStartingStock gives ge a starting-stock grant of food and wood, as the
-// first shop's Starting Food and Starting Wood perks were (they are retired;
-// the engine still pays whatever starting stock the shop holds).
-func withStartingStock(ge *GameEngine, food, wood float64) {
-	pm := ge.Prestige
-	list := append([]config.PrestigeUpgradeDef(nil), pm.upgradeList...)
-	for res, amount := range map[string]float64{"food": food, "wood": wood} {
-		def := config.PrestigeUpgradeDef{Key: "zz_test_start_" + res, Name: "Test " + res, EffectKey: res,
-			EffectType: "starting_resource", PerTier: amount, MaxTier: 1, Costs: []int{1}}
-		list = append(list, def)
-		pm.upgradeDefs[def.Key] = def
-		pm.upgrades[def.Key] = 1
-	}
-	pm.upgradeList = list
-}
-
 // A Succumb lands the starting stock whole, as a prestige does: stock has no
 // ceiling, so nothing of it is cut off, and the new run's first snapshot
 // already holds it.
@@ -336,17 +320,8 @@ func TestSuccumb_StartingStockLands(t *testing.T) {
 		t.Errorf("a Succumb starts with %v food and %v wood, want 15 and 12", food, wood)
 	}
 
-	// With a starting-stock grant: all of it lands, the same amounts a
-	// prestige starts with.
-	ge = fallen(22)
-	withStartingStock(ge, 100, 150)
-	succumbIn(t, ge, "renaissance_age")
-	st = ge.GetState()
-	if food, wood := st.Resources["food"].Amount, st.Resources["wood"].Amount; food != 115 || wood != 162 {
-		t.Errorf("a Succumb with +100 food and +150 wood starts with %v food and %v wood, want 115 and 162", food, wood)
-	}
-	pr := fallen(22)
-	withStartingStock(pr, 100, 150)
+	// A prestige starts with the same stock.
+	pr := fallen(21)
 	if err := pr.DoPrestige(); err != nil {
 		t.Fatal(err)
 	}

@@ -576,10 +576,9 @@ func (pm *PrestigeManager) kitState() LegacyKitState {
 	}
 }
 
-// LoadLegacy restores the shop version and the kit's memory from a save,
-// cleaning what a hand edit could have broken.
-func (pm *PrestigeManager) LoadLegacy(shopVersion int, plan []PlanTemplateItem, factions []string, shares map[string]float64) {
-	pm.shopVersion = shopVersion
+// LoadLegacy restores the kit's memory from a save, cleaning what a hand
+// edit could have broken.
+func (pm *PrestigeManager) LoadLegacy(plan []PlanTemplateItem, factions []string, shares map[string]float64) {
 	pm.legacyPlan = loadPlanTemplate(pm.rules, plan)
 	known := map[string]bool{}
 	for _, f := range pm.rules.Factions() {
@@ -626,7 +625,7 @@ func (ge *GameEngine) LegacyForTest() LegacyKit {
 func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	ge.Prestige.LoadLegacy(ge.Prestige.shopVersion, kit.Plan, kit.Factions, kit.Shares)
+	ge.Prestige.LoadLegacy(kit.Plan, kit.Factions, kit.Shares)
 	if !own {
 		return
 	}
@@ -655,9 +654,10 @@ func (ge *GameEngine) NotePlanForTest(kind, key string, count int) {
 // reachable from play.
 func (ge *GameEngine) WriteShopV1SaveForTest(name string, level, totalEarned, available int, upgrades map[string]int) error {
 	ge.mu.Lock()
-	ge.Prestige.LoadState(level, totalEarned, available, maps.Clone(upgrades))
+	ge.Prestige.LoadState(level, totalEarned, available)
 	gs := ge.buildSaveSnapshot()
 	ge.mu.Unlock()
+	gs.Prestige.Upgrades = maps.Clone(upgrades)
 	stripShopV2(&gs)
 	gs.Signature = signSave(gs)
 	data, err := json.MarshalIndent(gs, "", "  ")

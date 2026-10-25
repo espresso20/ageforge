@@ -247,11 +247,10 @@ func TestAddTotal_EqualsOldHandSum(t *testing.T) {
 
 	// OLD hand-sum for production_all: research + (perm+prestige+wonders) + Σ events.
 	research := ge.Research.GetBonuses()
-	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
 
 	oldProdAll := research["production_all"] + ge.permanentBonuses["production_all"] +
-		prestige["production_all"] + wonders["production_all"]
+		wonders["production_all"]
 	for _, eff := range ge.Events.GetActiveEffects() {
 		if eff.Type == "production_all" {
 			oldProdAll += eff.Value
@@ -264,7 +263,7 @@ func TestAddTotal_EqualsOldHandSum(t *testing.T) {
 	// OLD hand-sum for iron_rate: research + (perm+prestige+wonders). Events emit
 	// nothing for <res>_rate, so there is no event term here.
 	oldIron := research["iron_rate"] + ge.permanentBonuses["iron_rate"] +
-		prestige["iron_rate"] + wonders["iron_rate"]
+		wonders["iron_rate"]
 	if got := r.AddTotal("iron_rate"); math.Abs(got-oldIron) > 1e-9 {
 		t.Errorf("iron_rate: AddTotal=%.12f old hand-sum=%.12f", got, oldIron)
 	}

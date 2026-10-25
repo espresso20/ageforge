@@ -566,9 +566,6 @@ func (ge *GameEngine) Succumb() error {
 
 	ge.Resources.Add("food", 15)
 	ge.Resources.Add("wood", 12)
-	for res, amount := range ge.Prestige.GetStartingResources() {
-		ge.Resources.Add(res, amount)
-	}
 
 	ge.recalculateTickSpeed()
 

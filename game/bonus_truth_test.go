@@ -847,7 +847,7 @@ var truthKinds = map[string]truthKind{
 	"tech_housing": {
 		Unit: "of housing", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			base := float64(ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"]))
+			base := float64(ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]))
 			if base <= 0 {
 				return truthMeasured{Skip: "no housing here"}
 			}

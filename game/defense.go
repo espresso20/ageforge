@@ -65,12 +65,11 @@ func (ge *GameEngine) recordSavedResource(res string, amount float64) {
 	t.Resources[res] += amount
 }
 
-// militaryPower is the summed military_power bonus: research, milestones,
-// prestige upgrades and wonders. Read-only.
+// militaryPower is the summed military_power bonus: research, milestones
+// and wonders. Read-only.
 func (ge *GameEngine) militaryPower() float64 {
-	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
-	return ge.Research.Bonus(config.EffectMilitaryPower, "") + ge.permanentBonuses["military_power"] + prestige["military_power"] + wonders["military_power"]
+	return ge.Research.Bonus(config.EffectMilitaryPower, "") + ge.permanentBonuses["military_power"] + wonders["military_power"]
 }
 
 // missionPower is militaryPower as a mission's difficulty reads it in the
@@ -83,9 +82,8 @@ func (ge *GameEngine) missionPower() float64 {
 // expeditionReward is the summed expedition_reward bonus, from the same
 // sources as militaryPower. Read-only.
 func (ge *GameEngine) expeditionReward() float64 {
-	prestige := ge.Prestige.GetBonuses()
 	wonders := ge.getWonderBonuses()
-	return ge.Research.Bonus(config.EffectExpeditionReward, "") + ge.permanentBonuses["expedition_reward"] + prestige["expedition_reward"] + wonders["expedition_reward"]
+	return ge.Research.Bonus(config.EffectExpeditionReward, "") + ge.permanentBonuses["expedition_reward"] + wonders["expedition_reward"]
 }
 
 // defenseRating is the live Defense Rating (MilitaryState.DefenseRating).

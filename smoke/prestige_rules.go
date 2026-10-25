@@ -78,16 +78,6 @@ func prestigeCarryProblems(before, after game.GameState, ending string) []proble
 	if (before.LastPassage.CosmicLegacy || ending == "succumbed") && !after.LastPassage.CosmicLegacy {
 		out = append(out, problem{"prestige_lost_cosmic_legacy", "the Cosmic Legacy did not survive prestige"})
 	}
-	for _, key := range sortedKeys(before.Prestige.Upgrades) {
-		if t := after.Prestige.Upgrades[key].Tier; t < before.Prestige.Upgrades[key].Tier {
-			out = append(out, problem{"prestige_lost_upgrade",
-				fmt.Sprintf("prestige upgrade %s fell from tier %d to %d", key, before.Prestige.Upgrades[key].Tier, t)})
-		}
-	}
-	if after.Prestige.PassiveBonus != 0 {
-		out = append(out, problem{"prestige_passive_bonus",
-			fmt.Sprintf("passive bonus is %.4f at level %d; it retired into Era Mastery and must be 0", after.Prestige.PassiveBonus, after.Prestige.Level)})
-	}
 	out = append(out, treeResetProblems(after)...)
 	out = append(out, kitCarryProblems(before, after)...)
 	return append(out, masteryCarryProblems(before, after)...)

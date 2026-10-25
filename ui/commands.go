@@ -47,7 +47,6 @@ const (
 	ArgSave                               // an existing save
 	ArgRouteAvailable                     // a trade route that can start
 	ArgRouteActive                        // a running trade route
-	ArgPrestigeUpgrade                    // a legacy kit item not bought yet
 	ArgAccount                            // a local account's name
 	ArgPlanItem                           // a plan item's number
 	ArgDeal                               // a trade deal's number, of the civilization in the previous argument

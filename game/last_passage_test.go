@@ -678,7 +678,7 @@ func TestLastPassageEndureKeepsAShareOfThePoints(t *testing.T) {
 func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := lpEngine(t, "quantum_age", 7)
-	ge.Prestige.LoadState(2, 10, 4, nil) // a veteran: level 2, 4 points in the bank
+	ge.Prestige.LoadState(2, 10, 4) // a veteran: level 2, 4 points in the bank
 	if hasCosmicLegacyModifier(ge) {
 		t.Fatal("legacy before Succumb")
 	}
