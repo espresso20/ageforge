@@ -7,7 +7,7 @@
 <h1 align="center">AgeForge</h1>
 
 <p align="center">
-  <em>Forge a civilization from nothing, all within your terminal.</em>
+  <em>An almanac of twenty-two ages, begun at a campfire and kept in your terminal.</em>
 </p>
 
 <p align="center">
@@ -38,31 +38,33 @@
 
 <br>
 
-AgeForge is an idle civilization game for the terminal: you forge an empire from nothing and take it through 22 ages of history, from a campfire to the Transcendent Age, one typed command at a time.
+AgeForge is an idle civilization game for the terminal. You are handed a few people, a fire, 25 food and 50 wood, and from there you raise a civilization through 22 ages, from ten thousand years before Christ to a year the calendar cannot print, one typed command at a time. No age lets you go until its Wonder stands. A harbinger comes before every doom, and whether you brace for it or let the whole civilization fall and carry its lessons into the next is yours to decide. Eleven neighbors wait past the edge of a map grown from its own seed, and the town keeps working while you are away.
 
 > Version note: this README and the [wiki](https://ageforge.io/docs/) describe the game on master, version 4.0, which is coming soon. The latest release is 3.6, which still has some older systems (the `speed` command, the old city map).
 
 ## Overview
 
-A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, let workers staff your buildings, research technologies, send expeditions and campaigns, trade and make deals with other civilizations, and advance through the ages. The first run is slow on purpose: about a week of real time to the Modern Age and a full run's prestige. The game keeps playing while you are away (up to 24 hours, at half rate), and the build plan spends your income for you.
+A new game starts in the Primitive Age. Gather, build, let workers find their own way to your buildings, research, send missions from the mission board, trade and treat with other civilizations, raise each age's Wonder and advance. Write a build plan and the game spends your income on it while you play and while you are away (up to 24 hours, at half rate); when you come back, the log tells you what happened, in order.
 
 ## Features
 
-- **Resource Management**: 24 resources across 22 ages with storage limits and production chains
+- **Resource Management**: 24 resources across 22 ages, one resource to each building line; stock has no cap
 - **Building System**: 302 buildings (251 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
 - **Worker System**: 11 domains (food, faith, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy); workers arrive on their own and follow your worker shares (`workers share faith 40`), with auto-recruit as housing and food allow
 - **Tech Tree**: 203 technologies with prerequisites and permanent bonuses
-- **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources; your garrison's Defense Rating blunts raids, war raids and catastrophe losses
+- **Missions and the Army**: a mission board of nine offers (short, long and grand), each rolled up front with its length, odds and haul, with road events on the way and a rare Legendary offer; grand military missions cost soldiers, and your garrison's Defense Rating blunts raids, war raids and catastrophe losses
 - **Epochs and Catastrophes**: 7 epochs; from the Iron Era on a doom may be fated to strike at any moment of an era, and a harbinger comes first (Appease, Brace or Invite). When it strikes you Endure or Succumb, and Succumb's legacy bonuses carry across runs. In the Cosmic Era prestige itself is the Last Passage
 - **Build Plan**: queue builds, techs, trades and an advance (up to 60 items); the game starts each one as the resources come in, and stock has no limit, so a price is the only thing that holds a build back
-- **The Map**: your town drawn from your real buildings, in two styles (a roguelike glyph world and a side-on skyline), changing with every age, with a mini map on the dashboard
+- **The Map**: your town drawn from your real buildings, in two styles (a roguelike glyph world and a side-on skyline that zooms from the whole town to every building's face), changing with every age; each age's Wonder stands on the skyline, and the Wonders panel keeps a gallery of every one you have built; `minimap on` adds a mini map above the Buildings list
+- **The Advance panel**: the march of ages with a moving calendar year (10,000 BC to Beyond time), the four pillars to the next age (Knowledge, People, Industry, Monument) and what the next age brings
 - **Random Events**: 61 events (26 base + 35 epoch-exclusive) with streak balancing
 - **Milestones**: 77 milestones across 6 chains with civilization titles and temporary speed boosts
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, buildings with a next rung in their line (a line never switches resource) can be upgraded to it (`upgrade`)
-- **Trade System**: 21 trade routes, harbors and a black market
+- **Trade System**: 21 trade routes, harbors and a black market whose deals go through five times in six
 - **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, rotating faction trade deals, boons and setbacks
 - **Prestige**: Reset-and-grow system from the Medieval Age on. Every point ever earned is a lasting production bonus in every age. Plan Template, Roster and Old Friends carry over automatically after the first prestige. Era Mastery: every age a run completes runs faster on later runs, up to 4.2x
-- **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
+- **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name over the full screen, and `help` lists every command. On a Mac, Option+arrows stand in for Page Up/Down and Home/End
+- **VibeMode**: `vibemode on` swaps the game's words for a GenZ script; costs, rules, saves and badges stay exactly as they are
 - **Themes and accounts**: 16 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
 - **Badges**: 556 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
 - **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
