@@ -44,7 +44,7 @@ func helpProvider(_ game.GameState, screenW int) string {
 	}
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.01", "[gold]═══ Getting around ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open on top of the town; the prompt keeps working while one is open."))
+	note(vibe.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open over the whole screen, and the prompt keeps working in most of them. The Wonders, Harbinger and Build Plan panels use letter keys, so press Esc before you type a command there."))
 	keys([2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.04", "Scroll a panel that is longer than the screen, like this one")},
 		[2]string{"Esc", vibe.Line("ui.overlay_help.helpProvider.06", "Close the panel (with no panel open: save and go to the main menu)")},
 		[2]string{"Tab", vibe.Line("ui.overlay_help.helpProvider.08", "Finish the word you are typing (press again for the next match)")},
