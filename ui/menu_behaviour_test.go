@@ -46,8 +46,7 @@ type menuRig struct {
 func newMenuRig(t *testing.T, games ...string) *menuRig {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	acct, err := game.CreateNamedAccount("Menu Player")
 	must(t, err)
 	r := &menuRig{t: t, acct: acct, clock: time.Unix(1_000_000, 0)}
@@ -686,10 +685,7 @@ func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 	if r.eng.Running() || r.eng.GetState().Tick != 0 {
 		t.Error("opening the case started a game")
 	}
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(100, 30)
+	sim := newSimScreen(t, 100, 30)
 	b.SetRect(0, 0, 100, 30)
 	b.Draw(theme.WrapScreen(sim))
 	var text strings.Builder
