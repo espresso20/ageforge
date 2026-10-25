@@ -392,3 +392,33 @@ func TestTechChecks(t *testing.T) {
 		}
 	}
 }
+
+// FeatureLockByKey is FeatureLocks by key.
+func FeatureLockByKey() map[string]FeatureLockDef {
+	return indexBy(FeatureLocks(), func(d FeatureLockDef) string { return d.Key })
+}
+
+// LiveFeatureLocks splits locks by whether isTech knows each one's tech: a
+// lock is live when its tech is in the tree, and waiting (inert, its command
+// open) when it is not.
+func LiveFeatureLocks(locks []FeatureLockDef, isTech func(string) bool) (live, waiting []FeatureLockDef) {
+	for _, d := range locks {
+		if isTech(d.Tech) {
+			live = append(live, d)
+		} else {
+			waiting = append(waiting, d)
+		}
+	}
+	return live, waiting
+}
+
+// FeaturesOpenedBy lists the locks tech opens, in FeatureLocks order.
+func FeaturesOpenedBy(tech string) []FeatureLockDef {
+	var out []FeatureLockDef
+	for _, d := range FeatureLocks() {
+		if d.Tech == tech {
+			out = append(out, d)
+		}
+	}
+	return out
+}

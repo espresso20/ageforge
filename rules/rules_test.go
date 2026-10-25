@@ -109,6 +109,57 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 	}
 }
 
+// workerClassFromTable reads the class a domain's workers hold in age off
+// config.WorkerClasses by age place: the class written for that age, else the
+// latest one from an earlier age, else the domain's first. An unknown age
+// reads as later than every age.
+func workerClassFromTable(domain, age string) (config.WorkerClassDef, bool) {
+	pos := config.AgePositions(config.AgeOrder())
+	now, known := pos[age]
+	var first, best config.WorkerClassDef
+	found, have := false, false
+	for _, c := range config.WorkerClasses() {
+		if c.Domain != domain {
+			continue
+		}
+		if !found {
+			first, found = c, true
+		}
+		if p := pos[c.AgeKey]; !known || p <= now {
+			best, have = c, true
+		}
+	}
+	if have {
+		return best, true
+	}
+	return first, found
+}
+
+// TestWorkerClassKnownCases pins a few classes by hand, so the table walk
+// above is not the only thing that says what each age holds.
+func TestWorkerClassKnownCases(t *testing.T) {
+	s := Core()
+	for _, tc := range []struct{ domain, age, class string }{
+		{"food", "primitive_age", "Forager"},
+		{"food", "stone_age", "Farmhand"},
+		{"lumber", "stone_age", "Gatherer"},
+		{"lumber", "primitive_age", "Gatherer"}, // before the domain starts: its first class
+		{"lumber", "quantum_age", "Cosmic Extractor"},
+		{"lumber", "not_an_age", "Cosmic Extractor"}, // an unknown age reads as the latest
+		{"energy", "stone_age", "Stoker"},
+		{"energy", "victorian_age", "Stoker"},
+		{"energy", "electric_age", "Power Worker"},
+	} {
+		c, ok := s.WorkerClass(tc.domain, tc.age)
+		if !ok || c.ClassName != tc.class {
+			t.Errorf("WorkerClass(%q, %q) = %q, %v; want %q", tc.domain, tc.age, c.ClassName, ok, tc.class)
+		}
+	}
+	if c, _ := s.WorkerClass("food", "primitive_age"); c.FoodCost != 0.06 {
+		t.Errorf("food cost of the first food class = %v, want 0.06", c.FoodCost)
+	}
+}
+
 func TestCoreMatchesConfigPerAge(t *testing.T) {
 	s := Core()
 	order := config.AgeOrder()
@@ -164,9 +215,9 @@ func TestCoreMatchesConfigPerAge(t *testing.T) {
 		}
 		for _, d := range config.WorkerDomains() {
 			got, okG := s.WorkerClass(d, age)
-			want, okC := config.WorkerClassByDomainAndAge(d, age)
+			want, okC := workerClassFromTable(d, age)
 			if okG != okC || got != want {
-				t.Errorf("WorkerClass(%q, %q) = %+v, config %+v", d, age, got, want)
+				t.Errorf("WorkerClass(%q, %q) = %+v, config table says %+v", d, age, got, want)
 			}
 		}
 		if _, ok := s.WorkerClass("not_a_domain", age); ok {

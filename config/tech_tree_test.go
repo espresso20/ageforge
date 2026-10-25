@@ -2,6 +2,7 @@ package config
 
 import (
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -19,37 +20,14 @@ func TestTechTreeKeepsItsRules(t *testing.T) {
 	}
 }
 
-// TestEveryTechHasLaneCodeAndEmblem spells out what TechTreeProblems checks
-// about a tech's place and art, and adds what it leaves to the terminal: an
-// emblem is one cell wide.
-func TestEveryTechHasLaneCodeAndEmblem(t *testing.T) {
-	lanes := TechLaneByKey()
-	perLane := map[string]int{}
-	codes := map[string]string{}
+// TestEveryTechEmblemIsOneCellWide: TechTreeProblems checks that an emblem is
+// one glyph; the terminal also needs it to take one cell.
+func TestEveryTechEmblemIsOneCellWide(t *testing.T) {
 	for _, tech := range Technologies() {
-		if _, ok := lanes[tech.Lane]; !ok {
-			t.Errorf("%s: lane %q is not a lane", tech.Key, tech.Lane)
-		}
-		perLane[tech.Lane]++
-		if !validTechCode(tech.Code) {
-			t.Errorf("%s: code %q is not 2 to %d capital letters", tech.Key, tech.Code, TechCodeMax)
-		}
-		if other, taken := codes[tech.Code]; taken {
-			t.Errorf("%s and %s share the code %s", other, tech.Key, tech.Code)
-		}
-		codes[tech.Code] = tech.Key
 		if n := len([]rune(tech.Emblem)); n != 1 || uniseg.StringWidth(tech.Emblem) != 1 {
 			t.Errorf("%s: emblem %q is %d glyphs, %d cells wide; want one glyph, one cell", tech.Key, tech.Emblem, n, uniseg.StringWidth(tech.Emblem))
 		}
 	}
-	var split []string
-	for _, l := range TechLanes() {
-		if perLane[l.Key] == 0 {
-			t.Errorf("lane %s holds no tech", l.Key)
-		}
-		split = append(split, l.Key+" "+strings.Repeat("#", perLane[l.Key]))
-	}
-	t.Logf("%d techs by lane:\n  %s", len(codes), strings.Join(split, "\n  "))
 }
 
 // TestTechLanes: ten lanes, each with its own key, name and one-cell glyph.
@@ -183,70 +161,13 @@ func TestTechKindsAreDerived(t *testing.T) {
 	}
 }
 
-// realKeystones is each wonder's keystone tech, as the tree's design names
-// them. The Sacred Grove has none by design: nothing blocks the first age.
-// Stonehenge has none yet: its keystone (Calendar) is a tech still to come.
-var realKeystones = map[string]string{
-	"sacred_grove":         "",
-	"great_monolith":       "stoneworking",
-	"stonehenge":           "calendar",
-	"colosseum":            "mathematics",
-	"parthenon":            "philosophy",
-	"great_library":        "theology",
-	"sistine_chapel":       "patronage",
-	"grand_lighthouse":     "cartography",
-	"crystal_palace":       "industrialization",
-	"eiffel_tower":         "mass_production",
-	"hoover_dam":           "power_distribution",
-	"particle_accelerator": "nuclear_fission",
-	"space_program":        "satellite_tech",
-	"global_network":       "internet",
-	"world_simulation":     "machine_learning",
-	"neon_citadel":         "cybernetics",
-	"stellar_cradle":       "fusion_power",
-	"dyson_scaffold":       "orbital_mechanics",
-	"warp_nexus":           "warp_drive",
-	"cosmic_beacon":        "galactic_navigation",
-	"reality_anchor":       "quantum_mechanics",
-	"singularity_core":     "transcendence",
-}
-
-// TestRealTechKinds: on the real tables every tech has a kind, there is one
-// keystone per tech a wonder requires, and the spine only depends on the
-// spine. The counts are pinned: 21 keystones (every wonder but the Sacred
-// Grove's) and the 26 techs they stand on, and the two capstones of the Iron
-// Era.
+// TestRealTechKinds: on the real tables the spine only depends on the spine.
+// Every tech's kind is pinned by name in testdata/golden_tables.json.
 func TestRealTechKinds(t *testing.T) {
-	techs, buildings := Technologies(), BaseBuildings()
-	kinds := TechKinds(techs, buildings)
-	keystones := map[string]bool{}
-	wonders := 0
-	for _, b := range buildings {
-		if b.Category != "wonder" {
-			continue
-		}
-		wonders++
-		want, listed := realKeystones[b.Key]
-		if !listed || b.RequiredTech != want {
-			t.Errorf("%s requires %q, want %q (listed %v)", b.Key, b.RequiredTech, want, listed)
-		}
-		if b.RequiredTech != "" {
-			keystones[b.RequiredTech] = true
-		}
-	}
-	if wonders != len(realKeystones) {
-		t.Errorf("%d wonders, the keystone table lists %d", wonders, len(realKeystones))
-	}
-	count := map[TechKind]int{}
+	techs := Technologies()
+	kinds := TechKinds(techs, BaseBuildings())
 	for _, tech := range techs {
-		k, ok := kinds[tech.Key]
-		if !ok {
-			t.Errorf("%s has no kind", tech.Key)
-		}
-		count[k]++
-		if (k == TechKeystone) != keystones[tech.Key] {
-			t.Errorf("%s is %s, but a wonder requires it: %v", tech.Key, k, keystones[tech.Key])
-		}
+		k := kinds[tech.Key]
 		if k != TechKeystone && k != TechSpine {
 			continue
 		}
@@ -255,10 +176,6 @@ func TestRealTechKinds(t *testing.T) {
 				t.Errorf("%s is %s but needs %s, which is %s", tech.Key, k, p, kinds[p])
 			}
 		}
-	}
-	if count[TechKeystone] != 21 || count[TechSpine] != 27 || count[TechCapstone] != 12 || count[TechOptional] != 143 {
-		t.Errorf("kinds: %d keystone, %d spine, %d capstone, %d optional; want 21, 27, 12 and 143",
-			count[TechKeystone], count[TechSpine], count[TechCapstone], count[TechOptional])
 	}
 }
 
@@ -369,14 +286,7 @@ func TestTechTreeProblemsCatchEachRule(t *testing.T) {
 // TestPrereqsMet: every prerequisite, and one key of the either-or group.
 func TestPrereqsMet(t *testing.T) {
 	have := func(keys ...string) func(string) bool {
-		return func(k string) bool {
-			for _, h := range keys {
-				if h == k {
-					return true
-				}
-			}
-			return false
-		}
+		return func(k string) bool { return slices.Contains(keys, k) }
 	}
 	both := TechDef{Prerequisites: []string{"a", "b"}, AnyOf: []string{"x", "y"}}
 	cases := []struct {

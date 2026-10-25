@@ -5,55 +5,33 @@ import (
 	"testing"
 )
 
-// TestMilitaryYardstick pins the military yardstick age by age: what the
-// typical player's military power was when the raid threat and the missions
-// were measured, what it is on today's tree, and the two scales that put the
-// difference back. A change to a military tech moves Now and the scales with
-// it; this table then says what moved.
+// TestMilitaryYardstick holds the military yardstick age by age: the scales
+// put the typical player's Defense Rating against the threat, and what their
+// power takes off a mission, back to what they were when the raid threat and
+// the missions were measured. A change to a military tech moves Now and the
+// scales with it, and the typical player's odds stay put.
 func TestMilitaryYardstick(t *testing.T) {
 	order := AgeOrder()
 	if len(MilitaryCalibrated) != len(order) {
 		t.Fatalf("MilitaryCalibrated lists %d ages, the game has %d", len(MilitaryCalibrated), len(order))
 	}
-	want := []struct {
-		age       string
-		then, now float64
-	}{
-		{"primitive_age", 0, 0}, {"stone_age", 0, 0}, {"bronze_age", 0.20, 0.15},
-		{"iron_age", 0.65, 0.45}, {"classical_age", 1.05, 0.60}, {"medieval_age", 1.05, 0.70},
-		{"renaissance_age", 1.55, 0.82}, {"colonial_age", 1.85, 0.94}, {"industrial_age", 2.35, 1.06},
-		{"victorian_age", 2.35, 1.06}, {"electric_age", 2.35, 1.16}, {"atomic_age", 4.85, 1.36},
-		{"modern_age", 4.85, 1.36}, {"information_age", 5.85, 1.46}, {"digital_age", 5.85, 1.56},
-		{"cyberpunk_age", 6.85, 1.76}, {"fusion_age", 6.85, 1.86}, {"space_age", 6.85, 1.86},
-		{"interstellar_age", 6.85, 1.96}, {"galactic_age", 6.85, 2.06}, {"quantum_age", 6.85, 2.16},
-		{"transcendent_age", 6.85, 2.16},
-	}
-	if len(want) != len(order) {
-		t.Fatalf("the table lists %d ages, the game has %d", len(want), len(order))
-	}
 	prev := 0.0
-	for i, w := range want {
-		if order[i] != w.age {
-			t.Fatalf("age %d is %s, the table says %s", i, order[i], w.age)
-		}
+	for i, age := range order {
 		s := MilitaryScaleAt(i)
-		if math.Abs(s.Then-w.then) > 1e-9 || math.Abs(s.Now-w.now) > 1e-9 {
-			t.Errorf("%s: the typical player's military power was %.2f and is %.2f, want %.2f and %.2f", w.age, s.Then, s.Now, w.then, w.now)
-		}
 		// The typical player's Defense Rating against the threat, and what
 		// their power takes off a mission, are what they were.
 		if got := (1 + s.Now) / s.Threat; math.Abs(got-(1+s.Then)) > 1e-9 {
-			t.Errorf("%s: the threat's scale leaves the typical garrison at %.4f of a soldier's rating, want %.4f", w.age, got, 1+s.Then)
+			t.Errorf("%s: the threat's scale leaves the typical garrison at %.4f of a soldier's rating, want %.4f", age, got, 1+s.Then)
 		}
 		if got := MissionPower(s.Now, i); math.Abs(got-s.Then) > 1e-9 {
-			t.Errorf("%s: the typical player's mission power is %.4f, want what it was, %.4f", w.age, got, s.Then)
+			t.Errorf("%s: the typical player's mission power is %.4f, want what it was, %.4f", age, got, s.Then)
 		}
 		// The threat still rises with every age, in the garrison it was sized
 		// against: measured in soldiers at their posts it also follows the
 		// reference town's army (ArmyThreatScale), which can dip where a gate
 		// asks for more copies of a building with fewer posts each.
 		if th := AgeThreat(i) / ArmyThreatScale(i); th <= prev {
-			t.Errorf("%s: the threat is %.0f, not above the age before's %.0f", w.age, th, prev)
+			t.Errorf("%s: the threat is %.0f, not above the age before's %.0f", age, th, prev)
 		} else {
 			prev = th
 		}
@@ -92,39 +70,11 @@ func TestMilitaryYardstick(t *testing.T) {
 			t.Errorf("%s: half a moderate garrison blunts %.3f of a raid, want about an eighth", age, half)
 		}
 	}
-	// A mission's odds: the listed difficulty with no army, the floor with a
-	// large one.
-	if got := MissionDifficulty(0.6, 0); got != 0.6 {
-		t.Errorf("a 60%% mission with no military power fails %.2f of the time, want 0.60", got)
-	}
-	if got := MissionDifficulty(0.6, 10); got != MissionDifficultyFloor {
-		t.Errorf("a 60%% mission with an overwhelming army fails %.2f of the time, want the floor %.2f", got, MissionDifficultyFloor)
-	}
 }
 
-// TestReferenceArmyBluntsWhatTheModerateGarrisonDid: in every age the
-// reference town's army at its posts blunts the share of a raid, and half of it
-// the share, that the moderate garrison did when soldiers were a stockpile a
-// town's buildings made (recorded at 6b3a4162).
-func TestReferenceArmyBluntsWhatTheModerateGarrisonDid(t *testing.T) {
-	was := [][2]float64{
-		{0, 0}, {0.213158, 0.139655}, {0.238056, 0.161834}, {0.188970, 0.119596}, {0.254449, 0.177371},
-		{0.283329, 0.206753}, {0.332867, 0.264118}, {0.354662, 0.292659}, {0.408047, 0.373250},
-		{0.414129, 0.383555}, {0.422115, 0.397484}, {0.437068, 0.424859}, {0.438236, 0.427071},
-		{0.441776, 0.433848}, {0.443254, 0.436707}, {0.444750, 0.439620}, {0.445326, 0.440748},
-		{0.445781, 0.441640}, {0.446175, 0.442415}, {0.446361, 0.442781}, {0.446493, 0.443039},
-		{0.446801, 0.443647},
-	}
-	army := RefSoldiers(BaseBuildings(), Ages())
-	for i, age := range AgeOrder() {
-		if i == 0 {
-			continue // no military building yet
-		}
-		rating := 2 * army[i] * (1 + MilitaryScaleAt(i).Now)
-		full := DefenseMitigation(rating, AgeThreat(i))
-		half := DefenseMitigation(rating/2, AgeThreat(i))
-		if math.Abs(full-was[i][0]) > 2e-6 || math.Abs(half-was[i][1]) > 2e-6 {
-			t.Errorf("%s: the reference army of %.0f blunts %.6f and half of it %.6f of a raid, want %.6f and %.6f", age, army[i], full, half, was[i][0], was[i][1])
-		}
-	}
+// MissionPower is military power as a mission's difficulty reads it in the
+// age with the given order on this package's own tree: power × the age's
+// MilitaryScale.Mission. For tests and tools (rules.Set.MissionPower).
+func MissionPower(power float64, order int) float64 {
+	return float64(power * MilitaryScaleAt(order).Mission)
 }

@@ -35,7 +35,6 @@ var FieldIDs = map[string]string{
 	"config.EpochDef.Name":            "era.{Key}.name",
 	"config.EpochDef.Description":     "era.{Key}.description",
 	"config.ResourceDef.Name":         "resource.{Key}.name",
-	"config.ResourceDef.Description":  "resource.{Key}.description",
 	"config.WorkerClassDef.ClassName": "worker_class.{Domain}.{AgeKey}",
 
 	// ----- buildings and wonders -----
@@ -95,7 +94,6 @@ var FieldIDs = map[string]string{
 
 	// ----- events, catastrophes and harbingers -----
 	"config.EventDef.Name":             "event.{Key}.name",
-	"config.EventDef.Description":      "event.{Key}.description",
 	"config.EventDef.LogMessage":       "event.{Key}.log",
 	"config.EpochEventDef.Name":        "era_event.{Key}.name",
 	"config.EpochEventDef.FlavorText":  "era_event.{Key}.text",
@@ -112,7 +110,6 @@ var FieldIDs = map[string]string{
 	"config.TradeRouteDef.Description":      "route.{Key}.description",
 	"config.FactionDef.Name":                "civ.{Key}.name",
 	"config.FactionDef.Backstory":           "civ.{Key}.backstory",
-	"config.FactionDef.Description":         "civ.{Key}.description",
 	"config.PrestigeUpgradeDef.Name":        "prestige.{Key}.name",
 	"config.PrestigeUpgradeDef.Description": "prestige.{Key}.description",
 	"boon.Def.Name":                         "boon.{decl}.{sn}.name",

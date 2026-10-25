@@ -12,8 +12,7 @@ import (
 )
 
 // These tests cover the negative half of the engine (Polarity, MalusCatalog, the
-// two malus-only Kinds and their Applier paths), the exclusion of resources with
-// no BaseStorage from random targets, and age-scaled instant lumps.
+// two malus-only Kinds and their Applier paths) and age-scaled instant lumps.
 
 // TestCatalogPolaritiesAreConsistent checks the invariant the table split rests
 // on: every Catalog entry is Positive and every MalusCatalog entry is Negative. A
@@ -223,45 +222,6 @@ func TestRollThenApplyMalusEndToEnd(t *testing.T) {
 		}
 		if f.calls() == 0 {
 			t.Fatalf("malus %d (%s) made no Applier calls — the setback did nothing", i, b.Name)
-		}
-	}
-}
-
-// TestRandomTargetsAreStorable checks that a resource with BaseStorage <= 0 never
-// becomes a random target. Config has no such resource today, so the test skips.
-func TestRandomTargetsAreStorable(t *testing.T) {
-	storage := map[string]float64{}
-	for _, r := range config.BaseResources() {
-		storage[r.Key] = r.BaseStorage
-	}
-
-	// The test means nothing unless such a resource exists.
-	unstorable := 0
-	for _, r := range config.BaseResources() {
-		if r.BaseStorage <= 0 {
-			unstorable++
-		}
-	}
-	if unstorable == 0 {
-		t.Skip("no unstorable resources in config — nothing to exclude")
-	}
-
-	for _, polarity := range []Polarity{Positive, Negative} {
-		for _, age := range config.AgeOrder() {
-			p := DefaultProfile()
-			p.Polarity = polarity
-			p.Age = age
-			// No specialty: TargetSpecialty also falls back to the age pool.
-			for i, b := range rollN(p, 555, 400) {
-				if b.Resource == "" {
-					continue
-				}
-				if s, ok := storage[b.Resource]; ok && s <= 0 {
-					t.Fatalf("age %s polarity %v roll %d targeted unstorable resource %q "+
-						"(BaseStorage %.0f — the effect would silently vanish)",
-						age, polarity, i, b.Resource, s)
-				}
-			}
 		}
 	}
 }

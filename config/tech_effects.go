@@ -1,9 +1,6 @@
 package config
 
-import (
-	"fmt"
-	"math"
-)
+import "math"
 
 // TechEffectKind says what one effect of a tech changes. A tech's effect is a
 // kind, a target where the kind takes one, and a value: "output of gold,
@@ -249,40 +246,6 @@ func lessOrMore(v float64) string {
 		return "less"
 	}
 	return "more"
-}
-
-// Check reports what is wrong with e ("" when nothing is): a kind that is
-// not one of the constants, a target the kind does not take, a resource or a
-// mechanic that does not exist, a value of zero, or a cut so deep it leaves
-// nothing (a time or a price multiplied by zero or less). isResource says
-// which keys are resources.
-func (e TechEffect) Check(isResource func(string) bool) string {
-	known := false
-	for _, k := range TechEffectKinds() {
-		known = known || k == e.Kind
-	}
-	switch {
-	case !known:
-		return fmt.Sprintf("unknown effect kind %q", e.Kind)
-	case e.Value == 0:
-		return fmt.Sprintf("%s effect with no value", e.Kind)
-	case e.Kind == EffectMechanic:
-		if _, ok := MechanicByKey()[e.Target]; !ok {
-			return fmt.Sprintf("%s names %q, which is not a mechanic", e.Kind, e.Target)
-		}
-	case !e.Kind.TakesResource():
-		if e.Target != "" {
-			return fmt.Sprintf("%s takes no target, got %q", e.Kind, e.Target)
-		}
-	case e.Kind == EffectOutput && e.Target == ResearchTarget:
-		// The work scholars do: not a resource, but a bonus to it is allowed.
-	case !isResource(e.Target):
-		return fmt.Sprintf("%s names %q, which is not a resource", e.Kind, e.Target)
-	}
-	if e.Key().Multiplies() && e.Value <= -1 {
-		return fmt.Sprintf("%s of %v leaves nothing", e.Kind, e.Value)
-	}
-	return ""
 }
 
 // TechTerms folds the effects of techs into one term per key, in the order

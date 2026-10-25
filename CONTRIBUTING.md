@@ -216,7 +216,7 @@ The test suite covers all game systems with **86 tests** across 11 files:
 
 | File | Tests | What it covers |
 |------|-------|----------------|
-| `config/validate_test.go` | 12 | Cross-validates all config keys: no bad references, no duplicates, all content reachable |
+| `config/validate_test.go` | 10 | Cross-validates all config keys: no bad references, no duplicates, all content reachable |
 | `game/resources_test.go` | 7 | Add (no cap), remove, pay/afford, rates, unlock, save/load |
 | `game/buildings_test.go` | 5 | Unlock, cost scaling, pop capacity, get all, load counts |
 | `game/villagers_test.go` | 9 | Recruit, cap limits, assign/unassign, food drain, production, soldiers, save/load |

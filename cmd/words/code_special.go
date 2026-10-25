@@ -117,7 +117,6 @@ var fileNotes = map[string]fileNote{
 	"config/epochs.go":         {place: "about eras and catastrophes", area: areaEvents, age: "iron_age"},
 	"config/events.go":         {place: "about events", area: areaEvents},
 	"config/tech_tree.go":      {place: "in the Research panel", area: areaTechs, age: "primitive_age"},
-	"config/tech_checks.go":    {skip: whyDev},
 	"config/pacing.go":         {skip: whyDev},
 	"config/workers.go":        {place: "in the Workers panel", area: areaAges, age: "primitive_age"},
 
@@ -246,9 +245,7 @@ var fileNotes = map[string]fileNote{
 // skipDecls are functions and variables whose strings are left out, by
 // "file:name", each with its reason.
 var skipDecls = map[string]string{
-	"config/tech_effects.go:Check":                whyDev,
 	"ui/commands.go:devCommands":                  whyDev,
-	"config/tech_tree.go:TechTreeProblems":        whyDev,
 	"config/badge_catalog.go:mastery":             "a note for developers: how a badge is proved or judged",
 	"rules/badges.go:BadgeProblems":               whyDev,
 	"mapmodel/commands.go:BuildingCommand":        whySyntax,

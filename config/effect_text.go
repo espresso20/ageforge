@@ -97,11 +97,6 @@ func DurationText(ticks int) string {
 	return textfmt.Ticks(ticks, time.Duration(TickSeconds*float64(time.Second)))
 }
 
-// RateText is a per-tick change to one resource: "gold +5/tick".
-func RateText(res string, v float64) string {
-	return ResourceLabel(res) + " " + signed(v, FormatAmount(v)) + "/tick"
-}
-
 // unlockOrder is what a pass over the buildings needs to tell which outputs
 // a building cannot deliver yet: each age's position and each resource's
 // def. BaseBuildings builds it once per call.

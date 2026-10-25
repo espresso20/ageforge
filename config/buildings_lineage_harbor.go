@@ -25,88 +25,75 @@ func buildingsLineageHarbor() []BuildingDef {
 
 	// tier 0 — colonial_age
 	b = append(b, BuildingDef{
-		Name: "Harbor", Key: "harbor", Category: "production",
-		BaseCost:  map[string]float64{"stone": 54.3 * Million, "gold": 54.3 * Million},
-		CostScale: 1.15,
+		Name: "Harbor", Key: "harbor",
+		BaseCost: map[string]float64{"stone": 54.3 * Million, "gold": 54.3 * Million},
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 23300},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.05},
 		},
-		BuildTicks:   3000,
-		RequiredAge:  "colonial_age",
-		RequiredTech: "mercantilism",
-		Description:  "A working harbor for trade ships.",
-		LineageKey:   "harbor", LineageTier: 0,
-		WorkerDomain: "trade", WorkerCapacity: 4,
-		EpochKey: "steel_era", OutputResource: "gold",
+		BuildTicks:     3000,
+		RequiredAge:    "colonial_age",
+		RequiredTech:   "mercantilism",
+		Description:    "A working harbor for trade ships.",
+		WorkerCapacity: 4,
 	})
 	// tier 1 — industrial_age
 	b = append(b, BuildingDef{
-		Name: "Harbor Authority", Key: "harbor_authority", Category: "production",
-		BaseCost:  map[string]float64{"steel": 180 * Million, "coal": 64 * Million, "gold": 110 * Million},
-		CostScale: 1.15,
+		Name: "Harbor Authority", Key: "harbor_authority",
+		BaseCost: map[string]float64{"steel": 180 * Million, "coal": 64 * Million, "gold": 110 * Million},
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 38500},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.1},
 		},
-		BuildTicks:  3300,
-		RequiredAge: "industrial_age",
-		Description: "Industrial port authority coordinating dock traffic.",
-		LineageKey:  "harbor", LineageTier: 1,
-		WorkerDomain: "trade", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "gold",
+		BuildTicks:     3300,
+		RequiredAge:    "industrial_age",
+		Description:    "Industrial port authority coordinating dock traffic.",
+		WorkerCapacity: 5,
 	})
 	// tier 2 — modern_age
 	b = append(b, BuildingDef{
-		Name: "Seaport", Key: "seaport", Category: "production",
-		BaseCost:  map[string]float64{"steel": 105 * Billion, "titanium_ore": 105 * Billion, "electricity": 72 * Billion, "gold": 4.8 * Billion},
-		CostScale: 1.15,
+		Name: "Seaport", Key: "seaport",
+		BaseCost: map[string]float64{"steel": 105 * Billion, "titanium_ore": 105 * Billion, "electricity": 72 * Billion, "gold": 4.8 * Billion},
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 4.37 * Million},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.15},
 		},
-		BuildTicks:   3600,
-		RequiredAge:  "modern_age",
-		RequiredTech: "containerization",
-		Description:  "A deep-water seaport handling global cargo.",
-		LineageKey:   "harbor", LineageTier: 2,
-		WorkerDomain: "trade", WorkerCapacity: 6,
-		EpochKey: "digital_era", OutputResource: "gold",
+		BuildTicks:     3600,
+		RequiredAge:    "modern_age",
+		RequiredTech:   "containerization",
+		Description:    "A deep-water seaport handling global cargo.",
+		WorkerCapacity: 6,
 	})
 	// tier 3 — information_age
 	b = append(b, BuildingDef{
-		Name: "Container Terminal", Key: "container_terminal", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 560 * Billion, "data": 56 * Billion, "gold": Trillion},
-		CostScale: 1.15,
+		Name: "Container Terminal", Key: "container_terminal",
+		BaseCost: map[string]float64{"electricity": 560 * Billion, "data": 56 * Billion, "gold": Trillion},
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 228 * Million},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.2},
 		},
-		BuildTicks:   3600,
-		RequiredAge:  "information_age",
-		RequiredTech: "e_commerce",
-		Description:  "Automated container terminal moving freight at scale.",
-		LineageKey:   "harbor", LineageTier: 3,
-		WorkerDomain: "trade", WorkerCapacity: 8,
-		EpochKey: "digital_era", OutputResource: "gold",
+		BuildTicks:     3600,
+		RequiredAge:    "information_age",
+		RequiredTech:   "e_commerce",
+		Description:    "Automated container terminal moving freight at scale.",
+		WorkerCapacity: 8,
 	})
 	// tier 4 — digital_age
 	b = append(b, BuildingDef{
-		Name: "Logistics Hub", Key: "logistics_hub", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 2.8 * Trillion, "data": 360 * Billion},
-		CostScale: 1.15,
+		Name: "Logistics Hub", Key: "logistics_hub",
+		BaseCost: map[string]float64{"electricity": 2.8 * Trillion, "data": 360 * Billion},
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 102.4},
 			{Type: "trade_route_income", Target: "trade_route_income", Value: 0.25},
 		},
-		BuildTicks:   3600,
-		RequiredAge:  "digital_age",
-		RequiredTech: "automated_logistics",
-		Description:  "Algorithmic logistics hub routing every shipment.",
-		LineageKey:   "harbor", LineageTier: 4,
-		WorkerDomain: "trade", WorkerCapacity: 10,
-		EpochKey: "digital_era", OutputResource: "gold",
+		BuildTicks:     3600,
+		RequiredAge:    "digital_age",
+		RequiredTech:   "automated_logistics",
+		Description:    "Algorithmic logistics hub routing every shipment.",
+		WorkerCapacity: 10,
 	})
 
-	return b
+	return finishLineage(b, lineageSpec{
+		Key: "harbor", Category: "production", Scale: ProducerRate, Domain: "trade",
+	})
 }

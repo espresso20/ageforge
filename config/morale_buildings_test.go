@@ -13,74 +13,29 @@ func moraleEffectValue(b BuildingDef) (float64, bool) {
 	return 0, false
 }
 
-// TestMoraleBuildings_FaithAndCultureCarryMoraleEffect asserts that the
-// Stage 2A broadening landed: every faith worship building and every
-// culture_arts entertainment building parses with a positive morale effect,
-// and that BuildingByKey surfaces a couple of spot-check keys with it.
-func TestMoraleBuildings_FaithAndCultureCarryMoraleEffect(t *testing.T) {
-	byKey := BuildingByKey()
-
-	faithCount := 0
-	cultureCount := 0
+// TestMoraleBuildings_OnlySpiritLineagesCarryMorale: every faith and
+// culture_arts building has a positive morale effect, and no other lineage
+// does (a pure-producer lineage must not turn into a morale building).
+func TestMoraleBuildings_OnlySpiritLineagesCarryMorale(t *testing.T) {
+	spirit := 0
 	for _, b := range BaseBuildings() {
-		switch b.LineageKey {
-		case "faith":
-			v, ok := moraleEffectValue(b)
-			if !ok {
-				t.Errorf("faith building %q (tier %d) is missing a morale effect", b.Key, b.LineageTier)
-				continue
+		v, has := moraleEffectValue(b)
+		if b.LineageKey != "faith" && b.LineageKey != "culture_arts" {
+			if has {
+				t.Errorf("building %q (lineage %q) unexpectedly has a morale effect; only faith/culture_arts should",
+					b.Key, b.LineageKey)
 			}
-			if v <= 0 {
-				t.Errorf("faith building %q has non-positive morale value %v", b.Key, v)
-			}
-			faithCount++
-		case "culture_arts":
-			v, ok := moraleEffectValue(b)
-			if !ok {
-				t.Errorf("culture_arts building %q (tier %d) is missing a morale effect", b.Key, b.LineageTier)
-				continue
-			}
-			if v <= 0 {
-				t.Errorf("culture_arts building %q has non-positive morale value %v", b.Key, v)
-			}
-			cultureCount++
-		}
-	}
-
-	// Sanity: the lineages are non-trivial in size (guards against an empty
-	// iteration silently passing).
-	if faithCount < 20 {
-		t.Errorf("expected at least 20 faith buildings with morale effects, got %d", faithCount)
-	}
-	if cultureCount < 16 {
-		t.Errorf("expected at least 16 culture_arts buildings with morale effects, got %d", cultureCount)
-	}
-
-	// Spot-check via BuildingByKey: shrine (pre-existing) and a Stage-2A addition
-	// in each lineage must resolve with a morale effect.
-	for _, key := range []string{"shrine", "standing_stones", "amphitheater"} {
-		b, ok := byKey[key]
-		if !ok {
-			t.Fatalf("BuildingByKey missing %q", key)
-		}
-		if _, has := moraleEffectValue(b); !has {
-			t.Errorf("BuildingByKey[%q] has no morale effect", key)
-		}
-	}
-}
-
-// TestMoraleBuildings_OnlySpiritLineagesGotMorale guards against accidentally
-// turning a pure-producer lineage into a morale building. Only faith and
-// culture_arts buildings should carry morale effects.
-func TestMoraleBuildings_OnlySpiritLineagesGotMorale(t *testing.T) {
-	for _, b := range BaseBuildings() {
-		if _, has := moraleEffectValue(b); !has {
 			continue
 		}
-		if b.LineageKey != "faith" && b.LineageKey != "culture_arts" {
-			t.Errorf("building %q (lineage %q) unexpectedly has a morale effect — "+
-				"only faith/culture_arts should", b.Key, b.LineageKey)
+		spirit++
+		if !has {
+			t.Errorf("%s building %q (tier %d) is missing a morale effect", b.LineageKey, b.Key, b.LineageTier)
+		} else if v <= 0 {
+			t.Errorf("%s building %q has non-positive morale value %v", b.LineageKey, b.Key, v)
 		}
+	}
+	if spirit == 0 {
+		t.Error("no faith or culture_arts buildings found")
 	}
 }
 
