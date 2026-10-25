@@ -103,13 +103,11 @@ func TestArmyPanel_OnScreen(t *testing.T) {
 	const w, h = 160, 50
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	if !d.overlayMgr.Show("army", engine.GetState()) {
 		t.Fatal("overlay army not registered")
 	}
-	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 30% of a raid.") {
+	if !strings.Contains(drawPrimitive(t, pages, w, h).Text(), "Your garrison would blunt about 30% of a raid.") {
 		t.Error("the garrison line is not on screen")
 	}
 }
@@ -124,20 +122,18 @@ func TestCatastropheModal_EndureCountsGarrison(t *testing.T) {
 	if st.PendingEndure.Garrison <= 0 {
 		t.Fatalf("pending Endure has no garrison: %+v", st.PendingEndure)
 	}
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	d.showCatastropheModal(st.PendingCatastrophe)
-	grid := screenGrid(t, pages, w, h)
+	screen := drawPrimitive(t, pages, w, h).Text()
 	for _, want := range []string{
 		"All resources reduced to 34.1%",
 		"Your garrison keeps 34.1% of stock, not 15%",
 	} {
-		if !gridHas(grid, want) {
+		if !strings.Contains(screen, want) {
 			t.Errorf("modal missing %q", want)
 		}
 	}
-	if gridHas(grid, "No garrison") {
+	if strings.Contains(screen, "No garrison") {
 		t.Error("modal says no garrison with 640,000 soldiers standing")
 	}
 
@@ -162,14 +158,4 @@ func TestCatastropheModal_DefenseLinesFit(t *testing.T) {
 			}
 		}
 	}
-}
-
-// gridHas reports whether any screen row contains s.
-func gridHas(grid [][]rune, s string) bool {
-	for _, row := range grid {
-		if strings.Contains(string(row), s) {
-			return true
-		}
-	}
-	return false
 }
