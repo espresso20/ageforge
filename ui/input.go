@@ -2371,7 +2371,7 @@ func lastPassageStatusLines(state game.GameState) []string {
 	}
 	lines := []string{vibe.Sprintf("ui.input.lastPassageStatusLines.01", "  [red]☄ The Last Passage:[-] %s when you prestige.", lastPassageRiskText(state))}
 	if h := state.Harbinger; h != nil && h.LastPassage {
-		lines = append(lines, vibe.Sprintf("ui.input.lastPassageStatusLines.02", "  %s is warning of it. Type [cyan]harbinger[-] to answer.", capFirstUI(h.Name)))
+		lines = append(lines, vibe.Sprintf("ui.input.lastPassageStatusLines.02", "  %s is warning of it. Type [cyan]harbinger[-] to answer.", textfmt.Capitalize(h.Name)))
 	}
 	return lines
 }
@@ -2562,7 +2562,7 @@ func doomWarningText(state game.GameState) string {
 	if h.WhenText != "" {
 		when = " " + h.WhenText
 	}
-	return vibe.Sprintf("ui.input.doomWarningText.02", "%s warns of doom%s: %s", capFirstUI(h.Name), when, riskText(state))
+	return vibe.Sprintf("ui.input.doomWarningText.02", "%s warns of doom%s: %s", textfmt.Capitalize(h.Name), when, riskText(state))
 }
 
 // outlookRiskText describes the Last Passage's risk the way the current age
@@ -2570,7 +2570,7 @@ func doomWarningText(state game.GameState) string {
 // (the Cosmic Era's fated doom may be speaking instead).
 func outlookRiskText(state game.GameState) string {
 	if h := state.Harbinger; h != nil && h.LastPassage {
-		return vibe.Sprintf("ui.input.outlookRiskText.01", "%s warns of %s", capFirstUI(h.Name), riskText(state))
+		return vibe.Sprintf("ui.input.outlookRiskText.01", "%s warns of %s", textfmt.Capitalize(h.Name), riskText(state))
 	}
 	o := state.CatastropheOutlook
 	return riskFrom(state, o.Tier, harbingerNumericAge(state), o.Probability)

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
@@ -162,7 +163,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 			status = vibe.Line("ui.overlay_epoch.epochProviderCurrentEpoch.30", "invited, the catastrophe will come")
 		}
 		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_epoch.epochProviderCurrentEpoch.31", " Harbinger: [warning]%s is here[-] [gray](%s; appease %d/%d, brace %d/%d; type 'harbinger')[-]\n",
-			capFirstUI(h.Name), status, h.AppeaseLevel, game.HarbingerMaxAppease, h.BraceLevel, game.HarbingerMaxBrace))
+			textfmt.Capitalize(h.Name), status, h.AppeaseLevel, game.HarbingerMaxAppease, h.BraceLevel, game.HarbingerMaxBrace))
 	} else if r := latestHarbinger(state.HarbingerHistory, state.EpochKey); r != nil {
 		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_epoch.epochProviderCurrentEpoch.32", " Harbinger: %s\n", harbingerRecordText(state.Ruleset(), *r)))
 	}
@@ -222,12 +223,12 @@ func harbingerRecordText(set *rules.Set, r game.HarbingerRecord) string {
 	if len(extras) > 0 {
 		extra = " [gray](" + strings.Join(extras, ", ") + ")[-]"
 	}
-	chain := []string{capFirstUI(r.Name)}
+	chain := []string{textfmt.Capitalize(r.Name)}
 	if len(r.Chain) > 1 {
 		chain = chain[:0]
 		for _, a := range r.Chain {
 			if def, ok := set.Harbinger(a); ok {
-				chain = append(chain, capFirstUI(def.Name))
+				chain = append(chain, textfmt.Capitalize(def.Name))
 			}
 		}
 	}

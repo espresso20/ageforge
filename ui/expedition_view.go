@@ -255,14 +255,6 @@ func oddsKind(p float64) xk {
 	return xBad
 }
 
-func capFirst(s string) string {
-	if s == "" {
-		return s
-	}
-	r := []rune(s)
-	return strings.ToUpper(string(r[:1])) + string(r[1:])
-}
-
 // briefTitle is an offer's title without the mission's name and without
 // the Legendary mark, which the card already says: "Count the herds near
 // the Copper Hills".
@@ -274,7 +266,7 @@ func briefTitleOf(name string) string {
 	if i := strings.Index(title, ": "); i >= 0 {
 		title = title[i+2:]
 	}
-	return capFirst(title)
+	return textfmt.Capitalize(title)
 }
 
 // tierLabel is the card's top line: the mission's name and its kind.
@@ -290,7 +282,7 @@ func tierLabel(o game.ExpeditionInfo) string {
 	}
 	label := o.Label
 	if label == "" {
-		label = capFirst(o.Tier)
+		label = textfmt.Capitalize(o.Tier)
 	}
 	return label + " · " + kind
 }
@@ -314,7 +306,7 @@ func refusalText(o game.ExpeditionInfo) string {
 	if reason == "" {
 		reason = vibe.Line("ui.expedition_view.refusalText.01", "cannot be sent now")
 	}
-	return capFirst(strings.TrimRight(reason, ".")) + "."
+	return textfmt.Capitalize(strings.TrimRight(reason, ".")) + "."
 }
 
 // nextBoardChange is the ticks until the board next changes: an offer

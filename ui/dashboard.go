@@ -446,7 +446,7 @@ func (d *Dashboard) build() {
 		if handoff, _ := e.Payload["handoff"].(bool); handoff {
 			verb = vibe.Line("ui.dashboard.build.09", "takes up the warning")
 		}
-		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", capFirstUI(name), verb), "warning", 8*time.Second)
+		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", textfmt.Capitalize(name), verb), "warning", 8*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
 		// Runs under the engine write lock: only flip the flags, never touch the engine.

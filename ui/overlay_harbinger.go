@@ -181,20 +181,20 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 			sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerAbsentText.10", " Faith strength: ")+faithStrengthFigure(state)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.11", ".\n Stronger faith makes a doom less likely to strike, and faith and culture pay\n for Appease if a harbinger comes.")) + "\n")
 		}
 		if r := eraDoomRecord(state); r != nil && r.Outcome == game.HarbingerOutcomeDiscredited {
-			sb.WriteString(theme.Paint(theme.RoleDim, " "+capFirstUI(r.Name)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.12", "'s warning in this era was invented.")) + "\n")
+			sb.WriteString(theme.Paint(theme.RoleDim, " "+textfmt.Capitalize(r.Name)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.12", "'s warning in this era was invented.")) + "\n")
 		}
 	}
 }
 
 // harbingerPresentText is the panel with a harbinger present.
 func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, width int, inviteArmed bool) {
-	fmt.Fprintf(sb, " %s   %s\n", theme.Paint(theme.RoleBright, capFirstUI(h.Name)),
+	fmt.Fprintf(sb, " %s   %s\n", theme.Paint(theme.RoleBright, textfmt.Capitalize(h.Name)),
 		theme.Paint(theme.RoleDim, h.AgeName+vibe.Line("ui.overlay_harbinger.harbingerPresentText.01", " harbinger")))
 	sb.WriteString(" " + theme.Paint(theme.RoleLabel, h.Description) + "\n")
 	if len(h.Earlier) > 0 {
 		names := make([]string, len(h.Earlier))
 		for i, n := range h.Earlier {
-			names[i] = capFirstUI(n)
+			names[i] = textfmt.Capitalize(n)
 		}
 		sb.WriteString(" " + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerPresentText.02", "Took up the warning from ")+strings.Join(names, ", then ")+vibe.Line("ui.overlay_harbinger.harbingerPresentText.03", ". Your answers stand.")) + "\n")
 	}
@@ -207,7 +207,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		// TargetEpochName is the warning ("impending doom"), never an era.
 		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_harbinger.harbingerPresentText.05", " Warning of %s %s.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName), h.WhenText))
 	default:
-		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_harbinger.harbingerPresentText.06", " Warning of %s. %s gives no word of when.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName), capFirstUI(h.Name)))
+		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_harbinger.harbingerPresentText.06", " Warning of %s. %s gives no word of when.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName), textfmt.Capitalize(h.Name)))
 	}
 
 	for _, l := range h.Lines {
@@ -380,9 +380,6 @@ func harbingerNumericAge(state game.GameState) bool {
 func harbingerPercent(p float64) string {
 	return fmt.Sprintf("%.0f%%", p*100)
 }
-
-// capFirstUI upper-cases the first letter: "the Oracle" → "The Oracle".
-func capFirstUI(s string) string { return textfmt.Capitalize(s) }
 
 // harbingerGarrisonLine says whether the army is counted in the Brace
 // preview above it, and by how much.
