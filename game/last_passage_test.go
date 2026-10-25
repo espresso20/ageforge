@@ -204,9 +204,7 @@ const lastPassageChoiceMinRatio = 0.5
 // points, so the choice is in the prices: Appease level 1 is the dearer, but
 // saves at least half as many expected points per hour of income as Brace
 // level 1 (about two thirds, at these prices). Change a price or an effect
-// and this is the test to argue with. The prices before it (Brace at 12% of
-// the era's largest requirement, Appease on the whole age) gave a ratio of 1
-// to 13,500.
+// and this is the test to argue with.
 func TestLastPassageChoice(t *testing.T) {
 	const low, mid, high = 0.1, 0.5, 0.9
 	// What is left at risk at mid faith, in percent of the run's points, by
@@ -264,16 +262,6 @@ func TestLastPassageChoice(t *testing.T) {
 		if math.Abs(a/b-appeaseSaves/braceSaves) > 1e-9 {
 			t.Errorf("faith fill %v: Appease level 1 saves %vx what Brace level 1 does, at mid faith %vx", fill, a/b, appeaseSaves/braceSaves)
 		}
-	}
-
-	// The prices this replaced fail it: Brace at the era's price, which the
-	// Reality Tear's thread keeps, and Appease on the whole age.
-	oldBrace := incomeHours(t, eraBraceCost("cosmic_era", 1), first)
-	oldAppease := incomeHours(t, warningAppeaseCostIn(rules.Core(), "cosmic_era", first, config.AgeTargetTicks(first), 1), first)
-	oldRatio := valueRatio(oldAppease, oldBrace)
-	t.Logf("the old prices: Brace 1 %.4f h, Appease 1 %.1f h; ratio 1 to %.0f", oldBrace, oldAppease, 1/oldRatio)
-	if oldRatio >= lastPassageChoiceMinRatio/1000 {
-		t.Errorf("the old prices (Brace %.4f h, Appease %.1f h) give a ratio of %v: the test would not have caught them", oldBrace, oldAppease, oldRatio)
 	}
 }
 
@@ -479,13 +467,6 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 			if capped || share < ordinaryDoomBraceShare || share > 1.1*ordinaryDoomBraceShare {
 				t.Errorf("%s: Brace level 1 takes %.2f of the shortest warning (%.2f h of %.2f; every material capped: %v), want a third", age, share, braceHours, warning, capped)
 			}
-			// The old price fails the bar from the era's second age on.
-			if age != ep.Ages[0] {
-				oldHours := incomeHoursOfMade(eraBraceCost(ep.Key, 1), age)
-				if old := (appeaseSaves / appeaseHours) / (braceSaves / oldHours); old >= doomChoiceMinRatio {
-					t.Errorf("%s: the era's old price (%.4f h of income) gives a ratio of %.3f: the test would not have caught it", age, oldHours, old)
-				}
-			}
 		}
 	}
 	if checked == 0 {
@@ -541,19 +522,6 @@ func TestOrdinaryDoomChoice(t *testing.T) {
 // warning, the ratio 0.70x.
 var doomChoiceOnTheCeiling = map[string]float64{
 	"industrial_age": 0.08,
-}
-
-// incomeHoursOfMade is incomeHours over the resources of cost the age makes
-// at all: the old era price named some an age only buys.
-func incomeHoursOfMade(cost map[string]float64, age string) float64 {
-	slowest := 0.0
-	for res, c := range cost {
-		if rules.Core().BuildingOutput(res, age) <= 0 {
-			continue
-		}
-		slowest = math.Max(slowest, c/config.TypicalIncome(res, age))
-	}
-	return slowest * config.TickSeconds / 3600
 }
 
 // --- the outlook -------------------------------------------------------------------

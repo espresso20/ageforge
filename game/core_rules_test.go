@@ -74,32 +74,6 @@ func eraBraceMaterials(epochKey string) []string {
 	return eraBraceMaterialsIn(rules.Core(), epochKey)
 }
 
-// oldEraBrace is the price an ordinary doom's Brace had before it was priced
-// on the warning: 12% of the most the era's remaining advances asked of each
-// core resource, the same in every age of the era. It is written down, not
-// worked out: the gates it was a share of have since been derived again
-// (config/storage_rule.go), and 12% of today's gates is not the price that
-// was.
-var oldEraBrace = map[string]map[string]float64{
-	"stone_era":    {"food": 9600, "wood": 4800},
-	"iron_era":     {"gold": 21600, "iron": 6360, "stone": 26400},
-	"steel_era":    {"gold": 1.8 * config.Million, "steel": 288000},
-	"electric_era": {"electricity": 3.96 * config.Million, "oil": 924000, "steel": 56.4 * config.Million},
-	"digital_era":  {"data": 19.2 * config.Billion, "electricity": 117.6 * config.Billion, "gold": 156 * config.Million},
-	"neon_era":     {"crypto": 3 * config.Billion, "data": 46.8 * config.Billion, "electricity": 288 * config.Billion},
-	"cosmic_era":   {"dark_matter": 1.56 * config.Trillion, "titanium": 75.6 * config.Billion},
-}
-
-// eraBraceCost is that old price, doubled for level 2. Kept for the tests
-// that show what the old price did.
-func eraBraceCost(epochKey string, level int) map[string]float64 {
-	cost := map[string]float64{}
-	for k, v := range oldEraBrace[epochKey] {
-		cost[k] = v * float64(level)
-	}
-	return cost
-}
-
 func doomBraceCost(epochKey, age string, level int) map[string]float64 {
 	return doomBraceCostIn(rules.Core(), epochKey, age, level)
 }
