@@ -1,7 +1,6 @@
 package skyline
 
 import (
-	"sort"
 	"strconv"
 	"strings"
 
@@ -968,49 +967,7 @@ func (v *view) skyLayoutSized(m *mapmodel.Model, sc mapmodel.SkyScene, groundY, 
 		lay.maxW = max(lay.maxW, spr.w)
 		lay.lots = append(lay.lots, lv)
 	}
-	sort.SliceStable(lay.lots, func(i, j int) bool {
-		a, b := &lay.lots[i], &lay.lots[j]
-		if a.depth != b.depth {
-			return a.depth > b.depth
-		}
-		if a.spr.h != b.spr.h {
-			return a.spr.h > b.spr.h
-		}
-		return a.ml.Seed < b.ml.Seed
-	})
-	lay.index = make(map[lotID]int, len(lay.lots))
-	for i := range lay.lots {
-		ml := lay.lots[i].ml
-		lay.index[lotID{ml.Key, ml.Copy}] = i
-		if ml.New {
-			lay.news = append(lay.news, ml.X)
-		}
-	}
-	lay.byX = make([]int32, len(lay.lots))
-	for i := range lay.byX {
-		lay.byX[i] = int32(i)
-	}
-	sort.SliceStable(lay.byX, func(i, j int) bool { return lay.lots[lay.byX[i]].x0 < lay.lots[lay.byX[j]].x0 })
-	lay.prof = make([]int, lay.width)
-	lay.tallest = make([]int32, lay.width)
-	for i := range lay.tallest {
-		lay.tallest[i] = -1
-	}
-	for i := range lay.lots {
-		l := &lay.lots[i]
-		for x := 0; x < l.spr.w; x++ {
-			wx := l.x0 + x
-			if wx < 0 || wx >= lay.width {
-				continue
-			}
-			if t := l.spr.topAt(x); t >= 0 {
-				if h := l.spr.h - t; h > lay.prof[wx] {
-					lay.prof[wx] = h
-					lay.tallest[wx] = int32(i)
-				}
-			}
-		}
-	}
+	lay.finish()
 	*slotp = lay
 	return lay
 }
