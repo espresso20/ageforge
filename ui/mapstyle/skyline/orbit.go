@@ -874,7 +874,7 @@ func (v *view) skyLayoutSized(m *mapmodel.Model, sc mapmodel.SkyScene, groundY, 
 		if b != nil {
 			count = b.Count
 		}
-		fm := skyFormFor(sc, def, ml, ml.Key == keystone && ml.Age == present)
+		fm := skyFormFor(sc, def, ml.Key == keystone && ml.Age == present)
 		lv.producer = b != nil && b.Rate > 0
 		h := float64(fm.height * lay.scale)
 		if !ml.Wonder {
