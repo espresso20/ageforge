@@ -18,7 +18,7 @@ The panel graphs seven metrics:
 | **All production** | Your all-production bonus as the game applies it, as a percentage: every source added together, in full |
 | **Game speed** | Your game speed bonus (0.15 means ticks come 15% faster) |
 
-Each metric gets its own braille line graph that covers the whole stored history. Above each graph are the metric's name, a trend arrow, its current value, and the lowest and highest values in the window. The arrow compares the newest sample with the one before it: ↑ means it grew by more than 2%, ↓ means it fell by more than 2%, and → means it stayed within 2%. The line above the first graph gives the tick range and the number of samples.
+Each metric gets its own braille line graph that covers the whole stored history. Above each graph are the metric's name, a trend arrow, its current value, and the lowest and highest values in the window. The arrow compares the newest sample with the one before it: ↑ means a rise of more than 2%, ↓ means a fall of more than 2%, and → means anything in between. The line above the first graph gives the tick range and the number of samples.
 
 <figure class="screen" data-screen="history"><figcaption>The Civilization History panel in the Bronze Age: population, food rate and research rate over the last three thousand ticks.</figcaption></figure>
 
