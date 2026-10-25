@@ -33,13 +33,8 @@ func DealPriceLevelAt(res string, lv, flow map[string]float64) float64 {
 	return flow[res]
 }
 
-// PricedResources lists the construction resources of age, sorted: the ones
-// with a price level.
-func PricedResources(age string) []string {
-	return PricedResourcesAt(PriceLevels(age))
-}
-
-// PricedResourcesAt is PricedResources against an age's price levels.
+// PricedResourcesAt lists the construction resources of an age's price
+// levels, sorted: the ones with a price level.
 func PricedResourcesAt(lv map[string]float64) []string {
 	out := make([]string, 0, len(lv))
 	for r := range lv {

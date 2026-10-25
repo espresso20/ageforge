@@ -276,7 +276,7 @@ func FormatRateValue(v float64) string {
 }
 
 // The lookups below (PriceLevels, FlowIncome, TypicalIncome, and
-// DealPriceLevel and PricedResources in deals.go) describe the tables this package defines and
+// DealPriceLevel in deals.go) describe the tables this package defines and
 // keep nothing between calls: each one rebuilds the building table, about a
 // millisecond. They are for tests and tools. An engine reads the same
 // numbers from its rules.Set, which works them out once with the pure

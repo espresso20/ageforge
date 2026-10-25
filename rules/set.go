@@ -741,9 +741,6 @@ func (s *Set) WorkerClass(domain, age string) (config.WorkerClassDef, bool) {
 // PrestigeUpgrades returns the whole shop table, retired perks included.
 func (s *Set) PrestigeUpgrades() []config.PrestigeUpgradeDef { return slices.Clone(s.upgrades) }
 
-// ShopUpgrades returns the upgrades the shop sells, in shop order.
-func (s *Set) ShopUpgrades() []config.PrestigeUpgradeDef { return slices.Clone(s.shop) }
-
 // PrestigeUpgrade returns a shop upgrade's definition.
 func (s *Set) PrestigeUpgrade(key string) (config.PrestigeUpgradeDef, bool) {
 	u, ok := s.upgradeByKey[key]
