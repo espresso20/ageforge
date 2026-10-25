@@ -1,6 +1,7 @@
 package config
 
 import (
+	"maps"
 	"math"
 	"slices"
 	"sort"
@@ -237,12 +238,7 @@ func MakerAsks(defs []BuildingDef, ages []AgeDef) (gate, wonder map[string]map[s
 		gate[a.Key] = map[string]float64{}
 		wonder[a.Key] = map[string]float64{}
 		if i+1 < len(ages) {
-			keys := make([]string, 0, len(ages[i+1].BuildingReqs))
-			for k := range ages[i+1].BuildingReqs {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			for _, k := range keys {
+			for _, k := range slices.Sorted(maps.Keys(ages[i+1].BuildingReqs)) {
 				d := byKey[k]
 				for res, c := range d.BaseCost {
 					if lv[res] <= 0 || c <= 0 {
@@ -580,7 +576,7 @@ func makerSupply(defs []BuildingDef, ages []AgeDef, i int, res string) float64 {
 	byKey := indexBy(defs, func(d BuildingDef) string { return d.Key })
 	carried := makerCarried(defs, ages, i)
 	total := 0.0
-	for _, k := range sortedBuildingKeys(carried) {
+	for _, k := range slices.Sorted(maps.Keys(carried)) {
 		d := byKey[k]
 		mult := 1.0
 		if d.WorkerCapacity > 0 {
@@ -645,15 +641,6 @@ func makerAccepted(age, res string) bool {
 		}
 	}
 	return false
-}
-
-func sortedBuildingKeys(m map[string]int) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 func ageKeys(ages []AgeDef) []string {

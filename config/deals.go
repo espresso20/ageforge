@@ -1,6 +1,9 @@
 package config
 
-import "sort"
+import (
+	"maps"
+	"slices"
+)
 
 // Price levels for faction trade deals (game/deals.go).
 //
@@ -41,12 +44,7 @@ func PricedResources(age string) []string {
 
 // PricedResourcesAt is PricedResources against an age's price levels.
 func PricedResourcesAt(lv map[string]float64) []string {
-	out := make([]string, 0, len(lv))
-	for r := range lv {
-		out = append(out, r)
-	}
-	sort.Strings(out)
-	return out
+	return slices.Sorted(maps.Keys(lv))
 }
 
 // DealPaybackTicks is, for each age, how many ticks of a flow producer's

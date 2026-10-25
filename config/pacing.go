@@ -1,7 +1,9 @@
 package config
 
 import (
+	"maps"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -254,13 +256,9 @@ func median(v []float64) float64 {
 // that costs the median of one resource. Resources without a level (flow
 // resources) do not count.
 func priceUnits(cost map[string]float64, levels map[string]float64) float64 {
-	keys := make([]string, 0, len(cost))
-	for res := range cost {
-		keys = append(keys, res)
-	}
-	sort.Strings(keys) // summed in key order: a float sum over a map's own order differs in its last digit from run to run
 	u := 0.0
-	for _, res := range keys {
+	// summed in key order: a float sum over a map's own order differs in its last digit from run to run
+	for _, res := range slices.Sorted(maps.Keys(cost)) {
 		if pl := levels[res]; pl > 0 {
 			u += cost[res] / pl
 		}

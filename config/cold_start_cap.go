@@ -3,7 +3,7 @@ package config
 import (
 	"maps"
 	"math"
-	"sort"
+	"slices"
 
 	"github.com/espresso20/ageforge/detmath"
 )
@@ -56,12 +56,7 @@ func coldStartLimit(defs []BuildingDef, ages []AgeDef, i int) map[string]float64
 		}
 	}
 	made := map[string]float64{}
-	keys := make([]string, 0, len(copies))
-	for k := range copies {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
+	for _, k := range slices.Sorted(maps.Keys(copies)) {
 		for _, e := range byKey[k].Effects {
 			if e.Type == "production" && e.Value > 0 && unlocked[e.Target] {
 				made[e.Target] += float64(float64(copies[k]) * e.Value)
@@ -127,11 +122,7 @@ func capColdStartBridge(defs []BuildingDef) []ColdStartCap {
 			if d.RequiredAge != age.Key || d.Category == "wonder" || d.Category == "monument" {
 				continue
 			}
-			resources := make([]string, 0, len(d.BaseCost))
-			for res := range d.BaseCost {
-				resources = append(resources, res)
-			}
-			sort.Strings(resources)
+			resources := slices.Sorted(maps.Keys(d.BaseCost))
 			before := maps.Clone(d.BaseCost)
 			for _, res := range resources {
 				if IsFlowResource(res) || (handGatherable[res] && i <= pos["medieval_age"]) {
