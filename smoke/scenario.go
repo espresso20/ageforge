@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -130,6 +132,11 @@ type Result struct {
 	// Progression holds bot-run summaries (progression, styles, prestige).
 	Progression []*Summary  `json:"progression,omitempty"`
 	Data        interface{} `json:"data,omitempty"`
+}
+
+func (r *Findings) warn(check, format string, args ...interface{}) *Finding {
+	r.Warnings = append(r.Warnings, Finding{Check: check, Message: fmt.Sprintf(format, args...)})
+	return &r.Warnings[len(r.Warnings)-1]
 }
 
 // Scenario is one named, individually runnable check.
