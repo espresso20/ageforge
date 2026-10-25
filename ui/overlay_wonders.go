@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -52,12 +51,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 	// Bank progress if not built
 	if !built && hasBs {
 		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n"))
-		costKeys := make([]string, 0, len(current.def.BaseCost))
-		for k := range current.def.BaseCost {
-			costKeys = append(costKeys, k)
-		}
-		sort.Strings(costKeys)
-		for _, k := range costKeys {
+		for _, k := range sortedKeysOf(current.def.BaseCost) {
 			need := current.def.BaseCost[k]
 			banked := bs.WonderBank[k]
 			pct := 0.0
@@ -169,12 +163,7 @@ func wondersProvider(state game.GameState, _ int) string {
 
 				// Per-resource bank breakdown
 				if len(w.def.BaseCost) > 0 {
-					costKeys := make([]string, 0, len(w.def.BaseCost))
-					for k := range w.def.BaseCost {
-						costKeys = append(costKeys, k)
-					}
-					sort.Strings(costKeys)
-					for _, k := range costKeys {
+					for _, k := range sortedKeysOf(w.def.BaseCost) {
 						need := w.def.BaseCost[k]
 						banked := bs.WonderBank[k]
 						resPct := 0.0

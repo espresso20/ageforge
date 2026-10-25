@@ -51,12 +51,7 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.11", "\n [gold]Total gathered:[-]\n"))
-	gKeys := make([]string, 0, len(s.TotalGathered))
-	for k := range s.TotalGathered {
-		gKeys = append(gKeys, k)
-	}
-	sort.Strings(gKeys)
-	for _, k := range gKeys {
+	for _, k := range sortedKeysOf(s.TotalGathered) {
 		fmt.Fprintf(&sb, "   %-14s %s\n", textfmt.Capitalize(game.ResourceName(k)), textfmt.Number(s.TotalGathered[k]))
 	}
 

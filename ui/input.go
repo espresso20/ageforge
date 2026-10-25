@@ -376,13 +376,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	var sb strings.Builder
 	fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.05", "[gold::b]%s[-]: wonder bank\n\n", curWonder.name))
 
-	costKeys := make([]string, 0, len(curWonder.def.BaseCost))
-	for k := range curWonder.def.BaseCost {
-		costKeys = append(costKeys, k)
-	}
-	sort.Strings(costKeys)
-
-	for _, res := range costKeys {
+	for _, res := range sortedKeysOf(curWonder.def.BaseCost) {
 		need := curWonder.def.BaseCost[res]
 		banked := bs.WonderBank[res]
 		pct := 0.0
@@ -476,7 +470,7 @@ func wonderCollectAll(w *wonderInfo, engine *game.GameEngine) CommandResult {
 	bs := state.Buildings[w.key]
 	var banked int
 	var skipped, full []string // full: already banked in full, named only when nothing went in
-	for _, res := range sortedMapKeys(w.def.BaseCost) {
+	for _, res := range sortedKeysOf(w.def.BaseCost) {
 		name := game.ResourceName(res)
 		switch {
 		case bs.WonderBank[res] >= w.def.BaseCost[res]:

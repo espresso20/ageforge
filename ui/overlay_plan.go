@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"unicode"
 
@@ -219,7 +218,7 @@ func planDetailRows(detail string, width int) string {
 // planPriceWhole is formatPlanCost with each material's spaces glued.
 func planPriceWhole(cost map[string]float64) string {
 	var parts []string
-	for _, k := range sortedMapKeys(cost) {
+	for _, k := range sortedKeysOf(cost) {
 		parts = append(parts, strings.ReplaceAll(game.Amount(cost[k], k), " ", glue))
 	}
 	return strings.Join(parts, ", ")
@@ -243,19 +242,10 @@ func planDue(v game.PlanItemView) map[string]float64 {
 // formatPlanCost is "48 wood, 20 stone", resources in key order.
 func formatPlanCost(cost map[string]float64) string {
 	var parts []string
-	for _, k := range sortedMapKeys(cost) {
+	for _, k := range sortedKeysOf(cost) {
 		parts = append(parts, game.Amount(cost[k], k))
 	}
 	return strings.Join(parts, ", ")
-}
-
-func sortedMapKeys(m map[string]float64) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // planPanelText renders the panel. Pure: state in, text out.

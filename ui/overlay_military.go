@@ -154,13 +154,8 @@ func formatExpeditionCost(cost map[string]float64, state game.GameState) string 
 	if len(cost) == 0 {
 		return ""
 	}
-	keys := make([]string, 0, len(cost))
-	for k := range cost {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	parts := make([]string, 0, len(keys))
-	for _, k := range keys {
+	parts := make([]string, 0, len(cost))
+	for _, k := range sortedKeysOf(cost) {
 		parts = append(parts, textfmt.Number(cost[k])+" "+resourceDisplayName(state, k))
 	}
 	return strings.Join(parts, ", ")
