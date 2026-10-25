@@ -1,7 +1,6 @@
 package game
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -9,9 +8,10 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// Stock has no ceiling and nothing overflows (overflow.go): a plan item banks
-// nothing. What is left here: a wonder queued in the plan, and the banks a
-// save from before the storage wall still carries.
+// Stock has no ceiling and nothing overflows: a plan item banks nothing. What
+// is left here: a wonder queued in the plan, and a saved bank, which a load
+// drops (the save from before the storage wall that carried one has it given
+// back to the stores: storage_wall_load_test.go).
 
 // A wonder queued in the plan is paid the way a wonder is: the plan pays the
 // rest of its bank from the stores and starts it once they cover all of it.
@@ -38,8 +38,8 @@ func TestPlanOverflow_QueuedWonderStartsFromStock(t *testing.T) {
 	ge.Resources.SetRate("wood", need["wood"]/1000)
 	ge.Resources.ApplyRates()
 	ge.runPlanTick()
-	if len(ge.Buildings.wonderBanks[w]) != 0 || ge.plan[0].Banked != nil {
-		t.Errorf("a waiting planned wonder banked: bank %v, item %v", ge.Buildings.wonderBanks[w], ge.plan[0].Banked)
+	if len(ge.Buildings.wonderBanks[w]) != 0 {
+		t.Errorf("a waiting planned wonder banked: bank %v", ge.Buildings.wonderBanks[w])
 	}
 	if queued(ge, w) != 0 {
 		t.Fatalf("the wonder started with %v wood of the %v it needs", ge.Resources.Get("wood"), need["wood"])
@@ -84,90 +84,24 @@ func TestPlanOverflow_QueuedWonderStartsOffline(t *testing.T) {
 	}
 }
 
-// Removing or clearing puts a bank an old save carried back in the stores,
-// and says so.
-func TestPlanOverflow_RemoveAndClearReturnTheBank(t *testing.T) {
-	ge := planTestEngine(t)
-	if _, err := ge.PlanAddBuild("shrine", 2); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
-		t.Fatal(err)
-	}
-	ge.plan[0].Banked = map[string]float64{"wood": 300}
-	ge.plan[1].Banked = map[string]float64{"wood": 5}
-	setAmount(ge, "wood", 900)
-	if _, err := ge.PlanRemove(1); err != nil {
-		t.Fatal(err)
-	}
-	if w := ge.Resources.Get("wood"); w != 1200 {
-		t.Errorf("wood = %v after removing a 300 bank onto 900, want 1200", w)
-	}
-	if !logHasAll(ge, "Plan: the bank of", "went back to the stores", "300 wood") {
-		t.Error("no log line for the bank going back")
-	}
-	setAmount(ge, "wood", 0)
-	ge.PlanClear()
-	if w := ge.Resources.Get("wood"); w != 5 {
-		t.Errorf("wood = %v after clearing a plan with 5 banked, want 5", w)
-	}
-}
-
-// The advance puts the banks back before it trims the stockpiles, so a bank
-// carries no more into the new age than the trim allows.
-func TestPlanOverflow_AdvanceReturnsBanksBeforeTheTrim(t *testing.T) {
-	ge := planTestEngine(t)
-	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
-		t.Fatal(err)
-	}
-	ge.plan[0].Banked = map[string]float64{"wood": 100_000}
-	setAmount(ge, "wood", 0)
-	next := ge.progress.GetNextAge(ge.age)
-	trim := CarryoverStarterBuildings * ageEntryCost(next, "wood")
-	ge.advanceAge(next)
-	if ge.plan[0].Banked != nil {
-		t.Errorf("bank after the advance = %v, want returned", ge.plan[0].Banked)
-	}
-	if w := ge.Resources.Get("wood"); trim > 0 && w > trim+1e-9 {
-		t.Errorf("wood after the advance = %v, over the trim's %v: the bank dodged it", w, trim)
-	}
-	if !logHas(ge, "went back to the stores for the advance") {
-		t.Error("no log line for the banks going back at the advance")
-	}
-}
-
-// ageEntryCost is the advance trim's base for res in age: the cheapest price
-// in it among the age's buildings.
-func ageEntryCost(age, res string) float64 {
-	best := 0.0
-	for _, b := range NewGameEngine().Buildings.defs {
-		if b.RequiredAge != age || b.Category == "wonder" {
-			continue
-		}
-		if c := b.BaseCost[res]; c > 0 && (best == 0 || c < best) {
-			best = c
-		}
-	}
-	return best
-}
-
-// A saved bank is taken as the engine would write it: only on build items,
-// positive and finite, known resources.
-func TestPlanOverflow_LoadPlanCleansBanks(t *testing.T) {
-	inf := 1.0
-	for i := 0; i < 2000; i++ {
-		inf *= 10
-	}
+// A bank in a saved plan is dropped on load, whatever the item, and the rest
+// of the item loads as it was.
+func TestPlanOverflow_LoadPlanDropsBanks(t *testing.T) {
 	got := loadPlan([]PlanItem{
-		{Kind: PlanBuild, Key: "hut", Count: 1, Banked: map[string]float64{"wood": 5, "stone": -1, "nonsense": 3, "food": inf}},
+		{Kind: PlanBuild, Key: "hut", Count: 2, Started: 1, Banked: map[string]float64{"wood": 5}},
 		{Kind: PlanResearch, Key: "tool_making", Count: 1, Banked: map[string]float64{"knowledge": 9}},
-		{Kind: PlanBuild, Key: "hut", Count: 1, Banked: map[string]float64{"wood": 0}},
+		{Kind: PlanBuild, Key: "wood_camp", Count: 1},
 	})
-	if !reflect.DeepEqual(got[0].Banked, map[string]float64{"wood": 5}) {
-		t.Errorf("build bank = %v, want just the wood", got[0].Banked)
+	if len(got) != 3 {
+		t.Fatalf("%d items loaded, want 3", len(got))
 	}
-	if got[1].Banked != nil || got[2].Banked != nil {
-		t.Errorf("banks %v and %v, want none", got[1].Banked, got[2].Banked)
+	for i, it := range got {
+		if it.Banked != nil {
+			t.Errorf("item %d loaded with the bank %v, want none", i, it.Banked)
+		}
+	}
+	if got[0].Key != "hut" || got[0].Count != 2 || got[0].Started != 1 {
+		t.Errorf("the banked hut loaded as %+v", got[0])
 	}
 }
 

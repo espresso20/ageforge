@@ -168,7 +168,6 @@ game.engine.checkMilestones.01,"Milestone in the bag: %s, that is a core memory.
 game.engine.checkMilestones.02,Full chain cleared: %s. New title drip: %s. Game speed %s for %s.
 game.engine.applyMilestoneRewards.01,  → Looted 
 game.engine.advanceAge.01,↑ %s is due a glow-up into %s. Type 'upgrade %s'.
-game.engine.advanceAge.02,for the level-up
 game.engine.advanceAge.03,"New age means a stockpile trim, no more dragon hoard energy: each resource caps at %d times the cost of the cheapest new building that uses it, resources no new building uses keep %s, and faith is untouched."
 game.engine.advanceAge.05,Glowed up from the %s to the %s.
 game.engine.advanceAge.06,"★ A wonder just dropped: %s. Bank its cost and research %s, its keystone, then build it."
@@ -460,9 +459,6 @@ game.mission_board.slot.01,"offer %d is delulu, the board only has 1 to %d. Type
 game.mission_board.slot.02,offer %d got sniped already. A new one drops in a few minutes
 game.names.EffectTargetName.02, production
 game.names.Amount.01,research XP
-game.overflow.returnPlanBanks.01,the plan's stash
-game.overflow.logBankReturn.01,"Plan: %s got sent back to the stores%s, but they were already stacked."
-game.overflow.logBankReturn.02,Plan: %s respawned in the stores%s (%s).
 game.plan.PlanAddUpgrade.01,"Whole numbers from 1 to %d only, decimals are the ick."
 game.plan.PlanAddUpgrade.02,"%s gets no upgrade this age, it's in its basic era. Type 'upgrade' to list the ones that do."
 game.plan.PlanAddUpgrade.03,"Upgrade what? Your %s count is zero, bruh."
@@ -473,7 +469,6 @@ game.plan.PlanAddBuild.02,"'%s' is not a building, who is she? Did you mean '%s'
 game.plan.PlanAddBuild.03,"Building '%s' does not exist, it is giving imaginary. Type build to see what you can build."
 game.plan.PlanAddBuild.04,"%s can't join the plan, red flag: %s."
 game.plan.PlanAddBuild.05,"That plan item maxes out at %d and it is already there, bestie."
-game.plan.PlanRemove.01,the bank of 
 game.plan.planIndexErr.01,"Zero quests in the plan, nothing to see here, no thoughts."
 game.plan.planIndexErr.02,Plan item %d is a ghost (the plan has %s).
 game.plan.planIndexErr.03,quest
@@ -518,7 +513,6 @@ game.plan.runPlan.03,no glow-up on offer
 game.plan.runPlan.04,"all sold out, L"
 game.plan.runPlan.05,nothing left to cook
 game.plan.runPlan.06,Plan: benched %s (%s).
-game.plan.runPlan.07,the stash of 
 game.plan.runPlan.10,Plan: the last %s got yeeted (%s).
 game.plan.runPlan.12,"Plan: level-up time, heading to the %s."
 game.plan.runPlanTick.01,Plan: 

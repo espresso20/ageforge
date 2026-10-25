@@ -29,7 +29,7 @@ import (
 //     copies that grow the town as stood before it. That is research, deals
 //     and upgrades (the player's priorities, which a build neither needs nor
 //     gives), storage, knowledge and the army, and the items that cannot take
-//     part now (wonders, banked items, another age's buildings, a tech not
+//     part now (wonders, another age's buildings, a tech not
 //     researched). Only storage, knowledge and the army are paid for in the
 //     model.
 //   - The first PlanOptimizeCopies copies are reordered; the rest follow in
@@ -88,7 +88,7 @@ const (
 
 func (ge *GameEngine) planOptimizeKind(it PlanItem) int {
 	def, ok := ge.Buildings.defs[it.Key]
-	if !ok || len(it.Banked) > 0 || def.Category == "wonder" || ge.planBuildInvalid(it.Key, 0) != "" ||
+	if !ok || def.Category == "wonder" || ge.planBuildInvalid(it.Key, 0) != "" ||
 		def.RequiredAge != "" && def.RequiredAge != ge.age || ge.Buildings.TechLocked(it.Key) {
 		return optInert
 	}
@@ -160,7 +160,7 @@ func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
 			copies += take
 			if take < it.Count {
 				cut := it
-				cut.Count, cut.Started, cut.Banked = it.Count-take, 0, nil
+				cut.Count, cut.Started = it.Count-take, 0
 				rest = append(rest, cut)
 				capped = true
 			}

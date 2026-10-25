@@ -1105,7 +1105,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	beforeTheWall := save.StorageRules < config.StorageRules
 	if beforeTheWall {
-		ge.keepStockFromBeforeTheWall()
+		ge.keepStockFromBeforeTheWall(save.Plan)
 	}
 	beforeScholars := save.ScholarRules < scholarRules
 	if beforeScholars {
@@ -1802,15 +1802,18 @@ func storageWallNotice() string {
 
 // keepStockFromBeforeTheWall carries a save written under the old storage
 // rules across to the new ones without taking anything: what the plan's
-// items had banked from overflow goes back to the stores. Called on load,
-// before the stores are worked out.
-func (ge *GameEngine) keepStockFromBeforeTheWall() {
-	for i := range ge.plan {
-		for _, res := range sortedKeys(ge.plan[i].Banked) {
-			if r, ok := ge.Resources.resources[res]; ok && ge.plan[i].Banked[res] > 0 {
-				r.Amount += ge.plan[i].Banked[res]
+// build items had banked from overflow goes back to the stores. It reads the
+// plan as saved (loadPlanIn drops the banks) and is called on load, before
+// the stores are worked out.
+func (ge *GameEngine) keepStockFromBeforeTheWall(saved []PlanItem) {
+	for _, it := range saved {
+		if it.Kind != PlanBuild {
+			continue
+		}
+		for _, res := range sortedKeys(it.Banked) {
+			if r, ok := ge.Resources.resources[res]; ok && it.Banked[res] > 0 {
+				r.Amount += it.Banked[res]
 			}
 		}
-		ge.plan[i].Banked = nil
 	}
 }

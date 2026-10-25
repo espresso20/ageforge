@@ -2341,9 +2341,6 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// uses fall back to a small residual percentage. Players who didn't over-
 	// accumulate keep what they had (amount below the cap is untouched).
 	// Faith is excluded — it's cumulative.
-	// The plan's banks (from old saves) go back to the stores first, so the
-	// trim treats them like anything else held (overflow.go).
-	ge.returnPlanBanks(vibe.Line("game.engine.advanceAge.02", "for the advance"))
 	entryCosts := ge.rules.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
 		if key == "faith" {
@@ -3488,23 +3485,15 @@ func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) 
 func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	return ge.startBuildLocked(key, false)
+	return ge.startBuildPaid(key, false)
 }
 
-// startBuildLocked is BuildBuilding under the write lock: every check the
+// startBuildPaid is BuildBuilding under the write lock: every check the
 // command makes, the payment, and the queueing (or instant build). The build
 // plan starts its builds through it too, with quiet set so the per-copy
-// "Started building" line gives way to the plan's own summary.
-func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
-	return ge.startBuildPaid(key, quiet, nil)
-}
-
-// startBuildPaid is startBuildLocked with part of the price already paid:
-// prepaid (a plan item's overflow bank, at most the price per resource) is
-// taken off what the stores pay. The caller takes it out of the bank once
-// the build has started. Parts of the price left within planBankEpsilon of
-// prepaid count as paid.
-func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]float64) error {
+// "Started building" line gives way to the plan's own summary. (The name is
+// from when it took a plan bank's part of the price; the copy ids key on it.)
+func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
 		return ge.unknownBuildingErr(key)
@@ -3552,9 +3541,6 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 		// Use queue-aware cost so that items already in the build queue are
 		// factored into the cost curve (fixes queue-blindness exploit).
 		cost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
-		if len(prepaid) > 0 {
-			cost, _ = splitBank(cost, prepaid)
-		}
 		if !ge.Resources.Pay(cost) {
 			return vibe.Errorf("game.engine.startBuildPaid.05", "Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
 		}
@@ -3628,7 +3614,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	// A wonder is paid through its bank, one copy, by the single path: the
 	// store check and the bank rules are that path's.
 	if def.Category == "wonder" {
-		if err := ge.startBuildLocked(key, false); err != nil {
+		if err := ge.startBuildPaid(key, false); err != nil {
 			return 0, err
 		}
 		return 1, nil
