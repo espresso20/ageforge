@@ -475,3 +475,37 @@ func TestReset_ClearsPerRunCivState(t *testing.T) {
 		t.Errorf("post-reset lent workers = %d, want 0", ge.Diplomacy.LentWorkerTotal())
 	}
 }
+
+// Every civ command refuses a key the player has not met with the one
+// refusal, whether the key is off the roster or on it but undiscovered, and
+// it is the refusal errUnknownCiv words. A met civ is not refused.
+func TestCivCommandsRefuseACivNotMet(t *testing.T) {
+	ge := newSeededEngine(3) // not started: nothing else touches the engine
+	dm := ge.Diplomacy
+	unmet, met := dm.factionList[0].Key, dm.factionList[1].Key
+	delete(dm.factions, unmet)
+	dm.DiscoverFaction(met)
+	hidden := dm.factionList[2].Key // on the books but not discovered
+	dm.DiscoverFaction(hidden)
+	dm.factions[hidden].Discovered = false
+
+	calls := map[string]func(key string) error{
+		"SetStatus":         func(k string) error { _, err := dm.SetStatus(k, "neutral", 0); return err },
+		"RaidTradeRoute":    func(k string) error { _, err := dm.RaidTradeRoute(k, 1); return err },
+		"SendTribute":       func(k string) error { _, _, err := dm.SendTribute(k, 0, 0); return err },
+		"SendGift":          func(k string) error { _, err := dm.SendGift(k, 0); return err },
+		"AcceptFactionDeal": func(k string) error { _, err := ge.AcceptFactionDeal(k, 1); return err },
+		"PlanAddDeal":       func(k string) error { return ge.PlanAddDeal(k, 1) },
+	}
+	for name, call := range calls {
+		for _, key := range []string{unmet, hidden, "no_such_civ"} {
+			err := call(key)
+			if err == nil || err.Error() != dm.errUnknownCiv(key).Error() {
+				t.Errorf("%s(%q) = %v, want %v", name, key, err, dm.errUnknownCiv(key))
+			}
+		}
+		if err := call(met); err != nil && strings.Contains(err.Error(), "You have not met") {
+			t.Errorf("%s refused a civ that is met: %v", name, err)
+		}
+	}
+}

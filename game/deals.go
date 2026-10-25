@@ -676,12 +676,8 @@ func dealLogTerms(d FactionDeal) string {
 func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	def, ok := ge.Diplomacy.factionDefs[key]
+	def, fs, ok := ge.Diplomacy.metCiv(key)
 	if !ok {
-		return FactionDeal{}, ge.Diplomacy.errUnknownCiv(key)
-	}
-	fs, ok := ge.Diplomacy.factions[key]
-	if !ok || !fs.Discovered {
 		return FactionDeal{}, ge.Diplomacy.errUnknownCiv(key)
 	}
 	if err := ge.featureErr(config.FeatureDiplomacy); err != nil {

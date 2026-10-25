@@ -78,6 +78,17 @@ func (dm *DiplomacyManager) errUnknownCiv(key string) error {
 	return vibe.Errorf("game.diplomacy.errUnknownCiv.03", "%s Scouting expeditions make first contact; type diplomacy deals to see the ones you have met.", msg)
 }
 
+// metCiv is the roster entry and the state of the civ key, when the player has
+// met it. The commands that act on a civ refuse with errUnknownCiv otherwise.
+func (dm *DiplomacyManager) metCiv(key string) (config.FactionDef, *FactionState, bool) {
+	def, ok := dm.factionDefs[key]
+	if !ok {
+		return def, nil, false
+	}
+	fs, ok := dm.factions[key]
+	return def, fs, ok && fs.Discovered
+}
+
 // DiplomacyManager handles NPC civilization discovery and diplomatic relations.
 // The 6 original factions plus 5 new civilizations form an 11-civ roster spanning
 // all epochs. Civs are discovered through age/epoch-gated first-contact events.
@@ -400,14 +411,8 @@ func (dm *DiplomacyManager) applyPersonalityDrift(tradedRecently bool) {
 
 // SetStatus changes diplomatic status with a faction
 func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (float64, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return 0, dm.errUnknownCiv(factionKey)
-	}
-
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return 0, dm.errUnknownCiv(factionKey)
 	}
 
@@ -495,13 +500,8 @@ func (dm *DiplomacyManager) takeWarEvents() []warEvent {
 // provocation that can trigger war if standing is already hostile. Returns
 // (warStarted, error). Used by the diplomacy command.
 func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return false, dm.errUnknownCiv(factionKey)
-	}
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return false, dm.errUnknownCiv(factionKey)
 	}
 	// Raiding tanks opinion immediately, then registers the provocation.
@@ -516,13 +516,8 @@ func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, e
 // to end the war immediately and restore a small amount of opinion. Returns the
 // (gold, culture) actually spent and an error if conditions aren't met.
 func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64) (float64, float64, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return 0, 0, dm.errUnknownCiv(factionKey)
-	}
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return 0, 0, dm.errUnknownCiv(factionKey)
 	}
 	if !fs.AtWar {
@@ -621,14 +616,8 @@ func (dm *DiplomacyManager) GiftPrice() float64 {
 
 // SendGift sends a gift to a faction, increasing opinion
 func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return 0, dm.errUnknownCiv(factionKey)
-	}
-
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return 0, dm.errUnknownCiv(factionKey)
 	}
 

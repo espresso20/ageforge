@@ -546,3 +546,46 @@ func TestPrimitiveAgeSendsWithoutAParty(t *testing.T) {
 		t.Errorf("ambush story %q", story)
 	}
 }
+
+// The posted soldiers and the empty posts go into a save and come out of one
+// capped at the posts the standing copies have, with nothing for a building
+// that has none, and as nil (not an empty map) when nothing is left.
+func TestSoldierPostsAreCappedOnSaveAndLoad(t *testing.T) {
+	ge := newSeededEngine(3)
+	ge.Buildings.counts["war_camp"] = 2
+	posts := ge.soldierPostsOf("war_camp")
+	if posts <= 0 {
+		t.Fatal("setup: war camps have no posts")
+	}
+	over := func() map[string]int {
+		return map[string]int{"war_camp": posts + 5, "no_such_building": 3, "hut": 2}
+	}
+	want := map[string]int{"war_camp": posts}
+
+	ge.soldiersPosted, ge.soldiersVacant = over(), over()
+	if got := ge.soldiersPostedSave(); !reflect.DeepEqual(got, want) {
+		t.Errorf("posted in the save %v, want %v", got, want)
+	}
+	if got := ge.soldiersVacantSave(); !reflect.DeepEqual(got, want) {
+		t.Errorf("vacant in the save %v, want %v", got, want)
+	}
+
+	save := &GameSave{SoldiersPosted: over(), SoldiersVacant: over()}
+	ge.loadSoldiersPosted(save)
+	if !reflect.DeepEqual(ge.soldiersPosted, want) || !reflect.DeepEqual(ge.soldiersVacant, want) {
+		t.Errorf("after the load posted %v vacant %v, want %v", ge.soldiersPosted, ge.soldiersVacant, want)
+	}
+	ge.soldiersPosted["war_camp"] = 0
+	if save.SoldiersPosted["war_camp"] != posts+5 {
+		t.Error("the loaded soldiers share their map with the save")
+	}
+
+	ge.soldiersPosted, ge.soldiersVacant = map[string]int{"hut": 4, "war_camp": 0}, map[string]int{}
+	if ge.soldiersPostedSave() != nil || ge.soldiersVacantSave() != nil {
+		t.Error("nothing posted saved as a map, want nil")
+	}
+	ge.loadSoldiersPosted(&GameSave{SoldiersPosted: map[string]int{"hut": 4}, SoldiersVacant: map[string]int{}})
+	if ge.soldiersPosted != nil || ge.soldiersVacant != nil {
+		t.Errorf("an empty load left posted %v vacant %v, want nil", ge.soldiersPosted, ge.soldiersVacant)
+	}
+}
