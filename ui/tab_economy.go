@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -23,17 +24,6 @@ import (
 // player advances past these ages. Tunable: trim to just {"primitive_age"} for a
 // shorter intro, or extend it if later ages still warrant hand-holding.
 var earlyGameAges = []string{"primitive_age", "stone_age"}
-
-// isEarlyGame reports whether the given age key is one of the early-game ages that
-// should show the onboarding block.
-func isEarlyGame(ageKey string) bool {
-	for _, k := range earlyGameAges {
-		if k == ageKey {
-			return true
-		}
-	}
-	return false
-}
 
 // onboardingStep is one line of the first-steps guide: the commands to type,
 // the word that joins them, and a short note on why.
@@ -564,7 +554,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 	// Auto-retire the onboarding block once the player is past the early ages OR has
 	// logged 30+ minutes of play. PlayTime is wall-clock (time.Since(GameStarted)),
 	// so it's robust against tick-speed bonuses that a raw tick count would inflate.
-	if isEarlyGame(state.Age) && state.Stats.PlayTime < 30*time.Minute {
+	if slices.Contains(earlyGameAges, state.Age) && state.Stats.PlayTime < 30*time.Minute {
 		entry(renderOnboarding(w))
 	}
 	return head, entries
