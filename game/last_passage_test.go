@@ -176,16 +176,19 @@ func lastPassageLoss(t *testing.T, fill float64, appease, brace int) float64 {
 }
 
 // incomeHours is how long a moderate economy in age takes to make cost, in
-// hours at 1x: the slowest of its resources at config.TypicalIncome (which is
-// config.FlowIncome for faith and culture).
+// hours at 1x: the slowest of its resources at the compiled set's
+// TypicalIncome (the numbers of config.TypicalIncome, which is
+// config.FlowIncome for faith and culture, without rebuilding every table on
+// each call).
 func incomeHours(t *testing.T, cost map[string]float64, age string) float64 {
 	t.Helper()
 	if len(cost) == 0 {
 		t.Fatalf("no price to time in %s", age)
 	}
 	slowest := 0.0
+	core := rules.Core()
 	for res, c := range cost {
-		rate := config.TypicalIncome(res, age)
+		rate := core.TypicalIncome(res, age)
 		if rate <= 0 {
 			t.Fatalf("nothing makes %s in %s", res, age)
 		}

@@ -1110,6 +1110,7 @@ func TestAppeasePayableWithinTheWarning(t *testing.T) {
 		const wantTwo = 1.0
 		for _, age := range ep.Ages {
 			cost1, cost2 := doomAppeaseCost(ep.Key, age, 1), doomAppeaseCost(ep.Key, age, 2)
+			span := config.LatePriceTargetTicks(age)
 			if cost1["faith"] <= 0 {
 				t.Errorf("%s in %s: level 1 asks no faith (%v)", ep.Key, age, cost1)
 			}
@@ -1118,7 +1119,7 @@ func TestAppeasePayableWithinTheWarning(t *testing.T) {
 				if math.Abs(cost2[res]-wantTwo*l1) > 1e-6 {
 					t.Errorf("%s in %s: level 2 %s = %v, want %v times level 1's %v", ep.Key, age, res, cost2[res], wantTwo, l1)
 				}
-				rate, span := config.FlowIncome(res, age), config.LatePriceTargetTicks(age)
+				rate := rules.Core().FlowIncome(res, age)
 				shortest, longest := rate*span*harbingerLeadMin, rate*span*harbingerLeadMax
 				// Rounded up to two significant figures: within 10% of the share.
 				if l1 > 1.1*shortest*harbingerAppeaseWindowShare || l1 > shortest {
@@ -1159,6 +1160,7 @@ func TestLastPassageAppeasePayableWithinItsWarning(t *testing.T) {
 		for _, age := range ep.Ages {
 			cost1, cost2 := lastPassageAppeaseCost(ep.Key, age, 1), lastPassageAppeaseCost(ep.Key, age, 2)
 			doom := doomAppeaseCost(ep.Key, age, 1)
+			span := config.LatePriceTargetTicks(age)
 			if cost1["faith"] <= 0 || cost1["culture"] <= 0 || len(cost1) != len(doom) {
 				t.Fatalf("%s in %s: the Last Passage's appease asks %v, a doom's %v", ep.Key, age, cost1, doom)
 			}
@@ -1168,8 +1170,8 @@ func TestLastPassageAppeasePayableWithinItsWarning(t *testing.T) {
 				if cost2[res] != l1 {
 					t.Errorf("%s in %s: level 2 %s = %v, want level 1's %v again", ep.Key, age, res, cost2[res], l1)
 				}
-				rate := config.FlowIncome(res, age)
-				warning := rate * config.LatePriceTargetTicks(age) * lastPassageWarning
+				rate := rules.Core().FlowIncome(res, age)
+				warning := rate * span * lastPassageWarning
 				// Rounded up to two significant figures: within 10% of the share.
 				if l1 > 1.1*warning*harbingerAppeaseWindowShare || l1 > warning {
 					t.Errorf("%s in %s: level 1 %s (%v) is more than its share of what the warning makes (%v)", ep.Key, age, res, l1, warning*harbingerAppeaseWindowShare)
@@ -1186,7 +1188,7 @@ func TestLastPassageAppeasePayableWithinItsWarning(t *testing.T) {
 				slowest = math.Max(slowest, l1/rate)
 			}
 			for res, c := range lastPassageBraceCost(ep.Key, age, 1) {
-				rate := config.TypicalIncome(res, age)
+				rate := rules.Core().TypicalIncome(res, age)
 				if rate <= 0 {
 					t.Fatalf("%s in %s: nothing makes %s, which Brace asks for", ep.Key, age, res)
 				}
@@ -1218,6 +1220,7 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 			continue
 		}
 		for _, age := range ep.Ages {
+			span := config.LatePriceTargetTicks(age)
 			for _, th := range []struct {
 				name           string
 				cost1, cost2   map[string]float64
@@ -1241,7 +1244,7 @@ func TestFinalEraBracePricedOnTheWarning(t *testing.T) {
 					if th.cost2[res] != l1 {
 						t.Errorf("%s in %s: %s's level 2 %s = %v, want level 1's %v again", ep.Key, age, th.name, res, th.cost2[res], l1)
 					}
-					made := config.TypicalIncome(res, age) * config.LatePriceTargetTicks(age) * th.warning
+					made := rules.Core().TypicalIncome(res, age) * span * th.warning
 					// Rounded up to two significant figures: within 10% of the
 					// share; every Brace, the final era's two threads included,
 					// no more than its ceiling, three fifths of the age's stock

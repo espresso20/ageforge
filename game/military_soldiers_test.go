@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // warCampPosts is the soldiers one War Camp comes with, from the tables.
 func warCampPosts(t *testing.T) int {
 	t.Helper()
-	def, ok := config.BuildingByKey()["war_camp"]
+	def, ok := rules.Core().Building("war_camp")
 	if !ok || def.Soldiers <= 0 {
 		t.Fatalf("the War Camp has %d posts", def.Soldiers)
 	}

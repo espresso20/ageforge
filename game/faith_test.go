@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- faith strength -----------------------------------------------------------
@@ -16,7 +17,7 @@ import (
 func faithBuildingsUpTo(age string) []string {
 	order := ageOrders()
 	var keys []string
-	for _, d := range config.BaseBuildings() {
+	for _, d := range rules.Core().Buildings() {
 		if d.Category == "wonder" {
 			continue
 		}
@@ -53,7 +54,7 @@ func faithTown(t *testing.T, age string, sets float64) *GameEngine {
 		}
 	}
 	setFaithBuildings(ge, age, sets)
-	for _, d := range config.BaseBuildings() {
+	for _, d := range rules.Core().Buildings() {
 		if d.Category != "wonder" || order[d.RequiredAge] >= order[age] {
 			continue
 		}

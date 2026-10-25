@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- helpers ---------------------------------------------------------------
@@ -38,7 +39,7 @@ func badThenEscalate() *rand.Rand { return riggedRNG(0.99, 0.01) }
 // from a distinct WorkerDomain where possible.
 func pickWorkerBuildings(t *testing.T, domains ...string) []string {
 	t.Helper()
-	byKey := config.BuildingByKey()
+	byKey := rules.Core().BuildingMap()
 	keys := make([]string, 0, len(byKey))
 	for k := range byKey {
 		keys = append(keys, k)

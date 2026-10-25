@@ -38,8 +38,9 @@ func storageCounts(ge *GameEngine) map[string]int {
 
 func TestDestroyable_SparesWondersStorageAndKnowledgeBuildings(t *testing.T) {
 	spared := 0
-	for _, k := range sortedKeys(config.BuildingByKey()) {
-		d := config.BuildingByKey()[k]
+	byKey := config.BuildingByKey()
+	for _, k := range sortedKeys(byKey) {
+		d := byKey[k]
 		want := d.Category != "wonder" && d.Category != "storage" && !config.IsKnowledgeBuilding(d)
 		if got := isDestroyable(d); got != want {
 			t.Errorf("isDestroyable(%s, %s) = %v, want %v", k, d.Category, got, want)
@@ -133,8 +134,9 @@ func TestSuccumbRuins_NeverStorage(t *testing.T) {
 	food := pickWorkerBuildings(t, "food")[0]
 	ge.Buildings.counts[food] = 2
 	ruins := ge.Buildings.GenerateRuins(ge.gameRNG(), SuccumbRuinCount)
+	byKey := config.BuildingByKey()
 	for k, n := range ruins {
-		if config.BuildingByKey()[k].Category == "storage" {
+		if byKey[k].Category == "storage" {
 			t.Errorf("Succumb ruined %d %s: storage ruins produce nothing and storage is permanent", n, k)
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- culture strength ---------------------------------------------------------
@@ -14,7 +15,7 @@ import (
 func cultureBuildingsUpTo(age string) []string {
 	order := ageOrders()
 	var keys []string
-	for _, d := range config.BaseBuildings() {
+	for _, d := range rules.Core().Buildings() {
 		if d.Category == "wonder" {
 			continue
 		}
@@ -54,7 +55,7 @@ func cultureTown(t *testing.T, age string, sets float64) *GameEngine {
 	for _, key := range cultureBuildingsUpTo(age) {
 		ge.Buildings.counts[key] = int(math.Round(sets * float64(culturePerSet)))
 	}
-	for _, d := range config.BaseBuildings() {
+	for _, d := range rules.Core().Buildings() {
 		if d.Category != "wonder" || order[d.RequiredAge] >= order[age] {
 			continue
 		}

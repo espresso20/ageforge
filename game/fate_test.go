@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // --- helpers ------------------------------------------------------------------
@@ -1160,8 +1161,9 @@ func TestCosmicDoomSparesStorage(t *testing.T) {
 			if len(ruins) == 0 {
 				t.Fatal("Succumb left no ruins")
 			}
+			byKey := config.BuildingByKey()
 			for k, n := range ruins {
-				if config.BuildingByKey()[k].Category == "storage" {
+				if byKey[k].Category == "storage" {
 					t.Errorf("Succumb ruined %d %s: storage is permanent", n, k)
 				}
 			}
@@ -1232,10 +1234,10 @@ func TestShortestWarningCoversTheAnswers(t *testing.T) {
 			}
 			return res, worst
 		}
-		if res, ticks := slowest(r.BraceL1, config.TypicalIncome); ticks > shortest {
+		if res, ticks := slowest(r.BraceL1, rules.Core().TypicalIncome); ticks > shortest {
 			t.Errorf("%s in %s: Brace level 1 takes %.1f hours of %s income, the shortest warning lasts %.1f", r.Epoch, r.Age, hours(ticks), res, hours(shortest))
 		}
-		if res, ticks := slowest(r.AppeaseL1, config.FlowIncome); ticks > shortest {
+		if res, ticks := slowest(r.AppeaseL1, rules.Core().FlowIncome); ticks > shortest {
 			t.Errorf("%s in %s: Appease level 1 takes %.1f hours of %s income, the shortest warning lasts %.1f", r.Epoch, r.Age, hours(ticks), res, hours(shortest))
 		}
 	}

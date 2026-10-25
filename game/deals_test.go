@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 )
 
 // testDealEnv is a dealEnv for age with every resource the ages up to it
@@ -161,7 +162,7 @@ func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv
 		}
 		return
 	case DealRare:
-		if def.Personality != "isolationist" || config.DealPriceLevel(d.Get, env.age) > 0 {
+		if def.Personality != "isolationist" || rules.Core().DealPriceLevel(d.Get, env.age) > 0 {
 			t.Errorf("%s %+v: rare deal from a non-isolationist or for goods this age prices", def.Key, d)
 		}
 		return
@@ -180,7 +181,7 @@ func checkDeal(t *testing.T, def config.FactionDef, fs FactionState, env dealEnv
 	// multiple (dealRateMin to 1 of parity, good to the 3 figures an amount
 	// is rounded to), whatever any market would pay.
 	rate := d.GetAmt / d.GiveAmt
-	lf, lt := config.DealPriceLevel(d.Give, env.age), config.DealPriceLevel(d.Get, env.age)
+	lf, lt := rules.Core().DealPriceLevel(d.Give, env.age), rules.Core().DealPriceLevel(d.Get, env.age)
 	if lf > 0 && lt > 0 {
 		if rate > lt/lf*1.001 {
 			t.Errorf("%s %+v: rate %v beats parity %v", def.Key, d, rate, lt/lf)
