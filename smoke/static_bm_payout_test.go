@@ -79,18 +79,18 @@ func TestBlackMarketPayoutCheckCatchesTheFixedRates(t *testing.T) {
 	for _, c := range []struct{ key, rule string }{
 		{"colonial_age/coal", BMPayoutHigh}, {"colonial_age/gold", BMPayoutLow},
 		{"quantum_age/coal", BMPayoutHigh}, {"quantum_age/steel", BMPayoutLow}, {"quantum_age/electricity", BMPayoutLow},
-		{"transcendent_age/iron", BMPayoutHigh},
+		{"transcendent_age/coal", BMPayoutHigh},
 	} {
 		if old[c.key] != c.rule {
 			t.Errorf("the fixed rates, %s: flagged %q, want %q", c.key, old[c.key], c.rule)
 		}
 	}
-	// A rule that pays the same in every resource, ten times too much or ten
-	// times too little (in the typical incomes' minutes), fails everywhere.
+	// A rule that pays the same in every resource but ten times too much, or
+	// the earlier 0.3 times the deal, or a tenth of it, fails everywhere.
 	for _, c := range []struct {
 		times float64
 		rule  string
-	}{{10, BMPayoutHigh}, {0.1, BMPayoutLow}} {
+	}{{10, BMPayoutHigh}, {0.3, BMPayoutLow}, {0.1, BMPayoutLow}} {
 		got := flagged(func(age, res string) float64 {
 			typC, typR := set.TypicalIncome("culture", age), set.TypicalIncome(res, age)
 			return c.times * game.BlackMarketPayout(set, age, res, deal(age), typC, typR)

@@ -18,20 +18,20 @@ import (
 // (smoke/reference.go, a measure the rule does not read), and must come to
 // between BMPayoutLowMinutes and BMPayoutHighMinutes of it.
 //
-// The bounds come from the fixed curve. A win pays 0.3 times the deal's
-// minutes of culture income (3,600 minutes where the deal asks 200 hours) in
+// The bounds come from the fixed curve. A deal that goes through pays the
+// deal's own minutes of culture income (12,000 where it asks 200 hours) in
 // minutes of income of the resource; against the reference model's incomes
-// that reads from 1,519 minutes (crypto, in the Cyberpunk Age) to 3,014
-// (gold, in the Transcendent Age), because the model's incomes part from the
-// typical ones a little, by resource. Low is two thirds of the lowest and high
-// half again the highest, so the curve passes as it is and a payout that
-// parts from it by more than that does not. The fixed gold rates the payout
-// was paid at before put 111 of these 115 payouts outside it, from next to
-// nothing (steel, electricity) to over a million minutes (coal, iron), for the
-// same deal, by item.
+// that reads from 5,064 minutes (dark matter, in the Interstellar Age) to
+// 10,046 (gold, in the Transcendent Age), because the model's incomes part
+// from the typical ones a little, by resource. Low is two thirds of the
+// lowest and high half again the highest, so the curve passes as it is and a
+// payout that parts from it by more than that does not. The fixed gold rates
+// the payout was paid at before put 109 of these 115 payouts outside it, from
+// next to nothing (steel, electricity) to over a million minutes (coal, iron),
+// for the same deal, by item.
 const (
-	BMPayoutLowMinutes  = 1000.0
-	BMPayoutHighMinutes = 4500.0
+	BMPayoutLowMinutes  = 3300.0
+	BMPayoutHighMinutes = 15_000.0
 )
 
 // The rules a BMPayoutProblem can break.
@@ -116,7 +116,7 @@ func bmPayoutProblems(ages []config.AgeDef, income []map[string]float64, payout 
 
 // writeBMPayouts renders the check for the static scenario.
 func writeBMPayouts(sb *strings.Builder, problems []BMPayoutProblem, rows []BMPayoutRow) {
-	fmt.Fprintf(sb, "A win on the Black Market pays the same worth whichever resource it is taken in: a share of the deal's minutes of culture income, as minutes of the town's income of the resource. For every age from the Colonial Age and every resource the smugglers deal in that the age makes, a win for a town making the age's typical incomes is read in minutes of the reference model's income of that resource, and must come to between %s and %s of them. `go test ./smoke` fails on any row outside that.\n\n", num(BMPayoutLowMinutes), num(BMPayoutHighMinutes))
+	fmt.Fprintf(sb, "A deal that goes through on the Black Market pays the same worth whichever resource it is taken in: the deal's minutes of culture income, as minutes of the town's income of the resource. For every age from the Colonial Age and every resource the smugglers deal in that the age makes, a payout for a town making the age's typical incomes is read in minutes of the reference model's income of that resource, and must come to between %s and %s of them. `go test ./smoke` fails on any row outside that.\n\n", num(BMPayoutLowMinutes), num(BMPayoutHighMinutes))
 	if len(problems) == 0 {
 		sb.WriteString("No problems.\n\n")
 	} else {
@@ -125,7 +125,7 @@ func writeBMPayouts(sb *strings.Builder, problems []BMPayoutProblem, rows []BMPa
 		}
 		sb.WriteString("\n")
 	}
-	sb.WriteString("| age | resource | reference income per tick | a win pays | in minutes of that income |\n|---|---|---|---|---|\n")
+	sb.WriteString("| age | resource | reference income per tick | a deal pays | in minutes of that income |\n|---|---|---|---|---|\n")
 	for _, r := range rows {
 		fmt.Fprintf(sb, "| %s | %s | %s | %s | %s |\n", r.Age, r.Resource, num(r.Income), num(r.Payout), num(r.Minutes))
 	}
