@@ -883,45 +883,13 @@ func TestEveryDeclaredEventIsReported(t *testing.T) {
 	}
 
 	// Every one is used in the engine's own code (test files left out).
-	files, err := filepath.Glob("*.go")
-	if err != nil {
-		t.Fatal(err)
-	}
-	used := map[string]bool{}
-	for _, f := range files {
-		if strings.HasSuffix(f, "_test.go") {
-			continue
-		}
-		src, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatal(err)
-		}
-		for name := range names {
-			if strings.Contains(string(src), "config."+name) {
-				used[name] = true
-			}
-		}
-	}
+	src := engineSource(t)
 	for _, name := range sortedKeys(names) {
-		_, retired := retiredBadgeEvents[name]
-		switch {
-		case !used[name] && !retired:
+		if !strings.Contains(src, "config."+name) {
 			t.Errorf("config.%s is declared but the engine never reports it", name)
-		case used[name] && retired:
-			t.Errorf("config.%s is reported again: remove it from retiredBadgeEvents", name)
-		}
-	}
-	for name := range retiredBadgeEvents {
-		if _, ok := names[name]; !ok {
-			t.Errorf("retiredBadgeEvents lists config.%s, which is no longer declared: remove it", name)
 		}
 	}
 }
-
-// retiredBadgeEvents are events the catalog still declares and the engine no
-// longer reports, each with why. None today: the market's trade event went
-// with its ladder.
-var retiredBadgeEvents = map[string]string{}
 
 // TestDayPlayedIsNotedOncePerDay: starting or loading a game notes the
 // calendar day on the account, once.
