@@ -1,10 +1,7 @@
 package skyline
 
 import (
-	"os"
-	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -483,121 +480,7 @@ func TestSkyPerformance(t *testing.T) {
 	}
 }
 
-// TestSkyCaptures writes review captures of the sky scenes from the real
-// smoke-bot states when SKYLINE_SKY_CAPTURES names a directory:
-// .txt, .html (animated) and .png per shot.
-func TestSkyCaptures(t *testing.T) {
-	dir := os.Getenv("SKYLINE_SKY_CAPTURES")
-	if dir == "" {
-		t.Skip("set SKYLINE_SKY_CAPTURES to a directory to write sky captures")
-	}
-	states := filepath.Join("..", "..", "..", "map_captures", "states")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	type shot struct {
-		name, state, theme string
-		w, h               int
-		compact            bool
-		tier               mapmodel.GlyphTier
-		frames             int
-		anim0              int
-		inspect            int // Tab presses
-	}
-	var shots []shot
-	for _, a := range []string{"fusion_age", "space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age"} {
-		n := strings.TrimSuffix(a, "_age")
-		shots = append(shots, shot{name: n, state: a, w: 160, h: 48, frames: 8, anim0: 40},
-			shot{name: n + "_mini", state: a, w: 40, h: 15, compact: true, frames: 4, anim0: 40},
-			shot{name: n + "_strip", state: a, w: 65, h: 9, compact: true, frames: 4, anim0: 40})
-	}
-	shots = append(shots,
-		shot{name: "space_light", state: "space_age", theme: "daylight", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "galactic_light", state: "galactic_age", theme: "daylight", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "transcendent_light", state: "transcendent_age", theme: "daylight", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "space_mono", state: "space_age", theme: "monochrome", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "quantum_mono", state: "quantum_age", theme: "monochrome", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "interstellar_parchment", state: "interstellar_age", theme: "parchment", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "space_ascii", state: "space_age", tier: mapmodel.TierASCII, w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "galactic_inspect", state: "galactic_age", w: 160, h: 48, frames: 2, anim0: 40, inspect: 3},
-		shot{name: "space_80x24", state: "space_age", w: 80, h: 24, frames: 2, anim0: 40},
-		shot{name: "galactic_200x60", state: "galactic_age", w: 200, h: 60, frames: 2, anim0: 40},
-	)
-	only := os.Getenv("SKYLINE_SKY_ONLY")
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	b := mapmodel.NewBuilder(nil)
-	for _, sh := range shots {
-		if only != "" && !strings.Contains(sh.name, only) {
-			continue
-		}
-		st, err := capture.LoadState(filepath.Join(states, sh.state+".json.gz"))
-		if err != nil {
-			t.Logf("skip %s: %v", sh.name, err)
-			continue
-		}
-		th := sh.theme
-		if th == "" {
-			th = "forge"
-		}
-		if err := theme.SetActive(th); err != nil {
-			t.Fatal(err)
-		}
-		m := b.Build(&st, nil)
-		v := newView()
-		f := mapstyle.Frame{Model: m, Tier: sh.tier}
-		for i := 0; i < sh.inspect; i++ {
-			f.Anim = sh.anim0
-			_ = draw(v, m, sh.w, sh.h, sh.anim0, sh.tier, sh.compact)
-			v.HandleKey(tabKey(), f)
-		}
-		var frames []string
-		var txt strings.Builder
-		for k := 0; k < max(1, sh.frames); k++ {
-			scr := draw(v, m, sh.w, sh.h, sh.anim0+k*3, sh.tier, sh.compact)
-			frames = append(frames, capture.Frame(scr))
-			if k == 0 {
-				txt.WriteString(capture.Text(scr))
-				if err := capture.PNG(filepath.Join(dir, sh.name+".png"), scr); err != nil {
-					t.Fatal(err)
-				}
-				_ = os.WriteFile(filepath.Join(dir, sh.name+".cells"), []byte(cellDump(scr)), 0o644)
-			}
-			scr.Fini()
-		}
-		bg := capture.Hex(theme.Color(theme.RoleBackground))
-		fg := capture.Hex(theme.Color(theme.RoleText))
-		title := "skyline · " + sh.state + " · " + sh.name + " · theme " + th
-		_ = os.WriteFile(filepath.Join(dir, sh.name+".txt"), []byte(title+"\n"+txt.String()), 0o644)
-		_ = os.WriteFile(filepath.Join(dir, sh.name+".html"), []byte(capture.HTML(title, bg, fg, capture.Fonts, frames, 6)), 0o644)
-	}
-}
-
 func tabKey() *tcell.EventKey { return tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone) }
-
-// cellDump writes a screen's cells for an outside renderer: "W H", then a
-// line per row of tab-separated "rune fg bg" (decimal rune, hex colours).
-func cellDump(scr tcell.SimulationScreen) string {
-	cells, w, h := scr.GetContents()
-	var b strings.Builder
-	b.WriteString(strconv.Itoa(w) + " " + strconv.Itoa(h) + "\n")
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			c := cells[y*w+x]
-			r := ' '
-			if len(c.Runes) > 0 {
-				r = c.Runes[0]
-			}
-			fg, bg, _ := c.Style.Decompose()
-			if x > 0 {
-				b.WriteByte('\t')
-			}
-			b.WriteString(strconv.Itoa(int(r)) + " " + capture.Hex(fg) + " " + capture.Hex(bg))
-		}
-		b.WriteByte('\n')
-	}
-	return b.String()
-}
 
 // TestSkyTetherCarriesOn: the space elevator the Earth arc raises in the
 // Fusion Age is the one the Space Age carries up to the station: it stands
