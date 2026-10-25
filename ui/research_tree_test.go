@@ -120,7 +120,7 @@ func treeDrawsEveryTechWhole(t *testing.T, st game.GameState, sel string) {
 					}
 					continue
 				}
-				rows := badgeRows(geom, n, progressOf(st))
+				rows := badgeRows(geom, n, researchFraction(st))
 				if len(rows) != geom.badgeH {
 					t.Fatalf("%s: a badge of %d rows, want %d", n.key, len(rows), geom.badgeH)
 				}
