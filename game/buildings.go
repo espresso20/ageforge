@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"sort"
@@ -494,11 +495,7 @@ func (bm *BuildingManager) GetPopCapacity() int {
 
 // GetAll returns building counts (for save)
 func (bm *BuildingManager) GetAll() map[string]int {
-	out := make(map[string]int)
-	for key, count := range bm.counts {
-		out[key] = count
-	}
-	return out
+	return maps.Clone(bm.counts) // never nil: the manager makes it
 }
 
 // LoadCounts restores building counts from save data
@@ -560,14 +557,16 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 	return amount, nil
 }
 
-// GetWonderBank returns a copy of the banked resources for a wonder.
+// GetWonderBank returns a copy of the banked resources for a wonder (an empty
+// map, not nil, when nothing is banked).
 func (bm *BuildingManager) GetWonderBank(wonderKey string) map[string]float64 {
-	bank := bm.wonderBanks[wonderKey]
-	out := make(map[string]float64, len(bank))
-	for k, v := range bank {
-		out[k] = v
-	}
-	return out
+	return copyWonderBank(bm.wonderBanks[wonderKey])
+}
+
+// copyWonderBank copies a wonder's bank; unlike maps.Clone it turns nil into an
+// empty map, which is what the callers and the save always held.
+func copyWonderBank(bank map[string]float64) map[string]float64 {
+	return maps.Collect(maps.All(bank))
 }
 
 // IsWonderBankFull returns true when all required resources have been banked.
@@ -594,11 +593,7 @@ func (bm *BuildingManager) IsWonderBankFull(wonderKey string) bool {
 func (bm *BuildingManager) GetWonderBanks() map[string]map[string]float64 {
 	out := make(map[string]map[string]float64, len(bm.wonderBanks))
 	for k, v := range bm.wonderBanks {
-		inner := make(map[string]float64, len(v))
-		for rk, rv := range v {
-			inner[rk] = rv
-		}
-		out[k] = inner
+		out[k] = copyWonderBank(v)
 	}
 	return out
 }
@@ -617,14 +612,7 @@ func (bm *BuildingManager) UpgradeRoom(key string, n int, queue []BuildQueueItem
 	if !ok || def.MaxCount <= 0 {
 		return n
 	}
-	room := def.MaxCount - bm.counts[key] - bm.GetQueueCount(key, queue)
-	if room < 0 {
-		room = 0
-	}
-	if n > room {
-		return room
-	}
-	return n
+	return min(n, max(0, def.MaxCount-bm.counts[key]-bm.GetQueueCount(key, queue)))
 }
 
 // SetUpgradeCostTerm sets the techs' term on what an upgrade costs.
@@ -718,24 +706,24 @@ func keepsItsTier(def config.BuildingDef) bool {
 // over it is reproducible. Map iteration order must never leak into a random
 // draw.
 func (bm *BuildingManager) destroyablePool() []string {
-	keys := make([]string, 0, len(bm.counts))
-	for key, c := range bm.counts {
-		if c <= 0 {
-			continue
-		}
-		if def, ok := bm.defs[key]; !ok || !isDestroyable(def) {
-			continue
-		}
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
 	var pool []string
-	for _, key := range keys {
-		for i := 0; i < bm.counts[key]; i++ {
+	bm.eachDestroyable(func(key string, c int) {
+		for range c {
 			pool = append(pool, key)
 		}
-	}
+	})
 	return pool
+}
+
+// eachDestroyable calls f for every building type a catastrophe may take (see
+// isDestroyable) that has a copy standing, in sorted key order, with its count.
+// The pool a random draw shuffles is built from it, so the order must be stable.
+func (bm *BuildingManager) eachDestroyable(f func(key string, count int)) {
+	bm.eachBuilt(func(key string, c int, def config.BuildingDef) {
+		if isDestroyable(def) {
+			f(key, c)
+		}
+	})
 }
 
 // DestroyableCount returns how many built building instances a catastrophe can
@@ -743,14 +731,7 @@ func (bm *BuildingManager) destroyablePool() []string {
 // (see isDestroyable).
 func (bm *BuildingManager) DestroyableCount() int {
 	n := 0
-	for key, c := range bm.counts {
-		if c <= 0 {
-			continue
-		}
-		if def, ok := bm.defs[key]; ok && isDestroyable(def) {
-			n += c
-		}
-	}
+	bm.eachDestroyable(func(_ string, c int) { n += c })
 	return n
 }
 
@@ -784,10 +765,7 @@ func (bm *BuildingManager) GenerateRuins(rng *rand.Rand, n int) map[string]int {
 	newRuins := drawFromPool(rng, bm.destroyablePool(), n)
 	for key, count := range newRuins {
 		bm.ruins[key] += count
-		bm.counts[key] -= count
-		if bm.counts[key] < 0 {
-			bm.counts[key] = 0
-		}
+		bm.counts[key] -= count // the pool held every copy once, so the count stays at or above 0
 	}
 	return newRuins
 }
@@ -896,21 +874,13 @@ func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 // the log (e.g. "3 Lumber Mills") in sorted key order.
 func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]int, []string) {
 	destroyed := drawFromPool(rng, bm.destroyablePool(), count)
-	keys := make([]string, 0, len(destroyed))
-	for key := range destroyed {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
 	var names []string
-	for _, key := range keys {
+	for _, key := range sortedKeys(destroyed) {
+		// The pool held each copy once, so the count stays at or above 0, and
+		// only types with a def are in it.
 		n := destroyed[key]
 		bm.counts[key] -= n
-		if bm.counts[key] < 0 {
-			bm.counts[key] = 0
-		}
-		if def, ok := bm.defs[key]; ok {
-			names = append(names, textfmt.Int(n)+" "+pluralName(n, def.Name))
-		}
+		names = append(names, textfmt.Int(n)+" "+pluralName(n, bm.defs[key].Name))
 	}
 	return destroyed, names
 }
