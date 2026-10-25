@@ -823,10 +823,6 @@ func buildingMeta() map[string]buildingMetaEntry {
 	}
 }
 
-// BaseBuildings returns all building definitions.
-// Production/housing/military/research buildings come from NewProductionBuildings() (Phase 10
-// lineage redesign). Storage buildings and wonders come from baseBuildingsRaw(), enriched
-// with lineage metadata from buildingMeta().
 // roundSignificant rounds v to `sig` significant figures for readability
 // (e.g. 46.3→46, 644→640, 6420→6400, 90150→90000). A positive value is never
 // rounded down to 0 — it floors at 1 so a real cost never becomes free.
@@ -853,6 +849,10 @@ func roundSignificant(v float64, sig int) float64 {
 	return rounded
 }
 
+// BaseBuildings returns all building definitions.
+// Production/housing/military/research buildings come from NewProductionBuildings() (Phase 10
+// lineage redesign). Storage buildings and wonders come from baseBuildingsRaw(), enriched
+// with lineage metadata from buildingMeta().
 func BaseBuildings() []BuildingDef {
 	defs, _ := buildBase()
 	return defs
