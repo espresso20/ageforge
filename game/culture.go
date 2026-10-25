@@ -128,11 +128,7 @@ func (ge *GameEngine) accrueCulture(ticks float64) {
 	if r == nil || ticks <= 0 || !ge.Resources.unlocked["culture"] {
 		return
 	}
-	ge.cultureMeasure.Moderate += float64(ge.cultureRate.moderate * ticks)
-	ge.cultureMeasure.Own += float64(ge.cultureRate.own * ticks)
-	if other := r.Rate - ge.cultureRate.own; other > 0 {
-		ge.cultureMeasure.Other += float64(other * ticks)
-	}
+	accrueMeasure(&ge.cultureMeasure, ge.cultureRate, r.Rate, ticks)
 }
 
 // clearCultureRun starts the culture measure over with a new run (a
@@ -143,13 +139,7 @@ func (ge *GameEngine) clearCultureRun() {
 
 // cultureSaveCopy is the measure for a save: nil until it holds something,
 // so a new run's save keeps its bytes.
-func (ge *GameEngine) cultureSaveCopy() *CultureSave {
-	if ge.cultureMeasure == (CultureSave{}) {
-		return nil
-	}
-	m := ge.cultureMeasure
-	return &m
-}
+func (ge *GameEngine) cultureSaveCopy() *CultureSave { return saveCopyOf(ge.cultureMeasure) }
 
 // restoreCultureState loads the culture measure. A save written before the
 // measure existed has none: its town is taken as a moderate one that has
@@ -157,28 +147,5 @@ func (ge *GameEngine) cultureSaveCopy() *CultureSave {
 // CultureFullSets, Minor events only, and moves from there with what the
 // town does. Under the write lock, after the resources are restored.
 func (ge *GameEngine) restoreCultureState(save *GameSave) {
-	ge.cultureMeasure = CultureSave{}
-	if save.CultureMeasure != nil {
-		ge.cultureMeasure = *save.CultureMeasure
-		for _, v := range []*float64{&ge.cultureMeasure.Moderate, &ge.cultureMeasure.Own, &ge.cultureMeasure.Other} {
-			if !(*v >= 0) || *v > maxFaithMeasure { // a hand-edited save: NaN, negative or absurd
-				*v = 0
-			}
-		}
-		return
-	}
-	if save.CultureMeasured {
-		return
-	}
-	if held := ge.Resources.Get("culture"); held > 0 {
-		ge.cultureMeasure = CultureSave{Moderate: held, Own: held}
-	}
-}
-
-// setCultureMeasure puts ge's culture measure and its culture in place, for
-// tests. Not reachable from play; the caller holds ge.mu or owns ge alone.
-func (ge *GameEngine) setCultureMeasure(held float64, m CultureSave) {
-	ge.Resources.UnlockResource("culture")
-	ge.Resources.LoadAmounts(map[string]float64{"culture": held})
-	ge.cultureMeasure = m
+	ge.cultureMeasure = restoreMeasure(save.CultureMeasure, save.CultureMeasured, ge.Resources.Get("culture"))
 }

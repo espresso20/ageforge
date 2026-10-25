@@ -175,10 +175,18 @@ func (ge *GameEngine) accrueFaith(ticks float64) {
 	if r == nil || ticks <= 0 {
 		return
 	}
-	ge.faithMeasure.Moderate += float64(ge.faithRate.moderate * ticks)
-	ge.faithMeasure.Own += float64(ge.faithRate.own * ticks)
-	if other := r.Rate - ge.faithRate.own; other > 0 {
-		ge.faithMeasure.Other += float64(other * ticks)
+	accrueMeasure(&ge.faithMeasure, ge.faithRate, r.Rate, ticks)
+}
+
+// accrueMeasure adds ticks worth of rates to the measure m, for faith and for
+// culture: what a moderate set and the town's own buildings make, and what the
+// rest of the income makes (the resource's rate, rate, less the town's own),
+// when that is above nothing. Each product is rounded before it is added.
+func accrueMeasure(m *FaithSave, rates faithRates, rate, ticks float64) {
+	m.Moderate += float64(rates.moderate * ticks)
+	m.Own += float64(rates.own * ticks)
+	if other := rate - rates.own; other > 0 {
+		m.Other += float64(other * ticks)
 	}
 }
 
@@ -190,11 +198,14 @@ func (ge *GameEngine) clearFaithRun() {
 
 // faithSaveCopy is the measure for a save: nil until it holds something, so
 // a new run's save keeps its bytes.
-func (ge *GameEngine) faithSaveCopy() *FaithSave {
-	if ge.faithMeasure == (FaithSave{}) {
+func (ge *GameEngine) faithSaveCopy() *FaithSave { return saveCopyOf(ge.faithMeasure) }
+
+// saveCopyOf is a measure for a save, for faith and for culture: nil until it
+// holds something, so a new run's save keeps its bytes.
+func saveCopyOf(m FaithSave) *FaithSave {
+	if m == (FaithSave{}) {
 		return nil
 	}
-	m := ge.faithMeasure
 	return &m
 }
 
@@ -205,31 +216,31 @@ func (ge *GameEngine) faithSaveCopy() *FaithSave {
 // with what the town does. Under the write lock, after the resources are
 // restored.
 func (ge *GameEngine) restoreFaithState(save *GameSave) {
-	ge.faithMeasure = FaithSave{}
-	if save.FaithMeasure != nil {
-		ge.faithMeasure = *save.FaithMeasure
-		for _, v := range []*float64{&ge.faithMeasure.Moderate, &ge.faithMeasure.Own, &ge.faithMeasure.Other} {
-			if !(*v >= 0) || *v > maxFaithMeasure { // a hand-edited save: NaN, negative or absurd
+	ge.faithMeasure = restoreMeasure(save.FaithMeasure, save.FaithMeasured, ge.Resources.Get("faith"))
+}
+
+// restoreMeasure is the measure a save leaves, for faith and for culture:
+// saved is the measure it carried (nil for none), measured whether it
+// was written since the measure existed, held the resource the town holds.
+// Without a measure, an unmarked save holding some is taken as a moderate town
+// that kept it (Own = Moderate = held); a marked one has nothing measured yet.
+// A saved measure that is NaN, negative or absurd (a hand-edited save) is
+// cleared, field by field.
+func restoreMeasure(saved *FaithSave, measured bool, held float64) FaithSave {
+	if saved != nil {
+		m := *saved
+		for _, v := range []*float64{&m.Moderate, &m.Own, &m.Other} {
+			if !(*v >= 0) || *v > maxFaithMeasure {
 				*v = 0
 			}
 		}
-		return
+		return m
 	}
-	if save.FaithMeasured {
-		return
+	if !measured && held > 0 {
+		return FaithSave{Moderate: held, Own: held}
 	}
-	if held := ge.Resources.Get("faith"); held > 0 {
-		ge.faithMeasure = FaithSave{Moderate: held, Own: held}
-	}
+	return FaithSave{}
 }
 
 // maxFaithMeasure bounds a loaded measure: far past anything a run makes.
 const maxFaithMeasure = 1e300
-
-// setFaithMeasure puts ge's faith measure and its faith in place, for tests.
-// Not reachable from play; the caller holds ge.mu or owns ge alone.
-func (ge *GameEngine) setFaithMeasure(held float64, m FaithSave) {
-	ge.Resources.UnlockResource("faith")
-	ge.Resources.LoadAmounts(map[string]float64{"faith": held})
-	ge.faithMeasure = m
-}
