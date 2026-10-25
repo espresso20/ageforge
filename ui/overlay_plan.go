@@ -119,6 +119,11 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 	return true
 }
 
+// planFooter is the keys on the panel's foot.
+func planFooter() [][2]string {
+	return [][2]string{{"↑↓", "pick"}, {"U D", "move"}, {"X", "remove"}, {"C", "clear"}, {"Esc", "close"}}
+}
+
 // planStatusText is an item's status word in its role color.
 func planStatusText(v game.PlanItemView) string {
 	switch v.Status {
