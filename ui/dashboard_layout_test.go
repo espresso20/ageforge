@@ -92,10 +92,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 		t.Fatalf("only %d kinds of building under construction in the %s", queued, age)
 	}
 	eng.StepTicks(3)
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	return d, pages, eng
 }
 
@@ -103,10 +100,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 // the screen's cells.
 func drawnDashboard(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []tcell.SimCell {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	t.Cleanup(sim.Fini)
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	screen := theme.WrapScreen(sim)
 	// Twice: the first draw gives every box its size, and the refresh after
 	// it writes what depends on the sizes (the status bar, the mini map).
@@ -117,27 +111,13 @@ func drawnDashboard(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []
 		pages.Draw(screen)
 		screen.Show()
 	}
-	cells, _, _ := sim.GetContents()
-	return append([]tcell.SimCell(nil), cells...)
+	return simCells(sim).Cells()
 }
 
 // rectText is the text drawn in a rectangle of the screen, a line per row,
 // trailing blanks trimmed.
 func rectText(cells []tcell.SimCell, screenW, x, y, w, h int) []string {
-	lines := make([]string, h)
-	for row := 0; row < h; row++ {
-		var b strings.Builder
-		for col := 0; col < w; col++ {
-			c := cells[(y+row)*screenW+x+col]
-			if len(c.Runes) == 0 {
-				b.WriteByte(' ')
-			} else {
-				b.WriteRune(c.Runes[0])
-			}
-		}
-		lines[row] = strings.TrimRight(b.String(), " ")
-	}
-	return lines
+	return frame{w: screenW, cells: cells}.Region(x, y, w, h)
 }
 
 // checkFitted holds a box to what it wrote: every line of its text fits its
