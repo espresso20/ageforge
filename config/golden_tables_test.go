@@ -34,9 +34,8 @@ type goldenEffect struct {
 }
 
 type goldenTech struct {
-	Age   string  `json:"age"`
-	Cost  float64 `json:"cost"`
-	Ticks int     `json:"ticks"`
+	Age  string  `json:"age"`
+	Cost float64 `json:"cost"`
 }
 
 type goldenGate struct {
@@ -76,7 +75,7 @@ func liveGoldenTables() goldenTables {
 	}
 	techs := Technologies()
 	for _, t := range techs {
-		g.Techs[t.Key] = goldenTech{Age: t.Age, Cost: t.Cost, Ticks: t.ResearchTicks}
+		g.Techs[t.Key] = goldenTech{Age: t.Age, Cost: t.Cost}
 	}
 	order := AgeOrder()
 	for _, a := range Ages() {

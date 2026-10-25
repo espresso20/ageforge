@@ -17,7 +17,7 @@ const secondSetTech = "second_set_tech"
 func secondSet() *rules.Set {
 	src := rules.FromConfig()
 	src.Techs = append(src.Techs, config.TechDef{
-		Key: secondSetTech, Name: "Second Set Tech", Age: src.Ages[0].Key, ResearchTicks: 3,
+		Key: secondSetTech, Name: "Second Set Tech", Age: src.Ages[0].Key,
 		Effects: []config.TechEffect{{Kind: config.EffectAllOutput, Value: 0.5}},
 	})
 	return rules.Compile(src)

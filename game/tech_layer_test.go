@@ -162,7 +162,7 @@ func TestTechCutsMultiplyAndHoldAtTheirFloor(t *testing.T) {
 	// The floors: a made-up tree whose every tech halves all three.
 	src := rules.FromConfig()
 	for _, key := range []string{"zz_half_a", "zz_half_b", "zz_half_c", "zz_half_d"} {
-		src.Techs = append(src.Techs, config.TechDef{Key: key, Name: key, Age: "primitive_age", Lane: config.LaneCraft, Cost: 1, ResearchTicks: 1,
+		src.Techs = append(src.Techs, config.TechDef{Key: key, Name: key, Age: "primitive_age", Lane: config.LaneCraft, Cost: 1,
 			Effects: []config.TechEffect{
 				{Kind: config.EffectBuildCost, Value: -0.5},
 				{Kind: config.EffectBuildTime, Value: -0.5},

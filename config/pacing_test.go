@@ -122,17 +122,12 @@ func TestEveryAgeHasAFeed(t *testing.T) {
 	}
 }
 
-// TestBuildAndResearchCaps: nothing takes longer to build or research than
-// its age's share (the economy design's Law 2).
-func TestBuildAndResearchCaps(t *testing.T) {
+// TestBuildCaps: nothing takes longer to build than its age's share (the
+// economy design's Law 2).
+func TestBuildCaps(t *testing.T) {
 	for _, d := range BaseBuildings() {
 		if limit := BuildingBuildCapTicks(d.RequiredAge, d.Category); limit > 0 && float64(d.BuildTicks) > math.Ceil(limit) {
 			t.Errorf("%s builds in %d ticks, over its cap of %.0f", d.Key, d.BuildTicks, limit)
-		}
-	}
-	for _, tech := range Technologies() {
-		if limit := LatePriceTargetTicks(tech.Age) / researchShare; limit > 0 && float64(tech.ResearchTicks) > limit {
-			t.Errorf("%s researches in %d ticks, over its cap of %.0f", tech.Key, tech.ResearchTicks, limit)
 		}
 	}
 }
@@ -172,5 +167,4 @@ func TestFormatRateValue(t *testing.T) {
 const (
 	buildShare        = 6.0  // no building takes longer than a sixth of its age's target
 	storageBuildShare = 48.0 // a storage building, a forty-eighth
-	researchShare     = 8.0  // no tech takes longer than an eighth of its age's target
 )

@@ -13,7 +13,7 @@ import (
 //
 // The numbers of the economy are written in the tables themselves: a
 // building's first price, rate and output per copy (the buildings_*.go
-// files), a tech's price and research time (research.go), a gate's amounts
+// files), a tech's price (research.go), a gate's amounts
 // and counts (ages.go), and how long each age is meant to last (AgeTargets,
 // below). Nothing rewrites them when the game loads; a golden record of all
 // of them (testdata/golden_tables.json) fails the build when one moves.

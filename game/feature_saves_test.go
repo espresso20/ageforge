@@ -429,7 +429,7 @@ func TestFeatureLockSwitchesOnWithItsTech(t *testing.T) {
 	src.FeatureLocks = locks
 	inert := rules.Compile(src)
 	src.Techs = append(append([]config.TechDef(nil), src.Techs...), config.TechDef{
-		Key: "wormhole_charters", Name: "Wormhole Charters", Age: "interstellar_age", Lane: config.LaneTrade, Cost: 10, ResearchTicks: 4,
+		Key: "wormhole_charters", Name: "Wormhole Charters", Age: "interstellar_age", Lane: config.LaneTrade, Cost: 10,
 	})
 	withTech := rules.Compile(src)
 	const warp = "warp_commerce"

@@ -26,7 +26,7 @@ func chainSet() *rules.Set {
 	src := rules.FromConfig()
 	tech := func(key, name string, cost float64, def config.TechDef) config.TechDef {
 		def.Key, def.Name, def.Age, def.Lane = key, name, src.Ages[0].Key, config.LaneKnowledge
-		def.Cost, def.ResearchTicks = cost, 4
+		def.Cost = cost
 		return def
 	}
 	src.Techs = append(src.Techs,

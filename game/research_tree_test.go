@@ -20,7 +20,7 @@ func treeSet() *rules.Set {
 	src := rules.FromConfig()
 	tech := func(key, name string, def config.TechDef) config.TechDef {
 		def.Key, def.Name, def.Age, def.Lane = key, name, src.Ages[0].Key, config.LaneKnowledge
-		def.Cost, def.ResearchTicks = 10, 4
+		def.Cost = 10
 		return def
 	}
 	src.Techs = append(src.Techs,
