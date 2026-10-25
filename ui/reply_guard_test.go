@@ -163,9 +163,7 @@ func TestUsageFormsSurviveTview(t *testing.T) {
 func TestUsagePathsExist(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "input.go", nil, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	n := 0
 	ast.Inspect(f, func(node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)

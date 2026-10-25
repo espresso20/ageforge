@@ -83,9 +83,7 @@ func TestAccountShowCodeIsNotKept(t *testing.T) {
 	}
 	for _, f := range files {
 		raw, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 		if bytes.Contains(raw, []byte(code)) {
 			t.Errorf("%s holds the code", f)
 		}

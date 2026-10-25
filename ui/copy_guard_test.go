@@ -146,9 +146,7 @@ func collectCopyLiterals(t *testing.T) []copyLit {
 			})
 			return nil
 		})
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 	}
 	return out
 }

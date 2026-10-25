@@ -40,9 +40,7 @@ func TestAccountSwitchInGameGoesToMenu(t *testing.T) {
 	accounts := filepath.Dir(game.DataDir()) // DataDir is the active slot, <root>/accounts/<id>
 	first := eng.Account()
 	second, err := game.CreateAccount("Second Player")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	if _, err := game.SwitchAccount(first.AccountID); err != nil { // creating made Second active
 		t.Fatal(err)
 	}
@@ -77,9 +75,7 @@ func TestAccountSwitchInGameGoesToMenu(t *testing.T) {
 func TestAccountSwitchReplies(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
 
@@ -100,21 +96,15 @@ func TestAccountSwitchReplies(t *testing.T) {
 func TestAccountImportInGameDoesNotSwitch(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	bob, err := game.CreateAccount("Bob")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	blob, err := bob.ExportProgress()
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	path := filepath.Join(t.TempDir(), "bob.json")
 	if err := os.WriteFile(path, blob, 0644); err != nil {
 		t.Fatal(err)
 	}
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
 	if err := eng.StartNewNamedGame("Rome"); err != nil {
@@ -143,14 +133,10 @@ func TestAccountImportInGameDoesNotSwitch(t *testing.T) {
 func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	bob, err := game.CreateAccount("Bob")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	bobCode := bob.RecoveryCode()
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
 	// A badge and a lifetime prestige, no themes: the stat, then the report.
@@ -244,9 +230,7 @@ func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 func TestAccountWipeWordingMatchesWipe(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
 	if err := eng.StartNewNamedGame("Rome"); err != nil {
@@ -265,9 +249,7 @@ func TestAccountWipeWordingMatchesWipe(t *testing.T) {
 	}
 
 	backup, err := game.WipeAccountByID(alice.AccountID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	if _, err := os.Stat(save); !os.IsNotExist(err) {
 		t.Errorf("the save survived the wipe (stat err = %v)", err)
 	}

@@ -491,9 +491,7 @@ func TestBadgeLooksMatchTheGame(t *testing.T) {
 // wiki page names a secret badge.
 func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 	raw, err := os.ReadFile(filepath.Join("..", "site", "docs", "badges.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	page := string(raw)
 	has := func(what, want string) {
 		t.Helper()
@@ -592,9 +590,7 @@ func TestBadgeWikiMatchesTheCatalog(t *testing.T) {
 		name := regexp.MustCompile(`\b` + regexp.QuoteMeta(def.Name) + `\b`)
 		for _, p := range pages {
 			text, err := os.ReadFile(p)
-			if err != nil {
-				t.Fatal(err)
-			}
+			must(t, err)
 			if loc := name.FindIndex(text); loc != nil {
 				line := 1 + strings.Count(string(text[:loc[0]]), "\n")
 				t.Errorf("%s:%d names the secret badge %q (%s)", filepath.Base(p), line, def.Name, def.Key)

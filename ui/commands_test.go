@@ -20,9 +20,7 @@ func dispatcherCases(t *testing.T) (cases [][]string, words map[string]map[strin
 	t.Helper()
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "input.go", nil, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	funcs := map[string]*ast.FuncDecl{}
 	for _, d := range f.Decls {
 		if fd, ok := d.(*ast.FuncDecl); ok {
@@ -252,9 +250,7 @@ func TestRegistryCommandsRun(t *testing.T) {
 func TestDashboardCommandsHandled(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "dashboard.go", nil, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	var words map[string]bool
 	for _, d := range f.Decls {
 		if fd, ok := d.(*ast.FuncDecl); ok && fd.Name.Name == "submitInput" {

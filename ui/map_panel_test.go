@@ -21,9 +21,7 @@ func mapTestDashboard(t *testing.T, acct bool) (*Dashboard, *game.GameEngine) {
 	eng := game.NewGameEngine()
 	if acct {
 		a, err := game.CreateNamedAccount("Map Tester")
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 		eng.SetAccount(a)
 	}
 	app := tview.NewApplication()
@@ -255,17 +253,13 @@ func TestMapSettingsPersist(t *testing.T) {
 	d.runForTest("map style skyline")
 
 	second, err := game.CreateAccount("Second")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(second)
 	if s := d.mapSettings(); s.Style != "roguelike" || s.Tier != mapmodel.TierUnicode {
 		t.Errorf("a new account has %s/%s, want the defaults", s.Style, s.Tier)
 	}
 	back, err := game.SwitchAccount(first.AccountID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(back)
 	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII {
 		t.Errorf("switching back (read from disk): %s/%s, want skyline/ascii", s.Style, s.Tier)

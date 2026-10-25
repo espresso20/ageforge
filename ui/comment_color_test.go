@@ -53,9 +53,7 @@ func TestCommentColorIsDrawnOnlyOnFlavor(t *testing.T) {
 				continue
 			}
 			b, err := os.ReadFile(f)
-			if err != nil {
-				t.Fatal(err)
-			}
+			must(t, err)
 			s := string(b)
 			n := strings.Count(s, "[comment") + strings.Count(s, "RoleComment") + strings.Count(s, "commentInk(")
 			if n > 0 {

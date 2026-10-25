@@ -24,9 +24,7 @@ func badgeDashboard(t *testing.T) (*Dashboard, *tview.Pages, *game.GameEngine) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
 	a, err := game.CreateNamedAccount("Badge Tester")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(a)
 	if err := eng.StartNewNamedGame("run"); err != nil {
 		t.Fatal(err)

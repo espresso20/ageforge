@@ -188,9 +188,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 
 	// A second account with a save of its own; the first stays current.
 	second, err := game.CreateAccount("Second Player")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	mk := game.NewGameEngine()
 	mk.SetAccount(second)
 	if err := mk.StartNewNamedGame("delmere"); err != nil {
@@ -296,9 +294,7 @@ func TestQuitCommandSavesTheGameUnderItsName(t *testing.T) {
 		t.Error("the game is still running after quit")
 	}
 	st, err := game.ViewSave("Rome")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	if got := st.Resources["food"].Amount; got != want {
 		t.Errorf("Rome's save holds %v food, the game ended on %v", got, want)
 	}

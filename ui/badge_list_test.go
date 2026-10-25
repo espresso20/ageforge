@@ -216,9 +216,7 @@ func TestStatsPanelShowsCivilizationsStarted(t *testing.T) {
 		t.Errorf("holdings %q do not mention the civilization started", got)
 	}
 	other, err := game.CreateAccount("Other Player")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	other.Stats.SavesCompleted = 3
 	if got := accountHoldings(other); got != "" {
 		t.Errorf("an account holding only a retired stat reads as holding %q", got)

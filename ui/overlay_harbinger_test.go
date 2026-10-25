@@ -92,9 +92,7 @@ func TestNoScreenLeaksTheFate(t *testing.T) {
 		} else {
 			err = engine.ForceQuietFateForTest("iron_era")
 		}
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 		engine.StepTicks(20)
 		st := engine.GetState()
 		if st.Harbinger != nil {

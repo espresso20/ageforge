@@ -921,9 +921,7 @@ func TestWriteSiteScreens(t *testing.T) {
 
 	// A screen dropped from the list leaves no file behind.
 	old, err := filepath.Glob(filepath.Join(out, "*.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	total := 0
 	for _, f := range old {
 		n, ok := shots.bytes[strings.TrimSuffix(filepath.Base(f), ".json")]
@@ -964,9 +962,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 
 	s := newSiteStage(t)
 	acct, err := game.CreateNamedAccount("Ada")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	s.eng.SetAccount(acct)
 	// A first visit: an account, and no game yet.
 	shots.takeMenu(s.eng, "menu-first")
