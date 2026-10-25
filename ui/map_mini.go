@@ -34,7 +34,7 @@ const (
 	dockMinBody = 18
 
 	// miniMapMinCols and miniMapMinRows are the smallest terminal the
-	// dashboard shows the mini map on: 105 by 36. Beside the right column
+	// dashboard shows the mini map on: 105 by 34. Beside the right column
 	// the screen is split in two, the odd column going to the right half,
 	// where the mini map is, and that half must be miniMinW wide. Under the
 	// rows the dashboard keeps for itself (the Ledger is its standard size
