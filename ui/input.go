@@ -298,6 +298,36 @@ func parseCount(arg string) (int, error) {
 	return n, nil
 }
 
+// buildingCountArgs reads the `<building> [count]` that sell and the worker
+// commands take, for the command path cmd: the building and the count (def
+// when none is given). A reply that is not nil is the refusal: the usage line
+// when the building is missing, or with why when the count is not one.
+func buildingCountArgs(cmd string, args []string, def int) (building string, count int, bad *CommandResult) {
+	if len(args) < 1 {
+		return "", 0, &CommandResult{Message: usageFor(cmd), Type: "error"}
+	}
+	building, count = strings.ToLower(args[0]), def
+	if len(args) >= 2 {
+		n, err := parseCount(args[1])
+		if err != nil {
+			refusal := usageError(usageFor(cmd), err)
+			return building, count, &refusal
+		}
+		count = n
+	}
+	return building, count, nil
+}
+
+// buildingCountOrAll is buildingCountArgs for the commands whose count may be
+// the word all: all says it was, and the count is then def.
+func buildingCountOrAll(cmd string, args []string, def int) (building string, count int, all bool, bad *CommandResult) {
+	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
+		return strings.ToLower(args[0]), def, true, nil
+	}
+	building, count, bad = buildingCountArgs(cmd, args, def)
+	return building, count, false, bad
+}
+
 // parseAmount reads a resource amount: a positive, finite number. ParseFloat
 // happily returns NaN and infinities for "NaN" and "Inf", and NaN slips past
 // every comparison, so both are refused here.
@@ -691,22 +721,11 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
-	building := strings.ToLower(args[0])
-	all := false
-	count := 0
-	if len(args) >= 2 {
-		if strings.ToLower(args[1]) == "all" {
-			all = true
-		} else {
-			n, err := parseCount(args[1])
-			if err != nil {
-				return usageError(usageFor("upgrade"), err)
-			}
-			count = n
-		}
-	} else {
-		all = true // default: upgrade all
+	building, count, all, bad := buildingCountOrAll("upgrade", args, 0)
+	if bad != nil {
+		return *bad
 	}
+	all = all || len(args) < 2 // default: upgrade all
 
 	if err := engine.UpgradeBuilding(building, count, all); err != nil {
 		return errorResult(err)
@@ -895,53 +914,37 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("assign"), Type: "error"}
+	building, count, all, bad := buildingCountOrAll("assign", args, 1)
+	if bad != nil {
+		return *bad
 	}
-	building := strings.ToLower(args[0])
-	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
-		if _, err := engine.AssignAll(building); err != nil {
-			return errorResult(err)
-		}
-		return CommandResult{Type: "success"} // the engine logs the assignment
+	var err error
+	if all {
+		_, err = engine.AssignAll(building)
+	} else {
+		err = engine.AssignWorker(building, count)
 	}
-	count := 1
-	if len(args) >= 2 {
-		n, err := parseCount(args[1])
-		if err != nil {
-			return usageError(usageFor("assign"), err)
-		}
-		count = n
-	}
-	if err := engine.AssignWorker(building, count); err != nil {
+	if err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"}
+	return CommandResult{Type: "success"} // the engine logs the assignment
 }
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("unassign"), Type: "error"}
+	building, count, all, bad := buildingCountOrAll("unassign", args, 1)
+	if bad != nil {
+		return *bad
 	}
-	building := strings.ToLower(args[0])
-	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
-		if _, err := engine.UnassignAll(building); err != nil {
-			return errorResult(err)
-		}
-		return CommandResult{Type: "success"} // the engine logs the change
+	var err error
+	if all {
+		_, err = engine.UnassignAll(building)
+	} else {
+		err = engine.UnassignWorker(building, count)
 	}
-	count := 1
-	if len(args) >= 2 {
-		n, err := parseCount(args[1])
-		if err != nil {
-			return usageError(usageFor("unassign"), err)
-		}
-		count = n
-	}
-	if err := engine.UnassignWorker(building, count); err != nil {
+	if err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"}
+	return CommandResult{Type: "success"} // the engine logs the change
 }
 
 func cmdStatus(engine *game.GameEngine) CommandResult {
@@ -2276,17 +2279,9 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdSell(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("sell"), Type: "error"}
-	}
-	building := strings.ToLower(args[0])
-	count := 1
-	if len(args) >= 2 {
-		n, err := parseCount(args[1])
-		if err != nil {
-			return usageError(usageFor("sell"), err)
-		}
-		count = n
+	building, count, bad := buildingCountArgs("sell", args, 1)
+	if bad != nil {
+		return *bad
 	}
 	if err := engine.SellBuilding(building, count); err != nil {
 		return errorResult(err)
@@ -2295,22 +2290,9 @@ func cmdSell(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("dismiss"), Type: "error"}
-	}
-	building := strings.ToLower(args[0])
-	all := false
-	count := 1
-	if len(args) >= 2 {
-		if strings.ToLower(args[1]) == "all" {
-			all = true
-		} else {
-			n, err := parseCount(args[1])
-			if err != nil {
-				return usageError(usageFor("dismiss"), err)
-			}
-			count = n
-		}
+	building, count, all, bad := buildingCountOrAll("dismiss", args, 1)
+	if bad != nil {
+		return *bad
 	}
 	if err := engine.DismissWorkers(building, count, all); err != nil {
 		return errorResult(err)

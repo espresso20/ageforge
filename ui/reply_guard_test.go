@@ -190,7 +190,8 @@ func TestUsagePathsExist(t *testing.T) {
 	// Paths input.go builds at run time.
 	for _, p := range []string{"diplomacy ally", "diplomacy rival", "diplomacy embargo", "diplomacy neutral",
 		"diplomacy gift", "diplomacy tribute", "diplomacy raid", "plan up", "plan down",
-		"account list", "account switch", "account export", "account backup", "account import"} {
+		"account list", "account switch", "account export", "account backup", "account import",
+		"assign", "unassign", "sell", "dismiss", "upgrade"} {
 		if helpRow(p).Text == "" {
 			t.Errorf("%q matches no registry help row", p)
 		}
