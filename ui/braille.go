@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"slices"
+
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
@@ -25,15 +27,7 @@ func BrailleLine(values []float64, width, height int, ageCols []int) []string {
 		canvas[i] = make([]bool, cW)
 	}
 
-	minV, maxV := values[0], values[0]
-	for _, v := range values {
-		if v < minV {
-			minV = v
-		}
-		if v > maxV {
-			maxV = v
-		}
-	}
+	minV, maxV := slices.Min(values), slices.Max(values)
 	if maxV == minV {
 		maxV = minV + 1
 	}

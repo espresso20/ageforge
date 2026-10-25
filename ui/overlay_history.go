@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -74,15 +75,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 			vals[i] = m.values(s)
 		}
 
-		minV, maxV := vals[0], vals[0]
-		for _, v := range vals {
-			if v < minV {
-				minV = v
-			}
-			if v > maxV {
-				maxV = v
-			}
-		}
+		minV, maxV := slices.Min(vals), slices.Max(vals)
 
 		cur := vals[n-1]
 		prev := vals[n-2]
