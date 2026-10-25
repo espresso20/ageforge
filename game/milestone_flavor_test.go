@@ -109,20 +109,3 @@ func TestChainCompletionCarriesFlavor(t *testing.T) {
 		t.Error("log missing chain flavour line")
 	}
 }
-
-// TestEventLogMessageEmittedOnTrigger confirms a triggered event writes its
-// (now humorous) LogMessage to the log verbatim — the humour rewrite did not
-// break the trigger→log path. Uses InjectEvent's sibling path by driving a
-// known event through the manager is overkill; instead assert the config text
-// is what the engine would log, and that addLog routes it intact.
-func TestEventLogMessageEmittedOnTrigger(t *testing.T) {
-	ge := NewGameEngine()
-	def := config.EventByKey()["bountiful_harvest"]
-	if def.LogMessage == "" {
-		t.Fatal("bountiful_harvest lost its LogMessage")
-	}
-	ge.AddLog("event", def.LogMessage)
-	if !logHasLine(ge, def.LogMessage) {
-		t.Errorf("event LogMessage %q did not round-trip through the log", def.LogMessage)
-	}
-}

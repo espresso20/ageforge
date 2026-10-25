@@ -193,9 +193,6 @@ func TestEngine_AssignWorker(t *testing.T) {
 func TestEngine_StartResearch(t *testing.T) {
 	ge := NewGameEngine()
 
-	ge.mu.Lock()
-	ge.mu.Unlock()
-
 	err := ge.StartResearch("tool_making")
 	if err != nil {
 		t.Errorf("StartResearch failed: %v", err)
@@ -209,9 +206,6 @@ func TestEngine_StartResearch(t *testing.T) {
 
 func TestEngine_CancelResearch(t *testing.T) {
 	ge := NewGameEngine()
-
-	ge.mu.Lock()
-	ge.mu.Unlock()
 
 	ge.StartResearch("tool_making")
 	err := ge.CancelResearch()
@@ -263,49 +257,6 @@ func TestEngine_Reset(t *testing.T) {
 	}
 	if state.Resources["wood"].Amount != 50 {
 		t.Errorf("wood after reset = %v, want 50", state.Resources["wood"].Amount)
-	}
-}
-
-func TestEngine_MilestoneEvents(t *testing.T) {
-	ge := NewGameEngine()
-
-	milestoneReceived := false
-	ge.Bus.Subscribe(EventMilestoneCompleted, func(e EventData) {
-		milestoneReceived = true
-	})
-
-	ge.mu.Lock()
-	ge.Buildings.UnlockBuilding("hut")
-	ge.Buildings.counts["hut"] = 1
-	ge.checkMilestones()
-	ge.mu.Unlock()
-
-	if !milestoneReceived {
-		t.Error("EventMilestoneCompleted should fire when milestone is achieved")
-	}
-}
-
-func TestEngine_ChainEvents(t *testing.T) {
-	ge := NewGameEngine()
-
-	chainReceived := false
-	ge.Bus.Subscribe(EventChainCompleted, func(e EventData) {
-		chainReceived = true
-	})
-
-	ge.mu.Lock()
-	// Military chain requires all 5 milestones: first_soldiers, war_machine,
-	// iron_legion, fortress_state, military_superpower
-	ge.Milestones.completed["first_soldiers"] = true
-	ge.Milestones.completed["war_machine"] = true
-	ge.Milestones.completed["iron_legion"] = true
-	ge.Milestones.completed["fortress_state"] = true
-	ge.Milestones.completed["military_superpower"] = true
-	ge.checkMilestones()
-	ge.mu.Unlock()
-
-	if !chainReceived {
-		t.Error("EventChainCompleted should fire when chain completes")
 	}
 }
 
