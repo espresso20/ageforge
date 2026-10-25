@@ -597,22 +597,8 @@ func (h *reproHarness) advanceIntoIronWithCatastrophe() {
 
 // screenText renders the simulation screen to plain text (post-draw).
 func (h *reproHarness) screenText() string {
-	var sb strings.Builder
 	h.onUI(func() { h.a.tviewApp.ForceDraw() })
-	cells, w, ht := h.sim.GetContents()
-	for y := 0; y < ht; y++ {
-		line := make([]byte, 0, w)
-		for x := 0; x < w; x++ {
-			b := cells[y*w+x].Bytes
-			if len(b) == 0 {
-				b = []byte{' '}
-			}
-			line = append(line, b...)
-		}
-		sb.WriteString(strings.TrimRight(string(line), " "))
-		sb.WriteByte('\n')
-	}
-	return sb.String()
+	return simCells(h.sim).Text()
 }
 
 // TestReproAgeSplashCatastropheAutoDismiss: an advance that also leaves a
