@@ -66,31 +66,38 @@ type BuildingDef struct {
 	levelCost map[string]float64
 }
 
-// baseBuildingsRaw returns only the storage and wonder BuildingDef entries,
-// without economy-redesign metadata (lineage, worker domain).
-// These definitions are merged with buildingMeta() in BaseBuildings().
-// Production/housing/military buildings are now defined in the 13 lineage files
-// accessed via NewProductionBuildings() and should not be added here.
+// baseBuildingsRaw returns the storage, wonder and diplomacy BuildingDef
+// entries, in that order. Production/housing/military buildings are defined in
+// the lineage files accessed via NewProductionBuildings() and should not be
+// added here.
 //
 // Cost progression guideline per age:
 //
 //	Primitive 30–100 → Stone 200–1k → Bronze 1.5k–5k → Iron 8k–25k →
 //	Classical 40k–120k → Medieval 200k–600k → Renaissance 1M–3M →
 //	Colonial 5M–15M → Industrial 25M–75M → Victorian 125M–375M → ...
+func baseBuildingsRaw() []BuildingDef {
+	rows := storageRows()
+	rows = append(rows, wonderRows()...)
+	return append(rows, diplomacyRows()...)
+}
+
+// storageRows returns the 21 storage buildings, oldest age first. A row writes
+// only what is its own (name, price, build time, age, text); the rest is the
+// same on every storage building and comes from lineageSpec and the loop below:
+// the category, the storage price rate, the "storage" lineage and a tier that is
+// the row's place in the list, so list the rows oldest age first.
 //
 // A storage building no longer stores anything: stock is uncapped, so each
 // copy adds StorageBoostPercent percent to all production instead (the
 // "bonus" effect on production_all, summed by the engine as the "storage"
 // source of that pool).
-func baseBuildingsRaw() []BuildingDef {
-	return []BuildingDef{
+func storageRows() []BuildingDef {
+	rows := []BuildingDef{
 		// ===== PRIMITIVE AGE (costs: 30-100) =====
 		{
-			Name: "Stash", Key: "stash", Category: "storage",
-			BaseCost:  map[string]float64{"wood": 35},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Stash", Key: "stash",
+			BaseCost:    map[string]float64{"wood": 35},
 			BuildTicks:  9,
 			RequiredAge: "primitive_age",
 			Description: "A hidden pile of supplies.",
@@ -98,11 +105,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== STONE AGE (costs: 200-1000) =====
 		{
-			Name: "Storage Pit", Key: "storage_pit", Category: "storage",
-			BaseCost:  map[string]float64{"wood": 520, "stone": 340},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Storage Pit", Key: "storage_pit",
+			BaseCost:    map[string]float64{"wood": 520, "stone": 340},
 			BuildTicks:  28,
 			RequiredAge: "stone_age",
 			Description: "A hole in the ground to stash things.",
@@ -110,11 +114,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== BRONZE AGE (costs: 1500-5000) =====
 		{
-			Name: "Warehouse", Key: "warehouse", Category: "storage",
-			BaseCost:  map[string]float64{"wood": 3400, "stone": 2600, "iron": 520},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Warehouse", Key: "warehouse",
+			BaseCost:    map[string]float64{"wood": 3400, "stone": 2600, "iron": 520},
 			BuildTicks:  80,
 			RequiredAge: "bronze_age",
 			Description: "Proper storage building.",
@@ -122,11 +123,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== IRON AGE (costs: 8k-25k) =====
 		{
-			Name: "Granary", Key: "granary", Category: "storage",
-			BaseCost:  map[string]float64{"wood": 14000, "stone": 10000},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Granary", Key: "granary",
+			BaseCost:    map[string]float64{"wood": 14000, "stone": 10000},
 			BuildTicks:  120,
 			RequiredAge: "iron_age",
 			Description: "Organized supply storage.",
@@ -134,11 +132,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== CLASSICAL AGE (costs: 40k-120k) =====
 		{
-			Name: "Classical Vault", Key: "classical_vault", Category: "storage",
-			BaseCost:  map[string]float64{"stone": 86000, "iron": 21000, "gold": 17000},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Classical Vault", Key: "classical_vault",
+			BaseCost:    map[string]float64{"stone": 86000, "iron": 21000, "gold": 17000},
 			BuildTicks:  150,
 			RequiredAge: "classical_age",
 			Description: "Stone vault for valuables.",
@@ -146,11 +141,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== MEDIEVAL AGE (costs: 200k-600k) =====
 		{
-			Name: "Strongroom", Key: "keep", Category: "storage",
-			BaseCost:  map[string]float64{"stone": 340000, "iron": 100000, "gold": 69000},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Strongroom", Key: "keep",
+			BaseCost:    map[string]float64{"stone": 340000, "iron": 100000, "gold": 69000},
 			BuildTicks:  200,
 			RequiredAge: "medieval_age",
 			Description: "Fortified storehouse.",
@@ -158,11 +150,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== RENAISSANCE AGE (costs: 1M-3M) =====
 		{
-			Name: "Renaissance Vault", Key: "renaissance_vault", Category: "storage",
-			BaseCost:  map[string]float64{"stone": 430000, "gold": 260000, "iron": 100000},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Renaissance Vault", Key: "renaissance_vault",
+			BaseCost:    map[string]float64{"stone": 430000, "gold": 260000, "iron": 100000},
 			BuildTicks:  250,
 			RequiredAge: "renaissance_age",
 			Description: "Ornate storage facility.",
@@ -170,11 +159,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== COLONIAL AGE (costs: 5M-15M) =====
 		{
-			Name: "Colonial Warehouse", Key: "colonial_warehouse", Category: "storage",
-			BaseCost:  map[string]float64{"stone": 7.7 * Million, "gold": Million},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Colonial Warehouse", Key: "colonial_warehouse",
+			BaseCost:    map[string]float64{"stone": 7.7 * Million, "gold": Million},
 			BuildTicks:  300,
 			RequiredAge: "colonial_age",
 			Description: "Trade goods warehouse.",
@@ -182,11 +168,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== INDUSTRIAL AGE (costs: 25M-75M) =====
 		{
-			Name: "Industrial Depot", Key: "industrial_depot", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 26 * Million, "iron": 34 * Million, "coal": 17 * Million},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Industrial Depot", Key: "industrial_depot",
+			BaseCost:    map[string]float64{"steel": 26 * Million, "iron": 34 * Million, "coal": 17 * Million},
 			BuildTicks:  400,
 			RequiredAge: "industrial_age",
 			Description: "Industrial-scale storage.",
@@ -194,11 +177,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== VICTORIAN AGE (costs: 125M-375M) =====
 		{
-			Name: "Victorian Vault", Key: "victorian_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 210 * Million, "gold": 170 * Million, "iron": 130 * Million},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Victorian Vault", Key: "victorian_vault",
+			BaseCost:    map[string]float64{"steel": 210 * Million, "gold": 170 * Million, "iron": 130 * Million},
 			BuildTicks:  500,
 			RequiredAge: "victorian_age",
 			Description: "Reinforced vault.",
@@ -206,11 +186,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== ELECTRIC AGE (costs: 600M-2B) =====
 		{
-			Name: "Electric Warehouse", Key: "electric_warehouse", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 1.3 * Billion, "electricity": 210 * Million, "iron": 860 * Million},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Electric Warehouse", Key: "electric_warehouse",
+			BaseCost:    map[string]float64{"steel": 1.3 * Billion, "electricity": 210 * Million, "iron": 860 * Million},
 			BuildTicks:  600,
 			RequiredAge: "electric_age",
 			Description: "Climate-controlled storage.",
@@ -218,11 +195,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== ATOMIC AGE (costs: 3B-10B) =====
 		{
-			Name: "Atomic Vault", Key: "atomic_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 12 * Billion, "stone": 19 * Billion, "iron": 7.4 * Billion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Atomic Vault", Key: "atomic_vault",
+			BaseCost:    map[string]float64{"steel": 12 * Billion, "stone": 19 * Billion, "iron": 7.4 * Billion},
 			BuildTicks:  700,
 			RequiredAge: "atomic_age",
 			Description: "Radiation-shielded storage.",
@@ -230,11 +204,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== MODERN AGE (costs: 15B-50B) =====
 		{
-			Name: "Modern Depot", Key: "modern_depot", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 87 * Billion, "gold": 62 * Billion, "electricity": 20 * Billion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Modern Depot", Key: "modern_depot",
+			BaseCost:    map[string]float64{"steel": 87 * Billion, "gold": 62 * Billion, "electricity": 20 * Billion},
 			BuildTicks:  800,
 			RequiredAge: "modern_age",
 			Description: "Automated logistics center.",
@@ -242,11 +213,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== INFORMATION AGE (costs: 75B-250B) =====
 		{
-			Name: "Info Vault", Key: "info_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 250 * Billion, "electricity": 99 * Billion, "data": 1.6 * Billion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Info Vault", Key: "info_vault",
+			BaseCost:    map[string]float64{"steel": 250 * Billion, "electricity": 99 * Billion, "data": 1.6 * Billion},
 			BuildTicks:  900,
 			RequiredAge: "information_age",
 			Description: "Digital-physical storage hybrid.",
@@ -254,11 +222,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== DIGITAL AGE (costs: 400B-1.2T) =====
 		{
-			Name: "Digital Archive", Key: "digital_archive", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 1.2 * Trillion, "data": 25 * Billion, "electricity": 370 * Billion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Digital Archive", Key: "digital_archive",
+			BaseCost:    map[string]float64{"steel": 1.2 * Trillion, "data": 25 * Billion, "electricity": 370 * Billion},
 			BuildTicks:  1000,
 			RequiredAge: "digital_age",
 			Description: "Quantum-encrypted storage.",
@@ -266,11 +231,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== CYBERPUNK AGE (costs: 2T-6T) =====
 		{
-			Name: "Cyber Vault", Key: "cyber_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 7.4 * Trillion, "data": 150 * Billion, "crypto": 25 * Billion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Cyber Vault", Key: "cyber_vault",
+			BaseCost:    map[string]float64{"steel": 7.4 * Trillion, "data": 150 * Billion, "crypto": 25 * Billion},
 			BuildTicks:  1400,
 			RequiredAge: "cyberpunk_age",
 			Description: "Encrypted digital vault.",
@@ -278,11 +240,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== FUSION AGE (costs: 10T-30T) =====
 		{
-			Name: "Fusion Vault", Key: "fusion_vault", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 25 * Trillion, "plasma": 1.2 * Trillion, "electricity": 12 * Trillion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Fusion Vault", Key: "fusion_vault",
+			BaseCost:    map[string]float64{"steel": 25 * Trillion, "plasma": 1.2 * Trillion, "electricity": 12 * Trillion},
 			BuildTicks:  1950,
 			RequiredAge: "fusion_age",
 			Description: "Plasma-shielded storage.",
@@ -290,11 +249,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== SPACE AGE (costs: 50T-150T) =====
 		{
-			Name: "Orbital Depot", Key: "orbital_depot", Category: "storage",
-			BaseCost:  map[string]float64{"steel": 180 * Trillion, "plasma": 21 * Trillion, "electricity": 110 * Trillion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Orbital Depot", Key: "orbital_depot",
+			BaseCost:    map[string]float64{"steel": 180 * Trillion, "plasma": 21 * Trillion, "electricity": 110 * Trillion},
 			BuildTicks:  2145,
 			RequiredAge: "space_age",
 			Description: "Zero-gravity storage facility.",
@@ -302,11 +258,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== INTERSTELLAR AGE (costs: 250T-750T) =====
 		{
-			Name: "Stellar Vault", Key: "stellar_vault", Category: "storage",
-			BaseCost:  map[string]float64{"titanium": 210 * Trillion, "plasma": 180 * Trillion, "electricity": 280 * Trillion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Stellar Vault", Key: "stellar_vault",
+			BaseCost:    map[string]float64{"titanium": 210 * Trillion, "plasma": 180 * Trillion, "electricity": 280 * Trillion},
 			BuildTicks:  2340,
 			RequiredAge: "interstellar_age",
 			Description: "Pocket-dimension storage.",
@@ -314,11 +267,8 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== GALACTIC AGE (costs: 1.25Q-3.75Q) =====
 		{
-			Name: "Galactic Vault", Key: "galactic_vault", Category: "storage",
-			BaseCost:  map[string]float64{"dark_matter": 350 * Trillion, "titanium": 1.8 * Quadrillion, "plasma": 710 * Trillion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Galactic Vault", Key: "galactic_vault",
+			BaseCost:    map[string]float64{"dark_matter": 350 * Trillion, "titanium": 1.8 * Quadrillion, "plasma": 710 * Trillion},
 			BuildTicks:  2340,
 			RequiredAge: "galactic_age",
 			Description: "Galaxy-spanning storage network.",
@@ -326,32 +276,38 @@ func baseBuildingsRaw() []BuildingDef {
 
 		// ===== QUANTUM AGE (costs: 6Q-20Q) =====
 		{
-			Name: "Quantum Vault", Key: "quantum_vault", Category: "storage",
-			BaseCost:  map[string]float64{"antimatter": 5 * Quadrillion, "dark_matter": 9.9 * Quadrillion, "titanium": 2.5 * Quadrillion},
-			CostScale: 1.75,
-
-			Effects:     []Effect{{Type: "bonus", Target: "production_all", Value: StorageBoostPercent / 100.0}},
+			Name: "Quantum Vault", Key: "quantum_vault",
+			BaseCost:    map[string]float64{"antimatter": 5 * Quadrillion, "dark_matter": 9.9 * Quadrillion, "titanium": 2.5 * Quadrillion},
 			BuildTicks:  2340,
 			RequiredAge: "quantum_age",
 			Description: "Stores matter in quantum superposition.",
 		},
 
 		// ===== TRANSCENDENT AGE =====
-		// (singularity_core is a wonder, listed below)
+		// (singularity_core is a wonder, see wonderRows)
+	}
+	for i := range rows {
+		rows[i].Effects = []Effect{
+			{Type: "bonus", Target: "production_all", Value: StorageBoost()},
+		}
+	}
+	return finishLineage(rows, lineageSpec{Key: "storage", Category: "storage", Scale: StorageRate})
+}
 
-		// ===== WONDERS =====
-		// There is exactly one wonder per age (22 wonders total). Building a wonder
-		// unlocks +0.5x game speed — the primary long-term speed upgrade mechanic.
-		// Wonder costs use WonderBank: resources must be "banked" via 'wonder collect'
-		// before 'build <key>' queues construction. CostScale is always 1.0.
-		// Build ticks are extremely long to make each wonder a meaningful milestone.
-		//
-		// RequiredTech is the wonder's keystone: a tech of its own age that must
-		// be researched before 'build <key>' (the bank fills without it). The
-		// next age needs the wonder, so the keystone is the one tech an age
-		// asks for. The Sacred Grove has none (nothing blocks the first age),
-		// and Stonehenge has none yet (see there).
-
+// wonderRows returns the 22 wonders, oldest age first.
+// There is exactly one wonder per age (22 wonders total). Building a wonder
+// unlocks +0.5x game speed — the primary long-term speed upgrade mechanic.
+// Wonder costs use WonderBank: resources must be "banked" via 'wonder collect'
+// before 'build <key>' queues construction. CostScale is always 1.0.
+// Build ticks are extremely long to make each wonder a meaningful milestone.
+//
+// RequiredTech is the wonder's keystone: a tech of its own age that must
+// be researched before 'build <key>' (the bank fills without it). The
+// next age needs the wonder, so the keystone is the one tech an age
+// asks for. The Sacred Grove has none (nothing blocks the first age),
+// and Stonehenge has none yet (see there).
+func wonderRows() []BuildingDef {
+	return []BuildingDef{
 		// Primitive Age — normal costs: 30-300
 		{
 			Name: "Sacred Grove", Key: "sacred_grove", Category: "wonder",
@@ -680,16 +636,17 @@ func baseBuildingsRaw() []BuildingDef {
 			BuildTicks:   18720,
 			Description:  "The final wonder.",
 		},
-		// Diplomacy / foreign affairs — these act on the world rather than on a
-		// resource, so they live here in the admin/storage slice rather than a
-		// lineage file (the lineage files are strict one-per-age tier ladders with
-		// a per-tier output formula; a one-off administrative building does not fit
-		// one). NO Type:"production" effect on any of them — that would pollute the
-		// resource-rate map in WorkerScaledProduction.
-		//
-		// NOTE for anyone adding to this slice: BaseBuildings() only admits
-		// Category "storage", "wonder" and "diplomacy" out of baseBuildingsRaw().
-		// Any other Category here is silently dropped.
+	}
+}
+
+// diplomacyRows returns the diplomacy / foreign affairs buildings — these act
+// on the world rather than on a resource, so they live here beside storage and
+// the wonders rather than in a lineage file (the lineage files are strict
+// one-per-age tier ladders with a per-tier output formula; a one-off
+// administrative building does not fit one). NO Type:"production" effect on any
+// of them — that would pollute the resource-rate map in WorkerScaledProduction.
+func diplomacyRows() []BuildingDef {
+	return []BuildingDef{
 		{
 			Name: "Embassy", Key: "embassy", Category: "diplomacy",
 			BaseCost:     map[string]float64{"gold": 47 * Million, "iron": 11.5 * Million, "iron_ore": 11.5 * Million},
@@ -761,29 +718,6 @@ type buildingMetaEntry struct {
 //	metallurgy, energy, hacker, astronaut  (culture_arts has no domain)
 func buildingMeta() map[string]buildingMetaEntry {
 	return map[string]buildingMetaEntry{
-		// ── STORAGE lineage (no workers, no output resource) ─────────────────────
-		"stash":              {LineageKey: "storage", LineageTier: 0},
-		"storage_pit":        {LineageKey: "storage", LineageTier: 1},
-		"warehouse":          {LineageKey: "storage", LineageTier: 2},
-		"granary":            {LineageKey: "storage", LineageTier: 3},
-		"keep":               {LineageKey: "storage", LineageTier: 4},
-		"classical_vault":    {LineageKey: "storage", LineageTier: 5},
-		"renaissance_vault":  {LineageKey: "storage", LineageTier: 6},
-		"colonial_warehouse": {LineageKey: "storage", LineageTier: 7},
-		"industrial_depot":   {LineageKey: "storage", LineageTier: 8},
-		"victorian_vault":    {LineageKey: "storage", LineageTier: 9},
-		"electric_warehouse": {LineageKey: "storage", LineageTier: 10},
-		"atomic_vault":       {LineageKey: "storage", LineageTier: 11},
-		"modern_depot":       {LineageKey: "storage", LineageTier: 12},
-		"info_vault":         {LineageKey: "storage", LineageTier: 13},
-		"digital_archive":    {LineageKey: "storage", LineageTier: 14},
-		"cyber_vault":        {LineageKey: "storage", LineageTier: 15},
-		"fusion_vault":       {LineageKey: "storage", LineageTier: 16},
-		"orbital_depot":      {LineageKey: "storage", LineageTier: 17},
-		"stellar_vault":      {LineageKey: "storage", LineageTier: 18},
-		"galactic_vault":     {LineageKey: "storage", LineageTier: 19},
-		"quantum_vault":      {LineageKey: "storage", LineageTier: 20},
-
 		// ── WONDER lineage (no workers, max 1 each) ───────────────────────────────
 		"sacred_grove":         {LineageKey: "wonder", LineageTier: 0, OutputResource: "knowledge"},
 		"great_monolith":       {LineageKey: "wonder", LineageTier: 1, OutputResource: "knowledge"},

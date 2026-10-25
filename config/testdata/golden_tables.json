@@ -876,7 +876,7 @@
    "build_ticks": 150,
    "workers": 0,
    "lineage_key": "storage",
-   "lineage_tier": 5,
+   "lineage_tier": 4,
    "cost_scale": 1.75,
    "max_count": 0
   },
@@ -3393,7 +3393,7 @@
    "build_ticks": 200,
    "workers": 0,
    "lineage_key": "storage",
-   "lineage_tier": 4,
+   "lineage_tier": 5,
    "cost_scale": 1.75,
    "max_count": 0
   },
