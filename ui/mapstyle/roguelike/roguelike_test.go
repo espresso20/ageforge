@@ -20,6 +20,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 var testBuilder = mapmodel.NewBuilder(nil)
@@ -47,6 +48,10 @@ func grown(t testing.TB, o fixture.Options) (*mapmodel.Model, game.GameState) {
 }
 
 const sentinel = 'Ж'
+
+// glyphRules are what every rune the roguelike draws must pass, in every
+// tier: one cell wide and never the canvas's '?' fallback.
+var glyphRules = styletest.Rules{Query: styletest.Every, Width: styletest.Every}
 
 func fillScreen(s tcell.SimulationScreen) {
 	w, h := s.Size()
@@ -182,11 +187,7 @@ func TestThemeSweep(t *testing.T) {
 					s := draw(v, m, 140, 44, 2, mapmodel.TierUnicode, compact)
 					cells, _, _ := s.GetContents()
 					for i, c := range cells {
-						if len(c.Runes) == 0 || c.Runes[0] == ' ' || c.Runes[0] == sentinel {
-							continue
-						}
-						fg, bg, _ := c.Style.Decompose()
-						if fg == bg {
+						if styletest.HiddenInk(c) && c.Runes[0] != sentinel {
 							t.Errorf("theme %s, %s zoom %d: cell %d rune %q has fg == bg", th.Key, m.Age, z, i, c.Runes[0])
 							break
 						}
@@ -215,16 +216,11 @@ func TestGlyphWidths(t *testing.T) {
 						r := c.Runes[0]
 						// '?' is the canvas's fallback for a rune the tier cannot
 						// show; only the key hints on the last row may use it.
-						if r == '?' && i/sw != 46 {
-							t.Errorf("%s %s zoom %d: fallback '?' at row %d", age, tier, z, i/sw)
-							break
+						if r == '?' && i/sw == 46 {
+							continue
 						}
-						if tier == mapmodel.TierASCII && r >= 0x80 {
-							t.Errorf("%s ascii zoom %d: non-ASCII rune %q", age, z, r)
-							break
-						}
-						if uniseg.StringWidth(string(r)) != 1 {
-							t.Errorf("%s %s zoom %d: rune %q is not one cell", age, tier, z, r)
+						if f := glyphRules.Fault(r, tier); f != "" {
+							t.Errorf("%s %s zoom %d: rune %q at row %d: %s", age, tier, z, r, i/sw, f)
 							break
 						}
 					}

@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 var cityAges = []string{"modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"}
@@ -45,14 +45,8 @@ func TestCitySweep(t *testing.T) {
 					if len(c.Runes) == 0 {
 						continue
 					}
-					r := c.Runes[0]
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s ascii compact=%v: non-ASCII rune %q", m.Age, compact, r)
-					case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-						t.Fatalf("%s %s compact=%v: rune %q is not one cell wide", m.Age, tier, compact, r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %s compact=%v: a '?' fallback leaked into the frame", m.Age, tier, compact)
+					if f := frameRules.Fault(c.Runes[0], tier); f != "" {
+						t.Fatalf("%s %s compact=%v: rune %q: %s", m.Age, tier, compact, c.Runes[0], f)
 					}
 				}
 			}
@@ -71,8 +65,7 @@ func TestCitySweep(t *testing.T) {
 				scr := draw(newView(), m, w, h, 7, mapmodel.TierUnicode, compact)
 				cells, sw, _ := scr.GetContents()
 				for i, c := range cells {
-					fg, bg, _ := c.Style.Decompose()
-					if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg == bg {
+					if styletest.HiddenInk(c) {
 						t.Errorf("theme %s, %s compact=%v: %q at (%d,%d) has fg == bg", th.Key, m.Age, compact, c.Runes[0], i%sw, i/sw)
 						break
 					}

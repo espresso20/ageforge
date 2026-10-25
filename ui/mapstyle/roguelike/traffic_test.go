@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -374,8 +373,8 @@ func TestTrafficTiers(t *testing.T) {
 						continue
 					}
 					r := c.Runes[0]
-					if r == '?' || tier == mapmodel.TierASCII && r >= 0x80 || uniseg.StringWidth(string(r)) != 1 {
-						t.Fatalf("%s %s frame %d: rune %q at row %d", age, tier, anim, r, i/sw)
+					if f := glyphRules.Fault(r, tier); f != "" {
+						t.Fatalf("%s %s frame %d: rune %q at row %d: %s", age, tier, anim, r, i/sw, f)
 					}
 				}
 			}

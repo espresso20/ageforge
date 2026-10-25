@@ -13,6 +13,15 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
+)
+
+// frameRules are what the runes of a skyline frame must pass: nothing past
+// ASCII in the ASCII tier, and beyond it one cell wide and never the
+// canvas's '?' fallback. queryRules hold only the '?' to that.
+var (
+	frameRules = styletest.Rules{Query: styletest.NonASCII, Width: styletest.NonASCII}
+	queryRules = styletest.Rules{Query: styletest.NonASCII}
 )
 
 // catalog is the one catalogue the tests share, made on first use.

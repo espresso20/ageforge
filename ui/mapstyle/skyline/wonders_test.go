@@ -16,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // The ground ages are the first seventeen (Primitive to Fusion); from the
@@ -476,17 +477,11 @@ func TestWonderTiersAndThemes(t *testing.T) {
 							if len(c.Runes) == 0 {
 								continue
 							}
-							r := c.Runes[0]
-							fg, bg, _ := c.Style.Decompose()
-							switch {
-							case tier == mapmodel.TierASCII && r >= 0x80:
-								t.Fatalf("%s built=%v night=%v %s ascii: non-ASCII rune %q", age, built, night, zm, r)
-							case tier != mapmodel.TierASCII && r == '?':
-								t.Fatalf("%s built=%v night=%v %s %s: a '?' leaked into the frame", age, built, night, zm, tier)
-							case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-								t.Fatalf("%s %s: %q is not one cell wide", age, tier, r)
-							case r != ' ' && fg == bg:
-								t.Fatalf("%s built=%v night=%v %s %s: %q has fg == bg", age, built, night, zm, tier, r)
+							if f := frameRules.Fault(c.Runes[0], tier); f != "" {
+								t.Fatalf("%s built=%v night=%v %s %s: rune %q: %s", age, built, night, zm, tier, c.Runes[0], f)
+							}
+							if styletest.HiddenInk(c) {
+								t.Fatalf("%s built=%v night=%v %s %s: %q has fg == bg", age, built, night, zm, tier, c.Runes[0])
 							}
 						}
 					}

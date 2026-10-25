@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // skyAges are the sky arc's ages, scene by scene (mapmodel/sky.go).
@@ -144,8 +144,7 @@ func TestSkyThemeSweep(t *testing.T) {
 				scr := draw(v, m, sz[0], sz[1], 7, mapmodel.TierUnicode, sz[2] == 1)
 				cells, sw, _ := scr.GetContents()
 				for i, c := range cells {
-					fg, bg, _ := c.Style.Decompose()
-					if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg == bg {
+					if styletest.HiddenInk(c) {
 						t.Errorf("theme %s, %s %dx%d: %q at (%d,%d) has fg == bg", th.Key, name, sz[0], sz[1], c.Runes[0], i%sw, i/sw)
 						break
 					}
@@ -159,6 +158,7 @@ func TestSkyThemeSweep(t *testing.T) {
 // ASCII in the ASCII tier (never to the '?' of an unknown rune) and none is
 // an em dash, in every tier, full and compact.
 func TestSkyGlyphs(t *testing.T) {
+	rules := styletest.Rules{Query: styletest.Every, Width: styletest.NonASCII, EmDash: true}
 	for _, age := range skyAges {
 		m := build(fixture.Options{Age: age, Seed: 6, Routes: 4, Harbinger: true, Catastrophe: true, Wars: 1, Tick: tickAt(0.9)}, 1)
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierNerd, mapmodel.TierASCII} {
@@ -171,16 +171,8 @@ func TestSkyGlyphs(t *testing.T) {
 						if len(c.Runes) == 0 {
 							continue
 						}
-						r := c.Runes[0]
-						switch {
-						case tier == mapmodel.TierASCII && r >= 0x80:
-							t.Fatalf("%s ascii %dx%d: non-ASCII rune %q", age, sz[0], sz[1], r)
-						case r == '?':
-							t.Fatalf("%s %s %dx%d: a '?' fallback in the frame", age, tier, sz[0], sz[1])
-						case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-							t.Fatalf("%s %s: rune %q is not one cell wide", age, tier, r)
-						case r == '—':
-							t.Fatalf("%s: an em dash in the frame", age)
+						if f := rules.Fault(c.Runes[0], tier); f != "" {
+							t.Fatalf("%s %s %dx%d: rune %q: %s", age, tier, sz[0], sz[1], c.Runes[0], f)
 						}
 					}
 				}

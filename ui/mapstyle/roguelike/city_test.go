@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 var earthAges = []string{"modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"}
@@ -315,6 +316,7 @@ func TestCityTiersAndThemes(t *testing.T) {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 4 + int64(i), Routes: 2, Harbinger: true, Wars: 1})
 		models = append(models, m)
 	}
+	noQuery := styletest.Rules{Query: styletest.Every}
 	for _, m := range models {
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
 			for z := zRegion; z <= zDistrict; z++ {
@@ -332,8 +334,8 @@ func TestCityTiersAndThemes(t *testing.T) {
 							continue
 						}
 						r := c.Runes[0]
-						if r == '?' || tier == mapmodel.TierASCII && r >= 0x80 {
-							t.Fatalf("%s %s zoom %d compact %v: rune %q at %d,%d", m.Age, tier, z, compact, r, i%sw, i/sw)
+						if f := noQuery.Fault(r, tier); f != "" {
+							t.Fatalf("%s %s zoom %d compact %v: rune %q at %d,%d: %s", m.Age, tier, z, compact, r, i%sw, i/sw, f)
 						}
 					}
 				}
@@ -351,10 +353,7 @@ func TestCityTiersAndThemes(t *testing.T) {
 				s := draw(v, m, 140, 44, 3, mapmodel.TierUnicode, false)
 				cells, sw, _ := s.GetContents()
 				for i, c := range cells {
-					if len(c.Runes) == 0 || c.Runes[0] == ' ' || c.Runes[0] == sentinel {
-						continue
-					}
-					if fg, bg, _ := c.Style.Decompose(); fg == bg {
+					if styletest.HiddenInk(c) && c.Runes[0] != sentinel {
 						t.Errorf("theme %s, %s zoom %d: %q at %d,%d has fg == bg", th.Key, m.Age, z, c.Runes[0], i%sw, i/sw)
 						break
 					}

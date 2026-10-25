@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // TestPortraitEveryWonder: every wonder of the game is drawn alone, whatever
@@ -46,13 +47,10 @@ func TestPortraitEveryWonder(t *testing.T) {
 						t.Fatalf("%s at %dx%d: cell %d,%d was never written", key, sz[0], sz[1], i%w, i/w)
 					}
 					r := cell.Runes[0]
-					fg, bg, _ := cell.Style.Decompose()
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s %dx%d ascii: non-ASCII rune %q", key, sz[0], sz[1], r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %dx%d %v: a '?' fallback", key, sz[0], sz[1], tier)
-					case r != ' ' && fg == bg:
+					if f := queryRules.Fault(r, tier); f != "" {
+						t.Fatalf("%s %dx%d %v: rune %q: %s", key, sz[0], sz[1], tier, r, f)
+					}
+					if styletest.HiddenInk(cell) {
 						t.Fatalf("%s %dx%d %v: %q has fg == bg", key, sz[0], sz[1], tier, r)
 					}
 					if r != ' ' {

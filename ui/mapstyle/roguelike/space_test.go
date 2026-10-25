@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // skyAges are the ages with a scene of their own, in order.
@@ -151,10 +151,7 @@ func TestSkyThemeSweep(t *testing.T) {
 				s := drawStyle(st, m, 140, 44, 2, mapmodel.TierUnicode, compact)
 				cells, _, _ := s.GetContents()
 				for i, c := range cells {
-					if len(c.Runes) == 0 || c.Runes[0] == ' ' || c.Runes[0] == sentinel {
-						continue
-					}
-					if fg, bg, _ := c.Style.Decompose(); fg == bg {
+					if styletest.HiddenInk(c) && c.Runes[0] != sentinel {
 						t.Errorf("theme %s, %s: cell %d rune %q has fg == bg", th.Key, m.Age, i, c.Runes[0])
 						break
 					}
@@ -183,13 +180,11 @@ func TestSkyGlyphWidths(t *testing.T) {
 								continue
 							}
 							r := c.Runes[0]
-							switch {
-							case r == '?' && i/sw != 46:
-								t.Fatalf("%s %s zoom %d frame %d: fallback '?' at row %d", age, tier, z, anim, i/sw)
-							case tier == mapmodel.TierASCII && r >= 0x80:
-								t.Fatalf("%s ascii zoom %d frame %d: non-ASCII rune %q", age, z, anim, r)
-							case uniseg.StringWidth(string(r)) != 1:
-								t.Fatalf("%s %s zoom %d: rune %q is not one cell", age, tier, z, r)
+							if r == '?' && i/sw == 46 {
+								continue
+							}
+							if f := glyphRules.Fault(r, tier); f != "" {
+								t.Fatalf("%s %s zoom %d frame %d: rune %q at row %d: %s", age, tier, z, anim, r, i/sw, f)
 							}
 						}
 					}

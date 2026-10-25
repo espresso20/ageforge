@@ -14,6 +14,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // zoomed returns a view at zoom z, free of the present, whose view is
@@ -733,15 +734,11 @@ func TestZoomSweep(t *testing.T) {
 					if len(c.Runes) == 0 {
 						continue
 					}
-					r := c.Runes[0]
-					fg, bg, _ := c.Style.Decompose()
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s %s ascii: non-ASCII rune %q", age, z, r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %s %s: a '?' fallback leaked into the frame", age, z, tier)
-					case r != ' ' && fg == bg:
-						t.Fatalf("%s %s %s: %q has fg == bg", age, z, tier, r)
+					if f := queryRules.Fault(c.Runes[0], tier); f != "" {
+						t.Fatalf("%s %s %s: rune %q: %s", age, z, tier, c.Runes[0], f)
+					}
+					if styletest.HiddenInk(c) {
+						t.Fatalf("%s %s %s: %q has fg == bg", age, z, tier, c.Runes[0])
 					}
 				}
 			}

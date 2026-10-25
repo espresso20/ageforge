@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
@@ -16,6 +15,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 const sentinel = 'Ж'
@@ -323,8 +323,7 @@ func TestThemeSweep(t *testing.T) {
 				scr := draw(v, m, w, h, 7, mapmodel.TierUnicode, compact)
 				cells, sw, _ := scr.GetContents()
 				for i, c := range cells {
-					fg, bg, _ := c.Style.Decompose()
-					if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg == bg {
+					if styletest.HiddenInk(c) {
 						t.Errorf("theme %s, %s compact=%v: %q at (%d,%d) has fg == bg", th.Key, name, compact, c.Runes[0], i%sw, i/sw)
 						break
 					}
@@ -335,6 +334,8 @@ func TestThemeSweep(t *testing.T) {
 }
 
 func TestGlyphWidths(t *testing.T) {
+	rules := frameRules
+	rules.EmDash = true
 	for _, age := range []string{"primitive_age", "medieval_age", "victorian_age", "cyberpunk_age", "space_age", "transcendent_age"} {
 		m := build(fixture.Options{Age: age, Seed: 6, Routes: 4, Harbinger: true, Catastrophe: true, Wars: 1, Tick: tickAt(0.9)}, 1)
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierNerd, mapmodel.TierASCII} {
@@ -351,16 +352,8 @@ func TestGlyphWidths(t *testing.T) {
 					if len(c.Runes) == 0 {
 						continue
 					}
-					r := c.Runes[0]
-					switch {
-					case tier == mapmodel.TierASCII && r >= 0x80:
-						t.Fatalf("%s ascii compact=%v: non-ASCII rune %q", age, compact, r)
-					case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-						t.Fatalf("%s %s compact=%v: rune %q is not one cell wide", age, tier, compact, r)
-					case tier != mapmodel.TierASCII && r == '?':
-						t.Fatalf("%s %s compact=%v: a '?' fallback leaked into the frame", age, tier, compact)
-					case r == '—':
-						t.Fatalf("%s: an em dash in the frame", age)
+					if f := rules.Fault(c.Runes[0], tier); f != "" {
+						t.Fatalf("%s %s compact=%v: rune %q: %s", age, tier, compact, c.Runes[0], f)
 					}
 				}
 			}
