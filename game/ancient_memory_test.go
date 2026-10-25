@@ -2,7 +2,6 @@ package game
 
 import (
 	"math/rand"
-	"os"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -242,15 +241,7 @@ func TestAncientMemory_PersistsAcrossSaveLoad(t *testing.T) {
 		t.Fatalf("accept failed: %v", err)
 	}
 
-	if err := ge.SaveGame("test_ancient_memory"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_ancient_memory.json")
-
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_ancient_memory"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
+	ge2 := saveAndLoad(t, ge, "test_ancient_memory")
 
 	if !ge2.ancientMemoryUsed {
 		t.Error("ancientMemoryUsed should persist across save/load (true)")

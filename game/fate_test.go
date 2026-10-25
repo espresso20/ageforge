@@ -208,9 +208,7 @@ func TestFateSurvivesSaveLoadWithoutReroll(t *testing.T) {
 			ge.tick = 100
 			want := *ge.fate
 			draws, _ := ge.rngDraws()
-			noErr(t, ge.SaveGame("fate_"+strings.ReplaceAll(tc.name, " ", "_")))
-			ge2 := NewGameEngine()
-			noErr(t, ge2.LoadGame("fate_"+strings.ReplaceAll(tc.name, " ", "_")))
+			ge2 := saveAndLoad(t, ge, "fate_"+strings.ReplaceAll(tc.name, " ", "_"))
 			if ge2.cheaterBadge {
 				t.Error("a save with a fate failed its signature check")
 			}
@@ -236,9 +234,7 @@ func TestOldSavesMigrateToFates(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := catEngine(t, "classical_age", 1)
 	ge.tick = 5000
-	noErr(t, ge.SaveGame("old_no_thread"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("old_no_thread"))
+	ge2 := saveAndLoad(t, ge, "old_no_thread")
 	if ge2.fate != nil || ge2.harbinger != nil {
 		t.Fatalf("load started something: fate %+v thread %+v", ge2.fate, ge2.harbinger)
 	}
@@ -1071,9 +1067,7 @@ func TestParkedLastPassageThreadSurvivesSaveLoad(t *testing.T) {
 	ge := cosmicDoom(t, "galactic_age", 60000)
 	tickTo(ge, arrivalTick(ge))
 	want, wantParked := *ge.harbinger, *ge.parkedHarbinger
-	noErr(t, ge.SaveGame("parked"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("parked"))
+	ge2 := saveAndLoad(t, ge, "parked")
 	if ge2.harbinger == nil || ge2.parkedHarbinger == nil || !reflect.DeepEqual(*ge2.harbinger, want) || !reflect.DeepEqual(*ge2.parkedHarbinger, wantParked) {
 		t.Fatalf("after load: live %+v parked %+v", ge2.harbinger, ge2.parkedHarbinger)
 	}

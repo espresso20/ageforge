@@ -336,9 +336,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 	ge.mu.Lock()
 	log := clonePlanTemplate(ge.planLog)
 	ge.mu.Unlock()
-	noErr(t, ge.SaveGame("kit"))
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("kit"))
+	loaded := saveAndLoad(t, ge, "kit")
 	if loaded.cheaterBadge {
 		t.Fatal("the save failed its own signature check")
 	}
@@ -392,9 +390,7 @@ func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
 	ge.Prestige.LoadState(1, 120, 120, old)
 	ge.Prestige.LoadLegacy(2, []PlanTemplateItem{{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 1}}, []string{"riverlands_tribes"}, map[string]float64{"food": 40})
 	ge.mu.Unlock()
-	noErr(t, ge.SaveGame("old-shop"))
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("old-shop"))
+	loaded := saveAndLoad(t, ge, "old-shop")
 	p := loaded.GetState().Prestige
 	if p.TotalEarned != 120 || p.Available != 120 || p.ProductionMultiplier <= 1 {
 		t.Errorf("unspent old points loaded as %+v", p)
@@ -413,9 +409,7 @@ func TestLegacyShopSavesKeepTheirCarryOverAndPoints(t *testing.T) {
 	never.mu.Lock()
 	never.Prestige.LoadState(0, 0, 0, map[string]int{config.LegacyPlan: 1, config.LegacyWorkers: 1, config.LegacyFactions: 1})
 	never.mu.Unlock()
-	noErr(t, never.SaveGame("never-prestiged"))
-	loaded = NewGameEngine()
-	noErr(t, loaded.LoadGame("never-prestiged"))
+	loaded = saveAndLoad(t, never, "never-prestiged")
 	p = loaded.GetState().Prestige
 	if p.ProductionMultiplier != 1 {
 		t.Errorf("never-prestiged multiplier = %v, want 1", p.ProductionMultiplier)

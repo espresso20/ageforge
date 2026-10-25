@@ -2,7 +2,6 @@ package game
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -160,15 +159,8 @@ func TestSoldiersTrained_SaveLoadRoundTrip(t *testing.T) {
 	ge.Stats.SoldiersTrained = 137
 	ge.mu.Unlock()
 
-	if err := ge.SaveGame("test_soldiers_trained_roundtrip"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_soldiers_trained_roundtrip.json")
+	ge2 := saveAndLoad(t, ge, "test_soldiers_trained_roundtrip")
 
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_soldiers_trained_roundtrip"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
 	if got := ge2.Stats.SoldiersTrained; got != 137 {
 		t.Errorf("SoldiersTrained after load = %v, want 137", got)
 	}

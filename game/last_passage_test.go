@@ -738,9 +738,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	noErr(t, ge.Succumb())
 	check("after an epoch Succumb")
 
-	noErr(t, ge.SaveGame("legacy"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("legacy"))
+	ge2 := saveAndLoad(t, ge, "legacy")
 	ge = ge2
 	check("after save/load")
 	// It multiplies production after the caps: the pool is as it was, and

@@ -66,9 +66,7 @@ func TestPrestigeFloorSurvivesSaveLoad(t *testing.T) {
 		noErr(t, ge.EnterAgeForTest(age))
 	}
 	noErr(t, ge.DoPrestige())
-	noErr(t, ge.SaveGame("floor"))
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("floor"))
+	loaded := saveAndLoad(t, ge, "floor")
 	if got := loaded.GetState().Prestige.Floor; got != "medieval_age" {
 		t.Fatalf("loaded floor = %q", got)
 	}

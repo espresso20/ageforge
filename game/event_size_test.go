@@ -347,9 +347,7 @@ func TestEventSizeSurvivesASaveAndLoad(t *testing.T) {
 	a.Buildings.counts["gathering_camp"] += 4
 	stale := a.Resources.resources["food"].Rate
 	a.mu.Unlock()
-	noErr(t, a.SaveGame("sized"))
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("sized"))
+	b := saveAndLoad(t, a, "sized")
 	if fresh := b.Resources.resources["food"].Rate; fresh == stale {
 		t.Fatalf("the loaded game's food rate equals the stale one (%v): the test needs them to differ", fresh)
 	}

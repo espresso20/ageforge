@@ -878,9 +878,7 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 				t.Fatalf("pendingBraceLevel = %d, want %d", ge.pendingBraceLevel, tc.level)
 			}
 
-			noErr(t, ge.SaveGame("braced"))
-			ge2 := NewGameEngine()
-			noErr(t, ge2.LoadGame("braced"))
+			ge2 := saveAndLoad(t, ge, "braced")
 			if ge2.pendingBraceLevel != tc.level {
 				t.Fatalf("pendingBraceLevel after load = %d, want %d", ge2.pendingBraceLevel, tc.level)
 			}
@@ -1022,10 +1020,8 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	noErr(t, ge.HarbingerBrace())
 	noErr(t, ge.HarbingerInvite())
 	want, wantFate := *ge.harbinger, *ge.fate
-	noErr(t, ge.SaveGame("harb_mid"))
+	ge2 := saveAndLoad(t, ge, "harb_mid")
 
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("harb_mid"))
 	if ge2.cheaterBadge {
 		t.Error("save with a harbinger failed signature verification")
 	}
@@ -1063,9 +1059,7 @@ func TestHarbingerFieldsOmittedWhenAbsent(t *testing.T) {
 			t.Errorf("save without a harbinger contains %q", k)
 		}
 	}
-	noErr(t, ge.SaveGame("no_harb"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("no_harb"))
+	ge2 := saveAndLoad(t, ge, "no_harb")
 	ge2.harbingerTickCheck()
 	if h := ge2.harbinger; h == nil || h.TargetEpoch != "" || h.Age != "quantum_age" || ge2.catastropheInvited || ge2.cheaterBadge {
 		t.Errorf("cosmic save loaded as harbinger=%+v invited=%v cheater=%v",

@@ -124,9 +124,7 @@ func TestWondersDoNotRaiseSpeed(t *testing.T) {
 		t.Errorf("%d wonders built moved the tick interval from %v to %v", wonders, before, after)
 	}
 
-	noErr(t, ge.SaveGame("wonders"))
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("wonders"))
+	b := saveAndLoad(t, ge, "wonders")
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 	built := 0

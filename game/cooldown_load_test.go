@@ -16,9 +16,7 @@ func TestLoadGame_KeepsCooldowns(t *testing.T) {
 	ge.tick = 1000
 	ge.festivalReadyTick = 1250
 	ge.blackMarketReadyTick = 1200
-	noErr(t, ge.SaveGame("cooldowns"))
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("cooldowns"))
+	b := saveAndLoad(t, ge, "cooldowns")
 	if b.festivalReadyTick != 1250 || b.blackMarketReadyTick != 1200 {
 		t.Errorf("after load: festival ready at %d, black market at %d; want 1250 and 1200", b.festivalReadyTick, b.blackMarketReadyTick)
 	}
@@ -92,9 +90,7 @@ func TestLoadGame_BoundsStuckCooldowns(t *testing.T) {
 	ge.tick = 40
 	ge.festivalReadyTick = 5781
 	ge.blackMarketReadyTick = 5625
-	noErr(t, ge.SaveGame("stuck"))
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("stuck"))
+	b := saveAndLoad(t, ge, "stuck")
 	fs, bs := b.FestivalStatus(), b.BlackMarketStatus()
 	if fs.CooldownLeft > fs.CooldownTicks || bs.CooldownLeft > bs.CooldownTicks {
 		t.Errorf("after load the festival has %d ticks left (a fresh cooldown is %d) and the black market %d (fresh: %d)",

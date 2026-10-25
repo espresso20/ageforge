@@ -1,7 +1,6 @@
 package game
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -431,15 +430,7 @@ func TestPersistence_RoundTripsCivState(t *testing.T) {
 	}
 	ge.mu.Unlock()
 
-	if err := ge.SaveGame("test_civ_roundtrip"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_civ_roundtrip.json")
-
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_civ_roundtrip"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
+	ge2 := saveAndLoad(t, ge, "test_civ_roundtrip")
 
 	ge2.mu.Lock()
 	defer ge2.mu.Unlock()

@@ -437,9 +437,7 @@ func TestShares_SurviveSaveAndLoad(t *testing.T) {
 	}
 	ge.SetAutoRecruit(false)
 	noErr(t, ge.RecruitWorker("worker", 1))
-	noErr(t, ge.SaveGame("shares-roundtrip"))
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("shares-roundtrip"))
+	loaded := saveAndLoad(t, ge, "shares-roundtrip")
 	if loaded.cheaterBadge {
 		t.Error("the save failed its signature check")
 	}

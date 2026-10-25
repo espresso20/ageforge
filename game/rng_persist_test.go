@@ -70,9 +70,7 @@ func TestLoadGame_ContinuesRNGStream(t *testing.T) {
 	const split = 1200
 	a, sc := determinismSetup(t, 42)
 	sc.play(a, 0, split)
-	noErr(t, a.SaveGame("rng-continuity"))
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("rng-continuity"))
+	b := saveAndLoad(t, a, "rng-continuity")
 	if ga, gb := a.GetState(), b.GetState(); ga.RNGDraws != gb.RNGDraws || ga.QuipDraws != gb.QuipDraws {
 		t.Fatalf("stream positions after load: gameplay %d vs %d, quip %d vs %d", ga.RNGDraws, gb.RNGDraws, ga.QuipDraws, gb.QuipDraws)
 	}
@@ -137,9 +135,7 @@ func TestLoadGame_RestoresProseMemory(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		a.flavorStream().Line(req, a.gameRNG())
 	}
-	noErr(t, a.SaveGame("prose"))
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("prose"))
+	b := saveAndLoad(t, a, "prose")
 	for i := 0; i < 40; i++ {
 		la, lb := a.flavorStream().Line(req, a.gameRNG()), b.flavorStream().Line(req, b.gameRNG())
 		if la != lb {

@@ -445,9 +445,7 @@ func TestDefenseTally_SaveLoad(t *testing.T) {
 	if want == nil || want.Raids != 1 {
 		t.Fatalf("tally before save = %+v", want)
 	}
-	noErr(t, ge.SaveGame("defense"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("defense"))
+	ge2 := saveAndLoad(t, ge, "defense")
 	if ge2.cheaterBadge {
 		t.Error("save with a defense tally failed signature verification")
 	}

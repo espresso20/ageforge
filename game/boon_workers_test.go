@@ -114,10 +114,8 @@ func TestBoonTempWorkersSaved(t *testing.T) {
 
 	lendBoonCrew(ge, "merchant_guild", 4, 10)
 	ge.StepTicks(4)
-	noErr(t, ge.SaveGame("boon-crew"))
+	b := saveAndLoad(t, ge, "boon-crew")
 
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("boon-crew"))
 	loans := b.Diplomacy.boonLoans
 	if len(loans) != 1 || loans[0] != (BoonWorkerLoan{FactionKey: "merchant_guild", Count: 4, TicksLeft: 6}) {
 		t.Fatalf("loaded boon loans = %+v, want one crew of 4 from merchant_guild with 6 ticks left", loans)

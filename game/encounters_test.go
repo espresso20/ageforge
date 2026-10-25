@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -358,15 +357,8 @@ func TestSeedPersists_RoundTrip(t *testing.T) {
 	want := ge.seed
 	ge.mu.Unlock()
 
-	if err := ge.SaveGame("test_seed_roundtrip"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_seed_roundtrip.json")
+	ge2 := saveAndLoad(t, ge, "test_seed_roundtrip")
 
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_seed_roundtrip"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
 	if got := ge2.Seed(); got != want {
 		t.Errorf("seed did not round-trip: got %d, want %d", got, want)
 	}

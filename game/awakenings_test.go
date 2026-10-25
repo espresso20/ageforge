@@ -1,7 +1,6 @@
 package game
 
 import (
-	"os"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -105,15 +104,7 @@ func TestAwakening_ReloadDoesNotRefire(t *testing.T) {
 		t.Fatalf("precondition: awakening %q should be fired", def.Key)
 	}
 
-	if err := ge.SaveGame("test_awakening_reload"); err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_awakening_reload.json")
-
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("test_awakening_reload"); err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
+	ge2 := saveAndLoad(t, ge, "test_awakening_reload")
 
 	// Fired set must have survived the round-trip.
 	if !ge2.awakeningsFired[def.Key] {

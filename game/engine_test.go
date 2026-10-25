@@ -2,7 +2,6 @@ package game
 
 import (
 	"math"
-	"os"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -465,17 +464,7 @@ func TestEngine_SaveLoadRoundTrip(t *testing.T) {
 
 	ge.RecruitWorker("food", 2)
 
-	err := ge.SaveGame("test_roundtrip")
-	if err != nil {
-		t.Fatalf("SaveGame failed: %v", err)
-	}
-	defer os.Remove("data/saves/test_roundtrip.json")
-
-	ge2 := NewGameEngine()
-	err = ge2.LoadGame("test_roundtrip")
-	if err != nil {
-		t.Fatalf("LoadGame failed: %v", err)
-	}
+	ge2 := saveAndLoad(t, ge, "test_roundtrip")
 
 	state := ge2.GetState()
 	if state.Buildings["hut"].Count != 3 {

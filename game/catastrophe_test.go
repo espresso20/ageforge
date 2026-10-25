@@ -448,9 +448,7 @@ func TestSuccumb_ResearchBonusSurvivesPrestigeAndSaveLoad(t *testing.T) {
 	if got := ge.succumbResearchFactor(); got != twoEpochs {
 		t.Fatalf("after DoPrestige: x%v, want x%v", got, twoEpochs)
 	}
-	noErr(t, ge.SaveGame("cat_research"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("cat_research"))
+	ge2 := saveAndLoad(t, ge, "cat_research")
 	if got := ge2.succumbResearchFactor(); got != twoEpochs {
 		t.Errorf("after load: x%v, want x%v", got, twoEpochs)
 	}

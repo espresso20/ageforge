@@ -456,9 +456,7 @@ func TestDeals_SaveLoadRoundTrip(t *testing.T) {
 	}
 	want := ge.Diplomacy.GetFactionsForSave()
 	ge.mu.Unlock()
-	noErr(t, ge.SaveGame("deals-roundtrip"))
-	b := NewGameEngine()
-	noErr(t, b.LoadGame("deals-roundtrip"))
+	b := saveAndLoad(t, ge, "deals-roundtrip")
 	b.mu.RLock()
 	got := b.Diplomacy.GetFactionsForSave()
 	b.mu.RUnlock()

@@ -419,9 +419,7 @@ func TestPlan_SurvivesSaveAndLoad(t *testing.T) {
 	}
 	noErr(t, ge.PlanAddResearch("tool_making"))
 	ge.plan[0].Started = 3
-	noErr(t, ge.SaveGame("plan-roundtrip"))
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("plan-roundtrip"))
+	loaded := saveAndLoad(t, ge, "plan-roundtrip")
 	if !reflect.DeepEqual(loaded.plan, ge.plan) {
 		t.Errorf("plan after load = %+v, want %+v", loaded.plan, ge.plan)
 	}

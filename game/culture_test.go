@@ -259,9 +259,7 @@ func TestCultureMeasureSaveLoadAndReset(t *testing.T) {
 	if want.Moderate <= 0 || want.Own <= 0 {
 		t.Fatalf("measure after 100 ticks: %+v", want)
 	}
-	noErr(t, ge.SaveGame("culture"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("culture"))
+	ge2 := saveAndLoad(t, ge, "culture")
 	if ge2.cultureMeasure != want || math.Abs(ge2.cultureStrength()-strength) > 1e-12 {
 		t.Errorf("after load: measure %+v strength %v, want %+v and %v", ge2.cultureMeasure, ge2.cultureStrength(), want, strength)
 	}

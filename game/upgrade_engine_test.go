@@ -425,9 +425,7 @@ func TestOlderIsReadLive(t *testing.T) {
 	}
 	ge.age = "bronze_age"
 	before := append([]string(nil), ge.Buildings.OlderKeys()...)
-	noErr(t, ge.SaveGame("older-live"))
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("older-live"))
+	loaded := saveAndLoad(t, ge, "older-live")
 	after := loaded.Buildings.OlderKeys()
 	if strings.Join(before, ",") != strings.Join(after, ",") || len(after) == 0 {
 		t.Errorf("older buildings after a load: %v, before %v", after, before)

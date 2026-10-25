@@ -272,9 +272,7 @@ func TestSuccumbCommitsMastery(t *testing.T) {
 	}
 
 	// It is saved like any mastery.
-	noErr(t, ge.SaveGame("fallen"))
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("fallen"))
+	ge2 := saveAndLoad(t, ge, "fallen")
 	if got := ge2.Prestige.masterySave(); !sameMastery(got, want) || ge2.cheaterBadge {
 		t.Errorf("after a save and load mastery is %v (tampered: %v), want %v", got, ge2.cheaterBadge, want)
 	}
@@ -505,9 +503,7 @@ func TestMasterySaveRoundTrip(t *testing.T) {
 	ge := newSeededEngine(23)
 	ge.StepTicks(10)
 	ge.SetMasteryForTest(map[string]int{"primitive_age": 7, "stone_age": 2, "bronze_age": 1}, "iron_age")
-	noErr(t, ge.SaveGame("round"))
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("round"))
+	loaded := saveAndLoad(t, ge, "round")
 	a, b := ge.GetState().Mastery, loaded.GetState().Mastery
 	if !sameMastery(a.Ages, b.Ages) || a.Record != b.Record || a.RunFurthest != b.RunFurthest || a.K != b.K || !loaded.Prestige.masterySeeded {
 		t.Errorf("round trip: %+v -> %+v", a, b)
