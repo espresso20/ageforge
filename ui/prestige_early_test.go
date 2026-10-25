@@ -9,6 +9,26 @@ import (
 	"github.com/rivo/tview"
 )
 
+// medievalAges are the ages a run has passed when it stands in the Medieval Age.
+var medievalAges = []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"}
+
+// enterAges takes the run through the ages in order.
+func enterAges(t *testing.T, engine *game.GameEngine, ages ...string) {
+	t.Helper()
+	for _, age := range ages {
+		must(t, engine.EnterAgeForTest(age))
+	}
+}
+
+// medievalRun is a new game, on a data directory of its own, in the Medieval Age.
+func medievalRun(t *testing.T) *game.GameEngine {
+	t.Helper()
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	engine := game.NewGameEngine()
+	enterAges(t, engine, medievalAges...)
+	return engine
+}
+
 // `prestige confirm` before the Modern Age says plainly what the early
 // prestige pays and that a deeper run pays far more; from the Modern Age on
 // it says nothing of the kind.
@@ -16,9 +36,7 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	engine := game.NewGameEngine()
 	engine.SeedRNG(1)
-	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		must(t, engine.EnterAgeForTest(age))
-	}
+	enterAges(t, engine, medievalAges...)
 	confirm := untag(HandleCommand("prestige confirm", engine).Message)
 	wantAll(t, "prestige confirm in the Medieval Age", confirm,
 		"You will earn 9 prestige points.",
@@ -29,9 +47,7 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 		t.Errorf("prestige confirm names the Modern Age before the player has seen it:\n%s", confirm)
 	}
 
-	for _, age := range []string{"renaissance_age", "colonial_age", "industrial_age", "victorian_age", "electric_age", "atomic_age", "modern_age"} {
-		must(t, engine.EnterAgeForTest(age))
-	}
+	enterAges(t, engine, "renaissance_age", "colonial_age", "industrial_age", "victorian_age", "electric_age", "atomic_age", "modern_age")
 	confirm = untag(HandleCommand("prestige confirm", engine).Message)
 	if strings.Contains(confirm, "early taste") || !strings.Contains(confirm, "You will earn 120 prestige points.") {
 		t.Errorf("prestige confirm in the Modern Age is a full run's:\n%s", confirm)
@@ -43,11 +59,7 @@ func TestPrestigeConfirmSaysAnEarlyPrestigePaysLittle(t *testing.T) {
 // from the engine snapshot. That production really scales is checked in game
 // (the bonus truth tests).
 func TestPrestigedStateShowsLastingBonus(t *testing.T) {
-	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	engine := game.NewGameEngine()
-	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		must(t, engine.EnterAgeForTest(age))
-	}
+	engine := medievalRun(t)
 	must(t, engine.DoPrestige())
 	state := engine.GetState()
 	want := fmt.Sprintf("x%.2f", state.Prestige.ProductionMultiplier)
@@ -74,11 +86,7 @@ func TestPrestigedStateShowsLastingBonus(t *testing.T) {
 }
 
 func TestStatsShowsPrestigeFloorOnlyUntilPassed(t *testing.T) {
-	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	engine := game.NewGameEngine()
-	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		must(t, engine.EnterAgeForTest(age))
-	}
+	engine := medievalRun(t)
 	must(t, engine.DoPrestige())
 	below := untag(statsProvider(engine.GetState(), 0))
 	want := "Prestige opens once you pass the Medieval Age, the furthest an earlier run reached."
@@ -105,11 +113,7 @@ func TestStatsHidesPrestigeFloorWhenSnapshotSaysItDoesNotBlock(t *testing.T) {
 }
 
 func TestPrestigeCommandExplainsFloor(t *testing.T) {
-	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	engine := game.NewGameEngine()
-	for _, age := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		must(t, engine.EnterAgeForTest(age))
-	}
+	engine := medievalRun(t)
 	must(t, engine.DoPrestige())
 	got := untag(HandleCommand("prestige confirm yes", engine).Message)
 	if !strings.Contains(got, "Prestige opens once you pass the Medieval Age, the furthest an earlier run reached.") {

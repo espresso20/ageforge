@@ -97,41 +97,31 @@ func TestApplyAccountThemeAppliesStored(t *testing.T) {
 // default (Forge), never crashing. nil engine / nil account also fall back.
 func TestApplyAccountThemeFallsBackToForge(t *testing.T) {
 	restoreForge(t)
-
-	// Start from a non-default theme so a real fallback to Forge is observable
-	// (rather than already sitting on the default).
-	if err := theme.SetActive("deuteranopia"); err != nil {
-		t.Fatalf("setup SetActive(deuteranopia): %v", err)
-	}
-
-	// Empty stored key (fresh account) → Forge.
-	acct := newIsolatedAccount(t) // CreateNamedAccount leaves ActiveTheme == ""
-	engine := game.NewGameEngine()
-	engine.SetAccount(acct)
-	applyAccountTheme(engine)
-	if got := theme.Active().Key; got != theme.DefaultKey {
-		t.Errorf("empty stored key: active = %q, want default %q", got, theme.DefaultKey)
-	}
-
-	// Unknown stored key → Forge (and no crash).
-	if err := theme.SetActive("deuteranopia"); err != nil {
-		t.Fatalf("re-setup SetActive(deuteranopia): %v", err)
-	}
-	if err := acct.SetActiveTheme("no_such_theme_zzz"); err != nil {
-		t.Fatalf("SetActiveTheme(unknown): %v", err)
-	}
-	applyAccountTheme(engine)
-	if got := theme.Active().Key; got != theme.DefaultKey {
-		t.Errorf("unknown stored key: active = %q, want default %q", got, theme.DefaultKey)
-	}
-
-	// nil engine → Forge, no panic.
-	if err := theme.SetActive("deuteranopia"); err != nil {
-		t.Fatalf("re-setup SetActive(deuteranopia): %v", err)
-	}
-	applyAccountTheme(nil)
-	if got := theme.Active().Key; got != theme.DefaultKey {
-		t.Errorf("nil engine: active = %q, want default %q", got, theme.DefaultKey)
+	for _, c := range []struct {
+		name     string
+		stored   string // the account's stored theme key; "" keeps a brand-new account's empty one
+		noEngine bool
+	}{
+		{"empty stored key", "", false},
+		{"unknown stored key", "no_such_theme_zzz", false},
+		{"nil engine", "", true},
+	} {
+		// Start from a non-default theme so a real fallback to Forge is observable
+		// (rather than already sitting on the default).
+		must(t, theme.SetActive("deuteranopia"))
+		var engine *game.GameEngine
+		if !c.noEngine {
+			acct := newIsolatedAccount(t) // CreateNamedAccount leaves ActiveTheme == ""
+			if c.stored != "" {
+				must(t, acct.SetActiveTheme(c.stored))
+			}
+			engine = game.NewGameEngine()
+			engine.SetAccount(acct)
+		}
+		applyAccountTheme(engine)
+		if got := theme.Active().Key; got != theme.DefaultKey {
+			t.Errorf("%s: active = %q, want default %q", c.name, got, theme.DefaultKey)
+		}
 	}
 }
 

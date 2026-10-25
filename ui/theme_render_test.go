@@ -46,6 +46,14 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	}
 
 	out := map[string][]tcell.SimCell{}
+	// shot shows the overlay name, draws it into out under key and hides it.
+	shot := func(key, name string) {
+		if !d.overlayMgr.Show(name, engine.GetState()) {
+			t.Fatalf("overlay %q not registered", name)
+		}
+		out[key] = draw()
+		d.overlayMgr.Hide()
+	}
 	out["dashboard"] = draw()
 	if !d.mapDock.shown {
 		t.Fatalf("no mini map on the %dx%d dashboard", w, h)
@@ -61,13 +69,8 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.inputField.Blur()
 	d.inputField.SetText("")
 
-	state := engine.GetState()
 	for _, name := range []string{"stats", "help", "trade"} {
-		if !d.overlayMgr.Show(name, state) {
-			t.Fatalf("overlay %q not registered", name)
-		}
-		out["overlay:"+name] = draw()
-		d.overlayMgr.Hide()
+		shot("overlay:"+name, name)
 	}
 
 	// The Map panel and the mini map in every style and glyph tier.
@@ -78,11 +81,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 			d.mapLocal = &mapSettings{Style: style, Tier: tr, Minimap: true, HintShown: true}
 			d.refresh()
 			out["dashboard:"+style+"/"+tier] = draw()
-			if !d.overlayMgr.Show("map", engine.GetState()) {
-				t.Fatal("overlay map not registered")
-			}
-			out["overlay:map/"+style+"/"+tier] = draw()
-			d.overlayMgr.Hide()
+			shot("overlay:map/"+style+"/"+tier, "map")
 		}
 	}
 	d.mapLocal = saved
@@ -98,11 +97,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	if len(engine.GetState().Diplomacy.Factions["riverlands_tribes"].Deals) == 0 {
 		t.Fatal("the Factions panel sweep has no deals to draw")
 	}
-	if !d.overlayMgr.Show("factions", engine.GetState()) {
-		t.Fatal("overlay factions not registered")
-	}
-	out["overlay:factions_deals"] = draw()
-	d.overlayMgr.Hide()
+	shot("overlay:factions_deals", "factions")
 
 	// The Plan panel with an item of each status (ready, blocked on storage,
 	// waiting with a progress bar), the selection chip and a feedback line.
@@ -115,11 +110,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		}
 	}
 	d.planPanel.note, d.planPanel.noteGood = "Removed 1 × Farm.", true
-	if !d.overlayMgr.Show("plan", engine.GetState()) {
-		t.Fatal("overlay plan not registered")
-	}
-	out["overlay:plan"] = draw()
-	d.overlayMgr.Hide()
+	shot("overlay:plan", "plan")
 	engine.PlanClear()
 	d.planPanel.reset()
 
@@ -152,11 +143,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.closeCatastropheModal()
 	must(t, engine.Endure())
 	engine.SetGarrisonForTest("iron_age", 640000)
-	if !d.overlayMgr.Show("army", engine.GetState()) {
-		t.Fatal("overlay army not registered")
-	}
-	out["overlay:army_garrison"] = draw()
-	d.overlayMgr.Hide()
+	shot("overlay:army_garrison", "army")
 
 	// Harbinger: the panel (severity, keycaps, affordable and unaffordable
 	// costs), the Epoch overlay's harbinger lines and the status-bar badge.
@@ -164,21 +151,13 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.refresh()
 	out["dashboard_harbinger_badge"] = draw()
 	for _, name := range []string{"harbinger", "epoch"} {
-		if !d.overlayMgr.Show(name, engine.GetState()) {
-			t.Fatalf("overlay %q not registered", name)
-		}
-		out["overlay:"+name+"_harbinger"] = draw()
-		d.overlayMgr.Hide()
+		shot("overlay:"+name+"_harbinger", name)
 	}
 
 	// The Last Passage: the Cosmic Era panel, the modal variant with Succumb
 	// open and closed (chip-filled), and its status-bar badge.
 	must(t, engine.SummonHarbingerForTest("galactic_age"))
-	if !d.overlayMgr.Show("harbinger", engine.GetState()) {
-		t.Fatal("overlay harbinger not registered")
-	}
-	out["overlay:harbinger_last_passage"] = draw()
-	d.overlayMgr.Hide()
+	shot("overlay:harbinger_last_passage", "harbinger")
 	must(t, engine.ForceLastPassageForTest("galactic_age"))
 	d.refresh()
 	out["last_passage_modal"] = draw()
