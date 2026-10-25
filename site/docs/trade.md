@@ -1,6 +1,6 @@
 # Trade
 
-Trade routes and the black market move resources around your economy. **Trade routes** run in the background, trading a small fixed bundle of goods every few ticks, and every completed cycle raises the opinion of you held by every civilization you have met (except one at war with you). **Harbors** raise what the routes pay, and the **black market** gambles culture on a haul.
+Trade routes and the black market move resources around your economy. **Trade routes** run in the background, trading a small fixed bundle of goods every few ticks, and every completed cycle raises the opinion of you held by every civilization you have met (except one at war with you). **Harbors** raise what the routes pay, and the **black market** turns culture into a resource of your choice, with a risk of one deal in six.
 
 The game has no market where one resource swaps for another. Every material an age charges for comes from a building: see [The maker rule](buildings.md#the-maker-rule).
 
@@ -99,7 +99,7 @@ Harbors use the **trade** worker domain, the same workers who staff markets and 
 
 ## Black Market
 
-From the **Colonial Age**, once **Mercantilism** is researched, you can make smuggling runs on the black market. A run spends a lump of **culture** for a chance at a large haul of a resource you choose. If it fails, the culture is gone and you get nothing.
+From the **Colonial Age**, once **Mercantilism** is researched, you can make smuggling runs on the black market. A run spends a lump of **culture** for the same worth in a resource you choose. Five runs in six go through. The sixth time the smugglers vanish with the culture and you get nothing.
 
 ```text
 blackmarket              # show cost, odds and cooldown
@@ -109,9 +109,9 @@ trade black <resource>   # the same, through the trade command
 
 `bm` works in place of `blackmarket`.
 
-A run costs the larger of 5K culture and a number of hours of your own culture income: about 200 in the Colonial Age, about 166 in the Industrial Age, and 200 in every age from the Victorian Age on. The price grows as you do, and a town that makes twice the culture pays twice. It has a **55% chance** to pay out. A win pays the same worth whichever resource you take it in: **0.3 times** the minutes of culture income you staked, as minutes of your own income of the resource you chose. So a run that cost 200 hours of culture income and wins pays 60 hours of your income of iron, of oil or of gold alike. The smugglers deal in gold and nine resources (iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux), and only in those your age already makes; ask for anything else and they refuse, and nothing is spent. Your income of the resource counts between a quarter and four times what a moderate town of the age makes of it, so a town that makes none is still paid and one that makes a great deal is not paid without limit. The culture is spent up front, win or lose. After each run there's a cooldown of 624 ticks (about 21 minutes).
+A run costs the larger of 5K culture and a number of hours of your own culture income: about 200 in the Colonial Age, about 166 in the Industrial Age, and 200 in every age from the Victorian Age on. The price grows as you do, and a town that makes twice the culture pays twice. A run goes through **five times in six**. When it does, it pays the same worth whichever resource you take it in: the minutes of culture income you staked, as the same minutes of your own income of the resource you chose. So a run that cost 200 hours of culture income pays 200 hours of your income of iron, of oil or of gold alike. One time in six the smugglers vanish with the culture and pay nothing. The smugglers deal in gold and nine resources (iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux), and only in those your age already makes; ask for anything else and they refuse, and nothing is spent. Your income of the resource counts between a quarter and four times what a moderate town of the age makes of it, so a town that makes none is still paid and one that makes a great deal is not paid without limit. The culture is spent up front, whether the run goes through or not. After each run there's a cooldown of 624 ticks (about 21 minutes).
 
-Use it to turn a culture surplus into whatever you're short on, if you can live with the odds.
+Use it to turn a culture surplus into whatever you're short on, if you can live with the one run in six that is lost.
 
 ---
 
