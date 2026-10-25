@@ -1,5 +1,7 @@
 package config
 
+import "slices"
+
 // EventDef defines a random event that the engine may fire each tick.
 // The engine rolls a weighted selection from eligible events (Age ≥ MinAge,
 // Tick ≥ MinTick, and last-occurrence ≥ Cooldown ticks ago).
@@ -676,12 +678,6 @@ func EpochExclusiveEvents() []EventDef {
 
 // EventByKey returns a map of key -> EventDef
 func EventByKey() map[string]EventDef {
-	m := make(map[string]EventDef)
-	for _, e := range RandomEvents() {
-		m[e.Key] = e
-	}
-	for _, e := range EpochExclusiveEvents() {
-		m[e.Key] = e
-	}
-	return m
+	events := slices.Concat(RandomEvents(), EpochExclusiveEvents())
+	return indexBy(events, func(e EventDef) string { return e.Key })
 }

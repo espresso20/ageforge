@@ -67,11 +67,7 @@ func FeatureLocks() []FeatureLockDef {
 
 // FeatureLockByKey is FeatureLocks by key.
 func FeatureLockByKey() map[string]FeatureLockDef {
-	m := make(map[string]FeatureLockDef)
-	for _, d := range FeatureLocks() {
-		m[d.Key] = d
-	}
-	return m
+	return indexBy(FeatureLocks(), func(d FeatureLockDef) string { return d.Key })
 }
 
 // Refusal is what the game says when the command is used before its tech,

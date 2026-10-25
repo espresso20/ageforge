@@ -77,11 +77,7 @@ func TechLanes() []TechLaneDef {
 
 // TechLaneByKey returns a map of lane key -> TechLaneDef.
 func TechLaneByKey() map[string]TechLaneDef {
-	m := make(map[string]TechLaneDef)
-	for _, l := range TechLanes() {
-		m[l.Key] = l
-	}
-	return m
+	return indexBy(TechLanes(), func(l TechLaneDef) string { return l.Key })
 }
 
 // TechCodeMax is the most letters a tech's code may have: the width of the
@@ -156,10 +152,7 @@ const (
 // A capstone that a keystone also stands on reads as spine here, and
 // TechTreeProblems reports it.
 func TechKinds(techs []TechDef, buildings []BuildingDef) map[string]TechKind {
-	byKey := make(map[string]TechDef, len(techs))
-	for _, t := range techs {
-		byKey[t.Key] = t
-	}
+	byKey := indexBy(techs, func(t TechDef) string { return t.Key })
 	kinds := make(map[string]TechKind, len(techs))
 	for _, t := range techs {
 		kinds[t.Key] = TechOptional
@@ -256,10 +249,7 @@ func TechTreeProblems(techs []TechDef, buildings []BuildingDef, ages []string) [
 	var out []string
 	bad := func(format string, args ...any) { out = append(out, fmt.Sprintf(format, args...)) }
 
-	byKey := make(map[string]TechDef, len(techs))
-	for _, t := range techs {
-		byKey[t.Key] = t
-	}
+	byKey := indexBy(techs, func(t TechDef) string { return t.Key })
 	ageAt := make(map[string]int, len(ages))
 	for i, a := range ages {
 		ageAt[a] = i

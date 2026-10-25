@@ -234,11 +234,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 
 // TradeRouteByKey returns trade routes keyed by route key
 func TradeRouteByKey() map[string]TradeRouteDef {
-	out := make(map[string]TradeRouteDef)
-	for _, def := range BaseTradeRoutes() {
-		out[def.Key] = def
-	}
-	return out
+	return indexBy(BaseTradeRoutes(), func(def TradeRouteDef) string { return def.Key })
 }
 
 // BaseFactions returns all NPC civilization definitions. The roster of 11 civs
@@ -328,9 +324,5 @@ func BaseFactions() []FactionDef {
 
 // FactionByKey returns factions keyed by faction key
 func FactionByKey() map[string]FactionDef {
-	out := make(map[string]FactionDef)
-	for _, def := range BaseFactions() {
-		out[def.Key] = def
-	}
-	return out
+	return indexBy(BaseFactions(), func(def FactionDef) string { return def.Key })
 }

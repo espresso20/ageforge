@@ -1,5 +1,7 @@
 package config
 
+import "slices"
+
 // EpochDef defines a meta-progression era spanning multiple ages.
 // There are 7 epochs. Most span 3 ages; the final Cosmic Era spans 4.
 // At the boundary between epochs the engine rolls a special epoch event
@@ -319,23 +321,13 @@ func ChallengingEpochEvents() []EpochEventDef {
 
 // EpochByKey returns a map of key -> EpochDef.
 func EpochByKey() map[string]EpochDef {
-	m := make(map[string]EpochDef)
-	for _, e := range Epochs() {
-		m[e.Key] = e
-	}
-	return m
+	return indexBy(Epochs(), func(e EpochDef) string { return e.Key })
 }
 
 // EpochEventByKey returns a map of event key -> EpochEventDef across all epoch event pools.
 func EpochEventByKey() map[string]EpochEventDef {
-	m := make(map[string]EpochEventDef)
-	for _, ev := range GoodEpochEvents() {
-		m[ev.Key] = ev
-	}
-	for _, ev := range ChallengingEpochEvents() {
-		m[ev.Key] = ev
-	}
-	return m
+	events := slices.Concat(GoodEpochEvents(), ChallengingEpochEvents())
+	return indexBy(events, func(ev EpochEventDef) string { return ev.Key })
 }
 
 // EpochForAge returns the epoch key for a given age key.

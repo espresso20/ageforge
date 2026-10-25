@@ -51,10 +51,7 @@ func GateTownLeftOut() map[string]string {
 // each one stands on (Prerequisites, all the way down; an either-or group
 // puts neither branch in it). Entry i is the set for ages[i].
 func GateTownHeldTechs(defs []BuildingDef, ages []AgeDef, techs []TechDef) []map[string]bool {
-	byKey := make(map[string]TechDef, len(techs))
-	for _, t := range techs {
-		byKey[t.Key] = t
-	}
+	byKey := indexBy(techs, func(t TechDef) string { return t.Key })
 	wonderTech := map[string]string{}
 	for _, d := range defs {
 		if d.Category == "wonder" && d.RequiredTech != "" {

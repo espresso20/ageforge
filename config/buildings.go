@@ -910,11 +910,7 @@ func buildBase() ([]BuildingDef, []ColdStartCap) {
 // the last one in iteration order wins — in practice lineage files are prepended so
 // storage/wonder entries always shadow any phantom duplicates.
 func BuildingByKey() map[string]BuildingDef {
-	m := make(map[string]BuildingDef)
-	for _, b := range BaseBuildings() {
-		m[b.Key] = b
-	}
-	return m
+	return indexBy(BaseBuildings(), func(b BuildingDef) string { return b.Key })
 }
 
 // AgeEntryCosts returns, for each resource, the cheapest base cost of that

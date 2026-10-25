@@ -80,9 +80,5 @@ func BaseResources() []ResourceDef {
 
 // ResourceByKey returns a map of key -> ResourceDef
 func ResourceByKey() map[string]ResourceDef {
-	m := make(map[string]ResourceDef)
-	for _, r := range BaseResources() {
-		m[r.Key] = r
-	}
-	return m
+	return indexBy(BaseResources(), func(r ResourceDef) string { return r.Key })
 }

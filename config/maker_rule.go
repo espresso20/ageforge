@@ -229,10 +229,7 @@ func MakerPaybacks(defs []BuildingDef, order []string) map[string]MakerPayback {
 // asks come back separately. Keyed by the age the gate leaves.
 func MakerAsks(defs []BuildingDef, ages []AgeDef) (gate, wonder map[string]map[string]float64) {
 	levels := priceLevels(defs)
-	byKey := make(map[string]BuildingDef, len(defs))
-	for _, d := range defs {
-		byKey[d.Key] = d
-	}
+	byKey := indexBy(defs, func(d BuildingDef) string { return d.Key })
 	gate = map[string]map[string]float64{}
 	wonder = map[string]map[string]float64{}
 	for i, a := range ages {
@@ -417,10 +414,6 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 	held := GateTownHeldTechs(defs, ages, techs)
 	gate, wonder := MakerAsks(defs, ages)
 	pos := AgePositions(ageKeys(ages))
-	byKey := make(map[string]BuildingDef, len(defs))
-	for _, d := range defs {
-		byKey[d.Key] = d
-	}
 	// skip are the outputs a fill put there: read without them, the tables are
 	// as they stood before the fills. skipMade is the same without the Rule 1
 	// pairs: a Rule 1 building made the material already, at a trickle, so it
@@ -584,10 +577,7 @@ func MakerHoles(defs []BuildingDef, ages []AgeDef, techs []TechDef, fills []Make
 // as the tables hold them, at listed output (the listed output of a building
 // with worker slots is its full-crew rate: FullCrewShare of it).
 func makerSupply(defs []BuildingDef, ages []AgeDef, i int, res string) float64 {
-	byKey := make(map[string]BuildingDef, len(defs))
-	for _, d := range defs {
-		byKey[d.Key] = d
-	}
+	byKey := indexBy(defs, func(d BuildingDef) string { return d.Key })
 	carried := makerCarried(defs, ages, i)
 	total := 0.0
 	for _, k := range sortedBuildingKeys(carried) {
@@ -694,10 +684,7 @@ func joinKeys(keys []string) string {
 func MakerStandard(defs []BuildingDef, ages []AgeDef, paybacks map[string]float64, fills []MakerFill) map[string]map[string]float64 {
 	levels := priceLevels(defs)
 	gate, _ := MakerAsks(defs, ages)
-	byKey := make(map[string]BuildingDef, len(defs))
-	for _, d := range defs {
-		byKey[d.Key] = d
-	}
+	byKey := indexBy(defs, func(d BuildingDef) string { return d.Key })
 	touched := map[string]bool{}
 	rederived := map[string]bool{}
 	for _, f := range fills {

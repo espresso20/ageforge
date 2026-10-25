@@ -1986,11 +1986,7 @@ func rawTechnologies() []TechDef {
 
 // TechByKey returns a map of key -> TechDef
 func TechByKey() map[string]TechDef {
-	m := make(map[string]TechDef)
-	for _, t := range Technologies() {
-		m[t.Key] = t
-	}
-	return m
+	return indexBy(Technologies(), func(t TechDef) string { return t.Key })
 }
 
 // TechsByAge groups all tech definitions by their minimum age key.

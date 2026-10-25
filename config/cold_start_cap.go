@@ -36,10 +36,7 @@ type ColdStartCap struct {
 // what the ages so far have unlocked. It is the rule's limit on a first-copy
 // price part. It reads the outputs of earlier ages' buildings only.
 func coldStartLimit(defs []BuildingDef, ages []AgeDef, i int) map[string]float64 {
-	byKey := make(map[string]BuildingDef, len(defs))
-	for _, d := range defs {
-		byKey[d.Key] = d
-	}
+	byKey := indexBy(defs, func(d BuildingDef) string { return d.Key })
 	unlocked := map[string]bool{}
 	copies := map[string]int{}
 	for j := 0; j <= i; j++ {
