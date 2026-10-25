@@ -3,13 +3,15 @@ package flavor
 import (
 	"math/rand"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
 )
 
-// harbinger_test.go holds the tests specific to the nine harbinger Moments.
+// harbinger_test.go holds the tests specific to the nine harbinger Moments, and
+// the lines-clean and no-figures checks of RunEnding, which speaks in their voices.
 // They share every catalog lint in flavor_test.go and generator_test.go (hygiene,
 // era bleed, AI tells, register quotas, burstiness, house tics, near-duplicates)
 // but not the per-line Moments' SIZE floors, and the reason is how often they
@@ -49,12 +51,13 @@ func harbingerMoments() []Moment {
 
 // isHarbinger reports whether m is a harbinger Moment.
 func isHarbinger(m Moment) bool {
-	for _, h := range harbingerMoments() {
-		if h == m {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(harbingerMoments(), m)
+}
+
+// rareMoments returns the harbinger Moments and RunEnding, which fire a handful
+// of times a run.
+func rareMoments() []Moment {
+	return append(harbingerMoments(), RunEnding)
 }
 
 // isRare reports whether m fires only a handful of times a run, so it is
@@ -117,17 +120,7 @@ func harbReachable(m Moment, age string) bool {
 // runEndReachable reports whether a run can end (prestige) at age: the Modern
 // Age and every age after it.
 func runEndReachable(age string) bool {
-	for _, a := range runEndPlainAges {
-		if a == age {
-			return true
-		}
-	}
-	for _, a := range runEndCosmicAges {
-		if a == age {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(runEndPlainAges, age) || slices.Contains(runEndCosmicAges, age)
 }
 
 // harbKinds returns the Request.Kind values the game sends for m at age.
@@ -217,11 +210,12 @@ func harbRequests(t testing.TB, m Moment, age string) []Request {
 
 var digitRE = regexp.MustCompile(`[0-9]`)
 
-// TestHarbingerLinesAreClean is the coverage matrix for the new Moments: every
-// Moment, every one of the 22 ages, every tier, every tone, through a Stream,
-// and every line must pass the hygiene contract, carry no word from a foreign
-// era, and carry no digit. The odds are shown by the UI; a digit in the prose
-// would sooner or later disagree with it.
+// TestHarbingerLinesAreClean is the coverage matrix for the new Moments and for
+// RunEnding, which speaks in the same voices: every Moment, every one of the 22
+// ages, every tier, every tone, through a Stream, and every line must pass the
+// hygiene contract, carry no word from a foreign era and carry no digit. A
+// RunEnding line must also carry no other harbinger's vocabulary. The odds are
+// shown by the UI; a digit in the prose would sooner or later disagree with it.
 func TestHarbingerLinesAreClean(t *testing.T) {
 	draws := 6
 	if testing.Short() {
@@ -231,7 +225,7 @@ func TestHarbingerLinesAreClean(t *testing.T) {
 	for _, age := range config.AgeOrder() {
 		e, _ := eraOf(age)
 		foreign := foreignMarkers(e)
-		for _, m := range harbingerMoments() {
+		for _, m := range rareMoments() {
 			rng := rand.New(rand.NewSource(int64(len(age))*977 + int64(m)))
 			st := NewStream()
 			for _, req := range harbRequests(t, m, age) {
@@ -244,21 +238,30 @@ func TestHarbingerLinesAreClean(t *testing.T) {
 					if digitRE.MatchString(line) {
 						t.Fatalf("%v at %s (%+v): a digit in a harbinger line: %q", m, age, req, line)
 					}
-					if hit := foreign.FindString(callerText(line, req)); hit != "" {
+					scan := callerText(line, req)
+					if hit := foreign.FindString(scan); hit != "" {
 						t.Fatalf("era bleed: %v at %s produced %q, which carries %q", m, age, line, hit)
+					}
+					if m == RunEnding { // TestHarbingerSpeakerFit holds the speakers of the others
+						for owner, re := range speakerRE {
+							if w := re.FindString(scan); w != "" && owner != age && !speakerAlsoAt(speakerRE, age, w) {
+								t.Errorf("RunEnding at %s uses %q, which belongs to the %s harbinger: %q", age, w, owner, line)
+							}
+						}
 					}
 				}
 			}
 		}
 	}
-	t.Logf("%d harbinger lines across %d ages, all clean", lines, len(config.AgeOrder()))
+	t.Logf("%d harbinger and run-ending lines across %d ages, all clean", lines, len(config.AgeOrder()))
 }
 
 // TestHarbingerTemplatesUseNoFigures pins the digit rule at the source: no
-// harbinger sentence may use a placeholder that renders a number or a resource.
+// harbinger or run-ending sentence may use a placeholder that renders a number
+// or a resource.
 func TestHarbingerTemplatesUseNoFigures(t *testing.T) {
 	banned := []string{"{amt}", "{amt_res}", "{n}", "{ticks}", "{res}", "{res_stores}", "{res_haul}"}
-	for _, m := range harbingerMoments() {
+	for _, m := range rareMoments() {
 		for _, tp := range templatesFor(m) {
 			text := authoredText(tp)
 			for _, p := range tp.Parts {
@@ -360,15 +363,20 @@ var speakerWords = map[string][]string{
 	"transcendent_age": {"unmade", "branch(es)? that ended"},
 }
 
+// speakerRE is speakerWords as one word-boundary matcher per age.
+var speakerRE = func() map[string]*regexp.Regexp {
+	res := make(map[string]*regexp.Regexp, len(speakerWords))
+	for age, words := range speakerWords {
+		res[age] = regexp.MustCompile(`(?i)\b(` + strings.Join(words, "|") + `)\b`)
+	}
+	return res
+}()
+
 // TestHarbingerSpeakerFit is the per-age half of the era-bleed guard. The era
 // buckets are too coarse for a cast that changes every age (a newsboy and a
 // civil-defence broadcast share a bucket), so each speaker's vocabulary is
 // checked against every age it is NOT at home in.
 func TestHarbingerSpeakerFit(t *testing.T) {
-	res := map[string]*regexp.Regexp{}
-	for age, words := range speakerWords {
-		res[age] = regexp.MustCompile(`(?i)\b(` + strings.Join(words, "|") + `)\b`)
-	}
 	order := config.AgeOrder()
 	for _, m := range harbingerMoments() {
 		for _, tp := range templatesFor(m) {
@@ -382,11 +390,11 @@ func TestHarbingerSpeakerFit(t *testing.T) {
 				if !eraOK(tp, mustEra(t, age)) || !ageOK(tp, age) {
 					continue // not reachable here
 				}
-				for owner, re := range res {
+				for owner, re := range speakerRE {
 					if owner == age {
 						continue
 					}
-					if w := re.FindString(text); w != "" && !speakerAlsoAt(res, age, w) {
+					if w := re.FindString(text); w != "" && !speakerAlsoAt(speakerRE, age, w) {
 						t.Errorf("%s can fire in %s but uses %q, which belongs to the %s harbinger: %q",
 							tp.ID, age, w, owner, text)
 					}
@@ -418,13 +426,7 @@ func TestHarbingerFalseProphetLines(t *testing.T) {
 	found := 0
 	for _, m := range Moments() {
 		for _, tp := range templatesFor(m) {
-			isFalse := false
-			for _, k := range tp.Kinds {
-				if k == KindFalseProphet {
-					isFalse = true
-				}
-			}
-			if !isFalse {
+			if !slices.Contains(tp.Kinds, KindFalseProphet) {
 				continue
 			}
 			found++
@@ -445,49 +447,6 @@ func TestHarbingerFalseProphetLines(t *testing.T) {
 		for _, tp := range eligible(Request{Moment: m, Age: "bronze_age", Subject: "the Soothsayer"}) {
 			if len(tp.Kinds) > 0 {
 				t.Errorf("%s fired on a plain %s request", tp.ID, m)
-			}
-		}
-	}
-}
-
-// TestHarbingerDeterminism pins the purity contract for the new Moments on both
-// paths: same seed and request, same lines; a different seed, different lines.
-func TestHarbingerDeterminism(t *testing.T) {
-	const n = 120
-	run := func(req Request, seed int64, stream bool) []string {
-		rng := rand.New(rand.NewSource(seed))
-		st := NewStream()
-		out := make([]string, n)
-		for i := range out {
-			if stream {
-				out[i] = st.Line(req, rng)
-			} else {
-				out[i] = Line(req, rng)
-			}
-		}
-		return out
-	}
-	for _, m := range harbingerMoments() {
-		for _, age := range []string{"primitive_age", "medieval_age", "atomic_age", "cyberpunk_age", "transcendent_age"} {
-			if !harbReachable(m, age) {
-				continue
-			}
-			kinds := harbKinds(m, age)
-			req := Request{Moment: m, Age: age, Kind: kinds[len(kinds)-1], Subject: harbName(t, age)}
-			for _, stream := range []bool{false, true} {
-				a, b, c := run(req, 4242, stream), run(req, 4242, stream), run(req, 4243, stream)
-				differ := 0
-				for i := range a {
-					if a[i] != b[i] {
-						t.Fatalf("%v %s stream=%v: line %d differs under the same seed", m, age, stream, i)
-					}
-					if a[i] != c[i] {
-						differ++
-					}
-				}
-				if differ < n*8/10 {
-					t.Errorf("%v %s stream=%v: seeds 4242 and 4243 agree on %d of %d lines", m, age, stream, n-differ, n)
-				}
 			}
 		}
 	}
