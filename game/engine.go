@@ -4736,56 +4736,11 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	// Reset all game systems
-	ge.tick = 0
-	ge.runFacts = newRunFacts()
-	ge.age = "primitive_age"
-	ge.Resources = NewResourceManagerWith(ge.rules)
-	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManagerWith(ge.rules)
-	ge.Research = NewResearchManagerWith(ge.rules)
-	ge.Military = NewMilitaryManagerWith(ge.rules)
-	ge.Events = NewEventManagerWith(ge.rules)
-	ge.Milestones = NewMilestoneManagerWith(ge.rules)
-	ge.Trade = NewTradeManagerWith(ge.rules)
-	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
-	ge.Stats = NewGameStats()
-	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
-	ge.prestigeCue = PrestigeCue{}
-	ge.prestigeCueSeenAge = ""
-	ge.Stats.AgeLog[0].Tick = ge.tick
-	ge.Stats.AgeLog[0].Age = ge.age
-	// Bus intentionally kept — dashboard subscriptions must survive across resets.
-	ge.permanentBonuses = make(map[string]float64)
-	// A new run starts at 1x, as after a Succumb or a wipe: the dev console's
-	// /speed override does not carry into it.
-	ge.speedMultiplier = 1.0
-	ge.buildQueue = nil
-	ge.plan = nil
-	ge.log = nil
-	ge.currentEpoch = ge.rules.EraOf("primitive_age")
-	ge.epochEventFired = make(map[string]bool)
-	ge.clearHarbingerRun()
+	ge.resetRunLocked(0.70)
+	// A prestige also forgets the harbinger outcomes and the epoch events
+	// (a Succumb keeps both).
 	ge.harbingerHistory = nil
-	ge.awakeningsFired = make(map[string]bool)
-	ge.survivedEpochs = make(map[string]bool)
-	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil
-	ge.morale = 0.70
-	ge.lowMoraleWarned = false
-	// Fresh run: this prestige cycle may roll a new Ancient Memory.
-	ge.ancientMemoryUsed = false
-	ge.pendingMemoryTech = ""
-	// The cooldowns are tick numbers and the tick counter just went back to 0.
-	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
-	// A new run keeps no command the last one was granted (features.go).
-	ge.grantedFeatures = nil
-	// The run's timers start over, as in a new game. A stale ageReady let
-	// `advance` skip the Stone Age's requirements before the first tick.
-	ge.ageReady = false
-	ge.starvationTicks = 0
-	ge.autoExpeditionTicksLeft = 0
-	ge.autoExpeditionStarved = false
-	ge.startRunShares()
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -4864,6 +4819,66 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.maybeOfferAncientMemory()
 
 	ge.publishRunEnded(end, runStarted)
+}
+
+// resetRunLocked is the fresh-run block a prestige (completePrestige) and a
+// Succumb share: every manager is built anew, in this order (the constructors
+// are order-sensitive, so a save written after a reset keeps its bytes), and the
+// run's own state starts over, with morale at the figure the caller passes.
+// What outlives the run is the caller's business: the Prestige manager, the
+// ruins, the legacy flags, the histories, the Last Passage and the tick speed
+// bonus. Bus intentionally kept: dashboard subscriptions must survive across
+// resets. Caller holds the write lock.
+func (ge *GameEngine) resetRunLocked(morale float64) {
+	ge.tick = 0
+	ge.runFacts = newRunFacts()
+	ge.age = "primitive_age"
+	ge.Resources = NewResourceManagerWith(ge.rules)
+	ge.Buildings = ge.newBuildingManager()
+	ge.Workers = NewWorkerManagerWith(ge.rules)
+	ge.Research = NewResearchManagerWith(ge.rules)
+	ge.Military = NewMilitaryManagerWith(ge.rules)
+	ge.Events = NewEventManagerWith(ge.rules)
+	ge.Milestones = NewMilestoneManagerWith(ge.rules)
+	ge.Trade = NewTradeManagerWith(ge.rules)
+	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
+	ge.Stats = NewGameStats()
+	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
+	ge.prestigeCue = PrestigeCue{}
+	ge.prestigeCueSeenAge = ""
+	ge.Stats.AgeLog[0].Tick = ge.tick
+	ge.Stats.AgeLog[0].Age = ge.age
+	ge.permanentBonuses = make(map[string]float64)
+	// A new run starts at 1x, as after a wipe: the dev console's /speed
+	// override does not carry into it.
+	ge.speedMultiplier = 1.0
+	ge.buildQueue = nil
+	ge.plan = nil
+	ge.log = nil
+	ge.currentEpoch = ge.rules.EraOf("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.clearHarbingerRun()
+	ge.awakeningsFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+	ge.morale = morale
+	ge.lowMoraleWarned = false
+	// Fresh run: eligible to roll a new Ancient Memory.
+	ge.ancientMemoryUsed = false
+	ge.pendingMemoryTech = ""
+	// The cooldowns are tick numbers and the tick counter just went back to 0:
+	// left as they were, a cooldown with 780 ticks to run at tick 5,001 had
+	// 5,781 to run in the new run.
+	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	// A new run keeps no command the last one was granted (features.go).
+	ge.grantedFeatures = nil
+	// The run's timers start over, as in a new game. A stale ageReady let
+	// `advance` skip the Stone Age's requirements before the first tick.
+	ge.ageReady = false
+	ge.starvationTicks = 0
+	ge.autoExpeditionTicksLeft = 0
+	ge.autoExpeditionStarved = false
+	ge.startRunShares()
 }
 
 // BuyPrestigeUpgrade purchases a prestige upgrade tier
