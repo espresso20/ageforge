@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base32"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -1254,78 +1255,41 @@ func crc16CCITT(data []byte) uint16 {
 	return crc
 }
 
-// crockfordEncode encodes data as an uppercase Crockford base32 string (no padding).
-// Bits are packed MSB-first; a trailing partial group is left-padded with zero bits,
-// matching crockfordDecode's symmetric unpacking.
-func crockfordEncode(data []byte) string {
-	if len(data) == 0 {
-		return ""
-	}
-	var out []byte
-	var buf uint32
-	bits := 0
-	for _, b := range data {
-		buf = (buf << 8) | uint32(b)
-		bits += 8
-		for bits >= 5 {
-			bits -= 5
-			out = append(out, crockfordAlphabet[(buf>>uint(bits))&0x1F])
-		}
-	}
-	if bits > 0 {
-		out = append(out, crockfordAlphabet[(buf<<uint(5-bits))&0x1F])
-	}
-	return string(out)
-}
-
-// crockfordDecodeChar maps a single character to its 5-bit value using Crockford's
-// lenient rules: case-insensitive, with I/L→1, O→0, U→V (per the Crockford spec, U is
-// treated as V to absorb a common transcription slip). Returns (value, ok).
-func crockfordDecodeChar(c byte) (byte, bool) {
-	switch {
-	case c >= 'a' && c <= 'z':
-		c -= 'a' - 'A' // normalize to upper
-	}
-	switch c {
-	case 'O':
-		c = '0'
-	case 'I', 'L':
-		c = '1'
-	case 'U':
-		c = 'V'
-	}
-	for i := 0; i < len(crockfordAlphabet); i++ {
-		if crockfordAlphabet[i] == c {
-			return byte(i), true
-		}
-	}
-	return 0, false
-}
+// crockfordEnc is the Crockford base32 codec: the canonical alphabet, MSB-first bit packing,
+// no padding. A trailing partial group is zero-padded on encode and its spare bits are
+// ignored on decode (the codec is not Strict).
+var crockfordEnc = base32.NewEncoding(crockfordAlphabet).WithPadding(base32.NoPadding)
 
 // crockfordDecode decodes a Crockford base32 string (already stripped of the prefix,
-// dashes, and spaces) back to bytes. byteLen is the expected decoded length; any
-// trailing partial-group bits beyond byteLen*8 are discarded (they are the encoder's
-// zero padding). Returns an error on an unknown symbol or insufficient input.
+// dashes, and spaces) back to byteLen bytes. It is lenient the way the Crockford spec asks:
+// case-insensitive, with I/L read as 1, O as 0 and U as V (a common transcription slip).
+// Characters past the ones byteLen bytes need are still checked, then ignored. Returns an
+// error on an unknown symbol or insufficient input.
 func crockfordDecode(s string, byteLen int) ([]byte, error) {
-	out := make([]byte, 0, byteLen)
-	var buf uint32
-	bits := 0
+	norm := make([]byte, len(s))
 	for i := 0; i < len(s); i++ {
-		v, ok := crockfordDecodeChar(s[i])
-		if !ok {
+		c := s[i]
+		if c >= 'a' && c <= 'z' {
+			c -= 'a' - 'A'
+		}
+		switch c {
+		case 'O':
+			c = '0'
+		case 'I', 'L':
+			c = '1'
+		case 'U':
+			c = 'V'
+		}
+		if strings.IndexByte(crockfordAlphabet, c) < 0 {
 			return nil, vibe.Errorf("game.account.crockfordDecode.01", "That recovery code has a character it cannot contain ('%s'). Check it and try again.", string(s[i]))
 		}
-		buf = (buf << 5) | uint32(v)
-		bits += 5
-		if bits >= 8 {
-			bits -= 8
-			out = append(out, byte((buf>>uint(bits))&0xFF))
-		}
+		norm[i] = c
 	}
-	if len(out) < byteLen {
+	need := (byteLen*8 + 4) / 5 // symbols that carry byteLen bytes (29 for the 18-byte payload)
+	if len(norm) < need {
 		return nil, vibe.Errorf("game.account.crockfordDecode.02", "That recovery code is too short. Check it and try again.")
 	}
-	return out[:byteLen], nil
+	return crockfordEnc.DecodeString(string(norm[:need]))
 }
 
 // groupBy4 inserts a dash after every 4 characters, leaving any trailing partial
@@ -1359,7 +1323,7 @@ func (a *Account) RecoveryCode() string {
 	payload := make([]byte, 0, 18)
 	payload = append(payload, idBytes...)
 	payload = append(payload, byte(sum>>8), byte(sum&0xFF))
-	body := groupBy4(crockfordEncode(payload))
+	body := groupBy4(crockfordEnc.EncodeToString(payload))
 	return recoveryCodePrefix + "-" + body
 }
 
