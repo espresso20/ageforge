@@ -118,24 +118,8 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 		return v.composeMandala(f, W, H) // no panorama: the mandala alone
 	}
 	m := f.Model
-	v.sw, v.worldW = W, m.Skyline.Width
-	z := v.zoom
-	fit := z == zFar && v.fitOK(W)
-	if z == zFar && !fit {
-		z = zWide
-	}
-	lw, lh := z.cols(W), z.frameRows(H)
-	wcols, kx := lw, 1.0
-	if fit {
-		wcols, kx = m.Skyline.Width, float64(m.Skyline.Width)/float64(lw)
-	}
-	world := &v.fb
-	if z != zMid {
-		world = &v.lfb
-	}
-	v.lastW = wcols
-	s := &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: lw, H: lh, S: lh - 3, top: 1, sel: -1,
-		zm: z, lw: wcols, ls: lh - 3, sw: W, sh: H, fit: fit, kx: kx}
+	s := v.frameScene(f, W, H)
+	fit := s.fit
 	s.groundY = skyGround(s.S)
 	ref := skyGround(H - 3) // the baseline the forms are sized for: the screen's own
 	s.band = bandOf(m.AgeIdx)
@@ -146,33 +130,8 @@ func (v *view) composeSky(f mapstyle.Frame, W, H int, sc mapmodel.SkyScene) *sce
 	s.lay = v.skyLayoutSized(m, sc, s.groundY, ref, false)
 	s.vis = v.vis
 	defer func() { v.vis = s.vis }()
-	if v.follow && !fit {
-		v.cam = presentCam(m, lw)
-	}
-	if v.inspect {
-		ts := v.targetsFor(m, wcols, v.camX())
-		if i := v.resolve(m, ts, f.VisitFrame()); i >= 0 && v.reveal {
-			v.revealTarget(m, ts[i], wcols)
-		}
-	}
-	if !fit {
-		v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-lw))
-	}
-	s.cam = v.camX()
-	s.pan = v.panFor(z, s.S, skyPanDefault(s.S))
-	if fit {
-		s.ridge = ridgeItemsFar(m, lw)
-	} else {
-		s.ridge = ridgeItems(m, lw, s.cam)
-	}
-	if v.inspect && v.cur.kind == tLot {
-		s.sel = s.lay.find(v.cur.key, v.cur.cp)
-	}
-	if ep := m.Catastrophe.Pending; ep != "" {
-		e := m.Catalog.EpochIdx[ep]
-		s.gridOut = e == 3 || e == 4 || e == 5
-	}
-	world.reset(lw, lh)
+	v.placeCamera(s, f, skyPanDefault(s.S))
+	s.fb.reset(s.W, s.H)
 	o := newOrb(s, sc)
 	if !fit {
 		s.vis = s.lay.visible(s.cam-16, s.cam+s.W+16, s.vis)
