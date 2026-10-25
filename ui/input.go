@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,10 +71,10 @@ type CommandResult struct {
 	Window string
 }
 
-// HandleCommand parses a raw command string and dispatches to the appropriate
-// sub-handler. Single-letter shortcuts (g, b, r, a, u, s, t) are normalised
-// to their full equivalents before switching. Commands that purely open an
-// overlay return an empty Message with OverlayName set.
+// HandleCommand parses a raw command string and runs the registry command
+// that has its first word as a name or an alias (the shortcuts g, b, r, a, u,
+// s and t among them). Commands that purely open an overlay return an empty
+// Message with OverlayName set.
 func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	parts := strings.Fields(strings.TrimSpace(input))
 	if len(parts) == 0 {
@@ -83,135 +84,35 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	cmd := strings.ToLower(parts[0])
 	args := parts[1:]
 
-	switch cmd {
-	case "help", "h", "?":
-		return CommandResult{OverlayName: "help"}
-	case "gather", "g":
-		return cmdGather(args, engine)
-	case "build", "b":
-		return cmdBuild(args, engine)
-	case "recruit", "r":
-		return cmdRecruit(args, engine)
-	case "assign", "a":
-		return cmdAssign(args, engine)
-	case "unassign", "u":
-		return cmdUnassign(args, engine)
-	case "dismiss":
-		return cmdDismiss(args, engine)
-	case "sell":
-		return cmdSell(args, engine)
-	case "status", "s":
-		return cmdStatus(engine)
-	case "research", "res":
-		if len(args) == 0 {
-			return CommandResult{OverlayName: "techs"}
+	for _, c := range registry() {
+		if c.Dashboard || c.Name != cmd && !slices.Contains(c.Aliases, cmd) {
+			continue
 		}
-		return cmdResearch(args, engine)
-	case "expedition", "exp":
-		return cmdExpedition(args, engine)
-	case "campaign":
-		return cmdCampaign(args, engine)
-	case "trade", "t":
-		return cmdTrade(args, engine)
-	case "diplomacy", "dip":
-		if len(args) == 0 {
-			// Opens the Factions panel under its PRIMARY overlay name, not under
-			// "diplomacy": the sidebar highlight matches on the name it is handed,
-			// so returning the alias would open the panel without lighting up the
-			// entry the player just navigated to.
-			return CommandResult{OverlayName: "factions"}
+		run := c.Run
+		if run == nil {
+			run = openPanel(c.Name)
 		}
-		return cmdDiplomacy(args, engine)
-	case "wonder":
-		return cmdWonder(args, engine)
-	case "plan":
-		return cmdPlan(args, engine)
-	case "prestige":
-		return cmdPrestige(args, engine)
-	case "festival":
-		return cmdFestival(args, engine)
-	case "blackmarket", "bm":
-		return cmdBlackMarket(args, engine)
-	case "rates":
-		return cmdRates(engine)
-	case "upgrade":
-		return cmdUpgrade(args, engine)
-	case "advance":
-		return cmdAdvance(engine)
-	case "charter":
-		return CommandResult{OverlayName: "charter"}
-	case "factions":
-		return CommandResult{OverlayName: "factions"}
-	case "milestones", "ms":
-		return CommandResult{OverlayName: "milestones"}
-	case "techs":
-		return CommandResult{OverlayName: "techs"}
-	case "army":
-		return CommandResult{OverlayName: "army"}
-	case "stats":
-		return CommandResult{OverlayName: "stats"}
-	case "wonders":
-		return CommandResult{OverlayName: "wonders"}
-	case "people":
-		return CommandResult{OverlayName: "people"}
-	case "workers":
-		return cmdWorkers(args, engine)
-	case "roster":
-		return cmdRoster(args, engine)
-	case "scholars":
-		return cmdScholars(args, engine)
-	case "logs":
-		return CommandResult{OverlayName: "logs"}
-	case "epoch":
-		return CommandResult{OverlayName: "epoch"}
-	case "history":
-		return CommandResult{OverlayName: "history"}
-	case "buildings":
-		return CommandResult{OverlayName: "buildings"}
-	case "map", "citymap", "worldmap":
-		// citymap and worldmap are the old maps' commands, kept as aliases;
-		// worldmap opens on the known world.
-		return cmdMap(cmd, args, engine)
-	case "style":
-		// style is map style's shortcut: players reach for it first.
-		return cmdMapStyle(args, engine)
-	case "minimap":
-		return cmdMinimap(args, engine)
-	case "motion":
-		return cmdMotion(args, engine)
-	case "vibemode":
-		return cmdVibemode(args, engine)
-	case "catastrophe", "cat":
-		return cmdCatastrophe(args, engine)
-	case "harbinger", "harb":
-		return cmdHarbinger(args, engine)
-	case "dump", "exportlogs":
-		return cmdDump(args, engine)
-	case "saves":
-		return cmdSaveList()
-	case "save":
-		if len(args) > 0 && args[0] == "list" {
-			return cmdSaveList()
+		res := run(args, engine)
+		// worldmap is map, opened on the known world.
+		if cmd == "worldmap" && res.OverlayName == "map" {
+			res.MapWorld = true
 		}
-		return cmdSave(args, engine)
-	case "load":
-		return cmdLoad(args, engine)
-	case "account", "acct":
-		return cmdAccount(args, engine)
-	case "badges", "achievements":
-		return cmdBadges(args, engine)
-	case "title":
-		return cmdTitle(args, engine)
-	case "theme":
-		return cmdTheme(args, engine)
-	case "icons":
-		if len(args) > 0 {
-			return CommandResult{Message: usageFor("icons"), Type: "error"}
-		}
-		return CommandResult{Icons: true}
-	default:
-		return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
+		return res
 	}
+	return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
+}
+
+// openPanel is the Run of a command that only opens the panel of that name.
+func openPanel(name string) func(args []string, engine *game.GameEngine) CommandResult {
+	return func([]string, *game.GameEngine) CommandResult { return CommandResult{OverlayName: name} }
+}
+
+// cmdIcons is `icons`: start the guided icons check.
+func cmdIcons(args []string, _ *game.GameEngine) CommandResult {
+	if len(args) > 0 {
+		return CommandResult{Message: usageFor("icons"), Type: "error"}
+	}
+	return CommandResult{Icons: true}
 }
 
 // unknownCommandText is the refusal for a first word that is no command:
@@ -688,7 +589,7 @@ func cmdAutoRecruit(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: usageFor("workers auto-recruit"), Type: "error"}
 }
 
-func cmdAdvance(engine *game.GameEngine) CommandResult {
+func cmdAdvance(_ []string, engine *game.GameEngine) CommandResult {
 	if err := engine.AdvanceAge(); err != nil {
 		return errorResult(err)
 	}
@@ -947,7 +848,7 @@ func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Type: "success"} // the engine logs the change
 }
 
-func cmdStatus(engine *game.GameEngine) CommandResult {
+func cmdStatus(_ []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 
@@ -1436,6 +1337,9 @@ func oneWordName(verb string, args []string) (string, *CommandResult) {
 }
 
 func cmdSave(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) > 0 && args[0] == "list" {
+		return cmdSaveList(nil, engine)
+	}
 	// With a name: branch a new save off the current run (BranchSave switches the
 	// active slot + sets the parent, so autosave follows the branch). Without a
 	// name: overwrite the active slot. The dashboard UI intercepts a bare `save`
@@ -1478,7 +1382,7 @@ func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: vibe.Sprintf("ui.input.cmdLoad.04", "Game loaded from '%s'.", name), Type: "info"}
 }
 
-func cmdRates(engine *game.GameEngine) CommandResult {
+func cmdRates(_ []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 	lines = append(lines, vibe.Line("ui.input.cmdRates.01", "[gold]Resource Rate Breakdown:[-]"))
@@ -1558,7 +1462,7 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
-func cmdSaveList() CommandResult {
+func cmdSaveList(_ []string, _ *game.GameEngine) CommandResult {
 	saves, err := game.ListSaveDetails()
 	if err != nil {
 		return CommandResult{Message: vibe.Line("ui.input.cmdSaveList.01", "Could not list saves: ") + shortIOError(err) + ".", Type: "error"}
@@ -1700,7 +1604,7 @@ func themeKeys() []string {
 
 func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return cmdResearchList(engine)
+		return CommandResult{OverlayName: "techs"}
 	}
 	subcmd := strings.ToLower(args[0])
 
@@ -2184,6 +2088,10 @@ func civKey(words []string) string {
 
 func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
+		// Opens the Factions panel under its PRIMARY overlay name, not under
+		// "diplomacy": the sidebar highlight matches on the name it is handed,
+		// so returning the alias would open the panel without lighting up the
+		// entry the player just navigated to.
 		return CommandResult{OverlayName: "factions"}
 	}
 	subcmd := strings.ToLower(args[0])
@@ -2726,11 +2634,11 @@ func planIndexArg(rest []string, sub string) (int, error) {
 }
 
 // cmdMap handles map and its aliases citymap and worldmap. Bare, it opens
-// the Map panel (worldmap on the known world); "style" and "glyphs" read or
-// change the settings.
-func cmdMap(cmd string, args []string, engine *game.GameEngine) CommandResult {
+// the Map panel (HandleCommand has worldmap open it on the known world);
+// "style", "glyphs" and "flows" read or change the settings.
+func cmdMap(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "map", MapWorld: cmd == "worldmap"}
+		return CommandResult{OverlayName: "map"}
 	}
 	switch strings.ToLower(args[0]) {
 	case "style":
