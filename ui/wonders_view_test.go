@@ -19,9 +19,7 @@ import (
 func galleryTown(t *testing.T, built int) (*Dashboard, *tview.Pages, game.GameState) {
 	t.Helper()
 	eng := game.NewGameEngine()
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	st := eng.GetState()
 	list := getWonderList(st.Ruleset())
 	if built > len(list) {
@@ -250,7 +248,7 @@ func TestGalleryDrawsEveryWonder(t *testing.T) {
 				om.Show("wonders", st)
 				d.wonders.gallery, d.wonders.idx, d.wonders.key = true, i, win.key
 				om.Refresh(st)
-				screen := renderText(t, pages, w, h)
+				screen := drawPrimitive(t, pages, w, h).Text()
 				art := galleryArt(t, screen, win.name)
 				if len(art) < 6 {
 					t.Errorf("%s at %dx%d: the picture is %d rows", win.key, w, h, len(art))
