@@ -25,7 +25,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Room-sized computers that keep the records.",
 		LineageKey:  "hacker", LineageTier: 0,
 		WorkerDomain: "hacker", WorkerCapacity: 8,
-		EpochKey: "digital_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 1 — information_age  rate=2.0
 	b = append(b, BuildingDef{
@@ -40,7 +40,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Large server farm processing data.",
 		LineageKey:  "hacker", LineageTier: 1,
 		WorkerDomain: "hacker", WorkerCapacity: 8,
-		EpochKey: "digital_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 2 — digital_age  rate=4.0
 	b = append(b, BuildingDef{
@@ -53,7 +53,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Hyper-scale data center.",
 		LineageKey:  "hacker", LineageTier: 2,
 		WorkerDomain: "hacker", WorkerCapacity: 10,
-		EpochKey: "digital_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 3 — cyberpunk_age  rate=8.0
 	b = append(b, BuildingDef{
@@ -66,7 +66,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Cyberpunk underground hacker hub.",
 		LineageKey:  "hacker", LineageTier: 3,
 		WorkerDomain: "hacker", WorkerCapacity: 12,
-		EpochKey: "neon_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 4 — fusion_age  rate=16.0
 	b = append(b, BuildingDef{
@@ -79,7 +79,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Quantum-computing server farm.",
 		LineageKey:  "hacker", LineageTier: 4,
 		WorkerDomain: "hacker", WorkerCapacity: 14,
-		EpochKey: "neon_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 5 — space_age  rate=32.0
 	b = append(b, BuildingDef{
@@ -92,7 +92,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Orbital relay node for stellar data networks.",
 		LineageKey:  "hacker", LineageTier: 5,
 		WorkerDomain: "hacker", WorkerCapacity: 16,
-		EpochKey: "neon_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 6 — interstellar_age  rate=64.0
 	b = append(b, BuildingDef{
@@ -105,7 +105,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Interstellar galactic network node.",
 		LineageKey:  "hacker", LineageTier: 6,
 		WorkerDomain: "hacker", WorkerCapacity: 18,
-		EpochKey: "cosmic_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 7 — galactic_age  rate=128.0
 	b = append(b, BuildingDef{
@@ -118,7 +118,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Uploads and processes consciousness data.",
 		LineageKey:  "hacker", LineageTier: 7,
 		WorkerDomain: "hacker", WorkerCapacity: 20,
-		EpochKey: "cosmic_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 	// tier 8 — quantum_age  rate=256.0
 	b = append(b, BuildingDef{
@@ -131,7 +131,7 @@ func buildingsLineageHacker() []BuildingDef {
 		Description: "Processes data from the very structure of reality.",
 		LineageKey:  "hacker", LineageTier: 8,
 		WorkerDomain: "hacker", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "data",
+		OutputResource: "data",
 	})
 
 	return b

@@ -38,7 +38,7 @@ func buildingsLineageHarbor() []BuildingDef {
 		Description:  "A working harbor for trade ships.",
 		LineageKey:   "harbor", LineageTier: 0,
 		WorkerDomain: "trade", WorkerCapacity: 4,
-		EpochKey: "steel_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 1 — industrial_age
 	b = append(b, BuildingDef{
@@ -54,7 +54,7 @@ func buildingsLineageHarbor() []BuildingDef {
 		Description: "Industrial port authority coordinating dock traffic.",
 		LineageKey:  "harbor", LineageTier: 1,
 		WorkerDomain: "trade", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 2 — modern_age
 	b = append(b, BuildingDef{
@@ -71,7 +71,7 @@ func buildingsLineageHarbor() []BuildingDef {
 		Description:  "A deep-water seaport handling global cargo.",
 		LineageKey:   "harbor", LineageTier: 2,
 		WorkerDomain: "trade", WorkerCapacity: 6,
-		EpochKey: "digital_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 3 — information_age
 	b = append(b, BuildingDef{
@@ -88,7 +88,7 @@ func buildingsLineageHarbor() []BuildingDef {
 		Description:  "Automated container terminal moving freight at scale.",
 		LineageKey:   "harbor", LineageTier: 3,
 		WorkerDomain: "trade", WorkerCapacity: 8,
-		EpochKey: "digital_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 4 — digital_age
 	b = append(b, BuildingDef{
@@ -105,7 +105,7 @@ func buildingsLineageHarbor() []BuildingDef {
 		Description:  "Algorithmic logistics hub routing every shipment.",
 		LineageKey:   "harbor", LineageTier: 4,
 		WorkerDomain: "trade", WorkerCapacity: 10,
-		EpochKey: "digital_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 
 	return b

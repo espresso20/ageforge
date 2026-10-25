@@ -26,7 +26,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "Industrial coal processing plant.",
 		LineageKey:   "energy", LineageTier: 0, LineKey: "energy_coal",
 		WorkerDomain: "energy", WorkerCapacity: 6,
-		EpochKey: "steel_era", OutputResource: "coal",
+		OutputResource: "coal",
 	})
 	// tier 1 — victorian_age  output=electricity  rate=50  (+ some coal)
 	b = append(b, BuildingDef{
@@ -42,7 +42,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description: "A steam turbine hall with its own coal seam.",
 		LineageKey:  "energy", LineageTier: 1, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 7,
-		EpochKey: "electric_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 2 — electric_age  output=electricity  rate=100
 	b = append(b, BuildingDef{
@@ -58,7 +58,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "Electric power generator.",
 		LineageKey:   "energy", LineageTier: 2, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 8,
-		EpochKey: "electric_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 3 — atomic_age  output=electricity  rate=200
 	b = append(b, BuildingDef{
@@ -71,7 +71,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description: "Nuclear fission reactor.",
 		LineageKey:  "energy", LineageTier: 3, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 9,
-		EpochKey: "electric_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 4 — modern_age  output=oil + electricity  rate: oil=20 electricity=250
 	// electricity raised from 100→250 so upgrading from nuclear_reactor (200 elec) never regresses
@@ -88,7 +88,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description: "Modern oil refinery and power generation.",
 		LineageKey:  "energy", LineageTier: 4, LineKey: "energy_oil",
 		WorkerDomain: "energy", WorkerCapacity: 10,
-		EpochKey: "digital_era", OutputResource: "oil",
+		OutputResource: "oil",
 	})
 	// tier 5 — information_age  output=electricity  rate=400
 	b = append(b, BuildingDef{
@@ -102,7 +102,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "AI-optimized microgrid batteries.",
 		LineageKey:   "energy", LineageTier: 5, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 11,
-		EpochKey: "digital_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 6 — digital_age  output=electricity  rate=800
 	b = append(b, BuildingDef{
@@ -116,7 +116,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "Quantum-state battery arrays.",
 		LineageKey:   "energy", LineageTier: 6, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 12,
-		EpochKey: "digital_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 7 — cyberpunk_age  output=electricity  rate=1600
 	b = append(b, BuildingDef{
@@ -130,7 +130,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "Taps dark energy streams for electricity.",
 		LineageKey:   "energy", LineageTier: 7, LineKey: "energy_electricity",
 		WorkerDomain: "energy", WorkerCapacity: 13,
-		EpochKey: "neon_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 8 — fusion_age  output=plasma  rate=20
 	b = append(b, BuildingDef{
@@ -146,7 +146,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description: "Array of fusion reactors producing plasma.",
 		LineageKey:  "energy", LineageTier: 8, LineKey: "energy_plasma",
 		WorkerDomain: "energy", WorkerCapacity: 15,
-		EpochKey: "neon_era", OutputResource: "plasma",
+		OutputResource: "plasma",
 	})
 	// tier 9 — space_age  output=plasma + electricity  rate: plasma=40, electricity=2500
 	// electricity preserved from fusion_reactor_array (2000) — upgrading must never regress
@@ -163,7 +163,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description: "Orbital solar collectors feeding plasma energy.",
 		LineageKey:  "energy", LineageTier: 9, LineKey: "energy_plasma",
 		WorkerDomain: "energy", WorkerCapacity: 16,
-		EpochKey: "neon_era", OutputResource: "plasma",
+		OutputResource: "plasma",
 	})
 	// tier 10 — interstellar_age  output=plasma  rate=80  (+ electricity continuation)
 	// Resource pivot: plasma remains primary; electricity secondary continues from solar_collector_array
@@ -182,7 +182,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "Taps pulsar radiation for plasma and electricity.",
 		LineageKey:   "energy", LineageTier: 10, LineKey: "energy_plasma",
 		WorkerDomain: "energy", WorkerCapacity: 18,
-		EpochKey: "cosmic_era", OutputResource: "plasma",
+		OutputResource: "plasma",
 	})
 	// tier 11 — galactic_age  output=dark_matter  rate=10
 	// Resource pivot: plasma → dark_matter. Validator shows LOW boost — intentional cross-resource pivot.
@@ -199,7 +199,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "Taps quasar jets for dark matter.",
 		LineageKey:   "energy", LineageTier: 11, LineKey: "energy_dark_matter",
 		WorkerDomain: "energy", WorkerCapacity: 20,
-		EpochKey: "cosmic_era", OutputResource: "dark_matter",
+		OutputResource: "dark_matter",
 	})
 	// tier 12 — quantum_age  output=quantum_flux  rate=50
 	b = append(b, BuildingDef{
@@ -213,7 +213,7 @@ func buildingsLineageEnergy() []BuildingDef {
 		Description:  "Generates energy from quantum zero-point fields.",
 		LineageKey:   "energy", LineageTier: 12, LineKey: "energy_quantum_flux",
 		WorkerDomain: "energy", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 
 	return b

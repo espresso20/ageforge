@@ -26,7 +26,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "A basic camp for gathering stones.",
 		LineageKey:  "geological_extraction", LineageTier: 0, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 3,
-		EpochKey: "stone_era", OutputResource: "stone",
+		OutputResource: "stone",
 	})
 	// tier 1 — stone_age  rate=0.16  output=stone
 	b = append(b, BuildingDef{
@@ -39,7 +39,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "A shallow pit dug for stone.",
 		LineageKey:  "geological_extraction", LineageTier: 1, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 4,
-		EpochKey: "stone_era", OutputResource: "stone",
+		OutputResource: "stone",
 	})
 	// tier 2 — bronze_age  rate=0.32  output=stone
 	b = append(b, BuildingDef{
@@ -52,7 +52,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Organized stone quarrying.",
 		LineageKey:  "geological_extraction", LineageTier: 2, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 5,
-		EpochKey: "stone_era", OutputResource: "stone",
+		OutputResource: "stone",
 	})
 	// tier 3 — iron_age  rate=1.28  dual: marble(0.64) + iron_ore(0.64)
 	b = append(b, BuildingDef{
@@ -70,7 +70,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Marble, iron ore, stone and iron extraction.",
 		LineageKey:  "geological_extraction", LineageTier: 3, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 5,
-		EpochKey: "iron_era", OutputResource: "stone",
+		OutputResource: "stone",
 	})
 	// tier 4 — classical_age  rate=2.56  dual: marble(1.28) + iron_ore(1.28)
 	b = append(b, BuildingDef{
@@ -88,7 +88,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Classical marble, ore, stone and iron works.",
 		LineageKey:  "geological_extraction", LineageTier: 4, LineKey: "geological_extraction_stone",
 		WorkerDomain: "masonry", WorkerCapacity: 6,
-		EpochKey: "iron_era", OutputResource: "stone",
+		OutputResource: "stone",
 	})
 	// tier 5 — medieval_age  rate=2.56  output=iron_ore
 	b = append(b, BuildingDef{
@@ -105,7 +105,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Guild of stonemasons extracting iron ore, iron and stone.",
 		LineageKey:  "geological_extraction", LineageTier: 5, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 6,
-		EpochKey: "iron_era", OutputResource: "iron_ore",
+		OutputResource: "iron_ore",
 	})
 	// tier 6 — renaissance_age  rate=5.12  output=iron_ore
 	b = append(b, BuildingDef{
@@ -122,7 +122,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Deep iron ore, iron and stone mining.",
 		LineageKey:  "geological_extraction", LineageTier: 6, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 7,
-		EpochKey: "steel_era", OutputResource: "iron_ore",
+		OutputResource: "iron_ore",
 	})
 	// tier 7 — colonial_age  rate=10.24  output=iron_ore
 	b = append(b, BuildingDef{
@@ -139,7 +139,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Colonial deep iron ore, iron and stone extraction.",
 		LineageKey:  "geological_extraction", LineageTier: 7, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 8,
-		EpochKey: "steel_era", OutputResource: "iron_ore",
+		OutputResource: "iron_ore",
 	})
 	// tier 8 — industrial_age  rate=20.48  output=iron_ore
 	b = append(b, BuildingDef{
@@ -156,7 +156,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Steam-powered industrial iron ore, iron and stone mine.",
 		LineageKey:  "geological_extraction", LineageTier: 8, LineKey: "geological_extraction_iron_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 10,
-		EpochKey: "steel_era", OutputResource: "iron_ore",
+		OutputResource: "iron_ore",
 	})
 	// tier 9 — victorian_age  rate=40.96  output=uranium
 	b = append(b, BuildingDef{
@@ -172,7 +172,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Early uranium ore and stone extraction.",
 		LineageKey:  "geological_extraction", LineageTier: 9, LineKey: "geological_extraction_uranium",
 		WorkerDomain: "masonry", WorkerCapacity: 10,
-		EpochKey: "electric_era", OutputResource: "uranium",
+		OutputResource: "uranium",
 	})
 	// tier 10 — electric_age  rate=81.92  output=uranium
 	b = append(b, BuildingDef{
@@ -185,7 +185,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "High-tech nuclear material extraction.",
 		LineageKey:  "geological_extraction", LineageTier: 10, LineKey: "geological_extraction_uranium",
 		WorkerDomain: "masonry", WorkerCapacity: 12,
-		EpochKey: "electric_era", OutputResource: "uranium",
+		OutputResource: "uranium",
 	})
 	// tier 11 — atomic_age  rate=163.84  output=uranium
 	b = append(b, BuildingDef{
@@ -201,7 +201,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Industrial uranium and stone processing.",
 		LineageKey:  "geological_extraction", LineageTier: 11, LineKey: "geological_extraction_uranium",
 		WorkerDomain: "masonry", WorkerCapacity: 12,
-		EpochKey: "electric_era", OutputResource: "uranium",
+		OutputResource: "uranium",
 	})
 	// tier 12 — modern_age  rate=327.68  output=titanium_ore
 	b = append(b, BuildingDef{
@@ -214,7 +214,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "High-precision titanium ore extraction.",
 		LineageKey:  "geological_extraction", LineageTier: 12, LineKey: "geological_extraction_titanium_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 14,
-		EpochKey: "digital_era", OutputResource: "titanium_ore",
+		OutputResource: "titanium_ore",
 	})
 	// tier 13 — information_age  rate=655.36  output=titanium_ore
 	b = append(b, BuildingDef{
@@ -227,7 +227,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "AI-guided precision titanium mining.",
 		LineageKey:  "geological_extraction", LineageTier: 13, LineKey: "geological_extraction_titanium_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 15,
-		EpochKey: "digital_era", OutputResource: "titanium_ore",
+		OutputResource: "titanium_ore",
 	})
 	// tier 14 — digital_age  rate=1310.72  output=titanium_ore
 	b = append(b, BuildingDef{
@@ -240,7 +240,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Nanoscale drilling for titanium ore.",
 		LineageKey:  "geological_extraction", LineageTier: 14, LineKey: "geological_extraction_titanium_ore",
 		WorkerDomain: "masonry", WorkerCapacity: 16,
-		EpochKey: "digital_era", OutputResource: "titanium_ore",
+		OutputResource: "titanium_ore",
 	})
 	// tier 15 — cyberpunk_age  rate=2621.44  output=dark_matter_crystals
 	b = append(b, BuildingDef{
@@ -253,7 +253,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Extraction of dark matter crystals.",
 		LineageKey:  "geological_extraction", LineageTier: 15, LineKey: "geological_extraction_dark_matter_crystals",
 		WorkerDomain: "masonry", WorkerCapacity: 18,
-		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
+		OutputResource: "dark_matter_crystals",
 	})
 	// tier 16 — fusion_age  rate=5242.88  output=dark_matter_crystals
 	b = append(b, BuildingDef{
@@ -266,7 +266,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Plasma-assisted exotic mineral extraction.",
 		LineageKey:  "geological_extraction", LineageTier: 16, LineKey: "geological_extraction_dark_matter_crystals",
 		WorkerDomain: "masonry", WorkerCapacity: 20,
-		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
+		OutputResource: "dark_matter_crystals",
 	})
 	// tier 17 — space_age  rate=10485.76  output=dark_matter_crystals
 	b = append(b, BuildingDef{
@@ -279,7 +279,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Asteroid belt dark matter crystal mining.",
 		LineageKey:  "geological_extraction", LineageTier: 17, LineKey: "geological_extraction_dark_matter_crystals",
 		WorkerDomain: "masonry", WorkerCapacity: 20,
-		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
+		OutputResource: "dark_matter_crystals",
 	})
 	// tier 18 — interstellar_age  rate=20971.52  output=antimatter
 	b = append(b, BuildingDef{
@@ -293,7 +293,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description:  "Drills into stellar cores for antimatter.",
 		LineageKey:   "geological_extraction", LineageTier: 18, LineKey: "geological_extraction_antimatter",
 		WorkerDomain: "masonry", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "antimatter",
+		OutputResource: "antimatter",
 	})
 	// tier 19 — galactic_age  rate=41943.04  output=antimatter
 	b = append(b, BuildingDef{
@@ -307,7 +307,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description:  "Mining neutron stars for antimatter.",
 		LineageKey:   "geological_extraction", LineageTier: 19, LineKey: "geological_extraction_antimatter",
 		WorkerDomain: "masonry", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "antimatter",
+		OutputResource: "antimatter",
 	})
 	// tier 20 — quantum_age  rate=83886.08  output=antimatter
 	b = append(b, BuildingDef{
@@ -322,7 +322,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		Description: "Excavates antimatter from the quantum foam.",
 		LineageKey:  "geological_extraction", LineageTier: 20, LineKey: "geological_extraction_antimatter",
 		WorkerDomain: "masonry", WorkerCapacity: 30,
-		EpochKey: "cosmic_era", OutputResource: "antimatter",
+		OutputResource: "antimatter",
 	})
 
 	return b

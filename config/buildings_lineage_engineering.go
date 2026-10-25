@@ -27,7 +27,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "A forge smelting iron tools.",
 		LineageKey:  "engineering", LineageTier: 0, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 4,
-		EpochKey: "stone_era", OutputResource: "iron",
+		OutputResource: "iron",
 	})
 	// tier 1 — iron_age  output=iron  rate=0.20
 	b = append(b, BuildingDef{
@@ -40,7 +40,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Organized iron working and tools.",
 		LineageKey:  "engineering", LineageTier: 1, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 5,
-		EpochKey: "iron_era", OutputResource: "iron",
+		OutputResource: "iron",
 	})
 	// tier 2 — classical_age  output=iron  rate=0.40
 	b = append(b, BuildingDef{
@@ -53,7 +53,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Roman engineering feats improve iron output.",
 		LineageKey:  "engineering", LineageTier: 2, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 5,
-		EpochKey: "iron_era", OutputResource: "iron",
+		OutputResource: "iron",
 	})
 	// tier 3 — medieval_age  output=iron  rate=0.80
 	b = append(b, BuildingDef{
@@ -66,7 +66,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "A skilled craftsman's workshop.",
 		LineageKey:  "engineering", LineageTier: 3, LineKey: "engineering_iron",
 		WorkerDomain: "engineering", WorkerCapacity: 6,
-		EpochKey: "iron_era", OutputResource: "iron",
+		OutputResource: "iron",
 	})
 	// tier 4 — renaissance_age  output=steel  rate=1.60
 	b = append(b, BuildingDef{
@@ -82,7 +82,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Water-powered mill begins steel production.",
 		LineageKey:  "engineering", LineageTier: 4, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 6,
-		EpochKey: "steel_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 5 — colonial_age  output=steel  rate=3.20
 	b = append(b, BuildingDef{
@@ -95,7 +95,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Naval dockyard producing steel ships.",
 		LineageKey:  "engineering", LineageTier: 5, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 7,
-		EpochKey: "steel_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 6 — industrial_age  output=steel  rate=6.40
 	b = append(b, BuildingDef{
@@ -108,7 +108,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Large-scale industrial iron and steel works.",
 		LineageKey:  "engineering", LineageTier: 6, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 8,
-		EpochKey: "steel_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 7 — victorian_age  output=steel  rate=12.80  (+ electricity bonus)
 	b = append(b, BuildingDef{
@@ -125,7 +125,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description:  "Steam-powered steelworks with electricity generation.",
 		LineageKey:   "engineering", LineageTier: 7, LineKey: "engineering_steel",
 		WorkerDomain: "engineering", WorkerCapacity: 9,
-		EpochKey: "electric_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 8 — electric_age  output=electricity  rate=25.60
 	b = append(b, BuildingDef{
@@ -138,7 +138,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Coal-fired power station.",
 		LineageKey:  "engineering", LineageTier: 8, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 10,
-		EpochKey: "electric_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 9 — atomic_age  output=electricity  rate=51.20
 	b = append(b, BuildingDef{
@@ -152,7 +152,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description:  "Nuclear fission power generation.",
 		LineageKey:   "engineering", LineageTier: 9, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 11,
-		EpochKey: "electric_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 10 — modern_age  output=electricity  rate=102.40
 	b = append(b, BuildingDef{
@@ -168,7 +168,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description:  "Smart power grid distribution hub.",
 		LineageKey:   "engineering", LineageTier: 10, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 12,
-		EpochKey: "digital_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 11 — information_age  output=electricity  rate=204.80
 	b = append(b, BuildingDef{
@@ -181,7 +181,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "AI-managed smart grid node.",
 		LineageKey:  "engineering", LineageTier: 11, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 13,
-		EpochKey: "digital_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 12 — digital_age  output=electricity  rate=409.60
 	b = append(b, BuildingDef{
@@ -194,7 +194,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Neural-network managed power grid.",
 		LineageKey:  "engineering", LineageTier: 12, LineKey: "engineering_electricity",
 		WorkerDomain: "engineering", WorkerCapacity: 14,
-		EpochKey: "digital_era", OutputResource: "electricity",
+		OutputResource: "electricity",
 	})
 	// tier 13 — cyberpunk_age  output=plasma+electricity  rate: plasma=819.20, electricity=500
 	b = append(b, BuildingDef{
@@ -210,7 +210,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Cyberpunk foundry producing plasma and power.",
 		LineageKey:  "engineering", LineageTier: 13, LineKey: "engineering_plasma",
 		WorkerDomain: "engineering", WorkerCapacity: 15,
-		EpochKey: "neon_era", OutputResource: "plasma",
+		OutputResource: "plasma",
 	})
 	// tier 14 — fusion_age  output=plasma  rate=1638.40
 	b = append(b, BuildingDef{
@@ -226,7 +226,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Fusion reactor generating plasma and electricity.",
 		LineageKey:  "engineering", LineageTier: 14, LineKey: "engineering_plasma",
 		WorkerDomain: "engineering", WorkerCapacity: 18,
-		EpochKey: "neon_era", OutputResource: "plasma",
+		OutputResource: "plasma",
 	})
 	// tier 15 — space_age  output=plasma  rate=3276.80
 	b = append(b, BuildingDef{
@@ -239,7 +239,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Space launch complex generating plasma thrust.",
 		LineageKey:  "engineering", LineageTier: 15, LineKey: "engineering_plasma",
 		WorkerDomain: "engineering", WorkerCapacity: 20,
-		EpochKey: "neon_era", OutputResource: "plasma",
+		OutputResource: "plasma",
 	})
 	// tier 16 — interstellar_age  output=dark_matter  rate=6553.60
 	b = append(b, BuildingDef{
@@ -255,7 +255,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Warp drive manufacturing harnessing dark matter.",
 		LineageKey:  "engineering", LineageTier: 16, LineKey: "engineering_dark_matter",
 		WorkerDomain: "engineering", WorkerCapacity: 22,
-		EpochKey: "cosmic_era", OutputResource: "dark_matter",
+		OutputResource: "dark_matter",
 	})
 	// tier 17 — galactic_age  output=dark_matter  rate=13107.20
 	b = append(b, BuildingDef{
@@ -268,7 +268,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Assembly of Dyson sphere panels harvesting dark matter.",
 		LineageKey:  "engineering", LineageTier: 17, LineKey: "engineering_dark_matter",
 		WorkerDomain: "engineering", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "dark_matter",
+		OutputResource: "dark_matter",
 	})
 	// tier 18 — quantum_age  output=quantum_flux  rate=26214.40
 	b = append(b, BuildingDef{
@@ -284,7 +284,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description: "Forges structures from the quantum fabric.",
 		LineageKey:  "engineering", LineageTier: 18, LineKey: "engineering_quantum_flux",
 		WorkerDomain: "engineering", WorkerCapacity: 30,
-		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 	// tier 19 — transcendent_age  output=quantum_flux  rate=52428.80
 	b = append(b, BuildingDef{
@@ -298,7 +298,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		Description:  "A singularity-powered engine generating quantum flux.",
 		LineageKey:   "engineering", LineageTier: 19, LineKey: "engineering_quantum_flux",
 		WorkerDomain: "engineering", WorkerCapacity: 35,
-		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 
 	return b

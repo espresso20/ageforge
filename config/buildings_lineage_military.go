@@ -25,7 +25,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "stone_age",
 		Description: "A fortified war camp.",
 		LineageKey:  "military", LineageTier: 0,
-		EpochKey: "stone_era",
 	})
 	// tier 1 — bronze_age
 	b = append(b, BuildingDef{
@@ -37,7 +36,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredTech: "military_tactics",
 		Description:  "Houses soldiers.",
 		LineageKey:   "military", LineageTier: 1,
-		EpochKey: "stone_era",
 	})
 	// tier 2 — iron_age
 	b = append(b, BuildingDef{
@@ -48,7 +46,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "iron_age",
 		Description: "A gathering place for hunters turned military post.",
 		LineageKey:  "military", LineageTier: 2,
-		EpochKey: "iron_era",
 	})
 	// tier 3 — iron_age
 	b = append(b, BuildingDef{
@@ -60,7 +57,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredTech: "siege_warfare",
 		Description:  "A fortified Roman-style legion camp.",
 		LineageKey:   "military", LineageTier: 3,
-		EpochKey: "iron_era",
 	})
 	// tier 4 — classical_age
 	b = append(b, BuildingDef{
@@ -71,7 +67,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "classical_age",
 		Description: "Trains elite military officers.",
 		LineageKey:  "military", LineageTier: 4,
-		EpochKey: "iron_era",
 	})
 	// tier 5 — medieval_age
 	b = append(b, BuildingDef{
@@ -82,7 +77,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "medieval_age",
 		Description: "A fortified stone keep.",
 		LineageKey:  "military", LineageTier: 5,
-		EpochKey: "iron_era",
 	})
 	// tier 6 — renaissance_age
 	b = append(b, BuildingDef{
@@ -93,7 +87,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "renaissance_age",
 		Description: "A star-fort capable of holding a large garrison.",
 		LineageKey:  "military", LineageTier: 6,
-		EpochKey: "steel_era",
 	})
 	// tier 7 — colonial_age
 	b = append(b, BuildingDef{
@@ -104,7 +97,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "colonial_age",
 		Description: "A colonial frontier fort.",
 		LineageKey:  "military", LineageTier: 7,
-		EpochKey: "steel_era",
 	})
 	// tier 8 — industrial_age
 	b = append(b, BuildingDef{
@@ -115,7 +107,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "industrial_age",
 		Description: "An industrial-era military base.",
 		LineageKey:  "military", LineageTier: 8,
-		EpochKey: "steel_era",
 	})
 	// tier 9 — victorian_age
 	b = append(b, BuildingDef{
@@ -126,7 +117,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "victorian_age",
 		Description: "A Victorian-era garrison town.",
 		LineageKey:  "military", LineageTier: 9,
-		EpochKey: "electric_era",
 	})
 	// tier 10 — electric_age
 	b = append(b, BuildingDef{
@@ -137,7 +127,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "electric_age",
 		Description: "An electrified command and control post.",
 		LineageKey:  "military", LineageTier: 10,
-		EpochKey: "electric_era",
 	})
 	// tier 11 — atomic_age
 	b = append(b, BuildingDef{
@@ -148,7 +137,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "atomic_age",
 		Description: "A hardened atomic-era bunker complex.",
 		LineageKey:  "military", LineageTier: 11,
-		EpochKey: "electric_era",
 	})
 	// tier 12 — modern_age
 	b = append(b, BuildingDef{
@@ -159,7 +147,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "modern_age",
 		Description: "Headquarters for special operations forces.",
 		LineageKey:  "military", LineageTier: 12,
-		EpochKey: "digital_era",
 	})
 	// tier 13 — information_age
 	b = append(b, BuildingDef{
@@ -171,7 +158,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredTech: "cybersecurity",
 		Description:  "Cyber warfare command center.",
 		LineageKey:   "military", LineageTier: 13,
-		EpochKey: "digital_era",
 	})
 	// tier 14 — digital_age
 	b = append(b, BuildingDef{
@@ -182,7 +168,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "digital_age",
 		Description: "Autonomous drone warfare command.",
 		LineageKey:  "military", LineageTier: 14,
-		EpochKey: "digital_era",
 	})
 	// tier 15 — cyberpunk_age
 	b = append(b, BuildingDef{
@@ -194,7 +179,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredTech: "cybernetics",
 		Description:  "Cybernetic augmentation for soldiers.",
 		LineageKey:   "military", LineageTier: 15,
-		EpochKey: "neon_era",
 	})
 	// tier 16 — fusion_age
 	b = append(b, BuildingDef{
@@ -205,7 +189,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "fusion_age",
 		Description: "Plasma-weapon equipped military command.",
 		LineageKey:  "military", LineageTier: 16,
-		EpochKey: "neon_era",
 	})
 	// tier 17 — space_age
 	b = append(b, BuildingDef{
@@ -216,7 +199,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "space_age",
 		Description: "An orbital space force base.",
 		LineageKey:  "military", LineageTier: 17,
-		EpochKey: "neon_era",
 	})
 	// tier 18 — interstellar_age
 	b = append(b, BuildingDef{
@@ -227,7 +209,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "interstellar_age",
 		Description: "Commands a full interstellar fleet.",
 		LineageKey:  "military", LineageTier: 18,
-		EpochKey: "cosmic_era",
 	})
 	// tier 19 — galactic_age
 	b = append(b, BuildingDef{
@@ -238,7 +219,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "galactic_age",
 		Description: "Headquarters for the galactic armada.",
 		LineageKey:  "military", LineageTier: 19,
-		EpochKey: "cosmic_era",
 	})
 	// tier 20 — quantum_age
 	b = append(b, BuildingDef{
@@ -249,7 +229,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredAge: "quantum_age",
 		Description: "Wages war across probability timelines.",
 		LineageKey:  "military", LineageTier: 20,
-		EpochKey: "cosmic_era",
 	})
 	// tier 21 — transcendent_age
 	b = append(b, BuildingDef{
@@ -261,7 +240,6 @@ func buildingsLineageMilitary() []BuildingDef {
 		RequiredTech: "omniversal_command",
 		Description:  "Commands forces across the omniverse.",
 		LineageKey:   "military", LineageTier: 21,
-		EpochKey: "cosmic_era",
 	})
 
 	return b

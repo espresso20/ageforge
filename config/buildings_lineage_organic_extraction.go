@@ -27,7 +27,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "A basic camp for collecting wood.",
 		LineageKey:  "organic_extraction", LineageTier: 0, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 3,
-		EpochKey: "stone_era", OutputResource: "wood",
+		OutputResource: "wood",
 	})
 	// tier 1 — stone_age  rate=0.40  output=wood
 	b = append(b, BuildingDef{
@@ -40,7 +40,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Choppers fell trees with stone axes.",
 		LineageKey:  "organic_extraction", LineageTier: 1, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 4,
-		EpochKey: "stone_era", OutputResource: "wood",
+		OutputResource: "wood",
 	})
 	// tier 2 — bronze_age  rate=0.80  output=wood
 	b = append(b, BuildingDef{
@@ -53,7 +53,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Bronze-saw lumber processing.",
 		LineageKey:  "organic_extraction", LineageTier: 2, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 5,
-		EpochKey: "stone_era", OutputResource: "wood",
+		OutputResource: "wood",
 	})
 	// tier 3 — iron_age  rate=1.60  output=wood
 	b = append(b, BuildingDef{
@@ -66,7 +66,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Iron-saw timber processing yard.",
 		LineageKey:  "organic_extraction", LineageTier: 3, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 5,
-		EpochKey: "iron_era", OutputResource: "wood",
+		OutputResource: "wood",
 	})
 	// tier 4 — classical_age  rate=3.20  output=wood
 	b = append(b, BuildingDef{
@@ -79,7 +79,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Skilled carpenters working at full tilt.",
 		LineageKey:  "organic_extraction", LineageTier: 4, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 6,
-		EpochKey: "iron_era", OutputResource: "wood",
+		OutputResource: "wood",
 	})
 	// tier 5 — medieval_age  rate=6.40  output=wood
 	b = append(b, BuildingDef{
@@ -92,7 +92,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Water-wheel-powered sawmill.",
 		LineageKey:  "organic_extraction", LineageTier: 5, LineKey: "organic_extraction_wood",
 		WorkerDomain: "lumber", WorkerCapacity: 6,
-		EpochKey: "iron_era", OutputResource: "wood",
+		OutputResource: "wood",
 	})
 	// tier 6 — renaissance_age  rate=12.80  output=coal
 	b = append(b, BuildingDef{
@@ -105,7 +105,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Early coal extraction for industry.",
 		LineageKey:  "organic_extraction", LineageTier: 6, LineKey: "organic_extraction_coal",
 		WorkerDomain: "lumber", WorkerCapacity: 7,
-		EpochKey: "steel_era", OutputResource: "coal",
+		OutputResource: "coal",
 	})
 	// tier 7 — colonial_age  rate=25.60  output=coal
 	b = append(b, BuildingDef{
@@ -120,7 +120,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Organized coal extraction and processing.",
 		LineageKey:  "organic_extraction", LineageTier: 7, LineKey: "organic_extraction_coal",
 		WorkerDomain: "lumber", WorkerCapacity: 8,
-		EpochKey: "steel_era", OutputResource: "coal",
+		OutputResource: "coal",
 	})
 	// tier 8 — industrial_age  rate=51.20  output=coal
 	b = append(b, BuildingDef{
@@ -133,7 +133,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Steam-powered coal extraction plant.",
 		LineageKey:  "organic_extraction", LineageTier: 8, LineKey: "organic_extraction_coal",
 		WorkerDomain: "lumber", WorkerCapacity: 10,
-		EpochKey: "steel_era", OutputResource: "coal",
+		OutputResource: "coal",
 	})
 	// tier 9 — victorian_age  rate=102.40  output=oil
 	b = append(b, BuildingDef{
@@ -146,7 +146,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Early oil extraction derrick.",
 		LineageKey:  "organic_extraction", LineageTier: 9, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 10,
-		EpochKey: "electric_era", OutputResource: "oil",
+		OutputResource: "oil",
 	})
 	// tier 10 — electric_age  rate=204.80  output=oil
 	b = append(b, BuildingDef{
@@ -159,7 +159,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Electrified oil field operations.",
 		LineageKey:  "organic_extraction", LineageTier: 10, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 12,
-		EpochKey: "electric_era", OutputResource: "oil",
+		OutputResource: "oil",
 	})
 	// tier 11 — atomic_age  rate=409.60  output=oil
 	b = append(b, BuildingDef{
@@ -172,7 +172,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Advanced petroleum refinery.",
 		LineageKey:  "organic_extraction", LineageTier: 11, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 12,
-		EpochKey: "electric_era", OutputResource: "oil",
+		OutputResource: "oil",
 	})
 	// tier 12 — modern_age  rate=819.20  output=oil
 	b = append(b, BuildingDef{
@@ -187,7 +187,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Offshore AI-monitored oil platform.",
 		LineageKey:  "organic_extraction", LineageTier: 12, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 14,
-		EpochKey: "digital_era", OutputResource: "oil",
+		OutputResource: "oil",
 	})
 	// tier 13 — information_age  rate=1638.40  output=oil
 	b = append(b, BuildingDef{
@@ -200,7 +200,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "AI-optimized smart petroleum refinery.",
 		LineageKey:  "organic_extraction", LineageTier: 13, LineKey: "organic_extraction_oil",
 		WorkerDomain: "lumber", WorkerCapacity: 15,
-		EpochKey: "digital_era", OutputResource: "oil",
+		OutputResource: "oil",
 	})
 	// tier 14 — digital_age  rate=3276.80  output=nanobots
 	b = append(b, BuildingDef{
@@ -213,7 +213,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Digital-biological nanofabrication.",
 		LineageKey:  "organic_extraction", LineageTier: 14, LineKey: "organic_extraction_nanobots",
 		WorkerDomain: "lumber", WorkerCapacity: 16,
-		EpochKey: "digital_era", OutputResource: "nanobots",
+		OutputResource: "nanobots",
 	})
 	// tier 15 — cyberpunk_age  rate=6553.60  output=nanobots
 	b = append(b, BuildingDef{
@@ -226,7 +226,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Vat-grown nanobot manufacturing.",
 		LineageKey:  "organic_extraction", LineageTier: 15, LineKey: "organic_extraction_nanobots",
 		WorkerDomain: "lumber", WorkerCapacity: 18,
-		EpochKey: "neon_era", OutputResource: "nanobots",
+		OutputResource: "nanobots",
 	})
 	// tier 16 — fusion_age  rate=13107.20  output=nanobots
 	b = append(b, BuildingDef{
@@ -239,7 +239,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Plasma-powered molecular synthesis.",
 		LineageKey:  "organic_extraction", LineageTier: 16, LineKey: "organic_extraction_nanobots",
 		WorkerDomain: "lumber", WorkerCapacity: 20,
-		EpochKey: "neon_era", OutputResource: "nanobots",
+		OutputResource: "nanobots",
 	})
 	// tier 17 — space_age  rate=26214.40  output=quantum_flux
 	b = append(b, BuildingDef{
@@ -252,7 +252,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Quantum-state organic matter extraction.",
 		LineageKey:  "organic_extraction", LineageTier: 17, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 20,
-		EpochKey: "neon_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 	// tier 18 — interstellar_age  rate=52428.80  output=quantum_flux
 	b = append(b, BuildingDef{
@@ -265,7 +265,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Weaves reality matter into quantum flux.",
 		LineageKey:  "organic_extraction", LineageTier: 18, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 	// tier 19 — galactic_age  rate=104857.60  output=quantum_flux
 	b = append(b, BuildingDef{
@@ -278,7 +278,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Galactic-scale cosmic organic works.",
 		LineageKey:  "organic_extraction", LineageTier: 19, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 	// tier 20 — quantum_age  rate=209715.20  output=quantum_flux
 	b = append(b, BuildingDef{
@@ -293,7 +293,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		Description: "Harvests raw quantum flux from reality itself.",
 		LineageKey:  "organic_extraction", LineageTier: 20, LineKey: "organic_extraction_quantum_flux",
 		WorkerDomain: "lumber", WorkerCapacity: 30,
-		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 
 	// =========================================================================
@@ -314,7 +314,6 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		RequiredAge:  "modern_age",
 		Description:  "Molecular assembly line printing self-organizing nanobots.",
 		WorkerDomain: "engineering", WorkerCapacity: 12,
-		EpochKey: "digital_era",
 	})
 
 	return b

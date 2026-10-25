@@ -24,7 +24,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Elders share stories around the fire.",
 		LineageKey:  "knowledge", LineageTier: 0,
 		Scholars: 2,
-		EpochKey: "stone_era",
 	})
 	// tier 1 — stone_age  rate=0.6
 	b = append(b, BuildingDef{
@@ -37,7 +36,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "A hall where tribal elders convene.",
 		LineageKey:  "knowledge", LineageTier: 1,
 		Scholars: 2,
-		EpochKey: "stone_era",
 	})
 	// tier 2 — bronze_age  rate=2.0
 	b = append(b, BuildingDef{
@@ -50,7 +48,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Scribes copy and preserve texts.",
 		LineageKey:  "knowledge", LineageTier: 2,
 		Scholars: 3,
-		EpochKey: "stone_era",
 	})
 	// tier 3 — iron_age  rate=1.6
 	b = append(b, BuildingDef{
@@ -63,7 +60,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Open marketplace of ideas.",
 		LineageKey:  "knowledge", LineageTier: 3,
 		Scholars: 3,
-		EpochKey: "iron_era",
 	})
 	// tier 4 — classical_age  rate=3.2
 	b = append(b, BuildingDef{
@@ -76,7 +72,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Repository of written knowledge.",
 		LineageKey:  "knowledge", LineageTier: 4,
 		Scholars: 4,
-		EpochKey: "iron_era",
 	})
 	// tier 5 — medieval_age  rate=1.6
 	b = append(b, BuildingDef{
@@ -89,7 +84,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Monks preserve and copy scholarly works.",
 		LineageKey:  "knowledge", LineageTier: 5,
 		Scholars: 4,
-		EpochKey: "iron_era",
 	})
 	// tier 6 — renaissance_age  rate=3.2
 	b = append(b, BuildingDef{
@@ -102,7 +96,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Higher learning for the intellectual elite.",
 		LineageKey:  "knowledge", LineageTier: 6,
 		Scholars: 5,
-		EpochKey: "steel_era",
 	})
 	// tier 7 — colonial_age  rate=6.4
 	b = append(b, BuildingDef{
@@ -115,7 +108,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Scientific inquiry into the natural world.",
 		LineageKey:  "knowledge", LineageTier: 7,
 		Scholars: 5,
-		EpochKey: "steel_era",
 	})
 	// tier 8 — industrial_age  rate=12.8
 	b = append(b, BuildingDef{
@@ -128,7 +120,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Formal scientific research institute.",
 		LineageKey:  "knowledge", LineageTier: 8,
 		Scholars: 6,
-		EpochKey: "steel_era",
 	})
 	// tier 9 — victorian_age  rate=25.6
 	b = append(b, BuildingDef{
@@ -141,7 +132,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Victorian era academy of sciences.",
 		LineageKey:  "knowledge", LineageTier: 9,
 		Scholars: 6,
-		EpochKey: "electric_era",
 	})
 	// tier 10 — electric_age  rate=51.2
 	b = append(b, BuildingDef{
@@ -154,7 +144,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Electrified physics research laboratory.",
 		LineageKey:  "knowledge", LineageTier: 10,
 		Scholars: 7,
-		EpochKey: "electric_era",
 	})
 	// tier 11 — atomic_age  rate=102.4
 	b = append(b, BuildingDef{
@@ -167,7 +156,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Multi-disciplinary atomic-age research campus.",
 		LineageKey:  "knowledge", LineageTier: 11,
 		Scholars: 7,
-		EpochKey: "electric_era",
 	})
 	// tier 12 — modern_age  rate=204.8
 	b = append(b, BuildingDef{
@@ -180,7 +168,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Elite group of problem-solvers.",
 		LineageKey:  "knowledge", LineageTier: 12,
 		Scholars: 8,
-		EpochKey: "digital_era",
 	})
 	// tier 13 — information_age  rate=409.6
 	b = append(b, BuildingDef{
@@ -193,7 +180,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Startup-style innovation accelerator.",
 		LineageKey:  "knowledge", LineageTier: 13,
 		Scholars: 8,
-		EpochKey: "digital_era",
 	})
 	// tier 14 — digital_age  rate=819.2
 	b = append(b, BuildingDef{
@@ -206,7 +192,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Artificial intelligence drives research.",
 		LineageKey:  "knowledge", LineageTier: 14,
 		Scholars: 10,
-		EpochKey: "digital_era",
 	})
 	// tier 15 — cyberpunk_age  rate=1638.4
 	b = append(b, BuildingDef{
@@ -219,7 +204,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Neural-interface enhanced research.",
 		LineageKey:  "knowledge", LineageTier: 15,
 		Scholars: 10,
-		EpochKey: "neon_era",
 	})
 	// tier 16 — fusion_age  rate=3276.8
 	b = append(b, BuildingDef{
@@ -232,7 +216,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Theoretical physics at fusion-era scale.",
 		LineageKey:  "knowledge", LineageTier: 16,
 		Scholars: 12,
-		EpochKey: "neon_era",
 	})
 	// tier 17 — space_age  rate=6553.6
 	b = append(b, BuildingDef{
@@ -245,7 +228,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Observes the far reaches of the cosmos.",
 		LineageKey:  "knowledge", LineageTier: 17,
 		Scholars: 12,
-		EpochKey: "neon_era",
 	})
 	// tier 18 — interstellar_age  rate=13107.2
 	b = append(b, BuildingDef{
@@ -258,7 +240,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Studies alien civilizations and xeno-science.",
 		LineageKey:  "knowledge", LineageTier: 18,
 		Scholars: 15,
-		EpochKey: "cosmic_era",
 	})
 	// tier 19 — galactic_age  rate=26214.4
 	b = append(b, BuildingDef{
@@ -271,7 +252,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Galactic-scale scientific research station.",
 		LineageKey:  "knowledge", LineageTier: 19,
 		Scholars: 15,
-		EpochKey: "cosmic_era",
 	})
 	// tier 20 — quantum_age  rate=52428.8
 	b = append(b, BuildingDef{
@@ -284,7 +264,6 @@ func buildingsLineageKnowledge() []BuildingDef {
 		Description: "Learns from the fabric of reality itself.",
 		LineageKey:  "knowledge", LineageTier: 20,
 		Scholars: 20,
-		EpochKey: "cosmic_era",
 	})
 
 	// A knowledge building researches at full rate up to the count its gate

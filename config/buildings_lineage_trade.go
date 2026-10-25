@@ -23,7 +23,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "A trading market for barter and coin.",
 		LineageKey:  "trade", LineageTier: 0, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 3,
-		EpochKey: "stone_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 1 — iron_age  rate=0.10
 	b = append(b, BuildingDef{
@@ -40,7 +40,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "A regional trading post.",
 		LineageKey:  "trade", LineageTier: 1, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 3,
-		EpochKey: "iron_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 2 — classical_age  rate=0.20
 	b = append(b, BuildingDef{
@@ -53,7 +53,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "An urban merchant district.",
 		LineageKey:  "trade", LineageTier: 2, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 4,
-		EpochKey: "iron_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 3 — medieval_age  rate=0.40
 	b = append(b, BuildingDef{
@@ -66,7 +66,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Merchant guilds organize regional trade.",
 		LineageKey:  "trade", LineageTier: 3, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 4,
-		EpochKey: "iron_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 4 — renaissance_age  rate=0.80
 	b = append(b, BuildingDef{
@@ -79,7 +79,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "A commodity exchange for international trade.",
 		LineageKey:  "trade", LineageTier: 4, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 5 — colonial_age  rate=1.60
 	b = append(b, BuildingDef{
@@ -92,7 +92,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "A colonial maritime trade port.",
 		LineageKey:  "trade", LineageTier: 5, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 6 — industrial_age  rate=3.20
 	b = append(b, BuildingDef{
@@ -105,7 +105,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Industrial-era stock exchange.",
 		LineageKey:  "trade", LineageTier: 6, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 6,
-		EpochKey: "steel_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 7 — victorian_age  rate=6.40
 	b = append(b, BuildingDef{
@@ -118,7 +118,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "A Victorian national bank.",
 		LineageKey:  "trade", LineageTier: 7, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 6,
-		EpochKey: "electric_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 8 — electric_age  rate=12.80
 	b = append(b, BuildingDef{
@@ -131,7 +131,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Electric-age financial district.",
 		LineageKey:  "trade", LineageTier: 8, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 7,
-		EpochKey: "electric_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 9 — atomic_age  rate=25.60
 	b = append(b, BuildingDef{
@@ -146,7 +146,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Multinational corporate headquarters.",
 		LineageKey:  "trade", LineageTier: 9, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 7,
-		EpochKey: "electric_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 10 — modern_age  rate=51.20
 	b = append(b, BuildingDef{
@@ -159,7 +159,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Global investment and wealth management.",
 		LineageKey:  "trade", LineageTier: 10, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 8,
-		EpochKey: "digital_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 11 — information_age  rate=102.40
 	b = append(b, BuildingDef{
@@ -172,7 +172,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Digital venture capital hub.",
 		LineageKey:  "trade", LineageTier: 11, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 8,
-		EpochKey: "digital_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 12 — digital_age  rate=204.80
 	b = append(b, BuildingDef{
@@ -185,7 +185,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Decentralized digital currency exchange.",
 		LineageKey:  "trade", LineageTier: 12, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 10,
-		EpochKey: "digital_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 13 — cyberpunk_age  rate=409.60
 	b = append(b, BuildingDef{
@@ -201,7 +201,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Underground black market network.",
 		LineageKey:  "trade", LineageTier: 13, LineKey: "trade_crypto",
 		WorkerDomain: "trade", WorkerCapacity: 10,
-		EpochKey: "neon_era", OutputResource: "crypto",
+		OutputResource: "crypto",
 	})
 	// tier 14 — fusion_age  rate=819.20
 	b = append(b, BuildingDef{
@@ -215,7 +215,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description:  "Interplanetary energy trading exchange.",
 		LineageKey:   "trade", LineageTier: 14, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 12,
-		EpochKey: "neon_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 15 — space_age  rate=1638.40
 	b = append(b, BuildingDef{
@@ -228,7 +228,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Mineral trading hub in the asteroid belt.",
 		LineageKey:  "trade", LineageTier: 15, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 12,
-		EpochKey: "neon_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 16 — interstellar_age  rate=3276.80
 	b = append(b, BuildingDef{
@@ -241,7 +241,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Interstellar trade network hub.",
 		LineageKey:  "trade", LineageTier: 16, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 15,
-		EpochKey: "cosmic_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 17 — galactic_age  rate=6553.60
 	b = append(b, BuildingDef{
@@ -254,7 +254,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Galaxy-spanning stellar exchange.",
 		LineageKey:  "trade", LineageTier: 17, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 15,
-		EpochKey: "cosmic_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 18 — quantum_age  rate=13107.20
 	b = append(b, BuildingDef{
@@ -267,7 +267,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description: "Trades across all probable timelines.",
 		LineageKey:  "trade", LineageTier: 18, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 18,
-		EpochKey: "cosmic_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 	// tier 19 — transcendent_age  rate=26214.40
 	b = append(b, BuildingDef{
@@ -281,7 +281,7 @@ func buildingsLineageTrade() []BuildingDef {
 		Description:  "Omniversal trading bazaar beyond spacetime.",
 		LineageKey:   "trade", LineageTier: 19, LineKey: "trade_gold",
 		WorkerDomain: "trade", WorkerCapacity: 20,
-		EpochKey: "cosmic_era", OutputResource: "gold",
+		OutputResource: "gold",
 	})
 
 	return b

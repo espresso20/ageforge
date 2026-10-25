@@ -27,7 +27,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description:  "A furnace that smelts iron.",
 		LineageKey:   "metallurgy", LineageTier: 0, LineKey: "metallurgy_iron",
 		WorkerDomain: "metallurgy", WorkerCapacity: 4,
-		EpochKey: "iron_era", OutputResource: "iron",
+		OutputResource: "iron",
 	})
 	// tier 1 — classical_age  output=iron  rate=0.20
 	b = append(b, BuildingDef{
@@ -41,7 +41,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description:  "A proper forge for working iron.",
 		LineageKey:   "metallurgy", LineageTier: 1, LineKey: "metallurgy_iron",
 		WorkerDomain: "metallurgy", WorkerCapacity: 4,
-		EpochKey: "iron_era", OutputResource: "iron",
+		OutputResource: "iron",
 	})
 	// tier 2 — medieval_age  output=iron  rate=0.40
 	b = append(b, BuildingDef{
@@ -54,7 +54,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Specialist iron trade and metalworking.",
 		LineageKey:  "metallurgy", LineageTier: 2, LineKey: "metallurgy_iron",
 		WorkerDomain: "metallurgy", WorkerCapacity: 5,
-		EpochKey: "iron_era", OutputResource: "iron",
+		OutputResource: "iron",
 	})
 	// tier 3 — renaissance_age  output=steel  rate=0.50
 	// Resource pivot: iron → steel. Validator shows LOW boost (iron:0.40 → steel:0.50) — intentional.
@@ -70,7 +70,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description:  "Crucible furnaces that turn out steel.",
 		LineageKey:   "metallurgy", LineageTier: 3, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 4 — colonial_age  output=steel  rate=1.0
 	b = append(b, BuildingDef{
@@ -84,7 +84,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description:  "Colonial iron works processing steel.",
 		LineageKey:   "metallurgy", LineageTier: 4, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 6,
-		EpochKey: "steel_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 5 — industrial_age  output=steel  rate=2.0
 	b = append(b, BuildingDef{
@@ -97,7 +97,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Industrial-scale steel production.",
 		LineageKey:  "metallurgy", LineageTier: 5, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 7,
-		EpochKey: "steel_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 6 — victorian_age  output=steel  rate=4.0
 	b = append(b, BuildingDef{
@@ -113,7 +113,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Bessemer converter for mass steel and iron production.",
 		LineageKey:  "metallurgy", LineageTier: 6, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 8,
-		EpochKey: "electric_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 7 — electric_age  output=steel  rate=8.0
 	b = append(b, BuildingDef{
@@ -129,7 +129,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Electric arc furnace for high-grade steel and iron.",
 		LineageKey:  "metallurgy", LineageTier: 7, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 9,
-		EpochKey: "electric_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 8 — atomic_age  output=steel  rate=16.0
 	b = append(b, BuildingDef{
@@ -145,7 +145,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Atomic-era advanced alloy manufacturing.",
 		LineageKey:  "metallurgy", LineageTier: 8, LineKey: "metallurgy_steel",
 		WorkerDomain: "metallurgy", WorkerCapacity: 10,
-		EpochKey: "electric_era", OutputResource: "steel",
+		OutputResource: "steel",
 	})
 	// tier 9 — modern_age  output=titanium  rate=0.50 (reset for new metal)
 	// Resource pivot: steel → titanium. Validator shows 0.03x (steel:16 → titanium:0.50) — intentional.
@@ -163,7 +163,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Refines titanium and steel for precision work.",
 		LineageKey:  "metallurgy", LineageTier: 9, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 11,
-		EpochKey: "digital_era", OutputResource: "titanium",
+		OutputResource: "titanium",
 	})
 	// tier 10 — information_age  output=titanium  rate=1.0
 	b = append(b, BuildingDef{
@@ -179,7 +179,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Precision aerospace-grade titanium and steel foundry.",
 		LineageKey:  "metallurgy", LineageTier: 10, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 12,
-		EpochKey: "digital_era", OutputResource: "titanium",
+		OutputResource: "titanium",
 	})
 	// tier 11 — digital_age  output=titanium  rate=2.0
 	b = append(b, BuildingDef{
@@ -195,7 +195,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Nano-scale titanium and steel alloy production.",
 		LineageKey:  "metallurgy", LineageTier: 11, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 13,
-		EpochKey: "digital_era", OutputResource: "titanium",
+		OutputResource: "titanium",
 	})
 	// tier 12 — cyberpunk_age  output=dark_matter  rate=1.0 (new material)
 	// Resource pivot: titanium → dark_matter. Validator shows 0.50x (titanium:2.0 → dark_matter:1.0) — intentional.
@@ -213,7 +213,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Distills dark matter and steel from the void.",
 		LineageKey:  "metallurgy", LineageTier: 12, LineKey: "metallurgy_dark_matter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 14,
-		EpochKey: "neon_era", OutputResource: "dark_matter",
+		OutputResource: "dark_matter",
 	})
 	// tier 13 — fusion_age  output=dark_matter  rate=2.0
 	b = append(b, BuildingDef{
@@ -229,7 +229,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Plasma-forged exotic matter and steel manufacturing.",
 		LineageKey:  "metallurgy", LineageTier: 13, LineKey: "metallurgy_dark_matter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 16,
-		EpochKey: "neon_era", OutputResource: "dark_matter",
+		OutputResource: "dark_matter",
 	})
 	// tier 14 — space_age  output=titanium (rate set by the Payback Rule)
 	// note: was dark_matter at 4/tick, a resource that only unlocks in the
@@ -251,7 +251,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Zero-gravity orbital titanium and steel refinery.",
 		LineageKey:  "metallurgy", LineageTier: 14, LineKey: "metallurgy_titanium",
 		WorkerDomain: "metallurgy", WorkerCapacity: 18,
-		EpochKey: "neon_era", OutputResource: "titanium",
+		OutputResource: "titanium",
 	})
 	// tier 15 — interstellar_age  output=antimatter  rate=2.0 (new material)
 	// Resource pivot: titanium → antimatter. Validator shows 0.50x (titanium:4.0 → antimatter:2.0) — intentional.
@@ -269,7 +269,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Forges antimatter and titanium in magnetic containment.",
 		LineageKey:  "metallurgy", LineageTier: 15, LineKey: "metallurgy_antimatter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 20,
-		EpochKey: "cosmic_era", OutputResource: "antimatter",
+		OutputResource: "antimatter",
 	})
 	// tier 16 — galactic_age  output=antimatter  rate=4.0
 	b = append(b, BuildingDef{
@@ -285,7 +285,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description: "Stellar-scale antimatter and titanium metallurgy.",
 		LineageKey:  "metallurgy", LineageTier: 16, LineKey: "metallurgy_antimatter",
 		WorkerDomain: "metallurgy", WorkerCapacity: 22,
-		EpochKey: "cosmic_era", OutputResource: "antimatter",
+		OutputResource: "antimatter",
 	})
 	// tier 17 — quantum_age  output=quantum_flux  rate=4.0
 	// Resource pivot: antimatter → quantum_flux. Validator shows 1.00x (antimatter:4.0 → quantum_flux:4.0) — intentional.
@@ -301,7 +301,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		Description:  "Quantum-state metalworking across dimensions.",
 		LineageKey:   "metallurgy", LineageTier: 17, LineKey: "metallurgy_quantum_flux",
 		WorkerDomain: "metallurgy", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
+		OutputResource: "quantum_flux",
 	})
 
 	return b

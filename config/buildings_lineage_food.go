@@ -25,7 +25,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Foragers gather berries and roots.",
 		LineageKey:  "food", LineageTier: 0,
 		WorkerDomain: "food", WorkerCapacity: 3,
-		EpochKey: "stone_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 1 — stone_age  rate=1.5 (raised with tier 0)
 	// Rate raised from 0.10 → 1.00 to maintain ×2 per tier vs gathering_camp (0.50).
@@ -40,7 +40,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Organized foraging post.",
 		LineageKey:  "food", LineageTier: 1,
 		WorkerDomain: "food", WorkerCapacity: 4,
-		EpochKey: "stone_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 2 — bronze_age  rate=2.00
 	b = append(b, BuildingDef{
@@ -53,7 +53,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Cultivated fields produce steady food.",
 		LineageKey:  "food", LineageTier: 2,
 		WorkerDomain: "food", WorkerCapacity: 5,
-		EpochKey: "stone_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 3 — iron_age  rate=4.00
 	b = append(b, BuildingDef{
@@ -66,7 +66,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Iron-tool farming with irrigation.",
 		LineageKey:  "food", LineageTier: 3,
 		WorkerDomain: "food", WorkerCapacity: 5,
-		EpochKey: "iron_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 4 — classical_age  rate=8.00
 	b = append(b, BuildingDef{
@@ -79,7 +79,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "A large estate with managed farmlands.",
 		LineageKey:  "food", LineageTier: 4,
 		WorkerDomain: "food", WorkerCapacity: 6,
-		EpochKey: "iron_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 5 — medieval_age  rate=16.00
 	b = append(b, BuildingDef{
@@ -92,7 +92,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "A lord's demesne with serfs and crop rotation.",
 		LineageKey:  "food", LineageTier: 5,
 		WorkerDomain: "food", WorkerCapacity: 6,
-		EpochKey: "iron_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 6 — renaissance_age  rate=32.00
 	b = append(b, BuildingDef{
@@ -105,7 +105,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Scientific farming and market gardens.",
 		LineageKey:  "food", LineageTier: 6,
 		WorkerDomain: "food", WorkerCapacity: 7,
-		EpochKey: "steel_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 7 — colonial_age  rate=64.00
 	b = append(b, BuildingDef{
@@ -118,7 +118,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Large-scale colonial plantation.",
 		LineageKey:  "food", LineageTier: 7,
 		WorkerDomain: "food", WorkerCapacity: 8,
-		EpochKey: "steel_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 8 — industrial_age  rate=128.00
 	b = append(b, BuildingDef{
@@ -131,7 +131,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Industrial-scale agricultural works.",
 		LineageKey:  "food", LineageTier: 8,
 		WorkerDomain: "food", WorkerCapacity: 10,
-		EpochKey: "steel_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 9 — victorian_age  rate=256.00
 	b = append(b, BuildingDef{
@@ -144,7 +144,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Steam and oil-powered mechanized farming.",
 		LineageKey:  "food", LineageTier: 9,
 		WorkerDomain: "food", WorkerCapacity: 10,
-		EpochKey: "electric_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 10 — electric_age  rate=512.00
 	b = append(b, BuildingDef{
@@ -157,7 +157,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Electrified industrial farming complex.",
 		LineageKey:  "food", LineageTier: 10,
 		WorkerDomain: "food", WorkerCapacity: 12,
-		EpochKey: "electric_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 11 — atomic_age  rate=1024.00
 	b = append(b, BuildingDef{
@@ -170,7 +170,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Atomic-age agricultural mega-complex.",
 		LineageKey:  "food", LineageTier: 11,
 		WorkerDomain: "food", WorkerCapacity: 12,
-		EpochKey: "electric_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 12 — modern_age  rate=2048.00
 	b = append(b, BuildingDef{
@@ -183,7 +183,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "AI-optimized modern agriculture.",
 		LineageKey:  "food", LineageTier: 12,
 		WorkerDomain: "food", WorkerCapacity: 14,
-		EpochKey: "digital_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 13 — information_age  rate=4096.00
 	b = append(b, BuildingDef{
@@ -197,7 +197,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description:  "Sensor-driven smart farming.",
 		LineageKey:   "food", LineageTier: 13,
 		WorkerDomain: "food", WorkerCapacity: 15,
-		EpochKey: "digital_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 14 — digital_age  rate=8192.00
 	b = append(b, BuildingDef{
@@ -210,7 +210,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Nanotechnology-based food synthesis.",
 		LineageKey:  "food", LineageTier: 14,
 		WorkerDomain: "food", WorkerCapacity: 16,
-		EpochKey: "digital_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 15 — cyberpunk_age  rate=16384.00
 	b = append(b, BuildingDef{
@@ -223,7 +223,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Vat-grown protein synthesis at industrial scale.",
 		LineageKey:  "food", LineageTier: 15,
 		WorkerDomain: "food", WorkerCapacity: 18,
-		EpochKey: "neon_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 16 — fusion_age  rate=32768.00
 	b = append(b, BuildingDef{
@@ -236,7 +236,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Plasma-powered bio reactor food production.",
 		LineageKey:  "food", LineageTier: 16,
 		WorkerDomain: "food", WorkerCapacity: 20,
-		EpochKey: "neon_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 17 — space_age  rate=65536.00
 	b = append(b, BuildingDef{
@@ -249,7 +249,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Zero-gravity hydroponic growing bays.",
 		LineageKey:  "food", LineageTier: 17,
 		WorkerDomain: "food", WorkerCapacity: 20,
-		EpochKey: "neon_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 18 — interstellar_age  rate=131072.00
 	b = append(b, BuildingDef{
@@ -262,7 +262,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Matter-to-protein synthesizer.",
 		LineageKey:  "food", LineageTier: 18,
 		WorkerDomain: "food", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 19 — galactic_age  rate=262144.00
 	b = append(b, BuildingDef{
@@ -275,7 +275,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Converts raw matter into any food type.",
 		LineageKey:  "food", LineageTier: 19,
 		WorkerDomain: "food", WorkerCapacity: 25,
-		EpochKey: "cosmic_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 	// tier 20 — quantum_age  rate=524288.00
 	b = append(b, BuildingDef{
@@ -288,7 +288,7 @@ func buildingsLineageFood() []BuildingDef {
 		Description: "Quantum probability manipulation to grow food.",
 		LineageKey:  "food", LineageTier: 20,
 		WorkerDomain: "food", WorkerCapacity: 30,
-		EpochKey: "cosmic_era", OutputResource: "food",
+		OutputResource: "food",
 	})
 
 	return b

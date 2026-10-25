@@ -50,7 +50,6 @@ type BuildingDef struct {
 	LineKey        string // one-resource line, set where a lineage changes resource (e.g. "organic_extraction_wood"); "" = the lineage is the line; read via Line()
 	WorkerDomain   string // worker domain key for assignment (e.g. "food", "knowledge"); "" = no workers
 	WorkerCapacity int    // max workers assignable per individual building instance; 0 = not applicable
-	EpochKey       string // epoch this building belongs to (e.g. "stone_era", "iron_era")
 	OutputResource string // primary resource produced; used by the engine to remap lineage output on age transition
 	// Scholars is the scholars one copy of a knowledge building comes with
 	// (scholars.go in the rules): the crew size the building had when it was
@@ -68,7 +67,7 @@ type BuildingDef struct {
 }
 
 // baseBuildingsRaw returns only the storage and wonder BuildingDef entries,
-// without economy-redesign metadata (lineage, worker domain, epoch key).
+// without economy-redesign metadata (lineage, worker domain).
 // These definitions are merged with buildingMeta() in BaseBuildings().
 // Production/housing/military buildings are now defined in the 13 lineage files
 // accessed via NewProductionBuildings() and should not be added here.
@@ -701,7 +700,6 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredTech: "embassies",
 			Description:  "A diplomatic embassy.",
 			WorkerDomain: "trade", WorkerCapacity: 5,
-			EpochKey: "steel_era",
 		},
 		{
 			Name: "Grand Embassy", Key: "grand_embassy", Category: "diplomacy",
@@ -713,7 +711,6 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredTech: "concert_of_nations",
 			Description:  "A grand diplomatic complex.",
 			WorkerDomain: "trade", WorkerCapacity: 8,
-			EpochKey: "steel_era",
 		},
 		// The Geographic Society is the exploration arm of the foreign service: it
 		// keeps standing survey parties on the books and sends them out on its own
@@ -738,20 +735,18 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredTech: "geographic_societies",
 			Description:  "A chartered society of surveyors and cartographers. Sends out scouting expeditions on its own. More societies and more workers shorten the wait (8 workers).",
 			WorkerDomain: "military", WorkerCapacity: 8,
-			EpochKey: "steel_era",
 		},
 	}
 }
 
 // buildingMetaEntry holds the economy-redesign metadata for a single building.
 // It supplements the legacy BuildingDef entries in baseBuildingsRaw() which
-// were defined before lineage/epoch metadata existed.
+// were defined before lineage metadata existed.
 type buildingMetaEntry struct {
 	LineageKey     string
 	LineageTier    int
 	WorkerDomain   string
 	WorkerCapacity int
-	EpochKey       string
 	OutputResource string
 }
 
@@ -764,56 +759,54 @@ type buildingMetaEntry struct {
 // Worker domains: food, lumber, masonry, faith, military, trade, engineering,
 //
 //	metallurgy, energy, hacker, astronaut  (culture_arts has no domain)
-//
-// Epoch keys: stone_era, iron_era, steel_era, electric_era, digital_era, neon_era, cosmic_era
 func buildingMeta() map[string]buildingMetaEntry {
 	return map[string]buildingMetaEntry{
 		// ── STORAGE lineage (no workers, no output resource) ─────────────────────
-		"stash":              {LineageKey: "storage", LineageTier: 0, EpochKey: "stone_era"},
-		"storage_pit":        {LineageKey: "storage", LineageTier: 1, EpochKey: "stone_era"},
-		"warehouse":          {LineageKey: "storage", LineageTier: 2, EpochKey: "stone_era"},
-		"granary":            {LineageKey: "storage", LineageTier: 3, EpochKey: "iron_era"},
-		"keep":               {LineageKey: "storage", LineageTier: 4, EpochKey: "iron_era"},
-		"classical_vault":    {LineageKey: "storage", LineageTier: 5, EpochKey: "iron_era"},
-		"renaissance_vault":  {LineageKey: "storage", LineageTier: 6, EpochKey: "steel_era"},
-		"colonial_warehouse": {LineageKey: "storage", LineageTier: 7, EpochKey: "steel_era"},
-		"industrial_depot":   {LineageKey: "storage", LineageTier: 8, EpochKey: "steel_era"},
-		"victorian_vault":    {LineageKey: "storage", LineageTier: 9, EpochKey: "electric_era"},
-		"electric_warehouse": {LineageKey: "storage", LineageTier: 10, EpochKey: "electric_era"},
-		"atomic_vault":       {LineageKey: "storage", LineageTier: 11, EpochKey: "electric_era"},
-		"modern_depot":       {LineageKey: "storage", LineageTier: 12, EpochKey: "digital_era"},
-		"info_vault":         {LineageKey: "storage", LineageTier: 13, EpochKey: "digital_era"},
-		"digital_archive":    {LineageKey: "storage", LineageTier: 14, EpochKey: "digital_era"},
-		"cyber_vault":        {LineageKey: "storage", LineageTier: 15, EpochKey: "neon_era"},
-		"fusion_vault":       {LineageKey: "storage", LineageTier: 16, EpochKey: "neon_era"},
-		"orbital_depot":      {LineageKey: "storage", LineageTier: 17, EpochKey: "neon_era"},
-		"stellar_vault":      {LineageKey: "storage", LineageTier: 18, EpochKey: "cosmic_era"},
-		"galactic_vault":     {LineageKey: "storage", LineageTier: 19, EpochKey: "cosmic_era"},
-		"quantum_vault":      {LineageKey: "storage", LineageTier: 20, EpochKey: "cosmic_era"},
+		"stash":              {LineageKey: "storage", LineageTier: 0},
+		"storage_pit":        {LineageKey: "storage", LineageTier: 1},
+		"warehouse":          {LineageKey: "storage", LineageTier: 2},
+		"granary":            {LineageKey: "storage", LineageTier: 3},
+		"keep":               {LineageKey: "storage", LineageTier: 4},
+		"classical_vault":    {LineageKey: "storage", LineageTier: 5},
+		"renaissance_vault":  {LineageKey: "storage", LineageTier: 6},
+		"colonial_warehouse": {LineageKey: "storage", LineageTier: 7},
+		"industrial_depot":   {LineageKey: "storage", LineageTier: 8},
+		"victorian_vault":    {LineageKey: "storage", LineageTier: 9},
+		"electric_warehouse": {LineageKey: "storage", LineageTier: 10},
+		"atomic_vault":       {LineageKey: "storage", LineageTier: 11},
+		"modern_depot":       {LineageKey: "storage", LineageTier: 12},
+		"info_vault":         {LineageKey: "storage", LineageTier: 13},
+		"digital_archive":    {LineageKey: "storage", LineageTier: 14},
+		"cyber_vault":        {LineageKey: "storage", LineageTier: 15},
+		"fusion_vault":       {LineageKey: "storage", LineageTier: 16},
+		"orbital_depot":      {LineageKey: "storage", LineageTier: 17},
+		"stellar_vault":      {LineageKey: "storage", LineageTier: 18},
+		"galactic_vault":     {LineageKey: "storage", LineageTier: 19},
+		"quantum_vault":      {LineageKey: "storage", LineageTier: 20},
 
 		// ── WONDER lineage (no workers, max 1 each) ───────────────────────────────
-		"sacred_grove":         {LineageKey: "wonder", LineageTier: 0, EpochKey: "stone_era", OutputResource: "knowledge"},
-		"great_monolith":       {LineageKey: "wonder", LineageTier: 1, EpochKey: "stone_era", OutputResource: "knowledge"},
-		"stonehenge":           {LineageKey: "wonder", LineageTier: 2, EpochKey: "stone_era", OutputResource: "knowledge"},
-		"colosseum":            {LineageKey: "wonder", LineageTier: 3, EpochKey: "iron_era", OutputResource: "culture"},
-		"parthenon":            {LineageKey: "wonder", LineageTier: 4, EpochKey: "iron_era", OutputResource: "culture"},
-		"great_library":        {LineageKey: "wonder", LineageTier: 5, EpochKey: "iron_era", OutputResource: "knowledge"},
-		"sistine_chapel":       {LineageKey: "wonder", LineageTier: 6, EpochKey: "steel_era", OutputResource: "culture"},
-		"grand_lighthouse":     {LineageKey: "wonder", LineageTier: 7, EpochKey: "steel_era", OutputResource: "gold"},
-		"crystal_palace":       {LineageKey: "wonder", LineageTier: 8, EpochKey: "steel_era"},
-		"eiffel_tower":         {LineageKey: "wonder", LineageTier: 9, EpochKey: "electric_era", OutputResource: "culture"},
-		"hoover_dam":           {LineageKey: "wonder", LineageTier: 10, EpochKey: "electric_era", OutputResource: "electricity"},
-		"particle_accelerator": {LineageKey: "wonder", LineageTier: 11, EpochKey: "electric_era", OutputResource: "knowledge"},
-		"space_program":        {LineageKey: "wonder", LineageTier: 12, EpochKey: "digital_era", OutputResource: "knowledge"},
-		"global_network":       {LineageKey: "wonder", LineageTier: 13, EpochKey: "digital_era", OutputResource: "data"},
-		"world_simulation":     {LineageKey: "wonder", LineageTier: 14, EpochKey: "digital_era", OutputResource: "data"},
-		"neon_citadel":         {LineageKey: "wonder", LineageTier: 15, EpochKey: "neon_era", OutputResource: "crypto"},
-		"stellar_cradle":       {LineageKey: "wonder", LineageTier: 16, EpochKey: "neon_era", OutputResource: "plasma"},
-		"dyson_scaffold":       {LineageKey: "wonder", LineageTier: 17, EpochKey: "neon_era", OutputResource: "electricity"},
-		"warp_nexus":           {LineageKey: "wonder", LineageTier: 18, EpochKey: "cosmic_era", OutputResource: "dark_matter"},
-		"cosmic_beacon":        {LineageKey: "wonder", LineageTier: 19, EpochKey: "cosmic_era", OutputResource: "antimatter"},
-		"reality_anchor":       {LineageKey: "wonder", LineageTier: 20, EpochKey: "cosmic_era", OutputResource: "quantum_flux"},
-		"singularity_core":     {LineageKey: "wonder", LineageTier: 21, EpochKey: "cosmic_era", OutputResource: "quantum_flux"},
+		"sacred_grove":         {LineageKey: "wonder", LineageTier: 0, OutputResource: "knowledge"},
+		"great_monolith":       {LineageKey: "wonder", LineageTier: 1, OutputResource: "knowledge"},
+		"stonehenge":           {LineageKey: "wonder", LineageTier: 2, OutputResource: "knowledge"},
+		"colosseum":            {LineageKey: "wonder", LineageTier: 3, OutputResource: "culture"},
+		"parthenon":            {LineageKey: "wonder", LineageTier: 4, OutputResource: "culture"},
+		"great_library":        {LineageKey: "wonder", LineageTier: 5, OutputResource: "knowledge"},
+		"sistine_chapel":       {LineageKey: "wonder", LineageTier: 6, OutputResource: "culture"},
+		"grand_lighthouse":     {LineageKey: "wonder", LineageTier: 7, OutputResource: "gold"},
+		"crystal_palace":       {LineageKey: "wonder", LineageTier: 8},
+		"eiffel_tower":         {LineageKey: "wonder", LineageTier: 9, OutputResource: "culture"},
+		"hoover_dam":           {LineageKey: "wonder", LineageTier: 10, OutputResource: "electricity"},
+		"particle_accelerator": {LineageKey: "wonder", LineageTier: 11, OutputResource: "knowledge"},
+		"space_program":        {LineageKey: "wonder", LineageTier: 12, OutputResource: "knowledge"},
+		"global_network":       {LineageKey: "wonder", LineageTier: 13, OutputResource: "data"},
+		"world_simulation":     {LineageKey: "wonder", LineageTier: 14, OutputResource: "data"},
+		"neon_citadel":         {LineageKey: "wonder", LineageTier: 15, OutputResource: "crypto"},
+		"stellar_cradle":       {LineageKey: "wonder", LineageTier: 16, OutputResource: "plasma"},
+		"dyson_scaffold":       {LineageKey: "wonder", LineageTier: 17, OutputResource: "electricity"},
+		"warp_nexus":           {LineageKey: "wonder", LineageTier: 18, OutputResource: "dark_matter"},
+		"cosmic_beacon":        {LineageKey: "wonder", LineageTier: 19, OutputResource: "antimatter"},
+		"reality_anchor":       {LineageKey: "wonder", LineageTier: 20, OutputResource: "quantum_flux"},
+		"singularity_core":     {LineageKey: "wonder", LineageTier: 21, OutputResource: "quantum_flux"},
 	}
 }
 
@@ -841,7 +834,6 @@ func buildBase() ([]BuildingDef, []ColdStartCap) {
 			b.LineageTier = m.LineageTier
 			b.WorkerDomain = m.WorkerDomain
 			b.WorkerCapacity = m.WorkerCapacity
-			b.EpochKey = m.EpochKey
 			b.OutputResource = m.OutputResource
 		}
 		result = append(result, b)

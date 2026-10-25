@@ -28,7 +28,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "classical_age",
 		Description: "Open-air theater and culture hub.",
 		LineageKey:  "culture_arts", LineageTier: 0,
-		EpochKey: "iron_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 1 — medieval_age  rate=1.0
 	b = append(b, BuildingDef{
@@ -43,7 +43,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "medieval_age",
 		Description: "A lord's great hall for feasts and culture.",
 		LineageKey:  "culture_arts", LineageTier: 1,
-		EpochKey: "iron_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 2 — renaissance_age  rate=2.0
 	b = append(b, BuildingDef{
@@ -58,7 +58,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "renaissance_age",
 		Description: "Painters and sculptors create cultural works.",
 		LineageKey:  "culture_arts", LineageTier: 2,
-		EpochKey: "steel_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 3 — colonial_age  rate=4.0
 	b = append(b, BuildingDef{
@@ -73,7 +73,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "colonial_age",
 		Description: "Classical music and colonial culture.",
 		LineageKey:  "culture_arts", LineageTier: 3,
-		EpochKey: "steel_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 4 — industrial_age  rate=8.0
 	b = append(b, BuildingDef{
@@ -88,7 +88,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "industrial_age",
 		Description: "Grandest venue for opera and orchestral culture.",
 		LineageKey:  "culture_arts", LineageTier: 4,
-		EpochKey: "steel_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 5 — victorian_age  rate=15
 	b = append(b, BuildingDef{
@@ -103,7 +103,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "victorian_age",
 		Description: "A grand Victorian museum of arts and history.",
 		LineageKey:  "culture_arts", LineageTier: 5,
-		EpochKey: "electric_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 6 — electric_age  rate=30
 	b = append(b, BuildingDef{
@@ -118,7 +118,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "electric_age",
 		Description: "Broadcasts culture to the masses.",
 		LineageKey:  "culture_arts", LineageTier: 6,
-		EpochKey: "electric_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 7 — atomic_age  rate=60
 	b = append(b, BuildingDef{
@@ -133,7 +133,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "atomic_age",
 		Description: "Film and cinema spread cultural influence.",
 		LineageKey:  "culture_arts", LineageTier: 7,
-		EpochKey: "electric_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 8 — modern_age  rate=120
 	b = append(b, BuildingDef{
@@ -148,7 +148,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "modern_age",
 		Description: "Television studio broadcasting global culture.",
 		LineageKey:  "culture_arts", LineageTier: 8,
-		EpochKey: "digital_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 9 — information_age  rate=250
 	b = append(b, BuildingDef{
@@ -163,7 +163,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "information_age",
 		Description: "Digital media center for global cultural content.",
 		LineageKey:  "culture_arts", LineageTier: 9,
-		EpochKey: "digital_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 10 — digital_age  rate=500
 	b = append(b, BuildingDef{
@@ -178,7 +178,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "digital_age",
 		Description: "Virtual reality cultural experience studio.",
 		LineageKey:  "culture_arts", LineageTier: 10,
-		EpochKey: "digital_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 11 — cyberpunk_age  rate=1000
 	b = append(b, BuildingDef{
@@ -194,7 +194,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredTech: "holography",
 		Description:  "Full-immersion holographic cultural performances.",
 		LineageKey:   "culture_arts", LineageTier: 11,
-		EpochKey: "neon_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 12 — fusion_age  rate=2000
 	b = append(b, BuildingDef{
@@ -209,7 +209,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "fusion_age",
 		Description: "Neural-linked art creation at fusion scale.",
 		LineageKey:  "culture_arts", LineageTier: 12,
-		EpochKey: "neon_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 13 — space_age  rate=4000
 	b = append(b, BuildingDef{
@@ -224,7 +224,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "space_age",
 		Description: "Zero-gravity orbital art gallery.",
 		LineageKey:  "culture_arts", LineageTier: 13,
-		EpochKey: "neon_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 14 — interstellar_age  rate=8000
 	b = append(b, BuildingDef{
@@ -239,7 +239,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "interstellar_age",
 		Description: "A beacon broadcasting culture across star systems.",
 		LineageKey:  "culture_arts", LineageTier: 14,
-		EpochKey: "cosmic_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 15 — galactic_age  rate=16000
 	b = append(b, BuildingDef{
@@ -254,7 +254,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "galactic_age",
 		Description: "Archives of every civilization across the galaxy.",
 		LineageKey:  "culture_arts", LineageTier: 15,
-		EpochKey: "cosmic_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 	// tier 16 — quantum_age  rate=32000
 	b = append(b, BuildingDef{
@@ -269,7 +269,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		RequiredAge: "quantum_age",
 		Description: "Reshapes reality as a medium for art.",
 		LineageKey:  "culture_arts", LineageTier: 16,
-		EpochKey: "cosmic_era", OutputResource: "culture",
+		OutputResource: "culture",
 	})
 
 	return b

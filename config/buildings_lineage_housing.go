@@ -24,7 +24,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "primitive_age",
 		Description: "A crude shelter of sticks and leaves.",
 		LineageKey:  "housing", LineageTier: 0,
-		EpochKey: "stone_era",
 	})
 	// tier 1 — stone_age
 	b = append(b, BuildingDef{
@@ -36,7 +35,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "stone_age",
 		Description: "A communal longhouse.",
 		LineageKey:  "housing", LineageTier: 1,
-		EpochKey: "stone_era",
 	})
 	// tier 2 — bronze_age
 	b = append(b, BuildingDef{
@@ -48,7 +46,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "bronze_age",
 		Description: "A sturdy family dwelling.",
 		LineageKey:  "housing", LineageTier: 2,
-		EpochKey: "stone_era",
 	})
 	// tier 3 — iron_age
 	b = append(b, BuildingDef{
@@ -60,7 +57,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "iron_age",
 		Description: "A multi-floor townhouse.",
 		LineageKey:  "housing", LineageTier: 3,
-		EpochKey: "iron_era",
 	})
 	// tier 4 — classical_age
 	b = append(b, BuildingDef{
@@ -72,7 +68,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "classical_age",
 		Description: "An elegant classical villa.",
 		LineageKey:  "housing", LineageTier: 4,
-		EpochKey: "iron_era",
 	})
 	// tier 5 — medieval_age
 	b = append(b, BuildingDef{
@@ -84,7 +79,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "medieval_age",
 		Description: "A lord's country manor.",
 		LineageKey:  "housing", LineageTier: 5,
-		EpochKey: "iron_era",
 	})
 	// tier 6 — renaissance_age
 	b = append(b, BuildingDef{
@@ -96,7 +90,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "renaissance_age",
 		Description: "A grand estate with grounds.",
 		LineageKey:  "housing", LineageTier: 6,
-		EpochKey: "steel_era",
 	})
 	// tier 7 — colonial_age
 	b = append(b, BuildingDef{
@@ -108,7 +101,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "colonial_age",
 		Description: "A colonial settlement block.",
 		LineageKey:  "housing", LineageTier: 7,
-		EpochKey: "steel_era",
 	})
 	// tier 8 — industrial_age
 	b = append(b, BuildingDef{
@@ -120,7 +112,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "industrial_age",
 		Description: "Dense worker housing.",
 		LineageKey:  "housing", LineageTier: 8,
-		EpochKey: "steel_era",
 	})
 	// tier 9 — victorian_age
 	b = append(b, BuildingDef{
@@ -132,7 +123,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "victorian_age",
 		Description: "A Victorian terrace of row houses.",
 		LineageKey:  "housing", LineageTier: 9,
-		EpochKey: "electric_era",
 	})
 	// tier 10 — electric_age
 	b = append(b, BuildingDef{
@@ -144,7 +134,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "electric_age",
 		Description: "A modern apartment block.",
 		LineageKey:  "housing", LineageTier: 10,
-		EpochKey: "electric_era",
 	})
 	// tier 11 — atomic_age
 	b = append(b, BuildingDef{
@@ -156,7 +145,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "atomic_age",
 		Description: "Government-built housing towers.",
 		LineageKey:  "housing", LineageTier: 11,
-		EpochKey: "electric_era",
 	})
 	// tier 12 — modern_age
 	b = append(b, BuildingDef{
@@ -168,7 +156,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "modern_age",
 		Description: "A soaring residential tower.",
 		LineageKey:  "housing", LineageTier: 12,
-		EpochKey: "digital_era",
 	})
 	// tier 13 — information_age
 	b = append(b, BuildingDef{
@@ -181,7 +168,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredTech: "internet_of_things",
 		Description:  "AI-managed smart living complex.",
 		LineageKey:   "housing", LineageTier: 13,
-		EpochKey: "digital_era",
 	})
 	// tier 14 — digital_age
 	b = append(b, BuildingDef{
@@ -193,7 +179,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "digital_age",
 		Description: "A self-contained urban megaplex.",
 		LineageKey:  "housing", LineageTier: 14,
-		EpochKey: "digital_era",
 	})
 	// tier 15 — cyberpunk_age
 	b = append(b, BuildingDef{
@@ -205,7 +190,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "cyberpunk_age",
 		Description: "A self-sustaining arcology pod.",
 		LineageKey:  "housing", LineageTier: 15,
-		EpochKey: "neon_era",
 	})
 	// tier 16 — fusion_age
 	b = append(b, BuildingDef{
@@ -217,7 +201,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "fusion_age",
 		Description: "A rotating habitat ring in orbit.",
 		LineageKey:  "housing", LineageTier: 16,
-		EpochKey: "neon_era",
 	})
 	// tier 17 — space_age
 	b = append(b, BuildingDef{
@@ -229,7 +212,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "space_age",
 		Description: "A vast orbital habitat complex.",
 		LineageKey:  "housing", LineageTier: 17,
-		EpochKey: "neon_era",
 	})
 	// tier 18 — interstellar_age
 	b = append(b, BuildingDef{
@@ -241,7 +223,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "interstellar_age",
 		Description: "A ship that houses entire generations.",
 		LineageKey:  "housing", LineageTier: 18,
-		EpochKey: "cosmic_era",
 	})
 	// tier 19 — galactic_age
 	b = append(b, BuildingDef{
@@ -253,7 +234,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "galactic_age",
 		Description: "Living quarters within a Dyson sphere.",
 		LineageKey:  "housing", LineageTier: 19,
-		EpochKey: "cosmic_era",
 	})
 	// tier 20 — quantum_age
 	b = append(b, BuildingDef{
@@ -265,7 +245,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "quantum_age",
 		Description: "A folded-reality habitation zone.",
 		LineageKey:  "housing", LineageTier: 20,
-		EpochKey: "cosmic_era",
 	})
 	// tier 21 — transcendent_age
 	b = append(b, BuildingDef{
@@ -277,7 +256,6 @@ func buildingsLineageHousing() []BuildingDef {
 		RequiredAge: "transcendent_age",
 		Description: "A transcendent dimensional habitation nexus.",
 		LineageKey:  "housing", LineageTier: 21,
-		EpochKey: "cosmic_era",
 	})
 
 	return b

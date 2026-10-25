@@ -29,7 +29,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A small spirit shrine.",
 		LineageKey:  "faith", LineageTier: 0,
 		WorkerDomain: "faith", WorkerCapacity: 2,
-		EpochKey: "stone_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 1 — stone_age  rate=0.004
 	b = append(b, BuildingDef{
@@ -43,7 +43,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description:  "Monolithic stones with ritual significance.",
 		LineageKey:   "faith", LineageTier: 1,
 		WorkerDomain: "faith", WorkerCapacity: 2,
-		EpochKey: "stone_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 2 — bronze_age  rate=0.008
 	b = append(b, BuildingDef{
@@ -57,7 +57,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description:  "A sacred altar for offerings.",
 		LineageKey:   "faith", LineageTier: 2,
 		WorkerDomain: "faith", WorkerCapacity: 3,
-		EpochKey: "stone_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 3 — iron_age  rate=0.016
 	b = append(b, BuildingDef{
@@ -72,7 +72,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A formal temple for organized worship.",
 		LineageKey:  "faith", LineageTier: 3,
 		WorkerDomain: "faith", WorkerCapacity: 3,
-		EpochKey: "iron_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 4 — classical_age  rate=0.032
 	b = append(b, BuildingDef{
@@ -85,7 +85,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "Oracles speak for the gods.",
 		LineageKey:  "faith", LineageTier: 4,
 		WorkerDomain: "faith", WorkerCapacity: 4,
-		EpochKey: "iron_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 5 — medieval_age  rate=0.064
 	b = append(b, BuildingDef{
@@ -99,7 +99,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description:  "A towering medieval cathedral.",
 		LineageKey:   "faith", LineageTier: 5,
 		WorkerDomain: "faith", WorkerCapacity: 5,
-		EpochKey: "iron_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 6 — renaissance_age  rate=0.128
 	b = append(b, BuildingDef{
@@ -112,7 +112,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A grand Renaissance basilica.",
 		LineageKey:  "faith", LineageTier: 6,
 		WorkerDomain: "faith", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 7 — colonial_age  rate=0.256
 	b = append(b, BuildingDef{
@@ -125,7 +125,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A colonial mission spreading faith.",
 		LineageKey:  "faith", LineageTier: 7,
 		WorkerDomain: "faith", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 8 — industrial_age  rate=0.512
 	b = append(b, BuildingDef{
@@ -138,7 +138,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "An industrial-age parish church.",
 		LineageKey:  "faith", LineageTier: 8,
 		WorkerDomain: "faith", WorkerCapacity: 5,
-		EpochKey: "steel_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 9 — victorian_age  rate=1.024
 	b = append(b, BuildingDef{
@@ -151,7 +151,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A vast Victorian grand cathedral.",
 		LineageKey:  "faith", LineageTier: 9,
 		WorkerDomain: "faith", WorkerCapacity: 6,
-		EpochKey: "electric_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 10 — electric_age  rate=2.048
 	b = append(b, BuildingDef{
@@ -164,7 +164,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "Electric revival meetings spread spiritual fervor.",
 		LineageKey:  "faith", LineageTier: 10,
 		WorkerDomain: "faith", WorkerCapacity: 6,
-		EpochKey: "electric_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 11 — atomic_age  rate=4.096
 	b = append(b, BuildingDef{
@@ -177,7 +177,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "Atomic-age spiritual wellness center.",
 		LineageKey:  "faith", LineageTier: 11,
 		WorkerDomain: "faith", WorkerCapacity: 6,
-		EpochKey: "electric_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 12 — modern_age  rate=8.192
 	b = append(b, BuildingDef{
@@ -190,7 +190,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "Modern meditation and mindfulness hub.",
 		LineageKey:  "faith", LineageTier: 12,
 		WorkerDomain: "faith", WorkerCapacity: 7,
-		EpochKey: "digital_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 13 — information_age  rate=16.384
 	b = append(b, BuildingDef{
@@ -203,7 +203,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A virtual spiritual sanctuary.",
 		LineageKey:  "faith", LineageTier: 13,
 		WorkerDomain: "faith", WorkerCapacity: 7,
-		EpochKey: "digital_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 14 — digital_age  rate=32.768
 	b = append(b, BuildingDef{
@@ -216,7 +216,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A cybernetic devotional shrine.",
 		LineageKey:  "faith", LineageTier: 14,
 		WorkerDomain: "faith", WorkerCapacity: 8,
-		EpochKey: "digital_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 15 — cyberpunk_age  rate=65.536
 	b = append(b, BuildingDef{
@@ -229,7 +229,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "Neon-lit cyberpunk sanctuary.",
 		LineageKey:  "faith", LineageTier: 15,
 		WorkerDomain: "faith", WorkerCapacity: 8,
-		EpochKey: "neon_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 16 — fusion_age  rate=131.072
 	b = append(b, BuildingDef{
@@ -242,7 +242,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A chapel resonating with quantum energies.",
 		LineageKey:  "faith", LineageTier: 16,
 		WorkerDomain: "faith", WorkerCapacity: 9,
-		EpochKey: "neon_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 17 — space_age  rate=262.144
 	b = append(b, BuildingDef{
@@ -255,7 +255,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A faith sanctuary in orbital space.",
 		LineageKey:  "faith", LineageTier: 17,
 		WorkerDomain: "faith", WorkerCapacity: 9,
-		EpochKey: "neon_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 18 — interstellar_age  rate=524.288
 	b = append(b, BuildingDef{
@@ -268,7 +268,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A monastery floating in the interstellar void.",
 		LineageKey:  "faith", LineageTier: 18,
 		WorkerDomain: "faith", WorkerCapacity: 10,
-		EpochKey: "cosmic_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 19 — galactic_age  rate=1048.576
 	b = append(b, BuildingDef{
@@ -281,7 +281,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A galactic-scale stellar shrine.",
 		LineageKey:  "faith", LineageTier: 19,
 		WorkerDomain: "faith", WorkerCapacity: 10,
-		EpochKey: "cosmic_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 	// tier 20 — quantum_age  rate=2097.152
 	b = append(b, BuildingDef{
@@ -294,7 +294,7 @@ func buildingsLineageFaith() []BuildingDef {
 		Description: "A hall dedicated to transcendence beyond existence.",
 		LineageKey:  "faith", LineageTier: 20,
 		WorkerDomain: "faith", WorkerCapacity: 12,
-		EpochKey: "cosmic_era", OutputResource: "faith",
+		OutputResource: "faith",
 	})
 
 	return b
