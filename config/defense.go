@@ -189,14 +189,13 @@ func AgeThreat(order int) float64 {
 // The military yardstick.
 //
 // Two things are measured against military power: the raid threat (through
-// the Defense Rating, soldiers × 2 × (1 + power)) and a mission's difficulty
-// (its base less MissionPowerFactor × power). Both were sized while techs
-// gave far more of it than they do: +20% in the Bronze Age, +220% by the
-// Industrial, +470% in the Atomic and +670% from the Cyberpunk Age on. The
-// finished tree gives +15% to +201% over the same ages, in steps of 10 to
-// 15 points, so the same garrison stood at a third of the Defense Rating it
-// was measured with and a campaign the old tree made a near certainty was
-// back to even odds.
+// the Defense Rating, soldiers × 2 × (1 + power)) and a mission's difficulty.
+// Both were sized while techs gave far more of it than they do: +20% in the
+// Bronze Age, +220% by the Industrial, +470% in the Atomic and +670% from the
+// Cyberpunk Age on. The finished tree gives +15% to +201% over the same ages,
+// in steps of 10 to 15 points, so the same garrison stood at a third of the
+// Defense Rating it was measured with and a campaign the old tree made a near
+// certainty was back to even odds.
 //
 // MilitaryScale puts both back for the typical player, age by age: one who
 // holds the military techs of every age up to their own and the two
@@ -232,10 +231,6 @@ const (
 	// militaryIncidentalFrom is the age order MilitaryIncidental counts
 	// from: the Iron Age, where soldiers begin.
 	militaryIncidentalFrom = 3
-
-	// MissionPowerFactor is how much of a mission's difficulty one whole
-	// point (+100%) of scaled military power takes off.
-	MissionPowerFactor = 0.3
 )
 
 // MilitaryScaleDef is one age's military yardstick.
