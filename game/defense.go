@@ -1,6 +1,7 @@
 package game
 
 import (
+	"maps"
 	"math"
 	"sort"
 
@@ -39,12 +40,7 @@ func (t *DefenseTally) clone() *DefenseTally {
 		return nil
 	}
 	c := *t
-	if t.Resources != nil {
-		c.Resources = make(map[string]float64, len(t.Resources))
-		for k, v := range t.Resources {
-			c.Resources[k] = v
-		}
-	}
+	c.Resources = maps.Clone(t.Resources)
 	return &c
 }
 

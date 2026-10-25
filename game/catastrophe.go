@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"regexp"
@@ -539,7 +540,7 @@ func (ge *GameEngine) Succumb() error {
 	// The legacy kit remembers the fallen civilization's plan, research
 	// order, civilizations met and shares before the reset.
 	ge.captureLegacyLocked()
-	savedLegacy := copyBoolMap(ge.legacyBonuses)
+	savedLegacy := maps.Clone(ge.legacyBonuses)
 	// The ending's record, for whoever tells it (run_ending.go).
 	end := RunEnding{Kind: RunEndFallen, Age: ge.age, Level: ge.Prestige.GetLevel(), Catastrophe: catName}
 	runStarted := ge.Stats.GameStarted

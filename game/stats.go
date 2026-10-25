@@ -1,6 +1,7 @@
 package game
 
 import (
+	"maps"
 	"slices"
 	"time"
 )
@@ -82,23 +83,34 @@ func (gs *GameStats) RecordAge(age string, tick int) {
 	gs.AgeLog = append(gs.AgeLog, AgeEntry{Age: age, Tick: tick})
 }
 
+// clone returns a deep copy of gs that shares no map or slice with it. TotalGathered and
+// AgesReached come back non-nil, so a save writes {} and [] for them, never null, and
+// RecordGather can always write.
+func (gs *GameStats) clone() *GameStats {
+	c := *gs
+	c.TotalGathered = maps.Clone(gs.TotalGathered)
+	if c.TotalGathered == nil {
+		c.TotalGathered = make(map[string]float64)
+	}
+	c.AgesReached = slices.Clone(gs.AgesReached)
+	if c.AgesReached == nil {
+		c.AgesReached = []string{}
+	}
+	c.AgeLog = slices.Clone(gs.AgeLog)
+	c.Defense = gs.Defense.clone()
+	return &c
+}
+
 // Snapshot returns a stats snapshot for UI
 func (gs *GameStats) Snapshot() StatsSnapshot {
-	gathered := make(map[string]float64)
-	for k, v := range gs.TotalGathered {
-		gathered[k] = v
-	}
-	ages := make([]string, len(gs.AgesReached))
-	copy(ages, gs.AgesReached)
-	ageLog := make([]AgeEntry, len(gs.AgeLog))
-	copy(ageLog, gs.AgeLog)
+	c := gs.clone()
 	return StatsSnapshot{
-		TotalBuilt:     gs.TotalBuilt,
-		TotalRecruited: gs.TotalRecruited,
-		TotalGathered:  gathered,
-		GameStarted:    gs.GameStarted,
+		TotalBuilt:     c.TotalBuilt,
+		TotalRecruited: c.TotalRecruited,
+		TotalGathered:  c.TotalGathered,
+		GameStarted:    c.GameStarted,
 		PlayTime:       time.Since(gs.GameStarted),
-		AgesReached:    ages,
-		AgeLog:         ageLog,
+		AgesReached:    c.AgesReached,
+		AgeLog:         c.AgeLog,
 	}
 }

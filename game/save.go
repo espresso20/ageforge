@@ -655,16 +655,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		tradeExported[k] = v
 	}
 
-	// Deep copy stats
-	statsGathered := make(map[string]float64, len(ge.Stats.TotalGathered))
-	for k, v := range ge.Stats.TotalGathered {
-		statsGathered[k] = v
-	}
-	agesReached := make([]string, len(ge.Stats.AgesReached))
-	copy(agesReached, ge.Stats.AgesReached)
-	ageLog := make([]AgeEntry, len(ge.Stats.AgeLog))
-	copy(ageLog, ge.Stats.AgeLog)
-
 	rngDraws, quipDraws := ge.rngDraws()
 
 	return GameSave{
@@ -683,18 +673,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Buildings:            ge.Buildings.GetAll(),
 		Workers:              ge.Workers.GetAll(),
 		Unlocked:             ge.getUnlockedState(),
-		Stats: &GameStats{
-			TotalBuilt:      ge.Stats.TotalBuilt,
-			TotalRecruited:  ge.Stats.TotalRecruited,
-			TotalGathered:   statsGathered,
-			GameStarted:     ge.Stats.GameStarted,
-			AgesReached:     agesReached,
-			AgeLog:          ageLog,
-			SoldiersTrained: ge.Stats.SoldiersTrained,
-			ResearchWork:    ge.Stats.ResearchWork,
-			Defense:         ge.Stats.Defense.clone(),
-		},
-		BuildQueue: queue,
+		Stats:                ge.Stats.clone(),
+		BuildQueue:           queue,
 		Research: ResearchSave{
 			Researched:  ge.Research.GetResearched(),
 			CurrentTech: ge.Research.currentTech,
@@ -761,18 +741,18 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		RunFacts:               ge.runFactsSaveCopy(),
 		ParentName:             ge.activeParentName,
 		CurrentEpoch:           ge.currentEpoch,
-		EpochEventFired:        copyBoolMap(ge.epochEventFired),
-		AwakeningsFired:        copyBoolMap(ge.awakeningsFired),
+		EpochEventFired:        maps.Clone(ge.epochEventFired),
+		AwakeningsFired:        maps.Clone(ge.awakeningsFired),
 		AncientMemoryUsed:      ge.ancientMemoryUsed,
-		SurvivedEpochs:         copyBoolMap(ge.survivedEpochs),
+		SurvivedEpochs:         maps.Clone(ge.survivedEpochs),
 		PendingCatastrophe:     ge.pendingCatastrophe,
 		EpochEventHistory:      ge.epochHistoryForSave(),
 		SuccumbResearchDerived: true,
 		Ruins:                  ge.Buildings.GetAllRuins(),
-		LegacyBonuses:          copyBoolMap(ge.legacyBonuses),
+		LegacyBonuses:          maps.Clone(ge.legacyBonuses),
 		CatastropheHistory:     append([]string(nil), ge.catastropheHistory...),
 		Harbinger:              ge.harbingerSaveCopy(),
-		HarbingerArrived:       copyBoolMap(ge.harbingerArrived),
+		HarbingerArrived:       maps.Clone(ge.harbingerArrived),
 		CatastropheInvited:     ge.catastropheInvited,
 		PendingBraceLevel:      ge.pendingBraceLevel,
 		HarbingerHistory:       ge.harbingerHistoryForSave(),
@@ -943,26 +923,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.Buildings.LoadCounts(save.Buildings)
 	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
-		// Deep copy stats to avoid aliasing with the deserialized save
-		gathered := make(map[string]float64, len(save.Stats.TotalGathered))
-		for k, v := range save.Stats.TotalGathered {
-			gathered[k] = v
-		}
-		ages := make([]string, len(save.Stats.AgesReached))
-		copy(ages, save.Stats.AgesReached)
-		ageLog := make([]AgeEntry, len(save.Stats.AgeLog))
-		copy(ageLog, save.Stats.AgeLog)
-		ge.Stats = &GameStats{
-			TotalBuilt:      save.Stats.TotalBuilt,
-			TotalRecruited:  save.Stats.TotalRecruited,
-			TotalGathered:   gathered,
-			GameStarted:     save.Stats.GameStarted,
-			AgesReached:     ages,
-			AgeLog:          ageLog,
-			SoldiersTrained: save.Stats.SoldiersTrained,
-			ResearchWork:    save.Stats.ResearchWork,
-			Defense:         save.Stats.Defense.clone(),
-		}
+		// A copy, to avoid aliasing with the deserialized save
+		ge.Stats = save.Stats.clone()
 	}
 	ge.buildQueue = save.BuildQueue
 
@@ -1295,18 +1257,6 @@ func (ge *GameEngine) treeNotice(from int) string {
 // on its first load (GameSave.PacingWeek).
 func pacingNotice() string {
 	return vibe.Line("game.save.pacingNotice.01", "Pacing update: a first run now takes about a week. From the Bronze Age on, each age lasts about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age holds as many of them. Your game carries on where you left it.")
-}
-
-// copyBoolMap returns a deep copy of a map[string]bool.
-func copyBoolMap(m map[string]bool) map[string]bool {
-	if m == nil {
-		return nil
-	}
-	out := make(map[string]bool, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
 }
 
 // getUnlockedState collects all resource, building, and worker unlocks for
