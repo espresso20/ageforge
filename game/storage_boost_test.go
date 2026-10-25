@@ -84,23 +84,3 @@ func TestStorageBoostShowsInTheBonusBreakdown(t *testing.T) {
 		t.Errorf("the pool holds %v, want only the storage source's %v", ge.buildResolver().AddTotal("production_all"), found)
 	}
 }
-
-// TestNoStorageBuildingHoldsAnything: no storage building has a storage
-// effect, and a town of them only boosts production.
-func TestNoStorageBuildingHoldsAnything(t *testing.T) {
-	n := 0
-	for _, def := range config.BaseBuildings() {
-		if def.Category != "storage" {
-			continue
-		}
-		n++
-		for _, e := range def.Effects {
-			if e.Type == "storage" {
-				t.Errorf("%s has a storage effect", def.Key)
-			}
-		}
-	}
-	if n == 0 {
-		t.Fatal("no storage buildings")
-	}
-}

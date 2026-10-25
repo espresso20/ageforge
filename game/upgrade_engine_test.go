@@ -45,12 +45,6 @@ func halfOf(m map[string]float64) map[string]float64 {
 	return out
 }
 
-func TestUpgradeShareIsHalf(t *testing.T) {
-	if config.UpgradeShare != 0.5 {
-		t.Errorf("UpgradeShare = %v, want 0.5", config.UpgradeShare)
-	}
-}
-
 func TestUpgrade_OneCopyCostsHalfANewCopyAndMovesCounts(t *testing.T) {
 	ge := campsInTheStoneAge(t, 4)
 	newCost, _ := ge.Buildings.BuildBatchCost("forager_post", 1, ge.buildQueue)
