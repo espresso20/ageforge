@@ -372,13 +372,7 @@ func (o *orb) farStation(it ridgeItem) {
 	// the pennant
 	rc := o.mp.Fg[mapmodel.RelationClass(f.Relation)]
 	put(0, -1, '│', dim)
-	flag := '►'
-	if f.Relation == mapmodel.RelWar {
-		flag = mapmodel.R(mapmodel.SymWar, o.tier)
-	} else if o.tier == mapmodel.TierNerd {
-		flag = mapmodel.R(mapmodel.SymCiv, o.tier)
-	}
-	put(1, -1, flag, rc)
+	put(1, -1, pennantGlyph(f.Relation, o.tier), rc)
 	o.labels = append(o.labels, label{x - textLen(f.Name)/2, y - 2, f.Name, rc})
 }
 

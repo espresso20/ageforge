@@ -173,13 +173,7 @@ func (o *orb) starSystems() {
 		o.fb.fg(s.x, o.Y(s.y+1), '│', glow, dSystem)
 		o.fb.fg(s.x, o.Y(s.y), mapmodel.R(mapmodel.SymStarBig, o.tier), c, dSystem)
 		rc := o.mp.Fg[mapmodel.RelationClass(s.f.Relation)]
-		flag := '►'
-		if s.f.Relation == mapmodel.RelWar {
-			flag = mapmodel.R(mapmodel.SymWar, o.tier)
-		} else if o.tier == mapmodel.TierNerd {
-			flag = mapmodel.R(mapmodel.SymCiv, o.tier)
-		}
-		o.fb.fg(s.x+2, o.Y(s.y-1), flag, rc, dSystem)
+		o.fb.fg(s.x+2, o.Y(s.y-1), pennantGlyph(s.f.Relation, o.tier), rc, dSystem)
 		o.labels = append(o.labels, label{s.x - textLen(s.f.Name)/2, s.y - 2, s.f.Name, rc})
 	}
 }

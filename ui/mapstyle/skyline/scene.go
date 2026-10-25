@@ -461,18 +461,24 @@ func (s *scene) ridgeTowns() {
 		s.fb.fg(it.x, s.Y(py+1), '│', col, dRidgeTown)
 		s.fb.fg(it.x, s.Y(py+2), '│', col, dRidgeTown)
 		s.fb.fg(it.x, s.Y(py+3), '│', col, dRidgeTown)
-		flag := '►'
-		if f.Relation == mapmodel.RelWar {
-			flag = mapmodel.R(mapmodel.SymWar, s.tier)
-		} else if s.tier == mapmodel.TierNerd {
-			flag = mapmodel.R(mapmodel.SymCiv, s.tier)
-		}
-		s.fb.fg(it.x+1, s.Y(py+1), flag, rc, dRidgeTown)
+		s.fb.fg(it.x+1, s.Y(py+1), pennantGlyph(f.Relation, s.tier), rc, dRidgeTown)
 		s.labels = append(s.labels, label{it.x - textLen(f.Name)/2, py, f.Name, rc})
 	}
 }
 
 func townWidth(f *mapmodel.Faction) int { return clampInt(4+f.Strength*2, 5, 14) }
+
+// pennantGlyph is the flag a civ flies: an arrow, the war mark while at war,
+// the civ mark on the Nerd tier.
+func pennantGlyph(rel mapmodel.Relation, tier mapmodel.GlyphTier) rune {
+	switch {
+	case rel == mapmodel.RelWar:
+		return mapmodel.R(mapmodel.SymWar, tier)
+	case tier == mapmodel.TierNerd:
+		return mapmodel.R(mapmodel.SymCiv, tier)
+	}
+	return '►'
+}
 
 // harbinger: a lone figure on the far ridge, facing the city. From the
 // Digital Era it is a flickering hologram.

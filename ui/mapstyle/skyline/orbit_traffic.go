@@ -106,12 +106,17 @@ func (g skyGeo) limbRow(x int) int {
 	return min(g.S, int(g.limb[clampInt(x, 0, len(g.limb)-1)]/2))
 }
 
-// wrap places a stream anchored to the world on a screen w wide: its left
+// wrapX places a stream anchored to the world on a screen w wide: its left
 // column at frame anim, moving speed columns a frame.
 func wrapX(seed, anim, cam, w int, speed float64) int {
-	pad := 14
+	return wrapPad(seed, anim, cam, w, 14, speed)
+}
+
+// wrapPad is wrapX with pad columns of room off each edge of the screen, so a
+// stream wraps out of sight.
+func wrapPad(seed, anim, cam, w, pad int, speed float64) int {
 	span := w + 2*pad
-	pos := float64(hash(seed, 23)%uint64(span)) + float64(anim)*speed - float64(cam)
+	pos := float64(hash(seed, 23)%uint64(span)) + float64(float64(anim)*speed) - float64(cam)
 	x := int(math.Floor(pos)) % span
 	if x < 0 {
 		x += span

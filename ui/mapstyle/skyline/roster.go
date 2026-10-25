@@ -1,7 +1,6 @@
 package skyline
 
 import (
-	"math"
 	"strings"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -426,14 +425,7 @@ func rosterTraffic(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		if v.west {
 			speed = -speed
 		}
-		pad := max(12, v.width()+2)
-		span := w + 2*pad
-		pos := float64(hash(seed, 23)%uint64(span)) + float64(anim)*speed - float64(cam)
-		x := int(math.Floor(pos)) % span
-		if x < 0 {
-			x += span
-		}
-		v.x = x - pad
+		v.x = wrapPad(seed, anim, cam, w, max(12, v.width()+2), speed)
 		if t.paint {
 			v.body = [4]theme.SkyHue{theme.SkyCarRed, theme.SkyCarBlue, theme.SkyCarWhite, theme.SkyCarYellow}[hash(seed, 3)%4]
 		}
