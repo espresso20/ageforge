@@ -1,7 +1,9 @@
 package mapmodel
 
 import (
-	"sort"
+	"cmp"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -41,6 +43,27 @@ var LineageOrder = []string{
 	LinMilitary, LinDiplomacy,
 }
 
+// ageIndex is each age key's place in the config age order. The rosters
+// (movers, city features, city looks) name their ages by key and are built at
+// start-up, before any ruleset is in reach.
+var ageIndex = func() map[string]int {
+	order := config.AgeOrder()
+	out := make(map[string]int, len(order))
+	for i, k := range order {
+		out[k] = i
+	}
+	return out
+}()
+
+// ageNo is the index of the age with config key k, or -1 for "" or a key
+// that is not an age.
+func ageNo(k string) int {
+	if i, ok := ageIndex[k]; ok {
+		return i
+	}
+	return -1
+}
+
 // LineageNames are the player-facing names of each lineage.
 var LineageNames = map[string]vibe.Entry{
 	LinHousing: vibe.E("map.lineage.housing", "housing"), LinFood: vibe.E("map.lineage.food", "farms and food"), LinWood: vibe.E("map.lineage.organic_extraction", "wood and fibre"),
@@ -65,7 +88,6 @@ type Def struct {
 	Epoch      int // index of that age's epoch
 	Output     string
 	BaseOutput float64 // per-instance base production of Output
-	WorkerCap  int
 	Wonder     bool
 	// Slot is the type's fixed position among its age's types in the
 	// skyline district (most prominent first).
@@ -124,15 +146,11 @@ func NewCatalogFor(set *rules.Set) *Catalog {
 		c.AgeEpoch = append(c.AgeEpoch, c.EpochIdx[set.EraOf(k)])
 	}
 	defs := set.BuildingMap()
-	keys := make([]string, 0, len(defs))
-	for k := range defs {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	keys := slices.Sorted(maps.Keys(defs))
 	for _, k := range keys {
 		d := defs[k]
 		md := &Def{Key: k, Name: d.Name, Category: d.Category, Tier: d.LineageTier,
-			Age: c.AgeIdx[d.RequiredAge], Output: d.OutputResource, WorkerCap: d.WorkerCapacity}
+			Age: c.AgeIdx[d.RequiredAge], Output: d.OutputResource}
 		md.Epoch = c.AgeEpoch[md.Age]
 		md.Lineage = lineageOf(d)
 		md.Wonder = md.Lineage == LinWonder
@@ -144,20 +162,13 @@ func NewCatalogFor(set *rules.Set) *Catalog {
 		c.Defs[k] = md
 		c.ByLineage[md.Lineage] = append(c.ByLineage[md.Lineage], md)
 	}
-	for lin, ds := range c.ByLineage {
-		sort.Slice(ds, func(i, j int) bool {
-			if ds[i].Age != ds[j].Age {
-				return ds[i].Age < ds[j].Age
-			}
-			if ds[i].Tier != ds[j].Tier {
-				return ds[i].Tier < ds[j].Tier
-			}
-			return ds[i].Key < ds[j].Key
+	for _, ds := range c.ByLineage {
+		slices.SortFunc(ds, func(a, b *Def) int {
+			return cmp.Or(cmp.Compare(a.Age, b.Age), cmp.Compare(a.Tier, b.Tier), cmp.Compare(a.Key, b.Key))
 		})
 		for r, d := range ds {
 			d.Rank = r
 		}
-		c.ByLineage[lin] = ds
 	}
 	c.Wonders = c.ByLineage[LinWonder]
 	c.ByAge = make([][]*Def, len(c.Ages))
@@ -165,18 +176,13 @@ func NewCatalogFor(set *rules.Set) *Catalog {
 		d := c.Defs[k]
 		c.ByAge[d.Age] = append(c.ByAge[d.Age], d)
 	}
-	for a, ds := range c.ByAge {
-		sort.Slice(ds, func(i, j int) bool {
-			pi, pj := prominence(ds[i]), prominence(ds[j])
-			if pi != pj {
-				return pi > pj
-			}
-			return ds[i].Key < ds[j].Key
+	for _, ds := range c.ByAge {
+		slices.SortFunc(ds, func(a, b *Def) int {
+			return cmp.Or(cmp.Compare(prominence(b), prominence(a)), cmp.Compare(a.Key, b.Key))
 		})
 		for s, d := range ds {
 			d.Slot = s
 		}
-		c.ByAge[a] = ds
 	}
 	for _, f := range set.Factions() {
 		c.Factions = append(c.Factions, f.Key)
@@ -200,6 +206,18 @@ const (
 
 func (m RouteMode) String() string { return [...]string{"land", "sea", "air"}[m] }
 
+// routeWords are the words that put a route in a mode, in the order they are
+// tried: the sky and space first, then rails, roads and caravans (a route to
+// "ship iron by rail" is a train), then ships and the sea.
+var routeWords = []struct {
+	mode  RouteMode
+	words []string
+}{
+	{ModeAir, []string{"warp", "stellar", "galactic", "orbital", "space", "air", "sky"}},
+	{ModeLand, []string{"rail", "road", "caravan", "pipeline", "train", "truck", "convoy"}},
+	{ModeSea, []string{"port", "harbor", "ship", "clipper", "barge", "sea", "ocean", "steamship"}},
+}
+
 // routeModeOf reads a route's mode from its data: a route that needs a
 // harbor building sails; one whose words name the sky or space (warp,
 // stellar, galactic, orbital, air) flies; rails, roads and caravans go by
@@ -213,19 +231,9 @@ func routeModeOf(r config.TradeRouteDef, req *Def) RouteMode {
 		func(c rune) bool { return c < 'a' || c > 'z' }) {
 		words[strings.TrimSuffix(w, "s")] = true
 	}
-	for _, w := range []string{"warp", "stellar", "galactic", "orbital", "space", "air", "sky"} {
-		if words[w] {
-			return ModeAir
-		}
-	}
-	for _, w := range []string{"rail", "road", "caravan", "pipeline", "train", "truck", "convoy"} {
-		if words[w] {
-			return ModeLand // "ship iron by rail" is a train
-		}
-	}
-	for _, w := range []string{"port", "harbor", "ship", "clipper", "barge", "sea", "ocean", "steamship"} {
-		if words[w] {
-			return ModeSea
+	for _, g := range routeWords {
+		if slices.ContainsFunc(g.words, func(w string) bool { return words[w] }) {
+			return g.mode
 		}
 	}
 	return ModeLand

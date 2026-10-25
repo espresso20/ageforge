@@ -1,10 +1,6 @@
 package mapmodel
 
-import (
-	"github.com/espresso20/ageforge/config"
-
-	"github.com/espresso20/ageforge/vibe"
-)
+import "github.com/espresso20/ageforge/vibe"
 
 // movers.go is the traffic roster both map styles read: every kind of thing
 // that moves through a town, the age that introduces it and the last age it
@@ -121,7 +117,7 @@ type moverDef struct {
 // Fusion Age and shuttles from the Space Age's launch pads; Cosmic orbital
 // habitats. Satellites cross the night sky from the Modern Age, as the
 // skyline has always drawn them.
-var moverDefs = [NumMovers]moverDef{
+var moverDefs = [numAllMovers]moverDef{
 	MoverWalker: {key: "walker", name: vibe.E("map.mover.walker.name", "worker at work"), title: vibe.E("map.mover.walker.title", "Worker"), sym: SymWorker, class: CLife, way: WayFoot,
 		from: "primitive_age", pace: 5, lines: []vibe.Entry{vibe.E("map.mover.walker.line.01", "On the way to work."), vibe.E("map.mover.walker.line.02", "Heading home after a shift.")}},
 	MoverHunter: {key: "hunter", name: vibe.E("map.mover.hunter.name", "hunter"), title: vibe.E("map.mover.hunter.title", "Hunter"), sym: SymHunter, class: CLife, way: WayFoot,
@@ -202,33 +198,39 @@ var moverDefs = [NumMovers]moverDef{
 	MoverClimber: {key: "climber", name: vibe.E("map.mover.climber.name", "tether climber"), title: vibe.E("map.mover.climber.title", "Tether climber"), sym: SymClimber, class: CWealth,
 		way: WaySky, from: "fusion_age", pace: 4,
 		lines: []vibe.Entry{vibe.E("map.mover.climber.line.01", "A climber, riding the tether up."), vibe.E("map.mover.climber.line.02", "A climber, hauling cargo to orbit.")}},
+	// The sky arc's movers (see below).
+	MoverMiningDrone: {key: "mining_drone", name: vibe.E("map.mover.mining_drone.name", "mining drone"), title: vibe.E("map.mover.mining_drone.title", "Mining drone"), sym: SymMiningDrone,
+		class: CWork, way: WaySpace, from: "space_age", until: "interstellar_age", pace: 2,
+		lines: []vibe.Entry{vibe.E("map.mover.mining_drone.line.01", "A mining drone, hauling ore from the belt."), vibe.E("map.mover.mining_drone.line.02", "A mining drone, out for another rock.")}},
+	MoverGenShip: {key: "generation_ship", name: vibe.E("map.mover.generation_ship.name", "generation ship"), title: vibe.E("map.mover.generation_ship.title", "Generation ship"), sym: SymGenShip,
+		class: CLife, way: WaySpace, from: "interstellar_age", until: "interstellar_age", pace: 6,
+		lines: []vibe.Entry{vibe.E("map.mover.generation_ship.line.01", "A generation ship: its crew's grandchildren will land."), vibe.E("map.mover.generation_ship.line.02", "A generation ship, a town in a hull.")}},
+	MoverStarship: {key: "starship", name: vibe.E("map.mover.starship.name", "starship"), title: vibe.E("map.mover.starship.title", "Starship"), sym: SymStarship,
+		class: CLife, way: WaySpace, from: "galactic_age", until: "galactic_age", pace: 1,
+		lines: []vibe.Entry{vibe.E("map.mover.starship.line.01", "A starship, about to jump to warp."), vibe.E("map.mover.starship.line.02", "A starship, home from the far side of the arm.")}},
+	MoverAlienShip: {key: "alien_ship", name: vibe.E("map.mover.alien_ship.name", "alien ship"), title: vibe.E("map.mover.alien_ship.title", "Alien ship"), sym: SymUFO,
+		class: CFresh, way: WaySpace, from: "galactic_age", until: "galactic_age", pace: 2,
+		lines: []vibe.Entry{vibe.E("map.mover.alien_ship.line.01", "An alien ship, on ordinary business."), vibe.E("map.mover.alien_ship.line.02", "An alien ship, docking like anyone else.")}},
+	MoverPhaseShip: {key: "phase_ship", name: vibe.E("map.mover.phase_ship.name", "phase ship"), title: vibe.E("map.mover.phase_ship.title", "Phase ship"), sym: SymPhaseShip,
+		class: CCivic, way: WaySpace, from: "quantum_age", until: "quantum_age", pace: 2,
+		lines: []vibe.Entry{vibe.E("map.mover.phase_ship.line.01", "A phase ship, in several places at once."), vibe.E("map.mover.phase_ship.line.02", "A phase ship, arriving before it left.")}},
+	MoverMote: {key: "mote", name: vibe.E("map.mover.mote.name", "mote of light"), title: vibe.E("map.mover.mote.title", "Mote of light"), sym: SymMote,
+		class: CText, way: WaySpace, from: "transcendent_age", pace: 12,
+		lines: []vibe.Entry{vibe.E("map.mover.mote.line.01", "A mote of light, drifting home."), vibe.E("map.mover.mote.line.02", "A mote of light. It was a city once.")}},
 }
 
 var moverTable = buildMovers()
 
-func buildMovers() [NumMovers]MoverInfo {
-	idx := map[string]int{}
-	for i, k := range config.AgeOrder() {
-		idx[k] = i
-	}
-	age := func(k string, none int) int {
-		if k == "" {
-			return none
-		}
-		if i, ok := idx[k]; ok {
-			return i
-		}
-		return -1 // an unknown age key: never about (TestMoverRoster fails on it)
-	}
-	var out [NumMovers]MoverInfo
+func buildMovers() [numAllMovers]MoverInfo {
+	var out [numAllMovers]MoverInfo
 	out[MoverNone].From, out[MoverNone].Until = -1, -1 // nothing introduces nothing
-	for k := Mover(1); k < NumMovers; k++ {
+	for k := Mover(1); k < numAllMovers; k++ {
 		d := &moverDefs[k]
 		out[k] = MoverInfo{Key: d.key, Name: d.name.Plain(), Title: d.title.Plain(), Sym: d.sym, Class: d.class, Way: d.way,
-			From: age(d.from, -1), Until: age(d.until, -1), Pace: max(1, d.pace), Cars: max(1, d.cars),
+			From: ageNo(d.from), Until: ageNo(d.until), Pace: max(1, d.pace), Cars: max(1, d.cars),
 			Smoke: d.smoke, Night: d.night, Lines: plainLines(d.lines), def: d}
 		if d.until != "" && out[k].Until < 0 {
-			out[k].From = -1
+			out[k].From = -1 // an unknown age key: never about (TestMoverRoster fails on it)
 		}
 	}
 	return out
@@ -236,11 +238,8 @@ func buildMovers() [NumMovers]MoverInfo {
 
 // Info returns a mover's roster entry (the sky arc's movers too).
 func (k Mover) Info() MoverInfo {
-	if k >= NumMovers && k < numAllMovers {
-		return skyMoverTable[k-NumMovers].told()
-	}
-	if k >= NumMovers {
-		return moverTable[MoverNone]
+	if k >= numAllMovers {
+		k = MoverNone
 	}
 	return moverTable[k].told()
 }
@@ -305,54 +304,3 @@ const NumSkyMovers = int(numAllMovers - NumMovers)
 // SkyMoverFirst is the first of the sky arc's movers; they run to
 // SkyMoverFirst + NumSkyMovers.
 const SkyMoverFirst = MoverMiningDrone
-
-var skyMoverDefs = [numAllMovers - NumMovers]moverDef{
-	MoverMiningDrone - NumMovers: {key: "mining_drone", name: vibe.E("map.mover.mining_drone.name", "mining drone"), title: vibe.E("map.mover.mining_drone.title", "Mining drone"), sym: SymMiningDrone,
-		class: CWork, way: WaySpace, from: "space_age", until: "interstellar_age", pace: 2,
-		lines: []vibe.Entry{vibe.E("map.mover.mining_drone.line.01", "A mining drone, hauling ore from the belt."), vibe.E("map.mover.mining_drone.line.02", "A mining drone, out for another rock.")}},
-	MoverGenShip - NumMovers: {key: "generation_ship", name: vibe.E("map.mover.generation_ship.name", "generation ship"), title: vibe.E("map.mover.generation_ship.title", "Generation ship"), sym: SymGenShip,
-		class: CLife, way: WaySpace, from: "interstellar_age", until: "interstellar_age", pace: 6,
-		lines: []vibe.Entry{vibe.E("map.mover.generation_ship.line.01", "A generation ship: its crew's grandchildren will land."), vibe.E("map.mover.generation_ship.line.02", "A generation ship, a town in a hull.")}},
-	MoverStarship - NumMovers: {key: "starship", name: vibe.E("map.mover.starship.name", "starship"), title: vibe.E("map.mover.starship.title", "Starship"), sym: SymStarship,
-		class: CLife, way: WaySpace, from: "galactic_age", until: "galactic_age", pace: 1,
-		lines: []vibe.Entry{vibe.E("map.mover.starship.line.01", "A starship, about to jump to warp."), vibe.E("map.mover.starship.line.02", "A starship, home from the far side of the arm.")}},
-	MoverAlienShip - NumMovers: {key: "alien_ship", name: vibe.E("map.mover.alien_ship.name", "alien ship"), title: vibe.E("map.mover.alien_ship.title", "Alien ship"), sym: SymUFO,
-		class: CFresh, way: WaySpace, from: "galactic_age", until: "galactic_age", pace: 2,
-		lines: []vibe.Entry{vibe.E("map.mover.alien_ship.line.01", "An alien ship, on ordinary business."), vibe.E("map.mover.alien_ship.line.02", "An alien ship, docking like anyone else.")}},
-	MoverPhaseShip - NumMovers: {key: "phase_ship", name: vibe.E("map.mover.phase_ship.name", "phase ship"), title: vibe.E("map.mover.phase_ship.title", "Phase ship"), sym: SymPhaseShip,
-		class: CCivic, way: WaySpace, from: "quantum_age", until: "quantum_age", pace: 2,
-		lines: []vibe.Entry{vibe.E("map.mover.phase_ship.line.01", "A phase ship, in several places at once."), vibe.E("map.mover.phase_ship.line.02", "A phase ship, arriving before it left.")}},
-	MoverMote - NumMovers: {key: "mote", name: vibe.E("map.mover.mote.name", "mote of light"), title: vibe.E("map.mover.mote.title", "Mote of light"), sym: SymMote,
-		class: CText, way: WaySpace, from: "transcendent_age", pace: 12,
-		lines: []vibe.Entry{vibe.E("map.mover.mote.line.01", "A mote of light, drifting home."), vibe.E("map.mover.mote.line.02", "A mote of light. It was a city once.")}},
-}
-
-var skyMoverTable = buildSkyMovers()
-
-func buildSkyMovers() [numAllMovers - NumMovers]MoverInfo {
-	idx := map[string]int{}
-	for i, k := range config.AgeOrder() {
-		idx[k] = i
-	}
-	age := func(k string) int {
-		if k == "" {
-			return -1
-		}
-		if i, ok := idx[k]; ok {
-			return i
-		}
-		return -2 // an unknown age key: never about (TestSkyMoverRoster fails on it)
-	}
-	var out [numAllMovers - NumMovers]MoverInfo
-	for i := range skyMoverDefs {
-		d := &skyMoverDefs[i]
-		info := MoverInfo{Key: d.key, Name: d.name.Plain(), Title: d.title.Plain(), Sym: d.sym, Class: d.class, Way: d.way,
-			From: age(d.from), Until: age(d.until), Pace: max(1, d.pace), Cars: max(1, d.cars),
-			Smoke: d.smoke, Night: d.night, Lines: plainLines(d.lines), def: d}
-		if info.From < 0 || info.Until == -2 {
-			info.From, info.Until = -1, -1
-		}
-		out[i] = info
-	}
-	return out
-}

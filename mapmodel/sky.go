@@ -168,7 +168,8 @@ type SkyLineage struct {
 }
 
 // SkyLineages lists every lineage with units, in LineageOrder, for the
-// model's scene. The units are the lineage's town tiles (ruins and legacy
+// model's scene (the town lays its tiles out lineage by lineage, in that
+// order). The units are the lineage's town tiles (ruins and legacy
 // tiles included: an old section of the station, a dim colony), so a
 // lineage has as many units as it has tiles (TownTiles of its copies),
 // which grows sub-linearly with what is built and never shrinks while the
@@ -185,16 +186,6 @@ func (m *Model) SkyLineages() []SkyLineage {
 			out = append(out, SkyLineage{Key: t.Lineage, Part: SkyPartOf(s, t.Lineage)})
 		}
 		out[j].Units = append(out[j].Units, SkyUnit{Tile: i, N: t.Ord})
-	}
-	order := map[string]int{}
-	for i, l := range LineageOrder {
-		order[l] = i
-	}
-	// tiles come lineage by lineage already; keep LineageOrder explicit
-	for i := 1; i < len(out); i++ {
-		for j := i; j > 0 && order[out[j].Key] < order[out[j-1].Key]; j-- {
-			out[j], out[j-1] = out[j-1], out[j]
-		}
 	}
 	return out
 }

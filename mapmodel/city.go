@@ -1,10 +1,6 @@
 package mapmodel
 
-import (
-	"github.com/espresso20/ageforge/config"
-
-	"github.com/espresso20/ageforge/vibe"
-)
+import "github.com/espresso20/ageforge/vibe"
 
 // city.go is the Earth arc's city roster: every kind of thing the city
 // builds over the land from the Modern Age to the Fusion Age, the age that
@@ -161,25 +157,12 @@ var cityFeatureDefs = [NumCityFeatures]cityFeatureDef{
 var cityFeatureTable = buildCityFeatures()
 
 func buildCityFeatures() [NumCityFeatures]CityFeatureInfo {
-	idx := map[string]int{}
-	for i, k := range config.AgeOrder() {
-		idx[k] = i
-	}
-	age := func(k string, none int) int {
-		if k == "" {
-			return none
-		}
-		if i, ok := idx[k]; ok {
-			return i
-		}
-		return -1
-	}
 	var out [NumCityFeatures]CityFeatureInfo
 	out[FeatNone].From, out[FeatNone].Until = -1, -1
 	for f := CityFeature(1); f < NumCityFeatures; f++ {
 		d := &cityFeatureDefs[f]
 		out[f] = CityFeatureInfo{Key: d.key, Name: d.name.Plain(), Title: d.title.Plain(), Sym: d.sym,
-			From: age(d.from, -1), Until: age(d.until, -1), Lines: plainLines(d.lines), def: d}
+			From: ageNo(d.from), Until: ageNo(d.until), Lines: plainLines(d.lines), def: d}
 		if d.until != "" && out[f].Until < 0 {
 			out[f].From = -1 // an unknown age key: never stands (TestCityRoster fails on it)
 		}

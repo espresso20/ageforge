@@ -15,7 +15,9 @@
 package mapmodel
 
 import (
-	"sort"
+	"cmp"
+	"maps"
+	"slices"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
@@ -187,7 +189,6 @@ type Trip struct {
 type Expeditions struct {
 	Scout, Military *Trip
 	Completed       int
-	Auto            bool // a Geographic Society dispatches scouts
 }
 
 // Harbinger is the live harbinger.
@@ -280,12 +281,6 @@ func reachedAges(cat *Catalog, st *game.GameState, cur int) []bool {
 func (m *Model) ReachedAge(a int) bool { return a >= 0 && a < len(m.Reached) && m.Reached[a] }
 
 func layoutKey(m *Model) uint64 {
-	b2i := func(b bool) int64 {
-		if b {
-			return 1
-		}
-		return 0
-	}
 	h := Hash(m.Seed, int64(m.AgeIdx), int64(m.Workers.Staffed), int64(m.Workers.Idle), int64(m.Workers.Pop),
 		HashStr(m.Catastrophe.Pending), int64(m.Expeditions.Completed))
 	if vibe.On() { // the model holds words, so a scene built from the other script's is not reused
@@ -371,11 +366,7 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 	// Share each resource's building rate across its producers by their
 	// base production, so a building can say "+3.2 iron/s".
 	weight := map[string]float64{}
-	keys := make([]string, 0, len(st.Buildings))
-	for k := range st.Buildings {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	keys := slices.Sorted(maps.Keys(st.Buildings))
 	for _, k := range keys {
 		bs := st.Buildings[k]
 		d := cat.Defs[k]
@@ -416,12 +407,8 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 		order[l] = i
 	}
 	order[LinWonder] = len(LineageOrder)
-	sort.SliceStable(m.Buildings, func(i, j int) bool {
-		a, c := m.Buildings[i], m.Buildings[j]
-		if order[a.Lineage] != order[c.Lineage] {
-			return order[a.Lineage] < order[c.Lineage]
-		}
-		return a.Rank < c.Rank
+	slices.SortStableFunc(m.Buildings, func(a, c *Building) int {
+		return cmp.Or(cmp.Compare(order[a.Lineage], order[c.Lineage]), cmp.Compare(a.Rank, c.Rank))
 	})
 	// Wonders: every one built, plus the one this age needs once it is under
 	// way (something banked, or its construction queued). Until then the
@@ -538,7 +525,6 @@ func (m *Model) people(st *game.GameState) {
 		e.Military = &Trip{Name: s.Name, TicksLeft: s.TicksLeft}
 	}
 	e.Completed = st.Military.CompletedCount
-	e.Auto = st.Military.AutoExpedition.Active
 	for _, q := range st.BuildQueue {
 		p := 0.0
 		if q.TotalTicks > 0 {
@@ -588,16 +574,13 @@ func (m *Model) world(st *game.GameState) {
 	}
 	for _, r := range st.Trade.ActiveRoutes {
 		rt := Route{Key: r.Key, Name: r.Name, Disrupted: r.Disrupted, Cycles: r.CyclesDone, Mode: cat.RouteMode(r.Key)}
-		for res := range r.Import {
-			rt.Imports = append(rt.Imports, res)
-		}
-		sort.Strings(rt.Imports)
+		rt.Imports = slices.Sorted(maps.Keys(r.Import))
 		if len(partners) > 0 {
 			rt.Civ = partners[Hash(m.Seed, HashStr(r.Key))%uint64(len(partners))]
 		}
 		m.Routes = append(m.Routes, rt)
 	}
-	sort.Slice(m.Routes, func(i, j int) bool { return m.Routes[i].Key < m.Routes[j].Key })
+	slices.SortFunc(m.Routes, func(a, b Route) int { return cmp.Compare(a.Key, b.Key) })
 	if h := st.Harbinger; h != nil {
 		m.Harbinger = &Harbinger{Key: h.Key, Name: h.Name, Tier: string(h.Tier), Probability: h.Probability,
 			Numeric: h.Numeric, Invited: h.Invited, Warning: h.TargetEpochName}

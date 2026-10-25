@@ -1,7 +1,8 @@
 package mapmodel
 
 import (
-	"sort"
+	"maps"
+	"slices"
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
@@ -82,43 +83,18 @@ func (b *Builder) Model(st *game.GameState, since *Visit) *Model {
 func Signature(st *game.GameState, since *Visit) uint64 {
 	h := Hash(st.Seed, int64(st.Tick), HashStr(st.Age), int64(st.Workers.TotalPop), int64(st.Workers.TotalIdle),
 		int64(len(st.BuildQueue)), HashStr(st.PendingCatastrophe), HashStr(st.CurrentAgeWonderKey))
-	keys := make([]string, 0, len(st.Buildings))
-	for k, bs := range st.Buildings {
-		if bs.Count > 0 || bs.RuinCount > 0 {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
+	for _, k := range slices.Sorted(maps.Keys(st.Buildings)) {
 		bs := st.Buildings[k]
-		leg := int64(0)
-		if bs.IsLegacy {
-			leg = 1
+		if bs.Count > 0 || bs.RuinCount > 0 {
+			h = Hash(int64(h), HashStr(k), int64(bs.Count), int64(bs.RuinCount), int64(bs.WorkersAssigned), b2i(bs.IsLegacy))
 		}
-		h = Hash(int64(h), HashStr(k), int64(bs.Count), int64(bs.RuinCount), int64(bs.WorkersAssigned), leg)
 	}
-	fk := make([]string, 0, len(st.Diplomacy.Factions))
-	for k := range st.Diplomacy.Factions {
-		fk = append(fk, k)
-	}
-	sort.Strings(fk)
-	for _, k := range fk {
+	for _, k := range slices.Sorted(maps.Keys(st.Diplomacy.Factions)) {
 		f := st.Diplomacy.Factions[k]
-		d, w := int64(0), int64(0)
-		if f.Discovered {
-			d = 1
-		}
-		if f.AtWar {
-			w = 1
-		}
-		h = Hash(int64(h), HashStr(k), d, w, HashStr(f.Status), int64(f.Opinion))
+		h = Hash(int64(h), HashStr(k), b2i(f.Discovered), b2i(f.AtWar), HashStr(f.Status), int64(f.Opinion))
 	}
 	for _, r := range st.Trade.ActiveRoutes {
-		dis := int64(0)
-		if r.Disrupted {
-			dis = 1
-		}
-		h = Hash(int64(h), HashStr(r.Key), dis)
+		h = Hash(int64(h), HashStr(r.Key), b2i(r.Disrupted))
 	}
 	if s := st.Military.ActiveScout; s != nil {
 		h = Hash(int64(h), HashStr(s.Name), int64(s.TicksLeft))
