@@ -6,46 +6,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// Floors per the theming design §8.
-const (
-	floorBodyText  = 4.5 // Text/Label/Positive/Negative/Highlight vs Background (AA)
-	floorLargeText = 3.0 // Dim and Accent vs Background (AA large-text / glyphs)
-	floorSelection = 4.5 // Text drawn on the Selection background
-)
-
-// TestContrast_AllThemes enforces the WCAG AA luminance floors for every shipped
-// theme (§8). Themes are tuned against this test, not by eye — a theme that fails
-// here cannot ship.
-func TestContrast_AllThemes(t *testing.T) {
-	for _, th := range All() {
-		t.Run(th.Key, func(t *testing.T) {
-			bg := th.Color(RoleBackground)
-
-			body := []Role{RoleText, RoleLabel, RolePositive, RoleNegative, RoleHighlight}
-			for _, role := range body {
-				if r := ContrastRatio(th.Color(role), bg); r < floorBodyText {
-					t.Errorf("%s: %s vs Background = %.2f, want >= %.1f (AA body text)",
-						th.Key, role, r, floorBodyText)
-				}
-			}
-
-			large := []Role{RoleDim, RoleAccent}
-			for _, role := range large {
-				if r := ContrastRatio(th.Color(role), bg); r < floorLargeText {
-					t.Errorf("%s: %s vs Background = %.2f, want >= %.1f (AA large)",
-						th.Key, role, r, floorLargeText)
-				}
-			}
-
-			// Text must stay readable when drawn on a selected row.
-			if r := ContrastRatio(th.Color(RoleText), th.Color(RoleSelection)); r < floorSelection {
-				t.Errorf("%s: Text vs Selection = %.2f, want >= %.1f",
-					th.Key, r, floorSelection)
-			}
-		})
-	}
-}
-
 // TestContrast_AccessibleColorblind asserts that for every accessible theme, the
 // ± colors (Positive vs Negative) stay perceptibly distinct under BOTH
 // deuteranopia and protanopia simulation (§8). This is the check luminance contrast

@@ -41,6 +41,7 @@ var surfacePairs = func() []contrastPair {
 	}
 	ps = append(ps,
 		contrastPair{RoleSelectionText, RoleSelection, 4.5, 7.0, "selected row"},
+		contrastPair{RoleText, RoleSelection, 4.5, 4.5, "text on a selected row"},
 		contrastPair{RoleOnAccent, RoleAccent, 4.5, 4.5, "keycaps / primary buttons"},
 		contrastPair{RoleText, RoleChip, 4.5, 7.0, "keycap labels"},
 		contrastPair{RoleOnNegative, RoleNegative, 3.0, 4.5, "danger modal text (bold)"},
