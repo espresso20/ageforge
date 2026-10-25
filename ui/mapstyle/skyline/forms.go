@@ -806,8 +806,7 @@ func aSilo(r *rnd, h int) *sprite {
 	base := s.h - 1
 	for i := 0; i < n; i++ {
 		x := i * 3
-		s.vline(x, base-th+1, base, '█', sWallLit, sNone)
-		s.vline(x+1, base-th+1, base, '█', sWallShade, sNone)
+		s.shaft(x, base-th+1, base, 2, sWallLit, sWall, sWallShade)
 		s.put(x, base-th, '▄', sRoof, sNone)
 		s.put(x+1, base-th, '▄', sRoofShade, sNone)
 		s.put(x, base-th/2, '▀', sTrim, sWallLit)

@@ -39,18 +39,7 @@ func basilica(h int) *sprite {
 	lan := atLeast(u(4), 2)
 	ty := base - nav + 1 // the nave's top row
 	// the nave: pilasters, two tiers of arched windows
-	for y := ty; y <= base; y++ {
-		for x := 3; x < w-3; x++ {
-			sl := sWall
-			switch {
-			case x == 3:
-				sl = sWallLit
-			case x == w-4:
-				sl = sWallShade
-			}
-			s.put(x, y, '█', sl, sNone)
-		}
-	}
+	s.shaft(3, ty, base, w-6, sWallLit, sWall, sWallShade)
 	s.hline(2, w-3, ty, '█', sTrim, sNone)
 	s.hline(3, w-4, base, '▄', sTrim, sNone)
 	for x := 5; x < w-5; x += 3 {
@@ -98,17 +87,8 @@ func basilica(h int) *sprite {
 	// a bell tower with a spire at each end
 	th := atLeast(u(20), 6)
 	for _, tx := range []int{0, w - 5} {
+		s.shaft(tx, base-th+1, base, 5, sWallLit, sWall, sWallShade)
 		for y := base - th + 1; y <= base; y++ {
-			for x := tx; x < tx+5; x++ {
-				sl := sWall
-				switch {
-				case x == tx:
-					sl = sWallLit
-				case x == tx+4:
-					sl = sWallShade
-				}
-				s.put(x, y, '█', sl, sNone)
-			}
 			if (base-y)%4 == 2 && y > base-th+4 {
 				s.put(tx+2, y, '▌', sWin, sWall)
 				s.put(tx+3, y, '▐', sWin, sWall)
@@ -297,17 +277,8 @@ func glassHall(h int) *sprite {
 	s.put(cx, 1, '│', sMetal, sNone)
 	// the brick water towers at each end
 	for _, tx := range []int{0, w - 5} {
+		s.shaft(tx+1, base-tower+1, base, 3, sWallLit, sWall, sWallShade)
 		for y := base - tower + 1; y <= base; y++ {
-			for x := tx + 1; x < tx+4; x++ {
-				sl := sWall
-				switch {
-				case x == tx+1:
-					sl = sWallLit
-				case x == tx+3:
-					sl = sWallShade
-				}
-				s.put(x, y, '█', sl, sNone)
-			}
 			if (base-y)%5 == 3 {
 				s.put(tx+2, y, '▌', sWin, sWall)
 			}
@@ -509,9 +480,8 @@ func dam(h int) *sprite {
 	// the four intake towers
 	for _, tx := range []int{cx - crestHalf*3/5, cx - crestHalf/5, cx + crestHalf/5, cx + crestHalf*3/5} {
 		th := atLeast(u(6), 3)
+		s.shaft(tx, crest-th, crest-2, 2, sTrim, sWall, sWallShade)
 		for y := crest - th; y < crest-1; y++ {
-			s.put(tx, y, '█', sTrim, sNone)
-			s.put(tx+1, y, '█', sWallShade, sNone)
 			if (crest-y)%2 == 0 {
 				s.put(tx, y, '▌', sWin, sTrim)
 			}

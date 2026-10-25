@@ -372,16 +372,9 @@ func oDepot(r *rnd, h int) *sprite {
 		if i%2 == 1 {
 			fill = sMetal
 		}
-		for x := px; x < px+pw; x++ {
-			sl := fill
-			switch x {
-			case px:
-				sl = sWallLit
-			case px + pw - 1:
-				sl = sWallShade
-			}
-			s.put(x, y, '█', sl, sNone)
-			if x > px && x < px+pw-1 && (x-px)%3 == 0 {
+		s.shaft(px, y, y, pw, sWallLit, fill, sWallShade)
+		for x := px + 1; x < px+pw-1; x++ {
+			if (x-px)%3 == 0 {
 				s.put(x, y, '▬', sWallDark, fill)
 			}
 		}
@@ -1384,13 +1377,7 @@ func gBay(r *rnd, h int) *sprite {
 	s := newSprite(w, 6)
 	base := s.h - 1
 	s.hline(0, w-1, 1, '▄', sTrim, sNone)
-	for y := 2; y < base; y++ {
-		s.put(0, y, '█', sWallLit, sNone)
-		s.put(w-1, y, '█', sWallShade, sNone)
-		for x := 1; x < w-1; x++ {
-			s.put(x, y, '█', sWallDark, sNone)
-		}
-	}
+	s.shaft(0, 2, base-1, w, sWallLit, sWallDark, sWallShade)
 	s.hline(1, w-2, 2, '▀', sNeon1, sWallDark)
 	s.put(w/2-1, 3, '▄', sWall, sWallDark)
 	s.put(w/2, 3, '▄', sWall, sWallDark)
