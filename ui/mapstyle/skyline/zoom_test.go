@@ -703,17 +703,13 @@ func TestZoomFrameGuard(t *testing.T) {
 // without a panic, nothing '?', no glyph in its own colour, and in the ASCII
 // tier nothing outside ASCII.
 func TestZoomSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	ages := []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "modern_age", "cyberpunk_age", "fusion_age"}
 	themes := theme.All()
 	for i, age := range ages {
 		m := build(fixture.Options{Age: age, Seed: 4, Routes: 3, Harbinger: true, Tick: tickAt(0.95)}, 1)
 		for _, z := range zoomSteps {
 			for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
-				if err := theme.SetActive(themes[(i+int(z))%len(themes)].Key); err != nil {
-					t.Fatal(err)
-				}
+				fixture.WithTheme(t, themes[(i+int(z))%len(themes)].Key)
 				v := newView()
 				v.zoom, v.inspect, v.legend, v.flows = z, true, true, true
 				scr := draw(v, m, 120, 36, 7, tier, false)

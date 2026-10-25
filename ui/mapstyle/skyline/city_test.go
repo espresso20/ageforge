@@ -9,7 +9,6 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
@@ -22,8 +21,6 @@ var cityAges = []string{"modern_age", "information_age", "digital_age", "cyberpu
 // ASCII in the ASCII tier, with no '?' fallback elsewhere), no glyph in its
 // own background colour.
 func TestCitySweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	var models []*mapmodel.Model
 	for _, a := range cityAges {
 		for _, tod := range []float64{0.45, 0.95} {
@@ -52,10 +49,7 @@ func TestCitySweep(t *testing.T) {
 			}
 		}
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, m := range models {
 			for _, compact := range []bool{false, true} {
 				w, h := 120, 36

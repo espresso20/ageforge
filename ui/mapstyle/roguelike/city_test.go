@@ -11,7 +11,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
@@ -309,8 +308,6 @@ func TestCityTraffic(t *testing.T) {
 // in every view including the mini map, and on every theme no glyph is
 // drawn in its own background colour.
 func TestCityTiersAndThemes(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	var models []*mapmodel.Model
 	for i, age := range earthAges {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 4 + int64(i), Routes: 2, Harbinger: true, Wars: 1})
@@ -342,10 +339,7 @@ func TestCityTiersAndThemes(t *testing.T) {
 			}
 		}
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, m := range models {
 			for _, z := range []int{zRegion, zSettlement} {
 				v := newView()

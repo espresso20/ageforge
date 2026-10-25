@@ -17,8 +17,6 @@ import (
 // written, the wonder's own cells in it, nothing outside ASCII in the plain
 // tier and no glyph in its own colour.
 func TestPortraitEveryWonder(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	themes := theme.All()
 	c := catalog()
 	keys := 0
@@ -31,9 +29,7 @@ func TestPortraitEveryWonder(t *testing.T) {
 		keys++
 		for si, sz := range [][2]int{{66, 13}, {100, 30}, {40, 9}, {160, 42}} {
 			for ti, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
-				if err := theme.SetActive(themes[(a+si+ti)%len(themes)].Key); err != nil {
-					t.Fatal(err)
-				}
+				fixture.WithTheme(t, themes[(a+si+ti)%len(themes)].Key)
 				v := newView()
 				scr := capture.NewScreen(sz[0], sz[1])
 				if !v.Portrait(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, mapstyle.Frame{Model: m, Anim: 3, Tier: tier}, key) {

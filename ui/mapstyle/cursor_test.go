@@ -5,6 +5,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -41,15 +42,10 @@ func checkCursor(t *testing.T, where string, p *Palette) float64 {
 // dark themes the fill is warm (an orange); it is always made from the
 // theme's own roles.
 func TestCursorStandsOutInEveryTheme(t *testing.T) {
-	defer func() { _ = theme.SetActive(theme.DefaultKey) }()
-	themes := theme.All()
-	if len(themes) != 16 {
-		t.Fatalf("%d themes, want the 16 the game ships", len(themes))
+	if n := len(theme.All()); n != 16 {
+		t.Fatalf("%d themes, want the 16 the game ships", n)
 	}
-	for _, th := range themes {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		least := 9.0
 		var fill tcell.Color
 		for epoch := 0; epoch < 7; epoch++ {

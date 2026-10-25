@@ -16,6 +16,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
@@ -52,11 +53,7 @@ func TestWriteSiteFrames(t *testing.T) {
 	}
 	const w, h, anim = 120, 36, 4
 
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	if err := theme.SetActive("forge"); err != nil {
-		t.Fatal(err)
-	}
+	fixture.WithTheme(t, "forge")
 	defBg, defFg := theme.Color(theme.RoleBackground), theme.Color(theme.RoleText)
 
 	var palette []string

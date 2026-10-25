@@ -382,12 +382,7 @@ func TestVisitorSaucer(t *testing.T) {
 	}
 
 	// legible in every theme, and never in a legend
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		_, scr, x, y, r, _, _ := domeAt(m, shown, mapmodel.TierUnicode)
 		for dx := -1; dx <= 1; dx++ {
 			c, _, st, _ := scr.GetContent(x+dx, y)
@@ -396,7 +391,6 @@ func TestVisitorSaucer(t *testing.T) {
 			}
 		}
 	}
-	_ = theme.SetActive(orig)
 	lv := newView()
 	lv.SetOption(mapstyle.OptLegend, true)
 	if scr := draw(lv, m, 160, 45, shown, mapmodel.TierUnicode, false); strings.ContainsRune(rowText(scr, 44), dome) {

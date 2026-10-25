@@ -9,6 +9,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
@@ -341,16 +342,12 @@ func TestSkyZoomFrameGuard(t *testing.T) {
 // with the cursor out, without a panic, nothing '?', no glyph in its own
 // colour, and in the ASCII tier nothing outside ASCII.
 func TestSkyZoomSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	themes := theme.All()
 	for i, age := range skyAges {
 		m := skyModel(age, 4, 1)
 		for _, z := range zoomSteps {
 			for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
-				if err := theme.SetActive(themes[(i+int(z))%len(themes)].Key); err != nil {
-					t.Fatal(err)
-				}
+				fixture.WithTheme(t, themes[(i+int(z))%len(themes)].Key)
 				v := newView()
 				v.zoom, v.inspect, v.legend, v.flows = z, true, true, true
 				for _, sz := range [][2]int{{120, 36}, {80, 24}} {

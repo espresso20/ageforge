@@ -10,7 +10,6 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
@@ -127,16 +126,11 @@ func TestSkyDeterminismAndLife(t *testing.T) {
 // TestSkyThemeSweep: in every theme no drawn glyph has its ink equal to its
 // background, in the full and the compact views.
 func TestSkyThemeSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	models := map[string]*mapmodel.Model{}
 	for _, a := range skyAges {
 		models[a] = build(fixture.Options{Age: a, Seed: 5, Tick: tickAt(0.3), Harbinger: true, Routes: 3, Catastrophe: a == "quantum_age"}, 1)
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for name, m := range models {
 			for _, sz := range [][3]int{{120, 36, 0}, {40, 15, 1}, {65, 9, 1}} {
 				v := newView()

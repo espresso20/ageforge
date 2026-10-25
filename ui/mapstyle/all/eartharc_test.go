@@ -11,7 +11,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
@@ -123,22 +122,13 @@ func earthFrame(t *testing.T, style, age string, seed int64, tod float64, anim i
 	return frameSignature(scr, 0, 1, 160, 48-2)
 }
 
-func withTheme(t *testing.T, key string) {
-	t.Helper()
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	if err := theme.SetActive(key); err != nil {
-		t.Fatal(err)
-	}
-}
-
 // TestEarthArcDisparity is the disparity guard: in both styles, by day and
 // by night, on two seeds, every Earth-arc age's frame differs from its
 // neighbour's (the Atomic Age's before the Modern Age) by at least
 // disparityMin, so no two neighbours look alike. The owner found the late
 // ages too alike ("space kinda looks like cyber"); this keeps them apart.
 func TestEarthArcDisparity(t *testing.T) {
-	withTheme(t, "forge")
+	fixture.WithTheme(t, "forge")
 	ages := []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"}
 	for _, seed := range []int64{7, 11} {
 		for _, style := range []string{"roguelike", "skyline"} {
@@ -168,7 +158,7 @@ func TestEarthArcDisparity(t *testing.T) {
 // neon flickered, the clouds drifted) differs from itself by well under
 // the threshold, so the guard measures the ages, not the animation.
 func TestEarthArcDisparityThreshold(t *testing.T) {
-	withTheme(t, "forge")
+	fixture.WithTheme(t, "forge")
 	worst := 0.0
 	for _, style := range []string{"roguelike", "skyline"} {
 		for _, age := range []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
@@ -220,7 +210,7 @@ func greenShare(s tcell.SimulationScreen, x0, y0, x1, y1 int) float64 {
 // skyline by day): the Information Age shows well under the Modern Age's
 // green, the Digital Age less again (its reserve), and the megacity none.
 func TestEarthArcGreeneryOnScreen(t *testing.T) {
-	withTheme(t, "forge")
+	fixture.WithTheme(t, "forge")
 	for _, style := range []string{"roguelike", "skyline"} {
 		for _, seed := range []int64{7, 11} {
 			share := map[string]float64{}

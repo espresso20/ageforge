@@ -183,12 +183,7 @@ func blueShare(c tcell.Color) float64 {
 // in a built material: in a dark theme each row behind is dimmer and cooler
 // than the one in front; in a light theme it fades toward the paper.
 func TestBackRowsRecede(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, tod := range []float64{0.5, 0.95} {
 			m := build(fixture.Options{Age: "medieval_age", Seed: 5, Tick: tickAt(tod)}, 0)
 			p := newPal(m)
@@ -337,9 +332,7 @@ func windowColours(t *testing.T, m *mapmodel.Model, anim int) map[[2]int]tcell.C
 // waver slowly from frame to frame, and with the animation held (motion off)
 // the same frame is the same picture.
 func TestLitWindows(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	_ = theme.SetActive("forge")
+	fixture.WithTheme(t, "forge")
 	for _, age := range []string{"bronze_age", "medieval_age", "modern_age", "cyberpunk_age"} {
 		// seed 6: the Bronze Age has a dozen windowed buildings and few
 		// elsewhere; the landmark on the plot hides some of any seed's, so the

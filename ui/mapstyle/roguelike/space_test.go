@@ -10,7 +10,6 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
@@ -133,17 +132,12 @@ func TestSkyDeterministicAndAlive(t *testing.T) {
 // TestSkyThemeSweep: in every theme no glyph is drawn in its background
 // colour, in any sky scene.
 func TestSkyThemeSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	var models []*mapmodel.Model
 	for i, age := range skyAges {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 5, Harbinger: true, Wars: 1, Catastrophe: i%2 == 0})
 		models = append(models, m)
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, m := range models {
 			st := skyStyleFor()
 			st.g.flows = true

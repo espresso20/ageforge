@@ -12,7 +12,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
@@ -298,8 +297,6 @@ func TestPlacementStable(t *testing.T) {
 }
 
 func TestThemeSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	ages := []string{"stone_age", "medieval_age", "industrial_age", "cyberpunk_age", "quantum_age"}
 	models := map[string]*mapmodel.Model{}
 	for _, a := range ages {
@@ -308,10 +305,7 @@ func TestThemeSweep(t *testing.T) {
 				Harbinger: true, Routes: 3}, 1)
 		}
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for name, m := range models {
 			for _, compact := range []bool{false, true} {
 				w, h := 120, 36

@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
 	"sync"
@@ -110,13 +111,8 @@ func TestSpotCaptures(t *testing.T) {
 		{name: "ascii_colonial", o: fixture.Options{Age: "colonial_age", Seed: 5}, tod: 0.5, w: 120, h: 40, tier: mapmodel.TierASCII},
 	}
 	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	for _, sh := range shots {
-		if sh.theme != "" {
-			_ = theme.SetActive(sh.theme)
-		} else {
-			_ = theme.SetActive(orig)
-		}
+		fixture.WithTheme(t, cmp.Or(sh.theme, orig))
 		sh.o.Tick = tickAt(sh.tod) - 600 // fixture.Grow adds 600 ticks
 		m := build(sh.o, 1)
 		v := newView()

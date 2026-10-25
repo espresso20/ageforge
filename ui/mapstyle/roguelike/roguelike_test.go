@@ -17,7 +17,6 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
@@ -168,17 +167,12 @@ func TestDeterministicAndAlive(t *testing.T) {
 }
 
 func TestThemeSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	var models []*mapmodel.Model
 	for i, age := range []string{"primitive_age", "medieval_age", "industrial_age", "digital_age", "cyberpunk_age", "galactic_age"} {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 5, Harbinger: true, Wars: 1, Catastrophe: i%2 == 0})
 		models = append(models, m)
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for _, m := range models {
 			for z := zRegion; z <= zDistrict; z++ {
 				v := newView()

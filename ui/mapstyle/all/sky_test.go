@@ -10,7 +10,6 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
@@ -114,11 +113,7 @@ func skyFrameSig(t *testing.T, style string, m *mapmodel.Model, anim int) signat
 // Age before it, looks unlike its neighbours by at least disparityFloor,
 // while the same age a moment later looks like itself.
 func TestSkyDisparity(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	if err := theme.SetActive("forge"); err != nil {
-		t.Fatal(err)
-	}
+	fixture.WithTheme(t, "forge")
 	models := make([]*mapmodel.Model, len(arcAges))
 	for i, a := range arcAges {
 		models[i] = arcModel(a)

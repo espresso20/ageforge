@@ -438,8 +438,6 @@ func TestWonderGlyphs(t *testing.T) {
 // no panic, no '?', nothing outside ASCII in the ASCII tier, no glyph in its
 // own colour.
 func TestWonderTiersAndThemes(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	themes := theme.All()
 	n := 0
 	for i, age := range ageKeys(0, groundAges) {
@@ -454,9 +452,7 @@ func TestWonderTiersAndThemes(t *testing.T) {
 					x := wonderX(m.Skyline.Districts[m.AgeIdx], wonderKeyOf(m.AgeIdx))
 					for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
 						n++
-						if err := theme.SetActive(themes[(i+n)%len(themes)].Key); err != nil {
-							t.Fatal(err)
-						}
+						fixture.WithTheme(t, themes[(i+n)%len(themes)].Key)
 						v := newView()
 						v.zoom, v.follow, v.inspect = zm, false, true
 						v.cam = x - zm.cols(110)/2
