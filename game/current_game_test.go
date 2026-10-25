@@ -357,7 +357,7 @@ func TestPickCurrentGameNewest(t *testing.T) {
 // survives a reload of the account.
 func TestGameRecordLivesInSettings(t *testing.T) {
 	ge, acct := menuAccount(t)
-	accountFile := accountFilePath()
+	accountFile := accountPath()
 	settingsFile := filepath.Join(accountDir(acct.AccountID), settingsFileName)
 
 	// A settings file as a build before the records wrote it.

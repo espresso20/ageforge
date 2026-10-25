@@ -2,7 +2,6 @@ package game
 
 import (
 	"crypto/hmac"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -87,9 +86,9 @@ func accountDir(id string) string {
 //
 // When no account is active yet (empty id, the first-run window before a name is chosen),
 // it collapses to <root>/accounts. That is harmless: nothing writes a *named* artifact in
-// that window — LoadOrCreate returns a fresh unestablished account WITHOUT persisting it,
-// and the create/migrate paths always have a real id before they MkdirAll/Save. So no file
-// is ever created under an empty-id slot.
+// that window — before a name is chosen no account exists, and the create/migrate paths
+// always have a real id before they MkdirAll/Save. So no file is ever created under an
+// empty-id slot.
 func dataDirectory() string {
 	return accountDir(getActiveAccountID())
 }
@@ -137,7 +136,7 @@ func writeActivePointer(id string) error {
 
 // migrateLegacyAccountIfNeeded moves a pre-Phase-A FLAT layout (account.json + saves/
 // directly under the data ROOT) into the new account-scoped slot, non-destructively
-// (the accounts design, Phase A). It is called at the top of LoadOrCreate/LoadAccount, BEFORE the
+// (the accounts design, Phase A). It is called at the top of LoadAccount, BEFORE the
 // active account is resolved, so the pointer it writes is in place for that resolution.
 //
 // TRIGGER (idempotent): it runs ONLY when <root>/account.json exists AND <root>/accounts
@@ -166,7 +165,7 @@ func migrateLegacyAccountIfNeeded() error {
 	}
 
 	// Learn the legacy account's ID so we name its slot correctly. A corrupt/unparseable
-	// legacy file has no usable ID — leave it untouched (LoadOrCreate's corrupt path backs
+	// legacy file has no usable ID — leave it untouched (LoadAccount's corrupt path backs
 	// it up later) rather than inventing a slot name.
 	data, err := os.ReadFile(legacyAccount)
 	if err != nil {
@@ -317,13 +316,6 @@ type Account struct {
 	// signature and sets it again. Exports carry it too.
 	Tampered bool `json:"tampered,omitempty"`
 
-	// FreshlyCreated is the in-memory, non-persisted signal that LoadOrCreate just
-	// minted this account on its fresh-create path (no file existed). Boot code reads
-	// it to surface a one-time, non-blocking first-run notice (the accounts design §6) without
-	// changing LoadOrCreate's signature. json:"-" keeps it off disk; it is false for
-	// any account loaded from an existing file.
-	FreshlyCreated bool `json:"-"`
-
 	// dirty is the in-memory, non-persisted write-debounce flag for the lifetime-stats
 	// hooks (the accounts design §8 "debounce writes"). RecordPrestige/RecordAgeReached mutate
 	// the in-memory stats and set dirty=true WITHOUT touching the disk — they run under
@@ -369,32 +361,6 @@ type Account struct {
 	mu sync.Mutex
 }
 
-// newAccountID returns a fresh, stable account ID: 16 random bytes from crypto/rand,
-// hex-encoded (the accounts design §3.3 — 128 random bits, not a v4 UUID specifically).
-func newAccountID() (string, error) {
-	var b [16]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		return "", fmt.Errorf("failed to generate account id: %w", err)
-	}
-	return hex.EncodeToString(b[:]), nil
-}
-
-// newAccount builds a fresh, unsigned Account with a new ID and Created/LastSeen
-// set to now. The caller is responsible for calling Save to sign and persist it.
-func newAccount() (*Account, error) {
-	id, err := newAccountID()
-	if err != nil {
-		return nil, err
-	}
-	now := time.Now()
-	return &Account{
-		Version:   accountSchemaVersion,
-		AccountID: id,
-		Created:   now,
-		LastSeen:  now,
-	}, nil
-}
-
 // normalizeAccountName canonicalizes a name for ID derivation: trimmed, lowercased,
 // and with any internal whitespace run collapsed to a single space. So "  Bob   the
 // Builder " and "bob the builder" normalize identically and therefore derive the same
@@ -431,9 +397,9 @@ func (a *Account) Established() bool {
 	return a.DisplayName != ""
 }
 
-// LoadAccount loads an EXISTING account.json without ever creating one — the read-only
-// counterpart to LoadOrCreate, used by the name-first boot flow (the UI mints the account
-// after prompting for a name). Behavior by file state:
+// LoadAccount loads an EXISTING account.json without ever creating one — it is what the
+// name-first boot flow uses (the UI mints the account after prompting for a name).
+// Behavior by file state:
 //
 //   - Absent: return (nil, false, nil) — no file, nothing to load. The caller prompts.
 //   - Present + parses + signature valid (or unsigned/legacy): return (acct, true, nil).
@@ -443,11 +409,10 @@ func (a *Account) Established() bool {
 //     (nil, false, nil) — there is no salvageable account, so the caller prompts fresh.
 //
 // It never writes on the happy/tampered paths; the only disk mutation is the .corrupt
-// rename for an unparseable file (mirrors LoadOrCreate's corrupt handling, minus the
-// create).
+// rename for an unparseable file.
 func LoadAccount() (*Account, bool, error) {
-	// Same resolution as LoadOrCreate, minus the create: migrate a legacy flat layout,
-	// then scope to the active account from the persisted pointer.
+	// Migrate a legacy flat layout, then scope to the active account from the persisted
+	// pointer.
 	if err := migrateLegacyAccountIfNeeded(); err != nil {
 		return nil, false, err
 	}
@@ -495,7 +460,7 @@ func LoadAccount() (*Account, bool, error) {
 // same ID — that IS the cross-machine recovery story (the accounts design §3.5).
 //
 // MIGRATION: if an account file already exists (e.g. a legacy random-id dev account from
-// the old LoadOrCreate auto-create), its DATA — unlocks, lifetime stats, achievements,
+// an old build that auto-created one), its DATA — unlocks, lifetime stats, achievements,
 // prefs — is carried over into the new named account so earned progress is not lost when
 // the identity is re-keyed to the name. Identity fields (the old random ID, Created) are
 // replaced; the new named identity wins. A corrupt/unparseable existing file is ignored
@@ -510,12 +475,11 @@ func CreateNamedAccount(name string) (*Account, error) {
 	trimmed := strings.TrimSpace(name)
 	now := time.Now()
 	acct := &Account{
-		Version:        accountSchemaVersion,
-		AccountID:      accountIDFromName(trimmed),
-		DisplayName:    trimmed,
-		Created:        now,
-		LastSeen:       now,
-		FreshlyCreated: true,
+		Version:     accountSchemaVersion,
+		AccountID:   accountIDFromName(trimmed),
+		DisplayName: trimmed,
+		Created:     now,
+		LastSeen:    now,
 	}
 
 	// Carry over DATA from any pre-existing (currently-active) account so unlocks/stats
@@ -771,12 +735,11 @@ func CreateAccount(name string) (*Account, error) {
 	// Fresh, EMPTY established account — no carry-over. DATA fields stay zero.
 	now := time.Now()
 	acct := &Account{
-		Version:        accountSchemaVersion,
-		AccountID:      id,
-		DisplayName:    trimmed,
-		Created:        now,
-		LastSeen:       now,
-		FreshlyCreated: true,
+		Version:     accountSchemaVersion,
+		AccountID:   id,
+		DisplayName: trimmed,
+		Created:     now,
+		LastSeen:    now,
 	}
 	// A badge file left in the slot (its account.json was lost) is this account's.
 	acct.adoptBadgeFile()
@@ -929,7 +892,7 @@ func shortID(id string) string {
 // It takes a pointer (not a value) so the sync.Mutex field is never copied — a
 // value copy would trip go vet's copylocks. The signed bytes are unchanged from a
 // value-based marshal: json.Marshal already ignores unexported fields (mu) and the
-// json:"-" FreshlyCreated field, and we build the payload from a freshly-constructed
+// json:"-" badge fields, and we build the payload from a freshly-constructed
 // struct literal that copies only the serializable fields, with Signature zeroed — so
 // the signature covers exactly the on-disk data. Tampered is part of that data: it is
 // omitempty, so an untampered account signs to the same bytes as before the flag was
@@ -946,7 +909,7 @@ func signAccount(a *Account) string {
 		Achievements: a.Achievements,
 		Prefs:        a.Prefs,
 		Tampered:     a.Tampered,
-		// Signature deliberately zero; FreshlyCreated/mu are json:"-"/unexported.
+		// Signature deliberately zero; mu is unexported.
 		// The badges are not here: they are signed in their own file.
 	}
 	data, _ := json.Marshal(&payload)
@@ -964,7 +927,7 @@ func verifyAccount(a *Account) bool {
 }
 
 // validAccountID reports whether id has the shape every account ID has: 32 lowercase
-// hex characters (16 bytes, from newAccountID, accountIDFromName or a recovery code). An
+// hex characters (16 bytes, from accountIDFromName or a recovery code). An
 // ID names a directory under <root>/accounts/, so anything else (an empty ID, which
 // would collapse onto the shared accounts root, or a path from a hand-made export) is
 // refused before it reaches the disk.
@@ -1017,97 +980,6 @@ func (a *Account) Save() error {
 	}
 	// The badges go to their own file in the same slot, when they changed.
 	return a.saveBadgeFile(dir)
-}
-
-// LoadOrCreate resolves the active account (migrating a legacy flat layout, then reading
-// the active-account pointer) and returns the live Account, creating one transparently when
-// the active slot has none (the accounts design §6/§7). Behavior by file state:
-//
-//   - Absent: generate a fresh account (new ID, Created=now), Save it, return it.
-//   - Present + parses + signature valid (or unsigned/legacy): return it.
-//   - Present + parses + signature INVALID: return it with Tampered=true set —
-//     a cosmetic flag, not a lockout. The file is NOT deleted.
-//   - Present but UNPARSEABLE: back the bad file up to account.json.corrupt, then
-//     create + Save a fresh account and return it.
-//
-// Note: this phase does not stamp LastSeen on load (that is Phase 2 startup
-// wiring); LoadOrCreate's contract here is read-or-create, leaving the on-disk
-// file untouched on the valid/tampered paths.
-func LoadOrCreate() (*Account, error) {
-	// Relocate any pre-Phase-A flat layout into a slot before resolving the active
-	// account, so the pointer it writes is honored by the resolution below.
-	if err := migrateLegacyAccountIfNeeded(); err != nil {
-		return nil, err
-	}
-
-	// Resolve the active account from the persisted pointer. With an id set, scope the
-	// reads to that slot so accountPath() resolves to <root>/accounts/<id>/account.json.
-	id, err := readActivePointer()
-	if err != nil {
-		return nil, err
-	}
-	if id != "" {
-		setActiveAccountID(id)
-	}
-
-	path := accountPath()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// No account in the active slot → mint, sign, and persist a fresh one
-			// (the accounts design §6/§7). It becomes the active account: set the in-memory id,
-			// Save into its now-resolved slot, then persist the pointer so the next boot
-			// finds it. First genuine run → FreshlyCreated=true.
-			return createFreshActive(true)
-		}
-		return nil, fmt.Errorf("failed to read account: %w", err)
-	}
-
-	var acct Account
-	if err := json.Unmarshal(data, &acct); err != nil {
-		// Corrupt / unparseable → back it up to <slot>/account.json.corrupt, then mint a
-		// fresh account (the accounts design §7). The fresh account has a new ID, so it gets its
-		// own slot and becomes the active account (pointer included), the same as the
-		// absent-file path; the .corrupt backup stays in the old slot. (It used to be saved
-		// into the old slot under its new ID, leaving a slot whose folder named a different
-		// account.) The corrupt-recovery path is NOT a first run → FreshlyCreated stays false.
-		backup := path + ".corrupt"
-		if renameErr := os.Rename(path, backup); renameErr != nil {
-			return nil, fmt.Errorf("account file is corrupt and could not be backed up: %w", renameErr)
-		}
-		return createFreshActive(false)
-	}
-
-	if !verifyAccount(&acct) {
-		// Signature present but mismatched → tampered. Flag it, still load it.
-		acct.Tampered = true
-	}
-	acct.loadBadgeFile(filepath.Dir(path))
-	// Established account loaded from its slot — confirm it as the active account.
-	setActiveAccountID(acct.AccountID)
-	return &acct, nil
-}
-
-// createFreshActive mints a fresh random-id account, makes it the active account, and
-// persists it into its own slot plus the active pointer. It is the scoped equivalent of
-// the pre-Phase-A "absent file → create + Save" path: Save writes to
-// <root>/accounts/<id>/account.json (never an empty-id slot), and writeActivePointer
-// records the choice for the next boot. freshlyCreated sets FreshlyCreated so boot code
-// can surface the one-time first-run notice.
-func createFreshActive(freshlyCreated bool) (*Account, error) {
-	acct, err := newAccount()
-	if err != nil {
-		return nil, err
-	}
-	setActiveAccountID(acct.AccountID)
-	if err := acct.Save(); err != nil {
-		return nil, err
-	}
-	if err := writeActivePointer(acct.AccountID); err != nil {
-		return nil, err
-	}
-	acct.FreshlyCreated = freshlyCreated
-	return acct, nil
 }
 
 // --- Unlock API (the accounts design §8; the theming design §5 is the first caller) ---
@@ -1382,7 +1254,7 @@ func (a *Account) RecoveryCode() string {
 	idBytes, err := hex.DecodeString(id)
 	if err != nil || len(idBytes) != 16 {
 		// An account ID that isn't 16 hex bytes can't form a code; return the prefix
-		// only rather than panic. LoadOrCreate always produces a valid 16-byte ID.
+		// only rather than panic. CreateNamedAccount always produces a valid 16-byte ID.
 		return recoveryCodePrefix + "-"
 	}
 	sum := crc16CCITT(idBytes)

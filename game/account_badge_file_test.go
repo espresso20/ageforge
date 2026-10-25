@@ -988,15 +988,12 @@ func TestSwitchAndRecoverKeepBadges(t *testing.T) {
 	}
 }
 
-// TestRenamedAccountCarriesItsBadges: naming an unnamed account gives it a
-// new ID. Its badges come along and are signed for the new ID, the one way
-// a badge file changes owner.
+// TestRenamedAccountCarriesItsBadges: making an account under a new name
+// while another is live gives it a new ID. The live account's badges come
+// along and are signed for the new ID, the one way a badge file changes owner.
 func TestRenamedAccountCarriesItsBadges(t *testing.T) {
 	isolateAccountDir(t)
-	legacy, err := LoadOrCreate()
-	if err != nil {
-		t.Fatal(err)
-	}
+	legacy := mustAccount(t, "Legacy")
 	recordAge(t, legacy, "stone_age")
 	if err := legacy.FlushIfDirty(); err != nil {
 		t.Fatal(err)
