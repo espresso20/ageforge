@@ -93,17 +93,7 @@ func (c *completer) valid(a Arg, w string) bool {
 
 // buildUniverse lists every key each game-thing kind can take.
 func buildUniverse() map[ArgKind]map[string]bool {
-	set := func(keys []string) map[string]bool {
-		m := make(map[string]bool, len(keys))
-		for _, k := range keys {
-			m[k] = true
-		}
-		return m
-	}
-	var buildings, techs, resources, factions, themes, routes, upgrades []string
-	for k := range config.BuildingByKey() {
-		buildings = append(buildings, k)
-	}
+	var techs, resources, factions, themes, routes, upgrades []string
 	for _, t := range config.Technologies() {
 		techs = append(techs, t.Key)
 	}
@@ -122,21 +112,17 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	for _, u := range config.ActivePrestigeUpgrades() {
 		upgrades = append(upgrades, u.Key)
 	}
-	order := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		order[a] = i
-	}
-	b, r := set(buildings), set(resources)
+	b, r := setOf(sortedKeysOf(config.BuildingByKey())), setOf(resources)
 	return map[ArgKind]map[string]bool{
 		ArgBuilding: b, ArgPlanBuilding: b, ArgSellBuilding: b, ArgWorkerBuilding: b,
 		ArgPlanUpgradeBuilding: b,
 		ArgStaffedBuilding:     b, ArgUpgradeBuilding: b,
-		ArgTech: set(techs), ArgPlanTech: set(techs),
+		ArgTech: setOf(techs), ArgPlanTech: setOf(techs),
 		ArgResource: r, ArgWonderResource: r,
-		ArgFaction: set(factions), ArgTheme: set(themes),
-		ArgRouteAvailable: set(routes), ArgRouteActive: set(routes),
-		ArgPrestigeUpgrade: set(upgrades),
-		ArgDomain:          set(config.WorkerDomains()),
+		ArgFaction: setOf(factions), ArgTheme: setOf(themes),
+		ArgRouteAvailable: setOf(routes), ArgRouteActive: setOf(routes),
+		ArgPrestigeUpgrade: setOf(upgrades),
+		ArgDomain:          setOf(config.WorkerDomains()),
 	}
 }
 
@@ -396,7 +382,7 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return buildableBuildingKeys(st)
 	case ArgPlanBuilding:
 		return plannableBuildingKeys(st)
-	case ArgPlanUpgradeBuilding:
+	case ArgPlanUpgradeBuilding, ArgUpgradeBuilding:
 		return upgradeableBuildingKeys(c.engine)
 	case ArgSellBuilding:
 		return sellableBuildingKeys(st)
@@ -404,8 +390,6 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return workerBuildingKeys(st)
 	case ArgStaffedBuilding:
 		return assignedBuildingKeysAll(st)
-	case ArgUpgradeBuilding:
-		return upgradeableBuildingKeys(c.engine)
 	case ArgTech:
 		return availableTechKeys(st)
 	case ArgPlanTech:
@@ -474,17 +458,35 @@ func byRank(keys []string, rank func(string) int) []string {
 	return keys
 }
 
+// keysWhere is the keys of m that keep accepts, sorted.
+func keysWhere[V any](m map[string]V, keep func(key string, v V) bool) []string {
+	var keys []string
+	for k, v := range m {
+		if keep(k, v) {
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// setOf is the set of the keys in ks.
+func setOf(ks []string) map[string]bool {
+	m := make(map[string]bool, len(ks))
+	for _, k := range ks {
+		m[k] = true
+	}
+	return m
+}
+
 // buildableBuildingKeys is what `build` suggests: buildings that can be
 // built in this age (unlocked, not superseded, short of their limit), the
 // affordable ones first.
 func buildableBuildingKeys(state game.GameState) []string {
-	var keys []string
-	for key, bs := range state.Buildings {
+	keys := keysWhere(state.Buildings, func(_ string, bs game.BuildingState) bool {
 		// A building of another age is refused by the age lock.
-		if bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && (bs.AgeKey == "" || bs.AgeKey == state.Age) {
-			keys = append(keys, key)
-		}
-	}
+		return bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && (bs.AgeKey == "" || bs.AgeKey == state.Age)
+	})
 	return byRank(keys, func(k string) int {
 		if state.Buildings[k].CanBuild {
 			return 0
@@ -520,14 +522,7 @@ func plannableBuildingKeys(state game.GameState) []string {
 
 // availableTechKeys is what `research` suggests: techs that can start now.
 func availableTechKeys(state game.GameState) []string {
-	var keys []string
-	for key, ts := range state.Research.Techs {
-		if ts.Available {
-			keys = append(keys, key)
-		}
-	}
-	sort.Strings(keys)
-	return keys
+	return keysWhere(state.Research.Techs, func(_ string, ts game.TechState) bool { return ts.Available })
 }
 
 // plannableTechKeys is what `plan research` takes: unresearched techs of
@@ -545,12 +540,9 @@ func plannableTechKeys(state game.GameState) []string {
 			planned[v.Key] = true
 		}
 	}
-	var keys []string
-	for key, ts := range state.Research.Techs {
-		if !ts.Researched && !planned[key] && sight.Age(ts.Age) {
-			keys = append(keys, key)
-		}
-	}
+	keys := keysWhere(state.Research.Techs, func(key string, ts game.TechState) bool {
+		return !ts.Researched && !planned[key] && sight.Age(ts.Age)
+	})
 	return byRank(keys, func(k string) int {
 		ts := state.Research.Techs[k]
 		switch {
@@ -565,14 +557,7 @@ func plannableTechKeys(state game.GameState) []string {
 
 // unlockedResourceKeys returns the unlocked resources, sorted.
 func unlockedResourceKeys(state game.GameState) []string {
-	var keys []string
-	for key, rs := range state.Resources {
-		if rs.Unlocked {
-			keys = append(keys, key)
-		}
-	}
-	sort.Strings(keys)
-	return keys
+	return keysWhere(state.Resources, func(_ string, rs game.ResourceState) bool { return rs.Unlocked })
 }
 
 // wonderNeedKeys is what `wonder collect` suggests: the resources the current
@@ -583,13 +568,8 @@ func wonderNeedKeys(state game.GameState) []string {
 		return nil
 	}
 	bank := state.Buildings[w].WonderBank
-	var keys []string
 	wonder, _ := state.Ruleset().Building(w)
-	for res, need := range wonder.BaseCost {
-		if need-bank[res] > 0.001 {
-			keys = append(keys, res)
-		}
-	}
+	keys := keysWhere(wonder.BaseCost, func(res string, need float64) bool { return need-bank[res] > 0.001 })
 	return byRank(keys, func(k string) int {
 		if state.Resources[k].Amount > 0 {
 			return 0
@@ -608,25 +588,17 @@ func sellableBuildingKeys(state game.GameState) []string {
 	if state.Age == "primitive_age" {
 		return nil
 	}
-	var keys []string
-	for key, bs := range state.Buildings {
-		if bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && bs.Scholars <= 0 {
-			keys = append(keys, key)
-		}
-	}
-	sort.Strings(keys)
-	return keys
+	return keysWhere(state.Buildings, func(_ string, bs game.BuildingState) bool {
+		return bs.Count > 0 && bs.Category != "wonder" && bs.Category != "storage" && bs.Scholars <= 0
+	})
 }
 
 // workerBuildingKeys is what `assign` suggests: built buildings that take
 // workers, the ones with a free slot first.
 func workerBuildingKeys(state game.GameState) []string {
-	var keys []string
-	for key, bs := range state.Buildings {
-		if bs.Count > 0 && bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
-			keys = append(keys, key)
-		}
-	}
+	keys := keysWhere(state.Buildings, func(_ string, bs game.BuildingState) bool {
+		return bs.Count > 0 && bs.WorkerDomain != "" && bs.WorkerCapacity > 0
+	})
 	return byRank(keys, func(k string) int {
 		bs := state.Buildings[k]
 		if bs.WorkersAssigned < bs.Count*bs.WorkerCapacity {
@@ -647,23 +619,13 @@ func assignedBuildingKeysAll(state game.GameState) []string {
 			}
 		}
 	}
-	var keys []string
-	for k := range seen {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
+	return sortedKeysOf(seen)
 }
 
 // prestigeUpgradeKeys returns the legacy kit items not bought yet, the
 // ones the points on hand can buy first.
 func prestigeUpgradeKeys(state game.GameState) []string {
-	var keys []string
-	for key, u := range state.Prestige.Upgrades {
-		if u.NextCost > 0 {
-			keys = append(keys, key)
-		}
-	}
+	keys := keysWhere(state.Prestige.Upgrades, func(_ string, u game.PrestigeUpgradeState) bool { return u.NextCost > 0 })
 	return byRank(keys, func(k string) int {
 		if state.Prestige.Upgrades[k].NextCost <= state.Prestige.Available {
 			return 0
@@ -694,14 +656,7 @@ func activeTradeRouteKeys(state game.GameState) []string {
 
 // discoveredFactionKeys returns the civilizations met so far, sorted.
 func discoveredFactionKeys(state game.GameState) []string {
-	var keys []string
-	for key, f := range state.Diplomacy.Factions {
-		if f.Discovered {
-			keys = append(keys, key)
-		}
-	}
-	sort.Strings(keys)
-	return keys
+	return keysWhere(state.Diplomacy.Factions, func(_ string, f game.FactionInfo) bool { return f.Discovered })
 }
 
 // dealNumbers is what `diplomacy accept <civ>` and `plan deal <civ>` suggest:
