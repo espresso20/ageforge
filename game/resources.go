@@ -183,15 +183,12 @@ func (rm *ResourceManager) GetAll() map[string]float64 {
 const devFillAmount = config.Trillion
 
 // GetAllStorage is for the dev console's /fill and nothing else: a large
-// amount of every resource a town can save up (one with a BaseStorage above
-// zero). Stock has no cap, so there is no store to report; the name stays
-// because the console reads it.
+// amount of every resource the set defines. Stock has no cap, so there is no
+// store to report; the name stays because the console reads it.
 func (rm *ResourceManager) GetAllStorage() map[string]float64 {
-	out := make(map[string]float64)
-	for key := range rm.resources {
-		if rm.defs[key].BaseStorage > 0 {
-			out[key] = devFillAmount
-		}
+	out := make(map[string]float64, len(rm.defs))
+	for key := range rm.defs {
+		out[key] = devFillAmount
 	}
 	return out
 }
