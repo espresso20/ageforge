@@ -984,7 +984,6 @@ func (d *Dashboard) refresh() {
 	}
 
 	if d.lastAge != state.Age {
-		ApplyAgePalette(state.Age)
 		d.lastAge = state.Age
 	}
 
