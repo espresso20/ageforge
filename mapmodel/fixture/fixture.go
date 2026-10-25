@@ -9,6 +9,7 @@ import (
 	"maps"
 	"sort"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rules"
@@ -254,4 +255,19 @@ func Grow(st game.GameState, step int) game.GameState {
 	}
 	out.Tick += 600
 	return out
+}
+
+// ReachedEras cuts the run's record of ages in st down to the first eras eras
+// and the current age, as a run that came to this age through those eras
+// only would have. Every era, or more, leaves the record as it is.
+func ReachedEras(st *game.GameState, eras int) {
+	epochs := config.Epochs()
+	if eras >= len(epochs) {
+		return
+	}
+	st.Stats.AgesReached = nil
+	for _, e := range epochs[:eras] {
+		st.Stats.AgesReached = append(st.Stats.AgesReached, e.Ages...)
+	}
+	st.Stats.AgesReached = append(st.Stats.AgesReached, st.Age)
 }
