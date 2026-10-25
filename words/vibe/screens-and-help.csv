@@ -2371,24 +2371,6 @@ ui.toast.chainToast.02," Speedrun factor %s for %s."
 ui.villager_panel.computeMoraleBand.01,▲ Vibes %.0f%% (production %s)
 ui.villager_panel.computeMoraleBand.02,▼ Vibes %.0f%% (production %s)
 ui.villager_panel.computeMoraleBand.03,Vibes %.0f%% (production holding steady)
-ui.wonder_gallery.NewWonderPanel.01," Wonder Flex "
-ui.wonder_gallery.UpdateState.01,"[gray]This age has no wonder, zero flex.[-]"
-ui.wonder_gallery.UpdateState.02,"[green]It ate[-] [gray](%s)[-]
-
-"
-ui.wonder_gallery.UpdateState.03,"[gray]%s, still loading[-]
-
-"
-ui.wonder_gallery.UpdateState.04,"[cyan]Buffs:[-]
-"
-ui.wonder_gallery.UpdateState.05,"
-[cyan]Wonder bag:[-]
-"
-ui.wonder_gallery.UpdateState.06,"
-[gray]Cook time: %s[-]
-"
-ui.wonder_gallery.UpdateState.07,"
-[gold]Wonder flexes: %d[-]"
 ui.building_text.buildingText.07,"Past %s, each one gets nerfed to half-rate research."
 ui.building_text.buildingText.05,dupe
 ui.building_text.buildingText.06,dupes
