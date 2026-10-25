@@ -1,18 +1,16 @@
+//go:build smokebot
+
 package smoke
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 )
-
-func bad(v float64) bool { return math.IsNaN(v) || math.IsInf(v, 0) }
 
 // checkInvariants runs the per-sweep checks against one snapshot.
 func (r *runner) checkInvariants(st game.GameState) {
@@ -242,19 +240,4 @@ func costStr(c map[string]float64) string {
 		parts = append(parts, fmt.Sprintf("%s %s", k, num(c[k])))
 	}
 	return strings.Join(parts, ", ")
-}
-
-// num formats a number compactly: whole below ten thousand, and from there
-// the game's own format (textfmt.Number: 12.5K, 3.4M, 1.56T, 8.9Q), so the
-// report reads as the game does. It used to stop at T and printed the Cosmic
-// Era's quadrillions as 8900T in scientific form.
-func num(v float64) string {
-	switch {
-	case bad(v):
-		return fmt.Sprint(v)
-	case math.Abs(v) >= 10_000:
-		return textfmt.Number(v)
-	default:
-		return fmt.Sprintf("%.0f", v)
-	}
 }

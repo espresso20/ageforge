@@ -1585,28 +1585,8 @@ func (ge *GameEngine) doTick() {
 	ge.recalculateTickSpeed()
 
 	// Record periodic history sample (every historySampleInterval ticks).
-	// All data is read directly from engine fields — no GetState() call here.
 	if ge.tick%historySampleInterval == 0 {
-		ageOrderMap := ge.progress.GetAgeOrder()
-		ageOrder := ageOrderMap[ge.age]
-		snap := ge.Resources.Snapshot()
-		foodRate := 0.0
-		knowRate := 0.0
-		if fr, ok := snap["food"]; ok {
-			foodRate = fr.Rate
-		}
-		knowRate = ge.researchPerTick
-		faith := snap["faith"].Amount
-		ge.History.Sample(ge.tick, HistorySample{
-			Population: float64(ge.popLocked()),
-			FoodRate:   foodRate,
-			KnowRate:   knowRate,
-			Faith:      faith,
-			ProdAll:    ge.bonusPoolLocked(ge.buildResolver(), "production_all").Applied,
-			TickSpeed:  ge.tickSpeedBonus,
-			Morale:     ge.morale,
-			AgeOrder:   ageOrder,
-		})
+		ge.recordHistorySample(ge.tick)
 	}
 }
 
@@ -4796,6 +4776,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.buildQueue = nil
 	ge.plan = nil
 	ge.log = nil
+	// The history overlay is this run's: the ring starts over with the run.
+	ge.History = NewHistoryCollector()
 	ge.currentEpoch = ge.rules.EraOf("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
@@ -4943,6 +4925,8 @@ func (ge *GameEngine) Reset() {
 	ge.plan = nil
 	ge.planLog = nil
 	ge.log = nil
+	// The history overlay is this run's: the ring starts over with the run.
+	ge.History = NewHistoryCollector()
 
 	ge.applyAgeUnlocks("primitive_age")
 	ge.Resources.Add("food", 25)
@@ -5328,6 +5312,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	planStartsBefore := ge.runFacts.Counts[config.BadgeEvPlanStarted]
 	ge.away = true
 
+	end := ge.tick + offlineTicks
 	gains := make(map[string]float64)
 	var starts planStarts
 	var staffed staffCounts
@@ -5385,6 +5370,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		// A fated doom keeps its hour offline: the harbinger comes and the doom
 		// strikes at its tick, and a struck doom waits, pending, for the player.
 		ge.harbingerTickCheck()
+		ge.sampleOfflineTicks(base, base+n, end)
 	}
 	ge.away = false
 	// What the time away produced is counted as it is on a live tick

@@ -150,9 +150,10 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 	n, st := v.news(W - 2)
 	cv.Text(1, H-4, W-2, n, st)
 	dim := v.cls(mapmodel.CDim)
-	hints := vibe.Line("ui.mapstyle.roguelike.chrome.bottom.01", "arrows move  Shift fast  PgUp PgDn zoom  Tab next  Home center  map flows")
-	if W < 100 {
-		hints = vibe.Line("ui.mapstyle.roguelike.chrome.bottom.02", "arrows move  PgUp PgDn zoom  Tab next")
+	short := vibe.Line("ui.mapstyle.roguelike.chrome.bottom.02", "arrows move  -/= or PgUp/PgDn zoom  Tab next")
+	hints := short
+	if W >= 100 {
+		hints = vibe.Line("ui.mapstyle.roguelike.chrome.bottom.01", "arrows move  Shift fast  -/= or PgUp/PgDn zoom  Tab next  Home center  map flows")
 	}
 	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Clock: v.clock, Tier: v.tier}); {
 	case !ok:
@@ -175,6 +176,9 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 		left += vibe.Line("ui.mapstyle.roguelike.chrome.bottom.06", " · flows")
 	}
 	x := cv.Text(1, H-1, W-2, left, v.cls(mapmodel.CLabel))
+	if x+2+mapstyle.TextLen(hints) > W-1 {
+		hints = short // the long one does not fit beside the zoom name
+	}
 	if hw := mapstyle.TextLen(hints); x+2+hw <= W-1 {
 		cv.Text(W-1-hw, H-1, hw, hints, dim)
 	}

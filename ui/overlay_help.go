@@ -46,6 +46,7 @@ func helpProvider(_ game.GameState, screenW int) string {
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.01", "[gold]═══ Getting around ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.02", "Everything in AgeForge is a command: type it at the prompt at the bottom of the screen and press Enter. Panels open over the whole screen, and the prompt keeps working in most of them. The Wonders, Harbinger and Build Plan panels use letter keys, so press Esc before you type a command there."))
 	keys([2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.04", "Scroll a panel that is longer than the screen, like this one")},
+		[2]string{"Option+arrows", vibe.Line("ui.overlay_help.helpProvider.67", "No Page Up, Page Down, Home or End on your keyboard? Option+Up and Option+Down are PgUp and PgDn, and Option+Left and Option+Right are Home and End, in every panel. Alt does the same on other keyboards")},
 		[2]string{"Esc", vibe.Line("ui.overlay_help.helpProvider.06", "Close the panel (with no panel open: save and go to the main menu)")},
 		[2]string{"Tab", vibe.Line("ui.overlay_help.helpProvider.08", "Finish the word you are typing (press again for the next match)")},
 		[2]string{"help", vibe.Line("ui.overlay_help.helpProvider.10", "Open this page again at any time")})
@@ -102,8 +103,8 @@ func helpProvider(_ game.GameState, screenW int) string {
 	note(vibe.Line("ui.overlay_help.helpProvider.32", "The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = [ ] while the prompt is empty."))
 	keys([2]string{"Arrows", vibe.Line("ui.overlay_help.helpProvider.34", "Move the cursor (roguelike) or scroll (skyline); Shift moves further, half a screen in the skyline")},
 		[2]string{"Tab", vibe.Line("ui.overlay_help.helpProvider.36", "Next building, wonder or civilization (Shift-Tab: the one before)")},
-		[2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.38", "Zoom out and in")},
-		[2]string{"+/-", vibe.Line("ui.overlay_help.helpProvider.39", "Zoom in and out in the skyline (= works as +): far shows the whole town, close every building twice the size; the level is kept for next time")},
+		[2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.38", "Zoom out and in (Option+Up and Option+Down do the same)")},
+		[2]string{"+/-", vibe.Line("ui.overlay_help.helpProvider.39", "Zoom in and out with no Page keys, in either style (= works as +). In the skyline far shows the whole town, close every building twice the size; the level is kept for next time")},
 		[2]string{"[ ]", vibe.Line("ui.overlay_help.helpProvider.40", "Skyline: jump to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)")},
 		[2]string{"Up/Down", vibe.Line("ui.overlay_help.helpProvider.66", "Skyline, close zoom: raise and lower the view over a tall tower, Shift for half a screen (Home brings it back to the foot)")},
 		[2]string{"Home/End", vibe.Line("ui.overlay_help.helpProvider.42", "The town square (roguelike); the oldest district and the present (skyline)")},

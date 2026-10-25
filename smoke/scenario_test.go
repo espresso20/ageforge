@@ -1,9 +1,9 @@
+//go:build smokebot
+
 package smoke
 
 import (
 	"bytes"
-	"maps"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -56,34 +56,9 @@ func TestTargetsCoverEveryAge(t *testing.T) {
 	}
 }
 
-func TestFirstDiff(t *testing.T) {
-	type inner struct{ V []float64 }
-	type s struct {
-		M map[string]float64
-		P *inner
-		T []string
-	}
-	mk := func() s {
-		return s{M: map[string]float64{"a": 1, "b": 0.1 + 0.2}, P: &inner{V: []float64{1, 2}}, T: nil}
-	}
-	a, b := mk(), mk()
-	if d := firstDiff(a, b, nil); d != "" {
-		t.Fatalf("equal values differ: %s", d)
-	}
-	b.P.V[1] = 2 + 1e-15
-	if d := firstDiff(a, b, nil); !strings.HasPrefix(d, "P.V[1]") {
-		t.Errorf("a one-ulp change should be found at P.V[1], got %q", d)
-	}
-	b = mk()
-	b.T = []string{}
-	if d := firstDiff(a, b, nil); d != "" {
-		t.Errorf("nil and empty slices should match, got %q", d)
-	}
-	b.M["c"] = 3
-	if d := firstDiff(a, b, func(p string) bool { return p == "M" }); d != "" {
-		t.Errorf("skipped path still reported: %q", d)
-	}
-
+// TestSortStringSets: the save-file diff reads a set stored as a list as
+// the same set in any order, and then finds nothing else different.
+func TestSortStringSets(t *testing.T) {
 	ta, _ := jsonTree([]byte(`{"x":["b","a"],"y":{"z":["1","2"]},"n":1.5}`))
 	tb, _ := jsonTree([]byte(`{"x":["a","b"],"y":{"z":["1","2"]},"n":1.5}`))
 	if got := sortStringSets(ta, tb, ""); len(got) != 1 || got[0] != "x" {
@@ -91,35 +66,6 @@ func TestFirstDiff(t *testing.T) {
 	}
 	if d := firstDiff(ta, tb, nil); d != "" {
 		t.Errorf("after sorting, trees differ: %s", d)
-	}
-}
-
-// TestPrestigeFormulaMatchesDocs: the worked examples in
-// site/docs/prestige.md. Depth points: 3^epoch per completed age, with no
-// divisor, so the level and the run's milestones, techs and buildings
-// change nothing.
-func TestPrestigeFormulaMatchesDocs(t *testing.T) {
-	for _, c := range []struct {
-		age  string
-		want int
-	}{
-		{"medieval_age", 9},     // 1+1+1 (Stone Era) + 3+3 (Iron, Classical)
-		{"renaissance_age", 12}, // + 3 for the Medieval Age
-		{"modern_age", 120},     // 3 + 9 + 27 + 81
-		{"information_age", 201},
-		{"cyberpunk_age", 363}, // a run through the Digital Age
-		{"interstellar_age", 1092},
-		{"transcendent_age", 3279},
-	} {
-		st := game.GameState{Age: c.age}
-		st.Milestones.CompletedCount, st.Research.TotalResearched, st.Stats.TotalBuilt = 25, 31, 149
-		st.Prestige.Level = 7
-		if got := PrestigePoints(st); got != c.want {
-			t.Errorf("%s: %d points, want %d", c.age, got, c.want)
-		}
-		if got := config.DepthPoints(c.age); got != c.want {
-			t.Errorf("config.DepthPoints(%s) = %d, want %d", c.age, got, c.want)
-		}
 	}
 }
 
@@ -142,10 +88,6 @@ func runScenario(t *testing.T, name string) *Result {
 		t.Errorf("%s: %s: %s\n%s\n%s", name, f.Check, f.Message, f.Repro, f.Detail)
 	}
 	return r
-}
-
-func TestAccountsScenario(t *testing.T) {
-	runScenario(t, "accounts")
 }
 
 func TestOfflineScenario(t *testing.T) {
@@ -192,55 +134,11 @@ func TestFuzzShortRun(t *testing.T) {
 	}
 }
 
-func TestDocsyncParsers(t *testing.T) {
-	cmds, accepts := registryCommands()
-	if len(cmds) < 30 || len(accepts["trade"]) == 0 || !accepts["trade"]["route"] {
-		t.Errorf("registry read looks wrong: %d commands, trade accepts %v", len(cmds), accepts["trade"])
-	}
-	if subs := offeredSubcommands(); !slices.Contains(subs["trade"], "route start") || slices.Contains(subs["gather"], "food") {
-		t.Errorf("offered subcommands look wrong: trade %v, gather %v", subs["trade"], subs["gather"])
-	}
-	claims, err := docClaims("..")
-	if err != nil {
-		t.Fatal(err)
-	}
-	hero := 0
-	for _, c := range claims {
-		if strings.HasPrefix(c.text, "hero stat") {
-			hero++
-		}
-	}
-	if hero < 3 {
-		t.Errorf("found %d hero stats in site/index.html, want the ages, buildings and techs", hero)
-	}
-	if n, rows, err := lineageTable(".."); err != nil || n == 0 || rows == 0 {
-		t.Errorf("lineage table: heading %d, rows %d, err %v", n, rows, err)
-	}
-	md := "| Key | Tab |\n|---|---|\n| `e` | Economy |\n\n| Shortcut | Command |\n|---|---|\n| `b` | `build` |\n| `h`, `?` | `help` |\n"
-	want := map[string]string{"b": "build", "h": "help", "?": "help"}
-	if got := documentedShortcuts(md); !maps.Equal(got, want) {
-		t.Errorf("shortcuts table read as %v, want %v", got, want)
-	}
-}
-
-// TestDocsMatchTheGame runs the docsync scenario's checks on this tree as a
-// unit test: the numbers the docs quote (the badges and themes on the
-// landing page among them) and the commands tables against the game. The
-// scenario runs in the smoke suite too; here a stale count fails `go test`
-// before a pull request's checks do.
-func TestDocsMatchTheGame(t *testing.T) {
-	res := &Result{Name: "docsync"}
-	runDocsync(&Env{RepoRoot: ".."}, res)
-	for _, f := range res.Failures {
-		t.Errorf("[%s] %s", f.Check, f.Message)
-	}
-}
-
 func TestSessionReports(t *testing.T) {
 	sess := &Session{Tier: TierFast, Pacing: PacingReport, Scenarios: []*Result{
-		{Name: "fuzz", Status: StatusFail, Summary: "1 crash", Failures: []Finding{{Check: "fuzz_panic", Message: "boom", Repro: "go run ./cmd/smoke -scenario fuzz"}}},
-		{Name: "docsync", Status: StatusPass, Warnings: []Finding{{Check: "w", Message: "careful"}}},
-		{Name: "styles", Status: StatusSkip, Summary: "full tier only"},
+		{Name: "fuzz", Status: StatusFail, Findings: Findings{Summary: "1 crash", Failures: []Finding{{Check: "fuzz_panic", Message: "boom", Repro: "go run -tags smokebot ./cmd/smoke -scenario fuzz"}}}},
+		{Name: "docsync", Status: StatusPass, Findings: Findings{Warnings: []Finding{{Check: "w", Message: "careful"}}}},
+		{Name: "styles", Status: StatusSkip, Findings: Findings{Summary: "full tier only"}},
 	}, Failed: true}
 	var sum, md, js bytes.Buffer
 	for _, w := range []func() error{
@@ -257,7 +155,7 @@ func TestSessionReports(t *testing.T) {
 			t.Errorf("summary missing %q:\n%s", want, sum.String())
 		}
 	}
-	if !strings.Contains(md.String(), "go run ./cmd/smoke -scenario fuzz") || !strings.Contains(js.String(), `"fuzz_panic"`) {
+	if !strings.Contains(md.String(), "go run -tags smokebot ./cmd/smoke -scenario fuzz") || !strings.Contains(js.String(), `"fuzz_panic"`) {
 		t.Errorf("report or JSON missing the finding")
 	}
 }

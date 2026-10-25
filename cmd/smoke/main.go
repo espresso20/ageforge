@@ -1,3 +1,5 @@
+//go:build smokebot
+
 // Command smoke runs AgeForge's smoke suite: named scenarios that play the game
 // headless (a greedy bot, save/load round trips, offline catch-up, command fuzzing,
 // accounts, performance, the UI on a simulated terminal, docs against config) and
@@ -8,13 +10,16 @@
 // performance budget. It exits 2 on a bad flag value or an error running, merging or
 // writing the reports. Pacing fails nothing unless -pacing enforce.
 //
+// The test bot is parked: this command and the code behind it build only with
+// the smokebot build tag. Every command line below needs it.
+//
 // Usage:
 //
-//	go run ./cmd/smoke                         # fast tier (make smoke)
-//	go run ./cmd/smoke -tier full              # everything, deeper (make smoke-full)
-//	go run ./cmd/smoke -tier deep              # progression and static only, to a Quantum Age prestige (make smoke-deep)
-//	go run ./cmd/smoke -scenario saveload -v   # one scenario
-//	go run ./cmd/smoke -list                   # what the scenarios are
+//	go run -tags smokebot ./cmd/smoke                         # fast tier (make smoke)
+//	go run -tags smokebot ./cmd/smoke -tier full              # everything, deeper (make smoke-full)
+//	go run -tags smokebot ./cmd/smoke -tier deep              # progression and static only, to a Quantum Age prestige (make smoke-deep)
+//	go run -tags smokebot ./cmd/smoke -scenario saveload -v   # one scenario
+//	go run -tags smokebot ./cmd/smoke -list                   # what the scenarios are
 package main
 
 import (

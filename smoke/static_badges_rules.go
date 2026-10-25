@@ -290,16 +290,6 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 	return ""
 }
 
-// runTicks is the pacing targets, in ticks, of the run's ages from the age
-// at place from on.
-func (c *badgeCheck) runTicks(from int) float64 {
-	sum := 0.0
-	for i := max(from, 0); i <= c.m.runEnd; i++ {
-		sum += c.set.TargetTicks(c.m.ages[i].Key)
-	}
-	return sum
-}
-
 // runEras is the eras a run has played in by the end of the age at place
 // through, and how many of them a doom can strike in.
 func (c *badgeCheck) runEras(through int) (eras, dooms int) {
