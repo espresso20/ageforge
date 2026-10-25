@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -39,12 +41,6 @@ func (s *Session) scenarioTable(sb *strings.Builder) {
 		fmt.Fprintf(sb, "| %s | %s | %s | %s |\n", r.Name, statusMark(r.Status),
 			(time.Duration(r.WallMs) * time.Millisecond).Round(100*time.Millisecond), cell(r.Summary))
 	}
-}
-
-// cell keeps a table cell on one line.
-func cell(s string) string {
-	s = strings.ReplaceAll(s, "\n", " ")
-	return strings.ReplaceAll(s, "|", "\\|")
 }
 
 // pacing returns the first progression summary, the one the pacing table

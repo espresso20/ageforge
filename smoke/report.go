@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -462,7 +464,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 		sb.WriteString("\nNo seed reached prestige.\n")
 	}
 
-	s.writeGates(&sb)
+	writeGates(&sb, s.Gates)
 
 	sb.WriteString("\n## Events\n\n| seed | catastrophes rolled | endured | succumbed | epoch events | awakenings | milestones | techs | buildings | timed events | starvation deaths |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, r := range s.Runs {

@@ -7,27 +7,6 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// scaledTechs is the real techs with every price multiplied by f.
-func scaledTechs(f float64) []config.TechDef {
-	techs := config.Technologies()
-	for i := range techs {
-		techs[i].Cost = float64(techs[i].Cost * f)
-	}
-	return techs
-}
-
-// researchProblems runs the Research Covenant over techs and returns what
-// breaks it, by age.
-func researchProblems(techs []config.TechDef, defs map[string]config.BuildingDef) map[string][]string {
-	out := map[string][]string{}
-	for _, r := range staticResearch(config.Ages(), defs, techs, referenceKnowledge) {
-		if p := r.Problems(); len(p) > 0 {
-			out[r.Age] = p
-		}
-	}
-	return out
-}
-
 // TestResearchCovenant: with the tree's lock on, every age stays passable
 // from config alone. The first tech of an age fits the knowledge storage a
 // player enters with, or does within a few copies of the age's storage
@@ -63,7 +42,7 @@ func TestResearchCovenant(t *testing.T) {
 		t.Errorf("%d ages have a keystone, want 21: every age but the Primitive", keystones)
 	}
 	// Even the tightest age leaves a fifth of itself to spare.
-	if _, known := ResearchTimeKnown[worst.Age]; !known && worst.TimeShare() > 0.8 {
+	if worst.TimeShare() > 0.8 {
 		t.Errorf("%s: the keystone, its research and the wonder take %.0f%% of the age, over 80%%", worst.Age, 100*worst.TimeShare())
 	}
 	// What a keystones-only run carries in is reported: the Warp Nexus's
@@ -83,15 +62,6 @@ func TestResearchCovenant(t *testing.T) {
 			t.Errorf("the carried techs cost %.0f%% of what the Interstellar Age makes", 100*r.CarriedShare)
 		}
 	}
-}
-
-func hasProblem(problems []string, sub string) bool {
-	for _, p := range problems {
-		if strings.Contains(p, sub) {
-			return true
-		}
-	}
-	return false
 }
 
 // TestEveryKeystoneIsReachableInItsAge: the gate check follows the wonder's

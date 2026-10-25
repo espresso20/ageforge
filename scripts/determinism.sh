@@ -13,7 +13,8 @@ set -euo pipefail
 
 # The fixed runs: three seeds of the progression bot through a prestige (at
 # the Modern Age) and one seed of the Era Mastery veteran preset, with a state
-# digest every 2000 ticks. About 1-3 minutes.
+# digest every 2000 ticks. About 1-3 minutes. The bot is parked behind the
+# smokebot build tag, so every run here builds with it.
 SEED_BASE=1
 SEEDS=3
 STOP_AGE=digital_age
@@ -25,11 +26,11 @@ fingerprint() {
 	mkdir -p "$out"
 	go run ./cmd/export_config --out "$out/config" >/dev/null
 	(cd "$out/config" && find . -type f | LC_ALL=C sort | xargs shasum -a 256) >"$out/config.sha256"
-	go run ./cmd/smoke -tier fast -scenario progression -seed-base "$SEED_BASE" -seeds "$SEEDS" \
+	go run -tags smokebot ./cmd/smoke -tier fast -scenario progression -seed-base "$SEED_BASE" -seeds "$SEEDS" \
 		-stop-age "$STOP_AGE" -digest-every "$DIGEST_EVERY" -pacing report -out "$out/smoke" >/dev/null
 	# One seed of the Era Mastery veteran preset, so k-scaled play (rates,
 	# storage, build and research times at k = 4.16) replays everywhere too.
-	go run ./cmd/smoke -tier fast -scenario progression -preset veteran -seed-base "$SEED_BASE" -seeds 1 \
+	go run -tags smokebot ./cmd/smoke -tier fast -scenario progression -preset veteran -seed-base "$SEED_BASE" -seeds 1 \
 		-stop-age "$STOP_AGE" -digest-every "$DIGEST_EVERY" -pacing report -out "$out/veteran" >/dev/null
 	# Everything in the report but wall-clock times must match.
 	jq -S --slurpfile v "$out/veteran/report.json" \

@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -157,15 +159,6 @@ type plan struct {
 	blocker string
 	// blockCost is that purchase's whole price, which a deal must not give away.
 	blockCost map[string]float64
-}
-
-func sortedKeys[V any](m map[string]V) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
 }
 
 // goodStock is what the bot counts as a full store of res: a good stock of it

@@ -569,6 +569,8 @@ func (ge *GameEngine) Succumb() error {
 	ge.buildQueue = nil
 	ge.plan = nil
 	ge.log = nil
+	// The history overlay is this run's: the ring starts over with the run.
+	ge.History = NewHistoryCollector()
 	ge.speedMultiplier = 1.0
 	ge.tickSpeedBonus = 0
 	ge.ageReady = false

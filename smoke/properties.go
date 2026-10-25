@@ -42,10 +42,6 @@ var KnownPropertyFailures = map[int]string{
 	18: "not worked out here yet",
 }
 
-// KnownPropertyReasons is why a known failure fails, where the reason is a
-// decision and not a table to fix.
-var KnownPropertyReasons = map[int]string{}
-
 // researchBand is the band of property 10 for age: the share of the ordinary
 // player's stay that the age's techs take with every scholar at the cap
 // researching. The Primitive Age (config.ResearchSimmerExemptAge) keeps 0.7 to

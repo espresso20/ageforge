@@ -1,4 +1,4 @@
-//go:build mapcapture
+//go:build mapcapture && smokebot
 
 package capture
 
@@ -22,7 +22,7 @@ import (
 // bot, it sends scouts out and opens trade routes. It takes about ten
 // minutes to the Transcendent Age.
 //
-//	go test -tags mapcapture -run TestGenerateStates -timeout 60m ./ui/mapstyle/capture
+//	go test -tags "mapcapture smokebot" -run TestGenerateStates -timeout 60m ./ui/mapstyle/capture
 //
 // MAP_STATES_DIR picks the folder (default map_captures/states at the repo
 // root), MAP_STOP_AGE the last age.

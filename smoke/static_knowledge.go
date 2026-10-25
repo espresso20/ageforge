@@ -20,10 +20,7 @@ import (
 // (cheapest first, a tie in table order), and every price is written to
 // three significant figures, the table's usual. A tech's price is the work it
 // takes; there is no store for it to fit in.
-const (
-	KnowledgeLadderRatio = 1.3
-	KnowledgeLadderStep  = 0.01
-)
+const KnowledgeLadderRatio = 1.3
 
 // KnowledgeLadder is one age of the ladder.
 type KnowledgeLadder struct {
