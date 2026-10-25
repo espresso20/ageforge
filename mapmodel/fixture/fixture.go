@@ -9,7 +9,6 @@ import (
 	"maps"
 	"sort"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rules"
@@ -261,7 +260,7 @@ func Grow(st game.GameState, step int) game.GameState {
 // and the current age, as a run that came to this age through those eras
 // only would have. Every era, or more, leaves the record as it is.
 func ReachedEras(st *game.GameState, eras int) {
-	epochs := config.Epochs()
+	epochs := st.Ruleset().Eras()
 	if eras >= len(epochs) {
 		return
 	}

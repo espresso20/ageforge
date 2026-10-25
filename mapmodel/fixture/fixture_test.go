@@ -9,7 +9,7 @@ import (
 
 func TestReachedEras(t *testing.T) {
 	st := State(Options{Age: "transcendent_age", Seed: 7})
-	ReachedEras(&st, len(config.Epochs()))
+	ReachedEras(&st, len(st.Ruleset().Eras()))
 	if st.Stats.AgesReached != nil {
 		t.Errorf("every era: the record was cut to %v", st.Stats.AgesReached)
 	}
