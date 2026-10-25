@@ -214,8 +214,8 @@ The board has short offers from the start, long offers from the Iron Era and gra
 | `trade route` (or `trade route list`) | List your active trade routes and the routes you can start |
 | `trade route start <route>` | Start a trade route. Routes wait for The Wheel, a Bronze Age tech |
 | `trade route stop <route>` | Stop an active trade route |
-| `blackmarket` (or `bm`) | Show the black market's status: culture cost, payout odds and cooldown. Opens in the Colonial Age |
-| `blackmarket <resource>` | Make a smuggling run: spend culture for a chance at a big haul of the chosen resource. Waits for the Mercantilism tech |
+| `blackmarket` (or `bm`) | Show the black market's status: culture cost, the odds and cooldown. Opens in the Colonial Age |
+| `blackmarket <resource>` | Make a smuggling run: spend culture for the same worth in the chosen resource. Five runs in six go through; the sixth time the smugglers vanish with the culture. Waits for the Mercantilism tech |
 | `trade black [resource]` | Same as `blackmarket` |
 
 ```
