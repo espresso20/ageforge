@@ -446,8 +446,8 @@ var (
 )
 
 // TestConfigPlayerTextStyle: config text uses no em or en dashes, no
-// exclamation marks, no raw snake_case keys, and none of the banned spellings,
-// retired terms or stock words.
+// exclamation marks, no square brackets or printf verbs, no raw snake_case
+// keys, and none of the banned spellings, retired terms or stock words.
 func TestConfigPlayerTextStyle(t *testing.T) {
 	text := playerText()
 	labels := make([]string, 0, len(text))
@@ -463,6 +463,14 @@ func TestConfigPlayerTextStyle(t *testing.T) {
 		}
 		if strings.Contains(s, "!") {
 			t.Errorf("%s: exclamation mark in %q", l, s)
+		}
+		// Square brackets are tview colour tags, and a printf verb is a leftover
+		// format directive; the log and splash render these strings as they are.
+		if strings.ContainsAny(s, "[]") {
+			t.Errorf("%s: square bracket (tview tag risk) in %q", l, s)
+		}
+		if pctDirective.MatchString(s) {
+			t.Errorf("%s: %% directive in %q", l, s)
 		}
 		if k := rawKeyRe.FindString(s); k != "" {
 			t.Errorf("%s: raw key %q in %q", l, k, s)
