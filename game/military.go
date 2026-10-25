@@ -232,7 +232,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 // returns it. The offer's SuccessChance is the chance the mission is sent with
 // (the engine has already counted the army). The party and the resource costs
 // are validated and deducted by the engine BEFORE this is called.
-func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, cost, baseHaul map[string]float64) (*ActiveExpedition, error) {
+func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, cost, baseHaul map[string]float64) *ActiveExpedition {
 	ticks := mm.missionTicks(offer.Category(), minutesToTicks(offer.LengthMinutes))
 	if ticks < 1 {
 		ticks = 1
@@ -249,7 +249,7 @@ func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, c
 		LaunchChance: offer.SuccessChance,
 	}
 	mm.active = append(mm.active, a)
-	return a, nil
+	return a
 }
 
 // ActiveByTier returns the oldest mission under way in a tier, or nil. The
@@ -364,14 +364,14 @@ func missionLosses(rng *rand.Rand, party int, success, rare bool) int {
 // down and resolve independently.
 //
 // The success roll is the mission's own SuccessChance (rolled when the offer
-// was made; the army was counted when it was sent). expeditionBonus is not
-// used here: the loot was sized at launch. A failure differs from a success in
-// the loot (30%) and in the soldiers who fall (missionLosses).
+// was made; the army was counted when it was sent). The loot was sized at
+// launch. A failure differs from a success in the loot (30%) and in the
+// soldiers who fall (missionLosses).
 //
 // The roll is the mission's own draw from its luck stream, taken at launch
 // (ActiveExpedition.Luck): it succeeds when that draw is under the odds it
 // has now, so a road event that moves the odds still counts.
-func (mm *MilitaryManager) Tick(missionPower, expeditionBonus float64) []ExpeditionResult {
+func (mm *MilitaryManager) Tick() []ExpeditionResult {
 	var results []ExpeditionResult
 	kept := mm.active[:0:0]
 	for _, active := range mm.active {

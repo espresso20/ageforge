@@ -128,10 +128,7 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := ge.Military.LaunchOffer(offer, ge.tick, 0, nil, nil); err != nil {
-			t.Fatal(err)
-		}
-		ticks = ge.Military.ActiveByTier(offer.Tier).TicksLeft
+		ticks = ge.Military.LaunchOffer(offer, ge.tick, 0, nil, nil).TicksLeft
 		ge.Military.setActive(offer.Tier, nil)
 		_, infos := ge.boardViewLocked(0)
 		for _, info := range infos {
@@ -207,7 +204,7 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		active.TicksLeft = 1
 		active.SuccessChance = 0.95 // the cap; the roll below is a 0.9
 		active.Luck = 0.9
-		res := ge.Military.Tick(0, 0)
+		res := ge.Military.Tick()
 		if len(res) != 1 || !res[0].Success {
 			t.Fatalf("%s did not come home a success: %+v", key, res)
 		}

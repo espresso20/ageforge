@@ -1461,9 +1461,6 @@ func (ge *GameEngine) doTick() {
 
 	// Process build queue
 	ge.processBuildQueue()
-	if len(ge.buildQueue) > 0 {
-		ge.addLog("debug", fmt.Sprintf("Build queue: %s in progress", textfmt.Count(len(ge.buildQueue), "item", "items")))
-	}
 
 	// Process research
 	ge.processResearch()
@@ -1721,7 +1718,6 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 
 // processExpeditions advances the mission board and the missions under way.
 func (ge *GameEngine) processExpeditions() {
-	missionPower, expeditionBonus := ge.missionPower(), ge.expeditionReward()
 	// The board first: a new age gets a whole new board, an offer that has
 	// expired is replaced at once and a taken one after its wait. Then the
 	// missions under way, each of which may resolve this tick.
@@ -1732,10 +1728,7 @@ func (ge *GameEngine) processExpeditions() {
 		// A ruins offer is the mission's draw, from its own stream.
 		ge.withLuck(active.luckStream(), func() { ge.fireRoadEvents(active, active.ElapsedTicks) })
 	}
-	for _, active := range ge.Military.active {
-		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Title, active.TicksLeft))
-	}
-	for _, res := range ge.Military.Tick(missionPower, expeditionBonus) {
+	for _, res := range ge.Military.Tick() {
 		// The party is home: the soldiers who fell on the way back leave the
 		// population, and the casualty line joins the mission's message.
 		ge.soldiersFall(res.SoldiersFell)
@@ -3330,8 +3323,6 @@ func (ge *GameEngine) processBuildQueue() {
 		if item.TicksLeft <= 0 {
 			ge.finishBuild(item)
 		} else {
-			def := ge.Buildings.defs[item.BuildingKey]
-			ge.addLog("debug", fmt.Sprintf("Build queue: %s %d/%d ticks", def.Name, item.TotalTicks-item.TicksLeft, item.TotalTicks))
 			remaining = append(remaining, item)
 		}
 	}
@@ -4567,10 +4558,7 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 
 	offer.SuccessChance = ge.offerSuccessLocked(offer)
 	base := ge.missionHaulLocked(offer.HaulMinutes)
-	active, err := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base)
-	if err != nil {
-		return err
-	}
+	active := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base)
 	ge.syncSoldiers()
 	words, _ := ge.rules.MissionWords(offer.Age)
 	active.RoadEvents = rollRoadEvents(ge.gameRNG(), offer, active.TotalTicks, words)
