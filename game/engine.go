@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"maps"
 	"math"
 	"math/rand"
 	"slices"
@@ -2339,7 +2338,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// was its line's current rung in the age left and is not in the new one.
 	// Nothing moves and nothing is offered; they keep producing and can be
 	// upgraded (older.go).
-	summary := AgeAdvanceSummary{OldAge: oldAge, NewAge: newAge}
+	var summary AgeAdvanceSummary
 	for _, key := range ge.Buildings.OlderKeys() {
 		if _, wasOlder := ge.rules.UpgradeTarget(key, oldAge); wasOlder {
 			continue
@@ -4670,7 +4669,7 @@ func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64, 
 	for res := range haul {
 		haul[res] *= multiplier
 	}
-	info.ExpectedHaulMin, info.ExpectedHaulMax = haul, maps.Clone(haul)
+	info.ExpectedHaulMin = haul
 	// The refusal reads the party too, so it is judged on the cost before the
 	// panel's copy drops the soldiers.
 	block := ge.offerBlockLocked(cost)
@@ -5024,11 +5023,7 @@ func (ge *GameEngine) GetState() GameState {
 	sight := ge.ageSightLocked()
 
 	// One epoch lookup per snapshot (was three full table rebuilds).
-	epochDef, epochOK := ge.rules.Era(ge.currentEpoch)
-	epochColor := "white"
-	if epochOK {
-		epochColor = epochDef.Color
-	}
+	epochDef, _ := ge.rules.Era(ge.currentEpoch)
 
 	logCopy := make([]LogEntry, len(ge.log))
 	copy(logCopy, ge.log)
@@ -5154,7 +5149,6 @@ func (ge *GameEngine) GetState() GameState {
 			Population:      ge.popLocked(),
 			TechCount:       ge.Research.ResearchedCount(),
 			TotalBuilt:      ge.Stats.TotalBuilt,
-			SoldierCount:    soldiersHome,
 			SoldiersTrained: int(ge.Stats.SoldiersTrained),
 			WonderCount:     ge.countWonders(),
 			KnowledgeCount:  knowledgeCount,
@@ -5184,8 +5178,6 @@ func (ge *GameEngine) GetState() GameState {
 		EpochKey:              ge.currentEpoch,
 		EpochName:             epochDef.Name,
 		EpochIcon:             epochDef.Icon,
-		EpochColor:            epochColor,
-		EpochSurvived:         ge.survivedEpochs[ge.currentEpoch],
 		PendingCatastrophe:    ge.pendingCatastrophe,
 		PendingEndure:         pendingEndure,
 		CatastropheOutlook:    ge.catastropheOutlook(),

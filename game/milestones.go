@@ -30,9 +30,6 @@ type MilestoneManager struct {
 	// researchDone is the work done on techs this run, which the milestone
 	// that counts it reads as a "research" amount. The engine keeps it.
 	researchDone float64
-	// milestoneToChain is a reverse-index built at construction time for O(1)
-	// chain lookup when rendering the milestone list in the UI.
-	milestoneToChain map[string]string // milestone key -> chain key
 	// titles is the count-based fallback title ladder, held so
 	// recalculateTitle (run every tick from checkMilestones) doesn't rebuild it.
 	titles []config.TitleDef
@@ -62,12 +59,6 @@ func (mm *MilestoneManager) Rebind(set *rules.Set) {
 	mm.defs = set.Milestones()
 	mm.chains = set.MilestoneChains()
 	mm.titles = set.MilestoneTitles()
-	mm.milestoneToChain = make(map[string]string)
-	for _, c := range mm.chains {
-		for _, mk := range c.MilestoneKeys {
-			mm.milestoneToChain[mk] = c.Key
-		}
-	}
 	mm.plans = make([]milestonePlan, len(mm.defs))
 	for i, def := range mm.defs {
 		mm.plans[i] = mm.planFor(def)
@@ -485,7 +476,6 @@ func formatRewards(effects []config.Effect) string {
 // Snapshot returns milestone state for UI with progress, chains, and titles
 func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneState {
 	milestones := make(map[string]MilestoneInfo, len(mm.defs))
-	visibleCount := 0
 	plans := mm.plans
 	if len(plans) != len(mm.defs) { // defs were swapped in place, not through Rebind
 		plans = make([]milestonePlan, len(mm.defs))
@@ -523,12 +513,6 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 			visible = false
 		}
 
-		if visible {
-			visibleCount++
-		}
-
-		chainKey := mm.milestoneToChain[def.Key]
-
 		milestones[def.Key] = MilestoneInfo{
 			Name:        def.Name,
 			Description: def.Description,
@@ -539,7 +523,6 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 			RewardText:  plan.rewardText,
 			Rewards:     rewards.clone(def.Rewards), // def is the manager's table
 			Progress:    progress,
-			ChainKey:    chainKey,
 		}
 	}
 
@@ -576,7 +559,6 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 		Milestones:     milestones,
 		CompletedCount: len(mm.completed),
 		TotalCount:     len(mm.defs),
-		VisibleCount:   visibleCount,
 		Chains:         chains,
 		CurrentTitle:   mm.currentTitle,
 	}

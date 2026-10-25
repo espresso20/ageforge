@@ -494,12 +494,8 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		return nil
 	}
 	success := maps.Clone(active.SuccessRewards)
-	failure := maps.Clone(active.FailureRewards)
 	if success == nil {
 		success = scaleLoot(active.BaseRewards, 1+expeditionBonus)
-	}
-	if failure == nil {
-		failure = scaleLoot(active.BaseRewards, failedLootShare)
 	}
 	total := active.TotalTicks
 	if total < active.TicksLeft {
@@ -520,7 +516,6 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		SuccessChance: active.SuccessChance,
 		HaulMinutes:   active.HaulMinutes,
 		SuccessHaul:   success,
-		FailureHaul:   failure,
 		RoadStories:   append([]string(nil), active.RoadEventsSeen...),
 		RoadKinds:     firedRoadKinds(active),
 		LaunchChance:  active.LaunchChance,

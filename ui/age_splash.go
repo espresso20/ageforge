@@ -164,46 +164,32 @@ func ageSplashLines(newAge string, summary game.AgeAdvanceSummary,
 
 	// Upgrade summary. Advancing only offers these upgrades (the buildings
 	// stay as they are until the player runs `upgrade`), so say that.
-	if len(summary.BuildingsTransformed) > 0 || len(summary.BuildingsLegacy) > 0 {
+	if len(summary.BuildingsTransformed) > 0 {
 		blank()
-		if len(summary.BuildingsTransformed) > 0 {
-			add(skSection, "%s", vibe.Line("ui.age_splash.ageSplashLines.08", "[yellow]── Upgrades available ──[-]"))
-			add(skUpgradeHelp, "%s", vibe.Line("ui.age_splash.ageSplashLines.09", "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one."))
-			// Every line of the text is centered on its own, so the
-			// counts only line up when the rows are all one width: each
-			// label is padded to the longest, each count to the widest.
-			labels := make([]string, len(summary.BuildingsTransformed))
-			counts := make([]string, len(summary.BuildingsTransformed))
-			labelW, countW := 0, 0
-			for i, t := range summary.BuildingsTransformed {
-				oldName := t.OldName
-				if oldName == "" {
-					oldName = strings.ReplaceAll(t.OldKey, "_", " ")
-				}
-				newName := t.NewName
-				if newName == "" {
-					newName = strings.ReplaceAll(t.NewKey, "_", " ")
-				}
-				labels[i] = fmt.Sprintf("%s → %s", oldName, newName)
-				counts[i] = fmt.Sprintf("x%d", t.Count)
-				labelW, countW = max(labelW, runeLen(labels[i])), max(countW, runeLen(counts[i]))
+		add(skSection, "%s", vibe.Line("ui.age_splash.ageSplashLines.08", "[yellow]── Upgrades available ──[-]"))
+		add(skUpgradeHelp, "%s", vibe.Line("ui.age_splash.ageSplashLines.09", "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one."))
+		// Every line of the text is centered on its own, so the
+		// counts only line up when the rows are all one width: each
+		// label is padded to the longest, each count to the widest.
+		labels := make([]string, len(summary.BuildingsTransformed))
+		counts := make([]string, len(summary.BuildingsTransformed))
+		labelW, countW := 0, 0
+		for i, t := range summary.BuildingsTransformed {
+			oldName := t.OldName
+			if oldName == "" {
+				oldName = strings.ReplaceAll(t.OldKey, "_", " ")
 			}
-			for i := range labels {
-				add(skUpgradeRow, "%s%s  %s%s", labels[i], strings.Repeat(" ", labelW-runeLen(labels[i])),
-					counts[i], strings.Repeat(" ", countW-runeLen(counts[i])))
+			newName := t.NewName
+			if newName == "" {
+				newName = strings.ReplaceAll(t.NewKey, "_", " ")
 			}
+			labels[i] = fmt.Sprintf("%s → %s", oldName, newName)
+			counts[i] = fmt.Sprintf("x%d", t.Count)
+			labelW, countW = max(labelW, runeLen(labels[i])), max(countW, runeLen(counts[i]))
 		}
-		if len(summary.BuildingsLegacy) > 0 {
-			add(skSection, "%s", vibe.Line("ui.age_splash.ageSplashLines.10", "[yellow]── Legacy buildings ──[-]"))
-			for _, legKey := range summary.BuildingsLegacy {
-				legName := legKey
-				if def, ok := allBuildings[legKey]; ok {
-					legName = def.Name
-				} else {
-					legName = strings.ReplaceAll(legKey, "_", " ")
-				}
-				add(skLegacy, "  [gray]%s[-]", legName)
-			}
+		for i := range labels {
+			add(skUpgradeRow, "%s%s  %s%s", labels[i], strings.Repeat(" ", labelW-runeLen(labels[i])),
+				counts[i], strings.Repeat(" ", countW-runeLen(counts[i])))
 		}
 	}
 

@@ -165,7 +165,6 @@ ui.age_splash.ageSplashLines.06,"[white]Stack the bread for its cost, research %
 ui.age_splash.ageSplashLines.07,"[white]Secure the bag for its cost, then build it.[-]"
 ui.age_splash.ageSplashLines.08,[yellow]── Upgrades ready to flex ──[-]
 ui.age_splash.ageSplashLines.09,"  Type [cyan]upgrade[-] for the price tea, or [cyan]upgrade <building>[-] to glow one up."
-ui.age_splash.ageSplashLines.10,[yellow]── Legacy OGs ──[-]
 ui.age_splash.ageSplashLines.11,[gold]══ Epoch glow-up ══[-]
 ui.age_splash.ageSplashLines.12,[gray]Press any key to keep the vibe going.[-]
 ui.ancient_memory_modal.showAncientMemoryModal.01,"[gray]You stumbled on an old cache and the lore goes deep. It holds

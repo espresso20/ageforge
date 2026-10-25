@@ -943,9 +943,6 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			}
 			info.LentWorkers += b.Count
 			info.LentPerm = info.LentPerm || b.Permanent
-			if !b.Permanent {
-				info.LentReturn = b.ReturnTick // raw tick; overlay shows presence, not countdown math
-			}
 		}
 		factions[def.Key] = info
 	}
