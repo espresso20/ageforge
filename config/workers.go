@@ -2,32 +2,28 @@ package config
 
 // WorkerClassDef defines a single tier of a worker domain, tied to a specific age.
 // Each domain has one class per age it spans (from its start age through quantum_age).
-// Food cost and production multiplier scale geometrically per tier:
+// Food cost scales geometrically per tier:
 //
 //	FoodCost = baseFoodCost × 1.12^tier
-//	Multiplier = 2.0^tier
 //
 // With 1.12 the tier-20 cost is ~9.6× base (vs 3325× with the old 1.5 multiplier).
 // food domain (base 0.06): tier 0 → 0.060, tier 10 → 0.186, tier 20 → 0.579
 // lumber/masonry/knowledge (base 1.0): tier 0 → 1.000, tier 9 → 2.773, tier 19 → 7.690
 type WorkerClassDef struct {
-	Domain     string  // domain key (e.g. "food", "knowledge", "metallurgy")
-	AgeKey     string  // age at which this class tier is active
-	ClassName  string  // display name shown in UI
-	FoodCost   float64 // food consumed per tick per worker of this class
-	Multiplier float64 // production multiplier vs building base rate
+	Domain    string  // domain key (e.g. "food", "knowledge", "metallurgy")
+	AgeKey    string  // age at which this class tier is active
+	ClassName string  // display name shown in UI
+	FoodCost  float64 // food consumed per tick per worker of this class
 }
 
 // wc is an internal helper that creates a WorkerClassDef with geometrically
-// computed food cost and multiplier based on tier index within the domain.
+// computed food cost based on tier index within the domain.
 func wc(domain, ageKey, className string, baseFoodCost float64, tier int) WorkerClassDef {
 	fc := baseFoodCost
-	mp := 1.0
 	for i := 0; i < tier; i++ {
 		fc *= 1.12 // was 1.5 — softer scaling so tier-20 costs ~9x base not 3325x
-		mp *= 2.0
 	}
-	return WorkerClassDef{Domain: domain, AgeKey: ageKey, ClassName: className, FoodCost: fc, Multiplier: mp}
+	return WorkerClassDef{Domain: domain, AgeKey: ageKey, ClassName: className, FoodCost: fc}
 }
 
 // WorkerClasses returns all worker class definitions across all 12 domains.
@@ -165,11 +161,11 @@ func WorkerClasses() []WorkerClassDef {
 		// === FAITH DOMAIN (starts primitive_age for early shrine/altar buildings, base tiered) ===
 		// Early tiers added so primitive-through-classical faith workers get correct class names
 		// instead of falling back to the tier-0 Acolyte (FoodCost=2.0) via the domain-start fallback.
-		WorkerClassDef{Domain: "faith", AgeKey: "primitive_age", ClassName: "Devotee", FoodCost: 0.08, Multiplier: 1.0},
-		WorkerClassDef{Domain: "faith", AgeKey: "stone_age", ClassName: "Believer", FoodCost: 0.12, Multiplier: 1.0},
-		WorkerClassDef{Domain: "faith", AgeKey: "bronze_age", ClassName: "Worshipper", FoodCost: 0.18, Multiplier: 1.2},
-		WorkerClassDef{Domain: "faith", AgeKey: "iron_age", ClassName: "Celebrant", FoodCost: 0.27, Multiplier: 1.2},
-		WorkerClassDef{Domain: "faith", AgeKey: "classical_age", ClassName: "Initiate", FoodCost: 0.40, Multiplier: 1.5},
+		WorkerClassDef{Domain: "faith", AgeKey: "primitive_age", ClassName: "Devotee", FoodCost: 0.08},
+		WorkerClassDef{Domain: "faith", AgeKey: "stone_age", ClassName: "Believer", FoodCost: 0.12},
+		WorkerClassDef{Domain: "faith", AgeKey: "bronze_age", ClassName: "Worshipper", FoodCost: 0.18},
+		WorkerClassDef{Domain: "faith", AgeKey: "iron_age", ClassName: "Celebrant", FoodCost: 0.27},
+		WorkerClassDef{Domain: "faith", AgeKey: "classical_age", ClassName: "Initiate", FoodCost: 0.40},
 		wc("faith", "medieval_age", "Acolyte", 2.0, 0),
 		wc("faith", "renaissance_age", "Monk", 2.0, 1),
 		wc("faith", "colonial_age", "Missionary", 2.0, 2),
@@ -231,13 +227,13 @@ func WorkerClasses() []WorkerClassDef {
 		// === ENGINEERING DOMAIN (starts bronze_age for early smithy/workshop buildings, base tiered) ===
 		// Early tiers added so bronze-through-industrial engineering workers get correct class names
 		// instead of falling back to the tier-0 Tinker (FoodCost=8.0) via the domain-start fallback.
-		WorkerClassDef{Domain: "engineering", AgeKey: "bronze_age", ClassName: "Apprentice", FoodCost: 0.50, Multiplier: 1.0},
-		WorkerClassDef{Domain: "engineering", AgeKey: "iron_age", ClassName: "Craftsman", FoodCost: 0.75, Multiplier: 1.0},
-		WorkerClassDef{Domain: "engineering", AgeKey: "classical_age", ClassName: "Artisan", FoodCost: 1.10, Multiplier: 1.2},
-		WorkerClassDef{Domain: "engineering", AgeKey: "medieval_age", ClassName: "Engineer", FoodCost: 1.65, Multiplier: 1.2},
-		WorkerClassDef{Domain: "engineering", AgeKey: "renaissance_age", ClassName: "Master Engineer", FoodCost: 2.50, Multiplier: 1.5},
-		WorkerClassDef{Domain: "engineering", AgeKey: "colonial_age", ClassName: "Mechanic", FoodCost: 3.75, Multiplier: 1.5},
-		WorkerClassDef{Domain: "engineering", AgeKey: "industrial_age", ClassName: "Machinist", FoodCost: 5.60, Multiplier: 2.0},
+		WorkerClassDef{Domain: "engineering", AgeKey: "bronze_age", ClassName: "Apprentice", FoodCost: 0.50},
+		WorkerClassDef{Domain: "engineering", AgeKey: "iron_age", ClassName: "Craftsman", FoodCost: 0.75},
+		WorkerClassDef{Domain: "engineering", AgeKey: "classical_age", ClassName: "Artisan", FoodCost: 1.10},
+		WorkerClassDef{Domain: "engineering", AgeKey: "medieval_age", ClassName: "Engineer", FoodCost: 1.65},
+		WorkerClassDef{Domain: "engineering", AgeKey: "renaissance_age", ClassName: "Master Engineer", FoodCost: 2.50},
+		WorkerClassDef{Domain: "engineering", AgeKey: "colonial_age", ClassName: "Mechanic", FoodCost: 3.75},
+		WorkerClassDef{Domain: "engineering", AgeKey: "industrial_age", ClassName: "Machinist", FoodCost: 5.60},
 		wc("engineering", "victorian_age", "Tinker", 8.0, 0),
 		wc("engineering", "electric_age", "Electrical Engineer", 8.0, 1),
 		wc("engineering", "atomic_age", "Nuclear Engineer", 8.0, 2),
