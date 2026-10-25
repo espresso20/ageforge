@@ -12,7 +12,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 var allTiers = []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII, mapmodel.TierNerd}
@@ -479,27 +479,13 @@ func TestSkyLaneBehindBuildings(t *testing.T) {
 // inside the 25 ms budget (the map redraws every 125 ms) at 160x45, in every
 // roster band.
 func TestSkylineFrameTime(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"primitive_age", "iron_age", "renaissance_age", "industrial_age", "electric_age", "modern_age",
 		"digital_age", "cyberpunk_age", "fusion_age"} {
 		m := build(fixture.Options{Age: age, Seed: 7, Routes: 5, Tick: tickAt(0.5), Scale: 2}, 1)
 		m.Activity.Staffed, m.Activity.Wealth, m.Activity.Traffic = 20000, 1, 1
-		v := newView()
-		scr := capture.NewScreen(160, 45)
-		f := mapstyle.Frame{Model: m}
-		v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		const n = 60
-		start := time.Now()
-		for i := 0; i < n; i++ {
-			f.Anim = i
-			v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		}
-		per := time.Since(start) / n
-		t.Logf("160x45 %s frame: %v", age, per)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
+		styletest.FrameBudget(t, age, newView(), m, 160, 45, 60, 25*time.Millisecond)
 	}
 }

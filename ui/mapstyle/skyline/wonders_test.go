@@ -680,7 +680,7 @@ func TestWonderPlaque(t *testing.T) {
 // its scaffold, a night frame at 160x45 stays inside the 25 ms guard at each
 // zoom for six ages (the times are logged).
 func TestWonderFrameGuard(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"bronze_age", "classical_age", "industrial_age", "modern_age", "cyberpunk_age", "fusion_age"} {
@@ -688,25 +688,11 @@ func TestWonderFrameGuard(t *testing.T) {
 		for _, zm := range zoomSteps {
 			v := newView()
 			v.zoom, v.inspect = zm, true
-			scr := capture.NewScreen(160, 45)
-			f := mapstyle.Frame{Model: m}
 			// in the middle of the wonder's district, where the landmark and its glow are
 			d := m.Skyline.Districts[len(m.Skyline.Districts)-1]
 			v.follow = false
 			v.cam = wonderX(d, wonderKeyOf(m.AgeIdx)) - zm.cols(160)/2
-			v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-			const n = 30
-			start := time.Now()
-			for i := 0; i < n; i++ {
-				f.Anim = i
-				v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-			}
-			per := time.Since(start) / n
-			t.Logf("160x45 %-14s %-5s night frame %v", age, zm, per)
-			if per > 25*time.Millisecond {
-				t.Errorf("%s at %s: a frame takes %v", age, zm, per)
-			}
-			scr.Fini()
+			styletest.FrameBudget(t, fmt.Sprintf("%s at %s, night", age, zm), v, m, 160, 45, 30, 25*time.Millisecond)
 		}
 	}
 }

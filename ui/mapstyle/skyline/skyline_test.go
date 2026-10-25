@@ -482,25 +482,11 @@ func TestEntry(t *testing.T) {
 }
 
 func TestPerformance(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	m := build(fixture.Options{Age: "cyberpunk_age", Seed: 7, Routes: 5, Tick: tickAt(0.9), Scale: 2}, 1)
-	v := newView()
-	scr := capture.NewScreen(200, 60)
-	f := mapstyle.Frame{Model: m}
-	v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-	const n = 30
-	start := time.Now()
-	for i := 0; i < n; i++ {
-		f.Anim = i
-		v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-	}
-	per := time.Since(start) / n
-	t.Logf("200x60 cyberpunk frame: %v", per)
-	if per > 25*time.Millisecond {
-		t.Errorf("a frame takes %v", per)
-	}
+	styletest.FrameBudget(t, "cyberpunk_age", newView(), m, 200, 60, 30, 25*time.Millisecond)
 }
 
 // TestFlowsNeverSayFull: stock has no ceiling, so the flows overlay and the

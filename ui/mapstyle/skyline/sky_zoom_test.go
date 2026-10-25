@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
@@ -322,7 +322,7 @@ func TestMandalaZoom(t *testing.T) {
 // TestSkyZoomFrameGuard: a sky frame at every zoom stays inside the 25 ms
 // guard at 160x45 and 240x60 (and logs the times).
 func TestSkyZoomFrameGuard(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, sz := range [][2]int{{160, 45}, {240, 60}} {
@@ -331,20 +331,7 @@ func TestSkyZoomFrameGuard(t *testing.T) {
 			for _, z := range zoomSteps {
 				v := newView()
 				v.zoom = z
-				scr := capture.NewScreen(sz[0], sz[1])
-				f := mapstyle.Frame{Model: m}
-				v.Draw(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
-				const n = 20
-				start := time.Now()
-				for i := 0; i < n; i++ {
-					f.Anim = i
-					v.Draw(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
-				}
-				per := time.Since(start) / n
-				t.Logf("%dx%d %-17s %-5s frame %v", sz[0], sz[1], age, z, per)
-				if per > 25*time.Millisecond {
-					t.Errorf("%dx%d %s at %s: a frame takes %v", sz[0], sz[1], age, z, per)
-				}
+				styletest.FrameBudget(t, fmt.Sprintf("%s at %s", age, z), v, m, sz[0], sz[1], 20, 25*time.Millisecond)
 			}
 		}
 	}

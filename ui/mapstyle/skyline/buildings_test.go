@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // buildings_test.go pins the skyline's buildings: a silhouette for every
@@ -449,27 +451,12 @@ func TestNothingDrawsOutsideTheScene(t *testing.T) {
 // the frame guard, in six ages at 160x45, at night when every window is
 // working.
 func TestBuildingFrameBudget(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "modern_age", "cyberpunk_age"} {
 		m := build(fixture.Options{Age: age, Seed: 7, Routes: 4, Scale: 6, Tick: tickAt(0.95)}, 1)
-		v := newView()
-		scr := capture.NewScreen(160, 45)
-		f := mapstyle.Frame{Model: m}
-		v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		const n = 40
-		start := time.Now()
-		for i := 0; i < n; i++ {
-			f.Anim = i
-			v.Draw(scr, mapstyle.Rect{W: 160, H: 45}, f)
-		}
-		per := time.Since(start) / n
-		t.Logf("160x45 %s (%d silhouettes): frame %v", age, len(m.Skyline.Lots), per)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
-		scr.Fini()
+		styletest.FrameBudget(t, fmt.Sprintf("%s (%d silhouettes)", age, len(m.Skyline.Lots)), newView(), m, 160, 45, 40, 25*time.Millisecond)
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // sky_test.go checks the sky arc across both styles: each age looks like
@@ -197,28 +198,13 @@ func TestSkyVisitorRules(t *testing.T) {
 // under the map's 125 ms redraw (the budget is a fifth of it, generous for
 // a busy CI runner; actuals are logged).
 func TestSkyFrameBudget(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
-	const budget = 25 * time.Millisecond
 	for _, style := range Registry().Names() {
 		for _, age := range arcAges[1:] {
-			m := arcModel(age)
 			v, _ := Registry().New(style)
-			scr := capture.NewScreen(200, 60)
-			r := mapstyle.Rect{W: 200, H: 60}
-			v.Draw(scr, r, mapstyle.Frame{Model: m})
-			const n = 15
-			start := time.Now()
-			for i := 0; i < n; i++ {
-				v.Draw(scr, r, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-			}
-			per := time.Since(start) / n
-			t.Logf("%s %s: %v a frame", style, age, per)
-			if per > budget {
-				t.Errorf("%s %s: a frame takes %v, over %v", style, age, per, budget)
-			}
-			scr.Fini()
+			styletest.FrameBudget(t, style+" "+age, v, arcModel(age), 200, 60, 15, 25*time.Millisecond)
 		}
 	}
 }

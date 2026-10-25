@@ -387,47 +387,21 @@ func TestSkyNoLaterAge(t *testing.T) {
 // TestSkyPerformance: a sky frame and a scene build stay well inside the
 // map's 125 ms redraw.
 func TestSkyPerformance(t *testing.T) {
-	if testing.Short() || raceOn {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range skyAges {
 		m, _ := grown(t, fixture.Options{Age: age, Seed: 7, Harbinger: true, Scale: 2})
-		st := skyStyleFor()
-		scr := capture.NewScreen(200, 60)
-		r := mapstyle.Rect{W: 200, H: 60}
-		st.Draw(scr, r, mapstyle.Frame{Model: m})
-		const n = 20
+		styletest.FrameBudget(t, age, skyStyleFor(), m, 200, 60, 20, 25*time.Millisecond)
 		start := time.Now()
-		for i := 0; i < n; i++ {
-			st.Draw(scr, r, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-		}
-		per := time.Since(start) / n
-		start = time.Now()
 		for i := 0; i < 5; i++ {
 			newSkyScene(m, newSkyBase(m, m.Sky()))
 		}
 		build := time.Since(start) / 5
-		t.Logf("%s: a 200x60 frame %v, a scene build %v", age, per, build)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
+		t.Logf("%s: a scene build %v", age, build)
 		if build > 60*time.Millisecond {
 			t.Errorf("%s: a scene build takes %v", age, build)
 		}
-	}
-}
-
-func BenchmarkSkyDraw200x60(b *testing.B) {
-	for _, age := range skyAges {
-		b.Run(age, func(b *testing.B) {
-			m, _ := grown(b, fixture.Options{Age: age, Seed: 7, Harbinger: true})
-			st := skyStyleFor()
-			scr := capture.NewScreen(200, 60)
-			r := mapstyle.Rect{W: 200, H: 60}
-			for i := 0; i < b.N; i++ {
-				st.Draw(scr, r, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-			}
-		})
 	}
 }
 

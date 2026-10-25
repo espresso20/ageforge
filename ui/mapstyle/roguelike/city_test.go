@@ -366,7 +366,7 @@ func TestCityTiersAndThemes(t *testing.T) {
 // TestCityPerf holds the Earth arc to the map's frame budget (it redraws
 // every 125 ms): laying a megacity scene and drawing its frames stay cheap.
 func TestCityPerf(t *testing.T) {
-	if testing.Short() || raceOn {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"cyberpunk_age", "fusion_age", "information_age"} {
@@ -377,20 +377,10 @@ func TestCityPerf(t *testing.T) {
 			newScene(m)
 		}
 		lay := time.Since(start) / scenes
-		v := newView()
-		scr := draw(v, m, 200, 60, 0, mapmodel.TierUnicode, false)
-		const n = 30
-		start = time.Now()
-		for i := 0; i < n; i++ {
-			v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
-		}
-		frame := time.Since(start) / n
-		t.Logf("%s: scene %v, 200x60 frame %v", age, lay, frame)
+		t.Logf("%s: scene %v", age, lay)
 		if lay > 80*time.Millisecond {
 			t.Errorf("%s: laying the scene takes %v", age, lay)
 		}
-		if frame > 20*time.Millisecond {
-			t.Errorf("%s: a 200x60 frame takes %v", age, frame)
-		}
+		styletest.FrameBudget(t, age, newView(), m, 200, 60, 30, 20*time.Millisecond)
 	}
 }

@@ -138,25 +138,11 @@ func TestCityWorks(t *testing.T) {
 // TestCityPerformance: the Earth arc's busiest skylines keep inside the
 // frame budget (the map redraws every 125 ms).
 func TestCityPerformance(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range []string{"cyberpunk_age", "fusion_age", "digital_age"} {
 		m := build(fixture.Options{Age: age, Seed: 7, Routes: 5, Tick: tickAt(0.9), Scale: 2}, 1)
-		v := newView()
-		scr := capture.NewScreen(200, 60)
-		f := mapstyle.Frame{Model: m}
-		v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-		const n = 30
-		start := time.Now()
-		for i := 0; i < n; i++ {
-			f.Anim = i
-			v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-		}
-		per := time.Since(start) / n
-		t.Logf("200x60 %s frame: %v", age, per)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
+		styletest.FrameBudget(t, age, newView(), m, 200, 60, 30, 25*time.Millisecond)
 	}
 }
