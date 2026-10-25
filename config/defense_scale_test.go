@@ -92,14 +92,6 @@ func TestMilitaryYardstick(t *testing.T) {
 			t.Errorf("%s: half a moderate garrison blunts %.3f of a raid, want about an eighth", age, half)
 		}
 	}
-	// A mission's odds: the listed difficulty with no army, the floor with a
-	// large one.
-	if got := MissionDifficulty(0.6, 0); got != 0.6 {
-		t.Errorf("a 60%% mission with no military power fails %.2f of the time, want 0.60", got)
-	}
-	if got := MissionDifficulty(0.6, 10); got != MissionDifficultyFloor {
-		t.Errorf("a 60%% mission with an overwhelming army fails %.2f of the time, want the floor %.2f", got, MissionDifficultyFloor)
-	}
 }
 
 // TestReferenceArmyBluntsWhatTheModerateGarrisonDid: in every age the

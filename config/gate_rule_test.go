@@ -92,39 +92,8 @@ func TestGateTownRuleAsksOnlyForWhatARunCanBuild(t *testing.T) {
 			case !makesSomething(d):
 			case d.RequiredTech != "" && !held[from][d.RequiredTech]:
 			default:
-				if _, listed := GateTownLeftOut()[d.Key]; !listed {
-					t.Errorf("%s (%s) is passed over by the rule for no reason it names", d.Key, ages[from].Key)
-				}
+				t.Errorf("%s (%s) is passed over by the rule for no reason it names", d.Key, ages[from].Key)
 			}
-		}
-	}
-}
-
-// TestGateTownLeftOutIsTrue: each building the rule leaves out because a
-// covenant stops it exists, would otherwise be asked for, and carries a
-// reason.
-func TestGateTownLeftOutIsTrue(t *testing.T) {
-	defs, ages, techs := BaseBuildings(), Ages(), Technologies()
-	byKey := map[string]BuildingDef{}
-	for _, d := range defs {
-		byKey[d.Key] = d
-	}
-	held := GateTownHeldTechs(defs, ages, techs)
-	idx := map[string]int{}
-	for i, a := range ages {
-		idx[a.Key] = i
-	}
-	for k, why := range GateTownLeftOut() {
-		d, ok := byKey[k]
-		if !ok {
-			t.Errorf("%s is left out of the gate rule and does not exist", k)
-			continue
-		}
-		if why == "" {
-			t.Errorf("%s is left out of the gate rule with no reason", k)
-		}
-		if !makesSomething(d) || (d.RequiredTech != "" && !held[idx[d.RequiredAge]][d.RequiredTech]) {
-			t.Errorf("%s is left out of the gate rule, and the rule would not ask for it anyway", k)
 		}
 	}
 }
@@ -165,10 +134,9 @@ func makesSomething(d BuildingDef) bool {
 // the gate leads into (as the ages' BuildingReqs are read). Each count is the
 // reference town's, TownCopies, or the building's MaxCount when that
 // is smaller; a knowledge building's is the knowledge rule's
-// (KnowledgeGateCount). Buildings in GateTownLeftOut are not in it.
+// (KnowledgeGateCount).
 func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map[string]int {
 	held := GateTownHeldTechs(defs, ages, techs)
-	left := GateTownLeftOut()
 	out := map[string]map[string]int{}
 	for i := 0; i+1 < len(ages); i++ {
 		for _, d := range defs {
@@ -183,9 +151,6 @@ func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map
 				continue
 			}
 			if d.RequiredTech != "" && !held[i][d.RequiredTech] {
-				continue
-			}
-			if _, skip := left[d.Key]; skip {
 				continue
 			}
 			n := TownCopies

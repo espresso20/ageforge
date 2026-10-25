@@ -317,18 +317,6 @@ func MissionPower(power float64, order int) float64 {
 	return float64(power * MilitaryScaleAt(order).Mission)
 }
 
-// MissionDifficulty is a mission's chance of failure for a player whose
-// MissionPower is missionPower: base less MissionPowerFactor × missionPower,
-// and never under MissionDifficultyFloor.
-func MissionDifficulty(base, missionPower float64) float64 {
-	d := base - float64(missionPower*MissionPowerFactor)
-	return max(d, MissionDifficultyFloor)
-}
-
-// MissionDifficultyFloor is the least chance of failure any mission keeps,
-// whatever the army.
-const MissionDifficultyFloor = 0.05
-
 // DefenseMitigation is the share (0..DefenseMitigationCap) of a raid's losses
 // a garrison with the given Defense Rating blunts against the given threat:
 // DefenseMitigationCap × defense / (defense + threat). 0 when there is no

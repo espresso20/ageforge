@@ -43,7 +43,7 @@ var pureConfig = map[string]bool{
 	"AgePositions": true, "AnyResource": true, "StretchTicksBy": true,
 	"ClampMastery": true, "MasteryK": true, "AgeSpeed": true,
 	"DefenseMitigation": true, "AgeThreatAt": true,
-	"MilitaryScales": true, "MilitaryScaleIn": true, "MissionDifficulty": true,
+	"MilitaryScales": true, "MilitaryScaleIn": true,
 	"MissionKindTuning": true, "MissionKinds": true, "MissionBoardLongestMinutes": true,
 	"MissionBadgeKey": true, "MissionKindWord": true, "RareTitleWord": true,
 	"DurationText": true, "FormatAmount": true, "FormatPercent": true, "FormatRateValue": true,

@@ -36,16 +36,7 @@ package config
 //     rate and the gate asks the spend it always did (knowledge_rule.go).
 //
 // The covenants on gates (smoke.StaticGates) hold the result: each building
-// asked for is buildable in A and sourced from a cold start. A building a
-// covenant rules out is not silently dropped: it is named in GateTownLeftOut, with the reason, and the test
-// proves the list is true.
-
-// GateTownLeftOut names the buildings the gate rule would ask for and a
-// covenant stops it asking for, by building key, with the reason. Nothing
-// here is a tuning knob: an entry needs the numbers that break the covenant.
-func GateTownLeftOut() map[string]string {
-	return map[string]string{}
-}
+// asked for is buildable in A and sourced from a cold start.
 
 // GateTownHeldTechs is the techs a run cannot leave age A without: the
 // keystone of the wonder of every age up to and including A, and everything
