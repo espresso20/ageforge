@@ -41,15 +41,6 @@ func RefRole(c tcell.Color) (Role, bool) {
 	return Role(c - refBase), true
 }
 
-// Resolve maps a sentinel to the active theme's concrete color; anything else is
-// returned unchanged.
-func Resolve(c tcell.Color) tcell.Color {
-	if r, ok := RefRole(c); ok {
-		return Color(r)
-	}
-	return c
-}
-
 // ResolveStyle resolves both ends of a style against the active theme: sentinels
 // become their role color, ColorDefault fg becomes Text and ColorDefault bg
 // becomes Background. Attributes and URLs are preserved.
@@ -109,9 +100,6 @@ func WrapScreen(s tcell.Screen) *ThemedScreen {
 	}
 	return &ThemedScreen{Screen: s}
 }
-
-// Unwrap returns the underlying screen (tests use it to reach a SimulationScreen).
-func (s *ThemedScreen) Unwrap() tcell.Screen { return s.Screen }
 
 func (s *ThemedScreen) canvas() tcell.Style {
 	t := Active()

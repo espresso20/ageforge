@@ -183,18 +183,13 @@ func TestLegible(t *testing.T) {
 // TestRefResolve checks the sentinel round-trip and that no real color reads as
 // a sentinel.
 func TestRefResolve(t *testing.T) {
-	t.Cleanup(func() { _ = SetActive(DefaultKey) })
 	for _, key := range []string{"forge", "daylight"} {
-		_ = SetActive(key)
 		th, _ := ByKey(key)
 		for r := Role(0); r < numRoles; r++ {
 			ref := Ref(r)
 			got, ok := RefRole(ref)
 			if !ok || got != r {
 				t.Fatalf("RefRole(Ref(%s)) = %v,%v", r, got, ok)
-			}
-			if Resolve(ref) != th.Color(r) {
-				t.Errorf("%s: Resolve(Ref(%s)) = %06x, want %06x", key, r, Resolve(ref).Hex(), th.Color(r).Hex())
 			}
 			if _, isRef := RefRole(th.Color(r)); isRef {
 				t.Errorf("%s: real color for %s parses as a sentinel", key, r)
