@@ -1560,8 +1560,8 @@ ui.overlay_help.helpProvider.31,"
 ui.overlay_help.helpProvider.32,"The prompt keeps working while the Map is open: type commands like normal. The map yoinks the keys that print nothing, plus + - = [ ] while the prompt is empty."
 ui.overlay_help.helpProvider.34,"Move the cursor (roguelike) or scroll (skyline); Shift speedruns it, half a screen at a time in the skyline"
 ui.overlay_help.helpProvider.36,"Hop to the next building, wonder or civilization (Shift-Tab: run it back one)"
-ui.overlay_help.helpProvider.38,"Main character camera: zoom out, zoom in"
-ui.overlay_help.helpProvider.39,"Zoom in and out in the skyline (= works as +): far is the whole town, close gives every building a 2x glow-up; the level is kept for next time"
+ui.overlay_help.helpProvider.38,"Main character camera: zoom out, zoom in (Option+Up and Option+Down do the same)"
+ui.overlay_help.helpProvider.39,"Zoom in and out with no Page keys, in either style (= works as +). In the skyline far is the whole town, close gives every building a 2x glow-up; the level is kept for next time"
 ui.overlay_help.helpProvider.40,Skyline: speedrun to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)
 ui.overlay_help.helpProvider.42,The town square (roguelike); the OG district and the present (skyline)
 ui.overlay_help.helpProvider.44,"Drop the command for whatever the cursor is on into the prompt (with something typed, Tab and Enter act on the prompt instead)"
@@ -2322,8 +2322,8 @@ ui.tab_economy.buildingEntries.03,"   Damage: "
 ui.tab_economy.buildingEntries.04,"   [green]Grinders[-] "
 ui.tab_economy.buildingEntries.05,[gold]↑ Glow-up ready: %s. Type: upgrade %s[-]
 ui.tab_economy.buildingEntries.06," [gray]Zero buildings unlocked, so early[-]"
-ui.tab_economy.layoutBuildings.01," ↑ %d more up top, bestie: PgUp"
-ui.tab_economy.layoutBuildings.02," ↓ %d more down there, keep doomscrolling: PgDn"
+ui.tab_economy.layoutBuildings.01," ↑ %d more up top, bestie: PgUp (⌥↑)"
+ui.tab_economy.layoutBuildings.02," ↓ %d more down there, keep doomscrolling: PgDn (⌥↓)"
 ui.tab_economy.domainToLabel.01,Food gang
 ui.tab_economy.domainToLabel.02,Faith gang
 ui.tab_economy.domainToLabel.03,Military gang

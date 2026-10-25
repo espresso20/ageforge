@@ -109,7 +109,7 @@ The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it 
 - Type a panel's name to open it: `research`, `army`, `trade`, `factions`, `map`, `help` and so on.
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open.
 - **Tab** or **→** takes the completion shown in dim text after the cursor; press **Tab** again for the next one.
-- **PgUp / PgDn** turn the Buildings list a page. The list never shows part of an entry: an entry that does not fit whole waits for the next page, and the box says how many are above and below.
+- **PgUp / PgDn** turn the Buildings list a page. A Mac keyboard has no Page keys: **Option+↑ / Option+↓** do the same everywhere, and **Option+←** and **Option+→** are Home and End. The list never shows part of an entry: an entry that does not fit whole waits for the next page, and the box says how many are above and below.
 - **Ctrl+R** turns the Resources box to its next page, when it has more resources than it can show.
 - **↑ / ↓** step through your command history.
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the [main menu](#the-main-menu), where **Continue** takes you back in.
@@ -195,9 +195,9 @@ build stonehenge
 
 Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It has two styles:
 
-- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms: **PgUp** zooms out to the region, the known world with the civilizations you have met, and **PgDn** zooms in to a district with building names.
-- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed, and trade routes travel by land, sea or air. `←` and `→` scroll it, and PgUp and PgDn move half a screen.
+- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms: **PgUp** (or **-**) zooms out to the region, the known world with the civilizations you have met, and **PgDn** (or **=**) zooms in to a district with building names.
+- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed, and trade routes travel by land, sea or air. `←` and `→` scroll it, and `+` and `-` (or PgDn and PgUp) zoom.
 
 Switch with `map style skyline` or `map style roguelike` (or the shorter `style skyline`). `map glyphs` chooses the glyph set; both are saved with your account.
 
-The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab and Enter. In both styles an inspect cursor tells you what it is on and the command to type for it; Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large terminal the dashboard also shows a **mini map** above the Buildings list. `citymap` and `worldmap` still work and open the Map. See [The Map](map.md) for all the keys.
+The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab, Enter and the zoom keys - and =. In both styles an inspect cursor tells you what it is on and the command to type for it; Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large terminal the dashboard also shows a **mini map** above the Buildings list. `citymap` and `worldmap` still work and open the Map. See [The Map](map.md) for all the keys.
