@@ -55,16 +55,17 @@ const (
 	festivalCostShare     = 0.05   // of the age's stock scale, in minutes of your culture income (culture_price.go)
 	festivalMaxMinutes    = 6000.0 // the most minutes of your culture income a festival asks in any age: 100 hours
 
-	// Black market (culture sink, high-risk/high-reward) tuning. The player
-	// spends a lump of culture for a gamble: on a win the imported resource is
-	// paid out at blackMarketWinMult times the stake's minutes of culture
-	// income, in minutes of income of that resource (culture_price.go); on a
-	// loss the culture is simply gone. Gated behind colonial age + a cooldown.
+	// Black market (culture sink, a risk of one in six) tuning. The player
+	// spends a lump of culture on a deal: five times in six the imported
+	// resource is paid out at blackMarketWinMult times the stake's minutes of
+	// culture income, in minutes of income of that resource (culture_price.go);
+	// the sixth time the smugglers vanish with the culture and nothing comes
+	// back. Gated behind colonial age + a cooldown.
 	blackMarketCostShare     = 0.10           // of the age's stock scale, in minutes of your culture income, per deal
 	blackMarketMaxMinutes    = 12_000.0       // the most minutes of your culture income a deal asks in any age: 200 hours
 	blackMarketMinCost       = 5000.0         // floor so it's meaningful early
-	blackMarketWinChance     = 0.55           // probability of a payout
-	blackMarketWinMult       = 0.3            // payout = the stake's minutes of culture income × this, in minutes of the resource's income, on a win
+	blackMarketWinChance     = 5.0 / 6        // probability of a payout: five deals in six
+	blackMarketWinMult       = 1.0            // payout = the stake's minutes of culture income × this, in minutes of the resource's income, on a win
 	blackMarketCooldownTicks = 240            // ~8 minutes between deals
 	blackMarketMinAge        = "colonial_age" // smuggling networks open in the colonial era
 
@@ -3105,11 +3106,11 @@ func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
 	}
 }
 
-// DoBlackMarket runs one high-risk/high-reward black-market deal for the given
-// resource: it spends a lump of culture (always consumed) and rolls; on a win it
-// pays out blackMarketWinMult × the stake's gold-value in the chosen resource, on
-// a loss the smugglers vanish with the culture and nothing comes back. Gated by
-// the colonial-age unlock and a cooldown. Returns (won, gain, error).
+// DoBlackMarket runs one black-market deal for the given resource: it spends a
+// lump of culture (always consumed) and rolls; five times in six it pays out
+// the stake's worth in the chosen resource (blackMarketReward), the sixth the
+// smugglers vanish with the culture and nothing comes back. Gated by the
+// colonial-age unlock and a cooldown. Returns (won, gain, error).
 func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()

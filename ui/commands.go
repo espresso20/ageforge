@@ -271,7 +271,7 @@ func registry() []*Command {
 			}},
 		{Name: "blackmarket", Aliases: []string{"bm"}, Section: secTrade,
 			Args: []Arg{{Kind: ArgResource, Optional: true}},
-			Help: []Usage{{"blackmarket [resource]", vibe.Line("ui.help.commands.blackmarket", "Smuggling run: gamble culture on a haul of one resource (bare blackmarket shows the odds, or when it opens)")}}},
+			Help: []Usage{{"blackmarket [resource]", vibe.Line("ui.help.commands.blackmarket", "Smuggling run: spend culture for the same worth in one resource, five times in six (bare blackmarket shows the odds, or when it opens)")}}},
 		{Name: "factions", Section: secTrade, Panel: vibe.Line("ui.help.panels.factions", "Boons, the Geographic Society & opinion of each civilization (alias: diplomacy)"),
 			Help: []Usage{{"factions", vibe.Line("ui.help.commands.factions", "Open the Factions panel (boons, the Geographic Society, opinion)")}}},
 		{Name: "diplomacy", Aliases: []string{"dip"}, Section: secTrade, BareOK: true,

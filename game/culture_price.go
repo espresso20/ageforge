@@ -61,19 +61,19 @@ var blackMarketDeals = map[string]bool{
 	"data": true, "crypto": true, "dark_matter": true, "quantum_flux": true,
 }
 
-// A win on the Black Market pays the same worth whichever resource it is
-// taken in: the stake's minutes of culture income, times blackMarketWinMult,
-// as minutes of the town's income of the resource. It was the stake as gold
-// at a fixed rate for each resource, which paid from a few minutes of income
-// to tens of thousands depending on the item (gold against coal), for the
-// same stake. Each income is held to the band around the
+// A deal that goes through on the Black Market pays the same worth whichever
+// resource it is taken in: the stake's minutes of culture income, times
+// blackMarketWinMult (1), as minutes of the town's income of the resource. It
+// was the stake as gold at a fixed rate for each resource, which paid from a
+// few minutes of income to tens of thousands depending on the item (gold
+// against coal), for the same stake. Each income is held to the band around the
 // age's typical income (config.SizedIncome), as an event's gain is, so a town
 // that makes none of the resource is still paid and one that makes a great
 // deal is not paid without bound; the minutes are the stake over the culture
 // income so held, so a town paying the price in its own income gets exactly
 // blackMarketWinMult of them.
 
-// blackMarketPayoutOf is the payout for a win on resource with a stake of
+// blackMarketPayoutOf is the payout for a deal that goes through on resource, with a stake of
 // stake culture, for a town whose culture income and income of resource are
 // culture and have (each with the age's typical income, at the town's speed),
 // held to its band by set. 0 for a resource the smugglers do not deal in or

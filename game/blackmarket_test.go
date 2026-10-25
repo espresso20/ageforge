@@ -8,10 +8,11 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// blackMarketSeedWin yields a first Float64 of 0.167 (< blackMarketWinChance
-// 0.55) → a winning roll. blackMarketSeedLose yields 0.605 (>= 0.55) → a loss.
+// blackMarketSeedWin yields a first Float64 of 0.167 (< blackMarketWinChance,
+// five in six) → a winning roll. blackMarketSeedLose yields 0.919 (>= five in
+// six) → a loss.
 func blackMarketSeedWin() *rand.Rand  { return rand.New(rand.NewSource(2)) }
-func blackMarketSeedLose() *rand.Rand { return rand.New(rand.NewSource(1)) }
+func blackMarketSeedLose() *rand.Rand { return rand.New(rand.NewSource(7)) }
 
 // bmEngine builds a colonial-age engine with a fixed culture income + balance so the
 // deal cost is deterministic: 10000, the minutes of that income the deal asks.
@@ -97,6 +98,38 @@ func TestBlackMarket_LoseDeterministic(t *testing.T) {
 	}
 	if got := ge.Resources.Get("culture"); math.Abs(got-(50000-cost)) > 1e-6 {
 		t.Errorf("culture after loss = %.1f, want %.1f (cost still spent)", got, 50000-cost)
+	}
+}
+
+// TestBlackMarket_GoesThroughFiveTimesInSix: over a long run of deals a deal
+// goes through five times in six and pays the stake's worth; the sixth time
+// the smugglers vanish with the culture and pay nothing. The status says so.
+func TestBlackMarket_GoesThroughFiveTimesInSix(t *testing.T) {
+	ge := bmEngine(1e12)
+	ge.blackMarketRand = rand.New(rand.NewSource(11))
+	const runs = 6000
+	wins := 0
+	for i := 0; i < runs; i++ {
+		ge.blackMarketReadyTick = 0
+		won, gain, err := ge.DoBlackMarket("gold")
+		if err != nil {
+			t.Fatalf("deal %d: %v", i, err)
+		}
+		if won != (gain > 0) {
+			t.Fatalf("deal %d: won %v with a gain of %v, want a gain exactly when it went through", i, won, gain)
+		}
+		if won {
+			wins++
+		}
+	}
+	// Five in six of 6000 is 5000, with a spread of about 29: 150 either
+	// side is five spreads.
+	if wins < 4850 || wins > 5150 {
+		t.Errorf("%d of %d deals went through, want about %d", wins, runs, runs*5/6)
+	}
+	st := ge.BlackMarketStatus()
+	if st.WinChance != 5.0/6 || st.WinMult != 1 {
+		t.Errorf("the status says %v and %vx, want five in six and the same worth (1x)", st.WinChance, st.WinMult)
 	}
 }
 
