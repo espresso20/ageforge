@@ -106,11 +106,7 @@ func (pm *ProgressManager) GetUnlocks(ageKey string) config.AgeDef {
 
 // GetAgeOrder returns a map of age key -> order index
 func (pm *ProgressManager) GetAgeOrder() map[string]int {
-	out := make(map[string]int)
-	for k, v := range pm.ageIndex {
-		out[k] = v
-	}
-	return out
+	return maps.Clone(pm.ageIndex) // never nil: Rebind makes it
 }
 
 // AgeIndex returns the order index for an age key without copying the age map.

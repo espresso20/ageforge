@@ -524,7 +524,7 @@ minimum: 200ms
 ```
 
 `tick_speed_bonus`: research + milestones + active chain boosts (the retired Temporal Mastery perk adds nothing). Era Mastery never touches the tick interval (see below).
-`speed_multiplier`: always 1.0 for players. Game speed is fixed so the calendar paces the game: there is no player speed setting and wonders raise no cap. Only the dev console's `/speed` changes it, for the session; a load clamps it back to 1.0 (`clampPlayerSpeed`), and prestige, Succumb and a wipe reset it.
+`speed_multiplier`: always 1.0 for players. Game speed is fixed so the calendar paces the game: there is no player speed setting and wonders raise no cap. Only the dev console's `/speed` changes it, for the session; a load puts it back to 1.0, and prestige, Succumb and a wipe reset it.
 
 ### Resource Rates (per tick, in order)
 

@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"sort"
 	"strings"
@@ -1601,7 +1602,7 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 			ge.harbinger = &h
 		}
 	}
-	ge.harbingerArrived = copyBoolMap(save.HarbingerArrived)
+	ge.harbingerArrived = maps.Clone(save.HarbingerArrived)
 	if ge.harbingerArrived == nil {
 		ge.harbingerArrived = make(map[string]bool)
 	}

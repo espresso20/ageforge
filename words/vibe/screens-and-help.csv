@@ -165,7 +165,6 @@ ui.age_splash.ageSplashLines.06,"[white]Stack the bread for its cost, research %
 ui.age_splash.ageSplashLines.07,"[white]Secure the bag for its cost, then build it.[-]"
 ui.age_splash.ageSplashLines.08,[yellow]── Upgrades ready to flex ──[-]
 ui.age_splash.ageSplashLines.09,"  Type [cyan]upgrade[-] for the price tea, or [cyan]upgrade <building>[-] to glow one up."
-ui.age_splash.ageSplashLines.10,[yellow]── Legacy OGs ──[-]
 ui.age_splash.ageSplashLines.11,[gold]══ Epoch glow-up ══[-]
 ui.age_splash.ageSplashLines.12,[gray]Press any key to keep the vibe going.[-]
 ui.ancient_memory_modal.showAncientMemoryModal.01,"[gray]You stumbled on an old cache and the lore goes deep. It holds
@@ -1735,13 +1734,8 @@ ui.overlay_plan.planItemTitle.01,research
 ui.overlay_plan.planItemTitle.02,glow up %d %s → %s
 ui.overlay_plan.planItemTitle.03," (%d cooking)"
 ui.overlay_plan.planItemTitle.04," (%d already cooking)"
-ui.overlay_plan.planItemDetailGlued.01," banked from the overflow drip)"
-ui.overlay_plan.planItemDetailGlued.02," in the bag"
 ui.overlay_plan.planItemDetailGlued.03," gatekept for items above"
 ui.overlay_plan.planItemDetailGlued.04,drops next tick
-ui.overlay_plan.planItemDetailGlued.05,"drops next tick, paid from its own bag"
-ui.overlay_plan.planItemDetailGlued.06,drops next tick for 
-ui.overlay_plan.planItemDetailGlued.07," and its bag"
 ui.overlay_plan.planItemDetailGlued.08,drops next tick for 
 ui.overlay_plan.planPanelText.01,═══ Build Plan Arc ═══
 ui.overlay_plan.planPanelText.02," Started in order as the bag fills, while you play and while you are AFK.
@@ -1765,7 +1759,6 @@ ui.overlay_plan.planListText.02,Build Plan Arc
 ui.overlay_plan.planListText.03,"loading, %.0f%%"
 ui.overlay_plan.planListText.04," (short of "
 ui.overlay_plan.planListText.05,gatekept: 
-ui.overlay_plan.planListText.06," in the bag"
 ui.overlay_research.formatTechEffect.01,buffs research speed
 ui.overlay_research.formatTechEffect.02,drops 
 ui.overlay_research.formatTechEffect.03," crib space"

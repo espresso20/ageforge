@@ -120,24 +120,6 @@ func (ge *GameEngine) GrantBonusForTest(pool string, value float64) {
 	ge.recalculateTickSpeed()
 }
 
-// SetLegacyBonusForTest marks epochs as succumbed in, as a Succumb in each
-// would: their legacy bonuses and Ancient Knowledge apply at once. A test
-// hook for other packages (the panels that show research speed and legacy
-// bonuses); not reachable from play.
-func (ge *GameEngine) SetLegacyBonusForTest(epochs ...string) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	for _, ep := range epochs {
-		if _, ok := ge.rules.Era(ep); ok && !ge.legacyBonuses[ep] {
-			ge.legacyBonuses[ep] = true
-			for res, mult := range ge.rules.LegacyBonus(ep) {
-				ge.permanentBonuses[res+"_rate"] += mult
-			}
-		}
-	}
-	ge.recalculateRates()
-}
-
 // SetTownForTest stands the given number of copies of each building, as
 // that many finished builds would, and brings the population to people
 // (idle, housing allowing). Unknown buildings are ignored. A test hook for

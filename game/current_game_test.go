@@ -46,7 +46,7 @@ func backdate(t *testing.T, name string, ago time.Duration) {
 	_, elite := verifySave(&gs)
 	gs.Timestamp = time.Now().Add(-ago)
 	gs.Signature, gs.Proof = "", ""
-	sig := signSave(gs, saveHMACKey)
+	sig := signSave(gs)
 	gs.Signature = sig
 	if elite {
 		mac := hmac.New(sha256.New, []byte(forgeMasterKey))

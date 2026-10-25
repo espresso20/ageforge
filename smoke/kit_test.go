@@ -106,38 +106,22 @@ func TestDepthRow(t *testing.T) {
 	}
 }
 
-// TestKitCarryProblems: a lost kit item, unremembered civilizations,
-// dropped shares and a missing template slice are caught.
+// TestKitCarryProblems: unremembered civilizations are caught.
 func TestKitCarryProblems(t *testing.T) {
-	owned := func() map[string]game.PrestigeUpgradeState {
-		m := map[string]game.PrestigeUpgradeState{}
-		for _, k := range config.LegacyKit() {
-			m[k] = game.PrestigeUpgradeState{Tier: 1, MaxTier: 1, Kit: true}
-		}
-		return m
-	}
 	before := game.GameState{Age: "modern_age"}
-	before.Prestige.Upgrades = owned()
-	before.Workers.Shares = map[string]float64{"food": 40}
 	before.Diplomacy.Factions = map[string]game.FactionInfo{"riverlands_tribes": {Discovered: true}}
 	good := game.GameState{Age: "primitive_age"}
-	good.Prestige.Upgrades = owned()
-	good.Prestige.Kit = game.LegacyKitState{Factions: 1, PlanByAge: map[string]int{"primitive_age": 3}, PlanAppliedAge: "primitive_age"}
-	good.Workers.Shares = map[string]float64{"food": 40}
+	good.Prestige.Kit = game.LegacyKitState{Factions: 1}
 	if p := kitCarryProblems(before, good); len(p) != 0 {
 		t.Errorf("a clean carry-over reported %v", p)
 	}
 	bad := good
-	bad.Prestige.Upgrades = map[string]game.PrestigeUpgradeState{}
-	bad.Prestige.Kit = game.LegacyKitState{PlanByAge: map[string]int{"primitive_age": 3}}
-	bad.Workers.Shares = nil
+	bad.Prestige.Kit = game.LegacyKitState{}
 	got := map[string]bool{}
 	for _, p := range kitCarryProblems(before, bad) {
 		got[p.check] = true
 	}
-	for _, c := range []string{"prestige_lost_kit", "kit_factions_memory", "kit_shares", "kit_template"} {
-		if !got[c] {
-			t.Errorf("a broken carry-over did not report %s (got %v)", c, got)
-		}
+	if !got["kit_factions_memory"] {
+		t.Errorf("a broken carry-over did not report kit_factions_memory (got %v)", got)
 	}
 }

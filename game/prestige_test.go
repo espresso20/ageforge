@@ -173,9 +173,6 @@ func TestPrestigeManager_PrestigeGrantsLevel(t *testing.T) {
 	if got, want := pm.ProductionMultiplier(), 1+0.282*math.Sqrt(5); math.Abs(got-want) > 1e-12 {
 		t.Errorf("production multiplier = %v, want %v", got, want)
 	}
-	if p := pm.Snapshot().PassiveBonus; p != 0 {
-		t.Errorf("PassiveBonus = %v, want 0", p)
-	}
 }
 
 func TestPrestigeManager_SaveLoadRoundTrip(t *testing.T) {
@@ -186,7 +183,7 @@ func TestPrestigeManager_SaveLoadRoundTrip(t *testing.T) {
 	snap := pm.Snapshot()
 
 	pm2 := NewPrestigeManager()
-	pm2.LoadState(snap.Level, snap.TotalEarned, snap.Available, nil)
+	pm2.LoadState(snap.Level, snap.TotalEarned, snap.Available)
 
 	if pm2.GetLevel() != 2 {
 		t.Errorf("loaded level = %v, want 2", pm2.GetLevel())

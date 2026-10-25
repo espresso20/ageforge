@@ -49,7 +49,7 @@ func loadFixtureAway(t *testing.T, path, name string, away time.Duration) *GameE
 		t.Fatalf("setup: the fixture %s is not signed and valid as the old game wrote it", path)
 	}
 	save.Timestamp = time.Now().Add(-away)
-	save.Signature = signSave(save, saveHMACKey)
+	save.Signature = signSave(save)
 	data, err := json.Marshal(save)
 	if err != nil {
 		t.Fatal(err)
@@ -234,9 +234,7 @@ func TestRawMaterialsSave_ColosseumBankKeepsWhatItHeldAndAsksTheRest(t *testing.
 
 // TestRawMaterialsSave_QueueAndPlanSeeTheNewPrice: a building in the queue
 // finishes without a further charge (it was paid when it was queued), and the
-// plan's items for buildings that now cost a raw show the new price. A plan
-// item's bank of stone and iron pays only those parts of the new price, up to
-// each part, and is credited to no other.
+// plan's items for buildings that now cost a raw show the new price.
 func TestRawMaterialsSave_QueueAndPlanSeeTheNewPrice(t *testing.T) {
 	isolateAccountDir(t)
 	ge := loadFixtureAway(t, rawIronFixture, "raws_iron_plan", 0)
@@ -263,19 +261,16 @@ func TestRawMaterialsSave_QueueAndPlanSeeTheNewPrice(t *testing.T) {
 		}
 	}
 
-	// The Legion Fort's bank (14,000 stone, 7,000 iron) pays up to each part
-	// of the new price and nothing else.
-	fort := state.Plan[1]
-	if fort.Key != "legion_fort" {
+	// The Legion Fort's bank (14,000 stone, 7,000 iron) was written under the
+	// current storage rules, which nothing fills a bank under: it is dropped
+	// on load, and the plan shows the whole new price.
+	if fort := state.Plan[1]; fort.Key != "legion_fort" {
 		t.Fatalf("the second plan item is %s", fort.Key)
 	}
-	for res, banked := range map[string]float64{"stone": 14000, "iron": 7000} {
-		if want := math.Min(banked, fort.Cost[res]); math.Abs(fort.Banked[res]-want) > 1e-6 {
-			t.Errorf("legion fort: %s from the bank is %v, want %v", res, fort.Banked[res], want)
+	for i, it := range ge.plan {
+		if len(it.Banked) != 0 {
+			t.Errorf("plan item %d (%s) still holds a bank: %v", i, it.Key, it.Banked)
 		}
-	}
-	if fort.Banked["marble"] != 0 || fort.Banked["iron_ore"] != 0 || len(fort.Banked) != 2 {
-		t.Errorf("legion fort: the bank is credited to another part: %v", fort.Banked)
 	}
 
 	// The queued Agora finishes, and the stores are not charged for it again.

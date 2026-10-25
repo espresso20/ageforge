@@ -75,7 +75,6 @@ var fileNotes = map[string]fileNote{
 	"game/milestones.go":        {place: "about milestones", age: "primitive_age", seen: seenNews},
 	"game/military.go":          {place: "about expeditions, campaigns and the army", age: "primitive_age", seen: seenNews},
 	"game/names.go":             {place: "where the game names a thing it has no name for", age: "primitive_age"},
-	"game/overflow.go":          {place: "about wonder overflow", age: "stone_age", seen: seenNews},
 	"game/plan.go":              {place: "about the build plan", age: "primitive_age", seen: seenNews},
 	"game/plan_advance.go":      {place: "about the build plan's advance item", age: "primitive_age", seen: seenNews},
 	"game/plan_deal.go":         {place: "about the build plan's deal items", age: "bronze_age", seen: seenNews},

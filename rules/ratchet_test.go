@@ -30,7 +30,7 @@ import (
 // down; the test says which.
 var lookupBudget = map[string]lookupCount{
 	"game":     {config: 6, core: 25},
-	"ui":       {config: 22, core: 0},
+	"ui":       {config: 21, core: 0},
 	"mapmodel": {config: 4, core: 2},
 }
 

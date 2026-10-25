@@ -232,7 +232,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 // returns it. The offer's SuccessChance is the chance the mission is sent with
 // (the engine has already counted the army). The party and the resource costs
 // are validated and deducted by the engine BEFORE this is called.
-func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, cost, baseHaul map[string]float64) (*ActiveExpedition, error) {
+func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, cost, baseHaul map[string]float64) *ActiveExpedition {
 	ticks := mm.missionTicks(offer.Category(), minutesToTicks(offer.LengthMinutes))
 	if ticks < 1 {
 		ticks = 1
@@ -249,7 +249,7 @@ func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, c
 		LaunchChance: offer.SuccessChance,
 	}
 	mm.active = append(mm.active, a)
-	return a, nil
+	return a
 }
 
 // ActiveByTier returns the oldest mission under way in a tier, or nil. The
@@ -300,12 +300,11 @@ func (mm *MilitaryManager) SoldiersAway() int {
 // else) — see GameEngine.expeditionFlavorLine. Message stays the mechanical
 // line; flavour rides alongside it, never in place of it.
 type ExpeditionResult struct {
-	Rewards      map[string]float64
-	Message      string
-	Name         string // the offer's title
-	Category     string // ExpeditionScouting or ExpeditionMilitary
-	Success      bool   // true if the mission succeeded
-	SoldiersSent int
+	Rewards  map[string]float64
+	Message  string
+	Name     string // the offer's title
+	Category string // ExpeditionScouting or ExpeditionMilitary
+	Success  bool   // true if the mission succeeded
 	// SoldiersFell is the soldiers who fell on the way home (the failure's or
 	// the success's losses, drawn from the mission's own stream); Party the
 	// party that set out and Marching the soldiers still with it on return.
@@ -364,14 +363,14 @@ func missionLosses(rng *rand.Rand, party int, success, rare bool) int {
 // down and resolve independently.
 //
 // The success roll is the mission's own SuccessChance (rolled when the offer
-// was made; the army was counted when it was sent). expeditionBonus is not
-// used here: the loot was sized at launch. A failure differs from a success in
-// the loot (30%) and in the soldiers who fall (missionLosses).
+// was made; the army was counted when it was sent). The loot was sized at
+// launch. A failure differs from a success in the loot (30%) and in the
+// soldiers who fall (missionLosses).
 //
 // The roll is the mission's own draw from its luck stream, taken at launch
 // (ActiveExpedition.Luck): it succeeds when that draw is under the odds it
 // has now, so a road event that moves the odds still counts.
-func (mm *MilitaryManager) Tick(missionPower, expeditionBonus float64) []ExpeditionResult {
+func (mm *MilitaryManager) Tick() []ExpeditionResult {
 	var results []ExpeditionResult
 	kept := mm.active[:0:0]
 	for _, active := range mm.active {
@@ -418,7 +417,6 @@ func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResu
 		Name:         active.Title,
 		Category:     active.Category(),
 		Success:      success,
-		SoldiersSent: active.Soldiers,
 		SoldiersFell: fell,
 		Party:        active.Party,
 		Marching:     active.Soldiers,
@@ -463,11 +461,6 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		activeScout = activeLong
 	}
 
-	loot := make(map[string]float64)
-	for k, v := range mm.totalLoot {
-		loot[k] = v
-	}
-
 	return MilitaryState{
 		SoldierCount:    soldierCount,
 		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
@@ -483,7 +476,7 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		CompletedCount:  mm.completedCount,
 		Experience:      mm.experience,
 		Rank:            mm.Rank(),
-		TotalLoot:       loot,
+		TotalLoot:       maps.Clone(mm.totalLoot),
 		Returns:         mm.returnsCopy(),
 		ReturnsMade:     mm.returnsMade,
 		ReturnsSeen:     mm.returnsSeen,
@@ -496,12 +489,8 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		return nil
 	}
 	success := maps.Clone(active.SuccessRewards)
-	failure := maps.Clone(active.FailureRewards)
 	if success == nil {
 		success = scaleLoot(active.BaseRewards, 1+expeditionBonus)
-	}
-	if failure == nil {
-		failure = scaleLoot(active.BaseRewards, failedLootShare)
 	}
 	total := active.TotalTicks
 	if total < active.TicksLeft {
@@ -522,7 +511,6 @@ func snapshotActive(active *ActiveExpedition, expeditionBonus float64) *Expediti
 		SuccessChance: active.SuccessChance,
 		HaulMinutes:   active.HaulMinutes,
 		SuccessHaul:   success,
-		FailureHaul:   failure,
 		RoadStories:   append([]string(nil), active.RoadEventsSeen...),
 		RoadKinds:     firedRoadKinds(active),
 		LaunchChance:  active.LaunchChance,

@@ -35,7 +35,7 @@ type TechDef struct {
 }
 
 // Technologies returns every tech definition, ordered loosely by age.
-// Use TechByKey() for random access or TechsByAge() to group by age.
+// Use TechByKey() for random access.
 //
 // Every tech carries its own price. Nothing re-prices an age when a tech is
 // added or a keystone moves: a new tech needs its own price, and the golden
@@ -1987,14 +1987,4 @@ func rawTechnologies() []TechDef {
 // TechByKey returns a map of key -> TechDef
 func TechByKey() map[string]TechDef {
 	return indexBy(Technologies(), func(t TechDef) string { return t.Key })
-}
-
-// TechsByAge groups all tech definitions by their minimum age key.
-// Used by the research overlay to display techs in age buckets.
-func TechsByAge() map[string][]TechDef {
-	m := make(map[string][]TechDef)
-	for _, t := range Technologies() {
-		m[t.Age] = append(m[t.Age], t)
-	}
-	return m
 }

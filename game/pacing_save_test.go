@@ -40,7 +40,7 @@ func TestPacingNoticeOnceForOlderSaves(t *testing.T) {
 	old := ge.buildSaveSnapshot()
 	ge.mu.RUnlock()
 	old.PacingWeek = false
-	old.Signature = signSave(old, saveHMACKey)
+	old.Signature = signSave(old)
 	data, err := json.MarshalIndent(old, "", "  ")
 	if err != nil {
 		t.Fatal(err)

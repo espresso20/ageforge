@@ -162,8 +162,7 @@ func planItemTitle(v game.PlanItemView) string {
 }
 
 // planItemDetail is the second part of an item's line: the progress bar and
-// what it is short of, the reason it is blocked, or what it will pay. A build
-// item's overflow bank shows wherever it holds something.
+// what it is short of, the reason it is blocked, or what it will pay.
 func planItemDetail(v game.PlanItemView, state game.GameState) string {
 	return strings.ReplaceAll(planItemDetailGlued(v, state), glue, " ")
 }
@@ -173,23 +172,15 @@ func planItemDetail(v game.PlanItemView, state game.GameState) string {
 func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 	switch v.Status {
 	case game.PlanStatusBlocked:
-		note := v.Note
-		if len(v.Banked) > 0 {
-			note += " (" + planPriceWhole(v.Banked) + vibe.Line("ui.overlay_plan.planItemDetailGlued.01", " banked from overflow)")
-		}
-		return theme.Paint(theme.RoleDim, note)
+		return theme.Paint(theme.RoleDim, v.Note)
 	case game.PlanStatusWaiting:
 		detail := wonderProgressBar(v.Progress, 8) + fmt.Sprintf(" %3.0f%%", v.Progress*100)
 		if v.Short != "" {
 			cost := v.Cost[v.Short]
 			covered := v.Progress * cost
-			banked := v.Banked[v.Short]
 			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), FormatNumber(covered), FormatNumber(cost))
 			var notes []string
-			if banked >= 1 {
-				notes = append(notes, FormatNumber(banked)+vibe.Line("ui.overlay_plan.planItemDetailGlued.02", " banked"))
-			}
-			if held := state.Resources[v.Short].Amount - (covered - banked); held >= 1 {
+			if held := state.Resources[v.Short].Amount - covered; held >= 1 {
 				notes = append(notes, FormatNumber(held)+vibe.Line("ui.overlay_plan.planItemDetailGlued.03", " held for items above"))
 			}
 			if len(notes) > 0 {
@@ -199,14 +190,8 @@ func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 		}
 		return detail
 	default:
-		due := planDue(v)
-		switch {
-		case len(v.Cost) == 0:
+		if len(v.Cost) == 0 {
 			return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.04", "starts next tick"))
-		case len(due) == 0:
-			return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.05", "starts next tick, paid from its bank"))
-		case len(v.Banked) > 0:
-			return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.06", "starts next tick for ")+planPriceWhole(due)+vibe.Line("ui.overlay_plan.planItemDetailGlued.07", " and its bank"))
 		}
 		return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.08", "starts next tick for ")+planPriceWhole(v.Cost))
 	}
@@ -227,35 +212,12 @@ func planDetailRows(detail string, width int) string {
 	return strings.Join(wrapWords(detail, width), "\n"+strings.Repeat(" ", planDetailLead))
 }
 
-// planPriceWhole is formatPlanCost with each material's spaces glued.
+// planPriceWhole is "48 wood, 20 stone", resources in key order, with each
+// material's spaces glued.
 func planPriceWhole(cost map[string]float64) string {
 	var parts []string
 	for _, k := range sortedMapKeys(cost) {
 		parts = append(parts, strings.ReplaceAll(game.Amount(cost[k], k), " ", glue))
-	}
-	return strings.Join(parts, ", ")
-}
-
-// planDue is what an item's next start takes from the stores: its price less
-// what its bank covers (parts under 1 left out).
-func planDue(v game.PlanItemView) map[string]float64 {
-	if len(v.Banked) == 0 {
-		return v.Cost
-	}
-	due := map[string]float64{}
-	for res, c := range v.Cost {
-		if d := c - v.Banked[res]; d >= 1 {
-			due[res] = d
-		}
-	}
-	return due
-}
-
-// formatPlanCost is "48 wood, 20 stone", resources in key order.
-func formatPlanCost(cost map[string]float64) string {
-	var parts []string
-	for _, k := range sortedMapKeys(cost) {
-		parts = append(parts, game.Amount(cost[k], k))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -335,9 +297,6 @@ func planListText(state game.GameState) string {
 			}
 		case game.PlanStatusBlocked:
 			status = vibe.Line("ui.overlay_plan.planListText.05", "blocked: ") + v.Note
-		}
-		if len(v.Banked) > 0 {
-			status += ", " + formatPlanCost(v.Banked) + vibe.Line("ui.overlay_plan.planListText.06", " banked")
 		}
 		fmt.Fprintf(&sb, "  %d. %s  %s\n", i+1, tview.Escape(planItemTitle(v)), theme.Paint(theme.RoleDim, status))
 	}

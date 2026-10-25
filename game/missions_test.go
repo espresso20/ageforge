@@ -314,7 +314,7 @@ func TestMissionHaul_FormulaOnSuccessAndFailure(t *testing.T) {
 				ge.mu.Lock()
 				active.TicksLeft = 1
 				active.SuccessChance = map[bool]float64{true: 2, false: -1}[win]
-				results := ge.Military.Tick(0, ge.expeditionReward())
+				results := ge.Military.Tick()
 				ge.mu.Unlock()
 				if len(results) != 1 || results[0].Success != win {
 					t.Fatalf("%s %s came home as %+v, want success=%v", c.tier, c.grand, results, win)

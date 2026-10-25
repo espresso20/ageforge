@@ -512,7 +512,7 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 	prevDev := game.DevModeActive
 	game.DevModeActive = false
 	t.Cleanup(func() { game.DevModeActive = prevDev })
-	st := game.GameState{AgeName: "Bronze Age", EpochKey: "stone_era", EpochName: "Stone Era", EpochIcon: "◈", EpochColor: "white",
+	st := game.GameState{AgeName: "Bronze Age", EpochKey: "stone_era", EpochName: "Stone Era", EpochIcon: "◈",
 		Morale: 1.1, MoraleMultiplier: 1.2, Workers: game.WorkerState{TotalPop: 216, MaxPop: 875},
 		Milestones: game.MilestoneState{CurrentTitle: "Aspiring"}, Harbinger: &game.HarbingerView{}}
 	facts := ribbonFacts{year: "1,948 BC", next: "Iron Age"}

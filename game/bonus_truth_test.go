@@ -355,9 +355,7 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 	} {
 		held := ge.Military.ActiveByTier(c.tier)
 		ge.Military.setActive(c.tier, nil)
-		if _, err := ge.Military.LaunchOffer(testOffer(ge, c.tier, c.grand), ge.tick, 0, nil, nil); err == nil {
-			out[c.mechanic] = float64(ge.Military.ActiveByTier(c.tier).TicksLeft)
-		}
+		out[c.mechanic] = float64(ge.Military.LaunchOffer(testOffer(ge, c.tier, c.grand), ge.tick, 0, nil, nil).TicksLeft)
 		ge.Military.setActive(c.tier, held)
 	}
 	return out
@@ -874,7 +872,7 @@ var truthKinds = map[string]truthKind{
 	"tech_housing": {
 		Unit: "of housing", Pool: true,
 		measure: func(p truthPromise, ge *GameEngine, before, after truthReading) truthMeasured {
-			base := float64(ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]+ge.Prestige.GetBonuses()["population"]))
+			base := float64(ge.Buildings.GetPopCapacity() + int(ge.permanentBonuses["population"]))
 			if base <= 0 {
 				return truthMeasured{Skip: "no housing here"}
 			}

@@ -434,7 +434,7 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 		}
 	}
 	// A theme the badge gives joins the account's unlocked themes.
-	if t := def.Reward.Theme; t != "" && !a.hasThemeLocked(t) {
+	if t := def.Reward.Theme; t != "" && !slices.Contains(a.Unlocks.Themes, t) {
 		a.Unlocks.Themes = append(a.Unlocks.Themes, t)
 	}
 	if !silent {
@@ -636,7 +636,7 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 	// to an account that earned the badge before it gave one.
 	for _, key := range sortedKeys(a.Badges) {
 		if def := book.def(key); def != nil {
-			if t := def.Reward.Theme; t != "" && !a.hasThemeLocked(t) {
+			if t := def.Reward.Theme; t != "" && !slices.Contains(a.Unlocks.Themes, t) {
 				a.Unlocks.Themes = append(a.Unlocks.Themes, t)
 				changed = true
 			}

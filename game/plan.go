@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -37,11 +38,8 @@ import (
 //     and starts the wonder. While it waits it reserves nothing: it is a
 //     town's worth of price units of its age, and holding that back would
 //     stall everything below it for hours. Deposits (by hand) fill the bank.
-//   - A bank an old save carried (from before stock had no ceiling) pays
-//     first: a banked item's price in the walk is what its bank doesn't
-//     cover, which is what it reserves while it waits and what it pays from
-//     the stores when it starts. Nothing fills a bank any more. Nothing is
-//     built that was not queued.
+//   - Nothing is built that was not queued. (A bank an old save carried,
+//     from before stock had no ceiling, is given back on load, save.go.)
 //   - Deal items (plan_deal.go) take a civilization's trade deal once its
 //     fixed price is free, reserving it while they wait, like one build.
 //   - Techs start in plan order: only the first research item can take the
@@ -130,10 +128,10 @@ type PlanItem struct {
 	// Deal items (plan_deal.go): Key is the civilization, Deal the offer's ID.
 	Deal int `json:"deal,omitempty"`
 	// Banked is what an old save's overflow set aside toward a build item's
-	// next copy, by resource, at most that copy's price (overflow.go).
-	// Nothing fills it any more. The copy pays from it first when it starts.
-	// Removing the item, a drop, an advance and the last copy starting put
-	// what is left back in the stores.
+	// next copy. Nothing fills it any more: the field stays so that a save
+	// written under it still verifies, loadPlanIn drops its value, and a
+	// save from before the storage wall has it given back to the stores
+	// (keepStockFromBeforeTheWall).
 	Banked map[string]float64 `json:"banked,omitempty"`
 }
 
@@ -155,14 +153,10 @@ type PlanItemView struct {
 	Started int
 	// Cost is the price of the next start (for a wonder, what its bank still lacks).
 	Cost map[string]float64
-	// Banked is the part of Cost a build item's old-save bank already holds
-	// (nil when it holds nothing).
-	Banked map[string]float64
 	// Status is PlanStatusReady, PlanStatusWaiting or PlanStatusBlocked.
 	Status string
-	// Progress is how much of Cost is covered by the bank and what is free
-	// after the reservations above this item, 0 to 1 (the least-covered
-	// resource).
+	// Progress is how much of Cost is free after the reservations above this
+	// item, 0 to 1 (the least-covered resource).
 	Progress float64
 	// Short is the resource furthest from covered ("" when ready or blocked).
 	Short string
@@ -171,63 +165,23 @@ type PlanItemView struct {
 }
 
 // clonePlan copies a plan so snapshots and saves share nothing with the live
-// one, banks included.
+// one.
 func clonePlan(p []PlanItem) []PlanItem {
 	if len(p) == 0 {
 		return nil
 	}
-	out := append([]PlanItem(nil), p...)
-	for i := range out {
-		out[i].Banked = cloneBank(out[i].Banked)
-	}
-	return out
-}
-
-// cloneBank copies a plan item's bank (nil for an empty one).
-func cloneBank(b map[string]float64) map[string]float64 {
-	if len(b) == 0 {
-		return nil
-	}
-	out := make(map[string]float64, len(b))
-	for k, v := range b {
-		out[k] = v
-	}
-	return out
-}
-
-// loadBank is a saved bank as the engine accepts it: positive, finite
-// amounts of known resources only (nil if nothing is left).
-func loadBank(b map[string]float64, known func(string) bool) map[string]float64 {
-	var out map[string]float64
-	for k, v := range b {
-		if !(v > 0) || math.IsInf(v, 0) || !known(k) {
-			continue
-		}
-		if out == nil {
-			out = make(map[string]float64, len(b))
-		}
-		out[k] = v
-	}
-	return out
+	return slices.Clone(p)
 }
 
 // loadPlanIn is a saved plan as the engine accepts it: known kinds only,
 // counts in range, at most MaxPlanItems besides research and no more
-// research items than the tree has techs, banks on build items only, holding
-// positive, finite amounts of resources set knows. A plan the game wrote
-// passes unchanged.
+// research items than the tree has techs, and no banks (an old save's bank
+// is given back by keepStockFromBeforeTheWall, from the raw save). A plan the
+// game wrote passes unchanged.
 func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
-	known := func(res string) bool {
-		_, ok := set.Resource(res)
-		return ok
-	}
 	var out []PlanItem
 	for _, it := range saved {
-		if it.Kind == PlanBuild {
-			it.Banked = loadBank(it.Banked, known)
-		} else {
-			it.Banked = nil
-		}
+		it.Banked = nil
 		if (it.Kind != PlanBuild && it.Kind != PlanUpgrade && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
 			continue
 		}
@@ -289,22 +243,11 @@ func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 			return 0, vibe.Errorf("game.plan.PlanAddUpgrade.04", "%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
 		}
 	}
-	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == PlanUpgrade && ge.plan[n-1].Key == key {
-		add := min(count, maxPlanCount-ge.plan[n-1].Count)
-		if add <= 0 {
-			return 0, vibe.Errorf("game.plan.PlanAddUpgrade.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
-		}
-		ge.plan[n-1].Count += add
-		ge.logPlanAddLocked(ge.plan[n-1], add)
-		return add, nil
+	added, atMax, err := ge.planAppendLocked(PlanUpgrade, key, count)
+	if atMax {
+		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
 	}
-	if planLoad(ge.plan) >= MaxPlanItems {
-		return 0, errPlanFull()
-	}
-	ge.plan = append(ge.plan, PlanItem{Kind: PlanUpgrade, Key: key, Count: count})
-	ge.notePlanSize()
-	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
-	return count, nil
+	return added, err
 }
 
 // ===== Public API =====
@@ -321,7 +264,7 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 	defer ge.mu.Unlock()
 	def, ok := ge.Buildings.defs[key]
 	if !ok {
-		if s := ge.Buildings.SuggestKey(key); s != "" {
+		if s := closestKey(key, ge.Buildings.defs); s != "" {
 			return 0, vibe.Errorf("game.plan.PlanAddBuild.02", "Unknown building '%s'. Did you mean '%s'?", key, s)
 		}
 		return 0, vibe.Errorf("game.plan.PlanAddBuild.03", "Unknown building '%s'. Type build to see what you can build.", key)
@@ -334,22 +277,35 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 		room := def.MaxCount - ge.Buildings.GetCount(key) - ge.Buildings.GetQueueCount(key, ge.buildQueue) - planned
 		count = min(count, room)
 	}
-	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == PlanBuild && ge.plan[n-1].Key == key {
-		add := min(count, maxPlanCount-ge.plan[n-1].Count)
-		if add <= 0 {
-			return 0, vibe.Errorf("game.plan.PlanAddBuild.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
+	added, atMax, err := ge.planAppendLocked(PlanBuild, key, count)
+	if atMax {
+		return 0, vibe.Errorf("game.plan.PlanAddBuild.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
+	}
+	return added, err
+}
+
+// planAppendLocked adds count copies of key to the plan as a kind item (PlanBuild
+// or PlanUpgrade): onto the last item when that is the same kind and key,
+// otherwise as a new item. It returns how many it added; atMax when the last
+// item already holds the most one item can (the caller says so, in its own
+// words), and errPlanFull when a new item has no room. The caller holds the
+// write lock and has checked the count.
+func (ge *GameEngine) planAppendLocked(kind, key string, count int) (added int, atMax bool, err error) {
+	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == kind && ge.plan[n-1].Key == key {
+		if added = min(count, maxPlanCount-ge.plan[n-1].Count); added <= 0 {
+			return 0, true, nil
 		}
-		ge.plan[n-1].Count += add
-		ge.logPlanAddLocked(ge.plan[n-1], add)
-		return add, nil
+		ge.plan[n-1].Count += added
+		ge.logPlanAddLocked(ge.plan[n-1], added)
+		return added, false, nil
 	}
 	if planLoad(ge.plan) >= MaxPlanItems {
-		return 0, errPlanFull()
+		return 0, false, errPlanFull()
 	}
-	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: key, Count: count})
+	ge.plan = append(ge.plan, PlanItem{Kind: kind, Key: key, Count: count})
 	ge.notePlanSize()
 	ge.logPlanAddLocked(ge.plan[len(ge.plan)-1], count)
-	return count, nil
+	return count, false, nil
 }
 
 // PlanAddResearch plans tech key, with what it still needs before it
@@ -359,8 +315,7 @@ func (ge *GameEngine) PlanAddResearch(key string) error {
 	return err
 }
 
-// PlanRemove removes item n (1-based) and returns a description of it. What
-// an old save had banked for it goes back to the stores.
+// PlanRemove removes item n (1-based) and returns a description of it.
 func (ge *GameEngine) PlanRemove(n int) (string, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -370,21 +325,14 @@ func (ge *GameEngine) PlanRemove(n int) (string, error) {
 	it := ge.plan[n-1]
 	ge.plan = append(ge.plan[:n-1:n-1], ge.plan[n:]...)
 	ge.unlogPlanItemLocked(it)
-	label := ge.planItemLabel(it)
-	back := map[string]float64{}
-	if ge.returnPlanBank(&it, back) {
-		ge.logBankReturn(vibe.Line("game.plan.PlanRemove.01", "the bank of ")+label, "", back)
-	}
-	return label, nil
+	return ge.planItemLabel(it), nil
 }
 
-// PlanClear empties the plan and returns how many items it held. What an old
-// save had banked goes back to the stores.
+// PlanClear empties the plan and returns how many items it held.
 func (ge *GameEngine) PlanClear() int {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	n := len(ge.plan)
-	ge.returnPlanBanks("")
 	for _, it := range ge.plan {
 		ge.unlogPlanItemLocked(it)
 	}
@@ -402,12 +350,8 @@ func (ge *GameEngine) PlanMove(n, delta int) (int, error) {
 	}
 	to := min(max(n-1+delta, 0), len(ge.plan)-1)
 	it := ge.plan[n-1]
-	rest := append(ge.plan[:n-1:n-1], ge.plan[n:]...)
-	out := make([]PlanItem, 0, len(ge.plan))
-	out = append(out, rest[:to]...)
-	out = append(out, it)
-	out = append(out, rest[to:]...)
-	ge.plan = out
+	// A new array: what a snapshot holds of the old one stays as it was.
+	ge.plan = slices.Insert(slices.Delete(slices.Clone(ge.plan), n-1, n), to, it)
 	return to + 1, nil
 }
 
@@ -620,14 +564,9 @@ func techNamesOr(set *rules.Set, keys []string) string {
 
 // planCheck is the plan walk's verdict on one item's next start.
 type planCheck struct {
-	// cost is what the start takes from the stores: for a banked build, the
-	// part of its price the bank doesn't cover.
-	cost    map[string]float64
-	blocked string // why it can't start for a reason money won't fix
-	reserve bool   // whether a waiting item holds its price back from later items
-	// price and banked are a banked build's whole price and the part of it
-	// its bank covers (nil for an item with nothing banked).
-	price, banked map[string]float64
+	cost    map[string]float64 // what the start takes from the stores
+	blocked string             // why it can't start for a reason money won't fix
+	reserve bool               // whether a waiting item holds its price back from later items
 }
 
 // checkPlanItem works out whether item it could start now. researchFirst is
@@ -679,14 +618,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		if DevGodMode {
 			return planCheck{}
 		}
-		// A bank an old save carried pays first (nothing fills one any
-		// more): only the rest must come in and be held back while the item
-		// waits.
 		chk := planCheck{cost: cost}
-		if len(it.Banked) > 0 {
-			chk.price = cost
-			chk.cost, chk.banked = splitBank(cost, it.Banked)
-		}
 		if res := ge.planUnfunded(chk.cost); res != "" {
 			chk.blocked = vibe.Line("game.plan.checkPlanItem.08", "too little ") + ge.rules.ResourceLabel(res) + vibe.Line("game.plan.checkPlanItem.09", " coming in")
 			return chk
@@ -855,10 +787,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			}
 			label := ge.planItemLabel(it)
 			ge.addLog("warning", vibe.Sprintf("game.plan.runPlan.06", "Plan: dropped %s (%s).", label, reason))
-			back := map[string]float64{}
-			if ge.returnPlanBank(&it, back) {
-				ge.logBankReturn(vibe.Line("game.plan.runPlan.07", "the bank of ")+label, "", back)
-			}
 			continue
 		}
 		first := it.Kind == PlanResearch && !researchSeen
@@ -878,7 +806,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					break
 				}
 				if it.Kind == PlanBuild {
-					err = ge.startPlanBuild(&it, chk.banked)
+					err = ge.startBuildPaid(it.Key, true)
 				} else if it.Kind == PlanUpgrade {
 					err = ge.upgradeBuildingLocked(it.Key, 1, false)
 				} else {
@@ -924,9 +852,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		}
 		if it.Count > 0 {
 			out = append(out, it)
-		} else {
-			// Done: what is left of its bank (a price that fell) goes back.
-			ge.returnPlanBank(&it, nil)
 		}
 	}
 	if advanceAt >= 0 {
@@ -955,26 +880,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		started = true
 	}
 	return started
-}
-
-// startPlanBuild starts the next copy of build item it: its overflow bank
-// pays used (the part of the price checkPlanItem found the bank covers; nil
-// for none) and the stores the rest. Then used comes out of the bank.
-func (ge *GameEngine) startPlanBuild(it *PlanItem, used map[string]float64) error {
-	if err := ge.startBuildPaid(it.Key, true, used); err != nil {
-		return err
-	}
-	for res, u := range used {
-		if left := it.Banked[res] - u; left > planBankEpsilon {
-			it.Banked[res] = left
-		} else {
-			delete(it.Banked, res)
-		}
-	}
-	if len(it.Banked) == 0 {
-		it.Banked = nil
-	}
-	return nil
 }
 
 // staffPlanCopy fills key's empty worker slots. The plan calls it when a copy
@@ -1100,33 +1005,20 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		if missing != "" {
 			chk.blocked, chk.reserve = vibe.Line("game.plan.planViews.01", "needs ")+missing+vibe.Line("game.plan.planViews.02", " first"), false
 		}
-		// A banked build shows its whole price, what its bank holds of it,
-		// and progress counting the bank.
-		price := chk.cost
-		if chk.price != nil {
-			price = chk.price
-			v.Banked = cloneBank(chk.banked)
-		}
-		if len(price) > 0 {
-			v.Cost = make(map[string]float64, len(price))
-			for k, c := range price {
+		if len(chk.cost) > 0 {
+			v.Cost = make(map[string]float64, len(chk.cost))
+			for k, c := range chk.cost {
 				v.Cost[k] = c
 			}
 		}
 		// Progress: the least-covered resource after the reservations above.
 		v.Progress = 1
-		for _, res := range sortedKeys(price) {
-			c := price[res]
+		for _, res := range sortedKeys(chk.cost) {
+			c := chk.cost[res]
 			if c <= 0 {
 				continue
 			}
-			have := chk.banked[res]
-			if _, due := chk.cost[res]; due {
-				have += math.Max(0, ge.planFree(res, reserved))
-			} else {
-				have = c // the bank covers it
-			}
-			f := math.Max(0, math.Min(1, have/c))
+			f := math.Max(0, math.Min(1, math.Max(0, ge.planFree(res, reserved))/c))
 			if f < v.Progress {
 				v.Progress, v.Short = f, res
 			}

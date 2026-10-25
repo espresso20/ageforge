@@ -312,8 +312,8 @@ func TestMasteryPassiveRetired(t *testing.T) {
 	_ = ge.SummonHarbingerForTest("modern_age")
 	noErr(t, ge.DoPrestige())
 	st := ge.GetState()
-	if st.TickSpeedBonus != 0 || st.Prestige.PassiveBonus != 0 {
-		t.Errorf("after a prestige: tick speed %v, passive %v; the passive retired into Era Mastery", st.TickSpeedBonus, st.Prestige.PassiveBonus)
+	if st.TickSpeedBonus != 0 {
+		t.Errorf("after a prestige: tick speed %v; the passive retired into Era Mastery", st.TickSpeedBonus)
 	}
 	if st.Prestige.ProductionMultiplier <= 1 {
 		t.Errorf("prestige production multiplier = %v, want above 1", st.Prestige.ProductionMultiplier)
@@ -399,7 +399,7 @@ func oldSave(t *testing.T, ge *GameEngine, name string) {
 	old.Prestige.ShopVersion = 0
 	old.Prestige.LegacyPlan, old.Prestige.LegacyFactions, old.Prestige.LegacyShares = nil, nil, nil
 	old.PlanLog = nil
-	old.Signature = signSave(old, saveHMACKey)
+	old.Signature = signSave(old)
 	data, err := json.MarshalIndent(old, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -434,7 +434,7 @@ func TestMasterySeedingLevel5(t *testing.T) {
 	ge := newSeededEngine(21)
 	ge.StepTicks(30)
 	ge.mu.Lock()
-	ge.Prestige.LoadState(5, 86, 3, map[string]int{"gather_boost": 3, "storage_bonus": 3, "starting_food": 5})
+	ge.Prestige.LoadState(5, 86, 3)
 	ge.age = "industrial_age"
 	ge.currentEpoch = config.EpochForAge("industrial_age")
 	ge.Stats.AgesReached = []string{"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"}

@@ -472,7 +472,7 @@ func TestDeals_SaveLoadRoundTrip(t *testing.T) {
 
 	// A civ saved before deals existed carries none of the new fields and
 	// rolls a fresh set on its first tick.
-	old, _ := json.Marshal(FactionStateSave{Discovered: true, Status: "neutral"})
+	old, _ := json.Marshal(FactionState{Discovered: true, Status: "neutral"})
 	if strings.Contains(string(old), "deal") {
 		t.Errorf("empty deal fields are not omitted: %s", old)
 	}

@@ -1,14 +1,17 @@
 package game
 
 import (
+	"cmp"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base32"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -317,7 +320,7 @@ type Account struct {
 	Tampered bool `json:"tampered,omitempty"`
 
 	// dirty is the in-memory, non-persisted write-debounce flag for the lifetime-stats
-	// hooks (the accounts design §8 "debounce writes"). RecordPrestige/RecordAgeReached mutate
+	// hooks (the accounts design §8 "debounce writes"). RecordPrestigeFrom/RecordAgeReached mutate
 	// the in-memory stats and set dirty=true WITHOUT touching the disk — they run under
 	// the engine write lock (advanceAge/DoPrestige) where file I/O is forbidden. The
 	// engine's periodic autosave block (outside ge.mu) calls FlushIfDirty, which Saves
@@ -371,23 +374,19 @@ func normalizeAccountName(name string) string {
 	return strings.Join(strings.Fields(strings.ToLower(name)), " ")
 }
 
-// accountIDFromName derives the 32-char hex account ID from a name:
+// AccountIDForName derives the 32-char hex account ID from a name:
 // hex(sha256(normalize(name))[:16]). Deterministic — the same name always yields the
 // same ID — and it keeps the existing 16-byte / 32-hex-char ID format intact, so the
 // recovery code and save attribution keep working unchanged. The leading 16 bytes of
 // the SHA-256 digest are ample collision resistance for a local-only cosmetic identity.
-func accountIDFromName(name string) string {
+//
+// It is exported so UI/command paths can resolve a typed account name to its slot id
+// WITHOUT duplicating the hashing rule (e.g. `account switch <name>` checks whether
+// accountDir(AccountIDForName(name)) holds an account). It is side-effect-free — a pure
+// function of the (normalized) name, never touching disk or the active account.
+func AccountIDForName(name string) string {
 	sum := sha256.Sum256([]byte(normalizeAccountName(name)))
 	return hex.EncodeToString(sum[:16])
-}
-
-// AccountIDForName is the exported name→id derivation, so UI/command paths can resolve a typed
-// account name to its slot id WITHOUT duplicating the hashing rule (e.g. `account switch <name>`
-// checks whether accountDir(AccountIDForName(name)) holds an account). It is deterministic and
-// side-effect-free — a pure function of the (normalized) name, never touching disk or the active
-// account.
-func AccountIDForName(name string) string {
-	return accountIDFromName(name)
 }
 
 // Established reports whether this account has been named (DisplayName set). An account
@@ -455,7 +454,7 @@ func LoadAccount() (*Account, bool, error) {
 }
 
 // CreateNamedAccount mints a signed account whose identity is derived from name:
-// AccountID = accountIDFromName(name), DisplayName = the trimmed ORIGINAL name (display
+// AccountID = AccountIDForName(name), DisplayName = the trimmed ORIGINAL name (display
 // keeps casing/whitespace; the ID does not). Re-entering the same name reproduces the
 // same ID — that IS the cross-machine recovery story (the accounts design §3.5).
 //
@@ -476,7 +475,7 @@ func CreateNamedAccount(name string) (*Account, error) {
 	now := time.Now()
 	acct := &Account{
 		Version:     accountSchemaVersion,
-		AccountID:   accountIDFromName(trimmed),
+		AccountID:   AccountIDForName(trimmed),
 		DisplayName: trimmed,
 		Created:     now,
 		LastSeen:    now,
@@ -711,7 +710,7 @@ func SwitchAccount(id string) (*Account, error) {
 // the first-run name-derivation flow, where re-keying a legacy random-id account to a name
 // must preserve earned progress; it is left untouched.)
 //
-// Identity is name-derived (accountIDFromName), so the same name always maps to the same
+// Identity is name-derived (AccountIDForName), so the same name always maps to the same
 // slot. Behavior by slot state:
 //
 //   - Slot already exists (this name maps to an existing account): do NOT clobber it. Open
@@ -722,7 +721,7 @@ func SwitchAccount(id string) (*Account, error) {
 //     Save it in, and persist the active pointer. No prior account's DATA rides along.
 func CreateAccount(name string) (*Account, error) {
 	trimmed := strings.TrimSpace(name)
-	id := accountIDFromName(trimmed)
+	id := AccountIDForName(trimmed)
 
 	// Same-name → open the existing account rather than overwrite it. Slot existence is
 	// keyed on its account.json, so a bare/empty slot dir doesn't count as "exists".
@@ -755,35 +754,6 @@ func CreateAccount(name string) (*Account, error) {
 		return nil, err
 	}
 	return acct, nil
-}
-
-// WipeAccount permanently deletes the ACTIVE account's slot —
-// <root>/accounts/<activeID>/ and everything under it (account.json, its .corrupt
-// sibling, and the slot's own saves/) — then clears the active-account pointer and the
-// in-memory active id, so the next boot starts from a clean slate and re-prompts for a
-// name. It is the account analogue of WipeAllSaves — destructive and irreversible (no
-// server backup).
-//
-// SCOPE (Phase A): it removes only the ACTIVE account's slot. OTHER accounts' slots under
-// <root>/accounts/ are spared, and any user progress-export file (account-export.json,
-// which lives outside the slots) is never touched — those are independent backups the
-// player may have deliberately created. With no active account (empty id) it is a clean
-// no-op: it never falls back to removing the shared <root>/accounts root. Wiping twice (or
-// with nothing active) is a clean no-op — os.RemoveAll on a missing path is not an error.
-//
-// BACKUP: it delegates to WipeAccountByID(activeID), which snapshots the slot into
-// <root>/backups/ BEFORE removing it (the wipe is permanent, so we leave a recoverable copy).
-// The backup path is discarded here — the active-wipe callers don't surface it — and a backup
-// failure never blocks the wipe (only the wipe's own error is returned).
-func WipeAccount() error {
-	id := getActiveAccountID()
-	if id == "" {
-		// Nothing active to wipe. Do NOT remove accountDir("") — that is the shared
-		// <root>/accounts root, never a single account's slot.
-		return nil
-	}
-	_, err := WipeAccountByID(id)
-	return err
 }
 
 // ExportAccountByID exports the progress blob for the account in slot id WITHOUT touching the
@@ -832,15 +802,14 @@ func AccountExportPath(id string) string {
 }
 
 // WipeAccountByID permanently deletes the slot for account id — <root>/accounts/<id>/ and
-// everything under it (Phase D). It is the by-id sibling of WipeAccount (which targets the
-// ACTIVE slot): the Accounts panel uses it to wipe the SELECTED account, which may not be the
-// live one. OTHER slots are always spared (os.RemoveAll(accountDir(id)) touches only that one
+// everything under it (Phase D): the Accounts panel uses it to wipe the SELECTED account,
+// which may not be the live one. OTHER slots are always spared (os.RemoveAll(accountDir(id)) touches only that one
 // directory), and any user export file outside the slots is untouched.
 //
 // Guard: an empty id is refused (a no-op error), since accountDir("") collapses to the shared
 // <root>/accounts root — removing it would nuke EVERY account. When id IS the active account,
-// it also clears the active-account pointer + resets the in-memory active id (mirroring
-// WipeAccount), so the next boot starts clean and the UI re-prompts. Wiping a non-active slot
+// it also clears the active-account pointer + resets the in-memory active id, so the next
+// boot starts clean and the UI re-prompts. Wiping a non-active slot
 // leaves the active pointer alone.
 //
 // BACKUP (best-effort, BEFORE removal): the wipe is permanent, so we snapshot the slot into
@@ -927,7 +896,7 @@ func verifyAccount(a *Account) bool {
 }
 
 // validAccountID reports whether id has the shape every account ID has: 32 lowercase
-// hex characters (16 bytes, from accountIDFromName or a recovery code). An
+// hex characters (16 bytes, from AccountIDForName or a recovery code). An
 // ID names a directory under <root>/accounts/, so anything else (an empty ID, which
 // would collapse onto the shared accounts root, or a path from a hand-made export) is
 // refused before it reaches the disk.
@@ -993,17 +962,7 @@ func (a *Account) Save() error {
 func (a *Account) HasTheme(key string) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.hasThemeLocked(key)
-}
-
-// hasThemeLocked is the lock-free core of HasTheme. Callers must hold a.mu.
-func (a *Account) hasThemeLocked(key string) bool {
-	for _, k := range a.Unlocks.Themes {
-		if k == key {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(a.Unlocks.Themes, key)
 }
 
 // UnlockTheme records key as an unlocked theme and persists the account. If the
@@ -1015,7 +974,7 @@ func (a *Account) hasThemeLocked(key string) bool {
 func (a *Account) UnlockTheme(key string) (newly bool, err error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.hasThemeLocked(key) {
+	if slices.Contains(a.Unlocks.Themes, key) {
 		return false, nil
 	}
 	a.Unlocks.Themes = append(a.Unlocks.Themes, key)
@@ -1156,78 +1115,41 @@ func crc16CCITT(data []byte) uint16 {
 	return crc
 }
 
-// crockfordEncode encodes data as an uppercase Crockford base32 string (no padding).
-// Bits are packed MSB-first; a trailing partial group is left-padded with zero bits,
-// matching crockfordDecode's symmetric unpacking.
-func crockfordEncode(data []byte) string {
-	if len(data) == 0 {
-		return ""
-	}
-	var out []byte
-	var buf uint32
-	bits := 0
-	for _, b := range data {
-		buf = (buf << 8) | uint32(b)
-		bits += 8
-		for bits >= 5 {
-			bits -= 5
-			out = append(out, crockfordAlphabet[(buf>>uint(bits))&0x1F])
-		}
-	}
-	if bits > 0 {
-		out = append(out, crockfordAlphabet[(buf<<uint(5-bits))&0x1F])
-	}
-	return string(out)
-}
-
-// crockfordDecodeChar maps a single character to its 5-bit value using Crockford's
-// lenient rules: case-insensitive, with I/L→1, O→0, U→V (per the Crockford spec, U is
-// treated as V to absorb a common transcription slip). Returns (value, ok).
-func crockfordDecodeChar(c byte) (byte, bool) {
-	switch {
-	case c >= 'a' && c <= 'z':
-		c -= 'a' - 'A' // normalize to upper
-	}
-	switch c {
-	case 'O':
-		c = '0'
-	case 'I', 'L':
-		c = '1'
-	case 'U':
-		c = 'V'
-	}
-	for i := 0; i < len(crockfordAlphabet); i++ {
-		if crockfordAlphabet[i] == c {
-			return byte(i), true
-		}
-	}
-	return 0, false
-}
+// crockfordEnc is the Crockford base32 codec: the canonical alphabet, MSB-first bit packing,
+// no padding. A trailing partial group is zero-padded on encode and its spare bits are
+// ignored on decode (the codec is not Strict).
+var crockfordEnc = base32.NewEncoding(crockfordAlphabet).WithPadding(base32.NoPadding)
 
 // crockfordDecode decodes a Crockford base32 string (already stripped of the prefix,
-// dashes, and spaces) back to bytes. byteLen is the expected decoded length; any
-// trailing partial-group bits beyond byteLen*8 are discarded (they are the encoder's
-// zero padding). Returns an error on an unknown symbol or insufficient input.
+// dashes, and spaces) back to byteLen bytes. It is lenient the way the Crockford spec asks:
+// case-insensitive, with I/L read as 1, O as 0 and U as V (a common transcription slip).
+// Characters past the ones byteLen bytes need are still checked, then ignored. Returns an
+// error on an unknown symbol or insufficient input.
 func crockfordDecode(s string, byteLen int) ([]byte, error) {
-	out := make([]byte, 0, byteLen)
-	var buf uint32
-	bits := 0
+	norm := make([]byte, len(s))
 	for i := 0; i < len(s); i++ {
-		v, ok := crockfordDecodeChar(s[i])
-		if !ok {
+		c := s[i]
+		if c >= 'a' && c <= 'z' {
+			c -= 'a' - 'A'
+		}
+		switch c {
+		case 'O':
+			c = '0'
+		case 'I', 'L':
+			c = '1'
+		case 'U':
+			c = 'V'
+		}
+		if strings.IndexByte(crockfordAlphabet, c) < 0 {
 			return nil, vibe.Errorf("game.account.crockfordDecode.01", "That recovery code has a character it cannot contain ('%s'). Check it and try again.", string(s[i]))
 		}
-		buf = (buf << 5) | uint32(v)
-		bits += 5
-		if bits >= 8 {
-			bits -= 8
-			out = append(out, byte((buf>>uint(bits))&0xFF))
-		}
+		norm[i] = c
 	}
-	if len(out) < byteLen {
+	need := (byteLen*8 + 4) / 5 // symbols that carry byteLen bytes (29 for the 18-byte payload)
+	if len(norm) < need {
 		return nil, vibe.Errorf("game.account.crockfordDecode.02", "That recovery code is too short. Check it and try again.")
 	}
-	return out[:byteLen], nil
+	return crockfordEnc.DecodeString(string(norm[:need]))
 }
 
 // groupBy4 inserts a dash after every 4 characters, leaving any trailing partial
@@ -1261,7 +1183,7 @@ func (a *Account) RecoveryCode() string {
 	payload := make([]byte, 0, 18)
 	payload = append(payload, idBytes...)
 	payload = append(payload, byte(sum>>8), byte(sum&0xFF))
-	body := groupBy4(crockfordEncode(payload))
+	body := groupBy4(crockfordEnc.EncodeToString(payload))
 	return recoveryCodePrefix + "-" + body
 }
 
@@ -1571,37 +1493,27 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	// of each, never the sum, so importing your own backup doubles nothing.
 	a.takeBadgeStoreLocked(exp.BadgeStore, true)
 	// Max each numeric lifetime stat — bests don't regress.
-	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
+	a.Stats.TotalPrestiges = max(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
 	for _, age := range sortedKeys(exp.Stats.PrestigesByAge) {
 		if a.Stats.PrestigesByAge == nil {
 			a.Stats.PrestigesByAge = map[string]int{}
 		}
-		a.Stats.PrestigesByAge[age] = maxInt(a.Stats.PrestigesByAge[age], exp.Stats.PrestigesByAge[age])
+		a.Stats.PrestigesByAge[age] = max(a.Stats.PrestigesByAge[age], exp.Stats.PrestigesByAge[age])
 	}
-	a.Stats.CivilizationsStarted = maxInt(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
-	a.Stats.SavesCompleted = maxInt(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
+	a.Stats.CivilizationsStarted = max(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
+	a.Stats.SavesCompleted = max(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
 	// HighestAge is a key, not a number: the later age of the two wins.
 	if ageOrderOf(exp.Stats.HighestAge) > ageOrderOf(a.Stats.HighestAge) {
 		a.Stats.HighestAge = exp.Stats.HighestAge
 	}
-	// Active theme: keep local if set, else adopt the blob's.
-	if a.Prefs.ActiveTheme == "" {
-		a.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
-	}
-	// Map settings: the same rule.
-	if a.Prefs.MapStyle == "" {
-		a.Prefs.MapStyle = exp.Prefs.MapStyle
-	}
-	if a.Prefs.MapGlyphs == "" {
-		a.Prefs.MapGlyphs = exp.Prefs.MapGlyphs
-	}
-	if a.Prefs.MapZoom == "" {
-		a.Prefs.MapZoom = exp.Prefs.MapZoom
-	}
-	if a.Prefs.Minimap == "" {
-		a.Prefs.Minimap = exp.Prefs.Minimap
-	}
-	a.Prefs.MapIconsHint = a.Prefs.MapIconsHint || exp.Prefs.MapIconsHint
+	// Active theme and map settings: keep local if set, else adopt the blob's.
+	p := &a.Prefs
+	p.ActiveTheme = cmp.Or(p.ActiveTheme, exp.Prefs.ActiveTheme)
+	p.MapStyle = cmp.Or(p.MapStyle, exp.Prefs.MapStyle)
+	p.MapGlyphs = cmp.Or(p.MapGlyphs, exp.Prefs.MapGlyphs)
+	p.MapZoom = cmp.Or(p.MapZoom, exp.Prefs.MapZoom)
+	p.Minimap = cmp.Or(p.Minimap, exp.Prefs.Minimap)
+	p.MapIconsHint = p.MapIconsHint || exp.Prefs.MapIconsHint
 }
 
 // importExport folds a verified export into this LIVE account and saves it: the engine's
@@ -1650,14 +1562,6 @@ func unionStrings(a, b []string) []string {
 	return out
 }
 
-// maxInt returns the larger of a and b.
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 // --- Lifetime stats + achievements (the accounts design §3.3 / §8 / §9 Phase 6) ---
 //
 // Lifetime stats are CROSS-SAVE aggregates living on the ACCOUNT — distinct from the
@@ -1665,26 +1569,20 @@ func maxInt(a, b int) int {
 // (account_badges.go) are judged from the engine's reports, not by these hooks.
 //
 // LOCKING DISCIPLINE (the load-bearing constraint, the accounts design §8 + project rule):
-// the engine calls RecordPrestige/RecordAgeReached from UNDER the engine write lock
+// the engine calls RecordPrestigeFrom/RecordAgeReached from UNDER the engine write lock
 // (ge.mu — advanceAge and DoPrestige both hold it). Those methods therefore MUST be
 // in-memory only: they take the account's OWN mutex (a.mu, fully independent of ge.mu),
 // do NO file I/O, and NEVER call back into ge.* (AddLog/GetState/…), or the non-reentrant
 // ge.mu would deadlock. The actual Save happens later via FlushIfDirty, called from the
 // engine's periodic-autosave block which runs OUTSIDE ge.mu (the accounts design §8 write cadence).
 
-// RecordPrestige increments the lifetime prestige count and marks the account dirty for
-// the next flush (the accounts design §8). It is IN-MEMORY ONLY: it takes a.mu, performs no
-// file I/O, and never calls back into the engine — so it is safe to call from DoPrestige
-// while the engine write lock is held. The write is deferred to FlushIfDirty (engine
-// autosave block, outside ge.mu). The prestige badges are judged from the engine's own
-// report of the prestige (badges.go), not here.
-func (a *Account) RecordPrestige() {
-	a.RecordPrestigeFrom("")
-}
-
-// RecordPrestigeFrom is RecordPrestige for a prestige made from age, which it
-// also counts in PrestigesByAge ("" counts nowhere but the total). Same
-// IN-MEMORY-ONLY discipline as RecordPrestige.
+// RecordPrestigeFrom increments the lifetime prestige count, and PrestigesByAge for the
+// age the prestige was made from ("" counts nowhere but the total), and marks the account
+// dirty for the next flush (the accounts design §8). It is IN-MEMORY ONLY: it takes a.mu,
+// performs no file I/O, and never calls back into the engine — so it is safe to call from
+// DoPrestige while the engine write lock is held. The write is deferred to FlushIfDirty
+// (engine autosave block, outside ge.mu). The prestige badges are judged from the engine's
+// own report of the prestige (badges.go), not here.
 func (a *Account) RecordPrestigeFrom(age string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -1699,7 +1597,7 @@ func (a *Account) RecordPrestigeFrom(age string) {
 }
 
 // RecordCivilizationStarted counts one more civilization started on the account: a run
-// began. IN-MEMORY ONLY (same discipline as RecordPrestige): the engine calls it under its
+// began. IN-MEMORY ONLY (same discipline as RecordPrestigeFrom): the engine calls it under its
 // write lock when a new game starts and when a prestige or a Succumb starts the next run.
 func (a *Account) RecordCivilizationStarted() {
 	a.mu.Lock()
@@ -1711,7 +1609,7 @@ func (a *Account) RecordCivilizationStarted() {
 // RecordAgeReached records that the account's player has reached the given age, lifting
 // HighestAge only when ageOrder exceeds the order of the currently-stored highest age (so
 // a lower age never regresses the lifetime best), and marks the account dirty (the accounts
-// design §8). IN-MEMORY ONLY (same discipline as RecordPrestige). The age badges are judged
+// design §8). IN-MEMORY ONLY (same discipline as RecordPrestigeFrom). The age badges are judged
 // from the engine's report of the advance (badges.go).
 //
 // DEVIATION from the accounts design §8: the doc sketches RecordAgeReached(ageKey) with no order.

@@ -7,6 +7,12 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
+// checkParams is the numbers CheckMilestones reads, for a town with the stores
+// in rm and the buildings in bm and nothing else counted.
+func checkParams(tick int, age string, ageOrder map[string]int, rm *ResourceManager, bm *BuildingManager) MilestoneSnapshotParams {
+	return MilestoneSnapshotParams{Tick: tick, Age: age, AgeOrder: ageOrder, Resources: rm.GetAll(), held: bm}
+}
+
 // fullAgeOrder returns a complete age order map for tests
 func fullAgeOrder() map[string]int {
 	pm := NewProgressManager()
@@ -22,21 +28,21 @@ func TestMilestoneManager_CheckFirstShelter(t *testing.T) {
 	ageOrder := fullAgeOrder()
 
 	// No hut — should not complete
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed := mm.CheckMilestones(checkParams(1, "primitive_age", ageOrder, rm, bm), nil)
 	if len(completed) != 0 {
 		t.Errorf("expected 0 completions with no hut, got %d", len(completed))
 	}
 
 	// Build a hut
 	bm.counts["hut"] = 1
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(checkParams(2, "primitive_age", ageOrder, rm, bm), nil)
 
 	if !containsKey(completed, "first_shelter") {
 		t.Error("first_shelter should complete when hut count >= 1")
 	}
 
 	// Should not trigger again
-	completed = mm.CheckMilestones(3, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(checkParams(3, "primitive_age", ageOrder, rm, bm), nil)
 	for _, ms := range completed {
 		if ms.Key == "first_shelter" {
 			t.Error("first_shelter should not trigger twice")
@@ -56,14 +62,18 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	if need <= 0 {
 		t.Fatal("small_village has no population threshold")
 	}
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, need-1, 0, 0, nil, 0, 0, 0)
+	params := checkParams(1, "primitive_age", ageOrder, rm, bm)
+	params.Population = need - 1
+	completed := mm.CheckMilestones(params, nil)
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
 			t.Errorf("small_village should not trigger at pop %d", need-1)
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, need, 0, 0, nil, 0, 0, 0)
+	params = checkParams(2, "primitive_age", ageOrder, rm, bm)
+	params.Population = need
+	completed = mm.CheckMilestones(params, nil)
 	if !containsKey(completed, "small_village") {
 		t.Errorf("small_village should trigger at pop %d", need)
 	}
@@ -99,8 +109,10 @@ func TestMilestoneManager_RunCounters(t *testing.T) {
 				if short {
 					v[i]--
 				}
-				for _, ms := range mm.CheckMilestones(def.MinTick, age, ageOrder, NewResourceManager(), bm,
-					def.MinPopulation, def.MinTechCount, v[0], nil, v[1], v[2], v[3]) {
+				params := checkParams(def.MinTick, age, ageOrder, NewResourceManager(), bm)
+				params.Population, params.TechCount = def.MinPopulation, def.MinTechCount
+				params.TotalBuilt, params.SoldiersTrained, params.WonderCount, params.KnowledgeCount = v[0], v[1], v[2], v[3]
+				for _, ms := range mm.CheckMilestones(params, nil) {
 					if ms.Key == def.Key {
 						return true
 					}
@@ -150,8 +162,10 @@ func TestMilestoneManager_BuildingSum(t *testing.T) {
 			for k, n := range counts {
 				bm.counts[k] += n
 			}
-			for _, ms := range mm.CheckMilestones(def.MinTick, age, ageOrder, NewResourceManager(), bm,
-				def.MinPopulation, def.MinTechCount, def.MinTotalBuilt, nil, def.MinSoldiersTrained, def.MinWonders, def.MinKnowledgeWorkers) {
+			params := checkParams(def.MinTick, age, ageOrder, NewResourceManager(), bm)
+			params.Population, params.TechCount = def.MinPopulation, def.MinTechCount
+			params.TotalBuilt, params.SoldiersTrained, params.WonderCount, params.KnowledgeCount = def.MinTotalBuilt, def.MinSoldiersTrained, def.MinWonders, def.MinKnowledgeWorkers
+			for _, ms := range mm.CheckMilestones(params, nil) {
 				if ms.Key == def.Key {
 					return true
 				}
@@ -199,14 +213,14 @@ func TestMilestoneManager_AgeMilestone(t *testing.T) {
 	ageOrder := fullAgeOrder()
 
 	// bronze_pioneer requires bronze_age
-	completed := mm.CheckMilestones(1, "stone_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed := mm.CheckMilestones(checkParams(1, "stone_age", ageOrder, rm, bm), nil)
 	for _, ms := range completed {
 		if ms.Key == "bronze_pioneer" {
 			t.Error("bronze_pioneer should not trigger in stone_age")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "bronze_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(checkParams(2, "bronze_age", ageOrder, rm, bm), nil)
 	if !containsKey(completed, "bronze_pioneer") {
 		t.Error("bronze_pioneer should trigger in bronze_age")
 	}
@@ -423,7 +437,7 @@ func TestTradeChain_NewMilestonesComplete(t *testing.T) {
 	// caravan_network: classical_age + 5 trading_post.
 	// Below threshold (4 posts, classical) → no completion.
 	bm.counts["trading_post"] = 4
-	completed := mm.CheckMilestones(1, "classical_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed := mm.CheckMilestones(checkParams(1, "classical_age", ageOrder, rm, bm), nil)
 	for _, ms := range completed {
 		if ms.Key == "caravan_network" {
 			t.Error("caravan_network should not complete with only 4 trading posts")
@@ -432,7 +446,7 @@ func TestTradeChain_NewMilestonesComplete(t *testing.T) {
 
 	// 5 posts but still iron_age → age gate blocks it.
 	bm.counts["trading_post"] = 5
-	completed = mm.CheckMilestones(2, "iron_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(checkParams(2, "iron_age", ageOrder, rm, bm), nil)
 	for _, ms := range completed {
 		if ms.Key == "caravan_network" {
 			t.Error("caravan_network should not complete before classical_age")
@@ -440,7 +454,7 @@ func TestTradeChain_NewMilestonesComplete(t *testing.T) {
 	}
 
 	// 5 posts in classical_age → completes.
-	completed = mm.CheckMilestones(3, "classical_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(checkParams(3, "classical_age", ageOrder, rm, bm), nil)
 	if !containsKey(completed, "caravan_network") {
 		t.Error("caravan_network should complete with 5 trading posts in classical_age")
 	}
@@ -448,7 +462,7 @@ func TestTradeChain_NewMilestonesComplete(t *testing.T) {
 	// merchant_princes: medieval_age + 12 trading_post + 4 merchant_quarter.
 	bm.counts["trading_post"] = 12
 	bm.counts["merchant_quarter"] = 3 // one short
-	completed = mm.CheckMilestones(4, "medieval_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(checkParams(4, "medieval_age", ageOrder, rm, bm), nil)
 	for _, ms := range completed {
 		if ms.Key == "merchant_princes" {
 			t.Error("merchant_princes should not complete with only 3 merchant quarters")
@@ -456,7 +470,7 @@ func TestTradeChain_NewMilestonesComplete(t *testing.T) {
 	}
 
 	bm.counts["merchant_quarter"] = 4
-	completed = mm.CheckMilestones(5, "medieval_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(checkParams(5, "medieval_age", ageOrder, rm, bm), nil)
 	if !containsKey(completed, "merchant_princes") {
 		t.Error("merchant_princes should complete with 12 trading posts + 4 merchant quarters in medieval_age")
 	}
@@ -518,4 +532,34 @@ func containsKey(defs []config.MilestoneDef, key string) bool {
 		}
 	}
 	return false
+}
+
+// The work done on techs counts toward the milestone that asks for research,
+// the moment the scholars' work (or a gift) lands, and not before the amount.
+func TestKnowledgeSeekerReadsResearchWork(t *testing.T) {
+	need := config.MilestoneByKey()["knowledge_seeker"].MinResources[config.ResearchTarget]
+	if need <= 1 {
+		t.Fatalf("knowledge_seeker asks for %v research", need)
+	}
+	ge := scholarEngine(t)
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	// A tech too dear to finish, so the work keeps landing on it.
+	var dear string
+	for key, def := range ge.Research.defs {
+		if def.Cost > ge.Research.defs[dear].Cost || (def.Cost == ge.Research.defs[dear].Cost && key < dear) {
+			dear = key
+		}
+	}
+	ge.Research.currentTech = dear
+	ge.workResearch(need - 1)
+	ge.checkMilestones()
+	if ge.Milestones.IsCompleted("knowledge_seeker") {
+		t.Fatalf("knowledge_seeker done at %v research of %v", ge.Stats.ResearchWork, need)
+	}
+	ge.workResearch(1)
+	ge.checkMilestones()
+	if !ge.Milestones.IsCompleted("knowledge_seeker") {
+		t.Fatalf("knowledge_seeker not done at %v research", ge.Stats.ResearchWork)
+	}
 }

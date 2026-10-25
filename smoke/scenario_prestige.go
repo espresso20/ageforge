@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -216,13 +215,13 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 	return steps
 }
 
-// prestigeKitHooked buys each legacy kit item after a Modern Age prestige
-// and checks it does what the shop says: a run that planned a Stone Age
-// building and an advance, set a worker share and met a civilization;
-// then, in the next run, the shares are set again, entering the Stone Age
-// adds its template slice, and entering the Bronze Age meets the
-// civilization again. A tech the player planned comes along with the
-// template too (their own research path; the kit picks none by itself).
+// prestigeKitHooked checks the legacy kit after a Modern Age prestige, which
+// brings it free: a run that planned a Stone Age building and an advance,
+// set a worker share and met a civilization; then, in the next run, the
+// shares are set again, entering the Stone Age adds its template slice, and
+// entering the Bronze Age meets the civilization again. A tech the player
+// planned comes along with the template too (their own research path; the
+// kit picks none by itself).
 func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) bool) {
 	ge := hookedEngine(e, e.SeedBase)
 	st := ge.GetState()
@@ -254,19 +253,8 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 	if err := ge.DoPrestige(); !check("kit: prestige from "+game.PrestigeRunAge, err == nil, "%v", err) {
 		return
 	}
-	pts := ge.GetState().Prestige.Available
-	for _, key := range set.LegacyKit() {
-		err := ge.BuyPrestigeUpgrade(key)
-		check("kit: buy "+key, err == nil, "%v (with %d points)", err, pts)
-	}
 	after := ge.GetState()
-	total := 0
-	for _, key := range set.LegacyKit() {
-		item, _ := set.PrestigeUpgrade(key)
-		total += item.Costs[0]
-	}
-	check("kit: the whole kit costs 99 points", total == 99 && after.Prestige.Available == pts-total, "the kit cost %d; %d points left of %d", total, after.Prestige.Available, pts)
-	check("kit: worker shares carry over", after.Workers.Shares["food"] == 40, "shares after buying Worker Shares: %v", after.Workers.Shares)
+	check("kit: worker shares carry over", after.Workers.Shares["food"] == 40, "shares after the prestige: %v", after.Workers.Shares)
 
 	if err := ge.EnterAgeForTest(st.Age); !check("kit: enter "+st.Age, err == nil, "%v", err) {
 		return
@@ -303,9 +291,6 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 	if err := own.DoPrestige(); !check("kit: prestige with a planned tech", err == nil, "%v", err) {
 		return
 	}
-	if err := own.BuyPrestigeUpgrade(config.LegacyPlan); !check("kit: buy the template", err == nil, "%v", err) {
-		return
-	}
 	var research []string
 	for _, it := range own.GetState().Plan {
 		if it.Kind == game.PlanResearch {
@@ -318,8 +303,8 @@ func prestigeKitHooked(e *Env, check func(string, bool, string, ...interface{}) 
 }
 
 // prestigeRefundHooked loads a signed level-5 save from the first shop (the
-// plan's worked example) and checks the refund: 600 points, the old tiers at
-// 0 with their keys kept, the shop at its version, once.
+// plan's worked example) and checks it keeps its earned points, on the load
+// and on a load of the save written back.
 func prestigeRefundHooked(check func(string, bool, string, ...interface{}) bool) {
 	upgrades := map[string]int{
 		"gather_boost": 3, "storage_bonus": 3, "research_speed": 3, "military_power": 3,
@@ -336,14 +321,8 @@ func prestigeRefundHooked(check func(string, bool, string, ...interface{}) bool)
 			return
 		}
 		p := ge.GetState().Prestige
-		var held []string
-		for key := range upgrades {
-			if p.Upgrades[key].Tier != 0 {
-				held = append(held, key)
-			}
-		}
-		check("legacy save: "+name+" keeps earned points", p.Available == 3 && p.TotalEarned == 86 && len(held) == 0 && p.ShopVersion == 0,
-			"available %d, total %d, old tiers still held %v, shop version %d", p.Available, p.TotalEarned, held, p.ShopVersion)
+		check("legacy save: "+name+" keeps earned points", p.Available == 3 && p.TotalEarned == 86,
+			"available %d, total %d", p.Available, p.TotalEarned)
 		if i == 0 {
 			if err := ge.SaveGame("level5"); !check("refund: save after the refund", err == nil, "%v", err) {
 				return

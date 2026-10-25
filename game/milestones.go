@@ -27,12 +27,6 @@ type MilestoneManager struct {
 	chains          []config.MilestoneChainDef
 	chainsCompleted map[string]bool
 	currentTitle    string
-	// researchDone is the work done on techs this run, which the milestone
-	// that counts it reads as a "research" amount. The engine keeps it.
-	researchDone float64
-	// milestoneToChain is a reverse-index built at construction time for O(1)
-	// chain lookup when rendering the milestone list in the UI.
-	milestoneToChain map[string]string // milestone key -> chain key
 	// titles is the count-based fallback title ladder, held so
 	// recalculateTitle (run every tick from checkMilestones) doesn't rebuild it.
 	titles []config.TitleDef
@@ -62,12 +56,6 @@ func (mm *MilestoneManager) Rebind(set *rules.Set) {
 	mm.defs = set.Milestones()
 	mm.chains = set.MilestoneChains()
 	mm.titles = set.MilestoneTitles()
-	mm.milestoneToChain = make(map[string]string)
-	for _, c := range mm.chains {
-		for _, mk := range c.MilestoneKeys {
-			mm.milestoneToChain[mk] = c.Key
-		}
-	}
 	mm.plans = make([]milestonePlan, len(mm.defs))
 	for i, def := range mm.defs {
 		mm.plans[i] = mm.planFor(def)
@@ -75,22 +63,11 @@ func (mm *MilestoneManager) Rebind(set *rules.Set) {
 	mm.recalculateTitle() // the title in the words of this set, at once
 }
 
-// CheckMilestones checks all milestones against current state.
+// CheckMilestones checks all milestones against the town's numbers in params
+// (the same ones the snapshot reads; params.Resources holds the work done on
+// techs as "research") and the researched techs, which it only reads.
 // Returns list of newly completed milestones.
-func (mm *MilestoneManager) CheckMilestones(
-	tick int,
-	age string,
-	ageOrder map[string]int,
-	resources *ResourceManager,
-	buildings *BuildingManager,
-	population int,
-	techCount int,
-	totalBuilt int,
-	researchedTechs map[string]bool,
-	soldiersTrained int,
-	wonderCount int,
-	knowledgeCount int,
-) []config.MilestoneDef {
+func (mm *MilestoneManager) CheckMilestones(params MilestoneSnapshotParams, researched map[string]bool) []config.MilestoneDef {
 	var completed []config.MilestoneDef
 
 	for _, def := range mm.defs {
@@ -98,7 +75,7 @@ func (mm *MilestoneManager) CheckMilestones(
 			continue
 		}
 
-		if mm.checkMilestone(def, tick, age, ageOrder, resources, buildings, population, techCount, totalBuilt, researchedTechs, soldiersTrained, wonderCount, knowledgeCount) {
+		if mm.checkMilestone(def, params, researched) {
 			mm.completed[def.Key] = true
 			completed = append(completed, def)
 		}
@@ -107,40 +84,22 @@ func (mm *MilestoneManager) CheckMilestones(
 	return completed
 }
 
-func (mm *MilestoneManager) checkMilestone(
-	def config.MilestoneDef,
-	tick int,
-	age string,
-	ageOrder map[string]int,
-	resources *ResourceManager,
-	buildings *BuildingManager,
-	population int,
-	techCount int,
-	totalBuilt int,
-	researchedTechs map[string]bool,
-	soldiersTrained int,
-	wonderCount int,
-	knowledgeCount int,
-) bool {
+func (mm *MilestoneManager) checkMilestone(def config.MilestoneDef, params MilestoneSnapshotParams, researched map[string]bool) bool {
 	// Check min tick
-	if def.MinTick > 0 && tick < def.MinTick {
+	if def.MinTick > 0 && params.Tick < def.MinTick {
 		return false
 	}
 
 	// Check age
 	if def.MinAge != "" {
-		if ageOrder[age] < ageOrder[def.MinAge] {
+		if params.AgeOrder[params.Age] < params.AgeOrder[def.MinAge] {
 			return false
 		}
 	}
 
 	// Check resources
 	for res, required := range def.MinResources {
-		have := resources.Get(res)
-		if res == config.ResearchTarget {
-			have = mm.researchDone
-		}
-		if have < required {
+		if params.Resources[res] < required {
 			return false
 		}
 	}
@@ -149,36 +108,36 @@ func (mm *MilestoneManager) checkMilestone(
 	// A building named by key counts the building and every later rung of its
 	// line: upgrading copies away never takes the progress back.
 	for bld, required := range def.MinBuildings {
-		if buildings.CountFrom(bld) < required {
+		if params.heldFrom(bld) < required {
 			return false
 		}
 	}
 	if sum := def.MinBuildingSum; sum.Count > 0 {
-		if buildings.CountFromAny(sum.Keys) < sum.Count {
+		if params.heldFromAny(sum.Keys) < sum.Count {
 			return false
 		}
 	}
 
 	// Check population
-	if def.MinPopulation > 0 && population < def.MinPopulation {
+	if def.MinPopulation > 0 && params.Population < def.MinPopulation {
 		return false
 	}
 
 	// Check tech count
-	if def.MinTechCount > 0 && techCount < def.MinTechCount {
+	if def.MinTechCount > 0 && params.TechCount < def.MinTechCount {
 		return false
 	}
 
 	// Check specific techs
 	for _, tech := range def.RequiredTechs {
-		if !researchedTechs[tech] {
+		if !researched[tech] {
 			return false
 		}
 	}
 
 	// Run counters (zero asks for nothing)
-	if totalBuilt < def.MinTotalBuilt || soldiersTrained < def.MinSoldiersTrained ||
-		wonderCount < def.MinWonders || knowledgeCount < def.MinKnowledgeWorkers {
+	if params.TotalBuilt < def.MinTotalBuilt || params.SoldiersTrained < def.MinSoldiersTrained ||
+		params.WonderCount < def.MinWonders || params.KnowledgeCount < def.MinKnowledgeWorkers {
 		return false
 	}
 
@@ -351,73 +310,30 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 	progress := rows.take(plan.rows)
 
 	if def.MinTick > 0 {
-		progress = append(progress, MilestoneProgress{
-			Label:   vibe.Line("game.milestones.progressFor.01", "Ticks survived"),
-			Current: float64(params.Tick),
-			Target:  float64(def.MinTick),
-			Met:     params.Tick >= def.MinTick,
-		})
+		progress = append(progress, row(vibe.Line("game.milestones.progressFor.01", "Ticks survived"), params.Tick, def.MinTick))
 	}
 
 	if def.MinAge != "" {
-		currentOrder := params.AgeOrder[params.Age]
-		targetOrder := params.AgeOrder[def.MinAge]
-		met := currentOrder >= targetOrder
-		progress = append(progress, MilestoneProgress{
-			Label:   plan.ageLabel,
-			Current: float64(currentOrder),
-			Target:  float64(targetOrder),
-			Met:     met,
-		})
+		progress = append(progress, row(plan.ageLabel, params.AgeOrder[params.Age], params.AgeOrder[def.MinAge]))
 	}
 
 	for i, res := range plan.resKeys {
-		required := def.MinResources[res]
-		current := params.Resources[res]
-		progress = append(progress, MilestoneProgress{
-			Label:   plan.resLabels[i],
-			Current: current,
-			Target:  required,
-			Met:     current >= required,
-		})
+		progress = append(progress, row(plan.resLabels[i], params.Resources[res], def.MinResources[res]))
 	}
 
 	for i, bld := range plan.bldKeys {
-		required := def.MinBuildings[bld]
-		current := float64(params.heldFrom(bld))
-		progress = append(progress, MilestoneProgress{
-			Label:   plan.bldLabels[i],
-			Current: current,
-			Target:  float64(required),
-			Met:     int(current) >= required,
-		})
+		progress = append(progress, row(plan.bldLabels[i], params.heldFrom(bld), def.MinBuildings[bld]))
 	}
 	if sum := def.MinBuildingSum; sum.Count > 0 {
-		have := params.heldFromAny(sum.Keys)
-		progress = append(progress, MilestoneProgress{
-			Label:   plan.sumLabel,
-			Current: float64(have),
-			Target:  float64(sum.Count),
-			Met:     have >= sum.Count,
-		})
+		progress = append(progress, row(plan.sumLabel, params.heldFromAny(sum.Keys), sum.Count))
 	}
 
 	if def.MinPopulation > 0 {
-		progress = append(progress, MilestoneProgress{
-			Label:   vibe.Line("game.milestones.progressFor.02", "Population"),
-			Current: float64(params.Population),
-			Target:  float64(def.MinPopulation),
-			Met:     params.Population >= def.MinPopulation,
-		})
+		progress = append(progress, row(vibe.Line("game.milestones.progressFor.02", "Population"), params.Population, def.MinPopulation))
 	}
 
 	if def.MinTechCount > 0 {
-		progress = append(progress, MilestoneProgress{
-			Label:   vibe.Line("game.milestones.progressFor.03", "Technologies"),
-			Current: float64(params.TechCount),
-			Target:  float64(def.MinTechCount),
-			Met:     params.TechCount >= def.MinTechCount,
-		})
+		progress = append(progress, row(vibe.Line("game.milestones.progressFor.03", "Technologies"), params.TechCount, def.MinTechCount))
 	}
 
 	// Run counters
@@ -429,17 +345,18 @@ func (mm *MilestoneManager) progressFor(def config.MilestoneDef, plan *milestone
 	return progress
 }
 
+// row is one progress row: how far cur is toward need, met once it gets there.
+// Ints compare as ints, floats as floats.
+func row[N int | float64](label string, cur, need N) MilestoneProgress {
+	return MilestoneProgress{Label: label, Current: float64(cur), Target: float64(need), Met: cur >= need}
+}
+
 // appendCounter adds a run-counter row when the milestone asks for any.
 func appendCounter(progress []MilestoneProgress, label string, current, need int) []MilestoneProgress {
 	if need <= 0 {
 		return progress
 	}
-	return append(progress, MilestoneProgress{
-		Label:   label,
-		Current: float64(current),
-		Target:  float64(need),
-		Met:     current >= need,
-	})
+	return append(progress, row(label, current, need))
 }
 
 // overallProgress returns 0.0-1.0 progress ratio for a milestone
@@ -485,24 +402,16 @@ func formatRewards(effects []config.Effect) string {
 // Snapshot returns milestone state for UI with progress, chains, and titles
 func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneState {
 	milestones := make(map[string]MilestoneInfo, len(mm.defs))
-	visibleCount := 0
-	plans := mm.plans
-	if len(plans) != len(mm.defs) { // defs were swapped in place, not through Rebind
-		plans = make([]milestonePlan, len(mm.defs))
-		for i, def := range mm.defs {
-			plans[i] = mm.planFor(def)
-		}
-	}
 	var rewards sliceArena[config.Effect] // one backing array for every milestone's copy
 	var rows sliceArena[MilestoneProgress]
 	for i, def := range mm.defs {
 		rewards.reserve(def.Rewards)
-		rows.want += plans[i].rows
+		rows.want += mm.plans[i].rows
 	}
 
 	for i, def := range mm.defs {
 		completed := mm.completed[def.Key]
-		plan := &plans[i]
+		plan := &mm.plans[i]
 		progress := mm.progressFor(def, plan, params, &rows)
 		ratio := overallProgress(progress)
 
@@ -523,12 +432,6 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 			visible = false
 		}
 
-		if visible {
-			visibleCount++
-		}
-
-		chainKey := mm.milestoneToChain[def.Key]
-
 		milestones[def.Key] = MilestoneInfo{
 			Name:        def.Name,
 			Description: def.Description,
@@ -539,7 +442,6 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 			RewardText:  plan.rewardText,
 			Rewards:     rewards.clone(def.Rewards), // def is the manager's table
 			Progress:    progress,
-			ChainKey:    chainKey,
 		}
 	}
 
@@ -576,7 +478,6 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 		Milestones:     milestones,
 		CompletedCount: len(mm.completed),
 		TotalCount:     len(mm.defs),
-		VisibleCount:   visibleCount,
 		Chains:         chains,
 		CurrentTitle:   mm.currentTitle,
 	}

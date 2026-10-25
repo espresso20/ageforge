@@ -2,6 +2,7 @@ package game
 
 import (
 	"math/rand"
+	"slices"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -78,6 +79,17 @@ func (dm *DiplomacyManager) errUnknownCiv(key string) error {
 	return vibe.Errorf("game.diplomacy.errUnknownCiv.03", "%s Scouting expeditions make first contact; type diplomacy deals to see the ones you have met.", msg)
 }
 
+// metCiv is the roster entry and the state of the civ key, when the player has
+// met it. The commands that act on a civ refuse with errUnknownCiv otherwise.
+func (dm *DiplomacyManager) metCiv(key string) (config.FactionDef, *FactionState, bool) {
+	def, ok := dm.factionDefs[key]
+	if !ok {
+		return def, nil, false
+	}
+	fs, ok := dm.factions[key]
+	return def, fs, ok && fs.Discovered
+}
+
 // DiplomacyManager handles NPC civilization discovery and diplomatic relations.
 // The 6 original factions plus 5 new civilizations form an 11-civ roster spanning
 // all epochs. Civs are discovered through age/epoch-gated first-contact events.
@@ -140,30 +152,31 @@ type DiplomacyManager struct {
 // Status transitions: neutral → friendly (opinion ≥ 25 after gift) → allied (opinion ≥ 50, 500 gold).
 // rival and embargo both cause -5 opinion per 50 ticks.
 type FactionState struct {
-	Discovered bool
-	Opinion    int    // -100 to 100
-	Status     string // "neutral", "friendly", "allied", "rival", "embargo"
-	TradeCount int
+	Discovered bool   `json:"discovered"`
+	Opinion    int    `json:"opinion"` // -100 to 100
+	Status     string `json:"status"`  // "neutral", "friendly", "allied", "rival", "embargo"
+	TradeCount int    `json:"trade_count"`
 
 	// OpinionAccum is a transient sub-1.0/tick accumulator (e.g. embassy
 	// trickle). Not persisted — it spills into Opinion as it crosses 1.0.
-	OpinionAccum float64
+	OpinionAccum float64 `json:"-"`
 
 	// War state (event-driven; no combat). War begins only when Opinion <
 	// warOpinionThreshold AND Provocations >= warProvocationThreshold.
-	AtWar               bool
-	Provocations        int // count of crossed provocations (raids on their routes + embargoes)
-	RaidedRoutes        int // times the player raided this civ's trade route
-	Embargoes           int // times the player embargoed this civ
-	LastProvocationTick int // tick of the most recent provocation (drives the wait-out timer)
+	AtWar               bool `json:"at_war"`
+	Provocations        int  `json:"provocations"`          // count of crossed provocations (raids on their routes + embargoes)
+	RaidedRoutes        int  `json:"raided_routes"`         // times the player raided this civ's trade route
+	Embargoes           int  `json:"embargoes"`             // times the player embargoed this civ
+	LastProvocationTick int  `json:"last_provocation_tick"` // tick of the most recent provocation (drives the wait-out timer)
 
 	// Trade deals (deals.go): the current offers, how many times they have
 	// been rolled, ticks of live play since the last roll, and the age they
-	// were priced for.
-	Deals     []FactionDeal
-	DealRound int
-	DealTicks int
-	DealsFor  string
+	// were priced for. Absent from saves before them, which roll a fresh set
+	// on the first tick.
+	Deals     []FactionDeal `json:"deals,omitempty"`
+	DealRound int           `json:"deal_round,omitempty"`
+	DealTicks int           `json:"deal_ticks,omitempty"`
+	DealsFor  string        `json:"deals_for,omitempty"`
 }
 
 // LentWorkerBatch records one outstanding worker loan from a civilization.
@@ -400,14 +413,8 @@ func (dm *DiplomacyManager) applyPersonalityDrift(tradedRecently bool) {
 
 // SetStatus changes diplomatic status with a faction
 func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (float64, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return 0, dm.errUnknownCiv(factionKey)
-	}
-
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return 0, dm.errUnknownCiv(factionKey)
 	}
 
@@ -495,13 +502,8 @@ func (dm *DiplomacyManager) takeWarEvents() []warEvent {
 // provocation that can trigger war if standing is already hostile. Returns
 // (warStarted, error). Used by the diplomacy command.
 func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return false, dm.errUnknownCiv(factionKey)
-	}
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return false, dm.errUnknownCiv(factionKey)
 	}
 	// Raiding tanks opinion immediately, then registers the provocation.
@@ -516,13 +518,8 @@ func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, e
 // to end the war immediately and restore a small amount of opinion. Returns the
 // (gold, culture) actually spent and an error if conditions aren't met.
 func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64) (float64, float64, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return 0, 0, dm.errUnknownCiv(factionKey)
-	}
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return 0, 0, dm.errUnknownCiv(factionKey)
 	}
 	if !fs.AtWar {
@@ -621,14 +618,8 @@ func (dm *DiplomacyManager) GiftPrice() float64 {
 
 // SendGift sends a gift to a faction, increasing opinion
 func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, error) {
-	defs := dm.factionDefs
-	def, ok := defs[factionKey]
+	def, fs, ok := dm.metCiv(factionKey)
 	if !ok {
-		return 0, dm.errUnknownCiv(factionKey)
-	}
-
-	fs, ok := dm.factions[factionKey]
-	if !ok || !fs.Discovered {
 		return 0, dm.errUnknownCiv(factionKey)
 	}
 
@@ -943,9 +934,6 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			}
 			info.LentWorkers += b.Count
 			info.LentPerm = info.LentPerm || b.Permanent
-			if !b.Permanent {
-				info.LentReturn = b.ReturnTick // raw tick; overlay shows presence, not countdown math
-			}
 		}
 		factions[def.Key] = info
 	}
@@ -960,23 +948,11 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 }
 
 // LoadState restores diplomacy state from save.
-func (dm *DiplomacyManager) LoadState(factions map[string]FactionStateSave, lent []LentWorkerBatch) {
+func (dm *DiplomacyManager) LoadState(factions map[string]FactionState, lent []LentWorkerBatch) {
 	for k, v := range factions {
-		dm.factions[k] = &FactionState{
-			Discovered:          v.Discovered,
-			Opinion:             v.Opinion,
-			Status:              v.Status,
-			TradeCount:          v.TradeCount,
-			AtWar:               v.AtWar,
-			Provocations:        v.Provocations,
-			RaidedRoutes:        v.RaidedRoutes,
-			Embargoes:           v.Embargoes,
-			LastProvocationTick: v.LastProvocationTick,
-			Deals:               append([]FactionDeal(nil), v.Deals...),
-			DealRound:           v.DealRound,
-			DealTicks:           v.DealTicks,
-			DealsFor:            v.DealsFor,
-		}
+		v.OpinionAccum = 0
+		v.Deals = slices.Clone(v.Deals)
+		dm.factions[k] = &v
 	}
 	if lent != nil {
 		dm.lentBatches = append([]LentWorkerBatch(nil), lent...)
@@ -993,44 +969,14 @@ func (dm *DiplomacyManager) LentWorkerTotal() int {
 	return total
 }
 
-// FactionStateSave is the serializable form of FactionState
-type FactionStateSave struct {
-	Discovered          bool   `json:"discovered"`
-	Opinion             int    `json:"opinion"`
-	Status              string `json:"status"`
-	TradeCount          int    `json:"trade_count"`
-	AtWar               bool   `json:"at_war"`
-	Provocations        int    `json:"provocations"`
-	RaidedRoutes        int    `json:"raided_routes"`
-	Embargoes           int    `json:"embargoes"`
-	LastProvocationTick int    `json:"last_provocation_tick"`
-	// Trade deals (deals.go); absent from saves before them, which roll a
-	// fresh set on the first tick.
-	Deals     []FactionDeal `json:"deals,omitempty"`
-	DealRound int           `json:"deal_round,omitempty"`
-	DealTicks int           `json:"deal_ticks,omitempty"`
-	DealsFor  string        `json:"deals_for,omitempty"`
-}
-
 // GetFactionsForSave returns faction states for serialization
-func (dm *DiplomacyManager) GetFactionsForSave() map[string]FactionStateSave {
-	out := make(map[string]FactionStateSave, len(dm.factions))
+func (dm *DiplomacyManager) GetFactionsForSave() map[string]FactionState {
+	out := make(map[string]FactionState, len(dm.factions))
 	for k, fs := range dm.factions {
-		out[k] = FactionStateSave{
-			Discovered:          fs.Discovered,
-			Opinion:             fs.Opinion,
-			Status:              fs.Status,
-			TradeCount:          fs.TradeCount,
-			AtWar:               fs.AtWar,
-			Provocations:        fs.Provocations,
-			RaidedRoutes:        fs.RaidedRoutes,
-			Embargoes:           fs.Embargoes,
-			LastProvocationTick: fs.LastProvocationTick,
-			Deals:               append([]FactionDeal(nil), fs.Deals...),
-			DealRound:           fs.DealRound,
-			DealTicks:           fs.DealTicks,
-			DealsFor:            fs.DealsFor,
-		}
+		c := *fs
+		c.OpinionAccum = 0
+		c.Deals = slices.Clone(fs.Deals)
+		out[k] = c
 	}
 	return out
 }

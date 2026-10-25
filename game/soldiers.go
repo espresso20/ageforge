@@ -348,11 +348,12 @@ func (ge *GameEngine) logSoldiersArrived(def config.BuildingDef, n int) {
 	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.soldiers.logSoldiersArrived.01", "%s moved in with the %s.", textfmt.Count(n, strings.ToLower(w.One), strings.ToLower(w.Many)), def.Name))
 }
 
-// soldiersPostedSave is the posted soldiers for a save: nil when there are
-// none.
-func (ge *GameEngine) soldiersPostedSave() map[string]int {
+// capToPosts is a copy of m (soldiers or empty posts by building) with each
+// figure held to the posts the standing copies have and the ones left at nothing
+// dropped; nil when none is left.
+func (ge *GameEngine) capToPosts(m map[string]int) map[string]int {
 	var out map[string]int
-	for key, n := range ge.soldiersPosted {
+	for key, n := range m {
 		if n = min(n, ge.soldierPostsOf(key)); n > 0 {
 			if out == nil {
 				out = map[string]int{}
@@ -363,41 +364,23 @@ func (ge *GameEngine) soldiersPostedSave() map[string]int {
 	return out
 }
 
+// soldiersPostedSave is the posted soldiers for a save: nil when there are
+// none.
+func (ge *GameEngine) soldiersPostedSave() map[string]int {
+	return ge.capToPosts(ge.soldiersPosted)
+}
+
 // soldiersVacantSave is the posts the fallen left, for a save: nil when none.
 func (ge *GameEngine) soldiersVacantSave() map[string]int {
-	var out map[string]int
-	for key, n := range ge.soldiersVacant {
-		if n = min(n, ge.soldierPostsOf(key)); n > 0 {
-			if out == nil {
-				out = map[string]int{}
-			}
-			out[key] = n
-		}
-	}
-	return out
+	return ge.capToPosts(ge.soldiersVacant)
 }
 
 // loadSoldiersPosted restores the posted soldiers from a save, after the
 // buildings are back. A save from before the posts has none: they fill again as
 // the food allows. The army that stands is not counted as trained again.
 func (ge *GameEngine) loadSoldiersPosted(save *GameSave) {
-	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant = nil, nil, nil
-	for key, n := range save.SoldiersVacant {
-		if n = min(n, ge.soldierPostsOf(key)); n > 0 {
-			if ge.soldiersVacant == nil {
-				ge.soldiersVacant = map[string]int{}
-			}
-			ge.soldiersVacant[key] = n
-		}
-	}
-	for key, n := range save.SoldiersPosted {
-		if n = min(n, ge.soldierPostsOf(key)); n > 0 {
-			if ge.soldiersPosted == nil {
-				ge.soldiersPosted = map[string]int{}
-			}
-			ge.soldiersPosted[key] = n
-		}
-	}
+	ge.soldiersPosted, ge.soldierWaitLogged = ge.capToPosts(save.SoldiersPosted), nil
+	ge.soldiersVacant = ge.capToPosts(save.SoldiersVacant)
 	for _, key := range save.SoldiersWaiting {
 		if ge.soldierWaitLogged == nil {
 			ge.soldierWaitLogged = map[string]bool{}
