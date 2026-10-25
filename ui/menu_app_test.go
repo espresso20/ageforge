@@ -67,22 +67,9 @@ func TestMenuInTheRunningApp(t *testing.T) {
 		h.onUI(func() { on = m.stop != nil })
 		return on
 	}
-	screen := func() string {
-		var sb strings.Builder
-		h.onUI(func() {
-			cells, w, hh := h.sim.GetContents()
-			for y := 0; y < hh; y++ {
-				for x := 0; x < w; x++ {
-					if r := cells[y*w+x].Runes; len(r) > 0 {
-						sb.WriteRune(r[0])
-					} else {
-						sb.WriteByte(' ')
-					}
-				}
-				sb.WriteByte('\n')
-			}
-		})
-		return sb.String()
+	screen := func() (s string) {
+		h.onUI(func() { s = simCells(h.sim).Text() })
+		return s
 	}
 	moves := func(what string) {
 		t.Helper()
