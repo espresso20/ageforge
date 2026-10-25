@@ -5,10 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/theme"
 )
 
 // reserveState is a real Primitive Age state with workers, set to the given
@@ -100,19 +97,7 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 			st.Workers.HeldBy, st.Workers.FoodNet, st.Workers.FoodFeeds = by, 51.2, 512
 			d.lastState = &st
 			d.refreshWorkerMini(st)
-			sim := tcell.NewSimulationScreen("UTF-8")
-			must(t, sim.Init())
-			sim.SetSize(w, h)
-			screen := theme.WrapScreen(sim)
-			for i := 0; i < 2; i++ {
-				screen.Clear()
-				pages.SetRect(0, 0, w, h)
-				pages.Draw(screen)
-				screen.Show()
-			}
-			cells, _, _ := sim.GetContents()
-			cells = append([]tcell.SimCell(nil), cells...)
-			sim.Fini()
+			cells := drawWrapped(t, pages, w, h, 2).Cells()
 			where := fmt.Sprintf("held by %s at %dx%d", by, w, h)
 			rows := checkFitted(t, where+", People", d.workerMiniTV, cells, w)
 			text := strings.Join(rows, "\n")
@@ -158,19 +143,7 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 	st.Workers.HeldBy = game.HeldFood
 	d.lastState = &st
 	d.refreshWorkerMini(st)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(80, 24)
-	screen := theme.WrapScreen(sim)
-	for i := 0; i < 2; i++ {
-		screen.Clear()
-		pages.SetRect(0, 0, 80, 24)
-		pages.Draw(screen)
-		screen.Show()
-	}
-	cells, _, _ := sim.GetContents()
-	cells = append([]tcell.SimCell(nil), cells...)
+	cells := drawWrapped(t, pages, 80, 24, 2).Cells()
 	text := strings.Join(checkFitted(t, "big town, People", d.workerMiniTV, cells, 80), "\n")
 	if title := d.workerMiniTV.GetTitle(); !strings.Contains(title, "People") {
 		t.Errorf("the title %q lost the box's name", title)
