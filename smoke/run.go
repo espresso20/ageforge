@@ -1,6 +1,6 @@
 //go:build smokebot
 
-// Package smoke plays AgeForge end to end without a UI and reports whether
+// The test bot: it plays AgeForge end to end without a UI and reports whether
 // anything broke: panics, soft-locks, invariant violations, plus pacing and
 // event counts. It drives the real GameEngine through its public API and
 // steps ticks synchronously with GameEngine.StepTicks, so a run to the
