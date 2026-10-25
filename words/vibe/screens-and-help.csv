@@ -1736,13 +1736,8 @@ ui.overlay_plan.planItemTitle.01,research
 ui.overlay_plan.planItemTitle.02,glow up %d %s → %s
 ui.overlay_plan.planItemTitle.03," (%d cooking)"
 ui.overlay_plan.planItemTitle.04," (%d already cooking)"
-ui.overlay_plan.planItemDetailGlued.01," banked from the overflow drip)"
-ui.overlay_plan.planItemDetailGlued.02," in the bag"
 ui.overlay_plan.planItemDetailGlued.03," gatekept for items above"
 ui.overlay_plan.planItemDetailGlued.04,drops next tick
-ui.overlay_plan.planItemDetailGlued.05,"drops next tick, paid from its own bag"
-ui.overlay_plan.planItemDetailGlued.06,drops next tick for 
-ui.overlay_plan.planItemDetailGlued.07," and its bag"
 ui.overlay_plan.planItemDetailGlued.08,drops next tick for 
 ui.overlay_plan.planPanelText.01,═══ Build Plan Arc ═══
 ui.overlay_plan.planPanelText.02," Started in order as the bag fills, while you play and while you are AFK.
@@ -1766,7 +1761,6 @@ ui.overlay_plan.planListText.02,Build Plan Arc
 ui.overlay_plan.planListText.03,"loading, %.0f%%"
 ui.overlay_plan.planListText.04," (short of "
 ui.overlay_plan.planListText.05,gatekept: 
-ui.overlay_plan.planListText.06," in the bag"
 ui.overlay_research.formatTechEffect.01,buffs research speed
 ui.overlay_research.formatTechEffect.02,drops 
 ui.overlay_research.formatTechEffect.03," crib space"
