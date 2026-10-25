@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -47,6 +48,46 @@ func getWonderList(set *rules.Set) []wonderInfo {
 		}
 	}
 	return wonders
+}
+
+// currentWonder is the wonder of the age the town is in, nil when the age has
+// none.
+func currentWonder(state game.GameState) *wonderInfo {
+	for _, w := range getWonderList(state.Ruleset()) {
+		if w.ageKey == state.Age {
+			return &w
+		}
+	}
+	return nil
+}
+
+// bankRow is one resource of a wonder's price: what is banked of what it
+// takes, as a share from 0 to 1, and the colour the bank's lines give it
+// (red for none, yellow for some, green for all).
+type bankRow struct {
+	res          string
+	banked, need float64
+	share        float64
+	color        string
+}
+
+// bankRows is a wonder's price a resource at a time, in resource order,
+// against what is banked.
+func bankRows(cost, banked map[string]float64) []bankRow {
+	var rows []bankRow
+	for _, k := range sortedKeysOf(cost) {
+		r := bankRow{res: k, banked: banked[k], need: cost[k], color: "red"}
+		if r.need > 0 {
+			r.share = min(r.banked/r.need, 1)
+		}
+		if r.share >= 1 {
+			r.color = "green"
+		} else if r.share > 0 {
+			r.color = "yellow"
+		}
+		rows = append(rows, r)
+	}
+	return rows
 }
 
 // wonderCollectHint is the registry's wonder collect form, escaped for tview.

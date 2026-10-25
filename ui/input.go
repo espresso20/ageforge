@@ -336,14 +336,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 
 	// Find the wonder for the current age
-	var curWonder *wonderInfo
-	for _, w := range getWonderList(state.Ruleset()) {
-		if w.ageKey == state.Age {
-			wCopy := w
-			curWonder = &wCopy
-			break
-		}
-	}
+	curWonder := currentWonder(state)
 	if curWonder == nil {
 		return CommandResult{Message: vibe.Line("ui.input.cmdWonder.01", "No wonder available this age."), Type: "error"}
 	}
@@ -376,23 +369,8 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	var sb strings.Builder
 	fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.05", "[gold::b]%s[-]: wonder bank\n\n", curWonder.name))
 
-	for _, res := range sortedKeysOf(curWonder.def.BaseCost) {
-		need := curWonder.def.BaseCost[res]
-		banked := bs.WonderBank[res]
-		pct := 0.0
-		if need > 0 {
-			pct = banked / need * 100
-			if pct > 100 {
-				pct = 100
-			}
-		}
-		clr := "red"
-		if pct >= 100 {
-			clr = "green"
-		} else if pct > 0 {
-			clr = "yellow"
-		}
-		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, game.ResourceName(res), textfmt.Number(banked), textfmt.Number(need), pct)
+	for _, r := range bankRows(curWonder.def.BaseCost, bs.WonderBank) {
+		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", r.color, game.ResourceName(r.res), textfmt.Number(r.banked), textfmt.Number(r.need), r.share*100)
 	}
 
 	if line := wonderKeystoneLine(state, curWonder.key); line != "" {
