@@ -10,11 +10,11 @@ import (
 	"strings"
 )
 
-// vibe.go reads the VibeMode script: the sheets in words/vibe, embedded in
-// the binary. A sheet has a header row naming (at least) the columns id and
-// text, and a row per line of the game: the row id the export gives that
-// line, and the line in the VibeMode script. A row with no text is no row:
-// the game keeps the plain line.
+// This file reads the VibeMode script: the sheets in words/vibe, embedded in the
+// binary. A sheet has a header row naming (at least) the columns id and text,
+// then a row per line of the game: the row id the export gives that line, and
+// the line in the VibeMode script. A row with no text is no row, and the game
+// keeps the plain line.
 
 //go:embed vibe/*.csv
 var vibeFS embed.FS
@@ -32,7 +32,8 @@ type Row struct {
 
 // VibeRows reads every sheet embedded in the binary, in file-name order. It
 // returns the rows with text and the problems it found (a sheet it cannot
-// read, a row id twice); a problem never stops the rest from loading.
+// read, a row id twice). A problem never stops the rest from loading. For an id
+// that appears twice, the first row is kept.
 func VibeRows() ([]Row, []string) {
 	entries, err := vibeFS.ReadDir("vibe")
 	if err != nil {
@@ -68,9 +69,10 @@ func VibeRows() ([]Row, []string) {
 	return out, problems
 }
 
-// ParseRows reads one sheet: a header row with the columns id and text (in
-// any order, with any others beside them, which are ignored), then a row per
-// line. A row with no id or no text is left out; a row that is not text is
+// ParseRows reads one sheet: a header row with the columns id and text (in any
+// order, with other columns beside them, which are ignored), then a row per
+// line. A row with no id or no text is left out. A row that cannot be read, is
+// too short for the header or has an id with white space in it is left out and
 // reported.
 func ParseRows(file string, r io.Reader) ([]Row, []string) {
 	br := bufio.NewReader(r)

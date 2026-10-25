@@ -1,4 +1,6 @@
-// cmd/spritegen/buildings.go — thin wrapper delegating to pkg/sprites
+// Command spritegen writes the game's pixel art as 16×16 PNG files under assets/sprites,
+// relative to the working directory. This file writes the building sprites, which
+// pkg/sprites draws.
 package main
 
 import (
@@ -11,8 +13,9 @@ import (
 	"github.com/espresso20/ageforge/pkg/sprites"
 )
 
-// GenerateAllBuildingSprites generates 3 variations of each building sprite
-// at the current era and saves them as 16×16 PNGs.
+// GenerateAllBuildingSprites writes three variations of the sprite of each building in
+// sprites.AllBuildings to outDir: <key>.png, <key>_v2.png and <key>_v3.png. A zero pixel
+// is transparent.
 func GenerateAllBuildingSprites(outDir string) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err

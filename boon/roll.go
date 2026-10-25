@@ -12,30 +12,27 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// rareResourceKeys is the curated pool a Grand Cache draws from, intersected
-// with what the current age has unlocked. Ordered for deterministic selection;
-// tunable data like everything else.
+// rareResourceKeys is the pool a Grand Cache draws from, limited to what the
+// current age has unlocked. The order is fixed so the pick is deterministic.
 var rareResourceKeys = []string{
 	"gold", "uranium", "plasma", "titanium",
 	"dark_matter", "antimatter", "quantum_flux", "crypto", "data",
 }
 
-// RollBoon weighted-picks a Def honoring the profile (enabled kinds, weight
-// multipliers, rarity/magnitude scale), then rolls a concrete magnitude,
-// duration, target, and flavor line. It is PURE given (profile, rng): every
-// random draw comes from the passed *rand.Rand in a fixed order, so the same
-// seed reproduces the same boon sequence. It never uses package-level rand.
+// RollBoon picks a Def by weight under the profile (enabled kinds, weight
+// multipliers, rarity and magnitude scale), then rolls its magnitude, duration,
+// target and flavor line. It depends only on (profile, rng): every random draw
+// comes from the passed *rand.Rand in a fixed order, so the same seed gives the
+// same boon sequence. It never uses package-level rand.
 //
-// Profile.Polarity selects the TABLE: Positive draws Catalog(), Negative draws
-// MalusCatalog(). Everything downstream (weighting, ranges, targeting, flavor)
-// is identical — a malus is a boon with the sign flipped, which is exactly why
-// one engine can roll both.
+// Profile.Polarity selects the table: Positive draws Catalog, Negative draws
+// MalusCatalog. Weighting, ranges, targeting and flavor work the same for both.
 //
-// If the profile disables every catalogued kind, RollBoon returns the zero Boon
-// rather than panicking — callers are expected to leave at least one kind live.
+// If the profile disables every kind in the table, RollBoon returns the zero
+// Boon. Callers should leave at least one kind live.
 func RollBoon(profile Profile, rng *rand.Rand) Boon {
-	// Build the enabled candidate list from the catalog's fixed order, so the
-	// weighted pick is deterministic given rng's state.
+	// Candidates keep the catalog's fixed order, so the weighted pick is
+	// deterministic given rng's state.
 	cat := tableFor(profile.Polarity)
 	cands := make([]Def, 0, len(cat))
 	weights := make([]float64, 0, len(cat))
@@ -56,8 +53,8 @@ func RollBoon(profile Profile, rng *rand.Rand) Boon {
 		return Boon{}
 	}
 
-	// Weighted pick. rng.Float64() ∈ [0,1) so roll < total always; the trailing
-	// assignment is belt-and-suspenders against float rounding.
+	// Weighted pick. rng.Float64() is in [0,1), so roll < total. Starting from the
+	// last candidate covers float rounding in the running sum.
 	roll := rng.Float64() * total
 	pick := cands[len(cands)-1]
 	cum := 0.0
@@ -72,17 +69,17 @@ func RollBoon(profile Profile, rng *rand.Rand) Boon {
 	b := Boon{Kind: pick.Kind, Polarity: pick.Polarity, Name: pick.Name}
 	switch pick.Kind {
 	case InstantResource:
-		// Age-scaled AND magnitude-scaled: a fixed lump is a fortune in the
-		// primitive age and invisible in the quantum age, and standing/strength
-		// should be legible in the size of a gift.
+		// Scaled by age and by magnitude: a fixed lump is a fortune in the
+		// primitive age and invisible in the quantum age, and standing and
+		// strength should show in the size of a gift.
 		b.InstantAmount = rollFloatRange(rng, pick.AmountMin, pick.AmountMax) * profile.instantScale()
 	case TempWorkers, WorkerLoss:
-		// Discrete head-counts: never scaled, only ranged.
+		// Head-counts are discrete: ranged, never scaled.
 		b.InstantAmount = float64(rollIntRange(rng, int(pick.AmountMin), int(pick.AmountMax)))
 		b.DurationTicks = rollIntRange(rng, pick.DurMin, pick.DurMax)
 	case ResourceDrain:
-		// InstantAmount carries the drain FRACTION of current stock; the
-		// optional Mag/Dur pair carries a short production dip alongside it.
+		// InstantAmount is the drain fraction of current stock. The optional
+		// Mag and Dur pair is a short production dip.
 		frac := rollFloatRange(rng, pick.AmountMin, pick.AmountMax) * profile.magScale()
 		b.InstantAmount = math.Min(math.Max(frac, 0), maxDrainFraction)
 		if pick.MagMin != 0 || pick.MagMax != 0 {
@@ -93,18 +90,18 @@ func RollBoon(profile Profile, rng *rand.Rand) Boon {
 		b.Magnitude = rollFloatRange(rng, pick.MagMin, pick.MagMax) * profile.magScale()
 		b.DurationTicks = rollIntRange(rng, pick.DurMin, pick.DurMax)
 	}
-	// The table's durations are typed for the base curve. From the Bronze Age
-	// on the ages run config.PacingStretch times longer, and so do timed boons
-	// and setbacks, so each still covers the same share of an age (and the
-	// slot load the calibration notes in catalog.go describe is unchanged:
-	// expeditions, which bring the encounters, stretch alike).
+	// The table's durations are typed for the base curve. From the Bronze Age on
+	// the ages run config.PacingStretch times longer, and so do timed boons and
+	// setbacks, so each covers the same share of an age. Expeditions, which bring
+	// the encounters, stretch the same way, so the slot load described in
+	// catalog.go does not change.
 	b.DurationTicks = config.StretchTicks(profile.Age, b.DurationTicks)
 	b.Resource = resolveTarget(pick, profile, rng)
 	b.Flavor = rollFlavor(pick, b, rng, profile.tickInterval())
 	return b
 }
 
-// tableFor returns the catalog a polarity draws from.
+// tableFor returns the catalog that polarity p draws from.
 func tableFor(p Polarity) []Def {
 	if p == Negative {
 		return MalusCatalog()
@@ -112,9 +109,8 @@ func tableFor(p Polarity) []Def {
 	return Catalog()
 }
 
-// ageIndex is a profile age's position in the canonical age order. Empty or
-// unknown ages resolve to 0 — the most conservative (smallest) instant scaling,
-// which is the safe direction to be wrong in.
+// ageIndex is a profile age's position in config.AgeOrder. An empty or unknown
+// age gives 0, the smallest instant-lump scaling.
 func ageIndex(age string) int {
 	if age == "" {
 		return 0
@@ -127,19 +123,18 @@ func ageIndex(age string) int {
 	return 0
 }
 
-// instantScale is the multiplier applied to an InstantResource lump: the per-age
-// growth factor compounded over the profile's age position, times the profile's
-// MagnitudeScale so standing and strength show up in the size of a gift,
-// divided by the age's pacing stretch. A lump is tuned to a number of ticks of
-// production, and from the Bronze Age on a tick makes 1/config.PacingStretch
-// as much (the economy is paced to longer ages).
+// instantScale is the multiplier on an InstantResource lump: instantGrowthPerAge
+// raised to the profile's age index, times MagnitudeScale (so standing and
+// strength show in the size of a gift), divided by the age's pacing stretch. A
+// lump is tuned to a number of ticks of production, and from the Bronze Age on a
+// tick makes 1/config.PacingStretch as much.
 func (p Profile) instantScale() float64 {
 	return float64(detmath.Pow(instantGrowthPerAge, float64(ageIndex(p.Age)))*p.magScale()) / config.AgeStretch(p.Age)
 }
 
-// resolveTarget picks the concrete target resource for a Def under a profile.
-// Only the random rules consume rng, and each rule's draw count is fixed, so
-// the overall roll sequence stays deterministic.
+// resolveTarget picks the target resource for a Def under a profile. Only the
+// random rules draw from rng, and each draws a fixed number of values, so the
+// roll sequence stays deterministic.
 func resolveTarget(d Def, p Profile, rng *rand.Rand) string {
 	switch d.Target {
 	case TargetSpecialty:
@@ -166,16 +161,12 @@ func resolveTarget(d Def, p Profile, rng *rand.Rand) string {
 	}
 }
 
-// ageAppropriateResources returns resource keys unlocked at or before age that
-// are also STORABLE. An empty or unknown age yields everything unlocked — a
-// permissive default so a caller that omits Age still gets a usable pool.
-// Deterministic: config slices are ordered and the index map is used only for
-// lookups.
-//
-// The BaseStorage > 0 filter is not cosmetic. A resource with no storage would
-// silently swallow a grant — ResourceManager.Add clamps to Storage, so the lump lands as
-// zero — and a "<res>_rate" buff on it is equally invisible. Excluding them
-// keeps the random target pools free of no-ops.
+// ageAppropriateResources returns the keys of resources unlocked at or before age
+// that have a BaseStorage above zero (ones a town can save up). An empty or
+// unknown age gives every such resource, so a caller that omits Age still gets a
+// usable pool. No resource has BaseStorage <= 0 today, so the filter excludes
+// nothing. The order follows config.BaseResources, and the index map is used only
+// for lookups, so the result is deterministic.
 func ageAppropriateResources(age string) []string {
 	order := config.AgeOrder()
 	idx := make(map[string]int, len(order))
@@ -184,12 +175,12 @@ func ageAppropriateResources(age string) []string {
 	}
 	cur, ok := idx[age]
 	if !ok {
-		cur = len(order) // unknown/empty age ⇒ treat everything as unlocked
+		cur = len(order) // unknown or empty age: everything is unlocked
 	}
 	var out []string
 	for _, r := range config.BaseResources() {
 		if r.BaseStorage <= 0 {
-			continue // unstorable: a grant or rate buff on it is a no-op
+			continue // not a resource a town can save up
 		}
 		ri, ok := idx[r.Age]
 		if !ok || ri <= cur {
@@ -199,8 +190,8 @@ func ageAppropriateResources(age string) []string {
 	return out
 }
 
-// rareAgeResources returns the rare pool intersected with what age has unlocked,
-// falling back to wood when nothing rare is available yet.
+// rareAgeResources returns the rare pool limited to what age has unlocked, or
+// wood if none of it is unlocked yet.
 func rareAgeResources(age string) []string {
 	avail := ageAppropriateResources(age)
 	set := make(map[string]bool, len(avail))
@@ -235,17 +226,16 @@ func rollFloatRange(rng *rand.Rand, lo, hi float64) float64 {
 	return lo + float64(rng.Float64()*(hi-lo))
 }
 
-// rollFlavor picks a template from the Def's pool and fills its placeholders
-// from the rolled boon. Every catalog entry ships at least one template, so the
-// result is always non-empty (falling back to the Def name if a pool is empty).
+// rollFlavor picks a template from the Def's pool and fills in its placeholders
+// from the rolled boon. It returns the Def's name if the pool is empty.
 //
 // Placeholders:
 //
-//	{pct}   Magnitude as a percentage, ABSOLUTE — the template carries the
+//	{pct}   Magnitude as a percentage, absolute value. The template carries the
 //	        direction in its wording ("+{pct}" for a boon, "falls {pct}" for a
-//	        malus), so a bare "-12%" never leaks into a sentence that already
+//	        malus), so a bare "-12%" never lands in a sentence that already
 //	        said "falls".
-//	{res}   prettified target resource key
+//	{res}   the target resource key, with underscores as spaces
 //	{ticks} duration as wall-clock time at the profile's tick interval ("~50m");
 //	        templates read "for {ticks}"
 //	{amt}   InstantAmount rounded, K/M formatted (lump grants)
@@ -268,16 +258,16 @@ func rollFlavor(d Def, b Boon, rng *rand.Rand, interval time.Duration) string {
 	return rep.Replace(tmpl)
 }
 
-// drainPercent is a ResourceDrain's fraction as a percentage ("12%").
+// drainPercent formats a ResourceDrain's fraction as a percentage ("12%").
 func drainPercent(b Boon) string {
 	return fmt.Sprintf("%d%%", int(math.Round(math.Abs(b.InstantAmount)*100)))
 }
 
-// WithoutDip returns b with its optional production dip removed (a
-// ResourceDrain's Magnitude and DurationTicks zeroed), as a capacity cap
-// does. A drain that carried a dip gets the drain-only line, so the text
-// never announces a slowdown that will not happen:
-// "4% of the iron they carried is gone."
+// WithoutDip returns b with its production dip removed (Magnitude and
+// DurationTicks zeroed). The game uses it when the malus capacity is full. A
+// ResourceDrain that carried a dip gets a drain-only line, so the text never
+// announces a slowdown that will not happen: "4% of the iron they carried is
+// gone."
 func (b Boon) WithoutDip() Boon {
 	hadDip := b.Magnitude != 0 || b.DurationTicks != 0
 	b.Magnitude, b.DurationTicks = 0, 0
@@ -287,8 +277,8 @@ func (b Boon) WithoutDip() Boon {
 	return b
 }
 
-// resourceLabel prettifies a resource key for flavor text (quantum_flux →
-// "quantum flux"); "" becomes a generic "resources".
+// resourceLabel formats a resource key for flavor text (quantum_flux becomes
+// "quantum flux"). An empty key becomes "resources".
 func resourceLabel(key string) string {
 	if key == "" {
 		return "resources"
