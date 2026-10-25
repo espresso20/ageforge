@@ -47,11 +47,7 @@ func (p *peoplePanel) setSize(w, h int) { p.w, p.h = w, h }
 // update takes a new snapshot; the picked row stays in range.
 func (p *peoplePanel) update(state game.GameState) {
 	p.state = state
-	if n := peopleRows(state, p.view.tab); n > 0 {
-		p.view.row = clamp(p.view.row, 0, n-1)
-	} else {
-		p.view.row = 0
-	}
+	p.view.row = clamp(p.view.row, 0, peopleRows(state, p.view.tab)-1)
 }
 
 // Draw paints the panel.

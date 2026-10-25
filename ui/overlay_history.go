@@ -39,10 +39,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	}
 
 	// 85% overlay, minus y-axis label (8 chars), border/padding (6 chars)
-	graphW := int(float64(w)*0.85) - 14
-	if graphW < 20 {
-		graphW = 20
-	}
+	graphW := max(int(float64(w)*0.85)-14, 20)
 	const graphH = 4 // rows tall per graph
 
 	ageCols := AgeMarkerCols(markerTicks, firstTick, lastTick, graphW)

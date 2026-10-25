@@ -240,9 +240,7 @@ func (p *researchPanel) move(dx, dy int) {
 		dr, dl := n.row-cur.row, n.lane-cur.lane
 		s := 0
 		switch {
-		case dy != 0 && dr*dy > 0:
-			s = abs(dr)*100 + abs(dl)
-		case dx != 0 && dl*dx > 0:
+		case dy != 0 && dr*dy > 0, dx != 0 && dl*dx > 0:
 			s = abs(dr)*100 + abs(dl)
 		default:
 			continue

@@ -45,13 +45,7 @@ func (p *planPanel) provider(state game.GameState, screenW int) string {
 }
 
 func clampSel(sel, n int) int {
-	if n == 0 || sel < 0 {
-		return 0
-	}
-	if sel >= n {
-		return n - 1
-	}
-	return sel
+	return max(0, min(sel, n-1))
 }
 
 // handleKey acts on event against engine. Reports whether the key was

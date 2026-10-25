@@ -97,11 +97,7 @@ func renderPeople(st game.GameState, v peopleView, w, h int) *xgrid {
 		return g
 	}
 	v.tab = clamp(v.tab, 0, len(peopleTabs)-1)
-	if n := peopleRows(st, v.tab); n > 0 {
-		v.row = clamp(v.row, 0, n-1)
-	} else {
-		v.row = 0
-	}
+	v.row = clamp(v.row, 0, peopleRows(st, v.tab)-1)
 	peopleHeader(g, st, v)
 	c := peopleBody{g: g, st: st, v: v, x: 1, y: 2, w: w - 2, h: h - 4}
 	switch v.tab {

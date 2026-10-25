@@ -153,10 +153,7 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 	// the magnitudes and the countdowns line up and the section can be scanned
 	// vertically instead of read line by line.
 	const magCol, timeCol = 16, 9
-	descCol := usable - magCol - timeCol - 1
-	if descCol < 24 {
-		descCol = 24
-	}
+	descCol := max(usable-magCol-timeCol-1, 24)
 
 	names := make(map[string]config.FactionDef, len(defs))
 	for _, def := range defs {
@@ -302,19 +299,9 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	}
 
 	// Opinion bar across the -100..100 range. Clamp first to stay panic-free.
-	opinion := f.Opinion
-	if opinion > 100 {
-		opinion = 100
-	} else if opinion < -100 {
-		opinion = -100
-	}
+	opinion := max(-100, min(f.Opinion, 100))
 	const barCells = 20
-	filled := (opinion + 100) * barCells / 200
-	if filled < 0 {
-		filled = 0
-	} else if filled > barCells {
-		filled = barCells
-	}
+	filled := max(0, min((opinion+100)*barCells/200, barCells))
 	opinionColor := "white"
 	switch {
 	case f.Opinion >= 50:
@@ -411,14 +398,7 @@ func writeUndiscoveredRoster(sb *strings.Builder, pending int) {
 // terminal, less the border and padding). Clamped so a tiny or absent width
 // still yields a sane budget rather than a negative one.
 func panelUsableWidth(w int) int {
-	usable := int(float64(w)*0.85) - 4
-	if usable < 56 {
-		usable = 56
-	}
-	if usable > 110 {
-		usable = 110
-	}
-	return usable
+	return max(56, min(int(float64(w)*0.85)-4, 110))
 }
 
 // writeHeadedLine writes a section header with a right-aligned summary on the
@@ -434,20 +414,13 @@ func writeHeadedLine(sb *strings.Builder, usable int, color, header, summary str
 // the right edge of a total-width line whose leading segment is leftLen wide.
 // Never narrower than two spaces, so the halves cannot collide.
 func alignGap(total, leftLen, rightLen int) string {
-	gap := total - leftLen - rightLen
-	if gap < 2 {
-		gap = 2
-	}
-	return strings.Repeat(" ", gap)
+	return strings.Repeat(" ", max(total-leftLen-rightLen, 2))
 }
 
 // columnGap pads out a fixed-width column. Always at least one space, so a value
 // that overruns its column pushes the next one along instead of fusing with it.
 func columnGap(n int) string {
-	if n < 1 {
-		return " "
-	}
-	return strings.Repeat(" ", n)
+	return strings.Repeat(" ", max(n, 1))
 }
 
 // runeLen counts display cells as runes. Every glyph the panel aligns against
@@ -458,12 +431,7 @@ func runeLen(s string) int { return len([]rune(s)) }
 // strengthStars renders a 1-5 civ power rating as filled/hollow stars, clamped
 // so an out-of-range or zero value still produces five cells.
 func strengthStars(n int) string {
-	if n < 0 {
-		n = 0
-	}
-	if n > 5 {
-		n = 5
-	}
+	n = max(0, min(n, 5))
 	return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
 }
 
