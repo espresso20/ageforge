@@ -392,7 +392,7 @@ ui.help.commands.trade.route.list,"All your trade routes, receipts included"
 ui.help.commands.trade.route.start,Spin up a trade route and let the bread flow
 ui.help.commands.trade.route.stop,Ghost a trade route
 ui.help.commands.trade.black,"blackmarket, speedrun spelling"
-ui.help.commands.blackmarket,"Smuggling run: bet your culture on a haul of one resource, high risk, high drip (bare blackmarket shows the odds, or when it opens)"
+ui.help.commands.blackmarket,"Smuggling run: spend culture, get the same worth in one resource, five times in six (bare blackmarket shows the odds, or when it opens)"
 ui.help.panels.factions,"Boons, the Geographic Society & what every civilization thinks of you, the tea (alias: diplomacy)"
 ui.help.commands.factions,"Pull up the Factions panel for the social tea (boons, the Geographic Society, opinion)"
 ui.help.commands.diplomacy,factions with a different fit on (opens the same panel)
@@ -897,12 +897,12 @@ ui.input.cmdFestivalStatus.07,"  Vibe check: [yellow]not enough culture yet, bro
 ui.input.cmdFestivalStatus.08,"  Vibe check: [yellow]on cooldown[-], %s left to recover."
 ui.input.cmdBlackMarketStatus.01,"[gold]Black Market, sus side of town[-]"
 ui.input.cmdBlackMarketStatus.02,The smuggling plug opens in 
-ui.input.cmdBlackMarketStatus.03,"  Blow culture on a smuggling run: one gamble, one resource, potentially a massive bag."
 ui.input.cmdBlackMarketStatus.04,"  Damage: [cyan]%s[-] per run  (pockets: %s)"
-ui.input.cmdBlackMarketStatus.05,"  RNG: [green]%.0f%%[-] chance of a haul worth [green]%.1fx[-] the culture; miss and the culture is gone, rip."
 ui.input.cmdBlackMarketStatus.06,"  The tea: [green]ready[-]. Type [cyan]blackmarket <resource>[-] (for example, blackmarket gold)."
 ui.input.cmdBlackMarketStatus.07,"  The tea: [yellow]not enough culture yet, too broke.[-]"
 ui.input.cmdBlackMarketStatus.08,"  The tea: [yellow]lying low[-]. Next run unlocks in %s, stay lowkey."
+ui.input.cmdBlackMarketStatus.09,"  Blow culture on a smuggling run: it pays back the minutes of income your culture cost, as minutes of your income of whichever resource you pick."
+ui.input.cmdBlackMarketStatus.10,"  RNG: five in six it goes through; one in six the smugglers ghost you with the culture and pay nothing, rip."
 ui.input.cmdPrestige.01,☄ The Last Passage has pulled up. Prestige is on hold until you choose Endure or Succumb.
 ui.input.cmdPrestige.02,[yellow]⚠ Prestige PSA[-]
 ui.input.cmdPrestige.03,"  You will bag [cyan]%d[-] prestige points."
