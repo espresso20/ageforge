@@ -21,17 +21,11 @@ import (
 func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	t.Helper()
 	engine := game.NewGameEngine()
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	miniOn(t, d) // the mini map's colours are part of the sweep
 	d.refresh()
 
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	t.Cleanup(sim.Fini)
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	screen := theme.WrapScreen(sim)
 
 	draw := func() []tcell.SimCell {
@@ -39,10 +33,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		pages.SetRect(0, 0, w, h)
 		pages.Draw(screen)
 		screen.Show()
-		cells, _, _ := sim.GetContents()
-		out := make([]tcell.SimCell, len(cells))
-		copy(out, cells)
-		return out
+		return simCells(sim).Cells()
 	}
 
 	out := map[string][]tcell.SimCell{}
@@ -114,7 +105,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	engine.PlanClear()
 	d.planPanel.reset()
 
-	picker := CreateThemePickerPage(app, pages, nil, "dashboard")
+	picker := CreateThemePickerPage(d.app, pages, nil, "dashboard")
 	pages.AddPage(themePickerPage, picker, true, true)
 	out["theme_picker"] = draw()
 	pages.RemovePage(themePickerPage)
@@ -234,17 +225,10 @@ func TestThemeRender_NoInvisibleText(t *testing.T) {
 func TestThemeRender_CanvasIsThemeBackground(t *testing.T) {
 	restoreForge(t)
 	_ = theme.SetActive("forge")
-	engine := game.NewGameEngine()
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, engine, pages) // constructed under Forge
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(nil) // constructed under Forge
 	d.refresh()
 
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(120, 40)
+	sim := newSimScreen(t, 120, 40)
 	screen := theme.WrapScreen(sim)
 
 	for _, key := range []string{"daylight", "forge", "high_contrast_light"} {
@@ -253,7 +237,7 @@ func TestThemeRender_CanvasIsThemeBackground(t *testing.T) {
 		pages.SetRect(0, 0, 120, 40)
 		pages.Draw(screen)
 		screen.Show()
-		cells, _, _ := sim.GetContents()
+		cells := simCells(sim).Cells()
 		want := theme.Color(theme.RoleBackground).Hex()
 		counts := map[int32]int{}
 		for _, c := range cells {
