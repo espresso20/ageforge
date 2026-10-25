@@ -253,7 +253,7 @@ func TestOldSavesMigrateToFates(t *testing.T) {
 	old.catastropheInvited = true
 	snap := old.buildSaveSnapshot()
 	snap.Fate = nil
-	snap.Signature = signSave(snap, saveHMACKey)
+	snap.Signature = signSave(snap)
 	writeRawSave(t, "old_thread", snap)
 	ge3 := NewGameEngine()
 	noErr(t, ge3.LoadGame("old_thread"))
@@ -277,7 +277,7 @@ func TestOldSavesMigrateToFates(t *testing.T) {
 	stone.harbingerArrived["stone_era"] = true
 	snap = stone.buildSaveSnapshot()
 	snap.Fate = nil
-	snap.Signature = signSave(snap, saveHMACKey)
+	snap.Signature = signSave(snap)
 	writeRawSave(t, "old_stone", snap)
 	ge4 := NewGameEngine()
 	noErr(t, ge4.LoadGame("old_stone"))

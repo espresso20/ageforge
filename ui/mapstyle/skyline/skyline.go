@@ -337,16 +337,10 @@ func presentCam(m *mapmodel.Model, w int) int {
 	return m.Skyline.FrontierX + 34 - w
 }
 
-// compose builds the frame into v.fb and returns the scene as the screen
-// sees it. The world is composed at today's scale into a frame of its own
-// (v.lfb, or v.fb itself at mid), and the zoom decides how that frame
-// reaches the screen (zoom.go); the bars and the text are then drawn on the
-// screen.
-func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
-	if sky := f.Model.Sky(); sky != mapmodel.SkyGround {
-		v.sw = W
-		return v.composeSky(f, W, H, sky) // the sky arc: orbit.go
-	}
+// frameScene starts the scene of a frame: the zoom level (the far one falls
+// back to the wide one when the town is too big to fit) and the frame the world
+// is composed in (v.fb at mid, v.lfb otherwise).
+func (v *view) frameScene(f mapstyle.Frame, W, H int) *scene {
 	m := f.Model
 	v.sw, v.worldW = W, m.Skyline.Width
 	z := v.zoom
@@ -364,15 +358,16 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 		world = &v.lfb
 	}
 	v.lastW = wcols
-	s := &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: lw, H: lh, S: lh - 3, top: 1, sel: -1,
+	return &scene{v: v, m: m, fb: world, tier: f.Tier, anim: f.Anim, visit: f.VisitFrame(), W: lw, H: lh, S: lh - 3, top: 1, sel: -1,
 		zm: z, lw: wcols, ls: lh - 3, sw: W, sh: H, fit: fit, kx: kx}
-	s.groundY = s.S - 3
-	s.band = bandOf(m.AgeIdx)
-	s.p, s.mp = v.palettes(m)
-	s.lay = v.layoutSized(m, s.groundY, H-6)
-	s.vis = v.vis
-	s.city, s.inCity = mapmodel.CityLookAt(m.AgeIdx)
-	defer func() { v.vis = s.vis }()
+}
+
+// placeCamera puts the camera and the cursor in a scene whose layout is set:
+// it follows the present, reveals the cursor's target, clamps the camera and
+// takes the pan (panDef rows up from the foot), the ridge, the selected lot
+// and the grid-out flag of a catastrophe.
+func (v *view) placeCamera(s *scene, f mapstyle.Frame, panDef int) {
+	m, fit, lw, wcols := s.m, s.fit, s.W, s.lw
 	if v.follow && !fit {
 		v.cam = presentCam(m, lw)
 	}
@@ -386,7 +381,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 		v.cam = clampInt(v.cam, 0, max(0, m.Skyline.Width-lw))
 	}
 	s.cam = v.camX()
-	s.pan = v.panFor(z, s.S, 0)
+	s.pan = v.panFor(s.zm, s.S, panDef)
 	if fit {
 		s.ridge = ridgeItemsFar(m, lw)
 	} else {
@@ -399,7 +394,30 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 		e := m.Catalog.EpochIdx[ep]
 		s.gridOut = e == 3 || e == 4 || e == 5
 	}
-	world.reset(lw, lh)
+}
+
+// compose builds the frame into v.fb and returns the scene as the screen
+// sees it. The world is composed at today's scale into a frame of its own
+// (v.lfb, or v.fb itself at mid), and the zoom decides how that frame
+// reaches the screen (zoom.go); the bars and the text are then drawn on the
+// screen.
+func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
+	if sky := f.Model.Sky(); sky != mapmodel.SkyGround {
+		v.sw = W
+		return v.composeSky(f, W, H, sky) // the sky arc: orbit.go
+	}
+	m := f.Model
+	s := v.frameScene(f, W, H)
+	fit := s.fit
+	s.groundY = s.S - 3
+	s.band = bandOf(m.AgeIdx)
+	s.p, s.mp = v.palettes(m)
+	s.lay = v.layoutSized(m, s.groundY, H-6)
+	s.vis = v.vis
+	s.city, s.inCity = mapmodel.CityLookAt(m.AgeIdx)
+	defer func() { v.vis = s.vis }()
+	v.placeCamera(s, f, 0)
+	s.fb.reset(s.W, s.H)
 	s.sky()
 	s.celestial()
 	s.skyStructures()

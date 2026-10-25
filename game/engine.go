@@ -194,8 +194,10 @@ type GameEngine struct {
 	// their time: they completed on load (loadResearch).
 	loadedCompletions []string
 
-	// Dynamic tick speed. speedMultiplier is only ever above 1 through the dev
-	// console's /speed: players have no speed setting (see playerSpeedCap).
+	// Dynamic tick speed. Game speed is fixed so the calendar paces the game:
+	// there is no player speed setting and wonders raise no cap.
+	// speedMultiplier is only ever above 1 through the dev console's /speed,
+	// for the session: a load, prestige, Succumb or wipe puts it back to 1.
 	tickSpeedBonus  float64
 	speedMultiplier float64
 
@@ -864,7 +866,7 @@ func (ge *GameEngine) Start() {
 				}
 
 				// Account lifetime-stats flush (Phase 6): persist any pending
-				// RecordPrestige/RecordAgeReached deltas. MUST be here, outside the
+				// RecordPrestigeFrom/RecordAgeReached deltas. MUST be here, outside the
 				// tick write lock — Save does file I/O. Use the locking accessor, not
 				// ge.account directly, since we're outside ge.mu. No-op when not dirty.
 				if acct := ge.Account(); acct != nil {
@@ -951,41 +953,8 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	ge.tickSpeedBonus = bonus
 
 	if bonus != oldBonus {
-		mult := ge.speedMultiplier
-		if mult < 1.0 {
-			mult = 1.0
-		}
-		// Mirror getTickInterval's guard: a denominator ≤ 0 (tick_speed ≤ -1.0)
-		// would yield a +Inf/garbage duration in the debug log. The real interval
-		// the loop uses comes from getTickInterval, which guards identically.
-		denom := (1.0 + bonus) * mult
-		interval := MinTickInterval
-		if denom > 0 {
-			interval = time.Duration(float64(BaseTickInterval) / denom)
-			if interval < MinTickInterval {
-				interval = MinTickInterval
-			}
-		}
-		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, interval.Milliseconds()))
+		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, ge.tickIntervalLocked().Milliseconds()))
 	}
-}
-
-// playerSpeedCap is the most game speed a player runs at. Game speed is fixed
-// so the calendar paces the game: there is no player speed setting, and
-// wonders raise no cap. Only the dev console's /speed goes past it, for the
-// session: a load clamps the saved multiplier back (clampPlayerSpeed) and a
-// prestige, Succumb or wipe resets it.
-const playerSpeedCap = 1.0
-
-// clampPlayerSpeed limits a saved speed multiplier to what a player may run
-// at: 1x at least (a NaN counts as 1x), playerSpeedCap at most. A save from
-// before the speed setting was retired carries whatever the player had set,
-// up to 12x with every wonder built.
-func clampPlayerSpeed(mult float64) float64 {
-	if !(mult >= 1.0) {
-		return 1.0
-	}
-	return min(mult, playerSpeedCap)
 }
 
 // starvationDeathInterval is how many ticks pass between starvation deaths
@@ -1306,9 +1275,8 @@ func (ge *GameEngine) RecoveryCodeForID(id string) (string, error) {
 	return RecoveryCodeForID(id)
 }
 
-// WipeAccountByID deletes the slot for account id (Phase D). It is the by-id sibling of the
-// active-only WipeAccount, used by the Accounts panel to wipe the SELECTED account. game.
-// WipeAccountByID snapshots the slot into <root>/backups/ BEFORE removal and returns that
+// WipeAccountByID deletes the slot for account id (Phase D), used by the Accounts panel to wipe
+// the SELECTED account. game.WipeAccountByID snapshots the slot into <root>/backups/ BEFORE removal and returns that
 // backupPath (empty if the backup failed — the wipe still proceeds), removes only that slot,
 // and, if id was the active account, clears the active pointer + in-memory id. When the wiped
 // id matches ge's current account we also detach ge.account (under the write lock) so the UI
@@ -1369,8 +1337,8 @@ func (ge *GameEngine) StartNewNamedGame(name string) error {
 
 // accountForRecordsLocked returns the account this run's badges and lifetime stats go to,
 // or nil when the run records nothing: accountless play, or a run that belongs to another
-// account (the game still in memory after an account switch). The dashboard's theme unlocks
-// follow the same rule through GameState.AccountRecords. Callers hold ge.mu.
+// account (the game still in memory after an account switch). GameState.AccountRecords
+// carries the same answer. Callers hold ge.mu.
 //
 // Nothing about the developer console is here. Dev mode, and a run a dev command has
 // changed, record like any other: if a badge's condition is met, the badge is earned.
@@ -1465,9 +1433,6 @@ func (ge *GameEngine) doTick() {
 
 	// Process build queue
 	ge.processBuildQueue()
-	if len(ge.buildQueue) > 0 {
-		ge.addLog("debug", fmt.Sprintf("Build queue: %s in progress", textfmt.Count(len(ge.buildQueue), "item", "items")))
-	}
 
 	// Process research
 	ge.processResearch()
@@ -1705,7 +1670,6 @@ func (ge *GameEngine) fireEvent(def config.EventDef) {
 
 // processExpeditions advances the mission board and the missions under way.
 func (ge *GameEngine) processExpeditions() {
-	missionPower, expeditionBonus := ge.missionPower(), ge.expeditionReward()
 	// The board first: a new age gets a whole new board, an offer that has
 	// expired is replaced at once and a taken one after its wait. Then the
 	// missions under way, each of which may resolve this tick.
@@ -1716,10 +1680,7 @@ func (ge *GameEngine) processExpeditions() {
 		// A ruins offer is the mission's draw, from its own stream.
 		ge.withLuck(active.luckStream(), func() { ge.fireRoadEvents(active, active.ElapsedTicks) })
 	}
-	for _, active := range ge.Military.active {
-		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Title, active.TicksLeft))
-	}
-	for _, res := range ge.Military.Tick(missionPower, expeditionBonus) {
+	for _, res := range ge.Military.Tick() {
 		// The party is home: the soldiers who fell on the way back leave the
 		// population, and the casualty line joins the mission's message.
 		ge.soldiersFall(res.SoldiersFell)
@@ -1885,38 +1846,29 @@ func (ge *GameEngine) processDiplomacy() {
 	ge.tickFactionDeals()
 }
 
+// milestoneParamsLocked is the town's numbers as the milestones read them. The
+// check each tick and the snapshot both take them from here. Caller holds ge.mu.
+func (ge *GameEngine) milestoneParamsLocked(ageOrder map[string]int) MilestoneSnapshotParams {
+	return MilestoneSnapshotParams{
+		Tick:       ge.tick,
+		Age:        ge.age,
+		AgeOrder:   ageOrder,
+		Resources:  ge.milestoneResources(),
+		Population: ge.popLocked(),
+		TechCount:  ge.Research.ResearchedCount(),
+		TotalBuilt: ge.Stats.TotalBuilt,
+		// Soldier milestones key off cumulative lifetime soldiers trained, not
+		// the live military-worker count. The scholars are a live count.
+		SoldiersTrained: int(ge.Stats.SoldiersTrained),
+		WonderCount:     ge.countWonders(),
+		KnowledgeCount:  ge.scholarTotal(),
+		held:            ge.Buildings,
+	}
+}
+
 // checkMilestones checks for newly completed milestones and chains
 func (ge *GameEngine) checkMilestones() {
-	ageOrder := ge.progress.ageOrder()
-	researchedTechs := make(map[string]bool, len(ge.Research.researched))
-	for key := range ge.Research.researched {
-		researchedTechs[key] = true
-	}
-
-	// Soldier milestones key off cumulative lifetime soldiers trained, not the
-	// live military-worker count. The scholars are a live count.
-	soldiersTrained := int(ge.Stats.SoldiersTrained)
-	knowledgeCount := ge.scholarTotal()
-
-	// Count wonders
-	wonderCount := 0
-	for key, count := range ge.Buildings.counts {
-		if def, ok := ge.Buildings.defs[key]; ok && def.Category == "wonder" && count > 0 {
-			wonderCount += count
-		}
-	}
-
-	completed := ge.Milestones.CheckMilestones(
-		ge.tick, ge.age, ageOrder,
-		ge.Resources, ge.Buildings,
-		ge.popLocked(),
-		ge.Research.ResearchedCount(),
-		ge.Stats.TotalBuilt,
-		researchedTechs,
-		soldiersTrained,
-		wonderCount,
-		knowledgeCount,
-	)
+	completed := ge.Milestones.CheckMilestones(ge.milestoneParamsLocked(ge.progress.ageOrder()), ge.Research.researched)
 
 	for _, ms := range completed {
 		rewardText := formatMilestoneRewards(ms.Rewards)
@@ -2331,7 +2283,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// was its line's current rung in the age left and is not in the new one.
 	// Nothing moves and nothing is offered; they keep producing and can be
 	// upgraded (older.go).
-	summary := AgeAdvanceSummary{OldAge: oldAge, NewAge: newAge}
+	var summary AgeAdvanceSummary
 	for _, key := range ge.Buildings.OlderKeys() {
 		if _, wasOlder := ge.rules.UpgradeTarget(key, oldAge); wasOlder {
 			continue
@@ -2373,9 +2325,6 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// uses fall back to a small residual percentage. Players who didn't over-
 	// accumulate keep what they had (amount below the cap is untouched).
 	// Faith is excluded — it's cumulative.
-	// The plan's banks (from old saves) go back to the stores first, so the
-	// trim treats them like anything else held (overflow.go).
-	ge.returnPlanBanks(vibe.Line("game.engine.advanceAge.02", "for the advance"))
 	entryCosts := ge.rules.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
 		if key == "faith" {
@@ -3278,8 +3227,6 @@ func (ge *GameEngine) processBuildQueue() {
 		if item.TicksLeft <= 0 {
 			ge.finishBuild(item)
 		} else {
-			def := ge.Buildings.defs[item.BuildingKey]
-			ge.addLog("debug", fmt.Sprintf("Build queue: %s %d/%d ticks", def.Name, item.TotalTicks-item.TicksLeft, item.TotalTicks))
 			remaining = append(remaining, item)
 		}
 	}
@@ -3486,23 +3433,15 @@ func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) 
 func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	return ge.startBuildLocked(key, false)
+	return ge.startBuildPaid(key, false)
 }
 
-// startBuildLocked is BuildBuilding under the write lock: every check the
+// startBuildPaid is BuildBuilding under the write lock: every check the
 // command makes, the payment, and the queueing (or instant build). The build
 // plan starts its builds through it too, with quiet set so the per-copy
-// "Started building" line gives way to the plan's own summary.
-func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
-	return ge.startBuildPaid(key, quiet, nil)
-}
-
-// startBuildPaid is startBuildLocked with part of the price already paid:
-// prepaid (a plan item's overflow bank, at most the price per resource) is
-// taken off what the stores pay. The caller takes it out of the bank once
-// the build has started. Parts of the price left within planBankEpsilon of
-// prepaid count as paid.
-func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]float64) error {
+// "Started building" line gives way to the plan's own summary. (The name is
+// from when it took a plan bank's part of the price; the copy ids key on it.)
+func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
 		return ge.unknownBuildingErr(key)
@@ -3550,9 +3489,6 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool, prepaid map[string]
 		// Use queue-aware cost so that items already in the build queue are
 		// factored into the cost curve (fixes queue-blindness exploit).
 		cost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
-		if len(prepaid) > 0 {
-			cost, _ = splitBank(cost, prepaid)
-		}
 		if !ge.Resources.Pay(cost) {
 			return vibe.Errorf("game.engine.startBuildPaid.05", "Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
 		}
@@ -3626,7 +3562,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	// A wonder is paid through its bank, one copy, by the single path: the
 	// store check and the bank rules are that path's.
 	if def.Category == "wonder" {
-		if err := ge.startBuildLocked(key, false); err != nil {
+		if err := ge.startBuildPaid(key, false); err != nil {
 			return 0, err
 		}
 		return 1, nil
@@ -3910,7 +3846,7 @@ func checkAmount(amount float64) error {
 // unknownBuildingErr refuses a key that names no building, suggesting the
 // closest one: "Unknown building 'farmm'. Did you mean 'farm'?"
 func (ge *GameEngine) unknownBuildingErr(key string) error {
-	if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
+	if suggestion := closestKey(key, ge.Buildings.defs); suggestion != "" {
 		return vibe.Errorf("game.engine.unknownBuildingErr.01", "Unknown building '%s'. Did you mean '%s'?", key, suggestion)
 	}
 	return vibe.Errorf("game.engine.unknownBuildingErr.02", "Unknown building '%s'. Type 'build' to see available buildings.", key)
@@ -4515,10 +4451,7 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 
 	offer.SuccessChance = ge.offerSuccessLocked(offer)
 	base := ge.missionHaulLocked(offer.HaulMinutes)
-	active, err := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base)
-	if err != nil {
-		return err
-	}
+	active := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base)
 	ge.syncSoldiers()
 	words, _ := ge.rules.MissionWords(offer.Age)
 	active.RoadEvents = rollRoadEvents(ge.gameRNG(), offer, active.TotalTicks, words)
@@ -4631,7 +4564,7 @@ func (ge *GameEngine) offerInfoLocked(n int, offer MissionOffer, bonus float64, 
 	for res := range haul {
 		haul[res] *= multiplier
 	}
-	info.ExpectedHaulMin, info.ExpectedHaulMax = haul, maps.Clone(haul)
+	info.ExpectedHaulMin = haul
 	// The refusal reads the party too, so it is judged on the cost before the
 	// panel's copy drops the soldiers.
 	block := ge.offerBlockLocked(cost)
@@ -4751,58 +4684,11 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	savedRuins := ge.Buildings.GetAllRuins()
 
 	// Reset all game systems
-	ge.tick = 0
-	ge.runFacts = newRunFacts()
-	ge.age = "primitive_age"
-	ge.Resources = NewResourceManagerWith(ge.rules)
-	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManagerWith(ge.rules)
-	ge.Research = NewResearchManagerWith(ge.rules)
-	ge.Military = NewMilitaryManagerWith(ge.rules)
-	ge.Events = NewEventManagerWith(ge.rules)
-	ge.Milestones = NewMilestoneManagerWith(ge.rules)
-	ge.Trade = NewTradeManagerWith(ge.rules)
-	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
-	ge.Stats = NewGameStats()
-	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
-	ge.prestigeCue = PrestigeCue{}
-	ge.prestigeCueSeenAge = ""
-	ge.Stats.AgeLog[0].Tick = ge.tick
-	ge.Stats.AgeLog[0].Age = ge.age
-	// Bus intentionally kept — dashboard subscriptions must survive across resets.
-	ge.permanentBonuses = make(map[string]float64)
-	// A new run starts at 1x, as after a Succumb or a wipe: the dev console's
-	// /speed override does not carry into it.
-	ge.speedMultiplier = 1.0
-	ge.buildQueue = nil
-	ge.plan = nil
-	ge.log = nil
-	// The history overlay is this run's: the ring starts over with the run.
-	ge.History = NewHistoryCollector()
-	ge.currentEpoch = ge.rules.EraOf("primitive_age")
-	ge.epochEventFired = make(map[string]bool)
-	ge.clearHarbingerRun()
+	ge.resetRunLocked(0.70)
+	// A prestige also forgets the harbinger outcomes and the epoch events
+	// (a Succumb keeps both).
 	ge.harbingerHistory = nil
-	ge.awakeningsFired = make(map[string]bool)
-	ge.survivedEpochs = make(map[string]bool)
-	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil
-	ge.morale = 0.70
-	ge.lowMoraleWarned = false
-	// Fresh run: this prestige cycle may roll a new Ancient Memory.
-	ge.ancientMemoryUsed = false
-	ge.pendingMemoryTech = ""
-	// The cooldowns are tick numbers and the tick counter just went back to 0.
-	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
-	// A new run keeps no command the last one was granted (features.go).
-	ge.grantedFeatures = nil
-	// The run's timers start over, as in a new game. A stale ageReady let
-	// `advance` skip the Stone Age's requirements before the first tick.
-	ge.ageReady = false
-	ge.starvationTicks = 0
-	ge.autoExpeditionTicksLeft = 0
-	ge.autoExpeditionStarved = false
-	ge.startRunShares()
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -4815,12 +4701,9 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// tick: they have to be in the first snapshot of the new run.
 	ge.recalculateRates()
 
-	// Apply starting resources (base + prestige bonus)
+	// Apply the starting resources
 	ge.Resources.Add("food", 15)
 	ge.Resources.Add("wood", 12)
-	for res, amount := range ge.Prestige.GetStartingResources() {
-		ge.Resources.Add(res, amount)
-	}
 
 	ge.recalculateTickSpeed()
 
@@ -4867,7 +4750,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.addLog("info", vibe.Line("game.engine.completePrestige.12", "Type [cyan]help[-] to get started again."))
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
-	// ge.mu here, so RecordPrestige must not do I/O or re-enter the engine. The write
+	// ge.mu here, so RecordPrestigeFrom must not do I/O or re-enter the engine. The write
 	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A run that
 	// belongs to another account records nothing.
 	if acct := ge.accountForRecordsLocked(); acct != nil {
@@ -4883,15 +4766,66 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.publishRunEnded(end, runStarted)
 }
 
-// BuyPrestigeUpgrade purchases a prestige upgrade tier
-func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-
-	if err := ge.Prestige.BuyUpgrade(key); err != nil {
-		return err
-	}
-	return nil
+// resetRunLocked is the fresh-run block a prestige (completePrestige) and a
+// Succumb share: every manager is built anew, in this order (the constructors
+// are order-sensitive, so a save written after a reset keeps its bytes), and the
+// run's own state starts over, with morale at the figure the caller passes.
+// What outlives the run is the caller's business: the Prestige manager, the
+// ruins, the legacy flags, the histories, the Last Passage and the tick speed
+// bonus. Bus intentionally kept: dashboard subscriptions must survive across
+// resets. Caller holds the write lock.
+func (ge *GameEngine) resetRunLocked(morale float64) {
+	ge.tick = 0
+	ge.runFacts = newRunFacts()
+	ge.age = "primitive_age"
+	ge.Resources = NewResourceManagerWith(ge.rules)
+	ge.Buildings = ge.newBuildingManager()
+	ge.Workers = NewWorkerManagerWith(ge.rules)
+	ge.Research = NewResearchManagerWith(ge.rules)
+	ge.Military = NewMilitaryManagerWith(ge.rules)
+	ge.Events = NewEventManagerWith(ge.rules)
+	ge.Milestones = NewMilestoneManagerWith(ge.rules)
+	ge.Trade = NewTradeManagerWith(ge.rules)
+	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
+	ge.Stats = NewGameStats()
+	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
+	ge.prestigeCue = PrestigeCue{}
+	ge.prestigeCueSeenAge = ""
+	ge.Stats.AgeLog[0].Tick = ge.tick
+	ge.Stats.AgeLog[0].Age = ge.age
+	ge.permanentBonuses = make(map[string]float64)
+	// A new run starts at 1x, as after a wipe: the dev console's /speed
+	// override does not carry into it.
+	ge.speedMultiplier = 1.0
+	ge.buildQueue = nil
+	ge.plan = nil
+	ge.log = nil
+	// The history overlay is this run's: the ring starts over with the run.
+	ge.History = NewHistoryCollector()
+	ge.currentEpoch = ge.rules.EraOf("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.clearHarbingerRun()
+	ge.awakeningsFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+	ge.morale = morale
+	ge.lowMoraleWarned = false
+	// Fresh run: eligible to roll a new Ancient Memory.
+	ge.ancientMemoryUsed = false
+	ge.pendingMemoryTech = ""
+	// The cooldowns are tick numbers and the tick counter just went back to 0:
+	// left as they were, a cooldown with 780 ticks to run at tick 5,001 had
+	// 5,781 to run in the new run.
+	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	// A new run keeps no command the last one was granted (features.go).
+	ge.grantedFeatures = nil
+	// The run's timers start over, as in a new game. A stale ageReady let
+	// `advance` skip the Stone Age's requirements before the first tick.
+	ge.ageReady = false
+	ge.starvationTicks = 0
+	ge.autoExpeditionTicksLeft = 0
+	ge.autoExpeditionStarved = false
+	ge.startRunShares()
 }
 
 // Reset completely reinitializes the engine to a fresh state (including prestige)
@@ -4989,11 +4923,7 @@ func (ge *GameEngine) GetState() GameState {
 	sight := ge.ageSightLocked()
 
 	// One epoch lookup per snapshot (was three full table rebuilds).
-	epochDef, epochOK := ge.rules.Era(ge.currentEpoch)
-	epochColor := "white"
-	if epochOK {
-		epochColor = epochDef.Color
-	}
+	epochDef, _ := ge.rules.Era(ge.currentEpoch)
 
 	logCopy := make([]LogEntry, len(ge.log))
 	copy(logCopy, ge.log)
@@ -5017,7 +4947,6 @@ func (ge *GameEngine) GetState() GameState {
 
 	// The snapshot only reads the age index (it is nowhere kept), so it is not copied.
 	ageOrder := ge.progress.ageOrder()
-	knowledgeCount := ge.scholarTotal()
 	// The military panel reflects the soldiers at home. The soldier milestones
 	// key off the cumulative lifetime trained count instead
 	// (ge.Stats.SoldiersTrained).
@@ -5042,14 +4971,7 @@ func (ge *GameEngine) GetState() GameState {
 		prestigeSnap.NextAge, prestigeSnap.NextAgePoints = next, ge.Prestige.CalculatePoints(next)
 	}
 
-	speedMult := ge.speedMultiplier
-	if speedMult < 1.0 {
-		speedMult = 1.0
-	}
-	tickInterval := time.Duration(float64(BaseTickInterval) / ((1.0 + ge.tickSpeedBonus) * speedMult))
-	if tickInterval < MinTickInterval {
-		tickInterval = MinTickInterval
-	}
+	tickInterval := ge.tickIntervalLocked()
 
 	// MilitaryManager.Snapshot has no *GameEngine receiver, so it cannot see the
 	// Geographic Society's buildings, workers or dispatch countdown. Build the
@@ -5093,40 +5015,29 @@ func (ge *GameEngine) GetState() GameState {
 	workers.TotalPop += workers.Scholars + workers.Soldiers
 	workers.FoodDrain = ge.foodDrainLocked()
 
+	milestoneParams := ge.milestoneParamsLocked(ageOrder)
+	milestoneParams.Sight = &sight
+	milestoneParams.activeEvents = ge.Events.GetActive()
+
 	return GameState{
-		Rules:                ge.rules,
-		Tick:                 ge.tick,
-		Age:                  ge.age,
-		AgeName:              ge.progress.GetAgeName(ge.age),
-		AgeReady:             ge.ageReady,
-		CurrentAgeWonderKey:  currentAgeWonderKey,
-		CurrentAgeWonderName: currentAgeWonderName,
-		NextAge:              nextAge,
-		NextAgeName:          nextAgeName,
-		NextAgeBldReqs:       nextAgeBldReqs,
-		Resources:            ge.Resources.Snapshot(),
-		Buildings:            ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras),
-		Scholars:             ge.scholarsStateLocked(),
-		BuildQueue:           queue,
-		Workers:              workers,
-		Research:             ge.withResearchTimes(ge.Research.Snapshot(ge.age, ageOrder)),
-		Military:             militarySnap,
-		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
-			Tick:            ge.tick,
-			Age:             ge.age,
-			AgeOrder:        ageOrder,
-			Resources:       ge.milestoneResources(),
-			Population:      ge.popLocked(),
-			TechCount:       ge.Research.ResearchedCount(),
-			TotalBuilt:      ge.Stats.TotalBuilt,
-			SoldierCount:    soldiersHome,
-			SoldiersTrained: int(ge.Stats.SoldiersTrained),
-			WonderCount:     ge.countWonders(),
-			KnowledgeCount:  knowledgeCount,
-			Sight:           &sight,
-			activeEvents:    ge.Events.GetActive(),
-			held:            ge.Buildings,
-		}),
+		Rules:                 ge.rules,
+		Tick:                  ge.tick,
+		Age:                   ge.age,
+		AgeName:               ge.progress.GetAgeName(ge.age),
+		AgeReady:              ge.ageReady,
+		CurrentAgeWonderKey:   currentAgeWonderKey,
+		CurrentAgeWonderName:  currentAgeWonderName,
+		NextAge:               nextAge,
+		NextAgeName:           nextAgeName,
+		NextAgeBldReqs:        nextAgeBldReqs,
+		Resources:             ge.Resources.Snapshot(),
+		Buildings:             ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount, ge.buildingExtras),
+		Scholars:              ge.scholarsStateLocked(),
+		BuildQueue:            queue,
+		Workers:               workers,
+		Research:              ge.withResearchTimes(ge.Research.Snapshot(ge.age, ageOrder)),
+		Military:              militarySnap,
+		Milestones:            ge.Milestones.Snapshot(milestoneParams),
 		ActiveEvents:          ge.Events.GetActive(),
 		Prestige:              prestigeSnap,
 		PrestigeCue:           func() PrestigeCue { cue := ge.prestigeCue; cue.Seen = ge.prestigeCueSeenAge == ge.age; return cue }(),
@@ -5135,7 +5046,6 @@ func (ge *GameEngine) GetState() GameState {
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,
 		Stats:                 ge.Stats.Snapshot(),
-		SaveExists:            autosaveExists(),
 		TickSpeedBonus:        ge.tickSpeedBonus,
 		TickIntervalMs:        int(tickInterval.Milliseconds()),
 		CheaterBadge:          ge.cheaterBadge,
@@ -5150,8 +5060,6 @@ func (ge *GameEngine) GetState() GameState {
 		EpochKey:              ge.currentEpoch,
 		EpochName:             epochDef.Name,
 		EpochIcon:             epochDef.Icon,
-		EpochColor:            epochColor,
-		EpochSurvived:         ge.survivedEpochs[ge.currentEpoch],
 		PendingCatastrophe:    ge.pendingCatastrophe,
 		PendingEndure:         pendingEndure,
 		CatastropheOutlook:    ge.catastropheOutlook(),
@@ -5161,13 +5069,7 @@ func (ge *GameEngine) GetState() GameState {
 		Harbinger:             ge.harbingerView(),
 		SessionStart:          ge.sessionStart.clone(),
 		HarbingerHistory:      cloneHarbingerHistory(ge.harbingerHistory),
-		LegacyBonuses: func() map[string]bool {
-			out := make(map[string]bool, len(ge.legacyBonuses))
-			for k, v := range ge.legacyBonuses {
-				out[k] = v
-			}
-			return out
-		}(),
+		LegacyBonuses:         maps.Clone(ge.legacyBonuses),
 		CatastropheHistory:    ge.historyLines(),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
@@ -5178,13 +5080,7 @@ func (ge *GameEngine) GetState() GameState {
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
 		Plan:                  ge.planViews(),
-		PermanentBonuses: func() map[string]float64 {
-			out := make(map[string]float64, len(ge.permanentBonuses))
-			for k, v := range ge.permanentBonuses {
-				out[k] = v
-			}
-			return out
-		}(),
+		PermanentBonuses:      maps.Clone(ge.permanentBonuses),
 		// Snapshot the resolver's aggregated modifiers for the UI's Active
 		// Multipliers panel. buildResolver reads only already-held state and
 		// pure config.*, so it's safe under the RLock held here (it never
@@ -5291,15 +5187,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		elapsed = MaxOfflineTime
 	}
 
-	bonus := ge.tickSpeedBonus
-	mult := ge.speedMultiplier
-	if mult < 1.0 {
-		mult = 1.0
-	}
-	tickInterval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
-	if tickInterval < MinTickInterval {
-		tickInterval = MinTickInterval
-	}
+	tickInterval := ge.tickIntervalLocked()
 
 	offlineTicks := int(elapsed / tickInterval)
 	if offlineTicks <= 0 {
@@ -5687,14 +5575,13 @@ func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 	var result []UpgradeInfo
 	for _, key := range ge.Buildings.OlderKeys() {
 		target, ok := ge.Buildings.UpgradeTarget(key)
-		oldDef, ok2 := ge.rules.Building(key)
+		_, ok2 := ge.rules.Building(key)
 		if !ok || !ok2 {
 			continue
 		}
 		held := ge.Buildings.counts[key]
 		info := UpgradeInfo{
 			FromKey: key, ToKey: target.Key,
-			FromName: oldDef.Name, ToName: target.Name,
 			Count: held,
 			Cost:  ge.Buildings.UpgradeCopyCost(key, 0, ge.buildQueue),
 		}
@@ -5731,10 +5618,8 @@ func (ge *GameEngine) upgradesAffordableLocked(key string, target config.Buildin
 
 // UpgradeInfo describes one older building the town holds, for display.
 type UpgradeInfo struct {
-	FromKey  string
-	ToKey    string
-	FromName string
-	ToName   string
+	FromKey string
+	ToKey   string
 	// Count is the copies held; Cost the price of the next one.
 	Count int
 	Cost  map[string]float64
@@ -5820,32 +5705,6 @@ func (ge *GameEngine) civOpinion(key string) int {
 		return fs.Opinion
 	}
 	return 0
-}
-
-// prestigeUpgradeLine announces a prestige purchase with its total effect at
-// the new tier: "Bought Gather Boost (tier 2): worker output +10%."
-func (ge *GameEngine) prestigeUpgradeLine(key string) string {
-	def, ok := ge.rules.PrestigeUpgrade(key)
-	if !ok {
-		return vibe.Sprintf("game.engine.prestigeUpgradeLine.01", "Bought %s.", ge.rules.Name(rules.KindPrestigeUpgrade, key))
-	}
-	if def.EffectType == "legacy" {
-		// A one-tier kit item: say what it does from now on.
-		return vibe.Sprintf("game.engine.prestigeUpgradeLine.02", "Bought %s. %s.", def.Name, def.Description)
-	}
-	tier := ge.Prestige.upgrades[key]
-	total := float64(def.PerTier * float64(tier))
-	var effect string
-	switch def.EffectType {
-	case "rate_bonus":
-		effect = EffectTargetName(def.EffectKey) + " " + textfmt.SignedPercent(total)
-	case "starting_resource":
-		effect = vibe.Line("game.engine.prestigeUpgradeLine.04", "each run starts with +") + Amount(total, def.EffectKey)
-	}
-	if effect == "" {
-		return vibe.Sprintf("game.engine.prestigeUpgradeLine.05", "Bought %s (tier %d).", def.Name, tier)
-	}
-	return vibe.Sprintf("game.engine.prestigeUpgradeLine.06", "Bought %s (tier %d): %s.", def.Name, tier, effect)
 }
 
 // cheapestTechPrice is the price of the cheapest tech of the current age, or

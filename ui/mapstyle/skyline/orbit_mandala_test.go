@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // mandalaState is a busy Transcendent Age (routes, a war, the harbinger)
@@ -19,13 +21,7 @@ import (
 func mandalaState(eras int) game.GameState {
 	st := fixture.State(fixture.Options{Age: "transcendent_age", Seed: 4, Routes: 3, Wars: 1, Harbinger: true, Scale: 1.5,
 		Tick: tickAt(0.6)})
-	if eras < 7 {
-		st.Stats.AgesReached = nil
-		for _, e := range config.Epochs()[:eras] {
-			st.Stats.AgesReached = append(st.Stats.AgesReached, e.Ages...)
-		}
-		st.Stats.AgesReached = append(st.Stats.AgesReached, st.Age)
-	}
+	fixture.ReachedEras(&st, eras)
 	return st
 }
 
@@ -128,7 +124,7 @@ func TestSkyMandalaSymmetric(t *testing.T) {
 								continue
 							}
 							mc := v.fb.at(q[0], s.Y(q[1]))
-							if mc == nil || mc.d != dMandala || mdMirror(mc.ch, i == 0) != c.ch || mc.bg != c.bg || c.ch != ' ' && mc.fg != c.fg {
+							if mc == nil || mc.d != dMandala || styletest.MirrorRune(mc.ch, i == 0) != c.ch || mc.bg != c.bg || c.ch != ' ' && mc.fg != c.fg {
 								t.Errorf("%dx%d %d eras frame %d: %q at (%d,%d) is not mirrored at (%d,%d)", W, H, eras, anim, c.ch, x, y, q[0], q[1])
 							}
 						}
@@ -303,12 +299,9 @@ func TestSkyMandalaInspect(t *testing.T) {
 
 	// an era reached with nothing of it left standing is still a ring to read
 	st := mandalaState(7)
-	gone := map[string]bool{}
-	for _, a := range config.Epochs()[0].Ages {
-		gone[a] = true
-	}
+	gone := config.Epochs()[0].Ages
 	for k, b := range st.Buildings {
-		if gone[b.AgeKey] {
+		if slices.Contains(gone, b.AgeKey) {
 			delete(st.Buildings, k)
 		}
 	}
@@ -414,7 +407,7 @@ func TestSkyMandalaCompact(t *testing.T) {
 							if q[1] < 0 || q[1] >= H-1 || q[0] < 0 || q[0] >= W {
 								continue
 							}
-							if mc := v.fb.at(q[0], q[1]+1); mc.d != dMandala || mdMirror(mc.ch, i == 0) != c.ch || mc.bg != c.bg {
+							if mc := v.fb.at(q[0], q[1]+1); mc.d != dMandala || styletest.MirrorRune(mc.ch, i == 0) != c.ch || mc.bg != c.bg {
 								t.Errorf("%dx%d frame %d: %q at (%d,%d) is not mirrored at (%d,%d)", W, H, anim, c.ch, x, y, q[0], q[1])
 							}
 						}
@@ -458,24 +451,4 @@ func TestSkyMandalaPixelBands(t *testing.T) {
 			}
 		}
 	}
-}
-
-// mdMirror is r seen in a mirror: across the vertical axis (lr) or the
-// horizontal one. The petal points, the core's rays and the half-block
-// pixels turn with the mirror; every other glyph is its own mirror image.
-func mdMirror(r rune, lr bool) rune {
-	pairs := map[rune]rune{'╱': '╲', '╲': '╱'}
-	if lr {
-		for a, b := range map[rune]rune{'◄': '►', '◤': '◥', '◣': '◢'} {
-			pairs[a], pairs[b] = b, a
-		}
-	} else {
-		for a, b := range map[rune]rune{'▲': '▼', '◤': '◣', '◥': '◢', '▀': '▄'} {
-			pairs[a], pairs[b] = b, a
-		}
-	}
-	if m, ok := pairs[r]; ok {
-		return m
-	}
-	return r
 }

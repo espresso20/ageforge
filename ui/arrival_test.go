@@ -45,7 +45,6 @@ func fullSummary() game.AgeAdvanceSummary {
 			{OldName: "War Camp", NewName: "Barracks", Count: 2},
 			{OldName: "Woodcutter Camp", NewName: "Lumber Mill", Count: 4},
 		},
-		BuildingsLegacy: []string{"stash", "stone_camp"},
 	}
 }
 
@@ -396,8 +395,14 @@ func checkArrivalInfo(t *testing.T, where string, r *arrivalRig, w, h int) {
 		for y := 0; y < a.sc.L.top; y++ {
 			screen += " " + strings.TrimSpace(g.row(y))
 		}
-		if short := ironShort(g, a.sc.L.age, a.view.plain); short != 0 {
-			t.Errorf("%s: the name over the box is %d cells short", where, short)
+		if p := a.sc.L.age; p.ok {
+			if short := ironShort(g, p, a.view.plain); short != 0 {
+				t.Errorf("%s: the name over the box is %d cells short", where, short)
+			}
+		} else if caps := strings.ToUpper(a.view.age); !pageHas(g, caps) && !pageHas(g, spaced(caps)) {
+			// A name too long for iron at this size is a line of capitals
+			// (checkArrivalPlainNarrow holds the same rule).
+			t.Errorf("%s: the name over the box is not on the screen in capitals", where)
 		}
 	}
 	screen = strings.Join(strings.Fields(screen), " ")

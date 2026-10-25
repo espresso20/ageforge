@@ -154,6 +154,16 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 		lay.maxW = max(lay.maxW, spr.w)
 		lay.lots = append(lay.lots, lv)
 	}
+	lay.finish()
+	v.layoutSites(lay)
+	v.lay = lay
+	return lay
+}
+
+// finish sorts the dressed lots into draw order (stable: equal lots keep their
+// model order) and builds what the lookups need: the id index, the new-lot
+// columns, the lots by x0, the skyline profile and its tallest lot per column.
+func (lay *layout) finish() {
 	sort.SliceStable(lay.lots, func(i, j int) bool {
 		a, b := &lay.lots[i], &lay.lots[j]
 		if a.depth != b.depth {
@@ -172,7 +182,6 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 			lay.news = append(lay.news, ml.X)
 		}
 	}
-	v.layoutSites(lay)
 	lay.byX = make([]int32, len(lay.lots))
 	for i := range lay.byX {
 		lay.byX[i] = int32(i)
@@ -198,8 +207,6 @@ func (v *view) layoutSized(m *mapmodel.Model, groundY, ref int) *layout {
 			}
 		}
 	}
-	v.lay = lay
-	return lay
 }
 
 // visible appends to out the lots overlapping world columns [x0, x1), in

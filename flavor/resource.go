@@ -113,11 +113,6 @@ func say(told bool, e vibe.Entry) string {
 	return e.Plain()
 }
 
-// labelOverride replaces the config display name where lowercasing it does not
-// give the phrase we want mid-sentence. Empty today; kept as the documented seam
-// so a future awkward display name is fixed here rather than in the sentences.
-var labelOverride = map[string]string{}
-
 // labelsOnce guards the lazily-built key→label map. config.ResourceByKey()
 // rebuilds its map on every call, and the generator can run thousands of times a
 // run, so the lookup is built once.
@@ -129,8 +124,8 @@ var (
 
 // resourceLabel returns the plain, mid-sentence label for a resource key:
 // the config display name lowercased ("Dark Matter Crystals" → "dark matter
-// crystals"), an override if one is registered, or the key with underscores
-// turned into spaces when config does not know the key at all.
+// crystals"), or the key with underscores turned into spaces when config does
+// not know the key at all.
 //
 // An empty key yields the generic "supplies", so a template that references a
 // resource still reads if a caller forgets to set one.
@@ -139,9 +134,6 @@ func resourceLabel(key string) string {
 		return "supplies"
 	}
 	loadLabels()
-	if v, ok := labelOverride[key]; ok {
-		return v
-	}
 	if v, ok := labelCache[key]; ok {
 		return v
 	}
@@ -165,13 +157,10 @@ func loadLabels() {
 // while VibeMode is on, it is the script's name for the resource
 // (resource.<key>.name, the row the ruleset's definition reads) lowercased, so
 // a story names a resource as the log does; a resource the script has no name
-// for, an override, and the plain reading are resourceLabel.
+// for, and the plain reading, are resourceLabel.
 func resourceLabelAs(key string, told bool) string {
 	plain := resourceLabel(key)
 	if !told || key == "" || !vibe.On() {
-		return plain
-	}
-	if _, ok := labelOverride[key]; ok {
 		return plain
 	}
 	name, ok := nameCache[key]
@@ -198,39 +187,28 @@ func isMass(key string) bool { return classOf(key) == massNoun }
 // --- the grammatical frames -------------------------------------------------
 //
 // Four frames, each rendered from a placeholder in the templates. Two are safe
-// for BOTH classes; two are mass-only and gated by needMassRes.
+// for BOTH classes ({res}, the bare label, which works as a bare noun phrase for
+// mass and count alike: "took food", "took soldiers"; and {amt_res}); two are
+// mass-only and gated by needMassRes.
 
-// phraseBare is "{res}": the bare label. Mass and count both work as a bare noun
-// phrase ("took food", "took soldiers").
-func phraseBare(key string) string { return resourceLabel(key) }
-
-// phraseBareAs is phraseBare in the reading asked for (see say).
-func phraseBareAs(key string, told bool) string { return resourceLabelAs(key, told) }
-
-// phraseStores is "{res_stores}": MASS ONLY. "your food stores" — a plural head
-// noun, so it takes a plural verb ("your food stores are lighter").
-func phraseStores(key string) string { return phraseStoresAs(key, false) }
-
-// phraseStoresAs is phraseStores in the reading asked for (see say).
+// phraseStoresAs is "{res_stores}": MASS ONLY. "your food stores" — a plural head
+// noun, so it takes a plural verb ("your food stores are lighter"). It reads in
+// the reading asked for (see say).
 func phraseStoresAs(key string, told bool) string {
 	return say(told, storesOpen) + resourceLabelAs(key, told) + say(told, storesClose)
 }
 
-// phraseHaul is "{res_haul}": MASS ONLY. "a haul of food" — the indefinite
-// article attaches to "haul", never to the mass noun itself.
-func phraseHaul(key string) string { return phraseHaulAs(key, false) }
-
-// phraseHaulAs is phraseHaul in the reading asked for (see say).
+// phraseHaulAs is "{res_haul}": MASS ONLY. "a haul of food" — the indefinite
+// article attaches to "haul", never to the mass noun itself. It reads in the
+// reading asked for (see say).
 func phraseHaulAs(key string, told bool) string {
 	return say(told, haulOpen) + resourceLabelAs(key, told)
 }
 
-// phraseQuantity is "{amt_res}": a number and a label, correctly inflected.
+// phraseQuantityAs is "{amt_res}": a number and a label, correctly inflected.
 // Mass nouns never inflect ("40 food"); count nouns take the singular at exactly
-// one ("1 soldier") and the already-plural label otherwise ("12 soldiers").
-func phraseQuantity(key string, n int) string { return phraseQuantityAs(key, n, false) }
-
-// phraseQuantityAs is phraseQuantity in the reading asked for (see say).
+// one ("1 soldier") and the already-plural label otherwise ("12 soldiers"). It
+// reads in the reading asked for (see say).
 func phraseQuantityAs(key string, n int, told bool) string {
 	label := resourceLabelAs(key, told)
 	if classOf(key) == countNoun && n == 1 {

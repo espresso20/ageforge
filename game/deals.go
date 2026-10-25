@@ -665,11 +665,6 @@ func DealTerms(kind, give string, giveAmt float64, get string, getAmt float64, s
 	return vibe.Sprintf("game.deals.DealTerms.01", "%s: give %s %s → get %s", DealKindLabel(kind), num(giveAmt), ResourceName(give), DealGets(get, getAmt, standing, num))
 }
 
-// dealTerms is DealTerms for a saved deal, with the log's number format.
-func dealTerms(d FactionDeal) string {
-	return DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, textfmt.Number)
-}
-
 // dealLogTerms is a deal's terms as a clause for the log and the plan
 // label: "Buy: give 876M iron ore, get 966K food".
 func dealLogTerms(d FactionDeal) string {
@@ -681,12 +676,8 @@ func dealLogTerms(d FactionDeal) string {
 func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	def, ok := ge.Diplomacy.factionDefs[key]
+	def, fs, ok := ge.Diplomacy.metCiv(key)
 	if !ok {
-		return FactionDeal{}, ge.Diplomacy.errUnknownCiv(key)
-	}
-	fs, ok := ge.Diplomacy.factions[key]
-	if !ok || !fs.Discovered {
 		return FactionDeal{}, ge.Diplomacy.errUnknownCiv(key)
 	}
 	if err := ge.featureErr(config.FeatureDiplomacy); err != nil {

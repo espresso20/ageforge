@@ -36,9 +36,6 @@ func TestAdvanceAge_TurnsBuildingsOlder(t *testing.T) {
 	if !listed {
 		t.Errorf("the advance summary does not list the Gathering Camps: %+v", ge.lastAgeAdvanceSummary)
 	}
-	if len(ge.lastAgeAdvanceSummary.BuildingsLegacy) != 0 {
-		t.Errorf("the advance flagged legacy buildings %v; nothing is flagged any more", ge.lastAgeAdvanceSummary.BuildingsLegacy)
-	}
 	if len(ge.GetAvailableUpgrades()) == 0 {
 		t.Error("upgrade lists nothing after the advance")
 	}

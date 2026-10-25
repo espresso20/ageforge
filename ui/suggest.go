@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -93,7 +94,7 @@ func (c *completer) valid(a Arg, w string) bool {
 
 // buildUniverse lists every key each game-thing kind can take.
 func buildUniverse() map[ArgKind]map[string]bool {
-	var techs, resources, factions, themes, routes, upgrades []string
+	var techs, resources, factions, themes, routes []string
 	for _, t := range config.Technologies() {
 		techs = append(techs, t.Key)
 	}
@@ -109,9 +110,6 @@ func buildUniverse() map[ArgKind]map[string]bool {
 	for _, r := range config.BaseTradeRoutes() {
 		routes = append(routes, r.Key)
 	}
-	for _, u := range config.ActivePrestigeUpgrades() {
-		upgrades = append(upgrades, u.Key)
-	}
 	b, r := setOf(sortedKeysOf(config.BuildingByKey())), setOf(resources)
 	return map[ArgKind]map[string]bool{
 		ArgBuilding: b, ArgPlanBuilding: b, ArgSellBuilding: b, ArgWorkerBuilding: b,
@@ -121,8 +119,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 		ArgResource: r, ArgWonderResource: r,
 		ArgFaction: setOf(factions), ArgTheme: setOf(themes),
 		ArgRouteAvailable: setOf(routes), ArgRouteActive: setOf(routes),
-		ArgPrestigeUpgrade: setOf(upgrades),
-		ArgDomain:          setOf(config.WorkerDomains()),
+		ArgDomain: setOf(config.WorkerDomains()),
 	}
 }
 
@@ -314,33 +311,11 @@ func closestCommand(word string) string {
 	sort.Strings(names)
 	best, bestDist := "", limit+1
 	for _, n := range names {
-		if d := editDistance(word, n); d < bestDist {
+		if d := textfmt.EditDistance(word, n); d < bestDist {
 			best, bestDist = n, d
 		}
 	}
 	return best
-}
-
-// editDistance is the Levenshtein distance between a and b, by rune.
-func editDistance(a, b string) int {
-	ra, rb := []rune(a), []rune(b)
-	prev := make([]int, len(rb)+1)
-	for j := range prev {
-		prev[j] = j
-	}
-	for i := 1; i <= len(ra); i++ {
-		curr := make([]int, len(rb)+1)
-		curr[0] = i
-		for j := 1; j <= len(rb); j++ {
-			cost := 1
-			if ra[i-1] == rb[j-1] {
-				cost = 0
-			}
-			curr[j] = min(curr[j-1]+1, prev[j]+1, prev[j-1]+cost)
-		}
-		prev = curr
-	}
-	return prev[len(rb)]
 }
 
 func sortedSubs(c *Command) []*Command {
@@ -408,8 +383,6 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return availableTradeRouteKeys(st)
 	case ArgRouteActive:
 		return activeTradeRouteKeys(st)
-	case ArgPrestigeUpgrade:
-		return prestigeUpgradeKeys(st)
 	case ArgAccount:
 		return localAccountNames(c.engine)
 	case ArgDeal:
@@ -620,18 +593,6 @@ func assignedBuildingKeysAll(state game.GameState) []string {
 		}
 	}
 	return sortedKeysOf(seen)
-}
-
-// prestigeUpgradeKeys returns the legacy kit items not bought yet, the
-// ones the points on hand can buy first.
-func prestigeUpgradeKeys(state game.GameState) []string {
-	keys := keysWhere(state.Prestige.Upgrades, func(_ string, u game.PrestigeUpgradeState) bool { return u.NextCost > 0 })
-	return byRank(keys, func(k string) int {
-		if state.Prestige.Upgrades[k].NextCost <= state.Prestige.Available {
-			return 0
-		}
-		return 1
-	})
 }
 
 // availableTradeRouteKeys returns the routes that can start, sorted.

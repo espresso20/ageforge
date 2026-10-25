@@ -525,17 +525,8 @@ func library(h int) *sprite {
 		if side > 0 {
 			tx = w - 5
 		}
+		s.shaft(tx, base-tower, base, 5, sWallLit, sWall, sWallShade)
 		for y := base - tower; y <= base; y++ {
-			for x := tx; x < tx+5; x++ {
-				sl := sWall
-				if x == tx {
-					sl = sWallLit
-				}
-				if x == tx+4 {
-					sl = sWallShade
-				}
-				s.put(x, y, '█', sl, sNone)
-			}
 			if (base-y)%3 == 1 && y > base-tower+2 {
 				s.put(tx+2, y, '▌', sWin, sWall)
 			}

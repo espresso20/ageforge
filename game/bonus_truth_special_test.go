@@ -305,7 +305,7 @@ func TestBonusTruthEpochEventsAtOnce(t *testing.T) {
 func TestBonusTruthPrestige(t *testing.T) {
 	ge := newTruthEngine("information_age", truthClean)
 	before := readTruth(t, ge)
-	ge.Prestige.LoadState(1, 201, 0, nil)
+	ge.Prestige.LoadState(1, 201, 0)
 	after := readTruth(t, ge)
 	want := ge.Prestige.ProductionMultiplier()
 	for meter, value := range before {
@@ -326,7 +326,7 @@ func TestPrestigeProductionFrontierOnlineOffline(t *testing.T) {
 	const age = "information_age"
 	newTown := func(points int) (*GameEngine, string) {
 		ge := newTruthEngine(age, truthClean)
-		ge.Prestige.LoadState(1, points, 0, nil)
+		ge.Prestige.LoadState(1, points, 0)
 		ge.recalculateRates()
 		for _, key := range ge.Resources.order {
 			if ge.Resources.resources[key].Rate > 0 {
@@ -385,7 +385,7 @@ func TestPrestigeProductionRateEventSizesBeforePrestige(t *testing.T) {
 	)
 	newTown := func() (*GameEngine, string) {
 		ge := newTruthEngine(age, truthClean)
-		ge.Prestige.LoadState(1, points, 0, nil)
+		ge.Prestige.LoadState(1, points, 0)
 		ge.recalculateRates()
 		for _, key := range ge.Resources.order {
 			if ge.Resources.resources[key].Rate > 0 {

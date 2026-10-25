@@ -29,12 +29,8 @@ const PlanDeal = "deal"
 func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	def, ok := ge.Diplomacy.factionDefs[key]
+	def, fs, ok := ge.Diplomacy.metCiv(key)
 	if !ok {
-		return ge.Diplomacy.errUnknownCiv(key)
-	}
-	fs, ok := ge.Diplomacy.factions[key]
-	if !ok || !fs.Discovered {
 		return ge.Diplomacy.errUnknownCiv(key)
 	}
 	if err := ge.featureErr(config.FeatureDiplomacy); err != nil {

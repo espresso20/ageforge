@@ -222,7 +222,7 @@ func snapDiff(a, b GameState) string {
 
 func diffVal(a, b reflect.Value, path string) string {
 	switch path {
-	case "GameState.Stats.PlayTime", "GameState.SaveExists":
+	case "GameState.Stats.PlayTime":
 		return ""
 	}
 	if a.Kind() != b.Kind() {

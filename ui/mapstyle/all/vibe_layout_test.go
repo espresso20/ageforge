@@ -9,7 +9,6 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/vibe"
@@ -33,9 +32,7 @@ func TestVibeTextNeverMovesWhatIsAroundIt(t *testing.T) {
 	was := vibe.On()
 	t.Cleanup(func() { vibe.Set(was) })
 	vibe.Set(false)
-	if err := theme.SetActive("forge"); err != nil {
-		t.Fatal(err)
-	}
+	fixture.WithTheme(t, "forge")
 	keys := []*tcell.EventKey{
 		tcell.NewEventKey(tcell.KeyRight, 0, 0), tcell.NewEventKey(tcell.KeyDown, 0, 0),
 		tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModShift), tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModShift),

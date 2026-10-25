@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"sort"
@@ -203,58 +204,6 @@ func (bm *BuildingManager) techLocked(def *config.BuildingDef) bool {
 	return !(bm.graceAge != "" && def.RequiredAge == bm.graceAge)
 }
 
-// SuggestKey returns the closest building key to the input, or "" if none is close
-func (bm *BuildingManager) SuggestKey(input string) string {
-	best := ""
-	bestDist := 3 // max edit distance to suggest
-	for key := range bm.defs {
-		d := editDistance(input, key)
-		if d < bestDist {
-			bestDist = d
-			best = key
-		}
-	}
-	return best
-}
-
-// editDistance computes Levenshtein distance between two strings
-func editDistance(a, b string) int {
-	la, lb := len(a), len(b)
-	if la == 0 {
-		return lb
-	}
-	if lb == 0 {
-		return la
-	}
-	prev := make([]int, lb+1)
-	for j := range prev {
-		prev[j] = j
-	}
-	for i := 1; i <= la; i++ {
-		curr := make([]int, lb+1)
-		curr[0] = i
-		for j := 1; j <= lb; j++ {
-			cost := 1
-			if a[i-1] == b[j-1] {
-				cost = 0
-			}
-			ins := curr[j-1] + 1
-			del := prev[j] + 1
-			sub := prev[j-1] + cost
-			min := ins
-			if del < min {
-				min = del
-			}
-			if sub < min {
-				min = sub
-			}
-			curr[j] = min
-		}
-		prev = curr
-	}
-	return prev[lb]
-}
-
 // closestKey returns the key nearest to input by edit distance (at most 2),
 // or "" if none is that close. Keys are compared in sorted order so a tie
 // always resolves to the same suggestion.
@@ -267,7 +216,7 @@ func closestKey[V any](input string, keys map[string]V) string {
 	best := ""
 	bestDist := 3
 	for _, k := range sorted {
-		if d := editDistance(input, k); d < bestDist {
+		if d := textfmt.EditDistance(input, k); d < bestDist {
 			bestDist = d
 			best = k
 		}
@@ -337,22 +286,6 @@ func (bm *BuildingManager) batchCost(key string, def *config.BuildingDef, n int,
 	return total
 }
 
-// NextCost is what the next copy of key costs in res, the copies in queue
-// counted: BuildBatchCost(key, 1, queue)[res], to the bit, without building a
-// map (the plan prices every planned item each tick). 0 for an unknown key or a resource it doesn't cost.
-func (bm *BuildingManager) NextCost(key, res string, queue []BuildQueueItem) float64 {
-	def, ok := bm.defs[key]
-	if !ok {
-		return 0
-	}
-	base, ok := def.BaseCost[res]
-	if !ok {
-		return 0
-	}
-	exp := float64(bm.counts[key] + bm.GetQueueCount(key, queue))
-	return applyCostMult(base*detmath.Pow(def.CostScale, exp), bm.costMult)
-}
-
 // SellCost returns the 50% refund for selling n copies of a building,
 // assuming current copies are currently built.
 // Sells from the top (most expensive first): copy current, current-1, … current-n+1.
@@ -395,16 +328,7 @@ func (bm *BuildingManager) RemoveBuilding(key string, n int) int {
 // Cost scales exponentially: base × CostScale^count, floored to the nearest
 // integer. This makes later copies progressively more expensive.
 func (bm *BuildingManager) GetCost(key string) map[string]float64 {
-	def, ok := bm.defs[key]
-	if !ok {
-		return nil
-	}
-	count := bm.counts[key]
-	cost := make(map[string]float64)
-	for res, base := range def.BaseCost {
-		cost[res] = applyCostMult(base*detmath.Pow(def.CostScale, float64(count)), bm.costMult)
-	}
-	return cost
+	return bm.CopyCost(key, 0, nil)
 }
 
 // applyCostMult folds the global build-cost factor into a single resource's raw
@@ -421,49 +345,6 @@ func applyCostMult(raw, mult float64) float64 {
 		c = 1
 	}
 	return c
-}
-
-// Build constructs a building. Returns false if can't afford or not
-// unlocked, or if it still waits for a tech.
-func (bm *BuildingManager) Build(key string, resources *ResourceManager) bool {
-	if !bm.IsUnlocked(key) || bm.TechLocked(key) {
-		return false
-	}
-	def, ok := bm.defs[key]
-	if !ok {
-		return false
-	}
-	if def.MaxCount > 0 && bm.counts[key] >= def.MaxCount {
-		return false
-	}
-	cost := bm.GetCost(key)
-	if !resources.Pay(cost) {
-		return false
-	}
-	bm.counts[key]++
-	return true
-}
-
-// GetEffects returns the aggregate non-production effects from all built buildings
-// (e.g. capacity, storage). Production effects are intentionally excluded here
-// because they depend on the worker fill ratio; use WorkerScaledProduction for those.
-func (bm *BuildingManager) GetEffects() []config.Effect {
-	var effects []config.Effect
-	for key, count := range bm.counts {
-		if count == 0 {
-			continue
-		}
-		def := bm.defs[key]
-		for _, eff := range def.Effects {
-			scaled := config.Effect{
-				Type:   eff.Type,
-				Target: eff.Target,
-				Value:  eff.Value * float64(count),
-			}
-			effects = append(effects, scaled)
-		}
-	}
-	return effects
 }
 
 // unstaffedShare is what a building with worker slots makes with nobody in
@@ -562,11 +443,7 @@ func (bm *BuildingManager) GetPopCapacity() int {
 
 // GetAll returns building counts (for save)
 func (bm *BuildingManager) GetAll() map[string]int {
-	out := make(map[string]int)
-	for key, count := range bm.counts {
-		out[key] = count
-	}
-	return out
+	return maps.Clone(bm.counts) // never nil: the manager makes it
 }
 
 // LoadCounts restores building counts from save data
@@ -628,14 +505,16 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 	return amount, nil
 }
 
-// GetWonderBank returns a copy of the banked resources for a wonder.
+// GetWonderBank returns a copy of the banked resources for a wonder (an empty
+// map, not nil, when nothing is banked).
 func (bm *BuildingManager) GetWonderBank(wonderKey string) map[string]float64 {
-	bank := bm.wonderBanks[wonderKey]
-	out := make(map[string]float64, len(bank))
-	for k, v := range bank {
-		out[k] = v
-	}
-	return out
+	return copyWonderBank(bm.wonderBanks[wonderKey])
+}
+
+// copyWonderBank copies a wonder's bank; unlike maps.Clone it turns nil into an
+// empty map, which is what the callers and the save always held.
+func copyWonderBank(bank map[string]float64) map[string]float64 {
+	return maps.Collect(maps.All(bank))
 }
 
 // IsWonderBankFull returns true when all required resources have been banked.
@@ -662,11 +541,7 @@ func (bm *BuildingManager) IsWonderBankFull(wonderKey string) bool {
 func (bm *BuildingManager) GetWonderBanks() map[string]map[string]float64 {
 	out := make(map[string]map[string]float64, len(bm.wonderBanks))
 	for k, v := range bm.wonderBanks {
-		inner := make(map[string]float64, len(v))
-		for rk, rv := range v {
-			inner[rk] = rv
-		}
-		out[k] = inner
+		out[k] = copyWonderBank(v)
 	}
 	return out
 }
@@ -685,14 +560,7 @@ func (bm *BuildingManager) UpgradeRoom(key string, n int, queue []BuildQueueItem
 	if !ok || def.MaxCount <= 0 {
 		return n
 	}
-	room := def.MaxCount - bm.counts[key] - bm.GetQueueCount(key, queue)
-	if room < 0 {
-		room = 0
-	}
-	if n > room {
-		return room
-	}
-	return n
+	return min(n, max(0, def.MaxCount-bm.counts[key]-bm.GetQueueCount(key, queue)))
 }
 
 // SetUpgradeCostTerm sets the techs' term on what an upgrade costs.
@@ -786,24 +654,24 @@ func keepsItsTier(def config.BuildingDef) bool {
 // over it is reproducible. Map iteration order must never leak into a random
 // draw.
 func (bm *BuildingManager) destroyablePool() []string {
-	keys := make([]string, 0, len(bm.counts))
-	for key, c := range bm.counts {
-		if c <= 0 {
-			continue
-		}
-		if def, ok := bm.defs[key]; !ok || !isDestroyable(def) {
-			continue
-		}
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
 	var pool []string
-	for _, key := range keys {
-		for i := 0; i < bm.counts[key]; i++ {
+	bm.eachDestroyable(func(key string, c int) {
+		for range c {
 			pool = append(pool, key)
 		}
-	}
+	})
 	return pool
+}
+
+// eachDestroyable calls f for every building type a catastrophe may take (see
+// isDestroyable) that has a copy standing, in sorted key order, with its count.
+// The pool a random draw shuffles is built from it, so the order must be stable.
+func (bm *BuildingManager) eachDestroyable(f func(key string, count int)) {
+	bm.eachBuilt(func(key string, c int, def config.BuildingDef) {
+		if isDestroyable(def) {
+			f(key, c)
+		}
+	})
 }
 
 // DestroyableCount returns how many built building instances a catastrophe can
@@ -811,14 +679,7 @@ func (bm *BuildingManager) destroyablePool() []string {
 // (see isDestroyable).
 func (bm *BuildingManager) DestroyableCount() int {
 	n := 0
-	for key, c := range bm.counts {
-		if c <= 0 {
-			continue
-		}
-		if def, ok := bm.defs[key]; ok && isDestroyable(def) {
-			n += c
-		}
-	}
+	bm.eachDestroyable(func(_ string, c int) { n += c })
 	return n
 }
 
@@ -852,10 +713,7 @@ func (bm *BuildingManager) GenerateRuins(rng *rand.Rand, n int) map[string]int {
 	newRuins := drawFromPool(rng, bm.destroyablePool(), n)
 	for key, count := range newRuins {
 		bm.ruins[key] += count
-		bm.counts[key] -= count
-		if bm.counts[key] < 0 {
-			bm.counts[key] = 0
-		}
+		bm.counts[key] -= count // the pool held every copy once, so the count stays at or above 0
 	}
 	return newRuins
 }
@@ -964,21 +822,13 @@ func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 // the log (e.g. "3 Lumber Mills") in sorted key order.
 func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]int, []string) {
 	destroyed := drawFromPool(rng, bm.destroyablePool(), count)
-	keys := make([]string, 0, len(destroyed))
-	for key := range destroyed {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
 	var names []string
-	for _, key := range keys {
+	for _, key := range sortedKeys(destroyed) {
+		// The pool held each copy once, so the count stays at or above 0, and
+		// only types with a def are in it.
 		n := destroyed[key]
 		bm.counts[key] -= n
-		if bm.counts[key] < 0 {
-			bm.counts[key] = 0
-		}
-		if def, ok := bm.defs[key]; ok {
-			names = append(names, textfmt.Int(n)+" "+pluralName(n, def.Name))
-		}
+		names = append(names, textfmt.Int(n)+" "+pluralName(n, bm.defs[key].Name))
 	}
 	return destroyed, names
 }

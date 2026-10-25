@@ -60,7 +60,6 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 	check("TradeRoutes", s.TradeRoutes(), config.BaseTradeRoutes())
 	check("WorkerDomains", s.WorkerDomains(), config.WorkerDomains())
 	check("PrestigeUpgrades", s.PrestigeUpgrades(), config.PrestigeUpgrades())
-	check("ShopUpgrades", s.ShopUpgrades(), config.ActivePrestigeUpgrades())
 	check("LegacyKit", s.LegacyKit(), config.LegacyKit())
 
 	for key, want := range config.AgeByKey() {
@@ -83,12 +82,11 @@ func TestCoreMatchesConfigTables(t *testing.T) {
 			t.Errorf("Faction(%q) differs from config", key)
 		}
 	}
-	for key, want := range config.PrestigeUpgradeByKey() {
-		if got, ok := s.PrestigeUpgrade(key); !ok || !reflect.DeepEqual(got, want) {
-			t.Errorf("PrestigeUpgrade(%q) differs from config", key)
-		}
+	techsByAge := map[string][]config.TechDef{}
+	for _, tech := range config.Technologies() {
+		techsByAge[tech.Age] = append(techsByAge[tech.Age], tech)
 	}
-	for age, want := range config.TechsByAge() {
+	for age, want := range techsByAge {
 		if !reflect.DeepEqual(s.TechsOf(age), want) {
 			t.Errorf("TechsOf(%q) differs from config", age)
 		}
@@ -269,9 +267,6 @@ func TestPackageLookupsMatchTheirTables(t *testing.T) {
 		}
 		if !reflect.DeepEqual(config.PriceLevels(age), s.PriceLevels(age)) {
 			t.Errorf("config.PriceLevels(%q) differs from the set", age)
-		}
-		if got, want := config.PricedResources(age), s.PricedResources(age); len(got) != len(want) || (len(want) > 0 && !reflect.DeepEqual(got, want)) {
-			t.Errorf("config.PricedResources(%q) = %v, set %v", age, got, want)
 		}
 	}
 }
@@ -491,12 +486,12 @@ func TestSetHandsOutCopies(t *testing.T) {
 		"GoodEraEvents": s.GoodEraEvents(), "ChallengingEraEvents": s.ChallengingEraEvents(),
 		"Factions": s.Factions(), "TradeRoutes": s.TradeRoutes(),
 		"WorkerDomains": s.WorkerDomains(), "PrestigeUpgrades": s.PrestigeUpgrades(),
-		"ShopUpgrades": s.ShopUpgrades(), "LegacyKit": s.LegacyKit(),
+		"LegacyKit":   s.LegacyKit(),
 		"PriceLevels": s.PriceLevels(age), "PricedResources": s.PricedResources(age),
 		"Counts": s.Counts(),
 	} {
 		v := reflect.ValueOf(got)
-		if v.Len() == 0 && name != "PrestigeUpgrades" && name != "ShopUpgrades" {
+		if v.Len() == 0 && name != "PrestigeUpgrades" {
 			t.Errorf("%s is empty: nothing to check", name)
 			continue
 		}

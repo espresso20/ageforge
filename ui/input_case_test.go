@@ -43,7 +43,7 @@ func newCaseTestEngine(t *testing.T, age string) *game.GameEngine {
 		}
 	}
 	ge.Diplomacy.DiscoverFaction("riverlands_tribes")
-	ge.Prestige.LoadState(1, 20, 20, nil)
+	ge.Prestige.LoadState(1, 20, 20)
 	stock := map[string]float64{}
 	for _, k := range []string{"food", "wood", "stone", "gold", "iron", "knowledge", "culture", "soldiers"} {
 		stock[k] = 50000

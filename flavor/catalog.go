@@ -94,7 +94,6 @@ var (
 	// Spans, for imagery that genuinely covers two neighbouring buckets — a road
 	// and a river crossing belong to every age that has ground under it.
 	erasEarly = []era{eraAncient, eraFeudal}
-	erasMid   = []era{eraFeudal, eraIndustrial}
 	erasLate  = []era{eraDigital, eraCosmic}
 
 	// erasGrounded is every age with lanes, dogs and a washing line. The
@@ -146,6 +145,30 @@ func mergeBanks(tables ...map[string][]string) map[string][]string {
 	return out
 }
 
+// momentTable is the fixed data of every registered Moment, in the stable order
+// Moments returns them: the name String gives, the prefix its pool names start
+// with, and its part of a row id (see rowParts). MomentUnknown is not in it.
+var momentTable = []struct {
+	m                 Moment
+	name, prefix, key string
+}{
+	{ExpeditionSuccess, "ExpeditionSuccess", "exp_success", "expedition_success"},
+	{ExpeditionFailure, "ExpeditionFailure", "exp_fail", "expedition_fail"},
+	{EncounterStandoff, "EncounterStandoff", "enc_standoff", "encounter_standoff"},
+	{EncounterAtCapacity, "EncounterAtCapacity", "enc_cap", "encounter_full"},
+	{WarRaid, "WarRaid", "war_raid", "raid"},
+	{HarbingerArrival, "HarbingerArrival", "harb_arrival", "harbinger_arrival"},
+	{HarbingerWarning, "HarbingerWarning", "harb_warn", "harbinger_warning"},
+	{HarbingerAppeased, "HarbingerAppeased", "harb_appeased", "harbinger_appeased"},
+	{HarbingerBraced, "HarbingerBraced", "harb_braced", "harbinger_braced"},
+	{HarbingerVindicated, "HarbingerVindicated", "harb_vindicated", "harbinger_vindicated"},
+	{HarbingerSpared, "HarbingerSpared", "harb_spared", "harbinger_spared"},
+	{HarbingerDiscredited, "HarbingerDiscredited", "harb_discredited", "harbinger_discredited"},
+	{HarbingerInvited, "HarbingerInvited", "harb_invited", "harbinger_invited"},
+	{HarbingerFulfilled, "HarbingerFulfilled", "harb_fulfilled", "harbinger_fulfilled"},
+	{RunEnding, "RunEnding", "run_end", "run_ending"},
+}
+
 // templatesFor returns a Moment's skeleton set in a stable order. An unregistered
 // Moment returns nil, which is what makes Generate yield an empty Result for it.
 //
@@ -160,47 +183,30 @@ func templatesFor(m Moment) []tmpl {
 // sync.OnceValue rather than an init-time var so the cost is paid on first use,
 // and so concurrent first calls (two engines in one test binary) are race-free.
 var templateCache = sync.OnceValue(func() map[Moment][]tmpl {
-	out := make(map[Moment][]tmpl, len(Moments()))
-	for _, m := range Moments() {
-		out[m] = buildTemplates(m)
+	out := make(map[Moment][]tmpl, len(momentTable))
+	for _, e := range momentTable {
+		out[e.m] = builders[e.m]()
 	}
 	return out
 })
 
-// buildTemplates assembles one Moment's skeleton set from its per-era pools.
-func buildTemplates(m Moment) []tmpl {
-	switch m {
-	case ExpeditionSuccess:
-		return expSuccessTemplates()
-	case ExpeditionFailure:
-		return expFailTemplates()
-	case EncounterStandoff:
-		return encStandoffTemplates()
-	case EncounterAtCapacity:
-		return encCapacityTemplates()
-	case WarRaid:
-		return warRaidTemplates()
-	case HarbingerArrival:
-		return harbArrivalTemplates()
-	case HarbingerWarning:
-		return harbWarningTemplates()
-	case HarbingerAppeased:
-		return harbAppeasedTemplates()
-	case HarbingerBraced:
-		return harbBracedTemplates()
-	case HarbingerVindicated:
-		return harbVindicatedTemplates()
-	case HarbingerSpared:
-		return harbSparedTemplates()
-	case HarbingerDiscredited:
-		return harbDiscreditedTemplates()
-	case HarbingerInvited:
-		return harbInvitedTemplates()
-	case HarbingerFulfilled:
-		return harbFulfilledTemplates()
-	case RunEnding:
-		return runEndingTemplates()
-	default:
-		return nil
-	}
+// builders assembles each Moment's skeleton set from its per-era pools. It is
+// apart from momentTable on purpose: the pools read that table through rowParts,
+// so a table that held these functions would be an initialization cycle.
+var builders = map[Moment]func() []tmpl{
+	ExpeditionSuccess:    expSuccessTemplates,
+	ExpeditionFailure:    expFailTemplates,
+	EncounterStandoff:    encStandoffTemplates,
+	EncounterAtCapacity:  encCapacityTemplates,
+	WarRaid:              warRaidTemplates,
+	HarbingerArrival:     harbArrivalTemplates,
+	HarbingerWarning:     harbWarningTemplates,
+	HarbingerAppeased:    harbAppeasedTemplates,
+	HarbingerBraced:      harbBracedTemplates,
+	HarbingerVindicated:  harbVindicatedTemplates,
+	HarbingerSpared:      harbSparedTemplates,
+	HarbingerDiscredited: harbDiscreditedTemplates,
+	HarbingerInvited:     harbInvitedTemplates,
+	HarbingerFulfilled:   harbFulfilledTemplates,
+	RunEnding:            runEndingTemplates,
 }

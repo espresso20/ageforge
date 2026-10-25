@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
@@ -51,11 +53,7 @@ func TestWriteSiteFrames(t *testing.T) {
 	}
 	const w, h, anim = 120, 36, 4
 
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	if err := theme.SetActive("forge"); err != nil {
-		t.Fatal(err)
-	}
+	fixture.WithTheme(t, "forge")
 	defBg, defFg := theme.Color(theme.RoleBackground), theme.Color(theme.RoleText)
 
 	var palette []string
@@ -149,7 +147,7 @@ func TestWriteSiteFrames(t *testing.T) {
 			}
 			if i > 0 {
 				for y, r := range rows {
-					if f := a.Frames[0][y]; f.T == r.T && equalInts(f.R, r.R) {
+					if f := a.Frames[0][y]; f.T == r.T && slices.Equal(f.R, r.R) {
 						rows[y] = nil
 					}
 				}
@@ -248,16 +246,4 @@ func staticFrame(rows []*row, styles [][3]int, palette []string) string {
 type row struct {
 	T string `json:"t"`
 	R []int  `json:"r"`
-}
-
-func equalInts(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }

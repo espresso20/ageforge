@@ -531,8 +531,8 @@ func (p *accountsPanel) doDeleteSaves() {
 }
 
 // doWipe runs the two-step gate for permanently deleting the SELECTED account (identity + theme
-// unlocks + lifetime stats + achievements), targeting it by id via WipeAccountByID — NOT the
-// active-only WipeAccount. Step 1 is a dark-red yes/no; step 2 is a type-the-exact-name confirm.
+// unlocks + lifetime stats + achievements), targeting it by id via WipeAccountByID. Step 1 is a
+// dark-red yes/no; step 2 is a type-the-exact-name confirm.
 // After the wipe: if the wiped account was active the engine clears ge.account; if no accounts
 // remain we route to the first-run name flow; otherwise we just refresh the list.
 func (p *accountsPanel) doWipe() {

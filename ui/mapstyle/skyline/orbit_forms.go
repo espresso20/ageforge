@@ -32,16 +32,10 @@ var keystoneWonder = [mapmodel.NumSkyScenes]string{
 	mapmodel.SkyDeep: "warp_nexus", mapmodel.SkyGalaxy: "cosmic_beacon", mapmodel.SkyQuantum: "reality_anchor",
 }
 
-type formDef struct {
-	fn     archFn
-	height float64
-	name   string
-}
-
-func fd(fn archFn, h float64, name string) formDef { return formDef{fn, h, name} }
+func fd(fn archFn, h float64, key string) skyForm { return skyForm{fn, h, key} }
 
 // skyForms is the form table: a scene's form for each lineage.
-var skyForms = [mapmodel.NumSkyScenes]map[string]formDef{
+var skyForms = [mapmodel.NumSkyScenes]map[string]skyForm{
 	mapmodel.SkyOrbit: {
 		mapmodel.LinHousing: fd(oHabitat, 12, "o.hab"), mapmodel.LinFood: fd(oHydro, 7, "o.hydro"),
 		mapmodel.LinStorage: fd(oDepot, 6, "o.depot"), mapmodel.LinWood: fd(oBioVat, 8, "o.vat"),
@@ -91,7 +85,7 @@ var skyForms = [mapmodel.NumSkyScenes]map[string]formDef{
 // skyFormFor is a lot's form in scene sc. Wonders become the scene's
 // landmarks (the sky-era wonders keep their own drawing), and the present
 // age's keystone wonder (keystoneWonder) a small keystone.
-func skyFormFor(sc mapmodel.SkyScene, def *mapmodel.Def, ml *mapmodel.Lot, keystone bool) skyForm {
+func skyFormFor(sc mapmodel.SkyScene, def *mapmodel.Def, keystone bool) skyForm {
 	scene := string(rune('0' + int(sc)))
 	if def.Wonder {
 		switch {
@@ -105,13 +99,9 @@ func skyFormFor(sc mapmodel.SkyScene, def *mapmodel.Def, ml *mapmodel.Lot, keyst
 		return skyForm{fn: landmarkFn[sc], height: landmarkH[sc], key: scene + "lm:" + def.Key}
 	}
 	if f, ok := skyForms[sc][def.Lineage]; ok {
-		return skyForm{fn: f.fn, height: f.height, key: f.name}
+		return f
 	}
-	f := skyForms[sc][mapmodel.LinHousing]
-	if f.fn == nil {
-		return skyForm{fn: oHabitat, height: 10, key: scene + "default"}
-	}
-	return skyForm{fn: f.fn, height: f.height, key: f.name}
+	return skyForms[sc][mapmodel.LinHousing]
 }
 
 // skyEraWonder lists the wonders whose own drawings already belong in
@@ -372,16 +362,9 @@ func oDepot(r *rnd, h int) *sprite {
 		if i%2 == 1 {
 			fill = sMetal
 		}
-		for x := px; x < px+pw; x++ {
-			sl := fill
-			switch x {
-			case px:
-				sl = sWallLit
-			case px + pw - 1:
-				sl = sWallShade
-			}
-			s.put(x, y, '█', sl, sNone)
-			if x > px && x < px+pw-1 && (x-px)%3 == 0 {
+		s.shaft(px, y, y, pw, sWallLit, fill, sWallShade)
+		for x := px + 1; x < px+pw-1; x++ {
+			if (x-px)%3 == 0 {
 				s.put(x, y, '▬', sWallDark, fill)
 			}
 		}
@@ -1384,13 +1367,7 @@ func gBay(r *rnd, h int) *sprite {
 	s := newSprite(w, 6)
 	base := s.h - 1
 	s.hline(0, w-1, 1, '▄', sTrim, sNone)
-	for y := 2; y < base; y++ {
-		s.put(0, y, '█', sWallLit, sNone)
-		s.put(w-1, y, '█', sWallShade, sNone)
-		for x := 1; x < w-1; x++ {
-			s.put(x, y, '█', sWallDark, sNone)
-		}
-	}
+	s.shaft(0, 2, base-1, w, sWallLit, sWallDark, sWallShade)
 	s.hline(1, w-2, 2, '▀', sNeon1, sWallDark)
 	s.put(w/2-1, 3, '▄', sWall, sWallDark)
 	s.put(w/2, 3, '▄', sWall, sWallDark)

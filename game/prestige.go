@@ -13,9 +13,9 @@ import (
 // PrestigeManager manages the prestige meta-progression layer.
 // Players prestige from the Medieval Age on (PrestigeMinAge), earning depth
 // points: every age the run completed pays 3^epoch (rules.Set.DepthPoints).
-// Points buy the legacy kit (legacy.go), which carries a run's automation
-// across the reset; the first shop's nine perks are retired and refunded
-// (refundShopLocked).
+// Points are a permanent production bonus (ProductionMultiplier). The legacy
+// kit (legacy.go) carries a run's automation across the reset and comes with
+// the first prestige.
 //
 // It also holds Era Mastery (mastery.go): each age's mastery, the record
 // (the deepest age ever entered) and this run's furthest age. The manager
@@ -27,7 +27,6 @@ type PrestigeManager struct {
 	level       int
 	totalEarned int
 	available   int
-	upgrades    map[string]int // upgrade key -> tier purchased (0 = not bought)
 
 	// Era Mastery: age key -> mastery (ages at 0 left out), the record and
 	// this run's furthest age ("" for none yet), and whether a save from
@@ -40,10 +39,6 @@ type PrestigeManager struct {
 	runFurthest   string
 	masterySeeded bool
 	speeds        map[string]float64
-
-	// shopVersion is retained solely for old signed saves. New saves write it
-	// as zero because there is no longer a shop.
-	shopVersion int
 
 	// The legacy kit's memory (legacy.go): what the runs so far wrote and
 	// did, kept whether or not the kit is bought, so an item bought after a
@@ -58,9 +53,6 @@ type PrestigeManager struct {
 	// Not saved.
 	templateApplied string
 
-	// upgradeList / upgradeDefs only decode the former shop's save entries.
-	upgradeList         []config.PrestigeUpgradeDef
-	upgradeDefs         map[string]config.PrestigeUpgradeDef
 	prestigeCoefficient float64
 }
 
@@ -71,8 +63,7 @@ func NewPrestigeManager() *PrestigeManager { return NewPrestigeManagerWith(rules
 // its ages and its depth points.
 func NewPrestigeManagerWith(set *rules.Set) *PrestigeManager {
 	pm := &PrestigeManager{
-		upgrades: make(map[string]int),
-		mastery:  make(map[string]int),
+		mastery: make(map[string]int),
 		// A new game has no past prestiges to seed mastery from, and it
 		// starts in the first age: its record and its run's furthest age.
 		masterySeeded: true,
@@ -89,11 +80,6 @@ func NewPrestigeManagerWith(set *rules.Set) *PrestigeManager {
 func (pm *PrestigeManager) Rebind(set *rules.Set) {
 	pm.rules = set
 	pm.prestigeCoefficient = set.PrestigeBonusCoefficient()
-	pm.upgradeList = set.PrestigeUpgrades()
-	pm.upgradeDefs = make(map[string]config.PrestigeUpgradeDef, len(pm.upgradeList))
-	for _, def := range pm.upgradeList {
-		pm.upgradeDefs[def.Key] = def
-	}
 	pm.rebuildSpeeds()
 }
 
@@ -190,91 +176,38 @@ func (pm *PrestigeManager) NextProductionMultiplier(age string) float64 {
 	return 1 + float64(pm.prestigeCoefficient*math.Sqrt(float64(max(pm.totalEarned+pm.CalculatePoints(age), 0))))
 }
 
-// BuyUpgrade purchases the next tier of an upgrade. Returns error if can't
-// afford, maxed or retired.
-func (pm *PrestigeManager) BuyUpgrade(key string) error {
-	return vibe.Errorf("game.prestige.BuyUpgrade.01", "prestige points are now a permanent production bonus; upgrades are no longer sold")
-}
-
 // Owns reports whether the shop item key (a legacy kit item) is bought.
 // Retired perks never count.
 func (pm *PrestigeManager) Owns(key string) bool {
 	return pm.level > 0 && (key == config.LegacyPlan || key == config.LegacyWorkers || key == config.LegacyFactions)
 }
 
-// GetBonuses returns the bought upgrades' bonuses as a bonus map. The old
-// passive (+2% production and +1% tick speed per level) retired into Era
-// Mastery (mastery.go), which speeds up the ages a run completed instead.
-func (pm *PrestigeManager) GetBonuses() map[string]float64 {
-	return map[string]float64{}
-}
-
-// Modifiers emits one OpAdd Modifier per (target, value) returned by GetBonuses,
-// attributed to Source "prestige". Targets match the engine's current strings
-// (e.g. "production_all", "tick_speed", "<res>_rate") — no renaming.
+// Modifiers emits the permanent production multiplier every prestige point
+// earns, attributed to Source "prestige".
 func (pm *PrestigeManager) Modifiers() []Modifier {
 	return []Modifier{{Source: "prestige", Target: "prestige_production", Op: OpMul, Value: pm.ProductionMultiplier()}}
 }
 
-// GetStartingResources returns bonus starting resources from prestige upgrades
-func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
-	resources := make(map[string]float64)
-	for _, def := range pm.upgradeList {
-		if def.EffectType == "starting_resource" && pm.upgrades[def.Key] > 0 {
-			resources[def.EffectKey] += float64(def.PerTier * float64(pm.upgrades[def.Key]))
-		}
-	}
-	return resources
-}
-
 // Snapshot returns a PrestigeState for UI consumption
 func (pm *PrestigeManager) Snapshot() PrestigeState {
-	upgrades := make(map[string]PrestigeUpgradeState)
-
-	// The empty map keeps the existing snapshot field wire-compatible.
 	return PrestigeState{
 		Level:                pm.level,
 		Floor:                pm.floor,
 		TotalEarned:          pm.totalEarned,
 		Available:            pm.available,
-		Upgrades:             upgrades,
-		ShopVersion:          0,
 		Kit:                  pm.kitState(),
 		ProductionMultiplier: pm.ProductionMultiplier(),
 	}
 }
 
 // LoadState restores prestige state from save data
-func (pm *PrestigeManager) LoadState(level, totalEarned, available int, upgrades map[string]int) {
+func (pm *PrestigeManager) LoadState(level, totalEarned, available int) {
 	pm.level = level
 	pm.totalEarned = totalEarned
 	pm.available = available
-	if upgrades != nil {
-		pm.upgrades = upgrades
-	}
 }
 
 // GetLevel returns the current prestige level
 func (pm *PrestigeManager) GetLevel() int {
 	return pm.level
-}
-
-func formatPrestigeEffect(def config.PrestigeUpgradeDef, tier int) string {
-	if def.Retired {
-		return vibe.Line("game.prestige.formatPrestigeEffect.01", "Retired: refunded with the old shop")
-	}
-	if tier == 0 {
-		return vibe.Line("game.prestige.formatPrestigeEffect.02", "Not purchased")
-	}
-	if def.EffectType == "legacy" {
-		return vibe.Line("game.prestige.formatPrestigeEffect.03", "Owned")
-	}
-	v := def.PerTier * float64(tier)
-	switch def.EffectType {
-	case "rate_bonus":
-		return textfmt.SignedPercent(v) + " " + EffectTargetName(def.EffectKey)
-	case "starting_resource":
-		return textfmt.Signed(v) + vibe.Line("game.prestige.formatPrestigeEffect.05", " starting ") + ResourceName(def.EffectKey)
-	}
-	return ""
 }

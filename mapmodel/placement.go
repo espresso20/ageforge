@@ -1,8 +1,9 @@
 package mapmodel
 
 import (
+	"cmp"
 	"math"
-	"sort"
+	"slices"
 )
 
 // placement.go puts every building somewhere, for both styles, under one
@@ -57,7 +58,6 @@ type Town struct {
 	Tiles []TownTile
 	// WonderTiles are the built (or rising) wonders on their plots.
 	Wonders []TownWonder
-	at      map[int]int // tile index by y*W+x
 }
 
 // TownTile is one building tile in the town.
@@ -80,25 +80,6 @@ type TownWonder struct {
 	Fresh bool
 }
 
-// TileAt returns the building tile at p, or nil.
-func (t *Town) TileAt(p Pt) *TownTile {
-	if i, ok := t.at[p.Y*WorldW+p.X]; ok {
-		return &t.Tiles[i]
-	}
-	return nil
-}
-
-// WonderAt returns the wonder whose plot covers p, or nil.
-func (t *Town) WonderAt(p Pt) *TownWonder {
-	for i := range t.Wonders {
-		w := &t.Wonders[i]
-		if p.X >= w.At.X && p.X < w.At.X+WonderW && p.Y >= w.At.Y && p.Y < w.At.Y+WonderH {
-			return w
-		}
-	}
-	return nil
-}
-
 type share struct {
 	b      *Building
 	n      int // copies this share stands for
@@ -110,7 +91,7 @@ type share struct {
 
 func (b *Builder) town(m *Model) Town {
 	w, p := b.seedParts(m.Seed)
-	t := Town{World: w, Plan: p, at: map[int]int{}}
+	t := Town{World: w, Plan: p}
 	for _, l := range m.Lineages {
 		quarter := p.Quarter[l.Key]
 		shares := lineageShares(l)
@@ -132,7 +113,6 @@ func (b *Builder) town(m *Model) Town {
 				pt := quarter[ord]
 				tt := TownTile{Pt: pt, Lineage: l.Key, Key: s.b.Key, Ord: ord, Legacy: s.legacy, Ruin: s.ruin,
 					Anchor: j == 0 && !s.ruin, Fresh: j >= s.tiles-s.fresh}
-				t.at[pt.Y*WorldW+pt.X] = len(t.Tiles)
 				t.Tiles = append(t.Tiles, tt)
 				ord++
 			}
@@ -211,7 +191,7 @@ func allocate(shares []*share, n, per int) {
 		given += extra
 		rems = append(rems, rem{i, exact - float64(int(exact))})
 	}
-	sort.SliceStable(rems, func(a, b int) bool { return rems[a].f > rems[b].f })
+	slices.SortStableFunc(rems, func(a, b rem) int { return cmp.Compare(b.f, a.f) })
 	for len(rems) > 0 && given < n {
 		progressed := false
 		for _, r := range rems {

@@ -1,6 +1,7 @@
 package skyline
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
 	"sync"
@@ -13,17 +14,19 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
+// frameRules are what the runes of a skyline frame must pass: nothing past
+// ASCII in the ASCII tier, and beyond it one cell wide and never the
+// canvas's '?' fallback. queryRules hold only the '?' to that.
 var (
-	catOnce sync.Once
-	testCat *mapmodel.Catalog
+	frameRules = styletest.Rules{Query: styletest.NonASCII, Width: styletest.NonASCII}
+	queryRules = styletest.Rules{Query: styletest.NonASCII}
 )
 
-func catalog() *mapmodel.Catalog {
-	catOnce.Do(func() { testCat = mapmodel.NewCatalog() })
-	return testCat
-}
+// catalog is the one catalogue the tests share, made on first use.
+var catalog = sync.OnceValue(mapmodel.NewCatalog)
 
 // build makes a model from fixture options; with grow > 0 the state is
 // grown that many steps past a baseline, so the recap and ▼ markers show.
@@ -108,13 +111,8 @@ func TestSpotCaptures(t *testing.T) {
 		{name: "ascii_colonial", o: fixture.Options{Age: "colonial_age", Seed: 5}, tod: 0.5, w: 120, h: 40, tier: mapmodel.TierASCII},
 	}
 	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	for _, sh := range shots {
-		if sh.theme != "" {
-			_ = theme.SetActive(sh.theme)
-		} else {
-			_ = theme.SetActive(orig)
-		}
+		fixture.WithTheme(t, cmp.Or(sh.theme, orig))
 		sh.o.Tick = tickAt(sh.tod) - 600 // fixture.Grow adds 600 ticks
 		m := build(sh.o, 1)
 		v := newView()

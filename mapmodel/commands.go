@@ -1,7 +1,8 @@
 package mapmodel
 
 import (
-	"sort"
+	"cmp"
+	"slices"
 	"strconv"
 
 	"github.com/espresso20/ageforge/vibe"
@@ -24,8 +25,6 @@ func (m *Model) BuildingCommand(b *Building) string {
 	case b.Upgrade != "" && b.Count > 0:
 		return "upgrade " + b.Key
 	case b.Understaffed() && m.Workers.Idle > 0:
-		return "assign " + b.Key
-	case b.Staffing == 0 && b.Count > 0 && m.Workers.Idle > 0:
 		return "assign " + b.Key
 	case b.Legacy:
 		return ""
@@ -82,7 +81,7 @@ func (m *Model) IdleCommand() string {
 	if m.Workers.Idle == 0 || len(cands) == 0 {
 		return "recruit"
 	}
-	sort.SliceStable(cands, func(i, j int) bool { return cands[i].Staffing < cands[j].Staffing })
+	slices.SortStableFunc(cands, func(a, b *Building) int { return cmp.Compare(a.Staffing, b.Staffing) })
 	return "assign " + cands[0].Key + " " + strconv.Itoa(m.Workers.Idle)
 }
 

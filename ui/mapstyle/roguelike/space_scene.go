@@ -2,6 +2,7 @@ package roguelike
 
 import (
 	"math"
+	"slices"
 	"sort"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -162,7 +163,6 @@ type skyScene struct {
 	targets []mapmodel.Pt
 	labels  []skyLabel
 	movers  []skyMover
-	units   int // units placed
 	// unitAt maps a building key to its first unit's cell (inspect, labels)
 	anchor map[string]mapmodel.Pt
 	// the mandala (Transcendent): the eras' rings, the crown, the layout
@@ -246,7 +246,7 @@ func newSkyBase(m *mapmodel.Model, sky mapmodel.SkyScene) *skyBase {
 	case mapmodel.SkyQuantum:
 		b.layQuantum()
 	case mapmodel.SkyMandala:
-		b.layMandala()
+		b.hub = pt(mdX, mdY) // the core, which need not stay the plane's middle
 	}
 	return b
 }
@@ -347,7 +347,6 @@ func (s *skyScene) placeUnits() {
 					s.anchor[tt.Key] = p
 				}
 			}
-			s.units++
 		}
 	}
 }
@@ -496,23 +495,6 @@ func inEllipse(x, y int, cx, cy, rx, ry float64) bool {
 	return sq((float64(x)-cx)/rx)+sq((float64(y)-cy)/ry) < 1
 }
 
-// ringCells is an ellipse's outline as the one-cell, 4-connected boundary
-// of its inside (what box drawing needs to draw it unbroken), clockwise
-// from the top.
-func ringCells(cx, cy, rx, ry float64) []mapmodel.Pt {
-	inside := func(x, y int) bool { return inEllipse(x, y, cx, cy, rx, ry) }
-	var out []mapmodel.Pt
-	for y := int(cy-ry) - 2; y <= int(cy+ry)+2; y++ {
-		for x := int(cx-rx) - 2; x <= int(cx+rx)+2; x++ {
-			if onRing(x, y, inside) {
-				out = append(out, pt(x, y))
-			}
-		}
-	}
-	sortClockwise(out, cx, cy)
-	return out
-}
-
 // sortClockwise orders points by their angle round (cx, cy), clockwise from
 // the top, nearest first on ties.
 func sortClockwise(ps []mapmodel.Pt, cx, cy float64) {
@@ -632,9 +614,7 @@ func smoothRing(cx, cy, rx, ry float64) ([]mapmodel.Pt, []rune) {
 				continue
 			}
 			if abs(p.X-q.X) > 1 || abs(p.Y-q.Y) > 1 {
-				for _, f := range lineCells(q, p)[1:] {
-					ps = append(ps, f)
-				}
+				ps = append(ps, lineCells(q, p)[1:]...)
 				continue
 			}
 		}
@@ -647,7 +627,7 @@ func smoothRing(cx, cy, rx, ry float64) ([]mapmodel.Pt, []rune) {
 	for i := 0; i < len(ps) && len(ps) > 8; {
 		a, c := ps[(i+len(ps)-1)%len(ps)], ps[(i+1)%len(ps)]
 		if abs(a.X-c.X) <= 1 && abs(a.Y-c.Y) <= 1 {
-			ps = append(ps[:i], ps[i+1:]...)
+			ps = slices.Delete(ps, i, i+1)
 			continue
 		}
 		i++

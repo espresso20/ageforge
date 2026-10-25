@@ -46,7 +46,6 @@ type GameState struct {
 	Diplomacy      DiplomacyState
 	Log            []LogEntry
 	Stats          StatsSnapshot
-	SaveExists     bool
 	TickSpeedBonus float64
 	TickIntervalMs int
 	CheaterBadge   bool
@@ -54,11 +53,12 @@ type GameState struct {
 	// DevTouched is true once the developer console has changed this run (saved with
 	// the run; see GameEngine.markDevTouchedLocked).
 	DevTouched bool
-	// AccountRecords is true when this run records to the held account: badges,
-	// lifetime stats and theme unlocks. It is false for accountless play and for a run
-	// that belongs to another account (the game in memory after a switch). A run the
-	// developer console has changed records like any other. The dashboard grants
-	// milestone themes only while it is true.
+	// AccountRecords is true when this run records to the held account: badges (the
+	// themes they unlock come with them) and lifetime stats. It is false for accountless
+	// play and for a run that belongs to another account (the game in memory after a
+	// switch). A run the developer console has changed records like any other. The engine
+	// applies the same rule when it records (accountForRecordsLocked); the snapshot
+	// carries the answer for callers that ask.
 	AccountRecords bool
 	// Seed is this run's master RNG seed (see GameEngine.seed) — surfaced for
 	// reproducibility/debugging. Persisted via GameSave.Seed, not through this
@@ -74,8 +74,6 @@ type GameState struct {
 	EpochKey           string
 	EpochName          string
 	EpochIcon          string
-	EpochColor         string // tview color tag
-	EpochSurvived      bool   // player endured a catastrophe this epoch
 	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
 	// PendingEndure is what Endure would cost for the pending catastrophe,
 	// Brace and garrison included. Zero when none is pending.
@@ -181,16 +179,12 @@ type AccountStatsView struct {
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.
 type AgeAdvanceSummary struct {
-	OldAge               string
-	NewAge               string
 	BuildingsTransformed []BuildingTransform
-	BuildingsLegacy      []string // unused: nothing is marked legacy any more
 }
 
 // clone returns a copy that shares no slices with s.
 func (s AgeAdvanceSummary) clone() AgeAdvanceSummary {
 	s.BuildingsTransformed = slices.Clone(s.BuildingsTransformed)
-	s.BuildingsLegacy = slices.Clone(s.BuildingsLegacy)
 	return s
 }
 
@@ -202,13 +196,6 @@ type BuildingTransform struct {
 	NewKey  string
 	NewName string
 	Count   int
-}
-
-// RuinState represents one ruin entry (building type + count) persisting across Succumb resets.
-type RuinState struct {
-	Key   string
-	Name  string
-	Count int
 }
 
 // EpochEventRecord records one epoch transition event for the civilization history log.
@@ -616,7 +603,6 @@ type ExpeditionSnapshot struct {
 	SuccessChance float64
 	HaulMinutes   float64
 	SuccessHaul   map[string]float64
-	FailureHaul   map[string]float64
 	RoadStories   []string
 	// RoadKinds is the kind of each road event that has fired, in the order of
 	// RoadStories. LaunchChance is the odds it was sent with (0 for a save from
@@ -655,7 +641,6 @@ type ExpeditionInfo struct {
 	MaxMinutes      float64
 	BaseSuccess     float64
 	ExpectedHaulMin map[string]float64
-	ExpectedHaulMax map[string]float64
 	Category        string // "scouting" or "military"
 	// SoldiersNeeded is the party the mission takes, whatever its tier.
 	SoldiersNeeded int
@@ -693,7 +678,6 @@ type MilestoneState struct {
 	Milestones     map[string]MilestoneInfo
 	CompletedCount int
 	TotalCount     int
-	VisibleCount   int
 	Chains         []ChainInfo
 	CurrentTitle   string
 }
@@ -711,7 +695,6 @@ type MilestoneInfo struct {
 	// "capped" notes beside a bonus a limit holds back (caps.go).
 	Rewards  []config.Effect
 	Progress []MilestoneProgress
-	ChainKey string
 }
 
 // MilestoneProgress represents progress toward one condition of a milestone
@@ -744,7 +727,6 @@ type MilestoneSnapshotParams struct {
 	Population      int
 	TechCount       int
 	TotalBuilt      int
-	SoldierCount    int // soldiers at home (live); used by non-milestone consumers
 	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
 	KnowledgeCount  int // scholars
@@ -787,11 +769,9 @@ type PrestigeState struct {
 	Floor         string
 	TotalEarned   int
 	Available     int
-	Upgrades      map[string]PrestigeUpgradeState
 	PendingPoints int // points you'd get if you prestige now
 	CanPrestige   bool
-	FloorBlocks   bool    // true only when the prestige age floor is the current blocker
-	PassiveBonus  float64 // retired: always 0 (the passive became Era Mastery)
+	FloorBlocks   bool // true only when the prestige age floor is the current blocker
 	// ProductionMultiplier is the lasting multiplier from all points ever
 	// earned; NextProductionMultiplier includes PendingPoints.
 	ProductionMultiplier     float64
@@ -801,25 +781,8 @@ type PrestigeState struct {
 	// screen can say what one more age adds.
 	NextAge       string
 	NextAgePoints int
-	// ShopVersion is the shop the game is on (config.PrestigeShopVersion
-	// once any old perks are refunded).
-	ShopVersion int
 	// Kit is what the legacy kit remembers (legacy.go).
 	Kit LegacyKitState
-}
-
-// PrestigeUpgradeState represents one prestige upgrade for UI
-type PrestigeUpgradeState struct {
-	Name        string
-	Description string
-	Tier        int
-	MaxTier     int
-	NextCost    int // 0 if maxed or retired
-	Effect      string
-	// Retired marks a perk of the first shop: hidden, no effect, refunded.
-	Retired bool
-	// Kit marks a legacy kit item (one tier).
-	Kit bool
 }
 
 // === Event Types ===
@@ -914,7 +877,6 @@ type FactionInfo struct {
 	Strength    int    // civ power rating 1-5 (from FactionDef) — drives worldmap dot size
 	AtWar       bool   // true while this civ is waging war on the player
 	LentWorkers int    // workers currently on loan from this civ (0 if none)
-	LentReturn  int    // ticks until lent workers return (0 = none / permanent)
 	LentPerm    bool   // lent workers are permanent (opinion was > 80 at lend time)
 	// Trade deals (deals.go): the current offers, numbered for `diplomacy
 	// accept`; why the civ won't trade ("" if it will); and the ticks of

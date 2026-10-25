@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand"
+	"slices"
 	"sort"
 	"strings"
 
@@ -291,8 +292,7 @@ func (em *EventManager) updateStreaks(sentiment string) {
 // forceSentiment filters: "good" = only good/mixed, "bad" = only bad/mixed, "" = any.
 func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[string]int, forceSentiment string, currentEpoch string) []config.EventDef {
 	// Build candidate pool: universal events + epoch-exclusive events for the current epoch
-	pool := make([]config.EventDef, len(em.defs))
-	copy(pool, em.defs)
+	pool := slices.Clone(em.defs)
 	for _, ev := range em.rules.EraEvents() {
 		if ev.EpochKey == currentEpoch {
 			pool = append(pool, ev)

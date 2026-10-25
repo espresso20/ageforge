@@ -294,10 +294,7 @@ func clampInt(v, lo, hi int) int {
 	if v < lo {
 		return lo
 	}
-	if v > hi {
-		return hi
-	}
-	return v
+	return min(v, hi)
 }
 
 // hash is a small stateless integer hash, the source of every "random"

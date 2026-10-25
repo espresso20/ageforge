@@ -1,6 +1,7 @@
 package flavor
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,36 +31,16 @@ import (
 // keeps its plain English and its Key, and is told again from the Key when it
 // is read (Retell).
 
-// catalogKeys are the catalogs' parts of a row id, by the prefix their pools'
-// names start with.
-var catalogKeys = []struct{ prefix, key string }{
-	{"exp_success", "expedition_success"},
-	{"exp_fail", "expedition_fail"},
-	{"enc_standoff", "encounter_standoff"},
-	{"enc_cap", "encounter_full"},
-	{"war_raid", "raid"},
-	{"harb_arrival", "harbinger_arrival"},
-	{"harb_warn", "harbinger_warning"},
-	{"harb_appeased", "harbinger_appeased"},
-	{"harb_braced", "harbinger_braced"},
-	{"harb_invited", "harbinger_invited"},
-	{"harb_vindicated", "harbinger_vindicated"},
-	{"harb_spared", "harbinger_spared"},
-	{"harb_discredited", "harbinger_discredited"},
-	{"harb_fulfilled", "harbinger_fulfilled"},
-	{"run_end", "run_ending"},
-}
-
 // rowParts splits a pool's name into its catalog's part of a row id and the
 // pool's own ("exp_success_late" is expedition_success and late). Both are ""
 // for a name no catalog claims.
 func rowParts(prefix string) (key, bucket string) {
-	for _, c := range catalogKeys {
-		if prefix == c.prefix {
-			return c.key, ""
+	for _, e := range momentTable {
+		if prefix == e.prefix {
+			return e.key, ""
 		}
-		if rest, ok := strings.CutPrefix(prefix, c.prefix+"_"); ok {
-			return c.key, rest
+		if rest, ok := strings.CutPrefix(prefix, e.prefix+"_"); ok {
+			return e.key, rest
 		}
 	}
 	return "", ""
@@ -79,13 +60,7 @@ func wordRow(list string, n int) string {
 }
 
 // place is the place of the n-th entry (from 0) in a row id: from 001.
-func place(n int) string {
-	s := strconv.Itoa(n + 1)
-	for len(s) < 3 {
-		s = "0" + s
-	}
-	return s
-}
+func place(n int) string { return fmt.Sprintf("%03d", n+1) }
 
 // sentence is the sentence a template was made from, as the export reads it:
 // the slot as the slot mark and no full stop at the end (compose puts it back).

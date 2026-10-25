@@ -239,3 +239,27 @@ func trimZeros(s string) string {
 	s = strings.TrimRight(s, "0")
 	return strings.TrimSuffix(s, ".")
 }
+
+// EditDistance is the Levenshtein distance between a and b, counted in runes
+// so a multi-byte letter is one edit, not several. It backs the "did you
+// mean" suggestions for a mistyped command, building, tech or leader key.
+func EditDistance(a, b string) int {
+	ra, rb := []rune(a), []rune(b)
+	prev := make([]int, len(rb)+1)
+	for j := range prev {
+		prev[j] = j
+	}
+	for i := 1; i <= len(ra); i++ {
+		curr := make([]int, len(rb)+1)
+		curr[0] = i
+		for j := 1; j <= len(rb); j++ {
+			cost := 1
+			if ra[i-1] == rb[j-1] {
+				cost = 0
+			}
+			curr[j] = min(curr[j-1]+1, prev[j]+1, prev[j-1]+cost)
+		}
+		prev = curr
+	}
+	return prev[len(rb)]
+}

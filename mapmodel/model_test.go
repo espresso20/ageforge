@@ -2,7 +2,6 @@ package mapmodel_test
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -305,17 +304,6 @@ func TestTrafficScalesWithRoutes(t *testing.T) {
 	many := build(t, fixture.State(fixture.Options{Age: "industrial_age", Seed: 7, Routes: 5}), nil)
 	if many.Activity.Routes <= few.Activity.Routes || many.Activity.Traffic <= few.Activity.Traffic {
 		t.Fatalf("routes %d→%d traffic %v→%v", few.Activity.Routes, many.Activity.Routes, few.Activity.Traffic, many.Activity.Traffic)
-	}
-}
-
-// TestFlowsHaveNoFullStores: stock has no ceiling, so the flows summary has no
-// full stores to list (the field is gone) and no store carries a fill.
-func TestFlowsHaveNoFullStores(t *testing.T) {
-	if _, ok := reflect.TypeOf(mapmodel.Flows{}).FieldByName("Full"); ok {
-		t.Error("Flows still lists full stores")
-	}
-	if _, ok := reflect.TypeOf(mapmodel.Store{}).FieldByName("Fill"); ok {
-		t.Error("a Store still carries a fill")
 	}
 }
 

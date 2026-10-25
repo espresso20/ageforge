@@ -1,5 +1,7 @@
 package flavor
 
+import "slices"
+
 // HarbingerAppeased — the player spent faith and culture to lower the odds. The
 // log line above says the odds went down; these sentences are what the
 // appeasing looked like: what was given, who sang, who paid, and who is still
@@ -10,16 +12,12 @@ package flavor
 // player who clicked "Pay the monks to pray" reads about monks.
 
 func harbAppeasedTemplates() []tmpl {
-	out := pool("harb_appeased_any", erasAny, harbAppeasedAny)
-	out = append(out, pool("harb_appeased_grounded", erasGrounded, harbAppeasedGrounded)...)
-	out = append(out, pool("harb_appeased_late", erasLate, harbAppeasedLate)...)
-	out = append(out, pool("harb_appeased_ancient", erasAncient, harbAppeasedAncient)...)
-	out = append(out, pool("harb_appeased_feudal", erasFeudal, harbAppeasedFeudal)...)
-	out = append(out, pool("harb_appeased_industrial", erasIndustrial, harbAppeasedIndustrial)...)
-	out = append(out, pool("harb_appeased_digital", erasDigital, harbAppeasedDigital)...)
-	out = append(out, pool("harb_appeased_cosmic", erasCosmic, harbAppeasedCosmic)...)
-	out = append(out, agePools("harb_appeased_age", harbAppeasedAges)...)
-	return out
+	return slices.Concat(
+		eraPools("harb_appeased",
+			harbAppeasedAny, harbAppeasedGrounded, harbAppeasedLate, harbAppeasedAncient,
+			harbAppeasedFeudal, harbAppeasedIndustrial, harbAppeasedDigital, harbAppeasedCosmic),
+		agePools("harb_appeased_age", harbAppeasedAges),
+	)
 }
 
 var harbAppeasedAny = []skel{

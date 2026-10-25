@@ -1,22 +1,18 @@
 package skyline
 
 import (
-	"os"
-	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
 // skyAges are the sky arc's ages, scene by scene (mapmodel/sky.go).
@@ -130,16 +126,11 @@ func TestSkyDeterminismAndLife(t *testing.T) {
 // TestSkyThemeSweep: in every theme no drawn glyph has its ink equal to its
 // background, in the full and the compact views.
 func TestSkyThemeSweep(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	models := map[string]*mapmodel.Model{}
 	for _, a := range skyAges {
 		models[a] = build(fixture.Options{Age: a, Seed: 5, Tick: tickAt(0.3), Harbinger: true, Routes: 3, Catastrophe: a == "quantum_age"}, 1)
 	}
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for name, m := range models {
 			for _, sz := range [][3]int{{120, 36, 0}, {40, 15, 1}, {65, 9, 1}} {
 				v := newView()
@@ -147,8 +138,7 @@ func TestSkyThemeSweep(t *testing.T) {
 				scr := draw(v, m, sz[0], sz[1], 7, mapmodel.TierUnicode, sz[2] == 1)
 				cells, sw, _ := scr.GetContents()
 				for i, c := range cells {
-					fg, bg, _ := c.Style.Decompose()
-					if len(c.Runes) > 0 && c.Runes[0] != ' ' && fg == bg {
+					if styletest.HiddenInk(c) {
 						t.Errorf("theme %s, %s %dx%d: %q at (%d,%d) has fg == bg", th.Key, name, sz[0], sz[1], c.Runes[0], i%sw, i/sw)
 						break
 					}
@@ -162,6 +152,7 @@ func TestSkyThemeSweep(t *testing.T) {
 // ASCII in the ASCII tier (never to the '?' of an unknown rune) and none is
 // an em dash, in every tier, full and compact.
 func TestSkyGlyphs(t *testing.T) {
+	rules := styletest.Rules{Query: styletest.Every, Width: styletest.NonASCII, EmDash: true}
 	for _, age := range skyAges {
 		m := build(fixture.Options{Age: age, Seed: 6, Routes: 4, Harbinger: true, Catastrophe: true, Wars: 1, Tick: tickAt(0.9)}, 1)
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierNerd, mapmodel.TierASCII} {
@@ -174,16 +165,8 @@ func TestSkyGlyphs(t *testing.T) {
 						if len(c.Runes) == 0 {
 							continue
 						}
-						r := c.Runes[0]
-						switch {
-						case tier == mapmodel.TierASCII && r >= 0x80:
-							t.Fatalf("%s ascii %dx%d: non-ASCII rune %q", age, sz[0], sz[1], r)
-						case r == '?':
-							t.Fatalf("%s %s %dx%d: a '?' fallback in the frame", age, tier, sz[0], sz[1])
-						case tier != mapmodel.TierASCII && uniseg.StringWidth(string(r)) != 1:
-							t.Fatalf("%s %s: rune %q is not one cell wide", age, tier, r)
-						case r == '—':
-							t.Fatalf("%s: an em dash in the frame", age)
+						if f := rules.Fault(c.Runes[0], tier); f != "" {
+							t.Fatalf("%s %s %dx%d: rune %q: %s", age, tier, sz[0], sz[1], c.Runes[0], f)
 						}
 					}
 				}
@@ -258,9 +241,6 @@ func TestSkyInspect(t *testing.T) {
 			scr := draw(v, m, 160, 48, 2, mapmodel.TierUnicode, false)
 			if st := rowText(scr, 47); !strings.Contains(st, part.Name) || !strings.Contains(st, "type: ") {
 				t.Errorf("%s: the status line for %s does not say %q with its command: %q", age, tg.key, part.Name, st)
-			}
-			if c := v.fb.at(0, 47); c == nil {
-				t.Fatal("no status line")
 			}
 		}
 		// the cursor lands on a lot: its bracket under the baseline
@@ -459,145 +439,16 @@ func TestSkyVisitors(t *testing.T) {
 // TestSkyPerformance: a 200x60 frame of every sky age stays well inside the
 // redraw budget.
 func TestSkyPerformance(t *testing.T) {
-	if testing.Short() || raceEnabled {
+	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
 	for _, age := range skyAges {
 		m := build(fixture.Options{Age: age, Seed: 7, Routes: 5, Tick: tickAt(0.9), Scale: 2}, 1)
-		v := newView()
-		scr := capture.NewScreen(200, 60)
-		f := mapstyle.Frame{Model: m}
-		v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-		const n = 30
-		start := time.Now()
-		for i := 0; i < n; i++ {
-			f.Anim = i
-			v.Draw(scr, mapstyle.Rect{W: 200, H: 60}, f)
-		}
-		per := time.Since(start) / n
-		t.Logf("200x60 %s frame: %v", age, per)
-		if per > 25*time.Millisecond {
-			t.Errorf("%s: a frame takes %v", age, per)
-		}
-		scr.Fini()
-	}
-}
-
-// TestSkyCaptures writes review captures of the sky scenes from the real
-// smoke-bot states when SKYLINE_SKY_CAPTURES names a directory:
-// .txt, .html (animated) and .png per shot.
-func TestSkyCaptures(t *testing.T) {
-	dir := os.Getenv("SKYLINE_SKY_CAPTURES")
-	if dir == "" {
-		t.Skip("set SKYLINE_SKY_CAPTURES to a directory to write sky captures")
-	}
-	states := filepath.Join("..", "..", "..", "map_captures", "states")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	type shot struct {
-		name, state, theme string
-		w, h               int
-		compact            bool
-		tier               mapmodel.GlyphTier
-		frames             int
-		anim0              int
-		inspect            int // Tab presses
-	}
-	var shots []shot
-	for _, a := range []string{"fusion_age", "space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age"} {
-		n := strings.TrimSuffix(a, "_age")
-		shots = append(shots, shot{name: n, state: a, w: 160, h: 48, frames: 8, anim0: 40},
-			shot{name: n + "_mini", state: a, w: 40, h: 15, compact: true, frames: 4, anim0: 40},
-			shot{name: n + "_strip", state: a, w: 65, h: 9, compact: true, frames: 4, anim0: 40})
-	}
-	shots = append(shots,
-		shot{name: "space_light", state: "space_age", theme: "daylight", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "galactic_light", state: "galactic_age", theme: "daylight", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "transcendent_light", state: "transcendent_age", theme: "daylight", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "space_mono", state: "space_age", theme: "monochrome", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "quantum_mono", state: "quantum_age", theme: "monochrome", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "interstellar_parchment", state: "interstellar_age", theme: "parchment", w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "space_ascii", state: "space_age", tier: mapmodel.TierASCII, w: 160, h: 48, frames: 2, anim0: 40},
-		shot{name: "galactic_inspect", state: "galactic_age", w: 160, h: 48, frames: 2, anim0: 40, inspect: 3},
-		shot{name: "space_80x24", state: "space_age", w: 80, h: 24, frames: 2, anim0: 40},
-		shot{name: "galactic_200x60", state: "galactic_age", w: 200, h: 60, frames: 2, anim0: 40},
-	)
-	only := os.Getenv("SKYLINE_SKY_ONLY")
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
-	b := mapmodel.NewBuilder(nil)
-	for _, sh := range shots {
-		if only != "" && !strings.Contains(sh.name, only) {
-			continue
-		}
-		st, err := capture.LoadState(filepath.Join(states, sh.state+".json.gz"))
-		if err != nil {
-			t.Logf("skip %s: %v", sh.name, err)
-			continue
-		}
-		th := sh.theme
-		if th == "" {
-			th = "forge"
-		}
-		if err := theme.SetActive(th); err != nil {
-			t.Fatal(err)
-		}
-		m := b.Build(&st, nil)
-		v := newView()
-		f := mapstyle.Frame{Model: m, Tier: sh.tier}
-		for i := 0; i < sh.inspect; i++ {
-			f.Anim = sh.anim0
-			_ = draw(v, m, sh.w, sh.h, sh.anim0, sh.tier, sh.compact)
-			v.HandleKey(tabKey(), f)
-		}
-		var frames []string
-		var txt strings.Builder
-		for k := 0; k < max(1, sh.frames); k++ {
-			scr := draw(v, m, sh.w, sh.h, sh.anim0+k*3, sh.tier, sh.compact)
-			frames = append(frames, capture.Frame(scr))
-			if k == 0 {
-				txt.WriteString(capture.Text(scr))
-				if err := capture.PNG(filepath.Join(dir, sh.name+".png"), scr); err != nil {
-					t.Fatal(err)
-				}
-				_ = os.WriteFile(filepath.Join(dir, sh.name+".cells"), []byte(cellDump(scr)), 0o644)
-			}
-			scr.Fini()
-		}
-		bg := capture.Hex(theme.Color(theme.RoleBackground))
-		fg := capture.Hex(theme.Color(theme.RoleText))
-		title := "skyline · " + sh.state + " · " + sh.name + " · theme " + th
-		_ = os.WriteFile(filepath.Join(dir, sh.name+".txt"), []byte(title+"\n"+txt.String()), 0o644)
-		_ = os.WriteFile(filepath.Join(dir, sh.name+".html"), []byte(capture.HTML(title, bg, fg, capture.Fonts, frames, 6)), 0o644)
+		styletest.FrameBudget(t, age, newView(), m, 200, 60, 30, 25*time.Millisecond)
 	}
 }
 
 func tabKey() *tcell.EventKey { return tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone) }
-
-// cellDump writes a screen's cells for an outside renderer: "W H", then a
-// line per row of tab-separated "rune fg bg" (decimal rune, hex colours).
-func cellDump(scr tcell.SimulationScreen) string {
-	cells, w, h := scr.GetContents()
-	var b strings.Builder
-	b.WriteString(strconv.Itoa(w) + " " + strconv.Itoa(h) + "\n")
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			c := cells[y*w+x]
-			r := ' '
-			if len(c.Runes) > 0 {
-				r = c.Runes[0]
-			}
-			fg, bg, _ := c.Style.Decompose()
-			if x > 0 {
-				b.WriteByte('\t')
-			}
-			b.WriteString(strconv.Itoa(int(r)) + " " + capture.Hex(fg) + " " + capture.Hex(bg))
-		}
-		b.WriteByte('\n')
-	}
-	return b.String()
-}
 
 // TestSkyTetherCarriesOn: the space elevator the Earth arc raises in the
 // Fusion Age is the one the Space Age carries up to the station: it stands
@@ -607,10 +458,7 @@ func cellDump(scr tcell.SimulationScreen) string {
 func TestSkyTetherCarriesOn(t *testing.T) {
 	fus := skyModel("fusion_age", 6, 0)
 	spc := skyModel("space_age", 6, 0)
-	vf := newView()
-	sf := vf.compose(mapstyle.Frame{Model: fus}, 160, 48)
-	wf := sf.elevatorX() + sf.cam
-	if sf.elevatorX() < 0 {
+	if newView().compose(mapstyle.Frame{Model: fus}, 160, 48).elevatorX() < 0 {
 		t.Fatal("the Fusion Age has no tether")
 	}
 	// (A district widens to fit its buildings: the tether keeps its place
@@ -622,7 +470,7 @@ func TestSkyTetherCarriesOn(t *testing.T) {
 	if a, b := rel(spc), rel(fus); a != b {
 		t.Errorf("the Space Age's tether stands %d columns in from the Fusion district's edge, the Fusion Age's %d", a, b)
 	}
-	wf = tetherX(spc)
+	wf := tetherX(spc)
 	vs := newView()
 	vs.follow, vs.cam = false, max(0, wf-80)
 	ss := vs.compose(mapstyle.Frame{Model: spc}, 160, 48)

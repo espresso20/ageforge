@@ -39,7 +39,6 @@ func splashCases() []splashCase {
 			{OldKey: "long_house", NewKey: "house", Count: 15},
 			{OldName: "Nuclear Extraction Plant", NewName: "Uranium Processing Works", Count: 120},
 		},
-		BuildingsLegacy: []string{"stash", "stone_camp", "no_such_building"},
 	}
 	events := config.EpochEventByKey()
 	for _, a := range config.Ages() {

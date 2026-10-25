@@ -2,6 +2,7 @@ package roguelike
 
 import (
 	"math"
+	"slices"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -344,10 +345,8 @@ func (s *scene) hunts(n int) [][]mapmodel.Pt {
 }
 
 func reversed(ps []mapmodel.Pt) []mapmodel.Pt {
-	out := make([]mapmodel.Pt, len(ps))
-	for i, p := range ps {
-		out[len(ps)-1-i] = p
-	}
+	out := slices.Clone(ps)
+	slices.Reverse(out)
 	return out
 }
 

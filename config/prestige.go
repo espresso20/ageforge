@@ -44,11 +44,6 @@ func LegacyKit() []string {
 // serialized upgrades map but have no definitions or effects.
 func PrestigeUpgrades() []PrestigeUpgradeDef { return nil }
 
-// PrestigeUpgradeByKey returns no entries now that the shop is gone.
-func PrestigeUpgradeByKey() map[string]PrestigeUpgradeDef {
-	return indexBy(PrestigeUpgrades(), func(u PrestigeUpgradeDef) string { return u.Key })
-}
-
 // ActivePrestigeUpgrades is retained for callers during the UI transition.
 func ActivePrestigeUpgrades() []PrestigeUpgradeDef { return nil }
 

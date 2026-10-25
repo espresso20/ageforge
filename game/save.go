@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -246,24 +247,29 @@ type GameSave struct {
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
-// shared integrity-signing core used by both saves (signSave) and the account file
-// (Account.Save) — one construction, reused, per the accounts design's "reuse, don't
-// reinvent" rule. The key is always saveHMACKey in practice; it stays a parameter
-// so signSave's existing signature is unchanged.
+// shared integrity-signing core used by saves (signSave), the elite proof (proofOf) and
+// the account files (Account.Save) — one construction, reused, per the accounts design's
+// "reuse, don't reinvent" rule.
 func hmacSign(payload []byte, key string) string {
 	mac := hmac.New(sha256.New, []byte(key))
 	mac.Write(payload)
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-// signSave returns the HMAC-SHA256 hex of the save payload.
+// signSave returns the HMAC-SHA256 hex of the save payload under saveHMACKey.
 // Signature and Proof are zeroed before marshalling so the signature covers
 // the game data only, not a prior signature value.
-func signSave(gs GameSave, key string) string {
+func signSave(gs GameSave) string {
 	gs.Signature = ""
 	gs.Proof = ""
 	data, _ := json.Marshal(gs)
-	return hmacSign(data, key)
+	return hmacSign(data, saveHMACKey)
+}
+
+// proofOf is the elite proof for a save signed as sig: sig itself signed under
+// forgeMasterKey.
+func proofOf(sig string) string {
+	return hmacSign([]byte(sig), forgeMasterKey)
 }
 
 // verifySave checks the save's HMAC signature and optional elite proof.
@@ -278,14 +284,10 @@ func verifySave(gs *GameSave) (sigValid, eliteValid bool) {
 		return true, false
 	}
 
-	expectedSig := signSave(*gs, saveHMACKey)
-	sigValid = hmac.Equal([]byte(savedSig), []byte(expectedSig))
+	sigValid = hmac.Equal([]byte(savedSig), []byte(signSave(*gs)))
 
 	if sigValid && savedProof != "" {
-		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
-		mac.Write([]byte(savedSig))
-		expectedProof := hex.EncodeToString(mac.Sum(nil))
-		eliteValid = hmac.Equal([]byte(savedProof), []byte(expectedProof))
+		eliteValid = hmac.Equal([]byte(savedProof), []byte(proofOf(savedSig)))
 	}
 	return
 }
@@ -327,14 +329,16 @@ type TradeSave struct {
 
 // DiplomacySave holds diplomacy state for save
 type DiplomacySave struct {
-	Factions    map[string]FactionStateSave `json:"factions"`
-	LentWorkers []LentWorkerBatch           `json:"lent_workers,omitempty"`
+	Factions    map[string]FactionState `json:"factions"`
+	LentWorkers []LentWorkerBatch       `json:"lent_workers,omitempty"`
 	// BoonWorkers are the faction-boon crews still on loan. omitempty, so a
 	// save with none keeps its bytes.
 	BoonWorkers []BoonWorkerLoan `json:"boon_workers,omitempty"`
 }
 
-// PrestigeSave holds prestige state for save
+// PrestigeSave holds prestige state for save. Upgrades was the shop's tiers:
+// the shop is gone, every save writes it null and a load ignores it; it stays
+// so each save's signature bytes keep their "upgrades" line.
 type PrestigeSave struct {
 	Level         int            `json:"level"`
 	PrestigeFloor string         `json:"prestige_floor,omitempty"`
@@ -351,8 +355,9 @@ type PrestigeSave struct {
 	Furthest      string         `json:"furthest,omitempty"`
 	RunFurthest   string         `json:"run_furthest,omitempty"`
 	MasterySeeded bool           `json:"mastery_seeded,omitempty"`
-	// ShopVersion and the legacy-kit memory remain for signed old saves. They
-	// are read but no longer affect point spending or carry-over eligibility.
+	// ShopVersion stays so a signed old save re-marshals to the bytes it was
+	// signed over; nothing reads it. The legacy-kit memory is read but no
+	// longer affects point spending or carry-over eligibility.
 	ShopVersion    int                `json:"shop_version,omitempty"`
 	LegacyPlan     []PlanTemplateItem `json:"legacy_plan,omitempty"`
 	LegacyFactions []string           `json:"legacy_factions,omitempty"`
@@ -590,12 +595,9 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	}
 	save := ge.buildSaveSnapshot()
 	// Sign the payload (sig/proof are empty in snapshot)
-	sig := signSave(save, saveHMACKey)
-	save.Signature = sig
+	save.Signature = signSave(save)
 	if ge.eliteBadge {
-		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
-		mac.Write([]byte(sig))
-		save.Proof = hex.EncodeToString(mac.Sum(nil))
+		save.Proof = proofOf(save.Signature)
 	}
 	data, err := json.MarshalIndent(save, "", "  ")
 	ge.mu.RUnlock()
@@ -607,15 +609,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 		return fmt.Errorf("could not create the save folder: %w", err)
 	}
 
-	// Atomic write: temp file + rename to prevent corruption on crash
-	path := filepath.Join(dir, filename+".json")
-	tmpPath := path + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-		return fmt.Errorf("could not write the save file: %w", err)
-	}
-	err = os.Rename(tmpPath, path)
-	forgetAutosaveProbe()
-	if err != nil {
+	if err := writeFileAtomic(filepath.Join(dir, filename+".json"), data); err != nil {
 		return fmt.Errorf("could not write the save file: %w", err)
 	}
 	if played != nil {
@@ -639,10 +633,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	}
 
 	// Deep copy military loot
-	totalLoot := make(map[string]float64, len(ge.Military.totalLoot))
-	for k, v := range ge.Military.totalLoot {
-		totalLoot[k] = v
-	}
+	totalLoot := maps.Clone(ge.Military.totalLoot)
 
 	// Deep copy trade state
 	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))
@@ -657,16 +648,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	for k, v := range ge.Trade.totalExported {
 		tradeExported[k] = v
 	}
-
-	// Deep copy stats
-	statsGathered := make(map[string]float64, len(ge.Stats.TotalGathered))
-	for k, v := range ge.Stats.TotalGathered {
-		statsGathered[k] = v
-	}
-	agesReached := make([]string, len(ge.Stats.AgesReached))
-	copy(agesReached, ge.Stats.AgesReached)
-	ageLog := make([]AgeEntry, len(ge.Stats.AgeLog))
-	copy(ageLog, ge.Stats.AgeLog)
 
 	rngDraws, quipDraws := ge.rngDraws()
 
@@ -686,18 +667,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Buildings:            ge.Buildings.GetAll(),
 		Workers:              ge.Workers.GetAll(),
 		Unlocked:             ge.getUnlockedState(),
-		Stats: &GameStats{
-			TotalBuilt:      ge.Stats.TotalBuilt,
-			TotalRecruited:  ge.Stats.TotalRecruited,
-			TotalGathered:   statsGathered,
-			GameStarted:     ge.Stats.GameStarted,
-			AgesReached:     agesReached,
-			AgeLog:          ageLog,
-			SoldiersTrained: ge.Stats.SoldiersTrained,
-			ResearchWork:    ge.Stats.ResearchWork,
-			Defense:         ge.Stats.Defense.clone(),
-		},
-		BuildQueue: queue,
+		Stats:                ge.Stats.clone(),
+		BuildQueue:           queue,
 		Research: ResearchSave{
 			Researched:  ge.Research.GetResearched(),
 			CurrentTech: ge.Research.currentTech,
@@ -764,18 +735,18 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		RunFacts:               ge.runFactsSaveCopy(),
 		ParentName:             ge.activeParentName,
 		CurrentEpoch:           ge.currentEpoch,
-		EpochEventFired:        copyBoolMap(ge.epochEventFired),
-		AwakeningsFired:        copyBoolMap(ge.awakeningsFired),
+		EpochEventFired:        maps.Clone(ge.epochEventFired),
+		AwakeningsFired:        maps.Clone(ge.awakeningsFired),
 		AncientMemoryUsed:      ge.ancientMemoryUsed,
-		SurvivedEpochs:         copyBoolMap(ge.survivedEpochs),
+		SurvivedEpochs:         maps.Clone(ge.survivedEpochs),
 		PendingCatastrophe:     ge.pendingCatastrophe,
 		EpochEventHistory:      ge.epochHistoryForSave(),
 		SuccumbResearchDerived: true,
 		Ruins:                  ge.Buildings.GetAllRuins(),
-		LegacyBonuses:          copyBoolMap(ge.legacyBonuses),
+		LegacyBonuses:          maps.Clone(ge.legacyBonuses),
 		CatastropheHistory:     append([]string(nil), ge.catastropheHistory...),
 		Harbinger:              ge.harbingerSaveCopy(),
-		HarbingerArrived:       copyBoolMap(ge.harbingerArrived),
+		HarbingerArrived:       maps.Clone(ge.harbingerArrived),
 		CatastropheInvited:     ge.catastropheInvited,
 		PendingBraceLevel:      ge.pendingBraceLevel,
 		HarbingerHistory:       ge.harbingerHistoryForSave(),
@@ -946,26 +917,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.Buildings.LoadCounts(save.Buildings)
 	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
-		// Deep copy stats to avoid aliasing with the deserialized save
-		gathered := make(map[string]float64, len(save.Stats.TotalGathered))
-		for k, v := range save.Stats.TotalGathered {
-			gathered[k] = v
-		}
-		ages := make([]string, len(save.Stats.AgesReached))
-		copy(ages, save.Stats.AgesReached)
-		ageLog := make([]AgeEntry, len(save.Stats.AgeLog))
-		copy(ageLog, save.Stats.AgeLog)
-		ge.Stats = &GameStats{
-			TotalBuilt:      save.Stats.TotalBuilt,
-			TotalRecruited:  save.Stats.TotalRecruited,
-			TotalGathered:   gathered,
-			GameStarted:     save.Stats.GameStarted,
-			AgesReached:     ages,
-			AgeLog:          ageLog,
-			SoldiersTrained: save.Stats.SoldiersTrained,
-			ResearchWork:    save.Stats.ResearchWork,
-			Defense:         save.Stats.Defense.clone(),
-		}
+		// A copy, to avoid aliasing with the deserialized save
+		ge.Stats = save.Stats.clone()
 	}
 	ge.buildQueue = save.BuildQueue
 
@@ -1015,10 +968,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	}
 
 	// Restore prestige
-	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
+	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available)
 	ge.Prestige.floor = save.Prestige.PrestigeFloor
 	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest, save.Prestige.MasterySeeded)
-	ge.Prestige.LoadLegacy(save.Prestige.ShopVersion, save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
+	ge.Prestige.LoadLegacy(save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
 
 	// Restore trade
 	ge.Trade.LoadState(save.Trade)
@@ -1038,10 +991,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// written), and before the offline catch-up, which may build a wonder.
 	treeGraced := ge.graceTreeLocked(&save)
 
-	// Restore the speed multiplier, clamped to the player cap: a save written
+	// The speed multiplier loads as 1x whatever the save carries: a save written
 	// while wonders raised a speed cap (or with the dev console's /speed on)
 	// would otherwise load, and run its offline catch-up below, at that speed.
-	ge.speedMultiplier = clampPlayerSpeed(save.SpeedMultiplier)
+	ge.speedMultiplier = 1.0
 
 	// Restore badge state (verified above)
 	ge.cheaterBadge = save.CheaterBadge
@@ -1155,7 +1108,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 
 	beforeTheWall := save.StorageRules < config.StorageRules
 	if beforeTheWall {
-		ge.keepStockFromBeforeTheWall()
+		ge.keepStockFromBeforeTheWall(save.Plan)
 	}
 	beforeScholars := save.ScholarRules < scholarRules
 	if beforeScholars {
@@ -1300,18 +1253,6 @@ func pacingNotice() string {
 	return vibe.Line("game.save.pacingNotice.01", "Pacing update: a first run now takes about a week. From the Bronze Age on, each age lasts about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age holds as many of them. Your game carries on where you left it.")
 }
 
-// copyBoolMap returns a deep copy of a map[string]bool.
-func copyBoolMap(m map[string]bool) map[string]bool {
-	if m == nil {
-		return nil
-	}
-	out := make(map[string]bool, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
-}
-
 // getUnlockedState collects all resource, building, and worker unlocks for
 // the current age and all prior ages. On load, these lists are replayed to
 // restore the Buildings.unlocked / Resources.unlocked maps without having to
@@ -1331,21 +1272,44 @@ func (ge *GameEngine) getUnlockedState() UnlockedState {
 	return state
 }
 
+// writeFileAtomic writes data to path through path+".tmp" and a rename, so a crash never
+// leaves half a file. The temp file is removed when either step fails.
+func writeFileAtomic(path string, data []byte) error {
+	tmp := path + ".tmp"
+	err := os.WriteFile(tmp, data, 0644)
+	if err == nil {
+		err = os.Rename(tmp, path)
+	}
+	if err != nil {
+		os.Remove(tmp)
+	}
+	return err
+}
+
+// saveFiles lists the save files (*.json, no folders) in dir, in directory order. A folder
+// that does not exist holds none.
+func saveFiles(dir string) ([]os.DirEntry, error) {
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return slices.DeleteFunc(entries, func(e os.DirEntry) bool {
+		return e.IsDir() || filepath.Ext(e.Name()) != ".json"
+	}), nil
+}
+
 // ListSaves returns available save files
 func ListSaves() ([]string, error) {
-	entries, err := os.ReadDir(saveDirectory())
+	files, err := saveFiles(saveDirectory())
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
 	var saves []string
-	for _, e := range entries {
-		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
-			name := e.Name()
-			saves = append(saves, name[:len(name)-5]) // strip .json
-		}
+	for _, e := range files {
+		saves = append(saves, strings.TrimSuffix(e.Name(), ".json"))
 	}
 	return saves, nil
 }
@@ -1416,22 +1380,16 @@ type SaveInfo struct {
 // listing for the rest.
 func ListSaveDetails() ([]SaveInfo, error) {
 	dir := saveDirectory()
-	entries, err := os.ReadDir(dir)
+	files, err := saveFiles(dir)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
 		return nil, err
 	}
 	// The saves on disk are the core game's: no engine is held here, so the
 	// names and totals come from the core ruleset.
 	core := rules.Core()
 	var saves []SaveInfo
-	for _, e := range entries {
-		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
-			continue
-		}
-		name := e.Name()[:len(e.Name())-5]
+	for _, e := range files {
+		name := strings.TrimSuffix(e.Name(), ".json")
 		path := filepath.Join(dir, e.Name())
 
 		data, readErr := os.ReadFile(path)
@@ -1591,19 +1549,13 @@ func modTime(e os.DirEntry) time.Time {
 // WipeAllSaves deletes all save files
 func WipeAllSaves() error {
 	dir := saveDirectory()
-	entries, err := os.ReadDir(dir)
+	files, err := saveFiles(dir)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
 		return err
 	}
-	for _, e := range entries {
-		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
-			os.Remove(filepath.Join(dir, e.Name()))
-		}
+	for _, e := range files {
+		os.Remove(filepath.Join(dir, e.Name()))
 	}
-	forgetAutosaveProbe()
 	return nil
 }
 
@@ -1611,43 +1563,6 @@ func WipeAllSaves() error {
 func SaveExists(filename string) bool {
 	_, err := os.Stat(savePath(filename))
 	return err == nil
-}
-
-// autosaveProbeTTL is how long GetState trusts its last look for the autosave
-// file. The snapshot is taken twice a second and the look is three stat calls
-// (the canonical path, the legacy path, then the file itself); a save made or
-// removed by this process forgets the look at once, so only a change made from
-// outside waits out the second.
-const autosaveProbeTTL = time.Second
-
-var autosaveProbe struct {
-	mu     sync.Mutex
-	path   string // the saves folder's autosave path the look was taken for
-	at     time.Time
-	exists bool
-}
-
-// autosaveExists is SaveExists(AutosaveName) for the snapshot: the same answer,
-// looked up at most once per autosaveProbeTTL for a given saves folder.
-func autosaveExists() bool {
-	key := filepath.Join(saveDirectory(), AutosaveName+".json")
-	now := time.Now()
-	autosaveProbe.mu.Lock()
-	defer autosaveProbe.mu.Unlock()
-	if p := &autosaveProbe; !p.at.IsZero() && p.path == key && now.Sub(p.at) < autosaveProbeTTL {
-		return p.exists
-	}
-	exists := SaveExists(AutosaveName)
-	autosaveProbe.path, autosaveProbe.at, autosaveProbe.exists = key, now, exists
-	return exists
-}
-
-// forgetAutosaveProbe drops the remembered look: call it after anything in
-// this process wrote, removed or renamed a save file.
-func forgetAutosaveProbe() {
-	autosaveProbe.mu.Lock()
-	autosaveProbe.at = time.Time{}
-	autosaveProbe.mu.Unlock()
 }
 
 // maxSaveNameLen bounds save base-names. Generous for player-chosen names while
@@ -1723,7 +1638,6 @@ func DeleteSave(filename string) error {
 		return noSaveError{name: name, err: fs.ErrNotExist}
 	}
 	err = os.Remove(savePath(name))
-	forgetAutosaveProbe()
 	if err != nil {
 		return fmt.Errorf("could not delete the save file: %w", err)
 	}
@@ -1757,7 +1671,6 @@ func RenameSave(oldName, newName string) error {
 	// save in the legacy CWD location isn't orphaned by a canonical-dir write.
 	dstPath := filepath.Join(filepath.Dir(srcPath), dst+".json")
 	err = os.Rename(srcPath, dstPath)
-	forgetAutosaveProbe()
 	if err != nil {
 		return fmt.Errorf("could not rename the save file: %w", err)
 	}
@@ -1804,26 +1717,18 @@ func reparentSaveFile(name, newParent string) error {
 		return nil // nothing to do
 	}
 	gs.ParentName = newParent
-	sig := signSave(gs, saveHMACKey)
-	gs.Signature = sig
+	gs.Signature = signSave(gs)
+	gs.Proof = ""
 	if eliteValid {
-		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
-		mac.Write([]byte(sig))
-		gs.Proof = hex.EncodeToString(mac.Sum(nil))
-	} else {
-		gs.Proof = ""
+		gs.Proof = proofOf(gs.Signature)
 	}
 	out, err := json.MarshalIndent(gs, "", "  ")
 	if err != nil {
 		return err
 	}
-	// Atomic write into the file's own directory (matches SaveGame's pattern and
+	// Written into the file's own directory (matches SaveGame's pattern and
 	// keeps a legacy-dir save in its dir).
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return writeFileAtomic(path, out)
 }
 
 // DuplicateSave copies a save to a new name and returns the new base name. The
@@ -1856,14 +1761,7 @@ func DuplicateSave(filename string) (string, error) {
 	}
 	// Place the copy alongside the source (canonical or legacy dir) for the same
 	// reason as RenameSave. Write atomically (temp + rename).
-	dir := filepath.Dir(srcPath)
-	dstPath := filepath.Join(dir, dst+".json")
-	tmpPath := dstPath + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-		return "", fmt.Errorf("could not write the copy: %w", err)
-	}
-	if err := os.Rename(tmpPath, dstPath); err != nil {
-		os.Remove(tmpPath)
+	if err := writeFileAtomic(filepath.Join(filepath.Dir(srcPath), dst+".json"), data); err != nil {
 		return "", fmt.Errorf("could not write the copy: %w", err)
 	}
 	return dst, nil
@@ -1907,15 +1805,18 @@ func storageWallNotice() string {
 
 // keepStockFromBeforeTheWall carries a save written under the old storage
 // rules across to the new ones without taking anything: what the plan's
-// items had banked from overflow goes back to the stores. Called on load,
-// before the stores are worked out.
-func (ge *GameEngine) keepStockFromBeforeTheWall() {
-	for i := range ge.plan {
-		for _, res := range sortedKeys(ge.plan[i].Banked) {
-			if r, ok := ge.Resources.resources[res]; ok && ge.plan[i].Banked[res] > 0 {
-				r.Amount += ge.plan[i].Banked[res]
+// build items had banked from overflow goes back to the stores. It reads the
+// plan as saved (loadPlanIn drops the banks) and is called on load, before
+// the stores are worked out.
+func (ge *GameEngine) keepStockFromBeforeTheWall(saved []PlanItem) {
+	for _, it := range saved {
+		if it.Kind != PlanBuild {
+			continue
+		}
+		for _, res := range sortedKeys(it.Banked) {
+			if r, ok := ge.Resources.resources[res]; ok && it.Banked[res] > 0 {
+				r.Amount += it.Banked[res]
 			}
 		}
-		ge.plan[i].Banked = nil
 	}
 }

@@ -75,7 +75,6 @@ var fileNotes = map[string]fileNote{
 	"game/milestones.go":        {place: "about milestones", age: "primitive_age", seen: seenNews},
 	"game/military.go":          {place: "about expeditions, campaigns and the army", age: "primitive_age", seen: seenNews},
 	"game/names.go":             {place: "where the game names a thing it has no name for", age: "primitive_age"},
-	"game/overflow.go":          {place: "about wonder overflow", age: "stone_age", seen: seenNews},
 	"game/plan.go":              {place: "about the build plan", age: "primitive_age", seen: seenNews},
 	"game/plan_advance.go":      {place: "about the build plan's advance item", age: "primitive_age", seen: seenNews},
 	"game/plan_deal.go":         {place: "about the build plan's deal items", age: "bronze_age", seen: seenNews},
@@ -244,16 +243,15 @@ var fileNotes = map[string]fileNote{
 // skipDecls are functions and variables whose strings are left out, by
 // "file:name", each with its reason.
 var skipDecls = map[string]string{
-	"ui/commands.go:devCommands":                  whyDev,
-	"config/badge_catalog.go:mastery":             "a note for developers: how a badge is proved or judged",
-	"rules/badges.go:BadgeProblems":               whyDev,
-	"mapmodel/commands.go:BuildingCommand":        whySyntax,
-	"mapmodel/commands.go:FactionCommand":         whySyntax,
-	"mapmodel/commands.go:IdleCommand":            whySyntax,
-	"mapmodel/commands.go:RouteCommand":           whySyntax,
-	"mapmodel/commands.go:WonderCommand":          whySyntax,
-	"theme/theme.go:roleNames":                    whyDev,
-	"ui/mapstyle/skyline/wonders.go:wonderSprite": whyArt,
+	"ui/commands.go:devCommands":           whyDev,
+	"config/badge_catalog.go:mastery":      "a note for developers: how a badge is proved or judged",
+	"rules/badges.go:BadgeProblems":        whyDev,
+	"mapmodel/commands.go:BuildingCommand": whySyntax,
+	"mapmodel/commands.go:FactionCommand":  whySyntax,
+	"mapmodel/commands.go:IdleCommand":     whySyntax,
+	"mapmodel/commands.go:RouteCommand":    whySyntax,
+	"mapmodel/commands.go:WonderCommand":   whySyntax,
+	"theme/theme.go:roleNames":             whyDev,
 }
 
 // newRow starts a row a special rule fills.

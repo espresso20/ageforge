@@ -11,15 +11,37 @@ import "github.com/espresso20/ageforge/mapmodel"
 // wonderFamily lets a landmark wear a later period's finish.
 var wonderFamily = map[string]int{"crystal_palace": 7, "great_monolith": 8, "hoover_dam": 32, "particle_accelerator": 30}
 
-// wonderNominal is each wonder's height in rows in a scene sized for a
-// 45-row terminal at scale 1. A wonder is drawn this tall times the scene's
-// scale, within the scene's own room (wonderRows).
-var wonderNominal = map[string]float64{
-	"sacred_grove": 14, "great_monolith": 22, "stonehenge": 22, "colosseum": 18, "parthenon": 20,
-	"great_library": 26, "sistine_chapel": 30, "grand_lighthouse": 32, "crystal_palace": 28,
-	"eiffel_tower": 34, "hoover_dam": 32, "particle_accelerator": 30, "space_program": 34,
-	"global_network": 34, "world_simulation": 32, "neon_citadel": 34, "stellar_cradle": 34,
-	"dyson_scaffold": 26, "warp_nexus": 24, "cosmic_beacon": 32, "reality_anchor": 24, "singularity_core": 22,
+// wonderSpec is one wonder: its height in rows in a scene sized for a 45-row
+// terminal at scale 1 (it is drawn this tall times the scene's scale, within
+// the scene's own room: wonderRows) and the function that draws it.
+type wonderSpec struct {
+	nominal float64
+	draw    func(rows int) *sprite
+}
+
+var wonderSpecs = map[string]wonderSpec{
+	"sacred_grove":         {14, grove},
+	"great_monolith":       {22, monolith},
+	"stonehenge":           {22, henge},
+	"colosseum":            {18, colosseum},
+	"parthenon":            {20, parthenon},
+	"great_library":        {26, library},
+	"sistine_chapel":       {30, basilica},
+	"grand_lighthouse":     {32, lighthouse},
+	"crystal_palace":       {28, glassHall},
+	"eiffel_tower":         {34, lattice},
+	"hoover_dam":           {32, dam},
+	"particle_accelerator": {30, accelerator},
+	"space_program":        {34, rocket},
+	"global_network":       {34, network},
+	"world_simulation":     {32, simulation},
+	"neon_citadel":         {34, citadel},
+	"stellar_cradle":       {34, cradle},
+	"dyson_scaffold":       {26, dyson},
+	"warp_nexus":           {24, ringGate},
+	"cosmic_beacon":        {32, beacon},
+	"reality_anchor":       {24, anchor},
+	"singularity_core":     {22, singularity},
 }
 
 // wonderMinRows is the least a landmark is drawn at: under it the shape is
@@ -30,18 +52,12 @@ const wonderMinRows = 6
 // scale whose room above the ground is ref rows: its nominal height scaled,
 // never more than the scene holds and never under wonderMinRows.
 func wonderRows(key string, scale float64, ref int) int {
-	n := wonderNominal[key]
+	n := wonderSpecs[key].nominal
 	if n == 0 {
 		n = 14
 	}
 	h := int(n*scale + 0.5)
 	return clampInt(h, wonderMinRows, max(wonderMinRows, ref-2))
-}
-
-// wonderSprite is the wonder key drawn for a ground scene of this scale and
-// room.
-func wonderSprite(key string, scale float64, ref int) *sprite {
-	return wonderArt(key, wonderRows(key, scale, ref))
 }
 
 // fitRows makes s exactly rows tall: a taller one loses its top, a shorter
@@ -59,52 +75,9 @@ func fitRows(s *sprite, rows int) *sprite {
 // wonderArt draws the wonder key rows tall.
 func wonderArt(key string, rows int) *sprite {
 	var s *sprite
-	switch key {
-	case "sacred_grove":
-		s = grove(rows)
-	case "great_monolith":
-		s = monolith(rows)
-	case "stonehenge":
-		s = henge(rows)
-	case "colosseum":
-		s = colosseum(rows)
-	case "parthenon":
-		s = parthenon(rows)
-	case "great_library":
-		s = library(rows)
-	case "sistine_chapel":
-		s = basilica(rows)
-	case "grand_lighthouse":
-		s = lighthouse(rows)
-	case "crystal_palace":
-		s = glassHall(rows)
-	case "eiffel_tower":
-		s = lattice(rows)
-	case "hoover_dam":
-		s = dam(rows)
-	case "particle_accelerator":
-		s = accelerator(rows)
-	case "space_program":
-		s = rocket(rows)
-	case "global_network":
-		s = network(rows)
-	case "world_simulation":
-		s = simulation(rows)
-	case "neon_citadel":
-		s = citadel(rows)
-	case "stellar_cradle":
-		s = cradle(rows)
-	case "dyson_scaffold":
-		s = dyson(rows)
-	case "warp_nexus":
-		s = ringGate(rows)
-	case "cosmic_beacon":
-		s = beacon(rows)
-	case "reality_anchor":
-		s = anchor(rows)
-	case "singularity_core":
-		s = singularity(rows)
-	default: // a wonder with no drawing of its own: a plain obelisk
+	if w := wonderSpecs[key]; w.draw != nil {
+		s = w.draw(rows)
+	} else { // a wonder with no drawing of its own: a plain obelisk
 		s = aObelisk(newRnd(hash(len(key), int(key[0]))), rows)
 	}
 	return fitRows(s, rows)

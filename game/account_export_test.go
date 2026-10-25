@@ -208,9 +208,9 @@ func TestImportCrossAccountSafety(t *testing.T) {
 	idB := acctB.AccountID
 
 	// Wipe B's slot so we can prove the import recreates it (and so A is unambiguously the
-	// only pre-existing slot). WipeAccount removes the ACTIVE slot — B is active right now.
-	if err := WipeAccount(); err != nil {
-		t.Fatalf("WipeAccount(B): %v", err)
+	// only pre-existing slot). B is the ACTIVE slot right now.
+	if _, err := WipeAccountByID(idB); err != nil {
+		t.Fatalf("WipeAccountByID(B): %v", err)
 	}
 
 	// Account A: make it active with its own distinct data.

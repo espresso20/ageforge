@@ -182,15 +182,12 @@ func (ge *GameEngine) WipeSavesByID(id string) (int, error) {
 		return 0, vibe.Errorf("game.current_game.WipeSavesByID.01", "there is no account with the ID %q", id)
 	}
 	dir := filepath.Join(accountDir(id), "saves")
-	entries, err := os.ReadDir(dir)
-	if err != nil && !os.IsNotExist(err) {
+	files, err := saveFiles(dir)
+	if err != nil {
 		return 0, fmt.Errorf("could not read the save folder: %w", err)
 	}
 	n := 0
-	for _, e := range entries {
-		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
-			continue
-		}
+	for _, e := range files {
 		if err := os.Remove(filepath.Join(dir, e.Name())); err != nil {
 			return n, fmt.Errorf("could not delete the save file: %w", err)
 		}
@@ -224,8 +221,5 @@ func forgetGamesInSlot(id string) {
 	if err != nil {
 		return
 	}
-	tmp := path + ".tmp"
-	if os.WriteFile(tmp, out, 0644) == nil {
-		_ = os.Rename(tmp, path)
-	}
+	_ = writeFileAtomic(path, out)
 }

@@ -539,70 +539,19 @@ func (ge *GameEngine) Succumb() error {
 	// The legacy kit remembers the fallen civilization's plan, research
 	// order, civilizations met and shares before the reset.
 	ge.captureLegacyLocked()
-	savedLegacy := copyBoolMap(ge.legacyBonuses)
 	// The ending's record, for whoever tells it (run_ending.go).
 	end := RunEnding{Kind: RunEndFallen, Age: ge.age, Level: ge.Prestige.GetLevel(), Catastrophe: catName}
 	runStarted := ge.Stats.GameStarted
-	savedCatHistory := append([]string(nil), ge.catastropheHistory...)
-	savedEpochHistory := append([]EpochEventRecord(nil), ge.epochEventHistory...)
-	savedPrestige := ge.Prestige
 
-	// Full reset — Bus intentionally kept so dashboard subscriptions survive.
-	ge.tick = 0
-	ge.runFacts = newRunFacts()
-	ge.age = "primitive_age"
-	ge.Resources = NewResourceManagerWith(ge.rules)
-	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManagerWith(ge.rules)
-	ge.Research = NewResearchManagerWith(ge.rules)
-	ge.Military = NewMilitaryManagerWith(ge.rules)
-	ge.Events = NewEventManagerWith(ge.rules)
-	ge.Milestones = NewMilestoneManagerWith(ge.rules)
-	ge.Trade = NewTradeManagerWith(ge.rules)
-	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
-	ge.Stats = NewGameStats()
-	ge.prestigeCue = PrestigeCue{}
-	ge.prestigeCueSeenAge = ""
-	ge.Stats.AgeLog[0].Tick = ge.tick
-	ge.Stats.AgeLog[0].Age = ge.age
-	ge.permanentBonuses = make(map[string]float64)
-	ge.buildQueue = nil
-	ge.plan = nil
-	ge.log = nil
-	// The history overlay is this run's: the ring starts over with the run.
-	ge.History = NewHistoryCollector()
-	ge.speedMultiplier = 1.0
+	// Full reset, as at a prestige (resetRunLocked); morale starts lower.
+	// Prestige, the legacy flags and both histories carry over untouched.
+	ge.resetRunLocked(0.50)
+	// The tick speed bonus and a pending Last Passage start over too.
 	ge.tickSpeedBonus = 0
-	ge.ageReady = false
-	ge.starvationTicks = 0
-	// The festival and black market cooldowns are tick numbers, and the tick
-	// counter just went back to 0: left as they were, a cooldown with 780
-	// ticks to run at tick 5,001 had 5,781 to run in the new run. The
-	// automatic expedition's countdown starts over too, as at a prestige.
-	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
-	ge.grantedFeatures = nil
-	ge.autoExpeditionTicksLeft = 0
-	ge.autoExpeditionStarved = false
-	ge.currentEpoch = ge.rules.EraOf("primitive_age")
-	ge.epochEventFired = make(map[string]bool)
-	ge.clearHarbingerRun()
-	ge.awakeningsFired = make(map[string]bool)
-	ge.survivedEpochs = make(map[string]bool)
-	ge.pendingCatastrophe = ""
 	ge.pendingLastPassage = false
-	ge.morale = 0.50
-	ge.lowMoraleWarned = false
-	// Fresh run after the fall: eligible to roll a new Ancient Memory.
-	ge.ancientMemoryUsed = false
-	ge.pendingMemoryTech = ""
-	ge.startRunShares()
 
 	// Restore persistent cross-run state
-	ge.Prestige = savedPrestige
 	ge.Buildings.LoadRuins(savedRuins)
-	ge.legacyBonuses = savedLegacy
-	ge.catastropheHistory = savedCatHistory
-	ge.epochEventHistory = savedEpochHistory
 
 	// Per-resource legacy rate bonuses live in permanentBonuses; the research
 	// bonus is derived from the legacy flags (see succumbResearchFactor).
@@ -617,9 +566,6 @@ func (ge *GameEngine) Succumb() error {
 
 	ge.Resources.Add("food", 15)
 	ge.Resources.Add("wood", 12)
-	for res, amount := range ge.Prestige.GetStartingResources() {
-		ge.Resources.Add(res, amount)
-	}
 
 	ge.recalculateTickSpeed()
 

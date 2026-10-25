@@ -8,8 +8,8 @@ import (
 // name and 32 hex chars (16 bytes) — the format the recovery code + save attribution
 // depend on.
 func TestAccountIDFromNameDeterministic(t *testing.T) {
-	id1 := accountIDFromName("Imperium")
-	id2 := accountIDFromName("Imperium")
+	id1 := AccountIDForName("Imperium")
+	id2 := AccountIDForName("Imperium")
 	if id1 != id2 {
 		t.Errorf("same name derived different IDs: %q != %q", id1, id2)
 	}
@@ -21,7 +21,7 @@ func TestAccountIDFromNameDeterministic(t *testing.T) {
 // TestAccountIDFromNameNormalizes confirms the normalization rules: case-insensitive,
 // surrounding whitespace trimmed, internal whitespace runs collapsed — all map to one ID.
 func TestAccountIDFromNameNormalizes(t *testing.T) {
-	base := accountIDFromName("bob")
+	base := AccountIDForName("bob")
 	variants := map[string]string{
 		"trailing-space": "Bob ",
 		"leading-space":  "  bob",
@@ -29,18 +29,18 @@ func TestAccountIDFromNameNormalizes(t *testing.T) {
 		"mixed-case":     "Bob",
 	}
 	for name, v := range variants {
-		if got := accountIDFromName(v); got != base {
-			t.Errorf("%s: accountIDFromName(%q) = %q, want %q (same as %q)", name, v, got, base, "bob")
+		if got := AccountIDForName(v); got != base {
+			t.Errorf("%s: AccountIDForName(%q) = %q, want %q (same as %q)", name, v, got, base, "bob")
 		}
 	}
 
 	// Internal whitespace collapse: "bob  the   builder" == "bob the builder".
-	if a, b := accountIDFromName("bob  the   builder"), accountIDFromName("bob the builder"); a != b {
+	if a, b := AccountIDForName("bob  the   builder"), AccountIDForName("bob the builder"); a != b {
 		t.Errorf("internal whitespace not collapsed: %q != %q", a, b)
 	}
 
 	// Different names → different IDs.
-	if accountIDFromName("alice") == accountIDFromName("bob") {
+	if AccountIDForName("alice") == AccountIDForName("bob") {
 		t.Error("different names derived the same ID")
 	}
 }
@@ -57,8 +57,8 @@ func TestCreateNamedAccount(t *testing.T) {
 	if acct.DisplayName != "Imperium Romanum" {
 		t.Errorf("DisplayName = %q, want %q (trimmed original)", acct.DisplayName, "Imperium Romanum")
 	}
-	if acct.AccountID != accountIDFromName("Imperium Romanum") {
-		t.Errorf("AccountID = %q, want derived %q", acct.AccountID, accountIDFromName("Imperium Romanum"))
+	if acct.AccountID != AccountIDForName("Imperium Romanum") {
+		t.Errorf("AccountID = %q, want derived %q", acct.AccountID, AccountIDForName("Imperium Romanum"))
 	}
 	if !acct.Established() {
 		t.Error("named account not Established()")
@@ -90,7 +90,7 @@ func TestCreateNamedAccountCarriesOverData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateNamedAccount: %v", err)
 	}
-	if named.AccountID != accountIDFromName("Carthage") {
+	if named.AccountID != AccountIDForName("Carthage") {
 		t.Errorf("AccountID = %q, want name-derived", named.AccountID)
 	}
 	if named.AccountID == legacy.AccountID {

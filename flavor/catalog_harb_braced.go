@@ -1,5 +1,7 @@
 package flavor
 
+import "slices"
+
 // HarbingerBraced — the player spent resources to soften the blow if it comes.
 // The log line says what was spent; these sentences are the digging, stacking,
 // sealing and sandbagging, and the arguments about who got the heavy end.
@@ -7,16 +9,12 @@ package flavor
 // The per-age pools echo config.HarbingerDef.BraceLabel for that age.
 
 func harbBracedTemplates() []tmpl {
-	out := pool("harb_braced_any", erasAny, harbBracedAny)
-	out = append(out, pool("harb_braced_grounded", erasGrounded, harbBracedGrounded)...)
-	out = append(out, pool("harb_braced_late", erasLate, harbBracedLate)...)
-	out = append(out, pool("harb_braced_ancient", erasAncient, harbBracedAncient)...)
-	out = append(out, pool("harb_braced_feudal", erasFeudal, harbBracedFeudal)...)
-	out = append(out, pool("harb_braced_industrial", erasIndustrial, harbBracedIndustrial)...)
-	out = append(out, pool("harb_braced_digital", erasDigital, harbBracedDigital)...)
-	out = append(out, pool("harb_braced_cosmic", erasCosmic, harbBracedCosmic)...)
-	out = append(out, agePools("harb_braced_age", harbBracedAges)...)
-	return out
+	return slices.Concat(
+		eraPools("harb_braced",
+			harbBracedAny, harbBracedGrounded, harbBracedLate, harbBracedAncient,
+			harbBracedFeudal, harbBracedIndustrial, harbBracedDigital, harbBracedCosmic),
+		agePools("harb_braced_age", harbBracedAges),
+	)
 }
 
 var harbBracedAny = []skel{

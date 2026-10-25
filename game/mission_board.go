@@ -53,17 +53,6 @@ func tierKind(tier string) string {
 	return config.MissionScout
 }
 
-// kindTier is the tier of a mission kind.
-func kindTier(kind string) string {
-	switch kind {
-	case config.MissionExpedition:
-		return TierLong
-	case config.MissionCampaign:
-		return TierGrand
-	}
-	return TierShort
-}
-
 // slotTier is the tier of board slot i (0-based).
 func slotTier(i int) string { return boardTiers[i/config.BoardOffersPerTier] }
 

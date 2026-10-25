@@ -13,9 +13,9 @@ import (
 // grouped into pools by the ages they fit, and the word lists some of those
 // sentences draw a phrase from.
 //
-// A catalog file declares its pools with pool(), agePool() and agePools().
-// The reader takes the pool's name and ages from those calls, so a sentence's
-// id is its catalog, its pool and its place in the pool.
+// A catalog file declares its pools with pool(), agePool(), agePools() and
+// eraPools(). The reader takes the pool's name and ages from those calls, so a
+// sentence's id is its catalog, its pool and its place in the pool.
 
 // moment is one flavor catalog: one game situation the package narrates.
 type moment struct {
@@ -58,6 +58,20 @@ var flavorSpans = map[string][2]int{
 	"eraIndustrial": {9, 13},
 	"eraDigital":    {14, 17},
 	"eraCosmic":     {18, 22},
+}
+
+// eraPoolBuckets are the eight pools eraPools builds (flavor/skeleton.go), in the
+// order of its sentence arguments: the end of each pool's name and the era
+// shorthand that gates it.
+var eraPoolBuckets = []struct{ suffix, eras string }{
+	{"any", "erasAny"},
+	{"grounded", "erasGrounded"},
+	{"late", "erasLate"},
+	{"ancient", "erasAncient"},
+	{"feudal", "erasFeudal"},
+	{"industrial", "erasIndustrial"},
+	{"digital", "erasDigital"},
+	{"cosmic", "erasCosmic"},
 }
 
 // flavorPool is one pool of sentences.
@@ -166,6 +180,21 @@ func newFlavorReader(m *module) *flavorReader {
 					p.spans = spansOfAges(p.ages)
 				}
 				fr.pools[v] = p
+			case "eraPools":
+				if len(call.Args) != 1+len(eraPoolBuckets) {
+					return true
+				}
+				for i, b := range eraPoolBuckets {
+					name := prefix + "_" + b.suffix
+					mo, bucket := momentOf(name)
+					if mo == nil {
+						fr.unread = append(fr.unread, name)
+						continue
+					}
+					p := &flavorPool{m: mo, bucket: bucket, tmpl: name, spans: fr.spans[b.eras]}
+					fr.order = append(fr.order, p)
+					fr.pools[exprText(call.Args[1+i])] = p
+				}
 			case "agePools":
 				if mo == nil {
 					fr.unread = append(fr.unread, prefix)

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"maps"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
@@ -64,21 +65,13 @@ func (tm *TradeManager) routeDisruptedBy(def config.TradeRouteDef, disrupted map
 	}
 	// Deterministic: check imports in sorted key order so the reported resource
 	// is stable across runs (Go map iteration is randomised).
-	keys := make([]string, 0, len(def.Import))
-	for res := range def.Import {
-		keys = append(keys, res)
-	}
-	sort.Strings(keys)
-	for _, res := range keys {
+	for _, res := range sortedKeys(def.Import) {
 		if disrupted[res] {
 			return res
 		}
 	}
 	return ""
 }
-
-// NewTradeManager creates a new trade manager on the core ruleset.
-func NewTradeManager() *TradeManager { return NewTradeManagerWith(rules.Core()) }
 
 // NewTradeManagerWith creates a new trade manager with set's routes.
 func NewTradeManagerWith(set *rules.Set) *TradeManager {
@@ -102,19 +95,6 @@ func (tm *TradeManager) Rebind(set *rules.Set) {
 	}
 }
 
-// copyAmounts returns an independent copy of a resource-amount map so UI
-// snapshots never alias the manager's held config defs.
-func copyAmounts(m map[string]float64) map[string]float64 {
-	if m == nil {
-		return nil
-	}
-	out := make(map[string]float64, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
-}
-
 // SetTechTerms sets the techs' terms: routeTime multiplies a route's time per
 // run and routePay what a run brings in.
 func (tm *TradeManager) SetTechTerms(routeTime, routePay float64) {
@@ -124,7 +104,7 @@ func (tm *TradeManager) SetTechTerms(routeTime, routePay float64) {
 // routeImports is a copy of what one run of def brings in, with the techs'
 // term on trade route income: what the panels show.
 func (tm *TradeManager) routeImports(def config.TradeRouteDef) map[string]float64 {
-	out := copyAmounts(def.Import)
+	out := maps.Clone(def.Import)
 	for res, amount := range out {
 		out[res] = tm.RoutePay(amount)
 	}
@@ -325,7 +305,8 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	}
 	var disruptedResources []string
 	seenDisrupt := make(map[string]bool)
-	for key, route := range tm.activeRoutes {
+	for _, key := range sortedKeys(tm.activeRoutes) {
+		route := tm.activeRoutes[key]
 		def := allRoutes[key]
 		blockedBy := tm.routeDisruptedBy(def, disrupted)
 		activeRoutes = append(activeRoutes, ActiveRouteInfo{
@@ -333,7 +314,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			Key:         key,
 			TicksLeft:   route.TicksLeft,
 			CyclesDone:  route.CyclesDone,
-			Export:      copyAmounts(def.Export),
+			Export:      maps.Clone(def.Export),
 			Import:      tm.routeImports(def),
 			Disrupted:   blockedBy != "",
 			DisruptedBy: blockedBy,
@@ -369,7 +350,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		availableRoutes = append(availableRoutes, TradeRouteInfo{
 			Name:        def.Name,
 			Key:         def.Key,
-			Export:      copyAmounts(def.Export),
+			Export:      maps.Clone(def.Export),
 			Import:      tm.routeImports(def),
 			CanStart:    canStart,
 			RequiredBld: def.RequiredBld,
@@ -379,15 +360,10 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	}
 
 	// Deep copy stats
-	totalImported := make(map[string]float64, len(tm.totalImported))
-	for k, v := range tm.totalImported {
-		totalImported[k] = v
-	}
-
 	return TradeState{
 		ActiveRoutes:       activeRoutes,
 		AvailableRoutes:    availableRoutes,
-		TotalImported:      totalImported,
+		TotalImported:      maps.Clone(tm.totalImported),
 		DisruptedResources: disruptedResources,
 	}
 }

@@ -36,13 +36,8 @@ func cursorCells(s tcell.SimulationScreen, p *mapstyle.Palette) (cells []tcell.S
 // drawn in; the glyph beneath it is kept and stays readable; and the fill
 // keeps the margins every cursor keeps from the map's own colours.
 func TestCursorIsAHighlightedCell(t *testing.T) {
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	ages := rules.Core().AgeKeys()
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	for th := range fixture.Themes(t) {
 		for i, age := range ages {
 			m, _ := grown(t, fixture.Options{Age: age, Seed: 5})
 			if m.Sky() != mapmodel.SkyGround {

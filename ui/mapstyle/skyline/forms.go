@@ -1,6 +1,9 @@
 package skyline
 
-import "math"
+import (
+	"math"
+	"strings"
+)
 
 // forms.go is the building grammar: parametric archetypes drawn in blocks
 // and line art. A building is (archetype, height, seed): the archetype
@@ -803,8 +806,7 @@ func aSilo(r *rnd, h int) *sprite {
 	base := s.h - 1
 	for i := 0; i < n; i++ {
 		x := i * 3
-		s.vline(x, base-th+1, base, '█', sWallLit, sNone)
-		s.vline(x+1, base-th+1, base, '█', sWallShade, sNone)
+		s.shaft(x, base-th+1, base, 2, sWallLit, sWall, sWallShade)
 		s.put(x, base-th, '▄', sRoof, sNone)
 		s.put(x+1, base-th, '▄', sRoofShade, sNone)
 		s.put(x, base-th/2, '▀', sTrim, sWallLit)
@@ -1068,7 +1070,7 @@ func aHabRing(r *rnd, h int) *sprite {
 	base := s.h - 1
 	cx := w / 2
 	ry := base - th + 1
-	s.text(1, ry, "▄"+string(repeat('▀', w-4))+"▄", sMetal, sNone)
+	s.text(1, ry, "▄"+strings.Repeat("▀", max(w-4, 0))+"▄", sMetal, sNone)
 	s.put(0, ry+1, '█', sWallLit, sNone)
 	s.put(w-1, ry+1, '█', sWallShade, sNone)
 	for x := 1; x < w-1; x++ {
@@ -1077,7 +1079,7 @@ func aHabRing(r *rnd, h int) *sprite {
 			s.put(x, ry+1, '█', sWall, sNone)
 		}
 	}
-	s.text(1, ry+2, "▀"+string(repeat('▄', w-4))+"▀", sMetalDark, sNone)
+	s.text(1, ry+2, "▀"+strings.Repeat("▄", max(w-4, 0))+"▀", sMetalDark, sNone)
 	s.hline(2, w-3, ry+2, '▀', sNeon1, sNone)
 	s.vline(cx, ry+3, base, '█', sWallShade, sNone)
 	s.put(cx-1, ry+3, '╲', sMetal, sNone)
@@ -1183,7 +1185,7 @@ func aPillar(r *rnd, h int) *sprite {
 func aGenShip(r *rnd, h int) *sprite {
 	w := r.rng(15, 19)
 	s := newSprite(w, 7)
-	s.text(1, 1, "▄"+string(repeat('▄', w-5))+"▄", sWall, sNone)
+	s.text(1, 1, "▄"+strings.Repeat("▄", max(w-5, 0))+"▄", sWall, sNone)
 	s.hline(0, w-2, 2, '█', sWall, sNone)
 	s.put(w-1, 2, '►', sWallShade, sNone)
 	for x := 2; x < w-3; x += 2 {
@@ -1198,15 +1200,4 @@ func aGenShip(r *rnd, h int) *sprite {
 	}
 	s.hline(0, w-1, 6, '▀', sMetalDark, sNone)
 	return s
-}
-
-func repeat(r rune, n int) []rune {
-	if n < 0 {
-		n = 0
-	}
-	out := make([]rune, n)
-	for i := range out {
-		out[i] = r
-	}
-	return out
 }

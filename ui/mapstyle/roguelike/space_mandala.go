@@ -28,13 +28,6 @@ const (
 	mdRay    = -1           // a ray of the core's ref
 )
 
-// layMandala is the mandala's seed-only layer: a sparse starfield and the
-// core as the hub. The rings follow the eras reached, so the scene lays
-// them (mandala).
-func (b *skyBase) layMandala() {
-	b.hub = pt(mdX, mdY)
-}
-
 // mandala lays the mandala on the scene: the rings of the eras reached,
 // the crown and the core, on pure indigo.
 func (s *skyScene) mandala() {

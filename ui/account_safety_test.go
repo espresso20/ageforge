@@ -134,7 +134,7 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
 	// A badge and a lifetime prestige, no themes: the stat, then the report.
-	alice.RecordPrestige()
+	alice.RecordPrestigeFrom("")
 	eng.ReportForTest(config.BadgeEvPrestige, "modern_age")
 
 	res := HandleCommand("account recover "+alice.RecoveryCode(), eng)

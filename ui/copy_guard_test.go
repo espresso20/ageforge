@@ -35,6 +35,8 @@ var copyExemptFiles = map[string]string{
 	"ui/copy_guard_test.go":          "this file",
 	"game/expedition_flavor.go":      "flavor catalog glue",
 	"ui/mapstyle/capture/capture.go": "dev capture tool: writes HTML/JS for review pages, never shown in game",
+	"ui/mapstyle/styletest/cells.go": "test support: names a failed check for the developer, never shown in game",
+	"ui/mapstyle/styletest/frame.go": "test support: names a slow frame for the developer, never shown in game",
 }
 
 // copyExemptLiterals are literal substrings exempt from every guard.

@@ -14,6 +14,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
@@ -35,8 +36,6 @@ func TestWriteCaptures(t *testing.T) {
 	if err := os.MkdirAll(out, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
 	cp := &capturer{t: t, states: states, out: out, reg: Registry(), b: mapmodel.NewBuilder(nil)}
 	cp.run()
 	cp.index()
@@ -174,9 +173,7 @@ func (c *capturer) shoot(s shot) {
 	if th == "" {
 		th = "forge"
 	}
-	if err := theme.SetActive(th); err != nil {
-		c.t.Fatal(err)
-	}
+	fixture.WithTheme(c.t, th)
 	m := mapmodel.NewBuilder(c.b.Catalog()).Build(&st, since)
 	view, ok := c.reg.New(s.style)
 	if !ok {

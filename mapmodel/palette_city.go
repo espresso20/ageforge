@@ -1,7 +1,6 @@
 package mapmodel
 
 import (
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -71,14 +70,10 @@ var cityLookDefs = []cityLookDef{
 var cityLookTable = buildCityLooks()
 
 func buildCityLooks() []CityLook {
-	idx := map[string]int{}
-	for i, k := range config.AgeOrder() {
-		idx[k] = i
-	}
 	out := make([]CityLook, 0, len(cityLookDefs))
 	for i := range cityLookDefs {
 		d := &cityLookDefs[i]
-		a, ok := idx[d.key]
+		a, ok := ageIndex[d.key]
 		if !ok {
 			continue // an unknown age key (TestCityLooks fails on it)
 		}

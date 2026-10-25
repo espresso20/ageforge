@@ -128,6 +128,14 @@ func rdist(ax, ay, bx, by int) float64 {
 	return math.Sqrt(float64(dx*dx) + float64(dy*dy))
 }
 
+// b2i is 1 for true and 0 for false, for hashing a flag.
+func b2i(b bool) int64 {
+	if b {
+		return 1
+	}
+	return 0
+}
+
 func clamp01(v float64) float64 {
 	if v < 0 {
 		return 0
