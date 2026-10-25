@@ -62,8 +62,6 @@ var fieldRules = map[string]fieldRule{
 		where: "What the log says after “The {Name} begins.”, and the era's line in the Epoch panel."},
 	"config.ResourceDef.Name": {kind: kindName, area: areaAges, age: "res:{Key}", seen: seenAlways,
 		where: "The name of a resource: in the Resources box of the main window, in every cost and in the log."},
-	"config.ResourceDef.Description": {kind: kindVoice, area: areaAges, age: "res:{Key}", seen: seenRegular,
-		where: "The one-line description of the resource {Name}."},
 	"config.WorkerClassDef.ClassName": {kind: kindName, area: areaAges, age: "{AgeKey}", seen: seenRegular,
 		where: "What the Workers panel calls the workers of the {Domain} domain from the {name:AgeKey} on."},
 

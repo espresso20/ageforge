@@ -35,7 +35,6 @@ var FieldIDs = map[string]string{
 	"config.EpochDef.Name":            "era.{Key}.name",
 	"config.EpochDef.Description":     "era.{Key}.description",
 	"config.ResourceDef.Name":         "resource.{Key}.name",
-	"config.ResourceDef.Description":  "resource.{Key}.description",
 	"config.WorkerClassDef.ClassName": "worker_class.{Domain}.{AgeKey}",
 
 	// ----- buildings and wonders -----

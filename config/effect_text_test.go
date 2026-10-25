@@ -342,9 +342,6 @@ func playerText() map[string]string {
 		add("tech "+x.Key+" name", x.Name)
 		add("tech "+x.Key+" description", x.Description)
 	}
-	for _, x := range BaseResources() {
-		add("resource "+x.Key+" description", x.Description)
-	}
 	for _, x := range Ages() {
 		add("age "+x.Key+" description", x.Description)
 		add("age "+x.Key+" quip", x.Quip)
