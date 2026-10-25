@@ -407,7 +407,6 @@ func playerText() map[string]string {
 	}
 	for _, x := range BaseFactions() {
 		add("civ "+x.Key+" backstory", x.Backstory)
-		add("civ "+x.Key+" description", x.Description)
 	}
 	for _, x := range WorkerClasses() {
 		add("worker class "+x.Domain+"/"+x.AgeKey, x.ClassName)

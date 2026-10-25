@@ -41,7 +41,6 @@ type FactionDef struct {
 	Personality string  // "aggressive" | "peaceful" | "mercantile" | "isolationist"
 	Strength    int     // 1-5; scales war raid severity (higher = harsher raids)
 	Backstory   string  // flavour shown on first contact and in the overlay
-	Description string
 }
 
 // ValidPersonalities is the closed set of civilization personalities. Used by
@@ -256,84 +255,73 @@ func BaseFactions() []FactionDef {
 			Name: "Riverlands Tribes", Key: "riverlands_tribes",
 			MinAge: "bronze_age", Specialty: "food", TradeBonus: 0.15,
 			Personality: "peaceful", Strength: 1,
-			Backstory:   "Fisherfolk and farmers of the great delta, generous with grain and slow to anger. They remember every neighbor who once shared a harvest.",
-			Description: "Settled farming clans who prize hospitality above all.",
+			Backstory: "Fisherfolk and farmers of the great delta, generous with grain and slow to anger. They remember every neighbor who once shared a harvest.",
 		},
 		// --- Iron Era (founding civ) ---
 		{
 			Name: "Ironhold Clans", Key: "ironhold_clans",
 			MinAge: "medieval_age", Specialty: "iron", TradeBonus: 0.20,
 			Personality: "aggressive", Strength: 3,
-			Backstory:   "Mountain smiths and raiders who measure honor in steel. They respect strength and despise weakness. Cross them and the war-horns sound.",
-			Description: "Warlike highland clans forged around the anvil.",
+			Backstory: "Mountain smiths and raiders who measure honor in steel. They respect strength and despise weakness. Cross them and the war-horns sound.",
 		},
 		// --- Steel Era ---
 		{
 			Name: "Merchant Guild", Key: "merchant_guild",
 			MinAge: "colonial_age", Specialty: "gold", TradeBonus: 0.20,
 			Personality: "mercantile", Strength: 2,
-			Backstory:   "A continent-spanning cartel of traders and financiers whose loyalty follows the ledger. Trade with them often and their coffers open to you.",
-			Description: "A powerful guild of traders and financiers.",
+			Backstory: "A continent-spanning cartel of traders and financiers whose loyalty follows the ledger. Trade with them often and their coffers open to you.",
 		},
 		{
 			Name: "Artisan League", Key: "artisan_league",
 			MinAge: "industrial_age", Specialty: "culture", TradeBonus: 0.15,
 			Personality: "peaceful", Strength: 1,
-			Backstory:   "Master craftspeople and cultural preservationists who lend their guild-hands to allies they admire, asking only that beauty be protected.",
-			Description: "Master craftspeople and cultural preservationists.",
+			Backstory: "Master craftspeople and cultural preservationists who lend their guild-hands to allies they admire, asking only that beauty be protected.",
 		},
 		// --- Electric Era ---
 		{
 			Name: "Atomic Directorate", Key: "atomic_directorate",
 			MinAge: "atomic_age", Specialty: "steel", TradeBonus: 0.20,
 			Personality: "isolationist", Strength: 4,
-			Backstory:   "A secretive technocracy behind sealed borders, hoarding reactor science. They neither court nor provoke. They simply wait and watch.",
-			Description: "An insular technocracy guarding the secrets of the atom.",
+			Backstory: "A secretive technocracy behind sealed borders, hoarding reactor science. They neither court nor provoke. They simply wait and watch.",
 		},
 		// --- Digital Era ---
 		{
 			Name: "Tech Consortium", Key: "tech_consortium",
 			MinAge: "information_age", Specialty: "data", TradeBonus: 0.20,
 			Personality: "mercantile", Strength: 2,
-			Backstory:   "A coalition of technology firms that trades in information itself. Data is their currency and your trade volume buys their goodwill.",
-			Description: "A coalition of technology companies and innovators.",
+			Backstory: "A coalition of technology firms that trades in information itself. Data is their currency and your trade volume buys their goodwill.",
 		},
 		// --- Neon Era ---
 		{
 			Name: "Shadow Syndicate", Key: "shadow_syndicate",
 			MinAge: "cyberpunk_age", Specialty: "crypto", TradeBonus: 0.25,
 			Personality: "aggressive", Strength: 3,
-			Backstory:   "An underground network dealing in digital currencies and quieter goods. They lend muscle to friends and launch data raids on enemies.",
-			Description: "An underground network dealing in digital currencies.",
+			Backstory: "An underground network dealing in digital currencies and quieter goods. They lend muscle to friends and launch data raids on enemies.",
 		},
 		{
 			Name: "Plasma Nomads", Key: "plasma_nomads",
 			MinAge: "fusion_age", Specialty: "plasma", TradeBonus: 0.22,
 			Personality: "peaceful", Strength: 2,
-			Backstory:   "Wandering fusion-ship caravans with no homeworld and no grudges. To those who welcome them they gift willing crews and bright plasma.",
-			Description: "Stateless caravans drifting between the inner worlds.",
+			Backstory: "Wandering fusion-ship caravans with no homeworld and no grudges. To those who welcome them they gift willing crews and bright plasma.",
 		},
 		{
 			Name: "Stellar Federation", Key: "stellar_federation",
 			MinAge: "space_age", Specialty: "dark_matter", TradeBonus: 0.20,
 			Personality: "isolationist", Strength: 4,
-			Backstory:   "An interstellar alliance of spacefaring civilizations bound by strict non-interference. Hard to befriend, harder still to anger.",
-			Description: "An interstellar alliance of spacefaring civilizations.",
+			Backstory: "An interstellar alliance of spacefaring civilizations bound by strict non-interference. Hard to befriend, harder still to anger.",
 		},
 		// --- Cosmic Era ---
 		{
 			Name: "Void Reavers", Key: "void_reavers",
 			MinAge: "galactic_age", Specialty: "antimatter", TradeBonus: 0.28,
 			Personality: "aggressive", Strength: 5,
-			Backstory:   "Antimatter corsairs who strip dead stars and weaker empires alike. They take what they want. Only overwhelming respect keeps their fleets at bay.",
-			Description: "Antimatter corsairs feared across the galactic rim.",
+			Backstory: "Antimatter corsairs who strip dead stars and weaker empires alike. They take what they want. Only overwhelming respect keeps their fleets at bay.",
 		},
 		{
 			Name: "Quantum Collective", Key: "quantum_collective",
 			MinAge: "quantum_age", Specialty: "quantum_flux", TradeBonus: 0.30,
 			Personality: "isolationist", Strength: 5,
-			Backstory:   "Beings who exist across multiple dimensions, perceiving your civilization as a curiosity. They are indifferent by nature, but their favor bends reality.",
-			Description: "Beings who exist across multiple dimensions.",
+			Backstory: "Beings who exist across multiple dimensions, perceiving your civilization as a curiosity. They are indifferent by nature, but their favor bends reality.",
 		},
 	}
 }

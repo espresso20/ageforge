@@ -110,7 +110,6 @@ var FieldIDs = map[string]string{
 	"config.TradeRouteDef.Description":      "route.{Key}.description",
 	"config.FactionDef.Name":                "civ.{Key}.name",
 	"config.FactionDef.Backstory":           "civ.{Key}.backstory",
-	"config.FactionDef.Description":         "civ.{Key}.description",
 	"config.PrestigeUpgradeDef.Name":        "prestige.{Key}.name",
 	"config.PrestigeUpgradeDef.Description": "prestige.{Key}.description",
 	"boon.Def.Name":                         "boon.{decl}.{sn}.name",

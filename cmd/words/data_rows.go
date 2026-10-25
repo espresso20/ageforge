@@ -200,8 +200,6 @@ var fieldRules = map[string]fieldRule{
 		where: "The name of another civilization: in the Factions panel, on the map and in the log."},
 	"config.FactionDef.Backstory": {kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRare,
 		where: "The introduction of the {Name}: in the log when you first meet them, and under their name in the Factions panel."},
-	"config.FactionDef.Description": {kind: kindVoice, area: areaWorld, age: "{MinAge}", seen: seenRare,
-		where: "The one-line description of the {Name}."},
 	"config.PrestigeUpgradeDef.Name": {kind: kindName, area: areaWorld, age: "medieval_age", seen: seenRare,
 		where: "The name of an item in the prestige shop."},
 	"config.PrestigeUpgradeDef.Description": {kind: kindMessage, area: areaWorld, age: "medieval_age", seen: seenRare,
