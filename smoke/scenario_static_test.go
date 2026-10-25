@@ -20,7 +20,7 @@ func TestStaticScenarioReport(t *testing.T) {
 	}
 	want := []string{
 		"Static gate check", "Storage check", "Milestone feasibility", "Harbinger prices against the warning",
-		"Faith strength", "Culture strength", "Culture prices", "Depth points", "Research Covenant", "Feature locks",
+		"Faith strength", "Culture strength", "Culture prices", "Black Market payouts", "Depth points", "Research Covenant", "Feature locks",
 		"Bonus pools against their caps", "The economy's properties, by calculation", "Badge Covenant",
 	}
 	if !slices.Equal(titles, want) {
