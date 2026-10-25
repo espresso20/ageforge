@@ -38,6 +38,24 @@ import (
 // income of the material), and a price that sits on its ceiling has given all
 // the effort it may.
 
+// threadRef names the harbinger thread a pricing problem or row is about:
+// the doom foretold of an epoch, or the Last Passage, in the age its
+// harbinger arrives in.
+type threadRef struct {
+	Epoch string `json:"epoch"`
+	// Age is the age the thread's harbinger arrives in.
+	Age         string `json:"age"`
+	LastPassage bool   `json:"last_passage"`
+}
+
+// thread says which thread it is.
+func (t threadRef) thread() string {
+	if t.LastPassage {
+		return fmt.Sprintf("the Last Passage foretold in %s", t.Age)
+	}
+	return fmt.Sprintf("a doom of %s foretold in %s", t.Epoch, t.Age)
+}
+
 // The rules an AppeaseRuleProblem can break.
 const (
 	// AppeaseRuleWarning: level 1 costs more than a moderate economy makes
@@ -50,25 +68,22 @@ const (
 
 // AppeaseRuleProblem is one level-1 Appease price that breaks a pricing rule.
 type AppeaseRuleProblem struct {
-	Epoch string `json:"epoch"`
-	// Age is the age the thread's harbinger arrives in.
-	Age         string  `json:"age"`
-	LastPassage bool    `json:"last_passage"`
-	Rule        string  `json:"rule"`
-	Resource    string  `json:"resource"`
-	Price       float64 `json:"price"`
+	threadRef
+	Rule     string  `json:"rule"`
+	Resource string  `json:"resource"`
+	Price    float64 `json:"price"`
 	// Limit is what the price is held to: what a moderate economy makes in
 	// the shortest warning (AppeaseRuleWarning, at most), or a doom's price
 	// in the same age (AppeaseRuleOrdinary, more than).
 	Limit float64 `json:"limit"`
 }
 
-// thread names the thread the problem is in.
-func (p AppeaseRuleProblem) thread() string {
-	if p.LastPassage {
-		return fmt.Sprintf("the Last Passage foretold in %s", p.Age)
+// held says what the price is held to, for the report's table.
+func (p AppeaseRuleProblem) held() string {
+	if p.Rule == AppeaseRuleOrdinary {
+		return "more than " + num(p.Limit)
 	}
-	return fmt.Sprintf("a doom of %s foretold in %s", p.Epoch, p.Age)
+	return "at most " + num(p.Limit)
 }
 
 // String says what is wrong in plain words.
@@ -101,7 +116,7 @@ func appeaseRuleProblems(rows []PriceRow, income func(res, age string) float64) 
 	for _, r := range rows {
 		lastPassage := r.TargetEpoch == ""
 		add := func(rule, res string, price, limit float64) {
-			out = append(out, AppeaseRuleProblem{Epoch: r.Epoch, Age: r.Age, LastPassage: lastPassage, Rule: rule, Resource: res, Price: price, Limit: limit})
+			out = append(out, AppeaseRuleProblem{threadRef: threadRef{Epoch: r.Epoch, Age: r.Age, LastPassage: lastPassage}, Rule: rule, Resource: res, Price: price, Limit: limit})
 		}
 		for _, res := range sortedKeys(r.AppeaseL1) {
 			if made := float64(income(res, r.Age) * r.WarningTicks); r.AppeaseL1[res] > made {
@@ -161,11 +176,8 @@ const braceAtCeiling = 1.0
 
 // BraceRuleProblem is one level-1 Brace price that breaks a pricing rule.
 type BraceRuleProblem struct {
-	Epoch string `json:"epoch"`
-	// Age is the age the thread's harbinger arrives in.
-	Age         string `json:"age"`
-	LastPassage bool   `json:"last_passage"`
-	Rule        string `json:"rule"`
+	threadRef
+	Rule string `json:"rule"`
 	// Resource is the one the rule broke on: for BraceRuleEffort the slowest
 	// to make ("" when Brace asks for nothing).
 	Resource string  `json:"resource"`
@@ -180,12 +192,16 @@ type BraceRuleProblem struct {
 	Hours float64 `json:"hours,omitempty"`
 }
 
-// thread names the thread the problem is in.
-func (p BraceRuleProblem) thread() string {
-	if p.LastPassage {
-		return fmt.Sprintf("the Last Passage foretold in %s", p.Age)
+// held says what the price is held to, for the report's table. A
+// BraceRuleStore price reads as the default: at most its ceiling.
+func (p BraceRuleProblem) held() string {
+	switch p.Rule {
+	case BraceRuleEffort:
+		return "at least " + num(p.Limit)
+	case BraceRuleMaterial:
+		return "a material the age makes"
 	}
-	return fmt.Sprintf("a doom of %s foretold in %s", p.Epoch, p.Age)
+	return "at most " + num(p.Limit)
 }
 
 // String says what is wrong in plain words.
@@ -231,7 +247,7 @@ func braceRuleProblems(rows []PriceRow, income, built func(res, age string) floa
 		minTicks := braceMinTicks(r)
 		hours := minTicks * config.TickSeconds / 3600
 		add := func(rule, res string, price, limit float64) {
-			p := BraceRuleProblem{Epoch: r.Epoch, Age: r.Age, LastPassage: r.TargetEpoch == "", Rule: rule, Resource: res, Price: price, Limit: limit}
+			p := BraceRuleProblem{threadRef: threadRef{Epoch: r.Epoch, Age: r.Age, LastPassage: r.TargetEpoch == ""}, Rule: rule, Resource: res, Price: price, Limit: limit}
 			if rule == BraceRuleEffort {
 				p.Hours = hours
 			}
@@ -279,44 +295,47 @@ func braceRuleProblems(rows []PriceRow, income, built func(res, age string) floa
 // writeHarbingerPrices renders the two checks for the static scenario.
 func writeHarbingerPrices(sb *strings.Builder, appease []AppeaseRuleProblem, brace []BraceRuleProblem) {
 	sb.WriteString("Every level-1 Appease price against the warning it is priced on: a moderate economy (config.FlowIncome) must make it inside the thread's shortest warning (a fifth of the arrival age for a doom, two thirds of it for the Last Passage), and the Last Passage's must cost more than a doom's foretold in the same age.\n\n")
-	if len(appease) == 0 {
-		sb.WriteString("No problems.\n")
-	} else {
-		sb.WriteString("| thread | rule | price | held to |\n|---|---|---|---|\n")
-		for _, p := range appease {
-			held := "at most " + num(p.Limit)
-			if p.Rule == AppeaseRuleOrdinary {
-				held = "more than " + num(p.Limit)
-			}
-			fmt.Fprintf(sb, "| %s | %s | %s %s | %s |\n", p.thread(), p.Rule, num(p.Price), p.Resource, held)
-		}
+	var rows []ruleRow
+	for _, p := range appease {
+		rows = append(rows, ruleRow{p.threadRef, p.Rule, p.Price, p.Resource, p.held()})
 	}
+	writeRuleTable(sb, rows)
 	fmt.Fprintf(sb, "\nEvery level-1 Brace price, for every age the harbinger can arrive in: it must take a moderate economy (config.TypicalIncome) at least %g of the thread's shortest warning (and in the final era, for the Last Passage and its fated doom, at least %g hours of income), that economy must make each resource it asks for inside the warning, and each must be a material its own buildings make by then. No thread may ask more of a material than three fifths of the arrival age's stock scale (its ceiling, in hours of the moderate economy's income of it), and a price on that ceiling is not held to the share of the warning.\n\n", BraceMinWarningShare, WarningBraceMinHours)
-	if len(brace) == 0 {
-		sb.WriteString("No problems.\n")
-	} else {
-		sb.WriteString("| thread | rule | price | held to |\n|---|---|---|---|\n")
-		for _, p := range brace {
-			held := "at most " + num(p.Limit)
-			switch p.Rule {
-			case BraceRuleEffort:
-				held = "at least " + num(p.Limit)
-			case BraceRuleMaterial:
-				held = "a material the age makes"
-			}
-			// BraceRuleStore reads as the default: at most its ceiling.
-			fmt.Fprintf(sb, "| %s | %s | %s %s | %s |\n", p.thread(), p.Rule, num(p.Price), p.Resource, held)
-		}
+	rows = rows[:0]
+	for _, p := range brace {
+		rows = append(rows, ruleRow{p.threadRef, p.Rule, p.Price, p.Resource, p.held()})
 	}
+	writeRuleTable(sb, rows)
 	writeBraceStore(sb, HarbingerPrices(), rules.Core().TypicalIncome)
+}
+
+// ruleRow is one problem of either pricing check, as the report's table has
+// it: the thread, the rule it broke, the price and what it is held to.
+type ruleRow struct {
+	thread   threadRef
+	rule     string
+	price    float64
+	resource string
+	held     string
+}
+
+// writeRuleTable renders the problems of one pricing check, or says there are
+// none.
+func writeRuleTable(sb *strings.Builder, rows []ruleRow) {
+	if len(rows) == 0 {
+		sb.WriteString("No problems.\n")
+		return
+	}
+	sb.WriteString("| thread | rule | price | held to |\n|---|---|---|---|\n")
+	for _, r := range rows {
+		fmt.Fprintf(sb, "| %s | %s | %s %s | %s |\n", r.thread.thread(), r.rule, num(r.price), r.resource, r.held)
+	}
 }
 
 // BraceStoreRow is one thread's level-1 Brace beside the stock scale of the
 // arrival age (config.StockScale).
 type BraceStoreRow struct {
-	Epoch       string `json:"epoch"`
-	Age         string `json:"age"`
-	LastPassage bool   `json:"last_passage"`
+	threadRef
 	// Hours is how long a moderate economy takes to make the price's slowest
 	// part, at 1x, and WarningShare that time as a share of the thread's
 	// shortest warning.
@@ -337,7 +356,7 @@ type BraceStoreRow struct {
 func BraceStoreRows(rows []PriceRow, income func(res, age string) float64) []BraceStoreRow {
 	out := make([]BraceStoreRow, 0, len(rows))
 	for _, r := range rows {
-		row := BraceStoreRow{Epoch: r.Epoch, Age: r.Age, LastPassage: r.TargetEpoch == ""}
+		row := BraceStoreRow{threadRef: threadRef{Epoch: r.Epoch, Age: r.Age, LastPassage: r.TargetEpoch == ""}}
 		slowest := 0.0
 		for _, res := range sortedKeys(r.BraceL1) {
 			price := r.BraceL1[res]

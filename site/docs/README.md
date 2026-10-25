@@ -52,7 +52,7 @@ New to the game? Install it, then follow [Your First Age](first-ten-minutes.md).
 | Type a command, then `Enter` | Run it. Commands such as `research`, `trade`, `logs` and `help` open a panel. See [All Commands](commands.md) |
 | `Tab` or `→` | Take the completion shown in dim text after the cursor (`→` only at the end of the line). Press `Tab` again for the next suggestion, `Shift+Tab` for the previous one |
 | `↑` / `↓` | Step through your command history |
-| `PgUp` / `PgDn` | Turn the Buildings list a page when no panel is open (in the Map, they zoom) |
+| `PgUp` / `PgDn` | Turn the Buildings list a page when no panel is open (in the Map, they zoom). `Option+↑` / `Option+↓` do the same on a keyboard with no Page keys, and `Option+←` / `Option+→` are `Home` / `End` |
 | `Esc` | Close the open panel. With no panel open: save, stop the game and return to the [main menu](how-to-play.md#the-main-menu), where Continue opens the game again |
 
 Type commands at the `>` prompt at the bottom of the screen.

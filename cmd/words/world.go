@@ -6,7 +6,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// world.go holds the game facts the reader needs to say when a player first
+// This file holds the game facts the reader needs to say when a player first
 // meets a line: the order of the ages, which age a building, tech or badge
 // belongs to, and what things are called. It reads them from package config,
 // so they are the game's own.

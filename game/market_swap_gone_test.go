@@ -84,8 +84,8 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 		t.Errorf("a deal moved %s %v→%v and %s %v→%v, want -%v and +%v", d.Give, give0, give1, d.Get, get0, get1, d.GiveAmt, d.GetAmt)
 	}
 
-	// The black market still pays: a win on iron is the stake's gold value
-	// over iron's rate.
+	// The black market still pays: a win on iron is the stake's minutes of
+	// culture income, times the win multiplier, in minutes of iron income.
 	be := bmEngine(50000)
 	be.blackMarketRand = blackMarketSeedWin()
 	be.Resources.resources["iron"].Amount = 0
@@ -94,32 +94,57 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 	if err != nil || !won {
 		t.Fatalf("a black-market run on iron: won %v, err %v", won, err)
 	}
-	if want := stake * blackMarketWinMult / 2; math.Abs(gain-want) > 1e-6 || math.Abs(be.Resources.Get("iron")-want) > 1e-6 {
+	if want := bmFloorPayout(be, "iron", stake); math.Abs(gain-want) > 1e-9*want || math.Abs(be.Resources.Get("iron")-want) > 1e-9*want {
 		t.Errorf("a win on iron paid %v (iron %v), want %v", gain, be.Resources.Get("iron"), want)
 	}
 }
 
-// TestBlackMarketKeepsItsNineRates: the smugglers deal in nine resources at
-// their own gold rates (a payout is the stake's gold value over the rate),
-// pay gold directly, and refuse everything else, as when they read the
-// market's table.
-func TestBlackMarketKeepsItsNineRates(t *testing.T) {
-	ge := newSeededEngine(4)
-	rates := map[string]float64{
-		"iron": 2, "coal": 0.08, "steel": 5, "oil": 3, "electricity": 0.5,
-		"data": 5, "crypto": 20, "dark_matter": 50, "quantum_flux": 100,
+// TestBlackMarketPaysTheSameWorthInEveryResource: the smugglers deal in gold
+// and nine resources, and a win pays the same worth in each, as minutes of
+// the town's income of it: winMult times the stake's minutes of culture
+// income. They refuse everything else, and a resource the age makes none of,
+// as when they read the market's table.
+func TestBlackMarketPaysTheSameWorthInEveryResource(t *testing.T) {
+	deals := map[string]bool{
+		"gold": true, "iron": true, "coal": true, "steel": true, "oil": true, "electricity": true,
+		"data": true, "crypto": true, "dark_matter": true, "quantum_flux": true,
 	}
 	const stake = 10000.0
+	ge := newSeededEngine(4)
+	ge.age = "quantum_age"
+	typC := ge.rules.TypicalIncome("culture", ge.age)
+	paid := 0
 	for _, r := range ge.rules.Resources() {
-		want := 0.0
-		if rate, ok := rates[r.Key]; ok {
-			want = stake * blackMarketWinMult / rate
+		typR := ge.rules.TypicalIncome(r.Key, ge.age)
+		got := ge.blackMarketReward(r.Key, stake)
+		if !deals[r.Key] || typR <= 0 {
+			if got != 0 {
+				t.Errorf("a win on %s pays %v, want nothing (not dealt in, or none made)", r.Key, got)
+			}
+			continue
 		}
-		if r.Key == "gold" {
-			want = stake * blackMarketWinMult
+		paid++
+		// This town makes none of either: both incomes stand at a quarter of
+		// the typical, so the minutes of the resource's typical income a win
+		// pays are the stake's minutes of the culture's, times the multiplier.
+		minutes := got / (config.TicksPerMinute * typR)
+		want := blackMarketWinMult * stake / (config.TicksPerMinute * typC)
+		if math.Abs(minutes-want) > 1e-9*want {
+			t.Errorf("a win on %s pays %v minutes of its typical income, want %v", r.Key, minutes, want)
 		}
-		if got := ge.blackMarketReward(r.Key, stake); math.Abs(got-want) > 1e-9*math.Max(want, 1) {
-			t.Errorf("a win on %s pays %v, want %v", r.Key, got, want)
+	}
+	if paid != len(deals) {
+		t.Errorf("%d resources pay in the Quantum Age, want %d", paid, len(deals))
+	}
+	// A town making more of the resource is paid more of it, held to four
+	// times the typical income; one making less is paid as at a quarter.
+	typR := ge.rules.TypicalIncome("coal", ge.age)
+	coal := ge.Resources.resources["coal"]
+	for _, c := range []struct{ rate, held float64 }{{10 * typR, 4 * typR}, {2 * typR, 2 * typR}, {0.01 * typR, 0.25 * typR}} {
+		coal.Rate = c.rate
+		want := blackMarketWinMult * stake * c.held / (config.EventIncomeFloor * typC)
+		if got := ge.blackMarketReward("coal", stake); math.Abs(got-want) > 1e-9*want {
+			t.Errorf("a town making %v coal is paid %v, want %v", c.rate, got, want)
 		}
 	}
 	// A resource the smugglers do not deal in is refused with the old words,

@@ -15,10 +15,10 @@ import (
 )
 
 // The Ledger is the top of the dashboard under the status ribbon: the long
-// bar to the next age, the four pillars and a card a resource. These tests
+// bar to the next age, what it waits on and the four pillars. These tests
 // draw the real dashboard at the three sizes it is written for, hold its
-// numbers to the Advance panel's, and hold its memory, its cards and its
-// highlight to the rules in dash_ledger.go.
+// numbers to the Advance panel's, and hold what it waits on and what it is
+// short of to the rules in dash_ledger.go.
 
 // ledgerOf works the Ledger out for a snapshot, as a refresh does.
 func ledgerOf(st game.GameState, eng *game.GameEngine) *ledger {
@@ -81,18 +81,17 @@ func checkFittedBox(t *testing.T, where string, b *ledgerBox, cells []tcell.SimC
 // TestLedgerHeights: the rows the Ledger takes for each size, and the
 // dashboard gives it exactly those, right under the toast line.
 func TestLedgerHeights(t *testing.T) {
-	for _, c := range []struct{ w, h, slots, want int }{
-		{80, 24, 26, 2}, {99, 60, 26, 2}, {100, 29, 26, 2}, // the compact Ledger: the strip's two rows
-		{100, 30, 26, 4}, {119, 60, 3, 4}, {120, 36, 26, 4}, {120, 38, 26, 4}, // the standard one: bar, pillars, a card
-		{120, 39, 26, 7}, {120, 40, 26, 7}, {120, 41, 26, 9}, {120, 43, 26, 11}, // the full one: five rows and the cards
-		{160, 45, 26, 11}, {160, 45, 6, 9}, {160, 45, 3, 7}, {240, 60, 3, 7}, {240, 60, 26, 11},
+	for _, c := range []struct{ w, h, want int }{
+		{80, 24, 1}, {99, 60, 1}, {100, 29, 1}, // the compact Ledger: the long bar
+		{100, 30, 2}, {119, 60, 2}, {120, 36, 2}, {120, 38, 2}, // the standard one: the bar and the pillars
+		{120, 39, 4}, {160, 45, 4}, {240, 60, 4}, // the full one: the bar, the waiting line, the pillars in two rows
 	} {
-		if got := ledgerHeight(c.w, c.h, c.slots); got != c.want {
-			t.Errorf("%dx%d with %d resources: %d rows, want %d", c.w, c.h, c.slots, got, c.want)
+		if got := ledgerHeight(c.w, c.h); got != c.want {
+			t.Errorf("%dx%d: %d rows, want %d", c.w, c.h, got, c.want)
 		}
 	}
-	// The compact Ledger takes the rows the Next Age strip had, so a small
-	// terminal loses nothing to it.
+	// The smallest terminal keeps the badge line, the ribbon, the toast line
+	// and the one row of the Ledger over the boxes.
 	if dashHeaderRows != 1+1+1+ledgerCompactRows {
 		t.Errorf("dashHeaderRows = %d", dashHeaderRows)
 	}
@@ -102,7 +101,7 @@ func TestLedgerHeights(t *testing.T) {
 		w, h := sz[0], sz[1]
 		drawnDashboard(t, d, pages, w, h)
 		x, y, lw, lh := d.ledgerTV.GetRect()
-		if want := ledgerHeight(w, h, d.ledger.slots); x != 0 || y != 3 || lw != w || lh != want {
+		if want := ledgerHeight(w, h); x != 0 || y != 3 || lw != w || lh != want {
 			t.Errorf("%dx%d: the Ledger is at (%d,%d) %dx%d, want (0,3) %dx%d", w, h, x, y, lw, lh, w, want)
 		}
 		if _, cy, _, _ := d.contentArea.GetRect(); cy != 3+lh {
@@ -140,46 +139,35 @@ func TestLedgerAtThreeSizes(t *testing.T) {
 			}
 			switch ledgerTierFor(w, h) {
 			case ledgerCompact:
-				// The long bar and one row of cards: no pillars.
-				if len(rows) != 2 || strings.Contains(text, "Knowledge") {
-					t.Errorf("%s: the compact Ledger is not the bar and a row of cards:\n%s", where, text)
-				}
-				if !strings.Contains(rows[1], "/t") && !strings.ContainsAny(rows[1], "▲▼▬") {
-					t.Errorf("%s: the card row has no rates:\n%s", where, text)
+				// The long bar, on one row: no pillars.
+				if len(rows) != 1 || strings.Contains(text, "Knowledge") {
+					t.Errorf("%s: the compact Ledger is not the long bar alone:\n%s", where, text)
 				}
 			case ledgerStandard:
-				if !strings.Contains(rows[1], "Knowledge") || !strings.Contains(rows[1], "Monument") || len(rows) != 4 {
-					t.Errorf("%s: the standard Ledger lacks its row of pillars:\n%s", where, text)
-				}
-				if !strings.ContainsAny(rows[3], "▁▂▃▄▅▆▇█") {
-					t.Errorf("%s: the standard Ledger has no trend line in its card row:\n%s", where, text)
+				if !strings.Contains(rows[1], "Knowledge") || !strings.Contains(rows[1], "Monument") || len(rows) != 2 {
+					t.Errorf("%s: the standard Ledger is not the bar and a row of pillars:\n%s", where, text)
 				}
 			case ledgerFull:
-				if pillars != 4 || !strings.Contains(rows[1], "Waiting on: ") || !strings.Contains(rows[2], "KNOWLEDGE") {
+				if pillars != 4 || len(rows) != 4 || !strings.Contains(rows[1], "Waiting on: ") || !strings.Contains(rows[2], "KNOWLEDGE") {
 					t.Errorf("%s: the full Ledger lacks its waiting line or its pillars:\n%s", where, text)
 				}
-				if !strings.Contains(text, "rising") && !strings.Contains(text, "falling") && !strings.Contains(text, "steady") {
-					t.Errorf("%s: the cards do not say which way they are going:\n%s", where, text)
-				}
+			}
+			// The resources are the Resources panel's: the Ledger has no cards,
+			// no trend lines and no count of resources it leaves out.
+			if strings.ContainsAny(text, "▲▼▬▶▁▂▃▄▅▆▇") || strings.Contains(text, "rising") || strings.Contains(text, "falling") {
+				t.Errorf("%s: the Ledger draws a resource card:\n%s", where, text)
 			}
 		}
 	}
 }
 
 // TestLedgerInPlainASCII: on the plain glyph tier the Ledger is nothing but
-// ASCII at every size, its bars and trend lines in plain marks.
+// ASCII at every size, its bars in plain marks.
 func TestLedgerInPlainASCII(t *testing.T) {
 	restoreForge(t)
 	for _, age := range []string{"bronze_age", "quantum_age"} {
 		d, pages, _ := stagedDashboard(t, age)
 		plainTier(d)
-		// Some history, so the trend lines have something to draw.
-		drawnDashboard(t, d, pages, 80, 24)
-		for _, r := range d.ledger.trail.rings {
-			for n := 0; n < 10; n++ {
-				r.push(float64(10 + n*n%7))
-			}
-		}
 		for _, sz := range ledgerSizes {
 			w, h := sz[0], sz[1]
 			rows := ledgerRowsOn(t, d, pages, w, h)
@@ -195,13 +183,6 @@ func TestLedgerInPlainASCII(t *testing.T) {
 				t.Errorf("%s at %dx%d: no bar in plain marks:\n%s", age, w, h, strings.Join(rows, "\n"))
 			}
 		}
-	}
-	// The trend line has eight heights in either tier.
-	if got := ledgerSpark([]float64{1, 2, 3, 4, 5, 6, 7, 8}, 8, true); got != ledgerSparkASCII {
-		t.Errorf("the plain trend line is %q, want %q", got, ledgerSparkASCII)
-	}
-	if got := ledgerSpark([]float64{1, 2, 3, 4, 5, 6, 7, 8}, 8, false); got != ledgerSparkUnicode {
-		t.Errorf("the trend line is %q, want %q", got, ledgerSparkUnicode)
 	}
 }
 
@@ -307,170 +288,6 @@ func TestLedgerCalendarDoesNotRunBack(t *testing.T) {
 	}
 	if !slipped {
 		t.Error("no pillar shows the loss")
-	}
-}
-
-// TestLedgerTrailIsBounded: the memory of the amounts is a few samples a
-// resource, taken every few ticks, and starts over when the game does.
-func TestLedgerTrailIsBounded(t *testing.T) {
-	st := game.GameState{Resources: map[string]game.ResourceState{
-		"food": {Unlocked: true, Amount: 1, Rate: 1}, "wood": {Unlocked: true, Amount: 2}, "gold": {Unlocked: false, Amount: 9},
-	}}
-	var tr ledgerTrail
-	for tick := 0; tick <= 100000; tick++ {
-		st.Tick = tick
-		food := st.Resources["food"]
-		food.Amount = float64(tick)
-		st.Resources["food"] = food
-		tr.observe(st)
-	}
-	if len(tr.rings) != 2 || tr.rings["gold"] != nil {
-		t.Errorf("the trail keeps %d resources, want the two unlocked", len(tr.rings))
-	}
-	r := tr.rings["food"]
-	if r.n != ledgerTrailLen {
-		t.Errorf("the trail holds %d samples, want its limit %d", r.n, ledgerTrailLen)
-	}
-	vals := r.appendTo(nil)
-	if len(vals) != ledgerTrailLen {
-		t.Fatalf("the trail reads back %d samples", len(vals))
-	}
-	// Oldest first, a sample every ledgerSampleTicks ticks, ending at the last.
-	for i := 1; i < len(vals); i++ {
-		if vals[i]-vals[i-1] != ledgerSampleTicks {
-			t.Errorf("samples %d and %d are %v and %v: not %d ticks apart", i-1, i, vals[i-1], vals[i], ledgerSampleTicks)
-			break
-		}
-	}
-	if vals[len(vals)-1] != 100000 {
-		t.Errorf("the newest sample is %v, want 100000", vals[len(vals)-1])
-	}
-	// Fewer ticks than a sample apart take none.
-	n := tr.rings["wood"].n
-	st.Tick = 100001
-	tr.observe(st)
-	if tr.rings["wood"].n != n {
-		t.Error("a sample was taken a tick after the last")
-	}
-	// The tick going back (a new game) starts the memory over; so does reset.
-	st.Tick = 3
-	tr.observe(st)
-	if tr.rings["food"].n != 1 {
-		t.Errorf("after the tick went back the trail holds %d samples, want 1", tr.rings["food"].n)
-	}
-	tr.reset()
-	if len(tr.rings) != 0 {
-		t.Error("reset left a trail")
-	}
-}
-
-// TestLedgerTrendAndSpark: which way an amount has gone, and the line that
-// shows it.
-func TestLedgerTrendAndSpark(t *testing.T) {
-	for _, c := range []struct {
-		trail []float64
-		rate  float64
-		want  int
-	}{
-		{[]float64{1, 2, 3, 4}, 0, 1}, {[]float64{4, 3, 2, 1}, 5, -1}, {[]float64{100, 100.5, 100.2}, 5, 0},
-		{[]float64{0, 0, 0}, 5, 0}, {nil, 2, 1}, {[]float64{7}, -2, -1}, {nil, 0, 0},
-		{[]float64{1, 2, 3, 4}, -1, -1}, // up over the minutes, down now
-	} {
-		if got := ledgerTrend(c.trail, c.rate); got != c.want {
-			t.Errorf("trend of %v at rate %v = %d, want %d", c.trail, c.rate, got, c.want)
-		}
-	}
-	// The newest sample is at the right, the cells before the first are blank
-	// and a flat line sits in the middle.
-	if got := ledgerSpark([]float64{1, 9}, 5, false); got != "   ▁█" {
-		t.Errorf("a two-sample line = %q", got)
-	}
-	if got := ledgerSpark([]float64{5, 5, 5}, 3, false); got != "▄▄▄" {
-		t.Errorf("a flat line = %q", got)
-	}
-	if got := ledgerSpark(make([]float64, 40), 12, false); runeLen(got) != 12 {
-		t.Errorf("a long trail draws %d cells, want 12", runeLen(got))
-	}
-}
-
-// TestLedgerHidesIdleResources: a resource with nothing held, no rate, or not
-// yet unlocked takes no card, unless the gate is short of it.
-func TestLedgerHidesIdleResources(t *testing.T) {
-	st := game.GameState{Age: "bronze_age", Resources: map[string]game.ResourceState{
-		"food":  {Name: "Food", Unlocked: true, Amount: 50, Rate: 1},
-		"coal":  {Name: "Coal", Unlocked: true, Amount: 0, Rate: 0},   // nothing going on
-		"stone": {Name: "Stone", Unlocked: true, Amount: 0, Rate: 2},  // arriving
-		"iron":  {Name: "Iron", Unlocked: false, Amount: 30, Rate: 3}, // not unlocked
-		"gold":  {Name: "Gold", Unlocked: true, Amount: 7, Rate: 0},   // held, idle
-		"wood":  {Name: "Wood", Unlocked: true, Amount: 0, Rate: 0},   // nothing going on, but the gate costs it
-	}}
-	l := ledgerOf(st, nil)
-	if !l.data.Need["wood"] || l.data.Need["coal"] {
-		t.Fatalf("staging: the gate is short of %v, want wood and not coal", l.data.Need)
-	}
-	var got []string
-	for _, c := range l.data.Cards {
-		got = append(got, c.Key)
-	}
-	// In the ruleset's order, with only the ones that have something going on
-	// and the one the gate is short of.
-	if strings.Join(got, " ") != "food wood stone gold" {
-		t.Errorf("cards for %v, want food wood stone gold", got)
-	}
-	for _, c := range []struct {
-		tier  ledgerTier
-		first int // the first row of cards
-	}{{ledgerCompact, 1}, {ledgerStandard, 2}, {ledgerFull, 5}} {
-		lines := ledgerLines(&l.data, c.tier, 160, 11, mapmodel.TierUnicode)
-		text := untag(strings.Join(lines[c.first:], "\n"))
-		for _, hidden := range []string{"Coal", "Iron"} {
-			if strings.Contains(text, hidden) {
-				t.Errorf("tier %d draws a card for %q:\n%s", c.tier, hidden, text)
-			}
-		}
-		for _, shown := range []string{"Food", "Wood", "Stone", "Gold"} {
-			if !strings.Contains(text, shown) {
-				t.Errorf("tier %d has no card for %q:\n%s", c.tier, shown, text)
-			}
-		}
-	}
-}
-
-// TestLedgerCardsStayPut: a card's place does not change with its numbers,
-// however many digits they have, and a card does not push the next.
-func TestLedgerCardsStayPut(t *testing.T) {
-	names := []string{"Food", "Wood", "Stone", "Iron", "Gold", "Faith"}
-	mk := func(scale float64) *ledgerData {
-		d := &ledgerData{Need: map[string]bool{}}
-		for i, name := range names {
-			d.Cards = append(d.Cards, ledgerCard{Key: strings.ToLower(name), Name: name, Amount: scale * float64(i+1) * 1.37, Rate: scale * float64(i+2) / 3,
-				Trail: []float64{1, 3, 2, 5, 4}, Trend: i%3 - 1})
-		}
-		return d
-	}
-	for _, tier := range []ledgerTier{ledgerCompact, ledgerStandard, ledgerFull} {
-		const w = 160
-		var cols [][]int
-		for _, scale := range []float64{0.01, 1, 1234, 9.9e9, 4e18} {
-			var at []int
-			for _, line := range ledgerLines(mk(scale), tier, w, 11, mapmodel.TierUnicode) {
-				plain := untag(line)
-				if runeLen(plain) > w {
-					t.Errorf("tier %d, scale %v: a row of %d cells", tier, scale, runeLen(plain))
-				}
-				for _, name := range names {
-					if i := strings.Index(plain, name); i >= 0 {
-						at = append(at, runeLen(plain[:i]))
-					}
-				}
-			}
-			cols = append(cols, at)
-		}
-		for i := 1; i < len(cols); i++ {
-			if fmt.Sprint(cols[i]) != fmt.Sprint(cols[0]) || len(cols[0]) == 0 {
-				t.Errorf("tier %d: the cards moved with their numbers: %v then %v", tier, cols[0], cols[i])
-			}
-		}
 	}
 }
 
@@ -648,14 +465,14 @@ func waitingPrices(st game.GameState) map[string]bool {
 	return costs
 }
 
-// TestLedgerBottleneckFollowsTheBlockers: the resource a waiting building
-// costs and the town lacks is the one the Ledger marks, and a resource no
-// waiting building costs is not; when the gate is met nothing is marked.
-func TestLedgerBottleneckFollowsTheBlockers(t *testing.T) {
+// TestLedgerShortOfFollowsTheBlockers: the resource a waiting building costs
+// and the town lacks is the one the Ledger names as short, and a resource no
+// waiting building costs is not; when the gate is met nothing is named.
+func TestLedgerShortOfFollowsTheBlockers(t *testing.T) {
 	restoreForge(t)
 	full := bottleneckTown(t, "stone_age", 1e12)
-	if l := ledgerOf(full.GetState(), full); len(l.data.Need) != 0 || l.data.Worst != "" {
-		t.Fatalf("with every store full the gate is short of %v (worst %q)", l.data.Need, l.data.Worst)
+	if l := ledgerOf(full.GetState(), full); len(l.data.Need) != 0 || len(l.data.Short) != 0 {
+		t.Fatalf("with every store full the gate is short of %v (%v)", l.data.Need, l.data.Short)
 	}
 	st := full.GetState()
 	costs := waitingPrices(st)
@@ -670,32 +487,31 @@ func TestLedgerBottleneckFollowsTheBlockers(t *testing.T) {
 		e := bottleneckTown(t, "stone_age", 1e12, res)
 		l := ledgerOf(e.GetState(), e)
 		if got := l.data.Need[res]; got != costs[res] {
-			t.Errorf("with %s empty the Ledger marks it = %v, but a waiting building costs it = %v", res, got, costs[res])
+			t.Errorf("with %s empty the Ledger lists it as short = %v, but a waiting building costs it = %v", res, got, costs[res])
 		}
-		if costs[res] && l.data.Worst != res {
-			t.Errorf("%s is the only store empty and a waiting building costs it, but the worst is %q", res, l.data.Worst)
-		}
-		if !costs[res] && l.data.Worst != "" {
-			t.Errorf("%s is empty but nothing waiting costs it, and the worst is %q", res, l.data.Worst)
-		}
+		lines := untag(strings.Join(ledgerLines(&l.data, ledgerFull, 160, ledgerFullHeight, mapmodel.TierUnicode), "\n"))
 		if !costs[res] {
+			if len(l.data.Short) != 0 || strings.Contains(lines, "Short of") {
+				t.Errorf("%s is empty but nothing waiting costs it, and the Ledger is short of %v:\n%s", res, l.data.Short, lines)
+			}
 			continue
 		}
-		// The marks on the cards: a chip with the arrow on the worst, and the
-		// name in the "Short of" line.
-		marked := strings.Join(ledgerLines(&l.data, ledgerFull, 160, 11, mapmodel.TierUnicode), "\n")
-		if chip := theme.TagFgBg(theme.RoleOnAccent, theme.RoleAccent) + "▶" + rs.Name; !strings.Contains(marked, chip) {
-			t.Errorf("no card carries the mark for %s:\n%s", res, untag(marked))
+		// The name is the only one in the "Short of" line, on the accent.
+		if len(l.data.Short) != 1 || l.data.Short[0] != rs.Name {
+			t.Errorf("%s is the only store empty and a waiting building costs it, but the Ledger is short of %v", res, l.data.Short)
 		}
-		if !strings.Contains(untag(marked), "Short of: "+rs.Name) {
-			t.Errorf("the Ledger does not name %s as short:\n%s", rs.Name, untag(marked))
+		if !strings.Contains(lines, "Short of: "+rs.Name) {
+			t.Errorf("the Ledger does not name %s as short:\n%s", rs.Name, lines)
+		}
+		if chip := theme.TagFgBg(theme.RoleOnAccent, theme.RoleAccent) + rs.Name; !strings.Contains(strings.Join(ledgerLines(&l.data, ledgerFull, 160, ledgerFullHeight, mapmodel.TierUnicode), "\n"), chip) {
+			t.Errorf("the name of %s is not on the accent", res)
 		}
 	}
 	// The gate met: nothing waited on, nothing marked, and the line says so.
 	meet := bottleneckTown(t, "stone_age", 0)
 	meetTheGate(t, meet)
 	l := ledgerOf(meet.GetState(), meet)
-	if len(l.data.Waits) != 0 || l.data.Then != "" || len(l.data.Need) != 0 || l.data.Worst != "" {
+	if len(l.data.Waits) != 0 || l.data.Then != "" || len(l.data.Need) != 0 || len(l.data.Short) != 0 {
 		t.Errorf("a town that meets the gate still waits on %v then %q, short of %v", l.data.Waits, l.data.Then, l.data.Need)
 	}
 	lv := ledgerView{m: &l.data, w: 160}
@@ -719,7 +535,7 @@ func TestLedgerRowsFitAtEveryWidth(t *testing.T) {
 				for _, c := range []struct {
 					tier ledgerTier
 					h    int
-				}{{ledgerCompact, 2}, {ledgerStandard, 4}, {ledgerFull, 7}, {ledgerFull, 11}} {
+				}{{ledgerCompact, ledgerCompactRows}, {ledgerStandard, ledgerStandardRows}, {ledgerFull, ledgerFullHeight}} {
 					lines := ledgerLines(m, c.tier, w, c.h, g)
 					if len(lines) > c.h {
 						t.Fatalf("tier %d at %d: %d rows for %d", c.tier, w, len(lines), c.h)
@@ -767,8 +583,8 @@ func TestLedgerResizeShowsTheRightLedger(t *testing.T) {
 		sim.SetSize(sz.w, sz.h)
 		pages.SetRect(0, 0, sz.w, sz.h)
 		pages.Draw(screen) // no d.refresh in between
-		if _, _, _, lh := d.ledgerTV.GetRect(); lh != ledgerHeight(sz.w, sz.h, d.ledger.slots) {
-			t.Errorf("%dx%d: the Ledger is %d rows after the resize, want %d", sz.w, sz.h, lh, ledgerHeight(sz.w, sz.h, d.ledger.slots))
+		if _, _, _, lh := d.ledgerTV.GetRect(); lh != ledgerHeight(sz.w, sz.h) {
+			t.Errorf("%dx%d: the Ledger is %d rows after the resize, want %d", sz.w, sz.h, lh, ledgerHeight(sz.w, sz.h))
 		}
 	}
 }

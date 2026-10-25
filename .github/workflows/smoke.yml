@@ -34,7 +34,7 @@ on:
         options: [nightly, weekly]
         default: nightly
       scenarios:
-        description: "nightly only: comma-separated scenarios (all, or e.g. idle,progression); see go run ./cmd/smoke -list"
+        description: "nightly only: comma-separated scenarios (all, or e.g. idle,progression); see go run -tags smokebot ./cmd/smoke -list"
         type: string
         default: all
 
@@ -95,7 +95,7 @@ jobs:
           ONLY: ${{ matrix.only }}
           SKIP: ${{ matrix.skip }}
           ARGS: ${{ matrix.args }}
-        run: go run ./cmd/smoke -tier full -scenario "$SCENARIOS" -only "$ONLY" -skip "$SKIP" $ARGS -v -out smoke-report
+        run: go run -tags smokebot ./cmd/smoke -tier full -scenario "$SCENARIOS" -only "$ONLY" -skip "$SKIP" $ARGS -v -out smoke-report
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ always() }}
@@ -142,7 +142,7 @@ jobs:
             exit 1
           fi
           status=0
-          go run ./cmd/smoke -tier full -merge "$(IFS=,; echo "${reports[*]}")" -pacing enforce -v -out smoke-report || status=$?
+          go run -tags smokebot ./cmd/smoke -tier full -merge "$(IFS=,; echo "${reports[*]}")" -pacing enforce -v -out smoke-report || status=$?
           if [ "${#reports[@]}" -lt "$SHARDS" ] || [ "$SHARD_JOBS" != "success" ]; then
             echo "::error::${#reports[@]} of $SHARDS shards reported (shard jobs: $SHARD_JOBS)"
             status=1
@@ -217,7 +217,7 @@ jobs:
       # enforces the median across seeds. Panics, soft-locks and invariant
       # violations still fail this job.
       - name: Play seed ${{ matrix.seed }} to a Quantum Age prestige
-        run: go run ./cmd/smoke -tier deep -scenario progression -seed-base ${{ matrix.seed }} -seeds 1 -pacing report -v -out smoke-report
+        run: go run -tags smokebot ./cmd/smoke -tier deep -scenario progression -seed-base ${{ matrix.seed }} -seeds 1 -pacing report -v -out smoke-report
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ always() }}
@@ -262,7 +262,7 @@ jobs:
             exit 1
           fi
           status=0
-          go run ./cmd/smoke -tier deep -merge "$(IFS=,; echo "${reports[*]}")" -pacing enforce -v -out smoke-report || status=$?
+          go run -tags smokebot ./cmd/smoke -tier deep -merge "$(IFS=,; echo "${reports[*]}")" -pacing enforce -v -out smoke-report || status=$?
           if [ "${#reports[@]}" -lt "$SEEDS" ] || [ "$SEED_JOBS" != "success" ]; then
             echo "::error::${#reports[@]} of $SEEDS seeds reported (seed jobs: $SEED_JOBS)"
             status=1

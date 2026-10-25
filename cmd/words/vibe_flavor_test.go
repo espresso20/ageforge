@@ -13,8 +13,9 @@ import (
 )
 
 // flavorSheets are the seven sheets of the stories, with the fewest rows each
-// has today. The flavor package tells every row of them through the script, so
+// may have. The flavor package tells every row of them through the script, so
 // a sentence or a word added to a catalog counts here without a line of code.
+// A catalog that loses rows fails the test; one that gains rows still passes.
 var flavorSheets = []struct {
 	area *area
 	min  int

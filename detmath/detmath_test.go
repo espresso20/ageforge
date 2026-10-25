@@ -19,8 +19,8 @@ func sweep(n int, lo, hi float64, fn func(x float64)) {
 }
 
 // The detmath results are pinned bit for bit: this test passing on an
-// architecture is what "the same on every architecture" means. CI runs it
-// on amd64 and arm64 (the Go and Determinism workflows).
+// architecture is what "the same on every architecture" means. CI runs it on
+// amd64 and arm64 (the Go and Determinism workflows).
 func TestGoldenBits(t *testing.T) {
 	cases := []struct {
 		name string
@@ -35,7 +35,8 @@ func TestGoldenBits(t *testing.T) {
 		{"Exp(1)", Exp(1), 0x4005bf0a8b145769},
 		{"Exp(-3.25)", Exp(-3.25), 0x3fa3da368521902d},
 		{"Exp(700)", Exp(700), 0x7f0d945df4f8ec8e},
-		// The boon rarity bias: base weights 10, 5, 2 at 1/1.5 and 1/1.6.
+		// The boon rarity bias: base weights 10, 5 and 2 at 1/1.5 and 1/1.6
+		// (the rarity scales of an isolationist and an allied faction).
 		{"Pow(10,1/1.5)", Pow(10, 1/1.5), 0x401290fca9c761f7},
 		{"Pow(10,1/1.6)", Pow(10, 1/1.6), 0x4010de2c14fa8852},
 		{"Pow(5,1/1.5)", Pow(5, 1/1.5), 0x400764636974629c},
@@ -52,9 +53,8 @@ func TestGoldenBits(t *testing.T) {
 	}
 }
 
-// Log and Log10 are the algorithm amd64's assembly math.Log runs, in the same
-// order, so on amd64 they must match the standard library exactly. This is
-// what keeps the Log10 call sites' results unchanged on amd64.
+// Log and Log10 follow the algorithm of amd64's assembly math.Log, in the same
+// order, so on amd64 they must match the standard library exactly.
 func TestLogMatchesStdlibOnAMD64(t *testing.T) {
 	if runtime.GOARCH != "amd64" {
 		t.Skipf("math.Log is only assembly (and FMA-free) on amd64, not %s", runtime.GOARCH)
@@ -85,9 +85,8 @@ func TestPowIntegerMatchesStdlib(t *testing.T) {
 }
 
 // Accuracy: Log within 1 ulp of the standard library, Exp within 2 (amd64's
-// assembly Exp is a different algorithm), Pow within a few (exp(y*log x)
-// carries log's rounding error times |y*log x|, as math.Pow's own fractional
-// path does).
+// assembly Exp is a different algorithm), Pow within 8 (exp(y*log x) carries
+// log's rounding error times |y*log x|, as math.Pow's own fractional path does).
 func TestCloseToStdlib(t *testing.T) {
 	ulps := func(a, b float64) uint64 {
 		x, y := math.Float64bits(a), math.Float64bits(b)

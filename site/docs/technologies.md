@@ -144,7 +144,7 @@ With no arguments, opens the **Research panel**, the tech tree as a map (so do `
 research tree close
 research tree far
 ```
-Opens the tree at that zoom: big badges with full names (close, the default), or one-line pills that fit every lane on screen (far). `PgUp` and `PgDn` do the same from inside the panel.
+Opens the tree at that zoom: big badges with full names (close, the default), or one-line pills that fit every lane on screen (far). `PgUp` and `PgDn` (`Option+↑` and `Option+↓` on a Mac keyboard) do the same from inside the panel.
 
 ---
 
@@ -208,7 +208,7 @@ The panel takes only keys that print nothing. Letters always go to the command b
 |---|---|---|
 | Arrows | Move to the nearest tech that way; the view follows | Nothing |
 | `Tab`, `Shift-Tab` | The next or previous tech you can start | Nothing |
-| `PgUp`, `PgDn` | Zoom out and in | Nothing |
+| `PgUp`, `PgDn` (`Option+↑`, `Option+↓`) | Zoom out and in | Nothing |
 | `Home` | Jump back to your current age | Nothing |
 | `Enter` | Open the selected tech's card | Do what the card says |
 | `Esc` | Close the panel | Close the card |

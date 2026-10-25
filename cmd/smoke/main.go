@@ -1,19 +1,25 @@
-// Command smoke runs AgeForge's smoke suite: named scenarios that play the
-// game headless (a greedy bot, save/load round trips, offline catch-up,
-// command fuzzing, accounts, performance, the UI on a simulated terminal,
-// docs against config) and report what broke.
+//go:build smokebot
+
+// Command smoke runs AgeForge's smoke suite: named scenarios that play the game
+// headless (a greedy bot, save/load round trips, offline catch-up, command fuzzing,
+// accounts, performance, the UI on a simulated terminal, docs against config) and
+// report what broke.
 //
-// It exits 1 if any scenario failed: a panic, a soft-lock, an invariant
-// violation, a save/load divergence, a fuzz crash, an account failure, a
-// docs mismatch or a blown performance budget. Pacing fails nothing unless
-// -pacing enforce.
+// It exits 1 if any scenario failed: a panic, a soft-lock, an invariant violation, a
+// save/load divergence, a fuzz crash, an account failure, a docs mismatch or a blown
+// performance budget. It exits 2 on a bad flag value or an error running, merging or
+// writing the reports. Pacing fails nothing unless -pacing enforce.
+//
+// The test bot is parked: this command and the code behind it build only with
+// the smokebot build tag. Every command line below needs it.
 //
 // Usage:
 //
-//	go run ./cmd/smoke                         # fast tier (make smoke)
-//	go run ./cmd/smoke -tier full              # everything, deeper (make smoke-full)
-//	go run ./cmd/smoke -scenario saveload -v   # one scenario
-//	go run ./cmd/smoke -list                   # what the scenarios are
+//	go run -tags smokebot ./cmd/smoke                         # fast tier (make smoke)
+//	go run -tags smokebot ./cmd/smoke -tier full              # everything, deeper (make smoke-full)
+//	go run -tags smokebot ./cmd/smoke -tier deep              # progression and static only, to a Quantum Age prestige (make smoke-deep)
+//	go run -tags smokebot ./cmd/smoke -scenario saveload -v   # one scenario
+//	go run -tags smokebot ./cmd/smoke -list                   # what the scenarios are
 package main
 
 import (
@@ -239,8 +245,8 @@ func run() int {
 	return 0
 }
 
-// mergeReports reads the listed report.json files (a directory stands for
-// the report.json inside it) and merges them (smoke.MergeSessions).
+// mergeReports reads the listed report.json files (a directory stands for the
+// report.json inside it) and merges them with smoke.MergeSessions.
 func mergeReports(env *smoke.Env, list string) (*smoke.Session, error) {
 	var parts []*smoke.Session
 	for _, p := range strings.Split(list, ",") {

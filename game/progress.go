@@ -13,6 +13,9 @@ type ProgressManager struct {
 	ages       []config.AgeDef
 	ageIndex   map[string]int
 	ageWonders map[string]string // ageKey -> wonder building key (or "")
+	// town is what the measured gate reads of the town beyond its buildings
+	// (gate_v2.go); the engine fills it in. Today's gate never reads it.
+	town gateTown
 }
 
 // NewProgressManager creates a new progress manager on the core ruleset.
@@ -59,11 +62,16 @@ func (pm *ProgressManager) GetNextAge(currentKey string) string {
 
 // CheckAdvancement checks if requirements are met for the next age: the
 // buildings its gate asks for and the current age's wonder. No gate asks for
-// an amount of a resource, and advancing spends none.
+// an amount of a resource, and advancing spends none. Under the measured gate
+// (AGEFORGE_GATES=v2) the buildings are replaced by the town's population,
+// the income of the age's main materials and its key techs (gate_v2.go).
 func (pm *ProgressManager) CheckAdvancement(currentKey string, buildings *BuildingManager) string {
 	nextKey := pm.GetNextAge(currentKey)
 	if nextKey == "" {
 		return ""
+	}
+	if m, ok := pm.measureFor(currentKey); ok {
+		return pm.checkMeasured(currentKey, nextKey, m, buildings)
 	}
 	nextAge := pm.ages[pm.ageIndex[nextKey]]
 
@@ -120,6 +128,9 @@ func (pm *ProgressManager) GetRequirementsForNext(currentKey string) map[string]
 	nextKey := pm.GetNextAge(currentKey)
 	if nextKey == "" {
 		return nil
+	}
+	if _, ok := pm.measureFor(currentKey); ok {
+		return nil // the measured gate asks for no building counts
 	}
 	return maps.Clone(pm.ages[pm.ageIndex[nextKey]].BuildingReqs)
 }

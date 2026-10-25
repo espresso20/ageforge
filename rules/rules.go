@@ -103,6 +103,13 @@ type Source struct {
 	LastPassage        Catastrophe
 	Legacy             map[string]map[string]float64
 	CatastropheGate    string
+
+	// GatesV2 picks the measured gate (config/gate_measures.go) over the
+	// building counts of AgeDef.BuildingReqs; GateMeasures are its numbers,
+	// one for each age that has a gate. An age with no measure keeps the
+	// counts.
+	GatesV2      bool
+	GateMeasures []config.GateMeasure
 }
 
 // Catastrophe is a doom's display name and its flavor line.
@@ -146,6 +153,8 @@ func FromConfig() Source {
 		Teaching:             config.TeachingTable(),
 		PrestigeUpgrades:     config.PrestigeUpgrades(),
 		LegacyKit:            config.LegacyKit(),
+		GatesV2:              config.GatesV2(),
+		GateMeasures:         config.GateMeasures(),
 		Targets:              maps.Clone(config.AgeTargets),
 		Stretch:              map[string]float64{},
 		Catastrophes:         map[string]Catastrophe{},

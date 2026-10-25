@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -101,14 +103,6 @@ func TestDepthRow(t *testing.T) {
 	}
 	if newDepth(Config{Preset: PresetVeteran}, []*RunResult{run(5.3)}, order) != nil {
 		t.Error("a preset's first run graded as a first run")
-	}
-}
-
-// TestStaticDepth: the depth weights, the docs' table, the taste's share
-// and the first kit price all hold.
-func TestStaticDepth(t *testing.T) {
-	if p := StaticDepth(); len(p) != 0 {
-		t.Errorf("static depth problems: %v", p)
 	}
 }
 

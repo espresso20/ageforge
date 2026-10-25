@@ -21,10 +21,10 @@ import (
 // commands work as they do anywhere: printable keys go to the prompt, and
 // the map takes only the keys that print nothing (routeKey): the arrows,
 // Tab and Shift-Tab, PgUp and PgDn, Home and End, and Enter on an empty
-// prompt, which types the inspected command. On an empty prompt a style that
-// zooms also takes + - = [ ] (the skyline's zoom and district keys). Style, glyphs and the flows
-// overlay are commands (map style, map glyphs, map flows). The style draws
-// everything but the panel's bottom row, a key bar.
+// prompt, which types the inspected command. On an empty prompt it also takes
+// + - = to zoom, and [ ] (the skyline's district keys). Style, glyphs and the
+// flows overlay are commands (map style, map glyphs, map flows). The style
+// draws everything but the panel's bottom row, a key bar.
 
 // mapAnimStep is the map animation frame length (about 8 frames a second).
 const mapAnimStep = 125 * time.Millisecond
@@ -318,8 +318,9 @@ func (p *mapPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tv
 // arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab,
 // Shift-Tab and Enter. With something typed those three are the prompt's
 // (completion, run), and every printable key always is, but for the five
-// zoom and district keys + - = [ ] on an empty prompt, which are the map's
-// when the style uses them (no command begins with one).
+// zoom and district keys + - = [ ] on an empty prompt (no command begins
+// with one). + and = zoom in and - zooms out, as PgDn and PgUp do, in every
+// style; [ and ] are the map's when the style uses them.
 func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 	switch ev.Key() {
 	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight,
@@ -332,7 +333,16 @@ func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 		if prompt != "" || ev.Modifiers()&(tcell.ModCtrl|tcell.ModAlt) != 0 || !strings.ContainsRune(mapRuneKeys, ev.Rune()) {
 			return false
 		}
-		return p.handleKey(ev)
+		if p.handleKey(ev) {
+			return true
+		}
+		// A style with no use for the key itself still zooms on it: + and = are
+		// PgDn, - and _ are PgUp, so the roguelike zooms with no modifier and
+		// no Page keys (a MacBook has none).
+		if k, ok := zoomRuneKeys[ev.Rune()]; ok {
+			return p.handleKey(tcell.NewEventKey(k, 0, tcell.ModNone))
+		}
+		return false
 	default:
 		return false
 	}
@@ -342,6 +352,9 @@ func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 
 // mapRuneKeys are the printable keys the map takes on an empty prompt.
 const mapRuneKeys = "+-=_[]"
+
+// zoomRuneKeys are the page keys the zoom characters stand for.
+var zoomRuneKeys = map[rune]tcell.Key{'+': tcell.KeyPgDn, '=': tcell.KeyPgDn, '-': tcell.KeyPgUp, '_': tcell.KeyPgUp}
 
 // handleKey applies one map key and reports whether anything used it.
 // Enter types the inspected command into the prompt; the rest are the

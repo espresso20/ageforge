@@ -15,15 +15,15 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// lint.go holds a rewrite to the game's own copy rules.
+// This file holds a rewrite to the game's own copy rules.
 //
 // The rules live in the game's lint tests: the wording guards over ui, game
 // and boon, the style guard over config's text, the wiki's lint, and the
 // flavor catalog's checks. Their word lists and patterns are read from those
 // test files when the import runs, so a term retired there is refused here
-// the same day and the two cannot drift apart. What each rule does with its
-// list (which text it applies to, what counts as a hit) is restated here, a
-// few lines apiece. TestRulesAreRead fails if a list moves or changes shape.
+// too and the two cannot drift apart. What each rule does with its list (which
+// text it applies to, what counts as a hit) is restated here, a few lines
+// apiece. TestRulesAreRead fails if a list moves or changes shape.
 
 // pattern is a regular expression from a lint, with what the lint says
 // about it.
@@ -291,12 +291,15 @@ var spanNames = map[string]string{
 var allSpans = []string{"eraAncient", "eraFeudal", "eraIndustrial", "eraDigital", "eraCosmic"}
 
 // check returns what is wrong with a rewrite of a row under the game's copy
-// rules, one sentence a problem. A rule the current text already breaks is
-// not held against the rewrite: the import does not make old text a reason
-// to refuse new text.
+// rules, one sentence a problem. Most rules (those run through hit, the
+// sentence shapes, the colon ban and the era words) are skipped when the
+// original text already breaks them, so old text is not a reason to refuse new
+// text. The rest apply to the rewrite alone: the catalog's fragment, length,
+// markup, ending, 12-character and duplicate checks, the word-list checks and
+// the tech code check.
 func (cr *copyRules) check(r *row, yours string) []string {
 	var out []string
-	// hit reports a problem when the rewrite trips a test the original passes.
+	// hit adds a problem when the rewrite trips a test the original passes.
 	hit := func(trips func(s string) bool, problem string) {
 		if trips(yours) && !trips(r.current) {
 			out = append(out, problem)

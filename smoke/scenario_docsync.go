@@ -30,28 +30,12 @@ import (
 //     every alias is listed, next to the command it stands for, and nothing
 //     else is.
 
-// Quantity keys. The ones a ruleset counts are its own (rules.Set.Counts);
-// themes and expeditions are defined outside the ruleset and counted here.
+// Quantity keys. The ones a ruleset counts are its own (rules.Count*, from
+// rules.Set.Counts); themes and expeditions are defined outside the ruleset
+// and counted here.
 const (
-	qAges        = rules.CountAges
-	qBuildings   = rules.CountBuildings
-	qTechs       = rules.CountTechs
-	qMilestones  = rules.CountMilestones
-	qChains      = rules.CountChains
-	qResources   = rules.CountResources
-	qEpochs      = rules.CountEras
 	qThemes      = "themes"
-	qDomains     = rules.CountDomains
-	qLineages    = rules.CountLineages
-	qLines       = rules.CountLines
-	qWonders     = rules.CountWonders
-	qFactions    = rules.CountCivs
-	qRoutes      = rules.CountRoutes
 	qExpeditions = "expeditions"
-	qLineageBld  = rules.CountLineageBld
-	qStorage     = rules.CountStorage
-	qMonuments   = rules.CountMonuments
-	qStandalone  = rules.CountStandalone
 )
 
 // GameCounts is every number the docs quote, from the core ruleset.
@@ -73,33 +57,33 @@ var claimWords = []struct {
 	q   string
 	min int
 }{
-	{regexp.MustCompile(`(?i)\b(\d+)[- ]lineage buildings\b`), qLineageBld, 50},
-	{regexp.MustCompile(`(?i)\b(\d+)[- ](?:production )?lineages?\b`), qLineages, 5},
-	{regexp.MustCompile(`(?i)\b(\d+) (?:building|production) lines\b`), qLines, 5},
-	{regexp.MustCompile(`(?i)\b(\d+) (?:total )?buildings\b`), qBuildings, 100},
-	{regexp.MustCompile(`(?i)\b(\d+) (?:technologies|techs)\b`), qTechs, 20},
-	{regexp.MustCompile(`(?i)\b(\d+) milestones\b`), qMilestones, 20},
-	{regexp.MustCompile(`(?i)milestones\W+(\d+) achievements\b`), qMilestones, 20},
-	{regexp.MustCompile(`(?i)\b(\d+) resources\b`), qResources, 10},
-	{regexp.MustCompile(`(?i)\b(\d+) ages\b`), qAges, 10},
-	{regexp.MustCompile(`(?i)\b(\d+) epochs\b`), qEpochs, 5},
+	{regexp.MustCompile(`(?i)\b(\d+)[- ]lineage buildings\b`), rules.CountLineageBld, 50},
+	{regexp.MustCompile(`(?i)\b(\d+)[- ](?:production )?lineages?\b`), rules.CountLineages, 5},
+	{regexp.MustCompile(`(?i)\b(\d+) (?:building|production) lines\b`), rules.CountLines, 5},
+	{regexp.MustCompile(`(?i)\b(\d+) (?:total )?buildings\b`), rules.CountBuildings, 100},
+	{regexp.MustCompile(`(?i)\b(\d+) (?:technologies|techs)\b`), rules.CountTechs, 20},
+	{regexp.MustCompile(`(?i)\b(\d+) milestones\b`), rules.CountMilestones, 20},
+	{regexp.MustCompile(`(?i)milestones\W+(\d+) achievements\b`), rules.CountMilestones, 20},
+	{regexp.MustCompile(`(?i)\b(\d+) resources\b`), rules.CountResources, 10},
+	{regexp.MustCompile(`(?i)\b(\d+) ages\b`), rules.CountAges, 10},
+	{regexp.MustCompile(`(?i)\b(\d+) epochs\b`), rules.CountEras, 5},
 	{regexp.MustCompile(`(?i)\b(\d+) themes\b`), qThemes, 5},
-	{regexp.MustCompile(`(?i)\b(\d+) (?:worker )?domains\b`), qDomains, 5},
-	{regexp.MustCompile(`(?i)\b(\d+) wonders\b`), qWonders, 15},
-	{regexp.MustCompile(`(?i)\b(\d+) chains\b`), qChains, 3},
+	{regexp.MustCompile(`(?i)\b(\d+) (?:worker )?domains\b`), rules.CountDomains, 5},
+	{regexp.MustCompile(`(?i)\b(\d+) wonders\b`), rules.CountWonders, 15},
+	{regexp.MustCompile(`(?i)\b(\d+) chains\b`), rules.CountChains, 3},
 	{regexp.MustCompile(`(?i)\b(\d+) expeditions\b`), qExpeditions, 5},
-	{regexp.MustCompile(`(?i)\b(\d+) trade routes\b`), qRoutes, 5},
-	{regexp.MustCompile(`(?i)\b(\d+)-civ(?:ilization)?\b`), qFactions, 5},
-	{regexp.MustCompile(`(?i)\b(\d+) storage\b`), qStorage, 10},
-	{regexp.MustCompile(`(?i)\b(\d+) cultural monuments\b`), qMonuments, 2},
-	{regexp.MustCompile(`(?i)\b(\d+) (?:administrative|standalone)\b`), qStandalone, 2},
+	{regexp.MustCompile(`(?i)\b(\d+) trade routes\b`), rules.CountRoutes, 5},
+	{regexp.MustCompile(`(?i)\b(\d+)-civ(?:ilization)?\b`), rules.CountCivs, 5},
+	{regexp.MustCompile(`(?i)\b(\d+) storage\b`), rules.CountStorage, 10},
+	{regexp.MustCompile(`(?i)\b(\d+) cultural monuments\b`), rules.CountMonuments, 2},
+	{regexp.MustCompile(`(?i)\b(\d+) (?:administrative|standalone)\b`), rules.CountStandalone, 2},
 }
 
 // heroStat is one landing-page hero number: <span class="hstat-n">N</span><span class="hstat-l">Label</span>.
 var heroStat = regexp.MustCompile(`(?s)<span class="hstat-n">([^<]+)</span\s*>\s*<span class="hstat-l">([^<]+)</span>`)
 
-var heroLabels = map[string]string{"ages": qAges, "buildings": qBuildings, "techs": qTechs, "technologies": qTechs,
-	"milestones": qMilestones, "resources": qResources, "themes": qThemes, "epochs": qEpochs}
+var heroLabels = map[string]string{"ages": rules.CountAges, "buildings": rules.CountBuildings, "techs": rules.CountTechs, "technologies": rules.CountTechs,
+	"milestones": rules.CountMilestones, "resources": rules.CountResources, "themes": qThemes, "epochs": rules.CountEras}
 
 // docClaim is one number the docs state.
 type docClaim struct {
@@ -236,10 +220,6 @@ func dynamicWords() map[string]bool {
 	for _, r := range config.BaseTradeRoutes() {
 		out[r.Key] = true
 	}
-	order := map[string]int{}
-	for i, a := range config.AgeOrder() {
-		order[a] = i
-	}
 	for n := 1; n <= 9; n++ {
 		out[strconv.Itoa(n)] = true
 	}
@@ -280,7 +260,7 @@ func offeredSubcommands() map[string][]string {
 // "| Command | ... |" table in commands.md, plus "(or `x`)" aliases.
 var codeSpan = regexp.MustCompile("`([^`]+)`")
 
-func documentedForms(md string) (forms []string, all string) {
+func documentedForms(md string) (forms []string) {
 	inCmdTable := false
 	for _, line := range strings.Split(md, "\n") {
 		t := strings.TrimSpace(line)
@@ -301,7 +281,7 @@ func documentedForms(md string) (forms []string, all string) {
 			forms = append(forms, strings.TrimSpace(strings.ReplaceAll(m[1], "\x00", "|")))
 		}
 	}
-	return forms, md
+	return forms
 }
 
 // documentedShortcuts reads the "| Shortcut | Command |" table in
@@ -337,16 +317,13 @@ func documentedShortcuts(md string) map[string]string {
 	return out
 }
 
-// requiredForms are command shapes with no keyword to find them by.
-var requiredForms = []struct{ cmd, prefix, what string }{}
-
-func runDocsync(e *Env, res *Result) {
-	if e.RepoRoot == "" {
+func runDocsync(root string, res *Findings) {
+	if root == "" {
 		res.fail("docsync_unavailable", "repository root unknown; run from the repo")
 		return
 	}
 	counts := GameCounts()
-	claims, err := docClaims(e.RepoRoot)
+	claims, err := docClaims(root)
 	if err != nil {
 		res.fail("docsync_read", "%v", err)
 		return
@@ -363,25 +340,26 @@ func runDocsync(e *Env, res *Result) {
 		}
 		rows = append(rows, fmt.Sprintf("| %s:%d | %s | %d | %s |", c.file, c.line, cell(c.text), c.got, mark))
 	}
-	heading, tableRows, err := lineageTable(e.RepoRoot)
+	heading, tableRows, err := lineageTable(root)
 	if err != nil {
 		res.fail("doc_lineages", "%v", err)
 	} else {
-		if heading != counts[qLineages] {
-			res.fail("doc_lineages", "site/docs/buildings.md heading says %d production lineages but config has %d", heading, counts[qLineages])
+		if heading != counts[rules.CountLineages] {
+			res.fail("doc_lineages", "site/docs/buildings.md heading says %d production lineages but config has %d", heading, counts[rules.CountLineages])
 		}
-		if tableRows != counts[qLineages] {
-			res.fail("doc_lineages", "site/docs/buildings.md's lineage table has %d rows but config has %d lineages", tableRows, counts[qLineages])
+		if tableRows != counts[rules.CountLineages] {
+			res.fail("doc_lineages", "site/docs/buildings.md's lineage table has %d rows but config has %d lineages", tableRows, counts[rules.CountLineages])
 		}
 	}
 
 	cmds, accepts := registryCommands()
-	mdRaw, err := os.ReadFile(filepath.Join(e.RepoRoot, "site/docs/commands.md"))
+	mdRaw, err := os.ReadFile(filepath.Join(root, "site/docs/commands.md"))
 	if err != nil {
 		res.fail("docsync_read", "%v", err)
 		return
 	}
-	forms, md := documentedForms(string(mdRaw))
+	md := string(mdRaw)
+	forms := documentedForms(md)
 	documented := func(form string) bool {
 		return strings.Contains(md, "`"+form+"`") || strings.Contains(md, "`"+form+" ")
 	}
@@ -442,11 +420,6 @@ func runDocsync(e *Env, res *Result) {
 			if ok := subDocumented(names[0], sub); !ok {
 				res.fail("doc_subcommand_missing", "commands.md has no `%s %s` (the command registry lists it)", names[0], sub)
 			}
-		}
-	}
-	for _, rf := range requiredForms {
-		if !strings.Contains(md, rf.prefix) {
-			res.fail("doc_form_missing", "commands.md has no row for %s", rf.what)
 		}
 	}
 	for _, form := range forms {

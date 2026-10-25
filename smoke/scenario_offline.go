@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -63,7 +65,7 @@ type offlineRun struct {
 }
 
 func offlineBase(res *Result, base *game.GameEngine, age string, seed int64) []string {
-	repro := fmt.Sprintf("go run ./cmd/smoke -scenario offline -seed-base %d -v", seed)
+	repro := fmt.Sprintf("go run -tags smokebot ./cmd/smoke -scenario offline -seed-base %d -v", seed)
 	fail := func(check, format string, args ...interface{}) {
 		f := res.fail(check, "%s base: "+format, append([]interface{}{age}, args...)...)
 		f.Seed, f.Repro = seed, repro

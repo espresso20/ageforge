@@ -24,9 +24,8 @@ import (
 	"time"
 )
 
-// The pinned release. Bump Version, URL and SHA256 together; the checksum
-// is of the zip GitHub serves for that tag (it matches the digest GitHub
-// lists for the asset).
+// The pinned release. URL is built from Version, so bump Version and SHA256
+// together. SHA256 is the checksum of the zip GitHub serves for that tag.
 const (
 	Version = "v3.5.1"
 	URL     = "https://github.com/ryanoasis/nerd-fonts/releases/download/" + Version + "/JetBrainsMono.zip"
@@ -37,7 +36,8 @@ const (
 	// terminal grid wants) and leaves out the NL (no ligatures) and the
 	// proportional-icon variants.
 	monoPrefix = "JetBrainsMonoNerdFontMono-"
-	// maxZip bounds the download (the zip is about 134 MB).
+	// maxZip is the largest download the installer accepts (the zip is about
+	// 134 MB).
 	maxZip = 400 << 20
 )
 
@@ -75,7 +75,7 @@ type Installer struct {
 	// means the build has no registry support and the player gets a
 	// manual step instead.
 	Register func(files []string) error
-	// Progress reports progress lines ("Downloading... 40%"); may be nil.
+	// Progress reports progress lines ("Downloading... 25%"); may be nil.
 	Progress func(string)
 }
 
@@ -174,8 +174,10 @@ func (in *Installer) Install(ctx context.Context) (Result, error) {
 	return res, nil
 }
 
-// download fetches the zip into a temp file, hashing as it goes, and
-// returns the file only when the hash matches.
+// download fetches the zip into a temp file, hashing as it goes. It returns the
+// file's name once the file exists, even with an error (a cut-off download or an
+// ErrChecksum mismatch), so the caller can remove it. The error is nil only when
+// the hash matches.
 func (in *Installer) download(ctx context.Context) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, in.URL, nil)
 	if err != nil {
@@ -218,7 +220,7 @@ func (in *Installer) download(ctx context.Context) (string, error) {
 	return name, nil
 }
 
-// progressWriter reports each quarter of the download.
+// progressWriter reports the download at 25%, 50% and 75% when the size is known.
 type progressWriter struct {
 	total, done int64
 	next        int64 // next percentage to report

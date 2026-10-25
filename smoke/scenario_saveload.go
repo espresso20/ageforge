@@ -1,3 +1,5 @@
+//go:build smokebot
+
 package smoke
 
 import (
@@ -134,7 +136,7 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 	fail := func(check, repro, format string, args ...interface{}) {
 		fails = append(fails, Finding{Check: check, Seed: seed, Message: fmt.Sprintf(format, args...), Repro: repro})
 	}
-	repro := fmt.Sprintf("go run ./cmd/smoke -scenario saveload -seed-base %d -seeds 1 -v", seed)
+	repro := fmt.Sprintf("go run -tags smokebot ./cmd/smoke -scenario saveload -seed-base %d -seeds 1 -v", seed)
 	dir := filepath.Join(game.DataDir(), "saves")
 
 	// Run A: the uninterrupted game, saving at each checkpoint.
