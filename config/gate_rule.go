@@ -2,9 +2,10 @@ package config
 
 // The gate rule: what the gate out of an age asks for in buildings, besides
 // the keystone and the wonder. It is written in the tables (the gates in
-// Ages(), authored literals); this file is the derivation, and a test
-// recomputes what each gate must ask for from it and fails when a gate asks
-// for less.
+// Ages(), authored literals); the derivation (GateTown) is in
+// gate_rule_test.go, where a test recomputes what each gate must ask for from
+// it and fails when a gate asks for less. This file keeps what the cold start
+// and the smoke covenants read (GateTownHeldTechs).
 //
 // No gate asks for an amount of a resource. A gate asks for the town its age
 // is priced for: the reference town, which holds TownCopies copies of every
@@ -78,67 +79,6 @@ func GateTownHeldTechs(defs []BuildingDef, ages []AgeDef, techs []TechDef) []map
 		out[i] = make(map[string]bool, len(held))
 		for k := range held {
 			out[i][k] = true
-		}
-	}
-	return out
-}
-
-// makesSomething reports whether d has a production effect: it makes a
-// resource (food, gold, knowledge, faith, culture and the rest), or it is a
-// military building, which comes with its soldiers.
-func makesSomething(d BuildingDef) bool {
-	if d.Soldiers > 0 {
-		return true
-	}
-	for _, e := range d.Effects {
-		if _, ok := producedBy(e); ok && e.Value > 0 {
-			return true
-		}
-	}
-	return false
-}
-
-// GateTown works the gate rule out: what the gate that leaves each age must
-// ask for besides what it asks for today, by building key, keyed by the age
-// the gate leads into (as the ages' BuildingReqs are read). Each count is the
-// reference town's, TownCopies, or the building's MaxCount when that
-// is smaller; a knowledge building's is the knowledge rule's
-// (KnowledgeGateCount). Buildings in GateTownLeftOut are not in it.
-func GateTown(defs []BuildingDef, ages []AgeDef, techs []TechDef) map[string]map[string]int {
-	held := GateTownHeldTechs(defs, ages, techs)
-	left := GateTownLeftOut()
-	out := map[string]map[string]int{}
-	for i := 0; i+1 < len(ages); i++ {
-		for _, d := range defs {
-			if d.RequiredAge != ages[i].Key {
-				continue
-			}
-			switch d.Category {
-			case "wonder", "monument", "storage", "housing":
-				continue
-			}
-			if !makesSomething(d) {
-				continue
-			}
-			if d.RequiredTech != "" && !held[i][d.RequiredTech] {
-				continue
-			}
-			if _, skip := left[d.Key]; skip {
-				continue
-			}
-			n := TownCopies
-			if IsKnowledgeBuilding(d) {
-				// A knowledge building climbs at KnowledgeRate: the gate
-				// asks the spend it asked before (knowledge_rule.go).
-				n = KnowledgeGateCount(KnowledgeGateWas()[d.Key])
-			}
-			if d.MaxCount > 0 {
-				n = min(n, d.MaxCount)
-			}
-			if out[ages[i+1].Key] == nil {
-				out[ages[i+1].Key] = map[string]int{}
-			}
-			out[ages[i+1].Key][d.Key] = n
 		}
 	}
 	return out
