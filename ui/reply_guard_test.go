@@ -87,8 +87,7 @@ func playerLogCount(ge *game.GameEngine) int {
 func TestSuccessRepliesAreLogged(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	t.Chdir(t.TempDir())
-	prevTheme := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prevTheme) })
+	keepTheme(t)
 
 	cases := append([]struct{ age, cmd string }{}, replyGuardCases...)
 	cases = append(cases, struct{ age, cmd string }{"", "account export " + filepath.Join(t.TempDir(), "x.json")})
