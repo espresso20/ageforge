@@ -211,7 +211,6 @@ func TestAdvancePanelNeverChangesTheGame(t *testing.T) {
 	before := eng.GetState()
 	d.inputField.SetText("charter")
 	d.submitInput()
-	d.advancePanel.setSize(100, 27)
 	for _, k := range []tcell.Key{tcell.KeyDown, tcell.KeyDown, tcell.KeyUp} {
 		sendKey(d, k)
 	}

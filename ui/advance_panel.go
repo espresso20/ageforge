@@ -27,12 +27,10 @@ const advFlashFor = 8 * time.Second
 type advancePanel struct {
 	*tview.Box
 	engine *game.GameEngine
-	state  game.GameState
 	view   game.AdvanceView
 	ui     advanceUI
 	// flashAt is when the status row's line was set.
 	flashAt time.Time
-	w, h    int // the last size drawn at
 
 	// settings reads the glyph tier.
 	settings func() mapSettings
@@ -45,7 +43,7 @@ type advancePanel struct {
 }
 
 func newAdvancePanel() *advancePanel {
-	return &advancePanel{Box: tview.NewBox(), w: 100, h: 30, now: time.Now}
+	return &advancePanel{Box: tview.NewBox(), now: time.Now}
 }
 
 // advancePanelName is the overlay's name, and the command that opens it.
@@ -73,14 +71,9 @@ func (p *advancePanel) open(state game.GameState) tview.Primitive {
 		AddItem(nil, promptRows, 0, false)
 }
 
-// setSize tells the panel how big it is drawn, for the tests; a draw does it
-// by itself.
-func (p *advancePanel) setSize(w, h int) { p.w, p.h = w, h }
-
 // update takes a new snapshot. The calendar is held by the engine, so the year
 // the panel shows does not go back within an age.
 func (p *advancePanel) update(state game.GameState) {
-	p.state = state
 	v := state.AdvanceView()
 	if p.engine != nil {
 		v = p.engine.HoldCalendar(v)
@@ -100,7 +93,6 @@ func (p *advancePanel) Draw(scr tcell.Screen) {
 	if w <= 0 || h <= 0 {
 		return
 	}
-	p.w, p.h = w, h
 	plain := false
 	if p.settings != nil {
 		plain = p.settings().Tier == mapmodel.TierASCII

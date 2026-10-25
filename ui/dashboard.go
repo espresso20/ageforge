@@ -463,8 +463,6 @@ func (d *Dashboard) build() {
 		color := "cyan"
 		if eventType == "bad_challenging" {
 			color = "red"
-		} else if eventType == "catastrophe" {
-			color = "red"
 		} else if eventType == "good_legendary" {
 			color = "gold"
 		}

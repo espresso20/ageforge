@@ -211,7 +211,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 	if r.front() != accountsPage {
 		t.Fatalf("a opens %q", r.front())
 	}
-	p := newAccountsPanel(r.app, r.pages, r.eng, "dev", "splash")
+	p := newAccountsPanel(r.app, r.pages, r.eng, "splash")
 	r.pages.AddPage(accountsPage, p.root, true, true)
 	r.app.SetFocus(p.root)
 	if bar := untag(keyBar(accountsKeys, 200, 2)); !strings.Contains(bar, "x") || !strings.Contains(bar, "Delete saves") {
