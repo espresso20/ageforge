@@ -3,6 +3,8 @@ package ui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"github.com/espresso20/ageforge/game"
 )
 
 // bar_panel.go is what the overlay panels that leave the keyboard with the
@@ -53,4 +55,67 @@ func overBar(p tview.Primitive) tview.Primitive {
 	return tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(p, 0, 1, true).
 		AddItem(nil, promptRows, 0, false)
+}
+
+// barOverlay is how the dashboard drives one of those panels while it is the
+// open overlay.
+type barOverlay struct {
+	// routeKey is the panel's routeKey: it takes a key that is the panel's
+	// and reports whether it did.
+	routeKey func(ev *tcell.EventKey, prompt string) bool
+	// closeFirst takes back what Esc closes before it closes the panel (a
+	// card, a question) and reports whether there was one. Nil when there
+	// is nothing.
+	closeFirst func() bool
+	// reply, when set, puts what a command typed over the panel did on the
+	// panel's key bar.
+	reply func(cmd string, res CommandResult)
+	// update shows what a command typed over the panel changed now rather
+	// than at the next refresh.
+	update func(state game.GameState)
+}
+
+// newBarOverlays is the panels that leave the keyboard with the command bar,
+// by overlay name. Only the Map has a key bar of its own to say what a command
+// typed over it did, because the log is behind it.
+func (d *Dashboard) newBarOverlays() map[string]barOverlay {
+	return map[string]barOverlay{
+		"map": {
+			routeKey: d.mapPanel.routeKey,
+			reply:    d.mapPanel.reply,
+			update:   d.mapPanel.update,
+		},
+		"techs": {
+			routeKey:   d.researchPanel.routeKey,
+			closeFirst: d.researchPanel.closeCard,
+			update:     d.researchPanel.update,
+		},
+		"badges": {
+			routeKey:   d.badgePanel.routeKey,
+			closeFirst: d.badgePanel.closeCard,
+			update:     d.badgePanel.update,
+		},
+		"expedition": {
+			routeKey:   d.expPanel.routeKey,
+			closeFirst: d.expPanel.closeConfirm,
+			update:     d.expPanel.update,
+		},
+		"people": {
+			routeKey: d.peoplePanel.routeKey,
+			update:   d.peoplePanel.update,
+		},
+		"charter": {
+			routeKey: d.advancePanel.routeKey,
+			update:   d.advancePanel.update,
+		},
+	}
+}
+
+// handToPrompt gives the keyboard back to the command bar, starting with ev:
+// a panel that had it for itself passes on a key it does not take.
+func (d *Dashboard) handToPrompt(ev *tcell.EventKey) {
+	d.overlayMgr.FocusOn(d.inputField)
+	if h := d.inputField.InputHandler(); h != nil {
+		h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
+	}
 }
