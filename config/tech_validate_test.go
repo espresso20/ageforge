@@ -2,7 +2,10 @@ package config
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 )
 
 // A tech's promises as data a test can check. Everything a tech does (an
@@ -184,4 +187,180 @@ func AllTechChecks() map[string][]TechCheck {
 		out[t.Key] = TechChecks(t, buildings, locks)
 	}
 	return out
+}
+
+// Check reports what is wrong with e ("" when nothing is): a kind that is
+// not one of the constants, a target the kind does not take, a resource or a
+// mechanic that does not exist, a value of zero, or a cut so deep it leaves
+// nothing (a time or a price multiplied by zero or less). isResource says
+// which keys are resources.
+func (e TechEffect) Check(isResource func(string) bool) string {
+	known := false
+	for _, k := range TechEffectKinds() {
+		known = known || k == e.Kind
+	}
+	switch {
+	case !known:
+		return fmt.Sprintf("unknown effect kind %q", e.Kind)
+	case e.Value == 0:
+		return fmt.Sprintf("%s effect with no value", e.Kind)
+	case e.Kind == EffectMechanic:
+		if _, ok := MechanicByKey()[e.Target]; !ok {
+			return fmt.Sprintf("%s names %q, which is not a mechanic", e.Kind, e.Target)
+		}
+	case !e.Kind.TakesResource():
+		if e.Target != "" {
+			return fmt.Sprintf("%s takes no target, got %q", e.Kind, e.Target)
+		}
+	case e.Kind == EffectOutput && e.Target == ResearchTarget:
+		// The work scholars do: not a resource, but a bonus to it is allowed.
+	case !isResource(e.Target):
+		return fmt.Sprintf("%s names %q, which is not a resource", e.Kind, e.Target)
+	}
+	if e.Key().Multiplies() && e.Value <= -1 {
+		return fmt.Sprintf("%s of %v leaves nothing", e.Kind, e.Value)
+	}
+	return ""
+}
+
+// TechTreeProblems checks the rules the tree keeps and returns what breaks
+// them, sorted, one line each (nil when nothing does):
+//
+//   - every key in Prerequisites and AnyOf is a tech, named once, and not
+//     the tech itself;
+//   - an either-or group has at least two keys;
+//   - the graph has no cycle, counting an either-or key as an edge like any
+//     other: a tech may never be its own ancestor, whichever branch is
+//     taken;
+//   - no tech needs a tech of a later age;
+//   - every tech has a lane that exists, a code of two to TechCodeMax
+//     capital letters that no other tech has, and an emblem of one glyph;
+//   - a keystone opens in its wonder's age;
+//   - no capstone is a keystone or sits on the spine: a capstone is never
+//     required. (That the spine needs only the spine follows from how
+//     TechKinds builds it.)
+//
+// ages is the age keys in order.
+func TechTreeProblems(techs []TechDef, buildings []BuildingDef, ages []string) []string {
+	var out []string
+	bad := func(format string, args ...any) { out = append(out, fmt.Sprintf(format, args...)) }
+
+	byKey := indexBy(techs, func(t TechDef) string { return t.Key })
+	ageAt := AgePositions(ages)
+	lanes := TechLaneByKey()
+
+	codes := map[string]string{}
+	for _, t := range techs {
+		// What it needs.
+		named := map[string]bool{}
+		for _, list := range [][]string{t.Prerequisites, t.AnyOf} {
+			for _, p := range list {
+				pre, ok := byKey[p]
+				switch {
+				case p == t.Key:
+					bad("%s needs itself", t.Key)
+				case !ok:
+					bad("%s needs %s, which is not a tech", t.Key, p)
+				case named[p]:
+					bad("%s names %s twice in what it needs", t.Key, p)
+				case ageAt[pre.Age] > ageAt[t.Age]:
+					bad("%s (%s) needs %s, a tech of a later age (%s)", t.Key, t.Age, p, pre.Age)
+				}
+				named[p] = true
+			}
+		}
+		if len(t.AnyOf) == 1 {
+			bad("%s has an either-or group of one (%s): write it as a prerequisite", t.Key, t.AnyOf[0])
+		}
+
+		// Lane, code, emblem.
+		if _, ok := lanes[t.Lane]; !ok {
+			bad("%s has no lane, or one that does not exist (%q)", t.Key, t.Lane)
+		}
+		switch other, taken := codes[t.Code]; {
+		case !validTechCode(t.Code):
+			bad("%s has the code %q: a code is 2 to %d capital letters", t.Key, t.Code, TechCodeMax)
+		case taken:
+			bad("%s and %s share the code %s: give one of them its own", other, t.Key, t.Code)
+		default:
+			codes[t.Code] = t.Key
+		}
+		if utf8.RuneCountInString(t.Emblem) != 1 {
+			bad("%s has the emblem %q: an emblem is one glyph", t.Key, t.Emblem)
+		}
+	}
+
+	// Cycles: a depth-first walk over every edge, either-or keys included.
+	const (
+		unseen = iota
+		open
+		done
+	)
+	state := make(map[string]int, len(techs))
+	var path []string
+	var walk func(key string)
+	walk = func(key string) {
+		t, ok := byKey[key]
+		if !ok || state[key] == done {
+			return
+		}
+		if state[key] == open {
+			for i, k := range path {
+				if k == key {
+					bad("a cycle: %s", strings.Join(append(append([]string(nil), path[i:]...), key), " needs "))
+					break
+				}
+			}
+			return
+		}
+		state[key] = open
+		path = append(path, key)
+		for _, p := range t.Prerequisites {
+			walk(p)
+		}
+		for _, p := range t.AnyOf {
+			walk(p)
+		}
+		path = path[:len(path)-1]
+		state[key] = done
+	}
+	for _, t := range techs {
+		walk(t.Key)
+	}
+
+	// Keystones, the spine and capstones.
+	for _, b := range buildings {
+		if b.Category != "wonder" || b.RequiredTech == "" {
+			continue
+		}
+		if t, ok := byKey[b.RequiredTech]; ok && t.Age != b.RequiredAge {
+			bad("%s is the keystone of %s (%s) but opens in %s: a keystone opens in its wonder's age", t.Key, b.Key, b.RequiredAge, t.Age)
+		}
+	}
+	kinds := TechKinds(techs, buildings)
+	for _, t := range techs {
+		switch {
+		case !t.Capstone:
+		case kinds[t.Key] == TechKeystone:
+			bad("%s is flagged a capstone but a wonder requires it: a capstone is never required", t.Key)
+		case kinds[t.Key] == TechSpine:
+			bad("%s is flagged a capstone but a keystone stands on it: a capstone is never required", t.Key)
+		}
+	}
+
+	sort.Strings(out)
+	return out
+}
+
+// validTechCode reports whether code is 2 to TechCodeMax capital letters.
+func validTechCode(code string) bool {
+	if len(code) < 2 || len(code) > TechCodeMax {
+		return false
+	}
+	for _, r := range code {
+		if r < 'A' || r > 'Z' {
+			return false
+		}
+	}
+	return true
 }
