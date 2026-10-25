@@ -92,10 +92,7 @@ func newSiteStage(t *testing.T) *siteStage {
 	t.Helper()
 	eng := game.NewGameEngine()
 	eng.SeedRNG(siteScreensSeed)
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	// The maps animate on the clock: hold both at their first frame.
 	still := time.Unix(0, 0)
 	d.mapPanel.start, d.mapPanel.now = still, func() time.Time { return still }
@@ -104,7 +101,7 @@ func newSiteStage(t *testing.T) *siteStage {
 	// the app (app.go). Its timers are held: nothing here waits for them.
 	d.overlayMgr.engine = eng
 	d.overlayMgr.after = func(time.Duration, func()) func() { return func() {} }
-	return &siteStage{t: t, eng: eng, d: d, app: app, pages: pages}
+	return &siteStage{t: t, eng: eng, d: d, app: d.app, pages: pages}
 }
 
 // say types a command at the prompt and presses Enter, as a player would
@@ -657,16 +654,7 @@ func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 	defer m.leave()
 
 	cols, rows := siteDashW, siteDashH
-	sim := tcell.NewSimulationScreen("UTF-8")
-	must(w.t, sim.Init())
-	defer sim.Fini()
-	sim.SetSize(cols, rows)
-	screen := theme.WrapScreen(sim)
-	screen.Clear()
-	m.SetRect(0, 0, cols, rows)
-	m.Draw(screen)
-	screen.Show()
-	cells, _, _ := sim.GetContents()
+	cells := drawWrapped(w.t, m, cols, rows, 1).Cells()
 	raw, text, err := encodeSiteScreen(cells, cols, rows, theme.Color(theme.RoleText), theme.Color(theme.RoleBackground), false)
 	if err != nil {
 		w.t.Fatalf("%s: %v", name, err)
@@ -717,8 +705,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	}
 	must(t, os.MkdirAll(out, 0o755))
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
+	keepTheme(t)
 	prevDev := game.DevModeActive
 	game.DevModeActive = false
 	t.Cleanup(func() { game.DevModeActive = prevDev })
