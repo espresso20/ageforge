@@ -42,7 +42,7 @@ import (
 //   - static "run_count": it asks for more of something than a run can do;
 //   - it names an event, a counter, a fact, a predicate or an age the game
 //     does not have (the subject cannot occur);
-//   - bot: the style is not one a smoke bot plays;
+//   - bot: the style is not one a play-style proof may name;
 //   - spoilers: text that shows before the badge is earned names an age
 //     later than the one the badge is revealed at;
 //   - text: a dash or an exclamation mark in its name, description or hint;
@@ -66,11 +66,10 @@ var IntegrityBadges = []string{
 // of a badge, or accounts that hold it would not get the badge.
 var LegacyAchievements = []string{"first_prestige", "prestige_x10", "reached_iron", "reached_modern"}
 
-// BadgeBotStyles are the play styles a bot-proof may name.
+// BadgeBotStyles are the play styles a bot-proof may name. They are the
+// styles the retired test bot played, kept as names.
 var BadgeBotStyles = []string{"greedy", "idle", "harbinger", "succumber", "cosmic", "army", "taste",
-	// The veteran scenario's preset: an account with Era Mastery, which the
-	// fast tier plays on every pull request and holds to each age's
-	// pacing target divided by its mastery factor.
+	// An account with Era Mastery (the veteran preset).
 	"veteran"}
 
 // BadgeProblem is a badge the static check proves out of reach, or a fault
@@ -192,7 +191,7 @@ func (c *badgeCheck) check(def config.BadgeDef) {
 	case config.BadgeProofBot:
 		r.Proof = "bot:" + def.Proof.Rule
 		if !slices.Contains(BadgeBotStyles, def.Proof.Rule) {
-			c.fail(def.Key, "bot", fmt.Sprintf("%s is to be proven by a bot playing the %q style, which no smoke bot plays (%s).", label, def.Proof.Rule, strings.Join(BadgeBotStyles, ", ")))
+			c.fail(def.Key, "bot", fmt.Sprintf("%s is to be proven by a player of the %q style, which is not one of the styles a proof may name (%s).", label, def.Proof.Rule, strings.Join(BadgeBotStyles, ", ")))
 		}
 	case config.BadgeProofStatic:
 		r.Proof = "static:" + def.Proof.Rule

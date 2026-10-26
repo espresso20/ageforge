@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-// TestStaticScenarioReport runs the static scenario as cmd/smoke does and
-// holds it to the same standard as the tests beside it: no failures, and the
-// report's sections in the order the reader finds them.
+// TestStaticScenarioReport runs the static scenario and holds it to the same
+// standard as the tests beside it: no failures, and the report's sections in
+// the order the reader finds them.
 func TestStaticScenarioReport(t *testing.T) {
 	res := &Findings{}
 	runStatic(res)

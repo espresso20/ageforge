@@ -16,7 +16,7 @@ CLI idle/clicker empire builder game built with Go + tview/tcell. 22 ages, 302 b
 - Read it without auth: `curl -sL https://trello.com/b/tf31C2cz.json` returns lists, cards, labels and checklists. Writing to the board needs Trello auth that isn't set up, so tell Adam which cards to move rather than assuming they moved.
 - Reference cards by shortLink in PR titles, e.g. `feat(trade): ... (card iKgfDClK)`.
 - Before starting a feature, check the Done list and recent merged PRs (`gh pr list --state merged`) so you don't redo shipped work.
-- The current state lives in: open PRs (`gh pr list`), CHANGELOG.md `[Unreleased]`, and the nightly smoke report (see Testing). Record newly discovered follow-ups in the PR description or ask Adam to add a card; don't hold them only in context.
+- The current state lives in: open PRs (`gh pr list`) and CHANGELOG.md `[Unreleased]`. Record newly discovered follow-ups in the PR description or ask Adam to add a card; don't hold them only in context.
 
 ## Build & Run
 ```bash
@@ -28,12 +28,10 @@ go run main.go
 
 ## Testing
 ```bash
-go test ./...                 # every PR; the static checks run inside go test ./smoke, the bot does not (no smokebot tag)
-go vet -tags smokebot ./...   # keeps the parked bot compiling (go.yml's check job runs this)
-make smoke        # the bot's fast tier, parked: passes -tags smokebot, run by hand
-make smoke-full   # the bot's full tier, parked: the Smoke workflow is disabled in repository settings
+go test ./...     # every PR; the static checks run inside go test ./smoke
+make smoke        # the static checks alone (go test ./smoke -count=1)
 ```
-A pull request runs the `smoke (fast tier)` job only with the `smoke` label, or from the Actions tab (`gh workflow run Go --ref <branch>`). See CONTRIBUTING.md, "Smoke testing".
+There is no test bot. See CONTRIBUTING.md, "Smoke testing".
 
 ## Website & Wiki Sync Rule
 **Any change to the game MUST also update the appropriate pages in `site/`.**
@@ -71,7 +69,7 @@ This project is large. Burning main context on file reads is wasteful. Follow th
 - Where those agent types do not exist (a remote session), use `subagent_type=general-purpose` with `model: "haiku"` or `model: "sonnet"`. Never run a subagent on Opus or Fable unless Adam asks
 - Every spec says what is already done, what is left, what done looks like and what to report. Long specs go in a file outside the repository
 - Subagents commit and push in small steps and stop at a clean checkpoint when cut off
-- The test bot is switched off: no subagent runs the smoke suite's bot scenarios or the Determinism script unless Adam says to turn it back on
+- There is no test bot; pacing is checked by the reference model and static checks in `smoke/`, and by Adam's play
 
 **Never read these files in main context** (too large — always delegate):
 - `config/buildings_new*.go`, `config/ages.go`, `config/buildings.go`
