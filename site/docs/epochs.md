@@ -280,7 +280,7 @@ Each distinct epoch you Succumb in multiplies your research time by 0.8 (Ancient
 ## Working with the roll
 
 - Faith strength sets the odds of a good roll, and culture strength sets which good events can come. Both read the whole run, so buildings put up just before an advance change little.
-- Spending lowers either strength by the share spent. An Appease costs faith, and a festival or a monument costs culture. Check the Epoch panel's "Good events at the next era" line, and the faith row in the Economy panel, before you advance. The roll reads the strengths they show.
+- Spending lowers either strength by the share spent. An Appease costs faith, and a festival or a monument costs culture. Check the Epoch panel's "Good events at the next era" line, and the faith row in the Resources box, before you advance. The roll reads the strengths they show.
 - The transition roll picks its event at random from the pool. A bad roll takes half your gold in Merchant Betrayal and Economic Crash and 60% of your faith in Political Instability, so a bigger stockpile loses more.
 - A fated doom strikes with a chance that depends on your faith strength at the strike: 90% under 25%, 75% from 25% to 75%, and 60% over 75% (see [Faith](faith.md#faith-threshold-bands)).
 
