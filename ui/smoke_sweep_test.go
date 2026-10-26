@@ -2,7 +2,7 @@
 
 package ui
 
-// UI smoke sweep, run by `make smoke` (go test -tags smoke -run TestSmokeUISweep ./ui).
+// UI smoke sweep, run by hand: go test -tags smoke -run 'TestSmokeUISweep|TestSmokeUISmallTerminals' ./ui
 //
 // Boots the real App on a tcell SimulationScreen, with no dev mode, and under
 // EVERY theme walks the screens a player can reach: the splash's theme

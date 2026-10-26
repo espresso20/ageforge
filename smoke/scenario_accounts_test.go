@@ -7,8 +7,8 @@ import (
 	"github.com/espresso20/ageforge/rules"
 )
 
-// TestAccountsScenario runs the accounts scenario in a temp data directory,
-// as cmd/smoke does, and checks that it leaves the core ruleset alone.
+// TestAccountsScenario runs the accounts scenario in a temp data directory
+// and checks that it leaves the core ruleset alone.
 func TestAccountsScenario(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	set := rules.Core()

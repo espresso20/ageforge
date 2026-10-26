@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet validate smoke smoke-full smoke-deep all release release-patch release-minor release-major commit
+.PHONY: build run clean check test vet validate smoke all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
@@ -39,28 +39,13 @@ test:
 test-raw: build vet
 	@go test ./... -v -count=1
 
-# The test bot is parked (owner, 2026-10-10: "math, not bot"): the bot, its
-# scenarios and cmd/smoke build only with the smokebot tag, so go build, go vet
-# and go test skip them and run the static checks alone. The targets below turn
-# the tag on. See CONTRIBUTING.md, "Smoke testing".
-#
-# Smoke suite, fast tier (a few minutes): static gates, docsync, 3 seeds of
-# play to the Bronze Age, save/load, offline, fuzz, accounts, perf budgets and
-# the UI sweeps. Report in smoke-report/.
-# One scenario: go run -tags smokebot ./cmd/smoke -scenario saveload -v (see -list).
+# The static checks: gates, storage, milestones, harbinger prices, faith,
+# culture, depth, research, badges, lineages and caps, the docs check, the
+# accounts check, the reference players and the economy's properties. They
+# read the tables and drive the engine directly; go test ./... runs them too.
+# See CONTRIBUTING.md, "Smoke testing".
 smoke:
-	@go run -tags smokebot ./cmd/smoke -tier fast -pacing enforce -v -out smoke-report
-
-# Smoke suite, full tier (what the nightly runs): every scenario, deeper and
-# on more seeds, plus the play styles and two prestige cycles.
-smoke-full:
-	@go run -tags smokebot ./cmd/smoke -tier full -pacing enforce -v -out smoke-report
-
-# Smoke suite, deep tier (what the weekly runs, one seed per CI job): the
-# progression scenario on five seeds to a Quantum Age prestige, pacing
-# enforced on every age to the Galactic. About 10-15 minutes.
-smoke-deep:
-	@go run -tags smokebot ./cmd/smoke -tier deep -seeds 5 -pacing enforce -v -out smoke-report
+	@go test ./smoke -count=1
 
 # Run the game
 run: build
