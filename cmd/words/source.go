@@ -42,10 +42,6 @@ var scanned = []struct {
 // its strings. TestEveryPackageIsAccountedFor fails on a package in neither
 // list, so a new package cannot go unread by accident.
 var notScanned = map[string]string{
-	"cmd/balanceaudit":      "a developer tool",
-	"cmd/export_config":     "a developer tool",
-	"cmd/smoke":             "the smoke suite's runner",
-	"cmd/spritegen":         "a developer tool",
 	"cmd/words":             "this tool",
 	"smoke":                 "the smoke suite",
 	"vibe":                  "the VibeMode switch, no text (its script is data, in words/vibe)",
