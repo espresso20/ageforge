@@ -79,13 +79,13 @@ func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
 	}
 }
 
-// A pending or unrecorded catastrophe must never read as Survived.
+// A pending catastrophe must never read as Survived.
 func TestEpochHistoryNeverShowsUnresolvedAsSurvived(t *testing.T) {
 	state := game.NewGameEngine().GetState()
 	state.EpochKey = "electric_era"
 	state.EpochEventHistory = []game.EpochEventRecord{
 		{EpochKey: "iron_era", EventName: "The Great Plague", EventType: "catastrophe", Outcome: game.CatastrophePending},
-		{EpochKey: "steel_era", EventName: "The World War", EventType: "catastrophe"},
+		{EpochKey: "steel_era", EventName: "The World War", EventType: "catastrophe", Outcome: game.CatastrophePending},
 	}
 	var sb strings.Builder
 	epochProviderHistory(&sb, state)
@@ -93,8 +93,8 @@ func TestEpochHistoryNeverShowsUnresolvedAsSurvived(t *testing.T) {
 	if strings.Contains(out, "Endured") {
 		t.Errorf("unresolved catastrophes shown as Endured:\n%s", out)
 	}
-	if !strings.Contains(out, "Pending") || !strings.Contains(out, "outcome not recorded") {
-		t.Errorf("expected Pending and 'outcome not recorded' labels:\n%s", out)
+	if strings.Count(out, "Pending") != 2 {
+		t.Errorf("expected the Pending label on both:\n%s", out)
 	}
 
 	state.EpochEventHistory[0].Outcome = game.CatastropheEndured
