@@ -5,7 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AgeForge Compendium</title>
   <meta name="description" content="The AgeForge Compendium: commands, ages, buildings, technologies and how the game works.">
-  <meta name="theme-color" content="#dde3ea">
+  <meta name="theme-color" content="#e8dcc0">
+  <script>
+    /* The reader's edition, set before the first paint so the page never
+       flashes the wrong one. The system's preference is the default; the
+       Night/Day button overrides it with data-theme on <html> and saves the
+       choice under the key the front page uses, so it carries across. Every
+       storage access is guarded: a browser may refuse it. */
+    (function () {
+      var KEY = 'ageforge-theme';
+      var PAPER = { light: '#e8dcc0', dark: '#121822' };
+      var root = document.documentElement;
+      var system = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+      function stored() {
+        try {
+          var t = window.localStorage.getItem(KEY);
+          return t === 'light' || t === 'dark' ? t : null;
+        } catch (e) { return null; }
+      }
+      function mode() {
+        return root.getAttribute('data-theme') || (system && system.matches ? 'dark' : 'light');
+      }
+      function paint() {
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', PAPER[mode()]);
+        window.dispatchEvent(new Event('ageforge-theme'));
+      }
+      function apply(t) {
+        if (t) root.setAttribute('data-theme', t); else root.removeAttribute('data-theme');
+        paint();
+      }
+      var first = stored();
+      if (first) root.setAttribute('data-theme', first);
+      window.ageforgeTheme = {
+        mode: mode,
+        set: function (t) {
+          try { window.localStorage.setItem(KEY, t); } catch (e) { /* kept for this visit only */ }
+          apply(t);
+        }
+      };
+      if (system) {
+        var follow = function () { if (!root.getAttribute('data-theme')) paint(); };
+        if (system.addEventListener) system.addEventListener('change', follow);
+        else if (system.addListener) system.addListener(follow);
+      }
+      window.addEventListener('storage', function (e) { if (e.key === KEY) apply(stored()); });
+      document.addEventListener('DOMContentLoaded', paint);
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IM+Fell+Double+Pica&family=IM+Fell+Double+Pica+SC&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -36,8 +83,42 @@
         noData: 'No results.',
       },
       copyCode: { buttonText: 'Copy', errorText: 'Error', successText: 'Copied' },
-      themeColor: '#a3211b',
     };
+  </script>
+  <script>
+    /* The Night/Day button goes last among the top links. Docsify draws the
+       links itself, and may draw them again on a page change, so the button
+       is put back whenever it is missing. */
+    (function () {
+      var theme = window.ageforgeTheme;
+      if (!theme) return;
+      function label(btn) {
+        var night = theme.mode() === 'dark';
+        btn.textContent = night ? 'Day' : 'Night';
+        btn.setAttribute('aria-pressed', night ? 'true' : 'false');
+        btn.setAttribute('aria-label', night ? 'Switch to light mode' : 'Switch to dark mode');
+      }
+      function ensure() {
+        var list = document.querySelector('.app-nav ul');
+        if (!list || list.querySelector('.theme-toggle')) return;
+        var item = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'theme-toggle';
+        label(btn);
+        btn.addEventListener('click', function () {
+          theme.set(theme.mode() === 'dark' ? 'light' : 'dark');
+        });
+        item.appendChild(btn);
+        list.appendChild(item);
+      }
+      window.addEventListener('ageforge-theme', function () {
+        var btn = document.querySelector('.theme-toggle');
+        if (btn) label(btn);
+      });
+      new MutationObserver(ensure).observe(document.body, { childList: true, subtree: true });
+      ensure();
+    })();
   </script>
   <script src="screens.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>

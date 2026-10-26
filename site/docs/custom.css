@@ -1,17 +1,30 @@
-/* The wiki in the almanac's dress: blue sugar paper, black ink and one red,
-   old-style headings over a plain reading face. Light by day, a night
-   edition when the reader's system asks for dark. Wording is untouched. */
+/* The Compendium in the front page's two editions. By day an old parchment,
+   aged a little at the edges; by night a dark blue sheet, a night edition
+   and not an inversion. Both are tokens on :root. The system's preference
+   picks one, and the Night/Day button in the top links overrides it by
+   setting data-theme="light" or "dark" on <html> (index.html saves the
+   choice under the key the front page uses). Wording is untouched. */
 :root {
-  --paper:   #dde3ea;
-  --plate:   #eef1f5;
-  --ink:     #121925;
-  --ink-2:   #38435a;
-  --ink-3:   #5d6880;
-  --rubric:  #a3211b;
-  --rule:    #8f9bb0;
-  --rule-2:  #c3cbd8;
+  color-scheme: light;
+  --paper:   #e8dcc0;
+  --plate:   #f0e6cf;
+  --ink:     #241a10;
+  --ink-2:   #5b4a35;
+  --ink-3:   #6b5a44;
+  --rubric:  #962a1b;
+  --rubric-text: #962a1b;   /* the red where it is read as text */
+  --on-rubric:   #ffffff;
+  --rule:    #a89878;
+  --rule-2:  #d0c3a3;
   --term:    #0d1117;
   --term-ink:#e6edf3;
+  --term-edge: transparent;
+  --frame:   var(--ink);    /* the thin rule round a screen plate */
+
+  /* Parchment ageing: a soft vignette toward the corners and a faint paper
+     grain, multiplied over the paper. No image files. Both are off at night. */
+  --vignette: radial-gradient(ellipse at center, transparent 55%, rgba(110, 80, 40, .18) 100%);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .23 0 0 0 0 .12 0 0 0 1.1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E");
 
   --display: 'IM Fell Double Pica', 'IM Fell English', Georgia, 'Times New Roman', serif;
   --caps:    'IM Fell Double Pica SC', 'IM Fell English SC', Georgia, serif;
@@ -31,7 +44,7 @@
   --heading-font-weight:    400;
   --strong-color:           var(--ink);
   --strong-font-weight:     600;
-  --link-color:             var(--rubric);
+  --link-color:             var(--rubric-text);
   --link-color--hover:      var(--ink);
   --link-text-decoration:   underline;
   --hr-border:              1px solid var(--rule);
@@ -58,44 +71,73 @@
   --table-cell-border-color: var(--rule-2);
   --sidebar-background:     var(--plate);
   --sidebar-border-color:   var(--rule);
-  --sidebar-name-color:     var(--rubric);
+  --sidebar-name-color:     var(--rubric-text);
   --sidebar-nav-link-color:         var(--ink-2);
-  --sidebar-nav-link-color--hover:  var(--rubric);
-  --sidebar-nav-link-color--active: var(--rubric);
+  --sidebar-nav-link-color--hover:  var(--rubric-text);
+  --sidebar-nav-link-color--active: var(--rubric-text);
   --sidebar-nav-link-font-weight--active: 600;
   --sidebar-toggle-icon-color: var(--ink);
   --sidebar-toggle-background: var(--plate);
   --search-input-background-color: var(--paper);
-  --search-input-border-color:     var(--rule);
+  --search-input-border-color:     var(--ink-3);
   --search-input-color:            var(--ink);
+  --search-input-placeholder-color: var(--ink-3);
   --search-result-heading-color:   var(--ink);
   --search-result-item-color:      var(--ink-2);
   --search-result-keyword-background: transparent;
-  --search-result-keyword-color:   var(--rubric);
+  --search-result-keyword-color:   var(--rubric-text);
   --navbar-root-color:      var(--ink-2);
-  --navbar-root-color--hover: var(--rubric);
+  --navbar-root-color--hover: var(--rubric-text);
   --copycode-background:    var(--rubric);
-  --copycode-color:         #ffffff;
+  --copycode-color:         var(--on-rubric);
 }
 
+/* The night edition. Written twice on purpose: once for a system that asks
+   for dark (unless the reader chose Day), once for a reader who chose Night. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --paper:  #0f131b;
-    --plate:  #161b26;
-    --ink:    #e6e1d2;
-    --ink-2:  #b3ae9d;
-    --ink-3:  #8a8676;
-    --rubric: #ff7062;
-    --rule:   #465066;
-    --rule-2: #2a3243;
-    --term:   #0a0d13;
-    --copycode-color: #1a0705;
+    --paper:   #121822;
+    --plate:   #1a2230;
+    --ink:     #d9dee6;
+    --ink-2:   #9aa6b8;
+    --ink-3:   #8593a8;
+    --rubric:  #e0574c;
+    --rubric-text: #e65f54;
+    --on-rubric:   #120503;
+    --rule:    #3b475b;
+    --rule-2:  #262f40;
+    --term:    #0a0e14;
+    --term-edge: #2d384a;
+    --frame:   #4a5870;
+    --vignette: none;
+    --grain: none;
   }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper:   #121822;
+  --plate:   #1a2230;
+  --ink:     #d9dee6;
+  --ink-2:   #9aa6b8;
+  --ink-3:   #8593a8;
+  --rubric:  #e0574c;
+  --rubric-text: #e65f54;
+  --on-rubric:   #120503;
+  --rule:    #3b475b;
+  --rule-2:  #262f40;
+  --term:    #0a0e14;
+  --term-edge: #2d384a;
+  --frame:   #4a5870;
+  --vignette: none;
+  --grain: none;
 }
 
 body {
-  background: var(--paper);
+  background-color: var(--paper);
+  background-image: var(--vignette), var(--grain);
+  background-blend-mode: normal, multiply;
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--reading);
   font-variant-numeric: oldstyle-nums;
@@ -109,7 +151,7 @@ body {
   font-family: var(--display);
   font-size: 1.75rem;
   line-height: 1;
-  color: var(--rubric);
+  color: var(--rubric-text);
   text-decoration: none;
 }
 .sidebar-nav { font-family: var(--reading); font-size: 1.02rem; }
@@ -129,6 +171,19 @@ body {
 .app-nav { font-family: var(--caps); letter-spacing: 0.12em; font-size: 0.9rem; }
 .app-nav a { text-decoration: none; }
 
+/* The Night/Day button, last among the top links (index.html puts it there).
+   Small capitals in a square with a hairline inside the rule, like a plate. */
+.theme-toggle {
+  display: inline-block; margin: 0 0 0 0.2em; padding: 0.28em 0.7em 0.2em;
+  font: inherit; font-family: var(--caps); letter-spacing: 0.12em; line-height: 1.2;
+  color: var(--ink); background: var(--paper); cursor: pointer;
+  border: 1px solid var(--ink); border-radius: 0;
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
+  -webkit-appearance: none; appearance: none;
+}
+.theme-toggle:hover { color: var(--rubric-text); }
+.theme-toggle:focus-visible { outline: 2px solid var(--rubric-text); outline-offset: 3px; }
+
 /* Headings */
 .markdown-section h1,
 .markdown-section h2,
@@ -141,7 +196,7 @@ body {
   border-bottom: 0; border-top: 2px solid var(--ink);
   padding: 14px 0 0; margin-top: 2.4em;
 }
-.markdown-section h3 { font-size: 1.4rem; line-height: 1.15; color: var(--rubric); margin-top: 1.7em; }
+.markdown-section h3 { font-size: 1.4rem; line-height: 1.15; color: var(--rubric-text); margin-top: 1.7em; }
 .markdown-section h4 { font-family: var(--caps); font-size: 1rem; letter-spacing: 0.12em; color: var(--ink-2); }
 .markdown-section h2 a, .markdown-section h3 a, .markdown-section h4 a { color: inherit; text-decoration: none; }
 
@@ -161,7 +216,7 @@ body {
 .markdown-section pre,
 pre[class*="language-"] {
   background: var(--term) !important; color: var(--term-ink);
-  border: 0; border-left: 3px solid var(--rubric); border-radius: 2px;
+  border: 1px solid var(--term-edge); border-left: 3px solid var(--rubric); border-radius: 2px;
   overflow-x: auto !important; -webkit-overflow-scrolling: touch;
 }
 .markdown-section pre > code { background: none; border: 0; padding: 0; color: var(--term-ink); font-size: 0.8rem; }
@@ -199,7 +254,7 @@ p code, li code { word-break: break-word; }
 .search { border-bottom: 1px solid var(--rule) !important; }
 .search input {
   background: var(--paper) !important; color: var(--ink) !important;
-  border: 1px solid var(--rule) !important; border-radius: 2px !important;
+  border: 1px solid var(--ink-3) !important; border-radius: 2px !important;
   font-family: var(--reading); font-size: 1rem;
 }
 .search .matching-post { border-bottom: 1px solid var(--rule-2); }
@@ -217,14 +272,14 @@ p code, li code { word-break: break-word; }
 .screen-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 6px; align-items: start; }
 .screen-plate {
   margin: 5px; background: var(--term);
-  outline: 1px solid var(--ink); outline-offset: 4px;
+  outline: 1px solid var(--frame); outline-offset: 4px;
 }
 .screen-scroll {
   overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
   padding: 10px 12px; scrollbar-width: thin; scrollbar-color: #5d6880 transparent;
 }
 .markdown-section figure.screen:focus { outline: none; }
-.markdown-section figure.screen:focus-visible .screen-plate { outline: 2px solid var(--rubric); }
+.markdown-section figure.screen:focus-visible .screen-plate { outline: 2px solid var(--rubric-text); }
 .markdown-section pre.screen-term {
   position: relative; display: block; box-sizing: content-box;
   width: calc(var(--cols, 100) * 1ch); margin: 0 auto; padding: 0;
