@@ -3,7 +3,6 @@ package smoke
 import (
 	"maps"
 	"slices"
-	"strings"
 	"testing"
 )
 
@@ -19,14 +18,14 @@ func TestDocsyncParsers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hero := 0
-	for _, c := range claims {
-		if strings.HasPrefix(c.text, "hero stat") {
-			hero++
-		}
+	// The landing page states no counts, so it may carry no hero stats. If
+	// it ever does, the claims read here are checked against the game by
+	// TestDocsMatchTheGame; this only keeps the parser honest.
+	if len(claims) == 0 {
+		t.Error("docClaims found no claims in any file")
 	}
-	if hero < 3 {
-		t.Errorf("found %d hero stats in site/index.html, want the ages, buildings and techs", hero)
+	if m := heroStat.FindStringSubmatch(`<span class="hstat-n">22</span><span class="hstat-l">Ages</span>`); m == nil || m[1] != "22" || m[2] != "Ages" {
+		t.Errorf("hero stat parser read %v", m)
 	}
 	if n, rows, err := lineageTable(".."); err != nil || n == 0 || rows == 0 {
 		t.Errorf("lineage table: heading %d, rows %d, err %v", n, rows, err)
