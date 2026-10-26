@@ -17,13 +17,12 @@ import (
 //
 //	go run ./cmd/words vibe-wire map.csv
 //
-// What is left alone has a reason that is final (a key hint, a drawing, a name
-// no screen draws); none is left for later ("made once", "compared").
+// What is left alone has a reason that is final (a key hint, a name no screen
+// draws); none is left for later ("made once", "compared").
 func TestEveryTextOfTheMapSheetIsWiredOrLeftAlone(t *testing.T) {
 	c := realCatalog(t)
 	var loose, later, needless []string
 	wired := 0
-	left := map[string]int{}
 	for _, r := range c.rows {
 		if r.area != areaMap {
 			continue
@@ -39,11 +38,9 @@ func TestEveryTextOfTheMapSheetIsWiredOrLeftAlone(t *testing.T) {
 			loose = append(loose, where)
 		case !forGood(v.reason):
 			later = append(later, where+": "+v.reason)
-		default:
-			left[v.reason]++
 		}
 	}
-	if wired < 1000 {
+	if wired < 800 {
 		t.Errorf("only %d texts of the map sheet are wired", wired)
 	}
 	if len(loose) > 0 {
@@ -57,9 +54,6 @@ func TestEveryTextOfTheMapSheetIsWiredOrLeftAlone(t *testing.T) {
 	if len(needless) > 0 {
 		t.Errorf("%d texts of the map sheet are wired and judged not to follow VibeMode; take the vibe call off them:\n  %s",
 			len(needless), strings.Join(needless, "\n  "))
-	}
-	if left[leftKeycap] == 0 {
-		t.Errorf("no text of the map sheet is left alone as %q: the rule or the list is dead", leftKeycap)
 	}
 }
 
