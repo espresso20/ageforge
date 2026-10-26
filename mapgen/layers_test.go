@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	"github.com/espresso20/ageforge/mapmodel/fixture"
 )
 
 // groundFrame draws a frame's ground and town only, before detail, traffic and
@@ -173,5 +175,21 @@ func TestSpaceHasAPlanetAndStars(t *testing.T) {
 	}
 	if stars < 20 {
 		t.Errorf("only %d stars", stars)
+	}
+}
+
+// TestRuinsLeaveRubble: a lost building leaves rubble on its parcel, and
+// the inspect index says so.
+func TestRuinsLeaveRubble(t *testing.T) {
+	st := fixture.State(fixture.Options{Age: "modern_age", Seed: 7, Tick: noon, Ruins: true})
+	g := (&Generator{}).Render(model(st), worldW, worldH, 0)
+	rubble := 0
+	for i := range g.Cells {
+		if th := g.Things[g.Hit[i]]; th.Kind == KindBuilding && th.Ruin {
+			rubble++
+		}
+	}
+	if rubble == 0 {
+		t.Fatal("no rubble in a town with ruins")
 	}
 }
