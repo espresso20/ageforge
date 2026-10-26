@@ -21,9 +21,9 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
-// TestWriteCaptures draws review captures of the map from the real
-// smoke-bot states (run TestGenerateStates in ui/mapstyle/capture first):
-// .txt (the monochrome check) and .html built cell by cell from a tcell
+// TestWriteCaptures draws review captures of the map from saved game
+// snapshots in the states folder (nothing writes them now; a state that is
+// missing is skipped): .txt (the monochrome check) and .html built cell by cell from a tcell
 // SimulationScreen, animated where there are several frames.
 //
 //	go test -tags mapcapture -run TestWriteCaptures ./ui/mapstyle/roguelike
@@ -212,7 +212,7 @@ func (c *capturer) write(name, body string) {
 func (c *capturer) index() {
 	sort.Strings(c.files)
 	var b strings.Builder
-	b.WriteString(`<!doctype html><html><head><meta charset="utf-8"><title>Map captures</title><style>body{font-family:ui-monospace,Menlo,monospace;background:#111;color:#ccc;margin:20px}a{color:#8cf;display:block;margin:2px 0}</style></head><body><h1>Map captures</h1><p>Real tcell SimulationScreen renders from smoke-bot states. Nerd-tier pages need a Nerd Font installed (JetBrainsMono Nerd Font Mono or Symbols Nerd Font Mono).</p>`)
+	b.WriteString(`<!doctype html><html><head><meta charset="utf-8"><title>Map captures</title><style>body{font-family:ui-monospace,Menlo,monospace;background:#111;color:#ccc;margin:20px}a{color:#8cf;display:block;margin:2px 0}</style></head><body><h1>Map captures</h1><p>Real tcell SimulationScreen renders from saved game states. Nerd-tier pages need a Nerd Font installed (JetBrainsMono Nerd Font Mono or Symbols Nerd Font Mono).</p>`)
 	for _, f := range c.files {
 		fmt.Fprintf(&b, `<a href="%s">%s</a>`, f, strings.TrimSuffix(f, ".html"))
 	}

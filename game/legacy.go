@@ -1,10 +1,7 @@
 package game
 
 import (
-	"encoding/json"
 	"fmt"
-	"maps"
-	"os"
 	"slices"
 
 	"github.com/espresso20/ageforge/config"
@@ -595,16 +592,14 @@ func (pm *PrestigeManager) LoadLegacy(plan []PlanTemplateItem, factions []string
 
 // ===== Test hooks =====
 
-// LegacyKit is the legacy kit's memory as a save carries it, for tests and
-// the smoke suite's canned veteran kit.
+// LegacyKit is the legacy kit's memory as a save carries it, for tests.
 type LegacyKit struct {
 	Plan     []PlanTemplateItem `json:"plan,omitempty"`
 	Factions []string           `json:"factions,omitempty"`
 	Shares   map[string]float64 `json:"shares,omitempty"`
 }
 
-// LegacyForTest returns what the kit remembers now. A test hook for other
-// packages (the smoke suite dumps it to make the canned veteran kit); not
+// LegacyForTest returns what the kit remembers now. A test hook; not
 // reachable from play.
 func (ge *GameEngine) LegacyForTest() LegacyKit {
 	ge.mu.RLock()
@@ -619,9 +614,8 @@ func (ge *GameEngine) LegacyForTest() LegacyKit {
 
 // SetLegacyForTest gives the engine kit as its memory and, with own, buys
 // every kit item for free, then puts them to work as a purchase would (the
-// current age's template slice, the shares, old friends). A test hook for
-// other packages (the smoke suite's veteran with the kit); not reachable
-// from play.
+// current age's template slice, the shares, old friends). A test hook; not
+// reachable from play.
 func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -637,51 +631,10 @@ func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
 	ge.meetOldFriendsLocked()
 }
 
-// NotePlanForTest records kind and key (count copies of a build) in the
-// run's plan log as if the player had planned them in the current age. A
-// test hook for other packages (the smoke suite records a bot's builds to
-// make the canned veteran template); not reachable from play.
-func (ge *GameEngine) NotePlanForTest(kind, key string, count int) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.logPlanAddLocked(PlanItem{Kind: kind, Key: key, Count: count}, count)
-}
-
-// WriteShopV1SaveForTest writes the running game, with the given prestige
-// state, as a signed save from the first prestige shop: no shop version and
-// no kit memory, as a build from before the legacy kit wrote it. A test hook
-// for other packages (the smoke suite's refund check loads it back); not
-// reachable from play.
-func (ge *GameEngine) WriteShopV1SaveForTest(name string, level, totalEarned, available int, upgrades map[string]int) error {
-	ge.mu.Lock()
-	ge.Prestige.LoadState(level, totalEarned, available)
-	gs := ge.buildSaveSnapshot()
-	ge.mu.Unlock()
-	gs.Prestige.Upgrades = maps.Clone(upgrades)
-	stripShopV2(&gs)
-	gs.Signature = signSave(gs)
-	data, err := json.MarshalIndent(gs, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(savePath(name), data, 0o644)
-}
-
-// stripShopV2 removes what the legacy kit added to a save, leaving the
-// bytes a build from before it would have written.
-func stripShopV2(gs *GameSave) {
-	gs.Prestige.ShopVersion = 0
-	gs.Prestige.LegacyPlan, gs.Prestige.LegacyFactions, gs.Prestige.LegacyShares = nil, nil, nil
-	gs.PlanLog = nil
-}
-
 // EnterAgeForTest moves the game into age through the real advance (the
 // carryover, the unlocks, the kit's template slice and old friends), with no
-// requirements and no fate checked. A test hook for other packages (the
-// smoke suite's kit checks); not reachable from play.
+// requirements and no fate checked. A test hook for other packages; not
+// reachable from play.
 func (ge *GameEngine) EnterAgeForTest(age string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -690,22 +643,4 @@ func (ge *GameEngine) EnterAgeForTest(age string) error {
 	}
 	ge.advanceAge(age)
 	return nil
-}
-
-// NoteAdvanceForTest records in the run's plan log an advance item for age
-// (the age just left), as if the player had planned the advance they made.
-// A test hook for other packages (the smoke suite records a bot's advances
-// to make the canned veteran template); not reachable from play.
-func (ge *GameEngine) NoteAdvanceForTest(age string) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	if _, ok := ge.rules.Index(age); !ok || templateAgeLoad(ge.planLog, age) >= MaxPlanItems {
-		return
-	}
-	for _, e := range ge.planLog {
-		if e.Age == age && e.Kind == PlanAdvance {
-			return
-		}
-	}
-	ge.planLog = append(ge.planLog, PlanTemplateItem{Age: age, Kind: PlanAdvance})
 }

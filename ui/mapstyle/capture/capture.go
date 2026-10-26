@@ -1,8 +1,8 @@
 // Package capture turns map frames drawn on a tcell SimulationScreen into
 // review files: plain text (the monochrome check) and HTML built cell by
 // cell from the screen (a real terminal render, not an image), animated when
-// there are several frames. It also loads and saves the game states the
-// captures are drawn from.
+// there are several frames. It also loads the game states the captures are
+// drawn from.
 package capture
 
 import (
@@ -165,38 +165,7 @@ func Hex(c tcell.Color) string {
 	return fmt.Sprintf("#%02x%02x%02x", r&0xff, g&0xff, b&0xff)
 }
 
-// trimState drops the parts of a snapshot the maps never read.
-func trimState(st game.GameState) game.GameState {
-	st.History = nil
-	st.AccountStats = nil
-	st.Modifiers = nil
-	st.Milestones = game.MilestoneState{}
-	st.Research.Techs = nil
-	if len(st.Log) > 12 {
-		st.Log = st.Log[len(st.Log)-12:]
-	}
-	return st
-}
-
-// SaveState writes a snapshot as gzipped JSON.
-func SaveState(path string, st game.GameState) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	zw := gzip.NewWriter(f)
-	if err := json.NewEncoder(zw).Encode(trimState(st)); err != nil {
-		f.Close()
-		return err
-	}
-	if err := zw.Close(); err != nil {
-		f.Close()
-		return err
-	}
-	return f.Close()
-}
-
-// LoadState reads a snapshot written by SaveState.
+// LoadState reads a game snapshot saved as gzipped JSON.
 func LoadState(path string) (game.GameState, error) {
 	var st game.GameState
 	f, err := os.Open(path)

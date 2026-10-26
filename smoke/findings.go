@@ -5,30 +5,26 @@ import "fmt"
 // Finding is one problem a scenario found (a failure) or one thing worth
 // knowing that does not fail the run (a warning).
 type Finding struct {
-	Check   string `json:"check"`
-	Message string `json:"message"`
-	Seed    int64  `json:"seed,omitempty"`
-	// Repro is how to reproduce it: a command line, a seed and command list.
-	Repro string `json:"repro,omitempty"`
+	Check   string
+	Message string
 	// Detail is long text for the full report only (a state dump, a stack).
-	Detail string `json:"detail,omitempty"`
+	Detail string
 }
 
 // Section is one titled block of Markdown in the full report.
 type Section struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
+	Title string
+	Body  string
 }
 
 // Findings is what a check reports into: a one-line summary, the failures
-// and warnings it found and the sections of its report. A scenario's Result
-// embeds one; the static checks and the docs check fill it in without
-// knowing anything of the scenario runner around them.
+// and warnings it found and the sections of its report. The static checks,
+// the docs check and the accounts check each fill one in.
 type Findings struct {
-	Summary  string    `json:"summary"`
-	Failures []Finding `json:"failures"`
-	Warnings []Finding `json:"warnings,omitempty"`
-	Sections []Section `json:"-"`
+	Summary  string
+	Failures []Finding
+	Warnings []Finding
+	Sections []Section
 }
 
 func (r *Findings) fail(check, format string, args ...interface{}) *Finding {

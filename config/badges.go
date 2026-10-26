@@ -459,8 +459,9 @@ const (
 	BadgeNoProof BadgeProofKind = iota
 	// BadgeProofStatic is proven from config alone, by the rule in Rule.
 	BadgeProofStatic
-	// BadgeProofBot is proven by play: a smoke bot of the style in Rule
-	// must earn it.
+	// BadgeProofBot is proven by play: a player of the style in Rule earns
+	// it. The bot that once played every style is gone, so nothing runs
+	// the proof now; the guard only checks that Rule names a known style.
 	BadgeProofBot
 	// BadgeProofDerived follows from other badges (earn 25 badges, finish
 	// a ladder): it is reachable when they are.
@@ -543,7 +544,7 @@ const (
 // BadgeProof is a badge's claim that it can be earned.
 type BadgeProof struct {
 	Kind BadgeProofKind
-	// Rule is the static rule, or the bot style.
+	// Rule is the static rule, or the play style.
 	Rule string
 	// Why is the argument in words, for a proof the guard cannot compute
 	// (BadgeRuleOccurs asks for one).
@@ -559,7 +560,8 @@ func Occurs(why string) BadgeProof {
 	return BadgeProof{Kind: BadgeProofStatic, Rule: BadgeRuleOccurs, Why: why}
 }
 
-// BotProof is a proof by play: a smoke bot of the style earns it.
+// BotProof is a proof by play: a player of the style earns it. Plain data
+// now, since no bot plays to prove it (see BadgeProofBot).
 func BotProof(style string) BadgeProof { return BadgeProof{Kind: BadgeProofBot, Rule: style} }
 
 // DerivedProof is the proof of a badge that follows from other badges.
