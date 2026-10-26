@@ -199,11 +199,15 @@ func (f *frame) paintPlanet(x, y, r int) {
 		look, land = f.st.Land[Hills], false
 	}
 	c := look.at(x, y, 0)
+	city := land && r < 900 && chance(6, seed, 16, int64(x), int64(y))
+	if city && f.night >= 128 {
+		c.R = '∙'
+	}
 	edge := clamp((r-760)*256/240, 0, 230)
 	c.Bg, c.Fg = mix(c.Bg, f.st.Sky.Bg, edge), mix(c.Fg, f.st.Sky.Bg, edge)
 	f.g.paint(x, y, c)
 	f.g.mark(x, y, Thing{Kind: KindTerrain, Key: "planet"})
-	if land && r < 900 && chance(6, seed, 16, int64(x), int64(y)) {
+	if city {
 		f.lights = append(f.lights, Pt{x, y})
 	}
 }

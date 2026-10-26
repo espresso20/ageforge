@@ -92,6 +92,7 @@ type AgeStyle struct {
 	Roads  [3]RoadLook // by road tier; in orbit, the rings (0), spokes (1)
 	Deck   RGB         // a bridge's boards
 	Yard   Look        // the lot a building stands on
+	Crops  Look        // a farm's lot
 	Plaza  Look        // an unbuilt wonder plot
 	Rubble Look        // a lost building's lot
 	Shapes [numFamilies]Tiers
@@ -100,6 +101,9 @@ type AgeStyle struct {
 	Wall    RGB
 	Ink     map[rune]RGB
 	Windows string
+	// Chimney is the art rune that smokes, and Smoke how its smoke looks.
+	Chimney rune
+	Smoke   Look
 	Scatter []Scatter
 	Agents  []AgentKind
 	Night   Night

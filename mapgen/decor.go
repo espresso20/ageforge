@@ -29,3 +29,19 @@ func (f *frame) paintDetail() {
 		}
 	}
 }
+
+// paintSmoke lets each chimney breathe out a puff that climbs and drifts. Its
+// place is a function of the frame and the chimney alone.
+func (f *frame) paintSmoke() {
+	for _, v := range f.vents {
+		beat := (f.anim/5 + roll(9, f.m.Seed, 64, int64(v.X), int64(v.Y))) % 9
+		if beat >= 3 {
+			continue
+		}
+		x, y := v.X+beat/2*(2*roll(2, f.m.Seed, 65, int64(v.X), int64(v.Y))-1), v.Y-1-beat
+		if !f.g.in(x, y) || f.g.ThingAt(x, y).Kind == KindBuilding {
+			continue
+		}
+		f.g.draw(x, y, pick(f.st.Smoke.Glyphs, hash(f.m.Seed, 66, int64(beat))), mix(f.g.At(x, y).Bg, f.st.Smoke.Fg, 256-beat*60))
+	}
+}

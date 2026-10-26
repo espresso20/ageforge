@@ -89,8 +89,11 @@ func (f *frame) paintTown() {
 
 func (f *frame) paintYard(r Rect, pl placed) {
 	look := f.st.Yard
-	if pl.ruin {
+	switch {
+	case pl.ruin:
 		look = f.st.Rubble
+	case pl.b.Lineage == mapmodel.LinFood && f.st.Crops.Glyphs != "":
+		look = f.st.Crops
 	}
 	r.cells(func(x, y int) {
 		f.g.paint(x, y, look.at(x, y, 2))
@@ -175,6 +178,9 @@ func (f *frame) paintBuilding(pl placed) {
 			f.g.mark(x0+dx, y0+dy, thing)
 			if strings.ContainsRune(f.st.Windows, r) {
 				f.glow = append(f.glow, Pt{x0 + dx, y0 + dy})
+			}
+			if r == f.st.Chimney {
+				f.vents = append(f.vents, Pt{x0 + dx, y0 + dy})
 			}
 		}
 	}

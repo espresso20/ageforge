@@ -249,3 +249,27 @@ func TestInspectIndex(t *testing.T) {
 		}
 	}
 }
+
+// TestEveryAgeDraws: every age of the game draws, at both sizes, with its
+// buildings in view.
+func TestEveryAgeDraws(t *testing.T) {
+	var gen Generator
+	for i, age := range testCatalog.Ages {
+		m := model(state(age, 7, noon))
+		for _, size := range [][2]int{{120, 36}, {80, 24}} {
+			g := gen.Render(m, size[0], size[1], i)
+			if g.W != size[0] || g.H != size[1] {
+				t.Fatalf("%s: drew %dx%d, asked for %dx%d", age, g.W, g.H, size[0], size[1])
+			}
+			shown := 0
+			for _, th := range g.Hit {
+				if g.Things[th].Kind == KindBuilding {
+					shown++
+				}
+			}
+			if shown == 0 {
+				t.Errorf("%s at %dx%d: no building in view", age, size[0], size[1])
+			}
+		}
+	}
+}

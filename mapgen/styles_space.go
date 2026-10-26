@@ -49,5 +49,5 @@ var space = AgeStyle{
 	},
 	Night: Night{Tint: rgb(0x02030a), Dim: 120, Light: rgb(0xffdc8a)},
 	Tones: map[byte]RGB{'s': rgb(0xc6cee2), 'a': rgb(0xffd27a), 'g': rgb(0x78f0ff), 'm': rgb(0x9aa8bc), 'f': rgb(0xffd27a), 'n': rgb(0x3a1f66)},
-	Sky:   Look{Glyphs: "·.∙·✧", Fg: rgb(0xb8c6e6), Bg: rgb(0x04060c), Dense: 38},
+	Sky:   Look{Glyphs: "·.∙·✧", Fg: rgb(0xb8c6e6), Bg: rgb(0x04060c), Dense: 46},
 }

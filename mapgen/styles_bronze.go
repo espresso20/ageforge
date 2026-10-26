@@ -24,6 +24,7 @@ var bronze = AgeStyle{
 	},
 	Deck:   rgb(0x6a4a2a),
 	Yard:   Look{Glyphs: "·", Fg: rgb(0x3a3322), Bg: rgb(0x1d1a12), Dense: 10},
+	Crops:  Look{Glyphs: "≡", Fg: rgb(0x9aaa3a), Bg: rgb(0x1b2410), Dense: 60},
 	Plaza:  Look{Glyphs: "\"", Fg: rgb(0x3f6a3a), Bg: rgb(0x14201a), Dense: 25},
 	Rubble: Look{Glyphs: "░▒%", Fg: rgb(0x6a5a48), Bg: rgb(0x1d1a12), Dense: 70},
 	Shapes: [numFamilies]Tiers{
@@ -34,10 +35,10 @@ var bronze = AgeStyle{
 			{art("/^^^^\\\n|▫▫▫▫|\n|▫∩∩▫|")},
 		},
 		Work: {
-			{art(" ° \n[▫]")},
-			{art(" ° \n┌─┐ \n│∩│")},
-			{art("  ° \n┌───┐\n│▫∩▫│")},
-			{art("  ° ° \n┌────┐\n│▫▫∩▫│")},
+			{art(" ╷ \n[▫]")},
+			{art(" ╷ \n┌─┐\n│∩│")},
+			{art("  ╷  \n┌───┐\n│▫∩▫│")},
+			{art(" ╷  ╷ \n┌────┐\n│▫▫∩▫│")},
 		},
 		Civic: {
 			{art(" ▲ \n▐∩▌")},
@@ -47,8 +48,10 @@ var bronze = AgeStyle{
 		},
 	},
 	Wall:    rgb(0xa89a82),
-	Ink:     map[rune]RGB{'/': rgb(0xc08a4a), '\\': rgb(0xc08a4a), '^': rgb(0xc08a4a), '_': rgb(0xc08a4a), '▲': rgb(0xc08a4a), '∩': rgb(0x6a4a2a), '°': rgb(0x9aa0a8)},
-	Windows: "▫",
+	Ink:     map[rune]RGB{'/': rgb(0xc08a4a), '\\': rgb(0xc08a4a), '^': rgb(0xc08a4a), '_': rgb(0xc08a4a), '▲': rgb(0xc08a4a), '∩': rgb(0x6a4a2a), '╷': rgb(0x707880)},
+	Windows: "▫∩",
+	Chimney: '╷',
+	Smoke:   Look{Glyphs: "°∘", Fg: rgb(0xb0b4bc)},
 	Scatter: []Scatter{
 		{On: Grass, Glyphs: "♣τ", Fg: rgb(0x3f9a4f), Chance: 14},
 		{On: Scrub, Glyphs: "♠", Fg: rgb(0x6a8a42), Chance: 10},
@@ -58,6 +61,6 @@ var bronze = AgeStyle{
 		{Name: "walker", Glyphs: "☺", Fg: rgb(0xf0e0c0), Per: 40, Max: 24, Slow: 3},
 		{Name: "cart", Glyphs: "o=", Fg: rgb(0xc08a4a), Per: 120, Max: 6, Slow: 5},
 	},
-	Night: Night{Tint: rgb(0x050912), Dim: 190, Light: rgb(0xffc45a)},
-	Tones: map[byte]RGB{'s': rgb(0x9a9488), 'a': rgb(0xc08a4a), 'g': rgb(0xffc45a), 'v': rgb(0x4f8a3a)},
+	Night: Night{Tint: rgb(0x060a18), Dim: 165, Light: rgb(0xffc45a)},
+	Tones: map[byte]RGB{'s': rgb(0x8a847a), 'a': rgb(0xb07a3a), 'g': rgb(0xffc45a), 'v': rgb(0x4f8a3a)},
 }

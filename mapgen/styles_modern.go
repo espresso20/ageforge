@@ -23,6 +23,7 @@ var modern = AgeStyle{
 	},
 	Deck:   rgb(0x4a4e56),
 	Yard:   Look{Glyphs: "·", Fg: rgb(0x34383f), Bg: rgb(0x1c1f25), Dense: 8},
+	Crops:  Look{Glyphs: "≡", Fg: rgb(0x8a9a3a), Bg: rgb(0x1a2010), Dense: 55},
 	Plaza:  Look{Glyphs: "\"♣", Fg: rgb(0x4fa64f), Bg: rgb(0x13201a), Dense: 22},
 	Rubble: Look{Glyphs: "░▒%", Fg: rgb(0x8c7448), Bg: rgb(0x1c1f25), Dense: 70},
 	Shapes: [numFamilies]Tiers{
@@ -48,6 +49,8 @@ var modern = AgeStyle{
 	Wall:    rgb(0x9096a0),
 	Ink:     map[rune]RGB{'▪': rgb(0x6aa6dc), '▮': rgb(0x50545c), '▲': rgb(0xb4c0cc), '╽': rgb(0xdcf2ff), '┃': rgb(0x8c7c66), '▀': rgb(0xb4c0cc)},
 	Windows: "▪",
+	Chimney: '┃',
+	Smoke:   Look{Glyphs: "∘○", Fg: rgb(0x8a8e96)},
 	Scatter: []Scatter{
 		{On: Grass, Glyphs: "♣", Fg: rgb(0x4fa64f), Chance: 10},
 		{On: Scrub, Glyphs: "♠", Fg: rgb(0x6a9a58), Chance: 8},
@@ -59,5 +62,5 @@ var modern = AgeStyle{
 		{Name: "taxi", Glyphs: "■", Fg: rgb(0xe0b83a), Per: 400, Max: 8, Slow: 1},
 	},
 	Night: Night{Tint: rgb(0x0a0814), Dim: 185, Light: rgb(0xffc45a), Lamps: true},
-	Tones: map[byte]RGB{'s': rgb(0xb4c0cc), 'a': rgb(0xe0b040), 'g': rgb(0x6aa6dc), 'm': rgb(0x9096a0), 'f': rgb(0xff9440), 'v': rgb(0x4fa64f)},
+	Tones: map[byte]RGB{'s': rgb(0x8a929c), 'a': rgb(0xc09a3a), 'g': rgb(0x6aa6dc), 'm': rgb(0x9096a0), 'f': rgb(0xff9440), 'v': rgb(0x4fa64f)},
 }
