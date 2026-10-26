@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -12,6 +13,12 @@ import (
 // left out: it moves on the clock.
 var screenPanels = []string{"help", "milestones", "research", "badges", "army", "expedition", "trade",
 	"factions", "stats", "wonders", "people", "charter", "logs", "epoch", "harbinger", "plan", "history", "buildings"}
+
+// playTimeValue is the stats panel's play time, the one number on any screen
+// that is read from the wall clock (time.Since the run began) and moves while
+// the test draws. The frames are compared with it set aside, as the engine
+// state is in comparableState: the clock is not what the switch changes.
+var playTimeValue = regexp.MustCompile(`(Play time:\s+)\S+`)
 
 // TestTheScreensSwitchAtOnce: every text of the screens is read when it is
 // drawn, so the switch is not a restart. With a rewriter in place of the script
@@ -42,7 +49,7 @@ func TestTheScreensSwitchAtOnce(t *testing.T) {
 		d.refresh()
 		got := drawDashboard(t, d, pages, 160, 50)
 		d.overlayMgr.Hide()
-		return got
+		return playTimeValue.ReplaceAllString(got, "${1}(clock)")
 	}
 	shots := func() map[string]string {
 		out := map[string]string{"": draw("")}
