@@ -15,6 +15,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
@@ -29,12 +30,24 @@ import (
 // (site/index.html, "That was four of the 22 ages") says how many in words.
 var siteAges = []string{"primitive_age", "victorian_age", "cyberpunk_age", "galactic_age"}
 
+// siteState is the saved snapshot for key when states holds one, else a fixed
+// synthetic state of that age.
+func siteState(states, key string) game.GameState {
+	if st, err := capture.LoadState(filepath.Join(states, key+".json.gz")); err == nil {
+		return st
+	}
+	return fixture.State(fixture.Options{Age: key, Seed: 7})
+}
+
 // TestWriteSiteFrames writes site/frames.js, the roguelike map frames the
-// landing page's scroll steps through: one per age in siteAges, drawn from
-// the smoke-bot states (run TestGenerateStates in ui/mapstyle/capture
-// first), with a few animation frames each.
+// landing page's scroll steps through: one per age in siteAges, with a few
+// animation frames each. An age is drawn from the saved snapshot in the
+// states folder when there is one, else from a fixed synthetic state
+// (mapmodel/fixture). The committed frames were drawn from snapshots of a
+// bot's play, which nothing can regenerate now, so a fresh run looks
+// different.
 //
-//	go test -tags mapcapture -run TestWriteSiteFrames ./ui/mapstyle/all
+//	go test -tags mapcapture -run TestWriteSiteFrames ./ui/mapstyle/roguelike
 //
 // MAP_STATES_DIR picks the states folder (default map_captures/states),
 // SITE_FRAMES_OUT the output (default site/frames.js) and SITE_FRAMES_AGES a
@@ -97,10 +110,7 @@ func TestWriteSiteFrames(t *testing.T) {
 	b := mapmodel.NewBuilder(nil)
 	var doc []age
 	for _, key := range ages {
-		st, err := capture.LoadState(filepath.Join(states, key+".json.gz"))
-		if err != nil {
-			t.Fatalf("%s: %v (run TestGenerateStates first)", key, err)
-		}
+		st := siteState(states, key)
 		m := mapmodel.NewBuilder(b.Catalog()).Build(&st, nil)
 		// The landing page shows four ages and keeps the rest a surprise, so
 		// no frame names the age that comes next.
