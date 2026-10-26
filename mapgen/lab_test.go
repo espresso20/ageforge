@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
+	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
@@ -69,6 +70,18 @@ func write(t *testing.T, dir, name, body string) {
 	}
 }
 
+// writeShot saves one capture three ways: plain text, the coloured spans
+// (one span per colour run) and a page that opens by itself.
+func writeShot(t *testing.T, dir, base string, scr tcell.SimulationScreen) {
+	t.Helper()
+	spans := capture.Frame(scr)
+	write(t, dir, base+".txt", capture.Text(scr))
+	write(t, dir, base+".spans.html", spans)
+	bg := theme.Color(theme.RoleBackground)
+	fg := theme.Color(theme.RoleText)
+	write(t, dir, base+".html", capture.HTML(base, capture.Hex(bg), capture.Hex(fg), capture.Fonts, []string{spans}, 1))
+}
+
 func TestLabCaptures(t *testing.T) {
 	dir := outDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -89,14 +102,12 @@ func TestLabCaptures(t *testing.T) {
 
 				g := gen.Render(m, w, h, 0)
 				scr := blit(g, 0, 0, w, h)
-				write(t, dir, base+"_new.txt", capture.Text(scr))
-				write(t, dir, base+"_new.spans.html", capture.Frame(scr))
+				writeShot(t, dir, base+"_new", scr)
 				scr.Fini()
 
 				scr = capture.NewScreen(w, h)
 				roguelike.New().Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: m})
-				write(t, dir, base+"_old.txt", capture.Text(scr))
-				write(t, dir, base+"_old.spans.html", capture.Frame(scr))
+				writeShot(t, dir, base+"_old", scr)
 				scr.Fini()
 			}
 		}
@@ -153,8 +164,7 @@ func TestLabWonders(t *testing.T) {
 				}
 				scr := blit(g, x0, y0, w, h)
 				base := fmt.Sprintf("%s_wonder_%s_%s", age, stage, tick.name)
-				write(t, dir, base+".txt", capture.Text(scr))
-				write(t, dir, base+".spans.html", capture.Frame(scr))
+				writeShot(t, dir, base, scr)
 				scr.Fini()
 			}
 		}

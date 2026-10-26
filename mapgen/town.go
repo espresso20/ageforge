@@ -230,7 +230,7 @@ func (f *frame) paintBuilding(pl placed) {
 	tint := lineTints[pl.b.Lineage]
 	thing := Thing{Kind: KindBuilding, Key: pl.b.Key, Lineage: pl.b.Lineage, Count: pl.b.Count, Legacy: pl.b.Legacy}
 	f.stamp(shape, f.plan.Lots[pl.lot], thing, func(r rune) (rune, RGB) {
-		ink := f.ink(r, tint, 70)
+		ink := f.ink(r, tint, 120)
 		if r == '*' {
 			r, ink = lineSigns[pl.b.Lineage], tint
 		}
