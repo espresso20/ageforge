@@ -31,11 +31,11 @@ func (ge *GameEngine) targetsBefore(age string) float64 {
 }
 
 // eraPace is the ticks the run has spent in era over the pacing targets of
-// the era's ages. known is false when the run does not know when it entered
-// the era (a save from before that was kept).
+// the era's ages. known is false for an era the ruleset does not have or one
+// with no pacing target.
 func (ge *GameEngine) eraPace(era string) (pace float64, known bool) {
 	e, ok := ge.rules.Era(era)
-	if !ok || !ge.runFacts.EraKnown {
+	if !ok {
 		return 0, false
 	}
 	sum := 0.0
@@ -60,17 +60,17 @@ func (ge *GameEngine) reportEraLeft(era string) {
 
 // reportAgeReached reports an advance from oldAge into newAge: the age
 // itself, with the run's pace so far (its ticks over the pacing targets of
-// the ages behind it) when the run was kept from its first tick; the era
+// the ages behind it); the era
 // left, when the advance crosses into a new one; and what the account is
 // wearing.
 func (ge *GameEngine) reportAgeReached(oldAge, newAge string) {
 	ev := Event{Kind: config.BadgeEvAgeReached, Subject: newAge}
-	if sum := ge.targetsBefore(newAge); ge.runFacts.Whole && sum > 0 {
+	if sum := ge.targetsBefore(newAge); sum > 0 {
 		ev.Attrs = map[string]float64{"pace": float64(ge.tick) / sum}
 	}
 	if from, to := ge.rules.EraOf(oldAge), ge.rules.EraOf(newAge); from != to && from != "" {
 		ge.reportEraLeft(from)
-		ge.runFacts.EraTick, ge.runFacts.EraKnown = ge.tick, true
+		ge.runFacts.EraTick = ge.tick
 	}
 	ge.report(ev)
 	ge.ageTold = newAge

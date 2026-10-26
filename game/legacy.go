@@ -1,10 +1,7 @@
 package game
 
 import (
-	"encoding/json"
 	"fmt"
-	"maps"
-	"os"
 	"slices"
 
 	"github.com/espresso20/ageforge/config"
@@ -52,12 +49,10 @@ import (
 // and Amount were the retired sell orders'; a template read from a save
 // skips those rows, and nothing sets the fields now.
 type PlanTemplateItem struct {
-	Age    string  `json:"age"`
-	Kind   string  `json:"kind"`
-	Key    string  `json:"key,omitempty"`
-	Count  int     `json:"count,omitempty"`
-	To     string  `json:"to,omitempty"`
-	Amount float64 `json:"amount,omitempty"`
+	Age   string `json:"age"`
+	Kind  string `json:"kind"`
+	Key   string `json:"key,omitempty"`
+	Count int    `json:"count,omitempty"`
 }
 
 // clonePlanTemplate copies a template (nil for an empty one).
@@ -376,7 +371,7 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 		}
 		// Logged as written whatever happened: a full plan or an item that
 		// can't start now doesn't make the template forget it.
-		item := PlanItem{Kind: t.Kind, Key: t.Key, To: t.To, Amount: t.Amount}
+		item := PlanItem{Kind: t.Kind, Key: t.Key}
 		ge.logPlanAddLocked(item, t.Count)
 	}
 	if added+skipped+full == 0 {
@@ -645,37 +640,6 @@ func (ge *GameEngine) NotePlanForTest(kind, key string, count int) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	ge.logPlanAddLocked(PlanItem{Kind: kind, Key: key, Count: count}, count)
-}
-
-// WriteShopV1SaveForTest writes the running game, with the given prestige
-// state, as a signed save from the first prestige shop: no shop version and
-// no kit memory, as a build from before the legacy kit wrote it. A test hook
-// for other packages (the smoke suite's refund check loads it back); not
-// reachable from play.
-func (ge *GameEngine) WriteShopV1SaveForTest(name string, level, totalEarned, available int, upgrades map[string]int) error {
-	ge.mu.Lock()
-	ge.Prestige.LoadState(level, totalEarned, available)
-	gs := ge.buildSaveSnapshot()
-	ge.mu.Unlock()
-	gs.Prestige.Upgrades = maps.Clone(upgrades)
-	stripShopV2(&gs)
-	gs.Signature = signSave(gs)
-	data, err := json.MarshalIndent(gs, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(saveDirectory(), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(savePath(name), data, 0o644)
-}
-
-// stripShopV2 removes what the legacy kit added to a save, leaving the
-// bytes a build from before it would have written.
-func stripShopV2(gs *GameSave) {
-	gs.Prestige.ShopVersion = 0
-	gs.Prestige.LegacyPlan, gs.Prestige.LegacyFactions, gs.Prestige.LegacyShares = nil, nil, nil
-	gs.PlanLog = nil
 }
 
 // EnterAgeForTest moves the game into age through the real advance (the

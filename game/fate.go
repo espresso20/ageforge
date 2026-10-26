@@ -592,45 +592,16 @@ func (ge *GameEngine) publishFate(event, outcome string, arrived int) {
 	ge.Bus.Publish(EventData{Type: event, Payload: payload})
 }
 
-// restoreFateState loads the fate from a save. A save written before fates
-// existed has none: one standing in a Stone Era or a fated era with a live
-// thread from the old rules has that thread carried over (a warning of the
-// era's end becomes a doom that strikes at the era's end at the latest);
-// otherwise the first tick rolls the era's fate. Under the write lock, after
-// the epoch is restored and before the harbinger is.
+// restoreFateState loads the fate from a save: the one of the era the game is
+// in. Under the write lock, after the epoch is restored and before the
+// harbinger is.
 func (ge *GameEngine) restoreFateState(save *GameSave) {
 	ge.fate = nil
-	if save.Fate != nil {
-		f := *save.Fate
-		if f.EpochKey == ge.currentEpoch {
-			if (f.Fated || f.FalseProphet) && f.LeadFrac <= 0 {
-				f.LeadFrac = harbingerLeadMin
-			}
-			ge.fate = &f
-		}
+	if save.Fate == nil || save.Fate.EpochKey != ge.currentEpoch {
 		return
 	}
-	h := save.Harbinger
-	if h == nil || h.TargetEpoch == "" || h.EpochKey != ge.currentEpoch || !ge.rules.FateAllowed(h.EpochKey) {
-		return
-	}
-	// (A Last Passage thread, TargetEpoch "", keeps its rules: the Cosmic
-	// Era's own fate is rolled on the first tick.)
-	window := int(math.Round(ge.expectedEraTicks(h.EpochKey)))
-	ge.fate = &FateSave{
-		EpochKey:     h.EpochKey,
-		Fated:        !h.FalseProphet || save.CatastropheInvited,
-		FalseProphet: h.FalseProphet,
-		EntryTick:    ge.tick,
-		Window:       window,
-		// The old thread promised the era's end: past any tick this era can
-		// reach, so the gate at the final transition strikes it.
-		StrikeTick: math.MaxInt32,
-		LeadFrac:   harbingerLeadMin,
-		Claim:      h.AnnouncedTier,
-		Invited:    save.CatastropheInvited,
-		Arrived:    true,
-	}
+	f := *save.Fate
+	ge.fate = &f
 }
 
 // --- test hooks -----------------------------------------------------------------

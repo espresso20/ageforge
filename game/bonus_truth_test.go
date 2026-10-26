@@ -2356,7 +2356,7 @@ func truthOtherPromises() []truthPromise {
 						ge.festivalReadyTick = 0
 						// The festival's buff is what is measured, not the
 						// tech that opens the command (Drama): hold it open.
-						ge.grantFeaturesLocked([]string{config.FeatureFestivals})
+						ge.useFeature(config.FeatureFestivals)
 						if err := ge.DoFestival(); err != nil {
 							panic(err)
 						}

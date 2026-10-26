@@ -40,12 +40,6 @@ type BuildingManager struct {
 	// RequiredTech stays locked until it is, even in its own age. nil (a bare
 	// manager with no engine) gates nothing.
 	researched func(tech string) bool
-	// graceAge is the age whose buildings wait for no tech, its wonder
-	// included ("" for none): a game saved under an older version of the
-	// tree's rules keeps the rules it was playing by for the age it was in
-	// (GameSave.TreeGraceAge). The engine clears it at the next advance, and
-	// a new run starts without one.
-	graceAge string
 
 	// order is every def key, sorted, fixed at construction (defs never change
 	// after that). eachBuilt walks it so float sums across buildings come out
@@ -189,7 +183,6 @@ func (bm *BuildingManager) AgeUnlocked(key string) bool {
 }
 
 // TechLocked reports whether key needs a tech that is not researched yet.
-// A building of the grace age needs none, its wonder included (graceAge).
 func (bm *BuildingManager) TechLocked(key string) bool {
 	def := bm.defs[key]
 	return bm.techLocked(&def)
@@ -198,10 +191,7 @@ func (bm *BuildingManager) TechLocked(key string) bool {
 // techLocked is TechLocked of a definition in hand: the snapshot asks it of all
 // of them, and a definition is too big to look up and copy again for each ask.
 func (bm *BuildingManager) techLocked(def *config.BuildingDef) bool {
-	if def.RequiredTech == "" || bm.researched == nil || bm.researched(def.RequiredTech) {
-		return false
-	}
-	return !(bm.graceAge != "" && def.RequiredAge == bm.graceAge)
+	return def.RequiredTech != "" && bm.researched != nil && !bm.researched(def.RequiredTech)
 }
 
 // closestKey returns the key nearest to input by edit distance (at most 2),

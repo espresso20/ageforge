@@ -25,26 +25,6 @@ func TestATownCanNoLongerSwapResourcesButRoutesDealsAndTheBlackMarketStillPay(t 
 		}
 	}
 
-	// No plan item and no saved order: a town with the old save's sell
-	// orders and pressure plays its ticks without one swap, and its route
-	// runs on.
-	isolateAccountDir(t)
-	ge := loadFixture(t, marketSwapFixture, "gone")
-	ge.StepTicks(300)
-	for _, l := range ge.GetLogs() {
-		if strings.HasPrefix(l.Message, "Traded ") || strings.Contains(l.Message, "plan traded") {
-			t.Fatalf("a swap happened: %q", l.Message)
-		}
-	}
-	for _, it := range ge.GetState().Plan {
-		if it.Kind == "trade" {
-			t.Errorf("a sell order is back in the plan: %+v", it)
-		}
-	}
-	if len(ge.GetState().Trade.ActiveRoutes) == 0 {
-		t.Error("the route stopped running")
-	}
-
 	// Routes still pay: a run takes its export and brings its import.
 	re := newSeededEngine(9)
 	learn(re, "the_wheel")

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -24,13 +23,11 @@ type ActiveEvent struct {
 	// same in any script (VibeMode), and nameOf draws the Name again from the
 	// words of the script in force. An event with no Src has a Name that is
 	// just what it is.
-	Src           string `json:",omitempty"`
-	Ref           string `json:",omitempty"`
-	Tail          string `json:",omitempty"`
-	TicksLeft     int
-	Effects       []config.Effect
-	WorkersLost   int                // accumulated workers lost during this event
-	ResourcesLost map[string]float64 // resource key → total amount lost during this event
+	Src       string `json:",omitempty"`
+	Ref       string `json:",omitempty"`
+	Tail      string `json:",omitempty"`
+	TicksLeft int
+	Effects   []config.Effect
 }
 
 // EventManager handles random event triggering and management of active
@@ -464,32 +461,6 @@ func (em *EventManager) GetActiveForSave() []ActiveEvent {
 		}
 	}
 	return out
-}
-
-// buildLossSuffix returns a loss summary for an expired event, or "" if none
-// was recorded. Losses are logged when an event strikes now (see
-// applyEventEffects), so only timed events loaded from older saves still
-// carry recorded losses to report here.
-func buildLossSuffix(event ActiveEvent) string {
-	var parts []string
-	if event.WorkersLost > 0 {
-		parts = append(parts, vibe.Sprintf("game.events.buildLossSuffix.01", "[yellow]%d workers lost[-]", event.WorkersLost))
-	}
-	if len(event.ResourcesLost) > 0 {
-		keys := make([]string, 0, len(event.ResourcesLost))
-		for k := range event.ResourcesLost {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
-			amt := event.ResourcesLost[k]
-			parts = append(parts, vibe.Sprintf("game.events.buildLossSuffix.02", "[yellow]%s %s lost[-]", amountText(amt), resourceLabel(k)))
-		}
-	}
-	if len(parts) == 0 {
-		return ""
-	}
-	return " " + strings.Join(parts, ", ") + "."
 }
 
 // SetActiveEffects replaces the effects of the active event with the given

@@ -1557,15 +1557,10 @@ func copyHarbingerSave(in *HarbingerSave) *HarbingerSave {
 	return &h
 }
 
-// restoreHarbingerState loads the harbinger fields from a save (old saves have
-// none and load clean). It starts nothing and draws nothing, so a save loads
-// to exactly the state it was written in; the next tick brings whatever is
-// due. A live thread from before fates existed (it warned of the transition
-// out of its era) is carried into the new rules: in an era that can be fated
-// it becomes the warning of that era's doom (restoreFateState fated it to
-// strike at the era's end at the latest); in the Stone Era, where nothing can
-// be fated now, it is dropped. Under the write lock, after the epoch,
-// catastrophe and fate state are restored.
+// restoreHarbingerState loads the harbinger fields from a save. It starts
+// nothing and draws nothing, so a save loads to exactly the state it was
+// written in; the next tick brings whatever is due. Under the write lock,
+// after the epoch, catastrophe and fate state are restored.
 func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	ge.harbinger = nil
 	ge.harbingerCheckedEpoch = ""
@@ -1574,31 +1569,13 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 		h.Lines = append([]string(nil), save.Harbinger.Lines...)
 		h.LineKeys = append([]string(nil), save.Harbinger.LineKeys...)
 		h.Chain = append([]string(nil), save.Harbinger.Chain...)
-		if len(h.Chain) == 0 {
-			h.Chain = []string{h.Age}
-		}
 		if h.AppeaseLevel > HarbingerMaxAppease {
 			h.AppeaseLevel = HarbingerMaxAppease
 		}
 		if h.BraceLevel > HarbingerMaxBrace {
 			h.BraceLevel = HarbingerMaxBrace
 		}
-		if h.FalseProphet && h.ClaimFactor <= 0 {
-			h.ClaimFactor = 1
-		}
-		keep := true
-		if save.Fate == nil && h.TargetEpoch != "" {
-			// Written before fates existed.
-			if ge.fate != nil && ge.fate.EpochKey == h.EpochKey {
-				h.TargetEpoch = h.EpochKey
-				if def, ok := ge.rules.Harbinger(h.Age); ok {
-					h.When = ge.fateWhen(def)
-				}
-			} else {
-				keep = false
-			}
-		}
-		if _, ok := ge.rules.Harbinger(h.Age); ok && keep {
+		if _, ok := ge.rules.Harbinger(h.Age); ok {
 			ge.harbinger = &h
 		}
 	}

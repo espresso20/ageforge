@@ -69,11 +69,6 @@ const (
 	PlanAdvance  = "advance"
 )
 
-// retiredPlanTrade is the kind of the plan's sell orders, which the market's
-// swap took with it. An old save may still carry some; they are dropped on
-// load (retiredSellOrders counts them for the notice).
-const retiredPlanTrade = "trade"
-
 // MaxPlanItems caps the plan's length: 60 items, room for a day away on the
 // one-week curve (an age's storage, its required buildings, a few producers
 // per resource, the wonder and the advance, then the next age's opening
@@ -119,20 +114,8 @@ type PlanItem struct {
 	Key     string `json:"key"`
 	Count   int    `json:"count"`
 	Started int    `json:"started,omitempty"`
-	// To, Amount and Got were the retired sell orders' (what was bought, how
-	// much of it was still wanted, how much had been). They stay so a signed
-	// save still reads; nothing sets them now.
-	To     string  `json:"to,omitempty"`
-	Amount float64 `json:"amount,omitempty"`
-	Got    float64 `json:"got,omitempty"`
 	// Deal items (plan_deal.go): Key is the civilization, Deal the offer's ID.
 	Deal int `json:"deal,omitempty"`
-	// Banked is what an old save's overflow set aside toward a build item's
-	// next copy. Nothing fills it any more: the field stays so that a save
-	// written under it still verifies, loadPlanIn drops its value, and a
-	// save from before the storage wall has it given back to the stores
-	// (keepStockFromBeforeTheWall).
-	Banked map[string]float64 `json:"banked,omitempty"`
 }
 
 // Plan item statuses, for the UI.
@@ -175,13 +158,11 @@ func clonePlan(p []PlanItem) []PlanItem {
 
 // loadPlanIn is a saved plan as the engine accepts it: known kinds only,
 // counts in range, at most MaxPlanItems besides research and no more
-// research items than the tree has techs, and no banks (an old save's bank
-// is given back by keepStockFromBeforeTheWall, from the raw save). A plan the
-// game wrote passes unchanged.
+// research items than the tree has techs. A plan the game wrote passes
+// unchanged.
 func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 	var out []PlanItem
 	for _, it := range saved {
-		it.Banked = nil
 		if (it.Kind != PlanBuild && it.Kind != PlanUpgrade && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
 			continue
 		}

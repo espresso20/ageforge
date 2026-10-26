@@ -557,67 +557,8 @@ func TestImportMergesBadges(t *testing.T) {
 	}
 }
 
-// TestSaveFromBeforeRunFacts: a save written before run facts loads
-// unflagged, with the run's past marked unknown, tracks from there, and
-// keeps what it tracked through a save and a load.
-func TestSaveFromBeforeRunFacts(t *testing.T) {
-	isolateAccountDir(t)
-	id, _ := installV1(t, "account_v1_saver.json")
-	raw, err := os.ReadFile(filepath.Join(v1Dir, "save_pre_run_facts.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	saves := filepath.Join(accountDir(id), "saves")
-	noErr(t, os.MkdirAll(saves, 0755))
-	noErr(t, os.WriteFile(filepath.Join(saves, "fixture.json"), raw, 0644))
-	noErr(t, makeActive(id))
-
-	ge, acct := openIn(t, id)
-	if err := ge.LoadGame("fixture"); err != nil {
-		t.Fatalf("LoadGame: %v", err)
-	}
-	st := ge.GetState()
-	if st.CheaterBadge || st.DevTouched {
-		t.Fatalf("a save from before run facts loaded flagged: modified %v, dev %v", st.CheaterBadge, st.DevTouched)
-	}
-	if hasBadge(acct, badgeAccounting) {
-		t.Error("a clean old save earned Creative Accounting")
-	}
-	ge.mu.RLock()
-	facts := ge.runFacts.clone()
-	ge.mu.RUnlock()
-	if facts.Whole {
-		t.Error("the run's past reads as known for a save that never recorded it")
-	}
-	if !facts.AgeKnown || facts.AgeTick != 0 {
-		t.Errorf("a run still in its first age entered it at tick 0: %+v", facts)
-	}
-	if got := ge.Buildings.GetCount("hut"); got < 2 {
-		t.Fatalf("the save's two huts did not load: %d", got)
-	}
-
-	// It tracks from here, and the marks keep a rebuilt hut from counting.
-	finishOne(ge, "hut")
-	if got := counter(acct, config.BadgeEvBuiltLineage+".housing"); got != 1 {
-		t.Errorf("a hut built after the load left the counter at %v", got)
-	}
-	noErr(t, ge.SaveGame("fixture"))
-	ge2 := NewGameEngine()
-	ge2.SetAccount(acct)
-	noErr(t, ge2.LoadGame("fixture"))
-	if ge2.GetState().CheaterBadge {
-		t.Error("the save reads as modified after run facts were added to it")
-	}
-	ge2.mu.RLock()
-	again := ge2.runFacts.clone()
-	ge2.mu.RUnlock()
-	if again.Whole || again.Net["hut"] != 1 || again.High["hut"] != 1 || again.Counts[config.BadgeEvBuildingBuilt] != 1 {
-		t.Errorf("run facts after a save and a load: %+v", again)
-	}
-}
-
-// TestRunFactsRoundTrip: a new run's facts are whole, are saved, and load
-// equal; a save with nothing recorded writes no run_facts key.
+// TestRunFactsRoundTrip: a run's facts are saved and load equal; a save with
+// nothing recorded writes no run_facts key.
 func TestRunFactsRoundTrip(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
@@ -627,7 +568,7 @@ func TestRunFactsRoundTrip(t *testing.T) {
 	ge.mu.RLock()
 	want := ge.runFacts.clone()
 	ge.mu.RUnlock()
-	if !want.Whole || want.Counts[config.BadgeEvAgeReached] != 1 || want.Counts[config.BadgeEvBuildingSold] != 1 {
+	if want.Counts[config.BadgeEvAgeReached] != 1 || want.Counts[config.BadgeEvBuildingSold] != 1 {
 		t.Fatalf("facts of a new run: %+v", want)
 	}
 	noErr(t, ge.SaveGame("run"))

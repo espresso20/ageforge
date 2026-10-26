@@ -190,9 +190,6 @@ type GameEngine struct {
 	// would do each tick if every one of them researched (the posts split
 	// it): both from the last rates pass, and not saved.
 	researchBase, researchFull float64
-	// loadedCompletions are techs a loaded save had paid for and waiting out
-	// their time: they completed on load (loadResearch).
-	loadedCompletions []string
 
 	// Dynamic tick speed. Game speed is fixed so the calendar paces the game:
 	// there is no player speed setting and wonders raise no cap.
@@ -364,8 +361,7 @@ type GameEngine struct {
 	lowMoraleWarned bool    // true after morale warning fired; reset when morale rises above 0.40
 
 	// grantedFeatures is the commands this run keeps without the tech that
-	// opens them (features.go): each was used while its lock was inert, in
-	// the tree grace age, or before the lock existed. Saved
+	// opens them (features.go): each was used while its lock was inert. Saved
 	// (GameSave.GrantedFeatures), cleared with the run.
 	grantedFeatures map[string]bool
 	// festivalReadyTick is the earliest game tick a new festival may be held
@@ -479,7 +475,6 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		legacyBonuses:    make(map[string]bool),
 		History:          NewHistoryCollector(),
 		badges:           newBadgeBook(set),
-		runFacts:         newRunFacts(),
 	}
 	ge.Buildings = ge.newBuildingManager()
 	ge.progress.town = ge.gateTown()
@@ -1599,7 +1594,6 @@ func (ge *GameEngine) processEvents() {
 
 	for _, ae := range expired {
 		ge.addLog("debug", fmt.Sprintf("Event expired: %s", ae.Key))
-		suffix := buildLossSuffix(ae)
 		var about LogTag
 		switch ae.Key {
 		case "worker_lending":
@@ -1607,7 +1601,8 @@ func (ge *GameEngine) processEvents() {
 		case "war_raid":
 			about = TagArmy
 		}
-		ge.addLogAbout("info", about, vibe.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, suffix))
+		// The script's line for this has a second slot, which stays empty.
+		ge.addLogAbout("info", about, vibe.Sprintf("game.engine.processEvents.03", "%s has ended.%s", ae.Name, ""))
 	}
 
 	// Morale effects from triggered events
@@ -2270,9 +2265,6 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	prevK := ge.speedK()
 	ge.age = newAge
 	ge.resetCalendar()
-	// An old save's grace from the tech tree's locks covered the age it was
-	// in. It ends here (GameSave.TreeGraceAge).
-	ge.Buildings.graceAge = ""
 	ge.Prestige.NoteAgeEntered(newAge)
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
@@ -4776,7 +4768,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 // resets. Caller holds the write lock.
 func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.tick = 0
-	ge.runFacts = newRunFacts()
+	ge.runFacts = RunFacts{}
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManagerWith(ge.rules)
 	ge.Buildings = ge.newBuildingManager()
@@ -4871,7 +4863,7 @@ func (ge *GameEngine) Reset() {
 	ge.eliteBadge = false
 	// A new game is a new run: no dev console history, and no owner until
 	// StartNewNamedGame (or LoadGame) names one.
-	ge.runFacts = newRunFacts()
+	ge.runFacts = RunFacts{}
 	ge.devTouched = false
 	ge.runAccountID = ""
 	ge.runOrphaned = false

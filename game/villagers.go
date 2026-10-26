@@ -364,27 +364,19 @@ func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
 	}
 }
 
-// LoadWorkers restores state from save data. Handles forward and backward
-// compatibility: new saves have a single "worker" key; saves from before Phase
-// 19 may have domain-specific keys ("food", "faith", "military", etc.). All
-// domain counts are summed into the single pool and all valid assignments are
-// merged, so old saves load without data loss.
+// LoadWorkers restores state from save data: the single "worker" pool, with
+// the assignments that name a building that takes workers.
 func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	rt := vm.domains["worker"]
+	info := data["worker"]
+	rt.count = info.Count
 	// Reset before loading to prevent accumulation on repeated loads.
 	rt.assignments = make(map[string]int)
-	rt.count = 0
-	byBuilding := vm.buildingDefs
-	totalCount := 0
-	for _, info := range data {
-		totalCount += info.Count
-		for bKey, cnt := range info.Assignment {
-			if def, ok := byBuilding[bKey]; ok && def.WorkerCapacity > 0 && cnt > 0 {
-				rt.assignments[bKey] += cnt
-			}
+	for bKey, cnt := range info.Assignment {
+		if def, ok := vm.buildingDefs[bKey]; ok && def.WorkerCapacity > 0 && cnt > 0 {
+			rt.assignments[bKey] = cnt
 		}
 	}
-	rt.count = totalCount
 }
 
 // Snapshot returns worker state for UI consumption.

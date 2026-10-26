@@ -354,8 +354,6 @@ game.event_size.eventLine.01,Took an L on
 game.event_size.eventLine.02,Bagged 
 game.event_size.eventLine.03, for 
 game.events.nameOf.01, Speed Buff
-game.events.buildLossSuffix.01,[yellow]%d real ones lost[-]
-game.events.buildLossSuffix.02,[yellow]%s %s took the L[-]
 game.faction_boon.returnBoonWorkers.01,%s from the %s peaced out.
 game.faction_boon.returnBoonWorkers.02,borrowed homie
 game.faction_boon.returnBoonWorkers.03,borrowed homies
@@ -438,7 +436,6 @@ game.mastery.masteryEntryLine.02,"Known ground, muscle memory era: the %s runs %
 game.mastery.masteryEntryLine.03,Blind run: the %s runs at 1x until a run clears it.
 game.mastery.masteryCommitLine.01,"Era Mastery: the %s levelled up its mastery, so next time it zooms."
 game.mastery.masteryCommitLine.02,"Era Mastery: the %s through the %s each levelled up, the speedrun gets faster."
-game.mastery.seedMasteryLocked.01,Era Mastery: ages you already cleared now go zoom. %s to %s: mastery %d (%s).
 game.milestones.planFor.01,Age: 
 game.milestones.progressFor.01,Survival streak
 game.milestones.progressFor.02,Squad size
@@ -568,12 +565,6 @@ game.road_events.expRoadDuration.01,%d secs
 game.road_events.expRoadDuration.02,%d mins
 game.save.SaveGame.01,"the account behind this game got wiped, so the save had nowhere to go, it's over"
 game.save.BranchSave.01,"The name '%s' is already taken, no twinning. Pick another name."
-game.save.treeNotice.01,"Patch notes from the lab: the tech tree is complete, with new techs from the Doomscroll Age to the Final Boss. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech."
-game.save.treeNotice.03,"Lab tea: the tech tree is complete, with new techs from the Aesthetic Age to the Final Boss Age. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech."
-game.save.treeNotice.04,"The tech tree just got buffed with new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech."
-game.save.treeNotice.05,"Research lore drop: some commands now wait for a tech and say which when you try them, and a tech's bonus got nerfed but always counts in full."
-game.save.treeNotice.06,"Spill the tea, research edition: each age's wonder now needs one tech, its keystone, before it can be built, some commands wait for a tech and say which when you try them, and techs are priced by their age, with smaller bonuses that always count in full."
-game.save.treeNotice.07," Your run was already in the %s, so you got a free pass there, W: the locks start when you next advance."
 game.save.sanitizeSaveName.01,A save with no name is giving anonymous. Give the save a name.
 game.save.sanitizeSaveName.02,That save name is doing too much (the max is %d characters).
 game.save.sanitizeSaveName.03,"That save name has a character file names are allergic to, the ick."
@@ -597,9 +588,6 @@ game.scholars.SetResearchShare.05,big brains
 game.scholars.SetResearchShare.06,%d%% of your scholars research: %d are locked in on research and %d teach.
 game.scholars.startedResearchLine.01,Locked in on researching %s (%s).
 game.scholars.startedResearchLine.02,"Started on %s, but no scholars are researching it, so it is stuck in drafts."
-game.scholars.turnKnowledgeIntoWork.01,"No assignment for the scholars, so the insight slipped away, no thoughts just vibes."
-game.scholars.turnKnowledgeIntoWork.02,"The big brains pushed %s a little further, slay."
-game.scholars.turnKnowledgeIntoWork.03,"%s unlocked, the nerds ate."
 game.shares.keepSharesLive.01,Roster: 
 game.shares.keepSharesLive.02,"Workers just spawn in on their own now: the game recruits while housing and food allow, puts them to work by your roster, and parks the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand."
 game.shares.describe.01,"recruited %s, the squad grows (population %d/%d)"
@@ -696,11 +684,6 @@ game.catastrophe.historyLines.03,"Legacy bonus secured, W."
 game.catastrophe.historyLines.04,Legacy bonus was already in the bag.
 game.catastrophe.historyLines.05,"Tick %d: Endured %s (%s), held on to %d of %d prestige points, survivor era."
 game.catastrophe.historyLines.06,"Tick %d: Succumbed to %s (%s). Zero prestige points, but the Cosmic Legacy got unlocked, plot twist W."
-game.save.treeNotice.02," Any command you were already using stays open for the rest of this run, and everything you researched or built is safe, no nerfs."
-game.save.pacingNotice.01,"Pacing patch notes: a first run is now about a week of grind. From the Glow-Up Age on, each age lasts about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age holds as many of them. Your game picks up right where you left it."
-game.save.marketSwapNotice.01,The market's resource-swapping era is over. The sell orders in your plan got yeeted.
-game.save.scholarsNotice.01,"Knowledge stockpiles are retired, plot twist. Your scholars now lock in on one technology at a time."
-game.save.storageWallNotice.01,"Storage had a whole rework: a storage building's price now climbs much faster with each copy, and stock has no ceiling, so zero waste, it's giving infinite pantry. You keep every building you have, and what your plan had banked was given back to you."
 config.missions.RareTitleWord.01,Goated
 game.engine.ancientMemoryFlavor.01,"You found an old cache, and the lore inside is wild: memories of a civilization that went extinct."
 game.harbinger.lastPassageCame.01,the Last Passage already pulled up

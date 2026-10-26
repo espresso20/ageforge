@@ -697,61 +697,6 @@ func countCatastropheOutcomes(history []string) (endured, succumbed int) {
 	return endured, succumbed
 }
 
-// restoreCatastropheState finishes loading catastrophe state from a save and
-// migrates saves written before the overhaul. Call from LoadGame after the
-// epoch, legacy and milestone fields are restored, under the write lock.
-func (ge *GameEngine) restoreCatastropheState(save *GameSave) {
-	// save.CatastropheFired (written by early builds of this change) is ignored:
-	// the once-per-epoch rule is the transition roll's own epochEventFired.
-
-	// Outcomes on catastrophe records from older saves. The newest record per
-	// epoch is the one that matters; older duplicates can only be succumbs from
-	// earlier runs (the history survives Succumb).
-	seen := make(map[string]bool)
-	for i := len(ge.epochEventHistory) - 1; i >= 0; i-- {
-		r := &ge.epochEventHistory[i]
-		if r.EventType != "catastrophe" {
-			continue
-		}
-		latest := !seen[r.EpochKey]
-		seen[r.EpochKey] = true
-		if r.Outcome != "" {
-			continue
-		}
-		switch {
-		case latest && r.EpochKey == ge.pendingCatastrophe:
-			r.Outcome = CatastrophePending
-		case latest && ge.survivedEpochs[r.EpochKey]:
-			r.Outcome = CatastropheEndured
-		case ge.legacyBonuses[r.EpochKey]:
-			r.Outcome = CatastropheSuccumbed
-		}
-	}
-
-	// The Succumb research bonus used to be written into permanentBonuses (and
-	// wiped by the next reset). It is now derived from the legacy flags, so strip
-	// the stored copy: rebuild research_speed from this run's completed
-	// milestones, its only other writer.
-	if !save.SuccumbResearchDerived {
-		total := 0.0
-		for _, ms := range ge.rules.Milestones() {
-			if !ge.Milestones.IsCompleted(ms.Key) {
-				continue
-			}
-			for _, eff := range ms.Rewards {
-				if eff.Type == "permanent_bonus" && eff.Target == "research_speed" {
-					total += eff.Value
-				}
-			}
-		}
-		if total == 0 {
-			delete(ge.permanentBonuses, "research_speed")
-		} else {
-			ge.permanentBonuses["research_speed"] = total
-		}
-	}
-}
-
 // legacyBonusText lists an epoch's legacy bonus in set for a log line: "iron
 // +10% production, faith +5% production", in resource-key order.
 func legacyBonusText(set *rules.Set, epochKey string) string {
