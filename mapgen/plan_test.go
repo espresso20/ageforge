@@ -43,6 +43,19 @@ func TestPlanHasRoomForATown(t *testing.T) {
 	}
 }
 
+// TestEveryWonderHasAPlot: the wonder of every ground age has a plot, whatever
+// the land.
+func TestEveryWonderHasAPlot(t *testing.T) {
+	for _, seed := range []int64{1, 2, 3, 4, 5, 7, 9, 11, 16, 19, 23, 27, 31, 36} {
+		_, p := groundPlan(seed)
+		for age := 0; age < groundAges; age++ {
+			if p.Plots[age].Rect.W == 0 {
+				t.Errorf("seed %d: no plot for the wonder of age %d", seed, age)
+			}
+		}
+	}
+}
+
 // TestPlanNoOverlap: no two parcels or plots share a cell, none touches a
 // road or water, and every one is dry buildable ground.
 func TestPlanNoOverlap(t *testing.T) {

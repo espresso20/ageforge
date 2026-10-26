@@ -152,7 +152,14 @@ func (f *frame) paintRoads() {
 				cell.Bg = f.st.Deck
 			}
 			f.g.paint(c.X, c.Y, cell)
-			f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: roadNames[r.Tier]})
+			key := roadNames[r.Tier]
+			switch {
+			case i == 0:
+				key = "square"
+			case f.plan.Bridge[c]:
+				key = "bridge"
+			}
+			f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: key})
 		}
 	}
 }

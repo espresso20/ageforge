@@ -31,6 +31,12 @@ func (c *Chrome) Begin(f mapstyle.Frame) *mapstyle.Palette {
 	return v.pal.Palette
 }
 
+// NoMap says there is no map yet, on a canvas, for a frame with no model.
+func (c *Chrome) NoMap(cv *mapstyle.Canvas) {
+	c.v.pal = &pal{Palette: mapstyle.NewPalette(0)}
+	c.v.noMap(cv)
+}
+
 // SetOption sets a shared option (the flows overlay, the changes news).
 func (c *Chrome) SetOption(o mapstyle.Option, on bool) { c.v.SetOption(o, on) }
 

@@ -11,6 +11,18 @@ func (b *planner) reservePlots() {
 	}
 }
 
+// placeMissingPlots finds room, along the streets, for the wonders whose own
+// arm had none.
+func (b *planner) placeMissingPlots() {
+	p := b.plan
+	for n, plot := range p.Plots {
+		for road := 1; road < len(p.Roads) && plot.Rect.W == 0; road++ {
+			plot = b.fitPlot(road, 4, n)
+		}
+		p.Plots[n] = plot
+	}
+}
+
 // findPlot looks along a trunk arm for room for the plot that is the
 // step-th on that arm; none (a zero Lot) if the arm has no room left.
 func (b *planner) findPlot(road, step, n int) Lot {
@@ -18,12 +30,19 @@ func (b *planner) findPlot(road, step, n int) Lot {
 		return Lot{}
 	}
 	r := b.plan.Roads[road]
-	horizontal := b.heading(r)[1] == 0
 	span := plotH + 2
-	if horizontal {
+	if b.heading(r)[1] == 0 {
 		span = plotW + 2
 	}
-	for i := span/2 + 3 + step*span; i < len(r.Cells); i++ {
+	return b.fitPlot(road, span/2+3+step*span, n)
+}
+
+// fitPlot is the first plot on a road, from cell `from` on, that fits, on the
+// side plot n prefers or the other; none (a zero Lot) if nothing fits.
+func (b *planner) fitPlot(road, from, n int) Lot {
+	r := b.plan.Roads[road]
+	horizontal := b.heading(r)[1] == 0
+	for i := from; i < len(r.Cells); i++ {
 		for s := 0; s < 2; s++ {
 			side := (n%4/2 + s) % 2
 			lot := Lot{Rect: plotBeside(r.Cells[i], horizontal, side), Door: r.Cells[i], Road: road, At: i}

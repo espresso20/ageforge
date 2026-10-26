@@ -94,6 +94,7 @@ func NewGroundPlan(seed int64, f *Fields, cat *mapmodel.Catalog) *Plan {
 	b.layArms()
 	b.reservePlots()
 	b.layStreets()
+	b.placeMissingPlots()
 	b.cutLots()
 	b.plan.assign(seed, cat, 12, 5)
 	return b.plan

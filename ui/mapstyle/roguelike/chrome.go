@@ -44,7 +44,7 @@ func (v *view) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 	s := v.begin(f)
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, v.bgStyle())
 	if s == nil {
-		cv.Text(1, 0, 0, vibe.Line("ui.mapstyle.roguelike.chrome.Draw.01", "No map yet."), v.cls(mapmodel.CDim))
+		v.noMap(cv)
 		return
 	}
 	side := 0
@@ -60,6 +60,11 @@ func (v *view) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 		v.box(cv, mapW-min(sideW, mapW/2), 1, min(sideW, mapW/2), mapH)
 	}
 	v.bottom(cv, r.W, r.H)
+}
+
+// noMap is what a view with no model says.
+func (v *view) noMap(cv *mapstyle.Canvas) {
+	cv.Text(1, 0, 0, vibe.Line("ui.mapstyle.roguelike.chrome.Draw.01", "No map yet."), v.cls(mapmodel.CDim))
 }
 
 // header: settlement, age, epoch, weather, people, idle, civs met, zoom.

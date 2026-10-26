@@ -16,51 +16,37 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/procmap"
 	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
-// The lab captures: the new engine and today's map side by side, for three
-// ages, by day and by night, at two sizes. Run it with
+// The lab captures: the engine's map as the player gets it (through the
+// screen layer, in the theme, with the map's header and inspector round it),
+// and today's map beside it for a few ages. Run it with
 //
-//	go test -tags procmaplab -run TestLabCaptures ./mapgen
+//	go test -tags procmaplab -run 'TestLab' ./mapgen
 //
 // PROCMAP_OUT picks the folder the files go to (default: outside the repo).
-
-var labAges = []string{"bronze_age", "modern_age", "space_age"}
 
 var labSizes = [][2]int{{120, 36}, {80, 24}}
 
 const (
-	labSeed   = 4
-	labNoon   = 225 + 1800*5
-	labMidnig = 1125 + 1800*5
+	labSeed     = 4
+	labNoon     = 225 + 1800*5
+	labMidnight = 1125 + 1800*5
 )
+
+// labOldAges are the ages today's map is captured for, one to an era.
+var labOldAges = map[string]bool{
+	"bronze_age": true, "medieval_age": true, "industrial_age": true, "atomic_age": true,
+	"digital_age": true, "space_age": true,
+}
 
 func outDir() string {
 	if d := os.Getenv("PROCMAP_OUT"); d != "" {
 		return d
 	}
 	return "/Users/echo/code/ageforge/design-private/labs/procmap/out"
-}
-
-// blit puts the w by h part of a grid whose corner is (x0, y0) on a simulation
-// screen, the one thing the ui does with it.
-func blit(g *mapgen.Grid, x0, y0, w, h int) tcell.SimulationScreen {
-	scr := capture.NewScreen(w, h)
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			c := g.At(x0+x, y0+y)
-			r := c.R
-			if r == 0 {
-				r = ' '
-			}
-			style := tcell.StyleDefault.
-				Foreground(tcell.NewRGBColor(int32(c.Fg.R), int32(c.Fg.G), int32(c.Fg.B))).
-				Background(tcell.NewRGBColor(int32(c.Bg.R), int32(c.Bg.G), int32(c.Bg.B)))
-			scr.SetContent(x, y, r, nil, style)
-		}
-	}
-	return scr
 }
 
 func write(t *testing.T, dir, name, body string) {
@@ -70,8 +56,8 @@ func write(t *testing.T, dir, name, body string) {
 	}
 }
 
-// writeShot saves one capture three ways: plain text, the coloured spans
-// (one span per colour run) and a page that opens by itself.
+// writeShot saves one capture three ways: plain text, the coloured spans (one
+// span per colour run) and a page that opens by itself.
 func writeShot(t *testing.T, dir, base string, scr tcell.SimulationScreen) {
 	t.Helper()
 	spans := capture.Frame(scr)
@@ -82,33 +68,46 @@ func writeShot(t *testing.T, dir, base string, scr tcell.SimulationScreen) {
 	write(t, dir, base+".html", capture.HTML(base, capture.Hex(bg), capture.Hex(fg), capture.Fonts, []string{spans}, 1))
 }
 
-func TestLabCaptures(t *testing.T) {
+func labDir(t *testing.T) string {
 	dir := outDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
+	return dir
+}
+
+func labModel(age string, tick int) *mapmodel.Model {
+	st := fixture.State(fixture.Options{Age: age, Seed: labSeed, Tick: tick})
+	return mapmodel.NewBuilder(nil).Build(&st, nil)
+}
+
+func panel(v mapstyle.Style, m *mapmodel.Model, w, h int) tcell.SimulationScreen {
+	scr := capture.NewScreen(w, h)
+	v.Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: m})
+	return scr
+}
+
+// TestLabCaptures draws every age, by day and by night, at both sizes.
+func TestLabCaptures(t *testing.T) {
+	dir := labDir(t)
 	fixture.WithTheme(t, "forge")
-	var gen mapgen.Generator
-	for _, age := range labAges {
+	for _, age := range mapmodel.NewCatalog().Ages {
 		for _, tick := range []struct {
 			name string
 			tick int
-		}{{"day", labNoon}, {"night", labMidnig}} {
-			st := fixture.State(fixture.Options{Age: age, Seed: labSeed, Tick: tick.tick})
-			m := mapmodel.NewBuilder(nil).Build(&st, nil)
+		}{{"day", labNoon}, {"night", labMidnight}} {
+			m := labModel(age, tick.tick)
 			for _, size := range labSizes {
 				w, h := size[0], size[1]
 				base := fmt.Sprintf("%s_%s_%dx%d", age, tick.name, w, h)
-
-				g := gen.Render(m, w, h, 0)
-				scr := blit(g, 0, 0, w, h)
+				scr := panel(procmap.New(), m, w, h)
 				writeShot(t, dir, base+"_new", scr)
 				scr.Fini()
-
-				scr = capture.NewScreen(w, h)
-				roguelike.New().Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: m})
-				writeShot(t, dir, base+"_old", scr)
-				scr.Fini()
+				if labOldAges[age] {
+					scr = panel(roguelike.New(), m, w, h)
+					writeShot(t, dir, base+"_old", scr)
+					scr.Fini()
+				}
 			}
 		}
 	}
@@ -135,21 +134,18 @@ func wonderBox(g *mapgen.Grid, key string) (x0, y0, w, h int, ok bool) {
 	return x0, y0, w, h, true
 }
 
-// TestLabWonders draws the wonder of each test age, rising (as the fixture
-// has it, part banked) and finished, by day and by night, as a close-up.
+// TestLabWonders draws the wonder of each age, rising (as the fixture has it,
+// part banked) and finished, by day and by night, as a close-up.
 func TestLabWonders(t *testing.T) {
-	dir := outDir()
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
+	dir := labDir(t)
 	fixture.WithTheme(t, "forge")
 	var gen mapgen.Generator
-	for _, age := range labAges {
+	for _, age := range mapmodel.NewCatalog().Ages {
 		for _, stage := range []string{"rising", "built"} {
 			for _, tick := range []struct {
 				name string
 				tick int
-			}{{"day", labNoon}, {"night", labMidnig}} {
+			}{{"day", labNoon}, {"night", labMidnight}} {
 				st := fixture.State(fixture.Options{Age: age, Seed: labSeed, Tick: tick.tick})
 				key := st.CurrentAgeWonderKey
 				if stage == "built" {
@@ -157,16 +153,33 @@ func TestLabWonders(t *testing.T) {
 					bs.Count = 1
 					st.Buildings[key] = bs
 				}
-				g := gen.Render(mapmodel.NewBuilder(nil).Build(&st, nil), 120, 36, 0)
-				x0, y0, w, h, ok := wonderBox(g, key)
+				scene := gen.Draw(mapmodel.NewBuilder(nil).Build(&st, nil), 0)
+				x0, y0, w, h, ok := wonderBox(scene.Grid, key)
 				if !ok {
-					t.Fatalf("%s: the wonder %s is not in view", age, key)
+					t.Fatalf("%s: the wonder %s is not in the world", age, key)
 				}
-				scr := blit(g, x0, y0, w, h)
-				base := fmt.Sprintf("%s_wonder_%s_%s", age, stage, tick.name)
-				writeShot(t, dir, base, scr)
+				scr := capture.NewScreen(w, h)
+				procmap.Blit(scr, mapstyle.Rect{W: w, H: h}, scene.Grid.Window(x0, y0, w, h), mapmodel.TierUnicode)
+				writeShot(t, dir, fmt.Sprintf("%s_wonder_%s_%s", age, stage, tick.name), scr)
 				scr.Fini()
 			}
+		}
+	}
+}
+
+// TestLabThemes draws one age in two themes, a dark one and a light one, by
+// day and by night.
+func TestLabThemes(t *testing.T) {
+	dir := labDir(t)
+	for _, key := range []string{"forge", "daylight"} {
+		fixture.WithTheme(t, key)
+		for _, tick := range []struct {
+			name string
+			tick int
+		}{{"day", labNoon}, {"night", labMidnight}} {
+			scr := panel(procmap.New(), labModel("modern_age", tick.tick), 120, 36)
+			writeShot(t, dir, fmt.Sprintf("theme_%s_modern_age_%s", key, tick.name), scr)
+			scr.Fini()
 		}
 	}
 }
