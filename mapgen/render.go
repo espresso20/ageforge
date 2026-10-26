@@ -49,7 +49,7 @@ func (gen *Generator) Render(m *mapmodel.Model, w, h, anim int) *Grid {
 
 // camera is where the window's top-left corner goes: centred on the
 // settlement, nudged a little (the nearest nudge that does best) to take in
-// the most of what is built.
+// the most of what is built: the wonder being built first, then the rest.
 func (f *frame) camera(w, h int) (x0, y0 int) {
 	c := f.plan.Centre
 	best := -1
@@ -60,9 +60,18 @@ func (f *frame) camera(w, h int) (x0, y0 int) {
 	for _, n := range nudges {
 		x, y := clamp(c.X+n[0]-w/2, 0, worldW-w), clamp(c.Y+n[1]-h/2, 0, worldH-h)
 		in := 0
+		inside := func(r Rect) bool { return r.X >= x && r.X+r.W <= x+w && r.Y >= y && r.Y+r.H <= y+h }
 		for _, pl := range f.placed {
-			if r := f.plan.Lots[pl.lot].Rect; r.X >= x && r.X+r.W <= x+w && r.Y >= y && r.Y+r.H <= y+h {
+			if inside(f.plan.Lots[pl.lot].Rect) {
 				in++
+			}
+		}
+		for _, ws := range f.wonders() {
+			switch {
+			case inside(ws.plot.Rect) && ws.w.Current:
+				in += 1000 // the wonder being built comes first
+			case inside(ws.plot.Rect):
+				in += 4
 			}
 		}
 		if in > best {

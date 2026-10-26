@@ -30,7 +30,7 @@ var labAges = []string{"bronze_age", "modern_age", "space_age"}
 var labSizes = [][2]int{{120, 36}, {80, 24}}
 
 const (
-	labSeed   = 7
+	labSeed   = 4
 	labNoon   = 225 + 1800*5
 	labMidnig = 1125 + 1800*5
 )
