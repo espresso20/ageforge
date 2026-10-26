@@ -28,7 +28,7 @@ func TestPlanDeterministic(t *testing.T) {
 func TestPlanHasRoomForATown(t *testing.T) {
 	for _, seed := range []int64{7, 23} {
 		_, p := groundPlan(seed)
-		if len(p.Lots) < 200 {
+		if len(p.Lots) < 150 {
 			t.Errorf("seed %d: only %d lots", seed, len(p.Lots))
 		}
 		placed := 0

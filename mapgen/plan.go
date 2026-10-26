@@ -62,7 +62,7 @@ type Plan struct {
 // roughly square on screen.
 const (
 	lotW, lotH   = 6, 4
-	plotW, plotH = 11, 6
+	plotW, plotH = 10, 5
 )
 
 // groundAges is how many ages the ground scenes cover; later ages are in
@@ -98,7 +98,7 @@ func NewGroundPlan(seed int64, f *Fields, cat *mapmodel.Catalog) *Plan {
 	b.reservePlots()
 	b.layStreets()
 	b.cutLots()
-	b.plan.assign(seed, cat)
+	b.plan.assign(seed, cat, 12, 5)
 	return b.plan
 }
 
@@ -202,9 +202,11 @@ func (b *planner) branch(road, tier int) {
 	r := b.plan.Roads[road]
 	dir := b.heading(r)
 	left, right := [2]int{dir[1], -dir[0]}, [2]int{-dir[1], dir[0]}
-	gap, span := 13, 3
-	if tier == 2 {
-		gap, span = 9, 3
+	// a child that runs across the screen needs a block of rows between
+	// parents, a child that runs up and down a block of columns
+	gap, span := 14, 3
+	if dir[0] == 0 {
+		gap, span = 10, 2
 	}
 	for pos := 4; pos < len(r.Cells); pos += gap + roll(span, b.seed, 44, int64(road), int64(pos)) {
 		for s, side := range [][2]int{left, right} {
@@ -304,7 +306,8 @@ func (b *planner) nudge(cur Pt, dir [2]int, road, parent int) Pt {
 
 // reservePlots keeps ground for the wonders along the trunk arms, one plot
 // per age the ground can show, the nearest plots for the earliest ages. Plot
-// n sits on arm n%4, on the first side and place from its turn that fits.
+// n sits on arm n%4, on the arm's own side (the other when that is blocked),
+// at the first place from its turn that fits.
 func (b *planner) reservePlots() {
 	p := b.plan
 	for n := 0; n < groundAges; n++ {
@@ -326,7 +329,7 @@ func (b *planner) findPlot(road, step, n int) Lot {
 	}
 	for i := span/2 + 3 + step*span; i < len(r.Cells); i++ {
 		for s := 0; s < 2; s++ {
-			side := (n/4 + n%4 + s) % 2
+			side := (n%4/2 + s) % 2
 			lot := Lot{Rect: plotBeside(r.Cells[i], horizontal, side), Door: r.Cells[i], Road: road, At: i}
 			if b.free(lot.Rect) {
 				b.take(lot.Rect)
@@ -415,13 +418,16 @@ func lotBeside(c Pt, horizontal bool, side int) Rect {
 }
 
 // assign gives every lot to a building line. Each line has a heart, kept
-// near the middle for the earliest lines and further out for the later ones,
-// and a share of the lots in proportion to how many building types it has.
-// Lots go to the nearest heart that still has room, so districts grow round
-// their hearts, and a line's lots are listed nearest its heart first.
-func (p *Plan) assign(seed int64, cat *mapmodel.Catalog) {
+// near the middle for the earliest lines and further out for the later ones
+// (spreadX and spreadY cells further for the last), and a share of the lots in
+// proportion to how many building types it has. Lots are dealt from the
+// middle outward, each to the nearest heart whose line is not already ahead
+// of its fair turn, so every line gets its share of the near lots and its
+// district grows round its heart. A line's lots are listed nearest the
+// middle first.
+func (p *Plan) assign(seed int64, cat *mapmodel.Catalog, spreadX, spreadY int) {
 	lines := mapmodel.LineageOrder
-	p.Hearts = p.placeHearts(seed, len(lines))
+	p.Hearts = p.placeHearts(seed, len(lines), spreadX, spreadY)
 	quota := make([]int, len(lines))
 	types := 0
 	for _, l := range lines {
@@ -432,19 +438,14 @@ func (p *Plan) assign(seed int64, cat *mapmodel.Catalog) {
 	}
 	p.Owner = make([]int, len(p.Lots))
 	p.Order = make([][]int, len(lines))
-	byNearest := make([]int, len(p.Lots))
-	for i := range byNearest {
-		byNearest[i] = i
+	fromMiddle := make([]int, len(p.Lots))
+	for i := range fromMiddle {
+		fromMiddle[i] = i
 	}
-	nearest := func(lot int) int {
-		best := 1 << 62
-		for _, h := range p.Hearts {
-			best = min(best, p.Lots[lot].Rect.dist(h))
-		}
-		return best
-	}
-	slices.SortStableFunc(byNearest, func(a, b int) int { return cmp.Compare(nearest(a), nearest(b)) })
-	for _, lot := range byNearest {
+	slices.SortStableFunc(fromMiddle, func(a, b int) int {
+		return cmp.Compare(p.Lots[a].Rect.dist(p.Centre), p.Lots[b].Rect.dist(p.Centre))
+	})
+	for turn, lot := range fromMiddle {
 		heartsByDistance := make([]int, len(lines))
 		for i := range heartsByDistance {
 			heartsByDistance[i] = i
@@ -452,18 +453,20 @@ func (p *Plan) assign(seed int64, cat *mapmodel.Catalog) {
 		slices.SortStableFunc(heartsByDistance, func(a, b int) int {
 			return cmp.Compare(p.Lots[lot].Rect.dist(p.Hearts[a]), p.Lots[lot].Rect.dist(p.Hearts[b]))
 		})
-		for _, l := range heartsByDistance {
-			if len(p.Order[l]) < quota[l] {
-				p.Owner[lot] = l
-				p.Order[l] = append(p.Order[l], lot)
-				break
+		deal := func(room func(l int) bool) bool {
+			for _, l := range heartsByDistance {
+				if room(l) {
+					p.Owner[lot] = l
+					p.Order[l] = append(p.Order[l], lot)
+					return true
+				}
 			}
+			return false
 		}
-	}
-	for l := range p.Order {
-		slices.SortStableFunc(p.Order[l], func(a, b int) int {
-			return cmp.Compare(p.Lots[a].Rect.dist(p.Hearts[l]), p.Lots[b].Rect.dist(p.Hearts[l]))
-		})
+		turnShare := turn/len(lines) + 2
+		if !deal(func(l int) bool { return len(p.Order[l]) < min(quota[l], turnShare) }) {
+			deal(func(l int) bool { return len(p.Order[l]) < quota[l] })
+		}
 	}
 }
 
@@ -476,10 +479,10 @@ func (r Rect) dist(c Pt) int {
 
 // placeHearts spreads one heart per line round the centre by best candidate:
 // of a dozen hashed spots, take the one furthest from the hearts already set.
-func (p *Plan) placeHearts(seed int64, n int) []Pt {
+func (p *Plan) placeHearts(seed int64, n, spreadX, spreadY int) []Pt {
 	hearts := make([]Pt, 0, n)
 	for i := 0; i < n; i++ {
-		rx, ry := 14+i*3, 5+i/2
+		rx, ry := 8+i*spreadX/n, 3+i*spreadY/n
 		best, bestGap := p.Centre, -1
 		for try := 0; try < 12; try++ {
 			c := Pt{p.Centre.X + roll(2*rx+1, seed, 50, int64(i), int64(try)) - rx,

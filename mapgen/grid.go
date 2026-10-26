@@ -127,3 +127,26 @@ func (g *Grid) window(x0, y0, w, h int) *Grid {
 	}
 	return out
 }
+
+// Text is the grid as plain text, trailing spaces trimmed.
+func (g *Grid) Text() string {
+	var b []byte
+	for y := 0; y < g.H; y++ {
+		row := []rune{}
+		for x := 0; x < g.W; x++ {
+			row = append(row, g.Cells[y*g.W+x].R)
+		}
+		end := len(row)
+		for end > 0 && (row[end-1] == ' ' || row[end-1] == 0) {
+			end--
+		}
+		for _, r := range row[:end] {
+			if r == 0 {
+				r = ' '
+			}
+			b = append(b, string(r)...)
+		}
+		b = append(b, '\n')
+	}
+	return string(b)
+}

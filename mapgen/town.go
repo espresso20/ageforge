@@ -1,0 +1,181 @@
+package mapgen
+
+import (
+	"strings"
+
+	"github.com/espresso20/ageforge/mapmodel"
+)
+
+// wonderSpot is a wonder on its plot.
+type wonderSpot struct {
+	plot Lot
+	w    mapmodel.Wonder
+}
+
+// wonders lists the model's wonders that have a plot.
+func (f *frame) wonders() []wonderSpot {
+	var out []wonderSpot
+	for _, w := range f.m.Wonders {
+		if w.Age < len(f.plan.Plots) && f.plan.Plots[w.Age].Rect.W > 0 {
+			out = append(out, wonderSpot{f.plan.Plots[w.Age], w})
+		}
+	}
+	return out
+}
+
+// visible says how many cells of each road are laid: as far as the farthest
+// parcel in use along it, and as far as any branch that is laid leaves it, so
+// the roads grow with the town and never lead nowhere.
+func (p *Plan) visible(inUse []Lot) []int {
+	shown := make([]int, len(p.Roads))
+	shown[0] = 1
+	if p.Orbit {
+		shown[1] = len(p.Roads[1].Cells) // the elevator always stands
+	}
+	for _, l := range inUse {
+		shown[l.Road] = max(shown[l.Road], l.At+1)
+	}
+	for i := len(p.Roads) - 1; i > 0; i-- {
+		if shown[i] > 0 {
+			parent := p.Roads[i].Parent
+			shown[parent] = max(shown[parent], p.Roads[i].From+1)
+		}
+	}
+	return shown
+}
+
+// layRoads works out which road cells are laid, before anything is drawn.
+func (f *frame) layRoads() {
+	var inUse []Lot
+	for _, pl := range f.placed {
+		inUse = append(inUse, f.plan.Lots[pl.lot])
+	}
+	for _, w := range f.wonders() {
+		inUse = append(inUse, w.plot)
+	}
+	f.shown = f.plan.visible(inUse)
+	for i, r := range f.plan.Roads {
+		for _, c := range r.Cells[:f.shown[i]] {
+			f.roadAt[at(c.X, c.Y)] = int8(r.Tier + 1)
+			f.busy[at(c.X, c.Y)] = true
+		}
+	}
+}
+
+func (f *frame) laid(x, y int) bool { return inWorld(x, y) && f.roadAt[at(x, y)] > 0 }
+
+// paintTown draws the made things: yards, roads, buildings, wonders.
+func (f *frame) paintTown() {
+	for _, pl := range f.placed {
+		f.paintYard(f.plan.Lots[pl.lot].Rect, pl)
+	}
+	for _, w := range f.wonders() {
+		w.plot.Rect.cells(func(x, y int) {
+			f.g.paint(x, y, f.st.Plaza.at(x, y, 1))
+			f.busy[at(x, y)] = true
+		})
+	}
+	f.paintRoads()
+	for _, pl := range f.placed {
+		if !pl.ruin {
+			f.paintBuilding(pl)
+		}
+	}
+	for _, w := range f.wonders() {
+		f.paintWonder(w)
+	}
+	f.paintRelics()
+}
+
+func (f *frame) paintYard(r Rect, pl placed) {
+	look := f.st.Yard
+	if pl.ruin {
+		look = f.st.Rubble
+	}
+	r.cells(func(x, y int) {
+		f.g.paint(x, y, look.at(x, y, 2))
+		f.busy[at(x, y)] = true
+	})
+	if pl.ruin {
+		r.cells(func(x, y int) {
+			f.g.mark(x, y, Thing{Kind: KindBuilding, Key: pl.b.Key, Lineage: pl.b.Lineage, Count: pl.b.Ruins, Ruin: true})
+		})
+	}
+}
+
+func (f *frame) paintRoads() {
+	for i, r := range f.plan.Roads {
+		for _, c := range r.Cells[:f.shown[i]] {
+			look := f.st.Roads[r.Tier]
+			mask := neighbourMask(c.X, c.Y, f.laid)
+			cell := Cell{R: joinRune(look.Joins, mask, hash(int64(c.X), int64(c.Y))), Fg: look.Fg, Bg: look.Bg}
+			if f.plan.Bridge[c] {
+				cell.Bg = f.st.Deck
+			}
+			f.g.paint(c.X, c.Y, cell)
+			f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: roadNames[r.Tier]})
+		}
+	}
+}
+
+var roadNames = [3]string{"main road", "street", "lane"}
+
+// anchor is where art w by h stands on a parcel: toward the road it opens on.
+func anchor(l Lot, w, h int) (int, int) {
+	r := l.Rect
+	x, y := r.X+(r.W-w)/2, r.Y+(r.H-h)/2
+	switch {
+	case l.Door.Y >= r.Y+r.H:
+		y = r.Y + r.H - h
+	case l.Door.Y < r.Y:
+		y = r.Y
+	case l.Door.X < r.X:
+		x = r.X
+	default:
+		x = r.X + r.W - w
+	}
+	return x, y
+}
+
+// size is the width and height of art; short rows count as padded.
+func (a Art) size() (w, h int) {
+	for _, row := range a {
+		w = max(w, len([]rune(row)))
+	}
+	return w, len(a)
+}
+
+// paintBuilding stamps the footprint of a building kind on its parcel.
+func (f *frame) paintBuilding(pl placed) {
+	lot := f.plan.Lots[pl.lot]
+	fam := familyOf[pl.b.Lineage]
+	tier := min(pl.tier, numTiers-1)
+	for len(f.st.Shapes[fam][tier]) == 0 && tier > 0 {
+		tier--
+	}
+	variants := f.st.Shapes[fam][tier]
+	shape := variants[roll(len(variants), f.m.Seed, mapmodel.HashStr(pl.b.Key), int64(pl.instance))]
+	tint := lineTints[pl.b.Lineage]
+	thing := Thing{Kind: KindBuilding, Key: pl.b.Key, Lineage: pl.b.Lineage, Count: pl.b.Count, Legacy: pl.b.Legacy}
+	w, h := shape.size()
+	x0, y0 := anchor(lot, w, h)
+	for dy, row := range shape {
+		for dx, r := range []rune(row) {
+			if r == ' ' {
+				continue
+			}
+			ink, ok := f.st.Ink[r]
+			if !ok {
+				ink = mix(f.st.Wall, tint, 70)
+			}
+			if pl.b.Legacy {
+				ink = mix(ink, rgb(0x707070), 110)
+			}
+			f.g.draw(x0+dx, y0+dy, r, ink)
+			f.g.mark(x0+dx, y0+dy, thing)
+			if strings.ContainsRune(f.st.Windows, r) {
+				f.glow = append(f.glow, Pt{x0 + dx, y0 + dy})
+			}
+		}
+	}
+}
