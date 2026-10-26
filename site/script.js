@@ -17,8 +17,7 @@ const current = () => {
 function syncTheme() {
   const night = current() === "dark", b = $("theme");
   b.textContent = night ? "Day" : "Night";
-  b.setAttribute("aria-pressed", String(night));
-  b.setAttribute("aria-label", night ? "Switch to light mode" : "Switch to dark mode");
+  b.title = night ? "Switch to light mode" : "Switch to dark mode";
   metas.forEach(m => m.setAttribute("content", night ? "#121822" : "#e8dcc0"));
 }
 $("theme").hidden = false;
@@ -105,9 +104,10 @@ Promise.resolve(window.AGEFORGE_FRAMES).then(d => {
   paint();
   btn.hidden = false;
   btn.addEventListener("click", () => {
-    const on = btn.getAttribute("aria-pressed") !== "true";
-    btn.setAttribute("aria-pressed", String(on));
+    const on = plate.classList.contains("ink");
+    btn.classList.toggle("on", on);
     btn.textContent = on ? "Show in ink" : "Show in color";
+    btn.title = on ? "Show the map in one ink" : "Show the map in the game's own colors";
     plate.classList.toggle("ink", !on);
   });
   // the map moves, as it does in the game. Reduced motion holds it still.
