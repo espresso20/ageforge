@@ -100,6 +100,7 @@ func (f *frame) paintWonder(ws wonderSpot) {
 		built = (h*int(ws.w.Progress*100) + 99) / 100
 	}
 	thing := Thing{Kind: KindWonder, Key: ws.w.Key}
+	f.targets = append(f.targets, middleOf(t.Art, x0, y0))
 	for dy := h - built; dy < h; dy++ {
 		for dx, ch := range []rune(t.Art[dy]) {
 			if ch == ' ' {

@@ -4,7 +4,7 @@ package mapgen
 
 var space = AgeStyle{
 	From:  "space_age",
-	Scene: Orbit,
+	Scale: Orbit,
 	Land: [numBiomes]Look{
 		Deep:  {Glyphs: "≈~", Fg: P(HSea, 190), Bg: P(HSea, 255), Dense: 35},
 		Grass: {Glyphs: "\"'.", Fg: P(HLand, 230), Bg: P(HLand, 255), Dense: 40},

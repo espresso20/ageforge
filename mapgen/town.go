@@ -190,6 +190,9 @@ func (a Art) size() (w, h int) {
 func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, Paint)) {
 	w, h := a.size()
 	x0, y0 := anchor(l, w, h)
+	if thing.Kind == KindBuilding {
+		f.targets = append(f.targets, middleOf(a, x0, y0))
+	}
 	for dy, row := range a {
 		for dx, r := range []rune(row) {
 			if r == ' ' {
@@ -250,4 +253,18 @@ func (f *frame) paintHouse(lot int) {
 	f.stamp(shape, f.plan.Lots[lot], Thing{Kind: KindAmbient, Key: "houses"}, func(r rune) (rune, Paint) {
 		return r, f.ink(r, HNone).fade(170)
 	})
+}
+
+// middleOf is the drawn cell of art nearest its middle, where a cursor lands.
+func middleOf(rows []string, x0, y0 int) Pt {
+	best, bestGap := Pt{x0, y0}, 1<<30
+	for dy, row := range rows {
+		for dx, r := range []rune(row) {
+			w, _ := Art(rows).size()
+			if gap := abs(dx-w/2) + 2*abs(dy-len(rows)/2); r != ' ' && gap < bestGap {
+				best, bestGap = Pt{x0 + dx, y0 + dy}, gap
+			}
+		}
+	}
+	return best
 }

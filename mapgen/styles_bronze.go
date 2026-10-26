@@ -2,7 +2,7 @@ package mapgen
 
 var bronze = AgeStyle{
 	From:  "primitive_age",
-	Scene: Ground,
+	Scale: Ground,
 	Land: [numBiomes]Look{
 		Deep:     {Glyphs: "≈~", Fg: P(HDeep, 235), Bg: P(HDeep, 42), Dense: 55},
 		Shallows: {Glyphs: "~", Fg: P(HWater, 235), Bg: P(HWater, 48), Dense: 40},

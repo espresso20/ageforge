@@ -109,18 +109,7 @@ func (v *view) describe(s *scene, p mapmodel.Pt) insp {
 	case kWonder:
 		return describeWonder(m, &m.Town.Wonders[c.ref])
 	case kCentre, kPlaza:
-		in := insp{Title: vibe.Line("ui.mapstyle.roguelike.inspect.describe.13", "Town square of ") + w.Name, Command: m.SquareCommand(),
-			Lines: []string{plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.inspect.describe.14", "person"), vibe.Line("ui.mapstyle.roguelike.inspect.describe.15", "people")) + ", " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.roguelike.inspect.describe.16", " idle")}}
-		if s.epoch == 0 {
-			in.Title = vibe.Line("ui.mapstyle.roguelike.inspect.describe.17", "The hearth of ") + w.Name
-		}
-		if m.AgeReady && m.NextAgeName != "" {
-			in.Lines = append(in.Lines, m.NextAgeName+vibe.Line("ui.mapstyle.roguelike.inspect.describe.18", " is within reach"))
-		}
-		if m.Flows.Worst != "" {
-			in.Lines = append(in.Lines, m.Flows.Worst)
-		}
-		return in
+		return describeSquare(m, w.Name, s.epoch)
 	case kSite:
 		if f := &m.Factions[c.civ-1]; f.Discovered {
 			return describeCiv(m, f)
@@ -129,16 +118,7 @@ func (v *view) describe(s *scene, p mapmodel.Pt) insp {
 		if c.civ > 0 && s.trails[c.civ-1] != nil {
 			return describeTrail(m, &m.Factions[c.civ-1])
 		}
-		name := vibe.Line("ui.mapstyle.roguelike.inspect.describe.19", "Bridge")
-		switch {
-		case c.k == kStreet && c.major && s.d.wall == 3:
-			name = vibe.Line("ui.mapstyle.roguelike.inspect.describe.20", "Ring boulevard")
-		case c.k == kStreet && c.major:
-			name = vibe.Line("ui.mapstyle.roguelike.inspect.describe.21", "Avenue")
-		case c.k == kStreet:
-			name = vibe.Line("ui.mapstyle.roguelike.inspect.describe.22", "Street")
-		}
-		return insp{Title: name, Lines: []string{vibe.Line("ui.mapstyle.roguelike.inspect.describe.23", "in ") + w.Name}}
+		return describeRoad(w.Name, c.k, c.major, s.d.wall == 3)
 	case kWall, kTower:
 		name := map[bool]string{true: vibe.Line("ui.mapstyle.roguelike.inspect.describe.24", "Wall tower"), false: vibe.Line("ui.mapstyle.roguelike.inspect.describe.25", "City wall")}[c.k == kTower]
 		if s.d.wall == 1 {
@@ -193,6 +173,37 @@ func (v *view) describeTile(s *scene, tt *mapmodel.TownTile) insp {
 	add(b.Delta > 0, "+"+strconv.Itoa(b.Delta)+vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.09", " since your last visit"))
 	add(b.Delta < 0, strconv.Itoa(-b.Delta)+vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.10", " fewer since your last visit"))
 	add(b.Ruins > 0, strconv.Itoa(b.Ruins)+vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.11", " in ruins"))
+	return in
+}
+
+// describeRoad is a street, an avenue, a ring boulevard or a bridge.
+func describeRoad(town string, k kind, major, ring bool) insp {
+	name := vibe.Line("ui.mapstyle.roguelike.inspect.describe.19", "Bridge")
+	switch {
+	case k == kStreet && major && ring:
+		name = vibe.Line("ui.mapstyle.roguelike.inspect.describe.20", "Ring boulevard")
+	case k == kStreet && major:
+		name = vibe.Line("ui.mapstyle.roguelike.inspect.describe.21", "Avenue")
+	case k == kStreet:
+		name = vibe.Line("ui.mapstyle.roguelike.inspect.describe.22", "Street")
+	}
+	return insp{Title: name, Lines: []string{vibe.Line("ui.mapstyle.roguelike.inspect.describe.23", "in ") + town}}
+}
+
+// describeSquare is the town square: its people, the next age if it is in
+// reach, and what is stuck.
+func describeSquare(m *mapmodel.Model, town string, epoch int) insp {
+	in := insp{Title: vibe.Line("ui.mapstyle.roguelike.inspect.describe.13", "Town square of ") + town, Command: m.SquareCommand(),
+		Lines: []string{plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.inspect.describe.14", "person"), vibe.Line("ui.mapstyle.roguelike.inspect.describe.15", "people")) + ", " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.roguelike.inspect.describe.16", " idle")}}
+	if epoch == 0 {
+		in.Title = vibe.Line("ui.mapstyle.roguelike.inspect.describe.17", "The hearth of ") + town
+	}
+	if m.AgeReady && m.NextAgeName != "" {
+		in.Lines = append(in.Lines, m.NextAgeName+vibe.Line("ui.mapstyle.roguelike.inspect.describe.18", " is within reach"))
+	}
+	if m.Flows.Worst != "" {
+		in.Lines = append(in.Lines, m.Flows.Worst)
+	}
 	return in
 }
 

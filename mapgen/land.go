@@ -15,7 +15,7 @@ func neighbourMask(x, y int, test func(x, y int) bool) int {
 // paintGround lays the ground of the scene: land by biome with rivers
 // joined up, or space with its planet.
 func (f *frame) paintGround() {
-	if f.st.Scene == Orbit {
+	if f.st.Scale == Orbit {
 		f.paintSpace()
 		return
 	}
@@ -45,7 +45,7 @@ func (f *frame) paintGround() {
 // their numbers reach.
 func (f *frame) groundAt(x, y int) Biome {
 	b := f.fields.Biome[at(x, y)]
-	if f.st.Scene != City || (b != Forest && b != Scrub) {
+	if f.st.Scale != City || (b != Forest && b != Scrub) {
 		return b
 	}
 	pop := f.m.Workers.Pop

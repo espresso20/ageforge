@@ -35,8 +35,10 @@ type frame struct {
 	glow []Pt
 	// vents are the chimneys that smoke.
 	vents []Pt
-	// lights are planet cities that shine whenever it is night.
-	lights []Pt
+	// lights are planet cities that shine whenever it is night; targets are
+	// the places the cursor visits.
+	lights  []Pt
+	targets []Pt
 }
 
 // Render draws the model as a w by h grid at animation frame anim. The
@@ -45,7 +47,7 @@ func (gen *Generator) Render(m *mapmodel.Model, w, h, anim int) *Grid {
 	f := gen.frame(m, anim)
 	f.draw()
 	x0, y0 := f.camera(w, h)
-	return f.g.window(x0, y0, w, h)
+	return f.g.Window(x0, y0, w, h)
 }
 
 // camera is where the window's top-left corner goes: centred on the
@@ -96,7 +98,7 @@ func (gen *Generator) frame(m *mapmodel.Model, anim int) *frame {
 	st := styleFor(func(k string) int { return m.Catalog.AgeIdx[k] }, m.AgeIdx)
 	f := &frame{m: m, st: st, g: newGrid(worldW, worldH), anim: anim,
 		night: int(m.Clock.Night * 256), roadAt: make([]int8, worldW*worldH), busy: make([]bool, worldW*worldH)}
-	if st.Scene == Orbit {
+	if st.Scale == Orbit {
 		f.plan = gen.orbit
 	} else {
 		f.plan, f.fields = gen.ground, gen.fields

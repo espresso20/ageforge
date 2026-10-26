@@ -108,8 +108,8 @@ func (g *Grid) mark(x, y int, t Thing) {
 	g.Hit[y*g.W+x] = i
 }
 
-// window copies the w by h part of g whose top-left corner is (x0, y0).
-func (g *Grid) window(x0, y0, w, h int) *Grid {
+// Window copies the w by h part of g whose top-left corner is (x0, y0).
+func (g *Grid) Window(x0, y0, w, h int) *Grid {
 	out := newGrid(w, h)
 	out.Wall, out.Tint = g.Wall, g.Tint
 	out.Things = g.Things

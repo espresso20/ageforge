@@ -63,7 +63,10 @@ func (v *view) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 }
 
 // header: settlement, age, epoch, weather, people, idle, civs met, zoom.
-func (v *view) header(cv *mapstyle.Canvas, W int) {
+func (v *view) header(cv *mapstyle.Canvas, W int) { v.headerWith(cv, W, zoomNames[v.zoom].String()) }
+
+// headerWith is the header with the zoom's name given.
+func (v *view) headerWith(cv *mapstyle.Canvas, W int, zoom string) {
 	s, m, ch := v.sc, v.sc.m, v.pal.Chrome
 	_, cbg, _ := ch.Decompose()
 	cv.Fill(0, 0, W, 1, ' ', ch)
@@ -81,7 +84,7 @@ func (v *view) header(cv *mapstyle.Canvas, W int) {
 		{vibe.Line("ui.mapstyle.roguelike.chrome.header.01", "pop ") + strconv.Itoa(m.Workers.Pop) + "  ", ch},
 		{vibe.Line("ui.mapstyle.roguelike.chrome.header.02", "idle ") + strconv.Itoa(m.Workers.Idle), idle},
 		{vibe.Line("ui.mapstyle.roguelike.chrome.header.03", "  civs ") + strconv.Itoa(m.DiscoveredCount()) + "/" + strconv.Itoa(len(m.Factions)), ch},
-		{"  " + zoomNames[v.zoom].String() + " ", ch.Bold(true)},
+		{"  " + zoom + " ", ch.Bold(true)},
 	}
 	for ; len(segs) > 0; segs = segs[1:] { // drop from the left until it fits
 		n := 0
@@ -147,6 +150,16 @@ func (v *view) news(width int) (string, tcell.Style) {
 
 // bottom: news, the two inspector lines and the status line.
 func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
+	in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Clock: v.clock, Tier: v.tier})
+	left := zoomNames[v.zoom].String()
+	if v.zoom == zRegion {
+		left += " · " + plates[v.sc.epoch].name.String()
+	}
+	v.bottomWith(cv, W, H, in, ok, left)
+}
+
+// bottomWith is bottom for an inspection and a zoom label given.
+func (v *view) bottomWith(cv *mapstyle.Canvas, W, H int, in mapstyle.Inspection, ok bool, left string) {
 	n, st := v.news(W - 2)
 	cv.Text(1, H-4, W-2, n, st)
 	dim := v.cls(mapmodel.CDim)
@@ -155,7 +168,7 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 	if W >= 100 {
 		hints = vibe.Line("ui.mapstyle.roguelike.chrome.bottom.01", "arrows move  Shift fast  -/= or PgUp/PgDn zoom  Tab next  Home center  map flows")
 	}
-	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Clock: v.clock, Tier: v.tier}); {
+	switch {
 	case !ok:
 		cv.Text(1, H-3, W-2, vibe.Line("ui.mapstyle.roguelike.chrome.bottom.03", "cursor hidden; move it with the arrow keys"), v.bgStyle())
 		cv.Text(3, H-2, W-4, hints, dim)
@@ -167,10 +180,6 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 			x := cv.Text(3, H-2, W-4, vibe.Line("ui.mapstyle.roguelike.chrome.bottom.05", "type: "), dim)
 			cv.Text(x, H-2, W-x-1, in.Command, v.cls(mapmodel.CAccent).Bold(true))
 		}
-	}
-	left := zoomNames[v.zoom].String()
-	if v.zoom == zRegion {
-		left += " · " + plates[v.sc.epoch].name.String()
 	}
 	if v.flows {
 		left += vibe.Line("ui.mapstyle.roguelike.chrome.bottom.06", " · flows")
@@ -186,6 +195,15 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 
 // sidebar: the flows panel on top when it is on, the legend below.
 func (v *view) sidebar(cv *mapstyle.Canvas, x0, y0, w, h int) {
+	y := v.flowsPanel(cv, x0, y0, w, h)
+	if v.legend && y < y0+h {
+		v.drawLegend(cv, x0+2, y, w-3, y0+h-y)
+	}
+}
+
+// flowsPanel draws the sidebar's rule and, when the flows are on, their
+// panel; it returns the first row below.
+func (v *view) flowsPanel(cv *mapstyle.Canvas, x0, y0, w, h int) int {
 	for y := y0; y < y0+h; y++ {
 		cv.Put(x0, y, '│', v.pal.border)
 	}
@@ -199,9 +217,7 @@ func (v *view) sidebar(cv *mapstyle.Canvas, x0, y0, w, h int) {
 		}
 		y += 2
 	}
-	if v.legend && y < y0+h {
-		v.drawLegend(cv, x0+2, y, w-3, y0+h-y)
-	}
+	return y
 }
 
 // flowLine is one flows row: a tag and text, or a share bar.
@@ -295,7 +311,7 @@ const legendPair = 9
 // rows would run past the bottom (a busy late-age town), short labels
 // pair up two to a row so the traffic at the end still fits.
 func (v *view) drawLegend(cv *mapstyle.Canvas, x, y, w, h int) {
-	cv.Text(x, y, w, vibe.Line("ui.mapstyle.roguelike.chrome.drawLegend.01", "LEGEND"), v.cls(mapmodel.CAccent).Bold(true))
+	cv.Text(x, y, w, LegendTitle(), v.cls(mapmodel.CAccent).Bold(true))
 	type row struct {
 		e     lgEntry
 		label string
@@ -353,6 +369,20 @@ func (v *view) drawLegend(cv *mapstyle.Canvas, x, y, w, h int) {
 	}
 }
 
+// compactBars draws the first and last lines of the compact view: the age and
+// the people, and the news.
+func (v *view) compactBars(cv *mapstyle.Canvas, r mapstyle.Rect) {
+	m := v.sc.m
+	x := cv.Text(0, 0, r.W, strings.TrimSuffix(m.AgeName, " Age")+vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.02", " · pop ")+strconv.Itoa(m.Workers.Pop), v.cls(mapmodel.CAccent).Bold(true))
+	if m.Workers.Idle > 0 {
+		cv.Text(x, 0, r.W-x, vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.03", " · idle ")+strconv.Itoa(m.Workers.Idle), v.cls(mapmodel.CIdle).Bold(true))
+	}
+	if r.H >= 2 {
+		n, st := v.news(r.W)
+		cv.Text(0, r.H-1, r.W, n, st)
+	}
+}
+
 // DrawCompact renders the glanceable mini view (designed for 40x15): a
 // header line, the settlement fitted to the space, and one news line.
 func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
@@ -365,15 +395,7 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 		cv.Text(0, 0, 0, vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.01", "No map yet."), v.cls(mapmodel.CDim))
 		return
 	}
-	m := s.m
-	x := cv.Text(0, 0, r.W, strings.TrimSuffix(m.AgeName, " Age")+vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.02", " · pop ")+strconv.Itoa(m.Workers.Pop), v.cls(mapmodel.CAccent).Bold(true))
-	if m.Workers.Idle > 0 {
-		cv.Text(x, 0, r.W-x, vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.03", " · idle ")+strconv.Itoa(m.Workers.Idle), v.cls(mapmodel.CIdle).Bold(true))
-	}
-	if r.H >= 2 {
-		n, st := v.news(r.W)
-		cv.Text(0, r.H-1, r.W, n, st)
-	}
+	v.compactBars(cv, r)
 	if mh := r.H - 2; mh > 0 { // the town, auto-fitted; down-sampled if it must be
 		cx, cy := (s.x0+s.x1)/2, (s.y0+s.y1)/2
 		sc := max(int(ceilDiv(float64(s.x1-s.x0+3), float64(r.W))), int(ceilDiv(float64(s.y1-s.y0+3), float64(mh))))

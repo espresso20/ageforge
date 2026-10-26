@@ -4,7 +4,7 @@ package mapgen
 
 var modern = AgeStyle{
 	From:  "industrial_age",
-	Scene: City,
+	Scale: City,
 	Land: [numBiomes]Look{
 		Deep:     {Glyphs: "≈~", Fg: P(HDeep, 235), Bg: P(HDeep, 42), Dense: 55},
 		Shallows: {Glyphs: "~", Fg: P(HWater, 235), Bg: P(HWater, 48), Dense: 40},

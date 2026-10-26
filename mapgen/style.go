@@ -6,11 +6,11 @@ import "strings"
 // buildings of an age look like. Adding an age is adding a row; no code
 // changes. A row serves every age from its From up to the next row's.
 
-// Scene is the kind of ground a style draws on.
-type Scene uint8
+// Scale is how far the picture is pulled back: the ground, the city, orbit.
+type Scale uint8
 
 const (
-	Ground Scene = iota // open country and villages
+	Ground Scale = iota // open country and villages
 	City                // streets and blocks
 	Orbit               // a starfield, a planet and ring roads
 )
@@ -85,7 +85,7 @@ type Night struct {
 // AgeStyle is one age's look.
 type AgeStyle struct {
 	From  string // the first age the row serves
-	Scene Scene
+	Scale Scale
 	// Land is the ground by biome. In orbit, Deep is the planet's sea, Grass
 	// its land, Hills its cloud and Sand its limb of air.
 	Land   [numBiomes]Look

@@ -27,7 +27,7 @@ func TestStylesAreWellFormed(t *testing.T) {
 		}
 		last = age
 		maxRows := lotH
-		if st.Scene == Orbit {
+		if st.Scale == Orbit {
 			maxRows = stationH
 		}
 		for fam := range st.Shapes {
