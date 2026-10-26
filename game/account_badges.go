@@ -108,8 +108,8 @@ func (a *Account) badgeFileLocked() *badgeFile {
 // loadBadgeFile reads the badge file in dir into the account, after
 // account.json has given it its ID. It never writes.
 //
-//   - No file: the account has no badge store yet (it is new and unsaved, or
-//     from before badges: fromBeforeBadges).
+//   - No file: the account has no badge store yet (it is new and unsaved; for a
+//     saved account see loadSavedBadgeFile).
 //   - A file as the game signed it, for this account: taken as it is.
 //   - A file whose signature does not match, or signed for another account:
 //     taken, flagged (BadgesTampered), and every badge in it crossed. The
@@ -139,13 +139,17 @@ func (a *Account) loadBadgeFile(dir string) {
 	}
 }
 
-// fromBeforeBadges reports whether the account was made before badges, which
-// the game no longer brings up: it has a record of play (a prestige, an age
-// reached, an old achievement) and no badge file. Every account this build
-// saves has one.
-func (a *Account) fromBeforeBadges() bool {
-	played := len(a.Achievements) > 0 || a.Stats.TotalPrestiges > 0 || a.Stats.HighestAge != ""
-	return played && a.badgeDisk == nil && !a.badgeUnreadable
+// loadSavedBadgeFile is loadBadgeFile for an account read from its own slot. Every
+// account the game saves has a badge file, so one that is missing was taken away: it
+// reads as an edited one (BadgesTampered), and a save starts the file again, empty and
+// marked. Tampering marks badges; it never locks a player out.
+func (a *Account) loadSavedBadgeFile(dir string) {
+	a.loadBadgeFile(dir)
+	if a.badgeDisk == nil && !a.badgeUnreadable {
+		a.BadgesTampered = true
+		a.badgeRev++
+		a.dirty = true
+	}
 }
 
 // saveBadgeFile writes the badge file into dir, atomically, when the badges

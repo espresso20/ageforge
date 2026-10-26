@@ -18,7 +18,7 @@ data/
 └── accounts/
     └── <account_id>/
         ├── account.json         # that account's identity and account-wide progress
-        ├── badges.json          # that account's badges (once it has any)
+        ├── badges.json          # that account's badges
         ├── settings.json        # that account's display settings and which game is current
         └── saves/               # that account's game saves
 ```
@@ -35,7 +35,7 @@ You can switch accounts during a game with `account switch <name>`. The game is 
 
 ### Accounts from before 4.0
 
-The game no longer moves or converts old accounts. An account that has played but has no `badges.json` beside its `account.json` is from before [badges](#badges), and the game refuses it with the line saves from before 4.0 get: "This was saved before 4.0 and can no longer be loaded." It is not listed in the Accounts panel and is left on disk as it is. Make a new account to play. An export from before badges is refused too.
+The game no longer moves or converts old accounts. Every account the game saves carries a format number, 4, in `account.json`. An account without it was written before 4.0, played or not, and the game refuses it with the line saves from before 4.0 get: "This was saved before 4.0 and can no longer be loaded." It is not listed in the Accounts panel and is left on disk as it is. Make a new account to play. An export from before [badges](#badges) is refused too.
 
 The five age themes come with the badge for reaching their age, where a milestone used to unlock them. Every theme the account already holds stays unlocked, and an account that reached one of those ages without its theme gets the theme with the badge. That is the one thing this adds to `account.json`: a theme in the list of unlocked themes it has always kept.
 
@@ -345,7 +345,7 @@ Badges are kept in their own file, `badges.json`, beside `account.json` in the a
 The file is signed, and the signature covers the account ID:
 
 - A `badges.json` that was edited by hand, or copied in from another account, is flagged, and its badges are listed as earned in a modified game. That flag belongs to `badges.json` only; it never marks `account.json` as modified.
-- If `badges.json` is deleted or cannot be read, the game rebuilds what `account.json` proves (ages reached, prestiges made). Dates, counts and badges with no record there are gone, so keep an [export](#exporting-amp-importing-accounts) or a [backup](#backups).
+- If `badges.json` is deleted, the game treats it like an edited one: the account still loads, a new empty `badges.json` is started and flagged, and every badge earned from then on is listed as earned in a modified game. The badges that were in the file are gone, so keep an [export](#exporting-amp-importing-accounts) or a [backup](#backups). A file that cannot be read is set aside the next time the account is saved.
 - An export carries the badge file inside it, and a backup copies it, so both bring your badges back.
 
 ### The settings file

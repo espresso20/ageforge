@@ -42,7 +42,8 @@ func installThemes(t *testing.T, name string) (id string, accountRaw, badgesRaw 
 		}
 		return b
 	}
-	accountRaw, badgesRaw = read("account.json"), read("badges.json")
+	// The fixture is an account.json from before 4.0, written again as the game writes it now.
+	accountRaw, badgesRaw = withFormat(t, read("account.json")), read("badges.json")
 	var head struct {
 		AccountID string `json:"account_id"`
 	}
@@ -155,7 +156,7 @@ func TestAgeThemesMoveToBadgesWithNothingLost(t *testing.T) {
 			// account.json keeps its shape and still verifies; it changes only
 			// where a theme was gained, and then only in its unlocks.
 			first := slotFile(t, id)
-			assertOldShape(t, first)
+			assertAccountShape(t, first)
 			if disk := slotAccount(t, id); !verifyAccount(disk) || disk.Tampered || disk.BadgesTampered {
 				t.Errorf("on disk: verifies %v, tampered %v, badge file tampered %v", verifyAccount(disk), disk.Tampered, disk.BadgesTampered)
 			}
@@ -214,7 +215,7 @@ func TestAgeBadgeUnlocksItsThemeInPlay(t *testing.T) {
 		t.Errorf("themes after reaching the age twice: %v", got)
 	}
 	noErr(t, acct.FlushIfDirty())
-	assertOldShape(t, slotFile(t, acct.AccountID))
+	assertAccountShape(t, slotFile(t, acct.AccountID))
 
 	// Another account takes over the engine while the first one's run is
 	// still in memory: that run earns the newcomer nothing.

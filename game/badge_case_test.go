@@ -256,7 +256,7 @@ func TestHackerThemesComeWithTheirBadges(t *testing.T) {
 			t.Errorf("%s: earned %v, theme %v", c.badge, hasBadge(acct, c.badge), acct.HasTheme(c.theme))
 		}
 		noErr(t, acct.FlushIfDirty())
-		assertOldShape(t, slotFile(t, acct.AccountID))
+		assertAccountShape(t, slotFile(t, acct.AccountID))
 
 		// The badge held from before it gave a theme: take the theme away,
 		// as an account saved by the build before this one has it.
@@ -311,7 +311,7 @@ func TestMotionSettingLivesBesideTheAccountFile(t *testing.T) {
 	if got := slotBadgeFile(t, acct.AccountID); string(got) != string(badges) {
 		t.Error("setting motion rewrote the badge file")
 	}
-	assertOldShape(t, slotFile(t, acct.AccountID))
+	assertAccountShape(t, slotFile(t, acct.AccountID))
 	var file map[string]any
 	data, err := os.ReadFile(settings)
 	if err != nil || json.Unmarshal(data, &file) != nil || file["motion"] != "off" {

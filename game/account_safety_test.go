@@ -375,15 +375,9 @@ const (
 func TestOlderFilesStillVerify(t *testing.T) {
 	isolateAccountDir(t)
 
-	noErr(t, os.MkdirAll(accountDir(fixtureAccountID), 0755))
-	path := filepath.Join(accountDir(fixtureAccountID), accountFileName)
-	noErr(t, os.WriteFile(path, []byte(fixtureAccountJSON), 0644))
-	// The account has played, so it has the badge file every saved account has.
-	store, err := json.Marshal((&Account{AccountID: fixtureAccountID}).badgeFileLocked())
-	noErr(t, err)
-	noErr(t, os.WriteFile(filepath.Join(accountDir(fixtureAccountID), badgeFileName), store, 0644))
-	old := slotAccount(t, fixtureAccountID)
-	if old.Tampered || !verifyAccount(old) {
+	var old Account
+	noErr(t, json.Unmarshal([]byte(fixtureAccountJSON), &old))
+	if old.Tampered || !verifyAccount(&old) {
 		t.Errorf("an account.json from the previous version reads as modified (tampered=%v)", old.Tampered)
 	}
 

@@ -68,17 +68,16 @@ func slotBadgeFile(t *testing.T, id string) []byte {
 	return b
 }
 
-// accountFileKeys is every key account.json may hold: what the code from
-// before badges writes. A key outside it would be one that code does not
-// sign, and it would read the file as modified.
+// accountFileKeys is every key account.json may hold. The badges are in the
+// badge file, not here.
 var accountFileKeys = []string{
-	"version", "account_id", "display_name", "created", "last_seen",
+	"version", "format", "account_id", "display_name", "created", "last_seen",
 	"unlocks", "stats", "achievements", "prefs", "_sig", "tampered",
 }
 
-// assertOldShape fails if raw, an account.json, holds anything the code
-// from before badges does not know.
-func assertOldShape(t *testing.T, raw []byte) {
+// assertAccountShape fails if raw, an account.json, holds a key outside
+// accountFileKeys or is not in the current format.
+func assertAccountShape(t *testing.T, raw []byte) {
 	t.Helper()
 	var m map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &m); err != nil {
@@ -86,12 +85,38 @@ func assertOldShape(t *testing.T, raw []byte) {
 	}
 	for key := range m {
 		if !slices.Contains(accountFileKeys, key) {
-			t.Errorf("account.json holds the key %q, which a build from before badges does not sign", key)
+			t.Errorf("account.json holds the key %q, which does not belong in it", key)
 		}
 	}
 	if string(m["version"]) != "1" {
-		t.Errorf("account.json is version %s, want 1: its format has not changed", m["version"])
+		t.Errorf("account.json is version %s, want 1", m["version"])
 	}
+	if string(m["format"]) != "4" {
+		t.Errorf("account.json is format %s, want 4", m["format"])
+	}
+}
+
+// storedBadges parses a badge file's bytes.
+func storedBadges(t *testing.T, raw []byte) badgeFile {
+	t.Helper()
+	var bf badgeFile
+	if err := json.Unmarshal(raw, &bf); err != nil {
+		t.Fatalf("badge file: %v", err)
+	}
+	return bf
+}
+
+// withFormat returns raw, an account.json written before 4.0, as the game writes it
+// now: in the current format and signed again.
+func withFormat(t *testing.T, raw []byte) []byte {
+	t.Helper()
+	var acct Account
+	noErr(t, json.Unmarshal(raw, &acct))
+	acct.Format = accountFormat
+	acct.Signature = signAccount(&acct)
+	out, err := json.MarshalIndent(&acct, "", "  ")
+	noErr(t, err)
+	return out
 }
 
 // ageBadges is the badge of every age after the first, up to and including
@@ -391,7 +416,7 @@ func TestAccountFileHoldsNoBadges(t *testing.T) {
 	isolateAccountDir(t)
 	_, acct := earnSome(t, "Ada")
 
-	assertOldShape(t, slotFile(t, acct.AccountID))
+	assertAccountShape(t, slotFile(t, acct.AccountID))
 	var bf badgeFile
 	if err := json.Unmarshal(slotBadgeFile(t, acct.AccountID), &bf); err != nil {
 		t.Fatalf("the badge file: %v", err)
@@ -477,12 +502,45 @@ func TestEditedBadgeFileCrossesItsBadges(t *testing.T) {
 		t.Errorf("a badge earned into a flagged badge file: %+v (earned %v)", e, ok)
 	}
 
-	// Throwing the edited file away does not keep what the edit bought: an
-	// account that has played and has no badge file is refused.
+	// Throwing the edited file away does not keep what the edit bought: the
+	// file starts again empty and marked (TestMissingBadgeFileMarksTheAccount).
 	noErr(t, flagged.FlushIfDirty())
 	noErr(t, os.Remove(filepath.Join(accountDir(id), badgeFileName)))
-	if _, found, err := loadAccountFromSlot(id); found || err == nil {
-		t.Errorf("after deleting the edited file the account loads (found %v, err %v)", found, err)
+	if again := slotAccount(t, id); len(again.Badges) != 0 || !again.BadgesTampered {
+		t.Errorf("after deleting the edited file: badges %v, badge file tampered %v; want none and marked", again.Badges, again.BadgesTampered)
+	}
+}
+
+// TestMissingBadgeFileMarksTheAccount: a saved account always has a badge
+// file, so one that is missing was taken away. It reads as an edited one
+// would: the account loads, flagged for its badges and not as a whole, and the
+// next save starts the file again, empty and marked. What is earned from then
+// on is crossed. Tampering marks; it never locks a player out.
+func TestMissingBadgeFileMarksTheAccount(t *testing.T) {
+	isolateAccountDir(t)
+	_, acct := earnSome(t, "Ada")
+	id := acct.AccountID
+	noErr(t, os.Remove(filepath.Join(accountDir(id), badgeFileName)))
+
+	loaded := slotAccount(t, id)
+	if !loaded.BadgesTampered || loaded.Tampered || len(loaded.Badges) != 0 {
+		t.Fatalf("a missing badge file: badge file tampered %v, account tampered %v, badges %v; want marked, not flagged, none", loaded.BadgesTampered, loaded.Tampered, loaded.Badges)
+	}
+	if slotBadgeFile(t, id) != nil {
+		t.Error("reading the account wrote the badge file")
+	}
+
+	loaded.judge(coreBook(), Event{Kind: config.BadgeEvAgeReached, Subject: "stone_age"}, badgeCtx{})
+	if e, ok := loaded.Badges[badgeStone]; !ok || e.Flags&BadgeFlagCrossed == 0 {
+		t.Errorf("a badge earned after the file went missing: %+v (earned %v), want crossed", e, ok)
+	}
+	noErr(t, loaded.FlushIfDirty())
+	bf := storedBadges(t, slotBadgeFile(t, id))
+	if !verifyBadgeFile(&bf) || !bf.Tampered || bf.AccountID != id {
+		t.Errorf("the new badge file: verifies %v, marked %v, account %s", verifyBadgeFile(&bf), bf.Tampered, bf.AccountID)
+	}
+	if again := slotAccount(t, id); !again.BadgesTampered || again.Tampered || again.Badges[badgeStone].Flags&BadgeFlagCrossed == 0 {
+		t.Errorf("the mark did not stick: badge file tampered %v, account tampered %v", again.BadgesTampered, again.Tampered)
 	}
 }
 
@@ -532,34 +590,42 @@ func TestEditedAccountLeavesBadgeFileAlone(t *testing.T) {
 	}
 }
 
-// TestAccountFromBeforeBadgesIsRefused: an account that has played and has no
-// badge file is from before badges, or has lost its file; either way it is
-// refused with the one line saves from before 4.0 get, and an account that
-// has not played loads.
-func TestAccountFromBeforeBadgesIsRefused(t *testing.T) {
-	isolateAccountDir(t)
-	id, _ := installV1(t, "account_v1_full.json")
-	if acct, found, err := loadAccountFromSlot(id); acct != nil || found || err == nil || err.Error() != errBeforeFour().Error() {
-		t.Fatalf("an account from before badges: %v %v %v, want the refusal", acct, found, err)
-	}
-	noErr(t, makeActive(id))
-	if _, found, err := LoadAccount(); found || err == nil {
-		t.Errorf("LoadAccount found the account from before badges (found %v, err %v)", found, err)
-	}
-	if got := ListAccounts(); len(got) != 0 {
-		t.Errorf("an account from before badges is listed: %+v", got)
-	}
-	if _, err := SwitchAccount(id); err == nil {
-		t.Error("switching to an account from before badges was accepted")
-	}
-	if on, _ := os.ReadFile(filepath.Join(accountDir(id), accountFileName)); len(on) == 0 {
-		t.Error("the refused account file was removed")
+// TestAccountFromBefore4IsRefused: an account without the current format was
+// written before 4.0, played or not. It is refused with the one line saves from
+// before 4.0 get, is not listed, and is left on disk as it is; an account the
+// game saves carries the format.
+func TestAccountFromBefore4IsRefused(t *testing.T) {
+	for _, fixture := range []string{"account_v1_full.json", "account_v1_empty.json"} {
+		isolateAccountDir(t)
+		id, _ := installV1(t, fixture)
+		if acct, found, err := loadAccountFromSlot(id); acct != nil || found || err == nil || err.Error() != errBeforeFour().Error() {
+			t.Fatalf("%s: %v %v %v, want the refusal", fixture, acct, found, err)
+		}
+		noErr(t, makeActive(id))
+		if _, found, err := LoadAccount(); found || err == nil {
+			t.Errorf("%s: LoadAccount found it (found %v, err %v)", fixture, found, err)
+		}
+		if got := ListAccounts(); len(got) != 0 {
+			t.Errorf("%s is listed: %+v", fixture, got)
+		}
+		if _, err := SwitchAccount(id); err == nil {
+			t.Errorf("switching to %s was accepted", fixture)
+		}
+		if on, _ := os.ReadFile(filepath.Join(accountDir(id), accountFileName)); len(on) == 0 {
+			t.Errorf("%s was removed", fixture)
+		}
 	}
 
 	isolateAccountDir(t)
-	id, _ = installV1(t, "account_v1_empty.json")
-	if _, found, err := loadAccountFromSlot(id); !found || err != nil {
-		t.Errorf("an account that never played: found %v, err %v, want it to load", found, err)
+	acct, err := CreateAccount("Ada")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if acct.Format != accountFormat {
+		t.Errorf("a new account has format %d, want %d", acct.Format, accountFormat)
+	}
+	if _, found, err := loadAccountFromSlot(acct.AccountID); !found || err != nil {
+		t.Errorf("an account the game saved: found %v, err %v, want it to load", found, err)
 	}
 }
 

@@ -30,6 +30,11 @@ import (
 // always did and can never read it as modified.
 const accountSchemaVersion = 1
 
+// accountFormat is the format every saved account carries (Account.Format), signed
+// with the rest. An account without it was written before 4.0 and is refused on load
+// (errBeforeFour). A change to the format that cannot read the one before it raises it.
+const accountFormat = 4
+
 // accountFileName is the fixed base name of the account file under the data dir.
 // v1 resolves a single account.json — no multi-profile layout yet (the accounts design §3.1).
 const accountFileName = "account.json"
@@ -193,6 +198,7 @@ type AccountPrefs struct {
 // phases.
 type Account struct {
 	Version     int       `json:"version"`
+	Format      int       `json:"format,omitempty"`
 	AccountID   string    `json:"account_id"`
 	DisplayName string    `json:"display_name,omitempty"`
 	Created     time.Time `json:"created"`
@@ -212,7 +218,7 @@ type Account struct {
 	Counters map[string]float64     `json:"-"`
 	Days     []string               `json:"-"`
 	// BadgesTampered is the badge file's own tamper mark: its signature did not match,
-	// or it was signed for another account. Every badge in the file is then crossed,
+	// it was signed for another account, or a saved account's file was missing. Every badge in the file is then crossed,
 	// and so is every badge earned while it is set. It is saved in the badge file and
 	// sticks, as Tampered does for account.json. An edited badge file never flags
 	// account.json, and the other way round.
@@ -319,8 +325,10 @@ func (a *Account) Established() bool {
 //     a cosmetic flag, not a lockout. The file is NOT deleted.
 //   - Present but UNPARSEABLE: back the bad file up to account.json.corrupt and return
 //     (nil, false, nil) — there is no salvageable account, so the caller prompts fresh.
-//   - Present but from before badges (fromBeforeBadges): return (nil, false, err) with the
+//   - Present but from before 4.0 (no Format): return (nil, false, err) with the
 //     refusal; the file is not touched.
+//   - Present with its badge file missing: loaded, with the badge file marked as edited
+//     (loadSavedBadgeFile), as it is for an edited one.
 //
 // It never writes on the happy/tampered paths; the only disk mutation is the .corrupt
 // rename for an unparseable file.
@@ -353,15 +361,15 @@ func LoadAccount() (*Account, bool, error) {
 		}
 		return nil, false, nil
 	}
+	if acct.Format < accountFormat {
+		return nil, false, errBeforeFour()
+	}
 
 	if !verifyAccount(&acct) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
-	acct.loadBadgeFile(filepath.Dir(path))
-	if acct.fromBeforeBadges() {
-		return nil, false, errBeforeFour()
-	}
+	acct.loadSavedBadgeFile(filepath.Dir(path))
 	// Confirm the loaded account as active (the loaded id is authoritative over the pointer).
 	setActiveAccountID(acct.AccountID)
 	return &acct, true, nil
@@ -429,7 +437,7 @@ type AccountSummary struct {
 //   - Present but UNPARSEABLE: (nil, false, nil). UNLIKE LoadAccount it does NOT rename the
 //     bad file to .corrupt — enumeration is strictly read-only and must not mutate the disk
 //     just by listing; the slot simply doesn't appear.
-//   - Present but from before badges: (nil, false, err) with the refusal, as LoadAccount.
+//   - Present but from before 4.0: (nil, false, err) with the refusal, as LoadAccount.
 func loadAccountFromSlot(id string) (*Account, bool, error) {
 	path := filepath.Join(accountDir(id), accountFileName)
 	data, err := os.ReadFile(path)
@@ -444,13 +452,13 @@ func loadAccountFromSlot(id string) (*Account, bool, error) {
 		// Unparseable → not a salvageable account. Read-only: do not back it up here.
 		return nil, false, nil
 	}
+	if acct.Format < accountFormat {
+		return nil, false, errBeforeFour()
+	}
 	if !verifyAccount(&acct) {
 		acct.Tampered = true
 	}
-	acct.loadBadgeFile(filepath.Dir(path))
-	if acct.fromBeforeBadges() {
-		return nil, false, errBeforeFour()
-	}
+	acct.loadSavedBadgeFile(filepath.Dir(path))
 	return &acct, true, nil
 }
 
@@ -718,6 +726,7 @@ func shortID(id string) string {
 func signAccount(a *Account) string {
 	payload := Account{
 		Version:      a.Version,
+		Format:       a.Format,
 		AccountID:    a.AccountID,
 		DisplayName:  a.DisplayName,
 		Created:      a.Created,
@@ -782,6 +791,12 @@ func (a *Account) Save() error {
 		return fmt.Errorf("failed to create data directory: %w", err)
 	}
 
+	// The badges go to their own file in the same slot first, when they changed: a
+	// saved account always has one, so the badge file is never behind account.json.
+	if err := a.saveBadgeFile(dir); err != nil {
+		return err
+	}
+	a.Format = accountFormat
 	a.Signature = signAccount(a)
 	data, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
@@ -796,8 +811,7 @@ func (a *Account) Save() error {
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("failed to finalize account: %w", err)
 	}
-	// The badges go to their own file in the same slot, when they changed.
-	return a.saveBadgeFile(dir)
+	return nil
 }
 
 // --- Unlock API (the accounts design §8; the theming design §5 is the first caller) ---

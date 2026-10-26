@@ -677,7 +677,7 @@ func TestTitlesFromBadges(t *testing.T) {
 	}
 	// It is written beside the account, not in it.
 	noErr(t, acct.FlushIfDirty())
-	assertOldShape(t, slotFile(t, acct.AccountID))
+	assertAccountShape(t, slotFile(t, acct.AccountID))
 	if strings.Contains(string(slotFile(t, acct.AccountID)), "Survivor") {
 		t.Error("the title worn was written into account.json")
 	}

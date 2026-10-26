@@ -174,4 +174,4 @@ A save written before 4.0 does not load. The Load Game browser still lists it, a
 This was saved before 4.0 and can no longer be loaded.
 ```
 
-The game no longer repairs or converts old saves, so there is nothing to do with one but delete it (`d` in the Load Game browser) and start a new game. An account from before [badges](account.md#accounts-from-before-40) is refused the same way.
+The game no longer repairs or converts old saves, so there is nothing to do with one but delete it (`d` in the Load Game browser) and start a new game. An account from before 4.0 is refused the same way (see [Accounts from before 4.0](account.md#accounts-from-before-40)).

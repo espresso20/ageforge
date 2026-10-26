@@ -2,8 +2,6 @@ package game
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -42,19 +40,12 @@ const inertPrefsAccountJSON = `{
 // account that holds them must still verify. Dropping the fields from
 // AccountPrefs would flag every such account as modified.
 func TestAccountWithAMapStyleStillVerifies(t *testing.T) {
-	isolateAccountDir(t)
-	noErr(t, os.MkdirAll(accountDir(fixtureAccountID), 0755))
-	path := filepath.Join(accountDir(fixtureAccountID), accountFileName)
-	noErr(t, os.WriteFile(path, []byte(inertPrefsAccountJSON), 0644))
-	// The account has played, so it has the badge file every saved account has.
-	store, err := json.Marshal((&Account{AccountID: fixtureAccountID}).badgeFileLocked())
-	noErr(t, err)
-	noErr(t, os.WriteFile(filepath.Join(accountDir(fixtureAccountID), badgeFileName), store, 0644))
-	acct := slotAccount(t, fixtureAccountID)
+	var acct Account
+	noErr(t, json.Unmarshal([]byte(inertPrefsAccountJSON), &acct))
 	if acct.Prefs.MapStyle != "skyline" || acct.Prefs.MapZoom != "far" {
 		t.Fatalf("the prefs lost the style or the zoom: %+v", acct.Prefs)
 	}
-	if acct.Tampered || !verifyAccount(acct) {
-		t.Errorf("an account with a map style and zoom reads as modified (tampered=%v)", acct.Tampered)
+	if !verifyAccount(&acct) {
+		t.Error("an account with a map style and zoom reads as modified")
 	}
 }
