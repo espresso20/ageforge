@@ -56,6 +56,16 @@ var lineTints = map[string]RGB{
 	mapmodel.LinMilitary: rgb(0xc85050), mapmodel.LinDiplomacy: rgb(0x6a90b8),
 }
 
+// lineSigns are the signs hung on buildings, the symbols of the map legend:
+// a * in art is drawn as its line's sign.
+var lineSigns = map[string]rune{
+	mapmodel.LinHousing: '∩', mapmodel.LinFood: '≡', mapmodel.LinWood: '♠', mapmodel.LinMines: '▼',
+	mapmodel.LinMetal: '♦', mapmodel.LinEngineer: '¤', mapmodel.LinEnergy: '☼', mapmodel.LinHarbor: '╤',
+	mapmodel.LinHacker: 'λ', mapmodel.LinKnowledge: '§', mapmodel.LinFaith: 'Ω', mapmodel.LinCulture: '♫',
+	mapmodel.LinMonument: '◊', mapmodel.LinTrade: '$', mapmodel.LinStorage: '▣', mapmodel.LinMilitary: '†',
+	mapmodel.LinDiplomacy: '≡',
+}
+
 // placed is one building kind standing on one parcel.
 type placed struct {
 	lot      int // index into Plan.Lots

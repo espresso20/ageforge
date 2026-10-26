@@ -171,6 +171,9 @@ func (f *frame) paintBuilding(pl placed) {
 			if !ok {
 				ink = mix(f.st.Wall, tint, 70)
 			}
+			if r == '*' {
+				r, ink = lineSigns[pl.b.Lineage], tint
+			}
 			if pl.b.Legacy {
 				ink = mix(ink, rgb(0x707070), 110)
 			}

@@ -11,6 +11,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/rivo/uniseg"
+
+	"github.com/espresso20/ageforge/mapmodel"
 )
 
 // TestStylesAreWellFormed: the rows are in age order and name real ages, every
@@ -77,6 +79,20 @@ func checkGlyphs(t *testing.T, where, glyphs string) {
 	}
 	if !utf8.ValidString(glyphs) {
 		t.Errorf("%s: invalid text", where)
+	}
+}
+
+// TestEveryLineHasItsLook: each building line has a silhouette, a tint and a
+// sign, and the sign is one cell wide.
+func TestEveryLineHasItsLook(t *testing.T) {
+	for _, line := range mapmodel.LineageOrder {
+		sign, signed := lineSigns[line]
+		_, tinted := lineTints[line]
+		_, shaped := familyOf[line]
+		if !signed || !tinted || !shaped {
+			t.Errorf("line %s: sign %v, tint %v, family %v", line, signed, tinted, shaped)
+		}
+		checkGlyphs(t, line, string(sign))
 	}
 }
 
