@@ -30,16 +30,19 @@ var biomeNames = [numBiomes]string{"deep water", "shallows", "sand", "scrub", "g
 // Water reports whether the biome is wet ground.
 func (b Biome) Water() bool { return b <= Shallows || b == River }
 
+// Height thresholds: the sea, its beach, and where the land turns to hills
+// and mountains.
 const (
-	deepBelow = 280
-	seaLevel  = 330
-	beachTop  = 400
+	deepBelow = 270
+	seaLevel  = 320
+	beachTop  = 345
+	hillsAt   = 520
+	rangesAt  = 590
 )
 
-// biomeBands picks the biome from the height band (low, mid, high, peak) and
-// the moisture band (dry, mild, wet).
-var biomeBands = [4][3]Biome{
-	{Scrub, Grass, Forest},
+// biomeBands picks the biome from the height band (lowland, upland, peaks)
+// and the moisture band (dry, mild, wet).
+var biomeBands = [3][3]Biome{
 	{Scrub, Grass, Forest},
 	{Hills, Hills, Forest},
 	{Mountain, Mountain, Hills},
@@ -48,7 +51,10 @@ var biomeBands = [4][3]Biome{
 // Fields is the land: height, moisture, biome, and the water's way down.
 type Fields struct {
 	Height, Moist []int
-	Biome         []Biome
+	// Ground is Height blurred, so the lie of the land (not each cell's
+	// roughness) decides where building is too steep.
+	Ground []int
+	Biome  []Biome
 	// WaterDist is the steps to the nearest water, capped at 255.
 	WaterDist []uint8
 }
@@ -66,18 +72,20 @@ func newFields(seed int64) *Fields {
 	f := &Fields{
 		Height:    make([]int, worldW*worldH),
 		Moist:     make([]int, worldW*worldH),
+		Ground:    make([]int, worldW*worldH),
 		Biome:     make([]Biome, worldW*worldH),
 		WaterDist: make([]uint8, worldW*worldH),
 	}
 	coast := coasts[roll(len(coasts), seed, 1)]
 	for y := 0; y < worldH; y++ {
 		for x := 0; x < worldW; x++ {
-			noise := fbm(seed, x*256/30, y*256/15, 5)
+			noise := fbm(seed, x*256/30, y*256/15, 4)
 			reach := (x-worldW/2)*coast[0] + 2*(y-worldH/2)*coast[1]
-			f.Height[at(x, y)] = clamp(noise*5/3-230-max(0, reach-46)*8, 0, noiseMax)
+			f.Height[at(x, y)] = clamp(noise*2/5+235-max(0, reach-46)*8, 0, noiseMax)
 			f.Moist[at(x, y)] = fbm(seed+101, x*256/40, y*256/20, 4)
 		}
 	}
+	f.blur()
 	sea := make([]bool, len(f.Height))
 	for i, h := range f.Height {
 		sea[i] = h < seaLevel
@@ -87,6 +95,24 @@ func newFields(seed int64) *Fields {
 	f.measureWater()
 	f.settleBiomes()
 	return f
+}
+
+// blur averages every cell with the 5 by 3 cells round it.
+func (f *Fields) blur() {
+	for y := 0; y < worldH; y++ {
+		for x := 0; x < worldW; x++ {
+			sum, n := 0, 0
+			for yy := y - 1; yy <= y+1; yy++ {
+				for xx := x - 2; xx <= x+2; xx++ {
+					if inWorld(xx, yy) {
+						sum += f.Height[at(xx, yy)]
+						n++
+					}
+				}
+			}
+			f.Ground[at(x, y)] = sum / n
+		}
+	}
 }
 
 // neighbours are the four steps, in a fixed order.
@@ -190,7 +216,13 @@ func (f *Fields) settleBiomes() {
 		default:
 			damp := f.Moist[i] + max(0, 6-int(f.WaterDist[i]))*25
 			wet := clamp(damp*3/noiseMax, 0, 2)
-			band := clamp((h-beachTop)*4/(noiseMax-beachTop), 0, 3)
+			band := 0
+			if h >= hillsAt {
+				band = 1
+			}
+			if h >= rangesAt {
+				band = 2
+			}
 			f.Biome[i] = biomeBands[band][wet]
 		}
 	}
@@ -201,12 +233,13 @@ func (f *Fields) Land(x, y int) bool {
 	return inWorld(x, y) && !f.Biome[at(x, y)].Water()
 }
 
-// Slope is the steepest drop to a neighbour, in height units.
+// Slope is the steepest drop to a neighbour over a two-cell stride, on the
+// blurred ground, in height units.
 func (f *Fields) Slope(x, y int) int {
 	steep := 0
 	for _, d := range neighbours {
-		if inWorld(x+d[0], y+d[1]) {
-			steep = max(steep, abs(f.Height[at(x, y)]-f.Height[at(x+d[0], y+d[1])]))
+		if inWorld(x+2*d[0], y+2*d[1]) {
+			steep = max(steep, abs(f.Ground[at(x, y)]-f.Ground[at(x+2*d[0], y+2*d[1])]))
 		}
 	}
 	return steep
