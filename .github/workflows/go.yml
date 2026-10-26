@@ -3,14 +3,8 @@ name: Go
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths-ignore:
-      - "site/**"
-      - "**.md"
   push:
     branches: [master]
-    paths-ignore:
-      - "site/**"
-      - "**.md"
   workflow_dispatch:
 
 permissions:
