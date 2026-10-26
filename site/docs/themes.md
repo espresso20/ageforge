@@ -1,8 +1,8 @@
-# 🎨 Themes & Accessibility
+# 🎨 Themes & accessibility
 
 AgeForge's interface colors come from swappable **themes**: 16 themes in all, **dark** and **light**. You can switch at any time and the change applies at once. Your choice is saved with your **account**, not with a game save, so it carries across every save and every new game. Loading an old save never changes your theme.
 
-Themes come in three groups: **Standard** (the default dark **Forge** and the light **Daylight**), **Accessibility** (colorblind-safe and high-contrast, in dark and light), and **Unlockable** flavor themes that come with a [badge](badges.md): five for reaching an age, five for other badges. Standard and Accessibility themes are always unlocked.
+Themes come in three groups. **Standard** has the default dark **Forge** and the light **Daylight**. **Accessibility** has colorblind-safe and high-contrast themes, in dark and light. **Unlockable** flavor themes each come with a [badge](badges.md): five for reaching an age, five for other badges. Standard and Accessibility themes are always unlocked.
 
 ---
 
@@ -29,14 +29,14 @@ Themes come in three groups: **Standard** (the default dark **Forge** and the li
 
 ### Every theme paints its own background
 
-A theme paints the **whole surface**, text included: the page background, panels, borders, selection, text tiers, and the good / warn / bad colors. The game's flavor sentences, the quips and comments in the log, on buildings and in the arrival screens, have a color of their own: orange, in every theme (neon orange in Forge). Nothing else is drawn in it. Where orange is already a theme's loss or warning color (the colorblind-safe themes and Ashfall), it is a light apricot. A light theme looks right on a dark terminal and a dark theme looks right on a light one, so you don't need to match your terminal's colors to the theme.
+A theme paints the **whole surface**, text included: the page background, panels, borders, selection, text tiers, and the good, warn and bad colors. The game's flavor sentences (the quips and comments in the log, on buildings and in the arrival screens) have a color of their own: orange, in every theme (neon orange in Forge). Nothing else is drawn in it. In Deuteranopia-safe, Protanopia-safe, High Contrast and Ashfall, where orange is already the loss or warning color, the flavor color is a light apricot. A light theme looks right on a dark terminal and a dark theme looks right on a light one, so you don't need to match your terminal's colors to the theme.
 
 <div class="screen-pair">
 <figure class="screen" data-screen="theme-forge"><figcaption>The People panel in Forge, the default theme.</figcaption></figure>
 <figure class="screen" data-screen="theme-daylight"><figcaption>The same panel in Daylight.</figcaption></figure>
 </div>
 
-A **truecolor** terminal is recommended for exact colors.
+Themes use exact RGB colors, so a **truecolor** terminal shows them as designed.
 
 ### Motion
 
@@ -48,19 +48,19 @@ A few things in the game move on their own: the [Map](map.md) and the mini map, 
 | `motion off` | Hold everything still: each of those is drawn as its first frame, and nothing is animated |
 | `motion on` | Bring it back (the default) |
 
-Nothing is hidden with motion off, and nothing in a game changes: the same badges, the same map, drawn still. The setting is saved per account; with no account loaded it lasts for the session.
+Nothing is hidden with motion off, and nothing in a game changes: the same badges, the same map, drawn still. The setting is saved per account. With no account loaded, it lasts for the session.
 
 ---
 
 ## 🔀 How to switch
 
-You can change theme from the **`theme` command** at the `>` prompt, or from the **Themes** entry on the main menu. Both open the same picker.
+You can change theme from the **`theme` command** at the prompt, or from the **Themes** entry on the main menu. Both open the same picker.
 
 | Command | What it does |
 |---|---|
 | `theme` | Open the live theme picker |
-| `theme list` | List every theme by name and key. It marks the active one and shows each theme's light/dark variant, which ones are accessible, and the lock status of any theme you haven't unlocked |
-| `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`). A locked theme is refused with its unlock hint |
+| `theme list` | List every theme by name and key. It marks the active one, shows each theme's light or dark variant, marks the accessible ones, and shows the unlock condition of any theme you haven't unlocked |
+| `theme <key>` | Switch directly to a theme by key (for example `theme high_contrast`). A locked theme is refused, and the reply points you to `theme list` to see how to earn it |
 
 ```
 theme
@@ -70,25 +70,32 @@ theme daylight
 
 ### The picker
 
-The picker and `theme list` show a locked theme's unlock condition. One earned in an age past your next one reads "Reach a later age" instead of naming the age, so the list doesn't spoil ages you haven't reached (the table above has them all). A theme whose badge is still hidden from you says only what kind of badge gives it.
+The picker and `theme list` show a locked theme's unlock condition. One earned in an age past your next one reads "Reach a later age" instead of naming the age, so the list doesn't spoil ages you haven't reached (the table above has them all). The last five themes in the table show a general line instead of their condition:
 
-The picker fills the window and **previews** each theme as you move to it. Themes are grouped under **Standard**, **Accessibility**, and **Unlockable** headings, and each row is tagged **light** or **dark**, **accessible**, or **locked** (`🔒`).
+| Theme | What the picker says |
+|---|---|
+| Source and Glitch | Given by a secret badge |
+| Ashfall | Given by a legendary badge |
+| Ledger | Given by the top rung of a badge ladder |
+| Prismatic | Earn 400 badges |
+
+The picker fills the window and **previews** each theme as you move to it. Themes are grouped under **Standard**, **Accessibility** and **Unlockable** headings. Each row shows **light** or **dark**, and **accessible** or **locked** (`🔒`) where they apply. The theme you had when you opened the picker is marked `(current)`.
 
 | Key | Action |
 |---|---|
 | `↑` / `↓` | Preview a theme. The whole interface retints at once so you can judge it in place |
-| `Enter` | Keep the highlighted theme (only if it's unlocked) |
+| `Enter` | Keep the highlighted theme. On a locked theme it closes the picker and puts back the theme you had |
 | `Esc` / `q` | Cancel and revert to whatever you had before |
 
 Beside the list, a **details pane** shows the highlighted theme's:
 
-- one-line description, its **Light/Dark** variant and group;
-- the `▲` / `▼` gain/loss glyphs, for accessible themes;
+- name, **Light** or **Dark** variant and group, then a one-line description;
+- the `▲` and `▼` gain and loss glyphs, for accessible themes;
 - the **unlock condition**, for locked themes;
 - **palette swatches**, a colored block for each color role;
 - a small **sample panel** painted in that theme's own colors, so you can see it on its real background.
 
-A **locked** theme can still be previewed, but `Enter` won't keep one you haven't earned yet.
+A **locked** theme can still be previewed, but you can't keep one you haven't earned.
 
 ---
 
@@ -97,23 +104,22 @@ A **locked** theme can still be previewed, but `Enter` won't keep one you haven'
 Color is never the only signal. Four accessibility themes are **unlocked from the start** for everyone:
 
 - **Deuteranopia-safe** and **Protanopia-safe**, for red-green color vision deficiency.
-- **High Contrast**, for the most legible text on a near-black background. It suits low-vision players and high-glare screens.
-- **High Contrast Light**, the light counterpart: black ink on a white page, with text at **AAA (7:1)** contrast.
+- **High Contrast**, white text on a black background, for maximum legibility.
+- **High Contrast Light**, the light counterpart: black ink on a white page.
 
-AgeForge normally uses **green for gains and red for losses**. The accessible themes drop that pairing:
+AgeForge normally uses **green for gains and red for losses**. The accessibility themes drop that pairing:
 
-- Gains are **blue** and losses **orange**, the standard colorblind-safe pair, so red-green colorblind players can tell `+` from `−`.
-- `▲` (gain) and `▼` (loss) glyphs mark the sign by **shape as well as color**, so the direction reads even if the hues don't.
+- Gains are **blue** and losses are **orange** (amber in Protanopia-safe), a pair that red-green colorblind players can tell apart.
+- Everything the game draws in green or red for a gain or a loss follows the theme, so in these themes it reads blue and orange.
+- The picker's details pane and sample panel show `▲` for a gain and `▼` for a loss, so the sign is marked by shape as well as color.
 
-When an accessible theme is active, the usual "green = gain / red = loss" UI legends adapt to **blue / orange + glyphs** to match.
-
-Every shipped theme is **contrast-checked** (WCAG AA for text on its background). The accessibility themes additionally pass a **colorblind-distinguishability** check.
+All 16 themes pass a contrast check for text on their background (WCAG AA). The four accessibility themes are held to a stricter one: main text meets AAA (7:1) and the other text roles meet 4.5:1. They also pass a **colorblind-distinguishability** check: their gain and loss colors stay apart under deuteranopia and protanopia simulation.
 
 ---
 
 ## 🗺️ The Map and your theme
 
-The [Map](map.md) follows your theme too, including light ones. Both styles, roguelike and skyline, take their colors from the theme, so switching themes recolors the Map and the dashboard's mini map at once. In the **Monochrome** and **Parchment** themes the skyline is drawn as a two-tone (duotone) picture.
+The [Map](map.md) follows your theme too, including light ones. Both styles, roguelike and skyline, take their colors from the theme, so switching themes recolors the Map and the dashboard's mini map at once. In the **Monochrome** and **Parchment** themes the Map is drawn as a two-tone (duotone) picture: one ink on one paper.
 
 ---
 
@@ -134,11 +140,11 @@ Beyond the Standard and Accessibility groups, AgeForge has ten **flavor themes**
 | **Source** | Dark | Earn a secret badge |
 | **Glitch** | Dark | Earn another secret badge |
 
-Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on **every save and every future new game**, just like the accessibility themes. When a badge unlocks a theme, the log says so.
+Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on **every save and every future new game**, just like the accessibility themes. When a badge unlocks a theme, the log says so (`New theme unlocked: Bronze. Type theme to use it.`).
 
-The five age themes come with the badge for reaching their age. They used to come from milestones; the condition is the same, and an account that had already reached an age keeps its theme, or gets it the first time this version opens the account.
+The five age themes come with the badge for reaching their age. An account that has already reached an age gets that age's badge, and its theme, when the account loads.
 
-Until you've earned it, a flavor theme shows in the picker (and in `theme list`) with a `🔒` and its unlock condition. You can still preview a locked theme, but you can't make it your active theme until you earn the badge that unlocks it. The picker never says more than the badge case does: Source and Glitch say only that a secret badge gives them, and Ashfall and Ledger say what kind of badge gives them until that badge is in sight.
+Until you've earned it, a flavor theme shows in the picker (and in `theme list`) with a `🔒` and its unlock condition. You can still preview a locked theme, but you can't make it your active theme until you earn the badge that unlocks it.
 
 ### Ambient effects
 
@@ -152,7 +158,7 @@ Five themes carry an ambient effect on the dashboard:
 | **Ledger** | Every other row of the empty space is tinted, like green-bar paper |
 | **Prismatic** | Glints in the empty space turn slowly through the spectrum |
 
-An effect is only ever drawn in cells that are otherwise empty, with clear space between it and any text, and never in the command bar, so nothing you read or type is covered. `motion off` turns the effects off (see [Motion](#motion)); the colors stay.
+An effect is only ever drawn in cells that are otherwise empty, with clear space between it and any text, and never in the command bar, so nothing you read or type is covered. The same effects also play on the arrival screen of a new era and in the prestige ending. `motion off` turns the effects off (see [Motion](#motion)); the colors stay.
 
 ---
 
