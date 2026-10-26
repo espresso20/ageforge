@@ -159,7 +159,7 @@ func (pm *PrestigeManager) SetRecord(age string) {
 // LoadMastery restores the mastery state from a save. Unknown ages and
 // out-of-range levels are dropped or clamped, as a hand-edited save could
 // carry them.
-func (pm *PrestigeManager) LoadMastery(mastery map[string]int, record, runFurthest string, seeded bool) {
+func (pm *PrestigeManager) LoadMastery(mastery map[string]int, record, runFurthest string) {
 	pm.mastery = make(map[string]int, len(mastery))
 	for a, m := range mastery {
 		if _, ok := pm.rules.Index(a); ok && config.ClampMastery(m) > 0 {
@@ -173,7 +173,6 @@ func (pm *PrestigeManager) LoadMastery(mastery map[string]int, record, runFurthe
 	if _, ok := pm.rules.Index(runFurthest); ok {
 		pm.runFurthest = runFurthest
 	}
-	pm.masterySeeded = seeded
 	pm.rebuildSpeeds()
 }
 
@@ -256,57 +255,9 @@ func masteryCommitLine(set *rules.Set, gained []string) string {
 		set.Name(rules.KindAge, gained[0]), set.Name(rules.KindAge, gained[len(gained)-1]))
 }
 
-// seedMasteryLocked is the one-time step that gives a save from before Era
-// Mastery the mastery its past prestiges earned: each one was a Modern Age
-// prestige, which completes the Primitive to the Atomic Age, so those ages
-// get mastery min(10, level). The record becomes the deepest of the current
-// age, the Modern Age (any prestige reached it), the Interstellar Age with
-// the Cosmic Legacy held, and the first age of every epoch succumbed to.
-// Runs once, after the signature check, and marks the save
-// (PrestigeSave.MasterySeeded). A level-0 save gains nothing and logs
-// nothing. Must be called with the write lock held.
-func (ge *GameEngine) seedMasteryLocked() {
-	pm := ge.Prestige
-	if pm.masterySeeded {
-		return
-	}
-	pm.masterySeeded = true
-	if pm.level <= 0 {
-		return
-	}
-	m := config.ClampMastery(pm.level)
-	last := ""
-	for _, a := range ge.rules.AgeKeys() {
-		if a == PrestigeRunAge {
-			break
-		}
-		if pm.mastery[a] < m {
-			pm.mastery[a] = m
-		}
-		last = a
-	}
-	pm.NoteAgeEntered(PrestigeRunAge)
-	pm.runFurthest = "" // the run's own furthest comes from the run (noteRunAgesLocked)
-	if ge.cosmicLegacy {
-		pm.NoteAgeEntered("interstellar_age")
-		pm.runFurthest = ""
-	}
-	for _, ep := range sortedKeys(ge.legacyBonuses) {
-		if era, _ := ge.rules.Era(ep); ge.legacyBonuses[ep] && len(era.Ages) > 0 {
-			pm.NoteAgeEntered(era.Ages[0])
-			pm.runFurthest = ""
-		}
-	}
-	pm.rebuildSpeeds()
-	ge.noteRunAgesLocked()
-	ge.addLog("info", vibe.Sprintf("game.mastery.seedMasteryLocked.01", "Era Mastery: ages you have completed now run faster. %s to %s: mastery %d (%s).",
-		shortAgeName(ge.rules, ge.rules.AgeKeys()[0]), shortAgeName(ge.rules, last), m, SpeedText(config.MasteryK(m))))
-}
-
 // noteRunAgesLocked makes sure the run's furthest age and the record cover
 // the ages this run has reached (GameStats.AgesReached) and the current
-// one. Idempotent; on load it fills them in for saves from before Era
-// Mastery. Must be called with the write lock held.
+// one. Idempotent. Must be called with the write lock held.
 func (ge *GameEngine) noteRunAgesLocked() {
 	for _, a := range ge.Stats.AgesReached {
 		ge.Prestige.NoteAgeEntered(a)
@@ -355,13 +306,6 @@ func (ge *GameEngine) buildTicksLocked(def config.BuildingDef) int {
 // down, one tick at least. Must be called with the lock held.
 func (ge *GameEngine) wonderTicks(ticks int) int {
 	return techTimeTicks(ticks, ge.Research.Mechanic(config.MechanicWonderBuildTicks))
-}
-
-// WonderBuildTicks is BuildTicks for a wonder listed at base ticks, with the
-// techs' terms read off a snapshot (a mechanic no tech has touched is absent
-// there and reads as no cut): the panels list a wonder's time with it.
-func WonderBuildTicks(base int, rs ResearchState, k float64) int {
-	return BuildTicks(techTimeTicks(base, rs.Mechanics[config.MechanicWonderBuildTicks]), rs.BuildTime, k)
 }
 
 // BuildTicks is how long a building listed at base ticks takes to build

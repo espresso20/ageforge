@@ -11,39 +11,32 @@ import (
 // Every place that shows what a wonder needs shows that tech and whether it
 // is researched, and every place that lists a tech marks the keystones.
 
-// wonderKeystone reports the keystone tech of wonder key and where it
-// stands: researched, still locking the wonder, or waived (a save from
-// before the lock keeps the age it was in exempt; the engine then reports
-// no tech for the wonder to wait for). ok is false for a wonder that needs
-// no tech.
-func wonderKeystone(state game.GameState, key string) (name string, researched, waived, ok bool) {
+// wonderKeystone reports the keystone tech of wonder key and whether it is
+// researched. ok is false for a wonder that needs no tech.
+func wonderKeystone(state game.GameState, key string) (name string, researched, ok bool) {
 	def, found := state.Ruleset().Building(key)
 	if !found || def.RequiredTech == "" {
-		return "", false, false, false
+		return "", false, false
 	}
 	ts := state.Research.Techs[def.RequiredTech]
 	name = ts.Name
 	if name == "" {
 		name = game.TechName(def.RequiredTech)
 	}
-	return name, ts.Researched, !ts.Researched && state.Buildings[key].NeedsTech == "", true
+	return name, ts.Researched, true
 }
 
 // wonderKeystoneLine is the line a wonder's requirements carry for its
 // keystone, in the marks the bank lines use: green ✓ when researched, red ✗
-// with the command when not, gray when this age is exempt. "" for a wonder
-// that needs no tech.
+// with the command when not. "" for a wonder that needs no tech.
 func wonderKeystoneLine(state game.GameState, key string) string {
-	name, researched, waived, ok := wonderKeystone(state, key)
+	name, researched, ok := wonderKeystone(state, key)
 	if !ok {
 		return ""
 	}
 	def, _ := state.Ruleset().Building(key)
-	switch {
-	case researched:
+	if researched {
 		return vibe.Sprintf("ui.keystone.wonderKeystoneLine.01", "[green]✓ Keystone: %s, researched[-]", name)
-	case waived:
-		return vibe.Sprintf("ui.keystone.wonderKeystoneLine.02", "[gray]Keystone: %s, not needed in this age (the lock starts when you next advance)[-]", name)
 	}
 	return vibe.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, def.RequiredTech)
 }
@@ -51,7 +44,7 @@ func wonderKeystoneLine(state game.GameState, key string) string {
 // wonderBuildLine is what a full wonder bank says to do next: build it, or
 // research its keystone first.
 func wonderBuildLine(state game.GameState, key string) string {
-	if name, researched, waived, ok := wonderKeystone(state, key); ok && !researched && !waived {
+	if name, researched, ok := wonderKeystone(state, key); ok && !researched {
 		return vibe.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, key)
 	}
 	return vibe.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", key)

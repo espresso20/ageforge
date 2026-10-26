@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"os"
@@ -30,14 +31,18 @@ import (
 // always did and can never read it as modified.
 const accountSchemaVersion = 1
 
+// accountFormat is the format every saved account carries (Account.Format), signed
+// with the rest. An account without it was written before 4.0 and is refused on load
+// (errBeforeFour). A change to the format that cannot read the one before it raises it.
+const accountFormat = 4
+
 // accountFileName is the fixed base name of the account file under the data dir.
 // v1 resolves a single account.json — no multi-profile layout yet (the accounts design §3.1).
 const accountFileName = "account.json"
 
 // accountsDirName is the subdirectory under the data ROOT that holds the per-account
 // slots: <root>/accounts/<account_id>/. Each slot carries that account's account.json
-// and its own saves/ tree. The flat legacy layout (account.json + saves/ directly under
-// the root) is migrated into a slot on first boot by migrateLegacyAccountIfNeeded.
+// and its own saves/ tree.
 const accountsDirName = "accounts"
 
 // activePointerFileName is the base name of the active-account pointer file under the
@@ -89,8 +94,8 @@ func accountDir(id string) string {
 //
 // When no account is active yet (empty id, the first-run window before a name is chosen),
 // it collapses to <root>/accounts. That is harmless: nothing writes a *named* artifact in
-// that window — before a name is chosen no account exists, and the create/migrate paths
-// always have a real id before they MkdirAll/Save. So no file is ever created under an
+// that window — before a name is chosen no account exists, and the create paths always
+// have a real id before they MkdirAll/Save. So no file is ever created under an
 // empty-id slot.
 func dataDirectory() string {
 	return accountDir(getActiveAccountID())
@@ -133,88 +138,6 @@ func writeActivePointer(id string) error {
 	}
 	if err := os.Rename(tmp, path); err != nil {
 		return fmt.Errorf("failed to finalize active-account pointer: %w", err)
-	}
-	return nil
-}
-
-// migrateLegacyAccountIfNeeded moves a pre-Phase-A FLAT layout (account.json + saves/
-// directly under the data ROOT) into the new account-scoped slot, non-destructively
-// (the accounts design, Phase A). It is called at the top of LoadAccount, BEFORE the
-// active account is resolved, so the pointer it writes is in place for that resolution.
-//
-// TRIGGER (idempotent): it runs ONLY when <root>/account.json exists AND <root>/accounts
-// does NOT yet exist. Once the accounts/ tree exists the layout is already migrated (or
-// born scoped), so a second call is a clean no-op — safe to call on every boot.
-//
-// STEPS: read the legacy account.json to learn its AccountID → mkdir -p the slot →
-// MOVE (os.Rename) the legacy saves/ into the slot FIRST, then MOVE account.json → write
-// the active pointer. Renames are atomic and never delete data. Saves move BEFORE
-// account.json so that if the saves rename fails the legacy account.json is still in place
-// at the root and the trigger condition (no accounts/ dir) still holds, leaving the tree in
-// a clean, re-migratable state. account-export.json (a user-created backup) is left alone.
-func migrateLegacyAccountIfNeeded() error {
-	root := rootDataDir()
-	legacyAccount := filepath.Join(root, accountFileName)
-	accountsRoot := filepath.Join(root, accountsDirName)
-
-	// Trigger only when the flat account.json exists and we have NOT migrated yet.
-	if _, err := os.Stat(legacyAccount); err != nil {
-		return nil // no legacy account (absent) — nothing to migrate
-	}
-	if _, err := os.Stat(accountsRoot); err == nil {
-		return nil // accounts/ already exists — already migrated (idempotent no-op)
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("failed to stat accounts dir during migration: %w", err)
-	}
-
-	// Learn the legacy account's ID so we name its slot correctly. A corrupt/unparseable
-	// legacy file has no usable ID — leave it untouched (LoadAccount's corrupt path backs
-	// it up later) rather than inventing a slot name.
-	data, err := os.ReadFile(legacyAccount)
-	if err != nil {
-		return fmt.Errorf("failed to read legacy account during migration: %w", err)
-	}
-	var acct Account
-	if err := json.Unmarshal(data, &acct); err != nil {
-		return nil // unparseable legacy file — not a migration case; downstream handles it
-	}
-	if acct.AccountID == "" {
-		return nil // no ID to key a slot on — leave the flat file for downstream handling
-	}
-
-	slot := accountDir(acct.AccountID)
-	if err := os.MkdirAll(slot, 0755); err != nil {
-		return fmt.Errorf("failed to create account slot during migration: %w", err)
-	}
-
-	// One-time pre-migration snapshot: with migration now confirmed (parseable id, accounts/
-	// absent) but BEFORE the first os.Rename, copy the flat data/ aside so the player's
-	// original state is recoverable. BEST-EFFORT — a snapshot failure must NOT abort the
-	// migration: the renames below are atomic and corruption-safe on their own, so this is
-	// belt-and-braces reassurance, and bricking startup over a failed bonus backup would be
-	// strictly worse than skipping it. We capture the path/err locally; the game package has no
-	// logger, so a failure is simply not propagated.
-	_, _ = snapshotPreMigration()
-
-	// Move saves/ FIRST (see doc above): a failure here leaves account.json at the root,
-	// so the trigger still fires next boot and we retry cleanly.
-	legacySaves := filepath.Join(root, "saves")
-	if _, err := os.Stat(legacySaves); err == nil {
-		if err := os.Rename(legacySaves, filepath.Join(slot, "saves")); err != nil {
-			return fmt.Errorf("failed to migrate saves into account slot: %w", err)
-		}
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("failed to stat legacy saves during migration: %w", err)
-	}
-
-	// Move account.json into the slot.
-	if err := os.Rename(legacyAccount, filepath.Join(slot, accountFileName)); err != nil {
-		return fmt.Errorf("failed to migrate account.json into account slot: %w", err)
-	}
-
-	// Record the migrated account as active so the next resolution finds it.
-	if err := writeActivePointer(acct.AccountID); err != nil {
-		return fmt.Errorf("failed to write active pointer during migration: %w", err)
 	}
 	return nil
 }
@@ -276,6 +199,7 @@ type AccountPrefs struct {
 // phases.
 type Account struct {
 	Version     int       `json:"version"`
+	Format      int       `json:"format,omitempty"`
 	AccountID   string    `json:"account_id"`
 	DisplayName string    `json:"display_name,omitempty"`
 	Created     time.Time `json:"created"`
@@ -284,10 +208,8 @@ type Account struct {
 	// --- meta-progression (DATA) ---
 	Unlocks AccountUnlocks `json:"unlocks,omitempty"`
 	Stats   AccountStats   `json:"stats,omitempty"`
-	// Achievements is the list of account achievements a build from before badges
-	// keeps. The four became badges (each badge lists the key as an alias):
-	// ensureBadges grants a badge for a key found here, and earning such a badge
-	// adds its key here, so both kinds of build show the same thing.
+	// Achievements is the list the accounts kept before badges. Nothing adds to
+	// it now; it stays because account.json is signed over it.
 	Achievements []string `json:"achievements,omitempty"`
 	// Badges is the earned badges by key; Counters the lifetime counts badges are
 	// judged on (only the ones a badge names); Days the calendar days the account
@@ -297,7 +219,7 @@ type Account struct {
 	Counters map[string]float64     `json:"-"`
 	Days     []string               `json:"-"`
 	// BadgesTampered is the badge file's own tamper mark: its signature did not match,
-	// or it was signed for another account. Every badge in the file is then crossed,
+	// it was signed for another account, or a saved account's file was missing. Every badge in the file is then crossed,
 	// and so is every badge earned while it is set. It is saved in the badge file and
 	// sticks, as Tampered does for account.json. An edited badge file never flags
 	// account.json, and the other way round.
@@ -324,6 +246,11 @@ type Account struct {
 	// engine's periodic autosave block (outside ge.mu) calls FlushIfDirty, which Saves
 	// once if dirty and clears the flag. json:"-" keeps it off disk and out of the sig.
 	dirty bool `json:"-"`
+
+	// setAside is where an account from before 4.0 with this account's name was
+	// moved to when this one was made, until the engine has said so (takeSetAside).
+	// Not saved.
+	setAside string
 
 	// pendingEarned is the badges earned and not yet announced: the dashboard drains
 	// it (GameEngine.DrainEarnedBadges) and writes the toast and the log line. Not
@@ -388,7 +315,7 @@ func AccountIDForName(name string) string {
 }
 
 // Established reports whether this account has been named (DisplayName set). An account
-// loaded from disk with no display name (e.g. a legacy random-id dev account) is NOT
+// loaded from disk with no display name is NOT
 // established, so boot/UI code can prompt the player to name it on first run.
 func (a *Account) Established() bool {
 	return a.DisplayName != ""
@@ -404,15 +331,15 @@ func (a *Account) Established() bool {
 //     a cosmetic flag, not a lockout. The file is NOT deleted.
 //   - Present but UNPARSEABLE: back the bad file up to account.json.corrupt and return
 //     (nil, false, nil) — there is no salvageable account, so the caller prompts fresh.
+//   - Present but from before 4.0 (no Format): return (nil, false, err) with the
+//     refusal; the file is not touched.
+//   - Present with its badge file missing: loaded, with the badge file marked as edited
+//     (loadSavedBadgeFile), as it is for an edited one.
 //
 // It never writes on the happy/tampered paths; the only disk mutation is the .corrupt
 // rename for an unparseable file.
 func LoadAccount() (*Account, bool, error) {
-	// Migrate a legacy flat layout, then scope to the active account from the persisted
-	// pointer.
-	if err := migrateLegacyAccountIfNeeded(); err != nil {
-		return nil, false, err
-	}
+	// Scope to the active account from the persisted pointer.
 	id, err := readActivePointer()
 	if err != nil {
 		return nil, false, err
@@ -440,78 +367,18 @@ func LoadAccount() (*Account, bool, error) {
 		}
 		return nil, false, nil
 	}
+	if acct.Format < accountFormat {
+		return nil, false, errBeforeFour()
+	}
 
 	if !verifyAccount(&acct) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
-	acct.loadBadgeFile(filepath.Dir(path))
+	acct.loadSavedBadgeFile(filepath.Dir(path))
 	// Confirm the loaded account as active (the loaded id is authoritative over the pointer).
 	setActiveAccountID(acct.AccountID)
 	return &acct, true, nil
-}
-
-// CreateNamedAccount mints a signed account whose identity is derived from name:
-// AccountID = AccountIDForName(name), DisplayName = the trimmed ORIGINAL name (display
-// keeps casing/whitespace; the ID does not). Re-entering the same name reproduces the
-// same ID — that IS the cross-machine recovery story (the accounts design §3.5).
-//
-// MIGRATION: if an account file already exists (e.g. a legacy random-id dev account from
-// an old build that auto-created one), its DATA — unlocks, lifetime stats, achievements,
-// prefs — is carried over into the new named account so earned progress is not lost when
-// the identity is re-keyed to the name. Identity fields (the old random ID, Created) are
-// replaced; the new named identity wins. A corrupt/unparseable existing file is ignored
-// (LoadAccount backs it up) and the named account starts with empty data.
-//
-// SCOPING (Phase A): the new account is keyed to the name-derived id. Carry-over reads the
-// CURRENTLY-active account FIRST (before the id switch), then the active id is repointed to
-// the new name-derived id, its slot is created, the account is Saved into that slot, and the
-// active pointer is persisted so the next boot resolves to it. The save mutex discipline is
-// preserved — Save() takes no account mutex.
-func CreateNamedAccount(name string) (*Account, error) {
-	trimmed := strings.TrimSpace(name)
-	now := time.Now()
-	acct := &Account{
-		Version:     accountSchemaVersion,
-		AccountID:   AccountIDForName(trimmed),
-		DisplayName: trimmed,
-		Created:     now,
-		LastSeen:    now,
-	}
-
-	// Carry over DATA from any pre-existing (currently-active) account so unlocks/stats
-	// survive the identity re-key. Read this BEFORE switching the active id below, so it
-	// resolves the prior slot. found=false (absent or corrupt) → start clean.
-	if prior, found, err := LoadAccount(); err == nil && found && prior != nil {
-		acct.Unlocks = prior.Unlocks
-		acct.Stats = prior.Stats
-		acct.Achievements = append([]string(nil), prior.Achievements...)
-		// The badges come along too. They are signed again for the new ID when the
-		// account is saved: this is the one way a badge file changes owner.
-		acct.Badges = mergeBadges(prior.Badges, nil)
-		acct.Counters = mergeCounters(prior.Counters, nil)
-		acct.Days = mergeDays(prior.Days, nil)
-		acct.BadgesTampered = prior.BadgesTampered
-		acct.Prefs = prior.Prefs
-		// Carried data keeps its tamper flag: re-keying must not launder an edited file.
-		acct.Tampered = prior.Tampered
-	}
-	// And a badge file already in the slot the name leads to, if there is one.
-	acct.adoptBadgeFile()
-
-	// Switch the active account to the new name-derived id; Save writes into that
-	// account's own slot, <root>/accounts/<id>/account.json.
-	setActiveAccountID(acct.AccountID)
-	if err := os.MkdirAll(accountDir(acct.AccountID), 0755); err != nil {
-		return nil, fmt.Errorf("failed to create account slot: %w", err)
-	}
-	if err := acct.Save(); err != nil {
-		return nil, err
-	}
-	if err := writeActivePointer(acct.AccountID); err != nil {
-		return nil, err
-	}
-	return acct, nil
 }
 
 // makeActive makes the account in slot id the active one: the persisted pointer, then the
@@ -528,10 +395,7 @@ func makeActive(id string) error {
 
 // accountPath resolves the full path to the ACTIVE account's account.json:
 // <root>/accounts/<activeID>/account.json. It resolves purely through the SCOPED
-// dataDirectory() (Phase A account-scoping) — the pre-scoping binary/CWD-relative
-// fallbacks are gone, since the flat legacy <root>/account.json is relocated into a slot
-// by migrateLegacyAccountIfNeeded before any account read, so there is no flat file left
-// to fall back to.
+// dataDirectory() (Phase A account-scoping).
 func accountPath() string {
 	return filepath.Join(dataDirectory(), accountFileName)
 }
@@ -567,7 +431,7 @@ type AccountSummary struct {
 // the enumeration (ListAccounts) and the switch/open paths share, so neither has to fall
 // back to the global-mutating LoadAccount() to read a non-active slot.
 //
-// It does NOT call migrateLegacyAccountIfNeeded, readActivePointer, or setActiveAccountID
+// It does NOT call readActivePointer or setActiveAccountID
 // — the slot path is built directly from id (accountDir(id)/account.json), so reading slot
 // B can never repoint the active account at B. Behavior by file state mirrors LoadAccount's
 // READ contract, minus any disk mutation:
@@ -579,6 +443,7 @@ type AccountSummary struct {
 //   - Present but UNPARSEABLE: (nil, false, nil). UNLIKE LoadAccount it does NOT rename the
 //     bad file to .corrupt — enumeration is strictly read-only and must not mutate the disk
 //     just by listing; the slot simply doesn't appear.
+//   - Present but from before 4.0: (nil, false, err) with the refusal, as LoadAccount.
 func loadAccountFromSlot(id string) (*Account, bool, error) {
 	path := filepath.Join(accountDir(id), accountFileName)
 	data, err := os.ReadFile(path)
@@ -593,10 +458,13 @@ func loadAccountFromSlot(id string) (*Account, bool, error) {
 		// Unparseable → not a salvageable account. Read-only: do not back it up here.
 		return nil, false, nil
 	}
+	if acct.Format < accountFormat {
+		return nil, false, errBeforeFour()
+	}
 	if !verifyAccount(&acct) {
 		acct.Tampered = true
 	}
-	acct.loadBadgeFile(filepath.Dir(path))
+	acct.loadSavedBadgeFile(filepath.Dir(path))
 	return &acct, true, nil
 }
 
@@ -620,7 +488,7 @@ func ListAccounts() []AccountSummary { return listAccounts(nil) }
 
 // listAccounts is ListAccounts with a badge book to count each account's badges by: the
 // badges it holds that the ruleset knows and that count toward completion, after bringing
-// a file from an older version up in memory (nothing is written). With no book the count
+// a file up to the ruleset's badges in memory (nothing is written). With no book the count
 // is what the file holds.
 func listAccounts(book *badgeBook) []AccountSummary {
 	active := getActiveAccountID()
@@ -702,11 +570,8 @@ func SwitchAccount(id string) (*Account, error) {
 }
 
 // CreateAccount creates (or opens) the account whose identity is derived from name and
-// makes it active (Phase B). It is deliberately DISTINCT from CreateNamedAccount: this path
-// has NO CARRY-OVER. A brand-new account starts EMPTY — it never copies the currently-active
-// account's unlocks/stats/achievements/prefs. (CreateNamedAccount keeps its carry-over for
-// the first-run name-derivation flow, where re-keying a legacy random-id account to a name
-// must preserve earned progress; it is left untouched.)
+// makes it active (Phase B). There is NO CARRY-OVER: a brand-new account starts EMPTY — it
+// never copies the currently-active account's unlocks/stats/achievements/prefs.
 //
 // Identity is name-derived (AccountIDForName), so the same name always maps to the same
 // slot. Behavior by slot state:
@@ -722,9 +587,18 @@ func CreateAccount(name string) (*Account, error) {
 	id := AccountIDForName(trimmed)
 
 	// Same-name → open the existing account rather than overwrite it. Slot existence is
-	// keyed on its account.json, so a bare/empty slot dir doesn't count as "exists".
+	// keyed on its account.json, so a bare/empty slot dir doesn't count as "exists". An
+	// account from before 4.0 is refused: its folder is moved aside, whole, and the name
+	// makes a fresh account.
+	aside := ""
 	if _, err := os.Stat(filepath.Join(accountDir(id), accountFileName)); err == nil {
-		return SwitchAccount(id)
+		existing, switchErr := SwitchAccount(id)
+		if !errors.As(switchErr, &beforeFourError{}) {
+			return existing, switchErr
+		}
+		if aside, err = setAsideSlot(id); err != nil {
+			return nil, err
+		}
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("failed to stat account slot %s: %w", id, err)
 	}
@@ -737,6 +611,7 @@ func CreateAccount(name string) (*Account, error) {
 		DisplayName: trimmed,
 		Created:     now,
 		LastSeen:    now,
+		setAside:    aside,
 	}
 	// A badge file left in the slot (its account.json was lost) is this account's.
 	acct.adoptBadgeFile()
@@ -752,6 +627,37 @@ func CreateAccount(name string) (*Account, error) {
 		return nil, err
 	}
 	return acct, nil
+}
+
+// setAsideSlot moves the folder of the account in slot id, whole, to
+// <root>/backups/<id>.before-4.0 (with a number after it if that is taken) and returns
+// where it went. Nothing in it is deleted or changed.
+func setAsideSlot(id string) (string, error) {
+	backups := filepath.Join(rootDataDir(), backupsDirName)
+	if err := os.MkdirAll(backups, 0755); err != nil {
+		return "", fmt.Errorf("failed to create backups root: %w", err)
+	}
+	dst := filepath.Join(backups, id+".before-4.0")
+	for n := 2; ; n++ {
+		if _, err := os.Stat(dst); os.IsNotExist(err) {
+			break
+		}
+		dst = filepath.Join(backups, fmt.Sprintf("%s.before-4.0-%d", id, n))
+	}
+	if err := os.Rename(accountDir(id), dst); err != nil {
+		return "", fmt.Errorf("failed to move the account from before 4.0 aside: %w", err)
+	}
+	return dst, nil
+}
+
+// takeSetAside returns where an account from before 4.0 with this account's name was
+// moved to when this one was made, once, or "" if none was.
+func (a *Account) takeSetAside() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	moved := a.setAside
+	a.setAside = ""
+	return moved
 }
 
 // ExportAccountByID exports the progress blob for the account in slot id WITHOUT touching the
@@ -867,6 +773,7 @@ func shortID(id string) string {
 func signAccount(a *Account) string {
 	payload := Account{
 		Version:      a.Version,
+		Format:       a.Format,
 		AccountID:    a.AccountID,
 		DisplayName:  a.DisplayName,
 		Created:      a.Created,
@@ -931,6 +838,12 @@ func (a *Account) Save() error {
 		return fmt.Errorf("failed to create data directory: %w", err)
 	}
 
+	// The badges go to their own file in the same slot first, when they changed: a
+	// saved account always has one, so the badge file is never behind account.json.
+	if err := a.saveBadgeFile(dir); err != nil {
+		return err
+	}
+	a.Format = accountFormat
 	a.Signature = signAccount(a)
 	data, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
@@ -945,8 +858,7 @@ func (a *Account) Save() error {
 	if err := os.Rename(tmpPath, path); err != nil {
 		return fmt.Errorf("failed to finalize account: %w", err)
 	}
-	// The badges go to their own file in the same slot, when they changed.
-	return a.saveBadgeFile(dir)
+	return nil
 }
 
 // --- Unlock API (the accounts design §8; the theming design §5 is the first caller) ---
@@ -1149,7 +1061,7 @@ func (a *Account) RecoveryCode() string {
 	idBytes, err := hex.DecodeString(id)
 	if err != nil || len(idBytes) != 16 {
 		// An account ID that isn't 16 hex bytes can't form a code; return the prefix
-		// only rather than panic. CreateNamedAccount always produces a valid 16-byte ID.
+		// only rather than panic. CreateAccount always produces a valid 16-byte ID.
 		return recoveryCodePrefix + "-"
 	}
 	sum := crc16CCITT(idBytes)
@@ -1324,7 +1236,7 @@ func (a *Account) ExportProgress() ([]byte, error) {
 		Achievements: a.Achievements,
 		Prefs:        a.Prefs,
 		Tampered:     a.Tampered,
-		BadgeStore:   a.exportBadgeFileLocked(),
+		BadgeStore:   a.badgeFileLocked(),
 	}
 	exp.Signature = signProgressExport(&exp)
 
@@ -1392,9 +1304,15 @@ func decodeAccountExport(blob []byte) (*progressExport, error) {
 	if !validAccountID(exp.AccountID) {
 		return nil, vibe.Errorf("game.account.decodeAccountExport.04", "That progress export has an account ID the game cannot use, so it cannot be imported.")
 	}
+	// An export always carries the account's badges: one without them is from before
+	// badges.
+	b := exp.BadgeStore
+	if b == nil {
+		return nil, errBeforeFour()
+	}
 	// The badges it carries must be this account's and as the game signed them. An
 	// export is refused whole rather than imported in part.
-	if b := exp.BadgeStore; b != nil && (b.AccountID != exp.AccountID || !verifyBadgeFile(b)) {
+	if b.AccountID != exp.AccountID || !verifyBadgeFile(b) {
 		return nil, vibe.Errorf("game.account.decodeAccountExport.05", "That progress export has been changed or damaged since it was made, so it cannot be imported.")
 	}
 	return &exp, nil
@@ -1405,8 +1323,8 @@ func decodeAccountExport(blob []byte) (*progressExport, error) {
 // ImportAccountExport.
 //
 // With a badge book (the engine's import), the account it lands in is brought up to the
-// ruleset's badges before it is saved, so achievements from an older export are badges at
-// once. Without one that happens the first time an engine holds the account.
+// ruleset's badges before it is saved. Without one that happens the first time an
+// engine holds the account.
 func importExportToSlot(exp *progressExport, merge bool, book *badgeBook) (*Account, error) {
 	target, found, err := loadAccountFromSlot(exp.AccountID)
 	if err != nil {

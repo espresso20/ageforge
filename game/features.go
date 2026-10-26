@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/rules"
 )
 
 // Feature locks (config.FeatureLocks): a command that waits for a tech.
@@ -17,8 +16,7 @@ import (
 //     adds the tech);
 //   - its tech is researched;
 //   - this run already used it (grantedFeatures): a command in use stays
-//     open for the rest of the run, whatever is researched;
-//   - the game is in its tree grace age (a save from before the lock).
+//     open for the rest of the run, whatever is researched.
 //
 // Every use of a command whose tech is not researched is recorded as granted,
 // an inert lock's too. So when a later version adds the tech an inert lock
@@ -57,16 +55,7 @@ func (ge *GameEngine) featureShut(def config.FeatureLockDef) bool {
 	if !ge.rules.FeatureLockLive(def) {
 		return false
 	}
-	if ge.Research.IsResearched(def.Tech) || ge.grantedFeatures[def.Key] {
-		return false
-	}
-	return !ge.inTreeGrace()
-}
-
-// inTreeGrace reports whether the game is in its tree grace age: the age an
-// older save was in when it met the tree's new locks. Caller holds the lock.
-func (ge *GameEngine) inTreeGrace() bool {
-	return ge.Buildings.graceAge != "" && ge.Buildings.graceAge == ge.age
+	return !ge.Research.IsResearched(def.Tech) && !ge.grantedFeatures[def.Key]
 }
 
 // featureErr is the refusal for the first of keys that is locked ("" keys are
@@ -148,38 +137,4 @@ func (ge *GameEngine) loadGrantedFeatures(keys []string) {
 		}
 		ge.grantedFeatures[k] = true
 	}
-}
-
-// featuresInUse is the commands a save from before the feature locks shows
-// in use, by what it holds: those stay open for the rest of its run.
-//
-//   - trade routes: a route running, or anything a route ever imported or
-//     exported this run; Rail Freight and Warp Commerce when that route is
-//     running;
-//   - festivals and the black market: their cooldown has been set this run;
-//   - diplomacy: a civilization is met.
-func featuresInUse(save *GameSave, set *rules.Set, ageIndex func(string) (int, bool)) []string {
-	var out []string
-	routes := save.Trade.ActiveRoutes
-	if len(routes) > 0 || len(save.Trade.TotalImported) > 0 || len(save.Trade.TotalExported) > 0 {
-		out = append(out, config.FeatureTradeRoutes)
-	}
-	for _, key := range sortedKeys(routes) {
-		if f := config.RouteFeature(key); f != "" {
-			out = append(out, f)
-		}
-	}
-	if save.FestivalReadyTick > 0 {
-		out = append(out, config.FeatureFestivals)
-	}
-	if save.BlackMarketReadyTick > 0 {
-		out = append(out, config.FeatureBlackMarket)
-	}
-	for _, key := range sortedKeys(save.Diplomacy.Factions) {
-		if save.Diplomacy.Factions[key].Discovered {
-			out = append(out, config.FeatureDiplomacy)
-			break
-		}
-	}
-	return out
 }

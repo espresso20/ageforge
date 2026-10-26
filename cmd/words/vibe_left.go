@@ -30,7 +30,6 @@ func init() {
 	leftAloneFor(leftKey,
 		"game.catastrophe.doomMark.01", "game.catastrophe.eraMark.01", // the markers in a history line
 		"game.account.recoveryCodePrefix.01",                         // the first letters of a recovery code
-		"game.backup.snapshotPreMigration.03",                        // a file name
 		"game.save.DuplicateSave.01",                                 // a file name
 		"game.updater.CheckLatest.02", "game.updater.CheckLatest.03", // HTTP headers
 		"game.updater.updaterPlatformBinary.01",                    // the name of a release file

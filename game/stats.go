@@ -16,8 +16,7 @@ type GameStats struct {
 	// SoldiersTrained is the cumulative lifetime count of soldiers who
 	// took a post (a military building built or upgraded). Soldiers lost on
 	// missions or in raids never decrement this: it only ever grows. Drives the soldier
-	// milestone chain (first_soldiers, standing_army, …). Old saves without this
-	// field default to 0 and re-accrue progress as new soldiers are trained.
+	// milestone chain (first_soldiers, standing_army, …).
 	SoldiersTrained float64 `json:"soldiers_trained"`
 	// ResearchWork is the work done on techs this run, by the scholars and by
 	// everything that gave work (events, loot, milestones). It is what the

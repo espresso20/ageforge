@@ -204,9 +204,6 @@ type RaidRequest struct {
 	Message    string
 }
 
-// NewDiplomacyManager creates a new diplomacy manager on the core ruleset.
-func NewDiplomacyManager() *DiplomacyManager { return NewDiplomacyManagerWith(rules.Core()) }
-
 // NewDiplomacyManagerWith creates a new diplomacy manager with set's
 // civilizations.
 func NewDiplomacyManagerWith(set *rules.Set) *DiplomacyManager {

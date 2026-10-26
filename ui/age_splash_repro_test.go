@@ -71,9 +71,9 @@ func newReproHarness(t *testing.T) *reproHarness {
 	// real ./data tree, and wire an established account up front so NewApp
 	// skips the first-run account-name prompt.
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	acct, err := game.CreateNamedAccount("Repro Harness")
+	acct, err := game.CreateAccount("Repro Harness")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
+		t.Fatalf("CreateAccount: %v", err)
 	}
 
 	eng := game.NewGameEngine()

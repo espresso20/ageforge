@@ -18,8 +18,7 @@ import (
 // code from before the move (commit a58c4ee, run from a copy of that tree
 // against a temp data root): accounts that played to an age through the
 // engine, with themes unlocked the way that build's dashboard unlocked them
-// (its evaluateThemeUnlock, a milestone at a time), saved with the run they
-// played. Every test copies a fixture into a temp data root
+// (its evaluateThemeUnlock, a milestone at a time). Every test copies a fixture into a temp data root
 // (isolateAccountDir) and never touches data/.
 //
 //   - milestones: reached the Information Age; Bronze, Parchment and
@@ -33,7 +32,7 @@ import (
 const themesDir = "testdata/account_themes"
 
 // installThemes copies a theme fixture into its slot of the temp data
-// root: account.json, the badge file and the run it played.
+// root: account.json and the badge file.
 func installThemes(t *testing.T, name string) (id string, accountRaw, badgesRaw []byte) {
 	t.Helper()
 	read := func(file string) []byte {
@@ -43,7 +42,8 @@ func installThemes(t *testing.T, name string) (id string, accountRaw, badgesRaw 
 		}
 		return b
 	}
-	accountRaw, badgesRaw = read("account.json"), read("badges.json")
+	// The fixture is an account.json from before 4.0, written again as the game writes it now.
+	accountRaw, badgesRaw = withFormat(t, read("account.json")), read("badges.json")
 	var head struct {
 		AccountID string `json:"account_id"`
 	}
@@ -51,7 +51,7 @@ func installThemes(t *testing.T, name string) (id string, accountRaw, badgesRaw 
 	id = head.AccountID
 	noErr(t, os.MkdirAll(filepath.Join(accountDir(id), "saves"), 0755))
 	for file, data := range map[string][]byte{
-		accountFileName: accountRaw, badgeFileName: badgesRaw, filepath.Join("saves", "run.json"): read("run.json"),
+		accountFileName: accountRaw, badgeFileName: badgesRaw,
 	} {
 		noErr(t, os.WriteFile(filepath.Join(accountDir(id), file), data, 0644))
 	}
@@ -156,7 +156,7 @@ func TestAgeThemesMoveToBadgesWithNothingLost(t *testing.T) {
 			// account.json keeps its shape and still verifies; it changes only
 			// where a theme was gained, and then only in its unlocks.
 			first := slotFile(t, id)
-			assertOldShape(t, first)
+			assertAccountShape(t, first)
 			if disk := slotAccount(t, id); !verifyAccount(disk) || disk.Tampered || disk.BadgesTampered {
 				t.Errorf("on disk: verifies %v, tampered %v, badge file tampered %v", verifyAccount(disk), disk.Tampered, disk.BadgesTampered)
 			}
@@ -170,26 +170,6 @@ func TestAgeThemesMoveToBadgesWithNothingLost(t *testing.T) {
 			if bf := storedBadges(t, slotBadgeFile(t, id)); !verifyBadgeFile(&bf) || bf.Tampered {
 				t.Errorf("the badge file: verifies %v, tampered %v", verifyBadgeFile(&bf), bf.Tampered)
 			}
-
-			// The run it played loads and plays on. It is where it already
-			// was, so no age is told again and no theme is announced; what
-			// the ticks themselves bring (a return, a civilization met) is
-			// earned like anything else.
-			setActiveAccountID(id) // saves are read from the active account's slot
-			if err := ge.LoadGame("run"); err != nil {
-				t.Fatalf("the fixture's run does not load: %v", err)
-			}
-			themesBefore := acct.UnlockedThemes()
-			ge.StepTicks(2)
-			for _, v := range ge.DrainEarnedBadges() {
-				if v.Family == "age" || v.RewardTheme != "" {
-					t.Errorf("loading the run announced %s (theme %q)", v.Key, v.RewardTheme)
-				}
-			}
-			if got := acct.UnlockedThemes(); !slices.Equal(got, themesBefore) {
-				t.Errorf("loading the run changed the themes: %v, were %v", got, themesBefore)
-			}
-			noErr(t, acct.FlushIfDirty())
 
 			// A second load changes nothing, in either file.
 			_, again := openIn(t, id)
@@ -235,7 +215,7 @@ func TestAgeBadgeUnlocksItsThemeInPlay(t *testing.T) {
 		t.Errorf("themes after reaching the age twice: %v", got)
 	}
 	noErr(t, acct.FlushIfDirty())
-	assertOldShape(t, slotFile(t, acct.AccountID))
+	assertAccountShape(t, slotFile(t, acct.AccountID))
 
 	// Another account takes over the engine while the first one's run is
 	// still in memory: that run earns the newcomer nothing.

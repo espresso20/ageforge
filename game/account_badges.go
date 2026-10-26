@@ -17,8 +17,8 @@ import (
 )
 
 // account_badges.go is the account's side of the badges: where they are
-// stored, how an account from before them gets its own, and how an event is
-// judged against it. Like the lifetime-stat hooks, judging is in memory
+// stored, how an account is brought up to the ruleset's badges, and how an
+// event is judged against it. Like the lifetime-stat hooks, judging is in memory
 // only: it takes the account's own lock, touches no file and calls nothing
 // on the engine, so the engine may call it under its write lock. The write
 // happens later, in FlushIfDirty.
@@ -30,8 +30,7 @@ import (
 // them reads it, verifies it and writes it back as it always did, never
 // sees badges.json, and cannot mark a healthy account as modified. When
 // this build next loads the account it reconciles the two (ensureBadges):
-// whatever the account's record proves, an achievement the older build
-// earned included, is topped up in the badge file.
+// whatever the account's record proves is topped up in the badge file.
 //
 // The badge file is signed on its own, and the signature covers the account
 // ID, so it cannot be carried to another account. An edited badge file is
@@ -89,13 +88,11 @@ func verifyBadgeFile(b *badgeFile) bool {
 	return b.Signature != "" && hmac.Equal([]byte(b.Signature), []byte(signBadgeFile(b)))
 }
 
-// badgeFileLocked is the account's badges as a badge file, unsigned; nil
-// when there is nothing to store. It shares the account's maps: marshal it
-// before the lock is released. Callers hold a.mu (or own a).
+// badgeFileLocked is the account's badges as a signed badge file, always one,
+// even when the account has no badges: a saved account always has a badge
+// file, and an export always carries one. It shares the account's maps:
+// marshal it before the lock is released. Callers hold a.mu (or own a).
 func (a *Account) badgeFileLocked() *badgeFile {
-	if len(a.Badges) == 0 && len(a.Counters) == 0 && len(a.Days) == 0 && !a.BadgesTampered {
-		return nil
-	}
 	b := &badgeFile{
 		Version:   badgeFileVersion,
 		AccountID: a.AccountID,
@@ -111,8 +108,8 @@ func (a *Account) badgeFileLocked() *badgeFile {
 // loadBadgeFile reads the badge file in dir into the account, after
 // account.json has given it its ID. It never writes.
 //
-//   - No file: the account has no badge store yet (it is from before
-//     badges, or has earned nothing). ensureBadges fills it from the record.
+//   - No file: the account has no badge store yet (it is new and unsaved; for a
+//     saved account see loadSavedBadgeFile).
 //   - A file as the game signed it, for this account: taken as it is.
 //   - A file whose signature does not match, or signed for another account:
 //     taken, flagged (BadgesTampered), and every badge in it crossed. The
@@ -142,20 +139,23 @@ func (a *Account) loadBadgeFile(dir string) {
 	}
 }
 
-// saveBadgeFile writes the badge file into dir, atomically, when the badges
-// differ from what the file holds. An account with no badges and no file
-// gets none. Callers hold a.mu (or own a); Save calls it.
-func (a *Account) saveBadgeFile(dir string) error {
-	b := a.badgeFileLocked()
-	if b == nil {
-		if a.badgeDisk == nil || a.badgeUnreadable {
-			return nil // nothing to store, and nothing of ours on disk to clear
-		}
-		// The store was emptied (an import that replaced it): write it empty.
-		b = &badgeFile{Version: badgeFileVersion, AccountID: a.AccountID}
-		b.Signature = signBadgeFile(b)
+// loadSavedBadgeFile is loadBadgeFile for an account read from its own slot. Every
+// account the game saves has a badge file, so one that is missing was taken away: it
+// reads as an edited one (BadgesTampered), and a save starts the file again, empty and
+// marked. Tampering marks badges; it never locks a player out.
+func (a *Account) loadSavedBadgeFile(dir string) {
+	a.loadBadgeFile(dir)
+	if a.badgeDisk == nil && !a.badgeUnreadable {
+		a.BadgesTampered = true
+		a.badgeRev++
+		a.dirty = true
 	}
-	data, err := json.MarshalIndent(b, "", "  ")
+}
+
+// saveBadgeFile writes the badge file into dir, atomically, when the badges
+// differ from what the file holds. Callers hold a.mu (or own a); Save calls it.
+func (a *Account) saveBadgeFile(dir string) error {
+	data, err := json.MarshalIndent(a.badgeFileLocked(), "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal badges: %w", err)
 	}
@@ -180,18 +180,6 @@ func (a *Account) saveBadgeFile(dir string) error {
 	return nil
 }
 
-// exportBadgeFileLocked is the badge file an export carries: always one,
-// signed, even when the account has no badges, so that an export with no
-// badge store can only be one from before badges. Callers hold a.mu.
-func (a *Account) exportBadgeFileLocked() *badgeFile {
-	if b := a.badgeFileLocked(); b != nil {
-		return b
-	}
-	b := &badgeFile{Version: badgeFileVersion, AccountID: a.AccountID}
-	b.Signature = signBadgeFile(b)
-	return b
-}
-
 // adoptBadgeFile is for an account that is being created in memory for a
 // slot that may already hold a badge file (its account.json was lost or
 // set aside, and the account is made again under the same name): the file
@@ -211,14 +199,9 @@ func (a *Account) adoptBadgeFile() {
 // takeBadgeStoreLocked folds the badge store an export carries into the
 // account. A merge keeps every badge either copy holds (the earlier of
 // two) and the larger of each counter; otherwise the account's store
-// becomes the export's. An export from before badges carries none (b is
-// nil): it says nothing about badges, so the account's are left as they
-// are, replace or not. A flagged store flags the account's, and a flagged
+// becomes the export's. A flagged store flags the account's, and a flagged
 // account's stays flagged. Callers hold a.mu (or own a).
 func (a *Account) takeBadgeStoreLocked(b *badgeFile, merge bool) {
-	if b == nil {
-		return
-	}
 	a.BadgesTampered = a.BadgesTampered || b.Tampered
 	a.badgeRev++
 	if !merge {
@@ -234,8 +217,7 @@ func (a *Account) takeBadgeStoreLocked(b *badgeFile, merge bool) {
 
 // BadgeEarned is one earned badge as the badge file stores it.
 type BadgeEarned struct {
-	// At is when it was earned, in Unix seconds. 0 means before badges were
-	// dated: it came over from an account achievement, or the account's
+	// At is when it was earned, in Unix seconds. 0 means undated: the account's
 	// record already proved it.
 	At int64 `json:"at"`
 	// Run is the save it was earned in.
@@ -245,8 +227,7 @@ type BadgeEarned struct {
 	// Count is the count the badge's text carried when it was earned, for a
 	// badge whose text carries one (a ladder rung): the bar it was earned
 	// at, so the text always says what the player did however the game's
-	// tables move later. 0 (left out) for any other badge, and for one
-	// earned before this was kept. It is not under the file's signature
+	// tables move later. 0 (left out) for any other badge. It is not under the file's signature
 	// (signBadgeFile), so a build from before it reads the file, and signs
 	// it, as it always did.
 	Count float64 `json:"count,omitempty"`
@@ -421,18 +402,6 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	a.Badges[def.Key] = e
 	a.dirty = true
 	a.badgeRev++
-	// A badge that was an account achievement before badges keeps its place in
-	// that list too, so a build from before badges shows what this one earned.
-	// Not a crossed one: account.json has no way to mark it, and the list is
-	// what the badges are rebuilt from if the badge file is lost, so a crossed
-	// badge written there would come back clean.
-	if e.Flags&BadgeFlagCrossed == 0 {
-		for _, old := range def.Aliases {
-			if !slices.Contains(a.Achievements, old) {
-				a.Achievements = append(a.Achievements, old)
-			}
-		}
-	}
 	// A theme the badge gives joins the account's unlocked themes.
 	if t := def.Reward.Theme; t != "" && !slices.Contains(a.Unlocks.Themes, t) {
 		a.Unlocks.Themes = append(a.Unlocks.Themes, t)
@@ -523,16 +492,13 @@ func (a *Account) drainCaughtUp() int {
 
 // ensureBadges reconciles the account's badges with its record, under the
 // ruleset's badges, and reports whether it changed anything. It is what
-// gives an account from before badges its badge file, and what picks up
-// whatever a build from before badges did to account.json since. It is
-// safe to run on every load: a second run changes nothing.
+// brings an account up to a ruleset that added a badge or lowered a ladder.
+// It is safe to run on every load: a second run changes nothing.
 //
-//   - The four account achievements are their badges (each badge lists the
-//     key it had as an alias). The list stays in account.json.
-//   - The lifetime stats the account already kept seed the counters that
-//     continue them (prestiges).
 //   - What the record already proves is granted: the badge of every age up
 //     to the highest reached, and every ladder rung a counter has passed.
+//   - The badges held count toward the badges for earning badges.
+//   - A theme an earned badge gives is unlocked.
 //
 // Everything it grants is silent: undated, and no toast of its own. However
 // many it grants, the dashboard says so in one line (pendingCaughtUp): a
@@ -548,7 +514,7 @@ func (a *Account) ensureBadges(book *badgeBook) bool {
 }
 
 func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
-	changed := a.settleBarsLocked(book)
+	changed := false
 	// What this pass grants is announced in one line, however many there
 	// are (pendingCaughtUp): counted off the badges held before and after,
 	// so a badge one of them leads to is counted too.
@@ -559,25 +525,6 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 			a.grantLocked(book, def, badgeCtx{}, true, 0)
 			changed = true
 		}
-	}
-	for _, old := range a.Achievements {
-		if key, ok := book.set.BadgeForAlias(old); ok {
-			grant(book.def(key))
-		}
-	}
-	seed := func(name string, n float64) {
-		if book.counters[name] && a.Counters[name] < n {
-			if a.Counters == nil {
-				a.Counters = map[string]float64{}
-			}
-			a.Counters[name] = n
-			a.badgeRev++
-			changed = true
-		}
-	}
-	seed(config.BadgeEvPrestige, float64(a.Stats.TotalPrestiges))
-	for _, age := range sortedKeys(a.Stats.PrestigesByAge) {
-		seed(config.BadgeEvPrestige+"."+age, float64(a.Stats.PrestigesByAge[age]))
 	}
 	highest, reached := book.set.Index(a.Stats.HighestAge)
 	for i := range book.defs {
@@ -595,9 +542,8 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 			}
 		}
 	}
-	// The badges already held count toward the badges for earning badges: an
-	// account from before those existed kept none of their counters. A badge
-	// this grants is held too, so it goes round until nothing is added.
+	// The badges already held count toward the badges for earning badges. A
+	// badge this grants is held too, so it goes round until nothing is added.
 	for range maxBadgeChain {
 		held := map[string]float64{}
 		for key := range a.Badges {
@@ -643,46 +589,6 @@ func (a *Account) ensureBadgesLocked(book *badgeBook) bool {
 		}
 	}
 	if changed {
-		a.dirty = true
-	}
-	return changed
-}
-
-// settleBarsLocked is the one-time cleanup of ladder rungs earned before a
-// badge remembered the bar it was earned at. A rung with no remembered count
-// whose counter is today below the rung's bar was earned under a lower one:
-// it goes back to unearned. A rung whose counter meets today's bar keeps its
-// place and remembers today's count from then on. Only counted ladders are
-// looked at (a rung of a ladder on a lifetime counter whose text carries its
-// count); firsts, age badges and specials are not. A rung that gives a theme
-// or a title is left alone, so nothing it unlocked is taken away. A second
-// run finds every kept rung remembering its count and changes nothing.
-// Callers hold a.mu.
-func (a *Account) settleBarsLocked(book *badgeBook) bool {
-	changed := false
-	for _, key := range sortedKeys(a.Badges) {
-		e := a.Badges[key]
-		def := book.def(key)
-		if e.Count > 0 || def == nil || def.Ladder == "" || def.Scope != config.BadgeLifetime ||
-			def.Counter == "" || def.Threshold <= 0 {
-			continue
-		}
-		if _, counted := book.set.BadgeDescAt(key, def.Threshold); !counted {
-			continue
-		}
-		switch {
-		case a.Counters[def.Counter] >= def.Threshold:
-			e.Count = def.Threshold
-			a.Badges[key] = e
-		case def.Reward.Theme != "" || def.Reward.Title != "":
-			continue
-		default:
-			delete(a.Badges, key)
-		}
-		changed = true
-	}
-	if changed {
-		a.badgeRev++
 		a.dirty = true
 	}
 	return changed
@@ -1020,11 +926,10 @@ func (a *Account) badgeTitlesLocked(book *badgeBook) []string {
 
 // countableBadges is how many of the account's badges count toward
 // completion under book: earned, known to the ruleset and not integrity
-// badges. With no book it is every badge the file holds, or its old
-// achievements when those are more (a file no engine has brought up yet).
+// badges. With no book it is every badge the file holds.
 func (a *Account) countableBadges(book *badgeBook) int {
 	if book == nil {
-		return max(len(a.Badges), len(a.Achievements))
+		return len(a.Badges)
 	}
 	n := 0
 	for key := range a.Badges {

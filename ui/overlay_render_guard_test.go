@@ -147,7 +147,6 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 	river.Status, river.TradeBonus, river.TradeCount, river.LentWorkers = "allied", 0.15, 4, 3
 	s.Diplomacy.Factions["riverlands_tribes"] = river
 	s.Military.AutoExpedition = game.AutoExpeditionState{Active: true, TicksLeft: 50, Interval: 200, Count: 1, Assigned: 2, Capacity: 5}
-	s.Military.TotalLoot = map[string]float64{"iron_ore": 1234, "gold": 56}
 	s.Military.ExpeditionBonus = 0.1
 
 	// Trade: a blockade, routes in every state.

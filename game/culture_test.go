@@ -265,20 +265,14 @@ func TestCultureMeasureSaveLoadAndReset(t *testing.T) {
 		t.Errorf("after load: measure %+v strength %v, want %+v and %v", ge2.cultureMeasure, ge2.cultureStrength(), want, strength)
 	}
 
-	old := cultureTown(t, "renaissance_age", 0)
-	old.Resources.LoadAmounts(map[string]float64{"culture": 4321})
-	old.restoreCultureState(&GameSave{})
-	if got := old.cultureStrength(); math.Abs(got-1/CultureFullSets) > 1e-12 || CultureTierAt(got) != CultureTierMinor {
-		t.Errorf("an older save holding culture: strength %v, want a moderate town's %v", got, 1/CultureFullSets)
-	}
 	fresh := cultureTown(t, "renaissance_age", 0)
 	fresh.Resources.LoadAmounts(map[string]float64{"culture": 4321})
-	fresh.restoreCultureState(&GameSave{CultureMeasured: true})
+	fresh.restoreCultureState(&GameSave{})
 	if fresh.cultureMeasure != (CultureSave{}) {
-		t.Errorf("a marked save with no measure was given one: %+v", fresh.cultureMeasure)
+		t.Errorf("a save with no measure was given one: %+v", fresh.cultureMeasure)
 	}
 	bad := cultureTown(t, "renaissance_age", 0)
-	bad.restoreCultureState(&GameSave{CultureMeasured: true, CultureMeasure: &CultureSave{Moderate: math.NaN(), Own: -5, Other: math.Inf(1)}})
+	bad.restoreCultureState(&GameSave{CultureMeasure: &CultureSave{Moderate: math.NaN(), Own: -5, Other: math.Inf(1)}})
 	if bad.cultureMeasure != (CultureSave{}) || bad.cultureStrength() != 0 {
 		t.Errorf("a broken measure loaded as %+v (strength %v), want it cleared", bad.cultureMeasure, bad.cultureStrength())
 	}

@@ -78,7 +78,7 @@ func TestVibeSettingLivesBesideTheAccountFile(t *testing.T) {
 	if got := slotBadgeFile(t, acct.AccountID); string(got) != string(badges) {
 		t.Error("setting VibeMode rewrote the badge file")
 	}
-	assertOldShape(t, slotFile(t, acct.AccountID))
+	assertAccountShape(t, slotFile(t, acct.AccountID))
 	var file map[string]any
 	data, err := os.ReadFile(settings)
 	if err != nil || json.Unmarshal(data, &file) != nil || file["vibe"] != "on" {

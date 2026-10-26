@@ -171,26 +171,3 @@ func TestWorkerManager_SaveLoadRoundTrip(t *testing.T) {
 		t.Errorf("loaded assigned count = %v, want 3", count)
 	}
 }
-
-func TestWorkerManager_LegacyLoadCompat(t *testing.T) {
-	// Old saves had separate domain entries (food, faith, knowledge, etc.).
-	// LoadWorkers now sums all domain counts into the single "worker" pool.
-	vm := NewWorkerManager()
-	vm.UnlockType("worker")
-
-	oldData := map[string]WorkerInfo{
-		"food":      {Count: 3, FoodCost: 0.1, Assignment: map[string]int{"gathering_camp": 2}},
-		"knowledge": {Count: 2, FoodCost: 0.8, Assignment: map[string]int{}},
-	}
-	vm.LoadWorkers(oldData)
-
-	// All domain counts should be summed into the single pool
-	if vm.TotalPop() != 5 {
-		t.Errorf("loaded pop from legacy save = %v, want 5", vm.TotalPop())
-	}
-	// Assignments from old domains are preserved
-	assigned := vm.GetAssignedCount("worker", "gathering_camp")
-	if assigned != 2 {
-		t.Errorf("loaded assigned count from legacy save = %v, want 2", assigned)
-	}
-}

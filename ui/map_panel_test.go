@@ -19,7 +19,7 @@ func mapTestDashboard(t *testing.T, acct bool) (*Dashboard, *game.GameEngine) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
 	if acct {
-		a, err := game.CreateNamedAccount("Map Tester")
+		a, err := game.CreateAccount("Map Tester")
 		must(t, err)
 		eng.SetAccount(a)
 	}

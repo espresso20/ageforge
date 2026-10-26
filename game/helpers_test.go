@@ -21,3 +21,14 @@ func saveAndLoad(t *testing.T, ge *GameEngine, name string) *GameEngine {
 	}
 	return again
 }
+
+// countLines is how many log lines say exactly msg.
+func countLines(ge *GameEngine, msg string) int {
+	n := 0
+	for _, l := range ge.GetLogs() {
+		if l.Message == msg {
+			n++
+		}
+	}
+	return n
+}

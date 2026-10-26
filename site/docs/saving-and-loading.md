@@ -1,6 +1,6 @@
 # Saving & loading
 
-AgeForge keeps your civilization in named saves, with a regular autosave and a save browser. This page covers where saves live, the commands that manage them, which game the main menu's Continue opens, how to read the Load Game browser, how to delete saves and what happens when you load a save from an older version.
+AgeForge keeps your civilization in named saves, with a regular autosave and a save browser. This page covers where saves live, the commands that manage them, which game the main menu's Continue opens, how to read the Load Game browser, how to delete saves and what happens to a save from before 4.0.
 
 ---
 
@@ -166,49 +166,12 @@ Compare **wiping an account** (`w` in the Accounts panel). A wipe deletes the ac
 
 ---
 
-## Saves from older versions
+## Saves from before 4.0
 
-An older save loads as usual. For each change below except the folder move, the log says so once on the first load of a save from before it, and the next save you make doesn't repeat it.
-
-### Saves from the flat save folder
-
-Older builds kept every save in a single flat `data/saves/` folder. When the game starts and finds that layout, it moves the saves into your account's `data/accounts/<id>/saves/` folder. Nothing is deleted, and you don't have to do anything.
-
-### Saves from before the research changes
-
-A game saved before wonders needed a keystone tech, or before some commands waited for a tech, keeps everything it researched and built. In the age it was in nothing new is locked, and a command it was already using (trade routes, festivals, the black market or diplomacy) stays open for the rest of that run. If the time away already carried the game into the next age, that grace is over and the log says only what changed. Techs give the bonuses of the current tree: smaller, and always counted in full (see [How Tech Bonuses Stack](technologies.md#how-tech-bonuses-stack)).
-
-### Saves from before the pacing update
-
-A game saved before the pacing update carries on where you left it. The log says once that the pacing changed.
-
-### Saves from before the storage wall
-
-A game saved before storage became a wall keeps every building copy and all of its stock, and stock has no limit. What your plan had banked from overflow is given back to you. The log says so:
+A save written before 4.0 does not load. The Load Game browser still lists it, and trying to open it, or typing `load <name>`, says:
 
 ```
-Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked was given back to you.
+This was saved before 4.0 and can no longer be loaded.
 ```
 
-### Saves from before scholars
-
-A game saved before scholars keeps every building copy, even above a knowledge building's cap. Knowledge is not held as a stock, so what the save held is turned into work:
-
-- Knowledge you held becomes a gift of work for the tech in progress, at most half of that tech's price. With nothing in progress it is lost.
-- A tech that was paid for and waiting out its research time completes on load.
-- Workers on knowledge buildings return to the idle pool, and the knowledge buildings come with their scholars.
-- A share you had set for the knowledge domain is ignored.
-
-The log says:
-
-```
-Knowledge is no longer stored. Your scholars now work on one technology at a time.
-```
-
-### Saves from before the market ended
-
-A game saved while the market could swap resources keeps everything it built, researched and holds. If its build plan held sell orders, they are removed. The log says:
-
-```
-The market no longer swaps resources. The sell orders in your plan were removed.
-```
+The game no longer repairs or converts old saves, so there is nothing to do with one but delete it (`d` in the Load Game browser) and start a new game. An account from before 4.0 is refused the same way (see [Accounts from before 4.0](account.md#accounts-from-before-40)).

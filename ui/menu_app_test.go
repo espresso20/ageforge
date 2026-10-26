@@ -21,7 +21,7 @@ func bootMenuApp(t *testing.T, w, h int, games ...string) (*reproHarness, *game.
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	t.Cleanup(func() { _ = theme.SetActive(theme.DefaultKey) })
-	acct, err := game.CreateNamedAccount("Menu App")
+	acct, err := game.CreateAccount("Menu App")
 	must(t, err)
 	for _, name := range games {
 		mk := game.NewGameEngine()

@@ -35,7 +35,7 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	// Time spent in each age of this run. The last entry is the current age, so
-	// its time runs to the current tick. Nothing is shown for an old save with no log.
+	// its time runs to the current tick.
 	if len(s.AgeLog) > 0 {
 		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.09", "\n [gold]Ages this run[-]\n"))
 		iv := tickInterval(state)

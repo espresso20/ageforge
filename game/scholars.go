@@ -7,7 +7,6 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -522,46 +521,13 @@ func (ge *GameEngine) scholarShareSave() *int {
 	return &v
 }
 
-// loadResearch restores the research from a save. A tech that was paid for
-// and waiting out its research time (the save has a wait left) is done: it
-// completes on load. The setting comes back as it was saved.
+// loadResearch restores the research from a save, and the scholars' research
+// setting as it was saved.
 func (ge *GameEngine) loadResearch(save *GameSave) {
 	rs := save.Research
-	paidAndWaiting := ""
-	current := rs.CurrentTech
-	if current != "" && rs.TotalTicks > 0 {
-		paidAndWaiting, current = current, ""
-	}
-	ge.Research.LoadState(rs.Researched, current, rs.Progress, rs.Slowed)
-	if paidAndWaiting != "" {
-		if _, ok := ge.Research.defs[paidAndWaiting]; ok {
-			ge.Research.researched[paidAndWaiting] = true
-			ge.Research.rebuildBonuses()
-			ge.loadedCompletions = append(ge.loadedCompletions, paidAndWaiting)
-		}
-	}
+	ge.Research.LoadState(rs.Researched, rs.CurrentTech, rs.Progress, rs.Slowed)
 	ge.scholarShare, ge.scholarShareSet = 100, false
 	if save.ScholarShare != nil && *save.ScholarShare >= 0 && *save.ScholarShare < 100 {
 		ge.scholarShare, ge.scholarShareSet = *save.ScholarShare, true
 	}
-}
-
-// turnKnowledgeIntoWork is what a save from before the scholars does with the
-// knowledge it held: the stock becomes a gift of work for the tech in progress
-// (Research.Grant: at most half that tech's price, the rest is lost). With no
-// tech in progress it is lost. A tech that was paid for and waiting completes
-// on load (loadResearch) before this runs.
-func (ge *GameEngine) turnKnowledgeIntoWork(save *GameSave) {
-	stock := save.Resources["knowledge"]
-	if stock > 0 {
-		if ge.Research.currentTech == "" {
-			ge.addLogAbout("info", TagPeople|TagBad, vibe.Line("game.scholars.turnKnowledgeIntoWork.01", "Your scholars had nothing to study, so the insight was lost."))
-		} else if landed, _ := ge.Research.Grant(stock); landed < stock {
-			ge.addLogAbout("info", TagPeople, vibe.Sprintf("game.scholars.turnKnowledgeIntoWork.02", "Your scholars gained some ground on %s.", ge.Research.defs[ge.Research.currentTech].Name))
-		}
-	}
-	for _, key := range ge.loadedCompletions {
-		ge.addLog(LogRoutine, vibe.Sprintf("game.scholars.turnKnowledgeIntoWork.03", "Research complete: %s.", ge.rules.Name(rules.KindTech, key)))
-	}
-	ge.loadedCompletions = nil
 }

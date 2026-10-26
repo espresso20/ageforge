@@ -45,14 +45,14 @@ func TestAccountIDFromNameNormalizes(t *testing.T) {
 	}
 }
 
-// TestCreateNamedAccount confirms identity derivation: DisplayName keeps the original
+// TestCreateAccountFromName confirms identity derivation: DisplayName keeps the original
 // (trimmed) name, AccountID is name-derived, and the account is Established + signed.
-func TestCreateNamedAccount(t *testing.T) {
+func TestCreateAccountFromName(t *testing.T) {
 	isolateAccountDir(t)
 
-	acct, err := CreateNamedAccount("  Imperium Romanum  ")
+	acct, err := CreateAccount("  Imperium Romanum  ")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
+		t.Fatalf("CreateAccount: %v", err)
 	}
 	if acct.DisplayName != "Imperium Romanum" {
 		t.Errorf("DisplayName = %q, want %q (trimmed original)", acct.DisplayName, "Imperium Romanum")
@@ -68,42 +68,6 @@ func TestCreateNamedAccount(t *testing.T) {
 	}
 	if !verifyAccount(acct) {
 		t.Error("named account fails signature verification")
-	}
-}
-
-// TestCreateNamedAccountCarriesOverData confirms the migration: a pre-existing account
-// with an earned unlock has that DATA carried into the new named account when the
-// identity is re-keyed to a name.
-func TestCreateNamedAccountCarriesOverData(t *testing.T) {
-	isolateAccountDir(t)
-
-	// Seed an earlier account (a different identity) with an unlock + a lifetime stat.
-	legacy := mustAccount(t, "Legacy")
-	legacy.Unlocks.Themes = []string{"obsidian"}
-	legacy.Stats.TotalPrestiges = 7
-	legacy.Achievements = []string{"first_prestige"}
-	if err := legacy.Save(); err != nil {
-		t.Fatalf("Save legacy: %v", err)
-	}
-
-	named, err := CreateNamedAccount("Carthage")
-	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
-	}
-	if named.AccountID != AccountIDForName("Carthage") {
-		t.Errorf("AccountID = %q, want name-derived", named.AccountID)
-	}
-	if named.AccountID == legacy.AccountID {
-		t.Error("named account kept the earlier account's ID; should be name-derived")
-	}
-	if len(named.Unlocks.Themes) != 1 || named.Unlocks.Themes[0] != "obsidian" {
-		t.Errorf("unlock not carried over: %v", named.Unlocks.Themes)
-	}
-	if named.Stats.TotalPrestiges != 7 {
-		t.Errorf("lifetime stat not carried over: TotalPrestiges = %d, want 7", named.Stats.TotalPrestiges)
-	}
-	if len(named.Achievements) != 1 || named.Achievements[0] != "first_prestige" {
-		t.Errorf("achievement not carried over: %v", named.Achievements)
 	}
 }
 
@@ -128,9 +92,9 @@ func TestLoadAccountFoundFalseWhenNoFile(t *testing.T) {
 func TestLoadAccountFoundTrueForExisting(t *testing.T) {
 	isolateAccountDir(t)
 
-	created, err := CreateNamedAccount("Babylon")
+	created, err := CreateAccount("Babylon")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
+		t.Fatalf("CreateAccount: %v", err)
 	}
 
 	loaded, found, err := LoadAccount()
@@ -153,13 +117,13 @@ func TestLoadAccountFoundTrueForExisting(t *testing.T) {
 func TestRecoveryViaName(t *testing.T) {
 	isolateAccountDir(t)
 
-	first, err := CreateNamedAccount("Persia")
+	first, err := CreateAccount("Persia")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount (first): %v", err)
+		t.Fatalf("CreateAccount (first): %v", err)
 	}
-	second, err := CreateNamedAccount("Persia")
+	second, err := CreateAccount("Persia")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount (second): %v", err)
+		t.Fatalf("CreateAccount (second): %v", err)
 	}
 	if first.AccountID != second.AccountID {
 		t.Errorf("re-entering the same name produced a different ID: %q != %q", first.AccountID, second.AccountID)

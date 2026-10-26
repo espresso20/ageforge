@@ -376,8 +376,7 @@ func (ge *GameEngine) soldiersVacantSave() map[string]int {
 }
 
 // loadSoldiersPosted restores the posted soldiers from a save, after the
-// buildings are back. A save from before the posts has none: they fill again as
-// the food allows. The army that stands is not counted as trained again.
+// buildings are back. The army that stands is not counted as trained again.
 func (ge *GameEngine) loadSoldiersPosted(save *GameSave) {
 	ge.soldiersPosted, ge.soldierWaitLogged = ge.capToPosts(save.SoldiersPosted), nil
 	ge.soldiersVacant = ge.capToPosts(save.SoldiersVacant)

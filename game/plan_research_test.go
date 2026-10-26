@@ -243,3 +243,84 @@ func TestPlanTechOfALaterAgeWaitsItsTurn(t *testing.T) {
 		t.Errorf("in the Stone Age: researching %q, want pottery; views %+v", ge.Research.currentTech, ge.planViews())
 	}
 }
+
+// planKeys is the keys of the plan's items, in order.
+func planKeys(ge *GameEngine) []string {
+	var keys []string
+	for _, it := range ge.plan {
+		keys = append(keys, it.Key)
+	}
+	return keys
+}
+
+// TestPlanItemsMissingPrerequisitesWait: a planned tech whose prerequisites
+// are not researched simply waits, as it does when a content change gives a
+// planned tech a new prerequisite. The plan holds Alchemy (Philosophy missing)
+// and the next age's Quantum Computing (Quantum Mechanics missing). Through a
+// day away and a save and a load they stay in the plan, in order, saying what
+// they need, and nothing drops them. Neither starts, and each starts once
+// what it needs is researched.
+func TestPlanItemsMissingPrerequisitesWait(t *testing.T) {
+	isolateAccountDir(t)
+	ge := newSeededEngine(41)
+	ge.mu.Lock()
+	ge.age = "galactic_age"
+	ge.currentEpoch = config.EpochForAge(ge.age)
+	ge.Workers.SetAge(ge.age)
+	learn(ge, append(treeFixtureTechs, "chronometry", "clockwork_automation")...)
+	ge.plan = []PlanItem{
+		{Kind: PlanResearch, Key: "alchemy", Count: 1},
+		{Kind: PlanResearch, Key: "quantum_computing", Count: 1},
+	}
+	ge.mu.Unlock()
+
+	waiting := func(ge *GameEngine, when string) {
+		t.Helper()
+		if got, want := planKeys(ge), []string{"alchemy", "quantum_computing"}; !reflect.DeepEqual(got, want) {
+			t.Fatalf("%s: the plan holds %v, want %v", when, got, want)
+		}
+		if ge.Research.currentTech != "" || ge.Research.IsResearched("alchemy") || ge.Research.IsResearched("quantum_computing") {
+			t.Errorf("%s: researching %q; Alchemy researched %v, Quantum Computing %v; want both waiting", when,
+				ge.Research.currentTech, ge.Research.IsResearched("alchemy"), ge.Research.IsResearched("quantum_computing"))
+		}
+		v := ge.planViews()
+		if len(v) != 2 || v[0].Status != PlanStatusBlocked || v[0].Note != "needs Philosophy first" ||
+			v[1].Status != PlanStatusBlocked || v[1].Note != "needs Quantum Mechanics first" {
+			t.Errorf("%s: views = %+v, want each item blocked on its missing prerequisite", when, v)
+		}
+		for _, l := range ge.log {
+			if strings.HasPrefix(l.Message, "Plan: dropped") {
+				t.Errorf("%s: the plan dropped an item: %s", when, l.Message)
+			}
+		}
+	}
+	waiting(ge, "as built")
+	ge.runPlanTick()
+	waiting(ge, "after a plan tick")
+	// A full day away: the plan walks the whole time and still holds both.
+	ge.SimulateOffline(MaxOfflineTime)
+	waiting(ge, "after a day away")
+
+	ge = saveAndLoad(t, ge, "plan_waits")
+	waiting(ge, "after a save and a load")
+
+	// Philosophy arrives: Alchemy starts from the plan. Quantum Computing
+	// goes on waiting.
+	learn(ge, "philosophy")
+	ge.runPlanTick()
+	if ge.Research.currentTech != "alchemy" || !reflect.DeepEqual(planKeys(ge), []string{"quantum_computing"}) {
+		t.Fatalf("with Philosophy: researching %q, plan %v; want alchemy started and Quantum Computing left", ge.Research.currentTech, planKeys(ge))
+	}
+	researchOut(ge)
+	// The Quantum Age arrives without Quantum Mechanics: still waiting.
+	ge.age = "quantum_age"
+	ge.runPlanTick()
+	if v := ge.planViews(); ge.Research.currentTech != "" || len(v) != 1 || v[0].Note != "needs Quantum Mechanics first" {
+		t.Fatalf("in the Quantum Age without Quantum Mechanics: researching %q, views %+v", ge.Research.currentTech, v)
+	}
+	learn(ge, "quantum_mechanics")
+	ge.runPlanTick()
+	if ge.Research.currentTech != "quantum_computing" || len(ge.plan) != 0 {
+		t.Errorf("with Quantum Mechanics: researching %q, plan %v", ge.Research.currentTech, planKeys(ge))
+	}
+}

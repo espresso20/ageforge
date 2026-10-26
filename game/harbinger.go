@@ -259,8 +259,7 @@ type HarbingerSave struct {
 	Chain []string `json:"chain,omitempty"`
 	// EpochKey is the thread's epoch. TargetEpoch is the epoch whose doom it
 	// warns of: the same epoch (the doom strikes inside it), or "" for the
-	// Cosmic Era's Last Passage. Saves written before fates existed hold the
-	// next epoch here; restoreHarbingerState rewrites it.
+	// Cosmic Era's Last Passage.
 	EpochKey    string `json:"epoch_key"`
 	TargetEpoch string `json:"target_epoch"`
 	// When is what the current figure says about when the doom falls
@@ -283,7 +282,7 @@ type HarbingerSave struct {
 	// Lines are the current figure's arrival and warning lines, in plain
 	// English (a script's words are never kept). LineKeys name each of them
 	// for flavor.Retell, so they can be told in the script's words when they
-	// are read: "" for a line with no key (a save from before).
+	// are read: "" for a line with no key.
 	Lines       []string `json:"lines,omitempty"`
 	LineKeys    []string `json:"line_keys,omitempty"`
 	ArrivedTick int      `json:"arrived_tick,omitempty"`
@@ -588,8 +587,7 @@ func (ge *GameEngine) harborPlainName(def config.HarbingerDef) string {
 // harbingerLinesTold are a thread's arrival and warning lines as they read
 // now: in the script's words while VibeMode is on, told again from the keys
 // the thread holds; as they were drawn otherwise, and for a line whose key
-// does not name it any more (a save from before the keys, or from a build
-// whose catalog differed). Read-only.
+// does not name it any more (a build whose catalog differed). Read-only.
 func (ge *GameEngine) harbingerLinesTold(h *HarbingerSave) []string {
 	out := append([]string(nil), h.Lines...)
 	if !vibe.On() {
@@ -784,7 +782,7 @@ func harbingerHeldSinceStart(set *rules.Set, epochKey string) map[string]bool {
 }
 
 // startAge is the age the thread's harbinger arrived in: the first figure of
-// its chain (the current one for a save from before chains were kept). The
+// its chain (the current one for a thread built with no chain). The
 // thread's Appease is priced on it for as long as the thread lasts.
 func (h *HarbingerSave) startAge() string {
 	if len(h.Chain) > 0 {
@@ -824,8 +822,7 @@ func doomAppeaseCostIn(set *rules.Set, epochKey, age string, level int) map[stri
 // of the age, so level 1 is half of what the age makes, lastPassageWarning /
 // harbingerLeadMin times a doom's foretold in the same age. The thread comes
 // as the player enters the final era, so in play age is the era's first; a
-// later one prices a thread that began there (a save from before the thread
-// existed, the dev console). Pure.
+// later one prices a thread that began there (the dev console). Pure.
 func lastPassageAppeaseCostIn(set *rules.Set, epochKey, age string, level int) map[string]float64 {
 	return warningAppeaseCostIn(set, epochKey, age, shortestWarningTicks(set, age, true), level)
 }
@@ -1557,15 +1554,10 @@ func copyHarbingerSave(in *HarbingerSave) *HarbingerSave {
 	return &h
 }
 
-// restoreHarbingerState loads the harbinger fields from a save (old saves have
-// none and load clean). It starts nothing and draws nothing, so a save loads
-// to exactly the state it was written in; the next tick brings whatever is
-// due. A live thread from before fates existed (it warned of the transition
-// out of its era) is carried into the new rules: in an era that can be fated
-// it becomes the warning of that era's doom (restoreFateState fated it to
-// strike at the era's end at the latest); in the Stone Era, where nothing can
-// be fated now, it is dropped. Under the write lock, after the epoch,
-// catastrophe and fate state are restored.
+// restoreHarbingerState loads the harbinger fields from a save. It starts
+// nothing and draws nothing, so a save loads to exactly the state it was
+// written in; the next tick brings whatever is due. Under the write lock,
+// after the epoch, catastrophe and fate state are restored.
 func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	ge.harbinger = nil
 	ge.harbingerCheckedEpoch = ""
@@ -1574,31 +1566,13 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 		h.Lines = append([]string(nil), save.Harbinger.Lines...)
 		h.LineKeys = append([]string(nil), save.Harbinger.LineKeys...)
 		h.Chain = append([]string(nil), save.Harbinger.Chain...)
-		if len(h.Chain) == 0 {
-			h.Chain = []string{h.Age}
-		}
 		if h.AppeaseLevel > HarbingerMaxAppease {
 			h.AppeaseLevel = HarbingerMaxAppease
 		}
 		if h.BraceLevel > HarbingerMaxBrace {
 			h.BraceLevel = HarbingerMaxBrace
 		}
-		if h.FalseProphet && h.ClaimFactor <= 0 {
-			h.ClaimFactor = 1
-		}
-		keep := true
-		if save.Fate == nil && h.TargetEpoch != "" {
-			// Written before fates existed.
-			if ge.fate != nil && ge.fate.EpochKey == h.EpochKey {
-				h.TargetEpoch = h.EpochKey
-				if def, ok := ge.rules.Harbinger(h.Age); ok {
-					h.When = ge.fateWhen(def)
-				}
-			} else {
-				keep = false
-			}
-		}
-		if _, ok := ge.rules.Harbinger(h.Age); ok && keep {
+		if _, ok := ge.rules.Harbinger(h.Age); ok {
 			ge.harbinger = &h
 		}
 	}

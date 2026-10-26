@@ -263,8 +263,6 @@ Some commands wait for a tech. Until it is researched, the command is refused wi
 
 The Trade and Factions panels say which tech a command waits for, and so does `festival`.
 
-A save written before the tree locked something gets a grace age, the age it was in. In that age nothing waits for a tech: every command is open, and so is every building of the age, its wonder included. A command the save was already using (a route running, a festival held, a civilization met) stays open for the rest of that run. Nothing you researched or built is touched, and the log says so once when the save is loaded. The locks start when you next advance.
-
 ---
 
 ## Tech tree by age

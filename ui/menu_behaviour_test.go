@@ -47,7 +47,7 @@ func newMenuRig(t *testing.T, games ...string) *menuRig {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	keepTheme(t)
-	acct, err := game.CreateNamedAccount("Menu Player")
+	acct, err := game.CreateAccount("Menu Player")
 	must(t, err)
 	r := &menuRig{t: t, acct: acct, clock: time.Unix(1_000_000, 0)}
 	for _, name := range games {
@@ -500,7 +500,7 @@ func dataTree(t *testing.T, root string) map[string]string {
 func TestMenuLooksAndWritesNothing(t *testing.T) {
 	root := t.TempDir()
 	t.Cleanup(game.SetDataDirForTest(root))
-	acct, err := game.CreateNamedAccount("Careful Player")
+	acct, err := game.CreateAccount("Careful Player")
 	must(t, err)
 	for _, name := range []string{"ashford", "brackwater"} {
 		mk := game.NewGameEngine()

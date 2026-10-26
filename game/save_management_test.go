@@ -528,11 +528,12 @@ func TestActiveParentNameSetter(t *testing.T) {
 	}
 }
 
-func TestLegacySaveHasNoParentName(t *testing.T) {
-	// A legacy-style save written without parent_name must load as a root ("").
-	name := "test_lineage_legacy"
+func TestSaveWithoutParentNameIsARoot(t *testing.T) {
+	// A save written without parent_name must load as a root ("").
+	name := "test_lineage_root"
 	writeTestSave(t, name) // ensures the dir exists + registers cleanup
 	writeRawSave(t, name, GameSave{
+		Format:    saveFormat,
 		Timestamp: time.Now(),
 		Age:       "stone_age",
 		// ParentName intentionally omitted (zero value, omitempty drops it).
@@ -543,10 +544,10 @@ func TestLegacySaveHasNoParentName(t *testing.T) {
 		t.Fatalf("LoadGame(%q) failed: %v", name, err)
 	}
 	if loaded.activeParentName != "" {
-		t.Errorf("legacy save loaded with activeParentName = %q, want \"\"", loaded.activeParentName)
+		t.Errorf("root save loaded with activeParentName = %q, want \"\"", loaded.activeParentName)
 	}
 	if got := findDetail(t, name).ParentName; got != "" {
-		t.Errorf("legacy SaveInfo.ParentName = %q, want \"\"", got)
+		t.Errorf("root SaveInfo.ParentName = %q, want \"\"", got)
 	}
 }
 

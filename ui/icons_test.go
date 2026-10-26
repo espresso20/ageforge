@@ -263,7 +263,7 @@ func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
-	acct, err := game.CreateNamedAccount("Icons Tester")
+	acct, err := game.CreateAccount("Icons Tester")
 	must(t, err)
 	eng.SetAccount(acct)
 	d, pages := newTestDashboard(eng)

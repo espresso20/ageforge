@@ -375,17 +375,16 @@ const (
 func TestOlderFilesStillVerify(t *testing.T) {
 	isolateAccountDir(t)
 
-	noErr(t, os.MkdirAll(accountDir(fixtureAccountID), 0755))
-	path := filepath.Join(accountDir(fixtureAccountID), accountFileName)
-	noErr(t, os.WriteFile(path, []byte(fixtureAccountJSON), 0644))
-	old := slotAccount(t, fixtureAccountID)
-	if old.Tampered || !verifyAccount(old) {
+	var old Account
+	noErr(t, json.Unmarshal([]byte(fixtureAccountJSON), &old))
+	if old.Tampered || !verifyAccount(&old) {
 		t.Errorf("an account.json from the previous version reads as modified (tampered=%v)", old.Tampered)
 	}
 
-	// Its export verifies too (import merges it into the same account).
-	if _, err := ImportAccountExport([]byte(fixtureExportJSON), true); err != nil {
-		t.Errorf("an export from the previous version was refused: %v", err)
+	// Its export verifies too: it passes the signature and is then refused for
+	// carrying no badges, which an export from before badges does not.
+	if _, err := ImportAccountExport([]byte(fixtureExportJSON), true); err == nil || err.Error() != errBeforeFour().Error() {
+		t.Errorf("an export from the previous version: %v, want the refusal for a file from before 4.0", err)
 	}
 
 	clean, err := CreateAccount("Clean")

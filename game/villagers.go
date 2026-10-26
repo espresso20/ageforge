@@ -20,9 +20,7 @@ type domainRuntime struct {
 // many methods is intentionally ignored to maintain API compatibility with
 // callers that still pass domain strings (e.g. "military", "food").
 //
-// The domains map always contains exactly one entry keyed "worker". Legacy save
-// files may contain multiple domain entries; LoadWorkers sums them all into the
-// single pool so old saves still load correctly.
+// The domains map always contains exactly one entry keyed "worker".
 type WorkerManager struct {
 	rules    *rules.Set
 	domains  map[string]*domainRuntime
@@ -53,10 +51,6 @@ func (vm *WorkerManager) foodClassFor() (config.WorkerClassDef, bool) {
 func (vm *WorkerManager) refreshFoodClass() {
 	vm.foodClass, vm.foodClassOK = vm.rules.WorkerClass("food", vm.ageKey)
 }
-
-// NewWorkerManager creates a new single-pool worker manager on the core
-// ruleset.
-func NewWorkerManager() *WorkerManager { return NewWorkerManagerWith(rules.Core()) }
 
 // NewWorkerManagerWith creates a new single-pool worker manager on set.
 // All workers belong to a single "worker" pool — domain restrictions are removed.
@@ -364,27 +358,19 @@ func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
 	}
 }
 
-// LoadWorkers restores state from save data. Handles forward and backward
-// compatibility: new saves have a single "worker" key; saves from before Phase
-// 19 may have domain-specific keys ("food", "faith", "military", etc.). All
-// domain counts are summed into the single pool and all valid assignments are
-// merged, so old saves load without data loss.
+// LoadWorkers restores state from save data: the single "worker" pool, with
+// the assignments that name a building that takes workers.
 func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	rt := vm.domains["worker"]
+	info := data["worker"]
+	rt.count = info.Count
 	// Reset before loading to prevent accumulation on repeated loads.
 	rt.assignments = make(map[string]int)
-	rt.count = 0
-	byBuilding := vm.buildingDefs
-	totalCount := 0
-	for _, info := range data {
-		totalCount += info.Count
-		for bKey, cnt := range info.Assignment {
-			if def, ok := byBuilding[bKey]; ok && def.WorkerCapacity > 0 && cnt > 0 {
-				rt.assignments[bKey] += cnt
-			}
+	for bKey, cnt := range info.Assignment {
+		if def, ok := vm.buildingDefs[bKey]; ok && def.WorkerCapacity > 0 && cnt > 0 {
+			rt.assignments[bKey] = cnt
 		}
 	}
-	rt.count = totalCount
 }
 
 // Snapshot returns worker state for UI consumption.

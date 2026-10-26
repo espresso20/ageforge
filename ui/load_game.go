@@ -732,7 +732,7 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 		vibe.Sprintf("ui.load_game.detailText.09", "[gray]Morale[-] [white]%.0f%%[-]", s.Morale*100),
 	}, detailSep))
 
-	// Line 4b — account attribution. Pre-account/legacy saves show a dash; saves
+	// Line 4b — account attribution. Saves played with no account show a dash; saves
 	// from the current account are tagged "(this account)", everything else
 	// "(another account)". Only the short id prefix is shown — never the full id.
 	switch {

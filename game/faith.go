@@ -209,37 +209,26 @@ func saveCopyOf(m FaithSave) *FaithSave {
 	return &m
 }
 
-// restoreFaithState loads the faith measure. A save written before the
-// measure existed has none: its town is taken as a moderate one that has
-// kept its faith (Own = Moderate = the faith it holds), which reads 1 /
-// FaithFullSets, the low band every roll read before, and moves from there
-// with what the town does. Under the write lock, after the resources are
-// restored.
+// restoreFaithState loads the faith measure. Under the write lock.
 func (ge *GameEngine) restoreFaithState(save *GameSave) {
-	ge.faithMeasure = restoreMeasure(save.FaithMeasure, save.FaithMeasured, ge.Resources.Get("faith"))
+	ge.faithMeasure = restoreMeasure(save.FaithMeasure)
 }
 
 // restoreMeasure is the measure a save leaves, for faith and for culture:
-// saved is the measure it carried (nil for none), measured whether it
-// was written since the measure existed, held the resource the town holds.
-// Without a measure, an unmarked save holding some is taken as a moderate town
-// that kept it (Own = Moderate = held); a marked one has nothing measured yet.
-// A saved measure that is NaN, negative or absurd (a hand-edited save) is
-// cleared, field by field.
-func restoreMeasure(saved *FaithSave, measured bool, held float64) FaithSave {
-	if saved != nil {
-		m := *saved
-		for _, v := range []*float64{&m.Moderate, &m.Own, &m.Other} {
-			if !(*v >= 0) || *v > maxFaithMeasure {
-				*v = 0
-			}
+// saved is the measure it carried (nil for none, which has nothing measured
+// yet). A saved measure that is NaN, negative or absurd (a hand-edited save)
+// is cleared, field by field.
+func restoreMeasure(saved *FaithSave) FaithSave {
+	if saved == nil {
+		return FaithSave{}
+	}
+	m := *saved
+	for _, v := range []*float64{&m.Moderate, &m.Own, &m.Other} {
+		if !(*v >= 0) || *v > maxFaithMeasure {
+			*v = 0
 		}
-		return m
 	}
-	if !measured && held > 0 {
-		return FaithSave{Moderate: held, Own: held}
-	}
-	return FaithSave{}
+	return m
 }
 
 // maxFaithMeasure bounds a loaded measure: far past anything a run makes.

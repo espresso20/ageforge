@@ -231,18 +231,6 @@ Catch-up applies after a Succumb too, even on a run that has never prestiged: th
 
 A fated doom's window and the harbinger's lead are both measured on an age's expected length divided by the age's speed. In a mastered era the doom and its warning both fall inside the shorter era, and warnings shrink in the same proportion: at 4x every window is a quarter as long. Mastery is fixed for the run, so a fate rolled when you enter an era never shifts under you. See [The Harbinger](harbinger.md#when-the-harbinger-arrives).
 
-### Saves from before Era Mastery
-
-The first time a save from before Era Mastery loads, it gets the mastery its past prestiges earned. Every prestige in such a save was a Modern Age prestige, which completes the Primitive to the Atomic Age, so a save at prestige level L gets mastery L (10 at most) in each of those ages. Its record becomes the deepest of: the age it is in, the Modern Age, the Interstellar Age if it holds the Cosmic Legacy, and the first age of every epoch it succumbed in. This happens once, and the log says so:
-
-```
-Era Mastery: ages you have completed now run faster. Primitive to Atomic: mastery 5 (3.2x).
-```
-
-A save at prestige level 0 gains nothing.
-
-For example, a level-5 save, mid-run in the Industrial Age, loads with mastery 5 (k = 3.24) in every age from the Primitive to the Atomic Age and a record in the Modern Age. The Industrial Age runs 3.2x faster at once. The run's next Modern Age prestige takes those ages to mastery 6 (k = 3.45).
-
 ### What you see
 
 - `prestige` and the Stats panel show the age you are in: `Era Mastery: known ground, 2.4x faster (mastery 2)`, `known ground, 4x faster (catching up to your record)` or `new ground, 1x`. Under it is what your next prestige adds, for example `Next prestige: the Primitive Age to the Atomic Age gain a mastery level each.`

@@ -182,8 +182,7 @@ func epochProviderHarbingers(sb *strings.Builder, state game.GameState) {
 }
 
 // latestHarbinger returns the newest harbinger record of epochKey's doom, or
-// nil. (Saves from before fates held records keyed to the era the passage led
-// into; those match too, which is what they meant.)
+// nil.
 func latestHarbinger(history []game.HarbingerRecord, epochKey string) *game.HarbingerRecord {
 	for i := len(history) - 1; i >= 0; i-- {
 		if history[i].TargetEpochKey == epochKey {
@@ -329,8 +328,7 @@ func epochProviderCivilizationLog(sb *strings.Builder, state game.GameState) {
 
 // findEpochEvent returns the most recent transition event for the given epoch
 // key, or nil. A catastrophe strikes inside its era now, after the
-// transition's event, so it is skipped unless it is all the era has (saves
-// from before fates, when a catastrophe took the transition's place).
+// transition's event, so it is skipped unless it is all the era has.
 func findEpochEvent(history []game.EpochEventRecord, epochKey string) *game.EpochEventRecord {
 	var last, cat *game.EpochEventRecord
 	for i := range history {
@@ -360,9 +358,7 @@ func latestCatastrophe(history []game.EpochEventRecord, epochKey string) *game.E
 }
 
 // catastropheOutcomeLabel renders a catastrophe record's outcome. Only an
-// actual Endure reads as Endured: a pending catastrophe says so, and a record
-// whose outcome was never stored (older saves) says it is unknown rather than
-// claiming the player endured it.
+// actual Endure reads as Endured: a pending catastrophe says so.
 func catastropheOutcomeLabel(outcome string) string {
 	switch outcome {
 	case game.CatastropheEndured:
@@ -372,7 +368,7 @@ func catastropheOutcomeLabel(outcome string) string {
 	case game.CatastrophePending:
 		return vibe.Line("ui.overlay_epoch.catastropheOutcomeLabel.03", "[red]Pending[-]")
 	}
-	return vibe.Line("ui.overlay_epoch.catastropheOutcomeLabel.04", "[gray]catastrophe (outcome not recorded)[-]")
+	return ""
 }
 
 // epochEventColor returns a tview color tag name for an epoch event type.

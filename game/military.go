@@ -130,7 +130,6 @@ type MilitaryManager struct {
 	// the rank say. Only tests set it, to plant an offer of a tier the era
 	// has not opened.
 	minTiers      int
-	totalLoot     map[string]float64
 	defenseRating float64
 	// returns is the returns log, newest first (mission_returns.go);
 	// returnsMade counts every mission that has come home this run and
@@ -164,18 +163,6 @@ func (mm *MilitaryManager) missionTicks(category string, ticks int) int {
 	}
 	return techTimeTicks(ticks, mm.campaignTime)
 }
-
-// CampaignPay is amount of a campaign's loot with the techs' share on top:
-// amount itself with none.
-func (mm *MilitaryManager) CampaignPay(amount float64) float64 {
-	if mm.campaignPay <= 1 {
-		return amount
-	}
-	return float64(amount * mm.campaignPay)
-}
-
-// NewMilitaryManager creates a military manager on the core ruleset.
-func NewMilitaryManager() *MilitaryManager { return NewMilitaryManagerWith(rules.Core()) }
 
 // Rebind moves the manager onto set, whose clocks time its missions.
 func (mm *MilitaryManager) Rebind(set *rules.Set) {
@@ -223,8 +210,7 @@ func (mm *MilitaryManager) redraw() {
 // NewMilitaryManagerWith creates a military manager on set.
 func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 	return &MilitaryManager{
-		rules:     set,
-		totalLoot: make(map[string]float64),
+		rules: set,
 	}
 }
 
@@ -262,20 +248,6 @@ func (mm *MilitaryManager) ActiveByTier(tier string) *ActiveExpedition {
 	}
 	return nil
 }
-
-// ActiveOf returns every mission under way in a tier, oldest first.
-func (mm *MilitaryManager) ActiveOf(tier string) []*ActiveExpedition {
-	var out []*ActiveExpedition
-	for _, a := range mm.active {
-		if a.Tier == tier {
-			out = append(out, a)
-		}
-	}
-	return out
-}
-
-// ActiveAll returns every mission under way, in the order they were sent.
-func (mm *MilitaryManager) ActiveAll() []*ActiveExpedition { return slices.Clone(mm.active) }
 
 // HasActive reports whether any mission is currently under way.
 func (mm *MilitaryManager) HasActive() bool { return len(mm.active) > 0 }
@@ -397,13 +369,11 @@ func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResu
 	if success {
 		for res, amount := range active.SuccessRewards {
 			rewards[res] = amount
-			mm.totalLoot[res] += amount
 		}
 		message = vibe.Sprintf("game.military.tickMission.01", "%s succeeded. Loot: %s.", active.Title, amountsText(rewards))
 	} else {
 		for res, amount := range active.FailureRewards {
 			rewards[res] = amount
-			mm.totalLoot[res] += amount
 		}
 		message = vibe.Sprintf("game.military.tickMission.02", "%s failed. You kept %.0f%% of the loot: %s.", active.Title, failedLootShare*100, amountsText(rewards))
 	}
@@ -476,7 +446,6 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		CompletedCount:  mm.completedCount,
 		Experience:      mm.experience,
 		Rank:            mm.Rank(),
-		TotalLoot:       maps.Clone(mm.totalLoot),
 		Returns:         mm.returnsCopy(),
 		ReturnsMade:     mm.returnsMade,
 		ReturnsSeen:     mm.returnsSeen,
@@ -564,9 +533,6 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 		mm.returns[i].Loot = maps.Clone(mm.returns[i].Loot)
 	}
 	mm.returnsMade, mm.returnsSeen = save.ReturnsMade, save.ReturnsSeen
-	if save.TotalLoot != nil {
-		mm.totalLoot = save.TotalLoot
-	}
 	mm.redraw()
 }
 

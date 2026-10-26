@@ -3,7 +3,6 @@ package game
 import (
 	"math"
 	"math/rand"
-	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -433,52 +432,6 @@ func TestSuccumb_ResearchBonusSurvivesPrestigeAndSaveLoad(t *testing.T) {
 	}
 }
 
-func TestLoad_MigratesStoredSuccumbResearchBonus(t *testing.T) {
-	ge := NewGameEngine()
-	ge.legacyBonuses = map[string]bool{"iron_era": true, "steel_era": true}
-	// An old save: the last Succumb wrote +0.25 into permanentBonuses.
-	ge.permanentBonuses["research_speed"] = 0.25
-	ge.restoreCatastropheState(&GameSave{})
-	if _, ok := ge.permanentBonuses["research_speed"]; ok {
-		t.Errorf("stored research bonus not stripped: %v", ge.permanentBonuses["research_speed"])
-	}
-	if got := ge.combinedResearchSpeed(); got != 0 {
-		t.Errorf("research speed pool = %v, want 0: the stored copy is gone", got)
-	}
-	if got := ge.succumbResearchFactor(); got != twoEpochs {
-		t.Errorf("Ancient Knowledge = x%v, want x%v (derived from the legacy flags)", got, twoEpochs)
-	}
-
-	// A new-format save is trusted as-is.
-	ge2 := NewGameEngine()
-	ge2.permanentBonuses["research_speed"] = 0.15
-	ge2.restoreCatastropheState(&GameSave{SuccumbResearchDerived: true})
-	if got := ge2.permanentBonuses["research_speed"]; got != 0.15 {
-		t.Errorf("new-format save research_speed = %v, want 0.15", got)
-	}
-}
-
-func TestLoad_ReconstructsOutcomesOnOldRecords(t *testing.T) {
-	ge := NewGameEngine()
-	ge.pendingCatastrophe = "steel_era"
-	ge.survivedEpochs = map[string]bool{"iron_era": true}
-	ge.legacyBonuses = map[string]bool{"electric_era": true}
-	ge.epochEventHistory = []EpochEventRecord{
-		{EpochKey: "electric_era", EventType: "catastrophe"},
-		{EpochKey: "iron_era", EventType: "catastrophe"},
-		{EpochKey: "steel_era", EventType: "catastrophe"},
-		{EpochKey: "digital_era", EventType: "catastrophe"},
-		{EpochKey: "iron_era", EventType: "good_minor"},
-	}
-	ge.restoreCatastropheState(&GameSave{})
-	want := []string{CatastropheSuccumbed, CatastropheEndured, CatastrophePending, "", ""}
-	for i, r := range ge.epochEventHistory {
-		if r.Outcome != want[i] {
-			t.Errorf("record %d (%s %s) outcome = %q, want %q", i, r.EpochKey, r.EventType, r.Outcome, want[i])
-		}
-	}
-}
-
 // --- Pending blocks progress --------------------------------------------------
 
 func TestPendingBlocksAdvanceUntilResolved(t *testing.T) {
@@ -878,27 +831,6 @@ func TestSaveLoadKeepsPendingAndItStillBlocks(t *testing.T) {
 		t.Errorf("record outcome after load = %q, want pending", r.Outcome)
 	}
 	noErr(t, ge2.Endure())
-}
-
-// Saves written by early builds of this change carry catastrophe_fired. The
-// field is ignored on load but must not break the signature check.
-func TestLoadIgnoresDeprecatedCatastropheFired(t *testing.T) {
-	t.Cleanup(SetDataDirForTest(t.TempDir()))
-	ge := catEngine(t, "iron_age", 3)
-	snap := ge.buildSaveSnapshot()
-	snap.CatastropheFired = map[string]bool{"iron_era": true}
-	snap.Signature = signSave(snap)
-	noErr(t, os.MkdirAll(saveDirectory(), 0755))
-	writeRawSave(t, "cat_deprecated", snap)
-
-	ge2 := NewGameEngine()
-	noErr(t, ge2.LoadGame("cat_deprecated"))
-	if ge2.cheaterBadge {
-		t.Error("save with catastrophe_fired failed signature verification")
-	}
-	if ge2.buildSaveSnapshot().CatastropheFired != nil {
-		t.Error("catastrophe_fired must not be written back")
-	}
 }
 
 func TestCountCatastropheOutcomes(t *testing.T) {

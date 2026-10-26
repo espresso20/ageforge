@@ -51,7 +51,7 @@ func stage(t *testing.T, games ...string) string {
 	t.Helper()
 	root := t.TempDir()
 	t.Cleanup(game.SetDataDirForTest(root))
-	acct, err := game.CreateNamedAccount("Exit Tests")
+	acct, err := game.CreateAccount("Exit Tests")
 	if err != nil {
 		t.Fatal(err)
 	}

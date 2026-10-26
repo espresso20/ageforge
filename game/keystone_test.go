@@ -171,3 +171,23 @@ func TestResearchStateNamesKeystones(t *testing.T) {
 		t.Errorf("the Primitive Age has a keystone: %q", got)
 	}
 }
+
+// fillWonderBank banks everything wonder key still lacks, through the same
+// deposit a player makes, from stores raised to hold it.
+func fillWonderBank(t *testing.T, ge *GameEngine, key string) {
+	t.Helper()
+	for _, res := range sortedKeys(ge.Buildings.defs[key].BaseCost) {
+		need := ge.Buildings.defs[key].BaseCost[res] - ge.Buildings.wonderBanks[key][res]
+		if need <= 0.001 {
+			continue
+		}
+		ge.Resources.UnlockResource(res)
+		setAmount(ge, res, need)
+		if _, err := ge.BankWonderMax(key, res); err != nil {
+			t.Fatalf("banking %s for %s: %v", res, key, err)
+		}
+	}
+	if !ge.Buildings.IsWonderBankFull(key) {
+		t.Fatalf("the %s bank is not full after banking every part", key)
+	}
+}

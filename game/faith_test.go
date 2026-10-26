@@ -368,24 +368,17 @@ func TestFaithMeasureSaveLoadAndReset(t *testing.T) {
 		t.Errorf("after load: measure %+v strength %v, want %+v and %v", ge2.faithMeasure, ge2.faithStrength(), want, strength)
 	}
 
-	// A save from before the measure: no marker, no measure.
-	old := faithTown(t, "iron_age", 0)
-	old.Resources.LoadAmounts(map[string]float64{"faith": 4321})
-	old.restoreFaithState(&GameSave{})
-	if got := old.faithStrength(); math.Abs(got-1/FaithFullSets) > 1e-12 || FaithBandAt(got) != FaithBandLow {
-		t.Errorf("an older save holding faith: strength %v, want a moderate town's %v, the low band", got, 1/FaithFullSets)
-	}
-	// One written since, at a run's first tick, has the marker and nothing to
-	// measure yet: it is left alone.
+	// A save written at a run's first tick has nothing to measure yet: it
+	// is left alone.
 	fresh := faithTown(t, "iron_age", 0)
 	fresh.Resources.LoadAmounts(map[string]float64{"faith": 4321})
-	fresh.restoreFaithState(&GameSave{FaithMeasured: true})
+	fresh.restoreFaithState(&GameSave{})
 	if fresh.faithMeasure != (FaithSave{}) {
-		t.Errorf("a marked save with no measure was given one: %+v", fresh.faithMeasure)
+		t.Errorf("a save with no measure was given one: %+v", fresh.faithMeasure)
 	}
 	// A hand-edited measure cannot poison the rolls.
 	bad := faithTown(t, "iron_age", 0)
-	bad.restoreFaithState(&GameSave{FaithMeasured: true, FaithMeasure: &FaithSave{Moderate: math.NaN(), Own: -5, Other: math.Inf(1)}})
+	bad.restoreFaithState(&GameSave{FaithMeasure: &FaithSave{Moderate: math.NaN(), Own: -5, Other: math.Inf(1)}})
 	if bad.faithMeasure != (FaithSave{}) || bad.faithStrength() != 0 {
 		t.Errorf("a broken measure loaded as %+v (strength %v), want it cleared", bad.faithMeasure, bad.faithStrength())
 	}

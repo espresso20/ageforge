@@ -9,7 +9,7 @@ import (
 // TestShowAccountNameConfirmModalAddsPage is the add-page contract for the first-run
 // account confirmation step. Submitting a name in the entry modal opens this confirm
 // modal before any account is created (the name is the identity, so a typo must be
-// catchable). The create path (game.CreateNamedAccount) is covered elsewhere; this is a
+// catchable). The create path (game.CreateAccount) is covered elsewhere; this is a
 // presentation-only step, so we keep the check to the page-registration contract and
 // assert neither callback fires merely on open.
 func TestShowAccountNameConfirmModalAddsPage(t *testing.T) {

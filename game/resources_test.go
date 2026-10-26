@@ -163,3 +163,10 @@ func TestResourceManager_SaveLoadRoundTrip(t *testing.T) {
 		t.Errorf("loaded wood = %v, want 22.2", got)
 	}
 }
+
+// SetRate sets the production rate for a resource
+func (rm *ResourceManager) SetRate(key string, rate float64) {
+	if r, ok := rm.resources[key]; ok {
+		r.Rate = rate
+	}
+}

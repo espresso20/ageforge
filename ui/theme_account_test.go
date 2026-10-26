@@ -21,9 +21,9 @@ func newIsolatedAccount(t *testing.T) *game.Account {
 	t.Helper()
 	restore := game.SetDataDirForTest(t.TempDir())
 	t.Cleanup(restore)
-	acct, err := game.CreateNamedAccount("Theme Test Empire")
+	acct, err := game.CreateAccount("Theme Test Empire")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
+		t.Fatalf("CreateAccount: %v", err)
 	}
 	return acct
 }
@@ -111,7 +111,7 @@ func TestApplyAccountThemeFallsBackToForge(t *testing.T) {
 		must(t, theme.SetActive("deuteranopia"))
 		var engine *game.GameEngine
 		if !c.noEngine {
-			acct := newIsolatedAccount(t) // CreateNamedAccount leaves ActiveTheme == ""
+			acct := newIsolatedAccount(t) // CreateAccount leaves ActiveTheme == ""
 			if c.stored != "" {
 				must(t, acct.SetActiveTheme(c.stored))
 			}

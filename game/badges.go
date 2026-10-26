@@ -249,11 +249,6 @@ func (b *badgeBook) tracksBuilt(def config.BuildingDef) bool {
 // from counting twice. It is saved with the run and starts over with it
 // (prestige, Succumb, a new game).
 type RunFacts struct {
-	// Whole is true when the facts were kept from the run's first tick. A
-	// save from before run facts loads without it, and a badge that asks
-	// for something never to have happened in the run cannot be earned
-	// there: the run's past is not known.
-	Whole bool `json:"whole,omitempty"`
 	// Counts is how often each event was reported, by kind, and by kind and
 	// subject for the subjects a badge names.
 	Counts map[string]float64 `json:"counts,omitempty"`
@@ -263,22 +258,16 @@ type RunFacts struct {
 	// buildings a badge counts.
 	Net  map[string]int `json:"net,omitempty"`
 	High map[string]int `json:"high,omitempty"`
-	// AgeTick is the tick the run entered its current age, when AgeKnown.
-	AgeTick  int  `json:"age_tick,omitempty"`
-	AgeKnown bool `json:"age_known,omitempty"`
-	// EraTick is the tick the run entered its current era, when EraKnown.
-	// A save from before it was kept learns it at its next era.
-	EraTick  int  `json:"era_tick,omitempty"`
-	EraKnown bool `json:"era_known,omitempty"`
+	// AgeTick is the tick the run entered its current age, EraTick the tick
+	// it entered its current era.
+	AgeTick int `json:"age_tick,omitempty"`
+	EraTick int `json:"era_tick,omitempty"`
 }
 
-// newRunFacts is the facts of a run at its first tick.
-func newRunFacts() RunFacts { return RunFacts{Whole: true, AgeKnown: true, EraKnown: true} }
-
 // empty reports whether nothing is recorded: such facts are left out of the
-// save, so a save from before them keeps its bytes when written again.
+// save.
 func (f *RunFacts) empty() bool {
-	return !f.Whole && !f.AgeKnown && f.AgeTick == 0 && !f.EraKnown && f.EraTick == 0 && len(f.Counts) == 0 && len(f.Net) == 0 && len(f.High) == 0
+	return f.AgeTick == 0 && f.EraTick == 0 && len(f.Counts) == 0 && len(f.Net) == 0 && len(f.High) == 0
 }
 
 // clone returns a copy that shares no map with f.
@@ -369,7 +358,7 @@ func (ge *GameEngine) report(ev Event) {
 	case ge.badges.untallied[ev.Kind]:
 		// About the session or the account: judged, not tallied.
 	case ev.Kind == config.BadgeEvAgeReached:
-		ge.runFacts.AgeTick, ge.runFacts.AgeKnown = ge.tick, true
+		ge.runFacts.AgeTick = ge.tick
 		ge.runFacts.note(ge.badges, ev)
 	default:
 		ge.runFacts.note(ge.badges, ev)
@@ -458,7 +447,7 @@ func (ge *GameEngine) badgeCtxLocked(ev Event) badgeCtx {
 		fact: func(name string) (float64, bool) {
 			switch {
 			case strings.HasPrefix(name, factRun):
-				return ge.runFacts.Counts[strings.TrimPrefix(name, factRun)], ge.runFacts.Whole
+				return ge.runFacts.Counts[strings.TrimPrefix(name, factRun)], true
 			case strings.HasPrefix(name, factStandingAge):
 				n := 0
 				for _, k := range ge.badges.ageBuildings[strings.TrimPrefix(name, factStandingAge)] {
@@ -496,7 +485,7 @@ var badgePreds = map[string]func(ge *GameEngine, def *config.BadgeDef) bool{
 	// that age.
 	config.BadgePredAgeOverstay: func(ge *GameEngine, def *config.BadgeDef) bool {
 		target := ge.rules.TargetTicks(ge.age)
-		if !ge.runFacts.AgeKnown || target <= 0 || def.Threshold <= 0 {
+		if target <= 0 || def.Threshold <= 0 {
 			return false
 		}
 		return float64(ge.tick-ge.runFacts.AgeTick) >= float64(def.Threshold*target)
@@ -506,7 +495,7 @@ var badgePreds = map[string]func(ge *GameEngine, def *config.BadgeDef) bool{
 	config.BadgePredMostlyAway: func(ge *GameEngine, def *config.BadgeDef) bool {
 		away := ge.runFacts.Counts[config.BadgeEvAwayTicks]
 		played := float64(ge.tick) - away
-		return ge.runFacts.Whole && def.Threshold > 0 && away > 0 && played >= 0 && away >= float64(def.Threshold*played)
+		return def.Threshold > 0 && away > 0 && played >= 0 && away >= float64(def.Threshold*played)
 	},
 }
 

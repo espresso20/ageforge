@@ -23,9 +23,9 @@ import (
 func menuAccount(t *testing.T) (*GameEngine, *Account) {
 	t.Helper()
 	isolateAccountDir(t)
-	acct, err := CreateNamedAccount("Menu Tests")
+	acct, err := CreateAccount("Menu Tests")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
+		t.Fatalf("CreateAccount: %v", err)
 	}
 	ge := NewGameEngine()
 	ge.SetAccount(acct)

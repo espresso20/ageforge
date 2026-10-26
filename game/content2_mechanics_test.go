@@ -221,3 +221,10 @@ func TestSteelAndElectricMechanics(t *testing.T) {
 		t.Errorf("the %s expedition brings back %v, %v with the Military-Industrial Complex; want the same", scouting, a, b)
 	}
 }
+
+// WonderBuildTicks is BuildTicks for a wonder listed at base ticks, with the
+// techs' terms read off a snapshot (a mechanic no tech has touched is absent
+// there and reads as no cut): the panels list a wonder's time with it.
+func WonderBuildTicks(base int, rs ResearchState, k float64) int {
+	return BuildTicks(techTimeTicks(base, rs.Mechanics[config.MechanicWonderBuildTicks]), rs.BuildTime, k)
+}
