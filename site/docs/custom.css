@@ -316,6 +316,11 @@ p code, li code { word-break: break-word; }
   .markdown-section h1 { font-size: 2.2rem; }
   .markdown-section h2 { font-size: 1.55rem; }
   .sidebar-toggle { width: 42px !important; height: 42px !important; }
+  /* The top links and the Night/Day button keep to two rows, clear of the
+     sidebar toggle on the left and the corner ribbon on the right. */
+  .app-nav { left: 48px; right: 48px; font-size: 0.82rem; letter-spacing: 0.1em; }
+  .app-nav li { margin: 0 0.45em; }
+  .theme-toggle { padding: 0.26em 0.6em 0.18em; margin: 0; }
   .content { padding: 16px !important; }
   /* The theme pads the column 45px a side at every width; with the 16px
      above that left the text 253px of a 375px phone. On a phone the 16px
@@ -328,3 +333,7 @@ p code, li code { word-break: break-word; }
   .screen-scroll { padding: 8px; }
 }
 .search input::placeholder { color: var(--ink-3); opacity: 1; }
+/* On the narrowest phones the top links need a third row; leave room for it. */
+@media (max-width: 380px) {
+  .app-nav:not(:empty) ~ main .markdown-section { padding-top: 5rem; }
+}
