@@ -58,10 +58,8 @@ func TestEveryTextOfTheMapSheetIsWiredOrLeftAlone(t *testing.T) {
 		t.Errorf("%d texts of the map sheet are wired and judged not to follow VibeMode; take the vibe call off them:\n  %s",
 			len(needless), strings.Join(needless, "\n  "))
 	}
-	for _, reason := range []string{leftKeycap, leftNeverShown, leftArt} {
-		if left[reason] == 0 {
-			t.Errorf("no text of the map sheet is left alone as %q: the rule or the list is dead", reason)
-		}
+	if left[leftKeycap] == 0 {
+		t.Errorf("no text of the map sheet is left alone as %q: the rule or the list is dead", leftKeycap)
 	}
 }
 
@@ -123,8 +121,6 @@ func TestMapLabelsCarryTheirWidths(t *testing.T) {
 		"ui.mapstyle.roguelike.city.holoAds.01":           4, // one letter to a cell, four to a block
 		"ui.mapstyle.roguelike.city.megacorps.02":         3, // a tower's initials
 		"ui.mapstyle.roguelike.city.megacorps.01":         0, // its name is an inspect title
-		"ui.mapstyle.skyline.city.holoAds.01":             8,
-		"ui.mapstyle.skyline.wonders_late.citadel.01":     7,
 		"ui.mapstyle.roguelike.chrome.header.01":          0, // a header segment: dropped from the left until the line fits
 		"ui.mapstyle.roguelike.inspect.describe.01":       0,
 	} {

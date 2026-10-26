@@ -92,11 +92,8 @@ func TestSkyDispatch(t *testing.T) {
 	if st.g.zoom != zRegion {
 		t.Error("OptWorld does not open the known world")
 	}
-	if st.Name() != "roguelike" || !st.CompactShowsNews() {
-		t.Error("the wrapped style lost its name or its news")
-	}
-	if _, ok := Entry().New().(*skyStyle); !ok {
-		t.Error("the registry entry is not wrapped for the sky")
+	if _, ok := New().(*skyStyle); !ok {
+		t.Error("the map is not wrapped for the sky")
 	}
 }
 

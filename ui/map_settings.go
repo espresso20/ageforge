@@ -3,26 +3,20 @@ package ui
 import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// map_settings.go holds the display settings a command sets: "map style",
-// "map glyphs", "minimap" and "motion" (and the skyline's zoom, which its
-// + and - keys set). They travel with the account
-// (AccountPrefs, like the active theme; motion in the account's settings
-// file), so a save/load keeps them and an account switch swaps them. The
-// game still runs without an account: the dashboard then keeps them for
-// the session only.
+// map_settings.go holds the display settings a command sets: "map glyphs",
+// "minimap" and "motion". They travel with the account (AccountPrefs, like
+// the active theme; motion in the account's settings file), so a save/load
+// keeps them and an account switch swaps them. The game still runs without
+// an account: the dashboard then keeps them for the session only.
 
 // mapSettings is the resolved settings, defaults filled in.
 type mapSettings struct {
-	Style string
-	Tier  mapmodel.GlyphTier
-	// Zoom is the skyline's zoom level ("far", "wide", "mid" or "close"); "" is mid.
-	Zoom string
+	Tier mapmodel.GlyphTier
 	// Minimap: the dashboard shows the mini map above the Buildings list.
-	// Off unless the player turned it on (minimap on).
+	// On unless the player turned it off (minimap off).
 	Minimap bool
 	// HintShown: the one-time "Type icons" hint was shown on this account.
 	HintShown bool
@@ -32,41 +26,26 @@ type mapSettings struct {
 }
 
 // defaultMapSettings is the settings with nothing chosen.
-func defaultMapSettings(reg *mapstyle.Registry) mapSettings {
-	return mapSettings{Style: reg.Default(), Tier: mapmodel.TierUnicode, Minimap: false, Motion: true}
+func defaultMapSettings() mapSettings {
+	return mapSettings{Tier: mapmodel.TierUnicode, Minimap: true, Motion: true}
 }
 
-// resolveMapSettings reads the account's map settings against the style
-// registry. An empty or unknown style is the registry default (roguelike);
-// an empty or unknown tier is unicode; the mini map is on unless turned
-// off. acct may be nil (defaults).
-func resolveMapSettings(acct *game.Account, reg *mapstyle.Registry) mapSettings {
-	out := defaultMapSettings(reg)
+// resolveMapSettings reads the account's map settings. An empty or unknown
+// tier is unicode; the mini map is on unless turned off. acct may be nil
+// (defaults).
+func resolveMapSettings(acct *game.Account) mapSettings {
+	out := defaultMapSettings()
 	if acct == nil {
 		return out
 	}
-	style, glyphs, hint := acct.MapPrefs()
-	if _, ok := reg.New(style); ok {
-		out.Style = style
-	}
+	glyphs, hint := acct.MapPrefs()
 	if t, ok := mapmodel.ParseTier(glyphs); ok {
 		out.Tier = t
 	}
-	out.Zoom = acct.MapZoom()
 	out.Minimap = acct.MinimapOn()
 	out.HintShown = hint
 	out.Motion = acct.MotionOn()
 	return out
-}
-
-// styleTitle is a style's display name ("Roguelike"), or the key.
-func styleTitle(reg *mapstyle.Registry, name string) string {
-	for _, e := range reg.Entries() {
-		if e.Name == name {
-			return e.Title.String()
-		}
-	}
-	return name
 }
 
 // mapSettings is the dashboard's current map settings: the account's, or
@@ -74,11 +53,11 @@ func styleTitle(reg *mapstyle.Registry, name string) string {
 func (d *Dashboard) mapSettings() mapSettings {
 	if d.engine != nil {
 		if acct := d.engine.Account(); acct != nil {
-			return resolveMapSettings(acct, d.mapViews.reg)
+			return resolveMapSettings(acct)
 		}
 	}
 	if d.mapLocal == nil {
-		s := resolveMapSettings(nil, d.mapViews.reg)
+		s := resolveMapSettings(nil)
 		d.mapLocal = &s
 	}
 	return *d.mapLocal
@@ -96,16 +75,10 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 		d.mapLocal = &s
 		return
 	}
-	cur := resolveMapSettings(acct, d.mapViews.reg)
+	cur := resolveMapSettings(acct)
 	var err error
-	if cur.Style != s.Style {
-		err = acct.SetMapStyle(s.Style)
-	}
-	if cur.Tier != s.Tier && err == nil {
+	if cur.Tier != s.Tier {
 		err = acct.SetMapGlyphs(s.Tier.String())
-	}
-	if cur.Zoom != s.Zoom && err == nil {
-		err = acct.SetMapZoom(s.Zoom)
 	}
 	if cur.Minimap != s.Minimap && err == nil {
 		err = acct.SetMinimap(s.Minimap)
@@ -118,15 +91,13 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 	}
 }
 
-// mapPref is one setting a command changed: "style", "glyphs", "minimap"
-// or "motion", and its new value. The zero value changes nothing.
+// mapPref is one setting a command changed: "glyphs", "minimap" or
+// "motion", and its new value. The zero value changes nothing.
 type mapPref struct{ Key, Value string }
 
 // apply writes the change into s.
 func (p mapPref) apply(s *mapSettings) {
 	switch p.Key {
-	case "style":
-		s.Style = p.Value
 	case "glyphs":
 		if t, ok := mapmodel.ParseTier(p.Value); ok {
 			s.Tier = t

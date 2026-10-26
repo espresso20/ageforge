@@ -18,9 +18,7 @@ import (
 // The rich layout widens the Panels column so each panel can say what it is
 // for, gives that whole column to the Panels list, and moves the People box
 // into the right half of the Under construction row, where it has the rows
-// for the bar, the posts and what holds the population back. The skyline
-// strip (dash_skyline.go) is separate: it sits under the Buildings list in
-// either layout, wherever the Log is tall enough for it.
+// for the bar, the posts and what holds the population back.
 
 const (
 	// richMinCols and richMinRows are the smallest terminal the rich layout

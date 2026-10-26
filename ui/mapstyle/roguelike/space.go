@@ -30,17 +30,15 @@ func (s *skyStyle) onSky(m *mapmodel.Model) bool {
 	return m != nil && m.Sky() != mapmodel.SkyGround && s.g.zoom != zRegion
 }
 
-func (s *skyStyle) Name() string { return s.g.Name() }
-
 // Pointer reports the tile the ground view's cursor is on, when it is out
-// on the settlement (mapstyle.Pointing).
-func (s *skyStyle) Pointer() (mapstyle.Pointer, bool) {
-	return mapstyle.Pointer{X: s.g.cur.X, Y: s.g.cur.Y}, s.g.inspect && s.g.zoom != zRegion
+// on the settlement.
+func (s *skyStyle) Pointer() (mapmodel.Pt, bool) {
+	return s.g.cur, s.g.inspect && s.g.zoom != zRegion
 }
 
-// Point marks a tile in the ground view's compact form (mapstyle.Pointing).
-func (s *skyStyle) Point(p mapstyle.Pointer, ok bool) {
-	s.g.mark, s.g.marked = mapmodel.Pt{X: p.X, Y: p.Y}, ok
+// Point marks a tile in the ground view's compact form.
+func (s *skyStyle) Point(p mapmodel.Pt, ok bool) {
+	s.g.mark, s.g.marked = p, ok
 }
 
 // SceneInset: the full view keeps one row for its header and four below
@@ -90,9 +88,6 @@ func (s *skyStyle) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 
 // SetOption: the options live on the ground view, which the sky view reads.
 func (s *skyStyle) SetOption(o mapstyle.Option, on bool) { s.g.SetOption(o, on) }
-
-// CompactShowsNews: both views end the compact view with the news line.
-func (s *skyStyle) CompactShowsNews() bool { return true }
 
 // skyView draws the sky scenes. Its options (flows, inspect, legend,
 // changes) and its zoom are the ground view's; the cursor, the camera and

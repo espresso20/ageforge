@@ -97,21 +97,23 @@ func wholeEntries(t *testing.T, where string, d *Dashboard, rows []string) int {
 	return shown
 }
 
-// TestBuildingsBoxOnThePlaytestScreen: on the playtest's screen and town
-// the dashboard has no mini map (it is off until asked for); the Buildings
-// list shares its column only with the skyline strip under it. With more entries than fit, the box
-// shows whole entries only, says how many are below and names the key; a
-// page down shows the rest, with how many are above.
+// TestBuildingsBoxOnThePlaytestScreen: on the playtest's screen and town,
+// with the mini map turned off, the Buildings list has the whole column.
+// With more entries than fit, the box shows whole entries only, says how
+// many are below and names the key; a page down shows the rest, with how
+// many are above.
 func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 	d, pages := playtestTown(t)
+	d.runForTest("minimap off")
+	d.refresh()
 	txt := drawDashboard(t, d, pages, playtestCols, playtestRows)
-	if d.mapDock.shown || strings.Contains(txt, " Map · ") {
-		t.Fatalf("the mini map shows on a dashboard nobody turned it on for:\n%s", txt)
+	if d.mapDock.shown || strings.Contains(txt, "┌ Map ─") {
+		t.Fatalf("the mini map shows with minimap off:\n%s", txt)
 	}
 	rows := buildingsBox(t, d, pages, playtestCols, playtestRows)
 	_, _, bw, bh := d.economyTab.buildingTV.GetInnerRect()
 	if bw < 55 || bw > 65 || bh < 30 {
-		t.Fatalf("the Buildings box is %d by %d inside; the playtest's column (less the skyline strip) was about 60 by 37", bw, bh)
+		t.Fatalf("the Buildings box is %d by %d inside; the playtest's column was about 60 by 37", bw, bh)
 	}
 	_, entries := buildingEntries(d.economyTab.state, bw)
 	first := wholeEntries(t, "the first page", d, rows)
@@ -165,14 +167,14 @@ func TestBuildingsBoxOnThePlaytestScreen(t *testing.T) {
 	}
 }
 
-// TestBuildingsBoxUnderTheMiniMap: with the mini map turned on at the
-// playtest's screen, the list has two thirds of the column and still shows
-// whole entries only, and says what is below.
+// TestBuildingsBoxUnderTheMiniMap: with the mini map on (as it is unless
+// turned off) at the playtest's screen, the list has two thirds of the column
+// and still shows whole entries only, and says what is below.
 func TestBuildingsBoxUnderTheMiniMap(t *testing.T) {
 	d, pages := playtestTown(t)
 	miniOn(t, d)
 	txt := drawDashboard(t, d, pages, playtestCols, playtestRows)
-	if !d.mapDock.shown || !strings.Contains(txt, " Map · ") {
+	if !d.mapDock.shown || !strings.Contains(txt, "┌ Map ─") {
 		t.Fatalf("minimap on did not show the mini map at %dx%d", playtestCols, playtestRows)
 	}
 	rows := buildingsBox(t, d, pages, playtestCols, playtestRows)

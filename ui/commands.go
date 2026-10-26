@@ -132,8 +132,6 @@ var (
 	optCountMax = Arg{Kind: ArgNumber, Words: []string{"max"}, Optional: true}
 	optCountAll = Arg{Kind: ArgNumber, Words: []string{"all"}, Optional: true}
 	civArg      = []Arg{{Kind: ArgFaction}}
-	// mapStyleArg is the one slot of map style and its shortcut style.
-	mapStyleArg = Arg{Kind: ArgWord, Words: []string{"roguelike", "skyline"}, Optional: true}
 )
 
 // sub builds a subcommand with one help row.
@@ -338,16 +336,13 @@ func registry() []*Command {
 				{"map", vibe.Line("ui.help.commands.map", "Open the Map panel (worldmap opens it on the known world); the prompt keeps working while it is open")},
 			},
 			Subs: []*Command{
-				sub("style", "map style [roguelike|skyline]", vibe.Line("ui.help.commands.map.style", "Show or set the map style (default roguelike)"), mapStyleArg),
 				sub("glyphs", "map glyphs [ascii|unicode|nerd]", vibe.Line("ui.help.commands.map.glyphs", "Show or set the map's glyphs (default unicode; nerd needs a Nerd Font)"),
 					Arg{Kind: ArgWord, Words: []string{"ascii", "unicode", "nerd"}, Optional: true}),
 				sub("flows", "map flows [on|off]", vibe.Line("ui.help.commands.map.flows", "Turn the Map's flows overlay on or off (bare: switch it)"),
 					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
 			}},
-		{Name: "style", Run: cmdMapStyle, Section: secGame, Args: []Arg{mapStyleArg},
-			Help: []Usage{{"style [roguelike|skyline]", vibe.Line("ui.help.commands.style", "Same as map style")}}},
 		{Name: "minimap", Run: cmdMinimap, Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
-			Help: []Usage{{"minimap [on|off]", vibe.Line("ui.help.commands.minimap", "Show or set the mini map above the Buildings list (default off)")}}},
+			Help: []Usage{{"minimap [on|off]", vibe.Line("ui.help.commands.minimap", "Show or set the mini map above the Buildings list (default on)")}}},
 		{Name: "motion", Run: cmdMotion, Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"motion [on|off]", vibe.Line("ui.help.commands.motion", "Show or set motion: whether the maps, the badge case and theme effects move (default on)")}}},
 		{Name: "vibemode", Run: cmdVibemode, Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},

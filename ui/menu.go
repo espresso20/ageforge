@@ -16,8 +16,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -75,7 +73,6 @@ type mainMenu struct {
 	pages   *tview.Pages
 	engine  *game.GameEngine
 	version string
-	reg     *mapstyle.Registry
 
 	// What the page says, read by refresh.
 	view   menuView
@@ -136,7 +133,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) *mainMenu {
 	m := &mainMenu{
 		Box: tview.NewBox(), app: app, pages: pages, engine: engine, version: currentVersion,
-		reg: all.Registry(), now: time.Now, active: true,
+		now: time.Now, active: true,
 		eliteAt: rand.Intn(len(eliteLines)),
 	}
 	m.start = m.now()
@@ -155,12 +152,12 @@ func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEn
 func (m *mainMenu) fingerprint() string {
 	var sb strings.Builder
 	acct := m.engine.Account()
-	set := resolveMapSettings(acct, m.reg)
+	set := resolveMapSettings(acct)
 	if acct != nil {
 		mainGame, last := acct.GameRecord()
 		fmt.Fprintf(&sb, "%s|%s|%s|", acct.AccountID, mainGame, last)
 	}
-	fmt.Fprintf(&sb, "%s|%d|%v|%v|", set.Style, set.Tier, set.Motion, vibe.On()) // the words follow VibeMode too
+	fmt.Fprintf(&sb, "%d|%v|%v|", set.Tier, set.Motion, vibe.On()) // the words follow VibeMode too
 	entries, _ := os.ReadDir(filepath.Join(game.DataDir(), "saves"))
 	for _, e := range entries {
 		if fi, err := e.Info(); err == nil {
@@ -175,7 +172,7 @@ func (m *mainMenu) fingerprint() string {
 // changed since it last did (or force is set); the rest is cheap.
 func (m *mainMenu) refresh(force bool) {
 	m.acct = m.engine.Account()
-	m.set = resolveMapSettings(m.acct, m.reg)
+	m.set = resolveMapSettings(m.acct)
 	if fp := m.fingerprint(); force || fp != m.read {
 		m.read = fp
 		// What the account has changed (a game was played, a save made or
@@ -189,7 +186,7 @@ func (m *mainMenu) refresh(force bool) {
 			// menu then offers no Continue and shows its first page.
 			if st, err := game.ViewSave(cur.Save.Name); err == nil {
 				m.cur, m.hasCur = cur, true
-				m.town = newMenuTown(&st, m.reg, m.set.Style)
+				m.town = newMenuTown(&st)
 				m.view.captions = menuCaptions(m.town, &st)
 				m.continueDetails(&st)
 			}
@@ -529,7 +526,7 @@ func (m *mainMenu) open(id string) {
 		m.app.SetFocus(page)
 	case miBadges:
 		m.leave()
-		openMenuBadges(m.app, m.pages, m.engine, m.reg, "splash")
+		openMenuBadges(m.app, m.pages, m.engine, "splash")
 	case miThemes:
 		m.leave()
 		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash")

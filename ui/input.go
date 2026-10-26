@@ -20,7 +20,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -49,7 +48,7 @@ type CommandResult struct {
 	Badges badgeRequest
 	// Icons asks the dashboard to start the guided icons check.
 	Icons bool
-	// MapPref is a map setting change (map style, map glyphs, minimap) for
+	// MapPref is a map setting change (map glyphs, minimap) for
 	// the dashboard to apply at once. The command has already saved it to
 	// the account; with no account loaded the dashboard keeps it for the
 	// session.
@@ -2635,14 +2634,12 @@ func planIndexArg(rest []string, sub string) (int, error) {
 
 // cmdMap handles map and its aliases citymap and worldmap. Bare, it opens
 // the Map panel (HandleCommand has worldmap open it on the known world);
-// "style", "glyphs" and "flows" read or change the settings.
+// "glyphs" and "flows" read or change the settings.
 func cmdMap(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return CommandResult{OverlayName: "map"}
 	}
 	switch strings.ToLower(args[0]) {
-	case "style":
-		return cmdMapStyle(args[1:], engine)
 	case "glyphs":
 		return cmdMapGlyphs(args[1:], engine)
 	case "flows":
@@ -2680,40 +2677,9 @@ func flowsReply(on bool) string {
 // keep it on.
 var mapSessionOnly = vibe.E("ui.input.mapSessionOnly.01", " No account is loaded, so it lasts for this session.")
 
-func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
-	reg := all.Registry()
-	acct := engine.Account()
-	cur := resolveMapSettings(acct, reg)
-	if len(args) == 0 {
-		return CommandResult{Type: "info", Message: vibe.Sprintf("ui.input.cmdMapStyle.01", "Map style: %s. Styles: %s. Type map style <name> to switch.",
-			styleTitle(reg, cur.Style), strings.Join(reg.Names(), ", "))}
-	}
-	if len(args) > 1 {
-		return usageError(usageFor("map style"), vibe.Errorf("ui.input.cmdMapStyle.02", "one style name, please"))
-	}
-	name := strings.ToLower(args[0])
-	switch name {
-	case "roguelike", "skyline":
-	default:
-		return usageError(usageFor("map style"), vibe.Errorf("ui.input.cmdMapStyle.03", "there is no map style %q", args[0]))
-	}
-	// A routine confirmation (the map shows the change); without an account
-	// the reply carries a caveat, so it is an info line instead.
-	res := CommandResult{Type: game.LogRoutine, Message: vibe.Sprintf("ui.input.cmdMapStyle.04", "Map style set to %s.", styleTitle(reg, name)),
-		MapPref: mapPref{Key: "style", Value: name}}
-	if acct == nil {
-		res.Type, res.Message = "info", res.Message+mapSessionOnly.String()
-		return res
-	}
-	if err := acct.SetMapStyle(name); err != nil {
-		return errorResult(fmt.Errorf("the map style could not be saved: %w", err))
-	}
-	return res
-}
-
 func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
-	cur := resolveMapSettings(acct, all.Registry())
+	cur := resolveMapSettings(acct)
 	if len(args) == 0 {
 		return CommandResult{Type: "info", Message: vibe.Sprintf("ui.input.cmdMapGlyphs.01", "Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch (icons checks your font for nerd).",
 			cur.Tier, strings.Join(mapmodel.TierNames, ", "))}
@@ -2842,7 +2808,7 @@ func cmdMotion(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
 	if len(args) == 0 {
 		state := "off"
-		if resolveMapSettings(acct, all.Registry()).Motion {
+		if resolveMapSettings(acct).Motion {
 			state = "on"
 		}
 		return CommandResult{Type: "info", Message: vibe.Line("ui.input.cmdMotion.01", "Motion: ") + state + vibe.Line("ui.input.cmdMotion.02", ". Type motion on or motion off to change it.")}
@@ -2909,7 +2875,7 @@ func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
 	if len(args) == 0 {
 		state := "off"
-		if resolveMapSettings(acct, all.Registry()).Minimap {
+		if resolveMapSettings(acct).Minimap {
 			state = "on"
 		}
 		return CommandResult{Type: "info", Message: vibe.Line("ui.input.cmdMinimap.01", "Mini map: ") + state + vibe.Line("ui.input.cmdMinimap.02", ". Type minimap on or minimap off to change it.")}

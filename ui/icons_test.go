@@ -327,7 +327,7 @@ func TestIconsWindowOnScreen(t *testing.T) {
 	// The answer in the window sets the account's glyphs.
 	d.startIcons()
 	pressKey(d, pages, tcell.KeyRune, 'i')
-	if _, g, _ := eng.Account().MapPrefs(); g != "nerd" {
+	if g, _ := eng.Account().MapPrefs(); g != "nerd" {
 		t.Errorf("account glyphs %q after I see icons", g)
 	}
 }

@@ -30,20 +30,13 @@ var zoomNames = [3]vibe.Entry{vibe.E("ui.mapstyle.roguelike.view.zoomNames.01", 
 // New makes a fresh map view.
 func New() mapstyle.Style { return withSky(newView()) }
 
-// Entry is the registry entry for the roguelike style.
-func Entry() mapstyle.Entry {
-	return mapstyle.Entry{Name: "roguelike", Title: vibe.E("ui.mapstyle.roguelike.view.Entry.01", "Roguelike"),
-		Blurb: vibe.E("ui.mapstyle.roguelike.view.Entry.02", "A glyph world with an inspect cursor: your town, its people and the lands around it."),
-		New:   New}
-}
-
 // view is one open map. What it draws is a function of the frame, the
 // view's own state and the active theme.
 type view struct {
 	zoom int
 	cur  mapmodel.Pt
 	// mark is a tile the compact view highlights, with the cursor's own
-	// colours: where another view's cursor stands (mapstyle.Pointing).
+	// colours: where another view's cursor stands (Point).
 	mark                            mapmodel.Pt
 	marked                          bool
 	seed                            int64
@@ -79,8 +72,6 @@ type view struct {
 }
 
 func newView() *view { return &view{zoom: zSettlement, inspect: true, legend: true, changes: true} }
-
-func (v *view) Name() string { return "roguelike" }
 
 func (v *view) SetOption(o mapstyle.Option, on bool) {
 	if o == mapstyle.OptWorld {

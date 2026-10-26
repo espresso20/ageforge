@@ -713,20 +713,13 @@ func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 	}
 }
 
-// TestMenuTownFollowsTheSettings: the town is drawn in the account's map
-// style and glyph set, and the plain glyph set puts no block on the page.
+// TestMenuTownFollowsTheSettings: the town is drawn in the account's glyph
+// set, and the plain glyph set puts no block on the page.
 func TestMenuTownFollowsTheSettings(t *testing.T) {
 	r := newMenuRig(t, "ashford")
 	m := r.m
-	if got := m.town.style.Name(); got != "roguelike" {
-		t.Errorf("by default the town is drawn by %q", got)
-	}
-	must(t, r.acct.SetMapStyle("skyline"))
 	must(t, r.acct.SetMapGlyphs("ascii"))
 	m.Focus(func(tview.Primitive) {})
-	if got := m.town.style.Name(); got != "skyline" {
-		t.Errorf("after map style skyline the town is drawn by %q", got)
-	}
 	if m.set.Tier != mapmodel.TierASCII || !m.view.plain {
 		t.Errorf("after map glyphs ascii: tier %v, plain %v", m.set.Tier, m.view.plain)
 	}

@@ -120,7 +120,7 @@ func TestMiniMapMarksTheCursor(t *testing.T) {
 	panel, mini := withSky(newView()), withSky(newView())
 	panel.g.zoom, panel.g.inspect = zSettlement, true
 	draw(panel.g, m, 120, 40, 0, mapmodel.TierUnicode, false) // places the cursor
-	src, dst := mapstyle.Pointing(panel), mapstyle.Pointing(mini)
+	src, dst := panel, mini
 
 	dst.Point(src.Pointer())
 	s := drawMini(mini, m, 58, 9)

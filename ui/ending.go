@@ -9,8 +9,6 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
 )
 
 // ending.go runs the film of a run's ending: the overlay that plays when a
@@ -40,8 +38,7 @@ type ending struct {
 	view endView
 	fed  bool
 
-	// The town that was and the town that is, in the player's map style.
-	reg              *mapstyle.Registry
+	// The town that was and the town that is, in the player's glyph set.
 	set              mapSettings
 	oldTown, newTown *menuTown
 
@@ -67,8 +64,8 @@ type ending struct {
 // goroutine by the dashboard's refresh, before the overlay manager is given
 // the new run's state: what the manager last saw is the run that ended.
 func ShowRunEnding(om *OverlayManager, end game.RunEnding) {
-	e := &ending{Box: tview.NewBox(), om: om, reg: all.Registry(), now: time.Now}
-	e.set = defaultMapSettings(e.reg)
+	e := &ending{Box: tview.NewBox(), om: om, now: time.Now}
+	e.set = defaultMapSettings()
 	e.pal = newMenuPalette(theme.Active())
 	e.view = endViewFor(end, e.pal)
 	e.settings()
@@ -116,15 +113,15 @@ func (e *ending) feed(prev, cur *game.GameState) {
 	}
 	e.fed = true
 	if e.om != nil && e.om.engine != nil {
-		e.set = resolveMapSettings(e.om.engine.Account(), e.reg)
+		e.set = resolveMapSettings(e.om.engine.Account())
 		e.settings()
 	}
 	// One builder where the two runs are on one land.
 	builder := mapmodel.NewBuilder(nil)
 	if prev != nil && prev.Age == e.view.end.Age {
-		e.oldTown = newMenuTownOn(builder, prev, e.reg, e.set.Style, false)
+		e.oldTown = newMenuTownOn(builder, prev, false)
 	}
-	e.newTown = newMenuTownOn(builder, cur, e.reg, e.set.Style, true)
+	e.newTown = newMenuTownOn(builder, cur, true)
 	e.view.captions = menuCaptions(e.newTown, cur)
 	e.sc = nil
 	if !e.start.IsZero() {

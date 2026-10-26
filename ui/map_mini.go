@@ -10,18 +10,18 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// map_mini.go is the dashboard's mini map: the active style's compact view
-// in a border, docked above the Buildings list. It is short (at most
+// map_mini.go is the dashboard's mini map: the map's compact view in a
+// border, docked above the Buildings list. It is short (at most
 // miniMaxInnerH rows inside the border, and never more than a quarter of
 // the column) so the list keeps most of the room, and the minimap setting
-// turns it off. It keeps its own view of each style (separate from the Map
+// turns it off. It keeps its own view of the map (separate from the Map
 // panel's camera) and draws from the model the last refresh built, so a
 // redraw between refreshes (typing at the prompt) costs only the compact
-// draw. The since-last-visit news goes in its bottom border when there is
-// any.
+// draw. The compact view ends with the since-last-visit news.
 
 const (
 	miniMaxInnerH = 9
@@ -60,18 +60,18 @@ func miniHeight(w, h int) int {
 // miniMap is the mini map primitive (border included).
 type miniMap struct {
 	*tview.Box
-	mv     *mapViews
-	styles styleSet
-	set    mapSettings
-	model  *mapmodel.Model
-	start  time.Time
-	now    func() time.Time
+	mv    *mapViews
+	view  mapstyle.Style
+	set   mapSettings
+	model *mapmodel.Model
+	start time.Time
+	now   func() time.Time
 }
 
 func newMiniMap(mv *mapViews) *miniMap {
-	m := &miniMap{Box: tview.NewBox(), mv: mv, styles: styleSet{reg: mv.reg}, now: time.Now}
+	m := &miniMap{Box: tview.NewBox(), mv: mv, view: roguelike.New(), now: time.Now}
 	m.start = m.now()
-	m.set = defaultMapSettings(mv.reg)
+	m.set = defaultMapSettings()
 	return m
 }
 
@@ -82,23 +82,16 @@ func (m *miniMap) update(set mapSettings, state *game.GameState) {
 }
 
 // pointAt marks the Map panel's cursor on the mini map, as the same
-// highlighted cell, for a style whose compact view can (mapstyle.Pointing).
-// The two keep a view of the style each: the panel's has the cursor.
+// highlighted cell. The two keep a view each: the panel's has the cursor.
 func (m *miniMap) pointAt(p *mapPanel) {
-	dst, ok := m.styles.get(m.set.Style).(mapstyle.Pointing)
-	if !ok || p == nil {
+	if p == nil {
 		return
 	}
-	if src, ok := p.styles.get(m.set.Style).(mapstyle.Pointing); ok {
-		dst.Point(src.Pointer())
-		return
-	}
-	dst.Point(mapstyle.Pointer{}, false)
+	m.view.Point(p.view.Pointer())
 }
 
 // drawMapFrame draws the border of a map box w by h cells at the canvas's
-// origin, with title in the top border. The mini map and the skyline strip
-// (dash_skyline.go) are framed alike.
+// origin, with title in the top border.
 func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 	bg := theme.Color(theme.RoleBackground)
 	border := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleBorder), bg, 1.8))
@@ -118,61 +111,38 @@ func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 	cv.Text(1, 0, w-2, title, accent)
 }
 
-// Draw draws the border, the compact view inside it and the news line.
+// Draw draws the border and the compact view inside it.
 func (m *miniMap) Draw(scr tcell.Screen) {
 	x, y, w, h := m.GetRect()
 	if w < 3 || h < 3 {
 		return
 	}
-	bg := theme.Color(theme.RoleBackground)
 	cv := &mapstyle.Canvas{Scr: scr, R: mapstyle.Rect{X: x, Y: y, W: w, H: h}, Tier: m.set.Tier}
-	drawMapFrame(cv, w, h, vibe.Line("ui.map_mini.miniMap.Draw.01", " Map · ")+styleTitle(m.mv.reg, m.set.Style)+" ")
+	drawMapFrame(cv, w, h, vibe.Line("ui.map_mini.miniMap.Draw.01", " Map "))
 
 	f := mapFrame(m.model, m.set, m.now().Sub(m.start))
-	m.styles.get(m.set.Style).DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)
-
-	if ns, ok := m.styles.get(m.set.Style).(mapstyle.CompactNews); m.model != nil && !(ok && ns.CompactShowsNews()) {
-		if news := m.model.Recap.Headline(w - 4); news != "" {
-			st := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RolePositive), bg, 3))
-			if m.model.Recap.Items[0].Bad {
-				st = st.Foreground(theme.Legible(theme.Color(theme.RoleWarning), bg, 3))
-			}
-			cv.Text(1, h-1, w-2, " "+news+" ", st)
-		}
-	}
+	m.view.DrawCompact(scr, mapstyle.Rect{X: x + 1, Y: y + 1, W: w - 2, H: h - 2}, f)
 }
 
-// mapDock stacks the mini map above a body (the Buildings list) and, under
-// it, the skyline strip (dash_skyline.go), and lays them out itself on every
-// draw: the mini map shows only when it is on and the dock has room for it
-// and dockMinBody rows of body, so on a small terminal (80x24) it hides and
-// the body gets the whole column, with no flicker between refreshes. The
-// strip shows when the Log box beside the dock is tall enough for it
-// (stripHeight) on a terminal that fits it (stripFits).
+// mapDock stacks the mini map above a body (the Buildings list) and lays
+// them out itself on every draw: the mini map shows only when it is on and
+// the dock has room for it and dockMinBody rows of body, so on a small
+// terminal (80x24) it hides and the body gets the whole column, with no
+// flicker between refreshes.
 type mapDock struct {
 	*tview.Box
 	mini *miniMap
 	body tview.Primitive
-	// off is the minimap setting turned off: the body gets the column. It
-	// starts true: the mini map is off until asked for, and the dashboard
-	// sets this from the account's setting on every refresh, so a draw before
-	// the first refresh must not show it.
+	// off is the minimap setting turned off: the body gets the column. The
+	// dashboard sets this from the account's setting on every refresh.
 	off bool
 	// shown reports whether the last draw showed the mini map; drawn that
 	// there was a draw at all (before it, the dock has no real size).
 	shown, drawn bool
-
-	// strip is the skyline strip; logRows is the Log box's height in a
-	// column h rows tall and screen the terminal's size. A dock without a
-	// strip (or without the means to size it) has none.
-	strip      *skylineStrip
-	logRows    func(h int) int
-	screen     func() (w, h int)
-	stripShown bool // the last draw showed the strip
 }
 
 func newMapDock(mini *miniMap, body tview.Primitive) *mapDock {
-	return &mapDock{Box: tview.NewBox(), mini: mini, body: body, off: true}
+	return &mapDock{Box: tview.NewBox(), mini: mini, body: body}
 }
 
 // wantsModel reports whether the mini map needs a model: it is on and
@@ -182,47 +152,19 @@ func (d *mapDock) wantsModel() bool {
 	return !d.off && (!d.drawn || miniHeight(w, h) > 0)
 }
 
-// wantsStrip reports whether the strip needs a model: it is showing, or
-// nothing has been laid out yet.
-func (d *mapDock) wantsStrip() bool {
-	return d.strip != nil && (!d.drawn || d.stripShown)
-}
-
-// stripRows is the strip's height in a dock h rows tall that has mh rows of
-// mini map: 0 when the strip does not show.
-func (d *mapDock) stripRows(h, mh int) int {
-	if d.strip == nil || d.logRows == nil || d.screen == nil {
-		return 0
-	}
-	if tw, th := d.screen(); !stripFits(tw, th) {
-		return 0
-	}
-	sh := stripHeight(d.logRows(h))
-	if sh == 0 || h-mh-sh < stripMinBody {
-		return 0
-	}
-	return sh
-}
-
 func (d *mapDock) Draw(scr tcell.Screen) {
 	x, y, w, h := d.GetRect()
 	mh := miniHeight(w, h)
-	if d.off {
-		mh = 0
+	if d.off || d.mini.model == nil {
+		mh = 0 // off, or no refresh has built the map yet
 	}
-	sh := d.stripRows(h, mh)
 	d.shown, d.drawn = mh > 0, true
-	d.stripShown = sh > 0
 	if d.shown {
 		d.mini.SetRect(x, y, w, mh)
 		d.mini.Draw(scr)
 	}
-	d.body.SetRect(x, y+mh, w, h-mh-sh)
+	d.body.SetRect(x, y+mh, w, h-mh)
 	d.body.Draw(scr)
-	if sh > 0 {
-		d.strip.SetRect(x, y+h-sh, w, sh)
-		d.strip.Draw(scr)
-	}
 }
 
 // Focus and input go to the body; the mini map takes no keys.

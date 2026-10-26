@@ -742,13 +742,13 @@ func TestWriteSiteScreens(t *testing.T) {
 		{"expeditions", "expedition", ""},
 		{"history", "history", ""},
 		{"help", "help", ""},
-		{"map-roguelike", "map", ""},
+		{"map", "map", ""},
 	} {
 		s.open(p.cmd, p.heading)
 		shots.take(s, p.name)
 		s.close()
 	}
-	// The Wonders panel's gallery: G on the list opens it on the newest wonder.
+	// The Wonders panel's gallery: G on the list opens it.
 	s.open("wonders", "")
 	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tcell.NewEventKey(tcell.KeyRune, 'g', 0), func(tview.Primitive) {})
 	if !s.d.wonders.gallery {
@@ -756,12 +756,6 @@ func TestWriteSiteScreens(t *testing.T) {
 	}
 	shots.take(s, "wonders-gallery")
 	s.close()
-	// The same town on the other map style, then back.
-	s.say("map style skyline")
-	s.open("map", "")
-	shots.take(s, "map-skyline")
-	s.close()
-	s.say("map style roguelike")
 	// One panel in two themes, at the game's smallest size, for the themes page.
 	s.open("people", "")
 	shots.takeIn(s, "theme-forge", "forge", sitePairW, sitePairH)

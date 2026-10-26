@@ -14,7 +14,7 @@ import (
 )
 
 // TestSceneInsetIsTheChrome: the map says which rows of its full view are
-// bars (mapstyle.Scenic), and it is right: the age is named
+// bars (SceneInset), and it is right: the age is named
 // above the scene, the keys are listed below it, and neither is in the
 // rows between. The main menu shows those rows alone, behind the menu.
 func TestSceneInsetIsTheChrome(t *testing.T) {
@@ -24,10 +24,6 @@ func TestSceneInsetIsTheChrome(t *testing.T) {
 			st := fixture.State(fixture.Options{Age: age, Seed: 7})
 			m := mapmodel.NewBuilder(nil).Model(&st, nil)
 			sty := roguelike.New()
-			sc, ok := sty.(mapstyle.Scenic)
-			if !ok {
-				t.Fatal("the map does not say where its scene is")
-			}
 			for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges} {
 				sty.SetOption(o, false)
 			}
@@ -36,7 +32,7 @@ func TestSceneInsetIsTheChrome(t *testing.T) {
 			rows := strings.Split(strings.TrimSuffix(capture.Text(sim), "\n"), "\n")
 			sim.Fini()
 
-			top, bottom := sc.SceneInset(w, h)
+			top, bottom := sty.SceneInset(w, h)
 			where := fmt.Sprintf("the %s at %dx%d", st.AgeName, w, h)
 			if top < 1 || bottom < 1 || top+bottom >= h {
 				t.Fatalf("%s: inset %d and %d leaves no scene", where, top, bottom)
