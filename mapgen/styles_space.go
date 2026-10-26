@@ -40,6 +40,8 @@ var space = AgeStyle{
 			{art("  Ψ   \n ◠██◠ \n╞▫*█▫╡")},
 		},
 	},
+	Filler:  []Art{art("[▫]"), art("◘▫◘")},
+	FillPer: 45,
 	Wall:    rgb(0x9aa8bc),
 	Ink:     map[rune]RGB{'▤': rgb(0x3f78d8), '■': rgb(0xeef3fa), '▫': rgb(0xffe6b8), 'Ψ': rgb(0xff4a3a), '◠': rgb(0x7fd88e), '▓': rgb(0xc6cee2)},
 	Windows: "▫",

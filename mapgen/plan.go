@@ -49,6 +49,8 @@ type Plan struct {
 	Owner  []int
 	Order  [][]int
 	Hearts []Pt
+	// Near lists every lot, nearest the middle first.
+	Near []int
 	// Bridge marks road cells that cross a river.
 	Bridge map[Pt]bool
 }

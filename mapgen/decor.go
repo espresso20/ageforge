@@ -19,7 +19,7 @@ func (f *frame) paintDetail() {
 			if f.busy[at(x, y)] {
 				continue
 			}
-			biome := f.fields.Biome[at(x, y)]
+			biome := f.groundAt(x, y)
 			for _, s := range f.st.Scatter {
 				if s.On == biome && chance(s.Chance, seed, 62, int64(x), int64(y)) {
 					f.g.draw(x, y, pick(s.Glyphs, hash(seed, 63, int64(x), int64(y))), s.Fg)

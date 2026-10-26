@@ -35,6 +35,7 @@ func (p *Plan) assign(seed int64, cat *mapmodel.Catalog, spreadX, spreadY int) {
 	slices.SortStableFunc(fromMiddle, func(a, b int) int {
 		return cmp.Compare(p.Lots[a].Rect.dist(p.Centre), p.Lots[b].Rect.dist(p.Centre))
 	})
+	p.Near = fromMiddle
 	for turn, lot := range fromMiddle {
 		heartsByDistance := make([]int, len(lines))
 		for i := range heartsByDistance {

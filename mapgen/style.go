@@ -96,6 +96,10 @@ type AgeStyle struct {
 	Plaza  Look        // an unbuilt wonder plot
 	Rubble Look        // a lost building's lot
 	Shapes [numFamilies]Tiers
+	// Filler is the art of ordinary houses: one lot in the town's middle is
+	// given to one for every FillPer people, where no building stands.
+	Filler  []Art
+	FillPer int
 	// Wall colours every building rune not in Ink; Windows lists the runes
 	// that light up at night.
 	Wall    RGB

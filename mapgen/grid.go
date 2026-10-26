@@ -39,6 +39,7 @@ const (
 	KindBuilding
 	KindWonder
 	KindAgent
+	KindAmbient // the ordinary houses of the people, which no building type owns
 )
 
 // Thing is what the inspect index points at.

@@ -47,6 +47,8 @@ var bronze = AgeStyle{
 			{art("  ▲▲  \n /__\\ \n/____\\\n│▫*∩▫│")},
 		},
 	},
+	Filler:  []Art{art("/\\\n|▫"), art(" ▲ \n(∩)")},
+	FillPer: 25,
 	Wall:    rgb(0xa89a82),
 	Ink:     map[rune]RGB{'/': rgb(0xc08a4a), '\\': rgb(0xc08a4a), '^': rgb(0xc08a4a), '_': rgb(0xc08a4a), '▲': rgb(0xc08a4a), '∩': rgb(0x6a4a2a), '╷': rgb(0x707880)},
 	Windows: "▫∩",

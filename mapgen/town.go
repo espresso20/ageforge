@@ -44,11 +44,36 @@ func (p *Plan) visible(inUse []Lot) []int {
 	return shown
 }
 
+// fillerLots are the parcels no building stands on that the people fill with
+// ordinary houses, nearest the middle first: one for every FillPer people.
+func (f *frame) fillerLots() []int {
+	if len(f.st.Filler) == 0 {
+		return nil
+	}
+	taken := map[int]bool{}
+	for _, pl := range f.placed {
+		taken[pl.lot] = true
+	}
+	var out []int
+	for _, lot := range f.plan.Near {
+		if len(out) >= f.m.Workers.Pop/f.st.FillPer {
+			break
+		}
+		if !taken[lot] {
+			out = append(out, lot)
+		}
+	}
+	return out
+}
+
 // layRoads works out which road cells are laid, before anything is drawn.
 func (f *frame) layRoads() {
 	var inUse []Lot
 	for _, pl := range f.placed {
 		inUse = append(inUse, f.plan.Lots[pl.lot])
+	}
+	for _, lot := range f.filler {
+		inUse = append(inUse, f.plan.Lots[lot])
 	}
 	for _, w := range f.wonders() {
 		inUse = append(inUse, w.plot)
@@ -69,6 +94,9 @@ func (f *frame) paintTown() {
 	for _, pl := range f.placed {
 		f.paintYard(f.plan.Lots[pl.lot].Rect, pl)
 	}
+	for _, lot := range f.filler {
+		f.paintYardOf(f.plan.Lots[lot].Rect, f.st.Yard)
+	}
 	for _, w := range f.wonders() {
 		w.plot.Rect.cells(func(x, y int) {
 			f.g.paint(x, y, f.st.Plaza.at(x, y, 1))
@@ -76,6 +104,9 @@ func (f *frame) paintTown() {
 		})
 	}
 	f.paintRoads()
+	for _, lot := range f.filler {
+		f.paintHouse(lot)
+	}
 	for _, pl := range f.placed {
 		if !pl.ruin {
 			f.paintBuilding(pl)
@@ -95,15 +126,20 @@ func (f *frame) paintYard(r Rect, pl placed) {
 	case pl.b.Lineage == mapmodel.LinFood && f.st.Crops.Glyphs != "":
 		look = f.st.Crops
 	}
-	r.cells(func(x, y int) {
-		f.g.paint(x, y, look.at(x, y, 2))
-		f.busy[at(x, y)] = true
-	})
+	f.paintYardOf(r, look)
 	if pl.ruin {
 		r.cells(func(x, y int) {
 			f.g.mark(x, y, Thing{Kind: KindBuilding, Key: pl.b.Key, Lineage: pl.b.Lineage, Count: pl.b.Ruins, Ruin: true})
 		})
 	}
+}
+
+// paintYardOf lays the ground of a parcel in a look.
+func (f *frame) paintYardOf(r Rect, look Look) {
+	r.cells(func(x, y int) {
+		f.g.paint(x, y, look.at(x, y, 2))
+		f.busy[at(x, y)] = true
+	})
 }
 
 func (f *frame) paintRoads() {
@@ -148,9 +184,42 @@ func (a Art) size() (w, h int) {
 	return w, len(a)
 }
 
+// stamp draws art on a parcel, toward its door. look says which glyph and
+// colour each art rune is drawn as. Windows light up at night and chimneys
+// smoke.
+func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, RGB)) {
+	w, h := a.size()
+	x0, y0 := anchor(l, w, h)
+	for dy, row := range a {
+		for dx, r := range []rune(row) {
+			if r == ' ' {
+				continue
+			}
+			p := Pt{x0 + dx, y0 + dy}
+			glyph, ink := look(r)
+			f.g.draw(p.X, p.Y, glyph, ink)
+			f.g.mark(p.X, p.Y, thing)
+			if strings.ContainsRune(f.st.Windows, r) {
+				f.glow = append(f.glow, p)
+			}
+			if r == f.st.Chimney {
+				f.vents = append(f.vents, p)
+			}
+		}
+	}
+}
+
+// ink is the colour of an art rune: its own if the style names one, else the
+// walls', blended with tint.
+func (f *frame) ink(r rune, tint RGB, blend int) RGB {
+	if c, ok := f.st.Ink[r]; ok {
+		return c
+	}
+	return mix(f.st.Wall, tint, blend)
+}
+
 // paintBuilding stamps the footprint of a building kind on its parcel.
 func (f *frame) paintBuilding(pl placed) {
-	lot := f.plan.Lots[pl.lot]
 	fam := familyOf[pl.b.Lineage]
 	tier := min(pl.tier, numTiers-1)
 	for len(f.st.Shapes[fam][tier]) == 0 && tier > 0 {
@@ -160,31 +229,22 @@ func (f *frame) paintBuilding(pl placed) {
 	shape := variants[roll(len(variants), f.m.Seed, mapmodel.HashStr(pl.b.Key), int64(pl.instance))]
 	tint := lineTints[pl.b.Lineage]
 	thing := Thing{Kind: KindBuilding, Key: pl.b.Key, Lineage: pl.b.Lineage, Count: pl.b.Count, Legacy: pl.b.Legacy}
-	w, h := shape.size()
-	x0, y0 := anchor(lot, w, h)
-	for dy, row := range shape {
-		for dx, r := range []rune(row) {
-			if r == ' ' {
-				continue
-			}
-			ink, ok := f.st.Ink[r]
-			if !ok {
-				ink = mix(f.st.Wall, tint, 70)
-			}
-			if r == '*' {
-				r, ink = lineSigns[pl.b.Lineage], tint
-			}
-			if pl.b.Legacy {
-				ink = mix(ink, rgb(0x707070), 110)
-			}
-			f.g.draw(x0+dx, y0+dy, r, ink)
-			f.g.mark(x0+dx, y0+dy, thing)
-			if strings.ContainsRune(f.st.Windows, r) {
-				f.glow = append(f.glow, Pt{x0 + dx, y0 + dy})
-			}
-			if r == f.st.Chimney {
-				f.vents = append(f.vents, Pt{x0 + dx, y0 + dy})
-			}
+	f.stamp(shape, f.plan.Lots[pl.lot], thing, func(r rune) (rune, RGB) {
+		ink := f.ink(r, tint, 70)
+		if r == '*' {
+			r, ink = lineSigns[pl.b.Lineage], tint
 		}
-	}
+		if pl.b.Legacy {
+			ink = mix(ink, rgb(0x707070), 110)
+		}
+		return r, ink
+	})
+}
+
+// paintHouse stamps an ordinary house, in the quiet colours of background.
+func (f *frame) paintHouse(lot int) {
+	shape := f.st.Filler[roll(len(f.st.Filler), f.m.Seed, 67, int64(lot))]
+	f.stamp(shape, f.plan.Lots[lot], Thing{Kind: KindAmbient, Key: "houses"}, func(r rune) (rune, RGB) {
+		return r, mix(f.ink(r, f.st.Wall, 0), f.st.Yard.Bg, 90)
+	})
 }

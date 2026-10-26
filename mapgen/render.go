@@ -24,6 +24,7 @@ type frame struct {
 	anim   int
 	night  int // 0 day .. 256 full night
 	placed []placed
+	filler []int // lots given to ordinary houses
 	// shown is how many cells of each road are laid; roadAt is the tier+1
 	// of each laid road cell of the world.
 	shown  []int
@@ -51,34 +52,42 @@ func (gen *Generator) Render(m *mapmodel.Model, w, h, anim int) *Grid {
 // settlement, nudged a little (the nearest nudge that does best) to take in
 // the most of what is built: the wonder being built first, then the rest.
 func (f *frame) camera(w, h int) (x0, y0 int) {
-	c := f.plan.Centre
-	best := -1
 	nudges := [][2]int{{0, 0}, {-8, 0}, {8, 0}, {0, -4}, {0, 4}, {-8, -4}, {8, -4}, {-8, 4}, {8, 4}, {-16, 0}, {16, 0}, {-16, -4}, {16, -4}, {-16, 4}, {16, 4}, {-24, 0}, {24, 0}}
 	if f.plan.Orbit {
 		nudges = nudges[:1]
 	}
+	best := -1
 	for _, n := range nudges {
-		x, y := clamp(c.X+n[0]-w/2, 0, worldW-w), clamp(c.Y+n[1]-h/2, 0, worldH-h)
-		in := 0
-		inside := func(r Rect) bool { return r.X >= x && r.X+r.W <= x+w && r.Y >= y && r.Y+r.H <= y+h }
-		for _, pl := range f.placed {
-			if inside(f.plan.Lots[pl.lot].Rect) {
-				in++
-			}
-		}
-		for _, ws := range f.wonders() {
-			switch {
-			case inside(ws.plot.Rect) && ws.w.Current:
-				in += 1000 // the wonder being built comes first
-			case inside(ws.plot.Rect):
-				in += 4
-			}
-		}
-		if in > best {
-			x0, y0, best = x, y, in
+		x := clamp(f.plan.Centre.X+n[0]-w/2, 0, worldW-w)
+		y := clamp(f.plan.Centre.Y+n[1]-h/2, 0, worldH-h)
+		if score := f.inView(Rect{x, y, w, h}); score > best {
+			x0, y0, best = x, y, score
 		}
 	}
 	return x0, y0
+}
+
+// inView scores a window by what it takes in whole: one for each building,
+// four for a wonder, a thousand for the wonder being built.
+func (f *frame) inView(window Rect) int {
+	inside := func(r Rect) bool {
+		return r.X >= window.X && r.X+r.W <= window.X+window.W && r.Y >= window.Y && r.Y+r.H <= window.Y+window.H
+	}
+	score := 0
+	for _, pl := range f.placed {
+		if inside(f.plan.Lots[pl.lot].Rect) {
+			score++
+		}
+	}
+	for _, ws := range f.wonders() {
+		switch {
+		case inside(ws.plot.Rect) && ws.w.Current:
+			score += 1000
+		case inside(ws.plot.Rect):
+			score += 4
+		}
+	}
+	return score
 }
 
 // frame sets up a picture of the model: its style, plan and placements.
@@ -93,6 +102,7 @@ func (gen *Generator) frame(m *mapmodel.Model, anim int) *frame {
 		f.plan, f.fields = gen.ground, gen.fields
 	}
 	f.placed = f.plan.place(m)
+	f.filler = f.fillerLots()
 	f.layRoads()
 	return f
 }

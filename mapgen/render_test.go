@@ -108,9 +108,22 @@ func TestNothingStandsInWaterOrOverlaps(t *testing.T) {
 				})
 			}
 		}
+		for _, lot := range f.filler {
+			if prev, taken := parcels[lot]; taken {
+				t.Fatalf("%s: parcel %d holds both %s and ordinary houses", age, lot, prev)
+			}
+			parcels[lot] = "houses"
+			if f.fields != nil {
+				f.plan.Lots[lot].Rect.cells(func(x, y int) {
+					if f.fields.Biome[at(x, y)].Water() {
+						t.Fatalf("%s: houses stand in water at (%d,%d)", age, x, y)
+					}
+				})
+			}
+		}
 		for i := range f.g.Cells {
 			th := f.g.Things[f.g.Hit[i]]
-			if th.Kind != KindBuilding || th.Ruin {
+			if (th.Kind != KindBuilding && th.Kind != KindAmbient) || th.Ruin {
 				continue
 			}
 			if !f.busy[i] {
@@ -135,6 +148,11 @@ func TestEveryBuildingOnARoad(t *testing.T) {
 		for _, pl := range f.placed {
 			if door := f.plan.Lots[pl.lot].Door; !laid[door] {
 				t.Fatalf("%s: the door of %s, %v, is on no laid road", age, pl.b.Key, door)
+			}
+		}
+		for _, lot := range f.filler {
+			if door := f.plan.Lots[lot].Door; !laid[door] {
+				t.Fatalf("%s: the door of a house, %v, is on no laid road", age, door)
 			}
 		}
 		reached := map[Pt]bool{}

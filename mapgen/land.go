@@ -22,7 +22,7 @@ func (f *frame) paintGround() {
 	wet := func(x, y int) bool { return !inWorld(x, y) || f.fields.Biome[at(x, y)].Water() }
 	for y := 0; y < worldH; y++ {
 		for x := 0; x < worldW; x++ {
-			b := f.fields.Biome[at(x, y)]
+			b := f.groundAt(x, y)
 			look := f.st.Land[b]
 			var c Cell
 			switch b {
@@ -38,4 +38,21 @@ func (f *frame) paintGround() {
 			f.g.mark(x, y, Thing{Kind: KindTerrain, Key: biomeNames[b]})
 		}
 	}
+}
+
+// groundAt is the biome a cell is drawn as. In a city the people have cleared
+// the forest and scrub round the middle into lawns and parks, as far out as
+// their numbers reach.
+func (f *frame) groundAt(x, y int) Biome {
+	b := f.fields.Biome[at(x, y)]
+	if f.st.Scene != City || (b != Forest && b != Scrub) {
+		return b
+	}
+	pop := f.m.Workers.Pop
+	rx, ry := 24+pop/60, 8+pop/180
+	dx, dy := x-f.plan.Centre.X, y-f.plan.Centre.Y
+	if dx*dx*ry*ry+dy*dy*rx*rx < rx*rx*ry*ry {
+		return Grass
+	}
+	return b
 }

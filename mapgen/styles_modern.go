@@ -46,6 +46,8 @@ var modern = AgeStyle{
 			{art("  ╽   \n ▄██▄ \n ▐▪▪▌ \n ▐*▮▌ ")},
 		},
 	},
+	Filler:  []Art{art("▟▙\n▐▪▌"), art("▄▄▄\n█▪█"), art("▗▖\n▐▌")},
+	FillPer: 12,
 	Wall:    rgb(0x9096a0),
 	Ink:     map[rune]RGB{'▪': rgb(0x6aa6dc), '▮': rgb(0x50545c), '▲': rgb(0xb4c0cc), '╽': rgb(0xdcf2ff), '┃': rgb(0x8c7c66), '▀': rgb(0xb4c0cc)},
 	Windows: "▪",
