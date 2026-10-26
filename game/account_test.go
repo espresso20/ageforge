@@ -38,9 +38,9 @@ func isolateAccountDir(t *testing.T) string {
 // Call isolateAccountDir first so the account lands in a throwaway data root.
 func mustAccount(t *testing.T, name string) *Account {
 	t.Helper()
-	acct, err := CreateNamedAccount(name)
+	acct, err := CreateAccount(name)
 	if err != nil {
-		t.Fatalf("CreateNamedAccount(%q): %v", name, err)
+		t.Fatalf("CreateAccount(%q): %v", name, err)
 	}
 	return acct
 }
@@ -65,9 +65,9 @@ func reloadAccount(t *testing.T) *Account {
 	return acct
 }
 
-// TestCreateNamedAccountCreatesAndSigns covers the absent-file path: a fresh account is
+// TestCreateAccountCreatesAndSigns covers the absent-file path: a fresh account is
 // created, signed, persisted, and re-loadable with a valid signature.
-func TestCreateNamedAccountCreatesAndSigns(t *testing.T) {
+func TestCreateAccountCreatesAndSigns(t *testing.T) {
 	isolateAccountDir(t)
 
 	acct := testAccount(t)

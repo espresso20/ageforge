@@ -1,6 +1,7 @@
 package game
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -45,6 +46,10 @@ func TestAccountWithAMapStyleStillVerifies(t *testing.T) {
 	noErr(t, os.MkdirAll(accountDir(fixtureAccountID), 0755))
 	path := filepath.Join(accountDir(fixtureAccountID), accountFileName)
 	noErr(t, os.WriteFile(path, []byte(inertPrefsAccountJSON), 0644))
+	// The account has played, so it has the badge file every saved account has.
+	store, err := json.Marshal((&Account{AccountID: fixtureAccountID}).badgeFileLocked())
+	noErr(t, err)
+	noErr(t, os.WriteFile(filepath.Join(accountDir(fixtureAccountID), badgeFileName), store, 0644))
 	acct := slotAccount(t, fixtureAccountID)
 	if acct.Prefs.MapStyle != "skyline" || acct.Prefs.MapZoom != "far" {
 		t.Fatalf("the prefs lost the style or the zoom: %+v", acct.Prefs)

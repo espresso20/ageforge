@@ -15,10 +15,9 @@ import (
 // The badge file (badges.json, beside account.json in the account's slot)
 // and the accounts from before it. The fixtures under testdata/account_v1
 // were written by the code from before badges (CreateAccount, the Record
-// hooks, UnlockTheme, ExportProgress, SaveGame) before any of this existed;
-// account_v1_edited.json was changed by hand after signing. Every test
-// copies a fixture into a temp data root (isolateAccountDir) and never
-// touches data/.
+// hooks, UnlockTheme, ExportProgress, SaveGame) before any of this existed:
+// one that had played and one that had not. Every test copies a fixture
+// into a temp data root (isolateAccountDir) and never touches data/.
 
 const v1Dir = "testdata/account_v1"
 
@@ -150,225 +149,6 @@ func assertOnlyUnlocksDiffer(t *testing.T, was, now []byte) {
 	}
 }
 
-// TestOldAccountGetsItsBadgeFile is the migration: an account from before
-// badges loads with nothing lost, its achievements are badges in a badge
-// file beside it, what its record already proves is granted, nothing is
-// announced, and a second load changes nothing. account.json is left as it
-// was, but for the themes the granted badges unlock: an age's theme comes
-// with the badge of that age, so an account that reached the age has it.
-func TestOldAccountGetsItsBadgeFile(t *testing.T) {
-	cases := []struct {
-		file     string
-		tampered bool
-		badges   []string
-		prestige float64 // the prestige counter, seeded from the lifetime stat
-	}{
-		{
-			// All four achievements, 11 prestiges, the Information Age reached.
-			file: "account_v1_full.json",
-			// Thirteen ages and three prestige rungs: enough badges for
-			// the first rung of the ladder over earned badges.
-			badges:   append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeCollector),
-			prestige: 11,
-		},
-		{
-			// reached_iron and first_prestige; the Medieval Age reached.
-			file:     "account_v1_partial.json",
-			badges:   append(ageBadges("medieval_age"), badgePrestige1),
-			prestige: 1,
-		},
-		{file: "account_v1_empty.json"},
-		{
-			// prestige_x10 typed into the file by hand: it becomes a badge, crossed.
-			file:     "account_v1_edited.json",
-			tampered: true,
-			badges:   []string{badgePrestige1, badgePrestige10},
-			prestige: 1,
-		},
-		{
-			// Already flagged and re-signed before badges.
-			file:     "account_v1_flagged.json",
-			tampered: true,
-			badges:   ageBadges("iron_age"),
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.file, func(t *testing.T) {
-			isolateAccountDir(t)
-			id, raw := installV1(t, tc.file)
-			var old Account
-			noErr(t, json.Unmarshal(raw, &old))
-
-			ge, acct := openIn(t, id)
-			if acct.Tampered != tc.tampered {
-				t.Fatalf("tampered = %v, want %v: a clean file must still verify, an edited one must not", acct.Tampered, tc.tampered)
-			}
-			if acct.BadgesTampered {
-				t.Error("an account with no badge file reads as having an edited one")
-			}
-
-			// Nothing lost.
-			if acct.Version != old.Version || acct.AccountID != old.AccountID || acct.DisplayName != old.DisplayName ||
-				!acct.Created.Equal(old.Created) || !acct.LastSeen.Equal(old.LastSeen) {
-				t.Errorf("identity changed: version %d, %s %q", acct.Version, acct.AccountID, acct.DisplayName)
-			}
-			if !reflect.DeepEqual(acct.Stats, old.Stats) {
-				t.Errorf("lifetime stats changed:\n got %+v\nwant %+v", acct.Stats, old.Stats)
-			}
-			if !reflect.DeepEqual(acct.Prefs, old.Prefs) {
-				t.Errorf("prefs changed: %+v", acct.Prefs)
-			}
-			// No theme is lost, and the only ones gained are the granted
-			// badges' own.
-			for _, th := range old.Unlocks.Themes {
-				if !acct.HasTheme(th) {
-					t.Errorf("the account lost the theme %s", th)
-				}
-			}
-			gained := themesGiven(tc.badges)
-			wantThemes := sortedUnion(old.Unlocks.Themes, gained)
-			if got := sortedUnion(acct.Unlocks.Themes, nil); !slices.Equal(got, wantThemes) || len(acct.Unlocks.Themes) != len(wantThemes) {
-				t.Errorf("unlocked themes %v, want %v (it had %v, and its badges give %v)", acct.Unlocks.Themes, wantThemes, old.Unlocks.Themes, gained)
-			}
-			themesGrew := len(wantThemes) > len(old.Unlocks.Themes)
-			if !slices.Equal(acct.Achievements, old.Achievements) {
-				t.Errorf("the achievements list changed: %v, was %v", acct.Achievements, old.Achievements)
-			}
-
-			// The achievements are badges, with what the record proves.
-			want := slices.Clone(tc.badges)
-			slices.Sort(want)
-			if got := acct.EarnedBadges(); !slices.Equal(got, want) {
-				t.Errorf("badges %v, want %v", got, want)
-			}
-			for _, key := range acct.EarnedBadges() {
-				e := acct.Badges[key]
-				if e.At != 0 || e.Run != "" {
-					t.Errorf("%s came over dated or with a run: %+v", key, e)
-				}
-				if crossed := e.Flags&BadgeFlagCrossed != 0; crossed != tc.tampered {
-					t.Errorf("%s crossed = %v on an account with tampered = %v", key, crossed, tc.tampered)
-				}
-			}
-			if got := counter(acct, config.BadgeEvPrestige); got != tc.prestige {
-				t.Errorf("prestige counter %v, want %v", got, tc.prestige)
-			}
-			if earned := ge.DrainEarnedBadges(); len(earned) != 0 {
-				t.Errorf("the migration announced badges: %+v", earned)
-			}
-
-			// account.json keeps its shape, and a healthy one that gained no
-			// theme keeps its bytes: the badges went to their own file. One
-			// that gained a theme differs in its unlocks and nothing else.
-			first := slotFile(t, id)
-			assertOldShape(t, first)
-			if !tc.tampered && !themesGrew && string(first) != string(raw) {
-				t.Errorf("a healthy account.json was rewritten:\nwas %s\nnow %s", raw, first)
-			}
-			if !tc.tampered && themesGrew {
-				assertOnlyUnlocksDiffer(t, raw, first)
-			}
-			disk := slotAccount(t, id)
-			if !verifyAccount(disk) || disk.Tampered != tc.tampered || disk.BadgesTampered {
-				t.Errorf("on disk: verifies %v, tampered %v, badge file tampered %v", verifyAccount(disk), disk.Tampered, disk.BadgesTampered)
-			}
-			if !slices.Equal(disk.EarnedBadges(), want) {
-				t.Errorf("badges on disk %v, want %v", disk.EarnedBadges(), want)
-			}
-			firstBadges := slotBadgeFile(t, id)
-			if (firstBadges != nil) != (len(want) > 0) {
-				t.Errorf("badge file written = %v for an account with %d badges", firstBadges != nil, len(want))
-			}
-			if firstBadges != nil {
-				var bf badgeFile
-				if err := json.Unmarshal(firstBadges, &bf); err != nil || !verifyBadgeFile(&bf) || bf.AccountID != id || bf.Tampered {
-					t.Errorf("the badge file: err %v, verifies %v, account %s, tampered %v", err, verifyBadgeFile(&bf), bf.AccountID, bf.Tampered)
-				}
-			}
-
-			// A second load changes nothing, in either file.
-			ge2, again := openIn(t, id)
-			noErr(t, again.FlushIfDirty())
-			if second := slotFile(t, id); string(second) != string(first) {
-				t.Errorf("the second load rewrote account.json:\nfirst  %s\nsecond %s", first, second)
-			}
-			if second := slotBadgeFile(t, id); string(second) != string(firstBadges) {
-				t.Errorf("the second load rewrote the badge file:\nfirst  %s\nsecond %s", firstBadges, second)
-			}
-			if earned := ge2.DrainEarnedBadges(); len(earned) != 0 {
-				t.Errorf("the second load announced badges: %+v", earned)
-			}
-		})
-	}
-}
-
-// TestMigratedAccountKeepsEarning: after the migration the account earns
-// like any other. The next prestige continues the seeded counter, and a
-// badge it already held is not earned again.
-func TestMigratedAccountKeepsEarning(t *testing.T) {
-	isolateAccountDir(t)
-	id, _ := installV1(t, "account_v1_partial.json")
-	ge, acct := openIn(t, id)
-	noErr(t, ge.StartNewNamedGame("run"))
-	// This test is about migrated badge counters; the imported mastery record
-	// would otherwise correctly gate these deliberately shallow prestige runs.
-	ge.SetPrestigeFloorForTest("")
-
-	advanceTo(ge, "stone_age") // held since the migration
-	prestigeNow(t, ge)
-	ge.SetPrestigeFloorForTest("")
-	prestigeNow(t, ge) // the third prestige of the account's life
-	earned := mainViews(ge.DrainEarnedBadges())
-	if len(earned) != 1 || earned[0].Key != badgePrestige3 {
-		t.Fatalf("announced %+v, want only the rung at 3 prestiges", earned)
-	}
-	if got := counter(acct, config.BadgeEvPrestige); got != 3 {
-		t.Errorf("prestige counter %v, want 3 (1 from before, 2 now)", got)
-	}
-	if e := acct.Badges[badgeStone]; e.At != 0 {
-		t.Errorf("a badge held since the migration was earned again: %+v", e)
-	}
-}
-
-// TestV1ExportImports: an export made before badges still verifies and
-// imports, in both import paths, and its achievements become badges.
-func TestV1ExportImports(t *testing.T) {
-	blob, err := os.ReadFile(filepath.Join(v1Dir, "export_v1_full.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := append(ageBadges("information_age"), badgePrestige1, badgePrestige3, badgePrestige10, badgeCollector)
-	slices.Sort(want)
-
-	// Through the engine: brought up before it is saved.
-	isolateAccountDir(t)
-	ge := NewGameEngine()
-	imported, err := ge.ImportAccountExport(blob, true)
-	if err != nil {
-		t.Fatalf("the version 1 export was refused: %v", err)
-	}
-	disk := slotAccount(t, imported.AccountID)
-	if disk.Tampered || disk.BadgesTampered || !slices.Equal(disk.EarnedBadges(), want) {
-		t.Errorf("imported through the engine: tampered %v, badge file tampered %v, badges %v", disk.Tampered, disk.BadgesTampered, disk.EarnedBadges())
-	}
-	assertOldShape(t, slotFile(t, imported.AccountID))
-
-	// Without an engine the data lands as it is, and the first engine to
-	// hold the account brings it up.
-	isolateAccountDir(t)
-	plain, err := ImportAccountExport(blob, true)
-	if err != nil {
-		t.Fatalf("the version 1 export was refused: %v", err)
-	}
-	if len(plain.Badges) != 0 || len(plain.Achievements) != 4 {
-		t.Fatalf("a plain import changed the data: badges %v, achievements %v", plain.Badges, plain.Achievements)
-	}
-	_, opened := openIn(t, plain.AccountID)
-	if got := opened.EarnedBadges(); !slices.Equal(got, want) {
-		t.Errorf("after the first engine held it: %v, want %v", got, want)
-	}
-}
-
 // TestExportCarriesBadges: an export carries the badge file whole, under
 // its own signature, beside the part a build from before badges signs. The
 // badges come back as they were; an export whose badges were changed, or
@@ -452,17 +232,11 @@ func TestExportCarriesBadges(t *testing.T) {
 	if _, err := ImportAccountExport(reblob(func(m map[string]json.RawMessage) { m["badge_store"] = otherRaw["badge_store"] }), true); err == nil {
 		t.Error("an export carrying another account's badges was accepted")
 	}
-	// Without the badge store it is the export a build from before badges
-	// writes and reads: every other key is one that build signs.
+	// Without the badge store it is an export from before badges: refused.
 	plain := reblob(func(m map[string]json.RawMessage) { delete(m, "badge_store") })
-	for key := range raw {
-		if key != "badge_store" && !slices.Contains([]string{"version", "account_id", "display_name", "unlocks", "stats", "achievements", "prefs", "tampered", "_sig"}, key) {
-			t.Errorf("the export holds the key %q outside the badge store, which a build from before badges does not sign", key)
-		}
-	}
 	isolateAccountDir(t)
-	if _, err := ImportAccountExport(plain, true); err != nil {
-		t.Errorf("the export without its badge store was refused: %v", err)
+	if _, err := ImportAccountExport(plain, true); err == nil || err.Error() != errBeforeFour().Error() {
+		t.Errorf("the export without its badge store: %v, want the refusal for a file from before 4.0", err)
 	}
 }
 
@@ -534,18 +308,6 @@ func TestImportMergesBadges(t *testing.T) {
 	acct.applyExportLocked(backup, false)
 	if hasBadge(acct, badgeIron) || acct.Counters["built.lineage.housing"] != 10 || len(acct.Days) != 2 {
 		t.Errorf("replace did not take the backup as it is: %v %v %v", acct.Badges, acct.Counters, acct.Days)
-	}
-
-	// An export from before badges carries no badge store. It says nothing about
-	// badges, so even a replace leaves the account's as they are.
-	local()
-	older := &progressExport{Version: 1, AccountID: acct.AccountID, Stats: AccountStats{HighestAge: "stone_age"}}
-	acct.applyExportLocked(older, false)
-	if !hasBadge(acct, badgeIron) || !hasBadge(acct, badgeStone) || acct.Counters["built.lineage.housing"] != 40 {
-		t.Errorf("replacing with an export from before badges cost the account its badges: %v %v", acct.Badges, acct.Counters)
-	}
-	if acct.Stats.HighestAge != "stone_age" {
-		t.Errorf("the replace did not take the export's stats: %+v", acct.Stats)
 	}
 
 	// A backup whose badge file was flagged flags the account's, merged or replaced.
@@ -640,15 +402,16 @@ func TestAccountFileHoldsNoBadges(t *testing.T) {
 	if _, ok := bf.Badges[badgeStone]; !ok || bf.Counters[config.BadgeEvPrestige] != 1 || len(bf.Days) != 1 {
 		t.Errorf("the badge file holds %v, %v, %v", bf.Badges, bf.Counters, bf.Days)
 	}
-	// An account that has earned nothing gets no badge file. (Created by
-	// hand: starting a game would note a day.)
+	// An account that has earned nothing still has one, empty and signed.
 	plain, err := CreateAccount("Bea")
 	if err != nil {
 		t.Fatal(err)
 	}
 	noErr(t, plain.SetActiveTheme("bronze"))
-	if b := slotBadgeFile(t, plain.AccountID); b != nil {
-		t.Errorf("an account with no badges has a badge file: %s", b)
+	var empty badgeFile
+	noErr(t, json.Unmarshal(slotBadgeFile(t, plain.AccountID), &empty))
+	if !verifyBadgeFile(&empty) || empty.AccountID != plain.AccountID || len(empty.Badges) != 0 || len(empty.Counters) != 0 {
+		t.Errorf("the badge file of an account with no badges: %+v", empty)
 	}
 	// A save that changes no badge leaves the badge file's bytes alone.
 	before := slotBadgeFile(t, acct.AccountID)
@@ -714,17 +477,12 @@ func TestEditedBadgeFileCrossesItsBadges(t *testing.T) {
 		t.Errorf("a badge earned into a flagged badge file: %+v (earned %v)", e, ok)
 	}
 
-	// Throwing the edited file away does not keep what the edit bought: the
-	// badges come back from account.json's record, which never took it (a
-	// crossed badge is not written to the old achievements list).
+	// Throwing the edited file away does not keep what the edit bought: an
+	// account that has played and has no badge file is refused.
 	noErr(t, flagged.FlushIfDirty())
-	if slices.Contains(slotAccount(t, id).Achievements, "prestige_x10") {
-		t.Error("the edit reached account.json's achievements list")
-	}
 	noErr(t, os.Remove(filepath.Join(accountDir(id), badgeFileName)))
-	_, rebuilt := openIn(t, id)
-	if hasBadge(rebuilt, badgePrestige10) || hasBadge(rebuilt, badgePrestige25) || rebuilt.BadgesTampered {
-		t.Errorf("after deleting the edited file: %v, badge file tampered %v", rebuilt.EarnedBadges(), rebuilt.BadgesTampered)
+	if _, found, err := loadAccountFromSlot(id); found || err == nil {
+		t.Errorf("after deleting the edited file the account loads (found %v, err %v)", found, err)
 	}
 }
 
@@ -774,29 +532,34 @@ func TestEditedAccountLeavesBadgeFileAlone(t *testing.T) {
 	}
 }
 
-// TestMissingBadgeFileIsRebuiltFromTheRecord: without its badge file an
-// account keeps what account.json proves (its old achievements, the ages
-// up to its highest, its prestiges), undated and uncrossed. That is all an
-// account that was only ever opened by a build from before badges has.
-func TestMissingBadgeFileIsRebuiltFromTheRecord(t *testing.T) {
+// TestAccountFromBeforeBadgesIsRefused: an account that has played and has no
+// badge file is from before badges, or has lost its file; either way it is
+// refused with the one line saves from before 4.0 get, and an account that
+// has not played loads.
+func TestAccountFromBeforeBadgesIsRefused(t *testing.T) {
 	isolateAccountDir(t)
-	_, acct := earnSome(t, "Ada")
-	id := acct.AccountID
-	noErr(t, os.Remove(filepath.Join(accountDir(id), badgeFileName)))
-	_, again := openIn(t, id)
-	if again.Tampered || again.BadgesTampered {
-		t.Errorf("a missing badge file flagged the account: %v %v", again.Tampered, again.BadgesTampered)
+	id, _ := installV1(t, "account_v1_full.json")
+	if acct, found, err := loadAccountFromSlot(id); acct != nil || found || err == nil || err.Error() != errBeforeFour().Error() {
+		t.Fatalf("an account from before badges: %v %v %v, want the refusal", acct, found, err)
 	}
-	if got := again.EarnedBadges(); !slices.Equal(got, []string{badgeStone, badgePrestige1}) {
-		t.Errorf("rebuilt from the record: %v, want the Stone Age badge and the first prestige", got)
+	noErr(t, makeActive(id))
+	if _, found, err := LoadAccount(); found || err == nil {
+		t.Errorf("LoadAccount found the account from before badges (found %v, err %v)", found, err)
 	}
-	for _, key := range again.EarnedBadges() {
-		if e := again.Badges[key]; e.At != 0 || e.Flags != 0 {
-			t.Errorf("%s rebuilt as %+v, want undated and uncrossed", key, e)
-		}
+	if got := ListAccounts(); len(got) != 0 {
+		t.Errorf("an account from before badges is listed: %+v", got)
 	}
-	if slotBadgeFile(t, id) == nil {
-		t.Error("the rebuilt badges were not written")
+	if _, err := SwitchAccount(id); err == nil {
+		t.Error("switching to an account from before badges was accepted")
+	}
+	if on, _ := os.ReadFile(filepath.Join(accountDir(id), accountFileName)); len(on) == 0 {
+		t.Error("the refused account file was removed")
+	}
+
+	isolateAccountDir(t)
+	id, _ = installV1(t, "account_v1_empty.json")
+	if _, found, err := loadAccountFromSlot(id); !found || err != nil {
+		t.Errorf("an account that never played: found %v, err %v, want it to load", found, err)
 	}
 }
 
@@ -868,31 +631,8 @@ func TestSwitchAndRecoverKeepBadges(t *testing.T) {
 	if !hasBadge(got, badgeStone) || got.BadgesTampered || got.Tampered {
 		t.Errorf("after recovering Ada's code: badges %v, flags %v %v", got.EarnedBadges(), got.Tampered, got.BadgesTampered)
 	}
-	if b := slotBadgeFile(t, bea.AccountID); b != nil {
-		t.Errorf("Bea, who earned nothing, has a badge file: %s", b)
-	}
-}
-
-// TestRenamedAccountCarriesItsBadges: making an account under a new name
-// while another is live gives it a new ID. The live account's badges come
-// along and are signed for the new ID, the one way a badge file changes owner.
-func TestRenamedAccountCarriesItsBadges(t *testing.T) {
-	isolateAccountDir(t)
-	legacy := mustAccount(t, "Legacy")
-	recordAge(t, legacy, "stone_age")
-	noErr(t, legacy.FlushIfDirty())
-	earned := legacy.Badges[badgeStone]
-
-	named, err := CreateNamedAccount("Carthage")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if named.AccountID == legacy.AccountID {
-		t.Fatal("precondition: the named account kept the old ID")
-	}
-	disk := slotAccount(t, named.AccountID)
-	if disk.BadgesTampered || disk.Tampered || disk.Badges[badgeStone] != earned {
-		t.Errorf("the named account: badges %+v, flags %v %v; want %+v, unflagged", disk.Badges, disk.Tampered, disk.BadgesTampered, earned)
+	if len(slotAccount(t, bea.AccountID).Badges) != 0 {
+		t.Errorf("Bea, who earned nothing, holds badges: %v", slotAccount(t, bea.AccountID).Badges)
 	}
 }
 

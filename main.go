@@ -21,9 +21,9 @@ func main() {
 	// words are in the script the account chose (VibeMode). The UI shares the engine and
 	// reaches the account through engine.Account(). Nothing is created here: on first run
 	// (no file, or an account with no name) the engine has no account and the UI asks the
-	// player to name one (game.CreateNamedAccount). A load error is ignored: the game runs
-	// without an account rather than blocking play.
-	acct, found, _ := game.LoadAccount()
+	// player to name one (game.CreateAccount). A load error does not block play: the game
+	// runs without an account, and the log says why.
+	acct, found, loadErr := game.LoadAccount()
 	loaded := found && acct.Established()
 	if loaded {
 		vibe.Set(acct.VibeOn())
@@ -32,6 +32,9 @@ func main() {
 	engine := game.NewGameEngine()
 	if loaded {
 		engine.SetAccount(acct)
+	}
+	if loadErr != nil {
+		engine.AddLog("error", loadErr.Error())
 	}
 
 	app := ui.NewApp(engine, version)

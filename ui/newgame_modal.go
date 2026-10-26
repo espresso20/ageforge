@@ -29,7 +29,7 @@ const accountNameConfirmPage = "account_name_confirm"
 //
 // Because the account identity is name-derived (a typo mints a different, empty account),
 // the entry modal does NOT create immediately: submitting the name opens a confirmation
-// modal. "Create" calls the caller's onConfirm (which runs game.CreateNamedAccount +
+// modal. "Create" calls the caller's onConfirm (which runs game.CreateAccount +
 // SetAccount); "Re-type" reopens the entry modal pre-filled with the typed name so the
 // player can fix a typo. onConfirm receives the cleaned name only once the player confirms.
 func showAccountNameModal(app *tview.Application, pages *tview.Pages, restoreFocus tview.Primitive, onConfirm func(name string)) {

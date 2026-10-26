@@ -326,9 +326,9 @@ func bootSweeper(t *testing.T, w, h int) (*sweeper, *game.GameEngine) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	t.Cleanup(func() { _ = theme.SetActive(theme.DefaultKey) })
-	acct, err := game.CreateNamedAccount("Smoke Sweep")
+	acct, err := game.CreateAccount("Smoke Sweep")
 	if err != nil {
-		t.Fatalf("CreateNamedAccount: %v", err)
+		t.Fatalf("CreateAccount: %v", err)
 	}
 	eng := game.NewGameEngine()
 	eng.SetAccount(acct)
