@@ -78,8 +78,7 @@ func comparableState(ge *game.GameEngine) game.GameState {
 // `build Hut` always worked; `sell Hut` and `dismiss Hut` used to fail.
 func TestCommandKeysIgnoreCase(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
-	prevTheme := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prevTheme) })
+	keepTheme(t)
 
 	const stone, bronze, colonial = "stone_age", "bronze_age", "colonial_age"
 	cases := []struct {

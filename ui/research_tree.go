@@ -111,7 +111,7 @@ type edge struct {
 
 // treeBand is one age on the map.
 type treeBand struct {
-	age, name   string
+	name        string
 	row0, rows  int // its rows of techs
 	have, total int
 	here, next  bool // the age you are in; an age you have not reached
@@ -128,7 +128,6 @@ type treeModel struct {
 	w, h  int // the virtual canvas
 
 	known, inReach, nextAge, later int // counts for the title
-	laterAges                      int
 	lines                          map[[2]int]lineCell
 }
 
@@ -184,9 +183,6 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 		techs := set.TechsOf(age)
 		if !sight.Age(age) {
 			m.later += len(techs)
-			if len(techs) > 0 {
-				m.laterAges++
-			}
 			continue
 		}
 		seen = append(seen, techs...)
@@ -208,7 +204,7 @@ func buildTree(state game.GameState, geom treeGeom, ascii bool, sel string) *tre
 		}
 		at, _ := set.Index(age)
 		def, _ := set.Age(age)
-		band := treeBand{age: age, name: def.Name, row0: row, total: len(techs), here: at == here, next: at > here, ahead: max(at-here, 0)}
+		band := treeBand{name: def.Name, row0: row, total: len(techs), here: at == here, next: at > here, ahead: max(at-here, 0)}
 		// A tech sits below the techs of its own age that it needs.
 		inAge := map[string]config.TechDef{}
 		for _, t := range techs {
@@ -546,9 +542,6 @@ func (m *treeModel) nameSpan(n *treeNode) (x int, name string) {
 	return x, string(rs)
 }
 
-// progressOf is how far the research in progress has come, 0 to 1.
-func progressOf(state game.GameState) float64 { return researchFraction(state) }
-
 // canvas draws the whole tree on its virtual canvas: the lines first, then
 // every tech over them.
 func (m *treeModel) canvas(state game.GameState, sel string) *tGrid {
@@ -646,7 +639,7 @@ func (m *treeModel) canvas(state game.GameState, sel string) *tGrid {
 			nst = tsSel
 		}
 		g.text(nx, n.top, name, nst, n.lane)
-		rows := badgeRows(geom, n, progressOf(state))
+		rows := badgeRows(geom, n, researchFraction(state))
 		for dy, row := range rows {
 			g.text(left, n.top+geom.nameH+dy, row, st, n.lane)
 		}
@@ -1000,12 +993,6 @@ func (m *treeModel) beyondLine() string {
 	return vibe.Sprintf("ui.research_tree.beyondLine.01", "┄┄┄ %s in later ages ┄┄┄", textfmt.Count(m.later, vibe.Line("ui.research_tree.beyondLine.02", "more tech waits"), vibe.Line("ui.research_tree.beyondLine.03", "more techs wait")))
 }
 
-// costText is a tech's time as the status line says it: what it takes the
-// scholars researching now, or that it needs scholars.
-func costText(state game.GameState, n *treeNode) string {
-	return techTime(n.ts, state)
-}
-
 // statusLine names the selected tech, its state, its price and what it
 // opens.
 func (m *treeModel) statusLine(state game.GameState, v treeView) string {
@@ -1018,7 +1005,7 @@ func (m *treeModel) statusLine(state game.GameState, v treeView) string {
 		parts = append(parts, "keystone")
 	}
 	if n.mark != markDone {
-		parts = append(parts, costText(state, n))
+		parts = append(parts, techTime(n.ts, state))
 	}
 	if n.plan > 0 {
 		parts = append(parts, vibe.Sprintf("ui.research_tree.statusLine.03", "item %d in your plan", n.plan))
@@ -1441,30 +1428,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		lines = lines[:max(ch-2, 0)]
 	}
 	x0, y0 := ox+(mw-cw)/2, oy+(mh-ch)/2
-	for y := 0; y < ch; y++ {
-		for x := 0; x < cw; x++ {
-			r := ' '
-			switch {
-			case y == 0 && x == 0:
-				r = '╭'
-			case y == 0 && x == cw-1:
-				r = '╮'
-			case y == ch-1 && x == 0:
-				r = '╰'
-			case y == ch-1 && x == cw-1:
-				r = '╯'
-			case y == 0 || y == ch-1:
-				r = '─'
-			case x == 0 || x == cw-1:
-				r = '│'
-			}
-			out.put(x0+x, y0+y, r, tsBorder, -1)
-		}
-	}
-	out.text(x0+2, y0, clipRunes(" "+n.def.Name+" ", cw-4), tsBright, -1)
-	if esc := vibe.Line("ui.research_tree.drawCard.01", " Esc closes "); cw > len(esc)+len([]rune(n.def.Name))+8 {
-		out.text(x0+cw-2-len([]rune(esc)), y0, esc, tsDim, -1)
-	}
+	out.card(x0, y0, cw, ch, n.def.Name, vibe.Line("ui.research_tree.drawCard.01", " Esc closes "))
 	if badge {
 		ring := tsLane
 		if n.def.Capstone {

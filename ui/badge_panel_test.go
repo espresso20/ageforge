@@ -24,17 +24,10 @@ func badgeDashboard(t *testing.T) (*Dashboard, *tview.Pages, *game.GameEngine) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
 	a, err := game.CreateNamedAccount("Badge Tester")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(a)
-	if err := eng.StartNewNamedGame("run"); err != nil {
-		t.Fatal(err)
-	}
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	must(t, eng.StartNewNamedGame("run"))
+	d, pages := newTestDashboard(eng)
 	d.refresh()
 	return d, pages, eng
 }
@@ -53,9 +46,7 @@ func settle(d *Dashboard) {
 // ladder.
 func earnForTest(t *testing.T, eng *game.GameEngine) {
 	t.Helper()
-	if err := eng.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EnterAgeForTest("stone_age"))
 	for i := 0; i < 20; i++ {
 		eng.ReportForTest(config.BadgeEvBuiltLineage, "housing")
 	}
@@ -173,11 +164,7 @@ func TestBadgeCaseOnTheLiveScreen(t *testing.T) {
 			t.Errorf("%s: the command bar is not under the case:\n%s", where, strings.Join(lines[h-promptRows:], "\n"))
 		}
 		text := strings.Join(lines, "\n")
-		for _, want := range []string{"Serial Reincarnator", "Gold · Rare · 25 pts", "Prestige 10 times.", "Rung 3 of 4 · Prestiges"} {
-			if !strings.Contains(text, want) {
-				t.Errorf("%s: the detail does not say %q:\n%s", where, want, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%s: the detail", where), text, "Serial Reincarnator", "Gold · Rare · 25 pts", "Prestige 10 times.", "Rung 3 of 4 · Prestiges")
 		// The gold ring, whole, somewhere on the screen.
 		g := newTGrid(13, 7)
 		drawMedal(g, 0, 0, medal{tier: config.BadgeGold, emblem: '★'}, atRest, false)
@@ -238,9 +225,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 		tv := tview.NewTextView().SetDynamicColors(true)
 		tv.SetText(safeTags(markup))
 		sim := tcell.NewSimulationScreen("UTF-8")
-		if err := sim.Init(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, sim.Init())
 		defer sim.Fini()
 		sim.SetSize(200, 1)
 		tv.SetRect(0, 0, 200, 1)
@@ -290,12 +275,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 
 	// Colours: the mark in the tier's ink, and everything legible, in
 	// every theme.
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	eachThemeInline(t, func(th theme.Theme) {
 		bg := theme.Color(theme.RoleBackground)
 		_, cells := render(badgeToast(hut, mapmodel.TierUnicode, 0))
 		for x, c := range cells {
@@ -311,7 +291,7 @@ func TestBadgeToastFitsTheBar(t *testing.T) {
 		if fg, _, _ := cells[0].Style.Decompose(); fg != pal.inkOn(inkGold, false) {
 			t.Errorf("theme %s: the toast's mark is %06x, not gold (%06x)", th.Key, fg.Hex(), pal.inkOn(inkGold, false).Hex())
 		}
-	}
+	})
 }
 
 // TestBadgeToastOnTheLiveScreen: an earned badge's toast is on the toast
@@ -353,21 +333,13 @@ func TestHelpListsBadgeKeys(t *testing.T) {
 			}
 		}
 		flat := strings.Join(strings.Fields(help), " ")
-		for _, want := range []string{"badges next", "badges <family>", "badges <name>", "motion [on|off]", "achievements=badges", "The badge case: every badge"} {
-			if !strings.Contains(flat, want) {
-				t.Errorf("%d columns: the Help panel does not mention %q", screenW, want)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%d columns: the Help panel", screenW), flat, "badges next", "badges <family>", "badges <name>", "motion [on|off]", "achievements=badges", "The badge case: every badge")
 	}
 	listed := ""
 	for _, k := range badgeKeys {
 		listed += k.key + " " + k.what.String() + " "
 	}
-	for _, name := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "End", "Enter", "Esc"} {
-		if !strings.Contains(listed, name) {
-			t.Errorf("the badge case's key list leaves out %s", name)
-		}
-	}
+	wantAll(t, "the badge case's key list", listed, "Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "End", "Enter", "Esc")
 	found := false
 	for _, name := range sidebarPanels {
 		found = found || name == "badges"
@@ -424,20 +396,13 @@ func TestMotionCommand(t *testing.T) {
 // text; the same frame is the same picture; motion off draws none of it;
 // and a theme without an effect is never touched.
 func TestThemeEffectsStayInEmptyCells(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	eachThemeInline(t, func(th theme.Theme) {
 		for _, size := range treeSizes {
 			w, h := size[0], size[1]
 			d, pages, eng := badgeDashboard(t)
 			drawnDashboard(t, d, pages, w, h) // every box gets its size
 			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, sim.Init())
 			sim.SetSize(w, h)
 			scr := theme.WrapScreen(sim)
 			snap := func() []tcell.SimCell {
@@ -450,16 +415,12 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 			scr.Clear()
 			d.root.Draw(scr)
 			still := snap()
-			if err := eng.Account().SetMotion(false); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.Account().SetMotion(false))
 			d.drawEffect(scr, 0, 0, w, h)
 			if off := snap(); d.fxOn.Load() || fmt.Sprint(off) != fmt.Sprint(still) {
 				t.Errorf("theme %s at %dx%d: an effect draws with motion off", th.Key, w, h)
 			}
-			if err := eng.Account().SetMotion(true); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.Account().SetMotion(true))
 			bg := theme.Color(theme.RoleBackground)
 			drawn := 0
 			frames := 4
@@ -507,16 +468,12 @@ func TestThemeEffectsStayInEmptyCells(t *testing.T) {
 				t.Errorf("theme %s: effect on is %v", th.Key, d.fxOn.Load())
 			}
 		}
-	}
+	})
 	// A frame is a function of its number.
-	if err := theme.SetActive("source"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, theme.SetActive("source"))
 	frame := func(n int, plain bool) string {
 		sim := tcell.NewSimulationScreen("UTF-8")
-		if err := sim.Init(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, sim.Init())
 		defer sim.Fini()
 		sim.SetSize(40, 12)
 		scr := theme.WrapScreen(sim)
@@ -609,8 +566,7 @@ func TestStatusBarWearsTheTitle(t *testing.T) {
 // and the theme command refuses it with the same words. Earning the badge
 // unlocks it at once.
 func TestHackerThemesInTheList(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	_, _, eng := badgeDashboard(t)
 	acct := eng.Account()
 	st := eng.GetState()

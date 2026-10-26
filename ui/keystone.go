@@ -66,6 +66,3 @@ func keystoneMark(ts game.TechState) string {
 	}
 	return vibe.Sprintf("ui.keystone.keystoneMark.01", "  [gold]★ keystone: %s[-]", game.BuildingName(ts.KeystoneOf))
 }
-
-// keystoneLegend explains the mark, once per list.
-var keystoneLegend = vibe.E("ui.keystone.keystoneLegend.01", "[gray]★ keystone: the one tech its age's wonder needs before it can be built.[-]")

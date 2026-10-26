@@ -4,6 +4,10 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
+	"reflect"
+	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,53 +16,34 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// dispatcherCases parses ui/input.go: HandleCommand's switch gives every
-// word it dispatches on (grouped per case), and each case's handler, followed
-// through the input.go functions it calls, gives the literal words it
-// compares arguments with.
-func dispatcherCases(t *testing.T) (cases [][]string, words map[string]map[string]bool) {
+// dispatcherWords parses ui/input.go: each registry command's Run, found by
+// its function name and followed through the input.go functions it calls,
+// gives the literal words the command compares arguments with. A command with
+// no Run only opens its panel and compares nothing.
+func dispatcherWords(t *testing.T) map[string]map[string]bool {
 	t.Helper()
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "input.go", nil, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	funcs := map[string]*ast.FuncDecl{}
 	for _, d := range f.Decls {
 		if fd, ok := d.(*ast.FuncDecl); ok {
 			funcs[fd.Name.Name] = fd
 		}
 	}
-	hc := funcs["HandleCommand"]
-	if hc == nil {
-		t.Fatal("HandleCommand not found in ui/input.go")
-	}
-	words = map[string]map[string]bool{}
-	var sw *ast.SwitchStmt
-	ast.Inspect(hc.Body, func(n ast.Node) bool {
-		if s, ok := n.(*ast.SwitchStmt); ok && sw == nil {
-			sw = s
+	words := map[string]map[string]bool{}
+	for _, c := range registry() {
+		if c.Run == nil {
+			continue
 		}
-		return sw == nil
-	})
-	if sw == nil {
-		t.Fatal("HandleCommand has no switch")
-	}
-	for _, st := range sw.Body.List {
-		cc := st.(*ast.CaseClause)
-		var names []string
-		for _, e := range cc.List {
-			if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
-				s, _ := strconv.Unquote(lit.Value)
-				names = append(names, s)
-			}
+		name := funcName(c.Run)
+		fn := funcs[name]
+		if fn == nil {
+			t.Errorf("%s: its Run, %s, is not a function of input.go", c.Name, name)
+			continue
 		}
-		if len(names) == 0 {
-			continue // default
-		}
-		cases = append(cases, names)
 		w := map[string]bool{}
-		seen := map[string]bool{"HandleCommand": true}
+		seen := map[string]bool{name: true}
 		var walk func(n ast.Node)
 		walk = func(n ast.Node) {
 			for k := range comparedWords(n) {
@@ -74,12 +59,19 @@ func dispatcherCases(t *testing.T) (cases [][]string, words map[string]map[strin
 				return true
 			})
 		}
-		for _, st := range cc.Body {
-			walk(st)
-		}
-		words[names[0]] = w
+		walk(fn.Body)
+		words[c.Name] = w
 	}
-	return cases, words
+	return words
+}
+
+// funcName is the name of the ui function a Run is, or of the function that
+// made it, when it is a closure.
+func funcName(run func([]string, *game.GameEngine) CommandResult) string {
+	full := runtime.FuncForPC(reflect.ValueOf(run).Pointer()).Name() // ".../ui.cmdGather"
+	name := strings.TrimPrefix(full[strings.LastIndex(full, "/")+1:], "ui.")
+	name, _, _ = strings.Cut(name, ".")
+	return name
 }
 
 // comparedWords is every string literal under n used as a switch case,
@@ -136,57 +128,29 @@ func treeWords(c *Command, out map[string]bool) {
 // notSubcommands are words handlers compare that are not typed after a
 // command name: comparisons in helpers reached while following calls.
 var notSubcommands = map[string]bool{
-	"":         true, // empty-argument checks
-	"allied":   true, // a faction status the diplomacy status list checks
-	"worldmap": true, // cmdMap checks which alias it was typed as (worldmap opens on the world)
-	"trade":    true, // cmdPlan answers the retired `plan trade` as an unknown command; the registry lists none
+	"":       true, // empty-argument checks
+	"allied": true, // a faction status the diplomacy status list checks
+	"trade":  true, // cmdPlan answers the retired `plan trade` as an unknown command; the registry lists none
 }
 
-// TestRegistryMatchesDispatcher holds the registry and HandleCommand
-// together: every command, alias and subcommand in the registry is one the
-// dispatcher takes, and every command and subcommand word the dispatcher
-// takes is in the registry.
+// TestRegistryMatchesDispatcher holds the registry and the commands' Run
+// functions together: only a Dashboard command has no way to run in
+// HandleCommand, no name or alias is two commands, and every command and
+// subcommand word a Run takes is in the registry and the other way round.
 func TestRegistryMatchesDispatcher(t *testing.T) {
 	reg := registry()
-	cases, handled := dispatcherCases(t)
+	handled := dispatcherWords(t)
 
-	inSwitch := map[string]string{} // word → its case's first word
-	for _, names := range cases {
-		for _, n := range names {
-			inSwitch[n] = names[0]
-		}
-	}
 	inRegistry := map[string]*Command{}
 	for _, c := range reg {
+		if c.Dashboard && c.Run != nil {
+			t.Errorf("%q is marked Dashboard but has a Run for HandleCommand", c.Name)
+		}
 		for _, n := range append([]string{c.Name}, c.Aliases...) {
 			if prev := inRegistry[n]; prev != nil {
 				t.Errorf("registry: %q is both %s and %s", n, prev.Name, c.Name)
 			}
 			inRegistry[n] = c
-		}
-	}
-
-	// Registry → dispatcher: names and aliases.
-	for n, c := range inRegistry {
-		if c.Dashboard {
-			if _, ok := inSwitch[n]; ok {
-				t.Errorf("%q is marked Dashboard but HandleCommand also dispatches it", n)
-			}
-			continue
-		}
-		if _, ok := inSwitch[n]; !ok {
-			t.Errorf("registry has %q (%s) but HandleCommand does not dispatch it", n, c.Name)
-		}
-	}
-	// Dispatcher → registry, and each case is one command.
-	for _, names := range cases {
-		c := inRegistry[names[0]]
-		for _, n := range names {
-			if inRegistry[n] == nil {
-				t.Errorf("HandleCommand dispatches %q but the registry has no such command or alias", n)
-			} else if c != nil && inRegistry[n] != c {
-				t.Errorf("HandleCommand's case %v spans registry commands %s and %s", names, c.Name, inRegistry[n].Name)
-			}
 		}
 	}
 
@@ -197,13 +161,13 @@ func TestRegistryMatchesDispatcher(t *testing.T) {
 		}
 		reg := map[string]bool{}
 		treeWords(c, reg)
-		got := handled[inSwitch[c.Name]]
-		for _, w := range sortedSet(reg) {
+		got := handled[c.Name]
+		for _, w := range slices.Sorted(maps.Keys(reg)) {
 			if !got[w] {
 				t.Errorf("registry: %s takes %q, but its handler never checks for it", c.Name, w)
 			}
 		}
-		for _, w := range sortedSet(got) {
+		for _, w := range slices.Sorted(maps.Keys(got)) {
 			if !reg[w] && !notSubcommands[w] {
 				t.Errorf("the %s handler reacts to %q, but the registry doesn't list it under %s", c.Name, w, c.Name)
 			}
@@ -252,9 +216,7 @@ func TestRegistryCommandsRun(t *testing.T) {
 func TestDashboardCommandsHandled(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "dashboard.go", nil, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	var words map[string]bool
 	for _, d := range f.Decls {
 		if fd, ok := d.(*ast.FuncDecl); ok && fd.Name.Name == "submitInput" {
@@ -309,13 +271,4 @@ func TestRegistryShape(t *testing.T) {
 	if got := strings.Join(dangerous, ","); got != want {
 		t.Errorf("Dangerous commands = %s\nwant %s", got, want)
 	}
-}
-
-func sortedSet(m map[string]bool) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
 }

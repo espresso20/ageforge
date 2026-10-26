@@ -145,8 +145,7 @@ func TestEndingDump(t *testing.T) {
 	if out == "" {
 		t.Skip("set ENDING_DUMP to a folder to write the beats")
 	}
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	themes := strings.Split(os.Getenv("ENDING_DUMP_THEMES"), ",")
 	if themes[0] == "" {
 		themes = []string{theme.DefaultKey}
@@ -158,9 +157,7 @@ func TestEndingDump(t *testing.T) {
 	var page strings.Builder
 	page.WriteString("<!doctype html><meta charset=\"utf-8\"><title>Ending</title><style>body{background:#222;color:#ddd;font:13px sans-serif}pre{font:10px/12px 'JetBrains Mono',Menlo,monospace;display:inline-block;margin:4px 12px 16px 0;vertical-align:top}h3{margin:10px 0 2px}</style>\n")
 	for _, key := range themes {
-		if err := theme.SetActive(key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(key))
 		for _, sz := range strings.Split(sizes, ",") {
 			var w, h int
 			if _, err := fmt.Sscanf(sz, "%dx%d", &w, &h); err != nil {
@@ -206,32 +203,21 @@ func TestEndingDump(t *testing.T) {
 				for _, f := range frames {
 					g := r.at(w, h, f)
 					name := fmt.Sprintf("%s_%s_%dx%d_f%03d", key, c.name, w, h, f)
-					if err := os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644); err != nil {
-						t.Fatal(err)
-					}
+					must(t, os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644))
 					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.e.pal, r.e.view.plain))
 				}
 				r.e.close()
 			}
 		}
 	}
-	if err := os.WriteFile(filepath.Join(out, "ending.html"), []byte(page.String()), 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(filepath.Join(out, "ending.html"), []byte(page.String()), 0644))
 }
 
 // ---- what it says ----
 
 // endFold is a line as the plain glyph set shows it.
 func endFold(s string, plain bool) string {
-	if plain {
-		out := []rune(plainSafe(s))
-		for i, r := range out {
-			out[i] = mapmodel.Fold(r, mapmodel.TierASCII)
-		}
-		s = string(out)
-	}
-	return strings.Join(strings.Fields(s), " ")
+	return strings.Join(strings.Fields(foldASCII(s, plain)), " ")
 }
 
 // endScreen is everything on a frame, rows joined and blanks squeezed.
@@ -783,12 +769,7 @@ func TestEndingStill(t *testing.T) {
 	t.Cleanup(e.close)
 	const w, h = 100, 30
 	r.om.app = tview.NewApplication()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	e.SetRect(0, 0, w, h)
 	var stills []string
 	for i := 0; i < 4; i++ {
@@ -882,21 +863,11 @@ func TestEndingGivesWay(t *testing.T) {
 // or more on what is behind them), the word in iron stands off the page,
 // and the plain set shows nothing it does not have.
 func TestEndingInEveryTheme(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	const w, h = 100, 30
 	r := stagedEnding(t, sampleEnding(game.RunEndEndured, 5), mapmodel.TierUnicode, true, false)
 	t.Cleanup(r.e.close)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	sim := newSimScreen(t, w, h)
+	eachThemeInline(t, func(th theme.Theme) {
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 			r.restart(tier, true)
 			r.at(w, h, 0)
@@ -909,54 +880,8 @@ func TestEndingInEveryTheme(t *testing.T) {
 				}
 				g := r.at(w, h, f)
 				where := fmt.Sprintf("%s, beat %d, %s glyphs", th.Key, sp.beat, tier)
-				sim.Clear()
-				g.flush(theme.WrapScreen(sim), 0, 0, e.pal, plain)
-				rows := make([]string, h)
-				for y := range rows {
-					row := make([]rune, w)
-					for x := range row {
-						row[x], _, _, _ = sim.GetContent(x, y)
-						if plain && row[x] > 0x7e {
-							t.Fatalf("%s: cell (%d,%d) holds %q, which the plain glyph set does not have", where, x, y, row[x])
-						}
-					}
-					rows[y] = string(row)
-				}
-				read := func(word string) {
-					if word = strings.TrimSpace(word); word == "" {
-						return
-					}
-					for y := 0; y < h; y++ {
-						at := strings.Index(rows[y], word)
-						if at < 0 {
-							continue
-						}
-						x0 := len([]rune(rows[y][:at]))
-						for i, c := range []rune(word) {
-							if c == ' ' {
-								continue
-							}
-							_, _, st, _ := sim.GetContent(x0+i, y)
-							fg, bg, _ := st.Decompose()
-							if k := theme.ContrastRatio(fg, bg); k < 3-0.02 {
-								t.Errorf("%s: %q is drawn at a contrast of %.2f (%06x on %06x)", where, word, k, fg.Hex(), bg.Hex())
-								return
-							}
-						}
-						return
-					}
-					t.Errorf("%s: %q is not on the screen", where, word)
-				}
-				fold := func(s string) string {
-					if !plain {
-						return s
-					}
-					out := []rune(plainSafe(s))
-					for i, c := range out {
-						out[i] = mapmodel.Fold(c, mapmodel.TierASCII)
-					}
-					return string(out)
-				}
+				rows := flushRows(t, where, sim, g, e.pal, plain)
+				read := func(word string) { wordReadable(t, where, sim, rows, word) }
 				read(e.view.prompt)
 				switch sp.beat {
 				case beatEnding:
@@ -966,7 +891,7 @@ func TestEndingInEveryTheme(t *testing.T) {
 					}
 				case beatReckoning:
 					for _, row := range e.sc.reck.rows {
-						read(fold(row.plain()))
+						read(foldASCII(row.plain(), plain))
 					}
 				case beatStrike:
 					for _, line := range e.sc.L.caption {
@@ -982,11 +907,11 @@ func TestEndingInEveryTheme(t *testing.T) {
 						t.Errorf("%s: the word is drawn at a contrast of %.2f on the page", where, k)
 					}
 				case beatBeginning:
-					read(fold(fitOption(e.view.captions, w-4)))
+					read(foldASCII(fitOption(e.view.captions, w-4), plain))
 				}
 			}
 		}
-	}
+	})
 }
 
 // TestEndingAmbientIsThePrestiges: a theme's own ambient effect plays from
@@ -994,28 +919,16 @@ func TestEndingInEveryTheme(t *testing.T) {
 // nowhere else: not while the town burns, not over the reckoning, not in
 // a fall's film, not with motion off.
 func TestEndingAmbientIsThePrestiges(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	const w, h = 100, 30
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	extra := func(r *endingRig, frames ...int) (n int) {
 		r.e.SetRect(0, 0, w, h)
 		for _, f := range frames {
 			g := r.at(w, h, f)
 			sim.Clear()
 			r.e.Draw(theme.WrapScreen(sim))
-			for y := 0; y < h; y++ {
-				for x := 0; x < w; x++ {
-					if c, _, _, _ := sim.GetContent(x, y); c != g.c[y*w+x].r && !(c == ' ' && g.c[y*w+x].r == 0) {
-						n++
-					}
-				}
-			}
+			n += extraCells(sim, g)
 		}
 		return n
 	}
@@ -1029,9 +942,7 @@ func TestEndingAmbientIsThePrestiges(t *testing.T) {
 			continue
 		}
 		with++
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		film.restart(mapmodel.TierUnicode, true)
 		film.at(w, h, 0)
 		strike, _ := endSpanOf(film.e.sc, beatStrike)

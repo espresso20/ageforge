@@ -17,9 +17,7 @@ func cappedState(t *testing.T) (*game.GameEngine, game.GameState) {
 	t.Helper()
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1) // entering an era rolls an epoch event: the same one every run
-	if err := ge.EnterAgeForTest("modern_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.EnterAgeForTest("modern_age"))
 	ge.GrantTechsForTest()
 	ge.GrantBonusForTest("production_all", 2.4)
 	ge.GrantBonusForTest("gold_rate", 3.8)
@@ -69,15 +67,11 @@ func TestStatsPanelShowsLargePoolsInFull(t *testing.T) {
 	if got := applied(st, "gold_rate"); got != "+380%" {
 		t.Fatalf("gold has earned +380%% and applies %s, want +380%%", got)
 	}
-	for _, want := range []string{
+	wantAll(t, "Active multipliers", out,
 		"Gold production     [-] [green]+380%[-]   ",
-		"Scholar output      [-] [green]" + applied(st, "knowledge_rate") + "[-]   ",
+		"Scholar output      [-] [green]"+applied(st, "knowledge_rate")+"[-]   ",
 		"Iron production     [-] [green]+70%[-]   ",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("Active multipliers is missing %q:\n%s", want, out)
-		}
-	}
+	)
 	for _, bad := range []string{"quarter", "earned", "capped at +200%", "[green]+200%[-] "} {
 		if strings.Contains(out, bad) {
 			t.Errorf("a pool far past +200%% carries %q:\n%s", bad, out)
@@ -95,7 +89,7 @@ func TestResearchPanelBonuses(t *testing.T) {
 	large(t, st, "production_all") // the fixture's pools are past +200%
 	large(t, st, "gold_rate")
 	out := section(t, statsProvider(st, 120), "Research bonuses", "Resource rates")
-	for _, want := range []string{
+	wantAll(t, "Research bonuses", out,
 		"[green]+7%    [-] All production\n",
 		"[green]+36%   [-] Gold production\n",
 		"[green]+86%   [-] Research production\n",
@@ -112,11 +106,7 @@ func TestResearchPanelBonuses(t *testing.T) {
 		"[green]+2     [-] Hand gathering\n",
 		"[green]+15%   [-] Game speed\n",
 		"[gray]Output:[-]  +1 data/tick, +0.25 steel/tick",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("Research bonuses is missing %q:\n%s", want, out)
-		}
-	}
+	)
 	if strings.Contains(out, "capped") || strings.Contains(out, "a quarter") {
 		t.Errorf("a tech's bonus carries a cap note:\n%s", out)
 	}
@@ -150,24 +140,18 @@ func TestMilestonesAndWondersTagOnlyLimitedRewards(t *testing.T) {
 	ge, _ := cappedState(t)
 	ge.GrantBonusForTest("research_speed", 1.2)
 	ms := milestonesProvider(ge.GetState(), 120)
-	for _, want := range []string{
+	wantAll(t, "the Milestones panel", ms,
 		"+20% all production[-]\n",
 		"+10% all production[-]\n",
 		"+5% all production[-]\n",
 		"+5% research speed[-] [yellow](capped: no effect now)[-]",
-	} {
-		if !strings.Contains(ms, want) {
-			t.Errorf("the Milestones panel is missing %q:\n%s", want, ms)
-		}
-	}
+	)
 	if strings.Contains(ms, "a quarter") {
 		t.Errorf("the Milestones panel still talks of a quarter:\n%s", ms)
 	}
 	// The Information Age's wonder, the Global Network, adds scholar
 	// output to a pool that is already far past +200%.
-	if err := ge.EnterAgeForTest("information_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.EnterAgeForTest("information_age"))
 	wonders := wondersProvider(ge.GetState(), 120)
 	if want := "+30% scholar output[-]\n"; !strings.Contains(wonders, want) {
 		t.Errorf("the Wonders panel tags a scholar output effect that counts in full (want %q):\n%s", want, wonders)

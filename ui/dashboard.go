@@ -153,6 +153,10 @@ type Dashboard struct {
 	// pillars (advance_panel.go).
 	advancePanel *advancePanel
 
+	// barOverlays are the panels that leave the keyboard with the command
+	// bar, by overlay name (bar_panel.go).
+	barOverlays map[string]barOverlay
+
 	miniMap *miniMap
 	// skyline is the skyline strip under the Buildings list (dash_skyline.go).
 	skyline  *skylineStrip
@@ -206,25 +210,20 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.researchPanel.engine = d.engine
 	d.researchPanel.tier = func() mapmodel.GlyphTier { return d.mapSettings().Tier }
 	d.researchPanel.prompt = func() string { return d.inputField.GetText() }
-	d.researchPanel.toPrompt = func(ev *tcell.EventKey) {
-		d.overlayMgr.FocusOn(d.inputField)
-		if h := d.inputField.InputHandler(); h != nil {
-			h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
-		}
-	}
+	d.researchPanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("techs", vibe.E("ui.dashboard.NewDashboard.02", "Research"), d.researchPanel.open, d.researchPanel.update)
 	// The badge case: the account's badges. It leaves the keyboard with the
 	// command bar too.
 	d.badgePanel.settings = d.mapSettings
 	d.badgePanel.prompt = d.researchPanel.prompt
-	d.badgePanel.toPrompt = d.researchPanel.toPrompt
+	d.badgePanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("badges", vibe.E("ui.dashboard.NewDashboard.03", "Badges"), d.badgePanel.open, d.badgePanel.update)
 	d.overlayMgr.Register("army", vibe.E("ui.dashboard.NewDashboard.04", "Army"), militaryProvider)
 	// The Expeditions panel leaves the keyboard with the command bar too.
 	d.expPanel.engine = d.engine
 	d.expPanel.settings = d.mapSettings
 	d.expPanel.prompt = d.researchPanel.prompt
-	d.expPanel.toPrompt = d.researchPanel.toPrompt
+	d.expPanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("expedition", vibe.E("ui.dashboard.NewDashboard.05", "Expeditions"), d.expPanel.open, d.expPanel.update)
 	d.overlayMgr.Register("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradeProvider)
 	// The Factions panel, under two names pointing at one provider (the
@@ -255,7 +254,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	// The People panel, which `workers` opens too, leaves the keyboard with
 	// the command bar as well.
 	d.peoplePanel.settings = d.mapSettings
-	d.peoplePanel.toPrompt = d.researchPanel.toPrompt
+	d.peoplePanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
@@ -295,7 +294,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		// under the still-open map, for the player to run with Enter.
 		d.inputField.SetText(cmd)
 	}
-	d.mapPanel.prompt = func() string { return d.inputField.GetText() }
+	d.mapPanel.prompt = d.researchPanel.prompt
 	d.mapPanel.zoomed = func(level string) {
 		s := d.mapSettings()
 		s.Zoom = level
@@ -306,15 +305,9 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		// lock: the account hears that its player looked at a visitor.
 		d.engine.NoteVisitorInspected(kind)
 	}
-	d.mapPanel.toPrompt = func(ev *tcell.EventKey) {
-		// The map itself had the keyboard: give it back to the prompt,
-		// starting with this key.
-		d.overlayMgr.FocusOn(d.inputField)
-		if h := d.inputField.InputHandler(); h != nil {
-			h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
-		}
-	}
+	d.mapPanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("map", vibe.E("ui.dashboard.NewDashboard.19", "Map"), d.mapPanel.open, d.mapPanel.update)
+	d.barOverlays = d.newBarOverlays()
 
 	// The icons check is a window of its own (icons.go). It logs through
 	// the engine and brings the install's progress and outcome back to the
@@ -448,7 +441,7 @@ func (d *Dashboard) build() {
 		if handoff, _ := e.Payload["handoff"].(bool); handoff {
 			verb = vibe.Line("ui.dashboard.build.09", "takes up the warning")
 		}
-		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", capFirstUI(name), verb), "warning", 8*time.Second)
+		d.toastMgr.Show(vibe.Sprintf("ui.dashboard.build.10", "⚑ %s %s. Type harbinger to read the warning.", textfmt.Capitalize(name), verb), "warning", 8*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
 		// Runs under the engine write lock: only flip the flag, never touch the engine.
@@ -463,8 +456,6 @@ func (d *Dashboard) build() {
 		}
 		color := "cyan"
 		if eventType == "bad_challenging" {
-			color = "red"
-		} else if eventType == "catastrophe" {
 			color = "red"
 		} else if eventType == "good_legendary" {
 			color = "gold"
@@ -600,38 +591,14 @@ func (d *Dashboard) build() {
 			d.showDevUnlockModal()
 			return nil
 		}
-		// The open Map panel takes the keys that print nothing; the rest
-		// reach the command bar, which keeps the focus (map_panel.go).
-		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "map" && d.inputField.HasFocus() &&
-			d.mapPanel.routeKey(event, d.inputField.GetText()) {
-			return nil
-		}
-		// So does the open Research panel, and Esc closes its card first.
-		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "techs" && d.inputField.HasFocus() &&
-			(d.researchPanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.researchPanel.closeCard()) {
-			return nil
-		}
-		// And the open badge case, where Esc closes a badge's detail first.
-		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "badges" && d.inputField.HasFocus() &&
-			(d.badgePanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.badgePanel.closeCard()) {
-			return nil
-		}
-		// The open Expeditions panel, where Esc takes back the question to
-		// send a party first.
-		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "expedition" && d.inputField.HasFocus() &&
-			(d.expPanel.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && d.expPanel.closeConfirm()) {
-			return nil
-		}
-		// The open People panel, which takes the arrows while the bar is empty.
-		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "people" && d.inputField.HasFocus() &&
-			d.peoplePanel.routeKey(event, d.inputField.GetText()) {
-			return nil
-		}
-		// The open Advance panel, which takes the arrows and Enter while the
-		// bar is empty.
-		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "charter" && d.inputField.HasFocus() &&
-			d.advancePanel.routeKey(event, d.inputField.GetText()) {
-			return nil
+		// An open panel that leaves the keyboard with the command bar takes
+		// the keys that print nothing; the rest reach the bar, which keeps
+		// the focus. Esc closes the panel's card first, where it has one.
+		if d.overlayMgr != nil {
+			if o, ok := d.barOverlays[d.overlayMgr.ActiveName()]; ok && d.inputField.HasFocus() &&
+				(o.routeKey(event, d.inputField.GetText()) || event.Key() == tcell.KeyEsc && o.closeFirst != nil && o.closeFirst()) {
+				return nil
+			}
 		}
 		// The open text panels (Milestones, Stats, Help and the rest) scroll
 		// with the keys that print nothing while the bar is empty.
@@ -991,7 +958,6 @@ func (d *Dashboard) refresh() {
 	}
 
 	if d.lastAge != state.Age {
-		ApplyAgePalette(state.Age)
 		d.lastAge = state.Age
 	}
 
@@ -1150,7 +1116,7 @@ func peopleBoxTitle(state game.GameState, detail bool) string {
 	ws := state.Workers
 	for _, t := range []string{
 		vibe.Sprintf("ui.dashboard.peopleBoxTitle.02", " People %d/%d ", ws.TotalPop, ws.MaxPop),
-		vibe.Sprintf("ui.dashboard.peopleBoxTitle.03", " People %s/%s ", FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))),
+		vibe.Sprintf("ui.dashboard.peopleBoxTitle.03", " People %s/%s ", textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))),
 	} {
 		if runeLen(t) <= sidebarW-2 {
 			return t
@@ -1182,7 +1148,7 @@ func peopleBoxText(state game.GameState, w int, detail bool) string {
 			return vibe.Sprintf("ui.dashboard.peopleBoxText.02", "[gray]Pop[white] [%s]%s[white]/[green]%s[-]\n", popColor, pop, housing)
 		}
 		if w > 0 && visibleLen(strings.TrimRight(popLine(), "\n")) > w {
-			pop, housing = FormatNumber(float64(ws.TotalPop)), FormatNumber(float64(ws.MaxPop))
+			pop, housing = textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))
 		}
 		fmt.Fprint(&sb, popLine())
 	}
@@ -1315,7 +1281,7 @@ func statusLine(state game.GameState, f ribbonFacts, w int) string {
 		}
 		pop := groupedCount(state.Workers.TotalPop) + "/" + groupedCount(state.Workers.MaxPop)
 		if level >= 3 {
-			pop = FormatNumber(float64(state.Workers.TotalPop)) + "/" + FormatNumber(float64(state.Workers.MaxPop))
+			pop = textfmt.Number(float64(state.Workers.TotalPop)) + "/" + textfmt.Number(float64(state.Workers.MaxPop))
 		}
 		facts := make([]string, 0, 4)
 		if f.year != "" && level < 8 {
@@ -1343,7 +1309,7 @@ func statusLine(state game.GameState, f ribbonFacts, w int) string {
 // (1,094), and a count of a million or more as a short number (41.2M).
 func groupedCount(n int) string {
 	if n < 1000 || n >= 1_000_000 {
-		return FormatNumber(float64(n))
+		return textfmt.Number(float64(n))
 	}
 	return fmt.Sprintf("%d,%03d", n/1000, n%1000)
 }
@@ -1611,34 +1577,18 @@ func (d *Dashboard) submitInput() {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
-		if result.OverlayName == "map" || result.OverlayName == "techs" || result.OverlayName == "badges" || result.OverlayName == "expedition" || result.OverlayName == "people" || result.OverlayName == "charter" || d.overlayMgr.keepsBar(result.OverlayName) {
+		if _, ok := d.barOverlays[result.OverlayName]; ok || d.overlayMgr.keepsBar(result.OverlayName) {
 			// The command bar keeps the keyboard while the map is open.
 			d.overlayMgr.FocusOn(d.inputField)
 		}
-	} else if d.overlayMgr.ActiveName() == "badges" {
-		// A command typed over the case (map glyphs, motion): show what it
-		// changed now rather than at the next refresh.
-		d.badgePanel.update(d.engine.GetState())
-	} else if d.overlayMgr.ActiveName() == "people" {
-		// A command typed over the panel (roster, recruit): show what it
-		// changed now rather than at the next refresh.
-		d.peoplePanel.update(d.engine.GetState())
-	} else if d.overlayMgr.ActiveName() == "charter" {
-		// A command typed over the panel (build, advance): show what it
-		// changed now rather than at the next refresh.
-		d.advancePanel.update(d.engine.GetState())
-	} else if d.overlayMgr.ActiveName() == "expedition" {
-		// An offer sent by name: the map shows it gone now.
-		d.expPanel.update(d.engine.GetState())
-	} else if d.overlayMgr.ActiveName() == "techs" {
-		// A command typed over the tree (research <tech>, plan research):
-		// show what it changed now rather than at the next refresh.
-		d.researchPanel.update(d.engine.GetState())
-	} else if d.overlayMgr.ActiveName() == "map" {
-		// The log is behind the map: say what happened on its key bar, and
-		// show the change now rather than at the next refresh.
-		d.mapPanel.reply(cmd, result)
-		d.mapPanel.update(d.engine.GetState())
+	} else if o, ok := d.barOverlays[d.overlayMgr.ActiveName()]; ok {
+		// A command typed over one of those panels: say what happened on
+		// its key bar where the log is behind it, and show the change now
+		// rather than at the next refresh.
+		if o.reply != nil {
+			o.reply(cmd, result)
+		}
+		o.update(d.engine.GetState())
 	}
 	if result.Message != "" && result.Type != "success" {
 		// A badge this command earned is announced first, so the reply, which the

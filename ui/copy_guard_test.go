@@ -148,9 +148,7 @@ func collectCopyLiterals(t *testing.T) []copyLit {
 			})
 			return nil
 		})
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 	}
 	return out
 }
@@ -279,7 +277,7 @@ func TestCopyGlossaryTerms(t *testing.T) {
 var rawAmountRe = regexp.MustCompile(`%[+]?\.[0-9]f %s`)
 
 // TestCopyOneNumberFormatter fails when a format string prints an amount with
-// a raw float verb instead of textfmt.Number / game.Amount / FormatNumber.
+// a raw float verb instead of textfmt.Number / game.Amount.
 func TestCopyOneNumberFormatter(t *testing.T) {
 	for _, l := range collectCopyLiterals(t) {
 		if rawAmountRe.MatchString(l.text) {

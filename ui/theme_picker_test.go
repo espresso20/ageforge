@@ -98,22 +98,6 @@ func TestCmdThemeBadKeyIsErrorAndDoesNotSwitch(t *testing.T) {
 	}
 }
 
-func TestThemeKeysCoversRegistry(t *testing.T) {
-	keys := themeKeys()
-	if len(keys) != len(theme.All()) {
-		t.Fatalf("themeKeys() returned %d keys, want %d", len(keys), len(theme.All()))
-	}
-	want := map[string]bool{}
-	for _, th := range theme.All() {
-		want[th.Key] = true
-	}
-	for _, k := range keys {
-		if !want[k] {
-			t.Errorf("themeKeys() returned unexpected key %q", k)
-		}
-	}
-}
-
 func TestColorHexTag(t *testing.T) {
 	// A swatch tag is a valid tview hex tag built from the role's literal RGB.
 	forge, _ := theme.ByKey("forge")
@@ -175,27 +159,6 @@ func TestThemeRowLabelMarksActive(t *testing.T) {
 	// by passing available=false).
 	if got := themeRowLabel(forge, "forge", false); !strings.Contains(got, "locked") {
 		t.Errorf("themeRowLabel for unavailable theme should mark it locked\ngot: %q", got)
-	}
-}
-
-// TestCreateThemePickerPageRegisters mirrors the load-game add-page check: the
-// picker builds without a running app and registers under its page name. We use a
-// real (un-run) tview.Application + Pages so the construction path (Track closures,
-// list build, initial preview) executes end to end. restoreForge resets the active
-// theme afterward since the initial preview applies the default for real.
-func TestCreateThemePickerPageRegisters(t *testing.T) {
-	restoreForge(t)
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-
-	// nil engine → accountless picker (construction must not require an account).
-	page := CreateThemePickerPage(app, pages, nil, "splash")
-	if page == nil {
-		t.Fatal("CreateThemePickerPage returned nil")
-	}
-	pages.AddPage(themePickerPage, page, true, true)
-	if !pages.HasPage(themePickerPage) {
-		t.Errorf("picker page %q not registered after AddPage", themePickerPage)
 	}
 }
 

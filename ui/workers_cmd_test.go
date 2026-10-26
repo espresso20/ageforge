@@ -160,11 +160,7 @@ func TestWorkersCompletion(t *testing.T) {
 func TestWorkersHelpAndPanel(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	help := helpProvider(game.GameState{}, 0)
-	for _, want := range []string{"roster", "roster auto", "workers auto-recruit", "Put every domain back on auto", "workers share still works", "people"} {
-		if !strings.Contains(help, want) {
-			t.Errorf("the Help panel has no %q", want)
-		}
-	}
+	wantAll(t, "the Help panel", help, "roster", "roster auto", "workers auto-recruit", "Put every domain back on auto", "workers share still works", "people")
 	if strings.Contains(help, "workers share <") || strings.Count(help, "workers share") != 1 {
 		t.Error("the Help panel lists the roster's old name as a command")
 	}
@@ -184,11 +180,7 @@ func TestWorkersHelpAndPanel(t *testing.T) {
 		}
 	}
 	panel = renderPeople(ge.GetState(), faith, 100, 30).String()
-	for _, want := range []string{"Work areas", "Auto-recruit", "Faith", "set", "auto", "roster faith <%|auto>"} {
-		if !strings.Contains(panel, want) {
-			t.Errorf("the People panel's Work tab has no %q:\n%s", want, panel)
-		}
-	}
+	wantAll(t, "the People panel's Work tab", panel, "Work areas", "Auto-recruit", "Faith", "set", "auto", "roster faith <%|auto>")
 	// A fresh game shows the tab too, and says there is nothing to staff yet.
 	fresh := game.NewGameEngine()
 	panel = renderPeople(fresh.GetState(), peopleView{tab: tabWork}, 100, 30).String()

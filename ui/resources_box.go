@@ -8,6 +8,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -88,7 +89,7 @@ func resourceRows(state game.GameState) []resRow {
 // storeRow is an ordinary resource: what is held and which way it is going.
 // Stock has no ceiling, so there is no cap and no bar.
 func storeRow(rs game.ResourceState) resRow {
-	r := resRow{name: rs.Name, amt: FormatNumber(rs.Amount), amtColor: "white", rate: rs.Rate}
+	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rs.Rate}
 	switch {
 	case rs.Rate > 0:
 		r.amtColor = "green"
@@ -103,12 +104,12 @@ func storeRow(rs game.ResourceState) resRow {
 // something at, the bar the way there, and what that step gives on the
 // detail line.
 func cultureRow(rs game.ResourceState) resRow {
-	r := resRow{name: rs.Name, amt: FormatNumber(rs.Amount), amtColor: "white", rate: rs.Rate, progress: true}
+	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rs.Rate, progress: true}
 	for i, step := range cultureThresholds {
 		if rs.Amount < step {
-			r.cap = FormatNumber(step)
+			r.cap = textfmt.Number(step)
 			r.fill = rs.Amount / step
-			r.detail = vibe.Line("ui.resources_box.cultureRow.01", "[gray]at ") + FormatNumber(step) + ": " + cultureThresholdLabels[i].String() + "[-]"
+			r.detail = vibe.Line("ui.resources_box.cultureRow.01", "[gray]at ") + textfmt.Number(step) + ": " + cultureThresholdLabels[i].String() + "[-]"
 			return r
 		}
 	}

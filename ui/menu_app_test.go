@@ -22,15 +22,11 @@ func bootMenuApp(t *testing.T, w, h int, games ...string) (*reproHarness, *game.
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	t.Cleanup(func() { _ = theme.SetActive(theme.DefaultKey) })
 	acct, err := game.CreateNamedAccount("Menu App")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	for _, name := range games {
 		mk := game.NewGameEngine()
 		mk.SetAccount(acct)
-		if err := mk.StartNewNamedGame(name); err != nil {
-			t.Fatal(err)
-		}
+		must(t, mk.StartNewNamedGame(name))
 	}
 	eng := game.NewGameEngine()
 	eng.SetAccount(acct)
@@ -71,22 +67,9 @@ func TestMenuInTheRunningApp(t *testing.T) {
 		h.onUI(func() { on = m.stop != nil })
 		return on
 	}
-	screen := func() string {
-		var sb strings.Builder
-		h.onUI(func() {
-			cells, w, hh := h.sim.GetContents()
-			for y := 0; y < hh; y++ {
-				for x := 0; x < w; x++ {
-					if r := cells[y*w+x].Runes; len(r) > 0 {
-						sb.WriteRune(r[0])
-					} else {
-						sb.WriteByte(' ')
-					}
-				}
-				sb.WriteByte('\n')
-			}
-		})
-		return sb.String()
+	screen := func() (s string) {
+		h.onUI(func() { s = simCells(h.sim).Text() })
+		return s
 	}
 	moves := func(what string) {
 		t.Helper()
@@ -148,9 +131,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 
 	// The smallest terminal, live.
 	h.sim.SetSize(80, 24)
-	if err := h.sim.PostEvent(tcell.NewEventResize(80, 24)); err != nil {
-		t.Fatal(err)
-	}
+	must(t, h.sim.PostEvent(tcell.NewEventResize(80, 24)))
 	h.waitFor("the menu at 80x24", 5*time.Second, func() bool {
 		s := screen()
 		return strings.Contains(s, "▸ Continue") && strings.Contains(s, "Quit") && strings.Contains(s, "choose")
@@ -159,9 +140,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 
 	// Motion off (the setting is the account's): the next time the menu is
 	// returned to it holds still, with no clock.
-	if err := acct.SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	must(t, acct.SetMotion(false))
 	h.key(tcell.KeyRune, 't')
 	h.waitFor("the theme picker", 5*time.Second, func() bool { return h.frontPage() == themePickerPage })
 	h.key(tcell.KeyEsc, 0)

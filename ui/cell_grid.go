@@ -112,15 +112,33 @@ func (g *tGrid) text(x, y int, s string, st tStyle, lane int) int {
 	return x
 }
 
-// stamp copies src onto g with its top left corner at (x, y). Cells of
-// src outside g are dropped.
-func (g *tGrid) stamp(x, y int, src *tGrid) {
-	for sy := 0; sy < src.h; sy++ {
-		for sx := 0; sx < src.w; sx++ {
-			if g.in(x+sx, y+sy) {
-				g.c[(y+sy)*g.w+x+sx] = src.c[sy*src.w+sx]
+// card draws a rounded frame cw by ch at (x0, y0), blank inside, with name
+// on its top edge and, when the edge has the room, esc (the hint that Esc
+// closes it) at the right.
+func (g *tGrid) card(x0, y0, cw, ch int, name, esc string) {
+	for y := 0; y < ch; y++ {
+		for x := 0; x < cw; x++ {
+			r := ' '
+			switch {
+			case y == 0 && x == 0:
+				r = '╭'
+			case y == 0 && x == cw-1:
+				r = '╮'
+			case y == ch-1 && x == 0:
+				r = '╰'
+			case y == ch-1 && x == cw-1:
+				r = '╯'
+			case y == 0 || y == ch-1:
+				r = '─'
+			case x == 0 || x == cw-1:
+				r = '│'
 			}
+			g.put(x0+x, y0+y, r, tsBorder, -1)
 		}
+	}
+	g.text(x0+2, y0, clipRunes(" "+name+" ", cw-4), tsBright, -1)
+	if cw > runeLen(esc)+runeLen(name)+8 {
+		g.text(x0+cw-2-runeLen(esc), y0, esc, tsDim, -1)
 	}
 }
 

@@ -18,9 +18,7 @@ func lastPassageDashboard(t *testing.T, age string, legacy bool) (*Dashboard, *g
 	t.Helper()
 	d, engine, pages := harbDashboard(t, age)
 	engine.SetCosmicLegacyForTest(legacy)
-	if err := engine.ForceLastPassageForTest(age); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceLastPassageForTest(age))
 	return d, engine, pages
 }
 
@@ -32,18 +30,13 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 	if !pages.HasPage(catastrophePage) {
 		t.Fatal("refresh did not show the Last Passage modal")
 	}
-	screen := renderPages(t, pages, 160, 50)
-	t.Logf("Last Passage modal:\n%s", modalCapture(screen, "The Last Passage"))
-	for _, want := range []string{
+	screen := drawPrimitive(t, pages, 160, 50).Text()
+	wantAll(t, "modal", screen,
 		"✦ The Last Passage", "☄ The Last Passage", "Prestige waits on your answer",
 		"ENDURE: pass through, diminished", "You keep 50% of this run's prestige points",
 		"SUCCUMB: let it take the run", "no points from this run", "Cosmic Legacy: production +10%",
 		"[E] ENDURE", "[S] SUCCUMB", "prestige waits · type 'catastrophe' to reopen",
-	} {
-		if !strings.Contains(screen, want) {
-			t.Errorf("modal missing %q\n%s", want, screen)
-		}
-	}
+	)
 	if strings.Contains(screen, "buildings destroyed") {
 		t.Error("the Last Passage modal shows the epoch catastrophe's Endure terms")
 	}
@@ -95,8 +88,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 	d, engine, pages := lastPassageDashboard(t, "quantum_age", true)
 	d.refresh()
-	screen := renderPages(t, pages, 160, 50)
-	t.Logf("Last Passage modal, legacy held:\n%s", modalCapture(screen, "The Last Passage"))
+	screen := drawPrimitive(t, pages, 160, 50).Text()
 	if !strings.Contains(screen, "You already carry the Cosmic Legacy. Succumb is closed to you.") {
 		t.Errorf("no reason for the closed Succumb\n%s", screen)
 	}
@@ -112,49 +104,6 @@ func TestLastPassageSuccumbClosedWhenLegacyHeld(t *testing.T) {
 	if b, ok := d.catFocus.(*tview.Button); !ok || b.GetLabel() != tview.Escape("[E] ENDURE") {
 		t.Errorf("Tab moved focus off Endure: %v", d.catFocus)
 	}
-}
-
-// modalCapture returns the rows of screen from the one holding title down to
-// the box's bottom border, for the test log.
-func modalCapture(screen, title string) string {
-	rows := strings.Split(screen, "\n")
-	start := -1
-	for i, r := range rows {
-		if strings.Contains(r, title) {
-			start = i
-			break
-		}
-	}
-	if start < 0 {
-		return ""
-	}
-	// Cut each row to the box's columns: from the top-left corner to the
-	// matching right edge.
-	top := []rune(rows[start])
-	left, right := -1, -1
-	for i, r := range top {
-		if r == '╔' && left < 0 {
-			left = i
-		}
-		if r == '╗' {
-			right = i
-		}
-	}
-	if left < 0 || right < 0 {
-		return ""
-	}
-	var out []string
-	for _, row := range rows[start:] {
-		rr := []rune(row)
-		if len(rr) <= right {
-			break
-		}
-		out = append(out, string(rr[left:right+1]))
-		if rr[left] == '╚' {
-			break
-		}
-	}
-	return strings.Join(out, "\n")
 }
 
 // The layout fits the box at every Brace level, legacy held or not.
@@ -220,7 +169,7 @@ func checkCostBlock(t *testing.T, d *Dashboard, pages *tview.Pages, state game.G
 		t.Fatalf("the panel has %d price lines, want one at index %d", len(at), nth)
 	}
 	tv.ScrollTo(at[nth]-1, 0)
-	rows := strings.Split(renderText(t, pages, w, h), "\n")
+	rows := drawPrimitive(t, pages, w, h).Rows()
 	first, last := -1, -1
 	for _, item := range items {
 		row := -1
@@ -272,15 +221,11 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	if h == nil || h.AppeaseCost["faith"] <= 0 || h.AppeaseCost["culture"] <= 0 || h.BraceCost["titanium"] <= 0 || h.BraceCost["dark_matter"] <= 0 {
 		t.Fatalf("the Last Passage's thread has no prices to print: %+v", h)
 	}
-	for _, want := range []string{
+	wantAll(t, "panel", txt,
 		"The Distress Beacon", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
 		"Published odds:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
-	} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("panel missing %q:\n%s", want, txt)
-		}
-	}
+	)
 	if strings.Contains(txt, "passage into the") || strings.Contains(txt, "buildings fall") {
 		t.Errorf("panel talks about an epoch passage:\n%s", txt)
 	}
@@ -302,9 +247,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 		})
 	}
 
-	if err := engine.ForceLastPassageForTest("interstellar_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceLastPassageForTest("interstellar_age"))
 	txt = untag(harbingerPanelText(engine.GetState(), "", false, false))
 	t.Logf("Cosmic Era harbinger panel, Last Passage pending:\n%s", txt)
 	if !strings.Contains(txt, "The Last Passage has come. Prestige waits") ||
@@ -321,7 +264,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	if !d.overlayMgr.Show("harbinger", engine.GetState()) {
 		t.Fatal("harbinger overlay not registered")
 	}
-	screen := renderText(t, pages, 160, 50)
+	screen := drawPrimitive(t, pages, 160, 50).Text()
 	if !strings.Contains(screen, "Warning of the Last Passage") {
 		t.Errorf("overlay not on screen:\n%s", screen)
 	}
@@ -348,14 +291,10 @@ func TestPrestigeCommandLastPassageText(t *testing.T) {
 	}
 	confirm := untag(HandleCommand("prestige confirm", engine).Message)
 	t.Logf("prestige confirm (Cosmic Era):\n%s", confirm)
-	for _, want := range []string{
+	wantAll(t, "confirm", confirm,
 		"In the Cosmic Era prestige can bring the Last Passage", "If it comes, prestige waits for your choice",
 		"Endure: keep 50% of this run's points", "Succumb: no points from this run, and the Cosmic Legacy (+10% production, permanent).",
-	} {
-		if !strings.Contains(confirm, want) {
-			t.Errorf("confirm missing %q:\n%s", want, confirm)
-		}
-	}
+	)
 
 	engine.SetCosmicLegacyForTest(true)
 	if r := untag(HandleCommand("prestige confirm", engine).Message); !strings.Contains(r, "Succumb is closed: you already carry the Cosmic Legacy.") {
@@ -411,14 +350,10 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 		t.Fatalf("the all-production pool is not far past +200%% and in full in the Quantum Age with +400%% of milestone rewards: %+v", p)
 	}
 	out = untag(statsProvider(st, 140))
-	for _, want := range []string{
+	wantAll(t, "the Stats panel", out,
 		"Cosmic Legacy:   all production +10%, counted in full after every other bonus (permanent, through every prestige)\n",
 		"Cosmic Legacy ×1.10",
-	} {
-		if !strings.Contains(out, want) {
-			t.Errorf("the Stats panel does not show %q:\n%s", want, out)
-		}
-	}
+	)
 	if r := untag(HandleCommand("rates", engine).Message); !strings.Contains(r, "Cosmic Legacy: +") {
 		t.Errorf("rates has no Cosmic Legacy part:\n%s", r)
 	}

@@ -42,23 +42,3 @@ func carryoverStatusLines(state game.GameState) []string {
 	}
 	return []string{vibe.Line("ui.prestige_kit.carryoverStatusLines.04", "  Plan Template: [green]on[-]"), vibe.Line("ui.prestige_kit.carryoverStatusLines.05", "  Roster: [green]on[-]"), vibe.Line("ui.prestige_kit.carryoverStatusLines.06", "  Old Friends: [green]on[-]")}
 }
-
-// kitMemoryLines say what the kit remembers from your runs so far, for the
-// shop.
-func kitMemoryLines(state game.GameState) []string {
-	k := state.Prestige.Kit
-	if k.PlanItems+k.Factions+k.Shares == 0 {
-		return []string{vibe.Line("ui.prestige_kit.kitMemoryLines.01", "  [gray]The kit remembers your plan, roster and the civilizations you meet. Nothing is remembered yet: it starts with your first prestige.[-]")}
-	}
-	lines := []string{vibe.Line("ui.prestige_kit.kitMemoryLines.02", "  [gold]What the kit remembers from your runs[-]")}
-	if k.PlanItems > 0 {
-		lines = append(lines, vibe.Sprintf("ui.prestige_kit.kitMemoryLines.03", "  Plan: %s over %s.", textfmt.Count(k.PlanItems, vibe.Line("ui.prestige_kit.kitMemoryLines.04", "item"), vibe.Line("ui.prestige_kit.kitMemoryLines.05", "items")), textfmt.Count(k.PlanAges, vibe.Line("ui.prestige_kit.kitMemoryLines.06", "age"), vibe.Line("ui.prestige_kit.kitMemoryLines.07", "ages"))))
-	}
-	if k.Shares > 0 {
-		lines = append(lines, vibe.Sprintf("ui.prestige_kit.kitMemoryLines.08", "  Roster: %s.", textfmt.Count(k.Shares, vibe.Line("ui.prestige_kit.kitMemoryLines.09", "domain"), vibe.Line("ui.prestige_kit.kitMemoryLines.10", "domains"))))
-	}
-	if k.Factions > 0 {
-		lines = append(lines, vibe.Sprintf("ui.prestige_kit.kitMemoryLines.11", "  Civilizations met: %d.", k.Factions))
-	}
-	return lines
-}

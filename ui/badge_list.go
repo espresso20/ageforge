@@ -109,7 +109,7 @@ func badgeLine(v game.BadgeView) (line string, ok bool) {
 	}
 	line = fmt.Sprintf("[gray]☆[-] %s%s  [gray]%s[-]", lit(v.Name), tier, lit(v.Desc))
 	if v.Target > 0 {
-		line += vibe.Sprintf("ui.badge_list.badgeLine.02", " [gray](%s of %s)[-]", FormatNumber(v.Progress), FormatNumber(v.Target))
+		line += vibe.Sprintf("ui.badge_list.badgeLine.02", " [gray](%s of %s)[-]", textfmt.Number(v.Progress), textfmt.Number(v.Target))
 	}
 	return line, true
 }

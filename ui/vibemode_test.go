@@ -84,9 +84,7 @@ func TestVibemodeSwitchedFromOutside(t *testing.T) {
 	vibeOffAfter(t)
 	d, _, eng := badgeDashboard(t)
 	for _, on := range []bool{true, false} {
-		if err := eng.SetVibeMode(on); err != nil {
-			t.Fatal(err)
-		}
+		must(t, eng.SetVibeMode(on))
 		d.refresh()
 		want := map[bool]string{true: "Halp", false: "Help"}[on]
 		if got := helpTitleOf(d); !strings.Contains(got, want) {

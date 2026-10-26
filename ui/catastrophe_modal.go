@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -349,13 +348,8 @@ func legacyBonusText(set *rules.Set, epochKey string) string {
 	if len(bonuses) == 0 {
 		return "none"
 	}
-	keys := make([]string, 0, len(bonuses))
-	for res := range bonuses {
-		keys = append(keys, res)
-	}
-	sort.Strings(keys)
-	parts := make([]string, 0, len(keys))
-	for _, res := range keys {
+	parts := make([]string, 0, len(bonuses))
+	for _, res := range sortedKeysOf(bonuses) {
 		parts = append(parts, fmt.Sprintf("%s +%.0f%%", res, bonuses[res]*100))
 	}
 	return strings.Join(parts, ", ")

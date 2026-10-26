@@ -550,7 +550,7 @@ func barSegs(progress, target float64, w int, k ink) []seg {
 }
 
 func countText(progress, target float64) string {
-	return FormatNumber(progress) + " / " + FormatNumber(target)
+	return textfmt.Number(progress) + " / " + textfmt.Number(target)
 }
 
 // metaLine is a badge's tier, rarity and points on one line.
@@ -1139,30 +1139,7 @@ func (m *caseModel) drawCard(out *tGrid, it *caseItem, v caseView, n int) {
 	}
 	ch = min(ch, bh)
 	x0, y0 := 1+(bw-cw)/2, caseTop+(bh-ch)/2
-	for y := 0; y < ch; y++ {
-		for x := 0; x < cw; x++ {
-			r := ' '
-			switch {
-			case y == 0 && x == 0:
-				r = '╭'
-			case y == 0 && x == cw-1:
-				r = '╮'
-			case y == ch-1 && x == 0:
-				r = '╰'
-			case y == ch-1 && x == cw-1:
-				r = '╯'
-			case y == 0 || y == ch-1:
-				r = '─'
-			case x == 0 || x == cw-1:
-				r = '│'
-			}
-			out.put(x0+x, y0+y, r, tsBorder, -1)
-		}
-	}
-	out.text(x0+2, y0, clipRunes(" "+it.v.Name+" ", cw-4), tsBright, -1)
-	if esc := vibe.Line("ui.badge_case.drawCard.01", " Esc closes "); cw > runeLen(esc)+runeLen(it.v.Name)+8 {
-		out.text(x0+cw-2-runeLen(esc), y0, esc, tsDim, -1)
-	}
+	out.card(x0, y0, cw, ch, it.v.Name, vibe.Line("ui.badge_case.drawCard.01", " Esc closes "))
 	if art {
 		drawMedal(out, x0+3, y0+2+(ch-4-ah)/2, md, caseFrame(n, md.animated()), v.plain())
 	}

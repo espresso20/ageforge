@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
@@ -35,33 +34,6 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 	}
 }
 
-// screenGrid renders pages at w×h and returns one rune slice per row.
-func screenGrid(t *testing.T, pages *tview.Pages, w, h int) [][]rune {
-	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
-	pages.SetRect(0, 0, w, h)
-	pages.Draw(sim)
-	sim.Show()
-	cells, cw, ch := sim.GetContents()
-	grid := make([][]rune, ch)
-	for y := 0; y < ch; y++ {
-		grid[y] = make([]rune, cw)
-		for x := 0; x < cw; x++ {
-			r := ' '
-			if rs := cells[y*cw+x].Runes; len(rs) > 0 {
-				r = rs[0]
-			}
-			grid[y][x] = r
-		}
-	}
-	return grid
-}
-
 // The modal is a box floating over the dashboard: the page beneath stays
 // visible around it, and nothing beneath shows through inside it.
 func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
@@ -72,16 +44,14 @@ func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
 	d := NewDashboard(tview.NewApplication(), game.NewGameEngine(), pages)
 	d.showCatastropheModal("steel_era")
 
-	grid := screenGrid(t, pages, w, h)
-	title := []rune(" ☄ Steel Era Catastrophe ")
+	f := drawPrimitive(t, pages, w, h)
 	y0, x0 := -1, -1
-	for y, row := range grid {
-		if idx := strings.Index(string(row), string(title)); idx >= 0 {
+	for y, row := range f.Rows() {
+		if idx := strings.Index(row, " ☄ Steel Era Catastrophe "); idx >= 0 {
 			y0 = y
 			// Walk left from the title to the box corner.
-			rx := len([]rune(string(row)[:idx]))
-			for x := rx; x >= 0; x-- {
-				if row[x] == '╔' || row[x] == '┌' {
+			for x := len([]rune(row[:idx])); x >= 0; x-- {
+				if r := f.Rune(x, y); r == '╔' || r == '┌' {
 					x0 = x
 					break
 				}
@@ -95,7 +65,7 @@ func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
 	l := buildCatastropheModalLayout("steel_era", false, 0, game.DefaultEndureOutcome(), game.GameState{})
 	for y := y0; y < y0+l.height; y++ {
 		for x := x0; x < x0+catastropheModalWidth; x++ {
-			if grid[y][x] == 'X' {
+			if f.Rune(x, y) == 'X' {
 				t.Fatalf("dashboard shows through the modal at (%d,%d)", x, y)
 			}
 		}
@@ -103,8 +73,8 @@ func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
 	// Outside the box the dashboard is still drawn (the old full-width opaque
 	// spacers blanked all of it).
 	for _, p := range [][2]int{{0, 0}, {w - 1, h - 1}, {x0 - 1, y0}, {x0 + catastropheModalWidth, y0}, {x0, y0 - 1}, {x0, y0 + l.height}} {
-		if grid[p[1]][p[0]] != 'X' {
-			t.Errorf("dashboard blanked outside the modal at (%d,%d): %q", p[0], p[1], grid[p[1]][p[0]])
+		if r := f.Rune(p[0], p[1]); r != 'X' {
+			t.Errorf("dashboard blanked outside the modal at (%d,%d): %q", p[0], p[1], r)
 		}
 	}
 }

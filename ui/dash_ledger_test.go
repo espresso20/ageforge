@@ -421,9 +421,7 @@ func bottleneckTown(t *testing.T, age string, level float64, low ...string) *gam
 		if a == "primitive_age" {
 			continue
 		}
-		if err := eng.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, eng.EnterAgeForTest(a))
 	}
 	for k, rs := range eng.GetState().Resources {
 		if rs.Unlocked {
@@ -573,11 +571,7 @@ func TestLedgerResizeShowsTheRightLedger(t *testing.T) {
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "bronze_age")
 	drawnDashboard(t, d, pages, 80, 24)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(sim.Fini)
+	sim := newSimScreen(t, 160, 45)
 	screen := theme.WrapScreen(sim)
 	for _, sz := range []struct{ w, h int }{{160, 45}, {80, 24}, {100, 30}, {160, 45}} {
 		sim.SetSize(sz.w, sz.h)

@@ -5,10 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/theme"
 )
 
 // reserveState is a real Primitive Age state with workers, set to the given
@@ -44,19 +41,11 @@ func TestReserve_DashboardBox(t *testing.T) {
 	for _, c := range cases {
 		st := reserveState(t, c.by, c.net, c.feeds)
 		text := plainText(peopleBoxText(st, sidebarW-2, true))
-		for _, want := range []string{"Pop ", "Gatherers", "Clanfolk", "Hunters", "Elders"} {
-			if !strings.Contains(text, want) {
-				t.Errorf("held by %q: the box does not show %q:\n%s", c.by, want, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("held by %q: the box", c.by), text, "Pop ", "Gatherers", "Clanfolk", "Hunters", "Elders")
 		if reserve := lineContaining(text, "Clanfolk"); !strings.HasSuffix(reserve, " 3") {
 			t.Errorf("held by %q: the reserve's line should end with its count, 3: %q", c.by, reserve)
 		}
-		for _, want := range c.want {
-			if !strings.Contains(text, want) {
-				t.Errorf("held by %q: the box does not show %q:\n%s", c.by, want, text)
-			}
-		}
+		wantAll(t, fmt.Sprintf("held by %q: the box", c.by), text, c.want...)
 		if c.want == nil && strings.Contains(text, "Held by") {
 			t.Errorf("growing, but the box says it is held:\n%s", text)
 		}
@@ -108,21 +97,7 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 			st.Workers.HeldBy, st.Workers.FoodNet, st.Workers.FoodFeeds = by, 51.2, 512
 			d.lastState = &st
 			d.refreshWorkerMini(st)
-			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				t.Fatal(err)
-			}
-			sim.SetSize(w, h)
-			screen := theme.WrapScreen(sim)
-			for i := 0; i < 2; i++ {
-				screen.Clear()
-				pages.SetRect(0, 0, w, h)
-				pages.Draw(screen)
-				screen.Show()
-			}
-			cells, _, _ := sim.GetContents()
-			cells = append([]tcell.SimCell(nil), cells...)
-			sim.Fini()
+			cells := drawWrapped(t, pages, w, h, 2).Cells()
 			where := fmt.Sprintf("held by %s at %dx%d", by, w, h)
 			rows := checkFitted(t, where+", People", d.workerMiniTV, cells, w)
 			text := strings.Join(rows, "\n")
@@ -150,11 +125,7 @@ func TestReserve_DashboardAt80x24(t *testing.T) {
 				t.Errorf("%s: the title %q does not carry the headcount", where, title)
 			}
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
-			for _, name := range sidebarPanels {
-				if !strings.Contains(panels, name) {
-					t.Errorf("%s: the Panels list does not show %q", where, name)
-				}
-			}
+			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
 		}
 	}
 }
@@ -172,34 +143,12 @@ func TestReserve_BigTownAt80x24(t *testing.T) {
 	st.Workers.HeldBy = game.HeldFood
 	d.lastState = &st
 	d.refreshWorkerMini(st)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(80, 24)
-	screen := theme.WrapScreen(sim)
-	for i := 0; i < 2; i++ {
-		screen.Clear()
-		pages.SetRect(0, 0, 80, 24)
-		pages.Draw(screen)
-		screen.Show()
-	}
-	cells, _, _ := sim.GetContents()
-	cells = append([]tcell.SimCell(nil), cells...)
+	cells := drawWrapped(t, pages, 80, 24, 2).Cells()
 	text := strings.Join(checkFitted(t, "big town, People", d.workerMiniTV, cells, 80), "\n")
 	if title := d.workerMiniTV.GetTitle(); !strings.Contains(title, "People") {
 		t.Errorf("the title %q lost the box's name", title)
 	}
-	for _, s := range []string{"Operators", "Entangled", "Wardens", "Quantum minds", "Held by: food"} {
-		if !strings.Contains(text, s) {
-			t.Errorf("the People box does not show %q:\n%s", s, text)
-		}
-	}
+	wantAll(t, "the People box", text, "Operators", "Entangled", "Wardens", "Quantum minds", "Held by: food")
 	panels := strings.Join(checkFitted(t, "big town, Panels", d.sidebar, cells, 80), "\n")
-	for _, name := range sidebarPanels {
-		if !strings.Contains(panels, name) {
-			t.Errorf("the Panels list does not show %q", name)
-		}
-	}
+	wantAll(t, "the Panels list", panels, sidebarPanels...)
 }

@@ -23,7 +23,7 @@ func (h *reproHarness) film() (e *ending) {
 // keyboard, and is declined here.
 func (h *reproHarness) promptAfterFilm() {
 	h.t.Helper()
-	time.Sleep(650 * time.Millisecond) // a refresh, for that window to open if it will
+	h.refresh() // a refresh, for that window to open if it will
 	if h.frontPage() == ancientMemoryPage {
 		if h.inputHasFocus() {
 			h.t.Fatalf("an Ancient Memory is in front and the keyboard is with the prompt under it\n%s", h.describeUI())
@@ -170,7 +170,7 @@ func (h *reproHarness) fallFilm() {
 		}
 	})
 	h.waitFor("the arrival screen", 3*time.Second, func() bool { return h.hasPage(arrivalPageName) })
-	time.Sleep(550 * time.Millisecond)
+	h.refresh()
 	if h.hasPage("catastrophe") {
 		t.Fatalf("the catastrophe's window opened over the arrival\n%s", h.describeUI())
 	}
@@ -224,24 +224,18 @@ func TestDashboardPlaysTheFilm(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
 	eng.SeedRNG(3)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	om := d.overlayMgr
 	om.engine = eng
 	om.after = func(time.Duration, func()) func() { return func() {} }
 
-	if err := eng.ForceLastPassageForTest("interstellar_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.ForceLastPassageForTest("interstellar_age"))
 	d.refresh()
 	if !pages.HasPage(catastrophePage) || om.film != nil {
 		t.Fatal("the Last Passage's window did not open, or a film played before the choice")
 	}
 	full := eng.GetState().LastPassage.PointsNow
-	if err := eng.EndureLastPassage(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.EndureLastPassage())
 	d.closeCatastropheModal()
 	d.refresh()
 	e := om.film
@@ -279,10 +273,8 @@ func TestDashboardPlaysTheFilm(t *testing.T) {
 // no key could reach it.
 func TestAWindowThatWaitsGetsTheKeyboardBack(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	pages := tview.NewPages()
-	app := tview.NewApplication()
-	d := NewDashboard(app, game.NewGameEngine(), pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(nil)
+	app := d.app
 	d.overlayMgr.after = func(time.Duration, func()) func() { return func() {} }
 	d.showAncientMemoryModal("pottery", "Pottery")
 	button := app.GetFocus()

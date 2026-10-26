@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -150,6 +151,15 @@ func (h *reproHarness) onUI(f func()) {
 	case <-time.After(4 * time.Second):
 		h.t.Fatalf("tview event loop BLOCKED: QueueUpdate did not run within 4s\n\n=== GOROUTINES ===\n%s", dumpGoroutines())
 	}
+}
+
+// refresh runs, on the UI goroutine, the refresh the dashboard's 500 ms ticker
+// runs (Dashboard.StartUpdates). A test that needs "a refresh has happened
+// since" calls this instead of sleeping past the ticker: the refresh is done
+// when it returns.
+func (h *reproHarness) refresh() {
+	h.t.Helper()
+	h.onUI(func() { h.a.dashboard.refresh() })
 }
 
 func (h *reproHarness) key(k tcell.Key, r rune) {
@@ -439,8 +449,8 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 	after := h.eng.GetState()
 	label := fmt.Sprintf("#%d %s→%s (epoch %s→%s, pendingCat=%q)", i, before.Age, after.Age, before.EpochKey, after.EpochKey, after.PendingCatastrophe)
 
-	// Let refresh() (500ms) surface anything else pending (e.g. catastrophe modal).
-	time.Sleep(550 * time.Millisecond)
+	// Let refresh() surface anything else pending (e.g. catastrophe modal).
+	h.refresh()
 	h.t.Logf("%s front=%s", label, h.frontPage())
 
 	dk := dismissKeys[i%len(dismissKeys)]
@@ -448,7 +458,7 @@ func (h *reproHarness) advanceAndCheckWith(i int, catChoice rune, doAdvance func
 
 	for step := 0; step < 4; step++ {
 		// Let refresh() surface a catastrophe held back while the splash was up.
-		time.Sleep(550 * time.Millisecond)
+		h.refresh()
 		switch h.frontPage() {
 		case prestigeCuePage:
 			// A valid prestige cue can surface after the arrival closes; dismiss
@@ -566,15 +576,19 @@ func TestReproAgeSplashWithCatastrophe(t *testing.T) {
 	}
 }
 
-// reachBronze advances until the next advance crosses into the Iron Era,
-// where catastrophes become possible.
+// reachBronze jumps to the age before the Iron Era (the dev console's /age,
+// as the other tests do), where the next advance crosses into the Iron Era
+// and catastrophes become possible. The walk to it by typed `advance`s is
+// TestReproAgeSplashAllAges; here the Stone Age's two splashes, and the
+// buildings each asks for, would only be time spent before the test's own part.
 func (h *reproHarness) reachBronze() {
 	h.t.Helper()
-	for i := 0; h.eng.GetState().Age != "bronze_age"; i++ {
-		if !h.grantNextAge() || i > 5 {
-			h.t.Fatalf("could not reach the Bronze Age (at %s)", h.eng.GetState().Age)
-		}
-		h.advanceAndCheck(i, 'e')
+	if msg := h.dev("/age bronze_age"); msg != "jumped to bronze_age" {
+		h.t.Fatalf("/age bronze_age: %q", msg)
+	}
+	h.refresh() // the dashboard takes the age the way it does after any change
+	if age := h.eng.GetState().Age; age != "bronze_age" {
+		h.t.Fatalf("could not reach the Bronze Age (at %s)", age)
 	}
 }
 
@@ -597,27 +611,14 @@ func (h *reproHarness) advanceIntoIronWithCatastrophe() {
 
 // screenText renders the simulation screen to plain text (post-draw).
 func (h *reproHarness) screenText() string {
-	var sb strings.Builder
 	h.onUI(func() { h.a.tviewApp.ForceDraw() })
-	cells, w, ht := h.sim.GetContents()
-	for y := 0; y < ht; y++ {
-		line := make([]byte, 0, w)
-		for x := 0; x < w; x++ {
-			b := cells[y*w+x].Bytes
-			if len(b) == 0 {
-				b = []byte{' '}
-			}
-			line = append(line, b...)
-		}
-		sb.WriteString(strings.TrimRight(string(line), " "))
-		sb.WriteByte('\n')
-	}
-	return sb.String()
+	return simCells(h.sim).Text()
 }
 
 // TestReproAgeSplashCatastropheAutoDismiss: an advance that also leaves a
 // catastrophe pending (what an epoch-transition roll does) and a player who
 // just reads the screen for >20s, so the splash's auto-dismiss timer fires.
+// (The hold is cut to 300 ms here; the timer is still the real one.)
 // Afterwards whatever modal is on screen must still own the keyboard, and the
 // player must be able to get back to the dashboard (Esc) and then return to
 // the choice with the `catastrophe` command.
@@ -628,16 +629,40 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	h := newReproHarness(t)
 	h.still()
 	h.reachBronze()
+	// The splash closes itself once arrivalHold (20 s) has passed. Cut that to
+	// 300 ms, for this splash only (the walk above keeps the real hold, and
+	// closes each splash with a key): the timer is still a real one that
+	// reaches the screen through the event loop. It is let run only after the
+	// refresh below has run under the splash, so that refresh happens with
+	// the splash up whatever the machine's speed.
+	underSplash := make(chan struct{})
+	release := sync.OnceFunc(func() { close(underSplash) })
+	t.Cleanup(release)
+	h.onUI(func() {
+		h.a.dashboard.overlayMgr.after = func(d time.Duration, fn func()) func() {
+			run := func() { h.a.tviewApp.QueueUpdateDraw(fn) }
+			if d == arrivalHold {
+				d = 300 * time.Millisecond
+				run = func() {
+					<-underSplash
+					h.a.tviewApp.QueueUpdateDraw(fn)
+				}
+			}
+			tm := time.AfterFunc(d, run)
+			return func() { tm.Stop() }
+		}
+	})
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })
-	time.Sleep(700 * time.Millisecond)
+	h.refresh() // the catastrophe must not stack on the splash
 	t.Logf("shown:\n%s", h.describeUI())
-	// No key pressed: wait out the splash's 20s auto-dismiss timer, then for
-	// the catastrophe modal (shown now, or held back until the splash left).
-	h.waitFor("splash auto-dismiss", 25*time.Second, func() bool { return !h.hasPage("age_splash") })
+	// No key pressed: the splash's auto-dismiss timer runs out, then the
+	// catastrophe modal (shown now, or held back until the splash left).
+	release()
+	h.waitFor("splash auto-dismiss", 3*time.Second, func() bool { return !h.hasPage("age_splash") })
 	h.waitFor("catastrophe modal", 3*time.Second, func() bool { return h.hasPage("catastrophe") })
 	time.Sleep(100 * time.Millisecond) // let any focus change queued with it land
-	t.Logf("after 20s auto-dismiss:\n%s", h.describeUI())
+	t.Logf("after the auto-dismiss:\n%s", h.describeUI())
 	if h.inputHasFocus() {
 		t.Logf("SCREEN (modal visible, keyboard on hidden input):\n%s", h.screenText())
 	}
@@ -700,14 +725,15 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	h.reachBronze()
 	h.advanceIntoIronWithCatastrophe()
 	h.waitFor("age_splash", 3*time.Second, func() bool { return h.hasPage("age_splash") })
-	time.Sleep(550 * time.Millisecond)
+	h.refresh()
 	h.dismissArrival("into the Iron Age", tcell.KeyEnter, 0)
 	h.waitFor("catastrophe modal", 3*time.Second, func() bool { return h.frontPage() == "catastrophe" })
 
 	h.key(tcell.KeyEsc, 0)
 	h.waitFor("Esc closes the modal", 2*time.Second, func() bool { return !h.hasPage("catastrophe") && h.inputHasFocus() })
 	// Two refresh cycles: the modal must stay closed until asked for.
-	time.Sleep(1100 * time.Millisecond)
+	h.refresh()
+	h.refresh()
 	if h.hasPage("catastrophe") {
 		t.Fatalf("refresh() re-popped the modal after Esc\n%s", h.describeUI())
 	}
@@ -730,7 +756,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	if st := h.eng.GetState(); st.PendingCatastrophe != "" {
 		t.Fatalf("still pending after Endure: %q", st.PendingCatastrophe)
 	}
-	time.Sleep(600 * time.Millisecond) // one refresh so the status bar updates
+	h.refresh() // one refresh so the status bar updates
 	if scr := h.screenText(); catastropheBadgeShown(t, scr) {
 		t.Errorf("pending badge still shown after Endure:\n%s", scr)
 	}

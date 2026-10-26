@@ -14,9 +14,7 @@ func stoneAgeGame(t *testing.T) *game.GameEngine {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
-	if err := ge.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.EnterAgeForTest("stone_age"))
 	return ge
 }
 
@@ -76,14 +74,10 @@ func TestFullBankSaysWhatIsStillMissing(t *testing.T) {
 		t.Fatalf("setup: bank full %v, can build %v; want a full bank that cannot be built yet", bs.WonderBankFull, bs.CanBuild)
 	}
 	panel := wondersProvider(st, 120)
-	for _, want := range []string{
+	wantAll(t, "the Wonders panel", panel,
 		"✓ The bank is full. Research Stoneworking, then build it with: build great_monolith",
 		"(bank full, waiting for its keystone)",
-	} {
-		if !strings.Contains(panel, want) {
-			t.Errorf("the Wonders panel does not say %q:\n%s", want, panel)
-		}
-	}
+	)
 	if strings.Contains(panel, "ready to build") {
 		t.Errorf("the Wonders panel calls a wonder without its keystone ready to build:\n%s", panel)
 	}
@@ -93,11 +87,7 @@ func TestFullBankSaysWhatIsStillMissing(t *testing.T) {
 
 	ge.GrantTechsForTest("tool_making", "stoneworking")
 	panel = wondersProvider(ge.GetState(), 120)
-	for _, want := range []string{"✓ The bank is full. Build it with: build great_monolith", "(bank full, ready to build)"} {
-		if !strings.Contains(panel, want) {
-			t.Errorf("with the keystone researched the Wonders panel does not say %q:\n%s", want, panel)
-		}
-	}
+	wantAll(t, "with the keystone researched the Wonders panel", panel, "✓ The bank is full. Build it with: build great_monolith", "(bank full, ready to build)")
 	if cmd := cmdWonder(nil, ge); !strings.Contains(cmd.Message, "Bank full. Type 'build great_monolith' to start construction.") {
 		t.Errorf("`wonder` with a full bank and the keystone:\n%s", cmd.Message)
 	}

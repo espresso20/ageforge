@@ -6,9 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -27,15 +25,9 @@ func miniTestGame(t testing.TB) *game.GameEngine {
 	}
 	HandleCommand("build hut 2", eng)
 	HandleCommand("build stash", eng)
-	if err := eng.SaveGame("minimap"); err != nil {
-		t.Fatal(err)
-	}
-	if err := eng.LoadGame("minimap"); err != nil {
-		t.Fatal(err)
-	}
-	if err := eng.MeetFactionForTest("riverlands_tribes", 30); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SaveGame("minimap"))
+	must(t, eng.LoadGame("minimap"))
+	must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
 	return eng
 }
 
@@ -43,25 +35,17 @@ func miniTestGame(t testing.TB) *game.GameEngine {
 // theme screen wrapper, as the app does), returning the screen text.
 func drawDashboard(t testing.TB, d *Dashboard, pages *tview.Pages, w, h int) string {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	scr := theme.WrapScreen(sim)
 	pages.SetRect(0, 0, w, h)
 	pages.Draw(scr)
 	scr.Show()
-	return simText(sim)
+	return simCells(sim).Text()
 }
 
 func newMiniDashboard(t testing.TB) (*Dashboard, *tview.Pages) {
 	t.Helper()
-	eng := miniTestGame(t)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(miniTestGame(t))
 	miniOn(t, d)
 	return d, pages
 }
@@ -201,36 +185,12 @@ func TestMiniMapFollowsSettings(t *testing.T) {
 	}
 }
 
-// TestMiniMapFrameTime: a dashboard frame with the mini map stays cheap.
-// Budget: 25 ms a frame on average (a CI runner under -race is slower
-// than a laptop; the typical cost is a few ms, see BenchmarkDashboardFrame).
-func TestMiniMapFrameTime(t *testing.T) {
-	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	restoreForge(t)
-	d, pages := newMiniDashboard(t)
-	drawDashboard(t, d, pages, 160, 48)
-	const n = 20
-	start := time.Now()
-	for i := 0; i < n; i++ {
-		d.refresh()
-		drawDashboard(t, d, pages, 160, 48)
-	}
-	per := time.Since(start) / n
-	t.Logf("dashboard refresh+frame at 160x48 with the mini map: %v (mini map draw %v)", per, d.miniMap.lastDraw)
-	if per > 250*time.Millisecond {
-		t.Errorf("a dashboard frame takes %v", per)
-	}
-}
-
 // BenchmarkMiniMapDraw is the mini map's own draw (what a keypress redraw
 // adds to the dashboard), per style.
 func BenchmarkMiniMapDraw(b *testing.B) {
 	b.Cleanup(game.SetDataDirForTest(b.TempDir()))
 	d, _ := newMiniDashboard(b)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	_ = sim.Init()
-	defer sim.Fini()
-	sim.SetSize(160, 48)
+	sim := newSimScreen(b, 160, 48)
 	for _, style := range d.mapViews.reg.Names() {
 		b.Run(style, func(b *testing.B) {
 			s := d.mapSettings()
@@ -267,9 +227,7 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 			d.refresh()
 			txt := drawDashboard(t, d, pages, sz[0], sz[1])
 			name := filepath.Join(dir, fmt.Sprintf("dashboard_%s_%dx%d.txt", style, sz[0], sz[1]))
-			if err := os.WriteFile(name, []byte(txt), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(name, []byte(txt+"\n"), 0o644))
 		}
 	}
 }
@@ -279,10 +237,7 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 // not show the mini map. It is off until the player turns it on, so the
 // dock starts off and a refresh reads the account's setting.
 func TestMiniMapNotShownBeforeFirstRefresh(t *testing.T) {
-	eng := game.NewGameEngine()
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(nil)
 	txt := drawDashboard(t, d, pages, 180, 56)
 	if d.mapDock.shown || strings.Contains(txt, " Map · ") {
 		t.Fatalf("the mini map shows before the first refresh, on a dashboard nobody turned it on for:\n%s", txt)

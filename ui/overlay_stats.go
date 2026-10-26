@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -50,13 +51,8 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.11", "\n [gold]Total gathered:[-]\n"))
-	gKeys := make([]string, 0, len(s.TotalGathered))
-	for k := range s.TotalGathered {
-		gKeys = append(gKeys, k)
-	}
-	sort.Strings(gKeys)
-	for _, k := range gKeys {
-		fmt.Fprintf(&sb, "   %-14s %s\n", textfmt.Capitalize(game.ResourceName(k)), FormatNumber(s.TotalGathered[k]))
+	for _, k := range sortedKeysOf(s.TotalGathered) {
+		fmt.Fprintf(&sb, "   %-14s %s\n", textfmt.Capitalize(game.ResourceName(k)), textfmt.Number(s.TotalGathered[k]))
 	}
 
 	// ─── Lifetime (Account) ───
@@ -375,8 +371,8 @@ func summarizeBreakdown(mods []game.Modifier) string {
 		label := multiplierSourceLabel(src)
 		// Prefer a multiplicative display only when the source contributed a
 		// genuine OpMul (e.g. morale ×1.18) and no additive points alongside.
-		if a.hasMul && absFloat(a.addSum) <= multEpsilon {
-			if absFloat(a.mulProd-1.0) <= multEpsilon {
+		if a.hasMul && math.Abs(a.addSum) <= multEpsilon {
+			if math.Abs(a.mulProd-1.0) <= multEpsilon {
 				continue // ×1.00 — no-op
 			}
 			// Color by sign: a multiplier above 1.0 is a bonus, below is a penalty.
@@ -390,7 +386,7 @@ func summarizeBreakdown(mods []game.Modifier) string {
 		// Additive (the common case). Fold any stray OpMul into the percent so
 		// nothing is silently dropped.
 		eff := (1+a.addSum)*a.mulProd - 1.0
-		if absFloat(eff) <= multEpsilon {
+		if math.Abs(eff) <= multEpsilon {
 			continue // +0% — no-op
 		}
 		// Color by sign: positive contribution is a bonus, negative a penalty.
@@ -461,13 +457,4 @@ func legacyBonusLine(state game.GameState, bonuses map[string]float64) string {
 	}
 	sort.Strings(parts)
 	return textfmt.Capitalize(strings.Join(parts, ", "))
-}
-
-// absFloat is a tiny abs helper for epsilon comparisons (avoids importing math
-// for a single call site).
-func absFloat(f float64) float64 {
-	if f < 0 {
-		return -f
-	}
-	return f
 }

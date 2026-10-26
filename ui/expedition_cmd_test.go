@@ -67,11 +67,7 @@ func TestCmdExpeditionNoArgsPrintsTheBoard(t *testing.T) {
 	}
 	st := engine.GetState()
 	words, _ := st.Ruleset().MissionWords(st.Age)
-	for _, heading := range []string{words.Tiers[0] + ":", words.Tiers[1] + ":", "Grand:"} {
-		if !strings.Contains(res.Message, heading) {
-			t.Errorf("the board has no %s section:\n%s", heading, res.Message)
-		}
-	}
+	wantAll(t, "the board's sections", res.Message, words.Tiers[0]+":", words.Tiers[1]+":", "Grand:")
 	if st.Military.ActiveShort != nil || st.Military.ActiveLong != nil || st.Military.ActiveGrand != nil {
 		t.Error("printing the board launched something")
 	}

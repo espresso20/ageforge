@@ -87,8 +87,7 @@ func playerLogCount(ge *game.GameEngine) int {
 func TestSuccessRepliesAreLogged(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	t.Chdir(t.TempDir())
-	prevTheme := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prevTheme) })
+	keepTheme(t)
 
 	cases := append([]struct{ age, cmd string }{}, replyGuardCases...)
 	cases = append(cases, struct{ age, cmd string }{"", "account export " + filepath.Join(t.TempDir(), "x.json")})
@@ -163,9 +162,7 @@ func TestUsageFormsSurviveTview(t *testing.T) {
 func TestUsagePathsExist(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "input.go", nil, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	n := 0
 	ast.Inspect(f, func(node ast.Node) bool {
 		call, ok := node.(*ast.CallExpr)
@@ -193,7 +190,8 @@ func TestUsagePathsExist(t *testing.T) {
 	// Paths input.go builds at run time.
 	for _, p := range []string{"diplomacy ally", "diplomacy rival", "diplomacy embargo", "diplomacy neutral",
 		"diplomacy gift", "diplomacy tribute", "diplomacy raid", "plan up", "plan down",
-		"account list", "account switch", "account export", "account backup", "account import"} {
+		"account list", "account switch", "account export", "account backup", "account import",
+		"assign", "unassign", "sell", "dismiss", "upgrade"} {
 		if helpRow(p).Text == "" {
 			t.Errorf("%q matches no registry help row", p)
 		}
@@ -238,9 +236,7 @@ func TestDiplomacyPricesMatchEngine(t *testing.T) {
 	ge := game.NewGameEngine()
 	ge.GrantTechsForTest("envoys") // the tech that opens gifts and alliances
 	const civ = "riverlands_tribes"
-	if err := ge.MeetFactionForTest(civ, game.AllyOpinion-game.GiftOpinion); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.MeetFactionForTest(civ, game.AllyOpinion-game.GiftOpinion))
 	ge.Resources.LoadAmounts(map[string]float64{"gold": 5000})
 	opinion := func() int { return ge.GetState().Diplomacy.Factions[civ].Opinion }
 	gold := func() float64 { return ge.GetState().Resources["gold"].Amount }
@@ -249,9 +245,7 @@ func TestDiplomacyPricesMatchEngine(t *testing.T) {
 		t.Errorf("allied at opinion %d, but the help says it needs %d", opinion(), game.AllyOpinion)
 	}
 	before, op := gold(), opinion()
-	if err := ge.SendGift(civ); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.SendGift(civ))
 	if spent := before - gold(); spent != game.GiftCost {
 		t.Errorf("a gift cost %v gold, the help says %v", spent, game.GiftCost)
 	}

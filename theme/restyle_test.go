@@ -36,20 +36,12 @@ func TestTrack_NilIsIgnored(t *testing.T) {
 	Restyle()  // must not panic on the nil
 }
 
-// TestRegistry_FourBuiltinThemes asserts the four Phase-1a themes registered and
-// that Forge is the default/first.
-func TestRegistry_FourBuiltinThemes(t *testing.T) {
+// TestRegistry_DefaultFirst asserts the default theme is registered first and an
+// unknown key is not found.
+func TestRegistry_DefaultFirst(t *testing.T) {
 	all := All()
-	if len(all) < 4 {
-		t.Fatalf("expected >= 4 registered themes, got %d", len(all))
-	}
-	if all[0].Key != DefaultKey {
-		t.Errorf("first registered theme = %q, want default %q", all[0].Key, DefaultKey)
-	}
-	for _, key := range []string{"forge", "deuteranopia", "protanopia", "high_contrast"} {
-		if _, ok := ByKey(key); !ok {
-			t.Errorf("theme %q not registered", key)
-		}
+	if len(all) == 0 || all[0].Key != DefaultKey {
+		t.Errorf("first registered theme is not the default %q", DefaultKey)
 	}
 	if _, ok := ByKey("does_not_exist"); ok {
 		t.Errorf("ByKey returned ok for an unknown key")

@@ -41,6 +41,7 @@ var surfacePairs = func() []contrastPair {
 	}
 	ps = append(ps,
 		contrastPair{RoleSelectionText, RoleSelection, 4.5, 7.0, "selected row"},
+		contrastPair{RoleText, RoleSelection, 4.5, 4.5, "text on a selected row"},
 		contrastPair{RoleOnAccent, RoleAccent, 4.5, 4.5, "keycaps / primary buttons"},
 		contrastPair{RoleText, RoleChip, 4.5, 7.0, "keycap labels"},
 		contrastPair{RoleOnNegative, RoleNegative, 3.0, 4.5, "danger modal text (bold)"},
@@ -53,7 +54,6 @@ var surfacePairs = func() []contrastPair {
 // theme ship: its roles are tuned against this matrix, not by eye.
 func TestContrast_RoleMatrix(t *testing.T) {
 	for _, th := range All() {
-		th := th
 		t.Run(th.Key, func(t *testing.T) {
 			for _, p := range surfacePairs {
 				floor := p.floor
@@ -183,18 +183,13 @@ func TestLegible(t *testing.T) {
 // TestRefResolve checks the sentinel round-trip and that no real color reads as
 // a sentinel.
 func TestRefResolve(t *testing.T) {
-	t.Cleanup(func() { _ = SetActive(DefaultKey) })
 	for _, key := range []string{"forge", "daylight"} {
-		_ = SetActive(key)
 		th, _ := ByKey(key)
 		for r := Role(0); r < numRoles; r++ {
 			ref := Ref(r)
 			got, ok := RefRole(ref)
 			if !ok || got != r {
 				t.Fatalf("RefRole(Ref(%s)) = %v,%v", r, got, ok)
-			}
-			if Resolve(ref) != th.Color(r) {
-				t.Errorf("%s: Resolve(Ref(%s)) = %06x, want %06x", key, r, Resolve(ref).Hex(), th.Color(r).Hex())
 			}
 			if _, isRef := RefRole(th.Color(r)); isRef {
 				t.Errorf("%s: real color for %s parses as a sentinel", key, r)

@@ -14,6 +14,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
@@ -210,7 +211,7 @@ func (l *ledger) blockers(state game.GameState) {
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d/%d", r.Label, r.Have, r.Need))
 				short(buildingPrice(&state, r.Key, state.Buildings[r.Key]), nil)
 			case game.GateRowAmount:
-				d.Waits = append(d.Waits, fmt.Sprintf("%s %s/%s", r.Label, FormatNumber(r.Value), FormatNumber(r.Target)))
+				d.Waits = append(d.Waits, fmt.Sprintf("%s %s/%s", r.Label, textfmt.Number(r.Value), textfmt.Number(r.Target)))
 			case game.GateRowShare:
 				bankOpen = true
 				d.Waits = append(d.Waits, fmt.Sprintf("%s %d%%", r.Label, r.Have))

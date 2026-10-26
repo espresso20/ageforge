@@ -11,6 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // offerNumber matches an offer number as a list prints it: "3. Scout".
@@ -59,9 +60,7 @@ func TestExpeditionPanelOpensOnTheRightView(t *testing.T) {
 		t.Errorf("the Ready Room has no map:\n%s", text)
 	}
 
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	p.open(engine.GetState())
 	if !p.view.report {
 		t.Error("with a party out the panel opens on the Ready Room, not the Report")
@@ -89,9 +88,7 @@ func TestExpeditionPanelOpensOnTheRightView(t *testing.T) {
 
 func TestExpeditionPanelTabSwitchesAndClearsTheNewCount(t *testing.T) {
 	engine, p := expFixture(t)
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	runUntilHome(t, engine)
 	p.state, p.view = engine.GetState(), expView{}
 	if text := panelText(p); !strings.Contains(text, "● 1 new") {
@@ -231,9 +228,7 @@ func TestExpeditionPanelEnterEnterSends(t *testing.T) {
 
 func TestExpeditionPanelShowsAnOfferThatCannotBeSentItsRefusal(t *testing.T) {
 	engine, p := expFixture(t)
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	p.open(engine.GetState())
 	p.view.report = false
 	p.update(engine.GetState())
@@ -361,9 +356,7 @@ func TestTerrainHoldsForTheAgeAndChangesWithIt(t *testing.T) {
 func TestExpeditionPanelFitsItsSizes(t *testing.T) {
 	engine, _ := expFixture(t)
 	for _, n := range []int{1, 4, 7} {
-		if err := engine.LaunchExpedition(n); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.LaunchExpedition(n))
 	}
 	runUntilHome(t, engine)
 	for _, n := range []int{1, 4, 7} {
@@ -438,11 +431,7 @@ func TestExpeditionRoadStoriesFitCompactReports(t *testing.T) {
 		if !strings.Contains(g.String(), "On the road") {
 			t.Errorf("%dx%d omitted the road event heading", sz[0], sz[1])
 		}
-		for _, storyWord := range []string{"amber", "friendly village", "Bandits"} {
-			if !strings.Contains(g.String(), storyWord) {
-				t.Errorf("%dx%d omitted newest road story %q:\n%s", sz[0], sz[1], storyWord, g.String())
-			}
-		}
+		wantAll(t, fmt.Sprintf("%dx%d, newest road story", sz[0], sz[1]), g.String(), "amber", "friendly village", "Bandits")
 	}
 }
 
@@ -492,9 +481,7 @@ func TestExpeditionPanelKeysBelongToThePromptWhenItHasText(t *testing.T) {
 
 func TestExpeditionReportListsWhatCameHome(t *testing.T) {
 	engine, p := expFixture(t)
-	if err := engine.LaunchExpedition(1); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.LaunchExpedition(1))
 	runUntilHome(t, engine)
 	p.open(engine.GetState())
 	text := panelText(p)
@@ -560,7 +547,7 @@ func TestBriefingShowsThePartyOfEveryTier(t *testing.T) {
 	}
 	for _, o := range state.Military.Expeditions {
 		text, kind := partyLine(state, o)
-		if want := FormatNumber(float64(o.SoldiersNeeded)) + " soldiers"; text != want || o.SoldiersNeeded < 1 {
+		if want := textfmt.Number(float64(o.SoldiersNeeded)) + " soldiers"; text != want || o.SoldiersNeeded < 1 {
 			t.Errorf("offer %d (%s): Party line %q, want %q", o.Number, o.Tier, text, want)
 		}
 		if kind != xGood {
@@ -583,9 +570,7 @@ func TestBriefingShowsThePartyOfEveryTier(t *testing.T) {
 func TestPartiesOnEveryScreen(t *testing.T) {
 	for _, sz := range [][2]int{{80, 24}, {100, 30}} {
 		engine, p := expFixture(t)
-		if err := engine.LaunchExpedition(1); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.LaunchExpedition(1))
 		state := engine.GetState()
 		away := state.Military.SoldiersAway
 		if away != 8 {

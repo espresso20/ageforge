@@ -2,11 +2,10 @@ package ui
 
 import (
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
-
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -110,9 +109,7 @@ func freshSpoilerEngine(t *testing.T) *game.GameEngine {
 	engine.SeedRNG(1)
 	engine.StepTicks(1)
 	if engine.GetState().Harbinger == nil {
-		if err := engine.SummonHarbingerForTest("primitive_age"); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.SummonHarbingerForTest("primitive_age"))
 	}
 	if engine.GetState().Harbinger == nil {
 		t.Fatal("no harbinger; the guard would miss its text")
@@ -139,11 +136,9 @@ func TestFreshGameShowsNoSpoilers(t *testing.T) {
 	}
 
 	// The main window.
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	d.refresh()
-	screen := screenAt(t, pages, 180, 56)
+	screen := drawPrimitive(t, pages, 180, 56).Text()
 	checkSpoilers(t, "screen", screen, terms)
 	if !strings.Contains(screen, "To the Stone Age") {
 		t.Errorf("the Next Age goal should name the next age:\n%s", screen)
@@ -178,7 +173,7 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 		checkSpoilers(t, cmd, reply, terms)
 		typed := strings.Fields(cmd)
 		for _, f := range config.BaseFactions() {
-			if strings.Contains(reply, f.Key) && !containsWord(typed, f.Key) {
+			if strings.Contains(reply, f.Key) && !slices.Contains(typed, f.Key) {
 				t.Errorf("%q: the reply names %s, which the player never typed: %q", cmd, f.Key, reply)
 			}
 		}
@@ -191,13 +186,4 @@ func TestFreshGameRefusalsShowNoSpoilers(t *testing.T) {
 			t.Errorf("completion for %q offers %v before first contact", line, got)
 		}
 	}
-}
-
-func containsWord(words []string, w string) bool {
-	for _, x := range words {
-		if x == w {
-			return true
-		}
-	}
-	return false
 }

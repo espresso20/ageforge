@@ -237,7 +237,6 @@ var fileNotes = map[string]fileNote{
 	"ui/theme_widgets.go":        {skip: "widget chrome, not sentences"},
 	"ui/toast.go":                {place: "in a toast", age: "primitive_age"},
 	"ui/villager_panel.go":       {place: "in the Workers panel", age: "primitive_age"},
-	"ui/wonder_gallery.go":       {place: "in the Wonders panel", age: "stone_age"},
 	"ui/wonder_icon.go":          {skip: whyArt},
 }
 
@@ -252,6 +251,7 @@ var skipDecls = map[string]string{
 	"mapmodel/commands.go:IdleCommand":     whySyntax,
 	"mapmodel/commands.go:RouteCommand":    whySyntax,
 	"mapmodel/commands.go:WonderCommand":   whySyntax,
+	"theme/theme.go:roleNames":             whyDev,
 }
 
 // newRow starts a row a special rule fills.

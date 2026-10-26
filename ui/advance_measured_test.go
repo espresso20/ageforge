@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -56,8 +57,8 @@ func TestAdvancePanelShowsTheMeasures(t *testing.T) {
 			names = append(names, set.Name(rules.KindResource, res))
 		}
 		v := st.AdvanceView()
-		people := fmt.Sprintf("%s / %s", FormatNumber(float64(m.People/2)), FormatNumber(float64(m.People)))
-		income := fmt.Sprintf("%s / %s a tick", FormatNumber(m.Income/8), FormatNumber(m.Income))
+		people := fmt.Sprintf("%s / %s", textfmt.Number(float64(m.People/2)), textfmt.Number(float64(m.People)))
+		income := fmt.Sprintf("%s / %s a tick", textfmt.Number(m.Income/8), textfmt.Number(m.Income))
 		for _, size := range [][2]int{{100, 30}, {160, 45}} {
 			w, h := size[0], size[1]
 			where := fmt.Sprintf("%s at %dx%d", age, w, h)

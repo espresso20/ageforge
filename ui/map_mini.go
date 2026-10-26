@@ -66,9 +66,6 @@ type miniMap struct {
 	model  *mapmodel.Model
 	start  time.Time
 	now    func() time.Time
-
-	// lastDraw is how long the last draw took (the dashboard's frame cost).
-	lastDraw time.Duration
 }
 
 func newMiniMap(mv *mapViews) *miniMap {
@@ -123,8 +120,6 @@ func drawMapFrame(cv *mapstyle.Canvas, w, h int, title string) {
 
 // Draw draws the border, the compact view inside it and the news line.
 func (m *miniMap) Draw(scr tcell.Screen) {
-	t0 := time.Now()
-	defer func() { m.lastDraw = time.Since(t0) }()
 	x, y, w, h := m.GetRect()
 	if w < 3 || h < 3 {
 		return

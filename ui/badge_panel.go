@@ -48,7 +48,7 @@ type badgeRequest struct {
 
 // badgePanel is the badge case's overlay primitive.
 type badgePanel struct {
-	*tview.Box
+	barPanel
 	views   []game.BadgeView
 	sum     game.BadgeSummary
 	account bool
@@ -59,10 +59,6 @@ type badgePanel struct {
 	// settings reads the glyph tier and the motion setting.
 	settings func() mapSettings
 	motion   bool
-	// prompt reads the command bar ("" when it is empty).
-	prompt func() string
-	// toPrompt hands a key the panel does not take to the command bar.
-	toPrompt func(ev *tcell.EventKey)
 
 	// now and start are the animation clock.
 	now   func() time.Time
@@ -74,15 +70,15 @@ type badgePanel struct {
 }
 
 func newBadgePanel() *badgePanel {
-	return &badgePanel{Box: tview.NewBox(), w: 120, h: 37, now: time.Now, start: time.Now(), motion: true}
+	p := &badgePanel{w: 120, h: 37, now: time.Now, start: time.Now(), motion: true}
+	p.barPanel = newBarPanel(p.routeKey)
+	return p
 }
 
 // open is the overlay's build: it runs on every Show.
 func (p *badgePanel) open(state game.GameState) tview.Primitive {
 	p.update(state)
-	return tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(p, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+	return overBar(p)
 }
 
 // request sets what the next open shows.
@@ -178,20 +174,6 @@ func (p *badgePanel) Draw(scr tcell.Screen) {
 	p.moving.Store(p.moves())
 }
 
-// InputHandler takes the panel's keys when it has the focus itself and
-// hands the rest to the command bar.
-func (p *badgePanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		prompt := ""
-		if p.prompt != nil {
-			prompt = p.prompt()
-		}
-		if !p.routeKey(ev, prompt) && p.toPrompt != nil {
-			p.toPrompt(ev)
-		}
-	})
-}
-
 // routeKey takes a key if it is one of the panel's and reports whether it
 // did. With something typed in the prompt, Tab and Enter belong to the
 // prompt.
@@ -226,9 +208,9 @@ func (p *badgePanel) handleKey(key tcell.Key) {
 	p.view.note = ""
 	switch key {
 	case tcell.KeyUp:
-		p.moveLine(-1)
+		p.jump(-1, 1)
 	case tcell.KeyDown:
-		p.moveLine(1)
+		p.jump(1, 1)
 	case tcell.KeyLeft:
 		p.step(-1)
 	case tcell.KeyRight:
@@ -264,12 +246,6 @@ func (p *badgePanel) step(dir int) {
 	if j := i + dir; j >= 0 && j < len(p.model.items) {
 		p.view.sel = p.model.items[j].id
 	}
-}
-
-// moveLine selects the badge on the line above or below, in the nearest
-// column.
-func (p *badgePanel) moveLine(dir int) {
-	p.jump(dir, 1)
 }
 
 // page moves the selection up or down by as many lines as the grid shows.

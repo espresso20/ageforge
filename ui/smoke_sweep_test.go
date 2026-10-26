@@ -78,22 +78,7 @@ type sweeper struct {
 // the same cells, so call it from the loop (liveScreen) unless the loop is
 // already wedged, as in fail.
 func (s *sweeper) screenText() string {
-	cells, w, h := s.sim.GetContents()
-	var sb strings.Builder
-	for y := 0; y < h; y++ {
-		var line strings.Builder
-		for x := 0; x < w; x++ {
-			c := cells[y*w+x]
-			if len(c.Runes) == 0 {
-				line.WriteByte(' ')
-			} else {
-				line.WriteRune(c.Runes[0])
-			}
-		}
-		sb.WriteString(strings.TrimRight(line.String(), " "))
-		sb.WriteByte('\n')
-	}
-	return strings.TrimRight(sb.String(), "\n")
+	return strings.TrimRight(simCells(s.sim).Text(), "\n")
 }
 
 // liveScreen is screenText read on the event loop.

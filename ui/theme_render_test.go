@@ -21,19 +21,11 @@ import (
 func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	t.Helper()
 	engine := game.NewGameEngine()
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	miniOn(t, d) // the mini map's colours are part of the sweep
 	d.refresh()
 
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(sim.Fini)
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	screen := theme.WrapScreen(sim)
 
 	draw := func() []tcell.SimCell {
@@ -41,13 +33,18 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		pages.SetRect(0, 0, w, h)
 		pages.Draw(screen)
 		screen.Show()
-		cells, _, _ := sim.GetContents()
-		out := make([]tcell.SimCell, len(cells))
-		copy(out, cells)
-		return out
+		return simCells(sim).Cells()
 	}
 
 	out := map[string][]tcell.SimCell{}
+	// shot shows the overlay name, draws it into out under key and hides it.
+	shot := func(key, name string) {
+		if !d.overlayMgr.Show(name, engine.GetState()) {
+			t.Fatalf("overlay %q not registered", name)
+		}
+		out[key] = draw()
+		d.overlayMgr.Hide()
+	}
 	out["dashboard"] = draw()
 	if !d.mapDock.shown {
 		t.Fatalf("no mini map on the %dx%d dashboard", w, h)
@@ -63,13 +60,8 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.inputField.Blur()
 	d.inputField.SetText("")
 
-	state := engine.GetState()
 	for _, name := range []string{"stats", "help", "trade", "milestones", "logs", "history", "buildings", "wonders"} {
-		if !d.overlayMgr.Show(name, state) {
-			t.Fatalf("overlay %q not registered", name)
-		}
-		out["overlay:"+name] = draw()
-		d.overlayMgr.Hide()
+		shot("overlay:"+name, name)
 	}
 
 	// The Map panel and the mini map in every style and glyph tier.
@@ -80,11 +72,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 			d.mapLocal = &mapSettings{Style: style, Tier: tr, Minimap: true, HintShown: true}
 			d.refresh()
 			out["dashboard:"+style+"/"+tier] = draw()
-			if !d.overlayMgr.Show("map", engine.GetState()) {
-				t.Fatal("overlay map not registered")
-			}
-			out["overlay:map/"+style+"/"+tier] = draw()
-			d.overlayMgr.Hide()
+			shot("overlay:map/"+style+"/"+tier, "map")
 		}
 	}
 	d.mapLocal = saved
@@ -95,18 +83,12 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		key     string
 		opinion int
 	}{{"riverlands_tribes", 30}, {"ironhold_clans", -80}} {
-		if err := engine.MeetFactionForTest(c.key, c.opinion); err != nil {
-			t.Fatal(err)
-		}
+		must(t, engine.MeetFactionForTest(c.key, c.opinion))
 	}
 	if len(engine.GetState().Diplomacy.Factions["riverlands_tribes"].Deals) == 0 {
 		t.Fatal("the Factions panel sweep has no deals to draw")
 	}
-	if !d.overlayMgr.Show("factions", engine.GetState()) {
-		t.Fatal("overlay factions not registered")
-	}
-	out["overlay:factions_deals"] = draw()
-	d.overlayMgr.Hide()
+	shot("overlay:factions_deals", "factions")
 
 	// The Plan panel with an item of each status (ready, blocked on storage,
 	// waiting with a progress bar), the selection chip and a feedback line.
@@ -119,15 +101,11 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		}
 	}
 	d.planPanel.note, d.planPanel.noteGood = "Removed 1 × Farm.", true
-	if !d.overlayMgr.Show("plan", engine.GetState()) {
-		t.Fatal("overlay plan not registered")
-	}
-	out["overlay:plan"] = draw()
-	d.overlayMgr.Hide()
+	shot("overlay:plan", "plan")
 	engine.PlanClear()
 	d.planPanel.reset()
 
-	picker := CreateThemePickerPage(app, pages, nil, "dashboard")
+	picker := CreateThemePickerPage(d.app, pages, nil, "dashboard")
 	pages.AddPage(themePickerPage, picker, true, true)
 	out["theme_picker"] = draw()
 	pages.RemovePage(themePickerPage)
@@ -150,50 +128,28 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	// Endure preview counts that garrison. Endured afterwards so nothing stays
 	// pending for the harbinger screens below, which then count it too.
 	engine.SetGarrisonForTest("iron_age", 640000)
-	if err := engine.ForceCatastropheForTest(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceCatastropheForTest())
 	d.showCatastropheModal(engine.GetState().PendingCatastrophe)
 	out["catastrophe_modal_garrison"] = draw()
 	d.closeCatastropheModal()
-	if err := engine.Endure(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.Endure())
 	engine.SetGarrisonForTest("iron_age", 640000)
-	if !d.overlayMgr.Show("army", engine.GetState()) {
-		t.Fatal("overlay army not registered")
-	}
-	out["overlay:army_garrison"] = draw()
-	d.overlayMgr.Hide()
+	shot("overlay:army_garrison", "army")
 
 	// Harbinger: the panel (severity, keycaps, affordable and unaffordable
 	// costs), the Epoch overlay's harbinger lines and the status-bar badge.
-	if err := engine.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.SummonHarbingerForTest("bronze_age"))
 	d.refresh()
 	out["dashboard_harbinger_badge"] = draw()
 	for _, name := range []string{"harbinger", "epoch"} {
-		if !d.overlayMgr.Show(name, engine.GetState()) {
-			t.Fatalf("overlay %q not registered", name)
-		}
-		out["overlay:"+name+"_harbinger"] = draw()
-		d.overlayMgr.Hide()
+		shot("overlay:"+name+"_harbinger", name)
 	}
 
 	// The Last Passage: the Cosmic Era panel, the modal variant with Succumb
 	// open and closed (chip-filled), and its status-bar badge.
-	if err := engine.SummonHarbingerForTest("galactic_age"); err != nil {
-		t.Fatal(err)
-	}
-	if !d.overlayMgr.Show("harbinger", engine.GetState()) {
-		t.Fatal("overlay harbinger not registered")
-	}
-	out["overlay:harbinger_last_passage"] = draw()
-	d.overlayMgr.Hide()
-	if err := engine.ForceLastPassageForTest("galactic_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.SummonHarbingerForTest("galactic_age"))
+	shot("overlay:harbinger_last_passage", "harbinger")
+	must(t, engine.ForceLastPassageForTest("galactic_age"))
 	d.refresh()
 	out["last_passage_modal"] = draw()
 	d.closeCatastropheModal()
@@ -224,11 +180,8 @@ func TestThemeRender_NoInvisibleText(t *testing.T) {
 	restoreForge(t)
 	const w, h = 160, 48
 	for _, th := range theme.All() {
-		th := th
 		t.Run(th.Key, func(t *testing.T) {
-			if err := theme.SetActive(th.Key); err != nil {
-				t.Fatal(err)
-			}
+			must(t, theme.SetActive(th.Key))
 			for name, cells := range renderScreens(t, w, h) {
 				bad := 0
 				for i, c := range cells {
@@ -272,19 +225,10 @@ func TestThemeRender_NoInvisibleText(t *testing.T) {
 func TestThemeRender_CanvasIsThemeBackground(t *testing.T) {
 	restoreForge(t)
 	_ = theme.SetActive("forge")
-	engine := game.NewGameEngine()
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, engine, pages) // constructed under Forge
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(nil) // constructed under Forge
 	d.refresh()
 
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(120, 40)
+	sim := newSimScreen(t, 120, 40)
 	screen := theme.WrapScreen(sim)
 
 	for _, key := range []string{"daylight", "forge", "high_contrast_light"} {
@@ -293,7 +237,7 @@ func TestThemeRender_CanvasIsThemeBackground(t *testing.T) {
 		pages.SetRect(0, 0, 120, 40)
 		pages.Draw(screen)
 		screen.Show()
-		cells, _, _ := sim.GetContents()
+		cells := simCells(sim).Cells()
 		want := theme.Color(theme.RoleBackground).Hex()
 		counts := map[int32]int{}
 		for _, c := range cells {
@@ -332,9 +276,7 @@ func TestThemeRender_DumpANSI(t *testing.T) {
 		_ = theme.SetActive(key)
 		for name, cells := range renderScreens(t, w, h) {
 			base := fmt.Sprintf("%s/%s_%s", dir, key, strings.ReplaceAll(name, ":", "_"))
-			if err := os.WriteFile(base+".html", []byte(cellsHTML(cells, w, h, key+" / "+name)), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(base+".html", []byte(cellsHTML(cells, w, h, key+" / "+name)), 0o644))
 			var sb strings.Builder
 			for y := 0; y < h; y++ {
 				for x := 0; x < w; x++ {
@@ -350,9 +292,7 @@ func TestThemeRender_DumpANSI(t *testing.T) {
 				}
 				sb.WriteString("\x1b[0m\n")
 			}
-			if err := os.WriteFile(base+".ans", []byte(sb.String()), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(base+".ans", []byte(sb.String()), 0o644))
 		}
 	}
 }

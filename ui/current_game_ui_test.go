@@ -109,9 +109,7 @@ func TestLoadBrowserMarksTheMainGame(t *testing.T) {
 	}
 
 	// A rename carries the mark.
-	if err := game.RenameSave("ashford", "ashford_ii"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, game.RenameSave("ashford", "ashford_ii"))
 	_ = r.acct.RenameGame("ashford", "ashford_ii") // the browser's rename does this
 	// M on the main game unmarks it: the game last played is current again.
 	b = browserFor(r)
@@ -188,14 +186,10 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 
 	// A second account with a save of its own; the first stays current.
 	second, err := game.CreateAccount("Second Player")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	mk := game.NewGameEngine()
 	mk.SetAccount(second)
-	if err := mk.StartNewNamedGame("delmere"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, mk.StartNewNamedGame("delmere"))
 	if _, err := game.SwitchAccount(first.AccountID); err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +205,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 	if r.front() != accountsPage {
 		t.Fatalf("a opens %q", r.front())
 	}
-	p := newAccountsPanel(r.app, r.pages, r.eng, "dev", "splash")
+	p := newAccountsPanel(r.app, r.pages, r.eng, "splash")
 	r.pages.AddPage(accountsPage, p.root, true, true)
 	r.app.SetFocus(p.root)
 	if bar := untag(keyBar(accountsKeys, 200, 2)); !strings.Contains(bar, "x") || !strings.Contains(bar, "Delete saves") {
@@ -279,9 +273,7 @@ func TestAccountsPanelDeletesTheSelectedAccountsSaves(t *testing.T) {
 // written beside it.
 func TestQuitCommandSavesTheGameUnderItsName(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	go eng.Start()
 	t.Cleanup(eng.Stop)
 	waitRunning(t, eng)
@@ -296,9 +288,7 @@ func TestQuitCommandSavesTheGameUnderItsName(t *testing.T) {
 		t.Error("the game is still running after quit")
 	}
 	st, err := game.ViewSave("Rome")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	if got := st.Resources["food"].Amount; got != want {
 		t.Errorf("Rome's save holds %v food, the game ended on %v", got, want)
 	}
@@ -319,9 +309,7 @@ func TestMenuQuitWritesNothing(t *testing.T) {
 	// A game is played and left with Esc, as the dashboard does it.
 	r.press('c')
 	waitRunning(t, r.eng)
-	if err := r.eng.SaveGame(r.eng.ActiveSaveName()); err != nil {
-		t.Fatal(err)
-	}
+	must(t, r.eng.SaveGame(r.eng.ActiveSaveName()))
 	r.eng.Stop()
 	r.pages.SwitchToPage("splash")
 	before := dataTree(t, root)

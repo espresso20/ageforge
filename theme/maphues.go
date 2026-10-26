@@ -83,11 +83,5 @@ func MapHueColor(h MapHue) tcell.Color {
 
 // EpochHue is the production hue of an epoch (0 Stone … 6 Cosmic).
 func EpochHue(epoch int) MapHue {
-	if epoch < 0 {
-		epoch = 0
-	}
-	if epoch > 6 {
-		epoch = 6
-	}
-	return HueEpochStone + MapHue(epoch)
+	return HueEpochStone + MapHue(min(max(epoch, 0), 6))
 }

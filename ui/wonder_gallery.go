@@ -1,17 +1,11 @@
 package ui
 
 import (
-	"fmt"
-	"sort"
 	"strings"
-
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/rules"
-	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // wonderProgressBar returns a simple fill bar with colored segments.
@@ -56,172 +50,44 @@ func getWonderList(set *rules.Set) []wonderInfo {
 	return wonders
 }
 
-// ─── Current Age Wonder Panel (dashboard strip) ───
-
-// WonderPanel shows the current age's wonder with pixel art + perks
-type WonderPanel struct {
-	root     *tview.Flex
-	lastHash uint64
-}
-
-// NewWonderPanel creates the single-wonder panel for the dashboard
-func NewWonderPanel() *WonderPanel {
-	wp := &WonderPanel{}
-	wp.root = tview.NewFlex().SetDirection(tview.FlexColumn)
-	wp.root.SetBorder(true).SetTitle(vibe.Line("ui.wonder_gallery.NewWonderPanel.01", " Wonder "))
-	theme.Track(func() { wp.root.SetTitleColor(theme.Color(theme.RoleAccent)) })
-	return wp
-}
-
-// Primitive returns the underlying tview primitive
-func (wp *WonderPanel) Primitive() tview.Primitive {
-	return wp.root
-}
-
-// UpdateState refreshes the current-age wonder display
-func (wp *WonderPanel) UpdateState(state game.GameState) {
-	// Find the wonder for the current age
-	var current *wonderInfo
+// currentWonder is the wonder of the age the town is in, nil when the age has
+// none.
+func currentWonder(state game.GameState) *wonderInfo {
 	for _, w := range getWonderList(state.Ruleset()) {
 		if w.ageKey == state.Age {
-			wCopy := w
-			current = &wCopy
-			break
+			return &w
 		}
 	}
+	return nil
+}
 
-	// Hash to detect changes
-	var h uint64
-	h = hashKey(state.Age)
-	if current != nil {
-		if bs, ok := state.Buildings[current.key]; ok {
-			h ^= uint64(bs.Count)*7 + hashKey(current.key)
-			if bs.Unlocked {
-				h ^= 13
-			}
-			if bs.WonderBankFull {
-				h ^= 997
-			}
-			// The keystone line: which tech, and whether it still locks.
-			h ^= hashKey(wonderKeystoneLine(state, current.key)) * 17
-			for res, amt := range bs.WonderBank {
-				h ^= hashKey(res) * uint64(amt+1)
-			}
+// bankRow is one resource of a wonder's price: what is banked of what it
+// takes, as a share from 0 to 1, and the colour the bank's lines give it
+// (red for none, yellow for some, green for all).
+type bankRow struct {
+	res          string
+	banked, need float64
+	share        float64
+	color        string
+}
+
+// bankRows is a wonder's price a resource at a time, in resource order,
+// against what is banked.
+func bankRows(cost, banked map[string]float64) []bankRow {
+	var rows []bankRow
+	for _, k := range sortedKeysOf(cost) {
+		r := bankRow{res: k, banked: banked[k], need: cost[k], color: "red"}
+		if r.need > 0 {
+			r.share = min(r.banked/r.need, 1)
 		}
-	}
-	// Also hash wonder count for speed display
-	for _, w := range getWonderList(state.Ruleset()) {
-		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
-			h ^= hashKey(w.key) * 5
+		if r.share >= 1 {
+			r.color = "green"
+		} else if r.share > 0 {
+			r.color = "yellow"
 		}
+		rows = append(rows, r)
 	}
-	// And the "capped" note beside each perk (capTag below).
-	if current != nil {
-		for _, eff := range current.def.Effects {
-			h ^= hashKey(capNote(state, eff, state.Buildings[current.key].Count > 0)) * 31
-		}
-	}
-	if h == wp.lastHash {
-		return
-	}
-	wp.lastHash = h
-
-	wp.root.Clear()
-
-	_, _, totalW, ht := wp.root.GetInnerRect()
-	if totalW < 10 || ht < 3 {
-		return
-	}
-
-	if current == nil {
-		// No wonder for this age (shouldn't happen, but handle gracefully)
-		tv := tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
-		tv.SetText(vibe.Line("ui.wonder_gallery.UpdateState.01", "[gray]No wonder in this age.[-]"))
-		wp.root.AddItem(tv, 0, 1, false)
-		return
-	}
-
-	built := false
-	unlocked := false
-	if bs, ok := state.Buildings[current.key]; ok {
-		built = bs.Count > 0
-		unlocked = bs.Unlocked
-	}
-	_ = unlocked
-
-	// Text-only layout
-	infoTV := tview.NewTextView().SetDynamicColors(true)
-
-	var sb strings.Builder
-	if built {
-		fmt.Fprintf(&sb, "%s [gold::b]★ %s[-]\n", WonderSpriteIcon(current.key), current.name)
-		fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.02", "[green]Built[-] [gray](%s)[-]\n\n", current.ageName))
-	} else {
-		fmt.Fprintf(&sb, "[yellow::b]%s[-]\n", current.name)
-		fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.03", "[gray]%s, not built yet[-]\n\n", current.ageName))
-	}
-
-	// Show effects/perks
-	fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.04", "[cyan]Perks:[-]\n"))
-	for _, eff := range current.def.Effects {
-		fmt.Fprintf(&sb, "  %s%s\n", formatEffect(eff), capTag(state, eff, built, "-"))
-	}
-
-	// Bank progress if not built
-	if !built {
-		if bs, ok := state.Buildings[current.key]; ok {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.05", "\n[cyan]Wonder bank:[-]\n"))
-			costKeys := make([]string, 0, len(current.def.BaseCost))
-			for k := range current.def.BaseCost {
-				costKeys = append(costKeys, k)
-			}
-			sort.Strings(costKeys)
-			for _, k := range costKeys {
-				need := current.def.BaseCost[k]
-				banked := bs.WonderBank[k]
-				pct := 0.0
-				if need > 0 {
-					pct = banked / need
-					if pct > 1 {
-						pct = 1
-					}
-				}
-				clr := "red"
-				if pct >= 1.0 {
-					clr = "green"
-				} else if pct > 0 {
-					clr = "yellow"
-				}
-				bar := wonderProgressBar(pct, 8)
-				fmt.Fprintf(&sb, "  [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, FormatNumber(banked), FormatNumber(need))
-			}
-			if bs.WonderBankFull {
-				fmt.Fprintf(&sb, "  %s\n", wonderBuildLine(state, current.key))
-			} else {
-				fmt.Fprintf(&sb, "  [gray]%s[-]\n", wonderCollectHint())
-			}
-		}
-		if line := wonderKeystoneLine(state, current.key); line != "" {
-			fmt.Fprintf(&sb, "  %s\n", line)
-		}
-		// The techs' cut of construction time, then Era Mastery: a wonder
-		// builds in its own age, at that age's speed.
-		ticks := game.WonderBuildTicks(current.def.BuildTicks, state.Research, state.Mastery.Speeds[current.def.RequiredAge])
-		fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.06", "\n[gray]Build time: %s[-]\n", formatTicks(ticks, state)))
-	}
-
-	// Wonder count
-	wonderCount := 0
-	for _, w := range getWonderList(state.Ruleset()) {
-		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
-			wonderCount++
-		}
-	}
-	fmt.Fprint(&sb, vibe.Sprintf("ui.wonder_gallery.UpdateState.07", "\n[gold]Wonders built: %d[-]", wonderCount))
-
-	infoTV.SetText(safeTags(sb.String()))
-
-	wp.root.AddItem(infoTV, 0, 1, false)
+	return rows
 }
 
 // wonderCollectHint is the registry's wonder collect form, escaped for tview.

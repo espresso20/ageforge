@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"strings"
+	"math"
 
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -36,7 +36,7 @@ type moraleBand struct {
 // moralePct is the raw morale fraction (e.g. 0.52); mult is state.MoraleMultiplier.
 func computeMoraleBand(moralePct, mult float64) moraleBand {
 	// Round the production delta off the multiplier, not the raw morale.
-	delta := int(roundHalf((mult - 1.0) * 100))
+	delta := int(math.Round((mult - 1.0) * 100))
 	switch {
 	case mult > 1.0:
 		label := fmt.Sprintf("+%d%%", delta)
@@ -70,29 +70,4 @@ func computeMoraleBand(moralePct, mult float64) moraleBand {
 			DeltaPct: 0,
 		}
 	}
-}
-
-// roundHalf rounds to nearest, halves away from zero (math.Round semantics
-// without pulling math in for a single call site at -0.0 edge cases).
-func roundHalf(f float64) float64 {
-	if f < 0 {
-		return float64(int(f - 0.5))
-	}
-	return float64(int(f + 0.5))
-}
-
-// moraleBandBar renders a width-w bar whose fill uses the given tview color
-// name (the morale band color) rather than the fixed assignment fill color.
-func moraleBandBar(filled, total, w int, fillColor string) string {
-	if total <= 0 {
-		return BarEmptyColor() + strings.Repeat("░", w) + "[-]"
-	}
-	f := (filled * w) / total
-	if f > w {
-		f = w
-	}
-	if f < 0 {
-		f = 0
-	}
-	return "[" + fillColor + "]" + strings.Repeat("█", f) + BarEmptyColor() + strings.Repeat("░", w-f) + "[-]"
 }

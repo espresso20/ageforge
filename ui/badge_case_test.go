@@ -556,18 +556,13 @@ func TestLegendaryShimmerShowsInThePlainTier(t *testing.T) {
 //     in one ink are told apart by shape alone).
 func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 	views, sum := caseFixture()
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		pal := newGridPalette(0, nil)
 		check := func(where string, g *tGrid) {
 			scr := tcell.NewSimulationScreen("UTF-8")
-			if err := scr.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, scr.Init())
 			defer scr.Fini()
 			scr.SetSize(g.w, g.h)
 			paintGrid(scr, g, 0, 0, pal)
@@ -826,11 +821,7 @@ func TestBadgeCaseLadders(t *testing.T) {
 		t.Errorf("the ladder's next rung is %+v, want the third", housing.next)
 	}
 	text := g.String()
-	for _, want := range []string{"Housing", "131 / 180", "Next rung: Housing Magnate", "Rung 2 of 5"} {
-		if !strings.Contains(text, want) {
-			t.Errorf("the case does not say %q:\n%s", want, text)
-		}
-	}
+	wantAll(t, "the case", text, "Housing", "131 / 180", "Next rung: Housing Magnate", "Rung 2 of 5")
 	m, _, g = drawCase(views, sum, 100, 27, caseView{tab: caseTabNext, tier: mapmodel.TierUnicode}, atRest)
 	var order []string
 	for _, it := range m.items {
@@ -861,9 +852,7 @@ func TestBadgePanelKeysAndMotion(t *testing.T) {
 	p.SetRect(0, 0, 100, 27)
 	draw := func() string {
 		scr := tcell.NewSimulationScreen("UTF-8")
-		if err := scr.Init(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, scr.Init())
 		defer scr.Fini()
 		scr.SetSize(100, 27)
 		p.Draw(scr)

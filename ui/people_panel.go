@@ -16,28 +16,26 @@ import (
 // bar, where `roster <area> <percent>` sets a share.
 
 type peoplePanel struct {
-	*tview.Box
+	barPanel
 	state game.GameState
 	view  peopleView
 	w, h  int // the last size drawn at
 
 	// settings reads the glyph tier.
 	settings func() mapSettings
-	// toPrompt hands a key the panel does not take to the command bar.
-	toPrompt func(ev *tcell.EventKey)
 }
 
 func newPeoplePanel() *peoplePanel {
-	return &peoplePanel{Box: tview.NewBox(), w: 100, h: 30}
+	p := &peoplePanel{w: 100, h: 30}
+	p.barPanel = newBarPanel(p.routeKey)
+	return p
 }
 
 // open is the overlay's build: it runs on every Show, on the Overview.
 func (p *peoplePanel) open(state game.GameState) tview.Primitive {
 	p.state = state
 	p.view = peopleView{}
-	return tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(p, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+	return overBar(p)
 }
 
 // setSize tells the panel how big it is drawn, for the tests; a draw does it
@@ -47,11 +45,7 @@ func (p *peoplePanel) setSize(w, h int) { p.w, p.h = w, h }
 // update takes a new snapshot; the picked row stays in range.
 func (p *peoplePanel) update(state game.GameState) {
 	p.state = state
-	if n := peopleRows(state, p.view.tab); n > 0 {
-		p.view.row = clamp(p.view.row, 0, n-1)
-	} else {
-		p.view.row = 0
-	}
+	p.view.row = clamp(p.view.row, 0, peopleRows(state, p.view.tab)-1)
 }
 
 // Draw paints the panel.
@@ -70,16 +64,6 @@ func (p *peoplePanel) Draw(scr tcell.Screen) {
 		grid.fold()
 	}
 	paintExpedition(scr, grid, x, y, newExpPalette())
-}
-
-// InputHandler takes the panel's keys when it has the focus itself and
-// hands the rest to the command bar.
-func (p *peoplePanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		if !p.routeKey(ev, "") && p.toPrompt != nil {
-			p.toPrompt(ev)
-		}
-	})
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

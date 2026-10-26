@@ -537,7 +537,7 @@ func (m *mainMenu) open(id string) {
 		m.app.SetFocus(page)
 	case miAccounts:
 		m.leave()
-		page := CreateAccountsPage(m.app, m.pages, m.engine, m.version, "splash")
+		page := CreateAccountsPage(m.app, m.pages, m.engine, "splash")
 		m.pages.AddPage(accountsPage, page, true, true)
 		m.app.SetFocus(page)
 	case miUpdates:

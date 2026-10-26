@@ -18,9 +18,10 @@ import (
 //     both ways;
 //   - the smoke fuzz scenario: its command corpus.
 //
-// HandleCommand (input.go) keeps its own switch; TestRegistryMatchesDispatcher
-// holds the two together in both directions. To add a command, add it here and
-// to HandleCommand, then document it in site/docs/commands.md.
+// HandleCommand (input.go) looks a typed name up here and calls the command's
+// Run; TestRegistryMatchesDispatcher holds the words a Run takes and the words
+// listed here together in both directions. To add a command, add it here with
+// its Run, then document it in site/docs/commands.md.
 
 // ArgKind is what an argument slot takes. Completion offers values of the
 // kind from the live game state; the Enter rules check a typed value against
@@ -86,6 +87,10 @@ type Command struct {
 	Panel string
 	// Dashboard: run by the dashboard itself, not HandleCommand (quit).
 	Dashboard bool
+	// Run is what HandleCommand calls for a top-level command, with the words
+	// typed after its name or an alias. Nil: the command only opens the panel
+	// that has its name.
+	Run func(args []string, engine *game.GameEngine) CommandResult
 	// Quiet: an old form kept working for habit, not shown: it is parsed
 	// and run, but Help does not list it, the completer does not offer it,
 	// and it is not among the forms the wiki has to document.
@@ -152,21 +157,21 @@ func registry() []*Command {
 
 	return []*Command{
 		// Actions
-		{Name: "gather", Aliases: []string{"g"}, Section: secActions,
+		{Name: "gather", Run: cmdGather, Aliases: []string{"g"}, Section: secActions,
 			Args: []Arg{{Kind: ArgWord, Words: []string{"food", "wood", "stone"}}, optCount},
 			Help: []Usage{{"gather <food|wood|stone> [amount]", vibe.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (default ") + strconv.Itoa(int(gatherDefaultYield)) +
 				vibe.Line("ui.help.commands.gather.2", ", max ") + strconv.Itoa(int(gatherMaxYield)) + vibe.Line("ui.help.commands.gather.3", " per use; the early ages only)")}}},
-		{Name: "build", Aliases: []string{"b"}, Section: secActions,
+		{Name: "build", Run: cmdBuild, Aliases: []string{"b"}, Section: secActions,
 			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
 			Help: []Usage{{"build <building> [count|max]", vibe.Line("ui.help.commands.build", "Build copies of a building (default 1)")}}},
-		{Name: "sell", Section: secActions, Dangerous: true,
+		{Name: "sell", Run: cmdSell, Section: secActions, Dangerous: true,
 			Args: []Arg{{Kind: ArgSellBuilding}, optCount},
 			Help: []Usage{{"sell <building> [count]", vibe.Line("ui.help.commands.sell", "Demolish copies of a building and get back 50% of the build cost (not wonders, storage or knowledge buildings)")}}},
-		{Name: "advance", Section: secActions,
+		{Name: "advance", Run: cmdAdvance, Section: secActions,
 			Help: []Usage{{"advance", vibe.Line("ui.help.commands.advance", "Advance to the next age (when ready)")}}},
 		{Name: "charter", Section: secActions, Panel: vibe.Line("ui.help.panels.charter", "The Advance panel: the four pillars the next age asks for, the march of ages and what the next age brings"),
 			Help: []Usage{{"charter", vibe.Line("ui.help.commands.charter", "Open the Advance panel (Enter there advances when all four pillars stand)")}}},
-		{Name: "upgrade", Section: secActions,
+		{Name: "upgrade", Run: cmdUpgrade, Section: secActions,
 			Args: []Arg{{Kind: ArgUpgradeBuilding, Optional: true}, optCountAll},
 			Help: []Usage{
 				{"upgrade", vibe.Line("ui.help.commands.upgrade", "List the older buildings you hold and what upgrading them costs")},
@@ -174,7 +179,7 @@ func registry() []*Command {
 			}},
 
 		// Build Plan
-		{Name: "plan", Section: secPlan, BareOK: true, Panel: vibe.Line("ui.help.panels.plan", "Build plan: queued builds & techs, started as resources come in"),
+		{Name: "plan", Run: cmdPlan, Section: secPlan, BareOK: true, Panel: vibe.Line("ui.help.panels.plan", "Build plan: queued builds & techs, started as resources come in"),
 			Help: []Usage{{"plan", vibe.Line("ui.help.commands.plan", "Open the Plan panel (reorder and remove with keys)")}},
 			Subs: []*Command{
 				sub("build", "plan build <building> [count]", vibe.Line("ui.help.commands.plan.build", "Add copies of a building (this age's, or the next age's to build after you advance)"), Arg{Kind: ArgPlanBuilding}, optCount),
@@ -195,19 +200,19 @@ func registry() []*Command {
 			}},
 
 		// Workers
-		{Name: "recruit", Aliases: []string{"r"}, Section: secPeople,
+		{Name: "recruit", Run: cmdRecruit, Aliases: []string{"r"}, Section: secPeople,
 			Args: []Arg{optCountMax},
 			Help: []Usage{{"recruit [count|max]", vibe.Line("ui.help.commands.recruit", "Recruit workers into free housing (default 1). They start idle.")}}},
-		{Name: "assign", Aliases: []string{"a"}, Section: secPeople,
+		{Name: "assign", Run: cmdAssign, Aliases: []string{"a"}, Section: secPeople,
 			Args: []Arg{{Kind: ArgWorkerBuilding}, optCountAll},
 			Help: []Usage{{"assign <building> [count|all]", vibe.Line("ui.help.commands.assign", "Put idle workers to work in a building (default 1)")}}},
-		{Name: "unassign", Aliases: []string{"u"}, Section: secPeople,
+		{Name: "unassign", Run: cmdUnassign, Aliases: []string{"u"}, Section: secPeople,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
 			Help: []Usage{{"unassign <building> [count|all]", vibe.Line("ui.help.commands.unassign", "Take workers out of a building; they go idle (default 1)")}}},
-		{Name: "dismiss", Section: secPeople, Dangerous: true,
+		{Name: "dismiss", Run: cmdDismiss, Section: secPeople, Dangerous: true,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
 			Help: []Usage{{"dismiss <building> [count|all]", vibe.Line("ui.help.commands.dismiss", "Dismiss workers from a building; they leave your population (default 1)")}}},
-		{Name: "roster", Section: secPeople, BareOK: true,
+		{Name: "roster", Run: cmdRoster, Section: secPeople, BareOK: true,
 			Args: []Arg{{Kind: ArgDomain, Words: []string{"auto"}}, {Kind: ArgPercent, Words: []string{"auto"}, Optional: true}},
 			Help: []Usage{
 				{"roster", vibe.Line("ui.help.commands.roster", "Show your roster: each domain's part of the workforce")},
@@ -216,7 +221,7 @@ func registry() []*Command {
 			}},
 		{Name: "people", Section: secPeople, BareOK: true, Panel: vibe.Line("ui.help.panels.people", "People: workers, the reserve, soldiers and scholars"),
 			Help: []Usage{{"people", vibe.Line("ui.help.commands.people", "Open the People panel: your workers and their work areas, the reserve, your soldiers and your scholars")}}},
-		{Name: "workers", Section: secPeople, BareOK: true,
+		{Name: "workers", Run: cmdWorkers, Section: secPeople, BareOK: true,
 			Help: []Usage{{"workers", vibe.Line("ui.help.commands.workers", "Open the People panel (the same as people)")}},
 			Subs: []*Command{
 				// The roster's old name: `workers share ...` is `roster ...`.
@@ -228,7 +233,7 @@ func registry() []*Command {
 			}},
 
 		// Research, Expeditions & Army
-		{Name: "research", Aliases: []string{"res"}, Section: secResearch, Panel: vibe.Line("ui.help.panels.research", "The tech tree: a map of every tech in sight"),
+		{Name: "research", Run: cmdResearch, Aliases: []string{"res"}, Section: secResearch, Panel: vibe.Line("ui.help.panels.research", "The tech tree: a map of every tech in sight"),
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
 			Help: []Usage{{"research <tech>", vibe.Line("ui.help.commands.research", "Research a tech")}},
 			Subs: []*Command{
@@ -237,14 +242,14 @@ func registry() []*Command {
 				sub("tree", "research tree [close|far]", vibe.Line("ui.help.commands.research.tree", "Open the tech tree, zoomed in on big badges (close) or out on the whole tree (far)"), Arg{Kind: ArgWord, Words: []string{"close", "far"}, Optional: true}),
 				sub("card", "research card <tech>", vibe.Line("ui.help.commands.research.card", "Open the tech tree on a tech's card: what it does, how long it takes and what it needs"), Arg{Kind: ArgTech}),
 			}},
-		{Name: "scholars", Section: secResearch, BareOK: true,
+		{Name: "scholars", Run: cmdScholars, Section: secResearch, BareOK: true,
 			Args: []Arg{{Kind: ArgPercent, Optional: true}},
 			Help: []Usage{
 				{"scholars", vibe.Line("ui.help.commands.scholars", "Show your scholars: their kinds, how many research and teach, and what teaching adds")},
 				{"scholars <percent>", vibe.Line("ui.help.commands.scholars.2", "Set the share of your scholars that research (100 by default); the rest teach")},
 			}},
 		panel("techs", ""),
-		{Name: "expedition", Aliases: []string{"exp"}, Section: secResearch, Panel: vibe.Line("ui.help.panels.expedition", "The Expeditions panel (Ready Room and Expedition Report)"),
+		{Name: "expedition", Run: cmdExpedition, Aliases: []string{"exp"}, Section: secResearch, Panel: vibe.Line("ui.help.panels.expedition", "The Expeditions panel (Ready Room and Expedition Report)"),
 			Args: []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{
 				{"expedition", vibe.Line("ui.help.commands.expedition", "Open the Expeditions panel: the map of the age's lands with its offers on it, and the report of the parties out")},
@@ -253,13 +258,13 @@ func registry() []*Command {
 			Subs: []*Command{sub("list", "expedition list", vibe.Line("ui.help.commands.expedition.list", "Print the mission board"))}},
 		{Name: "army", Section: secResearch, Panel: vibe.Line("ui.help.panels.army", "Army overview & military campaigns"),
 			Help: []Usage{{"army", vibe.Line("ui.help.commands.army", "Open the Army (military) panel")}}},
-		{Name: "campaign", Section: secResearch,
+		{Name: "campaign", Run: cmdCampaign, Section: secResearch,
 			Args: []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{{"campaign <name>", vibe.Line("ui.help.commands.campaign", "Same as expedition: send the offer with that name")}},
 			Subs: []*Command{sub("list", "campaign list", vibe.Line("ui.help.commands.campaign.list", "Print the mission board"))}},
 
 		// Trade & Diplomacy
-		{Name: "trade", Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: vibe.Line("ui.help.panels.trade", "Trade routes"),
+		{Name: "trade", Run: cmdTrade, Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: vibe.Line("ui.help.panels.trade", "Trade routes"),
 			Subs: []*Command{
 				{Name: "route", BareOK: true, Subs: []*Command{
 					sub("list", "trade route list", vibe.Line("ui.help.commands.trade.route.list", "List trade routes")),
@@ -268,12 +273,12 @@ func registry() []*Command {
 				}},
 				sub("black", "trade black [resource]", vibe.Line("ui.help.commands.trade.black", "Same as blackmarket"), Arg{Kind: ArgResource, Optional: true}),
 			}},
-		{Name: "blackmarket", Aliases: []string{"bm"}, Section: secTrade,
+		{Name: "blackmarket", Run: cmdBlackMarket, Aliases: []string{"bm"}, Section: secTrade,
 			Args: []Arg{{Kind: ArgResource, Optional: true}},
 			Help: []Usage{{"blackmarket [resource]", vibe.Line("ui.help.commands.blackmarket", "Smuggling run: spend culture for the same worth in one resource, five times in six (bare blackmarket shows the odds, or when it opens)")}}},
 		{Name: "factions", Section: secTrade, Panel: vibe.Line("ui.help.panels.factions", "Boons, the Geographic Society & opinion of each civilization (alias: diplomacy)"),
 			Help: []Usage{{"factions", vibe.Line("ui.help.commands.factions", "Open the Factions panel (boons, the Geographic Society, opinion)")}}},
-		{Name: "diplomacy", Aliases: []string{"dip"}, Section: secTrade, BareOK: true,
+		{Name: "diplomacy", Run: cmdDiplomacy, Aliases: []string{"dip"}, Section: secTrade, BareOK: true,
 			Help: []Usage{{"diplomacy", vibe.Line("ui.help.commands.diplomacy", "Alias for factions (opens the same panel)")}},
 			Subs: []*Command{
 				sub("ally", "diplomacy ally <civ>", vibe.Line("ui.help.commands.diplomacy.ally", "Ally with a civilization (")+game.Amount(game.AllyCost, "gold")+vibe.Line("ui.help.commands.diplomacy.ally.2", " or less, needs opinion ")+strconv.Itoa(game.AllyOpinion)+")", civArg...),
@@ -291,7 +296,7 @@ func registry() []*Command {
 			}},
 
 		// Wonders & Prestige
-		{Name: "wonder", Section: secWonders, BareOK: true,
+		{Name: "wonder", Run: cmdWonder, Section: secWonders, BareOK: true,
 			Help: []Usage{{"wonder", vibe.Line("ui.help.commands.wonder", "Show current wonder bank status")}},
 			Subs: []*Command{
 				{Name: "collect", Aliases: []string{"bank"},
@@ -299,17 +304,17 @@ func registry() []*Command {
 					Help: []Usage{{"wonder collect <resource|all> [amount|all|max]", vibe.Line("ui.help.commands.wonder.collect", "Bank resources into the current wonder (alias: bank; no amount: as much as it needs)")}}},
 			}},
 		panel("wonders", vibe.Line("ui.help.panels.wonders", "Wonder bank, built wonders and a gallery of them (G)")),
-		{Name: "prestige", Section: secWonders, BareOK: true,
+		{Name: "prestige", Run: cmdPrestige, Section: secWonders, BareOK: true,
 			Help: []Usage{{"prestige", vibe.Line("ui.help.commands.prestige", "View prestige status")}},
 			Subs: []*Command{
 				prestigeConfirm,
 			}},
-		{Name: "festival", Section: secWonders, BareOK: true,
+		{Name: "festival", Run: cmdFestival, Section: secWonders, BareOK: true,
 			Help: []Usage{{"festival", vibe.Line("ui.help.commands.festival", "Spend culture for a temporary production boost")}},
 			Subs: []*Command{festivalConfirm}},
-		{Name: "catastrophe", Aliases: []string{"cat"}, Section: secWonders,
+		{Name: "catastrophe", Run: cmdCatastrophe, Aliases: []string{"cat"}, Section: secWonders,
 			Help: []Usage{{"catastrophe", vibe.Line("ui.help.commands.catastrophe", "Reopen a pending catastrophe or Last Passage (or show the outlook)")}}},
-		{Name: "harbinger", Aliases: []string{"harb"}, Section: secWonders, BareOK: true,
+		{Name: "harbinger", Run: cmdHarbinger, Aliases: []string{"harb"}, Section: secWonders, BareOK: true,
 			Panel: vibe.Line("ui.help.panels.harbinger", "The harbinger's warning & your answers (alias: harb)"),
 			Help: []Usage{
 				{"harbinger", vibe.Line("ui.help.commands.harbinger", "Open the Harbinger panel (alias: harb)")},
@@ -318,16 +323,16 @@ func registry() []*Command {
 			Subs: []*Command{{Name: "appease"}, {Name: "brace"}, {Name: "invite", Dangerous: true}}},
 
 		// Game
-		{Name: "rates", Section: secGame, Help: []Usage{{"rates", vibe.Line("ui.help.commands.rates", "Show resource rate breakdown")}}},
-		{Name: "status", Aliases: []string{"s"}, Section: secGame, Help: []Usage{{"status", vibe.Line("ui.help.commands.status", "Show detailed status")}}},
-		{Name: "theme", Section: secGame, Panel: vibe.Line("ui.help.panels.theme", "Theme picker: palettes & accessibility"),
+		{Name: "rates", Run: cmdRates, Section: secGame, Help: []Usage{{"rates", vibe.Line("ui.help.commands.rates", "Show resource rate breakdown")}}},
+		{Name: "status", Run: cmdStatus, Aliases: []string{"s"}, Section: secGame, Help: []Usage{{"status", vibe.Line("ui.help.commands.status", "Show detailed status")}}},
+		{Name: "theme", Run: cmdTheme, Section: secGame, Panel: vibe.Line("ui.help.panels.theme", "Theme picker: palettes & accessibility"),
 			Args: []Arg{{Kind: ArgTheme, Optional: true}},
 			Help: []Usage{
 				{"theme", vibe.Line("ui.help.commands.theme", "Open the theme picker (palettes + accessibility)")},
 				{"theme <key>", vibe.Line("ui.help.commands.theme.2", "Switch to a theme by key")},
 			},
 			Subs: []*Command{sub("list", "theme list", vibe.Line("ui.help.commands.theme.list", "List themes with unlock status"))}},
-		{Name: "map", Aliases: []string{"citymap", "worldmap"}, Section: secGame, BareOK: true,
+		{Name: "map", Run: cmdMap, Aliases: []string{"citymap", "worldmap"}, Section: secGame, BareOK: true,
 			Panel: vibe.Line("ui.help.panels.map", "The map: your settlement and the known world (aliases: citymap, worldmap)"),
 			Help: []Usage{
 				{"map", vibe.Line("ui.help.commands.map", "Open the Map panel (worldmap opens it on the known world); the prompt keeps working while it is open")},
@@ -339,23 +344,23 @@ func registry() []*Command {
 				sub("flows", "map flows [on|off]", vibe.Line("ui.help.commands.map.flows", "Turn the Map's flows overlay on or off (bare: switch it)"),
 					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
 			}},
-		{Name: "style", Section: secGame, Args: []Arg{mapStyleArg},
+		{Name: "style", Run: cmdMapStyle, Section: secGame, Args: []Arg{mapStyleArg},
 			Help: []Usage{{"style [roguelike|skyline]", vibe.Line("ui.help.commands.style", "Same as map style")}}},
-		{Name: "minimap", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+		{Name: "minimap", Run: cmdMinimap, Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"minimap [on|off]", vibe.Line("ui.help.commands.minimap", "Show or set the mini map above the Buildings list (default off)")}}},
-		{Name: "motion", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+		{Name: "motion", Run: cmdMotion, Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"motion [on|off]", vibe.Line("ui.help.commands.motion", "Show or set motion: whether the maps, the badge case and theme effects move (default on)")}}},
-		{Name: "vibemode", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+		{Name: "vibemode", Run: cmdVibemode, Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
 			Help: []Usage{{"vibemode [on|off]", vibe.Line("ui.help.commands.vibemode", "Show or set VibeMode: the game's words in a second, GenZ script (default off)")}}},
-		{Name: "icons", Section: secGame,
+		{Name: "icons", Run: cmdIcons, Section: secGame,
 			Help: []Usage{{"icons", vibe.Line("ui.help.commands.icons", "Check whether your font shows Nerd Font icons, and install one if it doesn't")}}},
-		{Name: "save", Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},
+		{Name: "save", Run: cmdSave, Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{{"save [name]", vibe.Line("ui.help.commands.save", "Save (no name: overwrite or branch; a name: branch a new save)")}},
 			Subs: []*Command{sub("list", "save list", vibe.Line("ui.help.commands.save.list", "Same as saves"))}},
-		{Name: "load", Section: secGame, Dangerous: true, Args: []Arg{{Kind: ArgSave, Optional: true}},
+		{Name: "load", Run: cmdLoad, Section: secGame, Dangerous: true, Args: []Arg{{Kind: ArgSave, Optional: true}},
 			Help: []Usage{{"load [name]", vibe.Line("ui.help.commands.load", "Load a save (no name: open the save browser)")}}},
-		{Name: "saves", Section: secGame, Help: []Usage{{"saves", vibe.Line("ui.help.commands.saves", "List all save files")}}},
-		{Name: "dump", Aliases: []string{"exportlogs"}, Section: secGame,
+		{Name: "saves", Run: cmdSaveList, Section: secGame, Help: []Usage{{"saves", vibe.Line("ui.help.commands.saves", "List all save files")}}},
+		{Name: "dump", Run: cmdDump, Aliases: []string{"exportlogs"}, Section: secGame,
 			Help: []Usage{{"dump", vibe.Line("ui.help.commands.dump", "Export logs to file for debugging")}}},
 		{Name: "help", Aliases: []string{"h", "?"}, Section: secGame, Panel: vibe.Line("ui.help.panels.help", "This Help panel"),
 			Help: []Usage{{"help", vibe.Line("ui.help.commands.help", "Open this Help panel")}}},
@@ -363,7 +368,7 @@ func registry() []*Command {
 			Help: []Usage{{"quit", vibe.Line("ui.help.commands.quit", "Save and quit the game")}}},
 
 		// Accounts
-		{Name: "account", Aliases: []string{"acct"}, Section: secAccounts, BareOK: true,
+		{Name: "account", Run: cmdAccount, Aliases: []string{"acct"}, Section: secAccounts, BareOK: true,
 			Help: []Usage{{"account", vibe.Line("ui.help.commands.account", "Show this account's ID & backup help")}},
 			Subs: []*Command{
 				sub("list", "account list", vibe.Line("ui.help.commands.account.list", "List your local accounts")),
@@ -381,7 +386,7 @@ func registry() []*Command {
 					Help: []Usage{{"account wipe", vibe.Line("ui.help.commands.account.wipe", "Where to wipe an account (the Accounts panel)")}}},
 			}},
 
-		{Name: "badges", Aliases: []string{"achievements"}, Section: secAccounts, BareOK: true,
+		{Name: "badges", Run: cmdBadges, Aliases: []string{"achievements"}, Section: secAccounts, BareOK: true,
 			Panel: vibe.Line("ui.help.panels.badges", "The badge case: every badge your account holds or can earn (alias: achievements)"),
 			Args:  []Arg{{Kind: ArgText, Words: []string{"next", "all"}, Optional: true}},
 			Help: []Usage{
@@ -390,7 +395,7 @@ func registry() []*Command {
 				{"badges next", vibe.Line("ui.help.commands.badges.3", "Open it on the badges you are closest to")},
 				{"badges <name>", vibe.Line("ui.help.commands.badges.4", "Open a badge's detail by its name, or a part of it")},
 			}},
-		{Name: "title", Section: secAccounts, BareOK: true,
+		{Name: "title", Run: cmdTitle, Section: secAccounts, BareOK: true,
 			Args: []Arg{{Kind: ArgText, Words: []string{"default"}, Optional: true}},
 			Help: []Usage{
 				{"title", vibe.Line("ui.help.commands.title", "List the titles your account holds, and the one it wears")},

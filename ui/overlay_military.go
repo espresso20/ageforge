@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -19,17 +20,17 @@ func militaryProvider(state game.GameState, _ int) string {
 
 	// === Army Overview ===
 	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.01", " [gold]═══ Army Overview ═══[-]\n\n"))
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.02", " [gold]Soldiers:[-]  %s posted of %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap))))
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.02", " [gold]Soldiers:[-]  %s posted of %s\n", textfmt.Number(float64(mil.SoldierCount)), textfmt.Number(float64(mil.SoldierCap))))
 	if len(mil.Posts) == 0 {
 		// Soldiers begin with the first military building: until one is built
 		// there is nobody at a post, and the panel says so.
 		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.03", " [gold]Posts:[-]     %s\n", theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_military.militaryProvider.04", "none yet. A military building comes with its soldiers."))))
 	} else {
 		for _, p := range mil.Posts {
-			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.05", " [gold]Posts:[-]     %s x%d: %s/%s\n", p.Name, p.Count, FormatNumber(float64(p.Posted)), FormatNumber(float64(p.Posts))))
+			fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.05", " [gold]Posts:[-]     %s x%d: %s/%s\n", p.Name, p.Count, textfmt.Number(float64(p.Posted)), textfmt.Number(float64(p.Posts))))
 		}
 	}
-	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.06", " [gold]Defense:[-]   %s\n", FormatNumber(mil.DefenseRating)))
+	fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_military.militaryProvider.06", " [gold]Defense:[-]   %s\n", textfmt.Number(mil.DefenseRating)))
 	writeGarrison(&sb, state)
 
 	if mil.MilitaryBonus > 0 {
@@ -153,14 +154,9 @@ func formatExpeditionCost(cost map[string]float64, state game.GameState) string 
 	if len(cost) == 0 {
 		return ""
 	}
-	keys := make([]string, 0, len(cost))
-	for k := range cost {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	parts := make([]string, 0, len(keys))
-	for _, k := range keys {
-		parts = append(parts, FormatNumber(cost[k])+" "+resourceDisplayName(state, k))
+	parts := make([]string, 0, len(cost))
+	for _, k := range sortedKeysOf(cost) {
+		parts = append(parts, textfmt.Number(cost[k])+" "+resourceDisplayName(state, k))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -195,7 +191,7 @@ func writeGarrison(sb *strings.Builder, state game.GameState) {
 	if ageName == "" {
 		ageName = state.Age
 	}
-	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.01", " [gold]Threat:[-]    %s (raids in the %s)\n", FormatNumber(mil.Threat), ageName))
+	fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.01", " [gold]Threat:[-]    %s (raids in the %s)\n", textfmt.Number(mil.Threat), ageName))
 	if mil.Mitigation <= 0 {
 		sb.WriteString(vibe.Line("ui.overlay_military.writeGarrison.02", " [yellow]You have no garrison: raids hit you with full force.[-]\n"))
 		fmt.Fprint(sb, vibe.Sprintf("ui.overlay_military.writeGarrison.03", "   [gray]Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%).[-]\n", capPct))
@@ -239,7 +235,7 @@ func garrisonSavedSummary(t *game.DefenseTally) string {
 		keys = keys[:4]
 	}
 	for _, k := range keys {
-		parts = append(parts, FormatNumber(t.Resources[k])+" "+k)
+		parts = append(parts, textfmt.Number(t.Resources[k])+" "+k)
 	}
 	if len(parts) == 0 {
 		return ""

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"unicode"
 
@@ -45,13 +44,7 @@ func (p *planPanel) provider(state game.GameState, screenW int) string {
 }
 
 func clampSel(sel, n int) int {
-	if n == 0 || sel < 0 {
-		return 0
-	}
-	if sel >= n {
-		return n - 1
-	}
-	return sel
+	return max(0, min(sel, n-1))
 }
 
 // handleKey acts on event against engine. Reports whether the key was
@@ -178,10 +171,10 @@ func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
 		if v.Short != "" {
 			cost := v.Cost[v.Short]
 			covered := v.Progress * cost
-			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), FormatNumber(covered), FormatNumber(cost))
+			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), textfmt.Number(covered), textfmt.Number(cost))
 			var notes []string
 			if held := state.Resources[v.Short].Amount - covered; held >= 1 {
-				notes = append(notes, FormatNumber(held)+vibe.Line("ui.overlay_plan.planItemDetailGlued.03", " held for items above"))
+				notes = append(notes, textfmt.Number(held)+vibe.Line("ui.overlay_plan.planItemDetailGlued.03", " held for items above"))
 			}
 			if len(notes) > 0 {
 				line += " (" + strings.Join(notes, ", ") + ")"
@@ -216,19 +209,10 @@ func planDetailRows(detail string, width int) string {
 // material's spaces glued.
 func planPriceWhole(cost map[string]float64) string {
 	var parts []string
-	for _, k := range sortedMapKeys(cost) {
+	for _, k := range sortedKeysOf(cost) {
 		parts = append(parts, strings.ReplaceAll(game.Amount(cost[k], k), " ", glue))
 	}
 	return strings.Join(parts, ", ")
-}
-
-func sortedMapKeys(m map[string]float64) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // planPanelText renders the panel. Pure: state in, text out.

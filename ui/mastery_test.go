@@ -28,11 +28,7 @@ func TestMasterySectionNoSpoilers(t *testing.T) {
 	var sb strings.Builder
 	writeMasterySection(&sb, state)
 	out := sb.String()
-	for _, want := range []string{"Primitive Age", "Bronze Age", "2.4x", "mastery  2", "known ground, 2x faster (mastery 1)", "Next prestige: the Primitive Age gains a mastery level"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("the mastery section lacks %q:\n%s", want, out)
-		}
-	}
+	wantAll(t, "the mastery section", out, "Primitive Age", "Bronze Age", "2.4x", "mastery  2", "known ground, 2x faster (mastery 1)", "Next prestige: the Primitive Age gains a mastery level")
 	for _, a := range config.AgeOrder()[3:] {
 		if name := game.AgeName(a); strings.Contains(out, name) {
 			t.Errorf("the mastery section names %s, past the record:\n%s", name, out)

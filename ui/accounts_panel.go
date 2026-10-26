@@ -35,10 +35,9 @@ const (
 // and a sensible selection restored after switch/new/import/wipe — the same shape as
 // loadGameBrowser (load_game.go).
 type accountsPanel struct {
-	app            *tview.Application
-	pages          *tview.Pages
-	engine         *game.GameEngine
-	currentVersion string
+	app    *tview.Application
+	pages  *tview.Pages
+	engine *game.GameEngine
 
 	root     *tview.Flex
 	title    *tview.TextView
@@ -62,18 +61,17 @@ type accountsPanel struct {
 // live detail refresh wired through SetChangedFunc. Per the tview deadlock rule (Trello
 // TCGiSWYX) NO handler here calls QueueUpdateDraw — tview redraws automatically after each
 // input event, so SetText / re-filling the list / applyAccountTheme all paint on the next frame.
-func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string, returnPage string) tview.Primitive {
-	return newAccountsPanel(app, pages, engine, currentVersion, returnPage).root
+func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, returnPage string) tview.Primitive {
+	return newAccountsPanel(app, pages, engine, returnPage).root
 }
 
 // newAccountsPanel builds the panel; its root is the page.
-func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string, returnPage string) *accountsPanel {
+func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, returnPage string) *accountsPanel {
 	p := &accountsPanel{
-		app:            app,
-		pages:          pages,
-		engine:         engine,
-		currentVersion: currentVersion,
-		returnPage:     returnPage,
+		app:        app,
+		pages:      pages,
+		engine:     engine,
+		returnPage: returnPage,
 	}
 
 	// ── Title ──────────────────────────────────────────────────────────────────
@@ -796,12 +794,6 @@ var accountsKeys = []footerKey{
 	{"x", vibe.E("ui.accounts_panel.accountsKeys.08", "Delete saves"), vibe.Entry{}},
 	{"w", vibe.E("ui.accounts_panel.accountsKeys.09", "Wipe"), vibe.Entry{}},
 	{"Esc", vibe.E("ui.accounts_panel.accountsKeys.11", "Back"), vibe.Entry{}},
-}
-
-// accountsFooterBar is the Accounts panel action bar on one line: a keycap button per
-// action (footerButton lives in load_game.go). The panel fits it to its width (keyBar).
-func accountsFooterBar() string {
-	return keyBar(accountsKeys, 1<<16, 1)
 }
 
 // displayNameOr returns the summary's DisplayName, or "(unnamed)" when empty.

@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -17,14 +16,7 @@ import (
 // wonder status without scrolling.
 func renderCurrentWonderSummary(state game.GameState) string {
 	var sb strings.Builder
-	var current *wonderInfo
-	for _, w := range getWonderList(state.Ruleset()) {
-		if w.ageKey == state.Age {
-			wCopy := w
-			current = &wCopy
-			break
-		}
-	}
+	current := currentWonder(state)
 	if current == nil {
 		return ""
 	}
@@ -52,29 +44,8 @@ func renderCurrentWonderSummary(state game.GameState) string {
 	// Bank progress if not built
 	if !built && hasBs {
 		fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_wonders.renderCurrentWonderSummary.04", "\n [cyan]Wonder bank:[-]\n"))
-		costKeys := make([]string, 0, len(current.def.BaseCost))
-		for k := range current.def.BaseCost {
-			costKeys = append(costKeys, k)
-		}
-		sort.Strings(costKeys)
-		for _, k := range costKeys {
-			need := current.def.BaseCost[k]
-			banked := bs.WonderBank[k]
-			pct := 0.0
-			if need > 0 {
-				pct = banked / need
-				if pct > 1 {
-					pct = 1
-				}
-			}
-			clr := "red"
-			if pct >= 1.0 {
-				clr = "green"
-			} else if pct > 0 {
-				clr = "yellow"
-			}
-			bar := wonderProgressBar(pct, 8)
-			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, FormatNumber(banked), FormatNumber(need))
+		for _, r := range bankRows(current.def.BaseCost, bs.WonderBank) {
+			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", r.color, game.ResourceName(r.res), wonderProgressBar(r.share, 8), textfmt.Number(r.banked), textfmt.Number(r.need))
 		}
 		if bs.WonderBankFull {
 			fmt.Fprintf(&sb, "   %s\n", wonderBuildLine(state, current.key))
@@ -168,31 +139,9 @@ func wondersProvider(state game.GameState, _ int) string {
 				}
 
 				// Per-resource bank breakdown
-				if len(w.def.BaseCost) > 0 {
-					costKeys := make([]string, 0, len(w.def.BaseCost))
-					for k := range w.def.BaseCost {
-						costKeys = append(costKeys, k)
-					}
-					sort.Strings(costKeys)
-					for _, k := range costKeys {
-						need := w.def.BaseCost[k]
-						banked := bs.WonderBank[k]
-						resPct := 0.0
-						if need > 0 {
-							resPct = banked / need
-							if resPct > 1 {
-								resPct = 1
-							}
-						}
-						clr := "red"
-						if resPct >= 1.0 {
-							clr = "green"
-						} else if resPct > 0 {
-							clr = "yellow"
-						}
-						fmt.Fprintf(&sb, "     [%s]%s: %s / %s[-]\n",
-							clr, game.ResourceName(k), FormatNumber(banked), FormatNumber(need))
-					}
+				for _, r := range bankRows(w.def.BaseCost, bs.WonderBank) {
+					fmt.Fprintf(&sb, "     [%s]%s: %s / %s[-]\n",
+						r.color, game.ResourceName(r.res), textfmt.Number(r.banked), textfmt.Number(r.need))
 				}
 				sb.WriteString(vibe.Line("ui.overlay_wonders.wondersProvider.07", "   [gray]Bank resources to build it: ") + wonderCollectHint() + "[-]\n")
 			}

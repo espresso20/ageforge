@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -18,9 +19,7 @@ import (
 func galleryTown(t *testing.T, built int) (*Dashboard, *tview.Pages, game.GameState) {
 	t.Helper()
 	eng := game.NewGameEngine()
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	st := eng.GetState()
 	list := getWonderList(st.Ruleset())
 	if built > len(list) {
@@ -235,14 +234,12 @@ func TestGalleryDrawsEveryWonder(t *testing.T) {
 		for ti, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
 			d.wonders.tier = func() mapmodel.GlyphTier { return tier }
 			for i, win := range list {
-				if err := theme.SetActive(themes[(i+ti)%len(themes)].Key); err != nil {
-					t.Fatal(err)
-				}
+				must(t, theme.SetActive(themes[(i+ti)%len(themes)].Key))
 				d.wonders.open()
 				om.Show("wonders", st)
 				d.wonders.gallery, d.wonders.idx, d.wonders.key = true, i, win.key
 				om.Refresh(st)
-				screen := renderText(t, pages, w, h)
+				screen := drawPrimitive(t, pages, w, h).Text()
 				art := galleryArt(t, screen, win.name)
 				if len(art) < 6 {
 					t.Errorf("%s at %dx%d: the picture is %d rows", win.key, w, h, len(art))
@@ -265,11 +262,7 @@ func TestGalleryDrawsEveryWonder(t *testing.T) {
 				if ink < 8 {
 					t.Errorf("%s at %dx%d %v: the picture has %d glyphs", win.key, w, h, tier, ink)
 				}
-				for _, want := range []string{win.name, win.ageName, "Esc back"} {
-					if !strings.Contains(screen, want) {
-						t.Errorf("%s at %dx%d: the page does not say %q:\n%s", win.key, w, h, want, screen)
-					}
-				}
+				wantAll(t, fmt.Sprintf("%s at %dx%d: the page", win.key, w, h), screen, win.name, win.ageName, "Esc back")
 				if strings.Contains(screen, "—") {
 					t.Errorf("%s: an em dash on the page", win.key)
 				}

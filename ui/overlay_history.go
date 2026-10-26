@@ -2,9 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -39,10 +41,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	}
 
 	// The panel's text width, minus y-axis label (8 chars) and the gap after it (6 chars)
-	graphW := overlayTextWidth(w) - 14
-	if graphW < 20 {
-		graphW = 20
-	}
+	graphW := max(overlayTextWidth(w)-14, 20)
 	const graphH = 4 // rows tall per graph
 
 	ageCols := AgeMarkerCols(markerTicks, firstTick, lastTick, graphW)
@@ -77,15 +76,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 			vals[i] = m.values(s)
 		}
 
-		minV, maxV := vals[0], vals[0]
-		for _, v := range vals {
-			if v < minV {
-				minV = v
-			}
-			if v > maxV {
-				maxV = v
-			}
-		}
+		minV, maxV := slices.Min(vals), slices.Max(vals)
 
 		cur := vals[n-1]
 		prev := vals[n-2]
@@ -97,7 +88,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 			trend = "[red]↓[-]"
 		}
 
-		curStr := fmtVal(cur)
+		curStr := textfmt.Number(cur)
 		if m.rate && cur >= 0 {
 			curStr = "+" + curStr
 		}
@@ -105,7 +96,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 		// header line
 		sb.WriteString(vibe.Sprintf("ui.overlay_history.renderHistoryOverlay.12", "%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
 			m.color, m.label, trend, curStr, m.unit,
-			fmtVal(minV), fmtVal(maxV)))
+			textfmt.Number(minV), textfmt.Number(maxV)))
 
 		// graph lines with y-axis labels
 		lines := BrailleLine(vals, graphW, graphH, ageCols)
@@ -143,7 +134,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 // left blank, so a flat series (drawn along the base line) is labeled once
 // and a series that barely moves does not print the same number twice.
 func historyAxisLabels(minV, maxV float64) (top, mid, bottom string) {
-	top, mid, bottom = fmtVal(maxV), fmtVal((maxV+minV)/2), fmtVal(minV)
+	top, mid, bottom = textfmt.Number(maxV), textfmt.Number((maxV+minV)/2), textfmt.Number(minV)
 	if mid == bottom || mid == top {
 		mid = ""
 	}

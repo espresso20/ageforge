@@ -46,9 +46,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 		if a == "primitive_age" {
 			continue
 		}
-		if err := eng.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, eng.EnterAgeForTest(a))
 	}
 	if got := eng.GetState().Age; got != age {
 		t.Fatalf("staged the %s, want the %s", got, age)
@@ -94,10 +92,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 		t.Fatalf("only %d kinds of building under construction in the %s", queued, age)
 	}
 	eng.StepTicks(3)
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	return d, pages, eng
 }
 
@@ -105,12 +100,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 // the screen's cells.
 func drawnDashboard(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []tcell.SimCell {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(sim.Fini)
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	screen := theme.WrapScreen(sim)
 	// Twice: the first draw gives every box its size, and the refresh after
 	// it writes what depends on the sizes (the status bar, the mini map).
@@ -121,27 +111,13 @@ func drawnDashboard(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []
 		pages.Draw(screen)
 		screen.Show()
 	}
-	cells, _, _ := sim.GetContents()
-	return append([]tcell.SimCell(nil), cells...)
+	return simCells(sim).Cells()
 }
 
 // rectText is the text drawn in a rectangle of the screen, a line per row,
 // trailing blanks trimmed.
 func rectText(cells []tcell.SimCell, screenW, x, y, w, h int) []string {
-	lines := make([]string, h)
-	for row := 0; row < h; row++ {
-		var b strings.Builder
-		for col := 0; col < w; col++ {
-			c := cells[(y+row)*screenW+x+col]
-			if len(c.Runes) == 0 {
-				b.WriteByte(' ')
-			} else {
-				b.WriteRune(c.Runes[0])
-			}
-		}
-		lines[row] = strings.TrimRight(b.String(), " ")
-	}
-	return lines
+	return frame{w: screenW, cells: cells}.Region(x, y, w, h)
 }
 
 // checkFitted holds a box to what it wrote: every line of its text fits its
@@ -229,11 +205,7 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 			// The Ledger, the Panels list and the Buildings list.
 			checkFittedBox(t, where+", Ledger", d.ledgerTV, cells, w)
 			panels := strings.Join(checkFitted(t, where+", Panels", d.sidebar, cells, w), "\n")
-			for _, name := range sidebarPanels {
-				if !strings.Contains(panels, name) {
-					t.Errorf("%s: the Panels list does not show %q", where, name)
-				}
-			}
+			wantAll(t, fmt.Sprintf("%s: the Panels list", where), panels, sidebarPanels...)
 			for _, row := range checkFitted(t, where+", Buildings", d.economyTab.buildingTV, cells, w) {
 				if strings.HasSuffix(row, "/") {
 					t.Errorf("%s: the Buildings list splits a rate after its slash: %q", where, row)
@@ -256,11 +228,7 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 					t.Errorf("%s: the People box is compact but its title has no headcount: %q", where, title)
 				}
 			}
-			for _, want := range []string{pop, st.Term("workers").Many, st.Term("reserve").Many, st.Term("soldiers").Many, st.Term("scholars").Many} {
-				if !strings.Contains(mini, want) {
-					t.Errorf("%s: the People box does not show %q:\n%s", where, want, mini)
-				}
-			}
+			wantAll(t, fmt.Sprintf("%s: the People box", where), mini, pop, st.Term("workers").Many, st.Term("reserve").Many, st.Term("soldiers").Many, st.Term("scholars").Many)
 		}
 	}
 }
@@ -517,11 +485,7 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 		Milestones: game.MilestoneState{CurrentTitle: "Aspiring"}, Harbinger: &game.HarbingerView{}}
 	facts := ribbonFacts{year: "1,948 BC", next: "Iron Age"}
 	full := untag(statusLine(st, facts, 0))
-	for _, want := range []string{"Bronze Age", "\"Aspiring\"", "⚑ Harbinger. Type harbinger to read it.", "Year 1,948 BC", "People 216/875", "Morale 110% (production +20%)", "Next: Iron Age", "type a panel name to open it · Esc: close or menu"} {
-		if !strings.Contains(full, want) {
-			t.Errorf("the whole line is missing %q: %q", want, full)
-		}
-	}
+	wantAll(t, "the whole line", full, "Bronze Age", "\"Aspiring\"", "⚑ Harbinger. Type harbinger to read it.", "Year 1,948 BC", "People 216/875", "Morale 110% (production +20%)", "Next: Iron Age", "type a panel name to open it · Esc: close or menu")
 	// The facts come in the order the card names: age, year, people, morale, next age.
 	last := -1
 	for _, want := range []string{"Bronze Age", "Year 1,948 BC", "People 216/875", "Morale 110%", "Next: Iron Age"} {
@@ -536,11 +500,7 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 		if runeLen(line) > w {
 			t.Errorf("width %d: the line is %d cells: %q", w, runeLen(line), line)
 		}
-		for _, want := range []string{"Bronze Age", "⚑ Harbinger", "People 216/875", "Morale 110%"} {
-			if !strings.Contains(line, want) {
-				t.Errorf("width %d: the line lost %q: %q", w, want, line)
-			}
-		}
+		wantAll(t, fmt.Sprintf("width %d: the line", w), line, "Bronze Age", "⚑ Harbinger", "People 216/875", "Morale 110%")
 	}
 	// What goes first needs the most room to stay: the narrowest bar each
 	// piece is still on never grows as the pieces go in the order above.
@@ -587,9 +547,7 @@ func TestStatusLineGivesUpTheHintFirst(t *testing.T) {
 func TestDashboardLayoutInEveryTheme(t *testing.T) {
 	restoreForge(t)
 	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		d, pages, _ := stagedDashboard(t, "quantum_age")
 		for _, sz := range [][2]int{{80, 24}, {100, 30}, {120, 40}, {160, 45}, {240, 60}} {
 			w, h := sz[0], sz[1]
@@ -622,9 +580,7 @@ func TestDashboardLayoutDump(t *testing.T) {
 		for _, sz := range layoutSizes {
 			cells := drawnDashboard(t, d, pages, sz[0], sz[1])
 			text := strings.Join(rectText(cells, sz[0], 0, 0, sz[0], sz[1]), "\n") + "\n"
-			if err := os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s_%dx%d.txt", age, sz[0], sz[1])), []byte(text), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s_%dx%d.txt", age, sz[0], sz[1])), []byte(text), 0o644))
 		}
 	}
 }

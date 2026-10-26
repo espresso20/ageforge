@@ -18,14 +18,10 @@ const armyGarrison = 2000
 
 func TestArmyPanel_NoGarrison(t *testing.T) {
 	txt := untag(militaryProvider(game.NewGameEngine().GetState(), 0))
-	for _, want := range []string{
+	wantAll(t, "Army panel", txt,
 		"Threat:", "You have no garrison: raids hit you with full force.",
 		"Soldiers blunt raids, war raids and what an Endure takes (up to 45%).",
-	} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("Army panel missing %q:\n%s", want, txt)
-		}
-	}
+	)
 	if strings.Contains(txt, "Your garrison would blunt") {
 		t.Errorf("Army panel claims a garrison with no soldiers:\n%s", txt)
 	}
@@ -47,9 +43,7 @@ func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 	if !strings.Contains(txt, "come with military buildings") && !strings.Contains(txt, "needs a party of") && !strings.Contains(txt, "A military building comes with its soldiers") {
 		t.Errorf("the Army panel should say where soldiers come from:\n%s", txt)
 	}
-	if err := engine.EnterAgeForTest("stone_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.EnterAgeForTest("stone_age"))
 	if txt = untag(militaryProvider(engine.GetState(), 0)); !strings.Contains(txt, "Posts:     none yet.") {
 		t.Errorf("a Stone Age town with no War Camp should still say nobody is posted:\n%s", txt)
 	}
@@ -59,17 +53,9 @@ func TestArmyPanel_PostsBeforeSoldiers(t *testing.T) {
 	state := engine.GetState()
 	txt = untag(militaryProvider(state, 0))
 	blunt := config.DefenseMitigation(state.Military.DefenseRating, config.AgeThreat(config.AgeByKey()["stone_age"].Order)) * 100
-	for _, want := range []string{"Soldiers:  1.5K posted of", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt)} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("the Stone Age Army panel with a garrison is missing %q:\n%s", want, txt)
-		}
-	}
-	if err := engine.EnterAgeForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
-	if err := engine.EnterAgeForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	wantAll(t, "the Stone Age Army panel with a garrison", txt, "Soldiers:  1.5K posted of", "(raids in the Stone Age)", fmt.Sprintf("Your garrison would blunt about %.0f%% of a raid.", blunt))
+	must(t, engine.EnterAgeForTest("bronze_age"))
+	must(t, engine.EnterAgeForTest("iron_age"))
 	if txt = untag(militaryProvider(engine.GetState(), 0)); strings.Contains(txt, "Training:") || strings.Contains(txt, "/tick") {
 		t.Errorf("nothing trains soldiers any more, yet the Iron Age Army panel shows a rate:\n%s", txt)
 	}
@@ -79,17 +65,13 @@ func TestArmyPanel_Garrison(t *testing.T) {
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
 	txt := untag(militaryProvider(engine.GetState(), 0))
-	for _, want := range []string{
+	wantAll(t, "Army panel", txt,
 		// The Classical Age's threat in soldiers at their posts: 1.94K.
 		"Threat:    1.94K (raids in the Classical Age)",
 		"Your garrison would blunt about 30% of a raid.",
 		"Raids, war raids and an Endure's losses all hit you that much softer.",
 		"Twice the garrison: about 36%. No army blunts more than 45%.",
-	} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("Army panel missing %q:\n%s", want, txt)
-		}
-	}
+	)
 }
 
 // The same garrison a few ages on is outmatched: the threat doubles per age.
@@ -121,13 +103,11 @@ func TestArmyPanel_OnScreen(t *testing.T) {
 	const w, h = 160, 50
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("classical_age", armyGarrison)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	if !d.overlayMgr.Show("army", engine.GetState()) {
 		t.Fatal("overlay army not registered")
 	}
-	if !gridHas(screenGrid(t, pages, w, h), "Your garrison would blunt about 30% of a raid.") {
+	if !strings.Contains(drawPrimitive(t, pages, w, h).Text(), "Your garrison would blunt about 30% of a raid.") {
 		t.Error("the garrison line is not on screen")
 	}
 }
@@ -137,38 +117,30 @@ func TestCatastropheModal_EndureCountsGarrison(t *testing.T) {
 	const w, h = 160, 50
 	engine := game.NewGameEngine()
 	engine.SetGarrisonForTest("iron_age", config.AgeThreat(3)/2) // defense == the Iron Age threat
-	if err := engine.ForceCatastropheForTest(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, engine.ForceCatastropheForTest())
 	st := engine.GetState()
 	if st.PendingEndure.Garrison <= 0 {
 		t.Fatalf("pending Endure has no garrison: %+v", st.PendingEndure)
 	}
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), engine, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(engine)
 	d.showCatastropheModal(st.PendingCatastrophe)
-	grid := screenGrid(t, pages, w, h)
+	screen := drawPrimitive(t, pages, w, h).Text()
 	for _, want := range []string{
 		"All resources reduced to 34.1%",
 		"Your garrison keeps 34.1% of stock, not 15%",
 	} {
-		if !gridHas(grid, want) {
+		if !strings.Contains(screen, want) {
 			t.Errorf("modal missing %q", want)
 		}
 	}
-	if gridHas(grid, "No garrison") {
+	if strings.Contains(screen, "No garrison") {
 		t.Error("modal says no garrison with 640,000 soldiers standing")
 	}
 
 	// Without soldiers the modal shows the old numbers and says so.
 	l := buildCatastropheModalLayout("iron_era", false, 0, game.DefaultEndureOutcome(), game.GameState{})
 	endure := untag(l.endure)
-	for _, want := range []string{"20% of buildings destroyed", "All resources reduced to 15%", "No garrison: soldiers would soften this"} {
-		if !strings.Contains(endure, want) {
-			t.Errorf("garrison-free Endure missing %q:\n%s", want, endure)
-		}
-	}
+	wantAll(t, "garrison-free Endure", endure, "20% of buildings destroyed", "All resources reduced to 15%", "No garrison: soldiers would soften this")
 }
 
 // Every Endure variant (Brace level x garrison, capped or not) fits the box.
@@ -186,14 +158,4 @@ func TestCatastropheModal_DefenseLinesFit(t *testing.T) {
 			}
 		}
 	}
-}
-
-// gridHas reports whether any screen row contains s.
-func gridHas(grid [][]rune, s string) bool {
-	for _, row := range grid {
-		if strings.Contains(string(row), s) {
-			return true
-		}
-	}
-	return false
 }

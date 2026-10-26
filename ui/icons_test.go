@@ -121,11 +121,7 @@ func TestIconsFlowInstalls(t *testing.T) {
 		t.Fatalf("installer ran %d times, stage %d", h.install, h.flow.stage)
 	}
 	txt := h.shown()
-	for _, want := range []string{"is installed", "In iTerm2:", "1. Open iTerm2", nerdfont.FamilyName, "Restart your terminal, then type icons again to check."} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("the window lacks %q:\n%s", want, txt)
-		}
-	}
+	wantAll(t, "the window", txt, "is installed", "In iTerm2:", "1. Open iTerm2", nerdfont.FamilyName, "Restart your terminal, then type icons again to check.")
 	if h.nerd != 0 {
 		t.Errorf("the install set the glyphs (%d)", h.nerd)
 	}
@@ -268,13 +264,9 @@ func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
 	acct, err := game.CreateNamedAccount("Icons Tester")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(acct)
-	pages := tview.NewPages()
-	d := NewDashboard(tview.NewApplication(), eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	d.icons.installer = in
 	d.icons.environ = func() []string { return env }
 	d.icons.goos = "darwin"
@@ -286,16 +278,6 @@ func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string
 // pressKey sends a key to whatever holds the keyboard, as the event loop does.
 func pressKey(d *Dashboard, pages *tview.Pages, k tcell.Key, r rune) {
 	pages.InputHandler()(tcell.NewEventKey(k, r, tcell.ModNone), func(p tview.Primitive) { d.app.SetFocus(p) })
-}
-
-// screenAt renders pages at w×h on a SimulationScreen.
-func screenAt(t *testing.T, pages *tview.Pages, w, h int) string {
-	t.Helper()
-	var rows []string
-	for _, r := range screenGrid(t, pages, w, h) {
-		rows = append(rows, strings.TrimRight(string(r), " "))
-	}
-	return strings.Join(rows, "\n")
 }
 
 // TestIconsWindowOnScreen: icons at the prompt opens the window over the
@@ -311,18 +293,14 @@ func TestIconsWindowOnScreen(t *testing.T) {
 	if front, _ := pages.GetFrontPage(); front != iconsPage {
 		t.Fatalf("front page %q after icons, want the icons window", front)
 	}
-	scr := screenAt(t, pages, 80, 24)
-	for _, want := range []string{" Icons check ", "[I] I see icons", "[B] I see boxes", "[Esc] Close", "Nerd Font icons"} {
-		if !strings.Contains(scr, want) {
-			t.Errorf("80x24 screen lacks %q:\n%s", want, scr)
-		}
-	}
+	scr := drawPrimitive(t, pages, 80, 24).Text()
+	wantAll(t, "80x24 screen", scr, " Icons check ", "[I] I see icons", "[B] I see boxes", "[Esc] Close", "Nerd Font icons")
 	if strings.Contains(scr, "[accent]") || strings.Contains(scr, "[text]") {
 		t.Errorf("a color tag leaked onto the screen:\n%s", scr)
 	}
 
 	pressKey(d, pages, tcell.KeyRune, 'B')
-	if scr := screenAt(t, pages, 100, 30); !strings.Contains(scr, "[Y] Install") || !strings.Contains(scr, "No, show me how") {
+	if scr := drawPrimitive(t, pages, 100, 30).Text(); !strings.Contains(scr, "[Y] Install") || !strings.Contains(scr, "No, show me how") {
 		t.Fatalf("no install offer after B:\n%s", scr)
 	}
 	pressKey(d, pages, tcell.KeyRune, 'x') // not a button: nothing happens
@@ -335,12 +313,8 @@ func TestIconsWindowOnScreen(t *testing.T) {
 	if installs != 1 {
 		t.Fatalf("Enter on Install ran the installer %d times", installs)
 	}
-	scr = screenAt(t, pages, 100, 30)
-	for _, want := range []string{"is installed", "In iTerm2:", "Restart your terminal, then type icons again to check."} {
-		if !strings.Contains(scr, want) {
-			t.Errorf("screen lacks %q:\n%s", want, scr)
-		}
-	}
+	scr = drawPrimitive(t, pages, 100, 30).Text()
+	wantAll(t, "screen", scr, "is installed", "In iTerm2:", "Restart your terminal, then type icons again to check.")
 
 	pressKey(d, pages, tcell.KeyEsc, 0)
 	if pages.HasPage(iconsPage) || !d.inputField.HasFocus() {

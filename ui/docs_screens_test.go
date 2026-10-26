@@ -30,9 +30,7 @@ const docScreensBudget = 400 << 10
 
 func TestDocScreens(t *testing.T) {
 	pages, err := filepath.Glob("../site/docs/*.md")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	shown := map[string][]string{} // screen name -> where it is shown
 	for _, page := range pages {
 		for i, line := range strings.Split(readDoc(t, page), "\n") {
@@ -57,9 +55,7 @@ func TestDocScreens(t *testing.T) {
 	}
 
 	files, err := filepath.Glob("../site/docs/screens/*.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	have := map[string]bool{}
 	total := 0
 	for _, f := range files {
@@ -69,9 +65,7 @@ func TestDocScreens(t *testing.T) {
 			t.Errorf("%s: no wiki page shows this screen. Put a figure for it on the page that explains it, or drop it from TestWriteSiteScreens and run it again", relDoc(f))
 		}
 		raw, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 		total += len(raw)
 		if msg := docScreenFault(raw); msg != "" {
 			t.Errorf("%s: %s", relDoc(f), msg)

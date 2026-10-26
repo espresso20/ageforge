@@ -12,20 +12,6 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
-// eachTheme runs fn once per registered theme, with that theme active, and
-// puts the active theme back afterwards.
-func eachTheme(t *testing.T, fn func(t *testing.T)) {
-	t.Helper()
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
-		t.Run(th.Key, fn)
-	}
-}
-
 // pinScene is the Ready Room drawn at w by h, with the highlight on the
 // first offer and the animation frame at frame.
 type pinScene struct {

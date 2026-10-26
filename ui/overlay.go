@@ -135,10 +135,8 @@ func (om *OverlayManager) Register(name string, title vibe.Entry, provide Overla
 	})
 
 	// The frame is the whole screen but the command bar's rows, which stay
-	// the dashboard's (a nil item draws nothing).
-	entry.root = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(frame, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+	// the dashboard's.
+	entry.root = overBar(frame)
 	om.entries[name] = entry
 }
 

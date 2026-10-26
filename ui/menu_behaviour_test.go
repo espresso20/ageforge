@@ -46,12 +46,9 @@ type menuRig struct {
 func newMenuRig(t *testing.T, games ...string) *menuRig {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	acct, err := game.CreateNamedAccount("Menu Player")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	r := &menuRig{t: t, acct: acct, clock: time.Unix(1_000_000, 0)}
 	for _, name := range games {
 		r.newGame(name)
@@ -79,9 +76,7 @@ func (r *menuRig) newGame(name string) {
 	r.t.Helper()
 	mk := game.NewGameEngine()
 	mk.SetAccount(r.acct)
-	if err := mk.StartNewNamedGame(name); err != nil {
-		r.t.Fatal(err)
-	}
+	must(r.t, mk.StartNewNamedGame(name))
 }
 
 // front is the name of the page in front.
@@ -134,9 +129,7 @@ func (s menuScreen) has(text string) bool {
 func (r *menuRig) draw(w, h int) menuScreen {
 	r.t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		r.t.Fatal(err)
-	}
+	must(r.t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	r.m.SetRect(0, 0, w, h)
@@ -364,9 +357,7 @@ func TestMenuStrikeAndMotion(t *testing.T) {
 	}
 
 	// Motion off: the setting is the account's.
-	if err := r.acct.SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	must(t, r.acct.SetMotion(false))
 	m.Focus(func(tview.Primitive) {})
 	r.draw(120, 40)
 	before := *m.scene
@@ -445,9 +436,7 @@ func TestMenuClockRunsOnlyWhileInUse(t *testing.T) {
 	}
 
 	// Motion off: one still frame, whatever the time, and no clock.
-	if err := r.acct.SetMotion(false); err != nil {
-		t.Fatal(err)
-	}
+	must(t, r.acct.SetMotion(false))
 	m.Focus(func(tview.Primitive) {})
 	m.scene = nil // a menu opened with motion off starts from the rest frame
 	still := r.draw(120, 40)
@@ -499,9 +488,7 @@ func dataTree(t *testing.T, root string) map[string]string {
 		out[rel] = hex.EncodeToString(sum[:]) + " " + fi.ModTime().Format(time.RFC3339Nano)
 		return nil
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	return out
 }
 
@@ -514,31 +501,21 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	root := t.TempDir()
 	t.Cleanup(game.SetDataDirForTest(root))
 	acct, err := game.CreateNamedAccount("Careful Player")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	for _, name := range []string{"ashford", "brackwater"} {
 		mk := game.NewGameEngine()
 		mk.SetAccount(acct)
-		if err := mk.StartNewNamedGame(name); err != nil {
-			t.Fatal(err)
-		}
+		must(t, mk.StartNewNamedGame(name))
 		mk.StepTicks(40)
-		if err := mk.SaveGame(name); err != nil {
-			t.Fatal(err)
-		}
+		must(t, mk.SaveGame(name))
 	}
-	if err := acct.Save(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, acct.Save())
 	// Make the saves old, so that a load would have hours of time away to
 	// apply. (Only the files' times: the menu must not care either way.)
 	old := time.Now().Add(-6 * time.Hour)
 	saves := filepath.Join(game.DataDir(), "saves")
 	for _, name := range []string{"ashford", "brackwater"} {
-		if err := os.Chtimes(filepath.Join(saves, name+".json"), old, old); err != nil {
-			t.Fatal(err)
-		}
+		must(t, os.Chtimes(filepath.Join(saves, name+".json"), old, old))
 	}
 
 	eng := game.NewGameEngine()
@@ -561,11 +538,7 @@ func TestMenuLooksAndWritesNothing(t *testing.T) {
 	if !m.hasCur || m.view.forge || m.cur.Save.Name != "brackwater" {
 		t.Fatalf("the menu should show the town of brackwater: current %q, forge page %v", m.cur.Save.Name, m.view.forge)
 	}
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
+	sim := newSimScreen(t, 120, 40)
 	scr := theme.WrapScreen(sim)
 	key := func(k tcell.Key, ch rune) {
 		pages.InputHandler()(tcell.NewEventKey(k, ch, tcell.ModNone), func(p tview.Primitive) { app.SetFocus(p) })
@@ -645,12 +618,8 @@ func noErrorOnPage(t *testing.T, where string, scr menuScreen) {
 func TestMenuFallsBackWithoutAnError(t *testing.T) {
 	// The account's only save is damaged: no Continue, the first page.
 	r := newMenuRig(t)
-	if err := os.MkdirAll(filepath.Join(game.DataDir(), "saves"), 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(game.DataDir(), "saves", "torn.json"), []byte("{not a save"), 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.MkdirAll(filepath.Join(game.DataDir(), "saves"), 0755))
+	must(t, os.WriteFile(filepath.Join(game.DataDir(), "saves", "torn.json"), []byte("{not a save"), 0644))
 	r.m.Focus(func(tview.Primitive) {})
 	if r.m.hasCur || !r.m.view.forge || r.m.view.items[0].id != miNew {
 		t.Errorf("a damaged save alone: a current game %v, forge page %v, first entry %q", r.m.hasCur, r.m.view.forge, r.m.view.items[0].id)
@@ -687,9 +656,7 @@ func TestMenuFallsBackWithoutAnError(t *testing.T) {
 
 	// The save vanishes after the menu read it: Continue says so in a
 	// dialog (the one thing that is said), and the menu reads again.
-	if err := game.DeleteSave("ashford"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, game.DeleteSave("ashford"))
 	r.press('c')
 	if r.front() != updateModalPage {
 		t.Fatalf("Continue on a save that is gone: front %q, want a dialog", r.front())
@@ -716,12 +683,7 @@ func TestMenuBadgesOpenWithoutAGame(t *testing.T) {
 	if r.eng.Running() || r.eng.GetState().Tick != 0 {
 		t.Error("opening the case started a game")
 	}
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(100, 30)
+	sim := newSimScreen(t, 100, 30)
 	b.SetRect(0, 0, 100, 30)
 	b.Draw(theme.WrapScreen(sim))
 	var text strings.Builder
@@ -759,12 +721,8 @@ func TestMenuTownFollowsTheSettings(t *testing.T) {
 	if got := m.town.style.Name(); got != "roguelike" {
 		t.Errorf("by default the town is drawn by %q", got)
 	}
-	if err := r.acct.SetMapStyle("skyline"); err != nil {
-		t.Fatal(err)
-	}
-	if err := r.acct.SetMapGlyphs("ascii"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, r.acct.SetMapStyle("skyline"))
+	must(t, r.acct.SetMapGlyphs("ascii"))
 	m.Focus(func(tview.Primitive) {})
 	if got := m.town.style.Name(); got != "skyline" {
 		t.Errorf("after map style skyline the town is drawn by %q", got)

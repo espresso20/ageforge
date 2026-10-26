@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,10 +71,10 @@ type CommandResult struct {
 	Window string
 }
 
-// HandleCommand parses a raw command string and dispatches to the appropriate
-// sub-handler. Single-letter shortcuts (g, b, r, a, u, s, t) are normalised
-// to their full equivalents before switching. Commands that purely open an
-// overlay return an empty Message with OverlayName set.
+// HandleCommand parses a raw command string and runs the registry command
+// that has its first word as a name or an alias (the shortcuts g, b, r, a, u,
+// s and t among them). Commands that purely open an overlay return an empty
+// Message with OverlayName set.
 func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	parts := strings.Fields(strings.TrimSpace(input))
 	if len(parts) == 0 {
@@ -83,135 +84,35 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	cmd := strings.ToLower(parts[0])
 	args := parts[1:]
 
-	switch cmd {
-	case "help", "h", "?":
-		return CommandResult{OverlayName: "help"}
-	case "gather", "g":
-		return cmdGather(args, engine)
-	case "build", "b":
-		return cmdBuild(args, engine)
-	case "recruit", "r":
-		return cmdRecruit(args, engine)
-	case "assign", "a":
-		return cmdAssign(args, engine)
-	case "unassign", "u":
-		return cmdUnassign(args, engine)
-	case "dismiss":
-		return cmdDismiss(args, engine)
-	case "sell":
-		return cmdSell(args, engine)
-	case "status", "s":
-		return cmdStatus(engine)
-	case "research", "res":
-		if len(args) == 0 {
-			return CommandResult{OverlayName: "techs"}
+	for _, c := range registry() {
+		if c.Dashboard || c.Name != cmd && !slices.Contains(c.Aliases, cmd) {
+			continue
 		}
-		return cmdResearch(args, engine)
-	case "expedition", "exp":
-		return cmdExpedition(args, engine)
-	case "campaign":
-		return cmdCampaign(args, engine)
-	case "trade", "t":
-		return cmdTrade(args, engine)
-	case "diplomacy", "dip":
-		if len(args) == 0 {
-			// Opens the Factions panel under its PRIMARY overlay name, not under
-			// "diplomacy": the sidebar highlight matches on the name it is handed,
-			// so returning the alias would open the panel without lighting up the
-			// entry the player just navigated to.
-			return CommandResult{OverlayName: "factions"}
+		run := c.Run
+		if run == nil {
+			run = runPanel(c.Name)
 		}
-		return cmdDiplomacy(args, engine)
-	case "wonder":
-		return cmdWonder(args, engine)
-	case "plan":
-		return cmdPlan(args, engine)
-	case "prestige":
-		return cmdPrestige(args, engine)
-	case "festival":
-		return cmdFestival(args, engine)
-	case "blackmarket", "bm":
-		return cmdBlackMarket(args, engine)
-	case "rates":
-		return cmdRates(engine)
-	case "upgrade":
-		return cmdUpgrade(args, engine)
-	case "advance":
-		return cmdAdvance(engine)
-	case "charter":
-		return CommandResult{OverlayName: "charter"}
-	case "factions":
-		return CommandResult{OverlayName: "factions"}
-	case "milestones", "ms":
-		return CommandResult{OverlayName: "milestones"}
-	case "techs":
-		return CommandResult{OverlayName: "techs"}
-	case "army":
-		return CommandResult{OverlayName: "army"}
-	case "stats":
-		return CommandResult{OverlayName: "stats"}
-	case "wonders":
-		return CommandResult{OverlayName: "wonders"}
-	case "people":
-		return CommandResult{OverlayName: "people"}
-	case "workers":
-		return cmdWorkers(args, engine)
-	case "roster":
-		return cmdRoster(args, engine)
-	case "scholars":
-		return cmdScholars(args, engine)
-	case "logs":
-		return CommandResult{OverlayName: "logs"}
-	case "epoch":
-		return CommandResult{OverlayName: "epoch"}
-	case "history":
-		return CommandResult{OverlayName: "history"}
-	case "buildings":
-		return CommandResult{OverlayName: "buildings"}
-	case "map", "citymap", "worldmap":
-		// citymap and worldmap are the old maps' commands, kept as aliases;
-		// worldmap opens on the known world.
-		return cmdMap(cmd, args, engine)
-	case "style":
-		// style is map style's shortcut: players reach for it first.
-		return cmdMapStyle(args, engine)
-	case "minimap":
-		return cmdMinimap(args, engine)
-	case "motion":
-		return cmdMotion(args, engine)
-	case "vibemode":
-		return cmdVibemode(args, engine)
-	case "catastrophe", "cat":
-		return cmdCatastrophe(args, engine)
-	case "harbinger", "harb":
-		return cmdHarbinger(args, engine)
-	case "dump", "exportlogs":
-		return cmdDump(args, engine)
-	case "saves":
-		return cmdSaveList()
-	case "save":
-		if len(args) > 0 && args[0] == "list" {
-			return cmdSaveList()
+		res := run(args, engine)
+		// worldmap is map, opened on the known world.
+		if cmd == "worldmap" && res.OverlayName == "map" {
+			res.MapWorld = true
 		}
-		return cmdSave(args, engine)
-	case "load":
-		return cmdLoad(args, engine)
-	case "account", "acct":
-		return cmdAccount(args, engine)
-	case "badges", "achievements":
-		return cmdBadges(args, engine)
-	case "title":
-		return cmdTitle(args, engine)
-	case "theme":
-		return cmdTheme(args, engine)
-	case "icons":
-		if len(args) > 0 {
-			return CommandResult{Message: usageFor("icons"), Type: "error"}
-		}
-		return CommandResult{Icons: true}
-	default:
-		return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
+		return res
 	}
+	return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
+}
+
+// runPanel is the Run of a command that only opens the panel of that name.
+func runPanel(name string) func(args []string, engine *game.GameEngine) CommandResult {
+	return func([]string, *game.GameEngine) CommandResult { return CommandResult{OverlayName: name} }
+}
+
+// cmdIcons is `icons`: start the guided icons check.
+func cmdIcons(args []string, _ *game.GameEngine) CommandResult {
+	if len(args) > 0 {
+		return CommandResult{Message: usageFor("icons"), Type: "error"}
+	}
+	return CommandResult{Icons: true}
 }
 
 // unknownCommandText is the refusal for a first word that is no command:
@@ -298,6 +199,36 @@ func parseCount(arg string) (int, error) {
 	return n, nil
 }
 
+// buildingCountArgs reads the `<building> [count]` that sell and the worker
+// commands take, for the command path cmd: the building and the count (def
+// when none is given). A reply that is not nil is the refusal: the usage line
+// when the building is missing, or with why when the count is not one.
+func buildingCountArgs(cmd string, args []string, def int) (building string, count int, bad *CommandResult) {
+	if len(args) < 1 {
+		return "", 0, &CommandResult{Message: usageFor(cmd), Type: "error"}
+	}
+	building, count = strings.ToLower(args[0]), def
+	if len(args) >= 2 {
+		n, err := parseCount(args[1])
+		if err != nil {
+			refusal := usageError(usageFor(cmd), err)
+			return building, count, &refusal
+		}
+		count = n
+	}
+	return building, count, nil
+}
+
+// buildingCountOrAll is buildingCountArgs for the commands whose count may be
+// the word all: all says it was, and the count is then def.
+func buildingCountOrAll(cmd string, args []string, def int) (building string, count int, all bool, bad *CommandResult) {
+	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
+		return strings.ToLower(args[0]), def, true, nil
+	}
+	building, count, bad = buildingCountArgs(cmd, args, def)
+	return building, count, false, bad
+}
+
 // parseAmount reads a resource amount: a positive, finite number. ParseFloat
 // happily returns NaN and infinities for "NaN" and "Inf", and NaN slips past
 // every comparison, so both are refused here.
@@ -336,14 +267,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 
 	// Find the wonder for the current age
-	var curWonder *wonderInfo
-	for _, w := range getWonderList(state.Ruleset()) {
-		if w.ageKey == state.Age {
-			wCopy := w
-			curWonder = &wCopy
-			break
-		}
-	}
+	curWonder := currentWonder(state)
 	if curWonder == nil {
 		return CommandResult{Message: vibe.Line("ui.input.cmdWonder.01", "No wonder available this age."), Type: "error"}
 	}
@@ -376,29 +300,8 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	var sb strings.Builder
 	fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.05", "[gold::b]%s[-]: wonder bank\n\n", curWonder.name))
 
-	costKeys := make([]string, 0, len(curWonder.def.BaseCost))
-	for k := range curWonder.def.BaseCost {
-		costKeys = append(costKeys, k)
-	}
-	sort.Strings(costKeys)
-
-	for _, res := range costKeys {
-		need := curWonder.def.BaseCost[res]
-		banked := bs.WonderBank[res]
-		pct := 0.0
-		if need > 0 {
-			pct = banked / need * 100
-			if pct > 100 {
-				pct = 100
-			}
-		}
-		clr := "red"
-		if pct >= 100 {
-			clr = "green"
-		} else if pct > 0 {
-			clr = "yellow"
-		}
-		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, game.ResourceName(res), FormatNumber(banked), FormatNumber(need), pct)
+	for _, r := range bankRows(curWonder.def.BaseCost, bs.WonderBank) {
+		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", r.color, game.ResourceName(r.res), textfmt.Number(r.banked), textfmt.Number(r.need), r.share*100)
 	}
 
 	if line := wonderKeystoneLine(state, curWonder.key); line != "" {
@@ -476,7 +379,7 @@ func wonderCollectAll(w *wonderInfo, engine *game.GameEngine) CommandResult {
 	bs := state.Buildings[w.key]
 	var banked int
 	var skipped, full []string // full: already banked in full, named only when nothing went in
-	for _, res := range sortedMapKeys(w.def.BaseCost) {
+	for _, res := range sortedKeysOf(w.def.BaseCost) {
 		name := game.ResourceName(res)
 		switch {
 		case bs.WonderBank[res] >= w.def.BaseCost[res]:
@@ -686,7 +589,7 @@ func cmdAutoRecruit(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: usageFor("workers auto-recruit"), Type: "error"}
 }
 
-func cmdAdvance(engine *game.GameEngine) CommandResult {
+func cmdAdvance(_ []string, engine *game.GameEngine) CommandResult {
 	if err := engine.AdvanceAge(); err != nil {
 		return errorResult(err)
 	}
@@ -719,22 +622,11 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
-	building := strings.ToLower(args[0])
-	all := false
-	count := 0
-	if len(args) >= 2 {
-		if strings.ToLower(args[1]) == "all" {
-			all = true
-		} else {
-			n, err := parseCount(args[1])
-			if err != nil {
-				return usageError(usageFor("upgrade"), err)
-			}
-			count = n
-		}
-	} else {
-		all = true // default: upgrade all
+	building, count, all, bad := buildingCountOrAll("upgrade", args, 0)
+	if bad != nil {
+		return *bad
 	}
+	all = all || len(args) < 2 // default: upgrade all
 
 	if err := engine.UpgradeBuilding(building, count, all); err != nil {
 		return errorResult(err)
@@ -923,56 +815,40 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("assign"), Type: "error"}
+	building, count, all, bad := buildingCountOrAll("assign", args, 1)
+	if bad != nil {
+		return *bad
 	}
-	building := strings.ToLower(args[0])
-	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
-		if _, err := engine.AssignAll(building); err != nil {
-			return errorResult(err)
-		}
-		return CommandResult{Type: "success"} // the engine logs the assignment
+	var err error
+	if all {
+		_, err = engine.AssignAll(building)
+	} else {
+		err = engine.AssignWorker(building, count)
 	}
-	count := 1
-	if len(args) >= 2 {
-		n, err := parseCount(args[1])
-		if err != nil {
-			return usageError(usageFor("assign"), err)
-		}
-		count = n
-	}
-	if err := engine.AssignWorker(building, count); err != nil {
+	if err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"}
+	return CommandResult{Type: "success"} // the engine logs the assignment
 }
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("unassign"), Type: "error"}
+	building, count, all, bad := buildingCountOrAll("unassign", args, 1)
+	if bad != nil {
+		return *bad
 	}
-	building := strings.ToLower(args[0])
-	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
-		if _, err := engine.UnassignAll(building); err != nil {
-			return errorResult(err)
-		}
-		return CommandResult{Type: "success"} // the engine logs the change
+	var err error
+	if all {
+		_, err = engine.UnassignAll(building)
+	} else {
+		err = engine.UnassignWorker(building, count)
 	}
-	count := 1
-	if len(args) >= 2 {
-		n, err := parseCount(args[1])
-		if err != nil {
-			return usageError(usageFor("unassign"), err)
-		}
-		count = n
-	}
-	if err := engine.UnassignWorker(building, count); err != nil {
+	if err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"}
+	return CommandResult{Type: "success"} // the engine logs the change
 }
 
-func cmdStatus(engine *game.GameEngine) CommandResult {
+func cmdStatus(_ []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 
@@ -987,7 +863,7 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  %-10s %s %s",
-			rs.Name, FormatNumber(rs.Amount), FormatRateTick(rs.Rate)))
+			rs.Name, textfmt.Number(rs.Amount), FormatRateTick(rs.Rate)))
 	}
 	lines = append(lines, "")
 
@@ -1461,6 +1337,9 @@ func oneWordName(verb string, args []string) (string, *CommandResult) {
 }
 
 func cmdSave(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) > 0 && args[0] == "list" {
+		return cmdSaveList(nil, engine)
+	}
 	// With a name: branch a new save off the current run (BranchSave switches the
 	// active slot + sets the parent, so autosave follows the branch). Without a
 	// name: overwrite the active slot. The dashboard UI intercepts a bare `save`
@@ -1503,7 +1382,7 @@ func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: vibe.Sprintf("ui.input.cmdLoad.04", "Game loaded from '%s'.", name), Type: "info"}
 }
 
-func cmdRates(engine *game.GameEngine) CommandResult {
+func cmdRates(_ []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 	lines = append(lines, vibe.Line("ui.input.cmdRates.01", "[gold]Resource Rate Breakdown:[-]"))
@@ -1583,7 +1462,7 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
-func cmdSaveList() CommandResult {
+func cmdSaveList(_ []string, _ *game.GameEngine) CommandResult {
 	saves, err := game.ListSaveDetails()
 	if err != nil {
 		return CommandResult{Message: vibe.Line("ui.input.cmdSaveList.01", "Could not list saves: ") + shortIOError(err) + ".", Type: "error"}
@@ -1725,7 +1604,7 @@ func themeKeys() []string {
 
 func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return cmdResearchList(engine)
+		return CommandResult{OverlayName: "techs"}
 	}
 	subcmd := strings.ToLower(args[0])
 
@@ -2209,6 +2088,10 @@ func civKey(words []string) string {
 
 func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
+		// Opens the Factions panel under its PRIMARY overlay name, not under
+		// "diplomacy": the sidebar highlight matches on the name it is handed,
+		// so returning the alias would open the panel without lighting up the
+		// entry the player just navigated to.
 		return CommandResult{OverlayName: "factions"}
 	}
 	subcmd := strings.ToLower(args[0])
@@ -2304,17 +2187,9 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdSell(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("sell"), Type: "error"}
-	}
-	building := strings.ToLower(args[0])
-	count := 1
-	if len(args) >= 2 {
-		n, err := parseCount(args[1])
-		if err != nil {
-			return usageError(usageFor("sell"), err)
-		}
-		count = n
+	building, count, bad := buildingCountArgs("sell", args, 1)
+	if bad != nil {
+		return *bad
 	}
 	if err := engine.SellBuilding(building, count); err != nil {
 		return errorResult(err)
@@ -2323,22 +2198,9 @@ func cmdSell(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: usageFor("dismiss"), Type: "error"}
-	}
-	building := strings.ToLower(args[0])
-	all := false
-	count := 1
-	if len(args) >= 2 {
-		if strings.ToLower(args[1]) == "all" {
-			all = true
-		} else {
-			n, err := parseCount(args[1])
-			if err != nil {
-				return usageError(usageFor("dismiss"), err)
-			}
-			count = n
-		}
+	building, count, all, bad := buildingCountOrAll("dismiss", args, 1)
+	if bad != nil {
+		return *bad
 	}
 	if err := engine.DismissWorkers(building, count, all); err != nil {
 		return errorResult(err)
@@ -2371,7 +2233,7 @@ func lastPassageStatusLines(state game.GameState) []string {
 	}
 	lines := []string{vibe.Sprintf("ui.input.lastPassageStatusLines.01", "  [red]☄ The Last Passage:[-] %s when you prestige.", lastPassageRiskText(state))}
 	if h := state.Harbinger; h != nil && h.LastPassage {
-		lines = append(lines, vibe.Sprintf("ui.input.lastPassageStatusLines.02", "  %s is warning of it. Type [cyan]harbinger[-] to answer.", capFirstUI(h.Name)))
+		lines = append(lines, vibe.Sprintf("ui.input.lastPassageStatusLines.02", "  %s is warning of it. Type [cyan]harbinger[-] to answer.", textfmt.Capitalize(h.Name)))
 	}
 	return lines
 }
@@ -2562,7 +2424,7 @@ func doomWarningText(state game.GameState) string {
 	if h.WhenText != "" {
 		when = " " + h.WhenText
 	}
-	return vibe.Sprintf("ui.input.doomWarningText.02", "%s warns of doom%s: %s", capFirstUI(h.Name), when, riskText(state))
+	return vibe.Sprintf("ui.input.doomWarningText.02", "%s warns of doom%s: %s", textfmt.Capitalize(h.Name), when, riskText(state))
 }
 
 // outlookRiskText describes the Last Passage's risk the way the current age
@@ -2570,7 +2432,7 @@ func doomWarningText(state game.GameState) string {
 // (the Cosmic Era's fated doom may be speaking instead).
 func outlookRiskText(state game.GameState) string {
 	if h := state.Harbinger; h != nil && h.LastPassage {
-		return vibe.Sprintf("ui.input.outlookRiskText.01", "%s warns of %s", capFirstUI(h.Name), riskText(state))
+		return vibe.Sprintf("ui.input.outlookRiskText.01", "%s warns of %s", textfmt.Capitalize(h.Name), riskText(state))
 	}
 	o := state.CatastropheOutlook
 	return riskFrom(state, o.Tier, harbingerNumericAge(state), o.Probability)
@@ -2772,11 +2634,11 @@ func planIndexArg(rest []string, sub string) (int, error) {
 }
 
 // cmdMap handles map and its aliases citymap and worldmap. Bare, it opens
-// the Map panel (worldmap on the known world); "style" and "glyphs" read or
-// change the settings.
-func cmdMap(cmd string, args []string, engine *game.GameEngine) CommandResult {
+// the Map panel (HandleCommand has worldmap open it on the known world);
+// "style", "glyphs" and "flows" read or change the settings.
+func cmdMap(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "map", MapWorld: cmd == "worldmap"}
+		return CommandResult{OverlayName: "map"}
 	}
 	switch strings.ToLower(args[0]) {
 	case "style":

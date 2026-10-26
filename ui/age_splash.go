@@ -10,12 +10,6 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// ShowAgeSplash is the simplified variant of ShowAgeSplashFull for callers that
-// don't have an AgeAdvanceSummary or EpochEventRecord available.
-func ShowAgeSplash(om *OverlayManager, oldAge, newAge string) {
-	ShowAgeSplashFull(om, oldAge, newAge, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
-}
-
 // ShowAgeSplashFull puts up the arrival screen for an advance into newAge
 // (arrival.go): the moment first, the age's name struck in iron over the
 // player's town, then what the age opens, the upgrades on offer and the
@@ -69,21 +63,6 @@ const (
 type splashLine struct {
 	text string
 	kind splashKind
-}
-
-// buildAgeSplashText assembles the full text of an age advance: the age's
-// name, description and quip, what it opens, the upgrades on offer and the
-// epoch's event. It is the arrival screen's words, every one of them; the
-// screen lays the same lines out (ageSplashLines). Pure function: same
-// inputs → same string, no side effects.
-func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
-	epochChanged bool, epochEvent game.EpochEventRecord) string {
-	lines := ageSplashLines(newAge, summary, epochChanged, epochEvent)
-	out := make([]string, len(lines))
-	for i, l := range lines {
-		out[i] = l.text
-	}
-	return strings.Join(out, "\n")
 }
 
 // ageSplashLines is the text of an age advance, line by line.

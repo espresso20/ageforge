@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -122,9 +123,9 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	add()
 
 	if a.Party > 0 {
-		parts := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.02", "Party"), 7), xDim}, {fmt.Sprintf("%s %s", FormatNumber(float64(a.Party)), pluralize(vibe.Line("ui.expedition_field.fieldLines.03", "soldier"), a.Party)), xText}}
+		parts := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.02", "Party"), 7), xDim}, {fmt.Sprintf("%s %s", textfmt.Number(float64(a.Party)), pluralize(vibe.Line("ui.expedition_field.fieldLines.03", "soldier"), a.Party)), xText}}
 		if fell := a.Party - a.Soldiers; fell > 0 {
-			parts = append(parts, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.04", " · %s fell so far", FormatNumber(float64(fell))), xBad})
+			parts = append(parts, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.04", " · %s fell so far", textfmt.Number(float64(fell))), xBad})
 		}
 		add(parts...)
 	}
@@ -146,7 +147,7 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	add(xseg{padRight(vibe.Line("ui.expedition_field.fieldLines.09", "Haul"), 7), xDim}, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.10", "about %.0f min of income", a.HaulMinutes), xGood})
 	var pays []string
 	for _, k := range sortedKeysOf(a.SuccessHaul) {
-		pays = append(pays, "+"+FormatNumber(a.SuccessHaul[k])+" "+resourceDisplayName(state, k))
+		pays = append(pays, "+"+textfmt.Number(a.SuccessHaul[k])+" "+resourceDisplayName(state, k))
 	}
 	for _, ln := range wrapText(strings.Join(pays, ", "), cw-7) {
 		add(xseg{"       ", xDim}, xseg{ln, xGood})

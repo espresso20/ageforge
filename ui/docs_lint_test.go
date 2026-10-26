@@ -20,9 +20,7 @@ import (
 func playerDocs(t *testing.T) []string {
 	t.Helper()
 	files, err := filepath.Glob("../site/docs/*.md")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	return append(files, "../site/index.html", "../site/script.js", "../README.md")
 }
 
@@ -33,9 +31,7 @@ func devDocs() []string { return []string{"../CONTRIBUTING.md"} }
 func readDoc(t *testing.T, path string) string {
 	t.Helper()
 	raw, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	return string(raw)
 }
 
@@ -184,9 +180,7 @@ var camelOK = map[string]bool{"AgeForge": true, "PgUp": true, "PgDn": true, "Git
 
 func TestDocsNoGoIdentifiers(t *testing.T) {
 	files, err := filepath.Glob("../site/docs/*.md")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	for _, f := range append(files, "../README.md") {
 		raw := readDoc(t, f)
 		raw = fencedCode.ReplaceAllString(raw, "")

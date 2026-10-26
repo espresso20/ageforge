@@ -31,20 +31,20 @@ func TestLateGameStoresPrintInThreeDigits(t *testing.T) {
 		}
 		largest = max(largest, size)
 	}
-	if got := FormatNumber(smallest); got != "800" {
+	if got := textfmt.Number(smallest); got != "800" {
 		t.Errorf("the smallest stock prints %q, want 800", got)
 	}
-	if got := FormatNumber(largest); got != "344Qi" {
+	if got := textfmt.Number(largest); got != "344Qi" {
 		t.Errorf("the largest stock prints %q, want 344Qi", got)
 	}
 	for copies := 1; copies <= 40; copies++ {
 		for _, size := range []float64{smallest, largest} {
-			if got := FormatNumber(size * float64(copies)); bigFigure.MatchString(got) {
+			if got := textfmt.Number(size * float64(copies)); bigFigure.MatchString(got) {
 				t.Errorf("%d copies of a %v store print %q", copies, size, got)
 			}
 		}
 	}
-	if got := FormatNumber(25 * config.Quintillion); got != "25Qi" {
+	if got := textfmt.Number(25 * config.Quintillion); got != "25Qi" {
 		t.Errorf("25 quintillion prints %q, want 25Qi", got)
 	}
 	if max := textfmt.MaxNumber(); max < largest*40*config.Billion {

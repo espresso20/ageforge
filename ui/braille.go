@@ -1,8 +1,6 @@
 package ui
 
-import (
-	"github.com/espresso20/ageforge/pkg/textfmt"
-)
+import "slices"
 
 // braille dot bit positions: [col: 0=left, 1=right][row: 0=top .. 3=bottom]
 var brailleDot = [2][4]rune{
@@ -25,15 +23,7 @@ func BrailleLine(values []float64, width, height int, ageCols []int) []string {
 		canvas[i] = make([]bool, cW)
 	}
 
-	minV, maxV := values[0], values[0]
-	for _, v := range values {
-		if v < minV {
-			minV = v
-		}
-		if v > maxV {
-			maxV = v
-		}
-	}
+	minV, maxV := slices.Min(values), slices.Max(values)
 	if maxV == minV {
 		maxV = minV + 1
 	}
@@ -110,10 +100,4 @@ func AgeMarkerCols(markerTicks []int, firstTick, lastTick, width int) []int {
 		}
 	}
 	return cols
-}
-
-// fmtVal formats a float64 for compact display. It delegates to the shared
-// number formatter (950, 12.5K, 1.23M) so graphs read like the rest of the UI.
-func fmtVal(v float64) string {
-	return textfmt.Number(v)
 }

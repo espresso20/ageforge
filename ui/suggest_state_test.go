@@ -84,9 +84,7 @@ func TestSuggestBuildGameAware(t *testing.T) {
 	checkBuildSuggestions(t, eng)
 
 	// Later on, other ages' buildings drop out and the age's new ones come in.
-	if err := eng.SummonHarbingerForTest("bronze_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SummonHarbingerForTest("bronze_age"))
 	// The Bronze Age's buildings cost more than the starting stock, so stock
 	// is added first: some of its buildings are then within reach and the
 	// rest are not.
@@ -146,9 +144,7 @@ func TestSuggestFromGameState(t *testing.T) {
 		}
 	}
 	// load: the saves on disk.
-	if err := eng.SaveGame("alpha"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SaveGame("alpha"))
 	if got := comp("load al"); !slices.Equal(got, []string{"load alpha"}) {
 		t.Errorf("load al = %v, want the alpha save", got)
 	}
@@ -175,9 +171,7 @@ func TestSuggestSellOnlyWhatSellTakes(t *testing.T) {
 		t.Errorf("sell offers %d buildings in the Primitive Age, want none: %v", len(got), got)
 	}
 
-	if err := eng.SummonHarbingerForTest("iron_age"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SummonHarbingerForTest("iron_age"))
 	offered := map[string]bool{}
 	for _, line := range comp("sell ") {
 		offered[strings.TrimPrefix(line, "sell ")] = true

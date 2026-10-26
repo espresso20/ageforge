@@ -56,9 +56,9 @@ type ending struct {
 	closed bool
 	// quiet: keys before this moment are let go by. keys counts every key
 	// the film was given, heeded or not (the freeze harness reads it).
-	quiet   time.Time
-	keys    int
-	stop    chan struct{}
+	quiet time.Time
+	keys  int
+	redrawClock
 	cancels []func()
 	after   func(d time.Duration, fn func()) (cancel func())
 }
@@ -204,37 +204,6 @@ func (e *ending) close() {
 	}
 }
 
-// startClock starts the redraw clock (see arrival.startClock).
-func (e *ending) startClock() {
-	if e.stop != nil || e.om == nil || e.om.app == nil {
-		return
-	}
-	stop := make(chan struct{})
-	e.stop = stop
-	app := e.om.app
-	go func() {
-		t := time.NewTimer(mapAnimStep)
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				asked := time.Now()
-				app.QueueUpdateDraw(func() {})
-				t.Reset(max(mapAnimStep-time.Since(asked), arrivalBreath))
-			case <-stop:
-				return
-			}
-		}
-	}()
-}
-
-func (e *ending) stopClock() {
-	if e.stop != nil {
-		close(e.stop)
-		e.stop = nil
-	}
-}
-
 // InputHandler: any key skips to the next beat, and on the last beat
 // closes the film.
 func (e *ending) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -288,7 +257,7 @@ func (e *ending) Draw(scr tcell.Screen) {
 		}
 	}
 	if e.view.motion {
-		e.startClock()
+		e.startClock(e.om)
 	} else {
 		e.stopClock()
 	}

@@ -27,29 +27,9 @@ func prestigeCueText(state game.GameState, width int) string {
 	}
 	var wrapped []string
 	for _, line := range lines {
-		wrapped = append(wrapped, wrapPrestigeCueLine(line, max)...)
+		wrapped = append(wrapped, wrapWords(line, max)...)
 	}
 	return strings.Join(wrapped, "\n")
-}
-
-func wrapPrestigeCueLine(line string, width int) []string {
-	words := strings.Fields(line)
-	var out []string
-	current := ""
-	for _, word := range words {
-		if current != "" && len(current)+1+len(word) > width {
-			out = append(out, current)
-			current = ""
-		}
-		if current != "" {
-			current += " "
-		}
-		current += word
-	}
-	if current != "" {
-		out = append(out, current)
-	}
-	return out
 }
 
 func shouldShowPrestigeCue(state game.GameState, blocked bool) bool {

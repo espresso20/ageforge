@@ -144,7 +144,7 @@ func TestTheGameRunsUnderTheCelebration(t *testing.T) {
 		return h.frontPage() == "dashboard" && h.inputHasFocus()
 	})
 	// One screen for two advances: the dashboard has refreshed again by now.
-	time.Sleep(700 * time.Millisecond)
+	h.refresh()
 	if h.hasPage(arrivalPageName) {
 		t.Errorf("a second screen followed the first\n%s", h.describeUI())
 	}

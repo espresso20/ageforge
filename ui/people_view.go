@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -97,11 +98,7 @@ func renderPeople(st game.GameState, v peopleView, w, h int) *xgrid {
 		return g
 	}
 	v.tab = clamp(v.tab, 0, len(peopleTabs)-1)
-	if n := peopleRows(st, v.tab); n > 0 {
-		v.row = clamp(v.row, 0, n-1)
-	} else {
-		v.row = 0
-	}
+	v.row = clamp(v.row, 0, peopleRows(st, v.tab)-1)
 	peopleHeader(g, st, v)
 	c := peopleBody{g: g, st: st, v: v, x: 1, y: 2, w: w - 2, h: h - 4}
 	switch v.tab {
@@ -129,8 +126,8 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 		x = g.put(x, 1, " "+name+" ", k) + 1
 	}
 	ws := st.Workers
-	pop := FormatNumber(float64(ws.TotalPop))
-	homes := FormatNumber(float64(ws.MaxPop))
+	pop := textfmt.Number(float64(ws.TotalPop))
+	homes := textfmt.Number(float64(ws.MaxPop))
 	people, of, homesWord := vibe.Line("ui.people_view.peopleHeader.04", "People "), vibe.Line("ui.people_view.peopleHeader.05", " of "), vibe.Line("ui.people_view.peopleHeader.06", " homes")
 	n := runeLen(people + pop + of + homes + homesWord)
 	if start := g.w - 3 - n + 1; start > x+1 {
@@ -184,17 +181,6 @@ func stackBar(g *xgrid, x, y, w int, parts []stackPart, homes int) {
 type stackPart struct {
 	n    int
 	kind xk
-}
-
-// kindCount is a legend entry: the block in the kind's colour, the name, the
-// count.
-func kindLegend(g *xgrid, x, y int, k peopleKind, housed bool) int {
-	mark := "█"
-	if !housed {
-		mark = "·"
-	}
-	x = g.put(x, y, mark+" "+k.name+" ", k.kind)
-	return g.put(x, y, FormatNumber(float64(k.count)), xText)
 }
 
 // A log line is picked for a panel by what it is about (LogEntry.About): by

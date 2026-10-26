@@ -45,7 +45,7 @@ func tickInterval(state game.GameState) time.Duration {
 // string or a negative time, so a countdown that has just hit its floor still
 // prints something sane.
 func formatTicks(ticks int, state game.GameState) string {
-	return "~" + humanizeDuration(time.Duration(ticks)*tickInterval(state))
+	return "~" + textfmt.Duration(time.Duration(ticks)*tickInterval(state))
 }
 
 // formatTickRange renders a [min, max] tick range as one approximate span:
@@ -60,16 +60,6 @@ func formatTickRange(minTicks, maxTicks int, state game.GameState) string {
 	}
 	iv := tickInterval(state)
 	return fmt.Sprintf("~%s – %s",
-		humanizeDuration(time.Duration(minTicks)*iv),
-		humanizeDuration(time.Duration(maxTicks)*iv))
-}
-
-// humanizeDuration renders d at two units of precision, largest first, dropping
-// a zero second unit: "45s", "4m 44s", "5m", "1h 12m", "2h", "3d 4h".
-//
-// Two units is the ceiling on purpose. "1h 12m 07s" is false precision for a
-// number that moves whenever tick speed does, and it makes a status line harder
-// to scan than the thing it is describing.
-func humanizeDuration(d time.Duration) string {
-	return textfmt.Duration(d)
+		textfmt.Duration(time.Duration(minTicks)*iv),
+		textfmt.Duration(time.Duration(maxTicks)*iv))
 }

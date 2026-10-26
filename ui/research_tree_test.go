@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -24,20 +25,14 @@ func classicalGame(t *testing.T) *game.GameEngine {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range []string{"stone_age", "bronze_age", "iron_age", "classical_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	ge.GrantTechsForTest("language", "tool_making", "fire_mastery", "stoneworking", "primitive_writing", "pottery", "woodworking", "bronze_working", "currency", "masonry", "the_wheel", "mathematics", "iron_smelting")
 	// A town of scholars: the times on the screens come from the scholars
 	// researching, so there must be some.
 	ge.SetTownForTest(map[string]int{"story_circle": 5, "elders_hall": 5, "scriptorium": 5, "agora": 7}, 0)
-	if err := ge.StartResearch("philosophy"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddResearch("road_building"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("philosophy"))
+	must(t, ge.PlanAddResearch("road_building"))
 	return ge
 }
 
@@ -120,7 +115,7 @@ func treeDrawsEveryTechWhole(t *testing.T, st game.GameState, sel string) {
 					}
 					continue
 				}
-				rows := badgeRows(geom, n, progressOf(st))
+				rows := badgeRows(geom, n, researchFraction(st))
 				if len(rows) != geom.badgeH {
 					t.Fatalf("%s: a badge of %d rows, want %d", n.key, len(rows), geom.badgeH)
 				}
@@ -335,65 +330,44 @@ func TestHelpListsResearchKeys(t *testing.T) {
 				t.Errorf("%d columns: the Help panel's Research section does not list %s", screenW, k.key)
 			}
 		}
-		for _, want := range []string{"Shift-Tab", "research tree far"} {
-			if !strings.Contains(section, want) {
-				t.Errorf("%d columns: the Help panel's Research section does not mention %s", screenW, want)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%d columns: the Help panel's Research section", screenW), section, "Shift-Tab", "research tree far")
 	}
 	// Every key the panel routes is one the Help panel names.
 	listed := ""
 	for _, k := range researchKeys {
 		listed += k.key + " " + k.what.String() + " "
 	}
-	for _, name := range []string{"Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "Enter", "Esc"} {
-		if !strings.Contains(listed, name) {
-			t.Errorf("the Research panel's key list leaves out %s", name)
-		}
-	}
+	wantAll(t, "the Research panel's key list", listed, "Arrows", "Tab", "Shift-Tab", "PgUp", "PgDn", "Home", "Enter", "Esc")
 }
 
 // TestResearchTreePaintsInEveryTheme: in every theme, at every size, every
 // cell the panel draws can be told from its background.
 func TestResearchTreePaintsInEveryTheme(t *testing.T) {
 	st := classicalGame(t).GetState()
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	eachThemeInline(t, func(th theme.Theme) {
 		for _, size := range treeSizes {
 			w, h := size[0], size[1]-promptRows
-			scr := tcell.NewSimulationScreen("UTF-8")
-			if err := scr.Init(); err != nil {
-				t.Fatal(err)
-			}
-			scr.SetSize(w, h)
 			p := newResearchPanel()
 			p.view.sel = "road_building"
 			p.SetRect(0, 0, w, h)
 			p.update(st)
-			p.Draw(scr)
-			scr.Show()
-			cells, cw, _ := scr.GetContents()
+			f := drawPrimitive(t, p, w, h)
 			seen := 0
-			for i, c := range cells {
+			for i, c := range f.Cells() {
 				if len(c.Runes) == 0 || c.Runes[0] == ' ' {
 					continue
 				}
 				seen++
 				fg, bg, _ := c.Style.Decompose()
 				if fg == bg {
-					t.Fatalf("theme %s at %dx%d: cell %d,%d (%q) is drawn in its own background colour", th.Key, w, h, i%cw, i/cw, c.Runes[0])
+					t.Fatalf("theme %s at %dx%d: cell %d,%d (%q) is drawn in its own background colour", th.Key, w, h, i%f.w, i/f.w, c.Runes[0])
 				}
 			}
 			if seen < w {
 				t.Errorf("theme %s at %dx%d: the panel drew %d cells", th.Key, w, h, seen)
 			}
-			scr.Fini()
 		}
-	}
+	})
 }
 
 // TestResearchTreeTellsStatesApartByShape: each state has a mark or a
@@ -523,11 +497,7 @@ func TestResearchCardReadsAsSentences(t *testing.T) {
 		"tool_making":      {"gives +10% food production and +10% wood production. With it, gathering by hand brings 2 more.", "It needs nothing before it."},
 	} {
 		card := cardOf(st, key)
-		for _, want := range wants {
-			if !strings.Contains(card, want) {
-				t.Errorf("%s's card is missing %q:\n%s", key, want, card)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%s's card", key), card, wants...)
 		if strings.Contains(card, "capped") {
 			t.Errorf("%s's card tags a tech's bonus as capped:\n%s", key, card)
 		}
@@ -658,9 +628,7 @@ func TestResearchPanelKeys(t *testing.T) {
 		t.Error("Esc should close the card once, and then have nothing to close")
 	}
 	// With the slot free, the card starts it.
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	p.update(ge.GetState())
 	p.view.sel = "animal_husbandry"
 	p.layout()
@@ -708,9 +676,7 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range []string{"stone_age", "bronze_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	ge.SetGarrisonForTest("bronze_age", 1000) // an army at home to make up a party
 	st := ge.GetState()
@@ -732,16 +698,10 @@ func TestPanelsMarkLockedCommands(t *testing.T) {
 		t.Errorf("a panel names a tech of an age not in sight:\n%s", out)
 	}
 	for _, a := range []string{"iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	out := tradeProvider(ge.GetState(), 120)
-	for _, want := range []string{"The Rail Freight route needs Railroads first. Research it to start it.", "The black market needs Mercantilism first. Research it to deal there."} {
-		if !strings.Contains(out, want) {
-			t.Errorf("the Trade panel is missing %q:\n%s", want, out)
-		}
-	}
+	wantAll(t, "the Trade panel", out, "The Rail Freight route needs Railroads first. Research it to start it.", "The black market needs Mercantilism first. Research it to deal there.")
 	// Their ages reached: each panel names the tech its command waits for,
 	// and stops once it is researched.
 	late := ge.GetState()
@@ -776,9 +736,7 @@ func medievalGame(t *testing.T) *game.GameEngine {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range []string{"stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age"} {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 	}
 	ge.GrantTechsForTest("language", "tool_making", "stoneworking", "primitive_writing", "woodworking", "masonry", "the_wheel",
 		"mathematics", "road_building", "philosophy", "civil_engineering", "alchemy", "theology")
@@ -801,9 +759,7 @@ func gameIn(t *testing.T, age string) *game.GameEngine {
 	ge := game.NewGameEngine()
 	ge.SeedRNG(1)
 	for _, a := range config.AgeOrder()[1:] {
-		if err := ge.EnterAgeForTest(a); err != nil {
-			t.Fatal(err)
-		}
+		must(t, ge.EnterAgeForTest(a))
 		if a == age {
 			break
 		}
@@ -927,14 +883,12 @@ func TestCapstonesReadByShape(t *testing.T) {
 	if got := buildTree(st, treeGeomFor(120, false), false, "guilds").statusLine(st, treeView{sel: "guilds"}); !strings.Contains(got, "waits for what it needs") {
 		t.Errorf("the status line for Guilds: %q", got)
 	}
-	if card := cardOf(st, "guilds"); !strings.Contains(card, "Guilds gives") && !strings.Contains(card, "With it, buildings cost 4% less and construction takes 8% less time") {
+	if card := cardOf(st, "guilds"); !strings.Contains(card, "With it, buildings cost 4% less and construction takes 8% less time") {
 		t.Errorf("Guilds's card does not say what it does:\n%s", card)
 	}
 
 	// In progress: the bar; then done: the tick.
-	if err := ge.StartResearch("scholasticism"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("scholasticism"))
 	st = ge.GetState()
 	geom := treeGeomFor(120, false)
 	m := buildTree(st, geom, false, "scholasticism")

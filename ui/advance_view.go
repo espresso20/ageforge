@@ -405,7 +405,7 @@ func advRow(g *xgrid, r game.GateRow, x, y, iw int) {
 // advAmount is a measured row's amounts at the right edge: "412 / 500", or
 // "210 / 300 a tick" for an income.
 func advAmount(r game.GateRow) string {
-	val := FormatNumber(r.Value) + " / " + FormatNumber(r.Target)
+	val := textfmt.Number(r.Value) + " / " + textfmt.Number(r.Target)
 	if r.Unit != "" {
 		val += " " + r.Unit
 	}

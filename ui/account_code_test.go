@@ -39,7 +39,7 @@ func TestAccountShowCodeIsVisible(t *testing.T) {
 		if front, _ := d.pages.GetFrontPage(); front != codeWindowPage {
 			t.Fatalf("front page %q, want the code window", front)
 		}
-		scr := screenAt(t, d.pages, sz[0], sz[1])
+		scr := drawPrimitive(t, d.pages, sz[0], sz[1]).Text()
 		if !strings.Contains(scr, code) {
 			t.Errorf("%dx%d: the window does not show the whole code %q:\n%s", sz[0], sz[1], code, scr)
 		}
@@ -52,9 +52,7 @@ func TestAccountShowCodeIsVisible(t *testing.T) {
 func TestAccountShowCodeIsNotKept(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	code := eng.Account().RecoveryCode()
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	d.runForTest("account show code")
 	d.refresh()
 	for _, e := range eng.GetLogs() {
@@ -71,21 +69,17 @@ func TestAccountShowCodeIsNotKept(t *testing.T) {
 		t.Error("the state snapshot holds the code")
 	}
 	d.pages.RemovePage(codeWindowPage)
-	if scr := screenAt(t, d.pages, 100, 30); strings.Contains(scr, code) {
+	if scr := drawPrimitive(t, d.pages, 100, 30).Text(); strings.Contains(scr, code) {
 		t.Errorf("the code is on screen after its window closed:\n%s", scr)
 	}
-	if err := eng.SaveGame("after-code"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SaveGame("after-code"))
 	files, _ := filepath.Glob(filepath.Join(game.DataDir(), "saves", "*.json"))
 	if len(files) == 0 {
 		t.Fatal("no save was written")
 	}
 	for _, f := range files {
 		raw, err := os.ReadFile(f)
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 		if bytes.Contains(raw, []byte(code)) {
 			t.Errorf("%s holds the code", f)
 		}

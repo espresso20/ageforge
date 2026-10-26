@@ -142,8 +142,7 @@ func TestArrivalDump(t *testing.T) {
 	if out == "" {
 		t.Skip("set ARRIVAL_DUMP to a folder to write the beats")
 	}
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	themes := strings.Split(os.Getenv("ARRIVAL_DUMP_THEMES"), ",")
 	if themes[0] == "" {
 		themes = []string{theme.DefaultKey}
@@ -155,9 +154,7 @@ func TestArrivalDump(t *testing.T) {
 	var page strings.Builder
 	page.WriteString("<!doctype html><meta charset=\"utf-8\"><title>Arrival</title><style>body{background:#222;color:#ddd;font:13px sans-serif}pre{font:10px/12px 'JetBrains Mono',Menlo,monospace;display:inline-block;margin:4px 12px 16px 0;vertical-align:top}h3{margin:10px 0 2px}</style>\n")
 	for _, key := range themes {
-		if err := theme.SetActive(key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(key))
 		for _, sz := range strings.Split(sizes, ",") {
 			var w, h int
 			if _, err := fmt.Sscanf(sz, "%dx%d", &w, &h); err != nil {
@@ -187,18 +184,14 @@ func TestArrivalDump(t *testing.T) {
 					if c.tier == mapmodel.TierASCII {
 						name += "_plain"
 					}
-					if err := os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644); err != nil {
-						t.Fatal(err)
-					}
+					must(t, os.WriteFile(filepath.Join(out, name+".txt"), []byte(gridText(g)), 0644))
 					fmt.Fprintf(&page, "<h3>%s</h3>\n%s", name, gridHTML(g, r.a.pal, r.a.view.plain))
 				}
 				r.a.close()
 			}
 		}
 	}
-	if err := os.WriteFile(filepath.Join(out, "arrival.html"), []byte(page.String()), 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(filepath.Join(out, "arrival.html"), []byte(page.String()), 0644))
 }
 
 // ---- the alphabet ----
@@ -413,16 +406,7 @@ func checkArrivalInfo(t *testing.T, where string, r *arrivalRig, w, h int) {
 		}
 	}
 	screen = strings.Join(strings.Fields(screen), " ")
-	fold := func(s string) string {
-		if a.view.plain {
-			out := []rune(plainSafe(s))
-			for i, r := range out {
-				out[i] = mapmodel.Fold(r, mapmodel.TierASCII)
-			}
-			s = string(out)
-		}
-		return strings.Join(strings.Fields(s), " ")
-	}
+	fold := func(s string) string { return strings.Join(strings.Fields(foldASCII(s, a.view.plain)), " ") }
 	if a.view.plain {
 		out := []rune(screen)
 		for i, r := range out {
@@ -1149,9 +1133,7 @@ func TestArrivalStill(t *testing.T) {
 			// No clock runs behind a still frame.
 			r.om.app = tview.NewApplication()
 			sim := tcell.NewSimulationScreen("UTF-8")
-			if err := sim.Init(); err != nil {
-				t.Fatal(err)
-			}
+			must(t, sim.Init())
 			sim.SetSize(w, h)
 			r.a.SetRect(0, 0, w, h)
 			r.a.Draw(theme.WrapScreen(sim))
@@ -1187,12 +1169,7 @@ func TestArrivalStill(t *testing.T) {
 func TestArrivalClock(t *testing.T) {
 	r := bareArrival(t, "bronze_age", mapmodel.TierUnicode, true)
 	r.om.app = tview.NewApplication()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(100, 30)
+	sim := newSimScreen(t, 100, 30)
 	r.a.SetRect(0, 0, 100, 30)
 	if r.a.stop != nil {
 		t.Fatal("the clock runs before the screen is drawn")
@@ -1360,8 +1337,6 @@ func TestArrivalAfterBeingAway(t *testing.T) {
 // name can, the page stands on the theme's ground, and the plain set shows
 // nothing it does not have.
 func TestArrivalInEveryTheme(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
 	if n := len(theme.All()); n < 16 {
 		t.Fatalf("%d themes", n)
 	}
@@ -1373,16 +1348,8 @@ func TestArrivalInEveryTheme(t *testing.T) {
 	era := bareArrival(t, "iron_age", mapmodel.TierUnicode, true)
 	t.Cleanup(age.a.close)
 	t.Cleanup(era.a.close)
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
-	for _, th := range theme.All() {
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+	sim := newSimScreen(t, w, h)
+	eachThemeInline(t, func(th theme.Theme) {
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierUnicode, mapmodel.TierASCII} {
 			for _, shot := range []struct {
 				name  string
@@ -1408,61 +1375,15 @@ func TestArrivalInEveryTheme(t *testing.T) {
 					g = r.at(w, h, shot.frame)
 				}
 				a := r.a
-				sim.Clear()
-				g.flush(theme.WrapScreen(sim), 0, 0, a.pal, a.view.plain)
-				rows := make([]string, h)
-				for y := range rows {
-					row := make([]rune, w)
-					for x := range row {
-						row[x], _, _, _ = sim.GetContent(x, y)
-						if a.view.plain && row[x] > 0x7e {
-							t.Fatalf("%s: cell (%d,%d) holds %q, which the plain glyph set does not have", where, x, y, row[x])
-						}
-					}
-					rows[y] = string(row)
-				}
+				rows := flushRows(t, where, sim, g, a.pal, a.view.plain)
 				if a.pal.bg.Hex() != th.Color(theme.RoleBackground).Hex() {
 					t.Errorf("%s: the page is not on the theme's ground", where)
 				}
-				read := func(word string) {
-					if word = strings.TrimSpace(word); word == "" {
-						return
-					}
-					for y := 0; y < h; y++ {
-						at := strings.Index(rows[y], word)
-						if at < 0 {
-							continue
-						}
-						x0 := len([]rune(rows[y][:at]))
-						for i, c := range []rune(word) {
-							if c == ' ' {
-								continue
-							}
-							_, _, st, _ := sim.GetContent(x0+i, y)
-							fg, bg, _ := st.Decompose()
-							if k := theme.ContrastRatio(fg, bg); k < 3-0.02 {
-								t.Errorf("%s: %q is drawn at a contrast of %.2f (%06x on %06x)", where, word, k, fg.Hex(), bg.Hex())
-								return
-							}
-						}
-						return
-					}
-					t.Errorf("%s: %q is not on the screen", where, word)
-				}
-				fold := func(s string) string {
-					if !a.view.plain {
-						return s
-					}
-					out := []rune(plainSafe(s))
-					for i, c := range out {
-						out[i] = mapmodel.Fold(c, mapmodel.TierASCII)
-					}
-					return string(out)
-				}
+				read := func(word string) { wordReadable(t, where, sim, rows, word) }
 				if shot.info {
 					for _, l := range a.info.pages[0] {
 						if l.kind != skBlank && l.kind != skRule {
-							read(fold(l.plain()))
+							read(foldASCII(l.plain(), a.view.plain))
 						}
 					}
 				} else {
@@ -1490,7 +1411,7 @@ func TestArrivalInEveryTheme(t *testing.T) {
 				}
 			}
 		}
-	}
+	})
 }
 
 // TestArrivalAmbientIsAnEpochs: a theme's own ambient effect plays in the
@@ -1498,15 +1419,9 @@ func TestArrivalInEveryTheme(t *testing.T) {
 // flash has gone, and nowhere else: not in an age's, not before the blow,
 // not on the information, not with motion off.
 func TestArrivalAmbientIsAnEpochs(t *testing.T) {
-	prev := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(prev) })
+	keepTheme(t)
 	const w, h = 100, 30
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
+	sim := newSimScreen(t, w, h)
 	// extra counts the cells the screen shows that the page did not draw.
 	extra := func(r *arrivalRig, frames ...int) (n int) {
 		r.a.SetRect(0, 0, w, h)
@@ -1514,13 +1429,7 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 			g := r.at(w, h, f)
 			sim.Clear()
 			r.a.Draw(theme.WrapScreen(sim))
-			for y := 0; y < h; y++ {
-				for x := 0; x < w; x++ {
-					if c, _, _, _ := sim.GetContent(x, y); c != g.c[y*w+x].r && !(c == ' ' && g.c[y*w+x].r == 0) {
-						n++
-					}
-				}
-			}
+			n += extraCells(sim, g)
 		}
 		return n
 	}
@@ -1541,9 +1450,7 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 			continue
 		}
 		with++
-		if err := theme.SetActive(th.Key); err != nil {
-			t.Fatal(err)
-		}
+		must(t, theme.SetActive(th.Key))
 		era.restart(mapmodel.TierUnicode, true)
 		if n := extra(era, 0, arrEraBlow2, arrEraStrike-1); n != 0 {
 			t.Errorf("%s: the effect plays before an epoch's heavy blow (%d cells)", th.Key, n)

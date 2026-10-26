@@ -12,7 +12,7 @@ import (
 // people_tabs.go is the four tabs of the People panel.
 
 // num prints a whole count, written short when it is long.
-func num(n int) string { return FormatNumber(float64(n)) }
+func num(n int) string { return textfmt.Number(float64(n)) }
 
 // rightOf is the column a right-aligned text of the box starting at x with
 // width w ends at (inside its frame).

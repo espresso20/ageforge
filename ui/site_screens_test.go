@@ -92,10 +92,7 @@ func newSiteStage(t *testing.T) *siteStage {
 	t.Helper()
 	eng := game.NewGameEngine()
 	eng.SeedRNG(siteScreensSeed)
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, pages := newTestDashboard(eng)
 	// The maps animate on the clock: hold both at their first frame.
 	still := time.Unix(0, 0)
 	d.mapPanel.start, d.mapPanel.now = still, func() time.Time { return still }
@@ -104,7 +101,7 @@ func newSiteStage(t *testing.T) *siteStage {
 	// the app (app.go). Its timers are held: nothing here waits for them.
 	d.overlayMgr.engine = eng
 	d.overlayMgr.after = func(time.Duration, func()) func() { return func() {} }
-	return &siteStage{t: t, eng: eng, d: d, app: app, pages: pages}
+	return &siteStage{t: t, eng: eng, d: d, app: d.app, pages: pages}
 }
 
 // say types a command at the prompt and presses Enter, as a player would
@@ -313,9 +310,7 @@ func (s *siteStage) close() { s.d.overlayMgr.Hide() }
 func (s *siteStage) draw(w, h int) ([]tcell.SimCell, tcell.Color, tcell.Color) {
 	s.t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		s.t.Fatal(err)
-	}
+	must(s.t, sim.Init())
 	defer sim.Fini()
 	sim.SetSize(w, h)
 	screen := theme.WrapScreen(sim)
@@ -529,9 +524,7 @@ func (s *siteStage) toIron() {
 	// From the Iron Era on a doom may be fated in secret. The era is kept
 	// quiet while the town is built, and the doom the pictures need is fated
 	// when they need it.
-	if err := s.eng.ForceQuietFateForTest("iron_era"); err != nil {
-		s.t.Fatal(err)
-	}
+	must(s.t, s.eng.ForceQuietFateForTest("iron_era"))
 	s.raiseAll(siteBuild{"granary", 5}, siteBuild{"townhouse", 6}, siteBuild{"field_works", 4}, siteBuild{"timber_yard", 4},
 		siteBuild{"marble_quarry", 3}, siteBuild{"agora", 7}, siteBuild{"temple", 2}, siteBuild{"hunting_lodge", 4},
 		siteBuild{"trading_post", 3}, siteBuild{"ironworks", 2})
@@ -636,17 +629,13 @@ type siteShots struct {
 // bytes and takes the file away again.
 func (s *siteStage) saveBytes(name string) []byte {
 	s.t.Helper()
-	if err := s.eng.SaveGame(name); err != nil {
-		s.t.Fatal(err)
-	}
+	must(s.t, s.eng.SaveGame(name))
 	path := filepath.Join(game.DataDir(), "saves", name+".json")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		s.t.Fatal(err)
 	}
-	if err := os.Remove(path); err != nil {
-		s.t.Fatal(err)
-	}
+	must(s.t, os.Remove(path))
 	return data
 }
 
@@ -656,9 +645,7 @@ func (s *siteStage) saveBytes(name string) []byte {
 // picture is the frame a still menu shows.
 func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 	w.t.Helper()
-	if err := theme.SetActive(theme.DefaultKey); err != nil {
-		w.t.Fatal(err)
-	}
+	must(w.t, theme.SetActive(theme.DefaultKey))
 	app, pages := tview.NewApplication(), tview.NewPages()
 	m := newMainMenu(app, pages, eng, siteMenuVersion)
 	still := time.Unix(0, 0)
@@ -667,18 +654,7 @@ func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 	defer m.leave()
 
 	cols, rows := siteDashW, siteDashH
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		w.t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(cols, rows)
-	screen := theme.WrapScreen(sim)
-	screen.Clear()
-	m.SetRect(0, 0, cols, rows)
-	m.Draw(screen)
-	screen.Show()
-	cells, _, _ := sim.GetContents()
+	cells := drawWrapped(w.t, m, cols, rows, 1).Cells()
 	raw, text, err := encodeSiteScreen(cells, cols, rows, theme.Color(theme.RoleText), theme.Color(theme.RoleBackground), false)
 	if err != nil {
 		w.t.Fatalf("%s: %v", name, err)
@@ -687,13 +663,9 @@ func (w *siteShots) takeMenu(eng *game.GameEngine, name string) {
 		w.t.Fatalf("two screens are named %q", name)
 	}
 	w.bytes[name] = len(raw)
-	if err := os.WriteFile(filepath.Join(w.out, name+".json"), raw, 0o644); err != nil {
-		w.t.Fatal(err)
-	}
+	must(w.t, os.WriteFile(filepath.Join(w.out, name+".json"), raw, 0o644))
 	if w.textDir != "" {
-		if err := os.WriteFile(filepath.Join(w.textDir, name+".txt"), []byte(text), 0o644); err != nil {
-			w.t.Fatal(err)
-		}
+		must(w.t, os.WriteFile(filepath.Join(w.textDir, name+".txt"), []byte(text), 0o644))
 	}
 	w.t.Logf("%-18s %3dx%-2d %6d bytes", name, cols, rows, len(raw))
 }
@@ -708,28 +680,20 @@ func (w *siteShots) take(s *siteStage, name string) {
 // takeIn is take in another theme or size.
 func (w *siteShots) takeIn(s *siteStage, name, themeKey string, cols, rows int) {
 	w.t.Helper()
-	if err := theme.SetActive(themeKey); err != nil {
-		w.t.Fatal(err)
-	}
+	must(w.t, theme.SetActive(themeKey))
 	cells, fg, bg := s.draw(cols, rows)
 	raw, text, err := encodeSiteScreen(cells, cols, rows, fg, bg, themeKey != theme.DefaultKey)
 	if err != nil {
 		w.t.Fatalf("%s: %v", name, err)
 	}
-	if err := theme.SetActive(theme.DefaultKey); err != nil {
-		w.t.Fatal(err)
-	}
+	must(w.t, theme.SetActive(theme.DefaultKey))
 	if _, dup := w.bytes[name]; dup {
 		w.t.Fatalf("two screens are named %q", name)
 	}
 	w.bytes[name] = len(raw)
-	if err := os.WriteFile(filepath.Join(w.out, name+".json"), raw, 0o644); err != nil {
-		w.t.Fatal(err)
-	}
+	must(w.t, os.WriteFile(filepath.Join(w.out, name+".json"), raw, 0o644))
 	if w.textDir != "" {
-		if err := os.WriteFile(filepath.Join(w.textDir, name+".txt"), []byte(text), 0o644); err != nil {
-			w.t.Fatal(err)
-		}
+		must(w.t, os.WriteFile(filepath.Join(w.textDir, name+".txt"), []byte(text), 0o644))
 	}
 	w.t.Logf("%-18s %3dx%-2d %6d bytes", name, cols, rows, len(raw))
 }
@@ -739,18 +703,13 @@ func TestWriteSiteScreens(t *testing.T) {
 	if out == "" {
 		out = filepath.Join("..", "site", "docs", "screens")
 	}
-	if err := os.MkdirAll(out, 0o755); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.MkdirAll(out, 0o755))
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
-	orig := theme.Active().Key
-	t.Cleanup(func() { _ = theme.SetActive(orig) })
+	keepTheme(t)
 	prevDev := game.DevModeActive
 	game.DevModeActive = false
 	t.Cleanup(func() { game.DevModeActive = prevDev })
-	if err := theme.SetActive(theme.DefaultKey); err != nil {
-		t.Fatal(err)
-	}
+	must(t, theme.SetActive(theme.DefaultKey))
 	shots := &siteShots{t: t, out: out, textDir: os.Getenv("SITE_SCREENS_TEXT"), bytes: map[string]int{}}
 
 	s := newSiteStage(t)
@@ -826,9 +785,7 @@ func TestWriteSiteScreens(t *testing.T) {
 	if fate == nil {
 		t.Fatal("the Iron Era has no fate")
 	}
-	if err := s.eng.ForceFateForTest("iron_era", s.eng.GetState().Tick-fate.EntryTick); err != nil {
-		t.Fatal(err)
-	}
+	must(t, s.eng.ForceFateForTest("iron_era", s.eng.GetState().Tick-fate.EntryTick))
 	s.wait(1)
 	if s.eng.GetState().Harbinger == nil {
 		t.Fatal("no harbinger came")
@@ -843,9 +800,7 @@ func TestWriteSiteScreens(t *testing.T) {
 		// The seeded strike missed (it lands six to nine times in ten). The
 		// page still needs its picture, so the catastrophe is brought on.
 		t.Log("the fated doom was spared; forcing the catastrophe")
-		if err := s.eng.ForceCatastropheForTest(); err != nil {
-			t.Fatal(err)
-		}
+		must(t, s.eng.ForceCatastropheForTest())
 	}
 	s.level(map[string]float64{"food": 0.64, "wood": 0.81, "stone": 0.57, "gold": 0.73, "iron": 0.6, "marble": 0.35, "iron_ore": 0.5, "faith": 0.63})
 	s.holdToast()
@@ -921,16 +876,12 @@ func TestWriteSiteScreens(t *testing.T) {
 
 	// A screen dropped from the list leaves no file behind.
 	old, err := filepath.Glob(filepath.Join(out, "*.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	total := 0
 	for _, f := range old {
 		n, ok := shots.bytes[strings.TrimSuffix(filepath.Base(f), ".json")]
 		if !ok {
-			if err := os.Remove(f); err != nil {
-				t.Fatal(err)
-			}
+			must(t, os.Remove(f))
 		}
 		total += n
 	}
@@ -964,15 +915,11 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 
 	s := newSiteStage(t)
 	acct, err := game.CreateNamedAccount("Ada")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	s.eng.SetAccount(acct)
 	// A first visit: an account, and no game yet.
 	shots.takeMenu(s.eng, "menu-first")
-	if err := s.eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, s.eng.StartNewNamedGame("Rome"))
 	s.eng.SeedRNG(siteScreensSeed)
 	still := time.Unix(0, 0)
 	s.d.badgePanel.start, s.d.badgePanel.now = still, func() time.Time { return still }
@@ -1066,12 +1013,8 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	if len(shots.town) == 0 {
 		t.Fatal("the first stage left no town for the menu's picture")
 	}
-	if err := os.WriteFile(filepath.Join(game.DataDir(), "saves", siteMenuGame+".json"), shots.town, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := acct.SetMainGame(siteMenuGame); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(filepath.Join(game.DataDir(), "saves", siteMenuGame+".json"), shots.town, 0o644))
+	must(t, acct.SetMainGame(siteMenuGame))
 	shots.takeMenu(s.eng, "menu")
 }
 

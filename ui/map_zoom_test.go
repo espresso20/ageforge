@@ -121,9 +121,7 @@ func TestMapZoomPersists(t *testing.T) {
 	d.overlayMgr.Hide()
 
 	second, err := game.CreateAccount("Second")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(second)
 	d.mapPanel.styles = styleSet{reg: d.mapViews.reg}
 	d.runForTest("map style skyline")
@@ -134,9 +132,7 @@ func TestMapZoomPersists(t *testing.T) {
 	}
 	d.overlayMgr.Hide()
 	back, err := game.SwitchAccount(first.AccountID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(back)
 	d.mapPanel.styles = styleSet{reg: d.mapViews.reg}
 	d.runForTest("map")

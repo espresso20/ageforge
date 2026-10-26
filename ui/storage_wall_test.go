@@ -156,7 +156,7 @@ func TestPlanPanelNeverWaitsOnStorage(t *testing.T) {
 		if !d.overlayMgr.Show("plan", eng.GetState()) {
 			t.Fatal("plan overlay not registered")
 		}
-		screen := renderText(t, pages, w, h)
+		screen := drawPrimitive(t, pages, w, h).Text()
 		if strings.Contains(screen, "storage") || strings.Contains(screen, "banked toward") {
 			t.Errorf("%dx%d: the plan panel speaks of storage or a bank:\n%s", w, h, screen)
 		}

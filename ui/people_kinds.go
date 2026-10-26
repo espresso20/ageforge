@@ -59,15 +59,15 @@ func peopleKinds(st game.GameState) []peopleKind {
 // its name on the left, its count on the right, and, for the soldiers, "·
 // N out" after the count when there is room.
 func (k peopleKind) boxLine(w int) string {
-	count := FormatNumber(float64(k.count))
+	count := textfmt.Number(float64(k.count))
 	if k.posts > k.count {
-		count += "/" + FormatNumber(float64(k.posts))
+		count += "/" + textfmt.Number(float64(k.posts))
 	}
 	if k.out > 0 {
 		// Only when the whole name still fits beside it.
 		for _, with := range []string{
-			count + " · " + FormatNumber(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.01", " out"),
-			count + " +" + FormatNumber(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.02", " out"),
+			count + " · " + textfmt.Number(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.01", " out"),
+			count + " +" + textfmt.Number(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.02", " out"),
 		} {
 			if w <= 0 || runeLen(k.name)+1+runeLen(with) <= w {
 				count = with
@@ -85,7 +85,3 @@ func (k peopleKind) boxLine(w int) string {
 	}
 	return theme.Tag(k.role) + name + "[-]" + pad + "[white]" + count + "[-]"
 }
-
-// countOf prints n people of the kind in the age's words: "3 Scribes", "1
-// Scribe".
-func (k peopleKind) countOf(n int) string { return textfmt.Count(n, k.one, k.name) }

@@ -15,12 +15,6 @@ import (
 // reads k from the snapshot (MasteryState) and names ages only up to the
 // record, the deepest age ever entered (the no-spoiler rule).
 
-// masteryTicks is ticks at the current age's speed: what a build or a
-// research started now takes.
-func masteryTicks(ticks int, state game.GameState) int {
-	return game.MasteryTicks(ticks, state.Mastery.K)
-}
-
 // masteryNowText is the current age's ground: "known ground, 2.4x faster
 // (mastery 2)", "known ground, 4x faster (catching up)" or "new ground, 1x".
 func masteryNowText(state game.GameState) string {

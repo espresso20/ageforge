@@ -40,15 +40,11 @@ func TestAccountSwitchInGameGoesToMenu(t *testing.T) {
 	accounts := filepath.Dir(game.DataDir()) // DataDir is the active slot, <root>/accounts/<id>
 	first := eng.Account()
 	second, err := game.CreateAccount("Second Player")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	if _, err := game.SwitchAccount(first.AccountID); err != nil { // creating made Second active
 		t.Fatal(err)
 	}
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	go eng.Start()
 	t.Cleanup(eng.Stop)
 	waitRunning(t, eng)
@@ -77,9 +73,7 @@ func TestAccountSwitchInGameGoesToMenu(t *testing.T) {
 func TestAccountSwitchReplies(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
 
@@ -100,26 +94,16 @@ func TestAccountSwitchReplies(t *testing.T) {
 func TestAccountImportInGameDoesNotSwitch(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	bob, err := game.CreateAccount("Bob")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	blob, err := bob.ExportProgress()
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	path := filepath.Join(t.TempDir(), "bob.json")
-	if err := os.WriteFile(path, blob, 0644); err != nil {
-		t.Fatal(err)
-	}
+	must(t, os.WriteFile(path, blob, 0644))
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	go eng.Start()
 	t.Cleanup(eng.Stop)
 	waitRunning(t, eng)
@@ -143,14 +127,10 @@ func TestAccountImportInGameDoesNotSwitch(t *testing.T) {
 func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	bob, err := game.CreateAccount("Bob")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	bobCode := bob.RecoveryCode()
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
 	// A badge and a lifetime prestige, no themes: the stat, then the report.
@@ -166,11 +146,7 @@ func TestAccountRecoverGuardCoversAllProgress(t *testing.T) {
 	if res.Type != "warning" || !strings.Contains(res.Message, "confirm") {
 		t.Fatalf("an account with badges but no themes was not guarded: %+v", res)
 	}
-	for _, want := range []string{"1 badge", "1 prestige", "account switch Alice"} {
-		if !strings.Contains(res.Message, want) {
-			t.Errorf("the guard does not mention %q: %q", want, res.Message)
-		}
-	}
+	wantAll(t, "the guard", res.Message, "1 badge", "1 prestige", "account switch Alice")
 	if eng.Account() != alice {
 		t.Fatal("the guard let the recovery through")
 	}
@@ -206,9 +182,7 @@ func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 	prev := game.DevModeActive
 	game.DevModeActive = true
 	t.Cleanup(func() { game.DevModeActive = prev })
-	if err := eng.StartNewNamedGame("dev"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("dev"))
 	eng.StepTicks(1)
 	d.refresh()
 
@@ -244,14 +218,10 @@ func TestDevTouchedRunUnlocksThemes(t *testing.T) {
 func TestAccountWipeWordingMatchesWipe(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	alice, err := game.CreateAccount("Alice")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng := game.NewGameEngine()
 	eng.SetAccount(alice)
-	if err := eng.StartNewNamedGame("Rome"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.StartNewNamedGame("Rome"))
 	save := slotSavePath(filepath.Dir(game.DataDir()), alice.AccountID, "Rome")
 	if _, err := os.Stat(save); err != nil {
 		t.Fatalf("no save in the slot to wipe: %v", err)
@@ -265,9 +235,7 @@ func TestAccountWipeWordingMatchesWipe(t *testing.T) {
 	}
 
 	backup, err := game.WipeAccountByID(alice.AccountID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	if _, err := os.Stat(save); !os.IsNotExist(err) {
 		t.Errorf("the save survived the wipe (stat err = %v)", err)
 	}

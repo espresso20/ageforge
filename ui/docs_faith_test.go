@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -59,6 +60,6 @@ func TestDocsFaithStrengthTable(t *testing.T) {
 		}
 		age, _ := set.Age(key)
 		makes := set.FlowBuildingOutput("faith", key)
-		wantRow(fmt.Sprintf("| %s | %d | %s | %s | %s |", age.Name, kinds*int(config.FlowCopies), FormatNumber(makes), FormatNumber(makes*mid), FormatNumber(makes*top)))
+		wantRow(fmt.Sprintf("| %s | %d | %s | %s | %s |", age.Name, kinds*int(config.FlowCopies), textfmt.Number(makes), textfmt.Number(makes*mid), textfmt.Number(makes*top)))
 	}
 }

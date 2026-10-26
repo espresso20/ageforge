@@ -21,15 +21,10 @@ func mapTestDashboard(t *testing.T, acct bool) (*Dashboard, *game.GameEngine) {
 	eng := game.NewGameEngine()
 	if acct {
 		a, err := game.CreateNamedAccount("Map Tester")
-		if err != nil {
-			t.Fatal(err)
-		}
+		must(t, err)
 		eng.SetAccount(a)
 	}
-	app := tview.NewApplication()
-	pages := tview.NewPages()
-	d := NewDashboard(app, eng, pages)
-	pages.AddPage("dashboard", d.Root(), true, true)
+	d, _ := newTestDashboard(eng)
 	d.refresh()
 	return d, eng
 }
@@ -43,35 +38,7 @@ func (d *Dashboard) runForTest(line string) {
 // drawMapPanel draws the open Map panel on a w x h screen and returns it as text.
 func drawMapPanel(t *testing.T, d *Dashboard, w, h int) string {
 	t.Helper()
-	sim := tcell.NewSimulationScreen("UTF-8")
-	if err := sim.Init(); err != nil {
-		t.Fatal(err)
-	}
-	defer sim.Fini()
-	sim.SetSize(w, h)
-	d.mapPanel.SetRect(0, 0, w, h)
-	d.mapPanel.Draw(sim)
-	sim.Show()
-	return simText(sim)
-}
-
-func simText(sim tcell.SimulationScreen) string {
-	cells, w, h := sim.GetContents()
-	var sb strings.Builder
-	for y := 0; y < h; y++ {
-		var line strings.Builder
-		for x := 0; x < w; x++ {
-			c := cells[y*w+x]
-			if len(c.Runes) == 0 {
-				line.WriteByte(' ')
-			} else {
-				line.WriteRune(c.Runes[0])
-			}
-		}
-		sb.WriteString(strings.TrimRight(line.String(), " "))
-		sb.WriteByte('\n')
-	}
-	return sb.String()
+	return drawPrimitive(t, d.mapPanel, w, h).Text()
 }
 
 func key(r rune) *tcell.EventKey { return tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone) }
@@ -113,11 +80,7 @@ func TestMapPanelLettersAreThePrompts(t *testing.T) {
 		t.Errorf("letters changed the settings: %s/%s", p.set.Style, p.set.Tier)
 	}
 	txt := drawMapPanel(t, d, 160, 48)
-	for _, want := range []string{"map style Roguelike", "map glyphs unicode", "Esc close"} {
-		if !strings.Contains(txt, want) {
-			t.Errorf("key bar has no %q:\n%s", want, txt)
-		}
-	}
+	wantAll(t, "key bar", txt, "map style Roguelike", "map glyphs unicode", "Esc close")
 	d.runForTest("map style skyline")
 	d.runForTest("map glyphs ascii")
 	if d.overlayMgr.ActiveName() != "map" {
@@ -165,13 +128,9 @@ func TestMapInspectStagesCommand(t *testing.T) {
 	for _, style := range all.Registry().Names() {
 		t.Run(style, func(t *testing.T) {
 			d, eng := mapTestDashboard(t, true)
-			if err := eng.Account().SetMapStyle(style); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.Account().SetMapStyle(style))
 			// A civ met: something on the map with a command in every style.
-			if err := eng.MeetFactionForTest("riverlands_tribes", 30); err != nil {
-				t.Fatal(err)
-			}
+			must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
 			d.runForTest("map")
 			p := d.mapPanel
 			drawMapPanel(t, d, 160, 48)
@@ -242,30 +201,22 @@ func TestMapSettingsPersist(t *testing.T) {
 	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII {
 		t.Fatalf("after the commands: %s/%s", s.Style, s.Tier)
 	}
-	if err := eng.SaveGame("maptest"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.SaveGame("maptest"))
 	d.runForTest("map style roguelike")
-	if err := eng.LoadGame("maptest"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.LoadGame("maptest"))
 	if s := d.mapSettings(); s.Style != "roguelike" || s.Tier != mapmodel.TierASCII {
 		t.Errorf("a load changed the account's map settings: %s/%s", s.Style, s.Tier)
 	}
 	d.runForTest("map style skyline")
 
 	second, err := game.CreateAccount("Second")
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(second)
 	if s := d.mapSettings(); s.Style != "roguelike" || s.Tier != mapmodel.TierUnicode {
 		t.Errorf("a new account has %s/%s, want the defaults", s.Style, s.Tier)
 	}
 	back, err := game.SwitchAccount(first.AccountID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	must(t, err)
 	eng.SetAccount(back)
 	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII {
 		t.Errorf("switching back (read from disk): %s/%s, want skyline/ascii", s.Style, s.Tier)
@@ -337,9 +288,7 @@ func TestStyleShortcut(t *testing.T) {
 func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	// A civ met: a target for Tab at the region zoom, with a command.
-	if err := eng.MeetFactionForTest("riverlands_tribes", 30); err != nil {
-		t.Fatal(err)
-	}
+	must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
 	sim := tcell.NewSimulationScreen("UTF-8")
 	sim.SetSize(160, 48)
 	d.app.SetScreen(sim).SetRoot(d.pages, true).SetFocus(d.inputField)
@@ -390,7 +339,7 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	sim.InjectKey(tcell.KeyEnter, 0, tcell.ModNone)
 	waitFor("the Map panel", func() bool { look(); return active == "map" && prompt == "" && focused })
 	var txt string
-	onLoop(func() { txt = simText(sim) })
+	onLoop(func() { txt = simCells(sim).Text() })
 	if !strings.Contains(txt, "Command") || !strings.Contains(txt, "Esc close") {
 		t.Errorf("the command bar or the key bar is missing with the map open:\n%s", txt)
 	}
@@ -403,7 +352,7 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	waitFor("Backspace in the prompt", func() bool { look(); return prompt == "" })
 
 	sim.InjectKey(tcell.KeyPgUp, 0, tcell.ModNone)
-	waitFor("PgUp to zoom out to the region", func() bool { return strings.Contains(simText(sim), "REGION") })
+	waitFor("PgUp to zoom out to the region", func() bool { return strings.Contains(simCells(sim).Text(), "REGION") })
 	onLoop(look)
 	before := title
 	sim.InjectKey(tcell.KeyTab, 0, tcell.ModNone)

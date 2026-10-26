@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -22,9 +23,7 @@ func scholarGame(t *testing.T) *game.GameEngine {
 	ge := gameIn(t, "stone_age")
 	ge.GrantTechsForTest("language")
 	ge.SetTownForTest(map[string]int{"story_circle": 2, "elders_hall": 1}, 0)
-	if err := ge.StartResearch("primitive_writing"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("primitive_writing"))
 	return ge
 }
 
@@ -44,11 +43,7 @@ func TestResearchBarFillsToOneHundred(t *testing.T) {
 			t.Fatalf("staging: %+v", st.Research)
 		}
 		row := headerRow(st, sz[0], sz[1])
-		for _, want := range []string{"Primitive Writing", fmt.Sprintf("%d%%", researchPercent(st)), "left"} {
-			if !strings.Contains(row, want) {
-				t.Errorf("%dx%d: the header lacks %q: %q", sz[0], sz[1], want, row)
-			}
-		}
+		wantAll(t, fmt.Sprintf("%dx%d: the header", sz[0], sz[1]), row, "Primitive Writing", fmt.Sprintf("%d%%", researchPercent(st)), "left")
 	}
 	last := -1
 	for i := 0; i < 4000 && ge.GetState().Research.CurrentTech != ""; i++ {
@@ -155,9 +150,7 @@ func TestTechTimeIsComputedFromTheScholarsResearching(t *testing.T) {
 // share at 0 the screens say it needs scholars.
 func TestIdleScholarsStillShowATechTime(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	st := ge.GetState()
 	if st.Research.CurrentTech != "" || st.Scholars.Researching != 0 || st.Scholars.Total == 0 {
 		t.Fatalf("staging: %+v", st.Scholars)
@@ -189,12 +182,8 @@ func TestIdleScholarsStillShowATechTime(t *testing.T) {
 // and teach and what teaching adds.
 func TestResearchListShowsQueueAndScholars(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.PlanAddResearch("ritual"); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddResearch("pottery"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.PlanAddResearch("ritual"))
+	must(t, ge.PlanAddResearch("pottery"))
 	st := ge.GetState()
 	list := cmdResearchList(ge).Message
 	i, j := strings.Index(list, "1. "), strings.Index(list, "2. ")
@@ -246,9 +235,7 @@ func TestScholarsLineWhereResearchIsShown(t *testing.T) {
 // the state.
 func TestTeachingBonusHasItsOwnLine(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	st := ge.GetState()
 	if st.Scholars.Teaching != st.Scholars.Total || st.Scholars.TeachingBonus <= 0 {
 		t.Fatalf("staging: %+v", st.Scholars)
@@ -263,9 +250,7 @@ func TestTeachingBonusHasItsOwnLine(t *testing.T) {
 		t.Errorf("rates lack %q:\n%s", want, rates)
 	}
 	// Half research: the bonus is half, and both screens say so.
-	if err := ge.StartResearch("primitive_writing"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.StartResearch("primitive_writing"))
 	if _, err := ge.SetResearchShare(50); err != nil {
 		t.Fatal(err)
 	}
@@ -338,11 +323,7 @@ func TestScholarsCommand(t *testing.T) {
 			t.Errorf("scholars lacks %q:\n%s", want, res.Message)
 		}
 	}
-	for _, want := range []string{fmt.Sprintf("Scholars[-] %d", st.Scholars.Total), scholarsLine(st), "100% of your scholars research. Set it with 'scholars <percent>'."} {
-		if !strings.Contains(res.Message, want) {
-			t.Errorf("scholars lacks %q:\n%s", want, res.Message)
-		}
-	}
+	wantAll(t, "scholars", res.Message, fmt.Sprintf("Scholars[-] %d", st.Scholars.Total), scholarsLine(st), "100% of your scholars research. Set it with 'scholars <percent>'.")
 	for _, in := range []string{"scholars 50", "scholars 50%"} {
 		res = HandleCommand(in, ge)
 		want, _ := ge.SetResearchShare(50)
@@ -362,15 +343,15 @@ func TestScholarsCommand(t *testing.T) {
 			t.Errorf("%s = %+v, want the usage line %q", in, res, usage)
 		}
 	}
-	if !strings.Contains(usage, "scholars [percent]") && !strings.Contains(usage, "scholars") {
+	if !strings.Contains(usage, "scholars <percent>") {
 		t.Errorf("usage = %q", usage)
 	}
 	// Completion and help know it like its neighbors.
-	if got := NewAutoCompleter(ge)("schol"); !containsWord(got, "scholars") {
+	if got := NewAutoCompleter(ge)("schol"); !slices.Contains(got, "scholars") {
 		t.Errorf("completing schol = %v", got)
 	}
-	if help := HandleCommand("help scholars", ge); !strings.Contains(help.Message+help.OverlayName, "scholars") {
-		t.Logf("help scholars = %+v", help)
+	if help := HandleCommand("help scholars", ge); help.OverlayName != "help" || !strings.Contains(untag(helpProvider(ge.GetState(), 120)), "scholars <percent>") {
+		t.Errorf("help scholars = %+v, or the Help panel does not list scholars <percent>", help)
 	}
 	// A town with no scholars says so in the engine's words.
 	fresh := game.NewGameEngine()
@@ -409,9 +390,7 @@ var knowledgeHeld = regexp.MustCompile(`(?i)knowledge (storage|store|price|cost|
 
 func TestNoScreenShowsKnowledgeAsHeldOrSpent(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.PlanAddResearch("ritual"); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.PlanAddResearch("ritual"))
 	st := ge.GetState()
 	screens := map[string]string{
 		"research list":   cmdResearchList(ge).Message,
@@ -462,9 +441,7 @@ func TestResourcesBoxHasNoKnowledgeRow(t *testing.T) {
 // `research` completes to the techs that can start now, and to no other.
 func TestSuggestResearchGameAware(t *testing.T) {
 	ge := scholarGame(t)
-	if err := ge.CancelResearch(); err != nil {
-		t.Fatal(err)
-	}
+	must(t, ge.CancelResearch())
 	st := ge.GetState()
 	got := NewAutoCompleter(ge)("research ")
 	techs := 0
@@ -483,7 +460,7 @@ func TestSuggestResearchGameAware(t *testing.T) {
 		t.Errorf("research offers %v; want the available techs", got)
 	}
 	for key, ts := range st.Research.Techs {
-		if ts.Available && !containsWord(got, "research "+key) {
+		if ts.Available && !slices.Contains(got, "research "+key) {
 			t.Errorf("research does not offer %s, which can start", key)
 		}
 	}

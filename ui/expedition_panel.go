@@ -35,7 +35,7 @@ var expeditionKeys = []keyHelp{
 const expFlashFor = 8 * time.Second
 
 type expeditionPanel struct {
-	*tview.Box
+	barPanel
 	engine *game.GameEngine
 	state  game.GameState
 	view   expView
@@ -51,10 +51,6 @@ type expeditionPanel struct {
 
 	// settings reads the glyph tier and the motion setting.
 	settings func() mapSettings
-	// prompt reads the command bar ("" when it is empty).
-	prompt func() string
-	// toPrompt hands a key the panel does not take to the command bar.
-	toPrompt func(ev *tcell.EventKey)
 
 	now   func() time.Time
 	start time.Time
@@ -65,7 +61,9 @@ type expeditionPanel struct {
 }
 
 func newExpeditionPanel() *expeditionPanel {
-	return &expeditionPanel{Box: tview.NewBox(), w: 100, h: 30, now: time.Now, start: time.Now()}
+	p := &expeditionPanel{w: 100, h: 30, now: time.Now, start: time.Now()}
+	p.barPanel = newBarPanel(p.routeKey)
+	return p
 }
 
 // open is the overlay's build: it runs on every Show. The panel opens on
@@ -80,9 +78,7 @@ func (p *expeditionPanel) open(state game.GameState) tview.Primitive {
 		p.setReport(true)
 	}
 	p.update(state)
-	return tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(p, 0, 1, true).
-		AddItem(nil, promptRows, 0, false)
+	return overBar(p)
 }
 
 // setSize tells the panel how big it is drawn, for the tests; a draw does
@@ -187,20 +183,6 @@ func (p *expeditionPanel) Draw(scr tcell.Screen) {
 	paintExpedition(scr, grid, x, y, newExpPalette())
 	sc := p.scene()
 	p.moving.Store(motion && (len(sc.acts) > 0 && v.report || len(sc.offers) > 0 && !v.report))
-}
-
-// InputHandler takes the panel's keys when it has the focus itself and
-// hands the rest to the command bar.
-func (p *expeditionPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		prompt := ""
-		if p.prompt != nil {
-			prompt = p.prompt()
-		}
-		if !p.routeKey(ev, prompt) && p.toPrompt != nil {
-			p.toPrompt(ev)
-		}
-	})
 }
 
 // routeKey takes a key if it is one of the panel's and reports whether it

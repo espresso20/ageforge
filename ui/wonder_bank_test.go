@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // paidByPrice is the share of a wonder's price that is paid, each part counted
@@ -58,17 +59,13 @@ func TestWondersListDoesNotSayFullWhenAPartIsMissing(t *testing.T) {
 	if !strings.Contains(untag(text), want) {
 		t.Errorf("the list does not say %s:\n%s", want, untag(text))
 	}
-	for _, line := range []string{
-		"[red]marble: 0 / " + FormatNumber(def.BaseCost["marble"]),
-		"[red]iron ore: 0 / " + FormatNumber(def.BaseCost["iron_ore"]),
-		"[green]stone: 512K / " + FormatNumber(def.BaseCost["stone"]),
-		"[green]iron: 114K / " + FormatNumber(def.BaseCost["iron"]),
-		"[green]gold: 101K / " + FormatNumber(def.BaseCost["gold"]),
-	} {
-		if !strings.Contains(text, line) {
-			t.Errorf("the list has no line %q:\n%s", line, text)
-		}
-	}
+	wantAll(t, "the list", text,
+		"[red]marble: 0 / "+textfmt.Number(def.BaseCost["marble"]),
+		"[red]iron ore: 0 / "+textfmt.Number(def.BaseCost["iron_ore"]),
+		"[green]stone: 512K / "+textfmt.Number(def.BaseCost["stone"]),
+		"[green]iron: 114K / "+textfmt.Number(def.BaseCost["iron"]),
+		"[green]gold: 101K / "+textfmt.Number(def.BaseCost["gold"]),
+	)
 }
 
 // A part banked past its price pays toward nothing else: a bank with only a
