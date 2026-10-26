@@ -82,15 +82,30 @@ func checkGlyphs(t *testing.T, where, glyphs string) {
 	}
 }
 
-// TestEveryLineHasItsLook: each building line has a silhouette, a tint and a
-// sign, and the sign is one cell wide.
+// TestLineHuesFollowTheLines: the line hues are one per building line, in
+// order, and the last hue is the last line's.
+func TestLineHuesFollowTheLines(t *testing.T) {
+	if numLines != len(mapmodel.LineageOrder) {
+		t.Fatalf("numLines is %d, there are %d lines", numLines, len(mapmodel.LineageOrder))
+	}
+	for i, line := range mapmodel.LineageOrder {
+		if lineHue(line) != HLine+Hue(i) {
+			t.Errorf("line %s: hue %d, want %d", line, lineHue(line), HLine+Hue(i))
+		}
+	}
+	if lineHue(mapmodel.LineageOrder[numLines-1]) != NumHues-1 {
+		t.Errorf("the last line hue is not the last hue")
+	}
+}
+
+// TestEveryLineHasItsLook: each building line has a silhouette and a sign, and
+// the sign is one cell wide.
 func TestEveryLineHasItsLook(t *testing.T) {
 	for _, line := range mapmodel.LineageOrder {
 		sign, signed := lineSigns[line]
-		_, tinted := lineTints[line]
 		_, shaped := familyOf[line]
-		if !signed || !tinted || !shaped {
-			t.Errorf("line %s: sign %v, tint %v, family %v", line, signed, tinted, shaped)
+		if !signed || !shaped {
+			t.Errorf("line %s: sign %v, family %v", line, signed, shaped)
 		}
 		checkGlyphs(t, line, string(sign))
 	}

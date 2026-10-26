@@ -46,16 +46,6 @@ var familyOf = map[string]Family{
 	mapmodel.LinTrade: Civic, mapmodel.LinMilitary: Civic, mapmodel.LinDiplomacy: Civic,
 }
 
-// lineTints colour each line's buildings a little, so districts read apart.
-var lineTints = map[string]RGB{
-	mapmodel.LinHousing: rgb(0xd8b890), mapmodel.LinFood: rgb(0xb8c860), mapmodel.LinWood: rgb(0xa0703c),
-	mapmodel.LinMines: rgb(0x9a9078), mapmodel.LinMetal: rgb(0xe08848), mapmodel.LinEngineer: rgb(0x90a8c0),
-	mapmodel.LinEnergy: rgb(0xe8d040), mapmodel.LinHarbor: rgb(0x48b0b8), mapmodel.LinHacker: rgb(0xd050c0),
-	mapmodel.LinKnowledge: rgb(0x8a7ae0), mapmodel.LinFaith: rgb(0xf0e8c8), mapmodel.LinCulture: rgb(0xe07898),
-	mapmodel.LinMonument: rgb(0xe0b040), mapmodel.LinTrade: rgb(0xe0c050), mapmodel.LinStorage: rgb(0x8a7a60),
-	mapmodel.LinMilitary: rgb(0xc85050), mapmodel.LinDiplomacy: rgb(0x6a90b8),
-}
-
 // lineSigns are the signs hung on buildings, the symbols of the map legend:
 // a * in art is drawn as its line's sign.
 var lineSigns = map[string]rune{

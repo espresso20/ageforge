@@ -61,22 +61,22 @@ func TestRenderMoves(t *testing.T) {
 	}
 }
 
-// TestNightIsDarker: the same place at midnight is dimmer than at noon, and
-// still has lit windows or lamps.
+// TestNightIsDarker: the same place at midnight is dimmer than at noon.
 func TestNightIsDarker(t *testing.T) {
 	for _, age := range testAges {
 		day := (&Generator{}).Render(model(state(age, 7, noon)), 120, 36, 0)
 		night := (&Generator{}).Render(model(state(age, 7, midnight)), 120, 36, 0)
-		if brightness(night) >= brightness(day) {
-			t.Errorf("%s: night (%d) is not darker than day (%d)", age, brightness(night), brightness(day))
+		if dusk(night) <= dusk(day) {
+			t.Errorf("%s: night (dim %d) is not darker than day (dim %d)", age, dusk(night), dusk(day))
 		}
 	}
 }
 
-func brightness(g *Grid) int {
+// dusk is how far, on average, a grid is pulled toward the dark.
+func dusk(g *Grid) int {
 	sum := 0
 	for _, c := range g.Cells {
-		sum += int(c.Bg.R) + int(c.Bg.G) + int(c.Bg.B)
+		sum += int(c.Dim)
 	}
 	return sum / len(g.Cells)
 }

@@ -111,7 +111,7 @@ func (f *frame) paintWonder(ws wonderSpot) {
 			}
 			ink, ok := f.st.Tones[tone]
 			if !ok {
-				ink = f.st.Wall
+				ink = P(f.st.Wall, 235)
 			}
 			f.g.draw(x0+dx, y0+dy, ch, ink)
 			f.g.mark(x0+dx, y0+dy, thing)

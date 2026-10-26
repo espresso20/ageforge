@@ -11,22 +11,12 @@
 // function of its input, byte for byte, on every machine.
 package mapgen
 
-// RGB is a 24-bit colour.
-type RGB struct{ R, G, B uint8 }
-
-func rgb(v uint32) RGB { return RGB{uint8(v >> 16), uint8(v >> 8), uint8(v)} }
-
-func mixByte(a, b uint8, t int) uint8 { return uint8((int(a)*(256-t) + int(b)*t) >> 8) }
-
-// mix blends a toward b by t/256.
-func mix(a, b RGB, t int) RGB {
-	return RGB{mixByte(a.R, b.R, t), mixByte(a.G, b.G, t), mixByte(a.B, b.B, t)}
-}
-
-// Cell is one character of the picture.
+// Cell is one character of the picture: a glyph in a foreground paint over a
+// background paint, pulled toward the night tint by Dim (of 255).
 type Cell struct {
 	R      rune
-	Fg, Bg RGB
+	Fg, Bg Paint
+	Dim    uint8
 }
 
 // Kind says what sort of thing a cell shows.
@@ -53,9 +43,13 @@ type Thing struct {
 }
 
 // Grid is a finished picture: the cells, and for each cell the thing it
-// shows (an index into Things, 0 for nothing).
+// shows (an index into Things, 0 for nothing). Wall is the hue of the age's
+// walls, which the building lines' hues lean on, and Tint the hue the dark
+// falls toward.
 type Grid struct {
 	W, H   int
+	Wall   Hue
+	Tint   Hue
 	Cells  []Cell
 	Hit    []uint16
 	Things []Thing
@@ -86,7 +80,7 @@ func (g *Grid) ThingAt(x, y int) Thing {
 func (g *Grid) in(x, y int) bool { return x >= 0 && y >= 0 && x < g.W && y < g.H }
 
 // draw writes a glyph and keeps the background below it.
-func (g *Grid) draw(x, y int, r rune, fg RGB) {
+func (g *Grid) draw(x, y int, r rune, fg Paint) {
 	if g.in(x, y) {
 		c := &g.Cells[y*g.W+x]
 		c.R, c.Fg = r, fg
@@ -117,6 +111,7 @@ func (g *Grid) mark(x, y int, t Thing) {
 // window copies the w by h part of g whose top-left corner is (x0, y0).
 func (g *Grid) window(x0, y0, w, h int) *Grid {
 	out := newGrid(w, h)
+	out.Wall, out.Tint = g.Wall, g.Tint
 	out.Things = g.Things
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {

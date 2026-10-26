@@ -42,6 +42,6 @@ func (f *frame) paintSmoke() {
 		if !f.g.in(x, y) || f.g.ThingAt(x, y).Kind == KindBuilding {
 			continue
 		}
-		f.g.draw(x, y, pick(f.st.Smoke.Glyphs, hash(f.m.Seed, 66, int64(beat))), mix(f.g.At(x, y).Bg, f.st.Smoke.Fg, 256-beat*60))
+		f.g.draw(x, y, pick(f.st.Smoke.Glyphs, hash(f.m.Seed, 66, int64(beat))), f.st.Smoke.Fg.fade(256-beat*60))
 	}
 }

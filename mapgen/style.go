@@ -19,7 +19,7 @@ const (
 // in Dense percent of cells (all when 0), over a background.
 type Look struct {
 	Glyphs string
-	Fg, Bg RGB
+	Fg, Bg Paint
 	Dense  int
 }
 
@@ -28,7 +28,7 @@ type Look struct {
 // pick from by hash, for roads that do not join up (a dirt track).
 type RoadLook struct {
 	Joins  string
-	Fg, Bg RGB
+	Fg, Bg Paint
 }
 
 // Art is a picture in characters; a space shows what is below.
@@ -57,7 +57,7 @@ type Tiers [numTiers][]Art
 type Scatter struct {
 	On     Biome
 	Glyphs string
-	Fg     RGB
+	Fg     Paint
 	Chance int
 }
 
@@ -67,18 +67,18 @@ type Scatter struct {
 type AgentKind struct {
 	Name   string
 	Glyphs string
-	Fg     RGB
+	Fg     Paint
 	Per    int
 	Max    int
 	Slow   int
 }
 
-// Night is how dark falls: colours slide toward Tint by Dim (of 256) at full
-// night, lit windows and lamps glow Light.
+// Night is how dark falls: colours slide toward the Tint hue by Dim (of 256)
+// at full night, lit windows and lamps glow in the Light hue.
 type Night struct {
-	Tint  RGB
+	Tint  Hue
 	Dim   int
-	Light RGB
+	Light Hue
 	Lamps bool
 }
 
@@ -90,7 +90,7 @@ type AgeStyle struct {
 	// its land, Hills its cloud and Sand its limb of air.
 	Land   [numBiomes]Look
 	Roads  [3]RoadLook // by road tier; in orbit, the rings (0), spokes (1)
-	Deck   RGB         // a bridge's boards
+	Deck   Paint       // a bridge's boards
 	Yard   Look        // the lot a building stands on
 	Crops  Look        // a farm's lot
 	Plaza  Look        // an unbuilt wonder plot
@@ -102,8 +102,8 @@ type AgeStyle struct {
 	FillPer int
 	// Wall colours every building rune not in Ink; Windows lists the runes
 	// that light up at night.
-	Wall    RGB
-	Ink     map[rune]RGB
+	Wall    Hue
+	Ink     map[rune]Paint
 	Windows string
 	// Chimney is the art rune that smokes, and Smoke how its smoke looks.
 	Chimney rune
@@ -113,7 +113,7 @@ type AgeStyle struct {
 	Night   Night
 	// Tones dresses wonder templates: the material letter of a template
 	// cell, in this age's colours.
-	Tones map[byte]RGB
+	Tones map[byte]Paint
 	// Sky is the void and its stars (orbit only).
 	Sky Look
 }
@@ -143,18 +143,9 @@ func (l Look) at(x, y int, salt int64) Cell {
 	c := Cell{R: ' ', Fg: l.Fg, Bg: l.Bg}
 	if l.Glyphs != "" && (l.Dense == 0 || int(h>>40)%100 < l.Dense) {
 		c.R = pick(l.Glyphs, h>>20)
-		c.Fg = jitter(l.Fg, h, 14)
+		c.Fg = l.Fg.vary(h, 18)
 	}
 	return c
-}
-
-// jitter moves a colour up or down a little, differently per channel.
-func jitter(c RGB, h uint64, amount int) RGB {
-	shift := func(v uint8, bits uint) uint8 {
-		d := int(h>>bits)%(2*amount+1) - amount
-		return uint8(clamp(int(v)+d, 0, 255))
-	}
-	return RGB{shift(c.R, 4), shift(c.G, 12), shift(c.B, 28)}
 }
 
 // joinRune is the glyph of a road or river cell whose neighbours N, E, S, W

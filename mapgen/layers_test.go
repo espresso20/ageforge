@@ -138,7 +138,7 @@ func TestNightLightsUp(t *testing.T) {
 			f.draw()
 			lit := 0
 			for _, cell := range f.g.Cells {
-				if cell.Fg == f.st.Night.Light {
+				if cell.Fg.Hue == f.st.Night.Light && cell.Dim == 0 {
 					lit++
 				}
 			}

@@ -187,7 +187,7 @@ func (a Art) size() (w, h int) {
 // stamp draws art on a parcel, toward its door. look says which glyph and
 // colour each art rune is drawn as. Windows light up at night and chimneys
 // smoke.
-func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, RGB)) {
+func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, Paint)) {
 	w, h := a.size()
 	x0, y0 := anchor(l, w, h)
 	for dy, row := range a {
@@ -209,13 +209,16 @@ func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, RGB)) 
 	}
 }
 
-// ink is the colour of an art rune: its own if the style names one, else the
-// walls', blended with tint.
-func (f *frame) ink(r rune, tint RGB, blend int) RGB {
+// ink is the paint of an art rune: its own if the style names one, else the
+// hue of the building line, or the walls' when there is none.
+func (f *frame) ink(r rune, line Hue) Paint {
 	if c, ok := f.st.Ink[r]; ok {
 		return c
 	}
-	return mix(f.st.Wall, tint, blend)
+	if line != HNone {
+		return P(line, 235)
+	}
+	return P(f.st.Wall, 235)
 }
 
 // paintBuilding stamps the footprint of a building kind on its parcel.
@@ -227,15 +230,15 @@ func (f *frame) paintBuilding(pl placed) {
 	}
 	variants := f.st.Shapes[fam][tier]
 	shape := variants[roll(len(variants), f.m.Seed, mapmodel.HashStr(pl.b.Key), int64(pl.instance))]
-	tint := lineTints[pl.b.Lineage]
+	line := lineHue(pl.b.Lineage)
 	thing := Thing{Kind: KindBuilding, Key: pl.b.Key, Lineage: pl.b.Lineage, Count: pl.b.Count, Legacy: pl.b.Legacy}
-	f.stamp(shape, f.plan.Lots[pl.lot], thing, func(r rune) (rune, RGB) {
-		ink := f.ink(r, tint, 120)
+	f.stamp(shape, f.plan.Lots[pl.lot], thing, func(r rune) (rune, Paint) {
+		ink := f.ink(r, line)
 		if r == '*' {
-			r, ink = lineSigns[pl.b.Lineage], tint
+			r, ink = lineSigns[pl.b.Lineage], P(line, 255)
 		}
 		if pl.b.Legacy {
-			ink = mix(ink, rgb(0x707070), 110)
+			ink = ink.fade(150)
 		}
 		return r, ink
 	})
@@ -244,7 +247,7 @@ func (f *frame) paintBuilding(pl placed) {
 // paintHouse stamps an ordinary house, in the quiet colours of background.
 func (f *frame) paintHouse(lot int) {
 	shape := f.st.Filler[roll(len(f.st.Filler), f.m.Seed, 67, int64(lot))]
-	f.stamp(shape, f.plan.Lots[lot], Thing{Kind: KindAmbient, Key: "houses"}, func(r rune) (rune, RGB) {
-		return r, mix(f.ink(r, f.st.Wall, 0), f.st.Yard.Bg, 90)
+	f.stamp(shape, f.plan.Lots[lot], Thing{Kind: KindAmbient, Key: "houses"}, func(r rune) (rune, Paint) {
+		return r, f.ink(r, HNone).fade(170)
 	})
 }

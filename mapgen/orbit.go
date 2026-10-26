@@ -162,7 +162,11 @@ func (f *frame) paintSpace() {
 func (f *frame) paintVoid(x, y int) {
 	sky := f.st.Sky
 	haze := max(0, fbm(f.m.Seed+11, x*256/24, y*256/12, 3)-540) * 90 / (noiseMax - 540)
-	f.g.paint(x, y, Cell{R: ' ', Fg: sky.Fg, Bg: mix(sky.Bg, f.st.Tones['n'], haze)})
+	bg := sky.Bg
+	if haze > 0 {
+		bg = P(HNebula, haze)
+	}
+	f.g.paint(x, y, Cell{R: ' ', Fg: sky.Fg, Bg: bg})
 	f.g.mark(x, y, Thing{Kind: KindTerrain, Key: "space"})
 }
 
@@ -181,7 +185,7 @@ func (f *frame) paintStars() {
 			if (f.anim/9+int(h>>20))%7 == 0 {
 				shine /= 2 // a slow twinkle
 			}
-			f.g.draw(x, y, pick(sky.Glyphs, h>>30), mix(sky.Bg, sky.Fg, shine))
+			f.g.draw(x, y, pick(sky.Glyphs, h>>30), sky.Fg.fade(shine))
 		}
 	}
 }
@@ -204,7 +208,7 @@ func (f *frame) paintPlanet(x, y, r int) {
 		c.R = '∙'
 	}
 	edge := clamp((r-760)*256/240, 0, 230)
-	c.Bg, c.Fg = mix(c.Bg, f.st.Sky.Bg, edge), mix(c.Fg, f.st.Sky.Bg, edge)
+	c.Dim = uint8(edge)
 	f.g.paint(x, y, c)
 	f.g.mark(x, y, Thing{Kind: KindTerrain, Key: "planet"})
 	if city {
@@ -215,8 +219,8 @@ func (f *frame) paintPlanet(x, y, r int) {
 // paintAir draws the thin glow of atmosphere round the planet.
 func (f *frame) paintAir(x, y, r int) {
 	air := f.st.Land[Sand]
-	fade := (r - 1000) * 256 / 220
-	c := Cell{R: ' ', Fg: mix(air.Fg, f.st.Sky.Bg, fade), Bg: mix(air.Bg, f.st.Sky.Bg, fade)}
+	thin := (r - 1000) * 256 / 220
+	c := Cell{R: ' ', Fg: air.Fg.fade(256 - thin), Bg: air.Bg.fade(256 - thin)}
 	if r < 1060 {
 		c.R = pick(air.Glyphs, hash(int64(x), int64(y)))
 	}

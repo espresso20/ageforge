@@ -101,6 +101,7 @@ func (gen *Generator) frame(m *mapmodel.Model, anim int) *frame {
 	} else {
 		f.plan, f.fields = gen.ground, gen.fields
 	}
+	f.g.Wall, f.g.Tint = st.Wall, st.Night.Tint
 	f.placed = f.plan.place(m)
 	f.filler = f.fillerLots()
 	f.layRoads()
