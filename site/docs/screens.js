@@ -1,4 +1,4 @@
-// The wiki's plates: real views of the game's screens, drawn as text.
+// The Compendium's plates: real views of the game's screens, drawn as text.
 //
 // A page asks for one with a figure:
 //

@@ -1,8 +1,8 @@
-# 🏛 AgeForge Wiki
+# The AgeForge Compendium
 
 > A terminal idle civilization game: 22 ages in 7 epochs, from the Primitive Age to the Transcendent Age.
 
-> Version note: this wiki describes version 4.0, the game on the master branch, which has no release yet. The downloads are version 3.6, which has the `speed` command and the old city map. To play version 4.0, build it from source (see [Installation](getting-started.md)).
+> Version note: this Compendium describes version 4.0, the game on the master branch, which has no release yet. The downloads are version 3.6, which has the `speed` command and the old city map. To play version 4.0, build it from source (see [Installation](getting-started.md)).
 
 AgeForge runs full-screen in your terminal as a single binary, built with Go and tview/tcell. You steer by typing commands at a prompt. Your civilization works on its own between commands, and when you open a save again the game credits the time you were away.
 
