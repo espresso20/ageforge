@@ -257,9 +257,7 @@ func PeekSaveBadges(filename string) (cheater, elite bool) {
 
 // TradeSave holds trade state for save.
 type TradeSave struct {
-	ActiveRoutes  map[string]ActiveRoute `json:"active_routes"`
-	TotalImported map[string]float64     `json:"total_imported"`
-	TotalExported map[string]float64     `json:"total_exported"`
+	ActiveRoutes map[string]ActiveRoute `json:"active_routes"`
 }
 
 // DiplomacySave holds diplomacy state for save
@@ -311,8 +309,7 @@ type ActiveSlotSave struct {
 // Active is the missions under way, a list keyed by slot (short, long and
 // grand). Board is the mission board with the counters its rare rule runs on.
 type MilitarySave struct {
-	CompletedCount int                `json:"completed_count"`
-	TotalLoot      map[string]float64 `json:"total_loot"`
+	CompletedCount int `json:"completed_count"`
 	// Experience is the army's experience (game/army.go).
 	Experience float64 `json:"experience,omitempty"`
 	// AutoExpeditionTicksLeft is the Geographic Society's dispatch countdown (see
@@ -539,21 +536,10 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		permBonuses[k] = v
 	}
 
-	// Deep copy military loot
-	totalLoot := maps.Clone(ge.Military.totalLoot)
-
 	// Deep copy trade state
 	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))
 	for k, v := range ge.Trade.activeRoutes {
 		tradeActiveRoutes[k] = *v
-	}
-	tradeImported := make(map[string]float64, len(ge.Trade.totalImported))
-	for k, v := range ge.Trade.totalImported {
-		tradeImported[k] = v
-	}
-	tradeExported := make(map[string]float64, len(ge.Trade.totalExported))
-	for k, v := range ge.Trade.totalExported {
-		tradeExported[k] = v
 	}
 
 	rngDraws, quipDraws := ge.rngDraws()
@@ -588,7 +574,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Board:          ge.Military.BoardForSave(),
 			CompletedCount: ge.Military.completedCount,
 			Experience:     ge.Military.experience,
-			TotalLoot:      totalLoot,
 			Returns:        ge.Military.ReturnsForSave(),
 			ReturnsMade:    ge.Military.returnsMade,
 			ReturnsSeen:    ge.Military.returnsSeen,
@@ -621,9 +606,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			LegacyShares:   cloneShares(ge.Prestige.legacyShares),
 		},
 		Trade: TradeSave{
-			ActiveRoutes:  tradeActiveRoutes,
-			TotalImported: tradeImported,
-			TotalExported: tradeExported,
+			ActiveRoutes: tradeActiveRoutes,
 		},
 		Diplomacy: DiplomacySave{
 			Factions:    ge.Diplomacy.GetFactionsForSave(),

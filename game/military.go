@@ -130,7 +130,6 @@ type MilitaryManager struct {
 	// the rank say. Only tests set it, to plant an offer of a tier the era
 	// has not opened.
 	minTiers      int
-	totalLoot     map[string]float64
 	defenseRating float64
 	// returns is the returns log, newest first (mission_returns.go);
 	// returnsMade counts every mission that has come home this run and
@@ -211,8 +210,7 @@ func (mm *MilitaryManager) redraw() {
 // NewMilitaryManagerWith creates a military manager on set.
 func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 	return &MilitaryManager{
-		rules:     set,
-		totalLoot: make(map[string]float64),
+		rules: set,
 	}
 }
 
@@ -371,13 +369,11 @@ func (mm *MilitaryManager) tickMission(active *ActiveExpedition) (ExpeditionResu
 	if success {
 		for res, amount := range active.SuccessRewards {
 			rewards[res] = amount
-			mm.totalLoot[res] += amount
 		}
 		message = vibe.Sprintf("game.military.tickMission.01", "%s succeeded. Loot: %s.", active.Title, amountsText(rewards))
 	} else {
 		for res, amount := range active.FailureRewards {
 			rewards[res] = amount
-			mm.totalLoot[res] += amount
 		}
 		message = vibe.Sprintf("game.military.tickMission.02", "%s failed. You kept %.0f%% of the loot: %s.", active.Title, failedLootShare*100, amountsText(rewards))
 	}
@@ -450,7 +446,6 @@ func (mm *MilitaryManager) Snapshot(soldierCount int, militaryBonus, expeditionB
 		CompletedCount:  mm.completedCount,
 		Experience:      mm.experience,
 		Rank:            mm.Rank(),
-		TotalLoot:       maps.Clone(mm.totalLoot),
 		Returns:         mm.returnsCopy(),
 		ReturnsMade:     mm.returnsMade,
 		ReturnsSeen:     mm.returnsSeen,
@@ -538,9 +533,6 @@ func (mm *MilitaryManager) LoadState(save MilitarySave) {
 		mm.returns[i].Loot = maps.Clone(mm.returns[i].Loot)
 	}
 	mm.returnsMade, mm.returnsSeen = save.ReturnsMade, save.ReturnsSeen
-	if save.TotalLoot != nil {
-		mm.totalLoot = save.TotalLoot
-	}
 	mm.redraw()
 }
 

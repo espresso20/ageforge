@@ -197,9 +197,6 @@ func determinismFingerprint(ge *GameEngine) string {
 		fmt.Fprintf(&b, "lent %s %d %d %v\n", lb.FactionKey, lb.Count, lb.ReturnTick, lb.Permanent)
 	}
 	fmt.Fprintf(&b, "expeditions completed %d\n", ge.Military.completedCount)
-	for _, k := range slices.Sorted(maps.Keys(ge.Military.totalLoot)) {
-		fmt.Fprintf(&b, "loot %s %x\n", k, math.Float64bits(ge.Military.totalLoot[k]))
-	}
 	return b.String()
 }
 

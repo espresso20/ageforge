@@ -537,7 +537,6 @@ type MilitaryState struct {
 	// 4 Legendary; config/army.go).
 	Experience float64
 	Rank       int
-	TotalLoot  map[string]float64
 	// Returns is the last missions to come home, newest first (at most
 	// config.MissionReturnsKept). ReturnsMade counts every mission that has
 	// come home this run; ReturnsSeen how many of them the player has seen
@@ -816,7 +815,6 @@ type ActiveEventState struct {
 type TradeState struct {
 	ActiveRoutes    []ActiveRouteInfo
 	AvailableRoutes []TradeRouteInfo
-	TotalImported   map[string]float64
 	// DisruptedResources lists resources currently blockaded by war/embargo; any
 	// active route importing one is suspended until the conflict ends.
 	DisruptedResources []string
