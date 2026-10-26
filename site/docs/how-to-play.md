@@ -1,6 +1,6 @@
-# How to Play
+# How to play
 
-AgeForge is a **command-driven idle civilization game**. Resources accumulate on their own, buildings construct over time, and you steer by typing commands at the `>` prompt. A first run takes about a week of real time, so the game is built for checking in a few times a day.
+AgeForge is a **command-driven idle civilization game**. Resources accumulate on their own, buildings construct over time, and you steer by typing commands at the prompt at the foot of the screen. The game keeps going while you are away (see [While you are away](#while-you-are-away)), so you can check in whenever you like.
 
 ---
 
@@ -27,7 +27,7 @@ An account with no game yet sees the forge and a title page, with **New game** f
 | **Check for updates** | `u` | Asks for the latest release (see [Updating](getting-started.md#updating)) |
 | **Quit** | `q` | Leaves the game |
 
-`↑` and `↓` move the selection and `Enter` opens it; each entry's letter opens it directly. Choosing an entry strikes the title: a flare and a burst of sparks, then the entry opens. The version is on the page, and so is **update available (u)** when a newer release is out.
+`↑` and `↓` (or `Tab` and `Shift+Tab`) move the selection, `Enter` or `Space` opens it, and each entry's letter opens it directly. With motion on, choosing an entry strikes the title: a flare and a burst of sparks, then the entry opens. The version is on the page, and so is **update available (u)** when a newer release is out.
 
 **Which game Continue opens.** Your account remembers the game you played last, and that is your current game. If you keep several games and want one of them on the menu whatever you played last, mark it as your **main game** with `m` in the Load Game browser. See [Continue and your main game](saving-and-loading.md#continue-and-your-main-game).
 
@@ -41,11 +41,11 @@ An account with no game yet sees the forge and a title page, with **New game** f
 Build → Staff → Research → Advance → Repeat
 ```
 
-1. **Build** structures to add housing and production
-2. **Staff** them: workers move in on their own toward your housing while food allows, and go to work by your [roster](workers-and-domains.md#the-roster). Steer the split with `roster`, or `recruit` and `assign` by hand
-3. **Research** technologies that multiply your output
-4. **Advance** to the next age with `advance` once the buildings it asks for stand and the age's wonder is built (see [Advancement Requirements](ages.md#advancement-requirements))
-5. **Prestige** for a lasting production bonus. After the first prestige, [Plan Template, Roster and Old Friends](prestige.md#carry-overs) carry into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run ([Era Mastery](prestige.md#era-mastery))
+1. Build structures to add housing and production.
+2. Staff them. Workers move in on their own toward your housing while food allows, and go to work by your [roster](workers-and-domains.md#the-roster). Steer the split with `roster`, or `recruit` and `assign` by hand.
+3. Research technologies. Each one changes your production, army, housing or the commands you can use.
+4. Advance to the next age with `advance` once the buildings it asks for stand and the age's wonder is built (see [Advancement Requirements](ages.md#advancement-requirements)).
+5. Prestige for a lasting production bonus. After the first prestige, [Plan Template, Roster and Old Friends](prestige.md#carry-overs) carry into later runs. Prestige opens at the Medieval Age, but a run to the Modern Age (or later) pays far more. Every age the run completed then runs faster on the next run: twice as fast after one completion and up to 4.2x after ten, and 4x at once for ages 6 or more behind your record (see [Era Mastery](prestige.md#era-mastery)).
 
 New to the game? [Your First Age](first-ten-minutes.md) walks you through the Primitive Age step by step, from the first `gather` to the Sacred Grove.
 
@@ -55,8 +55,9 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Stone Age · Year 3,200 BC · People 18/30 · Morale 54% · Next: Bronze Age │  status ribbon
-│ To the Bronze Age ████████░░░░░░  52%  Waiting on: Elders' Hall 3/5 · ...│  the Ledger: the long bar
+│ Bronze Age · Year 2,263 BC · People 906/919 · Morale 54% · Next: Iron Age│  status ribbon
+│ Research complete: Bronze Working                                        │  toast line
+│ To the Iron Age ████████░░░░░░  49%  Waiting on: Scriptorium 3/5 · ...   │  the Ledger: the long bar
 │ KNOWLEDGE ████ 80%   PEOPLE ███ 60%   INDUSTRY ██ 40%   MONUMENT ░ 0%    │  and the four pillars
 ├─ Resources ───────────────────────────┬─ Buildings ───────┬─ Panels ─────┤
 │ amounts and rates                     │ what you can      │ TOWN         │
@@ -72,15 +73,17 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 │ events and news                       ├─ Skyline ─────────┤              │
 │                                       │ your skyline      │              │
 ├─ Command ─────────────────────────────┴───────────────────┴──────────────┤
-│ > _                                                                      │
+│ ❯ _                                                                      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
 That is the layout on a terminal of 120 columns by 36 rows or more. On a smaller one the Under construction box has its row to itself, the People box sits under the Panels list, and there is no Skyline strip (see below).
 
-The top of the screen is the **status ribbon** and the **Ledger**, and they say the same things about your progress at every size.
+The top of the screen is the **status ribbon**, a toast line and the **Ledger**, and the ribbon and the Ledger say the same things about your progress at every size.
 
-The **status ribbon** is one line: your age, the calendar year, your people over your homes, morale and the next age. It also carries your prestige level and civilization title once you have them, and badges for a waiting harbinger or catastrophe. On a narrow terminal it gives things up in a fixed order: the hint at its end, then the next age, then the words of the badges, what morale does to production, your title, your account's name, the rest of the badges' words, and last the year. The age, the badges, your people and morale always stay.
+The **status ribbon** is one line: your account's name when you have one, your age, your prestige level and civilization title once you have them, then the calendar year, your people over your homes, morale and the next age. Badges show for a pending catastrophe or Last Passage and for a waiting harbinger. A hint on opening panels and on `Esc` ends the line. On a narrow terminal the ribbon gives things up in a fixed order: the hint, then the next age, then the words of the badges, what morale does to production, your title, your account's name, the rest of the badges' words, and last the year. The age, the badges, your people and morale always stay.
+
+The **toast line** under the ribbon shows news for a few seconds: an age advance, a finished tech, a built wonder, a milestone, a new epoch, a harbinger, a catastrophe, an epoch event or a new badge.
 
 The **Ledger** is under it:
 
@@ -88,19 +91,21 @@ The **Ledger** is under it:
 - **The four pillars** (Knowledge, People, Industry and Monument) are small meters, each with the same percent as in the Advance panel, or a check once it stands. On a big terminal each has a line under its name saying how many of its requirements are met.
 - **What you are short of.** On a big terminal a **Short of** list stands beside the Waiting on line. It names the resources that a waiting building, or the wonder's bank, costs more of than you hold. The Resources box below lists every resource with its amount and its rate.
 
-The Ledger comes in three sizes. Under 100 columns by 30 rows it is one row: the long bar with what it waits on. From 100 columns by 30 rows it adds a second row with the four pillars. From 120 columns by 39 rows it is four rows: the bar, the waiting line with the Short of list, and the pillars in two rows. A big-layout terminal under 39 rows keeps the 100-column Ledger. On the plain glyph tier (`map glyphs ascii`) the bars are drawn in plain characters.
+The Ledger comes in three sizes. Under 100 columns by 30 rows it is one row: the long bar with what it waits on. From 100 columns by 30 rows it adds a second row with the four pillars. From 120 columns by 39 rows it is four rows: the bar, the waiting line with the Short of list, and the pillars in two rows. A big-layout terminal under 39 rows keeps the 100-column Ledger. On the plain glyph tier (`map glyphs ascii`) the bars are drawn in plain characters. The [Advance](advance.md) page also covers the experimental gate (the environment variable `AGEFORGE_GATES=v2`), which asks for population, income and a key tech in place of building counts.
 
-Every panel you open (`research`, `trade`, `map`, `help` and so on) takes the whole screen but the command bar. Its name is on the top edge, the keys it takes are on the line along its foot, and `Esc` closes it back to the dashboard. The prompt keeps working in most panels. On the panels that are text (Milestones, Army, Trade, Factions, Statistics, Logs, Epoch, History, Buildings and Help), `↑` `↓` `PgUp` `PgDn` `Home` and `End` scroll the panel while the prompt is empty, and anything else you type goes to the prompt. The Wonders, Harbinger and Build Plan panels have keys that are letters (`G`, `A` `B` `I`, `U` `D` `X` `C`), so they keep the keyboard: press `Esc` before you type a command.
+Every panel you open (`research`, `trade`, `map`, `help` and so on) takes the whole screen but the command bar. Its name is on the top edge, the keys it takes are on the line along its foot, and `Esc` closes it back to the dashboard. The prompt keeps working in most panels. On the panels that are text (Milestones, Army, Trade routes, Factions, Statistics, Logs, Epoch, Civilization History, Buildings and Help), `↑` `↓` `PgUp` `PgDn` `Home` and `End` scroll the panel while the prompt is empty, and anything else you type goes to the prompt. The Wonders, Harbinger and Build Plan panels have keys that are letters (`G`, `A` `B` `I`, `U` `D` `X` `C`), so they keep the keyboard: press `Esc` before you type a command.
 
-<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: the status ribbon and the Ledger across the top; then resources, construction and the People box side by side, and the log on the left; the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
+<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: the status ribbon and the Ledger across the top; resources at the top left with construction and the People box side by side under them, and the log below; the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
 
-The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row in the Resources box: its amount, its rate and a marker when it is falling (`▼`); culture and faith add a bar toward their next step. On a narrow terminal the rows give up the bar first, and at 80 columns `/tick` is written `/t`. On a short terminal the Panels list is set in two columns, and when the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`; it then shows from 105 columns by 34 rows.
+The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row in the Resources box: its amount, its rate and a marker when it is falling (`▼`). Culture and faith add a bar toward their next step. On a narrow terminal the rows give up the bar first. On a short terminal the Panels list is set in two columns, or packed several names to a row on the smallest screens. When the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`. It then shows from 105 columns by 34 rows.
 
-**The People box.** From 120 columns by 36 rows the People box is the right half of the Under construction row, and the row is as tall as the box. It shows the headcount over your homes (with how full they are when there is room to say so), one bar across the homes in the colors of the four kinds of person (workers, the reserve, soldiers and scholars), a line for each kind in the age's own word, and what holds your population back. The soldiers' line shows the soldiers at their posts over all the posts they have while some wait on food, and how many are out on a mission. `Held by: food` carries the net food a tick and how many more it would feed once the terminal is 42 rows tall. When nothing holds the population back the box says so and counts the empty homes. On a smaller terminal the box is the short one under the Panels list, with the same lines in less room. The [People panel](workers-and-domains.md#the-people-of-your-town) has the whole picture.
+**The Under construction box.** It has a line for each building under way (copies of one building share a line), with a bar and the time left. A short box sums up instead (`9 under way, the first in ~4m 38s`).
+
+**The People box.** From 120 columns by 36 rows the People box is the right half of the Under construction row, and the row is as tall as the box. It shows the headcount over your homes (with how full they are when there is room to say so), one bar across the homes in the colors of the four kinds of person (workers, the reserve, soldiers and scholars), a line for each kind in the age's own word, and what holds your population back. The soldiers' line shows the soldiers at their posts over all the posts they have while some wait on food, and how many are out on a mission. `Held by: food` carries the net food a tick and how many more it would feed once the terminal is 42 rows tall. When nothing holds the population back the box says `Room to grow` and counts the empty homes. On a smaller terminal the box is the short one under the Panels list, with the same lines in less room. The [People panel](workers-and-domains.md#the-people-of-your-town) has the whole picture.
 
 **The Panels list.** On the same terminals the Panels column is wider, and the panels are set in four groups, each with a few words on what it is for: Town (`people`, `plan`, `wonders`, `map`), Progress (`milestones`, `research`, `charter`, `epoch`, `history`), World (`expedition`, `army`, `trade`, `factions`, `harbinger`) and You (`badges`, `stats`, `logs`, `help`). The panel that is open is marked. On a smaller terminal, or when the column is too short for the groups, the list is the panel names alone, and it never drops one.
 
-**The skyline strip.** Under the Buildings list a strip titled Skyline draws your town's skyline, whatever your map style is. It is a picture: it takes no keys and has no cursor, it moves with the Map when the motion setting is on and holds still when it is off, and `map` still opens the full Map. It is as wide as the Buildings list and half as tall as the Log box beside it, and it needs 4 rows inside its border, so it shows when the Log box is 12 rows or more: a terminal of 120 columns needs about 53 rows (more once your age has many resources), and one under 120 columns about 41. A terminal under 100 columns by 30 rows never shows it. Where it hides, the Buildings list has the whole column.
+**The skyline strip.** Under the Buildings list a strip titled Skyline draws your town's skyline, whatever your map style is. It is a picture: it takes no keys and has no cursor, it moves with the Map when the motion setting is on and holds still when it is off, and `map` still opens the full Map. It is as wide as the Buildings list and half as tall as the Log box beside it, and it needs 4 rows inside its border, so it shows when the Log box is 12 rows or more. A terminal of 120 columns needs about 53 rows (more once your age has many resources), and one under 120 columns about 41. A terminal under 100 columns by 30 rows never shows it. Where it hides, the Buildings list has the whole column.
 
 ---
 
@@ -108,25 +113,22 @@ The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it 
 
 - Type a panel's name to open it: `research`, `army`, `trade`, `factions`, `map`, `help` and so on.
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open.
-- **Tab** or **→** takes the completion shown in dim text after the cursor; press **Tab** again for the next one.
-- **PgUp / PgDn** turn the Buildings list a page (with a text panel open, they scroll the panel). A Mac keyboard has no Page keys: **Option+↑ / Option+↓** do the same everywhere, and **Option+←** and **Option+→** are Home and End. The list never shows part of an entry: an entry that does not fit whole waits for the next page, and the box says how many are above and below.
+- **Tab** or **→** takes the completion shown in dim text after the cursor, and **Tab** again takes the next one (**Shift+Tab** goes back). **Enter** runs a completion that makes a whole command. A command that cannot be undone (`sell`, `dismiss`, `load` and `quit`, for example) is put in the prompt instead, and a second **Enter** runs it.
+- **PgUp / PgDn** turn the Buildings list a page (with a text panel open, they scroll the panel). A Mac keyboard has no Page keys: **Option+↑ / Option+↓** do the same everywhere, and **Option+←** and **Option+→** are Home and End. In Apple Terminal's default setup, Option+← and Option+→ arrive as Alt+B and Alt+F, which work as Home and End while the prompt is empty. The list never shows part of an entry: an entry that does not fit whole waits for the next page, and the box says how many are above and below.
 - **Ctrl+R** turns the Resources box to its next page, when it has more resources than it can show.
-- **↑ / ↓** step through your command history (with a text panel open and the prompt empty, they scroll the panel).
+- **↑ / ↓** step through your last 50 commands (with a text panel open and the prompt empty, they scroll the panel).
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the [main menu](#the-main-menu), where **Continue** takes you back in.
 - Common commands have short names: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade`. See [Command shortcuts](commands.md#command-shortcuts) for the full list.
+- Display settings you can change at any time are `theme`, `motion`, `minimap`, `map style`, `map glyphs` and `vibemode` (see [Themes](themes.md) and [VibeMode](commands.md#vibemode)).
 
 ---
 
-## A week-long first run
+## While you are away
 
-A first run takes about **a week of real time** to reach the Modern Age, where a full run's prestige comes (prestige opens earlier, at the Medieval Age, as an early taste that pays little). A tick is 2 seconds of real time.
+You don't need to watch the game. Spend what has built up when you check in, and set the game up for the hours you're away. At the base speed a tick is 2 seconds of real time.
 
-That is the first run. After a prestige, every age the run completed runs faster the next time, twice as fast after one completion and up to 4.2x after ten (4x at once for ages 6 or more behind your record), so later runs reach the Modern Age much sooner (see [Era Mastery](prestige.md#era-mastery)).
-
-You don't need to watch it. Check in a few times a day, spend what has built up, and set the game up for the hours you're away:
-
-- **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your roster recruits and staffs as the hours pass. The welcome-back lines in the log say what happened.
-- **The build plan.** Queue up to 60 builds, techs, deals and an advance with `plan build`, `plan research`, `plan deal` and `plan advance`. The game starts each item, in order, as the resources come in, and pays for it only when it starts. See [The Build Plan](plan.md).
+- **Offline progress.** When you load a save, the game credits the time since you saved it, up to **24 hours**, at **50%** of your production. It runs that time in steps, so construction and research finish, the build plan starts what the income pays for, and your roster recruits and staffs as the time passes. The welcome-back lines in the log say what happened.
+- **The build plan.** Queue up to 60 items (builds, upgrades, deals and an advance) with `plan build`, `plan upgrade`, `plan deal` and `plan advance`, and queue techs with `plan research`, which take no room in the 60. The game starts each item, in order, as the resources come in, and pays for it only when it starts. See [The build plan](plan.md).
 - **Nothing is lost.** Stock has no limit, so everything you make while you are away is waiting when you come back. Nothing flows into a wonder's bank on its own: fill it with `wonder collect`, or let a planned wonder pay its bank from what you hold.
 - **Storage.** Storage buildings hold nothing: each copy adds 1% to all production. They have no copy limit, each copy costs 1.75 times the one before it, and every age gate asks for five copies of the storage building of the age you are leaving.
 
@@ -134,22 +136,22 @@ You don't need to watch it. Check in a few times a day, spend what has built up,
 
 ## Catastrophes and the harbinger
 
-From the Iron Era on, each era may hide a fated catastrophe. It can strike at any moment in the era, but never unannounced: a **harbinger** comes first, with a `⚑ Harbinger` badge on the status bar. Type `harbinger` to read it, and answer if you like: **Appease** lowers the odds, **Brace** softens the blow, **Invite** makes it certain. When a catastrophe strikes, nothing is lost until you choose: **Endure** (lose part of your buildings, stores and workers, and keep your age) or **Succumb** (fall back to the Primitive Age and keep a permanent legacy bonus). Higher faith lowers the odds of a strike. See [Catastrophes](catastrophe.md) and [The Harbinger](harbinger.md).
+From the Iron Era on, each era may hide a fated catastrophe. It can strike at any moment in the era, but never unannounced: a **harbinger** comes first, with a `⚑ Harbinger` badge on the status ribbon. Type `harbinger` to read it, and answer if you like: **Appease** lowers the odds, **Brace** softens the blow, **Invite** makes it certain. When a catastrophe strikes, nothing is lost until you choose: **Endure** (lose part of your buildings, stock and workers, and keep your age) or **Succumb** (fall back to the Primitive Age and keep a permanent legacy bonus). Higher faith lowers the odds of a strike. See [Catastrophes](catastrophe.md) and [The Harbinger](harbinger.md).
 
 ---
 
 ## Resource management tips
 
 - Stock has no limit: what you make piles up, and a price is the only thing that holds you back. Each age's storage building adds 1% to all production a copy.
-- **Food drain:** everyone eats the same amount, whatever building a worker staffs, scholars and the reserve included. That amount is set by your age: 0.06 food/tick per worker in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
+- **Food drain:** everyone eats the same amount, whatever building they work in. Workers, the reserve, scholars and soldiers all count. That amount is set by your age: 0.06 food/tick per person in the Primitive Age, rising 12% with each age. Keep food production above total drain. If food hits zero, one worker dies every 5 ticks (10 seconds at the base speed) until food recovers. See [Food drain](workers-and-domains.md#food-drain) and [Starvation](workers-and-domains.md#starvation).
 - **Food** runs out first early on. Keep your gathering camps staffed before anything else, then build a Story Circle: its scholars start research with no workers.
 - Watch the rates in the Resources box. A negative rate is draining you.
 
 ## Morale
 
-Morale is a percentage that multiplies **all worker output**. It **starts at 50%**, which is neutral. Above 50% your workers get a bonus that grows to **+20%** at the morale cap (100%, plus 5% for every wonder you build); below 50% they take a penalty that deepens to **x0.50** at the 10% floor. Morale drifts back toward 50% each tick, so a bonus has to be kept up.
+Morale is a percentage that multiplies your buildings' output and your scholars' research work. A new game **starts at 50%**, which is neutral (a prestige run starts at 70%). Above 50% you get a bonus that grows to **+20%** at the morale ceiling (100%, plus 5 points for each wonder you build and for three techs). Below 50% you take a penalty that deepens to **x0.50** at the 10% floor. Morale drifts back toward 50% each tick, so a bonus has to be kept up.
 
-Worship and culture buildings, your faith income, good events and age advances raise it. Starvation, a large army, many idle workers, bad events and catastrophes lower it. It shows as `Morale NN%` on the status bar, green for a bonus and red for a penalty, and on the People panel. See [Morale](morale.md) for the full system.
+Worship and culture buildings, your faith income, good events and age advances raise it. Starvation, a large army, many idle workers, bad events and enduring a catastrophe lower it. It shows as `Morale NN%` on the status ribbon, green for a bonus and red for a penalty, and on the People panel. See [Morale](morale.md) for the full system.
 
 ---
 
@@ -157,7 +159,7 @@ Worship and culture buildings, your faith income, good events and age advances r
 
 Workers fall into 11 worker domains (food, lumber, masonry, faith and so on), each tied to its own buildings. A worker takes the domain of the building it works in. Workers move in on their own toward your housing while food allows, and go to work by your roster (`roster`; every domain is on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`.
 
-Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%. Only food workers make food, but every worker eats it. See [People](workers-and-domains.md) for the full guide.
+Assigned workers raise a building's output. A building with no workers still produces at 20% (the floor), and a fully staffed one at 100%. Food comes from food buildings, but everyone eats it. Scholars come with knowledge buildings and soldiers with military buildings. See [People](workers-and-domains.md) for the full guide.
 
 ---
 
@@ -174,20 +176,20 @@ Assigned workers raise a building's output. A building with no workers still pro
 
 ### Upgrading buildings after an age advance
 
-Advancing an age does **not** convert your buildings. Each one whose line has a newer building for the new age becomes an older building: it keeps producing, and you can upgrade it. Use `upgrade <building>` to convert your existing copies to the building of your age. For example, `upgrade gathering_camp` after entering the Stone Age turns your Gathering Camps into Forager Posts. An upgraded copy costs half of what a new copy of the new building costs, takes effect at once, keeps the building's workers, and counts toward the next age's building requirements. Upgrade your food buildings first after every advance. Storage buildings never upgrade: the ones you built keep counting, so start on the new age's storage. See [Buildings](buildings.md#building-upgrades) for the full guide.
+Advancing an age does **not** convert your buildings. Each one whose line has a newer building for the new age becomes an older building: it keeps producing, and you can upgrade it. Use `upgrade <building>` to convert your existing copies to the building of your age. For example, `upgrade gathering_camp` after entering the Stone Age turns your Gathering Camps into Forager Posts. An upgraded copy costs half of what a new copy of the new building costs and takes effect at once. Its workers move with it as far as the new building has room, and it counts as a copy of the new building toward the buildings the age gate asks for. Upgrade your food buildings first after every advance. Storage buildings never upgrade: the ones you built keep counting, so start on the new age's storage. See [Buildings](buildings.md#building-upgrades) for the full guide.
 
 ---
 
 ## What are wonders?
 
-Wonders are unique mega-structures (22 wonders in all, one per age) that grant **permanent civilization bonuses**. You need your age's wonder to **advance** to the next age. Each one costs about the same share of its age's economy, and you **bank** the resources before you build it. Stonehenge, the Bronze Age wonder, needs about 34K stone, 19K wood and 3.4K iron:
+Wonders are unique mega-structures (22 wonders in all, one per age) that give civilization-wide bonuses. You need your age's wonder to **advance** to the next age. From the Stone Age on, each wonder also needs its keystone tech before you can build it. You **bank** the resources before you build the wonder. Stonehenge, the Bronze Age wonder, needs 54.4K stone, 30.4K wood and 5.44K iron, and the Calendar tech:
 
 ```
 wonder collect all
 build stonehenge
 ```
 
-`wonder collect all` banks as much of every needed resource as you have; repeat it until the bank is full, then build. Each wonder can be built only once. They are listed in the **Wonders** panel (`wonders`). See [Wonders](wonders.md).
+`wonder collect all` banks as much of every needed resource as you have. Repeat it until the bank is full, then build. Each wonder can be built only once. They are listed in the **Wonders** panel (`wonders`), where `G` or `Tab` opens a gallery of the ones you have built. See [Wonders](wonders.md).
 
 ---
 
@@ -195,9 +197,9 @@ build stonehenge
 
 Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It has two styles:
 
-- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms: **PgUp** (or **-**) zooms out to the region, the known world with the civilizations you have met, and **PgDn** (or **=**) zooms in to a district with building names.
-- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed, and trade routes travel by land, sea or air. `←` and `→` scroll it, and `+` and `-` (or PgDn and PgUp) zoom.
+- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms. **PgUp** (or **-**) zooms out to the region, the known world with the civilizations you have met, and **PgDn** (or **=**) zooms in to a district with building names.
+- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed. `←` and `→` scroll it, and `+` and `-` (or PgDn and PgUp) zoom through four levels: far, wide, mid and close.
 
-Switch with `map style skyline` or `map style roguelike` (or the shorter `style skyline`). `map glyphs` chooses the glyph set; both are saved with your account.
+Switch with `map style skyline` or `map style roguelike` (or the shorter `style skyline`). `map glyphs` chooses the glyph set (`ascii`, `unicode` or `nerd`). Both are saved with your account.
 
-The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab, Enter and the zoom keys - and =. In both styles an inspect cursor tells you what it is on and the command to type for it; Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large terminal the dashboard also shows a **mini map** above the Buildings list. `citymap` and `worldmap` still work and open the Map. See [The Map](map.md) for all the keys.
+The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab, Enter and the zoom keys `-` and `=`. In both styles an inspect cursor tells you what it is on and the command to type for it. Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large terminal the dashboard also shows a **mini map** above the Buildings list once you type `minimap on`. `citymap` and `worldmap` also open the Map. See [The Map](map.md) for all the keys.

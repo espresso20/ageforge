@@ -1,16 +1,16 @@
 # Trade
 
-Trade routes and the black market move resources around your economy. **Trade routes** run in the background, trading a small fixed bundle of goods every few ticks, and every completed cycle raises the opinion of you held by every civilization you have met (except one at war with you). **Harbors** raise what the routes pay, and the **black market** turns culture into a resource of your choice, with a risk of one deal in six.
+Trade routes and the Black Market move resources around your economy. There are 21 trade routes. They run in the background, trading a small fixed bundle of goods every few ticks, and every completed cycle raises the opinion of you held by every civilization you have met (except one at war with you). Harbors raise what the routes pay. The Black Market turns culture into a resource of your choice, with a risk of one deal in six.
 
-The game has no market where one resource swaps for another. Every material an age charges for comes from a building: see [The maker rule](buildings.md#the-maker-rule).
+The game has no market where one resource swaps for another. Every material an age charges for comes from a building (see [The maker rule](buildings.md#the-maker-rule)).
 
 The other civilizations (meeting them, opinion, deals, alliances, war) have their own page: [Factions & Diplomacy](factions.md).
 
 ---
 
-## Trade Routes
+## Trade routes
 
-Trade routes run in the background. Every few ticks a route takes a set of resources from you and gives you others in return. They only need the required buildings and enough of what they take in stock.
+Every few ticks a route takes a set of resources from you and gives you others in return. A route needs its required building and enough in stock of what it takes.
 
 <figure class="screen" data-screen="trade"><figcaption>The Trade routes panel, with Local Barter part way through a cycle.</figcaption></figure>
 
@@ -23,31 +23,29 @@ trade route start <route>
 trade route stop <route>
 ```
 
-`trade` on its own opens the **Trade routes** panel: your active routes, the routes you could start, and any allied bonuses.
+`trade` on its own opens the Trade routes panel, which fills the screen. It shows your active routes, the routes you could start, and any allied bonuses. `t` works in place of `trade`.
 
-`trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route; it fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle. There's no limit on how many routes can run at once.
+`trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route. It fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle. There's no limit on how many routes can run at once.
 
-A route **stops itself** if you fall below its required building count while it runs, and the log says so. Rebuild the building and `trade route start` it again.
+A route stops itself if you fall below its required building count while it runs, and the log says so. Rebuild the building and `trade route start` it again.
 
-If a cycle comes round and you don't have enough of what the route gives away, that cycle is skipped with no penalty (the log says so once per shortage), and the route tries again next cycle.
-
-Stock has no limit, so a run brings in all of its import however much you hold. The one thing that stops a run is not having what it gives away: then the cycle is skipped, silently, and the route tries again next cycle. Only the amounts that actually moved count toward the route's totals.
+Stock has no limit, so a run brings in all of its import however much you hold. The one thing that stops a run is not having what it gives away. Then the cycle is skipped with no penalty, the log says so once per shortage, and the route tries again next cycle. Only the amounts that actually moved count toward the route's totals.
 
 Every completed cycle also raises opinion by +1 with every civilization you have met that isn't at war with you. See [What routes are worth](#what-routes-are-worth).
 
-### Trade Disruption (War & Embargo)
+### Trade disruption (war & embargo)
 
-If you are **at war** with a civilization, or you have put it under **embargo**, every route that brings in that civilization's **specialty resource** is **disrupted**: it takes nothing and gives nothing while the conflict lasts. The route isn't stopped and its timer keeps running, so it **resumes by itself** once the conflict is over (end a war with tribute or by waiting it out; lift an embargo with `diplomacy neutral`). See [War & Peace](factions.md#war-amp-peace).
+If you are at war with a civilization, or you have put it under embargo, every route that brings in that civilization's specialty resource is disrupted. It takes nothing and gives nothing while the conflict lasts. The route isn't stopped and its timer keeps running, so it resumes by itself once the conflict is over. End a war with tribute or by waiting it out, and lift an embargo with `diplomacy neutral`. See [War & Peace](factions.md#war-amp-peace).
 
-On the Trade panel a disrupted route has a red ✖ and a note naming the blockaded resource, and a banner above the routes lists every blockaded resource. The log also notes each cycle a disrupted route misses.
+On the Trade routes panel a disrupted route has a red ✖ and a note naming the blockaded resource, and a banner above the routes lists every blockaded resource. The log also notes each cycle a disrupted route misses.
 
-Disruption follows the war and embargo state directly; there's nothing separate to track. Before you embargo or provoke a civilization, check which of your routes bring in its specialty.
+Disruption follows the war and embargo state directly, so there's nothing separate to track. Before you embargo or provoke a civilization, check which of your routes bring in its specialty.
 
-The Trade panel doesn't list civilizations. The one diplomacy effect it shows is an **Allied bonuses** block under the routes while an ally is boosting a resource (see [Allied Bonuses](factions.md#allied-bonuses)). Its last line points you to the **Factions** panel (`factions`) for opinion and deals.
+The panel doesn't list civilizations. The one diplomacy effect it shows is an Allied bonuses block under the routes while an ally is boosting a resource (see [Allied Bonuses](factions.md#allied-bonuses)). Its last line points you to the Factions panel (`factions`) for opinion and deals.
 
-### Full Trade Routes Reference
+### Full trade routes reference
 
-Every route opens in the Bronze Age or later. From the Bronze Age on, ages and their timers run 2.6 times their base length, and the cycles below already include that.
+Every route opens in the Bronze Age or later. The cycle lengths below are in ticks, which last 2 seconds each at the base speed.
 
 | Key | Name | Min Age | Required Building | You give (per cycle) | You get (per cycle) | Cycle (ticks) |
 |---|---|---|---|---|---|---|
@@ -75,13 +73,17 @@ Every route opens in the Bronze Age or later. From the Bronze Age on, ages and t
 
 What a route gives is boosted by your harbors and by an ally whose specialty it brings in: `amount × (1 + harbor bonus + ally bonus)`.
 
-**Techs and routes.** Trade routes wait for **The Wheel**, a Bronze Age tech (it needs Woodworking): until it is researched `trade route start` is refused and names it, and the Trade panel says so. Boatbuilding, Containerization and Asteroid Claims each make every run bring in 10% more of what the route lists (33% with all three); a harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route run 15% faster, and Wormholes 20% (with all four a route's next run takes 49% of the ticks listed). And **Rail Freight waits for Railroads**: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. **Warp Commerce waits for Interstellar Trade** in the same way, an Interstellar Age tech that needs Asteroid Claims and Warp Drive. A game that was already running either route when its rule arrived keeps it for the rest of that run.
+### Techs and routes
+
+Trade routes wait for The Wheel, a Bronze Age tech (it needs Woodworking). Until it is researched, `trade route start` is refused and names it, and the Trade routes panel says so. Rail Freight waits for Railroads in the same way: `trade route start rail_freight` is refused until the tech is researched, with its name in the refusal. Warp Commerce waits for Interstellar Trade, an Interstellar Age tech that needs Asteroid Claims and Warp Drive. A game that was already running either route keeps it for the rest of that run.
+
+Boatbuilding, Containerization and Asteroid Claims each make every run bring in 10% more of what the route lists (33% with all three). A harbor's and an ally's share are added to that, each as its own share of the listed amount. Road Building, Railroads and Automated Logistics each make every route run 15% faster, and Wormholes 20%. With all four, a route's next run takes 49% of the ticks listed.
 
 ---
 
 ## Harbor lineage: trade-route income
 
-Markets and banks (the **trade** lineage) make gold directly. **Harbors** (four of them wait for a tech of their age: the Harbor for Mercantilism, the Seaport for Containerization, the Container Terminal for E-commerce and the Logistics Hub for Automated Logistics) add a flat percentage to what **every active route** gives you, and the bonuses add up across tiers and copies. Harbors also produce gold themselves, which usually earns far more than the route bonus, because that bonus is a percentage of small fixed amounts (see [What routes are worth](#what-routes-are-worth)).
+Markets and banks (the trade lineage) make gold directly. Harbors add a flat percentage to what every active route gives you, and the bonuses add up across tiers and copies. Four of the five wait for a tech of their age: the Harbor for Mercantilism, the Seaport for Containerization, the Container Terminal for E-commerce and the Logistics Hub for Automated Logistics. Harbors also produce gold themselves, which usually earns far more than the route bonus, because that bonus is a percentage of small fixed amounts (see [What routes are worth](#what-routes-are-worth)).
 
 The harbor bonus adds to an ally's bonus: a route bringing in an ally's specialty, with a fleet of harbors, pays `base × (1 + harbor bonus + ally bonus)`.
 
@@ -93,13 +95,13 @@ The harbor bonus adds to an ally's bonus: a route bringing in an ally's specialt
 | 3 | `container_terminal` | Container Terminal | Information | +20% | 8 |
 | 4 | `logistics_hub` | Logistics Hub | Digital | +25% | 10 |
 
-Harbors use the **trade** worker domain, the same workers who staff markets and embassies, so a big harbor fleet competes with your markets for hands. Three routes (`triangular_trade`, `tea_clippers`, `coal_barges`) need harbors and one (`steamship_line`) needs Harbor Authorities, rather than ports.
+Harbors use the trade worker domain, the same workers who staff markets and embassies, so a big harbor fleet competes with your markets for hands. Three routes (`triangular_trade`, `tea_clippers`, `coal_barges`) need harbors and one (`steamship_line`) needs Harbor Authorities, rather than ports.
 
 ---
 
 ## Black Market
 
-From the **Colonial Age**, once **Mercantilism** is researched, you can make smuggling runs on the black market. A run spends a lump of **culture** for the same worth in a resource you choose. Five runs in six go through. The sixth time the smugglers vanish with the culture and you get nothing.
+From the Colonial Age, once Mercantilism is researched, you can make smuggling runs on the Black Market. A run spends a lump of culture for the same worth in a resource you choose. Five runs in six go through. The sixth time the smugglers vanish with the culture and you get nothing.
 
 ```text
 blackmarket              # show cost, odds and cooldown
@@ -109,9 +111,13 @@ trade black <resource>   # the same, through the trade command
 
 `bm` works in place of `blackmarket`.
 
-A run costs the larger of 5K culture and a number of hours of your own culture income: about 200 in the Colonial Age, about 166 in the Industrial Age, and 200 in every age from the Victorian Age on. The price grows as you do, and a town that makes twice the culture pays twice. A run goes through **five times in six**. When it does, it pays the same worth whichever resource you take it in: the minutes of culture income you staked, as the same minutes of your own income of the resource you chose. So a run that cost 200 hours of culture income pays 200 hours of your income of iron, of oil or of gold alike. One time in six the smugglers vanish with the culture and pay nothing. The smugglers deal in gold and nine resources (iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux), and only in those your age already makes; ask for anything else and they refuse, and nothing is spent. Your income of the resource counts between a quarter and four times what a moderate town of the age makes of it, so a town that makes none is still paid and one that makes a great deal is not paid without limit. The culture is spent up front, whether the run goes through or not. After each run there's a cooldown of 624 ticks (about 21 minutes).
+A run costs the larger of 5K culture and a number of hours of your own culture income. That number is about 200 in the Colonial Age, about 166 in the Industrial Age, and 200 in every age from the Victorian Age on. A town that makes twice the culture pays twice.
 
-Use it to turn a culture surplus into whatever you're short on, if you can live with the one run in six that is lost.
+A run goes through five times in six. When it does, it pays the same worth whichever resource you take it in: the minutes of culture income you staked, as the same minutes of your own income of the resource you chose. A run that cost 200 hours of culture income pays 200 hours of your income of iron, of oil or of gold alike. One time in six the smugglers vanish with the culture and pay nothing.
+
+The smugglers deal in gold and nine resources (iron, coal, steel, oil, electricity, data, crypto, dark matter and quantum flux), and only in those your age already makes. Ask for anything else and they refuse, and nothing is spent. Your income of the resource counts as between a quarter and four times what a moderate town of the age makes of it, so a town that makes none is still paid, and one that makes a great deal is not paid without limit. The culture is spent up front, whether the run goes through or not. After each run there's a cooldown of 624 ticks (about 21 minutes).
+
+The Black Market turns a culture surplus into whatever you're short on, if you can live with the one run in six that is lost.
 
 ---
 
@@ -119,19 +125,19 @@ Use it to turn a culture surplus into whatever you're short on, if you can live 
 
 ### What routes are worth
 
-Route payouts are fixed amounts, set per route, and they don't grow with the age. They were sized for a much smaller economy: Colonial Exports pays 150 gold a cycle in an age where a Port costs about 30M gold, and Quantum Trade pays 5K gold in an age where no building costs gold at all (none has since the Digital Age). Harbor and ally bonuses add a percentage to those amounts, which keeps them small. A route's goods are a small help in the Bronze and Iron Ages and close to nothing after that, so don't build for them.
+Route payouts are fixed amounts, set per route, and they don't grow with the age. Colonial Exports pays 150 gold a cycle in an age where a Port costs about 33M gold, and Quantum Trade pays 5K gold in an age where no building costs gold at all (none has since the Digital Age). Harbor and ally bonuses add a percentage to those amounts, which keeps them small. A route's goods are a small help in the Bronze and Iron Ages and close to nothing after that, so don't build for them.
 
-What a route pays all run long is **opinion**. Each completed cycle adds +1 opinion with every civilization you have met that isn't at war with you, all at once. Local Barter, which costs 10 food a cycle, adds about 70 opinion an hour with each of them on its own, more than any personality drift takes away. Opinion is what opens better deals, alliances and worker loans (see [Factions & Diplomacy](factions.md#opinion-and-status)), and mercantile civilizations warm to you just for having a route running.
+What a route pays all run long is opinion. Each completed cycle adds +1 opinion with every civilization you have met that isn't at war with you, all at once. At the base speed, Local Barter, which costs 10 food a cycle, adds about 70 opinion an hour with each of them on its own, more than any personality drift takes away. Opinion is what opens better deals, alliances and worker loans (see [Factions & Diplomacy](factions.md#opinion-and-status)), and mercantile civilizations warm to you just for having a route running.
 
-So:
+In practice:
 
-- Start `local_barter` as soon as you have a market and leave it running. Add the cheap routes of each age as you meet their buildings; a cheap route raises opinion as fast as an expensive one with the same cycle.
+- Start `local_barter` as soon as you have a market and The Wheel, and leave it running. Add the cheap routes of each age as you meet their buildings. A cheap route raises opinion as fast as an expensive one with the same cycle.
 - Prefer routes whose goods you can spare. A route that eats a resource you're short on costs more than the opinion is worth.
 - More routes means more cycles, and every cycle counts with every civilization you know. Once opinion sits near +100 with everyone, more routes add nothing.
 
 ---
 
-## Tips & Common Mistakes
+## Tips and common mistakes
 
 - A route needs its building. `trade route start <route>` refuses with an error if you don't have the required building at the required count. In `trade route list`, routes with a red ✗ are waiting on buildings.
 - An embargo mostly hurts you. It cancels that civilization's ally bonus, stops its deals, disrupts your routes that bring in its specialty and counts as a provocation. See [Factions & Diplomacy](factions.md#war-amp-peace).

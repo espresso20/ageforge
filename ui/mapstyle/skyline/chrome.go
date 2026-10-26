@@ -408,14 +408,8 @@ func (s *scene) status(bg tcell.Color) {
 		s.segs(0, y, bg, parts)
 		return
 	}
-	where := vibe.Line("ui.mapstyle.skyline.chrome.status.14", "the wilds")
-	if di := m.Skyline.DistrictAt(s.cam + s.lw/2); di >= 0 {
-		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + vibe.Line("ui.mapstyle.skyline.chrome.status.15", " district")
-	}
-	if s.fit { // the whole town is in view, so no district is the one
-		where = vibe.Line("ui.mapstyle.skyline.chrome.status.17", "the whole town")
-	}
-	where = vibe.Line("ui.mapstyle.skyline.chrome.status.16", "zoom: ") + s.zm.String() + "  " + where
+	// the district is named on the bar above; the line keeps the zoom level and the keys
+	where := vibe.Line("ui.mapstyle.skyline.chrome.status.16", "zoom: ") + s.zm.String()
 	s.segs(0, y, bg, panoramaHints(s.W, where, s.arrowMode()))
 }
 

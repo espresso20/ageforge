@@ -40,7 +40,7 @@
 
 AgeForge is an idle civilization game for the terminal: you forge an empire from nothing and take it through 22 ages of history, from a campfire to the Transcendent Age, one typed command at a time.
 
-> Version note: this README and the [wiki](https://ageforge.io/docs/) describe the game on master, version 4.0, which is coming soon. The latest release is 3.6, which still has some older systems (the `speed` command, the old city map).
+> Version note: this README and the [Compendium](https://ageforge.io/docs/) describe the game on master, version 4.0, which is coming soon. The latest release is 3.6, which still has some older systems (the `speed` command, the old city map).
 
 ## Overview
 
@@ -65,7 +65,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather, build, 
 - **Command-driven interface**: everything is typed at one prompt, with completion as you type; panels (research, plan, workers, army, trade, factions, stats, wonders, logs, epoch, harbinger, map and more) open by name, and `help` lists every command
 - **Themes and accounts**: 16 themes, dark and light, including colorblind-safe and high-contrast palettes; local accounts with backups and a recovery code
 - **Badges**: 556 badges to earn on your account, kept in a badge case (`badges`): one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and one-off feats. Badges give points, titles and ten of the themes, and never change a run
-- **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
+- **Compendium**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
 - **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
 
 ## Build & Run
@@ -99,7 +99,7 @@ Or use `make`:
 The [first-age walkthrough](https://ageforge.io/docs/#/first-ten-minutes) goes step by step.
 
 ### Commands
-Everything is typed at the prompt. The full reference is the in-game `help` panel and the [Commands](https://ageforge.io/docs/#/commands) wiki page; the ones you will use most:
+Everything is typed at the prompt. The full reference is the in-game `help` panel and the [Commands](https://ageforge.io/docs/#/commands) page of the Compendium; the ones you will use most:
 
 - `build <building> [count|max]`, `research <tech>`, `advance`
 - `plan`: the build plan (`plan build`, `plan research`, `plan advance`)

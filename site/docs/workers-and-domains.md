@@ -1,39 +1,39 @@
 # People
 
-Everyone in your town is a person, and there are four kinds: **workers**, who have a job; the **reserve**, who live in your homes and wait for one; **soldiers**; and **scholars**. Each age has its own word for each kind. In the Bronze Age the scholars are Scribes, in the Cyberpunk Age they are Netrunners, and the game shows the word of the age you are in. This page says workers, the reserve, soldiers and scholars.
+Everyone in your town is a person, and there are four kinds: workers, who have a job; the reserve, who live in your homes and wait for one; soldiers; and scholars. Each age has its own word for each kind. In the Bronze Age the scholars are Scribes, in the Cyberpunk Age they are Netrunners, and the game shows the word of the age you are in. This page says workers, the reserve, soldiers and scholars.
 
-Every building that produces resources has worker slots, and staffing it raises its output from a 20% floor up to 100%. Workers come from a **single generic pool**: any worker can go to any building. There are 11 worker domains, and a worker's domain comes from the building it staffs, not from the worker.
-
----
-
-## Quick Start
-
-- **Workers come on their own.** Build housing and buildings with worker slots. With auto-recruit on (the default), your population grows toward your housing while food allows, new workers fill the empty slots first, and the rest wait in the **reserve**. Workers in the reserve go to work by your [roster](#the-roster) as soon as a slot opens.
-- **Steer, or take over.** `roster faith 40` sends more workers to faith; `roster military 0` keeps military empty. `recruit` and `assign` still work by hand, and a worker you place stays where you put it.
-- **Every worker eats.** Each worker eats the current age's food rate every tick, whatever it does. Keep the food rate positive (see [Food Drain](#food-drain)).
-- **Scholars and soldiers move in with their building.** A knowledge building comes with its scholars and a military building with its soldiers. They live in your homes and eat like anyone, with no recruiting and no assignment.
-- **Look at the panel.** `people` (or `workers`) opens the People panel: the whole town on one tab, then your work areas, your army and your scholars.
-
-The first age, step by step, is in [Your First Ten Minutes](first-ten-minutes.md).
+Most buildings that make resources have worker slots, and staffing one raises its output from a 20% floor up to 100%. Workers come from a single generic pool: any worker can go to any building. There are 11 worker domains, and a worker's domain comes from the building it staffs, not from the worker.
 
 ---
 
-## The People of Your Town
+## Quick start
 
-Your **population** is every person who lives in your homes:
+- Workers come on their own. Build housing and buildings with worker slots. With auto-recruit on (the default), your population grows toward your housing while food allows. New workers fill the empty slots first, and the rest wait in the reserve until a slot opens (see [the roster](#the-roster)).
+- You can steer or take over. `roster faith 40` sends more workers to faith, and `roster military 0` keeps military empty. `recruit` and `assign` still work by hand, and a worker you place stays where you put it.
+- Everyone eats. Each person eats the current age's food rate every tick, whatever they do. Keep the food rate positive (see [Food drain](#food-drain)).
+- Scholars and soldiers come with their buildings. A knowledge building comes with its scholars and a military building with its soldiers. They live in your homes and eat like anyone, with no recruiting and no assignment.
+- The People panel shows all of it. `people` (or `workers`) opens it full screen: the whole town on one tab, then your work areas, your army and your scholars.
+
+The first age, step by step, is in [Your First Age](first-ten-minutes.md).
+
+---
+
+## The people of your town
+
+Your population is every person who lives in your homes:
 
 ```
 population = workers at work + the reserve + scholars + soldiers
 ```
 
-- **Workers** have a job: they are assigned to a building with worker slots.
-- **The reserve** is the workers with no slot yet. They eat like any worker and produce nothing; they take a new slot the moment one opens.
-- **Scholars** come with a knowledge building and work its research from the moment the copy stands (see [Scholars and Research](knowledge.md)). They are part of the population: they take a place in your homes and eat the same food as a worker. If your homes are full when the building stands, they still move in, and the reserve stops growing until there is room again. Knowledge buildings cannot be sold, so scholars do not leave.
-- **Soldiers** come with a military building (see [Army & Missions](military.md)) and stand at its posts. A copy has a fixed number of posts, more in the later ages. Posts fill from the reserve first, then with new arrivals, who need no room in your homes, and only while the food margin holds: the same test that lets the reserve grow, so soldiers arriving never starve the town. A post that food cannot fill waits, and fills as the food allows; the log says so once for each building. Soldiers are part of the population: they take a place in your homes and eat the same food as a worker, and when your homes are full they still arrive, and the reserve stops growing until there is room again. A military building no longer trains a stock of soldiers: the army is the soldiers at their posts. Soldiers out on a mission are away from their posts but still people, and soldiers who fall leave the population. Their empty posts retrain from the reserve, at most 1% of all your posts in a staffing pass (at least one), and only while the food margin holds; no newcomer takes them.
+- Workers have a job: they are assigned to a building with worker slots.
+- The reserve is the workers with no slot yet. They eat like any worker and produce nothing, and they take a slot when one opens.
+- Scholars come with a knowledge building and work its research from the moment the copy stands (see [Scholars and Research](knowledge.md)). They are part of the population: they take a place in your homes and eat the same food as a worker. If your homes are full when the building stands, they still move in, and the reserve stops growing until there is room again. Knowledge buildings cannot be sold, so scholars do not leave.
+- Soldiers come with a military building (see [Army & Missions](military.md#soldiers)) and stand at its posts. A copy has a fixed number of posts for its age, and two technologies add a tenth more. Posts fill from the reserve first, then with new arrivals, who need no room in your homes, and only while the food margin holds: the same test that lets the reserve grow, so soldiers arriving never starve the town. A post that food cannot fill waits and fills as the food allows; the log says so once for each building. Soldiers take a place in your homes and eat the same food as a worker. When your homes are full they still arrive, and the reserve stops growing until there is room again. A military building does not train a stock of soldiers: the army is the soldiers at their posts. Soldiers out on a mission are away from their posts but still people, and soldiers who fall leave the population. Their empty posts retrain from the reserve, at most 1% of all your posts in a staffing pass (at least one), and only while the food margin holds. No newcomer takes them.
 
 Housing caps the population. The room left for newcomers is your housing less your population.
 
-## The Worker Pool
+## The worker pool
 
 There is a single pool of workers. Workers have no domain until they are assigned to a building. The pool is:
 
@@ -41,7 +41,7 @@ There is a single pool of workers. Workers have no domain until they are assigne
 pool = reserve (idle workers) + sum of all building assignments
 ```
 
-An assigned worker takes on the **class name** for that building's domain at the current age. A worker on a `gathering_camp` in the Primitive Age is a **Forager**; the same worker on a `story_circle` is a **Shaman**. The class name is only a label: it changes nothing about what the worker produces or eats. There are no separate domain pools.
+A worker's domain is the domain of the building it staffs. A worker on a `gathering_camp` is a food worker, and the same worker on a `shrine` is a faith worker. The domain changes nothing about what a worker eats. There are no separate domain pools.
 
 - You don't choose a domain when recruiting.
 - Workers can move freely between any buildings that have worker slots.
@@ -50,9 +50,9 @@ An assigned worker takes on the **class name** for that building's domain at the
 
 ---
 
-## The Roster
+## The roster
 
-You don't have to recruit or assign workers yourself. Your population grows toward your housing while food allows (**auto-recruit**, on by default), and the game puts idle workers to work by your **roster**: how your workforce splits across the 11 domains. You can steer the split, or take over by hand. A worker you place by hand stays where you put it.
+You don't have to recruit or assign workers yourself. Your population grows toward your housing while food allows (auto-recruit, on by default), and the game puts idle workers to work by your roster: how your workforce splits across the 11 domains. You can steer the split, or take over by hand. A worker you place by hand stays where you put it.
 
 ```
 roster
@@ -61,7 +61,7 @@ roster auto
 workers auto-recruit [on|off]
 ```
 
-The roster used to be called worker shares, and `workers share` still works in place of `roster`.
+`workers share ...` does the same as `roster ...`.
 
 | Command | Effect |
 |---------|--------|
@@ -75,17 +75,17 @@ The roster used to be called worker shares, and `workers share` still works in p
 | `workers auto-recruit` | Show whether auto-recruit is on |
 | `workers auto-recruit off` | Stop recruiting automatically; `on` starts it again (`workers autorecruit` works too) |
 
-Each line of `roster` reads like `Faith: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The People panel's **Work** tab (`people`, or `workers`) shows the same, with a line that says what auto-recruit is doing: growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out.
+Each line of `roster` reads like `Faith: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The People panel's Work tab (`people`, or `workers`) shows the same, with a line that says what auto-recruit is doing: growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out.
 
 ### How the split works
 
-- A **share** is a percent of your whole workforce, idle workers included, for one domain.
-- Domains without a share are **on auto**: they split whatever the set shares leave, in proportion to their worker slots (the slots in that domain's built buildings). The default is every domain on auto, so your workers follow your buildings' slots.
+- A share is a percent of your whole workforce, idle workers included, for one domain.
+- Domains without a share are on auto: they split whatever the set shares leave, in proportion to their worker slots (the slots in that domain's built buildings). The default is every domain on auto, so your workers follow your buildings' slots.
 - Set shares that add up to more than 100% are each scaled down to fit: faith 80% and military 40% work as about 67% and 33%. The auto domains then get nothing, except overflow: when every domain with a share is full, extra workers go to auto domains with free slots.
-- A share of **0** keeps a domain empty. Its workers move to free slots elsewhere as room opens, and no new worker goes there. Setting food to 0 replies with a warning: "Food buildings get no workers now: watch your food."
+- A share of 0 keeps a domain empty. Its workers move to free slots elsewhere as room opens, and no new worker goes there. Setting food to 0 replies with a warning: "Food buildings get no workers now: watch your food."
 - A domain never holds more workers than its slots. Workers its share can't place go to other domains with free slots. If you set a share for a domain with no buildings yet, the reply says the share applies once you build one.
 
-**Example.** You have 30 worker slots in each of three domains and 40 workers:
+For example, say you have 30 worker slots in each of three domains and 40 workers:
 
 | Domain | Slots | All on auto | With `roster faith 50` | Workers then |
 |--------|-------|-------------|-----------------------------------|--------------|
@@ -97,29 +97,45 @@ Faith takes its 50% first. Food and lumber split the other 50% by their slots, w
 
 ### The roster routine
 
-Every 5 ticks (10 seconds), and offline once for every 5 ticks of the catch-up, so time away grows your town as much as time at the screen, the game:
+The routine runs every 5 ticks (10 seconds at normal speed). Offline it runs once for every 5 ticks of the catch-up, so time away grows your town as much as the same time at the screen. Each run:
 
 1. moves workers out of domains set to 0 into free slots elsewhere,
 2. puts idle workers to work, each in the domain furthest below its share,
 3. with auto-recruit on, recruits workers into every empty worker slot at once, by the shares, as far as housing allows and while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. Past the slots, the population keeps growing toward the housing, by 1% of your population each pass and at least one, under the same food margin; those workers wait idle in the reserve. A bigger town fills faster. On known ground ([Era Mastery](prestige.md#era-mastery)) the margin is measured before the age's speed-up, so the same buildings feed the same workforce at any speed.
 
-Within a domain, buildings fill in this order: buildings that are not superseded before those that are (a building is superseded once a higher tier of its line is open), the newest age first, then the higher tier of its line.
+Within a domain, buildings fill in this order: buildings that are not older before those that are (a building is older when your age has a newer building in its line, and you can `upgrade` it), the newest age first, then the higher tier of its line.
 
-**Food safety.** A newcomer your food income can't feed can still come as a food worker, if a food building has a free slot and the worker grows more food than they eat. A staffed food slot adds 80% of the building's food divided by its slots: a worker in a Primitive gathering camp grows about 0.27 food a tick and eats 0.06. So a small food share never stops growth; the extra newcomers go to food buildings. While food is short, idle workers go to food buildings first. Nothing is recruited while food is at 0 and workers are starving. The manual `recruit max` still does not check food.
+#### Food safety
 
-**Your workers stay put.** The routine never takes a worker out of a building, except out of a domain set to 0, so your own `assign` and `unassign` stick. Setting or clearing a share (`roster ...`) moves workers once to match the new shares: one at a time, from the domain furthest over its share to the one furthest under it that has a free slot. Food workers stay where moving them would make the food rate fall below zero.
+A newcomer your food income can't feed can still come as a food worker, if a food building has a free slot and the worker grows more food than they eat. A staffed food slot adds 80% of the building's food divided by its slots: a worker in a Primitive gathering camp grows about 0.27 food a tick and eats 0.06. So a small food share never stops growth; the extra newcomers go to food buildings. While food is short, idle workers go to food buildings first. Nothing is recruited while your food stock is at 0. The manual `recruit` and `recruit max` do not check food.
 
-**The minute's wait.** After a worker command (`recruit`, `assign`, `unassign`, `dismiss`, `sell`, `upgrade`) the routine waits a minute (30 ticks), so it never grabs workers you are moving by hand. After that, workers still idle go to work by your shares. So `unassign` alone may keep a building empty for only a minute; to keep a domain empty, set its share to 0.
+#### Your workers stay put
 
-**Auto-recruit off.** With `workers auto-recruit off`, your population stops growing on its own, but idle workers still go to work by your shares after that minute. `workers auto-recruit on` starts growth again at once.
+The routine never takes a worker out of a building, except out of a domain set to 0, so your own `assign` and `unassign` stick. Setting or clearing a share (`roster ...`) moves workers once to match the new shares: one at a time, from the domain furthest over its share to the one furthest under it that has a free slot. Food workers stay where moving them would make the food rate fall below zero.
 
-**What holds your population.** The People box and the People panel say it: `Held by: housing` when every home is full, and `Held by: food` with the net food a tick and how many more workers it feeds when the food margin stops the next newcomer. Nothing is shown while the population is growing.
+#### The minute's wait
 
-**Logs.** What the routine does is a routine line in the log (plain text color, and marked `·` in the **Logs** panel): `Roster: recruited 3 workers (population 12/20), put 2 idle workers to work.` The replies to setting a share or switching auto-recruit are routine lines too, except the warning for food at 0. The first time workers arrive in a run (when your population was 0), a note says: "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your roster. Type workers to see them; workers auto-recruit off to recruit by hand." After time away, the welcome back adds what the routine did, for example "While you were away, your roster recruited 12 workers (population 40/50), put 3 idle workers to work."
+After a worker command (`recruit`, `assign`, `unassign`, `dismiss`, `sell`, `upgrade`) the routine waits 30 ticks, a minute at normal speed, so it never grabs workers you are moving by hand. Setting or clearing a share, or `workers auto-recruit on`, ends the wait at once. After the wait, workers still idle go to work by your shares. So `unassign` alone may keep a building empty for only a minute; to keep a domain empty, set its share to 0.
 
-**Build plan.** A copy the [build plan](plan.md#how-it-runs) finishes is staffed from idle workers first: into the copy itself, or, with shares set, wherever the shares say. If idle workers run out, the plan moves workers out of superseded buildings, the same line's first; with shares set, only from the copy's own domain, so the split holds. It never moves food workers or workers in this age's buildings. The routine then recruits for what is still empty.
+#### Auto-recruit off
 
-**Saving.** Shares, the auto-recruit switch and the minute's wait are saved with your game. From the first prestige, **Roster** carries the shares you had when the run ended into the next run and a Succumb rebuild, and its log says so ("Roster: your shares carry over.", with the split). Auto-recruit is a preference and stays as you set it across prestige and Succumb, like wonder overflow. A new game resets both: every domain on auto, auto-recruit on. Older saves load with every domain on auto and auto-recruit on.
+With `workers auto-recruit off`, your population stops growing on its own, but idle workers still go to work by your shares after that minute. `workers auto-recruit on` starts growth again at once.
+
+#### What holds your population
+
+`Held by: housing` shows when every home is full. `Held by: food` shows, with the net food a tick and how many more workers it feeds, when the food margin stops the next newcomer or the food stock is empty. The People box and the People panel's Overview show these. When nothing holds the population back, the larger People box says "Room to grow" and the Overview says "nothing, growing".
+
+#### Logs
+
+What the routine does is a routine line in the log (plain text color, and marked `·` in the Logs panel): `Roster: recruited 3 workers (population 12/20), put 2 idle workers to work.` The replies to setting a share or switching auto-recruit are routine lines too, except the warning for food at 0. The first time workers arrive in a run (when your population was 0), a note says: "Workers arrive on their own: the game recruits workers while housing and food allow, puts them to work by your roster, and keeps the rest in the reserve. Type workers to see them; workers auto-recruit off to recruit by hand." After time away, the welcome back adds what the routine did, for example "While you were away, your roster recruited 12 workers (population 40/50), put 3 idle workers to work."
+
+#### Build plan
+
+A copy the [build plan](plan.md#how-it-runs) finishes is staffed from idle workers first: into the copy itself, or, with shares set, wherever the shares say. If idle workers run out, the plan moves workers out of older buildings, the same line's first; with shares set, only from the copy's own domain, so the split holds. It never moves food workers or workers in this age's buildings. The routine then recruits for what is still empty.
+
+#### Saving
+
+Shares, the auto-recruit switch and the minute's wait are saved with your game. From the first prestige, Roster carries the shares you had when the run ended into the next run and into a Succumb rebuild, and its log says so ("Roster: your shares carry over.", with the split). Auto-recruit is a preference and stays as you set it across prestige and Succumb. A new game puts every domain on auto and auto-recruit on.
 
 ---
 
@@ -128,17 +144,17 @@ Within a domain, buildings fill in this order: buildings that are not superseded
 | Command | Shortcut | Effect |
 |---------|----------|--------|
 | `people` | | Open the People panel (`workers` opens it too) |
-| `roster ...` | | Set or show the roster (see [The Roster](#the-roster)) |
+| `roster ...` | | Set or show the roster (see [The roster](#the-roster)) |
 | `workers auto-recruit on`, `off` | | Turn auto-recruit on or off; bare `workers auto-recruit` shows it |
 | `recruit [count]` | `r` | Recruit workers into free housing (default 1); `recruit max` fills all of it |
 | `assign <building> [count]` | `a` | Put idle workers to work in a building (default 1, or `all`) |
 | `unassign <building> [count]` | `u` | Take workers out of a building; they go idle (default 1, or `all`) |
 | `dismiss <building> [count]` | | Remove workers from a building and from your population (default 1, or `all`) |
-| `status` | `s` | Text summary, including population, idle workers and food drain |
+| `status` | `s` | Text summary: resources, population, the reserve, food drain and the workers in each building |
 
 ### Recruiting
 
-Workers arrive on their own: with auto-recruit on, your population grows toward your housing while food allows. `recruit` still works when you want workers now, or when you turn auto-recruit off. Workers are recruited from free housing, with or without a free slot, and you don't name a domain.
+Workers arrive on their own: with auto-recruit on, your population grows toward your housing while food allows. `recruit` still works when you want workers right away, or when you turn auto-recruit off. Workers are recruited from free housing, with or without a free slot, and you don't name a domain.
 
 | Command | Effect |
 |---------|--------|
@@ -148,7 +164,7 @@ Workers arrive on their own: with auto-recruit on, your population grows toward 
 
 New workers start idle. Put them to work with `assign`, or leave them: a minute after your last worker command, the roster routine puts any still idle to work by your shares.
 
-Recruiting is free, but every worker eats from the moment it joins (see [Food Drain](#food-drain)). **`recruit max`** fills all your free housing and does not check your food income, so it can put you into a deficit. Auto-recruit does check it: it keeps a food margin.
+Recruiting is free, but every worker eats from the moment it joins (see [Food drain](#food-drain)). `recruit max` fills all your free housing and does not check your food income, so it can put you into a deficit. Auto-recruit does check it: it keeps a food margin.
 
 ### Assigning
 
@@ -157,15 +173,14 @@ Assigns workers from the idle pool to a building. The domain comes from the buil
 | Command | Effect |
 |---------|--------|
 | `assign gathering_camp 3` | Assign 3 workers to gathering_camp |
-| `assign library all` | Assign all idle workers to library, up to its free slots |
-| `assign barracks 5` | Assign 5 workers to barracks |
+| `assign farm all` | Assign all idle workers to farm, up to its free slots |
 | `assign` (no arguments) | Shows the usage line |
 
 - You must have built at least one of the building.
 - Assignment is capped at the building count times its worker slots.
 - You can't assign more workers than you have idle.
 
-You don't have to assign: the roster routine puts idle workers to work every 5 ticks (10 seconds). Assign by hand when you want workers in a particular building. Your assignments stick: the routine never takes a worker out of a building, except out of a domain whose share is 0.
+You don't have to assign: the roster routine puts idle workers to work every 5 ticks (10 seconds at normal speed). Assign by hand when you want workers in a particular building. Your assignments stick: the routine never takes a worker out of a building, except out of a domain whose share is 0.
 
 ### Unassigning
 
@@ -174,33 +189,35 @@ Removes workers from a building and returns them to the idle pool, where they ke
 | Command | Effect |
 |---------|--------|
 | `unassign gathering_camp 2` | Remove 2 workers from gathering_camp |
-| `unassign barracks all` | Remove all workers from barracks |
+| `unassign farm all` | Remove all workers from farm |
 
 If you leave them idle, the roster routine puts them back to work a minute after your last worker command, possibly in the same domain. Within a domain it fills the newest buildings first, so `unassign <old building> all` after an advance moves workers to your new buildings. To pull workers out of a domain for good, set its share to 0 instead (`roster military 0`).
 
 ### Dismissing
 
-`dismiss` removes workers from a building **and** from your population. Dismissed workers are gone.
+`dismiss` removes workers from a building and from your population. Dismissed workers are gone.
 
 | Command | Effect |
 |---------|--------|
 | `dismiss gathering_camp 2` | Remove 2 workers from gathering_camp and reduce population by 2 |
-| `dismiss barracks all` | Dismiss all workers assigned to barracks |
+| `dismiss farm all` | Dismiss all workers assigned to farm |
 
-Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or to free housing. With auto-recruit on, the game recruits into the emptied slots again once housing and food allow. To keep a building empty, sell it, set its domain's share to 0, or turn auto-recruit off.
+Use it in a food deficit (idle workers still eat, so `unassign` doesn't help) or to free housing. With auto-recruit on, the game recruits into the emptied slots again once housing and food allow. To keep a building empty, sell it or set its domain's share to 0.
 
 ### The People panel
 
-`people` (or `workers`) opens the People panel over the whole screen. **Left** and **Right** switch tabs, **Up** and **Down** pick a row, and **Esc** closes it. The prompt keeps working while it is open: `roster faith 40` sets a share and the panel shows it at once.
+`people` (or `workers`) opens the People panel over the whole screen, apart from the command bar. It needs at least 60 columns and 14 rows. Left and Right switch tabs, Up and Down pick a row, and Esc closes it. The prompt keeps working while it is open: `roster faith 40` sets a share and the panel shows it at once.
 
-- **Overview**: your homes as one bar, with each kind of person in its own color and the empty homes dim; the homes, the empty ones and what holds your population back; what everyone eats, what food nets, your morale and how many people your food production can feed; one card for each kind (workers at work and the slots they fill, the reserve, soldiers at their posts and away, scholars at their desks); and a **Lately** list of what has happened to your people: workers recruited, scholars moved in, starvation, soldiers sent out and lost.
-- **Work**: each work area with its share (set, or auto), a bar of its workers over its slots and its buildings; the picked area's buildings, its share, the command that sets it, and what auto-recruit is doing (growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out).
-- **Army**: your military buildings with their copies and the soldiers posted over the posts they have (the People box shows the same as posted/posts while some wait on food), the army's size, your defense and what it blunts of a raid, the missions that have soldiers away with how long they have left, and the soldiers' news.
-- **Scholars**: your knowledge buildings with their copies and scholars, the research in progress with its progress, time left and rate, how many of your scholars research and how many teach, and what is queued next.
+- Overview: your homes as one bar, with each kind of person in its own color and the empty homes dim; the homes, the empty ones and what holds your population back; what everyone eats, what food nets, your morale and how many people your food production can feed; one card for each kind (workers at work and the slots they fill, the reserve, soldiers at their posts and away, scholars at their desks); and a Lately list of what has happened to your people: workers recruited, scholars moved in, starvation, soldiers sent out and lost.
+- Work: each work area with its share (set, or auto), a bar of its workers over its slots and its buildings. For the picked area it lists the buildings, the share, the command that sets it and what auto-recruit is doing (growing toward your housing, off, waiting after your last worker command, held by housing, held by food, or paused because food ran out).
+- Army: your military buildings with their copies and the soldiers posted over the posts they have (the People box shows the same as posted/posts while some wait on food), the army's size, your defense and what it blunts of a raid, your army's rank and what it gives, the missions that have soldiers away with how long they have left, and the soldiers' news.
+- Scholars: your knowledge buildings with their copies and scholars, the research in progress with its progress, time left and rate, how many of your scholars research and how many teach, the bonus teaching gives your workers, and what is queued next.
 
 <figure class="screen" data-screen="people"><figcaption>The People panel in the Bronze Age: the homes as one bar, a card for each kind of person, and what has happened lately.</figcaption></figure>
 
-On the accessible [themes](themes.md) the panel's greens and reds are blue and orange. The **People box** is always visible (beside Under construction on a terminal of 120 columns by 36 rows or more, under the Panels list on a smaller one): the population over the housing, one line for each kind of person with the age's word for it and the count (the soldiers add how many are out on missions when there is room), and, when something holds your population back, what it is. On a big terminal the box adds a bar across the homes in the colors of the four kinds. The food use and net food are on the Overview.
+On the accessible [themes](themes.md) the panel's greens and reds are blue and orange.
+
+The People box is always visible. On a terminal of 120 columns by 36 rows or more it sits beside Under construction; on a smaller one it sits under the Panels list. It shows the population over the housing, one line for each kind of person with the age's word for it and the count (the soldiers add how many are out on missions when there is room) and, when something holds your population back, what it is. The larger box also has a bar across the homes in the colors of the four kinds. The food use and net food are on the Overview.
 
 ### Completion
 
@@ -210,9 +227,9 @@ The prompt suggests completions for all worker commands, shown dim after the cur
 |-------|----------------|
 | `assign ` | your built buildings that have worker slots, the ones with a free slot first |
 | `assign gathering_camp ` | `all` |
-| `assign lib` | built buildings whose key starts with `lib`, such as `library` |
+| `assign gath` | built buildings whose key starts with `gath`, such as `gathering_camp` |
 | `unassign ` and `dismiss ` | only buildings that currently have workers assigned |
-| `unassign barracks ` | `all` |
+| `unassign farm ` | `all` |
 | `recruit ` | `max` |
 | `workers ` | `auto-recruit` |
 | `roster ` | the worker domains, the ones you have worker buildings in (or a share set for) first, then the rest, and `auto` |
@@ -224,16 +241,16 @@ The prompt suggests completions for all worker commands, shown dim after the cur
 These forms return an error:
 
 ```
-recruit food                     # no domain argument: workers are generic
-assign food gathering_camp       # the domain comes from the building
-unassign all food                # name a building
+recruit food              # no domain argument: workers are generic
+assign food gathering_camp   # the domain comes from the building
+unassign all food         # name a building
 roster gathering_camp 40  # a share is for a domain, not a building
 roster food 150           # a share is a percent from 0 to 100
 ```
 
 ---
 
-## Production and Efficiency
+## Production and efficiency
 
 ```
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity)
@@ -241,7 +258,7 @@ output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacit
 
 `total_capacity` is the building count times the building's worker slots. `base_rate` is the fully staffed rate shown in the building's description. For construction resources it is set by the Payback Rule; food, faith and culture keep hand-set rates (see [How Production Rates Are Set](buildings.md#how-production-rates-are-set)).
 
-| Workers Assigned | Efficiency |
+| Workers assigned | Efficiency |
 |-----------------|------------|
 | 0 (none) | 20% |
 | 25% of slots | 40% |
@@ -253,38 +270,38 @@ An unstaffed building still contributes 20%. Only full staffing reaches the full
 
 ### Worker output bonuses
 
-**Worker output** is the part of a building's output its workers add: the 80% that staffing brings, on top of the 20% an empty building makes. A worker output bonus raises that part:
+Worker output is the part of a building's output its workers add: the 80% that staffing brings, on top of the 20% an empty building makes. A worker output bonus raises that part:
 
 ```
 worker output       = base_rate × building_count × 0.80 × assigned / total_capacity × morale_multiplier
 worker output bonus = worker output × (sum of your worker output bonuses)
 ```
 
-So with +15% worker output a fully staffed building makes 12% more than its listed rate (15% of the 80% its crew adds), and an empty building gains nothing. One thing gives it today: the Jacked In milestone (+15%, from the Cyberpunk Age). No tech does any more: Tool Making, Bronze Working, Road Building and Neural Interface raise the output of a resource instead (see [Technologies](technologies.md#output-of-one-resource)).
+So with +15% worker output a fully staffed building makes 12% more than its listed rate (15% of the 80% its crew adds), and an empty building gains nothing. Two things give it: the Jacked In milestone (+15%, from the Cyberpunk Age) and your scholars when they teach (+10% in the first three ages, down to +4% from the Cyberpunk Age, with every scholar teaching; see [Research and teaching](knowledge.md#research-and-teaching)). No tech gives it: Tool Making, Bronze Working, Road Building and Neural Interface raise the output of one resource instead (see [Technologies](technologies.md#output-of-one-resource)).
 
-The bonus is added on top of your other production bonuses, not multiplied by them. It is outside [the all-production pool](resources.md#the-all-production-pool) and has no cap of its own, so it counts in full however large that pool is. `rates` shows it as its own **Worker bonus** part, and the Stats panel lists the total as **Worker output** under Active Multipliers.
+The bonus is added on top of your other production bonuses, not multiplied by them. It is outside [the all-production pool](resources.md#the-all-production-pool) and has no cap of its own, so it counts in full however large that pool is. `rates` shows it as its own Worker bonus part, and the Stats panel lists the total as Worker output under Active multipliers.
 
-**Example: gathering_camp**
+Example, `gathering_camp`:
 
 - Base rate 1.0 food/tick, 3 worker slots
 - Built 2×: 6 slots in total, base output 1.0 × 2 = 2.0 food/tick
-- With 3 workers (50% fill): `2.0 × (0.20 + 0.80 × 0.50)` = **1.2 food/tick**
-- With all 6 slots filled: **2.0 food/tick**
+- With 3 workers (50% fill): `2.0 × (0.20 + 0.80 × 0.50)` = 1.2 food/tick
+- With all 6 slots filled: 2.0 food/tick
 
-**Example: shrine (Primitive Age, faith domain)**
+Example, `shrine` (Primitive Age, faith domain):
 
 - Worker slots: 2 each
 - Built 3×: 6 slots in total
-- With 3 workers (50% fill): output is `base × 3 × (0.20 + 0.80 × 0.50)` = **60% of the base**
-- With all 6 slots filled: **100% of the base**
+- With 3 workers (50% fill): output is `base × 3 × (0.20 + 0.80 × 0.50)` = 60% of the base
+- With all 6 slots filled: 100% of the base
 
 Knowledge buildings have no worker slots: their [scholars](knowledge.md) come with them.
 
 ### Early worker buildings
 
-Worker slots are **per building**: 3 shrines give 3 × 2 = 6 slots.
+Worker slots are per building: 3 shrines give 3 × 2 = 6 slots.
 
-| Building | Key | Domain | Worker Slots | Available From |
+| Building | Key | Domain | Worker slots | Available from |
 |----------|-----|--------|----------------|----------------|
 | Gathering Camp | `gathering_camp` | food | 3 | Primitive Age |
 | Wood Camp | `wood_camp` | lumber | 3 | Primitive Age |
@@ -299,7 +316,7 @@ For every building see [Buildings](buildings.md).
 
 ---
 
-## Food Drain
+## Food drain
 
 Every person eats food each tick. The amount is set by the current age and is the same for everyone, whatever building a worker staffs, the reserve, the scholars and the soldiers included:
 
@@ -307,7 +324,7 @@ Every person eats food each tick. The amount is set by the current age and is th
 total_food_drain = food_per_worker(current age) × population
 ```
 
-A worker eats **0.06 food/tick** in the Primitive Age. The rate rises 12% with each age, to about **0.23** in the Modern Age and **0.58** in the Quantum Age (the Transcendent Age keeps the Quantum rate). When you advance, the new rate applies to every worker at once. The full per-age list is the food column under [Worker Class Names by Age](#worker-class-names-by-age).
+A worker eats 0.06 food/tick in the Primitive Age. The rate rises 12% with each age, to about 0.23 in the Modern Age and 0.58 in the Quantum Age (the Transcendent Age keeps the Quantum rate). When you advance, the new rate applies to every person at once. The full per-age list is the food table under [Worker class names by age](#worker-class-names-by-age).
 
 | Age | Food/tick per worker | 10 workers | 50 workers |
 |-----|---------------------|-----------|-----------|
@@ -321,7 +338,7 @@ A worker eats **0.06 food/tick** in the Primitive Age. The rate rises 12% with e
 | Modern | 0.234 | 2.34 | 11.69 |
 | Quantum | 0.579 | 5.79 | 28.94 |
 
-- Make sure food income exceeds food drain before recruiting by hand. Auto-recruit does this for you: it keeps a margin of one worker's food, or 5% of food production if that is more.
+- Keep food income above food drain before recruiting by hand. Auto-recruit does this for you: it keeps a margin of one worker's food, or 5% of food production if that is more.
 - The People panel's Overview shows food use and net food per tick; `status` shows the drain.
 - `unassign` returns workers to the idle pool, where they still eat. `dismiss` is the way to cut drain at once.
 
@@ -329,60 +346,64 @@ A worker eats **0.06 food/tick** in the Primitive Age. The rate rises 12% with e
 
 ## Starvation
 
-When food runs out while your workers are still eating, they begin dying:
+When food runs out while your people are still eating, workers begin dying:
 
-- A warning is logged on the first tick without food
-- **1 worker dies every 5 ticks** (10 seconds) until food recovers
-- Deaths are logged in red
-- As soon as there is food in stock again, deaths stop and a recovery message is logged
+- A warning is logged on the first tick without food.
+- One worker dies every 5 ticks (10 seconds at normal speed) until food recovers.
+- Deaths are logged in red.
+- As soon as there is food in stock again, deaths stop and a recovery message is logged.
 
-Starvation also drags morale down. Auto-recruit keeps a food margin and recruits nothing while workers are starving, but `recruit max`, a food share set too low, or the higher food rate after an age advance can still put you into a deficit. To recover:
+Only workers and the reserve die. Scholars and soldiers eat too, but they go with their buildings, not with the food.
 
-1. `dismiss` workers from low-priority buildings to cut drain at once
+Starvation also drags morale down. Auto-recruit keeps a food margin and recruits nothing while your food stock is empty, but `recruit max`, a food share set too low, or the higher food rate after an age advance can still put you into a deficit. To recover:
+
+1. `dismiss` workers from low-priority buildings to cut drain at once.
 2. Build more food buildings. While food is short, the roster routine sends idle workers to food buildings first.
-3. `unassign` workers from other buildings and `assign` them to food buildings
+3. `unassign` workers from other buildings and `assign` them to food buildings.
 
 ---
 
 ## Morale
 
-Morale multiplies the output of every worker-driven building:
+Morale multiplies the output of every building with worker slots:
 
 ```
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity) × morale_multiplier
 ```
 
-It starts at 50%, where it has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its cap. Starvation, workers in military buildings over 30% of your workers and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The People panel's Overview shows it beside the food figures, and the status bar shows it all the time. Everything else is on [Morale](morale.md).
+A new game starts at 50%, where morale has no effect, and the further it moves from 50% the bigger the effect: half output at the 10% floor, up to +20% at its ceiling. Starvation, military workers above 30% of your workers (only the Geographic Society takes any) and more than half your workers idle pull it down; worship and culture buildings, your faith income and good events push it up. The People panel's Overview shows it beside the food figures, and the status ribbon shows it all the time. Everything else is on [Morale](morale.md).
 
 ---
 
-## The 11 Worker Domains
+## The 11 worker domains
 
-A building's domain decides which worker class staffs it. "First Building" is the age of the earliest building that takes workers in that domain.
+A building's domain decides which worker class staffs it. "First building" is the age of the earliest building that takes workers in that domain.
 
-| Domain | Lineage | Makes | Example Buildings | First Building |
+| Domain | Lineage | Makes | Example buildings | First building |
 |--------|---------|-------|-------------------|----------------|
 | `food` | Food | food | `gathering_camp`, `forager_post`, `farm`, `field_works` | Primitive Age |
 | `lumber` | Organic Extraction | wood, then coal, oil, nanobots and quantum flux | `wood_camp`, `woodcutter_camp`, `lumber_mill`, `coal_mine` | Primitive Age |
 | `faith` | Faith | faith | `shrine`, `standing_stones`, `altar`, `temple` | Primitive Age |
-| `masonry` | Geological Extraction | stone and iron, then [ores](resources.md#what-the-ores-are-for), uranium and antimatter | `stone_camp`, `stone_pit`, `quarry`, `uranium_mine` | Stone Age |
-| `military` | Military | nothing | `geographic_society` | Industrial Age |
-| `trade` | Trade, Harbor | gold | `market`, `trading_post`, `merchant_quarter`, `harbor` | Bronze Age |
+| `masonry` | Geological Extraction | stone, marble, iron ore and iron, then uranium, titanium ore, dark matter crystals and antimatter (see [what the ores are for](resources.md#what-the-ores-are-for)) | `stone_camp`, `stone_pit`, `quarry`, `uranium_mine` | Stone Age |
+| `military` | none | nothing | `geographic_society` | Industrial Age |
+| `trade` | Trade, Harbor | gold (the Black Market Hub also makes crypto) | `market`, `trading_post`, `merchant_quarter`, `harbor` | Bronze Age |
 | `engineering` | Engineering | iron, steel, electricity, plasma, dark matter, quantum flux | `smithy`, `ironworks`, `mill`, `power_station`, `fusion_reactor` | Bronze Age |
 | `metallurgy` | Metallurgy | iron, steel, titanium, dark matter, antimatter, quantum flux | `smelter`, `forge`, `foundry`, `steel_mill`, `orbital_refinery` | Iron Age |
 | `energy` | Energy | coal, oil, electricity, plasma, dark matter, quantum flux | `coal_plant`, `steam_turbine`, `nuclear_reactor`, `fusion_reactor_array` | Industrial Age |
-| `hacker` | Hacker | data | `mainframe_hall`, `server_farm`, `data_center`, `cyber_hub` | Modern Age |
-| `astronaut` | none | nothing | none | No building uses it yet |
+| `hacker` | Hacker/Digital | data | `mainframe_hall`, `server_farm`, `data_center`, `cyber_hub` | Modern Age |
+| `astronaut` | none | nothing | none | No building uses it |
 
-- The Nano Foundry (nanobots) takes engineering workers. The Embassy and Grand Embassy take trade workers, and the Geographic Society takes military workers. Military buildings have no worker slots.
-- Metallurgy doesn't refine ore: its buildings consume nothing, like every other producer.
-- **Culture** has no worker domain. Culture buildings produce on their own and take no workers.
+- Four standalone buildings take workers: the Nano Foundry (engineering, and it makes nanobots), the Embassy and Grand Embassy (trade) and the Geographic Society (military). The buildings of the Military lineage have no worker slots.
+- No building uses up one resource to make another: metallurgy buildings make their metals outright.
+- Culture has no worker domain. Culture buildings produce on their own and take no workers.
 
 ---
 
-## Worker Class Names by Age
+## Worker class names by age
 
-Each domain has one class per age it spans. (The knowledge classes, Shaman to Quantum Theorist, are not a domain any more: they name the kinds of [scholar](knowledge.md#what-a-scholar-is).) Before a domain's first class age, a worker shows the domain's first class: a `wood_camp` worker in the Primitive Age is a Gatherer, a `war_camp` worker before the Iron Age a Soldier, and a `coal_plant` worker in the Industrial Age a Stoker. The Transcendent Age keeps the Quantum Age classes. The class name is a label: what a worker eats depends only on the age (see [Food Drain](#food-drain)).
+Each domain has one class name for each age it spans. A class name is a label: it changes nothing about what a worker produces, and what a worker eats depends only on the age (see [Food drain](#food-drain)). Two sets of names show on screen. `status` and the Logs panel call your whole workforce by the food class of the current age, a Forager in the Primitive Age. The knowledge classes, Shaman to Quantum Theorist, are not a worker domain: they name the kinds of [scholar](knowledge.md#what-a-scholar-is). The other class names are part of the game's data, and no screen shows them.
+
+In an age before a domain's first class, the first class applies: a `wood_camp` worker in the Primitive Age is a Gatherer, and a `coal_plant` worker in the Industrial Age a Stoker. The Transcendent Age keeps the Quantum Age classes.
 
 ### Quick reference
 
@@ -397,12 +418,13 @@ Each domain has one class per age it spans. (The knowledge classes, Shaman to Qu
 | engineering | - | Craftsman | Artisan | Engineer | Tinker | Systems Engineer |
 | metallurgy | - | Furnace Hand | Ironworker | Medieval Smith | Steam Smelter | Modern Metallurgist |
 | energy | - | - | - | - | Stoker | Power Engineer |
+| hacker | - | - | - | - | - | Script Kiddie |
 
-### food (starts Primitive Age)
+### food (from the Primitive Age)
 
-The food column doubles as the food each worker eats per tick in that age, since that rate applies to every worker.
+The food column doubles as the food each person eats per tick in that age, since that rate applies to everyone.
 
-| Age | Class Name | Food/tick per worker |
+| Age | Class name | Food/tick per worker |
 |-----|-----------|-----------|
 | Primitive | Forager | 0.060 |
 | Stone | Farmhand | 0.067 |
@@ -426,17 +448,17 @@ The food column doubles as the food each worker eats per tick in that age, since
 | Galactic | Galactic Farmer | 0.517 |
 | Quantum | Quantum Harvester | 0.579 |
 
-### lumber (starts Stone Age)
+### lumber (from the Stone Age)
 
-Stone: Gatherer → Bronze: Woodcutter → Iron: Lumberjack → Classical: Sawyer → Medieval: Forester → Renaissance: Renaissance Logger → Colonial: Mill Worker → Industrial: Coal Extractor → Victorian: Steam Logger → Electric: Electric Forester → Atomic: Fuel Extractor → Modern: Petroleum Worker → Information: Digital Forester → Digital: Bio-Extractor → Cyberpunk: Nano-Harvester → Fusion: Organic Engineer → Space: Biofield Harvester → Interstellar: Quantum Extractor → Galactic: Galactic Forester → **Quantum: Cosmic Extractor**
+Stone: Gatherer → Bronze: Woodcutter → Iron: Lumberjack → Classical: Sawyer → Medieval: Forester → Renaissance: Renaissance Logger → Colonial: Mill Worker → Industrial: Coal Extractor → Victorian: Steam Logger → Electric: Electric Forester → Atomic: Fuel Extractor → Modern: Petroleum Worker → Information: Digital Forester → Digital: Bio-Extractor → Cyberpunk: Nano-Harvester → Fusion: Organic Engineer → Space: Biofield Harvester → Interstellar: Quantum Extractor → Galactic: Galactic Forester → Quantum: Cosmic Extractor
 
-### masonry (starts Stone Age)
+### masonry (from the Stone Age)
 
-Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Extractor → Medieval: Medieval Miner → Renaissance: Renaissance Quarryman → Colonial: Colonial Miner → Industrial: Industrial Miner → Victorian: Victorian Quarryman → Electric: Electric Miner → Atomic: Uranium Miner → Modern: Modern Geologist → Information: Precision Miner → Digital: Digital Excavator → Cyberpunk: Cyber Miner → Fusion: Plasma Driller → Space: Space Miner → Interstellar: Asteroid Miner → Galactic: Dark Matter Extractor → **Quantum: Crystal Miner**
+Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Extractor → Medieval: Medieval Miner → Renaissance: Renaissance Quarryman → Colonial: Colonial Miner → Industrial: Industrial Miner → Victorian: Victorian Quarryman → Electric: Electric Miner → Atomic: Uranium Miner → Modern: Modern Geologist → Information: Precision Miner → Digital: Digital Excavator → Cyberpunk: Cyber Miner → Fusion: Plasma Driller → Space: Space Miner → Interstellar: Asteroid Miner → Galactic: Dark Matter Extractor → Quantum: Crystal Miner
 
-### faith (starts Primitive Age)
+### faith (from the Primitive Age)
 
-| Age | Class Name |
+| Age | Class name |
 |-----|-----------|
 | Primitive | Devotee |
 | Stone | Believer |
@@ -460,19 +482,19 @@ Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Ex
 | Galactic | Galactic High Priest |
 | Quantum | Quantum Sage |
 
-### military (starts Iron Age)
+### military (from the Iron Age)
 
 Only the Geographic Society has military worker slots.
 
-Iron: Soldier → Classical: Legionary → Medieval: Knight → Renaissance: Musketeer → Colonial: Colonial Marine → Industrial: Industrial Rifleman → Victorian: Victorian Guard → Electric: Electric Trooper → Atomic: Atomic Soldier → Modern: Modern Soldier → Information: Information Warrior → Digital: Digital Soldier → Cyberpunk: Cyber Warrior → Fusion: Plasma Trooper → Space: Space Marine → Interstellar: Interstellar Commando → Galactic: Galactic Guardian → **Quantum: Quantum Soldier**
+Iron: Soldier → Classical: Legionary → Medieval: Knight → Renaissance: Musketeer → Colonial: Colonial Marine → Industrial: Industrial Rifleman → Victorian: Victorian Guard → Electric: Electric Trooper → Atomic: Atomic Soldier → Modern: Modern Soldier → Information: Information Warrior → Digital: Digital Soldier → Cyberpunk: Cyber Warrior → Fusion: Plasma Trooper → Space: Space Marine → Interstellar: Interstellar Commando → Galactic: Galactic Guardian → Quantum: Quantum Soldier
 
-### trade (starts Bronze Age)
+### trade (from the Bronze Age)
 
-Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman → Renaissance: Banker → Colonial: Colonial Merchant → Industrial: Industrialist → Victorian: Victorian Trader → Electric: Electric Broker → Atomic: Atomic Trader → Modern: Corporate Trader → Information: Digital Trader → Digital: Crypto Broker → Cyberpunk: Cyber Dealer → Fusion: Plasma Merchant → Space: Space Trader → Interstellar: Interstellar Broker → Galactic: Galactic Merchant → **Quantum: Quantum Dealer**
+Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman → Renaissance: Banker → Colonial: Colonial Merchant → Industrial: Industrialist → Victorian: Victorian Trader → Electric: Electric Broker → Atomic: Atomic Trader → Modern: Corporate Trader → Information: Digital Trader → Digital: Crypto Broker → Cyberpunk: Cyber Dealer → Fusion: Plasma Merchant → Space: Space Trader → Interstellar: Interstellar Broker → Galactic: Galactic Merchant → Quantum: Quantum Dealer
 
-### engineering (starts Bronze Age)
+### engineering (from the Bronze Age)
 
-| Age | Class Name |
+| Age | Class name |
 |-----|-----------|
 | Bronze | Apprentice |
 | Iron | Craftsman |
@@ -494,21 +516,23 @@ Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman 
 | Galactic | Galactic Engineer |
 | Quantum | Quantum Engineer |
 
-### metallurgy (starts Iron Age)
+### metallurgy (from the Iron Age)
 
-Iron: Furnace Hand → Classical: Ironworker → Medieval: Medieval Smith → Renaissance: Renaissance Metallurgist → Colonial: Foundry Worker → Industrial: Factory Worker → Victorian: Steam Smelter → Electric: Electric Smelter → Atomic: Atomic Metallurgist → Modern: Modern Metallurgist → Information: Digital Foundry Worker → Digital: Digital Smelter → Cyberpunk: Cyber Forge Worker → Fusion: Plasma Metallurgist → Space: Stellar Foundry Worker → Interstellar: Stellar Smelter → Galactic: Galactic Metallurgist → **Quantum: Quantum Smelter**
+Iron: Furnace Hand → Classical: Ironworker → Medieval: Medieval Smith → Renaissance: Renaissance Metallurgist → Colonial: Foundry Worker → Industrial: Factory Worker → Victorian: Steam Smelter → Electric: Electric Smelter → Atomic: Atomic Metallurgist → Modern: Modern Metallurgist → Information: Digital Foundry Worker → Digital: Digital Smelter → Cyberpunk: Cyber Forge Worker → Fusion: Plasma Metallurgist → Space: Stellar Foundry Worker → Interstellar: Stellar Smelter → Galactic: Galactic Metallurgist → Quantum: Quantum Smelter
 
-### energy (starts Victorian Age)
+### energy (from the Victorian Age)
 
-Victorian: Stoker → Electric: Power Worker → Atomic: Reactor Technician → Modern: Power Engineer → Information: Grid Operator → Digital: Digital Power Manager → Cyberpunk: Cyber Energy Worker → Fusion: Fusion Technician → Space: Solar Engineer → Interstellar: Dark Energy Worker → Galactic: Antimatter Specialist → **Quantum: Zero-Point Engineer**
+Victorian: Stoker → Electric: Power Worker → Atomic: Reactor Technician → Modern: Power Engineer → Information: Grid Operator → Digital: Digital Power Manager → Cyberpunk: Cyber Energy Worker → Fusion: Fusion Technician → Space: Solar Engineer → Interstellar: Dark Energy Worker → Galactic: Antimatter Specialist → Quantum: Zero-Point Engineer
 
-### hacker (starts Modern Age)
+### hacker (from the Information Age)
 
-Modern and Information: Script Kiddie → Digital: Coder → Cyberpunk: Black Hat → Fusion: AI Hacker → Space: Orbital Hacker → Interstellar: Interstellar Netrunner → Galactic: Galactic Hacker → **Quantum: Quantum Hacker**
+Information: Script Kiddie → Digital: Coder → Cyberpunk: Black Hat → Fusion: AI Hacker → Space: Orbital Hacker → Interstellar: Interstellar Netrunner → Galactic: Galactic Hacker → Quantum: Quantum Hacker
 
-### astronaut (starts Space Age; no building uses it yet)
+The Modern Age uses Script Kiddie too.
 
-Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explorer → **Quantum: Quantum Astronaut**
+### astronaut (from the Space Age; no building uses it)
+
+Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explorer → Quantum: Quantum Astronaut
 
 ---
 
@@ -516,42 +540,42 @@ Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explore
 
 ### Early game (Primitive and Stone Age)
 
-Build gathering camps and huts together. Each camp holds 3 workers and new workers fill empty slots first, so build camps as you build housing. A worker eats 0.06 food/tick, and a fully staffed camp makes 1.0 food/tick, so a camp covers its own three workers' drain (0.18) several times over. Once food is stable, build a story circle: its two scholars start research at once, with no workers needed. The full walkthrough is [Your First Ten Minutes](first-ten-minutes.md).
+Build gathering camps and huts together. Each camp holds 3 workers and new workers fill empty slots first, so build camps as you build housing. A worker eats 0.06 food/tick, and a fully staffed camp makes 1.0 food/tick, so a camp covers its own three workers' drain (0.18) several times over. Once food is stable, build a story circle: its two scholars come with it, need no workers, and work on the tech you start. The full walkthrough is [Your First Age](first-ten-minutes.md).
 
 ### Mid game (Bronze and Iron Age)
 
-- Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots: workers in the reserve take a new building's slots at once.
-- A `war_camp` comes with its soldiers the moment it stands: they live in your homes and eat, so watch your food after a military building. It has no worker slots, so no one needs to staff it.
-- From the Iron Age, this age's masonry building makes stone, iron and iron ore, and from the Iron Age to the Classical marble too. The routine fills the newest buildings first. A mine that makes only a raw (the titanium and crystal mines, later on) is worth building for the buildings that cost it (see [What the ores are for](resources.md#what-the-ores-are-for)).
+- Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots: workers in the reserve fill a new building's slots.
+- A `war_camp` comes with its soldiers, who take their posts as the food allows. They live in your homes and eat, so watch your food after a military building. It has no worker slots, so no one needs to staff it.
+- From the Iron Age, this age's masonry building makes stone, iron and iron ore, and from the Iron Age to the Classical Age marble too. The routine fills the newest buildings first. A mine that makes only a raw material (the titanium and crystal mines, later on) is worth building for the buildings that cost it (see [What the ores are for](resources.md#what-the-ores-are-for)).
 
 ### Late game
 
 - As food buildings get more productive, you need fewer food workers. Give food a small share (not 0) to move the rest elsewhere. The routine still sends extra recruits to food buildings when the food income can't feed them.
-- Every worker eats the age's rate, and that rate keeps rising, so a large late-game population needs a large food income. Scale food before headcount.
+- Every person eats the age's rate, and that rate keeps rising, so a large late-game population needs a large food income. Scale food before headcount.
 - After an age advance, the new buildings fill from the reserve and new workers. When housing is full, `unassign <old building> all` frees workers, and a minute later the routine puts them to work by your shares, newer buildings first. Or `assign <new building> all` places them yourself.
 
-### Milestone: scholars_haven
+### Milestone: Scholar's Haven
 
-Needs **50 scholars** and **3 Libraries** built. Scholars come with the knowledge buildings, so build up the knowledge lineage: a Library comes with 4. Track progress with `milestones` or `ms`.
+Needs 50 scholars and 3 Libraries built. Scholars come with the knowledge buildings, so build up the knowledge lineage: a Library comes with 4. Track progress with `milestones` or `ms`.
 
 ### Specialize or spread
 
-Focusing on one domain can finish milestone chains faster; spreading protects you from shortages. The roster is the lever: auto spreads your workers by worker slots, and a share focuses them (`roster faith 50`). Early on, food and wood are enough; add military when campaigns open up and trade when gold becomes the bottleneck.
+The roster is the lever: auto spreads your workers by worker slots, and a share focuses them (`roster faith 50`). A share of 0 empties a domain.
 
 ### Tips
 
-- **Let the roster do the busywork.** Set a share when you want more workers in one domain or none in it, and `roster auto` to go back.
-- **Food first.** Auto-recruit recruits only while food allows, so early on your food buildings set the pace of growth.
-- **Faith workers before epoch transitions.** Your faith strength sets the epoch and catastrophe odds, and fully staffed faith buildings are what raise it (see [Faith](faith.md#faith-threshold-bands)).
-- **Watch the reserve.** `status` (or `s`) shows it as the idle count. Workers in the reserve have no free slot to go to: build more worker buildings and they take the slots at once.
-- **`dismiss` cuts drain, `unassign` doesn't.** Idle workers still eat.
+- Let the roster do the busywork. Set a share when you want more workers in one domain or none in it, and `roster auto` to go back.
+- Food comes first. Auto-recruit recruits only while food allows, so early on your food buildings set the pace of growth.
+- Staff your faith buildings before epoch transitions. Your faith strength sets the epoch and catastrophe odds, and fully staffed faith buildings help raise it (see [Faith](faith.md#faith-threshold-bands)).
+- Watch the reserve. `status` (or `s`) shows its count. Workers in the reserve have no free slot to go to: build more worker buildings and they take the slots.
+- `dismiss` cuts drain, `unassign` doesn't. Idle workers still eat.
 
 ---
 
-## See Also
+## See also
 
 - [Buildings](buildings.md): building lineages and worker slots per building
 - [Resources](resources.md): what each lineage produces in which age
 - [Morale](morale.md): the multiplier on everything your workers make
-- [Build Plan](plan.md): builds that start as resources come in, staffed by the roster routine
-- [Milestones](milestones.md): milestone chains that reward domain specialization
+- [The build plan](plan.md): builds that start as resources come in, staffed by the roster routine
+- [Milestones & Chains](milestones.md): the Scholar's Haven milestone and the rest

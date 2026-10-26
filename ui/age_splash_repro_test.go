@@ -688,6 +688,30 @@ func TestReproAgeSplashCatastropheAutoDismiss(t *testing.T) {
 	}
 }
 
+// statusRibbon returns the status ribbon's line on the screen: the one with
+// the people and morale, which the ribbon never gives up (statusLine).
+func statusRibbon(t *testing.T, screen string) string {
+	t.Helper()
+	for _, line := range strings.Split(screen, "\n") {
+		if strings.Contains(line, "People ") && strings.Contains(line, "Morale ") {
+			return line
+		}
+	}
+	t.Fatalf("no status ribbon on the screen:\n%s", screen)
+	return ""
+}
+
+// catastropheBadgeShown reports whether the status ribbon carries the pending-
+// catastrophe badge. The ribbon gives up the badge's words when the line does
+// not fit (dashboard_layout_test.go pins the order), and whether it fits
+// depends on what else the run has put on the line: a harbinger the era's fate
+// roll brought, a title, a longer count. So the badge is told by its mark and
+// name, which every wording keeps.
+func catastropheBadgeShown(t *testing.T, screen string) bool {
+	t.Helper()
+	return strings.Contains(statusRibbon(t, screen), "☄ Catastrophe")
+}
+
 // TestReproCatastropheEscBadgeBlockReopen: Esc closes the modal without
 // deciding; the status bar shows the pending badge; `advance` is refused while
 // pending; the bare `catastrophe` command reopens the modal; refresh() does
@@ -713,7 +737,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	if h.hasPage("catastrophe") {
 		t.Fatalf("refresh() re-popped the modal after Esc\n%s", h.describeUI())
 	}
-	if scr := h.screenText(); !strings.Contains(scr, "Catastrophe pending") {
+	if scr := h.screenText(); !catastropheBadgeShown(t, scr) {
 		t.Errorf("pending badge missing from the status bar:\n%s", scr)
 	}
 
@@ -733,7 +757,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 		t.Fatalf("still pending after Endure: %q", st.PendingCatastrophe)
 	}
 	h.refresh() // one refresh so the status bar updates
-	if scr := h.screenText(); strings.Contains(scr, "Catastrophe pending") {
+	if scr := h.screenText(); catastropheBadgeShown(t, scr) {
 		t.Errorf("pending badge still shown after Endure:\n%s", scr)
 	}
 }
