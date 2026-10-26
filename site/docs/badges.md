@@ -1,8 +1,10 @@
 # Badges
 
-A **badge** is a permanent mark on your account for something you did in a game. There are 554 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A badge is a permanent mark on your account for something you did in a game. There are 554 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
+
+## Seeing your badges
 
 Open the badge case to look through them:
 
@@ -12,7 +14,9 @@ badges
 
 <figure class="screen" data-screen="badge-families"><figcaption>The badge case as it opens: every family you have something in sight of, with the selected badge at full size beside the grid.</figcaption></figure>
 
-[Accounts & Recovery](account.md#the-badge-case) describes the case itself: what each shape means, the tabs, the detail card and the plain list. This page is about the badges.
+[Accounts & Recovery](account.md#the-badge-case) describes the case itself: what each shape means, the tabs, the detail card and the plain list. The Stats panel shows a short digest of your badges. `account badges` prints a text list instead: your count, points and title, then each family you have something in sight of, with its earned badges, the first four it has still to earn and how many secrets it keeps.
+
+VibeMode rewrites the names and descriptions of badges. The badges, their tiers and their points stay the same.
 
 ## How a badge is earned
 
@@ -20,22 +24,22 @@ Every badge is one of three kinds, and its description says which:
 
 | Kind | Earned when | Example |
 |---|---|---|
-| **A moment** | Something happens, once | Reach the Stone Age |
-| **In one run** | A count inside a single run reaches its mark. The count starts over with the next run | Take 10 deals from one civilization in one run |
-| **Across all your runs** | A count kept on the account reaches its mark. It never goes down, and a prestige does not reset it | Prestige 10 times |
+| A moment | Something happens, once | Reach the Stone Age |
+| In one run | A count or a condition inside a single run is met. It starts over with the next run | Take 10 deals from one civilization in one run |
+| Across all your runs | A count kept on the account reaches its mark. It never goes down, and a prestige does not reset it | Prestige 10 times |
 
 A few rules hold for all of them:
 
-- **A badge goes to the account the game belongs to.** A game started or loaded under one account never earns for another.
-- **Building counts ignore selling and rebuilding.** A copy counts only when it takes that building past the most the run has built of it.
-- **Production counts what was made.** A resource ladder counts what your buildings, workers and techs produce. Trades, loot, refunds and gifts are not production.
-- **Time away counts.** What the game produced while you were gone counts the same as what it produced while you watched.
-- **A modified game marks what it earns.** A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points.
-- **The developer console does not block badges.** A game it has changed still earns like any other.
+- A badge goes to the account the game belongs to. A game started or loaded under one account never earns for another.
+- Building counts ignore selling and rebuilding. A copy counts only when it takes that building past the most the run has built of it, and an upgrade is not a built copy.
+- Production counts what was made. A resource ladder counts what your buildings, workers and techs produce. Trades, loot, refunds and gifts are not production.
+- Time away counts. What the game produced while you were gone counts the same as what it produced while you watched.
+- A modified game marks what it earns. A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points.
+- The developer console does not block badges. A game it has changed still earns like any other.
 
 ## Tiers, rarity and points
 
-Each badge has a tier, and a tier is worth points. Your points add up to a **score**.
+Each badge has a tier, and a tier is worth points. Your points add up to a score.
 
 | Tier | Points | Usual rarity |
 |---|---|---|
@@ -45,37 +49,41 @@ Each badge has a tier, and a tier is worth points. Your points add up to a **sco
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,870 points.
+A badge's rarity follows its tier unless the badge says otherwise. The 22 Maximalists are gold but epic, and two of the specials are rarer than their tier: one gold badge is epic and one platinum badge is legendary. Every badge together is worth 12,870 points.
+
+Legendary badges are drawn as a ring. Eight of them have a drawing of their own that moves when motion is on.
+
+<figure class="screen" data-screen="badge-legend"><figcaption>A legendary special at full size. Eight badges have a drawing of their own: seven legendary specials and the badge for the last age.</figcaption></figure>
 
 ## The families
 
 | Family | Badges | What they are for |
 |---|---|---|
-| **Ages** | 21 | Reaching each age after the first |
-| **Swift Eras** | 7 | Leaving an era within the pacing target of its ages |
-| **Wonders** | 22 | Raising each age's wonder |
-| **Maximalists** | 22 | Having most of the buildings an age allows built at the same time, before you leave it |
-| **Research** | 22 | Researching every tech of an age in one run |
-| **Lineages** | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 14 lineages and for storage |
-| **Payrolls** | 20 | Workers at work in one domain at the same time: two rungs for each of 10 domains |
-| **Resources** | 90 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
-| **Civilizations** | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and making peace after a war with it |
-| **Harbingers** | 34 | Hearing out each of the 22 harbingers, and appeasing each of the first 12 |
-| **Catastrophes** | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
-| **Expeditions** | 21 | Coming back with a success from a scout, a long or a grand mission in each era |
-| **Awakenings** | 7 | Witnessing each awakening |
-| **Ladders** | 70 | Counts kept across all your runs, in 22 ladders |
-| **Themes** | 16 | Advancing an age while wearing each theme |
-| **Maps** | 3 | Advancing an age with each glyph set |
-| **Specials** | 65 | One-off feats, from the easy to the very hard. Maxed Out and Fully Invested are retired with the prestige shop |
+| Ages | 21 | Reaching each age after the first |
+| Swift Eras | 7 | Leaving each of the seven eras within its pacing target |
+| Wonders | 22 | Raising each age's wonder |
+| Maximalists | 22 | Having a set number of an age's buildings built at the same time, before you leave the age. Wonders do not count |
+| Research | 22 | Researching every tech of an age in one run |
+| Lineages | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 14 lineages and for storage |
+| Payrolls | 20 | Workers at work in one domain at the same time: two rungs for each of 10 domains |
+| Resources | 90 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
+| Civilizations | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and ending a war with it |
+| Harbingers | 34 | Hearing out each of the 22 harbingers, and appeasing each of the first 12 while it speaks |
+| Catastrophes | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
+| Expeditions | 21 | Coming back with a success from a scout, a long or a grand mission in each era |
+| Awakenings | 7 | Witnessing each awakening |
+| Ladders | 70 | Counts kept across all your runs, in 22 ladders |
+| Themes | 16 | Advancing an age while wearing each theme |
+| Maps | 3 | Advancing an age with each glyph set |
+| Specials | 65 | One-off feats, from the easy to the very hard |
 
-One special asks you to save up. **Everything Full** is earned in the Industrial Age or later by holding at least 6 hours of your income in every resource you can save up, all at once. Your income is what your town makes of each resource now, so it rises as you grow and the bar rises with it. Food, faith, culture and nanobots are spent as they are made and do not count, and neither does a resource your town makes none of.
+One special asks you to save up. Everything Full is earned in the Industrial Age or later by holding at least 6 hours of your income in every resource you can save up, all at once. Your income is what your town makes of each resource at that moment, so it rises as you grow and the bar rises with it. Food, faith, culture and nanobots are spent as they are made and do not count, and neither does a resource with no income.
 
 Three more badges sit outside the families. They are worth no points, count toward nothing, and are not listed until they are earned.
 
 ## Ladders
 
-A **ladder** is a set of badges that share one count and ask for more of it at each rung. The badge case draws a ladder on a line of its own, lowest rung first, with how far the next rung is.
+A ladder is a set of badges that share one count and ask for more of it at each rung. The badge case draws a ladder on a line of its own, lowest rung first, with how far the next rung is.
 
 ### Lifetime ladders
 
@@ -107,19 +115,15 @@ These count across all your runs. A dot separates the rungs.
 
 One more ladder of three rungs is secret.
 
-The ladder that counted market trades (Haggler, Day Trader and Market Maker) is retired with the market's swap. An account that had earned its rungs loads as before. The rungs no longer show and no longer score.
+The first rung of a lifetime ladder is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears. Many first rungs ask for one of something. No top rung of a ladder that counts play asks for more than 25 runs of ordinary play. Returns counts the times you came back to a game, so it climbs with your visits and not with your runs.
 
-The first rung of a ladder is one a first run earns early: by the Bronze Age, or by the second age after the thing it counts first appears (the lineage ladders are the exception, set out below). Many first rungs ask for one of something. The top rung of a ladder that counts play is set so that about 25 full runs reach it, and no ladder asks for more. Returns counts the times you came back to a game, so it climbs with the days, not the runs.
-
-A ladder can be lowered between versions of the game. An account that had already passed a rung is given it the next time it is loaded, and the log says how many badges that was in one line.
-
-A rung keeps the count it was earned at. If a later version of the game moves the bar, a rung you hold still says what you did, and a rung you have not earned shows today's count. A rung that was earned before counts were kept, and whose counter is under today's bar, goes back to unearned the first time the account is loaded. Rungs that give a theme or a title are left alone.
+When you load an account that has already passed a rung it does not hold, the game gives it the rung and says in one line how many badges that was. A rung remembers the count it was earned at, so a rung you hold keeps saying what you did, and a rung you have not earned shows the count asked today. A rung earned before counts were kept, whose counter is under today's bar, goes back to unearned the first time the account is loaded. Rungs that give a theme or a title are left alone.
 
 ### Lineage ladders
 
 Each of the 14 lineages has five rungs, and so does storage: Hobbyist, Contractor, Magnate, Tycoon and Dynasty. They count buildings of the lineage built across all your runs.
 
-Each lineage is on its own scale, because lineages differ a great deal in how many copies a town can build: a dedicated player's full clear builds about a thousand houses and about a hundred and thirty harbors. Dynasty is set to what such a player builds of the lineage over about 25 runs, so it is a long-term goal. The player in mind stays in every age well past the gate, buys new copies instead of upgrading old ones (an upgrade is not a built copy), prestiges early in the first runs and clears every age in the later ones. Each rung below Dynasty is two fifths of the one above, so the first rung falls within your first couple of runs. Energy and Hacker begin in later ages, so their first rungs take a run or two longer.
+Each lineage is on its own scale, because lineages differ a great deal in how many copies a town can build. A full clear builds about 1,000 houses and about 130 harbors. Dynasty is set to what a dedicated player builds of the lineage over about 25 runs, so it is a long-term goal. That player buys new copies instead of upgrading old ones, since an upgrade is not a built copy. Each rung below Dynasty is about two fifths of the one above. Energy and Hacker begin in later ages, so their first rungs come a run later.
 
 | Lineage | Rungs |
 |---|---|
@@ -158,30 +162,31 @@ A payroll badge asks for that many workers at work in one domain at the same tim
 
 ### Resource ladders
 
-Each resource has a ladder: Trickle, Stream, River and Flood. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is twenty-five full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. The badge case shows each rung's number and how far along you are.
+Each resource has a ladder: Trickle, Stream, River and Flood. The first rung is what an ordinary town makes of the resource in the first age it makes any, so a first run earns it in that age or soon after. The top rung is 25 full runs of it, and the rungs between climb in even steps, each the same number of times the one before. A resource that only comes after a first run's last age has no Trickle, and its top rung is measured over its own first two ages. Soldiers have a ladder too, and it counts the soldiers who take their posts. The badge case shows each rung's number and how far along you are.
 
 Three of them, as examples:
 
 | Resource | Trickle | Stream | River | Flood |
 |---|---|---|---|---|
-| Food | 4,300 | 1.4M | 500M | 170B |
-| Wood | 2,200 | 380K | 66M | 11B |
-| Stone | 44K | 1.2M | 35M | 980M |
+| Food | 4.3K | 1.4M | 510M | 170B |
+| Wood | 2.2K | 380K | 67M | 11B |
+| Stone | 44K | 44M | 45B | 46T |
 
 ## What stays hidden
 
 The badge case never names something the game has not shown you yet:
 
-- A badge about an **age** stays a blank slab until you reach that age. The badge for reaching the next age is the one exception: the long bar at the top of the dashboard already names it.
-- A badge about a **civilization** or a **harbinger** stays hidden until you have met it, one about an **awakening** until it happens, and one about a **catastrophe** until its warning names it or it strikes.
-- A **family** with nothing in sight has no tab and no heading.
-- The case counts what you can see, for example `3 of 127 earned, 15 points, ??? hidden`. It does not say how many badges are hidden until an account has reached the last age.
+- A badge for reaching an age shows once that age is your next age, because the long bar in the Ledger already names it. Badges tied to an age (its wonder, its Maximalist and Research badges, and the lineages, resources, payrolls and missions that begin in it) stay hidden until you reach that age.
+- A badge about a civilization or a harbinger stays hidden until you have met it, one about an awakening until it happens, and one about a catastrophe until its warning names it or it strikes.
+- The badge for wearing a theme that a badge unlocks stays hidden until you hold the theme.
+- A family with nothing in sight has no tab and no heading until you have reached the last age.
+- The counts cover what you can see. `account badges` starts with a line such as `3 of 127 earned, 15 points, ??? hidden`. The game does not say how many badges are hidden until an account has reached the last age.
 
-**14 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
+14 badges are secret. A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
 
 ## Titles
 
-Your score holds a **title**. Every account starts as a Settler.
+Your score holds a title. Every account starts as a Settler.
 
 | Title | Score |
 |---|---|
@@ -204,7 +209,7 @@ Six more titles come with badges, not with the score:
 | The Undying | Enduring every catastrophe and the Last Passage |
 | Hut Magnate | A secret badge |
 
-You wear one title at a time. It shows in the badge case's top bar and, when the window has room, beside your account's name in the status bar.
+You wear one title at a time. It shows in the badge case's top bar and, once you wear anything but Settler and the window has room, beside your account's name in the status bar.
 
 ```
 title
@@ -212,7 +217,7 @@ title survivor
 title default
 ```
 
-Bare `title` lists the titles you hold and marks the one you wear. `title <name>` wears one you hold; the start of the name is enough. `title default` goes back to the title your score holds. A badge earned in a modified game gives no title. A title changes nothing in a game.
+Bare `title` lists the titles you hold and marks the one you wear. `title <name>` wears one you hold, and the start of the name is enough. `title default` goes back to the title your score holds. A badge earned in a modified game gives no title. A title changes nothing in a game.
 
 ## Themes from badges
 
@@ -231,9 +236,7 @@ Ten [themes](themes.md) are the reward of a badge. Earning the badge unlocks the
 | Source | A secret badge |
 | Glitch | A secret badge |
 
-The five age themes used to come from milestones. They come from the age badges now, with the same condition: reach the age. An account that had already reached an age has its badge and its theme, and no account lost a theme in the move.
-
-<figure class="screen" data-screen="badge-legend"><figcaption>A legendary special at full size. Eight badges have a drawing of their own: seven legendary specials and the badge for the last age.</figcaption></figure>
+The five age themes come with the age badges. If an account reached one of those ages before it held the badge, the game adds the badge and the theme when it loads the account.
 
 ## Where badges are stored
 
