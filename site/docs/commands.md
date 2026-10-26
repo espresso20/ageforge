@@ -40,7 +40,7 @@ The game shows every duration and countdown as an approximate wall-clock time, n
 
 The `~` matters. A tick is 2 seconds of real time, and tick speed bonuses (from some techs, milestone speed boosts and some boons) make it shorter. Every reading is worked out from your **current** tick rate and changes when that rate does: finish a tech that grants tick speed and the countdown you were watching gets shorter. There is no speed setting; only those bonuses make ticks come faster.
 
-Balance values are *defined* in ticks (a tech costs so many ticks of research, an event lasts so many ticks), and this wiki quotes those tick figures where the tick count is the mechanic. The `dump` debug export prints the raw tick counts alongside the wall-clock readings.
+Balance values are *defined* in ticks (a tech costs so many ticks of research, an event lasts so many ticks), and this Compendium quotes those tick figures where the tick count is the mechanic. The `dump` debug export prints the raw tick counts alongside the wall-clock readings.
 
 ---
 

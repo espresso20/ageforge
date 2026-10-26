@@ -2,7 +2,7 @@
 
 AgeForge is a single binary with no runtime dependencies. Download the one for your system from the latest GitHub release, or build it from source.
 
-> Version note: the downloads below are version 3.6, the latest release. This wiki describes version 4.0, which has no release yet. Version 3.6 has the `speed` command and the old city map. To play version 4.0, build from source.
+> Version note: the downloads below are version 3.6, the latest release. This Compendium describes version 4.0, which has no release yet. Version 3.6 has the `speed` command and the old city map. To play version 4.0, build from source.
 
 ---
 
