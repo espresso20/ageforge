@@ -82,9 +82,8 @@ func (a *App) setup() {
 		showAccountNameModal(a.tviewApp, a.pages, splash, func(name string) {
 			newAcct, err := game.CreateAccount(name)
 			if err != nil {
-				// Account is non-critical: say why (an account from before 4.0 is
-				// refused) and fall through to the splash accountless rather than
-				// block play.
+				// Account is non-critical: say why and fall through to the splash
+				// accountless rather than block play.
 				showUpdateMsg(a.tviewApp, a.pages, err.Error())
 				return
 			}

@@ -7,6 +7,7 @@ import (
 	"encoding/base32"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"os"
@@ -245,6 +246,11 @@ type Account struct {
 	// engine's periodic autosave block (outside ge.mu) calls FlushIfDirty, which Saves
 	// once if dirty and clears the flag. json:"-" keeps it off disk and out of the sig.
 	dirty bool `json:"-"`
+
+	// setAside is where an account from before 4.0 with this account's name was
+	// moved to when this one was made, until the engine has said so (takeSetAside).
+	// Not saved.
+	setAside string
 
 	// pendingEarned is the badges earned and not yet announced: the dashboard drains
 	// it (GameEngine.DrainEarnedBadges) and writes the toast and the log line. Not
@@ -581,9 +587,18 @@ func CreateAccount(name string) (*Account, error) {
 	id := AccountIDForName(trimmed)
 
 	// Same-name → open the existing account rather than overwrite it. Slot existence is
-	// keyed on its account.json, so a bare/empty slot dir doesn't count as "exists".
+	// keyed on its account.json, so a bare/empty slot dir doesn't count as "exists". An
+	// account from before 4.0 is refused: its folder is moved aside, whole, and the name
+	// makes a fresh account.
+	aside := ""
 	if _, err := os.Stat(filepath.Join(accountDir(id), accountFileName)); err == nil {
-		return SwitchAccount(id)
+		existing, switchErr := SwitchAccount(id)
+		if !errors.As(switchErr, &beforeFourError{}) {
+			return existing, switchErr
+		}
+		if aside, err = setAsideSlot(id); err != nil {
+			return nil, err
+		}
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("failed to stat account slot %s: %w", id, err)
 	}
@@ -596,6 +611,7 @@ func CreateAccount(name string) (*Account, error) {
 		DisplayName: trimmed,
 		Created:     now,
 		LastSeen:    now,
+		setAside:    aside,
 	}
 	// A badge file left in the slot (its account.json was lost) is this account's.
 	acct.adoptBadgeFile()
@@ -611,6 +627,37 @@ func CreateAccount(name string) (*Account, error) {
 		return nil, err
 	}
 	return acct, nil
+}
+
+// setAsideSlot moves the folder of the account in slot id, whole, to
+// <root>/backups/<id>.before-4.0 (with a number after it if that is taken) and returns
+// where it went. Nothing in it is deleted or changed.
+func setAsideSlot(id string) (string, error) {
+	backups := filepath.Join(rootDataDir(), backupsDirName)
+	if err := os.MkdirAll(backups, 0755); err != nil {
+		return "", fmt.Errorf("failed to create backups root: %w", err)
+	}
+	dst := filepath.Join(backups, id+".before-4.0")
+	for n := 2; ; n++ {
+		if _, err := os.Stat(dst); os.IsNotExist(err) {
+			break
+		}
+		dst = filepath.Join(backups, fmt.Sprintf("%s.before-4.0-%d", id, n))
+	}
+	if err := os.Rename(accountDir(id), dst); err != nil {
+		return "", fmt.Errorf("failed to move the account from before 4.0 aside: %w", err)
+	}
+	return dst, nil
+}
+
+// takeSetAside returns where an account from before 4.0 with this account's name was
+// moved to when this one was made, once, or "" if none was.
+func (a *Account) takeSetAside() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	moved := a.setAside
+	a.setAside = ""
+	return moved
 }
 
 // ExportAccountByID exports the progress blob for the account in slot id WITHOUT touching the

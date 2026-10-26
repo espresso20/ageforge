@@ -32,10 +32,13 @@ const saveHMACKey = "ageforge-v1-save-integrity"
 // format that cannot read the one before it raises it.
 const saveFormat = 4
 
-// errBeforeFour is the refusal for a save or an account written before 4.0,
-// which the game no longer repairs.
+// beforeFourError is the refusal for a save or an account written before 4.0,
+// which the game no longer repairs. It is a type so a caller can tell it from a
+// read failure.
+type beforeFourError struct{ error }
+
 func errBeforeFour() error {
-	return vibe.Errorf("game.save.errBeforeFour.01", "This was saved before 4.0 and can no longer be loaded.")
+	return beforeFourError{vibe.Errorf("game.save.errBeforeFour.01", "This was saved before 4.0 and can no longer be loaded.")}
 }
 
 // GameSave is the serialised on-disk representation of a game state.

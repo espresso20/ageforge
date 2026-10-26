@@ -629,6 +629,78 @@ func TestAccountFromBefore4IsRefused(t *testing.T) {
 	}
 }
 
+// makeOldAccount makes the account for name and then turns it into one from
+// before 4.0: no format, signed again, with a save in its slot.
+func makeOldAccount(t *testing.T, name string) string {
+	t.Helper()
+	acct, err := CreateAccount(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	noErr(t, os.MkdirAll(filepath.Dir(slotSave(acct.AccountID, "run")), 0755))
+	noErr(t, os.WriteFile(slotSave(acct.AccountID, "run"), []byte(`{"old":true}`), 0644))
+	acct.Format = 0
+	acct.Signature = signAccount(acct)
+	data, err := json.MarshalIndent(acct, "", "  ")
+	noErr(t, err)
+	noErr(t, os.WriteFile(filepath.Join(accountDir(acct.AccountID), accountFileName), data, 0644))
+	return acct.AccountID
+}
+
+// TestANameOfARefusedAccountMakesAFreshOne: an account from before 4.0 does not
+// block its name. The new account is empty and in the same slot; the old folder is
+// moved whole to backups/<id>.before-4.0 (with a number if that is taken) and the
+// engine says so once.
+func TestANameOfARefusedAccountMakesAFreshOne(t *testing.T) {
+	root := isolateAccountDir(t)
+	id := makeOldAccount(t, "Ada")
+	oldFile, err := os.ReadFile(filepath.Join(accountDir(id), accountFileName))
+	noErr(t, err)
+
+	ge := NewGameEngine()
+	fresh, err := ge.CreateAccount("Ada")
+	if err != nil {
+		t.Fatalf("CreateAccount over an account from before 4.0: %v", err)
+	}
+	if fresh.AccountID != id || fresh.Format != accountFormat || len(fresh.Badges) != 0 || fresh.Stats.TotalPrestiges != 0 {
+		t.Errorf("the new account: id %s (want %s), format %d, badges %v", fresh.AccountID, id, fresh.Format, fresh.Badges)
+	}
+	if _, found, err := loadAccountFromSlot(id); !found || err != nil {
+		t.Errorf("the new account does not load: found %v, err %v", found, err)
+	}
+	aside := filepath.Join(root, backupsDirName, id+".before-4.0")
+	if got, err := os.ReadFile(filepath.Join(aside, accountFileName)); err != nil || string(got) != string(oldFile) {
+		t.Errorf("the old account.json in %s: %v, unchanged %v", aside, err, string(got) == string(oldFile))
+	}
+	if got, err := os.ReadFile(filepath.Join(aside, "saves", "run.json")); err != nil || string(got) != `{"old":true}` {
+		t.Errorf("the old save in %s: %v %q", aside, err, got)
+	}
+	if _, err := os.Stat(slotSave(id, "run")); !os.IsNotExist(err) {
+		t.Errorf("the old save is still in the new account's slot (stat err %v)", err)
+	}
+	if !logHas(ge, "from before 4.0 had this name") || !logHas(ge, aside) {
+		t.Error("the log does not say where the old account went")
+	}
+
+	// The same name again opens the account it made; nothing more is moved.
+	again, err := ge.CreateAccount("Ada")
+	if err != nil || again.AccountID != id {
+		t.Fatalf("the same name again: %v", err)
+	}
+	if entries, _ := os.ReadDir(filepath.Join(root, backupsDirName)); len(entries) != 1 {
+		t.Errorf("%d folders in backups, want only the moved account", len(entries))
+	}
+
+	// A second refused account of the same name goes beside the first, not over it.
+	makeOldAccount(t, "Ada")
+	if _, err := NewGameEngine().CreateAccount("Ada"); err != nil {
+		t.Fatalf("CreateAccount over a second account from before 4.0: %v", err)
+	}
+	if _, err := os.Stat(aside + "-2"); err != nil {
+		t.Errorf("the second old account was not moved to %s-2: %v", aside, err)
+	}
+}
+
 // TestUnreadableBadgeFileIsSetAside: a badge file that does not parse is
 // never overwritten: it is moved aside when there are badges to write.
 func TestUnreadableBadgeFileIsSetAside(t *testing.T) {

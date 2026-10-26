@@ -35,7 +35,7 @@ You can switch accounts during a game with `account switch <name>`. The game is 
 
 ### Accounts from before 4.0
 
-The game no longer moves or converts old accounts. Every account the game saves carries a format number, 4, in `account.json`. An account without it was written before 4.0, played or not, and the game refuses it with the line saves from before 4.0 get: "This was saved before 4.0 and can no longer be loaded." It is not listed in the Accounts panel and is left on disk as it is. Make a new account to play. An export from before [badges](#badges) is refused too.
+The game no longer moves or converts old accounts. Every account the game saves carries a format number, 4, in `account.json`. An account without it was written before 4.0, played or not, and the game refuses it with the line saves from before 4.0 get: "This was saved before 4.0 and can no longer be loaded." It is not listed in the Accounts panel and is left on disk as it is. To play, make an account: if you give it the same name as the refused one, the game moves the old account's whole folder to `data/backups/<id>.before-4.0`, starts a new empty account under that name, and says so in the log. An export from before [badges](#badges) is refused too.
 
 The five age themes come with the badge for reaching their age, where a milestone used to unlock them. Every theme the account already holds stays unlocked, and an account that reached one of those ages without its theme gets the theme with the badge. That is the one thing this adds to `account.json`: a theme in the list of unlocked themes it has always kept.
 

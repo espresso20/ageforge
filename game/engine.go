@@ -998,10 +998,9 @@ func (ge *GameEngine) SetActiveParentName(name string) {
 // handler or with ge.mu held.
 //
 // The account it installs is reconciled with this ruleset's badges first (ensureBadges):
-// its old achievements are badges, and what its record already proves is granted (an
-// account from before badges, or one a build from before badges has played since), all
-// without a toast. If that changed anything the account is saved at once (its badge file;
-// account.json only if something in it changed), so the next load finds nothing to do.
+// what its record already proves is granted, without a toast. If that changed anything the
+// account is saved at once (its badge file; account.json only if something in it changed),
+// so the next load finds nothing to do.
 func (ge *GameEngine) SetAccount(a *Account) {
 	ge.mu.Lock()
 	prev := ge.account
@@ -1021,6 +1020,9 @@ func (ge *GameEngine) SetAccount(a *Account) {
 		_ = a.FlushIfDirty()
 		// The words follow the account: its setting, not the last one's.
 		ge.followVibe(a.VibeOn())
+		if moved := a.takeSetAside(); moved != "" {
+			ge.AddLog("info", vibe.Sprintf("game.engine.SetAccount.01", "An account from before 4.0 had this name. It was moved to %s.", moved))
+		}
 	}
 }
 
