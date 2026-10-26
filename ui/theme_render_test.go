@@ -64,16 +64,14 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		shot("overlay:"+name, name)
 	}
 
-	// The Map panel and the mini map in every style and glyph tier.
+	// The Map panel and the mini map in every glyph tier.
 	saved := d.mapLocal
-	for _, style := range d.mapViews.reg.Names() {
-		for _, tier := range mapmodel.TierNames {
-			tr, _ := mapmodel.ParseTier(tier)
-			d.mapLocal = &mapSettings{Style: style, Tier: tr, Minimap: true, HintShown: true}
-			d.refresh()
-			out["dashboard:"+style+"/"+tier] = draw()
-			shot("overlay:map/"+style+"/"+tier, "map")
-		}
+	for _, tier := range mapmodel.TierNames {
+		tr, _ := mapmodel.ParseTier(tier)
+		d.mapLocal = &mapSettings{Tier: tr, Minimap: true, HintShown: true}
+		d.refresh()
+		out["dashboard:"+tier] = draw()
+		shot("overlay:map/"+tier, "map")
 	}
 	d.mapLocal = saved
 
@@ -163,7 +161,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 }
 
 // pixelGlyph reports runes that are legitimately drawn with fg == bg:
-// half-block pixels (wonder icons, the skyline map), where '▄' with equal
+// half-block pixels (wonder icons), where '▄' with equal
 // upper and lower pixels is a solid fill.
 func pixelGlyph(r rune) bool { return r == '▄' || r == '▀' }
 

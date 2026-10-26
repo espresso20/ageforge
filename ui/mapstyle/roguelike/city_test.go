@@ -375,6 +375,6 @@ func TestCityPerf(t *testing.T) {
 		if lay > 80*time.Millisecond {
 			t.Errorf("%s: laying the scene takes %v", age, lay)
 		}
-		styletest.FrameBudget(t, age, newView(), m, 200, 60, 30, 20*time.Millisecond)
+		styletest.FrameBudget(t, age, withSky(newView()), m, 200, 60, 30, 20*time.Millisecond)
 	}
 }

@@ -419,9 +419,6 @@ func TestKeys(t *testing.T) {
 	if !v.flows || !v.changes || !v.legend {
 		t.Errorf("options: flows %v changes %v legend %v", v.flows, v.changes, v.legend)
 	}
-	if Entry().Name != "roguelike" || Entry().New().Name() != "roguelike" {
-		t.Error("entry")
-	}
 }
 
 func BenchmarkDraw200x60(b *testing.B) {

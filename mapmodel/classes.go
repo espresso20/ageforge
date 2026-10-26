@@ -111,7 +111,7 @@ func LineageClass(lin string) Class {
 }
 
 // RelationClass is the class of a civ's standing: the fixed signal colours
-// both styles use (war red, ally green, friendly gold, neutral steel,
+// the map uses (war red, ally green, friendly gold, neutral steel,
 // rival amber).
 func RelationClass(r Relation) Class {
 	switch r {

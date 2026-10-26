@@ -15,7 +15,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -131,8 +130,8 @@ type Dashboard struct {
 	// Owned by the tview goroutine.
 	iconsWin *iconsWindow
 
-	// The maps: the shared model builder and style registry, the Map panel
-	// and the dashboard's mini map. UI goroutine only. mapLocal holds the
+	// The maps: the shared model builder, the Map panel and the dashboard's
+	// mini map. UI goroutine only. mapLocal holds the
 	// map settings when no account is loaded (session only).
 	mapViews *mapViews
 	mapPanel *mapPanel
@@ -157,9 +156,7 @@ type Dashboard struct {
 	// bar, by overlay name (bar_panel.go).
 	barOverlays map[string]barOverlay
 
-	miniMap *miniMap
-	// skyline is the skyline strip under the Buildings list (dash_skyline.go).
-	skyline  *skylineStrip
+	miniMap  *miniMap
 	mapDock  *mapDock
 	mapLocal *mapSettings
 	// icons is the guided icons check (icons.go).
@@ -179,7 +176,7 @@ type Dashboard struct {
 
 // NewDashboard creates the gameplay dashboard
 func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
-	mv := newMapViews(all.Registry())
+	mv := newMapViews()
 	d := &Dashboard{
 		app:           app,
 		engine:        engine,
@@ -191,7 +188,6 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		peoplePanel:   newPeoplePanel(),
 		advancePanel:  newAdvancePanel(),
 		miniMap:       newMiniMap(mv),
-		skyline:       newSkylineStrip(mv),
 		pages:         pages,
 		stopCh:        make(chan struct{}),
 		histIdx:       -1,
@@ -235,17 +231,14 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("factions", vibe.E("ui.dashboard.NewDashboard.07", "Factions"), factionsProvider)
 	d.overlayMgr.Register("diplomacy", vibe.E("ui.dashboard.NewDashboard.08", "Factions"), factionsProvider)
 	d.overlayMgr.Register("stats", vibe.E("ui.dashboard.NewDashboard.09", "Statistics"), statsProvider)
-	d.wonders = &wondersView{reg: d.mapViews.reg,
-		size:  func() (int, int) { return d.overlayMgr.textSize("wonders") },
-		tier:  func() mapmodel.GlyphTier { return d.mapSettings().Tier },
-		model: d.mapViews.model}
+	d.wonders = &wondersView{}
 	d.overlayMgr.Register("wonders", vibe.E("ui.dashboard.NewDashboard.10", "Wonders"), d.wonders.provider)
 	d.overlayMgr.SetOpenHandler("wonders", d.wonders.open)
 	d.overlayMgr.SetBackHandler("wonders", d.wonders.back)
 	d.overlayMgr.SetFooter("wonders", d.wonders.footer)
 	d.overlayMgr.SetKeyHandler("wonders", func(event *tcell.EventKey) *tcell.EventKey {
 		// tview goroutine, no engine lock held (see the harbinger handler).
-		if !d.wonders.handleKey(event, d.engine.GetState()) {
+		if !d.wonders.handleKey(event) {
 			return event
 		}
 		d.overlayMgr.Refresh(d.engine.GetState())
@@ -285,8 +278,8 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.vibeSeen = vibe.On()
 	d.overlayMgr.Register("help", vibe.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
 
-	// The Map panel: the active map style full screen (map, and its aliases
-	// citymap and worldmap). Its settings travel with the account.
+	// The Map panel: the map full screen (map, and its aliases citymap and
+	// worldmap). Its settings travel with the account.
 	d.mapPanel.settings = d.mapSettings
 	d.mapPanel.hintShown = d.markMapHintShown
 	d.mapPanel.stage = func(cmd string) {
@@ -295,11 +288,6 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.inputField.SetText(cmd)
 	}
 	d.mapPanel.prompt = d.researchPanel.prompt
-	d.mapPanel.zoomed = func(level string) {
-		s := d.mapSettings()
-		s.Zoom = level
-		d.saveMapSettings(s)
-	}
 	d.mapPanel.spotted = func(kind string) {
 		// tview goroutine (a refresh or a key handler), outside the engine
 		// lock: the account hears that its player looked at a visitor.
@@ -532,11 +520,9 @@ func (d *Dashboard) build() {
 	d.economyTab.AddToLeftColumn(d.logTV)
 
 	// The mini map docks above the Buildings list and hides itself when the
-	// terminal is too small for it (mapDock). So does the skyline strip,
-	// under the list, which is half the Log's height.
+	// terminal is too small for it (mapDock).
 	d.economyTab.WrapBuildings(func(list tview.Primitive) tview.Primitive {
 		d.mapDock = newMapDock(d.miniMap, list)
-		d.mapDock.strip, d.mapDock.logRows, d.mapDock.screen = d.skyline, d.economyTab.LogRows, d.screenSize
 		return d.mapDock
 	})
 
@@ -976,10 +962,6 @@ func (d *Dashboard) refresh() {
 	if d.mapDock.wantsModel() {
 		d.miniMap.update(set, &state)
 		d.miniMap.pointAt(d.mapPanel)
-	}
-	// The skyline strip's model, the same way.
-	if d.mapDock.wantsStrip() {
-		d.skyline.update(set, &state)
 	}
 
 	// Update overlay content and sidebar highlight

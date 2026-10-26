@@ -1,7 +1,7 @@
 package mapmodel
 
-// glyphs_space.go is the sky arc's part of the symbol table: what the maps
-// draw from the Space Age on (sky.go), when both styles leave the ground.
+// glyphs_space.go is the sky arc's part of the symbol table: what the map
+// draws from the Space Age on (sky.go), when it leaves the ground.
 // The symbols number from skySymBase, well past the ground table's numSyms,
 // so the two tables grow independently; G, AllGlyphs and Fold cover both.
 // Every symbol has an ASCII, a Unicode and (where Font Awesome has one) a

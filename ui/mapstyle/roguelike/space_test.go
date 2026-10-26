@@ -92,11 +92,8 @@ func TestSkyDispatch(t *testing.T) {
 	if st.g.zoom != zRegion {
 		t.Error("OptWorld does not open the known world")
 	}
-	if st.Name() != "roguelike" || !st.CompactShowsNews() {
-		t.Error("the wrapped style lost its name or its news")
-	}
-	if _, ok := Entry().New().(*skyStyle); !ok {
-		t.Error("the registry entry is not wrapped for the sky")
+	if _, ok := New().(*skyStyle); !ok {
+		t.Error("the map is not wrapped for the sky")
 	}
 }
 
@@ -360,7 +357,7 @@ func TestSkyNoLaterAge(t *testing.T) {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Scale: 2})
 		s := newSkyScene(m, newSkyBase(m, m.Sky()))
 		for _, mv := range s.movers {
-			if !mapmodel.Introduced(skyMoverKinds[mv.kind], m.AgeIdx) {
+			if skyMoverKinds[mv.kind].Info().From > m.AgeIdx {
 				t.Errorf("%s: a %s before its age", age, mv.info.Key)
 			}
 		}

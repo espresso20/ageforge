@@ -6,7 +6,7 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// sky.go is the sky arc: from the Space Age on, both map styles leave the
+// sky.go is the sky arc: from the Space Age on, the map leaves the
 // ground. Each of the last five ages is a scene of its own (SkyScene): the
 // Space Age looks down on the planet from orbit, the Interstellar Age sees
 // the home system shrink to an orrery among colony worlds, the Galactic Age
@@ -215,7 +215,7 @@ type MandalaMark struct {
 // Mandala lays the player's history out in rings, one for every era the
 // player passed through this run (reached one of its ages before the
 // mandala's own), oldest first. Each ring holds a mark for every building
-// type owned from that era's ages, in the catalogue's skyline order (the
+// type owned from that era's ages, in the catalogue's order (the
 // most prominent first); an era with nothing still standing is a ring with
 // no marks. The mandala's own age is not in it: its buildings are the
 // Crown.

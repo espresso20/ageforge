@@ -54,7 +54,7 @@ type CityFeatureInfo struct {
 	Key   string // "server_farm"
 	Name  string // legend label: "server farm"
 	Title string // inspect title: "Server farm"
-	Sym   Sym    // its symbol, SymNone for a line or a haze the styles draw themselves
+	Sym   Sym    // its symbol, SymNone for a line or a haze the map draws itself
 	// From is the index of the age that brings it; Until the last age it
 	// stands in (-1: to the end of time).
 	From, Until int

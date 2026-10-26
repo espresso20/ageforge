@@ -3,12 +3,11 @@ package theme
 import "github.com/gdamore/tcell/v2"
 
 // maphues_space.go holds the sky arc's colours: the palettes the maps draw
-// from the Space Age on, when both styles leave the ground (mapmodel/sky.go
+// from the Space Age on, when the map leaves the ground (mapmodel/sky.go
 // and mapmodel/palette_space.go say which age uses which). Like the other
-// map hues they are never drawn as they are: the roguelike makes each one
-// legible on the scene's void and the skyline lights and hazes it, both lift
-// the scene toward the page on light themes and fold it to a duotone on the
-// monochrome ones. Keeping the table here keeps "no raw colours outside
+// map hues they are never drawn as they are: the map makes each one legible
+// on the scene's void, lifts the scene toward the page on light themes and
+// folds it to a duotone on the monochrome ones. Keeping the table here keeps "no raw colours outside
 // theme/" true for ui/.
 
 // SpaceHue names a sky arc colour.

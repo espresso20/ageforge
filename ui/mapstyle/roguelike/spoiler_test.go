@@ -1,4 +1,4 @@
-package all
+package roguelike_test
 
 import (
 	"strings"
@@ -12,50 +12,48 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
-// mapText draws every view of every style for a state (full views at two
-// sizes, the region zoom, the mini map at its old and new sizes, and each
-// style's cursor stepped through every target) and returns everything a
-// player could read: the screens and the inspections.
+// mapText draws every view of the map for a state (full views at two sizes,
+// the region zoom, the mini map at its old and new sizes, and the cursor
+// stepped through every target) and returns everything a player could read:
+// the screens and the inspections.
 func mapText(t *testing.T, st game.GameState) string {
 	t.Helper()
 	m := mapmodel.NewBuilder(nil).Build(&st, nil)
-	reg := Registry()
 	var b strings.Builder
 	f := mapstyle.Frame{Model: m, Tier: mapmodel.TierUnicode}
-	for _, name := range reg.Names() {
-		for _, world := range []bool{false, true} {
-			v, _ := reg.New(name)
-			v.SetOption(mapstyle.OptWorld, world)
-			v.SetOption(mapstyle.OptInspect, true)
-			v.SetOption(mapstyle.OptFlows, true)
-			for _, sz := range [][2]int{{160, 48}, {120, 40}} {
-				scr := capture.NewScreen(sz[0], sz[1])
-				v.Draw(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
-				b.WriteString(capture.Text(scr))
-				scr.Fini()
-			}
-			scr := capture.NewScreen(160, 48)
-			for i := 0; i < 80; i++ {
-				v.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), f)
-				v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, f)
-				if in, ok := v.Inspect(f); ok {
-					b.WriteString(in.Title + "\n" + strings.Join(in.Lines, "\n") + "\n" + in.Command + "\n")
-				}
-				if i%10 == 0 {
-					b.WriteString(capture.Text(scr))
-				}
-			}
-			scr.Fini()
-		}
-		for _, sz := range [][2]int{{40, 15}, {65, 9}} {
-			v, _ := reg.New(name)
+	for _, world := range []bool{false, true} {
+		v := roguelike.New()
+		v.SetOption(mapstyle.OptWorld, world)
+		v.SetOption(mapstyle.OptInspect, true)
+		v.SetOption(mapstyle.OptFlows, true)
+		for _, sz := range [][2]int{{160, 48}, {120, 40}} {
 			scr := capture.NewScreen(sz[0], sz[1])
-			v.DrawCompact(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
+			v.Draw(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
 			b.WriteString(capture.Text(scr))
 			scr.Fini()
 		}
+		scr := capture.NewScreen(160, 48)
+		for i := 0; i < 80; i++ {
+			v.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), f)
+			v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, f)
+			if in, ok := v.Inspect(f); ok {
+				b.WriteString(in.Title + "\n" + strings.Join(in.Lines, "\n") + "\n" + in.Command + "\n")
+			}
+			if i%10 == 0 {
+				b.WriteString(capture.Text(scr))
+			}
+		}
+		scr.Fini()
+	}
+	for _, sz := range [][2]int{{40, 15}, {65, 9}} {
+		v := roguelike.New()
+		scr := capture.NewScreen(sz[0], sz[1])
+		v.DrawCompact(scr, mapstyle.Rect{W: sz[0], H: sz[1]}, f)
+		b.WriteString(capture.Text(scr))
+		scr.Fini()
 	}
 	return b.String()
 }
@@ -146,8 +144,11 @@ func TestNoSpoilers(t *testing.T) {
 			if st.AgeReady && !strings.Contains(txt, st.NextAgeName) {
 				t.Errorf("ready to advance, but the map never names the next age %q", st.NextAgeName)
 			}
-			if h := st.Harbinger; h != nil && !strings.Contains(txt, "warns of "+h.TargetEpochName) {
-				t.Errorf("the harbinger's line does not say it warns of %q", h.TargetEpochName)
+			if h := st.Harbinger; h != nil {
+				line := mapmodel.NewBuilder(nil).Build(&st, nil).Harbinger.WarningLine()
+				if !strings.Contains(line, "warns of "+h.TargetEpochName) {
+					t.Errorf("the harbinger's line %q does not say it warns of %q", line, h.TargetEpochName)
+				}
 			}
 		})
 	}

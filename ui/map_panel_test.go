@@ -10,7 +10,6 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
 )
 
 // mapTestDashboard builds a dashboard on a fresh game in a temp data dir,
@@ -63,38 +62,37 @@ func TestMapAliasesOpenThePanel(t *testing.T) {
 
 // TestMapPanelLettersAreThePrompts: no printable key is a map control any
 // more (the old s and g keys went to the prompt's letters); the key bar
-// names the setting commands instead, and they change the open panel.
+// names the setting command instead, and it changes the open panel.
 func TestMapPanelLettersAreThePrompts(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	d.runForTest("map")
 	p := d.mapPanel
-	if p.set.Style != "roguelike" || p.set.Tier != mapmodel.TierUnicode {
-		t.Fatalf("defaults = %s/%s, want roguelike/unicode", p.set.Style, p.set.Tier)
+	if p.set.Tier != mapmodel.TierUnicode {
+		t.Fatalf("default glyphs = %s, want unicode", p.set.Tier)
 	}
 	for _, r := range "sgzxhjklfnc?" {
 		if p.routeKey(key(r), "") {
 			t.Errorf("%q went to the map; printable keys belong to the prompt", r)
 		}
 	}
-	if p.set.Style != "roguelike" || p.set.Tier != mapmodel.TierUnicode {
-		t.Errorf("letters changed the settings: %s/%s", p.set.Style, p.set.Tier)
+	if p.set.Tier != mapmodel.TierUnicode {
+		t.Errorf("letters changed the glyphs: %s", p.set.Tier)
 	}
 	txt := drawMapPanel(t, d, 160, 48)
-	wantAll(t, "key bar", txt, "map style Roguelike", "map glyphs unicode", "Esc close")
-	d.runForTest("map style skyline")
+	wantAll(t, "key bar", txt, "map glyphs unicode", "Esc close")
 	d.runForTest("map glyphs ascii")
 	if d.overlayMgr.ActiveName() != "map" {
 		t.Fatal("a setting command closed the panel")
 	}
 	d.refresh()
-	if p.set.Style != "skyline" || p.set.Tier != mapmodel.TierASCII {
-		t.Errorf("after the commands the open panel is %s/%s", p.set.Style, p.set.Tier)
+	if p.set.Tier != mapmodel.TierASCII {
+		t.Errorf("after the command the open panel is %s", p.set.Tier)
 	}
-	if got, glyphs, _ := eng.Account().MapPrefs(); got != "skyline" || glyphs != "ascii" {
-		t.Errorf("account settings %s/%s", got, glyphs)
+	if glyphs, _ := eng.Account().MapPrefs(); glyphs != "ascii" {
+		t.Errorf("account glyphs %s", glyphs)
 	}
-	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "map style Skyline") {
-		t.Errorf("key bar does not name the new style:\n%s", txt)
+	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "map glyphs ascii") {
+		t.Errorf("key bar does not name the new glyphs:\n%s", txt)
 	}
 }
 
@@ -125,50 +123,45 @@ func TestMapFlowsCommand(t *testing.T) {
 // command in the prompt, unrun, under the still-open panel; with something
 // typed, Tab and Enter are the prompt's.
 func TestMapInspectStagesCommand(t *testing.T) {
-	for _, style := range all.Registry().Names() {
-		t.Run(style, func(t *testing.T) {
-			d, eng := mapTestDashboard(t, true)
-			must(t, eng.Account().SetMapStyle(style))
-			// A civ met: something on the map with a command in every style.
-			must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
-			d.runForTest("map")
-			p := d.mapPanel
-			drawMapPanel(t, d, 160, 48)
-			var cmd string
-			for i := 0; i < 40 && cmd == ""; i++ {
-				if !p.routeKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), "") {
-					t.Fatal("Tab on an empty prompt did not go to the map")
-				}
-				drawMapPanel(t, d, 160, 48)
-				if in, ok := p.current().Inspect(p.frame()); ok {
-					cmd = in.Command
-				}
-			}
-			if cmd == "" {
-				t.Fatal("Tab never reached a target with a command")
-			}
-			if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter types "+cmd) {
-				t.Errorf("key bar does not offer %q:\n%s", cmd, txt)
-			}
-			p.routeKey(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), "")
-			if d.overlayMgr.ActiveName() != "map" {
-				t.Errorf("Enter closed the panel")
-			}
-			if got := d.inputField.GetText(); got != cmd {
-				t.Errorf("prompt holds %q, want the staged %q", got, cmd)
-			}
-			if !d.inputField.comp.complete(cmd) {
-				t.Errorf("staged %q is not a whole command", cmd)
-			}
-			if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter runs the command below") {
-				t.Errorf("key bar does not say Enter runs the staged command:\n%s", txt)
-			}
-			for _, k := range []tcell.Key{tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEnter} {
-				if p.routeKey(tcell.NewEventKey(k, 0, tcell.ModNone), cmd) {
-					t.Errorf("%v went to the map with %q in the prompt", k, cmd)
-				}
-			}
-		})
+	d, eng := mapTestDashboard(t, true)
+	// A civ met: something on the map with a command.
+	must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
+	d.runForTest("map")
+	p := d.mapPanel
+	drawMapPanel(t, d, 160, 48)
+	var cmd string
+	for i := 0; i < 40 && cmd == ""; i++ {
+		if !p.routeKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), "") {
+			t.Fatal("Tab on an empty prompt did not go to the map")
+		}
+		drawMapPanel(t, d, 160, 48)
+		if in, ok := p.current().Inspect(p.frame()); ok {
+			cmd = in.Command
+		}
+	}
+	if cmd == "" {
+		t.Fatal("Tab never reached a target with a command")
+	}
+	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter types "+cmd) {
+		t.Errorf("key bar does not offer %q:\n%s", cmd, txt)
+	}
+	p.routeKey(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), "")
+	if d.overlayMgr.ActiveName() != "map" {
+		t.Errorf("Enter closed the panel")
+	}
+	if got := d.inputField.GetText(); got != cmd {
+		t.Errorf("prompt holds %q, want the staged %q", got, cmd)
+	}
+	if !d.inputField.comp.complete(cmd) {
+		t.Errorf("staged %q is not a whole command", cmd)
+	}
+	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "Enter runs the command below") {
+		t.Errorf("key bar does not say Enter runs the staged command:\n%s", txt)
+	}
+	for _, k := range []tcell.Key{tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEnter} {
+		if p.routeKey(tcell.NewEventKey(k, 0, tcell.ModNone), cmd) {
+			t.Errorf("%v went to the map with %q in the prompt", k, cmd)
+		}
 	}
 }
 
@@ -180,7 +173,7 @@ func TestMapIconsHintOnce(t *testing.T) {
 	if txt := drawMapPanel(t, d, 120, 40); !strings.Contains(txt, mapIconsHint.String()) {
 		t.Errorf("first open: no icons hint in\n%s", txt)
 	}
-	if _, _, shown := eng.Account().MapPrefs(); !shown {
+	if _, shown := eng.Account().MapPrefs(); !shown {
 		t.Error("the hint was not recorded on the account")
 	}
 	d.overlayMgr.Hide()
@@ -195,31 +188,31 @@ func TestMapIconsHintOnce(t *testing.T) {
 func TestMapSettingsPersist(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	first := eng.Account()
-	for _, line := range []string{"map style skyline", "map glyphs ascii"} {
+	for _, line := range []string{"map glyphs ascii", "minimap off"} {
 		d.runForTest(line)
 	}
-	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII {
-		t.Fatalf("after the commands: %s/%s", s.Style, s.Tier)
+	if s := d.mapSettings(); s.Tier != mapmodel.TierASCII || s.Minimap {
+		t.Fatalf("after the commands: %s, mini map %v", s.Tier, s.Minimap)
 	}
 	must(t, eng.SaveGame("maptest"))
-	d.runForTest("map style roguelike")
+	d.runForTest("map glyphs unicode")
 	must(t, eng.LoadGame("maptest"))
-	if s := d.mapSettings(); s.Style != "roguelike" || s.Tier != mapmodel.TierASCII {
-		t.Errorf("a load changed the account's map settings: %s/%s", s.Style, s.Tier)
+	if s := d.mapSettings(); s.Tier != mapmodel.TierUnicode || s.Minimap {
+		t.Errorf("a load changed the account's map settings: %s, mini map %v", s.Tier, s.Minimap)
 	}
-	d.runForTest("map style skyline")
+	d.runForTest("map glyphs nerd")
 
 	second, err := game.CreateAccount("Second")
 	must(t, err)
 	eng.SetAccount(second)
-	if s := d.mapSettings(); s.Style != "roguelike" || s.Tier != mapmodel.TierUnicode {
-		t.Errorf("a new account has %s/%s, want the defaults", s.Style, s.Tier)
+	if s := d.mapSettings(); s.Tier != mapmodel.TierUnicode || !s.Minimap {
+		t.Errorf("a new account has %s, mini map %v, want the defaults", s.Tier, s.Minimap)
 	}
 	back, err := game.SwitchAccount(first.AccountID)
 	must(t, err)
 	eng.SetAccount(back)
-	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII {
-		t.Errorf("switching back (read from disk): %s/%s, want skyline/ascii", s.Style, s.Tier)
+	if s := d.mapSettings(); s.Tier != mapmodel.TierNerd || s.Minimap {
+		t.Errorf("switching back (read from disk): %s, mini map %v, want nerd, off", s.Tier, s.Minimap)
 	}
 }
 
@@ -227,55 +220,38 @@ func TestMapSettingsPersist(t *testing.T) {
 // still work, for the session, and say so.
 func TestMapSettingsWithoutAccount(t *testing.T) {
 	d, eng := mapTestDashboard(t, false)
-	for _, line := range []string{"map style skyline", "map glyphs ascii", "minimap off"} {
+	for _, line := range []string{"map glyphs ascii", "minimap off"} {
 		d.runForTest(line)
 	}
-	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII || s.Minimap {
-		t.Errorf("session settings %+v, want skyline, ascii, mini map off", s)
+	if s := d.mapSettings(); s.Tier != mapmodel.TierASCII || s.Minimap {
+		t.Errorf("session settings %+v, want ascii, mini map off", s)
 	}
-	res := HandleCommand("map style roguelike", eng)
-	if res.Type != "info" || res.MapPref.Key != "style" || !strings.Contains(res.Message, "this session") {
-		t.Errorf("map style with no account: %+v", res)
+	res := HandleCommand("map glyphs unicode", eng)
+	if res.Type != "info" || res.MapPref.Key != "glyphs" || !strings.Contains(res.Message, "this session") {
+		t.Errorf("map glyphs with no account: %+v", res)
 	}
 }
 
 // TestMapSettingWordsMatchRegistries: the registry's literal words for map
-// style (and its shortcut style) and map glyphs are the style registry's
-// and the glyph tiers'.
+// glyphs are the glyph tiers'.
 func TestMapSettingWordsMatchRegistries(t *testing.T) {
-	c := lookup(registry(), "map")
-	want := map[string][]string{"style": all.Registry().Names(), "glyphs": mapmodel.TierNames}
-	for sub, names := range want {
-		s := lookup(c.Subs, sub)
-		if s == nil || len(s.Args) != 1 {
-			t.Fatalf("map %s is not registered with one slot", sub)
-		}
-		if strings.Join(s.Args[0].Words, ",") != strings.Join(names, ",") {
-			t.Errorf("map %s takes %v, want %v", sub, s.Args[0].Words, names)
-		}
+	s := lookup(lookup(registry(), "map").Subs, "glyphs")
+	if s == nil || len(s.Args) != 1 {
+		t.Fatal("map glyphs is not registered with one slot")
 	}
-	st := lookup(registry(), "style")
-	if st == nil || len(st.Args) != 1 {
-		t.Fatal("style is not registered with one slot")
-	}
-	if got, want := strings.Join(st.Args[0].Words, ","), strings.Join(all.Registry().Names(), ","); got != want {
-		t.Errorf("style takes %s, want %s", got, want)
+	if got, want := strings.Join(s.Args[0].Words, ","), strings.Join(mapmodel.TierNames, ","); got != want {
+		t.Errorf("map glyphs takes %s, want %s", got, want)
 	}
 }
 
-// TestStyleShortcut: style is map style under a shorter name: it shows the
-// style bare and saves a new one to the account.
-func TestStyleShortcut(t *testing.T) {
-	d, eng := mapTestDashboard(t, true)
-	d.runForTest("style skyline")
-	if got, _, _ := eng.Account().MapPrefs(); got != "skyline" {
-		t.Errorf("style skyline saved %q, want skyline", got)
+// TestNoMapStyleCommand: the map has no style to pick, so neither map style
+// nor a style shortcut is a command.
+func TestNoMapStyleCommand(t *testing.T) {
+	if s := lookup(lookup(registry(), "map").Subs, "style"); s != nil {
+		t.Error("map style is still registered")
 	}
-	if res := HandleCommand("style", eng); res.Type != "info" || !strings.Contains(res.Message, "Map style: Skyline") {
-		t.Errorf("bare style: %+v", res)
-	}
-	if res := HandleCommand("style cubist", eng); res.Type != "error" {
-		t.Errorf("style cubist: %+v", res)
+	if c := lookup(registry(), "style"); c != nil {
+		t.Error("style is still registered")
 	}
 }
 

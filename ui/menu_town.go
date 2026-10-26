@@ -7,20 +7,20 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
 // menu_town.go draws the player's own town behind the main menu: the map
-// of their current game, by the game's own map renderer, in their map
-// style, glyph set and theme, at the age the game is in, moving as the Map
-// panel's does.
+// of their current game, by the game's own map renderer, in their glyph set
+// and theme, at the age the game is in, moving as the Map panel's does.
 //
 // It is a picture of the save, not the game. The state comes from
 // game.ViewSave, which restores the save into an engine of its own and
 // throws the engine away: nothing is loaded into the engine in play, no
-// tick runs, no time away is applied and nothing is written. The style
-// draws its full view onto a screen of the menu's own; the rows that hold
-// the scene (mapstyle.Scenic) are copied to the menu, dimmed toward the
-// page and faded at the top and the right so the menu over them reads.
+// tick runs, no time away is applied and nothing is written. The map draws
+// its full view onto a screen of the menu's own; the rows that hold the
+// scene (SceneInset) are copied to the menu, dimmed toward the page and
+// faded at the top and the right so the menu over them reads.
 
 // menuTown is the picture of one save.
 type menuTown struct {
@@ -35,15 +35,15 @@ type menuTown struct {
 	sim    tcell.SimulationScreen
 	scr    tcell.Screen
 	sw, sh int
-	// failed is set when the style could not draw the picture. The menu
+	// failed is set when the map could not draw the picture. The menu
 	// then shows its first page; it never shows an error.
 	failed bool
 }
 
-// newMenuTown builds the picture of a save's state in a style. nil when
-// there is nothing to draw.
-func newMenuTown(st *game.GameState, reg *mapstyle.Registry, styleName string) (t *menuTown) {
-	return newMenuTownOn(mapmodel.NewBuilder(nil), st, reg, styleName, true)
+// newMenuTown builds the picture of a save's state. nil when there is
+// nothing to draw.
+func newMenuTown(st *game.GameState) (t *menuTown) {
+	return newMenuTownOn(mapmodel.NewBuilder(nil), st, true)
 }
 
 // newMenuTownOn is newMenuTown on a builder the caller keeps, so that two
@@ -51,8 +51,8 @@ func newMenuTown(st *game.GameState, reg *mapstyle.Registry, styleName string) (
 // land out once: the land is most of what a picture costs to make. follows
 // is for the picture that will follow the game (update): it takes the
 // builder's cache. The other is built aside and stays as it is.
-func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, reg *mapstyle.Registry, styleName string, follows bool) (t *menuTown) {
-	if st == nil || reg == nil || builder == nil {
+func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, follows bool) (t *menuTown) {
+	if st == nil || builder == nil {
 		return nil
 	}
 	defer func() {
@@ -60,12 +60,7 @@ func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, reg *mapstyle.
 			t = nil // a state the maps cannot lay out: no picture
 		}
 	}()
-	style, ok := reg.New(styleName)
-	if !ok {
-		if style, ok = reg.New(reg.Default()); !ok {
-			return nil
-		}
-	}
+	style := roguelike.New()
 	// The picture alone: no cursor, no legend, no overlay, no news.
 	for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges, mapstyle.OptWorld} {
 		style.SetOption(o, false)
@@ -107,8 +102,8 @@ func (t *menuTown) update(st *game.GameState) {
 // three, the body is the fourth, and the last is the flare of a strike.
 var townFade = [5]float64{0.80, 0.62, 0.46, 0.34, 0.12}
 
-// The least size a style draws its full view at (below it a style draws
-// its compact view, which is not a picture of the town).
+// The least size the map draws its full view at (below it the map draws its
+// compact view, which is not a picture of the town).
 const (
 	townMinW = 60
 	townMinH = 16
@@ -120,11 +115,10 @@ func (t *menuTown) draw(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle
 	return t.paint(g, pal, x0, y0, w, h, false, f, flare)
 }
 
-// drawFoot is draw for a block that may have fewer rows than a style lays
+// drawFoot is draw for a block that may have fewer rows than the map lays
 // its full view out in: the picture is then laid out at the least height
-// it takes and the block shows the foot of it, so a skyline keeps its
-// ground and a map the town at its middle. (The arrival screen's land is
-// what is left under a name and its lines.)
+// it takes and the block shows the foot of it. (The arrival screen's land
+// is what is left under a name and its lines.)
 func (t *menuTown) drawFoot(g *mGrid, pal *menuPalette, x0, y0, w, h int, f mapstyle.Frame, flare bool) (ok bool) {
 	return t.paint(g, pal, x0, y0, w, h, true, f, flare)
 }
@@ -138,10 +132,7 @@ func (t *menuTown) paint(g *mGrid, pal *menuPalette, x0, y0, w, h int, foot bool
 			t.failed, ok = true, false
 		}
 	}()
-	top, bottom := 0, 0
-	if sc, scenic := t.style.(mapstyle.Scenic); scenic {
-		top, bottom = sc.SceneInset(w, h)
-	}
+	top, bottom := t.style.SceneInset(w, h)
 	fw, fh := w, h+top+bottom
 	if foot && fh < townMinH {
 		// Rows of the picture above the block: it is laid out taller than

@@ -109,10 +109,11 @@ func stagedEnding(t testing.TB, end game.RunEnding, tier mapmodel.GlyphTier, mot
 	e := r.om.film
 	e.now = func() time.Time { return r.clock }
 	e.start = r.clock
-	if !towns {
-		e.reg = nil
-	}
 	r.om.Refresh(cur)
+	if !towns {
+		e.oldTown, e.newTown = nil, nil
+		e.view.captions = menuCaptions(nil, &cur)
+	}
 	e.set.Tier, e.set.Motion = tier, motion
 	e.settings()
 	e.sc = nil

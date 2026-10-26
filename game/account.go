@@ -250,18 +250,16 @@ type AccountStats struct {
 // Phase 1 only round-trips these; SetActiveTheme et al. land in Phase 3.
 type AccountPrefs struct {
 	ActiveTheme string `json:"active_theme,omitempty"`
-	// Map settings (the Map panel and the dashboard mini map). Empty means
-	// the default: the first registered style, the unicode glyph tier.
-	MapStyle  string `json:"map_style,omitempty"`
+	// MapStyle and MapZoom are inert (nothing reads them): the account signature covers Prefs as written.
+	MapStyle string `json:"map_style,omitempty"`
+	// MapGlyphs is the glyph tier of the Map panel and the mini map; empty is unicode.
 	MapGlyphs string `json:"map_glyphs,omitempty"`
-	// MapZoom is the skyline map's zoom level ("far", "wide", "mid", "close"); empty
-	// is the default, mid.
-	MapZoom string `json:"map_zoom,omitempty"`
+	MapZoom   string `json:"map_zoom,omitempty"`
 	// MapIconsHint records that the Map panel's one-time "Type icons" hint
 	// was shown, so it is shown once per account.
 	MapIconsHint bool `json:"map_icons_hint,omitempty"`
 	// Minimap is the dashboard mini map setting: "on", "off", or empty for
-	// the default (off).
+	// the default (on).
 	Minimap string `json:"minimap,omitempty"`
 }
 
@@ -1009,21 +1007,12 @@ func (a *Account) SetActiveTheme(key string) error {
 	return a.Save()
 }
 
-// MapPrefs returns the persisted map settings: the style key and glyph tier
-// name ("" for the defaults) and whether the icons hint was shown.
-func (a *Account) MapPrefs() (style, glyphs string, hintShown bool) {
+// MapPrefs returns the persisted map settings: the glyph tier name ("" for
+// the default) and whether the icons hint was shown.
+func (a *Account) MapPrefs() (glyphs string, hintShown bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.Prefs.MapStyle, a.Prefs.MapGlyphs, a.Prefs.MapIconsHint
-}
-
-// SetMapStyle persists the map style key. Like SetActiveTheme it does not
-// validate the key: the UI owns the style registry.
-func (a *Account) SetMapStyle(key string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.Prefs.MapStyle = key
-	return a.Save()
+	return a.Prefs.MapGlyphs, a.Prefs.MapIconsHint
 }
 
 // SetMapGlyphs persists the map glyph tier name.
@@ -1034,28 +1023,12 @@ func (a *Account) SetMapGlyphs(tier string) error {
 	return a.Save()
 }
 
-// MapZoom returns the persisted skyline zoom level ("" for the default).
-func (a *Account) MapZoom() string {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.Prefs.MapZoom
-}
-
-// SetMapZoom persists the skyline zoom level name. Like SetMapStyle it does
-// not validate it: the UI owns the levels.
-func (a *Account) SetMapZoom(level string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.Prefs.MapZoom = level
-	return a.Save()
-}
-
-// MinimapOn reports whether the dashboard's mini map is on. It is off until
-// the player turns it on (minimap on): an account that never chose has none.
+// MinimapOn reports whether the dashboard's mini map is on. It is on until
+// the player turns it off (minimap off): an account that never chose has it.
 func (a *Account) MinimapOn() bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.Prefs.Minimap == "on"
+	return a.Prefs.Minimap != "off"
 }
 
 // SetMinimap persists the mini map setting.
@@ -1509,9 +1482,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	// Active theme and map settings: keep local if set, else adopt the blob's.
 	p := &a.Prefs
 	p.ActiveTheme = cmp.Or(p.ActiveTheme, exp.Prefs.ActiveTheme)
-	p.MapStyle = cmp.Or(p.MapStyle, exp.Prefs.MapStyle)
 	p.MapGlyphs = cmp.Or(p.MapGlyphs, exp.Prefs.MapGlyphs)
-	p.MapZoom = cmp.Or(p.MapZoom, exp.Prefs.MapZoom)
 	p.Minimap = cmp.Or(p.Minimap, exp.Prefs.Minimap)
 	p.MapIconsHint = p.MapIconsHint || exp.Prefs.MapIconsHint
 }

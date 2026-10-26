@@ -10,6 +10,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -50,8 +51,8 @@ func newMiniDashboard(t testing.TB) (*Dashboard, *tview.Pages) {
 	return d, pages
 }
 
-// miniOn turns the dashboard's mini map on, as "minimap on" does. It is
-// off until the player asks for it.
+// miniOn turns the dashboard's mini map on, as "minimap on" does. It is on
+// unless the player turned it off, so this pins the setting.
 func miniOn(t testing.TB, d *Dashboard) {
 	t.Helper()
 	d.inputField.SetText("minimap on")
@@ -79,7 +80,7 @@ func TestMiniMapFitsAndHides(t *testing.T) {
 		if d.mapDock.shown != sz.show {
 			t.Errorf("%dx%d: mini map shown = %v, want %v\n%s", sz.w, sz.h, d.mapDock.shown, sz.show, txt)
 		}
-		if strings.Contains(txt, " Map · ") != sz.show {
+		if strings.Contains(txt, "┌ Map ─") != sz.show {
 			t.Errorf("%dx%d: map title on screen = %v, want %v", sz.w, sz.h, !sz.show, sz.show)
 		}
 		if !strings.Contains(txt, "Buildings") {
@@ -120,9 +121,9 @@ func TestMiniMapSize(t *testing.T) {
 	}
 }
 
-// TestMinimapSetting: the mini map is off until the player turns it on.
-// minimap on shows it above the Buildings list and is saved to the account;
-// minimap off gives the list the whole column back.
+// TestMinimapSetting: the mini map is on until the player turns it off.
+// minimap off gives the Buildings list the whole column back and is saved to
+// the account; minimap on brings it back.
 func TestMinimapSetting(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
 	pages := tview.NewPages()
@@ -131,30 +132,23 @@ func TestMinimapSetting(t *testing.T) {
 		drawDashboard(t, d, pages, 160, 48)
 		d.refresh()
 		txt := drawDashboard(t, d, pages, 160, 48)
-		if strings.Contains(txt, " Map · ") != d.mapDock.shown {
+		if strings.Contains(txt, "┌ Map ─") != d.mapDock.shown {
 			t.Errorf("the map title on screen disagrees with shown=%v", d.mapDock.shown)
 		}
 		return d.mapDock.shown
 	}
-	// Off until asked for: the Buildings list has the whole column, and no
-	// model is built for a map nobody sees.
-	if show() {
-		t.Fatal("the mini map shows on a dashboard nobody turned it on for")
+	// On until turned off, with nothing chosen.
+	if !show() {
+		t.Fatal("the mini map does not show on a new account")
 	}
-	if eng.Account().MinimapOn() || d.mapDock.wantsModel() {
-		t.Error("a new account has the mini map on, or builds models for it")
-	}
-	if res := HandleCommand("minimap", eng); !strings.Contains(res.Message, "Mini map: off") {
-		t.Errorf("bare minimap: %+v", res)
-	}
-	// On, and remembered by the account.
-	d.runForTest("minimap on")
-	if !show() || !eng.Account().MinimapOn() {
-		t.Fatal("minimap on did not show the mini map, or was not saved to the account")
+	if !eng.Account().MinimapOn() {
+		t.Error("a new account has the mini map off")
 	}
 	if res := HandleCommand("minimap", eng); !strings.Contains(res.Message, "Mini map: on") {
 		t.Errorf("bare minimap: %+v", res)
 	}
+	// Off, and remembered by the account: the Buildings list has the whole
+	// column, and no model is built for a map nobody sees.
 	d.runForTest("minimap off")
 	if show() {
 		t.Error("minimap off: the mini map still shows")
@@ -165,6 +159,9 @@ func TestMinimapSetting(t *testing.T) {
 	if d.mapDock.wantsModel() {
 		t.Error("the mini map still builds models while off")
 	}
+	if res := HandleCommand("minimap", eng); !strings.Contains(res.Message, "Mini map: off") {
+		t.Errorf("bare minimap: %+v", res)
+	}
 	d.runForTest("minimap on")
 	if !show() || !eng.Account().MinimapOn() {
 		t.Error("minimap on did not bring it back")
@@ -174,39 +171,32 @@ func TestMinimapSetting(t *testing.T) {
 	}
 }
 
-// TestMiniMapFollowsSettings: map style switches the mini map too.
+// TestMiniMapFollowsSettings: map glyphs switches the mini map too.
 func TestMiniMapFollowsSettings(t *testing.T) {
 	d, _ := mapTestDashboard(t, true)
-	miniOn(t, d)
-	d.runForTest("map style skyline")
+	d.runForTest("map glyphs ascii")
 	d.refresh()
-	if d.miniMap.set.Style != "skyline" {
-		t.Errorf("mini map style %s after map style skyline", d.miniMap.set.Style)
+	if d.miniMap.set.Tier != mapmodel.TierASCII {
+		t.Errorf("mini map glyphs %s after map glyphs ascii", d.miniMap.set.Tier)
 	}
 }
 
 // BenchmarkMiniMapDraw is the mini map's own draw (what a keypress redraw
-// adds to the dashboard), per style.
+// adds to the dashboard).
 func BenchmarkMiniMapDraw(b *testing.B) {
 	b.Cleanup(game.SetDataDirForTest(b.TempDir()))
 	d, _ := newMiniDashboard(b)
 	sim := newSimScreen(b, 160, 48)
-	for _, style := range d.mapViews.reg.Names() {
-		b.Run(style, func(b *testing.B) {
-			s := d.mapSettings()
-			s.Style = style
-			st := d.engine.GetState()
-			d.miniMap.update(s, &st)
-			d.miniMap.SetRect(0, 0, 69, miniMaxInnerH+2)
-			for i := 0; i < b.N; i++ {
-				d.miniMap.Draw(sim)
-			}
-		})
+	st := d.engine.GetState()
+	d.miniMap.update(d.mapSettings(), &st)
+	d.miniMap.SetRect(0, 0, 69, miniMaxInnerH+2)
+	for i := 0; i < b.N; i++ {
+		d.miniMap.Draw(sim)
 	}
 }
 
 // TestDumpDashboardWithMiniMap writes text captures of the dashboard with
-// the mini map, per style. Opt-in:
+// the mini map. Opt-in:
 //
 //	MINIMAP_DUMP=/tmp/dump go test ./ui/ -run TestDumpDashboardWithMiniMap
 func TestDumpDashboardWithMiniMap(t *testing.T) {
@@ -217,29 +207,22 @@ func TestDumpDashboardWithMiniMap(t *testing.T) {
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	restoreForge(t)
 	d, pages := newMiniDashboard(t)
-	for _, style := range d.mapViews.reg.Names() {
-		d.mapLocal = nil
-		s := d.mapSettings()
-		s.Style = style
-		d.mapLocal = &s
-		for _, sz := range [][2]int{{160, 48}, {120, 40}, {80, 24}} {
-			drawDashboard(t, d, pages, sz[0], sz[1])
-			d.refresh()
-			txt := drawDashboard(t, d, pages, sz[0], sz[1])
-			name := filepath.Join(dir, fmt.Sprintf("dashboard_%s_%dx%d.txt", style, sz[0], sz[1]))
-			must(t, os.WriteFile(name, []byte(txt+"\n"), 0o644))
-		}
+	for _, sz := range [][2]int{{160, 48}, {120, 40}, {80, 24}} {
+		drawDashboard(t, d, pages, sz[0], sz[1])
+		d.refresh()
+		txt := drawDashboard(t, d, pages, sz[0], sz[1])
+		name := filepath.Join(dir, fmt.Sprintf("dashboard_%dx%d.txt", sz[0], sz[1]))
+		must(t, os.WriteFile(name, []byte(txt+"\n"), 0o644))
 	}
 }
 
 // TestMiniMapNotShownBeforeFirstRefresh: a dashboard that has been drawn but
 // not yet refreshed (the frame between showing it and the first tick) must
-// not show the mini map. It is off until the player turns it on, so the
-// dock starts off and a refresh reads the account's setting.
+// not show the mini map: it has no map to draw until a refresh builds one.
 func TestMiniMapNotShownBeforeFirstRefresh(t *testing.T) {
 	d, pages := newTestDashboard(nil)
 	txt := drawDashboard(t, d, pages, 180, 56)
-	if d.mapDock.shown || strings.Contains(txt, " Map · ") {
-		t.Fatalf("the mini map shows before the first refresh, on a dashboard nobody turned it on for:\n%s", txt)
+	if d.mapDock.shown || strings.Contains(txt, "┌ Map ─") {
+		t.Fatalf("the mini map shows before the first refresh:\n%s", txt)
 	}
 }

@@ -35,7 +35,6 @@ var scanned = []struct {
 	{"ui", modeCode},
 	{"ui/mapstyle", modeCode},
 	{"ui/mapstyle/roguelike", modeCode},
-	{"ui/mapstyle/skyline", modeCode},
 	{".", modeCode},
 }
 
@@ -54,9 +53,8 @@ var notScanned = map[string]string{
 	"mapmodel/fixture":      "test fixtures",
 	"pkg/nerdfont":          "the icon font installer's glyph table and system paths",
 	"pkg/sprites":           "pixel art",
-	"ui/mapstyle/all":       "registers the map styles, no text",
 	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
-	"ui/mapstyle/styletest": "checks shared by the map style tests, never shown in the game",
+	"ui/mapstyle/styletest": "checks shared by the map tests, never shown in the game",
 }
 
 type scanMode int

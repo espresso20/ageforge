@@ -12,19 +12,19 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// map_panel.go is the Map panel: the active map style over the whole
-// screen but the command bar, opened with map (aliases citymap and
-// worldmap). The command bar keeps the keyboard while the panel is open, so
-// commands work as they do anywhere: printable keys go to the prompt, and
-// the map takes only the keys that print nothing (routeKey): the arrows,
-// Tab and Shift-Tab, PgUp and PgDn, Home and End, and Enter on an empty
-// prompt, which types the inspected command. On an empty prompt it also takes
-// + - = to zoom, and [ ] (the skyline's district keys). Style, glyphs and the
-// flows overlay are commands (map style, map glyphs, map flows). The style
-// draws everything but the panel's bottom row, a key bar.
+// map_panel.go is the Map panel: the map over the whole screen but the
+// command bar, opened with map (aliases citymap and worldmap). The command
+// bar keeps the keyboard while the panel is open, so commands work as they
+// do anywhere: printable keys go to the prompt, and the map takes only the
+// keys that print nothing (routeKey): the arrows, Tab and Shift-Tab, PgUp
+// and PgDn, Home and End, and Enter on an empty prompt, which types the
+// inspected command. On an empty prompt it also takes + - = to zoom. Glyphs
+// and the flows overlay are commands (map glyphs, map flows). The map draws
+// everything but the panel's bottom row, a key bar.
 
 // mapAnimStep is the map animation frame length (about 8 frames a second).
 const mapAnimStep = 125 * time.Millisecond
@@ -51,19 +51,17 @@ func mapFrame(m *mapmodel.Model, set mapSettings, since time.Duration) mapstyle.
 // mapIconsHint is the one-time hint the first Map panel open shows.
 var mapIconsHint = vibe.E("ui.map_panel.mapIconsHint.01", "Want real icons on your map? Type icons.")
 
-// mapViews is shared by the Map panel and the mini map: the style
-// registry, one model builder (the UI goroutine owns it) and the
-// since-last-visit baseline.
+// mapViews is shared by the Map panel and the mini map: one model builder
+// (the UI goroutine owns it) and the since-last-visit baseline.
 type mapViews struct {
-	reg     *mapstyle.Registry
 	builder *mapmodel.Builder
 
 	sinceKey [2]int64
 	since    *mapmodel.Visit
 }
 
-func newMapViews(reg *mapstyle.Registry) *mapViews {
-	return &mapViews{reg: reg, builder: mapmodel.NewBuilder(nil)}
+func newMapViews() *mapViews {
+	return &mapViews{builder: mapmodel.NewBuilder(nil)}
 }
 
 // model returns the map model for a snapshot, measured from the load-time
@@ -78,40 +76,18 @@ func (mv *mapViews) model(state *game.GameState) *mapmodel.Model {
 	return mv.builder.Model(state, mv.since)
 }
 
-// styleSet keeps one live view per style, so switching away and back keeps
-// a style's camera and cursor.
-type styleSet struct {
-	reg   *mapstyle.Registry
-	views map[string]mapstyle.Style
-}
-
-func (ss *styleSet) get(name string) mapstyle.Style {
-	if ss.views == nil {
-		ss.views = map[string]mapstyle.Style{}
-	}
-	if v, ok := ss.views[name]; ok {
-		return v
-	}
-	v, ok := ss.reg.New(name)
-	if !ok {
-		v, _ = ss.reg.New(ss.reg.Default())
-	}
-	ss.views[name] = v
-	return v
-}
-
 // mapPanel is the Map overlay primitive.
 type mapPanel struct {
 	barPanel
-	mv     *mapViews
-	styles styleSet
-	set    mapSettings
-	model  *mapmodel.Model
-	start  time.Time
-	now    func() time.Time // the animation clock (tests pin it)
+	mv    *mapViews
+	view  mapstyle.Style
+	set   mapSettings
+	model *mapmodel.Model
+	start time.Time
+	now   func() time.Time // the animation clock (tests pin it)
 
 	world bool // the next open starts on the known world
-	flows bool // the flows overlay, in every style (map flows)
+	flows bool // the flows overlay (map flows)
 	hint  bool // show the icons hint in the key bar while open
 	note  string
 
@@ -121,9 +97,6 @@ type mapPanel struct {
 	hintShown func()
 	// stage puts a command in the prompt, unrun, for the player's Enter.
 	stage func(cmd string)
-	// zoomed is told the new level when a key changed a style's zoom, to
-	// save it in the map settings.
-	zoomed func(level string)
 	// spotted is told when the cursor is on the rare visitor, once a
 	// visit; onVisitor is whether it was there at the last look.
 	spotted   func(kind string)
@@ -131,15 +104,15 @@ type mapPanel struct {
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
-	p := &mapPanel{mv: mv, styles: styleSet{reg: mv.reg}, now: time.Now}
+	p := &mapPanel{mv: mv, view: roguelike.New(), now: time.Now}
 	p.barPanel = newBarPanel(p.routeKey)
 	p.start = p.now()
-	p.set = defaultMapSettings(mv.reg)
+	p.set = defaultMapSettings()
 	return p
 }
 
 // open is the overlay's build: it runs on every Show. It picks up the
-// settings, points the style at the settlement or the world, and decides
+// settings, points the map at the settlement or the world, and decides
 // whether this is the open that shows the icons hint.
 func (p *mapPanel) open(state game.GameState) tview.Primitive {
 	if p.settings != nil {
@@ -148,9 +121,6 @@ func (p *mapPanel) open(state game.GameState) tview.Primitive {
 	p.note = ""
 	p.current().SetOption(mapstyle.OptWorld, p.world)
 	p.world = false
-	if z, ok := p.current().(mapstyle.Zoomable); ok {
-		z.SetZoom(p.set.Zoom)
-	}
 	p.hint = !p.set.HintShown && p.set.Tier != mapmodel.TierNerd
 	if p.hint && p.hintShown != nil {
 		p.hintShown()
@@ -184,11 +154,10 @@ func (p *mapPanel) lookForVisitor() {
 	p.onVisitor = on
 }
 
-// current is the active style's view, with the panel's flows setting.
+// current is the map view, with the panel's flows setting.
 func (p *mapPanel) current() mapstyle.Style {
-	st := p.styles.get(p.set.Style)
-	st.SetOption(mapstyle.OptFlows, p.flows)
-	return st
+	p.view.SetOption(mapstyle.OptFlows, p.flows)
+	return p.view
 }
 
 // setFlows turns the flows overlay on ("on"), off ("off") or over (anything
@@ -209,7 +178,7 @@ func (p *mapPanel) frame() mapstyle.Frame {
 	return mapFrame(p.model, p.set, p.now().Sub(p.start))
 }
 
-// Draw draws the style over all but the last row, and the key bar on it.
+// Draw draws the map over all but the last row, and the key bar on it.
 func (p *mapPanel) Draw(scr tcell.Screen) {
 	x, y, w, h := p.GetRect()
 	if w <= 0 || h <= 0 {
@@ -252,9 +221,8 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 	} else if in, ok := st.Inspect(f); ok && in.Command != "" {
 		cmd = []barPart{{"Enter", 1}, {vibe.Line("ui.map_panel.drawBar.04", " types "), 2}, {in.Command, 0}, {" · ", 2}}
 	}
-	full := []barPart{{"map style", 1}, {" " + styleTitle(p.mv.reg, p.set.Style) + " · ", 2},
-		{"map glyphs", 1}, {" " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {vibe.Line("ui.map_panel.drawBar.06", " close"), 2}}
-	short := []barPart{{"map style", 1}, {" · ", 2}, {"Esc", 1}, {vibe.Line("ui.map_panel.drawBar.08", " close"), 2}}
+	full := []barPart{{"map glyphs", 1}, {" " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {vibe.Line("ui.map_panel.drawBar.06", " close"), 2}}
+	short := []barPart{{"map glyphs", 1}, {" · ", 2}, {"Esc", 1}, {vibe.Line("ui.map_panel.drawBar.08", " close"), 2}}
 	width := func(parts ...[]barPart) int {
 		n := 0
 		for _, ps := range parts {
@@ -293,10 +261,9 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 // command bar (false). The map takes the keys that print nothing: the
 // arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab,
 // Shift-Tab and Enter. With something typed those three are the prompt's
-// (completion, run), and every printable key always is, but for the five
-// zoom and district keys + - = [ ] on an empty prompt (no command begins
-// with one). + and = zoom in and - zooms out, as PgDn and PgUp do, in every
-// style; [ and ] are the map's when the style uses them.
+// (completion, run), and every printable key always is, but for the zoom
+// keys + - = _ on an empty prompt (no command begins with one). + and =
+// zoom in and - and _ zoom out, as PgDn and PgUp do.
 func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 	switch ev.Key() {
 	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight,
@@ -306,19 +273,13 @@ func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 			return false
 		}
 	case tcell.KeyRune:
-		if prompt != "" || ev.Modifiers()&(tcell.ModCtrl|tcell.ModAlt) != 0 || !strings.ContainsRune(mapRuneKeys, ev.Rune()) {
+		// + and = are PgDn, - and _ are PgUp, so the map zooms with no
+		// modifier and no Page keys (a MacBook has none).
+		k, zoomKey := zoomRuneKeys[ev.Rune()]
+		if !zoomKey || prompt != "" || ev.Modifiers()&(tcell.ModCtrl|tcell.ModAlt) != 0 {
 			return false
 		}
-		if p.handleKey(ev) {
-			return true
-		}
-		// A style with no use for the key itself still zooms on it: + and = are
-		// PgDn, - and _ are PgUp, so the roguelike zooms with no modifier and
-		// no Page keys (a MacBook has none).
-		if k, ok := zoomRuneKeys[ev.Rune()]; ok {
-			return p.handleKey(tcell.NewEventKey(k, 0, tcell.ModNone))
-		}
-		return false
+		return p.handleKey(tcell.NewEventKey(k, 0, tcell.ModNone))
 	default:
 		return false
 	}
@@ -326,15 +287,12 @@ func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
 	return true
 }
 
-// mapRuneKeys are the printable keys the map takes on an empty prompt.
-const mapRuneKeys = "+-=_[]"
-
 // zoomRuneKeys are the page keys the zoom characters stand for.
 var zoomRuneKeys = map[rune]tcell.Key{'+': tcell.KeyPgDn, '=': tcell.KeyPgDn, '-': tcell.KeyPgUp, '_': tcell.KeyPgUp}
 
 // handleKey applies one map key and reports whether anything used it.
 // Enter types the inspected command into the prompt; the rest are the
-// style's. Esc is the dashboard's (it closes the panel).
+// map's. Esc is the dashboard's (it closes the panel).
 func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 	if ev.Key() == tcell.KeyEnter {
 		in, ok := p.current().Inspect(p.frame())
@@ -351,26 +309,9 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 	used := p.current().HandleKey(ev, p.frame())
 	if used {
 		p.note = ""
-		p.lookForZoom()
 		p.lookForVisitor()
 	}
 	return used
-}
-
-// lookForZoom saves the zoom level when a key changed it.
-func (p *mapPanel) lookForZoom() {
-	z, ok := p.current().(mapstyle.Zoomable)
-	if !ok {
-		return
-	}
-	level := z.ZoomLevel()
-	if cur := p.set.Zoom; cur == level || cur == "" && level == "mid" {
-		return
-	}
-	p.set.Zoom = level
-	if p.zoomed != nil {
-		p.zoomed(level)
-	}
 }
 
 // barTags matches the color tags a reply may carry: the key bar prints

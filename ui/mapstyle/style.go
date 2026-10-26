@@ -1,16 +1,13 @@
-// Package mapstyle is the contract between the map model and the map
-// styles. There is one model (package mapmodel) and several thin renderers
-// on top of it; a style draws a Frame, handles its own keys and says what
-// its cursor is on, in the command vocabulary. The Registry lists the
-// styles a player can pick (a "map style" setting), so a new style plugs in
-// with one entry.
+// Package mapstyle is the contract between the map model and the map view.
+// There is one model (package mapmodel) and one renderer on top of it; the
+// view draws a Frame, handles its own keys and says what its cursor is on,
+// in the command vocabulary.
 package mapstyle
 
 import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Rect is a screen rectangle.
@@ -71,10 +68,9 @@ const (
 	KindAlien = "alien"
 )
 
-// Style is one way of drawing the map.
+// Style is the map view the ui draws through: the one map in the game, and
+// the seam tests put a stand-in behind.
 type Style interface {
-	// Name is the registry key ("roguelike").
-	Name() string
 	// Draw renders the full view into r, writing every cell of r and
 	// nothing outside it.
 	Draw(scr tcell.Screen, r Rect, f Frame)
@@ -84,61 +80,26 @@ type Style interface {
 	// HandleKey applies a key to the view (cursor, zoom, toggles) and
 	// reports whether it used it.
 	HandleKey(ev *tcell.EventKey, f Frame) bool
-	// Inspect reports what the cursor is on; ok is false when the style has
+	// Inspect reports what the cursor is on; ok is false when the view has
 	// no cursor out.
 	Inspect(f Frame) (in Inspection, ok bool)
-	// SetOption turns a shared option on or off. Styles ignore options they
-	// do not support.
+	// SetOption turns a shared option on or off.
 	SetOption(o Option, on bool)
-}
-
-// Scenic is implemented by a style whose full view can be shown as a
-// picture, without the bars round it. SceneInset reports how many rows of
-// the full view at w by h are above and below the scene itself: the
-// header, the status lines, the key bar. The main menu draws a save's map
-// behind itself and leaves those rows out.
-type Scenic interface {
+	// SceneInset reports how many rows of the full view at w by h are above
+	// and below the scene itself: the header, the status lines, the key
+	// bar. The main menu draws a save's map behind itself and leaves those
+	// rows out.
 	SceneInset(w, h int) (top, bottom int)
+	// Pointer is the tile the cursor stands on; ok is false with no cursor
+	// out, or where the cursor is not a place on the ground.
+	Pointer() (p mapmodel.Pt, ok bool)
+	// Point marks p in the compact view from now on (ok false: no mark):
+	// the mini map marks the Map panel's cursor, as the same highlighted
+	// cell.
+	Point(p mapmodel.Pt, ok bool)
 }
 
-// CompactNews is implemented by a style whose compact view prints the
-// since-last-visit news itself, so the mini map's frame does not repeat it.
-type CompactNews interface {
-	CompactShowsNews() bool
-}
-
-// Zoomable is implemented by a style whose view has zoom levels that
-// persist in the map settings. A level is a name ("far", "wide", "mid", "close"); ""
-// is the style's default, and a name it does not know changes nothing.
-type Zoomable interface {
-	ZoomLevel() string
-	SetZoom(level string)
-}
-
-// Portraitist is implemented by a style that can draw one wonder alone, as
-// large as a rect holds, on a plain backdrop: the Wonders panel's gallery. It
-// draws every cell of r and reports false for a key it has no wonder for.
-type Portraitist interface {
-	Portrait(scr tcell.Screen, r Rect, f Frame, key string) bool
-}
-
-// Pointer is where a style's cursor stands, in the style's own terms (for
-// the roguelike, a tile of the settlement).
-type Pointer struct{ X, Y int }
-
-// Pointing is implemented by a style whose compact view can mark where the
-// cursor of another view of the same style stands: the mini map marks the
-// Map panel's cursor, as the same highlighted cell.
-type Pointing interface {
-	// Pointer reports where the cursor is; ok is false with no cursor out,
-	// or where the cursor is not a place on the ground.
-	Pointer() (p Pointer, ok bool)
-	// Point marks p in the compact view from now on (ok false: no mark).
-	Point(p Pointer, ok bool)
-}
-
-// Option is a view option several styles share, so a setting or a key
-// binding can drive any of them the same way.
+// Option is a view option a setting or a key binding can drive.
 type Option uint8
 
 const (
@@ -152,56 +113,6 @@ const (
 	// OptChanges highlights what is new since the last visit.
 	OptChanges
 	// OptWorld opens the view on the known world rather than the
-	// settlement (roguelike: the region zoom). Off returns to the
-	// settlement. Styles with one view ignore it.
+	// settlement (the region zoom). Off returns to the settlement.
 	OptWorld
 )
-
-// Entry describes one style for the registry.
-type Entry struct {
-	Name  string     // key for "map style <name>"
-	Title vibe.Entry // display name
-	Blurb vibe.Entry // one line for a picker
-	New   func() Style
-}
-
-// Registry is the set of styles a player can pick from. It holds no global
-// state: build one with NewRegistry (ui/mapstyle/all has the standard set).
-type Registry struct {
-	entries []Entry
-}
-
-// NewRegistry makes a registry; the first entry is the default.
-func NewRegistry(entries ...Entry) *Registry {
-	return &Registry{entries: append([]Entry(nil), entries...)}
-}
-
-// Entries lists the styles in order.
-func (r *Registry) Entries() []Entry { return append([]Entry(nil), r.entries...) }
-
-// Names lists the style keys in order.
-func (r *Registry) Names() []string {
-	out := make([]string, len(r.entries))
-	for i, e := range r.entries {
-		out[i] = e.Name
-	}
-	return out
-}
-
-// Default is the first style's key.
-func (r *Registry) Default() string {
-	if len(r.entries) == 0 {
-		return ""
-	}
-	return r.entries[0].Name
-}
-
-// New makes a fresh view of the named style.
-func (r *Registry) New(name string) (Style, bool) {
-	for _, e := range r.entries {
-		if e.Name == name {
-			return e.New(), true
-		}
-	}
-	return nil, false
-}

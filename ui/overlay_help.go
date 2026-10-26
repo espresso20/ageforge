@@ -100,17 +100,15 @@ func helpProvider(_ game.GameState, screenW int) string {
 	row("  [cyan]"+padRight(vibe.Line("ui.overlay_help.helpProvider.29", "Accounts"), 12)+"[-] - ", vibe.Line("ui.overlay_help.helpProvider.30", "Switch, create or back up accounts [gray](main-menu panel, not a command)[-]"))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.31", "\n[gold]═══ The Map panel ═══[-]\n"))
-	note(vibe.Line("ui.overlay_help.helpProvider.32", "The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = [ ] while the prompt is empty."))
-	keys([2]string{"Arrows", vibe.Line("ui.overlay_help.helpProvider.34", "Move the cursor (roguelike) or scroll (skyline); Shift moves further, half a screen in the skyline")},
+	note(vibe.Line("ui.overlay_help.helpProvider.32", "The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing, and + - = while the prompt is empty."))
+	keys([2]string{"Arrows", vibe.Line("ui.overlay_help.helpProvider.34", "Move the cursor; Shift moves further")},
 		[2]string{"Tab", vibe.Line("ui.overlay_help.helpProvider.36", "Next building, wonder or civilization (Shift-Tab: the one before)")},
 		[2]string{"PgUp/PgDn", vibe.Line("ui.overlay_help.helpProvider.38", "Zoom out and in (Option+Up and Option+Down do the same)")},
-		[2]string{"+/-", vibe.Line("ui.overlay_help.helpProvider.39", "Zoom in and out with no Page keys, in either style (= works as +). In the skyline far shows the whole town, close every building twice the size; the level is kept for next time")},
-		[2]string{"[ ]", vibe.Line("ui.overlay_help.helpProvider.40", "Skyline: jump to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)")},
-		[2]string{"Up/Down", vibe.Line("ui.overlay_help.helpProvider.66", "Skyline, close zoom: raise and lower the view over a tall tower, Shift for half a screen (Home brings it back to the foot)")},
-		[2]string{"Home/End", vibe.Line("ui.overlay_help.helpProvider.42", "The town square (roguelike); the oldest district and the present (skyline)")},
+		[2]string{"+/-", vibe.Line("ui.overlay_help.helpProvider.39", "Zoom in and out with no Page keys (= works as +)")},
+		[2]string{"Home/End", vibe.Line("ui.overlay_help.helpProvider.42", "The town square")},
 		[2]string{"Enter", vibe.Line("ui.overlay_help.helpProvider.44", "Put the command for what the cursor is on in the prompt (with something typed, Tab and Enter act on the prompt instead)")},
 		[2]string{"Esc", vibe.Line("ui.overlay_help.helpProvider.46", "Close the panel")})
-	note(vibe.Line("ui.overlay_help.helpProvider.47", "Settings are commands: map style, map glyphs, map flows, minimap."))
+	note(vibe.Line("ui.overlay_help.helpProvider.47", "Settings are commands: map glyphs, map flows, minimap."))
 
 	sb.WriteString(vibe.Line("ui.overlay_help.helpProvider.48", "\n[gold]═══ The Research panel ═══[-]\n"))
 	note(vibe.Line("ui.overlay_help.helpProvider.49", "The tech tree. The prompt keeps working while it is open; the tree takes the keys that print nothing."))

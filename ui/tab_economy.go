@@ -193,14 +193,6 @@ func (t *EconomyTab) AddPeopleBox(people tview.Primitive, rich func() bool, heig
 	t.leftCol.people, t.leftCol.rich, t.leftCol.peopleHeight = people, rich, height
 }
 
-// LogRows is the height of the Log box, border included, in a column h rows
-// tall (the Buildings column beside it is as tall): what the skyline strip
-// takes half of.
-func (t *EconomyTab) LogRows(h int) int {
-	_, _, lh := t.leftCol.heights(h)
-	return lh
-}
-
 // WrapBuildings replaces the Buildings list in the layout with wrap(list),
 // so the Dashboard can dock the mini map above it (mapDock).
 func (t *EconomyTab) WrapBuildings(wrap func(list tview.Primitive) tview.Primitive) {

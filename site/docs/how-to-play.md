@@ -10,7 +10,7 @@ The game opens on its main menu, and `Esc` brings you back to it from a game.
 
 <figure class="screen" data-screen="menu"><figcaption>The main menu of an account with a game, at 120 columns by 40 rows: its own town behind the menu, Continue first, and a caption that names the town and its age.</figcaption></figure>
 
-Once your account has a game, the menu is drawn over **your own town**: the map of your current game, in your map style, glyph set and theme, at the age that game is in, moving as the [Map](map.md) does. It is a look at the save and nothing more. The game is not loaded or run, no time away is counted, and nothing is written, so looking at the menu costs you nothing and earns you nothing. **Continue** is first and already selected: press `Enter` and you are back in that game. Under it are the town, its age and its people, and beside it the save's name.
+Once your account has a game, the menu is drawn over **your own town**: the map of your current game, in your glyph set and theme, at the age that game is in, moving as the [Map](map.md) does. It is a look at the save and nothing more. The game is not loaded or run, no time away is counted, and nothing is written, so looking at the menu costs you nothing and earns you nothing. **Continue** is first and already selected: press `Enter` and you are back in that game. Under it are the town, its age and its people, and beside it the save's name.
 
 <figure class="screen" data-screen="menu-first"><figcaption>The main menu on a first visit: the wordmark as iron on the fire, the menu as a table of contents, and the forge on its plate.</figcaption></figure>
 
@@ -63,21 +63,21 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 │ amounts and rates                     │ what you can      │ TOWN         │
 │                                       │ build, and what   │ people ...   │
 │                                       │ you own           │ PROGRESS     │
-│                                       │ (minimap on: a    │ research ... │
-│                                       │ map above it)     │ WORLD        │
+│                                       │ (the mini map     │ research ... │
+│                                       │ is above it)      │ WORLD        │
 ├─ Under construction ───┬─ People ─────┤                   │ trade ...    │
 │ progress bars          │ pop and bar  │                   │ YOU          │
 │                        │ four kinds,  │                   │ badges ...   │
 │                        │ held back by │                   │              │
 ├─ Log ──────────────────┴──────────────┤                   │              │
-│ events and news                       ├─ Skyline ─────────┤              │
-│                                       │ your skyline      │              │
+│ events and news                       │                   │              │
+│                                       │                   │              │
 ├─ Command ─────────────────────────────┴───────────────────┴──────────────┤
 │ ❯ _                                                                      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-That is the layout on a terminal of 120 columns by 36 rows or more. On a smaller one the Under construction box has its row to itself, the People box sits under the Panels list, and there is no Skyline strip (see below).
+That is the layout on a terminal of 120 columns by 36 rows or more. On a smaller one the Under construction box has its row to itself, and the People box sits under the Panels list.
 
 The top of the screen is the **status ribbon**, a toast line and the **Ledger**, and the ribbon and the Ledger say the same things about your progress at every size.
 
@@ -95,17 +95,15 @@ The Ledger comes in three sizes. Under 100 columns by 30 rows it is one row: the
 
 Every panel you open (`research`, `trade`, `map`, `help` and so on) takes the whole screen but the command bar. Its name is on the top edge, the keys it takes are on the line along its foot, and `Esc` closes it back to the dashboard. The prompt keeps working in most panels. On the panels that are text (Milestones, Army, Trade routes, Factions, Statistics, Logs, Epoch, Civilization History, Buildings and Help), `↑` `↓` `PgUp` `PgDn` `Home` and `End` scroll the panel while the prompt is empty, and anything else you type goes to the prompt. The Wonders, Harbinger and Build Plan panels have keys that are letters (`G`, `A` `B` `I`, `U` `D` `X` `C`), so they keep the keyboard: press `Esc` before you type a command.
 
-<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: the status ribbon and the Ledger across the top; resources at the top left with construction and the People box side by side under them, and the log below; the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
+<figure class="screen" data-screen="dashboard"><figcaption>The dashboard in the Bronze Age, on a terminal of 120 columns by 40 rows: the status ribbon and the Ledger across the top; resources at the top left with construction and the People box side by side under them, and the log below; the mini map and the Buildings list in the middle; the Panels list on the right.</figcaption></figure>
 
-The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row in the Resources box: its amount, its rate and a marker when it is falling (`▼`). Culture and faith add a bar toward their next step. On a narrow terminal the rows give up the bar first. On a short terminal the Panels list is set in two columns, or packed several names to a row on the smallest screens. When the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is off until you type `minimap on`. It then shows from 105 columns by 34 rows.
+The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it wraps. Each resource has one row in the Resources box: its amount, its rate and a marker when it is falling (`▼`). Culture and faith add a bar toward their next step. On a narrow terminal the rows give up the bar first. On a short terminal the Panels list is set in two columns, or packed several names to a row on the smallest screens. When the Resources box cannot show every resource it shows a page of them and says so: **Ctrl+R** turns the page. The mini map is on until you type `minimap off`. It shows from 105 columns by 34 rows.
 
 **The Under construction box.** It has a line for each building under way (copies of one building share a line), with a bar and the time left. A short box sums up instead (`9 under way, the first in ~4m 38s`).
 
 **The People box.** From 120 columns by 36 rows the People box is the right half of the Under construction row, and the row is as tall as the box. It shows the headcount over your homes (with how full they are when there is room to say so), one bar across the homes in the colors of the four kinds of person (workers, the reserve, soldiers and scholars), a line for each kind in the age's own word, and what holds your population back. The soldiers' line shows the soldiers at their posts over all the posts they have while some wait on food, and how many are out on a mission. `Held by: food` carries the net food a tick and how many more it would feed once the terminal is 42 rows tall. When nothing holds the population back the box says `Room to grow` and counts the empty homes. On a smaller terminal the box is the short one under the Panels list, with the same lines in less room. The [People panel](workers-and-domains.md#the-people-of-your-town) has the whole picture.
 
 **The Panels list.** On the same terminals the Panels column is wider, and the panels are set in four groups, each with a few words on what it is for: Town (`people`, `plan`, `wonders`, `map`), Progress (`milestones`, `research`, `charter`, `epoch`, `history`), World (`expedition`, `army`, `trade`, `factions`, `harbinger`) and You (`badges`, `stats`, `logs`, `help`). The panel that is open is marked. On a smaller terminal, or when the column is too short for the groups, the list is the panel names alone, and it never drops one.
-
-**The skyline strip.** Under the Buildings list a strip titled Skyline draws your town's skyline, whatever your map style is. It is a picture: it takes no keys and has no cursor, it moves with the Map when the motion setting is on and holds still when it is off, and `map` still opens the full Map. It is as wide as the Buildings list and half as tall as the Log box beside it, and it needs 4 rows inside its border, so it shows when the Log box is 12 rows or more. A terminal of 120 columns needs about 53 rows (more once your age has many resources), and one under 120 columns about 41. A terminal under 100 columns by 30 rows never shows it. Where it hides, the Buildings list has the whole column.
 
 ---
 
@@ -119,7 +117,7 @@ The dashboard fits any terminal from 80 columns by 24 rows up, and no row on it 
 - **↑ / ↓** step through your last 50 commands (with a text panel open and the prompt empty, they scroll the panel).
 - **Esc** closes the open panel. With no panel open, it saves the game, stops it and returns to the [main menu](#the-main-menu), where **Continue** takes you back in.
 - Common commands have short names: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade`. See [Command shortcuts](commands.md#command-shortcuts) for the full list.
-- Display settings you can change at any time are `theme`, `motion`, `minimap`, `map style`, `map glyphs` and `vibemode` (see [Themes](themes.md) and [VibeMode](commands.md#vibemode)).
+- Display settings you can change at any time are `theme`, `motion`, `minimap`, `map glyphs` and `vibemode` (see [Themes](themes.md) and [VibeMode](commands.md#vibemode)).
 
 ---
 
@@ -195,11 +193,8 @@ build stonehenge
 
 ## The Map
 
-Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It has two styles:
+Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It is a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms. **PgUp** (or **-**) zooms out to the region, the known world with the civilizations you have met, and **PgDn** (or **=**) zooms in to a district with building names.
 
-- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms. **PgUp** (or **-**) zooms out to the region, the known world with the civilizations you have met, and **PgDn** (or **=**) zooms in to a district with building names.
-- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed. `←` and `→` scroll it, and `+` and `-` (or PgDn and PgUp) zoom through four levels: far, wide, mid and close.
+`map glyphs` chooses the glyph set (`ascii`, `unicode` or `nerd`), and it is saved with your account.
 
-Switch with `map style skyline` or `map style roguelike` (or the shorter `style skyline`). `map glyphs` chooses the glyph set (`ascii`, `unicode` or `nerd`). Both are saved with your account.
-
-The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab, Enter and the zoom keys `-` and `=`. In both styles an inspect cursor tells you what it is on and the command to type for it. Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large terminal the dashboard also shows a **mini map** above the Buildings list once you type `minimap on`. `citymap` and `worldmap` also open the Map. See [The Map](map.md) for all the keys.
+The prompt keeps working while the Map is open. Letters you type go to the prompt, and the Map takes only the keys that print nothing: the arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab, Shift+Tab, Enter and the zoom keys `-` and `=`. An inspect cursor tells you what it is on and the command to type for it. Tab jumps between buildings and wonders, and Enter puts that command into the prompt. Esc closes the Map. On a large terminal the dashboard also shows a **mini map** above the Buildings list (`minimap off` hides it). `citymap` and `worldmap` also open the Map. See [The Map](map.md) for all the keys.

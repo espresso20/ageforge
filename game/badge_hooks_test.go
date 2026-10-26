@@ -375,27 +375,26 @@ func TestLooksWornAtAnAdvance(t *testing.T) {
 	isolateAccountDir(t)
 	ge, acct := devEngine(t, "Ada")
 	noErr(t, acct.SetActiveTheme("daylight"))
-	noErr(t, acct.SetMapStyle("skyline"))
 	noErr(t, acct.SetMapGlyphs("ascii"))
 	advanceTo(ge, "stone_age")
-	wantBadges(t, acct, "an advance in Daylight, skyline, plain glyphs",
-		[]string{"theme.daylight", "map.style.skyline", "map.glyphs.ascii"},
-		"theme.forge", "map.style.roguelike", "map.glyphs.unicode", "map.glyphs.nerd")
-	for _, kind := range []string{config.BadgeEvAdvancedTheme, config.BadgeEvAdvancedStyle, config.BadgeEvAdvancedGlyphs} {
-		if n := runTally(ge, kind) + runTally(ge, kind+".daylight") + runTally(ge, kind+".skyline") + runTally(ge, kind+".ascii"); n != 0 {
+	wantBadges(t, acct, "an advance in Daylight, plain glyphs",
+		[]string{"theme.daylight", "map.glyphs.ascii"},
+		"theme.forge", "map.glyphs.unicode", "map.glyphs.nerd")
+	for _, kind := range []string{config.BadgeEvAdvancedTheme, config.BadgeEvAdvancedGlyphs} {
+		if n := runTally(ge, kind) + runTally(ge, kind+".daylight") + runTally(ge, kind+".ascii"); n != 0 {
 			t.Errorf("the looks are tallied in the run's facts (%s: %v): they are the account's settings", kind, n)
 		}
 	}
 }
 
-// TestDefaultLooksAreInTheCatalog: an account that chose no theme, map
-// style or glyph set wears the defaults, and each has a badge.
+// TestDefaultLooksAreInTheCatalog: an account that chose no theme or glyph
+// set wears the defaults, and each has a badge.
 func TestDefaultLooksAreInTheCatalog(t *testing.T) {
-	th, style, glyphs := (&Account{}).looks()
-	if th != defaultThemeKey || !slices.Contains(config.BadgeMapStyles, style) || !slices.Contains(config.BadgeMapGlyphs, glyphs) {
-		t.Errorf("the looks of an account that chose none: %s %s %s", th, style, glyphs)
+	th, glyphs := (&Account{}).looks()
+	if th != defaultThemeKey || !slices.Contains(config.BadgeMapGlyphs, glyphs) {
+		t.Errorf("the looks of an account that chose none: %s %s", th, glyphs)
 	}
-	for _, key := range []string{"theme." + th, "map.style." + style, "map.glyphs." + glyphs} {
+	for _, key := range []string{"theme." + th, "map.glyphs." + glyphs} {
 		if _, ok := rules.Core().Badge(key); !ok {
 			t.Errorf("no badge %s for a default look", key)
 		}

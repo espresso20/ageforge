@@ -101,42 +101,37 @@ func (ge *GameEngine) noteAgeJump() {
 }
 
 // tellLooks tells the account what it is wearing as the run advances: its
-// theme, its map style and its map glyphs. They are the account's own
+// theme and its map glyphs. They are the account's own
 // settings, so the run's facts never hold them.
 func (ge *GameEngine) tellLooks() {
 	acct := ge.account
 	if acct == nil {
 		return
 	}
-	theme, style, glyphs := acct.looks()
+	theme, glyphs := acct.looks()
 	ge.tell(Event{Kind: config.BadgeEvAdvancedTheme, Subject: theme})
-	ge.tell(Event{Kind: config.BadgeEvAdvancedStyle, Subject: style})
 	ge.tell(Event{Kind: config.BadgeEvAdvancedGlyphs, Subject: glyphs})
 }
 
 // The looks an account has when it has chosen none.
 const (
 	defaultThemeKey  = "forge"
-	defaultMapStyle  = "roguelike"
 	defaultMapGlyphs = "unicode"
 )
 
-// looks is the theme, map style and map glyphs the account wears, with the
-// defaults for what it never chose.
-func (a *Account) looks() (theme, style, glyphs string) {
+// looks is the theme and map glyphs the account wears, with the defaults for
+// what it never chose.
+func (a *Account) looks() (theme, glyphs string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	theme, style, glyphs = a.Prefs.ActiveTheme, a.Prefs.MapStyle, a.Prefs.MapGlyphs
+	theme, glyphs = a.Prefs.ActiveTheme, a.Prefs.MapGlyphs
 	if theme == "" {
 		theme = defaultThemeKey
-	}
-	if style == "" {
-		style = defaultMapStyle
 	}
 	if glyphs == "" {
 		glyphs = defaultMapGlyphs
 	}
-	return theme, style, glyphs
+	return theme, glyphs
 }
 
 // doomInvited reports whether era's doom was invited.

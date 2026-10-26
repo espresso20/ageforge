@@ -6,25 +6,22 @@ import (
 	"slices"
 )
 
-// placement.go puts every building somewhere, for both styles, under one
-// rule: a thing's position is a function of (seed, its group, its ordinal
-// in that group), and ordinals only ever grow. Nothing is placed by
-// competing for space with what else happens to be built, so building
-// something new never moves anything already drawn.
+// placement.go puts every building somewhere, under one rule: a thing's
+// position is a function of (seed, its group, its ordinal in that group), and
+// ordinals only ever grow. Nothing is placed by competing for space with what
+// else happens to be built, so building something new never moves anything
+// already drawn.
 //
-//   - The town (roguelike): a lineage's tiles fill its reserved quarter
-//     (Plan.Quarter) in order. The lineage draws TownTiles(copies) tiles,
-//     which only grows as copies are added; the tiles are shared out among
-//     its types oldest first (ruins, then legacy, then current), so an
-//     upgrade or a new tier re-skins tiles in place instead of moving them.
-//     Legacy types collapse into the old end of the quarter and draw in the
-//     legacy class, which keeps late ages from turning into glyph soup.
-//   - The skyline: each age is a district of fixed width; a type's copies
-//     take fixed-stride slots (copy c of the type in slot t takes lot
-//     c·types+t), which depend on nothing but the catalogue.
+// A lineage's tiles fill its reserved quarter (Plan.Quarter) in order. The
+// lineage draws TownTiles(copies) tiles, which only grows as copies are
+// added; the tiles are shared out among its types oldest first (ruins, then
+// legacy, then current), so an upgrade or a new tier re-skins tiles in place
+// instead of moving them. Legacy types collapse into the old end of the
+// quarter and draw in the legacy class, which keeps late ages from turning
+// into glyph soup.
 //
-// Both are pure functions of the seed and the snapshot, so no placement
-// history has to be saved.
+// The placement is a pure function of the seed and the snapshot, so no
+// placement history has to be saved.
 
 // TownTiles is how many town tiles a lineage with n copies (ruins
 // included) draws: one per copy while small, then sub-linear. Fields draw
@@ -51,7 +48,7 @@ func TownTiles(lin string, n int) int {
 	return t
 }
 
-// Town is the roguelike's settlement: the world, its plan and the tiles.
+// Town is the settlement: the world, its plan and the tiles.
 type Town struct {
 	World *World
 	Plan  *Plan
@@ -224,217 +221,4 @@ func allocate(shares []*share, n, per int) {
 			s.fresh = f
 		}
 	}
-}
-
-// Skyline is the panorama's layout: a district per age, oldest west, and
-// the lots on them.
-type Skyline struct {
-	Districts []District
-	Lots      []Lot
-	// FrontierX is the first column past the newest district (cranes go
-	// here); Width is the whole panorama's width in columns.
-	FrontierX, Width int
-}
-
-// District is one age's stretch of the skyline.
-type District struct {
-	Age    int
-	X0, W  int
-	LandW  int // W without the bay
-	Centre int // world column of the district's middle (on land)
-	Bay    bool
-	BayX   int // the inlet's first column when Bay
-	BayW   int
-}
-
-// TetherX is the world column of a district's tall landmark (the space
-// elevator): a few columns in from the district's east edge, where the camera
-// finds it when that district is the present one.
-func (d District) TetherX() int { return d.X0 + d.LandW - skyTetherIn }
-
-// Lot is one silhouette on the skyline.
-type Lot struct {
-	Key     string
-	Lineage string
-	Age     int // the building's own period
-	Copy    int
-	Row     int // depth: 0 front, 1, 2 behind
-	X       int // world column the silhouette is centred on
-	Seed    uint64
-	Wonder  bool
-	Quay    bool // a harbour building on the bay's shore
-	Legacy  bool
-	New     bool
-}
-
-// Skyline sizing, in panorama columns.
-const (
-	SkyWestPad   = 34
-	SkyFrontierW = 30
-	SkyEastPad   = 46
-	skyLotStep   = 3
-	skyBayW      = 20
-	skyMinLandW  = 30
-	// skyLotInset is where a district's first lot column stands, in from its
-	// east edge; skyLotMargin is the room kept past the last column.
-	skyLotInset  = 4
-	skyLotMargin = 6
-	// skyWonderIn is where a district's landmark stands, in from its east edge.
-	skyWonderIn = 18
-	skyTetherIn = 10
-	// skyBlock is how many copies of one type stand side by side.
-	skyBlock = 4
-	// SkyCopiesPer is how many buildings one silhouette stands for.
-	SkyCopiesPer = 1
-	// SkyMaxCopies caps the silhouettes one type draws.
-	SkyMaxCopies = 24
-)
-
-// SkyCopies is how many silhouettes n copies draw: one for every
-// SkyCopiesPer, rounded up, capped.
-func SkyCopies(n int) int {
-	if n <= 0 {
-		return 0
-	}
-	c := (n + SkyCopiesPer - 1) / SkyCopiesPer
-	if c > SkyMaxCopies {
-		c = SkyMaxCopies
-	}
-	return c
-}
-
-func hasBay(ds []*Def) bool {
-	for _, d := range ds {
-		if d.Lineage == LinHarbor || d.Key == "grand_lighthouse" {
-			return true
-		}
-	}
-	return false
-}
-
-// skySlot is the slot a silhouette stands in, counted from its district's
-// east edge (the side the next age, the cranes and the camera are on): copy c
-// of the age's t-th type among nt. A type's first skyBlock copies stand side
-// by side in a block of their own, the next skyBlock copies of every type in
-// the round to the west, and so on; within a round the newest types stand
-// nearest the east. It depends on nothing that grows, so a lot never moves
-// from its district's east edge once it is drawn, and the district is as wide
-// as the slots in use need.
-func skySlot(c, t, nt int) (col, row int) {
-	l := c/skyBlock*nt*skyBlock + (nt-1-t)*skyBlock + c%skyBlock
-	col = l / 3
-	return col, (l + col) % 3
-}
-
-func skylineFor(m *Model) Skyline {
-	cat := m.Catalog
-	sk := Skyline{}
-	x := SkyWestPad
-	for a := 0; a <= m.AgeIdx && a < len(cat.ByAge); a++ {
-		ds := cat.ByAge[a]
-		nt := len(ds)
-		cols, quays := 0, 0
-		nh := 0
-		for _, def := range ds {
-			if def.Lineage == LinHarbor {
-				nh++
-			}
-		}
-		bay := hasBay(ds)
-		th := 0
-		for t, def := range ds {
-			b := m.byKey[def.Key]
-			if b == nil || b.Count <= 0 {
-				if def.Lineage == LinHarbor {
-					th++
-				}
-				continue
-			}
-			n := SkyCopies(b.Count)
-			switch {
-			case def.Wonder:
-			case def.Lineage == LinHarbor && bay:
-				quays = max(quays, (n-1)*nh+th+1)
-				th++
-			default:
-				col, _ := skySlot(n-1, t, nt)
-				cols = max(cols, col+1)
-			}
-		}
-		d := District{Age: a, X0: x}
-		d.LandW = max(skyMinLandW, skyLotInset+skyLotStep*cols+skyLotMargin)
-		d.W = d.LandW
-		if bay {
-			d.Bay, d.BayX = true, x+d.LandW
-			d.BayW = max(skyBayW, 2*quays+8)
-			d.W += d.BayW + 2
-		}
-		d.Centre = d.X0 + d.LandW/2
-		sk.Districts = append(sk.Districts, d)
-		x += d.W
-	}
-	sk.FrontierX = x
-	sk.Width = x + SkyFrontierW + SkyEastPad
-
-	for a, d := range sk.Districts {
-		ds := cat.ByAge[a]
-		nt := len(ds)
-		nh := 0
-		for _, def := range ds {
-			if def.Lineage == LinHarbor {
-				nh++
-			}
-		}
-		th := 0
-		for t, def := range ds {
-			harbour := def.Lineage == LinHarbor
-			ith := th
-			if harbour {
-				th++
-			}
-			b := m.byKey[def.Key]
-			if b == nil || b.Count <= 0 {
-				continue
-			}
-			n := SkyCopies(b.Count)
-			prevN := 0
-			if b.Delta > 0 {
-				prevN = SkyCopies(b.Count - b.Delta)
-			}
-			for c := 0; c < n; c++ {
-				lot := Lot{Key: def.Key, Lineage: def.Lineage, Age: a, Copy: c, Legacy: b.Legacy,
-					Seed: Hash(m.Seed, int64(a), int64(t), int64(c)), New: b.Delta > 0 && c >= prevN}
-				switch {
-				case def.Wonder:
-					lot.Wonder, lot.X, lot.Row = true, d.X0+d.LandW-skyWonderIn, 0
-					if d.Bay && def.Key == "grand_lighthouse" {
-						lot.X = d.BayX + skyBayW - 4
-					}
-				case harbour && d.Bay:
-					q := c*nh + ith
-					lot.Quay, lot.X, lot.Row = true, d.BayX+2+q*2, q%2
-				default:
-					col, row := skySlot(c, t, nt)
-					lot.Row = row
-					lot.X = d.X0 + d.LandW - skyLotInset - col*skyLotStep + int(Hash(int64(lot.Seed), 3)%3) - 1
-				}
-				sk.Lots = append(sk.Lots, lot)
-				if def.Wonder {
-					break // one landmark, whatever the count
-				}
-			}
-		}
-	}
-	return sk
-}
-
-// DistrictAt returns the index of the district under panorama column x,
-// or -1.
-func (s *Skyline) DistrictAt(x int) int {
-	for i, d := range s.Districts {
-		if x >= d.X0 && x < d.X0+d.W {
-			return i
-		}
-	}
-	return -1
 }

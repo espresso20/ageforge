@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-// mandalaSizes are layouts the styles ask for: the roguelike's full plane,
-// the skyline at 80x24, 160x48 and 200x60, and the mini maps.
+// mandalaSizes are layouts the map asks for: its full plane and the mini
+// maps.
 var mandalaSizes = [][2]float64{{20, 60}, {5, 10}, {12, 24}, {16, 31}, {6, 19}, {4, 19}, {2, 10}, {0, 3}}
 
 // TestMandalaSymmetric: every layout is its own mirror image across the
@@ -51,7 +51,7 @@ func TestMandalaSymmetric(t *testing.T) {
 }
 
 // TestMandalaRings: one ring per era asked for when there is room (all
-// seven on the roguelike's plane and the skyline at 160x48), never more,
+// seven on the map's plane), never more,
 // the newest kept when there is not; the radii grow outward inside the
 // space; and the core is the one centre cell.
 func TestMandalaRings(t *testing.T) {

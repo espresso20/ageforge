@@ -16,7 +16,7 @@ import (
 // of what the player last saw; the model diffs the live state against it.
 // The engine captures one when a save loads, before offline catch-up runs
 // (game.GameState.SessionStart), which is exactly the state the player left
-// at the end of their last session; a style can also take a fresh one when
+// at the end of their last session; the map can also take a fresh one when
 // the player closes the map ("since you last looked").
 
 // Visit is the baseline a recap is measured from.

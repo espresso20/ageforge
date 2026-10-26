@@ -49,14 +49,14 @@ func TestTrafficNoSpoilers(t *testing.T) {
 				v.zoom = vw.zoom
 				draw(v, m, 160, 48, vw.anim, mapmodel.TierUnicode, false)
 				for k := mapmodel.Mover(1); k < mapmodel.NumMovers; k++ {
-					if v.seen[lgMover+lgID(k)].on && !mapmodel.Introduced(k, ai) {
+					if v.seen[lgMover+lgID(k)].on && k.Info().From > ai {
 						t.Errorf("%s zoom %d frame %d: the legend lists a %s", age, vw.zoom, vw.anim, k.Info().Name)
 					}
 				}
 				s = v.sceneFor(m)
 			}
 			for _, mv := range s.movers {
-				if !mapmodel.Introduced(mv.k, ai) || !mv.info.In(ai) {
+				if mv.k.Info().From > ai || !mv.info.In(ai) {
 					t.Errorf("%s: a %s is about", age, mv.info.Name)
 				}
 			}

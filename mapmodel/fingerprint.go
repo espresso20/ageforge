@@ -9,7 +9,7 @@ import (
 )
 
 // Fingerprint is a short hash of everything the model derived: placement
-// (town tiles, wonder plots, skyline lots), the clock and weather, the
+// (town tiles, wonder plots), the clock and weather, the
 // flows and the recap. Equal fingerprints mean two machines laid the same
 // state out the same way to the last bit. The smoke harness records it next
 // to the engine's state digest, so the cross-machine determinism check
@@ -30,7 +30,7 @@ func (m *Model) Fingerprint() string {
 	}
 	tw := m.Town.World
 	if tw != nil {
-		w("world %d %d %s %v\n", tw.CX, tw.CY, tw.Name, tw.Coastal)
+		w("world %d %d %s\n", tw.CX, tw.CY, tw.Name)
 		hashTerrain(h, tw)
 	}
 	for _, t := range m.Town.Tiles {
@@ -39,17 +39,11 @@ func (m *Model) Fingerprint() string {
 	for _, t := range m.Town.Wonders {
 		w("w %s %d %d %v\n", t.Key, t.At.X, t.At.Y, t.Built)
 	}
-	for _, d := range m.Skyline.Districts {
-		w("d %d %d %d %v %d\n", d.Age, d.X0, d.W, d.Bay, d.BayX)
-	}
-	for _, l := range m.Skyline.Lots {
-		w("s %s %d %d %d %d %x\n", l.Key, l.Copy, l.Row, l.X, l.Age, l.Seed)
-	}
 	for _, f := range m.Factions {
 		w("f %s %d %v %d\n", f.Key, f.Site, f.Discovered, f.Relation)
 	}
 	for _, r := range m.Routes {
-		w("r %s %s %v %s\n", r.Key, r.Civ, r.Disrupted, r.Mode)
+		w("r %s %s %v\n", r.Key, r.Civ, r.Disrupted)
 	}
 	a := m.Activity
 	w("a %d %d %d %x %x\n", a.Routes, a.Staffed, a.Soldiers, math.Float64bits(a.Wealth), math.Float64bits(a.Traffic))

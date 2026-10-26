@@ -8,23 +8,6 @@ import "strings"
 // an entry that carries its id (vibe.E), or vibe.Same where the table holds a
 // string that has no row (see vibe/vibe.go).
 
-const (
-	leftNeverShown = "never shown: a name in a table that no screen draws (the code and its tests find a row by it)"
-	leftArt        = "art: a row of a drawing (a mask of palette letters or a pattern of marks), not words"
-)
-
-// neverShown are the tables of the map whose names nothing draws.
-var neverShown = []string{
-	"ui.mapstyle.skyline.roster.rosterEntries.", // the traffic roster: the name only labels an entry for the tests
-}
-
-func init() {
-	leftAloneFor(leftArt,
-		"ui.mapstyle.skyline.roster.tpCar.01", "ui.mapstyle.skyline.roster.tpHoverCar.01", // the mask of a car: aa is a palette letter, twice
-		"ui.mapstyle.skyline.roster.trSteamEngine.01", // #OO#: the pattern of a smoking engine
-	)
-}
-
 // typedIn are the commands the player types that a sentence of the map names
 // as they are typed (the hint line that ends in "map flows"), by row id. The
 // keep column cannot tell one from the words around it, so the sheet lists them
@@ -32,20 +15,6 @@ func init() {
 var typedIn = map[string][]string{
 	"ui.mapstyle.roguelike.chrome.bottom.01":       {"map flows"},
 	"ui.mapstyle.roguelike.space_chrome.bottom.01": {"map flows"},
-}
-
-// mapReason says why a row of the map sheet is not wired, when its place says
-// so by itself.
-func mapReason(r *row) string {
-	if r.area != areaMap {
-		return ""
-	}
-	for _, p := range neverShown {
-		if strings.HasPrefix(r.id, p) {
-			return leftNeverShown
-		}
-	}
-	return ""
 }
 
 // mapWidth is a limit on the rows of the map sheet whose ids start with prefix
@@ -74,9 +43,7 @@ func shortMark(r *row) bool { return len([]rune(r.current)) <= 3 }
 // are exactly 20. A group heading has the full 23. The flows panel keeps its
 // tags (DRAIN, IDLE, SHORT, OK) in a column 5 cells wide. The megacity's
 // holo-ads and towers draw their letters one to a cell: a block carries four
-// letters of an ad and three of a corporation's initials. The skyline's ads
-// are two cells to a letter in a block 31 wide, so 8 letters at most before
-// one meets the next. The Citadel's sign runs down the face of its tower.
+// letters of an ad and three of a corporation's initials.
 var mapWidths = []mapWidth{
 	{prefix: "ui.mapstyle.roguelike.glyph.lgInfo.", max: 20},
 	{prefix: "ui.mapstyle.roguelike.space_legend.skyLgInfo.", max: 20},
@@ -91,8 +58,6 @@ var mapWidths = []mapWidth{
 	{prefix: "ui.mapstyle.roguelike.space_chrome.flowLines.05", max: 5}, {prefix: "ui.mapstyle.roguelike.space_chrome.flowLines.08", max: 5},
 	{prefix: "ui.mapstyle.roguelike.city.holoAds.", max: 4},
 	{prefix: "ui.mapstyle.roguelike.city.megacorps.", max: 3, when: shortMark},
-	{prefix: "ui.mapstyle.skyline.city.holoAds.", max: 8},
-	{prefix: "ui.mapstyle.skyline.wonders_late.citadel.", max: 7},
 }
 
 // mapWidthOf is the width the map gives a row's text, or 0 when it gives none.

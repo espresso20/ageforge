@@ -52,20 +52,6 @@ func ClockAt(tick int) Clock {
 	return c
 }
 
-// ClockAtTOD returns a clock pinned to a time of day (captures, the
-// skyline's time key).
-func ClockAtTOD(day int, tod float64) Clock {
-	tod = tod - float64(int(tod))
-	if tod < 0 {
-		tod++
-	}
-	tick := (day-1)*DayTicks + int(float64(tod*DayTicks)) - DayTicks*3/8
-	for tick < 0 {
-		tick += DayTicks
-	}
-	return ClockAt(tick)
-}
-
 // String is "22:55".
 func (c Clock) String() string {
 	return string([]byte{byte('0' + c.Hour/10), byte('0' + c.Hour%10), ':', byte('0' + c.Minute/10), byte('0' + c.Minute%10)})

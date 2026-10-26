@@ -273,9 +273,6 @@ func TestSkyMoverRoster(t *testing.T) {
 				t.Errorf("%s: %q breaks the house style", in.Key, s)
 			}
 		}
-		if !mapmodel.Introduced(k, in.From) || mapmodel.Introduced(k, in.From-1) {
-			t.Errorf("%s: Introduced disagrees with From %d", in.Key, in.From)
-		}
 		for a := 0; a < in.From; a++ {
 			for _, mv := range mapmodel.MoversAt(a) {
 				if mv == k {

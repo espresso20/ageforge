@@ -229,15 +229,6 @@ func (om *OverlayManager) seenState() *game.GameState {
 	return om.seen
 }
 
-// textSize is the size of the text area of the named text overlay: what it was
-// drawn at, or before its first draw what the screen makes it.
-func (om *OverlayManager) textSize(name string) (w, h int) {
-	if e, ok := om.entries[name]; ok && e.frame.iw > 0 && e.frame.ih > 0 {
-		return e.frame.iw, e.frame.ih
-	}
-	return panelTextSize(max(om.screenW, 24), max(om.screenH-promptRows, panelMinRows+2))
-}
-
 // RegisterWidget registers an overlay backed by any tview.Primitive instead of a TextView.
 // The build function receives the current GameState and returns a ready-to-display primitive,
 // which fills the entire screen (the panel leaves the command bar's rows to the dashboard).

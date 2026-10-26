@@ -1,6 +1,6 @@
 //go:build mapcapture
 
-package all
+package roguelike_test
 
 import (
 	"encoding/json"
@@ -20,6 +20,7 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
 // siteAges are the ages the landing page scrolls through, oldest first: four
@@ -93,7 +94,7 @@ func TestWriteSiteFrames(t *testing.T) {
 		names[a.Key], order[a.Key] = a.Name, a.Order
 	}
 
-	reg, b := Registry(), mapmodel.NewBuilder(nil)
+	b := mapmodel.NewBuilder(nil)
 	var doc []age
 	for _, key := range ages {
 		st, err := capture.LoadState(filepath.Join(states, key+".json.gz"))
@@ -104,10 +105,7 @@ func TestWriteSiteFrames(t *testing.T) {
 		// The landing page shows four ages and keeps the rest a surprise, so
 		// no frame names the age that comes next.
 		m.NextAgeName = "The next age"
-		view, ok := reg.New("roguelike")
-		if !ok {
-			t.Fatal("no roguelike style")
-		}
+		view := roguelike.New()
 		scr := capture.NewScreen(w, h)
 		a := age{Key: key, Name: names[key], N: order[key] + 1}
 		for i := 0; i < anim; i++ {

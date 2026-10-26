@@ -16,7 +16,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
 )
 
 // menuSizes are the terminals the menu is checked at: the least the game
@@ -40,8 +39,8 @@ var stagedEngine = game.NewGameEngine()
 // stagedMenuView is a menu's view as refresh would build it for a game in
 // age, or for a first visit (age "").
 func stagedMenuView(age string, forge bool, tier mapmodel.GlyphTier) (*menuView, *menuTown) {
-	m := &mainMenu{version: "v4.0.0", reg: all.Registry(), engine: stagedEngine}
-	m.set = defaultMapSettings(m.reg)
+	m := &mainMenu{version: "v4.0.0", engine: stagedEngine}
+	m.set = defaultMapSettings()
 	m.set.Tier = tier
 	var town *menuTown
 	if age != "" {
@@ -51,7 +50,7 @@ func stagedMenuView(age string, forge bool, tier mapmodel.GlyphTier) (*menuView,
 		if !ok {
 			st := fixture.State(fixture.Options{Age: age, Seed: 7})
 			st.Workers.TotalPop = 216
-			staged = stagedTown{st: st, town: newMenuTown(&st, m.reg, m.set.Style)}
+			staged = stagedTown{st: st, town: newMenuTown(&st)}
 			stagedTowns[age] = staged
 		}
 		town = staged.town

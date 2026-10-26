@@ -23,12 +23,12 @@ import (
 // the smoke bot (its decisions steer the runs the determinism check compares).
 var simPackages = []string{"boon", "config", "detmath", "flavor", "game", "mapmodel", "rules", "smoke"}
 
-// mapRenderPackages are the map styles. What they draw depends only on the map
+// mapRenderPackages are the map renderers. What they draw depends only on the map
 // model and the animation frame, and it should look the same on every machine,
 // so they follow the no-transcendentals rule too (mapmodel.Sin, Cos, Log2 and
 // Noise are there for them). They are UI, not simulation, so the FMA check does
 // not cover them.
-var mapRenderPackages = []string{"ui/mapstyle", "ui/mapstyle/roguelike", "ui/mapstyle/skyline"}
+var mapRenderPackages = []string{"ui/mapstyle", "ui/mapstyle/roguelike"}
 
 const modulePath = "github.com/espresso20/ageforge"
 
@@ -141,7 +141,7 @@ var transcendental = map[string]string{
 }
 
 // TestNoStdlibTranscendentals fails on a call to one of package math's
-// architecture-dependent functions from simulation code or the map styles (tests
+// architecture-dependent functions from simulation code or the map (tests
 // excluded). Sqrt, Floor, Ceil, Round, Abs, Mod, Min, Max and the like are exact
 // and allowed.
 func TestNoStdlibTranscendentals(t *testing.T) {

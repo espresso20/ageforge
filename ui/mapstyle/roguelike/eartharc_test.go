@@ -1,4 +1,4 @@
-package all
+package roguelike_test
 
 import (
 	"math"
@@ -13,10 +13,11 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
 // eartharc_test.go holds the Earth arc (the Modern Age to the Fusion Age)
-// to its brief across both styles: every age reads at a glance (the
+// to its brief: every age reads at a glance (the
 // disparity guard), the green fades by the rule, and nothing of a later age
 // shows early.
 
@@ -102,52 +103,42 @@ func signatureDistance(a, b signature) float64 {
 	return (tvd(a.glyph, b.glyph) + tvd(a.color, b.color)) / 2
 }
 
-// earthFrame draws a style's frame of a synthetic age at 160x48 on the
-// default theme and returns its map area's signature: the roguelike's
-// settlement left of its legend, the skyline's scene rows, by day or
-// night (tod).
-func earthFrame(t *testing.T, style, age string, seed int64, tod float64, anim int) signature {
+// earthFrame draws a frame of a synthetic age at 160x48 on the default theme
+// and returns its map area's signature: the settlement left of its legend,
+// by day or night (tod).
+func earthFrame(t *testing.T, age string, seed int64, tod float64, anim int) signature {
 	t.Helper()
 	tick := 2*mapmodel.DayTicks + int(tod*mapmodel.DayTicks) - mapmodel.DayTicks*3/8
 	st := fixture.State(fixture.Options{Age: age, Seed: seed, Tick: tick, Routes: 3})
 	m := mapmodel.NewBuilder(nil).Build(&st, nil)
-	v, _ := Registry().New(style)
+	v := roguelike.New()
 	v.SetOption(mapstyle.OptInspect, false)
 	scr := capture.NewScreen(160, 48)
 	defer scr.Fini()
 	v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, mapstyle.Frame{Model: m, Anim: anim, Tier: mapmodel.TierUnicode})
-	if style == "roguelike" {
-		return frameSignature(scr, 0, 1, 160-26, 48-4)
-	}
-	return frameSignature(scr, 0, 1, 160, 48-2)
+	return frameSignature(scr, 0, 1, 160-26, 48-4)
 }
 
-// TestEarthArcDisparity is the disparity guard: in both styles, by day and
-// by night, on two seeds, every Earth-arc age's frame differs from its
-// neighbour's (the Atomic Age's before the Modern Age) by at least
-// disparityMin, so no two neighbours look alike. The owner found the late
+// TestEarthArcDisparity is the disparity guard: by day, on two seeds, every
+// Earth-arc age's frame differs from its neighbour's (the Atomic Age's
+// before the Modern Age) by at least disparityMin, so no two neighbours
+// look alike. The owner found the late
 // ages too alike ("space kinda looks like cyber"); this keeps them apart.
 func TestEarthArcDisparity(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	ages := []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"}
+	const tod = 0.45 // the map draws the same by night but for its satellites and headlights
 	for _, seed := range []int64{7, 11} {
-		for _, style := range []string{"roguelike", "skyline"} {
-			for _, tod := range []float64{0.45, 0.95} {
-				if style == "roguelike" && tod > 0.5 {
-					continue // the roguelike draws the same by night but for its satellites and headlights
-				}
-				sigs := make([]signature, len(ages))
-				for i, a := range ages {
-					sigs[i] = earthFrame(t, style, a, seed, tod, 600)
-				}
-				for i := 1; i < len(ages); i++ {
-					d := signatureDistance(sigs[i-1], sigs[i])
-					t.Logf("seed %d %s tod %.2f: %s -> %s: %.3f", seed, style, tod, ages[i-1], ages[i], d)
-					if d < disparityMin {
-						t.Errorf("seed %d %s (tod %.2f): the %s looks too like the %s (distance %.3f, want at least %.2f)",
-							seed, style, tod, ages[i], ages[i-1], d, disparityMin)
-					}
-				}
+		sigs := make([]signature, len(ages))
+		for i, a := range ages {
+			sigs[i] = earthFrame(t, a, seed, tod, 600)
+		}
+		for i := 1; i < len(ages); i++ {
+			d := signatureDistance(sigs[i-1], sigs[i])
+			t.Logf("seed %d: %s -> %s: %.3f", seed, ages[i-1], ages[i], d)
+			if d < disparityMin {
+				t.Errorf("seed %d: the %s looks too like the %s (distance %.3f, want at least %.2f)",
+					seed, ages[i], ages[i-1], d, disparityMin)
 			}
 		}
 	}
@@ -160,17 +151,15 @@ func TestEarthArcDisparity(t *testing.T) {
 func TestEarthArcDisparityThreshold(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	worst := 0.0
-	for _, style := range []string{"roguelike", "skyline"} {
-		for _, age := range []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
-			for _, tod := range []float64{0.45, 0.95} {
-				a := earthFrame(t, style, age, 7, tod, 600)
-				b := earthFrame(t, style, age, 7, tod+0.01, 680)
-				d := signatureDistance(a, b)
-				worst = math.Max(worst, d)
-				if d > disparityMin*0.6 {
-					t.Errorf("%s %s (tod %.2f): the same age a moment later differs by %.3f, too near the guard's %.2f",
-						style, age, tod, d, disparityMin)
-				}
+	for _, age := range []string{"atomic_age", "modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
+		for _, tod := range []float64{0.45, 0.95} {
+			a := earthFrame(t, age, 7, tod, 600)
+			b := earthFrame(t, age, 7, tod+0.01, 680)
+			d := signatureDistance(a, b)
+			worst = math.Max(worst, d)
+			if d > disparityMin*0.6 {
+				t.Errorf("%s (tod %.2f): the same age a moment later differs by %.3f, too near the guard's %.2f",
+					age, tod, d, disparityMin)
 			}
 		}
 	}
@@ -206,54 +195,46 @@ func greenShare(s tcell.SimulationScreen, x0, y0, x1, y1 int) float64 {
 }
 
 // TestEarthArcGreeneryOnScreen checks the greenery fade where the player
-// sees it, in both styles' frames (on two seeds, the settlement and the
-// skyline by day): the Information Age shows well under the Modern Age's
+// sees it, in the map's frames (on two seeds, by day): the Information Age shows well under the Modern Age's
 // green, the Digital Age less again (its reserve), and the megacity none.
 func TestEarthArcGreeneryOnScreen(t *testing.T) {
 	fixture.WithTheme(t, "forge")
-	for _, style := range []string{"roguelike", "skyline"} {
-		for _, seed := range []int64{7, 11} {
-			share := map[string]float64{}
-			for _, age := range []string{"modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
-				tick := 2*mapmodel.DayTicks + int(0.45*mapmodel.DayTicks) - mapmodel.DayTicks*3/8
-				st := fixture.State(fixture.Options{Age: age, Seed: seed, Tick: tick})
-				m := mapmodel.NewBuilder(nil).Build(&st, nil)
-				v, _ := Registry().New(style)
-				v.SetOption(mapstyle.OptChanges, false)
-				scr := capture.NewScreen(160, 48)
-				v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, mapstyle.Frame{Model: m, Anim: 600, Tier: mapmodel.TierUnicode})
-				if style == "roguelike" {
-					share[age] = greenShare(scr, 0, 1, 160-26, 48-4)
-				} else {
-					share[age] = greenShare(scr, 0, 1, 160, 48-2)
-				}
-				scr.Fini()
-			}
-			t.Logf("%s seed %d: %v", style, seed, share)
-			mod := share["modern_age"]
-			switch {
-			case mod < 0.01:
-				t.Errorf("%s seed %d: the Modern Age shows almost no green (%.3f)", style, seed, mod)
-			case share["information_age"] > mod*0.75 || share["information_age"] < mod*0.25:
-				t.Errorf("%s seed %d: the Information Age shows %.3f green to the Modern Age's %.3f, want about half",
-					style, seed, share["information_age"], mod)
-			case share["digital_age"] > mod*0.4 || share["digital_age"] > share["information_age"]:
-				t.Errorf("%s seed %d: the Digital Age shows %.3f green (Information %.3f, Modern %.3f)", style, seed,
-					share["digital_age"], share["information_age"], mod)
-			case share["digital_age"] <= 0:
-				t.Errorf("%s seed %d: the Digital Age shows no reserve", style, seed)
-			}
-			for _, a := range []string{"cyberpunk_age", "fusion_age"} {
-				if share[a] > mod*0.02 {
-					t.Errorf("%s seed %d: the %s still shows %.4f green", style, seed, a, share[a])
-				}
+	for _, seed := range []int64{7, 11} {
+		share := map[string]float64{}
+		for _, age := range []string{"modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age"} {
+			tick := 2*mapmodel.DayTicks + int(0.45*mapmodel.DayTicks) - mapmodel.DayTicks*3/8
+			st := fixture.State(fixture.Options{Age: age, Seed: seed, Tick: tick})
+			m := mapmodel.NewBuilder(nil).Build(&st, nil)
+			v := roguelike.New()
+			v.SetOption(mapstyle.OptChanges, false)
+			scr := capture.NewScreen(160, 48)
+			v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, mapstyle.Frame{Model: m, Anim: 600, Tier: mapmodel.TierUnicode})
+			share[age] = greenShare(scr, 0, 1, 160-26, 48-4)
+			scr.Fini()
+		}
+		t.Logf("seed %d: %v", seed, share)
+		mod := share["modern_age"]
+		switch {
+		case mod < 0.01:
+			t.Errorf("seed %d: the Modern Age shows almost no green (%.3f)", seed, mod)
+		case share["information_age"] > mod*0.75 || share["information_age"] < mod*0.25:
+			t.Errorf("seed %d: the Information Age shows %.3f green to the Modern Age's %.3f, want about half",
+				seed, share["information_age"], mod)
+		case share["digital_age"] > mod*0.4 || share["digital_age"] > share["information_age"]:
+			t.Errorf("seed %d: the Digital Age shows %.3f green (Information %.3f, Modern %.3f)", seed,
+				share["digital_age"], share["information_age"], mod)
+		case share["digital_age"] <= 0:
+			t.Errorf("seed %d: the Digital Age shows no reserve", seed)
+		}
+		for _, a := range []string{"cyberpunk_age", "fusion_age"} {
+			if share[a] > mod*0.02 {
+				t.Errorf("seed %d: the %s still shows %.4f green", seed, a, share[a])
 			}
 		}
 	}
 }
 
-// TestEarthArcNoSpoilers: a frame of each Earth-arc age, in both styles,
-// at every zoom, with the cursor stepped through every target, names no age
+// TestEarthArcNoSpoilers: a frame of each Earth-arc age, at every zoom, with the cursor stepped through every target, names no age
 // or era not yet reached, and no city feature of a later age (by its legend
 // name or its inspect title).
 func TestEarthArcNoSpoilers(t *testing.T) {

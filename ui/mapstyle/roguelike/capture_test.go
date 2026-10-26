@@ -1,0 +1,221 @@
+//go:build mapcapture
+
+package roguelike_test
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/mapmodel/fixture"
+	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
+	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
+)
+
+// TestWriteCaptures draws review captures of the map from the real
+// smoke-bot states (run TestGenerateStates in ui/mapstyle/capture first):
+// .txt (the monochrome check) and .html built cell by cell from a tcell
+// SimulationScreen, animated where there are several frames.
+//
+//	go test -tags mapcapture -run TestWriteCaptures ./ui/mapstyle/roguelike
+//
+// MAP_STATES_DIR and MAP_CAPTURES_DIR pick the folders (defaults under
+// map_captures/ at the repo root, which git ignores).
+func TestWriteCaptures(t *testing.T) {
+	root := filepath.Join("..", "..", "..", "map_captures")
+	states := envOr("MAP_STATES_DIR", filepath.Join(root, "states"))
+	out := envOr("MAP_CAPTURES_DIR", root)
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cp := &capturer{t: t, states: states, out: out, b: mapmodel.NewBuilder(nil)}
+	cp.run()
+	cp.index()
+}
+
+func envOr(k, d string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	return d
+}
+
+type capturer struct {
+	t      *testing.T
+	states string
+	out    string
+	b      *mapmodel.Builder
+	files  []string
+}
+
+// shot is one capture.
+type shot struct {
+	name    string
+	state   string // state file name without .json.gz
+	since   bool   // diff against prev_<state>
+	theme   string // "" = forge
+	tier    mapmodel.GlyphTier
+	w, h    int
+	compact bool
+	frames  int
+	opts    []mapstyle.Option
+	keys    []*tcell.EventKey
+	note    string
+}
+
+func key(k tcell.Key) *tcell.EventKey              { return tcell.NewEventKey(k, 0, tcell.ModNone) }
+func keys(ks ...*tcell.EventKey) []*tcell.EventKey { return ks }
+
+var reviewAges = []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "victorian_age",
+	"atomic_age", "digital_age", "cyberpunk_age", "space_age", "galactic_age"}
+
+func short(age string) string { return strings.TrimSuffix(age, "_age") }
+
+func (c *capturer) run() {
+	U, A, N := mapmodel.TierUnicode, mapmodel.TierASCII, mapmodel.TierNerd
+	tab := key(tcell.KeyTab)
+	for _, age := range reviewAges {
+		a := short(age)
+		c.shoot(shot{name: a, state: age, since: true, w: 160, h: 48})
+		c.shoot(shot{name: a + "_region", state: age, since: true, w: 160, h: 48, keys: keys(key(tcell.KeyPgUp)), note: "region zoom, epoch plate"})
+		c.shoot(shot{name: a + "_mini", state: age, since: true, w: 40, h: 15, compact: true})
+	}
+	// animated traffic and life
+	c.shoot(shot{name: "medieval_anim", state: "medieval_age", w: 160, h: 48, frames: 10})
+	c.shoot(shot{name: "cyberpunk_region_anim", state: "cyberpunk_age", w: 160, h: 48, frames: 10, keys: keys(key(tcell.KeyPgUp))})
+	// small terminals
+	for _, st := range []string{"primitive_early", "medieval_age", "industrial_age", "cyberpunk_age"} {
+		c.shoot(shot{name: short(st) + "_80x24", state: st, since: true, w: 80, h: 24})
+	}
+	c.shoot(shot{name: "industrial_100x30", state: "industrial_age", w: 100, h: 30})
+	c.shoot(shot{name: "primitive_early", state: "primitive_early", w: 160, h: 48})
+	// inspect, flows, district
+	c.shoot(shot{name: "medieval_inspect", state: "medieval_age", since: true, w: 160, h: 48, keys: keys(tab, tab, tab)})
+	c.shoot(shot{name: "medieval_district", state: "medieval_age", since: true, w: 160, h: 48, keys: keys(tab, key(tcell.KeyPgDn))})
+	for _, st := range []string{"industrial_age", "information_age"} {
+		c.shoot(shot{name: short(st) + "_flows", state: st, w: 160, h: 48, opts: []mapstyle.Option{mapstyle.OptFlows}, note: "flows toggle"})
+	}
+	// events
+	c.shoot(shot{name: "catastrophe_information", state: "catastrophe_information_age", w: 160, h: 48})
+	c.shoot(shot{name: "harbinger_iron", state: "harbinger_iron_age", w: 160, h: 48})
+	// light themes
+	c.shoot(shot{name: "medieval_light", state: "medieval_age", since: true, theme: "daylight", w: 160, h: 48})
+	c.shoot(shot{name: "industrial_region_parchment", state: "industrial_age", theme: "parchment", w: 160, h: 48, keys: keys(key(tcell.KeyPgUp))})
+	c.shoot(shot{name: "medieval_mini_light", state: "medieval_age", theme: "daylight", w: 40, h: 15, compact: true})
+	// glyph tiers
+	for _, tr := range []mapmodel.GlyphTier{A, U, N} {
+		c.shoot(shot{name: "medieval_glyphs_" + tr.String(), state: "medieval_age", w: 160, h: 48, tier: tr})
+		c.shoot(shot{name: "medieval_region_glyphs_" + tr.String(), state: "medieval_age", w: 160, h: 48, tier: tr, keys: keys(key(tcell.KeyPgUp))})
+	}
+}
+
+func (c *capturer) load(name string) (game.GameState, bool) {
+	st, err := capture.LoadState(filepath.Join(c.states, name+".json.gz"))
+	if err != nil {
+		c.t.Logf("skip %s: %v", name, err)
+		return st, false
+	}
+	return st, true
+}
+
+func (c *capturer) shoot(s shot) {
+	st, ok := c.load(s.state)
+	if !ok {
+		return
+	}
+	var since *mapmodel.Visit
+	if s.since {
+		if prev, ok := c.load("prev_" + strings.TrimPrefix(strings.TrimPrefix(s.state, "harbinger_"), "catastrophe_")); ok {
+			since = mapmodel.VisitOf(c.b.Build(&prev, nil))
+		}
+	}
+	th := s.theme
+	if th == "" {
+		th = "forge"
+	}
+	fixture.WithTheme(c.t, th)
+	m := mapmodel.NewBuilder(c.b.Catalog()).Build(&st, since)
+	view := roguelike.New()
+	for _, o := range s.opts {
+		view.SetOption(o, true)
+	}
+	scr := capture.NewScreen(s.w, s.h)
+	defer scr.Fini()
+	r := mapstyle.Rect{W: s.w, H: s.h}
+	f := mapstyle.Frame{Model: m, Tier: s.tier}
+	draw := func() {
+		if s.compact {
+			view.DrawCompact(scr, r, f)
+		} else {
+			view.Draw(scr, r, f)
+		}
+	}
+	draw()
+	for _, k := range s.keys {
+		view.HandleKey(k, f)
+		draw()
+	}
+	n := s.frames
+	if n < 1 {
+		n = 1
+	}
+	var html []string
+	var txt strings.Builder
+	for i := 0; i < n; i++ {
+		f.Anim = i * 3
+		draw()
+		html = append(html, capture.Frame(scr))
+		if i == 0 {
+			_ = os.MkdirAll(filepath.Join(c.out, "png"), 0o755)
+			_ = capture.PNG(filepath.Join(c.out, "png", s.name+".png"), scr)
+		}
+		if i == 0 || n > 1 {
+			if n > 1 {
+				fmt.Fprintf(&txt, "--- frame %d\n", i)
+			}
+			txt.WriteString(capture.Text(scr))
+		}
+	}
+	title := fmt.Sprintf("%s · %s · %dx%d · theme %s · glyphs %s", s.state, s.name, s.w, s.h, th, s.tier)
+	if s.note != "" {
+		title += " · " + s.note
+	}
+	fonts := capture.Fonts
+	if s.tier == mapmodel.TierNerd {
+		fonts = capture.NerdFonts
+	}
+	bg := capture.Hex(theme.Color(theme.RoleBackground))
+	fg := capture.Hex(theme.Color(theme.RoleText))
+	base := s.name
+	c.write(base+".html", capture.HTML(title, bg, fg, fonts, html, 6))
+	c.write(base+".txt", title+"\n"+txt.String())
+}
+
+func (c *capturer) write(name, body string) {
+	if err := os.WriteFile(filepath.Join(c.out, name), []byte(body), 0o644); err != nil {
+		c.t.Fatal(err)
+	}
+	if strings.HasSuffix(name, ".html") {
+		c.files = append(c.files, name)
+	}
+}
+
+func (c *capturer) index() {
+	sort.Strings(c.files)
+	var b strings.Builder
+	b.WriteString(`<!doctype html><html><head><meta charset="utf-8"><title>Map captures</title><style>body{font-family:ui-monospace,Menlo,monospace;background:#111;color:#ccc;margin:20px}a{color:#8cf;display:block;margin:2px 0}</style></head><body><h1>Map captures</h1><p>Real tcell SimulationScreen renders from smoke-bot states. Nerd-tier pages need a Nerd Font installed (JetBrainsMono Nerd Font Mono or Symbols Nerd Font Mono).</p>`)
+	for _, f := range c.files {
+		fmt.Fprintf(&b, `<a href="%s">%s</a>`, f, strings.TrimSuffix(f, ".html"))
+	}
+	b.WriteString("</body></html>\n")
+	c.write("index.html", b.String())
+}

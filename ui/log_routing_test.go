@@ -132,7 +132,6 @@ func TestMapSettingRepliesInTheMainLog(t *testing.T) {
 	cases := []struct{ cmd, line string }{
 		{"minimap off", "Mini map off. Type minimap on to bring it back."},
 		{"minimap on", "Mini map on. It shows above the Buildings list"},
-		{"map style skyline", "Map style set to Skyline."},
 		{"map glyphs ascii", "Map glyphs set to ascii."},
 		{"map flows on", "Flows overlay on: stocks running dry"},
 	}

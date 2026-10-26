@@ -119,7 +119,7 @@ All 16 themes pass a contrast check for text on their background (WCAG AA). The 
 
 ## 🗺️ The Map and your theme
 
-The [Map](map.md) follows your theme too, including light ones. Both styles, roguelike and skyline, take their colors from the theme, so switching themes recolors the Map and the dashboard's mini map at once. In the **Monochrome** and **Parchment** themes the Map is drawn as a two-tone (duotone) picture: one ink on one paper.
+The [Map](map.md) follows your theme too, including light ones. The Map takes its colors from the theme, so switching themes recolors the Map and the dashboard's mini map at once. In the **Monochrome** and **Parchment** themes the Map is drawn as a two-tone (duotone) picture: one ink on one paper.
 
 ---
 
@@ -168,4 +168,4 @@ An effect is only ever drawn in cells that are otherwise empty, with clear space
 - [Badges](badges.md): the badges that unlock the flavor themes
 - [Account & Recovery](account.md): how theme unlocks (and other account-wide progress) are kept and moved between machines
 - [The 22 Ages](ages.md): the ages whose badges unlock five of them
-- [The Map](map.md): the map styles and glyph sets
+- [The Map](map.md): the glyph sets

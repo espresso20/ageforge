@@ -2,7 +2,6 @@ package mapstyle
 
 import (
 	"math"
-	"sort"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -10,8 +9,8 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// mandala.go is the Transcendent Age's mandala as geometry both styles
-// draw: a bright core (a star, when there is room), a crown of eight solid
+// mandala.go is the Transcendent Age's mandala as geometry the map
+// draws: a bright core (a star, when there is room), a crown of eight solid
 // petals round it, and one ring per era the player passed through, the
 // Stone Era innermost. A ring is a band of its era's glyph, cell after cell
 // (only beads when the rings stand too close for a band), and every ring's
@@ -173,54 +172,6 @@ func LayMandala(n int, ry, rx float64) MandalaGeom {
 	return g
 }
 
-// RingCells is ring k's cells (its band and its beads), clockwise from the
-// top.
-func (g *MandalaGeom) RingCells(k int) []MandalaCell {
-	var out []MandalaCell
-	for _, c := range g.Cells {
-		if (c.Part == MdLine || c.Part == MdBead) && c.Ring == k {
-			out = append(out, c)
-		}
-	}
-	sort.SliceStable(out, func(i, j int) bool { return clockwise(out[i], out[j]) })
-	return out
-}
-
-// PetalCells is the crown's petals (each one's base cell), clockwise from
-// the top.
-func (g *MandalaGeom) PetalCells() []MandalaCell {
-	out := make([]MandalaCell, 0, g.Petals)
-	for _, c := range g.Cells {
-		if c.Part == MdPetal && !c.Tip {
-			out = append(out, c)
-		}
-	}
-	sort.SliceStable(out, func(i, j int) bool { return out[i].Idx < out[j].Idx })
-	return out
-}
-
-// clockwise reports whether cell a comes before cell b going clockwise
-// from the top, in whole numbers (a row counts as two columns), so the
-// order is the same on every machine.
-func clockwise(a, b MandalaCell) bool {
-	half := func(c MandalaCell) int { // 0: the right half, from the top; 1: the left, from the bottom
-		if c.DX > 0 || c.DX == 0 && c.DY < 0 {
-			return 0
-		}
-		return 1
-	}
-	if ha, hb := half(a), half(b); ha != hb {
-		return ha < hb
-	}
-	if cross := a.DX*2*b.DY - 2*a.DY*b.DX; cross != 0 {
-		return cross > 0
-	}
-	if a.DY != b.DY {
-		return a.DY < b.DY
-	}
-	return a.DX < b.DX
-}
-
 // spokeAt is the first-quadrant offset (columns right, rows up) of the
 // point at radius r rows on the spoke t turns clockwise from the top,
 // folded into the first quadrant.
@@ -366,7 +317,7 @@ func RayRune(dx, dy int) rune {
 	return '╲'
 }
 
-// EraLight is the colour of an era's ring before a style resolves it
+// EraLight is the colour of an era's ring before the map resolves it
 // against its theme: the era's own hue, lifted a little toward the
 // mandala's light so every era reads on the indigo.
 func EraLight(epoch int) tcell.Color {

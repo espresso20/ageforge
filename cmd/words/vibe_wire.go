@@ -193,9 +193,6 @@ func (c *catalog) wireVerdict(r *row) verdict {
 	if reason := screenReason(r); reason != "" {
 		return verdict{reason: reason}
 	}
-	if reason := mapReason(r); reason != "" {
-		return verdict{reason: reason}
-	}
 	if strings.HasPrefix(r.id, "config.lexicon.lexiconRows.") || strings.HasPrefix(r.id, "config.lexicon.plainTerms.") {
 		return verdict{reason: leftCovered}
 	}

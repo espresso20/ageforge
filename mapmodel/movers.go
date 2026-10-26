@@ -2,7 +2,7 @@ package mapmodel
 
 import "github.com/espresso20/ageforge/vibe"
 
-// movers.go is the traffic roster both map styles read: every kind of thing
+// movers.go is the traffic roster the map reads: every kind of thing
 // that moves through a town, the age that introduces it and the last age it
 // is seen in, how it travels and how fast. An age shows only movers that it,
 // or an earlier age, introduced, so the map never shows a vehicle from an age
@@ -115,8 +115,7 @@ type moverDef struct {
 // drones from the Digital Age; Neon maglevs and hovercars, with the
 // megacity's sky trains and crowds, the space elevator's climbers from the
 // Fusion Age and shuttles from the Space Age's launch pads; Cosmic orbital
-// habitats. Satellites cross the night sky from the Modern Age, as the
-// skyline has always drawn them.
+// habitats. Satellites cross the night sky from the Modern Age.
 var moverDefs = [numAllMovers]moverDef{
 	MoverWalker: {key: "walker", name: vibe.E("map.mover.walker.name", "worker at work"), title: vibe.E("map.mover.walker.title", "Worker"), sym: SymWorker, class: CLife, way: WayFoot,
 		from: "primitive_age", pace: 5, lines: []vibe.Entry{vibe.E("map.mover.walker.line.01", "On the way to work."), vibe.E("map.mover.walker.line.02", "Heading home after a shift.")}},
@@ -253,13 +252,6 @@ func (i MoverInfo) told() MoverInfo {
 	return i
 }
 
-// Introduced reports whether the age with index age, or an earlier one, has
-// introduced mover k (it may have retired since).
-func Introduced(k Mover, age int) bool {
-	i := k.Info()
-	return i.From >= 0 && age >= i.From
-}
-
 // MoversAt lists the movers about in the age with index age, in roster
 // order (the sky arc's last).
 func MoversAt(age int) []Mover {
@@ -275,13 +267,13 @@ func MoversAt(age int) []Mover {
 // ---------------------------------------------------------------------------
 // The sky arc's movers (Space Age to Transcendent Age)
 //
-// From the Space Age both map styles leave the ground (sky.go), and these
+// From the Space Age the map leaves the ground (sky.go), and these
 // movers travel the sky scenes' own lanes: the asteroid belt, the gulfs
 // between colony worlds, the lanes of the starbase. (The tether's climbers
 // are the Earth arc's MoverClimber: the elevator rises in the Fusion Age and
 // the sky scenes carry it on.) They number on from NumMovers in a range of
-// their own, so the ground roster above (and the arrays the styles size by
-// NumMovers) is untouched; Info, Introduced and MoversAt cover both ranges.
+// their own, so the ground roster above (and the arrays the map sizes by
+// NumMovers) is untouched; Info and MoversAt cover both ranges.
 // WaySpace keeps them off the ground's streets, rails, water and sky.
 // ---------------------------------------------------------------------------
 

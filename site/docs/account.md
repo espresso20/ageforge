@@ -54,7 +54,7 @@ The account holds two distinct things:
 | Part | What it is |
 |---|---|
 | **Identity** | Your chosen name and the account ID derived from it |
-| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, badges) and your prefs: your theme, map style, map glyphs, mini map setting, motion setting and VibeMode setting |
+| **Data** | Your earned account-wide progress (theme unlocks, lifetime stats, badges) and your prefs: your theme, map glyphs, mini map setting, motion setting and VibeMode setting |
 
 The split matters because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID). The **data** is backed up separately with an account **export** (see [Exporting & importing accounts](#exporting-amp-importing-accounts)).
 

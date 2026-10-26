@@ -7,7 +7,6 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 // menu_badges.go opens the badge case from the main menu. The case is the
@@ -40,9 +39,9 @@ func (b *menuBadges) InputHandler() func(event *tcell.EventKey, setFocus func(p 
 
 // openMenuBadges shows the badge case over the menu and returns to
 // returnPage when it is closed.
-func openMenuBadges(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, reg *mapstyle.Registry, returnPage string) {
+func openMenuBadges(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, returnPage string) {
 	p := newBadgePanel()
-	p.settings = func() mapSettings { return resolveMapSettings(engine.Account(), reg) }
+	p.settings = func() mapSettings { return resolveMapSettings(engine.Account()) }
 	// The case reads a snapshot's account part and nothing else of it.
 	st := game.GameState{}
 	if engine.Account() != nil {

@@ -280,10 +280,9 @@ const (
 	// account's own settings when the run advances an age, so they are
 	// never tallied in a run (BadgeSessionEvents).
 	//
-	// BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs: the
-	// theme, map style and glyph set worn at an advance. Subject: its key.
+	// BadgeEvAdvancedTheme, BadgeEvAdvancedGlyphs: the theme and glyph set
+	// worn at an advance. Subject: its key.
 	BadgeEvAdvancedTheme  = "advanced_in_theme"
-	BadgeEvAdvancedStyle  = "advanced_with_style"
 	BadgeEvAdvancedGlyphs = "advanced_with_glyphs"
 	// BadgeEvVisitor: a visitor on the map was inspected. Subject: its
 	// kind.
@@ -320,7 +319,7 @@ func BadgeEventKinds() []string {
 		BadgeEvProduced, BadgeEvCensus, BadgeEvWarStarted, BadgeEvWarEnded, BadgeEvGiftSent,
 		BadgeEvWorkersLent, BadgeEvDoomNamed, BadgeEvEraLeft, BadgeEvPlanQueued,
 		BadgeEvRuinsCarried, BadgeEvLegacyPrestige,
-		BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
+		BadgeEvAdvancedTheme, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
 	}
 }
 
@@ -352,7 +351,7 @@ func BadgeSessionEvents() []string {
 		// them in the run would only be bulk.
 		BadgeEvProduced, BadgeEvCensus,
 		// How the account looks, not what the run did.
-		BadgeEvAdvancedTheme, BadgeEvAdvancedStyle, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
+		BadgeEvAdvancedTheme, BadgeEvAdvancedGlyphs, BadgeEvVisitor,
 	}
 }
 

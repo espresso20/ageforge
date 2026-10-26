@@ -5,11 +5,10 @@ import "github.com/gdamore/tcell/v2"
 // maphues_city.go holds the Earth arc's city colours, the Modern Age to the
 // Fusion Age: concrete, glass and asphalt, the last parks, smog and
 // landfill, the data age's screens and glow, the megacity's night and neon,
-// its toxic water, and the powered city's plasma. Both map styles read them
-// (the roguelike leans theme roles toward them and clamps them legible; the
-// skyline lights and hazes them like its other scene colours), so like the
-// rest of the map hues they are never drawn as they are. Keeping them here
-// keeps "no raw colours outside theme/" true for ui/.
+// its toxic water, and the powered city's plasma. The map leans theme roles
+// toward them and clamps them legible, so like the rest of the map hues they
+// are never drawn as they are. Keeping them here keeps "no raw colours
+// outside theme/" true for ui/.
 
 // CityHue names an Earth-arc city colour.
 type CityHue uint8
@@ -18,7 +17,6 @@ const (
 	CityConcrete     CityHue = iota // bare concrete, office blocks
 	CityConcreteDark                // concrete in shadow, kerbs
 	CityAsphalt                     // highways and streets
-	CityLaneMark                    // highway lane paint
 	CityGlass                       // glass towers
 	CitySteel                       // steel trim, dishes
 	CityRoof                        // suburban roofs
@@ -59,7 +57,6 @@ var cityHues = [numCityHues]int32{
 	CityConcrete:     0x9096a0,
 	CityConcreteDark: 0x50545c,
 	CityAsphalt:      0x3c3e44,
-	CityLaneMark:     0xe8dc90,
 	CityGlass:        0x6aa6dc,
 	CitySteel:        0xb4c0cc,
 	CityRoof:         0xc87a5a,

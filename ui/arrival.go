@@ -10,8 +10,6 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -82,8 +80,7 @@ type arrival struct {
 	// from is the age left behind, once feed has worked it out.
 	from string
 
-	// The town, before and after, in the player's map style.
-	reg              *mapstyle.Registry
+	// The town, before and after, in the player's glyph set.
 	set              mapSettings
 	oldTown, newTown *menuTown
 
@@ -117,9 +114,9 @@ func newArrival(om *OverlayManager, oldAge, newAge string, summary game.AgeAdvan
 	epochChanged bool, epochEvent game.EpochEventRecord) *arrival {
 	a := &arrival{
 		Box: tview.NewBox(), om: om, oldAge: oldAge, newAge: newAge, summary: summary,
-		epoch: epochChanged, event: epochEvent, reg: all.Registry(), now: time.Now,
+		epoch: epochChanged, event: epochEvent, now: time.Now,
 	}
-	a.set = defaultMapSettings(a.reg)
+	a.set = defaultMapSettings()
 	a.after = om.after
 	if a.after == nil {
 		a.after = func(d time.Duration, fn func()) func() {
@@ -276,9 +273,9 @@ func (a *arrival) feed(prev, cur *game.GameState) {
 	}
 	a.say(cur)
 
-	// The two towns, in the player's style.
+	// The two towns, in the player's settings.
 	if a.om != nil && a.om.engine != nil {
-		a.set = resolveMapSettings(a.om.engine.Account(), a.reg)
+		a.set = resolveMapSettings(a.om.engine.Account())
 		a.settings()
 	}
 	before := stateAt(*cur, from)
@@ -288,9 +285,9 @@ func (a *arrival) feed(prev, cur *game.GameState) {
 	// One builder for both: it is the same land, laid out once.
 	builder := mapmodel.NewBuilder(nil)
 	if fi >= 0 {
-		a.oldTown = newMenuTownOn(builder, &before, a.reg, a.set.Style, false)
+		a.oldTown = newMenuTownOn(builder, &before, false)
 	}
-	a.newTown = newMenuTownOn(builder, cur, a.reg, a.set.Style, true)
+	a.newTown = newMenuTownOn(builder, cur, true)
 	a.sc, a.info.pages = nil, nil
 }
 

@@ -423,11 +423,9 @@ ui.help.commands.theme.2,Switch fits: pick a theme by key
 ui.help.commands.theme.list,Raid the closet: every theme fit and whether it is unlocked
 ui.help.panels.map,"The map: your settlement plus the known world, the whole canon in one view (aliases: citymap, worldmap)"
 ui.help.commands.map,Open the Map panel (worldmap opens it on the known world); the prompt stays locked in while it is open
-ui.help.commands.map.style,Show or set the map's aesthetic (default roguelike)
 ui.help.commands.map.glyphs,Show or set the map's glyph drip (default unicode; nerd needs a Nerd Font)
 ui.help.commands.map.flows,"The Map's flows overlay, on or off (bare: just flip it), it lowkey slaps"
-ui.help.commands.style,map style but make it short
-ui.help.commands.minimap,Show or set the smol map perched above the Buildings list (default off)
+ui.help.commands.minimap,Show or set the smol map perched above the Buildings list (default on)
 ui.help.commands.motion,"Show or set motion: do the maps, the badge case and theme effects move, or freeze like an NPC (default on)"
 ui.help.commands.vibemode,"Show or set VibeMode: the game's words in GenZ script, the one you are reading rn (default off)"
 ui.help.commands.icons,"Check if your font can show Nerd Font icons, and install one if it is lacking"
@@ -462,7 +460,6 @@ ui.help.panels.logs,The latest log tea
 ui.help.panels.epoch,Doomcore corner: how the epoch is going & the catastrophe
 ui.help.panels.history,Your civilization's lore timeline
 ui.help.panels.buildings,"Everything you built, sorted by lineage like a family group chat"
-ui.dash_skyline.Draw.01," Skyline Drip "
 ui.dashboard.shameMessages.01,✦ SCROLLS CAUGHT IN 4K ✦
 ui.dashboard.shameMessages.02,✦ FRAUD EMPIRE ARC ✦
 ui.dashboard.shameMessages.03,✦ DELULU DYNASTY ✦
@@ -988,10 +985,6 @@ ui.input.cmdMapFlows.03,map flows only takes on or off; %q is not it
 ui.input.flowsReply.01,"Flows overlay on: the Map now snitches on stocks running dry, understaffed buildings and idle workers."
 ui.input.flowsReply.02,"Flows overlay gone, the snitching stops."
 ui.input.mapSessionOnly.01," No account is loaded, so this is a situationship: it lasts for this session only."
-ui.input.cmdMapStyle.01,Map aesthetic: %s. Styles: %s. Type map style <name> to switch it up.
-ui.input.cmdMapStyle.02,"one style name only, no group projects"
-ui.input.cmdMapStyle.03,"map style %q does not exist, delulu"
-ui.input.cmdMapStyle.04,Map is in its %s era now.
 ui.input.cmdMapGlyphs.01,Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch up the drip (icons checks your font for nerd).
 ui.input.cmdMapGlyphs.02,"one glyph tier, not a whole playlist"
 ui.input.cmdMapGlyphs.03,"glyph tier %q is not real, sus"
@@ -1134,7 +1127,7 @@ ui.locked_hint.lockedHintLines.12,"Locked. It is on the syllabus, and your town 
 ui.locked_hint.lockedNeedsLine.01,Gatekept by %s (research)
 ui.locked_hint.lockedNeedsLine.02,"Gatekept by %s (research), after %s"
 ui.locked_hint.lockedBuildingEntry.01,"   Damage: "
-ui.map_mini.miniMap.Draw.01," Smol Map · "
+ui.map_mini.miniMap.Draw.01," Smol Map "
 ui.map_panel.mapIconsHint.01,Want real icons on your map? Icons glow-up: type icons.
 ui.map_panel.drawBar.02," sends the command below · "
 ui.map_panel.drawBar.04," sends "
@@ -1553,16 +1546,15 @@ ui.overlay_help.helpProvider.30,"Swap, spawn or back up alts [gray](main-menu pa
 ui.overlay_help.helpProvider.31,"
 [gold]═══ Map Mode Lore ═══[-]
 "
-ui.overlay_help.helpProvider.32,"The prompt keeps working while the Map is open: type commands like normal. The map yoinks the keys that print nothing, plus + - = [ ] while the prompt is empty."
-ui.overlay_help.helpProvider.34,"Move the cursor (roguelike) or scroll (skyline); Shift speedruns it, half a screen at a time in the skyline"
+ui.overlay_help.helpProvider.32,"The prompt keeps working while the Map is open: type commands like normal. The map yoinks the keys that print nothing, plus + - = while the prompt is empty."
+ui.overlay_help.helpProvider.34,Move the cursor; Shift speedruns it
 ui.overlay_help.helpProvider.36,"Hop to the next building, wonder or civilization (Shift-Tab: run it back one)"
 ui.overlay_help.helpProvider.38,"Main character camera: zoom out, zoom in (Option+Up and Option+Down do the same)"
-ui.overlay_help.helpProvider.39,"Zoom in and out with no Page keys, in either style (= works as +). In the skyline far is the whole town, close gives every building a 2x glow-up; the level is kept for next time"
-ui.overlay_help.helpProvider.40,Skyline: speedrun to the previous and next district (the bar at the bottom shows your skyline and a box where you are looking)
-ui.overlay_help.helpProvider.42,The town square (roguelike); the OG district and the present (skyline)
+ui.overlay_help.helpProvider.39,Zoom in and out with no Page keys (= works as +)
+ui.overlay_help.helpProvider.42,The town square
 ui.overlay_help.helpProvider.44,"Drop the command for whatever the cursor is on into the prompt (with something typed, Tab and Enter act on the prompt instead)"
 ui.overlay_help.helpProvider.46,Bail on the panel
-ui.overlay_help.helpProvider.47,"Every setting is a command, iykyk: map style, map glyphs, map flows, minimap."
+ui.overlay_help.helpProvider.47,"Every setting is a command, iykyk: map glyphs, map flows, minimap."
 ui.overlay_help.helpProvider.48,"
 [gold]═══ Big Brain HQ (Research) ═══[-]
 "
@@ -2353,15 +2345,11 @@ ui.villager_panel.computeMoraleBand.03,Vibes %.0f%% (production holding steady)
 ui.building_text.buildingText.07,"Past %s, each one gets nerfed to half-rate research."
 ui.building_text.buildingText.05,dupe
 ui.building_text.buildingText.06,dupes
-ui.overlay_help.helpProvider.66,"Skyline, close zoom: pan up and down a tall tower like a doomscroll, Shift for half a screen (Home drops you back at the foot)"
 ui.overlay_wonders.wondersProvider.15,"[gray]Press G for the flex gallery of every wonder you built.[-]
 "
 ui.people_tabs.scholars.23,", %d dupes, %d nerfed to half rate"
 ui.wonders_view.galleryKeys.01,[gray]Tab or G the list   Esc dip[-]
-ui.wonders_view.galleryKeys.02,"[gray]◄ ► scroll the flexes   Home End day one, final boss   Tab or G the list   Esc dip[-]"
 ui.wonders_view.galleryText.01,[gold]═══ The Flex Gallery ═══[-]
-ui.wonders_view.galleryText.02,"[gray]Zero wonders built so far. Every one you build gets hung here, drawn exactly like the map serves it.[-]"
-ui.wonders_view.galleryText.03,[gray]%d of %d flexed[-]
 ui.wonders_view.galleryText.04,"  [gray]the age dropped %s[-]"
 ui.dash_ledger.finalRow.01,"You've hit the final age, the endgame."
 ui.dash_ledger.waitText.04,"+%d more, bet"

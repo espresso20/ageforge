@@ -26,7 +26,7 @@ THRESHOLD=${BENCH_THRESHOLD:-15} # percent slower that gets reported
 SUITES=(
 	"./game|^(BenchmarkTick|BenchmarkGetState)$"
 	"./ui|^BenchmarkDashboardFrame$"
-	"./ui/mapstyle/all|^BenchmarkMapFrame$/^(roguelike|skyline)$/^(medieval_age|galactic_age)$/^vibemode_off$"
+	"./ui/mapstyle/roguelike|^BenchmarkMapFrame$/^(medieval_age|galactic_age)$/^vibemode_off$"
 )
 
 # build_side <tree> <bin-dir>: compile each suite's test binary.

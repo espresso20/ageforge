@@ -11,7 +11,7 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// traffic.go is the age's traffic, from the roster both styles share
+// traffic.go is the age's traffic, from the roster
 // (mapmodel.MoversAt): carts, trams and cars on the streets, boats on the
 // river and open water, trains on the railway, planes, drones and
 // satellites overhead. The scene lays the lanes once (the street network,

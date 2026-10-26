@@ -33,7 +33,7 @@ var ledgerSizes = [][2]int{{80, 24}, {100, 30}, {160, 45}}
 
 // plainTier puts the dashboard on the plain glyph tier, for the session.
 func plainTier(d *Dashboard) {
-	s := resolveMapSettings(nil, d.mapViews.reg)
+	s := resolveMapSettings(nil)
 	s.Tier = mapmodel.TierASCII
 	d.mapLocal = &s
 }

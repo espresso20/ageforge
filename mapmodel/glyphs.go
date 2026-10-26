@@ -147,7 +147,7 @@ const (
 	SymRain
 	SymSnow
 	SymBolt
-	// vehicles (the skyline's traffic uses these as markers in the nerd tier)
+	// vehicles
 	SymCart
 	SymShip
 	SymTrain

@@ -143,7 +143,7 @@ func TestOldBuildResaveKeepsBadges(t *testing.T) {
 			t.Errorf("load %d: counters %v days %v, want %v %v", load, acct.Counters, acct.Days, wantCounters, before.Days)
 		}
 		// What the older build changed is there.
-		if _, glyphs, _ := acct.MapPrefs(); glyphs != "ascii" {
+		if glyphs, _ := acct.MapPrefs(); glyphs != "ascii" {
 			t.Errorf("load %d: the older build's setting was lost: map glyphs %q", load, glyphs)
 		}
 		if earned := ge.DrainEarnedBadges(); len(earned) != 0 {

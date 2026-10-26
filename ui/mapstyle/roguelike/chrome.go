@@ -353,9 +353,6 @@ func (v *view) drawLegend(cv *mapstyle.Canvas, x, y, w, h int) {
 	}
 }
 
-// CompactShowsNews: the compact view's last row is the news line.
-func (v *view) CompactShowsNews() bool { return true }
-
 // DrawCompact renders the glanceable mini view (designed for 40x15): a
 // header line, the settlement fitted to the space, and one news line.
 func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
@@ -389,7 +386,7 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 		v.drawTiles(cv, g)
 		v.drawLife(cv)
 		// Where the Map panel's cursor stands, as the same highlighted
-		// cell (mapstyle.Pointing).
+		// cell (Point).
 		if cx, cy, ok := v.g.cellOf(v.mark); ok && v.marked {
 			r, _ := cv.Get(cx, cy)
 			cv.Put(cx, cy, r, v.pal.CursorStyle(v.anim))
