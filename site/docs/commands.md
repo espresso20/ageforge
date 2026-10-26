@@ -560,7 +560,7 @@ With something typed, `Tab` and `Enter` act on the prompt instead. The case draw
 | `account backup` | Copy the whole active account (`account.json`, `badges.json` and saves) to `data/backups/<name>-<id8>-<timestamp>/`. The 10 most recent backups per account are kept. The Accounts panel's `b` key does the same for the selected account. |
 | `account wipe` | Tells you where to wipe an account: the Accounts panel on the main menu, behind a type-the-name confirm (press `w` on the account). This command wipes nothing. |
 
-The game keeps several local accounts, one active at a time, each with its own saves. The Accounts entry on the main menu manages them. The recovery code carries your identity, not your progress: `account export` backs up progress, and `account backup` copies everything, saves included. Wiping an account deletes it and every save in its slot (after a backup). See [Account & Recovery](account.md).
+The game keeps several local accounts, one active at a time, each with its own saves. The Accounts entry on the main menu manages them. The recovery code carries your identity, not your progress: `account export` backs up progress, and `account backup` copies everything, saves included. Wiping an account deletes it and every save in its slot (after a backup). See [Accounts & Recovery](account.md).
 
 ---
 
