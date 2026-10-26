@@ -9,22 +9,20 @@ import "testing"
 func TestApplyExport_PrefsAndStatsMerge(t *testing.T) {
 	local := func() *Account {
 		return &Account{
-			Prefs: AccountPrefs{ActiveTheme: "ember", MapStyle: "skyline", MapZoom: "far"},
+			Prefs: AccountPrefs{ActiveTheme: "ember"},
 			Stats: AccountStats{TotalPrestiges: 5, CivilizationsStarted: 2, SavesCompleted: 9,
 				PrestigesByAge: map[string]int{"stone_age": 3}},
 		}
 	}
 	exp := &progressExport{
-		Prefs: AccountPrefs{ActiveTheme: "frost", MapStyle: "roguelike", MapGlyphs: "ascii", MapZoom: "close",
-			Minimap: "on", MapIconsHint: true},
+		Prefs: AccountPrefs{ActiveTheme: "frost", MapGlyphs: "ascii", Minimap: "on", MapIconsHint: true},
 		Stats: AccountStats{TotalPrestiges: 4, CivilizationsStarted: 7, SavesCompleted: 9,
 			PrestigesByAge: map[string]int{"stone_age": 1, "bronze_age": 2}},
 	}
 
 	a := local()
 	a.applyExportLocked(exp, true)
-	want := AccountPrefs{ActiveTheme: "ember", MapStyle: "skyline", MapGlyphs: "ascii", MapZoom: "far",
-		Minimap: "on", MapIconsHint: true}
+	want := AccountPrefs{ActiveTheme: "ember", MapGlyphs: "ascii", Minimap: "on", MapIconsHint: true}
 	if a.Prefs != want {
 		t.Errorf("merged prefs = %+v, want %+v", a.Prefs, want)
 	}

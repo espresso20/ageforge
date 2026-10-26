@@ -256,10 +256,6 @@ func (c *badgeCheck) subjectMissing(def config.BadgeDef) string {
 		if _, ok := theme.ByKey(def.Subject); !ok {
 			return fmt.Sprintf("names the theme %q, which does not exist", def.Subject)
 		}
-	case config.BadgeEvAdvancedStyle:
-		if !slices.Contains(config.BadgeMapStyles, def.Subject) {
-			return fmt.Sprintf("names the map style %q, which does not exist", def.Subject)
-		}
 	case config.BadgeEvAdvancedGlyphs:
 		if !slices.Contains(config.BadgeMapGlyphs, def.Subject) {
 			return fmt.Sprintf("names the glyph set %q, which does not exist", def.Subject)

@@ -47,8 +47,6 @@ func Badges() []BadgeDef {
 		},
 
 		// ----- F14, the map's looks -----
-		mapLook("map.style.roguelike", "Dungeon Crawler", "Advance an age with the roguelike map style.", BadgeEvAdvancedStyle, "roguelike"),
-		mapLook("map.style.skyline", "Skyline Watcher", "Advance an age with the skyline map style.", BadgeEvAdvancedStyle, "skyline"),
 		mapLook("map.glyphs.ascii", "Plain Speaker", "Advance an age with the plain (ascii) map glyphs.", BadgeEvAdvancedGlyphs, "ascii"),
 		mapLook("map.glyphs.unicode", "Box Drawer", "Advance an age with the unicode map glyphs.", BadgeEvAdvancedGlyphs, "unicode"),
 		mapLook("map.glyphs.nerd", "Font Snob", "Advance an age with the Nerd Font map glyphs.", BadgeEvAdvancedGlyphs, "nerd"),
@@ -619,7 +617,7 @@ func Badges() []BadgeDef {
 	return out
 }
 
-// mapLook is a badge for a map style or a glyph set worn at an advance.
+// mapLook is a badge for a glyph set worn at an advance.
 func mapLook(key, name, desc, event, subject string) BadgeDef {
 	return BadgeDef{
 		Key: key, Family: "map", Subject: subject, Name: name, Desc: desc,

@@ -20,7 +20,7 @@ import (
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/all"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
 // The full catalog on the case: the hand-drawn legendary badges, the
@@ -327,8 +327,8 @@ func TestLookingAtAVisitorEarnsItsBadge(t *testing.T) {
 	if p.set.Motion {
 		t.Fatal("precondition: motion is still on")
 	}
-	stub := &alienStyle{}
-	p.styles.views = map[string]mapstyle.Style{p.set.Style: stub}
+	stub := &alienStyle{Style: roguelike.New()}
+	p.view = stub
 	told := 0
 	spotted := p.spotted
 	p.spotted = func(kind string) { told++; spotted(kind) }
@@ -421,7 +421,7 @@ func TestBadgeThemesSayHowTheyAreEarned(t *testing.T) {
 	}
 }
 
-// TestBadgeLooksMatchTheGame: the themes, map styles and glyph sets the
+// TestBadgeLooksMatchTheGame: the themes and glyph sets the
 // catalog has a badge for are the ones the game has, and each theme a
 // badge gives is given by the badge the catalog says.
 func TestBadgeLooksMatchTheGame(t *testing.T) {
@@ -446,15 +446,6 @@ func TestBadgeLooksMatchTheGame(t *testing.T) {
 	}
 	for key := range listed {
 		t.Errorf("the catalog lists the theme %s, which the game does not have", key)
-	}
-	reg := all.Registry()
-	for _, style := range config.BadgeMapStyles {
-		if _, ok := reg.New(style); !ok {
-			t.Errorf("the catalog names the map style %q, which the game does not have", style)
-		}
-	}
-	if got := reg.Names(); len(got) != len(config.BadgeMapStyles) {
-		t.Errorf("the game has the map styles %v; the catalog has badges for %v", got, config.BadgeMapStyles)
 	}
 	var tiers []string
 	for _, tier := range caseTiers {

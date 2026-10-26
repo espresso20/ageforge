@@ -99,7 +99,7 @@ func TestAgeBadgeEarnedOnAdvance(t *testing.T) {
 		t.Fatalf("drained %+v, want the Stone Age badge with its text", earned)
 	}
 	// The advance also earns what the account wore as it advanced.
-	for _, key := range []string{"theme.forge", "map.style.roguelike", "map.glyphs.unicode"} {
+	for _, key := range []string{"theme.forge", "map.glyphs.unicode"} {
 		if !slices.ContainsFunc(all, func(v BadgeView) bool { return v.Key == key }) {
 			t.Errorf("advancing in the default looks did not earn %s: %v", key, earnedKeys(all))
 		}
