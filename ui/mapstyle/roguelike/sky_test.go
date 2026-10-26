@@ -1,4 +1,4 @@
-package all
+package roguelike_test
 
 import (
 	"sort"
@@ -12,10 +12,11 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 )
 
-// sky_test.go checks the sky arc across both styles: each age looks like
+// sky_test.go checks the sky arc: each age looks like
 // itself (the disparity guard), nothing names what the player has not
 // reached, the rare visitor keeps out of every legend and mini map, and a
 // frame stays inside the redraw budget.
@@ -92,16 +93,14 @@ func skySigOf(scr tcell.SimulationScreen, x0, y0, x1, y1 int) signature {
 // disparityFloor is how unlike two next-door ages of the sky arc must look,
 // on the scale of signatureDistance (0 the same picture, 1 nothing in
 // common). The same age a few frames later sits under 0.02 (things move,
-// stars twinkle). When the guard was written next-door ages measured from
-// 0.40 (the skyline's Interstellar to Galactic) to 0.74 (the roguelike's
-// Fusion to Space), so 0.30 leaves room to tune an age without letting two
-// neighbours drift into looking like one.
+// stars twinkle). Next-door ages measure well above 0.30, which leaves room
+// to tune an age without letting two neighbours drift into looking like one.
 const disparityFloor = 0.30
 
-// skyFrameSig draws a model in a style at 160x48 and signs the picture.
-func skyFrameSig(t *testing.T, style string, m *mapmodel.Model, anim int) signature {
+// skyFrameSig draws a model at 160x48 and signs the picture.
+func skyFrameSig(t *testing.T, m *mapmodel.Model, anim int) signature {
 	t.Helper()
-	v, _ := Registry().New(style)
+	v := roguelike.New()
 	scr := capture.NewScreen(160, 48)
 	defer scr.Fini()
 	v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, mapstyle.Frame{Model: m, Anim: anim, Tier: mapmodel.TierUnicode})
@@ -109,36 +108,34 @@ func skyFrameSig(t *testing.T, style string, m *mapmodel.Model, anim int) signat
 	return skySigOf(scr, 0, 1, 132, 43)
 }
 
-// TestSkyDisparity: in both styles every age of the sky arc, and the Fusion
-// Age before it, looks unlike its neighbours by at least disparityFloor,
-// while the same age a moment later looks like itself.
+// TestSkyDisparity: every age of the sky arc, and the Fusion Age before it,
+// looks unlike its neighbours by at least disparityFloor, while the same age
+// a moment later looks like itself.
 func TestSkyDisparity(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	models := make([]*mapmodel.Model, len(arcAges))
 	for i, a := range arcAges {
 		models[i] = arcModel(a)
 	}
-	for _, style := range Registry().Names() {
-		sigs := make([]signature, len(arcAges))
-		for i, m := range models {
-			sigs[i] = skyFrameSig(t, style, m, 400)
-			if self := signatureDistance(sigs[i], skyFrameSig(t, style, m, 403)); self > disparityFloor/3 {
-				t.Errorf("%s %s: a frame later it is already %.2f away from itself", style, arcAges[i], self)
-			}
+	sigs := make([]signature, len(arcAges))
+	for i, m := range models {
+		sigs[i] = skyFrameSig(t, m, 400)
+		if self := signatureDistance(sigs[i], skyFrameSig(t, m, 403)); self > disparityFloor/3 {
+			t.Errorf("%s: a frame later it is already %.2f away from itself", arcAges[i], self)
 		}
-		for i := 1; i < len(arcAges); i++ {
-			d := signatureDistance(sigs[i-1], sigs[i])
-			t.Logf("%s: %s to %s %.2f (glyphs %.2f, colours %.2f)", style, arcAges[i-1], arcAges[i], d,
-				tvd(sigs[i-1].glyph, sigs[i].glyph), tvd(sigs[i-1].color, sigs[i].color))
-			if d < disparityFloor {
-				t.Errorf("%s: %s and %s look too alike: %.2f, under %.2f", style, arcAges[i-1], arcAges[i], d, disparityFloor)
-			}
+	}
+	for i := 1; i < len(arcAges); i++ {
+		d := signatureDistance(sigs[i-1], sigs[i])
+		t.Logf("%s to %s %.2f (glyphs %.2f, colours %.2f)", arcAges[i-1], arcAges[i], d,
+			tvd(sigs[i-1].glyph, sigs[i].glyph), tvd(sigs[i-1].color, sigs[i].color))
+		if d < disparityFloor {
+			t.Errorf("%s and %s look too alike: %.2f, under %.2f", arcAges[i-1], arcAges[i], d, disparityFloor)
 		}
 	}
 }
 
 // TestSkyNoSpoilers: the sky ages name no age, era or civ the player has
-// not reached or met, in either style, on screen, on the inspect line or in
+// not reached or met, on screen, on the inspect line or in
 // the mini map, and name the next age once it is within reach.
 func TestSkyNoSpoilers(t *testing.T) {
 	for _, age := range arcAges[1:] {
@@ -156,7 +153,7 @@ func TestSkyNoSpoilers(t *testing.T) {
 }
 
 // TestSkyVisitorRules: in the Space and Interstellar Ages the rare visitor
-// never shows in either style's mini map; from the Galactic Age the model
+// never shows in the mini map; from the Galactic Age the model
 // schedules none, and the aliens are ordinary traffic.
 func TestSkyVisitorRules(t *testing.T) {
 	ufo := mapmodel.R(mapmodel.SymUFO, mapmodel.TierUnicode)
@@ -173,34 +170,29 @@ func TestSkyVisitorRules(t *testing.T) {
 		if !visiting {
 			t.Fatalf("%s: no visit inside the schedule's", age)
 		}
-		for _, style := range Registry().Names() {
-			for f := sg.Start; f < sg.Start+sg.Frames; f += 11 {
-				v, _ := Registry().New(style)
-				scr := capture.NewScreen(40, 15)
-				v.DrawCompact(scr, mapstyle.Rect{W: 40, H: 15}, mapstyle.Frame{Model: m, Anim: f})
-				if strings.ContainsRune(capture.Text(scr), ufo) {
-					t.Errorf("%s %s frame %d: the visitor shows in the mini map", style, age, f)
-					scr.Fini()
-					break
-				}
+		for f := sg.Start; f < sg.Start+sg.Frames; f += 11 {
+			v := roguelike.New()
+			scr := capture.NewScreen(40, 15)
+			v.DrawCompact(scr, mapstyle.Rect{W: 40, H: 15}, mapstyle.Frame{Model: m, Anim: f})
+			if strings.ContainsRune(capture.Text(scr), ufo) {
+				t.Errorf("%s frame %d: the visitor shows in the mini map", age, f)
 				scr.Fini()
+				break
 			}
+			scr.Fini()
 		}
 	}
 }
 
-// TestSkyFrameBudget: in both styles a sky age's 200x60 frame takes well
+// TestSkyFrameBudget: a sky age's 200x60 frame takes well
 // under the map's 125 ms redraw (the budget is a fifth of it, generous for
 // a busy CI runner; actuals are logged).
 func TestSkyFrameBudget(t *testing.T) {
 	if testing.Short() || styletest.RaceEnabled {
 		t.Skip("timing")
 	}
-	for _, style := range Registry().Names() {
-		for _, age := range arcAges[1:] {
-			v, _ := Registry().New(style)
-			styletest.FrameBudget(t, style+" "+age, v, arcModel(age), 200, 60, 15, 25*time.Millisecond)
-		}
+	for _, age := range arcAges[1:] {
+		styletest.FrameBudget(t, age, roguelike.New(), arcModel(age), 200, 60, 15, 25*time.Millisecond)
 	}
 }
 

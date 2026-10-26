@@ -1,4 +1,4 @@
-package all
+package roguelike_test
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
+	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -23,8 +24,8 @@ var unaccented = strings.NewReplacer("á", "a", "é", "e", "í", "i", "ó", "o",
 
 // TestVibeTextNeverMovesWhatIsAroundIt: a text of the map is drawn by cells, never
 // by bytes. With every text the code writes itself read with accents (the
-// same letters in the same number of cells, but more bytes each), both styles
-// draw the same picture as with VibeMode off, once the accents are taken off
+// same letters in the same number of cells, but more bytes each), the map
+// draws the same picture as with VibeMode off, once the accents are taken off
 // again: the cursor walks the same way, the inspector says the same, the
 // tags and the signs land in the same cells. A text indexed by bytes or
 // measured with len shows here, in a place no one reads the English of.
@@ -43,11 +44,11 @@ func TestVibeTextNeverMovesWhatIsAroundIt(t *testing.T) {
 	// and the sky scenes.
 	ages := []string{"stone_age", "medieval_age", "modern_age", "cyberpunk_age", "fusion_age", "space_age", "galactic_age", "quantum_age"}
 
-	// pictures walks one style over one model and returns what it drew and said.
-	pictures := func(style string, m *mapmodel.Model) string {
+	// pictures walks the map over one model and returns what it drew and said.
+	pictures := func(m *mapmodel.Model) string {
 		var b strings.Builder
 		for _, size := range [][2]int{{160, 48}, {80, 24}} {
-			v, _ := Registry().New(style)
+			v := roguelike.New()
 			for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges} {
 				v.SetOption(o, true)
 			}
@@ -63,7 +64,7 @@ func TestVibeTextNeverMovesWhatIsAroundIt(t *testing.T) {
 					b.WriteString(capture.Text(scr))
 				}
 			}
-			v2, _ := Registry().New(style)
+			v2 := roguelike.New()
 			scr.SetSize(40, 15)
 			v2.DrawCompact(scr, mapstyle.Rect{W: 40, H: 15}, mapstyle.Frame{Model: m, Tier: mapmodel.TierUnicode})
 			b.WriteString(capture.Text(scr))
@@ -72,48 +73,46 @@ func TestVibeTextNeverMovesWhatIsAroundIt(t *testing.T) {
 		return b.String()
 	}
 
-	for _, style := range Registry().Names() {
-		for ai, age := range ages {
-			st := fixture.State(fixture.Options{Age: age, Seed: int64(7 + ai%3), Scale: 1.5, Routes: 2, Wars: ai % 3,
-				Harbinger: ai%2 == 0, Catastrophe: ai == 3, Ruins: ai%4 == 0})
-			prev := fixture.State(fixture.Options{Age: age, Seed: int64(7 + ai%3), Scale: 1, Routes: 1})
-			since := mapmodel.VisitOf(mapmodel.NewBuilder(nil).Build(&prev, nil))
+	for ai, age := range ages {
+		st := fixture.State(fixture.Options{Age: age, Seed: int64(7 + ai%3), Scale: 1.5, Routes: 2, Wars: ai % 3,
+			Harbinger: ai%2 == 0, Catastrophe: ai == 3, Ruins: ai%4 == 0})
+		prev := fixture.State(fixture.Options{Age: age, Seed: int64(7 + ai%3), Scale: 1, Routes: 1})
+		since := mapmodel.VisitOf(mapmodel.NewBuilder(nil).Build(&prev, nil))
 
-			vibe.Set(false)
-			plain := pictures(style, mapmodel.NewBuilder(nil).Build(&st, since))
+		vibe.Set(false)
+		plain := pictures(mapmodel.NewBuilder(nil).Build(&st, since))
 
-			// The script is empty, so the only words that change are the code's own.
-			restoreScript := vibe.UseScriptForTest(map[string]string{})
-			restoreRewriter := vibe.UseRewriterForTest(func(id, plain string) string {
-				var sb strings.Builder
-				after := false // the letter after a % is the verb of a format, not a word
-				for _, r := range plain {
-					switch {
-					case after:
-						sb.WriteRune(r)
-						after = false
-					case r == '%':
-						sb.WriteRune(r)
-						after = true
-					default:
-						sb.WriteString(accented.Replace(string(r)))
-					}
+		// The script is empty, so the only words that change are the code's own.
+		restoreScript := vibe.UseScriptForTest(map[string]string{})
+		restoreRewriter := vibe.UseRewriterForTest(func(id, plain string) string {
+			var sb strings.Builder
+			after := false // the letter after a % is the verb of a format, not a word
+			for _, r := range plain {
+				switch {
+				case after:
+					sb.WriteRune(r)
+					after = false
+				case r == '%':
+					sb.WriteRune(r)
+					after = true
+				default:
+					sb.WriteString(accented.Replace(string(r)))
 				}
-				return sb.String()
-			})
-			vibe.Set(true)
-			on := pictures(style, mapmodel.NewBuilder(nil).Build(&st, since))
-			vibe.Set(false)
-			restoreRewriter()
-			restoreScript()
+			}
+			return sb.String()
+		})
+		vibe.Set(true)
+		on := pictures(mapmodel.NewBuilder(nil).Build(&st, since))
+		vibe.Set(false)
+		restoreRewriter()
+		restoreScript()
 
-			if !strings.ContainsAny(on, "áéíóú") {
-				t.Errorf("%s %s: with VibeMode on nothing of the picture was read with accents", style, age)
-			}
-			if got := unaccented.Replace(on); got != plain {
-				t.Errorf("%s %s: with VibeMode on (accents taken off again) the picture is not the plain one: %s",
-					style, age, firstDifferingLine(plain, got))
-			}
+		if !strings.ContainsAny(on, "áéíóú") {
+			t.Errorf("%s: with VibeMode on nothing of the picture was read with accents", age)
+		}
+		if got := unaccented.Replace(on); got != plain {
+			t.Errorf("%s: with VibeMode on (accents taken off again) the picture is not the plain one: %s",
+				age, firstDifferingLine(plain, got))
 		}
 	}
 }
