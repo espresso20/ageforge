@@ -126,3 +126,9 @@ func TestRunEndingRecord(t *testing.T) {
 		t.Errorf("a fall: %v", kinds)
 	}
 }
+
+// Came reports whether a catastrophe is part of the ending: a fall, or a
+// prestige the Last Passage came to.
+func (e RunEnding) Came() bool {
+	return e.Kind == RunEndFallen || e.Kind == RunEndEndured || e.Kind == RunEndSuccumbed
+}

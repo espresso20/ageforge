@@ -380,3 +380,14 @@ func TestPrestigeRecordedByAge(t *testing.T) {
 		t.Errorf("account stats JSON %s has no prestiges_by_age", data)
 	}
 }
+
+// templateAgeCount is how many items t holds for age.
+func templateAgeCount(t []PlanTemplateItem, age string) int {
+	n := 0
+	for _, it := range t {
+		if it.Age == age {
+			n++
+		}
+	}
+	return n
+}

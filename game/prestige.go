@@ -54,9 +54,6 @@ type PrestigeManager struct {
 	prestigeCoefficient float64
 }
 
-// NewPrestigeManager creates a new prestige manager on the core ruleset.
-func NewPrestigeManager() *PrestigeManager { return NewPrestigeManagerWith(rules.Core()) }
-
 // NewPrestigeManagerWith creates a new prestige manager on set: its shop,
 // its ages and its depth points.
 func NewPrestigeManagerWith(set *rules.Set) *PrestigeManager {

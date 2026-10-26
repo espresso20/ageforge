@@ -69,9 +69,6 @@ type BuildingManager struct {
 	upgradeCost float64
 }
 
-// NewBuildingManager creates a building manager on the core ruleset.
-func NewBuildingManager() *BuildingManager { return NewBuildingManagerWith(rules.Core()) }
-
 // NewBuildingManagerWith creates a building manager with set's buildings.
 func NewBuildingManagerWith(set *rules.Set) *BuildingManager {
 	defs := set.BuildingMap()

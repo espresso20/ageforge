@@ -308,13 +308,6 @@ func (ge *GameEngine) wonderTicks(ticks int) int {
 	return techTimeTicks(ticks, ge.Research.Mechanic(config.MechanicWonderBuildTicks))
 }
 
-// WonderBuildTicks is BuildTicks for a wonder listed at base ticks, with the
-// techs' terms read off a snapshot (a mechanic no tech has touched is absent
-// there and reads as no cut): the panels list a wonder's time with it.
-func WonderBuildTicks(base int, rs ResearchState, k float64) int {
-	return BuildTicks(techTimeTicks(base, rs.Mechanics[config.MechanicWonderBuildTicks]), rs.BuildTime, k)
-}
-
 // BuildTicks is how long a building listed at base ticks takes to build
 // with the techs' factor tech on construction time (1 with none, never
 // under config.BuildTimeFloor), on ground of speed k: the factor multiplies

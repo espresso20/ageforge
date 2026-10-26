@@ -54,10 +54,6 @@ func (vm *WorkerManager) refreshFoodClass() {
 	vm.foodClass, vm.foodClassOK = vm.rules.WorkerClass("food", vm.ageKey)
 }
 
-// NewWorkerManager creates a new single-pool worker manager on the core
-// ruleset.
-func NewWorkerManager() *WorkerManager { return NewWorkerManagerWith(rules.Core()) }
-
 // NewWorkerManagerWith creates a new single-pool worker manager on set.
 // All workers belong to a single "worker" pool — domain restrictions are removed.
 func NewWorkerManagerWith(set *rules.Set) *WorkerManager {

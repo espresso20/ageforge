@@ -79,9 +79,6 @@ func eventDelayIn(set *rules.Set, rng *rand.Rand, age string) int {
 // stream.
 const eventUnscheduled = -1
 
-// NewEventManager creates a new event manager on the core ruleset.
-func NewEventManager() *EventManager { return NewEventManagerWith(rules.Core()) }
-
 // NewEventManagerWith creates a new event manager with set's events. It makes
 // no random draws; the first event is scheduled on the first Tick.
 func NewEventManagerWith(set *rules.Set) *EventManager {

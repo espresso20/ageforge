@@ -75,17 +75,6 @@ func templateAgeLoad(t []PlanTemplateItem, age string) int {
 	return n
 }
 
-// templateAgeCount is how many items t holds for age.
-func templateAgeCount(t []PlanTemplateItem, age string) int {
-	n := 0
-	for _, it := range t {
-		if it.Age == age {
-			n++
-		}
-	}
-	return n
-}
-
 // loadPlanTemplate is a saved template as the engine accepts it: ages set
 // knows and known kinds (deals never), counts in range, at most MaxPlanItems
 // per age.
@@ -489,33 +478,6 @@ func (ge *GameEngine) legacyOnAgeEnteredLocked() {
 	ge.meetOldFriendsLocked()
 }
 
-// legacyOnPurchaseLocked puts a kit item to work the moment it is bought:
-// the template's slice for this age (unless the plan log already holds
-// something written in this age), the shares (unless some are set), and old
-// friends already within reach. Caller holds the write lock.
-func (ge *GameEngine) legacyOnPurchaseLocked(key string) {
-	switch key {
-	case config.LegacyPlan:
-		// The ages this run already passed keep their slices as written
-		// (the run's log takes them over), and this age's slice goes into
-		// the plan unless something was written here already.
-		for _, t := range ge.Prestige.legacyPlan {
-			if a := t.Age; a != ge.age && ge.enteredAgesLocked()[a] && templateAgeCount(ge.planLog, a) == 0 {
-				ge.copyTemplateSliceLocked(a)
-			}
-		}
-		if templateAgeCount(ge.planLog, ge.age) == 0 {
-			ge.applyPlanTemplateLocked()
-		}
-	case config.LegacyWorkers:
-		if ge.applyLegacySharesLocked() {
-			ge.addLogAbout("info", TagPeople, vibe.Line("game.legacy.legacyOnPurchaseLocked.01", "Your remembered roster is set again. ")+ge.applySharesLocked("").Line)
-		}
-	case config.LegacyFactions:
-		ge.meetOldFriendsLocked()
-	}
-}
-
 // enteredAgesLocked is every age this run has entered: the first age, the
 // ages it reached and the current one. Caller holds the lock.
 func (ge *GameEngine) enteredAgesLocked() map[string]bool {
@@ -524,16 +486,6 @@ func (ge *GameEngine) enteredAgesLocked() map[string]bool {
 		out[a] = true
 	}
 	return out
-}
-
-// copyTemplateSliceLocked writes the template's slice for age into the
-// run's plan log without adding it to the plan. Caller holds the write lock.
-func (ge *GameEngine) copyTemplateSliceLocked(age string) {
-	for _, t := range ge.Prestige.legacyPlan {
-		if t.Age == age {
-			ge.planLog = append(ge.planLog, t)
-		}
-	}
 }
 
 // ===== Snapshot =====

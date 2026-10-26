@@ -430,7 +430,6 @@ game.legacy.applyPlanTemplateLocked.08,quest
 game.legacy.applyPlanTemplateLocked.09,quests
 game.legacy.meetOldFriendsLocked.01,Old friends: the %s remember your people and slide back into your DMs.
 game.legacy.startRunLegacyLocked.01,"Roster: your shares carry into the new run, no reset, we keep the lore. "
-game.legacy.legacyOnPurchaseLocked.01,Your remembered roster respawns in place. 
 game.mastery.masteryEntryLine.01,Been here before: the %s runs %s faster while you speedrun back to your record.
 game.mastery.masteryEntryLine.02,"Known ground, muscle memory era: the %s runs %s faster (mastery %d)."
 game.mastery.masteryEntryLine.03,Blind run: the %s runs at 1x until a run clears it.

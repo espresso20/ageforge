@@ -1316,19 +1316,6 @@ func modTime(e os.DirEntry) time.Time {
 	return time.Time{}
 }
 
-// WipeAllSaves deletes all save files
-func WipeAllSaves() error {
-	dir := saveDirectory()
-	files, err := saveFiles(dir)
-	if err != nil {
-		return err
-	}
-	for _, e := range files {
-		os.Remove(filepath.Join(dir, e.Name()))
-	}
-	return nil
-}
-
 // SaveExists checks if a save file exists at either the canonical or legacy path.
 func SaveExists(filename string) bool {
 	_, err := os.Stat(savePath(filename))

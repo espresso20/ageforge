@@ -2,13 +2,14 @@ package game
 
 import (
 	"fmt"
-	"github.com/espresso20/ageforge/detmath"
 	"math"
 	"math/rand"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/espresso20/ageforge/detmath"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -120,12 +121,6 @@ func tellRoadStory(words config.MissionWords, place string, e RoadEvent, told st
 		"<weather>", wordAt(words.Weather[:], e.WeatherIndex),
 		"<find>", wordAt(words.Finds[:], e.FindIndex),
 	).Replace(told)
-}
-
-// applyRoadEvent carries a road event out and returns its story as read now.
-func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
-	words, _ := ge.rules.MissionWords(a.Age)
-	return tellRoadStory(words, a.roadPlace(), *e, ge.roadEventTold(a, e))
 }
 
 // roadEventTold carries a road event out (it moves the mission's time, odds

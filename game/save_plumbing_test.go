@@ -171,3 +171,16 @@ func TestSaveFiles(t *testing.T) {
 		t.Errorf("saves left after WipeAllSaves: %v", names)
 	}
 }
+
+// WipeAllSaves deletes all save files
+func WipeAllSaves() error {
+	dir := saveDirectory()
+	files, err := saveFiles(dir)
+	if err != nil {
+		return err
+	}
+	for _, e := range files {
+		os.Remove(filepath.Join(dir, e.Name()))
+	}
+	return nil
+}

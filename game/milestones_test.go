@@ -563,3 +563,14 @@ func TestKnowledgeSeekerReadsResearchWork(t *testing.T) {
 		t.Fatalf("knowledge_seeker not done at %v research", ge.Stats.ResearchWork)
 	}
 }
+
+// GetCurrentTitle returns the current civilization title
+func (mm *MilestoneManager) GetCurrentTitle() string {
+	return mm.currentTitle
+}
+
+// computeProgress computes progress indicators for a milestone definition
+func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params MilestoneSnapshotParams) []MilestoneProgress {
+	plan := mm.planFor(def)
+	return mm.progressFor(def, &plan, params, nil)
+}

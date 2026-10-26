@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -443,3 +444,26 @@ func TestOldActiveFieldsAreIgnoredOnLoad(t *testing.T) {
 		t.Errorf("completed count = %d, want 4", mm.completedCount)
 	}
 }
+
+// CampaignPay is amount of a campaign's loot with the techs' share on top:
+// amount itself with none.
+func (mm *MilitaryManager) CampaignPay(amount float64) float64 {
+	if mm.campaignPay <= 1 {
+		return amount
+	}
+	return float64(amount * mm.campaignPay)
+}
+
+// ActiveOf returns every mission under way in a tier, oldest first.
+func (mm *MilitaryManager) ActiveOf(tier string) []*ActiveExpedition {
+	var out []*ActiveExpedition
+	for _, a := range mm.active {
+		if a.Tier == tier {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
+// ActiveAll returns every mission under way, in the order they were sent.
+func (mm *MilitaryManager) ActiveAll() []*ActiveExpedition { return slices.Clone(mm.active) }

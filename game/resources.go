@@ -25,9 +25,6 @@ type ResourceManager struct {
 	order []string
 }
 
-// NewResourceManager creates a resource manager on the core ruleset.
-func NewResourceManager() *ResourceManager { return NewResourceManagerWith(rules.Core()) }
-
 // NewResourceManagerWith creates a resource manager with set's resources.
 func NewResourceManagerWith(set *rules.Set) *ResourceManager {
 	rm := &ResourceManager{
@@ -131,13 +128,6 @@ func (rm *ResourceManager) Pay(costs map[string]float64) bool {
 		rm.Remove(key, amount)
 	}
 	return true
-}
-
-// SetRate sets the production rate for a resource
-func (rm *ResourceManager) SetRate(key string, rate float64) {
-	if r, ok := rm.resources[key]; ok {
-		r.Rate = rate
-	}
 }
 
 // ApplyRates applies per-tick production rates, in key order.

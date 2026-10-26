@@ -66,12 +66,6 @@ type RunEnding struct {
 // Prestige reports whether the run ended in a prestige (of any kind).
 func (e RunEnding) Prestige() bool { return e.Kind != RunEndFallen }
 
-// Came reports whether a catastrophe is part of the ending: a fall, or a
-// prestige the Last Passage came to.
-func (e RunEnding) Came() bool {
-	return e.Kind == RunEndFallen || e.Kind == RunEndEndured || e.Kind == RunEndSuccumbed
-}
-
 // endingKind is the RunEnding.Kind of a prestige.
 func (how prestigeEnding) endingKind() string {
 	switch how {
