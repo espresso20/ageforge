@@ -28,10 +28,12 @@ go run main.go
 
 ## Testing
 ```bash
-go test ./...
-make smoke        # fast smoke tier (runs on every PR, pacing enforced)
-make smoke-full   # full tier (nightly)
+go test ./...                 # every PR; the static checks run inside go test ./smoke, the bot does not (no smokebot tag)
+go vet -tags smokebot ./...   # keeps the parked bot compiling (go.yml's check job runs this)
+make smoke        # the bot's fast tier, parked: passes -tags smokebot, run by hand
+make smoke-full   # the bot's full tier, parked: the Smoke workflow is disabled in repository settings
 ```
+A pull request runs the `smoke (fast tier)` job only with the `smoke` label, or from the Actions tab (`gh workflow run Go --ref <branch>`). See CONTRIBUTING.md, "Smoke testing".
 
 ## Website & Wiki Sync Rule
 **Any change to the game MUST also update the appropriate pages in `site/`.**
