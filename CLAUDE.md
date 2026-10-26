@@ -38,9 +38,9 @@ A pull request runs the `smoke (fast tier)` job only with the `smoke` label, or 
 ## Website & Wiki Sync Rule
 **Any change to the game MUST also update the appropriate pages in `site/`.**
 - Balance change (building cost, resource rate, tech effect, age requirement) → update `site/docs/` wiki page for that system
-- New building/tech/age/resource/wonder/expedition → add it to the relevant wiki page AND the landing page if it affects headline stats
+- New building/tech/age/resource/wonder/expedition → add it to the relevant wiki page
 - Mechanic change (new command, removed command, renamed key) → update `site/docs/commands.md` and any affected wiki page
-- The landing page `site/index.html` hero stats must stay accurate
+- The landing page `site/index.html` states no counts (no hero stats); don't add numbers back.
 - Use a subagent for the wiki update if it spans more than 2 files
 
 ## Subagent Usage — Token Efficiency (CRITICAL)
