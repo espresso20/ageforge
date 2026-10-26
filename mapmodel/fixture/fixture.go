@@ -1,8 +1,7 @@
 // Package fixture builds synthetic, deterministic game states for map tests:
-// any age, any seed, as built-up as asked, without running the engine. The
-// captures use real smoke-bot states instead (see ui/mapstyle/capture); these
-// are for the fast checks (every age at every size, determinism, placement
-// stability, traffic density).
+// any age, any seed, as built-up as asked, without running the engine. They
+// serve the fast checks (every age at every size, determinism, placement
+// stability, traffic density) and the landing page's frames.
 package fixture
 
 import (

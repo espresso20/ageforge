@@ -1,9 +1,8 @@
 name: Go
 
 on:
-  # labeled: adding the "smoke" label to a pull request runs the smoke job.
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened]
     paths-ignore:
       - "site/**"
       - "**.md"
@@ -47,11 +46,6 @@ jobs:
 
       - name: go vet
         run: go vet ./...
-
-      # The test bot is parked behind the smokebot tag (see the smoke job
-      # below); this keeps the parked code compiling while nothing runs it.
-      - name: go vet (parked test bot)
-        run: go vet -tags smokebot ./...
 
       - name: go build
         run: go build ./...
@@ -104,92 +98,3 @@ jobs:
           else
             go test -timeout 20m $pkgs
           fi
-
-  # The smoke suite's fast tier on every pull request (see CONTRIBUTING.md,
-  # "Smoke testing"), without the scenarios that play the test bot: static
-  # gates, docsync, accounts, perf budgets and the UI at small terminal sizes.
-  #
-  # The bot is switched off for now (2026-10-10) while the economy's numbers
-  # are being re-derived by calculation: it does not play on pull requests and
-  # no pacing band can fail a change. Its code is parked behind the smokebot
-  # build tag, so everyday builds, vet and the test shards skip it and every
-  # cmd/smoke run passes -tags smokebot. The nightly and weekly Smoke workflow
-  # and the Determinism workflow are disabled in the repository settings for
-  # the same reason. To switch it back on: restore the line below to
-  # `go run -tags smokebot ./cmd/smoke -tier fast -pacing enforce -v -out smoke-report`
-  # and run `gh workflow enable Smoke` and `gh workflow enable Determinism`.
-  # The smoke package's unit tests that need the bot to play well are skipped
-  # the same way (smoke/bot_switch_test.go): they build only with the tag, and
-  # then also want AGEFORGE_BOT_TESTS=1.
-  # Only on request (owner, 2026-10-20): a pull request labeled "smoke", or a
-  # manual run (gh workflow run Go --ref <branch>). The smoke package's unit
-  # tests, which hold the static rule checks, still run in the test shards.
-  smoke:
-    name: smoke (fast tier)
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'smoke')
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    env:
-      # A flag, not the secrets themselves, so the smoke step (PR code) never
-      # sees them. Empty on fork PRs and until the secrets are set; the email
-      # step then skips. Set the repo variable SMOKE_EMAIL_PR to "false" to
-      # stop PR emails and keep the nightly ones.
-      MAIL_ENABLED: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_PASSWORD != '' && secrets.MAIL_TO != '' && vars.SMOKE_EMAIL_PR != 'false' }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Smoke (fast tier)
-        id: smoke
-        run: go run -tags smokebot ./cmd/smoke -tier fast -scenario static,docsync,accounts,perf,ui -v -out smoke-report
-
-      - name: Job summary
-        if: ${{ always() }}
-        run: |
-          if [ -f smoke-report/summary.md ]; then
-            cat smoke-report/summary.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "The smoke run wrote no report; see the step log." >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: ${{ always() }}
-        with:
-          name: smoke-report
-          path: smoke-report/
-          if-no-files-found: warn
-
-      - name: Email body
-        id: email
-        if: ${{ always() && env.MAIL_ENABLED == 'true' }}
-        env:
-          RESULT: ${{ steps.smoke.outcome == 'success' && 'PASS' || 'FAIL' }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: bash scripts/smoke-email.sh "PR #$PR_NUMBER"
-
-      - name: Email the report
-        if: ${{ always() && env.MAIL_ENABLED == 'true' && steps.email.outcome == 'success' }}
-        # dawidd6/action-send-mail v22
-        uses: dawidd6/action-send-mail@67ce3558d613188179559c61d3565140cf389968
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          to: ${{ secrets.MAIL_TO }}
-          from: AgeForge Smoke <${{ secrets.MAIL_USERNAME }}>
-          subject: ${{ steps.email.outputs.subject }}
-          body: file://${{ runner.temp }}/smoke-email.md
-          html_body: file://${{ runner.temp }}/smoke-email.md
-          convert_markdown: true
-          attachments: ${{ steps.email.outputs.attachments }}

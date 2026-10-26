@@ -1,6 +1,6 @@
 # CI checks
 
-What the repository checks on every pull request and on a schedule, how to run each check on your own machine, and how to quiet a false positive. The tests, `gofmt`, `go vet`, the build and the determinism run live in `go.yml` and `determinism.yml` and are described in [CONTRIBUTING.md](../CONTRIBUTING.md). This page covers the checks added around them.
+What the repository checks on every pull request and on a schedule, how to run each check on your own machine, and how to quiet a false positive. The tests, `gofmt`, `go vet` and the build live in `go.yml` and are described in [CONTRIBUTING.md](../CONTRIBUTING.md). This page covers the checks added around them.
 
 ## Report-only for now
 
@@ -46,16 +46,6 @@ Baseline on 2026-10-23, so you can tell old findings from new ones:
 | `release-snapshot.yml` | GoReleaser | by hand | Builds the release binaries and uploads them as an artifact. Publishes nothing. |
 
 Every workflow sets `permissions: contents: read` at the top and asks for more only on the job that needs it. The workflows that run on pull requests cancel a superseded run of the same pull request. Every action is pinned to a commit SHA with its version in a comment, and Dependabot proposes the bumps (one grouped pull request a week).
-
-## The parked test bot
-
-The smoke suite's test bot is switched off (2026-10-10) and its code builds only with the `smokebot` build tag. CI follows that:
-
-- `go.yml` vets the tagged build in its `check` job (`go vet -tags smokebot ./...`), so the parked code keeps compiling. Build, vet, the test shards, golangci-lint and the dead code report all see the default build, where the bot does not exist.
-- Every job that runs `cmd/smoke` passes the tag: the `smoke (fast tier)` job in `go.yml` (label `smoke` or run by hand), the nightly and weekly jobs in `smoke.yml`, and `scripts/determinism.sh`. The Smoke and Determinism workflows are disabled in the repository settings; `gh workflow enable Smoke` and `gh workflow enable Determinism` turn them back on.
-- Without the tag `go run ./cmd/smoke` prints how to build it and exits 2, so a job that forgets the tag fails instead of passing on nothing.
-
-To run the bot on your machine, add `-tags smokebot` to the command (`make smoke` does). CONTRIBUTING.md, "Smoke testing", has the details.
 
 ## Run a check locally
 
