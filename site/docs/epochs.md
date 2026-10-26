@@ -201,7 +201,7 @@ The Stone Era's timed events run the listed time in the Primitive and Stone Ages
 | Humming Grove | Good | Primitive | 10 | +5 min of wood income, faith production +50% | 120 ticks (~4m); 312 (~10m 24s) from Bronze |
 | Beast Stampede | Bad, raid | Primitive | 8 | Lose 10% of your wood, 8% of your food | Instant |
 | River Blessing | Good | Primitive | 12 | Food production +25% | 144 ticks (~4m 48s); 374 (~12m 28s) from Bronze |
-| Wandering Sage | Good | Primitive | 7 | research progress worth 10 min of your scholars' work, +10 min of faith income | Instant |
+| Wandering Sage | Good | Primitive | 7 | Research progress worth 10 min of your scholars' work, +10 min of faith income | Instant |
 
 ### Iron Era ⚔
 
@@ -220,7 +220,7 @@ The Stone Era's timed events run the listed time in the Primitive and Stone Ages
 | Coal Seam Discovery | Good | Industrial | 10 | Coal production +30% | 468 ticks (~15m 36s) |
 | Workers' Uprising | Bad | Industrial | 9 | Lose 15% of your faith, -8% workers, food production -15% | 312 ticks (~10m 24s) |
 | Colonial Bounty | Good | Colonial | 8 | +12 min of gold income | Instant |
-| Steam Age Inventor | Good | Industrial | 7 | research progress worth 8 min of your scholars' work, research speed +20% | 374 ticks (~12m 28s) |
+| Steam Age Inventor | Good | Industrial | 7 | Research progress worth 8 min of your scholars' work, research speed +20% | 374 ticks (~12m 28s) |
 | Industrial Blight | Bad | Industrial | 9 | Lose 10% of your faith, food production -20% | 374 ticks (~12m 28s) |
 
 ### Electric Era ⚡
@@ -231,7 +231,7 @@ The Stone Era's timed events run the listed time in the Primitive and Stone Ages
 | Oil Strike | Good | Victorian | 8 | +8 min of gold income, oil production +40% | 468 ticks (~15m 36s) |
 | The Broadcast | Good | Victorian | 8 | +10 min of culture income, faith production +20% | 468 ticks (~15m 36s) |
 | Labor Movement | Bad | Victorian | 9 | Food production -15%, gold production -15% | 156 ticks (~5m 12s) |
-| Nuclear Theory | Good | Atomic | 6 | research progress worth 10 min of your scholars' work, research speed +25% | 468 ticks (~15m 36s) |
+| Nuclear Theory | Good | Atomic | 6 | Research progress worth 10 min of your scholars' work, research speed +25% | 468 ticks (~15m 36s) |
 
 ### Digital Era ▣
 
@@ -263,7 +263,7 @@ AI Breakthrough's min age, the Cyberpunk Age, belongs to the Neon Era, but the e
 | Dimensional Harvest | Good | Quantum | 8 | +8 min of antimatter income, +8 min of quantum flux income | Instant |
 | Galactic Council | Good | Quantum | 6 | +10 min of gold income, gold production +20% | 562 ticks (~18m 44s) |
 | Entropy Wave | Bad | Quantum | 8 | Quantum flux production -20%, research speed -20% | 374 ticks (~12m 28s) |
-| Transcendence Signal | Good | Quantum | 4 | research progress worth 15 min of your scholars' work, +10 min of culture income | Instant |
+| Transcendence Signal | Good | Quantum | 4 | Research progress worth 15 min of your scholars' work, +10 min of culture income | Instant |
 
 The raids among these are blunted by your garrison. See [Raids and your garrison](events.md#raids-and-your-garrison).
 
