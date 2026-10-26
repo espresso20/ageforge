@@ -8,9 +8,9 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// commands.go is the command vocabulary the maps teach. Whatever a style's
+// commands.go is the command vocabulary the map teaches. Whatever the
 // cursor is on, the model says which command a player would type for it,
-// so every style speaks the same words and a test can check them against
+// so the map speaks the registry's words and a test can check them against
 // the command registry.
 
 // BuildingCommand is the command for a building type: finish an upgrade,

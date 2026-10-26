@@ -190,7 +190,7 @@ func lotPenalty(lin string, w *World, p *Plan, i int, dc float64) float64 {
 		// Harbor buildings go on the shore, where their glyph reads as a
 		// pier or jetty running into the water. That is intended: the
 		// harbor lineage is the town's waterfront, and a pier is the
-		// clearest one-cell picture of it (skyline puts them on its bays).
+		// clearest one-cell picture of it.
 		if !p.NearWater[i] {
 			return 40
 		}

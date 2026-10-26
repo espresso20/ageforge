@@ -10,8 +10,7 @@ import (
 
 // space_mandala.go is the Transcendent Age: beyond matter. The map becomes
 // a mandala of light on deep indigo, built from the civilization's own
-// history (the geometry is mapstyle.LayMandala, which the skyline draws
-// too): a bright core; a crown of eight petals for the age's own
+// history (the geometry is mapstyle.LayMandala): a bright core; a crown of eight petals for the age's own
 // buildings; and one ring for every era the player passed through, the
 // Stone Era innermost, each a dotted line strung with its era's glyph in
 // its era's muted colour. It is strictly symmetric about the core, with

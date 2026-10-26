@@ -26,7 +26,7 @@ type Sighting struct {
 	Kind   SightingKind
 	Start  int    // first animation frame
 	Frames int    // how long it lasts
-	Roll   uint64 // a hash for the styles to place it with
+	Roll   uint64 // a hash for the map to place it with
 }
 
 // Phase is how far into the visit frame anim is, from 0 to 1.

@@ -9,7 +9,7 @@ import (
 // Fusion Age: the city eats the land (Modern, Information, Digital), then
 // the megacity rises (Cyberpunk) and is powered (Fusion). Each age has a
 // palette, a signature structure, a signature mover and one ambient effect,
-// so every age reads at a glance; both map styles draw from this table, and
+// so every age reads at a glance; the map draws from this table, and
 // the greenery fade and the smog are rules the tests hold them to.
 
 // CityLook is one Earth-arc age's look.

@@ -40,9 +40,6 @@ func TestMoverRoster(t *testing.T) {
 				t.Errorf("%s: %q breaks the house style", i.Key, s)
 			}
 		}
-		if !Introduced(k, i.From) || i.From > 0 && Introduced(k, i.From-1) {
-			t.Errorf("%s: Introduced disagrees with From %d", i.Key, i.From)
-		}
 	}
 	// people stroll; nothing moves faster than a cell a frame
 	if p := MoverWalker.Info().Pace; p != 5 {
@@ -71,7 +68,7 @@ func TestMoverRoster(t *testing.T) {
 			t.Errorf("%s arrives in the %s, want the %s", c.k.Info().Key, got, c.age)
 		}
 	}
-	if Introduced(MoverNone, len(ages)-1) || MoverNone.Info().In(0) || Introduced(NumMovers, 0) {
+	if MoverNone.Info().In(len(ages)-1) || MoverNone.Info().In(0) || NumMovers.Info().In(0) {
 		t.Error("the empty mover is about")
 	}
 	if len(MoversAt(0)) == 0 || len(MoversAt(len(ages)-1)) == 0 {

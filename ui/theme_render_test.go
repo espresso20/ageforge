@@ -161,7 +161,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 }
 
 // pixelGlyph reports runes that are legitimately drawn with fg == bg:
-// half-block pixels (wonder icons, the skyline map), where '▄' with equal
+// half-block pixels (wonder icons), where '▄' with equal
 // upper and lower pixels is a solid fill.
 func pixelGlyph(r rune) bool { return r == '▄' || r == '▀' }
 

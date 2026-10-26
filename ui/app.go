@@ -49,7 +49,7 @@ func (a *App) setup() {
 	applyAccountTheme(a.engine)
 
 	a.dashboard = NewDashboard(a.tviewApp, a.engine, a.pages)
-	// The arrival screen draws the player's town in their map style: it
+	// The arrival screen draws the player's town in their glyph set and theme: it
 	// reads the game and the account's settings through the engine.
 	a.dashboard.overlayMgr.engine = a.engine
 	// Esc reaches the dashboard before it reaches an overlay, and the

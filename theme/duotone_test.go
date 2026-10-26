@@ -2,7 +2,7 @@ package theme
 
 import "testing"
 
-// TestDuotoneThemesSpanARamp: a Duotone theme's pictures (the skyline map)
+// TestDuotoneThemesSpanARamp: a Duotone theme's pictures (the map)
 // fold every color onto the ramp from Background to Text, so the two ends
 // must be far enough apart for a picture to survive the fold, and at least
 // one theme must use it.

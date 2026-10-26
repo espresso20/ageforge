@@ -1,12 +1,12 @@
-// Package mapmodel is the one map model every map style draws from.
+// Package mapmodel is the one map model the map draws from.
 //
 // It is a pure function of (game snapshot, seed, tick): Build reads a
 // game.GameState and returns a Model holding everything a renderer needs
-// (buildings grouped by lineage and by age, stable placement for the town
-// and the skyline, workers, wonders, trade routes, civilizations,
-// expeditions, the harbinger and catastrophe pressure, the clock and the
-// weather, the flows summary and the since-last-visit recap). A new game
-// feature is modelled here once; styles stay thin.
+// (buildings grouped by lineage and by age, stable placement for the town,
+// workers, wonders, trade routes, civilizations, expeditions, the harbinger
+// and catastrophe pressure, the clock and the weather, the flows summary and
+// the since-last-visit recap). A new game feature is modelled here once; the
+// map stays thin.
 //
 // The model is deterministic across machines (it follows the float rules
 // for simulation code and the smoke harness fingerprints it), cheap (a few
@@ -46,8 +46,7 @@ type Model struct {
 	// Lineages groups them; only lineages with something built appear.
 	Lineages []*Lineage
 
-	Town    Town    // the roguelike town: world, plan and placed tiles
-	Skyline Skyline // the panorama: one district per age, placed lots
+	Town Town // the town: world, plan and placed tiles
 
 	Wonders     []Wonder
 	Workers     Workers
@@ -62,9 +61,9 @@ type Model struct {
 	Flows       Flows
 	Recap       Recap
 
-	// LayoutKey hashes everything a style's static layer depends on (what
+	// LayoutKey hashes everything the map's static layer depends on (what
 	// is placed, staffing, civs, routes, expeditions, the harbinger and
-	// catastrophe) but not the tick, so a style can keep its scene while
+	// catastrophe) but not the tick, so the map can keep its scene while
 	// only the clock moves.
 	LayoutKey uint64
 
@@ -141,8 +140,6 @@ type Route struct {
 	Disrupted bool
 	Imports   []string
 	Cycles    int
-	// Mode is how its goods travel (land, sea or air), from the route data.
-	Mode RouteMode
 	// Civ is the civ the route's caravans travel to: a cosmetic,
 	// deterministic pick among the civs you trade with ("" when you have
 	// met none).
@@ -242,7 +239,6 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	m.people(st)
 	m.world(st)
 	m.Town = b.town(m)
-	m.Skyline = skylineFor(m)
 	m.Recap = recap(m, st, since)
 	m.Flows = flowsFor(m, st)
 	m.Activity = activityFor(m)
@@ -573,7 +569,7 @@ func (m *Model) world(st *game.GameState) {
 		}
 	}
 	for _, r := range st.Trade.ActiveRoutes {
-		rt := Route{Key: r.Key, Name: r.Name, Disrupted: r.Disrupted, Cycles: r.CyclesDone, Mode: cat.RouteMode(r.Key)}
+		rt := Route{Key: r.Key, Name: r.Name, Disrupted: r.Disrupted, Cycles: r.CyclesDone}
 		rt.Imports = slices.Sorted(maps.Keys(r.Import))
 		if len(partners) > 0 {
 			rt.Civ = partners[Hash(m.Seed, HashStr(r.Key))%uint64(len(partners))]

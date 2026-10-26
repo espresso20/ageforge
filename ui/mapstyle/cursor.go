@@ -139,7 +139,7 @@ func (p *Palette) CursorMargins() (glyph, ground, over, text float64) {
 }
 
 // The margins every palette's cursor keeps (CursorMargins), which the
-// tests of each style hold it to.
+// map's tests hold it to.
 const (
 	// CursorFromGlyph: five times what is just noticeable side by side.
 	// No glyph is the cursor's colour. CursorFromGlyphGrey is the margin

@@ -357,7 +357,7 @@ func TestSkyNoLaterAge(t *testing.T) {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Scale: 2})
 		s := newSkyScene(m, newSkyBase(m, m.Sky()))
 		for _, mv := range s.movers {
-			if !mapmodel.Introduced(skyMoverKinds[mv.kind], m.AgeIdx) {
+			if skyMoverKinds[mv.kind].Info().From > m.AgeIdx {
 				t.Errorf("%s: a %s before its age", age, mv.info.Key)
 			}
 		}

@@ -43,10 +43,9 @@ type spot struct {
 }
 
 // TestPlacementNeverMoves: growing a settlement (more of this age's types,
-// new types) never moves a town tile or a skyline silhouette that was
-// already there. Town tiles may change which of their lineage's types they
-// show (an in-place re-skin), never where they are; the occupied lots only
-// grow.
+// new types) never moves a town tile that was already there. Town tiles may
+// change which of their lineage's types they show (an in-place re-skin),
+// never where they are.
 func TestPlacementNeverMoves(t *testing.T) {
 	for _, age := range []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "digital_age", "galactic_age"} {
 		for _, seed := range []int64{3, 7} {
@@ -57,7 +56,6 @@ func TestPlacementNeverMoves(t *testing.T) {
 				st = fixture.Grow(st, step)
 				cur := b.Build(&st, nil)
 				checkTown(t, fmt.Sprintf("%s/%d step %d", age, seed, step), prev, cur)
-				checkSkyline(t, fmt.Sprintf("%s/%d step %d", age, seed, step), prev, cur)
 				prev = cur
 			}
 		}
@@ -88,43 +86,6 @@ func checkTown(t *testing.T, name string, prev, cur *mapmodel.Model) {
 		}
 		if !found {
 			t.Fatalf("%s: wonder %s moved or vanished", name, w.Key)
-		}
-	}
-}
-
-// anchor is the world column a lot's position is measured from: its
-// district's east edge (where the bay begins). A district widens to fit what
-// it holds, which carries the districts east of it, so a silhouette keeps its
-// place against its district's east edge, not its world column.
-func anchor(m *mapmodel.Model, l mapmodel.Lot) int {
-	d := m.Skyline.Districts[l.Age]
-	return d.X0 + d.LandW
-}
-
-func checkSkyline(t *testing.T, name string, prev, cur *mapmodel.Model) {
-	t.Helper()
-	type id struct {
-		key  string
-		copy int
-	}
-	at := map[id]mapmodel.Lot{}
-	for _, l := range cur.Skyline.Lots {
-		at[id{l.Key, l.Copy}] = l
-	}
-	for _, l := range prev.Skyline.Lots {
-		c, ok := at[id{l.Key, l.Copy}]
-		if !ok {
-			t.Fatalf("%s: skyline lot %s#%d vanished", name, l.Key, l.Copy)
-		}
-		if c.X-anchor(cur, c) != l.X-anchor(prev, l) || c.Row != l.Row || c.Seed != l.Seed {
-			t.Fatalf("%s: skyline lot %s#%d moved from %d/%d to %d/%d in its district", name, l.Key, l.Copy,
-				l.X-anchor(prev, l), l.Row, c.X-anchor(cur, c), c.Row)
-		}
-	}
-	for i, d := range prev.Skyline.Districts {
-		c := cur.Skyline.Districts[i]
-		if c.Age != d.Age || c.X0 < d.X0 || c.LandW < d.LandW || c.Bay != d.Bay || c.BayW < d.BayW {
-			t.Fatalf("%s: district %d shrank or changed: %+v -> %+v", name, i, d, c)
 		}
 	}
 }
@@ -214,15 +175,6 @@ func TestRecap(t *testing.T) {
 	if fresh == 0 {
 		t.Error("no town tile is marked new")
 	}
-	newLots := 0
-	for _, l := range m.Skyline.Lots {
-		if l.New {
-			newLots++
-		}
-	}
-	if newLots == 0 {
-		t.Error("no skyline lot is marked new")
-	}
 	// No baseline, no recap (a pending catastrophe still makes the news).
 	if got := build(t, st, nil).Recap; got.HasBaseline || len(got.Items) != 0 {
 		t.Errorf("recap without a baseline: %+v", got)
@@ -262,10 +214,7 @@ func TestModelShape(t *testing.T) {
 		if el > 250*time.Millisecond {
 			t.Errorf("%s: model took %v", age, el)
 		}
-		if len(m.Skyline.Districts) != m.AgeIdx+1 {
-			t.Errorf("%s: %d districts", age, len(m.Skyline.Districts))
-		}
-		if len(m.Town.Tiles) == 0 || len(m.Skyline.Lots) == 0 {
+		if len(m.Town.Tiles) == 0 {
 			t.Errorf("%s: nothing placed", age)
 		}
 		seen := map[mapmodel.Pt]bool{}
@@ -354,8 +303,5 @@ func TestMaths(t *testing.T) {
 	c := mapmodel.ClockAt(0)
 	if c.Hour != 9 || c.Phase != "day" {
 		t.Errorf("tick 0 is %s (%s), want 09:00 day", c, c.Phase)
-	}
-	if n := mapmodel.ClockAtTOD(3, 0.0); n.Phase != "night" || n.Day != 3 {
-		t.Errorf("midnight clock %+v", n)
 	}
 }

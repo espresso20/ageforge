@@ -46,9 +46,6 @@ type World struct {
 	CX, CY int
 	Name   string
 	Sites  []Pt // civ sites, indexed like Catalog.Factions
-	// Coastal is true when open water lies within a short walk of the centre
-	// (the skyline gets a bay, the region map a harbour).
-	Coastal bool
 }
 
 // In reports whether (x, y) is on the map.
@@ -105,14 +102,6 @@ func NewWorld(seed int64, nSites int) *World {
 	wd.placeCentre()
 	wd.placeSites(nSites)
 	wd.Name = cityName(seed)
-	for dy := -7; dy <= 7 && !wd.Coastal; dy++ {
-		for dx := -16; dx <= 16; dx++ {
-			if t := wd.At(wd.CX+dx, wd.CY+dy); t == TShallow || t == TDeep {
-				wd.Coastal = true
-				break
-			}
-		}
-	}
 	return wd
 }
 

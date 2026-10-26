@@ -10,8 +10,8 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// mandala.go is the Transcendent Age's mandala as geometry both styles
-// draw: a bright core (a star, when there is room), a crown of eight solid
+// mandala.go is the Transcendent Age's mandala as geometry the map
+// draws: a bright core (a star, when there is room), a crown of eight solid
 // petals round it, and one ring per era the player passed through, the
 // Stone Era innermost. A ring is a band of its era's glyph, cell after cell
 // (only beads when the rings stand too close for a band), and every ring's
@@ -366,7 +366,7 @@ func RayRune(dx, dy int) rune {
 	return '╲'
 }
 
-// EraLight is the colour of an era's ring before a style resolves it
+// EraLight is the colour of an era's ring before the map resolves it
 // against its theme: the era's own hue, lifted a little toward the
 // mandala's light so every era reads on the indigo.
 func EraLight(epoch int) tcell.Color {

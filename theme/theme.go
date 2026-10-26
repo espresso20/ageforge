@@ -111,7 +111,7 @@ type Theme struct {
 	LossGlyph string // e.g. "▼" / "-"
 
 	// Duotone marks a one-ink-on-one-paper theme (Monochrome, Parchment):
-	// pictorial surfaces such as the skyline map fold every scene color
+	// pictorial surfaces such as the map fold every scene color
 	// onto the ramp from Background to Text instead of drawing full color.
 	Duotone bool
 
