@@ -2,14 +2,11 @@
 
 Open it with the `map` command. The Map draws your empire from your real game state: the buildings you own, the workers staffing them, your wonders, the civilizations you have met, your trade routes and wars. Build, trade or meet someone new and the map changes to match.
 
-The Map has two styles, and both are drawn from the same map model:
-
-- Roguelike (the default): a glyph world seen from above. Every cell is one colored character that means something.
-- Skyline: your empire side-on as a panorama, one district for every age you have lived through.
+The Map is a glyph world seen from above. Every cell is one colored character that means something.
 
 The Map shows only what you have reached. Civilizations you have not met are nowhere on it: no name, no town, no marker where they live. It names no era you have not reached and no age past your next one. The harbinger on the map warns of impending doom (in the Cosmic Era, it may warn of the Last Passage instead), never of the era to come.
 
-`citymap` and `worldmap` are aliases of `map`. Both open the Map, and `worldmap` opens it on the known world (the roguelike style's region zoom).
+`citymap` and `worldmap` are aliases of `map`. Both open the Map, and `worldmap` opens it on the known world (the region zoom).
 
 ---
 
@@ -17,11 +14,11 @@ The Map shows only what you have reached. Civilizations you have not met are now
 
 `map` opens the Map over the whole screen except the command bar, which keeps working: type any command while the Map is open, just as you would with it closed, and watch the map change. A command that opens another panel (say `research`) swaps the Map for it.
 
-Because typing goes to the command bar, the Map takes only the keys that print nothing. These work in every style:
+Because typing goes to the command bar, the Map takes only the keys that print nothing. These work:
 
 | Key | Action |
 |---|---|
-| Arrows | Move the cursor or scroll (see each style below) |
+| Arrows | Move the cursor |
 | `Tab` / `Shift-Tab` | Jump to the next or previous thing to inspect |
 | `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in |
 | `Enter` | Put the command for what the cursor is on into the prompt. It is not run: press `Enter` again to run it |
@@ -29,15 +26,15 @@ Because typing goes to the command bar, the Map takes only the keys that print n
 
 Once you have typed something, `Tab`, `Shift-Tab` and `Enter` act on the prompt instead (complete the command, run it), as they do everywhere else. The arrows, `PgUp`, `PgDn`, `Home` and `End` stay with the Map.
 
-A few keys that print are the Map's too, while the prompt is empty (no command begins with one): `+` and `=` zoom in, `-` and `_` zoom out, and `[` and `]` jump between districts in the skyline. A keyboard with no Page keys (a Mac's, for one) can zoom with `-` and `=` alone. `Option+↑` and `Option+↓` also work as `PgUp` and `PgDn` here, and `Option+←` and `Option+→` as `Home` and `End` (see [Commands](commands.md#the-prompt)).
+A few keys that print are the Map's too, while the prompt is empty (no command begins with one): `+` and `=` zoom in, `-` and `_` zoom out. A keyboard with no Page keys (a Mac's, for one) can zoom with `-` and `=` alone. `Option+↑` and `Option+↓` also work as `PgUp` and `PgDn` here, and `Option+←` and `Option+→` as `Home` and `End` (see [Commands](commands.md#the-prompt)).
 
-The settings are commands you can type with the Map open: `map style`, `map glyphs`, `map flows` and `minimap` (see [Settings](#settings)). With VibeMode on, the words on the Map come in its second script too (see [VibeMode](commands.md#vibemode)).
+The settings are commands you can type with the Map open: `map glyphs`, `map flows` and `minimap` (see [Settings](#settings)). With VibeMode on, the words on the Map come in its second script too (see [VibeMode](commands.md#vibemode)).
 
-The bottom row is a key bar. It shows what `Enter` will do, the current style and glyph set, and the reply to the last command you typed (the log is hidden behind the Map). The first time you open the Map it also shows a one-time hint, "Want real icons on your map? Type icons." (see [Icons](#icons-nerd-fonts)).
+The bottom row is a key bar. It shows what `Enter` will do, the current glyph set, and the reply to the last command you typed (the log is hidden behind the Map). The first time you open the Map it also shows a one-time hint, "Want real icons on your map? Type icons." (see [Icons](#icons-nerd-fonts)).
 
 ### The inspect cursor
 
-In both styles a cursor picks out one thing at a time: a building, a wonder, a civilization. In the roguelike style the cursor is a highlighted cell: a solid block in a color the map itself does not use in your theme (an orange on the dark themes), with the glyph beneath it still showing. In the skyline it is a highlighted bar under the building, and the building's name sits on a highlighted label. The cursor blinks slowly, and holds steady when `motion` is off.
+A cursor picks out one thing at a time: a building, a wonder, a civilization. The cursor is a highlighted cell: a solid block in a color the map itself does not use in your theme (an orange on the dark themes), with the glyph beneath it still showing. The cursor blinks slowly, and holds steady when `motion` is off.
 
 The Map reports the cursor's name, a few details (how many you own, how many workers staff it, what changed) and the whole command to type for it, for example `build hut` or `diplomacy gift riverlands_tribes`. Press `Enter` to put that command into the prompt, edit it if you like, and press `Enter` again to run it. The command depends on what the cursor is on:
 
@@ -49,22 +46,22 @@ The Map reports the cursor's name, a few details (how many you own, how many wor
 | A wonder | `wonder collect all` while it is rising, otherwise `wonders` |
 | A civilization | `diplomacy gift <civ>`, or `diplomacy tribute <civ>` when it is at war with you, or `diplomacy neutral <civ>` under an embargo or a rivalry |
 | A trail to a civilization you have a trade route with | `trade route list` |
-| The town square (roguelike) | `advance` when your age is ready, otherwise `status` |
+| The town square | `advance` when your age is ready, otherwise `status` |
 | The harbinger | `harbinger` |
 
 An old building with nothing left to do has no command, and `Enter` says so.
 
 ### Since your last visit
 
-When you load a save, the Map remembers your town as the save left it, before any time away was played out, and shows what changed since. A news line lists what happened: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"), and both styles mark what is new.
+When you load a save, the Map remembers your town as the save left it, before any time away was played out, and shows what changed since. A news line lists what happened: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"), and the map marks what is new.
 
 ---
 
-## Roguelike
+## The town
 
-The roguelike style draws your settlement as a small glyph world. Your town grows out of your real buildings, quarter by quarter, with streets, walls, wonders and people walking the streets. The same save always grows the same town, and new buildings join the existing streets instead of reshuffling them.
+The Map draws your settlement as a small glyph world. Your town grows out of your real buildings, quarter by quarter, with streets, walls, wonders and people walking the streets. The same save always grows the same town, and new buildings join the existing streets instead of reshuffling them.
 
-<figure class="screen" data-screen="map-roguelike"><figcaption>The roguelike map of a Bronze Age town: the palisade, the quarters inside it and the wonders named on their plots, with what the cursor is on spelled out beneath.</figcaption></figure>
+<figure class="screen" data-screen="map"><figcaption>The map of a Bronze Age town: the palisade, the quarters inside it and the wonders named on their plots, with what the cursor is on spelled out beneath.</figcaption></figure>
 
 The land comes from your save's seed: hills and forests, lakes and coasts ringed with shallows (`~`) round deeper water (`≈`), and rivers that wind from the high ground down to the sea or a lake. Your town is placed on flat ground near a river.
 
@@ -118,7 +115,7 @@ From the Space Age the settlement and district zooms show the sky instead of the
 
 The district zoom names only a handful of building types at a time (those nearest the cursor first), so it stays readable.
 
-### Roguelike keys
+### Map keys
 
 | Key | Action |
 |---|---|
@@ -133,119 +130,46 @@ The legend (what each glyph means) shows beside the map when there is room.
 
 ---
 
-## Skyline
-
-The skyline style shows your empire side-on, as an ANSI-art panorama. It has one district for every age you have lived through: the oldest in the west, the present in the east, and your build queue going up on the frontier the way your era builds: poles and stick frames in the first ages, timber scaffolding and wooden jib cranes from the Iron Age, tower cranes from the Industrial Age.
-
-<figure class="screen" data-screen="map-skyline"><figcaption>The same town in the skyline style: a district for each age so far, under the sky of that hour.</figcaption></figure>
-
-- Every building you own draws its own silhouette, up to 24 of any one kind, so a big town looks big. A district is as wide as the buildings in it need, so a large town is a long skyline you scroll, and a new building joins the street without moving the ones already there. Every silhouette has a darker outline so neighbors part, the rows behind are dimmer and cooler than the row in front, and the copies of one building come in three variants (a lower one, a taller one, and different window patterns, with a chimney, a flagpole or an aerial on some roofs), so eight farms do not all look alike. At night the lit windows glow in the light of their age (torches and fires, then lamps, bulbs, cool white light and screens, and neon) and waver slowly. They hold still when `motion` is off.
-- The skyline draws one wonder at a time, this age's, as a landmark. Once you start it, it stands under scaffolding that climbs with the bank. Once it is built, it is drawn as the thing it is (a ring of megaliths round a low sun, a temple on its rock, a striped lighthouse, an iron tower, a rocket on its gantry). The wonders of the ages behind you are not in the picture (a ring of megaliths floating in space would look strange). The Wonders panel keeps them in its [gallery](wonders.md#the-gallery). A wonder is not made to stand taller than the buildings round it: it is the most detailed thing in view, with an outline of its own, a glow and a beam of light at night, finer detail at the close zoom, and a plaque with its name when the inspect cursor is beside it.
-- Windows light and chimneys smoke where workers are staffed. A building with nobody in it stays dark.
-- The sky follows the game clock and the weather.
-- The far ridge holds the civilizations you have met, each drawn as a town with a pennant in the color of your relations with it, and the harbinger.
-- Traffic follows real state. Trade routes travel by land, sea or air depending on the route: harbor and ship routes sail the bays, warp and stellar routes fly once your age has aircraft, and rails and caravans stay on land.
-- Vehicles arrive with their age. The skyline and the roguelike share one list of what moves in which age, so a trade vehicle shows in neither style before the age that introduces it.
-- People and traffic fill the foreground. On a terminal 44 rows tall or more (the skyline needs 40 rows, and the command bar and the key bar take four), people are two cells high, a head over a body, and walk the street in groups of two to five at their own pace. The more of your workers are staffed, the more groups are out. Every age has its own traffic on three lanes. The road has walkers with bundles, a pack dog and goats in the first ages, then ox carts, camels and chariots, horses and riders, wagons, carriages, trams, the first cars, buses and cars, and hover bikes and hover cars at the end. The rail is laid along the verge from the Industrial Age (steam trains, then trains, bullet trains and maglevs). The sky lane starts with the age of flight (a biplane in the Electric Age, then propeller planes, jets, helicopters, drones and the shuttle). Flyers pass behind tall buildings, and an older vehicle still turns up now and then, like a horse in the Modern Age. On shorter terminals the skyline keeps its one-cell markers. The sky ages from the Space Age on keep their own traffic in orbit.
-- In the Monochrome and Parchment themes the skyline is drawn as a two-tone (duotone) picture.
-
-### The city on the skyline
-
-From the Modern Age the skyline shows the same city as the roguelike, side on:
-
-- Modern: street trees and parks fenced along the verge, an elevated freeway with its cars streaming (headlights at night), and the glass city lighting its own horizon after dark.
-- Information: half the trees, satellite dishes on the modern roofs and gardens on a few, cable lines strung between masts, cold screens in the windows, the Information district's towers in indigo glass, a hazier sky and smog gathering at the edges of the view.
-- Digital: one walled reserve in front of the Digital district and nothing else green, a gray-brown smog sky, bare concrete towers, and the data glow round the data halls and down the road.
-- Cyberpunk: the far ridge built over with towers, neon up every distant tower, holo-ads hanging in the air, three to five elevated rails with sky trains on each, drone swarms and hovercars, acid rain day and night, and a smog-dark day in which the neon never washes out.
-- Fusion: reactor domes and launch towers behind the city, a glow round the reactors, plasma pulsing down the road, an electric blue horizon, and the space elevator's tether rising from the Fusion district off the top of the screen with its climbers. The tether is an inspect target (`Tab` reaches it after the harbinger).
-
-The skyline in the mini map and in the dashboard's skyline strip wears the age's window light too, and shows the megacity's rain and the tether.
-
-### Zoom and the overview bar
-
-The skyline has four zoom levels, and the status line along the bottom says which one you are at (`zoom: close`) while the cursor is away. The level is kept with your account, like the map style.
-
-- Far fits the whole town on one screen, whatever its size. A column of the screen stands for as many columns of the town as it takes, and shows the tallest building among them in the color of its top. At night the windows that are lit show in it. The name of each district is written just below the street, and this age's wonder is marked with a star. There is nothing to scroll, so the arrows and `[` `]` do nothing here. A young town that is no wider than two screens has no far level of its own: wide already shows all of it.
-- Wide draws the town at half scale, two screens of it at once. The buildings read as a silhouette against the sky.
-- Mid is the standard scale, and the level a new account starts at.
-- Close draws every building twice the size, every cell of it as a 2x2 block, so you can see roofs, windows, the people at the door and the traffic in the street. The view stands on the street, so a tall tower runs off the top of the screen: press `↑` to raise the view over it and `↓` to lower it again (`Shift` goes half a screen). A bar down the right edge shows where the view stands in the scene, and `Home` brings it back to the street before it does anything else. While the inspect cursor is out the arrows are the cursor's, and moving the cursor brings the view back to the street.
-
-People, traffic, smoke and weather scale with the buildings. Names, the cursor's label and the bars do not: text always keeps its own size. `+` and `=` (or `PgDn`) zoom in, and `-` and `_` (or `PgUp`) zoom out. The view stays centered on the spot you were looking at (a view that follows the present keeps following it, and leaving the far level brings you back to the spot you left), and the inspect cursor works at every level.
-
-The sky ages zoom too. In the sky of the Space Age to the Quantum Age, close magnifies the station, the fleet or the starbase twice over, with the view starting on the baseline where the modules stand (`↑` and `↓` raise it toward the stars and lower it toward the planet or the void). Wide shows two screens of the panorama, and far fits all of it on one screen with the sky behind it. In the last age, the mandala, close shows the middle of it at twice the size, and the arrows pan the view along and up while the cursor is away. There is no level wider than the whole mandala.
-
-The bar along the bottom is an overview of the whole town. It draws your real skyline: each column as tall as the tallest building there and in the color of that building's top, a `◆` on this age's wonder, the name of each district where it fits, buildings new since your last visit in the positive color, and a bright box over the part of the town you are looking at. The box widens when you zoom out and narrows when you zoom in. `[` and `]` jump to the start of the previous and next district, so you can steer the view by the bar.
-
-### Skyline keys
-
-| Key | Action |
-|---|---|
-| `←` `→` | Scroll four columns of the screen (or move the cursor while inspecting); not at the far level, which shows the whole town |
-| `Shift`+`←` `→` | Scroll half a screen |
-| `PgDn` / `PgUp`, `+` / `-` (or `=`, `_`) | Zoom in and out: far, wide, mid, close |
-| `[` `]` | Jump to the start of the previous or next district |
-| `Home` | The oldest district (at the close level, with the view raised, it comes back to the street first) |
-| `End` | The present |
-| `Tab` / `Shift-Tab` | Put the inspect cursor out, then step through every target |
-| `↑` `↓` | Move between the building rows and the ridge (while inspecting); at the close level, with the cursor away, raise and lower the view over a tall tower (`Shift`: half a screen) |
-
----
-
 ## The sky
 
-From the Space Age the Map leaves the ground, in both styles. Each of the last ages has a sky of its own, with its own colors, its own landmark, its own traffic and something always gently moving. It is still your civilization: every building you own becomes something up there, each lineage its own kind of thing (homes are habitat modules in orbit, for instance), and the picture grows as you build. Like the town, it never reshuffles: what is drawn stays where it is. In the roguelike the legend names what you see. In both styles the inspect cursor and `Tab` work on all of it (a module tells you its building, its workers and the command for it), the flows overlay marks what is short of hands, and the mini map follows along.
+From the Space Age the Map leaves the ground. Each of the last ages has a sky of its own, with its own colors, its own landmark, its own traffic and something always gently moving. It is still your civilization: every building you own becomes something up there, each lineage its own kind of thing (homes are habitat modules in orbit, for instance), and the picture grows as you build. Like the town, it never reshuffles: what is drawn stays where it is. The legend names what you see. The inspect cursor and `Tab` work on all of it (a module tells you its building, its workers and the command for it), the flows overlay marks what is short of hands, and the mini map follows along.
 
-The Space Age is actual space. Your planet's curved limb fills the bottom of the map. Its night side is your own world, land and sea, with cloud swirls drifting over it, amber city lights where your town stands and the civilizations you have met glowing in their colors. The space elevator's tether rises from the town to the station:
-
-- In the roguelike, a ring station seen from above: your buildings dock round the ring, a sector for each lineage, growing outward ring by ring. Solar wings run out along the truss, hulls rise on the shipyard's slips, foundry tanks glow, relay satellites ride a low orbit, mining outposts sit on the rocks of the asteroid belt, and your military holds a base on the moon. Climbers ride the tether, shuttles climb from the town, and satellites and mining drones go about their rounds.
-- In the skyline, the ground drops away: the planet's curved horizon fills the bottom of the panorama, its city lights thickest under your busiest districts, and your districts stand in orbit on the station's long truss, every building a module in its old place. The tether you raised in the Fusion Age carries on from the planet up into the station, climbers riding it. The moon hangs to one side with its base lit, and an asteroid belt crosses the sky. Lit windows still mean staffed. Up here producers show glowing vents instead of smoke.
+The Space Age is actual space. Your planet's curved limb fills the bottom of the map. Its night side is your own world, land and sea, with cloud swirls drifting over it, amber city lights where your town stands and the civilizations you have met glowing in their colors. The space elevator's tether rises from the town to the station. You see a ring station from above: your buildings dock round the ring, a sector for each lineage, growing outward ring by ring. Solar wings run out along the truss, hulls rise on the shipyard's slips, foundry tanks glow, relay satellites ride a low orbit, mining outposts sit on the rocks of the asteroid belt, and your military holds a base on the moon. Climbers ride the tether, shuttles climb from the town, and satellites and mining drones go about their rounds.
 
 The ages of the Cosmic Era each look like no other, and every one is built from your own buildings. In the first, the home system shrinks to a little orrery while your lineages settle colony worlds and a warp gate rises. The next is something worthy of a starship captain, and the one after is a place where reality bends. At the very end, it is calm. If you have glimpsed a visitor in the sky before, you may find it is not so rare out there.
 
-In the roguelike each sky has a hub: `Home` takes the cursor there, and `PgDn` gives a closer view with names.
-
-In the last age of all the skyline has no districts left to scroll. `Tab` still puts the cursor out, the arrows move it round and between what is there, `+` closes in on the middle of the mandala, and the bottom row says what each key does.
+Each sky has a hub: `Home` takes the cursor there, and `PgDn` gives a closer view with names.
 
 ---
 
 ## Settings
 
-Three settings shape the Map: the style, the glyph set and the mini map. They are saved per account, like your theme: they carry across saves and new games, and switching accounts swaps them. With no account loaded they last for the session. The skyline's zoom level is saved with your account too.
+Two settings shape the Map: the glyph set and the mini map. They are saved per account, like your theme: they carry across saves and new games, and switching accounts swaps them. With no account loaded they last for the session.
 
 | Command | What it does |
 |---|---|
-| `map style` | Show the current style |
-| `map style roguelike` | Use the roguelike style (the default) |
-| `map style skyline` | Use the skyline style |
-| `style` | Same as `map style`: `style skyline` switches too |
 | `map glyphs` | Show the current glyph set |
 | `map glyphs ascii` | Plain ASCII, for fonts with poor symbol coverage |
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |
 | `map glyphs nerd` | Nerd Font icons. Needs a Nerd Font in your terminal; every icon has a Unicode fallback |
 | `minimap` | Show whether the dashboard's mini map is on |
-| `minimap off` | Hide the mini map, so the Buildings list gets the whole column (the default) |
-| `minimap on` | Show the mini map above the Buildings list |
+| `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
+| `minimap on` | Show the mini map above the Buildings list (the default) |
 | `map flows` | The flows overlay: where your economy is stuck (see [The flows overlay](#the-flows-overlay)). `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
 All of them work while the Map is open, so you see the change at once. The `motion` setting (`motion on` and `motion off`) holds the maps, the badge case and a theme's ambient effect still when it is off.
 
 ### The flows overlay
 
-`map flows` marks where your economy is stuck: stocks that are falling and will run dry within about a minute, buildings short of workers, and idle workers. In the roguelike a flows panel lists each of those, then the five lineages that make most of your output, with a bar for each one's share, so you can see what your settlement actually runs on. The skyline sums it up in one line along the bottom row (for example "Iron runs dry · 12 idle workers") and suggests a command for the idle hands. In the roguelike, the inspect cursor on the town square gives the same one-line summary.
-
----
-
-## The skyline strip
-
-On a terminal of 100 columns by 30 rows or larger, when the column has room, the dashboard draws a box titled Skyline under the Buildings list. It is the skyline style's compact view, and it shows the skyline whatever your map style is. It is a picture only: it has no cursor and takes no keys. It moves when `motion` is on and holds still when it is off. `map` still opens the full Map. See [How to play](how-to-play.md#the-screen-layout) for when the strip shows.
+`map flows` marks where your economy is stuck: stocks that are falling and will run dry within about a minute, buildings short of workers, and idle workers. A flows panel lists each of those, then the five lineages that make most of your output, with a bar for each one's share, so you can see what your settlement actually runs on. The inspect cursor on the town square gives a one-line summary.
 
 ---
 
 ## The mini map
 
-The mini map is off by default. Type `minimap on` and the dashboard shows a compact view of the Map above the Buildings list, in a border titled "Map · Roguelike" or "Map · Skyline"; the setting is remembered with your account. It follows your `map style` and `map glyphs` settings and shows the since-last-visit news too (the roguelike view ends with a news line, and the skyline's goes in the box's bottom border).
+The mini map is on by default. The dashboard shows a compact view of the Map above the Buildings list, in a border titled "Map". The setting is remembered with your account. It follows your `map glyphs` setting, and its last row is the since-last-visit news.
 
-It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it again and gives the list the whole column. In the roguelike style it marks the tile the Map panel's cursor is on with the same highlighted cell.
+It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back. It marks the tile the Map panel's cursor is on with the same highlighted cell.
 
 The mini map needs room: it appears on terminals of 105 columns by 34 rows and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 
@@ -271,7 +195,7 @@ The first time you open the Map it shows a one-time hint: "Want real icons on yo
 
 ## Themes
 
-Both styles draw their colors from your active [theme](themes.md), so switching themes recolors the Map and the mini map at once, light themes included.
+The Map draws its colors from your active [theme](themes.md), so switching themes recolors the Map and the mini map at once, light themes included.
 
 ---
 

@@ -36,7 +36,7 @@ This shows your level, your total points earned, the lasting production multipli
 
 <figure class="screen" data-screen="prestige-ending"><figcaption>A prestige begins with an ending: the town you built, on the whole screen, burning down from its edges until one ember is left.</figcaption></figure>
 
-A prestige plays out on the whole screen, in your map style, theme and glyph set. The town you built burns down to an ember. In the dark, what the run earned is counted out a line at a time: the age it reached, its prestige points, the badges it earned, the ages that gained mastery, and everything else the log reports. Then the word is struck in iron, with a star for every prestige so far, and the first fire of the new run is lit on its land.
+A prestige plays out on the whole screen, in your theme and glyph set. The town you built burns down to an ember. In the dark, what the run earned is counted out a line at a time: the age it reached, its prestige points, the badges it earned, the ages that gained mastery, and everything else the log reports. Then the word is struck in iron, with a star for every prestige so far, and the first fire of the new run is lit on its land.
 
 <figure class="screen" data-screen="prestige-strike"><figcaption>The strike, here at a first prestige: one star, and the game's own line for what the run paid.</figcaption></figure>
 

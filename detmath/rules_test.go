@@ -141,7 +141,7 @@ var transcendental = map[string]string{
 }
 
 // TestNoStdlibTranscendentals fails on a call to one of package math's
-// architecture-dependent functions from simulation code or the map styles (tests
+// architecture-dependent functions from simulation code or the map (tests
 // excluded). Sqrt, Floor, Ceil, Round, Abs, Mod, Min, Max and the like are exact
 // and allowed.
 func TestNoStdlibTranscendentals(t *testing.T) {

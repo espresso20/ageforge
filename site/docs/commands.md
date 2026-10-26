@@ -281,24 +281,20 @@ A deposit says how much went in and the bank's new total. When nothing can go in
 
 ## Map
 
-The Map draws your empire from your real game state: your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes and wars. It has two styles: **roguelike** (the default), a glyph world seen from above with three zooms from the whole known world down to a named district, and **skyline**, your empire side-on as a panorama with one district for every age you have lived through. In both, an inspect cursor gives you the name and details of what it is on and the whole command to type for it (for example `build hut`). See **[The Map](map.md)** for both styles and all their keys.
+The Map draws your empire from your real game state: your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes and wars. It is a glyph world seen from above, with three zooms from the whole known world down to a named district. An inspect cursor gives you the name and details of what it is on and the whole command to type for it (for example `build hut`). See **[The Map](map.md)** for all its keys.
 
 | Command | Description |
 |---|---|
 | `map` | Open the Map panel. It covers everything but the command bar, which keeps working while it is open |
-| `map style [roguelike\|skyline]` | Bare, show the current style. With a name, switch to it (default roguelike). Saved per account |
 | `map flows [on\|off]` | The Map's flows overlay (stocks running dry, understaffed buildings, idle workers): on, off, or bare to switch it. Lasts for the session |
-| `style [roguelike\|skyline]` | Same as `map style` |
-| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list; `off` hides it so the list gets the whole column (default off). Saved per account |
+| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list; `off` hides it so the list gets the whole column (default on). Saved per account |
 | `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal; every icon has a Unicode fallback. Saved per account |
 | `citymap` | Same as `map` |
-| `worldmap` | Same as `map`, opened on the known world (the roguelike style's region zoom) |
+| `worldmap` | Same as `map`, opened on the known world (the region zoom) |
 | `icons` | A guided check: do you see Nerd Font icons? If yes it sets `map glyphs nerd`; if not it offers to install JetBrains Mono Nerd Font for your user (pinned v3.5.1, checksum-verified, no admin rights) and tells you how to select it in your terminal |
 
 ```
 map
-map style skyline
-style roguelike
 map glyphs ascii
 map flows on
 minimap off
@@ -306,9 +302,9 @@ worldmap
 icons
 ```
 
-`map style`, `map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The **mini map** is off until you type `minimap on`. Then, on terminals of 105 columns by 34 rows and larger, the dashboard shows a short mini map of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
+`map glyphs` and `minimap` are saved per account, like your theme. With no account loaded they last for the session. The **mini map** is on until you type `minimap off`. On terminals of 105 columns by 34 rows and larger, the dashboard shows a short mini map above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
 
-The command bar keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing, in every style:
+The command bar keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing:
 
 | Key | Action |
 |---|---|
@@ -318,7 +314,7 @@ The command bar keeps working while the Map is open: type commands as usual. The
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press Enter again to run it) |
 | `Esc` | Close the Map |
 
-While the prompt is empty, `-`, `=` and `+` zoom in both styles, so a keyboard with no Page keys can zoom, and the skyline also takes `[` and `]` (the previous and next district). The skyline zooms in four steps (far, wide, mid, close) and its level is saved with your account. At the close level `↑` and `↓` raise and lower the view over a tall tower, and `Home` brings it back. With something typed, `Tab` and `Enter` act on the prompt instead. Each style lists its keys along its bottom edge.
+While the prompt is empty, `-`, `=` and `+` zoom, so a keyboard with no Page keys can zoom. With something typed, `Tab` and `Enter` act on the prompt instead. The Map lists its keys along its bottom edge.
 
 ---
 

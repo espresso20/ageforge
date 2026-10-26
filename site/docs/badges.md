@@ -1,6 +1,6 @@
 # Badges
 
-A **badge** is a permanent mark on your account for something you did in a game. There are 556 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
+A **badge** is a permanent mark on your account for something you did in a game. There are 554 badges to earn, in 17 families: one for every age, wonder, lineage, civilization and harbinger, ladders that climb across all your runs, and a set of one-off feats. A badge is earned once and kept for good, through every prestige and every new game.
 
 Badges are cosmetic. A badge gives points, sometimes a title or a theme, and nothing inside a run: the same game plays the same way whatever the account has earned. They are separate from [milestones](milestones.md), which belong to one run, pay a reward inside it and start over with the next.
 
@@ -45,7 +45,7 @@ Each badge has a tier, and a tier is worth points. Your points add up to a **sco
 | Platinum | 50 | Epic |
 | Legendary | 100 | Legendary |
 
-A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,880 points.
+A badge's rarity follows its tier unless the badge says otherwise: a few are rarer than their tier suggests. Every badge together is worth 12,870 points.
 
 ## The families
 
@@ -66,7 +66,7 @@ A badge's rarity follows its tier unless the badge says otherwise: a few are rar
 | **Awakenings** | 7 | Witnessing each awakening |
 | **Ladders** | 70 | Counts kept across all your runs, in 22 ladders |
 | **Themes** | 16 | Advancing an age while wearing each theme |
-| **Maps** | 5 | Advancing an age with each map style and each glyph set |
+| **Maps** | 3 | Advancing an age with each glyph set |
 | **Specials** | 65 | One-off feats, from the easy to the very hard. Maxed Out and Fully Invested are retired with the prestige shop |
 
 One special asks you to save up. **Everything Full** is earned in the Industrial Age or later by holding at least 6 hours of your income in every resource you can save up, all at once. Your income is what your town makes of each resource now, so it rises as you grow and the bar rises with it. Food, faith, culture and nanobots are spent as they are made and do not count, and neither does a resource your town makes none of.

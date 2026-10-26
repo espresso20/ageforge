@@ -52,9 +52,9 @@ The share is weighted by what each resource is worth in the age's prices, so a r
 
 ### The gallery
 
-Press `G` (or `Tab`) in the Wonders panel for the gallery: a picture of every wonder you have built, one at a time, drawn the way the skyline map draws it and as large as the panel. A line above the picture counts the wonders you have built (`2 of 2 built`). Under the picture are the wonder's name, its age, the year that age began and its description. The gallery opens on the newest wonder. `←` `→` (or `↑` `↓`, `PgUp` `PgDn`, `Option+↑` `Option+↓`) step through the wonders in age order. `Home` and `End` (or `Option+←` and `Option+→`) go to the first and the last. `G` or `Tab` goes back to the list, and so does `Esc` (a second `Esc` closes the panel). A wonder you have not built is not in the gallery. It works in every glyph set and theme, at 80 columns by 24 rows and larger.
+Press `G` (or `Tab`) in the Wonders panel for the gallery: a plain list of every wonder you have built, oldest first. Each wonder has its name, its age, the year that age began and its description. `↑` `↓` and `PgUp` `PgDn` scroll the list. `G` or `Tab` goes back to the wonders, and so does `Esc` (a second `Esc` closes the panel). A wonder you have not built is not in the gallery.
 
-<figure class="screen" data-screen="wonders-gallery"><figcaption>The gallery in the Bronze Age: a wonder built earlier, drawn at dusk with its lamps lit.</figcaption></figure>
+<figure class="screen" data-screen="wonders-gallery"><figcaption>The gallery in the Bronze Age: the wonders built so far, oldest first, each with its age and its description.</figcaption></figure>
 
 The game does not record the day a wonder was finished, so the gallery gives the year its age began.
 
@@ -62,9 +62,9 @@ The game does not record the day a wonder was finished, so the gallery gives the
 
 ## Viewing wonders on the Map
 
-Built wonders appear on the [Map](map.md) (`map` command) as landmarks, each drawn in its era's look. The roguelike style puts every wonder you have built on its own plot among your streets, and `Tab` jumps the cursor between buildings and wonders. The skyline shows one wonder at a time: this age's, and none from the ages behind you (the [gallery](#the-gallery) has those). Point the inspect cursor at a wonder to see its name, the age it belongs to and its details. `Enter` then types `wonder collect all` while the wonder is rising, and `wonders` otherwise.
+Built wonders appear on the [Map](map.md) (`map` command) as landmarks, each drawn in its era's look. The Map puts every wonder you have built on its own plot among your streets, and `Tab` jumps the cursor between buildings and wonders. Point the inspect cursor at a wonder to see its name, the age it belongs to and its details. `Enter` then types `wonder collect all` while the wonder is rising, and `wonders` otherwise.
 
-This age's wonder shows up only once you start it: bank some of its cost or queue its construction, and the Map marks its plot with scaffolding. On the skyline the scaffolding climbs as the bank fills, and in the roguelike style the cursor shows the percent banked. Until then the Map shows nothing for it.
+This age's wonder shows up only once you start it: bank some of its cost or queue its construction, and the Map marks its plot with scaffolding. The cursor shows the percent banked. Until then the Map shows nothing for it.
 
 ---
 
