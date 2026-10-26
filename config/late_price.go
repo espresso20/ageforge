@@ -3,6 +3,7 @@ package config
 import (
 	"maps"
 	"math"
+	"sync"
 
 	"github.com/espresso20/ageforge/detmath"
 )
@@ -27,17 +28,29 @@ const WonderBuildFactor = 2
 // LatePriceMultiplier is the price multiplier for age. It is one before and
 // in the Modern Age, and LatePriceStep for every age after it.
 func LatePriceMultiplier(age string) float64 {
-	positions := AgePositions(AgeOrder())
-	start, ok := positions[LatePriceStartAge]
-	if !ok {
-		return 1
+	if multiplier, ok := latePriceMultipliers()[age]; ok {
+		return multiplier
 	}
-	pos, ok := positions[age]
-	if !ok || pos <= start {
-		return 1
-	}
-	return detmath.Pow(LatePriceStep, float64(pos-start))
+	return 1
 }
+
+// latePriceMultipliers holds the multiplier of every age that has one other
+// than one. The age list is fixed, so the table is built once.
+var latePriceMultipliers = sync.OnceValue(func() map[string]float64 {
+	order := AgeOrder()
+	positions := AgePositions(order)
+	start, ok := positions[LatePriceStartAge]
+	multipliers := map[string]float64{}
+	if !ok {
+		return multipliers
+	}
+	for _, age := range order {
+		if positions[age] > start {
+			multipliers[age] = detmath.Pow(LatePriceStep, float64(positions[age]-start))
+		}
+	}
+	return multipliers
+})
 
 // LatePriceTargetTicks is an analytical pacing target for a price-derived
 // rule. It is not a game clock: it describes the longer stay created by the
