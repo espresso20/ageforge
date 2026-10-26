@@ -20,9 +20,7 @@ type domainRuntime struct {
 // many methods is intentionally ignored to maintain API compatibility with
 // callers that still pass domain strings (e.g. "military", "food").
 //
-// The domains map always contains exactly one entry keyed "worker". Legacy save
-// files may contain multiple domain entries; LoadWorkers sums them all into the
-// single pool so old saves still load correctly.
+// The domains map always contains exactly one entry keyed "worker".
 type WorkerManager struct {
 	rules    *rules.Set
 	domains  map[string]*domainRuntime

@@ -164,12 +164,6 @@ The Transcendent Age has no knowledge building of its own. Your scholars from th
 
 ---
 
-## Old saves
-
-A save made before scholars loads clean. The knowledge it held becomes a gift of work for the tech in progress (at most half its price), and is lost when nothing is in progress. A tech that was paid for and waiting out its time completes on load. The log says once: `Knowledge is no longer stored. Your scholars now work on one technology at a time.` See [Saving and Loading](saving-and-loading.md#saves-from-before-scholars).
-
----
-
 ## Tips
 
 - Build a Story Circle early: its 2 scholars start the first tech at once. The gate out of the Primitive Age asks for 5 of them. The Stone Age's wonder needs Stoneworking, which stands on Tool Making.

@@ -303,7 +303,7 @@ func AccountIDForName(name string) string {
 }
 
 // Established reports whether this account has been named (DisplayName set). An account
-// loaded from disk with no display name (e.g. a legacy random-id dev account) is NOT
+// loaded from disk with no display name is NOT
 // established, so boot/UI code can prompt the player to name it on first run.
 func (a *Account) Established() bool {
 	return a.DisplayName != ""
@@ -474,7 +474,7 @@ func ListAccounts() []AccountSummary { return listAccounts(nil) }
 
 // listAccounts is ListAccounts with a badge book to count each account's badges by: the
 // badges it holds that the ruleset knows and that count toward completion, after bringing
-// a file from an older version up in memory (nothing is written). With no book the count
+// a file up to the ruleset's badges in memory (nothing is written). With no book the count
 // is what the file holds.
 func listAccounts(book *badgeBook) []AccountSummary {
 	active := getActiveAccountID()
@@ -1262,8 +1262,8 @@ func decodeAccountExport(blob []byte) (*progressExport, error) {
 // ImportAccountExport.
 //
 // With a badge book (the engine's import), the account it lands in is brought up to the
-// ruleset's badges before it is saved, so achievements from an older export are badges at
-// once. Without one that happens the first time an engine holds the account.
+// ruleset's badges before it is saved. Without one that happens the first time an
+// engine holds the account.
 func importExportToSlot(exp *progressExport, merge bool, book *badgeBook) (*Account, error) {
 	target, found, err := loadAccountFromSlot(exp.AccountID)
 	if err != nil {

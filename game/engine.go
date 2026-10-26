@@ -434,8 +434,7 @@ type BuildQueueItem struct {
 	TicksLeft   int
 	TotalTicks  int
 	// FromPlan marks a copy the build plan started: on completion it is
-	// staffed (staffPlanCopy, plan.go). omitempty keeps older saves'
-	// bytes, and their signatures, unchanged.
+	// staffed (staffPlanCopy, plan.go).
 	FromPlan bool `json:",omitempty"`
 }
 

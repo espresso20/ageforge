@@ -51,8 +51,6 @@ The age progress bar shows `✗ Keystone: <tech>` beside the wonder until the te
 
 **No age asks you to hold anything for research.** Your scholars do the research, and the keystone is what the advance needs of it. See [how research is priced](technologies.md#how-research-is-priced).
 
-**A game saved before keystones** keeps the age it was in exempt: there the wonder builds without its keystone, and the lock starts when you next advance. The log says so once, on the first load. Every tech you researched stays researched and every wonder you built stays built.
-
 ## Advancement Requirements
 
 An age asks for the town it is priced for. **No age asks you to hold an amount of any resource**, and advancing spends nothing. To leave an age you need:

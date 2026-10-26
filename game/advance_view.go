@@ -299,8 +299,8 @@ func (st GameState) gatePillars(set *rules.Set, next string) []GatePillar {
 }
 
 // keystoneRow is the age's keystone tech as a row: met when researched, and
-// met without it once the wonder stands or the age is exempt from the lock (a
-// save from before the lock), since then nothing waits for it.
+// met without it once the wonder stands or does not wait for it, since then
+// nothing waits for it.
 func (st GameState) keystoneRow(set *rules.Set, tech string, built bool, wonder BuildingState) GateRow {
 	ts := st.Research.Techs[tech]
 	name := set.Name(rules.KindTech, tech)

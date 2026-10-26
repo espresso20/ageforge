@@ -33,13 +33,11 @@ A game belongs to the account it was started or loaded under. Its saves go to th
 
 You can switch accounts during a game with `account switch <name>`. The game is saved to the account it belongs to, and you go back to the main menu, which now shows the new account's current game: Continue opens it, or you load another of its games or start a new one. The game you left never carries on under the other account. (The **Accounts** panel on the main menu switches the same way; there is no game running there.)
 
-### Upgrading from an older version
+### Accounts from before 4.0
 
-Older builds kept a single account at the top level (a flat `data/account.json` with saves in `data/saves/`). If the game finds that layout on first launch, it moves your account and its saves into their own `data/accounts/<id>/` slot and makes that account active. **Nothing is deleted**, and you don't have to do anything; your civilizations and unlocks come across intact. Just before the move, the game also copies your old flat data into `data/backups/pre-migration-<timestamp>/`, so your original files stay recoverable.
+The game no longer moves or converts old accounts. An account that has played but has no `badges.json` beside its `account.json` is from before [badges](#badges), and the game refuses it with the line saves from before 4.0 get: "This was saved before 4.0 and can no longer be loaded." It is not listed in the Accounts panel and is left on disk as it is. Make a new account to play. An export from before badges is refused too.
 
-An account from before [badges](#badges) gets its badges the first time this version opens it. Nothing is lost: the four old achievements become their badges, and the badges its record already proves (an age it has reached, prestiges it has made) are added. None of that is announced, and it happens once. Saves from before this version load as they are.
-
-The five age themes now come with the badge for reaching their age, where a milestone used to unlock them. Every theme the account already holds stays unlocked, and an account that reached one of those ages without its theme gets the theme with the badge. That is the one thing this adds to `account.json`: a theme in the list of unlocked themes it has always kept.
+The five age themes come with the badge for reaching their age, where a milestone used to unlock them. Every theme the account already holds stays unlocked, and an account that reached one of those ages without its theme gets the theme with the badge. That is the one thing this adds to `account.json`: a theme in the list of unlocked themes it has always kept.
 
 ---
 
@@ -146,8 +144,6 @@ To overwrite that account's progress entirely with the backup instead, add `repl
 ```
 account import /path/to/my-ageforge-backup.json replace
 ```
-
-An export made by a version from before badges has no badges in it. Importing one never removes badges, with or without `replace`: it says nothing about them, so the account's badges stay as they are.
 
 If the file is missing or has been tampered with, the import is refused with an error and your accounts are left unchanged. A backup of an account flagged **modified** keeps the flag, and passes it to the account it lands in.
 
@@ -335,16 +331,16 @@ Each badge has a tier, and a tier is worth points:
 A few things about how badges are counted:
 
 - **Building counts ignore selling and rebuilding.** A badge that counts buildings across your runs counts a copy only when it takes that building past the most you have built of it in the run, so selling a building and building it again adds nothing.
-- **The four old achievements are badges now.** First Prestige, Serial Reincarnator, Age of Iron and Into the Modern Age carry over, and an account that had them keeps them.
+- **The four old achievements are badges.** First Prestige, Serial Reincarnator, Age of Iron and Into the Modern Age are badges like the rest.
 - **The developer console does not block badges.** The developer console is a testing tool. A game it has changed is marked in its save, and the log says so once, but it still records to the account like any other game: if a badge's condition is met, the badge is earned. Unlocking the console earns a badge of its own.
 - **A modified game marks what it earns.** A badge earned in a save that was edited outside the game is listed as earned in a modified game and adds no points. The same goes for a badge earned on an account whose `account.json` was edited, and for every badge in a `badges.json` that was edited.
 - **A badge can give a theme or a title.** Ten [themes](badges.md#themes-from-badges) and six [titles](badges.md#titles) come with badges. Earning the badge unlocks the theme on the account, for good, and the log says so.
 
 ### Where badges are stored
 
-Badges are kept in their own file, `badges.json`, beside `account.json` in the account's slot (`data/accounts/<id>/`). It holds the badges you have earned, the counts behind the ones that count across runs, and the days you have played. The game writes it the first time the account has a badge to keep.
+Badges are kept in their own file, `badges.json`, beside `account.json` in the account's slot (`data/accounts/<id>/`). It holds the badges you have earned, the counts behind the ones that count across runs, and the days you have played. The game writes it every time it saves the account, even with no badges yet.
 
-`account.json` keeps the shape it had before badges, on purpose. If you also run a version of the game from before badges, it reads and writes `account.json` as it always did and leaves `badges.json` alone, so going back and forth between versions cannot mark an account as modified or cost it a badge. When this version next opens the account, it adds whatever the other version's play has proved since (an age reached, prestiges made) to your badges.
+`account.json` keeps the shape it had before badges, on purpose: it holds what it always held, and the badges are in `badges.json` beside it. When this version opens an account, it adds the badge of any age the account has reached that it does not hold yet.
 
 The file is signed, and the signature covers the account ID:
 

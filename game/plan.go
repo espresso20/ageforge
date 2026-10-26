@@ -38,8 +38,7 @@ import (
 //     and starts the wonder. While it waits it reserves nothing: it is a
 //     town's worth of price units of its age, and holding that back would
 //     stall everything below it for hours. Deposits (by hand) fill the bank.
-//   - Nothing is built that was not queued. (A bank an old save carried,
-//     from before stock had no ceiling, is given back on load, save.go.)
+//   - Nothing is built that was not queued.
 //   - Deal items (plan_deal.go) take a civilization's trade deal once its
 //     fixed price is free, reserving it while they wait, like one build.
 //   - Techs start in plan order: only the first research item can take the

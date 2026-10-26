@@ -34,8 +34,6 @@ Great Monolith needs Stoneworking first. Research it to build here.
 
 The Wonders panel and `wonder` show the keystone with the bank: `✗ Keystone: Stoneworking, not researched (research stoneworking)` until it is done, then `✓ Keystone: Stoneworking, researched`. A full bank says to research the keystone first when it is still missing, and the log tells you when the research has opened the wonder. The Sacred Grove needs no tech. See [Keystone Techs](ages.md#keystone-techs) for the whole list and what each keystone stands on.
 
-In a game saved before keystones existed, the age you were in is exempt: its wonder builds without the tech, and the lock starts when you next advance.
-
 ### No overflow
 
 Stock has no limit, so nothing is ever cut off, and nothing flows into a wonder's bank on its own. The bank moves only when you deposit into it (`wonder collect`), or when a wonder in your build plan pays what its bank lacks from what you hold. When the last part is in, the log says so once and gives the next step, for example `Great Monolith is fully banked. Research Stoneworking, then type 'build great_monolith' to start construction.`

@@ -34,7 +34,6 @@ The plan holds at most 60 items. A full plan refuses a new one until you remove 
 - **Upgrades wait for their price.** `plan upgrade <building> [count|all]` adds upgrades for copies you hold. The plan upgrades one copy at a time, as soon as each can be paid, and drops the item if the upgrade is no longer available.
 - **Advance at its place.** An advance item advances the moment the requirements are met, when the walk reaches it: items above it go first, and items below wait for the next tick. Like the `advance` command, it waits behind a pending catastrophe. If a doom's harbinger comes at the plan's advance, the plan tries again on the next tick (see [No outrunning a doom](harbinger.md#no-outrunning-a-doom)).
 - **Dead items drop out.** A building of an earlier age after an advance, a building at its limit, a tech already researched: each leaves the plan with a line in the log.
-- **Sell orders don't exist.** The market doesn't swap resources, so a plan saved with sell orders loses them when it loads. See [Saving and loading](saving-and-loading.md#saves-from-before-the-market-ended).
 - **A tech missing a prerequisite waits.** Planning a tech plans what it needs above it, so this only happens when one of those later goes missing (you removed it, you moved it below, you canceled it mid-research, or a game update changed what the tech needs). The tech stays in the plan and shows what it needs (`needs Philosophy first`). While it waits it does not hold the research slot's turn, so the missing tech can be planned below it and still start first.
 - **A tech of a later age waits for the age.** It shows `waits for the Iron Age`, does not hold the slot's turn, and never drops out for waiting. This age's techs planned below it run as if it were not there.
 - **Staffed.** Copies the plan builds are staffed when they finish, from idle workers first: into the copy, or, with a [roster](workers-and-domains.md#the-roster) set, wherever the shares say. If those run out, the plan moves workers out of buildings an advance superseded (a higher tier of their line is open), the same line's first. With shares set, it takes them only from the copy's own domain, so the split holds. It never moves food workers or workers in this age's buildings. Then the roster routine recruits for what is still empty (with auto-recruit on, the default), as housing and food allow, so the next age's producers built after `plan advance` don't sit empty until you come back.
@@ -88,8 +87,6 @@ Planned research: Imperial Legions, after the 2 techs it needs first (Military T
 Stock has no limit, so a plan item is never held up by how large its price is. An item waits only for what it costs against what you hold, after the items above it hold back their share. Nothing overflows into the plan or into a wonder's bank.
 
 Research is never held up by stock. It starts in plan order, so the techs behind the first one read `after the research above it`, and the first reads `research slot busy` while another tech is in progress.
-
-A save written when stock still had a limit had banked part of its items' prices in the plan. Those banks are given back to you when the save loads (see [Old saves](saving-and-loading.md#saves-from-before-the-storage-wall)).
 
 ## The Plan panel
 

@@ -60,6 +60,7 @@ All notable changes to AgeForge are documented here.
 - **The top bar no longer shows the era badge.** The age name is enough; the next age is in the Next Age bar.
 - **What a tech does stands out.** The effect of a tech is shown in its own colour in the research screens.
 - **The test bot is parked.** Its code builds only with a build tag now, so everyday builds and tests skip it; the static checks still run on every change.
+- **Saves from before 4.0 are no longer loaded.** The game no longer repairs or converts old saves, accounts or exports, and refuses them with a plain line.
 
 ### Fixed
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.

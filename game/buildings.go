@@ -787,8 +787,7 @@ func (bm *BuildingManager) GetAllRuins() map[string]int {
 }
 
 // LoadRuins restores ruins from a saved state (or carries them across a
-// reset) and applies the ruin cap, so saves written before the cap existed
-// are trimmed on load.
+// reset) and applies the ruin cap.
 func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 	for k, v := range ruins {
 		if v > 0 {

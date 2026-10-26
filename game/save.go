@@ -1114,8 +1114,8 @@ type SaveInfo struct {
 	// ParentName is the lineage parent of this save ("" for a root). Surfaced
 	// here so Phase 3 can assemble the save-tree without re-reading files.
 	ParentName string
-	// AccountID attributes the save to a player account ("" = pre-account /
-	// legacy save). Display-only — drives the detail pane's account line.
+	// AccountID attributes the save to a player account ("" = a game played
+	// with no account). Display-only — drives the detail pane's account line.
 	AccountID string
 	// ModTime is when the file was last written, by the file system's
 	// account. It only breaks a tie between two saves that carry the same
