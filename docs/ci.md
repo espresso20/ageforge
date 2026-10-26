@@ -42,6 +42,7 @@ Baseline on 2026-10-23, so you can tell old findings from new ones:
 | `docs.yml` | lychee | weekly, by hand | Dead links in `site/docs/` and the README. |
 | `licenses.yml` | go-licenses | `go.mod` changes, weekly | License of every built-in module against a permissive allowlist. |
 | `bench.yml` | benchstat | Go changes, master | The hot-path benchmarks, base against the change. |
+| `nightly.yml` | ordinary path | nightly, by hand | `TestOrdinaryPath` (`smoke/ordinary_path_test.go`) walks the ordinary player through all 22 ages on the frontier with `AGEFORGE_LONG_TESTS=1`. The test skips on pull requests without that variable. |
 | `release-snapshot.yml` | GoReleaser | by hand | Builds the release binaries and uploads them as an artifact. Publishes nothing. |
 
 Every workflow sets `permissions: contents: read` at the top and asks for more only on the job that needs it. The workflows that run on pull requests cancel a superseded run of the same pull request. Every action is pinned to a commit SHA with its version in a comment, and Dependabot proposes the bumps (one grouped pull request a week).

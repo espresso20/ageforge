@@ -125,6 +125,9 @@ func longTests() bool { return os.Getenv("AGEFORGE_LONG_TESTS") != "" }
 // must build and every gate must open; a save made in each age must load
 // into a fresh engine as the same game; and time away must pay sanely.
 func TestOrdinaryPath(t *testing.T) {
+	if !longTests() {
+		t.Skip("set AGEFORGE_LONG_TESTS=1 to walk the ordinary path through all 22 ages (the nightly job does)")
+	}
 	ages := 0
 	walkOrdinary(t, func(age config.AgeDef, ge *game.GameEngine) {
 		savedAndLoaded(t, age, ge)

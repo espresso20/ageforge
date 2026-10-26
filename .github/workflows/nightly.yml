@@ -1,0 +1,29 @@
+name: Nightly
+
+# The slow test, once a night: TestOrdinaryPath walks the ordinary player's
+# purchases through all 22 ages on the frontier (smoke/ordinary_path_test.go).
+# It skips on every pull request unless AGEFORGE_LONG_TESTS=1 is set, which
+# this job does. GitHub-hosted runners only: no secrets, no Claude.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ordinary-path:
+    name: ordinary path (all 22 ages)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go test TestOrdinaryPath
+        run: AGEFORGE_LONG_TESTS=1 go test ./smoke -run TestOrdinaryPath -count=1 -timeout 30m
