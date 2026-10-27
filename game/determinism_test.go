@@ -208,10 +208,13 @@ func TestDeterminism_SameSeedSameRun(t *testing.T) {
 		t.Fatalf("same seed, same inputs, different runs:\n%s", firstDiff(a, b))
 	}
 	// Guard against a vacuous pass: the script must actually have exercised
-	// the random systems it exists to cover.
-	for _, want := range []string{"Expedition resolved", "Event triggered"} {
-		if !strings.Contains(a, want) {
-			t.Errorf("run never logged %q; the scenario no longer reaches that system", want)
+	// the random systems it exists to cover, which the fingerprint counts.
+	for system, idle := range map[string]string{
+		"expedition": "expeditions completed 0\n",
+		"event":      "streaks 0/0\n",
+	} {
+		if strings.Contains(a, idle) {
+			t.Errorf("the run never reached the %s system; the scenario no longer covers it", system)
 		}
 	}
 }

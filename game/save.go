@@ -784,8 +784,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		if save.Seed != 0 {
 			ge.SeedRNG(save.Seed)
 		}
-	} else if save.Seed != 0 && !ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws) {
-		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
+	} else if save.Seed != 0 {
+		// A position past the replay cap restarts the streams from the seed.
+		ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws)
 	}
 	ge.prose = flavor.StreamFromState(save.Prose)
 	// A cooldown never has longer to run than a fresh one: a hand-edited

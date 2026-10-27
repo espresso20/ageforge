@@ -853,10 +853,6 @@ func (ge *GameEngine) Start() {
 					ge.mu.Lock()
 					ge.addLog("warning", vibe.Sprintf("game.engine.Start.01", "Autosave failed: could not write the save file (%v). Try saving by hand.", err))
 					ge.mu.Unlock()
-				} else {
-					ge.mu.Lock()
-					ge.addLog("debug", "Autosave complete")
-					ge.mu.Unlock()
 				}
 
 				// Account lifetime-stats flush (Phase 6): persist any pending
@@ -938,17 +934,11 @@ func (ge *GameEngine) tickIntervalWithBonusLocked(bonus float64) time.Duration {
 // bonuses, prestige, and active events. Must be called with the write lock held.
 // The result is cached in ge.tickSpeedBonus; getTickInterval reads it.
 func (ge *GameEngine) recalculateTickSpeed() {
-	oldBonus := ge.tickSpeedBonus
 	// tick_speed additive pool from the resolver (research + permanent + prestige
 	// + active-event tick_speed). buildResolver reads only write-lock-held state
 	// + pure config; recalculateTickSpeed runs under the write lock. UNgated, as
 	// before — the (1 + bonus) below applies regardless of sign.
-	bonus := ge.buildResolver().AddTotal("tick_speed")
-	ge.tickSpeedBonus = bonus
-
-	if bonus != oldBonus {
-		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, ge.tickIntervalLocked().Milliseconds()))
-	}
+	ge.tickSpeedBonus = ge.buildResolver().AddTotal("tick_speed")
 }
 
 // starvationDeathInterval is how many ticks pass between starvation deaths
@@ -1470,14 +1460,6 @@ func (ge *GameEngine) doTick() {
 		}
 	}
 
-	// Log net food rate and capped resources every 10 ticks
-	if ge.tick%10 == 0 {
-		snap := ge.Resources.Snapshot()
-		if f, ok := snap["food"]; ok {
-			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Workers.TotalPop()))
-		}
-	}
-
 	// Track gathered amounts in stats
 	for key, r := range ge.Resources.Snapshot() {
 		if r.Rate > 0 {
@@ -1515,15 +1497,6 @@ func (ge *GameEngine) doTick() {
 	// Morale tick — must run after recalculateRates() so foodRate is current
 	ge.updateMoraleTick()
 
-	// Periodic debug snapshot every 50 ticks
-	if ge.tick%50 == 0 {
-		snap := ge.Resources.Snapshot()
-		foodAmt := snap["food"].Amount
-		foodRate := snap["food"].Rate
-		ge.addLog("debug", fmt.Sprintf("Tick %d snapshot: food=%.1f (%+.3f/t), pop=%d, queue=%d",
-			ge.tick, foodAmt, foodRate, ge.Workers.TotalPop(), len(ge.buildQueue)))
-	}
-
 	// The tick's report: the run's milestones are judged on it (checkMilestones,
 	// from the run's state, here as always), then the account's badges.
 	ge.report(Event{Kind: config.BadgeEvTick})
@@ -1555,7 +1528,6 @@ func (ge *GameEngine) doTick() {
 // finishResearch logs a completed tech and publishes EventResearchDone.
 func (ge *GameEngine) finishResearch(completed string) {
 	def := ge.Research.defs[completed]
-	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 	ge.addLog("success", vibe.Sprintf("game.engine.finishResearch.02", "Research complete: %s.", def.Name))
 	// The keystone of this age's wonder says what it opened.
 	if w := ge.progress.WonderForAge(ge.age); w != "" && ge.Buildings.defs[w].RequiredTech == completed &&
@@ -1589,12 +1561,10 @@ func (ge *GameEngine) processEvents() {
 	triggered, expired := ge.Events.Tick(ge.gameRNG(), ge.tick, ge.age, ageOrder, ge.currentEpoch)
 
 	for _, def := range triggered {
-		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
 		ge.fireEvent(def)
 	}
 
 	for _, ae := range expired {
-		ge.addLog("debug", fmt.Sprintf("Event expired: %s", ae.Key))
 		var about LogTag
 		switch ae.Key {
 		case "worker_lending":
@@ -1682,7 +1652,6 @@ func (ge *GameEngine) processExpeditions() {
 		ge.soldiersFall(res.SoldiersFell)
 		ge.syncSoldiers()
 		res.Message += ge.casualtyLine(res)
-		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.Military.recordReturn(res, ge.tick)
 		ge.addLogAbout("event", casualtyTags(res), res.Message)
 		if res.Rank > res.RankBefore {
@@ -2338,9 +2307,6 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
-	unlocks := ge.progress.GetUnlocks(newAge)
-	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
-		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", vibe.Sprintf("game.engine.advanceAge.05", "Advanced from the %s to the %s.", oldName, newName))
 	if line := ge.masteryEntryLine(newAge, prevK); line != "" {
 		ge.addLog("info", line)
@@ -2352,7 +2318,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	}
 
 	// Notify player about the wonder available in this age
-	for _, bKey := range unlocks.UnlockBuildings {
+	for _, bKey := range ge.progress.GetUnlocks(newAge).UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
 			if ge.Buildings.TechLocked(bKey) {
 				ge.addLog("event", vibe.Sprintf("game.engine.advanceAge.06", "★ Wonder available: %s. Bank its cost and research %s, its keystone, then build it.", def.Name, ge.techName(def.RequiredTech)))
@@ -3248,7 +3214,6 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 		ge.staffPlanCopy(key)
 	}
 	def := ge.Buildings.defs[key]
-	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
 	done := buildDoneLog(def)
 	ge.addLog(done, vibe.Sprintf("game.engine.finishBuild.02", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 	ge.logScholarsArrived(def)
@@ -3356,7 +3321,6 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	if actual > before {
 		ge.note(config.BadgeEvGathered, resource)
 	}
-	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
 	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.GatherResource.04", "Gathered %s.", Amount(actual-before, resource)))
 	return actual, nil
 }
@@ -3478,7 +3442,6 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 		}
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Build start: %s", def.Name))
 	if !DevGodMode && def.BuildTicks > 0 {
 		// Queue for construction, ÷ k on known ground (Era Mastery).
 		ticks := ge.buildTicksLocked(def)
@@ -3667,7 +3630,6 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	}
 	ge.Stats.RecordRecruit(count)
 	ge.holdStaffing()
-	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.popLocked(), popCap))
 	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
 		textfmt.Count(count, vibe.Line("game.engine.RecruitWorker.09", "worker"), vibe.Line("game.engine.RecruitWorker.10", "workers")), ge.popLocked(), popCap))
 	return nil
@@ -3704,7 +3666,6 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	}
 	ge.holdStaffing()
 	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
 	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
 	return nil
 }
@@ -3785,7 +3746,6 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	}
 	ge.holdStaffing()
 	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
 	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
 	return nil
 }
@@ -3987,7 +3947,6 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 		// complete immediately
 		ge.finishResearch(ge.Research.complete())
 	}
-	ge.addLog("debug", fmt.Sprintf("Research start: %s (work: %.0f, %d ticks)", def.Name, def.Cost, ge.researchTicksFor(def.Cost)))
 	if !quiet {
 		ge.addLog(LogRoutine, ge.startedResearchLine(def))
 	}
@@ -4455,7 +4414,6 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 		ge.Resources.Remove(res, cost[res])
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (party of %d soldiers)", offer.Title, int(soldiers)))
 	if offer.Military() {
 		ge.addLogAbout(LogRoutine, TagPeople|TagArmy, vibe.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {

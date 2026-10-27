@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math/rand"
 	"slices"
 	"strings"
@@ -515,7 +514,6 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 			}
 			out.gained[eff.Target] += eff.Value
 			ge.grantLocked(eff.Target, eff.Value)
-			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
 		case "steal_resource":
 			current := ge.Resources.Get(eff.Target)
 			loss := eff.Value
@@ -541,7 +539,6 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 				}
 				out.lost[eff.Target] += loss
 			}
-			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
 		case "worker_loss":
 			// Value is a share (0.0-1.0) of the worker pool to remove.
 			pct := eff.Value
@@ -555,7 +552,6 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 			before := ge.Workers.TotalPop()
 			ge.Workers.RemovePct(pct)
 			out.workers += before - ge.Workers.TotalPop()
-			ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", pct*100))
 		}
 	}
 	line := garrisonSavedLine(guard, keptRes, keptWorkers)

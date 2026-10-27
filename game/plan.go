@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"slices"
 	"strings"
@@ -782,7 +781,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					err = ge.payWonderBank(it.Key)
 				}
 				if err != nil {
-					ge.addLog("debug", fmt.Sprintf("Plan: %s refused: %v", ge.planItemLabel(it), err))
 					break
 				}
 				if it.Kind == PlanBuild {
@@ -795,7 +793,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 				if err != nil {
 					// The walk's checks mirror the command's; if the command
 					// still refuses, keep the item and try again next tick.
-					ge.addLog("debug", fmt.Sprintf("Plan: %s refused: %v", ge.planItemLabel(it), err))
 					break
 				}
 				started = true
@@ -840,7 +837,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		// its harbinger comes, first. If the advance must wait, the item goes
 		// back where it was and tries again next tick.
 		if err := ge.fateBeforeAdvance(next); err != nil {
-			ge.addLog("debug", fmt.Sprintf("Plan: advance waits: %v", err))
 			out = append(out[:advanceIdx], append([]PlanItem{ge.plan[advanceAt]}, out[advanceIdx:]...)...)
 			advanceAt = -1
 		}

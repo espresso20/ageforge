@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/espresso20/ageforge/rules"
@@ -271,7 +270,6 @@ func (ge *GameEngine) processAutoExpeditions() {
 	if err := ge.launchExpeditionLocked(n); err != nil {
 		// Defensive: the affordability and slot checks above already cover every
 		// rejection the launch path can produce. Hold at zero and retry.
-		ge.addLog("debug", fmt.Sprintf("auto-dispatch declined: %v", err))
 		return
 	}
 
