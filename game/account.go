@@ -131,13 +131,8 @@ func writeActivePointer(id string) error {
 	if err := os.MkdirAll(root, 0755); err != nil {
 		return fmt.Errorf("failed to create data root: %w", err)
 	}
-	path := activeAccountPointerPath()
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, []byte(id), 0644); err != nil {
+	if err := writeFileAtomic(activeAccountPointerPath(), []byte(id)); err != nil {
 		return fmt.Errorf("failed to write active-account pointer: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("failed to finalize active-account pointer: %w", err)
 	}
 	return nil
 }
@@ -850,13 +845,8 @@ func (a *Account) Save() error {
 		return fmt.Errorf("failed to marshal account: %w", err)
 	}
 
-	path := filepath.Join(dir, accountFileName)
-	tmpPath := path + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+	if err := writeFileAtomic(filepath.Join(dir, accountFileName), data); err != nil {
 		return fmt.Errorf("failed to write account: %w", err)
-	}
-	if err := os.Rename(tmpPath, path); err != nil {
-		return fmt.Errorf("failed to finalize account: %w", err)
 	}
 	return nil
 }

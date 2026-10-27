@@ -83,13 +83,8 @@ func (a *Account) saveSettingsLocked() error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal settings: %w", err)
 	}
-	path := filepath.Join(dir, settingsFileName)
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
+	if err := writeFileAtomic(filepath.Join(dir, settingsFileName), data); err != nil {
 		return fmt.Errorf("failed to write settings: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("failed to finalize settings: %w", err)
 	}
 	return nil
 }
