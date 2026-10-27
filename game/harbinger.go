@@ -1308,7 +1308,7 @@ func (ge *GameEngine) threadFlavorLog(h *HarbingerSave, moment flavor.Moment, ki
 		return
 	}
 	def, _ := ge.rules.Harbinger(h.Age)
-	if l := ge.flavorStream().Line(flavor.Request{Moment: moment, Age: h.Age, Subject: def.Name, Kind: kind}, ge.gameRNG()); l != "" {
+	if l := ge.flavorLine(flavor.Request{Moment: moment, Age: h.Age, Subject: def.Name, Kind: kind}); l != "" {
 		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }

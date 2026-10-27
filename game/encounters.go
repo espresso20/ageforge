@@ -120,11 +120,9 @@ const (
 // (first-contact + boon flavour); nil when no encounter fires or no faction is
 // eligible yet. Must run under the write lock.
 func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []string {
-	// Self-heal a missing RNG service rather than ever panicking on a nil source.
-	if ge.rng == nil {
-		ge.SeedRNG(newSeed())
-	}
-	if ge.rng.Float64() >= encounterChance(category, success) {
+	// gameRNG heals a missing RNG service rather than ever panicking on a nil
+	// source; the draws below read ge.rng after it.
+	if ge.gameRNG().Float64() >= encounterChance(category, success) {
 		return nil
 	}
 

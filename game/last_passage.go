@@ -290,7 +290,7 @@ func (ge *GameEngine) logRunEnding() {
 			req.Subject = def.Name
 		}
 	}
-	if l := ge.flavorStream().Line(req, ge.gameRNG()); l != "" {
+	if l := ge.flavorLine(req); l != "" {
 		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }
