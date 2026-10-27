@@ -21,26 +21,6 @@ const (
 	LaneComputing   = "computing"   // data, crypto
 )
 
-// TechTreeVersion is the tech tree's rules as a save knows them. It goes up
-// when the tree starts locking something it did not lock before, and a save
-// written under an older version (or before the tree: 0) then gets one age
-// of grace from the new locks (the game's GameSave.TreeVersion).
-//
-//	1: each age's wonder needs its keystone tech (BuildingDef.RequiredTech).
-//	2: commands wait for a tech (FeatureLocks).
-//	3: Stonehenge needs its keystone (Calendar), four more commands wait for
-//	   a tech that the tree now holds (trade routes, expeditions past the
-//	   Scout Party, diplomacy, festivals), and seven buildings of the Stone
-//	   and Iron Eras wait for one.
-//	4: nine buildings of the Steel and Electric Eras wait for a tech of
-//	   their age (the Foundry, the Harbor, the Colonial Steelworks, the
-//	   Embassy, the Coal Plant, the Geographic Society, the Grand Embassy,
-//	   the Steam Works and the Dynamo Hall).
-//	5: the Warp Commerce route waits for Interstellar Trade, the last
-//	   command lock to find its tech, and nineteen buildings of the Digital,
-//	   Neon and Cosmic Eras wait for a tech of their age.
-const TechTreeVersion = 5
-
 // TechLaneDef is one lane of the tech tree.
 type TechLaneDef struct {
 	Key  string
