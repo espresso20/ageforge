@@ -391,3 +391,42 @@ func templateAgeCount(t []PlanTemplateItem, age string) int {
 	}
 	return n
 }
+
+// LegacyForTest returns what the kit remembers now. A test hook; not
+// reachable from play.
+func (ge *GameEngine) LegacyForTest() LegacyKit {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	pm := ge.Prestige
+	return LegacyKit{
+		Plan:     clonePlanTemplate(pm.legacyPlan),
+		Factions: slices.Clone(pm.legacyFactions),
+		Shares:   cloneShares(pm.legacyShares),
+	}
+}
+
+// SetLegacyForTest gives the engine kit as its memory and, with own, buys
+// every kit item for free, then puts them to work as a purchase would (the
+// current age's template slice, the shares, old friends). A test hook; not
+// reachable from play.
+func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.Prestige.LoadLegacy(kit.Plan, kit.Factions, kit.Shares)
+	if !own {
+		return
+	}
+	if ge.Prestige.level == 0 {
+		ge.Prestige.level = 1
+	}
+	ge.applyPlanTemplateLocked()
+	ge.applyLegacySharesLocked()
+	ge.meetOldFriendsLocked()
+}
+
+// LegacyKit is the legacy kit's memory as a save carries it, for tests.
+type LegacyKit struct {
+	Plan     []PlanTemplateItem `json:"plan,omitempty"`
+	Factions []string           `json:"factions,omitempty"`
+	Shares   map[string]float64 `json:"shares,omitempty"`
+}

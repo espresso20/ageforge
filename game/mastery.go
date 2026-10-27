@@ -274,13 +274,6 @@ func (ge *GameEngine) SetMasteryForTest(mastery map[string]int, record string) {
 	ge.recalculateRates()
 }
 
-// SetPrestigeFloorForTest sets the prestige age floor for focused tests.
-func (ge *GameEngine) SetPrestigeFloorForTest(age string) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.Prestige.floor = age
-}
-
 // buildTicksLocked is def's construction time in the current age: its
 // BuildTicks × the techs' factor on construction time, ÷ k on known ground.
 // Must be called with the lock held.
