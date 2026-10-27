@@ -490,3 +490,13 @@ func TestCivCommandsRefuseACivNotMet(t *testing.T) {
 		}
 	}
 }
+
+// LentWorkerTotal returns the total number of workers currently on loan across
+// all civs. Used by the engine to reconcile the pool after a load.
+func (dm *DiplomacyManager) LentWorkerTotal() int {
+	total := 0
+	for _, b := range dm.lentBatches {
+		total += b.Count
+	}
+	return total
+}

@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -396,19 +395,6 @@ func (ge *GameEngine) fateWarningText(h *HarbingerSave) string {
 // before Appease: 60%, 75% or 90%. Read-only.
 func (ge *GameEngine) strikeBase() float64 {
 	return float64((1-ge.epochGoodChance())*catastropheChanceOnBadRoll) * FateStrikeScale
-}
-
-// StrikeChanceAt is the chance a fated doom strikes at faith strength
-// strength with appease levels of Appease bought: the rule the strike rolls
-// by. Pure; for the smoke report, which models the expected catastrophes of a
-// run from the faith it lived at.
-func StrikeChanceAt(strength float64, appease int) float64 {
-	good := goodChanceFor(strength)
-	p := float64((1-good)*catastropheChanceOnBadRoll) * FateStrikeScale
-	if appease > 0 {
-		p *= detmath.Pow(harbingerAppeaseFactor, float64(appease))
-	}
-	return p
 }
 
 // strikeChance is the chance the current era's doom strikes if it rolled now:

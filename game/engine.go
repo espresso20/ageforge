@@ -4191,18 +4191,6 @@ func (ge *GameEngine) ensureMissionBoardLocked() {
 	ge.Military.EnsureBoard(ge.gameRNG(), ge.age, ge.tick)
 }
 
-// MissionCost reports the current launch cost of offer n, soldiers under the
-// key "soldiers"; nil when there is no such offer.
-func (ge *GameEngine) MissionCost(n int) map[string]float64 {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-	offer, err := ge.Military.BoardOffer(n)
-	if err != nil {
-		return nil
-	}
-	return ge.missionCostLocked(offer)
-}
-
 // missionCostLocked is what sending an offer costs now: the party of soldiers
 // every mission takes (under "soldiers"; a military grand offer costs nothing
 // else) and, for any other, minutes of income in the age's two most-charged

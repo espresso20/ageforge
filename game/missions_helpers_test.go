@@ -164,3 +164,15 @@ func (mm *MilitaryManager) setActive(tier string, a *ActiveExpedition) {
 		mm.active = append(mm.active, a)
 	}
 }
+
+// MissionCost reports the current launch cost of offer n, soldiers under the
+// key "soldiers"; nil when there is no such offer.
+func (ge *GameEngine) MissionCost(n int) map[string]float64 {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	offer, err := ge.Military.BoardOffer(n)
+	if err != nil {
+		return nil
+	}
+	return ge.missionCostLocked(offer)
+}

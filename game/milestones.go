@@ -208,11 +208,6 @@ func (mm *MilestoneManager) savedTitle() string {
 	return mm.titleFor(plain.MilestoneChains(), plain.MilestoneTitles())
 }
 
-// IsCompleted checks if a milestone has been achieved
-func (mm *MilestoneManager) IsCompleted(key string) bool {
-	return mm.completed[key]
-}
-
 // CompletedCount returns how many milestones are completed
 func (mm *MilestoneManager) CompletedCount() int {
 	return len(mm.completed)

@@ -311,13 +311,6 @@ func (bm *BuildingManager) RemoveBuilding(key string, n int) int {
 	return n
 }
 
-// GetCost calculates the cost for the next instance of a building type.
-// Cost scales exponentially: base × CostScale^count, floored to the nearest
-// integer. This makes later copies progressively more expensive.
-func (bm *BuildingManager) GetCost(key string) map[string]float64 {
-	return bm.CopyCost(key, 0, nil)
-}
-
 // applyCostMult folds the global build-cost factor into a single resource's raw
 // curve cost, then floors. A positive raw cost never drops below 1 even after a
 // deep discount — you can always be charged something for a building that costs

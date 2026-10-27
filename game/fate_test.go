@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/rules"
 )
 
@@ -1190,4 +1191,17 @@ func TestLoadedGameWithNoFateRollsItOnTheFirstTick(t *testing.T) {
 	if ge2.fate == nil || ge2.fate.EpochKey != "iron_era" || ge2.fate.EntryTick != 5000 {
 		t.Errorf("first tick after a load: fate %+v", ge2.fate)
 	}
+}
+
+// StrikeChanceAt is the chance a fated doom strikes at faith strength
+// strength with appease levels of Appease bought: the rule the strike rolls
+// by. Pure; for the smoke report, which models the expected catastrophes of a
+// run from the faith it lived at.
+func StrikeChanceAt(strength float64, appease int) float64 {
+	good := goodChanceFor(strength)
+	p := float64((1-good)*catastropheChanceOnBadRoll) * FateStrikeScale
+	if appease > 0 {
+		p *= detmath.Pow(harbingerAppeaseFactor, float64(appease))
+	}
+	return p
 }
