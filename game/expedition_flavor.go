@@ -121,8 +121,7 @@ func topRewardIn(set *rules.Set, rewards map[string]float64) (string, float64) {
 // factionEncounterFlavor generates the line for an encounter outcome that gave the
 // player nothing — a standoff with a civ at war, or an offer the court has no room
 // for. Both were fixed three-line banks before this; they are now drawn off the
-// same generator, and game/boon_tuning_test.go classifies them via
-// flavor.Signatures rather than by matching those banks.
+// same generator.
 func (ge *GameEngine) factionEncounterFlavor(moment flavor.Moment, def config.FactionDef) string {
 	if ge.rng == nil {
 		ge.SeedRNG(newSeed())

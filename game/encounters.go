@@ -109,17 +109,9 @@ const (
 //
 // The two Moments are flavor.EncounterAtCapacity and flavor.EncounterStandoff.
 //
-// NOTE FOR THE TUNING HARNESS: game/boon_tuning_test.go buckets encounter
-// outcomes by matching the player-facing line. It used to iterate these two
-// slices; it now consults flavor.Signatures(moment), which enumerates the
-// fragments guaranteed to appear verbatim in generated text. If you add a Moment
-// to the empty-outcome path, add it to bounceSignatures there or the harness will
-// silently stop classifying.
-//
 // A standoff must never be SILENT: before the malus table existed a war encounter
-// fired and produced nothing at all, which read to the player — and to the
-// harness — as if no encounter had happened. A standoff is an outcome and gets a
-// line.
+// fired and produced nothing at all, which read to the player as if no encounter
+// had happened. A standoff is an outcome and gets a line.
 
 // rollExpeditionEncounter is called once per resolved expedition. It rolls the
 // encounter chance for (category, success); on a hit it discovers an eligible

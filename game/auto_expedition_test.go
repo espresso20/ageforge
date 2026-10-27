@@ -13,7 +13,7 @@ import (
 // launchExpeditionLocked → MilitaryManager — and assert the correctness rules the
 // feature must never break: scouting only, one slot honoured, cost actually paid.
 // The statistical question (does automation stay slower than hands-on play?) is a
-// different one and lives in boon_tuning_test.go, scenarios A/D/F.
+// different one and lives in boon_tuning_test.go, scenarios B/D/F.
 
 // autoExpeditionTestEngine returns an engine parked at an age with n Geographic
 // Societies standing, `assigned` workers spread across them, and every resource

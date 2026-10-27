@@ -212,7 +212,7 @@ func eraPools(prefix string, ungated, grounded, late, ancient, feudal, industria
 // the inside of a literal or transforms case, so everything up to the first slot
 // or placeholder survives into the finished line character for character. That
 // run is therefore an enumerable handle on the line for a consumer that only has
-// the string — game/boon_tuning_test.go classifies encounter outcomes with it.
+// the string.
 //
 // Returns "" for a template that opens on a bank draw, which the catalog forbids
 // (TestSkeletonShape).

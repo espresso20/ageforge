@@ -1673,7 +1673,7 @@ func TestEveryEraHasItsOwnVoice(t *testing.T) {
 }
 
 // TestSignaturesClassifyEveryLine is the end-to-end version of the signature
-// contract, and the property game/boon_tuning_test.go depends on: any generated
+// contract: any generated
 // line contains exactly one of its Moment's signatures and none of any other
 // Moment's, so a consumer holding only the finished text can bucket it.
 func TestSignaturesClassifyEveryLine(t *testing.T) {
