@@ -427,10 +427,6 @@ func TestOlderIsReadLive(t *testing.T) {
 	if err := loaded.UpgradeBuilding("gathering_camp", 1, false); err != nil && strings.Contains(err.Error(), "has no upgrade") {
 		t.Errorf("a loaded game cannot upgrade: %v", err)
 	}
-	// The save carries no flags and no offers.
-	if data := loaded.buildSaveSnapshot(); len(data.LegacyBuildings) != 0 || len(data.PendingUpgrades) != 0 {
-		t.Errorf("the save holds legacy %v and offers %v", data.LegacyBuildings, data.PendingUpgrades)
-	}
 }
 
 // Counters that name a building by key keep their progress when copies are

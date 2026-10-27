@@ -15,7 +15,8 @@ func TestApplyExport_PrefsAndStatsMerge(t *testing.T) {
 		}
 	}
 	exp := &progressExport{
-		Prefs: AccountPrefs{ActiveTheme: "frost", MapGlyphs: "ascii", Minimap: "on", MapIconsHint: true},
+		BadgeStore: &badgeFile{},
+		Prefs:      AccountPrefs{ActiveTheme: "frost", MapGlyphs: "ascii", Minimap: "on", MapIconsHint: true},
 		Stats: AccountStats{TotalPrestiges: 4, CivilizationsStarted: 7, SavesCompleted: 9,
 			PrestigesByAge: map[string]int{"stone_age": 1, "bronze_age": 2}},
 	}
@@ -33,7 +34,7 @@ func TestApplyExport_PrefsAndStatsMerge(t *testing.T) {
 
 	b := local()
 	b.Prefs.MapIconsHint = true
-	b.applyExportLocked(&progressExport{}, true)
+	b.applyExportLocked(&progressExport{BadgeStore: &badgeFile{}}, true)
 	if !b.Prefs.MapIconsHint {
 		t.Error("an import without the hint flag cleared the account's")
 	}

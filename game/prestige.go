@@ -29,16 +29,14 @@ type PrestigeManager struct {
 	available   int
 
 	// Era Mastery: age key -> mastery (ages at 0 left out), the record and
-	// this run's furthest age ("" for none yet), and whether a save from
-	// before Era Mastery has had its one-time seeding (seedMasteryLocked).
+	// this run's furthest age ("" for none yet).
 	// speeds is every age's k, rebuilt whenever mastery or the record
 	// changes (rebuildSpeeds).
-	mastery       map[string]int
-	record        string
-	floor         string
-	runFurthest   string
-	masterySeeded bool
-	speeds        map[string]float64
+	mastery     map[string]int
+	record      string
+	floor       string
+	runFurthest string
+	speeds      map[string]float64
 
 	// The legacy kit's memory (legacy.go): what the runs so far wrote and
 	// did, kept whether or not the kit is bought, so an item bought after a
@@ -56,19 +54,14 @@ type PrestigeManager struct {
 	prestigeCoefficient float64
 }
 
-// NewPrestigeManager creates a new prestige manager on the core ruleset.
-func NewPrestigeManager() *PrestigeManager { return NewPrestigeManagerWith(rules.Core()) }
-
 // NewPrestigeManagerWith creates a new prestige manager on set: its shop,
 // its ages and its depth points.
 func NewPrestigeManagerWith(set *rules.Set) *PrestigeManager {
 	pm := &PrestigeManager{
 		mastery: make(map[string]int),
-		// A new game has no past prestiges to seed mastery from, and it
-		// starts in the first age: its record and its run's furthest age.
-		masterySeeded: true,
-		record:        set.AgeKeys()[0],
-		runFurthest:   set.AgeKeys()[0],
+		// A new game starts in the first age: its record and its run's furthest age.
+		record:      set.AgeKeys()[0],
+		runFurthest: set.AgeKeys()[0],
 	}
 	pm.Rebind(set)
 	return pm

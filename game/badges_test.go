@@ -150,7 +150,7 @@ func TestPrestigeLadderFromPlay(t *testing.T) {
 	ge.mu.RLock()
 	facts := ge.runFacts
 	ge.mu.RUnlock()
-	if !facts.Whole || len(facts.Counts) != 0 || facts.AgeTick != 0 {
+	if len(facts.Counts) != 0 || facts.AgeTick != 0 {
 		t.Errorf("the run after a prestige did not start with fresh facts: %+v", facts)
 	}
 }
@@ -357,18 +357,6 @@ func TestFashionablyLate(t *testing.T) {
 	ge.StepTicks(5)
 	if !hasBadge(acct, badgeLate) {
 		t.Fatal("ten times the Primitive Age's target, spent in the Primitive Age, did not earn the badge")
-	}
-
-	// A run that does not know when it entered its age cannot earn it.
-	isolateAccountDir(t)
-	ge2, acct2 := devEngine(t, "Bea")
-	ge2.mu.Lock()
-	ge2.runFacts = RunFacts{}
-	ge2.tick = need + 10
-	ge2.mu.Unlock()
-	ge2.StepTicks(2)
-	if hasBadge(acct2, badgeLate) {
-		t.Error("a run with no known entry tick earned a time-in-age badge")
 	}
 }
 
@@ -736,9 +724,7 @@ func TestBadgeForEarningBadges(t *testing.T) {
 	}
 }
 
-// TestConditionsOnARun: the extra conditions a row can carry. "At most"
-// needs the run's whole story: a run that was not tracked from its first
-// tick cannot show that something never happened.
+// TestConditionsOnARun: the extra conditions a row can carry.
 func TestConditionsOnARun(t *testing.T) {
 	isolateAccountDir(t)
 	src := rules.FromConfig()
@@ -779,15 +765,6 @@ func TestConditionsOnARun(t *testing.T) {
 	advanceTo(sold, "stone_age")
 	if hasBadge(b, "special.no_sales") {
 		t.Error("a run with a sale earned the no-sales badge")
-	}
-
-	unknown, c := start("Cy")
-	unknown.mu.Lock()
-	unknown.runFacts = RunFacts{} // as a save from before run facts loads
-	unknown.mu.Unlock()
-	advanceTo(unknown, "stone_age")
-	if hasBadge(c, "special.no_sales") {
-		t.Error("a run whose past is unknown earned a badge for something that never happened")
 	}
 
 	ev := func(ge *GameEngine, brace float64) {

@@ -31,10 +31,6 @@ type TradeManager struct {
 	// same way; 0 reads as 1.
 	routePay float64
 
-	// Cumulative route stats for display in the Trade panel.
-	totalImported map[string]float64
-	totalExported map[string]float64
-
 	// Static config tables, built once at construction so Tick (every engine
 	// tick) and Snapshot (every UI refresh) don't rebuild them per call.
 	// Read-only: never mutate these or the maps inside the defs; Snapshot hands
@@ -76,9 +72,7 @@ func (tm *TradeManager) routeDisruptedBy(def config.TradeRouteDef, disrupted map
 // NewTradeManagerWith creates a new trade manager with set's routes.
 func NewTradeManagerWith(set *rules.Set) *TradeManager {
 	tm := &TradeManager{
-		activeRoutes:  make(map[string]*ActiveRoute),
-		totalImported: make(map[string]float64),
-		totalExported: make(map[string]float64),
+		activeRoutes: make(map[string]*ActiveRoute),
 	}
 	tm.Rebind(set)
 	return tm
@@ -251,7 +245,6 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				// Consume exports
 				for res, amount := range def.Export {
 					resources.Remove(res, amount)
-					tm.totalExported[res] += float64(amount)
 				}
 
 				// Add imports
@@ -265,7 +258,6 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 						continue
 					}
 					resources.Add(res, actual)
-					tm.totalImported[res] += actual
 				}
 
 				route.CyclesDone++
@@ -363,26 +355,14 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	return TradeState{
 		ActiveRoutes:       activeRoutes,
 		AvailableRoutes:    availableRoutes,
-		TotalImported:      maps.Clone(tm.totalImported),
 		DisruptedResources: disruptedResources,
 	}
 }
 
-// LoadState restores trade state from save. The old swap's fields in the save
-// (supply pressure, exchange totals, sold and bought) are read past: nothing
-// uses them any more, and the next save writes them empty.
+// LoadState restores trade state from save.
 func (tm *TradeManager) LoadState(s TradeSave) {
-	activeRoutes, totalImported, totalExported := s.ActiveRoutes, s.TotalImported, s.TotalExported
-	if activeRoutes != nil {
-		for k, v := range activeRoutes {
-			route := v // copy
-			tm.activeRoutes[k] = &route
-		}
-	}
-	if totalImported != nil {
-		tm.totalImported = totalImported
-	}
-	if totalExported != nil {
-		tm.totalExported = totalExported
+	for key, route := range s.ActiveRoutes {
+		route := route // copy
+		tm.activeRoutes[key] = &route
 	}
 }

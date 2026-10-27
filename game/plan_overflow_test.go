@@ -84,27 +84,6 @@ func TestPlanOverflow_QueuedWonderStartsOffline(t *testing.T) {
 	}
 }
 
-// A bank in a saved plan is dropped on load, whatever the item, and the rest
-// of the item loads as it was.
-func TestPlanOverflow_LoadPlanDropsBanks(t *testing.T) {
-	got := loadPlan([]PlanItem{
-		{Kind: PlanBuild, Key: "hut", Count: 2, Started: 1, Banked: map[string]float64{"wood": 5}},
-		{Kind: PlanResearch, Key: "tool_making", Count: 1, Banked: map[string]float64{"knowledge": 9}},
-		{Kind: PlanBuild, Key: "wood_camp", Count: 1},
-	})
-	if len(got) != 3 {
-		t.Fatalf("%d items loaded, want 3", len(got))
-	}
-	for i, it := range got {
-		if it.Banked != nil {
-			t.Errorf("item %d loaded with the bank %v, want none", i, it.Banked)
-		}
-	}
-	if got[0].Key != "hut" || got[0].Count != 2 || got[0].Started != 1 {
-		t.Errorf("the banked hut loaded as %+v", got[0])
-	}
-}
-
 // The plan holds 60 items and refuses the 61st.
 func TestPlan_HoldsSixtyItems(t *testing.T) {
 	if MaxPlanItems != 60 {

@@ -293,6 +293,7 @@ func TestImportOwnBackupKeepsLiveRecords(t *testing.T) {
 		AccountID:   alice.AccountID,
 		DisplayName: "Alice",
 		Unlocks:     AccountUnlocks{Themes: []string{"amber_crt"}},
+		BadgeStore:  alice.badgeFileLocked(),
 	}
 	exp.Signature = signProgressExport(&exp)
 	blob, err := json.Marshal(&exp)

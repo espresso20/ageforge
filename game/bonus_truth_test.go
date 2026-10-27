@@ -534,14 +534,16 @@ func truthLoot(t *testing.T, ge *GameEngine) float64 {
 		MissionOffer: testOffer(ge, TierShort, ""), TicksLeft: 1,
 		BaseRewards: base, SuccessRewards: scaleLoot(base, 1+ge.expeditionReward()),
 	})
-	ge.Military.totalLoot = map[string]float64{}
 	ge.processExpeditions()
 	if len(base) == 0 {
 		t.Fatalf("loot meter: no positive production income in %s", ge.age)
 	}
+	if len(ge.Military.returns) == 0 {
+		t.Fatal("loot meter: the expedition did not come home")
+	}
 	var got, want float64
 	for res, amount := range base {
-		got += ge.Military.totalLoot[res]
+		got += ge.Military.returns[0].Loot[res]
 		want += amount
 	}
 	return got / want
@@ -568,10 +570,9 @@ func truthRouteIncome(t *testing.T, ge *GameEngine) (float64, string) {
 			r.Amount = math.Max(r.Amount, amount)
 		}
 		ge.Trade.activeRoutes = map[string]*ActiveRoute{def.Key: {Key: def.Key, TicksLeft: 1}}
-		ge.Trade.totalImported = map[string]float64{}
 		ge.processTrade()
 		res := sortedKeys(def.Import)[0]
-		return ge.Trade.totalImported[res] / def.Import[res], ""
+		return ge.Resources.Get(res) / def.Import[res], ""
 	}
 	return 0, "no trade route runs in " + ge.age
 }
@@ -2356,7 +2357,7 @@ func truthOtherPromises() []truthPromise {
 						ge.festivalReadyTick = 0
 						// The festival's buff is what is measured, not the
 						// tech that opens the command (Drama): hold it open.
-						ge.grantFeaturesLocked([]string{config.FeatureFestivals})
+						ge.useFeature(config.FeatureFestivals)
 						if err := ge.DoFestival(); err != nil {
 							panic(err)
 						}

@@ -29,84 +29,6 @@ func coreDef(t *testing.T, key string) config.BadgeDef {
 	return def
 }
 
-// writeOldFile makes a slot whose badge file is as the code from before this
-// change wrote it: rungs with no remembered count, signed. The account holds
-// the two lower stone rungs and the third, and a counter that meets the first
-// two only; an age badge sits beside them.
-func writeOldFile(t *testing.T) (id string) {
-	t.Helper()
-	acct, err := CreateAccount("Ada")
-	if err != nil {
-		t.Fatal(err)
-	}
-	r2 := coreDef(t, stoneRung2)
-	acct.mu.Lock()
-	acct.Badges = map[string]BadgeEarned{
-		stoneRung1:          {At: 100},
-		stoneRung2:          {At: 200},
-		stoneRung3:          {At: 300, Run: "old"},
-		"age.stone_age":     {At: 50},
-		"lineage.housing.1": {At: 60},
-	}
-	acct.Counters = map[string]float64{stoneCount: r2.Threshold * 2, "built.lineage.housing": config.Billion}
-	acct.dirty = true
-	acct.mu.Unlock()
-	noErr(t, acct.Save())
-	return acct.AccountID
-}
-
-func TestOldRungsAreSettledOnce(t *testing.T) {
-	isolateAccountDir(t)
-	id := writeOldFile(t)
-	if raw := slotBadgeFile(t, id); bytes.Contains(raw, []byte(`"count"`)) {
-		t.Fatalf("the old-style file already remembers counts:\n%s", raw)
-	}
-
-	ge, acct := openIn(t, id)
-	_ = ge
-	if acct.BadgesTampered {
-		t.Fatal("a badge file from before this change loads flagged as edited")
-	}
-	if hasBadge(acct, stoneRung3) {
-		t.Error("the third stone rung, earned under a lower bar, is still earned")
-	}
-	for _, key := range []string{stoneRung1, stoneRung2} {
-		if !hasBadge(acct, key) {
-			t.Errorf("%s was lost", key)
-		}
-		if got, want := acct.Badges[key].Count, coreDef(t, key).Threshold; got != want {
-			t.Errorf("%s remembers %v, want today's %v", key, got, want)
-		}
-	}
-	for _, key := range []string{"age.stone_age", "lineage.housing.1"} {
-		if !hasBadge(acct, key) {
-			t.Errorf("%s was touched", key)
-		}
-	}
-	if acct.Badges["age.stone_age"].Count != 0 {
-		t.Error("an age badge remembers a count")
-	}
-
-	// The cleanup was saved, and the file is valid and says nothing wrong.
-	var bf badgeFile
-	raw := slotBadgeFile(t, id)
-	if err := json.Unmarshal(raw, &bf); err != nil || !verifyBadgeFile(&bf) || bf.Tampered {
-		t.Fatalf("the file after the cleanup: err %v, verifies %v, tampered %v", err, verifyBadgeFile(&bf), bf.Tampered)
-	}
-	if _, ok := bf.Badges[stoneRung3]; ok {
-		t.Error("the file still holds the un-earned rung")
-	}
-
-	// Once: another load changes nothing, in memory or on disk.
-	_, again := openIn(t, id)
-	if string(slotBadgeFile(t, id)) != string(raw) {
-		t.Error("a second load rewrote the badge file")
-	}
-	if len(again.Badges) != len(acct.Badges) || again.BadgesTampered {
-		t.Errorf("a second load: %d badges (was %d), tampered %v", len(again.Badges), len(acct.Badges), again.BadgesTampered)
-	}
-}
-
 // TestRungKeepsItsBarWhenTheBarRises: a rung earned after this change keeps
 // its count, and the words that go with it, when the ruleset's bar goes up.
 func TestRungKeepsItsBarWhenTheBarRises(t *testing.T) {
@@ -174,8 +96,16 @@ func badgeCountText(set *rules.Set, key string, count float64) string {
 // a file with the field and a file without it alike.
 func TestRememberedCountIsNotSigned(t *testing.T) {
 	isolateAccountDir(t)
-	id := writeOldFile(t)
-	openIn(t, id) // settles and saves with counts
+	acct, err := CreateAccount("Ada")
+	if err != nil {
+		t.Fatal(err)
+	}
+	acct.mu.Lock()
+	acct.Badges = map[string]BadgeEarned{stoneRung1: {At: 100, Count: coreDef(t, stoneRung1).Threshold}}
+	acct.dirty = true
+	acct.mu.Unlock()
+	noErr(t, acct.Save())
+	id := acct.AccountID
 	raw := slotBadgeFile(t, id)
 	if !bytes.Contains(raw, []byte(`"count"`)) {
 		t.Fatalf("no remembered count in the file:\n%s", raw)
@@ -217,41 +147,5 @@ func TestRememberedCountIsNotSigned(t *testing.T) {
 	})
 	if again := slotAccount(t, id); !again.BadgesTampered {
 		t.Error("editing the counters of a file with counts was not noticed")
-	}
-}
-
-// TestRungsThatGiveSomethingAreLeftAlone: the cleanup does not take back a
-// rung a theme or a title comes from, even when its counter is under today's
-// bar; whether it should is the owner's call.
-func TestRungsThatGiveSomethingAreLeftAlone(t *testing.T) {
-	isolateAccountDir(t)
-	set := rules.Core()
-	acct, err := CreateAccount("Cy")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var given []string
-	acct.mu.Lock()
-	acct.Badges = map[string]BadgeEarned{}
-	for _, def := range set.Badges() {
-		if _, counted := set.BadgeDescAt(def.Key, def.Threshold); !counted || def.Ladder == "" || def.Scope != config.BadgeLifetime {
-			continue
-		}
-		if def.Reward.Theme != "" || def.Reward.Title != "" {
-			given = append(given, def.Key)
-			acct.Badges[def.Key] = BadgeEarned{At: 10}
-		}
-	}
-	acct.dirty = true
-	acct.mu.Unlock()
-	if len(given) == 0 {
-		t.Fatal("no counted ladder rung gives a theme or a title")
-	}
-	noErr(t, acct.Save())
-	_, loaded := openIn(t, acct.AccountID)
-	for _, key := range given {
-		if !hasBadge(loaded, key) {
-			t.Errorf("%s gives %+v and was un-earned", key, coreDef(t, key).Reward)
-		}
 	}
 }

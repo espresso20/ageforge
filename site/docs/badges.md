@@ -59,23 +59,23 @@ Legendary badges are drawn as a ring. Eight of them have a drawing of their own 
 
 | Family | Badges | What they are for |
 |---|---|---|
-| Ages | 21 | Reaching each age after the first |
-| Swift Eras | 7 | Leaving each of the seven eras within its pacing target |
-| Wonders | 22 | Raising each age's wonder |
-| Maximalists | 22 | Having a set number of an age's buildings built at the same time, before you leave the age. Wonders do not count |
-| Research | 22 | Researching every tech of an age in one run |
-| Lineages | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 14 lineages and for storage |
-| Payrolls | 20 | Workers at work in one domain at the same time: two rungs for each of 10 domains |
-| Resources | 90 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
-| Civilizations | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and ending a war with it |
-| Harbingers | 34 | Hearing out each of the 22 harbingers, and appeasing each of the first 12 while it speaks |
-| Catastrophes | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
-| Expeditions | 21 | Coming back with a success from a scout, a long or a grand mission in each era |
-| Awakenings | 7 | Witnessing each awakening |
-| Ladders | 70 | Counts kept across all your runs, in 22 ladders |
-| Themes | 16 | Advancing an age while wearing each theme |
-| Maps | 3 | Advancing an age with each glyph set |
-| Specials | 65 | One-off feats, from the easy to the very hard |
+| **Ages** | 21 | Reaching each age after the first |
+| **Swift Eras** | 7 | Leaving each of the seven eras within its pacing target |
+| **Wonders** | 22 | Raising each age's wonder |
+| **Maximalists** | 22 | Having a set number of an age's buildings built at the same time, before you leave the age. Wonders do not count |
+| **Research** | 22 | Researching every tech of an age in one run |
+| **Lineages** | 75 | Building a lineage's buildings across all your runs: five rungs for each of the 14 lineages and for storage |
+| **Payrolls** | 20 | Workers at work in one domain at the same time: two rungs for each of 10 domains |
+| **Resources** | 90 | Producing a resource across all your runs: four rungs for the resources of a first run, three for the later ones |
+| **Civilizations** | 44 | Four for each civilization: meeting it, allying with it, taking five of its deals, and ending a war with it |
+| **Harbingers** | 34 | Hearing out each of the 22 harbingers, and appeasing each of the first 12 while it speaks |
+| **Catastrophes** | 15 | Enduring and succumbing to each of the six catastrophes, and the three ways the Last Passage can end |
+| **Expeditions** | 21 | Coming back with a success from a scout, a long or a grand mission in each era |
+| **Awakenings** | 7 | Witnessing each awakening |
+| **Ladders** | 70 | Counts kept across all your runs, in 22 ladders |
+| **Themes** | 16 | Advancing an age while wearing each theme |
+| **Maps** | 3 | Advancing an age with each glyph set |
+| **Specials** | 65 | One-off feats, from the easy to the very hard |
 
 One special asks you to save up. Everything Full is earned in the Industrial Age or later by holding at least 6 hours of your income in every resource you can save up, all at once. Your income is what your town makes of each resource at that moment, so it rises as you grow and the bar rises with it. Food, faith, culture and nanobots are spent as they are made and do not count, and neither does a resource with no income.
 
@@ -182,7 +182,7 @@ The badge case never names something the game has not shown you yet:
 - A family with nothing in sight has no tab and no heading until you have reached the last age.
 - The counts cover what you can see. `account badges` starts with a line such as `3 of 127 earned, 15 points, ??? hidden`. The game does not say how many badges are hidden until an account has reached the last age.
 
-14 badges are secret. A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
+**14 badges are secret.** A secret badge shows a one-line hint in the case and nothing else, and it keeps its name until you earn it. This page counts them and does not name them. The three badges outside the families are not listed at all until they are earned.
 
 ## Titles
 

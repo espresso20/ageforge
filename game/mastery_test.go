@@ -1,9 +1,7 @@
 package game
 
 import (
-	"encoding/json"
 	"math"
-	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -387,116 +385,8 @@ func TestMasteryFateWindow(t *testing.T) {
 	}
 }
 
-// oldSave writes ge's state as a build from before Era Mastery wrote and
-// signed it: no mastery fields at all.
-func oldSave(t *testing.T, ge *GameEngine, name string) {
-	t.Helper()
-	ge.mu.RLock()
-	old := ge.buildSaveSnapshot()
-	ge.mu.RUnlock()
-	old.Prestige.Mastery, old.Prestige.Furthest, old.Prestige.RunFurthest, old.Prestige.MasterySeeded = nil, "", "", false
-	// Nor the legacy kit (Pacing v2, PR 6): the first shop, no kit memory.
-	old.Prestige.ShopVersion = 0
-	old.Prestige.LegacyPlan, old.Prestige.LegacyFactions, old.Prestige.LegacyShares = nil, nil, nil
-	old.PlanLog = nil
-	old.Signature = signSave(old)
-	data, err := json.MarshalIndent(old, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, field := range []string{`"mastery"`, `"furthest"`, `"run_furthest"`, `"mastery_seeded"`,
-		`"shop_version"`, `"legacy_plan"`, `"legacy_factions"`, `"legacy_shares"`, `"plan_log"`} {
-		if strings.Contains(string(data), field) {
-			t.Fatalf("an old save still writes %s: the field must be omitempty", field)
-		}
-	}
-	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
-	noErr(t, os.WriteFile(savePath(name), data, 0o644))
-}
-
-func masteryLines(ge *GameEngine) []string {
-	var out []string
-	for _, l := range ge.log {
-		if strings.HasPrefix(l.Message, "Era Mastery: ages you have completed") {
-			out = append(out, l.Message)
-		}
-	}
-	return out
-}
-
-// TestMasterySeedingLevel5: a signed level-5 save from before Era Mastery,
-// mid-run in the Industrial Age, still verifies, and gets mastery 5 from
-// the Primitive to the Atomic Age, the Modern Age as its record and the
-// Industrial Age as the run's furthest, once, with one log line. Its next
-// save carries the marker, so loading it again changes nothing.
-func TestMasterySeedingLevel5(t *testing.T) {
-	isolateAccountDir(t)
-	ge := newSeededEngine(21)
-	ge.StepTicks(30)
-	ge.mu.Lock()
-	ge.Prestige.LoadState(5, 86, 3)
-	ge.age = "industrial_age"
-	ge.currentEpoch = config.EpochForAge("industrial_age")
-	ge.Stats.AgesReached = []string{"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age", "medieval_age", "renaissance_age", "colonial_age", "industrial_age"}
-	ge.mu.Unlock()
-	oldSave(t, ge, "level5")
-
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("level5"))
-	if loaded.cheaterBadge {
-		t.Fatal("the old signed save failed its signature check")
-	}
-	for _, a := range ageKeys() {
-		want := 0
-		if ageOrders()[a] < ageOrders()["modern_age"] {
-			want = 5
-		}
-		if m := loaded.Prestige.Mastery(a); m != want {
-			t.Errorf("%s mastery %d after seeding, want %d", a, m, want)
-		}
-	}
-	if r, f := loaded.Prestige.Record(), loaded.Prestige.RunFurthest(); r != "modern_age" || f != "industrial_age" {
-		t.Errorf("record %q, run furthest %q; want modern_age, industrial_age", r, f)
-	}
-	if k := loaded.GetState().Mastery.K; k != config.MasteryK(5) {
-		t.Errorf("the Industrial Age runs at %v, want %v", k, config.MasteryK(5))
-	}
-	lines := masteryLines(loaded)
-	want := "Era Mastery: ages you have completed now run faster. Primitive to Atomic: mastery 5 (3.2x)."
-	if len(lines) != 1 || lines[0] != want {
-		t.Errorf("seeding logged %q, want once %q", lines, want)
-	}
-
-	noErr(t, loaded.SaveGame("level5"))
-	if s := readSaveFromDisk(t, "level5"); !s.Prestige.MasterySeeded || s.Prestige.Mastery["atomic_age"] != 5 || s.Prestige.Furthest != "modern_age" {
-		t.Errorf("the next save carries seeded %v, atomic %d, furthest %q", s.Prestige.MasterySeeded, s.Prestige.Mastery["atomic_age"], s.Prestige.Furthest)
-	}
-	again := NewGameEngine()
-	noErr(t, again.LoadGame("level5"))
-	if n := len(masteryLines(again)); n != 0 || again.Prestige.Mastery("atomic_age") != 5 || again.cheaterBadge {
-		t.Errorf("second load: %d seeding lines, atomic mastery %d, tamper %v", n, again.Prestige.Mastery("atomic_age"), again.cheaterBadge)
-	}
-}
-
-// TestMasterySeedingLevel0: a level-0 save from before Era Mastery gains no
-// mastery and hears nothing; it only learns its record and run's furthest.
-func TestMasterySeedingLevel0(t *testing.T) {
-	isolateAccountDir(t)
-	ge := newSeededEngine(22)
-	ge.StepTicks(30)
-	oldSave(t, ge, "level0")
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("level0"))
-	if len(loaded.Prestige.masterySave()) != 0 || len(masteryLines(loaded)) != 0 || loaded.cheaterBadge {
-		t.Errorf("level 0: mastery %v, lines %v, tamper %v", loaded.Prestige.masterySave(), masteryLines(loaded), loaded.cheaterBadge)
-	}
-	if loaded.Prestige.Record() != loaded.age || !loaded.Prestige.masterySeeded {
-		t.Errorf("level 0: record %q (age %q), seeded %v", loaded.Prestige.Record(), loaded.age, loaded.Prestige.masterySeeded)
-	}
-}
-
-// TestMasterySaveRoundTrip: mastery, the record, the run's furthest age and
-// the seeding marker survive a save and load, and the loaded engine runs at
+// TestMasterySaveRoundTrip: mastery, the record and the run's furthest age
+// survive a save and load, and the loaded engine runs at
 // the same speed.
 func TestMasterySaveRoundTrip(t *testing.T) {
 	isolateAccountDir(t)
@@ -505,7 +395,7 @@ func TestMasterySaveRoundTrip(t *testing.T) {
 	ge.SetMasteryForTest(map[string]int{"primitive_age": 7, "stone_age": 2, "bronze_age": 1}, "iron_age")
 	loaded := saveAndLoad(t, ge, "round")
 	a, b := ge.GetState().Mastery, loaded.GetState().Mastery
-	if !sameMastery(a.Ages, b.Ages) || a.Record != b.Record || a.RunFurthest != b.RunFurthest || a.K != b.K || !loaded.Prestige.masterySeeded {
+	if !sameMastery(a.Ages, b.Ages) || a.Record != b.Record || a.RunFurthest != b.RunFurthest || a.K != b.K {
 		t.Errorf("round trip: %+v -> %+v", a, b)
 	}
 	if b.K != config.MasteryK(7) {

@@ -16,12 +16,13 @@ data/
 ├── accounts/
 │   └── <account_id>/
 │       ├── account.json            # identity, theme unlocks, lifetime stats, theme, map glyphs, mini map
-│       ├── badges.json             # badges and the counts behind them (written once there is one to keep)
+│       ├── badges.json             # badges and the counts behind them (written with every save of the account)
 │       ├── settings.json           # motion, VibeMode, worn title and current game
 │       ├── account-<id8>-export.json   # where `account export` writes by default
 │       └── saves/                  # this account's game saves
 └── backups/
-    └── <name>-<id8>-<timestamp>/   # full copies made by `account backup`
+    ├── <name>-<id8>-<timestamp>/   # full copies made by `account backup`
+    └── <id>.before-4.0/            # an account from before 4.0 whose name was used again
 ```
 
 `<account_id>` is 32 characters of hex, and `<id8>` is its first 8. Saves are per account and never mix. See [Saving & Loading](saving-and-loading.md) for the save layout.
@@ -34,13 +35,14 @@ A game belongs to the account it was started or loaded under. Its saves go to th
 
 `account switch <name>` switches accounts during a game. The name must belong to an account on this machine, and `account list` shows them. The game is saved to the account it belongs to, and you go back to the main menu, which shows the other account's current game. Continue opens it, or you can load another of its games or start a new one. The game you left never carries on under the other account. The Accounts panel on the main menu switches the same way, with no game running.
 
-### Upgrading from an older version
+### Accounts from before 4.0
 
-Early versions kept a single account at the top level, with `data/account.json` and the saves in `data/saves/`. If the game finds that layout at launch, it first copies the old data to `data/backups/pre-migration-<timestamp>/`. Then it moves the account and its saves into their own `data/accounts/<id>/` slot and makes that account active. Nothing is deleted, and you do not have to do anything.
+The game no longer moves or converts old accounts. Every account the game saves carries a format number, 4, in `account.json`. An account without it was written before 4.0, played or not, and the game refuses it with the line saves from before 4.0 get: "This was saved before 4.0 and can no longer be loaded." It is not listed in the Accounts panel and is left on disk as it is. To play, make an account: if you give it the same name as the refused one, the game moves the old account's whole folder to `data/backups/<id>.before-4.0`, starts a new empty account under that name, and says so in the log. An export from before [badges](#badges) is refused too.
 
-Each time the game loads an account, it adds the badges the account's record already proves: the four achievements of older versions, ages reached, prestiges made, and ladder rungs whose counts the account has passed. It reports them in one toast and one log line, such as `12 badges earned from your earlier play.`
+Each time the game loads an account, it adds the badges the account's record already proves: the badge of every age the account has reached, and ladder rungs whose counts the account has passed. It reports them in one toast and one log line, such as `12 badges earned from your earlier play.`
 
 Five themes come with age badges (see [Themes from badges](badges.md#themes-from-badges)). If an account has reached one of those ages without the theme, the game adds the badge and the theme when it loads the account.
+
 
 ---
 
@@ -150,9 +152,7 @@ To overwrite that account's progress entirely with the file, add `replace`:
 account import /path/to/my-ageforge-backup.json replace
 ```
 
-An export file with no badge section, made by an older version, never removes badges, with or without `replace`. It says nothing about them, so the account's badges stay as they are.
-
-The import is refused, and your accounts are left unchanged, if the file cannot be read, if it was edited or damaged since it was made (its badge section included), or if it has no usable account ID. A file from an account flagged modified keeps the flag and passes it to the account it lands in.
+The import is refused, and your accounts are left unchanged, if the file cannot be read, if it was edited or damaged since it was made (its badge section included), if it has no badge section (an export from before 4.0), or if it has no usable account ID. A file from an account flagged modified keeps the flag and passes it to the account it lands in.
 
 > With no server there is no copy elsewhere. You can only recover progress you exported. If a machine's `data/` folder is gone and you never exported, that account's earned progress is gone too.
 
@@ -317,13 +317,13 @@ Each badge has a tier, and each tier is worth points. The tiers, their points an
 
 ### Where badges are stored
 
-Badges are kept in their own file, `badges.json`, beside `account.json` in the account's slot (`data/accounts/<id>/`). It holds the badges you have earned, the counts behind the ones that count across runs, and the days you have played. The game writes it the first time the account has a badge to keep. A badge the game has retired stays in the file. It no longer shows and no longer scores.
+Badges are kept in their own file, `badges.json`, beside `account.json` in the account's slot (`data/accounts/<id>/`). It holds the badges you have earned, the counts behind the ones that count across runs, and the days you have played. The game writes it every time it saves the account, even with no badges yet. A badge the game has retired stays in the file. It no longer shows and no longer scores.
 
-`account.json` keeps the shape that older versions of the game read, on purpose. A version from before badges reads and writes `account.json` as it always did and leaves `badges.json` alone, so going back and forth between versions cannot mark an account as modified or cost it a badge. When the account is next opened, the game adds whatever the other version's play has proved since, such as an age reached or prestiges made.
+`account.json` keeps the shape it had before badges, on purpose: it holds what it always held, and the badges are in `badges.json` beside it. When this version opens an account, it adds the badge of any age the account has reached that it does not hold yet.
 
 The file is signed, and the signature covers the account ID. A `badges.json` that was edited by hand, or copied in from another account, is flagged, and its badges are listed as earned in a modified game. That flag belongs to `badges.json` only. It never marks `account.json` as modified.
 
-If `badges.json` is deleted or cannot be read, the game rebuilds what `account.json` proves (ages reached, prestiges made). Dates, counts and badges with no record there are gone, so keep an [export](#exporting-amp-importing-accounts) or a [backup](#backups). If `account.json` is lost and `badges.json` stays, an account made again under the same name, or recovered with its code, takes the badges back. An export carries the badge file inside it, and a backup copies it, so both bring your badges back.
+If `badges.json` is deleted, the game treats it like an edited one: the account still loads, a new empty `badges.json` is started and flagged, and every badge earned from then on is listed as earned in a modified game. The badges that were in the file are gone, so keep an [export](#exporting-amp-importing-accounts) or a [backup](#backups). A file that cannot be read is set aside the next time the account is saved. If `account.json` is lost and `badges.json` stays, an account made again under the same name, or recovered with its code, takes the badges back. An export carries the badge file inside it, and a backup copies it, so both bring your badges back.
 
 ---
 

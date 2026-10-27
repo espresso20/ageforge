@@ -59,6 +59,7 @@ All notable changes to AgeForge are documented here.
 - Prices in later ages now climb by 1.4 times per age from the Modern Age. Stores, wonders and research grow with the price curve while outputs stay unchanged.
 - **The top bar no longer shows the era badge.** The age name is enough; the next age is in the Next Age bar.
 - **What a tech does stands out.** The effect of a tech is shown in its own colour in the research screens.
+- **Saves from before 4.0 are no longer loaded.** The game no longer repairs or converts old saves, accounts or exports, and refuses them with a plain line.
 
 ### Removed
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.

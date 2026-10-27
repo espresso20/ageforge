@@ -55,9 +55,9 @@ func TestCreateAccountMintsEmpty(t *testing.T) {
 	}
 }
 
-// TestCreateAccountNoCarryOver proves the distinction from CreateNamedAccount: creating a
-// second, differently-named account does NOT copy the first account's earned progress, and
-// the first account's data on disk is left fully intact.
+// TestCreateAccountNoCarryOver proves that creating a second, differently-named account does
+// NOT copy the first account's earned progress, and the first account's data on disk is left
+// fully intact.
 func TestCreateAccountNoCarryOver(t *testing.T) {
 	isolateAccountDir(t)
 
@@ -166,7 +166,7 @@ func TestListAccountsEnumerates(t *testing.T) {
 	}
 	carol.Stats.TotalPrestiges = 3
 	carol.Stats.HighestAge = "iron_age"
-	carol.Achievements = []string{"first_prestige", "reached_iron"}
+	carol.Badges = map[string]BadgeEarned{"age.stone_age": {}, "age.bronze_age": {}}
 	if err := carol.Save(); err != nil {
 		t.Fatalf("carol.Save: %v", err)
 	}

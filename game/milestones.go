@@ -35,9 +35,6 @@ type MilestoneManager struct {
 	plans []milestonePlan
 }
 
-// NewMilestoneManager creates a new milestone manager on the core ruleset.
-func NewMilestoneManager() *MilestoneManager { return NewMilestoneManagerWith(rules.Core()) }
-
 // NewMilestoneManagerWith creates a new milestone manager with set's
 // milestones, chains and titles.
 func NewMilestoneManagerWith(set *rules.Set) *MilestoneManager {
@@ -231,11 +228,6 @@ func (mm *MilestoneManager) GetChainsCompleted() []string {
 	return sortedKeys(mm.chainsCompleted)
 }
 
-// GetCurrentTitle returns the current civilization title
-func (mm *MilestoneManager) GetCurrentTitle() string {
-	return mm.currentTitle
-}
-
 // milestonePlan is what a milestone's snapshot row holds that only the ruleset
 // decides: the reward line, the label of each progress row and the order of the
 // resource and building rows. A snapshot is taken twice a second; this is built
@@ -296,12 +288,6 @@ func (mm *MilestoneManager) planFor(def config.MilestoneDef) milestonePlan {
 		}
 	}
 	return plan
-}
-
-// computeProgress computes progress indicators for a milestone definition
-func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params MilestoneSnapshotParams) []MilestoneProgress {
-	plan := mm.planFor(def)
-	return mm.progressFor(def, &plan, params, nil)
 }
 
 // progressFor fills in def's progress rows from its plan and the town's

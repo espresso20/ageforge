@@ -227,65 +227,6 @@ func TestFateSurvivesSaveLoadWithoutReroll(t *testing.T) {
 	}
 }
 
-// A save written before fates existed, standing mid-era with no thread, gets
-// its era's fate on the first tick (entered then). One with a live thread from
-// the old rules keeps it as the warning of this era's doom, fated to strike at
-// the era's end at the latest; a Stone Era one is dropped.
-func TestOldSavesMigrateToFates(t *testing.T) {
-	t.Cleanup(SetDataDirForTest(t.TempDir()))
-	ge := catEngine(t, "classical_age", 1)
-	ge.tick = 5000
-	ge2 := saveAndLoad(t, ge, "old_no_thread")
-	if ge2.fate != nil || ge2.harbinger != nil {
-		t.Fatalf("load started something: fate %+v thread %+v", ge2.fate, ge2.harbinger)
-	}
-	ge2.harbingerTickCheck()
-	if ge2.fate == nil || ge2.fate.EpochKey != "iron_era" || ge2.fate.EntryTick != 5000 {
-		t.Errorf("first tick after an old load: fate %+v", ge2.fate)
-	}
-
-	// An old thread in the Iron Era warned of the transition into the Steel
-	// Era; it becomes this era's doom.
-	old := catEngine(t, "classical_age", 2)
-	old.harbinger = &HarbingerSave{Age: "classical_age", Chain: []string{"iron_age", "classical_age"}, EpochKey: "iron_era",
-		TargetEpoch: "steel_era", AnnouncedTier: CatastropheTierMedium, AppeaseLevel: 1, Invited: true}
-	old.harbingerArrived["iron_era"] = true
-	old.catastropheInvited = true
-	snap := old.buildSaveSnapshot()
-	snap.Fate = nil
-	snap.Signature = signSave(snap)
-	writeRawSave(t, "old_thread", snap)
-	ge3 := NewGameEngine()
-	noErr(t, ge3.LoadGame("old_thread"))
-	h, f := ge3.harbinger, ge3.fate
-	if h == nil || h.TargetEpoch != "iron_era" || h.AppeaseLevel != 1 || !h.Invited || h.When != WhenThisEra {
-		t.Fatalf("migrated thread = %+v", h)
-	}
-	if f == nil || !f.Fated || !f.Invited || f.StrikeTick != math.MaxInt32 || ge3.catastropheInvited {
-		t.Fatalf("migrated fate = %+v (invite flag %v)", f, ge3.catastropheInvited)
-	}
-	// It strikes at the era's end at the latest.
-	ge3.age = "medieval_age"
-	readyToAdvance(ge3)
-	if err := ge3.AdvanceAge(); err == nil || ge3.pendingCatastrophe != "iron_era" {
-		t.Errorf("leaving the era: err %v, pending %q; want the invited doom first", err, ge3.pendingCatastrophe)
-	}
-
-	// An old Stone Era thread has no doom to warn of now.
-	stone := catEngine(t, "stone_age", 3)
-	stone.harbinger = &HarbingerSave{Age: "stone_age", Chain: []string{"stone_age"}, EpochKey: "stone_era", TargetEpoch: "iron_era"}
-	stone.harbingerArrived["stone_era"] = true
-	snap = stone.buildSaveSnapshot()
-	snap.Fate = nil
-	snap.Signature = signSave(snap)
-	writeRawSave(t, "old_stone", snap)
-	ge4 := NewGameEngine()
-	noErr(t, ge4.LoadGame("old_stone"))
-	if ge4.harbinger != nil {
-		t.Errorf("an old Stone Era thread survived: %+v", ge4.harbinger)
-	}
-}
-
 // A save with no fate yet writes no fate key, and a quiet era's fate carries
 // no strike.
 func TestFateSaveFields(t *testing.T) {
@@ -1242,5 +1183,21 @@ func TestShortestWarningCoversTheAnswers(t *testing.T) {
 	}
 	if rows == 0 {
 		t.Fatal("no doom rows in the price table")
+	}
+}
+
+// A saved game that has no fate yet (nothing has ticked in its era) loads
+// without one, and gets its era's fate on the first tick, entered then.
+func TestLoadedGameWithNoFateRollsItOnTheFirstTick(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := catEngine(t, "classical_age", 1)
+	ge.tick = 5000
+	ge2 := saveAndLoad(t, ge, "no_fate_yet")
+	if ge2.fate != nil || ge2.harbinger != nil {
+		t.Fatalf("load started something: fate %+v thread %+v", ge2.fate, ge2.harbinger)
+	}
+	ge2.harbingerTickCheck()
+	if ge2.fate == nil || ge2.fate.EpochKey != "iron_era" || ge2.fate.EntryTick != 5000 {
+		t.Errorf("first tick after a load: fate %+v", ge2.fate)
 	}
 }

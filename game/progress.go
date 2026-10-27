@@ -18,9 +18,6 @@ type ProgressManager struct {
 	town gateTown
 }
 
-// NewProgressManager creates a new progress manager on the core ruleset.
-func NewProgressManager() *ProgressManager { return NewProgressManagerWith(rules.Core()) }
-
 // NewProgressManagerWith creates a new progress manager on set's ages.
 func NewProgressManagerWith(set *rules.Set) *ProgressManager {
 	pm := &ProgressManager{}

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"slices"
 	"strings"
 	"testing"
 
@@ -49,11 +48,6 @@ func TestRecordPrestigeIncrementsAndUnlocks(t *testing.T) {
 	}
 	if got := acct.Counters[config.BadgeEvPrestige]; got != 10 {
 		t.Errorf("the prestige counter is %v, want 10", got)
-	}
-	// The two rungs that were account achievements keep their place in that list,
-	// which is what a build from before badges shows.
-	if !slices.Equal(acct.Achievements, []string{"first_prestige", "prestige_x10"}) {
-		t.Errorf("the achievements list is %v, want first_prestige and prestige_x10", acct.Achievements)
 	}
 }
 

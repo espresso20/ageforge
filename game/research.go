@@ -51,9 +51,6 @@ type ResearchManager struct {
 	order []string
 }
 
-// NewResearchManager creates a new research manager on the core ruleset.
-func NewResearchManager() *ResearchManager { return NewResearchManagerWith(rules.Core()) }
-
 // NewResearchManagerWith creates a new research manager with set's techs.
 func NewResearchManagerWith(set *rules.Set) *ResearchManager {
 	defs := set.TechMap()

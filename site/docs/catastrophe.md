@@ -236,7 +236,7 @@ Your faith strength when a fated doom's moment comes sets the chance it strikes:
 
 Every resolved catastrophe adds a line to the civilization log with the tick, the outcome (Endured or Succumbed), the catastrophe and its era, and then either the number of buildings lost (Endure) or the words "Civilization reset" with whether the legacy bonus was earned or already held (Succumb). An Endure or a Succumb at the Last Passage adds a line of its own. The log survives Succumb and prestige, and the Epoch panel shows it. The Stats panel counts **Endured** and **Succumbed** from these lines, so a pending catastrophe counts as neither.
 
-The Epoch panel's history marks each past era's catastrophe as **Endured**, **Succumbed** or **Pending**. A catastrophe from an older save whose outcome was never stored shows as "outcome not recorded".
+The Epoch panel's history marks each past era's catastrophe as **Endured**, **Succumbed** or **Pending**.
 
 ---
 

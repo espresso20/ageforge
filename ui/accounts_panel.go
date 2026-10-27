@@ -662,8 +662,9 @@ func (p *accountsPanel) resolveAfterWipe(wasActive bool, backupPath string) {
 		// Nothing left — mint a new account via the first-run name flow (mirrors splash's
 		// post-wipe path). We leave the panel up behind the modal as the focus-return target.
 		showAccountNameModal(p.app, p.pages, p.list, func(name string) {
-			newAcct, err := game.CreateNamedAccount(name)
+			newAcct, err := game.CreateAccount(name)
 			if err != nil {
+				p.status.SetText(fmt.Sprintf("[red]%v[-]", err))
 				return
 			}
 			p.engine.SetAccount(newAcct)

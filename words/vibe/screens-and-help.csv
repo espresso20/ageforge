@@ -1017,7 +1017,6 @@ ui.input.cmdMinimap.04,minimap wants on or off; %q is not it
 ui.input.cmdMinimap.05,Smol map has left the chat. Type minimap on to bring it back.
 ui.input.cmdMinimap.06,Smol map on. It pops up above the Buildings list when the terminal has room (%dx%d and up).
 ui.keystone.wonderKeystoneLine.01,"[green]✓ Keystone: %s, big brained and done[-]"
-ui.keystone.wonderKeystoneLine.02,"[gray]Keystone: %s, not needed this age (the gatekeeping starts when you next advance)[-]"
 ui.keystone.wonderKeystoneLine.03,"[red]✗ Keystone: %s, not big brained yet (research %s)[-]"
 ui.keystone.wonderBuildLine.01,"[yellow]✓ Bag is full. Research %s, then build it with: build %s[-]"
 ui.keystone.wonderBuildLine.02,"[green]✓ The bag is full, time to cook. Build it with: build %s[-]"
@@ -1333,7 +1332,6 @@ ui.overlay_epoch.epochProviderCivilizationLog.02,"   [gray]Zero catastrophes so 
 ui.overlay_epoch.catastropheOutcomeLabel.01,[green]✓ Tanked it[-]
 ui.overlay_epoch.catastropheOutcomeLabel.02,[yellow]Succumbed (legacy buff)[-]
 ui.overlay_epoch.catastropheOutcomeLabel.03,[red]On deck[-]
-ui.overlay_epoch.catastropheOutcomeLabel.04,[gray]catastrophe (outcome lost to the lore)[-]
 ui.overlay_factions.factionsProvider.01,═══ Faction Drama ═══
 ui.overlay_factions.factionsProvider.02,%d met · %d not in the chat yet
 ui.overlay_factions.factionsProvider.03,"

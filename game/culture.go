@@ -141,11 +141,7 @@ func (ge *GameEngine) clearCultureRun() {
 // so a new run's save keeps its bytes.
 func (ge *GameEngine) cultureSaveCopy() *CultureSave { return saveCopyOf(ge.cultureMeasure) }
 
-// restoreCultureState loads the culture measure. A save written before the
-// measure existed has none: its town is taken as a moderate one that has
-// kept its culture (Own = Moderate = the culture it holds), which reads 1 /
-// CultureFullSets, Minor events only, and moves from there with what the
-// town does. Under the write lock, after the resources are restored.
+// restoreCultureState loads the culture measure. Under the write lock.
 func (ge *GameEngine) restoreCultureState(save *GameSave) {
-	ge.cultureMeasure = restoreMeasure(save.CultureMeasure, save.CultureMeasured, ge.Resources.Get("culture"))
+	ge.cultureMeasure = restoreMeasure(save.CultureMeasure)
 }

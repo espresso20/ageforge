@@ -908,7 +908,7 @@ func writeBadgeScreens(t *testing.T, shots *siteShots) {
 	t.Cleanup(game.SetBadgeClockForTest(func() time.Time { return day }))
 
 	s := newSiteStage(t)
-	acct, err := game.CreateNamedAccount("Ada")
+	acct, err := game.CreateAccount("Ada")
 	must(t, err)
 	s.eng.SetAccount(acct)
 	// A first visit: an account, and no game yet.

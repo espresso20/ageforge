@@ -2,7 +2,6 @@ package game
 
 import (
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -427,18 +426,13 @@ func TestTheCivilizationLogIsToldInTheScriptAndSavedInEnglish(t *testing.T) {
 	}
 }
 
-// TestTheNoticesAndTheNamedWordsFollowTheSwitch: the lines an old save is
-// given on its first load, the word a rare offer's title begins with, the old
-// cache's flavor, the refusal of the Last Passage and the ruins' description
-// are written by functions that read the script, and plain English with
-// VibeMode off.
+// TestTheNoticesAndTheNamedWordsFollowTheSwitch: the word a rare offer's
+// title begins with, the old cache's flavor, the refusal of the Last Passage
+// and the ruins' description are written by functions that read the script,
+// and plain English with VibeMode off.
 func TestTheNoticesAndTheNamedWordsFollowTheSwitch(t *testing.T) {
 	vibeSession(t)
 	texts := map[string]func() string{
-		"pacing":      pacingNotice,
-		"market":      marketSwapNotice,
-		"scholars":    scholarsNotice,
-		"storage":     storageWallNotice,
 		"rare":        config.RareTitleWord,
 		"cache":       ancientMemoryFlavor,
 		"last":        lastPassageCame,
@@ -492,45 +486,6 @@ func TestTheNoticesAndTheNamedWordsFollowTheSwitch(t *testing.T) {
 	if forSave := offer.forSave(); forSave.Title != "" || forSave.Description != "" {
 		t.Errorf("a drawn offer is saved with its words: %+v", forSave)
 	}
-}
-
-// TestAnOldSaveGetsItsNoticeInTheScript: a save from before the one-week
-// curve says so once on load, in the script's words while VibeMode is on, and
-// the save it writes next holds nothing of the script.
-func TestAnOldSaveGetsItsNoticeInTheScript(t *testing.T) {
-	isolateAccountDir(t)
-	vibeSession(t)
-
-	ge := newSeededEngine(1)
-	ge.StepTicks(20)
-	ge.mu.RLock()
-	old := ge.buildSaveSnapshot()
-	ge.mu.RUnlock()
-	old.PacingWeek = false
-	old.Signature = signSave(old)
-	data, err := json.MarshalIndent(old, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	noErr(t, os.MkdirAll(saveDirectory(), 0o755))
-	noErr(t, os.WriteFile(savePath("old-curve"), data, 0o644))
-
-	plainNotice := pacingNotice()
-	defer vibeRead(true, mark)()
-	loaded := NewGameEngine()
-	noErr(t, loaded.LoadGame("old-curve"))
-	if n := countLines(loaded, mark("game.save.pacingNotice.01", plainNotice)); n != 1 {
-		t.Errorf("the old save's notice was told in the script %d times, want once", n)
-	}
-	if n := countLines(loaded, plainNotice); n != 0 {
-		t.Errorf("the old save's notice was told in plain English %d times under the script", n)
-	}
-	noErr(t, loaded.SaveGame("old-curve-next"))
-	raw, err := os.ReadFile(savePath("old-curve-next"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	noScript(t, "the save", raw)
 }
 
 // TestRoadStoriesReadInTheShippedScript: with the script the game ships, every

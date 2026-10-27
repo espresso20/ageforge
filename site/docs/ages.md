@@ -53,8 +53,6 @@ The Sacred Grove needs no tech, so the advance out of the Primitive Age asks for
 
 Until the keystone is researched, the Advance panel and the Waiting on line show it as `Keystone: <tech>` with its progress (`not started`, `queued` or `researching, 40%`). The Wonders panel and `wonder` show the keystone and whether it is researched, and the Research panel marks every keystone with a ★. A wonder in your [build plan](plan.md) waits for its keystone.
 
-If you load a save from before keystones existed, the age it was in is exempt. There the wonder builds without its keystone, and the lock starts when you next advance. The log says so once, on the first load. Every tech you researched stays researched, and every wonder you built stays built.
-
 ## Advancement requirements
 
 To leave an age you need all of these:

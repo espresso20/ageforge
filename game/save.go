@@ -27,10 +27,23 @@ import (
 // ***** — the badge system is cosmetic, not security-critical. [[REDACTED]] :)
 const saveHMACKey = "ageforge-v1-save-integrity"
 
+// saveFormat is the format every save is written in. A save without it was
+// written before 4.0 and is refused on load (errBeforeFour). A change to the
+// format that cannot read the one before it raises it.
+const saveFormat = 4
+
+// beforeFourError is the refusal for a save or an account written before 4.0,
+// which the game no longer repairs. It is a type so a caller can tell it from a
+// read failure.
+type beforeFourError struct{ error }
+
+func errBeforeFour() error {
+	return beforeFourError{vibe.Errorf("game.save.errBeforeFour.01", "This was saved before 4.0 and can no longer be loaded.")}
+}
+
 // GameSave is the serialised on-disk representation of a game state.
 // All subsystem state is flattened into simple slices, maps, and scalars
-// so the file remains readable as plain JSON and backward-compatible across
-// schema additions (new optional fields default to zero/nil on old saves).
+// so the file remains readable as plain JSON.
 //
 // Integrity fields:
 //   - Signature: HMAC-SHA256 of the payload (excluding sig/proof). Tampered
@@ -38,19 +51,19 @@ const saveHMACKey = "ageforge-v1-save-integrity"
 //   - Proof: HMAC of the Signature using forgeMasterKey. Present only when
 //     the player has the elite badge; verifying this clears the cheater badge.
 type GameSave struct {
+	Format             int       `json:"format"`
 	Timestamp          time.Time `json:"timestamp"`
 	Tick               int       `json:"tick"`
 	Age                string    `json:"age"`
 	PrestigeCueSeenAge string    `json:"prestige_cue_seen_age,omitempty"`
 	// Seed is the run's master RNG seed (see GameEngine.seed). Persisted so a run's
-	// faction-encounter/buff stream is reproducible from its start. omitempty keeps
-	// legacy saves (which lack it) byte-identical; on load a zero seed means "no seed
-	// persisted" and the freshly-generated one from NewGameEngine is kept.
+	// faction-encounter/buff stream is reproducible from its start. On load a zero
+	// seed means "no seed persisted" and the freshly-generated one from
+	// NewGameEngine is kept.
 	Seed int64 `json:"seed,omitempty"`
 	// RNGDraws and QuipDraws are how many steps the gameplay and quip streams
 	// had taken from Seed when the game was saved; LoadGame replays them so
-	// the loaded game draws what the saved one would have drawn next. Zero on
-	// saves from before they were recorded, which restart both streams.
+	// the loaded game draws what the saved one would have drawn next.
 	RNGDraws  uint64 `json:"rng_draws,omitempty"`
 	QuipDraws uint64 `json:"quip_draws,omitempty"`
 	// Prose is the flavour Stream's recent-line memory. It decides how often a
@@ -63,7 +76,6 @@ type GameSave struct {
 	FestivalReadyTick    int                   `json:"festival_ready_tick,omitempty"`
 	BlackMarketReadyTick int                   `json:"black_market_ready_tick,omitempty"`
 	Resources            map[string]float64    `json:"resources"`
-	Storage              map[string]float64    `json:"storage,omitempty"` // retired: read and ignored, never written; old saves keep their signatures
 	Buildings            map[string]int        `json:"buildings"`
 	Workers              map[string]WorkerInfo `json:"workers"`
 	Unlocked             UnlockedState         `json:"unlocked"`
@@ -80,16 +92,7 @@ type GameSave struct {
 	Prestige         PrestigeSave                  `json:"prestige"`
 	Trade            TradeSave                     `json:"trade"`
 	Diplomacy        DiplomacySave                 `json:"diplomacy"`
-	SpeedMultiplier  float64                       `json:"speed_multiplier"`
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
-	// LegacyBuildings, PendingUpgrades and PendingUpgradesSaved belonged to
-	// the upgrade offers an age advance used to make. Which buildings are
-	// older is now read from the line and the age (older.go): nothing writes
-	// these fields and nothing reads them. They stay so a beta save still
-	// parses.
-	LegacyBuildings      []string          `json:"legacy_buildings,omitempty"`
-	PendingUpgrades      map[string]string `json:"pending_upgrades,omitempty"`
-	PendingUpgradesSaved bool              `json:"pending_upgrades_saved,omitempty"`
 	// Phase 8: epoch system
 	CurrentEpoch    string          `json:"current_epoch,omitempty"`
 	EpochEventFired map[string]bool `json:"epoch_event_fired,omitempty"`
@@ -102,21 +105,12 @@ type GameSave struct {
 	SurvivedEpochs     map[string]bool    `json:"survived_epochs,omitempty"`
 	PendingCatastrophe string             `json:"pending_catastrophe,omitempty"`
 	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
-	// CatastropheFired is deprecated and ignored on load. Early builds of the
-	// catastrophe overhaul wrote it; the field stays in the struct only so those
-	// saves still pass signature verification (signSave re-marshals this
-	// struct). Never written.
-	CatastropheFired map[string]bool `json:"catastrophe_fired,omitempty"`
-	// SuccumbResearchDerived marks saves written after the Succumb research
-	// bonus moved out of PermanentBonuses (it is derived from LegacyBonuses).
-	// False on older saves, which get their stored copy stripped on load.
-	SuccumbResearchDerived bool `json:"succumb_research_derived,omitempty"`
 	// Phase 9: catastrophe system (persist across Succumb and Prestige)
 	Ruins              map[string]int  `json:"ruins,omitempty"`
 	LegacyBonuses      map[string]bool `json:"legacy_bonuses,omitempty"`
 	CatastropheHistory []string        `json:"catastrophe_history,omitempty"`
 	// Harbinger (see harbinger.go). All omitempty, so saves without a harbinger
-	// and saves from before the feature keep their bytes and signatures.
+	// keep their bytes and signatures.
 	Harbinger          *HarbingerSave    `json:"harbinger,omitempty"`
 	HarbingerArrived   map[string]bool   `json:"harbinger_arrived,omitempty"`
 	CatastropheInvited bool              `json:"catastrophe_invited,omitempty"`
@@ -124,24 +118,16 @@ type GameSave struct {
 	HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
 	// Fate is the current era's hidden fate (fate.go): whether a doom is
 	// fated, when it strikes, when its harbinger comes. omitempty, so saves
-	// without one keep their bytes and signatures; a save written before
-	// fates existed gets its era's fate on the first tick after loading.
+	// without one keep their bytes and signatures.
 	Fate *FateSave `json:"fate,omitempty"`
 	// ParkedHarbinger is the Last Passage's thread while the Cosmic Era's
 	// fated doom speaks (fate.go). omitempty.
 	ParkedHarbinger *HarbingerSave `json:"parked_harbinger,omitempty"`
 	// FaithMeasure is the run's faith measure, what faith strength is read
-	// from (faith.go), and FaithMeasured the marker every save written since
-	// carries. Both omitempty, so older saves keep their bytes and
-	// signatures; a save without the marker is given a moderate town's
-	// measure once, on load (restoreFaithState).
-	FaithMeasure  *FaithSave `json:"faith_measure,omitempty"`
-	FaithMeasured bool       `json:"faith_measured,omitempty"`
-	// CultureMeasure and CultureMeasured are the same for the run's culture
-	// measure, what culture strength is read from (culture.go;
-	// restoreCultureState). Both omitempty.
-	CultureMeasure  *CultureSave `json:"culture_measure,omitempty"`
-	CultureMeasured bool         `json:"culture_measured,omitempty"`
+	// from (faith.go). CultureMeasure is the same for the run's culture
+	// measure (culture.go). Both omitempty.
+	FaithMeasure   *FaithSave   `json:"faith_measure,omitempty"`
+	CultureMeasure *CultureSave `json:"culture_measure,omitempty"`
 	// The Last Passage (see last_passage.go). omitempty, so saves without it
 	// keep their bytes and signatures. PendingLastPassage is a prestige from
 	// the final epoch waiting for Endure or Succumb; CosmicLegacy is the
@@ -157,65 +143,33 @@ type GameSave struct {
 	EliteBadge   bool `json:"elite_badge,omitempty"`
 	// DevTouched marks a run the developer console changed. It is a record only: such a
 	// run earns on the account like any other. Kept through prestige and Succumb, cleared
-	// by a new game. omitempty, so clean saves keep their bytes and signatures; signed
-	// like every field, so removing it by hand marks the save modified.
+	// by a new game. Signed like every field, so removing it by hand marks the save
+	// modified.
 	DevTouched bool `json:"dev_touched,omitempty"`
 	// RunFacts is what the run remembers about itself for the account's badges
 	// (badges.go): how often each event happened, and the build marks that keep a
 	// sold and rebuilt building from counting twice. It starts over with the run.
-	// omitempty, and absent on a save from before it: that save loads with the
-	// facts unknown (RunFacts.Whole false), keeps its bytes' signature, and tracks
-	// from there.
 	RunFacts *RunFacts `json:"run_facts,omitempty"`
 	// ParentName records the save this one branched from, for the save-lineage
-	// tree (Phase 1: plumbed through but always "" — branching lands in Phase 2).
-	// Legacy saves lack the field → "" → a root. omitempty keeps current saves
-	// byte-identical when empty.
+	// tree. Empty for a root.
 	ParentName string `json:"parent_name,omitempty"`
 	// AccountID attributes this save to a player account (the accounts design §5/§6). It is
-	// additive and optional: empty on legacy/no-account saves, where omitempty keeps
-	// the bytes identical. It is lazy-stamped — a save gains it the NEXT time it is
-	// written through SaveGame, which re-signs _sig over the new payload (the §3.5
+	// stamped by SaveGame, which signs _sig over the payload with it (the §3.5
 	// invariant: stamp only via SaveGame, never an in-place JSON edit). On load it is
 	// informational only and does NOT switch the active account (set once at boot).
 	AccountID string `json:"account_id,omitempty"`
-	// Plan is the build plan (plan.go), in order; saves from before it
-	// existed load with an empty plan. omitempty, so those saves keep their
-	// bytes. (Saves from before wonder overflow went carry a
-	// wonder_overflow_off field, which is ignored.)
+	// Plan is the build plan (plan.go), in order.
 	Plan []PlanItem `json:"plan,omitempty"`
 	// WorkerShares, AutoRecruitOff and StaffHoldUntil are the worker shares
 	// (shares.go): the split the player set (domain → percent; none means
 	// every domain is on auto), auto-recruit turned off (it is on by
 	// default), and the tick the routine's wait after a worker command ends.
-	// All omitempty, so saves from before them keep their bytes and load
-	// with every domain on auto and auto-recruit on.
 	WorkerShares   map[string]float64 `json:"worker_shares,omitempty"`
 	AutoRecruitOff bool               `json:"auto_recruit_off,omitempty"`
 	StaffHoldUntil int                `json:"staff_hold_until,omitempty"`
 	// PlanLog is this run's plan as written (legacy.go), the Plan
 	// Template's source. omitempty.
 	PlanLog []PlanTemplateItem `json:"plan_log,omitempty"`
-	// PacingWeek marks saves written on the one-week curve (Pacing v2:
-	// config.AgeTargets × config.PacingStretch from the Bronze Age on).
-	// Always written; false on older saves, which get a one-time log line
-	// on load saying the ages ahead are longer (pacingNotice). omitempty, so
-	// those saves keep their bytes and signatures.
-	PacingWeek bool `json:"pacing_week,omitempty"`
-	// StorageRules is the storage rules the save was written under
-	// (config.StorageRules; absent on saves from before the storage wall).
-	// A save from before them keeps its stock and its plan's banks
-	// (keepStockFromBeforeTheWall).
-	StorageRules int `json:"storage_rules,omitempty"`
-	// KnowledgeRules is the knowledge rules the save was written under, when
-	// knowledge had a store of its own. The store is gone; the field stays so
-	// that a save written under it still verifies, and is written empty.
-	KnowledgeRules int `json:"knowledge_rules,omitempty"`
-	// ScholarRules is the scholar rules the save was written under
-	// (scholarRules; absent on saves from before knowledge went to scholars).
-	// A save from before them has its knowledge turned into work for its
-	// techs, and hears of it once (turnKnowledgeIntoWork).
-	ScholarRules int `json:"scholar_rules,omitempty"`
 	// ScholarShare is the research setting, the percent of the scholars that
 	// research. Absent when it is the default, 100.
 	ScholarShare *int `json:"scholar_share,omitempty"`
@@ -229,18 +183,8 @@ type GameSave struct {
 	// SoldiersWaiting are the military buildings whose waiting posts the log
 	// has said so for (so a load does not say it again).
 	SoldiersWaiting []string `json:"soldiers_waiting,omitempty"`
-	// TreeVersion is the tech tree's rules the save was written under
-	// (config.TechTreeVersion; absent on saves from before the tree's first
-	// lock). TreeGraceAge is the age a save from an older version was in
-	// when it met the new locks: in that age they do not apply (its wonder
-	// needs no keystone tech), and they start at the next advance, which
-	// clears it (graceTreeLocked). Both omitempty, so older saves keep their
-	// bytes and signatures.
-	TreeVersion  int    `json:"tree_version,omitempty"`
-	TreeGraceAge string `json:"tree_grace_age,omitempty"`
 	// GrantedFeatures is the commands this run keeps without the tech that
-	// opens them (features.go), sorted: used while their lock was inert, in
-	// the grace age, or before the lock existed. omitempty.
+	// opens them (features.go), sorted: used while their lock was inert.
 	GrantedFeatures []string `json:"granted_features,omitempty"`
 	Signature       string   `json:"_sig,omitempty"`
 	Proof           string   `json:"_proof,omitempty"`
@@ -314,17 +258,9 @@ func PeekSaveBadges(filename string) (cheater, elite bool) {
 	return gs.CheaterBadge, false
 }
 
-// TradeSave holds trade state for save. SupplyPressure, TotalExchanged,
-// TotalSold and TotalBought belong to the market's retired swap: a save reads
-// them (it is signed over them as written) and writes them empty.
+// TradeSave holds trade state for save.
 type TradeSave struct {
-	ActiveRoutes   map[string]ActiveRoute `json:"active_routes"`
-	SupplyPressure map[string]float64     `json:"supply_pressure"`
-	TotalExchanged map[string]float64     `json:"total_exchanged"`
-	TotalSold      map[string]float64     `json:"total_sold,omitempty"`
-	TotalBought    map[string]float64     `json:"total_bought,omitempty"`
-	TotalImported  map[string]float64     `json:"total_imported"`
-	TotalExported  map[string]float64     `json:"total_exported"`
+	ActiveRoutes map[string]ActiveRoute `json:"active_routes"`
 }
 
 // DiplomacySave holds diplomacy state for save
@@ -336,29 +272,19 @@ type DiplomacySave struct {
 	BoonWorkers []BoonWorkerLoan `json:"boon_workers,omitempty"`
 }
 
-// PrestigeSave holds prestige state for save. Upgrades was the shop's tiers:
-// the shop is gone, every save writes it null and a load ignores it; it stays
-// so each save's signature bytes keep their "upgrades" line.
+// PrestigeSave holds prestige state for save.
 type PrestigeSave struct {
-	Level         int            `json:"level"`
-	PrestigeFloor string         `json:"prestige_floor,omitempty"`
-	TotalEarned   int            `json:"total_earned"`
-	Available     int            `json:"available"`
-	Upgrades      map[string]int `json:"upgrades"`
+	Level         int    `json:"level"`
+	PrestigeFloor string `json:"prestige_floor,omitempty"`
+	TotalEarned   int    `json:"total_earned"`
+	Available     int    `json:"available"`
 	// Era Mastery (mastery.go): each age's mastery (ages at 0 left out),
-	// the record (the deepest age ever entered), this run's furthest age,
-	// and the marker for the one-time seeding of saves written before Era
-	// Mastery (seedMasteryLocked). All omitempty, so those saves keep their
-	// bytes and signatures; a save without mastery_seeded is seeded once on
-	// load.
-	Mastery       map[string]int `json:"mastery,omitempty"`
-	Furthest      string         `json:"furthest,omitempty"`
-	RunFurthest   string         `json:"run_furthest,omitempty"`
-	MasterySeeded bool           `json:"mastery_seeded,omitempty"`
-	// ShopVersion stays so a signed old save re-marshals to the bytes it was
-	// signed over; nothing reads it. The legacy-kit memory is read but no
-	// longer affects point spending or carry-over eligibility.
-	ShopVersion    int                `json:"shop_version,omitempty"`
+	// the record (the deepest age ever entered) and this run's furthest age.
+	Mastery     map[string]int `json:"mastery,omitempty"`
+	Furthest    string         `json:"furthest,omitempty"`
+	RunFurthest string         `json:"run_furthest,omitempty"`
+	// The legacy-kit memory: it does not affect point spending or carry-over
+	// eligibility.
 	LegacyPlan     []PlanTemplateItem `json:"legacy_plan,omitempty"`
 	LegacyFactions []string           `json:"legacy_factions,omitempty"`
 	LegacyShares   map[string]float64 `json:"legacy_shares,omitempty"`
@@ -368,18 +294,10 @@ type PrestigeSave struct {
 type ResearchSave struct {
 	Researched  []string `json:"researched"`
 	CurrentTech string   `json:"current_tech"`
-	// TicksLeft and TotalTicks were the wait a paid-for tech had left. There
-	// is no such wait now: they are written empty, and a save that has them
-	// set holds a tech that was paid for and completes on load.
-	TicksLeft  int `json:"ticks_left"`
-	TotalTicks int `json:"total_ticks"`
 	// Progress is the work done on the tech in progress and Slowed marks an
 	// Ancient Memory research. Each is omitted when empty.
 	Progress float64 `json:"progress,omitempty"`
 	Slowed   bool    `json:"slowed,omitempty"`
-	// HeadStart is no longer written or read: research never carries over.
-	// An old save that has it loads clean and the value is dropped.
-	HeadStart float64 `json:"head_start,omitempty"`
 }
 
 // ActiveSlotSave is one mission under way in a save: the slot it holds (its
@@ -393,24 +311,13 @@ type ActiveSlotSave struct {
 //
 // Active is the missions under way, a list keyed by slot (short, long and
 // grand). Board is the mission board with the counters its rare rule runs on.
-// ActiveScout, ActiveMilitary and ActiveExpedition are the missions of the
-// older game: they are never read or written, and only held as the bytes
-// they came in, so an older save re-marshals to the bytes it was signed on
-// and is not taken for a tampered one. Beta saves are disposable: the
-// missions in them are gone.
 type MilitarySave struct {
-	ActiveScout      json.RawMessage `json:"active_scout,omitempty"`
-	ActiveMilitary   json.RawMessage `json:"active_military,omitempty"`
-	ActiveExpedition json.RawMessage `json:"active_expedition,omitempty"`
-
-	CompletedCount int                `json:"completed_count"`
-	TotalLoot      map[string]float64 `json:"total_loot"`
+	CompletedCount int `json:"completed_count"`
 	// Experience is the army's experience (game/army.go).
 	Experience float64 `json:"experience,omitempty"`
 	// AutoExpeditionTicksLeft is the Geographic Society's dispatch countdown (see
 	// game/auto_expedition.go). Persisted so a save/reload cannot reset the wait and
-	// hand out a free instant dispatch. Absent in pre-Phase-3 saves, where the zero
-	// value simply means "due now" — a single early party, which is harmless.
+	// hand out a free instant dispatch.
 	AutoExpeditionTicksLeft int `json:"auto_expedition_ticks_left,omitempty"`
 
 	Active []ActiveSlotSave `json:"active,omitempty"`
@@ -632,26 +539,16 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		permBonuses[k] = v
 	}
 
-	// Deep copy military loot
-	totalLoot := maps.Clone(ge.Military.totalLoot)
-
 	// Deep copy trade state
 	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))
 	for k, v := range ge.Trade.activeRoutes {
 		tradeActiveRoutes[k] = *v
 	}
-	tradeImported := make(map[string]float64, len(ge.Trade.totalImported))
-	for k, v := range ge.Trade.totalImported {
-		tradeImported[k] = v
-	}
-	tradeExported := make(map[string]float64, len(ge.Trade.totalExported))
-	for k, v := range ge.Trade.totalExported {
-		tradeExported[k] = v
-	}
 
 	rngDraws, quipDraws := ge.rngDraws()
 
 	return GameSave{
+		Format:             saveFormat,
 		Timestamp:          time.Now(),
 		Tick:               ge.tick,
 		Age:                ge.age,
@@ -680,7 +577,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Board:          ge.Military.BoardForSave(),
 			CompletedCount: ge.Military.completedCount,
 			Experience:     ge.Military.experience,
-			TotalLoot:      totalLoot,
 			Returns:        ge.Military.ReturnsForSave(),
 			ReturnsMade:    ge.Military.returnsMade,
 			ReturnsSeen:    ge.Military.returnsSeen,
@@ -703,79 +599,63 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			PrestigeFloor: ge.Prestige.floor,
 			TotalEarned:   ge.Prestige.totalEarned,
 			Available:     ge.Prestige.available,
-			Upgrades:      nil,
 
-			Mastery:       ge.Prestige.masterySave(),
-			Furthest:      ge.Prestige.record,
-			RunFurthest:   ge.Prestige.runFurthest,
-			MasterySeeded: ge.Prestige.masterySeeded,
+			Mastery:     ge.Prestige.masterySave(),
+			Furthest:    ge.Prestige.record,
+			RunFurthest: ge.Prestige.runFurthest,
 
-			ShopVersion:    0,
 			LegacyPlan:     clonePlanTemplate(ge.Prestige.legacyPlan),
 			LegacyFactions: slices.Clone(ge.Prestige.legacyFactions),
 			LegacyShares:   cloneShares(ge.Prestige.legacyShares),
 		},
 		Trade: TradeSave{
-			ActiveRoutes:   tradeActiveRoutes,
-			SupplyPressure: map[string]float64{},
-			TotalExchanged: map[string]float64{},
-			TotalImported:  tradeImported,
-			TotalExported:  tradeExported,
+			ActiveRoutes: tradeActiveRoutes,
 		},
 		Diplomacy: DiplomacySave{
 			Factions:    ge.Diplomacy.GetFactionsForSave(),
 			LentWorkers: ge.Diplomacy.GetLentBatchesForSave(),
 			BoonWorkers: ge.Diplomacy.boonLoansForSave(),
 		},
-		SpeedMultiplier:        ge.speedMultiplier,
-		WonderBanks:            ge.Buildings.GetWonderBanks(),
-		CheaterBadge:           ge.cheaterBadge,
-		EliteBadge:             ge.eliteBadge,
-		DevTouched:             ge.devTouched,
-		RunFacts:               ge.runFactsSaveCopy(),
-		ParentName:             ge.activeParentName,
-		CurrentEpoch:           ge.currentEpoch,
-		EpochEventFired:        maps.Clone(ge.epochEventFired),
-		AwakeningsFired:        maps.Clone(ge.awakeningsFired),
-		AncientMemoryUsed:      ge.ancientMemoryUsed,
-		SurvivedEpochs:         maps.Clone(ge.survivedEpochs),
-		PendingCatastrophe:     ge.pendingCatastrophe,
-		EpochEventHistory:      ge.epochHistoryForSave(),
-		SuccumbResearchDerived: true,
-		Ruins:                  ge.Buildings.GetAllRuins(),
-		LegacyBonuses:          maps.Clone(ge.legacyBonuses),
-		CatastropheHistory:     append([]string(nil), ge.catastropheHistory...),
-		Harbinger:              ge.harbingerSaveCopy(),
-		HarbingerArrived:       maps.Clone(ge.harbingerArrived),
-		CatastropheInvited:     ge.catastropheInvited,
-		PendingBraceLevel:      ge.pendingBraceLevel,
-		HarbingerHistory:       ge.harbingerHistoryForSave(),
-		Fate:                   ge.fateSaveCopy(),
-		ParkedHarbinger:        copyHarbingerSave(ge.parkedHarbinger),
-		FaithMeasure:           ge.faithSaveCopy(),
-		FaithMeasured:          true,
-		CultureMeasure:         ge.cultureSaveCopy(),
-		CultureMeasured:        true,
-		PendingLastPassage:     ge.pendingLastPassage,
-		CosmicLegacy:           ge.cosmicLegacy,
-		Morale:                 ge.morale,
-		History:                ge.History,
-		AccountID:              ge.saveAccountIDLocked(),
-		Plan:                   clonePlan(ge.plan),
-		WorkerShares:           cloneShares(ge.workerShares),
-		AutoRecruitOff:         ge.autoRecruitOff,
-		StaffHoldUntil:         ge.staffHoldUntil,
-		PlanLog:                clonePlanTemplate(ge.planLog),
-		PacingWeek:             true,
-		StorageRules:           config.StorageRules,
-		ScholarRules:           scholarRules,
-		ScholarShare:           ge.scholarShareSave(),
-		SoldiersPosted:         ge.soldiersPostedSave(),
-		SoldiersVacant:         ge.soldiersVacantSave(),
-		SoldiersWaiting:        sortedKeys(ge.soldierWaitLogged),
-		TreeVersion:            config.TechTreeVersion,
-		TreeGraceAge:           ge.Buildings.graceAge,
-		GrantedFeatures:        ge.grantedFeatureKeys(),
+		WonderBanks:        ge.Buildings.GetWonderBanks(),
+		CheaterBadge:       ge.cheaterBadge,
+		EliteBadge:         ge.eliteBadge,
+		DevTouched:         ge.devTouched,
+		RunFacts:           ge.runFactsSaveCopy(),
+		ParentName:         ge.activeParentName,
+		CurrentEpoch:       ge.currentEpoch,
+		EpochEventFired:    maps.Clone(ge.epochEventFired),
+		AwakeningsFired:    maps.Clone(ge.awakeningsFired),
+		AncientMemoryUsed:  ge.ancientMemoryUsed,
+		SurvivedEpochs:     maps.Clone(ge.survivedEpochs),
+		PendingCatastrophe: ge.pendingCatastrophe,
+		EpochEventHistory:  ge.epochHistoryForSave(),
+		Ruins:              ge.Buildings.GetAllRuins(),
+		LegacyBonuses:      maps.Clone(ge.legacyBonuses),
+		CatastropheHistory: append([]string(nil), ge.catastropheHistory...),
+		Harbinger:          ge.harbingerSaveCopy(),
+		HarbingerArrived:   maps.Clone(ge.harbingerArrived),
+		CatastropheInvited: ge.catastropheInvited,
+		PendingBraceLevel:  ge.pendingBraceLevel,
+		HarbingerHistory:   ge.harbingerHistoryForSave(),
+		Fate:               ge.fateSaveCopy(),
+		ParkedHarbinger:    copyHarbingerSave(ge.parkedHarbinger),
+		FaithMeasure:       ge.faithSaveCopy(),
+		CultureMeasure:     ge.cultureSaveCopy(),
+		PendingLastPassage: ge.pendingLastPassage,
+		CosmicLegacy:       ge.cosmicLegacy,
+		Morale:             ge.morale,
+		History:            ge.History,
+		AccountID:          ge.saveAccountIDLocked(),
+		Plan:               clonePlan(ge.plan),
+		WorkerShares:       cloneShares(ge.workerShares),
+		AutoRecruitOff:     ge.autoRecruitOff,
+		StaffHoldUntil:     ge.staffHoldUntil,
+		PlanLog:            clonePlanTemplate(ge.planLog),
+		ScholarShare:       ge.scholarShareSave(),
+		SoldiersPosted:     ge.soldiersPostedSave(),
+		SoldiersVacant:     ge.soldiersVacantSave(),
+		SoldiersWaiting:    sortedKeys(ge.soldierWaitLogged),
+		GrantedFeatures:    ge.grantedFeatureKeys(),
 	}
 }
 
@@ -870,6 +750,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if err := json.Unmarshal(data, &save); err != nil {
 		return fmt.Errorf("the save file '%s' is damaged and cannot be read: %w", filename, err)
 	}
+	if save.Format < saveFormat {
+		return errBeforeFour()
+	}
 
 	// Verify integrity before loading — set badge flags on the save struct
 	sigValid, eliteValid := verifySave(&save)
@@ -893,10 +776,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.prestigeCue = PrestigeCue{}
 	// Restore the run's master seed and both streams' positions, so the loaded
 	// game carries on drawing exactly where the saved one stopped. A zero seed
-	// means the save predates seed persistence — keep the fresh seed
-	// NewGameEngine already generated rather than pinning the run to 0. Saves
-	// without positions (older ones) restart the streams from the seed, as
-	// every load used to.
+	// keeps the fresh seed NewGameEngine already generated rather than pinning
+	// the run to 0.
 	if view {
 		// A look at the save needs its seed (the maps are drawn from it), not
 		// the streams' positions.
@@ -907,9 +788,8 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
 	}
 	ge.prose = flavor.StreamFromState(save.Prose)
-	// A cooldown never has longer to run than a fresh one. A save from
-	// before Succumb reset them can carry one that ends thousands of ticks
-	// on (a tick number from the fallen run): it is brought back in range.
+	// A cooldown never has longer to run than a fresh one: a hand-edited
+	// save cannot hold one that ends thousands of ticks on.
 	ge.festivalReadyTick = min(save.FestivalReadyTick, ge.tick+ge.stretchTicks(festivalCooldownTicks))
 	ge.blackMarketReadyTick = min(save.BlackMarketReadyTick, ge.tick+ge.stretchTicks(blackMarketCooldownTicks))
 	ge.Workers.SetAge(save.Age)
@@ -926,13 +806,11 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	for _, key := range save.Unlocked.Resources {
 		ge.Resources.UnlockResource(key)
 	}
-	// Reconcile resource unlocks against the loaded age. Old saves predating a
-	// resource's introduction won't have it in their serialized unlock set even when the player is
+	// Reconcile resource unlocks against the loaded age. A save from before a
+	// content patch added a resource won't have it in their serialized unlock set even when the player is
 	// already past its unlock age — unlock anything whose unlock-age has been reached.
 	// The rule is live play's: the UnlockResources lists of every age up to the
-	// loaded one (what applyAgeUnlocks replays). It used to read ResourceDef.Age,
-	// which disagreed with the age table for coal, so every Iron Age load
-	// unlocked coal three ages early.
+	// loaded one (what applyAgeUnlocks replays).
 	currentOrder := ge.progress.ageIndex[save.Age]
 	for _, age := range ge.progress.ages {
 		if ge.progress.ageIndex[age.Key] <= currentOrder {
@@ -957,11 +835,6 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.autoExpeditionStarved = false
 	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)
 	ge.Milestones.LoadState(save.Milestones, save.ChainsCompleted, save.CurrentTitle)
-	// Reconstruct chains and title for old saves that don't have them
-	if len(save.ChainsCompleted) == 0 {
-		ge.Milestones.CheckChains()
-		ge.Milestones.recalculateTitle()
-	}
 
 	if save.PermanentBonuses != nil {
 		ge.permanentBonuses = save.PermanentBonuses
@@ -970,7 +843,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// Restore prestige
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available)
 	ge.Prestige.floor = save.Prestige.PrestigeFloor
-	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest, save.Prestige.MasterySeeded)
+	ge.Prestige.LoadMastery(save.Prestige.Mastery, save.Prestige.Furthest, save.Prestige.RunFurthest)
 	ge.Prestige.LoadLegacy(save.Prestige.LegacyPlan, save.Prestige.LegacyFactions, save.Prestige.LegacyShares)
 
 	// Restore trade
@@ -986,10 +859,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if save.WonderBanks != nil {
 		ge.Buildings.LoadWonderBanks(save.WonderBanks)
 	}
-	// The tech tree's locks: a save from before them gets one age of grace,
-	// once (after the signature check above, which covered the bytes as
-	// written), and before the offline catch-up, which may build a wonder.
-	treeGraced := ge.graceTreeLocked(&save)
+	ge.loadGrantedFeatures(save.GrantedFeatures)
 
 	// The speed multiplier loads as 1x whatever the save carries: a save written
 	// while wonders raised a speed cap (or with the dev console's /speed on)
@@ -1009,15 +879,11 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	}
 	ge.runAccountID = ge.accountIDLocked()
 	ge.runOrphaned = false
-	// The run's facts for the badges. A save from before them has none: the run's
-	// past is unknown (Whole stays false), except that a run still in its first age
-	// entered it at tick 0.
+	// The run's facts for the badges.
 	ge.ageTold = "" // the save's age is where this run already is: nothing to tell
 	ge.runFacts = RunFacts{}
 	if save.RunFacts != nil {
 		ge.runFacts = save.RunFacts.clone()
-	} else if pos, ok := ge.rules.Index(save.Age); ok && pos == 0 {
-		ge.runFacts.AgeKnown = true
 	}
 
 	// Restore Phase 8: epoch system
@@ -1036,8 +902,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	} else {
 		ge.awakeningsFired = make(map[string]bool)
 	}
-	// Ancient Memory: restore the one-per-run flag (old saves default false — they
-	// predate the feature, so the run has not used its memory). The pending offer is
+	// Ancient Memory: restore the one-per-run flag. The pending offer is
 	// transient and never restored: any doubled-tick research already in flight rides
 	// in ResearchSave, so we don't re-pop the modal.
 	ge.ancientMemoryUsed = save.AncientMemoryUsed
@@ -1065,15 +930,10 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.legacyBonuses = make(map[string]bool)
 	}
 	ge.catastropheHistory = save.CatastropheHistory
-	// Era Mastery: a save from before it gets the mastery its prestiges
-	// earned, once (after the signature check above, which covered the
-	// bytes as written; it reads the legacies just restored); every save
-	// makes sure the run's furthest age and the record cover the ages this
-	// run reached. Before the fate and the harbinger, which measure time in
-	// each age's speed.
-	ge.seedMasteryLocked()
+	// Era Mastery: make sure the run's furthest age and the record cover the
+	// ages this run reached. Before the fate and the harbinger, which measure
+	// time in each age's speed.
 	ge.noteRunAgesLocked()
-	ge.restoreCatastropheState(&save)
 	ge.restoreFateState(&save)
 	ge.restoreHarbingerState(&save)
 	ge.restoreFaithState(&save)
@@ -1086,34 +946,19 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.History = NewHistoryCollector()
 	}
 
-	// Restore morale (default to 1.0 for old saves that have zero value)
-	if save.Morale > 0 {
-		ge.morale = save.Morale
-	} else {
-		ge.morale = 1.0
-	}
+	ge.morale = save.Morale
 	ge.lowMoraleWarned = false
 
 	// The build plan. A hand-edited plan is trimmed
 	// to what the plan accepts; items that can no longer start drop out, with
 	// a log line, on the next tick.
 	ge.plan = loadPlanIn(ge.rules, save.Plan)
-	sellOrders := retiredSellOrders(save.Plan)
 	ge.planLog = loadPlanTemplate(ge.rules, save.PlanLog)
 	// The worker shares: a hand-edited map keeps its known domains, each
 	// percent from 0 to 100, and the wait can't outlast one worker command.
 	ge.workerShares = cleanSharesIn(ge.rules, save.WorkerShares)
 	ge.autoRecruitOff = save.AutoRecruitOff
 	ge.staffHoldUntil = min(max(save.StaffHoldUntil, 0), ge.tick+staffHoldTicks)
-
-	beforeTheWall := save.StorageRules < config.StorageRules
-	if beforeTheWall {
-		ge.keepStockFromBeforeTheWall(save.Plan)
-	}
-	beforeScholars := save.ScholarRules < scholarRules
-	if beforeScholars {
-		ge.turnKnowledgeIntoWork(&save)
-	}
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
@@ -1128,7 +973,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// deadlock. Set before the catch-up below, so a badge earned while away names
 	// this save as its run.
 	ge.activeSaveName = filename
-	// Adopt the loaded save's lineage parent (empty for legacy/root saves).
+	// Adopt the loaded save's lineage parent (empty for a root).
 	ge.activeParentName = save.ParentName
 
 	if view {
@@ -1156,101 +1001,12 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// Apply offline progress for time since save
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
 
-	// A save from before the one-week curve hears once that the ages ahead
-	// are longer; its next save carries PacingWeek, so the line never repeats.
-	if !save.PacingWeek {
-		ge.addLog("info", pacingNotice())
-	}
-	// A save from before the tree's locks hears once what changed and what
-	// its grace covers; its next save carries the tree's version.
-	if treeGraced {
-		ge.addLog("info", ge.treeNotice(save.TreeVersion))
-	}
-	if beforeTheWall {
-		ge.addLog("info", storageWallNotice())
-	}
-	if beforeScholars {
-		ge.addLog("info", scholarsNotice())
-	}
-	// A save whose plan held sell orders hears once that they are gone; its
-	// next save has none, so the line never repeats.
-	if sellOrders > 0 {
-		ge.addLog("info", marketSwapNotice())
-	}
-
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
 	// modal the player closed in the old session is shown again). Handlers run
 	// under this write lock and must not call back into the engine.
 	ge.Bus.Publish(EventData{Type: EventGameLoaded, Payload: map[string]interface{}{"save": filename}})
 
 	return nil
-}
-
-// graceTreeLocked restores the tech tree's grace age and the run's granted
-// features from save and, for a save written under an older version of the
-// tree's rules (or before them), grants the grace: the age the save is in
-// becomes the grace age, where the tree's locks do not apply (no building
-// of the age waits for a tech, its wonder included, and every command is
-// open), and the commands the save
-// shows in use (featuresInUse) are granted for the rest of its run. Nothing
-// researched or built is touched. It reports whether it granted one. A
-// grace age that is not the save's age (a hand-edited save) is dropped.
-// Must be called with the write lock held.
-func (ge *GameEngine) graceTreeLocked(save *GameSave) bool {
-	ge.Buildings.graceAge = ""
-	ge.loadGrantedFeatures(save.GrantedFeatures)
-	if save.TreeVersion >= config.TechTreeVersion {
-		if save.TreeGraceAge == save.Age {
-			ge.Buildings.graceAge = save.TreeGraceAge
-		}
-		return false
-	}
-	ge.Buildings.graceAge = save.Age
-	ge.grantFeaturesLocked(featuresInUse(save, ge.rules, ge.rules.Index))
-	return true
-}
-
-// grantFeaturesLocked grants keys for the rest of the run, whatever is
-// researched. Must be called with the write lock held.
-func (ge *GameEngine) grantFeaturesLocked(keys []string) {
-	for _, k := range keys {
-		if ge.grantedFeatures == nil {
-			ge.grantedFeatures = make(map[string]bool)
-		}
-		ge.grantedFeatures[k] = true
-	}
-}
-
-// treeNotice is the line a save from before the tech tree's locks gets on its
-// first load: what changed since the version it was written under, and that
-// the age it was in is exempt. If the time away already took the game into
-// its next age the grace is over, and the line says only what changed and
-// what it keeps. Must be called with the write lock held.
-func (ge *GameEngine) treeNotice(from int) string {
-	changed := vibe.Line("game.save.treeNotice.01", "Research update: the tech tree is complete, with new techs from the Modern Age to the Transcendent. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech.")
-	kept := vibe.Line("game.save.treeNotice.02", " A command you were already using stays open for the rest of this run, and everything you have researched or built stays.")
-	if from < 4 {
-		changed = vibe.Line("game.save.treeNotice.03", "Research update: the tech tree is complete, with new techs from the Renaissance to the Transcendent Age. The Warp Commerce route now waits for one and says which when you try it, and a few buildings of those ages wait for a tech.")
-	}
-	if from < 3 {
-		changed = vibe.Line("game.save.treeNotice.04", "Research update: the tech tree gained new techs. Trade routes, expeditions past the Scout Party, diplomacy and festivals now each wait for one and say which when you try them, one more wonder needs its keystone, and a few buildings wait for a tech.")
-	}
-	if from < 2 {
-		changed = vibe.Line("game.save.treeNotice.05", "Research update: some commands now wait for a tech and say which when you try them, and a tech's bonus is smaller but always counts in full.")
-	}
-	if from < 1 {
-		changed = vibe.Line("game.save.treeNotice.06", "Research update: each age's wonder now needs one tech, its keystone, before it can be built, some commands wait for a tech and say which when you try them, and techs are priced by their age, with smaller bonuses that always count in full.")
-	}
-	if !ge.inTreeGrace() {
-		return changed + kept
-	}
-	return changed + vibe.Sprintf("game.save.treeNotice.07", " Your game was already in the %s, so nothing new is locked there: the locks start when you next advance.", ge.progress.GetAgeName(ge.age)) + kept
-}
-
-// pacingNotice is the line a save written before the one-week curve gets
-// on its first load (GameSave.PacingWeek).
-func pacingNotice() string {
-	return vibe.Line("game.save.pacingNotice.01", "Pacing update: a first run now takes about a week. From the Bronze Age on, each age lasts about 2.6 times as long, and events, raids, trade routes and other timers stretch to match, so each age holds as many of them. Your game carries on where you left it.")
 }
 
 // getUnlockedState collects all resource, building, and worker unlocks for
@@ -1361,8 +1117,8 @@ type SaveInfo struct {
 	// ParentName is the lineage parent of this save ("" for a root). Surfaced
 	// here so Phase 3 can assemble the save-tree without re-reading files.
 	ParentName string
-	// AccountID attributes the save to a player account ("" = pre-account /
-	// legacy save). Display-only — drives the detail pane's account line.
+	// AccountID attributes the save to a player account ("" = a game played
+	// with no account). Display-only — drives the detail pane's account line.
 	AccountID string
 	// ModTime is when the file was last written, by the file system's
 	// account. It only breaks a tie between two saves that carry the same
@@ -1544,19 +1300,6 @@ func modTime(e os.DirEntry) time.Time {
 		return fi.ModTime()
 	}
 	return time.Time{}
-}
-
-// WipeAllSaves deletes all save files
-func WipeAllSaves() error {
-	dir := saveDirectory()
-	files, err := saveFiles(dir)
-	if err != nil {
-		return err
-	}
-	for _, e := range files {
-		os.Remove(filepath.Join(dir, e.Name()))
-	}
-	return nil
 }
 
 // SaveExists checks if a save file exists at either the canonical or legacy path.
@@ -1765,58 +1508,4 @@ func DuplicateSave(filename string) (string, error) {
 		return "", fmt.Errorf("could not write the copy: %w", err)
 	}
 	return dst, nil
-}
-
-// marketSwapNotice is the line a save whose plan held sell orders gets on its
-// first load: the market no longer swaps resources, and the orders were
-// dropped (loadPlanIn skips the retired kind).
-func marketSwapNotice() string {
-	return vibe.Line("game.save.marketSwapNotice.01", "The market no longer swaps resources. The sell orders in your plan were removed.")
-}
-
-// retiredSellOrders is how many of a saved plan's items are the market
-// swap's sell orders.
-func retiredSellOrders(saved []PlanItem) int {
-	n := 0
-	for _, it := range saved {
-		if it.Kind == retiredPlanTrade {
-			n++
-		}
-	}
-	return n
-}
-
-// scholarRules is the version of the scholar rules a save is written under:
-// 1 from the scholars on (a knowledge building comes with its scholars,
-// research is a progress bar, nothing is stored). A save without it is from
-// before, and its knowledge becomes work (turnKnowledgeIntoWork).
-const scholarRules = 1
-
-// scholarsNotice is the line a save from before the scholars hears once.
-func scholarsNotice() string {
-	return vibe.Line("game.save.scholarsNotice.01", "Knowledge is no longer stored. Your scholars now work on one technology at a time.")
-}
-
-// storageWallNotice is the line a save from before the storage wall gets on
-// its first load.
-func storageWallNotice() string {
-	return vibe.Line("game.save.storageWallNotice.01", "Storage changed. A storage building's price now climbs much faster with each copy, and stock has no ceiling: nothing you make is wasted. You keep every building you have, and what your plan had banked was given back to you.")
-}
-
-// keepStockFromBeforeTheWall carries a save written under the old storage
-// rules across to the new ones without taking anything: what the plan's
-// build items had banked from overflow goes back to the stores. It reads the
-// plan as saved (loadPlanIn drops the banks) and is called on load, before
-// the stores are worked out.
-func (ge *GameEngine) keepStockFromBeforeTheWall(saved []PlanItem) {
-	for _, it := range saved {
-		if it.Kind != PlanBuild {
-			continue
-		}
-		for _, res := range sortedKeys(it.Banked) {
-			if r, ok := ge.Resources.resources[res]; ok && it.Banked[res] > 0 {
-				r.Amount += it.Banked[res]
-			}
-		}
-	}
 }

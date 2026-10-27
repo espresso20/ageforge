@@ -1,10 +1,11 @@
 package game
 
 import (
-	"github.com/espresso20/ageforge/config"
 	"math/rand"
 	"strings"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 func TestRoadEventRollsAreSeededAndBounded(t *testing.T) {
@@ -111,4 +112,10 @@ func TestRoadEventOddsLossesAndRuins(t *testing.T) {
 	if offer := ge.Military.board.Slots[0].Offer; offer == nil || offer.Tier != TierShort || !strings.Contains(offer.Description, "Found by this mission") {
 		t.Fatalf("ruins did not add a found short offer: %+v", offer)
 	}
+}
+
+// applyRoadEvent carries a road event out and returns its story as read now.
+func (ge *GameEngine) applyRoadEvent(a *ActiveExpedition, e *RoadEvent) string {
+	words, _ := ge.rules.MissionWords(a.Age)
+	return tellRoadStory(words, a.roadPlace(), *e, ge.roadEventTold(a, e))
 }

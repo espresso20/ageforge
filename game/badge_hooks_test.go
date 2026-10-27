@@ -482,8 +482,7 @@ func TestInvitedDoomsAreMarked(t *testing.T) {
 
 // TestEraPace: leaving an era reports the ticks spent in it over the
 // pacing targets of its ages, so a swift era is earned inside its target
-// and not outside it; a run that does not know when it entered the era (a
-// save from before that was kept) earns none.
+// and not outside it.
 func TestEraPace(t *testing.T) {
 	set := rules.Core()
 	stone, _ := set.Era("stone_era")
@@ -491,7 +490,7 @@ func TestEraPace(t *testing.T) {
 	for _, a := range stone.Ages {
 		target += set.TargetTicks(a)
 	}
-	leave := func(t *testing.T, ticks int, known bool) *Account {
+	leave := func(t *testing.T, ticks int) *Account {
 		isolateAccountDir(t)
 		ge, acct := devEngine(t, "Ada")
 		for _, a := range stone.Ages[1:] {
@@ -499,9 +498,6 @@ func TestEraPace(t *testing.T) {
 		}
 		ge.mu.Lock()
 		ge.tick = ticks
-		if !known {
-			ge.runFacts.EraKnown = false
-		}
 		ge.mu.Unlock()
 		advanceTo(ge, "iron_age")
 		if n := runTally(ge, config.BadgeEvEraLeft); n != 1 {
@@ -509,9 +505,8 @@ func TestEraPace(t *testing.T) {
 		}
 		return acct
 	}
-	wantBadges(t, leave(t, int(target), true), "the Stone Era on its target", []string{"swift.stone_era"})
-	wantBadges(t, leave(t, int(target)+1, true), "a tick over", nil, "swift.stone_era")
-	wantBadges(t, leave(t, 10, false), "an era entered before the run kept track", nil, "swift.stone_era")
+	wantBadges(t, leave(t, int(target)), "the Stone Era on its target", []string{"swift.stone_era"})
+	wantBadges(t, leave(t, int(target)+1), "a tick over", nil, "swift.stone_era")
 }
 
 // TestRunPace: reaching an age reports the run's ticks over the pacing
@@ -682,7 +677,7 @@ func TestTitlesFromBadges(t *testing.T) {
 	}
 	// It is written beside the account, not in it.
 	noErr(t, acct.FlushIfDirty())
-	assertOldShape(t, slotFile(t, acct.AccountID))
+	assertAccountShape(t, slotFile(t, acct.AccountID))
 	if strings.Contains(string(slotFile(t, acct.AccountID)), "Survivor") {
 		t.Error("the title worn was written into account.json")
 	}
