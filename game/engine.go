@@ -1548,10 +1548,7 @@ func (ge *GameEngine) finishResearch(completed string) {
 			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
-	ge.Bus.Publish(EventData{
-		Type:    EventResearchDone,
-		Payload: map[string]interface{}{"tech": completed},
-	})
+	ge.publish(EventResearchDone, payload{"tech": completed})
 	ge.note(config.BadgeEvResearchDone, completed)
 }
 
@@ -1852,14 +1849,11 @@ func (ge *GameEngine) checkMilestones() {
 		}
 		ge.applyMilestoneRewards(ms.Rewards)
 		// Publish milestone event
-		ge.Bus.Publish(EventData{
-			Type: EventMilestoneCompleted,
-			Payload: map[string]interface{}{
-				"name":        ms.Name,
-				"key":         ms.Key,
-				"reward_text": rewardText,
-				"flavor":      ms.Flavor,
-			},
+		ge.publish(EventMilestoneCompleted, payload{
+			"name":        ms.Name,
+			"key":         ms.Key,
+			"reward_text": rewardText,
+			"flavor":      ms.Flavor,
 		})
 		ge.note(config.BadgeEvMilestone, ms.Key)
 	}
@@ -1879,15 +1873,12 @@ func (ge *GameEngine) checkMilestones() {
 		}
 		ge.startChainBoost(chain, boost)
 		// Publish chain event
-		ge.Bus.Publish(EventData{
-			Type: EventChainCompleted,
-			Payload: map[string]interface{}{
-				"name":        chain.Name,
-				"key":         chain.Key,
-				"title":       chain.Title,
-				"flavor":      chain.Flavor,
-				"boost_ticks": boost,
-			},
+		ge.publish(EventChainCompleted, payload{
+			"name":        chain.Name,
+			"key":         chain.Key,
+			"title":       chain.Title,
+			"flavor":      chain.Flavor,
+			"boost_ticks": boost,
 		})
 		ge.note(config.BadgeEvChain, chain.Key)
 	}
@@ -2329,13 +2320,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		}
 	}
 
-	ge.Bus.Publish(EventData{
-		Type: EventAgeAdvanced,
-		Payload: map[string]interface{}{
-			"old_age": oldAge,
-			"new_age": newAge,
-		},
-	})
+	ge.publish(EventAgeAdvanced, payload{"old_age": oldAge, "new_age": newAge})
 
 	// Phase 8: detect epoch transition and roll epoch event
 	ge.detectEpochTransition(newAge)
@@ -2404,13 +2389,10 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 	ge.currentEpoch = newEpoch
 	ep, _ := ge.rules.Era(newEpoch)
 	ge.addLog("event", vibe.Sprintf("game.engine.detectEpochTransition.01", "[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description))
-	ge.Bus.Publish(EventData{
-		Type: EventEpochAdvanced,
-		Payload: map[string]interface{}{
-			"epoch_key":  newEpoch,
-			"epoch_name": ep.Name,
-			"epoch_icon": ep.Icon,
-		},
+	ge.publish(EventEpochAdvanced, payload{
+		"epoch_key":  newEpoch,
+		"epoch_name": ep.Name,
+		"epoch_icon": ep.Icon,
 	})
 	ge.rollEpochEvent(newEpoch)
 	// The new era's hidden fate, rolled on entry (none in the final epoch).
@@ -2533,10 +2515,7 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 		Tick: ge.tick,
 	}
 	ge.epochEventHistory = append(ge.epochEventHistory, record)
-	ge.Bus.Publish(EventData{
-		Type:    EventEpochEventFired,
-		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
-	})
+	ge.publish(EventEpochEventFired, payload{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type})
 }
 
 // rollChallengingEpochEvent picks a bad (non-catastrophe) epoch event.
@@ -2555,10 +2534,7 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 		Tick: ge.tick,
 	}
 	ge.epochEventHistory = append(ge.epochEventHistory, record)
-	ge.Bus.Publish(EventData{
-		Type:    EventEpochEventFired,
-		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
-	})
+	ge.publish(EventEpochEventFired, payload{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type})
 }
 
 // applyGoodEpochEvent applies the effects of a good epoch transition event. The
@@ -3237,10 +3213,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 		}
 	}
 	ge.Stats.RecordBuild()
-	ge.Bus.Publish(EventData{
-		Type:    EventBuildingBuilt,
-		Payload: map[string]interface{}{"building": key},
-	})
+	ge.publish(EventBuildingBuilt, payload{"building": key})
 	ge.noteBuilt(key, 1)
 }
 
@@ -3466,10 +3439,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 		}
 		ge.recalculateRates()
 		ge.addLog(buildDoneLog(def), vibe.Sprintf("game.engine.startBuildPaid.08", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
-		ge.Bus.Publish(EventData{
-			Type:    EventBuildingBuilt,
-			Payload: map[string]interface{}{"building": key},
-		})
+		ge.publish(EventBuildingBuilt, payload{"building": key})
 		ge.noteBuilt(key, 1)
 	}
 	return nil
@@ -3545,10 +3515,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		} else {
 			ge.Buildings.counts[key]++
 			ge.Stats.RecordBuild()
-			ge.Bus.Publish(EventData{
-				Type:    EventBuildingBuilt,
-				Payload: map[string]interface{}{"building": key},
-			})
+			ge.publish(EventBuildingBuilt, payload{"building": key})
 			ge.noteBuilt(key, 1)
 		}
 		built++

@@ -255,15 +255,12 @@ func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 		EventKey: ep.CatastropheKey, EventName: eventName, EventType: "catastrophe",
 		Tick: ge.tick, Outcome: CatastrophePending, Source: source,
 	})
-	ge.Bus.Publish(EventData{
-		Type: EventEpochEventFired,
-		Payload: map[string]interface{}{
-			"event_key":  ep.CatastropheKey,
-			"event_name": catName,
-			"event_type": "catastrophe",
-			"epoch_key":  epochKey,
-			"source":     source,
-		},
+	ge.publish(EventEpochEventFired, payload{
+		"event_key":  ep.CatastropheKey,
+		"event_name": catName,
+		"event_type": "catastrophe",
+		"epoch_key":  epochKey,
+		"source":     source,
 	})
 }
 

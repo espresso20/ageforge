@@ -626,14 +626,11 @@ func (ge *GameEngine) publishHarbinger(def config.HarbingerDef, targetEpoch stri
 		// The warning names the era's doom.
 		ge.note(config.BadgeEvDoomNamed, targetEpoch)
 	}
-	ge.Bus.Publish(EventData{
-		Type: EventHarbingerArrived,
-		Payload: map[string]interface{}{
-			"harbinger_key":  def.Key,
-			"harbinger_name": def.Name,
-			"epoch_key":      targetEpoch,
-			"handoff":        handoff,
-		},
+	ge.publish(EventHarbingerArrived, payload{
+		"harbinger_key":  def.Key,
+		"harbinger_name": def.Name,
+		"epoch_key":      targetEpoch,
+		"handoff":        handoff,
 	})
 }
 

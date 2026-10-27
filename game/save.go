@@ -1005,7 +1005,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
 	// modal the player closed in the old session is shown again). Handlers run
 	// under this write lock and must not call back into the engine.
-	ge.Bus.Publish(EventData{Type: EventGameLoaded, Payload: map[string]interface{}{"save": filename}})
+	ge.publish(EventGameLoaded, payload{"save": filename})
 
 	return nil
 }

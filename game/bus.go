@@ -18,10 +18,13 @@ const (
 	EventRunEnded = "run_ended"
 )
 
+// payload is the data an event carries.
+type payload = map[string]interface{}
+
 // EventData carries data for an event
 type EventData struct {
 	Type    string
-	Payload map[string]interface{}
+	Payload payload
 }
 
 // EventBus provides pub/sub communication between game systems
@@ -52,4 +55,9 @@ func (eb *EventBus) Publish(event EventData) {
 	for _, h := range handlers {
 		h(event)
 	}
+}
+
+// publish sends an event of kind with data to the engine's subscribers.
+func (ge *GameEngine) publish(kind string, data payload) {
+	ge.Bus.Publish(EventData{Type: kind, Payload: data})
 }
