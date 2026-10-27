@@ -450,16 +450,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	ge := &GameEngine{
 		rules:            set,
 		age:              "primitive_age",
-		Resources:        NewResourceManagerWith(set),
-		Workers:          NewWorkerManagerWith(set),
-		Research:         NewResearchManagerWith(set),
-		Military:         NewMilitaryManagerWith(set),
-		Events:           NewEventManagerWith(set),
-		Milestones:       NewMilestoneManagerWith(set),
 		Prestige:         NewPrestigeManagerWith(set),
-		Trade:            NewTradeManagerWith(set),
-		Diplomacy:        NewDiplomacyManagerWith(set),
-		Stats:            NewGameStats(),
 		Bus:              NewEventBus(),
 		progress:         NewProgressManagerWith(set),
 		permanentBonuses: make(map[string]float64),
@@ -475,7 +466,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		History:          NewHistoryCollector(),
 		badges:           newBadgeBook(set),
 	}
-	ge.Buildings = ge.newBuildingManager()
+	ge.newRunManagers()
 	ge.progress.town = ge.gateTown()
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
@@ -494,6 +485,21 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	// seed; Reset re-rolls a fresh one.
 	ge.SeedRNG(newSeed())
 	return ge
+}
+
+// newRunManagers builds the managers a run owns, anew, on the engine's rules.
+// The Prestige manager outlives runs and is not among them.
+func (ge *GameEngine) newRunManagers() {
+	ge.Resources = NewResourceManagerWith(ge.rules)
+	ge.Buildings = ge.newBuildingManager()
+	ge.Workers = NewWorkerManagerWith(ge.rules)
+	ge.Research = NewResearchManagerWith(ge.rules)
+	ge.Military = NewMilitaryManagerWith(ge.rules)
+	ge.Events = NewEventManagerWith(ge.rules)
+	ge.Milestones = NewMilestoneManagerWith(ge.rules)
+	ge.Trade = NewTradeManagerWith(ge.rules)
+	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
+	ge.Stats = NewGameStats()
 }
 
 // newBuildingManager is a BuildingManager whose tech-gated buildings read
@@ -4592,22 +4598,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.harbingerHistory = nil
 	ge.epochEventHistory = nil
 
-	// Restore cross-run state
-	ge.Buildings.LoadRuins(savedRuins)
-	ge.reapplyLegacyBonuses()
-
-	// Apply age unlocks for primitive age
-	ge.applyAgeUnlocks("primitive_age")
-
-	// Recompute derived rates for the fresh managers now, not on the first
-	// tick: they have to be in the first snapshot of the new run.
-	ge.recalculateRates()
-
-	// Apply the starting resources
-	ge.Resources.Add("food", 15)
-	ge.Resources.Add("wood", 12)
-
-	ge.recalculateTickSpeed()
+	ge.beginNextRunLocked(savedRuins)
 
 	ge.log = carried
 	// The old run's last lines: what the Last Passage did, then the run's
@@ -4680,16 +4671,7 @@ func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.tick = 0
 	ge.runFacts = RunFacts{}
 	ge.age = "primitive_age"
-	ge.Resources = NewResourceManagerWith(ge.rules)
-	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManagerWith(ge.rules)
-	ge.Research = NewResearchManagerWith(ge.rules)
-	ge.Military = NewMilitaryManagerWith(ge.rules)
-	ge.Events = NewEventManagerWith(ge.rules)
-	ge.Milestones = NewMilestoneManagerWith(ge.rules)
-	ge.Trade = NewTradeManagerWith(ge.rules)
-	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
-	ge.Stats = NewGameStats()
+	ge.newRunManagers()
 	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
@@ -4730,41 +4712,34 @@ func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.startRunShares()
 }
 
+// beginNextRunLocked starts the run that follows a prestige or a fall, on the
+// managers resetRunLocked just built: the ruins and legacy bonuses that
+// outlive the old run, the first age, the rates and the starting stock.
+// Per-resource legacy rate bonuses live in permanentBonuses; the research
+// bonus is derived from the legacy flags (see succumbResearchFactor).
+// Caller holds the write lock.
+func (ge *GameEngine) beginNextRunLocked(ruins map[string]int) {
+	ge.Buildings.LoadRuins(ruins)
+	ge.reapplyLegacyBonuses()
+	ge.applyAgeUnlocks("primitive_age")
+	// The rates are worked out before the starting stock lands: the real
+	// rates are in the new run's first snapshot, not left to the first tick.
+	ge.recalculateRates()
+	ge.Resources.Add("food", 15)
+	ge.Resources.Add("wood", 12)
+	ge.recalculateTickSpeed()
+}
+
 // Reset completely reinitializes the engine to a fresh state (including prestige)
 func (ge *GameEngine) Reset() {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	ge.tick = 0
 	ge.sessionStart = nil
-	ge.age = "primitive_age"
-	ge.Resources = NewResourceManagerWith(ge.rules)
-	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManagerWith(ge.rules)
-	ge.Research = NewResearchManagerWith(ge.rules)
-	ge.Military = NewMilitaryManagerWith(ge.rules)
-	ge.Events = NewEventManagerWith(ge.rules)
-	ge.Milestones = NewMilestoneManagerWith(ge.rules)
 	ge.Prestige = NewPrestigeManagerWith(ge.rules)
-	ge.Trade = NewTradeManagerWith(ge.rules)
-	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
-	ge.Stats = NewGameStats()
-	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
-	ge.prestigeCue = PrestigeCue{}
-	ge.prestigeCueSeenAge = ""
-	ge.Stats.AgeLog[0].Tick = ge.tick
-	ge.Stats.AgeLog[0].Age = ge.age
-	// Bus intentionally kept — dashboard subscriptions must survive across resets.
-	ge.permanentBonuses = make(map[string]float64)
+	ge.resetRunLocked(moraleNeutral)
 	ge.tickSpeedBonus = 0
-	ge.speedMultiplier = 1.0
-	ge.buildQueue = nil
-	ge.plan = nil
 	ge.planLog = nil
-	ge.log = nil
-	// The history overlay is this run's: the ring starts over with the run.
-	ge.History = NewHistoryCollector()
-
 	ge.applyAgeUnlocks("primitive_age")
 	ge.Resources.Add("food", 25)
 	ge.Resources.Add("wood", 50)
@@ -4773,34 +4748,15 @@ func (ge *GameEngine) Reset() {
 	ge.eliteBadge = false
 	// A new game is a new run: no dev console history, and no owner until
 	// StartNewNamedGame (or LoadGame) names one.
-	ge.runFacts = RunFacts{}
 	ge.devTouched = false
 	ge.runAccountID = ""
 	ge.runOrphaned = false
-	ge.currentEpoch = ge.rules.EraOf("primitive_age")
-	ge.epochEventFired = make(map[string]bool)
-	ge.clearHarbingerRun()
 	ge.harbingerHistory = nil
-	ge.awakeningsFired = make(map[string]bool)
-	ge.survivedEpochs = make(map[string]bool)
-	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil
 	ge.legacyBonuses = make(map[string]bool)
 	ge.catastropheHistory = nil
 	ge.pendingLastPassage = false
 	ge.cosmicLegacy = false
-	ge.morale = moraleNeutral
-	ge.lowMoraleWarned = false
-	// Full wipe: no previous civilization, so no cache. Clear the run flag.
-	ge.ancientMemoryUsed = false
-	ge.pendingMemoryTech = ""
-	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
-	ge.grantedFeatures = nil
-	ge.ageReady = false
-	ge.starvationTicks = 0
-	ge.autoExpeditionTicksLeft = 0
-	ge.autoExpeditionStarved = false
-	ge.startRunShares()
 	ge.autoRecruitOff = false
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())

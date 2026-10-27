@@ -547,24 +547,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.tickSpeedBonus = 0
 	ge.pendingLastPassage = false
 
-	// Restore persistent cross-run state
-	ge.Buildings.LoadRuins(savedRuins)
-
-	// Per-resource legacy rate bonuses live in permanentBonuses; the research
-	// bonus is derived from the legacy flags (see succumbResearchFactor).
-	ge.reapplyLegacyBonuses()
-
-	ge.applyAgeUnlocks("primitive_age")
-
-	// Work the rates out before the starting stock lands, as a prestige does:
-	// it puts the real rates in the new run's first snapshot instead of
-	// leaving them to the first tick.
-	ge.recalculateRates()
-
-	ge.Resources.Add("food", 15)
-	ge.Resources.Add("wood", 12)
-
-	ge.recalculateTickSpeed()
+	ge.beginNextRunLocked(savedRuins)
 
 	ge.sayEnding(&end, EndLineVerdict, "event", vibe.Sprintf("game.catastrophe.Succumb.06", "☄ %s: civilization has fallen. A new dawn.", catName))
 	if newLegacy {
