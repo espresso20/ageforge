@@ -128,11 +128,6 @@ func (s *Set) StockOf(res, age string, share, income float64) float64 {
 	return config.StockOf(age, share, s.typIncome[age][res], income)
 }
 
-// AgeHasStorageBuilding reports whether age has a storage building of its own.
-func (s *Set) AgeHasStorageBuilding(age string) bool {
-	return config.AgeHasStorageBuilding(s.Buildings(), age)
-}
-
 // MilitaryScale is the military yardstick of the age with the given order
 // on this set's tree (config.MilitaryScales): what the typical player's
 // military power was when the raid threat and the missions were measured,

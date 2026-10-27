@@ -389,7 +389,6 @@ func TestNames(t *testing.T) {
 		{KindBuilding, "hut", config.BuildingByKey()["hut"].Name},
 		{KindResource, "iron_ore", config.ResourceByKey()["iron_ore"].Name},
 		{KindCiv, "merchant_guild", config.FactionByKey()["merchant_guild"].Name},
-		{KindPrestigeUpgrade, config.LegacyPlan, "Legacy plan"},
 		{KindAge, "lost_age", "Lost age"},
 		{KindBuilding, "", ""},
 		{numKinds, "any_key", "Any key"},

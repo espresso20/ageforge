@@ -26,14 +26,3 @@ const (
 	// copy owned: Kittens Game's barn.
 	StorageRate = 1.75
 )
-
-// AgeHasStorageBuilding reports whether the age has a storage building of its
-// own. The last age has none.
-func AgeHasStorageBuilding(defs []BuildingDef, age string) bool {
-	for _, d := range defs {
-		if d.Category == "storage" && d.RequiredAge == age {
-			return true
-		}
-	}
-	return false
-}
