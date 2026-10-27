@@ -3642,9 +3642,7 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 		return vibe.Errorf("game.engine.AssignWorker.08", "Only %s idle (you asked for %d). Recruit more or unassign some elsewhere.",
 			textfmt.Count(idle, vibe.Line("game.engine.AssignWorker.09", "worker is"), vibe.Line("game.engine.AssignWorker.10", "workers are")), count)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
 	return nil
 }
 
@@ -3675,9 +3673,7 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	if !ge.Workers.Assign("worker", buildingKey, toAssign) {
 		return 0, vibe.Errorf("game.engine.AssignAll.05", "Could not assign workers to %s.", def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
 	return toAssign, nil
 }
 
@@ -3697,9 +3693,7 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	if !ge.Workers.Unassign("worker", buildingKey, assigned) {
 		return 0, vibe.Errorf("game.engine.UnassignAll.02", "Could not unassign workers from %s.", def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
 	return assigned, nil
 }
 
@@ -3722,9 +3716,7 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 		}
 		return vibe.Errorf("game.engine.UnassignWorker.03", "Only %s assigned to %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignWorker.04", "worker is"), vibe.Line("game.engine.UnassignWorker.05", "workers are")), def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
 	return nil
 }
 
@@ -3747,11 +3739,18 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	if dismissed == 0 {
 		return vibe.Errorf("game.engine.DismissWorkers.02", "No workers are assigned to %s.", def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.DismissWorkers.03", "Dismissed %s from %s. They left your population (now %d).",
+	ge.staffingChanged(vibe.Sprintf("game.engine.DismissWorkers.03", "Dismissed %s from %s. They left your population (now %d).",
 		textfmt.Count(dismissed, vibe.Line("game.engine.DismissWorkers.04", "worker"), vibe.Line("game.engine.DismissWorkers.05", "workers")), def.Name, ge.popLocked()))
 	return nil
+}
+
+// staffingChanged ends a command that moved workers: the staffing routine
+// waits, the rates follow and the log says what was done. Caller holds the
+// write lock.
+func (ge *GameEngine) staffingChanged(line string) {
+	ge.holdStaffing()
+	ge.recalculateRates()
+	ge.addLogAbout(LogRoutine, TagPeople, line)
 }
 
 // checkAmount rejects a resource amount no command can mean: NaN, an
