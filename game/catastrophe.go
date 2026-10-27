@@ -5,7 +5,6 @@ import (
 	"math"
 	"math/rand"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -357,12 +356,7 @@ func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 // idle pool, the same way SellBuilding does: each building keeps at most
 // WorkerCapacity × remaining count assigned. Keys are processed in sorted order.
 func (ge *GameEngine) releaseWorkersFrom(destroyed map[string]int) {
-	keys := make([]string, 0, len(destroyed))
-	for k := range destroyed {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
+	for _, key := range sortedKeys(destroyed) {
 		def := ge.Buildings.defs[key]
 		capacity := def.WorkerCapacity * ge.Buildings.GetCount(key)
 		assigned := ge.Workers.GetAssignedCount("worker", key)

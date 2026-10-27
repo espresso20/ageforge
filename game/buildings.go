@@ -195,14 +195,9 @@ func (bm *BuildingManager) techLocked(def *config.BuildingDef) bool {
 // or "" if none is that close. Keys are compared in sorted order so a tie
 // always resolves to the same suggestion.
 func closestKey[V any](input string, keys map[string]V) string {
-	sorted := make([]string, 0, len(keys))
-	for k := range keys {
-		sorted = append(sorted, k)
-	}
-	sort.Strings(sorted)
 	best := ""
 	bestDist := 3
-	for _, k := range sorted {
+	for _, k := range sortedKeys(keys) {
 		if d := textfmt.EditDistance(input, k); d < bestDist {
 			bestDist = d
 			best = k

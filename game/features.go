@@ -2,7 +2,6 @@ package game
 
 import (
 	"errors"
-	"sort"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -113,15 +112,7 @@ func (ge *GameEngine) featureStates() map[string]FeatureState {
 // grantedFeatureKeys is the run's granted features for the save, sorted; nil
 // when there are none, so the field is left out.
 func (ge *GameEngine) grantedFeatureKeys() []string {
-	if len(ge.grantedFeatures) == 0 {
-		return nil
-	}
-	keys := make([]string, 0, len(ge.grantedFeatures))
-	for k := range ge.grantedFeatures {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
+	return sortedKeys(ge.grantedFeatures)
 }
 
 // loadGrantedFeatures restores the run's granted features from a save,

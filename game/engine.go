@@ -4862,7 +4862,7 @@ func (ge *GameEngine) GetState() GameState {
 	rngDraws, quipDraws := ge.rngDraws()
 
 	workers := ge.Workers.Snapshot(popCap)
-	workers.Shares = cloneShares(ge.workerShares)
+	workers.Shares = cloneMap(ge.workerShares)
 	workers.AutoRecruit = !ge.autoRecruitOff
 	workers.HoldTicks = max(0, ge.staffHoldUntil-ge.tick)
 	workers.HeldBy, workers.FoodNet, workers.FoodFeeds = ge.popHoldLocked()

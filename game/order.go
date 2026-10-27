@@ -1,6 +1,9 @@
 package game
 
-import "sort"
+import (
+	"maps"
+	"slices"
+)
 
 // sortedKeys returns m's keys in ascending order.
 //
@@ -13,10 +16,24 @@ import "sort"
 // sortedKeys(m) instead. Loops whose result does not depend on order (integer
 // counts, per-key copies, lookups) can keep ranging over the map directly.
 func sortedKeys[V any](m map[string]V) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	keys := slices.AppendSeq(make([]string, 0, len(m)), maps.Keys(m))
+	slices.Sort(keys)
 	return keys
+}
+
+// cloneMap copies m so the copy shares nothing with it; an empty map reads as
+// nil, so a field tagged omitempty leaves it out of a save.
+func cloneMap[K comparable, V any](m map[K]V) map[K]V {
+	if len(m) == 0 {
+		return nil
+	}
+	return maps.Clone(m)
+}
+
+// cloneSlice is cloneMap for a slice.
+func cloneSlice[E any](s []E) []E {
+	if len(s) == 0 {
+		return nil
+	}
+	return slices.Clone(s)
 }

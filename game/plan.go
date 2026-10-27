@@ -145,15 +145,6 @@ type PlanItemView struct {
 	Note string
 }
 
-// clonePlan copies a plan so snapshots and saves share nothing with the live
-// one.
-func clonePlan(p []PlanItem) []PlanItem {
-	if len(p) == 0 {
-		return nil
-	}
-	return slices.Clone(p)
-}
-
 // loadPlanIn is a saved plan as the engine accepts it: known kinds only,
 // counts in range, at most MaxPlanItems besides research and no more
 // research items than the tree has techs. A plan the game wrote passes

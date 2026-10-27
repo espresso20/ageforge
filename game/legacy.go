@@ -55,14 +55,6 @@ type PlanTemplateItem struct {
 	Count int    `json:"count,omitempty"`
 }
 
-// clonePlanTemplate copies a template (nil for an empty one).
-func clonePlanTemplate(t []PlanTemplateItem) []PlanTemplateItem {
-	if len(t) == 0 {
-		return nil
-	}
-	return slices.Clone(t)
-}
-
 // templateAgeLoad is how many of the items t holds for age count against
 // an age's MaxPlanItems: every one but research, as in the plan itself.
 func templateAgeLoad(t []PlanTemplateItem, age string) int {
@@ -407,7 +399,7 @@ func (ge *GameEngine) applyLegacySharesLocked() bool {
 	if !ge.Prestige.Owns(config.LegacyWorkers) || len(ge.workerShares) > 0 || len(ge.Prestige.legacyShares) == 0 {
 		return false
 	}
-	ge.workerShares = cloneShares(ge.Prestige.legacyShares)
+	ge.workerShares = cloneMap(ge.Prestige.legacyShares)
 	return true
 }
 
@@ -454,7 +446,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 		}
 	}
 	if len(ge.workerShares) > 0 || pm.Owns(config.LegacyWorkers) {
-		pm.legacyShares = cloneShares(ge.workerShares)
+		pm.legacyShares = cloneMap(ge.workerShares)
 	}
 }
 

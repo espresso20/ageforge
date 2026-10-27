@@ -1,7 +1,6 @@
 package game
 
 import (
-	"sort"
 	"strings"
 	"time"
 
@@ -107,19 +106,9 @@ func Amount(v float64, res string) string {
 // key so the order is stable. Zero amounts are skipped. An empty map is
 // "nothing".
 func Amounts(m map[string]float64) string {
-	keys := make([]string, 0, len(m))
-	for k, v := range m {
-		if v != 0 {
-			keys = append(keys, k)
-		}
-	}
-	if len(keys) == 0 {
+	parts := amountParts(m, func(v float64) bool { return v != 0 })
+	if len(parts) == 0 {
 		return "nothing"
-	}
-	sort.Strings(keys)
-	parts := make([]string, len(keys))
-	for i, k := range keys {
-		parts[i] = Amount(m[k], k)
 	}
 	return strings.Join(parts, ", ")
 }

@@ -63,7 +63,7 @@ func TestPlanLogRecordsThePlanAsWritten(t *testing.T) {
 	ge.PlanClear()
 
 	ge.mu.Lock()
-	got := clonePlanTemplate(ge.planLog)
+	got := cloneSlice(ge.planLog)
 	ge.mu.Unlock()
 	want := []PlanTemplateItem{{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 1}}
 	if !reflect.DeepEqual(got, want) {
@@ -310,7 +310,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge.mu.Lock()
-	log := clonePlanTemplate(ge.planLog)
+	log := cloneSlice(ge.planLog)
 	ge.mu.Unlock()
 	loaded := saveAndLoad(t, ge, "kit")
 	if loaded.cheaterBadge {
@@ -320,7 +320,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 		t.Errorf("kit after load: %+v, want %+v", got, kit)
 	}
 	loaded.mu.RLock()
-	gotLog := clonePlanTemplate(loaded.planLog)
+	gotLog := cloneSlice(loaded.planLog)
 	owned := loaded.Prestige.Owns(config.LegacyFactions)
 	loaded.mu.RUnlock()
 	if !reflect.DeepEqual(gotLog, log) || len(log) == 0 || !owned {
@@ -399,9 +399,9 @@ func (ge *GameEngine) LegacyForTest() LegacyKit {
 	defer ge.mu.RUnlock()
 	pm := ge.Prestige
 	return LegacyKit{
-		Plan:     clonePlanTemplate(pm.legacyPlan),
+		Plan:     cloneSlice(pm.legacyPlan),
 		Factions: slices.Clone(pm.legacyFactions),
-		Shares:   cloneShares(pm.legacyShares),
+		Shares:   cloneMap(pm.legacyShares),
 	}
 }
 

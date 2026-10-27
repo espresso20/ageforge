@@ -1,7 +1,6 @@
 package game
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
@@ -250,20 +249,12 @@ func (mm *MilestoneManager) planFor(def config.MilestoneDef) milestonePlan {
 	}
 	// Sort resource keys before iterating — map iteration order is random,
 	// which would cause progress bar lines to flicker each tick.
-	plan.resKeys = make([]string, 0, len(def.MinResources))
-	for res := range def.MinResources {
-		plan.resKeys = append(plan.resKeys, res)
-	}
-	sort.Strings(plan.resKeys)
+	plan.resKeys = sortedKeys(def.MinResources)
 	for _, res := range plan.resKeys {
 		plan.resLabels = append(plan.resLabels, textfmt.Capitalize(ResourceName(res)))
 	}
 	// Sort building keys before iterating — same reason as resources.
-	plan.bldKeys = make([]string, 0, len(def.MinBuildings))
-	for bld := range def.MinBuildings {
-		plan.bldKeys = append(plan.bldKeys, bld)
-	}
-	sort.Strings(plan.bldKeys)
+	plan.bldKeys = sortedKeys(def.MinBuildings)
 	for _, bld := range plan.bldKeys {
 		plan.bldLabels = append(plan.bldLabels, mm.rules.Name(rules.KindBuilding, bld))
 	}

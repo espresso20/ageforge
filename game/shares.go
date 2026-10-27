@@ -166,19 +166,6 @@ func cleanSharesIn(set *rules.Set, in map[string]float64) map[string]float64 {
 	return out
 }
 
-// cloneShares copies a shares map so snapshots and saves share nothing with
-// the live one.
-func cloneShares(m map[string]float64) map[string]float64 {
-	if len(m) == 0 {
-		return nil
-	}
-	out := make(map[string]float64, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
-}
-
 // IsWorkerDomain reports whether key is one of set's worker domains.
 func IsWorkerDomain(set *rules.Set, key string) bool {
 	return slices.Contains(set.WorkerDomains(), key)
@@ -723,7 +710,7 @@ func (c staffCounts) describe(pop, popCap int) string {
 func (ge *GameEngine) WorkerShares() map[string]float64 {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
-	return cloneShares(ge.workerShares)
+	return cloneMap(ge.workerShares)
 }
 
 // AutoRecruit reports whether the shares routine recruits.
@@ -770,7 +757,7 @@ func (ge *GameEngine) SetWorkerShare(domain string, percent float64) (ShareReply
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	shares := cloneShares(ge.workerShares)
+	shares := cloneMap(ge.workerShares)
 	if shares == nil {
 		shares = make(map[string]float64)
 	}
@@ -790,7 +777,7 @@ func (ge *GameEngine) ClearWorkerShare(domain string) (ShareReply, error) {
 	if domain == "" {
 		ge.workerShares = nil
 	} else {
-		shares := cloneShares(ge.workerShares)
+		shares := cloneMap(ge.workerShares)
 		delete(shares, domain)
 		ge.workerShares = cleanSharesIn(ge.rules, shares)
 	}
