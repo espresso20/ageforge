@@ -2,6 +2,7 @@ package game
 
 import (
 	"maps"
+	"math/rand"
 	"slices"
 )
 
@@ -36,4 +37,25 @@ func cloneSlice[E any](s []E) []E {
 		return nil
 	}
 	return slices.Clone(s)
+}
+
+// pickWeighted draws one item, each item's chance its weight's share of the
+// total, with a single rng.Intn(total). ok is false, with nothing drawn, when
+// the weights add up to nothing.
+func pickWeighted[T any](rng *rand.Rand, items []T, weight func(T) int) (item T, ok bool) {
+	total := 0
+	for _, it := range items {
+		total += weight(it)
+	}
+	if total <= 0 {
+		return item, false
+	}
+	roll := rng.Intn(total)
+	for _, it := range items {
+		roll -= weight(it)
+		if roll < 0 {
+			return it, true
+		}
+	}
+	return items[len(items)-1], true
 }

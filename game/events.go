@@ -206,46 +206,26 @@ func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrd
 		return
 	}
 
-	// Weighted random selection
-	totalWeight := 0
-	for _, def := range eligible {
-		totalWeight += def.Weight
-	}
-	if totalWeight == 0 {
+	def, ok := pickWeighted(rng, eligible, func(def config.EventDef) int { return def.Weight })
+	if !ok {
 		return
 	}
-
-	roll := rng.Intn(totalWeight)
-	cumulative := 0
-	for _, def := range eligible {
-		cumulative += def.Weight
-		if roll < cumulative {
-			em.lastFired[def.Key] = tick
-			triggered = append(triggered, def)
-
-			// Update streak tracking
-			em.updateStreaks(def.Sentiment)
-
-			// If duration > 0, add to active
-			if def.Duration > 0 {
-				em.active = append(em.active, ActiveEvent{
-					Key:       def.Key,
-					Name:      def.Name,
-					Src:       nameFromEvent,
-					Ref:       def.Key,
-					TicksLeft: em.rules.StretchTicks(currentAge, def.Duration),
-					Effects:   def.Effects,
-				})
-			}
-
-			// Schedule the next event (5-20 minutes from now, times the
-			// age's stretch)
-			em.nextEventTick = tick + eventDelayIn(em.rules, rng, currentAge)
-			break
-		}
+	em.lastFired[def.Key] = tick
+	triggered = append(triggered, def)
+	em.updateStreaks(def.Sentiment)
+	if def.Duration > 0 {
+		em.active = append(em.active, ActiveEvent{
+			Key:       def.Key,
+			Name:      def.Name,
+			Src:       nameFromEvent,
+			Ref:       def.Key,
+			TicksLeft: em.rules.StretchTicks(currentAge, def.Duration),
+			Effects:   def.Effects,
+		})
 	}
-
-	return
+	// Schedule the next event (5-20 minutes from now, times the age's stretch)
+	em.nextEventTick = tick + eventDelayIn(em.rules, rng, currentAge)
+	return triggered, expired
 }
 
 // requiredSentiment returns a sentiment filter based on current streaks.

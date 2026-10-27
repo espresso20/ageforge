@@ -263,22 +263,10 @@ func (ge *GameEngine) eligibleFactions(ageOrder map[string]int, discovered bool)
 // into). Deterministic given ge.rng's state and the slice order. Strength is
 // clamped to a floor of 1 so every faction has a non-zero weight.
 func (ge *GameEngine) pickWeightedFaction(defs []config.FactionDef) config.FactionDef {
-	total := 0
-	for _, d := range defs {
-		total += factionWeight(d)
+	if def, ok := pickWeighted(ge.rng, defs, factionWeight); ok {
+		return def
 	}
-	if total <= 0 {
-		return defs[ge.rng.Intn(len(defs))]
-	}
-	roll := ge.rng.Intn(total)
-	cum := 0
-	for _, d := range defs {
-		cum += factionWeight(d)
-		if roll < cum {
-			return d
-		}
-	}
-	return defs[len(defs)-1]
+	return defs[ge.rng.Intn(len(defs))]
 }
 
 // factionWeight is a faction's encounter weight (Strength, floored at 1).
