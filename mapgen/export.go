@@ -92,3 +92,9 @@ func Runes() []rune {
 	delete(seen, ' ')
 	return slices.Sorted(maps.Keys(seen))
 }
+
+// HasTemplate reports whether a wonder has a template drawn for it.
+func HasTemplate(key string) bool {
+	_, ok := templates[key]
+	return ok
+}

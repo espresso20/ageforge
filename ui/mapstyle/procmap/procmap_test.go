@@ -64,6 +64,34 @@ func TestEveryAgeDrawsAtEverySize(t *testing.T) {
 	}
 }
 
+// TestEveryWonderDraws: all 22 wonders have a template of their own, and each
+// draws, rising and finished, at every size, by day and by night.
+func TestEveryWonderDraws(t *testing.T) {
+	fixture.WithTheme(t, "forge")
+	for _, w := range cat.Wonders {
+		if !mapgen.HasTemplate(w.Key) {
+			t.Errorf("the wonder %s has no template", w.Key)
+		}
+	}
+	for _, age := range cat.Ages {
+		for _, stage := range []string{"rising", "built"} {
+			for _, tick := range []int{noon, midnight} {
+				st := fixture.State(fixture.Options{Age: age, Seed: 4, Tick: tick})
+				if stage == "built" {
+					bs := st.Buildings[st.CurrentAgeWonderKey]
+					bs.Count = 1
+					st.Buildings[st.CurrentAgeWonderKey] = bs
+				}
+				m := mapmodel.NewBuilder(cat).Build(&st, nil)
+				for _, sz := range sizes {
+					scr := draw(New(), m, sz.w, sz.h, sz.compact, mapmodel.TierUnicode)
+					scr.Fini()
+				}
+			}
+		}
+	}
+}
+
 // TestEveryThemeDraws: the map draws in every theme, light and dark, by day
 // and by night, and a glyph never sinks into its ground.
 func TestEveryThemeDraws(t *testing.T) {

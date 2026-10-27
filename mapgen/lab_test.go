@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
@@ -27,8 +28,6 @@ import (
 //	go test -tags procmaplab -run 'TestLab' ./mapgen
 //
 // PROCMAP_OUT picks the folder the files go to (default: outside the repo).
-
-var labSizes = [][2]int{{120, 36}, {80, 24}}
 
 const (
 	labSeed     = 4
@@ -87,30 +86,51 @@ func panel(v mapstyle.Style, m *mapmodel.Model, w, h int) tcell.SimulationScreen
 	return scr
 }
 
-// TestLabCaptures draws every age, by day and by night, at both sizes.
+// TestLabCaptures draws every age: the engine by day and by night at the big
+// size, and as the whole-town overview at the small one; and, for the ages
+// today's map is shown for, today's map by day at both sizes.
 func TestLabCaptures(t *testing.T) {
 	dir := labDir(t)
 	fixture.WithTheme(t, "forge")
 	for _, age := range mapmodel.NewCatalog().Ages {
-		for _, tick := range []struct {
-			name string
-			tick int
-		}{{"day", labNoon}, {"night", labMidnight}} {
-			m := labModel(age, tick.tick)
-			for _, size := range labSizes {
-				w, h := size[0], size[1]
-				base := fmt.Sprintf("%s_%s_%dx%d", age, tick.name, w, h)
-				scr := panel(procmap.New(), m, w, h)
+		shots := []struct {
+			name    string
+			tick    int
+			w, h    int
+			old, nw bool
+		}{
+			{"day_120x36", labNoon, 120, 36, labOldAges[age], true},
+			{"night_120x36", labMidnight, 120, 36, false, true},
+			{"day_80x24", labNoon, 80, 24, labOldAges[age], true},
+		}
+		for _, shot := range shots {
+			m := labModel(age, shot.tick)
+			base := age + "_" + shot.name
+			if shot.nw {
+				scr := panel(procmap.New(), m, shot.w, shot.h)
 				writeShot(t, dir, base+"_new", scr)
 				scr.Fini()
-				if labOldAges[age] {
-					scr = panel(roguelike.New(), m, w, h)
-					writeShot(t, dir, base+"_old", scr)
-					scr.Fini()
-				}
+			}
+			if shot.old {
+				scr := panel(roguelike.New(), m, shot.w, shot.h)
+				writeShot(t, dir, base+"_old", scr)
+				scr.Fini()
 			}
 		}
 	}
+}
+
+// TestLabWonderList writes what the page says of each wonder: its key, its
+// name, its age, and the line the game gives it.
+func TestLabWonderList(t *testing.T) {
+	dir := labDir(t)
+	cat := mapmodel.NewCatalog()
+	defs := cat.Rules.BuildingMap()
+	var lines []string
+	for _, w := range cat.Wonders {
+		lines = append(lines, fmt.Sprintf("%s|%s|%s|%s", w.Key, w.Name, cat.AgeNames[w.Age], defs[w.Key].Flavor))
+	}
+	write(t, dir, "wonders.txt", strings.Join(lines, "\n")+"\n")
 }
 
 // wonderBox is a w by h part of the grid centred on the cells of one wonder:
