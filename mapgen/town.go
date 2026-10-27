@@ -75,6 +75,9 @@ func (f *frame) layRoads() {
 	for _, lot := range f.filler {
 		inUse = append(inUse, f.plan.Lots[lot])
 	}
+	if f.st.Pads > 0 && f.plan.Port.Rect.W > 0 {
+		inUse = append(inUse, f.plan.Port)
+	}
 	for _, w := range f.wonders() {
 		inUse = append(inUse, w.plot)
 	}
@@ -104,6 +107,7 @@ func (f *frame) paintTown() {
 		})
 	}
 	f.paintRoads()
+	f.paintPort()
 	for _, lot := range f.filler {
 		f.paintHouse(lot)
 	}
@@ -274,4 +278,35 @@ func middleOf(rows []string, x0, y0 int) Pt {
 		}
 	}
 	return best
+}
+
+// paintPort lays the spaceport: paved ground with its launch pads in a row,
+// as many as the age has built.
+func (f *frame) paintPort() {
+	port := f.plan.Port
+	if f.st.Pads == 0 || port.Rect.W == 0 {
+		return
+	}
+	thing := Thing{Kind: KindTerrain, Key: "port"}
+	f.paintYardOf(port.Rect, f.st.Yard)
+	port.Rect.cells(func(x, y int) { f.g.mark(x, y, thing) })
+	w, h := f.st.Pad.size()
+	for i := 0; i < f.st.Pads; i++ {
+		x0 := port.Rect.X + 1 + i*(w+1)
+		y0 := port.Rect.Y + port.Rect.H - h
+		if port.Door.Y >= port.Rect.Y+port.Rect.H {
+			y0 = port.Rect.Y
+		}
+		for dy, row := range f.st.Pad {
+			for dx, r := range []rune(row) {
+				if r != ' ' {
+					f.g.draw(x0+dx, y0+dy, r, f.ink(r, HNone))
+					f.g.mark(x0+dx, y0+dy, thing)
+				}
+			}
+		}
+		if i == 0 {
+			f.targets = append(f.targets, Pt{x0 + w/2, y0 + h/2})
+		}
+	}
 }

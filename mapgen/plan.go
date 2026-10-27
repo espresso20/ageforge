@@ -41,8 +41,10 @@ type Plan struct {
 	Centre Pt
 	Roads  []Road
 	Lots   []Lot
-	// Plots are the wonder plots, indexed by the wonder's age.
+	// Plots are the wonder plots, indexed by the wonder's age; Port is the
+	// ground kept for a spaceport.
 	Plots []Lot
+	Port  Lot
 	// Owner is the building line of each lot, an index into
 	// mapmodel.LineageOrder; Order lists each line's lots, nearest the
 	// middle first. Hearts are where each line's district is rooted.
@@ -60,6 +62,7 @@ type Plan struct {
 const (
 	lotW, lotH   = 6, 4
 	plotW, plotH = 10, 5
+	portW, portH = 32, 7
 )
 
 // groundAges is how many ages the ground scenes cover; later ages are in
@@ -93,6 +96,7 @@ func NewGroundPlan(seed int64, f *Fields, cat *mapmodel.Catalog) *Plan {
 	b.plan.Centre = b.findCentre()
 	b.layArms()
 	b.reservePlots()
+	b.reservePort()
 	b.layStreets()
 	b.placeMissingPlots()
 	b.cutLots()

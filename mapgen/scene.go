@@ -49,6 +49,9 @@ func (f *frame) bounds() Rect {
 	for _, ws := range f.wonders() {
 		grow(ws.plot.Rect)
 	}
+	if f.st.Pads > 0 && f.plan.Port.Rect.W > 0 {
+		grow(f.plan.Port.Rect)
+	}
 	const margin = 3
 	return Rect{x0 - margin, y0 - margin, x1 - x0 + 1 + 2*margin, y1 - y0 + 1 + 2*margin}
 }

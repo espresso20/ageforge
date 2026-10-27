@@ -11,10 +11,43 @@ func (b *planner) reservePlots() {
 	}
 }
 
+// reservePort keeps ground for a spaceport out along a trunk arm, away from
+// the middle of town; failing that it takes a place on a street later
+// (placeMissingPlots).
+func (b *planner) reservePort() {
+	for _, arm := range b.arms[:2] {
+		if arm >= 0 && b.plan.Port.Rect.W == 0 {
+			b.plan.Port = b.fitPort(arm, 24)
+		}
+	}
+}
+
+// fitPort is the first spaceport ground on a road, from cell `from` on, that
+// fits on one side of it or the other; none if nothing fits.
+func (b *planner) fitPort(road, from int) Lot {
+	r := b.plan.Roads[road]
+	if b.heading(r)[1] != 0 {
+		return Lot{}
+	}
+	for i := from; i < len(r.Cells); i++ {
+		c := r.Cells[i]
+		for _, rect := range []Rect{{c.X - portW/2, c.Y - portH, portW, portH}, {c.X - portW/2, c.Y + 1, portW, portH}} {
+			if b.free(rect) {
+				b.take(rect)
+				return Lot{Rect: rect, Door: c, Road: road, At: i}
+			}
+		}
+	}
+	return Lot{}
+}
+
 // placeMissingPlots finds room, along the streets, for the wonders whose own
 // arm had none.
 func (b *planner) placeMissingPlots() {
 	p := b.plan
+	for road := 1; road < len(p.Roads) && p.Port.Rect.W == 0; road++ {
+		p.Port = b.fitPort(road, 6)
+	}
 	for n, plot := range p.Plots {
 		for road := 1; road < len(p.Roads) && plot.Rect.W == 0; road++ {
 			plot = b.fitPlot(road, 4, n)

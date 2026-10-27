@@ -1,65 +1,16 @@
 package mapgen
 
-import "github.com/espresso20/ageforge/mapmodel"
+import (
+	"strings"
+
+	"github.com/espresso20/ageforge/mapmodel"
+)
 
 // Template is a wonder's hand-drawn shape. Art is drawn as written; Tone has
 // the same shape and names the material of each cell by a letter the age
 // style colours (Tones). A missing Tone means stone ('s' throughout).
 type Template struct {
 	Art, Tone []string
-}
-
-// templates are the wonders drawn so far, by wonder key. A wonder without
-// one is drawn as the generic monument.
-var templates = map[string]Template{
-	"stonehenge": {
-		Art: []string{
-			"  Π Π Π  ",
-			" Π     Π ",
-			"Π   ▄   Π",
-			" Π     Π ",
-			"  Π Π Π  ",
-		},
-		Tone: []string{
-			"  s s s  ",
-			" s     s ",
-			"s   a   s",
-			" s     s ",
-			"  s s s  ",
-		},
-	},
-	"space_program": {
-		Art: []string{
-			"    ▲    ",
-			"   ╱█╲   ",
-			"  ╟│█│╢  ",
-			" ╤═╧█╧═╤ ",
-			"▄▄▄▄▄▄▄▄▄",
-		},
-		Tone: []string{
-			"    a    ",
-			"   sgs   ",
-			"  msgsm  ",
-			" mmmsmmm ",
-			"sssssssss",
-		},
-	},
-	"dyson_scaffold": {
-		Art: []string{
-			" ╭─┬─┬─╮ ",
-			"╱╲ ╲ ╱ ╱╲",
-			"│ ╲ ☼ ╱ │",
-			"╲╱ ╱ ╲ ╲╱",
-			" ╰─┴─┴─╯ ",
-		},
-		Tone: []string{
-			" mmmmmmm ",
-			"mmm m mmm",
-			"m m f m m",
-			"mmm m mmm",
-			" mmmmmmm ",
-		},
-	},
 }
 
 // monuments stand in for wonders with no template of their own; one is
@@ -110,21 +61,34 @@ func (f *frame) paintWonder(ws wonderSpot) {
 			if t.Tone != nil && dx < len(t.Tone[dy]) {
 				tone = t.Tone[dy][dx]
 			}
-			ink, ok := f.st.Tones[tone]
-			if !ok {
-				ink = P(f.st.Wall, 235)
-			}
+			ink := f.tone(tone)
 			f.g.draw(x0+dx, y0+dy, ch, ink)
 			f.g.mark(x0+dx, y0+dy, thing)
-			if tone == 'g' || tone == 'f' {
+			if strings.IndexByte("gfln", tone) >= 0 {
 				f.glow = append(f.glow, Pt{x0 + dx, y0 + dy})
 			}
 		}
 	}
 	if built < h {
 		for dx := 0; dx < w; dx += 2 {
-			f.g.draw(x0+dx, y0+h-built-1, '╫', f.st.Tones['a'])
+			f.g.draw(x0+dx, y0+h-built-1, '╫', f.tone('a'))
 			f.g.mark(x0+dx, y0+h-built-1, thing)
 		}
 	}
+}
+
+// defaultTones are the materials of a wonder when the age does not say: s
+// stone, a gold, g glass, m metal, f fire, v green, w water, l warm light, n
+// neon.
+var defaultTones = map[byte]Paint{
+	's': P(HStone, 235), 'a': P(HGold, 255), 'g': P(HGlass, 255), 'm': P(HSteel, 235), 'f': P(HFire, 255),
+	'v': P(HLawn, 255), 'w': P(HWater, 255), 'l': P(HLight, 255), 'n': P(HNeon, 255),
+}
+
+// tone is the paint of a material letter in the age's colours.
+func (f *frame) tone(letter byte) Paint {
+	if p, ok := f.st.Tones[letter]; ok {
+		return p
+	}
+	return defaultTones[letter]
 }

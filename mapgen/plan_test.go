@@ -87,6 +87,9 @@ func TestPlanNoOverlap(t *testing.T) {
 				claim("plot", l.Rect)
 			}
 		}
+		if p.Port.Rect.W > 0 {
+			claim("port", p.Port.Rect)
+		}
 	}
 }
 
@@ -112,7 +115,7 @@ func TestPlanEveryParcelReachable(t *testing.T) {
 				}
 			}
 		}
-		parcels := append(append([]Lot{}, p.Lots...), p.Plots...)
+		parcels := append(append(append([]Lot{}, p.Lots...), p.Plots...), p.Port)
 		for _, l := range parcels {
 			if l.Rect.W == 0 {
 				continue

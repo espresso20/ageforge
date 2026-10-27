@@ -1,6 +1,9 @@
 package mapgen
 
-import "strings"
+import (
+	"maps"
+	"strings"
+)
 
 // An age style is one row of data: what the ground, the roads and the
 // buildings of an age look like. Adding an age is adding a row; no code
@@ -116,6 +119,73 @@ type AgeStyle struct {
 	Tones map[byte]Paint
 	// Sky is the void and its stars (orbit only).
 	Sky Look
+	// Pad is the art of one launch pad, and Pads how many the spaceport has:
+	// none, no spaceport.
+	Pad  Art
+	Pads int
+}
+
+// AgeRow is one age: the era whose look it shares, and what sets it apart. A
+// field left empty keeps the era's.
+type AgeRow struct {
+	Age    string
+	Era    *AgeStyle
+	Roads  [3]RoadLook        // the age's road kinds
+	Wall   Hue                // the age's material
+	Top    [numFamilies][]Art // its tallest buildings, replacing the era's
+	Ink    map[rune]Paint     // colours added to the era's
+	Tones  map[byte]Paint     // wonder materials added to the era's
+	Filler []Art
+	Agents []AgentKind
+	Night  Night
+	Pads   int // launch pads of the spaceport, when there is one
+}
+
+// compose makes the style of an age row: the era's, with the row's changes.
+func compose(row AgeRow) AgeStyle {
+	st := *row.Era
+	st.From = row.Age
+	if row.Roads[0].Joins != "" {
+		st.Roads = row.Roads
+	}
+	if row.Wall != HNone {
+		st.Wall = row.Wall
+	}
+	for fam, art := range row.Top {
+		if len(art) > 0 {
+			st.Shapes[fam][numTiers-1] = art
+		}
+	}
+	st.Ink = mergeInk(st.Ink, row.Ink)
+	st.Tones = mergeInk(st.Tones, row.Tones)
+	if len(row.Filler) > 0 {
+		st.Filler = row.Filler
+	}
+	if len(row.Agents) > 0 {
+		st.Agents = row.Agents
+	}
+	if row.Night.Dim > 0 {
+		st.Night = row.Night
+	}
+	st.Pads = row.Pads
+	return st
+}
+
+// mergeInk is the map a plus the entries of b, a map of its own.
+func mergeInk[K comparable](a, b map[K]Paint) map[K]Paint {
+	out := make(map[K]Paint, len(a)+len(b))
+	maps.Copy(out, a)
+	maps.Copy(out, b)
+	return out
+}
+
+// composeAges makes the styles of the rows, in order.
+func composeAges(rows []AgeRow) []AgeStyle {
+	out := make([]AgeStyle, len(rows))
+	for i, row := range rows {
+		out[i] = compose(row)
+	}
+	return out
 }
 
 // styleFor is the row that serves an age index; the first row serves any age

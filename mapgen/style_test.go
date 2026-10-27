@@ -44,6 +44,13 @@ func TestStylesAreWellFormed(t *testing.T) {
 				}
 			}
 		}
+		if pw, ph := st.Pad.size(); pw > lotW || ph > portH-2 {
+			t.Errorf("%s: a launch pad of %dx%d does not fit the spaceport", st.From, pw, ph)
+		}
+		if st.Pads > 0 && len(st.Pad) == 0 {
+			t.Errorf("%s: %d launch pads and no pad art", st.From, st.Pads)
+		}
+		checkGlyphs(t, st.From, strings.Join(st.Pad, ""))
 		for _, look := range st.Land {
 			checkGlyphs(t, st.From, look.Glyphs)
 		}
@@ -61,6 +68,16 @@ func TestStylesAreWellFormed(t *testing.T) {
 	for key, tpl := range templates {
 		if len(tpl.Tone) != 0 && len(tpl.Tone) != len(tpl.Art) {
 			t.Errorf("template %s: %d tone rows for %d art rows", key, len(tpl.Tone), len(tpl.Art))
+		}
+		for i, row := range tpl.Tone {
+			if len(row) < utf8.RuneCountInString(tpl.Art[i]) {
+				t.Errorf("template %s: tone row %d is shorter than its art", key, i)
+			}
+			for _, letter := range []byte(row) {
+				if _, ok := defaultTones[letter]; !ok && letter != ' ' {
+					t.Errorf("template %s: tone %q is no material", key, letter)
+				}
+			}
 		}
 		w, h := tpl.size()
 		if w > plotW || h > plotH {
