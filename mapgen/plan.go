@@ -37,7 +37,7 @@ type Lot struct {
 // function of the seed, so it never changes while a game goes on; what is
 // built only decides how much of it shows.
 type Plan struct {
-	Orbit  bool
+	Scale  Scale
 	Centre Pt
 	Roads  []Road
 	Lots   []Lot
@@ -53,8 +53,14 @@ type Plan struct {
 	Hearts []Pt
 	// Near lists every lot, nearest the middle first.
 	Near []int
-	// Bridge marks road cells that cross a river.
+	// Bridge marks road cells that cross a river; Fixed lists the roads that
+	// are always laid (an elevator).
 	Bridge map[Pt]bool
+	Fixed  []int
+	// Bodies are the planets of a solar system, Nodes the systems of a star
+	// map.
+	Bodies []Pt
+	Nodes  []Pt
 }
 
 // Parcel sizes. A cell is about twice as tall as wide, so these read as

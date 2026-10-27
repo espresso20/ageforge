@@ -29,8 +29,8 @@ func (f *frame) wonders() []wonderSpot {
 func (p *Plan) visible(inUse []Lot) []int {
 	shown := make([]int, len(p.Roads))
 	shown[0] = 1
-	if p.Orbit {
-		shown[1] = len(p.Roads[1].Cells) // the elevator always stands
+	for _, road := range p.Fixed {
+		shown[road] = len(p.Roads[road].Cells)
 	}
 	for _, l := range inUse {
 		shown[l.Road] = max(shown[l.Road], l.At+1)
@@ -102,7 +102,9 @@ func (f *frame) paintTown() {
 	}
 	for _, w := range f.wonders() {
 		w.plot.Rect.cells(func(x, y int) {
-			f.g.paint(x, y, f.st.Plaza.at(x, y, 1))
+			if f.st.Scale <= City {
+				f.g.paint(x, y, f.st.Plaza.at(x, y, 1))
+			}
 			f.busy[at(x, y)] = true
 		})
 	}
@@ -141,7 +143,9 @@ func (f *frame) paintYard(r Rect, pl placed) {
 // paintYardOf lays the ground of a parcel in a look.
 func (f *frame) paintYardOf(r Rect, look Look) {
 	r.cells(func(x, y int) {
-		f.g.paint(x, y, look.at(x, y, 2))
+		if f.st.Scale <= City { // in space the sky shows between the buildings
+			f.g.paint(x, y, look.at(x, y, 2))
+		}
 		f.busy[at(x, y)] = true
 	})
 }

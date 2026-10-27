@@ -9,8 +9,7 @@ type Generator struct {
 	seed   int64
 	cat    *mapmodel.Catalog
 	fields *Fields
-	ground *Plan
-	orbit  *Plan
+	plans  [numScales]*Plan // by scale; the ground and the city share one
 }
 
 // frame is one picture being drawn, layer by layer, on a grid the size of
@@ -55,7 +54,7 @@ func (gen *Generator) Render(m *mapmodel.Model, w, h, anim int) *Grid {
 // the most of what is built: the wonder being built first, then the rest.
 func (f *frame) camera(w, h int) (x0, y0 int) {
 	nudges := [][2]int{{0, 0}, {-8, 0}, {8, 0}, {0, -4}, {0, 4}, {-8, -4}, {8, -4}, {-8, 4}, {8, 4}, {-16, 0}, {16, 0}, {-16, -4}, {16, -4}, {-16, 4}, {16, 4}, {-24, 0}, {24, 0}}
-	if f.plan.Orbit {
+	if f.st.Scale > City {
 		nudges = nudges[:1]
 	}
 	best := -1
@@ -98,11 +97,7 @@ func (gen *Generator) frame(m *mapmodel.Model, anim int) *frame {
 	st := styleFor(func(k string) int { return m.Catalog.AgeIdx[k] }, m.AgeIdx)
 	f := &frame{m: m, st: st, g: newGrid(worldW, worldH), anim: anim,
 		night: int(m.Clock.Night * 256), roadAt: make([]int8, worldW*worldH), busy: make([]bool, worldW*worldH)}
-	if st.Scale == Orbit {
-		f.plan = gen.orbit
-	} else {
-		f.plan, f.fields = gen.ground, gen.fields
-	}
+	f.plan, f.fields = gen.plans[st.Scale], gen.fields
 	f.g.Wall, f.g.Tint = st.Wall, st.Night.Tint
 	f.placed = f.plan.place(m)
 	f.filler = f.fillerLots()
@@ -117,6 +112,7 @@ func (f *frame) draw() {
 	f.paintDetail()
 	f.paintSmoke()
 	f.paintAgents()
+	f.paintBodies()
 	f.paintLight()
 }
 
@@ -127,6 +123,7 @@ func (gen *Generator) sync(m *mapmodel.Model) {
 	}
 	gen.seed, gen.cat = m.Seed, m.Catalog
 	gen.fields = newFields(m.Seed)
-	gen.ground = NewGroundPlan(m.Seed, gen.fields, m.Catalog)
-	gen.orbit = NewOrbitPlan(m.Seed, m.Catalog)
+	ground := NewGroundPlan(m.Seed, gen.fields, m.Catalog)
+	gen.plans = [numScales]*Plan{Ground: ground, City: ground,
+		Orbit: NewOrbitPlan(m.Seed, m.Catalog), System: NewSystemPlan(m.Seed, m.Catalog), Stars: NewStarPlan(m.Seed, m.Catalog)}
 }

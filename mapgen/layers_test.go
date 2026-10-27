@@ -149,35 +149,6 @@ func TestNightLightsUp(t *testing.T) {
 	}
 }
 
-// TestSpaceHasAPlanetAndStars: the orbit scene has a planet curving across the
-// bottom, a thin air round it and stars in the sky.
-func TestSpaceHasAPlanetAndStars(t *testing.T) {
-	g := (&Generator{}).Render(model(state("space_age", 7, noon)), 120, 36, 0)
-	seen := map[string]int{}
-	for y := 0; y < g.H; y++ {
-		for x := 0; x < g.W; x++ {
-			if th := g.ThingAt(x, y); th.Kind == KindTerrain {
-				seen[th.Key]++
-				if th.Key == "planet" && y < g.H/2-6 {
-					t.Fatalf("planet cell at row %d of %d", y, g.H)
-				}
-			}
-		}
-	}
-	if seen["planet"] < 400 || seen["atmosphere"] < 100 || seen["space"] < 800 {
-		t.Errorf("a planet of %d cells, air %d, space %d", seen["planet"], seen["atmosphere"], seen["space"])
-	}
-	stars := 0
-	for _, c := range g.Cells {
-		if strings.ContainsRune(styles[len(styles)-1].Sky.Glyphs, c.R) && c.R != ' ' {
-			stars++
-		}
-	}
-	if stars < 20 {
-		t.Errorf("only %d stars", stars)
-	}
-}
-
 // TestRuinsLeaveRubble: a lost building leaves rubble on its parcel, and
 // the inspect index says so.
 func TestRuinsLeaveRubble(t *testing.T) {
@@ -191,5 +162,43 @@ func TestRuinsLeaveRubble(t *testing.T) {
 	}
 	if rubble == 0 {
 		t.Fatal("no rubble in a town with ruins")
+	}
+}
+
+// TestSpaceScalesDrawTheirBodies: each space age shows what its scale is made
+// of, and the sign of a building line in the lines' hues.
+func TestSpaceScalesDrawTheirBodies(t *testing.T) {
+	for _, c := range []struct {
+		age  string
+		want map[string]int
+	}{
+		{"space_age", map[string]int{"planet": 60, "space": 3000}},
+		{"interstellar_age", map[string]int{"sun": 8, "planet": 6, "space": 3000}},
+		{"galactic_age", map[string]int{"star": 20, "space": 3000}},
+	} {
+		g := (&Generator{}).Render(model(state(c.age, 4, noon)), worldW, worldH, 0)
+		seen := map[string]int{}
+		for _, h := range g.Hit {
+			if th := g.Things[h]; th.Kind == KindTerrain {
+				seen[th.Key]++
+			}
+		}
+		for key, n := range c.want {
+			if seen[key] < n {
+				t.Errorf("%s: %d cells of %s, want %d: %v", c.age, seen[key], key, n, seen)
+			}
+		}
+	}
+}
+
+// TestReachGrowsWithTheTown: on the star map the glow of the people's reach
+// is wider for a bigger town.
+func TestReachGrowsWithTheTown(t *testing.T) {
+	var gen Generator
+	small := fixture.State(fixture.Options{Age: "galactic_age", Seed: 4, Tick: noon, Scale: 0.2})
+	big := fixture.State(fixture.Options{Age: "galactic_age", Seed: 4, Tick: noon, Scale: 3})
+	a, b := gen.frame(model(small), 0), gen.frame(model(big), 0)
+	if a.reach() >= b.reach() {
+		t.Errorf("a small town reaches %d columns, a big one %d", a.reach(), b.reach())
 	}
 }

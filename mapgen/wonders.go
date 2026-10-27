@@ -236,6 +236,70 @@ var templates = map[string]Template{
 			"  mmmmm  ",
 		},
 	},
+	"warp_nexus": {
+		Art: []string{
+			"  ╭───╮  ",
+			" ╭╯ ▒ ╰╮ ",
+			"─┤ ▒▒▒ ├─",
+			" ╰╮ ▒ ╭╯ ",
+			"  ╰───╯  ",
+		},
+		Tone: []string{
+			"  mmmmm  ",
+			" mm g mm ",
+			"mm ggg mm",
+			" mm g mm ",
+			"  mmmmm  ",
+		},
+	},
+	"cosmic_beacon": {
+		Art: []string{
+			"  ╲ ║ ╱  ",
+			"   ╲║╱   ",
+			"────☼────",
+			"   ╱║╲   ",
+			"  ╱ ║ ╲  ",
+		},
+		Tone: []string{
+			"  a a a  ",
+			"   aaa   ",
+			"aaaafaaaa",
+			"   aaa   ",
+			"  a a a  ",
+		},
+	},
+	"reality_anchor": {
+		Art: []string{
+			"   ╭─╮   ",
+			"   ╰┬╯   ",
+			"  ──┼──  ",
+			" ╲  │  ╱ ",
+			"  ╰═╧═╯  ",
+		},
+		Tone: []string{
+			"   nnn   ",
+			"   nmn   ",
+			"  nnmnn  ",
+			" n  m  n ",
+			"  nnmnn  ",
+		},
+	},
+	"singularity_core": {
+		Art: []string{
+			"  ╭▒▒▒╮  ",
+			" ▒▒▓▓▓▒▒ ",
+			"▒▓▓███▓▓▒",
+			" ▒▒▓▓▓▒▒ ",
+			"  ╰▒▒▒╯  ",
+		},
+		Tone: []string{
+			"  nnnnn  ",
+			" nnfffnn ",
+			"nffsssffn",
+			" nnfffnn ",
+			"  nnnnn  ",
+		},
+	},
 	"stonehenge": {
 		Art: []string{
 			"  Π Π Π  ",

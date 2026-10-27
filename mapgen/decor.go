@@ -8,7 +8,7 @@ const (
 )
 
 func (f *frame) paintDetail() {
-	if f.st.Scale == Orbit {
+	if f.st.Scale > City {
 		return
 	}
 	seed := f.m.Seed

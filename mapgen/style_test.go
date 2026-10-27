@@ -26,9 +26,14 @@ func TestStylesAreWellFormed(t *testing.T) {
 			t.Fatalf("row %q is not a later age than the row before it", st.From)
 		}
 		last = age
-		maxRows := lotH
-		if st.Scale == Orbit {
-			maxRows = stationH
+		maxW, maxRows := lotW, lotH
+		switch st.Scale {
+		case Orbit:
+			maxW, maxRows = orbitSpec.lotW, orbitSpec.lotH
+		case System:
+			maxW, maxRows = 3, 1
+		case Stars:
+			maxW, maxRows = 1, 1
 		}
 		for fam := range st.Shapes {
 			for tier, variants := range st.Shapes[fam] {
@@ -37,7 +42,7 @@ func TestStylesAreWellFormed(t *testing.T) {
 				}
 				for _, a := range variants {
 					w, h := a.size()
-					if w > lotW || h > maxRows {
+					if w > maxW || h > maxRows {
 						t.Errorf("%s: art %v is %dx%d, bigger than a parcel", st.From, a, w, h)
 					}
 					checkGlyphs(t, st.From, strings.Join(a, ""))
@@ -63,7 +68,10 @@ func TestStylesAreWellFormed(t *testing.T) {
 		for _, a := range st.Agents {
 			checkGlyphs(t, st.From, a.Glyphs)
 		}
-		checkGlyphs(t, st.From, st.Sky.Glyphs+st.Yard.Glyphs+st.Plaza.Glyphs+st.Rubble.Glyphs+st.Windows)
+		checkGlyphs(t, st.From, st.Sky.Glyphs+st.Cloud.Glyphs+st.Yard.Glyphs+st.Plaza.Glyphs+st.Rubble.Glyphs+st.Windows+strings.Join(st.Hub, ""))
+		for _, b := range st.Bodies {
+			checkGlyphs(t, st.From, string(b.Glyph))
+		}
 	}
 	for key, tpl := range templates {
 		if len(tpl.Tone) != 0 && len(tpl.Tone) != len(tpl.Art) {

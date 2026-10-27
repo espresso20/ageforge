@@ -100,7 +100,7 @@ func TestNothingStandsInWaterOrOverlaps(t *testing.T) {
 				t.Fatalf("%s: parcel %d holds both %s and %s", age, pl.lot, prev, pl.b.Key)
 			}
 			parcels[pl.lot] = pl.b.Key
-			if f.fields != nil {
+			if f.st.Scale <= City {
 				f.plan.Lots[pl.lot].Rect.cells(func(x, y int) {
 					if f.fields.Biome[at(x, y)].Water() {
 						t.Fatalf("%s: %s stands in water at (%d,%d)", age, pl.b.Key, x, y)
@@ -113,7 +113,7 @@ func TestNothingStandsInWaterOrOverlaps(t *testing.T) {
 				t.Fatalf("%s: parcel %d holds both %s and ordinary houses", age, lot, prev)
 			}
 			parcels[lot] = "houses"
-			if f.fields != nil {
+			if f.st.Scale <= City {
 				f.plan.Lots[lot].Rect.cells(func(x, y int) {
 					if f.fields.Biome[at(x, y)].Water() {
 						t.Fatalf("%s: houses stand in water at (%d,%d)", age, x, y)

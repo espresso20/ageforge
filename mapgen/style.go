@@ -9,13 +9,18 @@ import (
 // buildings of an age look like. Adding an age is adding a row; no code
 // changes. A row serves every age from its From up to the next row's.
 
-// Scale is how far the picture is pulled back: the ground, the city, orbit.
+// Scale is how far the picture is pulled back, and so what the ground is: the
+// open land and the city (ages that stand on the planet), then the planet
+// seen from straight above with its orbits, the solar system, and the stars.
 type Scale uint8
 
 const (
 	Ground Scale = iota // open country and villages
 	City                // streets and blocks
-	Orbit               // a starfield, a planet and ring roads
+	Orbit               // the home planet and its rings, from above
+	System              // the sun, its planets and the lanes between them
+	Stars               // a star map: systems, routes, the reach of the people
+	numScales
 )
 
 // Look is how one sort of cell is drawn: a glyph picked by hash from Glyphs
@@ -117,12 +122,25 @@ type AgeStyle struct {
 	// Tones dresses wonder templates: the material letter of a template
 	// cell, in this age's colours.
 	Tones map[byte]Paint
-	// Sky is the void and its stars (orbit only).
-	Sky Look
+	// Sky is the void and its stars; Cloud the weather over the home planet's
+	// disc (orbit); Hub the sun of the solar system or the home star of the
+	// star map; Bodies the planets of the solar system, nearest the sun first.
+	Sky    Look
+	Cloud  Look
+	Hub    Art
+	Bodies []Body
+	// Reach tints the region the people's buildings reach on the star map.
+	Reach Paint
 	// Pad is the art of one launch pad, and Pads how many the spaceport has:
 	// none, no spaceport.
 	Pad  Art
 	Pads int
+}
+
+// Body is a planet of the solar system: a glyph and the hue it is drawn in.
+type Body struct {
+	Glyph rune
+	Hue   Hue
 }
 
 // AgeRow is one age: the era whose look it shares, and what sets it apart. A
@@ -138,7 +156,8 @@ type AgeRow struct {
 	Filler []Art
 	Agents []AgentKind
 	Night  Night
-	Pads   int // launch pads of the spaceport, when there is one
+	Pads   int   // launch pads of the spaceport, when there is one
+	Reach  Paint // the glow of the people's reach on the star map
 }
 
 // compose makes the style of an age row: the era's, with the row's changes.
@@ -168,6 +187,9 @@ func compose(row AgeRow) AgeStyle {
 		st.Night = row.Night
 	}
 	st.Pads = row.Pads
+	if row.Reach.Hue != HNone {
+		st.Reach = row.Reach
+	}
 	return st
 }
 
