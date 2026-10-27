@@ -16,10 +16,8 @@ import "github.com/espresso20/ageforge/vibe"
 func (ge *GameEngine) PlanAddAdvance() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	for _, it := range ge.plan {
-		if it.Kind == PlanAdvance {
-			return vibe.Errorf("game.plan_advance.PlanAddAdvance.01", "The plan already advances when ready.")
-		}
+	if plannedCount(ge.plan, PlanAdvance, "") > 0 {
+		return vibe.Errorf("game.plan_advance.PlanAddAdvance.01", "The plan already advances when ready.")
 	}
 	if ge.progress.GetNextAge(ge.age) == "" {
 		return vibe.Errorf("game.plan_advance.PlanAddAdvance.02", "This is the final age. There is nothing to advance to.")

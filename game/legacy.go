@@ -242,15 +242,11 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if !ok {
 			return false, false
 		}
-		planned := plannedCopies(ge.plan, t.Key)
+		planned := plannedCount(ge.plan, PlanBuild, t.Key)
 		if ge.planBuildInvalid(t.Key, planned) != "" {
 			return false, false
 		}
-		count := t.Count
-		if def.MaxCount > 0 {
-			room := def.MaxCount - ge.Buildings.GetCount(t.Key) - ge.Buildings.GetQueueCount(t.Key, ge.buildQueue) - planned
-			count = min(count, room)
-		}
+		count := min(t.Count, ge.planRoom(def, planned))
 		if count <= 0 {
 			return false, false
 		}
@@ -267,23 +263,8 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if !pending || ge.upgradeTechErr(newDef) != nil {
 			return false, false
 		}
-		newKey := newDef.Key
-		planned := 0
-		for _, it := range ge.plan {
-			if it.Kind == PlanUpgrade && it.Key == t.Key {
-				planned += it.Count
-			}
-		}
-		count := min(t.Count, ge.Buildings.GetCount(t.Key)-planned)
-		if newDef.MaxCount > 0 {
-			room := newDef.MaxCount - ge.Buildings.GetCount(newKey) - ge.Buildings.GetQueueCount(newKey, ge.buildQueue)
-			for _, it := range ge.plan {
-				if it.Kind == PlanUpgrade && it.Key == t.Key {
-					room -= it.Count
-				}
-			}
-			count = min(count, room)
-		}
+		planned := plannedCount(ge.plan, PlanUpgrade, t.Key)
+		count := min(t.Count, ge.Buildings.GetCount(t.Key)-planned, ge.planRoom(newDef, planned))
 		if count <= 0 {
 			return false, false
 		}
@@ -299,20 +280,16 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if _, ok := ge.rules.Tech(t.Key); !ok {
 			return false, false
 		}
-		for _, it := range ge.plan {
-			if it.Kind == PlanResearch && it.Key == t.Key {
-				return false, false
-			}
+		if plannedCount(ge.plan, PlanResearch, t.Key) > 0 {
+			return false, false
 		}
 		if ge.planResearchRefused(t.Key, n) != "" {
 			return false, false
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: t.Key, Count: 1})
 	case PlanAdvance:
-		for _, it := range ge.plan {
-			if it.Kind == PlanAdvance {
-				return false, false
-			}
+		if plannedCount(ge.plan, PlanAdvance, "") > 0 {
+			return false, false
 		}
 		if ge.progress.GetNextAge(ge.age) == "" {
 			return false, false
