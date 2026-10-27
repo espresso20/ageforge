@@ -102,7 +102,7 @@ func TestSoldiersTakePostsFromTheReserveFirst(t *testing.T) {
 	posts := warCampPosts(t)
 	ge := peopleEngine(t)
 	ge.mu.Lock()
-	ge.Workers.Recruit("worker", 5, 1000) // five more than the jobs: the reserve
+	ge.Workers.Recruit(5, 1000) // five more than the jobs: the reserve
 	ge.mu.Unlock()
 	before := ge.GetState()
 	idle := before.Workers.TotalIdle

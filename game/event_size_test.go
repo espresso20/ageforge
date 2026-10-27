@@ -32,7 +32,7 @@ const maxedStockShare = 20
 func newMaxedEngine(age string) *GameEngine {
 	ge := newTruthEngine(age, truthTypical)
 	order := ageOrders()
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	for _, key := range ge.Buildings.order {
 		def := ge.Buildings.defs[key]
 		if ge.Buildings.counts[key] == 0 || def.Category == "wonder" {
@@ -338,7 +338,7 @@ func TestEventSizeSurvivesASaveAndLoad(t *testing.T) {
 	a.SeedRNG(7)
 	a.SetTownForTest(map[string]int{"hut": 20, "stash": 10, "gathering_camp": 6}, 30)
 	a.mu.Lock()
-	a.Workers.Assign("worker", "gathering_camp", 12)
+	a.Workers.Assign("gathering_camp", 12)
 	a.mu.Unlock()
 	a.StepTicks(20)
 	// Four more camps finish after the tick's rates pass: the rates in

@@ -359,9 +359,9 @@ func (ge *GameEngine) releaseWorkersFrom(destroyed map[string]int) {
 	for _, key := range sortedKeys(destroyed) {
 		def := ge.Buildings.defs[key]
 		capacity := def.WorkerCapacity * ge.Buildings.GetCount(key)
-		assigned := ge.Workers.GetAssignedCount("worker", key)
+		assigned := ge.Workers.GetAssignedCount(key)
 		if assigned > capacity {
-			ge.Workers.Unassign("worker", key, assigned-capacity)
+			ge.Workers.Unassign(key, assigned-capacity)
 		}
 	}
 }

@@ -40,7 +40,7 @@ func setMeasuredTown(ge *GameEngine, m config.GateMeasure, s measuredTownState) 
 	ge.SetTownForTest(counts, 0)
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	ge.Workers.domains["worker"].count = s.pop
+	ge.Workers.count = s.pop
 	for _, res := range m.Materials {
 		ge.Resources.UnlockResource(res)
 		ge.Resources.SetRate(res, s.income/float64(len(m.Materials)))

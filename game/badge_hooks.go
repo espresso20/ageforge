@@ -205,12 +205,9 @@ func (ge *GameEngine) noteCensus() {
 	}
 	attrs := make(map[string]float64, len(ge.badges.domains)+2)
 	staffed := map[string]int{}
-	rt := ge.Workers.domains["worker"]
-	if rt != nil {
-		for building, n := range rt.assignments {
-			if def, ok := ge.Workers.buildingDefs[building]; ok && def.WorkerDomain != "" {
-				staffed[def.WorkerDomain] += n
-			}
+	for building, n := range ge.Workers.assignments {
+		if def, ok := ge.Workers.buildingDefs[building]; ok && def.WorkerDomain != "" {
+			staffed[def.WorkerDomain] += n
 		}
 	}
 	// The military domain is the soldiers at their posts: no building has

@@ -105,7 +105,7 @@ func (ge *GameEngine) autoExpeditionInvestment() (count int, fill float64) {
 		return count, 0
 	}
 	totalCap := float64(count * def.WorkerCapacity)
-	assigned := float64(ge.Workers.GetAssignedCount("worker", autoExpeditionBuildingKey))
+	assigned := float64(ge.Workers.GetAssignedCount(autoExpeditionBuildingKey))
 	fill = assigned / totalCap
 	if fill > 1 {
 		fill = 1
@@ -146,7 +146,7 @@ func (ge *GameEngine) autoExpeditionSnapshot() AutoExpeditionState {
 		Interval:  autoExpeditionInterval(ge.rules, ge.age, count, fill),
 		Starved:   ge.autoExpeditionStarved,
 		Count:     count,
-		Assigned:  ge.Workers.GetAssignedCount("worker", autoExpeditionBuildingKey),
+		Assigned:  ge.Workers.GetAssignedCount(autoExpeditionBuildingKey),
 		Capacity:  capacity,
 	}
 }

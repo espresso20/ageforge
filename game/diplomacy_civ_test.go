@@ -212,8 +212,8 @@ func TestDrift_ClampedToRange(t *testing.T) {
 func TestWorkerLending_AddsAndReturns(t *testing.T) {
 	ge := NewGameEngine()
 	ge.mu.Lock()
-	ge.Workers.UnlockType("worker")
-	ge.Workers.domains["worker"].count = 10
+	ge.Workers.Unlock()
+	ge.Workers.count = 10
 	// Inject a pending lend directly and apply it via the same path processDiplomacy uses.
 	ge.Diplomacy.pendingLends = []LendRequest{{FactionKey: "riverlands_tribes", Count: 5, Message: "test"}}
 	ge.Diplomacy.lentBatches = []LentWorkerBatch{{FactionKey: "riverlands_tribes", Count: 5, ReturnTick: 100, Permanent: false}}

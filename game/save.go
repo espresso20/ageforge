@@ -818,7 +818,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.Buildings.UnlockBuilding(key)
 	}
 	if len(save.Unlocked.Workers) > 0 {
-		ge.Workers.UnlockType("worker")
+		ge.Workers.Unlock()
 	}
 
 	// Restore Phase 3 systems

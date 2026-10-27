@@ -730,7 +730,7 @@ func (ge *GameEngine) updateMoraleTick() {
 			}
 			def, ok := ge.Buildings.defs[key]
 			if ok && def.WorkerDomain == "military" {
-				militaryAssigned += ge.Workers.GetAssignedCount("military", key)
+				militaryAssigned += ge.Workers.GetAssignedCount(key)
 			}
 		}
 		ratio := float64(militaryAssigned) / float64(totalPop)
@@ -742,7 +742,7 @@ func (ge *GameEngine) updateMoraleTick() {
 
 	// Idle workers > 50% of pop
 	if totalPop > 0 {
-		idle := ge.Workers.IdleCount("worker")
+		idle := ge.Workers.IdleCount()
 		if float64(idle)/float64(totalPop) > 0.50 {
 			ge.applyMorale(-0.002)
 		}
@@ -1798,7 +1798,7 @@ func (ge *GameEngine) processDiplomacy() {
 		if perWorker <= 0 || def.WorkerCapacity <= 0 {
 			return
 		}
-		assigned := ge.Workers.GetAssignedCount("worker", key)
+		assigned := ge.Workers.GetAssignedCount(key)
 		totalCap := float64(count * def.WorkerCapacity)
 		fill := float64(assigned) / totalCap
 		if fill > 1.0 {
@@ -2361,8 +2361,8 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 	for _, b := range age.UnlockBuildings {
 		ge.Buildings.UnlockBuilding(b)
 	}
-	for _, v := range age.UnlockVillagers {
-		ge.Workers.UnlockType(v)
+	if len(age.UnlockVillagers) > 0 {
+		ge.Workers.Unlock()
 	}
 }
 
@@ -3564,7 +3564,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Workers.IsUnlocked(vType) {
+	if !ge.Workers.IsUnlocked() {
 		return 0, vibe.Errorf("game.engine.RecruitMax.01", "Worker type '%s' is not unlocked yet.", vType)
 	}
 
@@ -3575,7 +3575,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 		return 0, vibe.Errorf("game.engine.RecruitMax.02", "No housing left (%d/%d). Build housing to recruit more.", ge.popLocked(), popCap)
 	}
 
-	if !ge.Workers.Recruit(vType, available, ge.workerCapLocked()) {
+	if !ge.Workers.Recruit(available, ge.workerCapLocked()) {
 		return 0, vibe.Errorf("game.engine.RecruitMax.03", "Could not recruit any workers.")
 	}
 	ge.Stats.RecordRecruit(available)
@@ -3595,9 +3595,9 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 
 	popCap := ge.popCapLocked()
 
-	if !ge.Workers.Recruit(vType, count, ge.workerCapLocked()) {
+	if !ge.Workers.Recruit(count, ge.workerCapLocked()) {
 		totalPop := ge.popLocked()
-		if !ge.Workers.IsUnlocked(vType) {
+		if !ge.Workers.IsUnlocked() {
 			return vibe.Errorf("game.engine.RecruitWorker.02", "Worker type '%s' is not unlocked yet.", vType)
 		}
 		if totalPop >= popCap {
@@ -3628,7 +3628,7 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	}
 	// Enforce capacity cap
 	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
-	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount(buildingKey)
 	available := totalCap - alreadyAssigned
 	if available <= 0 {
 		return vibe.Errorf("game.engine.AssignWorker.02", "All %s at %s are full.", textfmt.Count(totalCap, vibe.Line("game.engine.AssignWorker.03", "worker slot"), vibe.Line("game.engine.AssignWorker.04", "worker slots")), def.Name)
@@ -3637,8 +3637,8 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 		return vibe.Errorf("game.engine.AssignWorker.05", "Only %s free at %s (%d/%d filled).",
 			textfmt.Count(available, vibe.Line("game.engine.AssignWorker.06", "worker slot is"), vibe.Line("game.engine.AssignWorker.07", "worker slots are")), def.Name, alreadyAssigned, totalCap)
 	}
-	if !ge.Workers.Assign("worker", buildingKey, count) {
-		idle := ge.Workers.IdleCount("worker")
+	if !ge.Workers.Assign(buildingKey, count) {
+		idle := ge.Workers.IdleCount()
 		return vibe.Errorf("game.engine.AssignWorker.08", "Only %s idle (you asked for %d). Recruit more or unassign some elsewhere.",
 			textfmt.Count(idle, vibe.Line("game.engine.AssignWorker.09", "worker is"), vibe.Line("game.engine.AssignWorker.10", "workers are")), count)
 	}
@@ -3657,12 +3657,12 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 		return 0, err
 	}
 	// Cap at available capacity
-	toAssign := ge.Workers.IdleCount("worker")
+	toAssign := ge.Workers.IdleCount()
 	if toAssign <= 0 {
 		return 0, vibe.Errorf("game.engine.AssignAll.01", "No idle workers to assign. Recruit more first.")
 	}
 	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
-	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount(buildingKey)
 	available := totalCap - alreadyAssigned
 	if available <= 0 {
 		return 0, vibe.Errorf("game.engine.AssignAll.02", "All %s at %s are full.", textfmt.Count(totalCap, vibe.Line("game.engine.AssignAll.03", "worker slot"), vibe.Line("game.engine.AssignAll.04", "worker slots")), def.Name)
@@ -3670,7 +3670,7 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	if toAssign > available {
 		toAssign = available
 	}
-	if !ge.Workers.Assign("worker", buildingKey, toAssign) {
+	if !ge.Workers.Assign(buildingKey, toAssign) {
 		return 0, vibe.Errorf("game.engine.AssignAll.05", "Could not assign workers to %s.", def.Name)
 	}
 	ge.staffingChanged(vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
@@ -3686,11 +3686,11 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	assigned := ge.Workers.GetAssignedCount(buildingKey)
 	if assigned <= 0 {
 		return 0, vibe.Errorf("game.engine.UnassignAll.01", "No workers are assigned to %s.", def.Name)
 	}
-	if !ge.Workers.Unassign("worker", buildingKey, assigned) {
+	if !ge.Workers.Unassign(buildingKey, assigned) {
 		return 0, vibe.Errorf("game.engine.UnassignAll.02", "Could not unassign workers from %s.", def.Name)
 	}
 	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
@@ -3709,8 +3709,8 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	if err != nil {
 		return err
 	}
-	if !ge.Workers.Unassign("worker", buildingKey, count) {
-		assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	if !ge.Workers.Unassign(buildingKey, count) {
+		assigned := ge.Workers.GetAssignedCount(buildingKey)
 		if assigned <= 0 {
 			return vibe.Errorf("game.engine.UnassignWorker.02", "No workers are assigned to %s.", def.Name)
 		}
@@ -3730,7 +3730,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 		return ge.unknownBuildingErr(buildingKey)
 	}
 	if all {
-		count = ge.Workers.GetAssignedCount("worker", buildingKey)
+		count = ge.Workers.GetAssignedCount(buildingKey)
 	}
 	if count <= 0 {
 		return vibe.Errorf("game.engine.DismissWorkers.01", "No workers are assigned to %s.", def.Name)
@@ -3879,11 +3879,11 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	if def.WorkerCapacity > 0 {
 		newCount := current - n
 		newCap := def.WorkerCapacity * newCount
-		assigned := ge.Workers.GetAssignedCount("worker", key)
+		assigned := ge.Workers.GetAssignedCount(key)
 		if newCap == 0 {
-			ge.Workers.Unassign("worker", key, assigned)
+			ge.Workers.Unassign(key, assigned)
 		} else if assigned > newCap {
-			ge.Workers.Unassign("worker", key, assigned-newCap)
+			ge.Workers.Unassign(key, assigned-newCap)
 		}
 	}
 
@@ -5397,7 +5397,7 @@ func (ge *GameEngine) upgradeTechErr(target config.BuildingDef) error {
 // hold what is assigned), to the extent the target's slots take them; the
 // rest go idle. Under the write lock.
 func (ge *GameEngine) moveUpgradedWorkers(oldKey string, held int, oldDef, target config.BuildingDef) {
-	assigned := ge.Workers.GetAssignedCount("worker", oldKey)
+	assigned := ge.Workers.GetAssignedCount(oldKey)
 	if assigned <= 0 || held <= 0 {
 		return
 	}
@@ -5406,10 +5406,10 @@ func (ge *GameEngine) moveUpgradedWorkers(oldKey string, held int, oldDef, targe
 	if move <= 0 {
 		return
 	}
-	ge.Workers.Unassign("worker", oldKey, move)
-	room := target.WorkerCapacity*ge.Buildings.GetCount(target.Key) - ge.Workers.GetAssignedCount("worker", target.Key)
+	ge.Workers.Unassign(oldKey, move)
+	room := target.WorkerCapacity*ge.Buildings.GetCount(target.Key) - ge.Workers.GetAssignedCount(target.Key)
 	if give := min(move, room); give > 0 {
-		ge.Workers.Assign("worker", target.Key, give)
+		ge.Workers.Assign(target.Key, give)
 	}
 }
 

@@ -136,10 +136,10 @@ func newStaffedLateGameEngine(tb testing.TB, account bool) *GameEngine {
 		ge.runAccountID = acct.AccountID
 	}
 	ge.mu.Lock()
-	ge.Workers.domains["worker"].count = 4000
+	ge.Workers.count = 4000
 	for key, def := range ge.Buildings.defs {
 		if n := ge.Buildings.counts[key]; n > 0 && def.WorkerCapacity > 0 {
-			ge.Workers.domains["worker"].assignments[key] = n * def.WorkerCapacity
+			ge.Workers.assignments[key] = n * def.WorkerCapacity
 		}
 	}
 	ge.recalculateRates()

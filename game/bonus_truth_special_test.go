@@ -363,8 +363,8 @@ func TestPrestigeProductionFrontierOnlineOffline(t *testing.T) {
 	base, _ = newTown(0)
 	bonus, _ = newTown(201)
 	extraWorkers := int(base.Resources.resources["food"].Rate/base.Workers.FoodCostPerWorker()) + 1
-	base.Workers.domains["worker"].count += extraWorkers
-	bonus.Workers.domains["worker"].count += extraWorkers
+	base.Workers.count += extraWorkers
+	bonus.Workers.count += extraWorkers
 	base.recalculateRates()
 	bonus.recalculateRates()
 	if base.Resources.resources["food"].Rate >= 0 {
@@ -462,7 +462,7 @@ func TestBonusTruthWorkerOutput(t *testing.T) {
 	const key = "gathering_camp"
 	def := ge.Buildings.defs[key]
 	listed := def.Effects[0].Value
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	rate := func(crew int, gather, all float64) float64 {
 		ge.Buildings.counts[key] = 1
 		pool.count, pool.assignments = crew, map[string]int{key: crew}

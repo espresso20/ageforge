@@ -958,7 +958,7 @@ func TestCosmicLegacyMultipliesAfterThePools(t *testing.T) {
 // grown, never the drain.
 func TestCosmicLegacyNeverDeepensAFoodDeficit(t *testing.T) {
 	ge := newTruthEngine("iron_age", truthClean)
-	ge.Workers.domains["worker"].count += 100000 // far more mouths than the farms feed
+	ge.Workers.count += 100000 // far more mouths than the farms feed
 	ge.recalculateRates()
 	before := ge.Resources.resources["food"].Rate
 	if before >= 0 {

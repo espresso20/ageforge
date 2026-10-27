@@ -871,8 +871,8 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 	shares := len(ge.workerShares) > 0
 	if shares {
 		ge.placeIdle(ge.newStaffView())
-	} else if n := min(ge.slotsFree(key), ge.Workers.IdleCount("worker")); n > 0 {
-		ge.Workers.Assign("worker", key, n)
+	} else if n := min(ge.slotsFree(key), ge.Workers.IdleCount()); n > 0 {
+		ge.Workers.Assign(key, n)
 	}
 	free := ge.slotsFree(key)
 	if p, set := ge.workerShares[def.WorkerDomain]; free <= 0 || ge.Buildings.IsOlder(key) || set && p <= 0 {
@@ -894,9 +894,9 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 		if free <= 0 {
 			break
 		}
-		if n := min(free, ge.Workers.GetAssignedCount("worker", src)); n > 0 {
-			ge.Workers.Unassign("worker", src, n)
-			ge.Workers.Assign("worker", key, n)
+		if n := min(free, ge.Workers.GetAssignedCount(src)); n > 0 {
+			ge.Workers.Unassign(src, n)
+			ge.Workers.Assign(key, n)
 			free -= n
 		}
 	}

@@ -33,7 +33,7 @@ func TestEpochEventTextMatchesEffects(t *testing.T) {
 			ge.Resources.UnlockResource(r)
 			ge.Resources.Add(r, 1000-ge.Resources.Get(r))
 		}
-		ge.Workers.domains["worker"].count = 100
+		ge.Workers.count = 100
 		before := map[string]float64{}
 		for _, r := range tracked {
 			before[r] = ge.Resources.Get(r)

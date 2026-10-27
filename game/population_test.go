@@ -16,7 +16,7 @@ func peopleEngine(t *testing.T) *GameEngine {
 	defer ge.mu.Unlock()
 	ge.age = "stone_age"
 	ge.Workers.SetAge("stone_age")
-	ge.Workers.UnlockType("worker")
+	ge.Workers.Unlock()
 	ge.recalculateRates()
 	growFully(ge)
 	return ge
@@ -35,7 +35,7 @@ func TestPopulationCountsScholars(t *testing.T) {
 	ge.mu.Lock()
 	ge.Buildings.counts["hut"] = 3
 	ge.recalculateRates()
-	ge.Workers.Recruit("worker", 3, ge.workerCapLocked())
+	ge.Workers.Recruit(3, ge.workerCapLocked())
 	ge.mu.Unlock()
 	st = ge.GetState()
 	if st.Workers.TotalPop != 9 || st.Workers.Reserve() != 3 {

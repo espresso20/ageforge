@@ -69,11 +69,11 @@ func determinismSetup(t *testing.T, seed int64) (*GameEngine, determinismScript)
 	for _, r := range ge.Resources.resources {
 		r.Amount = config.StockScale(target) / 2
 	}
-	ge.Workers.UnlockType("worker")
-	ge.Workers.Recruit("worker", 120, 1000)
+	ge.Workers.Unlock()
+	ge.Workers.Recruit(120, 1000)
 	for i, key := range builds {
 		if ge.Buildings.defs[key].WorkerCapacity > 0 {
-			ge.Workers.Assign("worker", key, 1+i%3)
+			ge.Workers.Assign(key, 1+i%3)
 		}
 	}
 

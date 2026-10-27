@@ -330,10 +330,10 @@ const (
 )
 
 // WorkerScaledProduction computes production rates per resource, applying worker fill ratios.
-// getAssigned(workerDomain, buildingKey) returns the number of assigned workers for that building type.
+// getAssigned(buildingKey) returns the number of assigned workers for that building type.
 // Buildings with WorkerDomain set use: rate = base × count × (0.20 + 0.80 × assigned/totalCap).
 // Buildings without workers use: rate = base × count (unchanged behaviour).
-func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key string) int) map[string]float64 {
+func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(key string) int) map[string]float64 {
 	rates, _ := bm.productionWithWorkerOutput(getAssigned)
 	return rates
 }
@@ -343,7 +343,7 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 // every building with worker slots. That part is "worker output", what a
 // worker output bonus (gather_rate) raises; an unstaffed building's 20%,
 // wonders and ruins have none.
-func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(domain, key string) int) (rates, workerOutput map[string]float64) {
+func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(key string) int) (rates, workerOutput map[string]float64) {
 	rates = make(map[string]float64)
 	workerOutput = make(map[string]float64)
 	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
@@ -353,7 +353,7 @@ func (bm *BuildingManager) productionWithWorkerOutput(getAssigned func(domain, k
 			}
 			var rate float64
 			if def.WorkerCapacity > 0 && getAssigned != nil {
-				assigned := getAssigned("worker", key)
+				assigned := getAssigned(key)
 				totalCap := float64(count * def.WorkerCapacity)
 				fillRatio := float64(assigned) / totalCap
 				if fillRatio > 1.0 {
@@ -823,13 +823,13 @@ type buildingExtra struct {
 
 // Snapshot returns building states for UI.
 // queue is the engine's current build queue, used to compute queue-aware next costs.
-// getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
+// getWorkerCount(buildingKey) returns the number of workers assigned to that building;
 // pass nil to skip worker field population.
 // extras, when set, is asked for what only the engine knows of each building
 // (see buildingExtra). It takes its figures by value on purpose: handed a
 // pointer to the definition or the state, the compiler could not tell it keeps
 // neither and would move both to the heap for every building.
-func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int, extras func(scholars, fullRate, soldiers int, needsTech string) buildingExtra) map[string]BuildingState {
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(key string) int, extras func(scholars, fullRate, soldiers int, needsTech string) buildingExtra) map[string]BuildingState {
 	out := make(map[string]BuildingState, len(bm.defs))
 	for key, def := range bm.defs {
 		// NextCost uses BuildBatchCost so it reflects queue depth — the displayed
@@ -869,7 +869,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 			state.WorkerDomain = def.WorkerDomain
 			state.WorkerCapacity = def.WorkerCapacity
 			if getWorkerCount != nil {
-				state.WorkersAssigned = getWorkerCount(def.WorkerDomain, key)
+				state.WorkersAssigned = getWorkerCount(key)
 			}
 		}
 		// An older building is functional but no more are built: its copies

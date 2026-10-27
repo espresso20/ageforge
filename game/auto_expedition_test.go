@@ -41,9 +41,9 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 		ge.Buildings.LoadCounts(map[string]int{autoExpeditionBuildingKey: n})
 	}
 	if assigned > 0 {
-		ge.Workers.UnlockType("worker")
+		ge.Workers.Unlock()
 		ge.Workers.AddLentWorkers(assigned)
-		if !ge.Workers.Assign("worker", autoExpeditionBuildingKey, assigned) {
+		if !ge.Workers.Assign(autoExpeditionBuildingKey, assigned) {
 			t.Fatalf("could not assign %d workers to %s", assigned, autoExpeditionBuildingKey)
 		}
 	}

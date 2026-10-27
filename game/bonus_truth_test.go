@@ -114,7 +114,7 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 	ge.currentEpoch = config.EpochForAge(age)
 	ge.Workers.SetAge(age)
 	ge.Prestige.NoteAgeEntered(age)
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	for _, key := range ge.Buildings.order {
 		def := ge.Buildings.defs[key]
 		built, ok := order[def.RequiredAge]
@@ -467,7 +467,7 @@ func truthMoraleLift(t *testing.T, ge *GameEngine) float64 {
 // before any bonus: what the buildings make staffed less what they make
 // empty. It is what a worker output bonus raises.
 func truthCrewOutput(ge *GameEngine) map[string]float64 {
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	crew := pool.assignments
 	read := func() map[string]float64 {
 		ge.recalculateRates()
@@ -1504,7 +1504,7 @@ type truthSnapshot struct {
 }
 
 func takeTruthSnapshot(ge *GameEngine) truthSnapshot {
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	s := truthSnapshot{
 		stock:     map[string]float64{},
 		permanent: map[string]float64{},
@@ -1538,7 +1538,7 @@ func takeTruthSnapshot(ge *GameEngine) truthSnapshot {
 }
 
 func (s truthSnapshot) put(ge *GameEngine) {
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	ge.permanentBonuses = map[string]float64{}
 	for k, v := range s.permanent {
 		ge.permanentBonuses[k] = v

@@ -239,7 +239,7 @@ func (ge *GameEngine) newStaffView() *staffView {
 			return
 		}
 		sv.doms[i].slots += def.WorkerCapacity * count
-		sv.doms[i].assigned += ge.Workers.GetAssignedCount("worker", key)
+		sv.doms[i].assigned += ge.Workers.GetAssignedCount(key)
 		order[i] = append(order[i], fillKey{key, ge.Buildings.IsOlder(key), ages[def.RequiredAge], def.LineageTier})
 	})
 	for i, keys := range order {
@@ -271,7 +271,7 @@ func (ge *GameEngine) freeSlots() int {
 	free := 0
 	ge.Buildings.eachBuilt(func(key string, count int, def config.BuildingDef) {
 		if def.WorkerCapacity > 0 {
-			free += def.WorkerCapacity*count - ge.Workers.GetAssignedCount("worker", key)
+			free += def.WorkerCapacity*count - ge.Workers.GetAssignedCount(key)
 		}
 	})
 	return free
@@ -279,7 +279,7 @@ func (ge *GameEngine) freeSlots() int {
 
 // slotsFree is how many more workers building key takes.
 func (ge *GameEngine) slotsFree(key string) int {
-	return ge.Buildings.defs[key].WorkerCapacity*ge.Buildings.GetCount(key) - ge.Workers.GetAssignedCount("worker", key)
+	return ge.Buildings.defs[key].WorkerCapacity*ge.Buildings.GetCount(key) - ge.Workers.GetAssignedCount(key)
 }
 
 // staffDomain assigns n idle workers to domain i's buildings in fill order
@@ -290,7 +290,7 @@ func (ge *GameEngine) staffDomain(sv *staffView, i, n int) int {
 		if placed >= n {
 			break
 		}
-		if k := min(n-placed, ge.slotsFree(key)); k > 0 && ge.Workers.Assign("worker", key, k) {
+		if k := min(n-placed, ge.slotsFree(key)); k > 0 && ge.Workers.Assign(key, k) {
 			placed += k
 		}
 	}
@@ -302,8 +302,8 @@ func (ge *GameEngine) staffDomain(sv *staffView, i, n int) int {
 // whether it found one.
 func (ge *GameEngine) unstaffOne(sv *staffView, i int) bool {
 	for j := len(sv.blds[i]) - 1; j >= 0; j-- {
-		if key := sv.blds[i][j]; ge.Workers.GetAssignedCount("worker", key) > 0 {
-			if ge.Workers.Unassign("worker", key, 1) {
+		if key := sv.blds[i][j]; ge.Workers.GetAssignedCount(key) > 0 {
+			if ge.Workers.Unassign(key, 1) {
 				sv.doms[i].assigned--
 				return true
 			}
@@ -413,14 +413,14 @@ func (c *staffCounts) add(o staffCounts) {
 // and recalculates the rates when it did anything.
 func (ge *GameEngine) staffByShares(recruit bool) staffCounts {
 	var c staffCounts
-	if !ge.Workers.IsUnlocked("worker") {
+	if !ge.Workers.IsUnlocked() {
 		return c
 	}
 	// Cheap checks first: in a settled game every slot is filled or nobody
 	// can come, and this runs every few ticks.
 	zero := ge.zeroShareStaffed()
 	free := ge.freeSlots()
-	idle := ge.Workers.IdleCount("worker")
+	idle := ge.Workers.IdleCount()
 	room, reserve := 0, 0
 	if recruit && !ge.autoRecruitOff && ge.Resources.Get("food") > 0 {
 		// Jobs fill at once, as far as housing and food allow; growth past
@@ -485,7 +485,7 @@ func (ge *GameEngine) drainZeroShares(sv *staffView) int {
 // its share, food buildings first while food is short. Returns how many it
 // placed.
 func (ge *GameEngine) placeIdle(sv *staffView) int {
-	idle := ge.Workers.IdleCount("worker")
+	idle := ge.Workers.IdleCount()
 	if idle <= 0 {
 		return 0
 	}
@@ -561,7 +561,7 @@ func (ge *GameEngine) recruitByShares(sv *staffView, room, reserve int) int {
 		net = net + gain - per
 		n++
 	}
-	if n == 0 || !ge.Workers.Recruit("worker", n, ge.workerCapLocked()) {
+	if n == 0 || !ge.Workers.Recruit(n, ge.workerCapLocked()) {
 		return 0
 	}
 	ge.Stats.RecordRecruit(n)
@@ -633,7 +633,7 @@ func (ge *GameEngine) rebalanceShares(sv *staffView) int {
 func (ge *GameEngine) foodLossOfOne(sv *staffView, factor float64) float64 {
 	keys := sv.blds[sv.food]
 	for j := len(keys) - 1; j >= 0; j-- {
-		if ge.Workers.GetAssignedCount("worker", keys[j]) > 0 {
+		if ge.Workers.GetAssignedCount(keys[j]) > 0 {
 			return ge.foodPerWorker(keys[j], factor)
 		}
 	}

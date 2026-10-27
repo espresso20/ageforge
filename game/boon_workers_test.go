@@ -75,7 +75,7 @@ func TestBoonTempWorkersLeaveTheirPosts(t *testing.T) {
 	lendBoonCrew(ge, "riverlands_tribes", 5, 2)
 
 	ge.mu.Lock()
-	if !ge.Workers.Assign("", "gathering_camp", 6) {
+	if !ge.Workers.Assign("gathering_camp", 6) {
 		ge.mu.Unlock()
 		t.Fatal("could not assign 6 of 7 workers")
 	}
@@ -85,10 +85,10 @@ func TestBoonTempWorkersLeaveTheirPosts(t *testing.T) {
 	if got := ge.Workers.TotalPop(); got != 2 {
 		t.Fatalf("population after the loan ran out = %d, want 2", got)
 	}
-	if got := ge.Workers.GetAssignedCount("", "gathering_camp"); got != 2 {
+	if got := ge.Workers.GetAssignedCount("gathering_camp"); got != 2 {
 		t.Errorf("gathering camps staffed by %d after the crew left, want 2 (the workers left)", got)
 	}
-	if got := ge.Workers.IdleCount(""); got != 0 {
+	if got := ge.Workers.IdleCount(); got != 0 {
 		t.Errorf("idle workers = %d, want 0", got)
 	}
 	e, ok := lastLogWith(ge, "went home")

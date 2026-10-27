@@ -150,7 +150,7 @@ func TestCensusReadsThePayroll(t *testing.T) {
 	}
 	staff := func(n int) {
 		ge.mu.Lock()
-		ge.Workers.domains["worker"].assignments["gathering_camp"] = n
+		ge.Workers.assignments["gathering_camp"] = n
 		ge.mu.Unlock()
 		// To the next census.
 		for i := 0; i < config.BadgeCensusTicks; i++ {

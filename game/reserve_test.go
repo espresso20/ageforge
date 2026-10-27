@@ -20,8 +20,8 @@ func TestReserve_GrowthStepIsAShareOfThePopulation(t *testing.T) {
 // housing and food to spare (the 130 camps' 390 slots are full).
 func TestReserve_OnePassAddsOnePercent(t *testing.T) {
 	ge := sharesEngine(t, 100, map[string]int{"gathering_camp": 130})
-	ge.Workers.UnlockType("worker")
-	ge.Workers.Recruit("worker", 400, ge.popCapLocked())
+	ge.Workers.Unlock()
+	ge.Workers.Recruit(400, ge.popCapLocked())
 	ge.recalculateRates()
 	setAmount(ge, "food", config.Million)
 	for _, pop := range []int{400, 404, 409} {
@@ -45,7 +45,7 @@ func TestReserve_GrowsPastTheJobsUpToHousing(t *testing.T) {
 	if pop != 40 || pop <= slots {
 		t.Fatalf("population %d with %d slots, want the housing's 40", pop, slots)
 	}
-	if got, want := ge.Workers.IdleCount("worker"), pop-slots; got != want {
+	if got, want := ge.Workers.IdleCount(), pop-slots; got != want {
 		t.Errorf("reserve %d, want %d", got, want)
 	}
 	st := ge.GetState()
@@ -112,10 +112,10 @@ func TestReserve_HousingFullIsHeldByHousing(t *testing.T) {
 // the reserve.
 func TestReserve_ManualRecruitWithNoFreeSlot(t *testing.T) {
 	ge := sharesEngine(t, 2, nil)
-	ge.Workers.UnlockType("worker")
+	ge.Workers.Unlock()
 	ge.SetAutoRecruit(false)
 	noErr(t, ge.RecruitWorker("worker", 7))
-	if got := ge.Workers.IdleCount("worker"); got != 7 {
+	if got := ge.Workers.IdleCount(); got != 7 {
 		t.Errorf("reserve %d, want 7", got)
 	}
 	if err := ge.RecruitWorker("worker", 14); err == nil {
@@ -129,10 +129,10 @@ func TestReserve_JobsFillAtOnce(t *testing.T) {
 	ge := sharesEngine(t, 20, map[string]int{"gathering_camp": 20, "wood_camp": 20})
 	slots := slotsOf(ge, "gathering_camp") + slotsOf(ge, "wood_camp")
 	ge.keepSharesLive()
-	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp") + ge.Workers.GetAssignedCount("worker", "wood_camp"); got != slots {
+	if got := ge.Workers.GetAssignedCount("gathering_camp") + ge.Workers.GetAssignedCount("wood_camp"); got != slots {
 		t.Errorf("%d of %d slots filled by the first pass", got, slots)
 	}
-	if got, want := ge.Workers.IdleCount("worker"), popGrowthStep(0); got != want {
+	if got, want := ge.Workers.IdleCount(), popGrowthStep(0); got != want {
 		t.Errorf("reserve %d after the first pass, want the step's %d", got, want)
 	}
 }
@@ -144,7 +144,7 @@ func TestReserve_OfflineGrowsLikeLive(t *testing.T) {
 	town := map[string]int{"gathering_camp": 200}
 	live := sharesEngine(t, 100, town)
 	away := sharesEngine(t, 100, town)
-	growFullyFor := func(ge *GameEngine) { ge.Workers.UnlockType("worker") }
+	growFullyFor := func(ge *GameEngine) { ge.Workers.Unlock() }
 	growFullyFor(live)
 	growFullyFor(away)
 	live.StepTicks(ticks)
