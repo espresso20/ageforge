@@ -94,54 +94,60 @@ func (a *Account) saveSettingsLocked() error {
 	return nil
 }
 
+// readSettings is a copy of the account's settings.
+func (a *Account) readSettings() accountSettings {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return *a.settingsLocked()
+}
+
+// editSettings applies change to the account's settings and writes
+// settings.json.
+func (a *Account) editSettings(change func(*accountSettings)) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	change(a.settingsLocked())
+	return a.saveSettingsLocked()
+}
+
 // MotionOn reports whether the game's motion is on (the default): the
 // animation of the maps and of badges, and a theme's ambient effect.
 func (a *Account) MotionOn() bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.settingsLocked().Motion != "off"
+	return a.readSettings().Motion != "off"
 }
 
 // SetMotion persists the motion setting. It writes settings.json only:
 // account.json is not touched.
 func (a *Account) SetMotion(on bool) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s := a.settingsLocked()
-	s.Motion = ""
-	if !on {
-		s.Motion = "off"
-	}
-	return a.saveSettingsLocked()
+	return a.editSettings(func(s *accountSettings) {
+		s.Motion = ""
+		if !on {
+			s.Motion = "off"
+		}
+	})
 }
 
 // VibeOn reports whether VibeMode is on for this account: the game's words
 // read in the VibeMode script. Off by default.
 func (a *Account) VibeOn() bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.settingsLocked().Vibe == "on"
+	return a.readSettings().Vibe == "on"
 }
 
 // SetVibe persists the VibeMode setting. It writes settings.json only:
 // account.json is not touched.
 func (a *Account) SetVibe(on bool) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s := a.settingsLocked()
-	s.Vibe = ""
-	if on {
-		s.Vibe = "on"
-	}
-	return a.saveSettingsLocked()
+	return a.editSettings(func(s *accountSettings) {
+		s.Vibe = ""
+		if on {
+			s.Vibe = "on"
+		}
+	})
 }
 
 // SetTitle chooses the title the account wears: one it holds, or "" to go
 // back to the title its badge score holds. It writes settings.json only.
 // held is the titles the account holds now (BadgeSummary.Titles).
 func (a *Account) SetTitle(title string, held []string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	if title != "" {
 		found := false
 		for _, t := range held {
@@ -153,7 +159,8 @@ func (a *Account) SetTitle(title string, held []string) error {
 			return vibe.Errorf("game.account_settings.SetTitle.01", "You do not hold the title %q.", title)
 		}
 	}
-	a.settingsLocked().Title = title
-	a.badgeRev++ // the badge summary carries the title worn
-	return a.saveSettingsLocked()
+	return a.editSettings(func(s *accountSettings) {
+		s.Title = title
+		a.badgeRev++ // the badge summary carries the title worn
+	})
 }
