@@ -2507,15 +2507,7 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 	}
 	ev := eligible[ge.gameRNG().Intn(len(eligible))]
 	ge.applyGoodEpochEvent(ev)
-
-	ep, _ := ge.rules.Era(ge.currentEpoch)
-	record := EpochEventRecord{
-		EpochKey: ge.currentEpoch, EpochName: ep.Name,
-		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
-		Tick: ge.tick,
-	}
-	ge.epochEventHistory = append(ge.epochEventHistory, record)
-	ge.publish(EventEpochEventFired, payload{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type})
+	ge.recordEpochEvent(ge.currentEpoch, ev)
 }
 
 // rollChallengingEpochEvent picks a bad (non-catastrophe) epoch event.
@@ -2526,14 +2518,18 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 	}
 	ev := pool[ge.gameRNG().Intn(len(pool))]
 	ge.applyChallengingEpochEvent(ev, epochKey)
+	ge.recordEpochEvent(epochKey, ev)
+}
 
+// recordEpochEvent files an epoch event that has just been applied in the
+// history and tells the bus.
+func (ge *GameEngine) recordEpochEvent(epochKey string, ev config.EpochEventDef) {
 	ep, _ := ge.rules.Era(epochKey)
-	record := EpochEventRecord{
+	ge.epochEventHistory = append(ge.epochEventHistory, EpochEventRecord{
 		EpochKey: epochKey, EpochName: ep.Name,
 		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
 		Tick: ge.tick,
-	}
-	ge.epochEventHistory = append(ge.epochEventHistory, record)
+	})
 	ge.publish(EventEpochEventFired, payload{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type})
 }
 
@@ -2547,9 +2543,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	switch ev.Key {
 	case "age_of_plenty":
 		// ×2 all production for Duration ticks via production_all effect
-		ge.injectEpochEffects("epoch_age_of_plenty", ev,
-			[]config.Effect{{Type: "production_all", Value: 1.0}})
-		ge.logCapped(config.Effect{Type: "production_all", Value: 1.0})
+		ge.boostProduction("epoch_age_of_plenty", ev, 1.0)
 	case "population_surge":
 		// +15% workers across all domains, instant
 		before := ge.Workers.TotalPop()
@@ -2606,8 +2600,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 	case "worker_innovation":
 		// Permanent +10% production_all
-		ge.permanentBonuses["production_all"] += 0.10
-		ge.logCapped(config.Effect{Type: "production_all", Value: 0.10})
+		ge.grantProduction(0.10)
 	case "architects_gift":
 		// 10 free buildings of the most common built non-wonder type
 		const giftCount = 10
@@ -2626,14 +2619,26 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 	case "peaceful_century":
 		// +20% all production for Duration ticks
-		ge.injectEpochEffects("epoch_peaceful_century", ev,
-			[]config.Effect{{Type: "production_all", Value: 0.20}})
-		ge.logCapped(config.Effect{Type: "production_all", Value: 0.20})
+		ge.boostProduction("epoch_peaceful_century", ev, 0.20)
 	case "epoch_blessing":
 		// Permanent +15% production_all; recorded as a golden age
-		ge.permanentBonuses["production_all"] += 0.15
-		ge.logCapped(config.Effect{Type: "production_all", Value: 0.15})
+		ge.grantProduction(0.15)
 	}
+}
+
+// boostProduction starts a timed boost to all production for an epoch event
+// and logs what a cap keeps from counting.
+func (ge *GameEngine) boostProduction(key string, ev config.EpochEventDef, value float64) {
+	boost := config.Effect{Type: "production_all", Value: value}
+	ge.injectEpochEffects(key, ev, []config.Effect{boost})
+	ge.logCapped(boost)
+}
+
+// grantProduction adds a permanent bonus to all production and logs what a
+// cap keeps from counting.
+func (ge *GameEngine) grantProduction(value float64) {
+	ge.permanentBonuses["production_all"] += value
+	ge.logCapped(config.Effect{Type: "production_all", Value: value})
 }
 
 // applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch
