@@ -355,7 +355,7 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 	} {
 		held := ge.Military.ActiveByTier(c.tier)
 		ge.Military.setActive(c.tier, nil)
-		out[c.mechanic] = float64(ge.Military.LaunchOffer(testOffer(ge, c.tier, c.grand), ge.tick, 0, nil, nil).TicksLeft)
+		out[c.mechanic] = float64(ge.Military.LaunchOffer(testOffer(ge, c.tier, c.grand), 0, nil, nil).TicksLeft)
 		ge.Military.setActive(c.tier, held)
 	}
 	return out

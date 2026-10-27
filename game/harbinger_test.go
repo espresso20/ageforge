@@ -792,9 +792,6 @@ func TestAppeaseRefusesWhenUnaffordable(t *testing.T) {
 	if ge.Resources.Get("faith") != 20 || ge.harbinger.AppeaseLevel != 0 {
 		t.Error("a refused appease changed state")
 	}
-	if st := ge.GetState(); st.Harbinger.AppeaseAffordable {
-		t.Error("view says affordable")
-	}
 }
 
 func TestNoHarbingerActionsWithoutOne(t *testing.T) {

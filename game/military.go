@@ -31,10 +31,9 @@ type ActiveExpedition struct {
 	MissionOffer
 	// Soldiers is the party marching now (fewer than Party after an ambush);
 	// Party the soldiers it set out with. Both are away from their posts.
-	Soldiers   int `json:"soldiers,omitempty"`
-	Party      int `json:"party,omitempty"`
-	LaunchTick int `json:"launch_tick,omitempty"`
-	TicksLeft  int `json:"ticks_left"`
+	Soldiers  int `json:"soldiers,omitempty"`
+	Party     int `json:"party,omitempty"`
+	TicksLeft int `json:"ticks_left"`
 	// TotalTicks is the mission's whole length in ticks when it was sent.
 	TotalTicks     int                `json:"total_ticks,omitempty"`
 	ElapsedTicks   int                `json:"elapsed_ticks,omitempty"`
@@ -218,7 +217,7 @@ func NewMilitaryManagerWith(set *rules.Set) *MilitaryManager {
 // returns it. The offer's SuccessChance is the chance the mission is sent with
 // (the engine has already counted the army). The party and the resource costs
 // are validated and deducted by the engine BEFORE this is called.
-func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, cost, baseHaul map[string]float64) *ActiveExpedition {
+func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, soldiers int, cost, baseHaul map[string]float64) *ActiveExpedition {
 	ticks := mm.missionTicks(offer.Category(), minutesToTicks(offer.LengthMinutes))
 	if ticks < 1 {
 		ticks = 1
@@ -227,7 +226,6 @@ func (mm *MilitaryManager) LaunchOffer(offer MissionOffer, tick, soldiers int, c
 		MissionOffer: offer,
 		Soldiers:     soldiers,
 		Party:        soldiers,
-		LaunchTick:   tick,
 		TicksLeft:    ticks,
 		TotalTicks:   ticks,
 		BaseRewards:  maps.Clone(baseHaul),

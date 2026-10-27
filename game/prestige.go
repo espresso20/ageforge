@@ -46,10 +46,6 @@ type PrestigeManager struct {
 	legacyPlan     []PlanTemplateItem
 	legacyFactions []string
 	legacyShares   map[string]float64
-	// templateApplied is the age whose template slice was last added to the
-	// plan this session (for the snapshot and the smoke suite's kit check).
-	// Not saved.
-	templateApplied string
 
 	prestigeCoefficient float64
 }

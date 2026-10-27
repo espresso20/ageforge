@@ -4423,7 +4423,7 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 
 	offer.SuccessChance = ge.offerSuccessLocked(offer)
 	base := ge.missionHaulLocked(offer.HaulMinutes)
-	active := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base)
+	active := ge.Military.LaunchOffer(offer, int(soldiers), cost, base)
 	ge.syncSoldiers()
 	words, _ := ge.rules.MissionWords(offer.Age)
 	active.RoadEvents = rollRoadEvents(ge.gameRNG(), offer, active.TotalTicks, words)

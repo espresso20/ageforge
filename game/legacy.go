@@ -366,7 +366,6 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	if added+skipped+full == 0 {
 		return
 	}
-	pm.templateApplied = ge.age
 	line := vibe.Sprintf("game.legacy.applyPlanTemplateLocked.01", "Plan Template: added %s for the %s.", textfmt.Count(added, vibe.Line("game.legacy.applyPlanTemplateLocked.02", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.03", "items")), ge.rules.Name(rules.KindAge, ge.age))
 	if full > 0 {
 		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.04", " The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, textfmt.Count(full, vibe.Line("game.legacy.applyPlanTemplateLocked.05", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.06", "items")))
@@ -492,18 +491,13 @@ func (ge *GameEngine) enteredAgesLocked() map[string]bool {
 
 // LegacyKitState is what the legacy kit remembers, for the prestige shop.
 type LegacyKitState struct {
-	// PlanItems is the template's size and PlanAges how many ages it spans;
-	// PlanByAge is its items per age. PlanAppliedAge is the age whose slice
-	// Plan Template last added to the plan ("" before any this run).
-	PlanItems      int
-	PlanAges       int
-	PlanByAge      map[string]int
-	PlanAppliedAge string
-	// Factions is how many civilizations are remembered (FactionKeys, in
-	// roster order); Shares how many worker domains have a remembered share.
-	Factions    int
-	FactionKeys []string
-	Shares      int
+	// PlanItems is the template's size and PlanAges how many ages it spans.
+	PlanItems int
+	PlanAges  int
+	// Factions is how many civilizations are remembered; Shares how many
+	// worker domains have a remembered share.
+	Factions int
+	Shares   int
 }
 
 // kitState summarizes the kit's memory for the snapshot.
@@ -513,13 +507,10 @@ func (pm *PrestigeManager) kitState() LegacyKitState {
 		byAge[it.Age]++
 	}
 	return LegacyKitState{
-		PlanItems:      len(pm.legacyPlan),
-		PlanAges:       len(byAge),
-		PlanByAge:      byAge,
-		PlanAppliedAge: pm.templateApplied,
-		Factions:       len(pm.legacyFactions),
-		FactionKeys:    slices.Clone(pm.legacyFactions),
-		Shares:         len(pm.legacyShares),
+		PlanItems: len(pm.legacyPlan),
+		PlanAges:  len(byAge),
+		Factions:  len(pm.legacyFactions),
+		Shares:    len(pm.legacyShares),
 	}
 }
 

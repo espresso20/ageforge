@@ -366,9 +366,6 @@ type HarbingerView struct {
 	AppeaseBlocked string
 	BraceBlocked   string
 	InviteBlocked  string
-	// Affordability of the next level (false when blocked).
-	AppeaseAffordable bool
-	BraceAffordable   bool
 	// Endure numbers at the current and the next Brace level, the garrison
 	// included (see GarrisonPct).
 	EndureDestroyPct     int
@@ -1500,11 +1497,9 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 	}
 	if v.AppeaseBlocked == "" {
 		v.AppeaseCost = ge.appeasePrice(h, h.AppeaseLevel+1)
-		v.AppeaseAffordable = len(v.AppeaseCost) > 0 && ge.Resources.CanAfford(v.AppeaseCost)
 	}
 	if v.BraceBlocked == "" {
 		v.BraceCost = threadBraceCostIn(ge.rules, h, h.BraceLevel+1)
-		v.BraceAffordable = len(v.BraceCost) > 0 && ge.Resources.CanAfford(v.BraceCost)
 	}
 	next := h.BraceLevel
 	if next < HarbingerMaxBrace {

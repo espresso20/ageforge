@@ -308,7 +308,7 @@ func TestTechMechanicsReachTheirCommands(t *testing.T) {
 	plain := newTruthEngine("modern_age", truthClean)
 	march := func(e *GameEngine) int {
 		e.Military.setActive(TierGrand, nil)
-		return e.Military.LaunchOffer(testOffer(e, TierGrand, GrandMilitary), e.tick, 0, nil, nil).TicksLeft
+		return e.Military.LaunchOffer(testOffer(e, TierGrand, GrandMilitary), 0, nil, nil).TicksLeft
 	}
 	if a, b := march(plain), march(ge); a != b {
 		t.Errorf("a campaign takes %d ticks with Cartography and %d without, want the same", b, a)
