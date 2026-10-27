@@ -217,7 +217,6 @@ func (ge *GameEngine) rollFate() {
 		}
 	}
 	ge.fate = f
-	ge.publishFate(EventFateRolled, "", -1)
 }
 
 // ensureFate rolls the current era's fate if it has none: the first tick of a
@@ -449,7 +448,6 @@ func (ge *GameEngine) fateStrike(atAdvance bool) bool {
 	roll := ge.gameRNG().Float64()
 	struck := f.Invited || roll < p
 	f.ResolvedTick, f.AtAdvance = ge.tick, atAdvance
-	arrived := ge.harbingerArrivedTick()
 	if struck {
 		f.Resolved = FateStruck
 		source := catastropheRolled
@@ -461,17 +459,7 @@ func (ge *GameEngine) fateStrike(atAdvance bool) bool {
 		f.Resolved = FateSpared
 	}
 	ge.resolveHarbinger(f.EpochKey, struck)
-	ge.publishFate(EventFateResolved, f.Resolved, arrived)
 	return struck
-}
-
-// harbingerArrivedTick is the tick the current era's doom's harbinger
-// arrived, or -1 when none is here.
-func (ge *GameEngine) harbingerArrivedTick() int {
-	if h := ge.fateThread(); h != nil {
-		return h.ArrivedTick
-	}
-	return -1
 }
 
 // revealFalseProphet ends a false prophet whose foretold window has passed:
@@ -480,7 +468,6 @@ func (ge *GameEngine) harbingerArrivedTick() int {
 func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 	f := ge.fate
 	f.Resolved, f.ResolvedTick, f.AtAdvance = FateRevealed, ge.tick, true
-	arrived := ge.harbingerArrivedTick()
 	if h := ge.fateThread(); h != nil {
 		def, _ := ge.rules.Harbinger(h.Age)
 		window := vibe.Line("game.fate.revealFalseProphet.01", "This age ends")
@@ -490,7 +477,6 @@ func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 		ge.settleHarbinger(f.EpochKey, false,
 			vibe.Sprintf("game.fate.revealFalseProphet.03", "⚑ %s without the doom %s foretold. The warning had been invented from the start.", window, def.Name))
 	}
-	ge.publishFate(EventFateResolved, f.Resolved, arrived)
 }
 
 // errHarbingerAtGate is the refusal of an advance (or, in the final epoch, a
@@ -557,39 +543,6 @@ func (ge *GameEngine) fateAtPassage(leaving bool, again, gerund string) error {
 		return ge.catastropheBlockErr(gerund)
 	}
 	return nil
-}
-
-// publishFate tells the smoke report and tests about the fate (EventFateRolled
-// at a roll, EventFateResolved at a strike, a spared doom or a revealed false
-// prophet; arrived is the tick its harbinger came, -1 for none). The payload
-// carries the hidden fate, so the UI must never subscribe to either event
-// (ui/fate_guard_test.go holds it to that). Bus handlers run under the write
-// lock and must not call back into the engine.
-func (ge *GameEngine) publishFate(event, outcome string, arrived int) {
-	f := ge.fate
-	if f == nil {
-		return
-	}
-	payload := map[string]interface{}{
-		"epoch_key":     f.EpochKey,
-		"fated":         f.Fated,
-		"false_prophet": f.FalseProphet,
-		"entry_tick":    f.EntryTick,
-		"window":        f.Window,
-		"strike_tick":   f.StrikeTick,
-		"lead_frac":     f.LeadFrac,
-		"tick":          ge.tick,
-		"age":           ge.age,
-	}
-	if outcome != "" {
-		payload["outcome"] = outcome
-		payload["at_advance"] = f.AtAdvance
-		payload["invited"] = f.Invited
-		if arrived >= 0 {
-			payload["arrived_tick"] = arrived
-		}
-	}
-	ge.Bus.Publish(EventData{Type: event, Payload: payload})
 }
 
 // restoreFateState loads the fate from a save: the one of the era the game is

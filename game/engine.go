@@ -2488,15 +2488,6 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	for _, capped := range ge.capLinesLocked(def.Effects, true) {
 		ge.addLog("info", capped)
 	}
-
-	ge.Bus.Publish(EventData{
-		Type: EventAwakeningFired,
-		Payload: map[string]interface{}{
-			"awakening_key":  def.Key,
-			"awakening_name": def.Name,
-			"epoch_key":      def.EpochKey,
-		},
-	})
 }
 
 // rollEpochEvent performs the epoch transition event roll.

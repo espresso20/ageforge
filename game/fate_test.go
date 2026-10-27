@@ -168,17 +168,12 @@ func TestFalseProphetsOnlyBeforeIndustrialWithNothingFated(t *testing.T) {
 func TestFateRolledOnEnteringAnEra(t *testing.T) {
 	ge := fateEngine(t, "medieval_age", 4)
 	ge.tick = 777
-	var rolled []EventData
-	ge.Bus.Subscribe(EventFateRolled, func(e EventData) { rolled = append(rolled, e) })
 	ge.advanceAge("renaissance_age")
 	if ge.fate == nil || ge.fate.EpochKey != "steel_era" || ge.fate.EntryTick != 777 {
 		t.Fatalf("fate after entering the Steel Era = %+v", ge.fate)
 	}
 	if want := int(math.Round(baseEraTicks("steel_era"))); ge.fate.Window != want {
 		t.Errorf("window %d, want %d (the era's ages at their targets)", ge.fate.Window, want)
-	}
-	if len(rolled) != 1 || rolled[0].Payload["epoch_key"] != "steel_era" {
-		t.Errorf("fate events = %+v", rolled)
 	}
 	if n := len(ge.epochEventHistory); n == 0 || ge.epochEventHistory[n-1].EpochKey != "steel_era" {
 		t.Errorf("no epoch event for the transition: %+v", ge.epochEventHistory)
@@ -832,8 +827,6 @@ func TestOfflineCatchUpAcrossAStrike(t *testing.T) {
 	ge := fateEngine(t, "classical_age", 19)
 	forceFate(t, ge, 3000)
 	ge.rng = riggedRNG(0.01)
-	var resolved []EventData
-	ge.Bus.Subscribe(EventFateResolved, func(e EventData) { resolved = append(resolved, e) })
 	ge.SimulateOffline(8 * time.Hour)
 	if ge.pendingCatastrophe != "iron_era" {
 		t.Fatalf("after 8h away: pending %q, fate %+v", ge.pendingCatastrophe, ge.fate)
@@ -841,11 +834,8 @@ func TestOfflineCatchUpAcrossAStrike(t *testing.T) {
 	if ge.fate.ResolvedTick != ge.fate.StrikeTick {
 		t.Errorf("struck at tick %d, fated for %d", ge.fate.ResolvedTick, ge.fate.StrikeTick)
 	}
-	if len(resolved) != 1 || resolved[0].Payload["tick"] != ge.fate.StrikeTick {
-		t.Fatalf("resolve events = %+v", resolved)
-	}
-	if a, ok := resolved[0].Payload["arrived_tick"].(int); !ok || a >= ge.fate.StrikeTick {
-		t.Errorf("resolve event arrival %v, want the harbinger's tick before the strike", resolved[0].Payload["arrived_tick"])
+	if n := len(ge.harbingerHistory); n != 1 || ge.harbingerHistory[n-1].ArrivedTick >= ge.fate.StrikeTick {
+		t.Errorf("harbinger history = %+v, want one record that arrived before the strike", ge.harbingerHistory)
 	}
 	if countLogs(ge, "has come, warning of impending doom") != 1 || countLogs(ge, "was right") != 1 {
 		t.Errorf("the away log should show the warning and the strike:\n%s", strings.Join(logMessages(ge), "\n"))
