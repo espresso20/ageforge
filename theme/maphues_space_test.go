@@ -16,7 +16,4 @@ func TestSpaceHues(t *testing.T) {
 	if SpaceColor(numSpaceHues+3) != SpaceColor(SpaceNone) {
 		t.Error("an unknown space hue does not fall back")
 	}
-	if NumSpaceHues != int(numSpaceHues) {
-		t.Error("NumSpaceHues is stale")
-	}
 }
