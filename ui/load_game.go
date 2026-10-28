@@ -384,32 +384,27 @@ func (b *loadGameBrowser) doDelete() {
 	}
 	curIdx := b.list.GetCurrentItem()
 
-	const page = "load_game_delete"
-	modal := tview.NewModal().
-		SetText(vibe.Sprintf("ui.load_game.doDelete.01", "Delete '%s'?\n\nThis can't be undone.", s.Name)).
-		AddButtons([]string{vibe.Line("ui.load_game.doDelete.02", "Cancel"), "Delete"}).
-		SetDoneFunc(func(button int, _ string) {
-			b.pages.RemovePage(page)
-			b.app.SetFocus(b.list)
-			if button != 1 { // "Delete" is the second button; Cancel and Esc (-1) keep the save
-				return
-			}
-			if err := game.DeleteSave(s.Name); err != nil {
-				b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doDelete.04", "Delete failed: %v", err))
-				b.detail.SetText(vibe.Sprintf("ui.load_game.doDelete.05", "[red]Delete failed: %v[-]", err))
-				return
-			}
-			// The account's records of its current game let go of the name.
-			if acct := b.engine.Account(); acct != nil {
-				_ = acct.ForgetGame(s.Name)
-			}
-			// Keep the selection near where it was; clamp happens in refresh.
-			b.refresh(curIdx)
-		})
+	text := vibe.Sprintf("ui.load_game.doDelete.01", "Delete '%s'?\n\nThis can't be undone.", s.Name)
+	buttons := []string{vibe.Line("ui.load_game.doDelete.02", "Cancel"), "Delete"}
 	// Transient confirm modal (rebuilt per delete): construction-read the danger
 	// background from the Negative role so it tints with the theme.
-	styleDangerModal(modal)
-	b.pages.AddPage(page, modal, true, true)
+	styleDangerModal(showButtonModal(b.pages, "load_game_delete", text, buttons, func(button int, _ string) {
+		b.app.SetFocus(b.list)
+		if button != 1 { // "Delete" is the second button; Cancel and Esc (-1) keep the save
+			return
+		}
+		if err := game.DeleteSave(s.Name); err != nil {
+			b.engine.AddLog("error", vibe.Sprintf("ui.load_game.doDelete.04", "Delete failed: %v", err))
+			b.detail.SetText(vibe.Sprintf("ui.load_game.doDelete.05", "[red]Delete failed: %v[-]", err))
+			return
+		}
+		// The account's records of its current game let go of the name.
+		if acct := b.engine.Account(); acct != nil {
+			_ = acct.ForgetGame(s.Name)
+		}
+		// Keep the selection near where it was; clamp happens in refresh.
+		b.refresh(curIdx)
+	}))
 }
 
 // doRename shows an input modal prefilled with the current name. Errors from
@@ -426,12 +421,6 @@ func (b *loadGameBrowser) doRename() {
 	if !ok {
 		return
 	}
-	if s.Corrupt {
-		// A corrupt file can still be renamed at the FS level, but there's no
-		// healthy use for it; keep behaviour simple and allow it — RenameSave
-		// only touches the filename, not the bytes.
-	}
-
 	const page = "load_game_rename"
 
 	errTV := tview.NewTextView().
@@ -499,30 +488,20 @@ func (b *loadGameBrowser) doRename() {
 		AddItem(errTV, 1, 0, false).
 		AddItem(tview.NewBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, false)
-	inner.SetBorder(true).
-		SetTitle(vibe.Line("ui.load_game.doRename.04", " Rename save ")).
-		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBorderColor(theme.Color(theme.RoleAccent))
+	framed(inner, vibe.Line("ui.load_game.doRename.04", " Rename save "), theme.RoleAccent)
 
 	// Tab cycles input → OK → Cancel; Esc cancels from anywhere on the modal.
 	focusOrder := []tview.Primitive{input, okBtn, cancelBtn}
 	focusIdx := 0
+	cycle := func(step int) {
+		focusIdx = (focusIdx + step + len(focusOrder)) % len(focusOrder)
+		b.app.SetFocus(focusOrder[focusIdx])
+	}
 	modal := centeredModal(inner, 50, 9)
-	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		switch ev.Key() {
-		case tcell.KeyEsc:
-			close()
-			return nil
-		case tcell.KeyTab:
-			focusIdx = (focusIdx + 1) % len(focusOrder)
-			b.app.SetFocus(focusOrder[focusIdx])
-			return nil
-		case tcell.KeyBacktab:
-			focusIdx = (focusIdx - 1 + len(focusOrder)) % len(focusOrder)
-			b.app.SetFocus(focusOrder[focusIdx])
-			return nil
-		}
-		return ev
+	takeKeys(modal, map[tcell.Key]func(){
+		tcell.KeyEsc:     close,
+		tcell.KeyTab:     func() { cycle(1) },
+		tcell.KeyBacktab: func() { cycle(-1) },
 	})
 
 	b.pages.AddPage(page, modal, true, true)
@@ -643,13 +622,6 @@ var loadGameKeys = []footerKey{
 	{"C", vibe.E("ui.load_game.loadGameKeys.07", "Duplicate"), vibe.E("ui.load_game.loadGameKeys.08", "Copy")},
 	{"M", vibe.E("ui.load_game.loadGameKeys.09", "Main game"), vibe.E("ui.load_game.loadGameKeys.10", "Main")},
 	{"Esc", vibe.E("ui.load_game.loadGameKeys.12", "Back"), vibe.Entry{}},
-}
-
-// footerBar is the Load Game action bar with every name in full: a keycap
-// button per action, so the player can see at a glance which key triggers
-// what. The page fits it to its width (keyBar).
-func footerBar() string {
-	return keyBar(loadGameKeys, 1<<16, 1)
 }
 
 // legendText returns the static Key-box markup: one row symbol per line with a
@@ -841,18 +813,4 @@ func pluralSaves(n int) string {
 // a folder path that would be wrong for every account.
 func savesDirLabel() string {
 	return vibe.Line("ui.load_game.savesDirLabel.01", "This account")
-}
-
-// centeredModal wraps an inner primitive in nested Flex spacers so it floats at a
-// fixed width×height in the centre of the screen — the same idiom as
-// catastrophe_modal.go. width/height are fixed cell counts.
-func centeredModal(inner tview.Primitive, width, height int) *tview.Flex {
-	return tview.NewFlex().
-		AddItem(tview.NewBox(), 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(tview.NewBox(), 0, 1, false).
-			AddItem(inner, height, 0, true).
-			AddItem(tview.NewBox(), 0, 1, false),
-			width, 0, true).
-		AddItem(tview.NewBox(), 0, 1, false)
 }

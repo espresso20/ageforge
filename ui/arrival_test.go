@@ -1475,3 +1475,5 @@ func TestArrivalAmbientIsAnEpochs(t *testing.T) {
 		t.Fatal("no theme has an ambient effect")
 	}
 }
+
+func (l infoLine) plain() string { return plainOf(l.segs) }

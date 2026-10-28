@@ -145,6 +145,3 @@ func researchBonusLines(state game.GameState) string {
 func formatBonusName(key string) string {
 	return textfmt.Capitalize(game.EffectTargetName(key))
 }
-
-// capitalize upper-cases the first letter of s.
-func capitalize(s string) string { return textfmt.Capitalize(s) }

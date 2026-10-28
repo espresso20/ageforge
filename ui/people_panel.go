@@ -38,10 +38,6 @@ func (p *peoplePanel) open(state game.GameState) tview.Primitive {
 	return overBar(p)
 }
 
-// setSize tells the panel how big it is drawn, for the tests; a draw does it
-// by itself.
-func (p *peoplePanel) setSize(w, h int) { p.w, p.h = w, h }
-
 // update takes a new snapshot; the picked row stays in range.
 func (p *peoplePanel) update(state game.GameState) {
 	p.state = state

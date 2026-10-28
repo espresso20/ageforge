@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -170,33 +171,6 @@ func pendingChoiceKey(state game.GameState) string {
 
 func lineCount(s string) int { return strings.Count(s, "\n") + 1 }
 
-// surfaceBox is an opaque filler painted with the modal surface color. tview
-// only paints cells a primitive draws, so every row and column inside the box
-// must belong to a clearing primitive or the dashboard shows through.
-func surfaceBox() *tview.Box {
-	return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface))
-}
-
-func surfaceText(text string, align int) *tview.TextView {
-	tv := tview.NewTextView().SetDynamicColors(true).SetTextAlign(align).SetWrap(false).SetText(text)
-	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
-	return tv
-}
-
-// floatingModal centers inner at width×height over whatever page is beneath.
-// The spacers are nil flex items, which draw nothing, so the dashboard stays
-// visible around the box (unlike centeredModal, whose Box spacers clear it).
-func floatingModal(inner tview.Primitive, width, height int) *tview.Flex {
-	return tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(inner, height, 0, true).
-			AddItem(nil, 0, 1, false),
-			width, 0, true).
-		AddItem(nil, 0, 1, false)
-}
-
 // showCatastropheModal displays the Endure / Succumb choice for the pending
 // catastrophe as a box floating over the dashboard. Esc closes it without
 // choosing (the catastrophe stays pending and keeps blocking advancement; the
@@ -268,55 +242,30 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, true).
 		AddItem(surfaceText(l.hint, tview.AlignCenter), 1, 0, false)
-	inner.SetBorder(true).
-		SetTitle(l.title).
-		SetTitleColor(theme.Color(theme.RoleNegative)).
-		SetBorderColor(theme.Color(theme.RoleNegative)).
-		SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, l.title, theme.RoleNegative).SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	modal := floatingModal(inner, catastropheModalWidth, l.height)
 
-	focusOrder := []*tview.Button{btnEndure, btnSuccumb}
-	if !succumbOpen {
-		focusOrder = focusOrder[:1]
-	}
-	focusIdx := 0
-	setFocus := func(i int) {
-		focusIdx = i
-		d.catFocus = focusOrder[i]
-		d.app.SetFocus(focusOrder[i])
+	ring := newButtonRing(d.app, func(p tview.Primitive) { d.catFocus = p })
+	ring.add(btnEndure, 'e')
+	if succumbOpen {
+		ring.add(btnSuccumb, 's')
 	}
 	modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyEsc:
+		switch {
+		case event.Key() == tcell.KeyEsc:
 			d.closeCatastropheModal()
 			return nil
-		case tcell.KeyTab, tcell.KeyRight:
-			setFocus((focusIdx + 1) % len(focusOrder))
+		case ring.key(event):
 			return nil
-		case tcell.KeyBacktab, tcell.KeyLeft:
-			setFocus((focusIdx - 1 + len(focusOrder)) % len(focusOrder))
-			return nil
-		case tcell.KeyRune:
-			switch event.Rune() {
-			case 'e', 'E':
-				setFocus(0)
-				btnEndure.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
-				return nil
-			case 's', 'S':
-				if !succumbOpen {
-					return nil
-				}
-				setFocus(1)
-				btnSuccumb.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
-				return nil
-			}
+		case !succumbOpen && event.Key() == tcell.KeyRune && unicode.ToLower(event.Rune()) == 's':
+			return nil // the closed button's key does nothing
 		}
 		return event
 	})
 
 	d.pages.AddPage(catastrophePage, modal, true, true)
-	setFocus(0)
+	ring.focus(0)
 }
 
 // closeCatastropheModal removes the catastrophe overlay page and hands focus

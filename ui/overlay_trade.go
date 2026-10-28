@@ -98,16 +98,12 @@ func tradeProvider(state game.GameState, _ int) string {
 // and to that resource's production rate. Writes nothing when no ally
 // applies.
 func writeAllyTradeBonuses(sb *strings.Builder, dip game.DiplomacyState) {
-	keys := make([]string, 0, len(dip.Factions))
-	for k, f := range dip.Factions {
-		if f.Discovered && f.Status == "allied" && !f.AtWar && f.TradeBonus > 0 {
-			keys = append(keys, k)
-		}
-	}
+	keys := keysWhere(dip.Factions, func(_ string, f game.FactionInfo) bool {
+		return f.Discovered && f.Status == "allied" && !f.AtWar && f.TradeBonus > 0
+	})
 	if len(keys) == 0 {
 		return
 	}
-	sort.Strings(keys)
 	sb.WriteString(vibe.Line("ui.overlay_trade.writeAllyTradeBonuses.01", " [gold]Allied bonuses:[-]\n"))
 	for _, k := range keys {
 		f := dip.Factions[k]

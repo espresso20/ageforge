@@ -111,14 +111,7 @@ func statsProvider(state game.GameState, _ int) string {
 	if len(state.LegacyBonuses) == 0 {
 		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.27", "  [gray]None[-]\n"))
 	} else {
-		activeEpochs := make([]string, 0, len(state.LegacyBonuses))
-		for epochKey, active := range state.LegacyBonuses {
-			if active {
-				activeEpochs = append(activeEpochs, epochKey)
-			}
-		}
-		sort.Strings(activeEpochs)
-
+		activeEpochs := keysWhere(state.LegacyBonuses, func(_ string, active bool) bool { return active })
 		if len(activeEpochs) == 0 {
 			sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.28", "  [gray]None[-]\n"))
 		} else {
@@ -221,13 +214,7 @@ func statsProvider(state game.GameState, _ int) string {
 	sb.WriteString(researchSummaryLines(state))
 
 	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.56", "\n[gold]═══ Resource rates ═══[-]\n\n"))
-	rateKeys := make([]string, 0, len(state.Resources))
-	for k, rs := range state.Resources {
-		if rs.Unlocked {
-			rateKeys = append(rateKeys, k)
-		}
-	}
-	sort.Strings(rateKeys)
+	rateKeys := keysWhere(state.Resources, func(_ string, rs game.ResourceState) bool { return rs.Unlocked })
 	if len(rateKeys) == 0 {
 		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.57", " [gray]No unlocked resources.[-]\n"))
 	} else {
@@ -432,7 +419,7 @@ func multiplierSourceLabel(src string) string {
 	case "cosmic_legacy":
 		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.10", "Cosmic Legacy")
 	}
-	return capitalize(src)
+	return textfmt.Capitalize(src)
 }
 
 // rateEffectLabel names the thing a "<res>_rate" active-event effect acts on,

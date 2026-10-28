@@ -39,23 +39,15 @@ type mCell struct {
 
 // mGrid is the page as cells.
 type mGrid struct {
-	w, h int
-	c    []mCell
+	grid[mCell]
 	// clipped lists text that was cut at an edge. A layout that fits writes
 	// nothing here; the render tests fail on anything in it.
 	clipped []string
 }
 
 func newMGrid(w, h int) *mGrid {
-	g := &mGrid{w: max(w, 0), h: max(h, 0)}
-	g.c = make([]mCell, g.w*g.h)
-	for i := range g.c {
-		g.c[i].r = ' '
-	}
-	return g
+	return &mGrid{grid: newGrid(w, h, mCell{r: ' '})}
 }
-
-func (g *mGrid) in(x, y int) bool { return x >= 0 && y >= 0 && x < g.w && y < g.h }
 
 // put writes a glyph and its ink, and leaves the cell's ground as it is.
 func (g *mGrid) put(x, y int, r rune, fg tcell.Color) {
@@ -67,9 +59,7 @@ func (g *mGrid) put(x, y int, r rune, fg tcell.Color) {
 
 // set writes a whole cell: glyph, ink, ground and weight.
 func (g *mGrid) set(x, y int, r rune, fg, bg tcell.Color, bold bool) {
-	if g.in(x, y) {
-		g.c[y*g.w+x] = mCell{r: r, fg: fg, bg: bg, bold: bold, hasBg: true}
-	}
+	g.store(x, y, mCell{r: r, fg: fg, bg: bg, bold: bold, hasBg: true})
 }
 
 // fill paints a block's ground and clears what was on it.
@@ -134,36 +124,21 @@ func (g *mGrid) box(x, y, w, h int, heavy bool, fg tcell.Color) {
 	g.put(x+w-1, y+h-1, c[3], fg)
 }
 
-// row is one row of the grid as text.
-func (g *mGrid) row(y int) string {
-	if y < 0 || y >= g.h {
-		return ""
-	}
-	out := make([]rune, g.w)
-	for x := range out {
-		out[x] = g.c[y*g.w+x].r
-	}
-	return string(out)
-}
-
 // flush puts the grid on the screen with its top left corner at (x0, y0).
 // In the plain glyph set every glyph that is not ASCII is folded to one
 // that is (the wordmark and the fire were already drawn without blocks).
 func (g *mGrid) flush(scr tcell.Screen, x0, y0 int, pal *menuPalette, plain bool) {
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			c := g.c[y*g.w+x]
-			bg := pal.bg
-			if c.hasBg {
-				bg = c.bg
-			}
-			r := c.r
-			if plain {
-				r = mapmodel.Fold(r, mapmodel.TierASCII)
-			}
-			scr.SetContent(x0+x, y0+y, r, nil, tcell.StyleDefault.Foreground(c.fg).Background(bg).Bold(c.bold))
+	g.draw(scr, x0, y0, func(c mCell) (rune, tcell.Style) {
+		bg := pal.bg
+		if c.hasBg {
+			bg = c.bg
 		}
-	}
+		r := c.r
+		if plain {
+			r = mapmodel.Fold(r, mapmodel.TierASCII)
+		}
+		return r, tcell.StyleDefault.Foreground(c.fg).Background(bg).Bold(c.bold)
+	})
 }
 
 // ---- colours, all from the theme's roles ----

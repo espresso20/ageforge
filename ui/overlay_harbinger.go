@@ -126,15 +126,6 @@ func harbingerInviteRefusal(st game.GameState) error {
 	return vibe.Errorf("ui.overlay_harbinger.harbingerInviteRefusal.02", "cannot invite: %s", st.Harbinger.InviteBlocked)
 }
 
-// harbingerPanelText renders the panel for the narrowest screen the game
-// draws. Pure: state in, text out.
-func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed bool) string {
-	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, inviteArmed)
-}
-
-// narrowestScreenW is the narrowest terminal the game is laid out for.
-const narrowestScreenW = 80
-
 // harbingerPanelTextAt renders the panel for a screen screenW cells wide, so
 // the lines that can run long (the prices) are broken to fit the box.
 func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGood, inviteArmed bool) string {

@@ -460,12 +460,6 @@ func themeSwatches(t theme.Theme) string {
 	return strings.Join(rows, "\n")
 }
 
-// colorHexTag renders a tcell.Color as a tview "[#rrggbb]" inline tag from its
-// literal RGB (theme.HexTag). Kept as the picker's name for it.
-func colorHexTag(c tcell.Color) string {
-	return theme.HexTag(c)
-}
-
 // themeFooterBar is the picker action bar: keycap buttons matching the load-game
 // footer idiom (footerButton lives in load_game.go).
 func themeFooterBar() string {

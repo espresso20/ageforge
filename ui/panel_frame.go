@@ -26,9 +26,6 @@ const (
 	panelMinRows = 6
 )
 
-// panelKeys is the keys on a panel's foot: each a key and what it does.
-type panelKeys func() [][2]string
-
 // panelFrame is the primitive: a box with a title, a TextView inside, and the
 // keys. It hands the keyboard to the TextView.
 type panelFrame struct {

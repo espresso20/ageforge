@@ -242,3 +242,10 @@ func TestKeyBarsFitTheirWidth(t *testing.T) {
 		t.Error("the Accounts bar fits on one line at 130 columns and took two")
 	}
 }
+
+// footerBar is the Load Game action bar with every name in full: a keycap
+// button per action, so the player can see at a glance which key triggers
+// what. The page fits it to its width (keyBar).
+func footerBar() string {
+	return keyBar(loadGameKeys, 1<<16, 1)
+}

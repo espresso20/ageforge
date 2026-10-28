@@ -498,22 +498,6 @@ func personalityColor(personality string) string {
 	}
 }
 
-// truncate shortens s to at most max runes, appending an ellipsis when cut.
-// Operates on runes so multibyte backstory text is never split mid-character.
-func truncate(s string, max int) string {
-	if max <= 0 {
-		return ""
-	}
-	r := []rune(s)
-	if len(r) <= max {
-		return s
-	}
-	if max <= 1 {
-		return string(r[:max])
-	}
-	return string(r[:max-1]) + "…"
-}
-
 // diplomacyThreshold renders the distance-to-next-tier indicator for a
 // civilization given its current status and opinion. Hostile statuses
 // (rival/embargo) decay toward neutral, so they report "decaying" rather than

@@ -484,40 +484,6 @@ func segsLen(line []seg) int {
 	return n
 }
 
-// wrapCells wraps s to lines of at most w cells, on spaces. A word longer
-// than a line is cut.
-func wrapCells(s string, w int) []string {
-	if w < 1 {
-		return nil
-	}
-	var lines []string
-	line := ""
-	for _, word := range strings.Fields(s) {
-		for runeLen(word) > w {
-			if line != "" {
-				lines = append(lines, line)
-				line = ""
-			}
-			rs := []rune(word)
-			lines = append(lines, string(rs[:w]))
-			word = string(rs[w:])
-		}
-		switch {
-		case line == "":
-			line = word
-		case runeLen(line)+1+runeLen(word) <= w:
-			line += " " + word
-		default:
-			lines = append(lines, line)
-			line = word
-		}
-	}
-	if line != "" {
-		lines = append(lines, line)
-	}
-	return lines
-}
-
 // tierInk is the ink a tier's name and its progress bar are drawn in: its
 // metal, or for a legendary badge one hue of its wheel.
 func tierInk(t config.BadgeTier) ink {

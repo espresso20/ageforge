@@ -183,3 +183,9 @@ func TestPlanUpgradeCommandsAndPanel(t *testing.T) {
 		t.Fatalf("plan upgrade all: %+v", res)
 	}
 }
+
+// planItemDetail is the second part of an item's line: the progress bar and
+// what it is short of, the reason it is blocked, or what it will pay.
+func planItemDetail(v game.PlanItemView, state game.GameState) string {
+	return strings.ReplaceAll(planItemDetailGlued(v, state), glue, " ")
+}
