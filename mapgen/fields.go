@@ -228,11 +228,6 @@ func (f *Fields) settleBiomes() {
 	}
 }
 
-// Land reports whether (x, y) is dry ground.
-func (f *Fields) Land(x, y int) bool {
-	return inWorld(x, y) && !f.Biome[at(x, y)].Water()
-}
-
 // Slope is the steepest drop to a neighbour over a two-cell stride, on the
 // blurred ground, in height units.
 func (f *Fields) Slope(x, y int) int {
