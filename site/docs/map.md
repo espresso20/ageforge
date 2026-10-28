@@ -67,6 +67,12 @@ This age's wonder appears on its own plot, rising from the ground under scaffold
 
 Around the buildings the land is dressed too: trees and rocks, crops, chimney smoke, and people and traffic on the roads. Nothing moves when `motion` is off. At night the light fades and the windows and lamps glow.
 
+### The rare visitor
+
+Now and then someone comes to the Map from somewhere else. On the land a small visitor walks in along one of the trunk roads from beyond the edge of the view, stops a few cells from the square and is gone. In orbit and the solar system it is a ship, flying in from the edge of the map to one of the lanes. Rarer still, an alien's craft crosses over the town, or drops in over open ground, hangs there and shoots off.
+
+A visitor never covers a building, and it shows in the whole-town view too. It is rare before the Space Age and more common from it; from the Galactic Age on there are none, because the aliens are ordinary traffic by then. It comes and goes on the world's clock, so with `motion` off it still arrives, and stands still while it is there. Put the cursor on it and the Map says something of its own for a visitor and for an alien's craft. Looking at one earns a secret badge.
+
 ### The look of each era
 
 Each era of the game has its own look, and every age in it sets itself apart by its roads, its materials, its tallest buildings and its light:
