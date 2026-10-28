@@ -419,7 +419,7 @@ func multiplierSourceLabel(src string) string {
 	case "cosmic_legacy":
 		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.10", "Cosmic Legacy")
 	}
-	return capitalize(src)
+	return textfmt.Capitalize(src)
 }
 
 // rateEffectLabel names the thing a "<res>_rate" active-event effect acts on,

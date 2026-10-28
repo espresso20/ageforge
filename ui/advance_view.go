@@ -484,31 +484,6 @@ func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 	}
 }
 
-// wrapItems breaks a list of items into lines of at most w cells, comma
-// separated, never inside an item.
-func wrapItems(items []string, w int) []string {
-	var out []string
-	line := ""
-	for i, it := range items {
-		if i < len(items)-1 {
-			it += ","
-		}
-		switch {
-		case line == "":
-			line = it
-		case runeLen(line)+1+runeLen(it) > w:
-			out = append(out, line)
-			line = it
-		default:
-			line += " " + it
-		}
-	}
-	if line != "" {
-		out = append(out, line)
-	}
-	return out
-}
-
 // wayLines is how many rows what stands in the way takes in w cells.
 func wayLines(v game.AdvanceView, w int) int {
 	n := 0

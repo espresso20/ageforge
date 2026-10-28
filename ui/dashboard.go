@@ -1293,7 +1293,7 @@ func groupedCount(n int) string {
 	if n < 1000 || n >= 1_000_000 {
 		return textfmt.Number(float64(n))
 	}
-	return fmt.Sprintf("%d,%03d", n/1000, n%1000)
+	return wholeNumber(n)
 }
 
 func (d *Dashboard) refreshAgeProgress(state game.GameState) {

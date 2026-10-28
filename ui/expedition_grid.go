@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"strings"
-
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -180,42 +178,6 @@ func (g *xgrid) segsFit(x, y, room int, parts ...xseg) int {
 		x = g.putFit(x, y, end-x, p.s, p.k)
 	}
 	return x
-}
-
-// fitText cuts s to room cells, ending in an ellipsis if it is cut.
-func fitText(s string, room int) string {
-	r := []rune(s)
-	if room <= 0 {
-		return ""
-	}
-	if len(r) <= room {
-		return s
-	}
-	if room == 1 {
-		return "…"
-	}
-	return string(r[:room-1]) + "…"
-}
-
-// wrapText breaks s into lines of at most w cells, at spaces.
-func wrapText(s string, w int) []string {
-	var out []string
-	line := ""
-	for _, word := range strings.Fields(s) {
-		switch {
-		case line == "":
-			line = word
-		case len([]rune(line))+1+len([]rune(word)) > w:
-			out = append(out, line)
-			line = word
-		default:
-			line += " " + word
-		}
-	}
-	if line != "" {
-		out = append(out, line)
-	}
-	return out
 }
 
 // foldExpedition is the plain glyph tier's fold: the pins and the bars
