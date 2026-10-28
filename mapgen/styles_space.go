@@ -8,6 +8,9 @@ package mapgen
 var orbitEra = AgeStyle{
 	Scale:   Orbit,
 	Visitor: byShip,
+	Caravan: byFreight,
+	Omen:    omen(HRed),
+	Site:    siteStar,
 	// the planet's land and sea: the world's own biomes, seen from afar
 	Land: [numBiomes]Look{
 		Deep:     {Glyphs: "≈~", Fg: P(HWater, 140), Bg: P(HSea, 255), Dense: 35},
@@ -71,6 +74,9 @@ var orbitEra = AgeStyle{
 var systemEra = AgeStyle{
 	Scale:   System,
 	Visitor: byShip,
+	Caravan: byFreight,
+	Omen:    omen(HRed),
+	Site:    siteStar,
 	Roads: [3]RoadLook{
 		{Joins: joinsRounded, Fg: P(HEngine, 235), Bg: P(HVoid, 255)},
 		{Joins: joinsLight, Fg: P(HOrbit, 255), Bg: P(HVoid, 255)},
@@ -104,6 +110,9 @@ var systemEra = AgeStyle{
 var starsEra = AgeStyle{
 	Scale:   Stars,
 	Visitor: byShip,
+	Caravan: byFleet,
+	Omen:    omen(HNeon),
+	Site:    siteStar,
 	Roads: [3]RoadLook{
 		{Joins: "·∙", Fg: P(HEngine, 215), Bg: P(HNebula, 30)},
 		{Joins: "·∙", Fg: P(HEngine, 190), Bg: P(HNebula, 30)},

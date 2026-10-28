@@ -188,3 +188,33 @@ ui.mapstyle.roguelike.visitor.walkerLines.02,"A tiny visitor far from home, on a
 ui.mapstyle.roguelike.visitor.walkerLines.03,"Lost and unbothered, it is in its wander era."
 ui.mapstyle.roguelike.visitor.visitorAt.01,Sus craft
 ui.mapstyle.roguelike.visitor.visitorAt.02,Mystery mutual
+ui.mapstyle.roguelike.inspect.describeCiv.01,", vibe check "
+ui.mapstyle.roguelike.inspect.describeCiv.02,power level 
+ui.mapstyle.roguelike.inspect.describeCiv.03,", hustles in "
+ui.mapstyle.roguelike.inspect.describeCiv.04,hustle
+ui.mapstyle.roguelike.inspect.describeCiv.05,hustles
+ui.mapstyle.roguelike.inspect.describeCiv.06, so far
+ui.mapstyle.roguelike.inspect.describeCiv.09, lent out to your squad
+ui.mapstyle.roguelike.inspect.describeTrail.01,Path to the 
+ui.mapstyle.roguelike.inspect.describeTrail.02,beefing: the trail is closed
+ui.mapstyle.roguelike.inspect.describeTrail.03, got cooked
+ui.mapstyle.roguelike.inspect.describeTrail.04, the convoys bring 
+ui.mapstyle.roguelike.inspect.describeTrail.05, convoys
+ui.mapstyle.roguelike.inspect.describeTrail.06,"no convoys, ghost road"
+ui.mapstyle.roguelike.space_inspect.describeLane.01,Route to the 
+ui.mapstyle.roguelike.space_inspect.describeLane.02,"beefing, the lane is shut"
+ui.mapstyle.roguelike.space_inspect.describeLane.04, hauls 
+ui.mapstyle.roguelike.space_inspect.describeLane.05,"empty, ghost lane"
+ui.mapstyle.roguelike.inspect.describe.02,RNG 
+ui.mapstyle.roguelike.inspect.describe.03,beef level 
+ui.mapstyle.roguelike.inspect.describe.04,Chilling crew
+ui.mapstyle.roguelike.inspect.describe.07," doing absolutely nothing, no thoughts"
+ui.mapstyle.roguelike.inspect.describe.11,Recon squad: 
+ui.mapstyle.roguelike.inspect.describe.12, ticks until they spill the tea
+mapmodel.commands.WarningLine.01,is yapping about impending doom
+mapmodel.commands.WarningLine.02,is spilling the tea on 
+ui.mapstyle.mission.military.01,the squad: 
+ui.mapstyle.roguelike.inspect.describeCiv.07,grinder
+ui.mapstyle.roguelike.inspect.describeCiv.08,grinders
+ui.mapstyle.roguelike.inspect.describe.05,NPC
+ui.mapstyle.roguelike.inspect.describe.06,NPCs

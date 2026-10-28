@@ -38,6 +38,24 @@ func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 		return Inspection{Title: mapmodel.LineageName(mapmodel.LinHousing)}
 	case mapgen.KindVisitor:
 		return describeVisitor(th)
+	case mapgen.KindCiv:
+		if civ := m.Faction(th.Key); civ != nil {
+			return describeCiv(m, civ)
+		}
+	case mapgen.KindRoute:
+		if civ := m.Faction(th.Key); civ != nil {
+			return describeRoute(m, civ, th.Ref)
+		}
+	case mapgen.KindHarbinger:
+		if m.Harbinger != nil {
+			return describeHarbinger(m.Harbinger)
+		}
+	case mapgen.KindMission:
+		if trip := tripOf(m, th.Key); trip != nil {
+			return describeMission(trip, th.Key)
+		}
+	case mapgen.KindIdle:
+		return describeIdle(m)
 	case mapgen.KindRoad, mapgen.KindAgent:
 		return describeRoad(m, th.Key)
 	case mapgen.KindTerrain:
@@ -46,6 +64,14 @@ func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 		}
 	}
 	return Inspection{Title: m.TownName}
+}
+
+// tripOf is the party that is out under a key ("scout" or "military").
+func tripOf(m *mapmodel.Model, key string) *mapmodel.Trip {
+	if key == "scout" {
+		return m.Expeditions.Scout
+	}
+	return m.Expeditions.Military
 }
 
 // describeBuilding says what the cursor is on when it is on a building type

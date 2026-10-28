@@ -22,6 +22,9 @@ var natural = [numBiomes]Look{
 var stoneEra = AgeStyle{
 	Scale:   Ground,
 	Visitor: onFoot,
+	Caravan: byCart,
+	Omen:    omen(HFire),
+	Site:    siteFlag,
 	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsLight, Fg: P(HPath, 235), Bg: P(HEarth, 40)},
@@ -80,6 +83,9 @@ var stoneEra = AgeStyle{
 var ironEra = AgeStyle{
 	Scale:   Ground,
 	Visitor: onFoot,
+	Caravan: byCart,
+	Omen:    omen(HRed),
+	Site:    siteFlag,
 	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsLight, Fg: P(HPath, 235), Bg: P(HEarth, 40)},
@@ -138,6 +144,9 @@ var ironEra = AgeStyle{
 var steelEra = AgeStyle{
 	Scale:   City,
 	Visitor: onFoot,
+	Caravan: byCart,
+	Omen:    omen(HRed),
+	Site:    siteFlag,
 	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HStone, 220), Bg: P(HConcrete, 36)},
@@ -196,6 +205,9 @@ var steelEra = AgeStyle{
 var electricEra = AgeStyle{
 	Scale:   City,
 	Visitor: onFoot,
+	Caravan: byTruck,
+	Omen:    omen(HAmber),
+	Site:    siteFlag,
 	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HConcrete, 235), Bg: P(HAsphalt, 80)},
@@ -255,6 +267,9 @@ var electricEra = AgeStyle{
 var digitalEra = AgeStyle{
 	Scale:   City,
 	Visitor: onFoot,
+	Caravan: byTruck,
+	Omen:    omen(HCool),
+	Site:    siteFlag,
 	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HConcrete, 235), Bg: P(HAsphalt, 90)},
@@ -315,6 +330,9 @@ var digitalEra = AgeStyle{
 var neonEra = AgeStyle{
 	Scale:   City,
 	Visitor: onFoot,
+	Caravan: byHover,
+	Omen:    omen(HNeon),
+	Site:    siteFlag,
 	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HCyan, 200), Bg: P(HAsphalt, 110)},

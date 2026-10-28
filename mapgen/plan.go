@@ -61,6 +61,8 @@ type Plan struct {
 	// map.
 	Bodies []Pt
 	Nodes  []Pt
+	// NodeRoad is the road that ends at each node of a star map.
+	NodeRoad []int
 }
 
 // Parcel sizes. A cell is about twice as tall as wide, so these read as

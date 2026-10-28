@@ -22,7 +22,9 @@ type frame struct {
 	g      *Grid
 	anim   int
 	visit  int // the frame the rare visitor is drawn at; negative: none
-	night  int // 0 day .. 256 full night
+	sites  []site
+	box    Rect // the edge of the picture, once worked out
+	night  int  // 0 day .. 256 full night
 	placed []placed
 	filler []int // lots given to ordinary houses
 	// shown is how many cells of each road are laid; roadAt is the tier+1
@@ -114,6 +116,7 @@ func (f *frame) draw() {
 	f.paintSmoke()
 	f.paintAgents()
 	f.paintBodies()
+	f.paintAround()
 	f.paintLight()
 	f.paintVisitor()
 }

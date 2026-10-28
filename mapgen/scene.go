@@ -33,7 +33,11 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, anim, visit int) *Scene {
 	slices.SortStableFunc(f.targets, func(a, b Pt) int {
 		return cmp.Compare(Rect{a.X, a.Y, 1, 1}.dist(c), Rect{b.X, b.Y, 1, 1}.dist(c))
 	})
-	return &Scene{Grid: f.g, Centre: c, Bounds: f.bounds(), Targets: f.targets}
+	bounds := f.bounds()
+	if len(f.sites) > 0 && f.st.Scale != Stars {
+		bounds = f.edge() // the civs stand at the edge of the picture
+	}
+	return &Scene{Grid: f.g, Centre: c, Bounds: bounds, Targets: f.targets}
 }
 
 // bounds is the box round everything the town has laid or built, with a

@@ -1,5 +1,13 @@
 package mapmodel
 
+import (
+	"cmp"
+	"slices"
+	"strconv"
+
+	"github.com/espresso20/ageforge/vibe"
+)
+
 // commands.go is the command vocabulary the map teaches. Whatever the
 // cursor is on, the model says which command a player would type for it,
 // so the map speaks the registry's words and a test can check them against
@@ -24,6 +32,15 @@ func (m *Model) BuildingCommand(b *Building) string {
 	return "build " + b.Key
 }
 
+// WarningLine is the harbinger's inspect line: what it warns of, in the
+// game's words, never the era to come.
+func (h *Harbinger) WarningLine() string {
+	if h == nil || h.Warning == "" {
+		return vibe.Line("mapmodel.commands.WarningLine.01", "warns of impending doom")
+	}
+	return vibe.Line("mapmodel.commands.WarningLine.02", "warns of ") + h.Warning
+}
+
 // WonderCommand is the command for a wonder: bank into the one rising,
 // otherwise open the wonders panel.
 func (m *Model) WonderCommand(w *Wonder) string {
@@ -33,10 +50,48 @@ func (m *Model) WonderCommand(w *Wonder) string {
 	return "wonders"
 }
 
+// FactionCommand is the command for a civ: go and find it, sue for peace,
+// mend a feud, or send a gift.
+func (m *Model) FactionCommand(f *Faction) string {
+	switch {
+	case f == nil:
+		return ""
+	case !f.Discovered:
+		return "expedition"
+	case f.Relation == RelWar:
+		return "diplomacy tribute " + f.Key
+	case f.Relation == RelEmbargo || f.Relation == RelRival:
+		return "diplomacy neutral " + f.Key
+	}
+	return "diplomacy gift " + f.Key
+}
+
+// RouteCommand is the command for a trade route.
+func (m *Model) RouteCommand(*Route) string { return "trade route list" }
+
+// IdleCommand is the command for idle hands: put them in the building
+// most short of workers, or recruit when nobody is idle.
+func (m *Model) IdleCommand() string {
+	var short []*Building
+	for _, b := range m.Buildings {
+		if b.Count > 0 && b.Staffing >= 0 && b.Staffing < 1 && !b.Legacy {
+			short = append(short, b)
+		}
+	}
+	if m.Workers.Idle == 0 || len(short) == 0 {
+		return "recruit"
+	}
+	slices.SortStableFunc(short, func(a, b *Building) int { return cmp.Compare(a.Staffing, b.Staffing) })
+	return "assign " + short[0].Key + " " + strconv.Itoa(m.Workers.Idle)
+}
+
 // Fixed commands for the rest of the map.
 const (
-	CmdStatus  = "status"
-	CmdAdvance = "advance"
+	CmdHarbinger  = "harbinger"
+	CmdExpedition = "expedition"
+	CmdStatus     = "status"
+	CmdArmy       = "army"
+	CmdAdvance    = "advance"
 )
 
 // SquareCommand is the command for the settlement's centre: advance when
@@ -65,7 +120,16 @@ func (m *Model) AllCommands() []string {
 	for i := range m.Wonders {
 		add(m.WonderCommand(&m.Wonders[i]))
 	}
+	for i := range m.Factions {
+		add(m.FactionCommand(&m.Factions[i]))
+	}
+	for i := range m.Routes {
+		add(m.RouteCommand(&m.Routes[i]))
+	}
+	add(m.IdleCommand())
 	add(m.SquareCommand())
-	add(CmdStatus)
+	for _, c := range []string{CmdHarbinger, CmdExpedition, CmdStatus, CmdArmy} {
+		add(c)
+	}
 	return out
 }

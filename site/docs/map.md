@@ -67,6 +67,16 @@ This age's wonder appears on its own plot, rising from the ground under scaffold
 
 Around the buildings the land is dressed too: trees and rocks, crops, chimney smoke, and people and traffic on the roads. Nothing moves when `motion` is off. At night the light fades and the windows and lamps glow.
 
+### The world around the town
+
+The Map draws what the header and the news report. Each civilization you have met stands at the edge of the picture, in a direction of its own, marked in a color for its opinion of you: allied, friendly, neutral, rival or at war. A trade route is a line of dots from the square toward its partner, with caravans going back and forth on it. A route that is disrupted has one caravan stalled on it.
+
+When scouts are out, a small party walks out along a road and back. An army that is out marches toward the civilization that likes you least. The harbinger, while there is one, stands by the square, dressed in the colors of the age, and idle workers loiter round the square: one for every six who have nothing to do, up to nine. Nothing here covers a building.
+
+From the Space Age the same things appear as stars at the edge of the picture, with lanes to them and ships on the lanes. On the star map the civilizations live at the systems themselves.
+
+Put the cursor on any of them and the Map names it: the civilization with its opinion of you, its strength and its trades, the trail or lane to it with what its caravans bring, the harbinger with its warning, the party that is out, or the idle workers with the command to put them to work. `Tab` goes on from the buildings and wonders to the civilizations at the edge.
+
 ### The rare visitor
 
 Now and then someone comes to the Map from somewhere else. On the land a small visitor walks in along one of the trunk roads from beyond the edge of the view, stops a few cells from the square and is gone. In orbit and the solar system it is a ship, flying in from the edge of the map to one of the lanes. Rarer still, an alien's craft crosses over the town, or drops in over open ground, hangs there and shoots off.

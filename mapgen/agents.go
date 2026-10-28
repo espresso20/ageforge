@@ -28,20 +28,26 @@ func (f *frame) paintAgents() {
 func (f *frame) paintAgent(k AgentKind, kind, id int, routes []int) {
 	seed := f.m.Seed
 	index := routes[roll(len(routes), seed, 70, int64(kind), int64(id))]
-	road, length := f.plan.Roads[index], f.shown[index]
-	span := 2 * (length - 1)
-	pos := (roll(span, seed, 71, int64(kind), int64(id)) + f.anim/max(k.Slow, 1)) % span
-	forward := pos < length
-	i := pos
+	cells := f.plan.Roads[index].Cells[:f.shown[index]]
+	offset := roll(2*(len(cells)-1), seed, 71, int64(kind), int64(id))
+	p, dx, dy := pace(cells, offset, f.anim, k.Slow)
+	f.g.draw(p.X, p.Y, heading(k.Glyphs, dx, dy), k.Fg)
+	f.g.mark(p.X, p.Y, Thing{Kind: KindAgent, Key: k.Name})
+}
+
+// pace is where a figure going back and forth along cells is at a frame, and
+// the way it is heading: a cell every slow frames, from the cell its number
+// (offset) puts it at, out to the end and back.
+func pace(cells []Pt, offset, anim, slow int) (at Pt, dx, dy int) {
+	span := 2 * (len(cells) - 1)
+	pos := (offset + anim/max(slow, 1)) % span
+	forward := pos < len(cells)
+	i, next := pos, min(pos+1, len(cells)-1)
 	if !forward {
 		i = span - pos
+		next = max(i-1, 0)
 	}
-	from, to := road.Cells[i], road.Cells[min(i+1, length-1)]
-	if !forward {
-		to = road.Cells[max(i-1, 0)]
-	}
-	f.g.draw(from.X, from.Y, heading(k.Glyphs, to.X-from.X, to.Y-from.Y), k.Fg)
-	f.g.mark(from.X, from.Y, Thing{Kind: KindAgent, Key: k.Name})
+	return cells[i], cells[next].X - cells[i].X, cells[next].Y - cells[i].Y
 }
 
 // heading picks the glyph for travelling by (dx, dy): a set of four is

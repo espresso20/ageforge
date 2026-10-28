@@ -166,7 +166,7 @@ func TestRuinsLeaveRubble(t *testing.T) {
 }
 
 // TestSpaceScalesDrawTheirBodies: each space age shows what its scale is made
-// of, and the sign of a building line in the lines' hues.
+// of (a system a civilization lives at still counts as a star).
 func TestSpaceScalesDrawTheirBodies(t *testing.T) {
 	for _, c := range []struct {
 		age  string
@@ -181,6 +181,8 @@ func TestSpaceScalesDrawTheirBodies(t *testing.T) {
 		for _, h := range g.Hit {
 			if th := g.Things[h]; th.Kind == KindTerrain {
 				seen[th.Key]++
+			} else if th.Kind == KindCiv {
+				seen["star"]++
 			}
 		}
 		for key, n := range c.want {
