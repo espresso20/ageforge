@@ -217,18 +217,7 @@ func TestLabVisitors(t *testing.T) {
 				f := mapstyle.Frame{Model: m, Anim: frame, Clock: frame}
 				scr := capture.NewScreen(120, 36)
 				v.Draw(scr, mapstyle.Rect{W: 120, H: 36}, f)
-				for p, _ := v.Pointer(); p.X != at.X || p.Y != at.Y; p, _ = v.Pointer() {
-					key, mod := tcell.KeyRight, tcell.ModNone
-					switch {
-					case at.X < p.X:
-						key = tcell.KeyLeft
-					case at.X == p.X && at.Y < p.Y:
-						key = tcell.KeyUp
-					case at.X == p.X:
-						key = tcell.KeyDown
-					}
-					v.HandleKey(tcell.NewEventKey(key, 0, mod), f)
-				}
+				steerTo(v, f, at)
 				v.Draw(scr, mapstyle.Rect{W: 120, H: 36}, f)
 				writeShot(t, dir, fmt.Sprintf("visitor_%s_%s", age, form), scr)
 				scr.Fini()
@@ -258,6 +247,57 @@ func TestLabWorld(t *testing.T) {
 			mapstyle.New().Draw(scr, mapstyle.Rect{W: shot.w, H: shot.h}, mapstyle.Frame{Model: m, Anim: 21, Clock: 21})
 			writeShot(t, dir, fmt.Sprintf("world_%s_%s", age, shot.name), scr)
 			scr.Fini()
+		}
+	}
+}
+
+// steerTo presses the arrow keys until the cursor of a view is on a cell.
+func steerTo(v mapstyle.Style, f mapstyle.Frame, at mapgen.Pt) {
+	for p, _ := v.Pointer(); p.X != at.X || p.Y != at.Y; p, _ = v.Pointer() {
+		key := tcell.KeyRight
+		switch {
+		case at.X < p.X:
+			key = tcell.KeyLeft
+		case at.X == p.X && at.Y < p.Y:
+			key = tcell.KeyUp
+		case at.X == p.X:
+			key = tcell.KeyDown
+		}
+		v.HandleKey(tcell.NewEventKey(key, 0, tcell.ModNone), f)
+	}
+}
+
+// TestLabInspect draws the cursor on traffic and on the things of the space
+// ages, so the inspector line shows what each is.
+func TestLabInspect(t *testing.T) {
+	dir := labDir(t)
+	fixture.WithTheme(t, "forge")
+	var gen mapgen.Generator
+	for _, c := range []struct {
+		age  string
+		kind mapgen.Kind
+		key  string
+	}{
+		{"modern_age", mapgen.KindAgent, "car"}, {"iron_age", mapgen.KindAgent, "ox_cart"},
+		{"space_age", mapgen.KindTerrain, "home"}, {"space_age", mapgen.KindRoad, "tether"},
+		{"interstellar_age", mapgen.KindTerrain, "sun"}, {"interstellar_age", mapgen.KindTerrain, "planet"},
+		{"galactic_age", mapgen.KindTerrain, "star"}, {"galactic_age", mapgen.KindRoad, "route"},
+		{"space_age", mapgen.KindBuilding, ""},
+	} {
+		m := labModel(c.age, labNoon)
+		f := mapstyle.Frame{Model: m, Anim: 17, Clock: 17}
+		g := gen.Draw(m, 17).Grid
+		for i, h := range g.Hit {
+			if th := g.Things[h]; th.Kind == c.kind && (c.key == "" || th.Key == c.key) {
+				v := mapstyle.New()
+				scr := capture.NewScreen(120, 36)
+				v.Draw(scr, mapstyle.Rect{W: 120, H: 36}, f)
+				steerTo(v, f, mapgen.Pt{X: i % g.W, Y: i / g.W})
+				v.Draw(scr, mapstyle.Rect{W: 120, H: 36}, f)
+				writeShot(t, dir, fmt.Sprintf("inspect_%s_%s%s", c.age, c.key, map[bool]string{true: "building", false: ""}[c.kind == mapgen.KindBuilding]), scr)
+				scr.Fini()
+				break
+			}
 		}
 	}
 }
