@@ -103,7 +103,7 @@ type mapPanel struct {
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
-	p := &mapPanel{mv: mv, view: newMapStyle(), now: time.Now}
+	p := &mapPanel{mv: mv, view: mapstyle.New(), now: time.Now}
 	p.barPanel = newBarPanel(p.routeKey)
 	p.start = p.now()
 	p.set = defaultMapSettings()

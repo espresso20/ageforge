@@ -34,7 +34,6 @@ var scanned = []struct {
 	{"game", modeCode},
 	{"ui", modeCode},
 	{"ui/mapstyle", modeCode},
-	{"ui/mapstyle/roguelike", modeCode},
 	{".", modeCode},
 }
 
@@ -52,7 +51,6 @@ var notScanned = map[string]string{
 	"pkg/sprites":           "pixel art",
 	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",
 	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
-	"ui/mapstyle/procmap":   "the engine's map view: it says only what roguelike's words say, through its exports",
 	"ui/mapstyle/styletest": "checks shared by the map tests, never shown in the game",
 }
 

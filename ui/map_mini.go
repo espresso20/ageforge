@@ -68,7 +68,7 @@ type miniMap struct {
 }
 
 func newMiniMap(mv *mapViews) *miniMap {
-	m := &miniMap{Box: tview.NewBox(), mv: mv, view: newMapStyle(), now: time.Now}
+	m := &miniMap{Box: tview.NewBox(), mv: mv, view: mapstyle.New(), now: time.Now}
 	m.start = m.now()
 	m.set = defaultMapSettings()
 	return m

@@ -17,13 +17,11 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
-	"github.com/espresso20/ageforge/ui/mapstyle/procmap"
-	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
 // The lab captures: the engine's map as the player gets it (through the
-// screen layer, in the theme, with the map's header and inspector round it),
-// and today's map beside it for a few ages. Run it with
+// screen layer, in the theme, with the map's header and inspector round it).
+// Run it with
 //
 //	go test -tags procmaplab -run 'TestLab' ./mapgen
 //
@@ -34,12 +32,6 @@ const (
 	labNoon     = 225 + 1800*5
 	labMidnight = 1125 + 1800*5
 )
-
-// labOldAges are the ages today's map is captured for, one to an era.
-var labOldAges = map[string]bool{
-	"bronze_age": true, "medieval_age": true, "industrial_age": true, "atomic_age": true,
-	"digital_age": true, "space_age": true,
-}
 
 func outDir() string {
 	if d := os.Getenv("PROCMAP_OUT"); d != "" {
@@ -86,36 +78,25 @@ func panel(v mapstyle.Style, m *mapmodel.Model, w, h int) tcell.SimulationScreen
 	return scr
 }
 
-// TestLabCaptures draws every age: the engine by day and by night at the big
-// size, and as the whole-town overview at the small one; and, for the ages
-// today's map is shown for, today's map by day at both sizes.
+// TestLabCaptures draws every age: by day and by night at the big size, and as
+// the whole-town overview at the small one.
 func TestLabCaptures(t *testing.T) {
 	dir := labDir(t)
 	fixture.WithTheme(t, "forge")
 	for _, age := range mapmodel.NewCatalog().Ages {
 		shots := []struct {
-			name    string
-			tick    int
-			w, h    int
-			old, nw bool
+			name string
+			tick int
+			w, h int
 		}{
-			{"day_120x36", labNoon, 120, 36, labOldAges[age], true},
-			{"night_120x36", labMidnight, 120, 36, false, true},
-			{"day_80x24", labNoon, 80, 24, labOldAges[age], true},
+			{"day_120x36", labNoon, 120, 36},
+			{"night_120x36", labMidnight, 120, 36},
+			{"day_80x24", labNoon, 80, 24},
 		}
 		for _, shot := range shots {
-			m := labModel(age, shot.tick)
-			base := age + "_" + shot.name
-			if shot.nw {
-				scr := panel(procmap.New(), m, shot.w, shot.h)
-				writeShot(t, dir, base+"_new", scr)
-				scr.Fini()
-			}
-			if shot.old {
-				scr := panel(roguelike.New(), m, shot.w, shot.h)
-				writeShot(t, dir, base+"_old", scr)
-				scr.Fini()
-			}
+			scr := panel(mapstyle.New(), labModel(age, shot.tick), shot.w, shot.h)
+			writeShot(t, dir, age+"_"+shot.name+"_new", scr)
+			scr.Fini()
 		}
 	}
 }
@@ -179,7 +160,7 @@ func TestLabWonders(t *testing.T) {
 					t.Fatalf("%s: the wonder %s is not in the world", age, key)
 				}
 				scr := capture.NewScreen(w, h)
-				procmap.Blit(scr, mapstyle.Rect{W: w, H: h}, scene.Grid.Window(x0, y0, w, h), mapmodel.TierUnicode)
+				mapstyle.Blit(scr, mapstyle.Rect{W: w, H: h}, scene.Grid.Window(x0, y0, w, h), mapmodel.TierUnicode)
 				writeShot(t, dir, fmt.Sprintf("%s_wonder_%s_%s", age, stage, tick.name), scr)
 				scr.Fini()
 			}
@@ -197,7 +178,7 @@ func TestLabThemes(t *testing.T) {
 			name string
 			tick int
 		}{{"day", labNoon}, {"night", labMidnight}} {
-			scr := panel(procmap.New(), labModel("modern_age", tick.tick), 120, 36)
+			scr := panel(mapstyle.New(), labModel("modern_age", tick.tick), 120, 36)
 			writeShot(t, dir, fmt.Sprintf("theme_%s_modern_age_%s", key, tick.name), scr)
 			scr.Fini()
 		}

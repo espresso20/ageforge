@@ -54,15 +54,6 @@ var ageIndex = func() map[string]int {
 	return out
 }()
 
-// ageNo is the index of the age with config key k, or -1 for "" or a key
-// that is not an age.
-func ageNo(k string) int {
-	if i, ok := ageIndex[k]; ok {
-		return i
-	}
-	return -1
-}
-
 // LineageNames are the player-facing names of each lineage.
 var LineageNames = map[string]vibe.Entry{
 	LinHousing: vibe.E("map.lineage.housing", "housing"), LinFood: vibe.E("map.lineage.food", "farms and food"), LinWood: vibe.E("map.lineage.organic_extraction", "wood and fibre"),

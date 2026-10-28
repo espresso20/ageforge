@@ -25,10 +25,9 @@ var simPackages = []string{"boon", "config", "detmath", "flavor", "game", "mapmo
 
 // mapRenderPackages are the map renderers. What they draw depends only on the map
 // model and the animation frame, and it should look the same on every machine,
-// so they follow the no-transcendentals rule too (mapmodel.Sin, Cos, Log2 and
-// Noise are there for them). They are UI, not simulation, so the FMA check does
-// not cover them.
-var mapRenderPackages = []string{"mapgen", "ui/mapstyle", "ui/mapstyle/procmap", "ui/mapstyle/roguelike"}
+// so they follow the no-transcendentals rule too. They are UI, not
+// simulation, so the FMA check does not cover them.
+var mapRenderPackages = []string{"mapgen", "ui/mapstyle"}
 
 const modulePath = "github.com/espresso20/ageforge"
 

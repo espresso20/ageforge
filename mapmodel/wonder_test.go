@@ -20,17 +20,12 @@ func TestWonderHiddenUntilStarted(t *testing.T) {
 		}
 		shown := func(st game.GameState) bool {
 			m := build(t, st, nil)
-			inWonders, onPlot := false, false
 			for _, w := range m.Wonders {
-				inWonders = inWonders || w.Key == key
+				if w.Key == key {
+					return true
+				}
 			}
-			for _, w := range m.Town.Wonders {
-				onPlot = onPlot || w.Key == key
-			}
-			if inWonders != onPlot {
-				t.Errorf("%s: %s in the wonders %v but on its plot %v", age, key, inWonders, onPlot)
-			}
-			return inWonders
+			return false
 		}
 		bs := st.Buildings[key]
 		bs.WonderBank = nil

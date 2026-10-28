@@ -77,7 +77,12 @@ func (p *Palette) Backgrounds() []tcell.Color {
 // style that changes the palette's colours after NewPalette (a night city)
 // calls it again.
 func (p *Palette) FitCursor() {
-	paints := p.Paints()
+	p.Cursor, p.CursorAlt = fitCursor(p.Paints(), p.Bg, cursorCandidates())
+}
+
+// fitCursor chooses the cursor's two styles from the candidate fills, against
+// the colours a map is drawn in and the background it stands on.
+func fitCursor(paints []tcell.Color, bg tcell.Color, candidates []tcell.Color) (cursor, alt tcell.Style) {
 	apart := func(c tcell.Color) float64 {
 		least := -1.0
 		for _, m := range paints {
@@ -88,8 +93,8 @@ func (p *Palette) FitCursor() {
 		return least
 	}
 	fill, best, found := theme.Color(theme.RoleText), -1.0, false
-	for _, c := range cursorCandidates() {
-		stands := theme.ContrastRatio(c, p.Bg) >= cursorMinContrast
+	for _, c := range candidates {
+		stands := theme.ContrastRatio(c, bg) >= cursorMinContrast
 		// The first candidate that stands out is taken; a later one must
 		// be clearly further from the map to replace it, so the warm ones
 		// at the head of the list win a near tie.
@@ -99,9 +104,10 @@ func (p *Palette) FitCursor() {
 	}
 	// The blink's other half is the same fill a step brighter (darker on a
 	// light theme): further from the background still.
-	alt := theme.Mix(fill, theme.BestOn(p.Bg), cursorBlinkStep)
-	p.Cursor = tcell.StyleDefault.Foreground(theme.BestOn(fill)).Background(fill).Bold(true)
-	p.CursorAlt = tcell.StyleDefault.Foreground(theme.BestOn(alt)).Background(alt).Bold(true)
+	brighter := theme.Mix(fill, theme.BestOn(bg), cursorBlinkStep)
+	cursor = tcell.StyleDefault.Foreground(theme.BestOn(fill)).Background(fill).Bold(true)
+	alt = tcell.StyleDefault.Foreground(theme.BestOn(brighter)).Background(brighter).Bold(true)
+	return cursor, alt
 }
 
 // CursorStyle is the cursor's style at animation frame anim: the fill, and
@@ -112,6 +118,20 @@ func (p *Palette) CursorStyle(anim int) tcell.Style {
 		return p.CursorAlt
 	}
 	return p.Cursor
+}
+
+// CursorOver is the cursor's style at animation frame anim over a cell whose
+// ground is ground. The palette's own fill is kept while it stands clear of
+// the ground; over a ground the palette never drew (a map that colours its
+// land itself) the fill is chosen again against that ground alone, black or
+// white being the last resort that always stands out.
+func (p *Palette) CursorOver(ground tcell.Color, anim int) tcell.Style {
+	_, fill, _ := p.Cursor.Decompose()
+	if theme.Distance(fill, ground) >= CursorFromGround && theme.ContrastRatio(fill, ground) >= CursorOverGround {
+		return p.CursorStyle(anim)
+	}
+	cursor, alt := fitCursor([]tcell.Color{ground}, ground, append(cursorCandidates(), theme.BestOn(ground)))
+	return (&Palette{Cursor: cursor, CursorAlt: alt}).CursorStyle(anim)
 }
 
 // CursorMargins measures how far the cursor stands from the palette, for

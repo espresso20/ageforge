@@ -72,20 +72,6 @@ type Sym uint16
 
 const (
 	SymNone Sym = iota
-	// terrain
-	SymDeep
-	SymShallow
-	SymRiver
-	SymBeach
-	SymGrass1
-	SymGrass2
-	SymGrass3
-	SymForest
-	SymForest2
-	SymPine
-	SymHills
-	SymMountain
-	SymStar
 	SymStarBig
 	// lineages (housing, fields and stores re-skin by epoch: see LineageSym)
 	SymHut
@@ -106,7 +92,6 @@ const (
 	SymEnergy
 	SymHarbor
 	SymHacker
-	SymLaunch
 	SymKnowledge
 	SymFaith
 	SymCulture
@@ -122,24 +107,12 @@ const (
 	SymPlazaDigital
 	SymPlazaNeon
 	SymPlazaCosmic
-	// life and state
-	SymWorker
-	SymIdle
-	SymCaravan
-	SymScout
-	SymRaider
-	SymSmoke1
-	SymSmoke2
-	SymSmoke3
+	// state
 	SymRuin
 	SymWar
 	SymHarbinger
 	SymHazard
-	SymFire
 	SymCiv
-	SymFresh
-	SymWarning
-	SymCursor
 	// weather and sky
 	SymSun
 	SymMoon
@@ -147,62 +120,19 @@ const (
 	SymRain
 	SymSnow
 	SymBolt
-	// vehicles
-	SymCart
-	SymShip
-	SymTrain
-	SymCar
-	SymPlane
-	SymHeli
-	SymRocket
-	SymDrone
-	SymSatellite
-	// resources and gauges
+	// resources
 	SymGold
 	SymFood
-	SymPop
-	SymBuild
-	// movers: the traffic each age adds (movers.go). Walkers, steam and
-	// freight trains, steamships, planes, drones and satellites reuse the
-	// symbols above.
-	SymHunter
-	SymOxCart
-	SymRider
-	SymRowboat
-	SymWagon
-	SymSailShip
-	SymTram
-	SymAuto
-	SymTruck
-	SymBoxShip
-	SymMaglev
-	SymHovercar
-	SymShuttle
-	SymOrbital
 	// the rare visitor (never in a legend)
 	SymUFO
-	SymAlien
 	numSyms
 )
 
 // glyphTable is the symbol table. Nerd code points are Font Awesome icons
 // as Nerd Fonts ships them (nf-fa-*), all single width in a Nerd Font.
 var glyphTable = [numSyms]Glyph{
-	SymNone:     {' ', ' ', 0},
-	SymDeep:     {'~', '≈', 0},
-	SymShallow:  {'~', '~', 0},
-	SymRiver:    {'~', '≈', 0},
-	SymBeach:    {'.', '·', 0},
-	SymGrass1:   {'.', '.', 0},
-	SymGrass2:   {',', ',', 0},
-	SymGrass3:   {'\'', '\'', 0},
-	SymForest:   {'T', '♣', 0xf1bb},
-	SymForest2:  {'t', 'τ', 0},
-	SymPine:     {'A', '♠', 0},
-	SymHills:    {'^', '^', 0},
-	SymMountain: {'A', '▲', 0},
-	SymStar:     {'.', '·', 0},
-	SymStarBig:  {'*', '✦', 0xf005},
+	SymNone:    {' ', ' ', 0},
+	SymStarBig: {'*', '✦', 0xf005},
 
 	SymHut:         {'n', '∩', 0xf015},
 	SymHouse:       {'h', '⌂', 0xf015},
@@ -222,7 +152,6 @@ var glyphTable = [numSyms]Glyph{
 	SymEnergy:      {'&', '☼', 0xf0e7},
 	SymHarbor:      {'J', '╤', 0xf13d},
 	SymHacker:      {'L', 'λ', 0xf121},
-	SymLaunch:      {'!', '↑', 0xf135},
 	SymKnowledge:   {'S', '§', 0xf02d},
 	SymFaith:       {'+', 'Ω', 0xf0f3},
 	SymCulture:     {'m', '♫', 0xf001},
@@ -239,23 +168,11 @@ var glyphTable = [numSyms]Glyph{
 	SymPlazaNeon:    {'O', '◙', 0xf0ac},
 	SymPlazaCosmic:  {'*', '☼', 0xf185},
 
-	SymWorker:    {'o', '☺', 0xf183},
-	SymIdle:      {'O', '☻', 0xf007},
-	SymCaravan:   {'&', '&', 0xf0d1},
-	SymScout:     {'@', '@', 0xf1e5},
-	SymRaider:    {'>', '»', 0xf05b},
-	SymSmoke1:    {'.', '∙', 0},
-	SymSmoke2:    {'o', '°', 0},
-	SymSmoke3:    {'\'', '˚', 0},
 	SymRuin:      {'%', '%', 0xf127},
 	SymWar:       {'X', '×', 0xf00d},
 	SymHarbinger: {'Y', 'Ψ', 0xf06e},
 	SymHazard:    {'!', '‼', 0xf071},
-	SymFire:      {'^', '^', 0xf06d},
 	SymCiv:       {'C', '▪', 0xf286},
-	SymFresh:     {'+', '+', 0xf055},
-	SymWarning:   {'!', '⚠', 0xf071},
-	SymCursor:    {'X', '▸', 0xf0da},
 
 	SymSun:   {'O', '☼', 0xf185},
 	SymMoon:  {'C', '☾', 0xf186},
@@ -264,49 +181,16 @@ var glyphTable = [numSyms]Glyph{
 	SymSnow:  {'*', '❄', 0xf2dc},
 	SymBolt:  {'Z', 'ϟ', 0xf0e7},
 
-	SymCart:      {'o', '▭', 0xf0d1},
-	SymShip:      {'v', '◒', 0xf21a},
-	SymTrain:     {'=', '▬', 0xf238},
-	SymCar:       {'o', '▭', 0xf1b9},
-	SymPlane:     {'>', '✈', 0xf072},
-	SymHeli:      {'+', '✢', 0xf072},
-	SymRocket:    {'^', '▲', 0xf135},
-	SymDrone:     {'x', '✕', 0xf1d8},
-	SymSatellite: {'+', '✧', 0xf1eb},
+	SymGold: {'$', '¤', 0xf155},
+	SymFood: {'f', '♣', 0xf06c},
 
-	SymGold:  {'$', '¤', 0xf155},
-	SymFood:  {'f', '♣', 0xf06c},
-	SymPop:   {'p', '☺', 0xf0c0},
-	SymBuild: {'#', '▲', 0xf275},
-
-	// Movers that never share an age may share a shape (an ox cart and a
-	// car are both a box on the street); movers that do share an age differ.
-	SymHunter:   {'i', '♂', 0xf1b0}, // paw
-	SymOxCart:   {'c', '▭', 0xf0d1}, // truck
-	SymRider:    {'R', '♞', 0xf21c}, // motorcycle: Font Awesome 4 has no horse
-	SymRowboat:  {'u', '◡', 0xf21a}, // ship
-	SymWagon:    {'w', '▮', 0xf0d1},
-	SymSailShip: {'A', '△', 0xf21a},
-	SymTram:     {'B', '◫', 0xf207}, // bus
-	SymAuto:     {'a', '▭', 0xf1b9}, // car
-	SymTruck:    {'r', '▮', 0xf0d1},
-	SymBoxShip:  {'D', '▥', 0xf21a},
-	SymMaglev:   {'=', '▰', 0xf239}, // subway
-	SymHovercar: {'z', '◇', 0xf1ba}, // taxi
-	SymShuttle:  {'^', '▴', 0xf197}, // space shuttle
-	SymOrbital:  {'0', '◎', 0xf1cd}, // life ring
-	SymUFO:      {'O', '◉', 0xf192}, // dot in a circle
-	SymAlien:    {'Q', '☿', 0xf21b}, // a figure in disguise
+	SymUFO: {'O', '◉', 0xf192}, // dot in a circle
 }
 
-// G returns a symbol's glyph record, the Earth arc's (glyphs_city.go) and
-// the sky arc's (glyphs_space.go) included.
+// G returns a symbol's glyph record.
 func G(s Sym) Glyph {
-	if g, ok := skyGlyph(s); ok {
-		return g
-	}
 	if s >= numSyms {
-		return extGlyph(s) // a block kept in its own file (glyphs_city.go)
+		return glyphTable[SymNone]
 	}
 	return glyphTable[s]
 }
@@ -319,10 +203,6 @@ func AllGlyphs() []Glyph {
 	out := make([]Glyph, 0, numSyms)
 	for s := Sym(1); s < numSyms; s++ {
 		out = append(out, glyphTable[s])
-	}
-	out = append(out, extGlyphs()...)
-	for _, s := range skySyms() {
-		out = append(out, G(s))
 	}
 	return out
 }
@@ -403,11 +283,6 @@ func Fold(r rune, t GlyphTier) rune {
 			return g.ASCII
 		}
 	}
-	for _, g := range skyGlyphs {
-		if g.Unicode == r || g.Nerd != 0 && g.Nerd == r {
-			return g.ASCII
-		}
-	}
 	switch {
 	case r >= 0x2500 && r <= 0x257F: // box drawing
 		return boxFold(r)
@@ -436,7 +311,9 @@ var asciiFold = map[rune]rune{
 	'✈': '>', '✢': '+', '✕': 'x', '☁': '~', '❄': '*', '♫': 'm', '♪': 'm', '»': '>',
 	'«': '<', '¦': '|', '˙': '.', '¨': '"', '⁺': '+', '¹': '1', '²': '2', '³': '3',
 	'⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁰': '0',
-	'‾': '-', '◠': 'n',
+	'‾': '-', '◠': 'n', 'ƒ': 'f', 'Σ': 'E', '‰': '%', '⁘': ':', '€': 'E', '∘': 'o', '∞': '8', '∴': ':',
+	'∷': ':', '⊕': '@', '⋅': '.', '╪': '#', '╫': '#', '▮': 'w', '▰': '=', '△': 'A', '◈': 'A', '◎': '0',
+	'◡': 'u', '◦': 'o', '◫': 'B', '☿': 'Q', '♂': 'i', '♞': 'R', '♧': '"',
 }
 
 func boxFold(r rune) rune {

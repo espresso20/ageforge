@@ -11,7 +11,8 @@ import (
 
 // TestMapZoomKeys: + - = _ are the map's while the prompt is empty and the
 // prompt's otherwise. + and = zoom in and - and _ zoom out (a keyboard with
-// no Page keys zooms with them). [ and ] are not the map's.
+// no Page keys zooms with them), between the region and the settlement. [ and
+// ] are not the map's.
 func TestMapZoomKeys(t *testing.T) {
 	d, _ := mapTestDashboard(t, true)
 	p := d.mapPanel
@@ -22,7 +23,7 @@ func TestMapZoomKeys(t *testing.T) {
 	for _, step := range []struct {
 		r    rune
 		want string
-	}{{'-', "REGION"}, {'-', "REGION"}, {'=', "SETTLEMENT"}, {'+', "DISTRICT"}, {'_', "SETTLEMENT"}} {
+	}{{'-', "REGION"}, {'-', "REGION"}, {'=', "SETTLEMENT"}, {'+', "SETTLEMENT"}, {'_', "REGION"}} {
 		if !p.routeKey(key(step.r), "") {
 			t.Fatalf("%q did not go to the map", step.r)
 		}
@@ -48,7 +49,7 @@ func TestMapZoomKeys(t *testing.T) {
 	if p.routeKey(tcell.NewEventKey(tcell.KeyRune, '+', tcell.ModCtrl), "") || p.routeKey(tcell.NewEventKey(tcell.KeyRune, '[', tcell.ModAlt), "") {
 		t.Error("a Ctrl or Alt chord went to the map")
 	}
-	if !p.routeKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), "") || !strings.Contains(drawMapPanel(t, d, 160, 48), "DISTRICT") {
+	if !p.routeKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), "") || !strings.Contains(drawMapPanel(t, d, 160, 48), "SETTLEMENT") {
 		t.Error("PgDn did not zoom in")
 	}
 }

@@ -1,7 +1,9 @@
-// Package mapstyle is the contract between the map model and the map view.
-// There is one model (package mapmodel) and one renderer on top of it; the
-// view draws a Frame, handles its own keys and says what its cursor is on,
-// in the command vocabulary.
+// Package mapstyle is the map on the screen. There is one model (package
+// mapmodel), one engine that draws it into cells (package mapgen) and this
+// view on top: it colours the cells in the player's theme, draws a Frame with
+// the header, news and inspector round it, handles its own keys and says what
+// its cursor is on, in the command vocabulary. Style is the contract the ui
+// draws through, and the seam tests put a stand-in behind.
 package mapstyle
 
 import (
@@ -55,18 +57,13 @@ type Inspection struct {
 	// guildhall", "diplomacy gift ironhold_clans"), "" when none fits.
 	Command string
 	// Kind says what sort of thing it is, for code that reacts to what the
-	// player looked at: KindMover, KindAlien, or "" for everything else.
+	// player looked at: KindAlien, or "" for everything else.
 	Kind string
 }
 
-// Inspection kinds.
-const (
-	// KindMover is something passing through: a cart, a train, a plane.
-	KindMover = "mover"
-	// KindAlien is the rare visitor (mapmodel.SightingAt). Spotting one is
-	// meant to earn a secret badge.
-	KindAlien = "alien"
-)
+// KindAlien is the Kind of the rare visitor (mapmodel.SightingAt). Spotting
+// one is meant to earn a secret badge.
+const KindAlien = "alien"
 
 // Style is the map view the ui draws through: the one map in the game, and
 // the seam tests put a stand-in behind.

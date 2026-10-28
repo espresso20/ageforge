@@ -40,7 +40,7 @@ func TestEveryTextOfTheMapSheetIsWiredOrLeftAlone(t *testing.T) {
 			later = append(later, where+": "+v.reason)
 		}
 	}
-	if wired < 800 {
+	if wired < 150 {
 		t.Errorf("only %d texts of the map sheet are wired", wired)
 	}
 	if len(loose) > 0 {
@@ -57,21 +57,17 @@ func TestEveryTextOfTheMapSheetIsWiredOrLeftAlone(t *testing.T) {
 	}
 }
 
-// TestTheMapsTablesCarryTheirIds: the tables the map makes once (the legend's
-// entries, the city's parts, the movers, the themes) hold their words as
+// TestTheMapsTablesCarryTheirIds: the tables the map makes once (the lines'
+// names, the town's syllables, the themes) hold their words as
 // entries that carry the row id, so the map reads them when it draws; a table
 // entry is the text of its row and is counted as wired.
 func TestTheMapsTablesCarryTheirIds(t *testing.T) {
 	c := realCatalog(t)
 	w := newVibeWiring(c)
 	tables := map[string]int{
-		"map.city.":                           120, // the parts of the late-game city: name, title, lines
-		"map.mover.":                          120,
-		"map.sky.":                            60,
-		"map.lineage.":                        17,
-		"theme.":                              40,
-		"ui.mapstyle.roguelike.glyph.lgInfo.": 10,
-		"mapmodel.world.syllA.":               20,
+		"map.lineage.":          17,
+		"theme.":                40,
+		"mapmodel.world.syllA.": 20,
 	}
 	for prefix, least := range tables {
 		n := 0
@@ -98,25 +94,11 @@ func TestTheMapsTablesCarryTheirIds(t *testing.T) {
 func TestMapLabelsCarryTheirWidths(t *testing.T) {
 	c := realCatalog(t)
 	for id, want := range map[string]int{
-		"ui.mapstyle.roguelike.glyph.lgInfo.18":           20, // a legend label: "new since last visit" fills the 20 cells
-		"ui.mapstyle.roguelike.space_legend.skyLgInfo.30": 20,
-		"ui.mapstyle.roguelike.glyph.lgGroups.03":         23,
-		"map.city.cooling.name":                           20,
-		"map.city.cooling.title":                          0, // the heading of an inspect line, as long as the line
-		"map.city.cooling.line.01":                        0,
-		"map.mover.starship.name":                         20,
-		"map.mover.starship.title":                        0,
-		"map.sky.SkyQuantum.trade":                        20,
-		"map.lineage.housing":                             20,
-		"ui.mapstyle.roguelike.chrome.flowLines.01":       5, // the flows panel's tag column
-		"ui.mapstyle.roguelike.chrome.flowLines.08":       5,
-		"ui.mapstyle.roguelike.chrome.flowLines.09":       0, // the text next to it has the rest of the line
-		"ui.mapstyle.roguelike.space_chrome.flowLines.05": 5,
-		"ui.mapstyle.roguelike.city.holoAds.01":           4, // one letter to a cell, four to a block
-		"ui.mapstyle.roguelike.city.megacorps.02":         3, // a tower's initials
-		"ui.mapstyle.roguelike.city.megacorps.01":         0, // its name is an inspect title
-		"ui.mapstyle.roguelike.chrome.header.01":          0, // a header segment: dropped from the left until the line fits
-		"ui.mapstyle.roguelike.inspect.describe.01":       0,
+		"map.lineage.housing":                       20,
+		"ui.mapstyle.roguelike.chrome.flowLines.01": 5, // the flows panel's tag column
+		"ui.mapstyle.roguelike.chrome.flowLines.08": 5,
+		"ui.mapstyle.roguelike.chrome.flowLines.09": 0, // the text next to it has the rest of the line
+		"ui.mapstyle.roguelike.chrome.header.01":    0, // a header segment: dropped from the left until the line fits
 	} {
 		r := c.byID[id]
 		if r == nil {
@@ -133,27 +115,6 @@ func TestMapLabelsCarryTheirWidths(t *testing.T) {
 		if r.area == areaMap && r.max > 0 && len([]rune(r.current)) > r.max {
 			t.Errorf("%s: %q is %d characters and the row allows %d", r.id, r.current, len([]rune(r.current)), r.max)
 		}
-	}
-}
-
-// TestAStringWithNoRowBecomesAnEntryWhenItGetsOne: a table of entries holds the
-// strings that have no row as vibe.Same, and vibe-wire turns one into vibe.E when
-// a sheet gives it a row, so the sheet that does (the unsure one) needs no
-// hand work.
-func TestAStringWithNoRowBecomesAnEntryWhenItGetsOne(t *testing.T) {
-	c := realCatalog(t)
-	n := 0
-	for _, r := range c.rows {
-		if r.u.f.rel != "ui/mapstyle/roguelike/glyph.go" || r.current != "water" {
-			continue
-		}
-		n++
-		if v := c.wireVerdict(r); v.kind != wireSame {
-			t.Errorf("%s (%q) is judged %v, want it turned from vibe.Same into vibe.E", r.id, r.current, v.kind)
-		}
-	}
-	if n == 0 {
-		t.Fatal("no row for the legend's word water")
 	}
 }
 

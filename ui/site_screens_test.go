@@ -742,12 +742,17 @@ func TestWriteSiteScreens(t *testing.T) {
 		{"expeditions", "expedition", ""},
 		{"history", "history", ""},
 		{"help", "help", ""},
-		{"map", "map", ""},
 	} {
 		s.open(p.cmd, p.heading)
 		shots.take(s, p.name)
 		s.close()
 	}
+	// The Map: the close-up, as a large terminal draws it, and the whole town
+	// in one view, as a panel of the usual size draws it.
+	s.open("map", "")
+	shots.takeIn(s, "map", theme.DefaultKey, siteDashW, siteDashH)
+	shots.take(s, "map-region")
+	s.close()
 	// The Wonders panel's gallery: G on the list opens it.
 	s.open("wonders", "")
 	s.d.overlayMgr.entries["wonders"].tv.InputHandler()(tcell.NewEventKey(tcell.KeyRune, 'g', 0), func(tview.Primitive) {})

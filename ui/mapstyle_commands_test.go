@@ -11,7 +11,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
-	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
 // TestMapCommandsAreRegistryCommands: every command a map can put on its
@@ -49,7 +48,7 @@ func TestMapCommandsAreRegistryCommands(t *testing.T) {
 		st := fixture.State(fixture.Options{Age: age, Seed: 7, Wars: 1, Harbinger: true, Idle: 5})
 		m := b.Build(&st, nil)
 		f := mapstyle.Frame{Model: m}
-		s := roguelike.New()
+		s := mapstyle.New()
 		s.SetOption(mapstyle.OptInspect, true)
 		s.Draw(scr, mapstyle.Rect{W: 160, H: 48}, f)
 		seen := 0

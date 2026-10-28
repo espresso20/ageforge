@@ -19,50 +19,19 @@ func told(t *testing.T) {
 	t.Cleanup(vibe.UseRewriterForTest(func(id, plain string) string { return "«" + plain + "»" }))
 }
 
-// TestTheRostersReadTheScript: the words of the city's parts, the movers, the
-// Earth arc's looks, the station parts, the aliens and the lineages are read
-// when they are asked for, so one table follows the switch both ways.
-func TestTheRostersReadTheScript(t *testing.T) {
+// TestTheLineageNamesReadTheScript: the words of the lineages are read when
+// they are asked for, so one table follows the switch both ways.
+func TestTheLineageNamesReadTheScript(t *testing.T) {
 	told(t)
 	words := func() map[string]string {
 		out := map[string]string{}
-		// (the first of each is nothing, and reads as nothing)
-		if i := mapmodel.FeatNone.Info(); i.Name != "" || len(i.Lines) != 0 {
-			t.Errorf("no feature reads as %+v", i)
-		}
-		if i := mapmodel.MoverNone.Info(); i.Name != "" || len(i.Lines) != 0 {
-			t.Errorf("no mover reads as %+v", i)
-		}
-		for f := mapmodel.CityFeature(1); f < mapmodel.NumCityFeatures; f++ {
-			i := f.Info()
-			out["city "+i.Key] = i.Name + "|" + i.Title + "|" + strings.Join(i.Lines, "|") + "|" + i.Line(3)
-		}
-		for k := mapmodel.Mover(1); k < mapmodel.Mover(40); k++ {
-			i := k.Info()
-			if i.Key == "" {
-				continue
-			}
-			out["mover "+i.Key] = i.Name + "|" + i.Title + "|" + strings.Join(i.Lines, "|") + "|" + i.Line(3)
-		}
-		for _, l := range mapmodel.CityLooks() {
-			out["look "+l.Key] = l.Name + "|" + l.Structure + "|" + l.Ambient
-		}
 		for _, lin := range mapmodel.LineageOrder {
 			out["lineage "+lin] = mapmodel.LineageName(lin)
-			for s := mapmodel.SkyScene(0); s < mapmodel.NumSkyScenes; s++ {
-				out["part "+lin+" "+string(rune('0'+int(s)))] = mapmodel.SkyPartOf(s, lin).Name
-			}
-		}
-		for i, a := range mapmodel.Aliens {
-			out["alien "+string(rune('0'+i))] = a.Color.String() + "|" + a.Lines[0].String() + "|" + a.Lines[1].String()
 		}
 		out["war"] = mapmodel.RelWar.String()
 		return out
 	}
 	plain := words()
-	if len(plain) < 100 {
-		t.Fatalf("only %d texts of the rosters read", len(plain))
-	}
 	for k, v := range plain {
 		if strings.Contains(v, "«") {
 			t.Errorf("%s reads %q with VibeMode off", k, v)
@@ -82,8 +51,8 @@ func TestTheRostersReadTheScript(t *testing.T) {
 	}
 }
 
-// TestTheBuilderFollowsTheSwitch: the one builder, which caches the last model
-// and the world of a seed, builds again when VibeMode is switched, so the words
+// TestTheBuilderFollowsTheSwitch: the one builder, which caches the last model,
+// builds again when VibeMode is switched, so the words
 // a model holds (the news, what is stuck, the name of the town) are in the
 // script now in force, and plain again when it is off.
 func TestTheBuilderFollowsTheSwitch(t *testing.T) {
@@ -95,7 +64,7 @@ func TestTheBuilderFollowsTheSwitch(t *testing.T) {
 	words := func() map[string]string {
 		m := b.Model(&st, since)
 		out := map[string]string{
-			"town":     m.Town.World.Name,
+			"town":     m.TownName,
 			"stuck":    m.Flows.Worst,
 			"headline": m.Recap.Headline(400),
 		}

@@ -92,7 +92,7 @@ func TestModelSighting(t *testing.T) {
 	if sa < 0 || config.AgeOrder()[sa] != "space_age" {
 		t.Fatalf("SpaceAge %d", sa)
 	}
-	ga := cat.SkySceneAge(SkyGalaxy)
+	ga := cat.AgeIdx["galactic_age"]
 	if ga <= sa || config.AgeOrder()[ga] != "galactic_age" {
 		t.Fatalf("the Galactic Age is %d", ga)
 	}

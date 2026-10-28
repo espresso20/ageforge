@@ -6,8 +6,7 @@ import (
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 )
 
-// TestUndiscoveredCivsAnonymous: a civ not yet met is only a key and a site
-// slot in the model, so no style can print its name or traits.
+// TestUndiscoveredCivsAnonymous: a civ not yet met is only a key in the model, so no style can print its name or traits.
 func TestUndiscoveredCivsAnonymous(t *testing.T) {
 	st := fixture.State(fixture.Options{Age: "bronze_age", Seed: 7})
 	met := 0

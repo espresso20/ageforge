@@ -14,7 +14,7 @@
 # a noisy neighbor on a shared runner hits both sides instead of one.
 #
 # The benchmarks: the engine tick and the UI snapshot (game), one dashboard
-# frame (ui), and one frame of each map style at a ground age and a sky age.
+# frame (ui), and one frame of the map at a ground age and a sky age.
 set -euo pipefail
 
 ROUNDS=${BENCH_ROUNDS:-2}        # alternations of base and head
@@ -26,7 +26,7 @@ THRESHOLD=${BENCH_THRESHOLD:-15} # percent slower that gets reported
 SUITES=(
 	"./game|^(BenchmarkTick|BenchmarkGetState)$"
 	"./ui|^BenchmarkDashboardFrame$"
-	"./ui/mapstyle/roguelike|^BenchmarkMapFrame$/^(medieval_age|galactic_age)$/^vibemode_off$"
+	"./ui/mapstyle|^BenchmarkMapFrame$/^(medieval_age|galactic_age)$/^vibemode_off$"
 )
 
 # build_side <tree> <bin-dir>: compile each suite's test binary.

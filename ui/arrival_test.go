@@ -578,7 +578,8 @@ func TestArrivalWithItsTowns(t *testing.T) {
 						checkArrivalMoment(t, fmt.Sprintf("%s, frame %d", where, f), r, w, h, f)
 					}
 					// The town is there, under the name and clear of it:
-					// two rows' worth of it at the least (stars and sparks
+					// two rows' worth of it at the least, a cell counting when
+					// it has a glyph or a ground colour (stars and sparks
 					// alone are a few cells).
 					g, L := r.at(w, h, f), r.a.sc.L
 					from := L.top
@@ -587,7 +588,11 @@ func TestArrivalWithItsTowns(t *testing.T) {
 					}
 					land := 0
 					for y := from; y < h; y++ {
-						land += len([]rune(strings.Join(strings.Fields(g.row(y)), "")))
+						for x := 0; x < g.w; x++ {
+							if c := g.c[y*g.w+x]; c.r != ' ' || c.hasBg {
+								land++
+							}
+						}
 					}
 					if rows := h - from; rows < 4 || land < 2*w {
 						t.Errorf("%s, frame %d: the land (%d rows) is all but empty: %d cells drawn", where, f, rows, land)

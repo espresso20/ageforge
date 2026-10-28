@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 )
 
 // menu_town.go draws the player's own town behind the main menu: the map
@@ -60,7 +59,7 @@ func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, follows bool) 
 			t = nil // a state the maps cannot lay out: no picture
 		}
 	}()
-	style := roguelike.New()
+	style := mapstyle.New()
 	// The picture alone: no cursor, no legend, no overlay, no news.
 	for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges, mapstyle.OptWorld} {
 		style.SetOption(o, false)
@@ -74,11 +73,7 @@ func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, follows bool) 
 	if m == nil {
 		return nil
 	}
-	t = &menuTown{model: m, style: style, builder: builder, age: m.AgeName}
-	if m.Town.World != nil {
-		t.name = m.Town.World.Name
-	}
-	return t
+	return &menuTown{model: m, style: style, builder: builder, name: m.TownName, age: m.AgeName}
 }
 
 // update draws the picture from a newer state of the same game from here

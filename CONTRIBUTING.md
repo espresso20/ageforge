@@ -299,6 +299,12 @@ The wiki's pictures of the game (`site/docs/screens/*.json`, drawn as text by `s
 go test -tags mapcapture -run TestWriteSiteScreens ./ui
 ```
 
+The landing page's map plate (`site/frames.js`, and the first frame inside `site/index.html`) is written the same way, from the map itself:
+
+```bash
+go test -tags mapcapture -run TestWriteSiteFrames ./ui/mapstyle
+```
+
 To add a screen, add a shot to `TestWriteSiteScreens` (`ui/site_screens_test.go`) and a one-line `<figure class="screen" data-screen="name">` with a one-sentence `<figcaption>` to the wiki page that explains it. `TestDocScreens` (`go test ./ui`) fails on a figure with no file and on a file no page shows.
 
 ### Copy-editing sheets
@@ -349,10 +355,14 @@ rules/          The ruleset: config's definitions and every table worked out fro
                 them, compiled once into an immutable Set. Each engine owns one.
 game/           Engine, managers, tick loop. No UI imports.
 detmath/        Log, Exp, Pow with the same bits on every architecture (see Float rules).
-mapmodel/       The one map model: a GameState laid out for the map (placement,
-                civs, flows, recap, glyph tiers). Pure and deterministic.
+mapmodel/       The one map model: a GameState laid out for the map (buildings by
+                line, wonders, civs, flows, recap, glyph tiers). Pure and
+                deterministic.
+mapgen/         The procedural map engine: seed, model and frame in, a grid of
+                cells out. Pure Go, no tcell, no ui.
 ui/             tview TUI. Reads GameState snapshots. Never writes to engine.
-ui/mapstyle/    The map drawn from mapmodel (roguelike) and the pieces it shares.
+ui/mapstyle/    The map screen: the engine's cells in the theme's colours, the
+                header, news and inspector round them (procmap), and the canvas.
 scripts/        release.sh, commit.sh, ci-bench.sh (dev tooling)
 main.go         Entry point; wires engine + UI.
 ```
@@ -376,7 +386,7 @@ Bus handlers run synchronously under the engine's write lock. **Never call `engi
 
 ### Float rules for simulation code
 
-A seed must play the same run on every machine: the same numbers locally and in CI, and a save that carries on identically after moving from a Mac to a Linux box. Floating point is deterministic only if every machine does the same operations with the same rounding, and two things break that. Both rules apply to `game/`, `config/`, `rules/`, `boon/`, `flavor/`, `detmath/`, `mapmodel/` and `smoke/` (tests excluded), and the map under `ui/mapstyle/` keeps the second one (`mapmodel.Sin`, `Cos`, `Log2` and `Noise` are there for them):
+A seed must play the same run on every machine: the same numbers locally and in CI, and a save that carries on identically after moving from a Mac to a Linux box. Floating point is deterministic only if every machine does the same operations with the same rounding, and two things break that. Both rules apply to `game/`, `config/`, `rules/`, `boon/`, `flavor/`, `detmath/`, `mapmodel/` and `smoke/` (tests excluded), and the map (`mapgen/` and `ui/mapstyle/`) keeps the second one:
 
 1. **Round every product that feeds an addition or subtraction: `float64(a*b) + c`, not `a*b + c`.** Go lets the compiler fuse `a*b + c` into one fused multiply-add (FMA) instruction, which skips the rounding of `a*b`. arm64 (Apple Silicon, Graviton) always fuses and amd64 at `GOAMD64=v3` does; default amd64 never does, so the last bit differs, and a few thousand ticks later so does the run. Fusion can reach across statements and through inlined calls (`t := a*b; x += t` fuses too, and so does `x += f()` when `f` returns a product), so a plain assignment is not enough: only an explicit conversion rounds. A conversion changes nothing on amd64 v1, so these fixes never move CI numbers.
 2. **No transcendental functions from package `math`.** `math.Log`, `Exp`, `Pow` and the rest are assembly on some architectures, Go compiled with FMA on others, and `math.Exp` on amd64 even picks a path by CPU features. Use `detmath.Log`, `Log10`, `Exp` and `Pow`: the same algorithms with every product rounded. `detmath.Log` and `Log10` equal `math.Log` and `math.Log10` on amd64 bit for bit, and `detmath.Pow` with an integer exponent equals `math.Pow` everywhere. `math.Sqrt`, `Floor`, `Ceil`, `Round`, `Trunc`, `Abs`, `Mod`, `Min` and `Max` are exact and fine.
