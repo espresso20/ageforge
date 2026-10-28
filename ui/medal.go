@@ -648,4 +648,4 @@ var badgeFold = map[rune]rune{
 }
 
 // foldBadges rewrites a grid of badge art for the plain glyph tier.
-func foldBadges(g *tGrid) { foldGrid(g, badgeFold) }
+func foldBadges(g *tGrid) { g.foldWith(badgeFold) }

@@ -344,14 +344,7 @@ func foldLedger(s string) string {
 	}
 	out := []rune(s)
 	for i, r := range out {
-		if r < 0x80 {
-			continue
-		}
-		if f, ok := ledgerFold[r]; ok {
-			out[i] = f
-		} else {
-			out[i] = mapmodel.Fold(r, mapmodel.TierASCII)
-		}
+		out[i] = foldRune(r, ledgerFold)
 	}
 	return string(out)
 }

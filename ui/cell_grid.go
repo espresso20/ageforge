@@ -1,11 +1,8 @@
 package ui
 
 import (
-	"strings"
-
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -42,58 +39,26 @@ const (
 	tsCount                 // how many styles there are
 )
 
-// Cell flags.
-const (
-	cfBold uint8 = 1 << iota // drawn bold
-	cfSel                    // on the selection's background
-)
-
-// tCell is one cell of a panel.
-type tCell struct {
-	r    rune
-	st   tStyle
-	lane int8 // index into the tree's lanes for tsLane, else -1
-	fl   uint8
-	// ink, when set, is the cell's colour in place of its style's.
-	ink ink
-}
+// tCell is one cell of a panel, painted by a tStyle.
+type tCell = gcell[tStyle]
 
 // tGrid is a block of cells.
 type tGrid struct {
-	w, h int
-	c    []tCell
+	glyphGrid[tStyle]
 }
 
 func newTGrid(w, h int) *tGrid {
-	g := &tGrid{w: max(w, 0), h: max(h, 0)}
-	g.c = make([]tCell, g.w*g.h)
-	for i := range g.c {
-		g.c[i] = tCell{r: ' ', lane: -1}
-	}
-	return g
-}
-
-func (g *tGrid) in(x, y int) bool { return x >= 0 && y >= 0 && x < g.w && y < g.h }
-
-func (g *tGrid) at(x, y int) tCell {
-	if !g.in(x, y) {
-		return tCell{r: ' ', lane: -1}
-	}
-	return g.c[y*g.w+x]
+	return &tGrid{newGlyphGrid[tStyle](w, h)}
 }
 
 func (g *tGrid) put(x, y int, r rune, st tStyle, lane int) {
-	if g.in(x, y) {
-		g.c[y*g.w+x] = tCell{r: r, st: st, lane: int8(lane)}
-	}
+	g.store(x, y, tCell{r: r, k: st, lane: int8(lane)})
 }
 
 // paint writes a cell in an ink, with flags. The style is what the cell
 // falls back to where an ink has no say (a test that reads styles).
 func (g *tGrid) paint(x, y int, r rune, k ink, st tStyle, fl uint8) {
-	if g.in(x, y) {
-		g.c[y*g.w+x] = tCell{r: r, st: st, lane: -1, ink: k, fl: fl}
-	}
+	g.store(x, y, tCell{r: r, k: st, lane: -1, ink: k, fl: fl})
 }
 
 // flag adds flags to a cell that is already drawn.
@@ -139,35 +104,6 @@ func (g *tGrid) card(x0, y0, cw, ch int, name, esc string) {
 	g.text(x0+2, y0, clipRunes(" "+name+" ", cw-4), tsBright, -1)
 	if cw > runeLen(esc)+runeLen(name)+8 {
 		g.text(x0+cw-2-runeLen(esc), y0, esc, tsDim, -1)
-	}
-}
-
-// String is the grid as lines of text, trailing spaces kept.
-func (g *tGrid) String() string {
-	var sb strings.Builder
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			sb.WriteRune(g.c[y*g.w+x].r)
-		}
-		sb.WriteByte('\n')
-	}
-	return sb.String()
-}
-
-// foldGrid rewrites a grid for the plain glyph tier: nothing but ASCII.
-// table is the panel's own fold, for the marks and edges where the map
-// model's fold would lose the difference between two of them; what it does
-// not list folds as the map does.
-func foldGrid(g *tGrid, table map[rune]rune) {
-	for i, c := range g.c {
-		if c.r < 0x80 {
-			continue
-		}
-		if r, ok := table[c.r]; ok {
-			g.c[i].r = r
-		} else {
-			g.c[i].r = mapmodel.Fold(c.r, mapmodel.TierASCII)
-		}
 	}
 }
 
@@ -247,8 +183,8 @@ func (p *gridPalette) inkOn(k ink, selected bool) tcell.Color {
 
 // style is the screen style of a cell.
 func (p *gridPalette) style(c tCell) tcell.Style {
-	st := p.styles[c.st]
-	if c.st == tsLane && int(c.lane) >= 0 && int(c.lane) < len(p.lane) {
+	st := p.styles[c.k]
+	if c.k == tsLane && int(c.lane) >= 0 && int(c.lane) < len(p.lane) {
 		st = p.lane[c.lane]
 	}
 	selected := c.fl&cfSel != 0
@@ -259,7 +195,7 @@ func (p *gridPalette) style(c tCell) tcell.Style {
 			back = p.sel
 		}
 		st = tcell.StyleDefault.Background(back).Foreground(p.inkOn(c.ink, selected))
-	case selected && c.st != tsSel:
+	case selected && c.k != tsSel:
 		fg, _, _ := st.Decompose()
 		st = st.Background(p.sel).Foreground(theme.Legible(fg, p.sel, 3))
 	}
@@ -271,10 +207,5 @@ func (p *gridPalette) style(c tCell) tcell.Style {
 
 // paintGrid puts a rendered grid on the screen in theme colours.
 func paintGrid(scr tcell.Screen, g *tGrid, x0, y0 int, p *gridPalette) {
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			c := g.c[y*g.w+x]
-			scr.SetContent(x0+x, y0+y, c.r, nil, p.style(c))
-		}
-	}
+	g.draw(scr, x0, y0, func(c tCell) (rune, tcell.Style) { return c.r, p.style(c) })
 }

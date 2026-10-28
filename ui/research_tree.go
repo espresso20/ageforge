@@ -734,8 +734,8 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	for y := 0; y < mh; y++ {
 		for x := 0; x < mw; x++ {
 			c := canvas.at(v.vx+x, v.vy+y)
-			if v.card && c.st != tsSel {
-				c.st = tsDim
+			if v.card && c.k != tsSel {
+				c.k = tsDim
 			}
 			out.c[(oy+y)*w+ox+x] = c
 		}
@@ -1464,7 +1464,7 @@ var plainFold = map[rune]rune{
 }
 
 // foldPlain rewrites a grid for the plain glyph tier: nothing but ASCII.
-func foldPlain(g *tGrid) { foldGrid(g, plainFold) }
+func foldPlain(g *tGrid) { g.foldWith(plainFold) }
 
 // plainBar is a bar of width cells filled to the fraction f, as the card
 // draws it (no color tags: the card sets its own styles).
