@@ -56,11 +56,21 @@ func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 		}
 	case mapgen.KindIdle:
 		return describeIdle(m)
-	case mapgen.KindRoad, mapgen.KindAgent:
+	case mapgen.KindAgent:
+		if in, ok := describeAgent(th); ok {
+			return in
+		}
+	case mapgen.KindRoad:
+		if in, ok := describeSpace(m, th); ok {
+			return in
+		}
 		return describeRoad(m, th.Key)
 	case mapgen.KindTerrain:
 		if t, ok := mapgen.TerrainOf(th.Key); ok {
 			return describeTerrain(t)
+		}
+		if in, ok := describeSpace(m, th); ok {
+			return in
 		}
 	}
 	return Inspection{Title: m.TownName}
@@ -85,7 +95,7 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspect
 	if command == "" {
 		command = mapmodel.CmdStatus // a legacy type with nothing to do
 	}
-	line := lineageLabel(lineage)
+	line := placeName(m, lineage)
 	if ruin {
 		return Inspection{
 			Title:   vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.02", "Ruins of ") + b.Name,

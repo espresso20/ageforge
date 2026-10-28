@@ -63,7 +63,7 @@ var orbitEra = AgeStyle{
 	Windows: "▫",
 	Agents: []AgentKind{
 		{Name: "shuttle", Glyphs: "►◄▼▲", Fg: P(HEngine, 255), Per: 200, Max: 14, Slow: 1},
-		{Name: "freighter", Glyphs: "►◄▼▲", Fg: P(HAmber, 255), Per: 450, Max: 8, Slow: 2},
+		{Name: "mining_drone", Glyphs: "►◄▼▲", Fg: P(HAmber, 255), Per: 450, Max: 8, Slow: 2},
 	},
 	Night: Night{Tint: HNight, Dim: 70, Light: HLight},
 	Tones: map[byte]Paint{'s': P(HSteel, 255), 'a': P(HSun, 255), 'g': P(HEngine, 255), 'm': P(HSteel, 235), 'f': P(HSun, 255)},
@@ -98,8 +98,8 @@ var systemEra = AgeStyle{
 	},
 	Ink: map[rune]Paint{'█': P(HSun, 255), '▄': P(HSun, 255), '▀': P(HSun, 255), '☼': P(HFire, 255)},
 	Agents: []AgentKind{
-		{Name: "ship", Glyphs: "►◄▼▲", Fg: P(HEngine, 255), Per: 300, Max: 20, Slow: 2},
-		{Name: "freighter", Glyphs: "►◄▼▲", Fg: P(HAmber, 255), Per: 600, Max: 10, Slow: 3},
+		{Name: "generation_ship", Glyphs: "►◄▼▲", Fg: P(HEngine, 255), Per: 300, Max: 20, Slow: 2},
+		{Name: "mining_drone", Glyphs: "►◄▼▲", Fg: P(HAmber, 255), Per: 600, Max: 10, Slow: 3},
 	},
 	Tones: map[byte]Paint{'s': P(HSteel, 255), 'a': P(HSun, 255), 'g': P(HEngine, 255), 'm': P(HSteel, 235), 'f': P(HSun, 255)},
 	Sky:   Look{Glyphs: "·.∙·", Fg: P(HStar, 255), Bg: P(HVoid, 255), Dense: 30},
@@ -127,11 +127,8 @@ var starsEra = AgeStyle{
 		Work:  {{art("*")}, {art("*")}, {art("*")}, {art("*")}},
 		Civic: {{art("*")}, {art("*")}, {art("*")}, {art("*")}},
 	},
-	Wall: HSteel,
-	Hub:  art("☼"),
-	Agents: []AgentKind{
-		{Name: "fleet", Glyphs: "◆", Fg: P(HEngine, 255), Per: 400, Max: 16, Slow: 3},
-	},
+	Wall:  HSteel,
+	Hub:   art("☼"),
 	Reach: P(HNebula, 34),
 	Tones: map[byte]Paint{'s': P(HSteel, 255), 'a': P(HSun, 255), 'g': P(HEngine, 255), 'm': P(HSteel, 235), 'f': P(HSun, 255)},
 	Sky:   Look{Glyphs: "·.∙·✧+", Fg: P(HStar, 255), Bg: P(HVoid, 255), Dense: 62},
@@ -140,7 +137,16 @@ var starsEra = AgeStyle{
 var spaceRows = []AgeRow{
 	{Age: "space_age", Era: &orbitEra},
 	{Age: "interstellar_age", Era: &systemEra},
-	{Age: "galactic_age", Era: &starsEra, Reach: P(HNebula, 34)},
-	{Age: "quantum_age", Era: &starsEra, Reach: P(HNeon, 22), Ink: map[rune]Paint{'☼': P(HNeon, 255)}},
-	{Age: "transcendent_age", Era: &starsEra, Reach: P(HPlasma, 20), Ink: map[rune]Paint{'☼': P(HPlasma, 255)}},
+	{
+		Age: "galactic_age", Era: &starsEra, Reach: P(HNebula, 34),
+		Agents: []AgentKind{{Name: "starship", Glyphs: "◆", Fg: P(HEngine, 255), Per: 400, Max: 16, Slow: 3}},
+	},
+	{
+		Age: "quantum_age", Era: &starsEra, Reach: P(HNeon, 22), Ink: map[rune]Paint{'☼': P(HNeon, 255)},
+		Agents: []AgentKind{{Name: "phase_ship", Glyphs: "◇", Fg: P(HNeon, 255), Per: 400, Max: 16, Slow: 3}},
+	},
+	{
+		Age: "transcendent_age", Era: &starsEra, Reach: P(HPlasma, 20), Ink: map[rune]Paint{'☼': P(HPlasma, 255)},
+		Agents: []AgentKind{{Name: "mote", Glyphs: "∙", Fg: P(HWhite, 255), Per: 400, Max: 16, Slow: 3}},
+	},
 }

@@ -49,6 +49,8 @@ The Map reports the cursor's name, a few details (how many you own, how many wor
 
 An old building with nothing left to do has no command, and `Enter` says so. A road or open ground has none either: the Map names it and says what it is.
 
+Everything that moves is named for what it is: the worker, the ox cart, the wagon, the car, the hovercar, the shuttle, the mining drone, the generation ship, the starship. In the space ages the cursor names the homeworld, the home sun, the other planets, the stars, the elevator's tether, the rings and orbits and the routes between stars, the empty sky, and the heart of the town as a ring station, a home system, a starbase, an anchor or a core. A building is a part of the scene it stands in: a habitat module in orbit, a colony ark among the planets, a deck on the starbase. The spaceport on the ground is named too.
+
 ### Since your last visit
 
 When you load a save, the Map remembers your town as the save left it, before any time away was played out, and shows what changed since. A news line lists what happened: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"). When there is no news the line says what is stuck, or that all is quiet.

@@ -219,3 +219,145 @@ ui.mapstyle.roguelike.inspect.describeCiv.08,grinders
 ui.mapstyle.roguelike.inspect.describe.05,NPC
 ui.mapstyle.roguelike.inspect.describe.06,NPCs
 ui.mapstyle.roguelike.view.zoomNames.03,THE BLOCK
+ui.mapstyle.port.01,Launch hub
+ui.mapstyle.port.02,"where the shuttles yeet off the planet"
+ui.mapstyle.space.route.01,Star road
+ui.mapstyle.space.route.02,"links the systems your squad has reached"
+ui.mapstyle.space.ring.01,Orbit ring
+ui.mapstyle.space.ring.02,"stations hang out along it"
+map.mover.walker.title,Hustler
+map.mover.walker.line.01,"Commuting to the grind, coffee not yet kicked in."
+map.mover.walker.line.02,"Done for the day, logged off and heading home."
+map.mover.ox_cart.title,Slow Life Cart
+map.mover.ox_cart.line.01,"Creaking to market at ox speed, slow living core."
+map.mover.ox_cart.line.02,"An ox cart stacked with grain, carb loading era."
+map.mover.wagon.title,Wagon Szn
+map.mover.wagon.line.01,"Hauling timber by wagon, the lumber run ate."
+map.mover.wagon.line.02,"A covered wagon rolling to market, merch drop incoming."
+map.mover.early_car.title,Vroom Starter
+map.mover.early_car.line.01,"Sputtering along like it runs on vibes and hope, an early car icon."
+map.mover.early_car.line.02,"The horses are shook, an early motor car just rolled past."
+map.mover.car.title,Ride Check
+map.mover.car.line.01,"Stuck behind a truck, this car is in its patience era."
+map.mover.car.line.02,"School run in progress, mom taxi era."
+map.mover.hovercar.title,Float Whip
+map.mover.hovercar.line.01,"Skimming over the street, wheels are so last era."
+map.mover.hovercar.line.02,"Cutting corners like traffic laws are a suggestion, menace behavior."
+map.mover.shuttle.title,Orbit Speedrun
+map.mover.shuttle.line.01,"Climbing to orbit, this shuttle is ascending fr."
+map.mover.shuttle.line.02,"Outbound and not looking back, the shuttle has left the chat."
+map.mover.mining_drone.title,Rock Stan Bot
+map.mover.mining_drone.line.01,"Hauling ore off the belt nonstop, rock collector arc."
+map.mover.mining_drone.line.02,"Out for another rock, the grind is endless."
+map.mover.generation_ship.title,Multigen Lore
+map.mover.generation_ship.line.01,"The crew's grandkids will be the ones who land, generational side quest."
+map.mover.generation_ship.line.02,"A whole town packed into one hull, the cruise is their entire personality."
+map.mover.starship.title,Warp Core
+map.mover.starship.line.01,"Spooling up for warp, the starship is about to send it."
+map.mover.starship.line.02,"Home from the far side of the arm, big trip, big W."
+map.mover.phase_ship.title,Phase Glitch
+map.mover.phase_ship.line.01,"In several places at once, the phase ship is doing too much."
+map.mover.phase_ship.line.02,"It arrived before it left, the timeline is in shambles."
+map.mover.mote.title,Tiny Aura
+map.mover.mote.line.01,"Drifting home with zero plan, this mote of light is a whole mood."
+map.mover.mote.line.02,"This mote of light used to be a whole city, the lore goes deep."
+map.sky.SkyOrbit.housing,crash pod
+map.sky.SkyOrbit.food,snack garden
+map.sky.SkyOrbit.storage,stash pod
+map.sky.SkyOrbit.organic_extraction,goo vat
+map.sky.SkyOrbit.geological_extraction,asteroid grind
+map.sky.SkyOrbit.metallurgy,space forge
+map.sky.SkyOrbit.engineering,hull hub
+map.sky.SkyOrbit.energy,sun catcher
+map.sky.SkyOrbit.harbor,docking drip
+map.sky.SkyOrbit.hacker,signal boost
+map.sky.SkyOrbit.knowledge,star lab
+map.sky.SkyOrbit.faith,chill chapel
+map.sky.SkyOrbit.culture_arts,zero-g art drop
+map.sky.SkyOrbit.monument,aura beacon
+map.sky.SkyOrbit.trade,hustle dock
+map.sky.SkyOrbit.military,moon squad base
+map.sky.SkyOrbit.diplomacy,rizz embassy
+map.sky.SkyDeep.housing,new crib ark
+map.sky.SkyDeep.food,snack planet
+map.sky.SkyDeep.storage,stash moon
+map.sky.SkyDeep.organic_extraction,plant mom planet
+map.sky.SkyDeep.geological_extraction,rock stan world
+map.sky.SkyDeep.metallurgy,forge planet
+map.sky.SkyDeep.engineering,warp gate glow-up
+map.sky.SkyDeep.energy,star siphon
+map.sky.SkyDeep.harbor,dock world
+map.sky.SkyDeep.hacker,ping tower
+map.sky.SkyDeep.knowledge,big brain world
+map.sky.SkyDeep.faith,chapel world
+map.sky.SkyDeep.culture_arts,aesthetic world
+map.sky.SkyDeep.monument,core memory world
+map.sky.SkyDeep.trade,hustle world
+map.sky.SkyDeep.military,escort squad
+map.sky.SkyDeep.diplomacy,rizz world
+map.sky.SkyGalaxy.housing,crash deck
+map.sky.SkyGalaxy.food,snack deck
+map.sky.SkyGalaxy.storage,stash hold
+map.sky.SkyGalaxy.organic_extraction,goo works
+map.sky.SkyGalaxy.geological_extraction,neutron star grind
+map.sky.SkyGalaxy.metallurgy,star forge
+map.sky.SkyGalaxy.engineering,fix-it pylon
+map.sky.SkyGalaxy.energy,quasar juice
+map.sky.SkyGalaxy.harbor,dock lounge
+map.sky.SkyGalaxy.hacker,uplink glow
+map.sky.SkyGalaxy.knowledge,big brain deck
+map.sky.SkyGalaxy.faith,chapel deck
+map.sky.SkyGalaxy.culture_arts,archive vibe
+map.sky.SkyGalaxy.monument,aura spire
+map.sky.SkyGalaxy.trade,hustle deck
+map.sky.SkyGalaxy.military,squad at dock
+map.sky.SkyGalaxy.diplomacy,rizz deck
+map.sky.SkyQuantum.housing,folded crash pad
+map.sky.SkyQuantum.food,situationship garden
+map.sky.SkyQuantum.storage,linked stash
+map.sky.SkyQuantum.organic_extraction,reality crop
+map.sky.SkyQuantum.geological_extraction,what-if mine
+map.sky.SkyQuantum.metallurgy,quantum forge
+map.sky.SkyQuantum.engineering,reality smithy
+map.sky.SkyQuantum.energy,zero-point juice
+map.sky.SkyQuantum.harbor,phase port
+map.sky.SkyQuantum.hacker,reality hack shop
+map.sky.SkyQuantum.knowledge,delulu academy
+map.sky.SkyQuantum.faith,echo chapel
+map.sky.SkyQuantum.culture_arts,maybe-art drop
+map.sky.SkyQuantum.monument,canon point
+map.sky.SkyQuantum.trade,odds market
+map.sky.SkyQuantum.military,beef HQ
+map.sky.SkyQuantum.diplomacy,self-care embassy
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.01,Empty vibes
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.02,"low orbit, no drama tonight"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.03,Deep space lobby
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.04,"light-years of absolutely nothing, mid scenery"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.05,"In the star gap, vibing"
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.06,the lanes ghosted this spot
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.07,A situationship
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.08,certainty left the chat here
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.09,Pure aura
+ui.mapstyle.roguelike.space_inspect.skyVoidNames.10,"every build you ever made, kept as receipts"
+ui.mapstyle.roguelike.space_inspect.describeHub.01,Ring HQ of 
+ui.mapstyle.roguelike.space_inspect.describeHub.02,Home turf of 
+ui.mapstyle.roguelike.space_inspect.describeHub.03,Base 
+ui.mapstyle.roguelike.space_inspect.describeHub.04,Main anchor of 
+ui.mapstyle.roguelike.space_inspect.describeHub.05,Heart of 
+ui.mapstyle.roguelike.space_inspect.describe.03,The OG planet
+ui.mapstyle.roguelike.space_inspect.describe.04,origin story lore
+ui.mapstyle.roguelike.space_inspect.describe.05,NPC
+ui.mapstyle.roguelike.space_inspect.describe.06,NPCs
+ui.mapstyle.roguelike.space_inspect.describe.07, in all
+ui.mapstyle.roguelike.space_inspect.describe.08,"One of the home system planets, OG squad"
+ui.mapstyle.roguelike.space_inspect.describe.09,"it sticks to its old orbit, loyal queen"
+ui.mapstyle.roguelike.space_inspect.describe.14,Space lift
+ui.mapstyle.roguelike.space_inspect.describe.15,the tether from 
+ui.mapstyle.roguelike.space_inspect.describe.16, to the ring
+ui.mapstyle.roguelike.space_inspect.describe.17,climbers grind it day and night
+ui.mapstyle.roguelike.space_inspect.describe.31,Big OG sun
+ui.mapstyle.roguelike.space_inspect.describe.32,"the home system orrery, clockwork flex"
+ui.mapstyle.roguelike.space_inspect.describe.33," still circles it, no skips"
+ui.mapstyle.roguelike.space_inspect.describe.34,Home turf
+ui.mapstyle.roguelike.space_inspect.describe.35,"every ring has a world, stacked lineup"
+ui.mapstyle.roguelike.space_inspect.describe.50,"A star, main character"
