@@ -17,7 +17,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
-	"github.com/espresso20/ageforge/ui/mapstyle/procmap"
 )
 
 // The lab captures: the engine's map as the player gets it (through the
@@ -95,7 +94,7 @@ func TestLabCaptures(t *testing.T) {
 			{"day_80x24", labNoon, 80, 24},
 		}
 		for _, shot := range shots {
-			scr := panel(procmap.New(), labModel(age, shot.tick), shot.w, shot.h)
+			scr := panel(mapstyle.New(), labModel(age, shot.tick), shot.w, shot.h)
 			writeShot(t, dir, age+"_"+shot.name+"_new", scr)
 			scr.Fini()
 		}
@@ -161,7 +160,7 @@ func TestLabWonders(t *testing.T) {
 					t.Fatalf("%s: the wonder %s is not in the world", age, key)
 				}
 				scr := capture.NewScreen(w, h)
-				procmap.Blit(scr, mapstyle.Rect{W: w, H: h}, scene.Grid.Window(x0, y0, w, h), mapmodel.TierUnicode)
+				mapstyle.Blit(scr, mapstyle.Rect{W: w, H: h}, scene.Grid.Window(x0, y0, w, h), mapmodel.TierUnicode)
 				writeShot(t, dir, fmt.Sprintf("%s_wonder_%s_%s", age, stage, tick.name), scr)
 				scr.Fini()
 			}
@@ -179,7 +178,7 @@ func TestLabThemes(t *testing.T) {
 			name string
 			tick int
 		}{{"day", labNoon}, {"night", labMidnight}} {
-			scr := panel(procmap.New(), labModel("modern_age", tick.tick), 120, 36)
+			scr := panel(mapstyle.New(), labModel("modern_age", tick.tick), 120, 36)
 			writeShot(t, dir, fmt.Sprintf("theme_%s_modern_age_%s", key, tick.name), scr)
 			scr.Fini()
 		}

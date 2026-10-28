@@ -1,4 +1,4 @@
-package procmap
+package mapstyle
 
 import (
 	"go/ast"
@@ -16,7 +16,6 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/ui/mapstyle/styletest"
 	"github.com/espresso20/ageforge/vibe"
@@ -55,15 +54,15 @@ var glyphRules = styletest.Rules{Query: styletest.Every, Width: styletest.Every}
 
 // drawOffset draws a view into a w by h rectangle inset in a screen filled
 // with the sentinel, so a test can tell what the view wrote outside it.
-func drawOffset(v mapstyle.Style, m *mapmodel.Model, w, h, anim int, tier mapmodel.GlyphTier, compact bool) tcell.SimulationScreen {
+func drawOffset(v Style, m *mapmodel.Model, w, h, anim int, tier mapmodel.GlyphTier, compact bool) tcell.SimulationScreen {
 	scr := capture.NewScreen(w+4, h+2)
 	for y := 0; y < h+2; y++ {
 		for x := 0; x < w+4; x++ {
 			scr.SetContent(x, y, sentinel, nil, tcell.StyleDefault)
 		}
 	}
-	r := mapstyle.Rect{X: 2, Y: 1, W: w, H: h}
-	f := mapstyle.Frame{Model: m, Anim: anim, Tier: tier}
+	r := Rect{X: 2, Y: 1, W: w, H: h}
+	f := Frame{Model: m, Anim: anim, Tier: tier}
 	if compact {
 		v.DrawCompact(scr, r, f)
 	} else {
@@ -75,7 +74,7 @@ func drawOffset(v mapstyle.Style, m *mapmodel.Model, w, h, anim int, tier mapmod
 
 // checkRect fails if any cell inside r still holds the sentinel or any cell
 // outside it does not.
-func checkRect(t *testing.T, scr tcell.SimulationScreen, r mapstyle.Rect, what string) {
+func checkRect(t *testing.T, scr tcell.SimulationScreen, r Rect, what string) {
 	t.Helper()
 	cells, w, h := scr.GetContents()
 	bad := 0
@@ -105,14 +104,14 @@ func TestDrawWritesEveryCellOfItsRectAndNothingOutside(t *testing.T) {
 	for ai, age := range config.AgeOrder() {
 		m := modelFor(t, ageOptions(ai, age))
 		v := New()
-		v.SetOption(mapstyle.OptFlows, ai%2 == 1)
+		v.SetOption(OptFlows, ai%2 == 1)
 		for _, sz := range sizes {
 			for _, compact := range []bool{false, true} {
 				if compact && sz[0] != 40 {
 					continue
 				}
 				scr := drawOffset(v, m, sz[0], sz[1], ai, mapmodel.TierUnicode, compact)
-				checkRect(t, scr, mapstyle.Rect{X: 2, Y: 1, W: sz[0], H: sz[1]}, age+" "+strconv.Itoa(sz[0])+"x"+strconv.Itoa(sz[1]))
+				checkRect(t, scr, Rect{X: 2, Y: 1, W: sz[0], H: sz[1]}, age+" "+strconv.Itoa(sz[0])+"x"+strconv.Itoa(sz[1]))
 				scr.Fini()
 			}
 		}
@@ -129,10 +128,10 @@ func TestAnySize(t *testing.T) {
 			for _, h := range []int{1, 2, 3, 4, 5, 8, 15, 16, 17, 24, 29, 30, 31} {
 				for _, flows := range []bool{false, true} {
 					v := New()
-					v.SetOption(mapstyle.OptFlows, flows)
+					v.SetOption(OptFlows, flows)
 					for _, compact := range []bool{false, true} {
 						scr := drawOffset(v, m, w, h, 3, mapmodel.TierASCII, compact)
-						checkRect(t, scr, mapstyle.Rect{X: 2, Y: 1, W: w, H: h}, age+" "+strconv.Itoa(w)+"x"+strconv.Itoa(h))
+						checkRect(t, scr, Rect{X: 2, Y: 1, W: w, H: h}, age+" "+strconv.Itoa(w)+"x"+strconv.Itoa(h))
 						scr.Fini()
 					}
 				}
@@ -141,7 +140,7 @@ func TestAnySize(t *testing.T) {
 	}
 	for _, compact := range []bool{false, true} {
 		scr := drawOffset(New(), nil, 80, 24, 0, mapmodel.TierUnicode, compact)
-		checkRect(t, scr, mapstyle.Rect{X: 2, Y: 1, W: 80, H: 24}, "no model")
+		checkRect(t, scr, Rect{X: 2, Y: 1, W: 80, H: 24}, "no model")
 		scr.Fini()
 	}
 }
@@ -152,11 +151,11 @@ func TestOverviewAtEverySizeOfTheWorld(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := modelFor(t, fixture.Options{Age: "modern_age", Seed: 7})
 	v := New()
-	v.SetOption(mapstyle.OptWorld, true)
+	v.SetOption(OptWorld, true)
 	for w := 60; w <= 240; w += 17 {
 		for h := 16; h <= 80; h += 9 {
 			scr := drawOffset(v, m, w, h, 0, mapmodel.TierUnicode, false)
-			checkRect(t, scr, mapstyle.Rect{X: 2, Y: 1, W: w, H: h}, strconv.Itoa(w)+"x"+strconv.Itoa(h))
+			checkRect(t, scr, Rect{X: 2, Y: 1, W: w, H: h}, strconv.Itoa(w)+"x"+strconv.Itoa(h))
 			scr.Fini()
 		}
 	}
@@ -171,14 +170,14 @@ func TestDeterministicAndAlive(t *testing.T) {
 		m := grown(t, fixture.Options{Age: age, Seed: 9, Harbinger: true})
 		for _, world := range []bool{false, true} {
 			v := New()
-			v.SetOption(mapstyle.OptWorld, world)
+			v.SetOption(OptWorld, world)
 			first := capture.Text(drawOffset(v, m, 160, 48, 4, mapmodel.TierUnicode, false))
 			again := capture.Text(drawOffset(v, m, 160, 48, 4, mapmodel.TierUnicode, false))
 			if first != again {
 				t.Errorf("%s world %v: the same frame drew differently", age, world)
 			}
 			fresh := New()
-			fresh.SetOption(mapstyle.OptWorld, world)
+			fresh.SetOption(OptWorld, world)
 			if got := capture.Text(drawOffset(fresh, m, 160, 48, 4, mapmodel.TierUnicode, false)); got != first {
 				t.Errorf("%s world %v: a fresh view drew differently", age, world)
 			}
@@ -200,8 +199,8 @@ func TestThemeSweep(t *testing.T) {
 		for _, m := range models {
 			for _, world := range []bool{false, true} {
 				v := New()
-				v.SetOption(mapstyle.OptWorld, world)
-				v.SetOption(mapstyle.OptFlows, !world)
+				v.SetOption(OptWorld, world)
+				v.SetOption(OptFlows, !world)
 				for _, compact := range []bool{false, true} {
 					scr := drawOffset(v, m, 140, 44, 2, mapmodel.TierUnicode, compact)
 					cells, _, _ := scr.GetContents()
@@ -228,8 +227,8 @@ func TestGlyphWidths(t *testing.T) {
 		for _, tier := range []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd} {
 			for _, world := range []bool{false, true} {
 				v := New()
-				v.SetOption(mapstyle.OptWorld, world)
-				v.SetOption(mapstyle.OptFlows, true)
+				v.SetOption(OptWorld, world)
+				v.SetOption(OptFlows, true)
 				for _, compact := range []bool{false, true} {
 					scr := drawOffset(v, m, 150, 46, 1, tier, compact)
 					cells, width, _ := scr.GetContents()
@@ -310,8 +309,8 @@ func TestTabVisitsEveryTarget(t *testing.T) {
 		words := commandWords(m)
 		for _, world := range []bool{false, true} {
 			v := New().(*view)
-			v.SetOption(mapstyle.OptWorld, world)
-			f := mapstyle.Frame{Model: m, Tier: mapmodel.TierUnicode}
+			v.SetOption(OptWorld, world)
+			f := Frame{Model: m, Tier: mapmodel.TierUnicode}
 			drawOffset(v, m, 160, 48, 0, mapmodel.TierUnicode, false).Fini()
 			targets := v.scene(f).Targets
 			if len(targets) < 5 {
@@ -349,7 +348,7 @@ func TestInspectCommands(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := modelFor(t, fixture.Options{Age: "medieval_age", Seed: 8, Harbinger: true, Catastrophe: true, Idle: 30})
 	v := New().(*view)
-	f := mapstyle.Frame{Model: m}
+	f := Frame{Model: m}
 	drawOffset(v, m, 160, 48, 0, mapmodel.TierUnicode, false).Fini()
 	v.HandleKey(tcell.NewEventKey(tcell.KeyHome, 0, tcell.ModNone), f)
 	drawOffset(v, m, 160, 48, 0, mapmodel.TierUnicode, false).Fini()
@@ -360,7 +359,7 @@ func TestInspectCommands(t *testing.T) {
 	if in, ok := v.Inspect(f); !ok || in.Title == "" {
 		t.Errorf("at the corner of the world the inspector says %+v", in)
 	}
-	v.SetOption(mapstyle.OptInspect, false)
+	v.SetOption(OptInspect, false)
 	if _, ok := v.Inspect(f); ok {
 		t.Error("Inspect with the cursor hidden reported ok")
 	}
@@ -376,7 +375,7 @@ func TestKeys(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := modelFor(t, fixture.Options{Age: "medieval_age", Seed: 1})
 	v := New().(*view)
-	f := mapstyle.Frame{Model: m}
+	f := Frame{Model: m}
 	press := func(k tcell.Key, r rune, mod tcell.ModMask) bool {
 		return v.HandleKey(tcell.NewEventKey(k, r, mod), f)
 	}
@@ -401,7 +400,7 @@ func TestKeys(t *testing.T) {
 			t.Errorf("%q was used; letters belong to the prompt", r)
 		}
 	}
-	v.SetOption(mapstyle.OptFlows, true)
+	v.SetOption(OptFlows, true)
 	if !v.flows || !v.changes || !v.legend {
 		t.Errorf("options: flows %v changes %v legend %v", v.flows, v.changes, v.legend)
 	}
@@ -419,11 +418,11 @@ func TestSceneInsetIsTheChrome(t *testing.T) {
 			st := fixture.State(fixture.Options{Age: age, Seed: 7})
 			m := mapmodel.NewBuilder(nil).Model(&st, nil)
 			v := New()
-			for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges} {
+			for _, o := range []Option{OptFlows, OptInspect, OptLegend, OptChanges} {
 				v.SetOption(o, false)
 			}
 			scr := capture.NewScreen(w, h)
-			v.Draw(scr, mapstyle.Rect{W: w, H: h}, mapstyle.Frame{Model: m, Anim: 3, Clock: 3})
+			v.Draw(scr, Rect{W: w, H: h}, Frame{Model: m, Anim: 3, Clock: 3})
 			rows := strings.Split(strings.TrimSuffix(capture.Text(scr), "\n"), "\n")
 			scr.Fini()
 
@@ -466,13 +465,13 @@ func BenchmarkMapFrame(b *testing.B) {
 				v := New()
 				scr := capture.NewScreen(200, 60)
 				defer scr.Fini()
-				r := mapstyle.Rect{W: 200, H: 60}
-				v.Draw(scr, r, mapstyle.Frame{Model: m})
+				r := Rect{W: 200, H: 60}
+				v.Draw(scr, r, Frame{Model: m})
 				vibe.Set(name == "on")
 				b.ReportAllocs()
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					v.Draw(scr, r, mapstyle.Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
+					v.Draw(scr, r, Frame{Model: m, Anim: i, Tier: mapmodel.TierUnicode})
 				}
 			})
 		}

@@ -20,7 +20,6 @@ import (
 	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/procmap"
 )
 
 // The full catalog on the case: the hand-drawn legendary badges, the
@@ -327,7 +326,7 @@ func TestLookingAtAVisitorEarnsItsBadge(t *testing.T) {
 	if p.set.Motion {
 		t.Fatal("precondition: motion is still on")
 	}
-	stub := &alienStyle{Style: procmap.New()}
+	stub := &alienStyle{Style: mapstyle.New()}
 	p.view = stub
 	told := 0
 	spotted := p.spotted

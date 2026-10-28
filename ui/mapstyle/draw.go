@@ -1,23 +1,22 @@
-package procmap
+package mapstyle
 
 import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 // Draw renders the full view: header, picture, side panel, news, inspector and
 // status line. Below 60 by 16 it draws
 // the compact view instead.
-func (v *view) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
+func (v *view) Draw(scr tcell.Screen, r Rect, f Frame) {
 	if r.W < 60 || r.H < 16 {
 		v.DrawCompact(scr, r, f)
 		return
 	}
 	ink := v.begin(f)
-	cv := mapstyle.NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
+	cv := NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
 	if ink == nil {
 		drawNoMap(cv)
 		return
@@ -51,7 +50,7 @@ func (v *view) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 
 // drawPicture draws the world in the box (x, y, w, h) of the canvas: the whole
 // town squeezed to fit, or the close-up round the cursor.
-func (v *view) drawPicture(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, w, h int, sc *mapgen.Scene, anim int) {
+func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.Scene, anim int) {
 	var cx, cy int
 	var on bool
 	if v.overview {
@@ -71,7 +70,7 @@ func (v *view) drawPicture(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, w, h
 }
 
 // putCursor highlights the cell (x, y) of the canvas, keeping its glyph.
-func (v *view) putCursor(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, anim int) {
+func (v *view) putCursor(cv *Canvas, mp *Palette, x, y, anim int) {
 	r, under := cv.Get(x, y)
 	_, ground, _ := under.Decompose()
 	cv.Put(x, y, r, mp.CursorOver(ground, anim))
@@ -96,12 +95,12 @@ func clamp(v, lo, hi int) int { return min(max(v, lo), hi) }
 
 // DrawCompact renders the glanceable mini view: a header line, the whole town
 // squeezed into the space, and one news line.
-func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
+func (v *view) DrawCompact(scr tcell.Screen, r Rect, f Frame) {
 	if r.W <= 0 || r.H <= 0 {
 		return
 	}
 	ink := v.begin(f)
-	cv := mapstyle.NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
+	cv := NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
 	if ink == nil {
 		drawNoMap(cv)
 		return

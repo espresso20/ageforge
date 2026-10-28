@@ -1,7 +1,9 @@
-// Package mapstyle is the contract between the map model and the map view.
-// There is one model (package mapmodel) and one renderer on top of it; the
-// view draws a Frame, handles its own keys and says what its cursor is on,
-// in the command vocabulary.
+// Package mapstyle is the map on the screen. There is one model (package
+// mapmodel), one engine that draws it into cells (package mapgen) and this
+// view on top: it colours the cells in the player's theme, draws a Frame with
+// the header, news and inspector round it, handles its own keys and says what
+// its cursor is on, in the command vocabulary. Style is the contract the ui
+// draws through, and the seam tests put a stand-in behind.
 package mapstyle
 
 import (

@@ -1,4 +1,4 @@
-package procmap
+package mapstyle
 
 import (
 	"math"
@@ -10,7 +10,6 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -25,7 +24,7 @@ const firstNightEpoch = 5
 
 // inks are the colours the chrome is drawn in for one theme and epoch.
 type inks struct {
-	*mapstyle.Palette
+	*Palette
 	theme  string
 	border tcell.Style
 }
@@ -38,10 +37,10 @@ func inksFor(in *inks, epoch int) *inks {
 	if in != nil && in.theme == key && in.Epoch == epoch {
 		return in
 	}
-	pal := mapstyle.NewPalette(epoch)
+	pal := NewPalette(epoch)
 	if epoch >= firstNightEpoch {
 		for _, c := range []mapmodel.Class{mapmodel.CGround, mapmodel.CFlora, mapmodel.CRock, mapmodel.CHill, mapmodel.CWater} {
-			pal.Fg[c] = theme.Legible(theme.Mix(pal.Fg[c], pal.Bg, 0.35), pal.Bg, mapstyle.TerrainFloor)
+			pal.Fg[c] = theme.Legible(theme.Mix(pal.Fg[c], pal.Bg, 0.35), pal.Bg, TerrainFloor)
 		}
 	}
 	pal.FitCursor()
@@ -51,7 +50,7 @@ func inksFor(in *inks, epoch int) *inks {
 
 // begin readies the chrome for a frame and returns its inks, or nil when there
 // is no model.
-func (v *view) begin(f mapstyle.Frame) *inks {
+func (v *view) begin(f Frame) *inks {
 	if f.Model == nil {
 		return nil
 	}
@@ -61,14 +60,14 @@ func (v *view) begin(f mapstyle.Frame) *inks {
 }
 
 // drawNoMap says there is no map yet, for a frame with no model.
-func drawNoMap(cv *mapstyle.Canvas) {
-	dim := mapstyle.NewPalette(0).Style(mapmodel.CDim)
+func drawNoMap(cv *Canvas) {
+	dim := NewPalette(0).Style(mapmodel.CDim)
 	cv.Text(1, 0, 0, vibe.Line("ui.mapstyle.roguelike.chrome.Draw.01", "No map yet."), dim)
 }
 
 // drawHeader is the top row: settlement, age, epoch, weather, people, idle,
 // civs met and the zoom's name.
-func (v *view) drawHeader(cv *mapstyle.Canvas, width int, m *mapmodel.Model, zoom string) {
+func (v *view) drawHeader(cv *Canvas, width int, m *mapmodel.Model, zoom string) {
 	ink := v.ink.Chrome
 	_, background, _ := ink.Decompose()
 	cv.Fill(0, 0, width, 1, ' ', ink)
@@ -91,7 +90,7 @@ func (v *view) drawHeader(cv *mapstyle.Canvas, width int, m *mapmodel.Model, zoo
 	for ; len(segments) > 0; segments = segments[1:] { // drop from the left until it fits
 		total := 0
 		for _, segment := range segments {
-			total += mapstyle.TextLen(segment.text)
+			total += TextLen(segment.text)
 		}
 		if x+total+2 > width {
 			continue
@@ -152,7 +151,7 @@ func (v *view) news(m *mapmodel.Model, width int) (string, tcell.Style) {
 
 // drawBottom is the news, the two inspector lines and the status line, whose
 // left end names the zoom.
-func (v *view) drawBottom(cv *mapstyle.Canvas, width, height int, m *mapmodel.Model, in mapstyle.Inspection, ok bool, zoom string) {
+func (v *view) drawBottom(cv *Canvas, width, height int, m *mapmodel.Model, in Inspection, ok bool, zoom string) {
 	text, style := v.news(m, width-2)
 	cv.Text(1, height-4, width-2, text, style)
 	dim := v.ink.Style(mapmodel.CDim)
@@ -178,17 +177,17 @@ func (v *view) drawBottom(cv *mapstyle.Canvas, width, height int, m *mapmodel.Mo
 		zoom += vibe.Line("ui.mapstyle.roguelike.chrome.bottom.06", " · flows")
 	}
 	x := cv.Text(1, height-1, width-2, zoom, v.ink.Style(mapmodel.CLabel))
-	if x+2+mapstyle.TextLen(hints) > width-1 {
+	if x+2+TextLen(hints) > width-1 {
 		hints = short // the long one does not fit beside the zoom name
 	}
-	if hintWidth := mapstyle.TextLen(hints); x+2+hintWidth <= width-1 {
+	if hintWidth := TextLen(hints); x+2+hintWidth <= width-1 {
 		cv.Text(width-1-hintWidth, height-1, hintWidth, hints, dim)
 	}
 }
 
 // drawSidebar draws the sidebar's rule and, when the flows are on, their
 // panel; it returns the first row below, where the legend goes.
-func (v *view) drawSidebar(cv *mapstyle.Canvas, m *mapmodel.Model, x0, y0, width, height int) int {
+func (v *view) drawSidebar(cv *Canvas, m *mapmodel.Model, x0, y0, width, height int) int {
 	for y := y0; y < y0+height; y++ {
 		cv.Put(x0, y, '│', v.ink.border)
 	}
@@ -244,7 +243,7 @@ func (v *view) flowLines(m *mapmodel.Model) []flowLine {
 	return lines
 }
 
-func (v *view) drawFlowLine(cv *mapstyle.Canvas, x, y, width int, line flowLine) {
+func (v *view) drawFlowLine(cv *Canvas, x, y, width int, line flowLine) {
 	if line.bar <= 0 {
 		after := cv.Text(x, y, width, line.tag, v.ink.Style(line.class).Bold(true))
 		cv.Text(after+1, y, x+width-after-1, line.text, v.ink.Style(mapmodel.CText))
@@ -265,7 +264,7 @@ func (v *view) drawFlowLine(cv *mapstyle.Canvas, x, y, width int, line flowLine)
 
 // drawFlowsBox draws the flows panel in a frame over the picture, for a screen
 // with no room for a sidebar.
-func (v *view) drawFlowsBox(cv *mapstyle.Canvas, m *mapmodel.Model, x, y, width, maxHeight int) {
+func (v *view) drawFlowsBox(cv *Canvas, m *mapmodel.Model, x, y, width, maxHeight int) {
 	lines := v.flowLines(m)
 	height := min(len(lines)+2, maxHeight)
 	if width < 8 || height < 3 {
@@ -293,7 +292,7 @@ func (v *view) drawFlowsBox(cv *mapstyle.Canvas, m *mapmodel.Model, x, y, width,
 
 // drawCompactBars draws the first and last lines of the compact view: the age
 // and the people, and the news.
-func (v *view) drawCompactBars(cv *mapstyle.Canvas, r mapstyle.Rect, m *mapmodel.Model) {
+func (v *view) drawCompactBars(cv *Canvas, r Rect, m *mapmodel.Model) {
 	title := strings.TrimSuffix(m.AgeName, " Age") + vibe.Line("ui.mapstyle.roguelike.chrome.DrawCompact.02", " · pop ") + strconv.Itoa(m.Workers.Pop)
 	x := cv.Text(0, 0, r.W, title, v.ink.Style(mapmodel.CAccent).Bold(true))
 	if m.Workers.Idle > 0 {
@@ -306,7 +305,7 @@ func (v *view) drawCompactBars(cv *mapstyle.Canvas, r mapstyle.Rect, m *mapmodel
 }
 
 // drawLegend lists the signs of the building lines the town has.
-func (v *view) drawLegend(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, w, h int, m *mapmodel.Model) {
+func (v *view) drawLegend(cv *Canvas, mp *Palette, x, y, w, h int, m *mapmodel.Model) {
 	cv.Text(x, y, w, vibe.Line("ui.mapstyle.roguelike.chrome.drawLegend.01", "LEGEND"), mp.Style(mapmodel.CAccent).Bold(true))
 	for i, l := range m.Lineages {
 		if i+1 >= h {

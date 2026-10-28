@@ -1,4 +1,4 @@
-package procmap
+package mapstyle
 
 import (
 	"github.com/gdamore/tcell/v2"
@@ -120,9 +120,9 @@ type paintKey struct {
 	blank  bool
 }
 
-// palette is the colours of one theme and one age's walls. It is rebuilt when
+// cellPalette is the colours of one theme and one age's walls. It is rebuilt when
 // either changes.
-type palette struct {
+type cellPalette struct {
 	theme string
 	wall  mapgen.Hue
 	tint  mapgen.Hue
@@ -132,14 +132,14 @@ type palette struct {
 	cache map[paintKey]tcell.Style
 }
 
-// paletteFor returns p when it still fits the theme and the grid, else a new
+// cellPaletteFor returns p when it still fits the theme and the grid, else a new
 // one.
-func paletteFor(p *palette, g *mapgen.Grid) *palette {
+func cellPaletteFor(p *cellPalette, g *mapgen.Grid) *cellPalette {
 	key := theme.Active().Key
 	if p != nil && p.theme == key && p.wall == g.Wall && p.tint == g.Tint {
 		return p
 	}
-	p = &palette{theme: key, wall: g.Wall, tint: g.Tint, bg: theme.Color(theme.RoleBackground), cache: map[paintKey]tcell.Style{}}
+	p = &cellPalette{theme: key, wall: g.Wall, tint: g.Tint, bg: theme.Color(theme.RoleBackground), cache: map[paintKey]tcell.Style{}}
 	for h := range p.hue {
 		p.hue[h] = recipes[h].colour()
 	}
@@ -158,7 +158,7 @@ func paletteFor(p *palette, g *mapgen.Grid) *palette {
 }
 
 // over is a paint laid over the theme's ground.
-func (p *palette) over(pt mapgen.Paint) tcell.Color {
+func (p *cellPalette) over(pt mapgen.Paint) tcell.Color {
 	if pt.Hue == mapgen.HNone || pt.Weight == 0 {
 		return p.bg
 	}
@@ -173,7 +173,7 @@ const (
 
 // style is the style of a cell: its paints over the ground, pulled toward the
 // night by its dim, the glyph kept legible on the ground it stands on.
-func (p *palette) style(c mapgen.Cell) tcell.Style {
+func (p *cellPalette) style(c mapgen.Cell) tcell.Style {
 	k := paintKey{c.Fg, c.Bg, c.Dim, c.R == ' ' || c.R == 0}
 	if st, ok := p.cache[k]; ok {
 		return st
@@ -195,4 +195,6 @@ func (p *palette) style(c mapgen.Cell) tcell.Style {
 
 // colour is the colour of a hue at full weight, for chrome that borrows it
 // (the legend's signs).
-func (p *palette) colour(h mapgen.Hue) tcell.Color { return theme.Legible(p.hue[h], p.bg, dayContrast) }
+func (p *cellPalette) colour(h mapgen.Hue) tcell.Color {
+	return theme.Legible(p.hue[h], p.bg, dayContrast)
+}

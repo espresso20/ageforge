@@ -34,7 +34,6 @@ var scanned = []struct {
 	{"game", modeCode},
 	{"ui", modeCode},
 	{"ui/mapstyle", modeCode},
-	{"ui/mapstyle/procmap", modeCode},
 	{".", modeCode},
 }
 

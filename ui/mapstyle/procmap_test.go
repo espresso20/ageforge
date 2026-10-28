@@ -1,4 +1,4 @@
-package procmap
+package mapstyle
 
 import (
 	"strings"
@@ -10,7 +10,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
 
@@ -34,13 +33,13 @@ var sizes = []struct {
 	compact bool
 }{{"120x36", 120, 36, false}, {"80x24", 80, 24, false}, {"mini", 40, 9, true}}
 
-func draw(v mapstyle.Style, m *mapmodel.Model, w, h int, compact bool, tier mapmodel.GlyphTier) tcell.SimulationScreen {
+func draw(v Style, m *mapmodel.Model, w, h int, compact bool, tier mapmodel.GlyphTier) tcell.SimulationScreen {
 	scr := capture.NewScreen(w, h)
-	f := mapstyle.Frame{Model: m, Tier: tier}
+	f := Frame{Model: m, Tier: tier}
 	if compact {
-		v.DrawCompact(scr, mapstyle.Rect{W: w, H: h}, f)
+		v.DrawCompact(scr, Rect{W: w, H: h}, f)
 	} else {
-		v.Draw(scr, mapstyle.Rect{W: w, H: h}, f)
+		v.Draw(scr, Rect{W: w, H: h}, f)
 	}
 	scr.Show()
 	return scr
@@ -179,11 +178,11 @@ func TestCursorWalksTheTown(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := model("modern_age", noon)
 	v := New()
-	f := mapstyle.Frame{Model: m}
+	f := Frame{Model: m}
 	draw(v, m, 120, 36, false, mapmodel.TierUnicode).Fini()
 	start, _ := v.Pointer()
 	tab := tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone)
-	var in mapstyle.Inspection
+	var in Inspection
 	for i := 0; i < 60 && !strings.Contains(in.Title, "×"); i++ {
 		if !v.HandleKey(tab, f) {
 			t.Fatal("Tab was not taken")

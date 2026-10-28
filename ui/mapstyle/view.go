@@ -1,8 +1,9 @@
-// Package procmap is the map view drawn by the procedural engine (package
-// mapgen): the engine's cells, coloured in the player's theme, with the map's
-// own header, news, inspector and words round them. It is the mapstyle.Style
-// the Map panel, the mini map and the main menu draw through.
-package procmap
+package mapstyle
+
+// view.go is the map view: the picture the procedural engine (package
+// mapgen) draws, its cells coloured in the player's theme, with the map's own
+// header, news, inspector and words round it. It is the Style the Map panel,
+// the mini map and the main menu draw through.
 
 import (
 	"sync"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -40,8 +40,8 @@ var shared struct {
 
 // view is one open map.
 type view struct {
-	pal  *palette // the engine's cell colours
-	ink  *inks    // the chrome's colours
+	pal  *cellPalette // the engine's cell colours
+	ink  *inks        // the chrome's colours
 	tier mapmodel.GlyphTier
 
 	zoom     int  // the player's zoom, once chosen
@@ -76,12 +76,12 @@ type sceneKey struct {
 }
 
 // New makes a map view drawn by the engine.
-func New() mapstyle.Style {
+func New() Style {
 	return &view{inspect: true, legend: true, changes: true}
 }
 
 // scene is the world drawn for a frame, reused while the frame is the same.
-func (v *view) scene(f mapstyle.Frame) *mapgen.Scene {
+func (v *view) scene(f Frame) *mapgen.Scene {
 	if f.Model == nil {
 		return nil
 	}
@@ -97,27 +97,27 @@ func (v *view) scene(f mapstyle.Frame) *mapgen.Scene {
 	return v.sc
 }
 
-func (v *view) SetOption(o mapstyle.Option, on bool) {
+func (v *view) SetOption(o Option, on bool) {
 	switch o {
-	case mapstyle.OptWorld:
+	case OptWorld:
 		if on {
 			v.zoom, v.zoomSet = zOverview, true
 		} else if v.zoomSet && v.zoom == zOverview {
 			v.zoomSet = false // back to what the size chooses
 		}
-	case mapstyle.OptInspect:
+	case OptInspect:
 		v.inspect = on
-	case mapstyle.OptLegend:
+	case OptLegend:
 		v.legend = on
-	case mapstyle.OptFlows:
+	case OptFlows:
 		v.flows = on
-	case mapstyle.OptChanges:
+	case OptChanges:
 		v.changes = on
 	}
 }
 
 // wantsOverview says whether a panel r shows the whole town.
-func (v *view) wantsOverview(r mapstyle.Rect) bool {
+func (v *view) wantsOverview(r Rect) bool {
 	if v.zoomSet {
 		return v.zoom == zOverview
 	}
@@ -134,8 +134,8 @@ func (v *view) Point(p mapmodel.Pt, ok bool) { v.mark, v.marked = mapgen.Pt{X: p
 
 // blit puts a grid on the canvas at (x0, y0): the one thing the screen does
 // with it.
-func (v *view) blit(cv *mapstyle.Canvas, x0, y0 int, g *mapgen.Grid) {
-	v.pal = paletteFor(v.pal, g)
+func (v *view) blit(cv *Canvas, x0, y0 int, g *mapgen.Grid) {
+	v.pal = cellPaletteFor(v.pal, g)
 	for y := 0; y < g.H; y++ {
 		for x := 0; x < g.W; x++ {
 			c := g.Cells[y*g.W+x]
@@ -151,7 +151,7 @@ func (v *view) blit(cv *mapstyle.Canvas, x0, y0 int, g *mapgen.Grid) {
 // Blit draws a grid, as the screen layer would, onto a screen inside r. The
 // lab pages use it to show the engine's pictures in a theme without a map
 // panel round them.
-func Blit(scr tcell.Screen, r mapstyle.Rect, g *mapgen.Grid, tier mapmodel.GlyphTier) {
+func Blit(scr tcell.Screen, r Rect, g *mapgen.Grid, tier mapmodel.GlyphTier) {
 	v := &view{}
-	v.blit(mapstyle.NewCanvas(scr, r, tier, tcell.StyleDefault), 0, 0, g)
+	v.blit(NewCanvas(scr, r, tier, tcell.StyleDefault), 0, 0, g)
 }

@@ -1,4 +1,4 @@
-package procmap
+package mapstyle
 
 import (
 	"strconv"
@@ -7,17 +7,16 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/vibe"
 )
 
 // Inspect reports what the cursor is on; ok is false while it is hidden. It
 // says only what the game already says: a building's name and count, a
 // wonder's name and age, the square, a road, the ground.
-func (v *view) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
+func (v *view) Inspect(f Frame) (Inspection, bool) {
 	sc := v.scene(f)
 	if sc == nil || !v.inspect {
-		return mapstyle.Inspection{}, false
+		return Inspection{}, false
 	}
 	p := v.cur
 	if v.overview && v.ov != nil { // the most important thing in the cell
@@ -29,14 +28,14 @@ func (v *view) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 }
 
 // describe is what the game says of a thing the engine drew.
-func describe(m *mapmodel.Model, th mapgen.Thing) mapstyle.Inspection {
+func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 	switch th.Kind {
 	case mapgen.KindBuilding:
 		return describeBuilding(m, th.Key, th.Lineage, th.Ruin)
 	case mapgen.KindWonder:
 		return describeWonder(m, th.Key)
 	case mapgen.KindAmbient:
-		return mapstyle.Inspection{Title: mapmodel.LineageName(mapmodel.LinHousing)}
+		return Inspection{Title: mapmodel.LineageName(mapmodel.LinHousing)}
 	case mapgen.KindRoad, mapgen.KindAgent:
 		return describeRoad(m, th.Key)
 	case mapgen.KindTerrain:
@@ -44,15 +43,15 @@ func describe(m *mapmodel.Model, th mapgen.Thing) mapstyle.Inspection {
 			return describeTerrain(t)
 		}
 	}
-	return mapstyle.Inspection{Title: m.TownName}
+	return Inspection{Title: m.TownName}
 }
 
 // describeBuilding says what the cursor is on when it is on a building type
 // (or its ruins): its name, the count, the line, and what to type for it.
-func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) mapstyle.Inspection {
+func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) Inspection {
 	b := m.Building(key)
 	if b == nil {
-		return mapstyle.Inspection{Title: vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.01", "Ruins")}
+		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.01", "Ruins")}
 	}
 	command := m.BuildingCommand(b)
 	if command == "" {
@@ -60,7 +59,7 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) mapstyl
 	}
 	line := lineageLabel(lineage)
 	if ruin {
-		return mapstyle.Inspection{
+		return Inspection{
 			Title:   vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.02", "Ruins of ") + b.Name,
 			Command: command,
 			Lines:   []string{strconv.Itoa(b.Ruins) + vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.03", " in ruins"), line},
@@ -69,7 +68,7 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) mapstyl
 	if b.Legacy {
 		line += vibe.Line("ui.mapstyle.roguelike.inspect.describeTile.04", ", legacy")
 	}
-	in := mapstyle.Inspection{Title: b.Name + " ×" + strconv.Itoa(b.Count), Command: command, Lines: []string{line}}
+	in := Inspection{Title: b.Name + " ×" + strconv.Itoa(b.Count), Command: command, Lines: []string{line}}
 	add := func(ok bool, text string) {
 		if ok {
 			in.Lines = append(in.Lines, text)
@@ -93,8 +92,8 @@ func describeBuilding(m *mapmodel.Model, key, lineage string, ruin bool) mapstyl
 }
 
 // describeWonder says what the cursor is on when it is on a wonder.
-func describeWonder(m *mapmodel.Model, key string) mapstyle.Inspection {
-	in := mapstyle.Inspection{Title: key, Command: m.WonderCommand(nil)}
+func describeWonder(m *mapmodel.Model, key string) Inspection {
+	in := Inspection{Title: key, Command: m.WonderCommand(nil)}
 	for i := range m.Wonders {
 		wonder := &m.Wonders[i]
 		if wonder.Key != key {
@@ -118,7 +117,7 @@ func describeWonder(m *mapmodel.Model, key string) mapstyle.Inspection {
 }
 
 // describeRoad is what the cursor says on a road, a bridge or the square.
-func describeRoad(m *mapmodel.Model, key string) mapstyle.Inspection {
+func describeRoad(m *mapmodel.Model, key string) Inspection {
 	town := m.TownName
 	switch key {
 	case "square":
@@ -131,15 +130,15 @@ func describeRoad(m *mapmodel.Model, key string) mapstyle.Inspection {
 	return roadIn(vibe.Line("ui.mapstyle.roguelike.inspect.describe.22", "Street"), town)
 }
 
-func roadIn(name, town string) mapstyle.Inspection {
-	return mapstyle.Inspection{Title: name, Lines: []string{vibe.Line("ui.mapstyle.roguelike.inspect.describe.23", "in ") + town}}
+func roadIn(name, town string) Inspection {
+	return Inspection{Title: name, Lines: []string{vibe.Line("ui.mapstyle.roguelike.inspect.describe.23", "in ") + town}}
 }
 
 // describeSquare is the town square: its people, the next age if it is in
 // reach, and what is stuck.
-func describeSquare(m *mapmodel.Model, town string) mapstyle.Inspection {
+func describeSquare(m *mapmodel.Model, town string) Inspection {
 	people := plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.inspect.describe.14", "person"), vibe.Line("ui.mapstyle.roguelike.inspect.describe.15", "people"))
-	in := mapstyle.Inspection{
+	in := Inspection{
 		Title:   vibe.Line("ui.mapstyle.roguelike.inspect.describe.13", "Town square of ") + town,
 		Command: m.SquareCommand(),
 		Lines:   []string{people + ", " + strconv.Itoa(m.Workers.Idle) + vibe.Line("ui.mapstyle.roguelike.inspect.describe.16", " idle")},
@@ -176,8 +175,8 @@ var terrainNotes = [8]vibe.Entry{
 
 // describeTerrain says what the cursor is on when it is on open ground of a
 // terrain.
-func describeTerrain(t mapmodel.Terrain) mapstyle.Inspection {
-	in := mapstyle.Inspection{Title: terrainNames[t].String()}
+func describeTerrain(t mapmodel.Terrain) Inspection {
+	in := Inspection{Title: terrainNames[t].String()}
 	if note := terrainNotes[t].String(); note != "" {
 		in.Lines = append(in.Lines, note)
 	}

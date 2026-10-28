@@ -1,4 +1,4 @@
-package procmap
+package mapstyle
 
 import (
 	"fmt"
@@ -12,14 +12,13 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 	"github.com/espresso20/ageforge/vibe"
 )
 
 // cursorCells returns the cells of a screen drawn in the cursor's fill
 // (either half of its blink), with the position of each.
-func cursorCells(scr tcell.SimulationScreen, ink *mapstyle.Palette) (cells []tcell.SimCell, at [][2]int) {
+func cursorCells(scr tcell.SimulationScreen, ink *Palette) (cells []tcell.SimCell, at [][2]int) {
 	_, fill, _ := ink.Cursor.Decompose()
 	_, alt, _ := ink.CursorAlt.Decompose()
 	all, w, h := scr.GetContents()
@@ -59,13 +58,13 @@ func TestCursorIsAHighlightedCell(t *testing.T) {
 			m := grown(t, fixture.Options{Age: age, Seed: 5})
 			for _, world := range []bool{false, true} {
 				v := New().(*view)
-				v.SetOption(mapstyle.OptWorld, world)
-				v.SetOption(mapstyle.OptInspect, false)
+				v.SetOption(OptWorld, world)
+				v.SetOption(OptInspect, false)
 				plain := drawOffset(v, m, 120, 40, 0, mapmodel.TierUnicode, false)
 				if cells, _ := cursorCells(plain, v.ink.Palette); len(cells) != 0 {
 					t.Errorf("%s, %s: %d cells are drawn in the cursor's fill with no cursor out", th.Key, age, len(cells))
 				}
-				v.SetOption(mapstyle.OptInspect, true)
+				v.SetOption(OptInspect, true)
 				lit := drawOffset(v, m, 120, 40, 0, mapmodel.TierUnicode, false)
 				cells, at := changedCells(plain, lit, 2, 40-3) // the rows of the picture, inside the bars
 				before, w, _ := plain.GetContents()
@@ -81,7 +80,7 @@ func TestCursorIsAHighlightedCell(t *testing.T) {
 				}
 				_, ground, _ := under.Style.Decompose()
 				_, fill, _ := cells[0].Style.Decompose()
-				if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < mapstyle.CursorFromGround || cr < mapstyle.CursorOverGround {
+				if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < CursorFromGround || cr < CursorOverGround {
 					t.Errorf("%s, %s world %v: the cursor #%06x over the cell beneath it #%06x: distance %.3f, contrast %.2f", th.Key, age, world, fill.Hex(), ground.Hex(), d, cr)
 				}
 			}
@@ -90,7 +89,7 @@ func TestCursorIsAHighlightedCell(t *testing.T) {
 }
 
 // TestCursorBlinksWithTheMap: the cursor blinks slowly while the map moves
-// (the fill, then its brighter shade, each for mapstyle.CursorBlinkFrames
+// (the fill, then its brighter shade, each for CursorBlinkFrames
 // frames) and holds the fill while the motion setting holds the frame at 0.
 func TestCursorBlinksWithTheMap(t *testing.T) {
 	fixture.WithTheme(t, "forge")
@@ -106,15 +105,15 @@ func TestCursorBlinksWithTheMap(t *testing.T) {
 		_, bg, _ := cells[0].Style.Decompose()
 		return bg
 	}
-	_, fill, _ := v.begin(mapstyle.Frame{Model: m}).Cursor.Decompose()
+	_, fill, _ := v.begin(Frame{Model: m}).Cursor.Decompose()
 	_, alt, _ := v.ink.CursorAlt.Decompose()
 	if got := bgAt(0); got != fill {
 		t.Errorf("with motion off the cursor is #%06x, want the fill #%06x", got.Hex(), fill.Hex())
 	}
-	if got := bgAt(mapstyle.CursorBlinkFrames); got != alt {
+	if got := bgAt(CursorBlinkFrames); got != alt {
 		t.Errorf("half a blink on the cursor is #%06x, want the brighter shade #%06x", got.Hex(), alt.Hex())
 	}
-	if got := bgAt(2 * mapstyle.CursorBlinkFrames); got != fill {
+	if got := bgAt(2 * CursorBlinkFrames); got != fill {
 		t.Errorf("a whole blink on the cursor is #%06x, want the fill #%06x again", got.Hex(), fill.Hex())
 	}
 }
@@ -133,7 +132,7 @@ func TestMiniMapMarksTheCursor(t *testing.T) {
 		t.Errorf("the mini map marks %d cells for the Map panel's cursor, want 1", len(cells))
 	}
 	scr.Fini()
-	panel.SetOption(mapstyle.OptInspect, false)
+	panel.SetOption(OptInspect, false)
 	mini.Point(panel.Pointer())
 	scr = drawOffset(mini, m, 58, 9, 0, mapmodel.TierUnicode, true)
 	if cells, _ := cursorCells(scr, mini.ink.Palette); len(cells) != 0 {
@@ -150,9 +149,9 @@ func TestChromeInksKeepTheTerrainFloor(t *testing.T) {
 		var ink *inks
 		for epoch := 0; epoch < 7; epoch++ {
 			ink = inksFor(ink, epoch)
-			for _, class := range mapstyle.TerrainClasses {
-				if cr := theme.ContrastRatio(ink.Fg[class], ink.Bg); cr < mapstyle.TerrainFloor {
-					t.Errorf("%s epoch %d: class %d reads %.2f:1, want >= %.1f", th.Key, epoch, class, cr, mapstyle.TerrainFloor)
+			for _, class := range TerrainClasses {
+				if cr := theme.ContrastRatio(ink.Fg[class], ink.Bg); cr < TerrainFloor {
+					t.Errorf("%s epoch %d: class %d reads %.2f:1, want >= %.1f", th.Key, epoch, class, cr, TerrainFloor)
 				}
 			}
 		}
@@ -167,22 +166,22 @@ func mapText(t *testing.T, st game.GameState) string {
 	t.Helper()
 	m := mapmodel.NewBuilder(nil).Build(&st, nil)
 	var out strings.Builder
-	f := mapstyle.Frame{Model: m, Tier: mapmodel.TierUnicode}
+	f := Frame{Model: m, Tier: mapmodel.TierUnicode}
 	for _, world := range []bool{false, true} {
 		v := New()
-		v.SetOption(mapstyle.OptWorld, world)
-		v.SetOption(mapstyle.OptInspect, true)
-		v.SetOption(mapstyle.OptFlows, true)
+		v.SetOption(OptWorld, world)
+		v.SetOption(OptInspect, true)
+		v.SetOption(OptFlows, true)
 		for _, size := range [][2]int{{160, 48}, {120, 40}} {
 			scr := capture.NewScreen(size[0], size[1])
-			v.Draw(scr, mapstyle.Rect{W: size[0], H: size[1]}, f)
+			v.Draw(scr, Rect{W: size[0], H: size[1]}, f)
 			out.WriteString(capture.Text(scr))
 			scr.Fini()
 		}
 		scr := capture.NewScreen(160, 48)
 		for i := 0; i < 80; i++ {
 			v.HandleKey(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone), f)
-			v.Draw(scr, mapstyle.Rect{W: 160, H: 48}, f)
+			v.Draw(scr, Rect{W: 160, H: 48}, f)
 			if in, ok := v.Inspect(f); ok {
 				out.WriteString(in.Title + "\n" + strings.Join(in.Lines, "\n") + "\n" + in.Command + "\n")
 			}
@@ -194,7 +193,7 @@ func mapText(t *testing.T, st game.GameState) string {
 	}
 	for _, size := range [][2]int{{40, 15}, {65, 9}} {
 		scr := capture.NewScreen(size[0], size[1])
-		New().DrawCompact(scr, mapstyle.Rect{W: size[0], H: size[1]}, f)
+		New().DrawCompact(scr, Rect{W: size[0], H: size[1]}, f)
 		out.WriteString(capture.Text(scr))
 		scr.Fini()
 	}
@@ -317,13 +316,13 @@ func TestVibeTextNeverMovesWhatIsAroundIt(t *testing.T) {
 		var out strings.Builder
 		for _, size := range [][2]int{{160, 48}, {80, 24}} {
 			v := New()
-			for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges} {
+			for _, o := range []Option{OptFlows, OptInspect, OptLegend, OptChanges} {
 				v.SetOption(o, true)
 			}
 			scr := capture.NewScreen(size[0], size[1])
-			r := mapstyle.Rect{W: size[0], H: size[1]}
+			r := Rect{W: size[0], H: size[1]}
 			for step := 0; step < 2*len(keys); step++ {
-				f := mapstyle.Frame{Model: m, Anim: step, Clock: step * 3, Tier: mapmodel.TierUnicode}
+				f := Frame{Model: m, Anim: step, Clock: step * 3, Tier: mapmodel.TierUnicode}
 				v.HandleKey(keys[step%len(keys)], f)
 				in, ok := v.Inspect(f)
 				fmt.Fprintf(&out, "inspect %v %q %q %q %q\n", ok, in.Title, in.Lines, in.Command, in.Kind)
@@ -333,7 +332,7 @@ func TestVibeTextNeverMovesWhatIsAroundIt(t *testing.T) {
 				}
 			}
 			scr.SetSize(40, 15)
-			New().DrawCompact(scr, mapstyle.Rect{W: 40, H: 15}, mapstyle.Frame{Model: m, Tier: mapmodel.TierUnicode})
+			New().DrawCompact(scr, Rect{W: 40, H: 15}, Frame{Model: m, Tier: mapmodel.TierUnicode})
 			out.WriteString(capture.Text(scr))
 			scr.Fini()
 		}

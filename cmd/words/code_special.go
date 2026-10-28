@@ -136,9 +136,9 @@ var fileNotes = map[string]fileNote{
 	"theme/contrast.go":       {place: "in the theme picker's color-vision check", age: "primitive_age"},
 	"theme/palette.go":        {skip: whyDev},
 
-	"ui/mapstyle/procmap/chrome.go":  {place: "in the frame of the map: its header, its hints and its list of what is stuck", age: "primitive_age", seen: seenOften},
-	"ui/mapstyle/procmap/inspect.go": {place: "when you inspect something on the map", age: "primitive_age"},
-	"ui/mapstyle/procmap/view.go":    {place: "naming the map's zoom levels", age: "primitive_age"},
+	"ui/mapstyle/chrome.go":  {place: "in the frame of the map: its header, its hints and its list of what is stuck", age: "primitive_age", seen: seenOften},
+	"ui/mapstyle/inspect.go": {place: "when you inspect something on the map", age: "primitive_age"},
+	"ui/mapstyle/view.go":    {place: "naming the map's zoom levels", age: "primitive_age"},
 
 	// ----- screens -----
 	"ui/accounts_panel.go":       {place: "in the Accounts panel of the main menu", age: "menu", seen: seenRegular},

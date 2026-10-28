@@ -1,10 +1,9 @@
-package procmap
+package mapstyle
 
 import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapgen"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 var keyMoves = map[tcell.Key][2]int{tcell.KeyLeft: {-1, 0}, tcell.KeyRight: {1, 0}, tcell.KeyUp: {0, -1}, tcell.KeyDown: {0, 1}}
@@ -13,7 +12,7 @@ var keyMoves = map[tcell.Key][2]int{tcell.KeyLeft: {-1, 0}, tcell.KeyRight: {1, 
 // the arrows move the cursor (Shift by 8), PgUp and PgDn zoom out and in, Tab
 // and Shift-Tab jump between buildings and wonders, Home centres on the town
 // square.
-func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
+func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 	sc := v.scene(f)
 	if ev == nil || sc == nil {
 		return false

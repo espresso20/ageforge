@@ -7,7 +7,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/procmap"
 )
 
 // menu_town.go draws the player's own town behind the main menu: the map
@@ -60,7 +59,7 @@ func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, follows bool) 
 			t = nil // a state the maps cannot lay out: no picture
 		}
 	}()
-	style := procmap.New()
+	style := mapstyle.New()
 	// The picture alone: no cursor, no legend, no overlay, no news.
 	for _, o := range []mapstyle.Option{mapstyle.OptFlows, mapstyle.OptInspect, mapstyle.OptLegend, mapstyle.OptChanges, mapstyle.OptWorld} {
 		style.SetOption(o, false)
