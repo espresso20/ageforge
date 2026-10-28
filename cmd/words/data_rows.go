@@ -264,7 +264,6 @@ var hiddenFields = map[string]string{
 	"config.unlockOrder.resources":      "not a definition",
 	"config.TechEffect.Target":          "a key",
 	"config.TechEffectKey.Target":       "a key",
-	"config.BadgeHeldOutDef.Why":        "a note for developers",
 	"config.BadgeProof.Why":             "a note for developers",
 	"config.FeatureLockDef.Tech":        "a tech key",
 	"config.BadgeExpeditionDef.MinAge":  "an age key",
@@ -378,10 +377,6 @@ func (c *catalog) fromRule(rule fieldRule, u *unit) *row {
 	}
 	if rule.fix != nil {
 		rule.fix(c, u, r)
-	}
-	if u.decl == "BadgesHeldOut" {
-		r.unsure = true
-		r.where += " This badge is held out of the game for now (BadgesHeldOut), so nobody can see it yet."
 	}
 	return r
 }

@@ -74,13 +74,19 @@ func (rm *ResearchManager) Rebind(set *rules.Set) {
 	rm.rebuildBonuses()
 }
 
+// unknownTech is the refusal for a key that is no tech. The hint says where
+// the list of techs is.
+func (rm *ResearchManager) unknownTech(key, hint string) error {
+	return unknownKeyError(vibe.Line("game.research.StartResearch.01", "tech"), key, rm.defs, hint)
+}
+
 // StartResearch begins researching a technology. A tech can be started
 // whenever its age and prerequisites allow: it has no price to afford. It
 // starts at zero progress.
 func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int) error {
 	def, ok := rm.defs[key]
 	if !ok {
-		return unknownKeyError(vibe.Line("game.research.StartResearch.01", "tech"), key, rm.defs, vibe.Line("game.research.StartResearch.02", "Type research list to see what you can research."))
+		return rm.unknownTech(key, vibe.Line("game.research.StartResearch.02", "Type research list to see what you can research."))
 	}
 	if rm.researched[key] {
 		return vibe.Errorf("game.research.StartResearch.03", "%s is already researched.", def.Name)
@@ -160,7 +166,7 @@ const memoryResearchSlowdown = 0.5
 func (rm *ResearchManager) StartMemoryResearch(key string) error {
 	def, ok := rm.defs[key]
 	if !ok {
-		return unknownKeyError(vibe.Line("game.research.StartMemoryResearch.01", "tech"), key, rm.defs, vibe.Line("game.research.StartMemoryResearch.02", "Type research list to see what you can research."))
+		return rm.unknownTech(key, vibe.Line("game.research.StartMemoryResearch.02", "Type research list to see what you can research."))
 	}
 	if rm.researched[key] {
 		return vibe.Errorf("game.research.StartMemoryResearch.03", "%s is already researched.", def.Name)

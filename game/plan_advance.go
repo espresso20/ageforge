@@ -47,7 +47,7 @@ func (ge *GameEngine) planAdvanceBlocker() string {
 
 // planAdvanceView is an advance item for the UI.
 func (ge *GameEngine) planAdvanceView(it PlanItem) PlanItemView {
-	v := PlanItemView{Kind: it.Kind, Count: it.Count, Name: vibe.Line("game.plan_advance.planAdvanceView.01", "advance when ready")}
+	v := PlanItemView{Kind: it.Kind, Count: it.Count, Name: txtAdvanceWhenReady.String()}
 	if next := ge.progress.GetNextAge(ge.age); next != "" {
 		v.Name = vibe.Line("game.plan_advance.planAdvanceView.02", "advance to the ") + ge.progress.GetAgeName(next)
 	}

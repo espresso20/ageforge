@@ -2647,6 +2647,11 @@ func (ge *GameEngine) grantProduction(value float64) {
 	ge.logCapped(config.Effect{Type: "production_all", Value: value})
 }
 
+// countWorkersRealOne counts workers lost. See countWorkersHomie.
+func countWorkersRealOne(n int) string {
+	return textfmt.Count(n, vibe.Line("game.engine.applyChallengingEpochEvent.04", "worker"), vibe.Line("game.engine.applyChallengingEpochEvent.05", "workers"))
+}
+
 // applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch
 // event. As with good events, "→" lines report only what the flavor text
 // cannot state (what burned, who died, how much was lost).
@@ -2678,7 +2683,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		before := ge.Workers.TotalPop()
 		ge.Workers.RemovePct(0.20)
 		if lost := before - ge.Workers.TotalPop(); lost > 0 {
-			ge.addLogAbout("warning", TagPeople|TagBad, vibe.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", textfmt.Count(lost, vibe.Line("game.engine.applyChallengingEpochEvent.04", "worker"), vibe.Line("game.engine.applyChallengingEpochEvent.05", "workers"))))
+			ge.addLogAbout("warning", TagPeople|TagBad, vibe.Sprintf("game.engine.applyChallengingEpochEvent.03", "  → %s lost.", countWorkersRealOne(lost)))
 		}
 	case "resource_drought":
 		// Debuff epoch's primary resource
@@ -3559,6 +3564,12 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	return built, nil
 }
 
+// countWorkersGrinder counts workers recruited or assigned one at a time. See
+// countWorkersHomie.
+func countWorkersGrinder(n int) string {
+	return textfmt.Count(n, vibe.Line("game.engine.RecruitMax.05", "worker"), vibe.Line("game.engine.RecruitMax.06", "workers"))
+}
+
 // RecruitMax recruits as many workers as possible up to the pop cap
 func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.mu.Lock()
@@ -3581,8 +3592,14 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.Stats.RecordRecruit(available)
 	ge.holdStaffing()
 	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.engine.RecruitMax.04", "Recruited %s (population %d/%d).",
-		textfmt.Count(available, vibe.Line("game.engine.RecruitMax.05", "worker"), vibe.Line("game.engine.RecruitMax.06", "workers")), ge.popLocked(), popCap))
+		countWorkersGrinder(available), ge.popLocked(), popCap))
 	return available, nil
+}
+
+// countWorkersNPC counts workers recruited, assigned all at once or dismissed.
+// See countWorkersHomie.
+func countWorkersNPC(n int) string {
+	return textfmt.Count(n, vibe.Line("game.engine.RecruitWorker.09", "worker"), vibe.Line("game.engine.RecruitWorker.10", "workers"))
 }
 
 // RecruitWorker recruits workers
@@ -3609,7 +3626,7 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	ge.Stats.RecordRecruit(count)
 	ge.holdStaffing()
 	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
-		textfmt.Count(count, vibe.Line("game.engine.RecruitWorker.09", "worker"), vibe.Line("game.engine.RecruitWorker.10", "workers")), ge.popLocked(), popCap))
+		countWorkersNPC(count), ge.popLocked(), popCap))
 	return nil
 }
 
@@ -3642,7 +3659,7 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 		return vibe.Errorf("game.engine.AssignWorker.08", "Only %s idle (you asked for %d). Recruit more or unassign some elsewhere.",
 			textfmt.Count(idle, vibe.Line("game.engine.AssignWorker.09", "worker is"), vibe.Line("game.engine.AssignWorker.10", "workers are")), count)
 	}
-	ge.staffingChanged(vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", countWorkersGrinder(count), def.Name))
 	return nil
 }
 
@@ -3673,7 +3690,7 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	if !ge.Workers.Assign(buildingKey, toAssign) {
 		return 0, vibe.Errorf("game.engine.AssignAll.05", "Could not assign workers to %s.", def.Name)
 	}
-	ge.staffingChanged(vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", countWorkersNPC(toAssign), def.Name))
 	return toAssign, nil
 }
 
@@ -3693,7 +3710,7 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	if !ge.Workers.Unassign(buildingKey, assigned) {
 		return 0, vibe.Errorf("game.engine.UnassignAll.02", "Could not unassign workers from %s.", def.Name)
 	}
-	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", countWorkersHomie(assigned), def.Name))
 	return assigned, nil
 }
 
@@ -3716,7 +3733,7 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 		}
 		return vibe.Errorf("game.engine.UnassignWorker.03", "Only %s assigned to %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignWorker.04", "worker is"), vibe.Line("game.engine.UnassignWorker.05", "workers are")), def.Name)
 	}
-	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", countWorkersHomie(count), def.Name))
 	return nil
 }
 
@@ -3740,7 +3757,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 		return vibe.Errorf("game.engine.DismissWorkers.02", "No workers are assigned to %s.", def.Name)
 	}
 	ge.staffingChanged(vibe.Sprintf("game.engine.DismissWorkers.03", "Dismissed %s from %s. They left your population (now %d).",
-		textfmt.Count(dismissed, vibe.Line("game.engine.DismissWorkers.04", "worker"), vibe.Line("game.engine.DismissWorkers.05", "workers")), def.Name, ge.popLocked()))
+		countWorkersNPC(dismissed), def.Name, ge.popLocked()))
 	return nil
 }
 
@@ -4533,6 +4550,11 @@ func (ge *GameEngine) setPrestigeFloorLocked() {
 	ge.Prestige.floor = ge.Prestige.record
 }
 
+// countPrestigePoints counts prestige points.
+func countPrestigePoints(n int) string {
+	return textfmt.Count(n, vibe.Line("game.engine.completePrestige.02", "prestige point"), vibe.Line("game.engine.completePrestige.03", "prestige points"))
+}
+
 // completePrestige awards the run's prestige points (all, part or none of
 // them, as how says), logs the run's last lines and resets for the new run.
 // Called by DoPrestige and by the Last Passage choice, under the write lock.
@@ -4610,7 +4632,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 		end.Lines = append(end.Lines, RunEndingLine{Kind: kind, Level: l.Type, Text: l.Message})
 	}
 	ge.sayEnding(&end, EndLineComplete, "success", vibe.Sprintf("game.engine.completePrestige.01", "Prestige complete. Level %d, %s earned.",
-		ge.Prestige.GetLevel(), textfmt.Count(points, vibe.Line("game.engine.completePrestige.02", "prestige point"), vibe.Line("game.engine.completePrestige.03", "prestige points"))))
+		ge.Prestige.GetLevel(), countPrestigePoints(points)))
 	// An early prestige pays little: say so, and what a deeper run pays.
 	if line := EarlyPrestigeLine(sight, prestigedFrom, points, true); line != "" {
 		ge.sayEnding(&end, EndLineEarly, "info", line)

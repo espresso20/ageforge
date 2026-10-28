@@ -6,9 +6,7 @@ package config
 // when the ruleset is compiled; smoke/static_badges.go proves each badge
 // can be earned.
 //
-// A badge that cannot be shown to be earnable does not ship. The few whose
-// only proof would be a way of playing no smoke bot plays yet are kept
-// ready in BadgesHeldOut and are not in the ruleset.
+// A badge that cannot be shown to be earnable does not ship.
 
 // ----- the tables a family may be made from that live outside config -----
 

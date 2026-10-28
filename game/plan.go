@@ -312,7 +312,7 @@ func (ge *GameEngine) planIndexErr(n int) error {
 	if len(ge.plan) == 0 {
 		return vibe.Errorf("game.plan.planIndexErr.01", "The plan is empty.")
 	}
-	return vibe.Errorf("game.plan.planIndexErr.02", "There is no plan item %d (the plan has %s).", n, textfmt.Count(len(ge.plan), vibe.Line("game.plan.planIndexErr.03", "item"), vibe.Line("game.plan.planIndexErr.04", "items")))
+	return vibe.Errorf("game.plan.planIndexErr.02", "There is no plan item %d (the plan has %s).", n, countPlanItems(len(ge.plan)))
 }
 
 // errPlanFull is the refusal when the plan holds MaxPlanItems items besides
@@ -321,10 +321,13 @@ func errPlanFull() error {
 	return vibe.Errorf("game.plan.errPlanFull.01", "The plan is full (%d items, not counting research). Remove one with plan remove <n> first.", MaxPlanItems)
 }
 
+// txtAdvanceWhenReady names an advance item of the plan.
+var txtAdvanceWhenReady = vibe.E("game.plan.planItemLabel.01", "advance when ready")
+
 // planItemLabel is "3 Huts" or "research Pottery".
 func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	if it.Kind == PlanAdvance {
-		return vibe.Line("game.plan.planItemLabel.01", "advance when ready")
+		return txtAdvanceWhenReady.String()
 	}
 	if it.Kind == PlanDeal {
 		return ge.planDealLabel(it)
@@ -532,6 +535,11 @@ type planCheck struct {
 	reserve bool               // whether a waiting item holds its price back from later items
 }
 
+// incomeShortfall is why a plan item waits on a resource it has too little of.
+func (ge *GameEngine) incomeShortfall(res string) string {
+	return vibe.Line("game.plan.checkPlanItem.04", "too little ") + ge.rules.ResourceLabel(res) + vibe.Line("game.plan.checkPlanItem.05", " coming in")
+}
+
 // checkPlanItem works out whether item it could start now. researchFirst is
 // whether it is the first research item still in the plan.
 func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
@@ -555,7 +563,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		// so a planned upgrade waits for its price like a typed one.
 		chk := planCheck{cost: cost}
 		if res := ge.planUnfunded(cost); res != "" {
-			chk.blocked = vibe.Line("game.plan.checkPlanItem.04", "too little ") + ge.rules.ResourceLabel(res) + vibe.Line("game.plan.checkPlanItem.05", " coming in")
+			chk.blocked = ge.incomeShortfall(res)
 			return chk
 		}
 		chk.reserve = true
@@ -583,7 +591,7 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		}
 		chk := planCheck{cost: cost}
 		if res := ge.planUnfunded(chk.cost); res != "" {
-			chk.blocked = vibe.Line("game.plan.checkPlanItem.08", "too little ") + ge.rules.ResourceLabel(res) + vibe.Line("game.plan.checkPlanItem.09", " coming in")
+			chk.blocked = ge.incomeShortfall(res)
 			return chk
 		}
 		chk.reserve = true
@@ -602,10 +610,10 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.12", "after the research above it"), reserve: true}
 		}
 		if pre := def.MissingPrereq(ge.Research.IsResearched); pre != "" {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.13", "needs ") + techDefName(ge.rules, pre) + vibe.Line("game.plan.checkPlanItem.14", " first"), reserve: true}
+			return planCheck{blocked: needsFirst(techDefName(ge.rules, pre)), reserve: true}
 		}
 		if !def.AnyOfMet(ge.Research.IsResearched) {
-			return planCheck{blocked: vibe.Line("game.plan.checkPlanItem.15", "needs ") + techNamesOr(ge.rules, def.AnyOf) + vibe.Line("game.plan.checkPlanItem.16", " first"), reserve: true}
+			return planCheck{blocked: needsFirst(techNamesOr(ge.rules, def.AnyOf)), reserve: true}
 		}
 		return planCheck{reserve: true}
 	}
@@ -963,7 +971,7 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		}
 		chk := ge.checkPlanItem(it, first)
 		if missing != "" {
-			chk.blocked, chk.reserve = vibe.Line("game.plan.planViews.01", "needs ")+missing+vibe.Line("game.plan.planViews.02", " first"), false
+			chk.blocked, chk.reserve = needsFirst(missing), false
 		}
 		if len(chk.cost) > 0 {
 			v.Cost = make(map[string]float64, len(chk.cost))
