@@ -1,7 +1,7 @@
 name: Benchmarks
 
 # The hot-path benchmarks (engine tick, UI snapshot, one dashboard frame, one
-# map frame per style) compared with benchstat. See scripts/ci-bench.sh for
+# map frame) compared with benchstat. See scripts/ci-bench.sh for
 # exactly what runs and docs/ci.md for how to read it.
 #
 #   - Pull request: the merge result against the base branch's tip, built and

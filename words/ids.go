@@ -116,21 +116,9 @@ var FieldIDs = map[string]string{
 	"boon.Def.Flavors":                      "boon.{decl}.{sn}.line.{n}",
 
 	// ----- themes and the map -----
-	"theme.Theme.Name":               "theme.{Key}.name",
-	"theme.Theme.Blurb":              "theme.{Key}.blurb",
-	"theme.Theme.UnlockHint":         "theme.{Key}.unlock_hint",
-	"mapmodel.cityFeatureDef.name":   "map.city.{key}.name",
-	"mapmodel.cityFeatureDef.title":  "map.city.{key}.title",
-	"mapmodel.cityFeatureDef.lines":  "map.city.{key}.line.{n}",
-	"mapmodel.moverDef.name":         "map.mover.{key}.name",
-	"mapmodel.moverDef.title":        "map.mover.{key}.title",
-	"mapmodel.moverDef.lines":        "map.mover.{key}.line.{n}",
-	"mapmodel.cityLookDef.name":      "map.city_look.{key}.name",
-	"mapmodel.cityLookDef.structure": "map.city_look.{key}.structure",
-	"mapmodel.cityLookDef.ambient":   "map.city_look.{key}.ambient",
-	"mapmodel.skyPartDef.name":       "map.sky.{k2}.{k}",
-	"mapmodel.AlienKind.Color":       "map.alien.{sn}.color",
-	"mapmodel.AlienKind.Lines":       "map.alien.{sn}.line.{n}",
+	"theme.Theme.Name":       "theme.{Key}.name",
+	"theme.Theme.Blurb":      "theme.{Key}.blurb",
+	"theme.Theme.UnlockHint": "theme.{Key}.unlock_hint",
 }
 
 // FieldID returns the id template for a field, or "" if it has none. typ is

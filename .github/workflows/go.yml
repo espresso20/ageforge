@@ -54,7 +54,7 @@ jobs:
 
   # Tests in four parallel shards. The old single job ran every package under
   # the race detector on one runner and took 23 to 30 minutes (smoke 15, ui 12,
-  # roguelike 8 under -race). On a pull request only the game package, where
+  # the map 8 under -race). On a pull request only the game package, where
   # the engine's locks and bus handlers live, runs under -race; on master
   # every shard does, so a race still surfaces after the merge.
   test:

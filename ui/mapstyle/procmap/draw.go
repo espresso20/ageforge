@@ -9,7 +9,7 @@ import (
 )
 
 // Draw renders the full view: header, picture, side panel, news, inspector and
-// status line, as the roguelike view lays them out. Below 60 by 16 it draws
+// status line. Below 60 by 16 it draws
 // the compact view instead.
 func (v *view) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 	if r.W < 60 || r.H < 16 {
