@@ -97,7 +97,7 @@ func EffectTargetName(target string) string {
 func Amount(v float64, res string) string {
 	if res == config.ResearchTarget {
 		// Work done on a tech is a progress bar, never a number of its own.
-		return vibe.Line("game.names.Amount.01", "research progress")
+		return txtResearchProgress.String()
 	}
 	return textfmt.Number(v) + " " + ResourceName(res)
 }

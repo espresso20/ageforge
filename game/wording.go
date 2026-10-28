@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/pkg/textfmt"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Short names for the player-facing text helpers, kept so the Army code
@@ -51,7 +50,7 @@ func joinAnd(parts []string) string { return textfmt.List(parts) }
 func lossParts(resources map[string]float64, workers int) []string {
 	parts := amountParts(resources, isPositive)
 	if workers > 0 {
-		parts = append(parts, textfmt.Count(workers, vibe.Line("game.wording.lossParts.01", "worker"), vibe.Line("game.wording.lossParts.02", "workers")))
+		parts = append(parts, countWorkersRealOne(workers))
 	}
 	return parts
 }

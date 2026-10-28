@@ -252,34 +252,24 @@ game.engine.AssignWorker.08,Only %s chilling (you asked for %d). Recruit more or
 game.engine.AssignWorker.09,homie is
 game.engine.AssignWorker.10,homies are
 game.engine.AssignWorker.12,%s clocked in at %s and started grinding.
-game.engine.AssignWorker.13,grinder
-game.engine.AssignWorker.14,grinders
 game.engine.AssignAll.01,"Nobody is idle, every worker is already grinding. Recruit more first."
 game.engine.AssignAll.02,"All %s at %s are taken, the place is booked and busy, no cap."
 game.engine.AssignAll.03,lobby spot
 game.engine.AssignAll.04,lobby spots
 game.engine.AssignAll.05,"Nobody would clock in at %s, the assignment flopped."
 game.engine.AssignAll.06,Locked in %s on %s.
-game.engine.AssignAll.07,NPC
-game.engine.AssignAll.08,NPCs
 game.engine.UnassignAll.01,"%s is unstaffed, nobody is clocked in, empty-shift vibes."
 game.engine.UnassignAll.02,"The workers at %s refused to clock out, the unassign fumbled."
 game.engine.UnassignAll.03,%s got benched from %s.
-game.engine.UnassignAll.04,homie
-game.engine.UnassignAll.05,homies
 game.engine.UnassignWorker.01,"Unassign count of %d is a skill issue, positive numbers only."
 game.engine.UnassignWorker.02,"Nobody is grinding at %s, so there is nobody to pull."
 game.engine.UnassignWorker.03,Only %s locked in at %s.
 game.engine.UnassignWorker.04,grinder is
 game.engine.UnassignWorker.05,grinders are
 game.engine.UnassignWorker.07,"%s peaced out of %s, shift over."
-game.engine.UnassignWorker.08,homie
-game.engine.UnassignWorker.09,homies
 game.engine.DismissWorkers.01,"%s has nobody to dismiss, the roster is giving empty."
 game.engine.DismissWorkers.02,"Zero staff at %s, you can't fire the air, bestie."
 game.engine.DismissWorkers.03,"Sent %s home from %s, they ghosted your population (now %d)."
-game.engine.DismissWorkers.04,NPC
-game.engine.DismissWorkers.05,NPCs
 game.engine.checkAmount.01,"Amount has to be a positive number, %v is sus."
 game.engine.unknownBuildingErr.01,"'%s' is not a building, typo caught in 4K. Did you mean '%s'?"
 game.engine.unknownBuildingErr.02,"Building '%s' is not real, chat. Type 'build' to see what's on the menu."
@@ -423,11 +413,7 @@ game.legacy.applyPlanTemplateLocked.01,Plan Template: dropped %s in for the %s.
 game.legacy.applyPlanTemplateLocked.02,quest
 game.legacy.applyPlanTemplateLocked.03,quests
 game.legacy.applyPlanTemplateLocked.04," The plan is maxxed out (%d quests, not counting research), so %s got benched."
-game.legacy.applyPlanTemplateLocked.05,quest
-game.legacy.applyPlanTemplateLocked.06,quests
 game.legacy.applyPlanTemplateLocked.07," %s is too early for the plan, still locked, chill."
-game.legacy.applyPlanTemplateLocked.08,quest
-game.legacy.applyPlanTemplateLocked.09,quests
 game.legacy.meetOldFriendsLocked.01,Old friends: the %s remember your people and slide back into your DMs.
 game.legacy.startRunLegacyLocked.01,"Roster: your shares carry into the new run, no reset, we keep the lore. "
 game.mastery.masteryEntryLine.01,Been here before: the %s runs %s faster while you speedrun back to your record.
@@ -449,7 +435,6 @@ game.military.tickMission.02,"%s fumbled, but you saved %.0f%% of the loot: %s."
 game.mission_board.slot.01,"offer %d is delulu, the board only has 1 to %d. Type expedition to see them"
 game.mission_board.slot.02,offer %d got sniped already. A new one drops in a few minutes
 game.names.EffectTargetName.02, production
-game.names.Amount.01,research XP
 game.plan.PlanAddUpgrade.01,"Whole numbers from 1 to %d only, decimals are the ick."
 game.plan.PlanAddUpgrade.02,"%s gets no upgrade this age, it's in its basic era. Type 'upgrade' to list the ones that do."
 game.plan.PlanAddUpgrade.03,"Upgrade what? Your %s count is zero, bruh."
@@ -462,8 +447,6 @@ game.plan.PlanAddBuild.04,"%s can't join the plan, red flag: %s."
 game.plan.PlanAddBuild.05,"That plan item maxes out at %d and it is already there, bestie."
 game.plan.planIndexErr.01,"Zero quests in the plan, nothing to see here, no thoughts."
 game.plan.planIndexErr.02,Plan item %d is a ghost (the plan has %s).
-game.plan.planIndexErr.03,quest
-game.plan.planIndexErr.04,quests
 game.plan.errPlanFull.01,"No vacancy in the plan (%d quests, not counting research), it is stacked. Make room with plan remove <n> first."
 game.plan.planItemLabel.01,advance when the vibe is right
 game.plan.planItemLabel.02,research 
@@ -488,15 +471,9 @@ game.plan.checkPlanItem.04,mid
 game.plan.checkPlanItem.05, income
 game.plan.checkPlanItem.06,not its era until the 
 game.plan.checkPlanItem.07,simping for 
-game.plan.checkPlanItem.08,mid 
-game.plan.checkPlanItem.09, income
 game.plan.checkPlanItem.10,its era starts with the 
 game.plan.checkPlanItem.11,"research slot is taken, no cutting the line, fam"
 game.plan.checkPlanItem.12,waiting on the research above it to cook
-game.plan.checkPlanItem.13,needs 
-game.plan.checkPlanItem.14, first
-game.plan.checkPlanItem.15,needs 
-game.plan.checkPlanItem.16, first
 game.plan.checkPlanItem.17,unknown side quest
 game.plan.runPlan.01,Plan: yeeted %s (%s).
 game.plan.runPlan.02,copped a 
@@ -507,14 +484,11 @@ game.plan.runPlan.06,Plan: benched %s (%s).
 game.plan.runPlan.10,Plan: the last %s got yeeted (%s).
 game.plan.runPlan.12,"Plan: level-up time, heading to the %s."
 game.plan.runPlanTick.01,Plan: 
-game.plan.planViews.01,needs 
-game.plan.planViews.02, first
 game.plan_advance.PlanAddAdvance.01,"The plan already has advance-when-ready locked in, say less."
 game.plan_advance.PlanAddAdvance.02,"Final age, final boss, the end of the map: nothing to advance to."
 game.plan_advance.planAdvanceBlocker.01,"this is the last level, gg"
 game.plan_advance.planAdvanceBlocker.02,a catastrophe is still in the chat
 game.plan_advance.planAdvanceBlocker.03,"requirements still pending, lowkey close"
-game.plan_advance.planAdvanceView.01,advance when the vibe is right
 game.plan_advance.planAdvanceView.02,level up to the 
 game.plan_deal.PlanAddDeal.01,"Deal %d with the %s does not exist, chat, they offer %d. Type diplomacy deals to see them."
 game.plan_deal.PlanAddDeal.02,Deal %d with the %s got snatched already.
@@ -523,7 +497,6 @@ game.plan_deal.PlanAddDeal.04,"That deal is already in the plan, no double dippi
 game.plan_deal.planDealGone.01,"mystery civ, who is that"
 game.plan_deal.planDealGone.02,the offer ghosted
 game.plan_deal.planDealGone.03,already snatched
-game.plan_deal.planDealCheck.01,needs 
 game.plan_deal.planDealCheck.02, researched
 game.plan_deal.planDealLabel.01,link up with the 
 game.plan_optimize.PlanOptimize.01,"Nothing to optimize, the plan is a blank canvas, no thoughts."
@@ -533,8 +506,6 @@ game.plan_research.errTechOutOfSight.03,%s Type research to peep the whole tree.
 game.plan_research.PlanAddResearchChain.01,"%s already made the plan, it's in the group chat."
 game.plan_research.PlanAddResearchChain.02,%s gets a hard pass from the plan: %s.
 game.population.logScholarsArrived.01,"%s and the %s are roomies now, love that for them."
-game.prestige.EarlyPrestigeLine.01,aura point
-game.prestige.EarlyPrestigeLine.02,aura points
 game.prestige.EarlyPrestigeLine.03,a run to the 
 game.prestige.EarlyPrestigeLine.04, pays 
 game.prestige.EarlyPrestigeLine.05,"a full send, "
@@ -544,10 +515,6 @@ game.prestige.EarlyPrestigeLine.08," further on, pays "
 game.prestige.EarlyPrestigeLine.09,"Lowkey just a taste: a prestige from the %s pays %s, for the %s this run completed."
 game.prestige.EarlyPrestigeLine.10,"That was the soft launch: a prestige from the %s paid %s, for the %s the run completed."
 game.prestige.EarlyPrestigeLine.11," Going deeper is where the bag is: each era's ages are worth 3 times the era before, and %s."
-game.prestige.EarlyPrestigeLine.12,aura point
-game.prestige.EarlyPrestigeLine.13,aura points
-game.prestige.EarlyPrestigeLine.14,age
-game.prestige.EarlyPrestigeLine.15,ages
 game.research.StartResearch.01,tech
 game.research.StartResearch.02,"Type research list to see the whole tech menu, no gatekeeping."
 game.research.StartResearch.03,%s is already in the big-brain archive.
@@ -556,7 +523,6 @@ game.research.StartResearch.05,%s is gatekept by %s.
 game.research.StartResearch.06,"%s stays locked till %s is researched, that's the order, periodt."
 game.research.StartResearch.07,%s needs %s in the bag first.
 game.research.orList.01, or 
-game.research.StartMemoryResearch.01,tech
 game.research.StartMemoryResearch.02,Type research list to see what you can cook next.
 game.research.StartMemoryResearch.03,"%s is done already, that tech is so last era."
 game.research.StartMemoryResearch.04,%s is already cooking in the lab. Type research cancel to stop it.
@@ -597,15 +563,10 @@ game.shares.describe.05,idle homie
 game.shares.describe.06,idle homies
 game.shares.describe.07, on the grind
 game.shares.describe.08,yoinked 
-game.shares.describe.09,NPC
-game.shares.describe.10,NPCs
 game.shares.describe.11, out of domains set to 0%
 game.shares.UnknownDomainError.01,"'%s'? Not a worker domain, that's cap. The real ones are %s."
 game.shares.SetWorkerShare.01,"Shares live between 0 and 100 percent, and %v is not in that range, bestie."
-game.shares.applySharesLocked.01,Roster: 
 game.shares.applySharesLocked.02, Yoinked 
-game.shares.applySharesLocked.03,homie
-game.shares.applySharesLocked.04,homies
 game.shares.applySharesLocked.05, to match the vibe.
 game.shares.applySharesLocked.06," The shares add up to %s, so each got nerfed to fit."
 game.shares.applySharesLocked.07, No %s buildings in the squad yet; the share kicks in once you build one.
@@ -644,8 +605,6 @@ game.updater.DownloadAndInstall.11,"Updated to %s, glow-up installed
 Restart the game to play the new version."
 game.updater.updaterVerifyChecksum.01,"checksum is sus: expected %.8s…, got %.8s…"
 game.villagers.Snapshot.01,Worker
-game.wording.lossParts.01,real one
-game.wording.lossParts.02,real ones
 config.mission_words.roadEventTemplates.01,"<weather> trapped the party near the <place>, and the vibes were awful. <time> lost."
 config.mission_words.roadEventTemplates.02,"The party sat out <weather> by the <place>, doomscrolling for <time>."
 config.mission_words.roadEventTemplates.03,"<weather> made the road near the <place> a whole mess, it's giving chaos. The delay ate <time>."

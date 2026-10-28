@@ -80,7 +80,7 @@ func (ge *GameEngine) planDealCheck(it PlanItem) (d FactionDeal, blocked string)
 	d = fs.Deals[i]
 	if lock, shut := ge.featureLock(config.FeatureDiplomacy); shut {
 		tech, _ := ge.rules.Tech(lock.Tech)
-		return d, vibe.Line("game.plan_deal.planDealCheck.01", "needs ") + tech.Name + vibe.Line("game.plan_deal.planDealCheck.02", " researched")
+		return d, txtNeeds.String() + tech.Name + vibe.Line("game.plan_deal.planDealCheck.02", " researched")
 	}
 	blocked, _ = ge.dealProblem(fs, d)
 	return d, blocked

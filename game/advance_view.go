@@ -327,6 +327,17 @@ func (st GameState) keystoneRow(set *rules.Set, tech string, built bool, wonder 
 	return r
 }
 
+// txtNeeds and txtFirst say what a thing waits on: "needs X first".
+var (
+	txtNeeds = vibe.E("game.advance_view.monumentRows.03", "needs ")
+	txtFirst = vibe.E("game.advance_view.monumentRows.04", " first")
+)
+
+// needsFirst is "needs X first".
+func needsFirst(what string) string {
+	return txtNeeds.String() + what + txtFirst.String()
+}
+
 // monumentRows are the wonder's bank and the wonder built.
 func (st GameState) monumentRows(set *rules.Set, wonderKey string, built bool, wonder BuildingState) []GateRow {
 	name := set.Name(rules.KindBuilding, wonderKey)
@@ -362,7 +373,7 @@ func (st GameState) monumentRows(set *rules.Set, wonderKey string, built bool, w
 		if build.Note == "" {
 			switch {
 			case wonder.NeedsTech != "":
-				build.Note = vibe.Line("game.advance_view.monumentRows.03", "needs ") + set.Name(rules.KindTech, wonder.NeedsTech) + vibe.Line("game.advance_view.monumentRows.04", " first")
+				build.Note = needsFirst(set.Name(rules.KindTech, wonder.NeedsTech))
 			case !bank.Met:
 				build.Note = vibe.Line("game.advance_view.monumentRows.05", "bank it first")
 			default:

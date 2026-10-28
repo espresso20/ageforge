@@ -353,6 +353,9 @@ func overallProgress(progress []MilestoneProgress) float64 {
 	return total / float64(len(progress))
 }
 
+// txtResearchProgress is what research done on a tech is called in a reward and in an amount.
+var txtResearchProgress = vibe.E("game.milestones.formatRewards.01", "research progress")
+
 // formatRewards formats effects into a human-readable reward string
 func formatRewards(effects []config.Effect) string {
 	var parts []string
@@ -360,7 +363,7 @@ func formatRewards(effects []config.Effect) string {
 		switch e.Type {
 		case "instant_resource":
 			if e.Target == config.ResearchTarget {
-				parts = append(parts, vibe.Line("game.milestones.formatRewards.01", "research progress"))
+				parts = append(parts, txtResearchProgress.String())
 				continue
 			}
 			parts = append(parts, "+"+Amount(e.Value, e.Target))

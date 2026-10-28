@@ -304,6 +304,11 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 	return true, false
 }
 
+// countPlanItems counts plan items.
+func countPlanItems(n int) string {
+	return textfmt.Count(n, vibe.Line("game.legacy.applyPlanTemplateLocked.02", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.03", "items"))
+}
+
 // applyPlanTemplateLocked adds the template's slice for the current age to
 // the plan, when Plan Template is bought, and logs it as written so the
 // template carries forward. One log line says what went in. Caller holds
@@ -335,12 +340,12 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	if added+skipped+full == 0 {
 		return
 	}
-	line := vibe.Sprintf("game.legacy.applyPlanTemplateLocked.01", "Plan Template: added %s for the %s.", textfmt.Count(added, vibe.Line("game.legacy.applyPlanTemplateLocked.02", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.03", "items")), ge.rules.Name(rules.KindAge, ge.age))
+	line := vibe.Sprintf("game.legacy.applyPlanTemplateLocked.01", "Plan Template: added %s for the %s.", countPlanItems(added), ge.rules.Name(rules.KindAge, ge.age))
 	if full > 0 {
-		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.04", " The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, textfmt.Count(full, vibe.Line("game.legacy.applyPlanTemplateLocked.05", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.06", "items")))
+		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.04", " The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, countPlanItems(full))
 	}
 	if skipped > 0 {
-		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.07", " %s can't be planned yet.", textfmt.Count(skipped, vibe.Line("game.legacy.applyPlanTemplateLocked.08", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.09", "items")))
+		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.07", " %s can't be planned yet.", countPlanItems(skipped))
 	}
 	ge.addLog(LogRoutine, line)
 }
