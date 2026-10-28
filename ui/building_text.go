@@ -8,6 +8,12 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
+// txtCopies is said the same way on several screens, so it has one id.
+var txtCopies = vibe.E("ui.building_text.buildingText.06", "copies")
+
+// txtCopy is said the same way on several screens, so it has one id.
+var txtCopy = vibe.E("ui.building_text.buildingText.05", "copy")
+
 // buildingText is a building's description as the lists show it. A knowledge
 // building also says where its research halves ("Past 5 copies, each
 // researches at half rate.") and, when the description does not say it (it
@@ -26,7 +32,7 @@ func buildingText(bs game.BuildingState) string {
 		if line != "" {
 			line += " "
 		}
-		line += vibe.Sprintf("ui.building_text.buildingText.07", "Past %s, each researches at half rate.", textfmt.Count(bs.FullRateCopies, vibe.Line("ui.building_text.buildingText.05", "copy"), vibe.Line("ui.building_text.buildingText.06", "copies")))
+		line += vibe.Sprintf("ui.building_text.buildingText.07", "Past %s, each researches at half rate.", textfmt.Count(bs.FullRateCopies, txtCopy.String(), txtCopies.String()))
 	}
 	if line == "" {
 		return bs.Description

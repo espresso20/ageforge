@@ -53,6 +53,9 @@ func lockedNeedsLine(bs game.BuildingState) string {
 	return vibe.Sprintf("ui.locked_hint.lockedNeedsLine.02", "Needs %s (research), after %s", bs.LockTech, strings.Join(order, ", then "))
 }
 
+// txtIndentedCost is said the same way on several screens, so it has one id.
+var txtIndentedCost = vibe.E("ui.locked_hint.lockedBuildingEntry.01", "   Cost: ")
+
 // lockedBuildingEntry is a building its age has unlocked and a tech still
 // locks, as the Economy tab's Buildings box lists it: greyed out, the
 // research it needs, its cost and what it does, and a line from the
@@ -63,7 +66,7 @@ func lockedBuildingEntry(state game.GameState, key string, bs game.BuildingState
 	name := truncate(bs.Name, max(4, w-(1+2+1+1+runeLen(count))))
 	fmt.Fprintf(&sb, " [gray]%s %s %s[-]\n", lockedMarker, name, count)
 	sb.WriteString(hangingRow("   ", "[gray]"+lockedNeedsLine(bs)+"[-]", w))
-	sb.WriteString("[gray]" + costRow(vibe.Line("ui.locked_hint.lockedBuildingEntry.01", "   Cost: "), buildingPrice(&state, key, bs), w) + "[-]")
+	sb.WriteString("[gray]" + costRow(txtIndentedCost.String(), buildingPrice(&state, key, bs), w) + "[-]")
 	sb.WriteString(hangingRow("   ", "[gray]"+glueRates(buildingText(bs))+"[-]", w))
 	sb.WriteString(hangingRow("   ", "[gray::i]"+lockedHintLine(key)+"[-:-:-]", w))
 	return sb.String()

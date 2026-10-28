@@ -346,6 +346,15 @@ func spacedOptions(options []string) []string {
 	return out
 }
 
+// txtThe is said the same way on several screens, so it has one id.
+var txtThe = vibe.E("ui.menu_page.renderForge.12", "the ")
+
+// txtAges is said the same way on several screens, so it has one id.
+var txtAges = vibe.E("ui.menu_page.renderForge.04", " AGES")
+
+// txtAlmanacOf is said the same way on several screens, so it has one id.
+var txtAlmanacOf = vibe.E("ui.menu_page.renderForge.03", "AN ALMANAC OF ")
+
 // renderForge draws the forge page.
 func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	L := sc.L
@@ -362,7 +371,8 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	sc.sparks.draw(g, pal)
 
 	inside := L.w - 8
-	if line := fitOption([]string{spaced(vibe.Line("ui.menu_page.renderForge.03", "AN ALMANAC OF ") + strings.ToUpper(numberWords(v.ages)) + vibe.Line("ui.menu_page.renderForge.04", " AGES")), vibe.Line("ui.menu_page.renderForge.05", "AN ALMANAC OF ") + strings.ToUpper(numberWords(v.ages)) + vibe.Line("ui.menu_page.renderForge.06", " AGES")}, inside); line != "" {
+	almanac := txtAlmanacOf.String() + strings.ToUpper(numberWords(v.ages)) + txtAges.String()
+	if line := fitOption([]string{spaced(almanac), almanac}, inside); line != "" {
 		g.text(centred(L.w, runeLen(line)), L.line1, line, pal.dim, false)
 	}
 	ax, _ := sc.anvilAt()
@@ -388,7 +398,7 @@ func (sc *menuScene) renderForge(g *mGrid, pal *menuPalette, v *menuView) {
 	var feet []string
 	for _, ver := range v.versions {
 		if v.edition != "" {
-			feet = append(feet, vibe.Line("ui.menu_page.renderForge.12", "the ")+v.edition+vibe.Line("ui.menu_page.renderForge.13", " edition · ")+ver)
+			feet = append(feet, txtThe.String()+v.edition+vibe.Line("ui.menu_page.renderForge.13", " edition · ")+ver)
 		}
 	}
 	feet = append(feet, v.versions...)
@@ -494,12 +504,15 @@ func ternaryColor(cond bool, a, b tcell.Color) tcell.Color {
 	return b
 }
 
+// txtGameTitle is said the same way on several screens, so it has one id.
+var txtGameTitle = vibe.E("ui.menu_page.renderCompact.01", "AGEFORGE")
+
 // renderCompact draws the page for a terminal under the game's least
 // size: the name and the list, nothing that moves.
 func (sc *menuScene) renderCompact(g *mGrid, pal *menuPalette, v *menuView) {
 	w := min(g.w, 44)
 	x := centred(g.w, w)
-	title := vibe.Line("ui.menu_page.renderCompact.01", "AGEFORGE")
+	title := txtGameTitle.String()
 	if runeLen(title) <= g.w {
 		g.text(centred(g.w, runeLen(title)), 0, title, pal.accent, true)
 	}

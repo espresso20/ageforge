@@ -547,6 +547,9 @@ func sharesText(st game.GameState, domain string) string {
 	return sb.String()
 }
 
+// txtWorker is said the same way on several screens, so it has one id.
+var txtWorker = vibe.E("ui.input.shareRowText.04", "worker")
+
 // shareRowText is one domain's line: "Knowledge: 40% (set), 8 workers in 10
 // slots".
 func shareRowText(r game.ShareRow) string {
@@ -554,7 +557,7 @@ func shareRowText(r game.ShareRow) string {
 	if r.Set {
 		share = game.SharePercent(math.Round(r.Percent*10)/10) + vibe.Line("ui.input.shareRowText.02", " (set)")
 	}
-	return vibe.Sprintf("ui.input.shareRowText.03", "%s: %s, %s in %s", r.Name, share, textfmt.Count(r.Workers, vibe.Line("ui.input.shareRowText.04", "worker"), vibe.Line("ui.input.shareRowText.05", "workers")), textfmt.Count(r.Slots, vibe.Line("ui.input.shareRowText.06", "slot"), vibe.Line("ui.input.shareRowText.07", "slots")))
+	return vibe.Sprintf("ui.input.shareRowText.03", "%s: %s, %s in %s", r.Name, share, textfmt.Count(r.Workers, txtWorker.String(), vibe.Line("ui.input.shareRowText.05", "workers")), textfmt.Count(r.Slots, vibe.Line("ui.input.shareRowText.06", "slot"), vibe.Line("ui.input.shareRowText.07", "slots")))
 }
 
 // onOff is "on" or "off".
@@ -710,9 +713,15 @@ const (
 	gatherMaxYield     = 25.0
 )
 
+// txtPerUse is said the same way on several screens, so it has one id.
+var txtPerUse = vibe.E("ui.input.cmdGather.02", " per use)")
+
+// txtMaxPrefix is said the same way on several screens, so it has one id.
+var txtMaxPrefix = vibe.E("ui.input.cmdGather.01", " (max ")
+
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return errorReply(usageFor("gather") + vibe.Line("ui.input.cmdGather.01", " (max ") + textfmt.Number(gatherMaxYield) + vibe.Line("ui.input.cmdGather.02", " per use)"))
+		return errorReply(usageFor("gather") + txtMaxPrefix.String() + textfmt.Number(gatherMaxYield) + txtPerUse.String())
 	}
 	resource := strings.ToLower(args[0])
 	if resource != "food" && resource != "wood" && resource != "stone" {
@@ -722,7 +731,7 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) >= 2 {
 		n, err := parseAmount(args[1])
 		if err != nil {
-			return usageError(usageFor("gather")+vibe.Line("ui.input.cmdGather.04", " (max ")+textfmt.Number(gatherMaxYield)+vibe.Line("ui.input.cmdGather.05", " per use)"), err)
+			return usageError(usageFor("gather")+txtMaxPrefix.String()+textfmt.Number(gatherMaxYield)+txtPerUse.String(), err)
 		}
 		amount = n
 	}
@@ -1239,7 +1248,7 @@ func accountHoldings(acct *game.Account) string {
 		parts = append(parts, textfmt.Count(n, vibe.Line("ui.input.accountHoldings.01", "theme unlock"), vibe.Line("ui.input.accountHoldings.02", "theme unlocks")))
 	}
 	if n := len(badges); n > 0 {
-		parts = append(parts, textfmt.Count(n, vibe.Line("ui.input.accountHoldings.03", "badge"), vibe.Line("ui.input.accountHoldings.04", "badges")))
+		parts = append(parts, textfmt.Count(n, txtBadge.String(), vibe.Line("ui.input.accountHoldings.04", "badges")))
 	}
 	if n := stats.TotalPrestiges; n > 0 {
 		parts = append(parts, textfmt.Count(n, vibe.Line("ui.input.accountHoldings.05", "prestige"), vibe.Line("ui.input.accountHoldings.06", "prestiges")))
@@ -1746,20 +1755,23 @@ func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
 		mark, title, exp.LengthMinutes, exp.SuccessChance*100, expeditionHaul(exp, state), expeditionOfferCost(exp, state))
 	if exp.Tier == game.TierGrand {
 		if exp.Grand == game.GrandMilitary {
-			line += vibe.Sprintf("ui.input.offerLine.02", " · military · %d %s", exp.SoldiersNeeded, pluralize(vibe.Line("ui.input.offerLine.03", "soldier"), exp.SoldiersNeeded))
+			line += vibe.Sprintf("ui.input.offerLine.02", " · military · %d %s", exp.SoldiersNeeded, pluralize(txtSoldier.String(), exp.SoldiersNeeded))
 		} else {
 			line += vibe.Line("ui.input.offerLine.04", " · civil · ") + expeditionOfferCost(exp, state)
 		}
 	}
 	// Every mission takes a party.
 	if exp.SoldiersNeeded > 0 && !(exp.Tier == game.TierGrand && exp.Grand == game.GrandMilitary) {
-		line += vibe.Sprintf("ui.input.offerLine.05", " · party %d %s", exp.SoldiersNeeded, pluralize(vibe.Line("ui.input.offerLine.06", "soldier"), exp.SoldiersNeeded))
+		line += vibe.Sprintf("ui.input.offerLine.05", " · party %d %s", exp.SoldiersNeeded, pluralize(txtSoldier.String(), exp.SoldiersNeeded))
 	}
 	if !exp.CanLaunch && exp.LaunchBlockReason != "" {
 		line += fmt.Sprintf(" [red](%s)[-]", strings.TrimRight(exp.LaunchBlockReason, "."))
 	}
 	return line
 }
+
+// txtFestivalEffect is said the same way on several screens, so it has one id.
+var txtFestivalEffect = vibe.E("ui.input.cmdFestival.04", "  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].")
 
 // cmdFestival handles the `festival` culture-sink command. Bare `festival`
 // shows status (cost, cooldown, what it does). `festival confirm yes` spends a
@@ -1791,7 +1803,7 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 		var lines []string
 		lines = append(lines, vibe.Line("ui.input.cmdFestival.02", "[gold]Hold a Cultural Festival?[-]"))
 		lines = append(lines, vibe.Sprintf("ui.input.cmdFestival.03", "  Cost: [cyan]%s[-] (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
-		lines = append(lines, vibe.Sprintf("ui.input.cmdFestival.04", "  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
+		lines = append(lines, fmt.Sprintf(txtFestivalEffect.String(), st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 		lines = append(lines, festivalCapLines(st)...)
 		lines = append(lines, vibe.Sprintf("ui.input.cmdFestival.05", "  Cooldown afterward: [cyan]%s[-].", formatTicks(st.CooldownTicks, state)))
 		if st.Culture < st.Cost {
@@ -1824,7 +1836,7 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, vibe.Line("ui.input.cmdFestivalStatus.01", "[gold]Cultural Festival[-]"))
 	lines = append(lines, vibe.Line("ui.input.cmdFestivalStatus.02", "  Spend a lump of culture to raise all production for a while."))
 	lines = append(lines, vibe.Sprintf("ui.input.cmdFestivalStatus.03", "  Cost: [cyan]%s[-]  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
-	lines = append(lines, vibe.Sprintf("ui.input.cmdFestivalStatus.04", "  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
+	lines = append(lines, fmt.Sprintf(txtFestivalEffect.String(), st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 	lines = append(lines, festivalCapLines(st)...)
 	if note := strings.TrimSpace(lockNotes(state, config.FeatureFestivals)); note != "" {
 		// The command waits for a tech: say which before anything else.
@@ -2004,6 +2016,12 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 	}
 }
 
+// txtCycles is said the same way on several screens, so it has one id.
+var txtCycles = vibe.E("ui.input.cmdTradeRouteList.05", "cycles")
+
+// txtCycle is said the same way on several screens, so it has one id.
+var txtCycle = vibe.E("ui.input.cmdTradeRouteList.04", "cycle")
+
 func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	trade := state.Trade
@@ -2014,7 +2032,7 @@ func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 		lines = append(lines, vibe.Line("ui.input.cmdTradeRouteList.02", "\n[green]Active:[-]"))
 		for _, route := range trade.ActiveRoutes {
 			lines = append(lines, vibe.Sprintf("ui.input.cmdTradeRouteList.03", "  [cyan]%s[-] (%s): %s left, %s done",
-				route.Name, route.Key, formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, vibe.Line("ui.input.cmdTradeRouteList.04", "cycle"), vibe.Line("ui.input.cmdTradeRouteList.05", "cycles"))))
+				route.Name, route.Key, formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, txtCycle.String(), txtCycles.String())))
 		}
 	}
 
@@ -2416,6 +2434,9 @@ func riskFrom(state game.GameState, tier game.CatastropheTier, numeric bool, pro
 	return vibe.Sprintf("ui.input.riskFrom.03", "%s risk of catastrophe (no figures this early)", tier)
 }
 
+// txtRemoved is said the same way on several screens, so it has one id.
+var txtRemoved = vibe.E("ui.input.cmdPlan.09", "Removed ")
+
 // cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.
 func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
@@ -2520,7 +2541,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return routineReply(vibe.Line("ui.input.cmdPlan.09", "Removed ") + what + vibe.Line("ui.input.cmdPlan.10", " from the plan."))
+		return routineReply(txtRemoved.String() + what + vibe.Line("ui.input.cmdPlan.10", " from the plan."))
 	case "up", "down":
 		n, err := planIndexArg(rest, sub)
 		if err != nil {

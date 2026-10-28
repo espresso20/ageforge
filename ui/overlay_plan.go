@@ -90,7 +90,7 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 			p.note, p.noteGood = err.Error(), false
 			break
 		}
-		p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.03", "Removed ")+what+".", true
+		p.note, p.noteGood = txtRemoved.String()+what+".", true
 		p.sel = clampSel(p.sel, n-1)
 	case isRune && event.Rune() == 'C':
 		if n == 0 {

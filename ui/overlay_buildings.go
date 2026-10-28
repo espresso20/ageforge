@@ -102,7 +102,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 				fmt.Fprintf(&sb, " [gray]%s %s (%s)[-]\n", lockedMarker, bs.Name, e.key)
 				sb.WriteString(hangingRow("   ", "[gray]"+lockedNeedsLine(bs)+"[-]", width))
 				if price := buildingPrice(&state, e.key, bs); len(price) > 0 {
-					sb.WriteString("[gray]" + costRow(vibe.Line("ui.overlay_buildings.buildingsProvider.04", "   Cost: "), price, width) + "[-]")
+					sb.WriteString("[gray]" + costRow(txtIndentedCost.String(), price, width) + "[-]")
 				}
 				if text := buildingText(bs); text != "" {
 					fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)
@@ -143,7 +143,7 @@ func buildingsProvider(state game.GameState, screenW int) string {
 
 			// Cost and description on indent.
 			if price := buildingPrice(&state, e.key, bs); len(price) > 0 && !bs.IsLegacy {
-				sb.WriteString("[gray]" + costRow(vibe.Line("ui.overlay_buildings.buildingsProvider.08", "   Cost: "), price, overlayTextWidth(screenW)) + "[-]")
+				sb.WriteString("[gray]" + costRow(txtIndentedCost.String(), price, overlayTextWidth(screenW)) + "[-]")
 			}
 			if text := buildingText(bs); text != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", text)

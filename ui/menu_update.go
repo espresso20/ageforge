@@ -36,7 +36,7 @@ func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion 
 }
 
 func showUpdateMsg(app *tview.Application, pages *tview.Pages, msg string) {
-	showButtonModal(pages, updateModalPage, msg, []string{vibe.Line("ui.menu_update.showUpdateMsg.01", "OK")}, func(int, string) {})
+	showButtonModal(pages, updateModalPage, msg, []string{txtOK.String()}, func(int, string) {})
 }
 
 func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {

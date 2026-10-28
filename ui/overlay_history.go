@@ -15,6 +15,9 @@ func historyProvider(state game.GameState, w int) string {
 	return renderHistoryOverlay(state, w)
 }
 
+// txtMorale is said the same way on several screens, so it has one id.
+var txtMorale = vibe.E("ui.overlay_history.renderHistoryOverlay.07", "Morale")
+
 func renderHistoryOverlay(state game.GameState, w int) string {
 	if state.History == nil || len(state.History.Samples) < 2 {
 		return vibe.Line("ui.overlay_history.renderHistoryOverlay.01", "\n[gray] No history yet. Play for a while and check back.[-]\n")
@@ -59,7 +62,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.04", "Food rate"), "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.05", "Research rate"), "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.06", "Faith"), "[gold]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
-		{vibe.Line("ui.overlay_history.renderHistoryOverlay.07", "Morale"), "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
+		{txtMorale.String(), "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.08", "All production"), "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
 		{vibe.Line("ui.overlay_history.renderHistoryOverlay.09", "Game speed"), "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
 	}

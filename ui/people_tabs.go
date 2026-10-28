@@ -133,6 +133,9 @@ func (c peopleBody) overview() {
 	c.footer([][2]string{{"←→", "tabs"}, {"↑↓", "pick"}, {"Esc", "close"}}, "people")
 }
 
+// txtFood is said the same way on several screens, so it has one id.
+var txtFood = vibe.E("ui.people_tabs.foodLine.01", "Food ")
+
 // foodLine writes what everyone eats, what food nets and how many it feeds.
 func (c peopleBody) foodLine(x, y, w int) {
 	ws := c.st.Workers
@@ -148,7 +151,7 @@ func (c peopleBody) foodLine(x, y, w int) {
 	if rs.Rate < 0 {
 		net = xBad
 	}
-	parts := []xseg{{vibe.Line("ui.people_tabs.foodLine.01", "Food "), xDim}, {textfmt.Rate(-ws.FoodDrain), xText}, {vibe.Line("ui.people_tabs.foodLine.02", " for everyone"), xDim}, {vibe.Line("ui.people_tabs.foodLine.03", "   net "), xDim}, {textfmt.Rate(rs.Rate), net}}
+	parts := []xseg{{txtFood.String(), xDim}, {textfmt.Rate(-ws.FoodDrain), xText}, {vibe.Line("ui.people_tabs.foodLine.02", " for everyone"), xDim}, {vibe.Line("ui.people_tabs.foodLine.03", "   net "), xDim}, {textfmt.Rate(rs.Rate), net}}
 	// Morale, which the old Workers panel showed, before the figure that goes
 	// first on a narrow panel.
 	mk := xText
@@ -185,7 +188,7 @@ func (c peopleBody) card(i int, k peopleKind) []string {
 	case 2:
 		out := vibe.Line("ui.people_tabs.card.10", "none out")
 		if k.out > 0 {
-			out = num(k.out) + vibe.Line("ui.people_tabs.card.11", " out")
+			out = num(k.out) + txtOut.String()
 		}
 		return []string{num(k.count-k.out) + vibe.Line("ui.people_tabs.card.12", " at their posts"), out, vibe.Line("ui.people_tabs.card.13", "defense ") + num(int(st.Military.DefenseRating)), vibe.Line("ui.people_tabs.card.14", "see Army")}
 	}
@@ -467,7 +470,7 @@ func (c peopleBody) scholars() {
 		{vibe.Line("ui.people_tabs.scholars.10", "Research"), textfmt.RateValue(s.PerTick) + vibe.Line("ui.people_tabs.scholars.11", " a tick")},
 		{sch.name, vibe.Sprintf("ui.people_tabs.scholars.12", "%s: %s research, %s teach", num(s.Total), num(s.Researching), num(s.Teaching))},
 		{vibe.Line("ui.people_tabs.scholars.13", "Teaching"), textfmt.SignedPercent(s.TeachingBonus) + vibe.Line("ui.people_tabs.scholars.14", " to what workers make")},
-		{vibe.Line("ui.people_tabs.scholars.15", "Next"), next},
+		{txtNext.String(), next},
 	} {
 		y := c.y + 1 + i
 		if y >= c.y+topH-1 {

@@ -114,7 +114,7 @@ func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game
 		SetDynamicColors(true).
 		SetWrap(true)
 	b.detail.SetBorder(true).
-		SetTitle(vibe.Line("ui.load_game.newLoadGameBrowser.03", " Details "))
+		SetTitle(txtDetailsTitle.String())
 	theme.Track(func() {
 		b.detail.SetBorderColor(theme.Color(theme.RoleAccent)).
 			SetTitleColor(theme.Color(theme.RoleAccent))
@@ -637,15 +637,21 @@ func legendText() string {
 	}, "\n")
 }
 
+// txtEliteTag is said the same way on several screens, so it has one id.
+var txtEliteTag = vibe.E("ui.load_game.rowTag.03", "[gold]⭐ elite[-]")
+
+// txtModifiedTag is said the same way on several screens, so it has one id.
+var txtModifiedTag = vibe.E("ui.load_game.rowTag.02", "[red]⚠ modified[-]")
+
 func rowTag(s game.SaveInfo) string {
 	if s.Name == game.AutosaveName {
 		return vibe.Line("ui.load_game.rowTag.01", "[gold]★ auto[-]")
 	}
 	if s.Modified {
-		return vibe.Line("ui.load_game.rowTag.02", "[red]⚠ modified[-]")
+		return txtModifiedTag.String()
 	}
 	if s.Elite {
-		return vibe.Line("ui.load_game.rowTag.03", "[gold]⭐ elite[-]")
+		return txtEliteTag.String()
 	}
 	return ""
 }
@@ -752,10 +758,10 @@ func detailBadges(s game.SaveInfo) string {
 		parts = append(parts, vibe.Line("ui.load_game.detailBadges.01", "[gold]★ autosave[-]"))
 	}
 	if s.Elite {
-		parts = append(parts, vibe.Line("ui.load_game.detailBadges.02", "[gold]⭐ elite[-]"))
+		parts = append(parts, txtEliteTag.String())
 	}
 	if s.Modified {
-		parts = append(parts, vibe.Line("ui.load_game.detailBadges.03", "[red]⚠ modified[-]"))
+		parts = append(parts, txtModifiedTag.String())
 	}
 	return strings.Join(parts, "   ")
 }

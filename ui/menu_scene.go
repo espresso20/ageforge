@@ -8,7 +8,6 @@ import (
 
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // menu_scene.go draws what moves on the main menu: the AGEFORGE wordmark as
@@ -462,7 +461,7 @@ func drawIron(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0 int, mo
 
 // menuWord is AGEFORGE in the font, one pixel between letters.
 var menuWord = func() (rows [7]string) {
-	for i, l := range vibe.Line("ui.menu_scene.menuWord.01", "AGEFORGE") {
+	for i, l := range txtGameTitle.String() {
 		for r := 0; r < 7; r++ {
 			if i > 0 {
 				rows[r] += "."
