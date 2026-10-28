@@ -55,18 +55,13 @@ type Inspection struct {
 	// guildhall", "diplomacy gift ironhold_clans"), "" when none fits.
 	Command string
 	// Kind says what sort of thing it is, for code that reacts to what the
-	// player looked at: KindMover, KindAlien, or "" for everything else.
+	// player looked at: KindAlien, or "" for everything else.
 	Kind string
 }
 
-// Inspection kinds.
-const (
-	// KindMover is something passing through: a cart, a train, a plane.
-	KindMover = "mover"
-	// KindAlien is the rare visitor (mapmodel.SightingAt). Spotting one is
-	// meant to earn a secret badge.
-	KindAlien = "alien"
-)
+// KindAlien is the Kind of the rare visitor (mapmodel.SightingAt). Spotting
+// one is meant to earn a secret badge.
+const KindAlien = "alien"
 
 // Style is the map view the ui draws through: the one map in the game, and
 // the seam tests put a stand-in behind.

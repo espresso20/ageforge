@@ -44,7 +44,7 @@ func describe(m *mapmodel.Model, th mapgen.Thing) mapstyle.Inspection {
 			return describeTerrain(t)
 		}
 	}
-	return mapstyle.Inspection{Title: m.Town.World.Name}
+	return mapstyle.Inspection{Title: m.TownName}
 }
 
 // describeBuilding says what the cursor is on when it is on a building type
@@ -119,7 +119,7 @@ func describeWonder(m *mapmodel.Model, key string) mapstyle.Inspection {
 
 // describeRoad is what the cursor says on a road, a bridge or the square.
 func describeRoad(m *mapmodel.Model, key string) mapstyle.Inspection {
-	town := m.Town.World.Name
+	town := m.TownName
 	switch key {
 	case "square":
 		return describeSquare(m, town)

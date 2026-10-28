@@ -6,7 +6,6 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/vibe"
 )
 
 // Draw renders the full view: header, picture, side panel, news, inspector and
@@ -67,9 +66,15 @@ func (v *view) drawPicture(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, w, h
 		on = cx >= 0 && cy >= 0 && cx < w && cy < h
 	}
 	if on && v.inspect {
-		r, _ := cv.Get(x+cx, y+cy)
-		cv.Put(x+cx, y+cy, r, mp.CursorStyle(anim))
+		v.putCursor(cv, mp, x+cx, y+cy, anim)
 	}
+}
+
+// putCursor highlights the cell (x, y) of the canvas, keeping its glyph.
+func (v *view) putCursor(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, anim int) {
+	r, under := cv.Get(x, y)
+	_, ground, _ := under.Decompose()
+	cv.Put(x, y, r, mp.CursorOver(ground, anim))
 }
 
 // fit places the close-up's window: it stays put and scrolls only when the
@@ -88,20 +93,6 @@ func (v *view) fit(w, h int) {
 }
 
 func clamp(v, lo, hi int) int { return min(max(v, lo), hi) }
-
-// drawLegend lists the signs of the building lines the town has.
-func (v *view) drawLegend(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, w, h int, m *mapmodel.Model) {
-	cv.Text(x, y, w, vibe.Line("ui.mapstyle.roguelike.chrome.drawLegend.01", "LEGEND"), mp.Style(mapmodel.CAccent).Bold(true))
-	for i, l := range m.Lineages {
-		if i+1 >= h {
-			return
-		}
-		st := mp.Style(mapmodel.CText)
-		_, bg, _ := st.Decompose()
-		cv.Put(x, y+1+i, mapgen.Sign(l.Key), tcell.StyleDefault.Foreground(v.pal.colour(mapgen.LineHue(l.Key))).Background(bg))
-		cv.Text(x+2, y+1+i, w-2, l.Name, st)
-	}
-}
 
 // DrawCompact renders the glanceable mini view: a header line, the whole town
 // squeezed into the space, and one news line.
@@ -124,7 +115,6 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 	ov := v.scene(f).Overview(r.W, mh)
 	v.blit(cv, 0, 1, ov.Grid)
 	if cx, cy, ok := ov.CellOf(mapgen.Pt{X: v.mark.X, Y: v.mark.Y}); v.marked && ok {
-		ch, _ := cv.Get(cx, 1+cy)
-		cv.Put(cx, 1+cy, ch, ink.CursorStyle(f.Anim))
+		v.putCursor(cv, ink.Palette, cx, 1+cy, f.Anim)
 	}
 }

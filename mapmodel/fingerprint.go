@@ -4,16 +4,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"hash"
 	"math"
 )
 
-// Fingerprint is a short hash of everything the model derived: placement
-// (town tiles, wonder plots), the clock and weather, the
-// flows and the recap. Equal fingerprints mean two machines laid the same
-// state out the same way to the last bit. The smoke harness records it next
-// to the engine's state digest, so the cross-machine determinism check
-// covers the maps too.
+// Fingerprint is a short hash of everything the model derived: the town's
+// name, the clock and weather, the buildings, the flows and the recap. Equal
+// fingerprints mean two machines laid the same state out the same way to the
+// last bit.
 func (m *Model) Fingerprint() string {
 	h := sha256.New()
 	w := func(format string, a ...any) { fmt.Fprintf(h, format, a...) }
@@ -26,21 +23,11 @@ func (m *Model) Fingerprint() string {
 			math.Float64bits(b.Staffing), b.Legacy, math.Float64bits(b.Rate), b.Delta)
 	}
 	for _, l := range m.Lineages {
-		w("l %s %d %x\n", l.Key, l.Tiles, math.Float64bits(l.Share))
+		w("l %s %x\n", l.Key, math.Float64bits(l.Share))
 	}
-	tw := m.Town.World
-	if tw != nil {
-		w("world %d %d %s\n", tw.CX, tw.CY, tw.Name)
-		hashTerrain(h, tw)
-	}
-	for _, t := range m.Town.Tiles {
-		w("t %d %d %s %d %v %v %v\n", t.X, t.Y, t.Key, t.Ord, t.Legacy, t.Ruin, t.Fresh)
-	}
-	for _, t := range m.Town.Wonders {
-		w("w %s %d %d %v\n", t.Key, t.At.X, t.At.Y, t.Built)
-	}
+	w("town %s\n", m.TownName)
 	for _, f := range m.Factions {
-		w("f %s %d %v %d\n", f.Key, f.Site, f.Discovered, f.Relation)
+		w("f %s %v %d\n", f.Key, f.Discovered, f.Relation)
 	}
 	for _, r := range m.Routes {
 		w("r %s %s %v\n", r.Key, r.Civ, r.Disrupted)
@@ -56,15 +43,4 @@ func (m *Model) Fingerprint() string {
 		w("n %d %s\n", it.Kind, it.Text)
 	}
 	return hex.EncodeToString(h.Sum(nil)[:8])
-}
-
-func hashTerrain(h hash.Hash, w *World) {
-	buf := make([]byte, len(w.T))
-	for i, t := range w.T {
-		buf[i] = byte(t)
-	}
-	h.Write(buf)
-	for _, s := range w.Sites {
-		fmt.Fprintf(h, "%d,%d;", s.X, s.Y)
-	}
 }

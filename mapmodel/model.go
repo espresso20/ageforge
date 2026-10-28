@@ -34,8 +34,6 @@ type Model struct {
 	AgeReady             bool
 	Epoch                int // epoch index (0 Stone … 6 Cosmic)
 	EpochKey, EpochName  string
-	// Reached marks, by age index, the ages the player reached this run.
-	Reached []bool
 
 	Clock   Clock
 	Weather Weather
@@ -46,7 +44,7 @@ type Model struct {
 	// Lineages groups them; only lineages with something built appear.
 	Lineages []*Lineage
 
-	Town Town // the town: world, plan and placed tiles
+	TownName string // the name the run's seed gives the town
 
 	Wonders     []Wonder
 	Workers     Workers
@@ -107,8 +105,6 @@ type Lineage struct {
 	Share     float64 // share of the settlement's working output, 0..1
 	Class     Class
 	Sym       Sym
-	// Tiles is how many town tiles the lineage draws (TownTiles).
-	Tiles int
 }
 
 // Wonder is a built wonder or the current age's one in progress.
@@ -165,7 +161,6 @@ func (r Relation) String() string {
 // Faction is a civilization.
 type Faction struct {
 	Key, Name   string
-	Site        int // index into Town.World.Sites
 	Discovered  bool
 	Relation    Relation
 	Opinion     int
@@ -231,50 +226,19 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	if m.AgeName == "" {
 		m.AgeName = cat.AgeNames[m.AgeIdx]
 	}
-	m.Reached = reachedAges(cat, st, m.AgeIdx)
 	m.Clock = ClockAt(st.Tick)
 	m.Weather = weatherFor(st, m.Clock, m.Epoch)
 	m.buildings(st, since)
 	m.lineages()
 	m.people(st)
 	m.world(st)
-	m.Town = b.town(m)
+	m.TownName = cityName(st.Seed)
 	m.Recap = recap(m, st, since)
 	m.Flows = flowsFor(m, st)
 	m.Activity = activityFor(m)
 	m.LayoutKey = layoutKey(m)
 	return m
 }
-
-// reachedAges marks the ages the player reached this run: the ones in the
-// run's stats, and the current one. Every run starts in the first age, so a
-// record without it (an old save, a test fixture) is taken as incomplete,
-// and since ages come in order every age up to the current one counts.
-func reachedAges(cat *Catalog, st *game.GameState, cur int) []bool {
-	out := make([]bool, len(cat.AgeNames))
-	seen := st.Stats.AgesReached
-	full := false
-	for _, k := range seen {
-		full = full || len(cat.Ages) > 0 && k == cat.Ages[0]
-	}
-	for a := range out {
-		out[a] = !full && a <= cur
-	}
-	if full {
-		for _, k := range seen {
-			if a, ok := cat.AgeIdx[k]; ok && a < len(out) {
-				out[a] = true
-			}
-		}
-		if cur < len(out) {
-			out[cur] = true
-		}
-	}
-	return out
-}
-
-// ReachedAge reports whether the player reached age a this run.
-func (m *Model) ReachedAge(a int) bool { return a >= 0 && a < len(m.Reached) && m.Reached[a] }
 
 func layoutKey(m *Model) uint64 {
 	h := Hash(m.Seed, int64(m.AgeIdx), int64(m.Workers.Staffed), int64(m.Workers.Idle), int64(m.Workers.Pop),
@@ -284,14 +248,6 @@ func layoutKey(m *Model) uint64 {
 	}
 	for _, b := range m.Buildings {
 		h = Hash(int64(h), HashStr(b.Key), int64(b.Count), int64(b.Ruins), int64(b.Workers), b2i(b.Legacy), int64(b.Delta))
-	}
-	for a, r := range m.Reached {
-		if r != (a <= m.AgeIdx) { // a run that skipped ages (only then, so the usual keys stay as they were)
-			h = Hash(int64(h), int64(a), b2i(r))
-		}
-	}
-	for _, t := range m.Town.Tiles {
-		h = Hash(int64(h), int64(t.X), int64(t.Y), HashStr(t.Key), b2i(t.Fresh), b2i(t.Legacy), b2i(t.Ruin))
 	}
 	for _, w := range m.Wonders {
 		h = Hash(int64(h), HashStr(w.Key), b2i(w.Built), b2i(w.Delta))
@@ -501,7 +457,6 @@ func (m *Model) lineages() {
 		if total > 0 {
 			l.Share = act[l.Key] / total
 		}
-		l.Tiles = TownTiles(l.Key, l.Count+l.Ruins)
 	}
 }
 
@@ -532,16 +487,15 @@ func (m *Model) people(st *game.GameState) {
 
 func (m *Model) world(st *game.GameState) {
 	cat := m.Catalog
-	for i, k := range cat.Factions {
+	for _, k := range cat.Factions {
 		fi, ok := st.Diplomacy.Factions[k]
 		if !ok {
 			continue
 		}
-		f := Faction{Key: k, Site: i}
+		f := Faction{Key: k}
 		if !fi.Discovered {
-			// A civ not yet met (game/spoilers.go) is a key and a site slot,
-			// nothing more: no name, no traits, so no map can spoil who is
-			// out there.
+			// A civ not yet met (game/spoilers.go) is a key, nothing more: no
+			// name, no traits, so no map can spoil who is out there.
 			m.Factions = append(m.Factions, f)
 			continue
 		}

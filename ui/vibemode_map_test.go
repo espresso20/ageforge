@@ -74,7 +74,7 @@ func TestTheMapSwitchesAtOnce(t *testing.T) {
 	// The words the model itself holds, such as the town's name made of the
 	// script's syllables, are in the script now in force: the builder is not
 	// the cache that keeps the other one's.
-	if name := d.mapPanel.model.Town.World.Name; !strings.Contains(name, "«") {
+	if name := d.mapPanel.model.TownName; !strings.Contains(name, "«") {
 		t.Errorf("the town is called %q with VibeMode on", name)
 	}
 	// The panel was made before the switch; the key bar's words are read
@@ -90,7 +90,7 @@ func TestTheMapSwitchesAtOnce(t *testing.T) {
 
 	set(false)
 	back := shots()
-	if name := d.mapPanel.model.Town.World.Name; strings.Contains(name, "«") {
+	if name := d.mapPanel.model.TownName; strings.Contains(name, "«") {
 		t.Errorf("the town is called %q with VibeMode off again", name)
 	}
 	for name, text := range back {

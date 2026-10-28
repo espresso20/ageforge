@@ -7,6 +7,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
@@ -71,7 +72,7 @@ func (v *view) drawHeader(cv *mapstyle.Canvas, width int, m *mapmodel.Model, zoo
 	ink := v.ink.Chrome
 	_, background, _ := ink.Decompose()
 	cv.Fill(0, 0, width, 1, ' ', ink)
-	x := cv.Text(1, 0, width-2, "◆ "+m.Town.World.Name, ink.Foreground(theme.Legible(theme.Color(theme.RoleAccent), background, 3)).Bold(true))
+	x := cv.Text(1, 0, width-2, "◆ "+m.TownName, ink.Foreground(theme.Legible(theme.Color(theme.RoleAccent), background, 3)).Bold(true))
 	x = cv.Text(x, 0, width-x-1, " · "+m.AgeName+" · "+m.EpochName, ink)
 	idle := ink
 	if m.Workers.Idle > 0 {
@@ -301,6 +302,20 @@ func (v *view) drawCompactBars(cv *mapstyle.Canvas, r mapstyle.Rect, m *mapmodel
 	if r.H >= 2 {
 		text, style := v.news(m, r.W)
 		cv.Text(0, r.H-1, r.W, text, style)
+	}
+}
+
+// drawLegend lists the signs of the building lines the town has.
+func (v *view) drawLegend(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, w, h int, m *mapmodel.Model) {
+	cv.Text(x, y, w, vibe.Line("ui.mapstyle.roguelike.chrome.drawLegend.01", "LEGEND"), mp.Style(mapmodel.CAccent).Bold(true))
+	for i, l := range m.Lineages {
+		if i+1 >= h {
+			return
+		}
+		st := mp.Style(mapmodel.CText)
+		_, bg, _ := st.Decompose()
+		cv.Put(x, y+1+i, mapgen.Sign(l.Key), tcell.StyleDefault.Foreground(v.pal.colour(mapgen.LineHue(l.Key))).Background(bg))
+		cv.Text(x+2, y+1+i, w-2, l.Name, st)
 	}
 }
 

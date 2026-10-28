@@ -110,7 +110,7 @@ func (m *Model) SightingAt(anim int) (Sighting, bool) {
 	if m.Catalog != nil {
 		sa := m.Catalog.SpaceAge()
 		late = sa >= 0 && m.AgeIdx >= sa
-		if ga := m.Catalog.SkySceneAge(SkyGalaxy); ga >= 0 && m.AgeIdx >= ga {
+		if ga, ok := m.Catalog.AgeIdx["galactic_age"]; ok && m.AgeIdx >= ga {
 			return Sighting{}, false
 		}
 	}

@@ -206,8 +206,8 @@ func TestCursorWalksTheTown(t *testing.T) {
 	}
 	v.HandleKey(tcell.NewEventKey(tcell.KeyHome, 0, tcell.ModNone), f)
 	sq, _ := v.Inspect(f)
-	if !strings.Contains(sq.Title, m.Town.World.Name) {
-		t.Fatalf("Home is on %q, not the square of %s", sq.Title, m.Town.World.Name)
+	if !strings.Contains(sq.Title, m.TownName) {
+		t.Fatalf("Home is on %q, not the square of %s", sq.Title, m.TownName)
 	}
 }
 

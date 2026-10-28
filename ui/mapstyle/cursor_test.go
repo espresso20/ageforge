@@ -105,3 +105,26 @@ func TestCursorBlinksSlowlyAndHoldsStill(t *testing.T) {
 		t.Errorf("each half of the blink lasts %d frames, want between 5 and 12 (about a second at 8 a second)", CursorBlinkFrames)
 	}
 }
+
+// TestCursorOverAnyGround: over a ground the palette never drew, in every
+// theme, the cursor's fill (either half of its blink) stands clear of that
+// ground, and the glyph on it is readable.
+func TestCursorOverAnyGround(t *testing.T) {
+	for th := range fixture.Themes(t) {
+		p := NewPalette(0)
+		for level := 0; level <= 255; level += 15 {
+			for _, tint := range [][3]int32{{0, 0, 0}, {40, 0, 0}, {0, 40, 0}, {0, 0, 40}} {
+				ground := tcell.NewRGBColor(int32(level)/2+tint[0], int32(level)/2+tint[1], int32(level)/2+tint[2])
+				for _, anim := range []int{0, CursorBlinkFrames} {
+					fg, fill, _ := p.CursorOver(ground, anim).Decompose()
+					if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < CursorFromGround || cr < CursorOverGround {
+						t.Errorf("%s, ground #%06x, frame %d: the cursor #%06x has distance %.3f and contrast %.2f", th.Key, ground.Hex(), anim, fill.Hex(), d, cr)
+					}
+					if cr := theme.ContrastRatio(fg, fill); cr < CursorGlyphContrast {
+						t.Errorf("%s, ground #%06x, frame %d: the glyph on the cursor has contrast %.2f", th.Key, ground.Hex(), anim, cr)
+					}
+				}
+			}
+		}
+	}
+}

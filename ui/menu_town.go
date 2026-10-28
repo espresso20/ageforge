@@ -74,11 +74,7 @@ func newMenuTownOn(builder *mapmodel.Builder, st *game.GameState, follows bool) 
 	if m == nil {
 		return nil
 	}
-	t = &menuTown{model: m, style: style, builder: builder, age: m.AgeName}
-	if m.Town.World != nil {
-		t.name = m.Town.World.Name
-	}
-	return t
+	return &menuTown{model: m, style: style, builder: builder, name: m.TownName, age: m.AgeName}
 }
 
 // update draws the picture from a newer state of the same game from here
