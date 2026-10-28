@@ -12,7 +12,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -104,7 +103,7 @@ type mapPanel struct {
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
-	p := &mapPanel{mv: mv, view: roguelike.New(), now: time.Now}
+	p := &mapPanel{mv: mv, view: newMapStyle(), now: time.Now}
 	p.barPanel = newBarPanel(p.routeKey)
 	p.start = p.now()
 	p.set = defaultMapSettings()
