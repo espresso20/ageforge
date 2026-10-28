@@ -167,6 +167,8 @@ func (f *frame) paintRoads() {
 				key = "square"
 			case f.plan.Bridge[c]:
 				key = "bridge"
+			case f.st.Scale > City:
+				key = spaceRoadNames[f.st.Scale][r.Tier]
 			}
 			f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: key})
 		}
@@ -174,6 +176,15 @@ func (f *frame) paintRoads() {
 }
 
 var roadNames = [3]string{"main road", "street", "lane"}
+
+// spaceRoadNames name the roads of the space scales by tier: the rings of
+// orbit and the elevator's tether, the orbits of the solar system, the routes
+// between stars.
+var spaceRoadNames = [numScales][3]string{
+	Orbit:  {"ring", "tether", "ring"},
+	System: {"orbit", "orbit", "orbit"},
+	Stars:  {"route", "route", "route"},
+}
 
 // anchor is where art w by h stands on a parcel: toward the road it opens on.
 func anchor(l Lot, w, h int) (int, int) {

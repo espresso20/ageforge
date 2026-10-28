@@ -32,7 +32,7 @@ func (f *frame) paintAgent(k AgentKind, kind, id int, routes []int) {
 	offset := roll(2*(len(cells)-1), seed, 71, int64(kind), int64(id))
 	p, dx, dy := pace(cells, offset, f.anim, k.Slow)
 	f.g.draw(p.X, p.Y, heading(k.Glyphs, dx, dy), k.Fg)
-	f.g.mark(p.X, p.Y, Thing{Kind: KindAgent, Key: k.Name})
+	f.g.mark(p.X, p.Y, Thing{Kind: KindAgent, Key: k.Name, Ref: id})
 }
 
 // pace is where a figure going back and forth along cells is at a frame, and

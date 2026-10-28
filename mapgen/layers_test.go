@@ -172,7 +172,7 @@ func TestSpaceScalesDrawTheirBodies(t *testing.T) {
 		age  string
 		want map[string]int
 	}{
-		{"space_age", map[string]int{"planet": 60, "space": 3000}},
+		{"space_age", map[string]int{"home": 60, "space": 3000}},
 		{"interstellar_age", map[string]int{"sun": 8, "planet": 6, "space": 3000}},
 		{"galactic_age", map[string]int{"star": 20, "space": 3000}},
 	} {

@@ -55,18 +55,21 @@ func (f *frame) paintBodies() {
 		for i, b := range f.plan.Bodies {
 			if i < len(f.st.Bodies) {
 				f.g.draw(b.X, b.Y, f.st.Bodies[i].Glyph, P(f.st.Bodies[i].Hue, 255))
-				f.g.mark(b.X, b.Y, Thing{Kind: KindTerrain, Key: "planet"})
+				key := "planet"
+				if i == homeRing {
+					key = "home"
+				}
+				f.g.mark(b.X, b.Y, Thing{Kind: KindTerrain, Key: key})
 			}
 		}
 	case Stars:
-		star := Thing{Kind: KindTerrain, Key: "star"}
 		for i, n := range f.plan.Nodes {
-			glyph, ink := '✦', P(HStar, 235)
+			glyph, ink, key := '✦', P(HStar, 235), "star"
 			if i == 0 {
-				glyph, ink = []rune(f.st.Hub[0])[0], f.ink([]rune(f.st.Hub[0])[0], HNone)
+				glyph, ink, key = []rune(f.st.Hub[0])[0], f.ink([]rune(f.st.Hub[0])[0], HNone), "home"
 			}
 			f.g.draw(n.X, n.Y, glyph, ink)
-			f.g.mark(n.X, n.Y, star)
+			f.g.mark(n.X, n.Y, Thing{Kind: KindTerrain, Key: key})
 		}
 	}
 }

@@ -61,7 +61,7 @@ func (f *frame) paintHomePlanet() {
 				f.lights = append(f.lights, Pt{x, y})
 			}
 			f.g.paint(x, y, cell)
-			f.g.mark(x, y, Thing{Kind: KindTerrain, Key: "planet"})
+			f.g.mark(x, y, Thing{Kind: KindTerrain, Key: "home"})
 		}
 	}
 }

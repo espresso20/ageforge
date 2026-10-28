@@ -73,7 +73,7 @@ var stoneEra = AgeStyle{
 	},
 	Agents: []AgentKind{
 		{Name: "walker", Glyphs: "☺", Fg: P(HLife, 255), Per: 18, Max: 24, Slow: 3},
-		{Name: "cart", Glyphs: "o=", Fg: P(HThatch, 255), Per: 60, Max: 6, Slow: 5},
+		{Name: "ox_cart", Glyphs: "o=", Fg: P(HThatch, 255), Per: 60, Max: 6, Slow: 5},
 	},
 	Night: Night{Tint: HNight, Dim: 165, Light: HLight},
 	Tones: map[byte]Paint{'s': P(HStone, 230), 'a': P(HThatch, 255)},
@@ -134,7 +134,7 @@ var ironEra = AgeStyle{
 	},
 	Agents: []AgentKind{
 		{Name: "walker", Glyphs: "☺", Fg: P(HLife, 255), Per: 20, Max: 26, Slow: 3},
-		{Name: "cart", Glyphs: "o=", Fg: P(HTimber, 255), Per: 60, Max: 8, Slow: 4},
+		{Name: "ox_cart", Glyphs: "o=", Fg: P(HTimber, 255), Per: 60, Max: 8, Slow: 4},
 	},
 	Night: Night{Tint: HNight, Dim: 170, Light: HLight},
 	Tones: map[byte]Paint{'s': P(HStone, 240), 'a': P(HGold, 255)},
@@ -195,7 +195,7 @@ var steelEra = AgeStyle{
 	},
 	Agents: []AgentKind{
 		{Name: "walker", Glyphs: "☺", Fg: P(HLife, 255), Per: 40, Max: 24, Slow: 3},
-		{Name: "cart", Glyphs: "o=", Fg: P(HBrick, 255), Per: 80, Max: 10, Slow: 3},
+		{Name: "wagon", Glyphs: "o=", Fg: P(HBrick, 255), Per: 80, Max: 10, Slow: 3},
 	},
 	Night: Night{Tint: HNight, Dim: 175, Light: HLight},
 	Tones: map[byte]Paint{'s': P(HBrick, 235), 'm': P(HSteel, 235)},
@@ -256,8 +256,8 @@ var electricEra = AgeStyle{
 	},
 	Agents: []AgentKind{
 		{Name: "walker", Glyphs: "☺", Fg: P(HLife, 255), Per: 60, Max: 20, Slow: 3},
-		{Name: "car", Glyphs: "■", Fg: P(HRed, 255), Per: 180, Max: 14, Slow: 1},
-		{Name: "car", Glyphs: "■", Fg: P(HWhite, 255), Per: 220, Max: 12, Slow: 1},
+		{Name: "early_car", Glyphs: "■", Fg: P(HRed, 255), Per: 180, Max: 14, Slow: 1},
+		{Name: "early_car", Glyphs: "■", Fg: P(HWhite, 255), Per: 220, Max: 12, Slow: 1},
 	},
 	Night: Night{Tint: HNight, Dim: 180, Light: HLight, Lamps: true},
 	Tones: map[byte]Paint{'s': P(HConcrete, 235), 'a': P(HGold, 255), 'm': P(HSteel, 235)},
@@ -319,7 +319,7 @@ var digitalEra = AgeStyle{
 	Agents: []AgentKind{
 		{Name: "car", Glyphs: "■", Fg: P(HRed, 255), Per: 140, Max: 18, Slow: 1},
 		{Name: "car", Glyphs: "■", Fg: P(HWhite, 255), Per: 170, Max: 18, Slow: 1},
-		{Name: "taxi", Glyphs: "■", Fg: P(HAmber, 255), Per: 400, Max: 8, Slow: 1},
+		{Name: "car", Glyphs: "■", Fg: P(HAmber, 255), Per: 400, Max: 8, Slow: 1},
 	},
 	Night: Night{Tint: HNight, Dim: 185, Light: HLight, Lamps: true},
 	Tones: map[byte]Paint{'s': P(HSteel, 235), 'a': P(HGold, 255), 'm': P(HConcrete, 235)},
