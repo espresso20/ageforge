@@ -17,7 +17,7 @@ AgeForge runs full-screen in your terminal as a single binary, built with Go and
 - 302 buildings: 251 in 14 production lineages, plus storage buildings, monuments, standalone buildings and 22 wonders, one per age. You need an age's wonder to advance. Each storage building adds 1% to all production.
 - 24 resources, from food and wood up to Quantum Flux, and 203 technologies in prerequisite chains. Scholars come with your knowledge buildings and do the research.
 - The Advance panel (`charter`) shows what the next age asks for as four pillars: Knowledge, People, Industry and Monument. The same figures sit in the Ledger at the top of the dashboard.
-- The Map draws your town from your real buildings as a glyph world with two zooms. An inspect cursor puts the command for whatever it is on in the prompt, and a mini map sits above the Buildings list (`minimap off` hides it).
+- The Map draws your town from your real buildings as a glyph world with three zooms: the whole town, a close-up and a district. An inspect cursor puts the command for whatever it is on in the prompt, and a mini map sits above the Buildings list (`minimap off` hides it).
 - Catastrophes and harbingers: from the Iron Era on, an era may hold a fated catastrophe. A harbinger warns you before it strikes, and when it does you choose to Endure or Succumb.
 - Trade: 21 trade routes, harbors and a Black Market where culture buys the same worth in any resource, five times in six.
 - Factions: an 11-civilization roster to meet, with opinion, diplomacy, trade deals, boons and setbacks, embassies and war.

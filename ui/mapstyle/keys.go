@@ -9,9 +9,10 @@ import (
 var keyMoves = map[tcell.Key][2]int{tcell.KeyLeft: {-1, 0}, tcell.KeyRight: {1, 0}, tcell.KeyUp: {0, -1}, tcell.KeyDown: {0, 1}}
 
 // HandleKey takes only keys that print nothing, so typing reaches the prompt:
-// the arrows move the cursor (Shift by 8), PgUp and PgDn zoom out and in, Tab
-// and Shift-Tab jump between buildings and wonders, Home centres on the town
-// square.
+// the arrows move the cursor (Shift by 8), PgUp and PgDn zoom out and in
+// (the whole town, the close-up, a district), Tab and Shift-Tab jump between
+// buildings, wonders and civs (between districts, at the district zoom), Home
+// centres on the town square.
 func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 	sc := v.scene(f)
 	if ev == nil || sc == nil {
@@ -19,13 +20,18 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 	}
 	switch ev.Key() {
 	case tcell.KeyTab, tcell.KeyBacktab:
-		v.jump(sc, map[bool]int{true: 1, false: -1}[ev.Key() == tcell.KeyTab])
+		dir := map[bool]int{true: 1, false: -1}[ev.Key() == tcell.KeyTab]
+		if v.shownZoom() == zDistrict {
+			v.cycleDistrict(sc, dir)
+		} else {
+			v.jump(sc, dir)
+		}
 		return true
 	case tcell.KeyPgUp:
-		v.zoom, v.zoomSet = zOverview, true
+		v.zoomTo(sc, max(v.shownZoom()-1, zOverview))
 		return true
 	case tcell.KeyPgDn:
-		v.zoom, v.zoomSet, v.recentre = zCloseUp, true, true
+		v.zoomTo(sc, min(v.shownZoom()+1, zDistrict))
 		return true
 	case tcell.KeyHome:
 		v.cur, v.recentre = sc.Centre, true

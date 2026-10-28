@@ -337,7 +337,7 @@ The Wonders panel uses letter keys, so it keeps the keyboard:
 
 ## Map
 
-The Map draws your empire from your real game state: your buildings and the workers staffing them, and your wonders. It is a glyph world seen from above, with two zooms: the whole town and a close-up. An inspect cursor gives you the name and details of what it is on and the whole command to type for it (for example `build hut`). See [The Map](map.md) for all its keys.
+The Map draws your empire from your real game state: your buildings and the workers staffing them, and your wonders. It is a glyph world seen from above, with three zooms: the whole town, a close-up and one kind of building's district. An inspect cursor gives you the name and details of what it is on and the whole command to type for it (for example `build hut`). See [The Map](map.md) for all its keys.
 
 | Command | Description |
 |---|---|
@@ -365,7 +365,7 @@ The prompt keeps working while the Map is open: type commands as usual. The Map 
 |---|---|
 | Arrows | Move the cursor or scroll |
 | `Tab` / `Shift+Tab` | Next or previous building or wonder |
-| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out to the whole town and in to the close-up |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in a step: the whole town, the close-up, a district |
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press `Enter` again to run it) |
 | `Esc` | Close the Map |
 

@@ -27,7 +27,7 @@ func visitorAt(t *testing.T, m *mapmodel.Model, form string) (frame int, cells [
 		sg := mapmodel.NextSighting(m.Seed, late, from)
 		from = sg.Start + sg.Frames
 		frame = sg.Start + sg.Frames/2
-		g := gen.DrawAt(m, 0, frame).Grid
+		g := gen.DrawAt(m, mapgen.Moment{Anim: 0, Visit: frame}).Grid
 		for i := range g.Cells {
 			if th := g.Things[g.Hit[i]]; th.Kind == mapgen.KindVisitor && th.Key == form {
 				cells = append(cells, mapgen.Pt{X: i % g.W, Y: i / g.W})

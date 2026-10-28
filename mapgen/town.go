@@ -122,6 +122,7 @@ func (f *frame) paintTown() {
 		f.paintWonder(w)
 	}
 	f.paintRelics()
+	f.paintFresh()
 }
 
 func (f *frame) paintYard(r Rect, pl placed) {

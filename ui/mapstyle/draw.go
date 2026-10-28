@@ -29,11 +29,8 @@ func (v *view) Draw(scr tcell.Screen, r Rect, f Frame) {
 	}
 	mapW, mapH := r.W-side, r.H-5
 	v.overview = v.wantsOverview(r)
-	zoom := zoomNames[zCloseUp].String()
-	if v.overview {
-		zoom = zoomNames[zOverview].String()
-	}
 	v.drawPicture(cv, ink.Palette, 0, 1, mapW, mapH, sc, f.Anim)
+	zoom := v.zoomLabel()
 	v.drawHeader(cv, r.W, f.Model, zoom)
 	switch {
 	case side > 0:
