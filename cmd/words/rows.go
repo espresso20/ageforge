@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"sort"
+
+	"github.com/espresso20/ageforge/pkg/wordlist"
 )
 
 // This file turns the text units of the source into the rows of the sheets.
@@ -92,17 +94,18 @@ type left struct {
 
 // catalog is everything the reader found.
 type catalog struct {
-	m        *module
-	w        *world
-	fl       *flavorReader
-	rows     []*row
-	commands map[string]bool // the words a command can start with
-	cmdWords map[string]bool // the subcommands and argument words that can follow
-	rules    *copyRules      // the game's copy rules, read from its lint tests
-	matched  map[string]bool // "dir\x00text" for every text that code in the package folder dir compares or looks up
-	left     []left
-	byID     map[string]*row
-	ctxs     map[*srcFile]map[[2]int]nodeCtx // what the syntax around each text says, filled by wireVerdict file by file
+	m         *module
+	w         *world
+	fl        *flavorReader
+	rows      []*row
+	commands  map[string]bool // the words a command can start with
+	cmdWords  map[string]bool // the subcommands and argument words that can follow
+	rules     *copyRules      // the game's copy rules, read from its lint tests
+	matched   map[string]bool // "dir\x00text" for every text that code in the package folder dir compares or looks up
+	left      []left
+	byID      map[string]*row
+	saveNames map[string]wordlist.List        // the lists of game/savenames.txt, once read
+	ctxs      map[*srcFile]map[[2]int]nodeCtx // what the syntax around each text says, filled by wireVerdict file by file
 }
 
 // read builds the catalog from the source under root.
@@ -140,6 +143,10 @@ func read(root string) (*catalog, error) {
 		units := perFile[f]
 		cr := newCodeReader(c, f, units)
 		for _, u := range units {
+			if rows, done := cr.saveNameList(u); done {
+				c.rows = append(c.rows, rows...)
+				continue
+			}
 			var r *row
 			var why string
 			switch {

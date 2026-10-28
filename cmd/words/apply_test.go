@@ -25,6 +25,7 @@ func partialTree(t *testing.T) string {
 		"go.mod",
 		"config/research.go", "config/badge_catalog.go",
 		"ui/accounts_panel.go",
+		"game/savenames.go", "game/savenames.txt",
 		"ui/copy_guard_test.go", "ui/stale_copy_test.go", "ui/docs_lint_test.go",
 		"config/effect_text_test.go", "config/event_flavor_test.go",
 		"flavor/flavor_test.go", "flavor/generator_test.go",
@@ -119,7 +120,7 @@ func TestImportRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	files := []string{"config/research.go", "config/badge_catalog.go", "ui/accounts_panel.go"}
-	textFiles := []string{path.Join(flavorFolder, "exp_fail.txt")}
+	textFiles := []string{path.Join(flavorFolder, "exp_fail.txt"), saveNamesText}
 	before := sources(t, root, append(files, textFiles...)...)
 
 	desc := c.byID["tech.calendar.description"]
@@ -127,15 +128,27 @@ func TestImportRoundTrip(t *testing.T) {
 	label := pick(t, c, "a label the code matches on", func(r *row) bool { return len(r.twins) == 1 && plain(r) })
 	line := c.byID["flavor.expedition_fail.any.001"]
 	word := c.byID["flavor.words.exp_fail_kit.001"]
+	saveWord := pick(t, c, "a save name word no other row repeats", func(r *row) bool {
+		if r.area != areaSaveNames || !r.u.f.text {
+			return false
+		}
+		for _, other := range c.rows {
+			if other != r && other.current == r.current {
+				return false
+			}
+		}
+		return true
+	})
 	if desc == nil || line == nil || word == nil {
 		t.Fatal("the partial tree is missing the tech description, the flavor line or the word-list entry")
 	}
 	yours := map[string]string{
-		desc.id:  desc.current + " Every year.",
-		title.id: beforeTag(title.current, " here"),
-		label.id: label.current + " now",
-		line.id:  line.current + " again",
-		word.id:  word.current + " again",
+		desc.id:     desc.current + " Every year.",
+		title.id:    beforeTag(title.current, " here"),
+		label.id:    label.current + " now",
+		line.id:     line.current + " again",
+		word.id:     word.current + " again",
+		saveWord.id: saveWord.current + " Again",
 	}
 	// What should change, as source text: each row's literal, and for the
 	// label the comparison that reads it.
@@ -154,7 +167,7 @@ func TestImportRoundTrip(t *testing.T) {
 	if err := importSheets(root, dir, importOptions{}, &out); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "applied 5, refused 0, unchanged 0") {
+	if !strings.Contains(out.String(), "applied 6, refused 0, unchanged 0") {
 		t.Fatalf("the import said:\n%s", out.String())
 	}
 
@@ -229,7 +242,7 @@ func TestImportRoundTrip(t *testing.T) {
 	if err := importSheets(root, dir, importOptions{}, &out); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "applied 0, refused 0, unchanged 5") {
+	if !strings.Contains(out.String(), "applied 0, refused 0, unchanged 6") {
 		t.Errorf("the second import said:\n%s", out.String())
 	}
 	for rel, data := range sources(t, root, append(files, textFiles...)...) {
