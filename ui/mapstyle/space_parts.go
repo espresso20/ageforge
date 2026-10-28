@@ -1,0 +1,88 @@
+package mapstyle
+
+import (
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
+)
+
+// skyParts are what a building line becomes in each space age: a habitat
+// module in orbit, a colony ark among the planets, a deck on the starbase.
+// Index: the age (see skyOf).
+var skyParts = [4]map[string]vibe.Entry{
+	{
+		mapmodel.LinHousing:   vibe.E("map.sky.SkyOrbit.housing", "habitat module"),
+		mapmodel.LinFood:      vibe.E("map.sky.SkyOrbit.food", "hydroponic bay"),
+		mapmodel.LinStorage:   vibe.E("map.sky.SkyOrbit.storage", "depot pod"),
+		mapmodel.LinWood:      vibe.E("map.sky.SkyOrbit.organic_extraction", "bio-vat"),
+		mapmodel.LinMines:     vibe.E("map.sky.SkyOrbit.geological_extraction", "asteroid mine"),
+		mapmodel.LinMetal:     vibe.E("map.sky.SkyOrbit.metallurgy", "orbital foundry"),
+		mapmodel.LinEngineer:  vibe.E("map.sky.SkyOrbit.engineering", "shipyard"),
+		mapmodel.LinEnergy:    vibe.E("map.sky.SkyOrbit.energy", "solar array"),
+		mapmodel.LinHarbor:    vibe.E("map.sky.SkyOrbit.harbor", "docking port"),
+		mapmodel.LinHacker:    vibe.E("map.sky.SkyOrbit.hacker", "relay satellite"),
+		mapmodel.LinKnowledge: vibe.E("map.sky.SkyOrbit.knowledge", "observatory"),
+		mapmodel.LinFaith:     vibe.E("map.sky.SkyOrbit.faith", "sanctuary"),
+		mapmodel.LinCulture:   vibe.E("map.sky.SkyOrbit.culture_arts", "zero-g gallery"),
+		mapmodel.LinMonument:  vibe.E("map.sky.SkyOrbit.monument", "beacon"),
+		mapmodel.LinTrade:     vibe.E("map.sky.SkyOrbit.trade", "market dock"),
+		mapmodel.LinMilitary:  vibe.E("map.sky.SkyOrbit.military", "moon base"),
+		mapmodel.LinDiplomacy: vibe.E("map.sky.SkyOrbit.diplomacy", "embassy"),
+	},
+	{
+		mapmodel.LinHousing:   vibe.E("map.sky.SkyDeep.housing", "colony ark"),
+		mapmodel.LinFood:      vibe.E("map.sky.SkyDeep.food", "farm world"),
+		mapmodel.LinStorage:   vibe.E("map.sky.SkyDeep.storage", "depot moon"),
+		mapmodel.LinWood:      vibe.E("map.sky.SkyDeep.organic_extraction", "garden world"),
+		mapmodel.LinMines:     vibe.E("map.sky.SkyDeep.geological_extraction", "mining world"),
+		mapmodel.LinMetal:     vibe.E("map.sky.SkyDeep.metallurgy", "forge world"),
+		mapmodel.LinEngineer:  vibe.E("map.sky.SkyDeep.engineering", "warp gate frame"),
+		mapmodel.LinEnergy:    vibe.E("map.sky.SkyDeep.energy", "stellar collector"),
+		mapmodel.LinHarbor:    vibe.E("map.sky.SkyDeep.harbor", "port world"),
+		mapmodel.LinHacker:    vibe.E("map.sky.SkyDeep.hacker", "relay beacon"),
+		mapmodel.LinKnowledge: vibe.E("map.sky.SkyDeep.knowledge", "research world"),
+		mapmodel.LinFaith:     vibe.E("map.sky.SkyDeep.faith", "shrine world"),
+		mapmodel.LinCulture:   vibe.E("map.sky.SkyDeep.culture_arts", "arts world"),
+		mapmodel.LinMonument:  vibe.E("map.sky.SkyDeep.monument", "memorial world"),
+		mapmodel.LinTrade:     vibe.E("map.sky.SkyDeep.trade", "trade world"),
+		mapmodel.LinMilitary:  vibe.E("map.sky.SkyDeep.military", "escort frigate"),
+		mapmodel.LinDiplomacy: vibe.E("map.sky.SkyDeep.diplomacy", "embassy world"),
+	},
+	{
+		mapmodel.LinHousing:   vibe.E("map.sky.SkyGalaxy.housing", "habitat deck"),
+		mapmodel.LinFood:      vibe.E("map.sky.SkyGalaxy.food", "agri deck"),
+		mapmodel.LinStorage:   vibe.E("map.sky.SkyGalaxy.storage", "cargo hold"),
+		mapmodel.LinWood:      vibe.E("map.sky.SkyGalaxy.organic_extraction", "bio-works"),
+		mapmodel.LinMines:     vibe.E("map.sky.SkyGalaxy.geological_extraction", "neutron star mine"),
+		mapmodel.LinMetal:     vibe.E("map.sky.SkyGalaxy.metallurgy", "stellar forge"),
+		mapmodel.LinEngineer:  vibe.E("map.sky.SkyGalaxy.engineering", "repair pylon"),
+		mapmodel.LinEnergy:    vibe.E("map.sky.SkyGalaxy.energy", "quasar tap"),
+		mapmodel.LinHarbor:    vibe.E("map.sky.SkyGalaxy.harbor", "docking bay"),
+		mapmodel.LinHacker:    vibe.E("map.sky.SkyGalaxy.hacker", "uplink node"),
+		mapmodel.LinKnowledge: vibe.E("map.sky.SkyGalaxy.knowledge", "research deck"),
+		mapmodel.LinFaith:     vibe.E("map.sky.SkyGalaxy.faith", "shrine deck"),
+		mapmodel.LinCulture:   vibe.E("map.sky.SkyGalaxy.culture_arts", "archive deck"),
+		mapmodel.LinMonument:  vibe.E("map.sky.SkyGalaxy.monument", "beacon spire"),
+		mapmodel.LinTrade:     vibe.E("map.sky.SkyGalaxy.trade", "exchange deck"),
+		mapmodel.LinMilitary:  vibe.E("map.sky.SkyGalaxy.military", "fleet at dock"),
+		mapmodel.LinDiplomacy: vibe.E("map.sky.SkyGalaxy.diplomacy", "embassy deck"),
+	},
+	{
+		mapmodel.LinHousing:   vibe.E("map.sky.SkyQuantum.housing", "folded habitat"),
+		mapmodel.LinFood:      vibe.E("map.sky.SkyQuantum.food", "probability garden"),
+		mapmodel.LinStorage:   vibe.E("map.sky.SkyQuantum.storage", "entangled vault"),
+		mapmodel.LinWood:      vibe.E("map.sky.SkyQuantum.organic_extraction", "reality harvest"),
+		mapmodel.LinMines:     vibe.E("map.sky.SkyQuantum.geological_extraction", "possibility mine"),
+		mapmodel.LinMetal:     vibe.E("map.sky.SkyQuantum.metallurgy", "quantum works"),
+		mapmodel.LinEngineer:  vibe.E("map.sky.SkyQuantum.engineering", "reality forge"),
+		mapmodel.LinEnergy:    vibe.E("map.sky.SkyQuantum.energy", "zero-point well"),
+		mapmodel.LinHarbor:    vibe.E("map.sky.SkyQuantum.harbor", "phase dock"),
+		mapmodel.LinHacker:    vibe.E("map.sky.SkyQuantum.hacker", "reality processor"),
+		mapmodel.LinKnowledge: vibe.E("map.sky.SkyQuantum.knowledge", "academy of maybes"),
+		mapmodel.LinFaith:     vibe.E("map.sky.SkyQuantum.faith", "hall of echoes"),
+		mapmodel.LinCulture:   vibe.E("map.sky.SkyQuantum.culture_arts", "art that might be"),
+		mapmodel.LinMonument:  vibe.E("map.sky.SkyQuantum.monument", "fixed point"),
+		mapmodel.LinTrade:     vibe.E("map.sky.SkyQuantum.trade", "probability market"),
+		mapmodel.LinMilitary:  vibe.E("map.sky.SkyQuantum.military", "war room"),
+		mapmodel.LinDiplomacy: vibe.E("map.sky.SkyQuantum.diplomacy", "embassy of selves"),
+	},
+}
