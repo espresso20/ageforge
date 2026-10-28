@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/espresso20/ageforge/flavor"
 )
 
 // The tests read the real source once and share the result, because reading is
@@ -355,22 +357,19 @@ func TestEveryPackageIsAccountedFor(t *testing.T) {
 	})
 }
 
-// TestFlavorPoolsAreAllRead: every pool a catalog declares belongs to a
-// catalog the export knows, and every sentence in the package is a row.
+// TestFlavorPoolsAreAllRead: every pool a catalog file declares belongs to a
+// catalog the export knows (reading fails otherwise), and every sentence of the
+// files is a row.
 func TestFlavorPoolsAreAllRead(t *testing.T) {
 	c := realCatalog(t)
-	if len(c.fl.unread) > 0 {
-		t.Errorf("these flavor pools match no catalog in moments (flavor_rows.go): %v", c.fl.unread)
+	entries, err := flavor.ReadEntries(os.DirFS(filepath.Join(c.m.root, filepath.FromSlash(flavorFolder))))
+	if err != nil {
+		t.Fatal(err)
 	}
 	sentences := 0
-	for _, f := range c.m.files {
-		if f.mode != modeFlavor {
-			continue
-		}
-		for _, u := range c.m.units(f) {
-			if s := u.st(); s.typ == "flavor.skel" && s.field == "Text" {
-				sentences++
-			}
+	for _, e := range entries {
+		if !e.Bank {
+			sentences++
 		}
 	}
 	rows := 0

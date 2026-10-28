@@ -1,0 +1,197 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# RunEnding is the end of a run: one line logged at every prestige, after the
+# Last Passage verdict (when there is one) and before the new run begins.
+#
+# The request shape:
+#
+#	flavor.Request{
+#		Moment:  flavor.RunEnding,
+#		Age:     age,    // the age the run ended in
+#		Subject: h.Name, // the age's harbinger, Cosmic Era only; "" before it
+#	}
+#
+# A full run's prestige comes from the Modern Age on, and the pools those
+# runs reach are below. (Prestige opens at the Medieval Age, but a taste,
+# from the Medieval to the Atomic Age, reaches only the era-neutral pool for
+# now: pools of its own are a follow-up.)
+#
+#   - the Modern to the Space Age: a plain register, a civilization winding
+#     down. Offices empty, the last tram runs, the orbital yards shut. Nobody
+#     warns of anything; the harbinger of those ages is not in the room.
+#   - the Cosmic Era: the age's harbinger is there at the end (the Distress
+#     Beacon, the Elder Relay, your future self, your unmade self), and the
+#     prose drifts into the late-game dread the harbinger catalog already has.
+#     These ages reach none of the plain pools, only the small era-neutral one,
+#     so the figure's voice dominates the draw.
+#
+# The era-neutral pool exists so a zero Request, and a request for an age that
+# can never prestige, still produces a sentence. Like the harbinger Moments,
+# RunEnding fires rarely (once a run), so it is sized by its own floor rather
+# than TestSkeletonFloors: every age that can prestige reaches a pool wider
+# than the Stream's window. The same no-digit rule applies: the game prints the
+# points.
+
+# run_end_any fits every age: no era-coded noun at all.
+== run_end_any
+plain town | Everyone came outside
+plain name | Names were written down in the order people came forward to give them
+wry money | Debts were forgiven, since there was no longer anyone to collect them
+wry complaint time | The grumbling was that it had come before anything was finished
+plain haul | Whatever could be carried was handed to whoever could carry it, and what could not be carried was left where it stood with a note saying whose it had been
+plain building | Doors were left open
+plain food | Food was shared out until it was gone
+plain family | Most people wanted to be with their families, and were
+
+# run_end_plain is the winding-down voice from the Modern to the Space Age. It
+# spans three era buckets, so it names nothing any one of them owns.
+== run_end_plain ages=modern_age,information_age,digital_age,cyberpunk_age,fusion_age,space_age
+plain work | People put down what they were holding
+wry family | The children were told a shorter version
+plain food | A meal went cold on a table while the family that cooked it stood outside looking up
+plain people | The oldest people walked out to look at the end for themselves and came back without much to say
+plain time | Nothing new was started
+plain notice message | Last instructions were posted where everyone could read them
+plain ledger count | Kept, one of everything, and a copy of the names
+wry overheard rumour | People said it had been a good long life for a people, and most of them meant it
+wry argument | The last thing anyone agreed on was what should be left behind for whoever came next, and after so many years of arguing about everything else they settled it in an afternoon
+plain people | In the end they spent the last of it like a holiday they knew would not come again, visiting neighbours they had never once spoken to in all the years before and standing about in doorways
+joke family | A man went round at last to make an apology he had owed his brother since they were boys, and was forgiven at once, and was annoyed about it
+joke complaint time | The complaint going round is that the end came on a weekday
+
+# run_end_industrial is the Modern Age city: mills, trams, the town hall.
+== run_end_industrial eras=industrial
+plain work | The factories let their last shift go early
+plain building | The chimneys stopped smoking
+plain machine | The power station was run down one boiler at a time
+plain town | Offices emptied by noon
+plain paper | The newspapers printed a final edition
+plain machine | The last tram of the night went round its whole route with every light on and not one passenger aboard
+plain ledger money | Final pay packets, issued in full
+plain notice work | The works will not reopen on Monday
+wry complaint authority | The union complains that the end came without the statutory notice
+wry overheard rumour | They are saying in the pubs that it was always going to end like this, and they said it last week too
+plain family | Families had their photographs taken in front of their houses
+plain noise | On the final broadcast a dance band played to an empty studio
+plain people | Men from the rolling mill walked home together in their work clothes for the last time, and stood at the corner a while before anyone went in
+plain paper | At the town hall the typists worked through the evening copying out the deeds and the registers and the lists of the dead, so that whoever came afterwards would find the whole of it in order and know who had lived there
+joke money | The tax office sent out its final demands on schedule
+
+# run_end_digital is the Information to the Fusion Age: feeds, phones, arcades.
+== run_end_digital eras=digital
+plain machine | The network went down region by region
+plain noise | Phones stopped ringing
+plain message | Most of the final posts were photographs of the sky
+plain ledger money | Final balances, frozen at midnight
+joke complaint trade | Customers complain that the promised update never shipped
+wry notice work | Staff may keep their company phones
+wry overheard rumour | Word on the feeds is that the corporations knew and sold tickets
+plain machine | The delivery drones were called home and parked in rows on the landing pads, where they sat blinking
+plain town | The fusion plants were brought down to idle one after another, and the city dimmed in stages over three nights
+plain people | In the arcades the kids who had played one game every night for years played it one last time together, and when it ended they left the cabinets switched on, cycling their demo screens to an empty room
+plain building | Screens across the city went dark one block at a time
+plain machine | Every server farm was left running for as long as the power held, humming to itself in the dark
+plain people | People stayed logged in to the end, scrolling back through years of their own posts and pictures
+plain notice authority | All personal files will be kept in the permanent archive
+plain message | The last message sent out went to every address the city had ever held, including the ones dead for years, and it said thank you and goodbye in every language anybody there had ever spoken
+
+# run_end_space is the Space Age: the yards, the ring, the far side of the moon.
+== run_end_space ages=space_age
+plain building | The orbital yards were shut down
+plain machine | Launches were cancelled
+plain haul | The last shuttle up carried seed stock, photographs and not much else
+plain ledger count | Stations mothballed, crews rotated home, orbits logged
+plain notice authority | All craft are to return to dock and power down
+wry complaint authority | The moon base complains it was told last
+wry overheard rumour | On the station they say the view never looked better
+plain people | The mining crews came in from the belt
+plain omen | The ring station was turned so its windows faced home, and the crew took turns sitting at them through the last watch
+plain machine | Up in orbit the satellites were left running on their own, and they went on sending down pictures of the weather over cities where the streets had emptied and the lights had been switched off one district at a time
+plain authority | Mission control signed off
+plain message | The crew on the far side of the moon heard last of all, over a delayed signal, and wrote down every word of it by hand
+plain kit | Fuel went back into the tanks
+joke money | The orbital hotel refunded its bookings, less a handling fee
+plain family | Children at the observation windows waved at the ships coming in until the last one had docked
+
+# run_end_cosmic is the Cosmic Era's shared voice: the age's harbinger at the
+# end, and the dark it warned about. No speaker's own words; those live in
+# the pools named for one age, below.
+== run_end_cosmic ages=interstellar_age,galactic_age,quantum_age,transcendent_age
+plain message need=subject | The final word went to {subject}
+plain omen | Out past the last charted star something stirred, the way a sleeper stirs when a door closes in another part of the house
+plain stranger need=subject | Through the whole of the shutdown {subject} stayed, watching
+plain omen | The dark came closer
+plain omen | Whatever waits at the end of all roads had been told the colony was coming, and the last thing the long-range instruments recorded before they were powered down was a patch of sky where the background noise had fallen silent
+wry complaint argument need=subject | The crew complain that {subject} never said what comes after
+wry notice authority need=subject | All logs are to be left open for {subject} to read
+wry overheard rumour need=subject | People on the command deck say {subject} knew the hour all along
+plain time | The stars went on
+plain ledger count | Air normal, power falling, every soul accounted for
+plain stranger need=subject | When the colony's last lights went out, {subject} stayed on in the dark after the crew had gone to their berths
+plain machine | The instruments kept recording after everyone had stopped reading them
+plain work | The colony ended its watch
+plain stranger need=subject | Right up to the end {subject} offered no comfort and no blame
+plain omen | Far out past the colony's instruments, where only one probe still reported, the thing it had been warned about for four ages turned away without hurry, and the probe lost track of it within the hour
+joke notice machine | Engineering filed its last maintenance request, marked urgent
+plain people need=subject | The colonists took it in turns to sit with {subject} through the last watch, and none of them could say afterwards what had been said
+plain family | The children slept through it
+plain food | The hydroponics bays were left lit
+plain noise need=subject | At the end the only voice left on the comms was {subject}
+plain overheard rumour | The old hands say the dark had been patient long enough, and that it was only ever waiting for the colony to stop
+
+# The pools named for one age are each Cosmic Era harbinger's own closing words, echoing its
+# roster entry.
+
+== run_end_age_interstellar_age ages=interstellar_age
+plain name | The beacon's loop ended in your name
+plain noise | The beacon kept looping after the last lights went out
+plain message | For eighty years the beacon had warned of this, and at the end it simply added the colony to its list
+plain noise | The dead colony's beacon and the living colony's last transmission overlapped for a few seconds, two recordings of the end playing over each other on the one frequency, and then the living one stopped
+wry overheard rumour | The comms officer swears the beacon said goodbye
+plain ledger count | Beacon still transmitting, colony silent
+
+== run_end_age_galactic_age ages=galactic_age
+plain omen | The relay folded the colony into its geometry and fell silent
+plain work | The linguists stayed at their posts to translate the last of it
+plain noise | The relay's hum held one note
+plain name | The relay had said this to others before, and the linguists found the colony's own name already written into its oldest geometry, among the names of peoples who had ended long before anyone here had learned to speak
+joke complaint argument | The linguists complain that the relay's last message has no verb
+plain notice authority | Keep the relay powered after we are gone
+
+== run_end_age_quantum_age ages=quantum_age
+plain message | Your future self sent nothing this time
+plain noise | From nine years out came one last message, and it was only your own breathing
+wry time | Your future self said this was the part you always forget, and that you should try to remember it this time
+plain time | The timestamps on your future self's messages had been running backwards for weeks, closer to today each time, and at the end they stopped there
+wry overheard rumour | Your future self said it had been worth it, which you chose to believe
+plain message | In the last hour a message came from nine years out in your handwriting, the letters a little wrong, the hand that made them out of practice, and it said only that it was glad you had waited up
+
+== run_end_age_transcendent_age ages=transcendent_age
+plain stranger | Your unmade self took your hand
+plain overheard stranger | This is how mine ended too, it said, and it did not let go
+plain time | The branch you stood on and the branch that ended met at last
+wry stranger | Your unmade self had come all this way to see whether this branch ends the way its own did, and stayed to see that it did, and seemed almost relieved to have company
+wry complaint argument | Half the station complains that the other you never explains itself
+plain notice authority | Every door on the station was unlocked, by order, so the other you could walk where it liked

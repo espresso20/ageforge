@@ -3,6 +3,7 @@ package game
 import (
 	"strings"
 	"testing"
+	"unicode"
 )
 
 // pathHostile is the set of characters that must never appear in a generated
@@ -86,5 +87,40 @@ func TestGenerateSaveNameDistribution(t *testing.T) {
 
 	if frac := float64(len(distinct)) / float64(n); frac <= 0.70 {
 		t.Errorf("distinct names = %.2f%% of %d, want > 70%%", frac*100, n)
+	}
+}
+
+// TestSaveNameWordsAreSafe holds savenames.txt to what the generators need:
+// every list they draw from is there with words in it, no other list is left
+// unused, and every word is letters and single spaces, because a name becomes
+// a file name.
+func TestSaveNameWordsAreSafe(t *testing.T) {
+	drawnFrom := map[string][]string{
+		"polityPrefixes": polityPrefixes, "epicAdjectives": epicAdjectives, "epicNouns": epicNouns,
+		"epicPlaceRoots": epicPlaceRoots, "epicSuffixes": epicSuffixes, "mythicRoots": mythicRoots,
+		"mythicConnectors": mythicConnectors, "mythicSuffixes": mythicSuffixes, "mythicAdjectives": mythicAdjectives,
+		"mythicEpochNouns": mythicEpochNouns, "whimsicalWholeNames": whimsicalWholeNames,
+		"whimsicalAdjectives": whimsicalAdjectives, "whimsicalNouns": whimsicalNouns, "whimsicalOfThings": whimsicalOfThings,
+	}
+	for name, words := range drawnFrom {
+		if len(words) == 0 {
+			t.Errorf("savenames.txt has no list %s, and a generator draws from it", name)
+		}
+	}
+	for name, words := range saveNameWords {
+		if _, used := drawnFrom[name]; !used {
+			t.Errorf("savenames.txt has the list %s, which no generator draws from", name)
+		}
+		for _, word := range words {
+			if word != strings.TrimSpace(word) || strings.Contains(word, "  ") {
+				t.Errorf("%s: %q has extra white space", name, word)
+			}
+			for _, letter := range word {
+				if !unicode.IsLetter(letter) && letter != ' ' {
+					t.Errorf("%s: %q has %q, and a save's name becomes a file name", name, word, letter)
+					break
+				}
+			}
+		}
 	}
 }

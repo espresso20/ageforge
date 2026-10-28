@@ -1,0 +1,506 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# WarRaid — a civilization you are at war with came over the wall and took
+# something.
+#
+# The log line directly above this one already names the raider, names the
+# resource and gives the number. So nothing here says what was taken or how
+# much. These sentences are the morning after: what burnt and what stood next
+# to it, who saw them coming and who slept through it, the state of the outer
+# wall, what they left in the mud, the counting, somebody's child who is
+# missing and somebody's child who is not, and the rebuilding that started
+# before the ash went cold. See catalog.go for the rules.
+#
+# This is the grimmest Moment in the catalog and it carries the smallest
+# humour budget of the five — under one line in twelve reaches for anything,
+# and the flat lines are what make those land. Grim is not the same as
+# melodramatic. The strongest sentences here are the plainest: what a person
+# did with their hands the next morning.
+
+# --- slot banks --------------------------------------------------------------
+#
+# Noun phrases, lowercase, one tight category per bank, no era-coded nouns:
+# both are drawn by ungated sentences and so have to be true of a stone camp
+# and of a ring station alike. That rules out more than the lint catches —
+# nothing here is a cart, a hearth or a window shutter.
+
+# Things they broke getting in, getting out, or apparently for the exercise.
+== words war_raid_damage
+the outer wall
+the north door
+the water store
+the door frame
+the light over the entrance
+the long ladder
+the lock on the store room
+the lock on the main door
+the ceiling of the passage
+the covered way down to the water
+the seals around the inner door
+the lights along the passage
+the steps down to the store
+the panel beside the entrance
+the wall at the far end
+the floor of the front room
+the hinges on both doors
+
+# Small things they dropped, abandoned or left on purpose. Objects only —
+# something a person can pick up, carry inside and put on a table.
+== words war_raid_trace
+a broken knife
+a boot with no laces
+a torn strip of cloth
+a coil of good rope
+a child's shoe
+a torn glove
+an empty water flask
+a helmet with the strap cut
+a knife with the tip snapped off
+a bundle nobody will open
+a length of chain
+a bag of somebody else's food
+a flask still half full
+a strap with teeth marks in it
+a bloodied rag
+a cap two sizes too big
+a ring on a string
+a burnt glove
+
+# --- the sentences -----------------------------------------------------------
+
+# war_raid_any fires in every age, so nothing in it may name an era-coded object.
+# Doors, walls, water, rope, blood, dogs, children, names, counting and bad
+# weather are true of every age that has people in it; gates, sidings, feeds and
+# airlocks are not.
+== war_raid_any
+# --- short. A fact, and then the sentence stops. ---
+plain building | The outer wall is open
+plain casualty | Two children have not been found
+plain weather | It rained on and off
+plain name | Sen has gone to sit with her sister
+plain smell | Everything smells of wet ash
+plain wound | Somebody bit through a lip
+plain people | A child drew the men
+plain noise | It was loud, then quiet
+plain ledger building | Four doors need new frames
+
+# --- mid, with a slot. What they broke on the way through. ---
+plain building slot=war_raid_damage | The mending starts with ~ and gets worse from there
+plain people slot=war_raid_damage | Two men worked on ~ until it was too dark to see
+plain time slot=war_raid_damage | Nobody looked at ~ until the middle of the morning
+plain town slot=war_raid_damage | The children have been kept away from ~
+wry argument slot=war_raid_damage | What was done to ~ took time and both hands
+wry building slot=war_raid_damage | Somebody has already started on ~ without being asked
+wry complaint money slot=war_raid_damage | There is an argument going on about who pays for ~
+wry complaint haul slot=war_raid_damage | Nothing can be carried in or out until somebody sees to ~
+
+# --- mid, with a slot. What they left in the mud. ---
+plain haul slot=war_raid_trace | In the doorway they left ~ and went on
+plain kit slot=war_raid_trace | Nobody has claimed ~ and it has been sitting there two days
+
+# --- mid. The working length: one thing, with enough detail to place it. ---
+wry overheard sleep | Everyone says they were asleep and about half of them were
+plain people | A girl of about seven bit one of them on the hand
+wry message | A mark was left on the door and it is meant to be read
+wry noise | The quiet afterwards went on for most of an hour
+plain town | The people two doors along are packing what they have left
+wry overheard rumour | The story going round already has forty men in it
+plain name | A man called Hest went out to look and has not come back
+
+# --- long. Circumstantial, subordinated, the way a chronicle runs. ---
+plain kit slot=war_raid_trace | On the table by the door there is ~, and nobody has touched it since it was carried in
+joke authority | Two people who were nowhere near the door that night have resigned from things they had appointed themselves to, and a third is expected to follow
+wry overheard argument | There is talk of going out after them, and the talk has names in it now, and the older ones have started sitting in on it
+wry argument | The blame has settled, without anybody deciding it, on the one who sleeps nearest the door, and he has stopped coming out at meals
+
+# --- very long. Digressive, specific, a paragraph that forgot to stop. ---
+wry ledger count | The count of what is gone was started twice and abandoned twice, once because the woman doing it was called away and once because the man who took over could not read her marks, and it is being started again this evening
+wry complaint people | The men who came up from the far end an hour too late have spent all day explaining where they were, and the explanation has got shorter each time, and nobody has asked for it since noon
+
+# --- kind: aggressive ---
+plain time kind=aggressive | It happened in broad daylight
+plain noise kind=aggressive | Nothing about the way they came in was quiet or quick
+wry border kind=aggressive | They stood in the open long enough to be counted
+
+# --- kind: isolationist ---
+plain stranger kind=isolationist | Nobody here knew their faces
+wry haul kind=isolationist | They spoke to nobody and took only what two men could carry
+plain overheard message kind=isolationist | None of the old people can put a name to the marks on the door
+wry overheard rumour kind=isolationist | They went through the place without once raising their voices, which is being talked about more than the damage is
+
+# --- tone ---
+plain wound tone=grim | The blood has been washed twice
+plain casualty tone=grim | Two of the dead were laid out in the same room as the living
+
+# --- the raider's name, in frames a plural or singular name survives ---
+plain name need=subject | Somebody named {subject} out loud
+plain overheard rumour need=subject | The talk is all of {subject}
+plain message need=subject | A name has been scratched into the door frame, and the name is {subject}
+wry town need=subject | The children have learned to spell {subject} this week
+wry trade need=subject | Nobody here ever traded with {subject}, and nobody here will
+wry overheard noise need=subject | Somebody in the back room keeps saying {subject} over and over
+plain argument need=subject | The old quarrel with {subject} got a great deal worse last night
+plain wound need=subject | Two of the wounded said {subject} before they went under, and a third said a word nobody here knows, and it has been written down as best anyone could manage
+
+# --- what was taken, as a thing that used to sit in a room ---
+plain haul need=res | Whoever came in knew where to find the {res}
+plain haul need=res | Everything else got stepped over on the way to the {res}
+wry building need=res | The floor where the {res} used to sit has been swept and swept again, by a man who was told to stop an hour ago
+wry people need=res,mass | Somebody stood in front of {res_stores} with both arms out, and got put on the floor for it, and has been telling the story since the middle of the morning with the arms still out
+wry ledger count need=res,amount | The number being said out loud this evening is {amt_res}, and the number the two who did the counting wrote down is not that number, and the difference is being argued about in the back room by people who counted nothing
+
+# war_raid_grounded is the part of the old ungated pool whose imagery is a town
+# with lanes, dogs and a washing line: true from the Stone Age to the
+# Modern Age, and wrong on a station. Moved here after a corpus review.
+== war_raid_grounded eras=ancient,feudal,industrial
+wry argument need=res | Whoever pointed them at the {res} lives here, eats here, and was standing in the lane this morning with everybody else
+wry ledger count need=res,amount | A boy has chalked {amt_res} on the wall by the door because he heard it said, and two people have rubbed it out, and it has gone back up both times in a bigger hand
+wry ledger name | Two names are chalked up
+plain animal | Half the animals came home
+plain animal slot=war_raid_trace | The dogs turned up ~ under the wall at first light
+plain kit slot=war_raid_trace | Halfway up the lane somebody picked up ~
+plain animal | The dogs went off an hour before anyone got up
+plain ledger count | A woman down the lane counted them going past and got to nine
+plain animal | The grey dog is dead and the children have been told
+plain wound | The baker went at them with a shovel and got hurt for it
+plain overheard people | A boy who was in the loft the whole time has described the men twice and both descriptions are of the same man
+wry ledger count | Somebody has been going from house to house with a stick of chalk writing down what each place has lost, and has been let in everywhere
+wry complaint building | Every roof on the water side wants work before the cold comes, and the man who does roofs is one of the two who have not been found
+plain town | The washing was out on the line when it started and it is still out on the line, and the woman it belongs to has not been back in the house
+plain ground | An old man came down to the water at first light with a bucket, filled it, looked at the far bank for a while, and carried the bucket back up
+plain casualty | Two of ours went down in the lane and one of theirs went down with them, and ours have been carried in and washed and laid out, and the third is still lying where he fell
+wry overheard rumour | Word had gone round by the middle of the morning that they had come through the water side, and by evening that they had come down the lane, and by now that somebody here had walked out and shown them the way in
+plain casualty | A woman has been at the door since first light asking whether anybody saw her son go past, and she has asked everybody on the row, and two of them have started avoiding the lane so as not to be asked again
+wry people kind=aggressive | They made no attempt at all to come in unseen, and walked out the same way, and one of them stopped in the lane to drink
+plain stranger kind=aggressive | There was a man at the end of the lane who did nothing for the whole of it except stand and watch the rest work, and four separate people have described him, and the four descriptions agree
+plain complaint ground | The lane is still blocked
+plain ledger casualty tone=grim | Three graves and one is small
+plain town tone=grim | The children were kept in the back room all morning while the lane was cleared, and were let out at noon, and went straight to the wall to look
+wry overheard rumour tone=wry | There is a version going round in which the whole thing lasted an hour and there were thirty of them, and a shorter version told by the two who were actually out in the lane, and the long one is winning
+wry people slot=war_raid_trace | A boy will not give up ~ he found in the mud
+plain casualty | They left one of their own face down in the mud
+plain ledger count | Nine barrows of rubble so far
+wry ground tone=grim | The digging is being done by whoever can still hold a spade
+plain casualty tone=grim | A woman has been sitting with a body since dawn
+joke authority | The council sat before it was light and by the middle of the day had agreed to meet again
+wry sleep | The lamps were lit all night and are lit now, and nobody has said out loud that they will be lit tomorrow as well
+plain ground | The well was cleaned out and the water is being carried up from further along, which will go on until somebody can say the well is fit to drink from
+plain wound tone=grim | The wounded were brought in and the doors were barred behind them
+plain sleep | Third night with the lamps lit
+wry argument | Whoever let them in knew which way the bar lifted
+plain overheard rumour | Word got to the next place along the water before first light
+plain wound | Blood in the wash water
+plain smell | It smells of burning down by the water and will for days
+plain message | Somebody cut a shape into the wall down by the water
+wry ground kind=isolationist | Whoever they were, they walked a long way to get here
+plain casualty slot=war_raid_trace | The woman who washes the dead has kept back ~ and given it to the boy who sweeps her step
+wry weather | There was no moon at all, which they will have known about, because the two nights before it were bright enough to read by
+wry sleep tone=grim | The man who is keeping watch tonight kept watch last night and the night before, and has been told to go and lie down by everybody who passes the ladder, and is still up on the wall
+
+# --- re-tagged out of the shared pool by the third late-age review: the
+# kitchen, the back door, the walk home. True up to the Modern Age. ---
+plain food | The bread was left outside
+wry border | The man on the wall saw them and stayed where he was
+plain building | The back door was open from the inside
+plain people | Two houses on the corner were missed entirely
+wry complaint argument | The wall goes up again in the morning, higher this time, and the man who said it was high enough two years ago has been reminded of that by everybody carrying stone
+plain ledger haul | Everything that could be moved indoors was moved indoors before the light came up, and most of it has been carried back out since because the houses are full
+plain weather | The wind was up all evening and covered most of the noise, so the first anybody knew of it was a door going in
+plain sleep | The smallest of the children was under the floor the whole time and did not make a sound, and has been carried about by three different people today, and has been asleep for most of it
+wry building | The rebuilding was started before the ash had gone cold, by two men who had been up all night and were not asked to, and there is now a good deal of new timber lying in the wrong place
+plain smell need=res,mass | A line of spilled {res} runs down the back stairs and along the passage, and it will be there a while yet
+wry haul need=res,mass | Two of them walked out of the low door carrying {res_haul} between them at no particular speed, and one of them looked back at the house before he went, and four people saw that and none of them describe him the same way
+wry argument need=res | Nobody had thought to move the {res} indoors, and the two people who told everyone to move it have not said so again, which everybody has noticed
+wry argument tone=wry | The people who were loudest about the wall being high enough have gone indoors, and the people who were quiet about it are being kind, mostly
+
+# war_raid_late is the digital and cosmic voice: the field notes have become
+# logs, and the logs have started to notice how long everything takes.
+== war_raid_late eras=digital,cosmic
+wry machine | The damage report is still loading
+plain machine | They took the backups first, which means they knew where the backups were
+wry people | Four sections are sealed and the people inside them have been told help is coming, which is true in the sense that it is scheduled
+plain machine | Every screen in the sector went dark at the same moment and came back a minute later showing the correct time
+plain ledger casualty | The casualty list is being updated live
+plain town | Emergency lighting is on in the residential levels and will stay on, and the children have already stopped asking when the proper lights are coming back
+plain notice authority | Survivors are asked to report to the nearest intact terminal
+joke money | The insurers have described the attack as an act of war, which the people who were in it could have told them for free
+wry ledger count | Working out what was taken will take longer than the raid did, and the people doing it need more people
+plain machine | The security doors opened for them
+plain noise | The sirens ran all night
+plain ledger casualty | Triage took until morning
+wry machine | Every camera recorded the wrong corridor
+plain people | The evacuation drill worked
+plain building | Level four has no power
+wry notice authority | All access codes have been changed
+plain machine | They used a maintenance code that was supposed to have been retired years ago
+wry people | The medics set up in the lobby and the lobby has not been a lobby since
+plain building | The emergency shutters came down on the wrong side of half the residents
+wry authority | The security review has found that every procedure was followed and that the procedures were the problem
+plain machine | The backup generators came on and ran the lights and nothing else
+plain wound | The injured were sorted with colour-coded tags until the tags ran out
+wry complaint money | The insurers want a list of what was taken, itemised, with receipts
+plain people | A security guard held one door for twenty minutes and has asked not to be thanked in public
+plain machine | The alarm system logged every breach and sent the alerts to an address that closed last year
+wry rumour | The official count is lower than the count going round the residential levels
+plain haul | Whatever they came for was on the lower levels, and they knew which lift to take
+plain sleep | Families from the damaged section are sleeping in the sports hall
+wry machine | The facial recognition system identified every one of them as a member of staff
+plain casualty | The list of the missing is updated every hour on a screen in the main hall, and the crowd in front of it gets smaller each time a name comes off
+wry authority | A minister arrived by evening, was shown the damage, said that lessons would be learned, and was driven back out through the breach the raiders used
+plain machine | The door logs show them entering at one end of the complex and leaving at the other in under twenty minutes, stopping only where the stores were
+wry notice paper | Every resident has been sent a form for reporting losses, and the form was written for a burglary, and it has a box for the make of the bicycle
+plain people | A teenager who hid in a ventilation duct the whole time has been interviewed four times and gets the same details right every time, which has made him the most useful witness they have
+plain building | The breach in the outer wall is being covered with temporary panels, and children have already started drawing on them
+wry machine | The automated defences spent the raid guarding the parts of the complex that were not being attacked, as they had been programmed to, and the engineer who wrote that programming has been at a terminal ever since going through it line by line
+plain people | The canteen stayed open all night because the woman who runs it would not close it, and by morning she had fed the medics, the guards and the families from the damaged section, and she has gone home now and is not to be called
+plain machine | The lifts are locked down
+plain people | Two guards are unaccounted for
+wry authority | Emergency powers were declared and then read
+plain building | The atrium glass is gone
+plain machine | The power came back in the wrong order and the doors on the east side stayed sealed until noon
+wry overheard rumour | The residents' forum has already named the person who let them in, and has named four different people
+plain wound | The field hospital in the car park has run out of beds and started using the reclining chairs from the staff lounge
+wry money | Repairs have been estimated, and the estimate has been sent back with a request for a smaller one
+plain people | A child was found asleep under a desk in the admin block the next morning, having slept through the whole of it
+wry complaint people | The night staff want to know why the raid alert reached the day staff first
+plain machine | The sprinklers put out the fire in the stores and flooded the level below, where the spare equipment was kept
+plain casualty | The names of the dead were read out over the public address system at noon, and every corridor in the complex stopped to listen
+
+# --- added by the third late-age review: offices, stations, the long view ---
+plain building | The shutters are still down
+plain paper | Every door log has a gap in it
+plain building | Two stairwells are sealed with tape
+plain casualty | The lost property office has been turned over to the belongings of the missing
+plain people | Everyone was handed a foil blanket and most of them are still wearing one
+plain wound | The blood bank ran low by midnight and a queue formed in the corridor to give more
+wry money | Insurance assessors arrived before the fire crews had finished
+plain machine | The one lift that still works has a queue and a guard
+plain name | The names of the missing went up on the whiteboard in the canteen, and they have been rubbed out one at a time through the day as people turned up, and the last three have been circled
+plain overheard rumour | The rumour on the residential levels is that they had a floor plan
+plain notice authority | Residents are asked not to post photographs of the breach
+plain ledger count | Four doors breached, two stores emptied, one guard still in surgery
+wry complaint people | The maintenance crew are on their thirtieth hour and have started writing the time on every work order they sign
+wry noise kind=aggressive | They set off every alarm on purpose on the way out
+plain stranger kind=isolationist | They spoke to nobody and their suits carried no markings
+plain casualty tone=grim | The morgue ran out of drawers and borrowed a cold store
+plain casualty tone=grim | A woman from the damaged section has been going door to door on the upper levels with a photograph of her son on her phone, and every door has opened for her, and nobody behind any of them has seen him
+
+# war_raid_ancient — the elders, the herd, the store-pit, the watch-fire.
+== war_raid_ancient eras=ancient
+plain building | Two huts are down
+plain ledger haul | The store-pit was emptied by hand
+wry noise | The drums went up too late
+plain border | Smoke on the ridge until noon
+plain notice authority | Nobody goes past the racks
+plain animal | They drove off half the herd and killed what would not walk
+plain weapon | A spear was left standing in the ground by the store-pit
+wry complaint border | Somebody let the watch-fire go out well before midnight
+wry wound | An arrow came through the roof of the wrong hut
+wry ground | They crossed at the ford, which everyone had said they would not
+plain ledger haul | The hides put out to dry are gone or trampled into the mud
+plain ground | The spring below the camp has blood in it and is being left alone
+plain wound | A boy went after them with a spear and was carried back
+wry food | Half the harvest was still in the ground, which saved it
+wry border | The valley people watched them go past and lit nothing at all
+plain message | A hide with a hand-mark on it was tied to the post by the path
+wry authority | The elders have been sitting since before light and have sent for the old woman who remembers the last time, and she is coming up the slope now
+wry complaint people | Water has been carried up from the ford all morning by whoever could be spared, and the two women doing most of it have not been spelled off once
+wry overheard rumour | The column that came through was longer than the camp is wide, which two people have now said out loud and nobody has argued with
+plain people | An old woman stood in her doorway with a spear held wrong and they went round her, and she has been standing in the same place most of the day
+plain ground | The tracks go up the valley and stop where the ground turns hard, and two men followed them that far and came back and have not said much since
+wry ledger count | Somebody has cut marks into the post beside the store-pit, one for each of ours, and a boy has been sent to ask the elders whether that is allowed
+plain town | Three huts stand open with nothing in them, and the families are in with other families, and the old man who lived alone in the fourth has gone up to sit by the store-pit
+plain animal | They fired the drying racks on the way out and the dogs went in every direction, and half of them were back before dawn and the rest are still somewhere up on the slope
+
+# war_raid_feudal — the gate, the bells, the muster, the steward's arithmetic.
+== war_raid_feudal eras=feudal
+plain border | The gate stood open
+wry complaint food | Supper went cold in the hall
+plain ledger haul | Two carts are gone
+plain noise | The bells rang late
+plain paper | Wax still soft on the letter
+wry town | Riders were through the village before the bells started
+plain building | The storehouse doors were taken off their hinges and left in the yard
+wry border | Two pickets were found tied up and unhurt and are being asked about it
+plain ledger count | The steward has counted what is left and started again from the top
+plain wound | A clerk was hurt carrying the rolls out and will keep the hand
+plain complaint authority | Nobody called the militia until the whole of it was over
+wry notice authority | The muster is called for dawn and nobody expects much of it
+plain weapon | An arrow went through the shutter and stuck in the beam
+wry town | Somebody has hung a torn banner over the gate arch
+plain building | The undercroft was found open and most of the way empty
+plain ground | The column came up the road past the ford in good order
+wry message | A herald came the next morning with something on parchment that the steward read once, folded, and put inside his coat without saying a word about it
+wry town | The village below lost most of its roofs and blames the gate for it, and two families have already carried their things up the road to relatives
+joke complaint count | The quartermaster will not begin counting until the yard is cleared, and the yard cannot be cleared until the carts are mended, and the carter is at the ford
+wry argument | The gate keeper is dead and his son has been round the whole village asking who had the bar up last, and has been answered politely at every door
+plain weather | Smoke stood over the harvest fields until the rain came in the afternoon, and the men who went out to beat it down came back black to the elbow
+plain notice noise | The bells go again at first light, by order of the steward, and the boy who rings them has been given a stool and told to stay by the rope
+joke machine | Two wagons were taken and a third went into the ditch at the bend, and it has been got out and stands in the yard with a broken axle and a great deal of opinion around it
+wry noise | The horns went up in the wrong order, which had the militia running to the ford while the riders were already inside the yard, and the man who blew them has been stood down and is sitting in the hall
+
+# war_raid_industrial — the siding, the warehouse, the wire, the night shift.
+== war_raid_industrial eras=industrial
+plain message | The telephone line was cut first
+plain ledger casualty | Two men have not come in
+plain time | A bullet went through the depot clock at twenty past four
+plain weather | Smoke over the yard till dawn
+plain ledger haul | Freight left lying in the mud
+plain ground | The way in was along the rail siding, on foot
+plain building | The warehouse doors were cut and the lock left hanging on the chain
+plain wound | A night watchman is in hospital and will keep the eye
+wry authority | The foreman was on the platform for all of it
+wry machine | Two lorries went out after them and came back with nothing
+wry money | The payroll safe was opened with something heavy and unhurried
+plain message | The wire to the next station was down the whole night
+joke notice paper | It will be written up in triplicate and read by nobody
+plain complaint message | Somebody telegraphed the wrong office and lost forty minutes doing it
+wry animal | Nobody has seen the depot cat since Tuesday night
+wry haul | They knew which shed held the good stock and walked past two others
+wry time | The office clock stopped at the minute the wall took the blow, and three men have written that time down separately and two of the three agree
+wry sleep | Men are sleeping in the warehouse tonight with the lamps left burning, and the foreman has said nothing about the cost of the oil
+plain ground | The valley road was blocked behind them with a felled tree, and the two men sent to clear it took until noon and came back saying the cuts were fresh
+joke notice authority | The shareholders will be told about the fence and about the lock, and the meeting at which they are told has been moved back a week
+wry border | A column of them walked out along the rail line in the dark and nobody thought to stop the goods train, which went through at half past four and saw nothing
+wry paper | The annexe roof is holed in two places and the paper under it is ruined, and the two women who keep the files have been drying sheets on the office stove
+wry message | The telegram went out an hour after they had gone, and the reply came back in the morning telling the yard to secure the fence, which is where the fence used to be
+wry ledger count | The foreman's account and the watchman's account differ on the number of them and on the hour, and both men have been asked to write it out again, and both have written out the same thing again
+
+# war_raid_digital — the feed, the uplink, the drones, the after-action.
+== war_raid_digital eras=digital
+plain machine | The feed went dark early
+plain building | Power first, then the doors
+plain ledger wound | Two guards are in hospital
+plain sleep | The night analyst is still up
+wry notice authority | Nobody wants tomorrow's after-action
+plain machine | Two drones went up late and found dust and a cold engine
+plain machine | The uplink was cut at the pole outside the fence
+plain people | An analyst watched the whole of it and could do nothing
+wry machine | The network is back and half the cameras are still down
+wry complaint rumour | Somebody put the footage out before the shift had ended
+wry overheard rumour | The channel filled up with people who were nowhere near it
+plain ground | The service road was used both ways, with every light off
+plain message | The last clean image is a shoulder and half a face
+plain ledger count | The badge reader logged forty entries inside one minute
+wry border | They knew the camera angles better than the guards did
+wry ledger authority | Three doors opened on credentials that expired last year
+wry notice authority | The drones are grounded until somebody accounts for the eleven minutes, and the person who has to account for them went home at four and has not been reached
+wry people | A junior analyst called it in four minutes before it started and was told to hold, and has since had to say exactly what she saw to everybody above her
+wry overheard count | Half the floor has watched the same nine seconds of footage since the morning, and the room has agreed on the number of them and on nothing else
+wry noise | Somebody's phone is still transmitting from inside a bag somewhere on the far side of the fence, and it has been listened to for six hours and has given up two coughs
+wry machine | The network logged the whole thing as a maintenance window, which is what it was told to log, and the person who scheduled the window is on leave until Thursday
+wry machine | A drone found the vehicles four hours later on a track behind the reservoir, all three of them burnt out and parked neatly, one behind the other
+wry ledger paper | The channel logs stop for nine minutes and start again clean, and the two people who could say why are the two people who were on the desk, and both of them have been sent home to sleep
+joke notice paper | The uplink came back on its own at ten to six and the first thing through it was a maintenance ticket somebody had filed the evening before about a door sensor on the east side, which has now been read by about forty people
+plain machine | The drones were hacked first
+wry rumour | The raid trended before it ended
+plain machine | Every feed cut at once
+wry money | The accounts were drained in seconds and the bank is investigating
+plain machine | Their malware is still somewhere on the network and the analysts are hunting it floor by floor
+wry people | An analyst watched the whole thing on a feed from home and called it in before the building's own systems noticed
+plain machine | The drones that were supposed to defend the compound were turned around and used against it
+joke message | The raiders left a message on every screen in the building, and it has a spelling mistake in it, and the analysts are treating the spelling mistake as a clue
+plain machine | The fusion plant tripped to safe mode when the grid dropped, and the city went dark for an hour
+wry paper | The after-action review has been asked to explain how an attack this large came through a network this closely watched, and would like more time
+plain people | People filmed it on their phones from the flats across the street, and the footage is better than anything the security system kept
+wry machine | Their implants made them invisible to our cameras and easy to see for a cleaner with a mop, who passed them in the service corridor and took them for contractors
+
+# --- added by the third late-age review: the building, the city, the network ---
+plain machine | Their drones jammed ours
+plain building | The fusion plant was never touched
+wry people | The lobby feed shows them holding the door for each other
+wry authority | The police arrived in time to photograph the tyre marks
+plain map | An analyst traced their vehicles to a rented garage across the city and found it swept clean
+plain town | The street outside is closed and covered in broken glass
+plain rumour | People in the flats opposite are still posting clips, and the analysts are going through every one of them frame by frame
+wry machine | Their malware emptied the stores database and left the canteen menu alone
+wry wound | The hospital across the road took the wounded, then the families, then the press, and wants the network team to do something about the press
+wry authority | The security company that runs the doors has issued a statement saying its system performed as designed, and the analysts have spent the day reading the design documents, which run to four hundred pages and mention the east door once
+plain sleep | Two of the night staff slept under their desks
+plain overheard rumour | The word in the office is that one of the raiders used to work here
+wry notice authority | All staff must re-enrol their fingerprints by Friday
+wry ledger count | Six of the forty cameras were working, and none of the six faced the door they used
+plain complaint people | The cleaners were told to wait for the forensics team and have been waiting since six
+plain weapon kind=aggressive | They shot out every streetlight on the way in
+plain casualty tone=grim | The office has put flowers on two empty desks
+
+# war_raid_cosmic — the hull, the bay, the airlock, the dock crew.
+== war_raid_cosmic eras=cosmic
+wry machine | The reactor was left alone
+plain building | Bay three is open to space
+plain casualty | Two of the dock crew died
+plain building | Frost down the port corridor
+plain machine | The airlock seals are cut
+plain border | They came in with the transponder dead and nobody challenged it
+plain building | The cargo bay doors were cut through from the outside
+plain machine | There is a hole in the hull the size of a table
+plain machine | A bulkhead went inward and the section is still sealed
+plain ledger count | Nothing in the bay matches what the manifest has on it
+plain machine | They went out through the aft airlock and left it standing open
+wry message | The relay logged them and flagged nothing at all
+plain casualty | Vacuum took the forward compartment before anyone reached the doors
+wry stranger | A freighter three hours out saw them and stayed quiet
+wry border | Orbital watch had them and lost them behind the moon
+wry argument | Whoever opened the inner door had a code that worked
+wry argument | The hull plating outside the bay is scored in long parallel lines, which the engineer says was a cutting head and the second engineer says was something else
+plain notice food | Air is being rationed until the bay is sealed, and the notice about it went up at four in the morning and has been read by everybody and argued with by most
+wry message | The transponder code they used belonged to a ship broken up eleven years ago, and the woman who found that out has not left the terminal since she found it
+wry paper | Two relays went quiet for a minute and came back clean, and the log of that minute is the same log as the minute before it, character for character
+plain people | A child was found sealed into a storage locker on the lower level, breathing, and would not come out for the first two people who opened it
+wry ledger paper | The manifest was altered before anybody thought to look at it, and the alteration is neat and in the right hand and dated three days before any of this
+plain casualty | Somebody was in the bay when it went and did not get out, and the dock crew have been welding along the seam all night with the lights up and the talk down
+wry overheard argument | Half the ring has no pressure and the other half has questions, and the dock crew have answered the same one about forty times, which is whether the doors were opened from inside or cut from outside
+plain wound | Three sections vented
+wry people | The dead will be restored from backup
+plain haul | They took the whole cargo ring
+wry time | The raid lasted ninety seconds, local
+plain machine | The station is running at half spin
+plain casualty | The bodies recovered from outside are being brought in one at a time through the small lock
+wry people | Some of the restored have asked to be told how they died, and some have asked to be spared it
+plain machine | Their ships matched our spin before they fired, which means they had studied the station for a long time
+wry authority | The station administrator asked the ship's mind for an honest estimate of the next raid and has kept the answer to herself
+plain people | Everyone on the damaged ring has been moved inward, and the inner rings are now so crowded that people are sleeping in the corridors under the emergency lighting
+wry time | The attack was launched from so far out that the ships that made it are still accelerating away from something they finished weeks ago
+plain stranger | The raiders took nothing anyone can identify and left a small device bolted to the outer hull, and it has been counting down in a notation no one on the station can read
+
+# --- added by the third late-age review: the ring, the fleet, and what is out past it ---
+plain machine | The ring is still wobbling
+plain noise | Pressure alarms all night
+plain haul | They took the seed vault
+plain food | Hydroponics lost a whole tier to decompression
+plain wound | The medical bay has been treating cold burns since the second watch
+plain message | Their boarding craft left scorch rings on the hull that look like handprints
+wry town | The station's children have been moved to the core, where the gravity is lighter, and have been told it is a holiday
+plain stranger | A suit with nobody in it was found walking the outer hull on its last instructions
+plain border | The raiders came in through a cargo lock welded shut thirty years ago, and the weld was cut from the inside, and the security chief wants everyone who has lived aboard longer than that interviewed
+wry message | The comms mast took a hit and the station has been talking to the fleet by flashing its docking lights
+plain smell | The air smells of the backup scrubbers
+plain overheard rumour | The crews say the raiders kept their helmets on the whole time, and some say there was nothing inside them
+plain notice authority | Walking outside the inner ring is suspended until the hull crews say otherwise
+plain ledger count | Three decks vented, forty sealed in, all recovered alive
+wry complaint argument | The hull crews have dug out last month's request for more patrols and pinned it to the mess door
+wry border kind=aggressive | Their ships stayed in view long after the raid, lit up and slow
+plain casualty tone=grim | The dead are being kept in the cold hold until the burial ship comes
+plain stranger kind=isolationist | Their boarders wore no insignia and spoke in hand signals only

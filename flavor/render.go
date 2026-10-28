@@ -115,8 +115,8 @@ type tmpl struct {
 	// age in Eras. It exists for the harbinger Moments, whose speaker changes
 	// every age: a newsboy's headline and a civil-defence broadcast share an
 	// era bucket and nothing else. Like Eras, an unknown or empty Request.Age
-	// matches everything. Set it through agePool, which also fills Eras so the
-	// era-bleed lint sees the right bucket.
+	// matches everything. A pool with ages= in its heading sets it, and fills Eras
+	// from the ages so the era-bleed lint sees the right bucket.
 	Ages []string
 	// Reg, Form and Topic carry the authored sentence's register tags through to
 	// the tests that assert the mix, and Topic through to Stream. They never

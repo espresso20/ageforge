@@ -1,9 +1,6 @@
 package flavor
 
-import (
-	"strconv"
-	"strings"
-)
+import "strings"
 
 // The SKELETON model — the unit of authorship in this package.
 //
@@ -168,41 +165,6 @@ func namesResourceAsGoods(text string) bool {
 	return strings.Contains(text, "{res}") ||
 		strings.Contains(text, "{res_stores}") ||
 		strings.Contains(text, "{res_haul}")
-}
-
-// pool converts a batch of authored sentences into templates under one era
-// gating, numbering their ids from prefix.
-//
-// Ids are POSITIONAL within a pool. Nothing persists them — Result.Template is
-// read by tests and by nothing that survives a process — so an insert renumbering
-// its neighbours is harmless. The stable handle a text-only consumer wants is the
-// signature, which is derived from the prose itself and moves with it.
-func pool(prefix string, eras []era, ss []skel) []tmpl {
-	out := make([]tmpl, 0, len(ss))
-	key, bucket := rowParts(prefix)
-	for i, s := range ss {
-		t := s.template(prefix+"_"+strconv.Itoa(i), eras)
-		t.Row = sentenceRow(key, bucket, i)
-		out = append(out, t)
-	}
-	return out
-}
-
-// eraPools builds the eight pools most Moments have, in a fixed order: one open
-// to every age, the grounded and late spans, then one pool per era. Each pool is
-// named prefix plus its suffix ("exp_fail_late") and gated by the era shorthand
-// of the same name. cmd/words reads the eight sentence variables off a call to
-// this function by their position, so keep the order in step with it.
-func eraPools(prefix string, ungated, grounded, late, ancient, feudal, industrial, digital, cosmic []skel) []tmpl {
-	out := pool(prefix+"_any", erasAny, ungated)
-	out = append(out, pool(prefix+"_grounded", erasGrounded, grounded)...)
-	out = append(out, pool(prefix+"_late", erasLate, late)...)
-	out = append(out, pool(prefix+"_ancient", erasAncient, ancient)...)
-	out = append(out, pool(prefix+"_feudal", erasFeudal, feudal)...)
-	out = append(out, pool(prefix+"_industrial", erasIndustrial, industrial)...)
-	out = append(out, pool(prefix+"_digital", erasDigital, digital)...)
-	out = append(out, pool(prefix+"_cosmic", erasCosmic, cosmic)...)
-	return out
 }
 
 // anchorOf returns a template's SIGNATURE: the leading run of authored text that

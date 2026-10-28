@@ -1,0 +1,140 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# --- Discredited ----------------------------------------------------------------
+
+== harb_discredited_any
+plain people | The laughing started
+plain time | All for nothing, then
+wry overheard rumour | People say they always had doubts
+plain stranger need=subject | It seems that {subject} had never seen anything at all
+wry haul | Everybody remembered the things they had given up and wanted them back
+plain message | The warning, it emerged, had been made up from beginning to end
+plain people | The believers kept indoors for a few days
+joke food need=subject | Nobody can say what {subject} hoped to gain, and there are several theories, most of them involving food
+plain rumour need=subject | Bit by bit it came out that {subject} had given this warning in other places and been wrong there too
+wry argument | The frightened were angry afterwards and the doubters were insufferable, and between them they made the next few days harder than any danger would have
+wry complaint money | People want to know who pays for everything that was done for nothing
+joke notice authority | It has been agreed that nobody will speak of it again
+
+# harb_discredited_early spans the ancient and feudal buckets, where nearly all
+# false warnings end (the Steel Era's last figure, in the Industrial Age, uses
+# the era-neutral pool).
+== harb_discredited_early eras=ancient,feudal
+plain religion | The offerings were taken back
+plain sleep | The fires were let go out in disgust
+wry family need=subject | Children made up songs about {subject}, and the songs were rude
+wry haul | The buried things were dug up again, and the digging was not cheerful
+wry people need=subject | The crowd that ran {subject} out of the settlement threw whatever came to hand, and some of it was food they could not spare
+plain overheard people | The old women said that the warning had been false but the fear had been real, and that the fear should count for something
+joke weather | For a long time afterwards anyone who predicted anything at all, even rain, was looked at in a way that made them stop halfway through the sentence, and a whole season of weather went unforecast in the settlement because nobody dared
+plain food | A rotten turnip was thrown
+joke ledger count | Offerings returned to their owners, two goats short
+wry rumour | Everyone who had repeated the warning to somebody else went round afterwards unsaying it, which took longer than saying it had
+joke overheard people | A grandmother who had believed every prophet for sixty years announced that she would believe no more of them, and was believed by nobody
+plain rumour | The prophecy became a joke
+
+== harb_discredited_ancient eras=ancient
+wry authority | Embarrassment all round among the elders
+wry noise | The drums played a mocking beat
+plain noise | The songs are unkind
+plain building | The ash marks were scrubbed off the doorposts
+plain animal | The herd was let out and came to no harm at all
+wry weapon | The sharpened spears were put away without anyone mentioning them
+plain overheard authority | Whom to listen to will be chosen more carefully in future, the elders say
+plain religion | The feathers and charms were thrown on the midden
+plain stranger need=subject | Three other camps, it turned out, had already driven {subject} out for doing exactly this
+wry food | The women dug up the grain pits they had moved further up the slope and moved them back down, and said a great deal while doing it
+wry animal need=subject | The hunters who had stayed in for a moon went out on the first clear morning and found the herds had wandered far off, and walked three days to catch up, cursing {subject} by name the whole way
+wry complaint food | Complaints from the hunters, who lost a moon of hunting to a liar
+plain notice authority | The elders have forbidden anyone to give food to wandering prophets
+joke overheard food need=subject | Around the camp they say {subject} ate better than anyone that whole moon
+wry ledger count | One goat, three feathers and a great deal of dried meat, all wasted on a liar
+wry border | The boy who had been sent to watch the pass came back after a moon and asked whether he could stop now
+plain family | The charms that had been tied to the children's wrists were cut off and burned, and some of the children cried because they had liked them
+plain animal | The herd went back out
+wry overheard argument | The elders sat at the big fire and argued long into the night about how they had been fooled, and decided at last that the prophet had been convincing, which was a comfort to nobody
+plain name | The prophet's name is no longer said
+wry religion | The standing stones where the offerings had been left were cleared, and the offerings shared out again, and there were arguments over whose had been whose
+wry weapon | A hunter who had given up his best spear points as an offering tried to get them back from the stones and found them gone, and the whole camp has an opinion about who took them, and the prophet is one of the names
+plain ledger time | Four moons wasted
+
+== harb_discredited_feudal eras=feudal
+plain noise | The bells were silent
+wry religion | The bishop was displeased
+joke complaint money | Pilgrims asked for refunds
+wry religion | The priest preached on false prophets, at length
+wry money | The guild demanded its candle money back
+wry trade | The carts that had fled north came back looking sheepish
+plain authority need=subject | The lord's bailiff went looking for {subject} with a warrant
+wry rumour | The tavern had a new joke, and it was told all week
+wry trade | Cattle sold cheap on the strength of the warning stayed sold, and the buyers laughed in the sellers' faces
+wry paper | The abbey's chronicle entered the whole affair under the heading of follies
+wry town | The false warning was read out in the market square by order of the mayor, so that everybody could hear how foolish it sounded now, and it sounded exactly as frightening as it had the first time, and the reading was cut short
+wry complaint authority | The steward complains that he doubled the watch for a liar
+plain notice building need=subject | It is proclaimed that {subject} is not to be given lodging within the walls
+wry overheard trade need=subject | Gossip in the market has {subject} in the pay of the grain merchants
+wry ledger count | Candles returned to the chandler, forty; refunds given, none
+joke money | The monks who had prayed in shifts for a week sent the town a bill for the prayers, and the town refused to pay for prayers against nothing
+wry religion | The friars preached that the false warning had been a test of belief, and that the town had failed it by believing, which confused everyone
+plain notice trade | The fair was rescheduled
+wry building | The chalk crosses that had been drawn on every door on the high street were scrubbed off by the next morning, each household doing its own and pretending it had never drawn one, and the stone was cleaner than it had been for years
+wry religion | Masses of thanksgiving were said, somewhat sheepishly
+wry authority | The lord came back from the country, where he had fled before anyone else, and made a speech about steadiness in the face of rumour
+plain paper | Wills drawn up in the panic are being torn up now
+plain ledger paper | Twelve wills, torn up
+
+# The pools named for one age hold the per-age Discredited lines. A false warning is
+# rolled at an epoch's first age and repeated by every later figure, so the
+# Steel Era's can end with the Industrial Age's Newsboy: a printed figure
+# that turns out to have been invented.
+
+== harb_discredited_age_industrial_age ages=industrial_age
+plain paper | The paper printed a retraction on page nine
+plain trade | Nobody bought the late edition the next day
+plain count | The figure had been made up
+plain work | The mills reopened on the Monday
+wry authority | The editor who printed the odds resigned, and was taken on a week later by a rival paper that wanted his readers
+joke machine | It turned out the odds had been set by a compositor with a grudge and a free afternoon
+plain family | Families brought their tinned goods back up from the cellars and did not say much about it
+plain town | The newsboys found a different corner
+wry message | Letters to the editor ran for a month, each angrier than the last
+wry argument | The paper blamed the printers, and the printers blamed the paper
+wry complaint money | The factory owners who shut early want the lost wages paid back to them
+plain notice authority | The forecast printed in last week's late edition is withdrawn in full
+wry ledger haul | Extra coal, extra flour, extra candles, all bought for nothing
+wry money | The insurance men sent round letters asking for the emergency premiums to be paid anyway
+plain overheard rumour | In the pubs they say the whole thing was cooked up to sell papers
+plain religion | The chapel emptied again
+joke people | A crowd stood outside the newspaper offices that evening and threw nothing worse than insults, which the editor printed the next morning in a column headed Readers Respond
+joke building | Overnight a rude word appeared in chalk across the paper's front window, and the paper put a photograph of it on the front page
+plain town | The trams ran full again by the end of the week
+wry authority | The mayor, who had ordered the schools shut, now says he never believed a word of it
+plain stranger need=subject | The usual corner was taken over by a boy selling matches, and nobody saw {subject} there again
+wry authority need=subject | Somebody paid {subject} to shout it, and the police would like to know who
+joke overheard stranger need=subject | Word in the pubs is that {subject} sells a different paper now, on a different street, under a different name
+wry complaint money need=subject | The shopkeepers who put up their shutters say {subject} owes them a week's takings
+plain message need=subject | No one could say who had given {subject} the figure, and the paper did not care to find out
+wry authority need=subject | The police took a statement from {subject}, who said only that the figure had seemed about right
+joke paper need=subject | The last anyone saw of {subject}, the unsold late editions were going into the canal a bundle at a time

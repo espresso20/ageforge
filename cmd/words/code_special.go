@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/wordlist"
 	"github.com/espresso20/ageforge/words"
 )
 
@@ -100,6 +101,7 @@ var fileNotes = map[string]fileNote{
 	"boon/catalog.go":           {place: "in the boons and setbacks other civilizations leave", age: "bronze_age", area: areaWorld},
 	"flavor/resource.go":        {place: "in the way the story lines name a resource (the {res}, {res_stores} and {res_haul} slots)", area: areaFlavorExp, age: "primitive_age", seen: seenPool},
 	"flavor/flavor.go":          {place: "in the flavor package's names for its own settings"},
+	"flavor/text.go":            {skip: whyDev}, // the loader's messages for whoever edits a catalog file
 	"pkg/textfmt/textfmt.go":    {place: "wherever the game writes a list, a count or a rate", age: "primitive_age", seen: seenAlways},
 	"rules/badges.go":           {place: "in the descriptions of the tech badges", area: areaBadges, seen: seenRegular},
 	"main.go":                   {place: "printed in the terminal when the game starts or exits", age: "menu", seen: seenRare},
@@ -234,6 +236,7 @@ var fileNotes = map[string]fileNote{
 // "file:name", each with its reason.
 var skipDecls = map[string]string{
 	"ui/commands.go:devCommands":           whyDev,
+	"game/savenames.go:readSaveNameWords":  whyDev,
 	"config/badge_catalog.go:mastery":      "a note for developers: how a badge is proved or judged",
 	"rules/badges.go:BadgeProblems":        whyDev,
 	"mapmodel/commands.go:BuildingCommand": whySyntax,
@@ -324,16 +327,14 @@ func (cr *codeReader) special(u *unit) (r *row, why string, done bool) {
 		}
 
 	case "game/savenames.go":
+		// What is left in the Go file are the joining words between the pieces
+		// of a name; the lists of words are rows of savenames.txt (saveNameList).
 		if !hasWord(u.text) {
 			return nil, whyNoWords, true
 		}
-		list := u.decl
-		cr.n[list]++
-		r := newRow(fmt.Sprintf("save_name.%s.%03d", list, cr.n[list]), kindVoice,
-			"One of the words and phrases the game puts together when it suggests a name for a new save (the list "+list+"). The name becomes a file name: letters and single spaces only.")
-		if u.fn != "" {
-			r.where = "A joining word the game puts between the pieces of a suggested save name. The name becomes a file name: letters and single spaces only."
-		}
+		cr.n[u.decl]++
+		r := newRow(fmt.Sprintf("save_name.%s.%03d", u.decl, cr.n[u.decl]), kindVoice,
+			"A joining word the game puts between the pieces of a suggested save name. The name becomes a file name: letters and single spaces only.")
 		r.area, r.rules, r.seen, r.age = areaSaveNames, rulesSaveNam, seenPool, 0
 		return r, "", true
 	}
@@ -451,4 +452,76 @@ func idDots(s string) string {
 		parts[i] = words.IDSafe(p)
 	}
 	return strings.Join(parts, ".")
+}
+
+// saveNamesText is the file that holds the save name words, below the module
+// root; saveNamesGo is the Go file that names its lists.
+const (
+	saveNamesText = "game/savenames.txt"
+	saveNamesGo   = "game/savenames.go"
+)
+
+// noSaveNameWord is how savenames.txt writes an empty word.
+const noSaveNameWord = "(none)"
+
+// saveNameList makes the rows of one list of save name words when u is the
+// string that names the list in savenames.go (saveNameWords["epicNouns"]). The
+// rows come out where the list is declared in the Go file, so the sheet keeps
+// the order it always had. done is false for any other text.
+func (cr *codeReader) saveNameList(u *unit) (rows []*row, done bool) {
+	if cr.f.rel != saveNamesGo || u.fn != "" || u.near != "index" || u.text != u.decl {
+		return nil, false
+	}
+	lists, err := cr.c.saveNameLists()
+	if err != nil {
+		return nil, false
+	}
+	list, ok := lists[u.text]
+	if !ok {
+		return nil, false
+	}
+	file, err := cr.c.m.textFile(saveNamesText)
+	if err != nil {
+		return nil, false
+	}
+	n := 0
+	for _, entry := range list.Entries {
+		unit := textUnit(file, entry.Line, entry.Start, entry.End)
+		word := entry.Text
+		if word == noSaveNameWord {
+			word = ""
+		}
+		if !hasWord(word) {
+			cr.c.left = append(cr.c.left, left{unit, whyNoWords})
+			continue
+		}
+		n++
+		r := newRow(fmt.Sprintf("save_name.%s.%03d", list.Name(), n), kindVoice,
+			"One of the words and phrases the game puts together when it suggests a name for a new save (the list "+list.Name()+"). The name becomes a file name: letters and single spaces only.")
+		r.area, r.rules, r.seen, r.age = areaSaveNames, rulesSaveNam, seenPool, 0
+		cr.defaults(u, r)
+		r.u, r.current = unit, entry.Text
+		rows = append(rows, r)
+	}
+	return rows, true
+}
+
+// saveNameLists reads the lists of savenames.txt, once, by name.
+func (c *catalog) saveNameLists() (map[string]wordlist.List, error) {
+	if c.saveNames != nil {
+		return c.saveNames, nil
+	}
+	file, err := c.m.textFile(saveNamesText)
+	if err != nil {
+		return nil, err
+	}
+	lists, err := wordlist.Parse(string(file.src))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", saveNamesText, err)
+	}
+	c.saveNames = map[string]wordlist.List{}
+	for _, list := range lists {
+		c.saveNames[list.Name()] = list
+	}
+	return c.saveNames, nil
 }
