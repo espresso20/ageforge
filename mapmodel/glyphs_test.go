@@ -60,7 +60,7 @@ func TestFold(t *testing.T) {
 			t.Errorf("unicode tier changed %q to %q", r, u)
 		}
 	}
-	for s := mapmodel.Sym(1); s < mapmodel.SymBuild+1; s++ {
+	for s := mapmodel.Sym(1); s <= mapmodel.SymUFO; s++ {
 		n := mapmodel.R(s, mapmodel.TierNerd)
 		if a := mapmodel.Fold(n, mapmodel.TierASCII); a > 0x7e {
 			t.Errorf("a nerd glyph folds to %q", a)
