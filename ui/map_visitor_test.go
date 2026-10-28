@@ -39,7 +39,7 @@ func TestTheVisitorOnTheMapEarnsItsBadge(t *testing.T) {
 		// where the visitor stands, from the engine itself
 		f := p.frame()
 		var gen mapgen.Generator
-		g := gen.DrawAt(p.model, f.Anim, f.VisitFrame()).Grid
+		g := gen.DrawAt(p.model, mapgen.Moment{Anim: f.Anim, Visit: f.VisitFrame()}).Grid
 		var target mapgen.Pt
 		for i := range g.Cells {
 			if g.Things[g.Hit[i]].Kind == mapgen.KindVisitor {

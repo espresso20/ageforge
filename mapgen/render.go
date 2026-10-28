@@ -15,18 +15,20 @@ type Generator struct {
 // frame is one picture being drawn, layer by layer, on a grid the size of
 // the whole world.
 type frame struct {
-	m      *mapmodel.Model
-	st     *AgeStyle
-	plan   *Plan
-	fields *Fields
-	g      *Grid
-	anim   int
-	visit  int // the frame the rare visitor is drawn at; negative: none
-	sites  []site
-	box    Rect // the edge of the picture, once worked out
-	night  int  // 0 day .. 256 full night
-	placed []placed
-	filler []int // lots given to ordinary houses
+	m        *mapmodel.Model
+	st       *AgeStyle
+	plan     *Plan
+	fields   *Fields
+	g        *Grid
+	anim     int
+	visit    int // the frame the rare visitor is drawn at; negative: none
+	sites    []site
+	fresh    bool   // light what is new since the last visit
+	district string // the building line in focus, if any
+	box      Rect   // the edge of the picture, once worked out
+	night    int    // 0 day .. 256 full night
+	placed   []placed
+	filler   []int // lots given to ordinary houses
 	// shown is how many cells of each road are laid; roadAt is the tier+1
 	// of each laid road cell of the world.
 	shown  []int
@@ -117,6 +119,7 @@ func (f *frame) draw() {
 	f.paintAgents()
 	f.paintBodies()
 	f.paintAround()
+	f.paintFocus()
 	f.paintLight()
 	f.paintVisitor()
 }

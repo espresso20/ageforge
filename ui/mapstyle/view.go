@@ -6,6 +6,7 @@ package mapstyle
 // the mini map and the main menu draw through.
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/gdamore/tcell/v2"
@@ -15,16 +16,19 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// The engine's zoom levels: the whole town squeezed to fit, and one world cell
-// to a screen cell.
+// The engine's zoom levels: the whole town squeezed to fit, one world cell to
+// a screen cell, and the same close-up framed on one building line's district
+// with the rest of the town dimmed.
 const (
 	zOverview = 0
 	zCloseUp  = 1
+	zDistrict = 2
 )
 
-var zoomNames = [2]vibe.Entry{
+var zoomNames = [3]vibe.Entry{
 	zOverview: vibe.E("ui.mapstyle.roguelike.view.zoomNames.01", "REGION"),
 	zCloseUp:  vibe.E("ui.mapstyle.roguelike.view.zoomNames.02", "SETTLEMENT"),
+	zDistrict: vibe.E("ui.mapstyle.roguelike.view.zoomNames.03", "DISTRICT"),
 }
 
 // A panel at least this big shows the close-up; smaller ones (80 by 24, the
@@ -59,6 +63,12 @@ type view struct {
 	flows    bool // the flows overlay
 	changes  bool // the news of what is new since the last visit
 
+	district string // the building line in focus at the district zoom
+	// what is new since the last visit stays lit for freshFrames after the map
+	// first shows it: freshKey says which news that was, freshFrom when
+	freshKey  uint64
+	freshFrom int
+
 	mark   mapgen.Pt // where the Map panel's cursor stands, for the mini map
 	marked bool
 
@@ -71,9 +81,11 @@ type view struct {
 
 // sceneKey says which frame a scene was drawn for.
 type sceneKey struct {
-	m     *mapmodel.Model
-	anim  int
-	visit int
+	m        *mapmodel.Model
+	anim     int
+	visit    int
+	fresh    bool
+	district string
 }
 
 // New makes a map view drawn by the engine.
@@ -86,10 +98,14 @@ func (v *view) scene(f Frame) *mapgen.Scene {
 	if f.Model == nil {
 		return nil
 	}
-	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame()}); v.sc == nil || k != v.scKey {
+	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame(), v.freshLit(f), v.focus()}); v.sc == nil || k != v.scKey {
 		shared.Lock()
-		v.sc, v.scKey = shared.gen.DrawAt(f.Model, f.Anim, k.visit), k
+		v.sc, v.scKey = shared.gen.DrawAt(f.Model, mapgen.Moment{Anim: f.Anim, Visit: k.visit, Fresh: k.fresh, District: k.district}), k
 		shared.Unlock()
+	}
+	if line := v.focus(); line != "" && !slices.ContainsFunc(v.sc.Districts, func(d mapgen.District) bool { return d.Line == line }) {
+		v.zoom, v.district = zCloseUp, "" // the district is gone: back to the close-up
+		return v.scene(f)
 	}
 	if !v.placed || v.seed != f.Model.Seed {
 		v.seed, v.placed, v.recentre = f.Model.Seed, true, true

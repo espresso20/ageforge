@@ -76,13 +76,13 @@ func TestVisitorDrawsAtEveryScale(t *testing.T) {
 			for form, sg := range map[string]mapmodel.Sighting{"visitor": visitor, "alien": alien} {
 				seen := 0
 				for pct := 0; pct < 100; pct += 5 {
-					seen = max(seen, len(visitorCells(gen.DrawAt(m, 0, sg.Start+sg.Frames*pct/100).Grid)))
+					seen = max(seen, len(visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: sg.Start + sg.Frames*pct/100}).Grid)))
 				}
 				if seen == 0 {
 					t.Errorf("%s seed %d: the %s is never on the grid", age, seed, form)
 				}
 				for _, outside := range []int{sg.Start - 1, sg.Start + sg.Frames, -1} {
-					if cells := visitorCells(gen.DrawAt(m, 0, outside).Grid); len(cells) > 0 {
+					if cells := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: outside}).Grid); len(cells) > 0 {
 						t.Errorf("%s seed %d: the %s is out at frame %d, outside its visit", age, seed, form, outside)
 					}
 				}
@@ -96,7 +96,7 @@ func TestNoVisitorFromTheGalacticAge(t *testing.T) {
 	var gen Generator
 	m := model(state("galactic_age", 3, noon))
 	for _, sg := range visitsOf(model(state("space_age", 3, noon)), 5) {
-		if cells := visitorCells(gen.DrawAt(m, 0, sg.Start+sg.Frames/2).Grid); len(cells) > 0 {
+		if cells := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: sg.Start + sg.Frames/2}).Grid); len(cells) > 0 {
 			t.Fatalf("a visitor in the Galactic Age at frame %d", sg.Start)
 		}
 	}
@@ -110,9 +110,9 @@ func TestVisitorIsDeterministic(t *testing.T) {
 		visitor, alien := firstOf(t, m)
 		var warm Generator
 		for _, sg := range []mapmodel.Sighting{visitor, alien} {
-			warm.DrawAt(m, 0, sg.Start+3)
+			warm.DrawAt(m, Moment{Anim: 0, Visit: sg.Start + 3})
 			frame := sg.Start + sg.Frames/2
-			a, b := warm.DrawAt(m, 7, frame).Grid, (&Generator{}).DrawAt(m, 7, frame).Grid
+			a, b := warm.DrawAt(m, Moment{Anim: 7, Visit: frame}).Grid, (&Generator{}).DrawAt(m, Moment{Anim: 7, Visit: frame}).Grid
 			if !reflect.DeepEqual(a.Cells, b.Cells) || !reflect.DeepEqual(a.Hit, b.Hit) {
 				t.Fatalf("%s: frame %d of a visit depends on the frames before it", age, frame)
 			}
@@ -129,7 +129,7 @@ func TestVisitorNeverCoversABuilding(t *testing.T) {
 		visitor, alien := firstOf(t, m)
 		for _, sg := range []mapmodel.Sighting{visitor, alien} {
 			for pct := 0; pct < 100; pct += 4 {
-				base, with := gen.DrawAt(m, 0, -1).Grid, gen.DrawAt(m, 0, sg.Start+sg.Frames*pct/100).Grid
+				base, with := gen.DrawAt(m, Moment{Anim: 0, Visit: -1}).Grid, gen.DrawAt(m, Moment{Anim: 0, Visit: sg.Start + sg.Frames*pct/100}).Grid
 				for i := range base.Cells {
 					th := base.Things[base.Hit[i]]
 					if (th.Kind == KindBuilding || th.Kind == KindWonder || th.Kind == KindAmbient) &&
@@ -148,7 +148,7 @@ func TestVisitorShinesAtNight(t *testing.T) {
 	var gen Generator
 	m := model(state("modern_age", 3, midnight))
 	_, alien := firstOf(t, m)
-	g := gen.DrawAt(m, 0, alien.Start+alien.Frames/2).Grid
+	g := gen.DrawAt(m, Moment{Anim: 0, Visit: alien.Start + alien.Frames/2}).Grid
 	cells := visitorCells(g)
 	if len(cells) == 0 {
 		t.Fatal("no visitor to look at")
@@ -168,8 +168,8 @@ func TestVisitorArrivesAlongARoad(t *testing.T) {
 		var gen Generator
 		m := model(state(age, 3, noon))
 		visitor, _ := firstOf(t, m)
-		first := visitorCells(gen.DrawAt(m, 0, visitor.Start).Grid)
-		last := visitorCells(gen.DrawAt(m, 0, visitor.Start+visitor.Frames-1).Grid)
+		first := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: visitor.Start}).Grid)
+		last := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: visitor.Start + visitor.Frames - 1}).Grid)
 		if len(first) != 1 || len(last) != 1 {
 			t.Fatalf("%s: a visitor is %d cells at the start and %d at the end of its visit", age, len(first), len(last))
 		}
@@ -197,7 +197,7 @@ func TestVisitorArrivesAlongARoad(t *testing.T) {
 			t.Errorf("%s: the traveller ends at %v, not %d cells from the square", age, last[0], stopAt)
 		}
 		for pct := 0; pct < 100; pct += 3 {
-			for _, p := range visitorCells(gen.DrawAt(m, 0, visitor.Start+visitor.Frames*pct/100).Grid) {
+			for _, p := range visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: visitor.Start + visitor.Frames*pct/100}).Grid) {
 				if !f.plan.onRoad(p) {
 					t.Fatalf("%s: the traveller is at %v at %d%%, off the trunk roads", age, p, pct)
 				}

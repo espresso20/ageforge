@@ -203,7 +203,7 @@ func TestLabVisitors(t *testing.T) {
 				sg := mapmodel.NextSighting(m.Seed, late, from)
 				from = sg.Start + sg.Frames
 				frame := sg.Start + sg.Frames/2
-				g := gen.DrawAt(m, 0, frame).Grid
+				g := gen.DrawAt(m, mapgen.Moment{Anim: 0, Visit: frame}).Grid
 				at, found := mapgen.Pt{}, false
 				for i := range g.Cells {
 					if th := g.Things[g.Hit[i]]; th.Kind == mapgen.KindVisitor && th.Key == form {

@@ -53,7 +53,7 @@ func TestWorldRoundTheTownDrawsAtEveryScale(t *testing.T) {
 	for _, age := range aroundAges {
 		for _, seed := range []int64{4, 6} {
 			m := busyWorld(age, seed)
-			g := (&Generator{}).DrawAt(m, 9, -1).Grid
+			g := (&Generator{}).DrawAt(m, Moment{Anim: 9, Visit: -1}).Grid
 			kinds := kindsOf(g)
 			for _, k := range []Kind{KindCiv, KindRoute, KindMission, KindHarbinger, KindIdle} {
 				if kinds[k] == 0 {
@@ -77,7 +77,7 @@ func TestWorldRoundTheTownDrawsAtEveryScale(t *testing.T) {
 // world round the town shows.
 func TestNothingIsDrawnForACivNotMet(t *testing.T) {
 	for _, age := range aroundAges {
-		g := (&Generator{}).DrawAt(quietWorld(busyWorld(age, 4)), 9, -1).Grid
+		g := (&Generator{}).DrawAt(quietWorld(busyWorld(age, 4)), Moment{Anim: 9, Visit: -1}).Grid
 		if kinds := kindsOf(g); len(kinds) > 0 {
 			t.Errorf("%s: a quiet town draws %v", age, kinds)
 		}
@@ -90,7 +90,7 @@ func TestCivsAreColouredByRelation(t *testing.T) {
 	for _, age := range aroundAges {
 		var gen Generator
 		m := busyWorld(age, 4)
-		sc := gen.DrawAt(m, 0, -1)
+		sc := gen.DrawAt(m, Moment{Anim: 0, Visit: -1})
 		f := gen.frame(m, 0)
 		f.draw()
 		for _, s := range f.sites {
@@ -136,7 +136,7 @@ func TestRoutesRunToTheirPartners(t *testing.T) {
 	for _, age := range aroundAges {
 		var gen Generator
 		m := busyWorld(age, 4)
-		g := gen.DrawAt(m, 17, -1).Grid
+		g := gen.DrawAt(m, Moment{Anim: 17, Visit: -1}).Grid
 		for _, rt := range m.Routes {
 			if rt.Civ == "" {
 				continue
@@ -172,7 +172,7 @@ func TestDisruptedRouteStallsItsCaravan(t *testing.T) {
 	var gen Generator
 	at := func(anim int) map[Pt]bool {
 		out := map[Pt]bool{}
-		g := gen.DrawAt(m, anim, -1).Grid
+		g := gen.DrawAt(m, Moment{Anim: anim, Visit: -1}).Grid
 		for i, h := range g.Hit {
 			if th := g.Things[h]; th.Kind == KindRoute && g.Cells[i].R == '&' || th.Kind == KindRoute && g.Cells[i].R == '■' || th.Kind == KindRoute && g.Cells[i].R == '◆' {
 				out[Pt{i % g.W, i / g.W}] = true
@@ -193,13 +193,13 @@ func TestWorldRoundTheTownMovesAndIsDeterministic(t *testing.T) {
 		m := busyWorld(age, 4)
 		var warm Generator
 		for frame := 0; frame < 30; frame++ {
-			warm.DrawAt(m, frame, -1)
+			warm.DrawAt(m, Moment{Anim: frame, Visit: -1})
 		}
-		a, b := warm.DrawAt(m, 30, -1).Grid, (&Generator{}).DrawAt(m, 30, -1).Grid
+		a, b := warm.DrawAt(m, Moment{Anim: 30, Visit: -1}).Grid, (&Generator{}).DrawAt(m, Moment{Anim: 30, Visit: -1}).Grid
 		if !reflect.DeepEqual(a.Cells, b.Cells) || !reflect.DeepEqual(a.Hit, b.Hit) {
 			t.Fatalf("%s: frame 30 depends on the frames before it", age)
 		}
-		later := (&Generator{}).DrawAt(m, 60, -1).Grid
+		later := (&Generator{}).DrawAt(m, Moment{Anim: 60, Visit: -1}).Grid
 		moved := false
 		for i := range a.Hit {
 			if k := a.Things[a.Hit[i]].Kind; (k == KindRoute || k == KindMission) && a.Cells[i] != later.Cells[i] {
@@ -221,7 +221,7 @@ func TestWorldRoundTheTownNeverCoversABuilding(t *testing.T) {
 			m := busyWorld(age, 6)
 			m.Clock = mapmodel.ClockAt(tick)
 			var gen Generator
-			base, with := gen.DrawAt(quietWorld(m), 12, -1).Grid, gen.DrawAt(m, 12, -1).Grid
+			base, with := gen.DrawAt(quietWorld(m), Moment{Anim: 12, Visit: -1}).Grid, gen.DrawAt(m, Moment{Anim: 12, Visit: -1}).Grid
 			for i := range base.Cells {
 				th := base.Things[base.Hit[i]]
 				if (th.Kind == KindBuilding || th.Kind == KindWonder || th.Kind == KindAmbient) &&
@@ -239,7 +239,7 @@ func TestIdleWorkersLoiterInProportion(t *testing.T) {
 	for _, idle := range []int{0, 1, 6, 12, 30, 200} {
 		st := fixture.State(fixture.Options{Age: "modern_age", Seed: 4, Tick: noon, Idle: idle, Harbinger: true})
 		m := model(st)
-		g := (&Generator{}).DrawAt(m, 3, -1).Grid
+		g := (&Generator{}).DrawAt(m, Moment{Anim: 3, Visit: -1}).Grid
 		figures, harbingers := 0, 0
 		for _, h := range g.Hit {
 			switch g.Things[h].Kind {

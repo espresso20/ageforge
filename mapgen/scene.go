@@ -15,19 +15,31 @@ type Scene struct {
 	Centre  Pt
 	Bounds  Rect // the town: its parcels, plots and laid roads
 	Targets []Pt // buildings and wonders, nearest the square first
+	// Districts are the building lines that have something standing, in the
+	// order of the legend.
+	Districts []District
+}
+
+// Moment is when and how a picture is drawn: the animation frame, the frame
+// of the world's clock the rare visitor is at (negative: none is out, and the
+// clock runs on when the picture is held still), whether what is new since the
+// last visit is lit, and the building line whose district is in focus ("": the
+// whole town).
+type Moment struct {
+	Anim, Visit int
+	Fresh       bool
+	District    string
 }
 
 // Draw draws the whole world at animation frame anim.
 func (gen *Generator) Draw(m *mapmodel.Model, anim int) *Scene {
-	return gen.DrawAt(m, anim, anim)
+	return gen.DrawAt(m, Moment{Anim: anim, Visit: anim})
 }
 
-// DrawAt draws the whole world at animation frame anim, with the rare visitor
-// at frame visit of the world's clock (negative: none is out), which runs on
-// when the picture is held still.
-func (gen *Generator) DrawAt(m *mapmodel.Model, anim, visit int) *Scene {
-	f := gen.frame(m, anim)
-	f.visit = visit
+// DrawAt draws the whole world at a moment.
+func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
+	f := gen.frame(m, at.Anim)
+	f.visit, f.fresh, f.district = at.Visit, at.Fresh, at.District
 	f.draw()
 	c := f.plan.Centre
 	slices.SortStableFunc(f.targets, func(a, b Pt) int {
@@ -37,7 +49,7 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, anim, visit int) *Scene {
 	if len(f.sites) > 0 && f.st.Scale != Stars {
 		bounds = f.edge() // the civs stand at the edge of the picture
 	}
-	return &Scene{Grid: f.g, Centre: c, Bounds: bounds, Targets: f.targets}
+	return &Scene{Grid: f.g, Centre: c, Bounds: bounds, Targets: f.targets, Districts: f.districts()}
 }
 
 // bounds is the box round everything the town has laid or built, with a
