@@ -49,6 +49,13 @@ const (
 	HWhite
 	HAmber
 	HFresh // what is new or has just arrived
+	HIdle  // hands with nothing to do
+	// how a civilization stands toward you
+	HAlly
+	HFriend
+	HNeutral
+	HRival
+	HWar
 	// dark falling
 	HNight
 	// space

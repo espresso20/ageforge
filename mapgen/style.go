@@ -81,10 +81,10 @@ type AgentKind struct {
 	Slow   int
 }
 
-// Visitor is how the rare visitor looks: the glyphs it is drawn with (four for
-// the four ways it heads, east, west, south, north; one serves every way) in a
-// paint.
-type Visitor struct {
+// Figure is how a lone figure of the map looks (a visitor, a caravan, an
+// omen): the glyphs it is drawn with (four for the four ways it heads, east,
+// west, south, north; one serves every way) in a paint.
+type Figure struct {
 	Glyphs string
 	Fg     Paint
 }
@@ -129,7 +129,12 @@ type AgeStyle struct {
 	Night   Night
 	// Visitor is who arrives now and then: a traveller on foot on the land,
 	// a ship in space.
-	Visitor Visitor
+	Visitor Figure
+	// Caravan carries trade along a route, Omen is the harbinger who stands
+	// at the square, and Site marks a civilization you have met.
+	Caravan Figure
+	Omen    Figure
+	Site    Figure
 	// Tones dresses wonder templates: the material letter of a template
 	// cell, in this age's colours.
 	Tones map[byte]Paint

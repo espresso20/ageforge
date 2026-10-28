@@ -29,8 +29,13 @@ const (
 	KindBuilding
 	KindWonder
 	KindAgent
-	KindAmbient // the ordinary houses of the people, which no building type owns
-	KindVisitor // the rare visitor, and the craft of an alien
+	KindAmbient   // the ordinary houses of the people, which no building type owns
+	KindVisitor   // the rare visitor, and the craft of an alien
+	KindCiv       // a civilization met, at the edge of the map
+	KindRoute     // a trade route, and the caravans on it
+	KindMission   // a scouting or military party that is out
+	KindHarbinger // the harbinger, standing at the square
+	KindIdle      // idle workers, loitering at the square
 )
 
 // Thing is what the inspect index points at.

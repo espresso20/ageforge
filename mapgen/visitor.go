@@ -32,9 +32,9 @@ const (
 // How visits look: the traveller on foot, the ship in space and the alien's
 // saucer, a dome with a rim to either side.
 var (
-	onFoot = Visitor{Glyphs: "☿", Fg: P(HFresh, 255)}
-	byShip = Visitor{Glyphs: "►◄▼▲", Fg: P(HFresh, 255)}
-	saucer = Visitor{Glyphs: "◄◉►", Fg: P(HFresh, 255)}
+	onFoot = Figure{Glyphs: "☿", Fg: P(HFresh, 255)}
+	byShip = Figure{Glyphs: "►◄▼▲", Fg: P(HFresh, 255)}
+	saucer = Figure{Glyphs: "◄◉►", Fg: P(HFresh, 255)}
 )
 
 // paintVisitor draws the visit that is on at the frame's visit frame, if any.
@@ -56,12 +56,9 @@ func (f *frame) paintVisitor() {
 		cells, runes = []Pt{at}, []rune{heading(look.Glyphs, dx, dy)}
 	}
 	for i, p := range cells {
-		if !f.g.in(p.X, p.Y) || f.solid(p.X, p.Y) {
-			continue
+		if f.put(p, runes[i], look.Fg, thing) {
+			f.g.Cells[at(p.X, p.Y)].Dim = 0
 		}
-		f.g.draw(p.X, p.Y, runes[i], look.Fg)
-		f.g.mark(p.X, p.Y, thing)
-		f.g.Cells[at(p.X, p.Y)].Dim = 0
 	}
 }
 

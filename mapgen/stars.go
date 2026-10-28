@@ -31,6 +31,7 @@ func NewStarPlan(seed int64, cat *mapmodel.Catalog) *Plan {
 	b.claimRoad(p.Centre, 0)
 	p.Nodes = append([]Pt{p.Centre}, bestCandidates(seed, p.Centre, starNodes)...)
 	route := b.routes()
+	p.NodeRoad = route
 	b.plotsBeside(route)
 	b.cutStarLots(route)
 	p.assign(seed, cat, 14, 5)
@@ -192,4 +193,14 @@ func (f *frame) paintStarMap() {
 			}
 		}
 	}
+}
+
+// chain is the cells of a road from the home system out: its parents' cells up
+// to where it leaves them, then its own.
+func (p *Plan) chain(road int) []Pt {
+	r := p.Roads[road]
+	if r.Parent < 0 {
+		return r.Cells
+	}
+	return append(append([]Pt(nil), p.chain(r.Parent)[:r.From+1]...), r.Cells...)
 }
