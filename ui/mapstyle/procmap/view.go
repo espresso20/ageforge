@@ -1,8 +1,7 @@
 // Package procmap is the map view drawn by the procedural engine (package
 // mapgen): the engine's cells, coloured in the player's theme, with the map's
-// own header, news, inspector and words round them. It is the same
-// mapstyle.Style the roguelike view is, so the Map panel and the mini map take
-// either.
+// own header, news, inspector and words round them. It is the mapstyle.Style
+// the Map panel, the mini map and the main menu draw through.
 package procmap
 
 import (
@@ -13,15 +12,20 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // The engine's zoom levels: the whole town squeezed to fit, and one world cell
-// to a screen cell. The names are the map's own (roguelike.ZoomName).
+// to a screen cell.
 const (
 	zOverview = 0
 	zCloseUp  = 1
 )
+
+var zoomNames = [2]vibe.Entry{
+	zOverview: vibe.E("ui.mapstyle.roguelike.view.zoomNames.01", "REGION"),
+	zCloseUp:  vibe.E("ui.mapstyle.roguelike.view.zoomNames.02", "SETTLEMENT"),
+}
 
 // A panel at least this big shows the close-up; smaller ones (80 by 24, the
 // mini map) show the whole town.
@@ -36,8 +40,9 @@ var shared struct {
 
 // view is one open map.
 type view struct {
-	chrome *roguelike.Chrome
-	pal    *palette
+	pal  *palette // the engine's cell colours
+	ink  *inks    // the chrome's colours
+	tier mapmodel.GlyphTier
 
 	zoom     int  // the player's zoom, once chosen
 	zoomSet  bool // else the panel's size chooses
@@ -51,6 +56,8 @@ type view struct {
 	camKey   [2]int
 	inspect  bool
 	legend   bool
+	flows    bool // the flows overlay
+	changes  bool // the news of what is new since the last visit
 
 	mark   mapgen.Pt // where the Map panel's cursor stands, for the mini map
 	marked bool
@@ -70,7 +77,7 @@ type sceneKey struct {
 
 // New makes a map view drawn by the engine.
 func New() mapstyle.Style {
-	return &view{chrome: roguelike.NewChrome(), inspect: true, legend: true}
+	return &view{inspect: true, legend: true, changes: true}
 }
 
 // scene is the world drawn for a frame, reused while the frame is the same.
@@ -102,8 +109,10 @@ func (v *view) SetOption(o mapstyle.Option, on bool) {
 		v.inspect = on
 	case mapstyle.OptLegend:
 		v.legend = on
-	default:
-		v.chrome.SetOption(o, on)
+	case mapstyle.OptFlows:
+		v.flows = on
+	case mapstyle.OptChanges:
+		v.changes = on
 	}
 }
 

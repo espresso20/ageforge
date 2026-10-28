@@ -167,7 +167,7 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 	}{
 		{tcell.KeyUp, 0, alt, "REGION"}, {tcell.KeyDown, 0, alt, "SETTLEMENT"},
 		{tcell.KeyRune, '-', tcell.ModNone, "REGION"}, {tcell.KeyRune, '=', tcell.ModNone, "SETTLEMENT"},
-		{tcell.KeyRune, '+', tcell.ModNone, "DISTRICT"},
+		{tcell.KeyRune, '+', tcell.ModNone, "SETTLEMENT"},
 	} {
 		press(s.k, s.r, s.m)
 		if !shows(s.want) {
@@ -176,7 +176,7 @@ func TestOptionKeysReachThePanels(t *testing.T) {
 	}
 	press(tcell.KeyRune, 'x', tcell.ModNone)
 	press(tcell.KeyRune, '-', tcell.ModNone)
-	if got := h.inputText(); got != "x-" || !shows("DISTRICT") {
+	if got := h.inputText(); got != "x-" || !shows("SETTLEMENT") {
 		t.Errorf("with text in the prompt - went to %q, not the prompt, or zoomed the map", got)
 	}
 }

@@ -29,7 +29,9 @@ func (s *Scene) Overview(w, h int) *Overview {
 			p := s.mostImportant(o.X0+x*scale, o.Y0+y*scale, scale)
 			o.picks[y*w+x] = p
 			o.Grid.paint(x, y, s.summary(p))
-			o.Grid.Hit[y*w+x] = s.Grid.Hit[at(p.X, p.Y)]
+			if s.Grid.in(p.X, p.Y) { // a block past the edge of the world stays blank
+				o.Grid.Hit[y*w+x] = s.Grid.Hit[at(p.X, p.Y)]
+			}
 		}
 	}
 	return o
@@ -63,7 +65,7 @@ func (s *Scene) mostImportant(x0, y0, scale int) Pt {
 // summary is the cell drawn for a world cell standing for a block.
 func (s *Scene) summary(p Pt) Cell {
 	c := s.Grid.At(p.X, p.Y)
-	th := s.Grid.Things[s.Grid.Hit[at(p.X, p.Y)]]
+	th := s.Grid.ThingAt(p.X, p.Y)
 	switch {
 	case th.Kind == KindBuilding && !th.Ruin:
 		c.R, c.Fg = lineSigns[th.Lineage], P(lineHue(th.Lineage), 255)

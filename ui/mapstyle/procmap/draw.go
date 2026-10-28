@@ -6,7 +6,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Draw renders the full view: header, picture, side panel, news, inspector and
@@ -17,36 +17,37 @@ func (v *view) Draw(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {
 		v.DrawCompact(scr, r, f)
 		return
 	}
-	mp := v.chrome.Begin(f)
+	ink := v.begin(f)
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
-	if mp == nil {
-		v.chrome.NoMap(cv)
+	if ink == nil {
+		drawNoMap(cv)
 		return
 	}
-	cv.Fill(0, 0, r.W, r.H, ' ', mp.Style(mapmodel.CText))
+	cv.Fill(0, 0, r.W, r.H, ' ', ink.Style(mapmodel.CText))
 	sc := v.scene(f)
 	side := 0
-	if r.W >= 110 && (v.legend || v.chrome.Flows()) {
-		side = roguelike.SideWidth
+	if r.W >= 110 && (v.legend || v.flows) {
+		side = sideWidth
 	}
 	mapW, mapH := r.W-side, r.H-5
 	v.overview = v.wantsOverview(r)
-	zoom := roguelike.ZoomName(zCloseUp)
+	zoom := zoomNames[zCloseUp].String()
 	if v.overview {
-		zoom = roguelike.ZoomName(zOverview)
+		zoom = zoomNames[zOverview].String()
 	}
-	v.drawPicture(cv, mp, 0, 1, mapW, mapH, sc, f.Anim)
-	v.chrome.Header(cv, r.W, zoom)
+	v.drawPicture(cv, ink.Palette, 0, 1, mapW, mapH, sc, f.Anim)
+	v.drawHeader(cv, r.W, f.Model, zoom)
 	switch {
 	case side > 0:
-		if y := v.chrome.Sidebar(cv, mapW, 1, side, mapH); v.legend && y < 1+mapH {
-			v.drawLegend(cv, mp, mapW+2, y, side-3, 1+mapH-y, f.Model)
+		if y := v.drawSidebar(cv, f.Model, mapW, 1, side, mapH); v.legend && y < 1+mapH {
+			v.drawLegend(cv, ink.Palette, mapW+2, y, side-3, 1+mapH-y, f.Model)
 		}
-	case v.chrome.Flows():
-		v.chrome.Box(cv, mapW-min(roguelike.SideWidth, mapW/2), 1, min(roguelike.SideWidth, mapW/2), mapH)
+	case v.flows:
+		boxW := min(sideWidth, mapW/2)
+		v.drawFlowsBox(cv, f.Model, mapW-boxW, 1, boxW, mapH)
 	}
 	in, ok := v.Inspect(f)
-	v.chrome.Bottom(cv, r.W, r.H, in, ok, zoom)
+	v.drawBottom(cv, r.W, r.H, f.Model, in, ok, zoom)
 }
 
 // drawPicture draws the world in the box (x, y, w, h) of the canvas: the whole
@@ -90,7 +91,7 @@ func clamp(v, lo, hi int) int { return min(max(v, lo), hi) }
 
 // drawLegend lists the signs of the building lines the town has.
 func (v *view) drawLegend(cv *mapstyle.Canvas, mp *mapstyle.Palette, x, y, w, h int, m *mapmodel.Model) {
-	cv.Text(x, y, w, roguelike.LegendTitle(), mp.Style(mapmodel.CAccent).Bold(true))
+	cv.Text(x, y, w, vibe.Line("ui.mapstyle.roguelike.chrome.drawLegend.01", "LEGEND"), mp.Style(mapmodel.CAccent).Bold(true))
 	for i, l := range m.Lineages {
 		if i+1 >= h {
 			return
@@ -108,14 +109,14 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 	if r.W <= 0 || r.H <= 0 {
 		return
 	}
-	mp := v.chrome.Begin(f)
+	ink := v.begin(f)
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
-	if mp == nil {
-		v.chrome.NoMap(cv)
+	if ink == nil {
+		drawNoMap(cv)
 		return
 	}
-	cv.Fill(0, 0, r.W, r.H, ' ', mp.Style(mapmodel.CText))
-	v.chrome.Compact(cv, r)
+	cv.Fill(0, 0, r.W, r.H, ' ', ink.Style(mapmodel.CText))
+	v.drawCompactBars(cv, r, f.Model)
 	mh := r.H - 2
 	if mh <= 0 {
 		return
@@ -124,6 +125,6 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 	v.blit(cv, 0, 1, ov.Grid)
 	if cx, cy, ok := ov.CellOf(mapgen.Pt{X: v.mark.X, Y: v.mark.Y}); v.marked && ok {
 		ch, _ := cv.Get(cx, 1+cy)
-		cv.Put(cx, 1+cy, ch, mp.CursorStyle(f.Anim))
+		cv.Put(cx, 1+cy, ch, ink.CursorStyle(f.Anim))
 	}
 }

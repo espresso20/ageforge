@@ -43,7 +43,7 @@ func drawMapPanel(t *testing.T, d *Dashboard, w, h int) string {
 func key(r rune) *tcell.EventKey { return tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone) }
 
 // TestMapAliasesOpenThePanel: map, citymap and worldmap all open the one Map
-// panel; worldmap opens roguelike on the known world (its region zoom).
+// panel; worldmap opens the map on the known world (its region zoom).
 func TestMapAliasesOpenThePanel(t *testing.T) {
 	d, _ := mapTestDashboard(t, true)
 	for _, cmd := range []string{"map", "citymap", "worldmap"} {
@@ -115,7 +115,7 @@ func TestMapFlowsCommand(t *testing.T) {
 	}
 	d.runForTest("map flows on")
 	if txt := drawMapPanel(t, d, 160, 48); !strings.Contains(txt, "FLOWS") {
-		t.Errorf("the roguelike shows no flows panel with map flows on:\n%s", txt)
+		t.Errorf("the map shows no flows panel with map flows on:\n%s", txt)
 	}
 }
 
@@ -263,8 +263,8 @@ func TestNoMapStyleCommand(t *testing.T) {
 // the Map was open.
 func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
-	// A civ met: a target for Tab at the region zoom, with a command.
-	must(t, eng.MeetFactionForTest("riverlands_tribes", 30))
+	// A few buildings: targets for Tab at the region zoom, with a command.
+	eng.SetTownForTest(map[string]int{"hut": 3, "stash": 2, "wood_camp": 2}, 6)
 	sim := tcell.NewSimulationScreen("UTF-8")
 	sim.SetSize(160, 48)
 	d.app.SetScreen(sim).SetRoot(d.pages, true).SetFocus(d.inputField)
@@ -295,15 +295,13 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 		}
 		t.Fatalf("timed out waiting for %s", what)
 	}
-	var prompt, active, title string
-	var focused bool
+	var prompt, active string
+	var focused, pointed bool
+	var pointer mapmodel.Pt
 	look := func() {
 		prompt, active = d.inputField.GetText(), d.overlayMgr.ActiveName()
 		focused = d.app.GetFocus() == d.inputField
-		title = ""
-		if in, ok := d.mapPanel.current().Inspect(d.mapPanel.frame()); ok {
-			title = in.Title
-		}
+		pointer, pointed = d.mapPanel.current().Pointer()
 	}
 	typeText := func(s string) {
 		for _, r := range s {
@@ -330,9 +328,9 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 	sim.InjectKey(tcell.KeyPgUp, 0, tcell.ModNone)
 	waitFor("PgUp to zoom out to the region", func() bool { return strings.Contains(simCells(sim).Text(), "REGION") })
 	onLoop(look)
-	before := title
+	before := pointer
 	sim.InjectKey(tcell.KeyTab, 0, tcell.ModNone)
-	waitFor("Tab to move the map's cursor", func() bool { look(); return title != before && title != "" })
+	waitFor("Tab to move the map's cursor", func() bool { look(); return pointed && pointer != before })
 	sim.InjectKey(tcell.KeyRight, 0, tcell.ModNone)
 	sim.InjectKey(tcell.KeyLeft, 0, tcell.ModNone)
 	onLoop(look)
