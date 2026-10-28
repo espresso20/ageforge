@@ -32,8 +32,6 @@ func (m *Model) Fingerprint() string {
 	for _, r := range m.Routes {
 		w("r %s %s %v\n", r.Key, r.Civ, r.Disrupted)
 	}
-	a := m.Activity
-	w("a %d %d %d %x %x\n", a.Routes, a.Staffed, a.Soldiers, math.Float64bits(a.Wealth), math.Float64bits(a.Traffic))
 	w("c %s %x\n", m.Catastrophe.Pending, math.Float64bits(m.Catastrophe.Pressure))
 	for _, s := range m.Flows.Draining {
 		w("drain %s %x\n", s.Key, math.Float64bits(s.EmptyIn))

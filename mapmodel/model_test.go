@@ -118,18 +118,6 @@ func TestModelShape(t *testing.T) {
 		if m.Harbinger == nil || m.Catastrophe.Pressure <= 0 {
 			t.Errorf("%s: harbinger pressure missing", age)
 		}
-		if m.Activity.Traffic <= 0 || m.Activity.Traffic > 1 {
-			t.Errorf("%s: traffic %v", age, m.Activity.Traffic)
-		}
-	}
-}
-
-// TestTrafficScalesWithRoutes: more trade routes, more traffic.
-func TestTrafficScalesWithRoutes(t *testing.T) {
-	few := build(t, fixture.State(fixture.Options{Age: "industrial_age", Seed: 7, Routes: -1}), nil)
-	many := build(t, fixture.State(fixture.Options{Age: "industrial_age", Seed: 7, Routes: 5}), nil)
-	if many.Activity.Routes <= few.Activity.Routes || many.Activity.Traffic <= few.Activity.Traffic {
-		t.Fatalf("routes %d→%d traffic %v→%v", few.Activity.Routes, many.Activity.Routes, few.Activity.Traffic, many.Activity.Traffic)
 	}
 }
 
@@ -167,11 +155,6 @@ func TestLayoutKey(t *testing.T) {
 
 // TestMaths: the deterministic helpers are accurate enough.
 func TestMaths(t *testing.T) {
-	for _, c := range []struct{ x, want float64 }{{1, 0}, {2, 1}, {8, 3}, {6, 2.584962500721156}} {
-		if got := mapmodel.Log2(c.x); got < c.want-1e-9 || got > c.want+1e-9 {
-			t.Errorf("Log2(%v) = %v, want %v", c.x, got, c.want)
-		}
-	}
 	c := mapmodel.ClockAt(0)
 	if c.Hour != 9 || c.Phase != "day" {
 		t.Errorf("tick 0 is %s (%s), want 09:00 day", c, c.Phase)

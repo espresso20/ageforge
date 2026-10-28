@@ -1,7 +1,5 @@
 package mapmodel
 
-import "math"
-
 // rng.go holds the stateless hashing and the little float maths the model
 // needs. The model is part of the determinism contract (see Fingerprint), so
 // it follows the float rules for simulation code: every product that feeds a
@@ -38,26 +36,6 @@ func HashStr(s string) int64 {
 
 // smooth is the smoothstep weight 3t²-2t³.
 func smooth(t float64) float64 { return float64(float64(t*t) * (3 - float64(2*t))) }
-
-// Log2 returns log₂(x) for x > 0 using an exact integer part and a short
-// series for the fraction; it is only used for sub-linear counts, where a
-// few ulps do not matter but cross-machine agreement does.
-func Log2(x float64) float64 {
-	if x <= 0 {
-		return 0
-	}
-	frac, exp := math.Frexp(x) // x = frac·2^exp, frac in [0.5,1)
-	// log2(frac) via ln((1+s)/(1-s)) = 2(s + s³/3 + s⁵/5 + ...)
-	s := (frac - 1) / (frac + 1)
-	s2 := float64(s * s)
-	sum := 0.0
-	term := s
-	for k := 1; k < 30; k += 2 {
-		sum += term / float64(k)
-		term = float64(term * s2)
-	}
-	return float64(exp) + float64(2*sum)/math.Ln2
-}
 
 // b2i is 1 for true and 0 for false, for hashing a flag.
 func b2i(b bool) int64 {

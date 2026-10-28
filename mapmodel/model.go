@@ -48,14 +48,11 @@ type Model struct {
 
 	Wonders     []Wonder
 	Workers     Workers
-	Army        Army
 	Routes      []Route
 	Factions    []Faction // every civ, discovered or not, in site order
 	Expeditions Expeditions
 	Harbinger   *Harbinger
 	Catastrophe Catastrophe
-	Queue       []QueueItem
-	Activity    Activity
 	Flows       Flows
 	Recap       Recap
 
@@ -122,12 +119,6 @@ type Workers struct {
 	Pop, MaxPop, Idle int
 	Staffed           int // assigned to buildings
 	Capacity          int // worker slots in all buildings
-}
-
-// Army is the military picture.
-type Army struct {
-	Soldiers, Cap int
-	Defense       float64
 }
 
 // Route is an active trade route.
@@ -205,12 +196,6 @@ type Catastrophe struct {
 	Tier     string
 }
 
-// QueueItem is a building under construction.
-type QueueItem struct {
-	Name     string
-	Progress float64 // 0..1
-}
-
 // Build lays a snapshot out. since is the baseline for the recap (nil for
 // none). It is a pure function of its inputs; Builder caches the parts that
 // depend only on the seed.
@@ -235,7 +220,6 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	m.TownName = cityName(st.Seed)
 	m.Recap = recap(m, st, since)
 	m.Flows = flowsFor(m, st)
-	m.Activity = activityFor(m)
 	m.LayoutKey = layoutKey(m)
 	return m
 }
@@ -291,15 +275,6 @@ func (m *Model) Lineage(k string) *Lineage {
 		}
 	}
 	return nil
-}
-
-// TotalBuildings is the number of building copies owned.
-func (m *Model) TotalBuildings() int {
-	n := 0
-	for _, b := range m.Buildings {
-		n += b.Count
-	}
-	return n
 }
 
 // DiscoveredCount is the number of civs met.
@@ -467,7 +442,6 @@ func (m *Model) people(st *game.GameState) {
 		w.Staffed += b.Workers
 		w.Capacity += b.Capacity
 	}
-	m.Army = Army{Soldiers: st.Military.SoldierCount, Cap: st.Military.SoldierCap, Defense: st.Military.DefenseRating}
 	e := &m.Expeditions
 	if s := st.Military.ActiveScout; s != nil {
 		e.Scout = &Trip{Name: s.Name, TicksLeft: s.TicksLeft}
@@ -476,13 +450,6 @@ func (m *Model) people(st *game.GameState) {
 		e.Military = &Trip{Name: s.Name, TicksLeft: s.TicksLeft}
 	}
 	e.Completed = st.Military.CompletedCount
-	for _, q := range st.BuildQueue {
-		p := 0.0
-		if q.TotalTicks > 0 {
-			p = clamp01(1 - float64(q.TicksLeft)/float64(q.TotalTicks))
-		}
-		m.Queue = append(m.Queue, QueueItem{Name: q.Name, Progress: p})
-	}
 }
 
 func (m *Model) world(st *game.GameState) {
