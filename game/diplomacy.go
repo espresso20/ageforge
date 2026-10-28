@@ -103,12 +103,9 @@ type DiplomacyManager struct {
 	rules    *rules.Set
 	factions map[string]*FactionState
 
-	// giftCost and dealRefresh are the techs' terms the manager reads
-	// (SetTechTerms).
-	giftCost, dealRefresh float64
-	// giftOpinion and allyBonus are two more (SetGiftAndAllyTerms), and
-	// allyCost a third (SetAllyCostTerm).
-	giftOpinion, allyBonus, allyCost float64
+	// terms are the techs' terms the manager reads, set by the engine
+	// whenever the rates are worked out.
+	terms diplomacyTerms
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
@@ -545,63 +542,54 @@ func (dm *DiplomacyManager) endWar(fs *FactionState) {
 	}
 }
 
-// SetTechTerms sets the techs' terms the manager reads: giftCost on what a
-// gift costs (config.MechanicGiftCost), dealRefresh on how long a set of
-// offers lasts (config.MechanicDealRefreshTicks). 0 reads as 1 for each.
-func (dm *DiplomacyManager) SetTechTerms(giftCost, dealRefresh float64) {
-	dm.giftCost, dm.dealRefresh = giftCost, dealRefresh
+// diplomacyTerms are the techs' terms on the manager's numbers; 0 reads as 1
+// for each: giftCost on what a gift costs (config.MechanicGiftCost),
+// giftOpinion on the opinion it earns (MechanicGiftOpinion), dealRefresh on
+// how long a set of offers lasts (MechanicDealRefreshTicks), allyBonus on
+// what an allied civilization adds to its specialty (MechanicAllianceBonus)
+// and allyCost on what an alliance costs (MechanicAllianceCost).
+type diplomacyTerms struct {
+	giftCost, giftOpinion, dealRefresh, allyBonus, allyCost float64
 }
-
-// SetGiftAndAllyTerms sets two more of the techs' terms: giftOpinion on the
-// opinion a gift earns (config.MechanicGiftOpinion) and allyBonus on what an
-// allied civilization adds to its specialty (config.MechanicAllianceBonus).
-// 0 reads as 1 for each.
-func (dm *DiplomacyManager) SetGiftAndAllyTerms(giftOpinion, allyBonus float64) {
-	dm.giftOpinion, dm.allyBonus = giftOpinion, allyBonus
-}
-
-// SetAllyCostTerm sets the techs' term on what an alliance costs
-// (config.MechanicAllianceCost). 0 reads as 1.
-func (dm *DiplomacyManager) SetAllyCostTerm(f float64) { dm.allyCost = f }
 
 // AllyPrice is what an alliance costs now: AllyCost with the techs' cut.
 func (dm *DiplomacyManager) AllyPrice() float64 {
-	if dm.allyCost <= 0 || dm.allyCost >= 1 {
+	if dm.terms.allyCost <= 0 || dm.terms.allyCost >= 1 {
 		return AllyCost
 	}
-	return float64(AllyCost * dm.allyCost)
+	return float64(AllyCost * dm.terms.allyCost)
 }
 
 // GiftGain is the opinion a gift earns now: GiftOpinion with the techs'
 // share on top, rounded down to a whole point.
 func (dm *DiplomacyManager) GiftGain() int {
-	if dm.giftOpinion <= 1 {
+	if dm.terms.giftOpinion <= 1 {
 		return GiftOpinion
 	}
-	return int(float64(GiftOpinion * dm.giftOpinion))
+	return int(float64(GiftOpinion * dm.terms.giftOpinion))
 }
 
 // AllyBonus is what def adds to its specialty while allied: its TradeBonus
 // with the techs' share on top.
 func (dm *DiplomacyManager) AllyBonus(def config.FactionDef) float64 {
-	if dm.allyBonus <= 1 {
+	if dm.terms.allyBonus <= 1 {
 		return def.TradeBonus
 	}
-	return float64(def.TradeBonus * dm.allyBonus)
+	return float64(def.TradeBonus * dm.terms.allyBonus)
 }
 
 // dealRefreshFor is how long a set of offers lasts in age with the techs'
 // cut: dealRefreshIn, rounded down, one tick at least.
 func (dm *DiplomacyManager) dealRefreshFor(age string) int {
-	return techTimeTicks(dealRefreshIn(dm.rules, age), dm.dealRefresh)
+	return techTimeTicks(dealRefreshIn(dm.rules, age), dm.terms.dealRefresh)
 }
 
 // GiftPrice is what a gift costs now: GiftCost with the techs' cut.
 func (dm *DiplomacyManager) GiftPrice() float64 {
-	if dm.giftCost <= 0 || dm.giftCost >= 1 {
+	if dm.terms.giftCost <= 0 || dm.terms.giftCost >= 1 {
 		return GiftCost
 	}
-	return float64(GiftCost * dm.giftCost)
+	return float64(GiftCost * dm.terms.giftCost)
 }
 
 // SendGift sends a gift to a faction, increasing opinion
