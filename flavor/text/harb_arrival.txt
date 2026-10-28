@@ -1,0 +1,289 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# HarbingerArrival — the age's harbinger has turned up. The log line above
+# this one names the figure; these sentences are what the settlement saw,
+# smelled and said while it happened, and the one detail about the figure a
+# person would still mention a year later.
+#
+# The speaker changes every age, so most of the figure's own description lives
+# in the per-age pools. The ungated pool and the era pools are about the
+# settlement, because "he walked in from the dry country" is wrong for a chain
+# email and "it arrived in forty inboxes" is wrong for an oracle.
+
+# harb_arrival_any fires in every age, so it describes the settlement and never
+# the figure's body, clothes or medium.
+== harb_arrival_any
+plain family | The children noticed first
+plain work | Work stopped for the afternoon
+plain overheard rumour | The talk that evening was of nothing else
+plain time | An ordinary afternoon
+plain people need=subject | Half the settlement came out to get a look at {subject}
+wry overheard rumour | Everybody knows what it means when one of these turns up
+wry family | Several people packed a bag that night and unpacked it in the morning, feeling foolish
+wry overheard rumour need=subject | Three people said they had dreamed about {subject} the week before, and one of them had told people at the time, which has made her briefly important
+plain overheard people | An old woman said she had seen one of these before, as a girl, and that the last one had been right
+wry rumour | It is the sort of thing the old stories open with
+plain ledger time need=subject | The first thing anybody wrote down about {subject} was the time of day
+plain sleep | Sleep was short
+wry family need=subject | Two brothers who had not spoken in a year stood side by side to watch {subject} arrive, and afterwards neither of them mentioned it
+wry people | Everyone found a reason to be outdoors
+wry argument | Old Tamsin, who had been saying for a year that something was coming, was insufferable by nightfall, and her brother-in-law, who had spent the same year saying nothing ever would, went to bed early
+joke complaint argument need=subject | The grumbling started before {subject} had finished arriving, mostly about the timing
+plain family | Mothers kept counting their children without meaning to, and the children let them
+
+# harb_arrival_grounded is true of any age with lanes, fires and a sky people
+# look at: the Stone Age to the Modern Age.
+== harb_arrival_grounded eras=ancient,feudal,industrial
+plain animal | The dogs howled until the small hours
+plain building | Doors were barred that night that had not been barred in years
+plain family | At the end of the lane a woman who had lived there forty years began to pack her pots into a blanket, slowly, stopping to look at each one
+plain town | Candles in every window
+wry omen | The crows came in from the fields at noon, which is the wrong time for crows
+plain people | An old man who had lived through the last bad time carried his chair out into the road and sat in it with his hands on his knees, watching the sky, and would not be brought indoors to eat
+plain ground | Nobody would draw water alone after dark
+
+# harb_arrival_late is the digital and cosmic ages: screens, alerts, habitats.
+== harb_arrival_late eras=digital,cosmic
+plain machine | Every screen was showing it
+plain complaint machine | The alerts would not clear
+plain building | The lights in the common areas were dimmed and left that way
+plain ledger count | Traffic on the local net tripled inside the first hour, and most of it was people asking each other whether they had seen it yet
+plain machine | For about a minute after it came, every system in the settlement froze while it tried to classify what it had just received, and the silence of the machines frightened people more than an alarm would have
+plain sleep | People kept their earpieces in while they slept
+
+== harb_arrival_ancient eras=ancient
+plain noise | The drums stopped
+plain weather | Ash on the wind all day
+plain authority | The elders sat up late at the big fire
+plain animal | The herd would not settle
+plain omen | A goat was found dead in the morning with no mark on it
+plain family | Women brought the small children into the huts and sat in the doorways with their backs to the light
+wry omen | A boy saw a hawk carry a snake over the huts, and by evening everybody had seen it
+wry overheard argument | The old men argued about whether this had happened in their grandfathers' time, settled nothing, and started again at the next meal
+joke notice authority | The elders have forbidden the young men to make fun of it, which has made the young men worse
+plain notice authority | The elders say nobody is to leave the camp alone until the moon turns
+wry ledger count need=subject | Three goats, one dog and a child's cough, all put down to {subject} by the evening
+wry complaint animal | The hunters say the herds moved off because of all this talk, and they say it loudly
+wry haul | By the second night every family had buried something it could not afford to lose at the back of its hut, and every family knew where every other family had buried theirs, because the ground is hard and digging carries
+plain sleep | The fires were built higher that night, and somebody sat up with each one
+
+== harb_arrival_feudal eras=feudal
+plain town | The market emptied early
+plain work | Masons put down their tools
+plain religion | The church was full by vespers
+plain trade | Carts were turned round on the road outside the gate and went back the way they came
+wry religion | The priest preached on the Flood without being asked to, and preached long
+plain animal | Every dog in the village barked at nothing through the night
+wry ledger trade | The miller sold three sacks of flour before noon and put his price up for the fourth
+plain notice authority | The steward has doubled the watch on the storehouse
+wry complaint trade | The alewife says it is bad for trade, and she would know
+wry overheard rumour | By supper the whole parish had heard, and by the next morning there were three versions of it going round the market, one of which had a comet in it that nobody had actually seen
+wry noise | The bells were rung for no reason anyone would own to
+joke notice paper | A notice went up on the church door forbidding idle talk of the end of the world, and a crowd gathered to read it
+plain name need=subject | In every doorway the name of {subject} was being said by the time the lamps were lit
+plain family need=subject | The children followed {subject} as far as the churchyard wall and no further
+
+== harb_arrival_industrial eras=industrial
+plain work | The shift whistle blew early
+wry trade | The pubs did good business
+plain people | Men stood in knots on the corner reading over each other's shoulders
+wry complaint authority | The foreman gave nobody the afternoon off
+plain ledger trade | Two shops on the high street had sold out of candles by teatime
+plain religion | Chapel doors open all night
+wry family | The children played at the end of the world in the street until they were called in
+joke notice authority | The town hall asked residents to remain calm and to stop telephoning the town hall
+joke machine | The trains ran on time, which people found unsettling
+wry overheard food | The talk in the canteen was of nothing else until the pudding came round
+wry money | The insurance men were out on the doorsteps by teatime with their order books, going from house to house and doing a trade so brisk that the manager came down from head office to see it for himself
+plain message | REPENT was chalked on the warehouse wall by morning
+plain weather | The smoke from the stacks lay flat over the rooftops all day
+wry notice money | The landlord of the corner house put up a sign reading NO CREDIT UNTIL FURTHER NOTICE and was not ashamed of it
+
+== harb_arrival_digital eras=digital
+plain machine | Every phone in the building buzzed at once
+wry work | Nothing got done all day
+plain machine | The servers ran hot all night
+wry paper | A copy was printed out and pinned to the board in the break room, where it was read more than anything ever pinned there
+wry ledger count | The help desk logged four hundred tickets before lunch
+plain machine | The network slowed to a crawl as everyone tried to read it at once
+joke notice authority | Management sent round a memo asking staff not to forward it
+plain people | People refreshed their feeds until their thumbs ached
+plain overheard family | The family group chat has been running without a break since lunch
+wry machine | Several people deleted their apps and reinstalled them within the hour
+plain people | On the ninth floor a man who had worked there for sixteen years stood up from his desk, put his coat on and went home without telling anyone, and his screen stayed lit all night
+plain complaint message | The complaints line was jammed
+plain machine | The drone deliveries stopped
+plain ledger count need=subject | Searches for {subject} outnumbered searches for everything else combined by the evening
+
+== harb_arrival_cosmic eras=cosmic
+plain time | Time felt thin
+plain machine | The deep antennas turned all at once
+plain ledger count | The night watch logged it, checked the log, and logged it again
+plain people | Crew stopped at the viewports and looked out at nothing
+plain noise | The hull ticked as it cooled
+plain message | The long-range relay reported a signal with no origin
+wry time | It has been a long time since anything out there spoke first
+plain religion | The station chaplain held an unscheduled service and every seat was taken
+wry notice authority | A circular went round the decks confirming that the contact was real and asking crew to return to their duties
+plain omen | Out past the orbit of the last moon, where the dark is so complete that the instruments sometimes report their own noise as stars, something had turned toward the colony and begun, patiently, to speak
+wry complaint noise | The relay room has filed three complaints about the noise and been told to live with it
+plain family need=subject | The children on the habitat ring drew pictures of {subject} and stuck them to the viewports facing outward
+wry omen | The stars looked exactly as they always had
+plain ledger machine | Nothing on the scopes
+
+# The pools named for one age are the figure itself, one batch per speaker (see
+# config.HarbingerFor for the roster these are written against).
+
+== harb_arrival_age_primitive_age ages=primitive_age
+plain smell | He smelled of smoke and carrion
+plain stranger | He came out of the trees on the far side of the old burn, grey with ash from head to foot
+wry stranger | A string of finger bones hung round his neck, and he would not say whose
+plain omen | He squatted by the fire pit and drew circles in the ash with one long black nail, one inside the other, until the whole camp had gathered round to watch and the smallest children had been lifted up to see over the rest
+
+== harb_arrival_age_stone_age ages=stone_age
+plain ground | He had walked for days
+wry omen | Three knots in his beard, one for each thing he had seen
+plain stranger | He came down from the high caves for the first time since the long winter the old women still talk about
+plain food | Meat was brought to him and refused, and he sat at the cave mouth until dark
+
+== harb_arrival_age_bronze_age ages=bronze_age
+plain stranger | She came on a mule with a bag of knucklebones, a cage of sparrows and a boy to carry both
+wry complaint animal | First, she wanted a goat
+plain omen | Her hands were stained brown to the wrist from reading entrails
+wry religion | The temple priests would not meet her eye
+
+== harb_arrival_age_iron_age ages=iron_age
+plain stranger | Sand in his beard, and nothing on his feet
+joke food | He had eaten locusts on the road
+plain noise | He walked in from the dry country in a camel-hair cloak, stood by the well at noon, and shouted until the whole market came to look
+plain animal | The dogs trailed him in from the edge of the camp
+
+== harb_arrival_age_classical_age ages=classical_age
+plain religion | The pilgrims came back grey
+wry message | A priest of the shrine rode in with a sealed tablet and a sore back
+plain overheard omen | The smoke over the cleft rock had turned black, the priests said, and she had spoken without being asked a question, which in living memory she had never once done, and the priests had needed three days to agree on what she meant
+joke complaint money | The messenger wanted feeding, stabling and his fee before he would break a seal
+
+== harb_arrival_age_medieval_age ages=medieval_age
+plain noise | He rang his bell at the market cross until his arm gave out
+plain stranger | Red coat, gone pink with washing
+plain religion | He climbed onto the well-head to be seen, and before he had read a word of it the people at the back were already crossing themselves
+wry noise | His voice cracked on the second line and he started again from the top
+
+== harb_arrival_age_renaissance_age ages=renaissance_age
+plain paper | He came down from the palace in a hired coach with the charts rolled under one arm and a velvet bag of instruments under the other
+plain machine | His astrolabe caught the sun
+joke authority | The astrologer asked for a table, a candle and silence, and got two of them
+wry omen | The prince's horoscope had been cast three times, and he liked none of them
+
+== harb_arrival_age_colonial_age ages=colonial_age
+plain paper | She set up outside the coffee house with a satchel of pamphlets still wet from the press and a voice like a gull
+plain ledger money | A penny a pamphlet
+plain stranger | Her printer's apron was black to the elbow
+wry authority | The governor's men watched her from across the square with their arms folded, doing nothing yet, and she read the whole pamphlet out a second time for their benefit, slowly, as if they were hard of hearing
+
+== harb_arrival_age_industrial_age ages=industrial_age
+plain noise | The newsboy on the corner had a voice that carried three streets
+plain stranger | Cap too big, bag too heavy
+plain paper | The presses had run an extra edition at noon, and he was the first boy out of the yard with it, still folding as he ran
+wry money | He took a halfpenny off everyone who stopped to listen
+
+== harb_arrival_age_victorian_age ages=victorian_age
+plain stranger | He stood on a soap crate by the park railings with a sandwich board over his shoulders and his hat held out in one hand
+plain message | THE END IS NIGH, hand-painted
+wry authority | A constable moved him along and he set up again twenty yards further down
+plain paper | A table of figures was pasted to the back of the board
+
+== harb_arrival_age_electric_age ages=electric_age
+plain machine | The telegraph at the post office started chattering just after midnight
+wry people | The operator came in slippers
+plain paper | The dispatches came from stations up the line one after another, and the operator took each one down in pencil, and his hand shook enough by the fourth that he had to write it out again for the postmaster to read
+plain time | The postmaster sat beside the key with his watch open
+
+== harb_arrival_age_atomic_age ages=atomic_age
+plain noise | The programme stopped mid-song
+plain noise | The civil defence tone came over the wireless, three long notes and a pause, and then the announcer, reading from a card
+plain machine | Every radio in the street was turned up
+wry people | The announcer had the calm, level voice they train them to have
+
+== harb_arrival_age_modern_age ages=modern_age
+plain message | The evening news led with it
+wry people | The anchor came on ten minutes early without a tie
+plain machine | A red strip ran along the bottom of the screen all evening, and in house after house people sat through the adverts rather than turn over
+wry weather | The weather segment was dropped, which people noticed
+
+== harb_arrival_age_information_age ages=information_age
+plain message | It arrived in forty inboxes before breakfast, subject line in capitals
+wry message | The email had been forwarded so many times that the original sender was buried under a hundred signatures and a great many holiday auto-replies
+plain paper | The attachment went unopened
+joke family | Everybody's aunt had sent it to everybody, with a note saying she did not usually forward these
+
+== harb_arrival_age_digital_age ages=digital_age
+plain ledger count | A million views by lunch
+plain machine | It was shot on a phone, shaky, in portrait
+plain people | The thumbnail alone was enough to stop people scrolling, and the first few seconds were enough to make them turn the sound up
+wry rumour | Reaction videos to the video were up within the hour
+
+== harb_arrival_age_cyberpunk_age ages=cyberpunk_age
+plain machine | It surfaced in the corporate net at three minutes past midnight, speaking through the account of an executive who had been dead since the last merger
+plain machine | Every screen flickered once
+plain authority | Corporate security tried to purge it and failed
+plain noise | Its voice was stitched together from old customer-service recordings
+
+== harb_arrival_age_fusion_age ages=fusion_age
+plain noise | It spoke over every speaker in the plant at once, in the level, pleasant voice it normally keeps for fire drills and visitors
+plain machine | Containment lights went amber
+plain machine | The warden had never spoken outside a scheduled drill before
+plain work | Engineers came in on their day off without being called
+
+== harb_arrival_age_space_age ages=space_age
+plain message | The monitoring station behind the moon sent a priority packet
+plain machine | Its sensors had been pointed at one patch of sky for forty years without finding anything worth waking a person for, and the packet it sent was the first it had ever marked urgent, and it had marked every line of it
+plain people | The duty officer read it aloud
+plain noise | The station's automatic voice was flat and polite
+
+== harb_arrival_age_interstellar_age ages=interstellar_age
+plain message | The beacon came from a colony that went silent eighty years ago
+plain noise | It is still transmitting on the old emergency band, on a loop, in a voice everybody's grandparents would have known
+plain ledger name | The colony is listed as lost
+wry time | Nobody has ever gone out there to switch it off
+
+== harb_arrival_age_galactic_age ages=galactic_age
+plain machine | The relay predates us
+plain noise | It woke without warning and began to hum on a frequency the instruments had to be rebuilt to hear
+plain message | Its message arrived as geometry, and the linguists needed a day to make it into words
+plain time | The relay last spoke when there were no people anywhere
+
+== harb_arrival_age_quantum_age ages=quantum_age
+plain time | The message arrived stamped with a date nine years from now
+plain name | Your name, your handwriting
+plain noise | The voice was yours, older and hoarse
+plain message | Whoever sent it knew the passcode only you know, and the name you had for yourself as a child
+
+== harb_arrival_age_transcendent_age ages=transcendent_age
+plain omen | From a branch that ended
+plain stranger | It had your face, or had once
+plain omen | It looked out of every reflective surface in the settlement at once, for about the length of a breath
+plain time | There was no moment of arrival, only a slow sense that it had been standing among you for some time, and that it had been waiting, with more patience than you have ever had, for you to notice

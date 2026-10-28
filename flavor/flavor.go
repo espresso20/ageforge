@@ -92,7 +92,7 @@ import (
 // moment; an unregistered Moment yields "" rather than panicking.
 //
 // The list is additive: adding a Moment plus its templates is a data edit. It is
-// a constant here, a row in momentTable and an entry in builders (catalog.go).
+// a constant here, a row in momentTable (catalog.go) and a text file in text/.
 type Moment int
 
 const (
@@ -144,7 +144,7 @@ const (
 	// verdict and before the new run begins. Age is the age the run ended in.
 	// From the Modern to the Space Age the civilization winds down in a plain
 	// voice; in the Cosmic Era the age's harbinger speaks, so Subject is its
-	// roster Name there and empty before. See catalog_run_ending.go.
+	// roster Name there and empty before. See text/run_end.txt.
 	RunEnding
 )
 

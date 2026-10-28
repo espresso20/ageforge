@@ -1,0 +1,137 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# --- Spared -------------------------------------------------------------------
+
+== harb_spared_any
+plain time | Nothing came in the end
+plain sleep | People slept late
+plain noise | The relief was loud
+plain stranger need=subject | Nobody blamed {subject}, since the danger had been real
+plain haul | The things that had been hidden were brought back out, slowly
+wry family | Goodbyes that had been said at doorways were not mentioned again, though everybody remembered them
+plain family | The children were let out, and ran, and kept running until they reached the far edge of the settlement and could run no further
+plain weather | The warning had been true and the danger had been real, and it passed by anyway, the way a storm sometimes passes to one side
+wry people | Hale, who had prepared harder than anyone, was a little disappointed, and would not have admitted it for anything
+plain rumour | For a long time afterwards people talked about the close call in the voice they use for things that nearly happened to someone else, and it was months before anyone was willing to say out loud how close it had been
+wry complaint work | Now people grumble about all the work that turned out to be unneeded
+plain notice authority | Word was given that everyone could stand down
+wry overheard religion | Nobody can agree on who to thank
+
+== harb_spared_grounded eras=ancient,feudal,industrial
+plain animal | The dogs were let out
+plain people | The old men stopped watching the sky
+plain sleep | The fires were let burn down to their ordinary size
+plain building | Doors that had been barred were unbarred, and left open all day
+plain town | The candles that had been lit in the windows were left to burn out on their own, and nobody wanted to be the first to blow one out
+wry people | In the lane the neighbours who had not spoken in years found they had nothing to say to each other again, and were relieved about that too
+plain religion | When the danger had gone past, the oldest woman in the place went down to the water and washed her face and hands, as her mother had done the last time, and a line of people followed her down and did likewise
+plain notice authority | Word came that the lookouts could come down
+
+== harb_spared_late eras=digital,cosmic
+plain machine | Alerts cleared, one by one
+plain machine | The screens went back to normal
+plain building | The safe rooms emptied out over an afternoon
+plain count | The risk estimate dropped back to zero in real time while people watched
+plain sleep | People took their earpieces out for the first time in days
+wry machine | The systems that had been shut down came back online in order, and each one announced itself with a small cheerful chime that people found unbearable
+wry work | For a day nobody could settle to anything, and output everywhere dropped to nothing while people sat around telling each other they were fine
+plain time | The settlement's logs recorded the moment the danger passed down to the millisecond, and people keep going back to read that one entry among millions
+
+== harb_spared_ancient eras=ancient
+plain noise | The drums played fast
+plain ledger food | Four pits opened and all four still good
+plain authority | The elders laughed
+plain animal | The herd was let out onto the high pasture
+wry family | Families that had shared a fire went back to their own, a little sadly
+wry people | The young men went hunting to prove they had never been afraid
+wry religion | The offerings were left where they were, in case
+plain family | The children were washed of their protecting marks
+wry omen | The elders said the warning had been true and the sky had chosen to spare them, and everyone agreed not to ask the sky why
+plain food | The women dug up the food they had buried and found most of it still good, and the feast that night used all of it
+plain border | A boy climbed the tallest rock to watch the horizon where the danger was meant to come from, and sat there until dark, and came down to say the horizon was only the horizon, and was given the first piece of meat for saying so
+wry complaint animal | The hunters complain that the herd got fat and lazy in the pen
+plain notice authority | The elders say the fires can go down now
+plain overheard stranger need=subject | At the fires they say {subject} will be welcome back any time
+
+== harb_spared_feudal eras=feudal
+plain noise | The bells rang out
+plain trade | The fair went ahead
+plain building | The gates were opened
+wry religion | The priest said a mass of thanksgiving and kept it short, because half the congregation had already left for the tavern
+plain trade | Carts came back through the north gate loaded with the household goods they had left with
+joke authority | The lord's household came back from the country and pretended they had been hunting
+wry sleep | The watch was stood down, grumbling about lost sleep
+joke authority | The guildhall voted to declare the danger over, and then argued for an hour about the wording
+wry trade | Candles that had been bought for the end of the world were used for ordinary things all winter, and the chandlers had a lean spring
+wry argument | In the tavern that night the men who had sold their cows cheap before the danger passed tried to buy them back, and the men who had bought them would not sell, and there was nearly a fight, and then there was a fight
+wry complaint food | The miller complains that he is left with a loft full of flour nobody wants
+plain notice town | Dancing on the green tonight, by order of the reeve
+plain overheard religion | In the market they say the saints turned it aside
+
+== harb_spared_industrial eras=industrial
+plain ledger count | Sandbags returned to the depot, eight thousand
+plain count | The odds fell away
+plain machine | Trains ran again
+plain notice family | Schools reopen on Monday
+wry paper | The papers printed the odds one last time, much smaller
+plain money | The queues at the bank vanished overnight, and the manager, who had been sleeping in his office, went home for the first time in a week
+plain building | The shelters were locked up again, with the tins still inside
+plain people | The enlistment office sent its volunteers home with thanks
+wry money | The bookmakers who had given short odds on disaster had nobody to pay, and threw a party
+wry food | A great deal of tinned food was eaten over the following year, and a generation of children grew up thinking tinned peaches were what you had on special occasions
+joke authority | The council held a special meeting to congratulate itself on the preparations, which had not been needed, and voted unanimously to do it all again next time, and the minutes of the meeting were printed in the paper under the odds
+wry complaint trade | The shopkeepers complain that nobody wants tins any more
+wry overheard rumour | The pubs have decided the figure was never that high
+
+== harb_spared_digital eras=digital
+plain money | The markets rallied hard
+plain machine | The alerts stopped
+plain trade | Delivery slots reopened
+plain count | The probability dropped to nothing on every screen at once
+wry ground | Highways out of the city filled up again, going the other way
+wry trade | People tried to return their stockpiles, and the shops would not take them
+wry food | The group chats filled with relief and then with photos of lunch
+plain machine | Server farms spun back up in rolling sequence
+joke work | The companies that had sent staff home announced a return to the office with a speed that suggested they had been waiting for the excuse
+wry rumour | The trending topic changed from the warning to the relief to a celebrity divorce inside a single afternoon
+plain building | When the danger had passed, the doors of the lower levels opened again in reverse order, and people came up blinking out of the car parks with their emergency kits over their shoulders
+wry complaint argument | The comments complain the whole thing was overblown
+plain notice work | Offices will reopen on Monday, the email said
+wry ledger money | The office sweepstake on the date had no winner
+
+== harb_spared_cosmic eras=cosmic
+plain machine | The shields came down
+plain building | The outer ring reopened
+plain ledger family | Every child off the shuttles and accounted for
+plain notice authority | All crew may resume normal duties
+plain count | The estimate fell back to its usual whisper above zero
+plain omen | People went back to the viewports, and looked out, and saw stars
+plain building | The hull plating over the viewports was cut away again
+wry authority | The evacuation berths were unassigned without comment
+plain people | Crews came in from the hull in their pressure suits and stood in the airlock for a long time before taking their helmets off
+plain machine | Whatever had been out there went on past the colony without turning, and the long-range instruments followed it until it was out of range, and nobody looked away until then
+plain omen | The observation decks were unsealed and people crowded back in to look at the dark where it had been, and the dark looked exactly as it always had, and for a while that was the most beautiful thing any of them had ever seen
+wry complaint machine | Engineering complains about the wear on the shield emitters
+wry overheard rumour | On the ring they are saying it was never going to hit

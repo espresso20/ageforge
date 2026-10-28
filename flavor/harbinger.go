@@ -1,8 +1,8 @@
 package flavor
 
 // harbinger.go is the shared plumbing for the nine harbinger Moments: the
-// risk-tier kinds, the per-age pool helper, and the request shape the game
-// side is expected to build. The prose lives in catalog_harb_*.go.
+// risk-tier kinds and the request shape the game side is expected to build.
+// The prose lives in text/harb_*.txt.
 //
 // # The feature, in one paragraph
 //
@@ -68,91 +68,11 @@ const (
 	TierHigh = "high"
 )
 
+// KindFalseProphet is the Request.Kind for HarbingerFulfilled and
+// HarbingerVindicated when the warning had been invented.
+const KindFalseProphet = "false_prophet"
+
 // HarbingerTiers returns the four tiers in ascending order of risk.
 func HarbingerTiers() []string {
 	return []string{TierNone, TierLow, TierMedium, TierHigh}
-}
-
-// Tier sets, named so a pool reads as prose. Adjacent pairs exist because most
-// reaction lines honestly fit two neighbouring tiers: people going back to
-// work fits "nothing to fear" and "a little to fear" alike.
-var (
-	tNone    = []string{TierNone}
-	tLow     = []string{TierLow}
-	tMed     = []string{TierMedium}
-	tHigh    = []string{TierHigh}
-	tNoneLow = []string{TierNone, TierLow}
-	tLowMed  = []string{TierLow, TierMedium}
-	tMedHigh = []string{TierMedium, TierHigh}
-)
-
-// agePool is pool for sentences that belong to particular ages rather than to
-// a whole era bucket: the speaker's own voice. Eras is derived from the ages,
-// so the era-bleed lint holds a per-age line to its bucket's vocabulary.
-func agePool(prefix string, ages []string, ss []skel) []tmpl {
-	var eras []era
-	seen := map[era]bool{}
-	for _, a := range ages {
-		e, ok := eraOf(a)
-		if !ok {
-			panic("flavor: agePool given unknown age " + a)
-		}
-		if !seen[e] {
-			seen[e] = true
-			eras = append(eras, e)
-		}
-	}
-	out := pool(prefix, eras, ss)
-	for i := range out {
-		out[i].Ages = ages
-	}
-	return out
-}
-
-// ageSet is one per-age batch of sentences in a pool declaration.
-type ageSet struct {
-	ages []string
-	ss   []skel
-}
-
-// agePools builds every per-age batch in declaration order, which is fixed, so
-// the template set is stable for the determinism contract.
-func agePools(prefix string, sets []ageSet) []tmpl {
-	var out []tmpl
-	key, _ := rowParts(prefix)
-	for _, s := range sets {
-		set := agePool(prefix+"_"+s.ages[0], s.ages, s.ss)
-		for i := range set {
-			// A batch is a pool of its own, named by its first age.
-			set[i].Row = sentenceRow(key, s.ages[0], i)
-		}
-		out = append(out, set...)
-	}
-	return out
-}
-
-// ages is shorthand for an age-key list in a pool declaration.
-func ages(keys ...string) []string { return keys }
-
-// harbingerBanks holds the few noun banks the harbinger sentences draw on.
-// Each is era-bound through the pools that reference it.
-var harbingerBanks = map[string][]string{
-	// Things left at a shrine or a standing stone. Ancient bucket only.
-	"harb_offering_ancient": {
-		"a string of shells", "the best antler in the camp", "a pot of honey",
-		"a whole smoked fish", "a knife nobody could spare", "a bowl of red ochre",
-		"two good flints", "a pelt still soft from the scraping",
-	},
-	// What a feudal household gives the church to be prayed for.
-	"harb_offering_feudal": {
-		"a silver spoon", "a bolt of blue cloth", "a year's worth of candles",
-		"a sheep and her lamb", "the second-best bed", "a psalter with a cracked board",
-		"a purse of old pennies", "a cask of the good wine",
-	},
-	// What people carry down into the shelter, industrial bucket.
-	"harb_shelter_industrial": {
-		"a box of tinned peaches", "a wind-up radio", "the family photographs",
-		"a sack of flour", "a first-aid tin", "a deck of cards with two missing",
-		"three jerrycans of water", "a crate of candles",
-	},
 }

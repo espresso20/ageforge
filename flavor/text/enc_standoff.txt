@@ -1,0 +1,570 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# EncounterStandoff — contact with a civilization we are at war with, and both
+# sides walked away from it.
+#
+# The log line directly above this one already says the encounter produced
+# nothing, so none of these sentences report that. They report the afternoon:
+# who was on watch and what he thought he saw, what got shouted and whether
+# anybody understood a word of it, the interpreter, the body handed back, the
+# dog that had to be fetched, what was eaten standing up, what the officers
+# wrote down afterwards, and how much the story has grown since. See catalog.go
+# for the rules.
+#
+# The texture this file is aiming at is the quartermaster's book of
+# exp_success.txt rather than a book of aphorisms: circumstantial, often
+# mundane, occasionally digressive, and funny by accident about one line in
+# fifteen. The lengths swing on purpose — a four-word line beside a forty-word
+# one — because uniform rhythm is what made the two previous versions of this
+# catalog read as machine-written.
+
+# --- slot banks --------------------------------------------------------------
+#
+# Two categories, both true in every age, because the sentences that draw them
+# are ungated: a measured gap, and a small act. Lowercase noun phrases, no
+# terminal punctuation, nothing era-coded.
+
+# The gap between the two lines, as somebody afterwards described it.
+== words enc_standoff_distance
+twenty paces
+forty paces
+sixty paces
+a hundred paces
+two hundred paces
+a dozen paces
+a good ten paces
+a careful fifty paces
+eighty paces of open ground
+thirty paces of bad footing
+a short throw
+a long throw
+ninety paces or so
+the length of a shout
+the distance a voice carries
+an arm's length
+the width of the water
+a hundred and fifty paces
+
+# The small acts. Any one of them was the whole of what was exchanged.
+== words enc_standoff_gesture
+a raised hand
+a nod nobody returned
+a flat open palm
+a bow of the head
+two fingers lifted
+a slow wave
+a shrug
+a stiff nod
+a long look
+a step backwards
+a shaken head
+a hand held out empty
+a whistle with no answer
+a mouthed word
+a hand raised and dropped
+a knuckle to the forehead
+a wave that was almost friendly
+a lowered weapon
+
+# --- the sentences -----------------------------------------------------------
+
+# enc_standoff_any fires in every age. Watching, waiting, shouting, water,
+# weather, children, dogs and being lied to about it afterwards are timeless;
+# gates, sidings and airlocks are not.
+== enc_standoff_any
+# --- short. A fact, and then the sentence stops. ---
+plain food | Neither side ate first
+plain time | The waiting took four hours
+plain people | Nobody sat down once
+plain weather | The wind never dropped
+plain name | Two names were shouted across
+plain ledger count | Nine of us, forty of them
+wry message | The interpreter was useless
+plain casualty | A body was handed back
+plain people | Everyone stayed on their feet
+plain border | The far side sat down
+plain complaint authority | Nobody was told anything
+plain people slot=enc_standoff_gesture | What crossed the gap was ~
+
+# --- mid. The working length: one thing, with enough detail to place it. ---
+plain ledger count | The man on watch put their number at sixty and will not be talked down from it
+plain noise | Whatever was shouted from the far side, nobody here could make it out
+wry message | Our interpreter got three words of it and guessed at the rest
+plain casualty | They handed a body over at the halfway point and stepped back
+plain time | The waiting went on so long that people began sitting down
+wry trade | A quiet swap was made in the middle and both men have denied it
+wry overheard rumour | The story going round tonight has twice as much shouting in it
+plain notice paper | The officers wrote down the hour it started and very little else
+plain weapon | One of ours went for his weapon and was sat on immediately
+plain food | Cold food, eaten standing, with everybody watching everybody else
+plain name | A name was shouted and a man near the front went white
+plain town | The children were kept back and watched the whole thing anyway
+plain people | Nobody on either side wanted to be the one who moved
+wry ledger count | Estimates of their numbers went from sixty to ninety and were then left alone
+wry noise | An old woman on our side shouted something rude in their language
+plain name | Two of theirs were recognised and neither name has been said aloud
+wry overheard rumour | Somebody has been telling it as a great victory since about noon
+plain complaint ground | The men who held the left have complained about the ground ever since
+wry sleep | Sleep was poor afterwards and the ones who say otherwise are lying
+wry money | A bet was taken on which side would leave first and nobody has paid
+wry kit | The far side had better boots and everybody here noticed that
+plain stranger slot=enc_standoff_gesture | Their oldest man managed ~ before turning away
+wry argument slot=enc_standoff_gesture | One of ours offered ~ and has been talked about for it since
+wry people slot=enc_standoff_gesture | The whole of it came down to ~ and a great deal of standing about
+plain stranger slot=enc_standoff_gesture | It ended with ~ from somebody nobody on this side can name
+
+# --- long. Circumstantial, subordinated, the way a chronicle actually runs. ---
+plain food | Food had not been thought about at all, so the whole afternoon was got through on what happened to be in people's pockets
+wry overheard trade | A trade was done at the left-hand end while everybody else was watching the middle, and the two men involved deny it in exactly the same words
+plain notice paper | What went into writing afterwards was the hour it began, the hour it ended, an estimate of their strength, and one line about the ground being poor
+plain name | A name was shouted across the gap by somebody on their side, and a woman four ranks back in ours answered it before she could stop herself
+plain stranger | An old man walked out from their line with both hands open and stood in the middle a long while before anybody would come and hear him
+plain overheard message | The ones who were nearest have been asked what was said and have given four different answers, none of which agree on the language it was in
+plain people | A woman at their front raised one hand, held it there a moment and let it drop, and the men behind her began packing up before she had turned round
+wry argument slot=enc_standoff_gesture | Somebody near the middle answered with ~, and says now that it seemed reasonable at the hour
+
+# --- very long. Digressive, specific, a paragraph that forgot to stop. ---
+wry message | Our interpreter learned the language forty years ago from a trader who has been dead for twenty of them, and she caught perhaps half of what was shouted across, and she will only admit to a third of that
+plain argument | There is a man in the second row who put his hand up and shouted something that could have started the whole thing, and he has stopped answering his door
+plain notice paper | The account written up afterwards runs to nine lines, six of which are about the ground and the weather, and the other three say that contact was made at the hour stated and that the far side withdrew at its own pace
+
+# --- kind: aggressive ---
+plain weapon kind=aggressive | Blood was wanted
+plain weapon kind=aggressive | The front rank on their side came in fast and stopped short
+wry argument kind=aggressive | One of them spat and left it at that
+wry argument kind=aggressive | They had come out for a fight and stood about for four hours instead, and the man who brought them out has been hearing about it since
+plain weapon kind=aggressive | A captain over there drew a weapon, held it up over his head so that everybody on both sides of the ground could see it, and then put it away again without saying one word to anybody
+
+# --- kind: mercantile ---
+joke trade kind=mercantile | They tried to sell us something halfway through
+wry overheard trade kind=mercantile | A price was called out across the gap
+
+# --- kind: isolationist ---
+plain noise kind=isolationist | Not one of them spoke the whole time
+plain border kind=isolationist | They wanted us gone more than they wanted us dead
+plain border kind=isolationist | A marker was put down at the edge of the ground they claim, and every one of them walked back behind it and stood there until we had gone
+
+# --- tone ---
+joke weather tone=wry | Two armies stood in the rain being scrupulously polite
+joke noise tone=wry | The most dangerous moment of the whole afternoon was a sneeze
+wry rumour tone=wry | Both sides have marched off telling it as a win
+wry time tone=wry | It was ended by everybody getting bored at roughly the same time, which took rather longer than anyone will admit to in the morning
+joke ledger count tone=wry | The oldest man on the line says that if the standing about counts as fighting, this was the longest engagement anybody here has ever been in
+plain sleep tone=grim | They took the long way back
+plain casualty tone=grim | A body came over and nobody knew the face
+plain wound tone=grim | The wounded man they let through died in the night
+plain people tone=grim | The two men who were told to hold the left have not eaten since and will not be spoken to, and one of them has been sat in the same place since dark
+joke town tone=triumphant | There is drink out and somebody has already fallen over
+
+# --- the enemy, in frames a mixed-number name survives ---
+plain name need=subject | Somebody shouted the name {subject} across the gap and got no answer to it
+plain stranger need=subject | Nobody here had ever stood that close to {subject} before
+wry argument need=subject | The men spent the evening arguing about what {subject} wanted out of it
+plain people need=subject | Two of ours walked out to meet {subject} and walked back at the same pace
+plain notice authority need=subject | The order went round not to fire on {subject} without a word from the front, and it went round twice more before anybody believed it had come from where it said
+plain name need=subject | There is an old man here who fought {subject} thirty years ago in a different place, and he walked the length of our line during it, looking, and he has never said what he was looking for
+
+# --- the resource, as a thing in a room rather than as a payout ---
+plain trade need=res | Somebody offered {res} across the gap and got a shaken head for it
+plain ledger haul need=res | Everything got carried up to the line, including the {res}, and carried back down again unopened
+plain money need=res | Nobody wanted the job of guarding the {res} while all that was going on
+plain argument need=res | There has been an argument since about who was meant to be watching the {res}
+plain rumour need=res | The far side asked after the {res} by name, which nobody here has an explanation for
+wry building need=res | The store where the {res} is kept was left open the whole time and nothing at all went missing from it
+wry complaint money need=res | Two men were pulled off the {res} and put on the line, and neither of them has been put back, and both have mentioned it
+plain overheard count need=res,amount | The figure going round tonight is {amt_res}
+wry ledger money need=res,amount | Somebody has priced the whole afternoon at {amt_res} in lost work
+joke ledger money need=res,amount | A man on our side has worked out that standing about for four hours cost the town something like {amt_res}, and he has told nine people, and two of them have asked him to do the sum again
+wry count | Both sides had brought more people than they needed and fewer than they had claimed
+wry authority | The two commanders never came within speaking distance of each other, and each has since said the other was afraid to
+plain weather | The rain held off all day
+
+# enc_standoff_grounded is the part of the old ungated pool whose imagery is a town
+# with lanes, dogs and a washing line: true from the Stone Age to the
+# Modern Age, and wrong on a station. Moved here after a corpus review.
+== enc_standoff_grounded eras=ancient,feudal,industrial
+plain animal | A dog crossed the open ground and had to be fetched back
+plain animal | Somebody's dog went over
+plain animal | The dog belongs to somebody in the second row and it went straight across, and a boy of about nine had to walk out into the open and carry it back
+wry animal | The dog went over at some point in the second hour, was fed by three separate people on the far side, and had to be walked back by a boy sent out with both hands in the air and no idea what he was doing
+wry overheard rumour | The story has been told in the town four times since last night and has acquired, in order, a river, a wolf, an insult in a language nobody there speaks, and a man who walked out alone into the middle and came back grinning
+plain ground | The ground between them is churned to mud from all the standing
+wry message | A runner was sent back for orders and came back with a question
+wry ledger count | One man counted the far side at eighty and another at two hundred and forty, and the two of them were still going at it after dark
+wry border need=subject | The long war with {subject} stopped for one afternoon and started again by dark
+plain people | The man on the left of our line had been on his feet since before dawn and gave an account afterwards that had the far side arriving from two different directions
+wry ledger count kind=mercantile | Their side counted our numbers twice, carefully, the way a man counts out coin before he hands it over
+wry message | The shouting went back and forth for a quarter of an hour before anybody worked out that the two sides were using different words for the same river
+wry overheard rumour | The version being told in the town tonight has three times the numbers, a river crossing, and a speech that nobody who was there remembers hearing
+wry town | There were children on the slope behind us the entire time, sent away at the start and back inside the quarter hour
+plain ledger food | What got eaten in those four hours was two loaves passed down the line, a bag of dried fruit belonging to somebody who has not been thanked for it, and the water that had been meant for the walk home
+plain weather | The mist lay between the two lines until noon and neither side moved until it lifted
+wry people | Their drummer and ours took turns until dark, and ours has been told he lost
+plain ground | Both sides dug in along the same stretch of hedge, at opposite ends of it
+plain food | A cook on their side sent a pot of something across under a white cloth, and it came back scraped clean
+plain border slot=enc_standoff_distance | Both lines stopped at ~ and stayed there
+plain ledger count slot=enc_standoff_distance | The gap was paced out afterwards at ~
+plain border slot=enc_standoff_distance | Nobody on our side came closer than ~ all afternoon
+plain people slot=enc_standoff_distance | A boy sent out with water walked ~ and came back the same way
+wry count slot=enc_standoff_distance | The two front ranks settled at ~, which held for the rest of the day and was measured afterwards by a man who had nothing else to do
+wry noise slot=enc_standoff_distance | Shouting carried fine across ~, and the insults were understood well enough on both sides for two men to be told to stop
+wry argument need=subject | Somebody drew a picture of {subject} in the dirt, unkindly, and it was rubbed out before the officers came past
+
+# --- re-tagged out of the shared pool by the third late-age review: the
+# kitchen, the back door, the walk home. True up to the Modern Age. ---
+wry ground | Water was shared, grudgingly
+plain food | Bread was eaten standing up
+plain ground | Both sides used the same water and took turns about it
+plain weather | It rained on both of them for the whole of the afternoon
+wry weather | The weather turned about halfway through and the rain came in sideways, and neither side would give the other the satisfaction of moving into the lee of the hill
+wry smell | Whatever they had been eating carried across on the wind for two hours
+wry complaint food | The cook was given no warning and says so to anyone who passes
+plain town | Somebody's mother came out to look and was walked back indoors
+plain ground | There was one patch of shade and neither side went near it
+plain casualty | A body was carried out to the middle by four of theirs and left on the grass, and two of ours went and got it without being told to
+wry ground | Both sides drank from the same water within an hour of each other, upstream and down, and there has been an argument since about who got the better end
+wry complaint people | Nobody here has much to say about the far side's numbers, their weapons or their intentions, and everybody here has a very great deal to say about how long they were made to stand in one place with wet feet
+
+# enc_standoff_late is the digital and cosmic voice: the field notes have become
+# logs, and the logs have started to notice how long everything takes.
+== enc_standoff_late eras=digital,cosmic
+wry machine | Both sides spent the afternoon running simulations of the afternoon
+wry weapon | Their ships and ours held position for six hours at a range neither side could quite reach, which the tacticians on both sides have since described as the correct range
+plain weapon | No shot was fired
+joke ledger message | Their envoy's message was polite, formally correct and four thousand pages long
+wry time | An officer on our side worked out how long the war could go on at this rate, and the answer was longer than the sun has left, and the figure has been classified
+wry message | They sent a greeting in every language we have ever used, including two we stopped using
+plain weapon | Targeting stayed locked all afternoon
+wry machine | Both sides jammed each other politely
+wry message | Machine translation favoured their side
+plain weapon | Neither side armed its weapons
+plain people | The negotiators never sat down
+wry notice authority | The incident has been reclassified
+plain machine | Radar showed them all day
+joke message | The ultimatum had a typo in it
+plain weapon | For a full hour their targeting systems painted ours, and then they switched off
+wry message | The machine translation of their demands came out as a recipe
+plain people | Our envoy and theirs met at the halfway marker and exchanged business cards
+wry authority | Both governments have issued statements describing the same afternoon as a victory
+plain machine | The satellites overhead recorded both positions and belong to a third party who is selling the footage
+wry argument | The rules of engagement were read aloud three times before anybody agreed what they meant
+plain noise | One announcement played from their loudspeakers on a loop for four hours
+wry paper | The ceasefire document was signed by both sides and neither side kept a copy
+wry time | The standoff lasted longer than the talks that were supposed to prevent it
+joke people | Both commanders posted pictures of the other side's commander looking nervous
+plain weapon | Every weapon on both sides was pointed at something the whole time and none of them fired
+wry message | Our side sent a formal warning and got back an automated acknowledgement
+plain machine | A camera on their side kept adjusting itself to get a better look at us
+wry complaint people | The crews want hazard pay for sitting still
+plain border | The line on the map was agreed by both sides, which has never happened before
+wry stranger | A liaison officer on their side asked for the name of ours and wrote it down slowly
+plain sleep | The watch officers were changed every two hours and every one of them reported the same thing
+plain ledger food | Rations were eaten at the posts and the wrappers were collected and counted
+wry authority | The two delegations spent the first hour arguing about which language the meeting would be held in and the second hour arguing about whether that had been the meeting
+plain weapon | A targeting error on our side locked on to their command vehicle for a few seconds before it was caught, and those seconds are now the subject of three separate reports
+wry message | A list of our names, ranks and home addresses was broadcast from their side, all correct, and then they signed off with a wish for our good health
+plain people | One of their soldiers waved at the camera on our side, and the image has been enlarged, enhanced and circulated to every intelligence desk that will take it
+wry argument | The lawyers on both sides have agreed that nothing happened and are now arguing about who is entitled to say so first
+plain machine | Their countermeasures and ours cancelled each other out so completely that for the whole afternoon neither side could see anything at all, and both stayed exactly where they were
+wry notice paper | The official summary of the afternoon is a single paragraph, and the appendix explaining why it is a single paragraph runs to thirty pages
+plain time | A countdown was kept running on an open display on their side the entire time, and it reached zero, and they reset it
+wry trade | The opening offer from their negotiator would have ended the war, and it was withdrawn before anyone on our side could finish reading it
+plain people | The youngest officer on our side was the only one who could read their script, and she spent the afternoon translating signs about toilets and parking
+wry authority | The standoff has been given a code name, a case number and a small working group, and the working group has already met, found that it needs more information, and scheduled a second meeting at which it expects to find the same thing
+plain message | A long formal protest came from their side on every frequency we monitor, and ours sent one back, and the two turned out to be word for word identical because both sides had downloaded the same template
+wry machine | The autonomous defences on both sides spent the afternoon identifying each other as threats, escalating, standing down, and filing reports about it to people a few metres away who were watching the whole thing happen
+plain people | When it was over the two commanders walked back to their lines without turning round, and the only person who looked back was a medic on their side, who lifted one hand, and one of ours lifted a hand back before anyone could stop him
+plain machine | Sensors logged every movement
+wry people | Both medics compared notes
+plain weather | The storm grounded everything
+wry authority | Headquarters wanted hourly updates, and got them, and each update was the same sentence with a new time on it
+plain weapon | Our gunners were rotated off every hour so that nobody's hands would get tired
+wry message | The hotline between the two headquarters was used once, to confirm that it worked
+plain people | Two soldiers on opposite sides turned out to have the same surname and have been asked by their officers to stop pointing it out
+joke overheard rumour | The word in the ranks is that both generals went to the same school and are not speaking
+plain machine | Every screen in the command post showed the same two lines of dots, and the dots did not move
+wry complaint people | The reservists have filed a complaint about being called up to stand in a field
+plain ground | The ground between the lines was scanned for mines by both sides, and both sides published the results
+wry time | By the evening both command posts had ordered food from the same place, and the delivery driver was allowed through the lines twice
+plain machine | The sensors never blinked
+wry people | Both interpreters took the same breaks
+plain message | Their surrender demand expired unanswered
+wry authority | A peace conference has been proposed by a neutral party, and both sides have accepted it in principle and rejected every date
+plain weapon | Our missile batteries were armed and disarmed on a rota so that the crews would not get used to either
+joke trade | A vendor was seen selling coffee to both lines from the same van
+plain time | The afternoon felt like a week to everyone who was there, and took up a single line in the evening briefing
+wry stranger | One of their officers spent the afternoon sketching our vehicles, and one of ours spent it sketching him
+
+# --- added by the third late-age review: offices, stations, the long view ---
+plain border | Both sides kept their sensors hot
+plain stranger | The envoy's gloves never came off
+wry food | The enemy negotiator ate nothing and drank four coffees
+wry message | Our interpreter translated one joke, and their interpreter translated it back differently
+wry border | The ceasefire line on the shared map was nudged forty metres by each side in turn until an officer locked the file
+wry kit | The officers opposite came in dress uniform, medals and all, and ours were in their working kit
+plain weather | A weather satellite passes over the line every ninety minutes and both sides wait for it before doing anything
+plain wound | A medic from their side asked ours for a painkiller and got one
+plain food | Both delegations ate lunch in one corridor, facing opposite walls
+joke message | The demands arrived in a font nobody here has installed
+wry ledger paper | The only contact all afternoon was one handshake, and both sides have filed a form confirming it
+wry people | The two chief negotiators had met once before, at a conference years ago, and spent the first ten minutes pretending to have forgotten it
+wry paper | Everything said aloud was transcribed by three separate systems, the transcripts disagree in fourteen places, and a panel has been formed to decide what was said on an afternoon when both sides mostly stood and looked at each other
+plain overheard rumour | The word in the canteen is that their commander has a cold
+wry complaint sleep | The night crew have complained that the standoff ran entirely on their shift
+plain weapon kind=aggressive | Their side test-fired a weapon at nothing in particular at the start and did nothing else for six hours
+joke trade kind=mercantile | Their negotiator slid a price list across the table with the demands
+plain message kind=isolationist | They sent their demands in a sealed file that deleted itself after one reading
+plain wound kind=peaceful | The other side asked after our wounded by name
+joke rumour tone=wry | Both press offices have released photographs of one handshake, cropped to show only their own side
+plain casualty tone=grim | Two bodies were exchanged under a white sheet and a camera
+
+# enc_standoff_ancient — elders, spears, herds, hides, the ford, the watch-fire.
+== enc_standoff_ancient eras=ancient
+plain noise | The drums stopped early
+plain ledger weapon | Two spears, planted, left
+plain animal | Both herds grazed the same slope
+plain ground | The ford ran low
+plain authority | Elders talked all night
+plain weapon | An arrow was nocked and put away again without being drawn
+plain ground | Both sides watered at the ford and neither hurried about it
+plain border | The watch-fire was fed all night by two boys who saw nothing
+plain people | Somebody rolled a hide out on the grass and sat on it, watching
+wry weapon | The spears on the far side were better made and every man here saw that
+plain weapon | A spear was thrown short on purpose and left where it landed
+plain notice authority | The elders want the whole thing described to them again in the morning
+plain building | Nobody went near the store-pit while they were stood out there
+wry noise | An old woman shouted at them from behind our spears and was heard
+plain weather | Smoke from their fires and ours went straight up all afternoon
+wry complaint border | The boys who fed the watch-fire want it known that nobody relieved them
+wry animal | The herds were driven apart before anything could start, which took most of an hour and involved a good deal of shouting at animals rather than at people
+plain authority | One of the elders walked out alone to the middle of the ground, stood there a while, and came back at a considerably slower pace than he went out
+plain trade | A hide was carried across as a gift and handed straight back, and the man who carried it cannot agree with himself about what was said to him
+wry town | The harvest was standing in the valley the whole time and neither lot went into it, which the old men have been remarking on since with something like surprise
+wry animal | Their dogs and ours worked out where the line was long before the men did, and settled it between themselves at the water without anybody getting bitten
+plain weather | Frost on the grass at first light, two lines of men standing in it, and a boy of about ten going up and down our side with a water skin
+joke authority | The elders have talked about it for three nights and have arrived at the position that the spears should have gone in on the first afternoon, which was not the position any of them held on the first afternoon
+plain weapon | A spear came down beside the ford in the second hour, thrown by a young man on their side who was taken by the arm and walked back through his own line, and nothing else went across all day
+
+# enc_standoff_feudal — gates, bells, heralds, pickets, stewards, the muster.
+== enc_standoff_feudal eras=feudal
+plain border | The gate stayed shut
+plain noise | One bell, then nothing
+plain complaint food | Supper was late
+plain border | Both banners came down
+plain notice authority | The muster was stood down
+joke message | A herald went out, said his piece, and came back very thirsty
+plain weather | Two riders met at the ford and talked about the weather
+wry notice paper | The clerks have written it up and made it duller than it was
+plain trade | A cart of grain was let through the middle and nobody touched it
+joke trade | Their steward and ours discussed the harvest, of all things
+plain border | The pickets on both sides could see each other all night
+joke food | Somebody sent a jug over and it came back empty
+plain town | The village between the two camps was left alone by both
+plain noise | A horn went up on their side and got no answer
+wry town | The militia went home to the harvest and were glad to
+plain weapon | An arrow stuck in the gate post and has been left there
+wry ledger count | The quartermaster counted their column at four hundred, stopped counting, and wrote down four hundred, and the men who counted more have been coming to find him about it since
+plain message | A boy carried a message across the ground on foot because no rider would go, and he was given bread on the far side and sent back with nothing written down
+wry notice paper | Wax was melted for a seal on an agreement neither steward believed in, and the parchment it was pressed into has already been folded into somebody's boot
+plain building | The storehouse doors were shut for the first time since the spring, and the man with the key had to be found, and he was asleep in the undercroft
+plain food | Both columns ate supper within sight of one another in the yard beyond the ford, at about the same hour, in silence apart from the carts being unloaded
+wry complaint paper | The militia want it written down that they turned out on time and stood in the wet for five hours without one of them being told what for
+plain noise | The bells were rung once at about noon by a boy who had been told to ring them if anything happened, and were then not rung again, and the boy has spent the whole morning explaining himself to three different people
+wry notice paper | A clerk read out the terms from parchment in a voice nobody past the second rank could hear, and read them again louder when the militia complained, and by the third reading their whole column had turned round and started up the road
+
+# enc_standoff_industrial — depots, sidings, foremen, telegrams, triplicate.
+== enc_standoff_industrial eras=industrial
+plain animal | The depot cat stayed indoors
+plain complaint money | Two shifts' wages went unclaimed
+plain ledger machine | Two lorries idled all afternoon
+plain message | Nobody rang the telephone
+plain message | The wire was cut
+plain machine | A freight train went through between the two lines, slowly, twice
+plain authority | The foreman walked over, shook a hand, and walked straight back
+plain people | Both work parties stood about on the platform for most of the morning
+wry notice paper | A report went in triplicate and was mislaid by the afternoon
+plain people | The men on both sides smoked in the yard about ten feet apart
+plain building | The night shift watched the whole thing from the annexe roof
+wry notice message | Somebody telegraphed the entire affair in about nine words
+wry notice paper | A version fit for the shareholders is already being drafted upstairs
+plain border | The rail line between the two camps stayed open the whole week
+joke noise | The works whistle went and both sides jumped for no reason
+plain name | Their foreman and ours had worked the same siding years back
+wry complaint money | The night shift want to know who is paying for the extra hours
+wry trade | A crate of tools changed hands at the siding and was carried straight back over within the hour by a man who had been told to stop being helpful
+plain haul | The freight was left standing on the siding for four hours and guarded by men from both sides who did not speak to one another once
+plain notice paper | Nobody in the depot office will put a name to who moved first, and the telegram that went out at six says only that a meeting took place
+wry machine | Two columns halted a street apart in the rain and neither advanced, and the trams went between them on the hour as though nothing at all were happening
+joke town | A photograph was taken from the annexe roof and came out badly blurred, and the men in the front of it have all identified themselves anyway
+plain building | The warehouse doors were padlocked at half past ten in the morning and the key went into the foreman's coat pocket, and he walked out to the line and stood there until dark, and the doors were still locked when the night shift came on
+joke ledger money | The wages office has worked out what four hours of two hundred men standing about in a wet yard comes to, and has put the figure on the foreman's desk, and the foreman has put a mug on top of it
+
+# enc_standoff_digital — feeds, uplinks, drones, analysts, the open channel.
+== enc_standoff_digital eras=digital
+plain machine | The uplink stayed open
+plain ledger machine | Their drone watched ours for an hour
+plain message | Nobody closed the channel
+plain machine | The feed shows nothing
+wry people | An analyst called it close
+plain machine | Their drone and ours held the same height for eleven minutes
+wry noise | Somebody opened a channel, breathed into it, and closed it again
+wry notice paper | The after-action briefing has one line in it and a lot of white space
+joke notice paper | The network flagged the whole thing as an engagement, which is generous
+plain machine | Two vehicles idled facing each other for most of the morning
+plain complaint paper | An analyst has been told to explain the gap in the logs by morning
+wry message | Both sets of comms ended up on one channel by accident
+plain noise | Wind, boots, and forty minutes of nothing on the uplink
+joke rumour | Somebody streamed the whole afternoon and got four viewers
+plain border | The road between the two positions stayed empty all night
+plain weapon | One analyst noticed that both sides were carrying the same rifles
+wry overheard message | The channel logs are twenty minutes of somebody breathing and four seconds of a man saying a name that has been played back so often the audio is going
+wry machine | The feed cut for four seconds in the second hour and came back to exactly the same picture, which several people have found more unsettling than the rest of it
+wry notice paper | Nobody on the network wants to be the one who logged it, so it has been logged three times with three different timestamps by three different people
+wry rumour | The drone footage has been reviewed frame by frame by people who were not there, and shows two groups of people standing still, and one man scratching his neck
+joke noise | Somebody's phone rang in the middle of it, loudly, on both sides of the ground, and the man it belonged to has not been allowed to forget any part of that
+joke complaint kit | Two of the ground team have put in about the state of the boots issued to them, which is now more paperwork than the afternoon itself generated
+wry authority | A drone was flown low over their position and flown back again, and the pilot who did it has been spoken to by two people who outrank her and by one who does not, and she has said the same thing to all three
+wry overheard kit | The uplink was open for the whole four hours and carries, in total, one sentence from the man on the left flank about the state of his boots, and the rest is wind
+plain machine | Both firewalls held
+wry machine | The hackers on their side left a polite note
+plain machine | The drones circled and went home
+joke rumour | The livestream got bored first
+plain machine | Their drones and ours spent the afternoon photographing each other
+wry message | At one point their side opened a chat channel and sent a thumbs-up
+plain machine | Both sides probed the other's network all day and neither got past the login screen
+wry people | An analyst on our side recognised one of theirs from a conference
+plain machine | The feed from the forward camera shows two lines of people standing in the rain for four hours
+wry money | An attempt by their cyber team to drain our accounts got into the canteen payment system instead
+plain machine | A drone of theirs landed on our side with a flat battery and was handed back
+wry message | The uplink carried more insults than orders, and most of the insults were misspelt
+joke machine | Their deepfake of our commander surrendering was released an hour early, while our commander was still on camera doing the opposite
+plain border | The fusion plant between the two lines kept running all afternoon, supplying power to both
+wry argument | The analysts have been arguing all evening about whether their drone was waving or malfunctioning
+plain people | Both sides streamed the standoff live, and the two streams ended up with almost exactly the same number of viewers, most of them watching both
+wry paper | The after-action report was generated automatically from the logs and describes a battle, and it is being rewritten by hand to describe what happened
+plain machine | For four hours the network traffic between the two lines was heavier than anything seen in the war so far, and none of it did anything, and all of it has been archived for study
+
+# --- added by the third late-age review: the building, the city, the network ---
+plain machine | The drones kept their distance
+plain border | The riot line opposite never moved
+plain ledger count | A sergeant counted their vehicles at forty and was sent to count them again
+wry machine | Their drone hovered over our line long enough to need a battery swap
+plain town | Traffic was diverted round the whole thing for six hours
+plain town | The neon on their side stayed on all night
+joke rumour | Analysts from both sides were on one forum, posting about it in real time
+wry building | Enemy hackers set the lobby screens to show the time in their capital
+plain message | A drone from their side dropped a leaflet with nothing on it but a phone number
+joke message | Our commander phoned theirs and got voicemail
+wry border | The police cordon between the two lines was manned by a city force that belongs to neither side, and it has billed both of them for the overtime
+plain town | The shops on the street pulled their shutters down and put them up again when the drones left
+wry machine | The fusion plant raised its own alert level and nobody has told it to lower it again
+wry building | Their cyber team spent the afternoon inside our building's heating system and left the thermostat at a considerate twenty-one degrees
+plain people | A signals officer on our side recognised the voice on their channel from a training video
+plain town | The metro kept running under both lines, and a few people rode it from one side to the other just to see
+wry machine | At the start both sides put so many drones up that the air above the line hummed, and the two swarms spent the first hour using up their batteries getting out of each other's way
+plain overheard rumour | The analysts say their drone pilots are teenagers, and that ours are too
+joke notice authority | Staff are reminded not to wave at the enemy drones
+wry ledger count | Two drones were lost to the wind during the afternoon, and one analyst to a migraine
+joke trade kind=mercantile | The drones on the far side carried advertising
+plain message kind=isolationist | Their feed was encrypted end to end and showed us only a test card
+plain noise kind=aggressive | Armoured cars on the far side revved their engines on the hour
+plain wound tone=grim | One analyst could not watch the stretcher feed any longer and has been moved onto traffic
+
+# enc_standoff_cosmic — hulls, bays, transponders, the airlock, the relay.
+== enc_standoff_cosmic eras=cosmic
+plain ledger machine | Neither hull moved for six hours
+plain notice paper | The relay logged it
+plain machine | Their reactor ran hot
+plain machine | The airlock never cycled
+plain ledger count | Four hundred metres, exactly
+plain message | Their transponder answered ours and then went quiet for an hour
+plain machine | Both ships held orbit and neither turned to face the other
+wry machine | A freighter went between them and the whole moment was over
+wry ledger paper | The manifest they sent across was a list of nothing much
+wry people | A hand went up in their forward bay, at something none of ours could see
+plain notice authority | The dock crew were stood down and told to wait longer
+plain people | Two crews looked at each other through the same stretch of vacuum
+plain ledger paper | Their hull markings were read out and copied down wrong
+plain machine | A shuttle went halfway across and turned back on its own
+plain machine | The bay doors opened and closed with nothing leaving either ship
+wry notice border | Orbital watch has entered it as a routine transit
+wry complaint authority | The dock crew want to know why they were held over for six hours
+plain casualty | A dead crewman was sent across in a sealed bag and their side took him in without a word on the relay, and the bag came back empty an hour later
+wry machine | Their pilot matched our vector to the metre and held it there for most of the watch, which the officer at the helm has described as the worst three hours of her career
+wry machine | The reactor alarm went off in the second hour and everybody on this side assumed the worst, and it turned out to be a sensor that has been going for a fortnight
+joke overheard noise | Nothing crossed the gap in four hours except one very poor joke on an open frequency, which their side did not laugh at and ours has been repeating since
+plain people | A boarding party got as far as the tube, stood in it fully suited for twenty minutes, and came back through the airlock without anybody saying why
+wry notice paper | The transponder codes were exchanged, logged, checked against the list, found to be twelve years out of date on their side, and passed anyway by an officer who has since written four hundred words about why
+plain name | Somebody in the forward bay scratched a name into the frame beside the port during the second hour. It has been found and left as it is, and there is an argument about whether it should stay
+plain machine | The relay went silent both ways
+wry time | Light-lag made it a monologue
+plain weapon | Both reactors powered weapons nobody used
+wry time | They fired, possibly, a year ago
+plain border | Neither fleet crossed the marker buoy
+wry stranger | Their crew were copies of their crew
+plain machine | The enemy ships held station on the far side of the gas giant, visible only to the dock's long-range sensors
+wry message | The demands arrived as a single compressed file that took our systems nine hours to unpack, and the first line was a greeting
+wry time | By the time our reply reached them their commander had been replaced by her own successor
+wry people | The negotiator they sent was an instance of someone who died centuries ago, and she was better at it than anyone on our side
+plain weapon | Both fleets kept weapons trained across a gap so wide that any shot would have arrived after everyone involved had retired
+wry authority | The treaty terms they sent across were written to be read over a period of several hundred years
+plain stranger | Something on their flagship watched us the whole time from behind a window that should not have been there
+wry religion | Their envoy asked whether our crew had souls, and would not say which answer would help
+plain time | The standoff was over before most of the people who started it were awake, because on their ships time was running at a different rate
+wry machine | Our ship's mind and theirs exchanged something in the first second of contact, and both have declined to say what it was
+plain people | Thousands of their crew stood at the observation windows along the whole length of their hull, completely still, and after an hour they all left at once
+wry time | An old woman on our station remembers the war with them starting, and says it was already like this, and her grandmother told her the same thing
+plain machine | Their fleet showed on our sensors as a gap in the stars
+wry people | Our captain and theirs had trained at the same academy, three hundred years apart
+plain weapon | Both sides kept their weapons powered for the whole watch, and the station's lights dimmed every time theirs cycled
+wry notice authority | Orbital watch has logged the encounter as ongoing, which it technically still is for anyone standing far enough away
+plain time | The only message from their flagship was a timestamp, and it was from next week
+
+# --- added by the third late-age review: the ring, the fleet, and what is out past it ---
+plain border | Both fleets held formation
+wry stranger | The enemy captain never blinked on camera
+wry time | Every reply took forty minutes to arrive, and the comms officers on both sides played cards in the gaps
+plain building | The habitat kept its blast shutters closed for the whole watch
+plain count | Children on the observation deck counted their ships and got a different number every time
+plain smell | An envoy came across from their flagship as a projection and left a faint smell of ozone behind
+plain border | The fleets sat close enough to read each other's hull numbers, and both sides read them out loud
+plain people | A maintenance crew on their side kept working on the outer hull throughout, and waved once
+joke food | Our long-range scopes caught one of their crew eating a sandwich at a window
+wry weapon | Their warships were built to a design our navy retired a century ago, and our engineers spent the watch taking notes
+plain stranger | Halfway through the watch every screen on the station showed their commander's face for a moment, then ours, then a third face nobody on either side recognised, and both fleets pulled back within the hour
+wry message | Their demands went out on a frequency that also reaches the colony ships still in transit, which will hear them in about eighty years
+plain weapon | Gravity on the ring was turned down a tenth to put the power into the guns
+plain name | Two pilots who had trained together flew on opposite sides and traded call signs on an open frequency
+plain people | Our envoy spent the watch in a pressure suit in a neutral airlock
+plain stranger | The other fleet had no lights on at all
+wry building | The talks were held in a derelict station halfway between the fleets, and both delegations brought their own air
+plain notice authority | Shore leave on the ring is cancelled until their fleet is out of sensor range
+plain ledger count | Each fleet made one course correction in six hours and logged it to the second
+wry complaint weapon | The gunnery crews want it put in the log that they were ready
+wry machine | The engineers say their ships were grown rather than built, and nobody is keen to be on the team that finds out how
+plain noise kind=isolationist | A single tone came from their ships for the whole watch, at a pitch the medics say is bad for sleep
+plain weapon kind=aggressive | Their fleet ran a practice attack on the station three times, stopping short on every run
+joke trade kind=mercantile | The enemy flagship offered to sell us the coordinates of our own reinforcements
+plain casualty tone=grim | A body in a sealed suit was passed from their airlock to ours along a tether

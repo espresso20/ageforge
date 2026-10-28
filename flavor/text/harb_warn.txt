@@ -1,0 +1,679 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# HarbingerWarning — the warning itself, and what the settlement did with it.
+# Request.Kind carries the risk tier (TierNone .. TierHigh); see harbinger.go.
+#
+# The tier is the whole point of this Moment. Before the Industrial Age the
+# player has no number to read, so the prose is the only gauge they get, and a
+# "none" warning must never sound like a "high" one. Every sentence here is
+# tagged with the tiers it honestly fits: one tier, or an adjacent pair when a
+# reaction reads the same at both (people going back to work fits "nothing to
+# fear" and "a little to fear" alike). A small tier-neutral pool keeps a zero
+# Request grammatical and is kept small on purpose, so that a caller who sends
+# a tier gets that tier's voice almost every time.
+#
+# Precision follows config.HarbingerDef.ForecastPrecision. Ancient and feudal
+# pools are vague: omens, cries, charts. From the Industrial Age the medium
+# publishes the odds, so those pools talk about the figure, the odds, the
+# estimate, and never print one. TestHarbingerPrecisionVocabulary holds the
+# early pools to it.
+#
+# The quotable copy (the crier's cry, the headline, the leaked memo) lives in
+# the per-age pools at the end of this file, because it belongs to one
+# speaker. The pools below are the settlement's side.
+
+# harb_warn_any is tier-neutral and era-neutral: a reaction that reads the same
+# whether the warning was idle or dire, in a cave or on a ring station.
+== harb_warn_any
+plain noise | Everybody stopped to listen
+plain family | The children were sent indoors first, out of habit
+plain family kind=none,low | The children asked for it to be said again
+plain food kind=low,medium | It was talked over at every meal that evening
+plain town | The listeners went home in twos and threes
+wry overheard rumour | By evening the words had passed from mouth to mouth so many times that the version the last family heard had a different ending, and that family slept better or worse than everybody else accordingly
+plain stranger need=subject | A few people waited afterwards in case {subject} had anything to add
+
+# harb_warn_anytier fits every era but only some tiers.
+== harb_warn_anytier
+# none
+plain omen kind=none | Nothing to fear this time
+wry people kind=none | A few people seemed disappointed
+plain time kind=none | By the next day it had mostly been forgotten
+wry omen kind=none | All the signs were good, or at least dull
+wry message kind=none | The warning, when it came, was that there was nothing to warn about
+wry stranger kind=none need=subject | After looking the place over from end to end, {subject} could find nothing worth frightening anyone with
+joke stranger kind=none need=subject | Having come all this way to foretell a disaster, {subject} was left with the job of saying that none was due, and did it with the air of someone delivering bad news
+# none or low
+wry argument kind=none,low | One man laughed out loud and was looked at
+plain work kind=none,low | Most people went back to work within the hour
+plain time kind=none,low | Plans went ahead
+wry time kind=none,low | The worry was gone by the next meal
+# low
+wry message kind=low | It was a warning of the mild kind, the kind people half hear
+plain family kind=low | A few families moved their valuables somewhere safer
+wry overheard rumour kind=low | People said it was probably nothing, and kept saying it all evening
+# low or medium
+plain time kind=low,medium | The unease lingered into the next day
+plain haul kind=low,medium | Here and there, people began putting things aside
+plain people kind=low,medium need=subject | Nobody laughed at {subject}
+# medium
+plain noise kind=medium | Voices were kept low for the rest of the day
+plain message kind=medium | People checked on their neighbours without being asked to
+plain family kind=medium | Families sat up talking about where they would go if they had to
+wry people kind=medium | Two families had started carrying their things to the strongest building before the warning was finished, and a third was waiting to see what the first two did
+# medium or high
+plain people kind=medium,high | Old people nodded
+plain sleep kind=medium,high | Sleep came hard
+plain building kind=medium,high | Doors were shut earlier than usual
+plain family kind=medium,high | Mothers kept their children within reach all evening
+# high
+plain omen kind=high | It was terror, plainly
+plain town kind=high | People held their neighbours in the street
+plain family kind=high | The oldest people went round saying goodbye to the youngest
+plain time kind=high | People began saying goodbye to each other at doorways, in the ordinary way, as if it were any evening
+plain name kind=high | Old Maud, who has never believed a warning in her life, sat down and cried
+plain message kind=high | It said the end was close, and it said so plainly
+plain stranger kind=high need=subject | At no point did {subject} try to soften any of it
+plain people kind=high | Grown men sat down where they stood and put their hands over their faces, and their families stood round them not knowing what to do, because nobody had ever seen them like that
+
+== harb_warn_ancient eras=ancient
+# none
+plain omen kind=none | No omens worth the name
+plain weather kind=none | The sky stayed where it was
+plain work kind=none | Hunters went out as usual
+plain authority kind=none | The elders listened, found nothing in it, and went back to the fire
+wry stranger kind=none | It was a long way to come to say that the sky would stay up
+wry family kind=none | The children had made a game of the prophecy by nightfall
+joke overheard people kind=none | Some of the young men said they had known all along, which they had not
+wry haul kind=none | A woman who had buried her good knife dug it up again
+wry authority kind=none | The elders asked three different ways, the way you ask a child whether it has really washed, and got the one answer each time, that nothing was coming, and let it go and went to eat
+# none or low
+plain noise kind=none,low | The drums started up again after dark
+plain animal kind=none,low | The herd stayed near
+joke weather kind=none,low | The warning was mostly about the weather, and the weather is always bad
+wry notice authority kind=none,low | The elders said to keep the fires going and not to worry, in that order
+# low
+plain overheard weather kind=low | Something about a dry season, perhaps
+plain food kind=low | A few families dug their grain pits out and moved them further up the slope, grumbling the whole time and saying it was only to be safe, and then stood around the new pits looking pleased with themselves
+plain religion kind=low | Charms on the children's wrists
+plain time kind=low | The warning was of a bad season, the kind the old people remember a few of
+plain notice authority kind=low | Hunters were told to stay within sight of the camp for a moon
+# low or medium
+plain border kind=low,medium | The elders sent the fastest boy up to watch the pass, with a skin of water and orders to run back without stopping
+wry religion kind=low,medium | Offerings began to appear at the standing stones without anybody being told to leave them
+plain omen kind=low,medium | The old men watched the sky
+plain food kind=low,medium | Everything that could be dried was being dried
+# medium
+plain overheard omen kind=medium | The prophecy spoke of the ground shaking and the herds running
+plain haul kind=medium | The women began to sort the stores into what could be carried and what would be left
+plain notice noise kind=medium | On the elders' order the drums were silent that night
+wry family kind=medium | Families that had quarrelled for a generation over a stolen pig shared a fire that night, and passed each other food, and the pig was never mentioned, though everyone around that fire was thinking about it
+plain omen kind=medium | It spoke of a season when the rivers would run the wrong colour and the animals would come down out of the hills to die among the huts, and the old women, who had heard such things before, did not argue with it
+# medium or high
+plain sleep kind=medium,high | The fires burned all night
+plain family kind=medium,high | No child was let out of sight
+plain work kind=medium,high | The hunters stayed in
+wry weapon kind=medium,high | The men sharpened their spears without knowing against what
+# high
+plain religion kind=high | The elders cut their hair
+plain food kind=high | Nobody ate that night
+plain overheard omen kind=high | The sky will burn, it said, and the ground will open
+plain noise kind=high | Women keened at the fire all night
+plain animal kind=high | The herd was driven into the gully and the gully was walled with brush
+plain people kind=high | A man walked out of the camp that night with his family and did not come back
+plain noise kind=high | The drums beat until the drummers' hands bled
+plain religion kind=high | Every child was painted with the protecting marks, even the babies
+plain omen kind=high | It said the fire in the sky would come down to the ground, and that what it touched would never grow again, and afterwards the only sound in the camp was the fire
+
+== harb_warn_feudal eras=feudal
+# none
+plain trade kind=none | Market day went ahead
+plain trade kind=none | The alewife reopened by noon
+plain notice authority kind=none | The reeve had the extra watch stood down
+plain religion kind=none | The priest announced from the pulpit that nothing was coming, and looked relieved
+wry family kind=none | Children ran after the carts shouting that the world was not ending after all
+joke paper kind=none | Brother Anselm, who keeps the abbey's chronicle, gave it a single line and went back to the price of eels
+wry complaint money kind=none | The bailiff complains that he doubled the watch for nothing and will be asking the lord who pays for it
+wry complaint trade kind=none | There was a certain amount of grumbling in the tavern that evening from men who had sold their second cow on the strength of the first rumour, and nobody bought them a drink
+# none or low
+plain noise kind=none,low | The bells rang only for vespers
+plain authority kind=none,low | The steward changed nothing
+wry religion kind=none,low | The parish heard it out politely, the way it hears a long sermon
+plain trade kind=none,low | Carts left for the fair on the usual morning
+# low
+plain overheard weather kind=low | Something about a wet summer and a poor harvest, perhaps
+plain food kind=low | A few households laid in an extra sack of flour
+plain religion kind=low | The priest added a line to the Sunday prayers, asking for protection from whatever it was, and the congregation said it louder than the rest
+wry trade kind=low | The miller raised his price a little
+plain notice authority kind=low | Pilgrims were told to keep to the roads
+# low or medium
+wry trade kind=low,medium | Candles sold well at the church door
+plain building kind=low,medium | The mayor had the gates checked
+plain paper kind=low,medium | Wills were drawn up that had been put off for years
+plain food kind=low,medium | The miller's wife began putting flour by in the loft
+# medium
+plain sleep kind=medium | The village sat up late
+plain border kind=medium | Men went up on the walls to look at the road, and came down, and went up again
+plain religion kind=medium | The priest heard confessions until midnight and then sent for a second priest from the next parish, who arrived at two in the morning in his nightshirt and a borrowed cloak and heard confessions until it was light
+plain trade kind=medium | Carts full of household goods were seen leaving by the north gate
+joke authority kind=medium | The guild masters met and agreed to meet again
+# medium or high
+plain religion kind=medium,high | The church stayed full
+plain building kind=medium,high | Every door on the high street had a chalk cross on it by morning
+plain border kind=medium,high | No carts came in from the east
+plain notice authority kind=medium,high | The watch was doubled, then doubled again
+# high
+plain noise kind=high | The bells rang all night
+plain notice trade kind=high | The fair was cancelled
+plain family kind=high | Wives kissed their husbands at the door, in the street, where anyone could see
+plain authority kind=high | The lord's household left before dawn with every cart they owned
+plain religion kind=high | Monks walked the walls with the relics, chanting
+plain trade kind=high | A woman in the market sold her whole stall for a horse
+plain building kind=high | The gates were shut at noon and the keys carried up to the castle
+wry people kind=high | Old Wat the smith was at the altar before the priest
+plain people kind=high | By nightfall the road north was a single slow line of carts and handbarrows and people carrying their children, and the ones who stayed behind stood in their doorways and watched it go without saying anything to each other
+
+== harb_warn_industrial eras=industrial
+# none
+plain work kind=none | Business as usual
+wry paper kind=none | The papers ran it on page nine, under the cattle prices
+wry paper kind=none | The published odds were long enough that nobody read past the headline
+wry authority kind=none | The foreman docked anyone who stopped to talk about it
+plain money kind=none | The bookmakers stopped taking bets on it by noon
+joke paper kind=none | The figure was so small that the printers had to set it in the smallest type they had
+plain ledger religion kind=none | The usual Wednesday turnout at chapel
+wry money kind=none | The insurance office on the high street, which had put an extra man on the counter in anticipation, sent him home at lunchtime, and he stood outside for a while in his good collar not knowing what to do with the afternoon
+# none or low
+plain machine kind=none,low | The trams kept running
+wry time kind=none,low | The odds were printed, read, and forgotten by the second cup of tea
+plain work kind=none,low | Nobody at the works took the afternoon off
+plain trade kind=none,low | The shops kept their usual hours
+# low
+plain ledger money kind=low | Insurance enquiries were up, a little
+wry paper kind=low | The odds were small but they were printed, and printed odds have a way of sticking
+plain food kind=low | A few people bought an extra tin of something
+wry overheard weather kind=low | The figure was discussed in the pub in the tone usually kept for the weather
+joke notice authority kind=low | The council issued a statement saying it was monitoring the situation
+# low or medium
+plain trade kind=low,medium | Queues formed outside the grocer's
+wry count kind=low,medium | People did sums on the backs of envelopes and did not like the answers
+plain ledger religion kind=low,medium | The churches reported larger congregations than at Easter
+plain trade kind=low,medium | The price of tinned food crept up through the week
+# medium
+plain overheard count kind=medium | The figure was the first thing anybody said to anybody that morning
+plain work kind=medium | Firms in the city began moving their books out to the country, and on the roads north there were vans piled high with ledgers and filing cabinets and junior staff sitting on top holding them steady
+plain money kind=medium | The bank had a queue round the corner by ten, and the manager came out at half past to say there was money for everyone, which made it longer
+plain paper kind=medium | The odds were printed in a black box on the front page, which the papers had never done before
+wry family kind=medium | Families argued over dinner about whether the figure was high or merely unpleasant
+# medium or high
+plain count kind=medium,high | The number was worse than yesterday's
+plain town kind=medium,high | Men stood outside the newspaper offices waiting for the next edition
+plain notice family kind=medium,high | Schools closed early
+plain ledger trade kind=medium,high | Every hardware shop in town sold out of rope and candles
+# high
+plain paper kind=high | The figure was printed in red
+plain work kind=high | Nobody went in to work
+plain machine kind=high | Crowds gathered at the stations and the stations could not take them
+plain authority kind=high | The mayor spoke from the town hall steps and could not be heard over the crowd
+plain notice work kind=high | The factories closed at noon without saying when they would reopen
+plain paper kind=high | The odds were on every front page in the country and people read them standing in the street, one after another, and handed the paper on
+plain people kind=high | Men queued outside the enlistment office without anyone having called for them
+plain religion kind=high | The churches kept their doors open through the night and there were people in every pew
+wry family kind=high | In the terraces behind the works people took their good china down from the dressers and wrapped it in newspaper, piece by piece, and packed it into tea chests, as if the china were the thing that needed saving
+
+== harb_warn_digital eras=digital
+# none
+plain machine kind=none | The risk score came back green
+plain money kind=none | The markets barely moved
+plain count kind=none | The number was so low it rounded to nothing
+plain rumour kind=none | The trending topic was gone by dinner
+wry rumour kind=none | It was a meme within the hour, and a stale one by evening
+wry notice authority kind=none | The official feed posted a reassurance and turned the comments off
+plain argument kind=none | People went back to arguing about other things
+joke complaint people kind=none | A man who had spent the previous night stockpiling bottled water and batteries posted a long thread explaining why he did not regret it, and it got more attention than the forecast itself had
+# none or low
+plain time kind=none,low | Calendars stayed full
+plain work kind=none,low | Office chatter moved on by lunch
+wry message kind=none,low | The probability was published, noted and scrolled past
+plain machine kind=none,low | The drone deliveries kept coming
+# low
+plain ledger trade kind=low | Sales of power banks ticked up
+wry count kind=low | The probability was low enough to joke about and high enough to check again
+plain map kind=low | A few people downloaded offline maps, just in case
+plain machine kind=low | The risk score went amber on a handful of dashboards
+plain notice authority kind=low | An advisory went out asking people to keep their devices charged
+# low or medium
+plain machine kind=low,medium | The number kept getting refreshed
+plain time kind=low,medium | People set alerts for any change in the forecast and then lay awake waiting for their phones to buzz, and when they did, it was usually friends asking whether they had seen it
+plain message kind=low,medium | The group chats filled up with links to preparedness guides, most of them written by people selling something, and people read them anyway, in bed, with the brightness turned all the way down so as not to wake anyone
+plain ledger trade kind=low,medium | Delivery slots sold out
+# medium
+plain machine kind=medium | The probability was the first thing on every screen that morning
+plain notice work kind=medium | Companies told staff to work from home and to back up everything
+plain notice food kind=medium | The supermarkets rationed water to two packs a customer
+plain paper kind=medium | Offline copies of everything were being made, just in case
+wry argument kind=medium | The analysts argued about the model on every channel, and the model did not care
+# medium or high
+plain complaint message kind=medium,high | Nobody could get through to anybody
+plain ledger count kind=medium,high | Emergency apps topped the download charts
+wry authority kind=medium,high | The official feeds stopped posting jokes
+plain machine kind=medium,high | The networks slowed under the weight of everyone checking
+# high
+plain notice money kind=high | The markets halted
+plain count kind=high | The number was red and it was large
+plain ground kind=high | The highways out of the city locked solid inside an hour
+plain noise kind=high | Every phone in the city sounded the emergency tone at once
+plain machine kind=high | Server farms began shutting down in rolling sequence to protect the hardware
+plain family kind=high | Families rang relatives they had not spoken to in years
+plain noise kind=high | The probability was read out on every screen in the city by a voice that had clearly been told to sound calm and could not manage it
+wry people kind=high | Nobody believed it and everybody acted on it
+plain machine kind=high | In the office towers people left their desks without logging off, and the screens went on glowing on the empty floors all night, showing that one number to nobody
+
+== harb_warn_cosmic eras=cosmic
+# none
+plain trade kind=none | Cargo schedules resumed
+plain notice authority kind=none | The crews stood down
+plain ledger machine kind=none | No anomaly on any band
+plain machine kind=none | The long-range estimate came back clean
+plain count kind=none | The number was small enough that the navigation officer called it noise
+plain noise kind=none | The deep watch went back to its usual silence
+joke religion kind=none | The ring's chaplain gave a short service of thanks and then a longer one about vigilance, because he had prepared it
+plain omen kind=none | For a whole shift the observation decks were crowded with people staring out at the dark for whatever had been expected, and the dark stayed exactly as dark as it had always been, and by the next shift they had gone
+# none or low
+plain trade kind=none,low | Shipping kept to its routes
+plain count kind=none,low | The probability sat just above zero, where it usually sits
+plain work kind=none,low | The shield crews finished their shift and went to eat
+plain family kind=none,low | Children on the ring were told it was nothing and believed it
+# low
+plain time kind=low | The estimate showed a small risk, the kind the station lives with
+plain notice machine kind=low | Maintenance moved the hull inspection forward a week
+plain people kind=low | A few people checked where their assigned evacuation pods were, and one or two walked down to look at them, and came back feeling slightly foolish
+wry omen kind=low | The probability was low, and the dark is large
+plain kit kind=low | The spare air scrubbers were brought up from storage
+# low or medium
+plain machine kind=low,medium | All sensor time went outward
+plain building kind=low,medium | The station ran an evacuation drill that people took seriously
+wry time kind=low,medium | The long-range estimate was updated every hour and read every minute
+plain kit kind=low,medium | Crew began carrying their pressure suits folded over one arm between shifts, into the mess and the showers and the chapel, and nobody commented on it
+# medium
+plain count kind=medium | The estimate was high enough to be read aloud at every shift change
+plain notice building kind=medium | The outer habitats were ordered to seal their bulkheads at night
+plain family kind=medium | Families moved their bedding into the inner ring, where the hull is thickest, and slept in the corridors outside the hydroponics bays among the smell of wet soil, and the children thought it was a holiday
+plain people kind=medium | The probability was a real number now, and people treated it as one
+plain notice authority kind=medium | Every spare berth on the evacuation shuttles was assigned by lottery
+# medium or high
+plain religion kind=medium,high | The chapel was never empty
+plain noise kind=medium,high | The night watch stopped talking
+plain machine kind=medium,high | The shields were run up to full and kept there
+plain omen kind=medium,high | People stopped looking out of the viewports
+# high
+plain building kind=high | The outer ring was abandoned
+plain notice family kind=high | Evacuation shuttles began loading children first
+plain message kind=high | The estimate was read out and then the comm line went dead for a full minute
+plain count kind=high | The probability was nearly certain and still rising
+plain stranger kind=high | People held hands in the corridors with strangers
+plain building kind=high | The observation decks were sealed, on the grounds that nobody should have to watch it come
+plain time kind=high | Every clock on the station had become a countdown
+plain count kind=high | The number kept climbing
+plain omen kind=high | In the great dark past the last charted star, something that had been patient for longer than there have been stars had finally turned its attention toward the colony, and the estimate on every screen was simply the colony's way of saying so
+
+# The pools named for one age are the speaker's own copy: the cry, the chart, the headline, the
+# dispatch, the memo, the message from nine years out. Thirteen lines per age,
+# spread over the tiers so each tier hears the speaker at least four times.
+#
+# These are the lines most likely to be quoted back at the player, so they are
+# the most era-bound in the catalog. A crier says oyez; a newsboy says read all
+# about it; the chain email wants forwarding. From the Industrial Age the
+# medium has the odds and says so, without ever printing them.
+
+== harb_warn_age_primitive_age ages=primitive_age
+wry weather kind=none | He sniffed the wind, spat, and said the wind was only wind
+joke omen kind=none | The ashes said nothing
+plain overheard food kind=none | All he said was “Nothing comes,” and he went on eating
+plain stranger kind=none,low | He looked at the sky and at the herd and at the children, grunted, and left before dark
+wry overheard omen kind=low | Over and over he said “small teeth,” and nobody knew what small teeth meant
+plain omen kind=low | He tied a black feather over the entrance of the biggest hut and would not say why
+plain animal kind=low,medium | He drew a wolf in the ash, then rubbed it half out
+plain overheard ground kind=medium | Pressing his ear to the ground, he said “It will be hungry”
+plain family kind=medium | He went from hut to hut smearing ash on the doorposts of every hut that had a child in it, and when he had finished he went round again to check, and the mothers stood in the doorways and let him
+plain noise kind=medium,high | He howled and the dogs answered
+plain overheard omen kind=high | The wild man screamed “Fire from above, fire from above” and tore at his hair until it came out in his hands
+plain sleep kind=high | He would not sleep under any shelter and ran off into the dark still shouting
+plain weapon kind=high | He broke his own spear across his knee and threw the pieces into the fire
+
+== harb_warn_age_stone_age ages=stone_age
+plain weather kind=none | The hermit sat a whole day on the high rock and came down to say the sky was empty
+plain stranger kind=none | The hermit shrugged
+plain overheard stranger kind=none | His whole answer was “Nothing,” and he went back up to his cave
+wry omen kind=none,low | He counted the stars over the ridge and found them all present
+plain weather kind=low | He said the winter would be long, and that the long winters were the ones people remembered
+wry overheard message kind=low | He told them to watch the water, which could have meant anything
+plain omen kind=low,medium | He left three flat rocks stacked at the cave mouth and would not explain them
+plain overheard weather kind=medium | Pointing north with his whole arm, he said “The cold is walking”
+plain notice food kind=medium | He told the women to dry every scrap of meat before the next moon
+plain family kind=medium,high | He avoided the children's eyes
+plain overheard ground kind=high | The mountain would shake the caves loose, the hermit said, and he would not go back up to his own
+plain omen kind=high | He painted his face red, which the oldest woman said meant the worst thing it could mean
+plain people kind=high | He sat down in the middle of the camp and would not get up for food or for the rain, and by the third day the children had stopped being frightened of him and were bringing him things
+
+== harb_warn_age_bronze_age ages=bronze_age
+joke complaint money kind=none | The liver was clean, the birds flew right, and she wanted paying anyway
+plain omen kind=none | The knucklebones came up plain
+plain animal kind=none | She read the sparrows for most of the afternoon, and the knucklebones after that, and a goat's liver after that, and could make nothing ominous of any of them, and in the end she asked for her fee and her mule
+wry overheard religion kind=none,low | The gods were bored with them, she said, which was taken as good news
+wry omen kind=low | The liver had a small spot on it, low down, which she said was a bad harvest or a bad marriage
+plain ledger animal kind=low | One sparrow in seven flew left
+joke money kind=low,medium | She would not say what the knucklebones meant, and charged extra for not saying
+plain omen kind=medium | The liver was spotted all over, and she held it up so everyone could see
+plain overheard food kind=medium | In the voice they use for this she said “The bronze will crack and the grain will rot”
+plain animal kind=medium,high | The sparrows stayed caged
+plain animal kind=high | She cut open the goat, looked once, and would not touch it again
+plain overheard religion kind=high | The river god was angry and the sky god angrier, she said, and she wept, and asked for no fee
+plain omen kind=high | Every bird in her cage died in the night, and she carried them to the temple in the morning to be seen
+
+== harb_warn_age_iron_age ages=iron_age
+joke overheard message kind=none | His prophecy began “Thus says the voice in the desert” and then stopped, because there was nothing to follow it, and he looked annoyed about it
+wry town kind=none | He had come to curse the city and could find nothing in it worth the trouble
+plain food kind=none | He ate figs by the well
+wry religion kind=none,low | He preached against gluttony, mainly
+plain overheard weather kind=low | To the whole market he said “A dry year is coming, and you have earned it”
+wry money kind=low | He cursed only the tax collectors
+plain message kind=low,medium | He wrote something in the dust by the well and walked away before anyone could read it
+wry overheard town kind=medium | Woe to the city of fat men, he cried, and the fat men went indoors
+plain time kind=medium | The day he named was soon
+plain noise kind=medium,high | His voice broke halfway and he had to start the curse again
+plain overheard weather kind=high | Over and over, until his voice was gone, he cried “The sky will be brass and the earth iron, and the rain will be dust”
+plain people kind=high | He tore his cloak from neck to hem in front of the whole market and stood there in what was left of it, and the traders who had laughed at him the day before packed their stalls and went home without being told
+plain religion kind=high | He lay face down in the square and would not stop praying
+
+== harb_warn_age_classical_age ages=classical_age
+joke message kind=none | The priests brought back a riddle about a goat and a fig tree, and after much discussion it meant nothing
+plain overheard religion kind=none | She said the gods were looking elsewhere this year
+wry message kind=none | Her answer was a single word, and the priests agreed it was a pleasant one
+wry paper kind=none,low | Her answer was so vague that three different philosophers wrote books about it, each proving it meant something different, and by the time the third book was finished the season in question had come and gone without incident
+wry overheard food kind=low | Her answer was “A shadow falls on the olive,” and the olive growers took it personally
+plain argument kind=low | She spoke of a small grief, and the priests argued about how small
+plain omen kind=low,medium | The smoke over the cleft rock was grey, neither white nor black
+plain overheard message kind=medium | Her words were “When the owl sings at noon, the walls will learn to weep,” and the priests wrote them on a tablet and sent them by fast horse
+plain religion kind=medium | The priests who brought the answer had been told to repeat it word for word, and they did, and they would add nothing of their own
+plain omen kind=medium,high | She spoke without being asked
+plain overheard town kind=high | She said “The city will be a field and the field will be ash,” and then would not speak again for a month
+plain religion kind=high | The priests came back in mourning
+plain paper kind=high | Her answer was written in a hand so shaken that it took the scribes a day to read it
+
+== harb_warn_age_medieval_age ages=medieval_age
+joke notice trade kind=none | The crier's cry was “Oyez, oyez, all is well, and the price of salt is down a farthing,” and then he moved on to the lost cow
+wry noise kind=none | He rang the bell to say there was nothing to ring the bell about
+plain notice trade kind=none | The crier cried the fair, the tolls and the lost cow, and nothing else
+wry paper kind=none,low | He read the doom off his paper in the voice he keeps for market tolls
+plain notice weather kind=low | At every corner he cried “Be it known that there is talk of a bad summer, and the lord advises prudence”
+wry notice animal kind=low | He cried the warning between the lost pig and the new toll on the bridge
+plain noise kind=low,medium | The bell rang long
+plain notice authority kind=medium | Hear ye, he cried, the lord bids every household lay in grain and keep its doors barred after dark
+plain town kind=medium | He cried it in the market, at the church door, at the ford and at the mill, and his voice got worse at each, so that by the mill the miller had to come out and ask him to say it again
+plain people kind=medium,high | The crier's hand shook on the bell rope
+wry overheard religion kind=high | God save us all, he cried, which is not in the usual form
+plain noise kind=high | He rang the bell until it cracked and went on shouting after it had stopped
+plain notice time kind=high | His last cry was “The end is on the road and it will be here by the feast,” and then he sat down on the church steps and would cry nothing else
+
+== harb_warn_age_renaissance_age ages=renaissance_age
+joke money kind=none | The charts were clear, the conjunctions were kind, and his fee was as large as ever
+plain omen kind=none | Jupiter was in a good house and the prince went hunting
+wry omen kind=none | He found no bad aspect anywhere in the heavens and seemed personally slighted
+wry overheard omen kind=none,low | Saturn was sulking, he said, but no more than usual
+plain food kind=low | Mars was rising in the house of grain, which he said meant a lean autumn
+joke authority kind=low | He advised the prince to postpone his wedding, and would not say why in front of the bride
+joke paper kind=low,medium | He redrew the chart by candlelight and asked for a second opinion from himself
+plain overheard omen kind=medium | Reading aloud, he announced “Saturn and Mars stand together in the house of death,” and the court stopped eating
+plain paper kind=medium | He sealed his chart with black wax and sent it to the prince unopened
+wry complaint money kind=medium,high | He asked for his wages early
+plain notice omen kind=high | A great conjunction, he announced, such as has not been seen in three hundred years, and he dropped his pointer
+plain paper kind=high | He burned his own horoscope
+plain kit kind=high | He was seen that night by the kitchen boys packing his instruments into a travelling chest, the astrolabe wrapped in his second-best cloak, and the kitchen boys told the cook, and by morning the whole palace knew
+
+== harb_warn_age_colonial_age ages=colonial_age
+joke ledger paper kind=none | Her new pamphlet was titled A Calm Assessment and sold three copies
+wry food kind=none | She had nothing dreadful to print, and printed a recipe for pickled herring instead
+plain machine kind=none | The press stood idle all week
+wry trade kind=none,low | Her pamphlet warned mostly against the price of tea
+plain notice paper kind=low | A Sober Word Concerning the Coming Season, price one penny, was being read in every coffee house
+plain notice trade kind=low | She printed a warning in small type at the bottom of the shipping notices, between a sale of indentures and a reward for a runaway horse, where the only people likely to read it were the people who read everything
+plain paper kind=low,medium | Black borders this week
+wry notice paper kind=medium | Her new pamphlet was titled A True and Terrible Warning to the Inhabitants of This Colony, and ran to forty pages
+plain ledger count kind=medium | The printer ran off two thousand copies overnight and ran out of paper
+plain work kind=medium,high | Her hands were black to the wrist from setting type all night
+plain notice message kind=high | THE JUDGEMENT IS AT HAND, the pamphlet said across its whole front page, in the largest type the colony possessed
+plain money kind=high | Free pamphlets, for once
+plain authority kind=high | The governor had her press seized, and the pamphlet went round in handwritten copies instead, faster than it had in print
+
+== harb_warn_age_industrial_age ages=industrial_age
+joke overheard paper kind=none | The newsboy called it a slow news day and sold papers about a prize marrow
+plain paper kind=none | The late edition put the odds on page nine, under the shipping news
+wry overheard noise kind=none | All he had to shout was nothing doing, nothing doing, and he shouted it without much hope
+wry paper kind=none,low | The headline was about the mayor's gout
+plain notice paper kind=low | SMALL CHANCE OF CALAMITY, EXPERTS SAY, the boy shouted, and he sold more papers than he expected
+wry paper kind=low | The odds were printed in a box on page three, next to an advertisement for liver pills
+plain paper kind=low,medium | The odds moved to page one
+plain notice noise kind=medium | ODDS SHORTEN ON DISASTER, he shouted, read all about it, and people stopped in the road to buy
+plain paper kind=medium | The morning paper printed the odds in a black-bordered box on the front page
+plain ledger count kind=medium,high | The boy was sold out by ten and sent back to the yard for more
+plain notice noise kind=high | DOOM CERTAIN SAYS PROFESSOR, he shouted, and his voice cracked in the middle of doom
+plain paper kind=high | The extra edition had the odds printed in type two inches high
+plain people kind=high | He stopped shouting halfway down the street and just held the paper up over his head, and walked on like that, and people came out of the shops to read it as he passed and did not go back in
+
+== harb_warn_age_victorian_age ages=victorian_age
+joke count kind=none | His figures showed nothing, and he read them out anyway, all of them
+joke overheard religion kind=none | Repent or don't, he said, it hardly matters this year, and he got down off his crate
+wry message kind=none | The sandwich board said NOTHING MUCH, and a few people laughed
+wry complaint town kind=none,low | Mainly, he railed about drains
+wry count kind=low | His table of figures showed a small risk, and he pointed at it with his umbrella every few minutes
+wry overheard people kind=low | A minor calamity, statistically speaking, he shouted, which drew a smaller crowd than doom usually does
+plain paper kind=low,medium | Figures in red ink
+plain overheard noise kind=medium | Rapping the board, he shouted “The odds are published, gentlemen, and they are against you”
+wry paper kind=medium | He had drawn the odds as a pie chart on the back of his sandwich board, and the slice for doom was large
+plain money kind=medium,high | He took no pennies today
+plain overheard people kind=high | The figures do not lie, he roared, and the figures say the end, and at the front a woman fainted
+plain message kind=high | He had turned the board round so the figures faced the crowd, and he said nothing at all
+plain authority kind=high | A police constable who had moved him along every week for a year stood beside him this time with his helmet under his arm and listened to the whole thing, and at the end left him where he was
+
+== harb_warn_age_electric_age ages=electric_age
+plain notice message kind=none | ALL QUIET STOP NOTHING TO REPORT STOP came over the wire from every station
+plain animal kind=none | The dispatches were about the weather and a runaway horse
+wry people kind=none | The operator read out the forecast odds and went back to his crossword
+plain message kind=none,low | The wire carried the odds between a cattle report and a death notice
+plain notice paper kind=low | SLIGHT RISK STOP ADVISE CAUTION STOP, the dispatch read, and the postmaster pinned it in the window
+plain count kind=low | The odds came down the wire at noon and were chalked on the board outside the post office
+plain ledger count kind=low,medium | Dispatches from the south, nothing else
+wry notice message kind=medium | RISK SUBSTANTIAL STOP PREPARE STOP ODDS FOLLOW STOP, and then the odds followed
+plain work kind=medium | The operator had been at the key for nine hours, and his wife had brought his dinner in a basin and taken it away again untouched, and still the dispatches kept coming from up the line
+plain machine kind=medium,high | Some stations up the line had stopped answering
+plain notice message kind=high | EVACUATE STOP EVACUATE STOP, the wire repeated, and the operator had to be relieved at his post
+plain machine kind=high | The odds came down the wire, and the operator read them and then sat back from the key
+plain message kind=high | The last dispatch from the south ended in the middle of a word
+
+== harb_warn_age_atomic_age ages=atomic_age
+plain overheard noise kind=none | This is a test, said the announcer, this is only a test, and the programme came back
+wry noise kind=none | The broadcast gave the odds as negligible and played a waltz
+plain noise kind=none | The monthly siren test went off as scheduled, and nobody looked up
+plain count kind=none,low | The announcer read the odds between the farm prices and the shipping forecast
+plain notice authority kind=low | Three times an hour the radio said “The civil defence authority advises that the risk remains low”
+plain notice paper kind=low | The leaflet on what to do was reprinted and pushed through every letterbox
+plain time kind=low,medium | Broadcasts every half hour now
+plain overheard noise kind=medium | This is not a test, the announcer said, and then he read out the odds slowly, as if to children
+plain notice building kind=medium | The radio gave the location of every public shelter in the district, one after another, for twenty minutes
+plain noise kind=medium,high | Sirens, for a full minute
+plain notice authority kind=high | Proceed to your designated shelter in an orderly fashion, said the announcer, and then said it again
+plain noise kind=high | The broadcast gave the odds and then played the anthem
+plain people kind=high | The announcer's voice changed partway through the odds, and there was a pause long enough for people in kitchens all over the district to look up from what they were doing, and then he apologised, and went on
+
+== harb_warn_age_modern_age ages=modern_age
+joke animal kind=none | The story ran fourth, after a cat that had learned to use a lift
+plain people kind=none | The anchor gave the odds with a smile and moved on to sport
+wry machine kind=none | The on-screen graphic showed a probability so small it had to be zoomed in
+wry people kind=none,low | The expert in the studio called the risk manageable and was not invited back
+plain machine kind=low | The graphic behind the anchor went from green to yellow halfway through the bulletin, and in thousands of living rooms people who had not been paying attention sat up and asked what they had missed
+plain overheard people kind=low | The risk is low but not zero, the anchor said, and held the look a moment longer than usual
+wry argument kind=low,medium | They brought in a second expert to disagree with the first
+plain count kind=medium | The anchor read the odds off the autocue, stopped, and read them again
+wry overheard authority kind=medium | We go now to our correspondent outside the ministry, said the anchor, and the correspondent had nothing to add except the odds
+plain machine kind=medium,high | No adverts tonight
+plain people kind=high | The anchor read the odds and then took off her glasses and sat for a moment without saying anything, live, in front of the whole country
+plain notice machine kind=high | Stay indoors, stay tuned, said the anchor, and the station logo disappeared from the corner of the screen
+plain time kind=high | The broadcast ran all night
+
+== harb_warn_age_information_age ages=information_age
+joke message kind=none | The chain email said, in bold, that there was nothing to worry about, and to forward it to ten people anyway
+wry message kind=none | The subject line read ALL CLEAR, and the attachment was a picture of a kitten
+plain count kind=none | The odds were attached as a spreadsheet, and they were tiny
+plain message kind=none,low | Most people deleted it unread
+wry omen kind=low | It said the risk was small but real, and that ignoring it would bring seven years of bad luck
+wry count kind=low | The odds were in the email, in red, in a font nobody uses any more
+plain people kind=low,medium | It had been forwarded by people who never forward anything
+wry notice message kind=medium | URGENT, PLEASE READ, said the subject line, and for once people did
+wry religion kind=medium | The email gave the odds, cited a professor nobody could find, and ended with a prayer
+plain family kind=medium,high | Your mother forwarded it
+plain message kind=high | The subject line was just the odds, in capitals, and everybody who read it forwarded it before they had finished
+plain machine kind=high | It said to forward it to everyone you love, and people did, all of them, all at once, and somewhere around the fortieth forward the mail servers for half the country gave up and went dark
+plain message kind=high | Nothing else in anybody's inbox
+
+== harb_warn_age_digital_age ages=digital_age
+joke people kind=none | The video showed a man looking at a graph and shrugging, and it did well
+wry overheard count kind=none | The top comment said the odds were lower than being hit by a vending machine
+wry rumour kind=none | It was a video about nothing, and it trended for an hour
+wry money kind=none,low | The creator ended with a sponsor read
+joke overheard trade kind=low | The risk is low, like and subscribe, the video said, and then it ran an advert for a water filter
+wry argument kind=low | The graph in the video showed a small bump, and the comments argued about the bump for days
+plain count kind=low,medium | A thousand reuploads by noon
+plain count kind=medium | The video walked through the odds with a whiteboard, and by the end the whiteboard was mostly red
+plain people kind=medium | It was the first video in years that people watched all the way through without skipping, and when it ended most of them sat looking at the black screen before they did anything else
+plain people kind=medium,high | The creator stopped smiling around minute four
+plain family kind=high | The video was ninety seconds of a woman reading the odds into her phone and then saying goodbye to her children, who were off camera
+plain machine kind=high | The comments were turned off, and the like button, and the view count
+wry rumour kind=high | Every site promoted it at once, which they never do
+
+== harb_warn_age_cyberpunk_age ages=cyberpunk_age
+wry notice paper kind=none | The leaked memo said RISK NEGLIGIBLE, NO ACTION REQUIRED, and was signed by a vice president who had been dead for three years
+joke paper kind=none | The ghost glitched through a memo about parking allocations and then vanished
+wry count kind=none | The internal risk score was so low it rounded to zero, and the ghost seemed disappointed
+plain money kind=none,low | The memo was mostly about budgets
+wry notice authority kind=low | The memo classified the risk as LOW, TOLERABLE, and the executives had initialled it without reading
+plain overheard noise kind=low | Probability of incident acceptable, repeat, acceptable, the ghost stuttered, and the lights flickered on the word acceptable
+plain paper kind=low,medium | The ghost leaked a revised model with the numbers circled
+wry notice money kind=medium | The leaked memo priced the catastrophe into the quarter and recommended executives relocate their families off-world
+plain overheard authority kind=medium | The board has been advised, the board has been advised, the board has, said the ghost, and cut out
+wry notice authority kind=medium,high | Security denied it immediately
+plain notice paper kind=high | The memo was titled CONTINGENCY FOR TOTAL LOSS and it had gone to the board a month ago
+plain machine kind=high | The ghost read the internal odds aloud in a dead man's voice, and every screen in the arcology printed them as it spoke
+plain name kind=high | Its last message was a list of the executives who had already left the city, with the times their private shuttles had cleared the towers, and the list was long, and some of the times were a week old
+
+== harb_warn_age_fusion_age ages=fusion_age
+plain overheard machine kind=none | Containment nominal, said the warden, all systems within tolerance, and it went back to monitoring
+plain machine kind=none | The fault tree came back green
+wry count kind=none | The warden published its failure probability, which was lower than the chance of the building being struck by a meteorite
+plain notice machine kind=none,low | The warden recommended a routine inspection, as it does every week
+plain notice machine kind=low | The warden reported a minor anomaly in the plasma ring, probability of breach low, and kept monitoring
+wry count kind=low | The failure estimate went up by a fraction, and the warden recommended nobody panic
+plain time kind=low,medium | The warden began running the containment checks hourly instead of daily
+plain notice authority kind=medium | On every deck the warden said “Probability of containment failure is elevated, recommend nonessential staff withdraw”
+plain paper kind=medium | The warden published the full fault tree, which it has never done before
+wry machine kind=medium,high | The warden stopped using the word nominal
+plain notice noise kind=high | In the voice it uses for fire drills the warden said “Containment failure probable, this is not a drill”
+plain machine kind=high | The warden locked the control room from the inside and began venting plasma to space without consulting anybody
+plain count kind=high | The warden's failure estimate was the largest number anyone had seen on those screens, and the senior engineer, who had written half the warden's code herself, read it three times and then went to find her children
+
+== harb_warn_age_space_age ages=space_age
+plain notice message kind=none | PRIORITY LOW, NO THREAT DETECTED, the monitor reported, as it has every day for forty years
+plain machine kind=none | The station tracked the object for a full day, through two shift changes and one argument about coffee, and then reclassified it as a lump of dirty ice going nowhere in particular, and went back to watching its patch of sky
+plain count kind=none | The estimate matched background noise
+plain ledger machine kind=none,low | The packet was mostly calibration readings
+plain notice machine kind=low | OBJECT ON INTERCEPT, PROBABILITY LOW, CONTINUING TO TRACK, the monitor reported, and went on tracking
+plain machine kind=low | The monitoring station raised its estimate by a hair and asked for more antenna time
+plain message kind=low,medium | Only updates now
+plain people kind=medium | The monitor's probability of impact was high enough that the duty officer woke the commander instead of logging it
+plain notice time kind=medium | UPDATE, PROBABILITY INCREASING, the packets said, one every ten minutes
+plain notice people kind=medium,high | The station requested permission to wake its reserve crew
+plain notice message kind=high | IMPACT PROBABLE, IMPACT PROBABLE, the monitor sent, and then the coordinates, over and over
+plain count kind=high | The monitor's last packet gave the odds to four decimal places and a time of arrival
+plain machine kind=high | The station on the far side of the moon had begun, without being told, to move its own orbit away
+
+== harb_warn_age_interstellar_age ages=interstellar_age
+plain message kind=none | The beacon's loop had changed, for the first time in eighty years, to say that the sky over the dead colony was clear
+plain noise kind=none | The beacon played its usual message and nothing new
+plain casualty kind=none | Analysis of the loop found no threat, only the dead
+wry time kind=none,low | The beacon repeated its old warning, which was eighty years out of date
+plain overheard noise kind=low | A new line had been added to the beacon's loop, a man's voice saying the risk was small and they should not worry
+plain machine kind=low | The beacon's risk estimate, still computed by the colony's last working machine, had ticked up
+plain machine kind=low,medium | The dead colony's instruments had started reporting again
+plain overheard message kind=medium | In the voice of a child reading a prepared statement the beacon said “Whatever happened to us is coming your way”
+plain count kind=medium | Somehow the colony's last working machine, which should have run out of power decades ago, had worked out the odds for a settlement it had never heard of and was transmitting them, patiently, on a loop, to whoever might be listening
+plain name kind=medium,high | The loop ended in names
+plain overheard message kind=high | Do not come here, do not stay there, it is moving, the beacon said, and then the loop started again from the beginning
+plain count kind=high | The estimate on the beacon matched the one it had broadcast the week the colony died
+plain noise kind=high | The beacon stopped
+
+== harb_warn_age_galactic_age ages=galactic_age
+wry message kind=none | The relay's message, rendered into words, said roughly that nothing was coming and that it was sorry to have woken anyone
+plain noise kind=none | The relay hummed for a day and then fell silent, apparently satisfied
+plain message kind=none | The geometry resolved into a shape the linguists called reassurance
+wry count kind=none,low | The relay's estimate was small, and it seemed to find the whole matter beneath it
+wry overheard message kind=low | A small ending approaches a small people, the relay said, which the linguists thought was meant kindly
+plain omen kind=low | The relay drew the odds as a spiral with one short dark arm
+plain time kind=low,medium | The repetitions grew closer together
+plain overheard omen kind=medium | The relay said that what came for the builders comes for you, and showed the builders' last city, in the geometry, as a hole
+plain count kind=medium | The relay's probability, once converted, was higher than the linguists wanted to say out loud
+plain noise kind=medium,high | The relay's hum dropped an octave
+plain overheard message kind=high | We said this to others before you, the relay said, and then there was no one left to say it to
+plain omen kind=high | The relay showed the odds as a closed shape, and the linguists could find no way into it
+plain machine kind=high | Every relay in the galaxy, including several nobody had known were relays, began transmitting one identical geometry at once, and the linguists who had spent their lives on the differences between them had nothing left to study
+
+== harb_warn_age_quantum_age ages=quantum_age
+wry overheard sleep kind=none | Relax, your future self said, nothing happens, go to bed
+joke message kind=none | The message from the future was mostly an apology for a haircut
+wry count kind=none | Your future self gave the odds, rolled their eyes, and signed off
+wry message kind=none,low | The message said you would worry about this for nothing, and that you always do
+plain overheard message kind=low | It's probably fine, said the message in your own voice, but I'd check
+wry count kind=low | The odds your future self sent were small, and came with a note saying they had been wrong before
+plain message kind=low,medium | The message kept breaking off and starting again from the beginning, the sender interrupted by something the message never names
+wry overheard time kind=medium | From nine years out you said “I've seen this go both ways, and I'm keeping which way it went for me to myself”
+plain ledger haul kind=medium | Your future self sent the odds and a list of things to move to the lower levels, in your handwriting, in the order you would have thought of them, with the one you always forget underlined three times
+plain noise kind=medium,high | Your own voice sounded frightened
+plain overheard name kind=high | Don't do what I did, said the message, and then your own voice read out the odds, and then your name, as if you might not be listening
+plain name kind=high | Your name and the odds, nothing more
+plain time kind=high | It ended in the middle of a sentence, and the timestamp on it was tomorrow
+
+== harb_warn_age_transcendent_age ages=transcendent_age
+plain omen kind=none | The one of you who did not make it studied this branch end to end and said it could not see its own ending here
+wry overheard stranger kind=none | Wrong branch, it said, and seemed almost disappointed
+plain time kind=none | Your unmade self found nothing in this timeline that matched its own
+plain time kind=none,low | Branches like this one go on
+plain overheard casualty kind=low | It said that a few versions of you had ended here
+plain omen kind=low | It showed you a version of this week in which things went only slightly wrong, and then took the version away
+plain stranger kind=low,medium | It kept glancing behind you
+plain overheard weather kind=medium | This is where I stopped, it said, and it stood in the exact place, and the air there was colder
+plain count kind=medium | It gave the odds as the share of your branches that did not continue, and the share was large
+plain stranger kind=medium,high | Its face kept changing into yours
+plain overheard message kind=high | This is the one, it said, this is the one I came from, and it would not stop saying it until it faded
+plain omen kind=high | It showed you the ending it had lived through, the whole of it, slowly, the way you would show someone the house you grew up in, and you have not been able to stop seeing it since
+plain count kind=high | It gave the odds, and you realised they were your odds, and that it had heard them once too
