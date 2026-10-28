@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -441,17 +440,12 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 
 	// Only the current age's buildings: the unlocked ones, then the ones a
 	// tech still locks (greyed out, lockedBuildingEntry).
-	keys, locked := make([]string, 0), make([]string, 0)
-	for key, bs := range state.Buildings {
-		switch {
-		case bs.Unlocked && bs.AgeKey == state.Age:
-			keys = append(keys, key)
-		case !bs.Unlocked && bs.LockTech != "" && bs.AgeKey == state.Age:
-			locked = append(locked, key)
-		}
-	}
-	sort.Strings(keys)
-	sort.Strings(locked)
+	keys := keysWhere(state.Buildings, func(_ string, bs game.BuildingState) bool {
+		return bs.Unlocked && bs.AgeKey == state.Age
+	})
+	locked := keysWhere(state.Buildings, func(_ string, bs game.BuildingState) bool {
+		return !bs.Unlocked && bs.LockTech != "" && bs.AgeKey == state.Age
+	})
 	keys = append(keys, locked...)
 
 	if len(keys) > 0 {

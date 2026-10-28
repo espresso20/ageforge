@@ -251,17 +251,6 @@ func errorResult(err error) CommandResult {
 	return CommandResult{Message: textfmt.Sentence(err.Error()), Type: "error"}
 }
 
-// sortedKeysOf returns m's keys in order, so lists built from game maps come
-// out the same on every call.
-func sortedKeysOf[V any](m map[string]V) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
 func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 

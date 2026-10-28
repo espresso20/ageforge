@@ -416,18 +416,6 @@ func byRank(keys []string, rank func(string) int) []string {
 	return keys
 }
 
-// keysWhere is the keys of m that keep accepts, sorted.
-func keysWhere[V any](m map[string]V, keep func(key string, v V) bool) []string {
-	var keys []string
-	for k, v := range m {
-		if keep(k, v) {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	return keys
-}
-
 // setOf is the set of the keys in ks.
 func setOf(ks []string) map[string]bool {
 	m := make(map[string]bool, len(ks))

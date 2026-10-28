@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -167,13 +166,7 @@ func (l *ledger) resourceOrder(state game.GameState) []string {
 			l.order = append(l.order, def.Key)
 			seen[def.Key] = true
 		}
-		var rest []string
-		for k := range state.Resources {
-			if !seen[k] {
-				rest = append(rest, k)
-			}
-		}
-		sort.Strings(rest)
+		rest := keysWhere(state.Resources, func(k string, _ game.ResourceState) bool { return !seen[k] })
 		l.order = append(l.order, rest...)
 	}
 	return l.order
