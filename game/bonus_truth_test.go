@@ -703,12 +703,6 @@ func (o *truthOutcome) pool(off, on float64) {
 	o.Large = math.Min(off, on) >= 2.0-1e-9
 }
 
-// truthClose reports whether got is want within a few parts in a million
-// (the reference tech and price round to whole ticks and units).
-func truthClose(got, want float64) bool {
-	return math.Abs(got-want) <= 3e-6*math.Max(1, math.Abs(want))
-}
-
 // truthMoved reports whether a meter changed at all.
 func truthMoved(before, after float64) bool {
 	return math.Abs(after-before) > 1e-9*math.Max(1, math.Max(math.Abs(before), math.Abs(after)))

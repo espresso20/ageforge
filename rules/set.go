@@ -604,12 +604,6 @@ func (s *Set) Keystone(age string) string {
 // TechLanes returns the tech tree's lanes, in the order the tree draws them.
 func (s *Set) TechLanes() []config.TechLaneDef { return slices.Clone(s.lanes) }
 
-// TechLane returns a lane's definition.
-func (s *Set) TechLane(key string) (config.TechLaneDef, bool) {
-	l, ok := s.laneByKey[key]
-	return l, ok
-}
-
 // Resources returns every resource, in definition order.
 func (s *Set) Resources() []config.ResourceDef { return slices.Clone(s.resources) }
 
