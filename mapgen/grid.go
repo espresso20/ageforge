@@ -30,6 +30,7 @@ const (
 	KindWonder
 	KindAgent
 	KindAmbient // the ordinary houses of the people, which no building type owns
+	KindVisitor // the rare visitor, and the craft of an alien
 )
 
 // Thing is what the inspect index points at.
@@ -40,6 +41,9 @@ type Thing struct {
 	Count   int // copies a building parcel stands for
 	Legacy  bool
 	Ruin    bool
+	// Ref is a number the screen layer picks its words by, where a thing has
+	// several.
+	Ref int
 }
 
 // Grid is a finished picture: the cells, and for each cell the thing it

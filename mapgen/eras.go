@@ -20,8 +20,9 @@ var natural = [numBiomes]Look{
 
 // The stone era: huts of thatch and mud, dirt tracks, hearths.
 var stoneEra = AgeStyle{
-	Scale: Ground,
-	Land:  natural,
+	Scale:   Ground,
+	Visitor: onFoot,
+	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsLight, Fg: P(HPath, 235), Bg: P(HEarth, 40)},
 		{Joins: "·∙", Fg: P(HEarth, 235), Bg: P(HEarth, 34)},
@@ -77,8 +78,9 @@ var stoneEra = AgeStyle{
 
 // The iron era: stone and timber, tile roofs, cobbles, towers and walls.
 var ironEra = AgeStyle{
-	Scale: Ground,
-	Land:  natural,
+	Scale:   Ground,
+	Visitor: onFoot,
+	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsLight, Fg: P(HPath, 235), Bg: P(HEarth, 40)},
 		{Joins: joinsLight, Fg: P(HEarth, 220), Bg: P(HEarth, 34)},
@@ -134,8 +136,9 @@ var ironEra = AgeStyle{
 
 // The steel era: brick and slate, domes, docks, the first great chimneys.
 var steelEra = AgeStyle{
-	Scale: City,
-	Land:  natural,
+	Scale:   City,
+	Visitor: onFoot,
+	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HStone, 220), Bg: P(HConcrete, 36)},
 		{Joins: joinsLight, Fg: P(HStone, 200), Bg: P(HConcrete, 30)},
@@ -191,8 +194,9 @@ var steelEra = AgeStyle{
 
 // The electric era: concrete, wire and light; lamps line the streets.
 var electricEra = AgeStyle{
-	Scale: City,
-	Land:  natural,
+	Scale:   City,
+	Visitor: onFoot,
+	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HConcrete, 235), Bg: P(HAsphalt, 80)},
 		{Joins: joinsLight, Fg: P(HConcrete, 215), Bg: P(HAsphalt, 68)},
@@ -249,8 +253,9 @@ var electricEra = AgeStyle{
 
 // The digital era: glass and asphalt, screens, the last parks.
 var digitalEra = AgeStyle{
-	Scale: City,
-	Land:  natural,
+	Scale:   City,
+	Visitor: onFoot,
+	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HConcrete, 235), Bg: P(HAsphalt, 90)},
 		{Joins: joinsLight, Fg: P(HConcrete, 215), Bg: P(HAsphalt, 74)},
@@ -308,8 +313,9 @@ var digitalEra = AgeStyle{
 // The neon era: dark towers hung with light, rain on black streets, and at
 // the edge of the city a spaceport.
 var neonEra = AgeStyle{
-	Scale: City,
-	Land:  natural,
+	Scale:   City,
+	Visitor: onFoot,
+	Land:    natural,
 	Roads: [3]RoadLook{
 		{Joins: joinsHeavy, Fg: P(HCyan, 200), Bg: P(HAsphalt, 110)},
 		{Joins: joinsLight, Fg: P(HNeon, 190), Bg: P(HAsphalt, 96)},

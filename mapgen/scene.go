@@ -19,7 +19,15 @@ type Scene struct {
 
 // Draw draws the whole world at animation frame anim.
 func (gen *Generator) Draw(m *mapmodel.Model, anim int) *Scene {
+	return gen.DrawAt(m, anim, anim)
+}
+
+// DrawAt draws the whole world at animation frame anim, with the rare visitor
+// at frame visit of the world's clock (negative: none is out), which runs on
+// when the picture is held still.
+func (gen *Generator) DrawAt(m *mapmodel.Model, anim, visit int) *Scene {
 	f := gen.frame(m, anim)
+	f.visit = visit
 	f.draw()
 	c := f.plan.Centre
 	slices.SortStableFunc(f.targets, func(a, b Pt) int {
