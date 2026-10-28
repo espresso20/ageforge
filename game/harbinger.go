@@ -864,17 +864,30 @@ func warningAppeaseCostIn(set *rules.Set, epochKey, age string, window float64, 
 
 // ceilSignificant rounds v up to sig significant figures (v itself if v <= 0).
 func ceilSignificant(v float64, sig int) float64 {
+	return roundSignificant(v, sig, math.Ceil, -1e-9)
+}
+
+// floorSignificant rounds v down to sig significant figures (v itself if
+// v <= 0).
+func floorSignificant(v float64, sig int) float64 {
+	return roundSignificant(v, sig, math.Floor, 1e-9)
+}
+
+// roundSignificant scales v by an exact power of ten (see
+// config.roundSignificant) to sig significant figures, rounds the scaled
+// value with round after bias, which keeps a value that is a whole number
+// to within float error from tipping over, and scales it back.
+func roundSignificant(v float64, sig int, round func(float64) float64, bias float64) float64 {
 	if v <= 0 {
 		return v
 	}
 	exp := int(math.Ceil(detmath.Log10(v))) - sig
-	// Scale by an exact power of ten either way (see config.roundSignificant).
 	if exp >= 0 {
 		mag := detmath.Pow(10, float64(exp))
-		return math.Ceil(v/mag-1e-9) * mag
+		return round(v/mag+bias) * mag
 	}
 	mag := detmath.Pow(10, float64(-exp))
-	return math.Ceil(float64(v*mag)-1e-9) / mag
+	return round(float64(v*mag)+bias) / mag
 }
 
 // eraBraceMaterialsIn is what a doom of epochKey may ask Brace in, in set:
@@ -946,21 +959,6 @@ func capBraceToCeiling(set *rules.Set, age string, cost map[string]float64) {
 			cost[k] = limit
 		}
 	}
-}
-
-// floorSignificant rounds v down to sig significant figures (v itself if
-// v <= 0).
-func floorSignificant(v float64, sig int) float64 {
-	if v <= 0 {
-		return v
-	}
-	exp := int(math.Ceil(detmath.Log10(v))) - sig
-	if exp >= 0 {
-		mag := detmath.Pow(10, float64(exp))
-		return math.Floor(v/mag+1e-9) * mag
-	}
-	mag := detmath.Pow(10, float64(-exp))
-	return math.Floor(float64(v*mag)+1e-9) / mag
 }
 
 // lastPassageBraceCostIn is the price of Brace level (1 or 2) in the Last
@@ -1058,33 +1056,38 @@ func HarbingerPriceTableIn(set *rules.Set) []HarbingerPrice {
 			continue
 		}
 		for _, a := range ep.Ages {
-			row := HarbingerPrice{Epoch: ep.Key, Age: a, WarningTicks: shortestWarningTicks(set, a, false),
-				AppeaseL1: doomAppeaseCostIn(set, ep.Key, a, 1), AppeaseL2: doomAppeaseCostIn(set, ep.Key, a, 2),
-				BraceL1: doomBraceCostIn(set, ep.Key, a, 1), BraceL2: doomBraceCostIn(set, ep.Key, a, 2),
-				FinalEra: set.IsFinalEra(ep.Key), StockScale: set.StockScale(a)}
-			row.BraceCeiling, row.BraceCeilingHours = map[string]float64{}, map[string]float64{}
-			for _, k := range braceMaterials(set, ep.Key, a) {
-				row.BraceCeiling[k] = braceCeilingIn(set, k, a)
-				row.BraceCeilingHours[k] = braceCeilingHours(set, k, a)
-			}
-			rows = append(rows, row)
+			rows = append(rows, priceRowIn(set, ep.Key, a, false))
 		}
 		if !set.IsFinalEra(ep.Key) {
 			continue
 		}
 		for _, a := range ep.Ages {
-			row := HarbingerPrice{Epoch: ep.Key, Age: a, LastPassage: true, WarningTicks: shortestWarningTicks(set, a, true),
-				AppeaseL1: lastPassageAppeaseCostIn(set, ep.Key, a, 1), AppeaseL2: lastPassageAppeaseCostIn(set, ep.Key, a, 2),
-				BraceL1: lastPassageBraceCostIn(set, ep.Key, a, 1), BraceL2: lastPassageBraceCostIn(set, ep.Key, a, 2),
-				FinalEra: true, StockScale: set.StockScale(a), BraceCeiling: map[string]float64{}, BraceCeilingHours: map[string]float64{}}
-			for _, k := range braceMaterials(set, ep.Key, a) {
-				row.BraceCeiling[k] = braceCeilingIn(set, k, a)
-				row.BraceCeilingHours[k] = braceCeilingHours(set, k, a)
-			}
-			rows = append(rows, row)
+			rows = append(rows, priceRowIn(set, ep.Key, a, true))
 		}
 	}
 	return rows
+}
+
+// priceRowIn is the prices of the doom's thread, or of the Last Passage's,
+// for a harbinger that arrives in age.
+func priceRowIn(set *rules.Set, epoch, age string, lastPassage bool) HarbingerPrice {
+	appease, brace := doomAppeaseCostIn, doomBraceCostIn
+	if lastPassage {
+		appease, brace = lastPassageAppeaseCostIn, lastPassageBraceCostIn
+	}
+	row := HarbingerPrice{
+		Epoch: epoch, Age: age, LastPassage: lastPassage,
+		WarningTicks: shortestWarningTicks(set, age, lastPassage),
+		AppeaseL1:    appease(set, epoch, age, 1), AppeaseL2: appease(set, epoch, age, 2),
+		BraceL1: brace(set, epoch, age, 1), BraceL2: brace(set, epoch, age, 2),
+		FinalEra: set.IsFinalEra(epoch), StockScale: set.StockScale(age),
+		BraceCeiling: map[string]float64{}, BraceCeilingHours: map[string]float64{},
+	}
+	for _, k := range braceMaterials(set, epoch, age) {
+		row.BraceCeiling[k] = braceCeilingIn(set, k, age)
+		row.BraceCeilingHours[k] = braceCeilingHours(set, k, age)
+	}
+	return row
 }
 
 // --- Actions ------------------------------------------------------------------
