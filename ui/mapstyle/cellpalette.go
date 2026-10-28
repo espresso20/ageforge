@@ -64,6 +64,7 @@ var recipes = [mapgen.NumHues]recipe{
 	mapgen.HRed:      {theme.RoleNegative, fromCity(theme.CityTaillight), 0.6},
 	mapgen.HWhite:    {theme.RoleBright, nil, 0},
 	mapgen.HAmber:    {theme.RoleHighlight, fromSpace(theme.SpaceCityAmber), 0.6},
+	mapgen.HFresh:    {theme.RolePositive, fromMap(theme.HueFresh), 0.3},
 	mapgen.HVoid:     {theme.RoleBackground, fromSpace(theme.SpaceVoid), 0.85},
 	mapgen.HStar:     {theme.RoleText, fromSpace(theme.SpaceStar), 0.5},
 	mapgen.HNebula:   {theme.RoleDim, fromSpace(theme.SpaceNebulaViolet), 0.8},
