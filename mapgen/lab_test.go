@@ -11,6 +11,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/espresso20/ageforge/game"
+
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
@@ -232,6 +234,30 @@ func TestLabVisitors(t *testing.T) {
 				scr.Fini()
 				break
 			}
+		}
+	}
+}
+
+// TestLabWorld draws the world round the town: civs at the edge coloured by
+// how they stand, trade routes with caravans, scouts and an army out, the
+// harbinger and idle workers at the square, at the close-up and the region
+// zoom, in an age of each scale.
+func TestLabWorld(t *testing.T) {
+	dir := labDir(t)
+	fixture.WithTheme(t, "forge")
+	for _, age := range []string{"bronze_age", "modern_age", "space_age", "interstellar_age", "galactic_age"} {
+		st := fixture.State(fixture.Options{Age: age, Seed: 6, Tick: labNoon, Wars: 1, Harbinger: true, Idle: 14, Routes: 4})
+		st.Military.ActiveScout = &game.ExpeditionSnapshot{Name: "Scout the hills", TicksLeft: 40}
+		st.Military.ActiveMilitary = &game.ExpeditionSnapshot{Name: "March on the raiders", TicksLeft: 25}
+		m := mapmodel.NewBuilder(nil).Build(&st, nil)
+		for _, shot := range []struct {
+			name string
+			w, h int
+		}{{"close", 160, 48}, {"region", 80, 24}} {
+			scr := capture.NewScreen(shot.w, shot.h)
+			mapstyle.New().Draw(scr, mapstyle.Rect{W: shot.w, H: shot.h}, mapstyle.Frame{Model: m, Anim: 21, Clock: 21})
+			writeShot(t, dir, fmt.Sprintf("world_%s_%s", age, shot.name), scr)
+			scr.Fini()
 		}
 	}
 }
