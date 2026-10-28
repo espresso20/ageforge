@@ -1,22 +1,16 @@
 // Package capture turns map frames drawn on a tcell SimulationScreen into
 // review files: plain text (the monochrome check) and HTML built cell by
 // cell from the screen (a real terminal render, not an image), animated when
-// there are several frames. It also loads the game states the captures are
-// drawn from.
+// there are several frames.
 package capture
 
 import (
-	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"html"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
-
-	"github.com/espresso20/ageforge/game"
 )
 
 // NewScreen returns an initialised simulation screen of w x h.
@@ -103,12 +97,8 @@ pre{margin:0 14px 14px;font-size:13px;line-height:1.0;letter-spacing:0;display:i
 </style></head><body><h1>%s</h1>
 `
 
-// Fonts is the CSS font stack for ordinary captures; NerdFonts puts Nerd
-// Font Mono faces first for the nerd-tier captures.
-const (
-	Fonts     = `ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace`
-	NerdFonts = `"JetBrainsMono Nerd Font Mono","Hack Nerd Font Mono","FiraCode Nerd Font Mono","MesloLGS NF","Symbols Nerd Font Mono",ui-monospace,Menlo,monospace`
-)
+// Fonts is the CSS font stack for captures.
+const Fonts = `ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace`
 
 var styleRe = regexp.MustCompile(`<span style="([^"]+)">`)
 
@@ -163,20 +153,4 @@ func HTML(title, bg, fg, fonts string, frames []string, fps int) string {
 func Hex(c tcell.Color) string {
 	r, g, b := c.RGB()
 	return fmt.Sprintf("#%02x%02x%02x", r&0xff, g&0xff, b&0xff)
-}
-
-// LoadState reads a game snapshot saved as gzipped JSON.
-func LoadState(path string) (game.GameState, error) {
-	var st game.GameState
-	f, err := os.Open(path)
-	if err != nil {
-		return st, err
-	}
-	defer f.Close()
-	zr, err := gzip.NewReader(f)
-	if err != nil {
-		return st, err
-	}
-	err = json.NewDecoder(zr).Decode(&st)
-	return st, err
 }
