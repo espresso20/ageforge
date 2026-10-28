@@ -645,13 +645,6 @@ var loadGameKeys = []footerKey{
 	{"Esc", vibe.E("ui.load_game.loadGameKeys.12", "Back"), vibe.Entry{}},
 }
 
-// footerBar is the Load Game action bar with every name in full: a keycap
-// button per action, so the player can see at a glance which key triggers
-// what. The page fits it to its width (keyBar).
-func footerBar() string {
-	return keyBar(loadGameKeys, 1<<16, 1)
-}
-
 // legendText returns the static Key-box markup: one row symbol per line with a
 // short explanation. Colours match the row tags exactly (gold for ★, red for
 // ⚠) so the box reads as a direct legend for what's shown in the list.

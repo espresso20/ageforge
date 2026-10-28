@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -581,4 +582,34 @@ func TestLedgerResizeShowsTheRightLedger(t *testing.T) {
 			t.Errorf("%dx%d: the Ledger is %d rows after the resize, want %d", sz.w, sz.h, lh, ledgerHeight(sz.w, sz.h))
 		}
 	}
+}
+
+// GetText is the rows as text, one to a line, with the colour tags left in
+// unless stripTags.
+func (b *ledgerBox) GetText(stripTags bool) string {
+	lines := make([]string, len(b.lines))
+	for i, l := range b.lines {
+		if stripTags {
+			l = stripLedgerTags(l)
+		}
+		lines[i] = l
+	}
+	return strings.Join(lines, "\n")
+}
+
+// stripLedgerTags is s without the tags the Ledger writes.
+func stripLedgerTags(s string) string {
+	var sb strings.Builder
+	for i := 0; i < len(s); {
+		if s[i] == '[' {
+			if n, _, _, _, _, ok := ledgerTag(s[i:]); ok {
+				i += n
+				continue
+			}
+		}
+		r, size := utf8.DecodeRuneInString(s[i:])
+		sb.WriteRune(r)
+		i += size
+	}
+	return sb.String()
 }

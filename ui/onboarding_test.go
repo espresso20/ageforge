@@ -58,3 +58,13 @@ func TestOnboardingRendersEveryCommand(t *testing.T) {
 		}
 	}
 }
+
+// onboardingCommands flattens onboardingSteps into the commands in the order a
+// player would type them.
+func onboardingCommands() []string {
+	var out []string
+	for _, st := range onboardingSteps {
+		out = append(out, st.Commands...)
+	}
+	return out
+}

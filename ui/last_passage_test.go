@@ -358,3 +358,12 @@ func TestOutlookSurfacesNameThePrestigePassage(t *testing.T) {
 		t.Errorf("rates has no Cosmic Legacy part:\n%s", r)
 	}
 }
+
+// harbingerPanelText renders the panel for the narrowest screen the game
+// draws. Pure: state in, text out.
+func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed bool) string {
+	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, inviteArmed)
+}
+
+// narrowestScreenW is the narrowest terminal the game is laid out for.
+const narrowestScreenW = 80

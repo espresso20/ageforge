@@ -154,12 +154,6 @@ func planItemTitle(v game.PlanItemView) string {
 	return s
 }
 
-// planItemDetail is the second part of an item's line: the progress bar and
-// what it is short of, the reason it is blocked, or what it will pay.
-func planItemDetail(v game.PlanItemView, state game.GameState) string {
-	return strings.ReplaceAll(planItemDetailGlued(v, state), glue, " ")
-}
-
 // planItemDetailGlued is planItemDetail with the spaces inside each material
 // of a price glued, so planDetailRows can wrap between materials.
 func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {

@@ -291,7 +291,6 @@ func (g *xgrid) fold() {
 // expPalette is the active theme's colours for the panel.
 type expPalette struct {
 	styles [xCount]tcell.Style
-	italic tcell.Style
 }
 
 func newExpPalette() *expPalette {

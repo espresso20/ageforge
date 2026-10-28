@@ -37,21 +37,6 @@ func newCompleter(engine *game.GameEngine, snapshot func() *game.GameState) *com
 	return &completer{engine: engine, cmds: registry(), snapshot: snapshot}
 }
 
-// NewAutoCompleter returns the prompt's completions for a line, for callers
-// outside the dashboard (the smoke fuzz scenario walks commands with it):
-// every full line that completes the text, best first, without the trailing
-// space Tab adds. It reads a fresh snapshot on every call.
-func NewAutoCompleter(engine *game.GameEngine) func(string) []string {
-	c := newCompleter(engine, nil)
-	return func(text string) []string {
-		cands := c.candidates(text)
-		for i, s := range cands {
-			cands[i] = strings.TrimRight(s, " ")
-		}
-		return cands
-	}
-}
-
 // state returns the snapshot to suggest from, dropping the cache when it
 // has moved on.
 func (c *completer) state() *game.GameState {

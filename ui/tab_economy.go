@@ -45,16 +45,6 @@ var onboardingSteps = []onboardingStep{
 	{Commands: []string{"wonder collect all"}, Comma: true, Note: vibe.E("ui.tab_economy.onboardingSteps.06", "then build the [gold]wonder[-] once its bank is full. You need it to advance.")},
 }
 
-// onboardingCommands flattens onboardingSteps into the commands in the order a
-// player would type them.
-func onboardingCommands() []string {
-	var out []string
-	for _, st := range onboardingSteps {
-		out = append(out, st.Commands...)
-	}
-	return out
-}
-
 // renderOnboarding draws the first-steps guide for a list w cells wide:
 // gold header, cyan commands, white prose, each step wrapped under itself.
 func renderOnboarding(w int) string {

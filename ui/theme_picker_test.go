@@ -101,10 +101,10 @@ func TestCmdThemeBadKeyIsErrorAndDoesNotSwitch(t *testing.T) {
 func TestColorHexTag(t *testing.T) {
 	// A swatch tag is a valid tview hex tag built from the role's literal RGB.
 	forge, _ := theme.ByKey("forge")
-	tag := colorHexTag(forge.Color(theme.RoleAccent))
+	tag := theme.HexTag(forge.Color(theme.RoleAccent))
 	// Forge accent is gold #ffd700.
 	if tag != "[#ffd700]" {
-		t.Errorf("colorHexTag(forge accent) = %q, want [#ffd700]", tag)
+		t.Errorf("theme.HexTag(forge accent) = %q, want [#ffd700]", tag)
 	}
 }
 

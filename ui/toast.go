@@ -58,10 +58,8 @@ func (tm *ToastManager) show(toast Toast) {
 	}
 }
 
-// GetCurrent returns the current toast text or empty string if none active
-func (tm *ToastManager) GetCurrent() string { return tm.CurrentFor(0) }
-
-// CurrentFor is GetCurrent for a toast bar w cells wide (0: any width).
+// CurrentFor is the current toast's text for a bar w cells wide (0: any
+// width), or "" when none is showing.
 func (tm *ToastManager) CurrentFor(w int) string {
 	text, fit := tm.onShow()
 	if fit != nil {

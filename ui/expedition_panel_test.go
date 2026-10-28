@@ -641,3 +641,7 @@ func TestNoPartyRowWhenNoPartyGoes(t *testing.T) {
 		t.Errorf("the send box shows a party:\n%s", text)
 	}
 }
+
+// setSize tells the panel how big it is drawn, for the tests; a draw does
+// it by itself.
+func (p *expeditionPanel) setSize(w, h int) { p.w, p.h = w, h }

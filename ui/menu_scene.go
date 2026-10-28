@@ -134,18 +134,6 @@ func (g *mGrid) box(x, y, w, h int, heavy bool, fg tcell.Color) {
 	g.put(x+w-1, y+h-1, c[3], fg)
 }
 
-// row is one row of the grid as text.
-func (g *mGrid) row(y int) string {
-	if y < 0 || y >= g.h {
-		return ""
-	}
-	out := make([]rune, g.w)
-	for x := range out {
-		out[x] = g.c[y*g.w+x].r
-	}
-	return string(out)
-}
-
 // flush puts the grid on the screen with its top left corner at (x0, y0).
 // In the plain glyph set every glyph that is not ASCII is folded to one
 // that is (the wordmark and the fire were already drawn without blocks).

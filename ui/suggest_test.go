@@ -2,6 +2,7 @@ package ui
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
@@ -79,5 +80,20 @@ func TestEnterLine(t *testing.T) {
 		if line != tc.line || run != tc.run {
 			t.Errorf("Enter on %q = (%q, run %v), want (%q, run %v)", tc.typed, line, run, tc.line, tc.run)
 		}
+	}
+}
+
+// NewAutoCompleter returns the prompt's completions for a line, for callers
+// outside the dashboard (the smoke fuzz scenario walks commands with it):
+// every full line that completes the text, best first, without the trailing
+// space Tab adds. It reads a fresh snapshot on every call.
+func NewAutoCompleter(engine *game.GameEngine) func(string) []string {
+	c := newCompleter(engine, nil)
+	return func(text string) []string {
+		cands := c.candidates(text)
+		for i, s := range cands {
+			cands[i] = strings.TrimRight(s, " ")
+		}
+		return cands
 	}
 }
