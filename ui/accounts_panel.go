@@ -143,12 +143,15 @@ func newAccountsPanel(app *tview.Application, pages *tview.Pages, engine *game.G
 	return p
 }
 
+// txtDetailsTitle is said the same way on several screens, so it has one id.
+var txtDetailsTitle = vibe.E("ui.accounts_panel.newAccountsPanel.03", " Details ")
+
 // retext writes the panel's own words in the script now in force. Switching to
 // an account can switch VibeMode, so refresh does it again.
 func (p *accountsPanel) retext() {
 	p.title.SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.01", "[gold]═══ Accounts ═══[-]"))
 	p.subtitle.SetText(vibe.Line("ui.accounts_panel.newAccountsPanel.02", "[gray]Each account is its own slot. Switch between them, or back one up to a file.[-]"))
-	p.detail.SetTitle(vibe.Line("ui.accounts_panel.newAccountsPanel.03", " Details "))
+	p.detail.SetTitle(txtDetailsTitle.String())
 }
 
 // refresh re-reads the account listing, rebuilds the list rows, and restores a clamped

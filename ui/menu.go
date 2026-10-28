@@ -293,7 +293,7 @@ func (m *mainMenu) badgeExtras() []string {
 		return nil
 	}
 	_, sum := m.engine.Badges()
-	count := vibe.Sprintf("ui.menu.badgeExtras.01", "%d of %d", sum.Earned, sum.Shown)
+	count := fmt.Sprintf(txtCountOfTotal.String(), sum.Earned, sum.Shown)
 	var out []string
 	if title := wornTitle(sum); title != "" {
 		out = append(out, count+" · "+title)

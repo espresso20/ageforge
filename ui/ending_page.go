@@ -142,6 +142,9 @@ func endLevelTag(level string) string {
 	return ""
 }
 
+// txtBadge is said the same way on several screens, so it has one id.
+var txtBadge = vibe.E("ui.ending_page.endViewFor.03", "badge")
+
 // endViewFor works out what the film says from the record of the ending.
 func endViewFor(end game.RunEnding, pal *menuPalette) endView {
 	v := endView{end: end, prestige: end.Prestige(), age: game.AgeName(end.Age)}
@@ -176,7 +179,7 @@ func endViewFor(end game.RunEnding, pal *menuPalette) endView {
 	}
 	if end.Badges > 0 {
 		v.lines = append(v.lines, endLine{kind: elCount, count: end.Badges, say: func(n int) string {
-			return textfmt.Count(n, vibe.Line("ui.ending_page.endViewFor.03", "badge"), vibe.Line("ui.ending_page.endViewFor.04", "badges")) + vibe.Line("ui.ending_page.endViewFor.05", " earned")
+			return textfmt.Count(n, txtBadge.String(), vibe.Line("ui.ending_page.endViewFor.04", "badges")) + txtEarned.String()
 		}})
 	}
 	v.lines = append(v.lines, rest...)

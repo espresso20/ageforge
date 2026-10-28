@@ -49,7 +49,7 @@ func tradeProvider(state game.GameState, _ int) string {
 				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.07", "   [red]Suspended: %s imports are blockaded[-]\n\n", game.ResourceName(route.DisruptedBy)))
 			} else {
 				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.08", "   %s left in this cycle  [gray](%s done)[-]\n\n",
-					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, vibe.Line("ui.overlay_trade.tradeProvider.09", "cycle"), vibe.Line("ui.overlay_trade.tradeProvider.10", "cycles"))))
+					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, txtCycle.String(), txtCycles.String())))
 			}
 		}
 	}

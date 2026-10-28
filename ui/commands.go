@@ -110,6 +110,9 @@ const (
 	secAccounts = "Accounts"
 )
 
+// txtBuildPlan is said the same way on several screens, so it has one id.
+var txtBuildPlan = vibe.E("ui.commands.secPlan.01", "Build Plan")
+
 // helpSections is the Help panel's section order, each one's heading and its
 // note. The heading is the text of the section's name (a command's Section is
 // the name itself, which only the code reads).
@@ -118,7 +121,7 @@ var helpSections = []struct {
 	title, note vibe.Entry
 }{
 	{secActions, vibe.E("ui.commands.secActions.01", "Actions"), vibe.Entry{}},
-	{secPlan, vibe.E("ui.commands.secPlan.01", "Build Plan"), vibe.E("ui.commands.helpSections.01", "Queue builds and techs; each starts, and is paid for, when the resources are there, even while you are away.")},
+	{secPlan, txtBuildPlan, vibe.E("ui.commands.helpSections.01", "Queue builds and techs; each starts, and is paid for, when the resources are there, even while you are away.")},
 	{secPeople, vibe.E("ui.commands.secPeople.01", "People"), vibe.E("ui.commands.helpSections.02", "The roster used to be called worker shares: workers share still works.")},
 	{secResearch, vibe.E("ui.commands.secResearch.01", "Research, Expeditions & Army"), vibe.Entry{}},
 	{secTrade, vibe.E("ui.commands.secTrade.01", "Trade & Diplomacy"), vibe.Entry{}},

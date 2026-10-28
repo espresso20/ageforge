@@ -55,6 +55,9 @@ func peopleKinds(st game.GameState) []peopleKind {
 	return kinds
 }
 
+// txtOut is said the same way on several screens, so it has one id.
+var txtOut = vibe.E("ui.people_kinds.boxLine.01", " out")
+
 // boxLine is the kind's line in the People box w cells wide (0: any width):
 // its name on the left, its count on the right, and, for the soldiers, "·
 // N out" after the count when there is room.
@@ -66,8 +69,8 @@ func (k peopleKind) boxLine(w int) string {
 	if k.out > 0 {
 		// Only when the whole name still fits beside it.
 		for _, with := range []string{
-			count + " · " + textfmt.Number(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.01", " out"),
-			count + " +" + textfmt.Number(float64(k.out)) + vibe.Line("ui.people_kinds.boxLine.02", " out"),
+			count + " · " + textfmt.Number(float64(k.out)) + txtOut.String(),
+			count + " +" + textfmt.Number(float64(k.out)) + txtOut.String(),
 		} {
 			if w <= 0 || runeLen(k.name)+1+runeLen(with) <= w {
 				count = with

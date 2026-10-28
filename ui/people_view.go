@@ -128,7 +128,7 @@ func peopleHeader(g *xgrid, st game.GameState, v peopleView) {
 	ws := st.Workers
 	pop := textfmt.Number(float64(ws.TotalPop))
 	homes := textfmt.Number(float64(ws.MaxPop))
-	people, of, homesWord := vibe.Line("ui.people_view.peopleHeader.04", "People "), vibe.Line("ui.people_view.peopleHeader.05", " of "), vibe.Line("ui.people_view.peopleHeader.06", " homes")
+	people, of, homesWord := vibe.Line("ui.people_view.peopleHeader.04", "People "), txtOf.String(), vibe.Line("ui.people_view.peopleHeader.06", " homes")
 	n := runeLen(people + pop + of + homes + homesWord)
 	if start := g.w - 3 - n + 1; start > x+1 {
 		k := xBright

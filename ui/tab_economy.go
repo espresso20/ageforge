@@ -76,6 +76,9 @@ var cultureThresholds = []float64{
 	500, 2500, 10000, 50000, 250000, config.Million, 5 * config.Million, 25 * config.Million, 100 * config.Million, 500 * config.Million, config.Billion,
 }
 
+// txtResearchSpeed is said the same way on several screens, so it has one id.
+var txtResearchSpeed = vibe.E("ui.tab_economy.cultureThresholdLabels.07", "+research speed")
+
 // cultureThresholdLabels are short effect labels for each threshold (parallel to cultureThresholds).
 var cultureThresholdLabels = []vibe.Entry{
 	vibe.E("ui.tab_economy.cultureThresholdLabels.01", "+5% research speed"),
@@ -84,11 +87,11 @@ var cultureThresholdLabels = []vibe.Entry{
 	vibe.E("ui.tab_economy.cultureThresholdLabels.04", "+20% research speed"),
 	vibe.E("ui.tab_economy.cultureThresholdLabels.05", "+25% research speed, culture events"),
 	vibe.E("ui.tab_economy.cultureThresholdLabels.06", "+30% research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.07", "+research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.08", "+research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.09", "+research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.10", "+research speed"),
-	vibe.E("ui.tab_economy.cultureThresholdLabels.11", "+research speed"),
+	txtResearchSpeed,
+	txtResearchSpeed,
+	txtResearchSpeed,
+	txtResearchSpeed,
+	txtResearchSpeed,
 }
 
 // EconomyTab is the permanent background panel visible at all times on the Dashboard.
@@ -116,10 +119,13 @@ type EconomyTab struct {
 	bldFirst, bldShown, bldRows int
 }
 
+// txtResourcesTitle is said the same way on several screens, so it has one id.
+var txtResourcesTitle = vibe.E("ui.tab_economy.NewEconomyTab.01", " Resources ")
+
 // retitle writes the titles on the borders of the tab's three boxes, in the
 // script now in force.
 func (t *EconomyTab) retitle() {
-	t.resourceTV.SetTitle(vibe.Line("ui.tab_economy.NewEconomyTab.01", " Resources "))
+	t.resourceTV.SetTitle(txtResourcesTitle.String())
 	t.buildingTV.SetTitle(vibe.Line("ui.tab_economy.NewEconomyTab.02", " Buildings "))
 	t.constructionTV.SetTitle(vibe.Line("ui.tab_economy.NewEconomyTab.03", " Under construction "))
 }
@@ -478,7 +484,7 @@ func buildingEntries(state game.GameState, w int) (head string, entries [][]stri
 			if bs.AtMaxCount {
 				sb.WriteString(hangingRow("   ", vibe.Line("ui.tab_economy.buildingEntries.02", "[yellow]Building limit reached.[-]"), w))
 			} else {
-				sb.WriteString(costRow(vibe.Line("ui.tab_economy.buildingEntries.03", "   Cost: "), buildingPrice(&state, key, bs), w))
+				sb.WriteString(costRow(txtIndentedCost.String(), buildingPrice(&state, key, bs), w))
 			}
 			sb.WriteString(hangingRow("   ", "[gray]"+glueRates(buildingText(bs))+"[-]", w))
 			if bs.Flavor != "" {

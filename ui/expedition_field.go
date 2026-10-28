@@ -37,6 +37,9 @@ func outListH(missions, h int) int {
 	return min(missions+2, max(3, h*2/5))
 }
 
+// txtOffer is said the same way on several screens, so it has one id.
+var txtOffer = vibe.E("ui.expedition_field.drawFieldReport.03", "offer")
+
 // drawFieldReport draws the Out list and the field report beside the map.
 func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScene, hi int) {
 	x, w := l.cardX, l.cardW
@@ -58,7 +61,7 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 	top, bottom := y+1, y+h-1-foot
 	if len(sc.acts) == 0 {
 		offers := len(sc.offers)
-		for i, ln := range wrapText(vibe.Sprintf("ui.expedition_field.drawFieldReport.02", "Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize(vibe.Line("ui.expedition_field.drawFieldReport.03", "offer"), offers)), cw) {
+		for i, ln := range wrapText(vibe.Sprintf("ui.expedition_field.drawFieldReport.02", "Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize(txtOffer.String(), offers)), cw) {
 			if top+i < bottom {
 				g.putFit(x+1, top+i, cw, ln, xDim)
 			}
@@ -73,13 +76,16 @@ func drawFieldReport(g *xgrid, state game.GameState, v expView, l expLayout, sc 
 	}
 }
 
+// txtOutCount is said the same way on several screens, so it has one id.
+var txtOutCount = vibe.E("ui.expedition_field.drawOutList.01", "Out · %d")
+
 // drawOutList draws the Out list: each party under way on a line, its place
 // and its progress and time left, with the highlighted one marked. It scrolls
 // to keep the highlighted party in view.
 func drawOutList(g *xgrid, state game.GameState, x, y, w, h int, sc *expScene, hi int) {
 	cw := w - 2
 	n := len(sc.acts)
-	g.box(x, y, w, h, xBorder, vibe.Sprintf("ui.expedition_field.drawOutList.01", "Out · %d", n), xTitle, false)
+	g.box(x, y, w, h, xBorder, fmt.Sprintf(txtOutCount.String(), n), xTitle, false)
 	visible := h - 2
 	if n == 0 || visible <= 0 {
 		return
@@ -104,6 +110,15 @@ func drawOutList(g *xgrid, state game.GameState, x, y, w, h int, sc *expScene, h
 	}
 }
 
+// txtAboutMinutesOfIncome is said the same way on several screens, so it has one id.
+var txtAboutMinutesOfIncome = vibe.E("ui.expedition_field.fieldLines.10", "about %.0f min of income")
+
+// txtHaul is said the same way on several screens, so it has one id.
+var txtHaul = vibe.E("ui.expedition_field.fieldLines.09", "Haul")
+
+// txtSoldier is said the same way on several screens, so it has one id.
+var txtSoldier = vibe.E("ui.expedition_field.fieldLines.03", "soldier")
+
 // fieldLines is the field report for one party, wrapped to cw cells: its
 // title and tier, its soldiers, odds, progress and expected haul, then every
 // road event that has fired, newest first.
@@ -123,7 +138,7 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	add()
 
 	if a.Party > 0 {
-		parts := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.02", "Party"), 7), xDim}, {fmt.Sprintf("%s %s", textfmt.Number(float64(a.Party)), pluralize(vibe.Line("ui.expedition_field.fieldLines.03", "soldier"), a.Party)), xText}}
+		parts := []xseg{{padRight(vibe.Line("ui.expedition_field.fieldLines.02", "Party"), 7), xDim}, {fmt.Sprintf("%s %s", textfmt.Number(float64(a.Party)), pluralize(txtSoldier.String(), a.Party)), xText}}
 		if fell := a.Party - a.Soldiers; fell > 0 {
 			parts = append(parts, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.04", " · %s fell so far", textfmt.Number(float64(fell))), xBad})
 		}
@@ -144,7 +159,7 @@ func fieldLines(state game.GameState, a *game.ExpeditionSnapshot, cw int) []xlin
 	add(xseg{padRight(vibe.Line("ui.expedition_field.fieldLines.07", "Going"), 7), xDim}, xseg{expBar(progress, 10, "▰", "▱"), xGood},
 		xseg{vibe.Sprintf("ui.expedition_field.fieldLines.08", " %s out · %s to go", expDur(a.TotalTicks-a.TicksLeft, state), expDur(a.TicksLeft, state)), xText})
 
-	add(xseg{padRight(vibe.Line("ui.expedition_field.fieldLines.09", "Haul"), 7), xDim}, xseg{vibe.Sprintf("ui.expedition_field.fieldLines.10", "about %.0f min of income", a.HaulMinutes), xGood})
+	add(xseg{padRight(txtHaul.String(), 7), xDim}, xseg{fmt.Sprintf(txtAboutMinutesOfIncome.String(), a.HaulMinutes), xGood})
 	var pays []string
 	for _, k := range sortedKeysOf(a.SuccessHaul) {
 		pays = append(pays, "+"+textfmt.Number(a.SuccessHaul[k])+" "+resourceDisplayName(state, k))

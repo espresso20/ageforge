@@ -409,7 +409,7 @@ func multiplierSourceLabel(src string) string {
 	case "permanent":
 		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.05", "Permanent")
 	case "morale":
-		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.06", "Morale")
+		return txtMorale.String()
 	case "event":
 		return vibe.Line("ui.overlay_stats.multiplierSourceLabel.07", "Event")
 	case "diplomacy":

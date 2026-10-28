@@ -185,6 +185,9 @@ func familyTitle(key string) string {
 	return textfmt.Capitalize(strings.ReplaceAll(key, "_", " "))
 }
 
+// txtNext is said the same way on several screens, so it has one id.
+var txtNext = vibe.E("ui.badge_case.caseTabs.02", "Next")
+
 // caseTabs lists the tabs: All, each family in sight in the families' own
 // order, and Next. A family with nothing in sight has no tab and no
 // heading: its name alone would say what is ahead. Once the account may
@@ -227,7 +230,7 @@ func caseTabs(views []game.BadgeView, counted bool) []caseTab {
 	for _, key := range seen {
 		add(key)
 	}
-	return append(tabs, caseTab{key: caseTabNext, title: vibe.Line("ui.badge_case.caseTabs.02", "Next")})
+	return append(tabs, caseTab{key: caseTabNext, title: txtNext.String()})
 }
 
 // groupID is the id of a family's withheld badges.
@@ -519,6 +522,9 @@ func countText(progress, target float64) string {
 	return textfmt.Number(progress) + " / " + textfmt.Number(target)
 }
 
+// txtPts is said the same way on several screens, so it has one id.
+var txtPts = vibe.E("ui.badge_case.metaLine.06", " pts")
+
 // metaLine is a badge's tier, rarity and points on one line.
 func metaLine(it *caseItem) []seg {
 	v := it.v
@@ -537,7 +543,7 @@ func metaLine(it *caseItem) []seg {
 	if v.Rarity != "" {
 		out = append(out, dot, seg{text: textfmt.Capitalize(v.Rarity), st: tsLabel})
 	}
-	return append(out, dot, seg{text: wholeNumber(v.Points), st: tsHi}, seg{text: vibe.Line("ui.badge_case.metaLine.06", " pts"), st: tsDim})
+	return append(out, dot, seg{text: wholeNumber(v.Points), st: tsHi}, seg{text: txtPts.String(), st: tsDim})
 }
 
 // descText is what a badge says of itself, and what stands in for a
@@ -772,6 +778,9 @@ func renderCase(m *caseModel, v caseView, n int) *tGrid {
 	return out
 }
 
+// txtCountOfTotal is said the same way on several screens, so it has one id.
+var txtCountOfTotal = vibe.E("ui.badge_case.drawTitle.02", "%d of %d")
+
 // drawTitle writes the title bar: the counts, the score and the title it
 // holds.
 func (m *caseModel) drawTitle(out *tGrid) {
@@ -781,7 +790,7 @@ func (m *caseModel) drawTitle(out *tGrid) {
 		return
 	}
 	sum := m.sum
-	parts := []string{vibe.Sprintf("ui.badge_case.drawTitle.02", "%d of %d", sum.Earned, sum.Shown), hiddenText(sum.Hidden, sum), wholeNumber(sum.Points) + vibe.Line("ui.badge_case.drawTitle.03", " pts")}
+	parts := []string{fmt.Sprintf(txtCountOfTotal.String(), sum.Earned, sum.Shown), hiddenText(sum.Hidden, sum), wholeNumber(sum.Points) + txtPts.String()}
 	left := ""
 	for _, p := range parts {
 		if p != "" {
@@ -846,6 +855,9 @@ func (m *caseModel) drawTabs(out *tGrid, v caseView) {
 	}
 }
 
+// txtEarned is said the same way on several screens, so it has one id.
+var txtEarned = vibe.E("ui.badge_case.drawCounts.02", " earned")
+
 // drawCounts writes the line under the tabs: what the account holds by
 // rarity on All, a family's count on its tab.
 func (m *caseModel) drawCounts(out *tGrid, v caseView) {
@@ -873,7 +885,7 @@ func (m *caseModel) drawCounts(out *tGrid, v caseView) {
 	default:
 		for _, t := range m.tabs {
 			if t.key == v.tab {
-				line = []seg{{text: familyCount(t, m.sum, vibe.Line("ui.badge_case.drawCounts.02", " earned")), st: tsDim}}
+				line = []seg{{text: familyCount(t, m.sum, txtEarned.String()), st: tsDim}}
 			}
 		}
 	}
@@ -1035,6 +1047,9 @@ func (m *caseModel) statusLine(sel *caseItem, v caseView, room int) []seg {
 	return append(line, seg{text: "  " + count, st: tsHi})
 }
 
+// txtRunsCommandBelow is said the same way on several screens, so it has one id.
+var txtRunsCommandBelow = vibe.E("ui.badge_case.drawKeys.15", "runs the command below")
+
 // drawKeys writes the key bar: as many of the keys as the bar holds, and
 // always how to close.
 func (m *caseModel) drawKeys(out *tGrid, v caseView) {
@@ -1056,7 +1071,7 @@ func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	}
 	switch {
 	case v.prompt:
-		sets = [][][2]string{{{"Enter", vibe.Line("ui.badge_case.drawKeys.15", "runs the command below")}, esc}, {esc}}
+		sets = [][][2]string{{{"Enter", txtRunsCommandBelow.String()}, esc}, {esc}}
 	case v.card:
 		closes := [2]string{"Esc", vibe.Line("ui.badge_case.drawKeys.17", "closes the detail")}
 		sets = [][][2]string{{{"Enter", vibe.Line("ui.badge_case.drawKeys.19", "closes the detail")}, card, closes}, {card, closes}, {closes}, {esc}}
@@ -1082,6 +1097,9 @@ func (m *caseModel) drawKeys(out *tGrid, v caseView) {
 	}
 }
 
+// txtEscCloses is said the same way on several screens, so it has one id.
+var txtEscCloses = vibe.E("ui.badge_case.drawCard.01", " Esc closes ")
+
 // drawCard draws the selected badge's detail in place of the grid: the
 // badge at full size and everything the case says of it, nothing cut.
 func (m *caseModel) drawCard(out *tGrid, it *caseItem, v caseView, n int) {
@@ -1105,7 +1123,7 @@ func (m *caseModel) drawCard(out *tGrid, it *caseItem, v caseView, n int) {
 	}
 	ch = min(ch, bh)
 	x0, y0 := 1+(bw-cw)/2, caseTop+(bh-ch)/2
-	out.card(x0, y0, cw, ch, it.v.Name, vibe.Line("ui.badge_case.drawCard.01", " Esc closes "))
+	out.card(x0, y0, cw, ch, it.v.Name, txtEscCloses.String())
 	if art {
 		drawMedal(out, x0+3, y0+2+(ch-4-ah)/2, md, caseFrame(n, md.animated()), v.plain())
 	}

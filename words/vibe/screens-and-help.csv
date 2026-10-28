@@ -148,7 +148,6 @@ ui.advance_view.advRight.06,The squad
 ui.advance_view.advRight.07,Wonder flex
 ui.advance_view.advRight.08,The 
 ui.advance_view.advRight.09," pulls up with"
-ui.advance_view.advRight.10," pulls up with"
 ui.advance_view.advRight.11,Serving
 ui.advance_view.advWay.01,The opps
 ui.advance_view.advWay.02,"No opps left in the way, the road is clear."
@@ -217,7 +216,6 @@ ui.badge_case.renderCase.03,The badge shelf is empty rn.
 ui.badge_case.renderCase.04,"No counted badge on the radar yet, we are so early."
 ui.badge_case.drawTitle.01," BADGE DRIP"
 ui.badge_case.drawTitle.02,%d of %d bagged
-ui.badge_case.drawTitle.03," pts"
 ui.badge_case.drawTitle.04,%s · %s drops at %s 
 ui.badge_case.drawTitle.05,"  %d/%d · %s pts of aura"
 ui.badge_case.drawCounts.01,"The badges you are about to bag, closest at the top."
@@ -470,7 +468,6 @@ ui.dashboard.NewDashboard.01,Milestone Ws
 ui.dashboard.NewDashboard.02,Brain Grind
 ui.dashboard.NewDashboard.03,Badge Flex
 ui.dashboard.NewDashboard.04,Army Gang
-ui.dashboard.NewDashboard.05,Side Quests
 ui.dashboard.NewDashboard.06,Bread Routes
 ui.dashboard.NewDashboard.07,Faction Tea
 ui.dashboard.NewDashboard.08,Faction Drama
@@ -480,9 +477,7 @@ ui.dashboard.NewDashboard.11,The Crew
 ui.dashboard.NewDashboard.12,Log Tea
 ui.dashboard.NewDashboard.13,Epoch Era
 ui.dashboard.NewDashboard.14,Harbinger Lore
-ui.dashboard.NewDashboard.15,Build Plan Arc
 ui.dashboard.NewDashboard.16,Civ Lore
-ui.dashboard.NewDashboard.17,Builds
 ui.dashboard.NewDashboard.19,Map Vibes
 ui.dashboard.build.03,Glowed up an age: 
 ui.dashboard.build.04,"Big brain moment, research done: "
@@ -535,7 +530,6 @@ ui.ending_page.endViewFor.01,prestige point
 ui.ending_page.endViewFor.02,prestige points
 ui.ending_page.endViewFor.03,badge
 ui.ending_page.endViewFor.04,badges
-ui.ending_page.endViewFor.05," bagged"
 ui.expedition_field.drawFieldReport.01,Field tea
 ui.expedition_field.drawFieldReport.02,"Zero parties out, couch era. %d %s chilling in the Ready Room, waiting on you."
 ui.expedition_field.drawFieldReport.03,drop
@@ -590,14 +584,11 @@ ui.expedition_view.expLegend.04,Chill
 ui.expedition_view.expLegend.06,Goated
 ui.expedition_view.expLegend.07,a squad on tour
 ui.expedition_view.briefing.01,Squad
-ui.expedition_view.briefing.02,soldier
 ui.expedition_view.briefing.03,RNG
 ui.expedition_view.briefing.04,Out
 ui.expedition_view.briefing.05," and back, the full loop"
 ui.expedition_view.briefing.06,Wraps
 ui.expedition_view.briefing.07,in 
-ui.expedition_view.briefing.08,Loot
-ui.expedition_view.briefing.09,about %.0f min of bag
 ui.expedition_view.briefing.10,Damage
 ui.expedition_view.briefing.11,Damage
 ui.expedition_view.briefing.13,"If it flops, the cost is gone, a lot of the squad fall, and only a third of the haul makes it home."
@@ -605,11 +596,9 @@ ui.expedition_view.briefing.14,"Legendary: bigger bag, harder road. If it fails,
 ui.expedition_view.briefing.16," send the squad"
 ui.expedition_view.drawBriefing.01,Mission tea
 ui.expedition_view.drawBriefing.02,The board is empty rn. New offers drop in a few minutes.
-ui.expedition_view.drawBriefing.03,Mission tea
 ui.expedition_view.drawBriefing.04,"◈ Legendary, goated tier"
 ui.expedition_view.drawConfirm.02,Deadass send this 
 ui.expedition_view.drawConfirm.03,Squad
-ui.expedition_view.drawConfirm.04,soldier
 ui.expedition_view.drawConfirm.05,"  (%s stay home and touch grass)"
 ui.expedition_view.drawConfirm.06,Damage
 ui.expedition_view.drawConfirm.07,RNG
@@ -624,16 +613,10 @@ ui.expedition_view.returnLine.03," flopped. It kept "
 ui.expedition_view.returnLine.04," flopped."
 ui.expedition_view.returnLine.05," It hit %d road events, plot twists included."
 ui.expedition_view.returnLine.06," %s of %s %s did not make it, rip."
-ui.expedition_view.returnLine.07,soldier
 ui.expedition_view.returnLine.08," Every one of the %s %s made it home, we love to see it."
-ui.expedition_view.returnLine.09,soldier
-ui.expedition_view.drawOutCard.01,On tour · %d
 ui.expedition_view.drawOutCard.02,No squad out rn. The Ready Room has %d %s on deck.
-ui.expedition_view.drawOutCard.03,drop
 ui.expedition_view.drawOutCard.04,Squads on tour: 
 ui.expedition_view.drawOutCard.05," pulls up in "
-ui.expedition_view.drawOutCard.06," of "
-ui.expedition_view.drawOutCard.07,soldier
 ui.expedition_view.drawOutCard.08,%.0f%% RNG
 ui.expedition_view.drawOutCard.09," · bag %.0f min"
 ui.expedition_view.drawReport.01,Squads in the field
@@ -745,8 +728,6 @@ ui.input.cmdDump.18,Log tea dumped to %s: %d entries spilled
 ui.input.cmdGather.01," (max "
 ui.input.cmdGather.02," per use)"
 ui.input.cmdGather.03,"Hand gathering is food, wood or stone only, no exceptions bestie."
-ui.input.cmdGather.04," (max "
-ui.input.cmdGather.05," per use)"
 ui.input.cmdBuild.01,[gold]Builds on the menu:[-]
 ui.input.cmdBuild.02,"  %s [cyan]%s[-] (%d built) - Damage: %s %s"
 ui.input.cmdRecruit.03,. New workers spawn in idle; give them a job with 'assign <building>'.
@@ -812,7 +793,6 @@ ui.input.switchHint.01,Hop onto this alt any time with: account switch %s
 ui.input.switchHint.02,This alt is one hop away in the Accounts panel on the main menu.
 ui.input.accountHoldings.01,fit unlock
 ui.input.accountHoldings.02,fit unlocks
-ui.input.accountHoldings.03,badge
 ui.input.accountHoldings.04,badges
 ui.input.accountHoldings.05,glow-up
 ui.input.accountHoldings.06,glow-ups
@@ -870,10 +850,8 @@ ui.input.cmdMissionBoard.04,[yellow]On tour: %s (%s left)[-]
 ui.input.tierHeading.01,Big League
 ui.input.offerLine.01,"  %s %s · %.0f min · %.0f%% RNG · loot %s · damage %s"
 ui.input.offerLine.02," · beef · %d %s"
-ui.input.offerLine.03,soldier
 ui.input.offerLine.04," · chill · "
 ui.input.offerLine.05," · squad %d %s"
-ui.input.offerLine.06,soldier
 ui.input.cmdFestival.01,[yellow]The function is on cooldown.[-] Next one can drop in %s.
 ui.input.cmdFestival.02,"[gold]Throw a Cultural Festival, aka the function?[-]"
 ui.input.cmdFestival.03,"  Damage: [cyan]%s[-] (pockets: %s)"
@@ -886,7 +864,6 @@ ui.input.festivalCapLines.02," (peep stats).[-]"
 ui.input.cmdFestivalStatus.01,[gold]The Cultural Festival Function[-]
 ui.input.cmdFestivalStatus.02,"  Drop a chunk of culture and every building goes feral for a while."
 ui.input.cmdFestivalStatus.03,"  Damage: [cyan]%s[-]  (pockets: %s)"
-ui.input.cmdFestivalStatus.04,"  Buff: [green]+%.0f%%[-] to all production for [cyan]%s[-]."
 ui.input.cmdFestivalStatus.05,"  Vibe check: "
 ui.input.cmdFestivalStatus.06,"  Vibe check: [green]ready[-]. Type [cyan]festival confirm yes[-] and send it."
 ui.input.cmdFestivalStatus.07,"  Vibe check: [yellow]not enough culture yet, broke era.[-]"
@@ -1023,7 +1000,6 @@ ui.keystone.wonderBuildLine.02,"[green]✓ The bag is full, time to cook. Build 
 ui.keystone.keystoneMark.01,"  [gold]★ main character tech: %s[-]"
 ui.load_game.newLoadGameBrowser.01,[gold]═══ Run It Back ═══[-]
 ui.load_game.newLoadGameBrowser.02," Key, iykyk "
-ui.load_game.newLoadGameBrowser.03," Deets "
 ui.load_game.refresh.01," · saves are unreadable, sadge[-]"
 ui.load_game.refresh.02,[red]Reading saves fumbled: %v[-]
 ui.load_game.refresh.03,"[gray]This account has zero saved games, blank slate era.
@@ -1101,8 +1077,6 @@ ui.load_game.detailText.14,[gray]Locked in[-] %s
 ui.load_game.detailText.15,[gray]Spawned from: %s[-]
 ui.load_game.detailText.16,"[gray]Spawned from: %s (detached, solo era)[-]"
 ui.load_game.detailBadges.01,[gold]★ autopilot save[-]
-ui.load_game.detailBadges.02,[gold]⭐ goated[-]
-ui.load_game.detailBadges.03,"[red]⚠ modded, sus[-]"
 ui.load_game.relativeTime.02,literally just now
 ui.load_game.relativeTime.03,rn
 ui.load_game.relativeTime.04,"%dm ago, fresh"
@@ -1176,7 +1150,6 @@ ui.menu.buildViewWith.07,Any new drops?
 ui.menu.buildViewWith.08,Touch grass
 ui.menu.buildViewWith.09," · new update dropped (u)"
 ui.menu.buildViewWith.10," · new drop (u)"
-ui.menu.badgeExtras.01,%d of %d bagged
 ui.menu.continueGame.01,"'%s' would not open, sadge.
 
 %v"
@@ -1187,8 +1160,6 @@ ui.menu_page.renderForge.01," Plate I. Forge Era "
 ui.menu_page.renderForge.02," Forgecore "
 ui.menu_page.renderForge.03,A LORE DUMP OF 
 ui.menu_page.renderForge.04," AGES"
-ui.menu_page.renderForge.05,A LORE DUMP OF 
-ui.menu_page.renderForge.06," AGES"
 ui.menu_page.renderForge.07,campfire origin story
 ui.menu_page.renderForge.08,campfire origin story · the 
 ui.menu_page.renderForge.09," edition, major glow-up"
@@ -1197,7 +1168,6 @@ ui.menu_page.renderForge.11," TABLE OF LORE "
 ui.menu_page.renderForge.12,the 
 ui.menu_page.renderForge.13," edition · "
 ui.menu_page.renderCompact.01,AGEFORGE
-ui.menu_scene.menuWord.01,AGEFORGE
 ui.menu_update.showUpdateCheck.01,Checking for new drops...
 ui.menu_update.showUpdateCheck.02,"Update check flopped:
 
@@ -1206,7 +1176,6 @@ ui.menu_update.showUpdateCheck.03,"You are fully up to date, no notes.
 
 "
 ui.menu_update.showUpdateCheck.04," is the latest drop."
-ui.menu_update.showUpdateMsg.01,Say less
 ui.menu_update.showUpdateConfirm.01,"  ✦  New update just dropped  ✦
 
   Latest:   %s
@@ -1238,11 +1207,9 @@ ui.overlay_buildings.buildingsProvider.02," [gray]Every age so far, full lore. D
 "
 ui.overlay_buildings.buildingsProvider.03,"[gold]── %s (current era) ──[-]
 "
-ui.overlay_buildings.buildingsProvider.04,"   Damage: "
 ui.overlay_buildings.buildingsProvider.05," [gray](OG legacy)[-]"
 ui.overlay_buildings.buildingsProvider.06," [cyan]squad: %d/%d[-]"
 ui.overlay_buildings.buildingsProvider.07," [gray]squad cap: %d each[-]"
-ui.overlay_buildings.buildingsProvider.08,"   Damage: "
 ui.overlay_epoch.epochProvider.01,"[gold]═══ Epoch Lore ═══[-]
 
 "
@@ -1354,7 +1321,6 @@ ui.overlay_factions.writeLiveFactionEffects.02,Ws %d/%d · Ls %d/%d
 ui.overlay_factions.writeLiveFactionEffects.04," [green]↳ %d workers borrowed from %s (%s), collab era[-]
 "
 ui.overlay_factions.writeLiveFactionEffects.05,borrowed squad
-ui.overlay_factions.writeLiveFactionEffects.06,worker
 ui.overlay_factions.writeLiveFactionEffects.07,workers
 ui.overlay_factions.writeLiveFactionEffects.08," [gray]No Ws or Ls in play.[-]
 "
@@ -1449,7 +1415,6 @@ ui.overlay_harbinger.harbingerAbsentText.07,. Stack faith and the odds get nerfe
 ui.overlay_harbinger.harbingerAbsentText.08,The Last Passage has pulled up. Type 'catastrophe' and make the call.
 ui.overlay_harbinger.harbingerAbsentText.09," Final epoch, the endgame: its passage is prestige, and no harbinger has pulled up.
 "
-ui.overlay_harbinger.harbingerAbsentText.10," Faith aura: "
 ui.overlay_harbinger.harbingerAbsentText.11,".
  More faith nerfs the odds of a doom striking, and faith and culture foot
  the bill for Appease if a harbinger pulls up."
@@ -1475,7 +1440,6 @@ ui.overlay_harbinger.harbingerPresentText.10," Odds receipts: %s
 ui.overlay_harbinger.harbingerPresentText.11," Damage level: %s
 "
 ui.overlay_harbinger.harbingerPresentText.12," The omens refuse to drop numbers. Vibes are all you have to go on."
-ui.overlay_harbinger.harbingerPresentText.13," Faith aura: "
 ui.overlay_harbinger.harbingerPresentText.14,". More faith, more nerfed odds."
 ui.overlay_harbinger.harbingerPresentText.15,You invited it. The Last Passage pulls up when you prestige.
 ui.overlay_harbinger.harbingerPresentText.16,You invited it. The catastrophe pulls up exactly when fate scheduled it.
@@ -1500,7 +1464,6 @@ ui.overlay_harbinger.harbingerPresentText.32,Brace
 ui.overlay_harbinger.harbingerPresentText.33,Invite (double tap)
 ui.overlay_harbinger.harbingerPresentText.35,Bail
 ui.overlay_harbinger.harbingerPresentText.36," Nothing here expires, and the price stays the same in every age of the epoch, no inflation era."
-ui.overlay_harbinger.harbingerCostLine.01,Gatekept: 
 ui.overlay_harbinger.harbingerCostLine.02,Too broke to pay for anything yet.
 ui.overlay_harbinger.harbingerCostLine.03," (bag has "
 ui.overlay_harbinger.harbingerCostLine.04,"     Next level damage: "
@@ -1694,7 +1657,6 @@ ui.overlay_military.writeExpeditionGroup.05,"   Damage: %s
 "
 ui.overlay_military.writeExpeditionGroup.06,"   [green]Squad ready: fire it off from the Expeditions panel[-]
 "
-ui.overlay_military.expeditionHaul.01,about %.0f min of bag
 ui.overlay_military.writeGarrison.01," [gold]Opps:[-]      %s (raids in the %s)
 "
 ui.overlay_military.writeGarrison.02," [yellow]No garrison, so raids hit you raw, zero plot armor.[-]
@@ -1710,12 +1672,10 @@ ui.overlay_military.writeGarrison.06,"   [gray]Double the garrison: about %.0f%%
 ui.overlay_military.writeGarrison.07," [gold]Clutch saves this run:[-] %s
 "
 ui.overlay_military.garrisonSavedSummary.01,building
-ui.overlay_military.garrisonSavedSummary.02,worker
 ui.overlay_military.garrisonSavedSummary.03," [gray](%d %s tanked)[-]"
 ui.overlay_military.garrisonSavedSummary.04,raid
 ui.overlay_plan.handleKey.01,"Zero items queued, nothing to cook."
 ui.overlay_plan.handleKey.02,"Nothing to yeet, zero items in the plan."
-ui.overlay_plan.handleKey.03,Yeeted 
 ui.overlay_plan.handleKey.04,The plan is a blank slate rn.
 ui.overlay_plan.handleKey.05,Smash C again to nuke the whole plan.
 ui.overlay_plan.handleKey.06,"Plan nuked, blank slate."
@@ -1897,7 +1857,6 @@ ui.overlay_stats.multiplierSourceLabel.02,Big brain
 ui.overlay_stats.multiplierSourceLabel.03,Glow-up
 ui.overlay_stats.multiplierSourceLabel.04,Wonder flex
 ui.overlay_stats.multiplierSourceLabel.05,Rent free
-ui.overlay_stats.multiplierSourceLabel.06,Vibes
 ui.overlay_stats.multiplierSourceLabel.07,Plot twist
 ui.overlay_stats.multiplierSourceLabel.08,Civ besties
 ui.overlay_stats.multiplierSourceLabel.09,Legacy buff
@@ -1923,8 +1882,6 @@ ui.overlay_trade.tradeProvider.07,"   [red]Paused: %s imports are blockaded, the
 ui.overlay_trade.tradeProvider.08,"   %s left in this cycle  [gray](%s secured)[-]
 
 "
-ui.overlay_trade.tradeProvider.09,cycle
-ui.overlay_trade.tradeProvider.10,cycles
 ui.overlay_trade.tradeProvider.11," [gold]Routes up for grabs:[-]
 
 "
@@ -1999,9 +1956,7 @@ ui.panels_table.panelGroups.20,"the math, mathing"
 ui.panels_table.panelGroups.21,the full tea
 ui.panels_table.panelGroups.22,how to vibe
 ui.people_kinds.boxLine.01," on tour"
-ui.people_kinds.boxLine.02," on tour"
 ui.people_rich.peopleRichTitle.01," The Crew "
-ui.people_rich.peopleRichTitle.02," Squad %s/%s "
 ui.people_rich.peopleRichHeld.01,Gatekept by: 
 ui.people_rich.peopleRichHeld.02,every crib is packed
 ui.people_rich.peopleRichHeld.03,%s cribs empty
@@ -2032,7 +1987,6 @@ ui.people_tabs.card.07,"jobs first, no NPCs"
 ui.people_tabs.card.08,glow up with homes
 ui.people_tabs.card.09,peep Work
 ui.people_tabs.card.10,none on tour
-ui.people_tabs.card.11," on tour"
 ui.people_tabs.card.12," locked in on duty"
 ui.people_tabs.card.13,shield 
 ui.people_tabs.card.14,peep Army
@@ -2089,7 +2043,6 @@ ui.people_tabs.scholars.11," a tick, the clock"
 ui.people_tabs.scholars.12,"%s: %s big braining, %s in mentor mode"
 ui.people_tabs.scholars.13,Mentor mode
 ui.people_tabs.scholars.14," buff to what workers make"
-ui.people_tabs.scholars.15,Up next
 ui.people_tabs.scholars.16,Research speedrun tips
 ui.people_tabs.scholars.17,Build knowledge buildings: each one spawns with its 
 ui.people_tabs.scholars.18,Research techs that buff your 
@@ -2106,7 +2059,6 @@ ui.people_view.peopleKeys.04,Bounce from the panel
 ui.people_view.renderPeople.01,The Crew · 
 ui.people_view.renderPeople.02,Window too smol for the People panel. Esc closes it.
 ui.people_view.peopleHeader.04,Squad 
-ui.people_view.peopleHeader.05," of "
 ui.people_view.peopleHeader.06," cribs"
 ui.plan_optimize.planOptimizeText.01,"Nothing to reshuffle: none of the buildings in the plan changes how fast the town grows, so the plan stays, no notes."
 ui.plan_optimize.planOptimizeText.02,"Reshuffled the plan for faster growth, speedrun mode."
@@ -2116,8 +2068,6 @@ ui.plan_optimize.planOptimizeText.05,"
 Only the first %s copies got reshuffled; the other %s keep their spots after them, no line cutting fr."
 ui.plan_optimize.planOptimizeText.06,"
 %s stay on hold until the town can afford them, broke era."
-ui.plan_optimize.planOptimizeText.07,dupe
-ui.plan_optimize.planOptimizeText.08,dupes
 ui.plan_optimize.planOptimizeTimes.01," The last building should drop in about %s."
 ui.plan_optimize.planOptimizeTimes.02," The last building should drop in about %s instead of %s, speedrun."
 ui.prestige_cue_notice.prestigeCueText.01,Prestige era?
@@ -2166,7 +2116,6 @@ ui.research_tree.renderTree.09,"%d big braining, %d mentoring"
 ui.research_tree.renderTree.10," rn"
 ui.research_tree.renderTree.13,next one ready to cook
 ui.research_tree.renderTree.17,your era rn
-ui.research_tree.renderTree.23,sends the command below
 ui.research_tree.renderTree.26,"follows the card, say less"
 ui.research_tree.renderTree.28,yeets the card shut
 ui.research_tree.beyondLine.01,┄┄┄ %s for later ages ┄┄┄
@@ -2175,9 +2124,7 @@ ui.research_tree.beyondLine.03,more techs are loading
 ui.research_tree.statusLine.01," Zero techs on the radar yet."
 ui.research_tree.statusLine.03,"plan slot %d, on deck"
 ui.research_tree.statusLine.04,Enter pulls up its card
-ui.research_tree.opensText.01,the 
 ui.research_tree.opensText.02,drops 
-ui.research_tree.opensText.03,the 
 ui.research_tree.opensText.04," is gatekept behind it"
 ui.research_tree.joinAnd.01," and "
 ui.research_tree.cardSentences.01," buffs you with "
@@ -2185,7 +2132,6 @@ ui.research_tree.cardSentences.02,"With it in the bag, "
 ui.research_tree.cardSentences.03,It 
 ui.research_tree.cardSentences.04,It is this age's main character tech: the 
 ui.research_tree.cardSentences.05," is gatekept behind it."
-ui.research_tree.cardSentences.06,the 
 ui.research_tree.cardSentences.07,It drops 
 ui.research_tree.cardSentences.08,"You already own this, flex."
 ui.research_tree.cardSentences.09,It is cooking: %s done. %s
@@ -2213,7 +2159,6 @@ ui.research_tree.neededFirst.01,", its prereq"
 ui.research_tree.neededFirst.02,"the %d techs gatekeeping it (%s, then %s)"
 ui.research_tree.neededFirst.03,the %d techs gatekeeping it (%s and %d more)
 ui.research_tree.kindWords.03,on the main quest line
-ui.research_tree.drawCard.01," Esc to dip "
 ui.resources_box.cultureRow.01,[gray]clocked at 
 ui.resources_box.cultureRow.02,✦ Culture maxed out
 ui.resources_box.cultureRow.03,✦ maxed
@@ -2271,10 +2216,6 @@ ui.tab_economy.cultureThresholdLabels.04,+20% big brain speed
 ui.tab_economy.cultureThresholdLabels.05,"+25% big brain speed, culture events unlocked"
 ui.tab_economy.cultureThresholdLabels.06,+30% big brain speed
 ui.tab_economy.cultureThresholdLabels.07,+big brain speed
-ui.tab_economy.cultureThresholdLabels.08,+big brain speed
-ui.tab_economy.cultureThresholdLabels.09,+big brain speed
-ui.tab_economy.cultureThresholdLabels.10,+big brain speed
-ui.tab_economy.cultureThresholdLabels.11,+big brain speed
 ui.tab_economy.NewEconomyTab.01," The Bag "
 ui.tab_economy.NewEconomyTab.02," Builds "
 ui.tab_economy.NewEconomyTab.03," Currently Cooking "
@@ -2287,7 +2228,6 @@ ui.tab_economy.layoutConstruction.09," %d cooking"
 ui.tab_economy.layoutConstruction.10," +%d more cooking"
 ui.tab_economy.buildingEntries.01,[yellow]MAXED[-]
 ui.tab_economy.buildingEntries.02,"[yellow]Maxed out on this building, no more slots.[-]"
-ui.tab_economy.buildingEntries.03,"   Damage: "
 ui.tab_economy.buildingEntries.04,"   [green]Grinders[-] "
 ui.tab_economy.buildingEntries.05,[gold]↑ Glow-up ready: %s. Type: upgrade %s[-]
 ui.tab_economy.buildingEntries.06," [gray]Zero buildings unlocked, so early[-]"
@@ -2313,7 +2253,6 @@ ui.theme_picker.swatchRoles.09,The pick
 ui.theme_picker.CreateThemePickerPage.01,[gold]═══ Fit Check ═══[-]
 ui.theme_picker.CreateThemePickerPage.02,"[gray]Live preview, no cap. Pick a fit that reads well in your terminal; light or dark, every theme paints its own background.[-]"
 ui.theme_picker.CreateThemePickerPage.03," The Closet "
-ui.theme_picker.CreateThemePickerPage.04," Deets "
 ui.theme_picker.themeRowLabel.01," (wearing rn)[-]"
 ui.theme_picker.themeRowLabel.02,"  [cyan]accessible, green flag[-]"
 ui.theme_picker.themeRowLabel.03,"  [gray]🔒 gatekept[-]"
@@ -2326,8 +2265,6 @@ ui.theme_picker.themeFooterBar.01,Sneak peek
 ui.theme_picker.themeFooterBar.03,Lock it in
 ui.theme_picker.themeFooterBar.05,Nah
 ui.theme_picker.drawThemeSample.01,Fit check: 
-ui.theme_picker.drawThemeSample.02," The Bag "
-ui.theme_picker.drawThemeSample.03,Snacks 
 ui.theme_picker.drawThemeSample.04,Sticks 
 ui.theme_picker.drawThemeSample.05,Yap text 
 ui.theme_picker.drawThemeSample.06,and a lowkey hint

@@ -40,7 +40,7 @@ func planOptimizeText(res game.PlanOptimizeResult) string {
 		fmt.Fprint(&sb, vibe.Sprintf("ui.plan_optimize.planOptimizeText.05", "\nOnly the first %s copies were reordered; the other %s keep their order after them.", textfmt.Int(game.PlanOptimizeCopies), textfmt.Int(res.Beyond)))
 	}
 	if res.Waiting > 0 {
-		fmt.Fprint(&sb, vibe.Sprintf("ui.plan_optimize.planOptimizeText.06", "\n%s cannot start until the town makes what they cost.", textfmt.Count(res.Waiting, vibe.Line("ui.plan_optimize.planOptimizeText.07", "copy"), vibe.Line("ui.plan_optimize.planOptimizeText.08", "copies"))))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.plan_optimize.planOptimizeText.06", "\n%s cannot start until the town makes what they cost.", textfmt.Count(res.Waiting, txtCopy.String(), txtCopies.String())))
 	}
 	return strings.TrimRight(sb.String(), "\n")
 }

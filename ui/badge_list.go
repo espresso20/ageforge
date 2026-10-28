@@ -18,6 +18,9 @@ import (
 // silhouette has no name or description in it, so nothing here decides
 // what to hide.
 
+// txtExpeditions is said the same way on several screens, so it has one id.
+var txtExpeditions = vibe.E("ui.badge_list.badgeFamilyTitles.19", "Expeditions")
+
 // badgeFamilyTitles are the headings of the badge families, in the order
 // they list. A family not named here lists last, under its own key.
 var badgeFamilyTitles = []struct {
@@ -35,7 +38,7 @@ var badgeFamilyTitles = []struct {
 	{"civ", vibe.E("ui.badge_list.badgeFamilyTitles.15", "Civilizations")},
 	{"harbinger", vibe.E("ui.badge_list.badgeFamilyTitles.16", "Harbingers")},
 	{"doom", vibe.E("ui.badge_list.badgeFamilyTitles.18", "Catastrophes")},
-	{"expedition", vibe.E("ui.badge_list.badgeFamilyTitles.19", "Expeditions")},
+	{"expedition", txtExpeditions},
 	{"awakening", vibe.E("ui.badge_list.badgeFamilyTitles.21", "Awakenings")},
 	{"ladder", vibe.E("ui.badge_list.badgeFamilyTitles.23", "Ladders")},
 	{"theme", vibe.E("ui.badge_list.badgeFamilyTitles.24", "Themes")},
