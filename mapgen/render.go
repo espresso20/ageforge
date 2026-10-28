@@ -21,6 +21,7 @@ type frame struct {
 	fields *Fields
 	g      *Grid
 	anim   int
+	visit  int // the frame the rare visitor is drawn at; negative: none
 	night  int // 0 day .. 256 full night
 	placed []placed
 	filler []int // lots given to ordinary houses
@@ -95,7 +96,7 @@ func (f *frame) inView(window Rect) int {
 func (gen *Generator) frame(m *mapmodel.Model, anim int) *frame {
 	gen.sync(m)
 	st := styleFor(func(k string) int { return m.Catalog.AgeIdx[k] }, m.AgeIdx)
-	f := &frame{m: m, st: st, g: newGrid(worldW, worldH), anim: anim,
+	f := &frame{m: m, st: st, g: newGrid(worldW, worldH), anim: anim, visit: anim,
 		night: int(m.Clock.Night * 256), roadAt: make([]int8, worldW*worldH), busy: make([]bool, worldW*worldH)}
 	f.plan, f.fields = gen.plans[st.Scale], gen.fields
 	f.g.Wall, f.g.Tint = st.Wall, st.Night.Tint
@@ -114,6 +115,7 @@ func (f *frame) draw() {
 	f.paintAgents()
 	f.paintBodies()
 	f.paintLight()
+	f.paintVisitor()
 }
 
 // sync makes the land and plans match the model's seed and catalogue.

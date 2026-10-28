@@ -36,6 +36,8 @@ func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 		return describeWonder(m, th.Key)
 	case mapgen.KindAmbient:
 		return Inspection{Title: mapmodel.LineageName(mapmodel.LinHousing)}
+	case mapgen.KindVisitor:
+		return describeVisitor(th)
 	case mapgen.KindRoad, mapgen.KindAgent:
 		return describeRoad(m, th.Key)
 	case mapgen.KindTerrain:

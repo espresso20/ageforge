@@ -180,3 +180,11 @@ ui.mapstyle.roguelike.inspect.describeWonder.04,% of its cost stashed
 ui.mapstyle.roguelike.inspect.describeWonder.05,done since your last peek
 ui.mapstyle.roguelike.view.zoomNames.01,BIG VIEW
 ui.mapstyle.roguelike.view.zoomNames.02,TOWN VIBES
+ui.mapstyle.roguelike.visitor.saucerLines.01,"Definitely not from around here, sus."
+ui.mapstyle.roguelike.visitor.saucerLines.02,"It hums, then it ghosts."
+ui.mapstyle.roguelike.visitor.saucerLines.03,"Lights in the sky, and the group chat will say pics or it did not happen."
+ui.mapstyle.roguelike.visitor.walkerLines.01,"It waves, then it logs off."
+ui.mapstyle.roguelike.visitor.walkerLines.02,"A tiny visitor far from home, on a solo side quest."
+ui.mapstyle.roguelike.visitor.walkerLines.03,"Lost and unbothered, it is in its wander era."
+ui.mapstyle.roguelike.visitor.visitorAt.01,Sus craft
+ui.mapstyle.roguelike.visitor.visitorAt.02,Mystery mutual

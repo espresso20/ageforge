@@ -48,6 +48,7 @@ const (
 	HRed
 	HWhite
 	HAmber
+	HFresh // what is new or has just arrived
 	// dark falling
 	HNight
 	// space

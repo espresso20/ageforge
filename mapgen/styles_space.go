@@ -6,7 +6,8 @@ package mapgen
 
 // orbitEra: the home planet's disc with its rings of stations.
 var orbitEra = AgeStyle{
-	Scale: Orbit,
+	Scale:   Orbit,
+	Visitor: byShip,
 	// the planet's land and sea: the world's own biomes, seen from afar
 	Land: [numBiomes]Look{
 		Deep:     {Glyphs: "≈~", Fg: P(HWater, 140), Bg: P(HSea, 255), Dense: 35},
@@ -68,7 +69,8 @@ var orbitEra = AgeStyle{
 
 // systemEra: the sun, the planets on their orbits, lanes between them.
 var systemEra = AgeStyle{
-	Scale: System,
+	Scale:   System,
+	Visitor: byShip,
 	Roads: [3]RoadLook{
 		{Joins: joinsRounded, Fg: P(HEngine, 235), Bg: P(HVoid, 255)},
 		{Joins: joinsLight, Fg: P(HOrbit, 255), Bg: P(HVoid, 255)},
@@ -100,7 +102,8 @@ var systemEra = AgeStyle{
 // starsEra: the star map, systems joined by routes in the glow of the
 // people's reach.
 var starsEra = AgeStyle{
-	Scale: Stars,
+	Scale:   Stars,
+	Visitor: byShip,
 	Roads: [3]RoadLook{
 		{Joins: "·∙", Fg: P(HEngine, 215), Bg: P(HNebula, 30)},
 		{Joins: "·∙", Fg: P(HEngine, 190), Bg: P(HNebula, 30)},

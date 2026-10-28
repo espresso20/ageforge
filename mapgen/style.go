@@ -81,6 +81,14 @@ type AgentKind struct {
 	Slow   int
 }
 
+// Visitor is how the rare visitor looks: the glyphs it is drawn with (four for
+// the four ways it heads, east, west, south, north; one serves every way) in a
+// paint.
+type Visitor struct {
+	Glyphs string
+	Fg     Paint
+}
+
 // Night is how dark falls: colours slide toward the Tint hue by Dim (of 256)
 // at full night, lit windows and lamps glow in the Light hue.
 type Night struct {
@@ -119,6 +127,9 @@ type AgeStyle struct {
 	Scatter []Scatter
 	Agents  []AgentKind
 	Night   Night
+	// Visitor is who arrives now and then: a traveller on foot on the land,
+	// a ship in space.
+	Visitor Visitor
 	// Tones dresses wonder templates: the material letter of a template
 	// cell, in this age's colours.
 	Tones map[byte]Paint

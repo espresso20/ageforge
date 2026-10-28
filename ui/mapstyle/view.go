@@ -71,8 +71,9 @@ type view struct {
 
 // sceneKey says which frame a scene was drawn for.
 type sceneKey struct {
-	m    *mapmodel.Model
-	anim int
+	m     *mapmodel.Model
+	anim  int
+	visit int
 }
 
 // New makes a map view drawn by the engine.
@@ -85,9 +86,9 @@ func (v *view) scene(f Frame) *mapgen.Scene {
 	if f.Model == nil {
 		return nil
 	}
-	if k := (sceneKey{f.Model, f.Anim}); v.sc == nil || k != v.scKey {
+	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame()}); v.sc == nil || k != v.scKey {
 		shared.Lock()
-		v.sc, v.scKey = shared.gen.Draw(f.Model, f.Anim), k
+		v.sc, v.scKey = shared.gen.DrawAt(f.Model, f.Anim, k.visit), k
 		shared.Unlock()
 	}
 	if !v.placed || v.seed != f.Model.Seed {

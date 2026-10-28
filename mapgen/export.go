@@ -77,6 +77,7 @@ func Runes() []rune {
 		for _, a := range st.Agents {
 			add(a.Glyphs)
 		}
+		add(st.Visitor.Glyphs)
 		add(st.Windows)
 	}
 	for _, tpl := range templates {
@@ -88,6 +89,7 @@ func Runes() []rune {
 	for _, r := range lineSigns {
 		seen[r] = true
 	}
+	add(saucer.Glyphs)
 	add(joinsLight + joinsHeavy + joinsDouble + joinsRounded + "★∙")
 	delete(seen, ' ')
 	return slices.Sorted(maps.Keys(seen))
