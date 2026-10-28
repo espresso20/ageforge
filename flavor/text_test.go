@@ -91,6 +91,9 @@ func TestTextFilesAreHeldToEachOther(t *testing.T) {
 		"a pool of another catalog": {func(f fstest.MapFS) {
 			f["exp_fail.txt"] = &fstest.MapFile{Data: []byte("== war_raid_any\nplain kit | A sentence\n")}
 		}, "does not start with exp_fail_"},
+		"two pools with one set of row ids": {func(f fstest.MapFS) {
+			f["exp_fail.txt"] = &fstest.MapFile{Data: []byte("== exp_fail_iron_age\nplain kit | A sentence\n== exp_fail_age_iron_age ages=iron_age\nplain kit | Another\n")}
+		}, "has the same row ids as exp_fail_iron_age"},
 		"a file with no pool": {func(f fstest.MapFS) {
 			f["exp_fail.txt"] = &fstest.MapFile{Data: []byte("# nothing here\n")}
 		}, "exp_fail.txt has no pools"},

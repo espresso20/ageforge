@@ -5,6 +5,7 @@ import (
 	"go/format"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -14,20 +15,28 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// partialTree copies a few real source files, and the lint tests the copy
-// rules are read from, into a temporary tree the import can write to.
+// partialTree copies a few real source files, the flavor and save name text
+// files, and the lint tests the copy rules are read from, into a temporary
+// tree the import can write to.
 func partialTree(t *testing.T) string {
 	t.Helper()
 	src, dst := realRoot(t), t.TempDir()
-	for _, rel := range []string{
+	rels := []string{
 		"go.mod",
 		"config/research.go", "config/badge_catalog.go",
 		"ui/accounts_panel.go",
-		"flavor/catalog.go", "flavor/skeleton.go", "flavor/harbinger.go", "flavor/catalog_exp_fail.go",
 		"ui/copy_guard_test.go", "ui/stale_copy_test.go", "ui/docs_lint_test.go",
 		"config/effect_text_test.go", "config/event_flavor_test.go",
 		"flavor/flavor_test.go", "flavor/generator_test.go",
-	} {
+	}
+	catalogs, err := filepath.Glob(filepath.Join(src, filepath.FromSlash(flavorFolder), "*.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, catalog := range catalogs {
+		rels = append(rels, path.Join(flavorFolder, filepath.Base(catalog)))
+	}
+	for _, rel := range rels {
 		data, err := os.ReadFile(filepath.Join(src, filepath.FromSlash(rel)))
 		if err != nil {
 			t.Fatal(err)
@@ -94,7 +103,9 @@ func beforeTag(text, extra string) string {
 }
 
 // TestImportRoundTrip: on a copy of a few real files, a rewrite lands in the
-// literal it was written against and in no other token of any file; the
+// literal it was written against and in no other token of any file; a rewrite
+// of a flavor sentence, a word-list entry or a save name word lands in its line
+// of the text file and in no other line, and the next read finds it there; the
 // literal the code compares a button's label with moves with the label; a
 // second import changes nothing; the ledger and status agree.
 func TestImportRoundTrip(t *testing.T) {
@@ -107,27 +118,33 @@ func TestImportRoundTrip(t *testing.T) {
 	if err := export(c, dir, io.Discard); err != nil {
 		t.Fatal(err)
 	}
-	files := []string{"config/research.go", "config/badge_catalog.go", "ui/accounts_panel.go", "flavor/catalog_exp_fail.go"}
-	before := sources(t, root, files...)
+	files := []string{"config/research.go", "config/badge_catalog.go", "ui/accounts_panel.go"}
+	textFiles := []string{path.Join(flavorFolder, "exp_fail.txt")}
+	before := sources(t, root, append(files, textFiles...)...)
 
 	desc := c.byID["tech.calendar.description"]
 	title := pick(t, c, "a tagged interface string", func(r *row) bool { return r.u.f.rel == "ui/accounts_panel.go" && tagged(r) })
 	label := pick(t, c, "a label the code matches on", func(r *row) bool { return len(r.twins) == 1 && plain(r) })
 	line := c.byID["flavor.expedition_fail.any.001"]
-	if desc == nil || line == nil {
-		t.Fatal("the partial tree is missing the tech description or the flavor line")
+	word := c.byID["flavor.words.exp_fail_kit.001"]
+	if desc == nil || line == nil || word == nil {
+		t.Fatal("the partial tree is missing the tech description, the flavor line or the word-list entry")
 	}
 	yours := map[string]string{
 		desc.id:  desc.current + " Every year.",
 		title.id: beforeTag(title.current, " here"),
 		label.id: label.current + " now",
 		line.id:  line.current + " again",
+		word.id:  word.current + " again",
 	}
 	// What should change, as source text: each row's literal, and for the
 	// label the comparison that reads it.
 	wantMoved := map[[2]string]int{}
 	for id, text := range yours {
 		r := c.byID[id]
+		if r.u.f.text {
+			continue
+		}
 		was := string(before[r.u.f.rel][r.u.start:r.u.end])
 		wantMoved[[2]string{was, quote(r.u, text)}] += 1 + len(r.twins)
 	}
@@ -137,11 +154,23 @@ func TestImportRoundTrip(t *testing.T) {
 	if err := importSheets(root, dir, importOptions{}, &out); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "applied 4, refused 0, unchanged 0") {
+	if !strings.Contains(out.String(), "applied 5, refused 0, unchanged 0") {
 		t.Fatalf("the import said:\n%s", out.String())
 	}
 
-	after := sources(t, root, files...)
+	after := sources(t, root, append(files, textFiles...)...)
+	rewritten := map[string]map[*row]string{}
+	for id, text := range yours {
+		if r := c.byID[id]; r.u.f.text {
+			if rewritten[r.u.f.rel] == nil {
+				rewritten[r.u.f.rel] = map[*row]string{}
+			}
+			rewritten[r.u.f.rel][r] = text
+		}
+	}
+	for _, rel := range textFiles {
+		checkLinesRewritten(t, before[rel], after[rel], rewritten[rel])
+	}
 	moved := map[[2]string]int{}
 	for _, rel := range files {
 		if formatted, err := format.Source(after[rel]); err != nil || !bytes.Equal(formatted, after[rel]) {
@@ -200,10 +229,10 @@ func TestImportRoundTrip(t *testing.T) {
 	if err := importSheets(root, dir, importOptions{}, &out); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "applied 0, refused 0, unchanged 4") {
+	if !strings.Contains(out.String(), "applied 0, refused 0, unchanged 5") {
 		t.Errorf("the second import said:\n%s", out.String())
 	}
-	for rel, data := range sources(t, root, files...) {
+	for rel, data := range sources(t, root, append(files, textFiles...)...) {
 		if !bytes.Equal(data, after[rel]) {
 			t.Errorf("%s changed on the second import", rel)
 		}
@@ -221,6 +250,26 @@ func TestImportRoundTrip(t *testing.T) {
 	}
 	if _, total, _ := count(c3, led); total.changed != 1 || total.doneLines != len(yours)-1 {
 		t.Errorf("after a hand edit: %d changed since, %d rewritten; want 1 and %d", total.changed, total.doneLines, len(yours)-1)
+	}
+}
+
+// checkLinesRewritten holds the rewrites of a text file to their lines: the
+// file has the same lines but those, and each keeps what came before its text.
+func checkLinesRewritten(t *testing.T, before, after []byte, rewritten map[*row]string) {
+	t.Helper()
+	was, now := strings.Split(string(before), "\n"), strings.Split(string(after), "\n")
+	want := append([]string(nil), was...)
+	for r, text := range rewritten {
+		line := r.u.line - 1
+		want[line] = strings.TrimSuffix(was[line], r.current) + text
+	}
+	if len(now) != len(want) {
+		t.Fatalf("%d lines after the import, %d before", len(now), len(want))
+	}
+	for i := range want {
+		if now[i] != want[i] {
+			t.Errorf("line %d reads %q after the import, want %q", i+1, now[i], want[i])
+		}
 	}
 }
 
@@ -356,6 +405,8 @@ func TestImportRefusals(t *testing.T) {
 		{"restating", c.record(sentence, "Everybody said "+c.rules.restating[0]+" and went home early", ""), "repeats what the log line above it already said"},
 		{"word-list entry", c.record(entry, upper, ""), "starts with a capital letter"},
 		{"save name", c.record(saveWord, "O'Brien", ""), "letters and single spaces"},
+		{"line break in a text file", c.record(sentence, sentence.current+"\nand then the rest", ""), "has a line break"},
+		{"word read as a comment", c.record(entry, "#"+entry.current, ""), "reads as a comment or a heading"},
 	}
 	dir := t.TempDir()
 	good := c.byID["tech.language.description"]

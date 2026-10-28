@@ -116,8 +116,12 @@ func read(root string) (*catalog, error) {
 		return nil, err
 	}
 	c := &catalog{m: m, w: sharedWorld(), byID: map[string]*row{}, rules: rules}
-	fl := newFlavorReader(m)
-	c.fl = fl
+	c.fl = newFlavorReader()
+	flavorRows, err := c.fl.read(c)
+	if err != nil {
+		return nil, err
+	}
+	c.rows = append(c.rows, flavorRows...)
 	c.readCommands()
 	// What each package matches on, so a word it also compares is not
 	// mistaken for text.
@@ -141,8 +145,6 @@ func read(root string) (*catalog, error) {
 			switch {
 			case u.near == "mapkey" || u.near == "compare" || u.near == "case" || u.near == "index":
 				why = whyMatched
-			case f.mode == modeFlavor:
-				r, why = fl.read(c, u)
 			case f.mode == modeData && len(u.structs) > 0 && !u.vibeTable && !u.vibeKey:
 				r, why = readField(c, u)
 			}
@@ -161,7 +163,7 @@ func read(root string) (*catalog, error) {
 			c.rows = append(c.rows, r)
 		}
 	}
-	fl.bankRows(c)
+	c.fl.bankRows(c)
 	c.link()
 	c.fixedWidths()
 	if err := c.finish(); err != nil {

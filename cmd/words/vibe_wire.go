@@ -187,6 +187,9 @@ func (c *catalog) wireVerdict(r *row) verdict {
 		// catalog gives it. There is nothing in the source to rewrite.
 		return verdict{}
 	}
+	if r.u.f.text {
+		return verdict{reason: leftOnce} // a line of a text file: there is no call to put around it
+	}
 	if reason, ok := leftAlone[r.id]; ok {
 		return verdict{reason: reason}
 	}

@@ -377,6 +377,7 @@ func tagKind(tag string) (kind, value string) {
 // check holds the files to each other.
 func (c *catalogText) check() error {
 	poolNames := map[string]bool{}
+	rowPools := map[string]string{} // "catalog key.bucket" -> the pool that has these row ids
 	bankNames := map[string]bool{}
 	for _, file := range c.files {
 		isMomentFile := file.name != "harb_banks"
@@ -394,6 +395,12 @@ func (c *catalogText) check() error {
 				return fmt.Errorf("%s.txt:%d: the pool %s is already in another file", file.name, pool.line, pool.name)
 			}
 			poolNames[pool.name] = true
+			key, _ := rowParts(pool.name)
+			rows := key + "." + pool.bucket
+			if other, taken := rowPools[rows]; taken {
+				return fmt.Errorf("%s.txt:%d: the pool %s has the same row ids as %s", file.name, pool.line, pool.name, other)
+			}
+			rowPools[rows] = pool.name
 		}
 		for _, bank := range file.banks {
 			if bankNames[bank.name] {

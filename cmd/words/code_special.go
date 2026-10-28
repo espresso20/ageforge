@@ -100,6 +100,7 @@ var fileNotes = map[string]fileNote{
 	"boon/catalog.go":           {place: "in the boons and setbacks other civilizations leave", age: "bronze_age", area: areaWorld},
 	"flavor/resource.go":        {place: "in the way the story lines name a resource (the {res}, {res_stores} and {res_haul} slots)", area: areaFlavorExp, age: "primitive_age", seen: seenPool},
 	"flavor/flavor.go":          {place: "in the flavor package's names for its own settings"},
+	"flavor/text.go":            {skip: whyDev}, // the loader's messages for whoever edits a catalog file
 	"pkg/textfmt/textfmt.go":    {place: "wherever the game writes a list, a count or a rate", age: "primitive_age", seen: seenAlways},
 	"rules/badges.go":           {place: "in the descriptions of the tech badges", area: areaBadges, seen: seenRegular},
 	"main.go":                   {place: "printed in the terminal when the game starts or exits", age: "menu", seen: seenRare},
