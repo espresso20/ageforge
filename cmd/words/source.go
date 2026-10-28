@@ -50,6 +50,7 @@ var notScanned = map[string]string{
 	"mapmodel/fixture":      "test fixtures",
 	"pkg/nerdfont":          "the icon font installer's glyph table and system paths",
 	"pkg/sprites":           "pixel art",
+	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",
 	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
 	"ui/mapstyle/procmap":   "the engine's map view: it says only what roguelike's words say, through its exports",
 	"ui/mapstyle/styletest": "checks shared by the map tests, never shown in the game",
