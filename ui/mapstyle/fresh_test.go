@@ -89,7 +89,9 @@ func TestDistrictZoom(t *testing.T) {
 	}
 	press(tcell.KeyPgDn)
 	first := text()
-	label := func(s string) string { return strings.TrimSpace(s[strings.Index(s, "DISTRICT"):strings.Index(s, "DISTRICT")+40]) }
+	label := func(s string) string {
+		return strings.TrimSpace(s[strings.Index(s, "DISTRICT") : strings.Index(s, "DISTRICT")+40])
+	}
 	if !strings.Contains(first, "DISTRICT · ") || v.shownZoom() != zDistrict {
 		t.Fatalf("PgDn did not frame a district:\n%s", first)
 	}
