@@ -84,8 +84,8 @@ type catalogText struct {
 }
 
 // embedded is the catalog this build was made with. A file that does not
-// parse stops the program at start: TestEmbeddedTextParses keeps that from
-// reaching a build.
+// parse stops the program at start: TestTheShippedTextFilesAreWellFormed keeps
+// that from reaching a build.
 var embedded = mustReadEmbedded()
 
 // banks holds every noun bank by name. Bank entries are lowercase mid-sentence
