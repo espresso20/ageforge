@@ -5,7 +5,6 @@ import (
 	"math"
 	"math/rand"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -255,15 +254,12 @@ func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 		EventKey: ep.CatastropheKey, EventName: eventName, EventType: "catastrophe",
 		Tick: ge.tick, Outcome: CatastrophePending, Source: source,
 	})
-	ge.Bus.Publish(EventData{
-		Type: EventEpochEventFired,
-		Payload: map[string]interface{}{
-			"event_key":  ep.CatastropheKey,
-			"event_name": catName,
-			"event_type": "catastrophe",
-			"epoch_key":  epochKey,
-			"source":     source,
-		},
+	ge.publish(EventEpochEventFired, payload{
+		"event_key":  ep.CatastropheKey,
+		"event_name": catName,
+		"event_type": "catastrophe",
+		"epoch_key":  epochKey,
+		"source":     source,
 	})
 }
 
@@ -360,17 +356,12 @@ func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 // idle pool, the same way SellBuilding does: each building keeps at most
 // WorkerCapacity × remaining count assigned. Keys are processed in sorted order.
 func (ge *GameEngine) releaseWorkersFrom(destroyed map[string]int) {
-	keys := make([]string, 0, len(destroyed))
-	for k := range destroyed {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
+	for _, key := range sortedKeys(destroyed) {
 		def := ge.Buildings.defs[key]
 		capacity := def.WorkerCapacity * ge.Buildings.GetCount(key)
-		assigned := ge.Workers.GetAssignedCount("worker", key)
+		assigned := ge.Workers.GetAssignedCount(key)
 		if assigned > capacity {
-			ge.Workers.Unassign("worker", key, assigned-capacity)
+			ge.Workers.Unassign(key, assigned-capacity)
 		}
 	}
 }
@@ -550,24 +541,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.tickSpeedBonus = 0
 	ge.pendingLastPassage = false
 
-	// Restore persistent cross-run state
-	ge.Buildings.LoadRuins(savedRuins)
-
-	// Per-resource legacy rate bonuses live in permanentBonuses; the research
-	// bonus is derived from the legacy flags (see succumbResearchFactor).
-	ge.reapplyLegacyBonuses()
-
-	ge.applyAgeUnlocks("primitive_age")
-
-	// Work the rates out before the starting stock lands, as a prestige does:
-	// it puts the real rates in the new run's first snapshot instead of
-	// leaving them to the first tick.
-	ge.recalculateRates()
-
-	ge.Resources.Add("food", 15)
-	ge.Resources.Add("wood", 12)
-
-	ge.recalculateTickSpeed()
+	ge.beginNextRunLocked(savedRuins)
 
 	ge.sayEnding(&end, EndLineVerdict, "event", vibe.Sprintf("game.catastrophe.Succumb.06", "☄ %s: civilization has fallen. A new dawn.", catName))
 	if newLegacy {

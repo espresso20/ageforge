@@ -17,7 +17,6 @@ const (
 	KindResource
 	KindCiv
 	KindRoute
-	KindPrestigeUpgrade
 	numKinds
 )
 
@@ -42,9 +41,6 @@ func (s *Set) buildNames() {
 	}
 	for _, d := range s.routes {
 		s.names[KindRoute][d.Key] = d.Name
-	}
-	for _, d := range s.upgrades {
-		s.names[KindPrestigeUpgrade][d.Key] = d.Name
 	}
 }
 

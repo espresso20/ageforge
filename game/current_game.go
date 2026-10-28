@@ -83,73 +83,63 @@ func PickCurrentGame(saves []SaveInfo, mainGame, lastPlayed string) (cur Current
 // game and the save last played, "" for either that is not set. A record
 // may name a save that is gone; PickCurrentGame ignores it.
 func (a *Account) GameRecord() (mainGame, lastPlayed string) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s := a.settingsLocked()
+	s := a.readSettings()
 	return s.MainGame, s.LastPlayed
 }
 
 // NoteGamePlayed records name as the game last played. It writes the
 // settings file only when the record changes, so an autosave costs nothing.
 func (a *Account) NoteGamePlayed(name string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s := a.settingsLocked()
-	if name == "" || s.LastPlayed == name {
+	if name == "" || a.readSettings().LastPlayed == name {
 		return nil
 	}
-	s.LastPlayed = name
-	return a.saveSettingsLocked()
+	return a.editSettings(func(s *accountSettings) { s.LastPlayed = name })
 }
 
 // SetMainGame marks name as the main game, or with "" unmarks it.
 func (a *Account) SetMainGame(name string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s := a.settingsLocked()
-	if s.MainGame == name {
+	if a.readSettings().MainGame == name {
 		return nil
 	}
-	s.MainGame = name
-	return a.saveSettingsLocked()
+	return a.editSettings(func(s *accountSettings) { s.MainGame = name })
 }
 
 // RenameGame carries the records over a rename: a record that named the
 // save by its old name names it by the new one.
 func (a *Account) RenameGame(oldName, newName string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s := a.settingsLocked()
-	if oldName == "" || s.MainGame != oldName && s.LastPlayed != oldName {
+	records := a.readSettings()
+	if oldName == "" || records.MainGame != oldName && records.LastPlayed != oldName {
 		return nil
 	}
-	if s.MainGame == oldName {
-		s.MainGame = newName
-	}
-	if s.LastPlayed == oldName {
-		s.LastPlayed = newName
-	}
-	return a.saveSettingsLocked()
+	return a.editSettings(func(s *accountSettings) {
+		if s.MainGame == oldName {
+			s.MainGame = newName
+		}
+		if s.LastPlayed == oldName {
+			s.LastPlayed = newName
+		}
+	})
 }
 
 // ForgetGame drops the records that name a deleted save, so a later save
 // of the same name is not taken for it. With "" it drops both records
 // (every save was deleted).
 func (a *Account) ForgetGame(name string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	s := a.settingsLocked()
-	changed := false
-	if s.MainGame != "" && (name == "" || s.MainGame == name) {
-		s.MainGame, changed = "", true
+	forgets := func(record string) bool {
+		return record != "" && (name == "" || record == name)
 	}
-	if s.LastPlayed != "" && (name == "" || s.LastPlayed == name) {
-		s.LastPlayed, changed = "", true
-	}
-	if !changed {
+	records := a.readSettings()
+	if !forgets(records.MainGame) && !forgets(records.LastPlayed) {
 		return nil
 	}
-	return a.saveSettingsLocked()
+	return a.editSettings(func(s *accountSettings) {
+		if forgets(s.MainGame) {
+			s.MainGame = ""
+		}
+		if forgets(s.LastPlayed) {
+			s.LastPlayed = ""
+		}
+	})
 }
 
 // CurrentGame is the held account's current game among the saves in its

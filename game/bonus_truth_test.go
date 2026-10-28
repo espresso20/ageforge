@@ -114,7 +114,7 @@ func newTruthEngine(age string, mode truthMode) *GameEngine {
 	ge.currentEpoch = config.EpochForAge(age)
 	ge.Workers.SetAge(age)
 	ge.Prestige.NoteAgeEntered(age)
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	for _, key := range ge.Buildings.order {
 		def := ge.Buildings.defs[key]
 		built, ok := order[def.RequiredAge]
@@ -355,7 +355,7 @@ func truthMechanics(ge *GameEngine) map[string]float64 {
 	} {
 		held := ge.Military.ActiveByTier(c.tier)
 		ge.Military.setActive(c.tier, nil)
-		out[c.mechanic] = float64(ge.Military.LaunchOffer(testOffer(ge, c.tier, c.grand), ge.tick, 0, nil, nil).TicksLeft)
+		out[c.mechanic] = float64(ge.Military.LaunchOffer(testOffer(ge, c.tier, c.grand), 0, nil, nil).TicksLeft)
 		ge.Military.setActive(c.tier, held)
 	}
 	return out
@@ -467,7 +467,7 @@ func truthMoraleLift(t *testing.T, ge *GameEngine) float64 {
 // before any bonus: what the buildings make staffed less what they make
 // empty. It is what a worker output bonus raises.
 func truthCrewOutput(ge *GameEngine) map[string]float64 {
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	crew := pool.assignments
 	read := func() map[string]float64 {
 		ge.recalculateRates()
@@ -701,12 +701,6 @@ func (o *truthOutcome) pool(off, on float64) {
 		return
 	}
 	o.Large = math.Min(off, on) >= 2.0-1e-9
-}
-
-// truthClose reports whether got is want within a few parts in a million
-// (the reference tech and price round to whole ticks and units).
-func truthClose(got, want float64) bool {
-	return math.Abs(got-want) <= 3e-6*math.Max(1, math.Abs(want))
 }
 
 // truthMoved reports whether a meter changed at all.
@@ -1504,7 +1498,7 @@ type truthSnapshot struct {
 }
 
 func takeTruthSnapshot(ge *GameEngine) truthSnapshot {
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	s := truthSnapshot{
 		stock:     map[string]float64{},
 		permanent: map[string]float64{},
@@ -1538,7 +1532,7 @@ func takeTruthSnapshot(ge *GameEngine) truthSnapshot {
 }
 
 func (s truthSnapshot) put(ge *GameEngine) {
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	ge.permanentBonuses = map[string]float64{}
 	for k, v := range s.permanent {
 		ge.permanentBonuses[k] = v

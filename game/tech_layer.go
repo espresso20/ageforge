@@ -42,9 +42,13 @@ func (ge *GameEngine) pushMechanics() {
 	ge.Trade.SetTechTerms(ge.Research.Mechanic(config.MechanicRouteTicks), ge.Research.Mechanic(config.MechanicRouteIncome))
 	ge.Military.SetScoutTime(ge.Research.Mechanic(config.MechanicExpeditionTicks))
 	ge.Military.SetCampaignTerms(ge.Research.Mechanic(config.MechanicCampaignTicks), ge.Research.Mechanic(config.MechanicCampaignReward))
-	ge.Diplomacy.SetTechTerms(ge.Research.Mechanic(config.MechanicGiftCost), ge.Research.Mechanic(config.MechanicDealRefreshTicks))
-	ge.Diplomacy.SetGiftAndAllyTerms(ge.Research.Mechanic(config.MechanicGiftOpinion), ge.Research.Mechanic(config.MechanicAllianceBonus))
-	ge.Diplomacy.SetAllyCostTerm(ge.Research.Mechanic(config.MechanicAllianceCost))
+	ge.Diplomacy.terms = diplomacyTerms{
+		giftCost:    ge.Research.Mechanic(config.MechanicGiftCost),
+		giftOpinion: ge.Research.Mechanic(config.MechanicGiftOpinion),
+		dealRefresh: ge.Research.Mechanic(config.MechanicDealRefreshTicks),
+		allyBonus:   ge.Research.Mechanic(config.MechanicAllianceBonus),
+		allyCost:    ge.Research.Mechanic(config.MechanicAllianceCost),
+	}
 	ge.Buildings.SetUpgradeCostTerm(ge.Research.Mechanic(config.MechanicUpgradeCost))
 }
 

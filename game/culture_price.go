@@ -1,8 +1,6 @@
 package game
 
 import (
-	"sort"
-
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
 )
@@ -100,10 +98,5 @@ func BlackMarketPayout(set *rules.Set, age, resource string, stake, cultureIncom
 // BlackMarketResources lists the resources the smugglers deal in, sorted: the
 // ones a win can be taken in (if the age makes any of them).
 func BlackMarketResources() []string {
-	out := make([]string, 0, len(blackMarketDeals))
-	for r := range blackMarketDeals {
-		out = append(out, r)
-	}
-	sort.Strings(out)
-	return out
+	return sortedKeys(blackMarketDeals)
 }

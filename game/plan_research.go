@@ -92,15 +92,7 @@ func PlanResearchChain(st GameState, key string) []string {
 // researchOnWay reports whether tech key is researched, being researched or
 // in the plan. Caller holds the lock.
 func (ge *GameEngine) researchOnWay(key string) bool {
-	if ge.Research.IsResearched(key) || ge.Research.currentTech == key {
-		return true
-	}
-	for _, it := range ge.plan {
-		if it.Kind == PlanResearch && it.Key == key {
-			return true
-		}
-	}
-	return false
+	return ge.Research.IsResearched(key) || ge.Research.currentTech == key || plannedCount(ge.plan, PlanResearch, key) > 0
 }
 
 // planTechAhead reports whether tech key belongs to an age not reached yet:
@@ -146,10 +138,8 @@ func (ge *GameEngine) PlanAddResearchChain(key string) ([]string, error) {
 	if sight := ge.ageSightLocked(); !ok || !sight.Age(def.Age) {
 		return nil, ge.errTechOutOfSight(key, sight)
 	}
-	for _, it := range ge.plan {
-		if it.Kind == PlanResearch && it.Key == key {
-			return nil, vibe.Errorf("game.plan_research.PlanAddResearchChain.01", "%s is already in the plan.", def.Name)
-		}
+	if plannedCount(ge.plan, PlanResearch, key) > 0 {
+		return nil, vibe.Errorf("game.plan_research.PlanAddResearchChain.01", "%s is already in the plan.", def.Name)
 	}
 	if reason := ge.planResearchInvalid(key); reason != "" {
 		return nil, vibe.Errorf("game.plan_research.PlanAddResearchChain.02", "Can't plan %s: %s.", def.Name, reason)

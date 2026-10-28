@@ -17,23 +17,7 @@ package config
 // (reference_store.go), for the rules that still read one.
 const (
 	StorageRuleCopies = 5
-	// StorageRules is the version of the storage rules a save is written
-	// under: 1 from the storage wall on (a price larger than a store cannot
-	// be bought, overflow does not pay the plan). A save without it is from
-	// before, and keeps its stock on load.
-	StorageRules = 1
 	// StorageRate is the rate a storage building's price climbs at for each
 	// copy owned: Kittens Game's barn.
 	StorageRate = 1.75
 )
-
-// AgeHasStorageBuilding reports whether the age has a storage building of its
-// own. The last age has none.
-func AgeHasStorageBuilding(defs []BuildingDef, age string) bool {
-	for _, d := range defs {
-		if d.Category == "storage" && d.RequiredAge == age {
-			return true
-		}
-	}
-	return false
-}

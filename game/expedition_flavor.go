@@ -34,6 +34,12 @@ func (ge *GameEngine) flavorStream() *flavor.Stream {
 	return ge.prose
 }
 
+// flavorLine is the generated sentence for req, drawn off the run's seeded RNG
+// ("" when the generator has nothing for the moment).
+func (ge *GameEngine) flavorLine(req flavor.Request) string {
+	return ge.flavorStream().Line(req, ge.gameRNG())
+}
+
 // expeditionFlavorOdds is the denominator of the "does this resolution get a
 // quip" roll: roughly one expedition in this many gets a flavour line.
 //
@@ -54,12 +60,9 @@ const expeditionFlavorOdds = 3
 // nothing for the moment (the latter guard is so a future Moment removal degrades
 // to silence, not to a blank log entry).
 func (ge *GameEngine) expeditionFlavorLine(res ExpeditionResult) string {
-	if ge.rng == nil {
-		ge.SeedRNG(newSeed())
-	}
 	// Drawn off ge.rng, not package rand, so the prose stream stays reproducible
 	// from the run's persisted seed alongside the encounter and boon streams.
-	if ge.rng.Intn(expeditionFlavorOdds) != 0 {
+	if ge.gameRNG().Intn(expeditionFlavorOdds) != 0 {
 		return ""
 	}
 	moment := flavor.ExpeditionSuccess
@@ -67,7 +70,7 @@ func (ge *GameEngine) expeditionFlavorLine(res ExpeditionResult) string {
 		moment = flavor.ExpeditionFailure
 	}
 	resource, amount := topRewardIn(ge.rules, res.Rewards)
-	return ge.flavorStream().Line(flavor.Request{
+	return ge.flavorLine(flavor.Request{
 		Moment: moment,
 		Tone:   expeditionTone(res.Category, res.Success),
 		Age:    ge.age,
@@ -79,7 +82,7 @@ func (ge *GameEngine) expeditionFlavorLine(res ExpeditionResult) string {
 		Kind:     res.Category, // ExpeditionScouting / ExpeditionMilitary
 		Resource: resource,
 		Amount:   amount,
-	}, ge.rng)
+	})
 }
 
 // expeditionTone maps an outcome to a register. A won campaign is worth
@@ -121,13 +124,9 @@ func topRewardIn(set *rules.Set, rewards map[string]float64) (string, float64) {
 // factionEncounterFlavor generates the line for an encounter outcome that gave the
 // player nothing — a standoff with a civ at war, or an offer the court has no room
 // for. Both were fixed three-line banks before this; they are now drawn off the
-// same generator, and game/boon_tuning_test.go classifies them via
-// flavor.Signatures rather than by matching those banks.
+// same generator.
 func (ge *GameEngine) factionEncounterFlavor(moment flavor.Moment, def config.FactionDef) string {
-	if ge.rng == nil {
-		ge.SeedRNG(newSeed())
-	}
-	return ge.flavorStream().Line(flavor.Request{
+	return ge.flavorLine(flavor.Request{
 		Moment: moment,
 		Tone:   factionTone(moment, def.Personality),
 		Age:    ge.age,
@@ -136,7 +135,7 @@ func (ge *GameEngine) factionEncounterFlavor(moment flavor.Moment, def config.Fa
 		// only uses it in object position or with past-tense verbs.
 		Subject: def.Name,
 		Kind:    def.Personality,
-	}, ge.rng)
+	})
 }
 
 // raidLogLine composes the full player-facing war-raid entry: the mechanical line
@@ -154,21 +153,18 @@ func (ge *GameEngine) raidLogLine(raid RaidRequest) string {
 // NOT repeated here — which is also why no Amount is passed: the number is already
 // on the line.
 func (ge *GameEngine) raidFlavorLine(raid RaidRequest) string {
-	if ge.rng == nil {
-		ge.SeedRNG(newSeed())
-	}
 	def, ok := ge.rules.Faction(raid.FactionKey)
 	if !ok {
 		return ""
 	}
-	return ge.flavorStream().Line(flavor.Request{
+	return ge.flavorLine(flavor.Request{
 		Moment:   flavor.WarRaid,
 		Tone:     factionTone(flavor.WarRaid, def.Personality),
 		Age:      ge.age,
 		Subject:  def.Name,
 		Kind:     def.Personality,
 		Resource: raid.Resource,
-	}, ge.rng)
+	})
 }
 
 // factionTone maps a civilization's personality to a register per moment. An

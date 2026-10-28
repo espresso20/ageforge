@@ -69,11 +69,11 @@ func determinismSetup(t *testing.T, seed int64) (*GameEngine, determinismScript)
 	for _, r := range ge.Resources.resources {
 		r.Amount = config.StockScale(target) / 2
 	}
-	ge.Workers.UnlockType("worker")
-	ge.Workers.Recruit("worker", 120, 1000)
+	ge.Workers.Unlock()
+	ge.Workers.Recruit(120, 1000)
 	for i, key := range builds {
 		if ge.Buildings.defs[key].WorkerCapacity > 0 {
-			ge.Workers.Assign("worker", key, 1+i%3)
+			ge.Workers.Assign(key, 1+i%3)
 		}
 	}
 
@@ -208,10 +208,13 @@ func TestDeterminism_SameSeedSameRun(t *testing.T) {
 		t.Fatalf("same seed, same inputs, different runs:\n%s", firstDiff(a, b))
 	}
 	// Guard against a vacuous pass: the script must actually have exercised
-	// the random systems it exists to cover.
-	for _, want := range []string{"Expedition resolved", "Event triggered"} {
-		if !strings.Contains(a, want) {
-			t.Errorf("run never logged %q; the scenario no longer reaches that system", want)
+	// the random systems it exists to cover, which the fingerprint counts.
+	for system, idle := range map[string]string{
+		"expedition": "expeditions completed 0\n",
+		"event":      "streaks 0/0\n",
+	} {
+		if strings.Contains(a, idle) {
+			t.Errorf("the run never reached the %s system; the scenario no longer covers it", system)
 		}
 	}
 }

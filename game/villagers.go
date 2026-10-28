@@ -6,25 +6,17 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// domainRuntime holds runtime state for one worker domain
-type domainRuntime struct {
-	count       int
-	assignments map[string]int // buildingKey → assigned worker count
-}
-
 // WorkerManager manages population and worker assignments.
 //
-// Architecture note: the game previously modelled separate domain pools (food,
-// military, knowledge, etc.) but was simplified to a single "worker" pool so
-// any worker can be assigned to any building. The domain parameter accepted by
-// many methods is intentionally ignored to maintain API compatibility with
-// callers that still pass domain strings (e.g. "military", "food").
-//
-// The domains map always contains exactly one entry keyed "worker".
+// Every worker belongs to one pool, and any worker can be assigned to any
+// building with WorkerCapacity > 0.
 type WorkerManager struct {
-	rules    *rules.Set
-	domains  map[string]*domainRuntime
-	unlocked map[string]bool
+	rules *rules.Set
+	// count is the whole population and assignments is the workers at each
+	// building (buildingKey → assigned worker count).
+	count       int
+	assignments map[string]int
+	unlocked    bool
 	// ageKey is used for WorkerClassDef lookups (food cost per tick, displayed class name).
 	// Update via SetAge on every age advance.
 	ageKey string
@@ -52,17 +44,14 @@ func (vm *WorkerManager) refreshFoodClass() {
 	vm.foodClass, vm.foodClassOK = vm.rules.WorkerClass("food", vm.ageKey)
 }
 
-// NewWorkerManagerWith creates a new single-pool worker manager on set.
-// All workers belong to a single "worker" pool — domain restrictions are removed.
+// NewWorkerManagerWith creates a worker manager on set.
 func NewWorkerManagerWith(set *rules.Set) *WorkerManager {
 	vm := &WorkerManager{
 		rules:        set,
-		domains:      make(map[string]*domainRuntime),
-		unlocked:     make(map[string]bool),
+		assignments:  make(map[string]int),
 		ageKey:       "primitive_age",
 		buildingDefs: set.BuildingMap(),
 	}
-	vm.domains["worker"] = &domainRuntime{assignments: make(map[string]int)}
 	vm.refreshFoodClass()
 	return vm
 }
@@ -81,21 +70,20 @@ func (vm *WorkerManager) SetAge(ageKey string) {
 	vm.refreshFoodClass()
 }
 
-// UnlockType marks workers as recruitable. Always routes to "worker" pool.
-func (vm *WorkerManager) UnlockType(_ string) {
-	vm.unlocked["worker"] = true
+// Unlock marks workers as recruitable.
+func (vm *WorkerManager) Unlock() {
+	vm.unlocked = true
 }
 
 // IsUnlocked returns whether workers are available.
-func (vm *WorkerManager) IsUnlocked(_ string) bool {
-	return vm.unlocked["worker"]
+func (vm *WorkerManager) IsUnlocked() bool {
+	return vm.unlocked
 }
 
-// Recruit adds workers to the single pool. Returns false if not unlocked, if
-// count is not positive, or if it would take the population over popCap.
-func (vm *WorkerManager) Recruit(_ string, count int, popCap int) bool {
-	rt := vm.domains["worker"]
-	if !vm.unlocked["worker"] || count <= 0 {
+// Recruit adds workers to the pool. Returns false if not unlocked, if count
+// is not positive, or if it would take the population over popCap.
+func (vm *WorkerManager) Recruit(count int, popCap int) bool {
+	if !vm.unlocked || count <= 0 {
 		return false
 	}
 	// Compare against the room left rather than TotalPop()+count: a count near
@@ -103,81 +91,79 @@ func (vm *WorkerManager) Recruit(_ string, count int, popCap int) bool {
 	if count > popCap-vm.TotalPop() {
 		return false
 	}
-	rt.count += count
+	vm.count += count
 	return true
 }
 
-// Assign assigns workers from the single pool to a specific building.
-// The domain argument is ignored — any worker can go to any building with WorkerCapacity > 0.
-func (vm *WorkerManager) Assign(_, buildingKey string, count int) bool {
-	rt := vm.domains["worker"]
-	byKey := vm.buildingDefs
-	def, ok := byKey[buildingKey]
+// Assign assigns idle workers to a building that takes workers.
+func (vm *WorkerManager) Assign(buildingKey string, count int) bool {
+	def, ok := vm.buildingDefs[buildingKey]
 	if !ok || def.WorkerCapacity == 0 || count <= 0 {
 		return false
 	}
-	if vm.IdleCount("worker") < count {
+	if vm.IdleCount() < count {
 		return false
 	}
-	rt.assignments[buildingKey] += count
+	vm.assignments[buildingKey] += count
 	return true
 }
 
 // Unassign removes workers from a building assignment. A count that is not
 // positive is refused: a negative one would assign workers instead.
-func (vm *WorkerManager) Unassign(_, buildingKey string, count int) bool {
-	rt := vm.domains["worker"]
-	if count <= 0 || rt.assignments[buildingKey] < count {
+func (vm *WorkerManager) Unassign(buildingKey string, count int) bool {
+	if count <= 0 || vm.assignments[buildingKey] < count {
 		return false
 	}
-	rt.assignments[buildingKey] -= count
+	vm.assignments[buildingKey] -= count
 	return true
 }
 
 // Dismiss removes workers from a building assignment and from the pool entirely.
 // Returns the actual number dismissed.
 func (vm *WorkerManager) Dismiss(buildingKey string, count int) int {
-	rt := vm.domains["worker"]
-	assigned := rt.assignments[buildingKey]
+	assigned := vm.assignments[buildingKey]
 	if assigned <= 0 {
 		return 0
 	}
 	if count > assigned {
 		count = assigned
 	}
-	rt.assignments[buildingKey] -= count
-	rt.count -= count
-	if rt.count < 0 {
-		rt.count = 0
+	vm.assignments[buildingKey] -= count
+	vm.count -= count
+	if vm.count < 0 {
+		vm.count = 0
 	}
 	return count
 }
 
 // IdleCount returns how many workers are not assigned to any building.
-// The key argument is ignored.
-func (vm *WorkerManager) IdleCount(_ string) int {
-	rt := vm.domains["worker"]
-	assigned := 0
-	for _, c := range rt.assignments {
-		assigned += c
+func (vm *WorkerManager) IdleCount() int {
+	return vm.count - vm.assignedTotal()
+}
+
+// assignedTotal is how many workers are assigned to buildings.
+func (vm *WorkerManager) assignedTotal() int {
+	total := 0
+	for _, count := range vm.assignments {
+		total += count
 	}
-	return rt.count - assigned
+	return total
 }
 
 // TakeIdle removes up to n workers with no job from the pool (they leave it
 // for a post as soldiers) and returns how many went.
 func (vm *WorkerManager) TakeIdle(n int) int {
-	n = min(n, vm.IdleCount("worker"))
+	n = min(n, vm.IdleCount())
 	if n <= 0 {
 		return 0
 	}
-	vm.domains["worker"].count -= n
+	vm.count -= n
 	return n
 }
 
 // TotalPop returns total population
 func (vm *WorkerManager) TotalPop() int {
-	return vm.domains["worker"].count
+	return vm.count
 }
 
 // FoodDrain returns total food consumed per tick for all workers.
@@ -185,15 +171,10 @@ func (vm *WorkerManager) TotalPop() int {
 // age — early ages have very low drain (primitive: 0.08/tick) to ease onboarding.
 // Falls back to 0.1/worker if no class definition is found for the current age.
 func (vm *WorkerManager) FoodDrain() float64 {
-	rt := vm.domains["worker"]
-	if rt.count == 0 {
+	if vm.count == 0 {
 		return 0
 	}
-	cls, ok := vm.foodClassFor()
-	if !ok {
-		return 0.1 * float64(rt.count)
-	}
-	return cls.FoodCost * float64(rt.count)
+	return vm.FoodCostPerWorker() * float64(vm.count)
 }
 
 // FoodCostPerWorker is the food each worker eats a tick in the current age:
@@ -206,19 +187,16 @@ func (vm *WorkerManager) FoodCostPerWorker() float64 {
 }
 
 // GetAssignedCount returns how many workers are assigned to buildingKey.
-// The domain argument is ignored — there is only one pool.
-func (vm *WorkerManager) GetAssignedCount(_, buildingKey string) int {
-	return vm.domains["worker"].assignments[buildingKey]
+func (vm *WorkerManager) GetAssignedCount(buildingKey string) int {
+	return vm.assignments[buildingKey]
 }
 
 // GetDomainCount returns the number of workers assigned to buildings of the given domain.
 // This is used for e.g. soldierCount (domain "military") — workers assigned to military buildings.
 func (vm *WorkerManager) GetDomainCount(domain string) int {
-	rt := vm.domains["worker"]
-	byKey := vm.buildingDefs
 	total := 0
-	for buildingKey, count := range rt.assignments {
-		if def, ok := byKey[buildingKey]; ok && def.WorkerDomain == domain {
+	for buildingKey, count := range vm.assignments {
+		if def, ok := vm.buildingDefs[buildingKey]; ok && def.WorkerDomain == domain {
 			total += count
 		}
 	}
@@ -228,38 +206,12 @@ func (vm *WorkerManager) GetDomainCount(domain string) int {
 // KillWorker removes workers from starvation. Assignments are scaled down
 // proportionally so assigned count never exceeds remaining population.
 func (vm *WorkerManager) KillWorker(count int) int {
-	rt := vm.domains["worker"]
-	if rt.count <= 0 {
+	if vm.count <= 0 {
 		return 0
 	}
-	if count > rt.count {
-		count = rt.count
-	}
-	rt.count -= count
-	// Reconcile: assigned total must not exceed new count
-	for {
-		assigned := 0
-		for _, c := range rt.assignments {
-			assigned += c
-		}
-		if assigned <= rt.count {
-			break
-		}
-		// Find the largest assignment and reduce it by 1. Ties break on the
-		// smaller key, as in RemovePct, so map order never picks the loser.
-		maxKey := ""
-		maxVal := 0
-		for k, c := range rt.assignments {
-			if c > maxVal || (c == maxVal && c > 0 && k < maxKey) {
-				maxVal = c
-				maxKey = k
-			}
-		}
-		if maxKey == "" {
-			break
-		}
-		rt.assignments[maxKey]--
-	}
+	count = min(count, vm.count)
+	vm.count -= count
+	vm.trimAssignments()
 	return count
 }
 
@@ -271,104 +223,89 @@ func (vm *WorkerManager) AddLentWorkers(count int) {
 	if count <= 0 {
 		return
 	}
-	vm.domains["worker"].count += count
+	vm.count += count
 }
 
 // AddPctAll adds a percentage of current count to the pool (used by Population Surge event).
 func (vm *WorkerManager) AddPctAll(pct float64) {
-	rt := vm.domains["worker"]
-	add := int(float64(rt.count) * pct)
-	if add > 0 {
-		rt.count += add
+	if add := int(float64(vm.count) * pct); add > 0 {
+		vm.count += add
 	}
 }
 
 // RemovePct removes a percentage of workers from the pool (e.g. Epidemic event).
-// Assignments are proportionally scaled down so the total assigned count never
-// exceeds the remaining population. Integer truncation can leave the total
-// assigned count one or two above the new count; the reconciliation loop at
-// the bottom corrects this by reducing the largest assignment first.
-//
-// There is a single worker pool, so this already spans every worker domain:
-// food, knowledge, military and the rest all lose the same share of their
-// assigned workers (Endure's 25% loss relies on this).
+// Every building loses the same share of its assigned workers, then
+// trimAssignments takes off what integer truncation left over. There is a
+// single worker pool, so food, knowledge, military and the rest all lose the
+// same share (Endure's 25% loss relies on this).
 func (vm *WorkerManager) RemovePct(pct float64) {
-	rt := vm.domains["worker"]
-	remove := int(float64(rt.count) * pct)
+	remove := int(float64(vm.count) * pct)
 	if remove <= 0 {
 		return
 	}
-	rt.count -= remove
-	if rt.count < 0 {
-		rt.count = 0
+	vm.count = max(vm.count-remove, 0)
+	for key, assigned := range vm.assignments {
+		vm.assignments[key] = max(assigned-int(float64(assigned)*pct), 0)
 	}
-	// Scale down assignments proportionally
-	for k, assigned := range rt.assignments {
-		reduced := assigned - int(float64(assigned)*pct)
-		if reduced < 0 {
-			reduced = 0
-		}
-		rt.assignments[k] = reduced
-	}
-	// Reconciliation: integer truncation can leave total assigned > new count.
-	// Reduce the largest assignments one-by-one until total <= count.
-	totalAssigned := 0
-	for _, v := range rt.assignments {
-		totalAssigned += v
-	}
-	for totalAssigned > rt.count {
-		// Find the building with the most assigned workers and reduce it by 1.
-		// Ties break on the smaller key so the result never depends on map
-		// iteration order (keeps seeded catastrophe runs reproducible).
-		maxKey := ""
-		maxVal := 0
-		for k, v := range rt.assignments {
-			if v > maxVal || (v == maxVal && v > 0 && k < maxKey) {
-				maxVal = v
-				maxKey = k
+	vm.trimAssignments()
+}
+
+// trimAssignments takes workers off the largest assignments, one at a time,
+// until no more are assigned than the pool holds. Ties break on the smaller
+// key so the result never depends on map iteration order (seeded runs stay
+// reproducible). An assignment trimmed to nothing is dropped.
+func (vm *WorkerManager) trimAssignments() {
+	for excess := vm.assignedTotal() - vm.count; excess > 0; excess-- {
+		largestKey := ""
+		largest := 0
+		for key, assigned := range vm.assignments {
+			if assigned > largest || (assigned == largest && assigned > 0 && key < largestKey) {
+				largest = assigned
+				largestKey = key
 			}
 		}
-		if maxKey == "" {
-			break
+		if largestKey == "" {
+			return
 		}
-		rt.assignments[maxKey]--
-		if rt.assignments[maxKey] == 0 {
-			delete(rt.assignments, maxKey)
+		vm.assignments[largestKey]--
+		if vm.assignments[largestKey] == 0 {
+			delete(vm.assignments, largestKey)
 		}
-		totalAssigned--
 	}
 }
 
 // GetAll returns serializable worker info for saving, keyed by "worker".
 func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
-	rt := vm.domains["worker"]
-	assign := make(map[string]int, len(rt.assignments))
-	for k, v := range rt.assignments {
-		if v > 0 {
-			assign[k] = v
-		}
-	}
-	cls, _ := vm.foodClassFor()
 	return map[string]WorkerInfo{
 		"worker": {
-			Count:      rt.count,
-			FoodCost:   cls.FoodCost,
-			Assignment: assign,
+			Count:      vm.count,
+			FoodCost:   vm.foodClass.FoodCost,
+			Assignment: vm.positiveAssignments(),
 		},
 	}
+}
+
+// positiveAssignments is a copy of the assignments that hold workers.
+func (vm *WorkerManager) positiveAssignments() map[string]int {
+	assign := make(map[string]int, len(vm.assignments))
+	for key, count := range vm.assignments {
+		if count > 0 {
+			assign[key] = count
+		}
+	}
+	return assign
 }
 
 // LoadWorkers restores state from save data: the single "worker" pool, with
 // the assignments that name a building that takes workers.
 func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
-	rt := vm.domains["worker"]
 	info := data["worker"]
-	rt.count = info.Count
+	vm.count = info.Count
 	// Reset before loading to prevent accumulation on repeated loads.
-	rt.assignments = make(map[string]int)
-	for bKey, cnt := range info.Assignment {
-		if def, ok := vm.buildingDefs[bKey]; ok && def.WorkerCapacity > 0 && cnt > 0 {
-			rt.assignments[bKey] = cnt
+	vm.assignments = make(map[string]int)
+	for key, count := range info.Assignment {
+		if def, ok := vm.buildingDefs[key]; ok && def.WorkerCapacity > 0 && count > 0 {
+			vm.assignments[key] = count
 		}
 	}
 }
@@ -376,23 +313,13 @@ func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 // Snapshot returns worker state for UI consumption.
 // Types map has a single "worker" key.
 func (vm *WorkerManager) Snapshot(popCap int) WorkerState {
-	rt := vm.domains["worker"]
-	if rt == nil {
-		return WorkerState{Types: map[string]WorkerDomainState{}}
-	}
-	idle := vm.IdleCount("worker")
-	assign := make(map[string]int, len(rt.assignments))
-	for k, v := range rt.assignments {
-		if v > 0 {
-			assign[k] = v
-		}
-	}
+	idle := vm.IdleCount()
 	className := ""
 	drain := 0.0
 	if vm.ageKey != "" {
 		if wc, ok := vm.foodClassFor(); ok {
 			className = wc.ClassName
-			drain = wc.FoodCost * float64(rt.count)
+			drain = wc.FoodCost * float64(vm.count)
 		}
 	}
 	if className == "" {
@@ -402,13 +329,13 @@ func (vm *WorkerManager) Snapshot(popCap int) WorkerState {
 		Types: map[string]WorkerDomainState{
 			"worker": {
 				Name:        className,
-				Count:       rt.count,
+				Count:       vm.count,
 				IdleCount:   idle,
-				Assignments: assign,
-				Unlocked:    vm.unlocked["worker"],
+				Assignments: vm.positiveAssignments(),
+				Unlocked:    vm.unlocked,
 			},
 		},
-		TotalPop:  rt.count,
+		TotalPop:  vm.count,
 		MaxPop:    popCap,
 		TotalIdle: idle,
 		FoodDrain: drain,

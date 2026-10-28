@@ -89,7 +89,7 @@ func catEngine(t *testing.T, age string, seed int64) *GameEngine {
 
 func nonWonderTotal(ge *GameEngine) int { return ge.Buildings.DestroyableCount() }
 
-func setWorkers(ge *GameEngine, total int) { ge.Workers.domains["worker"].count = total }
+func setWorkers(ge *GameEngine, total int) { ge.Workers.count = total }
 
 // --- Endure -----------------------------------------------------------------
 
@@ -137,7 +137,7 @@ func TestEndure_ReleasesWorkersOfDestroyedBuildings(t *testing.T) {
 	ge.Buildings.counts[key] = 20
 	full := 20 * capPer
 	setWorkers(ge, full)
-	if !ge.Workers.Assign("worker", key, full) {
+	if !ge.Workers.Assign(key, full) {
 		t.Fatal("assign failed")
 	}
 	ge.pendingCatastrophe = "iron_era"
@@ -148,10 +148,10 @@ func TestEndure_ReleasesWorkersOfDestroyedBuildings(t *testing.T) {
 	// would scale the stranded 20c instead (15c).
 	remainingCap := 16 * capPer
 	want := remainingCap - int(float64(remainingCap)*0.25)
-	if got := ge.Workers.GetAssignedCount("worker", key); got != want {
+	if got := ge.Workers.GetAssignedCount(key); got != want {
 		t.Errorf("assigned after Endure = %d, want %d", got, want)
 	}
-	if got := ge.Workers.GetAssignedCount("worker", key); got > ge.Buildings.counts[key]*capPer {
+	if got := ge.Workers.GetAssignedCount(key); got > ge.Buildings.counts[key]*capPer {
 		t.Errorf("assigned %d exceeds capacity of %d buildings", got, ge.Buildings.counts[key])
 	}
 	wantPool := full - int(float64(full)*0.25)
@@ -171,7 +171,7 @@ func TestEndure_WorkerLossIsProportionalAcrossDomains(t *testing.T) {
 	}
 	setWorkers(ge, total)
 	for k, n := range assigned {
-		if !ge.Workers.Assign("worker", k, n) {
+		if !ge.Workers.Assign(k, n) {
 			t.Fatalf("assign %s failed", k)
 		}
 	}
@@ -179,7 +179,7 @@ func TestEndure_WorkerLossIsProportionalAcrossDomains(t *testing.T) {
 	noErr(t, ge.Endure())
 	for k, n := range assigned {
 		want := n - int(float64(n)*0.25)
-		if got := ge.Workers.GetAssignedCount("worker", k); got != want {
+		if got := ge.Workers.GetAssignedCount(k); got != want {
 			t.Errorf("%s (%s) assigned = %d, want %d", k, config.BuildingByKey()[k].WorkerDomain, got, want)
 		}
 	}

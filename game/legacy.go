@@ -55,14 +55,6 @@ type PlanTemplateItem struct {
 	Count int    `json:"count,omitempty"`
 }
 
-// clonePlanTemplate copies a template (nil for an empty one).
-func clonePlanTemplate(t []PlanTemplateItem) []PlanTemplateItem {
-	if len(t) == 0 {
-		return nil
-	}
-	return slices.Clone(t)
-}
-
 // templateAgeLoad is how many of the items t holds for age count against
 // an age's MaxPlanItems: every one but research, as in the plan itself.
 func templateAgeLoad(t []PlanTemplateItem, age string) int {
@@ -250,15 +242,11 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if !ok {
 			return false, false
 		}
-		planned := plannedCopies(ge.plan, t.Key)
+		planned := plannedCount(ge.plan, PlanBuild, t.Key)
 		if ge.planBuildInvalid(t.Key, planned) != "" {
 			return false, false
 		}
-		count := t.Count
-		if def.MaxCount > 0 {
-			room := def.MaxCount - ge.Buildings.GetCount(t.Key) - ge.Buildings.GetQueueCount(t.Key, ge.buildQueue) - planned
-			count = min(count, room)
-		}
+		count := min(t.Count, ge.planRoom(def, planned))
 		if count <= 0 {
 			return false, false
 		}
@@ -275,23 +263,8 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if !pending || ge.upgradeTechErr(newDef) != nil {
 			return false, false
 		}
-		newKey := newDef.Key
-		planned := 0
-		for _, it := range ge.plan {
-			if it.Kind == PlanUpgrade && it.Key == t.Key {
-				planned += it.Count
-			}
-		}
-		count := min(t.Count, ge.Buildings.GetCount(t.Key)-planned)
-		if newDef.MaxCount > 0 {
-			room := newDef.MaxCount - ge.Buildings.GetCount(newKey) - ge.Buildings.GetQueueCount(newKey, ge.buildQueue)
-			for _, it := range ge.plan {
-				if it.Kind == PlanUpgrade && it.Key == t.Key {
-					room -= it.Count
-				}
-			}
-			count = min(count, room)
-		}
+		planned := plannedCount(ge.plan, PlanUpgrade, t.Key)
+		count := min(t.Count, ge.Buildings.GetCount(t.Key)-planned, ge.planRoom(newDef, planned))
 		if count <= 0 {
 			return false, false
 		}
@@ -307,20 +280,16 @@ func (ge *GameEngine) addTemplateItemLocked(t PlanTemplateItem) (added, full boo
 		if _, ok := ge.rules.Tech(t.Key); !ok {
 			return false, false
 		}
-		for _, it := range ge.plan {
-			if it.Kind == PlanResearch && it.Key == t.Key {
-				return false, false
-			}
+		if plannedCount(ge.plan, PlanResearch, t.Key) > 0 {
+			return false, false
 		}
 		if ge.planResearchRefused(t.Key, n) != "" {
 			return false, false
 		}
 		ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: t.Key, Count: 1})
 	case PlanAdvance:
-		for _, it := range ge.plan {
-			if it.Kind == PlanAdvance {
-				return false, false
-			}
+		if plannedCount(ge.plan, PlanAdvance, "") > 0 {
+			return false, false
 		}
 		if ge.progress.GetNextAge(ge.age) == "" {
 			return false, false
@@ -366,7 +335,6 @@ func (ge *GameEngine) applyPlanTemplateLocked() {
 	if added+skipped+full == 0 {
 		return
 	}
-	pm.templateApplied = ge.age
 	line := vibe.Sprintf("game.legacy.applyPlanTemplateLocked.01", "Plan Template: added %s for the %s.", textfmt.Count(added, vibe.Line("game.legacy.applyPlanTemplateLocked.02", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.03", "items")), ge.rules.Name(rules.KindAge, ge.age))
 	if full > 0 {
 		line += vibe.Sprintf("game.legacy.applyPlanTemplateLocked.04", " The plan is full (%d items, not counting research), so %s waited out.", MaxPlanItems, textfmt.Count(full, vibe.Line("game.legacy.applyPlanTemplateLocked.05", "item"), vibe.Line("game.legacy.applyPlanTemplateLocked.06", "items")))
@@ -408,7 +376,7 @@ func (ge *GameEngine) applyLegacySharesLocked() bool {
 	if !ge.Prestige.Owns(config.LegacyWorkers) || len(ge.workerShares) > 0 || len(ge.Prestige.legacyShares) == 0 {
 		return false
 	}
-	ge.workerShares = cloneShares(ge.Prestige.legacyShares)
+	ge.workerShares = cloneMap(ge.Prestige.legacyShares)
 	return true
 }
 
@@ -455,7 +423,7 @@ func (ge *GameEngine) captureLegacyLocked() {
 		}
 	}
 	if len(ge.workerShares) > 0 || pm.Owns(config.LegacyWorkers) {
-		pm.legacyShares = cloneShares(ge.workerShares)
+		pm.legacyShares = cloneMap(ge.workerShares)
 	}
 }
 
@@ -492,18 +460,13 @@ func (ge *GameEngine) enteredAgesLocked() map[string]bool {
 
 // LegacyKitState is what the legacy kit remembers, for the prestige shop.
 type LegacyKitState struct {
-	// PlanItems is the template's size and PlanAges how many ages it spans;
-	// PlanByAge is its items per age. PlanAppliedAge is the age whose slice
-	// Plan Template last added to the plan ("" before any this run).
-	PlanItems      int
-	PlanAges       int
-	PlanByAge      map[string]int
-	PlanAppliedAge string
-	// Factions is how many civilizations are remembered (FactionKeys, in
-	// roster order); Shares how many worker domains have a remembered share.
-	Factions    int
-	FactionKeys []string
-	Shares      int
+	// PlanItems is the template's size and PlanAges how many ages it spans.
+	PlanItems int
+	PlanAges  int
+	// Factions is how many civilizations are remembered; Shares how many
+	// worker domains have a remembered share.
+	Factions int
+	Shares   int
 }
 
 // kitState summarizes the kit's memory for the snapshot.
@@ -513,13 +476,10 @@ func (pm *PrestigeManager) kitState() LegacyKitState {
 		byAge[it.Age]++
 	}
 	return LegacyKitState{
-		PlanItems:      len(pm.legacyPlan),
-		PlanAges:       len(byAge),
-		PlanByAge:      byAge,
-		PlanAppliedAge: pm.templateApplied,
-		Factions:       len(pm.legacyFactions),
-		FactionKeys:    slices.Clone(pm.legacyFactions),
-		Shares:         len(pm.legacyShares),
+		PlanItems: len(pm.legacyPlan),
+		PlanAges:  len(byAge),
+		Factions:  len(pm.legacyFactions),
+		Shares:    len(pm.legacyShares),
 	}
 }
 
@@ -541,45 +501,6 @@ func (pm *PrestigeManager) LoadLegacy(plan []PlanTemplateItem, factions []string
 }
 
 // ===== Test hooks =====
-
-// LegacyKit is the legacy kit's memory as a save carries it, for tests.
-type LegacyKit struct {
-	Plan     []PlanTemplateItem `json:"plan,omitempty"`
-	Factions []string           `json:"factions,omitempty"`
-	Shares   map[string]float64 `json:"shares,omitempty"`
-}
-
-// LegacyForTest returns what the kit remembers now. A test hook; not
-// reachable from play.
-func (ge *GameEngine) LegacyForTest() LegacyKit {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-	pm := ge.Prestige
-	return LegacyKit{
-		Plan:     clonePlanTemplate(pm.legacyPlan),
-		Factions: slices.Clone(pm.legacyFactions),
-		Shares:   cloneShares(pm.legacyShares),
-	}
-}
-
-// SetLegacyForTest gives the engine kit as its memory and, with own, buys
-// every kit item for free, then puts them to work as a purchase would (the
-// current age's template slice, the shares, old friends). A test hook; not
-// reachable from play.
-func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.Prestige.LoadLegacy(kit.Plan, kit.Factions, kit.Shares)
-	if !own {
-		return
-	}
-	if ge.Prestige.level == 0 {
-		ge.Prestige.level = 1
-	}
-	ge.applyPlanTemplateLocked()
-	ge.applyLegacySharesLocked()
-	ge.meetOldFriendsLocked()
-}
 
 // EnterAgeForTest moves the game into age through the real advance (the
 // carryover, the unlocks, the kit's template slice and old friends), with no

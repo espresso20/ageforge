@@ -450,16 +450,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	ge := &GameEngine{
 		rules:            set,
 		age:              "primitive_age",
-		Resources:        NewResourceManagerWith(set),
-		Workers:          NewWorkerManagerWith(set),
-		Research:         NewResearchManagerWith(set),
-		Military:         NewMilitaryManagerWith(set),
-		Events:           NewEventManagerWith(set),
-		Milestones:       NewMilestoneManagerWith(set),
 		Prestige:         NewPrestigeManagerWith(set),
-		Trade:            NewTradeManagerWith(set),
-		Diplomacy:        NewDiplomacyManagerWith(set),
-		Stats:            NewGameStats(),
 		Bus:              NewEventBus(),
 		progress:         NewProgressManagerWith(set),
 		permanentBonuses: make(map[string]float64),
@@ -475,7 +466,7 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 		History:          NewHistoryCollector(),
 		badges:           newBadgeBook(set),
 	}
-	ge.Buildings = ge.newBuildingManager()
+	ge.newRunManagers()
 	ge.progress.town = ge.gateTown()
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
@@ -494,6 +485,21 @@ func NewGameEngineWith(set *rules.Set) *GameEngine {
 	// seed; Reset re-rolls a fresh one.
 	ge.SeedRNG(newSeed())
 	return ge
+}
+
+// newRunManagers builds the managers a run owns, anew, on the engine's rules.
+// The Prestige manager outlives runs and is not among them.
+func (ge *GameEngine) newRunManagers() {
+	ge.Resources = NewResourceManagerWith(ge.rules)
+	ge.Buildings = ge.newBuildingManager()
+	ge.Workers = NewWorkerManagerWith(ge.rules)
+	ge.Research = NewResearchManagerWith(ge.rules)
+	ge.Military = NewMilitaryManagerWith(ge.rules)
+	ge.Events = NewEventManagerWith(ge.rules)
+	ge.Milestones = NewMilestoneManagerWith(ge.rules)
+	ge.Trade = NewTradeManagerWith(ge.rules)
+	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
+	ge.Stats = NewGameStats()
 }
 
 // newBuildingManager is a BuildingManager whose tech-gated buildings read
@@ -724,7 +730,7 @@ func (ge *GameEngine) updateMoraleTick() {
 			}
 			def, ok := ge.Buildings.defs[key]
 			if ok && def.WorkerDomain == "military" {
-				militaryAssigned += ge.Workers.GetAssignedCount("military", key)
+				militaryAssigned += ge.Workers.GetAssignedCount(key)
 			}
 		}
 		ratio := float64(militaryAssigned) / float64(totalPop)
@@ -736,7 +742,7 @@ func (ge *GameEngine) updateMoraleTick() {
 
 	// Idle workers > 50% of pop
 	if totalPop > 0 {
-		idle := ge.Workers.IdleCount("worker")
+		idle := ge.Workers.IdleCount()
 		if float64(idle)/float64(totalPop) > 0.50 {
 			ge.applyMorale(-0.002)
 		}
@@ -853,10 +859,6 @@ func (ge *GameEngine) Start() {
 					ge.mu.Lock()
 					ge.addLog("warning", vibe.Sprintf("game.engine.Start.01", "Autosave failed: could not write the save file (%v). Try saving by hand.", err))
 					ge.mu.Unlock()
-				} else {
-					ge.mu.Lock()
-					ge.addLog("debug", "Autosave complete")
-					ge.mu.Unlock()
 				}
 
 				// Account lifetime-stats flush (Phase 6): persist any pending
@@ -938,17 +940,11 @@ func (ge *GameEngine) tickIntervalWithBonusLocked(bonus float64) time.Duration {
 // bonuses, prestige, and active events. Must be called with the write lock held.
 // The result is cached in ge.tickSpeedBonus; getTickInterval reads it.
 func (ge *GameEngine) recalculateTickSpeed() {
-	oldBonus := ge.tickSpeedBonus
 	// tick_speed additive pool from the resolver (research + permanent + prestige
 	// + active-event tick_speed). buildResolver reads only write-lock-held state
 	// + pure config; recalculateTickSpeed runs under the write lock. UNgated, as
 	// before — the (1 + bonus) below applies regardless of sign.
-	bonus := ge.buildResolver().AddTotal("tick_speed")
-	ge.tickSpeedBonus = bonus
-
-	if bonus != oldBonus {
-		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, ge.tickIntervalLocked().Milliseconds()))
-	}
+	ge.tickSpeedBonus = ge.buildResolver().AddTotal("tick_speed")
 }
 
 // starvationDeathInterval is how many ticks pass between starvation deaths
@@ -1470,14 +1466,6 @@ func (ge *GameEngine) doTick() {
 		}
 	}
 
-	// Log net food rate and capped resources every 10 ticks
-	if ge.tick%10 == 0 {
-		snap := ge.Resources.Snapshot()
-		if f, ok := snap["food"]; ok {
-			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Workers.TotalPop()))
-		}
-	}
-
 	// Track gathered amounts in stats
 	for key, r := range ge.Resources.Snapshot() {
 		if r.Rate > 0 {
@@ -1515,15 +1503,6 @@ func (ge *GameEngine) doTick() {
 	// Morale tick — must run after recalculateRates() so foodRate is current
 	ge.updateMoraleTick()
 
-	// Periodic debug snapshot every 50 ticks
-	if ge.tick%50 == 0 {
-		snap := ge.Resources.Snapshot()
-		foodAmt := snap["food"].Amount
-		foodRate := snap["food"].Rate
-		ge.addLog("debug", fmt.Sprintf("Tick %d snapshot: food=%.1f (%+.3f/t), pop=%d, queue=%d",
-			ge.tick, foodAmt, foodRate, ge.Workers.TotalPop(), len(ge.buildQueue)))
-	}
-
 	// The tick's report: the run's milestones are judged on it (checkMilestones,
 	// from the run's state, here as always), then the account's badges.
 	ge.report(Event{Kind: config.BadgeEvTick})
@@ -1555,7 +1534,6 @@ func (ge *GameEngine) doTick() {
 // finishResearch logs a completed tech and publishes EventResearchDone.
 func (ge *GameEngine) finishResearch(completed string) {
 	def := ge.Research.defs[completed]
-	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 	ge.addLog("success", vibe.Sprintf("game.engine.finishResearch.02", "Research complete: %s.", def.Name))
 	// The keystone of this age's wonder says what it opened.
 	if w := ge.progress.WonderForAge(ge.age); w != "" && ge.Buildings.defs[w].RequiredTech == completed &&
@@ -1576,10 +1554,7 @@ func (ge *GameEngine) finishResearch(completed string) {
 			ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", q))
 		}
 	}
-	ge.Bus.Publish(EventData{
-		Type:    EventResearchDone,
-		Payload: map[string]interface{}{"tech": completed},
-	})
+	ge.publish(EventResearchDone, payload{"tech": completed})
 	ge.note(config.BadgeEvResearchDone, completed)
 }
 
@@ -1589,12 +1564,10 @@ func (ge *GameEngine) processEvents() {
 	triggered, expired := ge.Events.Tick(ge.gameRNG(), ge.tick, ge.age, ageOrder, ge.currentEpoch)
 
 	for _, def := range triggered {
-		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
 		ge.fireEvent(def)
 	}
 
 	for _, ae := range expired {
-		ge.addLog("debug", fmt.Sprintf("Event expired: %s", ae.Key))
 		var about LogTag
 		switch ae.Key {
 		case "worker_lending":
@@ -1682,7 +1655,6 @@ func (ge *GameEngine) processExpeditions() {
 		ge.soldiersFall(res.SoldiersFell)
 		ge.syncSoldiers()
 		res.Message += ge.casualtyLine(res)
-		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Name, len(res.Rewards)))
 		ge.Military.recordReturn(res, ge.tick)
 		ge.addLogAbout("event", casualtyTags(res), res.Message)
 		if res.Rank > res.RankBefore {
@@ -1826,7 +1798,7 @@ func (ge *GameEngine) processDiplomacy() {
 		if perWorker <= 0 || def.WorkerCapacity <= 0 {
 			return
 		}
-		assigned := ge.Workers.GetAssignedCount("worker", key)
+		assigned := ge.Workers.GetAssignedCount(key)
 		totalCap := float64(count * def.WorkerCapacity)
 		fill := float64(assigned) / totalCap
 		if fill > 1.0 {
@@ -1883,14 +1855,11 @@ func (ge *GameEngine) checkMilestones() {
 		}
 		ge.applyMilestoneRewards(ms.Rewards)
 		// Publish milestone event
-		ge.Bus.Publish(EventData{
-			Type: EventMilestoneCompleted,
-			Payload: map[string]interface{}{
-				"name":        ms.Name,
-				"key":         ms.Key,
-				"reward_text": rewardText,
-				"flavor":      ms.Flavor,
-			},
+		ge.publish(EventMilestoneCompleted, payload{
+			"name":        ms.Name,
+			"key":         ms.Key,
+			"reward_text": rewardText,
+			"flavor":      ms.Flavor,
 		})
 		ge.note(config.BadgeEvMilestone, ms.Key)
 	}
@@ -1910,15 +1879,12 @@ func (ge *GameEngine) checkMilestones() {
 		}
 		ge.startChainBoost(chain, boost)
 		// Publish chain event
-		ge.Bus.Publish(EventData{
-			Type: EventChainCompleted,
-			Payload: map[string]interface{}{
-				"name":        chain.Name,
-				"key":         chain.Key,
-				"title":       chain.Title,
-				"flavor":      chain.Flavor,
-				"boost_ticks": boost,
-			},
+		ge.publish(EventChainCompleted, payload{
+			"name":        chain.Name,
+			"key":         chain.Key,
+			"title":       chain.Title,
+			"flavor":      chain.Flavor,
+			"boost_ticks": boost,
 		})
 		ge.note(config.BadgeEvChain, chain.Key)
 	}
@@ -2338,9 +2304,6 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
-	unlocks := ge.progress.GetUnlocks(newAge)
-	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
-		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", vibe.Sprintf("game.engine.advanceAge.05", "Advanced from the %s to the %s.", oldName, newName))
 	if line := ge.masteryEntryLine(newAge, prevK); line != "" {
 		ge.addLog("info", line)
@@ -2352,7 +2315,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	}
 
 	// Notify player about the wonder available in this age
-	for _, bKey := range unlocks.UnlockBuildings {
+	for _, bKey := range ge.progress.GetUnlocks(newAge).UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
 			if ge.Buildings.TechLocked(bKey) {
 				ge.addLog("event", vibe.Sprintf("game.engine.advanceAge.06", "★ Wonder available: %s. Bank its cost and research %s, its keystone, then build it.", def.Name, ge.techName(def.RequiredTech)))
@@ -2363,13 +2326,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		}
 	}
 
-	ge.Bus.Publish(EventData{
-		Type: EventAgeAdvanced,
-		Payload: map[string]interface{}{
-			"old_age": oldAge,
-			"new_age": newAge,
-		},
-	})
+	ge.publish(EventAgeAdvanced, payload{"old_age": oldAge, "new_age": newAge})
 
 	// Phase 8: detect epoch transition and roll epoch event
 	ge.detectEpochTransition(newAge)
@@ -2404,8 +2361,8 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 	for _, b := range age.UnlockBuildings {
 		ge.Buildings.UnlockBuilding(b)
 	}
-	for _, v := range age.UnlockVillagers {
-		ge.Workers.UnlockType(v)
+	if len(age.UnlockVillagers) > 0 {
+		ge.Workers.Unlock()
 	}
 }
 
@@ -2438,13 +2395,10 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 	ge.currentEpoch = newEpoch
 	ep, _ := ge.rules.Era(newEpoch)
 	ge.addLog("event", vibe.Sprintf("game.engine.detectEpochTransition.01", "[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description))
-	ge.Bus.Publish(EventData{
-		Type: EventEpochAdvanced,
-		Payload: map[string]interface{}{
-			"epoch_key":  newEpoch,
-			"epoch_name": ep.Name,
-			"epoch_icon": ep.Icon,
-		},
+	ge.publish(EventEpochAdvanced, payload{
+		"epoch_key":  newEpoch,
+		"epoch_name": ep.Name,
+		"epoch_icon": ep.Icon,
 	})
 	ge.rollEpochEvent(newEpoch)
 	// The new era's hidden fate, rolled on entry (none in the final epoch).
@@ -2488,15 +2442,6 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	for _, capped := range ge.capLinesLocked(def.Effects, true) {
 		ge.addLog("info", capped)
 	}
-
-	ge.Bus.Publish(EventData{
-		Type: EventAwakeningFired,
-		Payload: map[string]interface{}{
-			"awakening_key":  def.Key,
-			"awakening_name": def.Name,
-			"epoch_key":      def.EpochKey,
-		},
-	})
 }
 
 // rollEpochEvent performs the epoch transition event roll.
@@ -2568,18 +2513,7 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 	}
 	ev := eligible[ge.gameRNG().Intn(len(eligible))]
 	ge.applyGoodEpochEvent(ev)
-
-	ep, _ := ge.rules.Era(ge.currentEpoch)
-	record := EpochEventRecord{
-		EpochKey: ge.currentEpoch, EpochName: ep.Name,
-		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
-		Tick: ge.tick,
-	}
-	ge.epochEventHistory = append(ge.epochEventHistory, record)
-	ge.Bus.Publish(EventData{
-		Type:    EventEpochEventFired,
-		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
-	})
+	ge.recordEpochEvent(ge.currentEpoch, ev)
 }
 
 // rollChallengingEpochEvent picks a bad (non-catastrophe) epoch event.
@@ -2590,18 +2524,19 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 	}
 	ev := pool[ge.gameRNG().Intn(len(pool))]
 	ge.applyChallengingEpochEvent(ev, epochKey)
+	ge.recordEpochEvent(epochKey, ev)
+}
 
+// recordEpochEvent files an epoch event that has just been applied in the
+// history and tells the bus.
+func (ge *GameEngine) recordEpochEvent(epochKey string, ev config.EpochEventDef) {
 	ep, _ := ge.rules.Era(epochKey)
-	record := EpochEventRecord{
+	ge.epochEventHistory = append(ge.epochEventHistory, EpochEventRecord{
 		EpochKey: epochKey, EpochName: ep.Name,
 		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
 		Tick: ge.tick,
-	}
-	ge.epochEventHistory = append(ge.epochEventHistory, record)
-	ge.Bus.Publish(EventData{
-		Type:    EventEpochEventFired,
-		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
 	})
+	ge.publish(EventEpochEventFired, payload{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type})
 }
 
 // applyGoodEpochEvent applies the effects of a good epoch transition event. The
@@ -2614,9 +2549,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	switch ev.Key {
 	case "age_of_plenty":
 		// ×2 all production for Duration ticks via production_all effect
-		ge.injectEpochEffects("epoch_age_of_plenty", ev,
-			[]config.Effect{{Type: "production_all", Value: 1.0}})
-		ge.logCapped(config.Effect{Type: "production_all", Value: 1.0})
+		ge.boostProduction("epoch_age_of_plenty", ev, 1.0)
 	case "population_surge":
 		// +15% workers across all domains, instant
 		before := ge.Workers.TotalPop()
@@ -2673,8 +2606,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 	case "worker_innovation":
 		// Permanent +10% production_all
-		ge.permanentBonuses["production_all"] += 0.10
-		ge.logCapped(config.Effect{Type: "production_all", Value: 0.10})
+		ge.grantProduction(0.10)
 	case "architects_gift":
 		// 10 free buildings of the most common built non-wonder type
 		const giftCount = 10
@@ -2693,14 +2625,26 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 	case "peaceful_century":
 		// +20% all production for Duration ticks
-		ge.injectEpochEffects("epoch_peaceful_century", ev,
-			[]config.Effect{{Type: "production_all", Value: 0.20}})
-		ge.logCapped(config.Effect{Type: "production_all", Value: 0.20})
+		ge.boostProduction("epoch_peaceful_century", ev, 0.20)
 	case "epoch_blessing":
 		// Permanent +15% production_all; recorded as a golden age
-		ge.permanentBonuses["production_all"] += 0.15
-		ge.logCapped(config.Effect{Type: "production_all", Value: 0.15})
+		ge.grantProduction(0.15)
 	}
+}
+
+// boostProduction starts a timed boost to all production for an epoch event
+// and logs what a cap keeps from counting.
+func (ge *GameEngine) boostProduction(key string, ev config.EpochEventDef, value float64) {
+	boost := config.Effect{Type: "production_all", Value: value}
+	ge.injectEpochEffects(key, ev, []config.Effect{boost})
+	ge.logCapped(boost)
+}
+
+// grantProduction adds a permanent bonus to all production and logs what a
+// cap keeps from counting.
+func (ge *GameEngine) grantProduction(value float64) {
+	ge.permanentBonuses["production_all"] += value
+	ge.logCapped(config.Effect{Type: "production_all", Value: value})
 }
 
 // applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch
@@ -3257,7 +3201,6 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 		ge.staffPlanCopy(key)
 	}
 	def := ge.Buildings.defs[key]
-	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
 	done := buildDoneLog(def)
 	ge.addLog(done, vibe.Sprintf("game.engine.finishBuild.02", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 	ge.logScholarsArrived(def)
@@ -3281,10 +3224,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 		}
 	}
 	ge.Stats.RecordBuild()
-	ge.Bus.Publish(EventData{
-		Type:    EventBuildingBuilt,
-		Payload: map[string]interface{}{"building": key},
-	})
+	ge.publish(EventBuildingBuilt, payload{"building": key})
 	ge.noteBuilt(key, 1)
 }
 
@@ -3365,7 +3305,6 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	if actual > before {
 		ge.note(config.BadgeEvGathered, resource)
 	}
-	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
 	ge.addLog(LogRoutine, vibe.Sprintf("game.engine.GatherResource.04", "Gathered %s.", Amount(actual-before, resource)))
 	return actual, nil
 }
@@ -3487,7 +3426,6 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 		}
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Build start: %s", def.Name))
 	if !DevGodMode && def.BuildTicks > 0 {
 		// Queue for construction, ÷ k on known ground (Era Mastery).
 		ticks := ge.buildTicksLocked(def)
@@ -3512,10 +3450,7 @@ func (ge *GameEngine) startBuildPaid(key string, quiet bool) error {
 		}
 		ge.recalculateRates()
 		ge.addLog(buildDoneLog(def), vibe.Sprintf("game.engine.startBuildPaid.08", "%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
-		ge.Bus.Publish(EventData{
-			Type:    EventBuildingBuilt,
-			Payload: map[string]interface{}{"building": key},
-		})
+		ge.publish(EventBuildingBuilt, payload{"building": key})
 		ge.noteBuilt(key, 1)
 	}
 	return nil
@@ -3591,10 +3526,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		} else {
 			ge.Buildings.counts[key]++
 			ge.Stats.RecordBuild()
-			ge.Bus.Publish(EventData{
-				Type:    EventBuildingBuilt,
-				Payload: map[string]interface{}{"building": key},
-			})
+			ge.publish(EventBuildingBuilt, payload{"building": key})
 			ge.noteBuilt(key, 1)
 		}
 		built++
@@ -3632,7 +3564,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Workers.IsUnlocked(vType) {
+	if !ge.Workers.IsUnlocked() {
 		return 0, vibe.Errorf("game.engine.RecruitMax.01", "Worker type '%s' is not unlocked yet.", vType)
 	}
 
@@ -3643,7 +3575,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 		return 0, vibe.Errorf("game.engine.RecruitMax.02", "No housing left (%d/%d). Build housing to recruit more.", ge.popLocked(), popCap)
 	}
 
-	if !ge.Workers.Recruit(vType, available, ge.workerCapLocked()) {
+	if !ge.Workers.Recruit(available, ge.workerCapLocked()) {
 		return 0, vibe.Errorf("game.engine.RecruitMax.03", "Could not recruit any workers.")
 	}
 	ge.Stats.RecordRecruit(available)
@@ -3663,9 +3595,9 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 
 	popCap := ge.popCapLocked()
 
-	if !ge.Workers.Recruit(vType, count, ge.workerCapLocked()) {
+	if !ge.Workers.Recruit(count, ge.workerCapLocked()) {
 		totalPop := ge.popLocked()
-		if !ge.Workers.IsUnlocked(vType) {
+		if !ge.Workers.IsUnlocked() {
 			return vibe.Errorf("game.engine.RecruitWorker.02", "Worker type '%s' is not unlocked yet.", vType)
 		}
 		if totalPop >= popCap {
@@ -3676,7 +3608,6 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	}
 	ge.Stats.RecordRecruit(count)
 	ge.holdStaffing()
-	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.popLocked(), popCap))
 	ge.addLogAbout(LogRoutine, TagPeople|TagGood, vibe.Sprintf("game.engine.RecruitWorker.08", "Recruited %s (population %d/%d).",
 		textfmt.Count(count, vibe.Line("game.engine.RecruitWorker.09", "worker"), vibe.Line("game.engine.RecruitWorker.10", "workers")), ge.popLocked(), popCap))
 	return nil
@@ -3697,7 +3628,7 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	}
 	// Enforce capacity cap
 	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
-	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount(buildingKey)
 	available := totalCap - alreadyAssigned
 	if available <= 0 {
 		return vibe.Errorf("game.engine.AssignWorker.02", "All %s at %s are full.", textfmt.Count(totalCap, vibe.Line("game.engine.AssignWorker.03", "worker slot"), vibe.Line("game.engine.AssignWorker.04", "worker slots")), def.Name)
@@ -3706,15 +3637,12 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 		return vibe.Errorf("game.engine.AssignWorker.05", "Only %s free at %s (%d/%d filled).",
 			textfmt.Count(available, vibe.Line("game.engine.AssignWorker.06", "worker slot is"), vibe.Line("game.engine.AssignWorker.07", "worker slots are")), def.Name, alreadyAssigned, totalCap)
 	}
-	if !ge.Workers.Assign("worker", buildingKey, count) {
-		idle := ge.Workers.IdleCount("worker")
+	if !ge.Workers.Assign(buildingKey, count) {
+		idle := ge.Workers.IdleCount()
 		return vibe.Errorf("game.engine.AssignWorker.08", "Only %s idle (you asked for %d). Recruit more or unassign some elsewhere.",
 			textfmt.Count(idle, vibe.Line("game.engine.AssignWorker.09", "worker is"), vibe.Line("game.engine.AssignWorker.10", "workers are")), count)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.AssignWorker.12", "Assigned %s to %s.", textfmt.Count(count, vibe.Line("game.engine.AssignWorker.13", "worker"), vibe.Line("game.engine.AssignWorker.14", "workers")), def.Name))
 	return nil
 }
 
@@ -3729,12 +3657,12 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 		return 0, err
 	}
 	// Cap at available capacity
-	toAssign := ge.Workers.IdleCount("worker")
+	toAssign := ge.Workers.IdleCount()
 	if toAssign <= 0 {
 		return 0, vibe.Errorf("game.engine.AssignAll.01", "No idle workers to assign. Recruit more first.")
 	}
 	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
-	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount(buildingKey)
 	available := totalCap - alreadyAssigned
 	if available <= 0 {
 		return 0, vibe.Errorf("game.engine.AssignAll.02", "All %s at %s are full.", textfmt.Count(totalCap, vibe.Line("game.engine.AssignAll.03", "worker slot"), vibe.Line("game.engine.AssignAll.04", "worker slots")), def.Name)
@@ -3742,12 +3670,10 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	if toAssign > available {
 		toAssign = available
 	}
-	if !ge.Workers.Assign("worker", buildingKey, toAssign) {
+	if !ge.Workers.Assign(buildingKey, toAssign) {
 		return 0, vibe.Errorf("game.engine.AssignAll.05", "Could not assign workers to %s.", def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.AssignAll.06", "Assigned %s to %s.", textfmt.Count(toAssign, vibe.Line("game.engine.AssignAll.07", "worker"), vibe.Line("game.engine.AssignAll.08", "workers")), def.Name))
 	return toAssign, nil
 }
 
@@ -3760,16 +3686,14 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	assigned := ge.Workers.GetAssignedCount(buildingKey)
 	if assigned <= 0 {
 		return 0, vibe.Errorf("game.engine.UnassignAll.01", "No workers are assigned to %s.", def.Name)
 	}
-	if !ge.Workers.Unassign("worker", buildingKey, assigned) {
+	if !ge.Workers.Unassign(buildingKey, assigned) {
 		return 0, vibe.Errorf("game.engine.UnassignAll.02", "Could not unassign workers from %s.", def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignAll.03", "Unassigned %s from %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignAll.04", "worker"), vibe.Line("game.engine.UnassignAll.05", "workers")), def.Name))
 	return assigned, nil
 }
 
@@ -3785,17 +3709,14 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	if err != nil {
 		return err
 	}
-	if !ge.Workers.Unassign("worker", buildingKey, count) {
-		assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	if !ge.Workers.Unassign(buildingKey, count) {
+		assigned := ge.Workers.GetAssignedCount(buildingKey)
 		if assigned <= 0 {
 			return vibe.Errorf("game.engine.UnassignWorker.02", "No workers are assigned to %s.", def.Name)
 		}
 		return vibe.Errorf("game.engine.UnassignWorker.03", "Only %s assigned to %s.", textfmt.Count(assigned, vibe.Line("game.engine.UnassignWorker.04", "worker is"), vibe.Line("game.engine.UnassignWorker.05", "workers are")), def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
+	ge.staffingChanged(vibe.Sprintf("game.engine.UnassignWorker.07", "Unassigned %s from %s.", textfmt.Count(count, vibe.Line("game.engine.UnassignWorker.08", "worker"), vibe.Line("game.engine.UnassignWorker.09", "workers")), def.Name))
 	return nil
 }
 
@@ -3809,7 +3730,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 		return ge.unknownBuildingErr(buildingKey)
 	}
 	if all {
-		count = ge.Workers.GetAssignedCount("worker", buildingKey)
+		count = ge.Workers.GetAssignedCount(buildingKey)
 	}
 	if count <= 0 {
 		return vibe.Errorf("game.engine.DismissWorkers.01", "No workers are assigned to %s.", def.Name)
@@ -3818,11 +3739,18 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	if dismissed == 0 {
 		return vibe.Errorf("game.engine.DismissWorkers.02", "No workers are assigned to %s.", def.Name)
 	}
-	ge.holdStaffing()
-	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Sprintf("game.engine.DismissWorkers.03", "Dismissed %s from %s. They left your population (now %d).",
+	ge.staffingChanged(vibe.Sprintf("game.engine.DismissWorkers.03", "Dismissed %s from %s. They left your population (now %d).",
 		textfmt.Count(dismissed, vibe.Line("game.engine.DismissWorkers.04", "worker"), vibe.Line("game.engine.DismissWorkers.05", "workers")), def.Name, ge.popLocked()))
 	return nil
+}
+
+// staffingChanged ends a command that moved workers: the staffing routine
+// waits, the rates follow and the log says what was done. Caller holds the
+// write lock.
+func (ge *GameEngine) staffingChanged(line string) {
+	ge.holdStaffing()
+	ge.recalculateRates()
+	ge.addLogAbout(LogRoutine, TagPeople, line)
 }
 
 // checkAmount rejects a resource amount no command can mean: NaN, an
@@ -3951,11 +3879,11 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	if def.WorkerCapacity > 0 {
 		newCount := current - n
 		newCap := def.WorkerCapacity * newCount
-		assigned := ge.Workers.GetAssignedCount("worker", key)
+		assigned := ge.Workers.GetAssignedCount(key)
 		if newCap == 0 {
-			ge.Workers.Unassign("worker", key, assigned)
+			ge.Workers.Unassign(key, assigned)
 		} else if assigned > newCap {
-			ge.Workers.Unassign("worker", key, assigned-newCap)
+			ge.Workers.Unassign(key, assigned-newCap)
 		}
 	}
 
@@ -3996,7 +3924,6 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 		// complete immediately
 		ge.finishResearch(ge.Research.complete())
 	}
-	ge.addLog("debug", fmt.Sprintf("Research start: %s (work: %.0f, %d ticks)", def.Name, def.Cost, ge.researchTicksFor(def.Cost)))
 	if !quiet {
 		ge.addLog(LogRoutine, ge.startedResearchLine(def))
 	}
@@ -4198,18 +4125,6 @@ func (ge *GameEngine) EnsureMissionBoard() {
 // made. Caller holds the write lock.
 func (ge *GameEngine) ensureMissionBoardLocked() {
 	ge.Military.EnsureBoard(ge.gameRNG(), ge.age, ge.tick)
-}
-
-// MissionCost reports the current launch cost of offer n, soldiers under the
-// key "soldiers"; nil when there is no such offer.
-func (ge *GameEngine) MissionCost(n int) map[string]float64 {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-	offer, err := ge.Military.BoardOffer(n)
-	if err != nil {
-		return nil
-	}
-	return ge.missionCostLocked(offer)
 }
 
 // missionCostLocked is what sending an offer costs now: the party of soldiers
@@ -4444,7 +4359,7 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 
 	offer.SuccessChance = ge.offerSuccessLocked(offer)
 	base := ge.missionHaulLocked(offer.HaulMinutes)
-	active := ge.Military.LaunchOffer(offer, ge.tick, int(soldiers), cost, base)
+	active := ge.Military.LaunchOffer(offer, int(soldiers), cost, base)
 	ge.syncSoldiers()
 	words, _ := ge.rules.MissionWords(offer.Age)
 	active.RoadEvents = rollRoadEvents(ge.gameRNG(), offer, active.TotalTicks, words)
@@ -4476,7 +4391,6 @@ func (ge *GameEngine) launchExpeditionLocked(n int) error {
 		ge.Resources.Remove(res, cost[res])
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (party of %d soldiers)", offer.Title, int(soldiers)))
 	if offer.Military() {
 		ge.addLogAbout(LogRoutine, TagPeople|TagArmy, vibe.Sprintf("game.engine.launchExpeditionLocked.02", "Campaign launched: %s (%d soldiers).", offer.Title, int(soldiers)))
 	} else {
@@ -4683,22 +4597,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.harbingerHistory = nil
 	ge.epochEventHistory = nil
 
-	// Restore cross-run state
-	ge.Buildings.LoadRuins(savedRuins)
-	ge.reapplyLegacyBonuses()
-
-	// Apply age unlocks for primitive age
-	ge.applyAgeUnlocks("primitive_age")
-
-	// Recompute derived rates for the fresh managers now, not on the first
-	// tick: they have to be in the first snapshot of the new run.
-	ge.recalculateRates()
-
-	// Apply the starting resources
-	ge.Resources.Add("food", 15)
-	ge.Resources.Add("wood", 12)
-
-	ge.recalculateTickSpeed()
+	ge.beginNextRunLocked(savedRuins)
 
 	ge.log = carried
 	// The old run's last lines: what the Last Passage did, then the run's
@@ -4771,16 +4670,7 @@ func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.tick = 0
 	ge.runFacts = RunFacts{}
 	ge.age = "primitive_age"
-	ge.Resources = NewResourceManagerWith(ge.rules)
-	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManagerWith(ge.rules)
-	ge.Research = NewResearchManagerWith(ge.rules)
-	ge.Military = NewMilitaryManagerWith(ge.rules)
-	ge.Events = NewEventManagerWith(ge.rules)
-	ge.Milestones = NewMilestoneManagerWith(ge.rules)
-	ge.Trade = NewTradeManagerWith(ge.rules)
-	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
-	ge.Stats = NewGameStats()
+	ge.newRunManagers()
 	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
 	ge.prestigeCue = PrestigeCue{}
 	ge.prestigeCueSeenAge = ""
@@ -4821,41 +4711,34 @@ func (ge *GameEngine) resetRunLocked(morale float64) {
 	ge.startRunShares()
 }
 
+// beginNextRunLocked starts the run that follows a prestige or a fall, on the
+// managers resetRunLocked just built: the ruins and legacy bonuses that
+// outlive the old run, the first age, the rates and the starting stock.
+// Per-resource legacy rate bonuses live in permanentBonuses; the research
+// bonus is derived from the legacy flags (see succumbResearchFactor).
+// Caller holds the write lock.
+func (ge *GameEngine) beginNextRunLocked(ruins map[string]int) {
+	ge.Buildings.LoadRuins(ruins)
+	ge.reapplyLegacyBonuses()
+	ge.applyAgeUnlocks("primitive_age")
+	// The rates are worked out before the starting stock lands: the real
+	// rates are in the new run's first snapshot, not left to the first tick.
+	ge.recalculateRates()
+	ge.Resources.Add("food", 15)
+	ge.Resources.Add("wood", 12)
+	ge.recalculateTickSpeed()
+}
+
 // Reset completely reinitializes the engine to a fresh state (including prestige)
 func (ge *GameEngine) Reset() {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	ge.tick = 0
 	ge.sessionStart = nil
-	ge.age = "primitive_age"
-	ge.Resources = NewResourceManagerWith(ge.rules)
-	ge.Buildings = ge.newBuildingManager()
-	ge.Workers = NewWorkerManagerWith(ge.rules)
-	ge.Research = NewResearchManagerWith(ge.rules)
-	ge.Military = NewMilitaryManagerWith(ge.rules)
-	ge.Events = NewEventManagerWith(ge.rules)
-	ge.Milestones = NewMilestoneManagerWith(ge.rules)
 	ge.Prestige = NewPrestigeManagerWith(ge.rules)
-	ge.Trade = NewTradeManagerWith(ge.rules)
-	ge.Diplomacy = NewDiplomacyManagerWith(ge.rules)
-	ge.Stats = NewGameStats()
-	ge.soldiersPosted, ge.soldierWaitLogged, ge.soldiersVacant, ge.soldiersSeen = nil, nil, nil, 0
-	ge.prestigeCue = PrestigeCue{}
-	ge.prestigeCueSeenAge = ""
-	ge.Stats.AgeLog[0].Tick = ge.tick
-	ge.Stats.AgeLog[0].Age = ge.age
-	// Bus intentionally kept — dashboard subscriptions must survive across resets.
-	ge.permanentBonuses = make(map[string]float64)
+	ge.resetRunLocked(moraleNeutral)
 	ge.tickSpeedBonus = 0
-	ge.speedMultiplier = 1.0
-	ge.buildQueue = nil
-	ge.plan = nil
 	ge.planLog = nil
-	ge.log = nil
-	// The history overlay is this run's: the ring starts over with the run.
-	ge.History = NewHistoryCollector()
-
 	ge.applyAgeUnlocks("primitive_age")
 	ge.Resources.Add("food", 25)
 	ge.Resources.Add("wood", 50)
@@ -4864,34 +4747,15 @@ func (ge *GameEngine) Reset() {
 	ge.eliteBadge = false
 	// A new game is a new run: no dev console history, and no owner until
 	// StartNewNamedGame (or LoadGame) names one.
-	ge.runFacts = RunFacts{}
 	ge.devTouched = false
 	ge.runAccountID = ""
 	ge.runOrphaned = false
-	ge.currentEpoch = ge.rules.EraOf("primitive_age")
-	ge.epochEventFired = make(map[string]bool)
-	ge.clearHarbingerRun()
 	ge.harbingerHistory = nil
-	ge.awakeningsFired = make(map[string]bool)
-	ge.survivedEpochs = make(map[string]bool)
-	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil
 	ge.legacyBonuses = make(map[string]bool)
 	ge.catastropheHistory = nil
 	ge.pendingLastPassage = false
 	ge.cosmicLegacy = false
-	ge.morale = moraleNeutral
-	ge.lowMoraleWarned = false
-	// Full wipe: no previous civilization, so no cache. Clear the run flag.
-	ge.ancientMemoryUsed = false
-	ge.pendingMemoryTech = ""
-	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
-	ge.grantedFeatures = nil
-	ge.ageReady = false
-	ge.starvationTicks = 0
-	ge.autoExpeditionTicksLeft = 0
-	ge.autoExpeditionStarved = false
-	ge.startRunShares()
 	ge.autoRecruitOff = false
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
@@ -4997,7 +4861,7 @@ func (ge *GameEngine) GetState() GameState {
 	rngDraws, quipDraws := ge.rngDraws()
 
 	workers := ge.Workers.Snapshot(popCap)
-	workers.Shares = cloneShares(ge.workerShares)
+	workers.Shares = cloneMap(ge.workerShares)
 	workers.AutoRecruit = !ge.autoRecruitOff
 	workers.HoldTicks = max(0, ge.staffHoldUntil-ge.tick)
 	workers.HeldBy, workers.FoodNet, workers.FoodFeeds = ge.popHoldLocked()
@@ -5533,7 +5397,7 @@ func (ge *GameEngine) upgradeTechErr(target config.BuildingDef) error {
 // hold what is assigned), to the extent the target's slots take them; the
 // rest go idle. Under the write lock.
 func (ge *GameEngine) moveUpgradedWorkers(oldKey string, held int, oldDef, target config.BuildingDef) {
-	assigned := ge.Workers.GetAssignedCount("worker", oldKey)
+	assigned := ge.Workers.GetAssignedCount(oldKey)
 	if assigned <= 0 || held <= 0 {
 		return
 	}
@@ -5542,10 +5406,10 @@ func (ge *GameEngine) moveUpgradedWorkers(oldKey string, held int, oldDef, targe
 	if move <= 0 {
 		return
 	}
-	ge.Workers.Unassign("worker", oldKey, move)
-	room := target.WorkerCapacity*ge.Buildings.GetCount(target.Key) - ge.Workers.GetAssignedCount("worker", target.Key)
+	ge.Workers.Unassign(oldKey, move)
+	room := target.WorkerCapacity*ge.Buildings.GetCount(target.Key) - ge.Workers.GetAssignedCount(target.Key)
 	if give := min(move, room); give > 0 {
-		ge.Workers.Assign("worker", target.Key, give)
+		ge.Workers.Assign(target.Key, give)
 	}
 }
 

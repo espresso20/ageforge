@@ -90,7 +90,7 @@ func TestRecalculateRates_NegativeGatherRateReducesRate(t *testing.T) {
 	const key = "gathering_camp"
 	def := ge.Buildings.defs[key]
 	ge.Buildings.counts[key] = 1
-	pool := ge.Workers.domains["worker"]
+	pool := ge.Workers
 	pool.count, pool.assignments[key] = def.WorkerCapacity, def.WorkerCapacity
 	listed := def.Effects[0].Value
 

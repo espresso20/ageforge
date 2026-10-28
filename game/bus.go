@@ -5,33 +5,26 @@ import "sync"
 // Event types
 const (
 	EventBuildingBuilt      = "building_built"
-	EventWorkerAdded        = "worker_added"
 	EventAgeAdvanced        = "age_advanced"
-	EventResourceDepleted   = "resource_depleted"
 	EventResearchDone       = "research_done"
-	EventGameSaved          = "game_saved"
 	EventGameLoaded         = "game_loaded"
 	EventMilestoneCompleted = "milestone_completed"
 	EventChainCompleted     = "chain_completed"
 	EventEpochAdvanced      = "epoch_advanced"
 	EventEpochEventFired    = "epoch_event_fired"
-	EventAwakeningFired     = "awakening_fired"
 	EventHarbingerArrived   = "harbinger_arrived"
-	// EventFateRolled and EventFateResolved carry an era's hidden fate
-	// (fate.go publishFate), for the smoke report and tests. The UI must never
-	// subscribe to them: a fate may not show before its harbinger arrives
-	// (ui/fate_guard_test.go).
-	EventFateRolled   = "fate_rolled"
-	EventFateResolved = "fate_resolved"
 	// EventRunEnded carries the record of a run that just ended in a
 	// prestige or a fall (run_ending.go), as Payload["ending"], a RunEnding.
 	EventRunEnded = "run_ended"
 )
 
+// payload is the data an event carries.
+type payload = map[string]interface{}
+
 // EventData carries data for an event
 type EventData struct {
 	Type    string
-	Payload map[string]interface{}
+	Payload payload
 }
 
 // EventBus provides pub/sub communication between game systems
@@ -62,4 +55,9 @@ func (eb *EventBus) Publish(event EventData) {
 	for _, h := range handlers {
 		h(event)
 	}
+}
+
+// publish sends an event of kind with data to the engine's subscribers.
+func (ge *GameEngine) publish(kind string, data payload) {
+	ge.Bus.Publish(EventData{Type: kind, Payload: data})
 }

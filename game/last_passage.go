@@ -142,15 +142,12 @@ func (ge *GameEngine) triggerLastPassage(source string) {
 	name, _ := ge.rules.LastPassage()
 	ge.addLog("warning", vibe.Sprintf("game.last_passage.triggerLastPassage.01", "☄ %s has come. The civilization cannot pass out of this age unmarked.", name))
 	ge.addLog("warning", vibe.Line("game.last_passage.triggerLastPassage.02", "  Type 'catastrophe' to choose Endure or Succumb. Only prestige waits; the run goes on until you choose."))
-	ge.Bus.Publish(EventData{
-		Type: EventEpochEventFired,
-		Payload: map[string]interface{}{
-			"event_key":  config.LastPassageKey,
-			"event_name": name,
-			"event_type": "catastrophe",
-			"epoch_key":  ge.currentEpoch,
-			"source":     source,
-		},
+	ge.publish(EventEpochEventFired, payload{
+		"event_key":  config.LastPassageKey,
+		"event_name": name,
+		"event_type": "catastrophe",
+		"epoch_key":  ge.currentEpoch,
+		"source":     source,
 	})
 }
 
@@ -293,7 +290,7 @@ func (ge *GameEngine) logRunEnding() {
 			req.Subject = def.Name
 		}
 	}
-	if l := ge.flavorStream().Line(req, ge.gameRNG()); l != "" {
+	if l := ge.flavorLine(req); l != "" {
 		ge.addLog("info", fmt.Sprintf("  [comment]%s[-]", l))
 	}
 }

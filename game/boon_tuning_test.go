@@ -377,7 +377,7 @@ func prepareTuningEngine(sc tuningScenario) *GameEngine {
 	// shipped investment/cadence functions see a real installation to read.
 	if sc.autoSocieties > 0 {
 		ge.Buildings.LoadCounts(map[string]int{autoExpeditionBuildingKey: sc.autoSocieties})
-		if sc.autoWorkers > 0 && !ge.Workers.Assign("worker", autoExpeditionBuildingKey, sc.autoWorkers) {
+		if sc.autoWorkers > 0 && !ge.Workers.Assign(autoExpeditionBuildingKey, sc.autoWorkers) {
 			panic("tuning scenario could not staff its Geographic Societies")
 		}
 	}

@@ -272,32 +272,10 @@ func (f *RunFacts) empty() bool {
 
 // clone returns a copy that shares no map with f.
 func (f RunFacts) clone() RunFacts {
-	f.Counts = cloneFloatMap(f.Counts)
-	f.Net = cloneIntMap(f.Net)
-	f.High = cloneIntMap(f.High)
+	f.Counts = cloneMap(f.Counts)
+	f.Net = cloneMap(f.Net)
+	f.High = cloneMap(f.High)
 	return f
-}
-
-func cloneFloatMap(m map[string]float64) map[string]float64 {
-	if len(m) == 0 {
-		return nil
-	}
-	out := make(map[string]float64, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
-}
-
-func cloneIntMap(m map[string]int) map[string]int {
-	if len(m) == 0 {
-		return nil
-	}
-	out := make(map[string]int, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
 }
 
 // runFactsSaveCopy is the run's facts for the save: a copy, or nil when

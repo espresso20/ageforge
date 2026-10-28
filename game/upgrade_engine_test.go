@@ -355,18 +355,18 @@ func TestUpgrade_StopsAtTheTargetsMaxCount(t *testing.T) {
 func TestUpgrade_CopyKeepsItsWorkers(t *testing.T) {
 	ge := campsInTheStoneAge(t, 4)
 	oldCap := ge.Buildings.defs["gathering_camp"].WorkerCapacity
-	ge.Workers.UnlockType("worker")
-	ge.Workers.Recruit("worker", 4*oldCap+5, 1<<20)
-	if !ge.Workers.Assign("worker", "gathering_camp", 4*oldCap) {
+	ge.Workers.Unlock()
+	ge.Workers.Recruit(4*oldCap+5, 1<<20)
+	if !ge.Workers.Assign("gathering_camp", 4*oldCap) {
 		t.Fatal("setup: assign failed")
 	}
 	newCap := ge.Buildings.defs["forager_post"].WorkerCapacity
 	noErr(t, ge.UpgradeBuilding("gathering_camp", 1, false))
 	moved := min(oldCap, newCap)
-	if got := ge.Workers.GetAssignedCount("worker", "forager_post"); got != moved {
+	if got := ge.Workers.GetAssignedCount("forager_post"); got != moved {
 		t.Errorf("the upgraded copy has %d workers, want %d (its %d, to a building of %d slots)", got, moved, oldCap, newCap)
 	}
-	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got != 3*oldCap {
+	if got := ge.Workers.GetAssignedCount("gathering_camp"); got != 3*oldCap {
 		t.Errorf("the three camps left have %d workers, want %d", got, 3*oldCap)
 	}
 
@@ -375,18 +375,18 @@ func TestUpgrade_CopyKeepsItsWorkers(t *testing.T) {
 	post := few.Buildings.defs["forager_post"]
 	post.WorkerCapacity = 1
 	few.Buildings.defs["forager_post"] = post
-	few.Workers.UnlockType("worker")
-	few.Workers.Recruit("worker", 2*oldCap, 1<<20)
-	few.Workers.Assign("worker", "gathering_camp", 2*oldCap)
+	few.Workers.Unlock()
+	few.Workers.Recruit(2*oldCap, 1<<20)
+	few.Workers.Assign("gathering_camp", 2*oldCap)
 	pop := few.Workers.TotalPop()
 	noErr(t, few.UpgradeBuilding("gathering_camp", 1, false))
-	if got := few.Workers.GetAssignedCount("worker", "forager_post"); got != 1 {
+	if got := few.Workers.GetAssignedCount("forager_post"); got != 1 {
 		t.Errorf("the upgraded copy has %d workers in 1 slot, want 1", got)
 	}
 	if few.Workers.TotalPop() != pop {
 		t.Errorf("population %d -> %d: an upgrade must not lose workers", pop, few.Workers.TotalPop())
 	}
-	if idle := few.Workers.IdleCount("worker"); idle != oldCap-1 {
+	if idle := few.Workers.IdleCount(); idle != oldCap-1 {
 		t.Errorf("idle = %d, want the %d the new copy had no slot for", idle, oldCap-1)
 	}
 }

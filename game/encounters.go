@@ -109,17 +109,9 @@ const (
 //
 // The two Moments are flavor.EncounterAtCapacity and flavor.EncounterStandoff.
 //
-// NOTE FOR THE TUNING HARNESS: game/boon_tuning_test.go buckets encounter
-// outcomes by matching the player-facing line. It used to iterate these two
-// slices; it now consults flavor.Signatures(moment), which enumerates the
-// fragments guaranteed to appear verbatim in generated text. If you add a Moment
-// to the empty-outcome path, add it to bounceSignatures there or the harness will
-// silently stop classifying.
-//
 // A standoff must never be SILENT: before the malus table existed a war encounter
-// fired and produced nothing at all, which read to the player — and to the
-// harness — as if no encounter had happened. A standoff is an outcome and gets a
-// line.
+// fired and produced nothing at all, which read to the player as if no encounter
+// had happened. A standoff is an outcome and gets a line.
 
 // rollExpeditionEncounter is called once per resolved expedition. It rolls the
 // encounter chance for (category, success); on a hit it discovers an eligible
@@ -128,11 +120,9 @@ const (
 // (first-contact + boon flavour); nil when no encounter fires or no faction is
 // eligible yet. Must run under the write lock.
 func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []string {
-	// Self-heal a missing RNG service rather than ever panicking on a nil source.
-	if ge.rng == nil {
-		ge.SeedRNG(newSeed())
-	}
-	if ge.rng.Float64() >= encounterChance(category, success) {
+	// gameRNG heals a missing RNG service rather than ever panicking on a nil
+	// source; the draws below read ge.rng after it.
+	if ge.gameRNG().Float64() >= encounterChance(category, success) {
 		return nil
 	}
 
@@ -273,22 +263,10 @@ func (ge *GameEngine) eligibleFactions(ageOrder map[string]int, discovered bool)
 // into). Deterministic given ge.rng's state and the slice order. Strength is
 // clamped to a floor of 1 so every faction has a non-zero weight.
 func (ge *GameEngine) pickWeightedFaction(defs []config.FactionDef) config.FactionDef {
-	total := 0
-	for _, d := range defs {
-		total += factionWeight(d)
+	if def, ok := pickWeighted(ge.rng, defs, factionWeight); ok {
+		return def
 	}
-	if total <= 0 {
-		return defs[ge.rng.Intn(len(defs))]
-	}
-	roll := ge.rng.Intn(total)
-	cum := 0
-	for _, d := range defs {
-		cum += factionWeight(d)
-		if roll < cum {
-			return d
-		}
-	}
-	return defs[len(defs)-1]
+	return defs[ge.rng.Intn(len(defs))]
 }
 
 // factionWeight is a faction's encounter weight (Strength, floored at 1).

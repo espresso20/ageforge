@@ -100,5 +100,5 @@ func (ge *GameEngine) publishRunEnded(end RunEnding, runStarted time.Time) {
 	if acct := ge.accountForRecordsLocked(); acct != nil && !runStarted.IsZero() {
 		end.Badges = acct.BadgesEarnedSince(runStarted)
 	}
-	ge.Bus.Publish(EventData{Type: EventRunEnded, Payload: map[string]interface{}{"ending": end}})
+	ge.publish(EventRunEnded, payload{"ending": end})
 }

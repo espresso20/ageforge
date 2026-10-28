@@ -31,9 +31,9 @@ func sharesEngine(t *testing.T, huts int, counts map[string]int) *GameEngine {
 // that is left. Each pass brings in 1% of the population, at least one.
 func growFully(ge *GameEngine) {
 	for i := 0; i < 5000; i++ {
-		pop, idle := ge.Workers.TotalPop(), ge.Workers.IdleCount("worker")
+		pop, idle := ge.Workers.TotalPop(), ge.Workers.IdleCount()
 		ge.keepSharesLive()
-		if ge.Workers.TotalPop() == pop && ge.Workers.IdleCount("worker") == idle {
+		if ge.Workers.TotalPop() == pop && ge.Workers.IdleCount() == idle {
 			return
 		}
 	}
@@ -114,7 +114,7 @@ func TestShares_HeldAsPopulationGrows(t *testing.T) {
 			t.Errorf("%d huts: food %d and lumber %d workers, want an even split", huts, f, l)
 		}
 	}
-	if n := ge.Workers.IdleCount("worker"); n != 0 {
+	if n := ge.Workers.IdleCount(); n != 0 {
 		t.Errorf("%d idle workers", n)
 	}
 }
@@ -129,7 +129,7 @@ func TestShares_OfflineRecruitsAndAssigns(t *testing.T) {
 	if pop := ge.Workers.TotalPop(); pop != housing {
 		t.Errorf("population after an hour away = %d, want the housing's %d", pop, housing)
 	}
-	if n, want := ge.Workers.IdleCount("worker"), housing-slots; n != want {
+	if n, want := ge.Workers.IdleCount(), housing-slots; n != want {
 		t.Errorf("%d in the reserve after an hour away, want %d (the housing less the %d slots, all filled)", n, want, slots)
 	}
 	if r := ge.Resources.GetRate("food"); r <= 0 {
@@ -145,7 +145,7 @@ func TestShares_OfflineRecruitsAndAssigns(t *testing.T) {
 func TestShares_NewBuildingsGetStaffed(t *testing.T) {
 	ge := sharesEngine(t, 3, map[string]int{"gathering_camp": 2, "wood_camp": 2})
 	growFully(ge)
-	if pop, idle := ge.Workers.TotalPop(), ge.Workers.IdleCount("worker"); pop != 30 || idle != 18 {
+	if pop, idle := ge.Workers.TotalPop(), ge.Workers.IdleCount(); pop != 30 || idle != 18 {
 		t.Fatalf("setup: population %d with %d in the reserve, want the housing's 30 and 18 waiting", pop, idle)
 	}
 	setAmount(ge, "wood", 1000)
@@ -154,7 +154,7 @@ func TestShares_NewBuildingsGetStaffed(t *testing.T) {
 		ge.StepTicks(1)
 	}
 	ge.StepTicks(staffEveryTicks)
-	if got, want := ge.Workers.GetAssignedCount("worker", "shrine"), slotsOf(ge, "shrine"); got != want {
+	if got, want := ge.Workers.GetAssignedCount("shrine"), slotsOf(ge, "shrine"); got != want {
 		t.Errorf("the new story circle has %d of its %d workers", got, want)
 	}
 	if pop := ge.Workers.TotalPop(); pop != 30 {
@@ -168,20 +168,20 @@ func TestShares_NewBuildingsGetStaffed(t *testing.T) {
 func TestShares_WaitsAfterAWorkerCommand(t *testing.T) {
 	ge := sharesEngine(t, 3, map[string]int{"gathering_camp": 2, "wood_camp": 2})
 	growFully(ge)
-	reserve := ge.Workers.IdleCount("worker")
+	reserve := ge.Workers.IdleCount()
 	noErr(t, ge.UnassignWorker("wood_camp", 3))
 	if st := ge.GetState(); st.Workers.HoldTicks != staffHoldTicks {
 		t.Errorf("HoldTicks = %d right after the command, want %d", st.Workers.HoldTicks, staffHoldTicks)
 	}
 	ge.StepTicks(staffHoldTicks - 1)
-	if n := ge.Workers.IdleCount("worker"); n != reserve+3 {
+	if n := ge.Workers.IdleCount(); n != reserve+3 {
 		t.Fatalf("%d idle workers during the wait, want the reserve's %d and the 3 the player freed", n, reserve)
 	}
 	ge.StepTicks(staffEveryTicks + 1)
-	if n := ge.Workers.IdleCount("worker"); n != reserve {
+	if n := ge.Workers.IdleCount(); n != reserve {
 		t.Errorf("%d idle workers after the wait, want the reserve's %d (the 3 back at work)", n, reserve)
 	}
-	if got, want := ge.Workers.GetAssignedCount("worker", "wood_camp"), slotsOf(ge, "wood_camp"); got != want {
+	if got, want := ge.Workers.GetAssignedCount("wood_camp"), slotsOf(ge, "wood_camp"); got != want {
 		t.Errorf("the wood camps have %d of their %d workers after the wait", got, want)
 	}
 }
@@ -199,7 +199,7 @@ func TestShares_RecruitKeepsFoodAndStopsAtHousing(t *testing.T) {
 	if r := ge.Resources.GetRate("food"); r <= 0 {
 		t.Errorf("food rate %v after recruiting up to the food", r)
 	}
-	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got != slotsOf(ge, "gathering_camp") {
+	if got := ge.Workers.GetAssignedCount("gathering_camp"); got != slotsOf(ge, "gathering_camp") {
 		t.Errorf("gathering camp has %d of its %d workers: a food worker grows more than they eat, so its slots fill first", got, slotsOf(ge, "gathering_camp"))
 	}
 	if st := ge.GetState(); RecruitStatus(st) != RecruitFood || st.Workers.HeldBy != HeldFood {
@@ -290,9 +290,9 @@ func TestShares_AutoRecruitOff(t *testing.T) {
 	if pop := ge.Workers.TotalPop(); pop != 0 {
 		t.Fatalf("recruited %d with auto-recruit off", pop)
 	}
-	ge.Workers.Recruit("worker", 5, 50)
+	ge.Workers.Recruit(5, 50)
 	ge.keepSharesLive()
-	if n := ge.Workers.IdleCount("worker"); n != 0 {
+	if n := ge.Workers.IdleCount(); n != 0 {
 		t.Errorf("%d idle workers with free slots and auto-recruit off", n)
 	}
 	for i := 0; i < 10; i++ {
@@ -400,7 +400,7 @@ func TestShares_FillOrder(t *testing.T) {
 	ge.recalculateRates()
 	setAmount(ge, "food", 1000)
 	growFully(ge)
-	if got := ge.Workers.GetAssignedCount("worker", "forager_post"); got != slotsOf(ge, "forager_post") {
+	if got := ge.Workers.GetAssignedCount("forager_post"); got != slotsOf(ge, "forager_post") {
 		t.Errorf("forager posts have %d of %d workers: this age's food buildings fill first", got, slotsOf(ge, "forager_post"))
 	}
 	if !ge.Buildings.IsOlder("gathering_camp") {
@@ -602,11 +602,11 @@ func TestShares_PlanStaffingFollowsTheShares(t *testing.T) {
 		ge.staffPlanCopy("stone_camp")
 		return ge
 	}
-	if got := game(true).Workers.GetAssignedCount("worker", "stone_camp"); got != 0 {
+	if got := game(true).Workers.GetAssignedCount("stone_camp"); got != 0 {
 		t.Errorf("with shares set the stone camp took %d workers from the wood camps (another domain)", got)
 	}
 	ge := game(false)
-	if got := ge.Workers.GetAssignedCount("worker", "stone_camp"); got != slotsOf(ge, "stone_camp") {
+	if got := ge.Workers.GetAssignedCount("stone_camp"); got != slotsOf(ge, "stone_camp") {
 		t.Errorf("on auto the stone camp has %d of its %d workers", got, slotsOf(ge, "stone_camp"))
 	}
 }

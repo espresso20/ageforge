@@ -4,7 +4,6 @@ import (
 	"maps"
 	"math"
 	"strconv"
-	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/rules"
@@ -42,11 +41,6 @@ func MasteryTicks(ticks int, k float64) int {
 // SpeedText formats a mastery speed for player text: "2x", "2.4x", "4.2x".
 func SpeedText(k float64) string {
 	return strconv.FormatFloat(math.Round(k*10)/10, 'f', -1, 64) + "x"
-}
-
-// shortAgeName is an age's name in set without " Age" ("Atomic"), for ranges.
-func shortAgeName(set *rules.Set, key string) string {
-	return strings.TrimSuffix(set.Name(rules.KindAge, key), " Age")
 }
 
 // ===== PrestigeManager: the mastery map =====
@@ -278,13 +272,6 @@ func (ge *GameEngine) SetMasteryForTest(mastery map[string]int, record string) {
 	ge.Prestige.SetRecord(record)
 	ge.Prestige.NoteAgeEntered(ge.age)
 	ge.recalculateRates()
-}
-
-// SetPrestigeFloorForTest sets the prestige age floor for focused tests.
-func (ge *GameEngine) SetPrestigeFloorForTest(age string) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	ge.Prestige.floor = age
 }
 
 // buildTicksLocked is def's construction time in the current age: its

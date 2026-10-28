@@ -503,9 +503,8 @@ func DistinctSkeletons(m Moment) int {
 // TestSignaturesClassifyEveryLine.
 //
 // That is the seam a consumer holding only finished TEXT needs in order to classify
-// it — game/boon_tuning_test.go uses it to keep bucketing encounter outcomes now
-// that those lines are generated rather than drawn from a fixed slice. Prefer
-// Result.Template when you have the Result; use this when you only have the string.
+// it. Prefer Result.Template when you have the Result; use this when you only
+// have the string.
 //
 // The returned slice is a fresh copy in a stable (sorted) order.
 func Signatures(m Moment) []string {

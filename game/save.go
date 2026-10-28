@@ -533,12 +533,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	queue := make([]BuildQueueItem, len(ge.buildQueue))
 	copy(queue, ge.buildQueue)
 
-	// Deep copy permanent bonuses
-	permBonuses := make(map[string]float64, len(ge.permanentBonuses))
-	for k, v := range ge.permanentBonuses {
-		permBonuses[k] = v
-	}
-
 	// Deep copy trade state
 	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))
 	for k, v := range ge.Trade.activeRoutes {
@@ -593,7 +587,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Milestones:       ge.Milestones.GetCompleted(),
 		ChainsCompleted:  ge.Milestones.GetChainsCompleted(),
 		CurrentTitle:     ge.Milestones.savedTitle(),
-		PermanentBonuses: permBonuses,
+		PermanentBonuses: orEmpty(maps.Clone(ge.permanentBonuses)),
 		Prestige: PrestigeSave{
 			Level:         ge.Prestige.level,
 			PrestigeFloor: ge.Prestige.floor,
@@ -604,9 +598,9 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Furthest:    ge.Prestige.record,
 			RunFurthest: ge.Prestige.runFurthest,
 
-			LegacyPlan:     clonePlanTemplate(ge.Prestige.legacyPlan),
+			LegacyPlan:     cloneSlice(ge.Prestige.legacyPlan),
 			LegacyFactions: slices.Clone(ge.Prestige.legacyFactions),
-			LegacyShares:   cloneShares(ge.Prestige.legacyShares),
+			LegacyShares:   cloneMap(ge.Prestige.legacyShares),
 		},
 		Trade: TradeSave{
 			ActiveRoutes: tradeActiveRoutes,
@@ -646,11 +640,11 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Morale:             ge.morale,
 		History:            ge.History,
 		AccountID:          ge.saveAccountIDLocked(),
-		Plan:               clonePlan(ge.plan),
-		WorkerShares:       cloneShares(ge.workerShares),
+		Plan:               cloneSlice(ge.plan),
+		WorkerShares:       cloneMap(ge.workerShares),
 		AutoRecruitOff:     ge.autoRecruitOff,
 		StaffHoldUntil:     ge.staffHoldUntil,
-		PlanLog:            clonePlanTemplate(ge.planLog),
+		PlanLog:            cloneSlice(ge.planLog),
 		ScholarShare:       ge.scholarShareSave(),
 		SoldiersPosted:     ge.soldiersPostedSave(),
 		SoldiersVacant:     ge.soldiersVacantSave(),
@@ -784,8 +778,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		if save.Seed != 0 {
 			ge.SeedRNG(save.Seed)
 		}
-	} else if save.Seed != 0 && !ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws) {
-		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
+	} else if save.Seed != 0 {
+		// A position past the replay cap restarts the streams from the seed.
+		ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws)
 	}
 	ge.prose = flavor.StreamFromState(save.Prose)
 	// A cooldown never has longer to run than a fresh one: a hand-edited
@@ -823,7 +818,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 		ge.Buildings.UnlockBuilding(key)
 	}
 	if len(save.Unlocked.Workers) > 0 {
-		ge.Workers.UnlockType("worker")
+		ge.Workers.Unlock()
 	}
 
 	// Restore Phase 3 systems
@@ -892,26 +887,14 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	} else {
 		ge.currentEpoch = ge.rules.EraOf(save.Age)
 	}
-	if save.EpochEventFired != nil {
-		ge.epochEventFired = save.EpochEventFired
-	} else {
-		ge.epochEventFired = make(map[string]bool)
-	}
-	if save.AwakeningsFired != nil {
-		ge.awakeningsFired = save.AwakeningsFired
-	} else {
-		ge.awakeningsFired = make(map[string]bool)
-	}
+	ge.epochEventFired = orEmpty(save.EpochEventFired)
+	ge.awakeningsFired = orEmpty(save.AwakeningsFired)
 	// Ancient Memory: restore the one-per-run flag. The pending offer is
 	// transient and never restored: any doubled-tick research already in flight rides
 	// in ResearchSave, so we don't re-pop the modal.
 	ge.ancientMemoryUsed = save.AncientMemoryUsed
 	ge.pendingMemoryTech = ""
-	if save.SurvivedEpochs != nil {
-		ge.survivedEpochs = save.SurvivedEpochs
-	} else {
-		ge.survivedEpochs = make(map[string]bool)
-	}
+	ge.survivedEpochs = orEmpty(save.SurvivedEpochs)
 	ge.pendingCatastrophe = save.PendingCatastrophe
 	ge.epochEventHistory = save.EpochEventHistory
 	ge.redrawHistory()
@@ -924,11 +907,7 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	if save.Ruins != nil {
 		ge.Buildings.LoadRuins(save.Ruins)
 	}
-	if save.LegacyBonuses != nil {
-		ge.legacyBonuses = save.LegacyBonuses
-	} else {
-		ge.legacyBonuses = make(map[string]bool)
-	}
+	ge.legacyBonuses = orEmpty(save.LegacyBonuses)
 	ge.catastropheHistory = save.CatastropheHistory
 	// Era Mastery: make sure the run's furthest age and the record cover the
 	// ages this run reached. Before the fate and the harbinger, which measure
@@ -1004,9 +983,17 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	// Tell the UI a different game state is live (e.g. so a pending catastrophe
 	// modal the player closed in the old session is shown again). Handlers run
 	// under this write lock and must not call back into the engine.
-	ge.Bus.Publish(EventData{Type: EventGameLoaded, Payload: map[string]interface{}{"save": filename}})
+	ge.publish(EventGameLoaded, payload{"save": filename})
 
 	return nil
+}
+
+// orEmpty is m, or an empty map when a save left m out.
+func orEmpty[K comparable, V any](m map[K]V) map[K]V {
+	if m == nil {
+		return map[K]V{}
+	}
+	return m
 }
 
 // getUnlockedState collects all resource, building, and worker unlocks for
@@ -1153,103 +1140,73 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			saves = append(saves, corruptInfo(name, e))
 			continue
 		}
-		// Parse only the subset of fields the detail pane needs. The json tags
-		// here must match GameSave / PrestigeSave / ResearchSave / WorkerInfo above.
-		var header struct {
-			Timestamp time.Time `json:"timestamp"`
-			Tick      int       `json:"tick"`
-			Age       string    `json:"age"`
-			Morale    float64   `json:"morale"`
-			Prestige  struct {
-				Level       int `json:"level"`
-				TotalEarned int `json:"total_earned"`
-			} `json:"prestige"`
-			CurrentTitle       string             `json:"current_title"`
-			CurrentEpoch       string             `json:"current_epoch"`
-			PendingCatastrophe string             `json:"pending_catastrophe"`
-			PendingLastPassage bool               `json:"pending_last_passage"`
-			Milestones         []string           `json:"milestones"`
-			Resources          map[string]float64 `json:"resources"`
-			SoldiersPosted     map[string]int     `json:"soldiers_posted"`
-			Military           struct {
-				Active []struct {
-					Mission *struct {
-						Soldiers int `json:"soldiers"`
-					} `json:"mission"`
-				} `json:"active"`
-			} `json:"military"`
-			Buildings map[string]int        `json:"buildings"`
-			Workers   map[string]WorkerInfo `json:"workers"`
-			Research  struct {
-				Researched []string `json:"researched"`
-			} `json:"research"`
-			CheaterBadge bool   `json:"cheater_badge"`
-			EliteBadge   bool   `json:"elite_badge"`
-			ParentName   string `json:"parent_name"`
-			AccountID    string `json:"account_id"`
-		}
-		if err := json.Unmarshal(data, &header); err != nil {
+		var save GameSave
+		if err := json.Unmarshal(data, &save); err != nil {
 			saves = append(saves, corruptInfo(name, e))
 			continue
 		}
-
-		// Derive aggregates. Ranges over nil maps are no-ops, so a save missing
-		// any of these sections simply yields zero — no panic.
-		population := 0
-		for _, w := range header.Workers {
-			population += w.Count
-		}
-		buildings, wonders := 0, 0
-		for key, count := range header.Buildings {
-			if count <= 0 {
-				continue
-			}
-			buildings += count
-			if def, ok := core.Building(key); ok && def.Category == "wonder" {
-				wonders += count
-			}
-		}
-
-		// The soldiers at home: the posted soldiers of the military buildings
-		// that stand (never more than their posts), less the parties away.
-		soldiers := 0
-		for key, posted := range header.SoldiersPosted {
-			if header.Buildings[key] > 0 {
-				soldiers += posted
-			}
-		}
-		for _, slot := range header.Military.Active {
-			if slot.Mission != nil {
-				soldiers -= slot.Mission.Soldiers
-			}
-		}
-
-		saves = append(saves, SaveInfo{
-			Name:               name,
-			Timestamp:          header.Timestamp,
-			Age:                header.Age,
-			Tick:               header.Tick,
-			PrestigeLevel:      header.Prestige.Level,
-			Morale:             header.Morale,
-			Modified:           header.CheaterBadge,
-			Elite:              header.EliteBadge,
-			Title:              header.CurrentTitle,
-			Epoch:              epochDisplayName(core, header.CurrentEpoch),
-			Population:         population,
-			Buildings:          buildings,
-			Wonders:            wonders,
-			Techs:              len(header.Research.Researched),
-			Soldiers:           max(0, soldiers),
-			PrestigeTotal:      header.Prestige.TotalEarned,
-			PendingCatastrophe: pendingChoiceDisplayName(core, header.PendingCatastrophe, header.PendingLastPassage),
-			MilestonesDone:     len(header.Milestones),
-			MilestonesTotal:    len(core.Milestones()),
-			ParentName:         header.ParentName,
-			AccountID:          header.AccountID,
-			ModTime:            modTime(e),
-		})
+		saves = append(saves, saveInfoOf(name, &save, core, e))
 	}
 	return saves, nil
+}
+
+// saveInfoOf is the browser's line for a save that parsed: what the detail
+// pane shows, derived from the save and counted against the core rules. A save
+// missing any section yields zeros for it.
+func saveInfoOf(name string, save *GameSave, core *rules.Set, e os.DirEntry) SaveInfo {
+	population := 0
+	for _, w := range save.Workers {
+		population += w.Count
+	}
+	buildings, wonders := 0, 0
+	for key, count := range save.Buildings {
+		if count <= 0 {
+			continue
+		}
+		buildings += count
+		if def, ok := core.Building(key); ok && def.Category == "wonder" {
+			wonders += count
+		}
+	}
+
+	// The soldiers at home: the posted soldiers of the military buildings
+	// that stand (never more than their posts), less the parties away.
+	soldiers := 0
+	for key, posted := range save.SoldiersPosted {
+		if save.Buildings[key] > 0 {
+			soldiers += posted
+		}
+	}
+	for _, slot := range save.Military.Active {
+		if slot.Mission != nil {
+			soldiers -= slot.Mission.Soldiers
+		}
+	}
+
+	return SaveInfo{
+		Name:               name,
+		Timestamp:          save.Timestamp,
+		Age:                save.Age,
+		Tick:               save.Tick,
+		PrestigeLevel:      save.Prestige.Level,
+		Morale:             save.Morale,
+		Modified:           save.CheaterBadge,
+		Elite:              save.EliteBadge,
+		Title:              save.CurrentTitle,
+		Epoch:              epochDisplayName(core, save.CurrentEpoch),
+		Population:         population,
+		Buildings:          buildings,
+		Wonders:            wonders,
+		Techs:              len(save.Research.Researched),
+		Soldiers:           max(0, soldiers),
+		PrestigeTotal:      save.Prestige.TotalEarned,
+		PendingCatastrophe: pendingChoiceDisplayName(core, save.PendingCatastrophe, save.PendingLastPassage),
+		MilestonesDone:     len(save.Milestones),
+		MilestonesTotal:    len(core.Milestones()),
+		ParentName:         save.ParentName,
+		AccountID:          save.AccountID,
+		ModTime:            modTime(e),
+	}
 }
 
 // epochDisplayName maps an epoch key to its display name in set, falling

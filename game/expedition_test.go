@@ -200,8 +200,8 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		setSoldiers(ge, 500)
 
 		ge.mu.Lock()
-		ge.Workers.UnlockType("worker")
-		ge.Workers.Recruit("worker", 5, 100)
+		ge.Workers.Unlock()
+		ge.Workers.Recruit(5, 100)
 		popBefore := ge.Workers.TotalPop()
 		ge.mu.Unlock()
 

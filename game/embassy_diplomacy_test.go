@@ -85,7 +85,7 @@ func TestEmbassyOpinionGain_GrandIsDouble(t *testing.T) {
 		// Seed one fully-staffed building of the requested type.
 		def := config.BuildingByKey()[buildingKey]
 		ge.Buildings.counts[buildingKey] = 1
-		ge.Workers.domains["worker"].assignments[buildingKey] = def.WorkerCapacity // 100% fill
+		ge.Workers.assignments[buildingKey] = def.WorkerCapacity // 100% fill
 		ge.mu.Unlock()
 
 		// Advance enough ticks for the fractional accumulator to spill into ints.

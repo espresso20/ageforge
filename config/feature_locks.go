@@ -15,10 +15,8 @@ import "fmt"
 // tells the two apart, and the static research check lists the ones still
 // waiting).
 //
-// Old saves: a game that already used a command keeps it for the rest of its
-// run, whatever it has researched (the game's GameSave.GrantedFeatures), and
-// a save from before the locks has every command open in the age it was in
-// (GameSave.TreeGraceAge).
+// A game that already used a command keeps it for the rest of its run,
+// whatever it has researched (the game's GameSave.GrantedFeatures).
 
 // The keys of the feature locks.
 const (

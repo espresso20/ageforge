@@ -402,3 +402,10 @@ func TestMasterySaveRoundTrip(t *testing.T) {
 		t.Errorf("the Primitive Age runs at %v after load, want %v", b.K, config.MasteryK(7))
 	}
 }
+
+// SetPrestigeFloorForTest sets the prestige age floor for focused tests.
+func (ge *GameEngine) SetPrestigeFloorForTest(age string) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.Prestige.floor = age
+}

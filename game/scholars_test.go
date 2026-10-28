@@ -18,7 +18,7 @@ func scholarEngine(t *testing.T) *GameEngine {
 	defer ge.mu.Unlock()
 	ge.age = "stone_age"
 	ge.Workers.SetAge("stone_age")
-	ge.Workers.UnlockType("worker")
+	ge.Workers.Unlock()
 	ge.Buildings.counts["story_circle"] = 2
 	ge.Buildings.counts["elders_hall"] = 1
 	ge.recalculateRates()

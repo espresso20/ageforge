@@ -1,7 +1,6 @@
 package game
 
 import (
-	"sort"
 	"strings"
 	"time"
 
@@ -23,13 +22,21 @@ func amountText(v float64) string { return textfmt.Number(v) }
 // amountsText lists amounts as "120 food, 40 gold", sorted by resource key,
 // skipping zero and negative entries.
 func amountsText(m map[string]float64) string {
+	return strings.Join(amountParts(m, isPositive), ", ")
+}
+
+func isPositive(v float64) bool { return v > 0 }
+
+// amountParts lists the entries of m that keep accepts as "120 food", sorted
+// by resource key.
+func amountParts(m map[string]float64, keep func(float64) bool) []string {
 	var parts []string
-	for _, k := range sortedKeys(m) {
-		if m[k] > 0 {
-			parts = append(parts, Amount(m[k], k))
+	for _, key := range sortedKeys(m) {
+		if keep(m[key]) {
+			parts = append(parts, Amount(m[key], key))
 		}
 	}
-	return strings.Join(parts, ", ")
+	return parts
 }
 
 // approxTicks renders a tick count at tick interval iv as an approximate
@@ -42,17 +49,7 @@ func joinAnd(parts []string) string { return textfmt.List(parts) }
 // lossParts lists resource amounts and a worker count for a log line, e.g.
 // ["8 food", "3 workers"]. Resources are sorted by key.
 func lossParts(resources map[string]float64, workers int) []string {
-	keys := make([]string, 0, len(resources))
-	for k, v := range resources {
-		if v > 0 {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	var parts []string
-	for _, k := range keys {
-		parts = append(parts, Amount(resources[k], k))
-	}
+	parts := amountParts(resources, isPositive)
 	if workers > 0 {
 		parts = append(parts, textfmt.Count(workers, vibe.Line("game.wording.lossParts.01", "worker"), vibe.Line("game.wording.lossParts.02", "workers")))
 	}

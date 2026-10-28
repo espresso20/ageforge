@@ -23,9 +23,9 @@ func TestUpgradeBuilding_PartialUpgradeRehomesWorkers(t *testing.T) {
 	newKey := target.Key
 	oldCap := ge.Buildings.defs["gathering_camp"].WorkerCapacity
 	newCap := ge.Buildings.defs[newKey].WorkerCapacity
-	ge.Workers.UnlockType("worker")
-	ge.Workers.Recruit("worker", 10*oldCap, 1<<20)
-	if !ge.Workers.Assign("worker", "gathering_camp", 10*oldCap) {
+	ge.Workers.Unlock()
+	ge.Workers.Recruit(10*oldCap, 1<<20)
+	if !ge.Workers.Assign("gathering_camp", 10*oldCap) {
 		t.Fatal("setup: assign failed")
 	}
 	for key := range ge.Resources.resources {
@@ -34,8 +34,8 @@ func TestUpgradeBuilding_PartialUpgradeRehomesWorkers(t *testing.T) {
 	pop := ge.Workers.TotalPop()
 
 	noErr(t, ge.UpgradeBuilding("gathering_camp", 3, false))
-	oldAssigned := ge.Workers.GetAssignedCount("worker", "gathering_camp")
-	newAssigned := ge.Workers.GetAssignedCount("worker", newKey)
+	oldAssigned := ge.Workers.GetAssignedCount("gathering_camp")
+	newAssigned := ge.Workers.GetAssignedCount(newKey)
 	if max := oldCap * ge.Buildings.GetCount("gathering_camp"); oldAssigned > max {
 		t.Errorf("gathering_camp: %d workers in %d slots", oldAssigned, max)
 	}
@@ -48,7 +48,7 @@ func TestUpgradeBuilding_PartialUpgradeRehomesWorkers(t *testing.T) {
 	if got := ge.Workers.TotalPop(); got != pop {
 		t.Errorf("population %d -> %d; an upgrade must not create or destroy workers", pop, got)
 	}
-	if idle := ge.Workers.IdleCount("worker"); idle != pop-oldAssigned-newAssigned {
+	if idle := ge.Workers.IdleCount(); idle != pop-oldAssigned-newAssigned {
 		t.Errorf("idle = %d, want %d", idle, pop-oldAssigned-newAssigned)
 	}
 }

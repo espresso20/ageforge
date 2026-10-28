@@ -212,8 +212,8 @@ func TestDrift_ClampedToRange(t *testing.T) {
 func TestWorkerLending_AddsAndReturns(t *testing.T) {
 	ge := NewGameEngine()
 	ge.mu.Lock()
-	ge.Workers.UnlockType("worker")
-	ge.Workers.domains["worker"].count = 10
+	ge.Workers.Unlock()
+	ge.Workers.count = 10
 	// Inject a pending lend directly and apply it via the same path processDiplomacy uses.
 	ge.Diplomacy.pendingLends = []LendRequest{{FactionKey: "riverlands_tribes", Count: 5, Message: "test"}}
 	ge.Diplomacy.lentBatches = []LentWorkerBatch{{FactionKey: "riverlands_tribes", Count: 5, ReturnTick: 100, Permanent: false}}
@@ -489,4 +489,14 @@ func TestCivCommandsRefuseACivNotMet(t *testing.T) {
 			t.Errorf("%s refused a civ that is met: %v", name, err)
 		}
 	}
+}
+
+// LentWorkerTotal returns the total number of workers currently on loan across
+// all civs. Used by the engine to reconcile the pool after a load.
+func (dm *DiplomacyManager) LentWorkerTotal() int {
+	total := 0
+	for _, b := range dm.lentBatches {
+		total += b.Count
+	}
+	return total
 }

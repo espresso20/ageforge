@@ -235,3 +235,10 @@ func TestEngine_BuildCostFactorWired(t *testing.T) {
 		t.Errorf("charge==display mismatch: GetCost=%v BuildBatchCost=%v", disp, charged["wood"])
 	}
 }
+
+// GetCost calculates the cost for the next instance of a building type.
+// Cost scales exponentially: base × CostScale^count, floored to the nearest
+// integer. This makes later copies progressively more expensive.
+func (bm *BuildingManager) GetCost(key string) map[string]float64 {
+	return bm.CopyCost(key, 0, nil)
+}

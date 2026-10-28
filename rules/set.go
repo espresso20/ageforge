@@ -98,10 +98,9 @@ type Set struct {
 	classByDomain map[string][]config.WorkerClassDef
 	domains       []string
 
-	upgrades     []config.PrestigeUpgradeDef
-	upgradeByKey map[string]config.PrestigeUpgradeDef
-	shop         []config.PrestigeUpgradeDef // the upgrades the shop sells
-	kit          []string
+	upgrades []config.PrestigeUpgradeDef
+	shop     []config.PrestigeUpgradeDef // the upgrades the shop sells
+	kit      []string
 
 	targets     map[string]time.Duration
 	targetTicks map[string]float64
@@ -339,9 +338,7 @@ func (s *Set) indexDefs() {
 	for _, c := range s.classes {
 		s.classByDomain[c.Domain] = append(s.classByDomain[c.Domain], c)
 	}
-	s.upgradeByKey = make(map[string]config.PrestigeUpgradeDef, len(s.upgrades))
 	for _, u := range s.upgrades {
-		s.upgradeByKey[u.Key] = u
 		if !u.Retired {
 			s.shop = append(s.shop, u)
 		}
@@ -607,12 +604,6 @@ func (s *Set) Keystone(age string) string {
 // TechLanes returns the tech tree's lanes, in the order the tree draws them.
 func (s *Set) TechLanes() []config.TechLaneDef { return slices.Clone(s.lanes) }
 
-// TechLane returns a lane's definition.
-func (s *Set) TechLane(key string) (config.TechLaneDef, bool) {
-	l, ok := s.laneByKey[key]
-	return l, ok
-}
-
 // Resources returns every resource, in definition order.
 func (s *Set) Resources() []config.ResourceDef { return slices.Clone(s.resources) }
 
@@ -764,12 +755,6 @@ func (s *Set) WorkerClass(domain, age string) (config.WorkerClassDef, bool) {
 
 // PrestigeUpgrades returns the whole shop table, retired perks included.
 func (s *Set) PrestigeUpgrades() []config.PrestigeUpgradeDef { return slices.Clone(s.upgrades) }
-
-// PrestigeUpgrade returns a shop upgrade's definition.
-func (s *Set) PrestigeUpgrade(key string) (config.PrestigeUpgradeDef, bool) {
-	u, ok := s.upgradeByKey[key]
-	return u, ok
-}
 
 // LegacyKit returns the legacy kit's keys in shop order.
 func (s *Set) LegacyKit() []string { return slices.Clone(s.kit) }

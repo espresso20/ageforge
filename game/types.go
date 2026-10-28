@@ -372,9 +372,8 @@ type WorkerDomainState struct {
 type LogEntry struct {
 	Tick    int
 	Message string
-	// Type is the category: "info", "success", "warning", "error", "event",
-	// LogRoutine or "debug". It decides the color, the logs panel's tag, and
-	// whether a player sees the line at all ("debug" is for dumps only).
+	// Type is the category: "info", "success", "warning", "error", "event"
+	// or LogRoutine. It decides the color and the logs panel's tag.
 	Type string
 	// Tags say what the line is about, set where it is written, so a panel
 	// can pick lines by subject without reading their words (which VibeMode's
@@ -391,7 +390,7 @@ type LogEntry struct {
 //
 // The rule, for any new line: a plain confirmation of something a panel
 // already shows is LogRoutine; anything worth noticing takes another
-// category. Every category but "debug" (dumps only) shows in both logs, so
+// category. Every category shows in both logs, so
 // the main window always says what a command did. There, routine lines take
 // the plain text color and the notable ones stand out in theirs; the logs
 // panel marks routine lines with a dot. Every command that succeeds writes a

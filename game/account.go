@@ -131,13 +131,8 @@ func writeActivePointer(id string) error {
 	if err := os.MkdirAll(root, 0755); err != nil {
 		return fmt.Errorf("failed to create data root: %w", err)
 	}
-	path := activeAccountPointerPath()
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, []byte(id), 0644); err != nil {
+	if err := writeFileAtomic(activeAccountPointerPath(), []byte(id)); err != nil {
 		return fmt.Errorf("failed to write active-account pointer: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("failed to finalize active-account pointer: %w", err)
 	}
 	return nil
 }
@@ -850,13 +845,8 @@ func (a *Account) Save() error {
 		return fmt.Errorf("failed to marshal account: %w", err)
 	}
 
-	path := filepath.Join(dir, accountFileName)
-	tmpPath := path + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+	if err := writeFileAtomic(filepath.Join(dir, accountFileName), data); err != nil {
 		return fmt.Errorf("failed to write account: %w", err)
-	}
-	if err := os.Rename(tmpPath, path); err != nil {
-		return fmt.Errorf("failed to finalize account: %w", err)
 	}
 	return nil
 }
@@ -902,67 +892,68 @@ func (a *Account) UnlockedThemes() []string {
 	return out
 }
 
-// ActiveTheme returns the persisted active-theme key, or "" if none is set.
-func (a *Account) ActiveTheme() string {
+// readPrefs is a copy of the account's preferences.
+func (a *Account) readPrefs() AccountPrefs {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return a.Prefs.ActiveTheme
+	return a.Prefs
+}
+
+// editPrefs applies change to the account's preferences and persists the
+// account.
+func (a *Account) editPrefs(change func(*AccountPrefs)) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	change(&a.Prefs)
+	return a.Save()
+}
+
+// ActiveTheme returns the persisted active-theme key, or "" if none is set.
+func (a *Account) ActiveTheme() string {
+	return a.readPrefs().ActiveTheme
 }
 
 // SetActiveTheme persists key as the active theme and returns the Save error.
 // It does NOT validate that key is unlocked — accounts is key-agnostic and theming
 // owns validity + the always-unlocked policy. The only error path is the Save error.
 func (a *Account) SetActiveTheme(key string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.Prefs.ActiveTheme = key
-	return a.Save()
+	return a.editPrefs(func(p *AccountPrefs) { p.ActiveTheme = key })
 }
 
 // MapPrefs returns the persisted map settings: the glyph tier name ("" for
 // the default) and whether the icons hint was shown.
 func (a *Account) MapPrefs() (glyphs string, hintShown bool) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.Prefs.MapGlyphs, a.Prefs.MapIconsHint
+	prefs := a.readPrefs()
+	return prefs.MapGlyphs, prefs.MapIconsHint
 }
 
 // SetMapGlyphs persists the map glyph tier name.
 func (a *Account) SetMapGlyphs(tier string) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.Prefs.MapGlyphs = tier
-	return a.Save()
+	return a.editPrefs(func(p *AccountPrefs) { p.MapGlyphs = tier })
 }
 
 // MinimapOn reports whether the dashboard's mini map is on. It is on until
 // the player turns it off (minimap off): an account that never chose has it.
 func (a *Account) MinimapOn() bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.Prefs.Minimap != "off"
+	return a.readPrefs().Minimap != "off"
 }
 
 // SetMinimap persists the mini map setting.
 func (a *Account) SetMinimap(on bool) error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.Prefs.Minimap = "off"
-	if on {
-		a.Prefs.Minimap = "on"
-	}
-	return a.Save()
+	return a.editPrefs(func(p *AccountPrefs) {
+		p.Minimap = "off"
+		if on {
+			p.Minimap = "on"
+		}
+	})
 }
 
 // SetMapIconsHintShown records that the one-time icons hint was shown.
 func (a *Account) SetMapIconsHintShown() error {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.Prefs.MapIconsHint {
+	if _, shown := a.MapPrefs(); shown {
 		return nil
 	}
-	a.Prefs.MapIconsHint = true
-	return a.Save()
+	return a.editPrefs(func(p *AccountPrefs) { p.MapIconsHint = true })
 }
 
 // --- Recovery code (identity backup, the accounts design §3.5 / §8 / §9 Phase 4) ---

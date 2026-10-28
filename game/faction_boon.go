@@ -276,7 +276,7 @@ func (dm *DiplomacyManager) loadBoonLoans(loans []BoonWorkerLoan) {
 // staffing buildings. Runs every live tick, under the write lock.
 func (ge *GameEngine) returnBoonWorkers() {
 	for _, l := range ge.Diplomacy.tickBoonLoans() {
-		idle := ge.Workers.IdleCount("")
+		idle := ge.Workers.IdleCount()
 		gone := ge.Workers.KillWorker(l.Count)
 		if gone <= 0 {
 			continue

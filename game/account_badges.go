@@ -169,12 +169,8 @@ func (a *Account) saveBadgeFile(dir string) error {
 			return fmt.Errorf("the badge file is damaged and could not be set aside: %w", err)
 		}
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
+	if err := writeFileAtomic(path, data); err != nil {
 		return fmt.Errorf("failed to write badges: %w", err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		return fmt.Errorf("failed to finalize badges: %w", err)
 	}
 	a.badgeDisk, a.badgeUnreadable = data, false
 	return nil

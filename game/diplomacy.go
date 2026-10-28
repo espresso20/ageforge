@@ -103,12 +103,9 @@ type DiplomacyManager struct {
 	rules    *rules.Set
 	factions map[string]*FactionState
 
-	// giftCost and dealRefresh are the techs' terms the manager reads
-	// (SetTechTerms).
-	giftCost, dealRefresh float64
-	// giftOpinion and allyBonus are two more (SetGiftAndAllyTerms), and
-	// allyCost a third (SetAllyCostTerm).
-	giftOpinion, allyBonus, allyCost float64
+	// terms are the techs' terms the manager reads, set by the engine
+	// whenever the rates are worked out.
+	terms diplomacyTerms
 
 	// lentBatches tracks worker loans in flight so they can be returned on time.
 	lentBatches []LentWorkerBatch
@@ -354,13 +351,9 @@ func (dm *DiplomacyManager) StateOf(key string) (FactionState, bool) {
 	return FactionState{Status: "neutral"}, false
 }
 
-// clampOpinion keeps a faction's integer opinion within [-100, 100].
-func clampOpinion(fs *FactionState) {
-	if fs.Opinion > opinionMax {
-		fs.Opinion = opinionMax
-	} else if fs.Opinion < opinionMin {
-		fs.Opinion = opinionMin
-	}
+// addOpinion moves a faction's opinion by delta, within [-100, 100].
+func (fs *FactionState) addOpinion(delta int) {
+	fs.Opinion = min(max(fs.Opinion+delta, opinionMin), opinionMax)
 }
 
 // applyPersonalityDrift nudges each discovered civ's opinion toward the
@@ -384,27 +377,26 @@ func (dm *DiplomacyManager) applyPersonalityDrift(tradedRecently bool) {
 		}
 		switch def.Personality {
 		case "aggressive":
-			fs.Opinion--
+			fs.addOpinion(-1)
 		case "peaceful":
 			if !fs.AtWar {
-				fs.Opinion++
+				fs.addOpinion(1)
 			}
 		case "mercantile":
 			if tradedRecently && !fs.AtWar {
-				fs.Opinion++
+				fs.addOpinion(1)
 			} else if !tradedRecently && fs.Opinion > 0 {
 				// Mercantile civs cool off when ignored.
-				fs.Opinion--
+				fs.addOpinion(-1)
 			}
 		case "isolationist":
 			// Drift gently toward neutral from either direction.
 			if fs.Opinion > 0 {
-				fs.Opinion--
+				fs.addOpinion(-1)
 			} else if fs.Opinion < 0 {
-				fs.Opinion++
+				fs.addOpinion(1)
 			}
 		}
-		clampOpinion(fs)
 	}
 }
 
@@ -504,8 +496,7 @@ func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, e
 		return false, dm.errUnknownCiv(factionKey)
 	}
 	// Raiding tanks opinion immediately, then registers the provocation.
-	fs.Opinion -= 20
-	clampOpinion(fs)
+	fs.addOpinion(-20)
 	fs.LastProvocationTick = tick
 	started := dm.recordProvocation(fs, def, 1)
 	return started, nil
@@ -534,11 +525,8 @@ func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64
 	// Peace: end the war, reset provocations, nudge opinion up to a wary truce.
 	dm.endWar(fs)
 	dm.warEvents = append(dm.warEvents, warEvent{faction: factionKey})
-	fs.Opinion += 25
-	if fs.Opinion > 0 {
-		fs.Opinion = 0 // a truce is wary neutrality at best, never instant friendship
-	}
-	clampOpinion(fs)
+	// A truce is wary neutrality at best, never instant friendship.
+	fs.Opinion = min(fs.Opinion+25, 0)
 	return goldCost, cultureCost, nil
 }
 
@@ -554,63 +542,54 @@ func (dm *DiplomacyManager) endWar(fs *FactionState) {
 	}
 }
 
-// SetTechTerms sets the techs' terms the manager reads: giftCost on what a
-// gift costs (config.MechanicGiftCost), dealRefresh on how long a set of
-// offers lasts (config.MechanicDealRefreshTicks). 0 reads as 1 for each.
-func (dm *DiplomacyManager) SetTechTerms(giftCost, dealRefresh float64) {
-	dm.giftCost, dm.dealRefresh = giftCost, dealRefresh
+// diplomacyTerms are the techs' terms on the manager's numbers; 0 reads as 1
+// for each: giftCost on what a gift costs (config.MechanicGiftCost),
+// giftOpinion on the opinion it earns (MechanicGiftOpinion), dealRefresh on
+// how long a set of offers lasts (MechanicDealRefreshTicks), allyBonus on
+// what an allied civilization adds to its specialty (MechanicAllianceBonus)
+// and allyCost on what an alliance costs (MechanicAllianceCost).
+type diplomacyTerms struct {
+	giftCost, giftOpinion, dealRefresh, allyBonus, allyCost float64
 }
-
-// SetGiftAndAllyTerms sets two more of the techs' terms: giftOpinion on the
-// opinion a gift earns (config.MechanicGiftOpinion) and allyBonus on what an
-// allied civilization adds to its specialty (config.MechanicAllianceBonus).
-// 0 reads as 1 for each.
-func (dm *DiplomacyManager) SetGiftAndAllyTerms(giftOpinion, allyBonus float64) {
-	dm.giftOpinion, dm.allyBonus = giftOpinion, allyBonus
-}
-
-// SetAllyCostTerm sets the techs' term on what an alliance costs
-// (config.MechanicAllianceCost). 0 reads as 1.
-func (dm *DiplomacyManager) SetAllyCostTerm(f float64) { dm.allyCost = f }
 
 // AllyPrice is what an alliance costs now: AllyCost with the techs' cut.
 func (dm *DiplomacyManager) AllyPrice() float64 {
-	if dm.allyCost <= 0 || dm.allyCost >= 1 {
+	if dm.terms.allyCost <= 0 || dm.terms.allyCost >= 1 {
 		return AllyCost
 	}
-	return float64(AllyCost * dm.allyCost)
+	return float64(AllyCost * dm.terms.allyCost)
 }
 
 // GiftGain is the opinion a gift earns now: GiftOpinion with the techs'
 // share on top, rounded down to a whole point.
 func (dm *DiplomacyManager) GiftGain() int {
-	if dm.giftOpinion <= 1 {
+	if dm.terms.giftOpinion <= 1 {
 		return GiftOpinion
 	}
-	return int(float64(GiftOpinion * dm.giftOpinion))
+	return int(float64(GiftOpinion * dm.terms.giftOpinion))
 }
 
 // AllyBonus is what def adds to its specialty while allied: its TradeBonus
 // with the techs' share on top.
 func (dm *DiplomacyManager) AllyBonus(def config.FactionDef) float64 {
-	if dm.allyBonus <= 1 {
+	if dm.terms.allyBonus <= 1 {
 		return def.TradeBonus
 	}
-	return float64(def.TradeBonus * dm.allyBonus)
+	return float64(def.TradeBonus * dm.terms.allyBonus)
 }
 
 // dealRefreshFor is how long a set of offers lasts in age with the techs'
 // cut: dealRefreshIn, rounded down, one tick at least.
 func (dm *DiplomacyManager) dealRefreshFor(age string) int {
-	return techTimeTicks(dealRefreshIn(dm.rules, age), dm.dealRefresh)
+	return techTimeTicks(dealRefreshIn(dm.rules, age), dm.terms.dealRefresh)
 }
 
 // GiftPrice is what a gift costs now: GiftCost with the techs' cut.
 func (dm *DiplomacyManager) GiftPrice() float64 {
-	if dm.giftCost <= 0 || dm.giftCost >= 1 {
+	if dm.terms.giftCost <= 0 || dm.terms.giftCost >= 1 {
 		return GiftCost
 	}
-	return float64(GiftCost * dm.giftCost)
+	return float64(GiftCost * dm.terms.giftCost)
 }
 
 // SendGift sends a gift to a faction, increasing opinion
@@ -625,10 +604,7 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 		return 0, vibe.Errorf("game.diplomacy.SendGift.01", "Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
-	fs.Opinion += dm.GiftGain()
-	if fs.Opinion > opinionMax {
-		fs.Opinion = opinionMax
-	}
+	fs.addOpinion(dm.GiftGain())
 
 	// Auto-upgrade to friendly if opinion hits 25+
 	if fs.Status == "neutral" && fs.Opinion >= 25 {
@@ -719,8 +695,7 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 		}
 		// Rival/embargo: -5 per rivalDecayInterval ticks.
 		if tick%rivalDecay == 0 && (fs.Status == "rival" || fs.Status == "embargo") {
-			fs.Opinion -= 5
-			clampOpinion(fs)
+			fs.addOpinion(-5)
 		}
 		// Natural drift toward 0 every opinionDecayInterval ticks (does not
 		// override war hostility).
@@ -889,10 +864,7 @@ func (dm *DiplomacyManager) RecordTrade() {
 			continue
 		}
 		fs.TradeCount++
-		fs.Opinion++
-		if fs.Opinion > opinionMax {
-			fs.Opinion = opinionMax
-		}
+		fs.addOpinion(1)
 	}
 }
 
@@ -954,16 +926,6 @@ func (dm *DiplomacyManager) LoadState(factions map[string]FactionState, lent []L
 	if lent != nil {
 		dm.lentBatches = append([]LentWorkerBatch(nil), lent...)
 	}
-}
-
-// LentWorkerTotal returns the total number of workers currently on loan across
-// all civs. Used by the engine to reconcile the pool after a load.
-func (dm *DiplomacyManager) LentWorkerTotal() int {
-	total := 0
-	for _, b := range dm.lentBatches {
-		total += b.Count
-	}
-	return total
 }
 
 // GetFactionsForSave returns faction states for serialization

@@ -14,7 +14,7 @@ func optimizeTown(t *testing.T) *GameEngine {
 	ge.Buildings.counts["hut"] = 2
 	ge.Buildings.counts["wood_camp"] = 3
 	ge.Buildings.counts["gathering_camp"] = 2
-	ge.Workers.Recruit("worker", 12, ge.popCapLocked())
+	ge.Workers.Recruit(12, ge.popCapLocked())
 	ge.staffByShares(false)
 	ge.recalculateRates()
 	setAmount(ge, "wood", 200)
@@ -114,7 +114,7 @@ func TestPlanOptimize_HomesBeforeCampsThatNeedPeople(t *testing.T) {
 	ge.Buildings.counts["hut"] = 1
 	ge.Buildings.counts["wood_camp"] = 3
 	ge.Buildings.counts["gathering_camp"] = 2
-	ge.Workers.Recruit("worker", 10, ge.popCapLocked())
+	ge.Workers.Recruit(10, ge.popCapLocked())
 	ge.staffByShares(false)
 	ge.recalculateRates()
 	setAmount(ge, "wood", 100)
@@ -351,7 +351,7 @@ func TestPlanOptimize_EveryAge(t *testing.T) {
 				stock[res] = max(stock[res], 30*c)
 			}
 		}
-		ge.Workers.Recruit("worker", 40, ge.popCapLocked())
+		ge.Workers.Recruit(40, ge.popCapLocked())
 		ge.staffByShares(false)
 		ge.recalculateRates()
 		ge.mu.Unlock()

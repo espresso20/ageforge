@@ -63,7 +63,7 @@ func TestPlanLogRecordsThePlanAsWritten(t *testing.T) {
 	ge.PlanClear()
 
 	ge.mu.Lock()
-	got := clonePlanTemplate(ge.planLog)
+	got := cloneSlice(ge.planLog)
 	ge.mu.Unlock()
 	want := []PlanTemplateItem{{Age: "primitive_age", Kind: PlanBuild, Key: "hut", Count: 1}}
 	if !reflect.DeepEqual(got, want) {
@@ -310,7 +310,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge.mu.Lock()
-	log := clonePlanTemplate(ge.planLog)
+	log := cloneSlice(ge.planLog)
 	ge.mu.Unlock()
 	loaded := saveAndLoad(t, ge, "kit")
 	if loaded.cheaterBadge {
@@ -320,7 +320,7 @@ func TestLegacySaveRoundTrip(t *testing.T) {
 		t.Errorf("kit after load: %+v, want %+v", got, kit)
 	}
 	loaded.mu.RLock()
-	gotLog := clonePlanTemplate(loaded.planLog)
+	gotLog := cloneSlice(loaded.planLog)
 	owned := loaded.Prestige.Owns(config.LegacyFactions)
 	loaded.mu.RUnlock()
 	if !reflect.DeepEqual(gotLog, log) || len(log) == 0 || !owned {
@@ -390,4 +390,43 @@ func templateAgeCount(t []PlanTemplateItem, age string) int {
 		}
 	}
 	return n
+}
+
+// LegacyForTest returns what the kit remembers now. A test hook; not
+// reachable from play.
+func (ge *GameEngine) LegacyForTest() LegacyKit {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	pm := ge.Prestige
+	return LegacyKit{
+		Plan:     cloneSlice(pm.legacyPlan),
+		Factions: slices.Clone(pm.legacyFactions),
+		Shares:   cloneMap(pm.legacyShares),
+	}
+}
+
+// SetLegacyForTest gives the engine kit as its memory and, with own, buys
+// every kit item for free, then puts them to work as a purchase would (the
+// current age's template slice, the shares, old friends). A test hook; not
+// reachable from play.
+func (ge *GameEngine) SetLegacyForTest(kit LegacyKit, own bool) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.Prestige.LoadLegacy(kit.Plan, kit.Factions, kit.Shares)
+	if !own {
+		return
+	}
+	if ge.Prestige.level == 0 {
+		ge.Prestige.level = 1
+	}
+	ge.applyPlanTemplateLocked()
+	ge.applyLegacySharesLocked()
+	ge.meetOldFriendsLocked()
+}
+
+// LegacyKit is the legacy kit's memory as a save carries it, for tests.
+type LegacyKit struct {
+	Plan     []PlanTemplateItem `json:"plan,omitempty"`
+	Factions []string           `json:"factions,omitempty"`
+	Shares   map[string]float64 `json:"shares,omitempty"`
 }

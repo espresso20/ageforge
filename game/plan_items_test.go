@@ -64,7 +64,7 @@ func TestPlan_StaffsWhatItBuilds(t *testing.T) {
 	for i := 0; i < 100 && queued(ge, "gathering_camp") > 0; i++ {
 		ge.processBuildQueue()
 	}
-	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got == 0 {
+	if got := ge.Workers.GetAssignedCount("gathering_camp"); got == 0 {
 		t.Error("the plan's gathering camp was left unstaffed with idle workers around")
 	}
 }
@@ -116,13 +116,13 @@ func planAdvanceAway(t *testing.T, autoRecruit bool) *GameEngine {
 func TestOffline_PlanStaffsTheNewAgeAfterAnAdvance(t *testing.T) {
 	ge := planAdvanceAway(t, false)
 	camps := ge.Buildings.GetCount("stone_camp")
-	if got, want := ge.Workers.GetAssignedCount("worker", "stone_camp"), 3*camps; got != want {
+	if got, want := ge.Workers.GetAssignedCount("stone_camp"), 3*camps; got != want {
 		t.Errorf("stone camps staffed with %d workers, want %d", got, want)
 	}
-	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got != 30 {
+	if got := ge.Workers.GetAssignedCount("gathering_camp"); got != 30 {
 		t.Errorf("gathering camps have %d workers, want the 30 they had (the plan must not move food workers)", got)
 	}
-	if got := ge.Workers.GetAssignedCount("worker", "wood_camp"); got != 30-3*camps {
+	if got := ge.Workers.GetAssignedCount("wood_camp"); got != 30-3*camps {
 		t.Errorf("wood camps have %d workers, want %d (the stone camps' workers came from them)", got, 30-3*camps)
 	}
 	if pop := ge.Workers.TotalPop(); pop != 60 {
@@ -136,7 +136,7 @@ func TestOffline_PlanStaffsTheNewAgeAfterAnAdvance(t *testing.T) {
 func TestOffline_SharesStaffTheNewAgeAfterAnAdvance(t *testing.T) {
 	ge := planAdvanceAway(t, true)
 	for _, k := range []string{"stone_camp", "wood_camp", "gathering_camp"} {
-		if got, want := ge.Workers.GetAssignedCount("worker", k), ge.Buildings.defs[k].WorkerCapacity*ge.Buildings.GetCount(k); got != want {
+		if got, want := ge.Workers.GetAssignedCount(k), ge.Buildings.defs[k].WorkerCapacity*ge.Buildings.GetCount(k); got != want {
 			t.Errorf("%s has %d of its %d workers after the hour away", k, got, want)
 		}
 	}
@@ -166,7 +166,7 @@ func TestPlan_StaffingLeavesCurrentBuildingsAlone(t *testing.T) {
 	for i := 0; i < 100 && queued(ge, "gathering_camp") > 0; i++ {
 		ge.processBuildQueue()
 	}
-	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got != 0 {
+	if got := ge.Workers.GetAssignedCount("gathering_camp"); got != 0 {
 		t.Errorf("the plan moved %d workers out of this age's wood camps", got)
 	}
 }

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/espresso20/ageforge/rules"
@@ -53,7 +52,7 @@ const (
 	// wanders past every so often; investment buys cadence, and the floor stops
 	// investment from buying back-to-back play.
 	//
-	// CALIBRATION (measured — see TestBoonTuning_Scenarios, scenarios A and F).
+	// CALIBRATION (measured by game/boon_tuning_test.go, scenarios B, D and F).
 	// A resolved mission rolls an encounter (doubled, capped at 0.6), so the
 	// encounter rate follows the resolutions per 10k ticks. The era scout is
 	// out for 150 to 900 ticks, and a dispatch cycle is max(interval, that
@@ -66,7 +65,8 @@ const (
 	//
 	// which is ~58% of the hands-on rate: automation keeps an idle empire fed
 	// without making the keyboard pointless. Move autoExpeditionMinInterval and
-	// that ratio moves inversely and immediately — re-run the tuning harness.
+	// that ratio moves inversely and immediately; TestBoonTuning_AutomationSitsBetweenCasualAndActive
+	// fails when it leaves the intended band.
 	//
 	// autoExpeditionBaseInterval is the wait for ONE society with no staff.
 	// Deliberately just under the ~1000-tick gap the "casual" tuning scenario
@@ -105,7 +105,7 @@ func (ge *GameEngine) autoExpeditionInvestment() (count int, fill float64) {
 		return count, 0
 	}
 	totalCap := float64(count * def.WorkerCapacity)
-	assigned := float64(ge.Workers.GetAssignedCount("worker", autoExpeditionBuildingKey))
+	assigned := float64(ge.Workers.GetAssignedCount(autoExpeditionBuildingKey))
 	fill = assigned / totalCap
 	if fill > 1 {
 		fill = 1
@@ -146,7 +146,7 @@ func (ge *GameEngine) autoExpeditionSnapshot() AutoExpeditionState {
 		Interval:  autoExpeditionInterval(ge.rules, ge.age, count, fill),
 		Starved:   ge.autoExpeditionStarved,
 		Count:     count,
-		Assigned:  ge.Workers.GetAssignedCount("worker", autoExpeditionBuildingKey),
+		Assigned:  ge.Workers.GetAssignedCount(autoExpeditionBuildingKey),
 		Capacity:  capacity,
 	}
 }
@@ -270,7 +270,6 @@ func (ge *GameEngine) processAutoExpeditions() {
 	if err := ge.launchExpeditionLocked(n); err != nil {
 		// Defensive: the affordability and slot checks above already cover every
 		// rejection the launch path can produce. Hold at zero and retry.
-		ge.addLog("debug", fmt.Sprintf("auto-dispatch declined: %v", err))
 		return
 	}
 

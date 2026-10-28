@@ -163,10 +163,7 @@ func (ge *GameEngine) newPlanModel(keys []string) *planModel {
 	for _, k := range sortedKeys(bm.ruins) {
 		produces(bm.defs[k])
 	}
-	for res := range seen {
-		m.res = append(m.res, res)
-	}
-	sort.Strings(m.res)
+	m.res = sortedKeys(seen)
 	for i, res := range m.res {
 		m.ridx[res] = i
 	}

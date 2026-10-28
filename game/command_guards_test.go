@@ -12,47 +12,47 @@ import (
 
 func TestWorkerManager_RecruitNoOverflow(t *testing.T) {
 	vm := NewWorkerManager()
-	vm.UnlockType("worker")
-	vm.Recruit("worker", 5, 10)
+	vm.Unlock()
+	vm.Recruit(5, 10)
 
 	for _, n := range []int{math.MaxInt, math.MaxInt - 4, math.MinInt, -1, 0} {
-		if vm.Recruit("worker", n, 10) {
+		if vm.Recruit(n, 10) {
 			t.Errorf("Recruit(%d) with 5/10 pop succeeded", n)
 		}
 		if got := vm.TotalPop(); got != 5 {
 			t.Fatalf("after Recruit(%d): pop = %d, want 5", n, got)
 		}
 	}
-	if !vm.Recruit("worker", 5, 10) {
+	if !vm.Recruit(5, 10) {
 		t.Error("Recruit filling the cap exactly should succeed")
 	}
 }
 
 func TestWorkerManager_AssignUnassignRejectNonPositive(t *testing.T) {
 	vm := NewWorkerManager()
-	vm.UnlockType("worker")
-	vm.Recruit("worker", 5, 10)
-	vm.Assign("worker", "gathering_camp", 2)
+	vm.Unlock()
+	vm.Recruit(5, 10)
+	vm.Assign("gathering_camp", 2)
 
 	for _, n := range []int{0, -1, math.MinInt} {
-		if vm.Assign("worker", "gathering_camp", n) {
+		if vm.Assign("gathering_camp", n) {
 			t.Errorf("Assign(%d) succeeded", n)
 		}
-		if vm.Unassign("worker", "gathering_camp", n) {
+		if vm.Unassign("gathering_camp", n) {
 			t.Errorf("Unassign(%d) succeeded", n)
 		}
 	}
-	if got := vm.GetAssignedCount("worker", "gathering_camp"); got != 2 {
+	if got := vm.GetAssignedCount("gathering_camp"); got != 2 {
 		t.Errorf("assigned = %d, want 2", got)
 	}
-	if got := vm.IdleCount("worker"); got != 3 {
+	if got := vm.IdleCount(); got != 3 {
 		t.Errorf("idle = %d, want 3", got)
 	}
 }
 
 func TestEngineCountGuards(t *testing.T) {
 	ge := newSeededEngine(1)
-	ge.Workers.UnlockType("worker")
+	ge.Workers.Unlock()
 	ge.Buildings.counts["gathering_camp"] = 2
 	ge.Buildings.counts["hut"] = 2
 	ge.recalculateRates()

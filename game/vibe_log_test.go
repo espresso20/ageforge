@@ -573,7 +573,7 @@ func TestTheLinesOfTheCommandsAreTagged(t *testing.T) {
 	for _, on := range []bool{false, true} {
 		vibe.Set(on)
 		ge := newSeededEngine(1)
-		ge.Workers.UnlockType("worker")
+		ge.Workers.Unlock()
 		ge.Buildings.counts["gathering_camp"] = 2
 		ge.Buildings.counts["hut"] = 2
 		ge.recalculateRates()

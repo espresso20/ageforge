@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math"
 	"slices"
 	"strings"
@@ -146,15 +145,6 @@ type PlanItemView struct {
 	Note string
 }
 
-// clonePlan copies a plan so snapshots and saves share nothing with the live
-// one.
-func clonePlan(p []PlanItem) []PlanItem {
-	if len(p) == 0 {
-		return nil
-	}
-	return slices.Clone(p)
-}
-
 // loadPlanIn is a saved plan as the engine accepts it: known kinds only,
 // counts in range, at most MaxPlanItems besides research and no more
 // research items than the tree has techs. A plan the game wrote passes
@@ -197,31 +187,17 @@ func (ge *GameEngine) PlanAddUpgrade(key string, count int) (int, error) {
 	if !pending {
 		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.02", "%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
-	newKey := newDef.Key
 	if err := ge.upgradeTechErr(newDef); err != nil {
 		return 0, err
 	}
-	planned := 0
-	for _, it := range ge.plan {
-		if it.Kind == PlanUpgrade && it.Key == key {
-			planned += it.Count
-		}
-	}
+	planned := plannedCount(ge.plan, PlanUpgrade, key)
 	count = min(count, ge.Buildings.GetCount(key)-planned)
 	if count <= 0 {
 		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.03", "You have no %s to upgrade.", oldDef.Name)
 	}
-	if newDef.MaxCount > 0 {
-		room := newDef.MaxCount - ge.Buildings.GetCount(newKey) - ge.Buildings.GetQueueCount(newKey, ge.buildQueue)
-		for _, it := range ge.plan {
-			if it.Kind == PlanUpgrade && it.Key == key {
-				room -= it.Count
-			}
-		}
-		count = min(count, room)
-		if count <= 0 {
-			return 0, vibe.Errorf("game.plan.PlanAddUpgrade.04", "%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
-		}
+	count = min(count, ge.planRoom(newDef, planned))
+	if count <= 0 {
+		return 0, vibe.Errorf("game.plan.PlanAddUpgrade.04", "%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
 	}
 	added, atMax, err := ge.planAppendLocked(PlanUpgrade, key, count)
 	if atMax {
@@ -249,14 +225,11 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 		}
 		return 0, vibe.Errorf("game.plan.PlanAddBuild.03", "Unknown building '%s'. Type build to see what you can build.", key)
 	}
-	planned := plannedCopies(ge.plan, key)
+	planned := plannedCount(ge.plan, PlanBuild, key)
 	if reason := ge.planBuildInvalid(key, planned); reason != "" {
 		return 0, vibe.Errorf("game.plan.PlanAddBuild.04", "Can't plan %s: %s.", def.Name, reason)
 	}
-	if def.MaxCount > 0 {
-		room := def.MaxCount - ge.Buildings.GetCount(key) - ge.Buildings.GetQueueCount(key, ge.buildQueue) - planned
-		count = min(count, room)
-	}
+	count = min(count, ge.planRoom(def, planned))
 	added, atMax, err := ge.planAppendLocked(PlanBuild, key, count)
 	if atMax {
 		return 0, vibe.Errorf("game.plan.PlanAddBuild.05", "That plan item already holds %d, the most one item can.", maxPlanCount)
@@ -367,15 +340,25 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 
 // ===== Validity =====
 
-// plannedCopies is how many copies of key items holds.
-func plannedCopies(items []PlanItem, key string) int {
+// plannedCount is how many copies items hold of the build or upgrade items
+// (kind) for key.
+func plannedCount(items []PlanItem, kind, key string) int {
 	n := 0
 	for _, it := range items {
-		if it.Kind == PlanBuild && it.Key == key {
+		if it.Kind == kind && it.Key == key {
 			n += it.Count
 		}
 	}
 	return n
+}
+
+// planRoom is how many more copies of def the plan can take besides planned
+// already in it: what def's MaxCount leaves, or no limit when it has none.
+func (ge *GameEngine) planRoom(def config.BuildingDef, planned int) int {
+	if def.MaxCount <= 0 {
+		return math.MaxInt
+	}
+	return def.MaxCount - ge.Buildings.GetCount(def.Key) - ge.Buildings.GetQueueCount(def.Key, ge.buildQueue) - planned
 }
 
 // planBuildInvalid is why a build of key can never start in this age ("" if
@@ -736,7 +719,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		if it.Kind == PlanBuild {
 			// Copies the surviving items above will take first (their
 			// counts already net of what they started this walk).
-			reason = ge.planBuildInvalid(it.Key, plannedCopies(out, it.Key))
+			reason = ge.planBuildInvalid(it.Key, plannedCount(out, PlanBuild, it.Key))
 		} else if it.Kind == PlanUpgrade {
 			if !ge.Buildings.IsOlder(it.Key) {
 				reason = vibe.Line("game.plan.runPlan.03", "no upgrade available")
@@ -782,7 +765,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					err = ge.payWonderBank(it.Key)
 				}
 				if err != nil {
-					ge.addLog("debug", fmt.Sprintf("Plan: %s refused: %v", ge.planItemLabel(it), err))
 					break
 				}
 				if it.Kind == PlanBuild {
@@ -795,7 +777,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 				if err != nil {
 					// The walk's checks mirror the command's; if the command
 					// still refuses, keep the item and try again next tick.
-					ge.addLog("debug", fmt.Sprintf("Plan: %s refused: %v", ge.planItemLabel(it), err))
 					break
 				}
 				started = true
@@ -806,7 +787,7 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					starts.addBuild(it.Key)
 					// MaxCount may be reached mid-item.
 					if it.Count > 0 {
-						if why := ge.planBuildInvalid(it.Key, plannedCopies(out, it.Key)); why != "" {
+						if why := ge.planBuildInvalid(it.Key, plannedCount(out, PlanBuild, it.Key)); why != "" {
 							ge.addLog("warning", vibe.Sprintf("game.plan.runPlan.10", "Plan: dropped the last %s (%s).", ge.planItemLabel(it), why))
 							it.Count = 0
 						}
@@ -840,7 +821,6 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		// its harbinger comes, first. If the advance must wait, the item goes
 		// back where it was and tries again next tick.
 		if err := ge.fateBeforeAdvance(next); err != nil {
-			ge.addLog("debug", fmt.Sprintf("Plan: advance waits: %v", err))
 			out = append(out[:advanceIdx], append([]PlanItem{ge.plan[advanceAt]}, out[advanceIdx:]...)...)
 			advanceAt = -1
 		}
@@ -884,8 +864,8 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 	shares := len(ge.workerShares) > 0
 	if shares {
 		ge.placeIdle(ge.newStaffView())
-	} else if n := min(ge.slotsFree(key), ge.Workers.IdleCount("worker")); n > 0 {
-		ge.Workers.Assign("worker", key, n)
+	} else if n := min(ge.slotsFree(key), ge.Workers.IdleCount()); n > 0 {
+		ge.Workers.Assign(key, n)
 	}
 	free := ge.slotsFree(key)
 	if p, set := ge.workerShares[def.WorkerDomain]; free <= 0 || ge.Buildings.IsOlder(key) || set && p <= 0 {
@@ -907,9 +887,9 @@ func (ge *GameEngine) staffPlanCopy(key string) {
 		if free <= 0 {
 			break
 		}
-		if n := min(free, ge.Workers.GetAssignedCount("worker", src)); n > 0 {
-			ge.Workers.Unassign("worker", src, n)
-			ge.Workers.Assign("worker", key, n)
+		if n := min(free, ge.Workers.GetAssignedCount(src)); n > 0 {
+			ge.Workers.Unassign(src, n)
+			ge.Workers.Assign(key, n)
 			free -= n
 		}
 	}

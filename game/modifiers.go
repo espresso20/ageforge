@@ -1,7 +1,5 @@
 package game
 
-import "sort"
-
 // Op defines how a modifier combines with its peers on the SAME target.
 //
 // The split exists because not every bonus stacks the same way. Most game
@@ -137,10 +135,5 @@ func (r *Resolver) All() []Modifier {
 // bucket. (Map keys are inherently unique, so this is sorted-only; the "deduped"
 // guarantee is structural.)
 func (r *Resolver) Targets() []string {
-	out := make([]string, 0, len(r.mods))
-	for target := range r.mods {
-		out = append(out, target)
-	}
-	sort.Strings(out)
-	return out
+	return sortedKeys(r.mods)
 }

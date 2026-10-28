@@ -46,8 +46,6 @@ func baseEraTicks(epochKey string) float64 {
 
 func eventDelay(rng *rand.Rand, age string) int { return eventDelayIn(rules.Core(), rng, age) }
 
-func expeditionTicks(age string, ticks int) int { return rules.Core().StretchTicks(age, ticks) }
-
 func autoExpeditionIntervalIn(age string, count int, fill float64) int {
 	return autoExpeditionInterval(rules.Core(), age, count, fill)
 }

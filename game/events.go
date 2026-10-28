@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math/rand"
 	"slices"
 	"strings"
@@ -207,46 +206,26 @@ func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrd
 		return
 	}
 
-	// Weighted random selection
-	totalWeight := 0
-	for _, def := range eligible {
-		totalWeight += def.Weight
-	}
-	if totalWeight == 0 {
+	def, ok := pickWeighted(rng, eligible, func(def config.EventDef) int { return def.Weight })
+	if !ok {
 		return
 	}
-
-	roll := rng.Intn(totalWeight)
-	cumulative := 0
-	for _, def := range eligible {
-		cumulative += def.Weight
-		if roll < cumulative {
-			em.lastFired[def.Key] = tick
-			triggered = append(triggered, def)
-
-			// Update streak tracking
-			em.updateStreaks(def.Sentiment)
-
-			// If duration > 0, add to active
-			if def.Duration > 0 {
-				em.active = append(em.active, ActiveEvent{
-					Key:       def.Key,
-					Name:      def.Name,
-					Src:       nameFromEvent,
-					Ref:       def.Key,
-					TicksLeft: em.rules.StretchTicks(currentAge, def.Duration),
-					Effects:   def.Effects,
-				})
-			}
-
-			// Schedule the next event (5-20 minutes from now, times the
-			// age's stretch)
-			em.nextEventTick = tick + eventDelayIn(em.rules, rng, currentAge)
-			break
-		}
+	em.lastFired[def.Key] = tick
+	triggered = append(triggered, def)
+	em.updateStreaks(def.Sentiment)
+	if def.Duration > 0 {
+		em.active = append(em.active, ActiveEvent{
+			Key:       def.Key,
+			Name:      def.Name,
+			Src:       nameFromEvent,
+			Ref:       def.Key,
+			TicksLeft: em.rules.StretchTicks(currentAge, def.Duration),
+			Effects:   def.Effects,
+		})
 	}
-
-	return
+	// Schedule the next event (5-20 minutes from now, times the age's stretch)
+	em.nextEventTick = tick + eventDelayIn(em.rules, rng, currentAge)
+	return triggered, expired
 }
 
 // requiredSentiment returns a sentiment filter based on current streaks.
@@ -515,7 +494,6 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 			}
 			out.gained[eff.Target] += eff.Value
 			ge.grantLocked(eff.Target, eff.Value)
-			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
 		case "steal_resource":
 			current := ge.Resources.Get(eff.Target)
 			loss := eff.Value
@@ -541,7 +519,6 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 				}
 				out.lost[eff.Target] += loss
 			}
-			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
 		case "worker_loss":
 			// Value is a share (0.0-1.0) of the worker pool to remove.
 			pct := eff.Value
@@ -555,7 +532,6 @@ func (ge *GameEngine) applyEventEffects(def config.EventDef, effects []config.Ef
 			before := ge.Workers.TotalPop()
 			ge.Workers.RemovePct(pct)
 			out.workers += before - ge.Workers.TotalPop()
-			ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", pct*100))
 		}
 	}
 	line := garrisonSavedLine(guard, keptRes, keptWorkers)

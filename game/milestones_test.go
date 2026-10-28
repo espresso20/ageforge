@@ -574,3 +574,8 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 	plan := mm.planFor(def)
 	return mm.progressFor(def, &plan, params, nil)
 }
+
+// IsCompleted checks if a milestone has been achieved
+func (mm *MilestoneManager) IsCompleted(key string) bool {
+	return mm.completed[key]
+}

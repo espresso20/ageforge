@@ -32,7 +32,7 @@ func partyTown(t *testing.T, camps, reserve int) *GameEngine {
 		t.Fatalf("setup: %d soldiers posted, want %d", got, want)
 	}
 	ge.mu.Lock()
-	ge.Workers.Recruit("worker", reserve, 1<<20)
+	ge.Workers.Recruit(reserve, 1<<20)
 	ge.recalculateRates()
 	ge.mu.Unlock()
 	for _, res := range []string{"stone", "wood", "food", "gold"} {
@@ -382,7 +382,7 @@ func TestFallenPostsNeedTheReserveAndTheFood(t *testing.T) {
 	}
 	// A reserve, but no food: they wait.
 	ge.mu.Lock()
-	ge.Workers.Recruit("worker", 2, 1<<20)
+	ge.Workers.Recruit(2, 1<<20)
 	ge.Resources.resources["food"].Amount = 0
 	got := ge.fillSoldierPosts()
 	ge.mu.Unlock()
@@ -458,7 +458,7 @@ func TestMissionLossesOfflineMatchLive(t *testing.T) {
 	const more = staffEveryTicks * 4
 	for _, ge := range []*GameEngine{live, offline} {
 		ge.mu.Lock()
-		ge.Workers.Recruit("worker", 10, 1<<20)
+		ge.Workers.Recruit(10, 1<<20)
 		ge.mu.Unlock()
 		setIncome(ge, "food", 100)
 	}

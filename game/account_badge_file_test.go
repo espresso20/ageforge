@@ -132,18 +132,6 @@ func ageBadges(age string) []string {
 	panic("no age " + age)
 }
 
-// themesGiven is the themes the badges in keys unlock, sorted.
-func themesGiven(keys []string) []string {
-	var out []string
-	for _, k := range keys {
-		if def, ok := rules.Core().Badge(k); ok && def.Reward.Theme != "" {
-			out = append(out, def.Reward.Theme)
-		}
-	}
-	slices.Sort(out)
-	return out
-}
-
 // sortedUnion is every string in a or b, once, sorted.
 func sortedUnion(a, b []string) []string {
 	out := slices.Clone(a)
