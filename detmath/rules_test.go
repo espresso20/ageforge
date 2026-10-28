@@ -28,7 +28,7 @@ var simPackages = []string{"boon", "config", "detmath", "flavor", "game", "mapmo
 // so they follow the no-transcendentals rule too (mapmodel.Sin, Cos, Log2 and
 // Noise are there for them). They are UI, not simulation, so the FMA check does
 // not cover them.
-var mapRenderPackages = []string{"ui/mapstyle", "ui/mapstyle/roguelike"}
+var mapRenderPackages = []string{"mapgen", "ui/mapstyle", "ui/mapstyle/procmap", "ui/mapstyle/roguelike"}
 
 const modulePath = "github.com/espresso20/ageforge"
 

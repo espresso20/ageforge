@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **A new map engine, to try.** Start the game with AGEFORGE_MAP=engine and the Map panel and the mini map draw the place itself instead of a symbol chart: roads and streets that grow with your town, buildings that stay where they were and grow from huts to towers, your wonders as small hand-drawn shapes, the land in your theme's colours, day and night. As you reach further the view pulls back to the planet, the solar system and the stars. Today's map stays the default.
 - **The Advance panel.** A full-screen view of what stands between you and the next age: the march of ages with a moving calendar year, the age's four pillars (Knowledge, People, Industry, Monument), and what the next age brings.
 - **Skyline zoom.** Zoom out to see the whole town or in to see every building up close, and steer by the overview bar, which now shows your real skyline and a box for where you are looking.
 - **VibeMode (early).** A setting that swaps the game's words for a GenZ script; this release has the switch and a first handful of lines.

@@ -10,7 +10,6 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/mapstyle"
-	"github.com/espresso20/ageforge/ui/mapstyle/roguelike"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -69,7 +68,7 @@ type miniMap struct {
 }
 
 func newMiniMap(mv *mapViews) *miniMap {
-	m := &miniMap{Box: tview.NewBox(), mv: mv, view: roguelike.New(), now: time.Now}
+	m := &miniMap{Box: tview.NewBox(), mv: mv, view: newMapStyle(), now: time.Now}
 	m.start = m.now()
 	m.set = defaultMapSettings()
 	return m
