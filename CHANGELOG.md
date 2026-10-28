@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **The world around the town is on the map.** Civilizations you have met stand at the edge of the picture in the color of how they stand toward you, trade routes run to them as lines of dots with caravans on them, scouts and an army walk out and back, the harbinger stands by the square and idle workers loiter round it. In space they are stars, lanes and ships. The cursor names each one, and `Tab` visits the civilizations.
 - **The rare visitor is back on the map.** A small visitor walks in along a trunk road, a ship flies in from the edge in orbit and the solar system, and now and then an alien's craft crosses over the town or hovers above it. Put the cursor on one to read what it says, and to earn the secret badge for looking.
 - **The Advance panel.** A full-screen view of what stands between you and the next age: the march of ages with a moving calendar year, the age's four pillars (Knowledge, People, Industry, Monument), and what the next age brings.
 - **Skyline zoom.** Zoom out to see the whole town or in to see every building up close, and steer by the overview bar, which now shows your real skyline and a box for where you are looking.
