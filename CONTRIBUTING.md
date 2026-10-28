@@ -299,6 +299,12 @@ The wiki's pictures of the game (`site/docs/screens/*.json`, drawn as text by `s
 go test -tags mapcapture -run TestWriteSiteScreens ./ui
 ```
 
+The landing page's map plate (`site/frames.js`, and the first frame inside `site/index.html`) is written the same way, from the map itself:
+
+```bash
+go test -tags mapcapture -run TestWriteSiteFrames ./ui/mapstyle
+```
+
 To add a screen, add a shot to `TestWriteSiteScreens` (`ui/site_screens_test.go`) and a one-line `<figure class="screen" data-screen="name">` with a one-sentence `<figcaption>` to the wiki page that explains it. `TestDocScreens` (`go test ./ui`) fails on a figure with no file and on a file no page shows.
 
 ### Copy-editing sheets
