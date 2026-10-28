@@ -354,13 +354,9 @@ func (dm *DiplomacyManager) StateOf(key string) (FactionState, bool) {
 	return FactionState{Status: "neutral"}, false
 }
 
-// clampOpinion keeps a faction's integer opinion within [-100, 100].
-func clampOpinion(fs *FactionState) {
-	if fs.Opinion > opinionMax {
-		fs.Opinion = opinionMax
-	} else if fs.Opinion < opinionMin {
-		fs.Opinion = opinionMin
-	}
+// addOpinion moves a faction's opinion by delta, within [-100, 100].
+func (fs *FactionState) addOpinion(delta int) {
+	fs.Opinion = min(max(fs.Opinion+delta, opinionMin), opinionMax)
 }
 
 // applyPersonalityDrift nudges each discovered civ's opinion toward the
@@ -384,27 +380,26 @@ func (dm *DiplomacyManager) applyPersonalityDrift(tradedRecently bool) {
 		}
 		switch def.Personality {
 		case "aggressive":
-			fs.Opinion--
+			fs.addOpinion(-1)
 		case "peaceful":
 			if !fs.AtWar {
-				fs.Opinion++
+				fs.addOpinion(1)
 			}
 		case "mercantile":
 			if tradedRecently && !fs.AtWar {
-				fs.Opinion++
+				fs.addOpinion(1)
 			} else if !tradedRecently && fs.Opinion > 0 {
 				// Mercantile civs cool off when ignored.
-				fs.Opinion--
+				fs.addOpinion(-1)
 			}
 		case "isolationist":
 			// Drift gently toward neutral from either direction.
 			if fs.Opinion > 0 {
-				fs.Opinion--
+				fs.addOpinion(-1)
 			} else if fs.Opinion < 0 {
-				fs.Opinion++
+				fs.addOpinion(1)
 			}
 		}
-		clampOpinion(fs)
 	}
 }
 
@@ -504,8 +499,7 @@ func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, e
 		return false, dm.errUnknownCiv(factionKey)
 	}
 	// Raiding tanks opinion immediately, then registers the provocation.
-	fs.Opinion -= 20
-	clampOpinion(fs)
+	fs.addOpinion(-20)
 	fs.LastProvocationTick = tick
 	started := dm.recordProvocation(fs, def, 1)
 	return started, nil
@@ -534,11 +528,8 @@ func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64
 	// Peace: end the war, reset provocations, nudge opinion up to a wary truce.
 	dm.endWar(fs)
 	dm.warEvents = append(dm.warEvents, warEvent{faction: factionKey})
-	fs.Opinion += 25
-	if fs.Opinion > 0 {
-		fs.Opinion = 0 // a truce is wary neutrality at best, never instant friendship
-	}
-	clampOpinion(fs)
+	// A truce is wary neutrality at best, never instant friendship.
+	fs.Opinion = min(fs.Opinion+25, 0)
 	return goldCost, cultureCost, nil
 }
 
@@ -625,10 +616,7 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 		return 0, vibe.Errorf("game.diplomacy.SendGift.01", "Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
-	fs.Opinion += dm.GiftGain()
-	if fs.Opinion > opinionMax {
-		fs.Opinion = opinionMax
-	}
+	fs.addOpinion(dm.GiftGain())
 
 	// Auto-upgrade to friendly if opinion hits 25+
 	if fs.Status == "neutral" && fs.Opinion >= 25 {
@@ -719,8 +707,7 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 		}
 		// Rival/embargo: -5 per rivalDecayInterval ticks.
 		if tick%rivalDecay == 0 && (fs.Status == "rival" || fs.Status == "embargo") {
-			fs.Opinion -= 5
-			clampOpinion(fs)
+			fs.addOpinion(-5)
 		}
 		// Natural drift toward 0 every opinionDecayInterval ticks (does not
 		// override war hostility).
@@ -889,10 +876,7 @@ func (dm *DiplomacyManager) RecordTrade() {
 			continue
 		}
 		fs.TradeCount++
-		fs.Opinion++
-		if fs.Opinion > opinionMax {
-			fs.Opinion = opinionMax
-		}
+		fs.addOpinion(1)
 	}
 }
 
