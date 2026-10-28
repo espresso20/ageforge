@@ -953,6 +953,12 @@ func firstContactMessage(def config.FactionDef) string {
 		def.Name, def.Personality, def.Backstory)
 }
 
+// countWorkersHomie counts workers in lend, unassign and shares lines. The
+// script names a worker differently by place, so each name has its own id.
+func countWorkersHomie(n int) string {
+	return textfmt.Count(n, vibe.Line("game.diplomacy.lendMessage.04", "worker"), vibe.Line("game.diplomacy.lendMessage.05", "workers"))
+}
+
 // lendMessage builds the line for a worker loan and says whether the workers
 // go home after ticks. The backstory belongs to first contact only, so it is
 // not repeated here. The duration is at base speed (the manager has no clock).
@@ -962,7 +968,7 @@ func lendMessage(def config.FactionDef, count int, permanent bool, ticks int) st
 		tail = vibe.Line("game.diplomacy.lendMessage.02", "(they stay for good)")
 	}
 	return vibe.Sprintf("game.diplomacy.lendMessage.03", "[green]+%s on loan from the %s[-] %s.",
-		textfmt.Count(count, vibe.Line("game.diplomacy.lendMessage.04", "worker"), vibe.Line("game.diplomacy.lendMessage.05", "workers")), def.Name, tail)
+		countWorkersHomie(count), def.Name, tail)
 }
 
 // raidMessage builds the MECHANICAL line for a war raid resource loss: who, what,

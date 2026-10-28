@@ -89,6 +89,11 @@ const PrestigeMinAge = "medieval_age"
 // rather than a taste, for the account's records (badges count only these).
 const PrestigeRunAge = "modern_age"
 
+// countAges counts ages.
+func countAges(n int) string {
+	return textfmt.Count(n, vibe.Line("game.prestige.EarlyPrestigeLine.06", "age"), vibe.Line("game.prestige.EarlyPrestigeLine.07", "ages"))
+}
+
 // EarlyPrestigeLine is the plain line an early prestige carries: one from
 // before PrestigeRunAge (an early taste, as the prestige panel calls it),
 // which pays little. It says what the prestige pays
@@ -104,17 +109,17 @@ func EarlyPrestigeLine(sight AgeSight, from string, points int, done bool) strin
 	if !ok || at >= run {
 		return ""
 	}
-	full := textfmt.Count(set.DepthPoints(PrestigeRunAge), vibe.Line("game.prestige.EarlyPrestigeLine.01", "prestige point"), vibe.Line("game.prestige.EarlyPrestigeLine.02", "prestige points"))
+	full := countPrestigePoints(set.DepthPoints(PrestigeRunAge))
 	deeper := vibe.Line("game.prestige.EarlyPrestigeLine.03", "a run to the ") + set.Name(rules.KindAge, PrestigeRunAge) + vibe.Line("game.prestige.EarlyPrestigeLine.04", " pays ") + full
 	if !sight.Age(PrestigeRunAge) {
-		deeper = vibe.Line("game.prestige.EarlyPrestigeLine.05", "a full run, ") + textfmt.Count(run-at, vibe.Line("game.prestige.EarlyPrestigeLine.06", "age"), vibe.Line("game.prestige.EarlyPrestigeLine.07", "ages")) + vibe.Line("game.prestige.EarlyPrestigeLine.08", " further on, pays ") + full
+		deeper = vibe.Line("game.prestige.EarlyPrestigeLine.05", "a full run, ") + countAges(run-at) + vibe.Line("game.prestige.EarlyPrestigeLine.08", " further on, pays ") + full
 	}
 	lead := vibe.Line("game.prestige.EarlyPrestigeLine.09", "This is an early taste: a prestige from the %s pays %s, for the %s this run completed.")
 	if done {
 		lead = vibe.Line("game.prestige.EarlyPrestigeLine.10", "That was an early taste: a prestige from the %s paid %s, for the %s the run completed.")
 	}
 	return fmt.Sprintf(lead+vibe.Line("game.prestige.EarlyPrestigeLine.11", " Going deeper pays far more: each era's ages are worth 3 times the era before, and %s."),
-		set.Name(rules.KindAge, from), textfmt.Count(points, vibe.Line("game.prestige.EarlyPrestigeLine.12", "prestige point"), vibe.Line("game.prestige.EarlyPrestigeLine.13", "prestige points")), textfmt.Count(at, vibe.Line("game.prestige.EarlyPrestigeLine.14", "age"), vibe.Line("game.prestige.EarlyPrestigeLine.15", "ages")), deeper)
+		set.Name(rules.KindAge, from), countPrestigePoints(points), countAges(at), deeper)
 }
 
 // CanPrestige returns true if the player has reached PrestigeMinAge or later,

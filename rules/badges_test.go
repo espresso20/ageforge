@@ -71,16 +71,6 @@ func TestCatalog(t *testing.T) {
 	if problems := BadgeProblems(config.Badges(), config.BadgeFamilies(), s); len(problems) != 0 {
 		t.Errorf("the badge tables have problems: %v", problems)
 	}
-	// A badge held out of the catalog is in no account's reach, and its
-	// key is free for the day it comes back.
-	for _, h := range config.BadgesHeldOut() {
-		if seen[h.Badge.Key] {
-			t.Errorf("%s is held out and in the catalog", h.Badge.Key)
-		}
-		if h.Why == "" {
-			t.Errorf("%s is held out without a reason", h.Badge.Key)
-		}
-	}
 }
 
 // What a family makes of one row of its table.

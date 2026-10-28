@@ -665,6 +665,9 @@ func TechHousing(base int, bonus float64) int {
 	return int(math.Ceil(float64(float64(base)*(1+bonus)) - 1e-9))
 }
 
+// txtRoster leads a log line of the roster.
+var txtRoster = vibe.E("game.shares.keepSharesLive.01", "Roster: ")
+
 // keepSharesLive is the routine's live run, from doTick: unless it is waiting
 // after a worker command, it staffs and recruits, recalculates the rates
 // when that changed anything, and logs what it did as a routine line.
@@ -678,7 +681,7 @@ func (ge *GameEngine) keepSharesLive() {
 		return
 	}
 	ge.recalculateRates()
-	ge.addLogAbout(LogRoutine, TagPeople, vibe.Line("game.shares.keepSharesLive.01", "Roster: ")+c.describe(ge.popLocked(), ge.popCapLocked())+".")
+	ge.addLogAbout(LogRoutine, TagPeople, txtRoster.String()+c.describe(ge.popLocked(), ge.popCapLocked())+".")
 	if before == 0 && c.hired > 0 {
 		// The first recruits of a run (or after everyone died): say once,
 		// as a note rather than a routine line, that this happens on its
@@ -698,7 +701,7 @@ func (c staffCounts) describe(pop, popCap int) string {
 		parts = append(parts, vibe.Line("game.shares.describe.04", "put ")+textfmt.Count(c.placed, vibe.Line("game.shares.describe.05", "idle worker"), vibe.Line("game.shares.describe.06", "idle workers"))+vibe.Line("game.shares.describe.07", " to work"))
 	}
 	if c.moved > 0 {
-		parts = append(parts, vibe.Line("game.shares.describe.08", "moved ")+textfmt.Count(c.moved, vibe.Line("game.shares.describe.09", "worker"), vibe.Line("game.shares.describe.10", "workers"))+vibe.Line("game.shares.describe.11", " out of domains set to 0%"))
+		parts = append(parts, vibe.Line("game.shares.describe.08", "moved ")+countWorkersNPC(c.moved)+vibe.Line("game.shares.describe.11", " out of domains set to 0%"))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -799,9 +802,9 @@ func (ge *GameEngine) applySharesLocked(changed string) ShareReply {
 	if moved > 0 || c.any() {
 		ge.recalculateRates()
 	}
-	line := vibe.Line("game.shares.applySharesLocked.01", "Roster: ") + sharesLine(ge.rules, ge.workerShares) + "."
+	line := txtRoster.String() + sharesLine(ge.rules, ge.workerShares) + "."
 	if moved > 0 {
-		line += vibe.Line("game.shares.applySharesLocked.02", " Moved ") + textfmt.Count(moved, vibe.Line("game.shares.applySharesLocked.03", "worker"), vibe.Line("game.shares.applySharesLocked.04", "workers")) + vibe.Line("game.shares.applySharesLocked.05", " to match.")
+		line += vibe.Line("game.shares.applySharesLocked.02", " Moved ") + countWorkersHomie(moved) + vibe.Line("game.shares.applySharesLocked.05", " to match.")
 	}
 	if c.any() {
 		line += " " + textfmt.Capitalize(c.describe(ge.popLocked(), ge.popCapLocked())) + "."

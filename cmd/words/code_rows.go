@@ -332,10 +332,10 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	}
 	where := what + " " + cr.note.place + "."
 	pattern := ""
-	if u.chain != nil && u.chain.parts >= 1 && strings.TrimSpace(u.chain.pattern) != strings.TrimSpace(u.text) {
-		pattern = u.chain.pattern
-	} else if p, ok := framePieces[u.vibeID]; ok {
+	if p, ok := framePieces[u.vibeID]; ok {
 		pattern = p
+	} else if u.chain != nil && u.chain.parts >= 1 && strings.TrimSpace(u.chain.pattern) != strings.TrimSpace(u.text) {
+		pattern = u.chain.pattern
 	}
 	if pattern != "" {
 		where += " It is one piece of a line the game puts together, which reads: “" + oneLine(pattern) + "” (… is what the game fills in)."
@@ -345,15 +345,19 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	return r, ""
 }
 
-// framePieces are the pieces of the flavor package's frames that name a
-// resource, by row id, with the line each is part of. They are read through
-// entries of a table (the frames are told in plain English and in the
-// script's words from the same entries), so the code does not join them in an
-// expression the reader can see the line in.
+// framePieces are the pieces of a line that the code does not join in an
+// expression the reader can see the line in, by row id, with the line each is
+// part of: the flavor package's frames that name a resource (told in plain
+// English and in the script's words from the same entries), and words that
+// several lines share through one entry.
 var framePieces = map[string]string{
-	"flavor.resource.phraseStores.01": "your … stores",
-	"flavor.resource.phraseStores.02": "your … stores",
-	"flavor.resource.phraseHaul.01":   "a haul of …",
+	"game.advance_view.monumentRows.03": "needs … first",
+	"game.advance_view.monumentRows.04": "needs … first",
+	"game.plan_deal.planDealCheck.02":   "needs … researched",
+	"game.shares.keepSharesLive.01":     "Roster: ….",
+	"flavor.resource.phraseStores.01":   "your … stores",
+	"flavor.resource.phraseStores.02":   "your … stores",
+	"flavor.resource.phraseHaul.01":     "a haul of …",
 }
 
 // defaults fills what the file's note decides, where a row has not set it.
