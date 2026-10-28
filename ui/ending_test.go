@@ -392,9 +392,11 @@ func TestEndingFitsEverySize(t *testing.T) {
 // and large. The town that burns fills the land at the start and is gone
 // at the end; the new land is there in the beginning.
 func TestEndingWithItsTowns(t *testing.T) {
+	// land counts the glyphs standing (or burning) on the land: an ember is
+	// what a burnt cell leaves behind, and the ground itself is colour.
 	land := func(g *mGrid, from int) (n int) {
 		for y := from; y < g.h-3; y++ {
-			n += len([]rune(strings.Join(strings.Fields(g.row(y)), "")))
+			n += len([]rune(strings.ReplaceAll(strings.Join(strings.Fields(g.row(y)), ""), "·", "")))
 		}
 		return n
 	}
