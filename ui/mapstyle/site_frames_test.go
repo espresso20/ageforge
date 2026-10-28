@@ -93,7 +93,7 @@ func TestWriteSiteFrames(t *testing.T) {
 	b := mapmodel.NewBuilder(nil)
 	var doc []age
 	for _, key := range ages {
-		st := fixture.State(fixture.Options{Age: key, Seed: 7})
+		st := fixture.State(fixture.Options{Age: key, Seed: 7, Tick: noon})
 		m := mapmodel.NewBuilder(b.Catalog()).Build(&st, nil)
 		// The landing page shows four ages and keeps the rest a surprise, so
 		// no frame names the age that comes next.

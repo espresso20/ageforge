@@ -108,9 +108,20 @@ const lineWallMix = 0.65
 func (r recipe) colour() tcell.Color {
 	base := theme.Color(r.role)
 	if r.from == nil {
-		return base
+		return inkOf(base)
 	}
-	return theme.Mix(base, r.from(), r.mix)
+	return inkOf(theme.Mix(base, r.from(), r.mix))
+}
+
+// inkOf is c as the active theme draws it: as it is, or on a one-ink-on-one-
+// paper theme (Monochrome, Parchment) only how light it is, laid on the ramp
+// from the theme's background to its text.
+func inkOf(c tcell.Color) tcell.Color {
+	if !theme.Active().Duotone {
+		return c
+	}
+	light := float64(0.2 + float64(0.8*theme.RelativeLuminance(c)))
+	return theme.Mix(theme.Color(theme.RoleBackground), theme.Color(theme.RoleText), light)
 }
 
 // paintKey is one cell's colours: what the style cache is keyed by.
@@ -153,7 +164,7 @@ func cellPaletteFor(p *cellPalette, g *mapgen.Grid) *cellPalette {
 	if theme.IsLight() {
 		black = theme.Color(theme.RoleText)
 	}
-	p.night = theme.Mix(black, theme.MapHueColor(theme.HueWaterDeep), 0.2)
+	p.night = theme.Mix(black, inkOf(theme.MapHueColor(theme.HueWaterDeep)), 0.2)
 	return p
 }
 

@@ -193,7 +193,7 @@ build stonehenge
 
 ## The Map
 
-Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It is a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. It has three zooms. **PgUp** (or **-**) zooms out to the region, the known world with the civilizations you have met, and **PgDn** (or **=**) zooms in to a district with building names.
+Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, and your wonders). It is a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, along roads that grow from the town square. It has two zooms. **PgUp** (or **-**) zooms out to the whole town, and **PgDn** (or **=**) zooms in to the close-up.
 
 `map glyphs` chooses the glyph set (`ascii`, `unicode` or `nerd`), and it is saved with your account.
 

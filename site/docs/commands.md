@@ -337,12 +337,12 @@ The Wonders panel uses letter keys, so it keeps the keyboard:
 
 ## Map
 
-The Map draws your empire from your real game state: your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes and wars. It is a glyph world seen from above, with three zooms from the whole known world down to a named district. An inspect cursor gives you the name and details of what it is on and the whole command to type for it (for example `build hut`). See [The Map](map.md) for all its keys.
+The Map draws your empire from your real game state: your buildings and the workers staffing them, and your wonders. It is a glyph world seen from above, with two zooms: the whole town and a close-up. An inspect cursor gives you the name and details of what it is on and the whole command to type for it (for example `build hut`). See [The Map](map.md) for all its keys.
 
 | Command | Description |
 |---|---|
 | `map` (or `citymap`) | Open the Map panel. The prompt keeps working while it is open. |
-| `worldmap` | Same as `map`, opened on the known world (the region zoom). |
+| `worldmap` | Same as `map`, opened on the whole town (the region zoom). |
 | `map flows [on\|off]` | The Map's flows overlay (stocks running dry, understaffed buildings, idle workers): on, off, or bare to switch it. It lasts for the session. |
 | `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal. Saved per account. |
 | `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `on` shows it above the Buildings list. `off` hides it so the list gets the whole column (default on). Saved per account. |
@@ -364,8 +364,8 @@ The prompt keeps working while the Map is open: type commands as usual. The Map 
 | Key | Action |
 |---|---|
 | Arrows | Move the cursor or scroll |
-| `Tab` / `Shift+Tab` | Next or previous thing to inspect |
-| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in |
+| `Tab` / `Shift+Tab` | Next or previous building or wonder |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out to the whole town and in to the close-up |
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press `Enter` again to run it) |
 | `Esc` | Close the Map |
 
