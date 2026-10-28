@@ -184,3 +184,54 @@ func TestLabThemes(t *testing.T) {
 		}
 	}
 }
+
+// TestLabVisitors draws the rare visitor with the cursor on it, on the land,
+// in the city, in orbit and in the solar system: the visitor, and the alien's
+// craft, each at the middle of its visit.
+func TestLabVisitors(t *testing.T) {
+	dir := labDir(t)
+	fixture.WithTheme(t, "forge")
+	var gen mapgen.Generator
+	cat := mapmodel.NewCatalog()
+	for _, age := range []string{"bronze_age", "modern_age", "space_age", "interstellar_age"} {
+		m := labModel(age, labNoon)
+		for _, form := range []string{"visitor", "alien"} {
+			late := m.AgeIdx >= cat.SpaceAge()
+			for from := 0; ; {
+				sg := mapmodel.NextSighting(m.Seed, late, from)
+				from = sg.Start + sg.Frames
+				frame := sg.Start + sg.Frames/2
+				g := gen.DrawAt(m, 0, frame).Grid
+				at, found := mapgen.Pt{}, false
+				for i := range g.Cells {
+					if th := g.Things[g.Hit[i]]; th.Kind == mapgen.KindVisitor && th.Key == form {
+						at, found = mapgen.Pt{X: i % g.W, Y: i / g.W}, true
+					}
+				}
+				if !found {
+					continue
+				}
+				v := mapstyle.New()
+				f := mapstyle.Frame{Model: m, Anim: frame, Clock: frame}
+				scr := capture.NewScreen(120, 36)
+				v.Draw(scr, mapstyle.Rect{W: 120, H: 36}, f)
+				for p, _ := v.Pointer(); p.X != at.X || p.Y != at.Y; p, _ = v.Pointer() {
+					key, mod := tcell.KeyRight, tcell.ModNone
+					switch {
+					case at.X < p.X:
+						key = tcell.KeyLeft
+					case at.X == p.X && at.Y < p.Y:
+						key = tcell.KeyUp
+					case at.X == p.X:
+						key = tcell.KeyDown
+					}
+					v.HandleKey(tcell.NewEventKey(key, 0, mod), f)
+				}
+				v.Draw(scr, mapstyle.Rect{W: 120, H: 36}, f)
+				writeShot(t, dir, fmt.Sprintf("visitor_%s_%s", age, form), scr)
+				scr.Fini()
+				break
+			}
+		}
+	}
+}
