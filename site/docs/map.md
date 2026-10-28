@@ -19,8 +19,8 @@ Because typing goes to the command bar, the Map takes only the keys that print n
 | Key | Action |
 |---|---|
 | Arrows | Move the cursor |
-| `Tab` / `Shift-Tab` | Jump to the next or previous building or wonder |
-| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out to the whole town and in to the close-up |
+| `Tab` / `Shift-Tab` | Jump to the next or previous building, wonder or civilization (to the next or previous district, in the district zoom) |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in a step: the whole town, the close-up, a district |
 | `Home` | Center on the town square |
 | `Enter` | Put the command for what the cursor is on into the prompt. It is not run: press `Enter` again to run it |
 | `Esc` | Close the Map |
@@ -52,6 +52,8 @@ An old building with nothing left to do has no command, and `Enter` says so. A r
 ### Since your last visit
 
 When you load a save, the Map remembers your town as the save left it, before any time away was played out, and shows what changed since. A news line lists what happened: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"). When there is no news the line says what is stuck, or that all is quiet.
+
+The ground under every kind of building that grew since your last visit, and under a wonder you finished, is lit for a while when the Map first shows it, and clears once you have looked at the Map. The lighting changes only the ground, never a glyph. A later visit with new news lights again.
 
 ---
 
@@ -98,14 +100,15 @@ Each era of the game has its own look, and every age in it sets itself apart by 
 
 People walk the streets of every era. Carts roll through the first three eras, cars arrive with the Electric Era, and the Neon Era has hovercars. How much moves follows how big and busy your town is, and traffic keeps to the roads.
 
-### Two zooms
+### Three zooms
 
 | Zoom | What you see |
 |---|---|
-| Settlement | The close-up: your town round the cursor, one cell of the world to a cell of the screen |
 | Region | The whole town squeezed into the space: each cell stands for a block of the world and shows the most important thing in it, a building as the sign of its kind and a wonder as a star |
+| Settlement | The close-up: your town round the cursor, one cell of the world to a cell of the screen |
+| District | The close-up framed on one kind of building's part of town, with every other kind dimmed so the district stands out. The top row names it |
 
-A large terminal opens the Map on the close-up. A smaller one, and the mini map, show the whole town, and `PgDn` or `=` zooms in. The close-up scrolls only when the cursor nears its edge. In the region zoom the arrows move the cursor a block at a time, and the cursor still tells you what it is on.
+A large terminal opens the Map on the close-up. A smaller one, and the mini map, show the whole town. `PgDn` or `=` zooms in a step, from the region to the settlement to a district, and `PgUp` or `-` zooms out a step. In a district, `Tab` and `Shift-Tab` go on to the next or previous district, and the cursor lands on a building in it. The close-up scrolls only when the cursor nears its edge. In the region zoom the arrows move the cursor a block at a time, and the cursor still tells you what it is on.
 
 <figure class="screen" data-screen="map-region"><figcaption>The same town in the region zoom: the whole town in one view, each building the sign of its kind.</figcaption></figure>
 
@@ -115,9 +118,9 @@ A large terminal opens the Map on the close-up. A smaller one, and the mini map,
 |---|---|
 | `←` `→` `↑` `↓` | Move the cursor |
 | `Shift`+arrow | Move the cursor by 8 |
-| `PgUp` or `-` | Zoom out to the whole town |
-| `PgDn` or `=` | Zoom in to the close-up |
-| `Tab` / `Shift-Tab` | Jump between buildings and wonders |
+| `PgUp` or `-` | Zoom out a step |
+| `PgDn` or `=` | Zoom in a step |
+| `Tab` / `Shift-Tab` | Jump between buildings, wonders and civilizations (between districts, in the district zoom) |
 | `Home` | Center on the town square |
 
 The legend (the sign of each kind of building your town has) shows beside the map when there is room.
