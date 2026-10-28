@@ -220,7 +220,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.expPanel.settings = d.mapSettings
 	d.expPanel.prompt = d.researchPanel.prompt
 	d.expPanel.toPrompt = d.handToPrompt
-	d.overlayMgr.RegisterWidget("expedition", vibe.E("ui.dashboard.NewDashboard.05", "Expeditions"), d.expPanel.open, d.expPanel.update)
+	d.overlayMgr.RegisterWidget("expedition", txtExpeditions, d.expPanel.open, d.expPanel.update)
 	d.overlayMgr.Register("trade", vibe.E("ui.dashboard.NewDashboard.06", "Trade routes"), tradeProvider)
 	// The Factions panel, under two names pointing at one provider (the
 	// citymap/map precedent below). "factions" is the primary — it is what the
@@ -263,7 +263,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.overlayMgr.Refresh(d.engine.GetState())
 		return nil
 	})
-	d.overlayMgr.Register("plan", vibe.E("ui.dashboard.NewDashboard.15", "Build Plan"), d.planPanel.provider)
+	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
 	d.overlayMgr.SetFooter("plan", planFooter)
 	d.overlayMgr.SetKeyHandler("plan", func(event *tcell.EventKey) *tcell.EventKey {
 		// tview goroutine, no engine lock held (see the harbinger handler).
@@ -274,7 +274,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		return nil
 	})
 	d.overlayMgr.Register("history", vibe.E("ui.dashboard.NewDashboard.16", "Civilization History"), historyProvider)
-	d.overlayMgr.Register("buildings", vibe.E("ui.dashboard.NewDashboard.17", "Buildings"), buildingsProvider)
+	d.overlayMgr.Register("buildings", txtBuildings, buildingsProvider)
 	d.vibeSeen = vibe.On()
 	d.overlayMgr.Register("help", vibe.E("ui.dashboard.NewDashboard.18", "Help"), helpProvider)
 
@@ -1089,6 +1089,9 @@ func peopleBoxCompact(state game.GameState, detail bool) bool {
 	return !detail && state.Workers.HeldBy != game.HeldNone
 }
 
+// txtPeopleBoxCount is said the same way on several screens, so it has one id.
+var txtPeopleBoxCount = vibe.E("ui.dashboard.peopleBoxTitle.03", " People %s/%s ")
+
 // peopleBoxTitle is the People box's title: " People ", with the headcount
 // over the housing in it when the box is compact and it fits.
 func peopleBoxTitle(state game.GameState, detail bool) string {
@@ -1098,7 +1101,7 @@ func peopleBoxTitle(state game.GameState, detail bool) string {
 	ws := state.Workers
 	for _, t := range []string{
 		vibe.Sprintf("ui.dashboard.peopleBoxTitle.02", " People %d/%d ", ws.TotalPop, ws.MaxPop),
-		vibe.Sprintf("ui.dashboard.peopleBoxTitle.03", " People %s/%s ", textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))),
+		fmt.Sprintf(txtPeopleBoxCount.String(), textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop))),
 	} {
 		if runeLen(t) <= sidebarW-2 {
 			return t
@@ -1293,7 +1296,7 @@ func groupedCount(n int) string {
 	if n < 1000 || n >= 1_000_000 {
 		return textfmt.Number(float64(n))
 	}
-	return fmt.Sprintf("%d,%03d", n/1000, n%1000)
+	return wholeNumber(n)
 }
 
 func (d *Dashboard) refreshAgeProgress(state game.GameState) {
@@ -1387,20 +1390,15 @@ func (d *Dashboard) showDevUnlockModal() {
 		SetBorderColor(theme.Color(theme.RoleDim)).
 		SetBackgroundColor(theme.Color(theme.RoleBackground))
 
-	centered := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(box, 3, 0, true).
-			AddItem(nil, 0, 1, false), 44, 0, true).
-		AddItem(nil, 0, 1, false)
-
-	d.pages.AddPage(devUnlockPage, centered, true, true)
+	d.pages.AddPage(devUnlockPage, floatingModal(box, 44, 3), true, true)
 	d.app.SetFocus(field)
 }
 
 // accountNoticePage is the page of the notice leaveToMenu shows over the main menu.
 const accountNoticePage = "account_notice"
+
+// txtOK is said the same way on several screens, so it has one id.
+var txtOK = vibe.E("ui.dashboard.leaveToMenu.02", "OK")
 
 // leaveToMenu takes the player from the dashboard to the main menu after a command
 // ended the game in progress: an account switch or recovery, where the engine already
@@ -1412,13 +1410,7 @@ func (d *Dashboard) leaveToMenu(msg string) {
 		d.overlayMgr.Hide()
 	}
 	d.pages.SwitchToPage("splash")
-	notice := tview.NewModal().
-		SetText(safeTags(msg)).
-		AddButtons([]string{vibe.Line("ui.dashboard.leaveToMenu.02", "OK")}).
-		SetDoneFunc(func(_ int, _ string) {
-			d.pages.RemovePage(accountNoticePage)
-		})
-	d.pages.AddPage(accountNoticePage, notice, true, true)
+	showButtonModal(d.pages, accountNoticePage, safeTags(msg), []string{txtOK.String()}, func(int, string) {})
 }
 
 // codeWindowPage is the page of the small window a command's Window text is
@@ -1445,14 +1437,7 @@ func (d *Dashboard) showWindow(text string) {
 		}
 		return nil
 	})
-	centered := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(tv, 7, 0, true).
-			AddItem(nil, 0, 1, false), 49, 0, true).
-		AddItem(nil, 0, 1, false)
-	d.pages.AddPage(codeWindowPage, centered, true, true)
+	d.pages.AddPage(codeWindowPage, floatingModal(tv, 49, 7), true, true)
 	d.app.SetFocus(tv)
 }
 

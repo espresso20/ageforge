@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -415,18 +414,16 @@ const (
 // iconsWindow shows the flow in a box floating over the dashboard. Built on
 // first open; its text and buttons are replaced each time the flow moves.
 type iconsWindow struct {
-	root    *tview.Flex // the page: the box, centered
-	body    *tview.TextView
-	btnRow  *tview.Flex
-	buttons []*tview.Button
-	keys    []iconsButton
-	focus   int
+	root   *tview.Flex // the page: the box, centered
+	body   *tview.TextView
+	btnRow *tview.Flex
+	ring   *buttonRing
 }
 
 // newIconsWindow builds the window. It reads theme colors at construction,
 // like the other modals; it is rebuilt with each dashboard.
 func (d *Dashboard) newIconsWindow() *iconsWindow {
-	w := &iconsWindow{}
+	w := &iconsWindow{ring: newButtonRing(d.app, nil)}
 	w.body = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetWordWrap(true)
 	w.body.SetTextColor(theme.Color(theme.RoleText)).SetBackgroundColor(theme.Color(theme.RoleSurface))
 	w.btnRow = tview.NewFlex().SetDirection(tview.FlexColumn)
@@ -443,23 +440,10 @@ func (d *Dashboard) newIconsWindow() *iconsWindow {
 		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(w.btnRow, 1, 0, true).
 		AddItem(hint, 1, 0, false)
-	inner.SetBorder(true).
-		SetTitle(vibe.Line("ui.icons.newIconsWindow.02", " Icons check ")).
-		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBorderColor(theme.Color(theme.RoleAccent)).
-		SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, vibe.Line("ui.icons.newIconsWindow.02", " Icons check "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 	w.root = floatingModal(inner, iconsWindowWidth, iconsWindowHeight)
 	w.root.SetInputCapture(d.iconsKey)
 	return w
-}
-
-// setFocus focuses button i (wrapping around).
-func (w *iconsWindow) setFocus(app *tview.Application, i int) {
-	if len(w.buttons) == 0 {
-		return
-	}
-	w.focus = (i%len(w.buttons) + len(w.buttons)) % len(w.buttons)
-	app.SetFocus(w.buttons[w.focus])
 }
 
 // startIcons opens the window (the icons command).
@@ -481,8 +465,7 @@ func (d *Dashboard) refreshIconsWindow() {
 	w := d.iconsWin
 	body, keys := d.icons.view()
 	w.body.SetText(body).ScrollToBeginning()
-	w.keys = keys
-	w.buttons = w.buttons[:0]
+	w.ring.clear()
 	w.btnRow.Clear()
 	w.btnRow.AddItem(surfaceBox(), 0, 1, false)
 	for i, k := range keys {
@@ -492,7 +475,7 @@ func (d *Dashboard) refreshIconsWindow() {
 			w.btnRow.AddItem(surfaceBox(), 2, 0, false)
 		}
 		w.btnRow.AddItem(b, tview.TaggedStringWidth(k.caption())+4, 0, i == 0)
-		w.buttons = append(w.buttons, b)
+		w.ring.add(b, k.key)
 	}
 	w.btnRow.AddItem(surfaceBox(), 0, 1, false)
 	if !d.pages.HasPage(iconsPage) {
@@ -502,7 +485,7 @@ func (d *Dashboard) refreshIconsWindow() {
 	// that opened on top keeps it until it closes, and returnFocus then
 	// hands it back.
 	if front, _ := d.pages.GetFrontPage(); front == iconsPage {
-		w.setFocus(d.app, 0)
+		w.ring.focus(0)
 	}
 }
 
@@ -510,25 +493,22 @@ func (d *Dashboard) refreshIconsWindow() {
 // between buttons, a button's letter presses it. Other letters do nothing;
 // Enter reaches the focused button.
 func (d *Dashboard) iconsKey(event *tcell.EventKey) *tcell.EventKey {
-	w := d.iconsWin
+	ring := d.iconsWin.ring
 	switch event.Key() {
 	case tcell.KeyEsc:
 		d.icons.close()
 		return nil
-	case tcell.KeyTab, tcell.KeyRight, tcell.KeyDown:
-		w.setFocus(d.app, w.focus+1)
+	case tcell.KeyDown:
+		ring.focus(ring.at + 1)
 		return nil
-	case tcell.KeyBacktab, tcell.KeyLeft, tcell.KeyUp:
-		w.setFocus(d.app, w.focus-1)
+	case tcell.KeyUp:
+		ring.focus(ring.at - 1)
 		return nil
 	case tcell.KeyRune:
-		r := unicode.ToLower(event.Rune())
-		for _, k := range w.keys {
-			if k.key != 0 && k.key == r {
-				k.press()
-				return nil
-			}
-		}
+		ring.press(event.Rune())
+		return nil
+	}
+	if ring.key(event) {
 		return nil
 	}
 	return event
@@ -546,7 +526,7 @@ func (d *Dashboard) returnFocus() {
 	switch {
 	case d.icons != nil && d.icons.open && d.iconsWin != nil && d.pages.HasPage(iconsPage):
 		d.pages.SendToFront(iconsPage)
-		d.iconsWin.setFocus(d.app, d.iconsWin.focus)
+		d.iconsWin.ring.focus(d.iconsWin.ring.at)
 	case d.catFocus != nil && d.pages.HasPage(catastrophePage):
 		d.pages.SendToFront(catastrophePage)
 		d.app.SetFocus(d.catFocus)

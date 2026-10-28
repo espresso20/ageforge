@@ -126,15 +126,6 @@ func harbingerInviteRefusal(st game.GameState) error {
 	return vibe.Errorf("ui.overlay_harbinger.harbingerInviteRefusal.02", "cannot invite: %s", st.Harbinger.InviteBlocked)
 }
 
-// harbingerPanelText renders the panel for the narrowest screen the game
-// draws. Pure: state in, text out.
-func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed bool) string {
-	return harbingerPanelTextAt(state, narrowestScreenW, note, noteGood, inviteArmed)
-}
-
-// narrowestScreenW is the narrowest terminal the game is laid out for.
-const narrowestScreenW = 80
-
 // harbingerPanelTextAt renders the panel for a screen screenW cells wide, so
 // the lines that can run long (the prices) are broken to fit the box.
 func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGood, inviteArmed bool) string {
@@ -158,6 +149,9 @@ func harbingerPanelTextAt(state game.GameState, screenW int, note string, noteGo
 	return sb.String()
 }
 
+// txtFaithStrength is said the same way on several screens, so it has one id.
+var txtFaithStrength = vibe.E("ui.overlay_harbinger.harbingerAbsentText.06", " Faith strength: ")
+
 // harbingerAbsentText is the panel with nobody there: how harbingers come,
 // and the outlook in plain words. It reads only what the player has seen, so
 // an era with a doom fated and a quiet one look the same until one comes.
@@ -175,7 +169,7 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 		if harbingerNumericAge(state) {
 			fmt.Fprint(sb, vibe.Sprintf("ui.overlay_harbinger.harbingerAbsentText.05", " Published odds: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(o.Probability))))
 		}
-		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerAbsentText.06", " Faith strength: ")+faithStrengthFigure(state)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.07", ". Stronger faith makes it less likely.")) + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, txtFaithStrength.String()+faithStrengthFigure(state)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.07", ". Stronger faith makes it less likely.")) + "\n")
 	case o.Passage == game.PassagePrestige && state.LastPassage.Pending:
 		sb.WriteString(" " + theme.Paint(theme.RoleNegative, vibe.Line("ui.overlay_harbinger.harbingerAbsentText.08", "The Last Passage has come. Type 'catastrophe' to choose.")) + "\n")
 	case o.Passage == game.PassagePrestige:
@@ -183,13 +177,16 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	default:
 		sb.WriteString(" " + eraOutlookText(state) + "\n")
 		if o.Possible {
-			sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerAbsentText.10", " Faith strength: ")+faithStrengthFigure(state)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.11", ".\n Stronger faith makes a doom less likely to strike, and faith and culture pay\n for Appease if a harbinger comes.")) + "\n")
+			sb.WriteString(theme.Paint(theme.RoleDim, txtFaithStrength.String()+faithStrengthFigure(state)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.11", ".\n Stronger faith makes a doom less likely to strike, and faith and culture pay\n for Appease if a harbinger comes.")) + "\n")
 		}
 		if r := eraDoomRecord(state); r != nil && r.Outcome == game.HarbingerOutcomeDiscredited {
 			sb.WriteString(theme.Paint(theme.RoleDim, " "+textfmt.Capitalize(r.Name)+vibe.Line("ui.overlay_harbinger.harbingerAbsentText.12", "'s warning in this era was invented.")) + "\n")
 		}
 	}
 }
+
+// txtUnavailable is said the same way on several screens, so it has one id.
+var txtUnavailable = vibe.E("ui.overlay_harbinger.harbingerPresentText.29", "Unavailable: ")
 
 // harbingerPresentText is the panel with a harbinger present.
 func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, width int, inviteArmed bool) {
@@ -235,7 +232,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	}
 	if !h.PassageCame {
 		// The strength the odds are read from, as the faith row shows it.
-		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerPresentText.13", " Faith strength: ")+faithStrengthFigure(state)+vibe.Line("ui.overlay_harbinger.harbingerPresentText.14", ". Stronger faith lowers the odds.")) + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, txtFaithStrength.String()+faithStrengthFigure(state)+vibe.Line("ui.overlay_harbinger.harbingerPresentText.14", ". Stronger faith lowers the odds.")) + "\n")
 	}
 	switch {
 	case h.Invited && h.LastPassage && !h.PassageCame:
@@ -284,7 +281,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	case h.InviteBlocked != "" && h.Invited:
 		sb.WriteString("     " + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerPresentText.28", "Done: ")+h.InviteBlocked+".") + "\n")
 	case h.InviteBlocked != "":
-		sb.WriteString("     " + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerPresentText.29", "Unavailable: ")+h.InviteBlocked+".") + "\n")
+		sb.WriteString("     " + theme.Paint(theme.RoleDim, txtUnavailable.String()+h.InviteBlocked+".") + "\n")
 	case inviteArmed:
 		sb.WriteString("     " + theme.Paint(theme.RoleNegative, vibe.Line("ui.overlay_harbinger.harbingerPresentText.30", "Press I again to confirm.")) + "\n")
 	}
@@ -300,7 +297,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 // past it the materials continue on the next line, under the first.
 func harbingerCostLine(sb *strings.Builder, state game.GameState, width int, blocked string, cost map[string]float64) {
 	if blocked != "" {
-		sb.WriteString("     " + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_harbinger.harbingerCostLine.01", "Unavailable: ")+blocked+".") + "\n")
+		sb.WriteString("     " + theme.Paint(theme.RoleDim, txtUnavailable.String()+blocked+".") + "\n")
 		return
 	}
 	if len(cost) == 0 {

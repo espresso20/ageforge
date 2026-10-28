@@ -198,7 +198,8 @@ func TestUsagePathsExist(t *testing.T) {
 	}
 }
 
-// TestUnknownCommandSuggests: a mistyped command names the closest one.
+// TestUnknownCommandSuggests: a mistyped command names the closest one, never
+// the word itself.
 func TestUnknownCommandSuggests(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	ge := game.NewGameEngine()
@@ -206,6 +207,8 @@ func TestUnknownCommandSuggests(t *testing.T) {
 		"biuld":   "Unknown command 'biuld'. Did you mean 'build'? Type help for all commands.",
 		"reserch": "Unknown command 'reserch'. Did you mean 'research'? Type help for all commands.",
 		"xyzzy":   "Unknown command 'xyzzy'. Type help for all commands.",
+		// quit is the dashboard's, not HandleCommand's, and is no suggestion for itself.
+		"quit": "Unknown command 'quit'. Type help for all commands.",
 	} {
 		if res := HandleCommand(in, ge); res.Type != "error" || res.Message != want {
 			t.Errorf("%q = %+v, want error %q", in, res, want)

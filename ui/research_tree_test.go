@@ -940,11 +940,11 @@ func TestResearchEffectSentenceCarriesTheEffectTag(t *testing.T) {
 		t.Fatalf("the effect sentence is not on the grid:\n%s", sents[0])
 	}
 	for i := range want {
-		if st := g.c[start+i].st; st != tsEffect {
+		if st := g.c[start+i].k; st != tsEffect {
 			t.Fatalf("effect sentence cell %d is style %d, want tsEffect", i, st)
 		}
 	}
-	if st := g.c[0].st; st != tsText {
+	if st := g.c[0].k; st != tsText {
 		t.Errorf("the flavour sentence is style %d, want tsText", st)
 	}
 

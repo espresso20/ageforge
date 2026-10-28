@@ -49,7 +49,7 @@ func tradeProvider(state game.GameState, _ int) string {
 				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.07", "   [red]Suspended: %s imports are blockaded[-]\n\n", game.ResourceName(route.DisruptedBy)))
 			} else {
 				fmt.Fprint(&sb, vibe.Sprintf("ui.overlay_trade.tradeProvider.08", "   %s left in this cycle  [gray](%s done)[-]\n\n",
-					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, vibe.Line("ui.overlay_trade.tradeProvider.09", "cycle"), vibe.Line("ui.overlay_trade.tradeProvider.10", "cycles"))))
+					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, txtCycle.String(), txtCycles.String())))
 			}
 		}
 	}
@@ -98,16 +98,12 @@ func tradeProvider(state game.GameState, _ int) string {
 // and to that resource's production rate. Writes nothing when no ally
 // applies.
 func writeAllyTradeBonuses(sb *strings.Builder, dip game.DiplomacyState) {
-	keys := make([]string, 0, len(dip.Factions))
-	for k, f := range dip.Factions {
-		if f.Discovered && f.Status == "allied" && !f.AtWar && f.TradeBonus > 0 {
-			keys = append(keys, k)
-		}
-	}
+	keys := keysWhere(dip.Factions, func(_ string, f game.FactionInfo) bool {
+		return f.Discovered && f.Status == "allied" && !f.AtWar && f.TradeBonus > 0
+	})
 	if len(keys) == 0 {
 		return
 	}
-	sort.Strings(keys)
 	sb.WriteString(vibe.Line("ui.overlay_trade.writeAllyTradeBonuses.01", " [gold]Allied bonuses:[-]\n"))
 	for _, k := range keys {
 		f := dip.Factions[k]

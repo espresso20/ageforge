@@ -159,7 +159,7 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 		SetDynamicColors(true).
 		SetWrap(true)
 	p.detail.SetBorder(true).
-		SetTitle(vibe.Line("ui.theme_picker.CreateThemePickerPage.04", " Details "))
+		SetTitle(txtDetailsTitle.String())
 	p.detail.SetBackgroundColor(theme.Ref(theme.RoleSurface))
 
 	// ── Sample preview (candidate's own colors) ─────────────────────────────
@@ -460,12 +460,6 @@ func themeSwatches(t theme.Theme) string {
 	return strings.Join(rows, "\n")
 }
 
-// colorHexTag renders a tcell.Color as a tview "[#rrggbb]" inline tag from its
-// literal RGB (theme.HexTag). Kept as the picker's name for it.
-func colorHexTag(c tcell.Color) string {
-	return theme.HexTag(c)
-}
-
 // themeFooterBar is the picker action bar: keycap buttons matching the load-game
 // footer idiom (footerButton lives in load_game.go).
 func themeFooterBar() string {
@@ -531,7 +525,7 @@ func drawThemeSample(screen tcell.Screen, x, y, w, h int, th theme.Theme) {
 	screen.SetContent(px1-1, py0, '┐', nil, bst)
 	screen.SetContent(px0, py1-1, '└', nil, bst)
 	screen.SetContent(px1-1, py1-1, '┘', nil, bst)
-	put(px0+2, py0, vibe.Line("ui.theme_picker.drawThemeSample.02", " Resources "), col(theme.RoleAccent), surf, true)
+	put(px0+2, py0, txtResourcesTitle.String(), col(theme.RoleAccent), surf, true)
 
 	gain, loss := "+", "-"
 	if th.GainGlyph != "" {
@@ -542,7 +536,7 @@ func drawThemeSample(screen tcell.Screen, x, y, w, h int, th theme.Theme) {
 	}
 	lines := []func(yy int){
 		func(yy int) {
-			xx := put(px0+2, yy, vibe.Line("ui.theme_picker.drawThemeSample.03", "Food "), col(theme.RoleLabel), surf, false)
+			xx := put(px0+2, yy, txtFood.String(), col(theme.RoleLabel), surf, false)
 			xx = put(xx, yy, "1.2K ", col(theme.RoleHighlight), surf, false)
 			put(xx, yy, gain+"12.5/s", col(theme.RolePositive), surf, false)
 		},

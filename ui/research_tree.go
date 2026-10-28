@@ -734,8 +734,8 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	for y := 0; y < mh; y++ {
 		for x := 0; x < mw; x++ {
 			c := canvas.at(v.vx+x, v.vy+y)
-			if v.card && c.st != tsSel {
-				c.st = tsDim
+			if v.card && c.k != tsSel {
+				c.k = tsDim
 			}
 			out.c[(oy+y)*w+ox+x] = c
 		}
@@ -930,7 +930,7 @@ func renderTree(state game.GameState, m *treeModel, v treeView, w, h int) *tGrid
 	}
 	switch {
 	case v.prompt:
-		keys = [][2]string{{"Enter", vibe.Line("ui.research_tree.renderTree.23", "runs the command below")}, {"Esc", "close"}}
+		keys = [][2]string{{"Enter", txtRunsCommandBelow.String()}, {"Esc", "close"}}
 	case v.card:
 		keys = [][2]string{{"Enter", vibe.Line("ui.research_tree.renderTree.26", "does what the card says")}, {"Esc", vibe.Line("ui.research_tree.renderTree.28", "closes the card")}}
 	}
@@ -1040,7 +1040,7 @@ func opensText(state game.GameState, def config.TechDef) string {
 		if b.Category == "wonder" {
 			wonder = b.Name
 		} else {
-			blds = append(blds, vibe.Line("ui.research_tree.opensText.01", "the ")+b.Name)
+			blds = append(blds, txtThe.String()+b.Name)
 		}
 	}
 	if len(blds) > 0 {
@@ -1048,7 +1048,7 @@ func opensText(state game.GameState, def config.TechDef) string {
 		out = append(out, vibe.Line("ui.research_tree.opensText.02", "opens ")+joinAnd(blds))
 	}
 	if wonder != "" {
-		out = append(out, vibe.Line("ui.research_tree.opensText.03", "the ")+wonder+vibe.Line("ui.research_tree.opensText.04", " needs it"))
+		out = append(out, txtThe.String()+wonder+vibe.Line("ui.research_tree.opensText.04", " needs it"))
 	}
 	return strings.Join(out, ", ")
 }
@@ -1155,7 +1155,7 @@ func (m *treeModel) cardSentences(state game.GameState, n *treeNode, note string
 		case b.Category == "wonder":
 			blurb += " " + sw(swEffect, vibe.Line("ui.research_tree.cardSentences.04", "It is this age's keystone: the ")+b.Name+vibe.Line("ui.research_tree.cardSentences.05", " cannot be built without it."))
 		default:
-			blds = append(blds, vibe.Line("ui.research_tree.cardSentences.06", "the ")+b.Name)
+			blds = append(blds, txtThe.String()+b.Name)
 		}
 	}
 	if len(blds) > 0 {
@@ -1428,7 +1428,7 @@ func (m *treeModel) drawCard(out *tGrid, state game.GameState, n *treeNode, v tr
 		lines = lines[:max(ch-2, 0)]
 	}
 	x0, y0 := ox+(mw-cw)/2, oy+(mh-ch)/2
-	out.card(x0, y0, cw, ch, n.def.Name, vibe.Line("ui.research_tree.drawCard.01", " Esc closes "))
+	out.card(x0, y0, cw, ch, n.def.Name, txtEscCloses.String())
 	if badge {
 		ring := tsLane
 		if n.def.Capstone {
@@ -1464,7 +1464,7 @@ var plainFold = map[rune]rune{
 }
 
 // foldPlain rewrites a grid for the plain glyph tier: nothing but ASCII.
-func foldPlain(g *tGrid) { foldGrid(g, plainFold) }
+func foldPlain(g *tGrid) { g.foldWith(plainFold) }
 
 // plainBar is a bar of width cells filled to the fraction f, as the card
 // draws it (no color tags: the card sets its own styles).

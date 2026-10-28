@@ -37,21 +37,6 @@ func newCompleter(engine *game.GameEngine, snapshot func() *game.GameState) *com
 	return &completer{engine: engine, cmds: registry(), snapshot: snapshot}
 }
 
-// NewAutoCompleter returns the prompt's completions for a line, for callers
-// outside the dashboard (the smoke fuzz scenario walks commands with it):
-// every full line that completes the text, best first, without the trailing
-// space Tab adds. It reads a fresh snapshot on every call.
-func NewAutoCompleter(engine *game.GameEngine) func(string) []string {
-	c := newCompleter(engine, nil)
-	return func(text string) []string {
-		cands := c.candidates(text)
-		for i, s := range cands {
-			cands[i] = strings.TrimRight(s, " ")
-		}
-		return cands
-	}
-}
-
 // state returns the snapshot to suggest from, dropping the cache when it
 // has moved on.
 func (c *completer) state() *game.GameState {
@@ -311,6 +296,9 @@ func closestCommand(word string) string {
 	sort.Strings(names)
 	best, bestDist := "", limit+1
 	for _, n := range names {
+		if n == word {
+			continue // a command HandleCommand does not run (quit) must not suggest itself
+		}
 		if d := textfmt.EditDistance(word, n); d < bestDist {
 			best, bestDist = n, d
 		}
@@ -428,18 +416,6 @@ func byRank(keys []string, rank func(string) int) []string {
 		}
 		return keys[i] < keys[j]
 	})
-	return keys
-}
-
-// keysWhere is the keys of m that keep accepts, sorted.
-func keysWhere[V any](m map[string]V, keep func(key string, v V) bool) []string {
-	var keys []string
-	for k, v := range m {
-		if keep(k, v) {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
 	return keys
 }
 

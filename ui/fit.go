@@ -45,36 +45,108 @@ func glueRates(s string) string {
 	return crewInText.ReplaceAllString(s, "(${1}"+glue+"${2}")
 }
 
+// wrapLines packs words into lines at most width cells wide, one space
+// between words, as size measures them. A word wider than the width gets a
+// line to itself.
+func wrapLines(words []string, width int, size func(string) int) []string {
+	var lines []string
+	var line strings.Builder
+	lineSize := 0
+	for _, word := range words {
+		n := size(word)
+		if lineSize > 0 && lineSize+1+n > width {
+			lines = append(lines, line.String())
+			line.Reset()
+			lineSize = 0
+		}
+		if lineSize > 0 {
+			line.WriteByte(' ')
+			lineSize++
+		}
+		line.WriteString(word)
+		lineSize += n
+	}
+	if line.Len() > 0 {
+		lines = append(lines, line.String())
+	}
+	return lines
+}
+
 // wrapWords breaks s at its spaces into lines at most width cells wide. A
 // word longer than the width gets a line to itself. Color tags are kept
 // with the word they are written against and take no room, and words
-// joined with glue stay together.
+// joined with glue stay together. Text with no words is one empty line.
 func wrapWords(s string, width int) []string {
-	if width < 1 {
-		width = 1
+	words := strings.Fields(s)
+	for i, word := range words {
+		words[i] = strings.ReplaceAll(word, glue, " ")
 	}
-	var lines []string
-	var cur strings.Builder
-	curLen := 0
-	for _, word := range strings.Fields(s) {
-		word = strings.ReplaceAll(word, glue, " ")
-		n := visibleLen(word)
-		if curLen > 0 && curLen+1+n > width {
-			lines = append(lines, cur.String())
-			cur.Reset()
-			curLen = 0
-		}
-		if curLen > 0 {
-			cur.WriteByte(' ')
-			curLen++
-		}
-		cur.WriteString(word)
-		curLen += n
-	}
-	if cur.Len() > 0 || len(lines) == 0 {
-		lines = append(lines, cur.String())
+	lines := wrapLines(words, max(width, 1), visibleLen)
+	if len(lines) == 0 {
+		return []string{""}
 	}
 	return lines
+}
+
+// wrapText breaks plain text (no color tags) into lines of at most w runes.
+func wrapText(s string, w int) []string {
+	return wrapLines(strings.Fields(s), w, runeLen)
+}
+
+// wrapCells is wrapText for a column that cannot spill: a word longer than
+// the line is cut into lines of its own.
+func wrapCells(s string, w int) []string {
+	if w < 1 {
+		return nil
+	}
+	var words []string
+	for _, word := range strings.Fields(s) {
+		for runeLen(word) > w {
+			runes := []rune(word)
+			words = append(words, string(runes[:w]))
+			word = string(runes[w:])
+		}
+		words = append(words, word)
+	}
+	return wrapLines(words, w, runeLen)
+}
+
+// wrapItems breaks a list of items into lines of at most w cells, comma
+// separated, never inside an item.
+func wrapItems(items []string, w int) []string {
+	words := make([]string, len(items))
+	for i, item := range items {
+		words[i] = item
+		if i < len(items)-1 {
+			words[i] += ","
+		}
+	}
+	return wrapLines(words, w, runeLen)
+}
+
+// truncate shortens s to at most max runes, appending an ellipsis when cut.
+// Operates on runes so multibyte backstory text is never split mid-character.
+func truncate(s string, max int) string {
+	if max <= 0 {
+		return ""
+	}
+	r := []rune(s)
+	if len(r) <= max {
+		return s
+	}
+	if max <= 1 {
+		return string(r[:max])
+	}
+	return string(r[:max-1]) + "…"
+}
+
+// fitText is truncate for the grid panels, which show the ellipsis alone
+// where a cut string has one cell.
+func fitText(s string, room int) string {
+	if room == 1 && runeLen(s) > 1 {
+		return "…"
+	}
+	return truncate(s, room)
 }
 
 // hangingRow is a two-column row: lead (already padded to its column, tags

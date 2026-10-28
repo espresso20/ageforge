@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"strings"
-
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -81,41 +79,16 @@ func chipKind(t chipTone, hi bool) xk {
 	return k
 }
 
-// xcell is one cell.
-type xcell struct {
-	r  rune
-	k  xk
-	it bool // drawn in italics
-}
+// xcell is one cell, painted by an xk.
+type xcell = gcell[xk]
 
 // xgrid is a block of cells.
 type xgrid struct {
-	w, h int
-	c    []xcell
+	glyphGrid[xk]
 }
 
 func newXGrid(w, h int) *xgrid {
-	g := &xgrid{w: max(w, 0), h: max(h, 0)}
-	g.c = make([]xcell, g.w*g.h)
-	for i := range g.c {
-		g.c[i] = xcell{r: ' '}
-	}
-	return g
-}
-
-func (g *xgrid) in(x, y int) bool { return x >= 0 && y >= 0 && x < g.w && y < g.h }
-
-func (g *xgrid) at(x, y int) xcell {
-	if !g.in(x, y) {
-		return xcell{r: ' '}
-	}
-	return g.c[y*g.w+x]
-}
-
-func (g *xgrid) set(x, y int, r rune, k xk) {
-	if g.in(x, y) {
-		g.c[y*g.w+x] = xcell{r: r, k: k}
-	}
+	return &xgrid{newGlyphGrid[xk](w, h)}
 }
 
 // put writes s from (x, y), one cell a rune, and returns the next x.
@@ -130,9 +103,7 @@ func (g *xgrid) put(x, y int, s string, k xk) int {
 // putIt is put in italics.
 func (g *xgrid) putIt(x, y int, s string, k xk) int {
 	for _, r := range s {
-		if g.in(x, y) {
-			g.c[y*g.w+x] = xcell{r: r, k: k, it: true}
-		}
+		g.store(x, y, xcell{r: r, k: k, lane: -1, fl: cfItalic})
 		x++
 	}
 	return x
@@ -209,63 +180,6 @@ func (g *xgrid) segsFit(x, y, room int, parts ...xseg) int {
 	return x
 }
 
-// String is the grid as lines of text, trailing spaces kept.
-func (g *xgrid) String() string {
-	var sb strings.Builder
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			sb.WriteRune(g.c[y*g.w+x].r)
-		}
-		sb.WriteByte('\n')
-	}
-	return sb.String()
-}
-
-// Lines are the rows as text, trailing spaces trimmed.
-func (g *xgrid) Lines() []string {
-	lines := strings.Split(strings.TrimRight(g.String(), "\n"), "\n")
-	for i, l := range lines {
-		lines[i] = strings.TrimRight(l, " ")
-	}
-	return lines
-}
-
-// fitText cuts s to room cells, ending in an ellipsis if it is cut.
-func fitText(s string, room int) string {
-	r := []rune(s)
-	if room <= 0 {
-		return ""
-	}
-	if len(r) <= room {
-		return s
-	}
-	if room == 1 {
-		return "…"
-	}
-	return string(r[:room-1]) + "…"
-}
-
-// wrapText breaks s into lines of at most w cells, at spaces.
-func wrapText(s string, w int) []string {
-	var out []string
-	line := ""
-	for _, word := range strings.Fields(s) {
-		switch {
-		case line == "":
-			line = word
-		case len([]rune(line))+1+len([]rune(word)) > w:
-			out = append(out, line)
-			line = word
-		default:
-			line += " " + word
-		}
-	}
-	if line != "" {
-		out = append(out, line)
-	}
-	return out
-}
-
 // foldExpedition is the plain glyph tier's fold: the pins and the bars
 // keep a difference between them in ASCII, and the rest folds as the maps
 // fold.
@@ -275,23 +189,11 @@ var foldExpedition = map[rune]rune{
 	'←': '<', '→': '>', '↑': '^', '↓': 'v', '…': '~', '▸': '>',
 }
 
-func (g *xgrid) fold() {
-	for i, c := range g.c {
-		if c.r < 0x80 {
-			continue
-		}
-		if r, ok := foldExpedition[c.r]; ok {
-			g.c[i].r = r
-		} else {
-			g.c[i].r = mapmodel.Fold(c.r, mapmodel.TierASCII)
-		}
-	}
-}
+func (g *xgrid) fold() { g.foldWith(foldExpedition) }
 
 // expPalette is the active theme's colours for the panel.
 type expPalette struct {
 	styles [xCount]tcell.Style
-	italic tcell.Style
 }
 
 func newExpPalette() *expPalette {
@@ -358,16 +260,16 @@ func newExpPalette() *expPalette {
 	return p
 }
 
+// style is the screen style of a cell.
+func (p *expPalette) style(c xcell) tcell.Style {
+	st := p.styles[c.k]
+	if c.fl&cfItalic != 0 {
+		st = st.Italic(true)
+	}
+	return st
+}
+
 // paintExpedition puts a grid on the screen at (x0, y0).
 func paintExpedition(scr tcell.Screen, g *xgrid, x0, y0 int, p *expPalette) {
-	for y := 0; y < g.h; y++ {
-		for x := 0; x < g.w; x++ {
-			c := g.c[y*g.w+x]
-			st := p.styles[c.k]
-			if c.it {
-				st = st.Italic(true)
-			}
-			scr.SetContent(x0+x, y0+y, c.r, nil, st)
-		}
-	}
+	g.draw(scr, x0, y0, func(c xcell) (rune, tcell.Style) { return c.r, p.style(c) })
 }

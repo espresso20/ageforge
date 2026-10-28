@@ -414,6 +414,12 @@ func advAmount(r game.GateRow) string {
 
 // ===== The right column =====
 
+// txtBrings is said the same way on several screens, so it has one id.
+var txtBrings = vibe.E("ui.advance_view.advRight.09", " brings")
+
+// txtBuildings is said the same way on several screens, so it has one id.
+var txtBuildings = vibe.E("ui.advance_view.advRight.04", "Buildings")
+
 // advRight draws the boxes on the right: what the next age brings, and
 // under it what else stands in the way when there is room.
 func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
@@ -436,7 +442,7 @@ func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 		resLines = wrapItems(b.Resources, vw)
 	}
 	rows := []brow{
-		{vibe.Line("ui.advance_view.advRight.04", "Buildings"), []string{buildings}},
+		{txtBuildings.String(), []string{buildings}},
 		{vibe.Line("ui.advance_view.advRight.05", "Resources"), resLines},
 		{vibe.Line("ui.advance_view.advRight.06", "People"), wrapItems(b.People, vw)},
 	}
@@ -458,9 +464,9 @@ func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 		boxH = bh
 	}
 
-	title := vibe.Line("ui.advance_view.advRight.08", "The ") + v.NextName + vibe.Line("ui.advance_view.advRight.09", " brings")
+	title := vibe.Line("ui.advance_view.advRight.08", "The ") + v.NextName + txtBrings.String()
 	if runeLen(title) > bw-6 {
-		title = v.NextName + vibe.Line("ui.advance_view.advRight.10", " brings")
+		title = v.NextName + txtBrings.String()
 	}
 	if runeLen(title) > bw-6 {
 		title = vibe.Line("ui.advance_view.advRight.11", "Brings")
@@ -482,31 +488,6 @@ func advRight(g *xgrid, v game.AdvanceView, x, y, bw, bh int) {
 	if wayH > 0 {
 		advWay(g, v, x, y+boxH, bw, wayH)
 	}
-}
-
-// wrapItems breaks a list of items into lines of at most w cells, comma
-// separated, never inside an item.
-func wrapItems(items []string, w int) []string {
-	var out []string
-	line := ""
-	for i, it := range items {
-		if i < len(items)-1 {
-			it += ","
-		}
-		switch {
-		case line == "":
-			line = it
-		case runeLen(line)+1+runeLen(it) > w:
-			out = append(out, line)
-			line = it
-		default:
-			line += " " + it
-		}
-	}
-	if line != "" {
-		out = append(out, line)
-	}
-	return out
 }
 
 // wayLines is how many rows what stands in the way takes in w cells.

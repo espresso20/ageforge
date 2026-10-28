@@ -96,14 +96,6 @@ func (a *App) setup() {
 	}
 }
 
-// SetScreen installs s as the app's screen, wrapped by theme.WrapScreen so theme
-// sentinels resolve. Tests use it to run the real app on a SimulationScreen; call
-// it before Run. Without it, Run opens the terminal itself.
-func (a *App) SetScreen(s tcell.Screen) {
-	a.tviewApp.SetScreen(theme.WrapScreen(s))
-	a.screenSet = true
-}
-
 // Run starts the tview application (blocks until exit)
 func (a *App) Run() error {
 	// Every theme paints its own canvas (the theming design §3.7): the terminal screen is

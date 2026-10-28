@@ -81,10 +81,6 @@ func (p *expeditionPanel) open(state game.GameState) tview.Primitive {
 	return overBar(p)
 }
 
-// setSize tells the panel how big it is drawn, for the tests; a draw does
-// it by itself.
-func (p *expeditionPanel) setSize(w, h int) { p.w, p.h = w, h }
-
 // scene is the map as it stands, on the panel's size.
 func (p *expeditionPanel) scene() *expScene {
 	l := layoutFor(p.w, p.h)

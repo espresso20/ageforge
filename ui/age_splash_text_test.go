@@ -63,11 +63,11 @@ func splashCases() []splashCase {
 	return out
 }
 
-// TestAgeSplashTextIsWhatItWas: for every age, with and without upgrades,
+// TestAgeSplashLinesAreOneLineEach: for every age, with and without upgrades,
 // and with every kind of epoch event, each line of the arrival's text is one
 // line (no line break inside it) and is blank exactly when it is of the
 // blank kind.
-func TestAgeSplashTextIsWhatItWas(t *testing.T) {
+func TestAgeSplashLinesAreOneLineEach(t *testing.T) {
 	cases := splashCases()
 	if len(cases) < 2*len(config.Ages())+5 {
 		t.Fatalf("only %d cases", len(cases))

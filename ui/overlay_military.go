@@ -165,7 +165,7 @@ func expeditionHaul(exp game.ExpeditionInfo, state game.GameState) string {
 	if haul := formatExpeditionCost(exp.ExpectedHaulMin, state); haul != "" {
 		return haul
 	}
-	return vibe.Sprintf("ui.overlay_military.expeditionHaul.01", "about %.0f min of income", exp.HaulMinutes)
+	return fmt.Sprintf(txtAboutMinutesOfIncome.String(), exp.HaulMinutes)
 }
 
 func expeditionOfferCost(exp game.ExpeditionInfo, state game.GameState) string {
@@ -217,7 +217,7 @@ func garrisonSavedSummary(t *game.DefenseTally) string {
 		parts = append(parts, fmt.Sprintf("%d %s", t.Buildings, pluralize(vibe.Line("ui.overlay_military.garrisonSavedSummary.01", "building"), t.Buildings)))
 	}
 	if t.Workers > 0 {
-		parts = append(parts, fmt.Sprintf("%d %s", t.Workers, pluralize(vibe.Line("ui.overlay_military.garrisonSavedSummary.02", "worker"), t.Workers)))
+		parts = append(parts, fmt.Sprintf("%d %s", t.Workers, pluralize(txtWorker.String(), t.Workers)))
 	}
 	keys := make([]string, 0, len(t.Resources))
 	for k, v := range t.Resources {

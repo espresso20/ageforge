@@ -342,8 +342,8 @@ func TestIconsWindowGetsTheKeyboardBack(t *testing.T) {
 		t.Fatal("no help panel")
 	}
 	d.overlayMgr.Hide()
-	if front, _ := pages.GetFrontPage(); front != iconsPage || !d.iconsWin.buttons[d.iconsWin.focus].HasFocus() {
-		t.Fatalf("after a panel closed over it: front %q, window focused %v", front, d.iconsWin.buttons[0].HasFocus())
+	if front, _ := pages.GetFrontPage(); front != iconsPage || !d.iconsWin.ring.buttons[d.iconsWin.ring.at].HasFocus() {
+		t.Fatalf("after a panel closed over it: front %q, window focused %v", front, d.iconsWin.ring.buttons[0].HasFocus())
 	}
 	pressKey(d, pages, tcell.KeyEsc, 0)
 	if pages.HasPage(iconsPage) || !d.inputField.HasFocus() {

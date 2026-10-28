@@ -216,7 +216,7 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 		civ := textfmt.Capitalize(civRef(state, crew.FactionKey))
 		prefix := fmt.Sprintf("↳ %s: ", civ)
 		desc := truncate(vibe.Line("ui.overlay_factions.writeLiveFactionEffects.05", "crew on loan"), descCol-runeLen(prefix))
-		count := textfmt.Count(crew.Count, vibe.Line("ui.overlay_factions.writeLiveFactionEffects.06", "worker"), vibe.Line("ui.overlay_factions.writeLiveFactionEffects.07", "workers"))
+		count := textfmt.Count(crew.Count, txtWorker.String(), vibe.Line("ui.overlay_factions.writeLiveFactionEffects.07", "workers"))
 		remain := formatTicks(crew.TicksLeft, state)
 		fmt.Fprintf(sb, " [green]↳[-] [cyan]%s[-]: %s%s[green]%s[-]%s%s[gray]%s[-]\n",
 			civ, desc,
@@ -496,22 +496,6 @@ func personalityColor(personality string) string {
 	default:
 		return "gray"
 	}
-}
-
-// truncate shortens s to at most max runes, appending an ellipsis when cut.
-// Operates on runes so multibyte backstory text is never split mid-character.
-func truncate(s string, max int) string {
-	if max <= 0 {
-		return ""
-	}
-	r := []rune(s)
-	if len(r) <= max {
-		return s
-	}
-	if max <= 1 {
-		return string(r[:max])
-	}
-	return string(r[:max-1]) + "…"
 }
 
 // diplomacyThreshold renders the distance-to-next-tier indicator for a

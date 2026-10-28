@@ -378,6 +378,9 @@ func renderExpedition(state game.GameState, v expView, w, h int) *xgrid {
 	return g
 }
 
+// txtOf is said the same way on several screens, so it has one id.
+var txtOf = vibe.E("ui.expedition_view.header.08", " of ")
+
 func header(g *xgrid, state game.GameState, v expView, l expLayout) {
 	ready, report := xDim, xDim
 	if v.report {
@@ -394,7 +397,7 @@ func header(g *xgrid, state game.GameState, v expView, l expLayout) {
 	g.put(l.w-3-len([]rune(rank)), 0, rank, xText)
 	home := textfmt.Number(float64(state.Military.SoldierCount))
 	posted := textfmt.Number(float64(state.Military.SoldierCount + state.Military.SoldiersAway))
-	soldiers, of, atHome := vibe.Line("ui.expedition_view.header.07", "Soldiers "), vibe.Line("ui.expedition_view.header.08", " of "), vibe.Line("ui.expedition_view.header.09", " at home")
+	soldiers, of, atHome := vibe.Line("ui.expedition_view.header.07", "Soldiers "), txtOf.String(), vibe.Line("ui.expedition_view.header.09", " at home")
 	g.segs(l.w-3-runeLen(soldiers+home+of+posted+atHome)+1, 1, xseg{soldiers, xDim}, xseg{home, xText}, xseg{of, xDim}, xseg{posted, xText}, xseg{atHome, xDim})
 }
 
@@ -711,13 +714,13 @@ func briefing(state game.GameState, o game.ExpeditionInfo, cw int) (body, foot [
 		if state.Military.SoldierCount < o.SoldiersNeeded {
 			kind = xBad
 		}
-		add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.01", "Party"), 7), xDim}, xseg{fmt.Sprintf("%s %s", textfmt.Number(float64(o.SoldiersNeeded)), pluralize(vibe.Line("ui.expedition_view.briefing.02", "soldier"), o.SoldiersNeeded)), kind})
+		add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.01", "Party"), 7), xDim}, xseg{fmt.Sprintf("%s %s", textfmt.Number(float64(o.SoldiersNeeded)), pluralize(txtSoldier.String(), o.SoldiersNeeded)), kind})
 	}
 	add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.03", "Odds"), 7), xDim}, xseg{expBar(o.SuccessChance, 10, "█", "░"), oddsKind(o.SuccessChance)},
 		xseg{fmt.Sprintf(" %.0f%%", o.SuccessChance*100), oddsKind(o.SuccessChance)})
 	add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.04", "Out"), 7), xDim}, xseg{expDur(o.DurationMin, state) + vibe.Line("ui.expedition_view.briefing.05", " and back"), xText})
 	add(3, xseg{padRight(vibe.Line("ui.expedition_view.briefing.06", "Ends"), 7), xDim}, xseg{vibe.Line("ui.expedition_view.briefing.07", "in ") + expDur(o.ExpiresTicks, state), xText})
-	add(0, xseg{padRight(vibe.Line("ui.expedition_view.briefing.08", "Haul"), 7), xDim}, xseg{vibe.Sprintf("ui.expedition_view.briefing.09", "about %.0f min of income", o.HaulMinutes), xGood})
+	add(0, xseg{padRight(txtHaul.String(), 7), xDim}, xseg{fmt.Sprintf(txtAboutMinutesOfIncome.String(), o.HaulMinutes), xGood})
 	var haul []string
 	for _, k := range sortedKeysOf(o.ExpectedHaulMin) {
 		haul = append(haul, "+"+textfmt.Number(o.ExpectedHaulMin[k])+" "+resourceDisplayName(state, k))
@@ -807,19 +810,22 @@ func fitCard(body, foot []cardLine, rows int) ([]cardLine, []cardLine) {
 	return body, foot
 }
 
+// txtBriefing is said the same way on several screens, so it has one id.
+var txtBriefing = vibe.E("ui.expedition_view.drawBriefing.01", "Briefing")
+
 // drawBriefing draws the card for the highlighted offer.
 func drawBriefing(g *xgrid, state game.GameState, v expView, l expLayout, sc *expScene, hi int) {
 	x, y, w, h := l.cardX, l.mainY, l.cardW, l.mainH
 	cw := w - 2
 	if hi < 0 {
-		g.box(x, y, w, h, xBorder, vibe.Line("ui.expedition_view.drawBriefing.01", "Briefing"), xTitle, false)
+		g.box(x, y, w, h, xBorder, txtBriefing.String(), xTitle, false)
 		for i, ln := range wrapText(vibe.Line("ui.expedition_view.drawBriefing.02", "No offers on the board. New ones come in a few minutes."), cw) {
 			g.put(x+1, y+1+i, ln, xDim)
 		}
 		return
 	}
 	o := *sc.offers[hi].offer
-	border, title, tk := xBorder, vibe.Line("ui.expedition_view.drawBriefing.03", "Briefing"), xTitle
+	border, title, tk := xBorder, txtBriefing.String(), xTitle
 	if o.Rare {
 		title, tk = vibe.Line("ui.expedition_view.drawBriefing.04", "◈ Legendary"), xLegend
 		border = xLegend
@@ -883,7 +889,7 @@ func drawConfirm(g *xgrid, state game.GameState, v expView, sc *expScene) {
 		if state.Military.SoldierCount < o.SoldiersNeeded {
 			kind = xBad
 		}
-		g.segs(x+2, row, xseg{padRight(vibe.Line("ui.expedition_view.drawConfirm.03", "Party"), 6), xDim}, xseg{fmt.Sprintf("%s %s", textfmt.Number(float64(o.SoldiersNeeded)), pluralize(vibe.Line("ui.expedition_view.drawConfirm.04", "soldier"), o.SoldiersNeeded)), kind},
+		g.segs(x+2, row, xseg{padRight(vibe.Line("ui.expedition_view.drawConfirm.03", "Party"), 6), xDim}, xseg{fmt.Sprintf("%s %s", textfmt.Number(float64(o.SoldiersNeeded)), pluralize(txtSoldier.String(), o.SoldiersNeeded)), kind},
 			xseg{vibe.Sprintf("ui.expedition_view.drawConfirm.05", "  (%s stay home)", textfmt.Number(float64(max(0, state.Military.SoldierCount-o.SoldiersNeeded)))), xDim})
 		row++
 	}
@@ -935,9 +941,9 @@ func returnLine(r game.MissionReturn) string {
 	line += rankReturnText(r.Experience)
 	switch {
 	case r.Fell > 0:
-		line += vibe.Sprintf("ui.expedition_view.returnLine.06", " %s of %s %s fell.", textfmt.Number(float64(r.Fell)), textfmt.Number(float64(r.Party)), pluralize(vibe.Line("ui.expedition_view.returnLine.07", "soldier"), r.Party))
+		line += vibe.Sprintf("ui.expedition_view.returnLine.06", " %s of %s %s fell.", textfmt.Number(float64(r.Fell)), textfmt.Number(float64(r.Party)), pluralize(txtSoldier.String(), r.Party))
 	case r.Party > 0:
-		line += vibe.Sprintf("ui.expedition_view.returnLine.08", " All %s %s came home.", textfmt.Number(float64(r.Party)), pluralize(vibe.Line("ui.expedition_view.returnLine.09", "soldier"), r.Party))
+		line += vibe.Sprintf("ui.expedition_view.returnLine.08", " All %s %s came home.", textfmt.Number(float64(r.Party)), pluralize(txtSoldier.String(), r.Party))
 	}
 	return line
 }
@@ -947,7 +953,7 @@ func returnLine(r game.MissionReturn) string {
 func drawOutCard(g *xgrid, state game.GameState, l expLayout, sc *expScene, hi int) {
 	x, y, w, h := l.cardX, l.mainY, l.cardW, l.mainH
 	cw := w - 2
-	g.box(x, y, w, h, xBorder, vibe.Sprintf("ui.expedition_view.drawOutCard.01", "Out · %d", len(sc.acts)), xTitle, false)
+	g.box(x, y, w, h, xBorder, fmt.Sprintf(txtOutCount.String(), len(sc.acts)), xTitle, false)
 	// With no legend row to hold it, the Society's line takes the card's foot.
 	soc, socKind := societyLine(state)
 	foot := 0
@@ -959,7 +965,7 @@ func drawOutCard(g *xgrid, state game.GameState, l expLayout, sc *expScene, hi i
 	}
 	if len(sc.acts) == 0 {
 		offers := len(sc.offers)
-		for i, ln := range wrapText(vibe.Sprintf("ui.expedition_view.drawOutCard.02", "Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize(vibe.Line("ui.expedition_view.drawOutCard.03", "offer"), offers)), cw) {
+		for i, ln := range wrapText(vibe.Sprintf("ui.expedition_view.drawOutCard.02", "Nobody is out. The Ready Room has %d %s waiting.", offers, pluralize(txtOffer.String(), offers)), cw) {
 			g.put(x+1, y+1+i, ln, xDim)
 		}
 	} else {
@@ -999,9 +1005,9 @@ func drawOutCard(g *xgrid, state game.GameState, l expLayout, sc *expScene, hi i
 			if a.Soldiers > 0 {
 				who := textfmt.Number(float64(a.Soldiers))
 				if a.Party > a.Soldiers {
-					who += vibe.Line("ui.expedition_view.drawOutCard.06", " of ") + textfmt.Number(float64(a.Party))
+					who += txtOf.String() + textfmt.Number(float64(a.Party))
 				}
-				parts = append(parts, xseg{fmt.Sprintf("%s %s", who, pluralize(vibe.Line("ui.expedition_view.drawOutCard.07", "soldier"), a.Soldiers)), xText}, xseg{" · ", xFaint})
+				parts = append(parts, xseg{fmt.Sprintf("%s %s", who, pluralize(txtSoldier.String(), a.Soldiers)), xText}, xseg{" · ", xFaint})
 			}
 			parts = append(parts, xseg{vibe.Sprintf("ui.expedition_view.drawOutCard.08", "%.0f%% odds", a.SuccessChance*100), oddsKind(a.SuccessChance)},
 				xseg{vibe.Sprintf("ui.expedition_view.drawOutCard.09", " · haul %.0f min", a.HaulMinutes), xDim})

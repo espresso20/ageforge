@@ -86,7 +86,7 @@ func peopleRichTitle(state game.GameState, rows int) string {
 		return vibe.Line("ui.people_rich.peopleRichTitle.01", " People ")
 	}
 	ws := state.Workers
-	return vibe.Sprintf("ui.people_rich.peopleRichTitle.02", " People %s/%s ", textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop)))
+	return fmt.Sprintf(txtPeopleBoxCount.String(), textfmt.Number(float64(ws.TotalPop)), textfmt.Number(float64(ws.MaxPop)))
 }
 
 // peopleRichHeld is the two lines on what holds the population back: what it

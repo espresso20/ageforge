@@ -55,24 +55,19 @@ func showAccountNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 // cancelled into a no-account state: its own Esc/close routes to onRetype (re-enter),
 // consistent with the entry modal's Esc-accepts policy.
 func showAccountNameConfirmModal(app *tview.Application, pages *tview.Pages, name string, onCreate func(name string), onRetype func()) {
-	modal := tview.NewModal().
-		SetText(vibe.Sprintf("ui.newgame_modal.showAccountNameConfirmModal.01", "Create your AgeForge account as %q?\nThis name is your identity. To restore your account on another device, enter it exactly as written here.", name)).
-		AddButtons([]string{vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.02", "Create"), vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.03", "Re-type")}).
-		SetDoneFunc(func(button int, _ string) {
-			pages.RemovePage(accountNameConfirmPage)
-			switch button {
-			case 0: // "Create"
-				onCreate(name)
-			default:
-				// "Re-type" or any close (Esc) — never abort into a no-account state.
-				onRetype()
-			}
-		})
+	text := vibe.Sprintf("ui.newgame_modal.showAccountNameConfirmModal.01", "Create your AgeForge account as %q?\nThis name is your identity. To restore your account on another device, enter it exactly as written here.", name)
+	buttons := []string{vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.02", "Create"), vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.03", "Re-type")}
+	modal := showButtonModal(pages, accountNameConfirmPage, text, buttons, func(button int, _ string) {
+		if button == 0 { // "Create"
+			onCreate(name)
+			return
+		}
+		// "Re-type" or any close (Esc) — never abort into a no-account state.
+		onRetype()
+	})
 	// Opaque background so the modal doesn't bleed the page beneath it, matching the
 	// other button-modals (and the earlier modal-opacity fix).
 	modal.SetBackgroundColor(theme.Color(theme.RoleSurface))
-
-	pages.AddPage(accountNameConfirmPage, modal, true, true)
 	app.SetFocus(modal)
 }
 
@@ -177,22 +172,15 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 		}
 	})
 
-	// Opaque spacers between the fields. tview only clears cells a primitive
-	// actually draws, so transparent spacers would let the page beneath (the
-	// dashboard, for a Branch save) bleed through; an explicit background paints
-	// them.
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface)) }
+	// Opaque spacers between the fields: transparent ones would let the page
+	// beneath (the dashboard, for a Branch save) bleed through.
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
-	inner.SetBorder(true).
-		SetTitle(title).
-		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBorderColor(theme.Color(theme.RoleAccent))
-	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, title, theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
 	// DoneFunc above so plain typing keys still reach the input.
@@ -200,24 +188,14 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 	// Height is sized to the exact content (5 rows + 2 border = 7). An oversized
 	// box would leave unallocated interior rows that no primitive paints, and
 	// those rows would show the dashboard through them.
+	escape := closeAndRestore
+	if escAccepts {
+		// First-run account naming can't be cancelled into a no-account state:
+		// Esc accepts the current/generated value via the normal submit path.
+		escape = submit
+	}
 	modal := centeredModal(inner, 60, 7)
-	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		switch ev.Key() {
-		case tcell.KeyEsc:
-			if escAccepts {
-				// First-run account naming can't be cancelled into a no-account state:
-				// Esc accepts the current/generated value via the normal submit path.
-				submit()
-			} else {
-				closeAndRestore()
-			}
-			return nil
-		case tcell.KeyTab, tcell.KeyBacktab:
-			reroll()
-			return nil
-		}
-		return ev
-	})
+	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: escape, tcell.KeyTab: reroll, tcell.KeyBacktab: reroll})
 
 	pages.AddPage(pageName, modal, true, true)
 	app.SetFocus(input)

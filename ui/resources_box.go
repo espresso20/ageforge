@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -64,13 +63,7 @@ type resRow struct {
 // resourceRows is the box's rows for a snapshot: every unlocked resource, in
 // key order.
 func resourceRows(state game.GameState) []resRow {
-	keys := make([]string, 0, len(state.Resources))
-	for k, rs := range state.Resources {
-		if rs.Unlocked {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
+	keys := keysWhere(state.Resources, func(_ string, rs game.ResourceState) bool { return rs.Unlocked })
 	rows := make([]resRow, 0, len(keys))
 	for _, key := range keys {
 		rs := state.Resources[key]

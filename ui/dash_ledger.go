@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"sync"
 	"unicode/utf8"
@@ -167,13 +166,7 @@ func (l *ledger) resourceOrder(state game.GameState) []string {
 			l.order = append(l.order, def.Key)
 			seen[def.Key] = true
 		}
-		var rest []string
-		for k := range state.Resources {
-			if !seen[k] {
-				rest = append(rest, k)
-			}
-		}
-		sort.Strings(rest)
+		rest := keysWhere(state.Resources, func(k string, _ game.ResourceState) bool { return !seen[k] })
 		l.order = append(l.order, rest...)
 	}
 	return l.order
@@ -351,14 +344,7 @@ func foldLedger(s string) string {
 	}
 	out := []rune(s)
 	for i, r := range out {
-		if r < 0x80 {
-			continue
-		}
-		if f, ok := ledgerFold[r]; ok {
-			out[i] = f
-		} else {
-			out[i] = mapmodel.Fold(r, mapmodel.TierASCII)
-		}
+		out[i] = foldRune(r, ledgerFold)
 	}
 	return string(out)
 }
@@ -689,19 +675,6 @@ func (b *ledgerBox) layout() {
 	}
 }
 
-// GetText is the rows as text, one to a line, with the colour tags left in
-// unless stripTags.
-func (b *ledgerBox) GetText(stripTags bool) string {
-	lines := make([]string, len(b.lines))
-	for i, l := range b.lines {
-		if stripTags {
-			l = stripLedgerTags(l)
-		}
-		lines[i] = l
-	}
-	return strings.Join(lines, "\n")
-}
-
 // ledgerTagRoles are the names of the colour tags the Ledger writes, with
 // the role each stands for.
 var ledgerTagRoles = sync.OnceValue(func() map[string]theme.Role { return theme.TagNames() })
@@ -739,23 +712,6 @@ func ledgerTag(s string) (n int, fg, bg tcell.Color, setFg, setBg, ok bool) {
 		return
 	}
 	return end + 1, fg, bg, setFg, setBg, true
-}
-
-// stripLedgerTags is s without the tags the Ledger writes.
-func stripLedgerTags(s string) string {
-	var sb strings.Builder
-	for i := 0; i < len(s); {
-		if s[i] == '[' {
-			if n, _, _, _, _, ok := ledgerTag(s[i:]); ok {
-				i += n
-				continue
-			}
-		}
-		r, size := utf8.DecodeRuneInString(s[i:])
-		sb.WriteRune(r)
-		i += size
-	}
-	return sb.String()
 }
 
 // ledgerRuneWidth is the cells a rune takes: one for the marks the Ledger

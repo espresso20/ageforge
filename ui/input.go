@@ -98,18 +98,18 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		}
 		return res
 	}
-	return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
+	return errorReply(unknownCommandText(cmd))
 }
 
 // runPanel is the Run of a command that only opens the panel of that name.
 func runPanel(name string) func(args []string, engine *game.GameEngine) CommandResult {
-	return func([]string, *game.GameEngine) CommandResult { return CommandResult{OverlayName: name} }
+	return func([]string, *game.GameEngine) CommandResult { return panelReply(name) }
 }
 
 // cmdIcons is `icons`: start the guided icons check.
 func cmdIcons(args []string, _ *game.GameEngine) CommandResult {
 	if len(args) > 0 {
-		return CommandResult{Message: usageFor("icons"), Type: "error"}
+		return errorReply(usageFor("icons"))
 	}
 	return CommandResult{Icons: true}
 }
@@ -242,25 +242,28 @@ func parseAmount(arg string) (float64, error) {
 // usageError is the error result for a bad argument: the usage line, then
 // what was wrong with the argument.
 func usageError(usage string, err error) CommandResult {
-	return CommandResult{Message: usage + " (" + err.Error() + ")", Type: "error"}
+	return errorReply(usage + " (" + err.Error() + ")")
 }
 
 // errorResult is the refusal for an engine error, as a sentence: capital
 // first letter, closing period.
 func errorResult(err error) CommandResult {
-	return CommandResult{Message: textfmt.Sentence(err.Error()), Type: "error"}
+	return errorReply(textfmt.Sentence(err.Error()))
 }
 
-// sortedKeysOf returns m's keys in order, so lists built from game maps come
-// out the same on every call.
-func sortedKeysOf[V any](m map[string]V) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
+// errorReply, infoReply, warningReply and routineReply are a reply of that
+// kind; successReply is a command that worked and has nothing to say (the
+// engine logs what it did).
+func errorReply(msg string) CommandResult   { return CommandResult{Message: msg, Type: "error"} }
+func infoReply(msg string) CommandResult    { return CommandResult{Message: msg, Type: "info"} }
+func warningReply(msg string) CommandResult { return CommandResult{Message: msg, Type: "warning"} }
+func routineReply(msg string) CommandResult {
+	return CommandResult{Message: msg, Type: game.LogRoutine}
 }
+func successReply() CommandResult { return CommandResult{Type: "success"} }
+
+// panelReply asks the dashboard to open the panel of that name.
+func panelReply(name string) CommandResult { return CommandResult{OverlayName: name} }
 
 func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
@@ -268,7 +271,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	// Find the wonder for the current age
 	curWonder := currentWonder(state)
 	if curWonder == nil {
-		return CommandResult{Message: vibe.Line("ui.input.cmdWonder.01", "No wonder available this age."), Type: "error"}
+		return errorReply(vibe.Line("ui.input.cmdWonder.01", "No wonder available this age."))
 	}
 
 	deposit := false
@@ -277,19 +280,16 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		case "collect", "bank":
 			deposit = true
 		default:
-			return CommandResult{Message: vibe.Sprintf("ui.input.cmdWonder.02", "Unknown wonder command %q. %s.", args[0], wonderBankUsage), Type: "error"}
+			return errorReply(vibe.Sprintf("ui.input.cmdWonder.02", "Unknown wonder command %q. %s.", args[0], wonderBankUsage))
 		}
 	}
 
 	bs := state.Buildings[curWonder.key]
 	if bs.Count > 0 {
 		if deposit {
-			return CommandResult{Message: vibe.Sprintf("ui.input.cmdWonder.03", "%s is already built: there is nothing left to bank this age.", curWonder.name), Type: "error"}
+			return errorReply(vibe.Sprintf("ui.input.cmdWonder.03", "%s is already built: there is nothing left to bank this age.", curWonder.name))
 		}
-		return CommandResult{
-			Message: vibe.Sprintf("ui.input.cmdWonder.04", "[gold]★ %s[-] is already built.", curWonder.name),
-			Type:    "info",
-		}
+		return infoReply(vibe.Sprintf("ui.input.cmdWonder.04", "[gold]★ %s[-] is already built.", curWonder.name))
 	}
 	if deposit {
 		return cmdWonderCollect(args[1:], curWonder, state, engine)
@@ -314,7 +314,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.08", "\n[gray]Bank resources with 'wonder collect <resource|all> [amount|all|max]'.[-]"))
 	}
-	return CommandResult{Message: sb.String(), Type: "info"}
+	return infoReply(sb.String())
 }
 
 const wonderBankUsage = "Usage: wonder collect|bank <resource|all> [amount|all|max]"
@@ -325,7 +325,7 @@ const wonderBankUsage = "Usage: wonder collect|bank <resource|all> [amount|all|m
 // `all` for the resource does that for every resource the wonder needs.
 func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 || len(args) > 2 {
-		return CommandResult{Message: wonderBankUsage, Type: "error"}
+		return errorReply(wonderBankUsage)
 	}
 	resource := strings.ToLower(args[0])
 	whole := true // bank as much as can go in
@@ -348,7 +348,7 @@ func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine
 		return wonderCollectAll(w, engine)
 	}
 	if _, ok := state.Resources[resource]; !ok {
-		return CommandResult{Message: vibe.Sprintf("ui.input.cmdWonderCollect.02", "Unknown resource '%s'. Type wonder to see what %s still needs.", args[0], w.name), Type: "error"}
+		return errorReply(vibe.Sprintf("ui.input.cmdWonderCollect.02", "Unknown resource '%s'. Type wonder to see what %s still needs.", args[0], w.name))
 	}
 
 	var deposited float64
@@ -359,15 +359,15 @@ func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine
 		deposited, err = engine.BankWonderResource(w.key, resource, amount)
 	}
 	if err != nil {
-		return CommandResult{Message: vibe.Line("ui.input.cmdWonderCollect.03", "Nothing banked. ") + textfmt.Sentence(err.Error()), Type: "error"}
+		return errorReply(vibe.Line("ui.input.cmdWonderCollect.03", "Nothing banked. ") + textfmt.Sentence(err.Error()))
 	}
 	// The engine logs the deposit (and a full bank); only a short deposit
 	// needs a word of its own.
 	if !whole && deposited < amount {
-		return CommandResult{Message: vibe.Sprintf("ui.input.cmdWonderCollect.04", "Only %s went in: that is all %s still needed.",
-			game.Amount(deposited, resource), w.name), Type: "info"}
+		return infoReply(vibe.Sprintf("ui.input.cmdWonderCollect.04", "Only %s went in: that is all %s still needed.",
+			game.Amount(deposited, resource), w.name))
 	}
-	return CommandResult{Type: "success"}
+	return successReply()
 }
 
 // wonderCollectAll is `wonder collect all`: bank every resource the wonder
@@ -397,12 +397,12 @@ func wonderCollectAll(w *wonderInfo, engine *game.GameEngine) CommandResult {
 	if banked == 0 {
 		all := append(skipped, full...)
 		sort.Strings(all)
-		return CommandResult{Message: vibe.Line("ui.input.wonderCollectAll.03", "Nothing banked: ") + strings.Join(all, ", ") + ".", Type: "error"}
+		return errorReply(vibe.Line("ui.input.wonderCollectAll.03", "Nothing banked: ") + strings.Join(all, ", ") + ".")
 	}
 	if len(skipped) > 0 {
-		return CommandResult{Message: vibe.Line("ui.input.wonderCollectAll.04", "Not banked: ") + strings.Join(skipped, ", ") + ".", Type: "info"}
+		return infoReply(vibe.Line("ui.input.wonderCollectAll.04", "Not banked: ") + strings.Join(skipped, ", ") + ".")
 	}
-	return CommandResult{Type: "success"}
+	return successReply()
 }
 
 // lowerFirst lowercases the first letter of s, to set an engine sentence
@@ -423,7 +423,7 @@ func lowerFirst(s string) string {
 // roster's old name and still runs it.
 func cmdWorkers(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "people"}
+		return panelReply("people")
 	}
 	switch strings.ToLower(args[0]) {
 	case "share":
@@ -431,7 +431,7 @@ func cmdWorkers(args []string, engine *game.GameEngine) CommandResult {
 	case "auto-recruit", "autorecruit":
 		return cmdAutoRecruit(args[1:], engine)
 	}
-	return CommandResult{Message: vibe.Sprintf("ui.input.cmdWorkers.01", "Unknown workers command '%s'. %s", args[0], subUsage("workers")), Type: "error"}
+	return errorReply(vibe.Sprintf("ui.input.cmdWorkers.01", "Unknown workers command '%s'. %s", args[0], subUsage("workers")))
 }
 
 // cmdRoster is `roster [domain] [percent|auto]` and `roster auto`: show the
@@ -440,10 +440,10 @@ func cmdWorkers(args []string, engine *game.GameEngine) CommandResult {
 func cmdRoster(args []string, engine *game.GameEngine) CommandResult {
 	usage := usageFor("roster")
 	if len(args) == 0 {
-		return CommandResult{Message: sharesText(engine.GetState(), ""), Type: "info"}
+		return infoReply(sharesText(engine.GetState(), ""))
 	}
 	if len(args) > 2 {
-		return CommandResult{Message: usage, Type: "error"}
+		return errorReply(usage)
 	}
 	domain := strings.ToLower(args[0])
 	var reply game.ShareReply
@@ -452,9 +452,9 @@ func cmdRoster(args []string, engine *game.GameEngine) CommandResult {
 	case domain == "auto" && len(args) == 1:
 		reply, err = engine.ClearWorkerShare("")
 	case !game.IsWorkerDomain(engine.Rules(), domain):
-		return CommandResult{Message: game.UnknownDomainError(engine.Rules(), args[0]).Error(), Type: "error"}
+		return errorReply(game.UnknownDomainError(engine.Rules(), args[0]).Error())
 	case len(args) == 1:
-		return CommandResult{Message: sharesText(engine.GetState(), domain), Type: "info"}
+		return infoReply(sharesText(engine.GetState(), domain))
 	case strings.ToLower(args[1]) == "auto":
 		reply, err = engine.ClearWorkerShare(domain)
 	default:
@@ -468,9 +468,9 @@ func cmdRoster(args []string, engine *game.GameEngine) CommandResult {
 		return errorResult(err)
 	}
 	if reply.Warning {
-		return CommandResult{Message: reply.Line, Type: "warning"}
+		return warningReply(reply.Line)
 	}
-	return CommandResult{Message: reply.Line, Type: game.LogRoutine}
+	return routineReply(reply.Line)
 }
 
 // cmdScholars is `scholars`: the scholars by kind, how many research and
@@ -480,19 +480,19 @@ func cmdScholars(args []string, engine *game.GameEngine) CommandResult {
 	usage := usageFor("scholars")
 	switch len(args) {
 	case 0:
-		return CommandResult{Message: scholarsText(engine.GetState()), Type: "info"}
+		return infoReply(scholarsText(engine.GetState()))
 	case 1:
 		pct, err := strconv.Atoi(strings.TrimSuffix(args[0], "%"))
 		if err != nil {
-			return CommandResult{Message: usage, Type: "error"}
+			return errorReply(usage)
 		}
 		line, err := engine.SetResearchShare(pct)
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: line, Type: game.LogRoutine}
+		return routineReply(line)
 	}
-	return CommandResult{Message: usage, Type: "error"}
+	return errorReply(usage)
 }
 
 // scholarsText is `scholars`: the kinds and counts, the line that says how
@@ -547,6 +547,9 @@ func sharesText(st game.GameState, domain string) string {
 	return sb.String()
 }
 
+// txtWorker is said the same way on several screens, so it has one id.
+var txtWorker = vibe.E("ui.input.shareRowText.04", "worker")
+
 // shareRowText is one domain's line: "Knowledge: 40% (set), 8 workers in 10
 // slots".
 func shareRowText(r game.ShareRow) string {
@@ -554,7 +557,7 @@ func shareRowText(r game.ShareRow) string {
 	if r.Set {
 		share = game.SharePercent(math.Round(r.Percent*10)/10) + vibe.Line("ui.input.shareRowText.02", " (set)")
 	}
-	return vibe.Sprintf("ui.input.shareRowText.03", "%s: %s, %s in %s", r.Name, share, textfmt.Count(r.Workers, vibe.Line("ui.input.shareRowText.04", "worker"), vibe.Line("ui.input.shareRowText.05", "workers")), textfmt.Count(r.Slots, vibe.Line("ui.input.shareRowText.06", "slot"), vibe.Line("ui.input.shareRowText.07", "slots")))
+	return vibe.Sprintf("ui.input.shareRowText.03", "%s: %s, %s in %s", r.Name, share, textfmt.Count(r.Workers, txtWorker.String(), vibe.Line("ui.input.shareRowText.05", "workers")), textfmt.Count(r.Slots, vibe.Line("ui.input.shareRowText.06", "slot"), vibe.Line("ui.input.shareRowText.07", "slots")))
 }
 
 // onOff is "on" or "off".
@@ -571,28 +574,28 @@ func cmdAutoRecruit(args []string, engine *game.GameEngine) CommandResult {
 	switch {
 	case len(args) == 0:
 		if engine.AutoRecruit() {
-			return CommandResult{Message: vibe.Line("ui.input.cmdAutoRecruit.01", "Auto-recruit is on: the game recruits into empty worker slots while housing and food allow. Turn it off with 'workers auto-recruit off'."), Type: "info"}
+			return infoReply(vibe.Line("ui.input.cmdAutoRecruit.01", "Auto-recruit is on: the game recruits into empty worker slots while housing and food allow. Turn it off with 'workers auto-recruit off'."))
 		}
-		return CommandResult{Message: vibe.Line("ui.input.cmdAutoRecruit.02", "Auto-recruit is off: recruit by hand with 'recruit'. Turn it on with 'workers auto-recruit on'."), Type: "info"}
+		return infoReply(vibe.Line("ui.input.cmdAutoRecruit.02", "Auto-recruit is off: recruit by hand with 'recruit'. Turn it on with 'workers auto-recruit on'."))
 	case len(args) > 1:
-		return CommandResult{Message: usageFor("workers auto-recruit"), Type: "error"}
+		return errorReply(usageFor("workers auto-recruit"))
 	}
 	switch strings.ToLower(args[0]) {
 	case "on":
 		engine.SetAutoRecruit(true)
-		return CommandResult{Message: vibe.Line("ui.input.cmdAutoRecruit.03", "Auto-recruit on: the game recruits into empty worker slots while housing and food allow."), Type: game.LogRoutine}
+		return routineReply(vibe.Line("ui.input.cmdAutoRecruit.03", "Auto-recruit on: the game recruits into empty worker slots while housing and food allow."))
 	case "off":
 		engine.SetAutoRecruit(false)
-		return CommandResult{Message: vibe.Line("ui.input.cmdAutoRecruit.04", "Auto-recruit off: recruit by hand with 'recruit'. Idle workers still go to work by your roster."), Type: game.LogRoutine}
+		return routineReply(vibe.Line("ui.input.cmdAutoRecruit.04", "Auto-recruit off: recruit by hand with 'recruit'. Idle workers still go to work by your roster."))
 	}
-	return CommandResult{Message: usageFor("workers auto-recruit"), Type: "error"}
+	return errorReply(usageFor("workers auto-recruit"))
 }
 
 func cmdAdvance(_ []string, engine *game.GameEngine) CommandResult {
 	if err := engine.AdvanceAge(); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"} // the engine logs the new age
+	return successReply() // the engine logs the new age
 }
 
 func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
@@ -600,7 +603,7 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 		// List available upgrades
 		upgrades := engine.GetAvailableUpgrades()
 		if len(upgrades) == 0 {
-			return CommandResult{Message: vibe.Line("ui.input.cmdUpgrade.01", "No building upgrades available right now."), Type: "info"}
+			return infoReply(vibe.Line("ui.input.cmdUpgrade.01", "No building upgrades available right now."))
 		}
 		var lines []string
 		lines = append(lines, vibe.Sprintf("ui.input.cmdUpgrade.02", "[gold]Older buildings you can upgrade[-] (each copy costs %d%% of a new copy of the building it becomes)", int(config.UpgradeShare*100)))
@@ -618,7 +621,7 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 			lines = append(lines, row)
 		}
 		lines = append(lines, vibe.Line("ui.input.cmdUpgrade.04", "\n  Type [cyan]")+lit(usageForm("upgrade"))+"[-]")
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+		return infoReply(strings.Join(lines, "\n"))
 	}
 
 	building, count, all, bad := buildingCountOrAll("upgrade", args, 0)
@@ -630,7 +633,7 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 	if err := engine.UpgradeBuilding(building, count, all); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Message: "", Type: "success"}
+	return successReply()
 }
 
 func cmdDump(args []string, engine *game.GameEngine) CommandResult {
@@ -642,7 +645,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	// launched from.)
 	dir := filepath.Join(game.DataDir(), "logs")
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return CommandResult{Message: vibe.Line("ui.input.cmdDump.01", "Could not create the logs folder: ") + shortIOError(err) + ".", Type: "error"}
+		return errorReply(vibe.Line("ui.input.cmdDump.01", "Could not create the logs folder: ") + shortIOError(err) + ".")
 	}
 
 	// Generate timestamped filename
@@ -697,13 +700,10 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	}
 
 	if err := os.WriteFile(filename, []byte(sb.String()), 0644); err != nil {
-		return CommandResult{Message: vibe.Line("ui.input.cmdDump.17", "Could not write the dump: ") + shortIOError(err) + ".", Type: "error"}
+		return errorReply(vibe.Line("ui.input.cmdDump.17", "Could not write the dump: ") + shortIOError(err) + ".")
 	}
 
-	return CommandResult{
-		Message: vibe.Sprintf("ui.input.cmdDump.18", "Logs exported to %s (%d entries)", filename, len(logs)),
-		Type:    "info",
-	}
+	return infoReply(vibe.Sprintf("ui.input.cmdDump.18", "Logs exported to %s (%d entries)", filename, len(logs)))
 }
 
 // gatherDefaultYield is what one bare `gather` brings in; gatherMaxYield is
@@ -713,19 +713,25 @@ const (
 	gatherMaxYield     = 25.0
 )
 
+// txtPerUse is said the same way on several screens, so it has one id.
+var txtPerUse = vibe.E("ui.input.cmdGather.02", " per use)")
+
+// txtMaxPrefix is said the same way on several screens, so it has one id.
+var txtMaxPrefix = vibe.E("ui.input.cmdGather.01", " (max ")
+
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: usageFor("gather") + vibe.Line("ui.input.cmdGather.01", " (max ") + textfmt.Number(gatherMaxYield) + vibe.Line("ui.input.cmdGather.02", " per use)"), Type: "error"}
+		return errorReply(usageFor("gather") + txtMaxPrefix.String() + textfmt.Number(gatherMaxYield) + txtPerUse.String())
 	}
 	resource := strings.ToLower(args[0])
 	if resource != "food" && resource != "wood" && resource != "stone" {
-		return CommandResult{Message: vibe.Line("ui.input.cmdGather.03", "You can only gather food, wood or stone by hand."), Type: "error"}
+		return errorReply(vibe.Line("ui.input.cmdGather.03", "You can only gather food, wood or stone by hand."))
 	}
 	amount := gatherDefaultYield
 	if len(args) >= 2 {
 		n, err := parseAmount(args[1])
 		if err != nil {
-			return usageError(usageFor("gather")+vibe.Line("ui.input.cmdGather.04", " (max ")+textfmt.Number(gatherMaxYield)+vibe.Line("ui.input.cmdGather.05", " per use)"), err)
+			return usageError(usageFor("gather")+txtMaxPrefix.String()+textfmt.Number(gatherMaxYield)+txtPerUse.String(), err)
 		}
 		amount = n
 	}
@@ -735,7 +741,7 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if _, err := engine.GatherResource(resource, amount); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"} // the engine logs what was gathered
+	return successReply() // the engine logs what was gathered
 }
 
 func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
@@ -758,7 +764,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 			lines = append(lines, vibe.Sprintf("ui.input.cmdBuild.02", "  %s [cyan]%s[-] (%d built) - Cost: %s %s",
 				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
 		}
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+		return infoReply(strings.Join(lines, "\n"))
 	}
 	key := strings.ToLower(args[0])
 
@@ -778,13 +784,13 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 		if _, err := engine.BuildMultiple(key, count); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"} // the engine logs each build
+		return successReply() // the engine logs each build
 	}
 
 	if err := engine.BuildBuilding(key); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"} // the engine logs the build
+	return successReply() // the engine logs the build
 }
 
 func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
@@ -792,7 +798,7 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.RecruitWorker("worker", 1); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"} // the engine logs the recruits
+		return successReply() // the engine logs the recruits
 	}
 
 	arg := strings.ToLower(args[0])
@@ -800,7 +806,7 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 		if _, err := engine.RecruitMax("worker"); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"}
+		return successReply()
 	}
 
 	n, err := parseCount(arg)
@@ -810,7 +816,7 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 	if err := engine.RecruitWorker("worker", n); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"}
+	return successReply()
 }
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
@@ -827,7 +833,7 @@ func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 	if err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"} // the engine logs the assignment
+	return successReply() // the engine logs the assignment
 }
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
@@ -844,7 +850,7 @@ func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 	if err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"} // the engine logs the change
+	return successReply() // the engine logs the change
 }
 
 func cmdStatus(_ []string, engine *game.GameEngine) CommandResult {
@@ -882,7 +888,7 @@ func cmdStatus(_ []string, engine *game.GameEngine) CommandResult {
 		}
 	}
 
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 // shortAccountID returns a human-friendly short form of a 32-char hex account ID:
@@ -914,10 +920,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 
 	if len(args) == 0 {
 		if acct == nil {
-			return CommandResult{
-				Message: vibe.Line("ui.input.cmdAccount.01", "Accounts are unavailable (no account is loaded)."),
-				Type:    "warning",
-			}
+			return warningReply(vibe.Line("ui.input.cmdAccount.01", "Accounts are unavailable (no account is loaded)."))
 		}
 		var lines []string
 		lines = append(lines, vibe.Sprintf("ui.input.cmdAccount.02", "[gold]Account:[-] %s  (%s)", acct.Name(), shortAccountID(acct.AccountID)))
@@ -939,7 +942,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// Last, because the log keeps the end of a long reply in view: the code itself
 		// is its own short reply (account show code), never lost above the fold.
 		lines = append(lines, vibe.Line("ui.input.cmdAccount.09", "Show your recovery code with:  account show code"))
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+		return infoReply(strings.Join(lines, "\n"))
 	}
 
 	sub := strings.ToLower(args[0])
@@ -948,7 +951,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// List every local account slot: name, short id, an active marker, and highest age.
 		summaries := engine.ListAccounts()
 		if len(summaries) == 0 {
-			return CommandResult{Message: vibe.Line("ui.input.cmdAccount.10", "No local accounts found."), Type: "info"}
+			return infoReply(vibe.Line("ui.input.cmdAccount.10", "No local accounts found."))
 		}
 		var lines []string
 		lines = append(lines, vibe.Line("ui.input.cmdAccount.11", "[gold]Local accounts:[-]"))
@@ -974,18 +977,15 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		lines = append(lines, "")
 		lines = append(lines, vibe.Line("ui.input.cmdAccount.16", "Switch with:  account switch <name>   (or use the Accounts panel on the main menu)"))
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+		return infoReply(strings.Join(lines, "\n"))
 
 	case "show":
 		// The recovery code on its own, so it is not lost at the top of a long reply.
 		if len(args) != 2 || !strings.EqualFold(args[1], "code") {
-			return CommandResult{Message: usageFor("account show code"), Type: "error"}
+			return errorReply(usageFor("account show code"))
 		}
 		if acct == nil {
-			return CommandResult{
-				Message: vibe.Line("ui.input.cmdAccount.17", "Accounts are unavailable (no account is loaded)."),
-				Type:    "warning",
-			}
+			return warningReply(vibe.Line("ui.input.cmdAccount.17", "Accounts are unavailable (no account is loaded)."))
 		}
 		engine.NoteRecoveryShown(acct.AccountID)
 		// In a window of its own, not the log: the log is kept (the Logs panel, the
@@ -994,7 +994,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 
 	case "switch":
 		if len(args) < 2 {
-			return CommandResult{Message: usageFor("account switch"), Type: "error"}
+			return errorReply(usageFor("account switch"))
 		}
 		// Resolve name→id via the shared derivation, then switch only if that slot exists.
 		// A non-existent slot errors with guidance rather than minting an empty account
@@ -1002,13 +1002,10 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		name := strings.TrimSpace(strings.Join(args[1:], " "))
 		id := game.AccountIDForName(name)
 		if !accountListed(engine, id) {
-			return CommandResult{
-				Message: vibe.Sprintf("ui.input.cmdAccount.18", "No account named %q. Create it from the Accounts panel on the main menu, or type 'account list' to see yours.", lit(name)),
-				Type:    "error",
-			}
+			return errorReply(vibe.Sprintf("ui.input.cmdAccount.18", "No account named %q. Create it from the Accounts panel on the main menu, or type 'account list' to see yours.", lit(name)))
 		}
 		if acct != nil && acct.AccountID == id {
-			return CommandResult{Message: vibe.Sprintf("ui.input.cmdAccount.19", "You are already playing as %s.", lit(acct.Name())), Type: "info"}
+			return infoReply(vibe.Sprintf("ui.input.cmdAccount.19", "You are already playing as %s.", lit(acct.Name())))
 		}
 		// The game in progress belongs to the account in use: SwitchAccount saves it to
 		// that account and stops it before switching (endedRun), and the dashboard then
@@ -1031,14 +1028,11 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 
 	case "export":
 		if acct == nil {
-			return CommandResult{
-				Message: vibe.Line("ui.input.cmdAccount.21", "Accounts are unavailable (no account is loaded)."),
-				Type:    "warning",
-			}
+			return warningReply(vibe.Line("ui.input.cmdAccount.21", "Accounts are unavailable (no account is loaded)."))
 		}
 		blob, err := acct.ExportProgress()
 		if err != nil {
-			return CommandResult{Message: vibe.Line("ui.input.cmdAccount.22", "Export failed: ") + shortIOError(err), Type: "error"}
+			return errorReply(vibe.Line("ui.input.cmdAccount.22", "Export failed: ") + shortIOError(err))
 		}
 		// Resolve the destination: explicit path arg, or a default that names the account so
 		// multiple accounts' exports don't collide in a shared directory. The blob carries the
@@ -1051,11 +1045,11 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		if dir := filepath.Dir(path); dir != "" {
 			if err := os.MkdirAll(dir, 0755); err != nil {
-				return CommandResult{Message: vibe.Line("ui.input.cmdAccount.23", "Export failed: ") + shortIOError(err), Type: "error"}
+				return errorReply(vibe.Line("ui.input.cmdAccount.23", "Export failed: ") + shortIOError(err))
 			}
 		}
 		if err := os.WriteFile(path, blob, 0644); err != nil {
-			return CommandResult{Message: vibe.Line("ui.input.cmdAccount.24", "Export failed: ") + shortIOError(err), Type: "error"}
+			return errorReply(vibe.Line("ui.input.cmdAccount.24", "Export failed: ") + shortIOError(err))
 		}
 		var lines []string
 		lines = append(lines, vibe.Sprintf("ui.input.cmdAccount.25", "Progress exported to %s. Restore it with: account import %s", path, path))
@@ -1068,40 +1062,37 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		engine.NoteAccountExported(acct.AccountID)
 		// Info, not success: the path must reach the log, and the engine logs nothing here.
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+		return infoReply(strings.Join(lines, "\n"))
 
 	case "backup":
 		// A full snapshot of the active account's slot (account.json + saves/) into
 		// <root>/backups/. Distinct from export, which serializes only meta-progression.
 		if acct == nil {
-			return CommandResult{Message: vibe.Line("ui.input.cmdAccount.29", "No account to back up."), Type: "warning"}
+			return warningReply(vibe.Line("ui.input.cmdAccount.29", "No account to back up."))
 		}
 		backupPath, err := engine.BackupAccount(acct.AccountID)
 		if err != nil {
-			return CommandResult{Message: vibe.Line("ui.input.cmdAccount.30", "Backup failed: ") + shortIOError(err), Type: "error"}
+			return errorReply(vibe.Line("ui.input.cmdAccount.30", "Backup failed: ") + shortIOError(err))
 		}
 		var lines []string
 		lines = append(lines, vibe.Sprintf("ui.input.cmdAccount.31", "Full backup saved to %s.", backupPath))
 		lines = append(lines, vibe.Line("ui.input.cmdAccount.32", "It holds this account's files (account.json, badges.json) and every save in its slot. To restore,"))
 		lines = append(lines, vibe.Line("ui.input.cmdAccount.33", "copy the folder's contents back into data/accounts/<id>/. The 10 most recent backups per account are kept."))
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+		return infoReply(strings.Join(lines, "\n"))
 
 	case "import":
 		if acct == nil {
-			return CommandResult{
-				Message: vibe.Line("ui.input.cmdAccount.34", "Accounts are unavailable (no account is loaded)."),
-				Type:    "warning",
-			}
+			return warningReply(vibe.Line("ui.input.cmdAccount.34", "Accounts are unavailable (no account is loaded)."))
 		}
 		if len(args) < 2 {
-			return CommandResult{Message: usageFor("account import"), Type: "error"}
+			return errorReply(usageFor("account import"))
 		}
 		path := args[1]
 		// merge by default; the `replace` token switches to wholesale replacement.
 		merge := !(len(args) >= 3 && strings.EqualFold(args[2], "replace"))
 		blob, err := os.ReadFile(path)
 		if err != nil {
-			return CommandResult{Message: vibe.Sprintf("ui.input.cmdAccount.35", "Import failed: cannot read %s (%s).", path, shortIOError(err)), Type: "error"}
+			return errorReply(vibe.Sprintf("ui.input.cmdAccount.35", "Import failed: cannot read %s (%s).", path, shortIOError(err)))
 		}
 		// An export is a single-account backup: it lands in its own account's slot (keyed by
 		// the blob's account id). A backup of the account in use is folded into it. Import
@@ -1109,7 +1100,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// belongs to; switching is its own step.
 		imported, err := engine.ImportAccountExport(blob, merge)
 		if err != nil {
-			return CommandResult{Message: vibe.Line("ui.input.cmdAccount.36", "Import failed: ") + textfmt.Sentence(err.Error()), Type: "error"}
+			return errorReply(vibe.Line("ui.input.cmdAccount.36", "Import failed: ") + textfmt.Sentence(err.Error()))
 		}
 		mode := "merged"
 		if !merge {
@@ -1123,21 +1114,15 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if imported.AccountID == acct.AccountID {
 			// The backup may carry a theme choice (replace, or a first theme): re-apply it.
 			applyAccountTheme(engine)
-			return CommandResult{
-				Message: vibe.Sprintf("ui.input.cmdAccount.42", "Imported the backup into %q (%s), the account you are using: %s, progress %s.",
-					lit(name), shortAccountID(imported.AccountID), themes, mode),
-				Type: "info",
-			}
+			return infoReply(vibe.Sprintf("ui.input.cmdAccount.42", "Imported the backup into %q (%s), the account you are using: %s, progress %s.",
+				lit(name), shortAccountID(imported.AccountID), themes, mode))
 		}
-		return CommandResult{
-			Message: vibe.Sprintf("ui.input.cmdAccount.43", "Imported account %q (%s): %s, progress %s. %s",
-				lit(name), shortAccountID(imported.AccountID), themes, mode, switchHint(imported)),
-			Type: "info",
-		}
+		return infoReply(vibe.Sprintf("ui.input.cmdAccount.43", "Imported account %q (%s): %s, progress %s. %s",
+			lit(name), shortAccountID(imported.AccountID), themes, mode, switchHint(imported)))
 
 	case "recover":
 		if len(args) < 2 {
-			return CommandResult{Message: usageFor("account recover"), Type: "error"}
+			return errorReply(usageFor("account recover"))
 		}
 		code := args[1]
 		confirmed := len(args) >= 3 && strings.EqualFold(args[2], "confirm")
@@ -1149,10 +1134,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			return errorResult(err)
 		}
 		if acct != nil && acct.AccountID == id {
-			return CommandResult{
-				Message: vibe.Sprintf("ui.input.cmdAccount.44", "That is the recovery code of the account you are using (%s), so there is nothing to restore.", accountLabel(acct)),
-				Type:    "info",
-			}
+			return infoReply(vibe.Sprintf("ui.input.cmdAccount.44", "That is the recovery code of the account you are using (%s), so there is nothing to restore.", accountLabel(acct)))
 		}
 		// Confirm guard: recovering switches this machine to another account. The account
 		// in use keeps everything in its own slot, but ask first whenever it holds any
@@ -1166,7 +1148,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 				lines = append(lines, vibe.Line("ui.input.cmdAccount.47", "A game in progress is saved to its own account first, and you go back to the main menu."))
 				lines = append(lines, "")
 				lines = append(lines, vibe.Sprintf("ui.input.cmdAccount.48", "To go ahead:  account recover %s confirm", lit(code)))
-				return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
+				return warningReply(strings.Join(lines, "\n"))
 			}
 		}
 
@@ -1194,25 +1176,19 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 
 	case "badges":
 		if acct == nil {
-			return CommandResult{
-				Message: vibe.Line("ui.input.cmdAccount.52", "Accounts are unavailable (no account is loaded)."),
-				Type:    "warning",
-			}
+			return warningReply(vibe.Line("ui.input.cmdAccount.52", "Accounts are unavailable (no account is loaded)."))
 		}
 		// Info, not success: the list must reach the log, and the engine logs nothing here.
 		views, summary := engine.Badges()
-		return CommandResult{Message: strings.Join(badgeListLines(views, summary), "\n"), Type: "info"}
+		return infoReply(strings.Join(badgeListLines(views, summary), "\n"))
 
 	case "wipe":
 		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we
 		// deliberately do not wipe from a bare command. Direct the player there.
-		return CommandResult{
-			Message: vibe.Line("ui.input.cmdAccount.53", "Wiping an account is permanent, so it lives in the Accounts panel on the main menu (press Esc, choose Accounts, then press w on the account). It deletes that account's ID, theme unlocks, lifetime stats, badges and every save in its slot. A backup goes to data/backups/ first; restoring it is manual."),
-			Type:    "warning",
-		}
+		return warningReply(vibe.Line("ui.input.cmdAccount.53", "Wiping an account is permanent, so it lives in the Accounts panel on the main menu (press Esc, choose Accounts, then press w on the account). It deletes that account's ID, theme unlocks, lifetime stats, badges and every save in its slot. A backup goes to data/backups/ first; restoring it is manual."))
 
 	default:
-		return CommandResult{Message: subUsage("account"), Type: "error"}
+		return errorReply(subUsage("account"))
 	}
 }
 
@@ -1272,7 +1248,7 @@ func accountHoldings(acct *game.Account) string {
 		parts = append(parts, textfmt.Count(n, vibe.Line("ui.input.accountHoldings.01", "theme unlock"), vibe.Line("ui.input.accountHoldings.02", "theme unlocks")))
 	}
 	if n := len(badges); n > 0 {
-		parts = append(parts, textfmt.Count(n, vibe.Line("ui.input.accountHoldings.03", "badge"), vibe.Line("ui.input.accountHoldings.04", "badges")))
+		parts = append(parts, textfmt.Count(n, txtBadge.String(), vibe.Line("ui.input.accountHoldings.04", "badges")))
 	}
 	if n := stats.TotalPrestiges; n > 0 {
 		parts = append(parts, textfmt.Count(n, vibe.Line("ui.input.accountHoldings.05", "prestige"), vibe.Line("ui.input.accountHoldings.06", "prestiges")))
@@ -1352,13 +1328,13 @@ func cmdSave(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.BranchSave(name); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: vibe.Sprintf("ui.input.cmdSave.01", "Branched a new save '%s'. Autosave now follows it.", name), Type: "info"}
+		return infoReply(vibe.Sprintf("ui.input.cmdSave.01", "Branched a new save '%s'. Autosave now follows it.", name))
 	}
 	active := engine.ActiveSaveName()
 	if err := engine.SaveGame(active); err != nil {
-		return CommandResult{Message: vibe.Line("ui.input.cmdSave.02", "Could not save: ") + shortIOError(err) + ".", Type: "error"}
+		return errorReply(vibe.Line("ui.input.cmdSave.02", "Could not save: ") + shortIOError(err) + ".")
 	}
-	return CommandResult{Message: vibe.Sprintf("ui.input.cmdSave.03", "Saved to '%s'.", active), Type: "info"}
+	return infoReply(vibe.Sprintf("ui.input.cmdSave.03", "Saved to '%s'.", active))
 }
 
 func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
@@ -1366,7 +1342,7 @@ func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
 	// The dashboard intercepts a bare `load` to open the Load Game tree; this
 	// fallback keeps other callers (and tests) from loading a slot by surprise.
 	if len(args) == 0 {
-		return CommandResult{Message: vibe.Line("ui.input.cmdLoad.01", "Type 'load <name>' to load a save, or open Load Game from the menu (press Esc) to browse your save tree."), Type: "info"}
+		return infoReply(vibe.Line("ui.input.cmdLoad.01", "Type 'load <name>' to load a save, or open Load Game from the menu (press Esc) to browse your save tree."))
 	}
 	name, refused := oneWordName("load", args)
 	if refused != nil {
@@ -1374,11 +1350,11 @@ func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
 	}
 	if err := engine.LoadGame(name); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return CommandResult{Message: vibe.Sprintf("ui.input.cmdLoad.02", "No save named '%s'. Type saves to list them.", name), Type: "error"}
+			return errorReply(vibe.Sprintf("ui.input.cmdLoad.02", "No save named '%s'. Type saves to list them.", name))
 		}
-		return CommandResult{Message: vibe.Sprintf("ui.input.cmdLoad.03", "Could not load '%s': %s.", name, strings.TrimRight(shortIOError(err), ".")), Type: "error"}
+		return errorReply(vibe.Sprintf("ui.input.cmdLoad.03", "Could not load '%s': %s.", name, strings.TrimRight(shortIOError(err), ".")))
 	}
-	return CommandResult{Message: vibe.Sprintf("ui.input.cmdLoad.04", "Game loaded from '%s'.", name), Type: "info"}
+	return infoReply(vibe.Sprintf("ui.input.cmdLoad.04", "Game loaded from '%s'.", name))
 }
 
 func cmdRates(_ []string, engine *game.GameEngine) CommandResult {
@@ -1458,16 +1434,16 @@ func cmdRates(_ []string, engine *game.GameEngine) CommandResult {
 	if shown == 0 {
 		lines = append(lines, vibe.Line("ui.input.cmdRates.13", "  [gray]No active resource rates[-]"))
 	}
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 func cmdSaveList(_ []string, _ *game.GameEngine) CommandResult {
 	saves, err := game.ListSaveDetails()
 	if err != nil {
-		return CommandResult{Message: vibe.Line("ui.input.cmdSaveList.01", "Could not list saves: ") + shortIOError(err) + ".", Type: "error"}
+		return errorReply(vibe.Line("ui.input.cmdSaveList.01", "Could not list saves: ") + shortIOError(err) + ".")
 	}
 	if len(saves) == 0 {
-		return CommandResult{Message: vibe.Line("ui.input.cmdSaveList.02", "No save files found."), Type: "info"}
+		return infoReply(vibe.Line("ui.input.cmdSaveList.02", "No save files found."))
 	}
 	var lines []string
 	lines = append(lines, vibe.Line("ui.input.cmdSaveList.03", "[gold]Save Files:[-]"))
@@ -1479,7 +1455,7 @@ func cmdSaveList(_ []string, _ *game.GameEngine) CommandResult {
 		lines = append(lines, fmt.Sprintf("  [cyan]%-15s[-] %s  [gray](%s)[-]",
 			s.Name, s.Timestamp.Format("2006-01-02 15:04:05"), age))
 	}
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 // cmdTheme handles the `theme` command's text paths:
@@ -1499,10 +1475,7 @@ func cmdSaveList(_ []string, _ *game.GameEngine) CommandResult {
 // engine/Account() are nil-guarded — the game must run accountless.
 func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{
-			Message: vibe.Line("ui.input.cmdTheme.01", "Usage: theme list | theme <key>. Type 'theme' at the prompt for the live picker."),
-			Type:    "info",
-		}
+		return infoReply(vibe.Line("ui.input.cmdTheme.01", "Usage: theme list | theme <key>. Type 'theme' at the prompt for the live picker."))
 	}
 	if strings.ToLower(args[0]) == "list" {
 		var st *game.GameState
@@ -1516,15 +1489,12 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 	key := strings.ToLower(args[0])
 	t, ok := theme.ByKey(key)
 	if !ok {
-		return CommandResult{
-			Message: vibe.Sprintf("ui.input.cmdTheme.02", "Unknown theme '%s'. Themes: %s.", key, strings.Join(themeKeys(), ", ")),
-			Type:    "error",
-		}
+		return errorReply(vibe.Sprintf("ui.input.cmdTheme.02", "Unknown theme '%s'. Themes: %s.", key, strings.Join(themeKeys(), ", ")))
 	}
 	// Unlock gate (the theming design §4/§5): refuse a known-but-locked theme. No theme is
 	// locked today (all shipped themes are Accessible/Forge); this is the Phase-3 seam.
 	if !themeAvailable(themeAccount(engine), t) {
-		return CommandResult{Message: themeUnavailableMsg.String(), Type: "error"}
+		return errorReply(themeUnavailableMsg.String())
 	}
 	if err := theme.SetActive(t.Key); err != nil {
 		return errorResult(err)
@@ -1537,7 +1507,7 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 		_ = acct.SetActiveTheme(t.Key)
 	}
 	// Info, not success: the engine logs nothing for a theme switch.
-	return CommandResult{Message: vibe.Sprintf("ui.input.cmdTheme.03", "Theme set to %s.", t.Name), Type: "info"}
+	return infoReply(vibe.Sprintf("ui.input.cmdTheme.03", "Theme set to %s.", t.Name))
 }
 
 // themeAccount returns engine's account, or nil when accountless. Mirrors the
@@ -1587,7 +1557,7 @@ func cmdThemeList(acct *game.Account, st *game.GameState) CommandResult {
 			marker, t.Name.String(), t.Key, strings.ToLower(t.Variant()), note))
 	}
 	lines = append(lines, vibe.Line("ui.input.cmdThemeList.04", "[gray]Switch with 'theme <key>'.[-]"))
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 // themeKeys returns every registered theme key in display order, for usage/error
@@ -1603,7 +1573,7 @@ func themeKeys() []string {
 
 func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{OverlayName: "techs"}
+		return panelReply("techs")
 	}
 	subcmd := strings.ToLower(args[0])
 
@@ -1615,14 +1585,14 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 		case "", "close", "far":
 			return CommandResult{OverlayName: "techs", ResearchZoom: zoom}
 		}
-		return CommandResult{Message: usageFor("research tree"), Type: "error"}
+		return errorReply(usageFor("research tree"))
 	}
 	if subcmd == "card" {
 		// The card names a tech, so it opens only on one the player may see.
 		state := engine.GetState()
 		key := strings.ToLower(strings.Join(args[1:], "_"))
 		if def, ok := state.Ruleset().Tech(key); !ok || !game.SightOf(&state).Age(def.Age) {
-			return CommandResult{Message: vibe.Line("ui.input.cmdResearch.01", "No tech '") + strings.Join(args[1:], " ") + vibe.Line("ui.input.cmdResearch.02", "' in sight. Type research to see the tree."), Type: "error"}
+			return errorReply(vibe.Line("ui.input.cmdResearch.01", "No tech '") + strings.Join(args[1:], " ") + vibe.Line("ui.input.cmdResearch.02", "' in sight. Type research to see the tree."))
 		}
 		return CommandResult{OverlayName: "techs", ResearchCard: key}
 	}
@@ -1630,7 +1600,7 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.CancelResearch(); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"} // the engine logs the cancellation
+		return successReply() // the engine logs the cancellation
 	}
 
 	// Support multi-word keys entered with spaces by joining all remaining args
@@ -1639,7 +1609,7 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	if err := engine.StartResearch(techKey); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"} // the engine logs the start
+	return successReply() // the engine logs the start
 }
 
 func cmdResearchList(engine *game.GameEngine) CommandResult {
@@ -1669,7 +1639,7 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 	}
 	lines = append(lines, "[gray]"+scholarsLine(state)+"[-]")
 
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 // cmdExpedition handles the `expedition`/`exp` command and its alias
@@ -1680,7 +1650,7 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 	engine.EnsureMissionBoard()
 	if len(args) < 1 {
-		return CommandResult{OverlayName: "expedition"}
+		return panelReply("expedition")
 	}
 	if len(args) == 1 && strings.ToLower(args[0]) == "list" {
 		return cmdMissionBoard(engine)
@@ -1698,20 +1668,20 @@ func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 		hits := matchOffers(titles, input)
 		switch {
 		case len(hits) == 0:
-			return CommandResult{Message: vibe.Sprintf("ui.input.cmdExpedition.01", "No offer called %q. Type expedition list to see the board.", input), Type: "error"}
+			return errorReply(vibe.Sprintf("ui.input.cmdExpedition.01", "No offer called %q. Type expedition list to see the board.", input))
 		case len(hits) > 1 && !sameTitles(titles, hits):
 			names := make([]string, len(hits))
 			for i, h := range hits {
 				names[i] = titles[h]
 			}
-			return CommandResult{Message: vibe.Line("ui.input.cmdExpedition.02", "Which one? ") + strings.Join(names, ", ") + vibe.Line("ui.input.cmdExpedition.03", ". Type more of the name."), Type: "warning"}
+			return warningReply(vibe.Line("ui.input.cmdExpedition.02", "Which one? ") + strings.Join(names, ", ") + vibe.Line("ui.input.cmdExpedition.03", ". Type more of the name."))
 		}
 		n = numbers[hits[0]]
 	}
 	if err := engine.LaunchExpedition(n); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Type: "success"} // the engine logs the launch
+	return successReply() // the engine logs the launch
 }
 
 // sameTitles reports whether the titles at hits are all one title.
@@ -1756,7 +1726,7 @@ func cmdMissionBoard(engine *game.GameEngine) CommandResult {
 			lines = append(lines, vibe.Sprintf("ui.input.cmdMissionBoard.04", "[yellow]Under way: %s (%s left)[-]", active.Name, formatTicks(active.TicksLeft, state)))
 		}
 	}
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 // tierHeading is the heading a tier's offers are printed under.
@@ -1785,20 +1755,23 @@ func offerLine(exp game.ExpeditionInfo, state game.GameState) string {
 		mark, title, exp.LengthMinutes, exp.SuccessChance*100, expeditionHaul(exp, state), expeditionOfferCost(exp, state))
 	if exp.Tier == game.TierGrand {
 		if exp.Grand == game.GrandMilitary {
-			line += vibe.Sprintf("ui.input.offerLine.02", " · military · %d %s", exp.SoldiersNeeded, pluralize(vibe.Line("ui.input.offerLine.03", "soldier"), exp.SoldiersNeeded))
+			line += vibe.Sprintf("ui.input.offerLine.02", " · military · %d %s", exp.SoldiersNeeded, pluralize(txtSoldier.String(), exp.SoldiersNeeded))
 		} else {
 			line += vibe.Line("ui.input.offerLine.04", " · civil · ") + expeditionOfferCost(exp, state)
 		}
 	}
 	// Every mission takes a party.
 	if exp.SoldiersNeeded > 0 && !(exp.Tier == game.TierGrand && exp.Grand == game.GrandMilitary) {
-		line += vibe.Sprintf("ui.input.offerLine.05", " · party %d %s", exp.SoldiersNeeded, pluralize(vibe.Line("ui.input.offerLine.06", "soldier"), exp.SoldiersNeeded))
+		line += vibe.Sprintf("ui.input.offerLine.05", " · party %d %s", exp.SoldiersNeeded, pluralize(txtSoldier.String(), exp.SoldiersNeeded))
 	}
 	if !exp.CanLaunch && exp.LaunchBlockReason != "" {
 		line += fmt.Sprintf(" [red](%s)[-]", strings.TrimRight(exp.LaunchBlockReason, "."))
 	}
 	return line
 }
+
+// txtFestivalEffect is said the same way on several screens, so it has one id.
+var txtFestivalEffect = vibe.E("ui.input.cmdFestival.04", "  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].")
 
 // cmdFestival handles the `festival` culture-sink command. Bare `festival`
 // shows status (cost, cooldown, what it does). `festival confirm yes` spends a
@@ -1816,24 +1789,21 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 			if err := engine.DoFestival(); err != nil {
 				return errorResult(err)
 			}
-			return CommandResult{Type: "success"} // the engine logs the festival
+			return successReply() // the engine logs the festival
 		}
 		// Show the confirm prompt with the live cost.
 		st := engine.FestivalStatus()
 		state := engine.GetState()
 		if note := strings.TrimSpace(lockNotes(state, config.FeatureFestivals)); note != "" {
-			return CommandResult{Message: note, Type: "warning"}
+			return warningReply(note)
 		}
 		if !st.Ready {
-			return CommandResult{
-				Message: vibe.Sprintf("ui.input.cmdFestival.01", "[yellow]Festival on cooldown.[-] The next one can be held in %s.", formatTicks(st.CooldownLeft, state)),
-				Type:    "warning",
-			}
+			return warningReply(vibe.Sprintf("ui.input.cmdFestival.01", "[yellow]Festival on cooldown.[-] The next one can be held in %s.", formatTicks(st.CooldownLeft, state)))
 		}
 		var lines []string
 		lines = append(lines, vibe.Line("ui.input.cmdFestival.02", "[gold]Hold a Cultural Festival?[-]"))
 		lines = append(lines, vibe.Sprintf("ui.input.cmdFestival.03", "  Cost: [cyan]%s[-] (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
-		lines = append(lines, vibe.Sprintf("ui.input.cmdFestival.04", "  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
+		lines = append(lines, fmt.Sprintf(txtFestivalEffect.String(), st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 		lines = append(lines, festivalCapLines(st)...)
 		lines = append(lines, vibe.Sprintf("ui.input.cmdFestival.05", "  Cooldown afterward: [cyan]%s[-].", formatTicks(st.CooldownTicks, state)))
 		if st.Culture < st.Cost {
@@ -1842,9 +1812,9 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 		}
 		lines = append(lines, "")
 		lines = append(lines, vibe.Line("ui.input.cmdFestival.07", "  Type [cyan]festival confirm yes[-] to celebrate."))
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
+		return warningReply(strings.Join(lines, "\n"))
 	default:
-		return CommandResult{Message: subUsage("festival"), Type: "error"}
+		return errorReply(subUsage("festival"))
 	}
 }
 
@@ -1866,7 +1836,7 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, vibe.Line("ui.input.cmdFestivalStatus.01", "[gold]Cultural Festival[-]"))
 	lines = append(lines, vibe.Line("ui.input.cmdFestivalStatus.02", "  Spend a lump of culture to raise all production for a while."))
 	lines = append(lines, vibe.Sprintf("ui.input.cmdFestivalStatus.03", "  Cost: [cyan]%s[-]  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
-	lines = append(lines, vibe.Sprintf("ui.input.cmdFestivalStatus.04", "  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
+	lines = append(lines, fmt.Sprintf(txtFestivalEffect.String(), st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 	lines = append(lines, festivalCapLines(st)...)
 	if note := strings.TrimSpace(lockNotes(state, config.FeatureFestivals)); note != "" {
 		// The command waits for a tech: say which before anything else.
@@ -1880,7 +1850,7 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	} else {
 		lines = append(lines, vibe.Sprintf("ui.input.cmdFestivalStatus.08", "  Status: [yellow]on cooldown[-], %s left.", formatTicks(st.CooldownLeft, state)))
 	}
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 // cmdBlackMarket handles the `blackmarket` / `trade black` command. Bare form
@@ -1897,7 +1867,7 @@ func cmdBlackMarket(args []string, engine *game.GameEngine) CommandResult {
 		return errorResult(err)
 	}
 	// The engine logs the run, paid off or failed; no second line here.
-	return CommandResult{Type: "success"}
+	return successReply()
 }
 
 // cmdBlackMarketStatus renders the bare `blackmarket` status panel.
@@ -1907,7 +1877,7 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.01", "[gold]Black Market[-]"))
 	if !st.Available {
 		lines = append(lines, "  "+theme.Paint(theme.RoleDim, vibe.Line("ui.input.cmdBlackMarketStatus.02", "Smuggling networks open in ")+ageRef(engine.GetState(), "colonial_age")+"."))
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+		return infoReply(strings.Join(lines, "\n"))
 	}
 	lines = append(lines, vibe.Line("ui.input.cmdBlackMarketStatus.09", "  Spend culture on a smuggling run: it pays back the minutes of income the culture cost you, as minutes of your income of the resource you pick."))
 	lines = append(lines, vibe.Sprintf("ui.input.cmdBlackMarketStatus.04", "  Cost: [cyan]%s[-] per run  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
@@ -1921,7 +1891,7 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 	} else {
 		lines = append(lines, vibe.Sprintf("ui.input.cmdBlackMarketStatus.08", "  Status: [yellow]lying low[-]. The next run is possible in %s.", formatTicks(st.CooldownLeft, engine.GetState())))
 	}
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
@@ -1944,7 +1914,7 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 					OpenCatastrophe: true,
 				}
 			}
-			return CommandResult{Type: "success"} // the engine logs the prestige
+			return successReply() // the engine logs the prestige
 		}
 		// Show warning
 		state := engine.GetState()
@@ -1962,9 +1932,9 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, lastPassageWarningLines(state)...)
 		lines = append(lines, "")
 		lines = append(lines, vibe.Line("ui.input.cmdPrestige.07", "  Type [cyan]prestige confirm yes[-] to proceed."))
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
+		return warningReply(strings.Join(lines, "\n"))
 	default:
-		return CommandResult{Message: subUsage("prestige"), Type: "error"}
+		return errorReply(subUsage("prestige"))
 	}
 }
 
@@ -1998,12 +1968,12 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, vibe.Line("ui.input.cmdPrestigeStatus.09", "  Type [cyan]prestige confirm[-] to reset with bonuses."))
 	}
 
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "trade"}
+		return panelReply("trade")
 	}
 	switch strings.ToLower(args[0]) {
 	case "route":
@@ -2015,7 +1985,7 @@ func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 	// The market no longer swaps resources: `trade list` and `trade <give>
 	// <get> <amount>` are gone, and answer as any unknown command does (the
 	// way the retired `speed` does).
-	return CommandResult{Message: unknownCommandText("trade " + strings.ToLower(args[0])), Type: "error"}
+	return errorReply(unknownCommandText("trade " + strings.ToLower(args[0])))
 }
 
 func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
@@ -2026,7 +1996,7 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 
 	const usage = "Usage: trade route start|stop <route>"
 	if len(args) < 2 {
-		return CommandResult{Message: usage, Type: "error"}
+		return errorReply(usage)
 	}
 	routeKey := strings.ToLower(strings.Join(args[1:], "_"))
 
@@ -2035,16 +2005,22 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.StartTradeRoute(routeKey); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"} // the engine logs the route
+		return successReply() // the engine logs the route
 	case "stop":
 		if err := engine.StopTradeRoute(routeKey); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"}
+		return successReply()
 	default:
-		return CommandResult{Message: usage, Type: "error"}
+		return errorReply(usage)
 	}
 }
+
+// txtCycles is said the same way on several screens, so it has one id.
+var txtCycles = vibe.E("ui.input.cmdTradeRouteList.05", "cycles")
+
+// txtCycle is said the same way on several screens, so it has one id.
+var txtCycle = vibe.E("ui.input.cmdTradeRouteList.04", "cycle")
 
 func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
@@ -2056,7 +2032,7 @@ func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 		lines = append(lines, vibe.Line("ui.input.cmdTradeRouteList.02", "\n[green]Active:[-]"))
 		for _, route := range trade.ActiveRoutes {
 			lines = append(lines, vibe.Sprintf("ui.input.cmdTradeRouteList.03", "  [cyan]%s[-] (%s): %s left, %s done",
-				route.Name, route.Key, formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, vibe.Line("ui.input.cmdTradeRouteList.04", "cycle"), vibe.Line("ui.input.cmdTradeRouteList.05", "cycles"))))
+				route.Name, route.Key, formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, txtCycle.String(), txtCycles.String())))
 		}
 	}
 
@@ -2076,7 +2052,7 @@ func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 		lines = append(lines, vibe.Line("ui.input.cmdTradeRouteList.07", "  [gray]No trade routes available yet.[-]"))
 	}
 
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 // civKey reads a civilization typed as one or more words, joined with "_"
@@ -2091,7 +2067,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		// "diplomacy": the sidebar highlight matches on the name it is handed,
 		// so returning the alias would open the panel without lighting up the
 		// entry the player just navigated to.
-		return CommandResult{OverlayName: "factions"}
+		return panelReply("factions")
 	}
 	subcmd := strings.ToLower(args[0])
 
@@ -2101,7 +2077,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 	switch subcmd {
 	case "ally", "rival", "embargo", "neutral", "gift", "tribute", "raid":
 		if len(args) < 2 {
-			return CommandResult{Message: usageFor("diplomacy " + subcmd), Type: "error"}
+			return errorReply(usageFor("diplomacy " + subcmd))
 		}
 		civ := civKey(args[1:])
 		switch subcmd {
@@ -2123,7 +2099,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"}
+		return successReply()
 
 	case "deals":
 		return cmdDiplomacyDeals(civKey(args[1:]), engine)
@@ -2131,7 +2107,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 	case "accept":
 		usage := usageFor("diplomacy accept")
 		if len(args) < 3 {
-			return CommandResult{Message: usage, Type: "error"}
+			return errorReply(usage)
 		}
 		n, err := parseCount(args[len(args)-1])
 		if err != nil {
@@ -2140,10 +2116,10 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if _, err := engine.AcceptFactionDeal(civKey(args[1:len(args)-1]), n); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Type: "success"} // the engine logs the deal and its terms
+		return successReply() // the engine logs the deal and its terms
 
 	default:
-		return CommandResult{Message: subUsage("diplomacy"), Type: "error"}
+		return errorReply(subUsage("diplomacy"))
 	}
 }
 
@@ -2151,7 +2127,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 // civilization and a made-up one read alike, and neither is named, so the
 // refusal gives nothing away (spoilers.go).
 func notMetReply(civ string) CommandResult {
-	return CommandResult{Message: vibe.Sprintf("ui.input.notMetReply.01", "You have not met a civilization called '%s'. Type 'diplomacy deals' to see the ones you have met.", civ), Type: "error"}
+	return errorReply(vibe.Sprintf("ui.input.notMetReply.01", "You have not met a civilization called '%s'. Type 'diplomacy deals' to see the ones you have met.", civ))
 }
 
 // cmdDiplomacyDeals lists the trade deals of one civilization, or of every
@@ -2179,10 +2155,10 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		if civ != "" {
 			return notMetReply(civ)
 		}
-		return CommandResult{Message: vibe.Line("ui.input.cmdDiplomacyDeals.01", "You have not met anyone to trade with yet. Scouting expeditions make first contact."), Type: "info"}
+		return infoReply(vibe.Line("ui.input.cmdDiplomacyDeals.01", "You have not met anyone to trade with yet. Scouting expeditions make first contact."))
 	}
 	lines = append(lines, theme.Paint(theme.RoleDim, vibe.Line("ui.input.cmdDiplomacyDeals.02", "Take one with: diplomacy accept <civ> <n> (or plan deal <civ> <n>)")))
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	return infoReply(strings.Join(lines, "\n"))
 }
 
 func cmdSell(args []string, engine *game.GameEngine) CommandResult {
@@ -2193,7 +2169,7 @@ func cmdSell(args []string, engine *game.GameEngine) CommandResult {
 	if err := engine.SellBuilding(building, count); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Message: "", Type: "success"}
+	return successReply()
 }
 
 func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
@@ -2204,22 +2180,19 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 	if err := engine.DismissWorkers(building, count, all); err != nil {
 		return errorResult(err)
 	}
-	return CommandResult{Message: "", Type: "success"}
+	return successReply()
 }
 
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) > 0 {
-		return CommandResult{
-			Message: vibe.Line("ui.input.cmdCatastrophe.01", "Usage: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the outlook)"),
-			Type:    "info",
-		}
+		return infoReply(vibe.Line("ui.input.cmdCatastrophe.01", "Usage: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the outlook)"))
 	}
 	// Bare `catastrophe`: reopen the pending choice, or report the outlook.
 	state := engine.GetState()
 	if pendingChoiceKey(state) != "" {
 		return CommandResult{Type: "success", OpenCatastrophe: true}
 	}
-	return CommandResult{Message: catastropheOutlookText(state), Type: "info"}
+	return infoReply(catastropheOutlookText(state))
 }
 
 // lastPassageStatusLines is the Last Passage risk line for `prestige`, empty
@@ -2283,7 +2256,7 @@ func lastPassageWarningLines(state game.GameState) []string {
 // with `harbinger appease|brace|invite`.
 func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "harbinger"}
+		return panelReply("harbinger")
 	}
 	var err error
 	switch strings.ToLower(args[0]) {
@@ -2294,16 +2267,13 @@ func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 	case "invite":
 		err = engine.HarbingerInvite()
 	default:
-		return CommandResult{
-			Message: vibe.Line("ui.input.cmdHarbinger.01", "Usage: harbinger (opens the Harbinger panel), or harbinger appease|brace|invite (answers it directly)"),
-			Type:    "info",
-		}
+		return infoReply(vibe.Line("ui.input.cmdHarbinger.01", "Usage: harbinger (opens the Harbinger panel), or harbinger appease|brace|invite (answers it directly)"))
 	}
 	if err != nil {
 		return errorResult(err)
 	}
 	// The engine logs the action itself.
-	return CommandResult{Type: "success"}
+	return successReply()
 }
 
 // faithStrengthText says the faith strength the odds are read from, with the
@@ -2464,17 +2434,20 @@ func riskFrom(state game.GameState, tier game.CatastropheTier, numeric bool, pro
 	return vibe.Sprintf("ui.input.riskFrom.03", "%s risk of catastrophe (no figures this early)", tier)
 }
 
+// txtRemoved is said the same way on several screens, so it has one id.
+var txtRemoved = vibe.E("ui.input.cmdPlan.09", "Removed ")
+
 // cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.
 func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "plan"}
+		return panelReply("plan")
 	}
 	sub := strings.ToLower(args[0])
 	rest := args[1:]
 	switch sub {
 	case "build":
 		if len(rest) == 0 || len(rest) > 2 {
-			return CommandResult{Message: usageFor("plan build"), Type: "error"}
+			return errorReply(usageFor("plan build"))
 		}
 		key := strings.ToLower(rest[0])
 		count := 1
@@ -2493,10 +2466,10 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if added < count {
 			msg = vibe.Sprintf("ui.input.cmdPlan.02", "Planned %s (the most its limit allows). It starts as soon as the resources are there.", game.BuildingCount(added, key))
 		}
-		return CommandResult{Message: msg, Type: game.LogRoutine}
+		return routineReply(msg)
 	case "upgrade":
 		if len(rest) == 0 || len(rest) > 2 {
-			return CommandResult{Message: usageFor("plan upgrade"), Type: "error"}
+			return errorReply(usageFor("plan upgrade"))
 		}
 		key := strings.ToLower(rest[0])
 		all := len(rest) == 2 && strings.EqualFold(rest[1], "all")
@@ -2526,10 +2499,10 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if all {
 			msg = vibe.Sprintf("ui.input.cmdPlan.04", "Planned to upgrade %s to %s (all you hold).", game.BuildingCount(added, key), game.BuildingName(to))
 		}
-		return CommandResult{Message: msg, Type: game.LogRoutine}
+		return routineReply(msg)
 	case "research", "res":
 		if len(rest) == 0 {
-			return CommandResult{Message: usageFor("plan research"), Type: "error"}
+			return errorReply(usageFor("plan research"))
 		}
 		key := strings.ToLower(strings.Join(rest, "_"))
 		chain, err := engine.PlanAddResearchChain(key)
@@ -2556,9 +2529,9 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 				}
 			}
 		}
-		return CommandResult{Message: msg, Type: game.LogRoutine}
+		return routineReply(msg)
 	case "list":
-		return CommandResult{Message: planListText(engine.GetState()), Type: "info"}
+		return infoReply(planListText(engine.GetState()))
 	case "remove", "rm":
 		n, err := planIndexArg(rest, "remove")
 		if err != nil {
@@ -2568,7 +2541,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: vibe.Line("ui.input.cmdPlan.09", "Removed ") + what + vibe.Line("ui.input.cmdPlan.10", " from the plan."), Type: game.LogRoutine}
+		return routineReply(txtRemoved.String() + what + vibe.Line("ui.input.cmdPlan.10", " from the plan."))
 	case "up", "down":
 		n, err := planIndexArg(rest, sub)
 		if err != nil {
@@ -2582,26 +2555,26 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: vibe.Sprintf("ui.input.cmdPlan.11", "Plan item %d is now number %d.", n, to), Type: game.LogRoutine}
+		return routineReply(vibe.Sprintf("ui.input.cmdPlan.11", "Plan item %d is now number %d.", n, to))
 	case "optimize", "reorder":
 		if len(rest) != 0 {
-			return CommandResult{Message: usageFor("plan optimize"), Type: "error"}
+			return errorReply(usageFor("plan optimize"))
 		}
 		res, err := engine.PlanOptimize()
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: planOptimizeText(res), Type: "info"}
+		return infoReply(planOptimizeText(res))
 	case "clear":
 		n := engine.PlanClear()
-		return CommandResult{Message: vibe.Sprintf("ui.input.cmdPlan.12", "Cleared the plan (%s).", textfmt.Count(n, vibe.Line("ui.input.cmdPlan.13", "item"), vibe.Line("ui.input.cmdPlan.14", "items"))), Type: game.LogRoutine}
+		return routineReply(vibe.Sprintf("ui.input.cmdPlan.12", "Cleared the plan (%s).", textfmt.Count(n, vibe.Line("ui.input.cmdPlan.13", "item"), vibe.Line("ui.input.cmdPlan.14", "items"))))
 	case "trade":
 		// The plan's sell orders are gone with the market's swap.
-		return CommandResult{Message: unknownCommandText("plan trade"), Type: "error"}
+		return errorReply(unknownCommandText("plan trade"))
 	case "deal":
 		usage := usageFor("plan deal")
 		if len(rest) < 2 {
-			return CommandResult{Message: usage, Type: "error"}
+			return errorReply(usage)
 		}
 		n, err := parseCount(rest[len(rest)-1])
 		if err != nil {
@@ -2611,17 +2584,17 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddDeal(civ, n); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: vibe.Sprintf("ui.input.cmdPlan.15", "Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)), Type: game.LogRoutine}
+		return routineReply(vibe.Sprintf("ui.input.cmdPlan.15", "Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)))
 	case "advance":
 		if len(rest) != 0 {
-			return CommandResult{Message: usageFor("plan advance"), Type: "error"}
+			return errorReply(usageFor("plan advance"))
 		}
 		if err := engine.PlanAddAdvance(); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: vibe.Line("ui.input.cmdPlan.16", "Planned: advance as soon as the next age's requirements are met."), Type: game.LogRoutine}
+		return routineReply(vibe.Line("ui.input.cmdPlan.16", "Planned: advance as soon as the next age's requirements are met."))
 	}
-	return CommandResult{Message: subUsage("plan"), Type: "error"}
+	return errorReply(subUsage("plan"))
 }
 
 // planIndexArg reads the one item number a plan subcommand takes.
@@ -2637,7 +2610,7 @@ func planIndexArg(rest []string, sub string) (int, error) {
 // "glyphs" and "flows" read or change the settings.
 func cmdMap(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return CommandResult{OverlayName: "map"}
+		return panelReply("map")
 	}
 	switch strings.ToLower(args[0]) {
 	case "glyphs":
@@ -2645,7 +2618,7 @@ func cmdMap(args []string, engine *game.GameEngine) CommandResult {
 	case "flows":
 		return cmdMapFlows(args[1:])
 	}
-	return CommandResult{Message: subUsage("map"), Type: "error"}
+	return errorReply(subUsage("map"))
 }
 
 // cmdMapFlows turns the Map's flows overlay (stocks running dry, understaffed
@@ -2681,8 +2654,8 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
 	cur := resolveMapSettings(acct)
 	if len(args) == 0 {
-		return CommandResult{Type: "info", Message: vibe.Sprintf("ui.input.cmdMapGlyphs.01", "Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch (icons checks your font for nerd).",
-			cur.Tier, strings.Join(mapmodel.TierNames, ", "))}
+		return infoReply(vibe.Sprintf("ui.input.cmdMapGlyphs.01", "Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch (icons checks your font for nerd).",
+			cur.Tier, strings.Join(mapmodel.TierNames, ", ")))
 	}
 	if len(args) > 1 {
 		return usageError(usageFor("map glyphs"), vibe.Errorf("ui.input.cmdMapGlyphs.02", "one glyph tier, please"))
@@ -2714,7 +2687,7 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 // detail by its name ("badges hut hoarder"). A name is looked for among the
 // badges in sight only: a withheld badge has no name to find.
 func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
-	res := CommandResult{OverlayName: "badges"}
+	res := panelReply("badges")
 	if len(args) == 0 {
 		return res
 	}
@@ -2736,7 +2709,7 @@ func cmdBadges(args []string, engine *game.GameEngine) CommandResult {
 		res.Badges = badgeRequest{sel: key, card: true}
 		return res
 	}
-	return CommandResult{Type: "error", Message: vibe.Sprintf("ui.input.cmdBadges.01", "No badge or family in sight is called %q. Type badges to look through them.", strings.Join(args, " "))}
+	return errorReply(vibe.Sprintf("ui.input.cmdBadges.01", "No badge or family in sight is called %q. Type badges to look through them.", strings.Join(args, " ")))
 }
 
 // wornTitle is the title an account wears: the one it chose, or the one
@@ -2756,7 +2729,7 @@ func wornTitle(sum game.BadgeSummary) string {
 func cmdTitle(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
 	if acct == nil {
-		return CommandResult{Type: "warning", Message: vibe.Line("ui.input.cmdTitle.01", "Titles belong to an account, and none is loaded. Type account to make one.")}
+		return warningReply(vibe.Line("ui.input.cmdTitle.01", "Titles belong to an account, and none is loaded. Type account to make one."))
 	}
 	_, sum := engine.Badges()
 	if len(args) == 0 {
@@ -2773,7 +2746,7 @@ func cmdTitle(args []string, engine *game.GameEngine) CommandResult {
 		} else {
 			msg += vibe.Line("ui.input.cmdTitle.05", " Some badges give a title of their own: the badge case says which.")
 		}
-		return CommandResult{Type: "info", Message: msg}
+		return infoReply(msg)
 	}
 	want := strings.Join(args, " ")
 	if strings.EqualFold(want, "default") {
@@ -2791,7 +2764,7 @@ func cmdTitle(args []string, engine *game.GameEngine) CommandResult {
 			}
 		}
 		if len(starts) != 1 {
-			return CommandResult{Type: "error", Message: vibe.Sprintf("ui.input.cmdTitle.06", "You do not hold a title called %q. Type title to list the ones you hold.", want)}
+			return errorReply(vibe.Sprintf("ui.input.cmdTitle.06", "You do not hold a title called %q. Type title to list the ones you hold.", want))
 		}
 		want = starts[0]
 	}
@@ -2799,7 +2772,7 @@ func cmdTitle(args []string, engine *game.GameEngine) CommandResult {
 		return errorResult(fmt.Errorf("the title could not be saved: %w", err))
 	}
 	_, sum = engine.Badges()
-	return CommandResult{Type: game.LogRoutine, Message: vibe.Line("ui.input.cmdTitle.08", "You now wear the title ") + wornTitle(sum) + "."}
+	return routineReply(vibe.Line("ui.input.cmdTitle.08", "You now wear the title ") + wornTitle(sum) + ".")
 }
 
 // cmdMotion shows or sets the motion setting: whether the maps, the badge
@@ -2811,7 +2784,7 @@ func cmdMotion(args []string, engine *game.GameEngine) CommandResult {
 		if resolveMapSettings(acct).Motion {
 			state = "on"
 		}
-		return CommandResult{Type: "info", Message: vibe.Line("ui.input.cmdMotion.01", "Motion: ") + state + vibe.Line("ui.input.cmdMotion.02", ". Type motion on or motion off to change it.")}
+		return infoReply(vibe.Line("ui.input.cmdMotion.01", "Motion: ") + state + vibe.Line("ui.input.cmdMotion.02", ". Type motion on or motion off to change it."))
 	}
 	if len(args) > 1 {
 		return usageError(usageFor("motion"), vibe.Errorf("ui.input.cmdMotion.03", "on or off, please"))
@@ -2845,7 +2818,7 @@ func cmdVibemode(args []string, engine *game.GameEngine) CommandResult {
 		if vibe.On() {
 			state = "on"
 		}
-		return CommandResult{Type: "info", Message: vibe.Line("ui.input.cmdVibemode.01", "VibeMode: ") + state + vibe.Line("ui.input.cmdVibemode.02", ". Type vibemode on or vibemode off to change it.")}
+		return infoReply(vibe.Line("ui.input.cmdVibemode.01", "VibeMode: ") + state + vibe.Line("ui.input.cmdVibemode.02", ". Type vibemode on or vibemode off to change it."))
 	}
 	if len(args) > 1 {
 		return usageError(usageFor("vibemode"), vibe.Errorf("ui.input.cmdVibemode.03", "on or off, please"))
@@ -2878,7 +2851,7 @@ func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
 		if resolveMapSettings(acct).Minimap {
 			state = "on"
 		}
-		return CommandResult{Type: "info", Message: vibe.Line("ui.input.cmdMinimap.01", "Mini map: ") + state + vibe.Line("ui.input.cmdMinimap.02", ". Type minimap on or minimap off to change it.")}
+		return infoReply(vibe.Line("ui.input.cmdMinimap.01", "Mini map: ") + state + vibe.Line("ui.input.cmdMinimap.02", ". Type minimap on or minimap off to change it."))
 	}
 	if len(args) > 1 {
 		return usageError(usageFor("minimap"), vibe.Errorf("ui.input.cmdMinimap.03", "on or off, please"))

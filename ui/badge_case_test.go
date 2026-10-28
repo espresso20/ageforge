@@ -477,7 +477,7 @@ func TestBadgeFramesArePure(t *testing.T) {
 			}
 			var sb strings.Builder
 			for _, c := range g.c {
-				fmt.Fprintf(&sb, "%c%d.%d.%d ", c.r, c.st, c.ink, c.fl)
+				fmt.Fprintf(&sb, "%c%d.%d.%d ", c.r, c.k, c.ink, c.fl)
 			}
 			return sb.String()
 		}
@@ -527,7 +527,7 @@ func TestLegendaryShimmerShowsInThePlainTier(t *testing.T) {
 			g := newTGrid(17, 9)
 			drawMedal(g, 0, 0, md, n, plain)
 			for _, c := range g.c {
-				if plain && c.r == '@' || !plain && c.r == '█' && c.st == tsBright && c.ink == inkNone {
+				if plain && c.r == '@' || !plain && c.r == '█' && c.k == tsBright && c.ink == inkNone {
 					cells++
 				}
 			}
@@ -577,11 +577,11 @@ func TestBadgeArtPaintsInEveryTheme(t *testing.T) {
 					t.Fatalf("theme %s, %s: cell %d,%d (%q) is drawn in its own background colour", th.Key, where, i%cw, i/cw, c.Runes[0])
 				}
 				min := 3.0
-				if g.c[i].st == tsSlab && g.c[i].ink == inkNone && g.c[i].fl&cfSel == 0 {
+				if g.c[i].k == tsSlab && g.c[i].ink == inkNone && g.c[i].fl&cfSel == 0 {
 					min = 1.08
 				}
 				if r := theme.ContrastRatio(fg, bg); r < min-0.01 {
-					t.Fatalf("theme %s, %s: cell %d,%d (%q, style %d, ink %d) has a contrast of %.2f, under %.2f", th.Key, where, i%cw, i/cw, c.Runes[0], g.c[i].st, g.c[i].ink, r, min)
+					t.Fatalf("theme %s, %s: cell %d,%d (%q, style %d, ink %d) has a contrast of %.2f, under %.2f", th.Key, where, i%cw, i/cw, c.Runes[0], g.c[i].k, g.c[i].ink, r, min)
 				}
 			}
 		}
