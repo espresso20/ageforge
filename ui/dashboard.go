@@ -1387,15 +1387,7 @@ func (d *Dashboard) showDevUnlockModal() {
 		SetBorderColor(theme.Color(theme.RoleDim)).
 		SetBackgroundColor(theme.Color(theme.RoleBackground))
 
-	centered := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(box, 3, 0, true).
-			AddItem(nil, 0, 1, false), 44, 0, true).
-		AddItem(nil, 0, 1, false)
-
-	d.pages.AddPage(devUnlockPage, centered, true, true)
+	d.pages.AddPage(devUnlockPage, floatingModal(box, 44, 3), true, true)
 	d.app.SetFocus(field)
 }
 
@@ -1412,13 +1404,7 @@ func (d *Dashboard) leaveToMenu(msg string) {
 		d.overlayMgr.Hide()
 	}
 	d.pages.SwitchToPage("splash")
-	notice := tview.NewModal().
-		SetText(safeTags(msg)).
-		AddButtons([]string{vibe.Line("ui.dashboard.leaveToMenu.02", "OK")}).
-		SetDoneFunc(func(_ int, _ string) {
-			d.pages.RemovePage(accountNoticePage)
-		})
-	d.pages.AddPage(accountNoticePage, notice, true, true)
+	showButtonModal(d.pages, accountNoticePage, safeTags(msg), []string{vibe.Line("ui.dashboard.leaveToMenu.02", "OK")}, func(int, string) {})
 }
 
 // codeWindowPage is the page of the small window a command's Window text is
@@ -1445,14 +1431,7 @@ func (d *Dashboard) showWindow(text string) {
 		}
 		return nil
 	})
-	centered := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(tv, 7, 0, true).
-			AddItem(nil, 0, 1, false), 49, 0, true).
-		AddItem(nil, 0, 1, false)
-	d.pages.AddPage(codeWindowPage, centered, true, true)
+	d.pages.AddPage(codeWindowPage, floatingModal(tv, 49, 7), true, true)
 	d.app.SetFocus(tv)
 }
 

@@ -435,27 +435,16 @@ func (p *accountsPanel) doImport() {
 		}
 	})
 
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
-	inner.SetBorder(true).
-		SetTitle(vibe.Line("ui.accounts_panel.doImport.07", " Import account backup ")).
-		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBorderColor(theme.Color(theme.RoleAccent))
-	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, vibe.Line("ui.accounts_panel.doImport.07", " Import account backup "), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	modal := centeredModal(inner, 68, 7)
-	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		if ev.Key() == tcell.KeyEsc {
-			close()
-			return nil
-		}
-		return ev
-	})
+	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: close})
 
 	p.pages.AddPage(accountsImportPage, modal, true, true)
 	p.app.SetFocus(input)
@@ -489,18 +478,14 @@ var wipeSavesLabel = vibe.E("ui.accounts_panel.wipeSavesLabel.01", "Delete all s
 // from Quit, and names the account it acts on. confirmed runs on the destructive button;
 // done runs after either answer, once the dialog is gone.
 func showWipeSavesConfirmation(pages *tview.Pages, account string, confirmed, done func()) {
-	modal := tview.NewModal().
-		SetText(vibe.Sprintf("ui.accounts_panel.showWipeSavesConfirmation.01", "⚠  Delete all saves?\n\nEvery save of the account \"%s\" is deleted.\nThose runs and their prestige are lost.\nThe account (themes, lifetime stats, badges) is kept.\n\nThis cannot be undone.", account)).
-		AddButtons([]string{vibe.Line("ui.accounts_panel.showWipeSavesConfirmation.02", "Cancel"), wipeSavesLabel.String()}).
-		SetDoneFunc(func(_ int, buttonLabel string) {
-			pages.RemovePage(accountsSavesConfirm)
-			if buttonLabel == wipeSavesLabel.String() {
-				confirmed()
-			}
-			done()
-		})
-	styleDangerModal(modal)
-	pages.AddPage(accountsSavesConfirm, modal, true, true)
+	text := vibe.Sprintf("ui.accounts_panel.showWipeSavesConfirmation.01", "⚠  Delete all saves?\n\nEvery save of the account \"%s\" is deleted.\nThose runs and their prestige are lost.\nThe account (themes, lifetime stats, badges) is kept.\n\nThis cannot be undone.", account)
+	buttons := []string{vibe.Line("ui.accounts_panel.showWipeSavesConfirmation.02", "Cancel"), wipeSavesLabel.String()}
+	styleDangerModal(showButtonModal(pages, accountsSavesConfirm, text, buttons, func(_ int, buttonLabel string) {
+		if buttonLabel == wipeSavesLabel.String() {
+			confirmed()
+		}
+		done()
+	}))
 }
 
 // doDeleteSaves deletes every save of the SELECTED account after the confirmation. The
@@ -544,22 +529,18 @@ func (p *accountsPanel) doWipe() {
 	wasActive := s.Active
 
 	// STEP 1 — the are-you-sure gate.
-	step1 := tview.NewModal().
-		SetText(vibe.Sprintf(
-			"ui.accounts_panel.doWipe.01", "⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, badges and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
-			name,
-		)).
-		AddButtons([]string{vibe.Line("ui.accounts_panel.doWipe.02", "Keep it"), vibe.Line("ui.accounts_panel.doWipe.03", "Wipe it")}).
-		SetDoneFunc(func(button int, _ string) {
-			p.pages.RemovePage(accountsWipeConfirm1)
-			if button == 1 { // "Wipe it"; the other button and Esc (-1) keep the account
-				p.showWipeTypeGate(s.AccountID, name, wasActive)
-				return
-			}
-			p.app.SetFocus(p.list)
-		})
-	styleDangerModal(step1)
-	p.pages.AddPage(accountsWipeConfirm1, step1, true, true)
+	text := vibe.Sprintf(
+		"ui.accounts_panel.doWipe.01", "⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, badges and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
+		name,
+	)
+	buttons := []string{vibe.Line("ui.accounts_panel.doWipe.02", "Keep it"), vibe.Line("ui.accounts_panel.doWipe.03", "Wipe it")}
+	styleDangerModal(showButtonModal(p.pages, accountsWipeConfirm1, text, buttons, func(button int, _ string) {
+		if button == 1 { // "Wipe it"; the other button and Esc (-1) keep the account
+			p.showWipeTypeGate(s.AccountID, name, wasActive)
+			return
+		}
+		p.app.SetFocus(p.list)
+	}))
 }
 
 // showWipeTypeGate is STEP 2: only an EXACT match of expectedName proceeds. A non-match stays
@@ -622,29 +603,18 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 	errTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	hintTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	input.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleNegative)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(promptTV, 4, 0, false).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(solidBox(theme.RoleNegative), 1, 0, false).
 		AddItem(input, 1, 0, true).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(solidBox(theme.RoleNegative), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(solidBox(theme.RoleNegative), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
-	inner.SetBorder(true).
-		SetTitle(vibe.Line("ui.accounts_panel.showWipeTypeGate.08", " Confirm account wipe ")).
-		SetTitleColor(theme.Color(theme.RoleOnNegative)).
-		SetBorderColor(theme.Color(theme.RoleOnNegative))
-	inner.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	framed(inner, vibe.Line("ui.accounts_panel.showWipeTypeGate.08", " Confirm account wipe "), theme.RoleOnNegative).SetBackgroundColor(theme.Color(theme.RoleNegative))
 
 	modal := centeredModal(inner, 72, 13)
-	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		if ev.Key() == tcell.KeyEsc {
-			abort()
-			return nil
-		}
-		return ev
-	})
+	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: abort})
 
 	p.pages.AddPage(accountsWipeTypeGate, modal, true, true)
 	p.app.SetFocus(input)
@@ -703,29 +673,18 @@ func (p *accountsPanel) showMessage(title, body string) {
 		SetText(vibe.Line("ui.accounts_panel.showMessage.01", "[gray]Enter / Esc: close[-]"))
 	hint.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(tv, 0, 1, false).
-		AddItem(spacer(), 1, 0, false).
+		AddItem(surfaceBox(), 1, 0, false).
 		AddItem(hint, 1, 0, false)
-	inner.SetBorder(true).
-		SetTitle(fmt.Sprintf(" %s ", title)).
-		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBorderColor(theme.Color(theme.RoleAccent))
-	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	framed(inner, fmt.Sprintf(" %s ", title), theme.RoleAccent).SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	close := func() {
 		p.pages.RemovePage(accountsMessagePage)
 		p.app.SetFocus(p.list)
 	}
 	modal := centeredModal(inner, 72, 13)
-	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
-		if ev.Key() == tcell.KeyEsc || ev.Key() == tcell.KeyEnter {
-			close()
-			return nil
-		}
-		return ev
-	})
+	takeKeys(modal, map[tcell.Key]func(){tcell.KeyEsc: close, tcell.KeyEnter: close})
 	p.pages.AddPage(accountsMessagePage, modal, true, true)
 	p.app.SetFocus(modal)
 }

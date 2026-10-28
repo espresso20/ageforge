@@ -69,53 +69,23 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		AddItem(body, 7, 0, false).
 		AddItem(tview.NewBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, true)
-	inner.SetBorder(true).
-		SetTitle(vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.09", " ✦ Ancient Memory ")).
-		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBorderColor(theme.Color(theme.RoleAccent))
+	framed(inner, vibe.Line("ui.ancient_memory_modal.showAncientMemoryModal.09", " ✦ Ancient Memory "), theme.RoleAccent)
 
-	modal := tview.NewFlex().
-		AddItem(tview.NewBox(), 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(tview.NewBox(), 0, 1, false).
-			AddItem(inner, 17, 0, true).
-			AddItem(tview.NewBox(), 0, 1, false),
-			64, 0, true).
-		AddItem(tview.NewBox(), 0, 1, false)
+	modal := centeredModal(inner, 64, 17)
 
 	// Tab/arrows cycle the buttons; a/d are shortcuts for Accept/Decline.
-	focusOrder := []tview.Primitive{btnAccept, btnDecline}
-	focusIdx := 0
+	ring := newButtonRing(d.app, func(p tview.Primitive) { d.memFocus = p })
+	ring.add(btnAccept, 'a')
+	ring.add(btnDecline, 'd')
 	modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyTab, tcell.KeyRight:
-			focusIdx = (focusIdx + 1) % len(focusOrder)
-			d.memFocus = focusOrder[focusIdx]
-			d.app.SetFocus(focusOrder[focusIdx])
+		if ring.key(event) {
 			return nil
-		case tcell.KeyBacktab, tcell.KeyLeft:
-			focusIdx = (focusIdx - 1 + len(focusOrder)) % len(focusOrder)
-			d.memFocus = focusOrder[focusIdx]
-			d.app.SetFocus(focusOrder[focusIdx])
-			return nil
-		case tcell.KeyRune:
-			switch event.Rune() {
-			case 'a', 'A':
-				d.app.SetFocus(btnAccept)
-				btnAccept.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
-				return nil
-			case 'd', 'D':
-				d.app.SetFocus(btnDecline)
-				btnDecline.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
-				return nil
-			}
 		}
 		return event
 	})
 
 	d.pages.AddPage(ancientMemoryPage, modal, true, true)
-	d.memFocus = btnAccept
-	d.app.SetFocus(btnAccept)
+	ring.focus(0)
 }
 
 // closeAncientMemoryModal removes the Ancient Memory overlay page and hands
