@@ -1,0 +1,145 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# --- Fulfilled ----------------------------------------------------------------
+
+== harb_fulfilled_any
+plain time | It came, as asked
+wry message | Nobody could say they had not been warned
+plain stranger need=subject | For days afterwards {subject} would not meet anyone's eye
+plain noise | The cheering was not repeated
+plain argument | Everyone knew whose doing it was
+plain people | The survivors kept looking at you, and then away
+wry overheard rumour | Some of the survivors were proud of it, and said at least it had come because they asked and not because it chose to
+plain family | The families who left came back afterwards to see, and stood at the edge of it, and would come no further
+plain casualty | The settlement found afterwards that it did not know how to grieve for a disaster it had sent for, and so it grieved for everything else instead
+wry complaint argument | The complaint, when it came, was that it had been bigger than anyone expected
+wry notice authority | It has been agreed the day will be remembered, though not yet as what
+plain overheard money | People say you knew what it would cost and paid it anyway
+
+== harb_fulfilled_grounded eras=ancient,feudal,industrial
+plain animal | The dogs howled again
+plain ledger casualty | The graves were dug in a single row
+plain building | The fires were built up in the ruins, out of habit
+plain wound | The old woman who had spat at your feet came back to help carry the wounded
+plain town | Candles were lit in the windows that were still standing
+plain religion | The dancers washed the paint off their faces in silence afterwards, and some of them could not get it all off
+plain work | Down every lane people dug through what was left, and every so often someone would stop and look toward your door, and then go back to digging
+wry overheard ground | What the old people talk about now is what grew back afterwards, stronger for having burned, and some of them say you saw that from the start and some of them say you only got lucky
+
+== harb_fulfilled_late eras=digital,cosmic
+plain machine | The systems logged it
+plain machine | Every screen went dark
+plain ledger time | The logs recorded the invitation and the arrival one after another
+wry notice authority | The settlement's systems filed an incident report naming you as the cause
+plain work | Rescue crews worked in shifts through the night
+plain count | The risk estimate had said certain, and it had been certain, and people found no comfort at all in the accuracy of it
+plain argument | Afterwards the footage of the moment you invited it was played over and over, and people argued about your face, and what they could see in it
+plain paper | Somewhere in the settlement's archives there is now a single file that contains both the decision and the consequence, a few lines apart, and people who read it say the gap between those lines is the most frightening thing they have ever seen
+
+== harb_fulfilled_ancient eras=ancient
+plain casualty | The elders keened
+plain ground | The camp moved on
+plain noise | The drums beat for the dead
+plain animal | The herd that had been let loose was scattered for days
+plain name | Songs were made about the chief who called the fire down
+plain casualty | The young men dug the graves
+wry religion | The offering left for the doom was found untouched afterwards
+plain religion | Nobody has painted the protecting marks backwards since
+plain people | The oldest woman sat with her back to what was left of the camp and would not speak to you, and when she finally did it was only to ask whether it had been worth it
+plain ground | The hunters went out afterwards into country none of them recognised, and came back without speaking
+plain casualty | They buried the dead in a line along the ridge, facing the way it had come, and the elders said the words for the dead and then some words nobody had heard before, words for those who died because their chief sent for it
+wry complaint argument | The hunters say they told you so, and they did
+plain notice authority | The elders have ruled that no one is to speak of the asking
+plain overheard rumour | They say the fire came faster because it was invited
+# false prophet, invited anyway
+wry stranger kind=false_prophet need=subject | The elders said later that {subject} had seen nothing at all until you made it true
+wry overheard rumour kind=false_prophet need=subject | It came out afterwards that {subject} had invented the whole warning, and nobody knew what to do with that, since it had come anyway
+plain stranger kind=false_prophet | The prophet who had lied ran with everyone else when it came
+
+== harb_fulfilled_feudal eras=feudal
+plain building | The abbey burned
+plain noise | The bells tolled all week
+plain work | The flagellants were the first to help dig
+plain religion | The priest refused you the sacrament, and then gave it
+plain authority | The lord's household never came back
+plain paper | The monk who keeps the chronicle edged the page in black and left a space at the bottom for the names, and ran out of space
+plain notice religion | Masses for the dead, daily
+wry town | The townspeople who had fled through every gate came back in ones and twos over the following month, and found their houses had been lived in by the ones who stayed
+wry argument | The penitent sect that had split in two came back together over the rubble, and argued about whose fault it was while they dug
+wry name | Ballads were already being sung about the lord who invited doom, and in some of them you are a hero and in some a fiend
+joke money | For years afterwards pilgrims came to see the place where it had been invited, and the townspeople showed them round for a fee, and the fee went up each year as the story grew, and the story grew each year as the fee went up
+wry complaint authority | The steward claims he advised against it, which nobody remembers
+plain notice food | The bishop has ordered the day kept with fasting forever
+plain overheard religion | In the market they say the saints looked away because they were not asked
+# false prophet, invited anyway
+wry message kind=false_prophet | The warning had been a fraud, it turned out, and it had come true anyway, because you asked it to
+wry religion kind=false_prophet | The friars preached on it for a year, a false prophecy made true by a lord's will, and never agreed on what it meant
+joke overheard rumour kind=false_prophet need=subject | In the tavern they call {subject} the only liar in history to be proved right by somebody else
+
+== harb_fulfilled_industrial eras=industrial
+plain work | The mills stood silent
+plain count | The odds had been exact
+plain paper | The papers printed black borders
+wry authority | The inquiry began before the dust had settled
+wry town | The society for the welcoming of the end held no further meetings
+plain work | Men from the works dug in the ruins alongside the men who owned the works
+plain paper | The editorial pages ran your photograph with no caption
+wry money | The insurance companies declared it an act of God, and then an act of government, and then refused to say whose act it was
+plain machine | Those who had fled on the packed trains came back on empty ones to see what was left, and some of them stayed to help
+plain town | Along the terraces nobody argued any more about whether it had been brave or wicked, and neighbours dug each other out, and made tea on the pavements with whatever they could find, and did not look at the sky
+wry complaint money | The unions complain that the rebuilding contracts went to the old firms
+plain notice casualty | A national day of mourning has been declared, and will be observed
+wry overheard rumour | In the pubs they say you did it on purpose, which you did
+
+== harb_fulfilled_digital eras=digital
+plain machine | The feeds went dark
+plain money | The markets stayed shut
+plain name | The hashtag became a memorial
+plain ledger count | Every prediction market settled at once
+plain message | Your invitation was the most replayed clip of the decade
+wry people | The accelerationist forums stopped posting within the hour
+plain machine | The emergency apps crashed under the load
+plain people | People posted photos of what was left and tagged you
+joke building | The executives who had flown to their bunkers found the bunkers had been built by the lowest bidder, and their location pings kept leaking
+wry argument | Commentators argued for weeks about whether it had been an act of courage or an act of vandalism, and the rubble stayed where it was while they argued
+plain machine | The machines in the server halls logged the arrival exactly as they had logged the invitation, neutrally, to the millisecond, and later the engineers found a note in the logs that none of them had written, flagging the two entries as related
+wry complaint argument | The comments complain that nobody checked with them first
+plain notice authority | The government has confirmed the event and asked residents to stay where they are
+wry overheard rumour | Everyone is saying your name, and not kindly
+
+== harb_fulfilled_cosmic eras=cosmic
+plain omen | The dark answered
+plain building | The outer ring was lost
+wry building | The station survived, mostly
+plain family | The children's ship kept going and did not look back
+plain people | The officer who had walked off the command deck came back and took his seat again
+plain machine | The instruments recorded the arrival in terrible detail, and the readings were sealed by order, and the order has been challenged every year since by people who want to see
+plain casualty | Every deck held a vigil for the ones who were lost
+plain omen | Whatever had been waiting out in the dark came when it was called, unhurried, and withdrew afterwards in its own time
+wry work | The engineers who had complained that nobody consulted engineering worked for three days without sleep patching the hull
+plain time | Long afterwards the colony still marks the day with a silence on every deck, and in the silence people think about the dark and about the asking, and about how the dark had waited, patiently, for someone small enough to call it in
+wry complaint authority | Crew complain that the command deck was told first and everyone else last
+plain notice authority | All crew are to report to the nearest intact deck
+plain overheard rumour need=subject | On the ring they say {subject} wept when it came

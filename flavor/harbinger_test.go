@@ -81,7 +81,7 @@ func harbName(t testing.TB, age string) string {
 // harbinger's name for the harbinger Moments, nothing otherwise.
 func gameSubject(m Moment, age string) string {
 	if m == RunEnding && !config.IsFinalEpoch(config.EpochForAge(age)) {
-		return "" // the plain register has no speaker; see catalog_run_ending.go
+		return "" // the plain register has no speaker; see text/run_end.txt
 	}
 	if !isHarbinger(m) && m != RunEnding {
 		return ""
@@ -116,6 +116,13 @@ func harbReachable(m Moment, age string) bool {
 	}
 	return true
 }
+
+// runEndPlainAges are the ages before the Cosmic Era from which a full run
+// prestiges: the Modern Age through the Space Age.
+var runEndPlainAges = []string{"modern_age", "information_age", "digital_age", "cyberpunk_age", "fusion_age", "space_age"}
+
+// runEndCosmicAges are the Cosmic Era's ages, whose passage is prestige itself.
+var runEndCosmicAges = []string{"interstellar_age", "galactic_age", "quantum_age", "transcendent_age"}
 
 // runEndReachable reports whether a run can end (prestige) at age: the Modern
 // Age and every age after it.

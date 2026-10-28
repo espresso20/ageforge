@@ -1,0 +1,59 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# Noun banks the harbinger answers draw on, shared by the appeased and braced
+# pools. Each is era-bound through the pools that use it.
+
+# Things left at a shrine or a standing stone. Ancient bucket only.
+== words harb_offering_ancient
+a string of shells
+the best antler in the camp
+a pot of honey
+a whole smoked fish
+a knife nobody could spare
+a bowl of red ochre
+two good flints
+a pelt still soft from the scraping
+
+# What a feudal household gives the church to be prayed for.
+== words harb_offering_feudal
+a silver spoon
+a bolt of blue cloth
+a year's worth of candles
+a sheep and her lamb
+the second-best bed
+a psalter with a cracked board
+a purse of old pennies
+a cask of the good wine
+
+# What people carry down into the shelter, industrial bucket.
+== words harb_shelter_industrial
+a box of tinned peaches
+a wind-up radio
+the family photographs
+a sack of flour
+a first-aid tin
+a deck of cards with two missing
+three jerrycans of water
+a crate of candles

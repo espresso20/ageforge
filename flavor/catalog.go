@@ -3,8 +3,8 @@ package flavor
 import "sync"
 
 // catalog.go is the REGISTRY half of the data layer: it wires each Moment to its
-// authored sentences and merges the noun banks those sentences draw from. The
-// prose itself lives one file per Moment, next to the banks it uses.
+// authored sentences. The prose itself lives one text file per Moment in text/,
+// next to the noun banks it uses; text.go reads them.
 //
 // # What an author writes
 //
@@ -78,32 +78,9 @@ import "sync"
 // Nothing here winks at ticks, rolls, slots, or caps. config/building_flavor.go
 // sets the bar.
 
-// --- era gating shorthands ---------------------------------------------------
-//
-// Named so a pool declaration reads as prose. nil means ungated: the sentence
-// fires in every age and must therefore contain no era-coded noun at all.
-
-var (
-	erasAny        []era
-	erasAncient    = []era{eraAncient}
-	erasFeudal     = []era{eraFeudal}
-	erasIndustrial = []era{eraIndustrial}
-	erasDigital    = []era{eraDigital}
-	erasCosmic     = []era{eraCosmic}
-
-	// Spans, for imagery that genuinely covers two neighbouring buckets — a road
-	// and a river crossing belong to every age that has ground under it.
-	erasEarly = []era{eraAncient, eraFeudal}
-	erasLate  = []era{eraDigital, eraCosmic}
-
-	// erasGrounded is every age with lanes, dogs and a washing line. The
-	// ungated pools used to hold these lines, which is how the Transcendent Age
-	// ended up narrated by a baker with a shovel.
-	erasGrounded = []era{eraAncient, eraFeudal, eraIndustrial}
-)
-
-// eraBucket pairs an era with the suffix its pool ids use. The order is fixed so
-// generated template sets are stable, which the determinism contract needs.
+// eraBucket pairs an era with the name its pool ids and the text files use. The
+// order is fixed so the template sets are stable, which the determinism
+// contract needs.
 type eraBucket struct {
 	era    era
 	suffix string
@@ -115,34 +92,6 @@ var eraBuckets = []eraBucket{
 	{eraIndustrial, "industrial"},
 	{eraDigital, "digital"},
 	{eraCosmic, "cosmic"},
-}
-
-// banks holds every noun-phrase bank, merged from the per-Moment files. Bank
-// fragments are always lowercase mid-sentence noun phrases with no terminal
-// punctuation: they drop into a slot, they never open a sentence.
-var banks = mergeBanks(
-	expSuccessBanks,
-	expFailBanks,
-	encStandoffBanks,
-	encCapacityBanks,
-	warRaidBanks,
-	harbingerBanks,
-)
-
-// mergeBanks folds the bank tables into one map. A key collision is an authoring
-// mistake that would silently discard a whole bank, so it panics at init rather
-// than shipping a half-empty pool.
-func mergeBanks(tables ...map[string][]string) map[string][]string {
-	out := make(map[string][]string)
-	for _, t := range tables {
-		for name, bank := range t {
-			if _, dup := out[name]; dup {
-				panic("flavor: duplicate bank name " + name)
-			}
-			out[name] = bank
-		}
-	}
-	return out
 }
 
 // momentTable is the fixed data of every registered Moment, in the stable order
@@ -185,28 +134,7 @@ func templatesFor(m Moment) []tmpl {
 var templateCache = sync.OnceValue(func() map[Moment][]tmpl {
 	out := make(map[Moment][]tmpl, len(momentTable))
 	for _, e := range momentTable {
-		out[e.m] = builders[e.m]()
+		out[e.m] = embedded.templates(e.prefix)
 	}
 	return out
 })
-
-// builders assembles each Moment's skeleton set from its per-era pools. It is
-// apart from momentTable on purpose: the pools read that table through rowParts,
-// so a table that held these functions would be an initialization cycle.
-var builders = map[Moment]func() []tmpl{
-	ExpeditionSuccess:    expSuccessTemplates,
-	ExpeditionFailure:    expFailTemplates,
-	EncounterStandoff:    encStandoffTemplates,
-	EncounterAtCapacity:  encCapacityTemplates,
-	WarRaid:              warRaidTemplates,
-	HarbingerArrival:     harbArrivalTemplates,
-	HarbingerWarning:     harbWarningTemplates,
-	HarbingerAppeased:    harbAppeasedTemplates,
-	HarbingerBraced:      harbBracedTemplates,
-	HarbingerVindicated:  harbVindicatedTemplates,
-	HarbingerSpared:      harbSparedTemplates,
-	HarbingerDiscredited: harbDiscreditedTemplates,
-	HarbingerInvited:     harbInvitedTemplates,
-	HarbingerFulfilled:   harbFulfilledTemplates,
-	RunEnding:            runEndingTemplates,
-}

@@ -1,0 +1,536 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# EncounterAtCapacity — somebody arrived with an offer and the court could not
+# take it.
+#
+# The log line above this one has already said so, so none of the sentences here
+# say it again, and none of them is about fullness. They are about the people and
+# the objects and the small administrative disasters that fullness produces: who
+# signed for the second load, what has gone soft behind a chest, which visitor has
+# quietly acquired a bed and a job, how much bread is going out, and the standing
+# instruction that everybody knows and nobody wants to be the one to read aloud.
+#
+# The voice reference is exp_success.txt — a quartermaster's book rather
+# than a book of aphorisms. Lengths swing on purpose, from four words to forty,
+# because the uniform rhythm of the two rejected versions of this file was the
+# tell, independently of how good any single line was.
+
+# --- slot banks --------------------------------------------------------------
+#
+# Two tight categories: the thing that arrived, and the place it was quietly
+# put. Both are drawn on from the ungated pool, so both are free of era-coded
+# nouns — a painted chest and a bad corner are as true of a longhouse as of an
+# orbital station.
+
+# What turned up that nobody has anywhere to put.
+== words enc_cap_gift
+a crate of dried fruit
+a very large mirror
+two more caged birds
+a painted cabinet
+a bolt of heavy cloth
+a jar of something sweet
+another set of matched cups
+a life-size statue of a stranger
+a box of small carved figures
+three crates of wine
+a bundle of dried flowers
+a heavy glass bowl
+a bag of seed nobody recognises
+a cage of white rabbits
+a set of ceremonial knives
+an enormous woven hanging
+a case of foreign money
+a portrait of somebody important
+
+# Where it ended up. All noun phrases, all of them somewhere out of the way.
+== words enc_cap_place
+the back corner
+the room nobody uses
+the far end of the hall
+a cold room at the back
+the corridor outside
+the stairwell
+the space behind the door
+a cupboard that already sticks
+the corner where the light is bad
+the empty room beside the kitchen
+a locked room upstairs
+the alcove by the entrance
+the gap between two cabinets
+the side room with the low ceiling
+the landing halfway up the stairs
+the passage behind the curtain
+a room that used to be a store
+the shadow under the stairs
+
+# --- the sentences -----------------------------------------------------------
+
+# enc_cap_any fires in every age, so nothing in it may name an era-coded
+# object. Rooms, doors, chairs, lists, servants, animals and children are
+# timeless; stewards, telegrams and airlocks are not.
+== enc_cap_any
+# --- short. A fact, and then the sentence stops. ---
+plain building | Nothing can get down the corridor
+wry ledger count | Seven chairs, fourteen visitors
+plain notice paper | Somebody signed for all of it
+plain animal | The bird has stopped singing
+plain haul | Nobody will open the tall crate
+plain ledger time | Three arrivals before noon
+plain sleep | The far room has been claimed
+plain name | One name was written twice
+plain haul | Everything is stacked waist-high
+plain message | The interpreter has lost her voice
+plain kit slot=enc_cap_gift | There is dust on ~ already
+
+# --- mid. The working length: one thing, with enough detail to place it. ---
+plain haul | Gifts have been stacked along the corridor wall for over a week
+plain complaint paper | The man who keeps the list has run out of page
+plain people | An envoy has started correcting the spelling on the notices
+plain animal | The animal that came this morning has eaten nothing it was offered
+plain argument | Two delegations who dislike each other have been put in one room
+plain money | The cost of feeding everybody has been mentioned at the table
+plain smell | Something in the far corner has begun to smell of fish
+wry notice authority | There is a standing instruction about this and nobody wants to break it first
+plain stranger | One of the visitors has moved his things into an upstairs room
+plain name | The woman on the door has started writing names on her hand
+plain town | The children have been told to stay out of the far room
+plain kit | Somebody put a cloth over the big mirror because of the light
+joke trade | Two of the gifts are the same gift, more or less
+plain paper | The welcome speech has been rewritten for the fourth arrival
+plain count | The queue outside has doubled since morning and nobody has counted it
+wry trade | A gift arrived wrapped in cloth worth more than the gift
+wry kit | The rope across the cupboard door was somebody's idea of a solution
+plain haul slot=enc_cap_gift | The pile by the door has taken ~ as well
+plain building slot=enc_cap_place | The newest thing to arrive has been carried straight to ~
+wry building slot=enc_cap_place | Nobody could think of anywhere better than ~
+plain notice authority slot=enc_cap_gift | It has been decided to leave ~ where it is
+plain ledger haul slot=enc_cap_place | Everything that came in this week has gone into ~
+wry building slot=enc_cap_gift | Whoever arranged the hall has put ~ behind a curtain
+wry town slot=enc_cap_gift | The children have got at ~ and are being left to it
+plain smell slot=enc_cap_place | Something soft has been left too long in ~
+
+# --- long. Circumstantial, subordinated, the way a chronicle actually runs. ---
+plain sleep | The room set aside for guests has a man asleep in it who came with the second lot and has since attached himself to nobody in particular
+plain complaint paper | The woman who keeps the list has asked for a second book, been told that one is being looked for, and started writing in the margins of the first
+wry paper | Nobody can say who signed for the second load, because the paper it was signed on has been used to wrap something, and the something has gone upstairs
+wry argument slot=enc_cap_gift | For the second time this month somebody has moved ~ without being asked, and the second move was into a worse place than the first
+wry ledger paper slot=enc_cap_gift | The far end of a list somewhere has ~ written on it in a hand nobody recognises, and the item itself has not been seen since it came through the door
+
+# --- very long. Digressive, specific, a paragraph that forgot to stop. ---
+plain argument | Two of the waiting parties will not be in the same room, so one has the front and one has the back, and the passage between them has a chair in it with somebody sitting on it
+wry time | The third delegation this month came in while the second was still waiting to be seen, and the second has now been waiting long enough to have opinions about the third that it has been sharing with anybody who walks past
+wry message | The interpreter has worked every day since the first party arrived and has been thanked once, and this morning turned a long and formal greeting into a shorter and less formal one that nobody in the room queried
+wry ledger count | One count of what has come in this month made it forty-one separate items, another the next day made it thirty-eight, and both numbers are written up on the same wall in the same hand
+plain stranger | A woman came in on the fourth day with a small box and a long speech, was heard out, was given water and a chair, and is still in the chair, and the box is still on her knees
+
+# --- kind: mercantile ---
+plain ledger trade kind=mercantile | Samples went back unopened
+joke trade kind=mercantile | The traders brought samples and are leaving with the samples
+
+# --- kind: peaceful ---
+plain kit kind=peaceful | They brought flowers that will last about four days
+plain people kind=peaceful | The visitors have been patient
+
+# --- kind: isolationist ---
+plain stranger kind=isolationist | They came a long way to stand in a doorway
+plain people kind=isolationist | The delegation refused food, refused chairs, refused the offer of a room, and has been standing in the same part of the hall since the middle of the morning
+
+# --- kind: aggressive ---
+plain weapon kind=aggressive | Their guards stand and stay standing
+plain weapon kind=aggressive | The escort left its weapons by the door after being asked four times
+
+# --- tone ---
+wry ledger count tone=wry | Six matched cups, four sets
+plain count tone=wry | Nobody has counted the chairs
+joke building tone=wry | The room has been named after what is in it
+wry animal tone=wry | Three separate peoples have now given the same species of bird
+joke trade tone=wry | Two people have worked out that a gift sent out last year has come back
+joke ledger paper tone=wry | Somebody has begun keeping a second list of the things on the first list, on the grounds that the first list has stopped being a list and started being a wall
+wry building tone=wry | A visitor asked where the gifts are kept and was taken to four different rooms by four different people, none of whom took him to the same room
+
+# --- the visitor's name, in frames a singular-or-plural name survives ---
+plain rumour need=subject | Word of it reached {subject} first
+plain kit need=subject | Chairs were found for {subject}
+wry paper need=subject | Somebody waiting has folded the note from {subject} into a fan
+plain time need=subject | Nobody has explained to {subject} how long the waiting has been running
+wry argument need=subject | The seating plan puts {subject} behind a pillar
+plain ledger haul need=subject | Everything sent by {subject} went to the same corner
+plain people need=subject | An interpreter was found for {subject} and then sent away again
+plain ledger name need=subject | The visitors' list has {subject} on it in two different hands
+wry complaint money need=subject | The bill for feeding {subject} came up at the evening meal and was read out by somebody who had clearly been waiting all day to read it out
+plain paper need=subject | The wrong line of the wrong list now reads {subject}, and it has been copied twice since by people who had no reason to doubt the first copy
+plain sleep need=subject | The room at the back, the room beside it and the passage between the two have all been given over to the men who came in with {subject}, and there are still four of them sleeping in the hall
+wry haul need=subject | Nobody has worked out what to do with what came from {subject}, so it has been left where it was set down, and people have begun walking round it as though it had always been there
+
+# enc_cap_grounded is set dressing that stops at the Modern Age: lamps, servants,
+# chests, a council that sits before it is light. True in a manor, wrong on a
+# station.
+== enc_cap_grounded eras=ancient,feudal,industrial
+plain food | A basket of soft fruit was found behind a chest this morning
+wry name need=subject | A door servant has learned to say {subject} without pausing in the middle, which took four days, and is the only thing about this week she intends to keep
+plain noise need=subject | A servant announced {subject} to a room that already had two delegations standing in it
+plain ledger count | A servant has counted the same stack four times this week
+plain people slot=enc_cap_gift | A servant was told to find room for ~
+wry overheard paper kind=peaceful | A treaty was read out in full to a room holding one servant, two waiting envoys from somewhere else entirely, and a child who had come in to look at the birds, and none of them was asked to leave
+plain people | An old woman has been sitting on a chest since first light
+plain complaint building | Four people have asked where the new chests go and none has been answered
+plain smell | One of the sealed jars has been leaking down the inside of a chest
+wry stranger | One of the visitors has a bed, a chest, a place at the table and a job carrying water, and nobody can now remember which delegation brought him or whether he came with one at all
+wry sleep | Somebody has been sleeping in the far room since the third day, and the household believes he came with a delegation, and the delegations believe he lives here
+wry complaint food | Somebody worked out that the visitors have eaten more in nine days than the household gets through in a month, and the figure has been repeated at every meal since
+wry sleep tone=wry | The best room in the house has been given to a crate, and the man who was moved out of it to make space has been sleeping on a bench in the passage and telling people about it
+plain haul need=subject | The chest marked {subject} stays shut
+plain haul | The chests from the first day were pushed against the wall to make room for the second lot, and the second lot went in front of them
+joke authority tone=wry | The door servant has become the most consulted person in the house
+plain complaint food | The household has been feeding between nine and fourteen extra people at every meal for nine days, and the woman who does the buying has stopped asking how long this goes on and has started buying for twenty
+joke kit tone=wry | The household now owns more ceremonial bowls than plates
+wry people | The interpreter was asked to attend at first light, waited through the whole morning without being called, and has been asked to attend again at first light tomorrow
+wry money kind=mercantile | The merchants have set up outside the door to wait, have been there two days, and have begun selling to the household staff at a discount they describe as friendly
+plain people | The tall visitor has read every notice on the wall by the door, in order, and has begun asking the servants about the ones he does not understand
+wry notice authority | There is a rule about how many of these the household may take, everybody knows the rule, and the household went past it on the second day
+plain stranger | Two more came at dusk
+plain people need=subject | Two servants carried a crate from {subject} up the stairs, were told it should have gone down instead, and carried it down again without saying anything
+wry haul slot=enc_cap_gift | Two servants spent the whole morning shifting ~ from one side of a room to the other, and then shifting it back after somebody senior walked through
+plain smell | A jar that came in sealed has been opened, sniffed by four people in turn, and sealed again with a cloth and a length of string
+
+# --- re-tagged out of the shared pool by the third late-age review: the
+# kitchen, the back door, the walk home. True up to the Modern Age. ---
+plain smell | The smell has reached the stairs
+plain complaint food | The bread is running out
+plain people | Water is being carried upstairs
+joke name | The big grey animal has been given a name by the kitchen staff
+plain complaint food | The kitchen has stopped asking how many are eating and started cooking for forty
+plain stranger | A man arrived at midday with a folded letter and an animal on a rope, and he has been offered water three times by three different people
+plain animal | Nobody knows what the animal eats, so it has been offered bread, fruit, boiled grain and a bowl of water, and it has taken the water
+plain ledger money | The bread and the meat have been going out at twice the usual rate since the first party arrived, and the woman who buys both has started writing the numbers on the wall
+wry stranger | An envoy who arrived before the cold weather now dresses like everybody else here, eats with the house, and was heard this morning complaining about the price of fish
+wry overheard town need=subject | A boy was sent out to tell {subject} that the hall is being cleaned
+plain haul need=subject | The gifts from {subject} came in three loads over two days, and the third load is still outside under a cloth because the second one has the doorway
+
+# enc_cap_late is the digital and cosmic voice: the field notes have become
+# logs, and the logs have started to notice how long everything takes.
+== enc_cap_late eras=digital,cosmic
+wry ledger count | The gift registry has run out of storage
+joke stranger | One delegation has brought a gift that has not finished arriving
+wry notice authority | Protocol requires every gift to be acknowledged in person, and at current rates the acknowledgements will be finished some time after the last person able to give them has died
+plain people | The guest quarters are full of envoys waiting to be told they can go home
+wry trade | An envoy asked what we needed and was shown the list of things we have been given
+plain notice building | Storage is full
+plain people | Every guest suite is taken
+wry notice authority | Further gifts cannot be accepted
+plain building | The overflow room has overflowed
+wry machine | The welcome screen has a waiting list
+plain ledger count | Nine delegations, four interpreters
+joke people | The protocol officer has resigned again
+plain food | Catering has stopped taking orders
+wry kit | The security scanner needs a rest
+plain stranger | One envoy has been here a year
+wry authority | Every gift has to be logged and thanked for, and the thanking is where it has stopped
+plain building | The embassy wing has been extended into the car park with temporary buildings
+wry trade | One delegation has offered to take some of the other delegations' gifts off our hands, for a fee
+plain people | The interpreters are working in shifts and one of them has started dreaming in the visitors' language
+joke stranger | An envoy who arrived to open talks has been here long enough to be invited to the office party
+plain machine | The scanner at the entrance has found the same undeclared item in four different gifts
+wry paper | Thank-you letters are being drafted from a template, and the template has started to show
+plain kit | A robot cleaner has been going round and round a crate that arrived this morning and has not been moved
+wry authority | The diplomatic calendar is now booked beyond the current government's term of office
+plain people | Two envoys from rival delegations have been seated together at lunch three days running and have become friends
+wry complaint people | The cleaning staff would like to know which of the gifts are rubbish
+plain stranger | A delegation arrived that no office had invited, and it was easier to accept their gift than to find out who they were
+wry money | The customs duty on the gifts has been calculated and exceeds the budget of the office receiving them
+plain building | Gifts are being stored in the lift, which has been taken out of service for the purpose
+wry name | Every delegation's name has been spelled wrong at least once on a lanyard
+wry notice authority | Visiting hours for foreign envoys have been introduced and are being ignored
+plain food | Every delegation brought food, and most of it needs refrigerating, and the fridges were full on Monday
+joke machine | The facial recognition at the entrance has started greeting the regular envoys by name
+wry trade | An envoy has proposed that his delegation's gift be counted as an advance against next year's gift, and the finance office has spent a week trying to work out whether that is allowed
+plain people | The head of protocol has been receiving delegations since seven and has now started receiving them standing up, to keep the meetings short
+wry paper | The gift register has grown so large that it now has its own register, listing which volume of the gift register each gift appears in
+plain building | A second reception area has been opened in the old training suite, with a sign on the door and a coffee machine that works only for the first hour
+joke stranger | One ambassador has been waiting so long for an audience that she has been appointed to a committee, and the committee has started meeting in the waiting room
+wry machine | The automated reply to foreign correspondence has been rewritten to sound less automated, and now three delegations have written back to the automated reply by name
+plain kit | The gift from one delegation is a machine for sorting gifts, and it has been unpacked and switched on, and it is the only thing in the building that looks happy
+wry authority | Every new arrival is being told that the court is honoured and cannot receive them yet, and one delegation wants that in writing so that they can frame it
+plain people | A child from one delegation has been taking the other delegations' children on tours of the building, and she now knows it better than half the staff
+wry money | The insurance on the gifts now costs more per month than the building they are kept in
+wry authority | The office that handles incoming delegations has asked for more staff, and the request has gone into the queue behind the delegations, and the delegations have begun asking whether that office has been told they are here
+plain building | Every meeting room in the building has been given over to a delegation, and the staff who used to meet in them now meet standing in the corridor by the lifts, with the visiting envoys walking past and sometimes stopping to listen
+wry stranger | The newest envoy arrived with a long speech of goodwill and a letter of introduction from a government that no longer exists, and he is being received with full honours and given the same slow answer as everyone else
+joke trade | Two delegations have started trading their gifts to each other in the lobby while they wait, and one of them now holds the gift the other brought for us, and has offered to give it to us again
+plain people | The lobby sofas are all taken
+wry machine | The visitor app has crashed
+plain building | The spare offices on the top floor have been furnished with borrowed chairs for envoys who arrived without appointments
+wry trade | The gift shop has started selling copies of the gifts
+plain stranger | One delegation has set up its own reception desk inside ours and is now receiving the delegations that arrive after it
+
+# --- added by the third late-age review: offices, stations, the long view ---
+plain building | Envoys are now waiting in the old mail room, among the parcels
+wry kit | Three envoys share one charger
+plain paper | Visitor passes are being written by hand now
+plain people | Every chair in the atrium has a delegation's coat on it
+plain message | An envoy has been resending his greeting every hour on the hour
+wry time | Every meeting room is booked until Friday, most of them by envoys who wanted somewhere to sit down
+wry sleep | The delegations have drawn up a rota for the one good sofa
+plain haul | A crate marked fragile has served as a desk for three different envoys this week
+plain authority | Protocol has run out of flags and is printing them on paper
+plain stranger | One delegation's gift is a live plant that needs watering, and the only person who waters it is one of their own envoys
+wry people | Two envoys who arrived in the first week are now training the envoys who arrived this week
+wry count | The reception desk now hands out numbered tickets, and the envoys take them without complaint, and the ticket roll has been changed three times since Monday by a facilities man who keeps asking what is going on upstairs
+wry authority | The cleaners have been given a list of the gifts they may throw away, and the list is blank
+plain overheard rumour | The envoys in the lobby are betting on who gets seen first
+plain complaint building | Facilities would like the gifts moved off the emergency exits
+wry notice machine | Envoys are asked not to charge their equipment from the emergency lighting
+wry sleep | An envoy fell asleep in the lift and rode it between floors for most of the afternoon
+joke money kind=mercantile | The trade delegation has started invoicing us for the waiting
+plain people kind=peaceful | They say they are happy to wait, and have brought books
+plain border kind=aggressive | Their security detail has taken over a whole corridor and put up signs of its own
+plain stranger kind=isolationist | They have refused the guest rooms and pitched a small tent in the atrium
+joke kit tone=wry | The gift from one delegation is a book about patience
+
+# enc_cap_ancient — the elders, the store-pit, hides drying for guests who
+# show no sign of going home.
+== enc_cap_ancient eras=ancient
+plain building | The store-pit will not shut
+plain ledger haul | Hides on every drying frame
+plain animal | Another herd came at dawn
+plain authority | The elders have stopped counting
+wry noise | Drums for the first three only
+plain argument | Two spears were planted outside a hut that has guests in it already
+plain sleep | The hides meant for winter are under sleeping strangers
+plain border | A watch-fire was kept burning for people who came a day early
+plain ground | The spring below the camp is being drunk dry by visitors
+wry ledger building | Somebody's hut now holds four carved things and one sleeping man
+wry argument | The elders argued about who sits nearest the fire until it went out
+plain kit | An arrow was given as a token and has already been lost
+plain ledger count | Three parties crossed the ford in two days and none has gone home
+joke complaint people | The old woman minding the visitors has asked to be given fewer visitors
+plain border | Smoke on the far ridge means another lot are walking in
+plain map | A hide painted with strangers' marks hangs where nobody looks at it
+plain animal | The herd that came as a gift has eaten the grass down to the mud, and the boy who was told to mind it has been told to mind three more
+wry overheard authority | The elders have run out of ways to say wait, and the woman who does the saying has been doing it in the doorway since the light came up
+plain weapon | Spears from four different peoples are stacked against one wall, and every one of them was handed over with a speech that had to be listened to
+wry ledger food | The store-pit holds a great deal that nobody intends to eat, including two sacks of seed that came from people who do not grow anything here
+plain complaint sleep | Guests have been sleeping under the hides put by for the cold months, and the woman who put them by has said her piece about it to three separate people
+wry noise | The drums were sounded for the first three arrivals and for none of the six after that, which the sixth lot noticed and mentioned before they had sat down
+wry trade | One of the gifts was traded away the morning after it arrived, for a spear and a hide and a promise of two more hides, and the man who did it has answered four separate people differently about where it went
+plain stranger | The people from the valley brought stone, stayed to watch what was done with the stone, were still watching when the next lot came up the road with more stone, and have now been given a hut of their own
+
+# enc_cap_feudal — the steward, the gate, carts in the yard, heralds arguing
+# about who speaks first.
+== enc_cap_feudal eras=feudal
+plain border | The gate has been left open
+wry ledger haul | Four carts, nobody unloading
+plain building | The undercroft is full of presents
+plain paper | Wax on the wrong parchment
+wry noise | Bells for the third delegation
+plain authority | The steward has stopped going down to meet new arrivals
+wry argument | Two heralds arrived together and argued about which of them speaks first
+plain complaint paper | The clerks have written the same welcome six times this month
+plain town | A muster was called off so the yard could be cleared of wagons
+plain notice authority | The quartermaster has refused to sign for any more of it
+plain border | Riders keep arriving and the pickets have stopped bothering to count
+wry money | The village has begun charging the waiting parties for bread
+plain sleep | An envoy has been given the steward's own room to sleep in
+plain food | Supper was served twice because neither party would sit at one table
+joke noise | A horn was blown for a delegation that had already gone home
+plain machine | Somebody's cart blocked the gate for most of the afternoon
+wry complaint paper | The clerk who keeps the visitors' list has asked in writing to be moved to other work, and the request went to the steward, who has it
+plain haul | Sacks of foreign grain have been stacked against the storehouse wall under a cloth, and the cloth has been taken twice for other uses and put back once
+wry paper | Parchment has run short on account of all the polite refusals, and the clerks are writing the newest ones on the backs of old muster lists
+wry complaint people | The militia turned out to carry chests up two flights of stairs, which was rather less than any of them had in mind when they answered the muster
+plain border | Wagons have been coming up to the gate since before first light, and the gate has been left standing open on the grounds that shutting it and opening it is more work
+wry trade | Somebody regifted a cup at midsummer and it came back to the undercroft within the month, wrapped in better cloth and with a longer letter attached
+joke overheard town | A boy has been paid a coin a day to stand at the gate and tell arriving parties that the hall is being cleaned, which is the fourth day he has said it
+wry religion | The banner hung for the first arrival was taken down for the second, put up again for the third because somebody thought it rude to leave it down, and has been up ever since through two more that nobody bothered to greet
+
+# enc_cap_industrial — the depot, the annexe, freight on the platform, and a
+# telegram that arrived after the people it announced.
+== enc_cap_industrial eras=industrial
+plain building | The annexe roof is leaking
+plain ledger haul | Freight on the platform, unclaimed
+wry ledger paper | Two more crates, no forms
+joke machine | The telephone has been unplugged
+plain count | Nobody signed the delivery book
+wry message | The telegram announcing the delegation arrived a day after the delegation
+plain machine | A whole siding has been given over to somebody's ceremonial engine
+wry notice authority | The foreman was asked to find space and has declined in writing
+plain money | Two men are on the payroll now purely to move boxes about
+plain complaint paper | The depot office has run out of the yellow visitor forms
+wry overheard rumour | Shareholders have been told the reception went off extremely well
+joke message | A wire came in asking whether the previous wire had come in
+plain machine | The lorries arrived at six and are still standing in the yard
+plain notice time | Three delegations have been booked into the same Thursday afternoon
+wry noise | A brass band was hired for the fourth arrival and stood down after one tune
+plain smell | Smoke from the visitors' cigars has filled the upper corridor
+wry ledger paper | Everything has been entered in triplicate, filed in three separate places, and the man who knows which three has been off sick since the second delegation came in
+wry complaint building | The warehouse manager has stopped answering the telephone, on the grounds that every call this week has been about somewhere to put something
+plain money | Two crates of gifts have sat on the platform all week under a tarpaulin, and the station master has begun charging demurrage on them to somebody
+wry complaint machine | The freight elevator has been reserved for gifts until Friday, which means the fourth floor is carrying everything up by hand and has said so loudly
+plain people | A porter has spent two days carrying the same chest between the annexe and the depot office, and nobody has told him to stop because nobody has noticed
+wry name | The visitors' train was met by one man with an umbrella and a sheet of paper, and the sheet of paper had the wrong name on it in a very good hand
+wry town | The company photographer has now been booked for a fifth arrival, and has photographed four sets of visitors standing in front of the same crates, which have been in the annexe long enough to appear in all four
+plain complaint argument | A leak in the annexe roof has reached the stacked crates, and the man who reported it in March has produced the copy of the report he kept, and is going round the offices with it
+
+# enc_cap_digital — the calendar, the lobby, badges, and a drone delivering
+# flowers to a floor nobody works on.
+== enc_cap_digital eras=digital
+plain kit | The visitor badges have run out
+plain count | Reception has four ambassadors waiting
+wry building | The gift closet will not shut
+joke noise | Nobody owns the visiting choir
+plain people | The lobby camera shows a queue
+plain notice time | The delegation has been added to a calendar that has no gaps in it
+plain machine | A drone delivered flowers to a floor that nobody works on
+wry message | The channel for foreign relations has been muted by somebody in it
+plain paper | Two analysts have been assigned to read the same greeting twice
+wry message | The network flagged the fourteenth identical invitation as spam
+wry money | A translation service has been running all morning on an empty room
+plain notice building | The conference room is booked out until the end of the quarter
+plain sleep | Three envoys are in reception and one of them has fallen asleep
+plain name | Somebody printed the wrong name on the welcome screen again
+plain border | Two drones are circling the building waiting for landing clearance
+wry ledger haul | The storage room downstairs now has a spreadsheet of its own
+plain message | An assistant has been moving the same meeting for eleven weeks, and the last four messages about it have gone to a person who left in March
+wry overheard rumour | The uplink was left open through an entire welcome speech, and the far end has since asked, politely, for a copy of what was said afterwards
+plain ledger paper | An analyst has been photographing the gifts for insurance, has got through sixty of them, and has been told that the insurance office wants them photographed against a plain wall
+wry overheard people | The office manager has begun turning arrivals away politely at the door, and has developed a form of words for it that the whole floor can now recite
+wry ledger count | Four identical gift boxes arrived from four different embassies on the same afternoon, and three of them have been opened and one has been put in a cupboard
+plain ledger paper | The security desk stopped logging deliveries at some point on Wednesday, and the log resumed on Thursday in a different hand, with a note about the missing day
+plain complaint argument | A crate of ceremonial hardware is under a desk on the second floor, and the person who sits at that desk has been working with their knees at an angle for nine days and has raised it with facilities three times
+wry complaint food | The parking outside has been taken by diplomatic vehicles since Monday, which is fine, except that the delivery entrance is behind them and the sandwich order has been left at the barrier three days running
+plain message | The embassy inbox is full
+wry machine | The drone pad has a waiting list
+joke message | Their gift is a subscription
+plain people | An analyst has been assigned to track which delegation is angry about waiting, and in what order
+wry machine | The network is carrying so many diplomatic video calls that the rest of the building has gone back to phoning
+plain message | One delegation's greeting has been sent by every channel at once, including the fax
+wry rumour | A livestream of the queue outside the embassy has more followers than the embassy
+plain machine | The gift from one delegation is a server rack, and it arrived switched on
+wry paper | The after-action notes from last week's reception have been circulated as the plan for next week's
+joke machine | A drone carrying a gift has been hovering over the forecourt for six hours because the delivery app needs a signature and the person who can sign is in another meeting
+plain people | An intern has been put in charge of the gift database and has already found three gifts logged by two different people
+wry money | The fusion plant sent over a gift of power credits and the accounts system has no field for it
+plain machine | Every screen in reception is showing one delegation's welcome video on a loop, because it was uploaded first and the setting to change it is somewhere in a menu the receptionist has yet to find
+wry message | The embassy channel has been renamed by one of the delegations, and the new name is a greeting in their language that the analysts are still arguing about
+joke kit | A delegation has sent a humanoid robot as its ambassador, and it has been waiting in reception with perfect patience since Tuesday, and the human envoys have started sitting next to it for company
+
+# --- added by the third late-age review: the building, the city, the network ---
+plain machine | The courier drones are queueing
+plain machine | Reception's wifi has given up
+wry kit | The guest network password is unspellable
+plain message | An ambassador has been on hold since lunch
+wry money | The front desk has started a sweepstake on which delegation leaves first
+wry rumour | One envoy is livestreaming the wait to his audience at home
+plain town | The delegations' cars have taken the road outside and the food trucks have parked in behind them
+plain paper | The office printer jammed on the fortieth welcome letter
+joke kit | One gift is a smart speaker that answers every question anyone asks in the lobby
+plain haul | The gift scanner takes one item at a time, and the queue for it goes back past the lifts
+wry people | The fusion plant's liaison has been waiting in the lobby for so long that he now runs the lobby's coffee rota
+plain rumour | A junior press officer has been told to read every delegation's social accounts for signs of offence
+plain stranger | Two envoys from delegations at war with each other are sharing a charging cable in the corner
+joke message | The embassy liaison's out-of-office reply now runs to three paragraphs and a map of the building
+joke trade | A delegation has hired a lobbyist to lobby for them to be let into the lobby
+wry trade | A food truck outside has named a sandwich after the delegation that has waited longest
+plain authority | Security has stopped scanning the gifts and started photographing them instead
+plain food | The server room is keeping the perishable gifts cold
+wry overheard rumour | The analysts say the third delegation's gift is listening
+wry complaint animal | The night guard wants to know which delegation owns the parrot
+plain notice food | Visiting envoys may use the staff canteen between two and three only
+wry ledger message | The embassy inbox is being answered in the order the mail arrived, and has reached last Tuesday
+wry trade kind=mercantile | The trade envoys set up a pop-up stall in the lobby and sold out by noon
+plain weapon kind=aggressive | Their bodyguards have not taken their sunglasses off indoors
+plain people kind=peaceful | The peace envoys have started volunteering on the front desk
+joke money tone=wry | One delegation has been waiting long enough to qualify for the staff pension scheme
+
+# enc_cap_cosmic — the dock schedule, the manifest, and a gift left in vacuum
+# long enough to become a different shape.
+== enc_cap_cosmic eras=cosmic
+wry building | The forward bay is diplomatic now
+plain ledger border | Three freighters holding at the marker
+plain kit | Somebody welded a shelf up
+plain ledger message | The relay has forty unanswered greetings
+plain haul | Nobody claimed the strapped crate
+plain notice time | The dock schedule has been rewritten twice this shift and once more since
+plain people | A delegation has been in the transit lounge for nine hours
+wry ledger paper | Something on the manifest is listed only as ceremonial
+plain stranger | Two visiting envoys have settled into a maintenance corridor with their bags
+wry haul | A gift was left in vacuum and is now a different shape
+plain food | The reactor deck runs warm, so the perishables went down there
+wry paper | An ambassador has memorised the whole station safety briefing by now
+plain authority | The dock crew have stopped asking anybody who they are
+plain animal | A live animal came aboard and has been given its own cabin
+plain message | Four transponders are broadcasting the same friendly message at once
+wry building | Somebody's ceremonial statue will not go through the hatch
+wry notice authority | The airlock queue has become a matter of protocol, and two junior officers have spent the morning working out an order that offends the smallest number of people
+wry complaint message | A freighter captain has been waiting behind three diplomatic ships since yesterday, and has been on the relay about it four times, and is being answered by a machine
+plain building | The station gardens have been closed for a reception since the middle of last week, and the reception has been moved to next week without the gardens being reopened
+plain ledger paper | The manifest lists ninety crates and describes none of them, and the officer who wrote it has been off shift since the third delegation docked
+wry argument | Two delegations in orbit are refusing to come down in the order the dock has given them, and the dock has stopped offering an order and is now offering times
+wry machine | The hull outside the visitors' berth has been polished twice this month by a crew that has not been outside for any other reason in two years
+wry trade | Rations have been traded off for foreign delicacies that most of the crew will not eat, and the two who will eat them have become very popular at the wrong end of the day
+joke religion | A hologram of somebody's founder stands in a service corridor with its feet in a puddle of condensate, and it has been switched off twice by maintenance and switched back on twice by protocol staff
+plain stranger | More ships are still on approach
+wry time | Their gifts left home centuries ago
+wry people | One envoy is a backup of another
+plain haul | A gift has been placed in orbit because it will not fit through any door on the station
+wry time | The delegation that arrived this morning was sent in answer to a message we have no memory of sending
+plain people | The visiting crews have been given leave on the station and there is nowhere left for them to take it
+wry stranger | One gift is still being uploaded, and it has been uploading since the start of the month
+joke machine | The ship's mind has been asked to arrange the gifts by importance and would first like importance defined
+plain time | A delegation that set out with gifts for our grandparents has arrived, and has been told the gifts will be accepted on their behalf
+wry authority | The treaty that obliges us to receive every delegation was signed by a government that had not expected anyone to come this far
+plain stranger | One of the visiting ships has no crew that anyone has seen, and its gift was delivered by the ship itself, carefully, through the cargo lock
+wry people | An envoy from a civilisation that no longer exists at home wants to stay, and his application will be read at a meeting held once every ten years
+plain haul | The storage ring is full, and the overflow is tethered outside in a long line that can be seen from the observation deck
+wry time | By the time we finish thanking this delegation, the civilisation that sent it will have become a different civilisation
+plain people | The oldest envoy on the station has been waiting for an audience since before the current administrator was born, has outlived three previous ones, and says she is in no hurry
+
+# --- added by the third late-age review: the ring, the fleet, and what is out past it ---
+plain building | The docking ring is full
+plain border | Diplomatic ships are circling the moon
+plain sleep | Every guest berth has two envoys in it
+plain haul | An envoy's gift has been thawing in the cargo bay for a week
+wry ledger count | The air budget has a line for delegations now
+plain sleep | A delegation arrived in cold sleep and has been left asleep until there is a room for it
+plain kit | A spacewalk crew has been sent out to untangle the gift tethers
+joke stranger | One envoy is a swarm and has been asked to wait in a single room
+plain stranger | An ambassador made of light has been given a dark room to wait in, as a courtesy
+wry building | The embassy module was docked at an angle that makes everyone inside it seasick
+wry time | Delegations from three star systems have to be greeted in the order their messages were sent, which was before any of the greeters were born
+plain stranger | The newest delegation arrived as a signal with no ship behind it, and has been living in the station's memory since, taking up a little more of it each day, and the archivists have been told to keep acknowledging it
+wry message | The dock officer has learned a greeting in each envoy's language and gets most of them wrong
+joke haul | One gift is a small moon
+wry overheard rumour | The crews in the transit lounge say one of the envoy ships was here before the station was built
+wry complaint kit | The dock crew want lead-lined gloves for handling the gifts from the hot envoy
+plain notice authority | Visitors are reminded that the observation deck is not a sleeping area
+plain ledger count | Fourteen ships are holding for six free berths
+wry trade | A habitat on the far side of the ring has offered to take the overflow envoys at a nightly rate
+wry trade kind=mercantile | The trade fleet has set up a market in orbit and is selling to the other delegations
+plain weapon kind=aggressive | Their warship has parked with its guns trained on the gift bay and has held that position for three days
+plain stranger kind=isolationist | Their delegation will not dock and speaks only through a small probe
+plain food kind=peaceful | The peace envoys have volunteered for hydroponics duty while they wait
+joke paper tone=wry | The station's gift registry now wants its own seat at the protocol table
+plain stranger | The envoy from the dead world keeps asking whether his world has answered yet

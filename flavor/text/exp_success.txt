@@ -1,0 +1,612 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# ExpeditionSuccess — a party was sent out and it worked.
+#
+# The log line directly above this one already says "<Name> succeeded. Loot:
+# ..." with the amounts. So none of the sentences here say that it worked. They say what came
+# back, who did not, what broke, what the map says now, what the town did about
+# it, and who is already arguing over the share. See catalog.go for the rules.
+#
+# This file is also the VOICE REFERENCE for the other four Moments. What it is
+# trying to be is a quartermaster's book rather than a book of aphorisms:
+# circumstantial, often mundane, occasionally digressive, and funny by accident
+# about one line in seven. The lengths swing on purpose — a four-word line next
+# to a thirty-eight-word one — because uniform rhythm is what made the two
+# previous versions of this catalog read as machine-written.
+
+# --- slot banks --------------------------------------------------------------
+#
+# Noun phrases, lowercase, one tight category per bank. A slot swaps the detail
+# in a sentence; it never changes what the sentence is about. Bank fragments
+# inherit the eras of every skeleton that references them, so anything drawn on
+# from the ungated pool has to be as true of a hunting party as of a boarding
+# crew.
+
+# What they carried in.
+== words exp_success_haul
+the heavy cases
+the bundles
+the crates
+the heavy bags
+the sealed boxes
+the packs
+the whole load
+the last two bundles
+the roped bundles
+the smaller cases
+the long crates
+the unopened bags
+the padded boxes
+the split bags
+the folded canvas
+the heavy end of it
+the burnt crates
+the last of the packs
+
+# A small physical thing that goes wrong or gets lost.
+== words exp_success_kit
+flask
+rope
+knife
+good coat
+tent peg
+spare boot
+spare jacket
+tin cup
+small hammer
+water bottle
+belt knife
+good blanket
+long rope
+brass whistle
+folding knife
+canvas satchel
+spare pin
+pair of gloves
+
+# --- the sentences -----------------------------------------------------------
+
+# exp_success_any fires in every age, so nothing in it may name an era-coded
+# object. People, counting, arguing, sleeping, weather, names and dogs are
+# timeless; carts, uplinks and bulkheads are not.
+== exp_success_any
+# --- short. A fact, and then the sentence stops. ---
+plain wound | Two are limping
+plain ledger count | Nine in, eleven counted
+plain name | Serit slept eleven hours
+plain argument | Everyone wants a share
+plain rumour | Word travelled ahead of them
+plain kit | The rope held
+plain stranger | A stranger walked in behind them
+wry ledger wound | Three teeth between four men
+plain casualty | Two names are gone
+plain sleep | Half of them are asleep sitting up
+plain complaint food | The cook was told nothing
+plain argument | Kel is not speaking to Serit
+wry people | Boots off, then arguing
+plain wound | Somebody has bled on this
+
+# --- mid. The working length: one thing, with enough detail to place it. ---
+wry people | The youngest one has not stopped talking since the moment he got in
+plain stranger | There is a prisoner in the back room who will not give a name
+plain people | The oldest of them sat down in the doorway and would not get up
+wry wound | Two of them have new scars and two versions of how they got them
+plain ledger casualty | The list of names is shorter than it was when they set out
+plain casualty | One of them has decided to stay out there, and they let him
+plain ledger haul slot=exp_success_haul | The load came in whole, and so did ~, which nobody had written down on the way out
+wry ledger count slot=exp_success_haul | Somebody counted ~ twice and got two answers
+plain haul slot=exp_success_haul | There is blood on ~ and nobody is saying whose
+wry argument slot=exp_success_haul | The same man has claimed ~ three separate times today
+wry argument slot=exp_success_haul | Two men are sitting on ~ and will not move off it
+plain kit slot=exp_success_kit | They lost the second ~ on the first night and managed without
+plain town slot=exp_success_kit | A child has been given the broken ~ to play with
+wry overheard rumour slot=exp_success_kit | Somebody left a ~ behind on purpose, or so the story goes
+wry kit slot=exp_success_kit | The only thing that came home whole is a ~
+plain ledger haul | Everything is spread across the floor and being sorted by size
+plain map | The map is longer than it was on the morning they set out, and one whole corner of it is now taken up with a coastline that two of them insist is there and the third says he never saw
+wry town | A child has already made up a song about the whole business
+plain name | There is a name being repeated tonight that nobody knew this morning
+plain ground | Something followed them for two days and then it stopped
+plain weather | The rain started an hour after the last of them was indoors
+wry name | A woman named Serit did most of the work and none of the talking
+wry wound | The wound on the tall one's arm is being described as nothing much
+wry people | Two of them came back wearing boots that belong to somebody else
+plain sleep | The whole lot of them went straight to sleep in the wrong beds
+wry money | Somebody has promised half of it away before it was even counted
+plain argument | Three of them are arguing about who saw the place first
+joke wound | There is a bruise on the tall one shaped exactly like a boot
+wry wound | One lost a tooth out there and considers it a fair swap
+plain building | Every door in the place has been left standing open since noon
+joke notice rumour | Anyone who wants the story told again will have to pay for it
+plain sleep | Nobody has slept and nobody looks likely to start
+joke animal | Something came back with them that no one can identify
+
+# --- long. Circumstantial, subordinated, the way a chronicle actually runs. ---
+wry argument | There was an argument about the share before anyone had washed, another one after the evening meal, and a third this morning involving two people who did not go
+plain people | Two of them have been sat in the corner since they got in, eating without speaking, and the third keeps getting up to check the door
+wry ledger paper | There is a list on the wall of what came back and a shorter list beside it of what was promised, and the two are being compared by strangers all afternoon
+wry wound | The tall one has told everybody that she is fine, has said it while sitting down, and has now been carried indoors by two people she is still telling
+wry map | Kel has explained the route to four separate people and drawn it out each time on the back of the same sheet, and no two of the drawings agree
+wry ledger money | Somebody has been going round asking what each thing is worth, and getting a different number from every person, and writing all of them down
+
+# --- very long. Digressive, specific, a paragraph that forgot to stop. ---
+wry ledger count | The count was done at the door by two people who did not agree, then again in the back room by one who did not care, and the number written up came from a boy nobody had asked
+wry overheard rumour | Word had gone round three days ago that they were all dead, on the authority of a man who heard it from a man who was not there, and that man has found a reason to be out of town since noon
+wry haul | The heaviest of what came in has been left in the passage where it was dropped, because moving it needs four people and every one of the four has found something else that badly needs doing
+
+# --- kind: scouting ---
+plain ledger time kind=scouting | Three days out, two back
+plain border kind=scouting | They counted the lights on the far side and stopped at forty
+wry map kind=scouting | Nobody has been that far and come home still talking
+
+# --- kind: military ---
+plain wound kind=military | The wounded came in first
+plain ledger casualty kind=military | Two dead, nine home
+wry noise kind=military | There was a great deal of shouting on the way in and none of it was orders
+
+# --- tone ---
+wry food tone=triumphant | The drink is already gone
+joke town tone=triumphant | Somebody has decided this deserves a statue
+joke town tone=triumphant | There is dancing and a great deal of it is very bad
+joke rumour tone=wry | Nobody has admitted that the plan was mostly an accident
+joke overheard rumour tone=wry | The version being told tonight has a sea monster in it
+joke ledger count tone=wry | Somebody has worked out that if you count the days generously and the losses charitably, this was the best thing anyone here has done in a decade
+wry rumour tone=wry | It was mostly luck and the two people who know that are keeping quiet
+joke overheard town tone=wry | The men who stayed behind have been telling everyone what they would have done
+
+# --- the order title, in a frame a verb-led name survives ---
+plain notice paper need=subject | The orders marked {subject} came back signed and filthy
+wry notice paper need=subject | Somebody filed the {subject} order under things that worked
+plain notice paper need=subject | A page titled {subject} now has three names crossed out on it
+plain notice paper need=subject | The line that reads {subject} has a thumbprint on it now
+
+# --- the resource, as a thing in a room rather than as a payout ---
+plain money need=res | Nobody wants to sit up guarding the {res} tonight
+plain argument need=res | Two people have already argued about the {res} this evening
+plain money need=res | A little of the {res} has already gone missing
+wry ledger count need=res | Everything is being counted twice and the {res} three times
+plain building need=res | Whatever room the {res} went into first turned out to be damp, so it has been moved once already, and the second room has a lock somebody has lost the key to
+plain money need=res,mass | Nobody around here expected {res_stores} to be this full
+plain ledger count need=res,amount | The count came to {amt_res}, twice, by two different people
+plain overheard count need=res,amount | The number being repeated tonight is {amt_res}
+
+# exp_success_grounded is the part of the old ungated pool whose imagery is a town
+# with lanes, dogs and a washing line: true from the Stone Age to the
+# Modern Age, and wrong on a station. Moved here after a corpus review.
+== exp_success_grounded eras=ancient,feudal,industrial
+plain animal | The dog came back fat
+joke animal | There was a dog with them on the way out that was not with them on the way back, and a different dog with them on the way back that was not with them on the way out, and nobody involved finds this worth discussing
+wry overheard rumour | The story as it stands this evening involves a night crossing, a wolf, a broken bridge and a stranger who gave them directions and would not take payment, and only one of those four things happened
+plain smell | Everything stinks of wet leather
+wry ledger count need=res,amount | Somebody chalked {amt_res} on the wall by the door and somebody else has already rubbed out the last figure and written a bigger one
+wry animal slot=exp_success_haul | The dogs have taken a great interest in ~
+plain animal | They brought a dog back with them and the dog is staying
+plain people | The washing is out and half of it will never be clean again
+wry ledger count | The first count at the door came to nine sacks and the second came to twelve, and the woman who took the second one has gone to bed
+wry overheard rumour | The younger of the two brothers has told the story four times and it has acquired a river, a night crossing and a wolf that were not in the first version
+wry animal | They came in the back way to avoid the fuss, which worked for about four minutes until the dogs started
+plain smell | The blankets are all wet, the heat has been on since noon, and the room now smells of scorched cloth and everyone has stopped mentioning it
+wry complaint kit | Whoever packed the water skins packed nine of them for thirteen people, which was survivable in the cold weeks and will be remembered for years
+plain ground | Mud on everything
+wry people | One of them lost a boot in the mud on the second day, walked the remaining nine days with rags on that foot, and has refused every offer of a replacement pair on the grounds that he has got used to it
+plain casualty | An old man has been at the door since first light asking after a name that is on neither list, and he has had both lists read out to him slowly
+wry ledger paper need=subject | One lamp, one knife, filed under {subject}
+plain food | Salt got into the water
+plain name | Serit walked the last of it on a bad ankle and would not be carried, so the whole lot arrived after dark and found the kitchen shut
+plain noise tone=triumphant | The noise has been going since dusk and shows no sign of stopping
+wry kit | The rope, the good lamp and both spare knives went over the side at the crossing, and the man who let go of them has been reminded of it at every meal since
+plain food | The whole lot came in at dusk without a word to anyone they passed, ate what was left of the evening meal cold, and were asleep before the light had properly gone
+wry rumour need=res | The whole town knew about the {res} before the council did
+plain weapon kind=military | They took the place at dawn and were gone before noon
+wry stranger tone=triumphant | Two people who have never met are toasting each other by the fire, and one of them was not here this morning and cannot say who invited him
+plain town | A boy walked out three miles to meet them on the way in and walked the last of it holding somebody's pack for him
+plain map | A marker was left at the crossing for whoever comes next, cut in at about the height of a man, which several people have already pointed out is the wrong height for when the water is up
+wry complaint paper | Kel wants it written down that he said the hills were passable
+plain ground | The crossing was frozen and they walked over without looking down
+joke map | The far side of the hills has a name now, and it is rude
+plain weapon kind=military | The fighting was short and the walk home took nine days
+plain ground | The last four miles were done in the dark because nobody wanted to make camp that close to home, which everyone now agrees was a poor decision
+plain money | The old man who gave them the crossing wants a share, and he is not wrong to ask, and there is nobody who wants to be the one to tell him no
+wry map kind=scouting | The sketch of the far bank is good enough to work from, which is a considerable improvement on the last one, which was a circle
+wry rumour | The story got better every time it was told on the walk back
+wry overheard map | They have been asked to describe the country beyond the hills and so far have offered a hand gesture, a long silence, and the word steep
+plain sleep | They walked the last mile home without singing, and it was noticed
+plain map kind=scouting | Two of them went up the ridge to see what was on the other side, came back down without saying anything, and went up again the next morning with the third
+plain money need=res | Whoever found the trail wants a bigger share of the {res}
+plain stranger | A woman none of them recognised walked along with them for half a day, said nothing anybody could understand, and turned off at the water without looking back
+plain trade slot=exp_success_kit | Directions were bought off a local for a ~
+plain weather | It rained the whole way
+wry ledger paper | Nobody wrote down the day they crossed the water, so the count of days out is being reconstructed from what people remember eating
+plain people | One of them will not go near water now and will not say why
+plain weapon kind=military | One of them will not put the blade down yet
+wry overheard rumour | Serit has been asked what the country beyond the water is like and has now said, at some length and to four different people, that it is much the same as here except that the birds are wrong
+plain food | The dried meat ran out two days short of home and they walked the rest of it hungry, which is being mentioned rather more often than the distance covered
+wry notice paper need=subject | The orders marked {subject} were read out once at the start, then carried nine days in a wet pack, and can no longer be read out at all
+plain ground | The route home was twice the length of the route out and no explanation has been offered by anybody who walked it
+plain ground | They found a place where the water comes out of the rock cold enough to hurt, and drank until they were sick, and have talked about very little else since
+plain map | They found water where the old marks said there was none
+plain ground | They walked past the place they meant to stop at, then past the next one, and made the whole last stretch in one go, and the reason given for this is that the first one had a smell about it
+plain time | They were three days late because of the water and then two days early once it dropped, so nobody was waiting when they finally came in
+plain casualty | Two were buried on the way out, at a bend in the water that nobody thought to mark, and the man who dug for them cannot now say where it was
+plain haul slot=exp_success_haul | Water got into ~ on the last night out
+plain weapon kind=military | The blades have all been cleaned and put away and the man who did it has been sitting looking at the wall ever since
+
+# --- re-tagged out of the shared pool by the third late-age review: the
+# kitchen, the back door, the walk home. True up to the Modern Age. ---
+plain food | The bread had gone green
+plain people | The cook is singing badly
+joke town | A child is charging admission
+wry people | One of them came back barefoot and will not discuss it
+wry complaint food | They came back a day early, which has upset the kitchen enormously
+plain town | The children were sent to bed and listened from the stairs anyway
+plain money | The old woman who told them where to look would like paying
+plain overheard ground | The water was worse than the fighting, according to all four of them
+plain time | Somebody put a mark on the doorframe for every day they were out, then stopped on the ninth, and has not gone back to finish it
+plain ledger haul | The heavy stuff went into the back room, the light stuff into the front, and one bundle that nobody will claim is sitting in the passage
+wry haul | It took four of them to get the heavy end through the door and it will take six to get it out again when somebody decides where it goes
+plain haul | Two of them have gone straight back out to fetch the load that was cached at the halfway point, on the grounds that somebody else will take it if they wait
+wry ledger haul | Everything that came in wet is hanging up, everything that came in broken is in a pile by the door, and everything that came in whole has already been taken by somebody
+plain food | The evening meal was late because the kitchen had planned for twelve and cooked for twelve, and fifteen came in, two of whom nobody could name, and the whole thing was stretched with water and a great deal of bread
+plain town | A woman has been waiting by the door since the middle of the afternoon with a clean shirt for one of them, and he walked straight past her to the food
+wry ledger haul | Everything came back through the same door within the space of an hour, in no order at all, and the sorting of it has been handed to a boy of about ten who has taken to the work with more seriousness than anyone expected
+wry map kind=scouting | They walked a good deal further than they were told to
+plain map kind=scouting | The new marks on the map are in a shaky hand
+wry notice paper need=subject | Everything filed under {subject} came home muddy, including the paper it was written on, which somebody had folded into a boot
+
+# exp_success_late is the digital and cosmic voice: the field notes have become
+# logs, and the logs have started to notice how long everything takes.
+== exp_success_late eras=digital,cosmic
+wry haul | They came back with more readings than anyone alive will have time to look at
+wry ledger paper | The recovered samples have been filed in a vault designed to outlast everyone with the clearance to open it
+plain ledger count | All nine are home
+wry time | One of them keeps asking what day it is, and each time he is told he writes it on the back of his hand, and by the evening meal both hands were full and he had started on his wrist
+wry map | The map of the region they surveyed is complete and accurate to the metre, and there is nothing on it worth going back for
+joke kit | Their suits went for cleaning and the cleaners sent one of them back with a question
+wry notice authority | Welcome-home drinks are at the usual time in the usual place, and attendance will be noted
+plain people | The youngest of them has asked to see a window
+plain time | Quarantine lasted four hours
+plain people | Everyone passed the medical
+plain haul | The samples are still warm
+wry notice authority | Debrief is postponed indefinitely
+plain ledger kit | Two suits need replacing
+plain smell | Decontamination took three passes
+plain machine | The cameras got all of it
+plain rumour | The footage has already leaked
+wry authority | Their badges still work
+wry complaint money | The pilot wants a raise
+plain notice paper | All personal logs are sealed
+wry food | The coffee ran out first
+plain wound | The medic signed them all off and then sat down for a while
+wry machine | One of them wants the footage deleted, including the parts with himself in it
+plain haul | The sample cases were opened in a sealed room by people wearing three layers of gloves
+wry authority | Their clearance was upgraded before they had finished taking their boots off
+plain time | The mission clock stopped at a time nobody had predicted
+wry paper | A lawyer was waiting at the door with a folder and a pen already uncapped
+plain machine | The recovered hardware is being photographed from every side before anyone is allowed to touch it
+wry notice authority | Press requests are being declined in the order they arrived
+plain people | Three of them want to go back out as soon as possible
+wry ledger paper | The debrief transcript runs to more pages than the mission plan did
+joke machine | The helmet camera on the lead suit was pointed at the floor the whole time
+wry machine | A cleaning robot has been following the returning team up and down the corridor
+joke food | The galley made a cake that none of them are cleared to eat yet
+wry haul | What they brought back has its own security detail now
+plain sleep | They were given a day off and spent it asleep
+plain people | Their families were told the return time and got it wrong by a day
+plain machine | Every screen in the room froze on the same frame of their arrival
+joke people | The official photographs had to be retaken because one of them was smiling
+joke noise | The last hour of comms is mostly one man's personal music
+wry notice paper | Procurement wants a signed statement from each of them about the gloves
+wry kit | Their suits were bagged and sent off for analysis before they were properly out of them
+plain kit | One of them will not take off the wristband they were issued
+plain time | The return window was met to the second
+wry authority | Promotions are being discussed in a meeting they were not invited to
+wry argument | The debrief ran for six hours and covered everything in the mission plan, and then a further hour on the one thing that was not in it
+wry wound | The medical team scanned all of them, found nothing, and scanned them again anyway because the machine had been booked for the whole afternoon
+wry haul | They had been told the recovered material was inert, and the lab that received it has asked them, politely and in writing, where exactly they heard that
+wry paper | The team lead has written a report that praises everyone by name, including one person who stayed behind and is now asking to be taken off it
+plain wound | One of the specialists came home with a cough, and the whole floor has been moved to video calls until the lab can say what it is
+plain kit | Their personal effects were returned to them in clear plastic bags, labelled, and one of them has not opened his yet
+wry machine | The landing video has been watched so often that the playback counter has become a topic of conversation in its own right
+plain name | There is a new name on the wall of the operations room, written in marker beside the mission code, and the question of whether it stays has been put off
+plain people | A junior engineer spent the whole return window watching their vital signs on a screen and was the first one at the door when they came in
+wry machine | The equipment they brought back works perfectly and does something that the equipment they took out with them was never designed to do
+joke notice paper | Every one of them was asked to rate the experience on a scale, and the forms have come back with the scale crossed out
+plain name | The mission patch was designed before launch and has now been reprinted with one fewer name on it
+wry town | They were met by a crowd holding up phones, and the only one of them who waved back has been asked not to do that again
+wry people | The team came back through the doors in the order they had left, which nobody had planned, and the people waiting had to shuffle along the corridor to greet them in the right sequence while pretending that had been the idea
+plain time | Recovery took longer than the mission, between the medical checks, the decontamination, the interviews, a second round of medical checks ordered because the first was done out of sequence, and a long wait for a signature from another floor
+wry kit | The specialist who designed the sampling kit has taken every piece of it apart on a lab table, found nothing wrong, put it back together, and is now sitting with it in front of him as though it might explain itself
+joke rumour | Their return made the evening news as a short item after the weather, and the clip that ran was of the wrong team, which the press office has decided is close enough to leave alone
+wry building | The oldest of the four has been in the business longer than the building they came back to has existed, and he walked through it on the way in looking at the ceilings as if he were checking for damp
+plain sleep | Nobody slept on the flight
+plain ledger count | All sensors accounted for
+wry people | Kel wants his old desk back
+plain kit | The gloves are being burned
+wry notice authority | A statement is being drafted
+plain wound | One cracked rib, one sprain
+joke machine | The autopilot is taking credit
+plain haul | The sample freezer is full and the overflow has gone into the staff fridge with a warning label
+wry people | Serit has started referring to the whole thing as a normal week
+plain map | The survey is already being used to plan the next trip
+wry overheard rumour | The version going round the lifts has them outrunning something
+plain machine | The lead suit's life support ran on reserve for the last stretch and nobody on the ground knew
+wry money | Accounts would like the receipts from a place that does not issue receipts
+plain time | They have been back for a day and are still on the other schedule, eating breakfast at the wrong hour in an empty canteen
+wry paper | The consent forms they signed before leaving have turned out to be for a different mission, and the legal team is treating it as a formality
+plain people | Everyone is home by midnight
+wry authority | The minister wants to shake hands
+plain machine | Every system aboard came back in better shape than the maintenance logs said it left
+wry money | A sponsor's logo on the side of the lead vehicle has been in every shot on the news, and the sponsor wants a bigger logo
+plain people | The medic who cleared them for the trip met them at the door and checked them over again without being asked
+
+# --- added by the third late-age review: offices, stations, the long view ---
+plain haul | Nobody has unpacked yet
+wry people | Their badge photos are two haircuts out of date
+wry name | Serit's desk plant died while she was away, and the office held a vote on whether to tell her before the debrief or after it
+wry haul | Customs held on to one man's belt
+plain ledger count | The sample tubes carry labels in four different hands, and one of the hands was shaking
+plain authority | Security walked them from the door to medical without letting them stop at the vending machines
+plain message | Their inboxes were forwarded to a shared folder that now holds four thousand unread messages
+wry complaint money | The pay system caps a trip at thirty days, and the last nine are going through as a manual claim that needs four signatures
+plain smell | The sealed room smells of cold metal and somebody's orange
+plain wound | The medical officer took a splinter out of one of them that has no business existing where they went, and it is in a dish now with a label on it
+wry map | The survey came in as one file so large that the first three people who tried to open it froze their terminals, and the fourth printed the index and has been reading it on paper at her desk since lunch
+plain kit | One of them brought back a stone for his daughter and declared it on the customs form as a stone
+wry name | The welcome-back message on the lobby screens misspells two of their names
+joke food tone=triumphant | A cake arrived large enough to need a permit
+plain map kind=scouting | The survey grid came back with every square filled in and a note in the margin of one of them
+plain ledger weapon kind=military | Every magazine they signed out came back full
+joke notice paper tone=wry | The press release calls the whole thing routine, in nine hundred words
+plain sleep | Kel slept in the decontamination shower
+
+# exp_success_ancient — fires, herds, hides, spears, the elders.
+== exp_success_ancient eras=ancient
+plain weapon | Two spears came home broken
+plain haul | The hides are stiff with salt
+plain ledger money | The store-pit is full
+plain noise | Drums until dawn
+plain ground | The ford was low
+wry authority | The elders looked at what came back and said nothing useful
+wry animal | They drove a herd back and not all of it is theirs
+wry argument | Somebody has planted a spear outside a doorway that is not his
+plain complaint border | The watch-fire was kept lit three nights for nothing
+plain wound | An arrow came back in a shoulder, still whole
+plain ground | They found a spring on the far side and drank it low
+wry map | The valley beyond has better grass and worse people
+plain notice authority | The elders want the spears counted before anybody eats
+plain building | A new hut is going up before the mud has dried
+plain haul | They brought back stone that rings when you strike it
+plain map | A hide came back with marks on it that nobody can read
+wry name | The old man who knows the ford has been proved right again and is being insufferable about it in the way of a man who has waited years
+plain noise | The drums stopped when the last of them was counted in, and started again an hour later for no reason anybody has explained
+wry weapon | A boy carried a spear the whole way and never once used it, and has been carrying it around the huts all evening in case anybody asks
+plain animal | The herd lost two on the way and the boy who was watching them has been crying since the middle of the afternoon
+wry weather | Three of them walked the last stretch under one hide, which kept the rain off two of them, and there has been discussion about which two
+plain ledger argument | The hides go to the women who worked the last lot, the spears to whoever carried them, and the stone to nobody yet because the elders have not finished arguing
+plain border | Smoke on the ridge turned out to be somebody else's trouble, which was established by two of them walking most of a day toward it and most of a day back
+wry complaint town | The harvest can wait, apparently, because everybody who should be out in it is instead standing around the store-pit looking at hides as though they might change
+
+# exp_success_feudal — carts, gates, bells, clerks, stewards, musters.
+== exp_success_feudal eras=feudal
+plain border | The gate was opened early
+plain machine | One cart came back on three wheels
+plain noise | The bells went at dusk
+plain complaint paper | Wax across the only clean parchment
+plain ledger money | The undercroft is full
+wry ledger count | The quartermaster has counted it and wants it counted again
+plain message | A rider went ahead with the news and beat them in by an hour
+plain complaint paper | The clerks are still writing and supper is going cold
+plain kit | One banner came home in pieces and is being sewn tonight
+wry town | The militia turned out for nothing and are pretending otherwise
+wry complaint haul | The wagons are in the yard and nobody will unload them
+wry overheard rumour | A herald has already made the story longer than it was
+plain town | They came through the village at dusk and woke all of it
+plain border | The pickets saw them coming and rang nothing at all
+plain ledger casualty | The muster roll is two names shorter than it was
+wry notice authority | The steward wants the tally before the men want their supper
+joke noise | A horn went up at the gate and half of it was flat
+wry religion | The village priest has claimed a share and is being ignored
+wry complaint paper | The clerks have been writing since noon, and the steward has sent to the monastery for more ink and a boy who can spell
+joke machine | A cart wheel came off in the yard, at walking pace, in front of about thirty people, and the carter has not been allowed to forget any part of it
+wry people | Two riders came in muddy to the waist and have offered no account of how, and the steward has stopped asking because the answers keep changing
+plain building | The storehouse doors have stood open since noon and there is a boy sitting on a stool beside them who was told to watch and has been watching very hard
+wry complaint town | The harvest stood untouched all afternoon because everybody who should have been in it was up on the wall watching the road, and the steward has said his piece about that
+wry notice noise | The bells go again at first light, by order of nobody anyone can name, and the boy who rang them last night is being watched by several people at once
+
+# exp_success_industrial — depots, sidings, foremen, telegrams, triplicate.
+== exp_success_industrial eras=industrial
+plain time | The depot clock has stopped
+plain ledger haul | Two crates went missing
+plain machine | Mud to the axles
+plain complaint money | The payroll is short again
+wry notice paper | Everything is in triplicate
+plain message | The telegram arrived a full day before the men did
+plain haul | Freight came in on the evening train and sat on the platform
+wry notice authority | The foreman has signed for all of it and gone home
+plain message | Somebody rang the office telephone at two in the morning
+plain message | There is a wire on the foreman's desk that nobody wants to open
+plain building | The annexe is full and they are stacking it in the corridor
+wry rumour | The shareholders will hear a considerably tidier version
+wry noise | The men came off the train singing and were told to stop
+wry complaint building | The warehouse roof leaks and it all went under there anyway
+plain sleep | The telegraph operator has been awake for two days
+wry animal | The depot cat has moved into the new crates
+wry town | A photograph was taken and everybody in it is squinting
+wry ledger count | The foreman's tally and the office tally differ by one crate, and both men have now written to the other explaining, at length, why the difference is not theirs
+wry machine | A rail truck was left uncoupled at the top of the siding and rolled down into the fence at a walking pace, and the fence has been mended and the matter has not
+joke notice message | They telegraphed ahead and the message arrived so badly garbled that the yard spent an afternoon preparing for eleven horses that were never mentioned in the original
+wry wound | Two of the column came home on stretchers and walked off them at the platform, which the doctor has described as a matter he intends to take up with both of them
+wry people | The night shift was told to go home and worked through anyway, and the men who did it have spent the morning making sure everybody knows they did
+joke complaint machine | The siding is blocked until somebody moves the empty trucks, and the man who moves the empty trucks is on the evening train, which cannot get in because the siding is blocked
+wry ledger building | There is a new lock on the warehouse door and three keys were cut for it, and as of this evening two of the three are unaccounted for and the third is in a drawer nobody can open
+
+# exp_success_digital — uplinks, drones, feeds, analysts, channels.
+== exp_success_digital eras=digital
+plain machine | The uplink held
+plain ledger machine | The drone came home with its camera facing backwards
+plain paper | The channel logs are gone
+plain sleep | The floor has been online since the weekend
+plain smell | Coffee on the console
+wry machine | The feed cut at the worst moment and came back at the dullest
+wry argument | Two analysts are still arguing over the same forty seconds
+wry notice paper | The after-action report is longer than the operation was
+wry overheard rumour | Somebody left the channel open and the whole floor listened in
+plain machine | The network went down for six minutes and nobody noticed
+wry people | A junior analyst spotted it first and will never stop saying so
+plain complaint machine | The feed from the second team is still buffering, hours later
+wry machine | One drone came home by a route it had not been given
+plain paper | The uplink logs show a gap that nobody wants to explain
+plain sleep | An analyst went home, slept four hours, and came back in
+wry name | The drone has been given a name and the name has stuck
+plain noise | The night channel was silent for two hours and then very loud
+wry overheard rumour | The drone footage has been watched sixty-odd times this evening, mostly by people who were not on the operation and have opinions about how it went
+wry notice sleep | The after-action briefing has been moved twice, once because the room was taken and once because the man giving it has been asleep at his desk since noon
+wry ledger machine | Two laptops came back and one of them still switches on, which is the better ratio of the two operations this month and is being mentioned as though it were an achievement
+plain casualty | Someone's badge is still on the desk where they left it and the desk has been walked past all afternoon by people who have decided it is not their business
+wry machine | The uplink dish took a stone at some point in the second week and carried on working, and the engineer who bolted it together has said several times that she is not surprised
+wry ledger machine | A second drone was sent out to find the first one, found it, and then both of them came home together at a speed the flight log describes as unusual
+wry overheard rumour | The channel is full of people asking what happened, and the four people who could answer are all asleep, and the two people who are answering were not there
+wry message | The group chat has been renamed
+plain rumour | Their faces are trending
+plain ledger count | Four drones out, four back
+plain machine | The feed never dropped once
+wry argument | Every analyst on the floor has an opinion about the footage, and two of them have the same one
+wry machine | One man's implant logged the whole route at a resolution nobody had asked for
+joke complaint money | The expense claims came in before they did
+plain kit | Their phones were collected at the door and handed back with the storage wiped
+joke rumour | The livestream of their return had more viewers than the livestream of their departure, and most of the comments are about one man's haircut
+plain machine | The server room was cleared so the recovered drives could be copied in private
+wry haul | Two of the drones came back carrying things they had not been sent to carry
+joke notice paper | The after-action deck has forty slides and the fortieth is a photograph of a sandwich
+plain complaint machine | The network team wants to know what they plugged into
+plain map | Their location pings stopped for a day and then resumed a long way from where they stopped
+plain overheard rumour | The ops channel has been busy since noon with people asking whether it is true
+wry people | The analyst who called the route wrong has been sent flowers by the team, and he is trying to decide how to take it
+plain stranger | A drone followed them in from the edge of the city, recorded everything, and belongs to no one anybody can find
+wry paper | The contract that paid for it has a clause about exactly this outcome, and the lawyers have been reading it aloud to each other all morning
+wry complaint machine | Every one of their accounts was locked for security the moment they came back online, and the helpdesk is working through them in the order the tickets arrived
+joke message | The first thing one of them did was check his messages, and there were so many that the phone ran out of battery while it was still loading them
+wry haul | Everything they recovered was copied onto separate drives in separate rooms, and the people holding the keys are not allowed to eat lunch together
+plain building | The whole operation was run from a rented office above a phone shop, which is now being asked for its security footage
+wry people | Their biometrics on the way in matched the ones taken on the way out, and that has become the good news of the day
+wry trade | The fusion plant's own drone team wants to borrow them for a week
+wry machine | The cyber team spent the night pulling apart the code on the device they brought back and found, under the encryption and several layers of decoy, a comment in plain text from the programmer asking whoever read it to say hello to his mother
+
+# --- added by the third late-age review: the building, the city, the network ---
+plain machine | The drone footage is mostly car parks
+plain ledger count | Four passwords reset, one account locked
+wry complaint argument | The analysts want the raw feed and are being given the edited one
+plain haul | A courier on a motorbike brought the last case across the city at rush hour
+wry time | The team's shared calendar still has them out of office until Thursday
+joke map | Kel printed the route on the office printer and it came out in magenta, because the black cartridge has been empty since March
+plain town | Their taxi home was booked by the office and sent to the wrong entrance
+wry money | The uplink bill for the fortnight is on the director's desk under a sticky note that says good work
+plain wound | One of them came home running implant firmware that no clinic in the city will touch
+wry message | The team channel was muted for the afternoon so they could sleep, and forty people unmuted it by evening to say welcome back
+joke money | The reactor team sent flowers and an invoice
+wry town | Traffic cameras caught their van four times on the way in and the fines are already in the post
+wry people | Everyone on the floor had watched the drone feed live, and in the debrief they kept correcting the team's account of its own route
+joke people | The analyst who planned the route has printed the final position report, framed it and hung it by the lifts, and she is often standing near it at odd hours of the day in case anybody has questions
+plain ledger count | The network logs from the trip run to four terabytes
+plain name | Kel's phone had nine hundred notifications and he read every one of them standing in the lobby
+plain food | The office bought pizza for twelve, and there were nine of them and most of the floor
+wry machine | A drone written off on the second day turned up this morning on a loading ramp behind the building, battery flat and camera still running, with forty hours of footage of a car park nobody has had the heart to delete
+joke rumour | Street vendors outside the building are selling their faces on stickers
+plain map kind=scouting | The map layer they built has been pushed to every phone in the department
+
+# exp_success_cosmic — hulls, bays, relays, transponders, airlocks.
+== exp_success_cosmic eras=cosmic
+plain machine | The hull is scored down one side
+plain ledger haul | Bay three is full
+plain haul | Vacuum frost on everything
+plain name | The new scrape along the outer seam already has a nickname
+plain machine | The reactor is still ticking
+wry authority | They came out of orbit hot and the dock crew swore at them
+plain message | The transponder was dead for eleven hours and then it was fine
+plain machine | Something is loose behind a bulkhead and nobody can find it
+plain machine | The airlock cycled twice on the way in
+wry border | The relay picked them up before the watch officer did
+wry ledger message | A freighter crew saw them pass and logged it as debris
+plain people | Two of the crew have not taken the suits off yet
+plain ledger count | The manifest and the bay count differ by one crate
+plain town | The dock lights were left burning all night for them
+wry machine | The bay doors froze half open and were beaten with a wrench
+plain wound | They spent the last day of the run on emergency air
+wry notice border | The transponder code came back wrong and was accepted anyway, because the officer on watch recognised the approach and could not be bothered with the paperwork at that hour
+wry machine | A bulkhead panel came away in somebody's hand three days out and has been held in place since by a strap, a wedge and an agreement not to look at it
+wry notice border | Orbital watch has logged the approach as clean, which the four people who were on the deck at the time have declined, politely and separately, to comment on
+plain complaint smell | Everything in the forward bay smells of scorched insulation and the smell has got into the corridor, the mess and, according to one of them, the food
+wry kit | The dock crew found a boot in the cargo net during the unload and it has been sitting on the ledge by the airlock since, and nobody has claimed it
+wry machine | The hull sensors are reporting the ship as sound while the ship makes a noise every ninety seconds that the engineer has started writing down the timings of
+wry machine | A repair patch made of tape and a cut-down panel is holding a whole compartment, and the inspector who looked at it this morning signed the sheet and left the remarks box empty
+wry notice message | The freighter that lent them fuel at the halfway point would like it back, has said so through the relay four times since yesterday, and is being answered by nobody
+plain machine | The dock logged them home
+wry time | Light-lag makes this old news
+wry people | Their backups were not needed
+wry time | Everyone aboard aged differently
+wry time | Their return signal was sent before most of the people receiving it were born, and the reception was organised by the grandchildren of the people who waved them off
+wry people | One of the crew has asked to be restored from an earlier backup, one taken before the trip, and the request is being considered on its merits
+plain message | The relay had announced their arrival before they came through the airlock
+wry map | They mapped a star system that will not exist in its current form by the time anyone else gets there
+wry argument | Two of them came back with memories of the voyage that do not match the log, and the log is being treated as the authority on the matter
+wry machine | The ship's mind wants a word with the captain about the second week
+plain haul | Their samples were parked in orbit around the station rather than brought inside it
+wry wound | The medical scans show nothing wrong with any of them, and the scans have been told this is suspicious
+wry notice people | Crew rotation lists them as returned, pending confirmation that they are the same crew
+joke money | The freighter that towed them in wants paying in a currency that stopped existing while they were out
+wry message | There is a message in the ship's memory from one of them to herself, dated a year before they launched
+plain haul | Nothing in the cargo bay is behaving the way the manifest says it should
+plain time | Every clock aboard agrees with every other clock aboard and with none of the clocks on the station
+plain name | They came back to a station with a different name on it
+joke complaint people | The navigator has asked for a window seat on the next trip, and the logistics office has started looking into it
+wry machine | Their descent was so clean that orbital traffic control wants it repeated for the training footage
+plain people | One of the crew stood at the observation port for most of the first watch home and would not say what she was looking at
+wry message | They were gone long enough for the language on the station to drift, and the first hour back went on working out that the dock crew's word for the samples meant something close to what they meant, though not close enough for a form
+wry authority | The mission was declared a success by a committee that had been reconstituted in their absence, and the chair who read out the verdict had been a child when they left and seemed nervous about getting their names right
+plain map | The last thing the long-range sensors picked up before the return burn was something moving the wrong way at the edge of the system, and it has been filed for later
+
+# --- added by the third late-age review: the ring, the fleet, and what is out past it ---
+plain town | The hab ring stayed up late for them
+plain smell | Their suits smell of ozone
+plain machine | The docking clamps held on the first try
+plain haul | One of them brought back sand from a world the survey marked as not worth the fuel, and it sits in a jar on the mess table
+plain name | Nothing in the samples has a name yet
+plain people | The station's children lined the observation gallery and waved at a ship that could not see them
+wry time | Two of them came back a few days older than the rest, and the medic has written this down without comment
+plain food | Hydroponics sent up a bowl of fresh tomatoes, one each, with the names written on the stalks in pen
+wry authority | Dock control logged the approach and drew a small star beside it
+wry complaint people | The navigator wants her chair put back where she left it, and the night crew moved it a centimetre
+wry notice money | Customs on the ring wanted a value put on a sealed flask of another star's light, for duty purposes
+plain noise | They brought back a signal from the edge of the system that sounds like singing, and it has been played once in a locked room to four specialists, and all four asked to hear it again without being able to say why
+plain building | The quarantine berth looks out on the planet and the crew have been given the good chairs
+wry trade | Their mission patch is already on a mug in the station shop
+plain ledger kit | Every suit radio worked
+wry ledger time | Four years out, one weekend by the ship's clock
+wry religion | The long-range crew are holding a small wake for the probe they left behind
+plain stranger | Something followed their drive plume out past the gas giant and turned back at the edge of the system, and the log shows the turn, though the watch officer that night saw nothing on her screens
+wry weapon kind=military | Their gunnery officer fired nothing and is being bought drinks anyway
+plain map kind=scouting | The star charts they brought back have three new names on them and one question mark
+plain casualty tone=grim | The empty cryo pod came back strapped in its cradle with the name still on the lid
+wry people | Two of the crew uploaded on the way home to save mass, and the other two carried them back on a drive in a padded case

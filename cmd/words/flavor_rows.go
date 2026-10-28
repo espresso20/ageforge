@@ -2,20 +2,25 @@ package main
 
 import (
 	"fmt"
-	"go/ast"
+	"os"
+	"path"
+	"path/filepath"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/flavor"
 )
 
 // This file reads the flavor catalogs: the sentences each catalog can say,
 // grouped into pools by the ages they fit, and the word lists some of those
 // sentences draw a phrase from.
 //
-// A catalog file declares its pools with pool(), agePool(), agePools() and
-// eraPools(). The reader takes the pool's name and ages from those calls, so a
-// sentence's id is its catalog, its pool and its place in the pool.
+// The catalogs are the text files of flavor/text. The flavor package reads
+// them and says, for each sentence and word, where it is written and what
+// pool it is in; a sentence's id is its catalog, its pool and its place in the
+// pool.
 
 // moment is one flavor catalog: one game situation the package narrates.
 type moment struct {
@@ -30,7 +35,7 @@ type moment struct {
 
 // moments are the catalogs, in the order of the guide. momentOf picks the
 // longest prefix that matches a pool name, so one prefix may start another.
-// TestFlavorPoolsAreAllRead fails when a pool matches none.
+// The read fails when a pool matches none.
 var moments = []*moment{
 	{"exp_success", "expedition_success", "Expedition comes back well", "after an expedition or campaign succeeds", "expedition", "", areaFlavorExp},
 	{"exp_fail", "expedition_fail", "Expedition comes back badly", "after an expedition or campaign fails", "expedition", "", areaFlavorExp},
@@ -60,20 +65,6 @@ var flavorSpans = map[string][2]int{
 	"eraCosmic":     {18, 22},
 }
 
-// eraPoolBuckets are the eight pools eraPools builds (flavor/skeleton.go), in the
-// order of its sentence arguments: the end of each pool's name and the era
-// shorthand that gates it.
-var eraPoolBuckets = []struct{ suffix, eras string }{
-	{"any", "erasAny"},
-	{"grounded", "erasGrounded"},
-	{"late", "erasLate"},
-	{"ancient", "erasAncient"},
-	{"feudal", "erasFeudal"},
-	{"industrial", "erasIndustrial"},
-	{"digital", "erasDigital"},
-	{"cosmic", "erasCosmic"},
-}
-
 // flavorPool is one pool of sentences.
 type flavorPool struct {
 	m      *moment
@@ -85,290 +76,125 @@ type flavorPool struct {
 }
 
 type flavorReader struct {
-	m       *module
-	pools   map[string]*flavorPool // by the variable that holds the sentences
-	setPool map[string]*moment     // by the variable that holds per-age sets (agePools)
-	setPre  map[string]string      // that variable's pool-name prefix, as agePools was given it
-	spans   map[string][]string    // erasAny, erasEarly ... -> spans
-	lists   map[string][]string    // named string lists (tLow, runEndPlainAges)
+	pools   map[string]*flavorPool // by the pool's name
+	order   []*flavorPool          // pools in the order the files list them
 	bankUse map[string][]*row      // word list -> the sentences that draw on it
 	bankLen map[string]int         // word list -> its longest entry
-	bankN   map[string]int
-	made    map[string]*flavorPool // per-age pools, by set variable and first age
-	unread  []string               // pools no moment claims
+	bankN   map[string]int         // word list -> its number of entries
 	byTmpl  map[string]*row        // sentences by the flavor package's own id
-	order   []*flavorPool          // pools in the order the reader finds them
 }
 
-func newFlavorReader(m *module) *flavorReader {
-	fr := &flavorReader{
-		m: m, pools: map[string]*flavorPool{}, setPool: map[string]*moment{}, setPre: map[string]string{},
-		spans: map[string][]string{}, lists: map[string][]string{},
-		bankUse: map[string][]*row{}, bankLen: map[string]int{}, bankN: map[string]int{},
-		made: map[string]*flavorPool{}, byTmpl: map[string]*row{},
+func newFlavorReader() *flavorReader {
+	return &flavorReader{
+		pools:   map[string]*flavorPool{},
+		bankUse: map[string][]*row{},
+		bankLen: map[string]int{},
+		bankN:   map[string]int{},
+		byTmpl:  map[string]*row{},
 	}
-	var files []*srcFile
-	for _, f := range m.files {
-		if f.mode == modeFlavor {
-			files = append(files, f)
-		}
-	}
-	// Named lists first: the era shorthands, the tier sets and the age lists.
-	for _, f := range files {
-		for _, d := range f.ast.Decls {
-			gd, ok := d.(*ast.GenDecl)
-			if !ok {
-				continue
-			}
-			for _, sp := range gd.Specs {
-				vs, ok := sp.(*ast.ValueSpec)
-				if !ok {
-					continue
-				}
-				for i, n := range vs.Names {
-					if i >= len(vs.Values) {
-						if exprText(vs.Type) == "[]era" {
-							fr.spans[n.Name] = nil // declared empty: every span
-						}
-						continue
-					}
-					if cl, ok := vs.Values[i].(*ast.CompositeLit); ok && exprText(cl.Type) == "[]era" {
-						for _, el := range cl.Elts {
-							fr.spans[n.Name] = append(fr.spans[n.Name], exprText(el))
-						}
-						continue
-					}
-					if l := fr.stringList(f, vs.Values[i]); l != nil {
-						fr.lists[n.Name] = l
-					}
-				}
-			}
-		}
-	}
-	// Then the pool declarations.
-	for _, f := range files {
-		ast.Inspect(f.ast, func(n ast.Node) bool {
-			call, ok := n.(*ast.CallExpr)
-			if !ok {
-				return true
-			}
-			id, ok := call.Fun.(*ast.Ident)
-			if !ok || len(call.Args) < 2 {
-				return true
-			}
-			prefix, isLit := stringLit(call.Args[0])
-			if !isLit {
-				return true
-			}
-			mo, bucket := momentOf(prefix)
-			switch id.Name {
-			case "pool", "agePool":
-				if len(call.Args) != 3 {
-					return true
-				}
-				v := exprText(call.Args[2])
-				if mo == nil {
-					fr.unread = append(fr.unread, prefix)
-					return true
-				}
-				p := &flavorPool{m: mo, bucket: bucket, tmpl: prefix}
-				fr.order = append(fr.order, p)
-				if id.Name == "pool" {
-					p.spans = fr.spans[exprText(call.Args[1])]
-				} else {
-					p.ages = fr.stringList(f, call.Args[1])
-					p.spans = spansOfAges(p.ages)
-				}
-				fr.pools[v] = p
-			case "eraPools":
-				if len(call.Args) != 1+len(eraPoolBuckets) {
-					return true
-				}
-				for i, b := range eraPoolBuckets {
-					name := prefix + "_" + b.suffix
-					mo, bucket := momentOf(name)
-					if mo == nil {
-						fr.unread = append(fr.unread, name)
-						continue
-					}
-					p := &flavorPool{m: mo, bucket: bucket, tmpl: name, spans: fr.spans[b.eras]}
-					fr.order = append(fr.order, p)
-					fr.pools[exprText(call.Args[1+i])] = p
-				}
-			case "agePools":
-				if mo == nil {
-					fr.unread = append(fr.unread, prefix)
-					return true
-				}
-				fr.setPool[exprText(call.Args[1])] = mo
-				fr.setPre[exprText(call.Args[1])] = prefix
-			}
-			return true
-		})
-	}
-	// Then the size of each pool, and the number of entries and the longest
-	// entry of each word list.
-	for _, f := range files {
-		for _, u := range m.units(f) {
-			if name, ok := bankOf(u); ok {
-				fr.bankN[name]++
-				if n := len([]rune(u.text)); n > fr.bankLen[name] {
-					fr.bankLen[name] = n
-				}
-			}
-			if s := u.st(); s.typ == "flavor.skel" && s.field == "Text" {
-				if p := fr.poolOf(u); p != nil {
-					p.size++
-				}
-			}
-		}
-	}
-	return fr
 }
 
-// momentOf finds the catalog a pool name belongs to and what is left of the
-// name.
-func momentOf(prefix string) (*moment, string) {
+// flavorFolder is where the catalogs are written, below the module root.
+const flavorFolder = "flavor/text"
+
+// read makes the rows of every text in the catalog files, in the order the
+// files list them. A word-list row says only its list until bankRows has seen
+// the sentences that use it.
+func (fr *flavorReader) read(c *catalog) ([]*row, error) {
+	folder := filepath.Join(c.m.root, filepath.FromSlash(flavorFolder))
+	if _, err := os.Stat(folder); os.IsNotExist(err) {
+		return nil, nil // a partial tree, as the tests use
+	}
+	entries, err := flavor.ReadEntries(os.DirFS(folder))
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range entries {
+		if e.Bank {
+			fr.bankN[e.Pool] = e.Size
+			fr.bankLen[e.Pool] = max(fr.bankLen[e.Pool], utf8.RuneCountInString(e.Text))
+		}
+	}
+	rows := make([]*row, 0, len(entries))
+	for _, e := range entries {
+		file, err := c.m.textFile(path.Join(flavorFolder, e.File))
+		if err != nil {
+			return nil, err
+		}
+		var r *row
+		if e.Bank {
+			r = bankEntryRow(e)
+		} else if r, err = fr.sentenceRow(c, e); err != nil {
+			return nil, err
+		}
+		r.u = textUnit(file, e.Line, e.From, e.To)
+		r.current = e.Text
+		if r.unsure {
+			r.area = areaUnsure
+		}
+		rows = append(rows, r)
+	}
+	return rows, nil
+}
+
+// momentOf finds the catalog a pool name belongs to.
+func momentOf(pool string) *moment {
 	var best *moment
 	for _, mo := range moments {
-		if (prefix == mo.prefix || strings.HasPrefix(prefix, mo.prefix+"_")) && (best == nil || len(mo.prefix) > len(best.prefix)) {
+		if (pool == mo.prefix || strings.HasPrefix(pool, mo.prefix+"_")) && (best == nil || len(mo.prefix) > len(best.prefix)) {
 			best = mo
 		}
 	}
-	if best == nil {
-		return nil, ""
-	}
-	return best, strings.TrimPrefix(strings.TrimPrefix(prefix, best.prefix), "_")
+	return best
 }
 
-// spansOfAges returns the spans a list of age keys falls in.
-func spansOfAges(ages []string) []string {
-	w := sharedWorld()
-	seen := map[string]bool{}
-	var out []string
-	for _, name := range []string{"eraAncient", "eraFeudal", "eraIndustrial", "eraDigital", "eraCosmic"} {
-		sp := flavorSpans[name]
-		for _, a := range ages {
-			if i := w.ageIdx[a]; i >= sp[0] && i <= sp[1] && !seen[name] {
-				seen[name] = true
-				out = append(out, name)
-			}
-		}
+// spansOfEras gives the flavorSpans keys of the eras a pool is held to.
+func spansOfEras(eras []string) []string {
+	var spans []string
+	for _, name := range eras {
+		spans = append(spans, "era"+strings.ToUpper(name[:1])+name[1:])
 	}
-	return out
+	return spans
 }
 
-var theWorld *world
-
-func sharedWorld() *world {
-	if theWorld == nil {
-		theWorld = newWorld()
+// poolOf finds the pool an entry belongs to, and makes it the first time.
+func (fr *flavorReader) poolOf(e flavor.Entry) (*flavorPool, error) {
+	if p, ok := fr.pools[e.Pool]; ok {
+		return p, nil
 	}
-	return theWorld
-}
-
-// stringList resolves an expression to a list of strings: a []string
-// literal, an ages(...) call, or a variable that holds one.
-func (fr *flavorReader) stringList(f *srcFile, e ast.Expr) []string {
-	switch x := e.(type) {
-	case *ast.CompositeLit:
-		if exprText(x.Type) != "[]string" && x.Type != nil {
-			return nil
-		}
-		var out []string
-		for _, el := range x.Elts {
-			out = append(out, fr.m.keyText(f.pkg, el))
-		}
-		return out
-	case *ast.CallExpr:
-		if id, ok := x.Fun.(*ast.Ident); ok && id.Name == "ages" {
-			var out []string
-			for _, a := range x.Args {
-				out = append(out, fr.m.keyText(f.pkg, a))
-			}
-			return out
-		}
-	case *ast.Ident:
-		return fr.lists[x.Name]
+	mo := momentOf(e.Pool)
+	if mo == nil || !strings.HasPrefix(e.ID, "flavor."+mo.key+".") {
+		return nil, fmt.Errorf("the flavor pool %s matches no catalog in moments (cmd/words/flavor_rows.go)", e.Pool)
 	}
-	return nil
-}
-
-// bankOf reports whether a unit is an entry of a word list, and which.
-func bankOf(u *unit) (string, bool) {
-	if len(u.structs) > 0 || !strings.HasSuffix(u.decl, "Banks") || len(u.coll) != 2 || !u.coll[1].isMap {
-		return "", false
-	}
-	return u.coll[1].key, true
-}
-
-// poolOf finds the pool a sentence belongs to.
-func (fr *flavorReader) poolOf(u *unit) *flavorPool {
-	if p, ok := fr.pools[u.decl]; ok && len(u.structs) == 1 {
-		return p
-	}
-	mo, ok := fr.setPool[u.decl]
-	if !ok || len(u.structs) != 2 {
-		return nil
-	}
-	// A per-age set: its ages are the set's first field.
-	set := u.structs[1]
-	var agesExpr ast.Expr
-	for i, el := range set.lit.Elts {
-		if kv, ok := el.(*ast.KeyValueExpr); ok {
-			if exprText(kv.Key) == "ages" {
-				agesExpr = kv.Value
-			}
-		} else if i == 0 {
-			agesExpr = el
-		}
-	}
-	ages := fr.stringList(u.f, agesExpr)
-	if len(ages) == 0 {
-		return nil
-	}
-	key := u.decl + "/" + ages[0]
-	if p, ok := fr.made[key]; ok {
-		return p
-	}
-	p := &flavorPool{m: mo, bucket: ages[0], ages: ages, spans: spansOfAges(ages), tmpl: fr.setPre[u.decl] + "_" + ages[0]}
-	fr.made[key] = p
+	p := &flavorPool{m: mo, bucket: e.Bucket, spans: spansOfEras(e.Eras), ages: e.Ages, size: e.Size, tmpl: e.Pool}
+	fr.pools[e.Pool] = p
 	fr.order = append(fr.order, p)
-	return p
+	return p, nil
 }
 
-// read makes the row for a unit of the flavor package, or says why not. A
-// unit that is neither a catalog sentence nor a word-list entry is left to
-// the code reader ("" for why).
-func (fr *flavorReader) read(c *catalog, u *unit) (*row, string) {
+// bankEntryRow makes the row for an entry of a word list.
+func bankEntryRow(e flavor.Entry) *row {
+	return &row{
+		id:    e.ID,
+		kind:  kindVoice,
+		area:  areaFlavorExp,
+		rules: rulesBank,
+		pool:  e.Size,
+		seen:  seenPool,
+		age:   -1,
+		where: e.Pool,
+	}
+}
+
+// sentenceRow makes the row for a catalog sentence.
+func (fr *flavorReader) sentenceRow(c *catalog, e flavor.Entry) (*row, error) {
+	p, err := fr.poolOf(e)
+	if err != nil {
+		return nil, err
+	}
 	w := c.w
-	if name, ok := bankOf(u); ok {
-		r := &row{
-			id:    fmt.Sprintf("flavor.words.%s.%03d", name, u.coll[0].index+1),
-			kind:  kindVoice,
-			area:  areaFlavorExp,
-			rules: rulesBank,
-			pool:  fr.bankN[name],
-			seen:  seenPool,
-			age:   -1,
-		}
-		// Filled in by bankRows once the sentences that use it are known.
-		r.where = name
-		return r, ""
-	}
-	s := u.st()
-	if s.typ != "flavor.skel" {
-		return nil, ""
-	}
-	if s.field != "Text" {
-		return nil, "a setting of a flavor sentence, not text"
-	}
-	p := fr.poolOf(u)
-	if p == nil {
-		return nil, ""
-	}
 	r := &row{
-		id:    fmt.Sprintf("flavor.%s.%s.%03d", p.m.key, p.bucket, s.coll[0].index+1),
+		id:    e.ID,
 		kind:  kindVoice,
 		area:  p.m.area,
 		rules: rulesSkel,
@@ -376,7 +202,7 @@ func (fr *flavorReader) read(c *catalog, u *unit) (*row, string) {
 		seen:  seenPool,
 		eras:  p.spans,
 	}
-	fr.byTmpl[fmt.Sprintf("%s_%d", p.tmpl, s.coll[0].index)] = r
+	fr.byTmpl[fmt.Sprintf("%s_%d", p.tmpl, e.Index)] = r
 	lo, hi := 1, len(w.ageKeys)
 	if len(p.ages) > 0 {
 		lo, hi = len(w.ageKeys), 1
@@ -412,20 +238,20 @@ func (fr *flavorReader) read(c *catalog, u *unit) (*row, string) {
 	default:
 		sb.WriteString(", in " + w.agesText(lo, hi) + ".")
 	}
-	if kinds := fr.fieldList(u, s, "Kinds"); len(kinds) > 0 {
-		sb.WriteString(" " + kindSentence(p.m, kinds))
+	if len(e.Kinds) > 0 {
+		sb.WriteString(" " + kindSentence(p.m, e.Kinds))
 	}
-	if tones := fr.fieldList(u, s, "Tones"); len(tones) > 0 {
-		sb.WriteString(" Used only for a " + strings.ToLower(strings.Join(tones, " or ")) + " telling.")
+	if len(e.Tones) > 0 {
+		sb.WriteString(" Used only for a " + strings.Join(e.Tones, " or ") + " telling.")
 	}
 	r.max = c.rules.maxLine - 1 // the game adds the full stop
-	if slot := s.sib["Slot"]; slot != "" {
-		sb.WriteString(fmt.Sprintf(" The ~ is replaced by one entry of the word list %s (%d entries, the rows flavor.words.%s.*).", slot, fr.bankN[slot], slot))
-		r.max = c.rules.maxLine - fr.bankLen[slot] // the longest entry may be the one drawn
-		fr.bankUse[slot] = append(fr.bankUse[slot], r)
+	if e.Slot != "" {
+		sb.WriteString(fmt.Sprintf(" The ~ is replaced by one entry of the word list %s (%d entries, the rows flavor.words.%s.*).", e.Slot, fr.bankN[e.Slot], e.Slot))
+		r.max = c.rules.maxLine - fr.bankLen[e.Slot] // the longest entry may be the one drawn
+		fr.bankUse[e.Slot] = append(fr.bankUse[e.Slot], r)
 	}
-	if strings.Contains(u.text, "{") {
-		sb.WriteString(" " + slotSentence(u.text))
+	if strings.Contains(e.Text, "{") {
+		sb.WriteString(" " + slotSentence(e.Text))
 	}
 	sb.WriteString(" The game adds the full stop.")
 	if unanswerable(p) {
@@ -435,7 +261,7 @@ func (fr *flavorReader) read(c *catalog, u *unit) (*row, string) {
 		sb.WriteString(" No catastrophe can strike in the first era, so the game refuses to appease, brace or invite there, and as things stand this line is never reached.")
 	}
 	r.where = sb.String()
-	return r, ""
+	return r, nil
 }
 
 // unanswerable reports whether a pool holds the lines that follow an answer
@@ -456,25 +282,6 @@ func unanswerable(p *flavorPool) bool {
 		}
 	}
 	return true
-}
-
-// fieldList returns the values of a list field of a sentence (Kinds, Tones).
-func (fr *flavorReader) fieldList(u *unit, s structSite, field string) []string {
-	for _, el := range s.lit.Elts {
-		kv, ok := el.(*ast.KeyValueExpr)
-		if !ok || exprText(kv.Key) != field {
-			continue
-		}
-		if cl, ok := kv.Value.(*ast.CompositeLit); ok {
-			var out []string
-			for _, e := range cl.Elts {
-				out = append(out, fr.m.keyText(u.f.pkg, e))
-			}
-			return out
-		}
-		return fr.stringList(u.f, kv.Value)
-	}
-	return nil
 }
 
 // kindSentence says in plain words what a Kinds restriction means.
@@ -611,4 +418,13 @@ func plural(n int, one, many string) string {
 		return "1 " + one
 	}
 	return fmt.Sprintf("%d %s", n, many)
+}
+
+var theWorld *world
+
+func sharedWorld() *world {
+	if theWorld == nil {
+		theWorld = newWorld()
+	}
+	return theWorld
 }

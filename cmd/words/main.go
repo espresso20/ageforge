@@ -9,8 +9,11 @@
 //	go run ./cmd/words vibe-wire [sheet]  write the vibe calls into the source for a sheet's texts (--dry-run to look, --only=ui.input. for a part)
 //
 // The export finds the text by parsing the Go source, so nothing in the game
-// has to register its strings anywhere. The import rewrites the same string
-// literals in place, by position, and runs gofmt over what it touched.
+// has to register its strings anywhere. The flavor sentences, their word lists
+// and the save name words are not in the Go source: they are the lines of the
+// text files flavor/text/*.txt and game/savenames.txt. The import rewrites the
+// same string literals and lines in place, by position, and runs gofmt over the
+// Go it touched.
 package main
 
 import (

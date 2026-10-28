@@ -11,7 +11,7 @@ extend-exclude = [
     # Terminal screenshots stored as JSON: text cut off at column edges.
     "site/docs/screens/",
     # Fantasy name syllables for save names.
-    "game/savenames.go",
+    "game/savenames.txt",
     # Checksums, not words.
     "go.sum",
 ]

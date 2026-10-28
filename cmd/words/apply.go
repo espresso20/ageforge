@@ -119,6 +119,7 @@ func decide(c *catalog, dir string, noSame bool) (*result, error) {
 			return
 		}
 		problems := checkKeep(r, text)
+		problems = append(problems, checkTextLine(r, text)...)
 		if n := len([]rune(text)); r.max > 0 && n > r.max {
 			problems = append(problems, fmt.Sprintf("is %d characters long and the most is %d", n, r.max))
 		}
@@ -286,9 +287,31 @@ func unbalanced(ts []kept) string {
 	return ""
 }
 
-// quote writes text as a Go string literal in the style of the literal it
-// replaces: between backquotes when that one was and the text allows it.
+// checkTextLine holds a rewrite of a line of a plain-text file to what a line
+// can say: one line, and, for a word, not a start the file reads as a comment
+// or a heading.
+func checkTextLine(r *row, text string) []string {
+	if !r.u.f.text {
+		return nil
+	}
+	var out []string
+	if strings.ContainsAny(text, "\r\n") {
+		out = append(out, "has a line break, and it is one line of "+r.u.f.rel)
+	}
+	if r.rules&(rulesBank|rulesSaveNam) != 0 && (strings.HasPrefix(text, "#") || strings.HasPrefix(text, "==")) {
+		out = append(out, "starts with # or ==, which "+r.u.f.rel+" reads as a comment or a heading")
+	}
+	return out
+}
+
+// quote writes text as it goes into the place it replaces: as it is in a
+// plain-text file, and in a Go file as a string literal in the style of the
+// literal it replaces, between backquotes when that one was and the text
+// allows it.
 func quote(u *unit, text string) string {
+	if u.f.text {
+		return text
+	}
 	if u.raw && !strings.ContainsAny(text, "`\r") {
 		return "`" + text + "`"
 	}
@@ -319,6 +342,10 @@ func rewrite(c *catalog, changes []change) (map[string][]byte, error) {
 			}
 			src = append(src[:e.start], append([]byte(e.text), src[e.end:]...)...)
 			last = e.start
+		}
+		if c.m.byRel[rel].text {
+			out[rel] = src
+			continue
 		}
 		formatted, err := format.Source(src)
 		if err != nil {

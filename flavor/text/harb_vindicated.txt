@@ -1,0 +1,165 @@
+# How this file is written (the same in every file of this folder):
+#
+#   A line that starts with # is a comment. Blank lines are skipped.
+#
+#   "== words NAME" starts a noun bank. Each line under it is one entry, written
+#   as it lands in the middle of a sentence: lowercase, no full stop.
+#
+#   "== NAME" starts a pool of sentences. NAME is the pool's name. Add eras=
+#   (ancient, feudal, industrial, digital, cosmic) or ages= (age keys) to hold
+#   the pool to those eras or ages, with commas between them. With neither, the
+#   pool fits every age.
+#
+#   Under a pool, one line is one sentence, written as "tags | text".
+#     text  has no full stop (the game adds it) and at most one ~, where an
+#           entry of the noun bank named by slot= goes. The game fills in
+#           {subject}, {res}, {amt_res} and the other {placeholders}.
+#     tags  a register (plain, wry or joke), a form if it has one (ledger,
+#           complaint, overheard or notice) and a topic, then any of tone=,
+#           kind=, need= and slot=, with commas between several values.
+#
+#   Lines are numbered by their place in the pool or bank, and the numbers are
+#   the row ids of the copy sheets and of the VibeMode script. Add new lines at
+#   the end of a pool: a line put in the middle renumbers every line after it.
+
+# The verdicts, logged when the doom resolves (it strikes or passes by, or a
+# false prophet's window runs out):
+#
+#   - HarbingerVindicated: the harbinger warned and the catastrophe came. The
+#     caller sends Kind: KindFalseProphet when the warning had been invented,
+#     which adds a few lines (ancient and feudal pools) about a fraud proved
+#     right by chance.
+#   - HarbingerSpared: a real harbinger warned and the roll went the player's
+#     way. The danger was real; this is relief, and a little embarrassment.
+#   - HarbingerDiscredited: a false prophet, found out. A false warning is
+#     rolled once per epoch, at the epoch's first age, so it can reach the last
+#     figure of the Stone, Iron and Steel Eras (the Steel Era's is the
+#     Industrial Age's Newsboy, who falls back on the era-neutral pool).
+#
+# The catastrophe has its own text. These sentences are about the WARNING:
+# who remembered it, who apologised for laughing, who wants their candles
+# back. None of them describes the damage.
+
+# --- Vindicated ---------------------------------------------------------------
+
+== harb_vindicated_any
+plain people | The laughing stopped
+plain message | Everyone remembered every word
+wry people | People apologised, awkwardly
+wry argument need=subject | By noon nobody in the settlement could remember having mocked {subject}
+wry message | Every half-remembered word of the warning was suddenly remembered in full
+wry overheard rumour | Several people claimed to have believed it from the start
+plain omen | The warning is being taken apart for everything else it might have meant
+wry rumour | The warning was repeated now in a low voice, word for word, and the jokes that had been made about it were not repeated at all
+plain stranger need=subject | Nobody thanked {subject} in words, though people went and stood nearby, one or two at a time, all afternoon
+wry time | In the days afterwards the warning was retold until it had grown far more precise than it ever was, and the version the children tell now names the day and the hour, which the original never did
+wry complaint argument | Everyone is complaining that nobody listened, mostly to people who also did not listen
+plain notice authority | Orders went out that the warning be kept and repeated as it was given
+
+== harb_vindicated_grounded eras=ancient,feudal,industrial
+plain animal | The dogs had known
+plain family | Children who had played at the end of the world in the lanes were kept indoors
+plain food need=subject | A woman who had called {subject} a madman went round with a basket of bread
+plain omen | The omens were gone over again by the fire, one by one
+wry overheard argument | Down every lane people stopped each other to say that they had said so, and nobody was listening to anybody, and it went on until dark
+plain people | The old men who had sat in the road watching the sky were brought indoors at last, and given the best seat, and asked what else they had noticed
+plain building | The chalk marks that had been put on the doors as a joke before the warning came true were left there, and nobody would scrub them off, and some of them are still there on the doors of houses whose owners have since moved away
+plain notice religion | Candles are to be lit for the warning every year on the day it came
+
+== harb_vindicated_late eras=digital,cosmic
+plain ledger count | Search traffic spiked again
+plain machine | Every screen brought the warning back up
+plain message | The original warning was pinned to the top of every public board
+plain paper | Experts went back over the warning line by line
+wry machine | The logs from before it happened were pulled and studied, and it turned out a surprising number of systems had flagged the danger and been overridden
+plain message | Muted copies of the warning were dug back out of settings menus, and there it was, unchanged, where people had left it
+wry machine | For weeks afterwards the settlement's systems kept surfacing the warning unprompted, in reminders and summaries and at the top of every morning briefing, as though the machines, too, needed everyone to know that they had been told
+wry complaint noise | People complain that the warning should have been louder
+
+== harb_vindicated_ancient eras=ancient
+plain noise | The songs began
+plain authority | The elders were silent
+plain religion need=subject | Offerings were made to {subject}
+wry people | The young men carried the heaviest loads afterwards, and did not have to be told
+plain message | The warning was painted on the rock face so it would never be forgotten
+plain notice food need=subject | By order of the elders {subject} is to be fed for as long as the camp has food
+plain noise | The drums told it to the next camp over
+wry family | A child who had repeated the prophecy in a silly voice was made to repeat it properly
+wry overheard rumour | Everybody now remembers some sign they saw beforehand, a bird or a cloud or a strange stone, and the signs get bigger each time
+plain ground | The hunters went out to the place where the herd had grazed and found the ground as the prophecy had said it would be, and came back without speaking
+plain people | The old women went over every word of the warning at the fire that night, and at each word one of them nodded, and at the end the oldest said it had been a true one and there would be songs
+wry complaint argument | The hunters complain that nobody told them properly
+plain ledger count | Three huts, one pit and most of the herd, as the warning said
+plain ledger animal | The herd has been counted, and the count matches the prophecy
+# a false prophet, proved right by chance
+plain argument kind=false_prophet need=subject | It came out later that {subject} had made the whole warning up, and the elders could not decide whether that made it better or worse
+wry stranger kind=false_prophet | The fraud had guessed right, and nobody in the camp knew what to do about it
+wry overheard rumour kind=false_prophet | The hunters hold that a liar who is right is still a liar, and the old women answer that a liar who is right is still right
+
+== harb_vindicated_feudal eras=feudal
+plain noise | The bells tolled
+wry religion | The priest preached humility
+plain stranger | Pilgrims came to see the place
+plain religion need=subject | The parish had masses said for {subject}
+plain message | The words of the warning were painted over the church door
+wry trade | The alewife who had called it nonsense stood the whole tavern a round
+plain paper | The abbey's chronicle gave it a whole page, with drawings
+plain people | The tavern was empty on Sunday and the church was full
+wry authority | The bishop wrote to the king that the warning had been true in every particular, and asked for money to rebuild, and got some of it
+wry rumour | Ballads about it were being sung in the market within the week, and the ballad-singers got the details wrong in ways that improved them
+joke argument | The guilds argued for a month over whose members had heeded the warning soonest, and it was eventually settled by the mayor, who awarded the honour to the chandlers because they had sold the most candles in the days before it came
+wry complaint authority | The steward complains that everyone is blaming him for not doubling the watch
+plain notice food | It is decreed that the day shall be kept as a day of fasting from now on
+plain overheard time need=subject | In the tavern they say {subject} knew the hour and would not tell it
+# a false prophet, proved right by chance
+plain religion kind=false_prophet | The friars could not settle whether a false prophecy that comes true is still false, and wrote to the bishop
+wry overheard rumour kind=false_prophet need=subject | The alehouse verdict is that {subject} invented every word of it and was then proved right by bad luck
+joke paper kind=false_prophet | The chronicle records the warning as a fraud and the disaster as foretold, on facing pages
+
+== harb_vindicated_industrial eras=industrial
+wry paper | The papers ran a correction
+plain count | The odds had been right
+wry town | Statues were proposed
+plain ledger count | Circulation doubled the next morning
+wry paper | The editorial that had called the forecast alarmist was taken down from the office wall where it had been framed
+joke authority | The mayor gave a speech about heeding warnings, which was long
+plain people | Men stood outside the newspaper offices reading the old editions pinned in the window
+plain money | The bookmakers who had given long odds against it closed for a week
+plain paper | People carried the clipping of the forecast in their wallets
+wry authority | An inquiry was announced into why the published odds had been ignored, and the inquiry was expected to take two years and publish odds of its own
+wry money | The insurance companies honoured the policies they had sold in the week before, and their chairmen gave interviews about the importance of listening to experts
+wry overheard rumour | In the pubs that evening men told each other that they had read the figure in the paper and had believed it, and each of them had in fact turned to the racing page, and each of them knew the others had too
+wry complaint authority | The council complains that the forecast was not specific enough
+plain notice paper | The forecast will now be printed on the front page by order of the council
+
+== harb_vindicated_digital eras=digital
+plain rumour | The forecast went viral again
+plain message | Old screenshots circulated everywhere
+wry machine | The algorithms promoted it again
+wry paper | The fact-check that had called it exaggerated was updated
+wry argument | Every comment that had mocked the warning was being quoted back at its author
+plain people | The model's authors were invited onto every programme
+plain time | People searched for the warning and found it had been right to the hour
+wry money | The companies that had ignored their own risk scores held press conferences about lessons learned, and their share prices went up
+plain name | A petition to make the forecast's authors national heroes had a million signatures by morning
+plain time | Somewhere in the servers the original forecast still sits with its timestamp from before, unaltered, and people keep going back to look at the timestamp as if it might have changed, and it never has
+wry complaint message | The comments say the warning should have been clearer
+wry notice authority | An inquiry into why the warnings were ignored has been announced and livestreamed
+plain ledger count | Downloads of the preparedness app, up nine hundredfold
+wry overheard work | Everyone at work is saying they took it seriously
+
+== harb_vindicated_cosmic eras=cosmic
+plain paper | The logs were sealed
+plain religion | The chaplain said nothing
+plain time | The colony remembered
+plain count | The original estimate was read aloud at the memorial
+plain people | The navigation officer who had called it noise resigned
+plain message | Every deck recorded its own account of the warning
+plain machine | The station's archive tagged the warning as verified
+plain omen | People kept returning to the observation deck where they had watched the dark for signs, and stood there, and did not say what they were looking for now
+wry count | The estimate had been right to within its stated margin, and the engineers had the margin engraved on a plate by the airlock
+plain name | Out in the dark the thing that had been foretold has moved on or gone back to sleep, and the only evidence that the warning was ever given is the colony itself, smaller now, and the list of names read out at every shift change
+wry complaint message | Crew complain the warning was buried under routine traffic
+plain notice authority | All future warnings are to be relayed to every deck immediately
+wry ledger count | Warning received, warning logged, warning overruled, warning correct
+plain overheard rumour need=subject | People on the ring say {subject} should have been listened to

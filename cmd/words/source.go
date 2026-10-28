@@ -24,7 +24,7 @@ var scanned = []struct {
 	dir  string
 	mode scanMode
 }{
-	{"flavor", modeFlavor},
+	{"flavor", modeCode},
 	{"config", modeData},
 	{"boon", modeData},
 	{"theme", modeData},
@@ -49,6 +49,7 @@ var notScanned = map[string]string{
 	"mapmodel/fixture":      "test fixtures",
 	"pkg/nerdfont":          "the icon font installer's glyph table and system paths",
 	"pkg/sprites":           "pixel art",
+	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",
 	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
 	"ui/mapstyle/styletest": "checks shared by the map tests, never shown in the game",
 }
@@ -56,9 +57,8 @@ var notScanned = map[string]string{
 type scanMode int
 
 const (
-	modeCode   scanMode = iota // ordinary code: text is whatever reaches the screen
-	modeData                   // data definitions: text is the fields the tables say
-	modeFlavor                 // the flavor catalogs
+	modeCode scanMode = iota // ordinary code: text is whatever reaches the screen
+	modeData                 // data definitions: text is the fields the tables say
 )
 
 // srcFile is one parsed source file.
@@ -68,7 +68,8 @@ type srcFile struct {
 	pkg     string // package name
 	mode    scanMode
 	src     []byte
-	ast     *ast.File
+	ast     *ast.File       // nil for a plain-text file
+	text    bool            // a plain-text file of player text (see textFile), not Go source
 	imports map[string]bool // names its imports are known by
 }
 
@@ -143,6 +144,29 @@ func loadModule(root string) (*module, error) {
 		}
 	}
 	return m, nil
+}
+
+// textFile loads a plain-text file that holds player text, once: a flavor
+// catalog or the save name words. It is not one of the module's Go files, so
+// the readers never see it as source; its rows point into it by byte position,
+// as the rows of a Go file do, and the import writes a rewrite back there.
+func (m *module) textFile(rel string) (*srcFile, error) {
+	if f, ok := m.byRel[rel]; ok {
+		return f, nil
+	}
+	src, err := os.ReadFile(filepath.Join(m.root, filepath.FromSlash(rel)))
+	if err != nil {
+		return nil, err
+	}
+	dir := path.Dir(rel)
+	f := &srcFile{rel: rel, dir: dir, pkg: path.Base(dir), src: src, text: true}
+	m.byRel[rel] = f
+	return f, nil
+}
+
+// textUnit is the text at bytes [from, to) of a plain-text file.
+func textUnit(f *srcFile, line, from, to int) *unit {
+	return &unit{f: f, start: from, end: to, line: line, text: string(f.src[from:to])}
 }
 
 // goFiles lists a directory's non-test Go files, sorted.

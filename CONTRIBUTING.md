@@ -303,7 +303,7 @@ To add a screen, add a shot to `TestWriteSiteScreens` (`ui/site_screens_test.go`
 
 ### Copy-editing sheets
 
-`cmd/words` is the copy-editing export and import. It writes every line a player reads to CSV sheets, one row a line, and writes the rows that come back edited into the string literals they came from.
+`cmd/words` is the copy-editing export and import. It writes every line a player reads to CSV sheets, one row a line, and writes the rows that come back edited into the string literals (or text file lines) they came from.
 
 ```bash
 go run ./cmd/words export            # the sheets and a README, in words/export/ (git-ignored)
@@ -314,6 +314,8 @@ go run ./cmd/words left              # every string the export leaves out, with 
 ```
 
 The export finds the text by parsing the source (`go/parser`), so nothing has to register a string anywhere. Each row has an `id` that says where the text lives (`tech.calendar.description`, `flavor.expedition_fail.any.017`, `ui.help.commands.plan.build`), a sentence on when a player sees it, the pieces a rewrite must keep (format verbs, slots, style tags, key names, glyphs) and a `yours` column, which is the only one to fill. The import refuses a row, and says why, when its id is gone, the source no longer reads what the sheet's `current` says, a kept piece is missing or out of order, the line runs past its limit, or it breaks one of the copy rules. The rules are the lint tests' own: the import reads their lists out of `ui/copy_guard_test.go`, `ui/stale_copy_test.go`, `ui/docs_lint_test.go`, `config/effect_text_test.go`, `config/event_flavor_test.go` and `flavor/flavor_test.go` when it runs, so a term retired in a lint is refused by the import the same day. It does not run the tests: `go test ./...` comes after it.
+
+The flavor sentences, their word lists and the save name words are not Go literals. They are lines of plain text files, `flavor/text/*.txt` and `game/savenames.txt`, built into the game with `go:embed`, and the first lines of each file say how it is written. The import writes a rewrite into its line there; the row ids count lines, so add new lines at the end of a pool or list.
 
 `words/ledger.json` is committed. It holds the id and a hash of the text for each row an import has applied, which is all `status` needs; commit it with the source changes of the same import. A name's rename is listed with the wiki pages, pictures and tests that still quote the old name, any other rewritten line is listed with the wiki pages that still quote it, and the wiki's tech tables are regenerated (`UPDATE_WIKI=1 go test ./config -run TestTechWikiTables`).
 
