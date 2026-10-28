@@ -296,6 +296,9 @@ func closestCommand(word string) string {
 	sort.Strings(names)
 	best, bestDist := "", limit+1
 	for _, n := range names {
+		if n == word {
+			continue // a command HandleCommand does not run (quit) must not suggest itself
+		}
 		if d := textfmt.EditDistance(word, n); d < bestDist {
 			best, bestDist = n, d
 		}
