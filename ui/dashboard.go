@@ -133,9 +133,10 @@ type Dashboard struct {
 	// The maps: the shared model builder, the Map panel and the dashboard's
 	// mini map. UI goroutine only. mapLocal holds the
 	// map settings when no account is loaded (session only).
-	mapViews *mapViews
-	mapPanel *mapPanel
-	wonders  *wondersView
+	mapViews  *mapViews
+	mapPanel  *mapPanel
+	wonders   *wondersView
+	epochHall *epochHall
 	// researchPanel is the Research panel, the tech tree as a map
 	// (research_panel.go).
 	researchPanel *researchPanel
@@ -251,7 +252,22 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.RegisterWidget("people", vibe.E("ui.dashboard.NewDashboard.11", "People"), d.peoplePanel.open, d.peoplePanel.update)
 	d.registerAdvancePanel()
 	d.overlayMgr.Register("logs", vibe.E("ui.dashboard.NewDashboard.12", "Logs"), logsProvider)
-	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), epochProvider)
+	d.epochHall = &epochHall{
+		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
+		height: func() int { return d.overlayMgr.screenH },
+	}
+	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
+	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
+	d.overlayMgr.SetBackHandler("epoch", d.epochHall.back)
+	d.overlayMgr.SetFooter("epoch", d.epochHall.footer)
+	d.overlayMgr.SetKeyHandler("epoch", func(event *tcell.EventKey) *tcell.EventKey {
+		// tview goroutine, no engine lock held (see the harbinger handler).
+		if !d.epochHall.handleKey(event) {
+			return event
+		}
+		d.overlayMgr.Refresh(d.engine.GetState())
+		return nil
+	})
 	d.overlayMgr.Register("harbinger", vibe.E("ui.dashboard.NewDashboard.14", "Harbinger"), d.harbPanel.provider)
 	d.overlayMgr.SetFooter("harbinger", harbingerFooter)
 	d.overlayMgr.SetKeyHandler("harbinger", func(event *tcell.EventKey) *tcell.EventKey {
