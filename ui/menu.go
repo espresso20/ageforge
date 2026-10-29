@@ -104,6 +104,12 @@ type mainMenu struct {
 	pending bool
 	// later runs fn after the strike's hold (tests run it at once).
 	later func(fn func())
+	// settings: the Settings page is shown in place of the entries.
+	// settingsSel is the row it is on; local holds the display settings
+	// when no account is loaded (they last while the menu does).
+	settings    bool
+	settingsSel int
+	local       *mapSettings
 	// checkUpdates opens the update check (it asks the network).
 	checkUpdates func()
 }
@@ -173,6 +179,9 @@ func (m *mainMenu) fingerprint() string {
 func (m *mainMenu) refresh(force bool) {
 	m.acct = m.engine.Account()
 	m.set = resolveMapSettings(m.acct)
+	if m.acct == nil && m.local != nil {
+		m.set = *m.local
+	}
 	if fp := m.fingerprint(); force || fp != m.read {
 		m.read = fp
 		// What the account has changed (a game was played, a save made or
@@ -254,26 +263,23 @@ func (m *mainMenu) buildViewWith(badges []string) {
 		was = m.view.items[m.view.sel].id
 	}
 	var items []menuItem
-	if m.hasCur {
+	if m.settings {
+		items = m.settingsItems()
+	} else if m.hasCur {
 		items = append(items, menuItem{id: miContinue, label: vibe.Line("ui.menu.buildViewWith.01", "Continue"), key: 'c', extras: m.contExtras, details: m.contDetails})
 	}
-	items = append(items,
-		menuItem{id: miNew, label: vibe.Line("ui.menu.buildViewWith.02", "New game"), key: 'n'},
-		menuItem{id: miLoad, label: vibe.Line("ui.menu.buildViewWith.03", "Load game"), key: 'l'},
-		menuItem{id: miBadges, label: vibe.Line("ui.menu.buildViewWith.04", "Badges"), key: 'b', extras: badges},
-		menuItem{id: miThemes, label: vibe.Line("ui.menu.buildViewWith.05", "Themes"), key: 't'},
-		menuItem{id: miAccounts, label: vibe.Line("ui.menu.buildViewWith.06", "Accounts"), key: 'a'},
-		menuItem{id: miUpdates, label: vibe.Line("ui.menu.buildViewWith.07", "Check for updates"), key: 'u'},
-		menuItem{id: miQuit, label: vibe.Line("ui.menu.buildViewWith.08", "Quit"), key: 'q'},
-	)
+	if !m.settings {
+		items = append(items, m.mainItems(badges)...)
+	}
 	m.view.items = items
-	// Continue is selected by default; without it, New game, which is
-	// then first. A selection made by hand stays where it was put.
 	m.view.sel = 0
 	for i, it := range items {
 		if was != "" && it.id == was {
 			m.view.sel = i
 		}
+	}
+	if m.settings {
+		m.view.sel = min(max(m.settingsSel, 0), len(items)-1)
 	}
 	m.view.forge = !m.hasCur || m.town == nil || m.town.failed
 	m.view.plain = m.set.Tier == mapmodel.TierASCII
@@ -283,6 +289,19 @@ func (m *mainMenu) buildViewWith(badges []string) {
 	if m.update {
 		m.view.versions = []string{m.version + vibe.Line("ui.menu.buildViewWith.09", " · update available (u)"), m.version + vibe.Line("ui.menu.buildViewWith.10", " · update (u)"), m.version}
 	}
+}
+
+// mainItems are the main menu's entries after Continue.
+func (m *mainMenu) mainItems(badges []string) []menuItem {
+	return append([]menuItem(nil),
+		menuItem{id: miNew, label: vibe.Line("ui.menu.buildViewWith.02", "New game"), key: 'n'},
+		menuItem{id: miLoad, label: vibe.Line("ui.menu.buildViewWith.03", "Load game"), key: 'l'},
+		menuItem{id: miBadges, label: vibe.Line("ui.menu.buildViewWith.04", "Badges"), key: 'b', extras: badges},
+		menuItem{id: miSettings, label: vibe.Line("ui.menu.settings.01", "Settings"), key: 's'},
+		menuItem{id: miAccounts, label: vibe.Line("ui.menu.buildViewWith.06", "Accounts"), key: 'a'},
+		menuItem{id: miUpdates, label: vibe.Line("ui.menu.buildViewWith.07", "Check for updates"), key: 'u'},
+		menuItem{id: miQuit, label: vibe.Line("ui.menu.buildViewWith.08", "Quit"), key: 'q'},
+	)
 }
 
 // badgeExtras is the Badges entry's right-hand text: how many badges the
@@ -450,7 +469,22 @@ func (m *mainMenu) InputHandler() func(event *tcell.EventKey, setFocus func(p tv
 			return
 		}
 		n := len(m.view.items)
+		if m.settings {
+			defer func() { m.settingsSel = m.view.sel }()
+		}
 		switch ev.Key() {
+		case tcell.KeyEsc:
+			if m.settings {
+				m.closeSettings()
+			}
+		case tcell.KeyLeft, tcell.KeyRight:
+			if m.settings {
+				dir := 1
+				if ev.Key() == tcell.KeyLeft {
+					dir = -1
+				}
+				m.changeSetting(m.view.items[m.view.sel].id, dir)
+			}
 		case tcell.KeyUp, tcell.KeyBacktab:
 			m.view.sel = (m.view.sel + n - 1) % n
 		case tcell.KeyDown, tcell.KeyTab:
@@ -527,11 +561,19 @@ func (m *mainMenu) open(id string) {
 	case miBadges:
 		m.leave()
 		openMenuBadges(m.app, m.pages, m.engine, "splash")
-	case miThemes:
+	case miSettings:
+		m.settings = true
+		m.settingsSel = 0
+		m.buildView()
+	case miSetTheme:
 		m.leave()
 		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash")
 		m.pages.AddPage(themePickerPage, page, true, true)
 		m.app.SetFocus(page)
+	case miSetVibe, miSetGlyphs, miSetMotion, miSetMinimap:
+		m.changeSetting(id, 1)
+	case miSetBack:
+		m.closeSettings()
 	case miAccounts:
 		m.leave()
 		page := CreateAccountsPage(m.app, m.pages, m.engine, "splash")

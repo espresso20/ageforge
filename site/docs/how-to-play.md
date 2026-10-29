@@ -22,7 +22,7 @@ An account with no game yet sees the forge and a title page, with **New game** f
 | **New game** | `n` | Asks you to name a civilization, then starts it (see [Starting a new game](saving-and-loading.md#starting-a-new-game)) |
 | **Load game** | `l` | Opens the [Load Game browser](saving-and-loading.md#the-load-game-browser), where you can also mark your main game |
 | **Badges** | `b` | Shows how many badges you hold and the title you wear, and opens the [badge case](account.md#the-badge-case). No game needs to be loaded |
-| **Themes** | `t` | Opens the [theme](themes.md) picker |
+| **Settings** | `s` | Opens a page of display settings, one row each with its value at the right: **Themes** (opens the [theme](themes.md) picker), **VibeMode**, **Map glyphs**, **Motion** and **Minimap**. `Enter` flips a switch, and `←` and `→` step the map glyphs through ascii, unicode and nerd. A change applies and saves at once, as the matching command does. `Esc` returns to the menu |
 | **Accounts** | `a` | Opens the [Accounts panel](account.md#the-accounts-panel): switch, create, back up and wipe accounts, and delete an account's saves |
 | **Check for updates** | `u` | Asks for the latest release (see [Updating](getting-started.md#updating)) |
 | **Quit** | `q` | Leaves the game |

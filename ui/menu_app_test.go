@@ -88,7 +88,7 @@ func TestMenuInTheRunningApp(t *testing.T) {
 	for _, c := range []struct {
 		key  rune
 		page string
-	}{{'t', themePickerPage}, {'l', loadGamePage}, {'a', accountsPage}, {'b', menuBadgesPage}} {
+	}{{'l', loadGamePage}, {'a', accountsPage}, {'b', menuBadgesPage}} {
 		h.key(tcell.KeyRune, c.key)
 		h.waitFor(c.page+" in front", 5*time.Second, func() bool { return h.frontPage() == c.page })
 		if clockRuns() {
@@ -141,8 +141,12 @@ func TestMenuInTheRunningApp(t *testing.T) {
 	// Motion off (the setting is the account's): the next time the menu is
 	// returned to it holds still, with no clock.
 	must(t, acct.SetMotion(false))
+	h.key(tcell.KeyRune, 's')
+	h.waitFor("the Settings page", 5*time.Second, func() bool { return strings.Contains(screen(), "Minimap") })
 	h.key(tcell.KeyRune, 't')
 	h.waitFor("the theme picker", 5*time.Second, func() bool { return h.frontPage() == themePickerPage })
+	h.key(tcell.KeyEsc, 0)
+	h.waitFor("Settings after the picker", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 	h.key(tcell.KeyEsc, 0)
 	h.waitFor("the menu with motion off", 5*time.Second, func() bool { return h.frontPage() == "splash" })
 	h.waitFor("the clock stopping", 3*time.Second, func() bool { return !clockRuns() })
