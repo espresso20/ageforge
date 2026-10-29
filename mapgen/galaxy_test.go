@@ -109,9 +109,10 @@ func TestSectorsFollowTheHomeArm(t *testing.T) {
 	}
 }
 
-// TestSystemsGrowWithTheLog: more buildings light more systems, slowly, and
-// the biggest line stays inside its sector.
-func TestSystemsGrowWithTheLog(t *testing.T) {
+// TestSystemsGrowWithTheCount: more buildings light more systems, steeply
+// enough that a few hundred fill a sector and a handful do not, and the
+// biggest line stays inside its sector.
+func TestSystemsGrowWithTheCount(t *testing.T) {
 	last := 0
 	for _, n := range []int{0, 1, 5, 20, 100, 500, 2000} {
 		got := systemsFor(n, sectorMax)
@@ -120,22 +121,38 @@ func TestSystemsGrowWithTheLog(t *testing.T) {
 		}
 		last = got
 	}
-	if systemsFor(500, sectorMax) > 3*systemsFor(20, sectorMax) {
-		t.Errorf("growth is not logarithmic: 20 lights %d, 500 lights %d", systemsFor(20, sectorMax), systemsFor(500, sectorMax))
+	if systemsFor(200, sectorMax) < 3*systemsFor(15, sectorMax) {
+		t.Errorf("growth is too flat: 15 lights %d, 200 lights %d", systemsFor(15, sectorMax), systemsFor(200, sectorMax))
 	}
 }
 
-// TestStarMapBoundsHoldTheGalaxy: the overview frames the whole galaxy, not
-// just the few systems the town has laid.
-func TestStarMapBoundsHoldTheGalaxy(t *testing.T) {
-	sc := (&Generator{}).Draw(model(state("galactic_age", 4, noon)), 0)
-	b := sc.Bounds
-	for _, p := range NewGalaxy(4).reach() {
-		if p.X < b.X || p.X > b.X+b.W || p.Y < b.Y || p.Y > b.Y+b.H {
-			t.Errorf("bounds %+v do not hold the galaxy corner %v", b, p)
+// TestStarMapBoundsHoldTheTerritory: the overview frames the galaxy's body
+// and every sector, rival and rift cell, and nothing like the whole world.
+func TestStarMapBoundsHoldTheTerritory(t *testing.T) {
+	for _, seed := range []int64{4, 23, 58, 101} {
+		sc := (&Generator{}).Draw(model(state("galactic_age", seed, noon)), 0)
+		b := sc.Bounds
+		in := func(p Pt) bool { return p.X >= b.X && p.X < b.X+b.W && p.Y >= b.Y && p.Y < b.Y+b.H }
+		p := NewStarPlan(seed, model(state("galactic_age", seed, noon)).Catalog)
+		for _, list := range [][]Sector{p.Sectors, p.Rivals} {
+			for _, sec := range list {
+				for _, c := range sec.Cells {
+					if !in(c) {
+						t.Errorf("seed %d: bounds %+v miss the system %v", seed, b, c)
+					}
+				}
+			}
 		}
-	}
-	if b.W < worldW*6/10 || b.H < worldH/3 {
-		t.Errorf("bounds %+v are too small for a galaxy", b)
+		hm := model(state("galactic_age", seed, noon))
+		hm.Harbinger = &mapmodel.Harbinger{Key: "x"}
+		hb := (&Generator{}).Draw(hm, 0).Bounds
+		for _, c := range p.Rift {
+			if c.X < hb.X || c.X >= hb.X+hb.W || c.Y < hb.Y || c.Y >= hb.Y+hb.H {
+				t.Errorf("seed %d: bounds %+v miss the rift cell %v", seed, hb, c)
+			}
+		}
+		if b.W < worldW*5/10 || b.H < worldH/3 || b.W > worldW*9/10 {
+			t.Errorf("seed %d: bounds %+v are the wrong size for a galaxy", seed, b)
+		}
 	}
 }

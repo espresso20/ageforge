@@ -48,12 +48,22 @@ func armSpread(path []Pt, n int) ([]Pt, int) {
 	return out, total
 }
 
-// clusterOffsets are the cells round a hub, nearest first with a little hashed
-// disorder, within an oval twice as wide as it is tall.
+// clusterOffsets are the cells round a hub, in the order they light, within an
+// oval twice as wide as it is tall. They are not a grid: a few clumps stand
+// off the hub, each cell is ranked by how near it is to the hub or a clump
+// with a good deal of hashed disorder, and a third of the cells are left
+// out, so the gaps come uneven and the cluster reads as a cluster of stars.
 func clusterOffsets(seed int64, salt int64, rows int) []Pt {
 	type cand struct {
 		p Pt
 		d int
+	}
+	var clumps []Pt
+	for k := 0; k < 2+roll(3, seed, 351, salt); k++ {
+		clumps = append(clumps, Pt{
+			roll(2*rows+1, seed, 352, salt, int64(k)) - rows,
+			(roll(rows+1, seed, 353, salt, int64(k)) - rows/2) * 2 / 3,
+		})
 	}
 	var cs []cand
 	for dy := -rows; dy <= rows; dy++ {
@@ -62,7 +72,16 @@ func clusterOffsets(seed int64, salt int64, rows int) []Pt {
 			if d == 0 || d > 4*rows*rows {
 				continue
 			}
-			cs = append(cs, cand{Pt{dx, dy}, d*8 + roll(24, seed, 350, salt, int64(dx), int64(dy))})
+			if roll(100, seed, 354, salt, int64(dx), int64(dy)) < 34 {
+				continue
+			}
+			near := d
+			for _, c := range clumps {
+				if dc := (sq(dx-2*c.X) + 4*sq(dy-c.Y)) * 3 / 2; dc < near {
+					near = dc
+				}
+			}
+			cs = append(cs, cand{Pt{dx, dy}, near*8 + d*2 + roll(40*rows, seed, 350, salt, int64(dx), int64(dy))})
 		}
 	}
 	slices.SortStableFunc(cs, func(a, b cand) int { return cmp.Compare(a.d, b.d) })
@@ -196,20 +215,28 @@ func riftPath(seed int64, g *Galaxy) []Pt {
 	return out
 }
 
-// systemsFor is how many systems light for a count of buildings: a log scale,
-// five copies a few systems, five hundred a big dense cluster.
+// systemsFor is how many systems light for a count of buildings: a root scale
+// from one system for a handful to a full cluster for a few hundred, steep
+// enough that a young civilization is a spatter and an old one a settled arm.
 func systemsFor(count, most int) int {
 	if count <= 0 {
 		return 0
 	}
-	l := 0 // four times the log base two, floored
-	for v := count * count * count * count; v > 1; v >>= 1 {
-		l++
-	}
-	return clamp(l-5, 1, most)
+	return clamp(2*isqrt(count)-2, 1, most)
 }
 
-var _ = mapmodel.LineageOrder
+// territoryCentre is the middle of the home sectors: where the camera starts.
+func (p *Plan) territoryCentre() Pt {
+	if len(p.Sectors) == 0 {
+		return p.Centre
+	}
+	x, y := 0, 0
+	for _, s := range p.Sectors {
+		x += s.Hub.X
+		y += s.Hub.Y
+	}
+	return Pt{x / len(p.Sectors), y / len(p.Sectors)}
+}
 
 // reserved says whether a cell is one a sector or a rival can light, or the
 // home star: the places a wonder's star keeps off.

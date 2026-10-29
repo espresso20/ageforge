@@ -63,3 +63,25 @@ func TestTheCursorVisitsSectorsAndRivals(t *testing.T) {
 		t.Errorf("%d hubs, %d civs and %d districts for %d lines and %d civs", hubs, civs, len(sc.Districts), len(m.Lineages), m.DiscoveredCount())
 	}
 }
+
+// TestAYoungTownIsASpatterAndAnOldOneASettledArm: the early galactic fixture
+// lights clearly fewer systems than the late transcendent one, and starts
+// with a smaller territory to show for it.
+func TestAYoungTownIsASpatterAndAnOldOneASettledArm(t *testing.T) {
+	fixture.WithTheme(t, "forge")
+	systems := func(age string, scale float64) int {
+		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Scale: scale, Wars: 1, Routes: 3})
+		n := 0
+		for th := range thingsOf(New().(*view).scene(Frame{Model: m}).Grid) {
+			if th.Kind == mapgen.KindSector && th.Ref == 1 {
+				n += th.Count // a hub carries the systems lit round it
+			}
+		}
+		return n
+	}
+	early, late := systems("galactic_age", 0.2), systems("transcendent_age", 1)
+	t.Logf("early %d, late %d", early, late)
+	if early == 0 || late < early*8/5 {
+		t.Errorf("an early galactic town lights %d systems, a late transcendent one %d", early, late)
+	}
+}

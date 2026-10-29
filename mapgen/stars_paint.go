@@ -163,11 +163,20 @@ func (f *frame) paintBorders(homes []lit, rivals []rivalSite) {
 	}
 }
 
+// clearCore takes the core's glow from under a system: sectors win, so a
+// cluster stands on the dark and not on the tan.
+func (f *frame) clearCore(p Pt) {
+	if c := &f.g.Cells[at(p.X, p.Y)]; c.Bg.Hue == HCore {
+		c.Bg = P(HNebula, int(c.Bg.Weight)/4)
+	}
+}
+
 // paintSector lights the systems of one line's sector and its hub.
 func (f *frame) paintSector(h lit) {
 	hue := lineHue(h.line)
 	n := len(h.cells)
 	for j, p := range h.cells {
+		f.clearCore(p)
 		if f.fresh && h.fresh {
 			f.g.Cells[at(p.X, p.Y)].Bg = freshTint
 		}
@@ -185,7 +194,9 @@ func (f *frame) paintSector(h lit) {
 			g--
 		}
 		g = clamp(g, 0, 3)
-		f.g.draw(p.X, p.Y, systemGlyphs[g], P(hue, 150+35*g))
+		// a hashed nudge in glyph and brightness: a cluster, not a pattern
+		g = clamp(g+roll(3, f.m.Seed, 370, int64(p.X), int64(p.Y))-1, 0, 3)
+		f.g.draw(p.X, p.Y, systemGlyphs[g], P(hue, 110+30*g+roll(70, f.m.Seed, 371, int64(p.X), int64(p.Y))))
 		f.g.mark(p.X, p.Y, Thing{Kind: KindSector, Key: h.line, Lineage: h.line, Count: n})
 	}
 }
@@ -195,7 +206,8 @@ func (f *frame) paintRival(r rivalSite) {
 	hue := relationHue[r.civ.Relation]
 	thing := Thing{Kind: KindCiv, Key: r.civ.Key}
 	for j, p := range r.cells {
-		glyph, w := '∙', 170
+		f.clearCore(p)
+		glyph, w := '∙', 130+roll(80, f.m.Seed, 372, int64(p.X), int64(p.Y))
 		if j == 0 {
 			glyph, w = '◉', 255
 		} else if j < len(r.cells)/3 {

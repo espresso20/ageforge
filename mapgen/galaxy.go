@@ -244,10 +244,10 @@ func NewGalaxy(seed int64) *Galaxy {
 		for x := 0; x < worldW; x++ {
 			dx, w := s.circle(x-cx, y-cy)
 			d2 := dx*dx + w*w
-			v := soft(bump(d2, s.Core*s.Core*20))*125>>8 + soft(bump(d2, s.Core*s.Core*5))*130>>8
+			v := soft(bump(d2, s.Core*s.Core*6))*80>>8 + soft(bump(d2, s.Core*s.Core*2))*90>>8
 			if s.Bar > 0 {
 				u, t := (dx*ca+w*sa)/1024, (-dx*sa+w*ca)/1024
-				if b := bump(u*u*1000/(s.Bar*s.Bar)+t*t*1000/49, 1000) * 190 >> 8; b > v {
+				if b := bump(u*u*1000/(s.Bar*s.Bar)+t*t*1000/49, 1000) * 110 >> 8; b > v {
 					v = b
 				}
 			}
@@ -294,7 +294,7 @@ func (g *Galaxy) paint(seed int64, arm, dust, core, knot []uint8) {
 			// the core is one warm-white glow that wins over the arm where it
 			// is the stronger, its weight falling smoothly with the distance
 			if c := int(core[i]); c > 6 {
-				if w := (c*215 + (h8(52, x, y)-128)*3) / 255; w > int(bg.Weight) {
+				if w := (c*130 + (h8(52, x, y)-128)*3) / 255; w > int(bg.Weight) {
 					bg = P(HCore, w)
 				}
 			}

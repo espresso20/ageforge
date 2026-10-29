@@ -137,6 +137,9 @@ func TestSpaceHubIsTheHeartOfTheTown(t *testing.T) {
 		f := Frame{Model: m}
 		sc := v.scene(f)
 		v.cur = sc.Centre
+		if age == "galactic_age" || age == "quantum_age" || age == "transcendent_age" {
+			v.cur = mapgen.Pt{X: 120, Y: 48} // the home star stays at the core; the camera starts on the town
+		}
 		if age == "space_age" || age == "interstellar_age" {
 			v.cur = mapgen.Pt{X: sc.Centre.X, Y: firstRoadRow(sc.Grid, sc.Centre.X)}
 		}
