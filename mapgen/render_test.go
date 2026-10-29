@@ -285,6 +285,14 @@ func TestEveryAgeDraws(t *testing.T) {
 					shown++
 				}
 			}
+			if gen.frame(m, 0).st.Scale == Stars { // sectors stand for the buildings
+				shown = 0
+				for _, th := range g.Hit {
+					if g.Things[th].Kind == KindSector {
+						shown++
+					}
+				}
+			}
 			if shown == 0 {
 				t.Errorf("%s at %dx%d: no building in view", age, size[0], size[1])
 			}

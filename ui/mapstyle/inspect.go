@@ -54,6 +54,10 @@ func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 		if trip := tripOf(m, th.Key); trip != nil {
 			return describeMission(trip, th.Key)
 		}
+	case mapgen.KindSector:
+		return describeSector(m, th)
+	case mapgen.KindLane:
+		return describeStarLane(m, th)
 	case mapgen.KindIdle:
 		return describeIdle(m)
 	case mapgen.KindAgent:

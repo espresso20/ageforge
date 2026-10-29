@@ -72,6 +72,10 @@ type Galaxy struct {
 	Dens []uint8
 	// Sky is the background and the stars of every cell of the world.
 	Sky []Cell
+	// Deep is the same sky for a close look: the deep gradient and a few dim
+	// stars, with no arms, no dust, no core and no far galaxies, so that what
+	// stands on it is the only thing with any weight.
+	Deep []Cell
 	// Home is the home arm, core to rim, as cells.
 	Home []Pt
 }
@@ -208,7 +212,7 @@ func soft(b int) int { return b * (512 - b) / 256 }
 func NewGalaxy(seed int64) *Galaxy {
 	s := pickShape(seed)
 	n := worldW * worldH
-	g := &Galaxy{Shape: s, Dens: make([]uint8, n), Sky: make([]Cell, n)}
+	g := &Galaxy{Shape: s, Dens: make([]uint8, n), Sky: make([]Cell, n), Deep: make([]Cell, n)}
 	arm, dust, core, knot := make([]uint8, n), make([]uint8, n), make([]uint8, n), make([]uint8, n)
 	for k := 0; k < s.Arms+s.Faint; k++ {
 		faint := k >= s.Arms
@@ -244,10 +248,10 @@ func NewGalaxy(seed int64) *Galaxy {
 		for x := 0; x < worldW; x++ {
 			dx, w := s.circle(x-cx, y-cy)
 			d2 := dx*dx + w*w
-			v := soft(bump(d2, s.Core*s.Core*20))*125>>8 + soft(bump(d2, s.Core*s.Core*5))*130>>8
+			v := soft(bump(d2, s.Core*s.Core*6))*80>>8 + soft(bump(d2, s.Core*s.Core*2))*90>>8
 			if s.Bar > 0 {
 				u, t := (dx*ca+w*sa)/1024, (-dx*sa+w*ca)/1024
-				if b := bump(u*u*1000/(s.Bar*s.Bar)+t*t*1000/49, 1000) * 190 >> 8; b > v {
+				if b := bump(u*u*1000/(s.Bar*s.Bar)+t*t*1000/49, 1000) * 110 >> 8; b > v {
 					v = b
 				}
 			}
@@ -294,11 +298,21 @@ func (g *Galaxy) paint(seed int64, arm, dust, core, knot []uint8) {
 			// the core is one warm-white glow that wins over the arm where it
 			// is the stronger, its weight falling smoothly with the distance
 			if c := int(core[i]); c > 6 {
-				if w := (c*215 + (h8(52, x, y)-128)*3) / 255; w > int(bg.Weight) {
+				if w := (c*130 + (h8(52, x, y)-128)*3) / 255; w > int(bg.Weight) {
 					bg = P(HCore, w)
 				}
 			}
 			g.Sky[i] = Cell{R: ' ', Fg: P(HStar, 0), Bg: bg}
+			// the close sky: the gradient alone and a thin even scatter of dim
+			// stars, a third of the faint ones and none of the bright, with
+			// no crowding in the arms
+			g.Deep[i] = Cell{R: ' ', Fg: P(HStar, 0), Bg: P(HNebula, tone)}
+			switch dh := int(hash(seed, 63, int64(x), int64(y)) % 1000); {
+			case dh < 14:
+				g.Deep[i].R, g.Deep[i].Fg = '∙', P(HStar, 60+h8(61, x, y)*40/256)
+			case dh < 40:
+				g.Deep[i].R, g.Deep[i].Fg = '·', P(HStar, 50+h8(62, x, y)*40/256)
+			}
 			// three layers of stars, thicker in the arms and the core
 			h := int(hash(seed, 44, int64(x), int64(y)) % 1000)
 			pn, pm, pf := 3*(256+dens*3+kn)/256, 14*(256+dens*5+kn*2)/256, 55*(256+dens*6)/256
@@ -358,37 +372,6 @@ func (g *Galaxy) smudge(seed int64, n int, c Pt) {
 			}
 		}
 	}
-}
-
-// homeNodes are n places along the home arm from near the core out, evenly
-// spaced and nudged a little off the line.
-func (g *Galaxy) homeNodes(seed int64, n int) []Pt {
-	line := g.Home[galArmN/10 : galArmN*88/100]
-	total := 0
-	length := []int{0}
-	for i := 1; i < len(line); i++ {
-		total += isqrt(sq(line[i].X-line[i-1].X) + 4*sq(line[i].Y-line[i-1].Y))
-		length = append(length, total)
-	}
-	var out []Pt
-	taken := map[Pt]bool{{worldW / 2, worldH / 2}: true}
-	j := 0
-	for k := 0; k < n; k++ {
-		want := total * (2*k + 1) / (2 * n)
-		for j < len(line)-1 && length[j] < want {
-			j++
-		}
-		p := line[j]
-		for try := 0; ; try++ {
-			q := Pt{p.X + roll(5, seed, 330, int64(k), int64(try)) - 2, p.Y + roll(3, seed, 331, int64(k), int64(try)) - 1}
-			if inWorld(q.X, q.Y) && !taken[q] {
-				taken[q] = true
-				out = append(out, q)
-				break
-			}
-		}
-	}
-	return out
 }
 
 func sq(v int) int { return v * v }

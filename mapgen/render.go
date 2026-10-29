@@ -25,6 +25,7 @@ type frame struct {
 	sites    []site
 	fresh    bool   // light what is new since the last visit
 	district string // the building line in focus, if any
+	close    bool   // a close look: the star map leaves its arms off the sky
 	box      Rect   // the edge of the picture, once worked out
 	night    int    // 0 day .. 256 full night
 	placed   []placed

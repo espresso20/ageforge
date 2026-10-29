@@ -74,6 +74,9 @@ func (p *Plan) place(m *mapmodel.Model) []placed {
 		pl   placed
 		rank int
 	}
+	if p.Scale == Stars { // the star map has sectors, not parcels
+		return nil
+	}
 	owner := map[int]claim{}
 	stand := func(b *mapmodel.Building, instance, tier int, ruin bool) {
 		line := lineOf[b.Lineage]

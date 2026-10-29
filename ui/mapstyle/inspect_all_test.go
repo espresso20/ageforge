@@ -42,6 +42,10 @@ func TestEverythingInspectsAsItself(t *testing.T) {
 	}
 }
 
+// starTraffic are the movers of the star map, which has none drawn since its
+// lanes became line work.
+var starTraffic = map[string]bool{"starship": true, "phase_ship": true, "mote": true}
+
 // TestTrafficInspectsAsWhatItIs: a cart, a car, a ship, a drone: the traffic of
 // every age has a name of its own and a line, not the road's.
 func TestTrafficInspectsAsWhatItIs(t *testing.T) {
@@ -66,11 +70,14 @@ func TestTrafficInspectsAsWhatItIs(t *testing.T) {
 			}
 			seen[th.Key] = true
 		}
-		if agents == 0 {
+		if agents == 0 && age != "galactic_age" && age != "quantum_age" && age != "transcendent_age" { // the star map has lanes, not traffic
 			t.Errorf("%s: no traffic to inspect", age)
 		}
 	}
 	for key := range movers {
+		if starTraffic[key] {
+			continue
+		}
 		if !seen[key] {
 			t.Errorf("no age draws a %s", key)
 		}
@@ -88,9 +95,9 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	want := map[string]map[string]string{
 		"space_age":        {"home": "The homeworld", "tether": "Space elevator", "ring": "Orbital ring", "space": "Open space"},
 		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "A planet of the home system", "orbit": "The home system", "space": "Deep space"},
-		"galactic_age":     {"star": "A star", "route": "Star route", "space": "Between the stars"},
-		"quantum_age":      {"star": "A star", "route": "Star route", "space": "A maybe"},
-		"transcendent_age": {"star": "A star", "space": "Light"},
+		"galactic_age":     {"space": "Between the stars"},
+		"quantum_age":      {"space": "A maybe"},
+		"transcendent_age": {"space": "Light"},
 	}
 	for age, titles := range want {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Wars: 1, Routes: 3})
@@ -130,6 +137,9 @@ func TestSpaceHubIsTheHeartOfTheTown(t *testing.T) {
 		f := Frame{Model: m}
 		sc := v.scene(f)
 		v.cur = sc.Centre
+		if age == "galactic_age" || age == "quantum_age" || age == "transcendent_age" {
+			v.cur = mapgen.Pt{X: 120, Y: 48} // the home star stays at the core; the camera starts on the town
+		}
 		if age == "space_age" || age == "interstellar_age" {
 			v.cur = mapgen.Pt{X: sc.Centre.X, Y: firstRoadRow(sc.Grid, sc.Centre.X)}
 		}

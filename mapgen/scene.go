@@ -14,6 +14,7 @@ type Scene struct {
 	Grid    *Grid
 	Centre  Pt
 	Bounds  Rect // the town: its parcels, plots and laid roads
+	Fill    bool // the overview may scale in fractions, to fill the window (the star map)
 	Targets []Pt // buildings and wonders, nearest the square first
 	// Districts are the building lines that have something standing, in the
 	// order of the legend.
@@ -29,6 +30,7 @@ type Moment struct {
 	Anim, Visit int
 	Fresh       bool
 	District    string
+	Close       bool // finer than the overview: the star map shows its territory on plain dark space
 }
 
 // Draw draws the whole world at animation frame anim.
@@ -39,7 +41,7 @@ func (gen *Generator) Draw(m *mapmodel.Model, anim int) *Scene {
 // DrawAt draws the whole world at a moment.
 func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	f := gen.frame(m, at.Anim)
-	f.visit, f.fresh, f.district = at.Visit, at.Fresh, at.District
+	f.visit, f.fresh, f.district, f.close = at.Visit, at.Fresh, at.District, at.Close
 	f.draw()
 	c := f.plan.Centre
 	slices.SortStableFunc(f.targets, func(a, b Pt) int {
@@ -49,8 +51,15 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	if len(f.sites) > 0 && f.st.Scale != Stars {
 		bounds = f.edge() // the civs stand at the edge of the picture
 	}
-	return &Scene{Grid: f.g, Centre: c, Bounds: bounds, Targets: f.targets, Districts: f.districts()}
+	if f.st.Scale == Stars {
+		c = f.plan.territoryCentre() // the camera starts on the town, not the core
+	}
+	return &Scene{Grid: f.g, Centre: c, Bounds: bounds, Fill: f.st.Scale == Stars, Targets: f.targets, Districts: f.districts()}
 }
+
+// starFrame is how much of the galaxy's reach the overview frames, in percent:
+// the faint rim is dark, and the territory is held in whatever it covers.
+const starFrame = 84
 
 // bounds is the box round everything the town has laid or built, with a
 // margin.
@@ -76,9 +85,23 @@ func (f *frame) bounds() Rect {
 	if f.st.Pads > 0 && f.plan.Port.Rect.W > 0 {
 		grow(f.plan.Port.Rect)
 	}
-	if f.st.Scale == Stars { // the whole galaxy is the map
-		for _, p := range f.plan.Galaxy.reach() {
-			grow(Rect{p.X, p.Y, 1, 1})
+	if f.st.Scale == Stars { // the body of the galaxy is the map, and all the territory
+		r := f.plan.Galaxy.reach()
+		cx, cy := worldW/2, worldH/2
+		for _, p := range r {
+			grow(Rect{cx + (p.X-cx)*starFrame/100, cy + (p.Y-cy)*starFrame/100, 1, 1})
+		}
+		for _, list := range [][]Sector{f.plan.Sectors, f.plan.Rivals} {
+			for _, s := range list {
+				for _, c := range s.Cells {
+					grow(Rect{c.X, c.Y, 1, 1})
+				}
+			}
+		}
+		if f.m.Harbinger != nil {
+			for _, c := range f.plan.Rift {
+				grow(Rect{c.X, c.Y, 1, 1})
+			}
 		}
 	}
 	const margin = 3

@@ -24,10 +24,17 @@ func (f *frame) paintSpace() {
 // paintGalaxy lays down the galaxy of the seed, already painted in the plan.
 func (f *frame) paintGalaxy() {
 	thing := Thing{Kind: KindTerrain, Key: "space"}
-	for i, c := range f.plan.Galaxy.Sky {
+	sky := f.plan.Galaxy.Sky
+	if f.close {
+		sky = f.plan.Galaxy.Deep
+	}
+	for i, c := range sky {
 		x, y := i%worldW, i/worldW
 		if (c.R == '✦' || c.R == '✧') && (f.anim/9+x*7+y*13)%7 == 0 {
 			c.R = '+' // the bright stars take turns to twinkle
+		}
+		if f.close && c.R == '∙' && (f.anim/9+x*7+y*13)%5 == 0 {
+			c.R = '·' // and the dim ones of the close sky blink down a step
 		}
 		f.g.paint(x, y, c)
 		f.g.mark(x, y, thing)
@@ -90,18 +97,20 @@ func (f *frame) paintRelics() {
 		return
 	}
 	for _, w := range f.m.Wonders {
-		if w.Age >= groundAges || !w.Built {
+		if w.Age >= groundAges && f.st.Scale != Stars || !w.Built {
 			continue
 		}
 		for try := 0; try < 60; try++ {
 			p := f.relicSpot(w.Age, try)
-			if f.busy[at(p.X, p.Y)] || f.g.ThingAt(p.X, p.Y).Kind == KindWonder {
+			if f.busy[at(p.X, p.Y)] || f.g.ThingAt(p.X, p.Y).Kind == KindWonder || f.st.Scale == Stars && (!f.sky(p) || f.plan.reserved(p)) {
 				continue
 			}
 			f.g.draw(p.X, p.Y, '★', P(HGold, 255))
 			f.g.mark(p.X, p.Y, Thing{Kind: KindWonder, Key: w.Key})
 			f.targets = append(f.targets, p)
-			f.lights = append(f.lights, p)
+			if !f.close || f.st.Scale != Stars { // the star needs no box of light on plain space
+				f.lights = append(f.lights, p)
+			}
 			break
 		}
 	}

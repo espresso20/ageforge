@@ -3,6 +3,8 @@ package mapgen
 import (
 	"slices"
 	"testing"
+
+	"github.com/espresso20/ageforge/mapmodel"
 )
 
 // TestGalaxyShapesVary: twenty seeds give at least twelve different galaxies,
@@ -74,47 +76,106 @@ func TestGalaxyFillsTheMap(t *testing.T) {
 	}
 }
 
-// TestStarNodesFollowTheHomeArm: every system the town can use lies on the
-// home arm, in the world, with none on another.
-func TestStarNodesFollowTheHomeArm(t *testing.T) {
-	for _, seed := range []int64{4, 7, 23} {
+// TestSectorsFollowTheHomeArm: every sector of the town has its hub on the
+// home arm, in the world, and no two systems anywhere share a cell or sit side
+// by side.
+func TestSectorsFollowTheHomeArm(t *testing.T) {
+	for _, seed := range []int64{4, 7, 23, 58, 101} {
 		p := NewStarPlan(seed, testCatalog)
-		if len(p.Nodes) != starNodes+1 {
-			t.Fatalf("seed %d: %d systems", seed, len(p.Nodes))
+		if len(p.Sectors) != len(mapmodel.LineageOrder) || len(p.Rivals) != rivalSlots {
+			t.Fatalf("seed %d: %d sectors and %d rival places", seed, len(p.Sectors), len(p.Rivals))
 		}
 		seen := map[Pt]bool{}
-		for _, n := range p.Nodes {
-			if !inWorld(n.X, n.Y) || seen[n] {
-				t.Errorf("seed %d: system %v is off the world or doubled", seed, n)
+		for _, sec := range append(slices.Clone(p.Sectors), p.Rivals...) {
+			for _, c := range sec.Cells {
+				if !inWorld(c.X, c.Y) || seen[c] || seen[Pt{c.X - 1, c.Y}] || seen[Pt{c.X + 1, c.Y}] {
+					t.Errorf("seed %d: system %v is off the world, doubled or touching another", seed, c)
+				}
+				seen[c] = true
 			}
-			seen[n] = true
 		}
-		for _, n := range p.Nodes[1:] {
+		for _, sec := range p.Sectors {
 			near := false
 			for _, h := range p.Galaxy.Home {
-				if abs(h.X-n.X) <= 3 && abs(h.Y-n.Y) <= 2 {
+				if abs(h.X-sec.Hub.X) <= 3 && abs(h.Y-sec.Hub.Y) <= 3 {
 					near = true
 					break
 				}
 			}
 			if !near {
-				t.Errorf("seed %d: system %v is not on the home arm", seed, n)
+				t.Errorf("seed %d: hub %v is not on the home arm", seed, sec.Hub)
 			}
 		}
 	}
 }
 
-// TestStarMapBoundsHoldTheGalaxy: the overview frames the whole galaxy, not
-// just the few systems the town has laid.
-func TestStarMapBoundsHoldTheGalaxy(t *testing.T) {
-	sc := (&Generator{}).Draw(model(state("galactic_age", 4, noon)), 0)
-	b := sc.Bounds
-	for _, p := range NewGalaxy(4).reach() {
-		if p.X < b.X || p.X > b.X+b.W || p.Y < b.Y || p.Y > b.Y+b.H {
-			t.Errorf("bounds %+v do not hold the galaxy corner %v", b, p)
+// TestSystemsGrowWithTheCount: more buildings light more systems, steeply
+// enough that a few hundred fill a sector and a handful do not, and the
+// biggest line stays inside its sector.
+func TestSystemsGrowWithTheCount(t *testing.T) {
+	last := 0
+	for _, n := range []int{0, 1, 5, 20, 100, 500, 2000} {
+		got := systemsFor(n, sectorMax)
+		if got < last || got > sectorMax || n > 0 && got < 1 {
+			t.Errorf("%d buildings light %d systems after %d", n, got, last)
+		}
+		last = got
+	}
+	if systemsFor(200, sectorMax) < 3*systemsFor(15, sectorMax) {
+		t.Errorf("growth is too flat: 15 lights %d, 200 lights %d", systemsFor(15, sectorMax), systemsFor(200, sectorMax))
+	}
+}
+
+// TestStarMapBoundsHoldTheTerritory: the overview frames the galaxy's body
+// and every sector, rival and rift cell, and nothing like the whole world.
+func TestStarMapBoundsHoldTheTerritory(t *testing.T) {
+	for _, seed := range []int64{4, 23, 58, 101} {
+		sc := (&Generator{}).Draw(model(state("galactic_age", seed, noon)), 0)
+		b := sc.Bounds
+		in := func(p Pt) bool { return p.X >= b.X && p.X < b.X+b.W && p.Y >= b.Y && p.Y < b.Y+b.H }
+		p := NewStarPlan(seed, model(state("galactic_age", seed, noon)).Catalog)
+		for _, list := range [][]Sector{p.Sectors, p.Rivals} {
+			for _, sec := range list {
+				for _, c := range sec.Cells {
+					if !in(c) {
+						t.Errorf("seed %d: bounds %+v miss the system %v", seed, b, c)
+					}
+				}
+			}
+		}
+		hm := model(state("galactic_age", seed, noon))
+		hm.Harbinger = &mapmodel.Harbinger{Key: "x"}
+		hb := (&Generator{}).Draw(hm, 0).Bounds
+		for _, c := range p.Rift {
+			if c.X < hb.X || c.X >= hb.X+hb.W || c.Y < hb.Y || c.Y >= hb.Y+hb.H {
+				t.Errorf("seed %d: bounds %+v miss the rift cell %v", seed, hb, c)
+			}
+		}
+		if b.W < worldW*5/10 || b.H < worldH/3 || b.W > worldW*9/10 {
+			t.Errorf("seed %d: bounds %+v are the wrong size for a galaxy", seed, b)
 		}
 	}
-	if b.W < worldW*6/10 || b.H < worldH/3 {
-		t.Errorf("bounds %+v are too small for a galaxy", b)
+}
+
+// TestTheCloseSkyIsPlainDarkSpace: the sky for a close look has no core and no
+// bright stars, and thins the backdrop to a fraction of the overview's.
+func TestTheCloseSkyIsPlainDarkSpace(t *testing.T) {
+	for _, seed := range []int64{4, 23, 58} {
+		g := NewGalaxy(seed)
+		stars, deep := 0, 0
+		for i, c := range g.Deep {
+			if c.Bg.Hue == HCore || c.R == '✦' || c.R == '✧' || c.R == '+' || c.R == '◌' {
+				t.Fatalf("seed %d: the close sky holds %q on %v", seed, c.R, c.Bg.Hue)
+			}
+			if g.Sky[i].R != ' ' {
+				stars++
+			}
+			if c.R != ' ' {
+				deep++
+			}
+		}
+		if deep*2 > stars {
+			t.Errorf("seed %d: %d backdrop stars close up against %d in the overview", seed, deep, stars)
+		}
 	}
 }

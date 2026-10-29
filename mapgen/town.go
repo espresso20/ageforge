@@ -121,7 +121,9 @@ func (f *frame) paintTown() {
 	for _, w := range f.wonders() {
 		f.paintWonder(w)
 	}
-	f.paintRelics()
+	if f.st.Scale != Stars {
+		f.paintRelics() // on the star map the territory paints them
+	}
 	f.paintFresh()
 }
 

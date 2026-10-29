@@ -63,13 +63,9 @@ func (f *frame) paintBodies() {
 			}
 		}
 	case Stars:
-		for i, n := range f.plan.Nodes {
-			glyph, ink, key := '✦', P(HStar, 235), "star"
-			if i == 0 {
-				glyph, ink, key = []rune(f.st.Hub[0])[0], f.ink([]rune(f.st.Hub[0])[0], HNone), "home"
-			}
-			f.g.draw(n.X, n.Y, glyph, ink)
-			f.g.mark(n.X, n.Y, Thing{Kind: KindTerrain, Key: key})
-		}
+		f.paintTerritory()
+		n, glyph := f.plan.Centre, []rune(f.st.Hub[0])[0]
+		f.g.draw(n.X, n.Y, glyph, f.ink(glyph, HNone))
+		f.g.mark(n.X, n.Y, Thing{Kind: KindTerrain, Key: "home"})
 	}
 }
