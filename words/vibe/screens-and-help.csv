@@ -2300,3 +2300,38 @@ ui.dashboard.statusLine.18,[gray]Next arc: %s[-]
 ui.badge_case.drawKeys.10,doomscroll
 ui.overlay_plan.planStatusText.01,on deck
 ui.research_tree.renderTree.15,4K zoom
+ui.epoch_card.epochCardText.01,Highlights
+ui.epoch_card.epochCardText.02,Ages
+ui.epoch_card.epochCardText.03,"Done: "
+ui.epoch_card.epochCardText.04,"Now: "
+ui.epoch_card.epochCardText.05,%d more to come
+ui.epoch_card.epochCardText.06,"Ahead: "
+ui.epoch_card.epochCardText.07,Top badges
+ui.epoch_card.epochCardText.08,"No badges yet, we are cooking."
+ui.epoch_card.epochCardText.09,Feats
+ui.epoch_card.epochCardText.10,No feats yet.
+ui.epoch_card.cmdEpoch.01,"Cheat code: epoch (opens the Epoch screen), or epoch card (saves a card to paste into Discord)"
+ui.epoch_card.cmdEpoch.02,"Could not make the data folder: "
+ui.epoch_card.cmdEpoch.03,"Could not save the card: "
+ui.epoch_card.cmdEpoch.04,Your epoch card is saved to %s. Paste it into Discord and flex.
+ui.epoch_hall.footer.02,front page
+ui.epoch_hall.footer.05,page
+ui.epoch_hall.newHallView.01,Population
+ui.epoch_hall.newHallView.02,Buildings
+ui.epoch_hall.newHallView.03,%s of %s
+ui.epoch_hall.newHallView.04,Techs
+ui.epoch_hall.newHallView.05,Wonders
+ui.epoch_hall.newHallView.06,Prestige
+ui.epoch_hall.hallFeats.01,"Catastrophes met: %d, endured %d, succumbed %d"
+ui.epoch_hall.hallFeats.02,Milestones hit: %d of %d
+ui.epoch_hall.hallFeats.03,"Fastest age: %s, done in %s"
+ui.epoch_hall.hallFrontText.01,Highlights
+ui.epoch_hall.hallFrontText.02,Ages
+ui.epoch_hall.hallFrontText.03,%d more to come
+ui.epoch_hall.hallFrontText.04,Top badges
+ui.epoch_hall.hallFrontText.05,"No badges yet, we are cooking."
+ui.epoch_hall.hallFrontText.06,Feats
+ui.epoch_hall.hallFrontText.07,No feats yet. They come with the ages.
+ui.epoch_hall.hallFrontText.08,Type epoch card to save a card you can paste into Discord and flex.
+ui.help.commands.epoch,Open the Epoch screen and gloat
+ui.help.commands.epoch.2,Save a plain-text card of your epoch to paste into Discord

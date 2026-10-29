@@ -325,6 +325,13 @@ func registry() []*Command {
 			Subs: []*Command{{Name: "appease"}, {Name: "brace"}, {Name: "invite", Dangerous: true}}},
 
 		// Game
+		{Name: "epoch", Run: cmdEpoch, Section: secGame, BareOK: true,
+			Panel: vibe.Line("ui.help.panels.epoch", "Epoch progress & catastrophe"),
+			Help: []Usage{
+				{"epoch", vibe.Line("ui.help.commands.epoch", "Open the Epoch screen")},
+				{"epoch card", vibe.Line("ui.help.commands.epoch.2", "Save a plain-text card of your epoch to paste into Discord")},
+			},
+			Subs: []*Command{{Name: "card"}}},
 		{Name: "rates", Run: cmdRates, Section: secGame, Help: []Usage{{"rates", vibe.Line("ui.help.commands.rates", "Show resource rate breakdown")}}},
 		{Name: "status", Run: cmdStatus, Aliases: []string{"s"}, Section: secGame, Help: []Usage{{"status", vibe.Line("ui.help.commands.status", "Show detailed status")}}},
 		{Name: "theme", Run: cmdTheme, Section: secGame, Panel: vibe.Line("ui.help.panels.theme", "Theme picker: palettes & accessibility"),
@@ -405,7 +412,6 @@ func registry() []*Command {
 		panel("milestones", vibe.Line("ui.help.panels.milestones", "Milestone goals & rewards"), "ms"),
 		panel("stats", vibe.Line("ui.help.panels.stats", "Empire statistics")),
 		panel("logs", vibe.Line("ui.help.panels.logs", "Recent game log entries")),
-		panel("epoch", vibe.Line("ui.help.panels.epoch", "Epoch progress & catastrophe")),
 		panel("history", vibe.Line("ui.help.panels.history", "Civilization history timeline")),
 		panel("buildings", vibe.Line("ui.help.panels.buildings", "Built structures by lineage")),
 	}

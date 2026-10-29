@@ -269,6 +269,42 @@ func badgeDigestLines(views []game.BadgeView, sum game.BadgeSummary) []string {
 // so this is the badge's art at its smallest.
 func badgeToast(v game.BadgeView, tier mapmodel.GlyphTier, w int) string {
 	pal := newGridPalette(0, nil)
+	rim := inkCyan
+	if !v.Integrity {
+		_, rim, _ = tierInks(v.Level)
+	}
+	mark := badgeMark(v, tier)
+	head := vibe.Line("ui.badge_list.badgeToast.01", "Badge earned:")
+	name, tierText, desc := v.Name, "", v.Desc
+	if v.Tier != "" {
+		tierText = " (" + v.Tier + ")"
+	}
+	// The mark, a space, the head, a space, the name, the tier, a full stop.
+	fixed := 3 + 1 + runeLen(head) + 1 + runeLen(tierText) + 1
+	if w > 0 && fixed+runeLen(name)+1+runeLen(desc) > w {
+		desc = ""
+	}
+	if room := w - fixed; w > 0 && runeLen(name) > room {
+		name = clipRunes(name, max(room-1, 1)) + "…"
+	}
+	var sb strings.Builder
+	sb.WriteString(mark + " ")
+	sb.WriteString("[" + theme.TagName(theme.RoleAccent) + "::b]" + head + theme.Reset + " ")
+	sb.WriteString("[" + theme.TagName(theme.RoleBright) + "::b]" + lit(name) + theme.Reset)
+	if tierText != "" {
+		sb.WriteString(theme.HexTag(theme.Legible(inkValue(rim, pal.light), pal.bg, 4.5)) + tierText + "[-]")
+	}
+	sb.WriteString(".")
+	if desc != "" {
+		sb.WriteString(" " + lit(desc))
+	}
+	return sb.String()
+}
+
+// badgeMark is a badge in three cells: its emblem between two half discs in
+// its tier's colours, as tview text. The toast and the epoch screen wear it.
+func badgeMark(v game.BadgeView, tier mapmodel.GlyphTier) string {
+	pal := newGridPalette(0, nil)
 	hex := func(k ink) string { return theme.HexTag(pal.inkOn(k, false)) }
 	rim, core := inkCyan, inkMagenta
 	if !v.Integrity {
@@ -283,29 +319,5 @@ func badgeToast(v game.BadgeView, tier mapmodel.GlyphTier, w int) string {
 			}
 		}
 	}
-	head := vibe.Line("ui.badge_list.badgeToast.01", "Badge earned:")
-	name, tierText, desc := v.Name, "", v.Desc
-	if v.Tier != "" {
-		tierText = " (" + v.Tier + ")"
-	}
-	// The mark, a space, the head, a space, the name, the tier, a full stop.
-	fixed := len(mark) + 1 + runeLen(head) + 1 + runeLen(tierText) + 1
-	if w > 0 && fixed+runeLen(name)+1+runeLen(desc) > w {
-		desc = ""
-	}
-	if room := w - fixed; w > 0 && runeLen(name) > room {
-		name = clipRunes(name, max(room-1, 1)) + "…"
-	}
-	var sb strings.Builder
-	sb.WriteString(hex(rim) + string(mark[0]) + hex(core) + lit(string(mark[1])) + hex(rim) + string(mark[2]) + "[-] ")
-	sb.WriteString("[" + theme.TagName(theme.RoleAccent) + "::b]" + head + theme.Reset + " ")
-	sb.WriteString("[" + theme.TagName(theme.RoleBright) + "::b]" + lit(name) + theme.Reset)
-	if tierText != "" {
-		sb.WriteString(theme.HexTag(theme.Legible(inkValue(rim, pal.light), pal.bg, 4.5)) + tierText + "[-]")
-	}
-	sb.WriteString(".")
-	if desc != "" {
-		sb.WriteString(" " + lit(desc))
-	}
-	return sb.String()
+	return hex(rim) + string(mark[0]) + hex(core) + lit(string(mark[1])) + hex(rim) + string(mark[2]) + "[-]"
 }
