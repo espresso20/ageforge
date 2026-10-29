@@ -254,7 +254,7 @@ func TestKeyedPanelsKeepTheKeyboard(t *testing.T) {
 	for name, keys := range map[string][]string{
 		"wonders":   {"Tab", "Esc"},
 		"harbinger": {"A", "B", "I", "Esc"},
-		"plan":      {"U D", "X", "C", "Esc"},
+		"plan":      {"U/D", "X", "C", "Esc"},
 	} {
 		openPanel(t, d, name, 100, 30)
 		if d.inputField.HasFocus() {

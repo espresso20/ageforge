@@ -2585,7 +2585,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 			return errorResult(err)
 		}
 		return routineReply(vibe.Sprintf("ui.input.cmdPlan.15", "Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)))
-	case "expedition", "exp":
+	case "expedition":
 		if len(rest) == 0 {
 			return errorReply(usageFor("plan expedition"))
 		}
