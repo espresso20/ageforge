@@ -75,7 +75,7 @@ func (f *frame) rivalSites() []rivalSite {
 		}
 		taken[s] = true
 		cells := f.plan.Rivals[s].Cells
-		out = append(out, rivalSite{civ, cells[:min(len(cells), 2+2*clamp(civ.Strength, 1, 5))]})
+		out = append(out, rivalSite{civ, cells[:min(len(cells), 4+3*clamp(civ.Strength, 1, 5))]})
 	}
 	return out
 }
@@ -143,7 +143,7 @@ func (f *frame) paintBorders(homes []lit, rivals []rivalSite) {
 		for _, h := range homes {
 			halo(h.cells, 3, in)
 		}
-		ink := P(f.ink([]rune(f.st.Hub[0])[0], HNone).Hue, 110)
+		ink := P(f.ink([]rune(f.st.Hub[0])[0], HNone).Hue, 160)
 		for _, p := range edgeOf(in) {
 			if f.sky(p) {
 				f.g.draw(p.X, p.Y, '·', ink)
@@ -156,7 +156,7 @@ func (f *frame) paintBorders(homes []lit, rivals []rivalSite) {
 		halo(r.cells, 2, in)
 		for _, p := range edgeOf(in) {
 			if (p.X+p.Y)%2 == 0 && f.sky(p) {
-				f.g.draw(p.X, p.Y, '·', P(relationHue[r.civ.Relation], 150))
+				f.g.draw(p.X, p.Y, '·', P(relationHue[r.civ.Relation], 190))
 				f.g.mark(p.X, p.Y, Thing{Kind: KindCiv, Key: r.civ.Key})
 			}
 		}

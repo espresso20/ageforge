@@ -313,7 +313,11 @@ func (v *view) drawLegend(cv *Canvas, mp *Palette, x, y, w, h int, m *mapmodel.M
 		}
 		st := mp.Style(mapmodel.CText)
 		_, bg, _ := st.Decompose()
-		cv.Put(x, y+1+i, mapgen.Sign(l.Key), tcell.StyleDefault.Foreground(v.pal.colour(mapgen.LineHue(l.Key))).Background(bg))
+		sign := mapgen.Sign(l.Key)
+		if skyOf(m) >= 2 { // on the star map a line is a sector, whose hub is a ring
+			sign = '◉'
+		}
+		cv.Put(x, y+1+i, sign, tcell.StyleDefault.Foreground(v.pal.colour(mapgen.LineHue(l.Key))).Background(bg))
 		cv.Text(x+2, y+1+i, w-2, l.Name, st)
 	}
 }

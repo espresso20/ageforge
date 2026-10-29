@@ -15,7 +15,7 @@ import (
 
 const (
 	sectorMax = 40 // systems in the biggest sector
-	rivalMax  = 14 // and in the biggest rival
+	rivalMax  = 20 // and in the biggest rival
 	// rivalSlots is how many places the other arms hold for rivals.
 	rivalSlots = 14
 )
@@ -169,7 +169,11 @@ func riftPath(seed int64, g *Galaxy) []Pt {
 	y := worldH/2 + (gx*sn+gy*cs)/1024*galRYBase/galRX
 	cur := Pt{clamp(x, 2, worldW-3), clamp(y, 1, worldH-2)}
 	out := []Pt{cur}
+	far := isqrt(sq(cur.X-worldW/2) + 4*sq(cur.Y-worldH/2))
 	for i := 1; i < 30; i++ {
+		if isqrt(sq(cur.X-worldW/2)+4*sq(cur.Y-worldH/2)) < far*62/100 {
+			break // a crack in the rim, not a wound to the core
+		}
 		dx, dy := cmp.Compare(worldW/2, cur.X), cmp.Compare(worldH/2, cur.Y)
 		switch roll(7, seed, 360, int64(i)) {
 		case 0, 1: // a step straight in
