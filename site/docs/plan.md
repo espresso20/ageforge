@@ -88,6 +88,12 @@ Stock has no limit, so a plan item is never held up by how large its price is. A
 
 Research is never held up by stock. It starts in plan order, so the techs behind the first one read `after the research above it`, and the first reads `research slot busy` while another tech is in progress.
 
+## Planned expeditions
+
+`plan expedition <mission>` queues a mission that is on the expedition board. It leaves when its price is covered and a party of soldiers is at home, the same as sending it yourself, and it holds back its price from the items below it. While the party is away the item waits and holds nothing back. If the offer leaves the board before the plan reaches it, the item drops out and the log says so. It behaves the same while you are away.
+
+Every item also reports when it starts: the amount it needs, what you hold, what the items above hold back, the income, and how long until the slowest resource is ready. A resource with no income reads `never`, and a wonder reads `needs you`, since it is paid by hand.
+
 ## The Plan panel
 
 Type `plan` to open the Build Plan panel. It takes the whole screen but the command bar, and its keys are letters, so press `Esc` before you type a command.

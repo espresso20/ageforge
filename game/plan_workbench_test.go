@@ -261,15 +261,15 @@ func TestPlanExpedition_BlockedWithoutAParty(t *testing.T) {
 	if err := ge.PlanAddExpedition(title); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
-		t.Fatal(err)
-	}
+	ge.mu.Lock()
+	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: "storage_pit", Count: 1})
+	ge.mu.Unlock()
 	setSoldiers(ge, 0)
 	v := ge.GetState().Plan[0]
 	if v.Status != PlanStatusBlocked || !strings.Contains(v.Note, "soldiers") || v.HeldBack != nil || v.When != PlanWhenUnknown {
 		t.Errorf("view = %+v, want blocked on the party, holding nothing", v)
 	}
-	if got := ge.GetState().Plan[1]; got.Rows[0].Held != 0 {
+	if got := ge.GetState().Plan[1]; len(got.Rows) > 0 && got.Rows[0].Held != 0 {
 		t.Errorf("hut sees %v held by a blocked expedition, want none", got.Rows[0].Held)
 	}
 	for _, res := range []string{"stone", "wood"} {

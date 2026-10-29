@@ -64,7 +64,7 @@ func TestPlanAdvanceCommand(t *testing.T) {
 		t.Errorf("plan advance now = %+v, want an error", res)
 	}
 	text := plainText(planPanelText(engine.GetState(), 0, "", false, false, 100))
-	if !strings.Contains(text, "advance to the Stone Age") || !strings.Contains(text, "waiting for the requirements") {
+	if !strings.Contains(text, "advance to the Stone Age") || !strings.Contains(text, "0 of 4 pillars") {
 		t.Errorf("panel:\n%s", text)
 	}
 }
