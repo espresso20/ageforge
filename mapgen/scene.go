@@ -76,6 +76,11 @@ func (f *frame) bounds() Rect {
 	if f.st.Pads > 0 && f.plan.Port.Rect.W > 0 {
 		grow(f.plan.Port.Rect)
 	}
+	if f.st.Scale == Stars { // the whole galaxy is the map
+		for _, p := range f.plan.Galaxy.reach() {
+			grow(Rect{p.X, p.Y, 1, 1})
+		}
+	}
 	const margin = 3
 	return Rect{x0 - margin, y0 - margin, x1 - x0 + 1 + 2*margin, y1 - y0 + 1 + 2*margin}
 }
