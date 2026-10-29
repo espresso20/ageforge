@@ -75,6 +75,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 
 ### Fixed
+- **A locked building's needs line.** The line no longer names every prerequisite tech, which would fill ten lines for a building locked by a tech with a long chain. It now counts them, shows which ones are immediately researchable, and names up to three of those (and how many more if there are more). Players read it in one line.
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.
 - **Late-game festival and Black Market prices.** They now stay in step with your culture income in every age instead of running away after the middle ages.
