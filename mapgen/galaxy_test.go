@@ -10,16 +10,28 @@ import (
 func TestGalaxyShapesVary(t *testing.T) {
 	shapes := map[GalaxyShape]bool{}
 	arms, bars := map[int]bool{}, map[bool]bool{}
+	quads, many, barred, flatMin, flatMax := map[int]bool{}, 0, 0, 100, 0
 	for seed := int64(1); seed <= 20; seed++ {
 		s := pickShape(seed)
 		shapes[s] = true
 		arms[s.Arms], bars[s.Bar > 0] = true, true
+		quads[s.Rot*4/turn] = true
+		if s.Arms >= 3 {
+			many++
+		}
+		if s.Bar > 0 {
+			barred++
+		}
+		flatMin, flatMax = min(flatMin, s.Flat), max(flatMax, s.Flat)
 		if s.Arms < 2 || s.Arms > 4 || s.Faint < 0 || s.Faint > 2 || s.Home >= s.Arms {
 			t.Errorf("seed %d: arms %d faint %d home %d out of range", seed, s.Arms, s.Faint, s.Home)
 		}
 	}
 	if len(shapes) < 12 {
 		t.Errorf("20 seeds gave %d different galaxies, want at least 12", len(shapes))
+	}
+	if len(quads) < 3 || many < 6 || many > 14 || barred < 3 || barred > 12 || flatMax-flatMin < 30 {
+		t.Errorf("rotations in %d quadrants, %d of 20 with 3 or 4 arms, %d barred, flattening %d to %d: too alike", len(quads), many, barred, flatMin, flatMax)
 	}
 	if len(arms) < 3 || len(bars) < 2 {
 		t.Errorf("arm counts %v, bar or not %v: too little variety", arms, bars)
@@ -96,7 +108,13 @@ func TestStarNodesFollowTheHomeArm(t *testing.T) {
 // just the few systems the town has laid.
 func TestStarMapBoundsHoldTheGalaxy(t *testing.T) {
 	sc := (&Generator{}).Draw(model(state("galactic_age", 4, noon)), 0)
-	if sc.Bounds.W < 2*galRX || sc.Bounds.H < 2*galRYBase*70/100 {
-		t.Errorf("bounds %+v do not hold the galaxy", sc.Bounds)
+	b := sc.Bounds
+	for _, p := range NewGalaxy(4).reach() {
+		if p.X < b.X || p.X > b.X+b.W || p.Y < b.Y || p.Y > b.Y+b.H {
+			t.Errorf("bounds %+v do not hold the galaxy corner %v", b, p)
+		}
+	}
+	if b.W < worldW*6/10 || b.H < worldH/3 {
+		t.Errorf("bounds %+v are too small for a galaxy", b)
 	}
 }

@@ -52,6 +52,7 @@ type GalaxyShape struct {
 	Wind  int // how far an arm turns from core to rim, in 4096ths of a turn
 	Spin  int // 1 or -1: which way the arms wind
 	Rot   int // where the first arm and the bar point
+	Tilt  int // how far the whole disc is turned on the sky, in 4096ths of a turn
 	Bar   int // the bar's half length in columns, 0 for none
 	Core  int // radius of the core glow in columns
 	Flat  int // height of the disc in percent of the full 44 rows
@@ -78,20 +79,21 @@ type Galaxy struct {
 func pickShape(seed int64) GalaxyShape {
 	r := func(n int, salt int64) int { return roll(n, seed, 300, salt) }
 	s := GalaxyShape{
-		Arms:  []int{2, 2, 2, 3, 3, 3, 3, 4, 4, 4}[r(10, 1)],
+		Arms:  []int{2, 2, 2, 2, 2, 3, 3, 3, 4, 4}[r(10, 1)],
+		Tilt:  r(turn/6, 15) - turn/12,
 		Faint: r(3, 2),
-		Wind:  1500 + r(2600, 3),
+		Wind:  900 + r(4200, 3),
 		Spin:  []int{1, -1}[r(2, 4)],
 		Rot:   r(turn, 5),
 		Core:  7 + r(8, 7),
-		Flat:  72 + r(29, 8),
+		Flat:  40 + r(61, 8),
 		Dust:  120 + r(300, 9),
 		Warm:  r(241, 11) - 120,
 		Glow:  85 + r(31, 12),
 		Rift:  r(turn, 13),
 	}
-	if r(5, 6) < 2 {
-		s.Bar = 18 + r(18, 6+100)
+	if r(3, 6) == 0 {
+		s.Bar = 22 + r(20, 6+100)
 	}
 	s.Home = r(s.Arms, 10)
 	// the distant galaxies sit in three of the four corners
@@ -108,13 +110,25 @@ func pickShape(seed int64) GalaxyShape {
 	return s
 }
 
-// reach is two opposite corners of the box round the disc.
+// reach is two opposite corners of the box round the disc, which is an oval
+// turned by its tilt.
 func (g *Galaxy) reach() [2]Pt {
-	ry := g.Shape.ryMax()
-	return [2]Pt{{worldW/2 - galRX, worldH/2 - ry}, {worldW/2 + galRX - 1, worldH/2 + ry - 1}}
+	s := g.Shape
+	cs, sn := cos4096(s.Tilt), sin4096(s.Tilt)
+	b := galRX * s.Flat / 100
+	hw := isqrt(sq(galRX*cs/16)+sq(b*sn/16)) / 64
+	hh := isqrt(sq(galRX*sn/16)+sq(b*cs/16)) / 64 * galRYBase / galRX
+	return [2]Pt{{worldW/2 - hw, worldH/2 - hh}, {worldW/2 + hw - 1, worldH/2 + hh - 1}}
 }
 
-func (s GalaxyShape) ryMax() int { return galRYBase * s.Flat / 100 }
+// circle is a cell's place in the galaxy's own frame: the offset from the
+// middle undone of the tilt and the flattening, rows made as long as columns,
+// so that the disc is a circle of radius galRX.
+func (s GalaxyShape) circle(dx, dy int) (int, int) {
+	cs, sn := cos4096(s.Tilt), sin4096(s.Tilt)
+	y := dy * galRX / galRYBase
+	return (dx*cs + y*sn) / 1024, (-dx*sn + y*cs) / 1024 * 100 / s.Flat
+}
 
 // armPhase is where arm k begins, major arms first and then the faint ones
 // between them.
@@ -143,8 +157,10 @@ func (s GalaxyShape) armAt(seed int64, k, rf, shift int) (Pt, int) {
 	rIn := max(s.Core*3/2, s.Bar)
 	r := rIn + (galRX-rIn)*rf/1000
 	a := s.armAngle(seed, k, rf) + shift
-	x := worldW/2 + r*cos4096(a)/1024
-	y := worldH/2 + r*sin4096(a)*s.ryMax()/(galRX*1024)
+	gx, gy := r*cos4096(a)/1024, r*sin4096(a)/1024*s.Flat/100
+	cs, sn := cos4096(s.Tilt), sin4096(s.Tilt)
+	x := worldW/2 + (gx*cs-gy*sn)/1024
+	y := worldH/2 + (gx*sn+gy*cs)/1024*galRYBase/galRX
 	return Pt{x, y}, r
 }
 
@@ -223,10 +239,10 @@ func NewGalaxy(seed int64) *Galaxy {
 	// core and bar, in the galaxy's own circle (rows stretched to columns): a
 	// halo, a bright body and a white-hot middle
 	ca, sa := cos4096(s.Rot), sin4096(s.Rot)
-	cx, cy, ry := worldW/2, worldH/2, s.ryMax()
+	cx, cy := worldW/2, worldH/2
 	for y := 0; y < worldH; y++ {
 		for x := 0; x < worldW; x++ {
-			dx, w := x-cx, (y-cy)*galRX/ry
+			dx, w := s.circle(x-cx, y-cy)
 			d2 := dx*dx + w*w
 			v := soft(bump(d2, s.Core*s.Core*20))*125>>8 + soft(bump(d2, s.Core*s.Core*5))*130>>8
 			if s.Bar > 0 {
@@ -248,13 +264,13 @@ func NewGalaxy(seed int64) *Galaxy {
 // the core, three layers of stars that crowd the arms, and the far galaxies.
 func (g *Galaxy) paint(seed int64, arm, dust, core, knot []uint8) {
 	s := g.Shape
-	cx, cy, ry := worldW/2, worldH/2, s.ryMax()
+	cx, cy := worldW/2, worldH/2
 	h8 := func(salt int64, x, y int) int { return int(hash(seed, salt, int64(x), int64(y)) % 256) }
 	var near []Pt
 	for y := 0; y < worldH; y++ {
 		for x := 0; x < worldW; x++ {
 			i := at(x, y)
-			dx, w := x-cx, (y-cy)*galRX/ry
+			dx, w := s.circle(x-cx, y-cy)
 			rad := isqrt((dx*1000/galRX)*(dx*1000/galRX) + (w*1000/galRX)*(w*1000/galRX))
 			// the arm's light, clumped a little by a slow noise, dimmed by dust
 			clump := 150 + fbm(seed+21, x*256/9, y*256/5, 3)*106/noiseMax
@@ -273,24 +289,13 @@ func (g *Galaxy) paint(seed int64, arm, dust, core, knot []uint8) {
 			tone := 6 + x*7/worldW + y*5/worldH + fbm(seed+31, x*256/80, y*256/40, 2)*3/noiseMax + h8(41, x, y)/140
 			bg := P(HNebula, tone)
 			if glow > 4 {
-				grain := 215 + h8(42, x, y)/6
-				// warm light inside the break radius, cool beyond, the two
-				// dithered together where they meet
-				warm := clamp((430-rad+s.Warm/2)*256/380, 0, 256)
-				if h8(43, x, y) < warm && glow > 22 {
-					bg = P(HSun, tone+glow*110/255*grain/256)
-				} else {
-					bg = P(HNebula, tone+glow*170/255*grain/256)
-				}
+				bg = P(HNebula, tone+glow*175/255*(215+h8(42, x, y)/6)/256)
 			}
-			if c := int(core[i]); c > 10 {
-				switch {
-				case c > 130 && h8(51, x, y) < (c-110)*2:
-					bg = P(HStar, 40+(c-110)*170/145)
-				case h8(52, x, y) < c*4:
-					bg = P(HSun, max(int(bg.Weight), 60+c*170/255))
-				default:
-					bg = P(HNebula, max(int(bg.Weight), tone+c*170/255))
+			// the core is one warm-white glow that wins over the arm where it
+			// is the stronger, its weight falling smoothly with the distance
+			if c := int(core[i]); c > 6 {
+				if w := (c*215 + (h8(52, x, y)-128)*3) / 255; w > int(bg.Weight) {
+					bg = P(HCore, w)
 				}
 			}
 			g.Sky[i] = Cell{R: ' ', Fg: P(HStar, 0), Bg: bg}
@@ -358,7 +363,7 @@ func (g *Galaxy) smudge(seed int64, n int, c Pt) {
 // homeNodes are n places along the home arm from near the core out, evenly
 // spaced and nudged a little off the line.
 func (g *Galaxy) homeNodes(seed int64, n int) []Pt {
-	line := g.Home[galArmN/12 : galArmN*62/100]
+	line := g.Home[galArmN/10 : galArmN*88/100]
 	total := 0
 	length := []int{0}
 	for i := 1; i < len(line); i++ {

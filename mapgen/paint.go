@@ -63,6 +63,7 @@ const (
 	HStar
 	HNebula
 	HSun
+	HCore
 	HSea
 	HLand
 	HCloud

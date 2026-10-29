@@ -75,6 +75,7 @@ var recipes = [mapgen.NumHues]recipe{
 	mapgen.HStar:     {theme.RoleText, fromSpace(theme.SpaceStar), 0.5},
 	mapgen.HNebula:   {theme.RoleDim, fromSpace(theme.SpaceNebulaViolet), 0.8},
 	mapgen.HSun:      {theme.RoleHighlight, fromSpace(theme.SpaceSun), 0.8},
+	mapgen.HCore:     {theme.RoleText, fromSpace(theme.SpaceSunCorona), 0.55},
 	mapgen.HSea:      {theme.RoleBackground, fromSpace(theme.SpacePlanetOcean), 0.8},
 	mapgen.HLand:     {theme.RoleBackground, fromSpace(theme.SpacePlanetLand), 0.8},
 	mapgen.HCloud:    {theme.RoleDim, fromSpace(theme.SpacePlanetCloud), 0.6},
