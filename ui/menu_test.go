@@ -589,7 +589,7 @@ func TestMenuPaintsInEveryTheme(t *testing.T) {
 						t.Errorf("%s: the page's corner is not on the theme's ground", where)
 					}
 
-					words := []string{"New game", "Load game", "Badges", "Themes", "Accounts", "Check for updates", "Quit", "v4.0.0", "choose", "Enter open", "38 of 120", eliteLines[0].words.String()}
+					words := []string{"New game", "Load game", "Badges", "Settings", "Accounts", "Check for updates", "Quit", "v4.0.0", "choose", "Enter open", "38 of 120", eliteLines[0].words.String()}
 					if st.forge {
 						words = append(words, "CONTENTS", "The forge", "begun at a campfire", "fourth edition")
 					} else {

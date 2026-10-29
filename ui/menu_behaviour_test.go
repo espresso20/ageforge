@@ -166,7 +166,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 	if !m.view.forge || m.hasCur {
 		t.Fatalf("an account with no game: forge page %v, a current game %v", m.view.forge, m.hasCur)
 	}
-	if got := ids(m.view.items); got != "new load badges themes accounts updates quit" {
+	if got := ids(m.view.items); got != "new load badges settings accounts updates quit" {
 		t.Errorf("the first visit's entries are %q", got)
 	}
 	if m.view.sel != 0 {
@@ -188,7 +188,7 @@ func TestMenuFirstVisitThenAGame(t *testing.T) {
 	if m.view.forge || !m.hasCur || m.town == nil {
 		t.Fatalf("an account with a game: forge page %v, a current game %v, a town %v", m.view.forge, m.hasCur, m.town != nil)
 	}
-	if got := ids(m.view.items); got != "continue new load badges themes accounts updates quit" {
+	if got := ids(m.view.items); got != "continue new load badges settings accounts updates quit" {
 		t.Errorf("the entries with a game are %q", got)
 	}
 	if m.view.sel != 0 || m.view.items[0].id != miContinue {
@@ -242,7 +242,7 @@ func TestMenuKeysOpenEveryEntry(t *testing.T) {
 	for _, c := range []struct {
 		key  rune
 		page string
-	}{{'l', loadGamePage}, {'t', themePickerPage}, {'a', accountsPage}, {'b', menuBadgesPage}, {'L', loadGamePage}, {'B', menuBadgesPage}} {
+	}{{'l', loadGamePage}, {'a', accountsPage}, {'b', menuBadgesPage}, {'L', loadGamePage}, {'B', menuBadgesPage}} {
 		r.press(c.key)
 		if got := r.front(); got != c.page {
 			t.Fatalf("%q opens %q, want %q", c.key, got, c.page)

@@ -573,7 +573,7 @@ The game keeps several local accounts, one active at a time, each with its own s
 
 | Command | Description |
 |---|---|
-| `theme` | Open the Themes picker to browse palettes with live preview (`↑` and `↓` preview, `Enter` keeps, `Esc` or `q` reverts). It is also on the main menu. |
+| `theme` | Open the Themes picker to browse palettes with live preview (`↑` and `↓` preview, `Enter` keeps, `Esc` or `q` reverts). It is also on the main menu, under Settings. |
 | `theme list` | List every theme by name and key, marking the active one, with each theme's light or dark variant, which are accessible, and how to unlock the ones you haven't. |
 | `theme <key>` | Switch directly to a theme by key (for example `theme high_contrast`). |
 | `motion [on\|off]` | Bare, show whether motion is on. `off` holds still everything that moves on its own: the maps, the main menu, the badges that move in the badge case, and a theme's ambient effect. `on` brings it back (default on). Saved per account. |

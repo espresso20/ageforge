@@ -1153,6 +1153,13 @@ ui.menu.buildViewWith.07,Any new drops?
 ui.menu.buildViewWith.08,Touch grass
 ui.menu.buildViewWith.09," · new update dropped (u)"
 ui.menu.buildViewWith.10," · new drop (u)"
+ui.menu.settings.01,Tweaks
+ui.menu.settings.02,Map icons
+ui.menu.settings.03,Movement
+ui.menu.settings.04,Mini map
+ui.menu.settings.05,Bounce
+ui.menu.settings.06,Yep
+ui.menu.settings.07,Nope
 ui.menu.continueGame.01,"'%s' would not open, sadge.
 
 %v"

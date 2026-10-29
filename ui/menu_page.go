@@ -31,10 +31,18 @@ const (
 	miNew      = "new"
 	miLoad     = "load"
 	miBadges   = "badges"
-	miThemes   = "themes"
+	miSettings = "settings"
 	miAccounts = "accounts"
 	miUpdates  = "updates"
 	miQuit     = "quit"
+
+	// The Settings page's rows.
+	miSetTheme   = "set_theme"
+	miSetVibe    = "set_vibe"
+	miSetGlyphs  = "set_glyphs"
+	miSetMotion  = "set_motion"
+	miSetMinimap = "set_minimap"
+	miSetBack    = "set_back"
 )
 
 // menuItem is one entry of the menu.
