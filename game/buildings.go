@@ -819,6 +819,7 @@ type buildingExtra struct {
 	scholars, fullRate, soldiers int
 	lockTech                     string
 	lockTechPath                 []string
+	lockTechNext                 []string
 }
 
 // Snapshot returns building states for UI.
@@ -884,7 +885,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if extras != nil {
 			x := extras(def.Scholars, def.FullRateCopies, def.Soldiers, state.NeedsTech)
 			state.Scholars, state.FullRateCopies, state.Soldiers = x.scholars, x.fullRate, x.soldiers
-			state.LockTech, state.LockTechPath = x.lockTech, x.lockTechPath
+			state.LockTech, state.LockTechPath, state.LockTechNext = x.lockTech, x.lockTechPath, x.lockTechNext
 		}
 		out[key] = state
 	}

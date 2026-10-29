@@ -198,6 +198,7 @@ func TestLockedBuildingInTheOverlay(t *testing.T) {
 	if end := strings.Index(block, "\n\n"); end >= 0 {
 		block = block[:end]
 	}
+	// With Language researched, the path is [Ritual], so it uses the "after" format
 	if !strings.Contains(collapse([]string{block}), "Needs Calendar (research), after Ritual") {
 		t.Errorf("the overlay does not say what the Altar needs:\n%s", block)
 	}
@@ -211,5 +212,83 @@ func TestLockedBuildingInTheOverlay(t *testing.T) {
 		if i := strings.Index(text, "]"+bs.Name+"[-]"); i > at {
 			t.Errorf("unlocked %s is listed after the locked Altar", bs.Name)
 		}
+	}
+}
+
+// TestLockedNeedsLineFormats: the needs line has different formats based on
+// the path length and next techs.
+func TestLockedNeedsLineFormats(t *testing.T) {
+	tests := []struct {
+		name    string
+		techs   []string
+		wantIn  string
+		notWant string
+	}{
+		// Path empty: "Needs X (research)"
+		// (Ritual and Language researched, so path = [])
+		{
+			name:    "path empty",
+			techs:   []string{"language", "ritual"},
+			wantIn:  "Needs Calendar (research)",
+			notWant: "after",
+		},
+		// Path length 1: "Needs X (research), after Y"
+		// (Language researched, so path = [Ritual])
+		{
+			name:    "path length 1",
+			techs:   []string{"language"},
+			wantIn:  "Needs Calendar (research), after Ritual",
+			notWant: "Start with",
+		},
+		// Path length 2: "Needs X (research), 2 techs before it. Start with Y"
+		// (Nothing researched, so path = [Ritual, Language])
+		{
+			name:    "path length 2",
+			techs:   []string{},
+			wantIn:  "Needs Calendar (research), 2 techs before it. Start with Language",
+			notWant: "after",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, _ := bronzeTown(t, tt.techs...)
+			altar := altarEntry(t, d, 60)
+			if altar == nil {
+				t.Fatal("the Altar is not listed")
+			}
+			text := collapse(altar)
+			if !strings.Contains(text, tt.wantIn) {
+				t.Errorf("got %q, want substring %q", text, tt.wantIn)
+			}
+			if tt.notWant != "" && strings.Contains(text, tt.notWant) {
+				t.Errorf("got %q, should not contain %q", text, tt.notWant)
+			}
+		})
+	}
+}
+
+// TestLockedNeedsLineJoinNames: joinNames formats tech names correctly.
+func TestLockedNeedsLineJoinNames(t *testing.T) {
+	tests := []struct {
+		names   []string
+		want    string
+		wantRem int
+	}{
+		{[]string{}, "", 0},
+		{[]string{"A"}, "A", 0},
+		{[]string{"A", "B"}, "A or B", 0},
+		{[]string{"A", "B", "C"}, "A, B or C", 0},
+		{[]string{"A", "B", "C", "D"}, "A, B or C", 1},
+		{[]string{"A", "B", "C", "D", "E", "F", "G"}, "A, B or C", 4},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("%d names", len(tt.names)), func(t *testing.T) {
+			got, rem := joinNames(tt.names)
+			if got != tt.want || rem != tt.wantRem {
+				t.Errorf("joinNames(%v) = %q, %d; want %q, %d", tt.names, got, rem, tt.want, tt.wantRem)
+			}
+		})
 	}
 }

@@ -53,3 +53,47 @@ func TestLockHintsOnlyForAgeUnlocked(t *testing.T) {
 		t.Fatalf("altar before its age: locked by %q after %v, want no hint", got.LockTech, got.LockTechPath)
 	}
 }
+
+// TestLockTechNextListsOnlyResearchableTechs: the frontier lists only the
+// techs on the path to a locked tech whose own prerequisites are all
+// researched. The Altar waits for Calendar, which waits for Ritual, which
+// waits for Language. At the start, only Language can be researched (no
+// prerequisites). After Language, only Ritual. After Ritual, the path is
+// empty so LockTechNext is empty (Calendar itself is researchable).
+func TestLockTechNextListsOnlyResearchableTechs(t *testing.T) {
+	ge := NewGameEngine()
+	ge.age = "bronze_age"
+	ge.applyAgeUnlocks("bronze_age")
+
+	altar := func() BuildingState {
+		t.Helper()
+		bs, ok := ge.GetState().Buildings["altar"]
+		if !ok {
+			t.Fatal("no altar in the state")
+		}
+		return bs
+	}
+
+	// At the start, only Language can be researched (it has no prerequisites)
+	if got := altar(); !reflect.DeepEqual(got.LockTechNext, []string{"Language"}) {
+		t.Fatalf("at start: next=%v, want [Language]", got.LockTechNext)
+	}
+
+	// After Language, only Ritual can be researched (its prereq Language is done)
+	ge.GrantTechsForTest("language")
+	if got := altar(); !reflect.DeepEqual(got.LockTechNext, []string{"Ritual"}) {
+		t.Fatalf("after Language: next=%v, want [Ritual]", got.LockTechNext)
+	}
+
+	// After Ritual, the path is empty so LockTechNext is empty
+	ge.GrantTechsForTest("ritual")
+	if got := altar(); got.LockTechPath != nil || got.LockTechNext != nil {
+		t.Fatalf("after Ritual: path=%v next=%v, want both empty", got.LockTechPath, got.LockTechNext)
+	}
+
+	// After Calendar, no lock at all
+	ge.GrantTechsForTest("calendar")
+	if got := altar(); got.LockTech != "" || got.LockTechNext != nil {
+		t.Fatalf("after Calendar: tech=%q next=%v, want no lock", got.LockTech, got.LockTechNext)
+	}
+}
