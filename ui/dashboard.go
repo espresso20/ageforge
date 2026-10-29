@@ -263,6 +263,8 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.overlayMgr.Refresh(d.engine.GetState())
 		return nil
 	})
+	d.planPanel.engine = d.engine
+	d.planPanel.height = func() int { return d.overlayMgr.screenH }
 	d.overlayMgr.Register("plan", txtBuildPlan, d.planPanel.provider)
 	d.overlayMgr.SetFooter("plan", planFooter)
 	d.overlayMgr.SetKeyHandler("plan", func(event *tcell.EventKey) *tcell.EventKey {

@@ -228,7 +228,23 @@ func TestLongPricesFitTheBuildPlan(t *testing.T) {
 					t.Fatal("plan overlay not registered")
 				}
 				screen := drawPrimitive(t, pages, w, h).Text()
-				if lost := partsNotWhole(strings.Split(screen, "\n"), parts); len(lost) > 0 {
+				// The detail pane has a row for each material: its whole name
+				// and its amount on one row.
+				var lost []string
+				for res, need := range v.Cost {
+					name, amount := game.ResourceName(res), textfmt.Number(need)
+					found := false
+					for _, row := range strings.Split(screen, "\n") {
+						if strings.Contains(row, name) && strings.Contains(row, amount) {
+							found = true
+							break
+						}
+					}
+					if !found {
+						lost = append(lost, amount+" "+name)
+					}
+				}
+				if len(lost) > 0 {
 					t.Errorf("%s at %dx%d: the plan does not show %v whole on a row:\n%s", key, w, h, lost, screen)
 				}
 				d.overlayMgr.Hide()

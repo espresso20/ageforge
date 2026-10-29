@@ -63,7 +63,7 @@ func TestPlanAdvanceCommand(t *testing.T) {
 	if res := HandleCommand("plan advance now", engine); res.Type != "error" {
 		t.Errorf("plan advance now = %+v, want an error", res)
 	}
-	text := plainText(planPanelText(engine.GetState(), 0, "", false, false, 100))
+	text := plainText(testPlanPanel(engine, 100))
 	if !strings.Contains(text, "advance to the Stone Age") || !strings.Contains(text, "0 of 4 pillars") {
 		t.Errorf("panel:\n%s", text)
 	}
@@ -72,7 +72,7 @@ func TestPlanAdvanceCommand(t *testing.T) {
 func TestPlanAutocomplete(t *testing.T) {
 	engine := game.NewGameEngine()
 	comp := NewAutoCompleter(engine)
-	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan deal,plan down,plan list,plan optimize,plan remove,plan research,plan up,plan upgrade" {
+	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan deal,plan down,plan expedition,plan list,plan optimize,plan remove,plan research,plan up,plan upgrade" {
 		t.Errorf("plan subcommands = %s", got)
 	}
 	builds := strings.Join(comp("plan build "), ",")
@@ -91,7 +91,7 @@ func TestPlanAutocomplete(t *testing.T) {
 
 func TestPlanPanel_KeysAndText(t *testing.T) {
 	engine := game.NewGameEngine()
-	var p planPanel
+	p := planPanel{engine: engine}
 	if text := plainText(p.provider(engine.GetState(), 100)); !strings.Contains(text, "The plan is empty") {
 		t.Errorf("empty panel:\n%s", text)
 	}
@@ -99,7 +99,10 @@ func TestPlanPanel_KeysAndText(t *testing.T) {
 		HandleCommand(c, engine)
 	}
 	text := plainText(p.provider(engine.GetState(), 100))
-	wantAll(t, "panel", text, "1. Hut ×2", "ready", "blocked", "too little wood coming in", "3. Stash")
+	wantAll(t, "panel", text, "1. Hut ×2", "ready", "blocked", "3. Stash", "Plan has no finish time yet", "wood")
+	p.sel = 1
+	wantAll(t, "blocked item detail", plainText(p.provider(engine.GetState(), 100)), "too little wood coming in")
+	p.sel = 0
 	key := func(k tcell.Key, r rune) {
 		if !p.handleKey(tcell.NewEventKey(k, r, tcell.ModNone), engine) {
 			t.Fatalf("key %v %q not consumed", k, r)
@@ -127,37 +130,6 @@ func TestPlanPanel_KeysAndText(t *testing.T) {
 	}
 }
 
-// The detail line of each status: what a waiting item is short of and how
-// much of that is held back for items above it, the reason a blocked item
-// waits, and what a ready one will pay. Nothing speaks of a bank.
-func TestPlanPanel_DetailLines(t *testing.T) {
-	st := game.GameState{Resources: map[string]game.ResourceState{"stone": {Amount: 900}, "wood": {Amount: 50}}}
-	waiting := game.PlanItemView{Kind: game.PlanBuild, Key: "longhouse", Name: "Longhouse", Count: 1,
-		Cost:   map[string]float64{"stone": 1000, "wood": 100},
-		Status: game.PlanStatusWaiting, Progress: 0.6, Short: "stone"}
-	if got := plainText(planItemDetail(waiting, st)); !strings.Contains(got, "stone 600 / 1K (300 held for items above)") {
-		t.Errorf("waiting line = %q", got)
-	}
-	blocked := waiting
-	blocked.Status, blocked.Note, blocked.Short = game.PlanStatusBlocked, "needs more stone storage", ""
-	if got := plainText(planItemDetail(blocked, st)); got != "needs more stone storage" {
-		t.Errorf("blocked line = %q", got)
-	}
-	ready := waiting
-	ready.Status, ready.Short, ready.Progress = game.PlanStatusReady, "", 1
-	if got := plainText(planItemDetail(ready, st)); got != "starts next tick for 1K stone, 100 wood" {
-		t.Errorf("ready line = %q", got)
-	}
-	ready.Cost = nil
-	if got := plainText(planItemDetail(ready, st)); got != "starts next tick" {
-		t.Errorf("free ready line = %q", got)
-	}
-	st.Plan = []game.PlanItemView{blocked}
-	if got := plainText(planListText(st)); !strings.HasSuffix(got, "blocked: needs more stone storage") {
-		t.Errorf("plan list = %q", got)
-	}
-}
-
 func upgradeCommandEngine(t *testing.T, count int) *game.GameEngine {
 	t.Helper()
 	engine := game.NewGameEngine()
@@ -172,7 +144,7 @@ func TestPlanUpgradeCommandsAndPanel(t *testing.T) {
 	if res.Type == "error" || res.Message != "Planned to upgrade 3 Gathering Camps to Forager Post. Each starts as soon as it can be paid." {
 		t.Fatalf("plan upgrade count: %+v", res)
 	}
-	line := plainText(planPanelText(engine.GetState(), 0, "", false, false, 100))
+	line := plainText(testPlanPanel(engine, 100))
 	if !strings.Contains(line, "upgrade 3 Gathering Camp → Forager Post") {
 		t.Fatalf("plan panel line missing: %s", line)
 	}
@@ -184,8 +156,8 @@ func TestPlanUpgradeCommandsAndPanel(t *testing.T) {
 	}
 }
 
-// planItemDetail is the second part of an item's line: the progress bar and
-// what it is short of, the reason it is blocked, or what it will pay.
-func planItemDetail(v game.PlanItemView, state game.GameState) string {
-	return strings.ReplaceAll(planItemDetailGlued(v, state), glue, " ")
+// testPlanPanel renders the panel for engine on a screen screenW wide.
+func testPlanPanel(engine *game.GameEngine, screenW int) string {
+	p := planPanel{engine: engine}
+	return p.provider(engine.GetState(), screenW)
 }

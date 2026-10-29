@@ -13,10 +13,11 @@ plan research imperial_legions # a tech that needs others: they go in first, in 
 plan advance                   # advance as soon as the requirements are met
 plan deal merchant_guild 2     # take the Merchant Guild's deal 2 once its price is there
 plan build longhouse 15        # a next-age building waits for the advance
+plan expedition <mission>      # send a mission from the board once a party is home
 plan optimize                  # reorder the buildings for the fastest growth
 ```
 
-`plan list` prints it. `plan remove <n>` (or `plan rm <n>`), `plan up <n>`, `plan down <n>` and `plan clear` edit it, and the panel does the same with keys. `plan optimize` (or `plan reorder`) reorders the buildings for you (see [Optimizing the order](#optimizing-the-order)). `plan research` can be written `plan res`. See [Commands](commands.md#build-plan).
+`plan list` prints it. `plan remove <n>` (or `plan rm <n>`), `plan up <n>`, `plan down <n>` and `plan clear` edit it, and the panel does the same with keys. `plan optimize` (or `plan reorder`) reorders the buildings for you (see [Optimizing the order](#optimizing-the-order)). `plan research` can be written `plan res`. `plan expedition` is [below](#planned-expeditions). See [Commands](commands.md#build-plan).
 
 The plan holds at most 60 items. A full plan refuses a new one until you remove one, but adding more of the building at the end of the plan still adds to that item. Research takes no room: the 60 are for builds, upgrades, deals and the advance, and a research queue is bounded by the tree, each tech once. One build or upgrade item holds at most 1,000 copies. You can plan a building of your current age or of the next age. A wonder, or a building with a limit, is planned only while it has room.
 
@@ -41,6 +42,8 @@ The plan holds at most 60 items. A full plan refuses a new one until you remove 
 Each tick's starts are summed up in one log line (`Plan: started building 3 Huts, started researching Pottery.`), and the welcome-back message says what the plan did while you were away.
 
 ## Optimizing the order
+
+Press `O` in the panel to see what it would do before it does it: the plan as it stands beside the plan as it would be, the moved items marked, and the time saved. `Enter` keeps it.
 
 Which building to plan first is a puzzle: a hut gives a camp someone to work it, a camp gives the hut something to be for, and food keeps them both. `plan optimize` (or `plan reorder`) solves it for you. If you ran `plan build hut 10`, `plan build wood_camp 10` and `plan build gathering_camp 10`, it mixes them: a few camps, a hut or two for the people they need, more camps, and so on, in the order that gets the town growing fastest.
 
@@ -98,29 +101,23 @@ Every item also reports when it starts: the amount it needs, what you hold, what
 
 Type `plan` to open the Build Plan panel. It takes the whole screen but the command bar, and its keys are letters, so press `Esc` before you type a command.
 
-```
-═══ Build plan ═══
- ▸  1. research Currency
-       blocked  research slot busy
-    2. Lumber Mill ×3 (1 started)
-       waiting  █░░░░░░░  20%  wood 1.22K / 6.04K
-    3. Quarry ×5
-       waiting  ░░░░░░░░   0%  wood 0 / 3.91K (1.22K held for items above)
-    4. advance to the Iron Age
-       blocked  waiting for the requirements
+The header says when the whole plan finishes, and, when [optimizing](#optimizing-the-order) would save a minute or more, how much. The queue lists one line for each item with its number, a short title, its status and when it starts. The detail beside it (under the queue on a narrow terminal) is for the item you picked:
 
- 3 of 60 items, and 1 tech queued (research takes no room)
+- **Resources.** What the item needs, what you hold, what the items above it hold back, your income and how long until each is ready. The slowest one is marked. `never` means there is no income of it, and a wonder reads `needs you`, since you deposit its bank by hand.
+- **Holding back.** What the item keeps from the items below it, and which of them.
+- **Advance.** The pillars as bars, each with what it still lacks and the number of the plan item that provides it.
+- **Research and expeditions.** What holds the research slot and when it frees, or a mission's price and whether a party is home.
 
- ↑↓  select   U  up   D  down   X  remove   C  clear
-```
-
-Each item shows one of three states. **ready** starts on the next tick. **waiting** is saving up (the bar is how much of the next price what is free after the items above it covers). **blocked** says what the item is waiting for.
+Each item shows one of three states. **ready** starts on the next tick. **waiting** is saving up. **blocked** says what the item is waiting for.
 
 | Key | What it does |
 |---|---|
-| `↑` `↓` (or `k` `j`) | Select an item |
+| `↑` `↓` (or `k` `j`), `PgUp` `PgDn` | Select an item, or page through the queue |
+| `A` | Add an item by name. Type part of a building, tech or mission; `Enter` adds it below the selection, and asks which kind when the name fits several. `Esc` cancels |
+| `+` / `-` | Change the count of a build or upgrade item |
 | `U` / `D` | Move the selected item up or down |
 | `X` (or `Delete`) | Remove the selected item |
+| `O` | Preview [optimizing](#optimizing-the-order): the plan now and after, side by side, with what moves marked. `Enter` keeps the new order, `Esc` closes |
 | `C` | Clear the plan. It asks for a second press, and the key is the capital letter |
 | `Esc` | Close the panel |
 

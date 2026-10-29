@@ -99,13 +99,14 @@ The plan is a list of builds and techs that the game starts for you, in order, a
 
 | Command | Description |
 |---|---|
-| `plan` | Open the Plan panel: the items, what each costs next and whether it can start. |
+| `plan` | Open the Plan panel: the queue, the detail of each item and an optimize preview. |
 | `plan build <building> [count]` | Add copies of a building of this age or the next (default 1). The next age's buildings wait for the advance. Adding more of the building at the end of the plan adds to that item. |
 | `plan upgrade <building> [count\|all]` | Plan upgrades for copies you hold (default 1). Each copy upgrades as soon as its price can be paid. |
 | `plan research <tech>` (or `plan res`) | Add a tech and, before it, the techs it still needs (see [The research queue](plan.md#the-research-queue)). Techs start one at a time, in plan order. It takes any tech you can see on your tech tree: a tech of a later age waits for its age. |
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too. They wait for the advance. |
+| `plan expedition <mission>` | Send a mission from the [board](military.md) as soon as its price is there and a party is home (a part of the name will do). It holds its price back from the items below while it waits, and drops out with a log line if the offer leaves the board. |
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Factions & Diplomacy](factions.md). |
-| `plan list` | Print the plan with each item's status. |
+| `plan list` | Print the plan with each item's status and when it starts. |
 | `plan remove <n>` (or `plan rm`) | Remove item `n`. |
 | `plan optimize` (or `plan reorder`) | Reorder the planned buildings for the fastest growth, mixing homes and producers, and say how much sooner the plan finishes. It only keeps an order that is faster. See [Optimizing the order](plan.md#optimizing-the-order). |
 | `plan up <n>` | Move item `n` one place up. |
@@ -127,9 +128,12 @@ In the Plan panel:
 
 | Key | Action |
 |---|---|
-| `↑` / `↓` (or `K` / `J`) | Pick an item |
+| `↑` / `↓` (or `K` / `J`), `PgUp` / `PgDn` | Pick an item, or page |
+| `A` | Add an item by name (`Enter` adds it below the pick, `Esc` cancels) |
+| `+` / `-` | Change the count of a build or upgrade item |
 | `U` / `D` | Move the picked item up or down |
 | `X` (or `Delete`) | Remove the picked item |
+| `O` | Preview plan optimize (`Enter` keeps it, `Esc` closes) |
 | `C` | Clear the plan. Press a capital `C` twice. |
 | `Esc` | Close the panel |
 

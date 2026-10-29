@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/gdamore/tcell/v2"
@@ -14,12 +15,20 @@ import (
 	"github.com/espresso20/ageforge/vibe"
 )
 
-// The Plan panel: the build plan in order, what each item's next start costs
-// and whether it could start now, with keys to reorder and remove items. A
-// text overlay with a key handler; the handler runs on the tview goroutine and
-// never under the engine lock, so it may call the engine's plan methods
-// (write lock) and GetState (read lock). Items are added with commands
-// (`plan build`, `plan research`), which autocomplete.
+// The Plan panel (the Workbench): the build plan as a queue on the left and
+// the selected item's detail on the right, with an optimize preview and an
+// add box. A text overlay with a key handler; the handler runs on the tview
+// goroutine and never under the engine lock, so it may call the engine's plan
+// methods (write lock) and GetState (read lock). The drawing is plan_screen.go,
+// the add box plan_add.go and the preview popup plan_optimize.go.
+
+// Modes of the panel: the queue, or one of its three overlays on it.
+const (
+	planModeQueue = iota
+	planModeAdd   // typing the name of an item to add
+	planModePick  // the name fits several items; pick one
+	planModeOptimize
+)
 
 // planPanel holds the panel's UI-only state. Owned by the tview goroutine.
 type planPanel struct {
@@ -30,17 +39,53 @@ type planPanel struct {
 	noteGood bool
 	// clearArmed is set by the first C press; the second one clears.
 	clearArmed bool
+
+	mode int
+	// input is the name typed into the add box; picks are the items it can
+	// mean when several, pickSel the one chosen.
+	input   string
+	picks   []planPick
+	pickSel int
+
+	// engine is read for the estimate and the optimize preview; the panel
+	// draws without them when it is nil. height says how many rows the screen
+	// has (40 when nil).
+	engine *game.GameEngine
+	height func() int
 }
 
-// reset clears the feedback and the Clear confirmation, for a fresh open.
+// reset clears the feedback, the Clear confirmation and any overlay, for a
+// fresh open.
 func (p *planPanel) reset() {
 	p.note, p.noteGood, p.clearArmed = "", false, false
+	p.mode, p.input, p.picks, p.pickSel = planModeQueue, "", nil, 0
 }
 
 // provider renders the panel for OverlayManager.
 func (p *planPanel) provider(state game.GameState, screenW int) string {
 	p.sel = clampSel(p.sel, len(state.Plan))
-	return planPanelText(state, p.sel, p.note, p.noteGood, p.clearArmed, overlayTextWidth(screenW))
+	sc := planScreen{
+		state: state, sel: p.sel, note: p.note, noteGood: p.noteGood, clearArmed: p.clearArmed,
+		width: overlayTextWidth(screenW), rows: p.bodyRows(),
+		mode: p.mode, input: p.input, picks: p.picks, pickSel: p.pickSel,
+	}
+	if p.engine != nil {
+		sc.est = p.engine.PlanEstimate()
+		sc.haveEst = len(sc.est.Items) == len(state.Plan)
+		if prev, err := p.engine.PlanOptimizePreview(); err == nil {
+			sc.opt, sc.haveOpt = prev, true
+		}
+	}
+	return planPanelScreen(sc)
+}
+
+// bodyRows is the rows the panel's text may use.
+func (p *planPanel) bodyRows() int {
+	h := 40
+	if p.height != nil {
+		h = p.height()
+	}
+	return max(12, h-panelChromeRows-promptRows)
 }
 
 func clampSel(sel, n int) int {
@@ -50,11 +95,21 @@ func clampSel(sel, n int) int {
 // handleKey acts on event against engine. Reports whether the key was
 // consumed. Must not be called under the engine lock.
 //
-//	↑/↓ or k/j   select
+//	↑/↓ or k/j   select; PgUp/PgDn page
+//	a            add an item (a name box; Enter adds below the selection)
+//	+ / -        the count of a build or upgrade item
 //	u / d        move the selected item up / down
 //	x or Delete  remove the selected item
+//	o            preview plan optimize (Enter keeps it)
 //	C, C         clear the plan (press twice)
 func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bool {
+	p.engine = engine
+	switch p.mode {
+	case planModeAdd, planModePick:
+		return p.handleAddKey(event, engine)
+	case planModeOptimize:
+		return p.handleOptimizeKey(event, engine)
+	}
 	n := len(engine.GetState().Plan)
 	r := unicode.ToLower(event.Rune())
 	isRune := event.Key() == tcell.KeyRune
@@ -64,6 +119,31 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 		p.sel = clampSel(p.sel-1, n)
 	case event.Key() == tcell.KeyDown || (isRune && r == 'j'):
 		p.sel = clampSel(p.sel+1, n)
+	case event.Key() == tcell.KeyPgUp:
+		p.sel = clampSel(p.sel-planPageRows(p.bodyRows()), n)
+	case event.Key() == tcell.KeyPgDn:
+		p.sel = clampSel(p.sel+planPageRows(p.bodyRows()), n)
+	case isRune && r == 'a':
+		p.mode, p.input, p.picks, p.pickSel = planModeAdd, "", nil, 0
+		p.note = ""
+	case isRune && r == 'o':
+		p.mode = planModeOptimize
+		p.note = ""
+	case isRune && (event.Rune() == '+' || event.Rune() == '=' || event.Rune() == '-' || event.Rune() == '_' || event.Rune() == '−'):
+		if n == 0 {
+			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.07", "The plan is empty."), false
+			break
+		}
+		delta := 1
+		if event.Rune() == '-' || event.Rune() == '_' || event.Rune() == '−' {
+			delta = -1
+		}
+		count, err := engine.PlanAdjust(p.sel+1, delta)
+		if err != nil {
+			p.note, p.noteGood = err.Error(), false
+			break
+		}
+		p.note, p.noteGood = vibe.Sprintf("ui.overlay_plan.handleKey.08", "Count is now %d.", count), true
 	case isRune && (r == 'u' || r == 'd'):
 		if n == 0 {
 			p.note, p.noteGood = vibe.Line("ui.overlay_plan.handleKey.01", "The plan is empty."), false
@@ -112,9 +192,14 @@ func (p *planPanel) handleKey(event *tcell.EventKey, engine *game.GameEngine) bo
 	return true
 }
 
-// planFooter is the keys on the panel's foot.
+// planPageRows is how far PgUp and PgDn move the selection: a queue page.
+func planPageRows(bodyRows int) int {
+	return max(1, bodyRows-6)
+}
+
+// planFooter is the keys on the panel's foot: the one place they are listed.
 func planFooter() [][2]string {
-	return [][2]string{{"↑↓", "pick"}, {"U D", "move"}, {"X", "remove"}, {"C", "clear"}, {"Esc", "close"}}
+	return [][2]string{{"A", "add"}, {"+/−", "count"}, {"U/D", "move"}, {"X", "remove"}, {"O", "optimize"}, {"C", "clear"}, {"Esc", "close"}}
 }
 
 // planStatusText is an item's status word in its role color.
@@ -154,51 +239,6 @@ func planItemTitle(v game.PlanItemView) string {
 	return s
 }
 
-// planItemDetailGlued is planItemDetail with the spaces inside each material
-// of a price glued, so planDetailRows can wrap between materials.
-func planItemDetailGlued(v game.PlanItemView, state game.GameState) string {
-	switch v.Status {
-	case game.PlanStatusBlocked:
-		return theme.Paint(theme.RoleDim, v.Note)
-	case game.PlanStatusWaiting:
-		detail := wonderProgressBar(v.Progress, 8) + fmt.Sprintf(" %3.0f%%", v.Progress*100)
-		if v.Short != "" {
-			cost := v.Cost[v.Short]
-			covered := v.Progress * cost
-			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), textfmt.Number(covered), textfmt.Number(cost))
-			var notes []string
-			if held := state.Resources[v.Short].Amount - covered; held >= 1 {
-				notes = append(notes, textfmt.Number(held)+vibe.Line("ui.overlay_plan.planItemDetailGlued.03", " held for items above"))
-			}
-			if len(notes) > 0 {
-				line += " (" + strings.Join(notes, ", ") + ")"
-			}
-			detail += theme.Paint(theme.RoleDim, line)
-		}
-		return detail
-	default:
-		if len(v.Cost) == 0 {
-			return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.04", "starts next tick"))
-		}
-		return theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planItemDetailGlued.08", "starts next tick for ")+planPriceWhole(v.Cost))
-	}
-}
-
-// planDetailLead is the cells before an item's detail: the seven that indent
-// the line, the status word (seven) and two spaces.
-const planDetailLead = 16
-
-// planDetailRows is detail on one row when it fits width cells, otherwise
-// wrapped at its spaces onto further rows under the first. The materials of a
-// price are joined with glue, so a material ("49.8T dark matter crystals")
-// is not broken while it fits a row of its own.
-func planDetailRows(detail string, width int) string {
-	if visibleLen(strings.ReplaceAll(detail, glue, " ")) <= width {
-		return strings.ReplaceAll(detail, glue, " ")
-	}
-	return strings.Join(wrapWords(detail, width), "\n"+strings.Repeat(" ", planDetailLead))
-}
-
 // planPriceWhole is "48 wood, 20 stone", resources in key order, with each
 // material's spaces glued.
 func planPriceWhole(cost map[string]float64) string {
@@ -209,53 +249,46 @@ func planPriceWhole(cost map[string]float64) string {
 	return strings.Join(parts, ", ")
 }
 
-// planPanelText renders the panel. Pure: state in, text out.
-// width is the cells the text has; a detail that is longer than the room left
-// of the status word goes on over further lines under its first.
-func planPanelText(state game.GameState, sel int, note string, noteGood, clearArmed bool, width int) string {
-	var sb strings.Builder
-	sb.WriteString(theme.Paint(theme.RoleAccent, vibe.Line("ui.overlay_plan.planPanelText.01", "═══ Build plan ═══")) + "\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planPanelText.02", " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.")) + "\n\n")
+// txtPlanNever and txtPlanNow are said in several places, so each has one id.
+var (
+	txtPlanNever = vibe.E("ui.overlay_plan.planWhen.02", "never")
+	txtPlanNow   = vibe.E("ui.overlay_plan.planWhen.03", "now")
+)
 
-	if len(state.Plan) == 0 {
-		sb.WriteString(vibe.Line("ui.overlay_plan.planPanelText.03", " The plan is empty.\n\n"))
-		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan build <building> [count[]") + theme.Paint(theme.RoleDim, "   e.g. plan build hut 10") + "\n")
-		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planPanelText.06", "            with what it needs first, in order")) + "\n")
-	} else {
-		for i, v := range state.Plan {
-			marker := "  "
-			title := fmt.Sprintf("%2d. %s", i+1, planItemTitle(v))
-			if i == sel {
-				marker = theme.Paint(theme.RoleAccent, "▸ ")
-				title = theme.Selected(tview.Escape(title))
-			} else {
-				title = theme.Paint(theme.RoleText, tview.Escape(title))
-			}
-			fmt.Fprintf(&sb, " %s%s\n       %s  %s\n", marker, title, planStatusText(v), planDetailRows(planItemDetailGlued(v, state), width-planDetailLead))
-		}
-		// Research takes no room: the 60 are for everything else.
-		load := game.PlanLoad(state.Plan)
-		count := vibe.Sprintf("ui.overlay_plan.planPanelText.07", "%d of %d items", load, game.MaxPlanItems)
-		if techs := len(state.Plan) - load; techs > 0 {
-			count += vibe.Sprintf("ui.overlay_plan.planPanelText.08", ", and %s queued (research takes no room)", textfmt.Count(techs, vibe.Line("ui.overlay_plan.planPanelText.09", "tech"), vibe.Line("ui.overlay_plan.planPanelText.10", "techs")))
-		}
-		fmt.Fprintf(&sb, "\n %s\n", theme.Paint(theme.RoleDim, count))
+// planWhen is when an item starts, as a word: "now", "in 4m", "never" or
+// "needs you". Empty when nothing can be said. est is the plan estimate (nil
+// without one): the walk's figure wins over the item's own price when it
+// played the item.
+func planWhen(v game.PlanItemView, est *game.PlanItemEstimate) string {
+	switch v.When {
+	case game.PlanWhenHand:
+		return vibe.Line("ui.overlay_plan.planWhen.01", "needs you")
+	case game.PlanWhenNever:
+		return txtPlanNever.String()
+	case game.PlanWhenUnknown:
+		return ""
 	}
-
-	sb.WriteString("\n " + theme.Keycap("↑↓") + vibe.Line("ui.overlay_plan.planPanelText.11", " select  ") + theme.Keycap("U") + " up  " + theme.Keycap("D") + " down  " +
-		theme.Keycap("X") + vibe.Line("ui.overlay_plan.planPanelText.14", " remove  ") + theme.Keycap("C") + vibe.Line("ui.overlay_plan.planPanelText.15", " clear\n"))
-	sb.WriteString(" " + theme.Paint(theme.RoleDim, vibe.Line("ui.overlay_plan.planPanelText.16", "Add with plan build / plan upgrade / plan research; plan list, remove, up, down and clear work as commands too.")) + "\n")
-
-	if note != "" {
-		role := theme.RoleNegative
-		if noteGood {
-			role = theme.RolePositive
-		} else if clearArmed {
-			role = theme.RoleWarning
+	at := v.StartsIn
+	if v.Status == game.PlanStatusReady {
+		at = 0
+	} else if est != nil && est.Modeled {
+		if est.Never {
+			return txtPlanNever.String()
 		}
-		sb.WriteString("\n " + theme.Paint(role, tview.Escape(note)) + "\n")
+		at = est.Start
 	}
-	return sb.String()
+	if at <= 0 {
+		return txtPlanNow.String()
+	}
+	return vibe.Line("ui.overlay_plan.planWhen.04", "in ") + textfmt.Duration(at)
+}
+
+// planTimeText is a span for the header: textfmt.Duration, "now" for none.
+func planTimeText(d time.Duration) string {
+	if d <= 0 {
+		return txtPlanNow.String()
+	}
+	return textfmt.Duration(d)
 }
 
 // planListText is `plan list`: the plan as plain log lines.
@@ -275,6 +308,9 @@ func planListText(state game.GameState) string {
 			}
 		case game.PlanStatusBlocked:
 			status = vibe.Line("ui.overlay_plan.planListText.05", "blocked: ") + v.Note
+		}
+		if when := planWhen(v, nil); when != "" && v.Status != game.PlanStatusBlocked {
+			status += "  ·  " + vibe.Line("ui.overlay_plan.planListText.06", "starts ") + when
 		}
 		fmt.Fprintf(&sb, "  %d. %s  %s\n", i+1, tview.Escape(planItemTitle(v)), theme.Paint(theme.RoleDim, status))
 	}

@@ -114,7 +114,7 @@ func (ge *GameEngine) planDetailFor(v *PlanItemView, chk planCheck, reserved map
 		v.When = PlanWhenHand
 		v.BankShare = ge.wonderBankShare(v.Key)
 		if v.Note == "" {
-			v.Note = txtWonderByHand.String()
+			v.Note = txtWonderByHand.String() + vibe.Line("game.plan_detail.planDetailFor.02", ". It also pays itself once the funds you hold cover the bank.")
 		}
 	}
 }

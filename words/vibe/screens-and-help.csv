@@ -1683,13 +1683,7 @@ ui.overlay_plan.planItemTitle.01,research
 ui.overlay_plan.planItemTitle.02,glow up %d %s → %s
 ui.overlay_plan.planItemTitle.03," (%d cooking)"
 ui.overlay_plan.planItemTitle.04," (%d already cooking)"
-ui.overlay_plan.planItemDetailGlued.03," gatekept for items above"
-ui.overlay_plan.planItemDetailGlued.04,drops next tick
-ui.overlay_plan.planItemDetailGlued.08,drops next tick for 
 ui.overlay_plan.planPanelText.01,═══ Build Plan Arc ═══
-ui.overlay_plan.planPanelText.02," Started in order as the bag fills, while you play and while you are AFK.
- Each item pays when it starts. A waiting item gatekeeps its price from the
- items below it; those can still start with whatever it doesn't need."
 ui.overlay_plan.planPanelText.03," The plan has zero items, very blank slate era.
 
 "
@@ -1698,11 +1692,6 @@ ui.overlay_plan.planPanelText.07,%d/%d items on deck
 ui.overlay_plan.planPanelText.08,", and %s queued (research takes no room, free real estate)"
 ui.overlay_plan.planPanelText.09,tech
 ui.overlay_plan.planPanelText.10,techs
-ui.overlay_plan.planPanelText.11," pick it  "
-ui.overlay_plan.planPanelText.14," yeet  "
-ui.overlay_plan.planPanelText.15," nuke it
-"
-ui.overlay_plan.planPanelText.16,"Add with plan build / plan upgrade / plan research; plan list, remove, up, down and clear double as commands too, twin energy."
 ui.overlay_plan.planListText.01,"Nothing queued rn. Add items with: plan build <building> [count[], or plan research <tech>."
 ui.overlay_plan.planListText.02,Build Plan Arc
 ui.overlay_plan.planListText.03,"loading, %.0f%%"

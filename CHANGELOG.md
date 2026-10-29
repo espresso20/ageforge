@@ -7,8 +7,9 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **Add from the plan panel.** `A` opens a name box: type part of a building, tech or mission, and `Enter` adds it below the selection (it asks which kind when the name fits several). `+` and `-` change the count of a build or upgrade item.
 - **Plan expeditions.** `plan expedition <mission>` queues a mission from the board. It leaves when its price is covered and a party is at home, and drops out of the plan with a log line if the offer goes. Each plan item now also carries its own time to start, and the whole plan has a finish estimate.
-- **Optimize preview.** The engine can show what `plan optimize` would do (before, after, new order) without applying it.
+- **Optimize preview.** `O` in the plan panel shows the plan now and after optimizing, with the moved items marked and the time saved. `Enter` keeps it.
 - **The map names everything.** Traffic is named for what it is (a cart, a car, a drone, a starship), and in orbit, the solar system and the star map the homeworld, the sun, the other planets, the stars, the elevator, the rings and the routes each have words of their own, with a building named for the part it is: a habitat module, a colony ark, a deck. None reads as the town's name any more.
 - **New since your last visit is lit, and a district zoom.** The ground under buildings that grew since the save was loaded, and under a wonder you finished, is lit when the Map first shows it and clears once you have looked. `PgDn` now goes from the region to the settlement to a district, which frames one kind of building's part of town and dims the rest, and `Tab` goes round the districts.
 - **The world around the town is on the map.** Civilizations you have met stand at the edge of the picture in the color of how they stand toward you, trade routes run to them as lines of dots with caravans on them, scouts and an army walk out and back, the harbinger stands by the square and idle workers loiter round it. In space they are stars, lanes and ships. The cursor names each one, and `Tab` visits the civilizations.
@@ -22,6 +23,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- **The plan panel is a workbench.** A queue on the left (a line for each item, with when it starts) and the detail of the picked item on the right: what it needs, holds and earns, what it holds back, an advance's pillars and a wonder's bank. The header says when the plan finishes. On a narrow terminal the detail sits under the queue. The keys are listed once, in the footer.
 - **The map is drawn by a new engine.** The Map panel, the dashboard's mini map and the picture behind the main menu draw the place itself instead of a symbol chart: roads and streets that grow with your town, buildings that stay where they were and grow from huts to towers, your wonders as small hand-drawn shapes, the land in your theme's colors, day and night. As you reach further the view pulls back to the planet, the solar system and the stars. It has two zooms, the whole town and a close-up. The AGEFORGE_MAP switch is gone.
 - **Every panel is full screen.** Panels open over the whole screen with the same frame, title and key line, instead of some opening as a box over the dashboard.
 - **Lineage badges on a real idle scale.** Each lineage's badges now count to numbers set by how much of that lineage a dedicated player builds across many runs, with Legendary a long-term goal.
