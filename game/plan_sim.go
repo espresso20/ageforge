@@ -559,6 +559,12 @@ type simOutcome struct {
 	finish float64 // tick the last copy that could start started
 	bought int
 	total  int
+	// first and last are the ticks the first and the last copy of each item
+	// started, by place in the items played; -1 for an item none of whose
+	// copies started.
+	first, last []float64
+	// got is how many copies of each item started.
+	got []int
 }
 
 // walk plays items (in plan order) as the plan does: every tick, in order,
@@ -566,9 +572,10 @@ type simOutcome struct {
 // the rest save up. It ends when everything has started or nothing ever will.
 func (m *planModel) walk(items []simItem) simOutcome {
 	r := m.newRun()
-	out := simOutcome{}
-	for _, it := range items {
+	out := simOutcome{first: make([]float64, len(items)), last: make([]float64, len(items)), got: make([]int, len(items))}
+	for i, it := range items {
 		out.total += it.left
+		out.first[i], out.last[i] = -1, -1
 	}
 	left := append([]simItem(nil), items...)
 	reserved := make([]float64, len(m.res))
@@ -589,6 +596,11 @@ func (m *planModel) walk(items []simItem) simOutcome {
 						remaining--
 						out.bought++
 						out.finish = r.t
+						if out.first[i] < 0 {
+							out.first[i] = r.t
+						}
+						out.last[i] = r.t
+						out.got[i]++
 						started = true
 						continue
 					}

@@ -62,6 +62,10 @@ type PlanOptimizeResult struct {
 	// Waiting is how many copies cannot start at all until the player makes
 	// what they cost.
 	Waiting int
+	// Previous labels the plan's items as they stood before, in order; Moved
+	// marks the items of Order that are not what stood at their place before.
+	Previous []string
+	Moved    []bool
 }
 
 // optHeld is an item that keeps its place: a build the model does not value
@@ -98,17 +102,24 @@ func (ge *GameEngine) planOptimizeKind(it PlanItem) int {
 	return optAnchor
 }
 
-// PlanOptimize reorders the plan's builds for the fastest growth, or leaves
-// the plan as it is when no order is faster. See the rules at the top of this
-// file.
-func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	if len(ge.plan) == 0 {
-		return PlanOptimizeResult{}, vibe.Errorf("game.plan_optimize.PlanOptimize.01", "The plan is empty.")
-	}
-	ge.recalculateRates()
+// optInput is the plan sorted for the optimizer: what moves, what holds its
+// place, and the items to walk.
+type optInput struct {
+	region, tail []PlanItem // the plan before its first advance, and from it
+	held         []optHeld
+	rest         []PlanItem // past the simulation
+	keys         []string
+	counts       map[string]int
+	started      map[string]int
+	before       []simItem // what the walk plays, in plan order
+	beforeAt     []int     // the plan index of each of before
+	moved        int
+	beyond       int
+}
 
+// optInputOf sorts the plan for the optimizer and for the estimate: the
+// copies of its builds that the model plays, in plan order.
+func (ge *GameEngine) optInputOf() optInput {
 	end := len(ge.plan)
 	for i, it := range ge.plan {
 		if it.Kind == PlanAdvance {
@@ -116,75 +127,122 @@ func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
 			break
 		}
 	}
-	region, tail := ge.plan[:end], ge.plan[end:]
-
-	var (
-		held    []optHeld
-		rest    []PlanItem // past the simulation
-		keys    []string
-		counts  = map[string]int{}
-		started = map[string]int{}
-		before  []simItem
-		moved   int
-		copies  int
-		capped  bool
-	)
+	in := optInput{region: ge.plan[:end], tail: ge.plan[end:], counts: map[string]int{}, started: map[string]int{}}
+	copies := 0
+	capped := false
 	keyOf := func(k string) int {
-		for i, have := range keys {
+		for i, have := range in.keys {
 			if have == k {
 				return i
 			}
 		}
-		keys = append(keys, k)
-		return len(keys) - 1
+		in.keys = append(in.keys, k)
+		return len(in.keys) - 1
 	}
-	for _, it := range region {
+	for at, it := range in.region {
 		if capped {
-			rest = append(rest, it)
+			in.rest = append(in.rest, it)
 			continue
 		}
 		if it.Kind != PlanBuild {
 			// Research, deals and upgrades neither need nor give a building:
 			// they keep their place by rank, like the builds the model
 			// cannot value.
-			held = append(held, optHeld{it: it, rank: moved})
+			in.held = append(in.held, optHeld{it: it, rank: in.moved})
 			continue
 		}
 		switch kind := ge.planOptimizeKind(it); kind {
 		case optMover:
 			take := min(it.Count, PlanOptimizeCopies-copies)
-			counts[it.Key] += take
-			started[it.Key] += it.Started
-			before = append(before, simItem{key: keyOf(it.Key), left: take})
-			moved += take
+			in.counts[it.Key] += take
+			in.started[it.Key] += it.Started
+			in.before = append(in.before, simItem{key: keyOf(it.Key), left: take})
+			in.beforeAt = append(in.beforeAt, at)
+			in.moved += take
 			copies += take
 			if take < it.Count {
 				cut := it
 				cut.Count, cut.Started = it.Count-take, 0
-				rest = append(rest, cut)
+				in.rest = append(in.rest, cut)
 				capped = true
 			}
 		default:
-			h := optHeld{it: it, rank: moved, play: kind == optAnchor}
+			h := optHeld{it: it, rank: in.moved, play: kind == optAnchor}
 			if h.play {
 				h.key = keyOf(it.Key)
-				before = append(before, simItem{key: h.key, left: it.Count})
+				in.before = append(in.before, simItem{key: h.key, left: it.Count})
+				in.beforeAt = append(in.beforeAt, at)
 			}
-			held = append(held, h)
+			in.held = append(in.held, h)
 			copies += it.Count
 		}
 		if copies >= PlanOptimizeCopies {
 			capped = true
 		}
 	}
-	beyond := 0
-	for _, it := range rest {
+	for _, it := range in.rest {
 		if it.Kind == PlanBuild {
-			beyond += it.Count
+			in.beyond += it.Count
 		}
 	}
-	if moved == 0 {
-		return PlanOptimizeResult{Reason: PlanOptimizeNothing, Order: ge.planLabels(ge.plan)}, nil
+	return in
+}
+
+// PlanOptimize reorders the plan's builds for the fastest growth, or leaves
+// the plan as it is when no order is faster. See the rules at the top of this
+// file.
+func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	return ge.planOptimizeLocked(true)
+}
+
+// PlanOptimizePreview is what PlanOptimize would do, without doing it: the
+// same result (Changed says whether it would reorder), the plan left as it
+// is. Results are kept for a few ticks while the plan does not change, so a
+// panel may ask on every refresh.
+func (ge *GameEngine) PlanOptimizePreview() (PlanOptimizeResult, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if len(ge.plan) > 0 && ge.previewCache.fresh(ge.plan, ge.tick) {
+		return ge.previewCache.res, nil
+	}
+	res, err := ge.planOptimizeLocked(false)
+	if err == nil {
+		ge.previewCache = previewCache{plan: slices.Clone(ge.plan), tick: ge.tick, res: res, ok: true}
+	}
+	return res, err
+}
+
+// planCacheTicks is how long an estimate or a preview is kept while the plan
+// stays as it is. The times drift by that much at most.
+const planCacheTicks = 10
+
+// previewCache is the last optimize preview and what it was made from.
+type previewCache struct {
+	plan []PlanItem
+	tick int
+	res  PlanOptimizeResult
+	ok   bool
+}
+
+func (c previewCache) fresh(plan []PlanItem, tick int) bool {
+	return c.ok && tick >= c.tick && tick-c.tick < planCacheTicks && slices.Equal(c.plan, plan)
+}
+
+// planOptimizeLocked is PlanOptimize; apply says whether to keep the new
+// order (false for a preview). Caller holds the write lock.
+func (ge *GameEngine) planOptimizeLocked(apply bool) (PlanOptimizeResult, error) {
+	if len(ge.plan) == 0 {
+		return PlanOptimizeResult{}, vibe.Errorf("game.plan_optimize.PlanOptimize.01", "The plan is empty.")
+	}
+	ge.recalculateRates()
+
+	in := ge.optInputOf()
+	held, rest, keys, counts, started, before := in.held, in.rest, in.keys, in.counts, in.started, in.before
+	tail, beyond := in.tail, in.beyond
+	if in.moved == 0 {
+		return PlanOptimizeResult{Reason: PlanOptimizeNothing, Order: ge.planLabels(ge.plan), Previous: ge.planLabels(ge.plan)}, nil
 	}
 
 	// The model lists keys in the order given, so an index into keys is an
@@ -213,7 +271,7 @@ func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
 		break
 	}
 
-	res := PlanOptimizeResult{Beyond: beyond, Waiting: old.total - old.bought}
+	res := PlanOptimizeResult{Beyond: beyond, Waiting: old.total - old.bought, Previous: ge.planLabels(ge.plan)}
 	iv := ge.tickIntervalLocked()
 	res.Before = time.Duration(old.finish * float64(iv))
 	res.After = time.Duration(bestOut.finish * float64(iv))
@@ -225,11 +283,24 @@ func (ge *GameEngine) PlanOptimize() (PlanOptimizeResult, error) {
 		res.Order = ge.planLabels(ge.plan)
 		return res, nil
 	}
-	ge.plan = best
 	res.Changed = true
 	res.Waiting = bestOut.total - bestOut.bought
-	res.Order = ge.planLabels(ge.plan)
+	res.Order = ge.planLabels(best)
+	res.Moved = planMoved(ge.plan, best)
+	if apply {
+		ge.plan = best
+	}
 	return res, nil
+}
+
+// planMoved marks the items of after that differ from the item at the same
+// place in before.
+func planMoved(before, after []PlanItem) []bool {
+	moved := make([]bool, len(after))
+	for i, it := range after {
+		moved[i] = i >= len(before) || before[i].Kind != it.Kind || before[i].Key != it.Key || before[i].Count != it.Count || before[i].Deal != it.Deal
+	}
+	return moved
 }
 
 // planLabels names every item of plan, in order.

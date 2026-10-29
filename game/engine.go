@@ -413,6 +413,10 @@ type GameEngine struct {
 	// plan is the build plan the engine works through as resources come in
 	// (plan.go). Saved; cleared by prestige, Succumb and Reset.
 	plan []PlanItem
+	// previewCache and estimateCache keep the last optimize preview and plan
+	// estimate (plan_estimate.go, plan_optimize.go) for a few ticks. Not saved.
+	previewCache  previewCache
+	estimateCache estimateCache
 	// planLog is the plan as written this run, age by age (legacy.go): the
 	// Plan Template's source. Saved; folded into the template and cleared by
 	// prestige and Succumb, cleared by Reset.
@@ -4898,7 +4902,7 @@ func (ge *GameEngine) GetState() GameState {
 	milestoneParams.Sight = &sight
 	milestoneParams.activeEvents = ge.Events.GetActive()
 
-	return GameState{
+	st := GameState{
 		Rules:                 ge.rules,
 		Tick:                  ge.tick,
 		Age:                   ge.age,
@@ -4988,6 +4992,8 @@ func (ge *GameEngine) GetState() GameState {
 			}
 		}(),
 	}
+	st.fillPlanPillars()
+	return st
 }
 
 // buildDoneLog is the log category for a finished copy of def: a wonder is

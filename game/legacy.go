@@ -141,7 +141,7 @@ func uniqueKeys(keys []string) []string {
 // for the age is not recorded twice, and an age holds at most MaxPlanItems
 // entries. Caller holds the write lock.
 func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
-	if it.Kind == PlanDeal || ((it.Kind == PlanBuild || it.Kind == PlanUpgrade) && count <= 0) {
+	if it.Kind == PlanDeal || it.Kind == PlanExpedition || ((it.Kind == PlanBuild || it.Kind == PlanUpgrade) && count <= 0) {
 		return
 	}
 	for i := range ge.planLog {
@@ -181,7 +181,7 @@ func (ge *GameEngine) logPlanAddLocked(it PlanItem, count int) {
 // loses its entry. The entry looked for is the current age's, then the
 // latest earlier one. Caller holds the write lock.
 func (ge *GameEngine) unlogPlanItemLocked(it PlanItem) {
-	if it.Kind == PlanDeal {
+	if it.Kind == PlanDeal || it.Kind == PlanExpedition {
 		return
 	}
 	match := func(e PlanTemplateItem) bool {
