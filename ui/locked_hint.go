@@ -38,6 +38,9 @@ func lockedHintLine(key string) string {
 	return lockedHintLines[h.Sum32()%uint32(len(lockedHintLines))].String()
 }
 
+// txtOr joins the last two names of a list.
+var txtOr = vibe.E("ui.locked_hint.joinNames.01", " or ")
+
 // joinNames joins up to 3 names with commas and "or"/"and": "A", "A or B", "A, B or C".
 // If there are more than 3, it returns the first 3 joined and the count of remaining.
 func joinNames(names []string) (string, int) {
@@ -48,13 +51,13 @@ func joinNames(names []string) (string, int) {
 		return names[0], 0
 	}
 	if len(names) == 2 {
-		return names[0] + " or " + names[1], 0
+		return names[0] + txtOr.String() + names[1], 0
 	}
 	if len(names) == 3 {
-		return names[0] + ", " + names[1] + " or " + names[2], 0
+		return names[0] + ", " + names[1] + txtOr.String() + names[2], 0
 	}
 	// More than 3: show the first 3
-	return names[0] + ", " + names[1] + " or " + names[2], len(names) - 3
+	return names[0] + ", " + names[1] + txtOr.String() + names[2], len(names) - 3
 }
 
 // lockedNeedsLine says what a locked building waits for: the tech, and the
