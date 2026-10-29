@@ -338,3 +338,32 @@ func TestPlanExpedition_LaunchesWhileAway(t *testing.T) {
 		t.Errorf("started %v with %+v, want the expedition sent", started, starts)
 	}
 }
+
+// + and - change a build item's count, within the building's room.
+func TestPlanAdjust(t *testing.T) {
+	ge := planTestEngine(t)
+	if _, err := ge.PlanAddBuild("hut", 2); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := ge.PlanAdjust(1, 3); err != nil || n != 5 {
+		t.Fatalf("+3 = %d, %v, want 5", n, err)
+	}
+	if n, err := ge.PlanAdjust(1, -2); err != nil || n != 3 {
+		t.Fatalf("-2 = %d, %v, want 3", n, err)
+	}
+	if n, err := ge.PlanAdjust(1, -9); err != nil || n != 1 {
+		t.Fatalf("-9 = %d, %v, want 1", n, err)
+	}
+	if _, err := ge.PlanAdjust(1, -1); err == nil {
+		t.Error("count went below 1")
+	}
+	if _, err := ge.PlanAdjust(5, 1); err == nil {
+		t.Error("adjusted an item that is not there")
+	}
+	if err := ge.PlanAddAdvance(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ge.PlanAdjust(2, 1); err == nil {
+		t.Error("gave an advance item a count")
+	}
+}

@@ -2585,6 +2585,32 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 			return errorResult(err)
 		}
 		return routineReply(vibe.Sprintf("ui.input.cmdPlan.15", "Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)))
+	case "expedition", "exp":
+		if len(rest) == 0 {
+			return errorReply(usageFor("plan expedition"))
+		}
+		input := strings.Join(rest, " ")
+		var titles []string
+		for _, slot := range engine.GetState().Military.Board {
+			if slot.Offer != nil {
+				titles = append(titles, slot.Offer.Name)
+			}
+		}
+		hits := matchOffers(titles, input)
+		switch {
+		case len(hits) == 0:
+			return errorReply(vibe.Sprintf("ui.input.cmdPlan.17", "No offer called %q. Type expedition list to see the board.", input))
+		case len(hits) > 1 && !sameTitles(titles, hits):
+			names := make([]string, len(hits))
+			for i, h := range hits {
+				names[i] = titles[h]
+			}
+			return warningReply(vibe.Line("ui.input.cmdPlan.18", "Which one? ") + strings.Join(names, ", ") + vibe.Line("ui.input.cmdPlan.19", ". Type more of the name."))
+		}
+		if err := engine.PlanAddExpedition(titles[hits[0]]); err != nil {
+			return errorResult(err)
+		}
+		return routineReply(vibe.Sprintf("ui.input.cmdPlan.20", "Planned: send %s once its price is there and a party is home.", titles[hits[0]]))
 	case "advance":
 		if len(rest) != 0 {
 			return errorReply(usageFor("plan advance"))

@@ -92,3 +92,48 @@ func (ge *GameEngine) launchPlanExpedition(it PlanItem) error {
 	}
 	return ge.launchExpeditionLocked(n)
 }
+
+// PlanAdjust changes the count of build or upgrade item n (1-based) by delta
+// and returns the new count. Raising it stops at what the building's limit or
+// the copies held leave; lowering it stops at 1 (remove the item instead).
+func (ge *GameEngine) PlanAdjust(n, delta int) (int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if n < 1 || n > len(ge.plan) {
+		return 0, ge.planIndexErr(n)
+	}
+	it := &ge.plan[n-1]
+	if it.Kind != PlanBuild && it.Kind != PlanUpgrade {
+		return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.01", "Only builds and upgrades have a count.")
+	}
+	if delta < 0 {
+		next := max(it.Count+delta, 1)
+		if next == it.Count {
+			return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.02", "The count is already 1. Remove the item to drop it.")
+		}
+		it.Count = next
+		return next, nil
+	}
+	planned := plannedCount(ge.plan, it.Kind, it.Key)
+	room := maxPlanCount - it.Count
+	if it.Kind == PlanBuild {
+		def, ok := ge.Buildings.defs[it.Key]
+		if !ok {
+			return 0, ge.unknownBuildingErr(it.Key)
+		}
+		room = min(room, ge.planRoom(def, planned))
+	} else {
+		newDef, pending := ge.Buildings.UpgradeTarget(it.Key)
+		if !pending {
+			return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.03", "That upgrade is no longer available.")
+		}
+		room = min(room, ge.Buildings.GetCount(it.Key)-planned, ge.planRoom(newDef, planned))
+	}
+	add := min(delta, room)
+	if add <= 0 {
+		return 0, vibe.Errorf("game.plan_expedition.PlanAdjust.04", "That is the most the plan can take.")
+	}
+	it.Count += add
+	ge.logPlanAddLocked(*it, add)
+	return it.Count, nil
+}
