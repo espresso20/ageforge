@@ -26,6 +26,9 @@ func (f *frame) paintGalaxy() {
 	thing := Thing{Kind: KindTerrain, Key: "space"}
 	for i, c := range f.plan.Galaxy.Sky {
 		x, y := i%worldW, i/worldW
+		if (c.R == '✦' || c.R == '✧') && (f.anim/9+x*7+y*13)%7 == 0 {
+			c.R = '+' // the bright stars take turns to twinkle
+		}
 		f.g.paint(x, y, c)
 		f.g.mark(x, y, thing)
 	}

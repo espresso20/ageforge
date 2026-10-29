@@ -192,15 +192,3 @@ func TestSpaceScalesDrawTheirBodies(t *testing.T) {
 		}
 	}
 }
-
-// TestReachGrowsWithTheTown: on the star map the glow of the people's reach
-// is wider for a bigger town.
-func TestReachGrowsWithTheTown(t *testing.T) {
-	var gen Generator
-	small := fixture.State(fixture.Options{Age: "galactic_age", Seed: 4, Tick: noon, Scale: 0.2})
-	big := fixture.State(fixture.Options{Age: "galactic_age", Seed: 4, Tick: noon, Scale: 3})
-	a, b := gen.frame(model(small), 0), gen.frame(model(big), 0)
-	if a.reach() >= b.reach() {
-		t.Errorf("a small town reaches %d columns, a big one %d", a.reach(), b.reach())
-	}
-}

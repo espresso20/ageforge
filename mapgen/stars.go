@@ -141,22 +141,6 @@ func (b *planner) cutStarLots(route []int) {
 	}
 }
 
-// reach is the radius, in columns, of the region the people's buildings
-// reach: out to the furthest parcel in use, and a little more.
-func (f *frame) reach() int {
-	c, r := f.plan.Centre, 14
-	use := func(rect Rect) {
-		r = max(r, isqrt(rect.dist(c))+8)
-	}
-	for _, pl := range f.placed {
-		use(f.plan.Lots[pl.lot].Rect)
-	}
-	for _, lot := range f.filler {
-		use(f.plan.Lots[lot].Rect)
-	}
-	return r
-}
-
 // chain is the cells of a road from the home system out: its parents' cells up
 // to where it leaves them, then its own.
 func (p *Plan) chain(road int) []Pt {

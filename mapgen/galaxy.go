@@ -173,25 +173,46 @@ func splat(field []uint8, c Pt, rho, amp int) {
 	}
 }
 
+// armWidth is how wide arm k is at rf (0 to 1000 along it) and r columns out,
+// and how bright: full strength through the first half, then narrowing and
+// fading to a thin faint tip.
+func armWidth(r, rf int, home bool) (rho, amp int) {
+	taper := 1000 - max(0, rf-420)*1000/760
+	base := 5 + r/8
+	if home {
+		base += 2
+	}
+	return max(3, base*(300+taper*7/10)/1000), 120 + 135*taper/1000
+}
+
+// soft lifts the foot of a hill so a glow reaches further before it fades.
+func soft(b int) int { return b * (512 - b) / 256 }
+
 // NewGalaxy draws the sky of a seed.
 func NewGalaxy(seed int64) *Galaxy {
 	s := pickShape(seed)
 	n := worldW * worldH
 	g := &Galaxy{Shape: s, Dens: make([]uint8, n), Sky: make([]Cell, n)}
-	arm, dust, core := make([]uint8, n), make([]uint8, n), make([]uint8, n)
+	arm, dust, core, knot := make([]uint8, n), make([]uint8, n), make([]uint8, n), make([]uint8, n)
 	for k := 0; k < s.Arms+s.Faint; k++ {
-		amp := 255
-		if k >= s.Arms {
-			amp = 105
-		}
+		faint := k >= s.Arms
 		for i := 0; i <= galArmN; i++ {
 			rf := i * 1000 / galArmN
 			c, r := s.armAt(seed, k, rf, 0)
-			edge := min(1000, (1000-rf)*8)
-			splat(arm, c, 3+r/14, amp*(1000-rf/3)/1000*edge/1000)
-			if k < s.Arms && rf > 250 && rf < 800 {
+			rho, amp := armWidth(r, rf, k == s.Home)
+			if faint {
+				rho, amp = rho*3/4, amp*2/5
+			} else if k != s.Home {
+				amp = amp * 9 / 10
+			}
+			splat(arm, c, rho, amp*min(1000, (1000-rf)*8)/1000)
+			if !faint && rf > 200 && rf < 800 {
 				d, rr := s.armAt(seed, k, rf, s.Spin*s.Dust)
-				splat(dust, d, 1+rr/50, 170)
+				splat(dust, d, 2+rr/40, 150)
+			}
+			// bright knots: a few clusters of young stars along the arm
+			if !faint && rf > 80 && rf < 900 && i%9 == 0 && roll(100, seed, 340, int64(k), int64(i)) < 24 {
+				splat(knot, c, 3+roll(3, seed, 341, int64(k), int64(i)), 255)
 			}
 		}
 	}
@@ -199,31 +220,33 @@ func NewGalaxy(seed int64) *Galaxy {
 		c, _ := s.armCell(seed, s.Home, i)
 		g.Home = append(g.Home, c)
 	}
-	// core and bar, in the galaxy's own circle (rows stretched to columns)
+	// core and bar, in the galaxy's own circle (rows stretched to columns): a
+	// halo, a bright body and a white-hot middle
 	ca, sa := cos4096(s.Rot), sin4096(s.Rot)
 	cx, cy, ry := worldW/2, worldH/2, s.ryMax()
 	for y := 0; y < worldH; y++ {
 		for x := 0; x < worldW; x++ {
 			dx, w := x-cx, (y-cy)*galRX/ry
-			v := bump(dx*dx+w*w, s.Core*s.Core*4) * 235 >> 8
+			d2 := dx*dx + w*w
+			v := soft(bump(d2, s.Core*s.Core*20))*125>>8 + soft(bump(d2, s.Core*s.Core*5))*130>>8
 			if s.Bar > 0 {
 				u, t := (dx*ca+w*sa)/1024, (-dx*sa+w*ca)/1024
-				if b := bump(u*u*1000/(s.Bar*s.Bar)+t*t*1000/36, 1000) * 170 >> 8; b > v {
+				if b := bump(u*u*1000/(s.Bar*s.Bar)+t*t*1000/49, 1000) * 190 >> 8; b > v {
 					v = b
 				}
 			}
 			core[at(x, y)] = uint8(min(v, 255))
 		}
 	}
-	g.paint(seed, arm, dust, core)
+	g.paint(seed, arm, dust, core, knot)
 	return g
 }
 
-// paint turns the fields into the finished sky: a dithered gradient of deep
-// tones, the glow of the arms (warm near the core, cool toward the rim), dust
-// lanes that darken them, the core, three layers of stars and the far
-// galaxies.
-func (g *Galaxy) paint(seed int64, arm, dust, core []uint8) {
+// paint turns the fields into the finished sky: a smooth dithered gradient of
+// deep tones, the glow of the arms (warm near the core, cool toward the rim)
+// graded from each arm's middle out into the dark, dust lanes that dim them,
+// the core, three layers of stars that crowd the arms, and the far galaxies.
+func (g *Galaxy) paint(seed int64, arm, dust, core, knot []uint8) {
 	s := g.Shape
 	cx, cy, ry := worldW/2, worldH/2, s.ryMax()
 	h8 := func(salt int64, x, y int) int { return int(hash(seed, salt, int64(x), int64(y)) % 256) }
@@ -233,37 +256,49 @@ func (g *Galaxy) paint(seed int64, arm, dust, core []uint8) {
 			i := at(x, y)
 			dx, w := x-cx, (y-cy)*galRX/ry
 			rad := isqrt((dx*1000/galRX)*(dx*1000/galRX) + (w*1000/galRX)*(w*1000/galRX))
-			a := int(arm[i]) * (140 + fbm(seed+21, x*256/6, y*256/4, 3)*140/noiseMax) >> 8
-			disc := bump(rad*rad, 1000*1000) * 22 >> 8
-			glow := min(255, a*s.Glow*5/400+disc)
+			// the arm's light, clumped a little by a slow noise, dimmed by dust
+			clump := 150 + fbm(seed+21, x*256/9, y*256/5, 3)*106/noiseMax
+			a := int(arm[i]) * clump >> 8
+			if d := int(dust[i]); d > 0 {
+				a = a * (256 - d*3/2) / 256
+				a = max(a, 0)
+			}
+			kn := int(knot[i]) * (200 + h8(50, x, y)/5) >> 8
+			a = min(255, a+kn/3)
+			disc := bump(rad*rad, 1000*1000) * 20 >> 8
+			glow := min(255, a*s.Glow/100+disc)
 			dens := min(255, glow+int(core[i]))
 			g.Dens[i] = uint8(dens)
-			// the deep gradient, a few weights apart, dithered
-			tone := 5 + x*8/worldW + y*6/worldH + fbm(seed+31, x*256/60, y*256/28, 3)*9/noiseMax +
-				max(0, fbm(seed+33, x*256/45, y*256/20, 3)-560)*7/(noiseMax-560) + h8(41, x, y)/90
+			// the deep gradient: smooth, one weight of grain
+			tone := 6 + x*7/worldW + y*5/worldH + fbm(seed+31, x*256/80, y*256/40, 2)*3/noiseMax + h8(41, x, y)/140
 			bg := P(HNebula, tone)
-			if glow > 10 {
-				bg = P(HNebula, tone+glow*130/255)
-			}
-			if glow > 35 {
-				warm := clamp((640-rad+s.Warm)*256/120+128, 0, 256)
-				if h8(42, x, y) < warm {
-					bg = P(HSun, 30+glow*95/255)
+			if glow > 4 {
+				grain := 215 + h8(42, x, y)/6
+				// warm light inside the break radius, cool beyond, the two
+				// dithered together where they meet
+				warm := clamp((430-rad+s.Warm/2)*256/380, 0, 256)
+				if h8(43, x, y) < warm && glow > 22 {
+					bg = P(HSun, tone+glow*110/255*grain/256)
+				} else {
+					bg = P(HNebula, tone+glow*170/255*grain/256)
 				}
 			}
-			if d := int(dust[i]) * min(255, a+40) / 255; d > 100 && h8(43, x, y) < d*2/3 {
-				bg = P(HVoid, 255)
-			}
-			if c := int(core[i]); c*220/255 > int(bg.Weight) && (bg.Hue == HSun || bg.Hue == HNebula) {
-				bg = P(HSun, c*220/255)
+			if c := int(core[i]); c > 10 {
+				switch {
+				case c > 130 && h8(51, x, y) < (c-110)*2:
+					bg = P(HStar, 40+(c-110)*170/145)
+				case h8(52, x, y) < c*4:
+					bg = P(HSun, max(int(bg.Weight), 60+c*170/255))
+				default:
+					bg = P(HNebula, max(int(bg.Weight), tone+c*170/255))
+				}
 			}
 			g.Sky[i] = Cell{R: ' ', Fg: P(HStar, 0), Bg: bg}
-			// three layers of stars, thicker in the arms
+			// three layers of stars, thicker in the arms and the core
 			h := int(hash(seed, 44, int64(x), int64(y)) % 1000)
-			mult := 256 + dens*2
-			pn, pm, pf := 4*mult/256, 16*(256+dens*3)/256, 60*(256+dens*3)/256
+			pn, pm, pf := 3*(256+dens*3+kn)/256, 14*(256+dens*5+kn*2)/256, 55*(256+dens*6)/256
 			ink := HStar
-			if dens > 60 && h8(45, x, y) < 100 {
+			if dens > 70 && h8(45, x, y) < 110 {
 				ink = HSun
 			}
 			switch {
@@ -271,16 +306,17 @@ func (g *Galaxy) paint(seed int64, arm, dust, core []uint8) {
 				g.Sky[i].R, g.Sky[i].Fg = pick("✦✧", uint64(h8(46, x, y))), P(ink, 255)
 				near = append(near, Pt{x, y})
 			case h < pn+pm:
-				g.Sky[i].R, g.Sky[i].Fg = pick("∙∙+", uint64(h8(47, x, y))), P(ink, 150+h8(48, x, y)*60/256)
+				g.Sky[i].R, g.Sky[i].Fg = pick("∙∙+", uint64(h8(47, x, y))), P(ink, 150+h8(48, x, y)*80/256)
 			case h < pn+pm+pf:
-				g.Sky[i].R, g.Sky[i].Fg = '·', P(HStar, 70+h8(49, x, y)*60/256)
+				g.Sky[i].R, g.Sky[i].Fg = '·', P(HStar, 70+h8(49, x, y)*70/256)
 			}
 		}
 	}
 	for _, p := range near { // a near star lights the cells beside it
 		for _, d := range [4][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}} {
-			if x, y := p.X+d[0], p.Y+d[1]; inWorld(x, y) && g.Sky[at(x, y)].Bg.Hue != HSun {
-				g.Sky[at(x, y)].Bg = P(HNebula, 60)
+			if x, y := p.X+d[0], p.Y+d[1]; inWorld(x, y) {
+				c := &g.Sky[at(x, y)]
+				c.Bg = P(c.Bg.Hue, min(255, int(c.Bg.Weight)+22))
 			}
 		}
 	}
@@ -289,7 +325,7 @@ func (g *Galaxy) paint(seed int64, arm, dust, core []uint8) {
 	}
 }
 
-// smudge is a far galaxy: a tilted oval of faint light and dots.
+// smudge is a far galaxy: a small tilted oval of soft light round a dot.
 func (g *Galaxy) smudge(seed int64, n int, c Pt) {
 	a, b := 6+roll(3, seed, 320, int64(n)), 2+roll(2, seed, 321, int64(n))
 	ang := roll(turn/2, seed, 322, int64(n))
@@ -302,16 +338,18 @@ func (g *Galaxy) smudge(seed int64, n int, c Pt) {
 			}
 			u, t := (dx*ca+2*dy*sa)/1024, (-dx*sa+2*dy*ca)/1024
 			e := bump(u*u*1000/(a*a)+t*t*1000/(b*b), 1000)
-			if e < 30 {
+			if e < 12 {
 				continue
 			}
 			cell := &g.Sky[at(x, y)]
-			cell.Bg = P(HCool, e*40>>8)
+			cell.Bg = P(HNebula, min(255, int(cell.Bg.Weight)+e*50>>8))
 			switch {
-			case e > 200:
-				cell.R, cell.Fg = '∙', P(HStar, 200)
-			case e > 90:
-				cell.R, cell.Fg = '·', P(HStar, 150)
+			case dx == 0 && dy == 0:
+				cell.R, cell.Fg = '◌', P(HStar, 220)
+			case e > 110:
+				cell.R, cell.Fg = '∙', P(HStar, 190)
+			case e > 40 && cell.R == ' ':
+				cell.R, cell.Fg = '·', P(HStar, 140)
 			}
 		}
 	}
@@ -320,7 +358,7 @@ func (g *Galaxy) smudge(seed int64, n int, c Pt) {
 // homeNodes are n places along the home arm from near the core out, evenly
 // spaced and nudged a little off the line.
 func (g *Galaxy) homeNodes(seed int64, n int) []Pt {
-	line := g.Home[galArmN/8 : galArmN*9/10]
+	line := g.Home[galArmN/12 : galArmN*62/100]
 	total := 0
 	length := []int{0}
 	for i := 1; i < len(line); i++ {

@@ -40,7 +40,7 @@ func TestGalaxyStable(t *testing.T) {
 // TestGalaxyFillsTheMap: the arms reach most of the way across the world and
 // the sky has no text on it, only star glyphs.
 func TestGalaxyFillsTheMap(t *testing.T) {
-	const stars = " ·∙+✦✧"
+	const stars = " ·∙+✦✧◌"
 	for _, seed := range []int64{4, 7, 23, 31, 58} {
 		g := NewGalaxy(seed)
 		minX, maxX, minY, maxY, lit := worldW, 0, worldH, 0, 0
