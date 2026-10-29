@@ -647,3 +647,11 @@ game.engine.ancientMemoryFlavor.01,"You found an old cache, and the lore inside 
 game.harbinger.lastPassageCame.01,the Last Passage already pulled up
 game.mission_board.ruinsFound.01,"Side quest loot, found near the ruins at "
 game.engine.AdvanceAge.05,"Not advancing yet, this age is still on the loading screen. The bar up top spills the tea on what it's waiting on. Type 'charter' for the full receipts on everything the advance needs."
+game.plan.planItemLabel.04,expedition 
+game.plan.describe.04,sent 
+game.plan_expedition.PlanAddExpedition.01,No offer called %q is on the board.
+game.plan_expedition.PlanAddExpedition.02,The plan already sends that expedition.
+game.plan_expedition.planExpeditionGone.01,the offer is gone
+game.plan_expedition.launchPlanExpedition.01,No offer called %q is on the board.
+game.plan_detail.planDetailFor.01,needs a deposit by hand
+game.plan_advance.fillPlanPillars.01,%d of %d pillars

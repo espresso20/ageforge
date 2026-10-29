@@ -7,6 +7,8 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **Plan expeditions.** `plan expedition <mission>` queues a mission from the board. It leaves when its price is covered and a party is at home, and drops out of the plan with a log line if the offer goes. Each plan item now also carries its own time to start, and the whole plan has a finish estimate.
+- **Optimize preview.** The engine can show what `plan optimize` would do (before, after, new order) without applying it.
 - **The map names everything.** Traffic is named for what it is (a cart, a car, a drone, a starship), and in orbit, the solar system and the star map the homeworld, the sun, the other planets, the stars, the elevator, the rings and the routes each have words of their own, with a building named for the part it is: a habitat module, a colony ark, a deck. None reads as the town's name any more.
 - **New since your last visit is lit, and a district zoom.** The ground under buildings that grew since the save was loaded, and under a wonder you finished, is lit when the Map first shows it and clears once you have looked. `PgDn` now goes from the region to the settlement to a district, which frames one kind of building's part of town and dims the rest, and `Tab` goes round the districts.
 - **The world around the town is on the map.** Civilizations you have met stand at the edge of the picture in the color of how they stand toward you, trade routes run to them as lines of dots with caravans on them, scouts and an army walk out and back, the harbinger stands by the square and idle workers loiter round it. In space they are stars, lanes and ships. The cursor names each one, and `Tab` visits the civilizations.

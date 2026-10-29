@@ -117,17 +117,19 @@ func (ge *GameEngine) planDealLabel(it PlanItem) string {
 func (ge *GameEngine) planDealView(it PlanItem, reserved map[string]float64) PlanItemView {
 	v := PlanItemView{Kind: it.Kind, Key: it.Key, Count: it.Count, Name: ge.planDealLabel(it)}
 	if gone := ge.planDealGone(it); gone != "" {
-		v.Status, v.Note = PlanStatusBlocked, gone
+		v.Status, v.Note, v.When = PlanStatusBlocked, gone, PlanWhenUnknown
 		return v
 	}
 	d, blocked := ge.planDealCheck(it)
 	v.Name += " (" + dealLogTerms(d) + ")"
 	v.Cost = map[string]float64{d.Give: d.GiveAmt}
 	if blocked != "" {
-		v.Status, v.Note = PlanStatusBlocked, blocked
+		v.Status, v.Note, v.When = PlanStatusBlocked, blocked, PlanWhenUnknown
 		return v
 	}
 	free := ge.planFree(d.Give, reserved)
+	ge.planDetail(&v, v.Cost, reserved)
+	v.HeldBack = map[string]float64{d.Give: d.GiveAmt}
 	reserved[d.Give] += d.GiveAmt
 	if free >= d.GiveAmt {
 		v.Status, v.Progress = PlanStatusReady, 1

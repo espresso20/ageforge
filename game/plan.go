@@ -4,6 +4,7 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/pkg/textfmt"
@@ -65,6 +66,8 @@ const (
 	PlanUpgrade  = "upgrade"
 	PlanResearch = "research"
 	PlanAdvance  = "advance"
+	// PlanExpedition launches a mission off the board (plan_expedition.go).
+	PlanExpedition = "expedition"
 )
 
 // MaxPlanItems caps the plan's length: 60 items, room for a day away on the
@@ -143,6 +146,29 @@ type PlanItemView struct {
 	Short string
 	// Note explains a blocked item ("research slot busy", ...).
 	Note string
+
+	// The detail pane (plan_detail.go). Rows has one row for each resource
+	// in Cost; StartsIn, When and Bottleneck sum them up.
+	Rows []PlanResourceRow
+	// StartsIn is how long until the next start, when When is PlanWhenTimed.
+	StartsIn time.Duration
+	// When says how StartsIn reads: a time, "never", "needs you" (a hand
+	// deposit) or unknown (it waits on something the estimate cannot time).
+	When string
+	// Bottleneck is the resource with the longest ReadyIn ("" when covered).
+	Bottleneck string
+	// Pillars are an advance item's charter pillars, each with the plan
+	// item that fills it, when there is one.
+	Pillars []PlanPillar
+	// BankShare is a wonder item's bank, 0 to 1.
+	BankShare float64
+	// Holds names what holds the slot of an item waiting for it (a research
+	// item: the tech being researched), with Frees as the time it frees.
+	Holds string
+	Frees time.Duration
+	// HeldBack is what this item holds back from the items below it, by
+	// resource: its reservation while it waits (empty when it holds nothing).
+	HeldBack map[string]float64
 }
 
 // loadPlanIn is a saved plan as the engine accepts it: known kinds only,
@@ -152,13 +178,13 @@ type PlanItemView struct {
 func loadPlanIn(set *rules.Set, saved []PlanItem) []PlanItem {
 	var out []PlanItem
 	for _, it := range saved {
-		if (it.Kind != PlanBuild && it.Kind != PlanUpgrade && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 {
+		if (it.Kind != PlanBuild && it.Kind != PlanUpgrade && it.Kind != PlanResearch && it.Kind != PlanAdvance && it.Kind != PlanDeal && it.Kind != PlanExpedition) || it.Count <= 0 {
 			continue
 		}
 		if load := planLoad(out); it.Kind != PlanResearch && load >= MaxPlanItems || it.Kind == PlanResearch && len(out)-load >= set.TechCount() {
 			continue
 		}
-		if it.Kind == PlanDeal && (it.Key == "" || it.Deal <= 0) {
+		if it.Kind == PlanDeal && (it.Key == "" || it.Deal <= 0) || it.Kind == PlanExpedition && it.Key == "" {
 			continue
 		}
 		if it.Kind != PlanBuild && it.Kind != PlanUpgrade {
@@ -332,6 +358,9 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	if it.Kind == PlanDeal {
 		return ge.planDealLabel(it)
 	}
+	if it.Kind == PlanExpedition {
+		return vibe.Line("game.plan.planItemLabel.04", "expedition ") + it.Key
+	}
 	if it.Kind == PlanResearch {
 		return vibe.Line("game.plan.planItemLabel.02", "research ") + techDefName(ge.rules, it.Key)
 	}
@@ -469,6 +498,8 @@ type planStarts struct {
 	advanced string
 	// deals are the deal items taken, as labels.
 	deals []string
+	// expeditions are the titles of the missions the plan sent.
+	expeditions []string
 }
 
 func (s *planStarts) addBuild(key string) {
@@ -482,7 +513,7 @@ func (s *planStarts) addBuild(key string) {
 }
 
 func (s *planStarts) empty() bool {
-	return len(s.order) == 0 && len(s.techs) == 0 && s.advanced == "" && len(s.deals) == 0
+	return len(s.order) == 0 && len(s.techs) == 0 && s.advanced == "" && len(s.deals) == 0 && len(s.expeditions) == 0
 }
 
 // describe renders the starts as verb-led clauses: "started building 2 Huts
@@ -506,6 +537,9 @@ func (s *planStarts) describe(set *rules.Set) string {
 		parts = append(parts, vibe.Line("game.plan.describe.02", "started researching ")+textfmt.List(names))
 	}
 	parts = append(parts, s.deals...)
+	if len(s.expeditions) > 0 {
+		parts = append(parts, vibe.Line("game.plan.describe.04", "sent ")+textfmt.List(s.expeditions))
+	}
 	if s.advanced != "" {
 		parts = append(parts, vibe.Line("game.plan.describe.03", "advanced to the ")+s.advanced)
 	}
@@ -596,6 +630,8 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		}
 		chk.reserve = true
 		return chk
+	case PlanExpedition:
+		return ge.planExpeditionCheck(it)
 	case PlanResearch:
 		def, _ := ge.rules.Tech(it.Key)
 		if order := ge.progress.GetAgeOrder(); order[def.Age] > order[ge.age] {
@@ -735,6 +771,8 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			if reason == "" && ge.Buildings.GetCount(it.Key) <= 0 {
 				reason = vibe.Line("game.plan.runPlan.04", "no copies left")
 			}
+		} else if it.Kind == PlanExpedition {
+			reason = ge.planExpeditionGone(it)
 		} else if reason = ge.planResearchInvalid(it.Key); reason == "" {
 			// Prerequisites planned before this item count only while they
 			// are still in the plan: out holds the survivors so far.
@@ -779,6 +817,8 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					err = ge.startBuildPaid(it.Key, true)
 				} else if it.Kind == PlanUpgrade {
 					err = ge.upgradeBuildingLocked(it.Key, 1, false)
+				} else if it.Kind == PlanExpedition {
+					err = ge.launchPlanExpedition(it)
 				} else {
 					err = ge.startResearchLocked(it.Key, true)
 				}
@@ -804,6 +844,8 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 					if ge.Buildings.GetCount(it.Key) <= 0 {
 						it.Count = 0
 					}
+				} else if it.Kind == PlanExpedition {
+					starts.expeditions = append(starts.expeditions, it.Key)
 				} else {
 					starts.techs = append(starts.techs, it.Key)
 				}
@@ -935,6 +977,7 @@ func (ge *GameEngine) planViews() []PlanItemView {
 	}
 	reserved := map[string]float64{}
 	researchSeen := false
+	var researchIdx []int // research items that wait only for the slot
 	out := make([]PlanItemView, 0, len(ge.plan))
 	for i, it := range ge.plan {
 		if it.Kind == PlanAdvance {
@@ -953,6 +996,8 @@ func (ge *GameEngine) planViews() []PlanItemView {
 			if target, ok := ge.Buildings.UpgradeTarget(it.Key); ok {
 				v.Target = target.Name
 			}
+		} else if it.Kind == PlanExpedition {
+			v.Name = it.Key
 		} else {
 			v.Name = ge.Buildings.defs[it.Key].Name
 		}
@@ -999,6 +1044,11 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		default:
 			v.Status = PlanStatusWaiting
 		}
+		ge.planDetailFor(&v, chk, reserved)
+		if it.Kind == PlanResearch && !waits {
+			v.When = PlanWhenTimed
+			researchIdx = append(researchIdx, len(out))
+		}
 		if v.Status == PlanStatusReady {
 			// It would start and pay; later items see what's left.
 			for res, c := range chk.cost {
@@ -1011,5 +1061,6 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		}
 		out = append(out, v)
 	}
+	ge.planResearchTimes(out, researchIdx)
 	return out
 }
