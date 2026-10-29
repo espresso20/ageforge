@@ -1099,6 +1099,9 @@ ui.locked_hint.lockedHintLines.11,Locked. Science has not pulled up on this one 
 ui.locked_hint.lockedHintLines.12,"Locked. It is on the syllabus, and your town chose to skip class. The audacity."
 ui.locked_hint.lockedNeedsLine.01,Gatekept by %s (research)
 ui.locked_hint.lockedNeedsLine.02,"Gatekept by %s (research), after %s"
+ui.locked_hint.lockedNeedsLine.03,"Gatekept by %s (research), %d techs before it. Start with %s"
+ui.locked_hint.lockedNeedsLine.04, and %d more
+ui.locked_hint.lockedNeedsLine.05,Gatekept by %s (research) — %d techs before it
 ui.locked_hint.lockedBuildingEntry.01,"   Damage: "
 ui.map_mini.miniMap.Draw.01," Smol Map "
 ui.map_panel.mapIconsHint.01,Want real icons on your map? Icons glow-up: type icons.
@@ -2290,3 +2293,4 @@ ui.dashboard.statusLine.18,[gray]Next arc: %s[-]
 ui.badge_case.drawKeys.10,doomscroll
 ui.overlay_plan.planStatusText.01,on deck
 ui.research_tree.renderTree.15,4K zoom
+
