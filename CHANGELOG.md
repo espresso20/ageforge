@@ -75,6 +75,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 
 ### Fixed
+- The Factions panel no longer cuts each civilization's backstory off with "…" about halfway across a wide terminal. It wraps at the panel's real width.
 - **A locked building's needs line.** It no longer lists every missing tech in a made-up order. It says how many techs stand before the one you need and names up to three you can research now.
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.
 - The mini map no longer flashes on for the first frame of a dashboard whose player never turned it on.

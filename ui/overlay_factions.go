@@ -37,9 +37,10 @@ import (
 // Geographic Society's automation status, a detail card per civilization you
 // have met, and a compact roster of the ones you have not.
 //
-// w is the full terminal width; the panel's text is that less its frame, and long
-// text is truncated to fit because tview's soft-wrap does not carry colour tags
-// across the break.
+// w is the full terminal width; the panel's text is that less its frame. Table
+// columns lay out at the capped panelUsableWidth, while prose wraps at the full
+// inner width (with colour re-applied per line, as tview's soft wrap does not
+// carry colour tags across a break).
 func factionsProvider(state game.GameState, w int) string {
 	var sb strings.Builder
 
@@ -80,7 +81,7 @@ func factionsProvider(state game.GameState, w int) string {
 		if !ok || !f.Discovered {
 			continue
 		}
-		writeFactionCard(&sb, def, f, tally[def.Key], usable, state)
+		writeFactionCard(&sb, def, f, tally[def.Key], usable, max(56, overlayTextWidth(w)), state)
 	}
 	if met > 0 {
 		// Embassies no longer gate first contact, but they are still how you court
@@ -277,7 +278,7 @@ func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 // The body is unchanged from the original diplomacy panel apart from two
 // additions — the strength rating and the live-effect line — so muscle memory
 // and the existing assertions both survive.
-func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.FactionInfo, t factionEffectTally, usable int, state game.GameState) {
+func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.FactionInfo, t factionEffectTally, usable, textW int, state game.GameState) {
 	// Strength lives on the snapshot, but a hand-built FactionInfo (tests, older
 	// saves) can carry a zero, so fall back to the static definition.
 	strength := f.Strength
@@ -288,9 +289,13 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	fmt.Fprintf(sb, " [cyan]%s[-]  [%s]%s[-]  [gray](%s)[-]  [gray]%s[-]\n",
 		def.Name, personalityColor(def.Personality), def.Personality, def.Specialty, strengthStars(strength))
 
-	// Backstory snippet, trimmed to the panel's usable width.
+	// Backstory is prose: wrapped at the panel's real inner width (textW, not the
+	// capped column width), each line indented under the first and coloured on
+	// its own, since tview's soft wrap does not carry colour tags across a break.
 	if def.Backstory != "" {
-		fmt.Fprintf(sb, "   [gray]%s[-]\n", truncate(def.Backstory, usable-4))
+		for _, line := range wrapWords(def.Backstory, textW-3) {
+			fmt.Fprintf(sb, "   [gray]%s[-]\n", line)
+		}
 	}
 
 	// War banner takes precedence — it's the headline state when active.

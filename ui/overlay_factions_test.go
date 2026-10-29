@@ -398,9 +398,10 @@ func TestFactionsProvider_RespectsWidth(t *testing.T) {
 	if narrow == wide {
 		t.Fatal("provider ignores its width parameter — narrow and wide renders are identical")
 	}
-	// The backstory is the long line; at 80 columns it must be cut.
-	if !strings.Contains(narrow, "…") {
-		t.Error("no truncation at 80 columns — long text will soft-wrap and lose its colour tags")
+	// The backstory is the long prose; at 80 columns it wraps onto more lines
+	// and no line is wider than the panel's inner width.
+	if strings.Contains(plainText(narrow), "…") {
+		t.Error("a backstory was cut with an ellipsis at 80 columns")
 	}
 }
 
@@ -718,5 +719,33 @@ func TestFactionsProvider_BoonNamesTheCivOnce(t *testing.T) {
 	}
 	if !strings.Contains(line, "✦ Ironhold Clans: Specialty Windfall") {
 		t.Errorf("the boon line should read civilization, then boon: %q", line)
+	}
+}
+
+// TestFactionsProvider_BackstoryWrapsNotCut checks a wide terminal shows every
+// backstory whole (wrapped, never cut with an ellipsis) and that a narrow one
+// wraps with the same words and no line past the panel's inner width.
+func TestFactionsProvider_BackstoryWrapsNotCut(t *testing.T) {
+	factions := make(map[string]game.FactionInfo)
+	for _, def := range config.BaseFactions() {
+		factions[def.Key] = game.FactionInfo{Name: def.Name, Discovered: true, Status: "neutral"}
+	}
+	state := game.GameState{Diplomacy: game.DiplomacyState{Factions: factions}}
+	for _, w := range []int{200, 80} {
+		out := plainText(factionsProvider(state, w))
+		flat := strings.Join(strings.Fields(out), " ")
+		for _, def := range config.BaseFactions() {
+			if def.Backstory == "" {
+				continue
+			}
+			if !strings.Contains(flat, strings.Join(strings.Fields(def.Backstory), " ")) {
+				t.Errorf("width %d: backstory of %s is cut or missing", w, def.Name)
+			}
+		}
+		if w == 200 {
+			if def := config.BaseFactions()[0]; def.Backstory != "" && lineContaining(out, strings.Fields(def.Backstory)[0]) == "" {
+				t.Errorf("no line holds the backstory start")
+			}
+		}
 	}
 }
