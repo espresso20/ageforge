@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **Epoch card.** `epoch card` saves a plain-text card of your epoch (name, town, age, highlights, ages done, top badges and feats), wrapped in a code fence to paste into Discord, as `epoch-card.txt` next to your saves.
 - **Add from the plan panel.** `A` opens a name box: type part of a building, tech or mission, and `Enter` adds it below the selection (it asks which kind when the name fits several). `+` and `-` change the count of a build or upgrade item.
 - **Plan expeditions.** `plan expedition <mission>` queues a mission from the board. It leaves when its price is covered and a party is at home, and drops out of the plan with a log line if the offer goes. Each plan item now also carries its own time to start, and the whole plan has a finish estimate.
 - **Optimize preview.** `O` in the plan panel shows the plan now and after optimizing, with the moved items marked and the time saved. `Enter` keeps it.
@@ -23,6 +24,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- **The Epoch screen.** `epoch` now opens a full-screen page to show off your run: the epoch name in iron lettering, your highlights, the ages you have finished, your five rarest badges and your feats. `Tab` turns to the old panel as the details page.
 - **The plan panel is a workbench.** A queue on the left (a line for each item, with when it starts) and the detail of the picked item on the right: what it needs, holds and earns, what it holds back, an advance's pillars and a wonder's bank. The header says when the plan finishes. On a narrow terminal the detail sits under the queue. The keys are listed once, in the footer.
 - **The map is drawn by a new engine.** The Map panel, the dashboard's mini map and the picture behind the main menu draw the place itself instead of a symbol chart: roads and streets that grow with your town, buildings that stay where they were and grow from huts to towers, your wonders as small hand-drawn shapes, the land in your theme's colors, day and night. As you reach further the view pulls back to the planet, the solar system and the stars. It has two zooms, the whole town and a close-up. The AGEFORGE_MAP switch is gone.
 - **Every panel is full screen.** Panels open over the whole screen with the same frame, title and key line, instead of some opening as a box over the dashboard.

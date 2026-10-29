@@ -111,7 +111,25 @@ The transition event has no cooldown and no streak rule. It fires once per epoch
 
 ## The Epoch panel
 
-Type `epoch` to open the Epoch panel. From the top it shows:
+Type `epoch` to open the Epoch screen, a full-screen page to show off your run. `Tab` turns between its two pages and `Esc` closes it.
+
+### The front page
+
+- The banner: your epoch's name in large iron lettering, in the epoch's color, with your town, current age and year under it.
+- Highlights: population, buildings, techs researched out of the total, wonders built and prestige count.
+- Ages: those you have finished, the one you are in, and those ahead. An age you have not seen is counted ("3 more to come"), not named.
+- Top badges: your five rarest earned badges with their emblems. With fewer than five it shows what you have, and with none it says so.
+- Feats: catastrophes met, how each harbinger ended, milestones reached and your fastest age.
+
+On a small terminal the sections stack and the page scrolls.
+
+### The Discord card
+
+Type `epoch card` to save a plain-text card of the front page, about 60 columns wide with no color codes and wrapped in a code fence, as `epoch-card.txt` in your account's data folder next to your saves. The reply gives the path. Paste the file's contents into Discord. The card never names an age you have not seen.
+
+### The details page
+
+Press `Tab` for the details page. From the top it shows:
 
 - Your current epoch: its icon and name, its ages, and its primary and energy resources. An age you cannot see yet is counted ("1 more to come"), not named.
 - The epoch event your transition roll brought, with its duration and a line about it, or "No event this epoch".
