@@ -42,6 +42,10 @@ func kindsOf(g *Grid) map[Kind]int {
 		switch k := g.Things[h].Kind; k {
 		case KindCiv, KindRoute, KindMission, KindHarbinger, KindIdle:
 			out[k]++
+		case KindLane:
+			if g.Things[h].Ref == 1 { // the lanes to civs; the ones between hubs are the town's own
+				out[k]++
+			}
 		}
 	}
 	return out
@@ -55,7 +59,11 @@ func TestWorldRoundTheTownDrawsAtEveryScale(t *testing.T) {
 			m := busyWorld(age, seed)
 			g := (&Generator{}).DrawAt(m, Moment{Anim: 9, Visit: -1}).Grid
 			kinds := kindsOf(g)
-			for _, k := range []Kind{KindCiv, KindRoute, KindMission, KindHarbinger, KindIdle} {
+			wanted := []Kind{KindCiv, KindRoute, KindMission, KindHarbinger, KindIdle}
+			if age == "galactic_age" { // the star map has lanes and a rift, no caravans, parties or loiterers
+				wanted = []Kind{KindCiv, KindLane, KindHarbinger}
+			}
+			for _, k := range wanted {
 				if kinds[k] == 0 {
 					t.Errorf("%s seed %d: nothing of kind %d is drawn", age, seed, k)
 				}
@@ -104,8 +112,8 @@ func TestCivsAreColouredByRelation(t *testing.T) {
 				t.Errorf("%s: %s (%v) is drawn in hue %d, want %d", age, s.civ.Key, s.civ.Relation, cell.Fg.Hue, want)
 			}
 			if f.st.Scale == Stars {
-				if !slices.Contains(f.plan.Nodes, s.at) {
-					t.Errorf("%s: %s stands at %v, not at a system", age, s.civ.Key, s.at)
+				if !slices.ContainsFunc(f.plan.Rivals, func(r Sector) bool { return r.Hub == s.at }) {
+					t.Errorf("%s: %s stands at %v, not at a rival hub", age, s.civ.Key, s.at)
 				}
 				continue
 			}
@@ -141,6 +149,18 @@ func TestRoutesRunToTheirPartners(t *testing.T) {
 			if rt.Civ == "" {
 				continue
 			}
+			if gen.frame(m, 0).st.Scale == Stars { // a lane joins home to the civ, steady
+				lane := 0
+				for _, h := range g.Hit {
+					if th := g.Things[h]; th.Kind == KindLane && th.Ref == 1 && th.Key == rt.Civ {
+						lane++
+					}
+				}
+				if lane < 3 {
+					t.Errorf("%s: the lane to %s has %d cells", age, rt.Civ, lane)
+				}
+				continue
+			}
 			dots, vans := 0, 0
 			for i, h := range g.Hit {
 				if th := g.Things[h]; th.Kind == KindRoute && th.Key == rt.Civ {
@@ -151,7 +171,7 @@ func TestRoutesRunToTheirPartners(t *testing.T) {
 					}
 				}
 			}
-			if scale := gen.frame(m, 0).st.Scale; vans == 0 || dots < 3 && scale != Stars {
+			if vans == 0 || dots < 3 {
 				t.Errorf("%s: the route to %s has %d dots and %d caravans", age, rt.Civ, dots, vans)
 			}
 		}
@@ -206,7 +226,7 @@ func TestWorldRoundTheTownMovesAndIsDeterministic(t *testing.T) {
 				moved = true
 			}
 		}
-		if !moved {
+		if !moved && age != "galactic_age" { // the lanes of the star map are steady
 			t.Errorf("%s: nothing on the routes moved in thirty frames", age)
 		}
 	}

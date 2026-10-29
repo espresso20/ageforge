@@ -36,6 +36,8 @@ const (
 	KindMission   // a scouting or military party that is out
 	KindHarbinger // the harbinger, standing at the square
 	KindIdle      // idle workers, loitering at the square
+	KindSector    // a building line's sector on the star map, and the border round them
+	KindLane      // a lane joining two hubs of the star map
 )
 
 // Thing is what the inspect index points at.

@@ -38,7 +38,7 @@ func (s *Scene) Overview(w, h int) *Overview {
 }
 
 // salience says how much a kind of thing deserves to stand for a block.
-var salience = [...]int{KindNone: 0, KindTerrain: 0, KindRoad: 2, KindAgent: 1, KindAmbient: 3, KindBuilding: 5, KindWonder: 6, KindVisitor: 7, KindCiv: 6, KindRoute: 2, KindMission: 4, KindHarbinger: 6, KindIdle: 4}
+var salience = [...]int{KindNone: 0, KindTerrain: 0, KindRoad: 2, KindAgent: 1, KindAmbient: 3, KindBuilding: 5, KindWonder: 6, KindVisitor: 7, KindCiv: 6, KindRoute: 2, KindMission: 4, KindHarbinger: 6, KindIdle: 4, KindSector: 5, KindLane: 2}
 
 // mostImportant is the cell of a block that stands for it: the most
 // important thing in it, or the cell in its middle when there is nothing.
@@ -53,6 +53,12 @@ func (s *Scene) mostImportant(x0, y0, scale int) Pt {
 			sal := salience[th.Kind]
 			if th.Kind == KindBuilding && th.Ruin {
 				sal = 2
+			}
+			if th.Kind == KindSector && th.Key == "border" {
+				sal = 1
+			}
+			if th.Kind == KindSector && th.Ref == 1 {
+				sal++ // a hub stands for its block before the systems round it
 			}
 			if sal > bestSal {
 				best, bestSal = Pt{x, y}, sal

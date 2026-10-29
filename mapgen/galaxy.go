@@ -360,35 +360,4 @@ func (g *Galaxy) smudge(seed int64, n int, c Pt) {
 	}
 }
 
-// homeNodes are n places along the home arm from near the core out, evenly
-// spaced and nudged a little off the line.
-func (g *Galaxy) homeNodes(seed int64, n int) []Pt {
-	line := g.Home[galArmN/10 : galArmN*88/100]
-	total := 0
-	length := []int{0}
-	for i := 1; i < len(line); i++ {
-		total += isqrt(sq(line[i].X-line[i-1].X) + 4*sq(line[i].Y-line[i-1].Y))
-		length = append(length, total)
-	}
-	var out []Pt
-	taken := map[Pt]bool{{worldW / 2, worldH / 2}: true}
-	j := 0
-	for k := 0; k < n; k++ {
-		want := total * (2*k + 1) / (2 * n)
-		for j < len(line)-1 && length[j] < want {
-			j++
-		}
-		p := line[j]
-		for try := 0; ; try++ {
-			q := Pt{p.X + roll(5, seed, 330, int64(k), int64(try)) - 2, p.Y + roll(3, seed, 331, int64(k), int64(try)) - 1}
-			if inWorld(q.X, q.Y) && !taken[q] {
-				taken[q] = true
-				out = append(out, q)
-				break
-			}
-		}
-	}
-	return out
-}
-
 func sq(v int) int { return v * v }

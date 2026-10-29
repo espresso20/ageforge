@@ -57,14 +57,15 @@ type Plan struct {
 	// are always laid (an elevator).
 	Bridge map[Pt]bool
 	Fixed  []int
-	// Bodies are the planets of a solar system, Nodes the systems of a star
-	// map.
+	// Bodies are the planets of a solar system.
 	Bodies []Pt
-	Nodes  []Pt
-	// NodeRoad is the road that ends at each node of a star map.
-	NodeRoad []int
-	// Galaxy is the sky of a star map.
-	Galaxy *Galaxy
+	// Galaxy is the sky of a star map; Sectors the place of every building
+	// line's sector on it, Rivals the places the civilizations met can stand
+	// and Rift the crack a harbinger opens.
+	Galaxy  *Galaxy
+	Sectors []Sector
+	Rivals  []Sector
+	Rift    []Pt
 }
 
 // Parcel sizes. A cell is about twice as tall as wide, so these read as

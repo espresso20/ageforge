@@ -88,7 +88,7 @@ func TestDistrictsAreOneLineEach(t *testing.T) {
 				last = idx
 			}
 			th := sc.Grid.ThingAt(d.Heart.X, d.Heart.Y)
-			if th.Kind != KindBuilding || th.Lineage != d.Line {
+			if (th.Kind != KindBuilding && th.Kind != KindSector) || th.Lineage != d.Line {
 				t.Errorf("%s: the heart of %s is %v", age, d.Line, th)
 			}
 			if d.Heart.X < d.Box.X || d.Heart.X >= d.Box.X+d.Box.W || d.Heart.Y < d.Box.Y || d.Heart.Y >= d.Box.Y+d.Box.H {
@@ -120,12 +120,12 @@ func TestFocusDimsTheOtherLines(t *testing.T) {
 				t.Fatalf("%s: focus changed a glyph at (%d,%d)", age, i%whole.Grid.W, i/whole.Grid.W)
 			}
 			switch {
-			case th.Kind == KindBuilding && th.Lineage == line:
+			case (th.Kind == KindBuilding || th.Kind == KindSector) && th.Lineage == line:
 				kept++
 				if a != b {
 					t.Fatalf("%s: focus changed the district itself at (%d,%d)", age, i%whole.Grid.W, i/whole.Grid.W)
 				}
-			case th.Kind == KindBuilding || th.Kind == KindAmbient:
+			case th.Kind == KindBuilding || th.Kind == KindAmbient || th.Kind == KindLane || th.Kind == KindCiv || th.Kind == KindSector:
 				if b.Dim <= a.Dim {
 					t.Fatalf("%s: %s at (%d,%d) is not dimmed", age, th.Lineage, i%whole.Grid.W, i/whole.Grid.W)
 				}

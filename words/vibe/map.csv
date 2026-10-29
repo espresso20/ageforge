@@ -361,3 +361,29 @@ ui.mapstyle.roguelike.space_inspect.describe.33," still circles it, no skips"
 ui.mapstyle.roguelike.space_inspect.describe.34,Home turf
 ui.mapstyle.roguelike.space_inspect.describe.35,"every ring has a world, stacked lineup"
 ui.mapstyle.roguelike.space_inspect.describe.50,"A star, main character"
+map.sky.SkyTranscend.housing,remembered home
+map.sky.SkyTranscend.food,light garden
+map.sky.SkyTranscend.storage,held vault
+map.sky.SkyTranscend.organic_extraction,grown thought
+map.sky.SkyTranscend.geological_extraction,deep memory mine
+map.sky.SkyTranscend.metallurgy,pure forge
+map.sky.SkyTranscend.engineering,maker of makers
+map.sky.SkyTranscend.energy,star of stars
+map.sky.SkyTranscend.harbor,gate of ends
+map.sky.SkyTranscend.hacker,thought relay
+map.sky.SkyTranscend.knowledge,all-knowing lens
+map.sky.SkyTranscend.faith,chorus of light
+map.sky.SkyTranscend.culture_arts,song that stays
+map.sky.SkyTranscend.monument,last beacon
+map.sky.SkyTranscend.trade,exchange of selves
+map.sky.SkyTranscend.military,guard of dawn
+map.sky.SkyTranscend.diplomacy,embassy of all
+ui.mapstyle.stars.border.01,Your territory
+ui.mapstyle.stars.border.02,the edge of what you hold
+ui.mapstyle.stars.sector.01,Sector: 
+ui.mapstyle.stars.sector.02,system
+ui.mapstyle.stars.sector.03,systems
+ui.mapstyle.stars.lane.01,Lane: 
+ui.mapstyle.stars.lane.02, to 
+ui.mapstyle.stars.lane.03,traffic 
+ui.mapstyle.stars.lane.04, of 3

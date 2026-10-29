@@ -40,7 +40,8 @@ func (f *frame) paintFocus() {
 	}
 	for i, h := range f.g.Hit {
 		th := f.g.Things[h]
-		if (th.Kind == KindBuilding && th.Lineage != f.district) || th.Kind == KindAmbient {
+		sky := th.Kind == KindLane || th.Kind == KindCiv || th.Kind == KindSector && th.Lineage != f.district
+		if (th.Kind == KindBuilding && th.Lineage != f.district) || th.Kind == KindAmbient || sky {
 			f.g.Cells[i].Dim = dimmer(f.g.Cells[i].Dim, focusDim)
 		}
 	}
@@ -59,6 +60,16 @@ type District struct {
 // the square first.
 func (f *frame) districts() []District {
 	var out []District
+	if f.st.Scale == Stars { // a sector is the district of its line
+		for _, h := range f.homeSectors() {
+			x0, y0, x1, y1 := h.cells[0].X, h.cells[0].Y, h.cells[0].X, h.cells[0].Y
+			for _, c := range h.cells {
+				x0, y0, x1, y1 = min(x0, c.X), min(y0, c.Y), max(x1, c.X), max(y1, c.Y)
+			}
+			out = append(out, District{h.line, Rect{x0 - 3, y0 - 1, x1 - x0 + 7, y1 - y0 + 3}, h.cells[0]})
+		}
+		return out
+	}
 	for _, line := range mapmodel.LineageOrder {
 		var box Rect
 		for _, pl := range f.placed {

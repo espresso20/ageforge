@@ -8,7 +8,7 @@ import (
 // skyParts are what a building line becomes in each space age: a habitat
 // module in orbit, a colony ark among the planets, a deck on the starbase.
 // Index: the age (see skyOf).
-var skyParts = [4]map[string]vibe.Entry{
+var skyParts = [5]map[string]vibe.Entry{
 	{
 		mapmodel.LinHousing:   vibe.E("map.sky.SkyOrbit.housing", "habitat module"),
 		mapmodel.LinFood:      vibe.E("map.sky.SkyOrbit.food", "hydroponic bay"),
@@ -84,5 +84,24 @@ var skyParts = [4]map[string]vibe.Entry{
 		mapmodel.LinTrade:     vibe.E("map.sky.SkyQuantum.trade", "probability market"),
 		mapmodel.LinMilitary:  vibe.E("map.sky.SkyQuantum.military", "war room"),
 		mapmodel.LinDiplomacy: vibe.E("map.sky.SkyQuantum.diplomacy", "embassy of selves"),
+	},
+	{
+		mapmodel.LinHousing:   vibe.E("map.sky.SkyTranscend.housing", "remembered home"),
+		mapmodel.LinFood:      vibe.E("map.sky.SkyTranscend.food", "light garden"),
+		mapmodel.LinStorage:   vibe.E("map.sky.SkyTranscend.storage", "held vault"),
+		mapmodel.LinWood:      vibe.E("map.sky.SkyTranscend.organic_extraction", "grown thought"),
+		mapmodel.LinMines:     vibe.E("map.sky.SkyTranscend.geological_extraction", "deep memory mine"),
+		mapmodel.LinMetal:     vibe.E("map.sky.SkyTranscend.metallurgy", "pure forge"),
+		mapmodel.LinEngineer:  vibe.E("map.sky.SkyTranscend.engineering", "maker of makers"),
+		mapmodel.LinEnergy:    vibe.E("map.sky.SkyTranscend.energy", "star of stars"),
+		mapmodel.LinHarbor:    vibe.E("map.sky.SkyTranscend.harbor", "gate of ends"),
+		mapmodel.LinHacker:    vibe.E("map.sky.SkyTranscend.hacker", "thought relay"),
+		mapmodel.LinKnowledge: vibe.E("map.sky.SkyTranscend.knowledge", "all-knowing lens"),
+		mapmodel.LinFaith:     vibe.E("map.sky.SkyTranscend.faith", "chorus of light"),
+		mapmodel.LinCulture:   vibe.E("map.sky.SkyTranscend.culture_arts", "song that stays"),
+		mapmodel.LinMonument:  vibe.E("map.sky.SkyTranscend.monument", "last beacon"),
+		mapmodel.LinTrade:     vibe.E("map.sky.SkyTranscend.trade", "exchange of selves"),
+		mapmodel.LinMilitary:  vibe.E("map.sky.SkyTranscend.military", "guard of dawn"),
+		mapmodel.LinDiplomacy: vibe.E("map.sky.SkyTranscend.diplomacy", "embassy of all"),
 	},
 }

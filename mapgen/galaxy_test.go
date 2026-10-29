@@ -3,6 +3,8 @@ package mapgen
 import (
 	"slices"
 	"testing"
+
+	"github.com/espresso20/ageforge/mapmodel"
 )
 
 // TestGalaxyShapesVary: twenty seeds give at least twelve different galaxies,
@@ -74,33 +76,52 @@ func TestGalaxyFillsTheMap(t *testing.T) {
 	}
 }
 
-// TestStarNodesFollowTheHomeArm: every system the town can use lies on the
-// home arm, in the world, with none on another.
-func TestStarNodesFollowTheHomeArm(t *testing.T) {
-	for _, seed := range []int64{4, 7, 23} {
+// TestSectorsFollowTheHomeArm: every sector of the town has its hub on the
+// home arm, in the world, and no two systems anywhere share a cell or sit side
+// by side.
+func TestSectorsFollowTheHomeArm(t *testing.T) {
+	for _, seed := range []int64{4, 7, 23, 58, 101} {
 		p := NewStarPlan(seed, testCatalog)
-		if len(p.Nodes) != starNodes+1 {
-			t.Fatalf("seed %d: %d systems", seed, len(p.Nodes))
+		if len(p.Sectors) != len(mapmodel.LineageOrder) || len(p.Rivals) != rivalSlots {
+			t.Fatalf("seed %d: %d sectors and %d rival places", seed, len(p.Sectors), len(p.Rivals))
 		}
 		seen := map[Pt]bool{}
-		for _, n := range p.Nodes {
-			if !inWorld(n.X, n.Y) || seen[n] {
-				t.Errorf("seed %d: system %v is off the world or doubled", seed, n)
+		for _, sec := range append(slices.Clone(p.Sectors), p.Rivals...) {
+			for _, c := range sec.Cells {
+				if !inWorld(c.X, c.Y) || seen[c] || seen[Pt{c.X - 1, c.Y}] || seen[Pt{c.X + 1, c.Y}] {
+					t.Errorf("seed %d: system %v is off the world, doubled or touching another", seed, c)
+				}
+				seen[c] = true
 			}
-			seen[n] = true
 		}
-		for _, n := range p.Nodes[1:] {
+		for _, sec := range p.Sectors {
 			near := false
 			for _, h := range p.Galaxy.Home {
-				if abs(h.X-n.X) <= 3 && abs(h.Y-n.Y) <= 2 {
+				if abs(h.X-sec.Hub.X) <= 3 && abs(h.Y-sec.Hub.Y) <= 3 {
 					near = true
 					break
 				}
 			}
 			if !near {
-				t.Errorf("seed %d: system %v is not on the home arm", seed, n)
+				t.Errorf("seed %d: hub %v is not on the home arm", seed, sec.Hub)
 			}
 		}
+	}
+}
+
+// TestSystemsGrowWithTheLog: more buildings light more systems, slowly, and
+// the biggest line stays inside its sector.
+func TestSystemsGrowWithTheLog(t *testing.T) {
+	last := 0
+	for _, n := range []int{0, 1, 5, 20, 100, 500, 2000} {
+		got := systemsFor(n, sectorMax)
+		if got < last || got > sectorMax || n > 0 && got < 1 {
+			t.Errorf("%d buildings light %d systems after %d", n, got, last)
+		}
+		last = got
+	}
+	if systemsFor(500, sectorMax) > 3*systemsFor(20, sectorMax) {
+		t.Errorf("growth is not logarithmic: 20 lights %d, 500 lights %d", systemsFor(20, sectorMax), systemsFor(500, sectorMax))
 	}
 }
 

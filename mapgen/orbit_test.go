@@ -1,6 +1,9 @@
 package mapgen
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 // spacePlans are the plans of the three space scales, with the ages whose
 // wonders each holds a plot for.
@@ -11,12 +14,18 @@ var spacePlans = []struct {
 }{
 	{"orbit", func(s int64) *Plan { return NewOrbitPlan(s, testCatalog) }, []int{17}},
 	{"system", func(s int64) *Plan { return NewSystemPlan(s, testCatalog) }, []int{18}},
-	{"stars", func(s int64) *Plan { return NewStarPlan(s, testCatalog) }, []int{19, 20, 21}},
+	{"stars", func(s int64) *Plan { return NewStarPlan(s, testCatalog) }, nil},
 }
 
 func TestSpacePlansDeterministic(t *testing.T) {
 	for _, sp := range spacePlans {
 		a, b := sp.plan(7), sp.plan(7)
+		if sp.name == "stars" {
+			if !reflect.DeepEqual(a.Sectors, b.Sectors) || !reflect.DeepEqual(a.Rivals, b.Rivals) || !reflect.DeepEqual(a.Rift, b.Rift) {
+				t.Errorf("%s: same seed, different territory", sp.name)
+			}
+			continue
+		}
 		if len(a.Lots) != len(b.Lots) || len(a.Roads) != len(b.Roads) || a.Lots[0] != b.Lots[0] || a.Lots[len(a.Lots)-1] != b.Lots[len(b.Lots)-1] {
 			t.Errorf("%s: same seed, different plan", sp.name)
 		}
@@ -31,7 +40,7 @@ func TestSpacePlansHoldTogether(t *testing.T) {
 	for _, sp := range spacePlans {
 		for _, seed := range []int64{4, 7, 23} {
 			p := sp.plan(seed)
-			if len(p.Lots) < 60 {
+			if len(p.Lots) < 60 && sp.name != "stars" {
 				t.Errorf("%s/%d: only %d parcels", sp.name, seed, len(p.Lots))
 			}
 			road := map[Pt]int{}

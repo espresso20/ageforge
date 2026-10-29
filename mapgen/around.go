@@ -63,6 +63,9 @@ type site struct {
 // paintAround draws the world round the town, over the town and its traffic.
 func (f *frame) paintAround() {
 	f.sites = f.civSites()
+	if f.st.Scale == Stars { // the territory painter has drawn the civs and their lanes
+		return
+	}
 	f.paintTrails()
 	f.paintSites()
 	f.paintParties()
@@ -148,15 +151,13 @@ func (f *frame) civSites() []site {
 func (f *frame) siteOf(civ *mapmodel.Faction, placed []site) site {
 	key, seed := mapmodel.HashStr(civ.Key), f.m.Seed
 	if f.st.Scale == Stars {
-		nodes := len(f.plan.Nodes) - 1
-		n := 1 + roll(nodes, seed, 100, key)
-		for taken := true; taken; {
-			taken = slices.ContainsFunc(placed, func(s site) bool { return s.node == n })
-			if taken {
-				n = n%nodes + 1
+		rivals := f.rivalSites()
+		for n, r := range rivals {
+			if r.civ == civ {
+				return site{civ, r.cells[0], n + 1}
 			}
 		}
-		return site{civ, f.plan.Nodes[n], n}
+		return site{civ, f.plan.Centre, 0}
 	}
 	edge := f.edge()
 	t := roll(edge.perimeter(), seed, 101, key)
@@ -188,8 +189,6 @@ func (f *frame) siteOfKey(k string) (site, bool) {
 func (f *frame) journey(to Pt, node int) []Pt {
 	home := f.square()
 	switch {
-	case f.st.Scale == Stars:
-		return f.plan.chain(f.plan.NodeRoad[node])[1:]
 	case f.st.Scale > City:
 		return staircase(home, to)
 	}
@@ -210,10 +209,6 @@ func (f *frame) journey(to Pt, node int) []Pt {
 // (a system, on the star map).
 func (f *frame) frontier(name string) (Pt, int) {
 	key := mapmodel.HashStr(name)
-	if f.st.Scale == Stars {
-		n := 1 + roll(len(f.plan.Nodes)-1, f.m.Seed, 102, key)
-		return f.plan.Nodes[n], n
-	}
 	edge := f.edge()
 	return edge.borderAt(roll(edge.perimeter(), f.m.Seed, 102, key)), 0
 }

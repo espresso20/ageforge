@@ -90,12 +90,12 @@ func (f *frame) paintRelics() {
 		return
 	}
 	for _, w := range f.m.Wonders {
-		if w.Age >= groundAges || !w.Built {
+		if w.Age >= groundAges && f.st.Scale != Stars || !w.Built {
 			continue
 		}
 		for try := 0; try < 60; try++ {
 			p := f.relicSpot(w.Age, try)
-			if f.busy[at(p.X, p.Y)] || f.g.ThingAt(p.X, p.Y).Kind == KindWonder {
+			if f.busy[at(p.X, p.Y)] || f.g.ThingAt(p.X, p.Y).Kind == KindWonder || f.st.Scale == Stars && (!f.sky(p) || f.plan.reserved(p)) {
 				continue
 			}
 			f.g.draw(p.X, p.Y, '★', P(HGold, 255))

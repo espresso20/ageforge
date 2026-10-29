@@ -73,6 +73,15 @@ func TestWorldRoundTheTownInspectsAsItself(t *testing.T) {
 			{"army", mapgen.KindMission, "military", "Army: March on the raiders", "army"},
 			{"idle workers", mapgen.KindIdle, "", "Idle workers", m.IdleCommand()},
 		}
+		if age == "galactic_age" { // the star map: a lane to the civ, no parties or loiterers
+			cases = append(cases[:1:1], cases[2], struct {
+				what  string
+				kind  mapgen.Kind
+				key   string
+				title string
+				cmd   string
+			}{"lane", mapgen.KindLane, routeCiv, "Lane: " + m.TownName + " to " + m.Faction(routeCiv).Name, ""})
+		}
 		for _, c := range cases {
 			if c.what == "civ" {
 				c.title = civ.Name
