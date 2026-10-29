@@ -7,9 +7,9 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 )
 
-// The star map is the last scale: every star of the sky from the hash, the
-// systems the people have among them joined by routes, and the region their
-// buildings reach, a glow that grows with them. Parcels are marks round the
+// The star map is the last scale: a seeded spiral galaxy (galaxy.go), the
+// systems the people have along its home arm joined by routes, and the region
+// their buildings reach. Parcels are marks round the
 // systems; a wonder is a landmark beside one.
 
 // starNodes is how many systems the map holds besides home.
@@ -29,7 +29,8 @@ func NewStarPlan(seed int64, cat *mapmodel.Catalog) *Plan {
 	p.Scale, p.Centre = Stars, Pt{worldW / 2, worldH / 2}
 	p.Roads = []Road{{Cells: []Pt{p.Centre}, Parent: -1}}
 	b.claimRoad(p.Centre, 0)
-	p.Nodes = append([]Pt{p.Centre}, bestCandidates(seed, p.Centre, starNodes)...)
+	p.Galaxy = NewGalaxy(seed)
+	p.Nodes = append([]Pt{p.Centre}, p.Galaxy.homeNodes(seed, starNodes)...)
 	route := b.routes()
 	p.NodeRoad = route
 	b.plotsBeside(route)
@@ -44,31 +45,6 @@ func padPlots(plots []Lot) []Lot {
 		plots = append(plots, Lot{})
 	}
 	return plots
-}
-
-// bestCandidates picks n points in an ellipse round c, each of a dozen
-// hashed spots the one furthest from the points already picked.
-func bestCandidates(seed int64, c Pt, n int) []Pt {
-	const rx, ry = 62, 22
-	var out []Pt
-	for i := 0; i < n; i++ {
-		best, bestGap := c, -1
-		for try := 0; try < 12; try++ {
-			q := Pt{c.X + roll(2*rx+1, seed, 90, int64(i), int64(try)) - rx, c.Y + roll(2*ry+1, seed, 91, int64(i), int64(try)) - ry}
-			if rim(q.X, q.Y, c.X, c.Y, rx, ry) > 1000 {
-				continue
-			}
-			gap := Rect{q.X, q.Y, 1, 1}.dist(c)
-			for _, o := range out {
-				gap = min(gap, Rect{q.X, q.Y, 1, 1}.dist(o))
-			}
-			if gap > bestGap {
-				best, bestGap = q, gap
-			}
-		}
-		out = append(out, best)
-	}
-	return out
 }
 
 // routes joins every system to the nearest one already joined, hub first, and
@@ -179,20 +155,6 @@ func (f *frame) reach() int {
 		use(f.plan.Lots[lot].Rect)
 	}
 	return r
-}
-
-// paintStarMap draws the glow of the people's reach; the systems themselves
-// are drawn over the routes (paintBodies).
-func (f *frame) paintStarMap() {
-	c, r := f.plan.Centre, f.reach()
-	rx, ry := r, max(1, r/2)
-	for y := c.Y - ry; y <= c.Y+ry; y++ {
-		for x := c.X - rx; x <= c.X+rx; x++ {
-			if r := rim(x, y, c.X, c.Y, rx, ry); inWorld(x, y) && r <= 1000 {
-				f.g.Cells[at(x, y)].Bg = f.st.Reach.fade(64 + (1000-r)*192/1000) // brightest at home
-			}
-		}
-	}
 }
 
 // chain is the cells of a road from the home system out: its parents' cells up

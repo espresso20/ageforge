@@ -6,6 +6,10 @@ package mapgen
 // paintSpace draws the void and the bodies of an orbit, a solar system or a
 // star map.
 func (f *frame) paintSpace() {
+	if f.st.Scale == Stars {
+		f.paintGalaxy()
+		return
+	}
 	f.paintVoid()
 	f.paintStarField()
 	f.paintTracks()
@@ -14,8 +18,16 @@ func (f *frame) paintSpace() {
 		f.paintHomePlanet()
 	case System:
 		f.paintSystem()
-	default:
-		f.paintStarMap()
+	}
+}
+
+// paintGalaxy lays down the galaxy of the seed, already painted in the plan.
+func (f *frame) paintGalaxy() {
+	thing := Thing{Kind: KindTerrain, Key: "space"}
+	for i, c := range f.plan.Galaxy.Sky {
+		x, y := i%worldW, i/worldW
+		f.g.paint(x, y, c)
+		f.g.mark(x, y, thing)
 	}
 }
 
