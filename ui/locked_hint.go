@@ -38,19 +38,45 @@ func lockedHintLine(key string) string {
 	return lockedHintLines[h.Sum32()%uint32(len(lockedHintLines))].String()
 }
 
+// joinNames joins up to 3 names with commas and "or"/"and": "A", "A or B", "A, B or C".
+// If there are more than 3, it returns the first 3 joined and the count of remaining.
+func joinNames(names []string) (string, int) {
+	if len(names) == 0 {
+		return "", 0
+	}
+	if len(names) == 1 {
+		return names[0], 0
+	}
+	if len(names) == 2 {
+		return names[0] + " or " + names[1], 0
+	}
+	if len(names) == 3 {
+		return names[0] + ", " + names[1] + " or " + names[2], 0
+	}
+	// More than 3: show the first 3
+	return names[0] + ", " + names[1] + " or " + names[2], len(names) - 3
+}
+
 // lockedNeedsLine says what a locked building waits for: the tech, and the
-// research still to come before it, nearest first.
+// research still to come before it.
 func lockedNeedsLine(bs game.BuildingState) string {
 	if len(bs.LockTechPath) == 0 {
 		return vibe.Sprintf("ui.locked_hint.lockedNeedsLine.01", "Needs %s (research)", bs.LockTech)
 	}
-	// LockTechPath is nearest first; the line reads in research order, so
-	// the first tech named is the one to research first.
-	order := make([]string, len(bs.LockTechPath))
-	for i, name := range bs.LockTechPath {
-		order[len(order)-1-i] = name
+	if len(bs.LockTechPath) == 1 {
+		return vibe.Sprintf("ui.locked_hint.lockedNeedsLine.02", "Needs %s (research), after %s", bs.LockTech, bs.LockTechPath[0])
 	}
-	return vibe.Sprintf("ui.locked_hint.lockedNeedsLine.02", "Needs %s (research), after %s", bs.LockTech, strings.Join(order, ", then "))
+	// Path has 2 or more techs. Tell the player what they can start with.
+	if len(bs.LockTechNext) > 0 {
+		names, more := joinNames(bs.LockTechNext)
+		line := vibe.Sprintf("ui.locked_hint.lockedNeedsLine.03", "Needs %s (research), %d techs before it. Start with %s", bs.LockTech, len(bs.LockTechPath), names)
+		if more > 0 {
+			line += vibe.Sprintf("ui.locked_hint.lockedNeedsLine.04", " and %d more", more)
+		}
+		return line
+	}
+	// No next techs (shouldn't happen, but handle it)
+	return vibe.Sprintf("ui.locked_hint.lockedNeedsLine.05", "Needs %s (research), %d techs before it", bs.LockTech, len(bs.LockTechPath))
 }
 
 // txtIndentedCost is said the same way on several screens, so it has one id.
