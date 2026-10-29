@@ -411,7 +411,8 @@ A festival costs the larger of 2K culture or a number of hours of your own cultu
 | Command | Description |
 |---|---|
 | `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts. |
-| `epoch` | Open the Epoch panel: the current epoch and its event, the catastrophe outlook, epoch history, harbingers, legacy bonuses, Era Mastery and the civilization log. |
+| `epoch` | Open the Epoch screen: a banner, your highlights, ages, top badges and feats on the front page, and on `Tab` the details (current epoch and its event, catastrophe outlook, epoch history, harbingers, legacy bonuses, Era Mastery and the civilization log). |
+| `epoch card` | Save a plain-text card of your epoch as `epoch-card.txt` next to your saves, to paste into Discord. |
 
 See [Milestones](milestones.md) and [Epochs](epochs.md).
 

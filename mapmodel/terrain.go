@@ -45,6 +45,10 @@ var syllA = []vibe.Entry{
 
 var syllB = []string{"vale", "ford", "hold", "mere", "wick", "stead", "haven", "gate", "moor", "crest", "fall", "reach"}
 
+// TownNameOf is the name a run's seed gives its town, without laying the
+// map out (the epoch screen names the town under the banner).
+func TownNameOf(seed int64) string { return cityName(seed) }
+
 // cityName is the name the town is given: a pure function of the run seed.
 func cityName(seed int64) string {
 	return syllA[Hash(seed, 5)%uint64(len(syllA))].String() + syllB[Hash(seed, 6)%uint64(len(syllB))]
