@@ -10,8 +10,8 @@ import (
 // the scholars a copy comes with and the copies that research at full rate (a
 // knowledge building), the soldiers a copy comes with (a military building),
 // and, so the panels can show a building its age has unlocked greyed out, the
-// research a tech still locks it behind: LockTech and LockTechPath, for the
-// buildings whose needsTech names one.
+// research a tech still locks it behind: LockTech, LockTechPath, and LockTechNext,
+// for the buildings whose needsTech names one.
 func (ge *GameEngine) buildingExtras(scholars, fullRate, soldiers int, needsTech string) buildingExtra {
 	var x buildingExtra
 	if scholars > 0 {
@@ -23,6 +23,7 @@ func (ge *GameEngine) buildingExtras(scholars, fullRate, soldiers int, needsTech
 	if needsTech != "" {
 		x.lockTech = ge.techName(needsTech)
 		x.lockTechPath = ge.lockTechPath(needsTech)
+		x.lockTechNext = ge.lockTechNext(needsTech)
 	}
 	return x
 }
@@ -53,4 +54,43 @@ func (ge *GameEngine) lockTechPath(tech string) []string {
 		path[i] = ge.techName(key)
 	}
 	return path
+}
+
+// lockTechNext is the display names of the techs on the path from tech whose
+// own prerequisites are all researched: the techs a player can research right
+// now to progress toward tech. Returns them in the order they appear in the
+// path, up to 3; empty when no techs on the path are immediately researchable.
+func (ge *GameEngine) lockTechNext(tech string) []string {
+	path := ge.lockTechPath(tech)
+	if len(path) == 0 {
+		return nil
+	}
+	// Walk the path (which has display names). We need to check prerequisites,
+	// so translate back to keys. Build a map of display name -> key for the ones
+	// on the path.
+	pathKeys := []string{tech}
+	for next := 0; next < len(pathKeys); next++ {
+		for _, p := range ge.Research.defs[pathKeys[next]].Prerequisites {
+			if slices.Contains(pathKeys, p) || ge.Research.IsResearched(p) {
+				continue
+			}
+			pathKeys = append(pathKeys, p)
+		}
+	}
+	// Now collect the techs whose prerequisites are all researched.
+	var next []string
+	for _, key := range pathKeys[1:] {
+		// A tech can be researched if all its prerequisites are researched
+		canResearch := true
+		for _, p := range ge.Research.defs[key].Prerequisites {
+			if !ge.Research.IsResearched(p) {
+				canResearch = false
+				break
+			}
+		}
+		if canResearch {
+			next = append(next, ge.techName(key))
+		}
+	}
+	return next
 }

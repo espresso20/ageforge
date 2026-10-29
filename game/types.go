@@ -275,9 +275,13 @@ type BuildingState struct {
 	// has unlocked it still waits for; "" when it needs none or the tech
 	// is researched. LockTechPath is the display names of that tech's
 	// prerequisites not researched yet, nearest first and recursively;
-	// empty when LockTech can be researched now.
+	// empty when LockTech can be researched now. LockTechNext is the display
+	// names of the techs on that path that can be researched right now (their
+	// prerequisites are all researched), in the order they appear in the path;
+	// empty when no techs on the path are immediately researchable.
 	LockTech     string
 	LockTechPath []string
+	LockTechNext []string
 	// Cost for next building
 	NextCost map[string]float64
 	// Wonder-specific: resources banked toward construction
