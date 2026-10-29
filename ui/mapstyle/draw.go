@@ -22,13 +22,13 @@ func (v *view) Draw(scr tcell.Screen, r Rect, f Frame) {
 		return
 	}
 	cv.Fill(0, 0, r.W, r.H, ' ', ink.Style(mapmodel.CText))
+	v.overview = v.wantsOverview(r)
 	sc := v.scene(f)
 	side := 0
 	if r.W >= 110 && (v.legend || v.flows) {
 		side = sideWidth
 	}
 	mapW, mapH := r.W-side, r.H-5
-	v.overview = v.wantsOverview(r)
 	v.drawPicture(cv, ink.Palette, 0, 1, mapW, mapH, sc, f.Anim)
 	zoom := v.zoomLabel()
 	v.drawHeader(cv, r.W, f.Model, zoom)
@@ -108,6 +108,7 @@ func (v *view) DrawCompact(scr tcell.Screen, r Rect, f Frame) {
 	if mh <= 0 {
 		return
 	}
+	v.overview = true
 	ov := v.scene(f).Overview(r.W, mh)
 	v.blit(cv, 0, 1, ov.Grid)
 	if cx, cy, ok := ov.CellOf(mapgen.Pt{X: v.mark.X, Y: v.mark.Y}); v.marked && ok {

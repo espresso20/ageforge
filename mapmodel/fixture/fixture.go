@@ -33,8 +33,14 @@ type Options struct {
 
 // State returns a synthetic snapshot.
 func State(o Options) game.GameState {
+	// Galactic is the first age on the star map: a real early town there is a
+	// fifth of the density of the late ones, and not every line has begun.
+	early := o.Age == "galactic_age"
 	if o.Scale == 0 {
 		o.Scale = 1
+		if early {
+			o.Scale = 0.2
+		}
 	}
 	set := o.Rules
 	if set == nil {
@@ -103,6 +109,9 @@ func State(o Options) game.GameState {
 				st.Buildings[k] = bs
 			}
 			continue
+		}
+		if early && d.LineageKey != "" && mapmodel.HashStr(d.LineageKey)%5 < 2 && d.Category != "housing" {
+			continue // a line not begun yet
 		}
 		if h(k, 1)%6 == 0 && da < ai {
 			continue // not every player builds everything

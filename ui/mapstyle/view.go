@@ -86,6 +86,7 @@ type sceneKey struct {
 	visit    int
 	fresh    bool
 	district string
+	close    bool
 }
 
 // New makes a map view drawn by the engine.
@@ -98,9 +99,9 @@ func (v *view) scene(f Frame) *mapgen.Scene {
 	if f.Model == nil {
 		return nil
 	}
-	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame(), v.freshLit(f), v.focus()}); v.sc == nil || k != v.scKey {
+	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame(), v.freshLit(f), v.focus(), !v.overview}); v.sc == nil || k != v.scKey {
 		shared.Lock()
-		v.sc, v.scKey = shared.gen.DrawAt(f.Model, mapgen.Moment{Anim: f.Anim, Visit: k.visit, Fresh: k.fresh, District: k.district}), k
+		v.sc, v.scKey = shared.gen.DrawAt(f.Model, mapgen.Moment{Anim: f.Anim, Visit: k.visit, Fresh: k.fresh, District: k.district, Close: k.close}), k
 		shared.Unlock()
 	}
 	if line := v.focus(); line != "" && !slices.ContainsFunc(v.sc.Districts, func(d mapgen.District) bool { return d.Line == line }) {

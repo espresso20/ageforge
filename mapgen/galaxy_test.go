@@ -156,3 +156,26 @@ func TestStarMapBoundsHoldTheTerritory(t *testing.T) {
 		}
 	}
 }
+
+// TestTheCloseSkyIsPlainDarkSpace: the sky for a close look has no core and no
+// bright stars, and thins the backdrop to a fraction of the overview's.
+func TestTheCloseSkyIsPlainDarkSpace(t *testing.T) {
+	for _, seed := range []int64{4, 23, 58} {
+		g := NewGalaxy(seed)
+		stars, deep := 0, 0
+		for i, c := range g.Deep {
+			if c.Bg.Hue == HCore || c.R == '✦' || c.R == '✧' || c.R == '+' || c.R == '◌' {
+				t.Fatalf("seed %d: the close sky holds %q on %v", seed, c.R, c.Bg.Hue)
+			}
+			if g.Sky[i].R != ' ' {
+				stars++
+			}
+			if c.R != ' ' {
+				deep++
+			}
+		}
+		if deep*2 > stars {
+			t.Errorf("seed %d: %d backdrop stars close up against %d in the overview", seed, deep, stars)
+		}
+	}
+}

@@ -72,6 +72,10 @@ type Galaxy struct {
 	Dens []uint8
 	// Sky is the background and the stars of every cell of the world.
 	Sky []Cell
+	// Deep is the same sky for a close look: the deep gradient and a few dim
+	// stars, with no arms, no dust, no core and no far galaxies, so that what
+	// stands on it is the only thing with any weight.
+	Deep []Cell
 	// Home is the home arm, core to rim, as cells.
 	Home []Pt
 }
@@ -208,7 +212,7 @@ func soft(b int) int { return b * (512 - b) / 256 }
 func NewGalaxy(seed int64) *Galaxy {
 	s := pickShape(seed)
 	n := worldW * worldH
-	g := &Galaxy{Shape: s, Dens: make([]uint8, n), Sky: make([]Cell, n)}
+	g := &Galaxy{Shape: s, Dens: make([]uint8, n), Sky: make([]Cell, n), Deep: make([]Cell, n)}
 	arm, dust, core, knot := make([]uint8, n), make([]uint8, n), make([]uint8, n), make([]uint8, n)
 	for k := 0; k < s.Arms+s.Faint; k++ {
 		faint := k >= s.Arms
@@ -299,6 +303,16 @@ func (g *Galaxy) paint(seed int64, arm, dust, core, knot []uint8) {
 				}
 			}
 			g.Sky[i] = Cell{R: ' ', Fg: P(HStar, 0), Bg: bg}
+			// the close sky: the gradient alone and a thin even scatter of dim
+			// stars, a third of the faint ones and none of the bright, with
+			// no crowding in the arms
+			g.Deep[i] = Cell{R: ' ', Fg: P(HStar, 0), Bg: P(HNebula, tone)}
+			switch dh := int(hash(seed, 63, int64(x), int64(y)) % 1000); {
+			case dh < 14:
+				g.Deep[i].R, g.Deep[i].Fg = '∙', P(HStar, 60+h8(61, x, y)*40/256)
+			case dh < 40:
+				g.Deep[i].R, g.Deep[i].Fg = '·', P(HStar, 50+h8(62, x, y)*40/256)
+			}
 			// three layers of stars, thicker in the arms and the core
 			h := int(hash(seed, 44, int64(x), int64(y)) % 1000)
 			pn, pm, pf := 3*(256+dens*3+kn)/256, 14*(256+dens*5+kn*2)/256, 55*(256+dens*6)/256

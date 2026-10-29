@@ -143,7 +143,11 @@ func (f *frame) paintBorders(homes []lit, rivals []rivalSite) {
 		for _, h := range homes {
 			halo(h.cells, 3, in)
 		}
-		ink := P(f.ink([]rune(f.st.Hub[0])[0], HNone).Hue, 160)
+		bw := 160
+		if f.close {
+			bw = 95 // a faint edge, not another texture
+		}
+		ink := P(f.ink([]rune(f.st.Hub[0])[0], HNone).Hue, bw)
 		for _, p := range edgeOf(in) {
 			if f.sky(p) {
 				f.g.draw(p.X, p.Y, '·', ink)
@@ -151,12 +155,16 @@ func (f *frame) paintBorders(homes []lit, rivals []rivalSite) {
 			}
 		}
 	}
+	rw := 190
+	if f.close {
+		rw = 120
+	}
 	for _, r := range rivals {
 		in := make([]bool, worldW*worldH)
 		halo(r.cells, 2, in)
 		for _, p := range edgeOf(in) {
 			if (p.X+p.Y)%2 == 0 && f.sky(p) {
-				f.g.draw(p.X, p.Y, '·', P(relationHue[r.civ.Relation], 190))
+				f.g.draw(p.X, p.Y, '·', P(relationHue[r.civ.Relation], rw))
 				f.g.mark(p.X, p.Y, Thing{Kind: KindCiv, Key: r.civ.Key})
 			}
 		}
@@ -196,7 +204,11 @@ func (f *frame) paintSector(h lit) {
 		g = clamp(g, 0, 3)
 		// a hashed nudge in glyph and brightness: a cluster, not a pattern
 		g = clamp(g+roll(3, f.m.Seed, 370, int64(p.X), int64(p.Y))-1, 0, 3)
-		f.g.draw(p.X, p.Y, systemGlyphs[g], P(hue, 110+30*g+roll(70, f.m.Seed, 371, int64(p.X), int64(p.Y))))
+		w := 110 + 30*g + roll(70, f.m.Seed, 371, int64(p.X), int64(p.Y))
+		if f.close {
+			w = 215 + roll(41, f.m.Seed, 371, int64(p.X), int64(p.Y)) // the brightest things on the screen
+		}
+		f.g.draw(p.X, p.Y, systemGlyphs[g], P(hue, w))
 		f.g.mark(p.X, p.Y, Thing{Kind: KindSector, Key: h.line, Lineage: h.line, Count: n})
 	}
 }
@@ -208,6 +220,9 @@ func (f *frame) paintRival(r rivalSite) {
 	for j, p := range r.cells {
 		f.clearCore(p)
 		glyph, w := '∙', 130+roll(80, f.m.Seed, 372, int64(p.X), int64(p.Y))
+		if f.close {
+			w = 200 + roll(41, f.m.Seed, 372, int64(p.X), int64(p.Y))
+		}
 		if j == 0 {
 			glyph, w = '◉', 255
 		} else if j < len(r.cells)/3 {
