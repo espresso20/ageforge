@@ -3,6 +3,7 @@ package ui
 import (
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -33,6 +34,10 @@ type epochHall struct {
 	// plain set); height is the screen's rows. Either may be nil.
 	tier   func() mapmodel.GlyphTier
 	height func() int
+	// motion says whether things move (the motion setting) and now is the
+	// clock. Either may be nil: still, and the wall clock.
+	motion func() bool
+	now    func() time.Time
 }
 
 // open starts the screen on the front page.
@@ -79,13 +84,28 @@ func (h *epochHall) provider(state game.GameState, screenW int) string {
 	if h.details {
 		return epochProvider(state, screenW)
 	}
-	return hallFrontText(state, screenW, h.rows(), h.glyphTier())
+	mo := hallMotion{}
+	if h.motion != nil && h.motion() {
+		now := time.Now
+		if h.now != nil {
+			now = h.now
+		}
+		mo = hallMotion{on: true, t: float64(now().UnixMilli()) / 1000}
+	}
+	return hallFront(state, screenW, h.rows(), h.glyphTier(), mo)
 }
 
 // ---- what the screen says ----
 
 // hallStat is one headline figure.
-type hallStat struct{ value, label string }
+type hallStat struct {
+	// value is the figure as the card says it, big the number the tile
+	// draws large, and label what it counts. hasBar marks a figure that is
+	// a share of a whole (frac of it done).
+	value, label, big string
+	hasBar            bool
+	frac              float64
+}
 
 // hallBadgeCount is how many badges the front page shows.
 const hallBadgeCount = 5
@@ -101,12 +121,19 @@ type hallView struct {
 	// ages ahead the player may see named, and unseen how many more there
 	// are that it may not.
 	done, ahead []string
-	cur         string
-	unseen      int
-	totalAges   int
-	badges      []game.BadgeView
-	// feats are the run's feats as tview text with color tags.
-	feats []string
+	// doneEp and curEp are the epoch (by order) of each age behind the town
+	// and of the one it is in; order is the town's epoch; seed is the run's.
+	doneEp       []int
+	curEp, order int
+	seed         int64
+	cur          string
+	unseen       int
+	totalAges    int
+	badges       []game.BadgeView
+	// feats are the run's feats as tview text with color tags, featKinds the
+	// kind of each (featCatastrophe and so on).
+	feats     []string
+	featKinds []int
 }
 
 // newHallView reads the screen's facts from a state.
@@ -114,8 +141,20 @@ func newHallView(state game.GameState) hallView {
 	set := state.Ruleset()
 	v := hallView{name: state.EpochName, icon: state.EpochIcon, color: "white"}
 	if ep, ok := set.Era(state.EpochKey); ok {
-		v.name, v.icon, v.color = ep.Name, ep.Icon, ep.Color
+		v.name, v.icon, v.color, v.order = ep.Name, ep.Icon, ep.Color, ep.Order
 	}
+	v.seed = state.Seed
+	epochOf := func(age string) int {
+		for _, ep := range set.Eras() {
+			for _, a := range ep.Ages {
+				if a == age {
+					return ep.Order
+				}
+			}
+		}
+		return v.order
+	}
+	v.curEp = epochOf(state.Age)
 	if v.name == "" {
 		v.name = game.AgeName(state.Age)
 	}
@@ -133,12 +172,21 @@ func newHallView(state game.GameState) hallView {
 	for _, b := range state.Buildings {
 		buildings += b.Count
 	}
+	stat := func(n int, label string) hallStat {
+		return hallStat{value: textfmt.Int(n), big: textfmt.Int(n), label: label}
+	}
+	techs := stat(state.Research.TotalResearched, vibe.Line("ui.epoch_hall.newHallView.04", "Techs"))
+	techs.value = vibe.Sprintf("ui.epoch_hall.newHallView.03", "%s of %s", textfmt.Int(state.Research.TotalResearched), textfmt.Int(len(set.Techs())))
+	techs.hasBar = true
+	if total := len(set.Techs()); total > 0 {
+		techs.frac = float64(state.Research.TotalResearched) / float64(total)
+	}
 	v.stats = []hallStat{
-		{textfmt.Int(state.Workers.TotalPop), vibe.Line("ui.epoch_hall.newHallView.01", "Population")},
-		{textfmt.Int(buildings), vibe.Line("ui.epoch_hall.newHallView.02", "Buildings")},
-		{vibe.Sprintf("ui.epoch_hall.newHallView.03", "%s of %s", textfmt.Int(state.Research.TotalResearched), textfmt.Int(len(set.Techs()))), vibe.Line("ui.epoch_hall.newHallView.04", "Techs")},
-		{textfmt.Int(len(builtWonders(state))), vibe.Line("ui.epoch_hall.newHallView.05", "Wonders")},
-		{textfmt.Int(state.Prestige.Level), vibe.Line("ui.epoch_hall.newHallView.06", "Prestige")},
+		stat(state.Workers.TotalPop, vibe.Line("ui.epoch_hall.newHallView.01", "Population")),
+		stat(buildings, vibe.Line("ui.epoch_hall.newHallView.02", "Buildings")),
+		techs,
+		stat(len(builtWonders(state)), vibe.Line("ui.epoch_hall.newHallView.05", "Wonders")),
+		stat(state.Prestige.Level, vibe.Line("ui.epoch_hall.newHallView.06", "Prestige")),
 	}
 
 	// The ages: those the run has been through, the one it is in, and the
@@ -147,6 +195,7 @@ func newHallView(state game.GameState) hallView {
 	for _, a := range state.Stats.AgesReached {
 		if a != state.Age {
 			v.done = append(v.done, game.AgeName(a))
+			v.doneEp = append(v.doneEp, epochOf(a))
 		}
 	}
 	ages := set.Ages()
@@ -168,7 +217,10 @@ func newHallView(state game.GameState) hallView {
 	}
 
 	v.badges = rarestBadges(state, hallBadgeCount)
-	v.feats = hallFeats(state)
+	for _, f := range hallFeats(state) {
+		v.feats = append(v.feats, f.text)
+		v.featKinds = append(v.featKinds, f.kind)
+	}
 	return v
 }
 
@@ -221,22 +273,28 @@ func rarestBadges(state game.GameState, n int) []game.BadgeView {
 // hallFeats are the run's feats, from what the game already keeps: the
 // catastrophes met, how each harbinger ended, the milestones and the
 // fastest age. Each is a line of tview text; none is a doom not yet foretold.
-func hallFeats(state game.GameState) []string {
-	var feats []string
+func hallFeats(state game.GameState) []hallFeat {
+	var feats []hallFeat
 	if n := state.CatastrophesEndured + state.CatastrophesSuccumbed; n > 0 {
-		feats = append(feats, vibe.Sprintf("ui.epoch_hall.hallFeats.01", "Catastrophes met: %d, endured %d, succumbed %d",
-			n, state.CatastrophesEndured, state.CatastrophesSuccumbed))
+		feats = append(feats, hallFeat{featCatastrophe, vibe.Sprintf("ui.epoch_hall.hallFeats.01", "Catastrophes met: %d, endured %d, succumbed %d",
+			n, state.CatastrophesEndured, state.CatastrophesSuccumbed)})
 	}
 	for _, r := range state.HarbingerHistory {
-		feats = append(feats, harbingerRecordText(state.Ruleset(), r))
+		feats = append(feats, hallFeat{featHarbinger, harbingerRecordText(state.Ruleset(), r)})
 	}
 	if ms := state.Milestones; ms.CompletedCount > 0 {
-		feats = append(feats, vibe.Sprintf("ui.epoch_hall.hallFeats.02", "Milestones reached: %d of %d", ms.CompletedCount, ms.TotalCount))
+		feats = append(feats, hallFeat{featMilestone, vibe.Sprintf("ui.epoch_hall.hallFeats.02", "Milestones reached: %d of %d", ms.CompletedCount, ms.TotalCount)})
 	}
 	if age, ticks, ok := fastestAge(state); ok {
-		feats = append(feats, vibe.Sprintf("ui.epoch_hall.hallFeats.03", "Fastest age: %s, in %s", age, game.DurationText(ticks, tickInterval(state))))
+		feats = append(feats, hallFeat{featFastest, vibe.Sprintf("ui.epoch_hall.hallFeats.03", "Fastest age: %s, in %s", age, game.DurationText(ticks, tickInterval(state)))})
 	}
 	return feats
+}
+
+// hallFeat is one feat: its kind and its text (tview, with color tags).
+type hallFeat struct {
+	kind int
+	text string
 }
 
 // fastestAge is the age of this run that took the fewest ticks to pass, of
@@ -262,211 +320,61 @@ func hallMark(plain bool, uni, ascii string) string {
 }
 
 // hallFrontText is the front page for a screen screenW cells wide and rows
-// tall.
+// tall, as a still frame.
 func hallFrontText(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier) string {
-	w := overlayTextWidth(screenW)
-	plain := tier == mapmodel.TierASCII
+	return hallFront(state, screenW, rows, tier, hallMotion{})
+}
+
+// hallFront is the front page at a moment of the clock. Every block is
+// centred as a unit on the width of the screen.
+func hallFront(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion) string {
 	v := newHallView(state)
-	tag := theme.NameTag(v.color)
-	var sb strings.Builder
-
-	// The banner.
-	sb.WriteString("\n")
-	for _, l := range hallBanner(v.name, tag, w, rows, plain) {
-		sb.WriteString(l + "\n")
+	c := hallCompose(v, screenW, rows, tier, mo, 1)
+	// On a tall screen the page sits a little below the top, not hard
+	// against it, with the stars all round.
+	if spare := rows - 4 - c.end; spare > 3 {
+		c = hallCompose(v, screenW, rows, tier, mo, 1+min(spare/3, 10))
 	}
-	sb.WriteString("\n")
-	under := []string{lit(v.town), lit(v.age)}
+	return c.render()
+}
+
+// hallCompose lays the page out with its banner starting at row top.
+func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, top int) *hallCtx {
+	w := overlayTextWidth(screenW)
+	c := newHallCtx(w, rows, tier, mo)
+	stops := c.epochInks(v.order)
+
+	// The banner and the lines under it.
+	c.y = top
+	c.banner(v.name, v.order, v.seed)
+	under := []string{v.town, v.age}
 	if v.year != "" {
-		under = append(under, lit(v.year))
+		under = append(under, v.year)
 	}
-	sep := " " + hallMark(plain, "·", "-") + " "
-	line := strings.TrimSpace(v.icon + " " + strings.Join(under, sep))
-	if plain {
-		line = strings.Join(under, sep)
+	line := strings.Join(under, " "+c.mark("·", "-")+" ")
+	if !c.plain {
+		line = strings.TrimSpace(v.icon + " " + line)
 	}
-	sb.WriteString(centreTagged(tag+"[::b]"+line+"[-:-:-]", visibleLen(line), w) + "\n\n")
+	c.paragraph(line, c.ink(stops[2]))
+	c.y += c.gap
 
-	// The highlights.
-	sb.WriteString(hallHeading(vibe.Line("ui.epoch_hall.hallFrontText.01", "Highlights")) + "\n\n")
-	for _, l := range hallTiles(v.stats, w) {
-		sb.WriteString(l + "\n")
-	}
-	sb.WriteString("\n")
+	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.01", "Highlights"))
+	c.tiles(v.stats)
+	c.y += c.gap - 1
 
-	// The ages.
-	sb.WriteString(hallHeading(vibe.Line("ui.epoch_hall.hallFrontText.02", "Ages")) + "\n\n")
-	done, here, next := hallMark(plain, "✓", "+"), hallMark(plain, "◆", "*"), hallMark(plain, "○", "o")
-	var toks []string
-	for _, a := range v.done {
-		toks = append(toks, theme.Paint(theme.RolePositive, done)+" "+lit(a))
-	}
-	toks = append(toks, tag+here+"[-] "+theme.Paint(theme.RoleBright, lit(v.cur)))
-	for _, a := range v.ahead {
-		toks = append(toks, theme.Paint(theme.RoleDim, next+" "+lit(a)))
-	}
-	if v.unseen > 0 {
-		toks = append(toks, theme.Paint(theme.RoleDim, next+" "+vibe.Sprintf("ui.epoch_hall.hallFrontText.03", "%d more to come", v.unseen)))
-	}
-	for _, l := range hallFlow(toks, "   ", w) {
-		sb.WriteString(l + "\n")
-	}
-	sb.WriteString("\n")
+	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.02", "Ages"))
+	c.track(v)
+	c.y += c.gap
 
-	// The badges.
-	sb.WriteString(hallHeading(vibe.Line("ui.epoch_hall.hallFrontText.04", "Top badges")) + "\n\n")
-	if len(v.badges) == 0 {
-		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.epoch_hall.hallFrontText.05", "No badges earned yet.")) + "\n")
-	}
-	for _, b := range v.badges {
-		sb.WriteString(badgeMark(b, tier) + " " + theme.Paint(theme.RoleBright, lit(b.Name)))
-		if b.Tier != "" || b.Rarity != "" {
-			sb.WriteString(theme.Paint(theme.RoleDim, " ("+lit(strings.Join(nonEmpty(b.Tier, b.Rarity), ", "))+")"))
-		}
-		sb.WriteString("\n")
-	}
-	sb.WriteString("\n")
+	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.04", "Top badges"))
+	c.badges(v.badges)
+	c.y += c.gap - 1
 
-	// The feats.
-	sb.WriteString(hallHeading(vibe.Line("ui.epoch_hall.hallFrontText.06", "Feats")) + "\n\n")
-	if len(v.feats) == 0 {
-		sb.WriteString(theme.Paint(theme.RoleDim, vibe.Line("ui.epoch_hall.hallFrontText.07", "No feats yet. They come with the ages.")) + "\n")
-	}
-	bullet := hallMark(plain, "·", "-")
-	for _, f := range v.feats {
-		sb.WriteString(" " + bullet + " " + f + "\n")
-	}
-	sb.WriteString("\n" + theme.Paint(theme.RoleDim, vibe.Line("ui.epoch_hall.hallFrontText.08", "Type epoch card to save a card you can paste into Discord.")) + "\n")
-	return sb.String()
-}
+	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.06", "Feats"))
+	c.feats(v)
 
-func nonEmpty(ss ...string) []string {
-	var out []string
-	for _, s := range ss {
-		if s != "" {
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
-func hallHeading(title string) string {
-	return theme.Paint(theme.RoleAccent, "── "+title+" ──")
-}
-
-// centreTagged pads s (n cells wide on screen) to the middle of w cells.
-func centreTagged(s string, n, w int) string {
-	if n >= w {
-		return s
-	}
-	return strings.Repeat(" ", (w-n)/2) + s
-}
-
-// hallFlow lays tokens out in rows at most w cells wide, sep between two on
-// a row, never breaking inside a token.
-func hallFlow(toks []string, sep string, w int) []string {
-	var rows []string
-	row, n := "", 0
-	for _, t := range toks {
-		tn := visibleLen(t)
-		if n > 0 && n+len(sep)+tn > w {
-			rows = append(rows, row)
-			row, n = "", 0
-		}
-		if n > 0 {
-			row += sep
-			n += len(sep)
-		}
-		row += t
-		n += tn
-	}
-	if n > 0 {
-		rows = append(rows, row)
-	}
-	return rows
-}
-
-// hallTiles lays the headline figures out as columns: each figure over its
-// label, as many to a row as w holds, then another row.
-func hallTiles(stats []hallStat, w int) []string {
-	cell := 0
-	for _, s := range stats {
-		cell = max(cell, runeLen(s.value), runeLen(s.label))
-	}
-	cell += 3
-	per := max(w/cell, 1)
-	var out []string
-	for i := 0; i < len(stats); i += per {
-		var vals, labels strings.Builder
-		for _, s := range stats[i:min(i+per, len(stats))] {
-			vals.WriteString(theme.Paint(theme.RoleHighlight, lit(s.value)) + strings.Repeat(" ", cell-runeLen(s.value)))
-			labels.WriteString(theme.Paint(theme.RoleDim, s.label) + strings.Repeat(" ", cell-runeLen(s.label)))
-		}
-		out = append(out, strings.TrimRight(vals.String(), " "), strings.TrimRight(labels.String(), " "))
-		if i+per < len(stats) {
-			out = append(out, "")
-		}
-	}
-	return out
-}
-
-// hallBanner is the epoch's name in iron, in the epoch's color, centred in w
-// cells and at most the rows the screen can spare. A name that does not fit
-// in iron is one line of spaced capitals.
-func hallBanner(name, tag string, w, rows int, plain bool) []string {
-	tag = strings.TrimSuffix(tag, "]") + "::b]"
-	limit := 8
-	if rows >= 36 {
-		limit = 16
-	}
-	big := []ironMode{{sx: 2, sy: 2}, {sx: 1, sy: 2}}
-	modes := []ironMode{{sx: 2, sy: 1}, {sx: 1, sy: 1}}
-	if !plain {
-		modes = append(modes, ironMode{sy: 1, half: true})
-	}
-	p := placeIron(name, append(big, modes...), w, limit)
-	if !p.ok {
-		text := strings.ToUpper(name)
-		if s := spaced(text); runeLen(s) <= w {
-			text = s
-		}
-		return []string{centreTagged(tag+lit(text)+"[-:-:-]", runeLen(text), w)}
-	}
-	g := newMGrid(p.w, p.h)
-	drawIron(g, newMenuPalette(theme.Active()), p.rows, 0, 0, p.mode, func(int, int) float64 { return 0.7 }, false)
-	if p.tail != "" {
-		t := spaced(strings.ToUpper(p.tail))
-		g.text(max((p.w-runeLen(t))/2, 0), p.h-1, t, theme.Color(theme.RoleText), true)
-	}
-	pad := strings.Repeat(" ", max((w-p.w)/2, 0))
-	out := make([]string, 0, g.h)
-	for y := 0; y < g.h; y++ {
-		var sb strings.Builder
-		sb.WriteString(pad)
-		inRun := false
-		for x := 0; x < g.w; x++ {
-			r := g.c[y*g.w+x].r
-			if r == ' ' {
-				if inRun {
-					sb.WriteString("[-:-:-]")
-					inRun = false
-				}
-				sb.WriteRune(' ')
-				continue
-			}
-			if !inRun {
-				sb.WriteString(tag)
-				inRun = true
-			}
-			if plain {
-				r = '#'
-			}
-			sb.WriteRune(r)
-		}
-		if inRun {
-			sb.WriteString("[-:-:-]")
-		}
-		out = append(out, strings.TrimRight(sb.String(), " "))
-	}
-	return out
+	c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.08", "Type epoch card to save a card you can paste into Discord."), c.role(theme.RoleDim))
+	c.end = c.y
+	c.sky(v.seed)
+	return c
 }

@@ -1,12 +1,19 @@
 package ui
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // lateHallState is a run well on its way: it has been through every age up
@@ -139,5 +146,181 @@ func TestEpochCardCommandWritesFile(t *testing.T) {
 	}
 	if res := HandleCommand("epoch", engine); res.OverlayName != "epoch" {
 		t.Errorf("bare epoch should open the screen: %+v", res)
+	}
+}
+
+// firstBox is the span of the first line that opens a box (a tile of the
+// totals row): its first and last used column.
+func firstBox(t *testing.T, txt string) (first, last int) {
+	t.Helper()
+	for _, l := range strings.Split(untag(txt), "\n") {
+		if !strings.Contains(l, "╭") {
+			continue
+		}
+		// Stars may share the row; the tiles are from the first corner to
+		// the last.
+		rs := []rune(l)
+		first, last = -1, 0
+		for i, r := range rs {
+			if r == '╭' && first < 0 {
+				first = i
+			}
+			if r == '╮' {
+				last = i
+			}
+		}
+		return first, last
+	}
+	t.Fatal("no tile row on the page")
+	return 0, 0
+}
+
+func TestEpochHallTotalsAreCentred(t *testing.T) {
+	late := lateHallState(t, "galactic_age")
+	for name, st := range map[string]game.GameState{"early": game.NewGameEngine().GetState(), "late": late} {
+		for _, dim := range [][2]int{{200, 50}, {400, 100}, {100, 30}} {
+			w := overlayTextWidth(dim[0])
+			first, last := firstBox(t, hallFrontText(st, dim[0], dim[1], 0))
+			// The row's middle against the page's, in half cells.
+			if d := first + last + 1 - w; d < -4 || d > 4 {
+				t.Errorf("%s %dx%d: totals row spans %d..%d on a page %d wide, off centre", name, dim[0], dim[1], first, last, w)
+			}
+		}
+	}
+}
+
+func TestEpochHallBannerHasManyColours(t *testing.T) {
+	for _, mo := range []bool{false, true} {
+		c := newHallCtx(196, 50, 0, hallMotion{on: mo, t: 3})
+		c.banner("Stone Era", 0, 1)
+		seen := map[any]bool{}
+		for _, cell := range c.g.c {
+			if cell.r == '█' || cell.r == '▌' || cell.r == '▐' {
+				seen[cell.fg] = true
+			}
+		}
+		if len(seen) < 2 {
+			t.Errorf("motion %v: the banner is one colour (%d)", mo, len(seen))
+		}
+	}
+}
+
+func TestEpochHallMotion(t *testing.T) {
+	st := lateHallState(t, "galactic_age")
+	a := hallFront(st, 200, 50, 0, hallMotion{t: 1})
+	b := hallFront(st, 200, 50, 0, hallMotion{t: 97.3})
+	if a != b {
+		t.Error("with motion off the page changed between two frames")
+	}
+	if on := hallFront(st, 200, 50, 0, hallMotion{on: true, t: 1}); on == hallFront(st, 200, 50, 0, hallMotion{on: true, t: 5}) {
+		t.Error("with motion on the page does not move")
+	}
+}
+
+func TestEpochHallPlainTierIsASCII(t *testing.T) {
+	st := lateHallState(t, "galactic_age")
+	for _, r := range untag(hallFrontText(st, 200, 50, mapmodel.TierASCII)) {
+		if r > 0x7e && r != '\n' {
+			t.Fatalf("the plain tier drew %q", r)
+		}
+	}
+}
+
+func TestEpochHallMonochromeHasNoHue(t *testing.T) {
+	was := theme.Active().Key
+	defer func() { _ = theme.SetActive(was) }()
+	if err := theme.SetActive("monochrome"); err != nil {
+		t.Skip(err)
+	}
+	hexRe := regexp.MustCompile(`\[#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})[:\]]`)
+	for _, m := range hexRe.FindAllStringSubmatch(hallFrontText(lateHallState(t, "galactic_age"), 200, 50, 0), -1) {
+		if m[1] != m[2] || m[2] != m[3] {
+			t.Fatalf("a hue in Monochrome: #%s%s%s", m[1], m[2], m[3])
+		}
+	}
+}
+
+// TestEpochHallDump writes the page's text for the render script when
+// HALL_DUMP names a directory.
+func TestEpochHallDump(t *testing.T) {
+	dir := os.Getenv("HALL_DUMP")
+	if dir == "" {
+		t.Skip("HALL_DUMP not set")
+	}
+	must(t, os.MkdirAll(dir, 0o755))
+	early := game.NewGameEngine().GetState()
+	early.AccountStats = &game.AccountStatsView{Badges: []game.BadgeView{
+		{Key: "a", Name: "First Fire", Rarity: "common", Points: 1, Earned: true, Level: config.BadgeBronze},
+		{Key: "b", Name: "Hands Full", Rarity: "uncommon", Points: 3, Earned: true, Level: config.BadgeSilver},
+		{Key: "c", Name: "Quarry Master", Rarity: "rare", Points: 10, Earned: true, Level: config.BadgeGold},
+	}}
+	late := lateHallState(t, "galactic_age")
+	for i, b := range late.AccountStats.Badges {
+		late.AccountStats.Badges[i].Level = []config.BadgeTier{config.BadgeBronze, config.BadgePlatinum, config.BadgeGold, config.BadgeLegendary, config.BadgeSilver, config.BadgeLegendary, config.BadgeBronze}[i]
+		_ = b
+	}
+	early.Workers.TotalPop = 14
+	early.Research.TotalResearched = 6
+	late.Workers.TotalPop = 48210
+	late.Research.TotalResearched = 171
+	late.Prestige.Level = 7
+	late.Buildings = map[string]game.BuildingState{"x": {Count: 1284}}
+	for name, st := range map[string]game.GameState{"early": early, "late": late} {
+		for _, dim := range [][2]int{{400, 100}, {200, 50}, {100, 30}} {
+			txt := hallFront(st, dim[0], dim[1], 0, hallMotion{on: true, t: 2})
+			must(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("%s-%dx%d.txt", name, dim[0], dim[1])), []byte(txt), 0o644))
+		}
+	}
+}
+
+func TestEpochHallBigPointIsLit(t *testing.T) {
+	for _, sx := range []int{1, 2} {
+		rows, ok := bigNumber("48.2K", sx)
+		if !ok {
+			t.Fatalf("sx %d: no glyph for 48.2K", sx)
+		}
+		// Two digits and their gaps come first, then the point.
+		at := 2*3*sx + 2*sx
+		base := []rune(rows[2])
+		if base[at] != '▀' {
+			t.Errorf("sx %d: no lit cell for the point at %d on the baseline: %q", sx, at, rows[2])
+		}
+		if n := len([]rune(rows[0])); n != len(base) {
+			t.Errorf("sx %d: rows differ in width", sx)
+		}
+	}
+	// On the plain tier the point is a '#'.
+	c := newHallCtx(196, 50, mapmodel.TierASCII, hallMotion{})
+	c.y = 1
+	c.tiles([]hallStat{{value: "48.2K", big: "48.2K", label: "Population"}})
+	txt := untag(c.render())
+	if strings.ContainsAny(txt, "█▀▄") {
+		t.Errorf("plain tile still has block glyphs:\n%s", txt)
+	}
+}
+
+func TestEpochHallTilesShareAHeightAndTheBarSitsInside(t *testing.T) {
+	late := lateHallState(t, "galactic_age")
+	for _, dim := range [][2]int{{200, 50}, {100, 30}, {100, 24}} {
+		lines := strings.Split(untag(hallFrontText(late, dim[0], dim[1], 0)), "\n")
+		top, bottom := -1, -1
+		for i, l := range lines {
+			if top < 0 && strings.Contains(l, "╭") {
+				top = i
+			}
+			if top >= 0 && strings.Contains(l, "╰") {
+				bottom = i
+				break
+			}
+		}
+		if top < 0 || bottom < 0 {
+			t.Fatalf("%v: no tile row", dim)
+		}
+		if strings.ContainsAny(lines[bottom], "━╌") {
+			t.Errorf("%v: progress bar is on the border row: %q", dim, lines[bottom])
+		}
+		if !strings.ContainsAny(lines[bottom-1], "━╌") {
+			t.Errorf("%v: no progress bar just above the border: %q", dim, lines[bottom-1])
+		}
 	}
 }

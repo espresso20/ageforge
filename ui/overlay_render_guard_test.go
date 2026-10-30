@@ -32,6 +32,11 @@ func guardPanels(t *testing.T, engine *game.GameEngine) map[string]OverlayProvid
 	t.Helper()
 	pages := tview.NewPages()
 	d := NewDashboard(tview.NewApplication(), engine, pages)
+	// Panels that move (the epoch screen's shimmer) change with the clock by
+	// design, so these guards read them still.
+	still := resolveMapSettings(nil)
+	still.Motion = false
+	d.mapLocal = &still
 	out := make(map[string]OverlayProvider, len(d.overlayMgr.entries))
 	for name, e := range d.overlayMgr.entries {
 		out[name] = e.provide

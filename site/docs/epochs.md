@@ -115,11 +115,14 @@ Type `epoch` to open the Epoch screen, a full-screen page to show off your run. 
 
 ### The front page
 
-- The banner: your epoch's name in large iron lettering, in the epoch's color, with your town, current age and year under it.
-- Highlights: population, buildings, techs researched out of the total, wonders built and prestige count.
-- Ages: those you have finished, the one you are in, and those ahead. An age you have not seen is counted ("3 more to come"), not named.
-- Top badges: your five rarest earned badges with their emblems. With fewer than five it shows what you have, and with none it says so.
-- Feats: catastrophes met, how each harbinger ended, milestones reached and your fastest age.
+- The banner: your epoch's name in large iron lettering, painted in a gradient of the epoch's colors over a field of stars, with your town, current age and year centered under it.
+- Highlights: five boxed tiles in a centered row, each with big digits and its own accent color. They show population, buildings, techs researched out of the total (with a thin progress bar), wonders built and prestige count.
+- Ages: a centered track. Finished ages are filled blocks in the epoch's color, the one you are in is lit (and pulses when Motion is on), and the next is an outline. An age you have not seen is counted ("3 more to come"), not named.
+- Top badges: your five rarest earned badges as cards, each with its emblem, a border in its rarity color, its name and its rarity. With fewer than five it shows what you have, and with none it says so.
+- Feats: catastrophes met, how each harbinger ended, milestones reached and your fastest age, each with a colored icon.
+- A centered hint about the epoch card closes the page.
+
+The blocks spread across a wide terminal up to about 190 columns and stay centered beyond that. With Motion off the page is a still, with a monochrome theme it has no color but keeps its boxes, and the plain glyph setting draws plain ASCII boxes and letters.
 
 On a small terminal the sections stack and the page scrolls.
 
