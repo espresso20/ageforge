@@ -16,7 +16,6 @@ import (
 )
 
 func main() {
-	icon := flag.Bool("icon", false, "write the single-A icon")
 	iconAF := flag.Bool("icon-af", false, "write the AF icon")
 	out := flag.String("o", "", "where to write the PNG")
 	cellW := flag.Int("cw", 10, "pixels per cell, across")
@@ -25,21 +24,14 @@ func main() {
 
 	// Set default output path based on which image is being generated
 	if *out == "" {
-		if *icon {
+		if *iconAF {
 			*out = "docs/icon.png"
-		} else if *iconAF {
-			*out = "docs/icon-af.png"
 		} else {
 			*out = "docs/banner.png"
 		}
 	}
 
-	if *icon {
-		if err := runAIcon(*out); err != nil {
-			fmt.Fprintln(os.Stderr, "bannerpng:", err)
-			os.Exit(1)
-		}
-	} else if *iconAF {
+	if *iconAF {
 		if err := runAFIcon(*out); err != nil {
 			fmt.Fprintln(os.Stderr, "bannerpng:", err)
 			os.Exit(1)
@@ -50,27 +42,6 @@ func main() {
 			os.Exit(1)
 		}
 	}
-}
-
-func runAIcon(out string) error {
-	const size = 1024
-	img := ui.AIconImage(size)
-	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
-		return err
-	}
-	f, err := os.Create(out)
-	if err != nil {
-		return err
-	}
-	if err := png.Encode(f, img); err != nil {
-		f.Close()
-		return err
-	}
-	if err := f.Close(); err != nil {
-		return err
-	}
-	fmt.Printf("wrote %s (%dx%d)\n", out, img.Bounds().Dx(), img.Bounds().Dy())
-	return nil
 }
 
 func runAFIcon(out string) error {
