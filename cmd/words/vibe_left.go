@@ -28,6 +28,7 @@ func init() {
 		"game.road_events.plainRoadDuration.01", "game.road_events.plainRoadDuration.02",
 	)
 	leftAloneFor(leftKey,
+		"presence.conn_unix.socketPaths.01", "presence.conn_unix.socketPaths.02", "presence.conn_unix.socketPaths.03", // environment variables and the name of Discord's socket
 		"game.catastrophe.doomMark.01", "game.catastrophe.eraMark.01", // the markers in a history line
 		"game.account.recoveryCodePrefix.01",                         // the first letters of a recovery code
 		"game.save.DuplicateSave.01",                                 // a file name
@@ -55,6 +56,9 @@ func init() {
 		"game.log_tags.logWords.16", "game.log_tags.logWords.17", "game.log_tags.logWords.18",
 	)
 	leftAloneFor(leftDev,
+		// Errors of the Discord connection, dropped by the runner: presence is silent when Discord is not there.
+		"presence.conn_unix.dialIPC.01", "presence.conn_windows.dialIPC.01", "presence.presence.readFrame.01",
+		"presence.runner.connect.01", "presence.runner.connect.02",
 		"game.catastrophe.forceCatastrophe.01", "game.catastrophe.forceCatastrophe.02",
 		"game.fate.forceFate.01", "game.fate.forceFate.02",
 		"game.harbinger.SummonHarbingerForTest.01",

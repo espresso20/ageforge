@@ -2339,3 +2339,6 @@ ui.epoch_hall.makeCard.01,Card copied. Paste it into Discord and flex.
 ui.epoch_hall.makeCard.02,Card saved to %s. Paste it into Discord.
 ui.help.commands.epoch,Open the Epoch screen and gloat
 ui.help.commands.epoch.2,Save a plain-text card of your epoch to paste into Discord
+presence.MenuActivity.01,Chilling in the menu
+presence.FromState.03, · Prestige %d no cap
+ui.menu.settings.08,Discord flex

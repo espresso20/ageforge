@@ -336,10 +336,13 @@ Some settings belong to the account, not to a save. Switching accounts swaps the
 | Theme | `theme <key>` | Forge | `account.json` |
 | Map glyphs | `map glyphs ascii`, `unicode` or `nerd` | unicode | `account.json` |
 | Mini map | `minimap on` or `minimap off` | on | `account.json` |
+| Discord status | The Settings page, row **Discord status** | on | `account.json` |
 | Motion | `motion on` or `motion off` | on | `settings.json` |
 | VibeMode | `vibemode on` or `vibemode off` | off | `settings.json` |
 | Worn title | `title <name>` | The title your score holds | `settings.json` |
 | Current game | `m` in the Load Game browser | The game you played last | `settings.json` |
+
+**Discord status** shows your age and town on your Discord profile while the Discord desktop app is running: "Playing AgeForge", then the age and its year, then your town and epoch (and your prestige level once you have one). It talks to the Discord app on your own machine and sends nothing anywhere else. If Discord is not running, nothing happens. Turn it off on the Settings page and the profile clears at once.
 
 The Map's zoom is not saved with the account. With no account loaded, the display settings last for the session only.
 

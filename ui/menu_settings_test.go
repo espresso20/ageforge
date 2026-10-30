@@ -26,7 +26,7 @@ func TestMenuSettingsRowsSave(t *testing.T) {
 	r := newMenuRig(t)
 	t.Cleanup(func() { vibe.Set(false) })
 	r.press('s')
-	if !r.m.settings || ids(r.m.view.items) != "set_theme set_vibe set_glyphs set_motion set_minimap set_back" {
+	if !r.m.settings || ids(r.m.view.items) != "set_theme set_vibe set_glyphs set_motion set_minimap set_discord set_back" {
 		t.Fatalf("Settings page not open: %v %q", r.m.settings, ids(r.m.view.items))
 	}
 	// Motion: Enter flips it and the account holds it.
@@ -92,5 +92,32 @@ func TestMenuSettingsEscAndThemeReturn(t *testing.T) {
 	r.key(tcell.KeyEsc, 0)
 	if r.front() != "splash" || !r.m.settings {
 		t.Errorf("back from the picker: front %q, settings %v", r.front(), r.m.settings)
+	}
+}
+
+func TestMenuSettingsDiscordRow(t *testing.T) {
+	r := newMenuRig(t)
+	calls := 0
+	r.m.onDiscord = func() { calls++ }
+	r.press('s')
+	if !r.acct.DiscordOn() {
+		t.Fatal("Discord status should start on")
+	}
+	r.press('d')
+	if r.acct.DiscordOn() || calls != 1 {
+		t.Errorf("Discord row did not turn it off at once: on %v, calls %d", r.acct.DiscordOn(), calls)
+	}
+	r.press('d')
+	if !r.acct.DiscordOn() || calls != 2 {
+		t.Errorf("Discord row did not turn it back on: on %v, calls %d", r.acct.DiscordOn(), calls)
+	}
+}
+
+func TestMenuSettingsDiscordRowHiddenWithoutAppID(t *testing.T) {
+	r := newMenuRig(t)
+	r.m.appID = ""
+	r.press('s')
+	if got := ids(r.m.view.items); strings.Contains(got, miSetDiscord) {
+		t.Errorf("Discord row shown with no application id: %q", got)
 	}
 }

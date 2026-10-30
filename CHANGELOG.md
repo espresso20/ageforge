@@ -8,6 +8,7 @@ All notable changes to AgeForge are documented here.
 
 ### Added
 - **A Settings page in the main menu.** Settings (`s`) takes the place of Themes. It lists Themes, VibeMode, Map glyphs, Motion and Minimap with their values; `Enter` or `←` and `→` change one, it saves at once like the command, and `Esc` goes back. The commands work as before.
+- **Discord status.** While the Discord desktop app is running, your profile shows "Playing AgeForge" with your age, year, town and epoch. It talks only to the Discord app on your machine, and a Discord status row on the Settings page turns it off.
 - **Epoch card.** `epoch card` saves a plain-text card of your epoch (name, town, age, highlights, ages done, top badges and feats), wrapped in a code fence to paste into Discord, as `epoch-card.txt` next to your saves.
 - **Add from the plan panel.** `A` opens a name box: type part of a building, tech or mission, and `Enter` adds it below the selection (it asks which kind when the name fits several). `+` and `-` change the count of a build or upgrade item.
 - **Plan expeditions.** `plan expedition <mission>` queues a mission from the board. It leaves when its price is covered and a party is at home, and drops out of the plan with a log line if the offer goes. Each plan item now also carries its own time to start, and the whole plan has a finish estimate.
