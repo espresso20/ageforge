@@ -24,6 +24,7 @@ make check        # build + vet + config validation
 make test         # build + vet + full test suite (formatted output)
 make test-raw     # build + vet + tests (raw go test -v, for CI/piping)
 make run          # build + run the game
+make banner       # regenerate README banner PNG from menu theme
 make clean        # remove binary
 make commit       # interactive conventional commit (see below)
 make release-patch   # bump patch version, update CHANGELOG, tag, push
@@ -32,6 +33,22 @@ make release-major   # bump major version, update CHANGELOG, tag, push
 ```
 
 What CI checks beyond the tests (security scans, linters, prose rules, benchmarks, release builds), how to run each one locally, and how to quiet a false positive: [docs/ci.md](docs/ci.md).
+
+### Regenerating the README Banner
+
+The README banner (`docs/banner.png`) is generated from the menu's Forge theme using the `bannerpng` tool. If you change the menu's wordmark, colors, or theme, regenerate it with:
+
+```bash
+make banner
+```
+
+Or directly with:
+
+```bash
+go run ./cmd/bannerpng -o docs/banner.png -w 10 -h 20
+```
+
+The tool accepts `-w` (cell width in pixels, default 10) and `-h` (cell height in pixels, default 20). The defaults produce a 1400×600 pixel image suitable for GitHub README display.
 
 ---
 

@@ -42,6 +42,7 @@ var scanned = []struct {
 // list, so a new package cannot go unread by accident.
 var notScanned = map[string]string{
 	"cmd/words":             "this tool",
+	"cmd/bannerpng":         "README banner generator, no player text",
 	"smoke":                 "the smoke suite",
 	"vibe":                  "the VibeMode switch, no text (its script is data, in words/vibe)",
 	"detmath":               "arithmetic, no text",
