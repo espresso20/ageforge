@@ -81,6 +81,10 @@ From the Space Age the same things appear as stars at the edge of the picture, w
 
 Put the cursor on any of them and the Map names it: the civilization with its opinion of you, its strength and its trades, the trail or lane to it with what its caravans bring, the harbinger with its warning, the party that is out, or the idle workers with the command to put them to work. `Tab` goes on from the buildings and wonders to the civilizations at the edge.
 
+### Dinosaurs and the asteroid
+
+In the Primitive Age the Late Cretaceous is still on: now and then a long-necked sauropod plods across open ground near the town, a small raptor dashes past, or a pterodactyl flaps over the upper rows. They are only scenery. They keep off buildings, can't be clicked, and thin out as you close on the Stone Age, until none are left. Near the end of the Late Cretaceous a fireball streaks down across the sky every few seconds for a short stretch of the age. With `motion` off, whatever is on screen holds still.
+
 ### The rare visitor
 
 Now and then someone comes to the Map from somewhere else. On the land a small visitor walks in along one of the trunk roads from beyond the edge of the view, stops a few cells from the square and is gone. In orbit and the solar system it is a ship, flying in from the edge of the map to one of the lanes. Rarer still, an alien's craft crosses over the town, or drops in over open ground, hangs there and shoots off.
