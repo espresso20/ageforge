@@ -51,11 +51,12 @@ smoke:
 run: build
 	@./ageforge
 
-# Generate the README banner PNG
+# Generate the README banner PNG and Discord icon
 banner:
-	@echo "\033[0;36m[ageforge]\033[0m Generating banner PNG..."
+	@echo "\033[0;36m[ageforge]\033[0m Generating banner and icon PNGs..."
 	@go run ./cmd/bannerpng
-	@echo "\033[0;32m[  OK  ]\033[0m Banner generated to docs/banner.png"
+	@go run ./cmd/bannerpng -icon-af
+	@echo "\033[0;32m[  OK  ]\033[0m Banner and icon generated to docs/"
 
 # Clean build artifacts
 clean:
