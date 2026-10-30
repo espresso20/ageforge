@@ -35,8 +35,9 @@ func init() {
 	)
 	leftAloneFor(leftOtherApp,
 		// The clipboard tools the game runs, and the arguments it gives them.
-		"ui.clipboard.clipboardCommands.02", "ui.clipboard.clipboardCommands.03",
-		"ui.clipboard.clipboardCommands.04", "ui.clipboard.clipboardCommands.05",
+		"ui.clipboard.clipboardImageCommands.01", "ui.clipboard.clipboardImageCommands.02",
+		"ui.clipboard.clipboardImageCommands.03", "ui.clipboard.clipboardImageCommands.05",
+		"ui.clipboard.clipboardImageCommands.07", "ui.clipboard.clipboardImageCommands.08",
 	)
 	leftAloneFor(leftCommand,
 		"ui.input.cmdTrade.01",                                                 // "trade " and the word the player typed after it
