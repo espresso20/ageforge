@@ -2902,20 +2902,20 @@ func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
 	return res
 }
 
-// cmdEpoch opens the epoch screen, or with `card` writes the Discord card.
+// cmdEpoch opens the epoch screen, or with `card` makes the Discord picture.
 func cmdEpoch(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return panelReply("epoch")
 	}
 	if strings.ToLower(args[0]) != "card" || len(args) > 1 {
-		return infoReply(vibe.Line("ui.epoch_card.cmdEpoch.01", "Usage: epoch (opens the Epoch screen), or epoch card (copies a card to paste into Discord)"))
+		return infoReply(vibe.Line("ui.epoch_card.cmdEpoch.01", "Usage: epoch (opens the Epoch screen), or epoch card (copies a picture to paste into Discord)"))
 	}
-	res, err := makeEpochCard(engine.GetState(), copyToClipboard)
+	res, err := makeEpochCard(engine.GetState(), epochCardCopier)
 	if err != nil {
 		return errorReply(err.Error())
 	}
 	if res.Copied {
-		return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.05", "Copied your epoch card to the clipboard (also saved to %s). Paste it into Discord.", res.Path), Type: "success"}
+		return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.05", "Picture copied (also saved to %s). Paste it into Discord.", res.Path), Type: "success"}
 	}
-	return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.04", "Saved your epoch card to %s. Paste its contents into Discord.", res.Path), Type: "success"}
+	return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.04", "Picture saved to %s.", res.Path), Type: "success"}
 }

@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -672,6 +673,10 @@ const (
 	featFastest
 )
 
+// hallTagRe matches a tview colour tag, which a feat carries and the page
+// strips to measure it.
+var hallTagRe = regexp.MustCompile(`\[[a-zA-Z0-9#:\-]*\]`)
+
 // feats draws the feats as one block, centred, a coloured icon to a line.
 func (c *hallCtx) feats(v hallView) {
 	if len(v.feats) == 0 {
@@ -683,7 +688,7 @@ func (c *hallCtx) feats(v hallView) {
 	lines := make([]string, len(v.feats))
 	width := 0
 	for i, f := range v.feats {
-		lines[i] = strings.TrimSpace(cardTagRe.ReplaceAllString(f, ""))
+		lines[i] = strings.TrimSpace(hallTagRe.ReplaceAllString(f, ""))
 		width = max(width, runeLen(lines[i])+3)
 	}
 	x := c.left(width)
