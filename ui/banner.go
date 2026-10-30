@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"math"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -117,8 +118,9 @@ func BannerImage(ages, cellW, cellH int) *image.RGBA {
 // same on every run.
 func IconImage(size int) *image.RGBA {
 	g, pal := iconGrid()
-	img := image.NewRGBA(image.Rect(0, 0, g.w*size/64, g.h*size/64))
-	cellW, cellH := size/64, size/64
+	cellW := size / 64
+	cellH := size / 32
+	img := image.NewRGBA(image.Rect(0, 0, g.w*cellW, g.h*cellH))
 	dot := max(1, min(cellW/5, cellH/8))
 	box := func(x, y, w, h int, c tcell.Color) {
 		draw.Draw(img, image.Rect(x, y, x+w, y+h), image.NewUniform(rgba(c)), image.Point{}, draw.Src)
@@ -177,44 +179,45 @@ func IconImage(size int) *image.RGBA {
 }
 
 // iconGrid is the icon as cells, on the palette it was drawn in: AGE and
-// FORGE on the navy Forge background with the fire gradient, stars in the
-// margins.
+// FORGE on the navy Forge background with the fire gradient, stars spread
+// through the margins. Grid is 64 wide x 32 tall; cells are 16x32 pixels.
 func iconGrid() (*mGrid, *menuPalette) {
 	pal := newMenuPalette(theme.Forge)
 	const (
 		iconW  = 64
-		iconH  = 64
-		margin = 2
-		lineH  = 14 // menuWordH * 2
+		iconH  = 32
+		skyH   = 3
+		lineH  = 11 // menuWordH * 1.5, rounded
 		gap    = 1
-		totalH = lineH + gap + lineH
-		topY   = (iconH - totalH) / 2
+		topY   = (iconH - (lineH + gap + lineH)) / 2
 	)
 	g := newMGrid(iconW, iconH)
 	rnd := menuRand{s: 0x9e3779b97f4a7c15}
-	stars := newMenuStars(&rnd, iconW, margin)
-	bottomStars := newMenuStars(&rnd, iconW, margin)
+
+	// Top stars: sparse scatter in upper region
+	topStars := newMenuStars(&rnd, iconW, skyH)
+	drawMenuStars(g, pal, topStars, 0)
+
+	// Bottom stars: sparse scatter in lower region
+	bottomStars := newMenuStars(&rnd, iconW, skyH)
 	for i := range bottomStars {
-		bottomStars[i].y += iconH - margin
+		bottomStars[i].y += iconH - skyH
 	}
-	drawMenuStars(g, pal, stars, 0)
 	drawMenuStars(g, pal, bottomStars, 0)
 
-	// Draw top line (AGE) on the first line
+	// Draw AGE (top line) at 1.5x scale, centered
 	ageGlyphs := [3]rune{'A', 'G', 'E'}
 	age := buildWord(ageGlyphs[:])
 	ageW := len(age[0])
-	ageSx := 2 // 2x scale
-	ageX0 := (iconW - ageW*ageSx) / 2
-	drawPixelWordmark(g, pal, age, ageX0, topY, ageSx, iconW)
+	ageX0 := (iconW - int(float64(ageW)*1.5)) / 2
+	drawScaledWordmark(g, pal, age, ageX0, topY, 1.5, iconW)
 
-	// Draw bottom line (FORGE) on the second line
+	// Draw FORGE (bottom line) at 1.5x scale, centered
 	forgeGlyphs := [5]rune{'F', 'O', 'R', 'G', 'E'}
 	forge := buildWord(forgeGlyphs[:])
 	forgeW := len(forge[0])
-	forgeSx := 2 // 2x scale
-	forgeX0 := (iconW - forgeW*forgeSx) / 2
-	drawPixelWordmark(g, pal, forge, forgeX0, topY+lineH+gap, forgeSx, iconW)
+	forgeX0 := (iconW - int(float64(forgeW)*1.5)) / 2
+	drawScaledWordmark(g, pal, forge, forgeX0, topY+lineH+gap, 1.5, iconW)
 
 	return g, pal
 }
@@ -237,20 +240,35 @@ func buildWord(glyphs []rune) [menuWordH]string {
 	return rows
 }
 
-// drawPixelWordmark draws the pixel words (AGE, FORGE) with the fire gradient
-// across the full icon width.
-func drawPixelWordmark(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0, sx, iconW int) {
+// drawScaledWordmark draws pixel words with fractional scale and fire gradient
+// across the full icon width. Each pixel is drawn across the cells it spans.
+func drawScaledWordmark(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0 int, scale float64, iconW int) {
 	w := len(rows[0])
 	for py := 0; py < menuWordH; py++ {
 		for px := 0; px < w; px++ {
 			if rows[py][px] != '#' {
 				continue
 			}
-			// Apply the gradient across the full icon width
-			u := float64((x0 + px*sx)) / float64(iconW-1)
+			// Compute the range of cells this pixel spans at the scaled size
+			scaledX := float64(px) * scale
+			scaledY := float64(py) * scale
+			x1 := int(math.Floor(scaledX))
+			x2 := int(math.Ceil(scaledX + scale))
+			y1 := int(math.Floor(scaledY))
+			y2 := int(math.Ceil(scaledY + scale))
+
+			// Use gradient position based on the pixel's starting position
+			u := float64(x0+x1) / float64(iconW-1)
 			col := rampAt(&pal.heat, u)
-			for d := 0; d < sx; d++ {
-				g.put(x0+px*sx+d, y0+py, '█', col)
+
+			// Draw all cells in the scaled range
+			for y := y1; y < y2; y++ {
+				for x := x1; x < x2; x++ {
+					gx, gy := x0+x, y0+y
+					if gx >= 0 && gx < g.w && gy >= 0 && gy < g.h {
+						g.put(gx, gy, '█', col)
+					}
+				}
 			}
 		}
 	}
