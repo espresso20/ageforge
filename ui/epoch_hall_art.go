@@ -82,11 +82,7 @@ func (c *hallCtx) role(r theme.Role) tcell.Color { return c.ink(theme.Color(r)) 
 
 // hue is a fixed identity colour (a rarity's, a tile's) as an ink.
 func (c *hallCtx) hue(hex string) tcell.Color {
-	var r, g, b int32
-	if _, err := fmt.Sscanf(hex, "#%02x%02x%02x", &r, &g, &b); err != nil {
-		return c.role(theme.RoleAccent)
-	}
-	return c.ink(tcell.NewRGBColor(r, g, b))
+	return c.ink(theme.Hue(hex, c.bg))
 }
 
 // mark picks a glyph for the Unicode set or the plain one.
@@ -160,7 +156,7 @@ func (c *hallCtx) box(x, y, w, h int, fg tcell.Color, ground *tcell.Color, bold 
 func (c *hallCtx) epochInks(order int) [4]tcell.Color {
 	base := theme.MapHueColor(theme.EpochHue(order))
 	grey := theme.Mix(c.bg, c.text, 0.55)
-	white := tcell.NewRGBColor(255, 255, 255)
+	white := theme.Mix(base, c.text, 0.9)
 	return [4]tcell.Color{
 		theme.Mix(theme.Mix(base, grey, 0.6), c.bg, 0.2),
 		base,
