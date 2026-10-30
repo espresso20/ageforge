@@ -4,6 +4,7 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -101,7 +102,7 @@ func YearBetween(start, next int, share float64) int {
 			return next
 		}
 		startAgo, nextAgo := float64(-start), float64(-next)
-		ago := startAgo * math.Pow(nextAgo/startAgo, float64(thousandths)/1000)
+		ago := startAgo * detmath.Pow(nextAgo/startAgo, float64(thousandths)/1000)
 		return -int(math.Round(ago))
 	}
 	return start + (next-start)*thousandths/1000
