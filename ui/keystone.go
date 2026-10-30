@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/vibe"
 )
 
@@ -38,16 +39,16 @@ func wonderKeystoneLine(state game.GameState, key string) string {
 	if researched {
 		return vibe.Sprintf("ui.keystone.wonderKeystoneLine.01", "[green]✓ Keystone: %s, researched[-]", name)
 	}
-	return vibe.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, def.RequiredTech)
+	return vibe.Sprintf("ui.keystone.wonderKeystoneLine.03", "[red]✗ Keystone: %s, not researched (research %s)[-]", name, state.Ruleset().Typed(rules.KindTech, def.RequiredTech))
 }
 
 // wonderBuildLine is what a full wonder bank says to do next: build it, or
 // research its keystone first.
 func wonderBuildLine(state game.GameState, key string) string {
 	if name, researched, ok := wonderKeystone(state, key); ok && !researched {
-		return vibe.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, key)
+		return vibe.Sprintf("ui.keystone.wonderBuildLine.01", "[yellow]✓ The bank is full. Research %s, then build it with: build %s[-]", name, state.Ruleset().Typed(rules.KindBuilding, key))
 	}
-	return vibe.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", key)
+	return vibe.Sprintf("ui.keystone.wonderBuildLine.02", "[green]✓ The bank is full. Build it with: build %s[-]", state.Ruleset().Typed(rules.KindBuilding, key))
 }
 
 // keystoneMark is the tag a tech carries in the research lists when a

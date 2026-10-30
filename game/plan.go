@@ -247,7 +247,7 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 	def, ok := ge.Buildings.defs[key]
 	if !ok {
 		if s := closestKey(key, ge.Buildings.defs); s != "" {
-			return 0, vibe.Errorf("game.plan.PlanAddBuild.02", "Unknown building '%s'. Did you mean '%s'?", key, s)
+			return 0, vibe.Errorf("game.plan.PlanAddBuild.02", "Unknown building '%s'. Did you mean '%s'?", key, ge.rules.Typed(rules.KindBuilding, s))
 		}
 		return 0, vibe.Errorf("game.plan.PlanAddBuild.03", "Unknown building '%s'. Type build to see what you can build.", key)
 	}

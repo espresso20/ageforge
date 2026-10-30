@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // completer answers the command prompt's questions from the registry
@@ -74,10 +75,22 @@ func (c *completer) valid(a Arg, w string) bool {
 	if c.universe == nil {
 		c.universe = buildUniverse()
 	}
-	return c.universe[a.Kind][w]
+	if c.universe[a.Kind][w] {
+		return true
+	}
+	if vibe.On() {
+		// A name VibeMode shows is as good as the key.
+		if key, ok := keyOfTyped(c.state().Ruleset(), a.Kind, w, true); ok {
+			return c.universe[a.Kind][key]
+		}
+	}
+	return false
 }
 
 // buildUniverse lists every key each game-thing kind can take.
+// gatherKeys is what gather takes: the resources worked by hand.
+var gatherKeys = []string{"food", "wood", "stone"}
+
 func buildUniverse() map[ArgKind]map[string]bool {
 	var techs, resources, factions, themes, routes []string
 	for _, t := range config.Technologies() {
@@ -104,7 +117,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 		ArgResource: r, ArgWonderResource: r,
 		ArgFaction: setOf(factions), ArgTheme: setOf(themes),
 		ArgRouteAvailable: setOf(routes), ArgRouteActive: setOf(routes),
-		ArgDomain: setOf(config.WorkerDomains()),
+		ArgDomain: setOf(config.WorkerDomains()), ArgGatherResource: setOf(gatherKeys),
 	}
 }
 
@@ -223,6 +236,10 @@ func (c *completer) candidates(text string) []string {
 			}
 		}
 		for _, w := range sortedWords(a.Words) {
+			// The names VibeMode shows stand in for the plain words of a name slot.
+			if _, named := nameKind(a.Kind); named && vibe.On() {
+				break
+			}
 			if strings.HasPrefix(w, lp) {
 				add(w, more)
 			}
@@ -328,13 +345,16 @@ func sortedWords(ws []string) []string {
 func (c *completer) values(k ArgKind, prev []string) []string {
 	st := c.state()
 	key := strconv.Itoa(int(k))
+	if vibe.On() {
+		key += "v"
+	}
 	if k == ArgDeal && len(prev) > 0 {
 		key += ":" + strings.ToLower(prev[0])
 	}
 	if v, ok := c.cache[key]; ok {
 		return v
 	}
-	v := c.compute(k, prev, *st)
+	v := typedNames(st.Ruleset(), k, c.compute(k, prev, *st))
 	c.cache[key] = v
 	return v
 }
@@ -386,6 +406,8 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return nums
 	case ArgDomain:
 		return shareDomainKeys(st)
+	case ArgGatherResource:
+		return gatherKeys
 	}
 	return nil
 }

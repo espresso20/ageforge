@@ -209,10 +209,10 @@ func closestKey[V any](input string, keys map[string]V) string {
 // unknownKeyError is the refusal for a key the player mistyped:
 // "Unknown tech 'x'. Did you mean 'y'? Type research list to see what you can
 // research." The suggestion part is dropped when nothing is close.
-func unknownKeyError[V any](kind, input string, keys map[string]V, hint string) error {
+func unknownKeyError[V any](kind, input string, keys map[string]V, hint string, say func(string) string) error {
 	msg := vibe.Sprintf("game.buildings.unknownKeyError.01", "Unknown %s '%s'.", kind, input)
 	if s := closestKey(input, keys); s != "" && s != input {
-		msg += vibe.Sprintf("game.buildings.unknownKeyError.02", " Did you mean '%s'?", s)
+		msg += vibe.Sprintf("game.buildings.unknownKeyError.02", " Did you mean '%s'?", say(s))
 	}
 	if hint != "" {
 		msg += " " + hint
@@ -436,7 +436,7 @@ func (bm *BuildingManager) LoadCounts(counts map[string]int) {
 func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float64, rm *ResourceManager) (float64, error) {
 	def, ok := bm.defs[wonderKey]
 	if !ok {
-		return 0, unknownKeyError(vibe.Line("game.buildings.BankResource.01", "wonder"), wonderKey, bm.defs, vibe.Line("game.buildings.BankResource.02", "Type wonders to see them."))
+		return 0, unknownKeyError(vibe.Line("game.buildings.BankResource.01", "wonder"), wonderKey, bm.defs, vibe.Line("game.buildings.BankResource.02", "Type wonders to see them."), bm.typedBuilding)
 	}
 	if def.Category != "wonder" {
 		return 0, vibe.Errorf("game.buildings.BankResource.03", "%s is not a wonder", def.Name)
@@ -915,4 +915,10 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		out[key] = bs
 	}
 	return out
+}
+
+// typedBuilding is key as a player types it: the name the screen shows, in the
+// shape of a key, while VibeMode is on.
+func (bm *BuildingManager) typedBuilding(key string) string {
+	return bm.rules.Typed(rules.KindBuilding, key)
 }
