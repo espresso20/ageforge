@@ -2,7 +2,7 @@
 
 AgeForge has 24 resources that unlock as you advance through the 22 ages. They build up on their own from your buildings and the workers in them. Stock has no limit, so what you make piles up, and prices are the only brake. An advance does trim what you carry into a new age (see [Stock and storage](#stock-and-storage)). Research is not a resource: [scholars](knowledge.md) do it, and nothing holds it.
 
-The Resources box on the dashboard lists every resource with its amount and its rate. The Ledger at the top of the screen shows the way to the next age instead, with no resource cards (see [The screen layout](how-to-play.md#the-screen-layout)).
+The Resources box on the dashboard lists every resource with its amount and its rate. The Ledger at the top of the screen shows the way to the next age instead, with no resource cards (see [The screen layout](how-to-play.md#the-screen-layout)). Each ordinary resource also has a bar of how big its stock is, on a log scale where each step down is a power of ten below the largest amount shown, and a short line of the last few minutes of its amount. A narrow box drops the line first and then the bar.
 
 Amounts print with up to three figures and a unit from a thousand up: K, M, B, T and Q, and past Q the units go on as Qi, Sx, Sp, Oc, No and Dc (1.5K, 876M, 11.8Qi).
 

@@ -27,6 +27,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- **Resource rows get a bar and a trend line.** Each ordinary resource in the Resources box shows how big its stock is on a log-scale bar, and a short line of its last few minutes; a narrow box drops the line, then the bar.
 - **The epoch card is a picture.** `c` on the Epoch screen (and `epoch card`) now copies a full-color picture of the screen, saved as `epoch-card.png`, in place of the plain-text card.
 - **Deep time and rounded years.** Primitive now begins 100 million years ago and the deep past shows a geologic epoch (Late Cretaceous to Pleistocene) in place of a year; later years are rounded, then read as a decade or a century.
 - **The epoch screen in full colour.** The banner is a gradient in your epoch's colors over stars, the totals are five boxed tiles with big digits in a centered row, the ages are a colored track, and the top badges are rarity-bordered cards. Everything is centered and fills a wide terminal.
