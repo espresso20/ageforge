@@ -3789,7 +3789,7 @@ func checkAmount(amount float64) error {
 // closest one: "Unknown building 'farmm'. Did you mean 'farm'?"
 func (ge *GameEngine) unknownBuildingErr(key string) error {
 	if suggestion := closestKey(key, ge.Buildings.defs); suggestion != "" {
-		return vibe.Errorf("game.engine.unknownBuildingErr.01", "Unknown building '%s'. Did you mean '%s'?", key, suggestion)
+		return vibe.Errorf("game.engine.unknownBuildingErr.01", "Unknown building '%s'. Did you mean '%s'?", key, ge.rules.Typed(rules.KindBuilding, suggestion))
 	}
 	return vibe.Errorf("game.engine.unknownBuildingErr.02", "Unknown building '%s'. Type 'build' to see available buildings.", key)
 }

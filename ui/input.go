@@ -19,6 +19,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -91,7 +92,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		if run == nil {
 			run = runPanel(c.Name)
 		}
-		res := run(args, engine)
+		res := run(vibeArgs(cmd, args, engine), engine)
 		// worldmap is map, opened on the known world.
 		if cmd == "worldmap" && res.OverlayName == "map" {
 			res.MapWorld = true
@@ -762,7 +763,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable = "[red]✗[-]"
 			}
 			lines = append(lines, vibe.Sprintf("ui.input.cmdBuild.02", "  %s [cyan]%s[-] (%d built) - Cost: %s %s",
-				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
+				affordable, state.Ruleset().Typed(rules.KindBuilding, key), b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
 		}
 		return infoReply(strings.Join(lines, "\n"))
 	}

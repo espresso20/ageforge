@@ -53,6 +53,7 @@ const (
 	ArgDeal                               // a trade deal's number, of the civilization in the previous argument
 	ArgDomain                             // a worker domain (roster)
 	ArgPercent                            // a percent: a number, with or without a % sign
+	ArgGatherResource                     // a resource gather takes: food, wood or stone
 )
 
 // Arg is one argument slot.
@@ -159,7 +160,7 @@ func registry() []*Command {
 	return []*Command{
 		// Actions
 		{Name: "gather", Run: cmdGather, Aliases: []string{"g"}, Section: secActions,
-			Args: []Arg{{Kind: ArgWord, Words: []string{"food", "wood", "stone"}}, optCount},
+			Args: []Arg{{Kind: ArgGatherResource, Words: []string{"food", "wood", "stone"}}, optCount},
 			Help: []Usage{{"gather <food|wood|stone> [amount]", vibe.Line("ui.help.commands.gather", "Gather food, wood or stone by hand (default ") + strconv.Itoa(int(gatherDefaultYield)) +
 				vibe.Line("ui.help.commands.gather.2", ", max ") + strconv.Itoa(int(gatherMaxYield)) + vibe.Line("ui.help.commands.gather.3", " per use; the early ages only)")}}},
 		{Name: "build", Run: cmdBuild, Aliases: []string{"b"}, Section: secActions,

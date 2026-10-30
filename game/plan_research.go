@@ -121,7 +121,7 @@ func (ge *GameEngine) errTechOutOfSight(key string, sight AgeSight) error {
 	}
 	msg := vibe.Sprintf("game.plan_research.errTechOutOfSight.01", "No tech '%s' in sight.", key)
 	if s := closestKey(key, seen); s != "" {
-		msg += vibe.Sprintf("game.plan_research.errTechOutOfSight.02", " Did you mean '%s'?", s)
+		msg += vibe.Sprintf("game.plan_research.errTechOutOfSight.02", " Did you mean '%s'?", ge.rules.Typed(rules.KindTech, s))
 	}
 	return vibe.Errorf("game.plan_research.errTechOutOfSight.03", "%s Type research to see the tree.", msg)
 }
