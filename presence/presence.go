@@ -69,11 +69,10 @@ type frame struct {
 // encodeFrame lays a frame out as Discord reads it: a little-endian uint32 opcode, a
 // little-endian uint32 length, then the JSON.
 func encodeFrame(op uint32, payload []byte) []byte {
-	buf := make([]byte, 8+len(payload))
-	binary.LittleEndian.PutUint32(buf[0:4], op)
-	binary.LittleEndian.PutUint32(buf[4:8], uint32(len(payload)))
-	copy(buf[8:], payload)
-	return buf
+	var head [8]byte
+	binary.LittleEndian.PutUint32(head[0:4], op)
+	binary.LittleEndian.PutUint32(head[4:8], uint32(len(payload)))
+	return append(head[:], payload...)
 }
 
 // readFrame reads one frame.
