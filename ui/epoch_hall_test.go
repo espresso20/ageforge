@@ -117,26 +117,22 @@ func TestEpochHallTabSwitchesPages(t *testing.T) {
 	}
 }
 
-func TestEpochCardCommandWritesFile(t *testing.T) {
-	dir := t.TempDir()
-	defer game.SetDataDirForTest(dir)()
-	var copied string
-	was := epochCardCopier
-	epochCardCopier = func(p string) error { copied = p; return nil }
-	defer func() { epochCardCopier = was }()
+func TestEpochCardCommandAsksTheDashboard(t *testing.T) {
 	engine := game.NewGameEngine()
-	res := HandleCommand("epoch card", engine)
-	if res.Type != "success" || !strings.Contains(res.Message, "epoch-card.png") {
+	if res := HandleCommand("epoch card", engine); !res.EpochCard {
 		t.Fatalf("reply = %+v", res)
-	}
-	if _, err := os.Stat(copied); err != nil || filepath.Base(copied) != "epoch-card.png" {
-		t.Errorf("the copier was given %q: %v", copied, err)
-	}
-	if _, err := os.Stat(filepath.Join(filepath.Dir(copied), "epoch-card.txt")); err == nil {
-		t.Error("the text card is written again")
 	}
 	if res := HandleCommand("epoch", engine); res.OverlayName != "epoch" {
 		t.Errorf("bare epoch should open the screen: %+v", res)
+	}
+	if res := epochCardReply(epochCardResult{Path: "/x/epoch-card.png", Copied: true}, nil); res.Type != "success" || !strings.Contains(res.Message, "/x/epoch-card.png") {
+		t.Errorf("copied reply = %+v", res)
+	}
+	if res := epochCardReply(epochCardResult{Path: "/x/epoch-card.png"}, nil); res.Type != "success" || !strings.Contains(res.Message, "saved") {
+		t.Errorf("saved reply = %+v", res)
+	}
+	if res := epochCardReply(epochCardResult{}, errors.New("no")); res.Type != "error" {
+		t.Errorf("error reply = %+v", res)
 	}
 }
 

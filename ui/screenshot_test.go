@@ -6,6 +6,12 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
+	"golang.org/x/image/font/gofont/gomono"
+	"golang.org/x/image/font/opentype"
+	"golang.org/x/image/font/sfnt"
+
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 )
 
 // shotCells is cols by rows blank cells, white on black, with set drawing
@@ -99,12 +105,39 @@ func TestScreenImageLinesMeetAcrossCells(t *testing.T) {
 func TestScreenImageDrawsNoTofu(t *testing.T) {
 	st := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
 	// Marks Go Mono has no shape for stay blank, and so does a diagonal.
-	for _, r := range []rune{'✸', '★', '🙂', '╱'} {
+	for _, r := range []rune{'🙂', '╱'} {
 		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, tcell.Style, bool) { return r, st, true }), 1, 1, shotCellW, shotCellH)
 		if _, b, _ := cellPixels(img, 0, 0); b != shotCellW*shotCellH {
 			t.Errorf("%c is not blank", r)
 		}
 	}
+}
+
+func TestScreenImageDrawsTheEpochIcons(t *testing.T) {
+	st := tcell.StyleDefault.Foreground(tcell.NewRGBColor(255, 255, 255)).Background(tcell.NewRGBColor(0, 0, 0))
+	for r := range symbolShapes {
+		img := ScreenImage(shotCells(1, 1, func(int, int) (rune, tcell.Style, bool) { return r, st, true }), 1, 1, shotCellW, shotCellH)
+		if _, b, _ := cellPixels(img, 0, 0); b == shotCellW*shotCellH {
+			t.Errorf("%c is blank", r)
+		}
+	}
+	for _, e := range func() []config.EpochDef { st := game.NewGameEngine().GetState(); return st.Ruleset().Eras() }() {
+		for _, r := range e.Icon {
+			if symbolShapes[r] == nil && !fontHas(r) {
+				t.Errorf("the icon %c of %s has no shape and is not in the font", r, e.Name)
+			}
+		}
+	}
+}
+
+func fontHas(r rune) bool {
+	f, err := opentype.Parse(gomono.TTF)
+	if err != nil {
+		return false
+	}
+	var b sfnt.Buffer
+	i, _ := f.GlyphIndex(&b, r)
+	return i != 0
 }
 
 func TestEpochPictureIsStillAndNotFlat(t *testing.T) {

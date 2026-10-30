@@ -1521,6 +1521,9 @@ func (d *Dashboard) submitInput() {
 		return
 	}
 	result := HandleCommand(text, d.engine)
+	if result.EpochCard {
+		result = epochCardReply(d.epochHall.card(d.engine.GetState()))
+	}
 	if result.ToMenu {
 		d.leaveToMenu(result.Message)
 		return

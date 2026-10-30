@@ -67,11 +67,6 @@ func epochPicture(state game.GameState) *image.RGBA {
 	return ScreenImage(cells, cols, rows, shotCellW, shotCellH)
 }
 
-// epochCardCopier is what the `epoch card` command puts the picture on the
-// clipboard with. The screen's c key is given its own (dashboard.go); this is
-// a variable only so that tests of the command never touch the real clipboard.
-var epochCardCopier = copyImageToClipboard
-
 // epochCardResult is what making the card did: the file it was saved to
 // and whether the clipboard took it too.
 type epochCardResult struct {
@@ -102,4 +97,16 @@ func makeEpochCard(state game.GameState, copy func(path string) error) (epochCar
 		res.Copied = true
 	}
 	return res, nil
+}
+
+// epochCardReply is what the `epoch card` command says once the picture is
+// made (res and err are makeEpochCard's).
+func epochCardReply(res epochCardResult, err error) CommandResult {
+	if err != nil {
+		return errorReply(err.Error())
+	}
+	if res.Copied {
+		return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.05", "Picture copied (also saved to %s). Paste it into Discord.", res.Path), Type: "success"}
+	}
+	return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.04", "Picture saved to %s.", res.Path), Type: "success"}
 }

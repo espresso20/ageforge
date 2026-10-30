@@ -158,6 +158,8 @@ func ScreenImage(cells []tcell.SimCell, cols, rows, cellW, cellH int) *image.RGB
 				drawBlockElement(img, cell, r, p.fg, p.bg)
 			case r >= 0x2500 && r <= 0x257F:
 				drawBoxLine(img, cell, r, p.fg)
+			case symbolShapes[r] != nil:
+				drawSymbol(img, cell, symbolShapes[r], p.fg)
 			case ferr == nil:
 				_, _, at := c.Style.Decompose()
 				drawGlyph(img, fonts, cell, r, p.fg, at&tcell.AttrBold != 0)
@@ -165,6 +167,108 @@ func ScreenImage(cells []tcell.SimCell, cols, rows, cellW, cellH int) *image.RGB
 		}
 	}
 	return img
+}
+
+// symbolShapes are the marks the epoch screen uses that Go Mono has no shape
+// for (the feat icons, the epochs' icons), each as a test of whether a point
+// is inside it, in a box from -1 to 1 each way. drawSymbol draws them in a
+// square as wide as the cell, centred.
+var symbolShapes = map[rune]func(x, y float64) bool{
+	'★': func(x, y float64) bool { return inStar(x, y, 5, 1, 0.42) },
+	'✦': func(x, y float64) bool { return inStar(x, y, 4, 1, 0.3) },
+	'✸': func(x, y float64) bool { return inStar(x, y, 8, 1, 0.55) },
+	'◆': func(x, y float64) bool { return math.Abs(x)+math.Abs(y) <= 1 },
+	'◈': func(x, y float64) bool {
+		d := math.Abs(x) + math.Abs(y)
+		return d <= 1 && d > 0.72 || d <= 0.4
+	},
+	'▣': func(x, y float64) bool {
+		m := math.Max(math.Abs(x), math.Abs(y))
+		return m <= 0.9 && m > 0.65 || m <= 0.35
+	},
+	'◉': func(x, y float64) bool {
+		r := math.Hypot(x, y)
+		return r <= 0.95 && r > 0.7 || r <= 0.4
+	},
+	'⚙': func(x, y float64) bool {
+		r := math.Hypot(x, y)
+		if r > 1 || r <= 0.4 {
+			return false
+		}
+		if r <= 0.75 {
+			return true
+		}
+		// Eight teeth, each 22 degrees wide.
+		a := math.Mod(math.Atan2(y, x)+2*math.Pi, math.Pi/4)
+		return math.Abs(a-math.Pi/8) <= 0.19
+	},
+	'⚡': func(x, y float64) bool {
+		return inPolygon(x, y, [][2]float64{{0.3, -1}, {-0.6, 0.1}, {-0.05, 0.1}, {-0.3, 1}, {0.6, -0.15}, {0.05, -0.15}})
+	},
+	'⚔': func(x, y float64) bool {
+		if math.Abs(x) > 0.95 || math.Abs(y) > 0.95 {
+			return false
+		}
+		blade := math.Abs(math.Abs(x)-math.Abs(y)) <= 0.2
+		// A short guard across each blade, low on the picture.
+		guard := y > 0.2 && y < 0.4 && math.Abs(math.Abs(x)-y) <= 0.5 && math.Abs(x) < 0.7
+		return blade || guard
+	},
+	'▾': func(x, y float64) bool { return inPolygon(x, y, [][2]float64{{-0.8, -0.5}, {0.8, -0.5}, {0, 0.6}}) },
+}
+
+// inStar says whether a point is inside an n-pointed star, one point up,
+// with the given outer and inner radii.
+func inStar(x, y float64, n int, outer, inner float64) bool {
+	pts := make([][2]float64, 0, 2*n)
+	for i := 0; i < 2*n; i++ {
+		r := outer
+		if i%2 == 1 {
+			r = inner
+		}
+		a := -math.Pi/2 + float64(i)*math.Pi/float64(n)
+		pts = append(pts, [2]float64{r * math.Cos(a), r * math.Sin(a)})
+	}
+	return inPolygon(x, y, pts)
+}
+
+// inPolygon is the even-odd test.
+func inPolygon(x, y float64, pts [][2]float64) bool {
+	in := false
+	for i, j := 0, len(pts)-1; i < len(pts); j, i = i, i+1 {
+		a, b := pts[i], pts[j]
+		if (a[1] > y) != (b[1] > y) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0] {
+			in = !in
+		}
+	}
+	return in
+}
+
+// drawSymbol draws a shape in a square the width of the cell, centred, with
+// its edge smoothed over 4 by 4 samples per pixel.
+func drawSymbol(img *image.RGBA, cell image.Rectangle, in func(x, y float64) bool, fg color.RGBA) {
+	w, h := cell.Dx(), cell.Dy()
+	half := float64(w) / 2 * 0.92
+	cx, cy := float64(w)/2, float64(h)/2
+	const n = 4
+	for py := 0; py < h; py++ {
+		for px := 0; px < w; px++ {
+			hit := 0
+			for sy := 0; sy < n; sy++ {
+				for sx := 0; sx < n; sx++ {
+					x := (float64(px) + (float64(sx)+0.5)/n - cx) / half
+					y := (float64(py) + (float64(sy)+0.5)/n - cy) / half
+					if math.Abs(x) <= 1 && math.Abs(y) <= 1 && in(x, y) {
+						hit++
+					}
+				}
+			}
+			if hit > 0 {
+				at := image.Pt(cell.Min.X+px, cell.Min.Y+py)
+				img.SetRGBA(at.X, at.Y, shotBlend(img.RGBAAt(at.X, at.Y), fg, float64(hit)/(n*n)))
+			}
+		}
+	}
 }
 
 // drawGlyph draws one letter in its cell, or nothing where Go Mono has none.
