@@ -274,6 +274,169 @@ func drawScaledWordmark(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, 
 	}
 }
 
+// AIconImage draws a square icon (1024x1024) with a single large "A" from the
+// menu's pixel font on the navy Forge background with fire gradient.
+func AIconImage(size int) *image.RGBA {
+	g, pal := aIconGrid()
+	return gridToImage(g, pal, size/64, size/32)
+}
+
+// aIconGrid creates the icon grid with a single "A" at 9x scale.
+func aIconGrid() (*mGrid, *menuPalette) {
+	pal := newMenuPalette(theme.Forge)
+	const (
+		iconW = 64
+		iconH = 32
+		skyH  = 3
+		scale = 9
+		aW    = 6 * scale // A is 6 cells wide
+		aH    = 7 * scale // A is 7 cells tall
+		aX    = (iconW - aW) / 2
+		aY    = (iconH - aH) / 2
+	)
+	g := newMGrid(iconW, iconH)
+	rnd := menuRand{s: 0x9e3779b97f4a7c15}
+
+	// Stars in margins
+	topStars := newMenuStars(&rnd, iconW, skyH)
+	drawMenuStars(g, pal, topStars, 0)
+	bottomStars := newMenuStars(&rnd, iconW, skyH)
+	for i := range bottomStars {
+		bottomStars[i].y += iconH - skyH
+	}
+	drawMenuStars(g, pal, bottomStars, 0)
+
+	// Draw "A" at 9x scale
+	aGlyph := menuFont['A']
+	var aRows [menuWordH]string
+	for y := range aRows {
+		aRows[y] = aGlyph[y]
+	}
+	drawIntegerWordmark(g, pal, aRows, aX, aY, scale, iconW)
+
+	return g, pal
+}
+
+// AFIconImage draws a square icon (1024x1024) with "AF" side by side.
+func AFIconImage(size int) *image.RGBA {
+	g, pal := afIconGrid()
+	return gridToImage(g, pal, size/64, size/32)
+}
+
+// afIconGrid creates the icon grid with "AF" at 4x scale.
+func afIconGrid() (*mGrid, *menuPalette) {
+	pal := newMenuPalette(theme.Forge)
+	const (
+		iconW = 64
+		iconH = 32
+		skyH  = 3
+		scale = 4
+		afW   = (6 + 1 + 6) * scale // "A" gap "F"
+		afH   = 7 * scale
+		afX   = (iconW - afW) / 2
+		afY   = (iconH - afH) / 2
+	)
+	g := newMGrid(iconW, iconH)
+	rnd := menuRand{s: 0x9e3779b97f4a7c15}
+
+	// Stars in margins
+	topStars := newMenuStars(&rnd, iconW, skyH)
+	drawMenuStars(g, pal, topStars, 0)
+	bottomStars := newMenuStars(&rnd, iconW, skyH)
+	for i := range bottomStars {
+		bottomStars[i].y += iconH - skyH
+	}
+	drawMenuStars(g, pal, bottomStars, 0)
+
+	// Draw "AF" at 4x scale
+	afGlyphs := [2]rune{'A', 'F'}
+	af := buildWord(afGlyphs[:])
+	drawIntegerWordmark(g, pal, af, afX, afY, scale, iconW)
+
+	return g, pal
+}
+
+// drawIntegerWordmark draws a word at integer scale with gradient across full width.
+func drawIntegerWordmark(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, y0, scale, iconW int) {
+	w := len(rows[0])
+	for py := 0; py < menuWordH; py++ {
+		for px := 0; px < w; px++ {
+			if rows[py][px] != '#' {
+				continue
+			}
+			// Gradient position based on the glyph's position in the icon
+			u := float64(x0+px*scale) / float64(iconW-1)
+			col := rampAt(&pal.heat, u)
+			for dy := 0; dy < scale; dy++ {
+				for dx := 0; dx < scale; dx++ {
+					gx, gy := x0+px*scale+dx, y0+py*scale+dy
+					if gx >= 0 && gx < g.w && gy >= 0 && gy < g.h {
+						g.put(gx, gy, '█', col)
+					}
+				}
+			}
+		}
+	}
+}
+
+// gridToImage renders a grid to a 1024x1024 image with the given cell dimensions.
+func gridToImage(g *mGrid, pal *menuPalette, cellW, cellH int) *image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, g.w*cellW, g.h*cellH))
+	dot := max(1, min(cellW/5, cellH/8))
+	box := func(x, y, w, h int, c tcell.Color) {
+		draw.Draw(img, image.Rect(x, y, x+w, y+h), image.NewUniform(rgba(c)), image.Point{}, draw.Src)
+	}
+	for y := 0; y < g.h; y++ {
+		first, last := -1, -1
+		for x := 0; x < g.w; x++ {
+			c := g.c[y*g.w+x]
+			bg := pal.bg
+			if c.hasBg {
+				bg = c.bg
+			}
+			px, py := x*cellW, y*cellH
+			box(px, py, cellW, cellH, bg)
+			switch c.r {
+			case ' ':
+			case '█':
+				box(px, py, cellW, cellH, c.fg)
+			case '·', '∙':
+				s := dot
+				if c.r == '∙' {
+					s = 2 * dot
+				}
+				box(px+(cellW-s)/2, py+(cellH-s)/2, s, s, c.fg)
+			default:
+				if first < 0 {
+					first = x
+				}
+				last = x
+			}
+		}
+		if first < 0 {
+			continue
+		}
+		run := g.c[y*g.w+first : y*g.w+last+1]
+		adv := 6 * dot
+		x0 := (first+last+1)*cellW/2 - len(run)*adv/2 + dot/2
+		y0 := y*cellH + (cellH-8*dot)/2
+		for i, c := range run {
+			rows, ok := bannerFont[c.r]
+			if !ok {
+				continue
+			}
+			for ry, row := range rows {
+				for rx := range row {
+					if row[rx] == '#' {
+						box(x0+i*adv+rx*dot, y0+ry*dot, dot, dot, c.fg)
+					}
+				}
+			}
+		}
+	}
+	return img
+}
+
 func rgba(c tcell.Color) color.RGBA {
 	r, g, b := c.RGB()
 	return color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 255}
