@@ -278,12 +278,12 @@ func (c *hallCtx) banner(name string, order int, seed int64) {
 // ---- numbers in blocks ----
 
 // hallGlyphs is the big digits: three rows each, built from the block
-// glyphs, one cell wide for the point and three for the rest.
+// glyphs, one cell wide for the point and comma and three for the rest.
 var hallGlyphs = map[rune][3]string{
 	'0': {"█▀█", "█ █", "▀▀▀"}, '1': {"▄█ ", " █ ", "▄█▄"}, '2': {"▀▀█", "▄▀▀", "▀▀▀"},
 	'3': {"▀▀█", " ▀█", "▀▀▀"}, '4': {"█ █", "▀▀█", "  ▀"}, '5': {"█▀▀", "▀▀█", "▀▀▀"},
 	'6': {"█▀▀", "█▀█", "▀▀▀"}, '7': {"▀▀█", "  █", "  ▀"}, '8': {"█▀█", "█▀█", "▀▀▀"},
-	'9': {"█▀█", "▀▀█", "▀▀▀"}, '.': {" ", " ", "."},
+	'9': {"█▀█", "▀▀█", "▀▀▀"}, '.': {" ", " ", "▀"}, ',': {" ", "▄", "▀"},
 	'K': {"█ █", "█▀▄", "▀ ▀"}, 'M': {"█▄█", "█▀█", "▀ ▀"}, 'B': {"█▀▄", "█▀▄", "▀▀▀"},
 	'T': {"▀█▀", " █ ", " ▀ "}, 'Q': {"█▀█", "█▄█", " ▀▄"},
 }
@@ -380,9 +380,9 @@ func (c *hallCtx) tiles(stats []hallStat) {
 	per := min(max((c.cw+gap)/(tw+gap), 1), len(stats))
 	nrows := (len(stats) + per - 1) / per
 	per = (len(stats) + nrows - 1) / nrows
-	th := 5
+	th := 6
 	if big {
-		th = 8
+		th = 9
 	}
 	ground := c.pal.ground
 	for r := 0; r < nrows; r++ {
@@ -398,6 +398,7 @@ func (c *hallCtx) tiles(stats []hallStat) {
 			ctr := func(row int, s string, fg tcell.Color, bold bool) {
 				c.g.text(x+(tw-runeLen(s))/2, y+row, s, fg, bold)
 			}
+			barRow := 0
 			if big {
 				for k := 0; k < 3; k++ {
 					ctr(2+k, bigs[i][k], ink, true)
@@ -406,15 +407,17 @@ func (c *hallCtx) tiles(stats []hallStat) {
 				if s.hasBar {
 					ctr(6, s.value, c.role(theme.RoleDim), false)
 				}
+				barRow = 7
 			} else {
 				ctr(1, s.big, ink, true)
 				ctr(2, s.label, c.role(theme.RoleText), true)
 				if s.hasBar {
 					ctr(3, s.value, c.role(theme.RoleDim), false)
 				}
+				barRow = 4
 			}
 			if s.hasBar {
-				// The progress is the tile's lower edge.
+				// The progress sits inside the tile, above its border.
 				inner := tw - 2
 				filled := int(math.Round(s.frac * float64(inner)))
 				if s.frac > 0 && filled == 0 {
@@ -422,9 +425,9 @@ func (c *hallCtx) tiles(stats []hallStat) {
 				}
 				for j := 0; j < inner; j++ {
 					if j < filled {
-						c.g.put(x+1+j, y+th-1, '━', ink)
+						c.g.put(x+1+j, y+barRow, '━', ink)
 					} else {
-						c.g.put(x+1+j, y+th-1, '╌', edge)
+						c.g.put(x+1+j, y+barRow, '╌', edge)
 					}
 				}
 			}
@@ -492,8 +495,24 @@ func (c *hallCtx) track(v hallView) {
 			}
 		}})
 	}
-	for i := 0; i < v.unseen; i++ {
-		segs = append(segs, seg{w: 1, draw: func(x, y int) { c.g.put(x, y+1, '·', dim); c.g.put(x, y+2, '·', dim) }})
+	if v.unseen > 0 {
+		// The dots stay on one row: as many as the room left by the blocks
+		// holds, at least one.
+		used := 0
+		for _, sg := range segs {
+			used += sg.w + 1
+		}
+		room := c.cw - used
+		if used > c.cw {
+			room = c.cw
+		}
+		n := max(min(v.unseen, (room+1)/2), 1)
+		segs = append(segs, seg{w: 2*n - 1, draw: func(x, y int) {
+			for i := 0; i < n; i++ {
+				c.g.put(x+2*i, y+1, '·', dim)
+				c.g.put(x+2*i, y+2, '·', dim)
+			}
+		}})
 	}
 	// Lay the segments out in rows no wider than the content.
 	for i := 0; i < len(segs); {

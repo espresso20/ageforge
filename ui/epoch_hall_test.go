@@ -272,3 +272,55 @@ func TestEpochHallDump(t *testing.T) {
 		}
 	}
 }
+
+func TestEpochHallBigPointIsLit(t *testing.T) {
+	for _, sx := range []int{1, 2} {
+		rows, ok := bigNumber("48.2K", sx)
+		if !ok {
+			t.Fatalf("sx %d: no glyph for 48.2K", sx)
+		}
+		// Two digits and their gaps come first, then the point.
+		at := 2*3*sx + 2*sx
+		base := []rune(rows[2])
+		if base[at] != '▀' {
+			t.Errorf("sx %d: no lit cell for the point at %d on the baseline: %q", sx, at, rows[2])
+		}
+		if n := len([]rune(rows[0])); n != len(base) {
+			t.Errorf("sx %d: rows differ in width", sx)
+		}
+	}
+	// On the plain tier the point is a '#'.
+	c := newHallCtx(196, 50, mapmodel.TierASCII, hallMotion{})
+	c.y = 1
+	c.tiles([]hallStat{{value: "48.2K", big: "48.2K", label: "Population"}})
+	txt := untag(c.render())
+	if strings.ContainsAny(txt, "█▀▄") {
+		t.Errorf("plain tile still has block glyphs:\n%s", txt)
+	}
+}
+
+func TestEpochHallTilesShareAHeightAndTheBarSitsInside(t *testing.T) {
+	late := lateHallState(t, "galactic_age")
+	for _, dim := range [][2]int{{200, 50}, {100, 30}, {100, 24}} {
+		lines := strings.Split(untag(hallFrontText(late, dim[0], dim[1], 0)), "\n")
+		top, bottom := -1, -1
+		for i, l := range lines {
+			if top < 0 && strings.Contains(l, "╭") {
+				top = i
+			}
+			if top >= 0 && strings.Contains(l, "╰") {
+				bottom = i
+				break
+			}
+		}
+		if top < 0 || bottom < 0 {
+			t.Fatalf("%v: no tile row", dim)
+		}
+		if strings.ContainsAny(lines[bottom], "━╌") {
+			t.Errorf("%v: progress bar is on the border row: %q", dim, lines[bottom])
+		}
+		if !strings.ContainsAny(lines[bottom-1], "━╌") {
+			t.Errorf("%v: no progress bar just above the border: %q", dim, lines[bottom-1])
+		}
+	}
+}
