@@ -412,7 +412,7 @@ A festival costs the larger of 2K culture or a number of hours of your own cultu
 |---|---|
 | `milestones` (or `ms`) | Open the Milestones panel: chain progress, earned titles and active speed boosts. |
 | `epoch` | Open the Epoch screen: a banner, your highlights, ages, top badges and feats on the front page, and on `Tab` the details (current epoch and its event, catastrophe outlook, epoch history, harbingers, legacy bonuses, Era Mastery and the civilization log). |
-| `epoch card` | Copy a plain-text card of your epoch to the clipboard, to paste into Discord. It is also saved as `epoch-card.txt` next to your saves, and the reply says which worked. Press `c` on the Epoch screen to do the same. |
+| `epoch card` | Copy a picture of your epoch screen to the clipboard, to paste into Discord. It is also saved as `epoch-card.png` next to your saves, and the reply says which worked. Press `c` on the Epoch screen to do the same. |
 
 See [Milestones](milestones.md) and [Epochs](epochs.md).
 
