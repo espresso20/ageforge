@@ -71,7 +71,7 @@ func DinoFactor(share float64) float64 {
 // DinoSlots is how many slots of kind k (an index of dinoKinds) are on at a
 // gate share: the count at share 0 scaled by DinoFactor, rounded down.
 func DinoSlots(k int, share float64) int {
-	return int(float64(dinoKinds[k].Slots)*DinoFactor(share) + 1e-9)
+	return int(float64(float64(dinoKinds[k].Slots)*DinoFactor(share)) + 1e-9)
 }
 
 // DinosAt lists the dinosaurs on the map at animation frame anim.
