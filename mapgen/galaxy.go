@@ -298,7 +298,7 @@ func (g *Galaxy) paint(seed int64, arm, dust, core, knot []uint8) {
 			// the core is one warm-white glow that wins over the arm where it
 			// is the stronger, its weight falling smoothly with the distance
 			if c := int(core[i]); c > 6 {
-				if w := (c*130 + (h8(52, x, y)-128)*3) / 255; w > int(bg.Weight) {
+				if w := (c*55 + (h8(52, x, y)-128)*3) / 255; w > int(bg.Weight) {
 					bg = P(HCore, w)
 				}
 			}

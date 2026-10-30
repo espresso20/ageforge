@@ -94,6 +94,7 @@ func (f *frame) paintTerritory() {
 		f.paintRival(r)
 	}
 	f.paintRift()
+	f.paintSkyLife()
 }
 
 // halo marks the cells within a short oval of any cell of a set.
@@ -189,7 +190,7 @@ func (f *frame) paintSector(h lit) {
 			f.g.Cells[at(p.X, p.Y)].Bg = freshTint
 		}
 		if j == 0 {
-			f.g.draw(p.X, p.Y, '◉', P(hue, 255))
+			f.g.draw(p.X, p.Y, '◉', P(hue, f.breathe(255, 55, int(p.X))))
 			f.g.mark(p.X, p.Y, Thing{Kind: KindSector, Key: h.line, Lineage: h.line, Count: n, Ref: 1})
 			f.targets = append(f.targets, p)
 			continue
@@ -224,7 +225,7 @@ func (f *frame) paintRival(r rivalSite) {
 			w = 200 + roll(41, f.m.Seed, 372, int64(p.X), int64(p.Y))
 		}
 		if j == 0 {
-			glyph, w = '◉', 255
+			glyph, w = '◉', f.breathe(255, 55, int(p.X))
 		} else if j < len(r.cells)/3 {
 			glyph = '•'
 		}

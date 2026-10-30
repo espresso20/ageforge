@@ -273,7 +273,7 @@ func pickBuildingKeys(t *testing.T) (wonder, other string) {
 		if d.Category == "wonder" && wonder == "" {
 			wonder = k
 		}
-		if d.Category != "wonder" && other == "" {
+		if d.Category != "wonder" && k != "war_camp" && other == "" { // the test sets war_camp itself
 			other = k
 		}
 	}
