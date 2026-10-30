@@ -8,6 +8,9 @@ import "unicode/utf8"
 // laid road out to its end and back.
 
 func (f *frame) paintAgents() {
+	if f.st.Scale == Stars { // the sky has its own life; no ships on the star map
+		return
+	}
 	var routes []int
 	for i, n := range f.shown {
 		if n >= 4 {
