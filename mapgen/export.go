@@ -90,6 +90,10 @@ func Runes() []rune {
 		seen[r] = true
 	}
 	add(saucer.Glyphs)
+	for _, s := range []sprite{sauropod, raptor, pterodactyl[0], pterodactyl[1]} {
+		add(strings.Join(s.Rows, "") + strings.Join(s.west().Rows, ""))
+	}
+	add("✦●∙·") // the asteroid's streak
 	add(joinsLight + joinsHeavy + joinsDouble + joinsRounded + "★∙")
 	delete(seen, ' ')
 	return slices.Sorted(maps.Keys(seen))

@@ -32,8 +32,12 @@ type Model struct {
 	AgeIdx               int
 	NextAge, NextAgeName string
 	AgeReady             bool
-	Epoch                int // epoch index (0 Stone … 6 Cosmic)
-	EpochKey, EpochName  string
+	// GateShare is how far the age's gate is filled, 0 to 1: the share the
+	// Advance panel turns into the year. The Primitive Age's ambient life
+	// (dinosaurs, the asteroid) keys off it.
+	GateShare           float64
+	Epoch               int // epoch index (0 Stone … 6 Cosmic)
+	EpochKey, EpochName string
 
 	Clock   Clock
 	Weather Weather
@@ -205,6 +209,7 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	m := &Model{Seed: st.Seed, Tick: st.Tick, Age: st.Age, AgeName: st.AgeName, AgeIdx: cat.AgeIdx[st.Age],
 		NextAge: st.NextAge, NextAgeName: st.NextAgeName, AgeReady: st.AgeReady, Catalog: cat,
 		byKey: map[string]*Building{}}
+	m.GateShare = st.AdvanceView().Share
 	m.Epoch = cat.EpochOfAge(m.AgeIdx)
 	m.EpochKey = cat.Epochs[m.Epoch]
 	m.EpochName = cat.EpochName[m.Epoch]

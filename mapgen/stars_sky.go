@@ -53,21 +53,31 @@ func (f *frame) paintComet() {
 	x0, y0 := 20+roll(worldW-40, seed, 381, int64(slot)), 8+roll(worldH-16, seed, 382, int64(slot))
 	vx := []int{-3, -2, 2, 3}[roll(4, seed, 383, int64(slot))]
 	vy := roll(3, seed, 384, int64(slot)) - 1
-	for k := 4; k >= 0; k-- {
-		x, y := x0+vx*(t-k)/2, y0+vy*(t-k)/2
-		if !f.skyCell(x, y) {
-			continue
-		}
+	f.streak(x0, y0, vx, vy, t, 4, f.skyCell, func(k int) (rune, Paint) {
 		switch k {
 		case 0:
-			f.g.draw(x, y, '✦', P(HWhite, 255))
+			return '✦', P(HWhite, 255)
 		case 1:
-			f.g.draw(x, y, '∙', P(HWhite, 200))
+			return '∙', P(HWhite, 200)
 		case 2, 3:
-			f.g.draw(x, y, '·', P(HStar, 150))
-		default:
-			f.g.draw(x, y, '·', P(HStar, 90))
+			return '·', P(HStar, 150)
 		}
+		return '·', P(HStar, 90)
+	})
+}
+
+// streak draws a bright head and a tail of fading dots, tail cells behind it:
+// the head started at (x0, y0) and has moved (vx, vy) half-cells a frame for t
+// frames. Cell k of the streak (0 the head) is look(k), and goes where
+// room says there is room. A comet and the asteroid are both drawn with it.
+func (f *frame) streak(x0, y0, vx, vy, t, tail int, room func(x, y int) bool, look func(k int) (rune, Paint)) {
+	for k := tail; k >= 0; k-- {
+		x, y := x0+vx*(t-k)/2, y0+vy*(t-k)/2
+		if !room(x, y) {
+			continue
+		}
+		r, ink := look(k)
+		f.g.draw(x, y, r, ink)
 	}
 }
 

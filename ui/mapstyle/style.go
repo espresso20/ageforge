@@ -49,6 +49,18 @@ func (f Frame) VisitFrame() int {
 	return -1
 }
 
+// DinoFrame is the frame the Primitive Age's dinosaurs are drawn from while
+// the motion setting holds the picture still: the world's clock, a second at
+// a time (so the map is not redrawn every frame), and 0 while the map moves
+// (they are then drawn at Anim). Held still, each dinosaur on the map at that
+// frame stands halfway through its walk.
+func (f Frame) DinoFrame() int {
+	if f.Clock == 0 || f.Clock == f.Anim {
+		return 0
+	}
+	return f.Clock/8*8 + 1
+}
+
 // Inspection is what a style's cursor is on.
 type Inspection struct {
 	Title string   // "Guildhall ×2"

@@ -22,6 +22,7 @@ type frame struct {
 	g        *Grid
 	anim     int
 	visit    int // the frame the rare visitor is drawn at; negative: none
+	clock    int // the world's clock when the picture is held still, else 0
 	sites    []site
 	fresh    bool   // light what is new since the last visit
 	district string // the building line in focus, if any
@@ -118,6 +119,7 @@ func (f *frame) draw() {
 	f.paintDetail()
 	f.paintSmoke()
 	f.paintAgents()
+	f.paintDinos()
 	f.paintBodies()
 	f.paintAround()
 	f.paintFocus()
