@@ -15,10 +15,10 @@ The top of the dashboard shows the same figures at a glance: a long bar to the n
 Every age is a stop on a track across the top. The ages you have passed are filled in, the one you are in and the next one are lit, and the ones beyond the next stay unnamed (`?`) until you reach them, as everywhere else in the game. On a narrow screen the track scrolls, and a `◂` or `▸` at its end shows there are more ages that way. Between your age and the next, a marker moves along the track as the pillars come in. The line under the track reads like this:
 
 ```
-Year 2,263 BC · 49% of the way to the Iron Age
+Year c. 2,300 BC · 49% of the way to the Iron Age
 ```
 
-The year is the calendar year of your town's history. It starts at the year your age begins and moves toward the year of the next age as the four pillars fill, so the track and the year close on the next age together. While you play an age the year never runs backward: if you sell a building, the pillars show the loss, but the year you reached stays. Loading a game or starting a new age sets it from where the pillars stand. The last age has no number. It shows the words "Beyond time" in place of a year.
+The year is the calendar year of your town's history, rounded: Primitive begins 100 million years ago, in the Late Cretaceous, and the deep past shows a geologic epoch instead of a number (Paleocene, Eocene and on to the Pleistocene). Closer years read as "c. 40,000 BC" or "c. 3,300 BC", then "c. 1450 AD", then a decade ("1840s"), and from 2100 a century ("22nd century"). It starts at the year your age begins and moves toward the year of the next age as the four pillars fill, so the track and the year close on the next age together. While you play an age the year never runs backward: if you sell a building, the pillars show the loss, but the year you reached stays. Loading a game or starting a new age sets it from where the pillars stand. The last age has no number. It shows the words "Beyond time" in place of a year.
 
 The year says where your town stands in history. It is not a clock, and it says nothing about how long play takes.
 

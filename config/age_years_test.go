@@ -11,7 +11,7 @@ func TestAgeYearsCoverTheCoreAges(t *testing.T) {
 	order := AgeOrder()
 	years := AgeStartYears(order)
 	want := map[string]int{
-		"primitive_age": -10000, "stone_age": -8000, "bronze_age": -3300, "iron_age": -1200,
+		"primitive_age": -100000000, "stone_age": -8000, "bronze_age": -3300, "iron_age": -1200,
 		"classical_age": -500, "medieval_age": 500, "renaissance_age": 1400, "colonial_age": 1600,
 		"industrial_age": 1760, "victorian_age": 1840, "electric_age": 1880, "atomic_age": 1945,
 		"modern_age": 1960, "information_age": 1980, "digital_age": 2000, "cyberpunk_age": 2050,
@@ -95,16 +95,57 @@ func TestYearBetweenIsMonotonicAndHitsBothEnds(t *testing.T) {
 	}
 }
 
+func TestYearBetweenDeepTime(t *testing.T) {
+	start, next := -100000000, -8000
+	if got := YearBetween(start, next, 0); got != start {
+		t.Errorf("at 0: %d", got)
+	}
+	if got := YearBetween(start, next, 1); got != next {
+		t.Errorf("at 1: %d", got)
+	}
+	if got := YearBetween(start, next, 0.5); got < -900000 || got > -888000 {
+		t.Errorf("midpoint %d, want near -894,000", got)
+	}
+	prev := start
+	for p := 0; p <= 1000; p++ {
+		y := YearBetween(start, next, float64(p)/1000)
+		if y < prev {
+			t.Fatalf("goes down at %d: %d after %d", p, y, prev)
+		}
+		prev = y
+	}
+	if got := YearBetween(-8000, -3300, 0.5); got != -5650 {
+		t.Errorf("linear span changed: %d", got)
+	}
+}
+
 func TestYearLabel(t *testing.T) {
 	for year, want := range map[int]string{
-		-10000: "10,000 BC", -3300: "3,300 BC", -500: "500 BC", -1: "1 BC", 0: "1 AD", 1: "1 AD",
-		500: "500 AD", 1948: "1,948 AD", 5000: "5,000 AD", 9999: "9,999 AD", 1234567: "1,234,567 AD",
+		-100000000: "Late Cretaceous", -66000000: "Late Cretaceous", -65999999: "Paleocene",
+		-56000000: "Paleocene", -55999999: "Eocene", -33900000: "Eocene", -33899999: "Oligocene",
+		-23000000: "Oligocene", -22999999: "Miocene", -5300000: "Miocene", -5299999: "Pliocene",
+		-2580000: "Pliocene", -2579999: "Pleistocene", -894000: "Pleistocene", -100000: "Pleistocene",
+		-99999: "c. 100,000 BC", -99400: "c. 99,000 BC", -40400: "c. 40,000 BC", -10001: "c. 10,000 BC",
+		-10000: "c. 10,000 BC", -8000: "c. 8,000 BC", -3300: "c. 3,300 BC", -1200: "c. 1,200 BC",
+		-500: "c. 500 BC", -1: "c. 1 BC",
+		0: "c. 1 AD", 1: "c. 1 AD", 500: "c. 500 AD", 1400: "c. 1400 AD", 1474: "c. 1450 AD",
+		1475: "c. 1500 AD", 1600: "c. 1600 AD", 1699: "c. 1700 AD",
+		1700: "1700s", 1760: "1760s", 1848: "1840s", 1945: "1940s", 2050: "2050s", 2099: "2090s",
+		2100: "22nd century", 2200: "23rd century", 2400: "25th century", 3000: "31st century",
+		5000: "51st century", 1000000 - 1: "10000th century",
+		1000: "c. 1000 AD",
 	} {
 		if got := YearLabel(year); got != want {
 			t.Errorf("YearLabel(%d) = %q, want %q", year, got, want)
 		}
 	}
-	for _, y := range []int{-3300, 1948} {
+	for n, want := range map[int]string{1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 11: "11th", 12: "12th", 13: "13th",
+		21: "21st", 22: "22nd", 23: "23rd", 101: "101st", 111: "111th", 112: "112th"} {
+		if got := ordinal(n); got != want {
+			t.Errorf("ordinal(%d) = %q, want %q", n, got, want)
+		}
+	}
+	for _, y := range []int{-3300, 1948, 2100} {
 		if strings.Contains(YearLabel(y), "  ") {
 			t.Errorf("YearLabel(%d) has a double space", y)
 		}

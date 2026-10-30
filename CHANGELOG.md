@@ -27,6 +27,7 @@ All notable changes to AgeForge are documented here.
 
 ### Changed
 - **The epoch card is a picture.** `c` on the Epoch screen (and `epoch card`) now copies a full-color picture of the screen, saved as `epoch-card.png`, in place of the plain-text card.
+- **Deep time and rounded years.** Primitive now begins 100 million years ago and the deep past shows a geologic epoch (Late Cretaceous to Pleistocene) in place of a year; later years are rounded, then read as a decade or a century.
 - **The epoch screen in full colour.** The banner is a gradient in your epoch's colors over stars, the totals are five boxed tiles with big digits in a centered row, the ages are a colored track, and the top badges are rarity-bordered cards. Everything is centered and fills a wide terminal.
 - **The space ages' map is a living galaxy.** The last three ages draw a seeded spiral galaxy with your buildings as sectors on the home arm, lanes between the hubs, rivals on the other arms and a rift for a harbinger. The sky now moves: twinkling stars, a comet, a nova, shimmering dust and a breathing core and hubs, with ghost systems in the Quantum Age and a halo ring in the Transcendent Age. Motion off holds it still. The warm core blotch and the boxes of light round wonder stars are gone, and no ships cross the star map.
 - **The Epoch screen.** `epoch` now opens a full-screen page to show off your run: the epoch name in iron lettering, your highlights, the ages you have finished, your five rarest badges and your feats. `Tab` turns to the old panel as the details page.

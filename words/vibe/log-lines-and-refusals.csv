@@ -1,5 +1,19 @@
 id,text
-config.age_years.YearLabel.01, AD
+config.age_years.YearLabel.bc,c. %s BC
+config.age_years.YearLabel.ad,c. %s AD
+config.age_years.YearLabel.decade,%ds
+config.age_years.YearLabel.century,%s century
+config.age_years.ordinal.st,%dst
+config.age_years.ordinal.nd,%dnd
+config.age_years.ordinal.rd,%drd
+config.age_years.ordinal.th,%dth
+config.age_years.epoch.late_cretaceous,Late Cretaceous
+config.age_years.epoch.paleocene,Paleocene
+config.age_years.epoch.eocene,Eocene
+config.age_years.epoch.oligocene,Oligocene
+config.age_years.epoch.miocene,Miocene
+config.age_years.epoch.pliocene,Pliocene
+config.age_years.epoch.pleistocene,Pleistocene
 config.gate_pillars.PillarName.01,Big Brain
 config.gate_pillars.PillarName.02,The Squad
 config.gate_pillars.PillarName.03,The Grind
