@@ -55,16 +55,35 @@ type resRow struct {
 	// progress draws a bar of progress toward something (faith strength,
 	// culture's next step). A row without it has no bar.
 	progress bool
-	glyph    string // the marker after the bar: "▼" falling
-	glyphCol string
-	detail   string // a second line for a roomy box, tags and all
+	// magnitude draws a bar of how big the stock is (fill, on a log scale),
+	// and trend the line of where it has been; both are for an ordinary
+	// resource. plain draws them in ASCII.
+	magnitude bool
+	trend     []float64
+	plain     bool
+	glyph     string // the marker after the bar: "▼" falling
+	glyphCol  string
+	detail    string // a second line for a roomy box, tags and all
 }
 
 // resourceRows is the box's rows for a snapshot: every unlocked resource, in
 // key order.
 func resourceRows(state game.GameState) []resRow {
+	return resourceRowsFor(state, nil, false)
+}
+
+// resourceRowsFor is resourceRows with the trend history to draw and the
+// glyph tier: plain for ASCII only.
+func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRow {
 	keys := keysWhere(state.Resources, func(_ string, rs game.ResourceState) bool { return rs.Unlocked })
 	rows := make([]resRow, 0, len(keys))
+	var held []float64 // the ordinary resources' amounts, for the bar's top
+	for _, key := range keys {
+		if key != "culture" && key != "faith" {
+			held = append(held, state.Resources[key].Amount)
+		}
+	}
+	top := magnitudeTop(held)
 	for _, key := range keys {
 		rs := state.Resources[key]
 		switch key {
@@ -73,14 +92,19 @@ func resourceRows(state game.GameState) []resRow {
 		case "faith":
 			rows = append(rows, faithRow(rs, state.CatastropheOutlook))
 		default:
-			rows = append(rows, storeRow(rs))
+			r := storeRow(rs)
+			r.fill = magnitudeFill(rs.Amount, top)
+			r.magnitude, r.plain = true, plain
+			r.trend = hist.points(key, rs.Amount)
+			rows = append(rows, r)
 		}
 	}
 	return rows
 }
 
 // storeRow is an ordinary resource: what is held and which way it is going.
-// Stock has no ceiling, so there is no cap and no bar.
+// Stock has no ceiling, so there is no cap; its bar (set by resourceRowsFor)
+// shows magnitude, not fullness.
 func storeRow(rs game.ResourceState) resRow {
 	r := resRow{name: rs.Name, amt: textfmt.Number(rs.Amount), amtColor: "white", rate: rs.Rate}
 	switch {
@@ -161,6 +185,7 @@ type resFormat struct {
 	gap                      int    // cells between columns
 	sep                      int    // cells between amount and step: 3 is " / ", 1 is "/", 0 is no step column
 	bar                      int    // cells of bar, 0 for none
+	trend                    int    // cells of trend line after the bar, 0 for none
 	unit                     string // the rate's unit: "/tick", or "/t" when even the step had to go
 }
 
@@ -179,18 +204,39 @@ func (f resFormat) width() int {
 	if f.bar > 0 {
 		w += f.gap + f.bar
 	}
+	if f.trend > 0 {
+		w += f.gap + f.trend
+	}
 	return w
 }
 
 // fitResourceFormat picks the grid for rows in a box w cells wide: the
 // fullest one that fits.
 func fitResourceFormat(rows []resRow, w int) resFormat {
+	// The trend line goes first: with it, the bar must still be a good one.
+	needTrend := false
+	for _, r := range rows {
+		needTrend = needTrend || r.trend != nil
+	}
+	if needTrend {
+		if f := fitResourceGrid(rows, w-2-resTrendCells); f.bar >= resBarGood {
+			f.trend = resTrendCells
+			if f.width() <= w {
+				return f
+			}
+		}
+	}
+	return fitResourceGrid(rows, w)
+}
+
+// fitResourceGrid is the grid without a trend line.
+func fitResourceGrid(rows []resRow, w int) resFormat {
 	f := resFormat{unit: "/tick", gap: 2, sep: 3}
 	longest := 0
 	needMid, needBar := false, false // does any row have a step or status, a bar?
 	for _, r := range rows {
 		needMid = needMid || r.cap != "" || len(r.status) > 0
-		needBar = needBar || r.progress
+		needBar = needBar || r.progress || r.magnitude
 		longest = max(longest, runeLen(r.name))
 		f.amtW = max(f.amtW, runeLen(r.amt))
 		f.capW = max(f.capW, runeLen(r.cap))
@@ -295,10 +341,21 @@ func (f resFormat) line(r resRow) string {
 	fmt.Fprintf(&b, "%s%s[%s]%s[-]", gap, strings.Repeat(" ", max(0, f.rateW-runeLen(rate))), rateColor, rate)
 	if f.bar > 0 {
 		b.WriteString(gap)
-		if r.progress {
+		switch {
+		case r.progress:
 			b.WriteString(progressCells(r.fill, f.bar))
-		} else {
+		case r.magnitude:
+			b.WriteString(magnitudeCells(r.fill, f.bar, r.plain))
+		default:
 			b.WriteString(strings.Repeat(" ", f.bar))
+		}
+	}
+	if f.trend > 0 {
+		b.WriteString(gap)
+		if r.magnitude {
+			b.WriteString(trendCells(r.trend, r.plain, r.amtColor))
+		} else {
+			b.WriteString(strings.Repeat(" ", f.trend))
 		}
 	}
 	if r.glyph != "" {

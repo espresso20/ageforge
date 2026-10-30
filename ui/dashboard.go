@@ -332,6 +332,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 func (d *Dashboard) build() {
 	// Create permanent economy tab
 	d.economyTab = NewEconomyTab()
+	d.economyTab.plain = func() bool { return d.mapSettings().Tier == mapmodel.TierASCII }
 
 	// Sidebar — command panel hints, laid out for the room it has: one
 	// column when the names fit that way, two when the screen is short.

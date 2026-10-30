@@ -178,14 +178,17 @@ func TestDashboardRowsNeverWrap(t *testing.T) {
 					if w >= 120 && !strings.Contains(row, "/tick") {
 						t.Errorf("%s: a resource row lost its rate's unit at a size with room for it: %q", where, row)
 					}
-					// Only culture and faith show progress toward something; an
-					// ordinary resource has no bar, for stock has no ceiling.
+					// Culture and faith show progress toward something; an ordinary
+					// resource shows magnitude, for stock has no ceiling.
 					progress := strings.HasPrefix(row, " Culture") || strings.HasPrefix(row, " Faith")
 					if w >= 120 && progress && !strings.ContainsAny(row, "█░▓") {
 						t.Errorf("%s: a progress row has no bar at a size with room for one: %q", where, row)
 					}
-					if !progress && strings.ContainsAny(row, "█░▓") {
-						t.Errorf("%s: a resource row shows a store bar: %q", where, row)
+					if !progress && w >= 120 && !strings.ContainsAny(row, "█░") {
+						t.Errorf("%s: a resource row has no magnitude bar at a size with room for one: %q", where, row)
+					}
+					if !progress && strings.ContainsAny(row, "▓") {
+						t.Errorf("%s: a resource row shows a progress bar: %q", where, row)
 					}
 				}
 			}

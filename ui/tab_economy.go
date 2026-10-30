@@ -110,6 +110,11 @@ type EconomyTab struct {
 	constructionTV *fitView
 
 	state game.GameState
+	// trend is the amounts of the last few minutes, for the Resources box's
+	// trend lines; plain says whether to draw in ASCII; now is the clock.
+	trend resHistory
+	plain func() bool
+	now   func() time.Time
 	// resPage is the page of the Resources box on show (Ctrl+R turns it),
 	// and resPages how many its rows took at the last draw.
 	resPage, resPages int
@@ -137,7 +142,7 @@ func NewEconomyTab() *EconomyTab {
 	t := &EconomyTab{resPages: 1}
 
 	t.resourceTV = newFitView(func(w, h int) string {
-		lines, pages := layoutResourceBox(resourceRows(t.state), w, h, t.resPage)
+		lines, pages := layoutResourceBox(t.rows(), w, h, t.resPage)
 		t.resPages = pages
 		t.resPage = ((t.resPage % pages) + pages) % pages
 		return strings.Join(lines, "\n")
@@ -167,7 +172,7 @@ func NewEconomyTab() *EconomyTab {
 	})
 
 	t.leftCol = &econColumn{Box: tview.NewBox(), resources: t.resourceTV, construction: t.constructionTV,
-		resourceRows: func() int { return resourceRowsNeed(resourceRows(t.state)) }}
+		resourceRows: func() int { return resourceRowsNeed(t.rows()) }}
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(t.leftCol, 0, 1, false).
@@ -204,9 +209,18 @@ func (t *EconomyTab) Root() tview.Primitive {
 // their next draw.
 func (t *EconomyTab) Refresh(state game.GameState) {
 	t.state = state
+	if t.now == nil {
+		t.now = time.Now
+	}
+	t.trend.note(state, t.now())
 	t.resourceTV.changed()
 	t.buildingTV.changed()
 	t.constructionTV.changed()
+}
+
+// rows is the Resources box's rows for the snapshot on show.
+func (t *EconomyTab) rows() []resRow {
+	return resourceRowsFor(t.state, &t.trend, t.plain != nil && t.plain())
 }
 
 // NextResourcePage turns the Resources box to its next page (round to the
