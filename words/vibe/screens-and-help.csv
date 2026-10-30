@@ -2333,5 +2333,6 @@ ui.epoch_hall.hallFrontText.05,"No badges yet, we are cooking."
 ui.epoch_hall.hallFrontText.06,Feats
 ui.epoch_hall.hallFrontText.07,No feats yet. They come with the ages.
 ui.epoch_hall.hallFrontText.08,Type epoch card to save a card you can paste into Discord and flex.
+ui.epoch_hall.hallFrontText.09,next: %s
 ui.help.commands.epoch,Open the Epoch screen and gloat
 ui.help.commands.epoch.2,Save a plain-text card of your epoch to paste into Discord

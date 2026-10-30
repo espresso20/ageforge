@@ -255,6 +255,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.epochHall = &epochHall{
 		tier:   func() mapmodel.GlyphTier { return d.mapSettings().Tier },
 		height: func() int { return d.overlayMgr.screenH },
+		motion: func() bool { return d.mapSettings().Motion },
 	}
 	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
