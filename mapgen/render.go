@@ -118,6 +118,7 @@ func (f *frame) draw() {
 	f.paintDetail()
 	f.paintSmoke()
 	f.paintAgents()
+	f.paintDinos()
 	f.paintBodies()
 	f.paintAround()
 	f.paintFocus()
