@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -31,6 +32,10 @@ func TestTheScreensSwitchAtOnce(t *testing.T) {
 	defer vibe.UseRewriterForTest(func(id, plain string) string { return "«" + plain + "»" })()
 	d, pages, eng := badgeDashboard(t)
 	d.runForTest("motion off")
+	// The maps read their frame from a clock; pinned, they draw one frame.
+	pinned := time.Unix(1_700_000_000, 0)
+	d.mapPanel.start, d.mapPanel.now = pinned, func() time.Time { return pinned }
+	d.miniMap.start, d.miniMap.now = pinned, func() time.Time { return pinned }
 	// The switch is thrown on the engine, not typed: a typed command writes a line
 	// in the log, which the screens would then differ by.
 	set := func(on bool) {
