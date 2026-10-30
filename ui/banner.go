@@ -7,7 +7,6 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -30,7 +29,7 @@ const (
 )
 
 // bannerGrid is the banner as cells, on the palette it was drawn in.
-func bannerGrid() (*mGrid, *menuPalette) {
+func bannerGrid(ages int) (*mGrid, *menuPalette) {
 	pal := newMenuPalette(theme.Forge)
 	g := newMGrid(bannerW, bannerH)
 	rnd := menuRand{s: 0x9e3779b97f4a7c15}
@@ -42,16 +41,16 @@ func bannerGrid() (*mGrid, *menuPalette) {
 	drawMenuStars(g, pal, high, 0)
 	drawMenuStars(g, pal, low, 0)
 	drawWordmark(g, pal, centred(bannerW, menuWordW*2), bannerWordY, 2, 0, 0, 0.5, false)
-	tag := menuTagline(len(rules.Core().AgeKeys()))
+	tag := menuTagline(ages)
 	g.textOn(centred(bannerW, runeLen(tag)), bannerTagY, tag, pal.ink, pal.bg, false)
 	return g, pal
 }
 
-// BannerImage draws the README banner with each cell cellW by cellH pixels.
+// BannerImage draws the README banner, its tagline counting ages, with each cell cellW by cellH pixels.
 // A block is a solid block of its colour, a star a dot, and text is set in
 // bannerFont, centred over the cells it takes.
-func BannerImage(cellW, cellH int) *image.RGBA {
-	g, pal := bannerGrid()
+func BannerImage(ages, cellW, cellH int) *image.RGBA {
+	g, pal := bannerGrid(ages)
 	img := image.NewRGBA(image.Rect(0, 0, g.w*cellW, g.h*cellH))
 	dot := max(1, min(cellW/5, cellH/8))
 	box := func(x, y, w, h int, c tcell.Color) {

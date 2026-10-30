@@ -10,7 +10,7 @@ import (
 // (a change to the number of ages may need a letter added), and it comes out
 // the size its cells say.
 func TestBannerImage(t *testing.T) {
-	g, _ := bannerGrid()
+	g, _ := bannerGrid(len(rules.Core().AgeKeys()))
 	if len(g.clipped) > 0 {
 		t.Fatalf("banner text cut at the edge: %q", g.clipped)
 	}
@@ -19,7 +19,7 @@ func TestBannerImage(t *testing.T) {
 			t.Errorf("the banner's face has no %q", r)
 		}
 	}
-	img := BannerImage(10, 20)
+	img := BannerImage(len(rules.Core().AgeKeys()), 10, 20)
 	if b := img.Bounds(); b.Dx() != bannerW*10 || b.Dy() != bannerH*20 {
 		t.Errorf("banner is %dx%d, want %dx%d", b.Dx(), b.Dy(), bannerW*10, bannerH*20)
 	}

@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/ui"
 )
 
@@ -29,7 +30,7 @@ func run(out string, cellW, cellH int) error {
 	if cellW < 1 || cellH < 1 {
 		return fmt.Errorf("cell size %dx%d: both must be at least 1", cellW, cellH)
 	}
-	img := ui.BannerImage(cellW, cellH)
+	img := ui.BannerImage(len(rules.Core().AgeKeys()), cellW, cellH)
 	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
 		return err
 	}
