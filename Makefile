@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet validate smoke all release release-patch release-minor release-major commit
+.PHONY: banner build run clean check test vet validate smoke all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
