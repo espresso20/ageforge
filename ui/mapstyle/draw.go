@@ -57,7 +57,7 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 	} else {
 		v.ov = nil
 		v.fit(w, h)
-		v.blit(cv, x, y, sc.Grid.Window(v.cam.X, v.cam.Y, w, h))
+		v.blit(cv, x, y, windowFilled(sc.Grid, v.cam.X, v.cam.Y, w, h))
 		cx, cy = v.cur.X-v.cam.X, v.cur.Y-v.cam.Y
 		on = cx >= 0 && cy >= 0 && cx < w && cy < h
 	}
@@ -86,6 +86,58 @@ func (v *view) fit(w, h int) {
 	v.cam.Y = clamp(v.cam.Y, v.cur.Y-h+my+1, v.cur.Y-my)
 	v.cam.X = clamp(v.cam.X, 0, max(0, mapgen.WorldW-w))
 	v.cam.Y = clamp(v.cam.Y, 0, max(0, mapgen.WorldH-h))
+	// A window bigger than the world centres it; windowFilled paints the
+	// rest.
+	if w > mapgen.WorldW {
+		v.cam.X = -(w - mapgen.WorldW) / 2
+	}
+	if h > mapgen.WorldH {
+		v.cam.Y = -(h - mapgen.WorldH) / 2
+	}
+}
+
+// windowFilled is g.Window for a window that may reach past the world: the
+// land beyond its edge is the land inside it, mirrored (so water stays
+// water and the shore carries on), with only terrain copied over so no
+// building or road shows twice.
+func windowFilled(g *mapgen.Grid, x0, y0, w, h int) *mapgen.Grid {
+	out := g.Window(x0, y0, w, h)
+	if x0 >= 0 && y0 >= 0 && x0+w <= g.W && y0+h <= g.H {
+		return out
+	}
+	mirror := func(v, n int) int {
+		v = ((v % (2 * n)) + 2*n) % (2 * n)
+		if v >= n {
+			v = 2*n - 1 - v
+		}
+		return v
+	}
+	terrain := func(i int) bool {
+		k := g.Things[g.Hit[i]].Kind
+		return k == mapgen.KindNone || k == mapgen.KindTerrain
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			wx, wy := x0+x, y0+y
+			if wx >= 0 && wy >= 0 && wx < g.W && wy < g.H {
+				continue
+			}
+			sx, sy := mirror(wx, g.W), mirror(wy, g.H)
+			i := sy*g.W + sx
+			// Walk inward off a building or road to the ground under it.
+			dx := 1
+			if sx >= g.W/2 {
+				dx = -1
+			}
+			for n := 0; n < 64 && !terrain(i) && sx+dx >= 0 && sx+dx < g.W; n++ {
+				sx += dx
+				i = sy*g.W + sx
+			}
+			out.Cells[y*w+x] = g.Cells[i]
+			out.Hit[y*w+x] = g.Hit[i]
+		}
+	}
+	return out
 }
 
 func clamp(v, lo, hi int) int { return min(max(v, lo), hi) }
