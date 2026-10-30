@@ -184,12 +184,12 @@ func IconImage(size int) *image.RGBA {
 func iconGrid() (*mGrid, *menuPalette) {
 	pal := newMenuPalette(theme.Forge)
 	const (
-		iconW  = 64
-		iconH  = 32
-		skyH   = 3
-		lineH  = 11 // menuWordH * 1.5, rounded
-		gap    = 1
-		topY   = (iconH - (lineH + gap + lineH)) / 2
+		iconW = 64
+		iconH = 32
+		skyH  = 3
+		lineH = 11 // menuWordH * 1.5, rounded
+		gap   = 1
+		topY  = (iconH - (lineH + gap + lineH)) / 2
 	)
 	g := newMGrid(iconW, iconH)
 	rnd := menuRand{s: 0x9e3779b97f4a7c15}
@@ -276,47 +276,6 @@ func drawScaledWordmark(g *mGrid, pal *menuPalette, rows [menuWordH]string, x0, 
 
 // AIconImage draws a square icon (1024x1024) with a single large "A" from the
 // menu's pixel font on the navy Forge background with fire gradient.
-func AIconImage(size int) *image.RGBA {
-	g, pal := aIconGrid()
-	return gridToImage(g, pal, size/64, size/32)
-}
-
-// aIconGrid creates the icon grid with a single "A" at 9x scale.
-func aIconGrid() (*mGrid, *menuPalette) {
-	pal := newMenuPalette(theme.Forge)
-	const (
-		iconW = 64
-		iconH = 32
-		skyH  = 3
-		scale = 9
-		aW    = 6 * scale // A is 6 cells wide
-		aH    = 7 * scale // A is 7 cells tall
-		aX    = (iconW - aW) / 2
-		aY    = (iconH - aH) / 2
-	)
-	g := newMGrid(iconW, iconH)
-	rnd := menuRand{s: 0x9e3779b97f4a7c15}
-
-	// Stars in margins
-	topStars := newMenuStars(&rnd, iconW, skyH)
-	drawMenuStars(g, pal, topStars, 0)
-	bottomStars := newMenuStars(&rnd, iconW, skyH)
-	for i := range bottomStars {
-		bottomStars[i].y += iconH - skyH
-	}
-	drawMenuStars(g, pal, bottomStars, 0)
-
-	// Draw "A" at 9x scale
-	aGlyph := menuFont['A']
-	var aRows [menuWordH]string
-	for y := range aRows {
-		aRows[y] = aGlyph[y]
-	}
-	drawIntegerWordmark(g, pal, aRows, aX, aY, scale, iconW)
-
-	return g, pal
-}
-
 // AFIconImage draws a square icon (1024x1024) with "AF" side by side.
 func AFIconImage(size int) *image.RGBA {
 	g, pal := afIconGrid()
