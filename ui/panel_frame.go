@@ -37,6 +37,9 @@ type panelFrame struct {
 	// panel keeps the keyboard for itself.
 	keys func() [][2]string
 	hint func() string
+	// notice, when set and not empty, takes the key line's place for a while
+	// (a confirmation, drawn in the good colour).
+	notice func() string
 	// plain reports the ASCII glyph tier, when the frame folds to it.
 	plain func() bool
 	// iw and ih are the text area's size as last drawn (0 before the first).
@@ -49,10 +52,12 @@ func newPanelFrame(title vibe.Entry, tv *tview.TextView) *panelFrame {
 
 // renderPanelFrame draws the frame at w by h: the box, the name in its top
 // edge and the keys along the foot.
-func renderPanelFrame(w, h int, title string, keys [][2]string, hint string) *xgrid {
+func renderPanelFrame(w, h int, title string, keys [][2]string, hint, notice string) *xgrid {
 	g := newXGrid(w, h)
 	g.box(0, 0, w, h, xBorder, title, xTitle, false)
-	if h >= panelMinRows {
+	if h >= panelMinRows && notice != "" {
+		g.segsFit(2, h-2, w-4, xseg{notice, xGood})
+	} else if h >= panelMinRows {
 		expKeyBar(g, expLayout{w: w, h: h, footY: h - 2}, keys, hint)
 	}
 	return g
@@ -78,7 +83,11 @@ func (f *panelFrame) Draw(scr tcell.Screen) {
 	if f.hint != nil {
 		hint = f.hint()
 	}
-	g := renderPanelFrame(w, h, f.title.String(), keys, hint)
+	notice := ""
+	if f.notice != nil {
+		notice = f.notice()
+	}
+	g := renderPanelFrame(w, h, f.title.String(), keys, hint, notice)
 	if f.plain != nil && f.plain() {
 		g.fold()
 	}

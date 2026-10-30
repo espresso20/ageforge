@@ -2310,10 +2310,11 @@ ui.epoch_card.epochCardText.07,Top badges
 ui.epoch_card.epochCardText.08,"No badges yet, we are cooking."
 ui.epoch_card.epochCardText.09,Feats
 ui.epoch_card.epochCardText.10,No feats yet.
-ui.epoch_card.cmdEpoch.01,"Cheat code: epoch (opens the Epoch screen), or epoch card (saves a card to paste into Discord)"
+ui.epoch_card.cmdEpoch.01,"Cheat code: epoch (opens the Epoch screen), or epoch card (copies a card to paste into Discord)"
 ui.epoch_card.cmdEpoch.02,"Could not make the data folder: "
 ui.epoch_card.cmdEpoch.03,"Could not save the card: "
 ui.epoch_card.cmdEpoch.04,Your epoch card is saved to %s. Paste it into Discord and flex.
+ui.epoch_card.cmdEpoch.05,"Your epoch card is on your clipboard (also saved to %s). Paste it into Discord and flex."
 ui.epoch_hall.footer.02,front page
 ui.epoch_hall.footer.05,page
 ui.epoch_hall.newHallView.01,Population
@@ -2332,7 +2333,9 @@ ui.epoch_hall.hallFrontText.04,Top badges
 ui.epoch_hall.hallFrontText.05,"No badges yet, we are cooking."
 ui.epoch_hall.hallFrontText.06,Feats
 ui.epoch_hall.hallFrontText.07,No feats yet. They come with the ages.
-ui.epoch_hall.hallFrontText.08,Type epoch card to save a card you can paste into Discord and flex.
+ui.epoch_hall.hallFrontText.08,Press c to copy a card for Discord and flex.
 ui.epoch_hall.hallFrontText.09,next: %s
+ui.epoch_hall.makeCard.01,Card copied. Paste it into Discord and flex.
+ui.epoch_hall.makeCard.02,Card saved to %s. Paste it into Discord.
 ui.help.commands.epoch,Open the Epoch screen and gloat
 ui.help.commands.epoch.2,Save a plain-text card of your epoch to paste into Discord

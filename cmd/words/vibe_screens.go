@@ -30,7 +30,13 @@ func init() {
 		"ui.input.cmdDump.06", "ui.input.cmdDump.07", "ui.input.cmdDump.08", "ui.input.cmdDump.09",
 		"ui.input.cmdDump.10", "ui.input.cmdDump.11", "ui.input.cmdDump.12", "ui.input.cmdDump.13",
 		"ui.input.cmdDump.14", "ui.input.cmdDump.15", "ui.input.cmdDump.16",
-		"ui.dashboard.submitInput.01", // the echo of a developer's command
+		"ui.dashboard.submitInput.01",    // the echo of a developer's command
+		"ui.clipboard.errNoClipboard.01", // the error clipboard.go passes up; the screen never prints it
+	)
+	leftAloneFor(leftOtherApp,
+		// The clipboard tools the game runs, and the arguments it gives them.
+		"ui.clipboard.clipboardCommands.02", "ui.clipboard.clipboardCommands.03",
+		"ui.clipboard.clipboardCommands.04", "ui.clipboard.clipboardCommands.05",
 	)
 	leftAloneFor(leftCommand,
 		"ui.input.cmdTrade.01",                                                 // "trade " and the word the player typed after it

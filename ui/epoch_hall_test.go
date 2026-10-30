@@ -1,12 +1,15 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -322,5 +325,77 @@ func TestEpochHallTilesShareAHeightAndTheBarSitsInside(t *testing.T) {
 		if !strings.ContainsAny(lines[bottom-1], "━╌") {
 			t.Errorf("%v: no progress bar just above the border: %q", dim, lines[bottom-1])
 		}
+	}
+}
+
+func TestEpochHallCardKey(t *testing.T) {
+	var made int
+	now := time.Unix(1000, 0)
+	var res epochCardResult
+	var cerr error
+	h := &epochHall{
+		now:   func() time.Time { return now },
+		state: func() game.GameState { return game.GameState{} },
+		card: func(game.GameState) (epochCardResult, error) {
+			made++
+			return res, cerr
+		},
+	}
+	press := func(r rune) bool { return h.handleKey(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone)) }
+
+	res = epochCardResult{Path: "/x/epoch-card.txt", Copied: true}
+	if !press('c') || made != 1 {
+		t.Fatalf("c did not make the card (made %d)", made)
+	}
+	if got := h.notice(); got != "Card copied. Paste it into Discord." {
+		t.Errorf("copied notice = %q", got)
+	}
+	now = now.Add(hallNoteFor + time.Second)
+	if h.notice() != "" {
+		t.Error("the notice did not expire")
+	}
+
+	res = epochCardResult{Path: "/x/epoch-card.txt"}
+	press('c')
+	if got := h.notice(); got != "Card saved to /x/epoch-card.txt." {
+		t.Errorf("file-only notice = %q", got)
+	}
+	if !press('x') || h.notice() != "" {
+		t.Error("the next key did not clear the notice")
+	}
+	if press('x') {
+		t.Error("an idle key was taken")
+	}
+
+	cerr = errors.New("Could not save the card: disk full.")
+	press('c')
+	if h.notice() != cerr.Error() {
+		t.Errorf("error notice = %q", h.notice())
+	}
+}
+
+func TestMakeEpochCardClipboard(t *testing.T) {
+	defer game.SetDataDirForTest(t.TempDir())()
+	st := game.NewGameEngine().GetState()
+	var got string
+	res, err := makeEpochCard(st, func(s string) error { got = s; return nil })
+	if err != nil || !res.Copied {
+		t.Fatalf("copy ok: %+v, %v", res, err)
+	}
+	if file, _ := os.ReadFile(res.Path); string(file) != got || got == "" {
+		t.Error("the file and the clipboard differ")
+	}
+	res, err = makeEpochCard(st, func(string) error { return errNoClipboard })
+	if err != nil || res.Copied || res.Path == "" {
+		t.Errorf("clipboard failing: %+v, %v", res, err)
+	}
+}
+
+func TestCopyWithPbcopy(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		t.Skip("pbcopy is macOS")
+	}
+	if err := copyWith([][]string{{"definitely-not-a-tool"}}, "x"); err != errNoClipboard {
+		t.Errorf("missing tool: %v", err)
 	}
 }

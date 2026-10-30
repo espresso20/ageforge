@@ -2908,15 +2908,14 @@ func cmdEpoch(args []string, engine *game.GameEngine) CommandResult {
 		return panelReply("epoch")
 	}
 	if strings.ToLower(args[0]) != "card" || len(args) > 1 {
-		return infoReply(vibe.Line("ui.epoch_card.cmdEpoch.01", "Usage: epoch (opens the Epoch screen), or epoch card (saves a card to paste into Discord)"))
+		return infoReply(vibe.Line("ui.epoch_card.cmdEpoch.01", "Usage: epoch (opens the Epoch screen), or epoch card (copies a card to paste into Discord)"))
 	}
-	dir := game.DataDir()
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return errorReply(vibe.Line("ui.epoch_card.cmdEpoch.02", "Could not create the data folder: ") + shortIOError(err) + ".")
+	res, err := makeEpochCard(engine.GetState(), copyToClipboard)
+	if err != nil {
+		return errorReply(err.Error())
 	}
-	path := filepath.Join(dir, epochCardFile)
-	if err := os.WriteFile(path, []byte(epochCardText(engine.GetState())), 0644); err != nil {
-		return errorReply(vibe.Line("ui.epoch_card.cmdEpoch.03", "Could not save the card: ") + shortIOError(err) + ".")
+	if res.Copied {
+		return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.05", "Copied your epoch card to the clipboard (also saved to %s). Paste it into Discord.", res.Path), Type: "success"}
 	}
-	return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.04", "Saved your epoch card to %s. Paste its contents into Discord.", path), Type: "success"}
+	return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.04", "Saved your epoch card to %s. Paste its contents into Discord.", res.Path), Type: "success"}
 }

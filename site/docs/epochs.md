@@ -120,7 +120,7 @@ Type `epoch` to open the Epoch screen, a full-screen page to show off your run. 
 - Ages: a centered track. Finished ages are filled blocks in the epoch's color, the one you are in is lit (and pulses when Motion is on), and the next is an outline. An age you have not seen is counted ("3 more to come"), not named.
 - Top badges: your five rarest earned badges as cards, each with its emblem, a border in its rarity color, its name and its rarity. With fewer than five it shows what you have, and with none it says so.
 - Feats: catastrophes met, how each harbinger ended, milestones reached and your fastest age, each with a colored icon.
-- A centered hint about the epoch card closes the page.
+- A centered hint closes the page: press `c` to copy a card for Discord.
 
 The blocks spread across a wide terminal up to about 190 columns and stay centered beyond that. With Motion off the page is a still, with a monochrome theme it has no color but keeps its boxes, and the plain glyph setting draws plain ASCII boxes and letters.
 
@@ -128,7 +128,7 @@ On a small terminal the sections stack and the page scrolls.
 
 ### The Discord card
 
-Type `epoch card` to save a plain-text card of the front page, about 60 columns wide with no color codes and wrapped in a code fence, as `epoch-card.txt` in your account's data folder next to your saves. The reply gives the path. Paste the file's contents into Discord. The card never names an age you have not seen.
+Press `c` on the Epoch screen, or type `epoch card`, to copy a plain-text card of the front page, about 60 columns wide with no color codes and wrapped in a code fence, to your clipboard. It is always saved too, as `epoch-card.txt` in your account's data folder next to your saves. A line on the screen says "Card copied" or, when the system has no clipboard tool (over SSH, say), gives the path of the saved file. Paste the card into Discord. The card never names an age you have not seen.
 
 ### The details page
 

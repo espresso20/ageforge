@@ -1,7 +1,10 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -95,4 +98,31 @@ func epochCardText(state game.GameState) string {
 	}
 	add("", rule)
 	return "```\n" + strings.Join(lines, "\n") + "\n```\n"
+}
+
+// epochCardResult is what making the card did: the file it was saved to
+// and whether the clipboard took it too.
+type epochCardResult struct {
+	Path   string
+	Copied bool
+}
+
+// makeEpochCard saves the card for a state to the data folder and then puts
+// it on the clipboard with copy (nil skips the clipboard). A clipboard that
+// fails is not an error: the file is the fallback, and Copied says false.
+func makeEpochCard(state game.GameState, copy func(string) error) (epochCardResult, error) {
+	dir := game.DataDir()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return epochCardResult{}, errors.New(vibe.Line("ui.epoch_card.cmdEpoch.02", "Could not create the data folder: ") + shortIOError(err) + ".")
+	}
+	card := epochCardText(state)
+	path := filepath.Join(dir, epochCardFile)
+	if err := os.WriteFile(path, []byte(card), 0644); err != nil {
+		return epochCardResult{}, errors.New(vibe.Line("ui.epoch_card.cmdEpoch.03", "Could not save the card: ") + shortIOError(err) + ".")
+	}
+	res := epochCardResult{Path: path}
+	if copy != nil && copy(card) == nil {
+		res.Copied = true
+	}
+	return res, nil
 }
