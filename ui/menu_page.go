@@ -317,7 +317,7 @@ func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *m
 	town.draw(g, pal, 0, L.top, L.landW, L.h-L.top, mf, sc.strike > 0.45)
 	sc.sparks.draw(g, pal)
 	drawWordmark(g, pal, L.wx, L.wy, L.sx, sc.t, sc.strike, 0.5, v.plain)
-	if tag := fitOption([]string{" " + numberWords(v.ages) + vibe.Line("ui.menu_page.renderTown.01", " ages, one terminal ")}, L.w); tag != "" {
+	if tag := fitOption([]string{menuTagline(v.ages)}, L.w); tag != "" {
 		g.textOn(centred(L.w, runeLen(tag)), L.tag, tag, pal.ink, pal.bg, false)
 	}
 
@@ -341,6 +341,14 @@ func (sc *menuScene) renderTown(g *mGrid, pal *menuPalette, v *menuView, town *m
 		g.textOn(L.w-2-runeLen(hint), L.cap, hint, pal.groundDim, pal.ground, false)
 	}
 }
+
+// txtOneTerminal ends the line under the town page's wordmark. The README
+// banner (BannerImage) says it too, so it has one id.
+var txtOneTerminal = vibe.E("ui.menu_page.renderTown.01", " ages, one terminal ")
+
+// menuTagline is the line under the town page's wordmark, a blank at each
+// end so it stands on a ground of its own.
+func menuTagline(ages int) string { return " " + numberWords(ages) + txtOneTerminal.String() }
 
 // spacedOptions puts a blank on each side of every option, so text on a
 // border or on the land has air round it.

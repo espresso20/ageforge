@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet validate smoke all release release-patch release-minor release-major commit
+.PHONY: banner build run clean check test vet validate smoke all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
@@ -50,6 +50,12 @@ smoke:
 # Run the game
 run: build
 	@./ageforge
+
+# Generate the README banner PNG
+banner:
+	@echo "\033[0;36m[ageforge]\033[0m Generating banner PNG..."
+	@go run ./cmd/bannerpng
+	@echo "\033[0;32m[  OK  ]\033[0m Banner generated to docs/banner.png"
 
 # Clean build artifacts
 clean:

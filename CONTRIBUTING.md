@@ -24,6 +24,7 @@ make check        # build + vet + config validation
 make test         # build + vet + full test suite (formatted output)
 make test-raw     # build + vet + tests (raw go test -v, for CI/piping)
 make run          # build + run the game
+make banner       # redraw docs/banner.png from the menu's wordmark
 make clean        # remove binary
 make commit       # interactive conventional commit (see below)
 make release-patch   # bump patch version, update CHANGELOG, tag, push
@@ -32,6 +33,8 @@ make release-major   # bump major version, update CHANGELOG, tag, push
 ```
 
 What CI checks beyond the tests (security scans, linters, prose rules, benchmarks, release builds), how to run each one locally, and how to quiet a false positive: [docs/ci.md](docs/ci.md).
+
+The README banner, `docs/banner.png`, is drawn from the main menu's own wordmark and colours by `cmd/bannerpng`. After changing the wordmark, the Forge theme or the line under it, run `make banner` (or `go run ./cmd/bannerpng`) and commit the new PNG.
 
 ---
 

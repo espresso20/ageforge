@@ -1,10 +1,8 @@
 <p align="center">
   <a href="https://ageforge.io">
-    <img src="https://raw.githubusercontent.com/espresso20/ageforge/master/ageforge-3.png" alt="AgeForge" width="200">
+    <img src="docs/banner.png" alt="AgeForge" width="100%">
   </a>
 </p>
-
-<h1 align="center">AgeForge</h1>
 
 <p align="center">
   <em>Forge a civilization from nothing, all within your terminal.</em>
