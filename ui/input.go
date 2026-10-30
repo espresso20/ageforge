@@ -309,9 +309,9 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	}
 	switch {
 	case bs.WonderBankFull && bs.NeedsTech != "":
-		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.06", "\n[yellow]Bank full. Research %s, then type 'build %s' to start construction.[-]", game.TechName(bs.NeedsTech), curWonder.key))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.06", "\n[yellow]Bank full. Research %s, then type 'build %s' to start construction.[-]", game.TechName(bs.NeedsTech), state.Ruleset().Typed(rules.KindBuilding, curWonder.key)))
 	case bs.WonderBankFull:
-		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.07", "\n[green]Bank full. Type 'build %s' to start construction.[-]", curWonder.key))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.07", "\n[green]Bank full. Type 'build %s' to start construction.[-]", state.Ruleset().Typed(rules.KindBuilding, curWonder.key)))
 	default:
 		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.08", "\n[gray]Bank resources with 'wonder collect <resource|all> [amount|all|max]'.[-]"))
 	}

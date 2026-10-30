@@ -561,9 +561,9 @@ func (ge *GameEngine) techLockErr(def config.BuildingDef) error {
 // or research its keystone tech first when that is still to come.
 func (ge *GameEngine) wonderNextStep(key string) string {
 	if ge.Buildings.TechLocked(key) {
-		return vibe.Sprintf("game.engine.wonderNextStep.01", "Research %s, then type 'build %s' to start construction.", ge.techName(ge.Buildings.defs[key].RequiredTech), key)
+		return vibe.Sprintf("game.engine.wonderNextStep.01", "Research %s, then type 'build %s' to start construction.", ge.techName(ge.Buildings.defs[key].RequiredTech), ge.rules.Typed(rules.KindBuilding, key))
 	}
-	return vibe.Sprintf("game.engine.wonderNextStep.02", "Type 'build %s' to start construction.", key)
+	return vibe.Sprintf("game.engine.wonderNextStep.02", "Type 'build %s' to start construction.", ge.rules.Typed(rules.KindBuilding, key))
 }
 
 // techName is a tech's display name (its key if it has no def).
@@ -3256,9 +3256,9 @@ func (ge *GameEngine) AdvanceAge() error {
 			if wonderKey != "" && ge.Buildings.GetCount(wonderKey) < 1 {
 				if def, ok := ge.Buildings.defs[wonderKey]; ok {
 					if ge.Buildings.TechLocked(wonderKey) {
-						return vibe.Errorf("game.engine.AdvanceAge.01", "Build the %s wonder before advancing: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, ge.techName(def.RequiredTech), wonderKey)
+						return vibe.Errorf("game.engine.AdvanceAge.01", "Build the %s wonder before advancing: research %s, its keystone, bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, ge.techName(def.RequiredTech), ge.rules.Typed(rules.KindBuilding, wonderKey))
 					}
-					return vibe.Errorf("game.engine.AdvanceAge.02", "Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, wonderKey)
+					return vibe.Errorf("game.engine.AdvanceAge.02", "Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'. Type 'charter' to see everything the advance needs.", def.Name, ge.rules.Typed(rules.KindBuilding, wonderKey))
 				}
 			}
 			return vibe.Errorf("game.engine.AdvanceAge.05", "Not ready to advance. The bar at the top lists what it is waiting on. Type 'charter' to see everything the advance needs.")
