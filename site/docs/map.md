@@ -137,7 +137,9 @@ The Space Age looks down on your planet from orbit. The planet is a small disc i
 
 The Interstellar Age pulls back to the solar system. The sun sits in the middle with the planets on their orbits and the lanes between them. Your buildings are marks along the orbits, in the order your people reached them, and ships travel the lanes.
 
-The last three ages, the Galactic, the Quantum and the Transcendent, pull back to a star map. The sky is full of stars, the systems your people have reached are joined by routes, and the region your buildings reach glows round them and grows as you build. Your wonders stand as landmarks beside the systems, and fleets move along the routes.
+The last three ages, the Galactic, the Quantum and the Transcendent, pull back to a spiral galaxy of arms, dust and a bright core, different for every save. Your civilization is territory on it: each kind of building has its own sector along your home arm, a hub with a cluster of systems that grows as you build, and a faint border runs round the lot. Lanes join the hubs, thicker where more traffic runs, and the civilizations you have met hold clusters of their own on the other arms, in the color of how they stand toward you. A harbinger opens a red rift at the edge. Your wonders stand as bright stars beside the systems.
+
+The sky is alive. Stars twinkle, a comet crosses every so often, a star goes nova now and then, the dust shimmers in the whole-galaxy view, and the hubs and the core slowly breathe. The Quantum Age adds a few ghost systems that flicker in and out at the edge of your territory, and the Transcendent Age rings your home sectors with a halo of small circles. With `motion` off the sky is held still, and the picture is whole.
 
 `Home` takes the cursor to the middle of the picture, and `PgUp` and `PgDn` switch between the whole picture and a closer view.
 

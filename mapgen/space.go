@@ -36,6 +36,9 @@ func (f *frame) paintGalaxy() {
 		if f.close && c.R == '∙' && (f.anim/9+x*7+y*13)%5 == 0 {
 			c.R = '·' // and the dim ones of the close sky blink down a step
 		}
+		if !f.close {
+			c = f.breatheSky(x, y, c)
+		}
 		f.g.paint(x, y, c)
 		f.g.mark(x, y, thing)
 	}
@@ -108,7 +111,7 @@ func (f *frame) paintRelics() {
 			f.g.draw(p.X, p.Y, '★', P(HGold, 255))
 			f.g.mark(p.X, p.Y, Thing{Kind: KindWonder, Key: w.Key})
 			f.targets = append(f.targets, p)
-			if !f.close || f.st.Scale != Stars { // the star needs no box of light on plain space
+			if f.st.Scale != Stars { // a star on the star map needs no box of light
 				f.lights = append(f.lights, p)
 			}
 			break
@@ -127,4 +130,17 @@ func (f *frame) relicSpot(age, try int) Pt {
 		return home[roll(len(home), seed, 20, int64(age), int64(try))]
 	}
 	return Pt{c.X - 12 + roll(25, seed, 21, int64(age), int64(try)), c.Y - 5 + roll(11, seed, 22, int64(age), int64(try))}
+}
+
+// breatheSky is the overview's slow life: the core swelling and fading and the
+// glow of the dust shimmering, each place at its own phase.
+func (f *frame) breatheSky(x, y int, c Cell) Cell {
+	switch w := int(c.Bg.Weight); {
+	case c.Bg.Hue == HCore:
+		c.Bg = P(HCore, w-w*tri(f.anim/4, 12)/60) // up to a fifth down, over about twelve seconds
+	case c.Bg.Hue == HNebula && w > 18:
+		ph := int(hash(f.m.Seed, 64, int64(x/3), int64(y/2)) % 24)
+		c.Bg = P(HNebula, w-w*tri(f.anim/5+ph, 12)/48)
+	}
+	return c
 }
