@@ -32,6 +32,7 @@ var scanned = []struct {
 	{"rules", modeCode},
 	{"pkg/textfmt", modeCode},
 	{"game", modeCode},
+	{"presence", modeCode},
 	{"ui", modeCode},
 	{"ui/mapstyle", modeCode},
 	{".", modeCode},

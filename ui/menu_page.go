@@ -42,6 +42,7 @@ const (
 	miSetGlyphs  = "set_glyphs"
 	miSetMotion  = "set_motion"
 	miSetMinimap = "set_minimap"
+	miSetDiscord = "set_discord"
 	miSetBack    = "set_back"
 )
 

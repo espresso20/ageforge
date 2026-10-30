@@ -5,8 +5,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/presence"
 	"github.com/espresso20/ageforge/ui"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -39,6 +41,11 @@ func main() {
 
 	app := ui.NewApp(engine, version)
 
+	// Discord Rich Presence: off unless the build carries an application id. It follows
+	// the menu and the game by reading the engine on its own goroutine.
+	status := presence.Start(presence.Options{AppID: presence.AppID, Activity: presence.Provider(engine, time.Now())})
+	app.OnDiscordChange(status.Refresh)
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go exitOnSignal(sigs, engine, app.Stop)
@@ -46,6 +53,7 @@ func main() {
 	// Run blocks until the player leaves by any route: the menu's Quit, the quit command,
 	// Ctrl+C (a key to the terminal, not a signal) or a signal.
 	err := app.Run()
+	status.Close()
 	leave(engine)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

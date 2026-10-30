@@ -15,6 +15,7 @@ type App struct {
 	engine    *game.GameEngine
 	dashboard *Dashboard
 	version   string
+	menu      *mainMenu
 	screenSet bool // a (theme-wrapped) screen is installed; Run won't open the terminal
 }
 
@@ -67,6 +68,7 @@ func (a *App) setup() {
 	})
 
 	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.version)
+	a.menu, _ = splash.(*mainMenu)
 
 	a.pages.AddPage("splash", splash, true, true)
 	a.pages.AddPage("dashboard", a.dashboard.Root(), true, false)
@@ -93,6 +95,14 @@ func (a *App) setup() {
 			// (the theming design §6). Re-resolve from the freshly-wired account.
 			applyAccountTheme(a.engine)
 		})
+	}
+}
+
+// OnDiscordChange sets what is called when the player changes the Discord status setting,
+// so the status can follow at once.
+func (a *App) OnDiscordChange(fn func()) {
+	if a.menu != nil {
+		a.menu.onDiscord = fn
 	}
 }
 

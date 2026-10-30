@@ -2336,3 +2336,6 @@ ui.epoch_hall.hallFrontText.08,Type epoch card to save a card you can paste into
 ui.epoch_hall.hallFrontText.09,next: %s
 ui.help.commands.epoch,Open the Epoch screen and gloat
 ui.help.commands.epoch.2,Save a plain-text card of your epoch to paste into Discord
+presence.MenuActivity.01,Chilling in the menu
+presence.FromState.03, · Prestige %d no cap
+ui.menu.settings.08,Discord flex

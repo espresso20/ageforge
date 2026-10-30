@@ -179,6 +179,9 @@ type AccountPrefs struct {
 	// Minimap is the dashboard mini map setting: "on", "off", or empty for
 	// the default (on).
 	Minimap string `json:"minimap,omitempty"`
+	// Discord is the Discord status setting: "on", "off", or empty for the
+	// default (on).
+	Discord string `json:"discord,omitempty"`
 }
 
 // Account is the per-player identity + meta-progression record, persisted to the active
@@ -948,6 +951,22 @@ func (a *Account) SetMinimap(on bool) error {
 	})
 }
 
+// DiscordOn reports whether the run is shown on the player's Discord profile
+// (while Discord runs). It is on until the player turns it off.
+func (a *Account) DiscordOn() bool {
+	return a.readPrefs().Discord != "off"
+}
+
+// SetDiscord persists the Discord status setting.
+func (a *Account) SetDiscord(on bool) error {
+	return a.editPrefs(func(p *AccountPrefs) {
+		p.Discord = "off"
+		if on {
+			p.Discord = "on"
+		}
+	})
+}
+
 // SetMapIconsHintShown records that the one-time icons hint was shown.
 func (a *Account) SetMapIconsHintShown() error {
 	if _, shown := a.MapPrefs(); shown {
@@ -1393,6 +1412,7 @@ func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
 	p.ActiveTheme = cmp.Or(p.ActiveTheme, exp.Prefs.ActiveTheme)
 	p.MapGlyphs = cmp.Or(p.MapGlyphs, exp.Prefs.MapGlyphs)
 	p.Minimap = cmp.Or(p.Minimap, exp.Prefs.Minimap)
+	p.Discord = cmp.Or(p.Discord, exp.Prefs.Discord)
 	p.MapIconsHint = p.MapIconsHint || exp.Prefs.MapIconsHint
 }
 

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/espresso20/ageforge/presence"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -84,6 +85,8 @@ type mainMenu struct {
 	town                    *menuTown
 	set                     mapSettings
 	acct                    *game.Account
+	appID                   string // the Discord application id; the Discord row shows only when it is set
+	onDiscord               func() // called after the Discord status setting changes
 	read                    string // what refresh last read from (fingerprint)
 	eliteAt                 int    // which of eliteLines is shown, picked when the menu opens (-1: none)
 	update                  bool   // a newer version is out
@@ -139,7 +142,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) *mainMenu {
 	m := &mainMenu{
 		Box: tview.NewBox(), app: app, pages: pages, engine: engine, version: currentVersion,
-		now: time.Now, active: true,
+		now: time.Now, active: true, appID: presence.AppID,
 		eliteAt: rand.Intn(len(eliteLines)),
 	}
 	m.start = m.now()
@@ -570,7 +573,7 @@ func (m *mainMenu) open(id string) {
 		page := CreateThemePickerPage(m.app, m.pages, m.engine, "splash")
 		m.pages.AddPage(themePickerPage, page, true, true)
 		m.app.SetFocus(page)
-	case miSetVibe, miSetGlyphs, miSetMotion, miSetMinimap:
+	case miSetVibe, miSetGlyphs, miSetMotion, miSetMinimap, miSetDiscord:
 		m.changeSetting(id, 1)
 	case miSetBack:
 		m.closeSettings()
