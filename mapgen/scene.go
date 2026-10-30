@@ -28,9 +28,13 @@ type Scene struct {
 // whole town).
 type Moment struct {
 	Anim, Visit int
-	Fresh       bool
-	District    string
-	Close       bool // finer than the overview: the star map shows its territory on plain dark space
+	// Clock is the world's clock while the picture is held still (Anim held):
+	// the dinosaurs on the map at that frame stand where they are in their walk.
+	// 0 means the same as Anim.
+	Clock    int
+	Fresh    bool
+	District string
+	Close    bool // finer than the overview: the star map shows its territory on plain dark space
 }
 
 // Draw draws the whole world at animation frame anim.
@@ -42,6 +46,7 @@ func (gen *Generator) Draw(m *mapmodel.Model, anim int) *Scene {
 func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	f := gen.frame(m, at.Anim)
 	f.visit, f.fresh, f.district, f.close = at.Visit, at.Fresh, at.District, at.Close
+	f.clock = at.Clock
 	f.draw()
 	c := f.plan.Centre
 	slices.SortStableFunc(f.targets, func(a, b Pt) int {

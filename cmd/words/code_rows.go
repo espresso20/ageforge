@@ -30,6 +30,10 @@ const (
 	whyArt      = "art or a map glyph, not words"
 )
 
+// numberSuffix is a number with a unit tacked on, as a decade reads: "%ds". Only a text the code
+// already tells through a vibe call counts, so a duration ("%ds") stays out.
+var numberSuffix = regexp.MustCompile(`^%d[a-z]+$`)
+
 // keyish matches a single token that reads as a key: lower case, digits and
 // the punctuation keys are written with. capsKey is the same in capitals
 // with a digit or an underscore in it ("UTF-8", "TERM_PROGRAM"): a word in
@@ -184,7 +188,7 @@ func (cr *codeReader) read(u *unit) (*row, string) {
 	if u.vibeKey {
 		return nil, whyKey // the row id of a vibe call
 	}
-	if !hasWord(u.text) {
+	if !hasWord(u.text) && !(u.vibeID != "" && numberSuffix.MatchString(u.text)) {
 		return nil, whyNoWords
 	}
 	for _, marker := range cr.c.rules.readBack {

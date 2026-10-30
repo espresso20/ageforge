@@ -21,7 +21,7 @@ import (
 // figures, the ages done and ahead, the account's five rarest badges and the
 // feats the game already keeps. Tab turns to the details page, which is the
 // panel this screen replaced (epochProvider). The Discord card (epoch_card.go)
-// is the same facts as plain text.
+// is a picture of this page.
 //
 // Everything here follows the no-leak rule of the old panel: an age the
 // player has not seen is counted, never named.
@@ -38,6 +38,49 @@ type epochHall struct {
 	// clock. Either may be nil: still, and the wall clock.
 	motion func() bool
 	now    func() time.Time
+	// state is the game as the picture reads it, and card makes the card (the
+	// dashboard gives makeEpochCard with the real clipboard; tests give their
+	// own). Either may be nil, and then c does nothing.
+	state func() game.GameState
+	card  func(game.GameState) (epochCardResult, error)
+	// note is the line the last card left on the foot, until noteUntil.
+	note      string
+	noteUntil time.Time
+}
+
+// hallNoteFor is how long the card's confirmation stays on the foot.
+const hallNoteFor = 5 * time.Second
+
+func (h *epochHall) clock() time.Time {
+	if h.now != nil {
+		return h.now()
+	}
+	return time.Now()
+}
+
+// notice is the confirmation line for the foot, "" once it has gone.
+func (h *epochHall) notice() string {
+	if h.note == "" || !h.clock().Before(h.noteUntil) {
+		return ""
+	}
+	return h.note
+}
+
+// makeCard is the c key: save the card, copy it, and say which on the foot.
+func (h *epochHall) makeCard() {
+	if h.state == nil || h.card == nil {
+		return
+	}
+	res, err := h.card(h.state())
+	switch {
+	case err != nil:
+		h.note = err.Error()
+	case res.Copied:
+		h.note = vibe.Line("ui.epoch_hall.makeCard.01", "Picture copied. Paste it into Discord.")
+	default:
+		h.note = vibe.Sprintf("ui.epoch_hall.makeCard.02", "Picture saved to %s.", res.Path)
+	}
+	h.noteUntil = h.clock().Add(hallNoteFor)
 }
 
 // open starts the screen on the front page.
@@ -49,8 +92,14 @@ func (h *epochHall) back() bool { return false }
 // handleKey turns the page on Tab and reports whether it took the key; the
 // rest (scrolling) is the text view's.
 func (h *epochHall) handleKey(ev *tcell.EventKey) bool {
+	had := h.note != ""
+	h.note = ""
+	if ev.Key() == tcell.KeyRune && (ev.Rune() == 'c' || ev.Rune() == 'C') {
+		h.makeCard()
+		return true
+	}
 	if ev.Key() != tcell.KeyTab && ev.Key() != tcell.KeyBacktab {
-		return false
+		return had
 	}
 	h.details = !h.details
 	return true
@@ -328,18 +377,24 @@ func hallFrontText(state game.GameState, screenW, rows int, tier mapmodel.GlyphT
 // hallFront is the front page at a moment of the clock. Every block is
 // centred as a unit on the width of the screen.
 func hallFront(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion) string {
+	return hallFrontPage(state, screenW, rows, tier, mo, true)
+}
+
+// hallFrontPage is hallFront with or without the line that says which key
+// copies the picture (the picture itself leaves it out).
+func hallFrontPage(state game.GameState, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, hint bool) string {
 	v := newHallView(state)
-	c := hallCompose(v, screenW, rows, tier, mo, 1)
+	c := hallCompose(v, screenW, rows, tier, mo, 1, hint)
 	// On a tall screen the page sits a little below the top, not hard
 	// against it, with the stars all round.
 	if spare := rows - 4 - c.end; spare > 3 {
-		c = hallCompose(v, screenW, rows, tier, mo, 1+min(spare/3, 10))
+		c = hallCompose(v, screenW, rows, tier, mo, 1+min(spare/3, 10), hint)
 	}
 	return c.render()
 }
 
 // hallCompose lays the page out with its banner starting at row top.
-func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, top int) *hallCtx {
+func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hallMotion, top int, hint bool) *hallCtx {
 	w := overlayTextWidth(screenW)
 	c := newHallCtx(w, rows, tier, mo)
 	stops := c.epochInks(v.order)
@@ -373,7 +428,9 @@ func hallCompose(v hallView, screenW, rows int, tier mapmodel.GlyphTier, mo hall
 	c.heading(vibe.Line("ui.epoch_hall.hallFrontText.06", "Feats"))
 	c.feats(v)
 
-	c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.08", "Type epoch card to save a card you can paste into Discord."), c.role(theme.RoleDim))
+	if hint {
+		c.paragraph(vibe.Line("ui.epoch_hall.hallFrontText.08", "Press c to copy a picture for Discord."), c.role(theme.RoleDim))
+	}
 	c.end = c.y
 	c.sky(v.seed)
 	return c

@@ -2,9 +2,12 @@ package rules
 
 import (
 	"maps"
+	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // Kind says what a key names, for Name.
@@ -114,3 +117,86 @@ func (s *Set) buildCounts() {
 // buildings, technologies and so on the set defines, keyed by the Count
 // constants.
 func (s *Set) Counts() map[string]int { return maps.Clone(s.counts) }
+
+// Slug is a name the way it is typed at the command line: lower case, every
+// run of anything but letters and digits one underscore ("Crash Pad" is
+// "crash_pad"), the same shape as the config keys.
+func Slug(name string) string {
+	var b strings.Builder
+	gap := false
+	for _, r := range strings.ToLower(name) {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			if gap && b.Len() > 0 {
+				b.WriteByte('_')
+			}
+			gap = false
+			b.WriteRune(r)
+			continue
+		}
+		gap = true
+	}
+	return b.String()
+}
+
+// Typed is what a player types for key while VibeMode is on: the slug of the
+// name the screen shows. With VibeMode off, or for a key the set has no name
+// for, it is the key as it is.
+func (s *Set) Typed(kind Kind, key string) string {
+	if s == nil || !vibe.On() || kind >= numKinds {
+		return key
+	}
+	if n := s.names[kind][key]; n != "" {
+		if t := Slug(n); t != "" {
+			return t
+		}
+	}
+	return key
+}
+
+// KeyFor reads what a player typed for a thing of kind: the key, the slug of
+// the name this set shows, or the slug of the plain name. With prefix, a word
+// that starts a name's slug and no other's ("crash" for "Crash Pad") names
+// it too. ok is false when nothing fits, or when a prefix fits two.
+func (s *Set) KeyFor(kind Kind, typed string, prefix bool) (key string, ok bool) {
+	if kind >= numKinds {
+		return "", false
+	}
+	t := Slug(typed)
+	if t == "" {
+		return "", false
+	}
+	if _, isKey := s.names[kind][t]; isKey {
+		return t, true
+	}
+	sets := []*Set{s}
+	if plain := plainCore.get(); plain != s {
+		sets = append(sets, plain)
+	}
+	keys := make([]string, 0, len(s.names[kind]))
+	for k := range s.names[kind] {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, set := range sets {
+		for _, k := range keys {
+			if Slug(set.names[kind][k]) == t {
+				return k, true
+			}
+		}
+	}
+	if !prefix {
+		return "", false
+	}
+	found := ""
+	for _, set := range sets {
+		for _, k := range keys {
+			if strings.HasPrefix(Slug(set.names[kind][k]), t+"_") && k != found {
+				if found != "" {
+					return "", false
+				}
+				found = k
+			}
+		}
+	}
+	return found, found != ""
+}

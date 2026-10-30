@@ -36,6 +36,9 @@ type overlayEntry struct {
 	// footer, when set, is the keys on the panel's foot in place of the
 	// scrolling ones (SetFooter).
 	footer func() [][2]string
+	// notice, when set, is a line that takes the foot's place while it is not
+	// empty (SetNotice).
+	notice func() string
 }
 
 // widgetEntry backs an overlay whose content is any tview.Primitive (e.g. a custom
@@ -118,6 +121,12 @@ func (om *OverlayManager) Register(name string, title vibe.Entry, provide Overla
 	entry := &overlayEntry{title: title, tv: tv, frame: frame, provide: provide}
 	frame.keys = func() [][2]string { return om.footerKeys(entry) }
 	frame.hint = func() string { return om.typeHint(entry) }
+	frame.notice = func() string {
+		if entry.notice == nil {
+			return ""
+		}
+		return entry.notice()
+	}
 	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			if entry.back != nil && entry.back() {
@@ -192,6 +201,14 @@ func (om *OverlayManager) scrollKey(ev *tcell.EventKey, prompt string) bool {
 func (om *OverlayManager) SetFooter(name string, keys func() [][2]string) {
 	if e, ok := om.entries[name]; ok {
 		e.footer = keys
+	}
+}
+
+// SetNotice gives the named text overlay a line for its foot (see
+// overlayEntry.notice). Unknown names are ignored.
+func (om *OverlayManager) SetNotice(name string, notice func() string) {
+	if e, ok := om.entries[name]; ok {
+		e.notice = notice
 	}
 }
 

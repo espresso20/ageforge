@@ -1,12 +1,15 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
+	"image/png"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -114,38 +117,22 @@ func TestEpochHallTabSwitchesPages(t *testing.T) {
 	}
 }
 
-func TestEpochCard(t *testing.T) {
-	late := lateHallState(t, "galactic_age")
-	card := epochCardText(late)
-	if !strings.HasPrefix(card, "```\n") || !strings.HasSuffix(card, "```\n") {
-		t.Errorf("card is not fenced:\n%s", card)
-	}
-	wantAll(t, "card", card, "Highlights", "Ages", "Top badges", "Feats", "Legend Four", "Done:", "Now:", "Ahead:", "more to come")
-	if cardTagRe.MatchString(card) {
-		t.Errorf("card holds color tags:\n%s", card)
-	}
-	for _, l := range strings.Split(card, "\n") {
-		if n := runeLen(l); n > epochCardWidth {
-			t.Errorf("line is %d wide: %q", n, l)
-		}
-	}
-	for _, a := range unseenAges(late) {
-		if strings.Contains(card, a) {
-			t.Errorf("card names the unseen age %q", a)
-		}
-	}
-}
-
-func TestEpochCardCommandWritesFile(t *testing.T) {
-	dir := t.TempDir()
-	defer game.SetDataDirForTest(dir)()
+func TestEpochCardCommandAsksTheDashboard(t *testing.T) {
 	engine := game.NewGameEngine()
-	res := HandleCommand("epoch card", engine)
-	if res.Type != "success" || !strings.Contains(res.Message, "epoch-card.txt") {
+	if res := HandleCommand("epoch card", engine); !res.EpochCard {
 		t.Fatalf("reply = %+v", res)
 	}
 	if res := HandleCommand("epoch", engine); res.OverlayName != "epoch" {
 		t.Errorf("bare epoch should open the screen: %+v", res)
+	}
+	if res := epochCardReply(epochCardResult{Path: "/x/epoch-card.png", Copied: true}, nil); res.Type != "success" || !strings.Contains(res.Message, "/x/epoch-card.png") {
+		t.Errorf("copied reply = %+v", res)
+	}
+	if res := epochCardReply(epochCardResult{Path: "/x/epoch-card.png"}, nil); res.Type != "success" || !strings.Contains(res.Message, "saved") {
+		t.Errorf("saved reply = %+v", res)
+	}
+	if res := epochCardReply(epochCardResult{}, errors.New("no")); res.Type != "error" {
+		t.Errorf("error reply = %+v", res)
 	}
 }
 
@@ -322,5 +309,126 @@ func TestEpochHallTilesShareAHeightAndTheBarSitsInside(t *testing.T) {
 		if !strings.ContainsAny(lines[bottom-1], "━╌") {
 			t.Errorf("%v: no progress bar just above the border: %q", dim, lines[bottom-1])
 		}
+	}
+}
+
+func TestEpochHallCardKey(t *testing.T) {
+	var made int
+	now := time.Unix(1000, 0)
+	var res epochCardResult
+	var cerr error
+	h := &epochHall{
+		now:   func() time.Time { return now },
+		state: func() game.GameState { return game.GameState{} },
+		card: func(game.GameState) (epochCardResult, error) {
+			made++
+			return res, cerr
+		},
+	}
+	press := func(r rune) bool { return h.handleKey(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone)) }
+
+	res = epochCardResult{Path: "/x/epoch-card.png", Copied: true}
+	if !press('c') || made != 1 {
+		t.Fatalf("c did not make the card (made %d)", made)
+	}
+	if got := h.notice(); got != "Picture copied. Paste it into Discord." {
+		t.Errorf("copied notice = %q", got)
+	}
+	now = now.Add(hallNoteFor + time.Second)
+	if h.notice() != "" {
+		t.Error("the notice did not expire")
+	}
+
+	res = epochCardResult{Path: "/x/epoch-card.png"}
+	press('c')
+	if got := h.notice(); got != "Picture saved to /x/epoch-card.png." {
+		t.Errorf("file-only notice = %q", got)
+	}
+	if !press('x') || h.notice() != "" {
+		t.Error("the next key did not clear the notice")
+	}
+	if press('x') {
+		t.Error("an idle key was taken")
+	}
+
+	cerr = errors.New("Could not save the picture: disk full.")
+	press('c')
+	if h.notice() != cerr.Error() {
+		t.Errorf("error notice = %q", h.notice())
+	}
+}
+
+func TestMakeEpochCardClipboard(t *testing.T) {
+	defer game.SetDataDirForTest(t.TempDir())()
+	st := game.NewGameEngine().GetState()
+	var got string
+	res, err := makeEpochCard(st, func(path string) error { got = path; return nil })
+	if err != nil || !res.Copied {
+		t.Fatalf("copy ok: %+v, %v", res, err)
+	}
+	if got != res.Path || filepath.Ext(got) != ".png" {
+		t.Errorf("the copier was given %q, the file is %q", got, res.Path)
+	}
+	f, err := os.Open(res.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	img, err := png.Decode(f)
+	if err != nil {
+		t.Fatalf("the file is not a PNG: %v", err)
+	}
+	if b := img.Bounds(); b.Dx() != epochPicCols*shotCellW+2*shotPad || (b.Dy()-2*shotPad)%shotCellH != 0 || b.Dy() < epochPicMinRows*shotCellH {
+		t.Errorf("picture is %v", b)
+	}
+	res, err = makeEpochCard(st, func(string) error { return errNoClipboard })
+	if err != nil || res.Copied || res.Path == "" {
+		t.Errorf("clipboard failing: %+v, %v", res, err)
+	}
+}
+
+func TestClipboardImageCommandsQuoteThePath(t *testing.T) {
+	path := `/Users/a b/it's "x"/epoch-card.png`
+	mac := clipboardImageCommands("darwin", path)[0].argv
+	if mac[0] != "osascript" || !strings.Contains(mac[2], `/Users/a b/it's \"x\"/epoch-card.png`) || !strings.Contains(mac[2], "PNGf") {
+		t.Errorf("macOS command: %q", mac)
+	}
+	win := clipboardImageCommands("windows", path)[0].argv
+	if win[0] != "powershell" || !strings.Contains(win[len(win)-1], `it''s "x"`) {
+		t.Errorf("Windows command: %q", win)
+	}
+	lin := clipboardImageCommands("linux", path)
+	if lin[0].argv[0] != "wl-copy" || !lin[0].stdin || lin[1].argv[0] != "xclip" || lin[1].argv[len(lin[1].argv)-1] != path {
+		t.Errorf("Linux commands: %+v", lin)
+	}
+}
+
+func TestCopyImageWithMissingTool(t *testing.T) {
+	if err := copyImageWith([]imageCommand{{argv: []string{"definitely-not-a-tool"}}}, "x"); err != errNoClipboard {
+		t.Errorf("missing tool: %v", err)
+	}
+}
+
+func TestEpochHallCardKeyHandsTheCopierAPNGPath(t *testing.T) {
+	defer game.SetDataDirForTest(t.TempDir())()
+	var path string
+	var copyErr error
+	now := time.Unix(1000, 0)
+	h := &epochHall{
+		now:   func() time.Time { return now },
+		state: func() game.GameState { return game.NewGameEngine().GetState() },
+		card: func(st game.GameState) (epochCardResult, error) {
+			return makeEpochCard(st, func(p string) error { path = p; return copyErr })
+		},
+	}
+	press := func() { h.handleKey(tcell.NewEventKey(tcell.KeyRune, 'c', tcell.ModNone)) }
+	press()
+	if filepath.Ext(path) != ".png" || h.notice() != "Picture copied. Paste it into Discord." {
+		t.Errorf("path %q, notice %q", path, h.notice())
+	}
+	copyErr = errNoClipboard
+	press()
+	if want := "Picture saved to " + path + "."; h.notice() != want {
+		t.Errorf("notice %q, want %q", h.notice(), want)
 	}
 }

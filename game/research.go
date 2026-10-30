@@ -77,7 +77,7 @@ func (rm *ResearchManager) Rebind(set *rules.Set) {
 // unknownTech is the refusal for a key that is no tech. The hint says where
 // the list of techs is.
 func (rm *ResearchManager) unknownTech(key, hint string) error {
-	return unknownKeyError(vibe.Line("game.research.StartResearch.01", "tech"), key, rm.defs, hint)
+	return unknownKeyError(vibe.Line("game.research.StartResearch.01", "tech"), key, rm.defs, hint, func(k string) string { return rm.rules.Typed(rules.KindTech, k) })
 }
 
 // StartResearch begins researching a technology. A tech can be started

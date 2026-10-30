@@ -257,7 +257,10 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		height: func() int { return d.overlayMgr.screenH },
 		motion: func() bool { return d.mapSettings().Motion },
 	}
+	d.epochHall.state = func() game.GameState { return d.engine.GetState() }
+	d.epochHall.card = func(st game.GameState) (epochCardResult, error) { return makeEpochCard(st, copyImageToClipboard) }
 	d.overlayMgr.Register("epoch", vibe.E("ui.dashboard.NewDashboard.13", "Epoch"), d.epochHall.provider)
+	d.overlayMgr.SetNotice("epoch", d.epochHall.notice)
 	d.overlayMgr.SetOpenHandler("epoch", d.epochHall.open)
 	d.overlayMgr.SetBackHandler("epoch", d.epochHall.back)
 	d.overlayMgr.SetFooter("epoch", d.epochHall.footer)
@@ -1518,6 +1521,9 @@ func (d *Dashboard) submitInput() {
 		return
 	}
 	result := HandleCommand(text, d.engine)
+	if result.EpochCard {
+		result = epochCardReply(d.epochHall.card(d.engine.GetState()))
+	}
 	if result.ToMenu {
 		d.leaveToMenu(result.Message)
 		return

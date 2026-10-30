@@ -7,7 +7,9 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- **Dinosaurs on the Primitive map.** A sauropod, a raptor and a pterodactyl roam the town in the Primitive Age, thinning out as the gate fills, and an asteroid streaks across the sky near the end of the Late Cretaceous. Ambient only.
 - **A Settings page in the main menu.** Settings (`s`) takes the place of Themes. It lists Themes, VibeMode, Map glyphs, Motion and Minimap with their values; `Enter` or `←` and `→` change one, it saves at once like the command, and `Esc` goes back. The commands work as before.
+- **Discord status.** While the Discord desktop app is running, your profile shows "Playing AgeForge" with your age, year, town and epoch. It talks only to the Discord app on your machine, and a Discord status row on the Settings page turns it off.
 - **Epoch card.** `epoch card` saves a plain-text card of your epoch (name, town, age, highlights, ages done, top badges and feats), wrapped in a code fence to paste into Discord, as `epoch-card.txt` next to your saves.
 - **Add from the plan panel.** `A` opens a name box: type part of a building, tech or mission, and `Enter` adds it below the selection (it asks which kind when the name fits several). `+` and `-` change the count of a build or upgrade item.
 - **Plan expeditions.** `plan expedition <mission>` queues a mission from the board. It leaves when its price is covered and a party is at home, and drops out of the plan with a log line if the offer goes. Each plan item now also carries its own time to start, and the whole plan has a finish estimate.
@@ -25,6 +27,8 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- **The epoch card is a picture.** `c` on the Epoch screen (and `epoch card`) now copies a full-color picture of the screen, saved as `epoch-card.png`, in place of the plain-text card.
+- **Deep time and rounded years.** Primitive now begins 100 million years ago and the deep past shows a geologic epoch (Late Cretaceous to Pleistocene) in place of a year; later years are rounded, then read as a decade or a century.
 - **The epoch screen in full colour.** The banner is a gradient in your epoch's colors over stars, the totals are five boxed tiles with big digits in a centered row, the ages are a colored track, and the top badges are rarity-bordered cards. Everything is centered and fills a wide terminal.
 - **The space ages' map is a living galaxy.** The last three ages draw a seeded spiral galaxy with your buildings as sectors on the home arm, lanes between the hubs, rivals on the other arms and a rift for a harbinger. The sky now moves: twinkling stars, a comet, a nova, shimmering dust and a breathing core and hubs, with ghost systems in the Quantum Age and a halo ring in the Transcendent Age. Motion off holds it still. The warm core blotch and the boxes of light round wonder stars are gone, and no ships cross the star map.
 - **The Epoch screen.** `epoch` now opens a full-screen page to show off your run: the epoch name in iron lettering, your highlights, the ages you have finished, your five rarest badges and your feats. `Tab` turns to the old panel as the details page.
@@ -80,6 +84,7 @@ All notable changes to AgeForge are documented here.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 
 ### Fixed
+- **The epoch card reaches your clipboard.** Press `c` on the Epoch screen (or type `epoch card`) to copy the card for Discord. Before, the screen told you to type a command that never got the key. A line on the screen confirms it, and the file is still saved.
 - The Factions panel no longer cuts each civilization's backstory off with "…" about halfway across a wide terminal. It wraps at the panel's real width.
 - **A locked building's needs line.** It no longer lists every missing tech in a made-up order. It says how many techs stand before the one you need and names up to three you can research now.
 - **Maps read in light themes.** Terrain on every map is dark enough to read on a light background.

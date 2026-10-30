@@ -167,7 +167,7 @@ var wordRe = regexp.MustCompile(`\pL[\pL']*\pL|\pL`)
 
 // shortWords are real words and abbreviations with no vowel in them, which
 // would otherwise read as sprite art.
-var shortWords = map[string]bool{"pts": true, "bld": true, "hrs": true, "ctrl": true, "pgdn": true, "vs": true, "tv": true, "dr": true, "mr": true, "st": true, "nd": true, "rd": true, "th": true}
+var shortWords = map[string]bool{"pts": true, "bld": true, "hrs": true, "ctrl": true, "pgdn": true, "vs": true, "tv": true, "dr": true, "mr": true, "st": true, "nd": true, "rd": true, "th": true, "bc": true}
 
 // realWord reports whether a run of letters is a word: two letters or more,
 // a vowel among them (y counts, and so does any non-ASCII letter), and no

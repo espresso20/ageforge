@@ -22,7 +22,7 @@ An account with no game yet sees the forge and a title page, with **New game** f
 | **New game** | `n` | Asks you to name a civilization, then starts it (see [Starting a new game](saving-and-loading.md#starting-a-new-game)) |
 | **Load game** | `l` | Opens the [Load Game browser](saving-and-loading.md#the-load-game-browser), where you can also mark your main game |
 | **Badges** | `b` | Shows how many badges you hold and the title you wear, and opens the [badge case](account.md#the-badge-case). No game needs to be loaded |
-| **Settings** | `s` | Opens a page of display settings, one row each with its value at the right: **Themes** (opens the [theme](themes.md) picker), **VibeMode**, **Map glyphs**, **Motion** and **Minimap**. `Enter` flips a switch, and `←` and `→` step the map glyphs through ascii, unicode and nerd. A change applies and saves at once, as the matching command does. `Esc` returns to the menu |
+| **Settings** | `s` | Opens a page of display settings, one row each with its value at the right: **Themes** (opens the [theme](themes.md) picker), **VibeMode**, **Map glyphs**, **Motion**, **Minimap** and **Discord status** (your age and town on your Discord profile while Discord is running; see [Account settings](account.md#account-settings)). `Enter` flips a switch, and `←` and `→` step the map glyphs through ascii, unicode and nerd. A change applies and saves at once, as the matching command does. `Esc` returns to the menu |
 | **Accounts** | `a` | Opens the [Accounts panel](account.md#the-accounts-panel): switch, create, back up and wipe accounts, and delete an account's saves |
 | **Check for updates** | `u` | Asks for the latest release (see [Updating](getting-started.md#updating)) |
 | **Quit** | `q` | Leaves the game |
@@ -55,7 +55,7 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Bronze Age · Year 2,263 BC · People 906/919 · Morale 54% · Next: Iron Age│  status ribbon
+│ Bronze Age · Year c. 2,300 BC · People 906 · Morale 54% · Next: Iron Age │  status ribbon
 │ Research complete: Bronze Working                                        │  toast line
 │ To the Iron Age ████████░░░░░░  49%  Waiting on: Scriptorium 3/5 · ...   │  the Ledger: the long bar
 │ KNOWLEDGE ████ 80%   PEOPLE ███ 60%   INDUSTRY ██ 40%   MONUMENT ░ 0%    │  and the four pillars

@@ -19,6 +19,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/rules"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -33,6 +34,8 @@ type CommandResult struct {
 	Message     string
 	Type        string // "info", "success", "error", "warning", game.LogRoutine
 	OverlayName string // non-empty → dashboard should open this overlay panel
+	// EpochCard asks the dashboard to make the epoch picture and reply.
+	EpochCard bool
 	// OpenCatastrophe asks the dashboard to (re)open the pending catastrophe modal.
 	OpenCatastrophe bool
 	// MapWorld opens the Map panel (OverlayName "map") on the known world.
@@ -91,7 +94,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		if run == nil {
 			run = runPanel(c.Name)
 		}
-		res := run(args, engine)
+		res := run(vibeArgs(cmd, args, engine), engine)
 		// worldmap is map, opened on the known world.
 		if cmd == "worldmap" && res.OverlayName == "map" {
 			res.MapWorld = true
@@ -308,9 +311,9 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	}
 	switch {
 	case bs.WonderBankFull && bs.NeedsTech != "":
-		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.06", "\n[yellow]Bank full. Research %s, then type 'build %s' to start construction.[-]", game.TechName(bs.NeedsTech), curWonder.key))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.06", "\n[yellow]Bank full. Research %s, then type 'build %s' to start construction.[-]", game.TechName(bs.NeedsTech), state.Ruleset().Typed(rules.KindBuilding, curWonder.key)))
 	case bs.WonderBankFull:
-		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.07", "\n[green]Bank full. Type 'build %s' to start construction.[-]", curWonder.key))
+		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.07", "\n[green]Bank full. Type 'build %s' to start construction.[-]", state.Ruleset().Typed(rules.KindBuilding, curWonder.key)))
 	default:
 		fmt.Fprint(&sb, vibe.Sprintf("ui.input.cmdWonder.08", "\n[gray]Bank resources with 'wonder collect <resource|all> [amount|all|max]'.[-]"))
 	}
@@ -762,7 +765,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 				affordable = "[red]✗[-]"
 			}
 			lines = append(lines, vibe.Sprintf("ui.input.cmdBuild.02", "  %s [cyan]%s[-] (%d built) - Cost: %s %s",
-				affordable, key, b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
+				affordable, state.Ruleset().Typed(rules.KindBuilding, key), b.Count, FormatCost(buildingPrice(&state, key, b)), buildingText(b)))
 		}
 		return infoReply(strings.Join(lines, "\n"))
 	}
@@ -2902,21 +2905,14 @@ func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
 	return res
 }
 
-// cmdEpoch opens the epoch screen, or with `card` writes the Discord card.
-func cmdEpoch(args []string, engine *game.GameEngine) CommandResult {
+// cmdEpoch opens the epoch screen, or with `card` makes the Discord picture.
+func cmdEpoch(args []string, _ *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return panelReply("epoch")
 	}
 	if strings.ToLower(args[0]) != "card" || len(args) > 1 {
-		return infoReply(vibe.Line("ui.epoch_card.cmdEpoch.01", "Usage: epoch (opens the Epoch screen), or epoch card (saves a card to paste into Discord)"))
+		return infoReply(vibe.Line("ui.epoch_card.cmdEpoch.01", "Usage: epoch (opens the Epoch screen), or epoch card (copies a picture to paste into Discord)"))
 	}
-	dir := game.DataDir()
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return errorReply(vibe.Line("ui.epoch_card.cmdEpoch.02", "Could not create the data folder: ") + shortIOError(err) + ".")
-	}
-	path := filepath.Join(dir, epochCardFile)
-	if err := os.WriteFile(path, []byte(epochCardText(engine.GetState())), 0644); err != nil {
-		return errorReply(vibe.Line("ui.epoch_card.cmdEpoch.03", "Could not save the card: ") + shortIOError(err) + ".")
-	}
-	return CommandResult{Message: vibe.Sprintf("ui.epoch_card.cmdEpoch.04", "Saved your epoch card to %s. Paste its contents into Discord.", path), Type: "success"}
+	// The dashboard makes the picture (it holds the clipboard); see epochCardReply.
+	return CommandResult{EpochCard: true}
 }

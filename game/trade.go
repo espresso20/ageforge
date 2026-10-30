@@ -127,7 +127,7 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 	routes := tm.routeDefs
 	def, ok := routes[key]
 	if !ok {
-		return unknownKeyError(vibe.Line("game.trade.StartRoute.01", "trade route"), key, routes, vibe.Line("game.trade.StartRoute.02", "Type trade route list to see the routes."))
+		return unknownKeyError(vibe.Line("game.trade.StartRoute.01", "trade route"), key, routes, vibe.Line("game.trade.StartRoute.02", "Type trade route list to see the routes."), func(k string) string { return tm.rules.Typed(rules.KindRoute, k) })
 	}
 
 	// Check age requirement

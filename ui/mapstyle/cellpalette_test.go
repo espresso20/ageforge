@@ -41,3 +41,23 @@ func TestDuotoneThemesDrawOnTheirRamp(t *testing.T) {
 		}
 	}
 }
+
+// TestDinosStandOutFromTheTrees: on every theme with colour, each dinosaur's
+// hue sits clearly apart from the greens of the forest, grass and scrub it
+// walks through (the Forge theme included).
+func TestDinosStandOutFromTheTrees(t *testing.T) {
+	const apart = 0.12
+	for th := range fixture.Themes(t) {
+		if th.Duotone {
+			continue // one ink on one paper: nothing to tell apart by hue
+		}
+		p := cellPaletteFor(nil, &mapgen.Grid{Wall: mapgen.HStone, Tint: mapgen.HNone})
+		for _, d := range mapgen.DinoHues() {
+			for _, g := range []mapgen.Hue{mapgen.HForest, mapgen.HGrass, mapgen.HScrub} {
+				if dist := theme.Distance(p.hue[d], p.hue[g]); dist < apart {
+					t.Errorf("%s: dinosaur hue %d is %.2f from ground hue %d, want %.2f or more", th.Key, d, dist, g, apart)
+				}
+			}
+		}
+	}
+}

@@ -74,7 +74,7 @@ func (dm *DiplomacyManager) errUnknownCiv(key string) error {
 		}
 	}
 	if s := closestKey(key, met); s != "" && s != key {
-		msg += vibe.Sprintf("game.diplomacy.errUnknownCiv.02", " Did you mean '%s'?", s)
+		msg += vibe.Sprintf("game.diplomacy.errUnknownCiv.02", " Did you mean '%s'?", dm.rules.Typed(rules.KindCiv, s))
 	}
 	return vibe.Errorf("game.diplomacy.errUnknownCiv.03", "%s Scouting expeditions make first contact; type diplomacy deals to see the ones you have met.", msg)
 }
