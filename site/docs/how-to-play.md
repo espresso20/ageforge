@@ -55,7 +55,7 @@ New to the game? [Your First Age](first-ten-minutes.md) walks you through the Pr
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Bronze Age · Year 2,263 BC · People 906/919 · Morale 54% · Next: Iron Age│  status ribbon
+│ Bronze Age · Year c. 2,300 BC · People 906/919 · Morale 54% · Next: Iron Age│  status ribbon
 │ Research complete: Bronze Working                                        │  toast line
 │ To the Iron Age ████████░░░░░░  49%  Waiting on: Scriptorium 3/5 · ...   │  the Ledger: the long bar
 │ KNOWLEDGE ████ 80%   PEOPLE ███ 60%   INDUSTRY ██ 40%   MONUMENT ░ 0%    │  and the four pillars
