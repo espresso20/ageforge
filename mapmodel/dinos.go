@@ -6,16 +6,19 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// dinos.go schedules the Primitive Age's ambient life: three dinosaurs that
-// roam the town map and, near the end of the Late Cretaceous, the asteroid.
-// Like the visitors they are pure functions of the save's seed, the age and
-// the animation frame (plus the gate share, which stands for the calendar),
-// so captures and tests reproduce them. They change nothing in the game and
-// are never saved.
+// dinos.go schedules the Primitive Age's ambient life: dinosaurs that roam
+// the town map and, near the end of the Late Cretaceous, the asteroid. Like
+// the visitors they are pure functions of the save's seed, the age and the
+// animation frame (plus the gate share, which stands for the calendar), so
+// captures and tests reproduce them. They change nothing in the game and are
+// never saved.
 //
-// The dinosaurs thin out as the gate fills: at share 0 each kind comes about
-// as often as the busiest visitor does today (one visit a block), and the
-// chance falls in a straight line to nothing at dinoGateEnd.
+// They roam: at share 0 about two sauropods and two or three raptors are on
+// the map at any moment, each walking for a few minutes before it leaves and
+// another comes, and a pterodactyl crosses every minute or so. Each walker
+// has a slot that is always on its next walk; the number of slots on falls
+// in a straight line with the gate share (rounded down) to none at
+// dinoGateEnd, and the pterodactyl's chance falls the same way.
 
 // The ambient kinds, after the visitor's.
 const (
@@ -28,9 +31,6 @@ const (
 const (
 	// dinoGateEnd is the gate share from which no dinosaur shows.
 	dinoGateEnd = 0.95
-	// dinoOdds is the chance scale: a kind shows in a block when its roll
-	// out of dinoOdds falls under the chance for the share.
-	dinoOdds = 1000
 
 	// asteroidWindow is how far either side of its share the asteroid shows,
 	// asteroidSlot the frames between streaks (about 10 seconds) and
@@ -44,49 +44,67 @@ const (
 	asteroidYear = -66000000
 )
 
-// dinoKinds lists the dinosaurs with how long each is about, in frames.
+// dinoKinds lists the dinosaurs: how many slots each has at share 0, how long
+// a visit lasts (min to max, in frames) and how long a slot's cycle is. A
+// slot's walk starts somewhere in its cycle, so a walk is a little under
+// the cycle and the next begins soon after. The pterodactyl has one slot
+// that is on with a chance instead of in a count.
 var dinoKinds = []struct {
-	Kind     SightingKind
-	Min, Max int
+	Kind          SightingKind
+	Slots         int
+	Min, Max, Per int
 }{
-	{SightSauropod, 30 * 8, 45 * 8},
-	{SightRaptor, 6 * 8, 9 * 8},
-	{SightPterodactyl, 12 * 8, 15 * 8},
+	{SightSauropod, 2, 180 * 8, 210 * 8, 215 * 8},
+	{SightRaptor, 3, 90 * 8, 135 * 8, 140 * 8},
+	{SightPterodactyl, 1, 12 * 8, 15 * 8, 75 * 8},
 }
 
-// DinoChance is the chance, in thousandths, that a dinosaur kind is about in
-// a block at a gate share: all of them at 0, falling in a straight line to
-// none at dinoGateEnd.
-func DinoChance(share float64) int {
+// DinoFactor is how much of the dinosaurs is left at a gate share: 1 at 0,
+// falling in a straight line to 0 at dinoGateEnd.
+func DinoFactor(share float64) float64 {
 	if share != share || share >= dinoGateEnd {
 		return 0
 	}
-	return int((1 - max(share, 0)/dinoGateEnd) * dinoOdds)
+	return 1 - max(share, 0)/dinoGateEnd
 }
 
-// DinosAt lists the dinosaurs showing at animation frame anim.
+// DinoSlots is how many slots of kind k (an index of dinoKinds) are on at a
+// gate share: the count at share 0 scaled by DinoFactor, rounded down.
+func DinoSlots(k int, share float64) int {
+	return int(float64(dinoKinds[k].Slots)*DinoFactor(share) + 1e-9)
+}
+
+// DinosAt lists the dinosaurs on the map at animation frame anim.
 func DinosAt(seed int64, share float64, anim int) []Sighting {
 	if anim < 0 {
 		return nil
 	}
-	chance := DinoChance(share)
-	if chance == 0 {
-		return nil
-	}
+	f := DinoFactor(share)
 	const salt = 0xd1a0
-	b := int64(anim / SightingBlock)
 	var out []Sighting
 	for i, k := range dinoKinds {
 		ki := int64(i)
-		if int(Hash(seed, salt, b, ki, 1)%dinoOdds) >= chance {
-			continue
-		}
-		s := Sighting{Kind: k.Kind, Frames: k.Min + int(Hash(seed, salt, b, ki, 2)%uint64(k.Max-k.Min+1)),
-			Roll: Hash(seed, salt, b, ki, 3)}
-		lo, span := SightingBlock*10/100, SightingBlock*80/100-s.Frames
-		s.Start = int(b)*SightingBlock + lo + int(Hash(seed, salt, b, ki, 4)%uint64(span))
-		if anim >= s.Start && anim < s.Start+s.Frames {
-			out = append(out, s)
+		for slot := 0; slot < k.Slots; slot++ {
+			si := int64(slot)
+			if k.Kind == SightPterodactyl {
+				// one slot, on in a period with a chance of f
+				if slot > 0 {
+					break
+				}
+			} else if slot >= DinoSlots(i, share) {
+				continue
+			}
+			off := int(Hash(seed, salt, ki, si, 0) % uint64(k.Per))
+			n := int64((anim + off) / k.Per)
+			if k.Kind == SightPterodactyl && float64(Hash(seed, salt, ki, si, n, 1)%1000) >= f*1000 {
+				continue
+			}
+			s := Sighting{Kind: k.Kind, Frames: k.Min + int(Hash(seed, salt, ki, si, n, 2)%uint64(k.Max-k.Min+1)),
+				Roll: Hash(seed, salt, ki, si, n, 3)}
+			s.Start = int(n)*k.Per - off + int(Hash(seed, salt, ki, si, n, 4)%uint64(k.Per-s.Frames+1))
+			if anim >= s.Start && anim < s.Start+s.Frames {
+				out = append(out, s)
+			}
 		}
 	}
 	return out

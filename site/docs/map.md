@@ -83,7 +83,7 @@ Put the cursor on any of them and the Map names it: the civilization with its op
 
 ### Dinosaurs and the asteroid
 
-In the Primitive Age the Late Cretaceous is still on: now and then a long-necked sauropod plods across open ground near the town, a small raptor dashes past, or a pterodactyl flaps over the upper rows. They are only scenery. They keep off buildings, can't be clicked, and thin out as you close on the Stone Age, until none are left. Near the end of the Late Cretaceous a fireball streaks down across the sky every few seconds for a short stretch of the age. With `motion` off, whatever is on screen holds still.
+In the Primitive Age the Late Cretaceous is still on: about two long-necked sauropods and two or three small raptors are walking open ground near the town at any moment, each for a few minutes before it leaves and another arrives, and a pterodactyl flaps over the upper rows about every minute. They are only scenery. They keep off buildings, can't be clicked, and thin out in a straight line as you close on the Stone Age, until none are left. Near the end of the Late Cretaceous a fireball streaks down across the sky every few seconds for a short stretch of the age. With `motion` off the dinosaurs stand where the clock has them; only the fireball stops.
 
 ### The rare visitor
 

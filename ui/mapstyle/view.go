@@ -84,6 +84,7 @@ type sceneKey struct {
 	m        *mapmodel.Model
 	anim     int
 	visit    int
+	dino     int
 	fresh    bool
 	district string
 	close    bool
@@ -99,9 +100,9 @@ func (v *view) scene(f Frame) *mapgen.Scene {
 	if f.Model == nil {
 		return nil
 	}
-	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame(), v.freshLit(f), v.focus(), !v.overview}); v.sc == nil || k != v.scKey {
+	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame(), f.DinoFrame(), v.freshLit(f), v.focus(), !v.overview}); v.sc == nil || k != v.scKey {
 		shared.Lock()
-		v.sc, v.scKey = shared.gen.DrawAt(f.Model, mapgen.Moment{Anim: f.Anim, Visit: k.visit, Fresh: k.fresh, District: k.district, Close: k.close}), k
+		v.sc, v.scKey = shared.gen.DrawAt(f.Model, mapgen.Moment{Anim: f.Anim, Visit: k.visit, Clock: k.dino, Fresh: k.fresh, District: k.district, Close: k.close}), k
 		shared.Unlock()
 	}
 	if line := v.focus(); line != "" && !slices.ContainsFunc(v.sc.Districts, func(d mapgen.District) bool { return d.Line == line }) {

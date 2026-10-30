@@ -21,11 +21,18 @@ type sprite struct {
 
 // The three of them, facing east (right). west mirrors one to face west.
 var (
-	sauropod = sprite{Rows: []string{"  ◢█◣╱•", " ◢████ "}, Fg: P(HForest, 255)}
-	raptor   = sprite{Rows: []string{"◣█•"}, Fg: P(HScrub, 255)}
+	sauropod = sprite{Rows: []string{"  ◢█◣╱•", " ◢████ "}, Fg: P(HBrick, 255)}
+	raptor   = sprite{Rows: []string{"◣█•"}, Fg: P(HRed, 255)}
 	// the pterodactyl flaps between two frames and faces neither way
-	pterodactyl = [2]sprite{{Rows: []string{"╲•╱"}, Fg: P(HSand, 255)}, {Rows: []string{"─•─"}, Fg: P(HSand, 255)}}
+	pterodactyl = [2]sprite{{Rows: []string{"╲•╱"}, Fg: P(HAmber, 255)}, {Rows: []string{"─•─"}, Fg: P(HAmber, 255)}}
 )
+
+// The colours are picked to stand apart from the greens of the forest, grass
+// and scrub they walk in (a rust brown, a red and an amber), not to match
+// them; a test holds it on every theme with colour. DinoHues lists them.
+func DinoHues() []Hue {
+	return []Hue{sauropod.Fg.Hue, raptor.Fg.Hue, pterodactyl[0].Fg.Hue}
+}
 
 // mirror swaps the glyphs that have a handedness.
 var mirror = map[rune]rune{'◢': '◣', '◣': '◢', '◤': '◥', '◥': '◤', '╱': '╲', '╲': '╱', '▌': '▐', '▐': '▌', '►': '◄', '◄': '►'}
@@ -63,8 +70,16 @@ func (f *frame) paintDinos() {
 	if f.st.Scale > City {
 		return
 	}
-	for _, sg := range f.m.Dinos(f.anim) {
-		f.paintDino(sg)
+	if f.clock > 0 && f.clock != f.anim {
+		// held still: whoever is on the map on the world's clock stands
+		// halfway through their walk
+		for _, sg := range f.m.Dinos(f.clock) {
+			f.paintDino(sg, sg.Frames/2)
+		}
+	} else {
+		for _, sg := range f.m.Dinos(f.anim) {
+			f.paintDino(sg, f.anim-sg.Start)
+		}
 	}
 	if sg, ok := f.m.AsteroidAt(f.anim); ok {
 		f.paintAsteroid(sg)
@@ -72,18 +87,17 @@ func (f *frame) paintDinos() {
 }
 
 // dinoPace says how a walker moves: a cell in every slow frames of per cells
-// (so slow 2, per 3 is two cells in three frames).
+// .
 type dinoPace struct{ cells, frames int }
 
 // paintDino draws one dinosaur at the frame.
-func (f *frame) paintDino(sg mapmodel.Sighting) {
-	t := f.anim - sg.Start
+func (f *frame) paintDino(sg mapmodel.Sighting, t int) {
 	east := sg.Roll>>8&1 == 0
 	switch sg.Kind {
 	case mapmodel.SightSauropod:
-		f.paintWalker(sg, sauropod, dinoPace{1, 6}, t, east)
+		f.paintWalker(sg, sauropod, dinoPace{1, 24}, t, east)
 	case mapmodel.SightRaptor:
-		f.paintWalker(sg, raptor, dinoPace{2, 3}, t, east)
+		f.paintWalker(sg, raptor, dinoPace{1, 12}, t, east)
 	case mapmodel.SightPterodactyl:
 		f.paintFlyer(sg, t, east)
 	}
@@ -116,8 +130,8 @@ func (f *frame) paintWalker(sg mapmodel.Sighting, s sprite, pace dinoPace, t int
 	run := sg.Frames * pace.cells / pace.frames // the cells it walks in all
 	steps := t * pace.cells / pace.frames
 	c := f.plan.Centre
-	for try := int64(0); try < 30; try++ {
-		x0 := c.X - 50 + roll(100-run, int64(sg.Roll), 20, try)
+	for try := int64(0); try < 120; try++ {
+		x0 := c.X - 65 + roll(130-run, int64(sg.Roll), 20, try)
 		y0 := c.Y - 10 + roll(21, int64(sg.Roll), 21, try)
 		open := true
 		for y := y0; y < y0+h && open; y++ {

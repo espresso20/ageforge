@@ -35,7 +35,7 @@ func extras(gen *Generator, m *mapmodel.Model, anim int) (cells []Pt, kinds []Ki
 func dinoFrame(m *mapmodel.Model, kind mapmodel.SightingKind) (mapmodel.Sighting, bool) {
 	for f := 0; f < 60*8*3600; f += 8 {
 		for _, s := range m.Dinos(f) {
-			if s.Kind == kind {
+			if s.Kind == kind && s.Start >= 0 {
 				return s, true
 			}
 		}
@@ -164,5 +164,33 @@ func TestDinoPictureIsDeterministic(t *testing.T) {
 	b := (&Generator{}).DrawAt(m, Moment{Anim: f, Visit: f}).Grid
 	if !reflect.DeepEqual(a.Cells, b.Cells) {
 		t.Error("two draws of one frame differ")
+	}
+}
+
+// TestFrozenMapStillShowsDinos: with motion off the animation frame is held at
+// 0 but the clock keeps counting; the dinosaurs stand where the clock puts them.
+func TestFrozenMapStillShowsDinos(t *testing.T) {
+	var gen Generator
+	m := dinoModel(3, 0)
+	bare := *m
+	bare.GateShare = 1
+	shown := 0
+	for clock := 8; clock < 20*60*8 && shown < 3; clock += 8 * 30 {
+		if len(m.Dinos(clock/8*8+1)) == 0 {
+			continue
+		}
+		at := Moment{Anim: 0, Clock: clock/8*8 + 1, Visit: -1}
+		a := gen.DrawAt(m, at).Grid
+		b := gen.DrawAt(&bare, at).Grid
+		if reflect.DeepEqual(a.Cells, b.Cells) {
+			continue // walkers with no clear route may be missing; others must show
+		}
+		shown++
+		if c := gen.DrawAt(m, at).Grid; !reflect.DeepEqual(a.Cells, c.Cells) {
+			t.Fatal("a frozen map's picture changed between two draws of the same frame")
+		}
+	}
+	if shown < 3 {
+		t.Errorf("only %d frozen frames showed a dinosaur", shown)
 	}
 }
