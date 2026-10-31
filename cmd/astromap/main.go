@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand/v2"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -34,6 +35,14 @@ type Map struct {
 	Seed      int64
 	Stations  []struct{ x, y int }
 	LaneCells map[string]bool // for tracking lane cells
+}
+
+// abs returns the absolute value of an integer.
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
 
 // hash combines x, y and salt to create a pseudorandom value.
@@ -345,9 +354,9 @@ func generate(seed int64) *Map {
 				if math.Abs(dy) == 0 {
 					glyph = '─'
 				} else if dx*dy > 0 {
-					glyph = '╲'
-				} else {
 					glyph = '╱'
+				} else {
+					glyph = '╲'
 				}
 				m.set(x, y, glyph, 223, false, 7, "Planetary ring")
 			}
@@ -523,35 +532,32 @@ func generate(seed int64) *Map {
 	}
 
 	gateFound := false
-	for tries := 0; tries < 2000 && !gateFound; tries++ {
-		gy_gate := 1 + rng.IntN(30)
+	var gy_gate int
+	for tries := 0; tries < 32 && !gateFound; tries++ {
+		// Try sequential positions
+		gy_gate = 1 + tries
 
 		valid := true
-		for _, st := range stations {
-			if ad(gx_gate-st.x, gy_gate-st.y) < 14 {
-				valid = false
-				break
-			}
-		}
-
-		if valid {
-			for dy := 0; dy < 3; dy++ {
-				for dx := -1; dx <= 1; dx++ {
-					cx, cy := gx_gate+dx, gy_gate+dy
-					if cx >= 0 && cx < W && cy >= 0 && cy < H {
-						if m.Grid[cy][cx].Prio >= 7 {
-							valid = false
-							break
-						}
-					}
-				}
-				if !valid {
+		// Check the 3 cells where the gate will be placed
+		for dx := -1; dx <= 1; dx++ {
+			cx, cy := gx_gate+dx, gy_gate
+			if cx >= 0 && cx < W && cy >= 0 && cy < H {
+				// Only block on star or harbinger (prio >= 9)
+				if m.Grid[cy][cx].Prio >= 9 {
+					valid = false
 					break
 				}
 			}
 		}
 
-		if valid && !(gx_gate >= rfQx && gx_gate < rfQx+rfQw && gy_gate >= rfQy && gy_gate < rfQy+rfQh) {
+		if valid {
+			// Check if in rift quadrant
+			if gx_gate >= rfQx && gx_gate < rfQx+rfQw && gy_gate >= rfQy && gy_gate < rfQy+rfQh {
+				valid = false
+			}
+		}
+
+		if valid {
 			m.set(gx_gate-1, gy_gate, '[', 250, false, 11, "Jump gate")
 			m.set(gx_gate, gy_gate, '⟐', 201, true, 11, "Jump gate")
 			m.set(gx_gate+1, gy_gate, ']', 250, false, 11, "Jump gate")
@@ -559,8 +565,288 @@ func generate(seed int64) *Map {
 		}
 	}
 
-	// Lanes (simplified MST - just connect nearest neighbors)
-	// For now, just draw some simple lanes
+	// Lanes - MST and non-tree edges
+	type Node struct {
+		x, y int
+		name string
+	}
+
+	var nodes []Node
+	for i, st := range stations {
+		nodes = append(nodes, Node{st.x + 1, st.y, fmt.Sprintf("S%d", i)})
+	}
+	if gateFound {
+		nodes = append(nodes, Node{gx_gate + 1, gy_gate, "Gate"})
+	}
+	nodes = append(nodes, Node{m.SX, m.SY, "Star"})
+
+	// Prim's MST
+	if len(nodes) > 1 {
+		inMST := make([]bool, len(nodes))
+		edges := make([]struct{ a, b int; dist float64 }, 0)
+
+		inMST[0] = true
+		mstEdgeCount := 0
+
+		for mstEdgeCount < len(nodes)-1 {
+			minDist := math.MaxFloat64
+			minA, minB := -1, -1
+
+			for i := 0; i < len(nodes); i++ {
+				if !inMST[i] {
+					continue
+				}
+				for j := 0; j < len(nodes); j++ {
+					if inMST[j] {
+						continue
+					}
+					dx, dy := nodes[i].x-nodes[j].x, nodes[i].y-nodes[j].y
+					dist := ad(dx, dy)
+					if dist < minDist {
+						minDist = dist
+						minA, minB = i, j
+					}
+				}
+			}
+
+			if minA != -1 {
+				inMST[minB] = true
+				edges = append(edges, struct{ a, b int; dist float64 }{minA, minB, minDist})
+				mstEdgeCount++
+			}
+		}
+
+		// Add 2 shortest non-tree edges where both stations exist
+		type EdgeCandidate struct {
+			a, b int
+			dist float64
+		}
+		var candidates []EdgeCandidate
+		for i := 0; i < len(nodes); i++ {
+			for j := i + 1; j < len(nodes); j++ {
+				isInTree := false
+				for _, e := range edges {
+					if (e.a == i && e.b == j) || (e.a == j && e.b == i) {
+						isInTree = true
+						break
+					}
+				}
+				if isInTree {
+					continue
+				}
+				dx, dy := nodes[i].x-nodes[j].x, nodes[i].y-nodes[j].y
+				dist := ad(dx, dy)
+				if dist < 45 {
+					candidates = append(candidates, EdgeCandidate{i, j, dist})
+				}
+			}
+		}
+		// Sort by distance (simple bubble sort)
+		for i := 0; i < len(candidates); i++ {
+			for j := i + 1; j < len(candidates); j++ {
+				if candidates[j].dist < candidates[i].dist {
+					candidates[i], candidates[j] = candidates[j], candidates[i]
+				}
+			}
+		}
+		addCount := 0
+		for _, cand := range candidates {
+			if addCount >= 2 {
+				break
+			}
+			edges = append(edges, struct{ a, b int; dist float64 }{cand.a, cand.b, cand.dist})
+			addCount++
+		}
+
+		// Draw lanes for each edge
+		for _, edge := range edges {
+			a, b := edge.a, edge.b
+			xa, ya := nodes[a].x, nodes[a].y
+			xb, yb := nodes[b].x, nodes[b].y
+
+			dx, dy := xb-xa, yb-ya
+			m_dist := abs(dx)
+			n_dist := abs(dy)
+
+			// Determine colors and kind based on node types
+			isGateLink := (nodes[a].name == "Gate") || (nodes[b].name == "Gate")
+			isConduit := (nodes[a].name == "Star") || (nodes[b].name == "Star")
+
+			color := 39
+			hGlyph := '─'
+			kind := "Warp lane"
+			if isGateLink {
+				color = 51
+				hGlyph = '═'
+				kind = "Gate link"
+			} else if isConduit {
+				color = 220
+				hGlyph = '═'
+				kind = "Gravity conduit"
+			}
+
+			// Helper to check if cell should be skipped
+			skipCell := func(cx, cy int) bool {
+				for _, st := range stations {
+					if cx >= st.x-1 && cx <= st.x+1 && cy == st.y {
+						return true
+					}
+				}
+				if gateFound {
+					if cx >= gx_gate-1 && cx <= gx_gate+1 && cy == gy_gate {
+						return true
+					}
+				}
+				return false
+			}
+
+			// Route and draw the lane
+			x, y := xa, ya
+
+			if m_dist >= n_dist {
+				// Horizontal first, then diagonal, then horizontal
+				hSteps := (m_dist - n_dist) / 2
+				signX := 1
+				if dx < 0 {
+					signX = -1
+				}
+				signY := 1
+				if dy < 0 {
+					signY = -1
+				}
+
+				// First horizontal segment
+				for i := 0; i < hSteps; i++ {
+					x += signX
+					if x >= 0 && x < W && y >= 0 && y < H && !skipCell(x, y) {
+						m.set(x, y, hGlyph, color, false, 5, kind)
+						cellKey := fmt.Sprintf("%d,%d", x, y)
+						m.LaneCells[cellKey] = true
+					}
+				}
+
+				// Diagonal segment
+				diagGlyph := '╱'
+				if signX*signY > 0 {
+					diagGlyph = '╱'
+				} else {
+					diagGlyph = '╲'
+				}
+				for i := 0; i < n_dist; i++ {
+					x += signX
+					y += signY
+					if x >= 0 && x < W && y >= 0 && y < H && !skipCell(x, y) {
+						m.set(x, y, diagGlyph, color, false, 5, kind)
+						cellKey := fmt.Sprintf("%d,%d", x, y)
+						m.LaneCells[cellKey] = true
+					}
+				}
+
+				// Second horizontal segment
+				for i := 0; i < hSteps; i++ {
+					x += signX
+					if x >= 0 && x < W && y >= 0 && y < H && !skipCell(x, y) {
+						m.set(x, y, hGlyph, color, false, 5, kind)
+						cellKey := fmt.Sprintf("%d,%d", x, y)
+						m.LaneCells[cellKey] = true
+					}
+				}
+			} else {
+				// Vertical first, then diagonal, then vertical
+				vSteps := (n_dist - m_dist) / 2
+				signY := 1
+				if dy < 0 {
+					signY = -1
+				}
+				signX := 1
+				if dx < 0 {
+					signX = -1
+				}
+
+				// First vertical segment
+				for i := 0; i < vSteps; i++ {
+					y += signY
+					if x >= 0 && x < W && y >= 0 && y < H && !skipCell(x, y) {
+						m.set(x, y, '│', color, false, 5, kind)
+						cellKey := fmt.Sprintf("%d,%d", x, y)
+						m.LaneCells[cellKey] = true
+					}
+				}
+
+				// Diagonal segment
+				diagGlyph := '╱'
+				if signX*signY > 0 {
+					diagGlyph = '╱'
+				} else {
+					diagGlyph = '╲'
+				}
+				for i := 0; i < m_dist; i++ {
+					x += signX
+					y += signY
+					if x >= 0 && x < W && y >= 0 && y < H && !skipCell(x, y) {
+						m.set(x, y, diagGlyph, color, false, 5, kind)
+						cellKey := fmt.Sprintf("%d,%d", x, y)
+						m.LaneCells[cellKey] = true
+					}
+				}
+
+				// Second vertical segment
+				for i := 0; i < vSteps; i++ {
+					y += signY
+					if x >= 0 && x < W && y >= 0 && y < H && !skipCell(x, y) {
+						m.set(x, y, '│', color, false, 5, kind)
+						cellKey := fmt.Sprintf("%d,%d", x, y)
+						m.LaneCells[cellKey] = true
+					}
+				}
+			}
+		}
+	}
+
+	// Freighters
+	if len(m.LaneCells) > 0 {
+		k := 3 + rng.IntN(4)
+		laneCellsSlice := make([]string, 0, len(m.LaneCells))
+		for cellKey := range m.LaneCells {
+			laneCellsSlice = append(laneCellsSlice, cellKey)
+		}
+
+		// Sort to ensure deterministic ordering
+		sort.Strings(laneCellsSlice)
+
+		// Pick k cells with spacing of at least 4 cells
+		selected := make([]string, 0, k)
+		lastX, lastY := -10, -10
+
+		for i := 0; i < len(laneCellsSlice) && len(selected) < k; i++ {
+			cellKey := laneCellsSlice[i]
+			parts := strings.Split(cellKey, ",")
+			cx, _ := strconv.Atoi(parts[0])
+			cy, _ := strconv.Atoi(parts[1])
+
+			// Require spacing of at least 4 cells
+			if abs(cx-lastX)+abs(cy-lastY) >= 4 {
+				selected = append(selected, cellKey)
+				lastX, lastY = cx, cy
+			}
+		}
+
+		// Place freighters
+		for _, cellKey := range selected {
+			parts := strings.Split(cellKey, ",")
+			fx, _ := strconv.Atoi(parts[0])
+			fy, _ := strconv.Atoi(parts[1])
+
+			if fx >= 0 && fx < W && fy >= 0 && fy < H {
+				cellRune := m.Grid[fy][fx].R
+				glyph := rune('▲')
+				if cellRune == '─' || cellRune == '═' {
+					glyph = '►'
+				}
+				m.set(fx, fy, glyph, 231, true, 6, "Freighter")
+			}
+		}
+	}
 
 	return m
 }
@@ -621,14 +907,18 @@ func render(m *Map, color bool, ix, iy int) []string {
 	for y := 0; y < H; y++ {
 		for x := 0; x < W; x++ {
 			k := m.Grid[y][x].Kind
-			if strings.Contains(k, "Faint star") || strings.Contains(k, "Star") || strings.Contains(k, "Bright star") {
+			if k == "Faint star" || k == "Star" || k == "Bright star" {
 				starCount++
+			}
+			if strings.Contains(k, "lane") || strings.Contains(k, "conduit") || strings.Contains(k, "link") {
+				laneCount++
+			}
+			if k == "Freighter" {
+				freighterCount++
 			}
 		}
 	}
 	stationCount = len(m.Stations)
-	laneCount = len(m.LaneCells) // TODO: count lane edges instead
-	freighterCount = 0
 
 	quadrantNames := [4]string{"NW", "NE", "SW", "SE"}
 	metricsLine := fmt.Sprintf("│ stars %d · stations %d · lanes %d · freighters %d · rift %s",
@@ -656,7 +946,6 @@ func render(m *Map, color bool, ix, iy int) []string {
 	// Bottom frame
 	botLine := "└" + strings.Repeat("─", 120) + "┘"
 	lines = append(lines, botLine) // width = 1 + 120 + 1 = 122
-	lines = append(lines, "")      // extra blank line
 
 	return lines
 }
