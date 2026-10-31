@@ -35,6 +35,7 @@ type Map struct {
 	Seed      int64
 	Stations  []struct{ x, y int }
 	LaneCells map[string]bool // for tracking lane cells
+	EdgeCount int             // lanes drawn, gate link and conduit included
 }
 
 // abs returns the absolute value of an integer.
@@ -583,7 +584,10 @@ func generate(seed int64) *Map {
 	// Prim's MST
 	if len(nodes) > 1 {
 		inMST := make([]bool, len(nodes))
-		edges := make([]struct{ a, b int; dist float64 }, 0)
+		edges := make([]struct {
+			a, b int
+			dist float64
+		}, 0)
 
 		inMST[0] = true
 		mstEdgeCount := 0
@@ -611,7 +615,10 @@ func generate(seed int64) *Map {
 
 			if minA != -1 {
 				inMST[minB] = true
-				edges = append(edges, struct{ a, b int; dist float64 }{minA, minB, minDist})
+				edges = append(edges, struct {
+					a, b int
+					dist float64
+				}{minA, minB, minDist})
 				mstEdgeCount++
 			}
 		}
@@ -654,11 +661,15 @@ func generate(seed int64) *Map {
 			if addCount >= 2 {
 				break
 			}
-			edges = append(edges, struct{ a, b int; dist float64 }{cand.a, cand.b, cand.dist})
+			edges = append(edges, struct {
+				a, b int
+				dist float64
+			}{cand.a, cand.b, cand.dist})
 			addCount++
 		}
 
 		// Draw lanes for each edge
+		m.EdgeCount = len(edges)
 		for _, edge := range edges {
 			a, b := edge.a, edge.b
 			xa, ya := nodes[a].x, nodes[a].y
@@ -688,12 +699,12 @@ func generate(seed int64) *Map {
 			// Helper to check if cell should be skipped
 			skipCell := func(cx, cy int) bool {
 				for _, st := range stations {
-					if cx >= st.x-1 && cx <= st.x+1 && cy == st.y {
+					if cx >= st.x && cx <= st.x+2 && cy == st.y {
 						return true
 					}
 				}
 				if gateFound {
-					if cx >= gx_gate-1 && cx <= gx_gate+1 && cy == gy_gate {
+					if cx >= gx_gate && cx <= gx_gate+2 && cy == gy_gate {
 						return true
 					}
 				}
@@ -814,20 +825,37 @@ func generate(seed int64) *Map {
 		// Sort to ensure deterministic ordering
 		sort.Strings(laneCellsSlice)
 
-		// Pick k cells with spacing of at least 4 cells
+		// Shuffle, then keep cells still showing a lane and at least 8 cells from every pick
+		rng.Shuffle(len(laneCellsSlice), func(i, j int) {
+			laneCellsSlice[i], laneCellsSlice[j] = laneCellsSlice[j], laneCellsSlice[i]
+		})
 		selected := make([]string, 0, k)
-		lastX, lastY := -10, -10
-
-		for i := 0; i < len(laneCellsSlice) && len(selected) < k; i++ {
-			cellKey := laneCellsSlice[i]
+		var picked [][2]int
+		for _, cellKey := range laneCellsSlice {
+			if len(selected) >= k {
+				break
+			}
 			parts := strings.Split(cellKey, ",")
 			cx, _ := strconv.Atoi(parts[0])
 			cy, _ := strconv.Atoi(parts[1])
-
-			// Require spacing of at least 4 cells
-			if abs(cx-lastX)+abs(cy-lastY) >= 4 {
+			if cx < 0 || cx >= W || cy < 0 || cy >= H {
+				continue
+			}
+			switch m.Grid[cy][cx].Kind {
+			case "Warp lane", "Gate link", "Gravity conduit":
+			default:
+				continue
+			}
+			far := true
+			for _, p := range picked {
+				if abs(cx-p[0])+abs(cy-p[1]) < 8 {
+					far = false
+					break
+				}
+			}
+			if far {
 				selected = append(selected, cellKey)
-				lastX, lastY = cx, cy
+				picked = append(picked, [2]int{cx, cy})
 			}
 		}
 
@@ -910,15 +938,13 @@ func render(m *Map, color bool, ix, iy int) []string {
 			if k == "Faint star" || k == "Star" || k == "Bright star" {
 				starCount++
 			}
-			if strings.Contains(k, "lane") || strings.Contains(k, "conduit") || strings.Contains(k, "link") {
-				laneCount++
-			}
 			if k == "Freighter" {
 				freighterCount++
 			}
 		}
 	}
 	stationCount = len(m.Stations)
+	laneCount = m.EdgeCount
 
 	quadrantNames := [4]string{"NW", "NE", "SW", "SE"}
 	metricsLine := fmt.Sprintf("│ stars %d · stations %d · lanes %d · freighters %d · rift %s",
