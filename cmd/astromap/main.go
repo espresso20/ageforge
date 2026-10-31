@@ -47,9 +47,8 @@ func abs(n int) int {
 }
 
 // hash combines x, y and salt to create a pseudorandom value.
-func hash(x, y int, salt uint64) uint64 {
-	h := uint64(x)*0x9E3779B97F4A7C15 ^ uint64(y)*0xC2B2AE3D27D4EB4F
-	return h
+func hash(seed int64, x, y int, salt uint64) uint64 {
+	return uint64(x)*0x9E3779B97F4A7C15 ^ uint64(y)*0xC2B2AE3D27D4EB4F ^ (uint64(seed)+salt)*0x165667B19E3779F9
 }
 
 // splitmix64 finalizer for hash output.
@@ -63,8 +62,8 @@ func splitmix64(z uint64) uint64 {
 }
 
 // hash01 converts hash output to float64 in [0,1).
-func hash01(x, y int, salt uint64) float64 {
-	h := splitmix64(hash(x, y, salt))
+func hash01(seed int64, x, y int, salt uint64) float64 {
+	h := splitmix64(hash(seed, x, y, salt))
 	return float64(h>>11) / (1 << 53)
 }
 
@@ -103,10 +102,10 @@ func fbm(x, y float64, seed int64, salt uint64) float64 {
 		ty = ty * ty * (3 - 2*ty)
 
 		// bilinear interpolation
-		v00 := hash01(ix, iy, salt+uint64(octave))
-		v10 := hash01(ix+1, iy, salt+uint64(octave))
-		v01 := hash01(ix, iy+1, salt+uint64(octave))
-		v11 := hash01(ix+1, iy+1, salt+uint64(octave))
+		v00 := hash01(seed, ix, iy, salt+uint64(octave))
+		v10 := hash01(seed, ix+1, iy, salt+uint64(octave))
+		v01 := hash01(seed, ix, iy+1, salt+uint64(octave))
+		v11 := hash01(seed, ix+1, iy+1, salt+uint64(octave))
 
 		v0 := v00*(1-tx) + v10*tx
 		v1 := v01*(1-tx) + v11*tx
@@ -174,7 +173,7 @@ func generate(seed int64) *Map {
 				m.set(x, y, '▒', hue, false, 1, "Nebula (cyan|blue|magenta)")
 			} else if g > 0.54 {
 				m.set(x, y, '░', hue, false, 1, "Nebula (cyan|blue|magenta)")
-			} else if g > 0.48 && hash01(x, y, 101) < 0.35 {
+			} else if g > 0.48 && hash01(seed, x, y, 101) < 0.35 {
 				m.set(x, y, '~', 238, false, 1, "Nebula wisp")
 			}
 
@@ -196,20 +195,20 @@ func generate(seed int64) *Map {
 				continue // skip dust
 			}
 
-			r := hash01(x, y, 400)
+			r := hash01(seed, x, y, 400)
 			if r < 0.030 {
 				m.set(x, y, '.', 240, false, 3, "Faint star")
 			} else if r < 0.045 {
 				m.set(x, y, '·', 244, false, 3, "Faint star")
 			} else if r < 0.053 {
 				glyph := '*'
-				if splitmix64(hash(x, y, 0))%2 == 0 {
+				if splitmix64(hash(seed, x, y, 0))%2 == 0 {
 					glyph = '∙'
 				}
 				m.set(x, y, glyph, 250, false, 3, "Star")
 			} else if r < 0.057 {
 				glyph := '✦'
-				if splitmix64(hash(x, y, 0))%2 == 0 {
+				if splitmix64(hash(seed, x, y, 0))%2 == 0 {
 					glyph = '✧'
 				}
 				m.set(x, y, glyph, 231, true, 3, "Bright star")
@@ -243,7 +242,7 @@ func generate(seed int64) *Map {
 				m.set(x, y, '▓', 214, false, 9, "Corona")
 			} else if e < 3.6 {
 				m.set(x, y, '▒', 208, false, 9, "Corona")
-			} else if e < 4.6 && hash01(x, y, 500) < 0.6 {
+			} else if e < 4.6 && hash01(seed, x, y, 500) < 0.6 {
 				m.set(x, y, '░', 202, false, 9, "Corona")
 			}
 		}
@@ -256,14 +255,14 @@ func generate(seed int64) *Map {
 	numSteps := int(math.Ceil(2*math.Pi/0.004)) + 1
 	for step := 0; step < numSteps; step++ {
 		t := 0.004 * float64(step)
-		jitter := (hash01(step, 0, 600) - 0.5) * 2.0
+		jitter := (hash01(seed, step, 0, 600) - 0.5) * 2.0
 
 		x := int(math.Round(float64(m.SX) + (float64(a)+jitter)*math.Cos(t)))
 		y := int(math.Round(float64(m.SY) + (b+jitter/2)*math.Sin(t)))
 
 		if x >= 0 && x < W && y >= 0 && y < H {
-			if hash01(x, y, 601) < 0.30 {
-				r := hash01(x, y, 602)
+			if hash01(seed, x, y, 601) < 0.30 {
+				r := hash01(seed, x, y, 602)
 				glyph := '•'
 				if r < 0.8 {
 					glyph = '°'
@@ -272,7 +271,7 @@ func generate(seed int64) *Map {
 				}
 
 				color := 137
-				if splitmix64(hash(x, y, 0))%2 == 0 {
+				if splitmix64(hash(seed, x, y, 0))%2 == 0 {
 					color = 180
 				}
 				m.set(x, y, glyph, color, false, 4, "Asteroid belt")
@@ -420,14 +419,14 @@ func generate(seed int64) *Map {
 
 		// Halo
 		if x-1 >= 0 && x-1 < W {
-			if hash01(x-1, y, 701) < 0.6 {
+			if hash01(seed, x-1, y, 701) < 0.6 {
 				m.set(x-1, y, '▓', 129, false, 10, "Harbinger rift")
 			} else {
 				m.set(x-1, y, '▒', 93, false, 10, "Harbinger rift")
 			}
 		}
 		if x+1 >= 0 && x+1 < W {
-			if hash01(x+1, y, 701) < 0.6 {
+			if hash01(seed, x+1, y, 701) < 0.6 {
 				m.set(x+1, y, '▓', 129, false, 10, "Harbinger rift")
 			} else {
 				m.set(x+1, y, '▒', 93, false, 10, "Harbinger rift")
@@ -442,7 +441,7 @@ func generate(seed int64) *Map {
 			for dx := -3; dx <= 3; dx++ {
 				sx, sy := rc.x+dx, rc.y+dy
 				if sx >= 0 && sx < W && sy >= 0 && sy < H {
-					if ad(sx-rc.x, sy-rc.y) <= 3 && hash01(sx, sy, 702) < 0.10 {
+					if ad(sx-rc.x, sy-rc.y) <= 3 && hash01(seed, sx, sy, 702) < 0.10 {
 						m.set(sx, sy, 'ϟ', 201, true, 10, "Rift spark")
 					}
 				}

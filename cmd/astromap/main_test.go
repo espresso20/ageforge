@@ -61,7 +61,7 @@ func TestDifferentSeeds(t *testing.T) {
 	lines42 := render(generate(42), false, 60, 16)
 	lines7 := render(generate(7), false, 60, 16)
 
-	// Grid rows should differ in at least 20% of cells
+	// Grid rows should differ in at least 50% (nebula and stars must follow the seed) of cells
 	gridDiffs := 0
 	gridCells := 32 * 120
 
@@ -76,8 +76,8 @@ func TestDifferentSeeds(t *testing.T) {
 	}
 
 	percentDiff := float64(gridDiffs) / float64(gridCells)
-	if percentDiff < 0.20 {
-		t.Errorf("only %.1f%% of cells differ between seed 42 and seed 7 (expected >= 20%%)", percentDiff*100)
+	if percentDiff < 0.50 {
+		t.Errorf("only %.1f%% of cells differ between seed 42 and seed 7 (expected >= 50%%)", percentDiff*100)
 	}
 }
 
