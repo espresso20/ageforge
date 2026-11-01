@@ -12,7 +12,7 @@ import (
 // light, so each cell still shows what its own layer drew.
 func groundFrame(age string, tick int) *frame {
 	var gen Generator
-	f := gen.frame(model(state(age, 7, tick)), 0)
+	f := gen.frame(model(state(age, 7, tick)), 0, true)
 	f.paintGround()
 	f.paintTown()
 	return f
@@ -98,7 +98,7 @@ func TestTrafficStaysOnRoads(t *testing.T) {
 	for _, age := range testAges {
 		var gen Generator
 		m := model(state(age, 7, noon))
-		f := gen.frame(m, 100)
+		f := gen.frame(m, 100, true)
 		f.draw()
 		agents := 0
 		for i := range f.g.Cells {
@@ -125,8 +125,10 @@ func TestTrafficStaysOnRoads(t *testing.T) {
 	}
 }
 
-// TestNightLightsUp: at midnight there are lit windows or lamps in the style's
-// light, and at noon none.
+// TestNightLightsUp: at midnight there are lit windows or lamps in the
+// style's light, and at noon none. The space age paints its daytime ink in its
+// own light hue (cyan), so for it the day holds lit-looking cells and only
+// the night count is checked.
 func TestNightLightsUp(t *testing.T) {
 	for _, age := range testAges {
 		for _, c := range []struct {
@@ -134,13 +136,16 @@ func TestNightLightsUp(t *testing.T) {
 			lit  bool
 		}{{noon, false}, {midnight, true}} {
 			var gen Generator
-			f := gen.frame(model(state(age, 7, c.tick)), 0)
+			f := gen.frame(model(state(age, 7, c.tick)), 0, true)
 			f.draw()
 			lit := 0
 			for _, cell := range f.g.Cells {
 				if cell.Fg.Hue == f.st.Night.Light && cell.Dim == 0 {
 					lit++
 				}
+			}
+			if age == "space_age" && !c.lit {
+				continue
 			}
 			if (lit > 0) != c.lit {
 				t.Errorf("%s tick %d: %d lit cells", age, c.tick, lit)
@@ -165,18 +170,32 @@ func TestRuinsLeaveRubble(t *testing.T) {
 	}
 }
 
-// TestSpaceScalesDrawTheirBodies: each space age shows what its scale is made
-// of (a system a civilization lives at still counts as a star).
+// TestSpaceScalesDrawTheirBodies: each space scale shows what it is made of
+// (a system a civilization lives at still counts as a star). The home orbit
+// and the solar system have no age that draws them now, so they are drawn in
+// their own style; the star map is the far picture of the space ages.
 func TestSpaceScalesDrawTheirBodies(t *testing.T) {
+	orbit := compose(AgeRow{Age: "space_age", Era: &orbitEra})
+	system := compose(AgeRow{Age: "interstellar_age", Era: &systemEra})
 	for _, c := range []struct {
 		age  string
+		st   *AgeStyle
 		want map[string]int
 	}{
-		{"space_age", map[string]int{"home": 60, "space": 3000}},
-		{"interstellar_age", map[string]int{"sun": 8, "planet": 6, "space": 3000}},
-		{"galactic_age", map[string]int{"star": 20, "space": 3000}},
+		{"space_age", &orbit, map[string]int{"home": 60, "space": 3000}},
+		{"interstellar_age", &system, map[string]int{"sun": 8, "planet": 6, "space": 3000}},
+		{"galactic_age", nil, map[string]int{"star": 20, "space": 3000}},
 	} {
-		g := (&Generator{}).Render(model(state(c.age, 4, noon)), worldW, worldH, 0)
+		var gen Generator
+		m := model(state(c.age, 4, noon))
+		gen.sync(m)
+		st := c.st
+		if st == nil {
+			st = styleFor(func(k string) int { return m.Catalog.AgeIdx[k] }, m.AgeIdx, false)
+		}
+		f := gen.frameOf(m, 0, st)
+		f.draw()
+		g := f.g.Window(0, 0, worldW, worldH)
 		seen := map[string]int{}
 		for _, h := range g.Hit {
 			if th := g.Things[h]; th.Kind == KindTerrain {

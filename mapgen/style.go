@@ -226,13 +226,18 @@ func composeAges(rows []AgeRow) []AgeStyle {
 	return out
 }
 
-// styleFor is the row that serves an age index; the first row serves any age
-// before it.
-func styleFor(ageIdx func(string) int, age int) *AgeStyle {
-	row := &styles[0]
-	for i := range styles {
-		if ageIdx(styles[i].From) <= age {
-			row = &styles[i]
+// styleFor is the row that serves an age index at a zoom: the star map when
+// the picture is the far one and the age is a space age, the city otherwise.
+// The first row serves any age before it.
+func styleFor(ageIdx func(string) int, age int, close bool) *AgeStyle {
+	table := styles
+	if !close && age >= ageIdx(firstFarAge) {
+		table = farStyles
+	}
+	row := &table[0]
+	for i := range table {
+		if ageIdx(table[i].From) <= age {
+			row = &table[i]
 		}
 	}
 	return row

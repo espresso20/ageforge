@@ -49,7 +49,7 @@ func Runes() []rune {
 			seen[r] = true
 		}
 	}
-	for _, st := range styles {
+	for _, st := range append(slices.Clone(styles), farStyles...) {
 		looks := append([]Look{st.Yard, st.Crops, st.Plaza, st.Rubble, st.Smoke, st.Sky}, st.Land[:]...)
 		for _, look := range looks {
 			add(look.Glyphs)

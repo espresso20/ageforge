@@ -144,7 +144,7 @@ func TestEveryAgeHasARow(t *testing.T) {
 		t.Fatalf("the first row starts at %q, not the first age", styles[0].From)
 	}
 	for age := range testCatalog.Ages {
-		if styleFor(ageIdx, age) == nil {
+		if styleFor(ageIdx, age, false) == nil {
 			t.Fatalf("age %d has no style", age)
 		}
 	}

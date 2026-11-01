@@ -48,9 +48,10 @@ type frame struct {
 }
 
 // Render draws the model as a w by h grid at animation frame anim. The
-// picture is a window onto a world of fixed size, centred on the settlement.
+// picture is a window onto a world of fixed size, centred on the settlement;
+// it is always the close picture, the town.
 func (gen *Generator) Render(m *mapmodel.Model, w, h, anim int) *Grid {
-	f := gen.frame(m, anim)
+	f := gen.frame(m, anim, true)
 	f.draw()
 	x0, y0 := f.camera(w, h)
 	return f.g.Window(x0, y0, w, h)
@@ -99,9 +100,13 @@ func (f *frame) inView(window Rect) int {
 }
 
 // frame sets up a picture of the model: its style, plan and placements.
-func (gen *Generator) frame(m *mapmodel.Model, anim int) *frame {
+func (gen *Generator) frame(m *mapmodel.Model, anim int, close bool) *frame {
 	gen.sync(m)
-	st := styleFor(func(k string) int { return m.Catalog.AgeIdx[k] }, m.AgeIdx)
+	return gen.frameOf(m, anim, styleFor(func(k string) int { return m.Catalog.AgeIdx[k] }, m.AgeIdx, close))
+}
+
+// frameOf sets up a picture of the model in a given style.
+func (gen *Generator) frameOf(m *mapmodel.Model, anim int, st *AgeStyle) *frame {
 	f := &frame{m: m, st: st, g: newGrid(worldW, worldH), anim: anim, visit: anim,
 		night: int(m.Clock.Night * 256), roadAt: make([]int8, worldW*worldH), busy: make([]bool, worldW*worldH)}
 	f.plan, f.fields = gen.plans[st.Scale], gen.fields

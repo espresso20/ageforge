@@ -61,7 +61,7 @@ func TestFreshLightsAFinishedWonder(t *testing.T) {
 		m.Wonders[i].Delta = m.Wonders[i].Built
 	}
 	var gen Generator
-	f := gen.frame(m, 0)
+	f := gen.frame(m, 0, true)
 	f.fresh = true
 	f.draw()
 	for _, ws := range f.wonders() {

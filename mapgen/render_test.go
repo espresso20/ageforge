@@ -83,7 +83,7 @@ func dusk(g *Grid) int {
 
 // worldFrame draws the whole world, so cell positions are world positions.
 func worldFrame(gen *Generator, m *mapmodel.Model) *frame {
-	f := gen.frame(m, 0)
+	f := gen.frame(m, 0, true)
 	f.draw()
 	return f
 }
@@ -178,7 +178,7 @@ func TestEveryBuildingOnARoad(t *testing.T) {
 // holds each parcel.
 func standing(gen *Generator, st game.GameState) (at map[string]int, rankAt map[int]int) {
 	m := model(st)
-	f := gen.frame(m, 0)
+	f := gen.frame(m, 0, true)
 	at, rankAt = map[string]int{}, map[int]int{}
 	for _, pl := range f.placed {
 		if !pl.ruin {
@@ -283,14 +283,6 @@ func TestEveryAgeDraws(t *testing.T) {
 			for _, th := range g.Hit {
 				if g.Things[th].Kind == KindBuilding {
 					shown++
-				}
-			}
-			if gen.frame(m, 0).st.Scale == Stars { // sectors stand for the buildings
-				shown = 0
-				for _, th := range g.Hit {
-					if g.Things[th].Kind == KindSector {
-						shown++
-					}
 				}
 			}
 			if shown == 0 {

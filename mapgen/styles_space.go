@@ -1,8 +1,8 @@
 package mapgen
 
-// The space ages, seen from straight above and pulled back era by era: the
-// home planet and its orbits (the Space Age), the solar system (the
-// Interstellar Age), then the star map (the three ages after it).
+// The space ages at the far zoom: the star map, with the reach of the people
+// growing brighter age by age. At the close zoom they draw their city (ages.go).
+// The home orbit and the solar system below are not drawn by any age now.
 
 // orbitEra: the home planet's disc with its rings of stations.
 var orbitEra = AgeStyle{
@@ -134,9 +134,10 @@ var starsEra = AgeStyle{
 	Sky:   Look{Glyphs: "·.∙·✧+", Fg: P(HStar, 255), Bg: P(HVoid, 255), Dense: 62},
 }
 
+// spaceRows are the far-zoom rows of the five space ages.
 var spaceRows = []AgeRow{
-	{Age: "space_age", Era: &orbitEra},
-	{Age: "interstellar_age", Era: &systemEra},
+	{Age: "space_age", Era: &starsEra, Reach: P(HNebula, 14)},
+	{Age: "interstellar_age", Era: &starsEra, Reach: P(HNebula, 24)},
 	{
 		Age: "galactic_age", Era: &starsEra, Reach: P(HNebula, 34),
 		Agents: []AgentKind{{Name: "starship", Glyphs: "◆", Fg: P(HEngine, 255), Per: 400, Max: 16, Slow: 3}},
