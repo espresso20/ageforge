@@ -20,7 +20,10 @@ import (
 // one cell.
 func TestStylesAreWellFormed(t *testing.T) {
 	last := -1
-	for _, st := range styles {
+	for i, st := range append(slices.Clone(styles), farStyles...) {
+		if i == len(styles) {
+			last = -1 // the far table starts again from its own first age
+		}
 		age, ok := testCatalog.AgeIdx[st.From]
 		if !ok || age <= last {
 			t.Fatalf("row %q is not a later age than the row before it", st.From)
