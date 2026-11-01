@@ -2,7 +2,7 @@ package mapgen
 
 // The ground and city ages, one row each. A row names its era (eras.go) and
 // sets its age apart: its roads, its material, its tallest buildings, its
-// light. The space ages are the rows in styles_space.go.
+// light. The far zoom of the space ages is the rows in styles_space.go.
 
 var dirtRoads = [3]RoadLook{
 	{Joins: "·∙", Fg: P(HEarth, 235), Bg: P(HEarth, 34)},
@@ -156,5 +156,9 @@ var ageRows = []AgeRow{
 		},
 		Ink:   map[rune]Paint{'▪': P(HPlasma, 255), '▫': P(HCyan, 255), '◢': P(HPlasma, 255), '◣': P(HPlasma, 255)},
 		Night: Night{Tint: HNight, Dim: 190, Light: HPlasma, Lamps: true},
-	},
+	}, {Age: "space_age", Era: &cosmicEra, Pads: 6, Roads: plasmaRoads, Wall: HSteel},
+	{Age: "interstellar_age", Era: &marsEra, Pads: 8, Roads: plasmaRoads, Wall: HSteel},
+	{Age: "galactic_age", Era: &alienEra, Pads: 10, Roads: plasmaRoads, Wall: HSteel},
+	{Age: "quantum_age", Era: &apotheosisEra, Pads: 14, Wall: HSteel},
+	{Age: "transcendent_age", Era: &apotheosisEra, Pads: 18, Wall: HSteel},
 }
