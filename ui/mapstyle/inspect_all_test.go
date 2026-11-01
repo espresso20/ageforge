@@ -42,9 +42,9 @@ func TestEverythingInspectsAsItself(t *testing.T) {
 	}
 }
 
-// starTraffic are the movers of the star map, which has none drawn since its
-// lanes became line work.
-var starTraffic = map[string]bool{"starship": true, "phase_ship": true, "mote": true}
+// unusedMovers are the movers no age draws now: the orbit and system scenes that
+// had them are not reachable from any age, and the star map draws none.
+var unusedMovers = map[string]bool{"mining_drone": true, "generation_ship": true, "phase_ship": true}
 
 // TestTrafficInspectsAsWhatItIs: a cart, a car, a ship, a drone: the traffic of
 // every age has a name of its own and a line, not the road's.
@@ -70,12 +70,12 @@ func TestTrafficInspectsAsWhatItIs(t *testing.T) {
 			}
 			seen[th.Key] = true
 		}
-		if agents == 0 && age != "galactic_age" && age != "quantum_age" && age != "transcendent_age" { // the star map has lanes, not traffic
+		if agents == 0 {
 			t.Errorf("%s: no traffic to inspect", age)
 		}
 	}
 	for key := range movers {
-		if starTraffic[key] {
+		if unusedMovers[key] {
 			continue
 		}
 		if !seen[key] {
