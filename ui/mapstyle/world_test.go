@@ -44,7 +44,8 @@ func TestWorldRoundTheTownInspectsAsItself(t *testing.T) {
 	for _, age := range worldAges {
 		m := busyModel(t, age)
 		v := New().(*view)
-		lane := m.AgeIdx >= m.Catalog.SpaceAge()
+		lane := age == "galactic_age" // the star map is the far zoom; the other ages draw their land or city
+		v.overview = lane
 		var civ *mapmodel.Faction
 		for i := range m.Factions {
 			if m.Factions[i].Discovered {
