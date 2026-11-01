@@ -54,9 +54,7 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 	}
 	switch {
 	case th.Kind == mapgen.KindRoad && th.Key == "square":
-		in = describeSquare(m, town)
-		in.Title = hubTitles[sky].String() + town
-		return in, true
+		return Inspection{}, false // a city's square, now that every space age draws one
 	case th.Kind == mapgen.KindRoad:
 		return describeLane(m, th.Key, town), true
 	}

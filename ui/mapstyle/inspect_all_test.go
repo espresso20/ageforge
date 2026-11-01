@@ -89,12 +89,14 @@ var roadKeys = map[string]bool{"tether": true, "ring": true, "orbit": true, "rou
 
 // TestSpaceThingsHaveTheirOwnWords: in the space ages the home planet, the sun,
 // the other planets, the stars, the elevator and the routes inspect each as
-// itself, and a station or a colony names the part it is.
+// itself, and a station or a colony names the part it is. The first two ages
+// draw their city at the close zoom and have no sky things left; the star map
+// of the other three is the far zoom.
 func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	want := map[string]map[string]string{
-		"space_age":        {"home": "The homeworld", "tether": "Space elevator", "ring": "Orbital ring", "space": "Open space"},
-		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "A planet of the home system", "orbit": "The home system", "space": "Deep space"},
+		"space_age":        {},
+		"interstellar_age": {},
 		"galactic_age":     {"space": "Between the stars"},
 		"quantum_age":      {"space": "A maybe"},
 		"transcendent_age": {"space": "Light"},
@@ -102,6 +104,7 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	for age, titles := range want {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Wars: 1, Routes: 3})
 		v := New().(*view)
+		v.overview = len(titles) > 0
 		f := Frame{Model: m, Anim: 17, Clock: 17}
 		found := map[string]bool{}
 		for th, p := range thingsOf(v.scene(f).Grid) {
@@ -135,27 +138,20 @@ func TestSpaceHubIsTheHeartOfTheTown(t *testing.T) {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6})
 		v := New().(*view)
 		f := Frame{Model: m}
+		far := i >= 2 // the star map is the far zoom; the first two ages draw their city
+		v.overview = far
 		sc := v.scene(f)
 		v.cur = sc.Centre
-		if age == "galactic_age" || age == "quantum_age" || age == "transcendent_age" {
+		if far {
 			v.cur = mapgen.Pt{X: 120, Y: 48} // the home star stays at the core; the camera starts on the town
 		}
-		if age == "space_age" || age == "interstellar_age" {
-			v.cur = mapgen.Pt{X: sc.Centre.X, Y: firstRoadRow(sc.Grid, sc.Centre.X)}
-		}
 		in, _ := v.Inspect(f)
-		if want := hubTitles[i].String() + m.TownName; in.Title != want {
+		want := hubTitles[i].String() + m.TownName
+		if !far {
+			want = "Town square of " + m.TownName
+		}
+		if in.Title != want {
 			t.Errorf("%s: the heart of the town inspects as %q, want %q", age, in.Title, want)
 		}
 	}
-}
-
-// firstRoadRow is the row of the square in a ring scene, found by its key.
-func firstRoadRow(g *mapgen.Grid, x int) int {
-	for y := 0; y < g.H; y++ {
-		if th := g.ThingAt(x, y); th.Kind == mapgen.KindRoad && th.Key == "square" {
-			return y
-		}
-	}
-	return 0
 }
