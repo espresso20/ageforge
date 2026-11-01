@@ -87,9 +87,9 @@ In the Primitive Age the Late Cretaceous is still on: about two long-necked saur
 
 ### The rare visitor
 
-Now and then someone comes to the Map from somewhere else. On the land a small visitor walks in along one of the trunk roads from beyond the edge of the view, stops a few cells from the square and is gone. In orbit and the solar system it is a ship, flying in from the edge of the map to one of the lanes. Rarer still, an alien's craft crosses over the town, or drops in over open ground, hangs there and shoots off.
+Now and then someone comes to the Map from somewhere else. On the land a small visitor walks in along one of the trunk roads from beyond the edge of the view, stops a few cells from the square and is gone. In the space ages it is a ship, flying in from the edge of the map along a lane. Rarer still, an alien's craft crosses over the town, or drops in over open ground, hangs there and shoots off.
 
-A visitor never covers a building, and it shows in the whole-town view too. It is rare before the Space Age and more common from it; from the Galactic Age on there are none, because the aliens are ordinary traffic by then. It comes and goes on the world's clock, so with `motion` off it still arrives, and stands still while it is there. Put the cursor on it and the Map says something of its own for a visitor and for an alien's craft. Looking at one earns a secret badge.
+A visitor never covers a building, and it shows in the whole-town view too. It is rare before the Space Age and more common from it. It comes and goes on the world's clock, so with `motion` off it still arrives, and stands still while it is there. Put the cursor on it and the Map says something of its own for a visitor and for an alien's craft. Looking at one earns a secret badge.
 
 ### The look of each era
 
@@ -137,11 +137,15 @@ The legend (the sign of each kind of building your town has) shows beside the ma
 
 From the Space Age the Map leaves the ground, and each step out pulls the view further back. It is still your civilization: every building you own becomes something up there, and the picture grows as you build. Like the town, it never reshuffles: what is drawn stays where it is. The inspect cursor and `Tab` work on all of it, the flows overlay lists what is short of hands, and the mini map follows along.
 
-The Space Age looks down on your planet from orbit. The planet is a small disc in the middle, its land and sea the world your town stood on, with clouds drifting over it and the lights of its cities by night. Round it run the rings of orbit, and your buildings stand on them as stations, growing outward ring by ring. A space elevator joins the ground to the rings, and shuttles and freighters go about their rounds.
+At the close zoom (the Settlement view), the five space ages each draw a living ground city much like earlier eras, built of their age's materials and life:
 
-The Interstellar Age pulls back to the solar system. The sun sits in the middle with the planets on their orbits and the lanes between them. Your buildings are marks along the orbits, in the order your people reached them, and ships travel the lanes.
+- **Space Age:** An Earth launchport with arcologies, launch gantries, solar arrays, a space elevator anchor, maglev rails, shuttles and hovercars.
+- **Interstellar Age:** The red frontier on Mars, with red dunes, basalt crags, ice fields, biodome oases, pressurized domes, oxygen extractors, rovers and cargo haulers.
+- **Galactic Age:** An alien exoplanet with shimmering seas, crystal sand, glowing alien flora and giant fungi, crystal peaks, quantum spires, starship drydocks, a warp nexus and starships.
+- **Quantum Age:** The transfigured world with rivers of quantum flux, crystal groves, starlit ground, paths of light and crystal monoliths.
+- **Transcendent Age:** The transfigured world perfected, with the Singularity Core at the heart of the town, golden phantoms and motes of light.
 
-The last three ages, the Galactic, the Quantum and the Transcendent, pull back to a spiral galaxy of arms, dust and a bright core, different for every save. Your civilization is territory on it: each kind of building has its own sector along your home arm, a hub with a cluster of systems that grows as you build, and a faint border runs round the lot. Lanes join the hubs, thicker where more traffic runs, and the civilizations you have met hold clusters of their own on the other arms, in the color of how they stand toward you. A harbinger opens a red rift at the edge. Your wonders stand as bright stars beside the systems.
+At the far zoom (the Region view), all five space ages show your civilization's territory on a spiral galaxy of arms, dust and a bright core, different for every save. Your civilization is territory on it: each kind of building has its own sector along your home arm, a hub with a cluster of systems that grows as you build, and a faint border runs round the lot. Lanes join the hubs, thicker where more traffic runs, and the civilizations you have met hold clusters of their own on the other arms, in the color of how they stand toward you. A harbinger opens a red rift at the edge. Your wonders stand as bright stars beside the systems.
 
 The sky is alive. Stars twinkle, a comet crosses every so often, a star goes nova now and then, the dust shimmers in the whole-galaxy view, and the hubs and the core slowly breathe. The Quantum Age adds a few ghost systems that flicker in and out at the edge of your territory, and the Transcendent Age rings your home sectors with a halo of small circles. With `motion` off the sky is held still, and the picture is whole.
 
