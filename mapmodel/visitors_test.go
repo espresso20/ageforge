@@ -97,18 +97,14 @@ func TestModelSighting(t *testing.T) {
 		t.Fatalf("the Galactic Age is %d", ga)
 	}
 	for _, c := range []struct {
-		age        int
-		late, none bool
-	}{{0, false, false}, {sa - 1, false, false}, {sa, true, false}, {ga - 1, true, false}, {ga, true, true},
-		{len(cat.Ages) - 1, true, true}} {
+		age  int
+		late bool
+	}{{0, false}, {sa - 1, false}, {sa, true}, {ga - 1, true}, {ga, true}, {len(cat.Ages) - 1, true}} {
 		m := &Model{Seed: 9, AgeIdx: c.age, Catalog: cat}
 		seen := 0
 		for f := 0; f < 20*SightingBlock; f += 97 {
 			got, ok := m.SightingAt(f)
 			want, wok := SightingAt(9, c.late, f)
-			if c.none {
-				want, wok = Sighting{}, false
-			}
 			if got != want || ok != wok {
 				t.Fatalf("age %d frame %d: model %v %v, schedule %v %v", c.age, f, got, ok, want, wok)
 			}
@@ -116,7 +112,7 @@ func TestModelSighting(t *testing.T) {
 				seen++
 			}
 		}
-		if c.late && !c.none && seen == 0 {
+		if c.late && seen == 0 {
 			t.Errorf("age %d: no visit in 20 blocks", c.age)
 		}
 	}

@@ -7,10 +7,9 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 )
 
-// visitAges are one age of each scale a visit can come to: the land, the
-// city, the orbit and the solar system. (The star map's ages schedule none:
-// from the Galactic Age the aliens are traffic.)
-var visitAges = []string{"bronze_age", "modern_age", "space_age", "interstellar_age"}
+// visitAges are the ages a visit comes to: the land, the city, and the five
+// space ages, whose city is drawn at the close zoom.
+var visitAges = []string{"bronze_age", "modern_age", "space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age"}
 
 // visitSeeds are the worlds the visitor tests walk.
 var visitSeeds = []int64{1, 3, 7}
@@ -64,8 +63,8 @@ func firstOf(t *testing.T, m *mapmodel.Model) (visitor, alien mapmodel.Sighting)
 	return visitor, alien
 }
 
-// TestVisitorDrawsAtEveryScale: through a visit, on the land, in the city, in
-// orbit and in the solar system, the visitor is on the grid at some frame and
+// TestVisitorDrawsAtEveryScale: through a visit, on the land and in the city of
+// every age, the visitor is on the grid at some frame and
 // the same grid has none before the visit starts or after it is over.
 func TestVisitorDrawsAtEveryScale(t *testing.T) {
 	for _, age := range visitAges {
@@ -91,13 +90,16 @@ func TestVisitorDrawsAtEveryScale(t *testing.T) {
 	}
 }
 
-// TestNoVisitorFromTheGalacticAge: the star map's ages schedule none.
-func TestNoVisitorFromTheGalacticAge(t *testing.T) {
+// TestFarZoomHoldsAVisit: the far zoom of the space ages is the star map; a
+// visit in the model draws there without trouble.
+func TestFarZoomHoldsAVisit(t *testing.T) {
 	var gen Generator
-	m := model(state("galactic_age", 3, noon))
-	for _, sg := range visitsOf(model(state("space_age", 3, noon)), 5) {
-		if cells := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: sg.Start + sg.Frames/2, Close: true}).Grid); len(cells) > 0 {
-			t.Fatalf("a visitor in the Galactic Age at frame %d", sg.Start)
+	for _, age := range []string{"space_age", "galactic_age", "transcendent_age"} {
+		m := model(state(age, 3, noon))
+		for _, sg := range visitsOf(m, 5) {
+			if gen.DrawAt(m, Moment{Anim: 0, Visit: sg.Start + sg.Frames/2}).Grid == nil {
+				t.Fatalf("%s: no picture at frame %d", age, sg.Start)
+			}
 		}
 	}
 }
