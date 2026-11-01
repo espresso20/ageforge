@@ -16,6 +16,7 @@ func TestSectorsAndLanesInspectByName(t *testing.T) {
 	for _, age := range []string{"galactic_age", "transcendent_age"} {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Wars: 1, Routes: 3})
 		v := New().(*view)
+		v.overview = true // the star map is the far zoom
 		f := Frame{Model: m, Anim: 3, Clock: 3}
 		sectors, lanes, borders := 0, 0, 0
 		for th, p := range thingsOf(v.scene(f).Grid) {
@@ -49,7 +50,9 @@ func TestSectorsAndLanesInspectByName(t *testing.T) {
 func TestTheCursorVisitsSectorsAndRivals(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := modelFor(t, fixture.Options{Age: "transcendent_age", Seed: 6, Wars: 1, Routes: 3})
-	sc := New().(*view).scene(Frame{Model: m})
+	v := New().(*view)
+	v.overview = true // the star map is the far zoom
+	sc := v.scene(Frame{Model: m})
 	hubs, civs := 0, 0
 	for _, p := range sc.Targets {
 		switch th := sc.Grid.ThingAt(p.X, p.Y); {
@@ -72,7 +75,9 @@ func TestAYoungTownIsASpatterAndAnOldOneASettledArm(t *testing.T) {
 	systems := func(age string, scale float64) int {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Scale: scale, Wars: 1, Routes: 3})
 		n := 0
-		for th := range thingsOf(New().(*view).scene(Frame{Model: m}).Grid) {
+		v := New().(*view)
+		v.overview = true // the star map is the far zoom
+		for th := range thingsOf(v.scene(Frame{Model: m}).Grid) {
 			if th.Kind == mapgen.KindSector && th.Ref == 1 {
 				n += th.Count // a hub carries the systems lit round it
 			}
