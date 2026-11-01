@@ -12,14 +12,14 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle/capture"
 )
 
-// visitAges are one age of each scale a visit comes to: the land, the city,
-// orbit and the solar system. The star map's ages schedule none.
-var visitAges = []string{"bronze_age", "modern_age", "space_age", "interstellar_age"}
+// visitAges are the ages a visit comes to: the land, the city, and the space
+// ages, whose city is the close zoom.
+var visitAges = []string{"bronze_age", "modern_age", "space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age"}
 
 // visitorAt finds a visit of the model whose visitor is of the given form
 // ("visitor" or "alien") and returns the frame it is at its middle, and the
-// cells it is drawn in.
-func visitorAt(t *testing.T, m *mapmodel.Model, form string) (frame int, cells []mapgen.Pt) {
+// cells it is drawn in at the close zoom or, with close false, the far one.
+func visitorAt(t *testing.T, m *mapmodel.Model, form string, close bool) (frame int, cells []mapgen.Pt) {
 	t.Helper()
 	late := m.AgeIdx >= m.Catalog.SpaceAge()
 	var gen mapgen.Generator
@@ -27,7 +27,7 @@ func visitorAt(t *testing.T, m *mapmodel.Model, form string) (frame int, cells [
 		sg := mapmodel.NextSighting(m.Seed, late, from)
 		from = sg.Start + sg.Frames
 		frame = sg.Start + sg.Frames/2
-		g := gen.DrawAt(m, mapgen.Moment{Anim: 0, Visit: frame}).Grid
+		g := gen.DrawAt(m, mapgen.Moment{Anim: 0, Visit: frame, Close: close}).Grid
 		for i := range g.Cells {
 			if th := g.Things[g.Hit[i]]; th.Kind == mapgen.KindVisitor && th.Key == form {
 				cells = append(cells, mapgen.Pt{X: i % g.W, Y: i / g.W})
@@ -41,13 +41,20 @@ func visitorAt(t *testing.T, m *mapmodel.Model, form string) (frame int, cells [
 	return 0, nil
 }
 
-// steer presses the arrows until the view's cursor is on p, p being whole
-// steps of unit cells from where it is, Shift for the long way. It reports
-// whether it got there.
-func steer(v Style, f Frame, p mapgen.Pt, unit int) bool {
+// steer presses the arrows until the view's cursor is on p (in the overview,
+// in the block that shows p), Shift for the long way. It reports whether it
+// got there.
+func steer(v *view, f Frame, p mapgen.Pt) bool {
+	cell := func(q mapgen.Pt) mapgen.Pt {
+		if v.overview && v.ov != nil {
+			x, y, _ := v.ov.CellOf(q)
+			return mapgen.Pt{X: x, Y: y}
+		}
+		return q
+	}
 	for i := 0; i < 400; i++ {
-		at, _ := v.Pointer()
-		dx, dy := p.X-at.X, p.Y-at.Y
+		at, to := cell(v.cur), cell(p)
+		dx, dy := to.X-at.X, to.Y-at.Y
 		if dx == 0 && dy == 0 {
 			return true
 		}
@@ -61,7 +68,7 @@ func steer(v Style, f Frame, p mapgen.Pt, unit int) bool {
 			key, along = tcell.KeyDown, dy
 		}
 		mod := tcell.ModNone
-		if abs(along) >= 8*unit {
+		if abs(along) >= 8 {
 			mod = tcell.ModShift
 		}
 		v.HandleKey(tcell.NewEventKey(key, 0, mod), f)
@@ -80,7 +87,7 @@ func TestVisitorInspectsAsTheVisitor(t *testing.T) {
 	for _, age := range visitAges {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 3})
 		for form, title := range titles {
-			frame, cells := visitorAt(t, m, form)
+			frame, cells := visitorAt(t, m, form, true)
 			v := New().(*view)
 			f := Frame{Model: m, Anim: frame, Clock: frame}
 			v.scene(f)
@@ -103,22 +110,16 @@ func TestVisitorIsReachableByTheKeys(t *testing.T) {
 	for _, age := range visitAges {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 3})
 		for _, form := range []string{"visitor", "alien"} {
-			frame, cells := visitorAt(t, m, form)
-			f := Frame{Model: m, Anim: frame, Clock: frame}
 			for _, size := range []struct{ w, h int }{{160, 48}, {80, 24}} {
+				// a panel under the close-up size shows the far zoom, where the visit is elsewhere
+				frame, cells := visitorAt(t, m, form, size.w >= closeUpMinW && size.h >= closeUpMinH)
+				f := Frame{Model: m, Anim: frame, Clock: frame}
 				v := New().(*view)
 				scr := capture.NewScreen(size.w, size.h)
 				v.Draw(scr, Rect{W: size.w, H: size.h}, f)
 				scr.Fini()
-				target, unit := cells[len(cells)/2], 1
-				if v.overview {
-					// every step is a block of the world: stop in the block the visitor is in
-					unit = v.ov.Scale
-					x, y, _ := v.ov.CellOf(v.cur)
-					tx, ty, _ := v.ov.CellOf(target)
-					target = mapgen.Pt{X: v.cur.X + (tx-x)*unit, Y: v.cur.Y + (ty-y)*unit}
-				}
-				if !steer(v, f, target, unit) {
+				target := cells[len(cells)/2]
+				if !steer(v, f, target) {
 					t.Fatalf("%s %dx%d: the arrows never reach the %s at %v", age, size.w, size.h, form, target)
 				}
 				if in, ok := v.Inspect(f); !ok || in.Kind != KindAlien {
@@ -137,7 +138,7 @@ func TestVisitorChangesThePictureAtEverySize(t *testing.T) {
 	for _, age := range visitAges {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 3})
 		for _, form := range []string{"visitor", "alien"} {
-			frame, spots := visitorAt(t, m, form)
+			frame, spots := visitorAt(t, m, form, true)
 			for _, sz := range sizes {
 				// the cursor stands on the visitor, so the close-up has it in view
 				look := func(clock int) tcell.SimulationScreen {
@@ -185,7 +186,7 @@ func drawFrame(v Style, f Frame, w, h int, compact bool) tcell.SimulationScreen 
 func TestVisitorNeverCoversTheCursor(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := modelFor(t, fixture.Options{Age: "modern_age", Seed: 3})
-	frame, cells := visitorAt(t, m, "alien")
+	frame, cells := visitorAt(t, m, "alien", true)
 	f := Frame{Model: m, Anim: frame, Clock: frame}
 	target := cells[len(cells)/2]
 	draw := func(cursor bool) (rune, tcell.Style) {
@@ -215,7 +216,7 @@ func TestVisitorNeverCoversTheCursor(t *testing.T) {
 func TestVisitorHoldsStillWithMotionOff(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := modelFor(t, fixture.Options{Age: "space_age", Seed: 3})
-	frame, _ := visitorAt(t, m, "visitor")
+	frame, _ := visitorAt(t, m, "visitor", true)
 	sg, _ := m.SightingAt(frame)
 	var first []tcell.SimCell
 	for clock := sg.Start; clock < sg.Start+sg.Frames; clock += 9 {

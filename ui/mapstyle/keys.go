@@ -44,13 +44,52 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 	if ev.Modifiers()&tcell.ModShift != 0 {
 		d = [2]int{d[0] * 8, d[1] * 8}
 	}
-	if v.overview && v.ov != nil {
-		d = [2]int{d[0] * v.ov.Scale, d[1] * v.ov.Scale}
-	}
 	v.inspect = true
+	if v.overview && v.ov != nil {
+		v.cur = v.blockStep(d)
+		return true
+	}
 	v.cur.X = clamp(v.cur.X+d[0], 0, mapgen.WorldW-1)
 	v.cur.Y = clamp(v.cur.Y+d[1], 0, mapgen.WorldH-1)
 	return true
+}
+
+// blockStep is the cursor moved d blocks of the overview. A block is not a
+// whole number of world cells when the overview fills the window (the star
+// map), so it walks cell by cell into the block it wants rather than stepping
+// a fixed width, which would skip some blocks.
+func (v *view) blockStep(d [2]int) mapgen.Pt {
+	x, y, ok := v.ov.CellOf(v.cur)
+	if !ok {
+		return v.cur
+	}
+	tx, ty := clamp(x+d[0], 0, v.ov.Grid.W-1), clamp(y+d[1], 0, v.ov.Grid.H-1)
+	p := v.cur
+	for ; p.X > 0 && x > tx; p.X-- {
+		if cx, _, _ := v.ov.CellOf(mapgen.Pt{X: p.X - 1, Y: p.Y}); cx == tx {
+			p.X--
+			break
+		}
+	}
+	for ; p.X < mapgen.WorldW-1 && x < tx; p.X++ {
+		if cx, _, _ := v.ov.CellOf(mapgen.Pt{X: p.X + 1, Y: p.Y}); cx == tx {
+			p.X++
+			break
+		}
+	}
+	for ; p.Y > 0 && y > ty; p.Y-- {
+		if _, cy, _ := v.ov.CellOf(mapgen.Pt{X: p.X, Y: p.Y - 1}); cy == ty {
+			p.Y--
+			break
+		}
+	}
+	for ; p.Y < mapgen.WorldH-1 && y < ty; p.Y++ {
+		if _, cy, _ := v.ov.CellOf(mapgen.Pt{X: p.X, Y: p.Y + 1}); cy == ty {
+			p.Y++
+			break
+		}
+	}
+	return p
 }
 
 // jump moves the cursor to the next (dir 1) or previous building or wonder.
