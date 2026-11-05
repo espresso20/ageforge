@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- Every star in the wide view is a generated system you can zoom into.
 - In space, the cursor jumps between bodies and you can zoom in on any planet.
 - **The space port at the deepest zoom.** In the space ages the district zoom shows your buildings as modules on a ring city around Earth, with blinking lights and the warp gate on the ring once built. Every planet now shows its moons, and the Moon reads as a satellite.
 - **A Sol-system orrery on the space Map.** From the Space Age the Map draws a procedural Sol system: the Sun, the planets on their orbits and the asteroid belt. A new inner zoom, from the Sun out to the asteroid belt, sits between the whole-system view and the close-up, and the Cosmos view zooms out past it. The cursor names the new space objects. The space colours, light mode and wide terminals are tuned. Buildings of ended resources and far legacy ground buildings are left off the orbits.

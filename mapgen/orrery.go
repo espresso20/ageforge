@@ -67,7 +67,7 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 	r.sx, r.sy = (2*cx+1)*pxUnit, (2*cy+1)*pxUnit
 
 	// how far out each orbit is: the inner zoom spreads them to fill the window
-	spread := 185 // the home system's outer planets go off the window
+	spread := 185   // the home system's outer planets go off the window
 	if !spec.Home { // a far system fills it, every planet in view
 		far := 1
 		for _, p := range spec.Planets {
