@@ -96,6 +96,13 @@ func (f *frame) districts() []District {
 				heart, gap = t, d
 			}
 		}
+		for _, pl := range f.placed { // the close-up draws no town: the heart is the nearest lot's
+			r := f.plan.Lots[pl.lot].Rect
+			c := Pt{r.X + r.W/2, r.Y + r.H/2}
+			if d := (Rect{c.X, c.Y, 1, 1}).dist(middle); f.calm() && !pl.ruin && pl.b.Lineage == line && d < gap {
+				heart, gap = c, d
+			}
+		}
 		if gap < 1<<60 {
 			out = append(out, District{line, box, heart})
 		}

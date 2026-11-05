@@ -177,6 +177,15 @@ func (p *Pixels) Resolve(g *Grid) {
 	}
 }
 
+// solid is a block of one colour: a blank on the ground, a full block on
+// anything else, so a lit body never reads as empty space.
+func solid(c, base Paint) (rune, Paint, Paint) {
+	if c == base {
+		return ' ', c, c
+	}
+	return '█', c, c
+}
+
 func reduceQuad(px [4]Paint, base Paint) (r rune, fg, bg Paint) {
 	var cols [4]Paint
 	var cnt [4]int
@@ -192,7 +201,7 @@ func reduceQuad(px [4]Paint, base Paint) (r rune, fg, bg Paint) {
 		cnt[k]++
 	}
 	if n == 1 {
-		return ' ', cols[0], cols[0]
+		return solid(cols[0], base)
 	}
 	// the two that win: most pixels, then not the ground, then the brighter
 	better := func(a, b int) bool {
@@ -241,7 +250,7 @@ func reduceQuad(px [4]Paint, base Paint) (r rune, fg, bg Paint) {
 		cb = Paint{cb.Hue, uint8(sumB / nB)}
 	}
 	if nB == 0 {
-		return ' ', ca, ca
+		return solid(ca, base)
 	}
 	// the foreground is the group that is not the ground, else the brighter
 	aFront := paintLuma(ca) >= paintLuma(cb)

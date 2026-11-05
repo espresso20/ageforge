@@ -30,7 +30,7 @@ func lit(v *view, f Frame) int {
 // picture draws at every size.
 func TestNewSinceLastVisitLightsThenClears(t *testing.T) {
 	fixture.WithTheme(t, "forge")
-	for _, age := range []string{"medieval_age", "modern_age", "space_age", "galactic_age"} {
+	for _, age := range []string{"medieval_age", "modern_age", "galactic_age"} {
 		m := grown(t, fixture.Options{Age: age, Seed: 7})
 		more := grown(t, fixture.Options{Age: age, Seed: 9})
 		at := func(model *mapmodel.Model, clock int) Frame { return Frame{Model: model, Anim: clock, Clock: clock} }

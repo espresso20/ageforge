@@ -127,6 +127,14 @@ func (f *frame) at(x, y int) int { return y*f.g.W + x }
 
 // draw paints every layer, bottom to top.
 func (f *frame) draw() {
+	if f.calm() {
+		f.paintVoid()
+		f.paintStarField()
+		f.paintEarthSystem()
+		f.paintAround()
+		f.paintVisitor()
+		return
+	}
 	f.paintGround()
 	f.paintTown()
 	f.paintDetail()

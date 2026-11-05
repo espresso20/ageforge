@@ -184,525 +184,6 @@ func (f *frame) paintBodies() {
 	}
 }
 
-// paintConstructCell paints a single cell of a megastructure or space station,
-// marking it as KindBuilding with the given key, and respecting boundaries.
-func (f *frame) paintConstructCell(x, y int, r rune, fg Paint, bg Paint, key string, lineage ...string) {
-	if !f.g.in(x, y) {
-		return
-	}
-	th := f.g.ThingAt(x, y)
-	if th.Key == "sun" || th.Key == "home" || th.Key == "planet" {
-		return
-	}
-	if th.Kind == KindWonder {
-		return
-	}
-	spaceBg := f.g.At(x, y).Bg
-	if bg.Weight != 0 {
-		spaceBg = bg
-	}
-	f.g.paint(x, y, Cell{R: r, Fg: fg, Bg: spaceBg})
-	f.g.mark(x, y, Thing{Kind: KindBuilding, Key: key})
-	if f.g.in(x, y) {
-		f.busy[f.at(x, y)] = true
-	}
-}
-
-// paintDysonSwarm draws close-orbit solar energy harvesters absorbing solar plasma
-// and beaming microwave energy toward the inner system.
-func (f *frame) paintDysonSwarm(c Pt) {
-	dysonRX, dysonRY := 22, 9
-	advance := (f.anim * 2) % 4096
-
-	for k := 0; k < 4; k++ {
-		a := (advance + k*1024) % 4096
-		hx := c.X + (dysonRX*cos4096(a))/1024
-		hy := c.Y + (dysonRY*sin4096(a))/1024
-
-		if k == 0 {
-			f.targets = append(f.targets, Pt{hx, hy})
-		}
-		lin := mapmodel.LinEnergy
-
-		if k%2 == 0 {
-			// Pattern: ╞⬢╡
-			coreCol := []Paint{P(HWhite, 255), P(HGold, 255), P(HSun, 255)}[(f.anim/3+k)%3]
-			f.paintConstructCell(hx-1, hy, '╞', P(HSteel, 230), Paint{}, "dyson_harvester", lin)
-			f.paintConstructCell(hx, hy, '⬢', coreCol, Paint{}, "dyson_harvester", lin)
-			f.paintConstructCell(hx+1, hy, '╡', P(HSteel, 230), Paint{}, "dyson_harvester", lin)
-		} else {
-			// Pattern: ▤╪▤
-			coreCol := []Paint{P(HSun, 255), P(HWhite, 255), P(HGold, 255)}[(f.anim/3+k)%3]
-			f.paintConstructCell(hx-1, hy, '▤', P(HGold, 240), Paint{}, "dyson_harvester", lin)
-			f.paintConstructCell(hx, hy, '╪', coreCol, Paint{}, "dyson_harvester", lin)
-			f.paintConstructCell(hx+1, hy, '▤', P(HGold, 240), Paint{}, "dyson_harvester", lin)
-		}
-
-		// Beaming microwave energy toward the system
-		vx := hx - c.X
-		vy := hy - c.Y
-		dxDir := 0
-		if vx > 2 {
-			dxDir = 1
-		} else if vx < -2 {
-			dxDir = -1
-		}
-		dyDir := 0
-		if vy > 1 {
-			dyDir = 1
-		} else if vy < -1 {
-			dyDir = -1
-		}
-
-		if dxDir != 0 || dyDir != 0 {
-			for step := 2; step <= 3; step++ {
-				bx := hx + dxDir*step
-				by := hy + dyDir*step
-				if f.g.in(bx, by) && f.g.ThingAt(bx, by).Kind == KindNone {
-					if (f.anim/2+step+k)%3 == 0 {
-						spaceBg := f.g.At(bx, by).Bg
-						f.g.paint(bx, by, Cell{R: '·', Fg: P(HGold, 180), Bg: spaceBg})
-					}
-				}
-			}
-		}
-	}
-}
-
-// paintWarpGate draws the system edge Interstellar Jump Gate with portal core and pulse rings.
-func (f *frame) paintWarpGate(c Pt, neptunePos Pt) {
-	gx := c.X
-	gy := c.Y + 104
-	if !f.g.in(gx, gy) {
-		return
-	}
-	dxNep := abs(gx - neptunePos.X)
-	dyNep := abs(gy - neptunePos.Y)
-	if dxNep < 11 && dyNep < 5 {
-		return
-	}
-
-	coreRunes := []rune{'◎', '◉', '✺', '⊛'}
-	coreR := coreRunes[(f.anim/4)%len(coreRunes)]
-	corePaints := []Paint{P(HNeon, 255), P(HWhite, 255), P(HNebula, 255), P(HCyan, 255)}
-	coreFg := corePaints[(f.anim/3)%len(corePaints)]
-
-	f.targets = append(f.targets, Pt{gx, gy})
-	lin := mapmodel.LinFaith
-
-	emitFg := P(HNeon, 255)
-	if (f.anim/3)&1 == 0 {
-		emitFg = P(HWhite, 255)
-	}
-
-	// Row -1: Upper focus emitters
-	f.paintConstructCell(gx-3, gy-1, '▲', emitFg, Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx+3, gy-1, '▲', emitFg, Paint{}, "warp_gate", lin)
-	if (f.anim/3)%2 == 0 {
-		f.paintConstructCell(gx, gy-1, '·', P(HCyan, 180), Paint{}, "warp_gate", lin)
-	}
-
-	// Row 0: Full jump gate corridor (width 11) - ▲ ▤═╣ ⬡ ╌ ◎ ╌ ⬡ ╠═▤ ▼
-	f.paintConstructCell(gx-5, gy, '▤', P(HSteel, 230), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx-4, gy, '═', P(HSteel, 200), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx-3, gy, '╣', P(HMetal, 255), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx-2, gy, '⬡', P(HCyan, 255), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx-1, gy, '╌', P(HNeon, 230), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx, gy, coreR, coreFg, P(HNebula, 210), "warp_gate", lin)
-	f.paintConstructCell(gx+1, gy, '╌', P(HNeon, 230), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx+2, gy, '⬡', P(HCyan, 255), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx+3, gy, '╠', P(HMetal, 255), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx+4, gy, '═', P(HSteel, 200), Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx+5, gy, '▤', P(HSteel, 230), Paint{}, "warp_gate", lin)
-
-	// Row +1: Lower focus emitters
-	f.paintConstructCell(gx-3, gy+1, '▼', emitFg, Paint{}, "warp_gate", lin)
-	f.paintConstructCell(gx+3, gy+1, '▼', emitFg, Paint{}, "warp_gate", lin)
-	if (f.anim/3)%2 == 0 {
-		f.paintConstructCell(gx, gy+1, '·', P(HCyan, 180), Paint{}, "warp_gate", lin)
-	}
-}
-
-// paintAsteroidMines draws automated refinery complexes tethered to rocky chondrites.
-func (f *frame) paintAsteroidMines(c Pt, planetPositions []Pt) {
-	beltRX, beltRY := 118, 50
-	angles := [4]int{512, 1536, 2560, 3584}
-
-	for k, baseA := range angles {
-		a := (baseA + int(f.m.Seed%128)) % 4096
-		mx := c.X + (beltRX*cos4096(a))/1024
-		my := c.Y + (beltRY*sin4096(a))/1024
-
-		tooClose := false
-		for _, pp := range planetPositions {
-			dx := mx - pp.X
-			dy := (my - pp.Y) * 25 / 10
-			if isqrt(dx*dx+dy*dy) < 14 {
-				tooClose = true
-				break
-			}
-		}
-		if tooClose {
-			continue
-		}
-
-		if k == 0 {
-			f.targets = append(f.targets, Pt{mx, my})
-		}
-		lin := mapmodel.LinMines
-
-		if k%2 == 0 {
-			torchRunes := []rune{'*', '✦', '·', '▸'}
-			torchR := torchRunes[(f.anim/3+k)%len(torchRunes)]
-			torchPaints := []Paint{P(HFire, 255), P(HAmber, 255), P(HWhite, 255)}
-			torchCol := torchPaints[(f.anim/2+k)%len(torchPaints)]
-
-			f.paintConstructCell(mx-2, my, '●', P(HRock, 210), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx-1, my, '═', P(HSteel, 190), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx, my, '╪', P(HMetal, 240), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx+1, my, '⬡', P(HSteel, 220), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx+2, my, torchR, torchCol, Paint{}, "asteroid_mine", lin)
-		} else {
-			torchRunes := []rune{'✦', '*', '·', '►'}
-			torchR := torchRunes[(f.anim/3+k)%len(torchRunes)]
-			torchPaints := []Paint{P(HAmber, 255), P(HFire, 255), P(HWhite, 255)}
-			torchCol := torchPaints[(f.anim/2+k)%len(torchPaints)]
-
-			f.paintConstructCell(mx-2, my, '╞', P(HSteel, 220), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx-1, my, '■', P(HMetal, 240), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx, my, '═', P(HSteel, 190), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx+1, my, '▪', P(HRock, 230), Paint{}, "asteroid_mine", lin)
-			f.paintConstructCell(mx+2, my, torchR, torchCol, Paint{}, "asteroid_mine", lin)
-		}
-	}
-}
-
-// paintLagrangeRelays draws navigational communication buoys with rotating dish antennas.
-func (f *frame) paintLagrangeRelays(pts []Pt) {
-	dishRunes := []rune{'ᗒ', 'ᗑ', 'ᗕ', 'ᗐ'}
-
-	for k, pt := range pts {
-		if pt.X == 0 && pt.Y == 0 {
-			continue
-		}
-		lx, ly := pt.X, pt.Y
-		dishR := dishRunes[(f.anim/6+k)%len(dishRunes)]
-
-		if k == 0 {
-			f.targets = append(f.targets, Pt{lx, ly})
-		}
-		lin := mapmodel.LinTrade
-
-		f.paintConstructCell(lx-1, ly, dishR, P(HSteel, 230), Paint{}, "deep_space_relay", lin)
-		f.paintConstructCell(lx, ly, '═', P(HMetal, 200), Paint{}, "deep_space_relay", lin)
-		f.paintConstructCell(lx+1, ly, '⌾', P(HCyan, 255), Paint{}, "deep_space_relay", lin)
-
-		if (f.anim/4+k)%3 == 0 {
-			f.paintConstructCell(lx+2, ly, '·', P(HCyan, 210), Paint{}, "deep_space_relay", lin)
-		}
-	}
-}
-
-// paintOrbitalCitadel paints multi-cell modular space stations orbiting planets.
-func (f *frame) paintOrbitalCitadel(sx, sy int, style int) {
-	f.targets = append(f.targets, Pt{sx, sy})
-	lin := mapmodel.LinKnowledge
-	switch style {
-	case 0:
-		lin = mapmodel.LinKnowledge
-	case 1:
-		lin = mapmodel.LinHousing
-	case 2:
-		lin = mapmodel.LinMetal
-	case 3:
-		lin = mapmodel.LinFood
-	case 4:
-		lin = mapmodel.LinEngineer
-	case 5:
-		lin = mapmodel.LinCulture
-	case 6:
-		lin = mapmodel.LinMonument
-	case 7:
-		lin = mapmodel.LinHarbor
-	case 8:
-		lin = mapmodel.LinMilitary
-	}
-
-	switch style {
-	case 0: // Earth Gateway Citadel (ISS Prime) - width 7 modular station with cupola & navigation strobes
-		wingFg := P(HCyan, 240)
-		strobeCol := P(HWhite, 255)
-		if (f.anim/4)&1 == 0 {
-			wingFg = P(HWhite, 255)
-			strobeCol = P(HCyan, 255)
-		}
-		// Upper & lower navigation strobe lights
-		f.paintConstructCell(sx, sy-1, '·', strobeCol, Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-3, sy-1, '·', P(HCyan, 240), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+3, sy-1, '·', P(HRed, 240), Paint{}, "space_station", lin)
-		// Main station body: ▤═╞═█═╡═▤
-		f.paintConstructCell(sx-3, sy, '▤', wingFg, Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-2, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '╞', P(HMetal, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '█', P(HWhite, 255), P(HCyan, 180), "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '╡', P(HMetal, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+3, sy, '▤', wingFg, Paint{}, "space_station", lin)
-		// Lower strobes
-		f.paintConstructCell(sx-3, sy+1, '·', P(HCyan, 240), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+3, sy+1, '·', P(HRed, 240), Paint{}, "space_station", lin)
-
-	case 1: // Earth Orbital Research Station - width 5 (▤═╬═▤)
-		f.paintConstructCell(sx-2, sy, '▤', P(HCyan, 230), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '╬', P(HWhite, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '▤', P(HCyan, 230), Paint{}, "space_station", lin)
-
-	case 2: // Martian Orbital Shipyard & Phobos Foundry - industrial drydock (╞═⬢═╡) with gantries & amber lights
-		gantryFg := P(HAmber, 230)
-		warnFg := P(HAmber, 255)
-		if (f.anim/4)&1 == 0 {
-			gantryFg = P(HRed, 255)
-			warnFg = P(HFire, 255)
-		}
-		// Gantries
-		f.paintConstructCell(sx, sy-1, '╦', P(HSteel, 220), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy+1, '╩', P(HSteel, 220), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-2, sy-1, '·', warnFg, Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy-1, '·', warnFg, Paint{}, "space_station", lin)
-		// Docking cradle
-		f.paintConstructCell(sx-2, sy, '╞', gantryFg, Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '⬢', P(HAmber, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '╡', gantryFg, Paint{}, "space_station", lin)
-
-	case 3: // Jovian Atmosphere Harvester - science platform (▤═◈═▤) with magnetosphere telemetry
-		teleCol := []Paint{P(HNeon, 255), P(HWhite, 255), P(HCyan, 255)}[(f.anim/3)%3]
-		f.paintConstructCell(sx, sy-1, '╷', P(HCyan, 220), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-2, sy, '▤', P(HCyan, 230), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '◈', teleCol, Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '▤', P(HCyan, 230), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy+1, '╵', P(HCyan, 220), Paint{}, "space_station", lin)
-
-	case 4: // Jovian Atmosphere Refinery Platform - width 5
-		f.paintConstructCell(sx-2, sy, '╞', P(HSteel, 220), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '▣', P(HAmber, 240), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '╡', P(HSteel, 220), Paint{}, "space_station", lin)
-
-	case 5: // Saturn Orbital Spire - golden solar collector station (╘═╬═╛) anchored in high orbit
-		f.paintConstructCell(sx, sy-1, '╥', P(HGold, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-2, sy, '╘', P(HGold, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '╬', P(HAmber, 240), P(HGold, 180), "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '╛', P(HGold, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy+1, '╨', P(HGold, 255), Paint{}, "space_station", lin)
-
-	case 6: // Saturn Golden Solar Collector Platform - width 5
-		f.paintConstructCell(sx-2, sy, '╘', P(HGold, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '◈', P(HSun, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HSteel, 210), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '╛', P(HGold, 255), Paint{}, "space_station", lin)
-
-	case 7: // Uranus Research Outpost - width 5
-		f.paintConstructCell(sx-2, sy, '╞', P(HCyan, 230), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '◈', P(HNeon, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HSteel, 200), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '╡', P(HCyan, 230), Paint{}, "space_station", lin)
-
-	case 8: // Neptune Deep Space Sentinel - width 5
-		f.paintConstructCell(sx-2, sy, '▤', P(HSteel, 220), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx-1, sy, '═', P(HCyan, 220), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx, sy, '⌾', P(HWhite, 255), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+1, sy, '═', P(HCyan, 220), Paint{}, "space_station", lin)
-		f.paintConstructCell(sx+2, sy, '▤', P(HSteel, 220), Paint{}, "space_station", lin)
-	}
-}
-
-// paintComets draws sweeping procedural comets with glowing nuclei and ion/dust tails pointing away from the Sun.
-func (f *frame) paintComets(c Pt) {
-	type cometSpec struct {
-		rx, ry   int
-		speed    int
-		seedOff  int64
-		col      Paint
-		tailHue1 Hue
-		tailHue2 Hue
-	}
-	comets := []cometSpec{
-		{
-			rx: 235, ry: 102, speed: 1, seedOff: 331,
-			col: P(HWhite, 255), tailHue1: HCyan, tailHue2: HAir,
-		},
-		{
-			rx: 215, ry: 95, speed: 2, seedOff: 773,
-			col: P(HCyan, 255), tailHue1: HWater, tailHue2: HNebula,
-		},
-	}
-
-	for k, cs := range comets {
-		angle := (int(f.m.Seed+cs.seedOff)%4096 + (f.anim*cs.speed)/2) % 4096
-		cx0 := c.X + (cs.rx*cos4096(angle))/1024
-		cy0 := c.Y + (cs.ry*sin4096(angle))/1024
-
-		if !f.g.in(cx0, cy0) {
-			continue
-		}
-		th := f.g.ThingAt(cx0, cy0)
-		if th.Key == "sun" || th.Key == "planet" || th.Key == "home" || th.Kind == KindWonder {
-			continue
-		}
-
-		// Vector away from the Sun (c.X, c.Y)
-		dxSun := cx0 - c.X
-		dySun := cy0 - c.Y
-		dist := isqrt(dxSun*dxSun + dySun*dySun*4)
-		if dist == 0 {
-			dist = 1
-		}
-		dirX := (dxSun * 100) / dist
-		dirY := (dySun * 100) / dist
-
-		// Ion and dust tail pointing radially outward away from the Sun
-		tailRunes := []rune{'═', '─', '-', '·', '∙', '·'}
-		for s := 6; s >= 1; s-- {
-			tx := cx0 + (dirX*s*12)/100
-			ty := cy0 + (dirY*s*8)/100
-			if !f.g.in(tx, ty) {
-				continue
-			}
-			tth := f.g.ThingAt(tx, ty)
-			if tth.Key == "sun" || tth.Key == "planet" || tth.Key == "home" || tth.Kind == KindWonder {
-				continue
-			}
-			tRune := tailRunes[s-1]
-			var tCol Paint
-			if s <= 2 {
-				tCol = P(cs.tailHue1, 240)
-			} else if s <= 4 {
-				tCol = P(cs.tailHue2, 200)
-			} else {
-				tCol = P(HNebula, 150)
-			}
-			spaceBg := f.g.At(tx, ty).Bg
-			f.g.paint(tx, ty, Cell{R: tRune, Fg: tCol, Bg: spaceBg})
-			f.g.mark(tx, ty, Thing{Kind: KindBuilding, Key: "comet"})
-		}
-
-		// Glowing nucleus
-		nucRunes := []rune{'✦', '★', '*', '●'}
-		nRune := nucRunes[(f.anim/3+k)%len(nucRunes)]
-		spaceBg := f.g.At(cx0, cy0).Bg
-		f.g.paint(cx0, cy0, Cell{R: nRune, Fg: cs.col, Bg: spaceBg})
-		f.g.mark(cx0, cy0, Thing{Kind: KindBuilding, Key: "comet"})
-	}
-}
-
-// paintPluto draws the binary dwarf planet system Pluto and Charon in the outer Kuiper belt.
-func (f *frame) paintPluto(c Pt) {
-	rx, ry := 214, 91
-	a := (2100 + int(f.m.Seed%400) + f.anim/180) % 4096
-	px := c.X + (rx*cos4096(a))/1024
-	py := c.Y + (ry*sin4096(a))/1024
-	px = clamp(px, 5, f.g.W-6)
-	py = clamp(py, 3, f.g.H-4)
-
-	if !f.g.in(px, py) {
-		return
-	}
-	th := f.g.ThingAt(px, py)
-	if th.Key == "sun" || th.Kind == KindWonder {
-		return
-	}
-
-	spaceBg := f.g.At(px, py).Bg
-	f.g.paint(px, py, Cell{R: '●', Fg: P(HAmber, 230), Bg: spaceBg})
-	f.g.mark(px, py, Thing{Kind: KindTerrain, Key: "pluto"})
-
-	// Charon companion orbiting Pluto
-	ca := (f.anim * 8) % 4096
-	cx := px + (3*cos4096(ca))/1024
-	cy := py + (1*sin4096(ca))/1024
-	if cx == px && cy == py {
-		cx = px + 1
-	}
-	if f.g.in(cx, cy) && f.g.ThingAt(cx, cy).Kind == KindNone {
-		cBg := f.g.At(cx, cy).Bg
-		f.g.paint(cx, cy, Cell{R: '∙', Fg: P(HWhite, 240), Bg: cBg})
-		f.g.mark(cx, cy, Thing{Kind: KindTerrain, Key: "pluto"})
-	}
-}
-
-// paintInterstellarProbe draws a Voyager-class interstellar probe drifting outward into the interstellar void.
-func (f *frame) paintInterstellarProbe(c Pt) {
-	// Upper-left quadrant beyond Neptune
-	prX := c.X - 225
-	prY := c.Y - 96
-	if !f.g.in(prX-2, prY) || !f.g.in(prX+2, prY) {
-		return
-	}
-
-	// Probe structure: ╘═◯═·
-	// High-gain dish antenna facing back toward the Sun (East)
-	f.paintConstructCell(prX+2, prY, '╘', P(HGold, 255), Paint{}, "interstellar_probe")
-	// Structural truss
-	f.paintConstructCell(prX+1, prY, '═', P(HSteel, 210), Paint{}, "interstellar_probe")
-	// Central bus / RTG
-	coreCol := P(HWhite, 255)
-	if (f.anim/4)&1 == 0 {
-		coreCol = P(HCyan, 255)
-	}
-	f.paintConstructCell(prX, prY, '◯', coreCol, Paint{}, "interstellar_probe")
-	// Boom & magnetometer
-	f.paintConstructCell(prX-1, prY, '═', P(HSteel, 210), Paint{}, "interstellar_probe")
-	// Telemetry pulse beaming into the deep void
-	pulseFg := P(HCyan, 220)
-	if (f.anim/3)&1 == 0 {
-		pulseFg = P(HNeon, 240)
-	}
-	f.paintConstructCell(prX-2, prY, '·', pulseFg, Paint{}, "interstellar_probe")
-	if (f.anim/2)%3 == 0 {
-		f.paintConstructCell(prX-3, prY, '·', P(HCyan, 160), Paint{}, "interstellar_probe")
-	}
-}
-
-// paintAlienMonolith draws a silent enigmatic obsidian monolith in the outer Kuiper belt.
-func (f *frame) paintAlienMonolith(c Pt) {
-	// Lower-right quadrant in deep space
-	mX := c.X + 220
-	mY := c.Y + 94
-	if !f.g.in(mX, mY) {
-		return
-	}
-
-	// Monolith cell: deep dark obsidian pillar
-	f.g.paint(mX, mY, Cell{R: '▌', Fg: P(HDeep, 255), Bg: P(HVoid, 255)})
-	f.g.mark(mX, mY, Thing{Kind: KindBuilding, Key: "alien_monolith"})
-
-	// Faint tachyon resonance rings
-	if (f.anim/3)%3 == 0 {
-		ringPts := []Pt{
-			{mX - 1, mY}, {mX + 1, mY},
-			{mX, mY - 1}, {mX, mY + 1},
-		}
-		for _, pt := range ringPts {
-			if f.g.in(pt.X, pt.Y) && f.g.ThingAt(pt.X, pt.Y).Kind == KindNone {
-				rBg := f.g.At(pt.X, pt.Y).Bg
-				f.g.paint(pt.X, pt.Y, Cell{R: '·', Fg: P(HNebula, 190), Bg: rBg})
-				f.g.mark(pt.X, pt.Y, Thing{Kind: KindBuilding, Key: "alien_monolith"})
-			}
-		}
-	}
-}
-
 // paintSystemBodies draws the full 8-planet 3D Solar System, planetary rings,
 // asteroid belt, and interplanetary transfer corridors with active spacecraft.
 func (f *frame) paintSystemBodies() {
@@ -710,7 +191,6 @@ func (f *frame) paintSystemBodies() {
 
 	// 1. Compute Live Orbital Loops & Positions for All 8 Planets
 	var planetPos [8]Pt
-	var lagrangePoints []Pt
 	divs := [8]int{12, 20, 32, 50, 80, 120, 180, 260}
 	for i := 0; i < len(systemSpec.rings) && i < 8; i++ {
 		east := f.plan.Roads[2+2*i].Cells
@@ -734,16 +214,7 @@ func (f *frame) paintSystemBodies() {
 		pos := loop[(startIdx+advance)%len(loop)]
 		planetPos[i] = pos
 
-		// Capture L4 and L5 Lagrange points for Earth (i=2) and Jupiter (i=4)
-		if i == 2 || i == 4 {
-			l4 := loop[(startIdx+advance+len(loop)/6)%len(loop)]
-			l5 := loop[(startIdx+advance-len(loop)/6+len(loop))%len(loop)]
-			lagrangePoints = append(lagrangePoints, l4, l5)
-		}
 	}
-
-	// 2. Solar Dyson Swarm Harvesters (Inside Mercury's Orbit)
-	f.paintDysonSwarm(c)
 
 	// 3. Main Asteroid Belt (Between Mars Ring 3 ry=41 and Jupiter Ring 4 ry=59)
 	beltRX, beltRY := 118, 50
@@ -779,26 +250,11 @@ func (f *frame) paintSystemBodies() {
 		}
 	}
 
-	// 4. Asteroid Belt Mining Outposts
-	f.paintAsteroidMines(c, planetPos[:])
-
-	// 5. Deep Space Navigational Relays (Lagrange Points)
-	f.paintLagrangeRelays(lagrangePoints)
-
-	// 6. Interstellar Warp Nexus / Jump Gate (System Edge)
-	f.paintWarpGate(c, planetPos[7])
-
-	// 7. Outer Periphery, Kuiper Belt & Comets
-	f.paintComets(c)
-	f.paintPluto(c)
-	f.paintInterstellarProbe(c)
-	f.paintAlienMonolith(c)
-
-	// 8. Ships between the planets and the warp gate, in quadrant pixels. They
+	// 8. Ships between the planets, in quadrant pixels. They
 	// keep clear of the bodies (the radii are cells of clearance) and of Sol,
 	// and of anything else already drawn.
-	clearance := [9]int{8, 9, 12, 10, 22, 25, 10, 12, 9}
-	pos := append(planetPos[:], Pt{X: c.X, Y: c.Y + 104})
+	clearance := [8]int{8, 9, 12, 10, 22, 25, 10, 12}
+	pos := planetPos[:]
 	bodies := make([]shipBody, len(pos))
 	for i, p := range pos {
 		bodies[i] = shipBody{(2*p.X + 1) * pxUnit, (2*p.Y + 1) * pxUnit, 32 * clearance[i]}
@@ -1494,26 +950,16 @@ func (f *frame) paintSystemBodies() {
 
 		case 2: // Earth (rx=6, ry=2)
 			drawPlanetSphere(px, py, 6, 2, 2, key)
-			a1 := (f.anim * 6) % 4096
-			a2 := (a1 + 2048) % 4096
-			f.paintOrbitalCitadel(px+(8*cos4096(a1))/1024, py+(3*sin4096(a1))/1024, 0)
-			f.paintOrbitalCitadel(px+(8*cos4096(a2))/1024, py+(3*sin4096(a2))/1024, 1)
 			la := (f.anim * 4) % 4096
 			paintSatellite(px+(10*cos4096(la))/1024, py+(4*sin4096(la))/1024, '●', P(HWhite, 255), key)
 
 		case 3: // Mars (rx=5, ry=2)
 			drawPlanetSphere(px, py, 5, 2, 3, key)
-			a := (f.anim * 8) % 4096
-			f.paintOrbitalCitadel(px+(7*cos4096(a))/1024, py+(3*sin4096(a))/1024, 2)
 			pa := (f.anim * 12) % 4096
 			paintSatellite(px+(8*cos4096(pa))/1024, py+(3*sin4096(pa))/1024, '∙', P(HRock, 230), key)
 
 		case 4: // Jupiter (rx=10, ry=4)
 			drawPlanetSphere(px, py, 10, 4, 4, key)
-			ja1 := (f.anim * 5) % 4096
-			ja2 := (ja1 + 2048) % 4096
-			f.paintOrbitalCitadel(px+(13*cos4096(ja1))/1024, py+(5*sin4096(ja1))/1024, 3)
-			f.paintOrbitalCitadel(px+(13*cos4096(ja2))/1024, py+(5*sin4096(ja2))/1024, 4)
 			ioA := (f.anim * 10) % 4096
 			paintSatellite(px+(14*cos4096(ioA))/1024, py+(6*sin4096(ioA))/1024, '●', P(HSun, 255), key)
 			euA := (f.anim * 8) % 4096
@@ -1527,22 +973,14 @@ func (f *frame) paintSystemBodies() {
 			paintSaturnRings(px, py, true)
 			drawPlanetSphere(px, py, 8, 3, 5, key)
 			paintSaturnRings(px, py, false)
-			sa1 := (f.anim * 4) % 4096
-			sa2 := (sa1 + 2048) % 4096
-			f.paintOrbitalCitadel(px+(20*cos4096(sa1))/1024, py+(6*sin4096(sa1))/1024, 5)
-			f.paintOrbitalCitadel(px+(20*cos4096(sa2))/1024, py+(6*sin4096(sa2))/1024, 6)
 			ta := (f.anim * 4) % 4096
 			paintSatellite(px+(23*cos4096(ta))/1024, py+(7*sin4096(ta))/1024, '●', P(HAmber, 255), key)
 
 		case 6: // Uranus (rx=6, ry=2)
 			drawPlanetSphere(px, py, 6, 2, 6, key)
-			ua := (f.anim * 4) % 4096
-			f.paintOrbitalCitadel(px+(8*cos4096(ua))/1024, py+(3*sin4096(ua))/1024, 7)
 
 		case 7: // Neptune (rx=6, ry=2)
 			drawPlanetSphere(px, py, 6, 2, 7, key)
-			na := (f.anim * 3) % 4096
-			f.paintOrbitalCitadel(px+(8*cos4096(na))/1024, py+(3*sin4096(na))/1024, 8)
 			tra := (4096 - (f.anim*4)%4096) % 4096
 			paintSatellite(px+(10*cos4096(tra))/1024, py+(4*sin4096(tra))/1024, '●', P(HAir, 245), key)
 		}
