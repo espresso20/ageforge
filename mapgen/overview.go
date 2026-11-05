@@ -30,16 +30,26 @@ const (
 // Overview squeezes the town of a scene into w by h cells.
 func (s *Scene) Overview(w, h int) *Overview {
 	if s.Scale == System {
-		return s.overviewSystem(w, h, SystemViewFull)
+		return s.overviewSystem(w, h, SystemViewFull, 0)
 	}
 	return s.overviewPadded(w, h, 0, 0)
+}
+
+// SystemOverview squeezes the system of star k (0 the home sun) in the given
+// view into w by h cells; other scales have no systems and give the plain
+// overview.
+func (s *Scene) SystemOverview(w, h int, mode SystemViewMode, k int) *Overview {
+	if s.Scale != System {
+		return s.Overview(w, h)
+	}
+	return s.overviewSystem(w, h, mode, k)
 }
 
 // OverviewCosmos squeezes the scene with additional cosmic padding into w by h cells,
 // giving a wide deep space perspective.
 func (s *Scene) OverviewCosmos(w, h int) *Overview {
 	if s.Scale == System {
-		return s.overviewSystem(w, h, SystemViewCosmos)
+		return s.overviewSystem(w, h, SystemViewCosmos, 0)
 	}
 	return s.overviewPadded(w, h, 100, 50)
 }
@@ -49,7 +59,7 @@ func (s *Scene) OverviewCosmos(w, h int) *Overview {
 // while maintaining an astronomical perspective.
 func (s *Scene) OverviewInner(w, h int) *Overview {
 	if s.Scale == System {
-		return s.overviewSystem(w, h, SystemViewInner)
+		return s.overviewSystem(w, h, SystemViewInner, 0)
 	}
 	return s.overviewPadded(w, h, 0, 0)
 }
@@ -131,7 +141,7 @@ func (s *Scene) mostImportant(x0, y0, x1, y1 int) Pt {
 			foundInGrid = true
 			th := s.Grid.Things[s.Grid.Hit[y*s.Grid.W+x]]
 			sal := salience[th.Kind]
-			if th.Kind == KindTerrain && (th.Key == "planet" || th.Key == "home" || th.Key == "sun" || th.Key == "space_station") {
+			if th.Kind == KindTerrain && (th.Key == "planet" || th.Key == "home" || th.Key == "sun" || th.Key == "star" || th.Key == "space_station") {
 				sal = 4
 			}
 			if th.Kind == KindBuilding && th.Ruin {
@@ -271,9 +281,9 @@ func floorDiv(a, b int) int {
 	return a / b
 }
 
-// overviewSystem generates a clean, dedicated Astronomical Orrery Map for the Solar System at far zoom,
-// avoiding point-sampling artifacts on detailed 3D spheres.
-func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
+// overviewSystem draws the orrery of star k's system (0: the home system) at
+// far zoom, avoiding point-sampling artifacts on detailed 3D spheres.
+func (s *Scene) overviewSystem(w, h int, mode SystemViewMode, k int) *Overview {
 	gw, gh := s.Grid.W, s.Grid.H
 	var bw, bh int
 	switch mode {
@@ -312,38 +322,26 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	cx := w / 2
 	cy := h / 2
 
-	// 2. Compute Viewport Orbit Radii for the 8 Planets + Asteroid Belt
+	// 2. How far out the system reaches; at the cosmos zoom the home system
+	// leaves room for the stars round it.
+	spec := systemOf(s.Seed, k, s.Progress)
 	maxRY := cy * 88 / 100
-	orbitFractions := [8]int{18, 28, 39, 50, 68, 79, 89, 98}
-	beltFraction := 59
 	switch mode {
 	case SystemViewCosmos:
-		maxRY = cy * 68 / 100
+		maxRY = min(cy*40/100, cx*13/100)
 	case SystemViewInner:
 		maxRY = cy * 92 / 100
-		orbitFractions = [8]int{30, 48, 66, 84, 126, 150, 175, 200}
-		beltFraction = 100
 	}
 	maxRY = max(8, maxRY)
 
-	var rX, rY [8]int
-	for i := 0; i < 8; i++ {
-		ry := max(3+i, (maxRY*orbitFractions[i])/100)
-		rx := (ry * 230) / 100
-		rY[i] = ry
-		rX[i] = rx
-	}
-	beltRY := (maxRY * beltFraction) / 100
-	beltRX := (beltRY * 230) / 100
-
 	// 3. The system itself, drawn in quadrant blocks (orrery.go): glow, orbit
-	// lines, belt, sun, planets with their moons, Pluto and the comet.
-	s.paintOrrery(o, mode, cx, cy, maxRY, rX, rY, beltRX, beltRY)
+	// lines, belts, star, planets with their moons, the dwarf planet, the comet.
+	s.paintOrrery(o, spec, k, mode, cx, cy, maxRY)
 
 	// 7. Outer Megastructures: Warp Gate
 	warpRY := (maxRY * 115) / 100
 	warpY := cy + warpRY
-	if s.Gate && o.Grid.in(cx, warpY) {
+	if s.Gate && spec.Home && o.Grid.in(cx, warpY) {
 		if o.Grid.in(cx-1, warpY) {
 			o.Grid.paint(cx-1, warpY, Cell{R: '⫷', Fg: P(HCyan, 255), Bg: o.Grid.At(cx-1, warpY).Bg})
 			o.Grid.mark(cx-1, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})

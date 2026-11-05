@@ -5,7 +5,7 @@ package mapgen
 // town stands here; the town is at the space port, one zoom in. Everything
 // about the picture (sizes, kinds, phases, the lights) comes from the seed.
 // Any other planet of the system gets the same close-up: its own face and its
-// own moons (the orrery's table), and no stations.
+// own moons (its spec's count), and no stations.
 
 // station is one kind of station: a disc, a truss with panels, or a cross.
 type station struct {
@@ -72,20 +72,21 @@ func lighting(seed int64) func(c Paint, nx, ny int) Paint {
 	}
 }
 
-// planet paints planet i of the system and, for the home world, its air,
-// centred on (sx, sy) in 16ths of a pixel; the shading is lighting's.
-func (p *Pixels) planet(seed int64, anim, i, sx, sy, R int, shade func(Paint, int, int) Paint) {
-	own := p.Owner(PlanetThing(i), 5)
-	if i == planetSaturn {
+// planet paints planet i of a system as the thing th and, for a world with
+// seas, its air, centred on (sx, sy) in 16ths of a pixel; the shading is
+// lighting's.
+func (p *Pixels) planet(seed int64, anim int, pl *PlanetSpec, i int, th Thing, sx, sy, R int, shade func(Paint, int, int) Paint) {
+	own := p.Owner(th, 5)
+	if pl.Ring {
 		p.satRing(sx, sy, R, own, -1)
 	}
 	p.Disc(sx, sy, R, own, func(nx, ny int) Paint {
-		return shade(surface(seed, i, nx, ny, 6, anim/12), nx, ny)
+		return shade(pl.surface(seed, i, nx, ny, 6, anim/12), nx, ny)
 	})
-	if i == planetSaturn {
+	if pl.Ring {
 		p.satRing(sx, sy, R, own, 1)
 	}
-	if i == planetEarth {
+	if pl.World {
 		p.Glow(sx, sy, R, R+3*pxUnit, HAir, 150, 3, own)
 	}
 }
@@ -97,22 +98,24 @@ func (p *Pixels) moon(x, y, r, k int, shade func(Paint, int, int) Paint) {
 	})
 }
 
-// closeSize is how big each planet's close-up disc is next to the home
-// world's, in percent: the giants a little larger, the small ones smaller.
-var closeSize = [8]int{55, 90, 100, 70, 110, 85, 90, 90}
-
 // paintEarthSystem draws the close-up over the sky already in the frame: the
 // home world with its stations, or the planet the player zoomed on.
 func (f *frame) paintEarthSystem() {
-	seed, anim := f.m.Seed, f.anim
+	anim := f.anim
+	sp := systemOf(f.m.Seed, f.star, spaceProgress(f.m))
+	seed := f.m.Seed + int64(f.star)*7919
 	pl := planetEarth
 	if f.planet > 0 {
 		pl = f.planet - 1
 	}
+	if pl >= len(sp.Planets) { // a home world only the home system has
+		pl = 0
+	}
+	ps := &sp.Planets[pl]
 	pix := NewPixels(f.g.W, f.g.H)
 	c := f.plan.Centre
 	sx, sy := (2*c.X+1)*pxUnit, (2*c.Y+1)*pxUnit
-	R := (26 + roll(7, seed, 5200)) * pxUnit * closeSize[pl] / 100
+	R := (26 + roll(7, seed, 5200)) * pxUnit * ps.Close / 100
 	shade := lighting(seed)
 
 	stationOwn := pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 5)
@@ -121,7 +124,7 @@ func (f *frame) paintEarthSystem() {
 	at := func(a, rx, tilt int) (x, y int, behind bool) {
 		return sx + rx*cos4096(a)/1024, sy + rx*tilt/100*sin4096(a)/2048, sin4096(a) < 0
 	}
-	// the planet's moons, from the orrery's table; moon 0 of the home world
+	// the planet's moons, from its spec; moon 0 of the home world
 	// is the Moon. Moon k keeps its first roll when k is 0.
 	rk := func(n int, salt int64, k int) int {
 		if k == 0 {
@@ -130,18 +133,18 @@ func (f *frame) paintEarthSystem() {
 		return roll(n, seed, salt, int64(k))
 	}
 	moons := func(front bool) {
-		for k := 0; k < moonCount[pl]; k++ {
+		for k := 0; k < min(ps.Moons, 14); k++ {
 			r := max(pxUnit, (5+rk(4, 5202, k)-k)*pxUnit)
-			rx := R + (30+rk(20, 5203, k)+10*k)*pxUnit
+			rx := R + (30+rk(20, 5203, k)+10*min(k, 5)+3*max(0, k-5))*pxUnit
 			x, y, behind := at(rk(turn, 5204, k)+anim/(8+2*k)*16, rx, 60+rk(40, 5205, k))
 			if behind != front {
 				pix.moon(x, y, r, k, shade)
 			}
 		}
 	}
-	n := 0
-	if pl == planetEarth {
-		n = 2 + roll(2, seed, 5206)
+	n := ps.Stations
+	if ps.Home {
+		n += roll(2, seed, 5206)
 	}
 	drawStations := func(front bool) {
 		for i := 0; i < n; i++ {
@@ -164,7 +167,7 @@ func (f *frame) paintEarthSystem() {
 
 	moons(false)
 	drawStations(false)
-	pix.planet(seed, anim, pl, sx, sy, R, shade)
+	pix.planet(seed, anim, ps, pl, sp.ThingOf(pl), sx, sy, R, shade)
 	moons(true)
 	drawStations(true)
 

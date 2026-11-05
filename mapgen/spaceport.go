@@ -191,7 +191,7 @@ func (f *frame) paintSpacePort() {
 
 	moon(false)
 	ring(false)
-	pix.planet(seed, anim, planetEarth, earthX, earthY, earthR, shade)
+	pix.planet(seed, anim, &SolSpec.Planets[planetEarth], planetEarth, SolSpec.ThingOf(planetEarth), earthX, earthY, earthR, shade)
 	ring(true)
 	moon(true)
 
