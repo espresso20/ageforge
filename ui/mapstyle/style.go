@@ -49,11 +49,6 @@ func (f Frame) VisitFrame() int {
 	return -1
 }
 
-// DinoFrame is retained for compatibility and returns 0 (dinosaurs removed).
-func (f Frame) DinoFrame() int {
-	return 0
-}
-
 // Inspection is what a style's cursor is on.
 type Inspection struct {
 	Title string   // "Guildhall ×2"
