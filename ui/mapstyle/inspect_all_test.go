@@ -80,7 +80,7 @@ func TestTrafficInspectsAsWhatItIs(t *testing.T) {
 		}
 	}
 	for key := range movers {
-		if starTraffic[key] || key == "mining_drone" { // the close-up draws pixel ships, not the old stair-step drones
+		if starTraffic[key] {
 			continue
 		}
 		if !seen[key] {

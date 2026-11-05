@@ -180,6 +180,8 @@ ui.mapstyle.roguelike.inspect.describeWonder.04,% of its cost stashed
 ui.mapstyle.roguelike.inspect.describeWonder.05,done since your last peek
 ui.mapstyle.roguelike.view.zoomNames.01,BIG VIEW
 ui.mapstyle.roguelike.view.zoomNames.02,TOWN VIBES
+ui.mapstyle.roguelike.view.zoomNames.cosmos,THE VOID
+ui.mapstyle.roguelike.view.zoomNames.inner,INNER CIRCLE
 ui.mapstyle.roguelike.visitor.saucerLines.01,"Definitely not from around here, sus."
 ui.mapstyle.roguelike.visitor.saucerLines.02,"It hums, then it ghosts."
 ui.mapstyle.roguelike.visitor.saucerLines.03,"Lights in the sky, and the group chat will say pics or it did not happen."
@@ -246,9 +248,6 @@ map.mover.hovercar.line.02,"Cutting corners like traffic laws are a suggestion, 
 map.mover.shuttle.title,Orbit Speedrun
 map.mover.shuttle.line.01,"Climbing to orbit, this shuttle is ascending fr."
 map.mover.shuttle.line.02,"Outbound and not looking back, the shuttle has left the chat."
-map.mover.mining_drone.title,Rock Stan Bot
-map.mover.mining_drone.line.01,"Hauling ore off the belt nonstop, rock collector arc."
-map.mover.mining_drone.line.02,"Out for another rock, the grind is endless."
 map.mover.generation_ship.title,Multigen Lore
 map.mover.generation_ship.line.01,"The crew's grandkids will be the ones who land, generational side quest."
 map.mover.generation_ship.line.02,"A whole town packed into one hull, the cruise is their entire personality."
