@@ -44,8 +44,9 @@ type orrery struct {
 }
 
 // paintOrrery draws the system into o over the star field that is already in
-// it, and returns the cell of each planet, which the ships fly between.
-func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int, rX, rY [8]int, beltRX, beltRY int) (planets [8]Pt) {
+// it.
+func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int, rX, rY [8]int, beltRX, beltRY int) {
+	var planets [8]Pt
 	w, h := o.Grid.W, o.Grid.H
 	r := &orrery{s: s, pix: NewPixels(w, h), mode: mode, look: orreryLooks[mode], cx: cx, cy: cy}
 	// a bigger window gets bigger bodies, a small one smaller
@@ -73,8 +74,6 @@ func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int,
 	}
 	r.belt(beltRX, beltRY, orbitOwn)
 
-	r.sun(sunOwn)
-
 	// where the planets are
 	var x16, y16 [8]int
 	divs := [8]int{12, 20, 32, 50, 80, 120, 180, 260}
@@ -85,6 +84,13 @@ func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int,
 		y16[i] = r.sy + rY[i]*sin4096(ang)/32
 		planets[i] = Pt{floorDiv(x16[i], 2*pxUnit), floorDiv(y16[i], 2*pxUnit)}
 	}
+	bodies := make([]shipBody, 8)
+	for i := range bodies {
+		bodies[i] = shipBody{x16[i], y16[i], r.look.planet[i]}
+	}
+	// the ships first, so the sun and the planets lie over them
+	r.pix.Ships(s.Seed, s.Anim, bodies, []shipBody{{r.sx, r.sy, r.look.sun}}, nil)
+	r.sun(sunOwn)
 	for i := 0; i < 8; i++ {
 		r.planet(i, x16[i], y16[i])
 	}
@@ -132,7 +138,6 @@ func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int,
 		o.Grid.paint(x, p.Y, Cell{R: '◈', Fg: P(HAmber, 240), Bg: o.Grid.At(x, p.Y).Bg})
 		o.Grid.mark(x, p.Y, Thing{Kind: KindBuilding, Key: "space_station"})
 	}
-	return planets
 }
 
 // sun is the star: a white heart, a yellow body and an orange rim.

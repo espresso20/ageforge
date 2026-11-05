@@ -170,15 +170,18 @@ func TestVisitorArrivesAlongARoad(t *testing.T) {
 		visitor, _ := firstOf(t, m)
 		first := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: visitor.Start}).Grid)
 		last := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: visitor.Start + visitor.Frames - 1}).Grid)
-		if len(first) != 1 || len(last) != 1 {
-			t.Fatalf("%s: a visitor is %d cells at the start and %d at the end of its visit", age, len(first), len(last))
-		}
 		f := gen.frame(m, 0)
-		if f.st.Scale > City {
-			if x := first[0].X; x != 0 && x != worldW-1 {
+		if f.st.Scale > City { // a ship is a hull and its glow, a few cells
+			if len(first) == 0 || len(first) > 3 || len(last) == 0 || len(last) > 3 {
+				t.Fatalf("%s: a ship is %d cells at the start and %d at the end of its visit", age, len(first), len(last))
+			}
+			if x := first[0].X; x > 1 && x < worldW-2 {
 				t.Errorf("%s: the ship starts at %v, not on an edge of the map", age, first[0])
 			}
 			continue
+		}
+		if len(first) != 1 || len(last) != 1 {
+			t.Fatalf("%s: a visitor is %d cells at the start and %d at the end of its visit", age, len(first), len(last))
 		}
 		onTrunk := func(p Pt, at int) bool {
 			for i, road := range f.plan.Roads {

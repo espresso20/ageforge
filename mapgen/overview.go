@@ -340,8 +340,8 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	beltRX := (beltRY * 230) / 100
 
 	// 3. The system itself, drawn in quadrant blocks (orrery.go): glow, orbit
-	// lines, belt, sun, planets with their moons, Pluto and the comet.
-	planetPts := s.paintOrrery(o, mode, cx, cy, maxRY, rX, rY, beltRX, beltRY)
+	// lines, belt, sun, ships, planets with their moons, Pluto and the comet.
+	s.paintOrrery(o, mode, cx, cy, maxRY, rX, rY, beltRX, beltRY)
 
 	// 7. Outer Megastructures: Warp Gate
 	warpRY := (maxRY * 115) / 100
@@ -357,55 +357,6 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 			o.Grid.paint(cx+1, warpY, Cell{R: '⫸', Fg: P(HCyan, 255), Bg: o.Grid.At(cx+1, warpY).Bg})
 			o.Grid.mark(cx+1, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})
 		}
-	}
-
-	// 8. Interplanetary Cruisers (2-3 clean single-cell darts)
-	shipRoutes := [][2]int{{2, 3}, {2, 4}, {3, 5}}
-	for rIdx, rt := range shipRoutes {
-		pA := planetPts[rt[0]]
-		pB := planetPts[rt[1]]
-		dx := pB.X - pA.X
-		dy := pB.Y - pA.Y
-		dist := max(abs(dx), abs(dy))
-		if dist < 6 {
-			continue
-		}
-		shipStep := (s.Anim/8 + rIdx*17) % (dist * 2)
-		prog := shipStep
-		dirFwd := true
-		if prog >= dist {
-			prog = 2*dist - prog
-			dirFwd = false
-		}
-		if prog < 2 || prog > dist-2 {
-			continue
-		}
-		sx := pA.X + (dx*prog)/dist
-		sy := pA.Y + (dy*prog)/dist
-		if !o.Grid.in(sx, sy) {
-			continue
-		}
-		glyph := '►'
-		vx, vy := dx, dy
-		if !dirFwd {
-			vx, vy = -dx, -dy
-		}
-		if abs(vx) >= abs(vy) {
-			if vx >= 0 {
-				glyph = '►'
-			} else {
-				glyph = '◄'
-			}
-		} else {
-			if vy >= 0 {
-				glyph = '▼'
-			} else {
-				glyph = '▲'
-			}
-		}
-		sBg := o.Grid.At(sx, sy).Bg
-		o.Grid.paint(sx, sy, Cell{R: glyph, Fg: P(HCyan, 255), Bg: sBg})
-		o.Grid.mark(sx, sy, Thing{Kind: KindAgent, Key: "generation_ship"})
 	}
 
 	// 10. Rare Visitors & Alien Craft (Sync with Scene Grid)
