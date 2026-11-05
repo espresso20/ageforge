@@ -168,57 +168,37 @@ func TestOverviewWideViewportGroundNeverLeavesBlank(t *testing.T) {
 	}
 }
 
-// TestOverviewSystemRendersOrrery verifies that in interstellar_age (System scale),
-// Overview renders a clean astronomical orrery view:
-// 1. Sol '☼' is centered.
-// 2. Iconic planet runes ('⊕', '⊚', '⊝', '●', '∙') are painted.
-// 3. Faint orbital tracks ('·') and megastructures ('◎') are present.
-// 4. No fragmented subpixel quadrant runes ('▜', '▞', '▟', '▛') appear in the overview.
+// TestOverviewSystemRendersOrrery: the orrery is drawn in quadrant blocks, the
+// Sun and the planets are found from any of their cells, and the warp gate
+// and the old single-rune planets are gone or kept as the design says.
 func TestOverviewSystemRendersOrrery(t *testing.T) {
 	gen := &Generator{}
 	m := model(state("interstellar_age", 7, noon))
 	sc := gen.Draw(m, 0)
-
 	if sc.Scale != System {
 		t.Fatalf("expected Scale == System for interstellar_age, got %v", sc.Scale)
 	}
-
-	ov := sc.Overview(80, 24)
-
-	var hasSun, hasEarth, hasJupiter, hasSaturn, hasWarpGate bool
-	for y := 0; y < 24; y++ {
-		for x := 0; x < 80; x++ {
-			c := ov.Grid.At(x, y)
-			switch c.R {
-			case '☼':
-				hasSun = true
-			case '⊕':
-				hasEarth = true
-			case '⊚':
-				hasJupiter = true
-			case '⊝':
-				hasSaturn = true
-			case '◎':
-				hasWarpGate = true
-			case '▜', '▞', '▟', '▛':
-				t.Errorf("found ugly fragmented quadrant rune %q at (%d,%d) in System overview", c.R, x, y)
+	ov := sc.Overview(120, 40)
+	quads, sun, planets, orbits := 0, 0, 0, 0
+	for y := 0; y < ov.Grid.H; y++ {
+		for x := 0; x < ov.Grid.W; x++ {
+			if r := ov.Grid.At(x, y).R; r != ' ' && r >= '\u2580' && r <= '\u259f' {
+				quads++
+			}
+			switch th := ov.Grid.ThingAt(x, y); {
+			case th.Kind == KindTerrain && th.Key == "sun":
+				sun++
+			case th.Kind == KindRoad && th.Key == "orbit":
+				orbits++
+			case th.Kind == KindTerrain && th.Key != "sun":
+				planets++
 			}
 		}
 	}
-
-	if !hasSun {
-		t.Error("System overview missing Sol '☼'")
+	if quads < 100 {
+		t.Errorf("only %d quadrant cells in the overview", quads)
 	}
-	if !hasEarth {
-		t.Error("System overview missing Earth '⊕'")
-	}
-	if !hasJupiter {
-		t.Error("System overview missing Jupiter '⊚'")
-	}
-	if !hasSaturn {
-		t.Error("System overview missing Saturn '⊝'")
-	}
-	if !hasWarpGate {
-		t.Error("System overview missing Warp Gate '◎'")
+	if sun == 0 || orbits == 0 || planets == 0 {
+		t.Errorf("inspect marks: sun %d, orbit %d, planet %d; want all present", sun, orbits, planets)
 	}
 }

@@ -69,7 +69,7 @@ func (s *Scene) overviewPadded(w, h, padX, padY int) *Overview {
 	o := &Overview{Grid: newGrid(w, h), Scale: max(1, step/256), step: step, picks: make([]Pt, w*h)}
 	o.Grid.Wall, o.Grid.Tint = s.Grid.Wall, s.Grid.Tint
 	o.Grid.Space = s.Grid.Space
-	o.Grid.Things = s.Grid.Things
+	o.Grid.Things = s.Grid.Things[:len(s.Grid.Things):len(s.Grid.Things)] // appends must not reach the scene's
 	spanX := w * step / 256
 	if spanX > gw {
 		o.X0 = (gw - spanX) / 2
@@ -291,7 +291,7 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	o := &Overview{Grid: newGrid(w, h), Scale: max(1, step/256), step: step, picks: make([]Pt, w*h)}
 	o.Grid.Wall, o.Grid.Tint = s.Grid.Wall, s.Grid.Tint
 	o.Grid.Space = true
-	o.Grid.Things = s.Grid.Things
+	o.Grid.Things = s.Grid.Things[:len(s.Grid.Things):len(s.Grid.Things)] // appends must not reach the scene's
 
 	spanX := w * step / 256
 	o.X0 = (gw - spanX) / 2
@@ -339,179 +339,9 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	beltRY := (maxRY * beltFraction) / 100
 	beltRX := (beltRY * 230) / 100
 
-	// 3. Draw Clean, Faint Orbital Orrery Rings
-	for i := 0; i < 8; i++ {
-		rx, ry := rX[i], rY[i]
-		ringHue := P(HCyan, 55)
-		if i == 2 { // Earth / Home orbit
-			ringHue = P(HCyan, 85)
-		}
-		// Plot elliptical ring points
-		for a := 0; a < 4096; a += 16 {
-			ox := cx + (rx*cos4096(a))/1024
-			oy := cy + (ry*sin4096(a))/1024
-			if o.Grid.in(ox, oy) {
-				cur := o.Grid.At(ox, oy)
-				if cur.R == 0 || cur.R == ' ' || cur.R == '·' || cur.R == '.' {
-					o.Grid.paint(ox, oy, Cell{R: '·', Fg: ringHue, Bg: cur.Bg})
-					o.Grid.mark(ox, oy, Thing{Kind: KindRoad, Key: "orbit"})
-				}
-			}
-		}
-	}
-
-	// Asteroid Belt Dust Ring
-	for a := 0; a < 4096; a += 24 {
-		jitter := (roll(5, s.Seed, int64(a)) - 2)
-		ox := cx + ((beltRX+jitter*2)*cos4096(a))/1024
-		oy := cy + ((beltRY+jitter)*sin4096(a))/1024
-		if o.Grid.in(ox, oy) {
-			cur := o.Grid.At(ox, oy)
-			r := '·'
-			if a%72 == 0 {
-				r = '∙'
-			}
-			o.Grid.paint(ox, oy, Cell{R: r, Fg: P(HRock, 180), Bg: cur.Bg})
-			o.Grid.mark(ox, oy, Thing{Kind: KindRoad, Key: "orbit"})
-		}
-	}
-
-	// 4. Center Sol: Radiant Star
-	o.Grid.paint(cx, cy, Cell{R: '☼', Fg: P(HWhite, 255), Bg: P(HSun, 255)})
-	o.Grid.mark(cx, cy, Thing{Kind: KindTerrain, Key: "sun"})
-	flareOffsets := [][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
-	if mode == SystemViewInner {
-		flareOffsets = append(flareOffsets, [2]int{-1, -1}, [2]int{1, -1}, [2]int{-1, 1}, [2]int{1, 1})
-	}
-	for _, off := range flareOffsets {
-		fx, fy := cx+off[0], cy+off[1]
-		if o.Grid.in(fx, fy) {
-			bg := o.Grid.At(fx, fy).Bg
-			o.Grid.paint(fx, fy, Cell{R: '·', Fg: P(HSun, 240), Bg: bg})
-			o.Grid.mark(fx, fy, Thing{Kind: KindTerrain, Key: "sun"})
-		}
-	}
-	if mode == SystemViewInner {
-		// Close-orbit Dyson Swarm Energy Harvesters
-		for _, dx := range []int{-3, 3} {
-			hx, hy := cx+dx, cy
-			if o.Grid.in(hx, hy) {
-				o.Grid.paint(hx, hy, Cell{R: '⬢', Fg: P(HGold, 255), Bg: o.Grid.At(hx, hy).Bg})
-				o.Grid.mark(hx, hy, Thing{Kind: KindBuilding, Key: "dyson_harvester"})
-			}
-		}
-		// Asteroid Belt Mining Outposts
-		for _, a := range []int{1024, 3072} {
-			mx := cx + (beltRX*cos4096(a))/1024
-			my := cy + (beltRY*sin4096(a))/1024
-			if o.Grid.in(mx, my) {
-				o.Grid.paint(mx, my, Cell{R: '⬡', Fg: P(HSteel, 240), Bg: o.Grid.At(mx, my).Bg})
-				o.Grid.mark(mx, my, Thing{Kind: KindBuilding, Key: "asteroid_mine"})
-			}
-		}
-	}
-
-	// 5. Compute Planet Positions
-	divs := [8]int{12, 20, 32, 50, 80, 120, 180, 260}
-	var planetPts [8]Pt
-	for i := 0; i < 8; i++ {
-		phaseFrac := (int(s.Seed%1000) + i*382) % 1000
-		baseAngle := (phaseFrac * 4096) / 1000
-		advance := (s.Anim / divs[i]) * 16
-		ang := (baseAngle + advance) % 4096
-
-		px := cx + (rX[i]*cos4096(ang))/1024
-		py := cy + (rY[i]*sin4096(ang))/1024
-		planetPts[i] = Pt{px, py}
-	}
-
-	// 6. Draw Planetary Celestial Jewels
-	// Mercury (0)
-	if p := planetPts[0]; o.Grid.in(p.X, p.Y) {
-		bg := o.Grid.At(p.X, p.Y).Bg
-		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HRock, 255), Bg: bg})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
-	}
-	// Venus (1)
-	if p := planetPts[1]; o.Grid.in(p.X, p.Y) {
-		bg := o.Grid.At(p.X, p.Y).Bg
-		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HSun, 255), Bg: bg})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
-	}
-	// Earth / Home (2)
-	if p := planetPts[2]; o.Grid.in(p.X, p.Y) {
-		o.Grid.paint(p.X, p.Y, Cell{R: '⊕', Fg: P(HLife, 255), Bg: P(HWater, 255)})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "home"})
-		// Moon Luna
-		if o.Grid.in(p.X+1, p.Y) {
-			lBg := o.Grid.At(p.X+1, p.Y).Bg
-			o.Grid.paint(p.X+1, p.Y, Cell{R: '·', Fg: P(HWhite, 255), Bg: lBg})
-		}
-		// ISS Gateway Station
-		if o.Grid.in(p.X-1, p.Y) {
-			sBg := o.Grid.At(p.X-1, p.Y).Bg
-			o.Grid.paint(p.X-1, p.Y, Cell{R: '✜', Fg: P(HCyan, 255), Bg: sBg})
-			o.Grid.mark(p.X-1, p.Y, Thing{Kind: KindBuilding, Key: "space_station"})
-		}
-	}
-	// Mars (3)
-	if p := planetPts[3]; o.Grid.in(p.X, p.Y) {
-		bg := o.Grid.At(p.X, p.Y).Bg
-		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HRed, 255), Bg: bg})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
-		if o.Grid.in(p.X+1, p.Y) {
-			sBg := o.Grid.At(p.X+1, p.Y).Bg
-			o.Grid.paint(p.X+1, p.Y, Cell{R: '◈', Fg: P(HAmber, 240), Bg: sBg})
-			o.Grid.mark(p.X+1, p.Y, Thing{Kind: KindBuilding, Key: "space_station"})
-		}
-	}
-	// Jupiter (4)
-	if p := planetPts[4]; o.Grid.in(p.X, p.Y) {
-		o.Grid.paint(p.X, p.Y, Cell{R: '⊚', Fg: P(HGold, 255), Bg: P(HAmber, 240)})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
-		for k, off := range [][2]int{{-1, 0}, {1, 0}, {2, 0}} {
-			mx, my := p.X+off[0], p.Y+off[1]
-			if o.Grid.in(mx, my) {
-				mBg := o.Grid.At(mx, my).Bg
-				mCol := P(HWhite, 230)
-				if k == 0 {
-					mCol = P(HSun, 255)
-				}
-				o.Grid.paint(mx, my, Cell{R: '·', Fg: mCol, Bg: mBg})
-			}
-		}
-	}
-	// Saturn (5)
-	if p := planetPts[5]; o.Grid.in(p.X, p.Y) {
-		o.Grid.paint(p.X, p.Y, Cell{R: '⊝', Fg: P(HGold, 255), Bg: P(HSand, 230)})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
-		if o.Grid.in(p.X+1, p.Y) {
-			tBg := o.Grid.At(p.X+1, p.Y).Bg
-			o.Grid.paint(p.X+1, p.Y, Cell{R: '·', Fg: P(HAmber, 240), Bg: tBg})
-		}
-	}
-	// Uranus (6)
-	if p := planetPts[6]; o.Grid.in(p.X, p.Y) {
-		bg := o.Grid.At(p.X, p.Y).Bg
-		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HCool, 255), Bg: bg})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
-	}
-	// Neptune (7)
-	if p := planetPts[7]; o.Grid.in(p.X, p.Y) {
-		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HCyan, 255), Bg: P(HWater, 240)})
-		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
-	}
-	// Pluto
-	plutoRY := (maxRY * 108) / 100
-	plutoRX := (plutoRY * 230) / 100
-	plutoA := (1280 + s.Anim/360*16) % 4096
-	plutoX := cx + (plutoRX*cos4096(plutoA))/1024
-	plutoY := cy + (plutoRY*sin4096(plutoA))/1024
-	if o.Grid.in(plutoX, plutoY) {
-		pBg := o.Grid.At(plutoX, plutoY).Bg
-		o.Grid.paint(plutoX, plutoY, Cell{R: '∙', Fg: P(HAmber, 230), Bg: pBg})
-		o.Grid.mark(plutoX, plutoY, Thing{Kind: KindTerrain, Key: "pluto"})
-	}
+	// 3. The system itself, drawn in quadrant blocks (orrery.go): glow, orbit
+	// lines, belt, sun, planets with their moons, Pluto and the comet.
+	planetPts := s.paintOrrery(o, mode, cx, cy, maxRY, rX, rY, beltRX, beltRY)
 
 	// 7. Outer Megastructures: Warp Gate
 	warpRY := (maxRY * 115) / 100
@@ -576,30 +406,6 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 		sBg := o.Grid.At(sx, sy).Bg
 		o.Grid.paint(sx, sy, Cell{R: glyph, Fg: P(HCyan, 255), Bg: sBg})
 		o.Grid.mark(sx, sy, Thing{Kind: KindAgent, Key: "generation_ship"})
-	}
-
-	// 9. Sweeping Outer Comet
-	cometA := (3400 + s.Anim/200*16) % 4096
-	cometRY := (maxRY * 118) / 100
-	cometRX := (cometRY * 230) / 100
-	cometX := cx + (cometRX*cos4096(cometA))/1024
-	cometY := cy + (cometRY*sin4096(cometA))/1024
-	if o.Grid.in(cometX, cometY) {
-		cBg := o.Grid.At(cometX, cometY).Bg
-		o.Grid.paint(cometX, cometY, Cell{R: '✦', Fg: P(HWhite, 255), Bg: cBg})
-		o.Grid.mark(cometX, cometY, Thing{Kind: KindTerrain, Key: "comet"})
-		// Tail pointing away from Sol
-		tdx := cometX - cx
-		tdy := cometY - cy
-		tLen := max(1, isqrt(tdx*tdx+tdy*tdy))
-		for t := 1; t <= 4; t++ {
-			tx := cometX + (tdx*t*2)/tLen
-			ty := cometY + (tdy*t)/tLen
-			if o.Grid.in(tx, ty) {
-				tBg := o.Grid.At(tx, ty).Bg
-				o.Grid.paint(tx, ty, Cell{R: '·', Fg: P(HCyan, 180-t*35), Bg: tBg})
-			}
-		}
 	}
 
 	// 10. Rare Visitors & Alien Craft (Sync with Scene Grid)
