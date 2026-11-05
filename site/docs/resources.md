@@ -169,6 +169,10 @@ No price reads a store size. The festival, the Black Market and a faction deal's
 
 When you advance, the stock you carry into the new age is trimmed. Each resource is capped at 8 times the cost of the cheapest new building that uses it. A resource no new building uses keeps 10%, and faith is untouched. Stock below the cap carries over as it is. That leaves a head start of a few opening buildings: see [Ages](ages.md).
 
+### Ended resources
+
+A resource is available while buildings produce it and for one carryover age after its last producer. When an empire advances past that carryover age, the resource has ended: its remaining bank expires on advance, buildings that produce it are retired (returning all assigned workers to the idle pool), and it is dropped from the dashboard Resources box to keep the interface uncluttered. Food, faith, culture, and gold never end.
+
 ### Storage buildings
 
 Storage buildings hold nothing. There is one per age, from the Stash to the Quantum Vault, with no limit on copies, and each copy costs 1.75 times the one before it. Each copy you own adds 1% to all production, in the same pool as the wonders' and monuments' bonuses to all production (see [the all-production pool](#the-all-production-pool)). See [Storage Buildings](buildings.md#storage-buildings-21-tiers) for the list. Every age gate asks for five copies of the storage building of the age you are leaving.

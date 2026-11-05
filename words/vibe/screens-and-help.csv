@@ -727,7 +727,7 @@ ui.input.cmdDump.17,Writing the dump fumbled:
 ui.input.cmdDump.18,Log tea dumped to %s: %d entries spilled
 ui.input.cmdGather.01," (max "
 ui.input.cmdGather.02," per use)"
-ui.input.cmdGather.03,"Hand gathering is food, wood or stone only, no exceptions bestie."
+ui.input.cmdGather.03,"Hand gathering is %s, %s or %s only, no exceptions bestie."
 ui.input.cmdBuild.01,[gold]Builds on the menu:[-]
 ui.input.cmdBuild.02,"  %s [cyan]%s[-] (%d built) - Damage: %s %s"
 ui.input.cmdRecruit.03,. New workers spawn in idle; give them a job with 'assign <building>'.
@@ -2175,8 +2175,8 @@ ui.resources_box.faithBandFor.11,◈ Down bad
 ui.resources_box.faithBandFor.12,◈ Faith vibes
 ui.resources_box.faithBandFor.13,◈ Faith aura
 ui.resources_box.faithRow.01,[%s]%s[-] [gray](epoch lore: %s)[-]
-ui.resources_box.resLegends.01," [gray]Bag:[-] [green]going up[-] [gray]·[-] [red]going down[-] [gray]·[-] [red]▼[-] [gray]tanking[-]"
-ui.resources_box.resLegends.02," [green]going up[-] [gray]·[-] [red]▼[-] [gray]tanking[-]"
+ui.resources_box.resLegends.01," [gray]Bag:[-] [green]going up[-] [gray]·[-] [red]▼[-] [gray]tanking [gray]· bar: stash · line: 8m vibes[-]"
+ui.resources_box.resLegends.02," [green]going up[-] [gray]·[-] [red]▼[-] [gray]tanking [gray]· bar: stash · line: 8m[-]"
 ui.resources_box.resLegends.03," [red]▼[-] [gray]tanking[-]"
 ui.resources_box.resMoreLine.01,"%d-%d of %d, the page"
 ui.resources_box.resMoreLine.02," more drip"

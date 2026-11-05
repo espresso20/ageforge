@@ -728,7 +728,10 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	}
 	resource := strings.ToLower(args[0])
 	if resource != "food" && resource != "wood" && resource != "stone" {
-		return errorReply(vibe.Line("ui.input.cmdGather.03", "You can only gather food, wood or stone by hand."))
+		f := engine.Rules().ResourceLabel("food")
+		w := engine.Rules().ResourceLabel("wood")
+		s := engine.Rules().ResourceLabel("stone")
+		return errorReply(vibe.Sprintf("ui.input.cmdGather.03", "You can only gather %s, %s or %s by hand.", f, w, s))
 	}
 	amount := gatherDefaultYield
 	if len(args) >= 2 {

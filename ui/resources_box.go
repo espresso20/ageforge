@@ -6,6 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
@@ -75,7 +76,15 @@ func resourceRows(state game.GameState) []resRow {
 // resourceRowsFor is resourceRows with the trend history to draw and the
 // glyph tier: plain for ASCII only.
 func resourceRowsFor(state game.GameState, hist *resHistory, plain bool) []resRow {
-	keys := keysWhere(state.Resources, func(_ string, rs game.ResourceState) bool { return rs.Unlocked })
+	keys := keysWhere(state.Resources, func(key string, rs game.ResourceState) bool {
+		if !rs.Unlocked {
+			return false
+		}
+		if state.Age != "" && config.IsResourceEnded(key, state.Age) {
+			return false
+		}
+		return true
+	})
 	rows := make([]resRow, 0, len(keys))
 	var held []float64 // the ordinary resources' amounts, for the bar's top
 	for _, key := range keys {
@@ -393,8 +402,8 @@ func shortName(name string, n int) string {
 // amount's color and the marker mean, so neither carries meaning by color
 // alone. The box prints the fullest that fits.
 var resLegends = []vibe.Entry{
-	vibe.E("ui.resources_box.resLegends.01", " [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]falling[-] [gray]·[-] [red]▼[-] [gray]falling[-]"),
-	vibe.E("ui.resources_box.resLegends.02", " [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling[-]"),
+	vibe.E("ui.resources_box.resLegends.01", " [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m trend[-]"),
+	vibe.E("ui.resources_box.resLegends.02", " [green]rising[-] [gray]·[-] [red]▼[-] [gray]falling [gray]· bar: stock · line: 8m[-]"),
 	vibe.E("ui.resources_box.resLegends.03", " [red]▼[-] [gray]falling[-]"),
 }
 

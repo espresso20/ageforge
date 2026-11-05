@@ -78,6 +78,8 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 		ge.mu.Lock()
 		ge.age = key
 		ge.applyAgeUnlocks(key)
+		ge.upgradePreSpaceBuildingsLocked(key)
+		ge.recalculateRates()
 		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return "jumped to " + key
