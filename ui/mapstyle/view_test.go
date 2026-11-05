@@ -503,3 +503,19 @@ func BenchmarkMapFrame(b *testing.B) {
 		}
 	}
 }
+
+// TestSpaceZoomNamesSwitchInVibeMode: COSMOS and INNER read in the VibeMode
+// script like the zoom names beside them.
+func TestSpaceZoomNamesSwitchInVibeMode(t *testing.T) {
+	defer vibe.Set(false)
+	for z, plain := range map[int]string{zCosmos: "COSMOS", zInner: "INNER"} {
+		vibe.Set(false)
+		if got := zoomName(z).String(); got != plain {
+			t.Errorf("zoom %d plain: got %q, want %q", z, got, plain)
+		}
+		vibe.Set(true)
+		if got := zoomName(z).String(); got == plain || got == "" {
+			t.Errorf("zoom %d in VibeMode still reads %q", z, got)
+		}
+	}
+}

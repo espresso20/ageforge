@@ -53,6 +53,11 @@ var lineModule = map[string]module{
 // gateBuilding is the wonder that raises the warp gate on the ring.
 const gateBuilding = "warp_nexus"
 
+// gateRaised says whether the warp gate stands: the Warp Nexus is built.
+func gateRaised(ws []mapmodel.Wonder) bool {
+	return slices.ContainsFunc(ws, func(w mapmodel.Wonder) bool { return w.Key == gateBuilding && w.Built })
+}
+
 // slots on the outer ring, and on the inner one that holds the overflow.
 const outerSlots, innerSlots = 60, 42
 
@@ -114,7 +119,7 @@ func (f *frame) port() *port {
 		}
 	}
 	pp.gate = false
-	if slices.ContainsFunc(f.m.Wonders, func(w mapmodel.Wonder) bool { return w.Key == gateBuilding && w.Built }) {
+	if gateRaised(f.m.Wonders) {
 		pp.gate = true
 		pp.gateAt = roll(outerSlots, seed, 5305)
 	}

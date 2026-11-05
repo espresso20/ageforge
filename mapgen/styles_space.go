@@ -60,14 +60,9 @@ var orbitEra = AgeStyle{
 		'▓': P(HSteel, 255), '█': P(HSteel, 255), '▄': P(HSteel, 255), '▀': P(HSteel, 255),
 	},
 	Windows: "▫",
-	Agents: []AgentKind{
-		{Name: "shuttle", Glyphs: "►◄▼▲", Fg: P(HEngine, 255), Per: 200, Max: 14, Slow: 1},
-		{Name: "cargo_hauler", Glyphs: "■", Fg: P(HWhite, 255), Per: 320, Max: 10, Slow: 2},
-		{Name: "mining_drone", Glyphs: "►◄▼▲", Fg: P(HAmber, 255), Per: 450, Max: 8, Slow: 2},
-	},
-	Night: Night{Tint: HNight, Dim: 70, Light: HLight},
-	Tones: map[byte]Paint{'s': P(HSteel, 255), 'a': P(HSun, 255), 'g': P(HEngine, 255), 'm': P(HSteel, 235), 'f': P(HSun, 255)},
-	Sky:   Look{Glyphs: "·.∙·✧", Fg: P(HStar, 255), Bg: P(HVoid, 255), Dense: 46},
+	Night:   Night{Tint: HNight, Dim: 70, Light: HLight},
+	Tones:   map[byte]Paint{'s': P(HSteel, 255), 'a': P(HSun, 255), 'g': P(HEngine, 255), 'm': P(HSteel, 235), 'f': P(HSun, 255)},
+	Sky:     Look{Glyphs: "·.∙·✧", Fg: P(HStar, 255), Bg: P(HVoid, 255), Dense: 46},
 }
 
 // systemEra: the sun, the planets on their orbits, lanes between them.

@@ -92,8 +92,9 @@ func TestScatterKeepsApart(t *testing.T) {
 	}
 }
 
-// TestTrafficStaysOnRoads: every agent is on a laid road, and a frame draws
-// the same whether or not the ones before it were drawn.
+// TestTrafficStaysOnRoads: every agent of the ground is on a laid road (space
+// has no roads; its ships fly free), and a frame draws the same whether or not
+// the ones before it were drawn.
 func TestTrafficStaysOnRoads(t *testing.T) {
 	for _, age := range testAges {
 		var gen Generator
@@ -104,7 +105,7 @@ func TestTrafficStaysOnRoads(t *testing.T) {
 		for i := range f.g.Cells {
 			if f.g.Things[f.g.Hit[i]].Kind == KindAgent {
 				agents++
-				if !f.laid(i%worldW, i/worldW) {
+				if f.st.Scale < Orbit && !f.laid(i%worldW, i/worldW) {
 					t.Fatalf("%s: an agent at (%d,%d) is off the roads", age, i%worldW, i/worldW)
 				}
 			}
