@@ -8,7 +8,6 @@ All notable changes to AgeForge are documented here.
 
 ### Added
 - **A Sol-system orrery on the space Map.** From the Space Age the Map draws a procedural Sol system: the Sun, the planets on their orbits and the asteroid belt. A new inner zoom, from the Sun out to the asteroid belt, sits between the whole-system view and the close-up, and the Cosmos view zooms out past it. The cursor names the new space objects. The space colours, light mode and wide terminals are tuned. Buildings of ended resources and far legacy ground buildings are left off the orbits.
-- **Dinosaurs on the Primitive map.** A sauropod, a raptor and a pterodactyl roam the town in the Primitive Age, thinning out as the gate fills, and an asteroid streaks across the sky near the end of the Late Cretaceous. Ambient only.
 - **A Settings page in the main menu.** Settings (`s`) takes the place of Themes. It lists Themes, VibeMode, Map glyphs, Motion and Minimap with their values; `Enter` or `←` and `→` change one, it saves at once like the command, and `Esc` goes back. The commands work as before.
 - **Discord status.** While the Discord desktop app is running, your profile shows "Playing AgeForge" with your age, year, town and epoch. It talks only to the Discord app on your machine, and a Discord status row on the Settings page turns it off.
 - **Epoch card.** `epoch card` saves a plain-text card of your epoch (name, town, age, highlights, ages done, top badges and feats), wrapped in a code fence to paste into Discord, as `epoch-card.txt` next to your saves.
@@ -82,6 +81,7 @@ All notable changes to AgeForge are documented here.
 - **Saves from before 4.0 are no longer loaded.** The game no longer repairs or converts old saves, accounts or exports, and refuses them with a plain line.
 
 ### Removed
+- **The Primitive Age dinosaurs and the asteroid.** The sauropod, raptor and pterodactyl no longer roam the Primitive town, and the asteroid no longer streaks across the sky near the end of the Late Cretaceous.
 - **The old map renderer.** The symbol-chart map, with its district zoom, region plates and city scenes, is gone with its code; the engine draws every age.
 - **The test bot.** The bot that played whole runs, its runner, its reports, a sprite generator and two unused developer tools are gone. The static checks, the reference players and the docs check stay and run on every change.
 

@@ -33,8 +33,7 @@ type Scene struct {
 // whole town).
 type Moment struct {
 	Anim, Visit int
-	// Clock is the world's clock while the picture is held still (Anim held):
-	// the dinosaurs on the map at that frame stand where they are in their walk.
+	// Clock is the world's clock while the picture is held still (Anim held).
 	// 0 means the same as Anim.
 	Clock    int
 	Fresh    bool
