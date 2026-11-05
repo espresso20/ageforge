@@ -4,6 +4,8 @@ package mapgen
 // with blinking lights, drawn in quadrant blocks (quad.go). Nothing of the
 // town stands here; the town is at the space port, one zoom in. Everything
 // about the picture (sizes, kinds, phases, the lights) comes from the seed.
+// Any other planet of the system gets the same close-up: its own face and its
+// own moons (the orrery's table), and no stations.
 
 // station is one kind of station: a disc, a truss with panels, or a cross.
 type station struct {
@@ -70,30 +72,47 @@ func lighting(seed int64) func(c Paint, nx, ny int) Paint {
 	}
 }
 
-// earth paints the planet and its air, centred on (sx, sy) in 16ths of a
-// pixel; the shading is lighting's.
-func (p *Pixels) earth(seed int64, anim, sx, sy, R int, shade func(Paint, int, int) Paint) {
-	own := p.Owner(Thing{Kind: KindTerrain, Key: "home"}, 5)
+// planet paints planet i of the system and, for the home world, its air,
+// centred on (sx, sy) in 16ths of a pixel; the shading is lighting's.
+func (p *Pixels) planet(seed int64, anim, i, sx, sy, R int, shade func(Paint, int, int) Paint) {
+	own := p.Owner(PlanetThing(i), 5)
+	if i == planetSaturn {
+		p.satRing(sx, sy, R, own, -1)
+	}
 	p.Disc(sx, sy, R, own, func(nx, ny int) Paint {
-		return shade(earthFace(seed, nx, ny, 6, anim/12), nx, ny)
+		return shade(surface(seed, i, nx, ny, 6, anim/12), nx, ny)
 	})
-	p.Glow(sx, sy, R, R+3*pxUnit, HAir, 150, 3, own)
+	if i == planetSaturn {
+		p.satRing(sx, sy, R, own, 1)
+	}
+	if i == planetEarth {
+		p.Glow(sx, sy, R, R+3*pxUnit, HAir, 150, 3, own)
+	}
 }
 
-// moon paints the Moon, a satellite of the home world.
-func (p *Pixels) moon(x, y, r int, shade func(Paint, int, int) Paint) {
+// moon paints a moon, a satellite of a planet, in the table's tone k.
+func (p *Pixels) moon(x, y, r, k int, shade func(Paint, int, int) Paint) {
 	p.Disc(x, y, r, p.Owner(Thing{Kind: KindTerrain, Key: "satellite"}, 5), func(nx, ny int) Paint {
-		return shade(P(HWhite, 235), nx, ny)
+		return shade(moonTone[k%len(moonTone)], nx, ny)
 	})
 }
 
-// paintEarthSystem draws the close-up over the sky already in the frame.
+// closeSize is how big each planet's close-up disc is next to the home
+// world's, in percent: the giants a little larger, the small ones smaller.
+var closeSize = [8]int{55, 90, 100, 70, 110, 85, 90, 90}
+
+// paintEarthSystem draws the close-up over the sky already in the frame: the
+// home world with its stations, or the planet the player zoomed on.
 func (f *frame) paintEarthSystem() {
 	seed, anim := f.m.Seed, f.anim
+	pl := planetEarth
+	if f.planet > 0 {
+		pl = f.planet - 1
+	}
 	pix := NewPixels(f.g.W, f.g.H)
 	c := f.plan.Centre
 	sx, sy := (2*c.X+1)*pxUnit, (2*c.Y+1)*pxUnit
-	R := (26 + roll(7, seed, 5200)) * pxUnit
+	R := (26 + roll(7, seed, 5200)) * pxUnit * closeSize[pl] / 100
 	shade := lighting(seed)
 
 	stationOwn := pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 5)
@@ -102,11 +121,28 @@ func (f *frame) paintEarthSystem() {
 	at := func(a, rx, tilt int) (x, y int, behind bool) {
 		return sx + rx*cos4096(a)/1024, sy + rx*tilt/100*sin4096(a)/2048, sin4096(a) < 0
 	}
-	moonR := (5 + roll(4, seed, 5202)) * pxUnit
-	moonRx := R + (30+roll(20, seed, 5203))*pxUnit
-	mx, my, moonBehind := at(roll(turn, seed, 5204)+anim/8*16, moonRx, 60+roll(40, seed, 5205))
-	moon := func() { pix.moon(mx, my, moonR, shade) }
-	n := 2 + roll(2, seed, 5206)
+	// the planet's moons, from the orrery's table; moon 0 of the home world
+	// is the Moon. Moon k keeps its first roll when k is 0.
+	rk := func(n int, salt int64, k int) int {
+		if k == 0 {
+			return roll(n, seed, salt)
+		}
+		return roll(n, seed, salt, int64(k))
+	}
+	moons := func(front bool) {
+		for k := 0; k < moonCount[pl]; k++ {
+			r := max(pxUnit, (5+rk(4, 5202, k)-k)*pxUnit)
+			rx := R + (30+rk(20, 5203, k)+10*k)*pxUnit
+			x, y, behind := at(rk(turn, 5204, k)+anim/(8+2*k)*16, rx, 60+rk(40, 5205, k))
+			if behind != front {
+				pix.moon(x, y, r, k, shade)
+			}
+		}
+	}
+	n := 0
+	if pl == planetEarth {
+		n = 2 + roll(2, seed, 5206)
+	}
 	drawStations := func(front bool) {
 		for i := 0; i < n; i++ {
 			k := stationKinds[(roll(len(stationKinds), seed, 5207)+i)%len(stationKinds)]
@@ -126,14 +162,10 @@ func (f *frame) paintEarthSystem() {
 		}
 	}
 
-	if moonBehind {
-		moon()
-	}
+	moons(false)
 	drawStations(false)
-	pix.earth(seed, anim, sx, sy, R, shade)
-	if !moonBehind {
-		moon()
-	}
+	pix.planet(seed, anim, pl, sx, sy, R, shade)
+	moons(true)
 	drawStations(true)
 
 	pix.Resolve(f.g)

@@ -185,13 +185,13 @@ func (f *frame) paintSpacePort() {
 	moonR := (5 + roll(4, seed, 5308)) * pxUnit
 	moon := func(front bool) {
 		if moonFront == front {
-			pix.moon(mx*pxUnit, my*pxUnit, moonR, shade)
+			pix.moon(mx*pxUnit, my*pxUnit, moonR, 0, shade)
 		}
 	}
 
 	moon(false)
 	ring(false)
-	pix.earth(seed, anim, earthX, earthY, earthR, shade)
+	pix.planet(seed, anim, planetEarth, earthX, earthY, earthR, shade)
 	ring(true)
 	moon(true)
 

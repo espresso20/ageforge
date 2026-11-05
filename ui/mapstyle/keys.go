@@ -48,6 +48,9 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 		d = [2]int{d[0] * v.ov.Scale, d[1] * v.ov.Scale}
 	}
 	v.inspect = true
+	if sc.Grid.Space && v.snap(sc, d) {
+		return true
+	}
 	v.cur.X = clamp(v.cur.X+d[0], 0, sc.Grid.W-1)
 	v.cur.Y = clamp(v.cur.Y+d[1], 0, sc.Grid.H-1)
 	return true

@@ -59,17 +59,56 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 		default:
 			v.ov = sc.Overview(w, h)
 		}
+		if v.seek != (mapgen.Thing{}) { // zoomed between bodies: the cursor stays on it
+			for _, b := range bodiesOf(v.ov.Grid) {
+				if b.th == v.seek {
+					v.cur = v.ov.Pick(b.at.X, b.at.Y)
+					break
+				}
+			}
+			v.seek = mapgen.Thing{}
+		}
 		v.blit(cv, x, y, v.ov.Grid)
 		cx, cy, on = v.ov.CellOf(v.cur)
 	} else {
 		v.ov = nil
 		v.fit(w, h, sc)
+		v.win = mapgen.Rect{X: v.cam.X, Y: v.cam.Y, W: w, H: h}
 		v.blit(cv, x, y, windowFilled(sc, v.cam.X, v.cam.Y, w, h))
 		cx, cy = v.cur.X-v.cam.X, v.cur.Y-v.cam.Y
 		on = cx >= 0 && cy >= 0 && cx < w && cy < h
 	}
-	if on && v.inspect {
-		v.putCursor(cv, mp, x+cx, y+cy, anim)
+	if !on || !v.inspect {
+		return
+	}
+	if g, gx, gy, ok := v.shownCell(sc); ok && sc.Grid.Space {
+		if b, ok := bodyAt(g, gx, gy, nil); ok {
+			// the corners stand outside the body, so the body shows whole
+			dx, dy := x, y // the grid's cell to the canvas's
+			if !v.overview {
+				dx, dy = x-v.cam.X, y-v.cam.Y
+			}
+			v.putBrackets(cv, mp, mapgen.Rect{X: b.box.X + dx - 1, Y: b.box.Y + dy - 1, W: b.box.W + 2, H: b.box.H + 2}, mapgen.Rect{X: x, Y: y, W: w, H: h}, anim)
+			return
+		}
+	}
+	v.putCursor(cv, mp, x+cx, y+cy, anim)
+}
+
+// putBrackets draws the four corners of box on the canvas in the cursor's
+// colour, those that fall inside the picture clip.
+func (v *view) putBrackets(cv *Canvas, mp *Palette, box, clip mapgen.Rect, anim int) {
+	for _, c := range [4]struct {
+		x, y int
+		r    rune
+	}{{box.X, box.Y, '┌'}, {box.X + box.W - 1, box.Y, '┐'}, {box.X, box.Y + box.H - 1, '└'}, {box.X + box.W - 1, box.Y + box.H - 1, '┘'}} {
+		if c.x < clip.X || c.y < clip.Y || c.x >= clip.X+clip.W || c.y >= clip.Y+clip.H {
+			continue
+		}
+		_, under := cv.Get(c.x, c.y)
+		_, ground, _ := under.Decompose()
+		_, fill, _ := mp.CursorOver(ground, anim).Decompose()
+		cv.Put(c.x, c.y, c.r, tcell.StyleDefault.Foreground(fill).Background(ground).Bold(true))
 	}
 }
 

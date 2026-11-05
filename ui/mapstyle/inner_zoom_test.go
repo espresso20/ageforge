@@ -81,8 +81,8 @@ func TestInnerZoomDraws(t *testing.T) {
 		}
 		at := v.cur
 		v.HandleKey(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone), f)
-		if v.cur.X-at.X != v.ov.Scale {
-			t.Errorf("%v: arrow moved the cursor %d, want the overview scale %d", size, v.cur.X-at.X, v.ov.Scale)
+		if v.cur.X <= at.X { // the arrows jump to the next body to the right
+			t.Errorf("%v: arrow moved the cursor from %v to %v, want it to the right", size, at, v.cur)
 		}
 		if _, ok := v.Inspect(f); !ok {
 			t.Errorf("%v: nothing to inspect at the inner zoom", size)
