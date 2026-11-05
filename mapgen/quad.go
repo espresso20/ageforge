@@ -2,22 +2,7 @@ package mapgen
 
 import "sync"
 
-// Quadrant blocks: a picture drawn at twice the grid's resolution each way.
-// Every cell holds a 2 by 2 block of pixels, and a quadrant glyph (▘ ▝ ▀ ▖
-// ▌ ▞ ▛ ▗ ▚ ▐ ▜ ▄ ▙ ▟ █) shows any pattern of them in two colours, a
-// foreground and a background. Space draws its bodies this way: a planet is
-// a small shaded disc, an orbit a thin line, not a letter.
-//
-// The canvas lives in mapgen, not beside the screen code, because the engine
-// is what knows the picture (and what a pixel of it is, for the inspect line)
-// and the screen layer only has to turn a cell's paints into colours. A
-// resolved canvas is an ordinary Grid, so every theme, tier and test that
-// handles a Grid handles this too.
-//
-// Geometry is whole numbers, like the noise: positions and sizes are in 16ths
-// of a pixel. A pixel is half a cell wide and half a cell tall, so it is as
-// tall as it is wide only on a cell that is twice as tall as it is wide;
-// shapes below are drawn for that, and a disc is round on screen.
+// Positions and sizes use sixteenths of a pixel; each cell holds four pixels.
 
 // pxUnit is one pixel in the 16ths the drawing calls use.
 const pxUnit = 16
@@ -31,16 +16,12 @@ var quadGlyph = [16]rune{
 	'▄', '▙', '▟', '█',
 }
 
-// QuadGlyph is the glyph that draws the pixels of mask in the foreground.
-func QuadGlyph(mask int) rune { return quadGlyph[mask&15] }
-
 type pixOwner struct {
 	thing Thing
 	prio  uint8
 }
 
-// Pixels is a canvas of 2w by 2h pixels over a w by h grid. A pixel with no
-// hue is empty and shows whatever the cell under it has for a background.
+// Pixels is a 2w by 2h pixel canvas over a w by h grid.
 type Pixels struct {
 	W, H   int // in pixels
 	px     []Paint
@@ -68,9 +49,7 @@ var pixPool sync.Pool
 // used afterwards.
 func (p *Pixels) Release() { pixPool.Put(p) }
 
-// Owner registers a thing the inspect line names, and returns the id to set
-// pixels with. Where several things share a cell, the one with the highest
-// prio is the one the cell reports.
+// Owner registers a thing and its priority for inspection.
 func (p *Pixels) Owner(t Thing, prio int) uint8 {
 	for i, o := range p.owners {
 		if i > 0 && o.thing == t && o.prio == uint8(prio) {
@@ -93,20 +72,7 @@ func (p *Pixels) Set(x, y int, c Paint, own uint8) {
 	p.px[i], p.own[i] = c, own
 }
 
-// At is the paint of a pixel; off the canvas it is empty.
-func (p *Pixels) At(x, y int) Paint {
-	if x < 0 || y < 0 || x >= p.W || y >= p.H {
-		return Paint{}
-	}
-	return p.px[y*p.W+x]
-}
-
-// Disc paints a round body centred at (cx, cy) with a radius of r, all in
-// 16ths of a pixel and measured across (a disc r wide is r/2 tall in pixels).
-// shade says what each pixel is made of from its place on the face: nx and ny
-// run from -256 to 256 across it, y up the screen being negative; it returns
-// an empty paint to leave the pixel alone. The pixel the centre falls in is
-// always painted, so the smallest body is one pixel.
+// Disc paints a round body; coordinates and radius use sixteenths of a pixel.
 func (p *Pixels) Disc(cx, cy, r int, own uint8, shade func(nx, ny int) Paint) {
 	r = max(r, 1)
 	x0, x1 := (cx-r)/pxUnit-1, (cx+r)/pxUnit+1
@@ -124,9 +90,7 @@ func (p *Pixels) Disc(cx, cy, r int, own uint8, shade func(nx, ny int) Paint) {
 	}
 }
 
-// Glow lays soft rings of c round (cx, cy), from radius r0 out to r1 (16ths
-// of a pixel, across): steps bands that fade from weight w0 toward nothing.
-// It only paints pixels that are still empty, so draw it first.
+// Glow paints fading rings from r0 to r1 into empty pixels.
 func (p *Pixels) Glow(cx, cy, r0, r1 int, c Hue, w0, steps int, own uint8) {
 	if steps < 1 || r1 <= r0 {
 		return
@@ -151,10 +115,7 @@ func (p *Pixels) Glow(cx, cy, r0, r1 int, c Hue, w0, steps int, own uint8) {
 	}
 }
 
-// Ellipse paints the line of an ellipse of radii rx and ry (16ths of a
-// pixel) round (cx, cy), one pixel thick, dashed where gap is more than zero
-// (that many pixels off for every one on). half limits it to the lower half
-// (1) or the upper half (-1) of the ellipse, 0 for all of it.
+// Ellipse paints a one-pixel line, optionally dashed or limited to one half.
 func (p *Pixels) Ellipse(cx, cy, rx, ry int, c Paint, own uint8, gap, half int) {
 	n := max(24, (rx+ry)*2/pxUnit*3/2)
 	n = min(n, 4096)
@@ -180,12 +141,7 @@ func (p *Pixels) Ellipse(cx, cy, rx, ry int, c Paint, own uint8, gap, half int) 
 	}
 }
 
-// Resolve turns the canvas into cells of g: every cell with a pixel in it
-// becomes a quadrant glyph in the two colours that stand for its four pixels,
-// laid over the cell's own background wherever a pixel is empty. Cells with
-// no pixel are left as they are, so what was drawn under the canvas (a star
-// field) shows round the bodies. A cell also reports the thing of its most
-// important pixel to the inspect line.
+// Resolve turns each painted pixel block into a grid cell and inspection hit.
 func (p *Pixels) Resolve(g *Grid) {
 	var hit [256]uint16 // owner -> index in g.Things, 0 until first used
 	for cy := 0; cy < p.H/2 && cy < g.H; cy++ {
@@ -221,12 +177,6 @@ func (p *Pixels) Resolve(g *Grid) {
 	}
 }
 
-// reduceQuad picks the glyph and the two colours for four pixels, in the
-// order top left, top right, bottom left, bottom right. base is the colour of
-// the empty ground, which the glyph's background keeps when it can. The two
-// colours that fill most of the block win; a pixel of any other colour joins
-// whichever of the two it is nearer to, and a group of one hue shows as the
-// average of its weights.
 func reduceQuad(px [4]Paint, base Paint) (r rune, fg, bg Paint) {
 	var cols [4]Paint
 	var cnt [4]int
