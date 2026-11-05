@@ -9,6 +9,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
+	"github.com/gdamore/tcell/v2"
 )
 
 // thingsOf lists one cell of every distinct thing a scene shows.
@@ -80,7 +81,7 @@ func TestTrafficInspectsAsWhatItIs(t *testing.T) {
 		}
 	}
 	for key := range movers {
-		if starTraffic[key] {
+		if starTraffic[key] || key == "mining_drone" { // the close-up draws pixel ships, not the old stair-step drones
 			continue
 		}
 		if !seen[key] {
@@ -106,21 +107,26 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	}
 	for age, titles := range want {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Wars: 1, Routes: 3})
-		v := New().(*view)
 		f := Frame{Model: m, Anim: 17, Clock: 17}
 		found := map[string]bool{}
-		for th, p := range thingsOf(v.scene(f).Grid) {
-			v.cur = p
-			in, _ := v.Inspect(f)
-			if title, ok := titles[th.Key]; ok && (th.Kind == mapgen.KindRoad) == roadKeys[th.Key] {
-				found[th.Key] = true
-				if in.Title != title {
-					t.Errorf("%s: %s inspects as %q, want %q", age, th.Key, in.Title, title)
-				}
+		for _, deeper := range []bool{false, true} { // the close-up, then the district
+			v := New().(*view)
+			if deeper {
+				v.HandleKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), f)
 			}
-			if th.Kind == mapgen.KindBuilding && !th.Ruin {
-				if part := placeName(m, th.Lineage); len(in.Lines) == 0 || !strings.HasPrefix(in.Lines[0], part) {
-					t.Errorf("%s: a %s station says %v, want its part %q", age, th.Lineage, in.Lines, part)
+			for th, p := range thingsOf(v.scene(f).Grid) {
+				v.cur = p
+				in, _ := v.Inspect(f)
+				if title, ok := titles[th.Key]; ok && (th.Kind == mapgen.KindRoad) == roadKeys[th.Key] {
+					found[th.Key] = true
+					if in.Title != title {
+						t.Errorf("%s: %s inspects as %q, want %q", age, th.Key, in.Title, title)
+					}
+				}
+				if th.Kind == mapgen.KindBuilding && !th.Ruin {
+					if part := placeName(m, th.Lineage); len(in.Lines) == 0 || !strings.HasPrefix(in.Lines[0], part) {
+						t.Errorf("%s: a %s station says %v, want its part %q", age, th.Lineage, in.Lines, part)
+					}
 				}
 			}
 		}
@@ -140,6 +146,9 @@ func TestSpaceHubIsTheHeartOfTheTown(t *testing.T) {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6})
 		v := New().(*view)
 		f := Frame{Model: m}
+		if i < 2 {
+			v.HandleKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), f) // the town is at the district zoom
+		}
 		sc := v.scene(f)
 		v.cur = sc.Centre
 		if age == "galactic_age" || age == "quantum_age" || age == "transcendent_age" {
@@ -220,4 +229,23 @@ func TestSpaceConstructsInspection(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestCloseUpMoonInspects: the cursor over the Moon in the calm Earth
+// close-up names it, with words the map already has.
+func TestCloseUpMoonInspects(t *testing.T) {
+	fixture.WithTheme(t, "forge")
+	m := modelFor(t, fixture.Options{Age: "space_age", Seed: 6})
+	v := New().(*view)
+	f := Frame{Model: m, Anim: 17, Clock: 17}
+	for th, p := range thingsOf(v.scene(f).Grid) {
+		if th.Kind == mapgen.KindTerrain && th.Key == "planet" {
+			v.cur = p
+			if in, _ := v.Inspect(f); in.Title != "A planet of the home system" {
+				t.Errorf("the Moon inspects as %q", in.Title)
+			}
+			return
+		}
+	}
+	t.Error("no Moon in the close-up")
 }

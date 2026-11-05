@@ -257,19 +257,7 @@ func (r *orrery) surface(i, nx, ny int) Paint {
 		}
 		return P(HSun, 250)
 	case planetEarth:
-		if abs(ny) > 215 {
-			return P(HWhite, 245)
-		}
-		cell := func(salt int64) int {
-			return roll(10, r.s.Seed, 77+salt, int64((nx+256)*4/512), int64((ny+256)*4/512))
-		}
-		switch {
-		case cell(0) < 3:
-			return P(HHydro, 235)
-		case cell(1) == 0:
-			return P(HWhite, 225)
-		}
-		return P(HPanel, 255)
+		return earthFace(r.s.Seed, nx, ny, 4, 0)
 	case planetMars:
 		if ny < -205 {
 			return P(HWhite, 245)

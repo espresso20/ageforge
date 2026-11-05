@@ -11,7 +11,7 @@ func TestReduceQuadPatterns(t *testing.T) {
 		fg   Paint
 		bg   Paint
 	}{
-		{"flat", [4]Paint{y, y, y, y}, ' ', y, y},
+		{"flat", [4]Paint{y, y, y, y}, '█', y, y},
 		{"top left", [4]Paint{y, g, g, g}, '▘', y, g},
 		{"top row", [4]Paint{y, y, g, g}, '▀', y, g},
 		{"left column", [4]Paint{y, g, y, g}, '▌', y, g},
