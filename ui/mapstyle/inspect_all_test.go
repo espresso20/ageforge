@@ -45,7 +45,9 @@ func TestEverythingInspectsAsItself(t *testing.T) {
 
 // starTraffic are the movers of the star map, which has none drawn since its
 // lanes became line work.
-var starTraffic = map[string]bool{"starship": true, "phase_ship": true, "mote": true}
+// A generation ship is one of the kinds a seed may roll for the ships of space,
+// so a given seed need not draw one.
+var starTraffic = map[string]bool{"starship": true, "phase_ship": true, "mote": true, "generation_ship": true}
 
 // TestTrafficInspectsAsWhatItIs: a cart, a car, a ship, a drone: the traffic of
 // every age has a name of its own and a line, not the road's.
@@ -55,21 +57,23 @@ func TestTrafficInspectsAsWhatItIs(t *testing.T) {
 	seen := map[string]bool{}
 	for ai, age := range config.AgeOrder() {
 		m := modelFor(t, ageOptions(ai, age))
-		v := New().(*view)
-		f := Frame{Model: m, Anim: 17, Clock: 17}
 		agents := 0
-		for th, p := range thingsOf(v.scene(f).Grid) {
-			if th.Kind != mapgen.KindAgent {
-				continue
+		for _, anim := range []int{17, 700, 1500, 2300} { // the ships of space come and go with the frame
+			v := New().(*view)
+			f := Frame{Model: m, Anim: anim, Clock: anim}
+			for th, p := range thingsOf(v.scene(f).Grid) {
+				if th.Kind != mapgen.KindAgent {
+					continue
+				}
+				agents++
+				words, known := movers[th.Key]
+				v.cur = p
+				in, _ := v.Inspect(f)
+				if !known || in.Title != words[0].String() || slices.Contains(roads, in.Title) || len(in.Lines) != 1 || in.Lines[0] == "" {
+					t.Errorf("%s: the %s inspects as %+v", age, th.Key, in)
+				}
+				seen[th.Key] = true
 			}
-			agents++
-			words, known := movers[th.Key]
-			v.cur = p
-			in, _ := v.Inspect(f)
-			if !known || in.Title != words[0].String() || slices.Contains(roads, in.Title) || len(in.Lines) != 1 || in.Lines[0] == "" {
-				t.Errorf("%s: the %s inspects as %+v", age, th.Key, in)
-			}
-			seen[th.Key] = true
 		}
 		if agents == 0 && age != "galactic_age" && age != "quantum_age" && age != "transcendent_age" { // the star map has lanes, not traffic
 			t.Errorf("%s: no traffic to inspect", age)

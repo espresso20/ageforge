@@ -67,15 +67,22 @@ func (p *Pixels) Ships(seed int64, anim int, bodies, keep []shipBody, skip func(
 			continue
 		}
 		own := p.Owner(Thing{Kind: KindAgent, Key: k.key}, 6)
-		for j := 0; j < k.size+k.tail; j++ {
-			c := k.hull
-			if j >= k.size {
-				c = P(k.glow, 200-70*(j-k.size))
-			}
-			px, py := floorDiv(x-hx*j, pxUnit), floorDiv(y-hy*j, pxUnit)
-			if skip != nil && skip(px, py) || coveredBy(px, py, bodies) || coveredBy(px, py, keep) {
-				continue
-			}
+		p.Ship(k, x, y, hx, hy, own, func(px, py int) bool {
+			return skip != nil && skip(px, py) || coveredBy(px, py, bodies) || coveredBy(px, py, keep)
+		})
+	}
+}
+
+// Ship draws one ship, hull first and glow behind, at (x, y) in 16ths of a
+// pixel and heading (hx, hy); skip says which pixels it leaves alone.
+func (p *Pixels) Ship(k shipKind, x, y, hx, hy int, own uint8, skip func(x, y int) bool) {
+	for j := 0; j < k.size+k.tail; j++ {
+		c := k.hull
+		if j >= k.size {
+			c = P(k.glow, 200-70*(j-k.size))
+		}
+		px, py := floorDiv(x-hx*j, pxUnit), floorDiv(y-hy*j, pxUnit)
+		if !skip(px, py) {
 			p.Set(px, py, c, own)
 		}
 	}

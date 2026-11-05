@@ -806,8 +806,11 @@ func (f *frame) paintSystemBodies() {
 	pix := NewPixels(f.g.W, f.g.H)
 	pix.Ships(f.m.Seed, f.anim, bodies, nil, func(px, py int) bool {
 		x, y := px/2, py/2
-		return !f.g.in(x, y) || f.g.ThingAt(x, y).Kind != KindNone ||
-			rim(x, y, c.X, c.Y, sunRX+5, sunRY+3) <= 1000
+		if !f.g.in(x, y) || rim(x, y, c.X, c.Y, sunRX+5, sunRY+3) <= 1000 {
+			return true
+		}
+		th := f.g.ThingAt(x, y)
+		return th.Kind == KindWonder || th.Kind == KindBuilding || th.Key == "sun" || th.Key == "planet" || th.Key == "home"
 	})
 	pix.Resolve(f.g)
 	pix.Release()

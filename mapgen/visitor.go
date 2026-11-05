@@ -29,11 +29,9 @@ const (
 	hoverRise   = 12
 )
 
-// How visits look: the traveller on foot, the ship in space and the alien's
-// saucer, a dome with a rim to either side.
+// How visits look: the traveller on foot and the alien's saucer, a dome with a rim to either side.
 var (
 	onFoot = Figure{Glyphs: "☿", Fg: P(HFresh, 255)}
-	byShip = Figure{Glyphs: "►◄▼▲", Fg: P(HFresh, 255)}
 	saucer = Figure{Glyphs: "◄◉►", Fg: P(HFresh, 255)}
 )
 
@@ -48,6 +46,9 @@ func (f *frame) paintVisitor() {
 	if sg.Roll>>16%alienOneIn == 0 {
 		thing.Key, look = "alien", saucer
 		cells, runes = f.saucerCells(sg), []rune(saucer.Glyphs)
+	} else if f.st.Scale > City {
+		f.paintShipVisit(sg, thing)
+		return
 	} else {
 		at, dx, dy, ok := f.arrival(sg)
 		if !ok {
@@ -76,9 +77,6 @@ func (f *frame) solid(x, y int) bool {
 // and stays at the end of it; ok is false when it has no way in.
 func (f *frame) arrival(sg mapmodel.Sighting) (at Pt, dx, dy int, ok bool) {
 	route := f.footRoute(sg)
-	if f.st.Scale > City {
-		route = f.shipRoute(sg)
-	}
 	if len(route) < 2 {
 		return Pt{}, 0, 0, false
 	}
@@ -108,9 +106,10 @@ func (f *frame) footRoute(sg mapmodel.Sighting) []Pt {
 	return route
 }
 
-// shipRoute is how a ship flies in: a straight stair from a spot on the left
-// or the right edge of the map to a cell of one of the lanes that are laid.
-func (f *frame) shipRoute(sg mapmodel.Sighting) []Pt {
+// paintShipVisit draws a visiting ship in space: a hull and its glow flying
+// in from the left or right edge of the map to a cell of one of the lanes
+// that are laid, in the first arrivePct of the visit, then standing there.
+func (f *frame) paintShipVisit(sg mapmodel.Sighting, thing Thing) {
 	var lanes []int
 	for i, n := range f.shown {
 		if n >= 4 {
@@ -135,7 +134,19 @@ func (f *frame) shipRoute(sg mapmodel.Sighting) []Pt {
 	if sg.Roll>>8&1 == 1 {
 		edge.X = worldW - 1
 	}
-	return append([]Pt{edge}, staircase(edge, target)...)
+	// the flight, in 16ths of a pixel, along the longer axis
+	ax, ay := (2*edge.X+1)*pxUnit, (2*edge.Y+1)*pxUnit
+	dx, dy := (2*target.X+1)*pxUnit-ax, (2*target.Y+1)*pxUnit-ay
+	L := max(abs(dx), abs(dy), 1)
+	arrive := max(1, sg.Frames*arrivePct/100)
+	t := clamp(f.visit-sg.Start, 0, arrive)
+	pix := NewPixels(f.g.W, f.g.H)
+	own := pix.Owner(thing, 7)
+	pix.Ship(shipKinds[1], ax+dx*t/arrive, ay+dy*t/arrive, dx*pxUnit/L, dy*pxUnit/L, own, func(px, py int) bool {
+		return !f.g.in(px/2, py/2) || f.solid(px/2, py/2)
+	})
+	pix.Resolve(f.g)
+	pix.Release()
 }
 
 // saucerCells are the three cells of the alien's saucer at the visit frame.
