@@ -34,8 +34,7 @@ type Model struct {
 	NextAge, NextAgeName string
 	AgeReady             bool
 	// GateShare is how far the age's gate is filled, 0 to 1: the share the
-	// Advance panel turns into the year. The Primitive Age's ambient life
-	// (dinosaurs, the asteroid) keys off it.
+	// Advance panel turns into the year.
 	GateShare           float64
 	Epoch               int // epoch index (0 Stone … 6 Cosmic)
 	EpochKey, EpochName string

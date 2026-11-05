@@ -26,8 +26,7 @@ func TestTheMapSwitchesAtOnce(t *testing.T) {
 	// The map's clock is pinned, so a frame is a function of the game.
 	pinned := time.Now()
 	d.mapPanel.start, d.mapPanel.now = pinned, func() time.Time { return pinned }
-	// the mini map keeps its own clock, and the dinosaurs walk on it even with
-	// motion off
+	// the mini map keeps its own clock
 	d.miniMap.start, d.miniMap.now = pinned, func() time.Time { return pinned }
 	set := func(on bool) {
 		t.Helper()
