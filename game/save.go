@@ -939,6 +939,9 @@ func (ge *GameEngine) loadSave(filename string, view bool) error {
 	ge.autoRecruitOff = save.AutoRecruitOff
 	ge.staffHoldUntil = min(max(save.StaffHoldUntil, 0), ge.tick+staffHoldTicks)
 
+	ge.retireEndedResourcesLocked(ge.age)
+	ge.upgradePreSpaceBuildingsLocked(ge.age)
+
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 

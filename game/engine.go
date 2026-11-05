@@ -2241,6 +2241,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.prestigeCueSeenAge = ""
 	ge.ageReady = false
 	ge.Workers.SetAge(newAge)
+	ge.retireEndedResourcesLocked(newAge)
 
 	// What the advance turned into older buildings: every held building that
 	// was its line's current rung in the age left and is not in the new one.
@@ -2291,6 +2292,10 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	entryCosts := ge.rules.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
 		if key == "faith" {
+			continue
+		}
+		if config.IsResourceEnded(key, newAge) {
+			r.Amount = 0
 			continue
 		}
 		if entry, ok := entryCosts[key]; ok && entry > 0 {
@@ -2354,6 +2359,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// A new age gets a whole new mission board. Last, so it draws from the
 	// seeded RNG after everything else the advance rolls.
 	ge.ensureMissionBoardLocked()
+
+	ge.retireEndedResourcesLocked(newAge)
 }
 
 // applyAgeUnlocks unlocks all content for an age
@@ -2367,6 +2374,129 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 	}
 	if len(age.UnlockVillagers) > 0 {
 		ge.Workers.Unlock()
+	}
+	ge.retireEndedResourcesLocked(ageKey)
+}
+
+// retireEndedResourcesLocked zeroes stockpiles of ended resources, retires buildings
+// producing ended resources, frees their assigned workers to the idle pool, and locks them.
+// Caller must hold ge.mu write lock.
+func (ge *GameEngine) retireEndedResourcesLocked(ageKey string) {
+	if ageKey == "" {
+		return
+	}
+
+	// a) Zero stockpiles of any resource resKey where config.IsResourceEnded(resKey, ageKey)
+	if ge.Resources != nil {
+		for resKey, r := range ge.Resources.resources {
+			if config.IsResourceEnded(resKey, ageKey) {
+				r.Amount = 0
+			}
+		}
+	}
+
+	// b) For every building bKey, def := range ge.Buildings.defs:
+	// If def.OutputResource != "" && config.IsResourceEnded(def.OutputResource, ageKey):
+	if ge.Buildings != nil {
+		var endedKeys []string
+		for bKey, def := range ge.Buildings.defs {
+			if def.OutputResource != "" && config.IsResourceEnded(def.OutputResource, ageKey) {
+				endedKeys = append(endedKeys, bKey)
+				if ge.Workers != nil {
+					assigned := ge.Workers.GetAssignedCount(bKey)
+					if assigned > 0 {
+						ge.Workers.Unassign(bKey, assigned)
+					}
+				}
+				ge.Buildings.counts[bKey] = 0
+				if ge.Buildings.ruins != nil {
+					ge.Buildings.ruins[bKey] = 0
+				}
+				ge.Buildings.unlocked[bKey] = false
+			}
+		}
+
+		if len(endedKeys) > 0 {
+			endedSet := make(map[string]bool, len(endedKeys))
+			for _, k := range endedKeys {
+				endedSet[k] = true
+			}
+			if len(ge.buildQueue) > 0 {
+				var remaining []BuildQueueItem
+				for _, item := range ge.buildQueue {
+					if !endedSet[item.BuildingKey] {
+						remaining = append(remaining, item)
+					}
+				}
+				ge.buildQueue = remaining
+			}
+			if len(ge.plan) > 0 {
+				var remainingPlan []PlanItem
+				for _, item := range ge.plan {
+					if !endedSet[item.Key] {
+						remainingPlan = append(remainingPlan, item)
+					}
+				}
+				ge.plan = remainingPlan
+			}
+		}
+	}
+}
+
+// upgradePreSpaceBuildingsLocked converts owned pre-space ground buildings (reqIdx < 17)
+// into their Space Age counterparts when in a space age (ageIdx >= 17).
+// Caller must hold ge.mu write lock.
+func (ge *GameEngine) upgradePreSpaceBuildingsLocked(ageKey string) {
+	if ge.Buildings == nil || ge.progress == nil {
+		return
+	}
+	targetIdx, ok := ge.progress.ageIndex[ageKey]
+	if !ok || targetIdx < 17 {
+		return
+	}
+	for bKey, def := range ge.Buildings.defs {
+		reqIdx := ge.progress.ageIndex[def.RequiredAge]
+		if reqIdx >= 17 || ge.Buildings.counts[bKey] <= 0 {
+			continue
+		}
+		target, found := ge.Buildings.UpgradeTarget(bKey)
+		if !found && def.LineageKey != "" && def.Category != "wonder" && def.Category != "monument" {
+			bestAge := -1
+			for _, cand := range ge.Buildings.defs {
+				if cand.LineageKey != def.LineageKey || cand.Category == "wonder" || cand.Category == "monument" {
+					continue
+				}
+				if cand.OutputResource != "" && config.IsResourceEnded(cand.OutputResource, ageKey) {
+					continue
+				}
+				cIdx := ge.progress.ageIndex[cand.RequiredAge]
+				if cIdx >= 17 && cIdx <= targetIdx {
+					if cIdx > bestAge || (cIdx == bestAge && cand.Key < target.Key) {
+						target = cand
+						bestAge = cIdx
+						found = true
+					}
+				}
+			}
+		}
+		if !found || ge.progress.ageIndex[target.RequiredAge] < 17 {
+			continue
+		}
+		count := ge.Buildings.counts[bKey]
+		ge.Buildings.counts[bKey] = 0
+		ge.Buildings.counts[target.Key] += count
+		ge.Buildings.unlocked[target.Key] = true
+		if ge.Workers != nil {
+			assigned := ge.Workers.GetAssignedCount(bKey)
+			if assigned > 0 {
+				ge.Workers.Unassign(bKey, assigned)
+				targetCap := target.WorkerCapacity * count
+				toAssign := min(assigned, targetCap)
+				if toAssign > 0 {
+					ge.Workers.Assign(target.Key, toAssign)
+				}
+			}
+		}
 	}
 }
 
@@ -2567,7 +2697,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		// sized like any other gain (config.EventSize), and in knowledge at
 		// most the price of the age's cheapest tech.
 		for _, key := range ge.Resources.order {
-			if !ge.Resources.IsUnlocked(key) {
+			if !ge.Resources.IsUnlocked(key) || config.IsResourceEnded(key, ge.age) {
 				continue
 			}
 			gain := config.EventSize(config.Effect{Type: config.EventGain, Target: key, Value: config.AncientCacheMinutes}, ge.eventTown(key, false))
@@ -2618,7 +2748,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		bestCount := 0
 		for _, key := range sortedKeys(ge.Buildings.counts) {
 			count := ge.Buildings.counts[key]
-			if def, ok := ge.Buildings.defs[key]; ok && def.Category != "wonder" && count > bestCount {
+			if def, ok := ge.Buildings.defs[key]; ok && def.Category != "wonder" && (def.OutputResource == "" || !config.IsResourceEnded(def.OutputResource, ge.age)) && count > bestCount {
 				bestKey = key
 				bestCount = count
 			}

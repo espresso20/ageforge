@@ -29,9 +29,9 @@ import (
 // as an argument. When a count drops, lower its budget here so it stays
 // down; the test says which.
 var lookupBudget = map[string]lookupCount{
-	"game":     {config: 6, core: 25},
-	"ui":       {config: 21, core: 0},
-	"mapmodel": {config: 4, core: 2},
+	"game":     {config: 6, core: 12},
+	"ui":       {config: 20, core: 0},
+	"mapmodel": {config: 2, core: 2},
 }
 
 type lookupCount struct{ config, core int }
@@ -59,6 +59,7 @@ var pureConfig = map[string]bool{
 	// from the set (Set.AgeYears).
 	"GatePillar": true, "GatePillars": true, "PillarName": true,
 	"YearBetween": true, "YearLabel": true,
+	"IsResourceEnded": true, "AlwaysAvailableResources": true,
 }
 
 const (

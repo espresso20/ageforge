@@ -1,6 +1,9 @@
 package config
 
-import "math"
+import (
+	"math"
+	"sync"
+)
 
 // ResourceDef defines a single game resource. There are 24 resources in total,
 // unlocking progressively through the 22 ages.
@@ -81,4 +84,55 @@ func BaseResources() []ResourceDef {
 // ResourceByKey returns a map of key -> ResourceDef
 func ResourceByKey() map[string]ResourceDef {
 	return indexBy(BaseResources(), func(r ResourceDef) string { return r.Key })
+}
+
+// AlwaysAvailableResources defines resources that are never subject to ending.
+var AlwaysAvailableResources = map[string]bool{
+	"food":      true,
+	"faith":     true,
+	"culture":   true,
+	"gold":      true,
+	"knowledge": true,
+	"soldiers":  true,
+}
+
+var resourceLastMakerAge = sync.OnceValue(func() map[string]int {
+	defs := BaseBuildings()
+	pos := AgePositions(AgeOrder())
+	last := make(map[string]int)
+	for _, d := range defs {
+		p, ok := pos[d.RequiredAge]
+		if !ok {
+			continue
+		}
+		for _, e := range d.Effects {
+			if e.Type != "production" || e.Value <= 0 {
+				continue
+			}
+			if prev, ok := last[e.Target]; !ok || p > prev {
+				last[e.Target] = p
+			}
+		}
+	}
+	return last
+})
+
+// IsResourceEnded reports whether a resource has ended in the given age.
+// A resource is available while buildings produce it and for one carryover
+// age after its last producer. Food, faith, culture, knowledge, soldiers and
+// gold are always available.
+func IsResourceEnded(resKey, ageKey string) bool {
+	if AlwaysAvailableResources[resKey] {
+		return false
+	}
+	pos := AgePositions(AgeOrder())
+	curPos, ok := pos[ageKey]
+	if !ok {
+		return false
+	}
+	lastMaker, ok := resourceLastMakerAge()[resKey]
+	if !ok || lastMaker < 0 {
+		return false
+	}
+	return curPos > lastMaker+1
 }

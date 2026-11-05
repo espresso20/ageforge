@@ -214,7 +214,15 @@ func statsProvider(state game.GameState, _ int) string {
 	sb.WriteString(researchSummaryLines(state))
 
 	sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.56", "\n[gold]═══ Resource rates ═══[-]\n\n"))
-	rateKeys := keysWhere(state.Resources, func(_ string, rs game.ResourceState) bool { return rs.Unlocked })
+	rateKeys := keysWhere(state.Resources, func(k string, rs game.ResourceState) bool {
+		if !rs.Unlocked {
+			return false
+		}
+		if state.Age != "" && config.IsResourceEnded(k, state.Age) {
+			return false
+		}
+		return true
+	})
 	if len(rateKeys) == 0 {
 		sb.WriteString(vibe.Line("ui.overlay_stats.statsProvider.57", " [gray]No unlocked resources.[-]\n"))
 	} else {

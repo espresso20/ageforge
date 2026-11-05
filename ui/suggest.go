@@ -528,7 +528,15 @@ func plannableTechKeys(state game.GameState) []string {
 
 // unlockedResourceKeys returns the unlocked resources, sorted.
 func unlockedResourceKeys(state game.GameState) []string {
-	return keysWhere(state.Resources, func(_ string, rs game.ResourceState) bool { return rs.Unlocked })
+	return keysWhere(state.Resources, func(k string, rs game.ResourceState) bool {
+		if !rs.Unlocked {
+			return false
+		}
+		if state.Age != "" && config.IsResourceEnded(k, state.Age) {
+			return false
+		}
+		return true
+	})
 }
 
 // wonderNeedKeys is what `wonder collect` suggests: the resources the current
