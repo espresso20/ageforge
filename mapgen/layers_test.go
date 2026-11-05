@@ -173,7 +173,7 @@ func TestSpaceScalesDrawTheirBodies(t *testing.T) {
 		want map[string]int
 	}{
 		{"space_age", map[string]int{"home": 60, "space": 3000}},
-		{"interstellar_age", map[string]int{"sun": 8, "planet": 6, "space": 3000}},
+		{"interstellar_age", map[string]int{"space": 3000}},
 		{"galactic_age", map[string]int{"star": 20, "space": 3000}},
 	} {
 		g := (&Generator{}).Render(model(state(c.age, 4, noon)), worldW, worldH, 0)

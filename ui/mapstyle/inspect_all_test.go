@@ -9,7 +9,6 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
-	"github.com/gdamore/tcell/v2"
 )
 
 // thingsOf lists one cell of every distinct thing a scene shows.
@@ -99,8 +98,8 @@ var roadKeys = map[string]bool{"tether": true, "ring": true, "orbit": true, "rou
 func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	want := map[string]map[string]string{
-		"space_age":        {"home": "The homeworld", "tether": "Space elevator", "ring": "Orbital ring", "space": "Open space"},
-		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "A planet of the home system", "orbit": "The home system", "space": "Deep space"},
+		"space_age":        {"home": "The homeworld", "space": "Open space"},
+		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "A planet of the home system", "satellite": "Satellite", "orbit": "The home system", "space": "Deep space"},
 		"galactic_age":     {"space": "Between the stars"},
 		"quantum_age":      {"space": "A maybe"},
 		"transcendent_age": {"space": "Light"},
@@ -109,13 +108,22 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 6, Wars: 1, Routes: 3})
 		f := Frame{Model: m, Anim: 17, Clock: 17}
 		found := map[string]bool{}
-		for _, deeper := range []bool{false, true} { // the close-up, then the district
+		for _, z := range []int{zOverview, zInner, zCloseUp, zDistrict} {
 			v := New().(*view)
-			if deeper {
-				v.HandleKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), f)
+			v.zoom, v.zoomSet, v.overview = z, true, z <= zInner
+			if z == zDistrict {
+				v.zoom = zCloseUp
+				v.zoomTo(v.scene(f), zDistrict)
 			}
-			for th, p := range thingsOf(v.scene(f).Grid) {
-				v.cur = p
+			grid, pick := v.scene(f).Grid, func(p mapgen.Pt) mapgen.Pt { return p }
+			if z == zOverview || z == zInner { // the orrery is drawn in the overview itself
+				if v.ov = v.scene(f).Overview(160, 48); z == zInner {
+					v.ov = v.scene(f).OverviewInner(160, 48)
+				}
+				grid, pick = v.ov.Grid, func(p mapgen.Pt) mapgen.Pt { return v.ov.Pick(p.X, p.Y) }
+			}
+			for th, p := range thingsOf(grid) {
+				v.cur = pick(p)
 				in, _ := v.Inspect(f)
 				if title, ok := titles[th.Key]; ok && (th.Kind == mapgen.KindRoad) == roadKeys[th.Key] {
 					found[th.Key] = true
@@ -147,7 +155,7 @@ func TestSpaceHubIsTheHeartOfTheTown(t *testing.T) {
 		v := New().(*view)
 		f := Frame{Model: m}
 		if i < 2 {
-			v.HandleKey(tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone), f) // the town is at the district zoom
+			v.zoom, v.zoomSet, v.overview = zOverview, true, true // the square is on the overview
 		}
 		sc := v.scene(f)
 		v.cur = sc.Centre
@@ -204,11 +212,6 @@ func TestSpaceConstructsInspection(t *testing.T) {
 			expTitle: "Asteroid Mining Complex",
 			expLines: []string{"Tethered refinery and mass driver", "extracting metals and volatiles from ancient chondrites"},
 		},
-		{
-			key:      "deep_space_relay",
-			expTitle: "Deep Space Navigational Relay",
-			expLines: []string{"Lagrange point communication buoy", "routing telemetry across the star system"},
-		},
 	}
 
 	for _, tc := range tests {
@@ -239,9 +242,9 @@ func TestCloseUpMoonInspects(t *testing.T) {
 	v := New().(*view)
 	f := Frame{Model: m, Anim: 17, Clock: 17}
 	for th, p := range thingsOf(v.scene(f).Grid) {
-		if th.Kind == mapgen.KindTerrain && th.Key == "planet" {
+		if th.Kind == mapgen.KindTerrain && th.Key == "satellite" {
 			v.cur = p
-			if in, _ := v.Inspect(f); in.Title != "A planet of the home system" {
+			if in, _ := v.Inspect(f); in.Title != "Satellite" {
 				t.Errorf("the Moon inspects as %q", in.Title)
 			}
 			return

@@ -223,19 +223,19 @@ func (r *orrery) planet(i, x, y int) {
 	if r.mode == SystemViewCosmos {
 		return
 	}
-	switch i {
-	case planetEarth: // Luna
-		a := (r.s.Anim / 3 * 16) % 4096
-		rm := R + 3*pxUnit
-		r.pix.Set(floorDiv(x+rm*cos4096(a)/1024, pxUnit), floorDiv(y+rm*sin4096(a)/2048, pxUnit), P(HWhite, 235), own)
-	case planetJupiter: // the Galilean moons
-		for k, c := range [3]Paint{P(HSun, 255), P(HWhite, 230), P(HRock, 255)} {
-			a := (r.s.Anim/(2+k*2)*16 + k*1500) % 4096
-			rm := R + (3+2*k)*pxUnit
-			r.pix.Set(floorDiv(x+rm*cos4096(a)/1024, pxUnit), floorDiv(y+rm*sin4096(a)/2048, pxUnit), c, own)
-		}
+	// the moons: a dot each on a slow orbit, wherever the disc is big enough
+	moon := r.pix.Owner(Thing{Kind: KindTerrain, Key: "satellite"}, 6)
+	for k := 0; k < moonCount[i] && R >= 3*pxUnit/2; k++ {
+		a := (r.s.Anim/(3+2*k)*16 + roll(turn, r.s.Seed, 92, int64(i), int64(k))) % 4096
+		rm := R + (3+2*k)*pxUnit
+		r.pix.Set(floorDiv(x+rm*cos4096(a)/1024, pxUnit), floorDiv(y+rm*sin4096(a)/2048, pxUnit), moonTone[k%len(moonTone)], moon)
 	}
 }
+
+// moonCount is how many moons each planet shows, as the sky has them.
+var moonCount = [8]int{0, 0, 1, 2, 4, 5, 4, 2}
+
+var moonTone = [...]Paint{P(HWhite, 235), P(HSun, 255), P(HRock, 255), P(HSand, 240), P(HCool, 240)}
 
 // satRing draws Saturn's ring: two thin lines round the planet, the half
 // behind it (side -1) or the half in front (side 1).

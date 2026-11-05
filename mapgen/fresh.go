@@ -70,6 +70,41 @@ func (f *frame) districts() []District {
 		}
 		return out
 	}
+	if f.st.Scale == Orbit || f.st.Scale == System { // a line's modules on the ring of the space port
+		for _, line := range mapmodel.LineageOrder {
+			var box Rect
+			var heart Pt
+			var first portMod
+			// clear: no module of another line close enough to cover its centre
+			clear := func(m portMod) bool {
+				for _, o := range f.port().mods {
+					if o.b.Lineage != m.b.Lineage && abs(o.x-m.x) <= 10 && abs(o.y-m.y) <= 10 {
+						return false
+					}
+				}
+				return true
+			}
+			for _, m := range f.port().mods {
+				if m.b.Lineage != line {
+					continue
+				}
+				c := Rect{m.x / 2, m.y / 2, 1, 1}
+				if box.W == 0 {
+					box, heart, first = c, Pt{c.X, c.Y}, m
+				} else {
+					if clear(m) && !clear(first) {
+						heart = Pt{c.X, c.Y}
+					}
+					x0, y0 := min(box.X, c.X), min(box.Y, c.Y)
+					box = Rect{x0, y0, max(box.X+box.W, c.X+1) - x0, max(box.Y+box.H, c.Y+1) - y0}
+				}
+			}
+			if box.W > 0 {
+				out = append(out, District{line, box, heart})
+			}
+		}
+		return out
+	}
 	for _, line := range mapmodel.LineageOrder {
 		var box Rect
 		for _, pl := range f.placed {
@@ -94,13 +129,6 @@ func (f *frame) districts() []District {
 			th := f.g.ThingAt(t.X, t.Y)
 			if d := (Rect{t.X, t.Y, 1, 1}).dist(middle); th.Kind == KindBuilding && th.Lineage == line && d < gap {
 				heart, gap = t, d
-			}
-		}
-		for _, pl := range f.placed { // the close-up draws no town: the heart is the nearest lot's
-			r := f.plan.Lots[pl.lot].Rect
-			c := Pt{r.X + r.W/2, r.Y + r.H/2}
-			if d := (Rect{c.X, c.Y, 1, 1}).dist(middle); f.calm() && !pl.ruin && pl.b.Lineage == line && d < gap {
-				heart, gap = c, d
 			}
 		}
 		if gap < 1<<60 {

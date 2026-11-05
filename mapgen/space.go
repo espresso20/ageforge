@@ -13,11 +13,8 @@ func (f *frame) paintSpace() {
 	f.paintVoid()
 	f.paintStarField()
 	f.paintTracks()
-	switch f.st.Scale {
-	case Orbit:
+	if f.st.Scale == Orbit {
 		f.paintHomePlanet()
-	case System:
-		f.paintSystem()
 	}
 }
 

@@ -45,6 +45,7 @@ type frame struct {
 	// the places the cursor visits.
 	lights  []Pt
 	targets []Pt
+	pp      *port // the space port, once laid out
 }
 
 // Render draws the model as a w by h grid at animation frame anim. The
@@ -127,11 +128,16 @@ func (f *frame) at(x, y int) int { return y*f.g.W + x }
 
 // draw paints every layer, bottom to top.
 func (f *frame) draw() {
-	if f.calm() {
+	if f.calm() || f.atPort() {
 		f.paintVoid()
 		f.paintStarField()
-		f.paintEarthSystem()
+		if f.atPort() {
+			f.paintSpacePort()
+		} else {
+			f.paintEarthSystem()
+		}
 		f.paintAround()
+		f.paintFocus()
 		f.paintVisitor()
 		return
 	}

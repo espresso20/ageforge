@@ -112,12 +112,6 @@ func (f *frame) bounds() Rect {
 		maxRX := (maxRY * 25) / 10
 		grow(Rect{f.plan.Centre.X - maxRX, f.plan.Centre.Y - maxRY, 2*maxRX + 1, 2*maxRY + 1})
 	}
-	if f.st.Scale == System {
-		grow(Rect{f.plan.Centre.X - sunRX, f.plan.Centre.Y - sunRY, 2*sunRX + 1, 2*sunRY + 1})
-		maxRY := systemSpec.rings[len(systemSpec.rings)-1]
-		maxRX := (maxRY * 25) / 10
-		grow(Rect{f.plan.Centre.X - maxRX, f.plan.Centre.Y - maxRY, 2*maxRX + 1, 2*maxRY + 1})
-	}
 	if f.st.Scale == Stars { // the body of the galaxy is the map, and all the territory
 		r := f.plan.Galaxy.reach()
 		cx, cy := worldW/2, worldH/2
