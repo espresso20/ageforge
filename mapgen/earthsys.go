@@ -28,6 +28,12 @@ func (f *frame) calm() bool {
 	return f.close && f.district == "" && (f.st.Scale == Orbit || f.st.Scale == System)
 }
 
+// atPort says whether this frame is the space port: the deepest zoom of the
+// orbit and the solar system, with a building line in focus.
+func (f *frame) atPort() bool {
+	return f.close && f.district != "" && (f.st.Scale == Orbit || f.st.Scale == System)
+}
+
 // earthFace is the planet's face at (nx, ny), -256 to 256 across: sea, land
 // and cloud on an n by n grid of blotches, the cloud drifting by drift.
 func earthFace(seed int64, nx, ny, n, drift int) Paint {
@@ -46,6 +52,41 @@ func earthFace(seed int64, nx, ny, n, drift int) Paint {
 	return P(HPanel, 255)
 }
 
+// lighting shades a paint for the seed's light: night, dusk or day, by where
+// the point (nx, ny) on a body's face lies.
+func lighting(seed int64) func(c Paint, nx, ny int) Paint {
+	la := roll(turn, seed, 5201) // the light comes from this way
+	lx, ly := cos4096(la)*256/1024, 2*sin4096(la)*256/1024
+	return func(c Paint, nx, ny int) Paint {
+		z := isqrt(max(0, 65536-nx*nx-ny*ny))
+		lvl := 2
+		switch dot := (nx*lx+ny*ly)/256 + z*90/256; {
+		case dot < -30:
+			lvl = 0
+		case dot < 90:
+			lvl = 1
+		}
+		return Paint{c.Hue, uint8(int(c.Weight) * [3]int{120, 180, 256}[lvl] >> 8)}
+	}
+}
+
+// earth paints the planet and its air, centred on (sx, sy) in 16ths of a
+// pixel; the shading is lighting's.
+func (p *Pixels) earth(seed int64, anim, sx, sy, R int, shade func(Paint, int, int) Paint) {
+	own := p.Owner(Thing{Kind: KindTerrain, Key: "home"}, 5)
+	p.Disc(sx, sy, R, own, func(nx, ny int) Paint {
+		return shade(earthFace(seed, nx, ny, 6, anim/12), nx, ny)
+	})
+	p.Glow(sx, sy, R, R+3*pxUnit, HAir, 150, 3, own)
+}
+
+// moon paints the Moon, a satellite of the home world.
+func (p *Pixels) moon(x, y, r int, shade func(Paint, int, int) Paint) {
+	p.Disc(x, y, r, p.Owner(Thing{Kind: KindTerrain, Key: "satellite"}, 5), func(nx, ny int) Paint {
+		return shade(P(HWhite, 235), nx, ny)
+	})
+}
+
 // paintEarthSystem draws the close-up over the sky already in the frame.
 func (f *frame) paintEarthSystem() {
 	seed, anim := f.m.Seed, f.anim
@@ -53,24 +94,8 @@ func (f *frame) paintEarthSystem() {
 	c := f.plan.Centre
 	sx, sy := (2*c.X+1)*pxUnit, (2*c.Y+1)*pxUnit
 	R := (26 + roll(7, seed, 5200)) * pxUnit
-	la := roll(turn, seed, 5201) // the light comes from this way
-	lx, ly := cos4096(la)*256/1024, 2*sin4096(la)*256/1024
-	lit := func(nx, ny int) int { // 0 night, 1 dusk, 2 day
-		z := isqrt(max(0, 65536-nx*nx-ny*ny))
-		switch dot := (nx*lx+ny*ly)/256 + z*90/256; {
-		case dot < -30:
-			return 0
-		case dot < 90:
-			return 1
-		}
-		return 2
-	}
-	shade := func(c Paint, nx, ny int) Paint {
-		return Paint{c.Hue, uint8(int(c.Weight) * [3]int{120, 180, 256}[lit(nx, ny)] >> 8)}
-	}
+	shade := lighting(seed)
 
-	earthOwn := pix.Owner(Thing{Kind: KindTerrain, Key: "home"}, 5)
-	moonOwn := pix.Owner(Thing{Kind: KindTerrain, Key: "planet"}, 5)
 	stationOwn := pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 5)
 
 	// where the bodies on orbits are: the angle, and whether behind the planet
@@ -80,11 +105,7 @@ func (f *frame) paintEarthSystem() {
 	moonR := (5 + roll(4, seed, 5202)) * pxUnit
 	moonRx := R + (30+roll(20, seed, 5203))*pxUnit
 	mx, my, moonBehind := at(roll(turn, seed, 5204)+anim/8*16, moonRx, 60+roll(40, seed, 5205))
-	moon := func() {
-		pix.Disc(mx, my, moonR, moonOwn, func(nx, ny int) Paint {
-			return shade(P(HWhite, 235), nx, ny)
-		})
-	}
+	moon := func() { pix.moon(mx, my, moonR, shade) }
 	n := 2 + roll(2, seed, 5206)
 	drawStations := func(front bool) {
 		for i := 0; i < n; i++ {
@@ -101,10 +122,7 @@ func (f *frame) paintEarthSystem() {
 		moon()
 	}
 	drawStations(false)
-	pix.Disc(sx, sy, R, earthOwn, func(nx, ny int) Paint {
-		return shade(earthFace(seed, nx, ny, 6, anim/12), nx, ny)
-	})
-	pix.Glow(sx, sy, R, R+3*pxUnit, HAir, 150, 3, earthOwn)
+	pix.earth(seed, anim, sx, sy, R, shade)
 	if !moonBehind {
 		moon()
 	}

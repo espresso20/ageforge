@@ -80,14 +80,6 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 				vibe.Line("ui.mapstyle.space.asteroid_mine.03", "extracting metals and volatiles from ancient chondrites"),
 			},
 		}, true
-	case "deep_space_relay":
-		return Inspection{
-			Title: vibe.Line("ui.mapstyle.space.relay.01", "Deep Space Navigational Relay"),
-			Lines: []string{
-				vibe.Line("ui.mapstyle.space.relay.02", "Lagrange point communication buoy"),
-				vibe.Line("ui.mapstyle.space.relay.03", "routing telemetry across the star system"),
-			},
-		}, true
 	case "comet":
 		return Inspection{
 			Title: vibe.Line("ui.mapstyle.space.comet.01", "Great Comet"),
@@ -102,22 +94,6 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 			Lines: []string{
 				vibe.Line("ui.mapstyle.space.pluto.02", "Binary dwarf planet in the frozen Kuiper belt"),
 				vibe.Line("ui.mapstyle.space.pluto.03", "nitrogen glaciers and methane frost glint under distant Sol"),
-			},
-		}, true
-	case "interstellar_probe":
-		return Inspection{
-			Title: vibe.Line("ui.mapstyle.space.probe.01", "Interstellar Probe"),
-			Lines: []string{
-				vibe.Line("ui.mapstyle.space.probe.02", "Voyager-class deep space explorer"),
-				vibe.Line("ui.mapstyle.space.probe.03", "drifting past the heliopause into the interstellar void"),
-			},
-		}, true
-	case "alien_monolith":
-		return Inspection{
-			Title: vibe.Line("ui.mapstyle.space.monolith.01", "Alien Monolith"),
-			Lines: []string{
-				vibe.Line("ui.mapstyle.space.monolith.02", "An enigmatic obsidian monolith of unknown origin"),
-				vibe.Line("ui.mapstyle.space.monolith.03", "faint tachyon pulses reverberate from its geometry"),
 			},
 		}, true
 	}
@@ -147,6 +123,8 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.31", "The home sun"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.32", "the orrery of the home system"),
 				town + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}, true
+	case "satellite":
+		return Inspection{Title: vibe.Line("ui.mapstyle.space.satellite.01", "Satellite")}, true
 	case "star":
 		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.50", "A star"), Lines: []string{skyVoids[sky][1].String()}}, true
 	case "space":
