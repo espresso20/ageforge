@@ -73,7 +73,14 @@ func describeRoute(m *mapmodel.Model, civ *mapmodel.Faction, lane int) Inspectio
 // describeHarbinger is the harbinger at the square: what it warns of, the
 // odds when the game gives them, and how bad it could be.
 func describeHarbinger(h *mapmodel.Harbinger) Inspection {
-	in := Inspection{Title: h.Name, Command: mapmodel.CmdHarbinger, Lines: []string{h.WarningLine()}}
+	in := Inspection{
+		Title:   h.Name,
+		Command: mapmodel.CmdHarbinger,
+		Lines: []string{
+			vibe.Line("ui.mapstyle.harbinger.rift.desc", "Harbinger Rift · reality distortion tearing spacetime"),
+			h.WarningLine(),
+		},
+	}
 	if h.Numeric {
 		in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.roguelike.inspect.describe.02", "odds ")+strconv.Itoa(int(float64(h.Probability*100)+0.5))+"%")
 	}

@@ -51,13 +51,20 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 	var cx, cy int
 	var on bool
 	if v.overview {
-		v.ov = sc.Overview(w, h)
+		switch v.shownZoom() {
+		case zCosmos:
+			v.ov = sc.OverviewCosmos(w, h)
+		case zInner:
+			v.ov = sc.OverviewInner(w, h)
+		default:
+			v.ov = sc.Overview(w, h)
+		}
 		v.blit(cv, x, y, v.ov.Grid)
 		cx, cy, on = v.ov.CellOf(v.cur)
 	} else {
 		v.ov = nil
-		v.fit(w, h)
-		v.blit(cv, x, y, windowFilled(sc.Grid, v.cam.X, v.cam.Y, w, h))
+		v.fit(w, h, sc)
+		v.blit(cv, x, y, windowFilled(sc, v.cam.X, v.cam.Y, w, h))
 		cx, cy = v.cur.X-v.cam.X, v.cur.Y-v.cam.Y
 		on = cx >= 0 && cy >= 0 && cx < w && cy < h
 	}
@@ -75,7 +82,11 @@ func (v *view) putCursor(cv *Canvas, mp *Palette, x, y, anim int) {
 
 // fit places the close-up's window: it stays put and scrolls only when the
 // cursor nears an edge, and jumps only when the cursor is off screen.
-func (v *view) fit(w, h int) {
+func (v *view) fit(w, h int, sc *mapgen.Scene) {
+	gw, gh := mapgen.WorldW, mapgen.WorldH
+	if sc != nil && sc.Grid != nil {
+		gw, gh = sc.Grid.W, sc.Grid.H
+	}
 	key := [2]int{w, h}
 	if key != v.camKey || v.recentre || v.cur.X < v.cam.X || v.cur.X >= v.cam.X+w || v.cur.Y < v.cam.Y || v.cur.Y >= v.cam.Y+h {
 		v.camKey, v.recentre = key, false
@@ -84,25 +95,43 @@ func (v *view) fit(w, h int) {
 	mx, my := min(8, w/4), min(4, h/4)
 	v.cam.X = clamp(v.cam.X, v.cur.X-w+mx+1, v.cur.X-mx)
 	v.cam.Y = clamp(v.cam.Y, v.cur.Y-h+my+1, v.cur.Y-my)
-	v.cam.X = clamp(v.cam.X, 0, max(0, mapgen.WorldW-w))
-	v.cam.Y = clamp(v.cam.Y, 0, max(0, mapgen.WorldH-h))
+	v.cam.X = clamp(v.cam.X, 0, max(0, gw-w))
+	v.cam.Y = clamp(v.cam.Y, 0, max(0, gh-h))
 	// A window bigger than the world centres it; windowFilled paints the
 	// rest.
-	if w > mapgen.WorldW {
-		v.cam.X = -(w - mapgen.WorldW) / 2
+	if w > gw {
+		v.cam.X = -(w - gw) / 2
 	}
-	if h > mapgen.WorldH {
-		v.cam.Y = -(h - mapgen.WorldH) / 2
+	if h > gh {
+		v.cam.Y = -(h - gh) / 2
 	}
 }
 
-// windowFilled is g.Window for a window that may reach past the world: the
-// land beyond its edge is the land inside it, mirrored (so water stays
-// water and the shore carries on), with only terrain copied over so no
-// building or road shows twice.
-func windowFilled(g *mapgen.Grid, x0, y0, w, h int) *mapgen.Grid {
+// windowFilled is sc.Grid.Window for a window that may reach past the world:
+// in space scales, procedural space cells fill beyond the world edge without mirroring;
+// in ground scales, land is mirrored to preserve coastlines, but unique landmarks,
+// homes, and buildings are never duplicated.
+func windowFilled(sc *mapgen.Scene, x0, y0, w, h int) *mapgen.Grid {
+	g := sc.Grid
 	out := g.Window(x0, y0, w, h)
 	if x0 >= 0 && y0 >= 0 && x0+w <= g.W && y0+h <= g.H {
+		return out
+	}
+	outCell := sc.SpaceCell
+	if outCell == nil {
+		outCell = sc.GroundCell
+	}
+	if outCell != nil {
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				wx, wy := x0+x, y0+y
+				if wx >= 0 && wy >= 0 && wx < g.W && wy < g.H {
+					continue
+				}
+				out.Cells[y*w+x] = outCell(wx, wy)
+				out.Hit[y*w+x] = 0
+			}
+		}
 		return out
 	}
 	mirror := func(v, n int) int {
@@ -113,8 +142,11 @@ func windowFilled(g *mapgen.Grid, x0, y0, w, h int) *mapgen.Grid {
 		return v
 	}
 	terrain := func(i int) bool {
-		k := g.Things[g.Hit[i]].Kind
-		return k == mapgen.KindNone || k == mapgen.KindTerrain
+		th := g.Things[g.Hit[i]]
+		if th.Key == "home" {
+			return false
+		}
+		return th.Kind == mapgen.KindNone || th.Kind == mapgen.KindTerrain
 	}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
@@ -133,8 +165,20 @@ func windowFilled(g *mapgen.Grid, x0, y0, w, h int) *mapgen.Grid {
 				sx += dx
 				i = sy*g.W + sx
 			}
-			out.Cells[y*w+x] = g.Cells[i]
-			out.Hit[y*w+x] = g.Hit[i]
+			if !terrain(i) {
+				dx = -dx
+				for n := 0; n < 64 && !terrain(i) && sx+dx >= 0 && sx+dx < g.W; n++ {
+					sx += dx
+					i = sy*g.W + sx
+				}
+			}
+			if terrain(i) {
+				out.Cells[y*w+x] = g.Cells[i]
+				out.Hit[y*w+x] = g.Hit[i]
+			} else {
+				out.Cells[y*w+x] = mapgen.Cell{R: ' '}
+				out.Hit[y*w+x] = 0
+			}
 		}
 	}
 	return out

@@ -88,6 +88,7 @@ const (
 
 type planner struct {
 	seed   int64
+	w, h   int
 	f      *Fields
 	plan   *Plan
 	claim  []uint8
@@ -96,8 +97,26 @@ type planner struct {
 }
 
 func newPlanner(seed int64) *planner {
-	return &planner{seed: seed, plan: &Plan{Bridge: map[Pt]bool{}},
-		claim: make([]uint8, worldW*worldH), roadOf: make([]int, worldW*worldH)}
+	return newPlannerSized(seed, worldW, worldH)
+}
+
+func newPlannerSized(seed int64, w, h int) *planner {
+	return &planner{
+		seed:   seed,
+		w:      w,
+		h:      h,
+		plan:   &Plan{Bridge: map[Pt]bool{}},
+		claim:  make([]uint8, w*h),
+		roadOf: make([]int, w*h),
+	}
+}
+
+func (b *planner) at(x, y int) int {
+	return y*b.w + x
+}
+
+func (b *planner) in(x, y int) bool {
+	return x >= 0 && y >= 0 && x < b.w && y < b.h
 }
 
 // NewGroundPlan lays out a settlement on the land of a seed.

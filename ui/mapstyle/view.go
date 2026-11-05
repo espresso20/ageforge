@@ -18,17 +18,56 @@ import (
 
 // The engine's zoom levels: the whole town squeezed to fit, one world cell to
 // a screen cell, and the same close-up framed on one building line's district
-// with the rest of the town dimmed.
+// with the rest of the town dimmed. Space scenes add two more: the cosmos
+// beyond the overview, and the inner system between the overview and the
+// close-up. Only the ladder (zoomStep) says what comes next; the numbers just
+// have to keep the squeezed views at or below zInner.
 const (
+	zCosmos   = -1
 	zOverview = 0
-	zCloseUp  = 1
-	zDistrict = 2
+	zInner    = 1
+	zCloseUp  = 2
+	zDistrict = 3
 )
 
-var zoomNames = [3]vibe.Entry{
+// zoomStep is the zoom one step out (dir -1) or in (dir 1) from z. Space
+// scenes climb COSMOS, OVERVIEW, INNER, CLOSE-UP, DISTRICT; the rest keep
+// OVERVIEW, CLOSE-UP, DISTRICT.
+func zoomStep(z, dir int, space bool) int {
+	ladder := []int{zOverview, zCloseUp, zDistrict}
+	if space {
+		ladder = []int{zCosmos, zOverview, zInner, zCloseUp, zDistrict}
+	}
+	at := 0
+	for i, l := range ladder {
+		if l <= z {
+			at = i
+		}
+	}
+	return ladder[max(0, min(at+dir, len(ladder)-1))]
+}
+
+var zoomNames = [4]vibe.Entry{
 	zOverview: vibe.E("ui.mapstyle.roguelike.view.zoomNames.01", "REGION"),
 	zCloseUp:  vibe.E("ui.mapstyle.roguelike.view.zoomNames.02", "SETTLEMENT"),
 	zDistrict: vibe.E("ui.mapstyle.roguelike.view.zoomNames.03", "DISTRICT"),
+}
+
+func zoomName(z int) vibe.Entry {
+	switch z {
+	case zCosmos:
+		return vibe.E("ui.mapstyle.roguelike.view.zoomNames.cosmos", "COSMOS")
+	case zOverview:
+		return zoomNames[zOverview]
+	case zInner:
+		return vibe.E("ui.mapstyle.roguelike.view.zoomNames.inner", "INNER")
+	case zCloseUp:
+		return zoomNames[zCloseUp]
+	case zDistrict:
+		return zoomNames[zDistrict]
+	default:
+		return zoomNames[zOverview]
+	}
 }
 
 // A panel at least this big shows the close-up; smaller ones (80 by 24, the
@@ -135,10 +174,11 @@ func (v *view) SetOption(o Option, on bool) {
 	}
 }
 
-// wantsOverview says whether a panel r shows the whole town.
+// wantsOverview says whether a panel r shows a squeezed view of the town
+// (the whole town, the cosmos or the inner system) rather than the close-up.
 func (v *view) wantsOverview(r Rect) bool {
 	if v.zoomSet {
-		return v.zoom == zOverview
+		return v.zoom <= zInner
 	}
 	return r.W < closeUpMinW || r.H < closeUpMinH
 }

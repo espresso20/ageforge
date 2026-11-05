@@ -406,6 +406,32 @@ func TestKeys(t *testing.T) {
 	}
 }
 
+// TestCosmicZoomInSpaceAge: in space scales, PgUp zooms beyond region out to cosmos.
+func TestCosmicZoomInSpaceAge(t *testing.T) {
+	fixture.WithTheme(t, "forge")
+	m := modelFor(t, fixture.Options{Age: "interstellar_age", Seed: 42})
+	v := New().(*view)
+	f := Frame{Model: m}
+	press := func(k tcell.Key) bool {
+		return v.HandleKey(tcell.NewEventKey(k, 0, 0), f)
+	}
+	if !press(tcell.KeyPgUp) || v.zoom != zInner {
+		t.Fatalf("first PgUp: got zoom %d, want %d (zInner)", v.zoom, zInner)
+	}
+	if !press(tcell.KeyPgUp) || v.zoom != zOverview {
+		t.Fatalf("second PgUp: got zoom %d, want %d (zOverview)", v.zoom, zOverview)
+	}
+	if !press(tcell.KeyPgUp) || v.zoom != zCosmos {
+		t.Fatalf("third PgUp in space: got zoom %d, want %d (zCosmos)", v.zoom, zCosmos)
+	}
+	if got := v.zoomLabel(); got != "COSMOS" {
+		t.Errorf("zoomLabel: got %q, want %q", got, "COSMOS")
+	}
+	if !press(tcell.KeyPgDn) || v.zoom != zOverview {
+		t.Fatalf("PgDn from cosmos: got zoom %d, want %d (zOverview)", v.zoom, zOverview)
+	}
+}
+
 // TestSceneInsetIsTheChrome: the map says which rows of its full view are
 // bars (SceneInset), and it is right: the age is named above the scene, the
 // keys are listed below it, and neither is in the rows between. The main menu

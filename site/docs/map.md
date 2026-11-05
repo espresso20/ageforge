@@ -20,7 +20,7 @@ Because typing goes to the command bar, the Map takes only the keys that print n
 |---|---|
 | Arrows | Move the cursor |
 | `Tab` / `Shift-Tab` | Jump to the next or previous building, wonder or civilization (to the next or previous district, in the district zoom) |
-| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in a step: the whole town, the close-up, a district |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in a step: cosmic overview (in space), the whole town or system, the inner system (in space), the close-up, a district |
 | `Home` | Center on the town square |
 | `Enter` | Put the command for what the cursor is on into the prompt. It is not run: press `Enter` again to run it |
 | `Esc` | Close the Map |
@@ -49,7 +49,7 @@ The Map reports the cursor's name, a few details (how many you own, how many wor
 
 An old building with nothing left to do has no command, and `Enter` says so. A road or open ground has none either: the Map names it and says what it is.
 
-Everything that moves is named for what it is: the worker, the ox cart, the wagon, the car, the hovercar, the shuttle, the mining drone, the generation ship, the starship. In the space ages the cursor names the homeworld, the home sun, the other planets, the stars, the elevator's tether, the rings and orbits and the routes between stars, the empty sky, and the heart of the town as a ring station, a home system, a starbase, an anchor or a core. A building is a part of the scene it stands in: a habitat module in orbit, a colony ark among the planets, a deck on the starbase. The spaceport on the ground is named too.
+Everything that moves is named for what it is: the worker, the ox cart, the wagon, the car, the hovercar, the shuttle, the cargo hauler, the mining drone, the generation ship, the starship. In the space ages the cursor names the homeworld, the home sun, the other planets, the stars, the elevator's tether, the rings and orbits and the routes between stars, the empty sky, and the heart of the town as a ring station, a home system, a starbase, an anchor or a core. A building is a part of the scene it stands in: a habitat module in orbit, a colony ark among the planets, a deck on the starbase. The spaceport on the ground is named too.
 
 ### Since your last visit
 
@@ -106,15 +106,17 @@ Each era of the game has its own look, and every age in it sets itself apart by 
 
 People walk the streets of every era. Carts roll through the first three eras, cars arrive with the Electric Era, and the Neon Era has hovercars. How much moves follows how big and busy your town is, and traffic keeps to the roads.
 
-### Three zooms
+### Zoom levels
 
 | Zoom | What you see |
 |---|---|
+| Cosmos | In space ages, deep space wide overview with cosmic margins, encompassing the full solar system or star cluster without clipping |
 | Region | The whole town squeezed into the space: each cell stands for a block of the world and shows the most important thing in it, a building as the sign of its kind and a wonder as a star |
+| Inner | In space ages, one step in from the region: the inner system, with Sol, the inner worlds and the asteroid belt drawn larger and the outer planets pushed to the edge. The cursor and the arrows work as they do in the region zoom |
 | Settlement | The close-up: your town round the cursor, one cell of the world to a cell of the screen |
 | District | The close-up framed on one kind of building's part of town, with every other kind dimmed so the district stands out. The top row names it |
 
-A large terminal opens the Map on the close-up. A smaller one, and the mini map, show the whole town. `PgDn` or `=` zooms in a step, from the region to the settlement to a district, and `PgUp` or `-` zooms out a step. In a district, `Tab` and `Shift-Tab` go on to the next or previous district, and the cursor lands on a building in it. The close-up scrolls only when the cursor nears its edge. In the region zoom the arrows move the cursor a block at a time, and the cursor still tells you what it is on.
+A large terminal opens the Map on the close-up. A smaller one, and the mini map, show the whole town. `PgDn` or `=` zooms in a step, from cosmos to region to inner to settlement to a district (the inner step exists only in space ages), and `PgUp` or `-` zooms out a step. In space ages, `PgUp` or `-` zooms out past region into the cosmic view (`COSMOS`), and `PgDn` from region stops at the inner system (`INNER`) before the settlement. In a district, `Tab` and `Shift-Tab` go on to the next or previous district, and the cursor lands on a building in it. The close-up scrolls only when the cursor nears its edge. In the region zoom the arrows move the cursor a block at a time, and the cursor still tells you what it is on.
 
 <figure class="screen" data-screen="map-region"><figcaption>The same town in the region zoom: the whole town in one view, each building the sign of its kind.</figcaption></figure>
 
@@ -137,9 +139,9 @@ The legend (the sign of each kind of building your town has) shows beside the ma
 
 From the Space Age the Map leaves the ground, and each step out pulls the view further back. It is still your civilization: every building you own becomes something up there, and the picture grows as you build. Like the town, it never reshuffles: what is drawn stays where it is. The inspect cursor and `Tab` work on all of it, the flows overlay lists what is short of hands, and the mini map follows along.
 
-The Space Age looks down on your planet from orbit. The planet is a small disc in the middle, its land and sea the world your town stood on, with clouds drifting over it and the lights of its cities by night. Round it run the rings of orbit, and your buildings stand on them as stations, growing outward ring by ring. A space elevator joins the ground to the rings, and shuttles and freighters go about their rounds.
+The Space Age looks down on your planet from orbit. The planet is a high-resolution 3D spherical globe rotating West to East in the middle (50x20 cells with 2x2 subpixel quadrant resolution), its continents, mountain ranges, lush biomes, and continental shelves smoothly rotating beneath differential atmospheric cloud decks with Coriolis shear and cyclonic storms. Sunlight bathes the day side while twilight brings Rayleigh scattering along the terminator, ocean specular sun-glint shines on open water, and rotating megacities glimmer with golden lights on the night side. Round it run the rings of orbit, and your buildings stand on them as stations, growing outward ring by ring. A space elevator joins the ground to the rings, and shuttles and freighters go about their rounds.
 
-The Interstellar Age pulls back to the solar system. The sun sits in the middle with the planets on their orbits and the lanes between them. Your buildings are marks along the orbits, in the order your people reached them, and ships travel the lanes.
+The Interstellar Age pulls back to the open expanse of the full solar system across deep pristine void, free of artificial orbital ring lines or mundane housing in space. The planetary orbits are widely spread across the system: Sol blazes in the center with rotating plasma granules, coronal flare streamers, and equatorial sunspots, encircled by close-orbit Solar Dyson Swarm collectors absorbing stellar plasma and beaming microwave energy outward. All eight worlds (Mercury, Venus, Terra with Luna, Mars with Phobos, the shimmering Main Asteroid Belt, banded Jupiter with its Great Red Spot and Galilean moons, giant ringed Saturn with its multi-banded 3D rings and Titan, ringed Uranus, and cobalt Neptune with Triton) orbit dynamically at Keplerian speeds dispersed across 360° quadrants. Striking multi-cell orbital citadels and megastructures anchor the system: the modular Earth Gateway Citadel with observation cupola and flashing navigation strobe wings, the Martian Orbital Shipyard and drydock with industrial warning beacons and docking gantries, the Jovian Atmospheric Harvester analyzing magnetospheric telemetry, and the Saturnian Orbital Spire with golden collectors. The Asteroid Belt hosts automated mining complexes and plasma refinery torches, stable Lagrange points hold deep-space navigational relay buoys with rotating dishes, and the system edge features the signature 11-cell Interstellar Warp Gate with pulsing warp event horizon rings. Active spacecraft with ion exhaust trails fly along interplanetary transfer corridors between planets and stations. Farther out in the Kuiper belt and deep void periphery, procedural comets sweep past Sol with glowing icy nuclei and sweeping ion tails pointing radially away from the Sun, the icy binary dwarf planet Pluto & Charon glints under distant sunlight, a Voyager-class interstellar probe drifts past the heliopause into the deep void, and an enigmatic dark alien monolith floats silently with faint tachyon rings. The overview zoom pulls back with generous cosmic margins to encompass the full system and all peripheral objects without clipping.
 
 The last three ages, the Galactic, the Quantum and the Transcendent, pull back to a spiral galaxy of arms, dust and a bright core, different for every save. Your civilization is territory on it: each kind of building has its own sector along your home arm, a hub with a cluster of systems that grows as you build, and a faint border runs round the lot. Lanes join the hubs, thicker where more traffic runs, and the civilizations you have met hold clusters of their own on the other arms, in the color of how they stand toward you. A harbinger opens a red rift at the edge. Your wonders stand as bright stars beside the systems.
 

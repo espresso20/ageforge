@@ -36,14 +36,17 @@ func dimmer(a, b uint8) uint8 { return uint8(255 - (255-int(a))*(255-int(b))/255
 // glowAt lights a cell: its glyph in the light, its ground warmed by it, and
 // no dark over it.
 func (f *frame) glowAt(p Pt, light Hue, warm int) {
-	c := &f.g.Cells[at(p.X, p.Y)]
+	if !f.g.in(p.X, p.Y) {
+		return
+	}
+	c := &f.g.Cells[f.at(p.X, p.Y)]
 	c.Fg, c.Bg, c.Dim = P(light, 255), P(light, warm*f.night/256), 0
 }
 
 // lampRoads sets a lamp on every few laid road cells.
 func (f *frame) lampRoads(light Hue) {
-	for y := 0; y < worldH; y++ {
-		for x := 0; x < worldW; x++ {
+	for y := 0; y < f.g.H; y++ {
+		for x := 0; x < f.g.W; x++ {
 			if f.laid(x, y) && (x*5+y*3)%11 == 0 {
 				f.glowAt(Pt{x, y}, light, 70)
 			}

@@ -31,7 +31,7 @@ func TestStylesAreWellFormed(t *testing.T) {
 		case Orbit:
 			maxW, maxRows = orbitSpec.lotW, orbitSpec.lotH
 		case System:
-			maxW, maxRows = 3, 1
+			maxW, maxRows = systemSpec.lotW, systemSpec.lotH
 		case Stars:
 			maxW, maxRows = 1, 1
 		}

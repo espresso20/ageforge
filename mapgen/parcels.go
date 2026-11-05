@@ -105,7 +105,7 @@ func plotBeside(c Pt, horizontal bool, side int) Rect {
 func (b *planner) free(r Rect) bool {
 	ok := true
 	r.cells(func(x, y int) {
-		if !b.buildable(x, y) || b.claim[at(x, y)] != freeCell {
+		if !b.buildable(x, y) || b.claim[b.at(x, y)] != freeCell {
 			ok = false
 		}
 	})
@@ -113,7 +113,7 @@ func (b *planner) free(r Rect) bool {
 }
 
 func (b *planner) take(r Rect) {
-	r.cells(func(x, y int) { b.claim[at(x, y)] = lotCell })
+	r.cells(func(x, y int) { b.claim[b.at(x, y)] = lotCell })
 }
 
 // cutLots lines every road with parcels on both sides, packing each as close

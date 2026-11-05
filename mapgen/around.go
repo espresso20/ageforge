@@ -86,7 +86,7 @@ func (f *frame) put(p Pt, r rune, ink Paint, th Thing) bool {
 // open says whether a line of dots may be drawn on a cell: nothing is built
 // or laid there, and in space it is empty sky.
 func (f *frame) open(p Pt) bool {
-	if !f.g.in(p.X, p.Y) || f.busy[at(p.X, p.Y)] || f.solid(p.X, p.Y) {
+	if !f.g.in(p.X, p.Y) || f.busy[f.at(p.X, p.Y)] || f.solid(p.X, p.Y) {
 		return false
 	}
 	th := f.g.ThingAt(p.X, p.Y)
@@ -108,7 +108,7 @@ func (f *frame) edge() Rect {
 	if f.box.W == 0 {
 		b := f.bounds()
 		x0, y0 := max(b.X-edgeGapX, 1), max(b.Y-edgeGapY, 1)
-		x1, y1 := min(b.X+b.W+edgeGapX, worldW-1), min(b.Y+b.H+edgeGapY, worldH-1)
+		x1, y1 := min(b.X+b.W+edgeGapX, f.g.W-1), min(b.Y+b.H+edgeGapY, f.g.H-1)
 		f.box = Rect{x0, y0, x1 - x0, y1 - y0}
 	}
 	return f.box
@@ -313,7 +313,7 @@ func (f *frame) paintSquare() {
 		f.put(spots[0], []rune(f.st.Omen.Glyphs)[0], f.st.Omen.Fg, Thing{Kind: KindHarbinger, Key: f.m.Harbinger.Key})
 		spots = spots[1:]
 	}
-	if f.m.Workers.Idle == 0 {
+	if f.st.Scale >= Orbit || f.m.Workers.Idle == 0 {
 		return
 	}
 	runes := []rune(idler.Glyphs)

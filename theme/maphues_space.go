@@ -32,6 +32,7 @@ const (
 	SpaceOrbitLine
 	SpaceNebulaViolet
 	SpaceEngine
+	SpaceWhite
 
 	numSpaceHues
 )
@@ -53,6 +54,7 @@ var spaceHues = [numSpaceHues]int32{
 	SpaceOrbitLine:    0x4c4676,
 	SpaceNebulaViolet: 0x8a46d0,
 	SpaceEngine:       0x78f0ff,
+	SpaceWhite:        0xffffff,
 }
 
 // SpaceColor returns a sky arc colour.
@@ -61,4 +63,9 @@ func SpaceColor(h SpaceHue) tcell.Color {
 		h = SpaceNone
 	}
 	return tcell.NewHexColor(spaceHues[h])
+}
+
+// SpaceWhiteColor returns pure RGB white for high-res celestial bodies.
+func SpaceWhiteColor() tcell.Color {
+	return tcell.NewHexColor(0xffffff)
 }

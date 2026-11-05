@@ -67,7 +67,7 @@ func (v *view) shownZoom() int {
 
 // zoomLabel names the zoom the last frame showed, and for a district whose.
 func (v *view) zoomLabel() string {
-	label := zoomNames[v.shownZoom()].String()
+	label := zoomName(v.shownZoom()).String()
 	if v.shownZoom() == zDistrict {
 		label += " · " + lineageLabel(v.district)
 	}
@@ -78,6 +78,12 @@ func (v *view) zoomLabel() string {
 // cursor in the district of what it is on (or the nearest one); with no town
 // to frame it stays a close-up.
 func (v *view) zoomTo(sc *mapgen.Scene, zoom int) {
+	if sc == nil || sc.Grid == nil || !sc.Grid.Space {
+		zoom = max(zoom, zOverview)
+		if zoom == zInner {
+			zoom = zOverview
+		}
+	}
 	v.zoom, v.zoomSet, v.recentre = zoom, true, true
 	if zoom != zDistrict {
 		return

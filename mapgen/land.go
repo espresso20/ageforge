@@ -56,3 +56,62 @@ func (f *frame) groundAt(x, y int) Biome {
 	}
 	return b
 }
+
+// groundCellFunc evaluates seamless procedural wilderness and ocean outside the
+// world grid so wide viewports never mirror continents, rivers, or city yards.
+func (f *frame) groundCellFunc() func(wx, wy int) Cell {
+	seed := f.m.Seed
+	st := *f.st
+	anim := f.anim
+	dusk := clamp(st.Night.Dim*f.night/256, 0, 255)
+	coast := coasts[roll(len(coasts), seed, 1)]
+	return func(wx, wy int) Cell {
+		noise := fbm(seed, floorDiv(wx*256, 30), floorDiv(wy*256, 15), 4)
+		reach := (wx-worldW/2)*coast[0] + 2*(wy-worldH/2)*coast[1]
+		h := clamp(noise*2/5+235-max(0, reach-46)*8, 0, noiseMax)
+		moist := fbm(seed+101, floorDiv(wx*256, 40), floorDiv(wy*256, 20), 4)
+		var b Biome
+		switch {
+		case h < deepBelow:
+			b = Deep
+		case h < seaLevel:
+			b = Shallows
+		case h < beachTop:
+			b = Sand
+		default:
+			wet := clamp(moist*3/noiseMax, 0, 2)
+			band := 0
+			if h >= hillsAt {
+				band = 1
+			}
+			if h >= rangesAt {
+				band = 2
+			}
+			b = biomeBands[band][wet]
+		}
+		look := st.Land[b]
+		var c Cell
+		switch b {
+		case Deep, Shallows:
+			c = look.at(wx, wy, int64((anim+roll(12, int64(wx), int64(wy)))/12))
+		default:
+			c = look.at(wx, wy, 0)
+		}
+		bx, by := floorDiv(wx, spotW), floorDiv(wy, spotH)
+		sx := bx*spotW + roll(spotW, seed, 60, int64(bx), int64(by))
+		sy := by*spotH + roll(spotH, seed, 61, int64(bx), int64(by))
+		if sx == wx && sy == wy {
+			for _, s := range st.Scatter {
+				if s.On == b && chance(s.Chance, seed, 62, int64(wx), int64(wy)) {
+					c.R = pick(s.Glyphs, hash(seed, 63, int64(wx), int64(wy)))
+					c.Fg = s.Fg
+					break
+				}
+			}
+		}
+		if dusk > 0 {
+			c.Dim = dimmer(c.Dim, uint8(dusk))
+		}
+		return c
+	}
+}

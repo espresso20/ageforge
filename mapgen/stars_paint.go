@@ -387,7 +387,7 @@ func straight(a, b Pt) []Pt {
 func sign(v int) int { return cmp.Compare(v, 0) }
 
 // paintRift cracks the galaxy's edge when a harbinger is near: a jagged line
-// of slashes in dim red, with dark cells where it opens.
+// of glowing red slashes, with dark reality distortion where it opens.
 func (f *frame) paintRift() {
 	h := f.m.Harbinger
 	if h == nil {
@@ -412,16 +412,18 @@ func (f *frame) paintRift() {
 		default:
 			r = '╱'
 		}
-		if i < len(rift)/3 { // the rim: black where it opens
+		if i < len(rift)/3 { // the rim: distortion glow where it opens
 			for _, w := range []int{-1, 1} {
-				if inWorld(c.X+w, c.Y) && f.sky(Pt{c.X + w, c.Y}) {
-					f.g.Cells[at(c.X+w, c.Y)].Bg = P(HVoid, 255)
+				p := Pt{c.X + w, c.Y}
+				if inWorld(p.X, p.Y) && f.sky(p) {
+					f.g.Cells[at(p.X, p.Y)].Bg = P(HPlasma, 35)
+					f.g.mark(p.X, p.Y, thing)
 				}
 			}
 		}
 		if f.sky(c) {
-			f.g.draw(c.X, c.Y, r, P(HRed, 150+i))
-			f.g.Cells[at(c.X, c.Y)].Bg = P(HVoid, 255)
+			f.g.draw(c.X, c.Y, r, P(HRed, 230))
+			f.g.Cells[at(c.X, c.Y)].Bg = P(HRed, 35)
 			f.g.mark(c.X, c.Y, thing)
 		}
 	}

@@ -160,3 +160,40 @@ func TestMaths(t *testing.T) {
 		t.Errorf("tick 0 is %s (%s), want 09:00 day", c, c.Phase)
 	}
 }
+
+// TestSpaceAge_FiltersEndedResourceBuildingsAndPreSpaceLegacy verifies that
+// ended-resource buildings and ancient legacy buildings are excluded from the space map model.
+func TestSpaceAge_FiltersEndedResourceBuildingsAndPreSpaceLegacy(t *testing.T) {
+	st := fixture.State(fixture.Options{Age: "space_age", Seed: 7})
+
+	// 1. Ended resources should not be in fixture state for space_age
+	for _, res := range []string{"wood", "stone", "iron", "uranium", "crypto"} {
+		if _, ok := st.Resources[res]; ok {
+			t.Errorf("ended resource %q found in space_age fixture state", res)
+		}
+	}
+
+	// 2. Ended-resource buildings should not be generated in fixture for space_age
+	for _, bKey := range []string{"wood_camp", "sawmill", "quarry"} {
+		if bs, ok := st.Buildings[bKey]; ok && bs.Count > 0 {
+			t.Errorf("ended building %q with count %d found in space_age fixture", bKey, bs.Count)
+		}
+	}
+
+	// 3. Even if injected into snapshot, model.buildings must filter ended-resource buildings
+	st.Buildings["wood_camp"] = game.BuildingState{Count: 16, Name: "Wood Camp"}
+	m := build(t, st, nil)
+	for _, b := range m.Buildings {
+		if b.Key == "wood_camp" {
+			t.Errorf("wood_camp should not be placed on the map in space_age")
+		}
+		if b.Def.Output != "" && config.IsResourceEnded(b.Def.Output, "space_age") {
+			t.Errorf("building %s produces ended resource %s on space map", b.Key, b.Def.Output)
+		}
+	}
+
+	// 4. Pre-space legacy buildings (like foraging_hut from Stone Age) must not be in space fixture
+	if bs, ok := st.Buildings["foraging_hut"]; ok && bs.Count > 0 {
+		t.Errorf("pre-space legacy building foraging_hut found in space_age fixture")
+	}
+}

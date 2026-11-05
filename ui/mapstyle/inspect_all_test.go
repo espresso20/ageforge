@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/mapgen"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/mapmodel/fixture"
 )
 
@@ -158,4 +159,61 @@ func firstRoadRow(g *mapgen.Grid, x int) int {
 		}
 	}
 	return 0
+}
+
+// TestSpaceConstructsInspection verifies that all newly introduced megastructures
+// and space stations have rich inspection tooltips with exact title and descriptive lines.
+func TestSpaceConstructsInspection(t *testing.T) {
+	fixture.WithTheme(t, "forge")
+	m := &mapmodel.Model{Age: "interstellar_age", TownName: "Alpha Centauri"}
+	tests := []struct {
+		key      string
+		expTitle string
+		expLines []string
+	}{
+		{
+			key:      "space_station",
+			expTitle: "Orbital Space Station",
+			expLines: []string{"A modular habitat and orbital citadel", "docking bays hum with transfer shuttles"},
+		},
+		{
+			key:      "dyson_harvester",
+			expTitle: "Solar Dyson Swarm Collector",
+			expLines: []string{"Orbits deep in the solar corona", "harvesting raw plasma and radiant stellar energy"},
+		},
+		{
+			key:      "warp_gate",
+			expTitle: "Interstellar Warp Gate",
+			expLines: []string{"Hub of faster-than-light corridors", "connecting Sol to distant star systems"},
+		},
+		{
+			key:      "asteroid_mine",
+			expTitle: "Asteroid Mining Complex",
+			expLines: []string{"Tethered refinery and mass driver", "extracting metals and volatiles from ancient chondrites"},
+		},
+		{
+			key:      "deep_space_relay",
+			expTitle: "Deep Space Navigational Relay",
+			expLines: []string{"Lagrange point communication buoy", "routing telemetry across the star system"},
+		},
+	}
+
+	for _, tc := range tests {
+		th := mapgen.Thing{Kind: mapgen.KindBuilding, Key: tc.key}
+		in, ok := describeSpace(m, th)
+		if !ok {
+			t.Fatalf("describeSpace(%s) returned ok=false", tc.key)
+		}
+		if in.Title != tc.expTitle {
+			t.Errorf("key %s: got title %q, want %q", tc.key, in.Title, tc.expTitle)
+		}
+		if len(in.Lines) != len(tc.expLines) {
+			t.Errorf("key %s: got %d lines, want %d", tc.key, len(in.Lines), len(tc.expLines))
+		}
+		for i := range tc.expLines {
+			if i < len(in.Lines) && in.Lines[i] != tc.expLines[i] {
+				t.Errorf("key %s line %d: got %q, want %q", tc.key, i, in.Lines[i], tc.expLines[i])
+			}
+		}
+	}
 }

@@ -61,6 +61,7 @@ type Grid struct {
 	W, H   int
 	Wall   Hue
 	Tint   Hue
+	Space  bool
 	Cells  []Cell
 	Hit    []uint16
 	Things []Thing
@@ -123,6 +124,7 @@ func (g *Grid) mark(x, y int, t Thing) {
 func (g *Grid) Window(x0, y0, w, h int) *Grid {
 	out := newGrid(w, h)
 	out.Wall, out.Tint = g.Wall, g.Tint
+	out.Space = g.Space
 	out.Things = g.Things
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {

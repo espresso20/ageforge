@@ -61,14 +61,20 @@ func (gen *Generator) Render(m *mapmodel.Model, w, h, anim int) *Grid {
 // the most of what is built: the wonder being built first, then the rest.
 func (f *frame) camera(w, h int) (x0, y0 int) {
 	nudges := [][2]int{{0, 0}, {-8, 0}, {8, 0}, {0, -4}, {0, 4}, {-8, -4}, {8, -4}, {-8, 4}, {8, 4}, {-16, 0}, {16, 0}, {-16, -4}, {16, -4}, {-16, 4}, {16, 4}, {-24, 0}, {24, 0}}
-	if f.st.Scale > City {
+	if f.st.Scale == Orbit || f.st.Scale == System {
+		nudges = [][2]int{{0, 0}, {0, -12}, {0, -16}, {0, 12}, {0, 16}}
+	} else if f.st.Scale > City {
 		nudges = nudges[:1]
 	}
 	best := -1
 	for _, n := range nudges {
-		x := clamp(f.plan.Centre.X+n[0]-w/2, 0, worldW-w)
-		y := clamp(f.plan.Centre.Y+n[1]-h/2, 0, worldH-h)
-		if score := f.inView(Rect{x, y, w, h}); score > best {
+		x := clamp(f.plan.Centre.X+n[0]-w/2, 0, f.g.W-w)
+		y := clamp(f.plan.Centre.Y+n[1]-h/2, 0, f.g.H-h)
+		score := f.inView(Rect{x, y, w, h})
+		if score > best {
+			if (f.st.Scale == Orbit || f.st.Scale == System) && best > 0 && n != [2]int{0, 0} {
+				continue
+			}
 			x0, y0, best = x, y, score
 		}
 	}
@@ -102,15 +108,22 @@ func (f *frame) inView(window Rect) int {
 func (gen *Generator) frame(m *mapmodel.Model, anim int) *frame {
 	gen.sync(m)
 	st := styleFor(func(k string) int { return m.Catalog.AgeIdx[k] }, m.AgeIdx)
-	f := &frame{m: m, st: st, g: newGrid(worldW, worldH), anim: anim, visit: anim,
-		night: int(m.Clock.Night * 256), roadAt: make([]int8, worldW*worldH), busy: make([]bool, worldW*worldH)}
+	gw, gh := worldW, worldH
+	if st.Scale == System {
+		gw, gh = SystemW, SystemH
+	}
+	f := &frame{m: m, st: st, g: newGrid(gw, gh), anim: anim, visit: anim,
+		night: int(m.Clock.Night * 256), roadAt: make([]int8, gw*gh), busy: make([]bool, gw*gh)}
 	f.plan, f.fields = gen.plans[st.Scale], gen.fields
 	f.g.Wall, f.g.Tint = st.Wall, st.Night.Tint
+	f.g.Space = st.Scale >= Orbit
 	f.placed = f.plan.place(m)
 	f.filler = f.fillerLots()
 	f.layRoads()
 	return f
 }
+
+func (f *frame) at(x, y int) int { return y*f.g.W + x }
 
 // draw paints every layer, bottom to top.
 func (f *frame) draw() {

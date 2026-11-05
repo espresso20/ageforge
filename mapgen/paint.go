@@ -83,6 +83,9 @@ const (
 // (a test holds it to len(mapmodel.LineageOrder)).
 const numLines = 17
 
+// HMetal is metallic hulls, trusses and structures (rendered with steel hue).
+const HMetal = HSteel
+
 // lineHue is the hue that tints the buildings of a line.
 func lineHue(line string) Hue { return HLine + Hue(lineOf[line]) }
 
