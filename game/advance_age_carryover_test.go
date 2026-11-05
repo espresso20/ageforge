@@ -158,6 +158,10 @@ func TestAdvanceAge_RetiresEndedResourceBuildings(t *testing.T) {
 	ge.Resources.LoadAmounts(map[string]float64{"wood": 50000, "stone": 30000})
 	ge.buildQueue = append(ge.buildQueue, BuildQueueItem{BuildingKey: "wood_camp", TicksLeft: 10, TotalTicks: 10})
 
+	// Already in space_age's epoch: crossing into a new epoch rolls a random
+	// epoch event (population surge +15%, epidemic -20%) that changes the pool.
+	ge.currentEpoch = ge.rules.EraOf("space_age")
+
 	// Advance to space_age where both wood and stone are ended
 	ge.advanceAge("space_age")
 
