@@ -52,9 +52,9 @@ type orrery struct {
 }
 
 // paintOrrery draws system star (spec) into o over the star field that is
-// already in it, reaching maxRY rows out. It returns the radii of the belts,
-// for the works that stand on them.
-func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode SystemViewMode, cx, cy, maxRY int) (beltRX, beltRY int) {
+// already in it, reaching maxRY rows out.
+func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode SystemViewMode, cx, cy, maxRY int) {
+	var beltRX, beltRY int
 	w, h := o.Grid.W, o.Grid.H
 	r := &orrery{s: s, pix: NewPixels(w, h), spec: spec, star: star, seed: s.Seed + int64(star)*7919, mode: mode, look: orreryLooks[mode], cx: cx, cy: cy}
 	// a bigger window gets bigger bodies, a small one smaller
@@ -67,9 +67,17 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 	r.sx, r.sy = (2*cx+1)*pxUnit, (2*cy+1)*pxUnit
 
 	// how far out each orbit is: the inner zoom spreads them to fill the window
+	spread := 185 // the home system's outer planets go off the window
+	if !spec.Home { // a far system fills it, every planet in view
+		far := 1
+		for _, p := range spec.Planets {
+			far = max(far, p.Orbit)
+		}
+		spread = clamp(10500/far, 100, 185)
+	}
 	reach := func(orbit int) (rx, ry int) {
 		if mode == SystemViewInner {
-			orbit = orbit * 185 / 100
+			orbit = orbit * spread / 100
 		}
 		return maxRY * orbit / 100 * 230 / 100, maxRY * orbit / 100
 	}
@@ -167,7 +175,6 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 			o.Grid.mark(x, cells[i].Y, Thing{Kind: KindBuilding, Key: "space_station"})
 		}
 	}
-	return beltRX, beltRY
 }
 
 // glow is the halo of star k, round its middle (x, y) with radius R.

@@ -44,7 +44,7 @@ type SystemSpec struct {
 }
 
 // StationCount is how many planets have a station by them.
-func (sp *SystemSpec) StationCount() (n int) {
+func (sp SystemSpec) StationCount() (n int) {
 	for _, p := range sp.Planets {
 		if p.Outpost > 0 {
 			n++
