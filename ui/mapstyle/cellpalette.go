@@ -62,7 +62,7 @@ var recipes = [mapgen.NumHues]recipe{
 	mapgen.HCool:     {theme.RoleLabel, fromCity(theme.CityScreenCool), 0.6},
 	mapgen.HLife:     {theme.RoleBright, nil, 0},
 	mapgen.HRed:      {theme.RoleNegative, fromCity(theme.CityTaillight), 0.6},
-	mapgen.HWhite:    {theme.RoleBright, nil, 0},
+	mapgen.HWhite:    {theme.RoleBright, theme.SpaceWhiteColor, 1.0},
 	mapgen.HAmber:    {theme.RoleHighlight, fromSpace(theme.SpaceCityAmber), 0.6},
 	mapgen.HFresh:    {theme.RolePositive, fromMap(theme.HueFresh), 0.3},
 	mapgen.HIdle:     {theme.RoleWarning, fromMap(theme.HueIdle), 0.3},
@@ -113,7 +113,24 @@ var lineRecipes = [...]recipe{
 // lineWallMix is how far a line's hue leans from the wall toward its recipe.
 const lineWallMix = 0.65
 
-func (r recipe) colour() tcell.Color {
+func isSpaceHue(h mapgen.Hue) bool {
+	return h >= mapgen.HVoid && h <= mapgen.HRock
+}
+
+func isBlockRune(r rune) bool {
+	switch r {
+	case '█', '▀', '▄', '▌', '▐',
+		'▘', '▝', '▖', '▗', '▚', '▞', '▛', '▜', '▙', '▟',
+		'░', '▒', '▓':
+		return true
+	}
+	return false
+}
+
+func (r recipe) colour(h mapgen.Hue) tcell.Color {
+	if isSpaceHue(h) && r.from != nil {
+		return inkOf(r.from())
+	}
 	base := theme.Color(r.role)
 	if r.from == nil {
 		return inkOf(base)
@@ -128,7 +145,11 @@ func inkOf(c tcell.Color) tcell.Color {
 	if !theme.Active().Duotone {
 		return c
 	}
-	light := float64(0.2 + float64(0.8*theme.RelativeLuminance(c)))
+	lum := theme.RelativeLuminance(c)
+	if theme.IsLight() {
+		lum = 1.0 - lum
+	}
+	light := float64(0.2 + float64(0.8*lum))
 	return theme.Mix(theme.Color(theme.RoleBackground), theme.Color(theme.RoleText), light)
 }
 
@@ -137,6 +158,7 @@ type paintKey struct {
 	fg, bg mapgen.Paint
 	dim    uint8
 	blank  bool
+	block  bool
 }
 
 // cellPalette is the colours of one theme and one age's walls. It is rebuilt when
@@ -145,6 +167,7 @@ type cellPalette struct {
 	theme string
 	wall  mapgen.Hue
 	tint  mapgen.Hue
+	space bool
 	bg    tcell.Color
 	night tcell.Color
 	hue   [mapgen.NumHues]tcell.Color
@@ -155,21 +178,33 @@ type cellPalette struct {
 // one.
 func cellPaletteFor(p *cellPalette, g *mapgen.Grid) *cellPalette {
 	key := theme.Active().Key
-	if p != nil && p.theme == key && p.wall == g.Wall && p.tint == g.Tint {
+	if p != nil && p.theme == key && p.wall == g.Wall && p.tint == g.Tint && p.space == g.Space {
 		return p
 	}
-	p = &cellPalette{theme: key, wall: g.Wall, tint: g.Tint, bg: theme.Color(theme.RoleBackground), cache: map[paintKey]tcell.Style{}}
+	bg := theme.Color(theme.RoleBackground)
+	if g.Space {
+		bg = inkOf(theme.SpaceColor(theme.SpaceVoid))
+	}
+	p = &cellPalette{theme: key, wall: g.Wall, tint: g.Tint, space: g.Space, bg: bg, cache: map[paintKey]tcell.Style{}}
 	for h := range p.hue {
-		p.hue[h] = recipes[h].colour()
+		p.hue[h] = recipes[h].colour(mapgen.Hue(h))
+	}
+	if g.Space && theme.IsLight() {
+		p.hue[mapgen.HSteel] = inkOf(theme.CityColor(theme.CitySteel))
+	}
+	if theme.Active().Key == "daylight" || g.Space {
+		if !theme.Active().Duotone {
+			p.hue[mapgen.HWhite] = inkOf(theme.SpaceWhiteColor())
+		}
 	}
 	wall := p.hue[g.Wall]
 	for i, r := range lineRecipes {
-		p.hue[mapgen.HLine+mapgen.Hue(i)] = theme.Mix(wall, r.colour(), lineWallMix)
+		p.hue[mapgen.HLine+mapgen.Hue(i)] = theme.Mix(wall, r.colour(mapgen.HLine+mapgen.Hue(i)), lineWallMix)
 	}
 	// The dark falls toward a deep blue-black, whatever the theme: a light
 	// theme's night is dark too, with its own text colour as the black.
 	black := p.bg
-	if theme.IsLight() {
+	if theme.IsLight() && !g.Space {
 		black = theme.Color(theme.RoleText)
 	}
 	p.night = theme.Mix(black, inkOf(theme.MapHueColor(theme.HueWaterDeep)), 0.2)
@@ -193,7 +228,7 @@ const (
 // style is the style of a cell: its paints over the ground, pulled toward the
 // night by its dim, the glyph kept legible on the ground it stands on.
 func (p *cellPalette) style(c mapgen.Cell) tcell.Style {
-	k := paintKey{c.Fg, c.Bg, c.Dim, c.R == ' ' || c.R == 0}
+	k := paintKey{c.Fg, c.Bg, c.Dim, c.R == ' ' || c.R == 0, isBlockRune(c.R)}
 	if st, ok := p.cache[k]; ok {
 		return st
 	}
@@ -205,7 +240,15 @@ func (p *cellPalette) style(c mapgen.Cell) tcell.Style {
 		floor = nightContrast
 	}
 	if !k.blank {
-		fg = theme.Legible(fg, bg, floor)
+		if p.space {
+			// In space, celestial pixel art, ship hulls, and telemetry keep their exact colours; never invert or clamp.
+		} else if k.block {
+			// On the ground, block runes (buildings, wonders) preserve their material colours
+			// and only clamp if they would sink into the ground below the floor of 1.5.
+			fg = theme.Legible(fg, bg, 1.5)
+		} else {
+			fg = theme.Legible(fg, bg, floor)
+		}
 	}
 	st := tcell.StyleDefault.Foreground(fg).Background(bg)
 	p.cache[k] = st

@@ -10,7 +10,7 @@ var keyMoves = map[tcell.Key][2]int{tcell.KeyLeft: {-1, 0}, tcell.KeyRight: {1, 
 
 // HandleKey takes only keys that print nothing, so typing reaches the prompt:
 // the arrows move the cursor (Shift by 8), PgUp and PgDn zoom out and in
-// (the whole town, the close-up, a district), Tab and Shift-Tab jump between
+// (the whole town, the close-up, a district; space scenes add the cosmos and the inner system), Tab and Shift-Tab jump between
 // buildings, wonders and civs (between districts, at the district zoom), Home
 // centres on the town square.
 func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
@@ -28,10 +28,10 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 		}
 		return true
 	case tcell.KeyPgUp:
-		v.zoomTo(sc, max(v.shownZoom()-1, zOverview))
+		v.zoomTo(sc, zoomStep(v.shownZoom(), -1, sc.Grid.Space))
 		return true
 	case tcell.KeyPgDn:
-		v.zoomTo(sc, min(v.shownZoom()+1, zDistrict))
+		v.zoomTo(sc, zoomStep(v.shownZoom(), 1, sc.Grid.Space))
 		return true
 	case tcell.KeyHome:
 		v.cur, v.recentre = sc.Centre, true
@@ -48,8 +48,8 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 		d = [2]int{d[0] * v.ov.Scale, d[1] * v.ov.Scale}
 	}
 	v.inspect = true
-	v.cur.X = clamp(v.cur.X+d[0], 0, mapgen.WorldW-1)
-	v.cur.Y = clamp(v.cur.Y+d[1], 0, mapgen.WorldH-1)
+	v.cur.X = clamp(v.cur.X+d[0], 0, sc.Grid.W-1)
+	v.cur.Y = clamp(v.cur.Y+d[1], 0, sc.Grid.H-1)
 	return true
 }
 

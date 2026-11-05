@@ -12,8 +12,10 @@ import (
 
 // WorldW and WorldH are the size of the world, in cells.
 const (
-	WorldW = worldW
-	WorldH = worldH
+	WorldW  = worldW
+	WorldH  = worldH
+	SystemW = 480
+	SystemH = 240
 )
 
 // Sign is the sign hung on the buildings of a line: its symbol on the map.
@@ -90,10 +92,7 @@ func Runes() []rune {
 		seen[r] = true
 	}
 	add(saucer.Glyphs)
-	for _, s := range []sprite{sauropod, raptor, pterodactyl[0], pterodactyl[1]} {
-		add(strings.Join(s.Rows, "") + strings.Join(s.west().Rows, ""))
-	}
-	add("✦●∙·") // the asteroid's streak
+	add("✦●∙·◖◗⬢⬡◉ᗒᗑᗕᗐ⌾✺⊛") // planet crescents and space constructs
 	add(joinsLight + joinsHeavy + joinsDouble + joinsRounded + "★∙")
 	delete(seen, ' ')
 	return slices.Sorted(maps.Keys(seen))

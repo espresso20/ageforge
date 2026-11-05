@@ -60,13 +60,19 @@ func TestWorldRoundTheTownDrawsAtEveryScale(t *testing.T) {
 			g := (&Generator{}).DrawAt(m, Moment{Anim: 9, Visit: -1}).Grid
 			kinds := kindsOf(g)
 			wanted := []Kind{KindCiv, KindRoute, KindMission, KindHarbinger, KindIdle}
-			if age == "galactic_age" { // the star map has lanes and a rift, no caravans, parties or loiterers
-				wanted = []Kind{KindCiv, KindLane, KindHarbinger}
+			if m.AgeIdx >= m.Catalog.SpaceAge() { // space maps: ships and stations, no loitering people in vacuum
+				wanted = []Kind{KindCiv, KindRoute, KindMission, KindHarbinger}
+				if age == "galactic_age" { // the star map has lanes and a rift, no caravans or parties
+					wanted = []Kind{KindCiv, KindLane, KindHarbinger}
+				}
 			}
 			for _, k := range wanted {
 				if kinds[k] == 0 {
 					t.Errorf("%s seed %d: nothing of kind %d is drawn", age, seed, k)
 				}
+			}
+			if m.AgeIdx >= m.Catalog.SpaceAge() && kinds[KindIdle] > 0 {
+				t.Errorf("%s seed %d: found %d idle workers on space map, want 0", age, seed, kinds[KindIdle])
 			}
 			civs := map[string]bool{}
 			for _, h := range g.Hit {

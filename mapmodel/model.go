@@ -19,6 +19,7 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -305,12 +306,18 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 		if d == nil || bs.Count == 0 || d.Output == "" {
 			continue
 		}
+		if st.Age != "" && config.IsResourceEnded(d.Output, st.Age) {
+			continue
+		}
 		weight[d.Output] += float64(d.BaseOutput * float64(bs.Count))
 	}
 	for _, k := range keys {
 		bs := st.Buildings[k]
 		d := cat.Defs[k]
 		if d == nil || bs.Count == 0 && bs.RuinCount == 0 {
+			continue
+		}
+		if st.Age != "" && d.Output != "" && config.IsResourceEnded(d.Output, st.Age) {
 			continue
 		}
 		b := &Building{Def: d, Count: bs.Count, Ruins: bs.RuinCount, Workers: bs.WorkersAssigned,

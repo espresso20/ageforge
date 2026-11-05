@@ -39,7 +39,7 @@ func (b *planner) layStreets() {
 }
 
 func (b *planner) claimRoad(c Pt, road int) {
-	b.claim[at(c.X, c.Y)], b.roadOf[at(c.X, c.Y)] = roadCell, road
+	b.claim[b.at(c.X, c.Y)], b.roadOf[b.at(c.X, c.Y)] = roadCell, road
 }
 
 // branch spawns the children of a road: streets off a trunk, lanes off a

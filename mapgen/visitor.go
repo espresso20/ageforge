@@ -120,7 +120,16 @@ func (f *frame) shipRoute(sg mapmodel.Sighting) []Pt {
 	target := f.plan.Centre
 	if len(lanes) > 0 {
 		lane := lanes[roll(len(lanes), int64(sg.Roll), 2)]
-		target = f.plan.Roads[lane].Cells[roll(f.shown[lane], int64(sg.Roll), 3)]
+		cells := f.plan.Roads[lane].Cells[:f.shown[lane]]
+		start := roll(len(cells), int64(sg.Roll), 3)
+		target = cells[start]
+		for step := 0; step < len(cells); step++ {
+			c := cells[(start+step)%len(cells)]
+			if !f.solid(c.X, c.Y) {
+				target = c
+				break
+			}
+		}
 	}
 	edge := Pt{0, roll(worldH, int64(sg.Roll), 4)}
 	if sg.Roll>>8&1 == 1 {

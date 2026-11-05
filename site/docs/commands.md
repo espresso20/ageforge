@@ -369,7 +369,7 @@ The prompt keeps working while the Map is open: type commands as usual. The Map 
 |---|---|
 | Arrows | Move the cursor or scroll |
 | `Tab` / `Shift+Tab` | Next or previous building or wonder |
-| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in a step: the whole town, the close-up, a district |
+| `PgUp` / `PgDn` (`Option+↑` / `Option+↓`), or `-` / `=` | Zoom out and in a step: cosmic overview (in space), the whole town or system, the inner system (in space), the close-up, a district |
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press `Enter` again to run it) |
 | `Esc` | Close the Map |
 

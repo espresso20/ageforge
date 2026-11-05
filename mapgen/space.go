@@ -47,8 +47,8 @@ func (f *frame) paintGalaxy() {
 func (f *frame) paintVoid() {
 	sky := f.st.Sky
 	thing := Thing{Kind: KindTerrain, Key: "space"}
-	for y := 0; y < worldH; y++ {
-		for x := 0; x < worldW; x++ {
+	for y := 0; y < f.g.H; y++ {
+		for x := 0; x < f.g.W; x++ {
 			bg := sky.Bg
 			if haze := max(0, fbm(f.m.Seed+11, x*256/24, y*256/12, 3)-540) * 60 / (noiseMax - 540); haze > 0 {
 				bg = P(HNebula, haze)
@@ -62,8 +62,8 @@ func (f *frame) paintVoid() {
 // paintStarField puts one candidate star in each small block of the sky.
 func (f *frame) paintStarField() {
 	sky := f.st.Sky
-	for by := 0; by < worldH/3; by++ {
-		for bx := 0; bx < worldW/5; bx++ {
+	for by := 0; by < f.g.H/3; by++ {
+		for bx := 0; bx < f.g.W/5; bx++ {
 			x := bx*5 + roll(5, f.m.Seed, 12, int64(bx), int64(by))
 			y := by*3 + roll(3, f.m.Seed, 13, int64(bx), int64(by))
 			if !chance(sky.Dense, f.m.Seed, 14, int64(bx), int64(by)) {
@@ -82,7 +82,7 @@ func (f *frame) paintStarField() {
 // paintTracks draws every orbit as a faint dotted line, laid or not; the
 // lanes that are laid are drawn over it.
 func (f *frame) paintTracks() {
-	if f.st.Scale != Orbit && f.st.Scale != System {
+	if f.st.Scale != Orbit {
 		return
 	}
 	for _, r := range f.plan.Roads[2:] {
@@ -105,7 +105,7 @@ func (f *frame) paintRelics() {
 		}
 		for try := 0; try < 60; try++ {
 			p := f.relicSpot(w.Age, try)
-			if f.busy[at(p.X, p.Y)] || f.g.ThingAt(p.X, p.Y).Kind == KindWonder || f.st.Scale == Stars && (!f.sky(p) || f.plan.reserved(p)) {
+			if f.busy[f.at(p.X, p.Y)] || f.g.ThingAt(p.X, p.Y).Kind == KindWonder || f.st.Scale == Stars && (!f.sky(p) || f.plan.reserved(p)) {
 				continue
 			}
 			f.g.draw(p.X, p.Y, '★', P(HGold, 255))
@@ -139,8 +139,93 @@ func (f *frame) breatheSky(x, y int, c Cell) Cell {
 	case c.Bg.Hue == HCore:
 		c.Bg = P(HCore, w-w*tri(f.anim/4, 12)/60) // up to a fifth down, over about twelve seconds
 	case c.Bg.Hue == HNebula && w > 18:
-		ph := int(hash(f.m.Seed, 64, int64(x/3), int64(y/2)) % 24)
+		ph := int(hash(f.m.Seed, 64, int64(floorDiv(x, 3)), int64(floorDiv(y, 2))) % 24)
 		c.Bg = P(HNebula, w-w*tri(f.anim/5+ph, 12)/48)
+	}
+	return c
+}
+
+// spaceCellFunc returns a function that evaluates procedural space cells at any coordinate (wx, wy).
+func (f *frame) spaceCellFunc() func(wx, wy int) Cell {
+	seed := f.m.Seed
+	sky := f.st.Sky
+	scale := f.st.Scale
+	anim := f.anim
+	close := f.close
+	if scale == Stars {
+		return func(wx, wy int) Cell {
+			return starsSpaceCell(seed, anim, close, wx, wy)
+		}
+	}
+	return func(wx, wy int) Cell {
+		return voidSpaceCell(seed, sky, anim, wx, wy)
+	}
+}
+
+// voidSpaceCell generates the procedural nebula background and stars for Orbit and System scales.
+func voidSpaceCell(seed int64, sky Look, anim int, wx, wy int) Cell {
+	fx := floorDiv(wx*256, 24)
+	fy := floorDiv(wy*256, 12)
+	bg := sky.Bg
+	if haze := max(0, fbm(seed+11, fx, fy, 3)-540) * 60 / (noiseMax - 540); haze > 0 {
+		bg = P(HNebula, haze)
+	}
+	cell := Cell{R: ' ', Fg: sky.Fg, Bg: bg}
+
+	bx := floorDiv(wx, 5)
+	by := floorDiv(wy, 3)
+	starX := bx*5 + roll(5, seed, 12, int64(bx), int64(by))
+	starY := by*3 + roll(3, seed, 13, int64(bx), int64(by))
+	if starX == wx && starY == wy && chance(sky.Dense, seed, 14, int64(bx), int64(by)) {
+		h := hash(seed, 15, int64(wx), int64(wy))
+		shine := 120 + int(h>>8)%136
+		if (anim/9+int(h>>20))%7 == 0 {
+			shine /= 2 // a slow twinkle
+		}
+		if len(sky.Glyphs) > 0 {
+			cell.R = pick(sky.Glyphs, h>>30)
+		}
+		cell.Fg = sky.Fg.fade(shine)
+	}
+	return cell
+}
+
+// starsSpaceCell generates procedural deep space outside the galaxy for the Stars scale.
+func starsSpaceCell(seed int64, anim int, close bool, wx, wy int) Cell {
+	h8 := func(salt int64, x, y int) int { return int(hash(seed, salt, int64(x), int64(y)) % 256) }
+	fx := floorDiv(wx*256, 80)
+	fy := floorDiv(wy*256, 40)
+	tone := 6 + clamp(wx, 0, worldW-1)*7/worldW + clamp(wy, 0, worldH-1)*5/worldH + fbm(seed+31, fx, fy, 2)*3/noiseMax + h8(41, wx, wy)/140
+	bg := P(HNebula, tone)
+	c := Cell{R: ' ', Fg: P(HStar, 0), Bg: bg}
+	if close {
+		dh := int(hash(seed, 63, int64(wx), int64(wy)) % 1000)
+		switch {
+		case dh < 14:
+			c.R, c.Fg = '∙', P(HStar, 60+h8(61, wx, wy)*40/256)
+		case dh < 40:
+			c.R, c.Fg = '·', P(HStar, 50+h8(62, wx, wy)*40/256)
+		}
+		if c.R == '∙' && (anim/9+wx*7+wy*13)%5 == 0 {
+			c.R = '·'
+		}
+	} else {
+		h := int(hash(seed, 44, int64(wx), int64(wy)) % 1000)
+		switch {
+		case h < 3:
+			c.R, c.Fg = pick("✦✧", uint64(h8(46, wx, wy))), P(HStar, 255)
+		case h < 17:
+			c.R, c.Fg = pick("∙∙+", uint64(h8(47, wx, wy))), P(HStar, 150+h8(48, wx, wy)*80/256)
+		case h < 72:
+			c.R, c.Fg = '·', P(HStar, 70+h8(49, wx, wy)*70/256)
+		}
+		if (c.R == '✦' || c.R == '✧') && (anim/9+wx*7+wy*13)%7 == 0 {
+			c.R = '+'
+		}
+		if w := int(c.Bg.Weight); c.Bg.Hue == HNebula && w > 18 {
+			ph := int(hash(seed, 64, int64(floorDiv(wx, 3)), int64(floorDiv(wy, 2))) % 24)
+			c.Bg = P(HNebula, w-w*tri(anim/5+ph, 12)/48)
+		}
 	}
 	return c
 }

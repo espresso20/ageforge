@@ -31,6 +31,9 @@ func (v *view) Inspect(f Frame) (Inspection, bool) {
 func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 	switch th.Kind {
 	case mapgen.KindBuilding:
+		if in, ok := describeSpace(m, th); ok {
+			return in
+		}
 		return describeBuilding(m, th.Key, th.Lineage, th.Ruin)
 	case mapgen.KindWonder:
 		return describeWonder(m, th.Key)
@@ -71,7 +74,7 @@ func describe(m *mapmodel.Model, th mapgen.Thing) Inspection {
 		return describeRoad(m, th.Key)
 	case mapgen.KindTerrain:
 		if t, ok := mapgen.TerrainOf(th.Key); ok {
-			return describeTerrain(t)
+			return describeTerrain(t, m)
 		}
 		if in, ok := describeSpace(m, th); ok {
 			return in
@@ -217,8 +220,21 @@ var terrainNotes = [8]vibe.Entry{
 
 // describeTerrain says what the cursor is on when it is on open ground of a
 // terrain.
-func describeTerrain(t mapmodel.Terrain) Inspection {
+func describeTerrain(t mapmodel.Terrain, m *mapmodel.Model) Inspection {
 	in := Inspection{Title: terrainNames[t].String()}
+	if m != nil && skyOf(m) >= 0 {
+		switch t {
+		case mapmodel.TForest:
+			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.forest.space", "the world's green canopy, seen from orbit"))
+		case mapmodel.TRiver:
+			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.river.space", "veins of blue water crossing the cradle world"))
+		case mapmodel.THills, mapmodel.TMountain:
+			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.mountains.space", "ridges rising toward the atmosphere"))
+		case mapmodel.TDeep, mapmodel.TShallow, mapmodel.TBeach:
+			in.Lines = append(in.Lines, vibe.Line("ui.mapstyle.terrain.water.space", "oceans of the home world"))
+		}
+		return in
+	}
 	if note := terrainNotes[t].String(); note != "" {
 		in.Lines = append(in.Lines, note)
 	}

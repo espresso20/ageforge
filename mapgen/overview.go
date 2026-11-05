@@ -18,25 +18,91 @@ type Overview struct {
 	picks         []Pt // the world cell each cell shows
 }
 
+// SystemViewMode selects the framing for the astronomical system map.
+type SystemViewMode int
+
+const (
+	SystemViewFull   SystemViewMode = 0 // Full 8-planet planetary system (Sol out to Neptune & Pluto)
+	SystemViewCosmos SystemViewMode = 1 // Cosmic deep space perspective with outer Kuiper padding
+	SystemViewInner  SystemViewMode = 2 // Inner solar system (Sol, Mercury, Venus, Earth, Mars, Asteroids, Jupiter)
+)
+
 // Overview squeezes the town of a scene into w by h cells.
 func (s *Scene) Overview(w, h int) *Overview {
+	if s.Scale == System {
+		return s.overviewSystem(w, h, SystemViewFull)
+	}
+	return s.overviewPadded(w, h, 0, 0)
+}
+
+// OverviewCosmos squeezes the scene with additional cosmic padding into w by h cells,
+// giving a wide deep space perspective.
+func (s *Scene) OverviewCosmos(w, h int) *Overview {
+	if s.Scale == System {
+		return s.overviewSystem(w, h, SystemViewCosmos)
+	}
+	return s.overviewPadded(w, h, 100, 50)
+}
+
+// OverviewInner focuses on the inner planetary system (Sol through Jupiter)
+// with generous orbital spacing, allowing players to see inside the Sol system
+// while maintaining an astronomical perspective.
+func (s *Scene) OverviewInner(w, h int) *Overview {
+	if s.Scale == System {
+		return s.overviewSystem(w, h, SystemViewInner)
+	}
+	return s.overviewPadded(w, h, 0, 0)
+}
+
+func (s *Scene) overviewPadded(w, h, padX, padY int) *Overview {
 	b := s.Bounds
-	step := max(256, (b.W*256+w-1)/w, (b.H*256+h-1)/h)
+	bw, bh := b.W+padX, b.H+padY
+	gw, gh := s.Grid.W, s.Grid.H
+	if s.Grid.Space && b.W >= gw {
+		bw += 16
+		bh += 8
+	}
+	step := max(256, (bw*256+w-1)/w, (bh*256+h-1)/h)
 	if !s.Fill {
 		step = (step + 255) / 256 * 256 // whole cells to a block
 	}
-	o := &Overview{Grid: newGrid(w, h), Scale: (step + 255) / 256, step: step, picks: make([]Pt, w*h)}
+	o := &Overview{Grid: newGrid(w, h), Scale: max(1, step/256), step: step, picks: make([]Pt, w*h)}
 	o.Grid.Wall, o.Grid.Tint = s.Grid.Wall, s.Grid.Tint
+	o.Grid.Space = s.Grid.Space
 	o.Grid.Things = s.Grid.Things
-	o.X0 = clamp(b.X+b.W/2-w*step/512, 0, max(0, worldW-w*step/256))
-	o.Y0 = clamp(b.Y+b.H/2-h*step/512, 0, max(0, worldH-h*step/256))
+	spanX := w * step / 256
+	if spanX > gw {
+		o.X0 = (gw - spanX) / 2
+	} else {
+		o.X0 = clamp(b.X+b.W/2-spanX/2, 0, gw-spanX)
+	}
+	spanY := h * step / 256
+	if spanY > gh {
+		o.Y0 = (gh - spanY) / 2
+	} else {
+		o.Y0 = clamp(b.Y+b.H/2-spanY/2, 0, gh-spanY)
+	}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			p := s.mostImportant(o.blockX(x), o.blockY(y), o.blockX(x+1), o.blockY(y+1))
-			o.picks[y*w+x] = p
-			o.Grid.paint(x, y, s.summary(p))
-			if s.Grid.in(p.X, p.Y) { // a block past the edge of the world stays blank
-				o.Grid.Hit[y*w+x] = s.Grid.Hit[at(p.X, p.Y)]
+			x0, y0 := o.blockX(x), o.blockY(y)
+			x1, y1 := o.blockX(x+1), o.blockY(y+1)
+			if x1 > 0 && x0 < s.Grid.W && y1 > 0 && y0 < s.Grid.H {
+				p := s.mostImportant(x0, y0, x1, y1)
+				o.picks[y*w+x] = p
+				o.Grid.paint(x, y, s.summary(p))
+				o.Grid.Hit[y*w+x] = s.Grid.Hit[p.Y*s.Grid.W+p.X]
+			} else {
+				bx := x0 + step/512
+				by := y0 + step/512
+				o.picks[y*w+x] = Pt{bx, by}
+				if s.SpaceCell != nil {
+					o.Grid.paint(x, y, s.SpaceCell(bx, by))
+				} else if s.GroundCell != nil {
+					o.Grid.paint(x, y, s.GroundCell(bx, by))
+				} else {
+					o.Grid.paint(x, y, s.groundEdgeCell(bx, by))
+				}
+				o.Grid.Hit[y*w+x] = 0
 			}
 		}
 	}
@@ -54,14 +120,23 @@ var salience = [...]int{KindNone: 0, KindTerrain: 0, KindRoad: 2, KindAgent: 1, 
 // important thing in it, or the cell in its middle when there is nothing.
 func (s *Scene) mostImportant(x0, y0, x1, y1 int) Pt {
 	x1, y1 = max(x1, x0+1), max(y1, y0+1)
-	best, bestSal := Pt{(x0 + x1) / 2, (y0 + y1) / 2}, 0
+	cx, cy := floorDiv(x0+x1, 2), floorDiv(y0+y1, 2)
+	best, bestSal := Pt{cx, cy}, 0
+	foundInGrid := false
 	for y := y0; y < y1; y++ {
 		for x := x0; x < x1; x++ {
 			if !s.Grid.in(x, y) {
 				continue
 			}
-			th := s.Grid.Things[s.Grid.Hit[at(x, y)]]
+			foundInGrid = true
+			th := s.Grid.Things[s.Grid.Hit[y*s.Grid.W+x]]
 			sal := salience[th.Kind]
+			if th.Kind == KindTerrain && (th.Key == "planet" || th.Key == "home" || th.Key == "sun") {
+				sal = 4
+			}
+			if s.SpaceCell != nil && th.Kind == KindAgent {
+				sal = 4
+			}
 			if th.Kind == KindBuilding && th.Ruin {
 				sal = 2
 			}
@@ -76,12 +151,27 @@ func (s *Scene) mostImportant(x0, y0, x1, y1 int) Pt {
 			}
 		}
 	}
+	if !s.Grid.in(best.X, best.Y) && foundInGrid {
+		best = Pt{clamp(cx, 0, s.Grid.W-1), clamp(cy, 0, s.Grid.H-1)}
+	}
 	return best
 }
 
 // summary is the cell drawn for a world cell standing for a block.
 func (s *Scene) summary(p Pt) Cell {
+	if !s.Grid.in(p.X, p.Y) {
+		if s.SpaceCell != nil {
+			return s.SpaceCell(p.X, p.Y)
+		}
+		if s.GroundCell != nil {
+			return s.GroundCell(p.X, p.Y)
+		}
+		return s.groundEdgeCell(p.X, p.Y)
+	}
 	c := s.Grid.At(p.X, p.Y)
+	if s.SpaceCell != nil {
+		return c
+	}
 	th := s.Grid.ThingAt(p.X, p.Y)
 	switch {
 	case th.Kind == KindBuilding && !th.Ruin:
@@ -90,6 +180,65 @@ func (s *Scene) summary(p Pt) Cell {
 		c.R, c.Fg = '★', P(HGold, 255)
 	}
 	return c
+}
+
+// groundEdgeCell samples mirrored terrain or clamped edge ground for coordinates outside the world.
+func (s *Scene) groundEdgeCell(wx, wy int) Cell {
+	if s.Grid.W == 0 || s.Grid.H == 0 {
+		return Cell{}
+	}
+	mx := mirrorCoord(wx, s.Grid.W)
+	my := mirrorCoord(wy, s.Grid.H)
+	i := my*s.Grid.W + mx
+	terrain := func(idx int) bool {
+		th := s.Grid.Things[s.Grid.Hit[idx]]
+		if th.Key == "home" {
+			return false
+		}
+		return th.Kind == KindNone || th.Kind == KindTerrain
+	}
+	if terrain(i) {
+		return s.Grid.Cells[i]
+	}
+	dx := 1
+	if mx >= s.Grid.W/2 {
+		dx = -1
+	}
+	sx := mx
+	for n := 0; n < 64 && !terrain(i) && sx+dx >= 0 && sx+dx < s.Grid.W; n++ {
+		sx += dx
+		i = my*s.Grid.W + sx
+	}
+	if !terrain(i) {
+		dx = -dx
+		sx = mx
+		i = my*s.Grid.W + sx
+		for n := 0; n < 64 && !terrain(i) && sx+dx >= 0 && sx+dx < s.Grid.W; n++ {
+			sx += dx
+			i = my*s.Grid.W + sx
+		}
+	}
+	if terrain(i) {
+		return s.Grid.Cells[i]
+	}
+	cx := clamp(wx, 0, s.Grid.W-1)
+	cy := clamp(wy, 0, s.Grid.H-1)
+	c := s.Grid.Cells[cy*s.Grid.W+cx]
+	if !terrain(cy*s.Grid.W + cx) {
+		c.R = ' '
+	}
+	return c
+}
+
+func mirrorCoord(v, n int) int {
+	if n <= 0 {
+		return 0
+	}
+	v = ((v % (2 * n)) + 2*n) % (2 * n)
+	if v >= n {
+		v = 2*n - 1 - v
+	}
+	return v
 }
 
 // CellOf is the cell that shows a world cell, and whether any does.
@@ -123,4 +272,352 @@ func floorDiv(a, b int) int {
 		return -((-a + b - 1) / b)
 	}
 	return a / b
+}
+
+// overviewSystem generates a clean, dedicated Astronomical Orrery Map for the Solar System at far zoom,
+// avoiding point-sampling artifacts on detailed 3D spheres.
+func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
+	gw, gh := s.Grid.W, s.Grid.H
+	var bw, bh int
+	switch mode {
+	case SystemViewCosmos:
+		bw, bh = gw+80, gh+40
+	case SystemViewInner:
+		bw, bh = (gw*58)/100, (gh*58)/100
+	default:
+		bw, bh = gw, gh
+	}
+	step := max(256, (bw*256+w-1)/w, (bh*256+h-1)/h)
+	o := &Overview{Grid: newGrid(w, h), Scale: max(1, step/256), step: step, picks: make([]Pt, w*h)}
+	o.Grid.Wall, o.Grid.Tint = s.Grid.Wall, s.Grid.Tint
+	o.Grid.Space = true
+	o.Grid.Things = s.Grid.Things
+
+	spanX := w * step / 256
+	o.X0 = (gw - spanX) / 2
+	spanY := h * step / 256
+	o.Y0 = (gh - spanY) / 2
+
+	// 1. Fill base space background with stars & nebula
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			wx := o.blockX(x)
+			wy := o.blockY(y)
+			o.picks[y*w+x] = Pt{wx, wy}
+			if s.SpaceCell != nil {
+				o.Grid.paint(x, y, s.SpaceCell(wx, wy))
+			} else {
+				o.Grid.paint(x, y, Cell{Bg: P(HVoid, 255)})
+			}
+		}
+	}
+
+	cx := w / 2
+	cy := h / 2
+
+	// 2. Compute Viewport Orbit Radii for the 8 Planets + Asteroid Belt
+	maxRY := cy * 88 / 100
+	orbitFractions := [8]int{18, 28, 39, 50, 68, 79, 89, 98}
+	beltFraction := 59
+	switch mode {
+	case SystemViewCosmos:
+		maxRY = cy * 68 / 100
+	case SystemViewInner:
+		maxRY = cy * 92 / 100
+		orbitFractions = [8]int{30, 48, 66, 84, 126, 150, 175, 200}
+		beltFraction = 100
+	}
+	maxRY = max(8, maxRY)
+
+	var rX, rY [8]int
+	for i := 0; i < 8; i++ {
+		ry := max(3+i, (maxRY*orbitFractions[i])/100)
+		rx := (ry * 230) / 100
+		rY[i] = ry
+		rX[i] = rx
+	}
+	beltRY := (maxRY * beltFraction) / 100
+	beltRX := (beltRY * 230) / 100
+
+	// 3. Draw Clean, Faint Orbital Orrery Rings
+	for i := 0; i < 8; i++ {
+		rx, ry := rX[i], rY[i]
+		ringHue := P(HCyan, 55)
+		if i == 2 { // Earth / Home orbit
+			ringHue = P(HCyan, 85)
+		}
+		// Plot elliptical ring points
+		for a := 0; a < 4096; a += 16 {
+			ox := cx + (rx*cos4096(a))/1024
+			oy := cy + (ry*sin4096(a))/1024
+			if o.Grid.in(ox, oy) {
+				cur := o.Grid.At(ox, oy)
+				if cur.R == 0 || cur.R == ' ' || cur.R == '·' || cur.R == '.' {
+					o.Grid.paint(ox, oy, Cell{R: '·', Fg: ringHue, Bg: cur.Bg})
+					o.Grid.mark(ox, oy, Thing{Kind: KindRoad, Key: "orbit"})
+				}
+			}
+		}
+	}
+
+	// Asteroid Belt Dust Ring
+	for a := 0; a < 4096; a += 24 {
+		jitter := (roll(5, s.Seed, int64(a)) - 2)
+		ox := cx + ((beltRX+jitter*2)*cos4096(a))/1024
+		oy := cy + ((beltRY+jitter)*sin4096(a))/1024
+		if o.Grid.in(ox, oy) {
+			cur := o.Grid.At(ox, oy)
+			r := '·'
+			if a%72 == 0 {
+				r = '∙'
+			}
+			o.Grid.paint(ox, oy, Cell{R: r, Fg: P(HRock, 180), Bg: cur.Bg})
+			o.Grid.mark(ox, oy, Thing{Kind: KindRoad, Key: "orbit"})
+		}
+	}
+
+	// 4. Center Sol: Radiant Star
+	o.Grid.paint(cx, cy, Cell{R: '☼', Fg: P(HWhite, 255), Bg: P(HSun, 255)})
+	o.Grid.mark(cx, cy, Thing{Kind: KindTerrain, Key: "sun"})
+	flareOffsets := [][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+	if mode == SystemViewInner {
+		flareOffsets = append(flareOffsets, [2]int{-1, -1}, [2]int{1, -1}, [2]int{-1, 1}, [2]int{1, 1})
+	}
+	for _, off := range flareOffsets {
+		fx, fy := cx+off[0], cy+off[1]
+		if o.Grid.in(fx, fy) {
+			bg := o.Grid.At(fx, fy).Bg
+			o.Grid.paint(fx, fy, Cell{R: '·', Fg: P(HSun, 240), Bg: bg})
+			o.Grid.mark(fx, fy, Thing{Kind: KindTerrain, Key: "sun"})
+		}
+	}
+	if mode == SystemViewInner {
+		// Close-orbit Dyson Swarm Energy Harvesters
+		for _, dx := range []int{-3, 3} {
+			hx, hy := cx+dx, cy
+			if o.Grid.in(hx, hy) {
+				o.Grid.paint(hx, hy, Cell{R: '⬢', Fg: P(HGold, 255), Bg: o.Grid.At(hx, hy).Bg})
+				o.Grid.mark(hx, hy, Thing{Kind: KindBuilding, Key: "dyson_harvester"})
+			}
+		}
+		// Asteroid Belt Mining Outposts
+		for _, a := range []int{1024, 3072} {
+			mx := cx + (beltRX*cos4096(a))/1024
+			my := cy + (beltRY*sin4096(a))/1024
+			if o.Grid.in(mx, my) {
+				o.Grid.paint(mx, my, Cell{R: '⬡', Fg: P(HSteel, 240), Bg: o.Grid.At(mx, my).Bg})
+				o.Grid.mark(mx, my, Thing{Kind: KindBuilding, Key: "asteroid_mine"})
+			}
+		}
+	}
+
+	// 5. Compute Planet Positions
+	divs := [8]int{12, 20, 32, 50, 80, 120, 180, 260}
+	var planetPts [8]Pt
+	for i := 0; i < 8; i++ {
+		phaseFrac := (int(s.Seed%1000) + i*382) % 1000
+		baseAngle := (phaseFrac * 4096) / 1000
+		advance := (s.Anim / divs[i]) * 16
+		ang := (baseAngle + advance) % 4096
+
+		px := cx + (rX[i]*cos4096(ang))/1024
+		py := cy + (rY[i]*sin4096(ang))/1024
+		planetPts[i] = Pt{px, py}
+	}
+
+	// 6. Draw Planetary Celestial Jewels
+	// Mercury (0)
+	if p := planetPts[0]; o.Grid.in(p.X, p.Y) {
+		bg := o.Grid.At(p.X, p.Y).Bg
+		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HRock, 255), Bg: bg})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
+	}
+	// Venus (1)
+	if p := planetPts[1]; o.Grid.in(p.X, p.Y) {
+		bg := o.Grid.At(p.X, p.Y).Bg
+		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HSun, 255), Bg: bg})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
+	}
+	// Earth / Home (2)
+	if p := planetPts[2]; o.Grid.in(p.X, p.Y) {
+		o.Grid.paint(p.X, p.Y, Cell{R: '⊕', Fg: P(HLife, 255), Bg: P(HWater, 255)})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "home"})
+		// Moon Luna
+		if o.Grid.in(p.X+1, p.Y) {
+			lBg := o.Grid.At(p.X+1, p.Y).Bg
+			o.Grid.paint(p.X+1, p.Y, Cell{R: '·', Fg: P(HWhite, 255), Bg: lBg})
+		}
+		// ISS Gateway Station
+		if o.Grid.in(p.X-1, p.Y) {
+			sBg := o.Grid.At(p.X-1, p.Y).Bg
+			o.Grid.paint(p.X-1, p.Y, Cell{R: '✜', Fg: P(HCyan, 255), Bg: sBg})
+			o.Grid.mark(p.X-1, p.Y, Thing{Kind: KindBuilding, Key: "space_station"})
+		}
+	}
+	// Mars (3)
+	if p := planetPts[3]; o.Grid.in(p.X, p.Y) {
+		bg := o.Grid.At(p.X, p.Y).Bg
+		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HRed, 255), Bg: bg})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
+		if o.Grid.in(p.X+1, p.Y) {
+			sBg := o.Grid.At(p.X+1, p.Y).Bg
+			o.Grid.paint(p.X+1, p.Y, Cell{R: '◈', Fg: P(HAmber, 240), Bg: sBg})
+			o.Grid.mark(p.X+1, p.Y, Thing{Kind: KindBuilding, Key: "space_station"})
+		}
+	}
+	// Jupiter (4)
+	if p := planetPts[4]; o.Grid.in(p.X, p.Y) {
+		o.Grid.paint(p.X, p.Y, Cell{R: '⊚', Fg: P(HGold, 255), Bg: P(HAmber, 240)})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
+		for k, off := range [][2]int{{-1, 0}, {1, 0}, {2, 0}} {
+			mx, my := p.X+off[0], p.Y+off[1]
+			if o.Grid.in(mx, my) {
+				mBg := o.Grid.At(mx, my).Bg
+				mCol := P(HWhite, 230)
+				if k == 0 {
+					mCol = P(HSun, 255)
+				}
+				o.Grid.paint(mx, my, Cell{R: '·', Fg: mCol, Bg: mBg})
+			}
+		}
+	}
+	// Saturn (5)
+	if p := planetPts[5]; o.Grid.in(p.X, p.Y) {
+		o.Grid.paint(p.X, p.Y, Cell{R: '⊝', Fg: P(HGold, 255), Bg: P(HSand, 230)})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
+		if o.Grid.in(p.X+1, p.Y) {
+			tBg := o.Grid.At(p.X+1, p.Y).Bg
+			o.Grid.paint(p.X+1, p.Y, Cell{R: '·', Fg: P(HAmber, 240), Bg: tBg})
+		}
+	}
+	// Uranus (6)
+	if p := planetPts[6]; o.Grid.in(p.X, p.Y) {
+		bg := o.Grid.At(p.X, p.Y).Bg
+		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HCool, 255), Bg: bg})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
+	}
+	// Neptune (7)
+	if p := planetPts[7]; o.Grid.in(p.X, p.Y) {
+		o.Grid.paint(p.X, p.Y, Cell{R: '●', Fg: P(HCyan, 255), Bg: P(HWater, 240)})
+		o.Grid.mark(p.X, p.Y, Thing{Kind: KindTerrain, Key: "planet"})
+	}
+	// Pluto
+	plutoRY := (maxRY * 108) / 100
+	plutoRX := (plutoRY * 230) / 100
+	plutoA := (1280 + s.Anim/360*16) % 4096
+	plutoX := cx + (plutoRX*cos4096(plutoA))/1024
+	plutoY := cy + (plutoRY*sin4096(plutoA))/1024
+	if o.Grid.in(plutoX, plutoY) {
+		pBg := o.Grid.At(plutoX, plutoY).Bg
+		o.Grid.paint(plutoX, plutoY, Cell{R: '∙', Fg: P(HAmber, 230), Bg: pBg})
+		o.Grid.mark(plutoX, plutoY, Thing{Kind: KindTerrain, Key: "pluto"})
+	}
+
+	// 7. Outer Megastructures: Warp Gate
+	warpRY := (maxRY * 115) / 100
+	warpY := cy + warpRY
+	if o.Grid.in(cx, warpY) {
+		if o.Grid.in(cx-1, warpY) {
+			o.Grid.paint(cx-1, warpY, Cell{R: '⫷', Fg: P(HCyan, 255), Bg: o.Grid.At(cx-1, warpY).Bg})
+			o.Grid.mark(cx-1, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})
+		}
+		o.Grid.paint(cx, warpY, Cell{R: '◎', Fg: P(HNeon, 255), Bg: P(HCyan, 220)})
+		o.Grid.mark(cx, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})
+		if o.Grid.in(cx+1, warpY) {
+			o.Grid.paint(cx+1, warpY, Cell{R: '⫸', Fg: P(HCyan, 255), Bg: o.Grid.At(cx+1, warpY).Bg})
+			o.Grid.mark(cx+1, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})
+		}
+	}
+
+	// 8. Interplanetary Cruisers (2-3 clean single-cell darts)
+	shipRoutes := [][2]int{{2, 3}, {2, 4}, {3, 5}}
+	for rIdx, rt := range shipRoutes {
+		pA := planetPts[rt[0]]
+		pB := planetPts[rt[1]]
+		dx := pB.X - pA.X
+		dy := pB.Y - pA.Y
+		dist := max(abs(dx), abs(dy))
+		if dist < 6 {
+			continue
+		}
+		shipStep := (s.Anim/8 + rIdx*17) % (dist * 2)
+		prog := shipStep
+		dirFwd := true
+		if prog >= dist {
+			prog = 2*dist - prog
+			dirFwd = false
+		}
+		if prog < 2 || prog > dist-2 {
+			continue
+		}
+		sx := pA.X + (dx*prog)/dist
+		sy := pA.Y + (dy*prog)/dist
+		if !o.Grid.in(sx, sy) {
+			continue
+		}
+		glyph := '►'
+		vx, vy := dx, dy
+		if !dirFwd {
+			vx, vy = -dx, -dy
+		}
+		if abs(vx) >= abs(vy) {
+			if vx >= 0 {
+				glyph = '►'
+			} else {
+				glyph = '◄'
+			}
+		} else {
+			if vy >= 0 {
+				glyph = '▼'
+			} else {
+				glyph = '▲'
+			}
+		}
+		sBg := o.Grid.At(sx, sy).Bg
+		o.Grid.paint(sx, sy, Cell{R: glyph, Fg: P(HCyan, 255), Bg: sBg})
+		o.Grid.mark(sx, sy, Thing{Kind: KindAgent, Key: "generation_ship"})
+	}
+
+	// 9. Sweeping Outer Comet
+	cometA := (3400 + s.Anim/200*16) % 4096
+	cometRY := (maxRY * 118) / 100
+	cometRX := (cometRY * 230) / 100
+	cometX := cx + (cometRX*cos4096(cometA))/1024
+	cometY := cy + (cometRY*sin4096(cometA))/1024
+	if o.Grid.in(cometX, cometY) {
+		cBg := o.Grid.At(cometX, cometY).Bg
+		o.Grid.paint(cometX, cometY, Cell{R: '✦', Fg: P(HWhite, 255), Bg: cBg})
+		o.Grid.mark(cometX, cometY, Thing{Kind: KindTerrain, Key: "comet"})
+		// Tail pointing away from Sol
+		tdx := cometX - cx
+		tdy := cometY - cy
+		tLen := max(1, isqrt(tdx*tdx+tdy*tdy))
+		for t := 1; t <= 4; t++ {
+			tx := cometX + (tdx*t*2)/tLen
+			ty := cometY + (tdy*t)/tLen
+			if o.Grid.in(tx, ty) {
+				tBg := o.Grid.At(tx, ty).Bg
+				o.Grid.paint(tx, ty, Cell{R: '·', Fg: P(HCyan, 180-t*35), Bg: tBg})
+			}
+		}
+	}
+
+	// 10. Rare Visitors & Alien Craft (Sync with Scene Grid)
+	if s.Grid != nil {
+		for i := range s.Grid.Cells {
+			th := s.Grid.Things[s.Grid.Hit[i]]
+			if th.Kind == KindVisitor {
+				wx, wy := i%s.Grid.W, i/s.Grid.W
+				ox, oy, ok := o.CellOf(Pt{wx, wy})
+				if ok && o.Grid.in(ox, oy) {
+					o.Grid.paint(ox, oy, s.Grid.At(wx, wy))
+					o.Grid.mark(ox, oy, th)
+					o.picks[oy*w+ox] = Pt{wx, wy}
+					o.Grid.Hit[oy*w+ox] = s.Grid.Hit[i]
+				}
+			}
+		}
+	}
+
+	return o
 }

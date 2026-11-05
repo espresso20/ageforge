@@ -114,9 +114,30 @@ func TestVisitorIsReachableByTheKeys(t *testing.T) {
 				if v.overview {
 					// every step is a block of the world: stop in the block the visitor is in
 					unit = v.ov.Scale
-					x, y, _ := v.ov.CellOf(v.cur)
 					tx, ty, _ := v.ov.CellOf(target)
-					target = mapgen.Pt{X: v.cur.X + (tx-x)*unit, Y: v.cur.Y + (ty-y)*unit}
+					target = v.cur
+					for {
+						cx, _, _ := v.ov.CellOf(target)
+						if cx == tx {
+							break
+						}
+						if cx < tx {
+							target.X += unit
+						} else {
+							target.X -= unit
+						}
+					}
+					for {
+						_, cy, _ := v.ov.CellOf(target)
+						if cy == ty {
+							break
+						}
+						if cy < ty {
+							target.Y += unit
+						} else {
+							target.Y -= unit
+						}
+					}
 				}
 				if !steer(v, f, target, unit) {
 					t.Fatalf("%s %dx%d: the arrows never reach the %s at %v", age, size.w, size.h, form, target)

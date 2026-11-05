@@ -48,6 +48,78 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 	switch th.Key {
 	case "port":
 		return Inspection{Title: vibe.Line("ui.mapstyle.port.01", "Spaceport"), Lines: []string{vibe.Line("ui.mapstyle.port.02", "where the shuttles lift off")}}, true
+	case "space_station":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.station.01", "Orbital Space Station"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.station.02", "A modular habitat and orbital citadel"),
+				vibe.Line("ui.mapstyle.space.station.03", "docking bays hum with transfer shuttles"),
+			},
+		}, true
+	case "dyson_harvester":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.dyson.01", "Solar Dyson Swarm Collector"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.dyson.02", "Orbits deep in the solar corona"),
+				vibe.Line("ui.mapstyle.space.dyson.03", "harvesting raw plasma and radiant stellar energy"),
+			},
+		}, true
+	case "warp_gate":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.warp_gate.01", "Interstellar Warp Gate"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.warp_gate.02", "Hub of faster-than-light corridors"),
+				vibe.Line("ui.mapstyle.space.warp_gate.03", "connecting Sol to distant star systems"),
+			},
+		}, true
+	case "asteroid_mine":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.asteroid_mine.01", "Asteroid Mining Complex"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.asteroid_mine.02", "Tethered refinery and mass driver"),
+				vibe.Line("ui.mapstyle.space.asteroid_mine.03", "extracting metals and volatiles from ancient chondrites"),
+			},
+		}, true
+	case "deep_space_relay":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.relay.01", "Deep Space Navigational Relay"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.relay.02", "Lagrange point communication buoy"),
+				vibe.Line("ui.mapstyle.space.relay.03", "routing telemetry across the star system"),
+			},
+		}, true
+	case "comet":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.comet.01", "Great Comet"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.comet.02", "An icy wanderer sweeping from the Oort cloud"),
+				vibe.Line("ui.mapstyle.space.comet.03", "its luminescent ion tail points away from the Sun"),
+			},
+		}, true
+	case "pluto":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.pluto.01", "Pluto & Charon"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.pluto.02", "Binary dwarf planet in the frozen Kuiper belt"),
+				vibe.Line("ui.mapstyle.space.pluto.03", "nitrogen glaciers and methane frost glint under distant Sol"),
+			},
+		}, true
+	case "interstellar_probe":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.probe.01", "Interstellar Probe"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.probe.02", "Voyager-class deep space explorer"),
+				vibe.Line("ui.mapstyle.space.probe.03", "drifting past the heliopause into the interstellar void"),
+			},
+		}, true
+	case "alien_monolith":
+		return Inspection{
+			Title: vibe.Line("ui.mapstyle.space.monolith.01", "Alien Monolith"),
+			Lines: []string{
+				vibe.Line("ui.mapstyle.space.monolith.02", "An enigmatic obsidian monolith of unknown origin"),
+				vibe.Line("ui.mapstyle.space.monolith.03", "faint tachyon pulses reverberate from its geometry"),
+			},
+		}, true
 	}
 	if sky < 0 {
 		return Inspection{}, false

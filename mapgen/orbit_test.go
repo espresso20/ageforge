@@ -43,10 +43,16 @@ func TestSpacePlansHoldTogether(t *testing.T) {
 			if len(p.Lots) < 60 && sp.name != "stars" {
 				t.Errorf("%s/%d: only %d parcels", sp.name, seed, len(p.Lots))
 			}
+			inBounds := func(x, y int) bool {
+				if sp.name == "system" {
+					return x >= 0 && y >= 0 && x < SystemW && y < SystemH
+				}
+				return inWorld(x, y)
+			}
 			road := map[Pt]int{}
 			for i, r := range p.Roads {
 				for _, c := range r.Cells {
-					if !inWorld(c.X, c.Y) {
+					if !inBounds(c.X, c.Y) {
 						t.Fatalf("%s/%d: road %d leaves the world at %v", sp.name, seed, i, c)
 					}
 					road[c] = i
@@ -122,6 +128,181 @@ func TestHalfRingsAreClosedCurves(t *testing.T) {
 			}
 			if half[0].Y != 40-ry || half[len(half)-1].Y != 40+ry {
 				t.Errorf("ry %d: a half ring runs from row %d to %d, want %d to %d", ry, half[0].Y, half[len(half)-1].Y, 40-ry, 40+ry)
+			}
+		}
+	}
+}
+
+func TestHomePlanetHighResolution(t *testing.T) {
+	if discRX != 50 || discRY != 20 {
+		t.Fatalf("discRX = %d, discRY = %d, want 50, 20", discRX, discRY)
+	}
+
+	st := state("space_age", 7, noon)
+	m := model(st)
+	g := (&Generator{}).Render(m, worldW, worldH, 0)
+
+	minX, maxX := worldW, 0
+	minY, maxY := worldH, 0
+	quadrantCount := 0
+	rimCyanCount := 0
+	coastlineCount := 0
+	polarCount := 0
+	nightLightCount := 0
+
+	quadrantSet := map[rune]bool{}
+	for _, r := range quadrantRunes {
+		if r != ' ' {
+			quadrantSet[r] = true
+		}
+	}
+
+	for y := 0; y < worldH; y++ {
+		for x := 0; x < worldW; x++ {
+			th := g.ThingAt(x, y)
+			if th.Kind == KindTerrain && th.Key == "home" {
+				if x < minX {
+					minX = x
+				}
+				if x > maxX {
+					maxX = x
+				}
+				if y < minY {
+					minY = y
+				}
+				if y > maxY {
+					maxY = y
+				}
+
+				cell := g.At(x, y)
+				if quadrantSet[cell.R] {
+					quadrantCount++
+					if cell.Fg.Hue == HCyan {
+						rimCyanCount++
+					}
+					if cell.Fg.Hue == HLand && cell.Bg.Hue == HSea {
+						coastlineCount++
+					}
+				}
+				if cell.R == '*' || cell.R == '░' {
+					polarCount++
+				}
+				if x > worldW/2 && cell.Fg.Hue == HGold {
+					nightLightCount++
+				}
+			}
+		}
+	}
+
+	// Verify aspect ratio (width / height) ~ 2.5 (50:20 = 101:41)
+	w := maxX - minX + 1
+	h := maxY - minY + 1
+	if w < 98 || w > 103 {
+		t.Errorf("planet width = %d, want ~101", w)
+	}
+	if h < 39 || h > 43 {
+		t.Errorf("planet height = %d, want ~41", h)
+	}
+
+	// Verify subpixel anti-aliasing features
+	if rimCyanCount < 10 {
+		t.Errorf("cyan anti-aliased rim count = %d, want >= 10", rimCyanCount)
+	}
+	if coastlineCount < 10 {
+		t.Errorf("subpixel coastline count = %d, want >= 10", coastlineCount)
+	}
+	if polarCount < 10 {
+		t.Errorf("polar ice cap cell count = %d, want >= 10", polarCount)
+	}
+	if nightLightCount < 2 {
+		t.Errorf("night-side city lights count = %d, want >= 2", nightLightCount)
+	}
+}
+
+func TestEarthSpinsWithAnim(t *testing.T) {
+	st := state("space_age", 7, noon)
+	m := model(st)
+	gen := &Generator{}
+	g0 := gen.Render(m, worldW, worldH, 0)
+	g25 := gen.Render(m, worldW, worldH, 25)
+
+	c := Pt{worldW / 2, worldH / 2}
+	diffCount := 0
+	interiorCount := 0
+
+	for y := c.Y - discRY; y <= c.Y+discRY; y++ {
+		for x := c.X - discRX; x <= c.X+discRX; x++ {
+			th0 := g0.ThingAt(x, y)
+			th25 := g25.ThingAt(x, y)
+			if th0.Kind == KindTerrain && th0.Key == "home" && th25.Kind == KindTerrain && th25.Key == "home" {
+				c0 := g0.At(x, y)
+				c25 := g25.At(x, y)
+				// Skip outer atmospheric rim cells (which have HCyan Fg)
+				if c0.Fg.Hue == HCyan && c25.Fg.Hue == HCyan {
+					continue
+				}
+				interiorCount++
+				if c0.R != c25.R || c0.Fg != c25.Fg || c0.Bg != c25.Bg {
+					diffCount++
+				}
+			}
+		}
+	}
+
+	if interiorCount == 0 {
+		t.Fatalf("no interior planet cells found")
+	}
+	if diffCount < 50 {
+		t.Errorf("Earth did not rotate: only %d / %d cells changed between anim=0 and anim=25, want >= 50", diffCount, interiorCount)
+	}
+}
+
+func TestSpaceCellExposedAndContinuous(t *testing.T) {
+	gen := &Generator{}
+	for _, tc := range []struct {
+		age       string
+		wantSpace bool
+	}{
+		{"stone_age", false},
+		{"medieval_age", false},
+		{"space_age", true},
+		{"interstellar_age", true},
+		{"galactic_age", true},
+	} {
+		m := model(state(tc.age, 7, noon))
+		sc := gen.Draw(m, 0)
+		if tc.wantSpace && sc.SpaceCell == nil {
+			t.Errorf("%s: want SpaceCell != nil", tc.age)
+		}
+		if !tc.wantSpace && sc.SpaceCell != nil {
+			t.Errorf("%s: want SpaceCell == nil", tc.age)
+		}
+		if sc.SpaceCell != nil {
+			coords := [][2]int{
+				{-100, -50},
+				{-1, 0},
+				{0, -1},
+				{worldW, 50},
+				{worldW + 100, worldH + 50},
+			}
+			for _, pt := range coords {
+				cell := sc.SpaceCell(pt[0], pt[1])
+				if cell.Bg.Hue != HVoid && cell.Bg.Hue != HNebula {
+					t.Errorf("%s: cell at %v has unexpected hue %v", tc.age, pt, cell.Bg.Hue)
+				}
+			}
+			if tc.age == "space_age" {
+				for y := 0; y < 10; y++ {
+					for x := 0; x < 10; x++ {
+						if sc.Grid.ThingAt(x, y).Key == "space" {
+							want := sc.Grid.At(x, y)
+							got := sc.SpaceCell(x, y)
+							if want.Bg != got.Bg || want.R != got.R || want.Fg != got.Fg {
+								t.Errorf("at (%d,%d): want %+v, got %+v", x, y, want, got)
+							}
+						}
+					}
+				}
 			}
 		}
 	}

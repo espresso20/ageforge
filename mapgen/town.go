@@ -84,13 +84,13 @@ func (f *frame) layRoads() {
 	f.shown = f.plan.visible(inUse)
 	for i, r := range f.plan.Roads {
 		for _, c := range r.Cells[:f.shown[i]] {
-			f.roadAt[at(c.X, c.Y)] = int8(r.Tier + 1)
-			f.busy[at(c.X, c.Y)] = true
+			f.roadAt[f.at(c.X, c.Y)] = int8(r.Tier + 1)
+			f.busy[f.at(c.X, c.Y)] = true
 		}
 	}
 }
 
-func (f *frame) laid(x, y int) bool { return inWorld(x, y) && f.roadAt[at(x, y)] > 0 }
+func (f *frame) laid(x, y int) bool { return f.g.in(x, y) && f.roadAt[f.at(x, y)] > 0 }
 
 // paintTown draws the made things: yards, roads, buildings, wonders.
 func (f *frame) paintTown() {
@@ -105,7 +105,7 @@ func (f *frame) paintTown() {
 			if f.st.Scale <= City {
 				f.g.paint(x, y, f.st.Plaza.at(x, y, 1))
 			}
-			f.busy[at(x, y)] = true
+			f.busy[f.at(x, y)] = true
 		})
 	}
 	f.paintRoads()
@@ -128,6 +128,9 @@ func (f *frame) paintTown() {
 }
 
 func (f *frame) paintYard(r Rect, pl placed) {
+	if f.st.Scale == System {
+		return
+	}
 	look := f.st.Yard
 	switch {
 	case pl.ruin:
@@ -145,15 +148,22 @@ func (f *frame) paintYard(r Rect, pl placed) {
 
 // paintYardOf lays the ground of a parcel in a look.
 func (f *frame) paintYardOf(r Rect, look Look) {
+	if f.st.Scale == System {
+		return
+	}
 	r.cells(func(x, y int) {
 		if f.st.Scale <= City { // in space the sky shows between the buildings
 			f.g.paint(x, y, look.at(x, y, 2))
 		}
-		f.busy[at(x, y)] = true
+		f.busy[f.at(x, y)] = true
 	})
 }
 
 func (f *frame) paintRoads() {
+	if f.st.Scale == Orbit || f.st.Scale == System {
+		f.paintOrbitRoads()
+		return
+	}
 	for i, r := range f.plan.Roads {
 		for _, c := range r.Cells[:f.shown[i]] {
 			look := f.st.Roads[r.Tier]
@@ -173,6 +183,92 @@ func (f *frame) paintRoads() {
 				key = spaceRoadNames[f.st.Scale][r.Tier]
 			}
 			f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: key})
+		}
+	}
+}
+
+func (f *frame) paintOrbitRoads() {
+	rings := orbitSpec.rings
+	hubKey := "square"
+	spokeKey := "tether"
+	ringKey := "ring"
+	if f.st.Scale == System {
+		rings = systemSpec.rings
+		spokeKey = "orbit"
+		ringKey = "orbit"
+	}
+	for i, r := range f.plan.Roads {
+		cells := r.Cells
+		if f.shown[i] < len(cells) {
+			cells = cells[:f.shown[i]]
+		}
+		if i == 0 {
+			// Square / Hub at the base of the elevator (or near the Sun)
+			for _, c := range cells {
+				if f.st.Scale == System {
+					th := f.g.ThingAt(c.X, c.Y)
+					if th.Key == "sun" || th.Key == "planet" || th.Key == "home" {
+						continue
+					}
+					f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: hubKey})
+					continue
+				}
+				f.g.draw(c.X, c.Y, '║', P(HWhite, 245))
+				f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: hubKey})
+			}
+			continue
+		}
+		if i == 1 {
+			// Vertical Space Elevator Tether column (Orbit) or radial transit spine (System)
+			for _, c := range cells {
+				if f.st.Scale == System {
+					if th := f.g.ThingAt(c.X, c.Y); th.Key == "sun" || th.Key == "planet" || th.Key == "home" {
+						continue
+					}
+					f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: spokeKey})
+					continue
+				}
+				glyph := '║'
+				for _, ry := range rings {
+					if c.Y == f.plan.Centre.Y-ry || c.Y == f.plan.Centre.Y+ry {
+						glyph = '╬'
+						break
+					}
+				}
+				f.g.draw(c.X, c.Y, glyph, P(HWhite, 245))
+				f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: spokeKey})
+			}
+			continue
+		}
+
+		// Elliptical orbital rings (i >= 2)
+		for idx, c := range cells {
+			if f.st.Scale == System {
+				if th := f.g.ThingAt(c.X, c.Y); th.Key == "sun" || th.Key == "planet" || th.Key == "home" {
+					continue
+				}
+				f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: ringKey})
+				continue
+			}
+			if f.st.Scale == Orbit && c.X == f.plan.Centre.X {
+				f.g.draw(c.X, c.Y, '╬', P(HWhite, 230))
+			} else {
+				var rRune rune
+				var rFg Paint
+				switch {
+				case (idx+f.anim/4)%8 == 0:
+					rRune = '∙'
+					rFg = P(HCyan, 210)
+				case (idx+f.anim/4)%8 == 4:
+					rRune = '·'
+					rFg = P(HOrbit, 185)
+				default:
+					rRune = '·'
+					rFg = P(HOrbit, 130)
+				}
+				f.g.draw(c.X, c.Y, rRune, rFg)
+			}
+			f.g.mark(c.X, c.Y, Thing{Kind: KindRoad, Key: ringKey})
 		}
 	}
 }
@@ -241,6 +337,32 @@ func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, Paint)
 	}
 }
 
+// stampCell draws art on a parcel setting both foreground and background.
+func (f *frame) stampCell(a Art, l Lot, thing Thing, look func(r rune) Cell) {
+	w, h := a.size()
+	x0, y0 := anchor(l, w, h)
+	if thing.Kind == KindBuilding {
+		f.targets = append(f.targets, middleOf(a, x0, y0))
+	}
+	for dy, row := range a {
+		for dx, r := range []rune(row) {
+			if r == ' ' {
+				continue
+			}
+			p := Pt{x0 + dx, y0 + dy}
+			c := look(r)
+			f.g.paint(p.X, p.Y, c)
+			f.g.mark(p.X, p.Y, thing)
+			if strings.ContainsRune(f.st.Windows, r) {
+				f.glow = append(f.glow, p)
+			}
+			if r == f.st.Chimney {
+				f.vents = append(f.vents, p)
+			}
+		}
+	}
+}
+
 // ink is the paint of an art rune: its own if the style names one, else the
 // hue of the building line, or the walls' when there is none.
 func (f *frame) ink(r rune, line Hue) Paint {
@@ -264,6 +386,62 @@ func (f *frame) paintBuilding(pl placed) {
 	shape := variants[roll(len(variants), f.m.Seed, mapmodel.HashStr(pl.b.Key), int64(pl.instance))]
 	line := lineHue(pl.b.Lineage)
 	thing := Thing{Kind: KindBuilding, Key: pl.b.Key, Lineage: pl.b.Lineage, Count: pl.b.Count, Legacy: pl.b.Legacy}
+
+	if f.st.Scale == System {
+		lot := f.plan.Lots[pl.lot]
+		mid := Pt{lot.Rect.X + lot.Rect.W/2, lot.Rect.Y + lot.Rect.H/2}
+		f.targets = append(f.targets, mid)
+		f.g.mark(mid.X, mid.Y, thing)
+		return
+	}
+
+	if f.st.Scale == Orbit && !pl.ruin {
+		coreGlyph := '◉'
+		switch fam {
+		case Work:
+			coreGlyph = '▣'
+		case Civic:
+			coreGlyph = '◈'
+		}
+		lot := f.plan.Lots[pl.lot]
+		w, h := shape.size()
+		x0, y0 := anchor(lot, w, h)
+		f.targets = append(f.targets, middleOf(shape, x0, y0))
+		for dy, row := range shape {
+			for dx, r := range []rune(row) {
+				if r == ' ' {
+					continue
+				}
+				if r == '*' {
+					r = coreGlyph
+				}
+				p := Pt{x0 + dx, y0 + dy}
+				spaceBg := f.g.At(p.X, p.Y).Bg
+				var fg Paint
+				bg := spaceBg
+				switch r {
+				case '▤':
+					fg = P(HCyan, 230)
+				case '◉', '▣', '◈':
+					fg = P(line, 255)
+					bg = P(HMetal, 45)
+				case '╲', '╱', '╷', '╵', '╨', '╥':
+					fg = P(HCyan, 195)
+				case '╞', '╡', '╠', '╣', '╭', '╮', '╰', '╯', '═', '─', '╦', '╩', '╬':
+					fg = P(HCloud, 240)
+				default:
+					fg = f.ink(r, line)
+				}
+				if pl.b.Legacy {
+					fg = fg.fade(150)
+				}
+				f.g.paint(p.X, p.Y, Cell{R: r, Fg: fg, Bg: bg})
+				f.g.mark(p.X, p.Y, thing)
+			}
+		}
+		return
+	}
+
 	f.stamp(shape, f.plan.Lots[pl.lot], thing, func(r rune) (rune, Paint) {
 		ink := f.ink(r, line)
 		if r == '*' {
@@ -278,6 +456,9 @@ func (f *frame) paintBuilding(pl placed) {
 
 // paintHouse stamps an ordinary house, in the quiet colours of background.
 func (f *frame) paintHouse(lot int) {
+	if f.st.Scale == System {
+		return
+	}
 	shape := f.st.Filler[roll(len(f.st.Filler), f.m.Seed, 67, int64(lot))]
 	f.stamp(shape, f.plan.Lots[lot], Thing{Kind: KindAmbient, Key: "houses"}, func(r rune) (rune, Paint) {
 		return r, f.ink(r, HNone).fade(170)

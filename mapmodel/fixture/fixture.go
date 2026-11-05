@@ -8,6 +8,7 @@ import (
 	"maps"
 	"sort"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/rules"
@@ -96,6 +97,9 @@ func State(o Options) game.GameState {
 		if da > ai {
 			continue
 		}
+		if d.OutputResource != "" && config.IsResourceEnded(d.OutputResource, o.Age) {
+			continue
+		}
 		bs := game.BuildingState{Name: d.Name, Category: d.Category, AgeKey: d.RequiredAge,
 			WorkerCapacity: d.WorkerCapacity, Unlocked: true}
 		if d.Category == "wonder" {
@@ -117,6 +121,14 @@ func State(o Options) game.GameState {
 			continue // not every player builds everything
 		}
 		legacy := d.LineageKey != "" && d.LineageTier < top[d.Line()] && d.Category != "storage"
+		if legacy {
+			if ai >= 17 && da < 17 {
+				continue
+			}
+			if da < ai-2 {
+				continue
+			}
+		}
 		n := 2 + int(h(k, 2)%9)
 		if da == ai {
 			n = 1 + int(h(k, 3)%6)
@@ -156,6 +168,9 @@ func State(o Options) game.GameState {
 
 	for i, r := range set.Resources() {
 		if ageIdx[r.Age] > ai {
+			continue
+		}
+		if config.IsResourceEnded(r.Key, o.Age) {
 			continue
 		}
 		scale := r.BaseStorage * float64(10+ai*20) // what an age's stock is measured against here

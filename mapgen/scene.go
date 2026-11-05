@@ -14,11 +14,16 @@ type Scene struct {
 	Grid    *Grid
 	Centre  Pt
 	Bounds  Rect // the town: its parcels, plots and laid roads
-	Fill    bool // the overview may scale in fractions, to fill the window (the star map)
+	Fill    bool // the overview may scale in fractions, to fill the window (space scales)
 	Targets []Pt // buildings and wonders, nearest the square first
 	// Districts are the building lines that have something standing, in the
 	// order of the legend.
-	Districts []District
+	Districts  []District
+	SpaceCell  func(wx, wy int) Cell
+	GroundCell func(wx, wy int) Cell
+	Scale      Scale
+	Anim       int
+	Seed       int64
 }
 
 // Moment is when and how a picture is drawn: the animation frame, the frame
@@ -59,7 +64,16 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	if f.st.Scale == Stars {
 		c = f.plan.territoryCentre() // the camera starts on the town, not the core
 	}
-	return &Scene{Grid: f.g, Centre: c, Bounds: bounds, Fill: f.st.Scale == Stars, Targets: f.targets, Districts: f.districts()}
+	sc := &Scene{
+		Grid: f.g, Centre: c, Bounds: bounds, Fill: f.st.Scale >= Orbit, Targets: f.targets, Districts: f.districts(),
+		Scale: f.st.Scale, Anim: f.anim, Seed: f.m.Seed,
+	}
+	if f.st.Scale >= Orbit {
+		sc.SpaceCell = f.spaceCellFunc()
+	} else {
+		sc.GroundCell = f.groundCellFunc()
+	}
+	return sc
 }
 
 // starFrame is how much of the galaxy's reach the overview frames, in percent:
@@ -69,6 +83,9 @@ const starFrame = 84
 // bounds is the box round everything the town has laid or built, with a
 // margin.
 func (f *frame) bounds() Rect {
+	if f.st.Scale == System {
+		return Rect{X: 0, Y: 0, W: f.g.W, H: f.g.H}
+	}
 	x0, y0, x1, y1 := f.plan.Centre.X, f.plan.Centre.Y, f.plan.Centre.X, f.plan.Centre.Y
 	grow := func(r Rect) {
 		x0, y0, x1, y1 = min(x0, r.X), min(y0, r.Y), max(x1, r.X+r.W-1), max(y1, r.Y+r.H-1)
@@ -89,6 +106,18 @@ func (f *frame) bounds() Rect {
 	}
 	if f.st.Pads > 0 && f.plan.Port.Rect.W > 0 {
 		grow(f.plan.Port.Rect)
+	}
+	if f.st.Scale == Orbit {
+		grow(Rect{f.plan.Centre.X - discRX, f.plan.Centre.Y - discRY, 2*discRX + 1, 2*discRY + 1})
+		maxRY := orbitSpec.rings[len(orbitSpec.rings)-1]
+		maxRX := (maxRY * 25) / 10
+		grow(Rect{f.plan.Centre.X - maxRX, f.plan.Centre.Y - maxRY, 2*maxRX + 1, 2*maxRY + 1})
+	}
+	if f.st.Scale == System {
+		grow(Rect{f.plan.Centre.X - sunRX, f.plan.Centre.Y - sunRY, 2*sunRX + 1, 2*sunRY + 1})
+		maxRY := systemSpec.rings[len(systemSpec.rings)-1]
+		maxRX := (maxRY * 25) / 10
+		grow(Rect{f.plan.Centre.X - maxRX, f.plan.Centre.Y - maxRY, 2*maxRX + 1, 2*maxRY + 1})
 	}
 	if f.st.Scale == Stars { // the body of the galaxy is the map, and all the territory
 		r := f.plan.Galaxy.reach()

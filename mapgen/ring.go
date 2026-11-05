@@ -23,7 +23,10 @@ type ringSpec struct {
 // included) round to the bottom (not included), one step at a time so every
 // cell touches the one before: along a row, then up or down to the next.
 func halfRing(cx, cy, ry, side int) []Pt {
-	rx := 2 * ry
+	rx := (ry * 237) / 100
+	if rx > cx-4 {
+		rx = cx - 4
+	}
 	var upper []Pt
 	height := ry
 	for dx := 1; dx <= rx; dx++ {
@@ -45,13 +48,17 @@ func ringOf(road int) int { return (road - 2) / 2 }
 
 // newRingPlan lays out the hub, the spoke and the rings, and no parcels yet.
 func newRingPlan(seed int64, sp ringSpec, scale Scale) *planner {
-	b := newPlanner(seed)
+	gw, gh := worldW, worldH
+	if scale == System {
+		gw, gh = SystemW, SystemH
+	}
+	b := newPlannerSized(seed, gw, gh)
 	p := b.plan
 	p.Scale, p.Centre = scale, Pt{sp.cx, sp.cy}
 	hub := Pt{sp.cx, sp.cy - sp.hub - 1}
 	p.Roads = []Road{{Cells: []Pt{hub}, Parent: -1}}
 	spoke := Road{Parent: 0, Tier: 1}
-	for y := hub.Y - 1; y >= sp.cy-sp.rings[len(sp.rings)-1]-1; y-- {
+	for y := hub.Y - 1; y >= max(0, sp.cy-sp.rings[len(sp.rings)-1]); y-- {
 		spoke.Cells = append(spoke.Cells, Pt{sp.cx, y})
 	}
 	p.Roads = append(p.Roads, spoke)
@@ -62,7 +69,11 @@ func newRingPlan(seed int64, sp ringSpec, scale Scale) *planner {
 	for _, ry := range sp.rings {
 		crossing := hub.Y - 1 - (sp.cy - ry) // the spoke cell on the ring's top
 		for _, side := range []int{1, -1} {
-			road := Road{Cells: halfRing(sp.cx, sp.cy, ry, side), Parent: 1, From: crossing}
+			cells := halfRing(sp.cx, sp.cy, ry, side)
+			if side == 1 {
+				cells = append(cells, Pt{sp.cx, sp.cy + ry})
+			}
+			road := Road{Cells: cells, Parent: 1, From: crossing}
 			for _, c := range road.Cells {
 				b.claimRoad(c, len(p.Roads))
 			}
@@ -79,9 +90,9 @@ func (b *planner) room(r Rect, ring int) bool {
 	ok := true
 	r.cells(func(x, y int) {
 		switch {
-		case !inWorld(x, y) || b.claim[at(x, y)] == lotCell:
+		case !b.in(x, y) || b.claim[b.at(x, y)] == lotCell:
 			ok = false
-		case b.claim[at(x, y)] == roadCell && (b.roadOf[at(x, y)] < 2 || ringOf(b.roadOf[at(x, y)]) != ring):
+		case b.claim[b.at(x, y)] == roadCell && (b.roadOf[b.at(x, y)] < 2 || ringOf(b.roadOf[b.at(x, y)]) != ring):
 			ok = false
 		}
 	})
@@ -112,18 +123,26 @@ func (b *planner) cutRingLots(seed int64, cat *mapmodel.Catalog, sp ringSpec) {
 }
 
 // plotBesideRing keeps a wonder's ground just outside a ring, at its east
-// end, for the wonder of an age.
+// end (or west end if east is off-world), for the wonder of an age.
 func (b *planner) plotBesideRing(age, ring int) {
 	p := b.plan
-	road := 2 + 2*ring // the east half
-	for i, c := range p.Roads[road].Cells {
-		if c.Y == p.Centre.Y {
-			rect := Rect{c.X + 1, c.Y - plotH/2, plotW, plotH}
-			if b.free2(rect) {
-				b.take(rect)
-				p.Plots[age] = Lot{Rect: rect, Door: c, Road: road, At: i}
+	for r := ring; r >= 0; r-- {
+		for _, road := range []int{2 + 2*r, 2 + 2*r + 1} {
+			cells := p.Roads[road].Cells
+			for i, c := range cells {
+				for _, rect := range []Rect{
+					{c.X + 1, c.Y - plotH/2, plotW, plotH},
+					{c.X - plotW, c.Y - plotH/2, plotW, plotH},
+					{c.X - plotW/2, c.Y + 1, plotW, plotH},
+					{c.X - plotW/2, c.Y - plotH, plotW, plotH},
+				} {
+					if b.free2(rect) {
+						b.take(rect)
+						p.Plots[age] = Lot{Rect: rect, Door: c, Road: road, At: i}
+						return
+					}
+				}
 			}
-			return
 		}
 	}
 }
@@ -132,7 +151,7 @@ func (b *planner) plotBesideRing(age, ring int) {
 func (b *planner) free2(r Rect) bool {
 	ok := true
 	r.cells(func(x, y int) {
-		if !inWorld(x, y) || b.claim[at(x, y)] != freeCell {
+		if !b.in(x, y) || b.claim[b.at(x, y)] != freeCell {
 			ok = false
 		}
 	})
