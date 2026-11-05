@@ -74,6 +74,9 @@ func TestVisitorDrawsAtEveryScale(t *testing.T) {
 			m := model(state(age, seed, noon))
 			visitor, alien := firstOf(t, m)
 			for form, sg := range map[string]mapmodel.Sighting{"visitor": visitor, "alien": alien} {
+				if form == "visitor" && gen.frame(m, 0).st.Scale > City { // space has no visiting ships
+					continue
+				}
 				seen := 0
 				for pct := 0; pct < 100; pct += 5 {
 					seen = max(seen, len(visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: sg.Start + sg.Frames*pct/100}).Grid)))
@@ -162,7 +165,7 @@ func TestVisitorShinesAtNight(t *testing.T) {
 
 // TestVisitorArrivesAlongARoad: on the land a visitor starts at the far end
 // of a trunk road, walks its cells in to stopAt from the square, and stays
-// there; in space a ship starts on an edge of the map and flies in.
+// there; space has no visiting ship.
 func TestVisitorArrivesAlongARoad(t *testing.T) {
 	for _, age := range visitAges {
 		var gen Generator
@@ -171,12 +174,9 @@ func TestVisitorArrivesAlongARoad(t *testing.T) {
 		first := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: visitor.Start}).Grid)
 		last := visitorCells(gen.DrawAt(m, Moment{Anim: 0, Visit: visitor.Start + visitor.Frames - 1}).Grid)
 		f := gen.frame(m, 0)
-		if f.st.Scale > City { // a ship is a hull and its glow, a few cells
-			if len(first) == 0 || len(first) > 3 || len(last) == 0 || len(last) > 3 {
-				t.Fatalf("%s: a ship is %d cells at the start and %d at the end of its visit", age, len(first), len(last))
-			}
-			if x := first[0].X; x > 1 && x < worldW-2 {
-				t.Errorf("%s: the ship starts at %v, not on an edge of the map", age, first[0])
+		if f.st.Scale > City { // no ships in space: only the saucer calls
+			if len(first) != 0 || len(last) != 0 {
+				t.Fatalf("%s: a visiting ship is drawn", age)
 			}
 			continue
 		}

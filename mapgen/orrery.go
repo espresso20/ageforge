@@ -84,12 +84,6 @@ func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int,
 		y16[i] = r.sy + rY[i]*sin4096(ang)/32
 		planets[i] = Pt{floorDiv(x16[i], 2*pxUnit), floorDiv(y16[i], 2*pxUnit)}
 	}
-	bodies := make([]shipBody, 8)
-	for i := range bodies {
-		bodies[i] = shipBody{x16[i], y16[i], r.look.planet[i]}
-	}
-	// the ships first, so the sun and the planets lie over them
-	r.pix.Ships(s.Seed, s.Anim, bodies, []shipBody{{r.sx, r.sy, r.look.sun}}, nil)
 	r.sun(sunOwn)
 	for i := 0; i < 8; i++ {
 		r.planet(i, x16[i], y16[i])
@@ -104,6 +98,11 @@ func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int,
 	r.pix.Disc(px, py, r.look.pluto, plutoOwn, func(nx, ny int) Paint { return P(HAmber, 230) })
 
 	r.comet(maxRY)
+	// the station by the home world: a fixed hull pixel with a blinking light
+	stOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 6)
+	sx, sy := floorDiv(x16[planetEarth]-r.look.planet[planetEarth]-3*pxUnit, pxUnit), floorDiv(y16[planetEarth], pxUnit)
+	r.pix.Set(sx, sy, P(HSteel, 255), stOwn)
+	r.pix.light(s.Seed, s.Anim, 0, sx, sy-1, HRed, stOwn)
 	r.pix.Resolve(o.Grid)
 	r.pix.Release()
 
@@ -128,11 +127,6 @@ func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int,
 		}
 	}
 	across := func(i int) int { return (r.look.planet[i] + 2*pxUnit - 1) / (2 * pxUnit) } // cells from centre to rim
-	if p := planets[planetEarth]; o.Grid.in(p.X-across(planetEarth)-1, p.Y) {
-		x := p.X - across(planetEarth) - 1
-		o.Grid.paint(x, p.Y, Cell{R: '✜', Fg: P(HCyan, 255), Bg: o.Grid.At(x, p.Y).Bg})
-		o.Grid.mark(x, p.Y, Thing{Kind: KindBuilding, Key: "space_station"})
-	}
 	if p := planets[planetMars]; o.Grid.in(p.X+across(planetMars)+1, p.Y) {
 		x := p.X + across(planetMars) + 1
 		o.Grid.paint(x, p.Y, Cell{R: '◈', Fg: P(HAmber, 240), Bg: o.Grid.At(x, p.Y).Bg})

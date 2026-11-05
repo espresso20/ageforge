@@ -131,10 +131,7 @@ func (s *Scene) mostImportant(x0, y0, x1, y1 int) Pt {
 			foundInGrid = true
 			th := s.Grid.Things[s.Grid.Hit[y*s.Grid.W+x]]
 			sal := salience[th.Kind]
-			if th.Kind == KindTerrain && (th.Key == "planet" || th.Key == "home" || th.Key == "sun") {
-				sal = 4
-			}
-			if s.SpaceCell != nil && th.Kind == KindAgent {
+			if th.Kind == KindTerrain && (th.Key == "planet" || th.Key == "home" || th.Key == "sun" || th.Key == "space_station") {
 				sal = 4
 			}
 			if th.Kind == KindBuilding && th.Ruin {
@@ -340,7 +337,7 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	beltRX := (beltRY * 230) / 100
 
 	// 3. The system itself, drawn in quadrant blocks (orrery.go): glow, orbit
-	// lines, belt, sun, ships, planets with their moons, Pluto and the comet.
+	// lines, belt, sun, planets with their moons, Pluto and the comet.
 	s.paintOrrery(o, mode, cx, cy, maxRY, rX, rY, beltRX, beltRY)
 
 	// 7. Outer Megastructures: Warp Gate

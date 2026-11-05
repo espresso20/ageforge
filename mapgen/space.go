@@ -15,7 +15,6 @@ func (f *frame) paintSpace() {
 	f.paintTracks()
 	if f.st.Scale == Orbit {
 		f.paintHomePlanet()
-		f.paintOrbitShips()
 	}
 }
 
@@ -228,18 +227,15 @@ func starsSpaceCell(seed int64, anim int, close bool, wx, wy int) Cell {
 	return c
 }
 
-// paintOrbitShips flies the pixel ships over the home planet's disc: between
-// the planet and the two edges of the picture, behind the planet where they
-// pass it.
-func (f *frame) paintOrbitShips() {
+// paintOrbitStation sets one station beside the home planet: a fixed hull
+// pixel with a blinking light above it.
+func (f *frame) paintOrbitStation() {
 	c, seed := f.plan.Centre, f.m.Seed
-	cx, cy := (2*c.X+1)*pxUnit, (2*c.Y+1)*pxUnit
-	bodies := []shipBody{{cx, cy, 2 * discRX * pxUnit}}
-	for _, side := range []int{-1, 1} {
-		bodies = append(bodies, shipBody{cx + side*(2*discRX+60)*pxUnit, cy + (roll(21, seed, 5212, int64(side))-10)*pxUnit, 1})
-	}
+	x, y := (2*c.X+1)-2*discRX-10, (2*c.Y+1)-8
 	pix := NewPixels(f.g.W, f.g.H)
-	pix.Ships(seed, f.anim, bodies, nil, nil)
+	own := pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 6)
+	pix.Set(x, y, P(HSteel, 255), own)
+	pix.light(seed, f.anim, 0, x, y-1, HRed, own)
 	pix.Resolve(f.g)
 	pix.Release()
 }

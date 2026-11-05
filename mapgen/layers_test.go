@@ -93,7 +93,7 @@ func TestScatterKeepsApart(t *testing.T) {
 }
 
 // TestTrafficStaysOnRoads: every agent of the ground is on a laid road (space
-// has no roads; its ships fly free), and a frame draws the same whether or not
+// has none: stations blink instead), and a frame draws the same whether or not
 // the ones before it were drawn.
 func TestTrafficStaysOnRoads(t *testing.T) {
 	for _, age := range testAges {
@@ -110,7 +110,7 @@ func TestTrafficStaysOnRoads(t *testing.T) {
 				}
 			}
 		}
-		if agents < 3 {
+		if f.st.Scale < Orbit && agents < 3 {
 			t.Errorf("%s: only %d agents", age, agents)
 		}
 		var warm Generator

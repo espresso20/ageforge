@@ -8,7 +8,11 @@ import "unicode/utf8"
 // laid road out to its end and back.
 
 func (f *frame) paintAgents() {
-	if f.st.Scale == Stars { // the sky has its own life; no ships on the star map
+	if f.st.Scale == Orbit { // no traffic in orbit; one station blinks by the planet
+		f.paintOrbitStation()
+		return
+	}
+	if f.st.Scale == Stars { // the sky has its own life
 		return
 	}
 	var routes []int
