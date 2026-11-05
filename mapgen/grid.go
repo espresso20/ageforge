@@ -111,13 +111,18 @@ func (g *Grid) mark(x, y int, t Thing) {
 	if !g.in(x, y) {
 		return
 	}
+	g.Hit[y*g.W+x] = g.thingIndex(t)
+}
+
+// thingIndex is the number a thing goes by in Hit, added on first use.
+func (g *Grid) thingIndex(t Thing) uint16 {
 	i, ok := g.index[t]
 	if !ok {
 		i = uint16(len(g.Things))
 		g.Things = append(g.Things, t)
 		g.index[t] = i
 	}
-	g.Hit[y*g.W+x] = i
+	return i
 }
 
 // Window copies the w by h part of g whose top-left corner is (x0, y0).
