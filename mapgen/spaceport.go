@@ -154,7 +154,7 @@ func (f *frame) paintSpacePort() {
 	pp := f.port()
 	pix := NewPixels(f.g.W, f.g.H)
 	shade := lighting(seed)
-	earth := shipBody{pp.cx * pxUnit, pp.cy * pxUnit, pp.R * pxUnit}
+	earthX, earthY, earthR := pp.cx*pxUnit, pp.cy*pxUnit, pp.R*pxUnit
 
 	ring := func(front bool) {
 		n := 4 * (pp.rx + pp.ry)
@@ -165,9 +165,16 @@ func (f *frame) paintSpacePort() {
 				}
 			}
 		}
-		for _, m := range pp.mods {
+		for i, m := range pp.mods {
 			if m.front == front {
-				pix.module(m, pix.Owner(Thing{Kind: KindBuilding, Key: m.b.Key, Lineage: m.b.Lineage, Count: m.b.Count}, 5))
+				own := pix.Owner(Thing{Kind: KindBuilding, Key: m.b.Key, Lineage: m.b.Lineage, Count: m.b.Count}, 5)
+				pix.module(m, own)
+				switch h := m.m.h + (m.tier+1)/2; m.m.shape { // a beacon on each spire, a light at each dock's tip
+				case shSpire:
+					pix.light(seed, anim, 10+i, m.x, m.y-h, HRed, own)
+				case shDock:
+					pix.light(seed, anim, 10+i, m.x-(m.m.w+(m.tier+1)/2)/2, m.y-1, HLife, own)
+				}
 			}
 		}
 	}
@@ -184,34 +191,21 @@ func (f *frame) paintSpacePort() {
 
 	moon(false)
 	ring(false)
-	pix.earth(seed, anim, earth.x, earth.y, earth.r, shade)
+	pix.earth(seed, anim, earthX, earthY, earthR, shade)
 	ring(true)
 	moon(true)
 
-	// the warp gate stands on the ring, and the ships fly through it
-	var docks []shipBody
-	for _, m := range pp.mods {
-		if m.m.shape == shDock {
-			docks = append(docks, shipBody{m.x * pxUnit, m.y * pxUnit, 1})
-		}
-	}
+	// the warp gate stands on the ring, a few lights round it
 	if pp.gate {
 		x, y, _ := pp.at(pp.gateAt*turn/outerSlots, 100)
 		own := pix.Owner(Thing{Kind: KindBuilding, Key: "warp_gate"}, 7)
 		pix.Ellipse(x*pxUnit, y*pxUnit, 5*pxUnit, 9*pxUnit, P(HCyan, 255), own, 0, 0)
 		pix.Ellipse(x*pxUnit, y*pxUnit, 4*pxUnit, 7*pxUnit, P(HNeon, 220), own, 0, 0)
 		pix.Set(x, y, P(HWhite, 255), own)
-		docks = append(docks, shipBody{x * pxUnit, y * pxUnit, 1})
-	}
-	// a few ships between a berth or the gate and the edge of the picture
-	if len(docks) > 0 {
-		for i := 0; i < shipCount(seed); i++ {
-			side := 2*roll(2, seed, 5309, int64(i)) - 1
-			leg := []shipBody{docks[roll(len(docks), seed, 5310, int64(i))], {(pp.cx + side*(pp.rx+60)) * pxUnit, (pp.cy + (roll(31, seed, 5311, int64(i)) - 15)) * pxUnit, 1}}
-			if k, x, y, hx, hy, ok := shipPose(seed, anim, i, leg); ok {
-				pix.Ship(k, x, y, hx, hy, pix.Owner(Thing{Kind: KindAgent, Key: k.key}, 4), func(px, py int) bool { return earth.covers(px, py) })
-			}
-		}
+		pix.light(seed, anim, 1, x, y-9, HRed, own)
+		pix.light(seed, anim, 2, x, y+9, HLife, own)
+		pix.light(seed, anim, 3, x-5, y, HWhite, own)
+		pix.light(seed, anim, 4, x+5, y, HWhite, own)
 	}
 
 	for _, m := range pp.mods {

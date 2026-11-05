@@ -7,7 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
-- **The space port at the deepest zoom.** In the space ages the district zoom shows your buildings as modules on a ring city around Earth, with ships docking and leaving and the warp gate on the ring once built. Every planet now shows its moons, and the Moon reads as a satellite.
+- **The space port at the deepest zoom.** In the space ages the district zoom shows your buildings as modules on a ring city around Earth, with blinking lights and the warp gate on the ring once built. Every planet now shows its moons, and the Moon reads as a satellite.
 - **A Sol-system orrery on the space Map.** From the Space Age the Map draws a procedural Sol system: the Sun, the planets on their orbits and the asteroid belt. A new inner zoom, from the Sun out to the asteroid belt, sits between the whole-system view and the close-up, and the Cosmos view zooms out past it. The cursor names the new space objects. The space colours, light mode and wide terminals are tuned. Buildings of ended resources and far legacy ground buildings are left off the orbits.
 - **A Settings page in the main menu.** Settings (`s`) takes the place of Themes. It lists Themes, VibeMode, Map glyphs, Motion and Minimap with their values; `Enter` or `←` and `→` change one, it saves at once like the command, and `Esc` goes back. The commands work as before.
 - **Discord status.** While the Discord desktop app is running, your profile shows "Playing AgeForge" with your age, year, town and epoch. It talks only to the Discord app on your machine, and a Discord status row on the Settings page turns it off.
@@ -28,6 +28,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Space scenes drop the moving ships; stations blink instead.
 - **Resource rows get a bar and a trend line.** Each ordinary resource in the Resources box shows how big its stock is on a log-scale bar, and a short line of its last few minutes; a narrow box drops the line, then the bar.
 - **The epoch card is a picture.** `c` on the Epoch screen (and `epoch card`) now copies a full-color picture of the screen, saved as `epoch-card.png`, in place of the plain-text card.
 - **Deep time and rounded years.** Primitive now begins 100 million years ago and the deep past shows a geologic epoch (Late Cretaceous to Pleistocene) in place of a year; later years are rounded, then read as a decade or a century.

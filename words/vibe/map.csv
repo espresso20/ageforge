@@ -245,21 +245,6 @@ map.mover.car.line.02,"School run in progress, mom taxi era."
 map.mover.hovercar.title,Float Whip
 map.mover.hovercar.line.01,"Skimming over the street, wheels are so last era."
 map.mover.hovercar.line.02,"Cutting corners like traffic laws are a suggestion, menace behavior."
-map.mover.shuttle.title,Orbit Speedrun
-map.mover.shuttle.line.01,"Climbing to orbit, this shuttle is ascending fr."
-map.mover.shuttle.line.02,"Outbound and not looking back, the shuttle has left the chat."
-map.mover.generation_ship.title,Multigen Lore
-map.mover.generation_ship.line.01,"The crew's grandkids will be the ones who land, generational side quest."
-map.mover.generation_ship.line.02,"A whole town packed into one hull, the cruise is their entire personality."
-map.mover.starship.title,Warp Core
-map.mover.starship.line.01,"Spooling up for warp, the starship is about to send it."
-map.mover.starship.line.02,"Home from the far side of the arm, big trip, big W."
-map.mover.phase_ship.title,Phase Glitch
-map.mover.phase_ship.line.01,"In several places at once, the phase ship is doing too much."
-map.mover.phase_ship.line.02,"It arrived before it left, the timeline is in shambles."
-map.mover.mote.title,Tiny Aura
-map.mover.mote.line.01,"Drifting home with zero plan, this mote of light is a whole mood."
-map.mover.mote.line.02,"This mote of light used to be a whole city, the lore goes deep."
 map.sky.SkyOrbit.housing,crash pod
 map.sky.SkyOrbit.food,snack garden
 map.sky.SkyOrbit.storage,stash pod

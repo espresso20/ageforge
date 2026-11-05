@@ -1,9 +1,9 @@
 package mapgen
 
 // The close-up of the space ages: a calm Earth with its Moon, a few stations
-// and a few ships passing, drawn in quadrant blocks (quad.go). Nothing of the
+// with blinking lights, drawn in quadrant blocks (quad.go). Nothing of the
 // town stands here; the town is at the space port, one zoom in. Everything
-// about the picture (sizes, kinds, phases, the ships) comes from the seed.
+// about the picture (sizes, kinds, phases, the lights) comes from the seed.
 
 // station is one kind of station: a disc, a truss with panels, or a cross.
 type station struct {
@@ -113,7 +113,15 @@ func (f *frame) paintEarthSystem() {
 			rx := R + (k.orbit+roll(5, seed, 5208, int64(i)))*pxUnit
 			x, y, behind := at(roll(turn, seed, 5209, int64(i))+anim/k.speed*16, rx, 40+roll(60, seed, 5210, int64(i)))
 			if behind != front {
-				pix.station(k, floorDiv(x, pxUnit), floorDiv(y, pxUnit), stationOwn)
+				x, y = floorDiv(x, pxUnit), floorDiv(y, pxUnit)
+				pix.station(k, x, y, stationOwn)
+				// nav lights at the tips, and a white strobe on the largest
+				tip := [3]int{k.size - 1, k.size, k.size / 2 * 2}[k.shape]
+				pix.light(seed, anim, 4*i, x-tip, y, HRed, stationOwn)
+				pix.light(seed, anim, 4*i+1, x+tip, y, HLife, stationOwn)
+				if k.size == 5 {
+					pix.light(seed, anim, 4*i+2, x, y-2, HWhite, stationOwn)
+				}
 			}
 		}
 	}
@@ -127,12 +135,6 @@ func (f *frame) paintEarthSystem() {
 		moon()
 	}
 	drawStations(true)
-
-	bodies := []shipBody{{sx, sy, R}, {mx, my, moonR}}
-	for _, side := range []int{-1, 1} { // the edges of the picture
-		bodies = append(bodies, shipBody{sx + side*88*pxUnit, sy + (roll(21, seed, 5211, int64(side))-10)*pxUnit, 1})
-	}
-	pix.Ships(seed, anim, bodies, nil, nil)
 
 	pix.Resolve(f.g)
 	pix.Release()

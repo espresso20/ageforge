@@ -43,12 +43,6 @@ func TestEverythingInspectsAsItself(t *testing.T) {
 	}
 }
 
-// starTraffic are the movers of the star map, which has none drawn since its
-// lanes became line work.
-// A generation ship is one of the kinds a seed may roll for the ships of space,
-// so a given seed need not draw one.
-var starTraffic = map[string]bool{"starship": true, "phase_ship": true, "mote": true, "generation_ship": true}
-
 // TestTrafficInspectsAsWhatItIs: a cart, a car, a ship, a drone: the traffic of
 // every age has a name of its own and a line, not the road's.
 func TestTrafficInspectsAsWhatItIs(t *testing.T) {
@@ -75,14 +69,11 @@ func TestTrafficInspectsAsWhatItIs(t *testing.T) {
 				seen[th.Key] = true
 			}
 		}
-		if agents == 0 && age != "galactic_age" && age != "quantum_age" && age != "transcendent_age" { // the star map has lanes, not traffic
+		if agents == 0 && ai < m.Catalog.SpaceAge() { // space has stations that blink, not traffic
 			t.Errorf("%s: no traffic to inspect", age)
 		}
 	}
 	for key := range movers {
-		if starTraffic[key] {
-			continue
-		}
 		if !seen[key] {
 			t.Errorf("no age draws a %s", key)
 		}

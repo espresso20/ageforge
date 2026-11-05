@@ -16,6 +16,10 @@ import (
 // orbit and the solar system. The star map's ages schedule none.
 var visitAges = []string{"bronze_age", "modern_age", "space_age", "interstellar_age"}
 
+// inSpace says whether the model is in a space age, which has no visiting
+// ship: only the alien's saucer calls.
+func inSpace(m *mapmodel.Model) bool { return m.AgeIdx >= m.Catalog.SpaceAge() }
+
 // visitorAt finds a visit of the model whose visitor is of the given form
 // ("visitor" or "alien") and returns the frame it is at its middle, and the
 // cells it is drawn in.
@@ -80,6 +84,9 @@ func TestVisitorInspectsAsTheVisitor(t *testing.T) {
 	for _, age := range visitAges {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 3})
 		for form, title := range titles {
+			if form == "visitor" && inSpace(m) {
+				continue
+			}
 			frame, cells := visitorAt(t, m, form)
 			v := New().(*view)
 			f := Frame{Model: m, Anim: frame, Clock: frame}
@@ -103,6 +110,9 @@ func TestVisitorIsReachableByTheKeys(t *testing.T) {
 	for _, age := range visitAges {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 3})
 		for _, form := range []string{"visitor", "alien"} {
+			if form == "visitor" && inSpace(m) {
+				continue
+			}
 			frame, cells := visitorAt(t, m, form)
 			f := Frame{Model: m, Anim: frame, Clock: frame}
 			for _, size := range []struct{ w, h int }{{160, 48}, {80, 24}} {
@@ -158,6 +168,9 @@ func TestVisitorChangesThePictureAtEverySize(t *testing.T) {
 	for _, age := range visitAges {
 		m := modelFor(t, fixture.Options{Age: age, Seed: 3})
 		for _, form := range []string{"visitor", "alien"} {
+			if form == "visitor" && inSpace(m) {
+				continue
+			}
 			frame, spots := visitorAt(t, m, form)
 			for _, sz := range sizes {
 				// the cursor stands on the visitor, so the close-up has it in view
@@ -236,7 +249,7 @@ func TestVisitorNeverCoversTheCursor(t *testing.T) {
 func TestVisitorHoldsStillWithMotionOff(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	m := modelFor(t, fixture.Options{Age: "space_age", Seed: 3})
-	frame, _ := visitorAt(t, m, "visitor")
+	frame, _ := visitorAt(t, m, "alien")
 	sg, _ := m.SightingAt(frame)
 	var first []tcell.SimCell
 	for clock := sg.Start; clock < sg.Start+sg.Frames; clock += 9 {
