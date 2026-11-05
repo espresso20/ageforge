@@ -70,18 +70,24 @@ func TestCursorIsAHighlightedCell(t *testing.T) {
 				before, w, _ := plain.GetContents()
 				plain.Fini()
 				lit.Fini()
-				if len(cells) != 1 {
-					t.Errorf("%s, %s world %v: the cursor changes %d cells, want 1", th.Key, age, world, len(cells))
+				// one highlighted cell, or on a body in space its four corner brackets
+				if len(cells) != 1 && len(cells) != 4 {
+					t.Errorf("%s, %s world %v: the cursor changes %d cells, want 1 or 4", th.Key, age, world, len(cells))
 					continue
 				}
-				under := before[at[0][1]*w+at[0][0]]
-				if len(cells[0].Runes) == 0 || len(under.Runes) == 0 || cells[0].Runes[0] != under.Runes[0] {
-					t.Errorf("%s, %s world %v: the cursor hides the glyph beneath it", th.Key, age, world)
-				}
-				_, ground, _ := under.Style.Decompose()
-				_, fill, _ := cells[0].Style.Decompose()
-				if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < CursorFromGround || cr < CursorOverGround {
-					t.Errorf("%s, %s world %v: the cursor #%06x over the cell beneath it #%06x: distance %.3f, contrast %.2f", th.Key, age, world, fill.Hex(), ground.Hex(), d, cr)
+				for i, c := range cells {
+					under := before[at[i][1]*w+at[i][0]]
+					if len(cells) == 1 && (len(c.Runes) == 0 || len(under.Runes) == 0 || c.Runes[0] != under.Runes[0]) {
+						t.Errorf("%s, %s world %v: the cursor hides the glyph beneath it", th.Key, age, world)
+					}
+					_, ground, _ := under.Style.Decompose()
+					fill, bgFill, _ := c.Style.Decompose()
+					if len(cells) == 1 {
+						fill = bgFill // the cell wears its fill behind the glyph; the brackets wear it as ink
+					}
+					if d, cr := theme.Distance(fill, ground), theme.ContrastRatio(fill, ground); d < CursorFromGround || cr < CursorOverGround {
+						t.Errorf("%s, %s world %v: the cursor #%06x over the cell beneath it #%06x: distance %.3f, contrast %.2f", th.Key, age, world, fill.Hex(), ground.Hex(), d, cr)
+					}
 				}
 			}
 		}

@@ -73,8 +73,6 @@ func steer(v Style, f Frame, p mapgen.Pt, unit int) bool {
 	return false
 }
 
-func abs(v int) int { return max(v, -v) }
-
 // TestVisitorInspectsAsTheVisitor: on every scale the cursor on the visitor
 // names it with its own words and reports KindAlien, the visitor and the
 // alien's craft each with a title and a line of their own.
@@ -149,7 +147,26 @@ func TestVisitorIsReachableByTheKeys(t *testing.T) {
 						}
 					}
 				}
-				if !steer(v, f, target, unit) {
+				if inSpace(m) { // the arrows jump between bodies: head for the alien until on it
+					for i := 0; i < 60; i++ {
+						if in, ok := v.Inspect(f); ok && in.Kind == KindAlien {
+							break
+						}
+						at, _ := v.Pointer()
+						key := tcell.KeyRight
+						switch dx, dy := target.X-at.X, target.Y-at.Y; {
+						case abs(dx) >= abs(dy) && dx < 0:
+							key = tcell.KeyLeft
+						case abs(dx) < abs(dy) && dy < 0:
+							key = tcell.KeyUp
+						case abs(dx) < abs(dy):
+							key = tcell.KeyDown
+						}
+						v.HandleKey(tcell.NewEventKey(key, 0, tcell.ModNone), f)
+						scr := drawFrame(v, f, size.w, size.h, false)
+						scr.Fini()
+					}
+				} else if !steer(v, f, target, unit) {
 					t.Fatalf("%s %dx%d: the arrows never reach the %s at %v", age, size.w, size.h, form, target)
 				}
 				if in, ok := v.Inspect(f); !ok || in.Kind != KindAlien {

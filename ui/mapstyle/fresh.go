@@ -84,6 +84,9 @@ func (v *view) zoomTo(sc *mapgen.Scene, zoom int) {
 			zoom = zOverview
 		}
 	}
+	if sc != nil && sc.Grid != nil && sc.Grid.Space && !v.aim(sc, zoom) {
+		return
+	}
 	v.zoom, v.zoomSet, v.recentre = zoom, true, true
 	if zoom != zDistrict {
 		return
@@ -104,6 +107,65 @@ func (v *view) zoomTo(sc *mapgen.Scene, zoom int) {
 		}
 	}
 	v.visitDistrict(sc.Districts[best])
+}
+
+// planetShown is the planet the picture is a close-up of: 0 for the home
+// world, and anywhere but the close-up.
+func (v *view) planetShown() int {
+	if v.overview {
+		return 0
+	}
+	return v.planet
+}
+
+// aim settles which body a zoom in a space scene is on, before it happens.
+// Diving to the close-up lands on the planet under the cursor (the home world
+// when the cursor is on nothing); the sun, which has no close-up, and the
+// district of any planet but the home world, refuse. Going up, or between the
+// squeezed views, the cursor follows the body it was on. It reports whether
+// the zoom goes ahead.
+func (v *view) aim(sc *mapgen.Scene, to int) bool {
+	from := v.shownZoom()
+	th := homeThing
+	if from < zCloseUp {
+		th = v.thingUnder(sc)
+	} else if v.planet > 0 {
+		th = mapgen.PlanetThing(v.planet - 1)
+	}
+	i, planet := mapgen.PlanetOf(th)
+	switch {
+	case to >= zCloseUp && from < zCloseUp:
+		if th == sunThing {
+			return false
+		}
+		pl := 0
+		if planet && th.Key != "home" {
+			pl = i + 1
+		}
+		if pl > 0 && to > zCloseUp {
+			return false
+		}
+		v.planet, v.cur = pl, sc.Centre // the planet is drawn at the centre of the close-up
+	case to > zCloseUp && v.planet > 0:
+		return false
+	case to < zCloseUp:
+		v.planet = 0
+	}
+	if to < zCloseUp && (planet || th == sunThing) {
+		v.seek = th
+	}
+	return true
+}
+
+// thingUnder is the body the cursor is on, in the grid it is shown in; the
+// zero thing when it is on none.
+func (v *view) thingUnder(sc *mapgen.Scene) mapgen.Thing {
+	if g, x, y, ok := v.shownCell(sc); ok {
+		if b, ok := bodyAt(g, x, y, nil); ok {
+			return b.th
+		}
+	}
+	return mapgen.Thing{}
 }
 
 // visitDistrict frames a district: the cursor goes to its heart.
