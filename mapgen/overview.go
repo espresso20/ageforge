@@ -346,7 +346,7 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	// 7. Outer Megastructures: Warp Gate
 	warpRY := (maxRY * 115) / 100
 	warpY := cy + warpRY
-	if o.Grid.in(cx, warpY) {
+	if s.Gate && o.Grid.in(cx, warpY) {
 		if o.Grid.in(cx-1, warpY) {
 			o.Grid.paint(cx-1, warpY, Cell{R: '⫷', Fg: P(HCyan, 255), Bg: o.Grid.At(cx-1, warpY).Bg})
 			o.Grid.mark(cx-1, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})

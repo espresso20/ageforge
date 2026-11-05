@@ -102,3 +102,35 @@ func TestOverviewShipsAreNamed(t *testing.T) {
 		t.Error("no ship found in the overview")
 	}
 }
+
+// The Space Age overview flies pixel ships, and the Sol-system warp gate
+// stands only once the Warp Nexus is built.
+func TestOrbitShipsAndGate(t *testing.T) {
+	m := model(state("space_age", 7, noon))
+	sc := (&Generator{}).Draw(m, 100)
+	ships := 0
+	for _, h := range sc.Grid.Hit {
+		if sc.Grid.Things[h].Kind == KindAgent {
+			ships++
+		}
+	}
+	if ships == 0 {
+		t.Error("space age: no pixel ships")
+	}
+	for _, built := range []bool{false, true} {
+		sm := model(state("interstellar_age", 7, noon))
+		for i := range sm.Wonders {
+			if sm.Wonders[i].Key == gateBuilding {
+				sm.Wonders[i].Built = built
+			}
+		}
+		ov := (&Generator{}).Draw(sm, 40).Overview(120, 40)
+		gate := false
+		for _, h := range ov.Grid.Hit {
+			gate = gate || ov.Grid.Things[h].Key == "warp_gate"
+		}
+		if gate != built {
+			t.Errorf("warp nexus built=%v: gate drawn=%v", built, gate)
+		}
+	}
+}
