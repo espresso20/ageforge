@@ -40,6 +40,7 @@ type Moment struct {
 	Fresh    bool
 	District string
 	Close    bool // finer than the overview: the star map shows its territory on plain dark space
+	Planet   int  // the planet a close look is on: 1 Mercury to 8 Neptune, 0 the home world
 }
 
 // Draw draws the whole world at animation frame anim.
@@ -50,7 +51,7 @@ func (gen *Generator) Draw(m *mapmodel.Model, anim int) *Scene {
 // DrawAt draws the whole world at a moment.
 func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	f := gen.frame(m, at.Anim)
-	f.visit, f.fresh, f.district, f.close = at.Visit, at.Fresh, at.District, at.Close
+	f.visit, f.fresh, f.district, f.close, f.planet = at.Visit, at.Fresh, at.District, at.Close, at.Planet
 	f.clock = at.Clock
 	f.draw()
 	c := f.plan.Centre

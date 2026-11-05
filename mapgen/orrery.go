@@ -33,6 +33,25 @@ const (
 	planetNeptune
 )
 
+// PlanetThing is the thing the orrery draws planet i as (0 Mercury to 7
+// Neptune): the home world is "home", the others "planet" numbered by Ref.
+func PlanetThing(i int) Thing {
+	if i == planetEarth {
+		return Thing{Kind: KindTerrain, Key: "home"}
+	}
+	return Thing{Kind: KindTerrain, Key: "planet", Ref: i + 1}
+}
+
+// PlanetOf says which planet a thing is; ok is false for anything else.
+func PlanetOf(th Thing) (i int, ok bool) {
+	for i := 0; i < len(moonCount); i++ {
+		if PlanetThing(i) == th {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
 // orrery is one picture being drawn.
 type orrery struct {
 	s      *Scene
@@ -58,7 +77,7 @@ func (s *Scene) paintOrrery(o *Overview, mode SystemViewMode, cx, cy, maxRY int,
 	r.sx, r.sy = (2*cx+1)*pxUnit, (2*cy+1)*pxUnit
 
 	sunOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "sun"}, 4)
-	glowOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "sun"}, 1)
+	glowOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "sun", Ref: 1}, 1) // Ref 1: the halo, not the sun itself
 	orbitOwn := r.pix.Owner(Thing{Kind: KindRoad, Key: "orbit"}, 2)
 
 	// the sun's glow first, so everything else lies over it
@@ -184,11 +203,7 @@ func (r *orrery) comet(maxRY int) {
 
 // planet draws one planet (and what travels with it) centred at (x, y).
 func (r *orrery) planet(i, x, y int) {
-	key := "planet"
-	if i == planetEarth {
-		key = "home"
-	}
-	own := r.pix.Owner(Thing{Kind: KindTerrain, Key: key}, 5)
+	own := r.pix.Owner(PlanetThing(i), 5)
 	R := r.look.planet[i]
 	// the light comes from the sun
 	lx, ly := r.sx-x, 2*(r.sy-y)
@@ -196,10 +211,10 @@ func (r *orrery) planet(i, x, y int) {
 	lx, ly = lx*256/l, ly*256/l
 
 	if i == planetSaturn { // the back of the ring, behind the planet
-		r.satRing(x, y, R, own, -1)
+		r.pix.satRing(x, y, R, own, -1)
 	}
 	r.pix.Disc(x, y, R, own, func(nx, ny int) Paint {
-		c := r.surface(i, nx, ny)
+		c := surface(r.s.Seed, i, nx, ny, 4, 0)
 		z := isqrt(max(0, 65536-nx*nx-ny*ny))
 		dot := (nx*lx+ny*ly)/256 + z*90/256
 		lvl := 256
@@ -212,7 +227,7 @@ func (r *orrery) planet(i, x, y int) {
 		return Paint{c.Hue, uint8(int(c.Weight) * lvl >> 8)}
 	})
 	if i == planetSaturn { // and the front of it, across the planet
-		r.satRing(x, y, R, own, 1)
+		r.pix.satRing(x, y, R, own, 1)
 	}
 	if r.mode == SystemViewCosmos {
 		return
@@ -233,14 +248,15 @@ var moonTone = [...]Paint{P(HWhite, 235), P(HSun, 255), P(HRock, 255), P(HSand, 
 
 // satRing draws Saturn's ring: two thin lines round the planet, the half
 // behind it (side -1) or the half in front (side 1).
-func (r *orrery) satRing(x, y, R int, own uint8, side int) {
-	r.pix.Ellipse(x, y, R*19/10, R*7/10, P(HSand, 215), own, 0, side)
-	r.pix.Ellipse(x, y, R*24/10, R*9/10, P(HGold, 170), own, 0, side)
+func (p *Pixels) satRing(x, y, R int, own uint8, side int) {
+	p.Ellipse(x, y, R*19/10, R*7/10, P(HSand, 215), own, 0, side)
+	p.Ellipse(x, y, R*24/10, R*9/10, P(HGold, 170), own, 0, side)
 }
 
-// surface is what the planet is made of at (nx, ny) on its face, before the
-// light falls on it.
-func (r *orrery) surface(i, nx, ny int) Paint {
+// surface is what planet i is made of at (nx, ny) on its face, before the
+// light falls on it; fine is how many blotches the home world and Mars have
+// across, and drift moves the home world's clouds.
+func surface(seed int64, i, nx, ny, fine, drift int) Paint {
 	band := (ny + 256) * 9 / 512 // nine bands, pole to pole
 	switch i {
 	case planetMercury:
@@ -251,12 +267,12 @@ func (r *orrery) surface(i, nx, ny int) Paint {
 		}
 		return P(HSun, 250)
 	case planetEarth:
-		return earthFace(r.s.Seed, nx, ny, 4, 0)
+		return earthFace(seed, nx, ny, fine, drift)
 	case planetMars:
 		if ny < -205 {
 			return P(HWhite, 245)
 		}
-		if roll(5, r.s.Seed, 91, int64((nx+256)*3/512), int64((ny+256)*3/512)) == 0 {
+		if roll(5, seed, 91, int64((nx+256)*(fine-1)/512), int64((ny+256)*(fine-1)/512)) == 0 {
 			return P(HRed, 200)
 		}
 		return P(HRed, 255)
