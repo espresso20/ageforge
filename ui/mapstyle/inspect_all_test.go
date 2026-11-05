@@ -99,7 +99,7 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	want := map[string]map[string]string{
 		"space_age":        {"home": "The homeworld", "space": "Open space"},
-		"interstellar_age": {"home": "The homeworld", "orbit": "The home system", "space": "Deep space"},
+		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "A planet of the home system", "satellite": "Satellite", "orbit": "The home system", "space": "Deep space"},
 		"galactic_age":     {"space": "Between the stars"},
 		"quantum_age":      {"space": "A maybe"},
 		"transcendent_age": {"space": "Light"},
@@ -115,8 +115,15 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 				v.zoom = zCloseUp
 				v.zoomTo(v.scene(f), zDistrict)
 			}
-			for th, p := range thingsOf(v.scene(f).Grid) {
-				v.cur = p
+			grid, pick := v.scene(f).Grid, func(p mapgen.Pt) mapgen.Pt { return p }
+			if z == zOverview || z == zInner { // the orrery is drawn in the overview itself
+				if v.ov = v.scene(f).Overview(160, 48); z == zInner {
+					v.ov = v.scene(f).OverviewInner(160, 48)
+				}
+				grid, pick = v.ov.Grid, func(p mapgen.Pt) mapgen.Pt { return v.ov.Pick(p.X, p.Y) }
+			}
+			for th, p := range thingsOf(grid) {
+				v.cur = pick(p)
 				in, _ := v.Inspect(f)
 				if title, ok := titles[th.Key]; ok && (th.Kind == mapgen.KindRoad) == roadKeys[th.Key] {
 					found[th.Key] = true
