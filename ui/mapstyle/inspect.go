@@ -21,6 +21,11 @@ func (v *view) Inspect(f Frame) (Inspection, bool) {
 	p := v.cur
 	if v.overview && v.ov != nil { // the most important thing in the cell
 		if x, y, ok := v.ov.CellOf(p); ok {
+			if sc.Grid.Space { // bodies are drawn in the overview itself
+				if th := v.ov.Grid.ThingAt(x, y); th != (mapgen.Thing{}) {
+					return describe(f.Model, th), true
+				}
+			}
 			p = v.ov.Pick(x, y)
 		}
 	}

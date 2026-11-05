@@ -157,7 +157,11 @@ func TestWorldRoundTheTownDrawsAtEverySize(t *testing.T) {
 						t.Fatalf("%s %s: %q at (%d,%d) is not clean ASCII", age, sz.name, c.Runes[0], i%w, i/w)
 					}
 				}
-				if sz.name != "mini" && tier == mapmodel.TierUnicode && !strings.ContainsAny(capture.Text(scr), "▪✦◉") {
+				marks := "▪✦◉"
+				if v.scene(f).Grid.Space { // space draws its bodies in quadrant blocks
+					marks += "▘▝▖▗▀▄▌▐▚▞▛▜▙▟"
+				}
+				if sz.name != "mini" && tier == mapmodel.TierUnicode && !strings.ContainsAny(capture.Text(scr), marks) {
 					t.Errorf("%s %s: no civ marker on the screen", age, sz.name)
 				}
 				scr.Fini()
