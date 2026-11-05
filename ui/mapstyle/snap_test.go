@@ -223,3 +223,80 @@ func TestLandArrowsStillStepOneCell(t *testing.T) {
 		t.Errorf("right moved %v to %v, want one cell", from, v.cur)
 	}
 }
+
+// TestZoomIntoAStarAndBack: from COSMOS a star opens its system, a planet of
+// it opens a close-up, and zooming out returns each time with the cursor on
+// the body it left, ending on the star in COSMOS.
+func TestZoomIntoAStarAndBack(t *testing.T) {
+	v, f := spaceView(t, "interstellar_age")
+	v.zoomTo(v.scene(f), zCosmos)
+	shot(v, f).Fini()
+	var star mapgen.Thing
+	for _, b := range bodiesOf(v.ov.Grid) {
+		if b.th.Key == "star" {
+			star = b.th
+			v.cur = v.ov.Pick(b.at.X, b.at.Y)
+			break
+		}
+	}
+	if star.Key == "" {
+		t.Fatal("no star to zoom into at COSMOS")
+	}
+	cosmosCur := v.cur
+	press(v, f, tcell.KeyPgDn)
+	shot(v, f).Fini()
+	if v.star != star.Ref || v.shownZoom() != zOverview || bodyUnder(v, f) != star {
+		t.Fatalf("into the star: star %d zoom %d on %v", v.star, v.shownZoom(), bodyUnder(v, f))
+	}
+	press(v, f, tcell.KeyPgDn) // inner
+	shot(v, f).Fini()
+	var planet mapgen.Thing
+	for _, b := range bodiesOf(v.ov.Grid) {
+		if b.th.Key == "planet" {
+			planet = b.th
+			v.cur = v.ov.Pick(b.at.X, b.at.Y)
+			break
+		}
+	}
+	if planet.Key == "" {
+		t.Fatal("the system shows no planet")
+	}
+	press(v, f, tcell.KeyPgDn) // close-up
+	shot(v, f).Fini()
+	if v.planet != planet.Ref || v.star != star.Ref {
+		t.Fatalf("close-up of star %d planet %d, want %d / %d", v.star, v.planet, star.Ref, planet.Ref)
+	}
+	press(v, f, tcell.KeyPgDn) // the district: refused
+	shot(v, f).Fini()
+	if v.shownZoom() != zCloseUp {
+		t.Errorf("a far system opened zoom %d", v.shownZoom())
+	}
+	press(v, f, tcell.KeyPgUp)
+	shot(v, f).Fini()
+	if v.shownZoom() != zInner || bodyUnder(v, f) != planet {
+		t.Errorf("out of the close-up: zoom %d on %v, want the planet", v.shownZoom(), bodyUnder(v, f))
+	}
+	press(v, f, tcell.KeyPgUp)
+	press(v, f, tcell.KeyPgUp)
+	shot(v, f).Fini()
+	if v.shownZoom() != zCosmos || v.star != 0 || bodyUnder(v, f) != star || v.cur != cosmosCur {
+		t.Errorf("back at COSMOS: zoom %d star %d on %v at %v, want %v at %v", v.shownZoom(), v.star, bodyUnder(v, f), v.cur, star, cosmosCur)
+	}
+}
+
+func TestFarStarInspects(t *testing.T) {
+	v, f := spaceView(t, "interstellar_age")
+	v.zoomTo(v.scene(f), zCosmos)
+	shot(v, f).Fini()
+	for _, b := range bodiesOf(v.ov.Grid) {
+		if b.th.Key == "star" {
+			v.cur = v.ov.Pick(b.at.X, b.at.Y)
+			in, ok := v.Inspect(f)
+			if !ok || in.Title == "" {
+				t.Fatalf("a star at COSMOS inspects as %+v", in)
+			}
+			return
+		}
+	}
+	t.Fatal("no star at COSMOS")
+}

@@ -53,7 +53,7 @@ func (v *view) snap(sc *mapgen.Scene, d [2]int) bool {
 		return false
 	}
 	from := mapgen.Rect{X: x, Y: y, W: 1, H: 1}
-	if b, ok := bodyAt(g, x, y, nil); ok {
+	if b, ok := v.bodyAt(g, x, y); ok {
 		from = b.box
 	}
 	if b, ok := nearestBody(bs, from, sign(d[0]), sign(d[1])); ok {
@@ -75,6 +75,8 @@ func pickable(th mapgen.Thing, n int) bool {
 			return th.Ref == 0 // not its halo
 		case "planet", "home", "pluto", "comet", "space_station":
 			return true
+		case "star":
+			return th.Count == 0 // not its halo
 		case "satellite":
 			return n >= 4 // a moon drawn as a dot is not worth a stop
 		}
@@ -87,9 +89,28 @@ func pickable(th mapgen.Thing, n int) bool {
 // bodyAt is the body that has cell (x, y) of g in it. seen, if given, marks
 // the cells already gathered into a body.
 func bodyAt(g *mapgen.Grid, x, y int, seen []bool) (body, bool) {
+	b, ok, _ := bodyAtCells(g, x, y, seen)
+	return b, ok
+}
+
+// bodyAt is the body at a cell, found on the view's own marks so a frame
+// allocates nothing to ask; the marks are cleared again.
+func (v *view) bodyAt(g *mapgen.Grid, x, y int) (body, bool) {
+	if n := g.W * g.H; len(v.seen) < n {
+		v.seen = make([]bool, n)
+	}
+	b, ok, cells := bodyAtCells(g, x, y, v.seen)
+	for _, c := range cells {
+		v.seen[c.Y*g.W+c.X] = false
+	}
+	return b, ok
+}
+
+// bodyAtCells is bodyAt that also says which cells it marked in seen.
+func bodyAtCells(g *mapgen.Grid, x, y int, seen []bool) (body, bool, []mapgen.Pt) {
 	hit := g.Hit[y*g.W+x]
-	if hit == 0 {
-		return body{}, false
+	if hit == 0 || !pickable(g.Things[hit], 1<<30) {
+		return body{}, false, nil
 	}
 	if seen == nil {
 		seen = make([]bool, g.W*g.H)
@@ -113,7 +134,7 @@ func bodyAt(g *mapgen.Grid, x, y int, seen []bool) (body, bool) {
 	}
 	th := g.Things[hit]
 	if !pickable(th, len(cells)) {
-		return body{}, false
+		return body{}, false, cells
 	}
 	// the cursor takes the cell of the body nearest its middle
 	best, gap := cells[0], 1<<60
@@ -123,7 +144,7 @@ func bodyAt(g *mapgen.Grid, x, y int, seen []bool) (body, bool) {
 			best, gap = c, d
 		}
 	}
-	return body{mapgen.Rect{X: x0, Y: y0, W: x1 - x0 + 1, H: y1 - y0 + 1}, best, th}, true
+	return body{mapgen.Rect{X: x0, Y: y0, W: x1 - x0 + 1, H: y1 - y0 + 1}, best, th}, true, cells
 }
 
 // bodiesOf lists the bodies of g.

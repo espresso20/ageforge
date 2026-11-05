@@ -106,8 +106,12 @@ type view struct {
 	district string // the building line in focus at the district zoom
 	// the planet the space close-up is on (1 Mercury .. 8 Neptune; 0 the home
 	// world), and the body the next squeezed view puts the cursor on
+	// and the star whose system that is (0 the home sun), which the squeezed
+	// views show too
 	planet int
+	star   int
 	seek   mapgen.Thing
+	seen   []bool // scratch for bodyAt
 	// what is new since the last visit stays lit for freshFrames after the map
 	// first shows it: freshKey says which news that was, freshFrom when
 	freshKey  uint64
@@ -132,6 +136,7 @@ type sceneKey struct {
 	district string
 	close    bool
 	planet   int
+	star     int
 }
 
 // New makes a map view drawn by the engine.
@@ -144,9 +149,9 @@ func (v *view) scene(f Frame) *mapgen.Scene {
 	if f.Model == nil {
 		return nil
 	}
-	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame(), v.freshLit(f), v.focus(), !v.overview, v.planetShown()}); v.sc == nil || k != v.scKey {
+	if k := (sceneKey{f.Model, f.Anim, f.VisitFrame(), v.freshLit(f), v.focus(), !v.overview, v.planetShown(), v.starShown()}); v.sc == nil || k != v.scKey {
 		shared.Lock()
-		v.sc, v.scKey = shared.gen.DrawAt(f.Model, mapgen.Moment{Anim: f.Anim, Visit: k.visit, Fresh: k.fresh, District: k.district, Close: k.close, Planet: k.planet}), k
+		v.sc, v.scKey = shared.gen.DrawAt(f.Model, mapgen.Moment{Anim: f.Anim, Visit: k.visit, Fresh: k.fresh, District: k.district, Close: k.close, Planet: k.planet, Star: k.star}), k
 		shared.Unlock()
 	}
 	if line := v.focus(); line != "" && !slices.ContainsFunc(v.sc.Districts, func(d mapgen.District) bool { return d.Line == line }) {
@@ -164,7 +169,7 @@ func (v *view) SetOption(o Option, on bool) {
 	switch o {
 	case OptWorld:
 		if on {
-			v.zoom, v.zoomSet, v.planet = zOverview, true, 0
+			v.zoom, v.zoomSet, v.planet, v.star = zOverview, true, 0, 0
 		} else if v.zoomSet && v.zoom == zOverview {
 			v.zoomSet = false // back to what the size chooses
 		}

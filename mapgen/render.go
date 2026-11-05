@@ -28,6 +28,7 @@ type frame struct {
 	district string // the building line in focus, if any
 	close    bool   // a close look: the star map leaves its arms off the sky
 	planet   int    // the planet the close look is on (1 Mercury .. 8 Neptune), 0 the home world
+	star     int    // the star whose system the close look is in, 0 the home sun
 	box      Rect   // the edge of the picture, once worked out
 	night    int    // 0 day .. 256 full night
 	placed   []placed

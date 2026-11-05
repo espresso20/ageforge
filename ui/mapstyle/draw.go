@@ -55,9 +55,9 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 		case zCosmos:
 			v.ov = sc.OverviewCosmos(w, h)
 		case zInner:
-			v.ov = sc.OverviewInner(w, h)
+			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewInner, v.star)
 		default:
-			v.ov = sc.Overview(w, h)
+			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewFull, v.star)
 		}
 		if v.seek != (mapgen.Thing{}) { // zoomed between bodies: the cursor stays on it
 			for _, b := range bodiesOf(v.ov.Grid) {
@@ -82,7 +82,7 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 		return
 	}
 	if g, gx, gy, ok := v.shownCell(sc); ok && sc.Grid.Space {
-		if b, ok := bodyAt(g, gx, gy, nil); ok {
+		if b, ok := v.bodyAt(g, gx, gy); ok {
 			// the corners stand outside the body, so the body shows whole
 			dx, dy := x, y // the grid's cell to the canvas's
 			if !v.overview {
