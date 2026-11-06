@@ -89,8 +89,8 @@ var roadKeys = map[string]bool{"tether": true, "ring": true, "orbit": true, "rou
 func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	want := map[string]map[string]string{
-		"space_age":        {"home": "The homeworld", "space": "Open space"},
-		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "Mercury", "satellite": "Satellite", "orbit": "The home system", "space": "Deep space"},
+		"space_age":        {"home": "Earth", "space": "Open space"},
+		"interstellar_age": {"home": "Earth", "sun": "Sol", "planet": "Mercury", "satellite": "Satellite", "orbit": "The home system", "space": "Deep space"},
 		"galactic_age":     {"space": "Between the stars"},
 		"quantum_age":      {"space": "A maybe"},
 		"transcendent_age": {"space": "Light"},

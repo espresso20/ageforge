@@ -123,7 +123,7 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.08", "A planet of the home system"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.09", "it keeps its old orbit")}}, true
 	case "sun":
-		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.31", "The home sun"),
+		return Inspection{Title: vibe.Line("ui.mapstyle.space.sun.01", "Sol"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.32", "the orrery of the home system"),
 				town + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}, true
 	case "satellite":
@@ -141,7 +141,7 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 // describeHomeworld is the planet the town stands on, seen from orbit, as a
 // planet of the solar system, or as the home star.
 func describeHomeworld(m *mapmodel.Model) Inspection {
-	return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.03", "The homeworld"), Command: m.SquareCommand(),
+	return Inspection{Title: planetNames[2].String(), Command: m.SquareCommand(),
 		Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.04", "where it all began"),
 			plural(m.Workers.Pop, vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.05", "person"), vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.06", "people")) +
 				vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.07", " in all")}}
@@ -178,7 +178,7 @@ func placeName(m *mapmodel.Model, lineage string) string {
 }
 
 // planetNames are Sol's planets by Ref (mapgen.SystemSpec.ThingOf: index+1),
-// inner to outer. Earth is the "home" thing and never asks for its slot.
+// inner to outer. Earth is the "home" thing; describeHomeworld takes its slot.
 var planetNames = [...]vibe.Entry{
 	vibe.E("ui.mapstyle.space.planet.mercury", "Mercury"),
 	vibe.E("ui.mapstyle.space.planet.venus", "Venus"),
