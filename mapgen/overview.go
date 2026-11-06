@@ -24,32 +24,31 @@ type SystemViewMode int
 const (
 	SystemViewFull   SystemViewMode = 0 // Full 8-planet planetary system (Sol out to Neptune & Pluto)
 	SystemViewCosmos SystemViewMode = 1 // Cosmic deep space perspective with outer Kuiper padding
-	SystemViewInner  SystemViewMode = 2 // Inner solar system (Sol, Mercury, Venus, Earth, Mars, Asteroids, Jupiter)
+	SystemViewInner  SystemViewMode = 2 // Inner solar system (Sol, Mercury, Venus, Earth, Mars, the edge of the belt)
 )
 
 // Overview squeezes the town of a scene into w by h cells.
 func (s *Scene) Overview(w, h int) *Overview {
 	if s.Scale == System {
-		return s.overviewSystem(w, h, SystemViewFull, 0)
+		return s.overviewSystem(w, h, SystemViewFull)
 	}
 	return s.overviewPadded(w, h, 0, 0)
 }
 
-// SystemOverview squeezes the system of star k (0 the home sun) in the given
-// view into w by h cells; other scales have no systems and give the plain
-// overview.
-func (s *Scene) SystemOverview(w, h int, mode SystemViewMode, k int) *Overview {
+// SystemOverview squeezes the solar system in the given view into w by h
+// cells; other scales have no system and give the plain overview.
+func (s *Scene) SystemOverview(w, h int, mode SystemViewMode) *Overview {
 	if s.Scale != System {
 		return s.Overview(w, h)
 	}
-	return s.overviewSystem(w, h, mode, k)
+	return s.overviewSystem(w, h, mode)
 }
 
 // OverviewCosmos squeezes the scene with additional cosmic padding into w by h cells,
 // giving a wide deep space perspective.
 func (s *Scene) OverviewCosmos(w, h int) *Overview {
 	if s.Scale == System {
-		return s.overviewSystem(w, h, SystemViewCosmos, 0)
+		return s.overviewSystem(w, h, SystemViewCosmos)
 	}
 	return s.overviewPadded(w, h, 100, 50)
 }
@@ -59,7 +58,7 @@ func (s *Scene) OverviewCosmos(w, h int) *Overview {
 // while maintaining an astronomical perspective.
 func (s *Scene) OverviewInner(w, h int) *Overview {
 	if s.Scale == System {
-		return s.overviewSystem(w, h, SystemViewInner, 0)
+		return s.overviewSystem(w, h, SystemViewInner)
 	}
 	return s.overviewPadded(w, h, 0, 0)
 }
@@ -281,9 +280,9 @@ func floorDiv(a, b int) int {
 	return a / b
 }
 
-// overviewSystem draws the orrery of star k's system (0: the home system) at
-// far zoom, avoiding point-sampling artifacts on detailed 3D spheres.
-func (s *Scene) overviewSystem(w, h int, mode SystemViewMode, k int) *Overview {
+// overviewSystem draws the orrery of the solar system at far zoom, avoiding
+// point-sampling artifacts on detailed 3D spheres.
+func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	gw, gh := s.Grid.W, s.Grid.H
 	var bw, bh int
 	switch mode {
@@ -322,9 +321,8 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode, k int) *Overview {
 	cx := w / 2
 	cy := h / 2
 
-	// 2. How far out the system reaches; at the cosmos zoom the home system
-	// leaves room for the stars round it.
-	spec := systemOf(s.Seed, k, s.Progress)
+	// 2. How far out the system reaches; at the cosmos zoom it leaves room
+	// for the Kuiper belt round it.
 	maxRY := cy * 88 / 100
 	switch mode {
 	case SystemViewCosmos:
@@ -336,12 +334,12 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode, k int) *Overview {
 
 	// 3. The system itself, drawn in quadrant blocks (orrery.go): glow, orbit
 	// lines, belts, star, planets with their moons, the dwarf planet, the comet.
-	s.paintOrrery(o, spec, k, mode, cx, cy, maxRY)
+	s.paintOrrery(o, &SolSpec, mode, cx, cy, maxRY)
 
 	// 7. Outer Megastructures: Warp Gate
 	warpRY := (maxRY * 115) / 100
 	warpY := cy + warpRY
-	if s.Gate && spec.Home && o.Grid.in(cx, warpY) {
+	if s.Gate && o.Grid.in(cx, warpY) {
 		if o.Grid.in(cx-1, warpY) {
 			o.Grid.paint(cx-1, warpY, Cell{R: '⫷', Fg: P(HCyan, 255), Bg: o.Grid.At(cx-1, warpY).Bg})
 			o.Grid.mark(cx-1, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})

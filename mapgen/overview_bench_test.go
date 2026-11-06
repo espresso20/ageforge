@@ -15,7 +15,7 @@ func BenchmarkOverviewSystem(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
 				sc.Anim = i
-				_ = sc.overviewSystem(200, 55, c.mode, 0)
+				_ = sc.overviewSystem(200, 55, c.mode)
 			}
 		})
 	}

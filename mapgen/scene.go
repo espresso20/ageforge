@@ -25,7 +25,6 @@ type Scene struct {
 	Anim       int
 	Seed       int64
 	Gate       bool // the warp gate stands: the Warp Nexus is built
-	Progress   int  // how far into the interstellar ages the town is: see spaceProgress
 }
 
 // Moment is when and how a picture is drawn: the animation frame, the frame
@@ -42,7 +41,6 @@ type Moment struct {
 	District string
 	Close    bool // finer than the overview: the star map shows its territory on plain dark space
 	Planet   int  // the planet a close look is on: 1 Mercury to 8 Neptune, 0 the home world
-	Star     int  // the star whose system the look is in: 0 the home sun
 }
 
 // Draw draws the whole world at animation frame anim.
@@ -53,7 +51,7 @@ func (gen *Generator) Draw(m *mapmodel.Model, anim int) *Scene {
 // DrawAt draws the whole world at a moment.
 func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	f := gen.frame(m, at.Anim)
-	f.visit, f.fresh, f.district, f.close, f.planet, f.star = at.Visit, at.Fresh, at.District, at.Close, at.Planet, at.Star
+	f.visit, f.fresh, f.district, f.close, f.planet = at.Visit, at.Fresh, at.District, at.Close, at.Planet
 	f.clock = at.Clock
 	f.draw()
 	c := f.plan.Centre
@@ -69,7 +67,7 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	}
 	sc := &Scene{
 		Grid: f.g, Centre: c, Bounds: bounds, Fill: f.st.Scale >= Orbit, Targets: f.targets, Districts: f.districts(),
-		Scale: f.st.Scale, Anim: f.anim, Seed: f.m.Seed, Gate: gateRaised(f.m.Wonders), Progress: spaceProgress(f.m),
+		Scale: f.st.Scale, Anim: f.anim, Seed: f.m.Seed, Gate: gateRaised(f.m.Wonders),
 	}
 	if f.st.Scale >= Orbit {
 		sc.SpaceCell = f.spaceCellFunc()

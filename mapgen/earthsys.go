@@ -24,16 +24,18 @@ var stationKinds = [...]station{
 	{1, 4, P(HSteel, 255), HSun, 17, 11},
 }
 
-// calm says whether this frame is the Earth close-up: a close look at the
-// orbit or the solar system, with no district chosen.
+// calm says whether this frame is a planet close-up: in the orbit, the home
+// world with no district chosen; in the solar system, any planet but the home
+// world.
 func (f *frame) calm() bool {
-	return f.close && f.district == "" && (f.st.Scale == Orbit || f.st.Scale == System)
+	return f.close && (f.st.Scale == Orbit && f.district == "" || f.st.Scale == System && f.planet > 0)
 }
 
-// atPort says whether this frame is the space port: the deepest zoom of the
-// orbit and the solar system, with a building line in focus.
+// atPort says whether this frame is the space port: in the orbit, the deepest
+// zoom with a building line in focus; in the solar system, the close-up of
+// the home world.
 func (f *frame) atPort() bool {
-	return f.close && f.district != "" && (f.st.Scale == Orbit || f.st.Scale == System)
+	return f.close && (f.st.Scale == Orbit && f.district != "" || f.st.Scale == System && f.planet == 0)
 }
 
 // earthFace is the planet's face at (nx, ny), -256 to 256 across: sea, land
@@ -102,14 +104,10 @@ func (p *Pixels) moon(x, y, r, k int, shade func(Paint, int, int) Paint) {
 // home world with its stations, or the planet the player zoomed on.
 func (f *frame) paintEarthSystem() {
 	anim := f.anim
-	sp := systemOf(f.m.Seed, f.star, spaceProgress(f.m))
-	seed := f.m.Seed + int64(f.star)*7919
+	sp, seed := &SolSpec, f.m.Seed
 	pl := planetEarth
 	if f.planet > 0 {
 		pl = f.planet - 1
-	}
-	if pl >= len(sp.Planets) { // a home world only the home system has
-		pl = 0
 	}
 	ps := &sp.Planets[pl]
 	pix := NewPixels(f.g.W, f.g.H)

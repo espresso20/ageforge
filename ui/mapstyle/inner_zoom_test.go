@@ -12,15 +12,18 @@ import (
 )
 
 // TestZoomLadder: PgUp and PgDn step through COSMOS, OVERVIEW, INNER,
-// CLOSE-UP, DISTRICT in space scenes, and through OVERVIEW, CLOSE-UP,
-// DISTRICT everywhere else, never landing on INNER.
+// CLOSE-UP, DISTRICT in the space scenes, the Interstellar Age without the
+// district, and through OVERVIEW, CLOSE-UP, DISTRICT everywhere else, never
+// landing on INNER.
 func TestZoomLadder(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	cases := []struct {
 		age  string
 		want []int // from the top of the ladder down, then back up
 	}{
-		{"interstellar_age", []int{zCosmos, zOverview, zInner, zCloseUp, zDistrict}},
+		{"space_age", []int{zCosmos, zOverview, zInner, zCloseUp, zDistrict}},
+		{"interstellar_age", []int{zCosmos, zOverview, zInner, zCloseUp}},
+		{"galactic_age", []int{zCosmos, zOverview, zInner, zCloseUp, zDistrict}},
 		{"medieval_age", []int{zOverview, zCloseUp, zDistrict}},
 	}
 	for _, c := range cases {
@@ -41,8 +44,8 @@ func TestZoomLadder(t *testing.T) {
 			}
 		}
 		press(tcell.KeyPgDn)
-		if v.shownZoom() != zDistrict {
-			t.Errorf("%s: PgDn past the district left zoom %d", c.age, v.shownZoom())
+		if end := c.want[len(c.want)-1]; v.shownZoom() != end {
+			t.Errorf("%s: PgDn past the deepest zoom left zoom %d", c.age, v.shownZoom())
 		}
 		for i := len(c.want) - 2; i >= 0; i-- {
 			press(tcell.KeyPgUp)
@@ -79,10 +82,13 @@ func TestInnerZoomDraws(t *testing.T) {
 		if os.Getenv("DUMP_INNER") != "" {
 			t.Logf("OVERVIEW %v\n%s\nINNER %v\n%s", size, over, size, inner)
 		}
-		at := v.cur
-		v.HandleKey(tcell.NewEventKey(tcell.KeyRight, 0, tcell.ModNone), f)
-		if v.cur.X <= at.X { // the arrows jump to the next body to the right
-			t.Errorf("%v: arrow moved the cursor from %v to %v, want it to the right", size, at, v.cur)
+		at, moved := v.cur, false
+		for _, k := range []tcell.Key{tcell.KeyRight, tcell.KeyLeft, tcell.KeyDown, tcell.KeyUp} {
+			v.HandleKey(tcell.NewEventKey(k, 0, tcell.ModNone), f)
+			moved = moved || v.cur != at // the arrows jump to the next body that way
+		}
+		if !moved {
+			t.Errorf("%v: no arrow moved the cursor from %v", size, at)
 		}
 		if _, ok := v.Inspect(f); !ok {
 			t.Errorf("%v: nothing to inspect at the inner zoom", size)

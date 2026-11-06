@@ -102,6 +102,9 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 		for _, z := range []int{zOverview, zInner, zCloseUp, zDistrict} {
 			v := New().(*view)
 			v.zoom, v.zoomSet, v.overview = z, true, z <= zInner
+			if z == zDistrict && age == "interstellar_age" {
+				continue // the solar system has no district; its close-up is the port
+			}
 			if z == zDistrict {
 				v.zoom = zCloseUp
 				v.zoomTo(v.scene(f), zDistrict)

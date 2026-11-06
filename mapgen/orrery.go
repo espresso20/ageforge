@@ -1,10 +1,12 @@
 package mapgen
 
-// A star system drawn in quadrant blocks (see quad.go) from its spec: the
-// star with its glow, the planets as shaded discs, thin orbit lines, the
+// The solar system drawn in quadrant blocks (see quad.go) from SolSpec: the
+// sun with its glow, the planets as shaded discs, thin orbit lines, the
 // speckled belts and the comet. Sizes are in 16ths of a pixel, across the
 // body, and grow with the zoom: at the cosmos zoom a planet is a speck, at the
-// inner zoom Jupiter shows its bands.
+// inner zoom Mars shows its cap. The inner zoom frames the sun, the four
+// inner planets and the edge of the belt; the cosmos zoom shrinks the system
+// to the middle of the window and rings it with the Kuiper belt.
 
 // orreryLook is how big the bodies are at one zoom: the star and the planets
 // as a percent of the spec's sizes, the dwarf planet and the comet outright.
@@ -17,7 +19,10 @@ var orreryLooks = [...]orreryLook{
 }
 
 // planet i of the home system, by place; the one the town stands on is 2
-const planetEarth = 2
+const (
+	planetEarth = 2
+	planetMars  = 3
+)
 
 // PlanetThing is the thing the orrery draws planet i of the home system as
 // (0 Mercury to 7 Neptune): the home world is "home", the others "planet"
@@ -41,7 +46,6 @@ type orrery struct {
 	s      *Scene
 	pix    *Pixels
 	spec   *SystemSpec
-	star   int // which star's system
 	seed   int64
 	mode   SystemViewMode
 	look   orreryLook
@@ -51,48 +55,43 @@ type orrery struct {
 	sx, sy int   // the star's centre, in 16ths of a pixel
 }
 
-// paintOrrery draws system star (spec) into o over the star field that is
+// paintOrrery draws the system (spec) into o over the star field that is
 // already in it, reaching maxRY rows out.
-func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode SystemViewMode, cx, cy, maxRY int) {
+func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, cx, cy, maxRY int) {
 	var beltRX, beltRY int
 	w, h := o.Grid.W, o.Grid.H
-	r := &orrery{s: s, pix: NewPixels(w, h), spec: spec, star: star, seed: s.Seed + int64(star)*7919, mode: mode, look: orreryLooks[mode], cx: cx, cy: cy}
+	r := &orrery{s: s, pix: NewPixels(w, h), spec: spec, seed: s.Seed, mode: mode, look: orreryLooks[mode], cx: cx, cy: cy}
 	// a bigger window gets bigger bodies, a small one smaller
 	k := clamp(cy*256/20, 205, 384)
 	r.sun = spec.Star.Size * r.look.sun / 100 * k >> 8
 	r.look.dwarf, r.look.comet = r.look.dwarf*k>>8, r.look.comet*k>>8
-	for _, p := range spec.Planets {
+	planets := spec.Planets
+	if mode == SystemViewInner { // the sun and the four inner planets
+		planets = planets[:planetMars+1]
+	}
+	for _, p := range planets {
 		r.rad = append(r.rad, p.Size*r.look.planet/100*k>>8)
 	}
 	r.sx, r.sy = (2*cx+1)*pxUnit, (2*cy+1)*pxUnit
 
-	// how far out each orbit is: the inner zoom spreads them to fill the window
-	spread := 185   // the home system's outer planets go off the window
-	if !spec.Home { // a far system fills it, every planet in view
-		far := 1
-		for _, p := range spec.Planets {
-			far = max(far, p.Orbit)
-		}
-		spread = clamp(10500/far, 100, 185)
-	}
+	// how far out each orbit is: the inner zoom spreads them to fill the
+	// window with the belt at its edge
+	const spread = 170
 	reach := func(orbit int) (rx, ry int) {
 		if mode == SystemViewInner {
 			orbit = orbit * spread / 100
 		}
 		return maxRY * orbit / 100 * 230 / 100, maxRY * orbit / 100
 	}
-	sunOwn := r.pix.Owner(StarThing(star, false), 4)
+	sunOwn := r.pix.Owner(sunThing, 4)
 	orbitOwn := r.pix.Owner(Thing{Kind: KindRoad, Key: "orbit"}, 2)
 
 	// the star's glow first, so everything else lies over it
-	r.glow(star, r.sx, r.sy, r.sun, spec.Star)
-	if star == 0 && mode == SystemViewCosmos { // the other stars of the sky
-		r.sky(cx, cy)
-	}
+	r.glow(r.sx, r.sy, r.sun, spec.Star)
 
 	// the orbit lines, the home world's brighter
-	rX, rY := make([]int, len(spec.Planets)), make([]int, len(spec.Planets))
-	for i, p := range spec.Planets {
+	rX, rY := make([]int, len(planets)), make([]int, len(planets))
+	for i, p := range planets {
 		rX[i], rY[i] = reach(p.Orbit)
 		rY[i] = max(3+i, rY[i])
 		rX[i] = max(rX[i], rY[i]*230/100)
@@ -109,21 +108,24 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 	}
 
 	// where the planets are: the slower the further out
-	x16, y16 := make([]int, len(spec.Planets)), make([]int, len(spec.Planets))
-	cells := make([]Pt, len(spec.Planets))
-	for i, p := range spec.Planets {
-		phaseFrac := (int(s.Seed%1000) + i*382 + star*137) % 1000
+	x16, y16 := make([]int, len(planets)), make([]int, len(planets))
+	cells := make([]Pt, len(planets))
+	for i, p := range planets {
+		phaseFrac := (int(s.Seed%1000) + i*382) % 1000
 		ang := ((phaseFrac*4096)/1000 + (s.Anim/max(10, p.Orbit*p.Orbit/37))*16) % 4096
 		x16[i] = r.sx + rX[i]*cos4096(ang)/32
 		y16[i] = r.sy + rY[i]*sin4096(ang)/32
 		cells[i] = Pt{floorDiv(x16[i], 2*pxUnit), floorDiv(y16[i], 2*pxUnit)}
 	}
 	r.body(sunOwn)
-	for i := range spec.Planets {
+	for i := range planets {
 		r.planet(i, x16[i], y16[i])
 	}
+	if mode == SystemViewCosmos { // the Kuiper belt, out past the dwarf planet
+		r.belt(maxRY*138/100*230/100, maxRY*138/100, orbitOwn)
+	}
 
-	if spec.Dwarf { // out beyond the rest
+	if spec.Dwarf && mode != SystemViewInner { // out beyond the rest
 		plutoRY := (maxRY * 108) / 100
 		plutoA := (1280 + s.Anim/360*16) % 4096
 		px := r.sx + plutoRY*230/100*cos4096(plutoA)/32
@@ -131,13 +133,13 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 		plutoOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "pluto"}, 5)
 		r.pix.Disc(px, py, r.look.dwarf, plutoOwn, func(nx, ny int) Paint { return P(HAmber, 230) })
 	}
-	if spec.Comet {
+	if spec.Comet && mode != SystemViewInner {
 		r.comet(maxRY)
 	}
 	// a hull pixel with a blinking light stands by the planets that have one
 	stOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 6)
 	lamp := 0
-	for i, p := range spec.Planets {
+	for i, p := range planets {
 		if p.Outpost == 1 {
 			sx, sy := floorDiv(x16[i]-r.rad[i]-3*pxUnit, pxUnit), floorDiv(y16[i], pxUnit)
 			r.pix.Set(sx, sy, P(HSteel, 255), stOwn)
@@ -150,7 +152,7 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 
 	// Glyph overlays that are not part of the picture: the stations at the
 	// planets and the Dyson and mining works. They stand clear of the discs.
-	if spec.Home && mode == SystemViewInner {
+	if mode == SystemViewInner {
 		sunR := (r.sun + 2*pxUnit - 1) / (2 * pxUnit)
 		for _, dx := range []int{-(sunR + 2), sunR + 2} {
 			hx, hy := cx+dx, cy
@@ -168,7 +170,7 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 			}
 		}
 	}
-	for i, p := range spec.Planets {
+	for i, p := range planets {
 		across := (r.rad[i] + 2*pxUnit - 1) / (2 * pxUnit) // cells from centre to rim
 		if x := cells[i].X + across + 1; p.Outpost == 2 && o.Grid.in(x, cells[i].Y) {
 			o.Grid.paint(x, cells[i].Y, Cell{R: '◈', Fg: P(HAmber, 240), Bg: o.Grid.At(x, cells[i].Y).Bg})
@@ -177,9 +179,9 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, star int, mode System
 	}
 }
 
-// glow is the halo of star k, round its middle (x, y) with radius R.
-func (r *orrery) glow(k, x, y, R int, st StarSpec) {
-	r.pix.Glow(x, y, R, R*19/10+2*pxUnit, st.Rim, 150, 3, r.pix.Owner(StarThing(k, true), 1))
+// glow is the halo of the sun, round its middle (x, y) with radius R.
+func (r *orrery) glow(x, y, R int, st StarSpec) {
+	r.pix.Glow(x, y, R, R*19/10+2*pxUnit, st.Rim, 150, 3, r.pix.Owner(sunHaloThing, 1))
 }
 
 // disc draws star st, as thing own, at (x, y) with radius R: a heart, a body
@@ -198,19 +200,6 @@ func (r *orrery) disc(own uint8, x, y, R int, st StarSpec) {
 
 // body is the system's own star.
 func (r *orrery) body(own uint8) { r.disc(own, r.sx, r.sy, r.sun, r.spec.Star) }
-
-// sky draws the other stars of the sky round the home system: star k
-// is the kth of the save's list, wherever the window puts it.
-func (r *orrery) sky(cx, cy int) {
-	k := clamp(cy*256/20, 205, 384)
-	for i, p := range starSites(r.s.Seed, 12) {
-		st := genStar(r.s.Seed, i+1)
-		x, y := (2*(cx+p[0]*cx/1000)+1)*pxUnit, (2*(cy+p[1]*cy/1000)+1)*pxUnit
-		R := st.Size * r.look.sun / 100 * k >> 8
-		r.glow(i+1, x, y, R, st)
-		r.disc(r.pix.Owner(StarThing(i+1, false), 4), x, y, R, st)
-	}
-}
 
 // belt scatters the asteroids: a ring of specks that drift round slowly.
 func (r *orrery) belt(rx, ry int, own uint8) {

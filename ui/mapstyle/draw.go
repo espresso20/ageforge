@@ -1,6 +1,8 @@
 package mapstyle
 
 import (
+	"slices"
+
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapgen"
@@ -55,14 +57,15 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 		case zCosmos:
 			v.ov = sc.OverviewCosmos(w, h)
 		case zInner:
-			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewInner, v.star)
+			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewInner)
 		default:
-			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewFull, v.star)
+			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewFull)
 		}
 		if v.seek != (mapgen.Thing{}) { // zoomed between bodies: the cursor stays on it
-			for _, b := range bodiesOf(v.ov.Grid) {
-				if b.th == v.seek {
-					v.cur = v.ov.Pick(b.at.X, b.at.Y)
+			bs := bodiesOf(v.ov.Grid)
+			for _, want := range [2]mapgen.Thing{v.seek, sunThing} { // else the sun, if the body is out of the frame
+				if i := slices.IndexFunc(bs, func(b body) bool { return b.th == want }); i >= 0 {
+					v.cur = v.ov.Pick(bs[i].at.X, bs[i].at.Y)
 					break
 				}
 			}
