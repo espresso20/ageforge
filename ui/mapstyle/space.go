@@ -117,6 +117,9 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 		}
 		return describeHomeworld(m), true
 	case "planet":
+		if th.Ref >= 1 && th.Ref <= len(planetNames) {
+			return Inspection{Title: planetNames[th.Ref-1].String()}, true
+		}
 		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.08", "A planet of the home system"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.09", "it keeps its old orbit")}}, true
 	case "sun":
@@ -172,4 +175,17 @@ func placeName(m *mapmodel.Model, lineage string) string {
 		}
 	}
 	return lineageLabel(lineage)
+}
+
+// planetNames are Sol's planets by Ref (mapgen.SystemSpec.ThingOf: index+1),
+// inner to outer. Earth is the "home" thing and never asks for its slot.
+var planetNames = [...]vibe.Entry{
+	vibe.E("ui.mapstyle.space.planet.mercury", "Mercury"),
+	vibe.E("ui.mapstyle.space.planet.venus", "Venus"),
+	vibe.E("ui.mapstyle.space.planet.earth", "Earth"),
+	vibe.E("ui.mapstyle.space.planet.mars", "Mars"),
+	vibe.E("ui.mapstyle.space.planet.jupiter", "Jupiter"),
+	vibe.E("ui.mapstyle.space.planet.saturn", "Saturn"),
+	vibe.E("ui.mapstyle.space.planet.uranus", "Uranus"),
+	vibe.E("ui.mapstyle.space.planet.neptune", "Neptune"),
 }
