@@ -2,20 +2,20 @@ package mapgen
 
 // The solar system drawn in quadrant blocks (see quad.go) from SolSpec: the
 // sun with its glow, the planets as shaded discs, thin orbit lines, the
-// speckled belts and the comet. Sizes are in 16ths of a pixel, across the
+// speckled belts and, at the cosmos zoom, the comet. Sizes are in 16ths of a pixel, across the
 // body, and grow with the zoom: at the cosmos zoom a planet is a speck, at the
 // inner zoom Mars shows its cap. The inner zoom frames the sun, the four
 // inner planets and the edge of the belt; the cosmos zoom shrinks the system
 // to the middle of the window and rings it with the Kuiper belt.
 
 // orreryLook is how big the bodies are at one zoom: the star and the planets
-// as a percent of the spec's sizes, the dwarf planet and the comet outright.
-type orreryLook struct{ sun, planet, dwarf, comet int }
+// as a percent of the spec's sizes, the dwarf planet outright.
+type orreryLook struct{ sun, planet, dwarf int }
 
 var orreryLooks = [...]orreryLook{
-	SystemViewFull:   {100, 100, 18, 24},
-	SystemViewCosmos: {73, 73, 16, 20},
-	SystemViewInner:  {164, 178, 24, 28},
+	SystemViewFull:   {100, 100, 18},
+	SystemViewCosmos: {73, 73, 16},
+	SystemViewInner:  {164, 178, 24},
 }
 
 // planet i of the home system, by place; the one the town stands on is 2
@@ -64,7 +64,7 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, 
 	// a bigger window gets bigger bodies, a small one smaller
 	k := clamp(cy*256/20, 205, 384)
 	r.sun = spec.Star.Size * r.look.sun / 100 * k >> 8
-	r.look.dwarf, r.look.comet = r.look.dwarf*k>>8, r.look.comet*k>>8
+	r.look.dwarf = r.look.dwarf * k >> 8
 	planets := spec.Planets
 	if mode == SystemViewInner { // the sun and the four inner planets
 		planets = planets[:planetMars+1]
@@ -133,8 +133,8 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, 
 		plutoOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "pluto"}, 5)
 		r.pix.Disc(px, py, r.look.dwarf, plutoOwn, func(nx, ny int) Paint { return P(HAmber, 230) })
 	}
-	if spec.Comet && mode != SystemViewInner {
-		r.comet(maxRY)
+	if spec.Comet && mode == SystemViewCosmos { // it crosses the cosmic view only
+		r.comet()
 	}
 	// a hull pixel with a blinking light stands by the planets that have one
 	stOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 6)
@@ -216,24 +216,6 @@ func (r *orrery) belt(rx, ry int, own uint8) {
 		}
 		r.pix.Set(floorDiv(x, pxUnit), floorDiv(y, pxUnit), c, own)
 	}
-}
-
-// comet sweeps round outside the planets, its tail pointing away from the sun.
-func (r *orrery) comet(maxRY int) {
-	a := (3400 + r.s.Anim/200*16) % 4096
-	ry := (maxRY * 118) / 100
-	hx := r.sx + ry*230/100*cos4096(a)/32
-	hy := r.sy + ry*sin4096(a)/32
-	own := r.pix.Owner(Thing{Kind: KindTerrain, Key: "comet"}, 5)
-	dx, dy := (hx-r.sx)/pxUnit, (hy-r.sy)/pxUnit
-	m := max(1, abs(dx), abs(dy))
-	tail := r.look.comet * 6 / pxUnit
-	for t := tail; t >= 1; t-- {
-		x := floorDiv(hx+dx*t*pxUnit/m, pxUnit)
-		y := floorDiv(hy+dy*t*pxUnit/m, pxUnit)
-		r.pix.Set(x, y, P(HCyan, 215-t*200/(tail+1)), own)
-	}
-	r.pix.Disc(hx, hy, r.look.comet, own, func(nx, ny int) Paint { return P(HWhite, 255) })
 }
 
 // planet draws planet i (and what travels with it) centred at (x, y).
