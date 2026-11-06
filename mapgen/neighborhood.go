@@ -96,7 +96,7 @@ func (s *Scene) OverviewNeighborhood(w, h int) *Overview {
 	gw, gh := s.Grid.W, s.Grid.H
 	o := &Overview{Grid: newGrid(w, h), Scale: 1, step: 256, picks: make([]Pt, w*h), X0: gw/2 - w/2, Y0: gh/2 - h/2}
 	o.Grid.Wall, o.Grid.Tint, o.Grid.Space = s.Grid.Wall, s.Grid.Tint, true
-	o.deepSky(s.Seed)
+	o.deepSky(s)
 
 	pix := NewPixels(w, h)
 	defer pix.Release()
@@ -226,12 +226,35 @@ func (s *Scene) paintNearLanes(pix *Pixels, cx, cy int, pts *[len(NearStars)][2]
 
 // deepSky paints the near-black ground of the close views of space: sparse
 // faint stars and, at the edges, a tint or two.
-func (o *Overview) deepSky(seed int64) {
+func (o *Overview) deepSky(s *Scene) {
 	for y := 0; y < o.Grid.H; y++ {
 		for x := 0; x < o.Grid.W; x++ {
-			o.Grid.paint(x, y, deepCell(seed, o.X0+x, o.Y0+y, x, y, o.Grid.W, o.Grid.H))
+			o.Grid.paint(x, y, s.deep.cell(s.Seed, o.X0+x, o.Y0+y, x, y, o.Grid.W, o.Grid.H))
 		}
 	}
+}
+
+// deepLayer keeps the dark ground between frames: it depends on the seed and
+// the window alone.
+type deepLayer struct {
+	seed       int64
+	w, h, x, y int
+	cells      []Cell
+}
+
+// cell is deepCell of the cached window, computed once per seed and window.
+func (d *deepLayer) cell(seed int64, wx, wy, x, y, w, h int) Cell {
+	x0, y0 := wx-x, wy-y
+	if d.cells == nil || d.seed != seed || d.w != w || d.h != h || d.x != x0 || d.y != y0 {
+		d.seed, d.w, d.h, d.x, d.y = seed, w, h, x0, y0
+		d.cells = make([]Cell, w*h)
+		for cy := 0; cy < h; cy++ {
+			for cx := 0; cx < w; cx++ {
+				d.cells[cy*w+cx] = deepCell(seed, x0+cx, y0+cy, cx, cy, w, h)
+			}
+		}
+	}
+	return d.cells[y*w+x]
 }
 
 // deepCell is a cell of deep space at world (wx, wy), shown at (x, y) of a

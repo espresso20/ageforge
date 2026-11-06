@@ -315,7 +315,7 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 			wy := o.blockY(y)
 			o.picks[y*w+x] = Pt{wx, wy}
 			if s.Scale == Stars { // the close-up of Sol is on the dark between the stars
-				o.Grid.paint(x, y, deepCell(s.Seed, wx, wy, x, y, w, h))
+				o.Grid.paint(x, y, s.deep.cell(s.Seed, wx, wy, x, y, w, h))
 			} else if s.SpaceCell != nil {
 				c := s.SpaceCell(wx, wy)
 				if mode == SystemViewCosmos && c.Bg.Hue == HNebula { // the Milky Way is the glow here

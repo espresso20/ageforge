@@ -28,6 +28,7 @@ type Scene struct {
 	// Colonies are the building lines with something standing, on the star
 	// map: the lit stars of Sol's neighbourhood.
 	Colonies []Colony
+	deep     *deepLayer
 }
 
 // Moment is when and how a picture is drawn: the animation frame, the frame
@@ -74,7 +75,7 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	}
 	sc := &Scene{
 		Grid: f.g, Centre: c, Bounds: bounds, Fill: f.st.Scale >= Orbit, Targets: f.targets, Districts: f.districts(),
-		Scale: f.st.Scale, Anim: f.anim, Seed: f.m.Seed, Gate: gateRaised(f.m.Wonders), Colonies: colonies,
+		Scale: f.st.Scale, Anim: f.anim, Seed: f.m.Seed, Gate: gateRaised(f.m.Wonders), Colonies: colonies, deep: &gen.deep,
 	}
 	if f.st.Scale >= Orbit {
 		sc.SpaceCell = f.spaceCellFunc()

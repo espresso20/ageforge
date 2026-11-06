@@ -10,6 +10,7 @@ type Generator struct {
 	cat    *mapmodel.Catalog
 	fields *Fields
 	plans  [numScales]*Plan // by scale; the ground and the city share one
+	deep   deepLayer        // the dark ground of the star map's close views, kept between frames
 }
 
 // frame is one picture being drawn, layer by layer, on a grid the size of
