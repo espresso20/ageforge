@@ -3,6 +3,7 @@ package mapstyle
 import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // freshFrames is how long what is new since the last visit stays lit once the
@@ -70,6 +71,14 @@ func (v *view) shownZoom() int {
 // zoomLabel names the zoom the last frame showed, and for a district whose.
 func (v *view) zoomLabel() string {
 	label := zoomName(v.shownZoom()).String()
+	if v.stars { // the star map's own rungs
+		switch v.shownZoom() {
+		case zCloseUp:
+			label = vibe.Line("ui.mapstyle.roguelike.view.zoomNames.closeup", "CLOSE-UP")
+		case zOverview:
+			label = vibe.Line("ui.mapstyle.roguelike.view.zoomNames.overview", "OVERVIEW")
+		}
+	}
 	if v.shownZoom() == zDistrict {
 		label += " · " + lineageLabel(v.district)
 	}

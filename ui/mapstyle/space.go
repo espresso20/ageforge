@@ -220,9 +220,6 @@ var starNames = [len(mapgen.NearStars)]vibe.Entry{
 	vibe.E("ui.mapstyle.space.star.tau_ceti", "Tau Ceti"),
 	vibe.E("ui.mapstyle.space.star.teegardens_star", "Teegarden's Star"),
 	vibe.E("ui.mapstyle.space.star.kapteyns_star", "Kapteyn's Star"),
-	vibe.E("ui.mapstyle.space.star.altair", "Altair"),
-	vibe.E("ui.mapstyle.space.star.vega", "Vega"),
-	vibe.E("ui.mapstyle.space.star.fomalhaut", "Fomalhaut"),
 }
 
 // describeNearStar is a star of the neighbourhood: its name, how far it is

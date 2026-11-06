@@ -71,3 +71,15 @@ func TestGalacticOpensOnTheNeighborhood(t *testing.T) {
 		t.Errorf("the Sun inspects as %q, want Sol", in.Title)
 	}
 }
+
+// TestGalacticRungLabels: the footer names each rung of the star map.
+func TestGalacticRungLabels(t *testing.T) {
+	v, f := galacticView(t)
+	for z, want := range map[int]string{zCloseUp: "CLOSE-UP", zInner: "INNER", zOverview: "OVERVIEW", zCosmos: "COSMOS"} {
+		v.cur = v.scene(f).Centre
+		v.zoomTo(v.scene(f), z)
+		if got := v.zoomLabel(); v.shownZoom() != z || got != want {
+			t.Errorf("zoom %d is labelled %q, want %q", z, got, want)
+		}
+	}
+}

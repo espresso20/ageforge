@@ -34,7 +34,7 @@ func starCell(o *Overview, key string) (x, y int, ok bool) {
 }
 
 // TestNeighborhoodIsToScale: distance from Sol is linear on screen, so Sirius
-// lies farther out than Alpha Centauri, and Vega farther still.
+// lies farther out than Alpha Centauri, and Kapteyn's Star farther still.
 func TestNeighborhoodIsToScale(t *testing.T) {
 	o := nearScene(7, nil).OverviewNeighborhood(120, 40)
 	sx, sy := 60, 20
@@ -45,8 +45,8 @@ func TestNeighborhoodIsToScale(t *testing.T) {
 		}
 		return sq(x-sx) + 4*sq(y-sy)
 	}
-	if a, s, v := dist("alpha_centauri"), dist("sirius"), dist("vega"); !(a < s && s < v) {
-		t.Errorf("distances on screen: Alpha Centauri %d, Sirius %d, Vega %d", a, s, v)
+	if a, s, v := dist("alpha_centauri"), dist("sirius"), dist("kapteyns_star"); !(a < s && s < v) {
+		t.Errorf("distances on screen: Alpha Centauri %d, Sirius %d, Kapteyn %d", a, s, v)
 	}
 }
 

@@ -52,9 +52,6 @@ var NearStars = [...]NearStar{
 	{"tau_ceti", 1190, 173, starLook{HSun, 1, 210, 0, 0}},
 	{"teegardens_star", 1250, 160, starLook{HRed, 0, 130, 0, 0}},
 	{"kapteyns_star", 1280, 251, starLook{HRed, 0, 150, 0, 0}},
-	{"altair", 1670, 48, starLook{HWhite, 2, 240, 0, 0}},
-	{"vega", 2500, 67, starLook{HCool, 2, 255, 0, 0}},
-	{"fomalhaut", 2510, 20, starLook{HWhite, 2, 235, 0, 0}},
 }
 
 // ringLy is the gap between the faint distance rings, in light-years.
@@ -104,7 +101,7 @@ func (s *Scene) OverviewNeighborhood(w, h int) *Overview {
 	pix := NewPixels(w, h)
 	defer pix.Release()
 	cx, cy := (2*(w/2)+1)*pxUnit, (2*(h/2)+1)*pxUnit
-	reach := min(w*pxUnit, 2*h*pxUnit) * 93 / 100 // the farthest star, in 16ths of a pixel
+	reach := min(w*pxUnit, 2*h*pxUnit) * 90 / 100 // the farthest star, in 16ths of a pixel
 	far := NearStars[len(NearStars)-1].Dist100
 	at := func(d100, lon int) (int, int) {
 		r, a := d100*reach/far, lon*turn/360
@@ -137,12 +134,12 @@ func (s *Scene) OverviewNeighborhood(w, h int) *Overview {
 		own := pix.Owner(th, 5)
 		x, y := pts[i][0], pts[i][1]
 		if lit {
-			for k, n := 0, 4+2*c.Tier; k < n; k++ { // a bigger colony lights more of its ring
+			for k, n := 0, 12; k < n; k++ { // a thin ring, a little brighter for a bigger colony
 				a := turn/4 + k*turn/n
-				pix.Set(floorDiv(x+3*pxUnit*cos4096(a)/1024, pxUnit), floorDiv(y+3*pxUnit*sin4096(a)/2048, pxUnit), P(HAmber, 210), own)
+				pix.Set(floorDiv(x+4*pxUnit*cos4096(a)/1024, pxUnit), floorDiv(y+4*pxUnit*sin4096(a)/2048, pxUnit), P(HAmber, 90+25*c.Tier), own)
 			}
 		}
-		paintNearStar(pix, x, y, st.look, own, blinkWith(s.Seed, s.Anim, 700+i, 40, 30)) // the bright ones twinkle, slowly
+		paintNearStar(pix, x, y, st.look, own, blinkWith(s.Seed, s.Anim, 700+i, 40, 30)) // the brighter ones twinkle, slowly
 	}
 	sol, sx, sy := pix.Owner(sunThing, 6), cx/pxUnit, cy/pxUnit
 	for dx := -2; dx <= 2; dx++ {
@@ -166,7 +163,7 @@ func (s *Scene) OverviewNeighborhood(w, h int) *Overview {
 func paintNearStar(pix *Pixels, x, y int, l starLook, own uint8, arms bool) {
 	px, py := floorDiv(x, pxUnit), floorDiv(y, pxUnit)
 	pix.Set(px, py, P(l.hue, l.weight), own)
-	if l.size > 0 {
+	if l.size > 0 && arms {
 		pix.Set(px+1, py, P(l.hue, l.weight), own)
 	}
 	if l.size > 1 && arms {
@@ -221,7 +218,7 @@ func (s *Scene) paintNearLanes(pix *Pixels, cx, cy int, pts *[len(NearStars)][2]
 		x0, y0, x1, y1 := floorDiv(from.x, pxUnit), floorDiv(from.y, pxUnit), floorDiv(pts[i][0], pxUnit), floorDiv(pts[i][1], pxUnit)
 		n := max(abs(x1-x0), abs(y1-y0))
 		for k := 1; k < n; k++ {
-			pix.Set(x0+(x1-x0)*k/n, y0+(y1-y0)*k/n, P(HCyan, [4]int{0, 70, 110, 150}[traffic]), own)
+			pix.Set(x0+(x1-x0)*k/n, y0+(y1-y0)*k/n, P(HCyan, [4]int{0, 40, 60, 90}[traffic]), own)
 		}
 		nodes = append(nodes, node{pts[i][0], pts[i][1], c.Line, c.Count})
 	}
