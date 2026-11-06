@@ -127,9 +127,13 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.08", "A planet of the home system"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.09", "it keeps its old orbit")}}, true
 	case "sun":
-		return Inspection{Title: vibe.Line("ui.mapstyle.space.sun.01", "Sol"),
+		in = Inspection{Title: vibe.Line("ui.mapstyle.space.sun.01", "Sol"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.32", "the orrery of the home system"),
-				town + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}, true
+				town + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}
+		if sky >= 2 { // on the star map Sol is the town's seat
+			in.Command = m.SquareCommand()
+		}
+		return in, true
 	case "satellite":
 		return Inspection{Title: vibe.Line("ui.mapstyle.space.satellite.01", "Satellite")}, true
 	case "the_moon":
