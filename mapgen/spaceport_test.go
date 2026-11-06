@@ -41,7 +41,7 @@ func TestPortIsPixelsWithoutPlots(t *testing.T) {
 	if quad < 200 {
 		t.Errorf("only %d quadrant cells", quad)
 	}
-	if n := portCells(g, func(th Thing) bool { return th.Kind == KindAmbient || th.Kind == KindRoad }); n != 0 {
+	if n := portCells(g, func(th Thing) bool { return th.Kind == KindAmbient || th.Kind == KindRoad && th.Key != "tether" }); n != 0 {
 		t.Errorf("%d plot or square cells in the port", n)
 	}
 }
