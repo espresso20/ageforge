@@ -25,6 +25,9 @@ type Scene struct {
 	Anim       int
 	Seed       int64
 	Gate       bool // the warp gate stands: the Warp Nexus is built
+	// Colonies are the building lines with something standing, on the star
+	// map: the lit stars of Sol's neighbourhood.
+	Colonies []Colony
 }
 
 // Moment is when and how a picture is drawn: the animation frame, the frame
@@ -62,12 +65,16 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	if len(f.sites) > 0 && f.st.Scale != Stars {
 		bounds = f.edge() // the civs stand at the edge of the picture
 	}
+	var colonies []Colony
 	if f.st.Scale == Stars {
-		c = f.plan.territoryCentre() // the camera starts on the town, not the core
+		c = Pt{f.g.W / 2, f.g.H / 2} // Sol, at the middle of the neighbourhood and of its close-up
+		for _, h := range f.homeSectors() {
+			colonies = append(colonies, Colony{Line: h.line, Count: h.count, Systems: len(h.cells), Tier: h.tier})
+		}
 	}
 	sc := &Scene{
 		Grid: f.g, Centre: c, Bounds: bounds, Fill: f.st.Scale >= Orbit, Targets: f.targets, Districts: f.districts(),
-		Scale: f.st.Scale, Anim: f.anim, Seed: f.m.Seed, Gate: gateRaised(f.m.Wonders),
+		Scale: f.st.Scale, Anim: f.anim, Seed: f.m.Seed, Gate: gateRaised(f.m.Wonders), Colonies: colonies,
 	}
 	if f.st.Scale >= Orbit {
 		sc.SpaceCell = f.spaceCellFunc()

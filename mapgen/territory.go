@@ -225,19 +225,6 @@ func systemsFor(count, most int) int {
 	return clamp(2*isqrt(count)-2, 1, most)
 }
 
-// territoryCentre is the middle of the home sectors: where the camera starts.
-func (p *Plan) territoryCentre() Pt {
-	if len(p.Sectors) == 0 {
-		return p.Centre
-	}
-	x, y := 0, 0
-	for _, s := range p.Sectors {
-		x += s.Hub.X
-		y += s.Hub.Y
-	}
-	return Pt{x / len(p.Sectors), y / len(p.Sectors)}
-}
-
 // reserved says whether a cell is one a sector or a rival can light, or the
 // home star: the places a wonder's star keeps off.
 func (p *Plan) reserved(c Pt) bool {

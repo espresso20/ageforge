@@ -44,6 +44,10 @@ func (s *Scene) SystemOverview(w, h int, mode SystemViewMode) *Overview {
 	return s.overviewSystem(w, h, mode)
 }
 
+// OverviewSol is the close-up of Sol on the star map: the solar system of the
+// Interstellar Age and the warp gate where the lanes leave.
+func (s *Scene) OverviewSol(w, h int) *Overview { return s.overviewSystem(w, h, SystemViewFull) }
+
 // OverviewCosmos squeezes the scene with additional cosmic padding into w by h cells,
 // giving a wide deep space perspective.
 func (s *Scene) OverviewCosmos(w, h int) *Overview {
@@ -310,7 +314,9 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 			wx := o.blockX(x)
 			wy := o.blockY(y)
 			o.picks[y*w+x] = Pt{wx, wy}
-			if s.SpaceCell != nil {
+			if s.Scale == Stars { // the close-up of Sol is on the dark between the stars
+				o.Grid.paint(x, y, deepCell(s.Seed, wx, wy, x, y, w, h))
+			} else if s.SpaceCell != nil {
 				c := s.SpaceCell(wx, wy)
 				if mode == SystemViewCosmos && c.Bg.Hue == HNebula { // the Milky Way is the glow here
 					c.Bg = P(HVoid, 255)
@@ -343,7 +349,7 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	// 7. Outer Megastructures: Warp Gate
 	warpRY := (maxRY * 115) / 100
 	warpY := cy + warpRY
-	if s.Gate && o.Grid.in(cx, warpY) {
+	if (s.Gate || s.Scale == Stars) && o.Grid.in(cx, warpY) { // the lanes of the neighbourhood leave by it
 		if o.Grid.in(cx-1, warpY) {
 			o.Grid.paint(cx-1, warpY, Cell{R: '⫷', Fg: P(HCyan, 255), Bg: o.Grid.At(cx-1, warpY).Bg})
 			o.Grid.mark(cx-1, warpY, Thing{Kind: KindBuilding, Key: "warp_gate"})
@@ -357,7 +363,7 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 	}
 
 	// 10. Rare Visitors & Alien Craft (Sync with Scene Grid)
-	if s.Grid != nil {
+	if s.Grid != nil && s.Scale != Stars {
 		for i := range s.Grid.Cells {
 			th := s.Grid.Things[s.Grid.Hit[i]]
 			if th.Kind == KindVisitor {
