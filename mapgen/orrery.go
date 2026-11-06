@@ -53,6 +53,7 @@ type orrery struct {
 	rad    []int // the planets' radii
 	cx, cy int   // the star's cell
 	sx, sy int   // the star's centre, in 16ths of a pixel
+	maxRY  int   // how far out the system reaches, in rows
 }
 
 // paintOrrery draws the system (spec) into o over the star field that is
@@ -60,7 +61,7 @@ type orrery struct {
 func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, cx, cy, maxRY int) {
 	var beltRX, beltRY int
 	w, h := o.Grid.W, o.Grid.H
-	r := &orrery{s: s, pix: NewPixels(w, h), spec: spec, seed: s.Seed, mode: mode, look: orreryLooks[mode], cx: cx, cy: cy}
+	r := &orrery{s: s, pix: NewPixels(w, h), spec: spec, seed: s.Seed, mode: mode, look: orreryLooks[mode], cx: cx, cy: cy, maxRY: maxRY}
 	// a bigger window gets bigger bodies, a small one smaller
 	k := clamp(cy*256/20, 205, 384)
 	r.sun = spec.Star.Size * r.look.sun / 100 * k >> 8
@@ -86,6 +87,9 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, 
 	sunOwn := r.pix.Owner(sunThing, 4)
 	orbitOwn := r.pix.Owner(Thing{Kind: KindRoad, Key: "orbit"}, 2)
 
+	if mode == SystemViewCosmos {
+		r.cosmos(o, maxRY)
+	}
 	// the star's glow first, so everything else lies over it
 	r.glow(r.sx, r.sy, r.sun, spec.Star)
 
@@ -122,7 +126,7 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, 
 		r.planet(i, x16[i], y16[i])
 	}
 	if mode == SystemViewCosmos { // the Kuiper belt, out past the dwarf planet
-		r.belt(maxRY*138/100*230/100, maxRY*138/100, orbitOwn)
+		r.kuiper(maxRY, orbitOwn)
 	}
 
 	if spec.Dwarf && mode != SystemViewInner { // out beyond the rest
@@ -135,6 +139,9 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, 
 	}
 	if spec.Comet && mode == SystemViewCosmos { // it crosses the cosmic view only
 		r.comet()
+	}
+	if mode == SystemViewCosmos {
+		r.beacons()
 	}
 	// a hull pixel with a blinking light stands by the planets that have one
 	stOwn := r.pix.Owner(Thing{Kind: KindTerrain, Key: "space_station"}, 6)

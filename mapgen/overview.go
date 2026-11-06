@@ -311,7 +311,11 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 			wy := o.blockY(y)
 			o.picks[y*w+x] = Pt{wx, wy}
 			if s.SpaceCell != nil {
-				o.Grid.paint(x, y, s.SpaceCell(wx, wy))
+				c := s.SpaceCell(wx, wy)
+				if mode == SystemViewCosmos && c.Bg.Hue == HNebula { // the Milky Way is the glow here
+					c.Bg = P(HVoid, 255)
+				}
+				o.Grid.paint(x, y, c)
 			} else {
 				o.Grid.paint(x, y, Cell{Bg: P(HVoid, 255)})
 			}

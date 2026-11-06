@@ -9,8 +9,11 @@ const (
 )
 
 // blinkOn says whether light i of the seed is on at frame anim.
-func blinkOn(seed int64, anim, i int) bool {
-	return (anim+roll(blinkPeriod, seed, 5400, int64(i)))%blinkPeriod < blinkLit
+func blinkOn(seed int64, anim, i int) bool { return blinkWith(seed, anim, i, blinkPeriod, blinkLit) }
+
+// blinkWith is blinkOn for a light that is lit lit frames in period.
+func blinkWith(seed int64, anim, i, period, lit int) bool {
+	return (anim+roll(period, seed, 5400, int64(i)))%period < lit
 }
 
 // light sets pixel (x, y) in hue h when light i is on.
