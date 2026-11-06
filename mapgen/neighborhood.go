@@ -229,7 +229,7 @@ func (s *Scene) paintNearLanes(pix *Pixels, cx, cy int, pts *[len(NearStars)][2]
 func (o *Overview) deepSky(s *Scene) {
 	for y := 0; y < o.Grid.H; y++ {
 		for x := 0; x < o.Grid.W; x++ {
-			o.Grid.paint(x, y, s.deep.cell(s.Seed, o.X0+x, o.Y0+y, x, y, o.Grid.W, o.Grid.H))
+			o.Grid.paint(x, y, s.deep.cell(s.Seed, o, x, y))
 		}
 	}
 }
@@ -237,20 +237,23 @@ func (o *Overview) deepSky(s *Scene) {
 // deepLayer keeps the dark ground between frames: it depends on the seed and
 // the window alone.
 type deepLayer struct {
-	seed       int64
-	w, h, x, y int
-	cells      []Cell
+	seed             int64
+	w, h, x, y, step int
+	cells            []Cell
 }
 
-// cell is deepCell of the cached window, computed once per seed and window.
-func (d *deepLayer) cell(seed int64, wx, wy, x, y, w, h int) Cell {
-	x0, y0 := wx-x, wy-y
-	if d.cells == nil || d.seed != seed || d.w != w || d.h != h || d.x != x0 || d.y != y0 {
-		d.seed, d.w, d.h, d.x, d.y = seed, w, h, x0, y0
+// cell is deepCell of o's window, computed once per seed and window. The key
+// is the window itself (origin, size, step), never derived from one cell:
+// at a coarse step that would miss on every cell and rebuild the window each
+// time (the Galactic close-up froze the terminal that way).
+func (d *deepLayer) cell(seed int64, o *Overview, x, y int) Cell {
+	w, h := o.Grid.W, o.Grid.H
+	if d.cells == nil || d.seed != seed || d.w != w || d.h != h || d.x != o.X0 || d.y != o.Y0 || d.step != o.step {
+		d.seed, d.w, d.h, d.x, d.y, d.step = seed, w, h, o.X0, o.Y0, o.step
 		d.cells = make([]Cell, w*h)
 		for cy := 0; cy < h; cy++ {
 			for cx := 0; cx < w; cx++ {
-				d.cells[cy*w+cx] = deepCell(seed, x0+cx, y0+cy, cx, cy, w, h)
+				d.cells[cy*w+cx] = deepCell(seed, o.blockX(cx), o.blockY(cy), cx, cy, w, h)
 			}
 		}
 	}
