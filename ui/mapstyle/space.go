@@ -120,6 +120,8 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 		return describeHomeworld(m), true
 	case "neighbor":
 		return describeNearStar(m, th), true
+	case "deepsky":
+		return describeSkyObject(th), true
 	case "planet":
 		if th.Ref >= 1 && th.Ref <= len(planetNames) {
 			return Inspection{Title: planetNames[th.Ref-1].String()}, true
@@ -236,6 +238,48 @@ func describeNearStar(m *mapmodel.Model, th mapgen.Thing) Inspection {
 		colony := describeSector(m, mapgen.Thing{Kind: mapgen.KindSector, Key: th.Lineage, Lineage: th.Lineage, Count: th.Count})
 		in.Lines = append(in.Lines, colony.Title)
 		in.Lines = append(in.Lines, colony.Lines...)
+	}
+	return in
+}
+
+// skyNames are the objects of the wide views, in the order of mapgen.SkyObjects.
+var skyNames = [len(mapgen.SkyObjects)]vibe.Entry{
+	vibe.E("ui.mapstyle.space.sky.orion_nebula", "Orion Nebula"),
+	vibe.E("ui.mapstyle.space.sky.horsehead_nebula", "Horsehead Nebula"),
+	vibe.E("ui.mapstyle.space.sky.pleiades", "The Pleiades"),
+	vibe.E("ui.mapstyle.space.sky.hyades", "The Hyades"),
+	vibe.E("ui.mapstyle.space.sky.crab_nebula", "Crab Nebula"),
+	vibe.E("ui.mapstyle.space.sky.eagle_nebula", "Eagle Nebula"),
+	vibe.E("ui.mapstyle.space.sky.lagoon_nebula", "Lagoon Nebula"),
+	vibe.E("ui.mapstyle.space.sky.carina_nebula", "Carina Nebula"),
+	vibe.E("ui.mapstyle.space.sky.milky_way", "The Milky Way"),
+	vibe.E("ui.mapstyle.space.sky.large_magellanic_cloud", "Large Magellanic Cloud"),
+	vibe.E("ui.mapstyle.space.sky.small_magellanic_cloud", "Small Magellanic Cloud"),
+	vibe.E("ui.mapstyle.space.sky.andromeda", "Andromeda"),
+	vibe.E("ui.mapstyle.space.sky.triangulum", "Triangulum"),
+}
+
+// describeSkyObject names an object of the wide views and says how far it is
+// from Sol; the Milky Way has no distance, Sol is in it.
+func describeSkyObject(th mapgen.Thing) Inspection {
+	i := th.Ref - 1
+	if i < 0 || i >= len(skyNames) {
+		return Inspection{}
+	}
+	in := Inspection{Title: skyNames[i].String()}
+	ly := mapgen.SkyObjects[i].Ly
+	switch {
+	case ly == 0:
+		in.Lines = []string{vibe.Line("ui.mapstyle.space.sky.home", "Sol lies in one of its arms")}
+	case ly >= 1000000:
+		t := (ly + 50000) / 100000
+		in.Lines = []string{strconv.Itoa(t/10) + "." + strconv.Itoa(t%10) + vibe.Line("ui.mapstyle.space.sky.million", " million light-years from Sol")}
+	default:
+		s := strconv.Itoa(ly)
+		if len(s) > 3 {
+			s = s[:len(s)-3] + "," + s[len(s)-3:]
+		}
+		in.Lines = []string{s + vibe.Line("ui.mapstyle.space.sky.distance", " light-years from Sol")}
 	}
 	return in
 }

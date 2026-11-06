@@ -7,7 +7,7 @@ package mapgen
 // star map.
 func (f *frame) paintSpace() {
 	if f.st.Scale == Stars {
-		f.paintGalaxy()
+		f.paintVoid() // the star map's looks are the wide views; this is only its ground
 		return
 	}
 	f.paintVoid()
@@ -15,29 +15,6 @@ func (f *frame) paintSpace() {
 	f.paintTracks()
 	if f.st.Scale == Orbit {
 		f.paintHomePlanet()
-	}
-}
-
-// paintGalaxy lays down the galaxy of the seed, already painted in the plan.
-func (f *frame) paintGalaxy() {
-	thing := Thing{Kind: KindTerrain, Key: "space"}
-	sky := f.plan.Galaxy.Sky
-	if f.close {
-		sky = f.plan.Galaxy.Deep
-	}
-	for i, c := range sky {
-		x, y := i%worldW, i/worldW
-		if (c.R == '✦' || c.R == '✧') && (f.anim/9+x*7+y*13)%7 == 0 {
-			c.R = '+' // the bright stars take turns to twinkle
-		}
-		if f.close && c.R == '∙' && (f.anim/9+x*7+y*13)%5 == 0 {
-			c.R = '·' // and the dim ones of the close sky blink down a step
-		}
-		if !f.close {
-			c = f.breatheSky(x, y, c)
-		}
-		f.g.paint(x, y, c)
-		f.g.mark(x, y, thing)
 	}
 }
 
@@ -129,31 +106,11 @@ func (f *frame) relicSpot(age, try int) Pt {
 	return Pt{c.X - 12 + roll(25, seed, 21, int64(age), int64(try)), c.Y - 5 + roll(11, seed, 22, int64(age), int64(try))}
 }
 
-// breatheSky is the overview's slow life: the core swelling and fading and the
-// glow of the dust shimmering, each place at its own phase.
-func (f *frame) breatheSky(x, y int, c Cell) Cell {
-	switch w := int(c.Bg.Weight); {
-	case c.Bg.Hue == HCore:
-		c.Bg = P(HCore, w-w*tri(f.anim/4, 12)/60) // up to a fifth down, over about twelve seconds
-	case c.Bg.Hue == HNebula && w > 18:
-		ph := int(hash(f.m.Seed, 64, int64(floorDiv(x, 3)), int64(floorDiv(y, 2))) % 24)
-		c.Bg = P(HNebula, w-w*tri(f.anim/5+ph, 12)/48)
-	}
-	return c
-}
-
 // spaceCellFunc returns a function that evaluates procedural space cells at any coordinate (wx, wy).
 func (f *frame) spaceCellFunc() func(wx, wy int) Cell {
 	seed := f.m.Seed
 	sky := f.st.Sky
-	scale := f.st.Scale
 	anim := f.anim
-	close := f.close
-	if scale == Stars {
-		return func(wx, wy int) Cell {
-			return starsSpaceCell(seed, anim, close, wx, wy)
-		}
-	}
 	return func(wx, wy int) Cell {
 		return voidSpaceCell(seed, sky, anim, wx, wy)
 	}
@@ -185,46 +142,6 @@ func voidSpaceCell(seed int64, sky Look, anim int, wx, wy int) Cell {
 		cell.Fg = sky.Fg.fade(shine)
 	}
 	return cell
-}
-
-// starsSpaceCell generates procedural deep space outside the galaxy for the Stars scale.
-func starsSpaceCell(seed int64, anim int, close bool, wx, wy int) Cell {
-	h8 := func(salt int64, x, y int) int { return int(hash(seed, salt, int64(x), int64(y)) % 256) }
-	fx := floorDiv(wx*256, 80)
-	fy := floorDiv(wy*256, 40)
-	tone := 6 + clamp(wx, 0, worldW-1)*7/worldW + clamp(wy, 0, worldH-1)*5/worldH + fbm(seed+31, fx, fy, 2)*3/noiseMax + h8(41, wx, wy)/140
-	bg := P(HNebula, tone)
-	c := Cell{R: ' ', Fg: P(HStar, 0), Bg: bg}
-	if close {
-		dh := int(hash(seed, 63, int64(wx), int64(wy)) % 1000)
-		switch {
-		case dh < 14:
-			c.R, c.Fg = '∙', P(HStar, 60+h8(61, wx, wy)*40/256)
-		case dh < 40:
-			c.R, c.Fg = '·', P(HStar, 50+h8(62, wx, wy)*40/256)
-		}
-		if c.R == '∙' && (anim/9+wx*7+wy*13)%5 == 0 {
-			c.R = '·'
-		}
-	} else {
-		h := int(hash(seed, 44, int64(wx), int64(wy)) % 1000)
-		switch {
-		case h < 3:
-			c.R, c.Fg = pick("✦✧", uint64(h8(46, wx, wy))), P(HStar, 255)
-		case h < 17:
-			c.R, c.Fg = pick("∙∙+", uint64(h8(47, wx, wy))), P(HStar, 150+h8(48, wx, wy)*80/256)
-		case h < 72:
-			c.R, c.Fg = '·', P(HStar, 70+h8(49, wx, wy)*70/256)
-		}
-		if (c.R == '✦' || c.R == '✧') && (anim/9+wx*7+wy*13)%7 == 0 {
-			c.R = '+'
-		}
-		if w := int(c.Bg.Weight); c.Bg.Hue == HNebula && w > 18 {
-			ph := int(hash(seed, 64, int64(floorDiv(wx, 3)), int64(floorDiv(wy, 2))) % 24)
-			c.Bg = P(HNebula, w-w*tri(anim/5+ph, 12)/48)
-		}
-	}
-	return c
 }
 
 // paintOrbitStation sets one station beside the home planet: a fixed hull

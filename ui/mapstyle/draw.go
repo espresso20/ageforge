@@ -54,6 +54,10 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 	var on bool
 	if v.overview {
 		switch z := v.shownZoom(); {
+		case v.stars && z == zCosmos:
+			v.ov = sc.OverviewVoid(w, h)
+		case v.stars && z == zOverview:
+			v.ov = sc.OverviewArm(w, h)
 		case z == zCosmos:
 			v.ov = sc.OverviewCosmos(w, h)
 		case v.stars && z == zInner:

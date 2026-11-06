@@ -23,7 +23,7 @@ func (v *view) Inspect(f Frame) (Inspection, bool) {
 		if x, y, ok := v.ov.CellOf(p); ok {
 			if sc.Grid.Space { // bodies are drawn in the overview itself
 				th := v.ov.Grid.ThingAt(x, y)
-				if v.stars && v.shownZoom() >= zInner { // the neighbourhood and Sol are all there is of the sky
+				if v.stars { // every view of the sky is drawn by the overview
 					switch {
 					case th.Key == "home":
 						return describeHomeworld(f.Model), true
