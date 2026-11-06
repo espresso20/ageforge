@@ -1,13 +1,16 @@
 package mapgen
 
-// Blinking lights on the space stations: a light is one pixel, lit one frame
-// in blinkPeriod, each on a phase of its own from the seed so they never blink
-// together. The ships are gone; the stations are what moves the eye now.
-const blinkPeriod = 8
+// Blinking lights on the space stations: a light is one pixel, lit blinkLit
+// frames in blinkPeriod (a slow beacon, not a flicker), each on a phase of its
+// own from the seed so they never blink together.
+const (
+	blinkPeriod = 28
+	blinkLit    = 3
+)
 
 // blinkOn says whether light i of the seed is on at frame anim.
 func blinkOn(seed int64, anim, i int) bool {
-	return (anim+roll(blinkPeriod, seed, 5400, int64(i)))%blinkPeriod == 0
+	return (anim+roll(blinkPeriod, seed, 5400, int64(i)))%blinkPeriod < blinkLit
 }
 
 // light sets pixel (x, y) in hue h when light i is on.

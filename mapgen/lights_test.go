@@ -31,14 +31,14 @@ func TestLightsBlink(t *testing.T) {
 		}
 		apart = apart || blinkOn(7, anim, 0) != blinkOn(7, anim, 1) || blinkOn(7, anim, 2) != blinkOn(7, anim, 3)
 	}
-	if on != 10 || !apart {
+	if on != 10*blinkLit || !apart {
 		t.Errorf("lit %d frames in %d, apart=%v", on, 10*blinkPeriod, apart)
 	}
 	p := NewPixels(4, 4)
 	defer p.Release()
 	for anim := 0; anim < blinkPeriod; anim++ {
 		p.light(7, anim, 0, 1, 1, HRed, 0)
-		if (p.px[p.W+1].Hue == HRed) != (anim == (blinkPeriod-roll(blinkPeriod, int64(7), 5400, 0))%blinkPeriod) {
+		if (p.px[p.W+1].Hue == HRed) != ((anim+roll(blinkPeriod, int64(7), 5400, 0))%blinkPeriod < blinkLit) {
 			t.Fatalf("anim %d: light on=%v", anim, p.px[p.W+1].Hue == HRed)
 		}
 		p.px[p.W+1] = Paint{}
