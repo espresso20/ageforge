@@ -99,7 +99,7 @@ func pickable(th mapgen.Thing, n int) bool {
 			return true
 		case "star":
 			return th.Count == 0 // not its halo
-		case "neighbor":
+		case "neighbor", "deepsky":
 			return true
 		case "satellite", "the_moon":
 			return n >= 4 // a moon drawn as a dot is not worth a stop
