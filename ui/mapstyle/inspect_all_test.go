@@ -90,7 +90,7 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	want := map[string]map[string]string{
 		"space_age":        {"home": "The homeworld", "space": "Open space"},
-		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "A planet of the home system", "satellite": "Satellite", "orbit": "The home system", "space": "Deep space"},
+		"interstellar_age": {"home": "The homeworld", "sun": "The home sun", "planet": "Mercury", "satellite": "Satellite", "orbit": "The home system", "space": "Deep space"},
 		"galactic_age":     {"space": "Between the stars"},
 		"quantum_age":      {"space": "A maybe"},
 		"transcendent_age": {"space": "Light"},
@@ -119,7 +119,11 @@ func TestSpaceThingsHaveTheirOwnWords(t *testing.T) {
 			for th, p := range thingsOf(grid) {
 				v.cur = pick(p)
 				in, _ := v.Inspect(f)
-				if title, ok := titles[th.Key]; ok && (th.Kind == mapgen.KindRoad) == roadKeys[th.Key] {
+				title, ok := titles[th.Key]
+				if ok && th.Key == "planet" && age == "interstellar_age" { // Sol's planets go by name
+					title = [...]string{"Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"}[th.Ref-1]
+				}
+				if ok && (th.Kind == mapgen.KindRoad) == roadKeys[th.Key] {
 					found[th.Key] = true
 					if in.Title != title {
 						t.Errorf("%s: %s inspects as %q, want %q", age, th.Key, in.Title, title)

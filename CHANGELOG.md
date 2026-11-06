@@ -30,6 +30,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- The space map names Sol's planets, Mercury to Neptune, when you inspect them.
 - The widest space view shows the Oort cloud, the Milky Way, the Sun's bubble and a fuller Kuiper belt, with relay beacons from the Interstellar age.
 - The space map names Earth's moon "The Moon" instead of "Satellite".
 - The Interstellar map: comets cross the cosmic view slowly, and Earth shows city lights, space elevators, huge stations and a docked starship; the satellites fade softly instead of flashing, and station lights blink more slowly.
