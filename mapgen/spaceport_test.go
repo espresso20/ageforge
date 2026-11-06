@@ -17,7 +17,7 @@ func portAt(scale float64, gate bool) *Scene {
 		}
 	}
 	line := "housing"
-	return (&Generator{}).DrawAt(m, Moment{Anim: 40, Visit: -1, Close: true, District: line})
+	return (&Generator{}).DrawAt(m, Moment{Anim: 40, Visit: -1, Close: true})
 }
 
 func portCells(g *Grid, keep func(Thing) bool) int {

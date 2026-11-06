@@ -12,7 +12,7 @@ func closeUp(age string, seed int64, anim int) *Scene {
 // The calm close-up is drawn in quadrant blocks, shows Earth's colours and
 // holds nothing of the player's.
 func TestCalmCloseUpIsEarthAndNothingElse(t *testing.T) {
-	for _, age := range []string{"space_age", "interstellar_age"} {
+	for _, age := range []string{"space_age"} { // the Interstellar close-up is the port
 		g := closeUp(age, 7, 40).Grid
 		quad, hydro := 0, 0
 		for _, c := range g.Cells {

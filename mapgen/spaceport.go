@@ -6,7 +6,8 @@ import (
 	"github.com/espresso20/ageforge/mapmodel"
 )
 
-// The space port at the deepest zoom of the space ages: a ring city in orbit
+// The space port, the close-up of the Interstellar Age (the deepest zoom of
+// the Space Age): a ring city in orbit
 // round the home world, a megacity of trillions seen from outside, drawn in
 // quadrant blocks (quad.go). Every building the player has is a module of the
 // ring; ships dock at the dock arms and leave toward the edge of the picture.
@@ -194,6 +195,12 @@ func (f *frame) paintSpacePort() {
 	pix.planet(seed, anim, &SolSpec.Planets[planetEarth], planetEarth, SolSpec.ThingOf(planetEarth), earthX, earthY, earthR, shade)
 	ring(true)
 	moon(true)
+
+	// a swarm of small satellites winks in the dark round the ring
+	for i := 0; i < 16; i++ {
+		x, y, _ := pp.at(roll(turn, seed, 5310, int64(i))+anim/(20+i)*16, 112+roll(45, seed, 5311, int64(i)))
+		pix.light(seed, anim, 200+i, x, y, HWhite, 0)
+	}
 
 	// the warp gate stands on the ring, a few lights round it
 	if pp.gate {
