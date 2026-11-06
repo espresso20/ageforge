@@ -7,7 +7,7 @@ package mapgen
 // star map.
 func (f *frame) paintSpace() {
 	if f.st.Scale == Stars {
-		f.paintVoid() // the star map's looks are the wide views; this is only its ground
+		f.paintVoid()
 		return
 	}
 	f.paintVoid()
@@ -24,7 +24,9 @@ func (f *frame) paintVoid() {
 	for y := 0; y < f.g.H; y++ {
 		for x := 0; x < f.g.W; x++ {
 			bg := sky.Bg
-			if haze := max(0, fbm(f.m.Seed+11, x*256/24, y*256/12, 3)-540) * 60 / (noiseMax - 540); haze > 0 {
+			if f.st.Scale == Stars {
+				// the star map's looks are the wide views; this is only its flat ground
+			} else if haze := max(0, fbm(f.m.Seed+11, x*256/24, y*256/12, 3)-540) * 60 / (noiseMax - 540); haze > 0 {
 				bg = P(HNebula, haze)
 			}
 			f.g.paint(x, y, Cell{R: ' ', Fg: sky.Fg, Bg: bg})
