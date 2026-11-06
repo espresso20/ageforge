@@ -118,15 +118,6 @@ func (v *view) planetShown() int {
 	return v.planet
 }
 
-// starShown is the star whose system the close-up is in: 0 for the home sun,
-// and anywhere but the close-up.
-func (v *view) starShown() int {
-	if v.overview {
-		return 0
-	}
-	return v.star
-}
-
 // aim settles which body a zoom in a space scene is on, before it happens.
 // Diving to the close-up lands on the planet under the cursor (the home world
 // when the cursor is on nothing); the sun, which has no close-up, and the
@@ -142,18 +133,18 @@ func (v *view) aim(sc *mapgen.Scene, to int) bool {
 		th = mapgen.Thing{Kind: mapgen.KindTerrain, Key: "planet", Ref: v.planet}
 	}
 	i, planet := mapgen.PlanetOf(th)
-	star := th == sunThing || th.Key == "star"
+	sun := th == sunThing
 	switch {
 	case to >= zCloseUp && from < zCloseUp:
-		if star {
+		if sun {
 			return false
 		}
 		pl := 0
 		if planet && th.Key != "home" {
 			pl = i + 1
 		}
-		if v.star > 0 && pl == 0 || pl > 0 && to > zCloseUp || v.star > 0 && to > zCloseUp {
-			return false // a far system has planets to dive to, and no town
+		if pl > 0 && to > zCloseUp {
+			return false
 		}
 		v.planet, v.cur = pl, sc.Centre // the planet is drawn at the centre of the close-up
 	case to > zCloseUp && v.planet > 0:
@@ -161,13 +152,7 @@ func (v *view) aim(sc *mapgen.Scene, to int) bool {
 	case to < zCloseUp:
 		v.planet = 0
 	}
-	switch {
-	case to == zCosmos && v.star > 0: // out of a far system: the cursor stays on its star
-		th, v.star = mapgen.StarThing(v.star, false), 0
-		v.seek = th
-	case to < zCloseUp && from == zCosmos && th.Key == "star": // into one
-		v.star, v.seek = th.Ref, th
-	case to < zCloseUp && (planet || star):
+	if to < zCloseUp && (planet || sun) {
 		v.seek = th
 	}
 	return true

@@ -16,7 +16,6 @@ func portAt(scale float64, gate bool) *Scene {
 			m.Wonders[i].Built = gate
 		}
 	}
-	line := "housing"
 	return (&Generator{}).DrawAt(m, Moment{Anim: 40, Visit: -1, Close: true})
 }
 

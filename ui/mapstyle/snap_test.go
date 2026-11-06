@@ -160,8 +160,8 @@ func TestZoomOnMarsDrawsMarsWithNoStation(t *testing.T) {
 	press(v, f, tcell.KeyPgDn)
 	earth := shot(v, f)
 	defer earth.Fini()
-	if !hasThing(v.scene(f).Grid, "space_station") {
-		t.Error("the calm Earth lost its station")
+	if !hasThing(v.scene(f).Grid, "home") {
+		t.Error("Earth's close-up lost the home world")
 	}
 	if reds(mars) <= reds(earth) {
 		t.Errorf("Mars is no redder than Earth: %d against %d", reds(mars), reds(earth))
@@ -224,79 +224,123 @@ func TestLandArrowsStillStepOneCell(t *testing.T) {
 	}
 }
 
-// TestZoomIntoAStarAndBack: from COSMOS a star opens its system, a planet of
-// it opens a close-up, and zooming out returns each time with the cursor on
-// the body it left, ending on the star in COSMOS.
-func TestZoomIntoAStarAndBack(t *testing.T) {
+// planetRefs is the planets (by Ref, 1 Mercury .. 8 Neptune) and whether the
+// home world is among the bodies of g.
+func planetRefs(g *mapgen.Grid) (refs map[int]bool, home bool) {
+	refs = map[int]bool{}
+	for _, b := range bodiesOf(g) {
+		switch b.th.Key {
+		case "planet":
+			refs[b.th.Ref] = true
+		case "home":
+			home = true
+		}
+	}
+	return refs, home
+}
+
+// TestInterstellarOpensOnThePort: a big panel opens the Interstellar Age on
+// Earth and its space port, the modules of the ring inspect as the buildings,
+// and zooming in again does nothing.
+func TestInterstellarOpensOnThePort(t *testing.T) {
 	v, f := spaceView(t, "interstellar_age")
-	v.zoomTo(v.scene(f), zCosmos)
-	shot(v, f).Fini()
-	var star mapgen.Thing
-	for _, b := range bodiesOf(v.ov.Grid) {
-		if b.th.Key == "star" {
-			star = b.th
-			v.cur = v.ov.Pick(b.at.X, b.at.Y)
+	scr := shot(v, f)
+	scr.Fini()
+	if v.shownZoom() != zCloseUp || v.overview {
+		t.Fatalf("opened on zoom %d (overview %v), want the close-up", v.shownZoom(), v.overview)
+	}
+	g := v.scene(f).Grid
+	if !hasThing(g, "home") {
+		t.Error("no Earth in the close-up")
+	}
+	mod := -1
+	for i, h := range g.Hit {
+		if g.Things[h].Kind == mapgen.KindBuilding {
+			mod = i
 			break
 		}
 	}
-	if star.Key == "" {
-		t.Fatal("no star to zoom into at COSMOS")
+	if mod < 0 {
+		t.Fatal("no port module in the close-up")
 	}
-	cosmosCur := v.cur
+	v.cur = mapgen.Pt{X: mod % g.W, Y: mod / g.W}
+	if in, _ := v.Inspect(f); in.Title == "" || in.Title == f.Model.TownName {
+		t.Errorf("a port module inspects as %+v", in)
+	}
 	press(v, f, tcell.KeyPgDn)
-	shot(v, f).Fini()
-	if v.star != star.Ref || v.shownZoom() != zOverview || bodyUnder(v, f) != star {
-		t.Fatalf("into the star: star %d zoom %d on %v", v.star, v.shownZoom(), bodyUnder(v, f))
-	}
-	press(v, f, tcell.KeyPgDn) // inner
-	shot(v, f).Fini()
-	var planet mapgen.Thing
-	for _, b := range bodiesOf(v.ov.Grid) {
-		if b.th.Key == "planet" {
-			planet = b.th
-			v.cur = v.ov.Pick(b.at.X, b.at.Y)
-			break
-		}
-	}
-	if planet.Key == "" {
-		t.Fatal("the system shows no planet")
-	}
-	press(v, f, tcell.KeyPgDn) // close-up
-	shot(v, f).Fini()
-	if v.planet != planet.Ref || v.star != star.Ref {
-		t.Fatalf("close-up of star %d planet %d, want %d / %d", v.star, v.planet, star.Ref, planet.Ref)
-	}
-	press(v, f, tcell.KeyPgDn) // the district: refused
-	shot(v, f).Fini()
 	if v.shownZoom() != zCloseUp {
-		t.Errorf("a far system opened zoom %d", v.shownZoom())
-	}
-	press(v, f, tcell.KeyPgUp)
-	shot(v, f).Fini()
-	if v.shownZoom() != zInner || bodyUnder(v, f) != planet {
-		t.Errorf("out of the close-up: zoom %d on %v, want the planet", v.shownZoom(), bodyUnder(v, f))
-	}
-	press(v, f, tcell.KeyPgUp)
-	press(v, f, tcell.KeyPgUp)
-	shot(v, f).Fini()
-	if v.shownZoom() != zCosmos || v.star != 0 || bodyUnder(v, f) != star || v.cur != cosmosCur {
-		t.Errorf("back at COSMOS: zoom %d star %d on %v at %v, want %v at %v", v.shownZoom(), v.star, bodyUnder(v, f), v.cur, star, cosmosCur)
+		t.Errorf("PgDn at the port gave zoom %d", v.shownZoom())
 	}
 }
 
-func TestFarStarInspects(t *testing.T) {
+// TestInterstellarLadder: out from the port, INNER, OVERVIEW, COSMOS, and back.
+func TestInterstellarLadder(t *testing.T) {
 	v, f := spaceView(t, "interstellar_age")
-	v.zoomTo(v.scene(f), zCosmos)
-	shot(v, f).Fini()
-	for _, b := range bodiesOf(v.ov.Grid) {
-		if b.th.Key == "star" {
-			v.cur = v.ov.Pick(b.at.X, b.at.Y)
-			in, ok := v.Inspect(f)
-			if !ok || in.Title == "" {
-				t.Fatalf("a star at COSMOS inspects as %+v", in)
-			}
-			return
+	for _, want := range []int{zInner, zOverview, zCosmos, zCosmos} {
+		press(v, f, tcell.KeyPgUp)
+		shot(v, f).Fini()
+		if v.shownZoom() != want {
+			t.Fatalf("PgUp gave zoom %d, want %d", v.shownZoom(), want)
 		}
 	}
-	t.Fatal("no star at COSMOS")
+	for _, want := range []int{zOverview, zInner, zCloseUp, zCloseUp} {
+		press(v, f, tcell.KeyPgDn)
+		shot(v, f).Fini()
+		if v.shownZoom() != want {
+			t.Fatalf("PgDn gave zoom %d, want %d", v.shownZoom(), want)
+		}
+	}
+}
+
+// TestInnerShowsTheInnerPlanetsOnly: Mercury to Mars and the sun, not Jupiter.
+func TestInnerShowsTheInnerPlanetsOnly(t *testing.T) {
+	for _, size := range [][2]int{{100, 30}, {140, 45}, {200, 55}} {
+		v, f := spaceView(t, "interstellar_age")
+		v.zoomTo(v.scene(f), zInner)
+		drawFrame(v, f, size[0], size[1], false).Fini()
+		refs, home := planetRefs(v.ov.Grid)
+		if !home || !refs[1] || !refs[2] || !refs[4] || len(refs) != 3 {
+			t.Errorf("%v: inner shows planets %v, home %v; want Mercury, Venus, Mars and the home world", size, refs, home)
+		}
+		if !hasThing(v.ov.Grid, "sun") {
+			t.Errorf("%v: no sun at INNER", size)
+		}
+	}
+}
+
+// TestOverviewShowsAllEight: the whole of Sol.
+func TestOverviewShowsAllEight(t *testing.T) {
+	v, f := spaceView(t, "interstellar_age")
+	v.zoomTo(v.scene(f), zOverview)
+	drawFrame(v, f, 140, 45, false).Fini()
+	refs, home := planetRefs(v.ov.Grid)
+	if !home || len(refs) != 7 {
+		t.Errorf("overview shows planets %v, home %v; want all eight", refs, home)
+	}
+}
+
+// TestCosmosStarsAreNotPlaces: the outer system has no star to pick, and
+// zooming in on the sky steps to the overview, as ever.
+func TestCosmosStarsAreNotPlaces(t *testing.T) {
+	v, f := spaceView(t, "interstellar_age")
+	v.zoomTo(v.scene(f), zCosmos)
+	drawFrame(v, f, 140, 45, false).Fini()
+	if hasThing(v.ov.Grid, "star") {
+		t.Error("a star is a place at COSMOS")
+	}
+	if refs, home := planetRefs(v.ov.Grid); !home || len(refs) != 7 {
+		t.Errorf("cosmos shows planets %v, home %v; want Sol small in the middle", refs, home)
+	}
+	g := v.ov.Grid
+	for i, c := range g.Cells {
+		if g.Hit[i] == 0 && c.R != ' ' && c.R != 0 { // a dot of sky
+			v.cur = v.ov.Pick(i%g.W, i/g.W)
+			break
+		}
+	}
+	press(v, f, tcell.KeyPgDn)
+	drawFrame(v, f, 140, 45, false).Fini()
+	if v.shownZoom() != zOverview || v.planet != 0 {
+		t.Errorf("zoom %d planet %d after zooming in on the sky", v.shownZoom(), v.planet)
+	}
 }
