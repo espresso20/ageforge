@@ -190,11 +190,17 @@ func (f *frame) paintSpacePort() {
 		}
 	}
 
+	f.megaStations(pix, pp, shade)
 	moon(false)
 	ring(false)
 	pix.planet(seed, anim, &SolSpec.Planets[planetEarth], planetEarth, SolSpec.ThingOf(planetEarth), earthX, earthY, earthR, shade)
+	f.cityLights(pix, pp, shade)
+	f.shield(pix, pp)
+	f.paintTethers(pix, pp)
 	ring(true)
 	moon(true)
+	f.starship(pix, pp)
+	f.swarm(pix, pp)
 
 	// the warp gate stands on the ring, a few lights round it
 	if pp.gate {
