@@ -93,9 +93,10 @@ func (p *Pixels) planet(seed int64, anim int, pl *PlanetSpec, i int, th Thing, s
 	}
 }
 
-// moon paints a moon, a satellite of a planet, in the table's tone k.
-func (p *Pixels) moon(x, y, r, k int, shade func(Paint, int, int) Paint) {
-	p.Disc(x, y, r, p.Owner(Thing{Kind: KindTerrain, Key: "satellite"}, 5), func(nx, ny int) Paint {
+// moon paints a moon, a satellite of a planet, in the table's tone k; key
+// is "the_moon" for Earth's, "satellite" for the rest.
+func (p *Pixels) moon(x, y, r, k int, key string, shade func(Paint, int, int) Paint) {
+	p.Disc(x, y, r, p.Owner(Thing{Kind: KindTerrain, Key: key}, 5), func(nx, ny int) Paint {
 		return shade(moonTone[k%len(moonTone)], nx, ny)
 	})
 }
@@ -136,7 +137,11 @@ func (f *frame) paintEarthSystem() {
 			rx := R + (30+rk(20, 5203, k)+10*min(k, 5)+3*max(0, k-5))*pxUnit
 			x, y, behind := at(rk(turn, 5204, k)+anim/(8+2*k)*16, rx, 60+rk(40, 5205, k))
 			if behind != front {
-				pix.moon(x, y, r, k, shade)
+				key := "satellite"
+				if ps.Home && k == 0 {
+					key = "the_moon"
+				}
+				pix.moon(x, y, r, k, key, shade)
 			}
 		}
 	}

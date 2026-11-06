@@ -236,9 +236,9 @@ func TestCloseUpMoonInspects(t *testing.T) {
 	v := New().(*view)
 	f := Frame{Model: m, Anim: 17, Clock: 17}
 	for th, p := range thingsOf(v.scene(f).Grid) {
-		if th.Kind == mapgen.KindTerrain && th.Key == "satellite" {
+		if th.Kind == mapgen.KindTerrain && th.Key == "the_moon" {
 			v.cur = p
-			if in, _ := v.Inspect(f); in.Title != "Satellite" {
+			if in, _ := v.Inspect(f); in.Title != "The Moon" {
 				t.Errorf("the Moon inspects as %q", in.Title)
 			}
 			return

@@ -222,3 +222,10 @@ func TestPortSwarmIsCalm(t *testing.T) {
 		}
 	}
 }
+
+// Earth's moon at the port is the Moon, not a satellite.
+func TestPortMoonIsTheMoon(t *testing.T) {
+	if portCells(portAt(1, true).Grid, func(th Thing) bool { return th.Key == "the_moon" }) == 0 {
+		t.Error("no cell of the port view is the Moon")
+	}
+}

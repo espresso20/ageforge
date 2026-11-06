@@ -254,9 +254,13 @@ func (r *orrery) planet(i, x, y int) {
 	// the first eight of them
 	moon := r.pix.Owner(Thing{Kind: KindTerrain, Key: "satellite"}, 6)
 	for k := 0; k < min(p.Moons, 8) && R >= 3*pxUnit/2; k++ {
+		own := moon
+		if p.Home && k == 0 {
+			own = r.pix.Owner(Thing{Kind: KindTerrain, Key: "the_moon"}, 6)
+		}
 		a := (r.s.Anim/(3+2*k)*16 + roll(turn, r.seed, 92, int64(i), int64(k))) % 4096
 		rm := R + (3+2*k)*pxUnit
-		r.pix.Set(floorDiv(x+rm*cos4096(a)/1024, pxUnit), floorDiv(y+rm*sin4096(a)/2048, pxUnit), moonTone[k%len(moonTone)], moon)
+		r.pix.Set(floorDiv(x+rm*cos4096(a)/1024, pxUnit), floorDiv(y+rm*sin4096(a)/2048, pxUnit), moonTone[k%len(moonTone)], own)
 	}
 }
 

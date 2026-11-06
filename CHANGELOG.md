@@ -30,6 +30,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- The space map names Earth's moon "The Moon" instead of "Satellite".
 - The Interstellar map: comets cross the cosmic view slowly, and Earth shows city lights, space elevators, huge stations and a docked starship; the satellites fade softly instead of flashing, and station lights blink more slowly.
 - Space scenes drop the moving ships; stations blink instead.
 - **Resource rows get a bar and a trend line.** Each ordinary resource in the Resources box shows how big its stock is on a log-scale bar, and a short line of its last few minutes; a narrow box drops the line, then the bar.
