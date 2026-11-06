@@ -45,7 +45,7 @@ const (
 	cDust = nch
 )
 
-var chHue = [nch]Hue{HCool, HSun, HNeon, HRed, HGold, HHydro, HFire, HAir}
+var chHue = [nch]Hue{HStar, HSun, HNeon, HRed, HGold, HHydro, HFire, HAir}
 
 // wcanvas is a window of light, in pixels; ell and the rest take isotropic
 // positions, where a pixel is one wide and two tall.
@@ -92,8 +92,12 @@ func (c *wcanvas) starAt(x, y int, p Paint) { c.star(x, floorDiv(y, 2), p) }
 
 // glint is a star of a seeded colour at an isotropic position.
 func (c *wcanvas) glint(seed int64, i, x, y, lo int) {
-	hue := [6]Hue{HCool, HCool, HWhite, HWhite, HCool, HSun}[roll(6, seed, 7010, int64(i))]
-	c.starAt(x, y, P(hue, lo+roll(256-lo, seed, 7011, int64(i))))
+	hue := [6]Hue{HStar, HStar, HWhite, HWhite, HStar, HSun}[roll(6, seed, 7010, int64(i))]
+	r := roll(256-lo, seed, 7011, int64(i))
+	if lo < 100 {
+		r = r * r / (256 - lo) // a low floor means mostly dim stars
+	}
+	c.starAt(x, y, P(hue, lo+r))
 }
 
 // paints turns the channels into paints in pix.
@@ -130,40 +134,56 @@ type galLook struct {
 	core, bar int
 	dust      int
 	stars     int
+	spurs     bool // two fainter, shorter arms between the main ones
 }
 
-// armXY is the arm a's point at t (0..255 along it) in the sky.
-func armXY(g galLook, cx, cy, a, t int) (int, int, int) {
-	th := a*turn/g.arms + t*g.spin*turn/65536
-	r := g.r * (30 + 226*t/256) / 256
+// armXY is the point at t (0..255 along it) of the arm that leaves at angle
+// off; with a bar the arms leave from its ends.
+func armXY(g galLook, cx, cy, off, t int) (int, int, int) {
+	lo := 30
+	if g.bar > 0 {
+		off += turn / 7
+		lo = 97
+	}
+	th := off + t*g.spin*turn/65536
+	r := g.r * (lo + (256-lo)*t*t/65536) / 256 // wide pitch outside, like a log spiral
 	u, v := r*cos4096(th)/1024, r*sin4096(th)/1024*g.q/256
 	cs, sn := cos4096(g.phi), sin4096(g.phi)
 	return cx + (u*cs-v*sn)/1024, cy + (u*sn+v*cs)/1024, r
 }
 
-// galaxy paints a spiral at (cx, cy): haze, arms of cool light and stars,
-// dust beside them, pink knots, a warm bar and core.
+// galaxy paints a spiral at (cx, cy): a soft glow over the disc, arms of pale
+// light and stars that widen as they wind out, dust on their inner edges, pink
+// knots, a warm bar and core. The fainter spurs lie between the main arms.
 func (c *wcanvas) galaxy(seed int64, id, cx, cy int, g galLook) {
 	sq0 := max(g.q, 40)
-	c.ell(cx, cy, g.r, g.r*sq0/256, g.phi, cWarm, 22)
-	c.ell(cx, cy, g.r*8/10, g.r*8/10*sq0/256, g.phi, cCool, 18)
+	c.ell(cx, cy, g.r, g.r*sq0/256, g.phi, cCool, 9)
+	c.ell(cx, cy, g.r*7/10, g.r*7/10*sq0/256, g.phi, cWarm, 12)
 	n := max(60, g.r*3)
-	for a := 0; a < g.arms; a++ {
-		for i := 0; i < n; i++ {
+	for a := 0; a < g.arms*(1+boolInt(g.spurs)); a++ {
+		spur := a >= g.arms
+		off, lo, amp := a*turn/g.arms, 0, 130
+		if spur {
+			off, lo, amp = (a-g.arms)*turn/g.arms+turn/4, 90, 60
+		}
+		for i := lo * n / 256; i < (256-(lo+20)*boolInt(spur))*n/256; i++ {
 			t := i * 256 / n
-			x, y, r := armXY(g, cx, cy, a, t)
-			wd := 1 + g.r/16 + g.r*t/256/14
-			c.ell(x, y, wd, max(1, wd*sq0/256), 0, cCool, 40+30*(256-t)/256)
+			x, y, r := armXY(g, cx, cy, off, t)
+			wd := 1 + g.r/22 + g.r*t/256/8
+			c.ell(x, y, wd, max(1, wd*sq0/256), 0, cCool, amp*(60+t/2)/256*7/(wd+2)) // wider arms overlap more, so each sample adds less
 			for k := 0; k < g.stars; k++ {
 				j := int64(id*100000 + a*10000 + i*10 + k)
 				ox, oy := roll(2*wd+1, seed, 7020, j)-wd, roll(2*wd+1, seed, 7021, j)-wd
-				c.starAt(x+ox, y+oy*sq0/256, P([3]Hue{HCool, HWhite, HCool}[roll(3, seed, 7023, j)], 50+roll(110, seed, 7024, j)))
+				c.starAt(x+ox, y+oy*sq0/256, P([3]Hue{HStar, HWhite, HStar}[roll(3, seed, 7023, j)], 50+roll(110, seed, 7024, j)))
+			}
+			if spur {
+				continue
 			}
 			if g.dust > 0 && i%3 == 0 { // the dust lies along the inner edge of the arm
-				ex, ey, _ := armXY(g, cx, cy, a, max(t-4, 0))
+				ex, ey, _ := armXY(g, cx, cy, off-turn/40, t)
 				c.ell(ex, ey, max(1, wd/2), max(1, wd/2*sq0/256), 0, cDust, g.dust*(40+t/3)/256)
 			}
-			if t > 70 && t < 230 && roll(40, seed, 7022, int64(id), int64(a), int64(i)) == 0 {
+			if t > 70 && t < 230 && roll(30, seed, 7022, int64(id), int64(a), int64(i)) == 0 {
 				c.ell(x, y, 1+r/18, 1+r/18*sq0/256, 0, cPink, 110)
 			}
 		}
@@ -332,7 +352,7 @@ func buildWide(k wideKey) *wideLayer {
 	}
 	pix.Resolve(g)
 	for i, cell := range g.Cells {
-		if f, b := int(cell.Fg.Weight), int(cell.Bg.Weight); cell.R != ' ' && (f < 40 && b < 40 || cell.Fg.Hue == cell.Bg.Hue && abs(f-b) < 24) {
+		if f, b := int(cell.Fg.Weight), int(cell.Bg.Weight); cell.R != ' ' && (f < 64 && b < 64 || cell.Fg.Hue == cell.Bg.Hue && abs(f-b) < 24) {
 			// a haze glyph a themed ground cannot tell from its ground is a blank
 			g.Cells[i] = Cell{R: ' ', Fg: cell.Bg, Bg: cell.Bg}
 			if cell.Fg.Weight > cell.Bg.Weight {
@@ -357,21 +377,21 @@ func (c *wcanvas) arm(seed int64, colonies int, mark func(n uint8, x, y, r int))
 	reach := min(c.w/2, c.h) * 90 / 100
 	phi := armBandDeg * turn / 360
 	cs, sn := cos4096(phi), sin4096(phi)
-	wd := reach * 40 / 100
+	wd := reach * 55 / 100
 	for y := 0; y < c.h; y++ {
 		for x := 0; x < c.w; x++ {
 			dx, dy := x-cx, 2*y-cy
 			u, v := (dx*cs-dy*sn)/1024, (dx*sn+dy*cs)/1024
 			v += reach / 12 * sin4096(u*turn/(reach*2)) / 1024
-			d := 24 + bump(v*v, wd*wd)*232/256
+			d := 20 + bump(v*v, wd*wd)*200/256
 			i := y*c.w + x
 			n := fbm(seed+3, x*256/9, y*256/5, 3) // 0..1023
 			c.ch[i][cCool] = int16(d * n / 1024 * 5 / 10)
 			if r := abs(fbm(seed+4, x*256/12, y*256/6, 3) - 512); r < 70 { // a lane where the noise crosses its middle
 				c.ch[i][cDust] = int16((70 - r) * 3 * d / 256)
 			}
-			if roll(1000, seed, 7050, int64(x), int64(y)) < 6+d*55/256 {
-				c.glint(seed, i, x, 2*y, 60)
+			if roll(1000, seed, 7050, int64(x), int64(y)) < 3+d*28/256 {
+				c.glint(seed, i, x, 2*y, 40)
 			}
 		}
 	}
@@ -411,17 +431,17 @@ func boolInt(b bool) int {
 // void paints the space between galaxies.
 func (c *wcanvas) void(seed int64, mark func(n uint8, x, y, r int)) {
 	W, H := c.w, 2*c.h // isotropic size
-	mwX, mwY, mwR := W*28/100, H*46/100, min(W*23/100, H*36/100)
-	m31X, m31Y, m31R := W*74/100, H*28/100, W*16/100
+	mwX, mwY, mwR := W*26/100, H*46/100, min(W*23/100, H*36/100)
+	m31X, m31Y, m31R := W*79/100, H*30/100, W*14/100
 	m33X, m33Y, m33R := W*88/100, H*72/100, W*6/100
 	lmcX, lmcY := W*46/100, H*80/100
 	smcX, smcY := W*56/100, H*88/100
 	type major struct{ x, y, r int }
 	majors := []major{{mwX, mwY, mwR}, {m31X, m31Y, m31R}, {m33X, m33Y, m33R}, {lmcX, lmcY, 10}, {smcX, smcY, 8}}
 
-	mw := galLook{r: mwR, q: 256, phi: 0, arms: 2, spin: 230, core: 150, bar: 130, dust: 200, stars: 1}
+	mw := galLook{r: mwR, q: 256, phi: 0, arms: 2, spin: 330, core: 150, bar: 130, dust: 200, stars: 1, spurs: true}
 	c.galaxy(seed, 1, mwX, mwY, mw)
-	sx, sy, _ := armXY(mw, mwX, mwY, 0, 150) // Sol, in the Orion spur
+	sx, sy, _ := armXY(mw, mwX, mwY, 0, 170) // Sol, in the Orion spur
 	c.ring(sx, sy, 3, 12, P(HOrbit, 90))
 	c.starAt(sx, sy, P(HSun, 255))
 	c.starAt(sx+1, sy, P(HWhite, 255))
@@ -452,7 +472,7 @@ func (c *wcanvas) void(seed int64, mark func(n uint8, x, y, r int)) {
 	x0, y0, x1, y1 := mwX+mwR+4, mwY-mwR/4, m31X-m31R-8, m31Y+m31R/8
 	n := max(abs(x1-x0), abs(y1-y0)/2)
 	for k := 0; k < n; k++ {
-		c.starAt(x0+(x1-x0)*k/n, y0+(y1-y0)*k/n, P(HCyan, 55))
+		c.starAt(x0+(x1-x0)*k/n, y0+(y1-y0)*k/n, P(HStar, 110))
 	}
 
 	for i := 0; i < 24 && len(majors) < 16; i++ { // far galaxies, faint
