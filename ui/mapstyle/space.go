@@ -1,6 +1,8 @@
 package mapstyle
 
 import (
+	"strconv"
+
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/vibe"
@@ -110,12 +112,14 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 	}
 	switch th.Key {
 	case "home":
-		if sky >= 2 { // on the star map the home world is a star: the heart of the town
+		if sky >= 2 { // on the star map's galaxy the home world is a star: the heart of the town
 			in = describeSquare(m, town)
 			in.Title = hubTitles[sky].String() + town
 			return in, true
 		}
 		return describeHomeworld(m), true
+	case "neighbor":
+		return describeNearStar(m, th), true
 	case "planet":
 		if th.Ref >= 1 && th.Ref <= len(planetNames) {
 			return Inspection{Title: planetNames[th.Ref-1].String()}, true
@@ -123,9 +127,13 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.08", "A planet of the home system"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.09", "it keeps its old orbit")}}, true
 	case "sun":
-		return Inspection{Title: vibe.Line("ui.mapstyle.space.sun.01", "Sol"),
+		in = Inspection{Title: vibe.Line("ui.mapstyle.space.sun.01", "Sol"),
 			Lines: []string{vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.32", "the orrery of the home system"),
-				town + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}, true
+				town + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}
+		if sky >= 2 { // on the star map Sol is the town's seat
+			in.Command = m.SquareCommand()
+		}
+		return in, true
 	case "satellite":
 		return Inspection{Title: vibe.Line("ui.mapstyle.space.satellite.01", "Satellite")}, true
 	case "the_moon":
@@ -188,4 +196,46 @@ var planetNames = [...]vibe.Entry{
 	vibe.E("ui.mapstyle.space.planet.saturn", "Saturn"),
 	vibe.E("ui.mapstyle.space.planet.uranus", "Uranus"),
 	vibe.E("ui.mapstyle.space.planet.neptune", "Neptune"),
+}
+
+// starNames are the stars of Sol's neighbourhood, in the order of
+// mapgen.NearStars.
+var starNames = [len(mapgen.NearStars)]vibe.Entry{
+	vibe.E("ui.mapstyle.space.star.alpha_centauri", "Alpha Centauri"),
+	vibe.E("ui.mapstyle.space.star.barnards_star", "Barnard's Star"),
+	vibe.E("ui.mapstyle.space.star.wolf_359", "Wolf 359"),
+	vibe.E("ui.mapstyle.space.star.lalande_21185", "Lalande 21185"),
+	vibe.E("ui.mapstyle.space.star.sirius", "Sirius"),
+	vibe.E("ui.mapstyle.space.star.luyten_726_8", "Luyten 726-8"),
+	vibe.E("ui.mapstyle.space.star.ross_154", "Ross 154"),
+	vibe.E("ui.mapstyle.space.star.ross_248", "Ross 248"),
+	vibe.E("ui.mapstyle.space.star.epsilon_eridani", "Epsilon Eridani"),
+	vibe.E("ui.mapstyle.space.star.lacaille_9352", "Lacaille 9352"),
+	vibe.E("ui.mapstyle.space.star.ross_128", "Ross 128"),
+	vibe.E("ui.mapstyle.space.star.61_cygni", "61 Cygni"),
+	vibe.E("ui.mapstyle.space.star.procyon", "Procyon"),
+	vibe.E("ui.mapstyle.space.star.struve_2398", "Struve 2398"),
+	vibe.E("ui.mapstyle.space.star.groombridge_34", "Groombridge 34"),
+	vibe.E("ui.mapstyle.space.star.epsilon_indi", "Epsilon Indi"),
+	vibe.E("ui.mapstyle.space.star.tau_ceti", "Tau Ceti"),
+	vibe.E("ui.mapstyle.space.star.teegardens_star", "Teegarden's Star"),
+	vibe.E("ui.mapstyle.space.star.kapteyns_star", "Kapteyn's Star"),
+}
+
+// describeNearStar is a star of the neighbourhood: its name, how far it is
+// from Sol and, if people live there, what the colony says of itself.
+func describeNearStar(m *mapmodel.Model, th mapgen.Thing) Inspection {
+	i := th.Ref - 1
+	if i < 0 || i >= len(starNames) {
+		return Inspection{}
+	}
+	tenths := (mapgen.NearStars[i].Dist100 + 5) / 10
+	in := Inspection{Title: starNames[i].String(),
+		Lines: []string{strconv.Itoa(tenths/10) + "." + strconv.Itoa(tenths%10) + vibe.Line("ui.mapstyle.space.star.distance", " light-years from Sol")}}
+	if th.Lineage != "" {
+		colony := describeSector(m, mapgen.Thing{Kind: mapgen.KindSector, Key: th.Lineage, Lineage: th.Lineage, Count: th.Count})
+		in.Lines = append(in.Lines, colony.Title)
+		in.Lines = append(in.Lines, colony.Lines...)
+	}
+	return in
 }

@@ -3,6 +3,7 @@ package mapstyle
 import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/vibe"
 )
 
 // freshFrames is how long what is new since the last visit stays lit once the
@@ -59,6 +60,8 @@ func (v *view) shownZoom() int {
 	switch {
 	case v.zoomSet:
 		return v.zoom
+	case v.stars:
+		return zInner // Sol's neighbourhood
 	case v.overview:
 		return zOverview
 	}
@@ -68,6 +71,14 @@ func (v *view) shownZoom() int {
 // zoomLabel names the zoom the last frame showed, and for a district whose.
 func (v *view) zoomLabel() string {
 	label := zoomName(v.shownZoom()).String()
+	if v.stars { // the star map's own rungs
+		switch v.shownZoom() {
+		case zCloseUp:
+			label = vibe.Line("ui.mapstyle.roguelike.view.zoomNames.closeup", "CLOSE-UP")
+		case zOverview:
+			label = vibe.Line("ui.mapstyle.roguelike.view.zoomNames.overview", "OVERVIEW")
+		}
+	}
 	if v.shownZoom() == zDistrict {
 		label += " · " + lineageLabel(v.district)
 	}
@@ -125,6 +136,13 @@ func (v *view) planetShown() int {
 // squeezed views, the cursor follows the body it was on. It reports whether
 // the zoom goes ahead.
 func (v *view) aim(sc *mapgen.Scene, to int) bool {
+	if v.stars { // Sol is the middle of every rung; only Sol can be dived into
+		if to == zCloseUp && v.shownZoom() < zCloseUp && v.thingUnder(sc) != sunThing {
+			return false
+		}
+		v.cur = sc.Centre
+		return true
+	}
 	from := v.shownZoom()
 	th := homeThing
 	if from < zCloseUp {

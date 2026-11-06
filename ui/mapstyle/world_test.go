@@ -116,6 +116,9 @@ func TestWorldRoundTheTownInspectsAsItself(t *testing.T) {
 func TestTheCursorCanVisitACiv(t *testing.T) {
 	fixture.WithTheme(t, "forge")
 	for _, age := range worldAges {
+		if age == "galactic_age" {
+			continue // the neighborhood shows no rival civs; Tab hops the stars
+		}
 		m := busyModel(t, age)
 		v := New()
 		f := Frame{Model: m}
