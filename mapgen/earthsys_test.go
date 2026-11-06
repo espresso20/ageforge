@@ -69,7 +69,7 @@ func TestCalmCloseUpNamesItsBodies(t *testing.T) {
 			keys[g.Things[id].Key] = true
 		}
 	}
-	for _, k := range []string{"home", "satellite", "space_station"} {
+	for _, k := range []string{"home", "the_moon", "space_station"} {
 		if !keys[k] {
 			t.Errorf("no %s in the close-up", k)
 		}

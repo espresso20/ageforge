@@ -125,6 +125,8 @@ func describeSpace(m *mapmodel.Model, th mapgen.Thing) (in Inspection, ok bool) 
 				town + vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.33", " still turns round it")}}, true
 	case "satellite":
 		return Inspection{Title: vibe.Line("ui.mapstyle.space.satellite.01", "Satellite")}, true
+	case "the_moon":
+		return Inspection{Title: vibe.Line("ui.mapstyle.space.moon.01", "The Moon")}, true
 	case "star":
 		return Inspection{Title: vibe.Line("ui.mapstyle.roguelike.space_inspect.describe.50", "A star"), Lines: []string{skyVoids[sky][1].String()}}, true
 	case "space":
