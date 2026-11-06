@@ -55,6 +55,7 @@ func (v *view) begin(f Frame) *inks {
 		return nil
 	}
 	v.tier = f.Tier
+	v.stars = skyOf(f.Model) >= 2
 	v.ink = inksFor(v.ink, f.Model.Epoch)
 	return v.ink
 }

@@ -53,10 +53,14 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 	var cx, cy int
 	var on bool
 	if v.overview {
-		switch v.shownZoom() {
-		case zCosmos:
+		switch z := v.shownZoom(); {
+		case z == zCosmos:
 			v.ov = sc.OverviewCosmos(w, h)
-		case zInner:
+		case v.stars && z == zInner:
+			v.ov = sc.OverviewNeighborhood(w, h)
+		case v.stars && z == zCloseUp:
+			v.ov = sc.OverviewSol(w, h)
+		case z == zInner:
 			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewInner)
 		default:
 			v.ov = sc.SystemOverview(w, h, mapgen.SystemViewFull)

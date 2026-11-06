@@ -59,6 +59,8 @@ func (v *view) shownZoom() int {
 	switch {
 	case v.zoomSet:
 		return v.zoom
+	case v.stars:
+		return zInner // Sol's neighbourhood
 	case v.overview:
 		return zOverview
 	}
@@ -125,6 +127,13 @@ func (v *view) planetShown() int {
 // squeezed views, the cursor follows the body it was on. It reports whether
 // the zoom goes ahead.
 func (v *view) aim(sc *mapgen.Scene, to int) bool {
+	if v.stars { // Sol is the middle of every rung; only Sol can be dived into
+		if to == zCloseUp && v.shownZoom() < zCloseUp && v.thingUnder(sc) != sunThing {
+			return false
+		}
+		v.cur = sc.Centre
+		return true
+	}
 	from := v.shownZoom()
 	th := homeThing
 	if from < zCloseUp {

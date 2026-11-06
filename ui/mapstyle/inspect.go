@@ -22,7 +22,16 @@ func (v *view) Inspect(f Frame) (Inspection, bool) {
 	if v.overview && v.ov != nil { // the most important thing in the cell
 		if x, y, ok := v.ov.CellOf(p); ok {
 			if sc.Grid.Space { // bodies are drawn in the overview itself
-				if th := v.ov.Grid.ThingAt(x, y); th != (mapgen.Thing{}) {
+				th := v.ov.Grid.ThingAt(x, y)
+				if v.stars && v.shownZoom() >= zInner { // the neighbourhood and Sol are all there is of the sky
+					switch {
+					case th.Key == "home":
+						return describeHomeworld(f.Model), true
+					case th == (mapgen.Thing{}):
+						th = mapgen.Thing{Kind: mapgen.KindTerrain, Key: "space"}
+					}
+				}
+				if th != (mapgen.Thing{}) {
 					return describe(f.Model, th), true
 				}
 			}

@@ -66,6 +66,28 @@ func (v *view) snap(sc *mapgen.Scene, d [2]int) bool {
 	return v.overview // the close-up steps a cell, which scrolls the next bodies into view
 }
 
+// hop moves the cursor on to the next (dir 1) or previous body of the picture
+// shown, the Tab key's step on the star map's close views.
+func (v *view) hop(sc *mapgen.Scene, dir int) {
+	bs := bodiesOf(v.ov.Grid)
+	if len(bs) == 0 {
+		return
+	}
+	v.inspect = true
+	n := len(bs) - 1 // a step back from nowhere lands on the last
+	if dir > 0 {
+		n = 0
+	}
+	if g, x, y, ok := v.shownCell(sc); ok {
+		if here, ok := v.bodyAt(g, x, y); ok {
+			if i := slices.IndexFunc(bs, func(b body) bool { return b.th == here.th }); i >= 0 {
+				n = ((i+dir)%len(bs) + len(bs)) % len(bs)
+			}
+		}
+	}
+	v.cur = v.ov.Pick(bs[n].at.X, bs[n].at.Y)
+}
+
 // pickable says whether a run of n cells of a thing is a body.
 func pickable(th mapgen.Thing, n int) bool {
 	switch th.Kind {
@@ -77,6 +99,8 @@ func pickable(th mapgen.Thing, n int) bool {
 			return true
 		case "star":
 			return th.Count == 0 // not its halo
+		case "neighbor":
+			return true
 		case "satellite", "the_moon":
 			return n >= 4 // a moon drawn as a dot is not worth a stop
 		}

@@ -23,7 +23,7 @@ func TestZoomLadder(t *testing.T) {
 	}{
 		{"space_age", []int{zCosmos, zOverview, zInner, zCloseUp, zDistrict}},
 		{"interstellar_age", []int{zCosmos, zOverview, zInner, zCloseUp}},
-		{"galactic_age", []int{zCosmos, zOverview, zInner, zCloseUp, zDistrict}},
+		{"galactic_age", []int{zCosmos, zOverview, zInner, zCloseUp}},
 		{"medieval_age", []int{zOverview, zCloseUp, zDistrict}},
 	}
 	for _, c := range cases {

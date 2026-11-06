@@ -23,6 +23,8 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 		dir := map[bool]int{true: 1, false: -1}[ev.Key() == tcell.KeyTab]
 		if v.shownZoom() == zDistrict {
 			v.cycleDistrict(sc, dir)
+		} else if v.stars && v.ov != nil && v.overview && v.shownZoom() >= zInner {
+			v.hop(sc, dir)
 		} else {
 			v.jump(sc, dir)
 		}

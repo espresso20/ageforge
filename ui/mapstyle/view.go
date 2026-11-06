@@ -20,7 +20,7 @@ import (
 // a screen cell, and the same close-up framed on one building line's district
 // with the rest of the town dimmed. Space scenes add two more: the cosmos
 // beyond the overview, and the inner system between the overview and the
-// close-up. Only the ladder (zoomStep) says what comes next; the numbers just
+// close-up. The star map's close-up is Sol. Only the ladder (zoomStep) says what comes next; the numbers just
 // have to keep the squeezed views at or below zInner. The Interstellar Age
 // stops at the close-up: its space port is the close-up, and it has no
 // district rung.
@@ -38,8 +38,8 @@ const (
 func zoomStep(z, dir int, sc *mapgen.Scene) int {
 	ladder := []int{zOverview, zCloseUp, zDistrict}
 	switch {
-	case sc.Scale == mapgen.System:
-		ladder = []int{zCosmos, zOverview, zInner, zCloseUp}
+	case sc.Scale == mapgen.System || sc.Scale == mapgen.Stars:
+		ladder = []int{zCosmos, zOverview, zInner, zCloseUp} // on the star map the close-up is Sol
 	case sc.Grid.Space:
 		ladder = []int{zCosmos, zOverview, zInner, zCloseUp, zDistrict}
 	}
@@ -95,6 +95,7 @@ type view struct {
 	zoom     int  // the player's zoom, once chosen
 	zoomSet  bool // else the panel's size chooses
 	overview bool // what the last draw showed
+	stars    bool // the age is a star-map age: Sol's neighbourhood and Sol are drawn whole, in the overview
 
 	cur      mapgen.Pt
 	seed     int64
@@ -188,6 +189,9 @@ func (v *view) SetOption(o Option, on bool) {
 // wantsOverview says whether a panel r shows a squeezed view of the town
 // (the whole town, the cosmos or the inner system) rather than the close-up.
 func (v *view) wantsOverview(r Rect) bool {
+	if v.stars {
+		return true
+	}
 	if v.zoomSet {
 		return v.zoom <= zInner
 	}
