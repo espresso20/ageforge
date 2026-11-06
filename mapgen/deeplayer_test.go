@@ -20,3 +20,19 @@ func TestDeepLayerBuildsOncePerWindow(t *testing.T) {
 		}
 	}
 }
+
+// The wide layers are drawn once per window and again when the window moves.
+func TestWideLayerKeyedOnTheWindow(t *testing.T) {
+	var gen Generator
+	s := &Scene{Seed: 3, Grid: newGrid(400, 200), wide: &gen.wide}
+	s.OverviewArm(80, 30)
+	first := &gen.wide.cells[0]
+	s.OverviewArm(80, 30)
+	if &gen.wide.cells[0] != first {
+		t.Error("the same window was drawn twice")
+	}
+	s.OverviewVoid(80, 30)
+	if &gen.wide.cells[0] == first {
+		t.Error("the void reused the arm sector")
+	}
+}

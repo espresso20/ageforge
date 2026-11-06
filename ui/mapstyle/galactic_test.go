@@ -83,3 +83,43 @@ func TestGalacticRungLabels(t *testing.T) {
 		}
 	}
 }
+
+// TestGalacticWideViewsNameTheirObjects: the arm view and the void show named
+// objects that inspect with their distance from Sol, and Tab hops between them.
+func TestGalacticWideViewsNameTheirObjects(t *testing.T) {
+	v, f := galacticView(t)
+	cases := []struct {
+		z           int
+		name, light string
+	}{
+		{zOverview, "Orion Nebula", "1,344 light-years from Sol"},
+		{zOverview, "Crab Nebula", "6,500 light-years from Sol"},
+		{zCosmos, "Large Magellanic Cloud", "160,000 light-years from Sol"},
+		{zCosmos, "Andromeda", "2.5 million light-years from Sol"},
+		{zCosmos, "Triangulum", "2.7 million light-years from Sol"},
+		{zCosmos, "The Milky Way", "Sol lies in one of its arms"},
+	}
+	for _, c := range cases {
+		v.cur = v.scene(f).Centre
+		v.zoomTo(v.scene(f), c.z)
+		drawFrame(v, f, 250, 80, false).Fini()
+		g := v.ov.Grid
+		found := false
+		for i, h := range g.Hit {
+			if th := g.Things[h]; th.Key != "deepsky" {
+				continue
+			}
+			v.cur = v.ov.Pick(i%g.W, i/g.W)
+			if in, _ := v.Inspect(f); in.Title == c.name {
+				found = true
+				if len(in.Lines) == 0 || in.Lines[0] != c.light {
+					t.Errorf("%s inspects as %+v, want %q", c.name, in, c.light)
+				}
+				break
+			}
+		}
+		if !found {
+			t.Errorf("zoom %d shows no %s", c.z, c.name)
+		}
+	}
+}
