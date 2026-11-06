@@ -196,12 +196,6 @@ func (f *frame) paintSpacePort() {
 	ring(true)
 	moon(true)
 
-	// a swarm of small satellites winks in the dark round the ring
-	for i := 0; i < 16; i++ {
-		x, y, _ := pp.at(roll(turn, seed, 5310, int64(i))+anim/(20+i)*16, 112+roll(45, seed, 5311, int64(i)))
-		pix.light(seed, anim, 200+i, x, y, HWhite, 0)
-	}
-
 	// the warp gate stands on the ring, a few lights round it
 	if pp.gate {
 		x, y, _ := pp.at(pp.gateAt*turn/outerSlots, 100)
