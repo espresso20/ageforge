@@ -3,9 +3,6 @@ package ui
 import (
 	"strings"
 	"testing"
-
-	"github.com/espresso20/ageforge/theme"
-	"github.com/gdamore/tcell/v2"
 )
 
 // must fails the test at the caller's line when err is not nil.
@@ -25,14 +22,6 @@ func wantAll(t testing.TB, where, text string, wants ...string) {
 			t.Errorf("%s: missing %q:\n%s", where, w, text)
 		}
 	}
-}
-
-// SetScreen installs s as the app's screen, wrapped by theme.WrapScreen so theme
-// sentinels resolve. Tests use it to run the real app on a SimulationScreen; call
-// it before Run. Without it, Run opens the terminal itself.
-func (a *App) SetScreen(s tcell.Screen) {
-	a.tviewApp.SetScreen(theme.WrapScreen(s))
-	a.screenSet = true
 }
 
 // row is one row of the grid as text.

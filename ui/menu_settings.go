@@ -21,11 +21,28 @@ func (m *mainMenu) settingsItems() []menuItem {
 		{id: miSetMotion, label: vibe.Line("ui.menu.settings.03", "Motion"), key: 'm', extras: []string{settingOnOff(m.set.Motion)}},
 		{id: miSetMinimap, label: vibe.Line("ui.menu.settings.04", "Minimap"), key: 'i', extras: []string{settingOnOff(m.set.Minimap)}},
 	}
+	// The font is a row only when the game is in its own window.
+	if m.window != nil {
+		items = append(items, menuItem{id: miSetFont, label: txtFont.String(), key: 'f', extras: []string{fontName(m.window.FontChoice())}})
+	}
 	// Discord status is a row only in a build that has a Discord application id.
 	if m.appID != "" {
 		items = append(items, menuItem{id: miSetDiscord, label: vibe.Line("ui.menu.settings.08", "Discord status"), key: 'd', extras: []string{settingOnOff(m.discordOn())}})
 	}
 	return append(items, menuItem{id: miSetBack, label: vibe.Line("ui.menu.settings.05", "Back"), key: 'b'})
+}
+
+var (
+	txtFont      = vibe.E("ui.window.font.title", "Font")
+	txtFontPixel = vibe.E("ui.window.font.pixel", "Pixel")
+	txtFontMono  = vibe.E("ui.window.font.mono", "JetBrains Mono")
+)
+
+func fontName(choice string) string {
+	if choice == "pixel" {
+		return txtFontPixel.String()
+	}
+	return txtFontMono.String()
 }
 
 // discordOn reads the Discord status setting from the account; it is on with none.
@@ -81,6 +98,13 @@ func (m *mainMenu) changeSetting(id string, dir int) {
 				return
 			}
 		}
+	case miSetFont:
+		if m.window == nil {
+			return
+		}
+		m.window.NextFont()
+		m.refresh(false)
+		return
 	case miSetDiscord:
 		// Held by the account only: with none loaded there is nothing to keep it in.
 		if m.acct == nil {

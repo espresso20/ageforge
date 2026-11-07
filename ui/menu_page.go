@@ -43,6 +43,7 @@ const (
 	miSetMotion  = "set_motion"
 	miSetMinimap = "set_minimap"
 	miSetDiscord = "set_discord"
+	miSetFont    = "set_font"
 	miSetBack    = "set_back"
 )
 
