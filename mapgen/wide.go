@@ -1,7 +1,5 @@
 package mapgen
 
-import "math"
-
 // The two wide views of the Galactic map. OVERVIEW is a sector of the Orion
 // Arm round Sol, its nebulae and star clusters set by their real direction
 // with the distance compressed (radius grows with the square root of the
@@ -181,9 +179,8 @@ func armXYf(g galLook, cx, cy, off int, t float64) (float64, float64) {
 	}
 	th := float64(off) + t*float64(g.spin*turn)/65536
 	r := float64(g.r) * (lo + (256-lo)*t*t/65536) / 256
-	c, s := math.Cos(th*2*math.Pi/turn), math.Sin(th*2*math.Pi/turn)
-	u, v := r*c, r*s*float64(g.q)/256
-	cs, sn := math.Cos(float64(g.phi)*2*math.Pi/turn), math.Sin(float64(g.phi)*2*math.Pi/turn)
+	u, v := r*cosF(th), r*sinF(th)*float64(g.q)/256
+	cs, sn := cosF(float64(g.phi)), sinF(float64(g.phi))
 	return float64(cx) + u*cs - v*sn, float64(cy) + u*sn + v*cs
 }
 

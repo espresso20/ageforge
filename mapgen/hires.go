@@ -3,7 +3,6 @@ package mapgen
 import (
 	"image"
 	"image/color"
-	"math"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -94,7 +93,7 @@ func (r *raster) strip(img *image.RGBA, y0, y1 int, acc, rgb []float32) {
 			w := tot * dust
 			f := float32(0) // a soft shoulder, so bright light keeps its shape instead of going flat
 			if w > 2 {
-				f = 255 * (1 - float32(math.Exp(float64(-(w-2)/170)))) / tot
+				f = 255 * (1 - float32(expNeg(float64(w-2)/170))) / tot
 			}
 			for k := 0; k < nch; k++ {
 				if a[k] == 0 {
@@ -140,9 +139,9 @@ func q8(v, d float32) uint8 {
 // light adds the ellipse o to the channel sums of rows y0..y1: amp times
 // (1-rho^2)^2, rho the distance from its middle in its own radii.
 func (r *raster) light(o wop, y0, y1 int, acc []float32) {
-	ext := math.Max(o.rx, o.ry)
-	xa, xb := int(math.Floor((o.cx-ext)*r.sx)), int(math.Ceil((o.cx+ext)*r.sx))
-	ya, yb := max(y0, int(math.Floor((o.cy-ext)*r.sy))), min(y1-1, int(math.Ceil((o.cy+ext)*r.sy)))
+	ext := max(o.rx, o.ry)
+	xa, xb := floorF((o.cx-ext)*r.sx), floorF((o.cx+ext)*r.sx)+1
+	ya, yb := max(y0, floorF((o.cy-ext)*r.sy)), min(y1-1, floorF((o.cy+ext)*r.sy)+1)
 	xa, xb = max(xa, 0), min(xb, r.w-1)
 	cs, sn := float64(cos4096(o.phi))/1024, float64(sin4096(o.phi))/1024
 	for y := ya; y <= yb; y++ {
@@ -177,15 +176,15 @@ func (r *raster) dot(i int, o wop, y0, y1 int, rgb []float32) {
 	}
 	col := r.hue[o.p.Hue]
 	cr, cg, cb := float32(col.R), float32(col.G), float32(col.B)
-	for y := max(y0, int(py-reach)); y <= min(y1-1, int(py+reach)); y++ {
-		for x := max(0, int(px-reach)); x <= min(r.w-1, int(px+reach)); x++ {
+	for y := max(y0, floorF(py-reach)); y <= min(y1-1, floorF(py+reach)); y++ {
+		for x := max(0, floorF(px-reach)); x <= min(r.w-1, floorF(px+reach)); x++ {
 			dx, dy := float64(x)+0.5-px, float64(y)+0.5-py
 			d2 := dx*dx + dy*dy
-			a := math.Exp(-d2 / (2 * sigma * sigma))
+			a := expNeg(d2 / (2 * sigma * sigma))
 			if glow {
-				a += 0.22 * math.Exp(-d2/(2*3.2*3.2))
+				a += 0.22 * expNeg(d2/(2*3.2*3.2))
 			}
-			a = math.Min(1, a*math.Min(1, wt*1.5+0.1))
+			a = min(1, a*min(1, wt*1.5+0.1))
 			if a < 0.01 {
 				continue
 			}
@@ -197,3 +196,31 @@ func (r *raster) dot(i int, o wop, y0, y1 int, rgb []float32) {
 		}
 	}
 }
+
+// The engine keeps to integers and its own tables, so the picture is the same
+// everywhere; these are the few real-number helpers it needs.
+
+func floorF(x float64) int {
+	i := int(x)
+	if float64(i) > x {
+		i--
+	}
+	return i
+}
+
+// expNeg is e^-x for x >= 0, close enough for a falloff and cut off at 0 past 6.
+func expNeg(x float64) float64 {
+	if x >= 6 {
+		return 0
+	}
+	return 1 / (1 + x + x*x/2 + x*x*x/6 + x*x*x*x/24 + x*x*x*x*x/120)
+}
+
+// sinF and cosF are the sine tables read between their steps; a is in turns of 4096.
+func sinF(a float64) float64 {
+	i := floorF(a)
+	f := a - float64(i)
+	return (float64(sin4096(i))*(1-f) + float64(sin4096(i+1))*f) / 1024
+}
+
+func cosF(a float64) float64 { return sinF(a + turn/4) }
