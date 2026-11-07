@@ -53,7 +53,9 @@ type wcanvas struct {
 	w, h int
 	ch   [][nch + 1]int16
 	pt   []Paint
-	tw   []int // pixels of the brighter stars
+	tw   []int      // pixels of the brighter stars
+	rec  *[]wop     // when set, every ell and star is also noted here (see hires.go)
+	sub  [3]float64 // for the notes only: the part of a position the integers dropped, and a share of the amount (0 is all)
 }
 
 func newWcanvas(w, h int) *wcanvas {
@@ -63,6 +65,12 @@ func newWcanvas(w, h int) *wcanvas {
 // ell raises channel k by amp in an ellipse of radii rx, ry tilted phi.
 func (c *wcanvas) ell(cx, cy, rx, ry, phi, k, amp int) {
 	rx, ry = max(rx, 1), max(ry, 1)
+	if c.rec != nil {
+		*c.rec = append(*c.rec, wop{cx: float64(cx) + c.sub[0], cy: float64(cy) + c.sub[1], rx: float64(rx), ry: float64(ry), phi: phi, k: k, amp: float64(amp) * c.share()})
+		if c.ch == nil {
+			return
+		}
+	}
 	r := max(rx, ry)
 	cs, sn := cos4096(phi), sin4096(phi)
 	for y := max(0, floorDiv(cy-r, 2)); y <= min(c.h-1, (cy+r)/2+1); y++ {
@@ -77,9 +85,18 @@ func (c *wcanvas) ell(cx, cy, rx, ry, phi, k, amp int) {
 }
 
 // star sets pixel (x, y)'s own paint; a bright one may twinkle.
-func (c *wcanvas) star(x, y int, p Paint) {
+func (c *wcanvas) star(x, y int, p Paint) { c.starF(x, y, float64(x)+0.5, float64(2*y+1), p) }
+
+// starF is star, noting for the picture the isotropic point (fx, fy) it stands for.
+func (c *wcanvas) starF(x, y int, fx, fy float64, p Paint) {
 	if x < 0 || y < 0 || x >= c.w || y >= c.h {
 		return
+	}
+	if c.rec != nil {
+		*c.rec = append(*c.rec, wop{cx: fx, cy: fy, star: true, p: p})
+		if c.ch == nil {
+			return
+		}
 	}
 	c.pt[y*c.w+x] = p
 	if p.Weight >= 200 && len(c.tw) < 24 {
@@ -88,7 +105,7 @@ func (c *wcanvas) star(x, y int, p Paint) {
 }
 
 // starAt is star at an isotropic position.
-func (c *wcanvas) starAt(x, y int, p Paint) { c.star(x, floorDiv(y, 2), p) }
+func (c *wcanvas) starAt(x, y int, p Paint) { c.starF(x, floorDiv(y, 2), float64(x), float64(y), p) }
 
 // glint is a star of a seeded colour at an isotropic position.
 func (c *wcanvas) glint(seed int64, i, x, y, lo int) {
@@ -152,6 +169,37 @@ func armXY(g galLook, cx, cy, off, t int) (int, int, int) {
 	return cx + (u*cs-v*sn)/1024, cy + (u*sn+v*cs)/1024, r
 }
 
+// armXYf is armXY without the rounding, at t a fraction of a step: where the
+// picture draws the arm.
+func armXYf(g galLook, cx, cy, off int, t float64) (float64, float64) {
+	lo := 30.0
+	if g.bar > 0 {
+		off += turn / 7
+		lo = 97
+	}
+	th := float64(off) + t*float64(g.spin*turn)/65536
+	r := float64(g.r) * (lo + (256-lo)*t*t/65536) / 256
+	u, v := r*cosF(th), r*sinF(th)*float64(g.q)/256
+	cs, sn := cosF(float64(g.phi)), sinF(float64(g.phi))
+	return float64(cx) + u*cs - v*sn, float64(cy) + u*sn + v*cs
+}
+
+// at points the notes of the next ell at the exact place (fx, fy) the rounded
+// (x, y) stands for; with no arguments it clears.
+func (c *wcanvas) at(x, y int, f ...float64) {
+	c.sub = [3]float64{}
+	if c.rec != nil && len(f) == 3 {
+		c.sub = [3]float64{f[0] - float64(x), f[1] - float64(y), f[2]}
+	}
+}
+
+func (c *wcanvas) share() float64 {
+	if c.sub[2] > 0 {
+		return c.sub[2]
+	}
+	return 1
+}
+
 // galaxy paints a spiral at (cx, cy): a soft glow over the disc, arms of pale
 // light and stars that widen as they wind out, dust on their inner edges, pink
 // knots, a warm bar and core. The fainter spurs lie between the main arms.
@@ -169,8 +217,18 @@ func (c *wcanvas) galaxy(seed int64, id, cx, cy int, g galLook) {
 		for i := lo * n / 256; i < (256-(lo+20)*boolInt(spur))*n/256; i++ {
 			t := i * 256 / n
 			x, y, r := armXY(g, cx, cy, off, t)
+			tf := float64(i) * 256 / float64(n)
 			wd := 1 + g.r/22 + g.r*t/256/8
-			c.ell(x, y, wd, max(1, wd*sq0/256), 0, cCool, amp*(60+t/2)/256*7/(wd+2)) // wider arms overlap more, so each sample adds less
+			if c.rec != nil { // the picture is finer than the steps: four samples, each a quarter
+				for j := 0; j < 4; j++ {
+					fx, fy := armXYf(g, cx, cy, off, tf+(float64(j)-1.5)*256/float64(4*n))
+					c.at(x, y, fx, fy, 0.25)
+					c.ell(x, y, wd, max(1, wd*sq0/256), 0, cCool, amp*(60+t/2)/256*7/(wd+2))
+				}
+				c.at(0, 0)
+			} else {
+				c.ell(x, y, wd, max(1, wd*sq0/256), 0, cCool, amp*(60+t/2)/256*7/(wd+2)) // wider arms overlap more, so each sample adds less
+			}
 			for k := 0; k < g.stars; k++ {
 				j := int64(id*100000 + a*10000 + i*10 + k)
 				ox, oy := roll(2*wd+1, seed, 7020, j)-wd, roll(2*wd+1, seed, 7021, j)-wd
@@ -179,7 +237,15 @@ func (c *wcanvas) galaxy(seed int64, id, cx, cy int, g galLook) {
 			if spur {
 				continue
 			}
-			if g.dust > 0 && i%3 == 0 { // the dust lies along the inner edge of the arm
+			if g.dust > 0 && c.rec != nil { // the picture lays the dust in a smooth line, not every third step
+				for j := 0; j < 4; j++ {
+					ex, ey, _ := armXY(g, cx, cy, off-turn/40, t)
+					fx, fy := armXYf(g, cx, cy, off-turn/40, tf+(float64(j)-1.5)*256/float64(4*n))
+					c.at(ex, ey, fx, fy, 1.0/12)
+					c.ell(ex, ey, max(1, wd/2), max(1, wd/2*sq0/256), 0, cDust, g.dust*(40+t/3)/256)
+				}
+				c.at(0, 0)
+			} else if g.dust > 0 && i%3 == 0 { // the dust lies along the inner edge of the arm
 				ex, ey, _ := armXY(g, cx, cy, off-turn/40, t)
 				c.ell(ex, ey, max(1, wd/2), max(1, wd/2*sq0/256), 0, cDust, g.dust*(40+t/3)/256)
 			}
