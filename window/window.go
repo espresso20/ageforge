@@ -18,7 +18,6 @@ import (
 	"github.com/rivo/uniseg"
 
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 // Options are what the window needs from main.
@@ -43,6 +42,7 @@ type Game struct {
 	pw, ph     int     // the window, in device pixels
 	size       float64 // the font's size in device pixels
 	cw, ch     int     // one cell, in device pixels
+	sky        *sky    // the map of space, drawn under the cells
 	asc        float64 // top of the line box to the baseline
 	cols, rows int
 	buf        *ebiten.Image
@@ -51,24 +51,19 @@ type Game struct {
 	closing    bool
 	frame      int
 	script     *script
-	stage      *stage
 	adv        map[advKey]float64
 	tface      map[faceID]*text.GoTextFace
 }
 
 // New is a window for the host, with the settings saved in dir.
 func New(o Options) *Game {
-	g := &Game{o: o, faces: newFaces(), stage: newStage(), adv: map[advKey]float64{}, tface: map[faceID]*text.GoTextFace{}, scale: 1}
+	g := &Game{o: o, faces: newFaces(), sky: newSky(), adv: map[advKey]float64{}, tface: map[faceID]*text.GoTextFace{}, scale: 1}
 	g.set = loadSettings(o.Dir).clean(1)
 	if o.Script != "" {
 		g.script = loadScript(o.Script)
 	}
 	return g
 }
-
-// Stage is where the game puts the map pictures the window draws as images
-// (see mapstyle.Stage).
-func (g *Game) Stage() mapstyle.Stage { return g.stage }
 
 // Run opens the window and runs it until the game ends or the window is
 // closed. It must be called on the main goroutine.
@@ -195,6 +190,7 @@ func (g *Game) Update() error {
 		return ebiten.Termination
 	}
 	g.keys()
+	g.sky.update()
 	return nil
 }
 
@@ -299,9 +295,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.paint()
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64((g.pw-g.cols*g.cw)/2), float64((g.ph-g.rows*g.ch)/2))
-	// Under the cells, so the images show where a cell is clear.
-	g.stage.upload(g.stage.poll(g.cw, g.ch))
-	g.stage.draw(screen, g.cw, g.ch, op.GeoM.Element(0, 2), op.GeoM.Element(1, 2))
+	// Under the cells, so the sky shows where a cell is clear.
+	g.sky.draw(screen, int(op.GeoM.Element(0, 2)), int(op.GeoM.Element(1, 2)), g.cw, g.ch)
 	screen.DrawImage(g.buf, op)
 	g.cursor(screen, op.GeoM.Element(0, 2), op.GeoM.Element(1, 2))
 	if g.script != nil {

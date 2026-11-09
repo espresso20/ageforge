@@ -26,7 +26,7 @@ func loadScript(path string) *script {
 	return &script{steps: strings.Split(strings.TrimSpace(string(b)), "\n")}
 }
 
-var scriptKeys = map[string]tcell.Key{"enter": tcell.KeyEnter, "esc": tcell.KeyEscape, "up": tcell.KeyUp, "down": tcell.KeyDown, "tab": tcell.KeyTab}
+var scriptKeys = map[string]tcell.Key{"enter": tcell.KeyEnter, "esc": tcell.KeyEscape, "up": tcell.KeyUp, "down": tcell.KeyDown, "tab": tcell.KeyTab, "left": tcell.KeyLeft, "right": tcell.KeyRight, "home": tcell.KeyHome, "pgup": tcell.KeyPgUp, "pgdn": tcell.KeyPgDn}
 
 // step runs the next line; it reports true on "quit".
 func (s *script) step(g *Game) bool {

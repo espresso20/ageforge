@@ -59,7 +59,7 @@ func main() {
 		})
 		app.SetScreen(host)
 		app.SetWindowHost(win)
-		app.SetStage(win.Stage()) // the map draws its pictures as images here
+		app.SetSpaceHost(win.SpaceHost()) // the map draws space itself here
 	}
 
 	// Discord Rich Presence: off unless the build carries an application id. It follows

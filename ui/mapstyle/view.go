@@ -14,6 +14,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/world"
 )
 
 // The engine's zoom levels: the whole town squeezed to fit, one world cell to
@@ -122,6 +123,13 @@ type view struct {
 
 	mark   mapgen.Pt // where the Map panel's cursor stands, for the mini map
 	marked bool
+
+	// the sky the window's host draws, when there is one: the world, the palette
+	// it was coloured with, and whether the last draw handed it over
+	sky    *world.World
+	skyFor *cellPalette
+	skyPal world.Palette
+	hosted bool
 
 	// the last overview drawn and the scene it came from, so the cursor can
 	// ask what a cell is
