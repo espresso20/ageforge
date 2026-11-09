@@ -85,7 +85,7 @@ var recipes = [mapgen.NumHues]recipe{
 	mapgen.HPanel:    {theme.RoleLabel, fromSpace(theme.SpaceSolar), 0.8},
 	mapgen.HHydro:    {theme.RolePositive, fromSpace(theme.SpaceHydro), 0.6},
 	mapgen.HRock:     {theme.RoleDim, fromSpace(theme.SpaceRock), 0.6},
-	mapgen.HArm:      {theme.RoleDim, armColour, 1.0},
+	mapgen.HArm:      {theme.RoleHighlight, armColour, 0.7},
 }
 
 // armColour is the light of a spiral arm: the star's blue-white leaning toward
@@ -93,7 +93,7 @@ var recipes = [mapgen.NumHues]recipe{
 // and stay apart from the stars strewn along them.
 func armColour() tcell.Color {
 	lav := theme.Mix(theme.SpaceColor(theme.SpaceStar), theme.SpaceColor(theme.SpaceNebulaViolet), 0.35)
-	return theme.Mix(lav, tcell.NewRGBColor(0x8a, 0x8a, 0x96), 0.35)
+	return theme.Mix(lav, theme.Color(theme.RoleDim), 0.35)
 }
 
 // lineRecipes are the hues of the building lines, in the order of
