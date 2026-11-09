@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/world"
 )
 
 // The space port, the close-up of the Interstellar Age (the deepest zoom of
@@ -52,7 +53,7 @@ var lineModule = map[string]module{
 }
 
 // gateBuilding is the wonder that raises the warp gate on the ring.
-const gateBuilding = "warp_nexus"
+const gateBuilding = world.GateWonder
 
 // gateRaised says whether the warp gate stands: the Warp Nexus is built.
 func gateRaised(ws []mapmodel.Wonder) bool {

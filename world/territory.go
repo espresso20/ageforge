@@ -241,3 +241,33 @@ func abs(v int) int {
 
 // InWorld says whether a cell is on the galaxy raster.
 func InWorld(x, y int) bool { return x >= 0 && y >= 0 && x < CellsW && y < CellsH }
+
+// PlaceRivals gives every civilization met (keys, in site order) a slot of
+// the n the other arms hold, picked by its key and moved on to the next free
+// one when taken. The slot is -1 when none is free.
+func PlaceRivals(seed int64, keys []string, n int) []int {
+	out := make([]int, len(keys))
+	taken := make([]bool, n)
+	for i, k := range keys {
+		out[i] = -1
+		if n == 0 {
+			continue
+		}
+		s := Roll(n, seed, 100, mapmodel.HashStr(k))
+		for try := 0; try < n && taken[s]; try++ {
+			s = (s + 1) % n
+		}
+		if !taken[s] {
+			taken[s] = true
+			out[i] = s
+		}
+	}
+	return out
+}
+
+// RivalSystems is how many systems a civilization of a strength lights.
+func RivalSystems(strength int) int { return 4 + 3*clamp(strength, 1, 5) }
+
+// Lit is how many systems of a sector a count of buildings lights, never more
+// than the sector holds.
+func (s Sector) Lit(count int) int { return min(SystemsFor(count, SectorMax), len(s.Cells)) }

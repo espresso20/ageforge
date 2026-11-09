@@ -18,6 +18,13 @@ const (
 	ToneGold
 	TonePanel
 	ToneCyan
+	ToneStar // a plain star's light
+	TonePink // the knots of an arm, emission nebulae
+	ToneTeal
+	ToneBlue
+	ToneOrange
+	ToneArm  // the light of a spiral arm
+	ToneDust // dark lanes
 	numTones
 )
 

@@ -37,7 +37,8 @@ type Frame struct {
 	Kind     FrameKind
 	Key      string // stable id, also the label key of the frame's centre
 	Unit     Unit
-	Pos      Vec     // anchor in the parent's units
+	Anchor   string  // key of the parent's object this frame hangs on ("" its centre)
+	Pos      Vec     // anchor in the parent's units, at phase zero for a moving anchor
 	Radius   float64 // the extent of the frame, in its own units
 	Band     Band
 	Schem    bool // positions are schematic, not to scale (the Local Group)
@@ -86,10 +87,12 @@ type Object struct {
 	To    Vec    // lane: the far end (Pos is the near one)
 	Flow  int    // lane: traffic 1..3
 
-	Galaxy *GalaxyLook // KindGalaxy
-	Star   *Look       // KindStar, KindColony
-	Body   *Body       // KindPlanet, KindMoon, KindBelt, KindComet
-	Pick   bool        // the player can select it
+	Galaxy *GalaxyLook  // KindGalaxy
+	Star   *Look        // KindStar, KindColony
+	Body   *Body        // KindPlanet, KindMoon, KindBelt, KindComet
+	Shape  *GalaxyShape // the seeded galaxy's disc (KindGalaxy of the Galaxy frame)
+	Path   []Vec        // a polyline: the home arm, core to rim (KindFeature)
+	Pick   bool         // the player can select it
 }
 
 // Body is the orbit and make-up of a planet, moon, belt or comet.
@@ -101,8 +104,9 @@ type Body struct {
 	Phase    int        // where it starts, in 4096ths of a turn
 	Rings    bool
 	Moons    int
-	Kind     string // "rocky", "gas", "ice", "dwarf", "moon", "belt", "comet"
-	StationN int    // stations in its close-up
+	Kind     string  // "rocky", "gas", "ice", "dwarf", "moon", "belt", "comet"
+	Earths   float64 // physical radius, in Earth radii (planets); Object.Size is the art size
+	StationN int     // stations in its close-up
 }
 
 // World is the whole sky for one save.

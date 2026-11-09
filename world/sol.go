@@ -65,3 +65,32 @@ var SolSpec = SystemSpec{
 	Dwarf: true,
 	Comet: true,
 }
+
+// SolAU is the real orbit radius of each planet of SolSpec, in AU. The spec's
+// own Orbit is the art spacing (a percent of the drawn reach); this is the
+// number the system frame is measured in.
+var SolAU = [...]float64{0.39, 0.72, 1.0, 1.52, 5.2, 9.58, 19.2, 30.1}
+
+// SolEarths is the real radius of each planet of SolSpec, in Earth radii.
+var SolEarths = [...]float64{0.38, 0.95, 1.0, 0.53, 11.2, 9.45, 4.0, 3.88}
+
+// SolNames are the planets' label keys, inner to outer.
+var SolNames = [...]string{"mercury", "venus", "earth", "mars", "jupiter", "saturn", "uranus", "neptune"}
+
+// Home is the index of the home world in SolSpec.Planets.
+const Home = 2
+
+// BeltAU is the asteroid belt's orbit, in AU, and KuiperAU the Kuiper belt's;
+// PlutoAU is the dwarf planet's, OortAU the Oort cloud's edge.
+const (
+	BeltAU   = 2.8
+	KuiperAU = 44.0
+	PlutoAU  = 39.5
+	GateAU   = 35.0 // the warp gate, at 115% of the outer orbit
+)
+
+// GateWonder is the wonder that raises the warp gate.
+const GateWonder = "warp_nexus"
+
+// CometCycle is the animation frames in one comet crossing and its gap.
+const CometCycle = 2800
