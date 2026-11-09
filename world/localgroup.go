@@ -16,10 +16,13 @@ const (
 
 func lgVec(x, y int) Vec { return Vec{float64(x-lgW/2) * lgKly, float64(y-lgH/2) * lgKly} }
 
-func localGroup(seed int64) *Frame {
+// localGroup lays the Local Group out. sol is Sol's place in the galaxy
+// frame, in light-years from the Milky Way's centre; the marker is the same
+// point drawn at the schematic scale, so the two frames agree on where it is.
+func localGroup(seed int64, sol Vec) *Frame {
 	f := &Frame{
 		Kind: FrameLocalGroup, Key: "local_group", Unit: UnitKly,
-		Radius: lgW / 2 * lgKly, Band: Band{Min: 400, Max: 6000}, Schem: true,
+		Radius: lgW / 2 * lgKly, Band: Band{Min: 3500, Max: 6000}, Schem: true,
 	}
 	W, H := lgW, lgH
 	mwX, mwY, mwR := W*26/100, H*46/100, min(W*23/100, H*36/100)
@@ -48,12 +51,10 @@ func localGroup(seed int64) *Frame {
 		_ = i
 		f.Objects = append(f.Objects, o)
 	}
-	// Sol, in the Orion spur of the Milky Way
-	mw := LookMilkyWay
-	mw.R = mwR
-	sx, sy, _ := ArmXY(mw, mwX, mwY, 0, 170)
-	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: "sol", Label: "sol", Pos: lgVec(sx, sy), Tone: ToneSun, Weight: 255,
-		Star: &Look{Tone: ToneSun, Size: 1, Weight: 255, Extra: ToneWhite}})
+	// Sol, on the Milky Way's home arm: the galaxy frame's own point, scaled
+	k := float64(mwR*lgKly) / galRadiusLy // kly drawn per ly of the real disc
+	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: "sol", Label: "sol", Pos: Vec{lgVec(mwX, mwY).X + sol.X*k, lgVec(mwX, mwY).Y + sol.Y*k},
+		Tone: ToneSun, Weight: 255, Star: &Look{Tone: ToneSun, Size: 1, Weight: 255, Extra: ToneWhite}})
 	// the lane of stars from the Milky Way toward Andromeda, ending short of it
 	x0, y0, x1, y1 := mwX+mwR+4, mwY-mwR/4, m31X-m31R-8, m31Y+m31R/8
 	f.Objects = append(f.Objects, Object{Kind: KindFeature, Key: "lane_to_andromeda", Pos: lgVec(x0, y0), To: lgVec(x1, y1), Tone: ToneStar, Weight: 110})

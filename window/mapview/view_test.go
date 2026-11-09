@@ -210,3 +210,59 @@ func TestSystemRootedAgeHasNoLocalGroup(t *testing.T) {
 		t.Error("a cleared view still draws")
 	}
 }
+
+// discFit gives, in galaxy-frame light-years, the disc's two far corners and
+// Sol, and the half extents of a 16:9 view at zoom z.
+func discFit(t *testing.T, c chain, z float64) (box [2]world.Vec, sol world.Vec, hw, hh float64) {
+	t.Helper()
+	var shape *world.GalaxyShape
+	for _, o := range c[1].f.Objects {
+		if o.Key == "disc" {
+			shape = o.Shape
+		}
+		if o.Key == "sol" {
+			sol = o.Pos
+		}
+	}
+	r := (&world.Galaxy{Shape: *shape}).Reach()
+	cell := func(p world.Pt) world.Vec {
+		return world.Vec{X: float64(p.X-world.CellsW/2) * 50000 / world.GalRX, Y: float64(p.Y-world.CellsH/2) * 2 * 50000 / world.GalRX}
+	}
+	hw = math.Pow(10, z) / c[1].mx / 2
+	return [2]world.Vec{cell(r[0]), cell(r[1])}, sol, hw, hw * 9 / 16
+}
+
+func TestWholeDiscFitsAtTheTopOfTheGalaxyBand(t *testing.T) {
+	for seed := int64(1); seed <= 40; seed++ {
+		st := fixture.State(fixture.Options{Age: "galactic_age", Seed: seed, Tick: 43200})
+		m := mapmodel.NewBuilder(mapmodel.NewCatalog()).Build(&st, nil)
+		c := newChain(world.Build(m, seed).Root)
+		box, sol, hw, hh := discFit(t, c, c[1].lo) // the zoom where the galaxy is fully in
+		if sol == (world.Vec{}) {
+			t.Fatalf("seed %d: Sol sits at the galaxy centre, want out on the home arm", seed)
+		}
+		for _, p := range box {
+			if math.Abs(p.X-sol.X) > hw || math.Abs(p.Y-sol.Y) > hh {
+				t.Errorf("seed %d: disc corner %v is outside the view centred on Sol %v (half %.0f x %.0f ly)", seed, p, sol, hw, hh)
+			}
+		}
+	}
+}
+
+// TestSolStaysInViewFromTheLocalGroupToTheRegion walks the zoom in from the
+// home view and checks Sol stays at the centre of the screen.
+func TestSolStaysInViewFromTheLocalGroupToTheRegion(t *testing.T) {
+	v := New()
+	v.Set(build(t, "galactic_age"), 1, testPal)
+	_, hi := v.ch.zRange()
+	for z := hi; z > v.ch[2].bmin; z -= 0.05 {
+		v.z, v.tz = z, z
+		v.Update(0)
+		sol := v.ch.centreIn(2, v.m, world.Vec{}) // the region's origin is Sol
+		d := world.Vec{X: sol.X - v.off.X, Y: sol.Y - v.off.Y}
+		half := v.width() / v.ch[v.m].mx / 2
+		if math.Abs(d.X) > half*0.01 || math.Abs(d.Y) > half*0.01 {
+			t.Fatalf("z=%.2f: Sol is %v from the centre, view half width %v", z, d, half)
+		}
+	}
+}

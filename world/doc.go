@@ -6,7 +6,7 @@
 // Frames (unit; zoom band as view width in the unit):
 //
 //	LocalGroup   kly   400..6000     schematic: galaxies not to scale
-//	  Galaxy     ly    15000..140000   the seeded home galaxy, 50000 ly radius
+//	  Galaxy     ly    15000..240000   the seeded home galaxy, 50000 ly radius
 //	    Region   ly    400..18000      the Orion arm round Sol, 8500 ly reach
 //	      Neighbourhood ly 3..60       stars within 13 ly of Sol
 //	        System AU  0.5..140        Sol's system; also the root in space/interstellar ages

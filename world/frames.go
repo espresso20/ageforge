@@ -9,6 +9,13 @@ func cellLy(p Pt) Vec {
 	return Vec{float64(p.X-CellsW/2) * 50000 / GalRX, float64(p.Y-CellsH/2) * 2 * 50000 / GalRX}
 }
 
+// galRadiusLy is the galaxy disc's radius.
+const galRadiusLy = 50000
+
+// solLy is Sol's place in the galaxy frame: out on the home arm, as the real
+// one sits on the Orion spur, not at the centre.
+func solLy(g *Galaxy) Vec { return cellLy(g.Home[len(g.Home)*55/100]) }
+
 func polar(r float64, a int) Vec {
 	return Vec{r * float64(Cos4096(a)) / 1024, r * float64(Sin4096(a)) / 1024}
 }
@@ -18,15 +25,17 @@ func polar(r float64, a int) Vec {
 func galaxyFrame(m *mapmodel.Model, seed int64, g *Galaxy, t Territory) *Frame {
 	mw := lgVec(lgW*26/100, lgH*46/100)
 	f := &Frame{Kind: FrameGalaxy, Key: "milky_way", Unit: UnitLy, Anchor: "milky_way", Pos: mw,
-		Radius: 50000, Band: Band{Min: 15000, Max: 140000}}
+		Radius: galRadiusLy, Band: Band{Min: 15000, Max: 240000}}
 	shape := g.Shape
 	f.Objects = append(f.Objects, Object{Kind: KindGalaxy, Key: "disc", Label: "milky_way", Inspect: "milky_way",
-		Size: 50000, Tone: ToneStar, Weight: 255, Shape: &shape})
+		Size: galRadiusLy, Tone: ToneStar, Weight: 255, Shape: &shape})
 	path := make([]Vec, len(g.Home))
 	for i, p := range g.Home {
 		path[i] = cellLy(p)
 	}
 	f.Objects = append(f.Objects, Object{Kind: KindFeature, Key: "home_arm", Path: path, Tone: ToneArm, Weight: 200})
+	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: "sol", Label: "sol", Inspect: "sol", Pos: solLy(g), Tone: ToneSun, Weight: 255, Pick: true,
+		Star: &Look{Tone: ToneSun, Size: 1, Weight: 255, Extra: ToneWhite}})
 	cols := Colonies(m, t)
 	for _, c := range cols {
 		sec := t.Sectors[lineIndex[c.Line]]

@@ -32,13 +32,11 @@ func (c chain) objPos(l int, key string) (world.Vec, bool) {
 
 // newChain walks the first child at every level.
 //
-// Two reconciliations live here. The Local Group is schematic: it draws the
-// Milky Way at 540 kly across where the galaxy frame is 100 kly, so every
-// frame below it is scaled by that ratio and the zoom stays continuous. And
-// Sol: the galaxy frame hangs its Orion arm on "sol", which the model puts at
-// the galaxy's origin, while the Local Group draws its Sol marker out on the
-// arm. The arm is anchored where the Local Group marker is, so zooming in on
-// the marker lands on the Orion arm.
+// The Local Group is schematic: it draws the Milky Way at 540 kly across
+// where the galaxy frame is 100 kly, so every frame below it is scaled by that
+// ratio and the zoom stays continuous. Sol is one point in every frame (the
+// world puts it on the home arm and scales the marker from it), so no frame
+// needs a special anchor.
 func newChain(root *world.Frame) chain {
 	var c chain
 	k := 1.0
@@ -49,11 +47,6 @@ func newChain(root *world.Frame) chain {
 			l.anchor = f.Pos
 			if pos, ok := c.objPos(n-1, f.Anchor); ok && f.Anchor != "" {
 				l.anchor = pos
-			} else if f.Anchor == "sol" && p.f.Kind == world.FrameGalaxy && c[0].f.Schem {
-				if sol, ok := c.objPos(0, "sol"); ok {
-					s := p.mx / c[0].mx // galaxy units to local-group units
-					l.anchor = world.Vec{X: (sol.X - p.anchor.X) / s, Y: (sol.Y - p.anchor.Y) / s}
-				}
 			}
 			if p.f.Schem && k == 1 { // the first frame under a schematic one sets the scale
 				k = schemRatio(c, l.f)
