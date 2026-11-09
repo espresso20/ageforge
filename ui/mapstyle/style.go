@@ -29,6 +29,11 @@ type Frame struct {
 	// 0 means "the same as Anim", for a frame built without one.
 	Clock int
 	Tier  mapmodel.GlyphTier
+	// Stage, when there is one, takes the pictures that are better drawn as an
+	// image than as cells (see stage.go); Slot says which map this is. A nil
+	// Stage draws everything as cells.
+	Stage Stage
+	Slot  string
 }
 
 // VisitFrame is the frame the rare visitor (mapmodel.SightingAt) is drawn

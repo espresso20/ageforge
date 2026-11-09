@@ -94,6 +94,9 @@ type mapPanel struct {
 	settings func() mapSettings
 	// hintShown records that the icons hint was shown.
 	hintShown func()
+	// images is the window's stage for map pictures, when there is a window:
+	// the Map panel draws the Galactic void on it instead of in cells.
+	images mapstyle.Stage
 	// stage puts a command in the prompt, unrun, for the player's Enter.
 	stage func(cmd string)
 	// spotted is told when the cursor is on the rare visitor, once a
@@ -174,7 +177,9 @@ func (p *mapPanel) setFlows(mode string) bool {
 }
 
 func (p *mapPanel) frame() mapstyle.Frame {
-	return mapFrame(p.model, p.set, p.now().Sub(p.start))
+	f := mapFrame(p.model, p.set, p.now().Sub(p.start))
+	f.Stage, f.Slot = p.images, "map"
+	return f
 }
 
 // Draw draws the map over all but the last row, and the key bar on it.
