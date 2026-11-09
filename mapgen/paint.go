@@ -73,6 +73,7 @@ const (
 	HPanel
 	HHydro
 	HRock
+	HArm // the light of a spiral arm
 	// the building lines come last, one hue each in the order of
 	// mapmodel.LineageOrder
 	HLine
