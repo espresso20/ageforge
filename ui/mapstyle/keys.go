@@ -18,6 +18,10 @@ func (v *view) HandleKey(ev *tcell.EventKey, f Frame) bool {
 	if ev == nil || sc == nil {
 		return false
 	}
+	if c, ok := cmdOf(ev); ok && v.hosted && f.Space != nil {
+		f.Space.Command(c) // the window moves the camera
+		return true
+	}
 	switch ev.Key() {
 	case tcell.KeyTab, tcell.KeyBacktab:
 		dir := map[bool]int{true: 1, false: -1}[ev.Key() == tcell.KeyTab]

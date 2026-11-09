@@ -25,7 +25,7 @@ const (
 	ToneOrange
 	ToneArm  // the light of a spiral arm
 	ToneDust // dark lanes
-	numTones
+	NumTones
 )
 
 // Shade is a tone at a weight: 255 is the full colour, less is dimmer. A

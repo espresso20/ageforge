@@ -15,12 +15,14 @@ import (
 // the compact view instead.
 func (v *view) Draw(scr tcell.Screen, r Rect, f Frame) {
 	if r.W < 60 || r.H < 16 {
+		v.unhost(f)
 		v.DrawCompact(scr, r, f)
 		return
 	}
 	ink := v.begin(f)
 	cv := NewCanvas(scr, r, f.Tier, tcell.StyleDefault)
 	if ink == nil {
+		v.unhost(f)
 		drawNoMap(cv)
 		return
 	}
@@ -54,6 +56,13 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 	anim := f.Anim
 	var cx, cy int
 	var on bool
+	if f.Space != nil && sc.Grid.Space {
+		v.pal = cellPaletteFor(v.pal, sc.Grid)
+		if v.hosted = v.hostSky(cv, f, v.pal, x, y, w, h); v.hosted {
+			return
+		}
+	}
+	v.unhost(f)
 	if v.overview {
 		switch z := v.shownZoom(); {
 		case v.stars && z == zCosmos:
@@ -81,20 +90,9 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 			}
 			v.seek = mapgen.Thing{}
 		}
-		if z := v.shownZoom(); f.Stage != nil && v.imaged(z) {
-			v.pal = cellPaletteFor(v.pal, v.ov.Grid)
-			v.placeVoid(cv, f.Stage, f.Slot, x, y, w, h, sc.Seed)
-		} else {
-			if f.Stage != nil {
-				f.Stage.Clear(f.Slot)
-			}
-			v.blit(cv, x, y, v.ov.Grid)
-		}
+		v.blit(cv, x, y, v.ov.Grid)
 		cx, cy, on = v.ov.CellOf(v.cur)
 	} else {
-		if f.Stage != nil {
-			f.Stage.Clear(f.Slot)
-		}
 		v.ov = nil
 		v.fit(w, h, sc)
 		v.win = mapgen.Rect{X: v.cam.X, Y: v.cam.Y, W: w, H: h}

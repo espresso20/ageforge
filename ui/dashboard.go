@@ -823,6 +823,7 @@ func (d *Dashboard) StartUpdates() {
 					d.app.QueueUpdateDraw(func() {
 						if d.overlayMgr.ActiveName() != "map" {
 							d.mapOpen.Store(false)
+							d.mapPanel.hide()
 						}
 						if d.overlayMgr.ActiveName() != "badges" {
 							d.badgePanel.moving.Store(false)

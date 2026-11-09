@@ -128,11 +128,10 @@ func (a *App) SetWindowHost(h WindowHost) {
 	}
 }
 
-// SetStage gives the Map panel the window's stage, where it puts the pictures
-// that are better drawn as an image than as cells (see mapstyle.Stage). Without
-// one the map is all cells.
-func (a *App) SetStage(s mapstyle.Stage) {
-	a.dashboard.mapPanel.images = s
+// SetSpaceHost gives the Map panel the window's own sky (see mapstyle.SpaceHost).
+// Without one space is drawn in cells.
+func (a *App) SetSpaceHost(h mapstyle.SpaceHost) {
+	a.dashboard.mapPanel.space = h
 }
 
 // Run starts the tview application (blocks until exit)
