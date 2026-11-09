@@ -73,7 +73,13 @@ func (p *pen) frame() {
 
 func (p *pen) object(o *world.Object) {
 	x, y := p.at(o.Pos)
+	// Size is a true radius in the galaxy frames and the close-up, but an art
+	// size in the system (a planet's 68 is not 68 AU): there a body is a dot
+	// whose radius grows with it.
 	r := o.Size * p.ppu
+	if p.f.Kind == world.FrameSystem && o.Kind != world.KindBelt {
+		r = 1 + o.Size/24
+	}
 	switch o.Kind {
 	case world.KindGalaxy:
 		p.galaxy(o, x, y, r)
@@ -101,14 +107,14 @@ func (p *pen) object(o *world.Object) {
 		if o.Body != nil && o.Body.Orbit > 0 {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 60, false)
 		}
-		p.disc(x, y, math.Max(1+o.Size/24, r), o.Tone, o.Weight)
+		p.disc(x, y, math.Max(1, r), o.Tone, o.Weight)
 	case world.KindComet:
 		if o.Body != nil {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 30, false)
 		}
 		p.disc(x, y, 1, o.Tone, o.Weight)
 	case world.KindStation, world.KindShip:
-		p.rect(x, y, 1+o.Size*p.ppu, o.Tone, o.Weight)
+		p.rect(x, y, math.Min(8, math.Max(2, r)), o.Tone, o.Weight)
 	default: // stars, systems, colonies, rifts, the gate
 		p.disc(x, y, math.Max(1, r), o.Tone, o.Weight)
 	}
