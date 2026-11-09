@@ -201,7 +201,7 @@ func (g *Game) keys() {
 		meta:  ebiten.IsKeyPressed(ebiten.KeyMeta),
 	}
 	// The window's own keys come first and never reach the game.
-	zoom := m.ctrl
+	zoom := m.ctrl && !m.alt // Ctrl with Alt is AltGr, which types text
 	if mac {
 		zoom = m.meta
 	}
