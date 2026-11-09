@@ -13,7 +13,7 @@ import (
 
 // script is a dev-only hook (AGEFORGE_WINDOW_SCRIPT=<file>) for checking the
 // window without a person: one step per line, "wait N" frames, "key enter|esc|
-// up|down|tab", "text abc", "shot <file.png>", "quit".
+// up|down|tab", "text abc", "shot <file.png>", "quit", and on the map's canvas (art pixels) "click x y", "focus x y", "wheel x y n", "drag x1 y1 x2 y2".
 type script struct {
 	steps []string
 	i     int
@@ -47,6 +47,24 @@ func (s *script) step(g *Game) bool {
 	case "text":
 		for _, r := range arg {
 			g.o.Host.InjectKey(tcell.KeyRune, r, tcell.ModNone)
+		}
+	case "click", "focus", "wheel", "drag": // in art pixels of the map's canvas
+		var v [4]int
+		for i, f := range strings.Fields(arg) {
+			if i < len(v) {
+				v[i], _ = strconv.Atoi(f)
+			}
+		}
+		switch cmd {
+		case "click":
+			g.sky.click(v[0], v[1])
+		case "focus":
+			g.sky.focus(v[0], v[1])
+		case "wheel":
+			g.sky.wheel(v[0], v[1], float64(v[2]))
+		case "drag":
+			_, _, n := g.sky.size()
+			g.sky.pan(float64((v[2]-v[0])*n), float64((v[3]-v[1])*n))
 		}
 	case "shot":
 		s.shot = arg

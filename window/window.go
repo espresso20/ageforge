@@ -9,6 +9,7 @@ import (
 	"math"
 	"runtime"
 	"sync"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -190,6 +191,7 @@ func (g *Game) Update() error {
 		return ebiten.Termination
 	}
 	g.keys()
+	g.sky.mouse(time.Now())
 	g.sky.update()
 	return nil
 }

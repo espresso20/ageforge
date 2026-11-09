@@ -14,6 +14,9 @@ import (
 // says only what the game already says: a building's name and count, a
 // wonder's name and age, the square, a road, the ground.
 func (v *view) Inspect(f Frame) (Inspection, bool) {
+	if v.hosted && f.Model != nil { // the window's map has its own selection
+		return v.hostedInspect(f.Model)
+	}
 	sc := v.scene(f)
 	if sc == nil || !v.inspect {
 		return Inspection{}, false

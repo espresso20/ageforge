@@ -130,6 +130,10 @@ type view struct {
 	skyFor *cellPalette
 	skyPal world.Palette
 	hosted bool
+	// what the host last said of its frame and selection, and the host that
+	// was asked to
+	hst     hostState
+	watched SpaceHost
 
 	// the last overview drawn and the scene it came from, so the cursor can
 	// ask what a cell is
