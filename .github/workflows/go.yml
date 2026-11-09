@@ -27,6 +27,10 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install window libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev
+
       - name: gofmt
         run: |
           unformatted=$(gofmt -l .)
@@ -72,6 +76,10 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Install window libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev
 
       - name: go test
         env:

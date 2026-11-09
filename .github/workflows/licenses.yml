@@ -43,6 +43,10 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install window libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev
+
       - name: Install go-licenses
         run: go install github.com/google/go-licenses/v2@v2.0.1
 

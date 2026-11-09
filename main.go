@@ -44,14 +44,12 @@ func main() {
 	app := ui.NewApp(engine, version)
 
 	// The default is the window; --terminal keeps the terminal for now.
+	var err error
 	var win *window.Game
 	var done chan struct{}
-	if !slices.Contains(os.Args[1:], "--terminal") {
-		host, err := window.NewHost()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
+	if host, herr := window.NewHost(); herr != nil {
+		err = herr
+	} else if !slices.Contains(os.Args[1:], "--terminal") {
 		done = make(chan struct{})
 		win = window.New(window.Options{
 			Host: host, Dir: game.RootDataDir(), Done: done,
@@ -74,10 +72,11 @@ func main() {
 
 	// Run blocks until the player leaves by any route: the menu's Quit, the quit command,
 	// Ctrl+C (a key to the terminal, not a signal) or a signal.
-	var err error
-	if win == nil {
+	switch {
+	case err != nil: // the window could not be set up: nothing to run
+	case win == nil:
 		err = app.Run()
-	} else {
+	default:
 		// The window owns the main thread (macOS needs that); the game runs beside it.
 		// When the game ends the window closes, and when the window closes the game stops.
 		errc := make(chan error, 1)
