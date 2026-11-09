@@ -22,6 +22,12 @@ import "github.com/gdamore/tcell/v2"
 // theme color (all themes are RGB) or a real palette slot.
 const refBase = tcell.ColorValid | 0xA0000
 
+// Transparent is a background that is no colour: a cell with it shows what the
+// window has drawn under the cells (a map image), and the screen leaves it as
+// it is. It sits past the role sentinels, so RefRole does not know it, and only
+// the window reads it; a terminal never draws a cell with it.
+const Transparent = refBase + 0x1000
+
 // Ref returns a late-bound color for role. It is only meaningful on a screen
 // wrapped by WrapScreen (the app installs one before Run); tview.Styles is
 // populated with Refs by applyRemap.

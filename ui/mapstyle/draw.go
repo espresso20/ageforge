@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // Draw renders the full view: header, picture, side panel, news, inspector and
@@ -31,7 +32,7 @@ func (v *view) Draw(scr tcell.Screen, r Rect, f Frame) {
 		side = sideWidth
 	}
 	mapW, mapH := r.W-side, r.H-5
-	v.drawPicture(cv, ink.Palette, 0, 1, mapW, mapH, sc, f.Anim)
+	v.drawPicture(cv, ink.Palette, 0, 1, mapW, mapH, sc, f)
 	zoom := v.zoomLabel()
 	v.drawHeader(cv, r.W, f.Model, zoom)
 	switch {
@@ -49,7 +50,8 @@ func (v *view) Draw(scr tcell.Screen, r Rect, f Frame) {
 
 // drawPicture draws the world in the box (x, y, w, h) of the canvas: the whole
 // town squeezed to fit, or the close-up round the cursor.
-func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.Scene, anim int) {
+func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.Scene, f Frame) {
+	anim := f.Anim
 	var cx, cy int
 	var on bool
 	if v.overview {
@@ -79,9 +81,20 @@ func (v *view) drawPicture(cv *Canvas, mp *Palette, x, y, w, h int, sc *mapgen.S
 			}
 			v.seek = mapgen.Thing{}
 		}
-		v.blit(cv, x, y, v.ov.Grid)
+		if z := v.shownZoom(); f.Stage != nil && v.imaged(z) {
+			v.pal = cellPaletteFor(v.pal, v.ov.Grid)
+			v.placeVoid(cv, f.Stage, f.Slot, x, y, w, h, sc.Seed)
+		} else {
+			if f.Stage != nil {
+				f.Stage.Clear(f.Slot)
+			}
+			v.blit(cv, x, y, v.ov.Grid)
+		}
 		cx, cy, on = v.ov.CellOf(v.cur)
 	} else {
+		if f.Stage != nil {
+			f.Stage.Clear(f.Slot)
+		}
 		v.ov = nil
 		v.fit(w, h, sc)
 		v.win = mapgen.Rect{X: v.cam.X, Y: v.cam.Y, W: w, H: h}
@@ -117,7 +130,7 @@ func (v *view) putBrackets(cv *Canvas, mp *Palette, box, clip mapgen.Rect, anim 
 			continue
 		}
 		_, under := cv.Get(c.x, c.y)
-		_, ground, _ := under.Decompose()
+		ground := v.groundOf(under)
 		_, fill, _ := mp.CursorOver(ground, anim).Decompose()
 		cv.Put(c.x, c.y, c.r, tcell.StyleDefault.Foreground(fill).Background(ground).Bold(true))
 	}
@@ -126,8 +139,17 @@ func (v *view) putBrackets(cv *Canvas, mp *Palette, box, clip mapgen.Rect, anim 
 // putCursor highlights the cell (x, y) of the canvas, keeping its glyph.
 func (v *view) putCursor(cv *Canvas, mp *Palette, x, y, anim int) {
 	r, under := cv.Get(x, y)
-	_, ground, _ := under.Decompose()
-	cv.Put(x, y, r, mp.CursorOver(ground, anim))
+	cv.Put(x, y, r, mp.CursorOver(v.groundOf(under), anim))
+}
+
+// groundOf is the colour a cell stands on; over an image it is the palette's
+// ground, which the image is drawn on.
+func (v *view) groundOf(st tcell.Style) tcell.Color {
+	_, ground, _ := st.Decompose()
+	if ground == theme.Transparent && v.pal != nil {
+		return v.pal.bg
+	}
+	return ground
 }
 
 // fit places the close-up's window: it stays put and scrolls only when the

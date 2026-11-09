@@ -1,6 +1,7 @@
 package window
 
 import (
+	"image"
 	"image/color"
 	"math"
 
@@ -67,7 +68,11 @@ func (g *Game) drawCell(x, y int, k cellKey) {
 	}
 	px, py := float32(x*g.cw), float32(y*g.ch)
 	fg, bg, attr := g.colors(k.st)
-	vector.FillRect(g.buf, px, py, float32(cw), float32(g.ch), bg, false)
+	if _, b, _ := k.st.Decompose(); b == theme.Transparent {
+		g.buf.SubImage(image.Rect(int(px), int(py), int(px)+cw, int(py)+g.ch)).(*ebiten.Image).Clear() // an image shows through
+	} else {
+		vector.FillRect(g.buf, px, py, float32(cw), float32(g.ch), bg, false)
+	}
 	if !k.covered && k.r != ' ' && k.r != 0 {
 		if sh, ok := procedural(k.r, g.cw, g.ch); ok {
 			g.drawShape(sh, px, py, fg, bg)

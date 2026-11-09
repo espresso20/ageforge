@@ -41,11 +41,12 @@ const (
 	cTeal
 	cOrange
 	cBlue
+	cArm // the light of a spiral arm, its own colour
 	nch
 	cDust = nch
 )
 
-var chHue = [nch]Hue{HStar, HSun, HNeon, HRed, HGold, HHydro, HFire, HAir}
+var chHue = [nch]Hue{HStar, HSun, HNeon, HRed, HGold, HHydro, HFire, HAir, HArm}
 
 // wcanvas is a window of light, in pixels; ell and the rest take isotropic
 // positions, where a pixel is one wide and two tall.
@@ -212,22 +213,22 @@ func (c *wcanvas) galaxy(seed int64, id, cx, cy int, g galLook) {
 		spur := a >= g.arms
 		off, lo, amp := a*turn/g.arms, 0, 130
 		if spur {
-			off, lo, amp = (a-g.arms)*turn/g.arms+turn/4, 90, 60
+			off, lo, amp = (a-g.arms)*turn/g.arms+turn/4, 90, 26
 		}
 		for i := lo * n / 256; i < (256-(lo+20)*boolInt(spur))*n/256; i++ {
 			t := i * 256 / n
 			x, y, r := armXY(g, cx, cy, off, t)
 			tf := float64(i) * 256 / float64(n)
-			wd := 1 + g.r/22 + g.r*t/256/8
-			if c.rec != nil { // the picture is finer than the steps: four samples, each a quarter
+			wd := 1 + g.r/40 + g.r*t/256/12 // thin, and a little wider as it winds out
+			if c.rec != nil {               // the picture is finer than the steps: four samples, each a quarter
 				for j := 0; j < 4; j++ {
 					fx, fy := armXYf(g, cx, cy, off, tf+(float64(j)-1.5)*256/float64(4*n))
 					c.at(x, y, fx, fy, 0.25)
-					c.ell(x, y, wd, max(1, wd*sq0/256), 0, cCool, amp*(60+t/2)/256*7/(wd+2))
+					c.ell(x, y, wd, max(1, wd*sq0/256), 0, cArm, amp*(60+t/2)/256*7/(wd+2))
 				}
 				c.at(0, 0)
 			} else {
-				c.ell(x, y, wd, max(1, wd*sq0/256), 0, cCool, amp*(60+t/2)/256*7/(wd+2)) // wider arms overlap more, so each sample adds less
+				c.ell(x, y, wd, max(1, wd*sq0/256), 0, cArm, amp*(60+t/2)/256*7/(wd+2)) // wider arms overlap more, so each sample adds less
 			}
 			for k := 0; k < g.stars; k++ {
 				j := int64(id*100000 + a*10000 + i*10 + k)
@@ -505,7 +506,7 @@ func (c *wcanvas) void(seed int64, mark func(n uint8, x, y, r int)) {
 	type major struct{ x, y, r int }
 	majors := []major{{mwX, mwY, mwR}, {m31X, m31Y, m31R}, {m33X, m33Y, m33R}, {lmcX, lmcY, 10}, {smcX, smcY, 8}}
 
-	mw := galLook{r: mwR, q: 256, phi: 0, arms: 2, spin: 330, core: 150, bar: 130, dust: 200, stars: 1, spurs: true}
+	mw := galLook{r: mwR, q: 256, phi: 0, arms: 2, spin: 200, core: 150, bar: 130, dust: 200, stars: 1, spurs: true}
 	c.galaxy(seed, 1, mwX, mwY, mw)
 	sx, sy, _ := armXY(mw, mwX, mwY, 0, 170) // Sol, in the Orion spur
 	c.ring(sx, sy, 3, 12, P(HOrbit, 90))

@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
 // App manages the tview application and page routing
@@ -125,6 +126,13 @@ func (a *App) SetWindowHost(h WindowHost) {
 	if a.menu != nil {
 		a.menu.window = h
 	}
+}
+
+// SetStage gives the Map panel the window's stage, where it puts the pictures
+// that are better drawn as an image than as cells (see mapstyle.Stage). Without
+// one the map is all cells.
+func (a *App) SetStage(s mapstyle.Stage) {
+	a.dashboard.mapPanel.images = s
 }
 
 // Run starts the tview application (blocks until exit)
