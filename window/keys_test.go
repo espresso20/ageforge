@@ -66,3 +66,9 @@ func TestMapChars(t *testing.T) {
 		t.Error("takesText: chords must not type")
 	}
 }
+
+func TestOneLine(t *testing.T) {
+	if got := oneLine("a\r\nb \n\n c\t"); got != "a b c" {
+		t.Fatalf("oneLine = %q", got)
+	}
+}

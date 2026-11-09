@@ -222,6 +222,12 @@ func (g *Game) keys() {
 		return
 	}
 	host := g.o.Host
+	if (zoom && inpututil.IsKeyJustPressed(ebiten.KeyV)) || (m.shift && inpututil.IsKeyJustPressed(ebiten.KeyInsert)) {
+		for _, p := range mapChars([]rune(clipboardText())) {
+			host.InjectKey(p.key, p.r, p.mod)
+		}
+		return
+	}
 	for _, k := range pressedKeys {
 		if g.holdFires(k) {
 			if p, ok := mapKey(k, m); ok {
