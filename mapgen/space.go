@@ -105,7 +105,7 @@ func (f *frame) relicSpot(age, try int) Pt {
 		home := f.plan.Roads[2+2*homeRing+roll(2, seed, 19, int64(age))].Cells // the orbit of the third world
 		return home[roll(len(home), seed, 20, int64(age), int64(try))]
 	}
-	return Pt{c.X - 12 + roll(25, seed, 21, int64(age), int64(try)), c.Y - 5 + roll(11, seed, 22, int64(age), int64(try))}
+	return Pt{X: c.X - 12 + roll(25, seed, 21, int64(age), int64(try)), Y: c.Y - 5 + roll(11, seed, 22, int64(age), int64(try))}
 }
 
 // spaceCellFunc returns a function that evaluates procedural space cells at any coordinate (wx, wy).

@@ -161,7 +161,7 @@ func TestEveryBuildingOnARoad(t *testing.T) {
 		reached[start] = true
 		for head := 0; head < len(queue); head++ {
 			for _, d := range neighbours {
-				n := Pt{queue[head].X + d[0], queue[head].Y + d[1]}
+				n := Pt{X: queue[head].X + d[0], Y: queue[head].Y + d[1]}
 				if laid[n] && !reached[n] {
 					reached[n] = true
 					queue = append(queue, n)

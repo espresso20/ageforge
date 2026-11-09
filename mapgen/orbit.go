@@ -455,7 +455,7 @@ func (f *frame) paintHomePlanet() {
 					cell.R = cityGlyphs[hCity%uint64(len(cityGlyphs))]
 					cell.Fg = P(HGold, 255)
 					cell.Dim = 0
-					f.lights = append(f.lights, Pt{x, y})
+					f.lights = append(f.lights, Pt{X: x, Y: y})
 				}
 			}
 
@@ -476,7 +476,7 @@ func (f *frame) paintOrbitStructures() {
 			top := spoke.Cells[n-1]
 			canAnchor := true
 			for dx := -2; dx <= 2; dx++ {
-				p := Pt{top.X + dx, top.Y}
+				p := Pt{X: top.X + dx, Y: top.Y}
 				if !f.g.in(p.X, p.Y) || f.g.ThingAt(p.X, p.Y).Kind == KindBuilding || f.g.ThingAt(p.X, p.Y).Kind == KindWonder {
 					canAnchor = false
 					break
@@ -544,13 +544,11 @@ func (f *frame) paintOrbitStructures() {
 func (f *frame) orbitRelic(age, try int) Pt {
 	c := f.plan.Centre
 	for attempt := 0; attempt < 10; attempt++ {
-		p := Pt{
-			c.X - discRX + 2 + roll(2*discRX-3, f.m.Seed, 17, int64(age), int64(try*10+attempt)),
-			c.Y - discRY + 2 + roll(2*discRY-3, f.m.Seed, 18, int64(age), int64(try*10+attempt)),
-		}
+		p := Pt{X: c.X - discRX + 2 + roll(2*discRX-3, f.m.Seed, 17, int64(age), int64(try*10+attempt)), Y: c.Y - discRY + 2 + roll(2*discRY-3, f.m.Seed, 18, int64(age), int64(try*10+attempt))}
+
 		if rim(p.X, p.Y, c.X, c.Y, discRX, discRY) <= 800 {
 			return p
 		}
 	}
-	return Pt{c.X, c.Y}
+	return Pt{X: c.X, Y: c.Y}
 }

@@ -36,7 +36,7 @@ func (f *frame) paintSkyLife() {
 }
 
 // skyCell is a cell of open sky.
-func (f *frame) skyCell(x, y int) bool { return f.g.in(x, y) && f.sky(Pt{x, y}) }
+func (f *frame) skyCell(x, y int) bool { return f.g.in(x, y) && f.sky(Pt{X: x, Y: y}) }
 
 // paintComet flies one comet across the sky once in a while: a bright head
 // and a short tail of fading dots.

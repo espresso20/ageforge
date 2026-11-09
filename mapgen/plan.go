@@ -1,9 +1,12 @@
 package mapgen
 
-import "github.com/espresso20/ageforge/mapmodel"
+import (
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/world"
+)
 
 // Pt is a cell of the world.
-type Pt struct{ X, Y int }
+type Pt = world.Pt
 
 // Rect is a block of cells.
 type Rect struct{ X, Y, W, H int }
@@ -137,7 +140,7 @@ func NewGroundPlan(seed int64, f *Fields, cat *mapmodel.Catalog) *Plan {
 // findCentre picks the flattest dry spot near water that is near the middle
 // of the world: the settlement's square.
 func (b *planner) findCentre() Pt {
-	best, bestScore := Pt{worldW / 2, worldH / 2}, 1<<62
+	best, bestScore := Pt{X: worldW / 2, Y: worldH / 2}, 1<<62
 	for y := worldH/2 - 12; y <= worldH/2+12; y++ {
 		for x := worldW/2 - 36; x <= worldW/2+36; x++ {
 			if !b.buildable(x, y) {
@@ -145,7 +148,7 @@ func (b *planner) findCentre() Pt {
 			}
 			score := b.surroundings(x, y) + abs(x-worldW/2)*3 + abs(y-worldH/2)*6 + max(0, int(b.f.WaterDist[at(x, y)])-14)*30
 			if score < bestScore {
-				best, bestScore = Pt{x, y}, score
+				best, bestScore = Pt{X: x, Y: y}, score
 			}
 		}
 	}

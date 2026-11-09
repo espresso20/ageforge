@@ -69,7 +69,7 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	}
 	var colonies []Colony
 	if f.st.Scale == Stars {
-		c = Pt{f.g.W / 2, f.g.H / 2} // Sol, at the middle of the neighbourhood and of its close-up
+		c = Pt{X: f.g.W / 2, Y: f.g.H / 2} // Sol, at the middle of the neighbourhood and of its close-up
 		for _, h := range f.homeSectors() {
 			colonies = append(colonies, Colony{Line: h.line, Count: h.count, Systems: len(h.cells), Tier: h.tier})
 		}
@@ -124,7 +124,7 @@ func (f *frame) bounds() Rect {
 		grow(Rect{f.plan.Centre.X - maxRX, f.plan.Centre.Y - maxRY, 2*maxRX + 1, 2*maxRY + 1})
 	}
 	if f.st.Scale == Stars { // the body of the galaxy is the map, and all the territory
-		r := f.plan.Galaxy.reach()
+		r := f.plan.Galaxy.Reach()
 		cx, cy := worldW/2, worldH/2
 		for _, p := range r {
 			grow(Rect{cx + (p.X-cx)*starFrame/100, cy + (p.Y-cy)*starFrame/100, 1, 1})

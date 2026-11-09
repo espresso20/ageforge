@@ -40,7 +40,7 @@ func visitorCells(g *Grid) []Pt {
 	var out []Pt
 	for i := range g.Cells {
 		if g.Things[g.Hit[i]].Kind == KindVisitor {
-			out = append(out, Pt{i % g.W, i / g.W})
+			out = append(out, Pt{X: i % g.W, Y: i / g.W})
 		}
 	}
 	return out

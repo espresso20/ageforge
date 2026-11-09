@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/world"
 )
 
 // The territory of the people on the star map, painted over the galaxy: each
@@ -35,7 +36,7 @@ func (f *frame) homeSectors() []lit {
 			continue
 		}
 		sec := f.plan.Sectors[i]
-		n := min(systemsFor(l.Count, sectorMax), len(sec.Cells))
+		n := sec.Lit(l.Count)
 		tier := 0
 		if kinds := len(f.m.Catalog.ByLineage[l.Key]); kinds > 1 && len(l.Buildings) > 0 {
 			tier = clamp(l.Buildings[len(l.Buildings)-1].Rank*3/(kinds-1), 0, 3)
@@ -55,27 +56,21 @@ type rivalSite struct {
 // rivalSites places every civilization met in a slot of its own, picked by its
 // key and moved on to the next free one when taken.
 func (f *frame) rivalSites() []rivalSite {
-	var out []rivalSite
-	n := len(f.plan.Rivals)
-	if n == 0 {
-		return nil
-	}
-	taken := make([]bool, n)
+	var civs []*mapmodel.Faction
+	var keys []string
 	for i := range f.m.Factions {
-		civ := &f.m.Factions[i]
-		if !civ.Discovered {
+		if civ := &f.m.Factions[i]; civ.Discovered {
+			civs = append(civs, civ)
+			keys = append(keys, civ.Key)
+		}
+	}
+	var out []rivalSite
+	for i, slot := range world.PlaceRivals(f.m.Seed, keys, len(f.plan.Rivals)) {
+		if slot < 0 {
 			continue
 		}
-		s := roll(n, f.m.Seed, 100, mapmodel.HashStr(civ.Key))
-		for try := 0; try < n && taken[s]; try++ {
-			s = (s + 1) % n
-		}
-		if taken[s] {
-			continue
-		}
-		taken[s] = true
-		cells := f.plan.Rivals[s].Cells
-		out = append(out, rivalSite{civ, cells[:min(len(cells), 4+3*clamp(civ.Strength, 1, 5))]})
+		cells := f.plan.Rivals[slot].Cells
+		out = append(out, rivalSite{civs[i], cells[:min(len(cells), world.RivalSystems(civs[i].Strength))]})
 	}
 	return out
 }
@@ -123,7 +118,7 @@ func edgeOf(in []bool) []Pt {
 				continue
 			}
 			if x == 0 || y == 0 || x == worldW-1 || y == worldH-1 || !in[at(x-1, y)] || !in[at(x+1, y)] || !in[at(x, y-1)] || !in[at(x, y+1)] {
-				out = append(out, Pt{x, y})
+				out = append(out, Pt{X: x, Y: y})
 			}
 		}
 	}
@@ -379,7 +374,7 @@ func straight(a, b Pt) []Pt {
 		}
 		x := a.X + (dx*i*2+n*sign(dx))/(2*n)
 		y := a.Y + (dy*i*2+n*sign(dy))/(2*n)
-		out = append(out, Pt{x, y})
+		out = append(out, Pt{X: x, Y: y})
 	}
 	return out
 }
@@ -401,7 +396,7 @@ func (f *frame) paintRift() {
 		if i+1 < len(rift) {
 			next = rift[i+1]
 		} else if i > 0 {
-			next = Pt{2*c.X - rift[i-1].X, 2*c.Y - rift[i-1].Y}
+			next = Pt{X: 2*c.X - rift[i-1].X, Y: 2*c.Y - rift[i-1].Y}
 		}
 		dx, dy := next.X-c.X, next.Y-c.Y
 		switch {
@@ -414,7 +409,7 @@ func (f *frame) paintRift() {
 		}
 		if i < len(rift)/3 { // the rim: distortion glow where it opens
 			for _, w := range []int{-1, 1} {
-				p := Pt{c.X + w, c.Y}
+				p := Pt{X: c.X + w, Y: c.Y}
 				if inWorld(p.X, p.Y) && f.sky(p) {
 					f.g.Cells[at(p.X, p.Y)].Bg = P(HPlasma, 35)
 					f.g.mark(p.X, p.Y, thing)

@@ -67,17 +67,17 @@ func TestSpacePlansHoldTogether(t *testing.T) {
 					t.Fatalf("%s/%d: door %v is not cell %d of road %d", sp.name, seed, l.Door, l.At, l.Road)
 				}
 				l.Rect.cells(func(x, y int) {
-					if taken[Pt{x, y}] {
+					if taken[Pt{X: x, Y: y}] {
 						t.Fatalf("%s/%d: two parcels cover (%d,%d)", sp.name, seed, x, y)
 					}
-					taken[Pt{x, y}] = true
+					taken[Pt{X: x, Y: y}] = true
 				})
 			}
 			reached := map[Pt]bool{p.Roads[0].Cells[0]: true}
 			queue := []Pt{p.Roads[0].Cells[0]}
 			for head := 0; head < len(queue); head++ {
 				for _, d := range neighbours {
-					n := Pt{queue[head].X + d[0], queue[head].Y + d[1]}
+					n := Pt{X: queue[head].X + d[0], Y: queue[head].Y + d[1]}
 					if _, onRoad := road[n]; onRoad && !reached[n] {
 						reached[n] = true
 						queue = append(queue, n)
@@ -109,7 +109,7 @@ func TestRingParcelsStandOnTheirOwnRing(t *testing.T) {
 		}
 		for _, l := range p.Lots {
 			l.Rect.cells(func(x, y int) {
-				if i, onRoad := road[Pt{x, y}]; onRoad && (i < 2 || ringOf(i) != ringOf(l.Road)) {
+				if i, onRoad := road[Pt{X: x, Y: y}]; onRoad && (i < 2 || ringOf(i) != ringOf(l.Road)) {
 					t.Fatalf("%s: a parcel on ring %d covers road %d at (%d,%d)", sp.name, ringOf(l.Road), i, x, y)
 				}
 			})
@@ -226,7 +226,7 @@ func TestEarthSpinsWithAnim(t *testing.T) {
 	g0 := gen.Render(m, worldW, worldH, 0)
 	g25 := gen.Render(m, worldW, worldH, 25)
 
-	c := Pt{worldW / 2, worldH / 2}
+	c := Pt{X: worldW / 2, Y: worldH / 2}
 	diffCount := 0
 	interiorCount := 0
 

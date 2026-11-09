@@ -1,9 +1,6 @@
 package mapgen
 
-import (
-	"cmp"
-	"slices"
-)
+import "github.com/espresso20/ageforge/world"
 
 // The Galactic map opens on Sol's neighbourhood: the nearest real stars at
 // their true distances from Sol, the people's colonies lit round some of them
@@ -11,7 +8,8 @@ import (
 // reads true; a star's direction is its galactic longitude. The close-up of
 // Sol is the solar-system drawing of the Interstellar Age (overviewSystem).
 
-// NearStar is a star of the neighbourhood.
+// NearStar is a star of the neighbourhood, as the painters read the
+// catalogue in world/.
 type NearStar struct {
 	Key     string // the name's key, for the inspect line
 	Dist100 int    // light-years from Sol, times 100
@@ -30,65 +28,22 @@ type starLook struct {
 	extra  Hue // a third, dim one, or a white dwarf
 }
 
-// NearStars are the stars of the neighbourhood, nearest first. Distances are
-// the catalogue's; longitudes are rounded to a degree.
-var NearStars = [...]NearStar{
-	{"alpha_centauri", 437, 316, starLook{HSun, 1, 255, HAmber, HRed}},
-	{"barnards_star", 596, 31, starLook{HRed, 0, 190, 0, 0}},
-	{"wolf_359", 786, 244, starLook{HRed, 0, 150, 0, 0}},
-	{"lalande_21185", 831, 185, starLook{HRed, 0, 190, 0, 0}},
-	{"sirius", 860, 227, starLook{HCool, 2, 255, 0, HWhite}},
-	{"luyten_726_8", 870, 175, starLook{HRed, 0, 170, HRed, 0}},
-	{"ross_154", 970, 11, starLook{HRed, 0, 160, 0, 0}},
-	{"ross_248", 1030, 110, starLook{HRed, 0, 140, 0, 0}},
-	{"epsilon_eridani", 1050, 196, starLook{HAmber, 1, 220, 0, 0}},
-	{"lacaille_9352", 1070, 5, starLook{HRed, 0, 200, 0, 0}},
-	{"ross_128", 1100, 270, starLook{HRed, 0, 150, 0, 0}},
-	{"61_cygni", 1140, 82, starLook{HAmber, 1, 190, HAmber, 0}},
-	{"procyon", 1150, 214, starLook{HSun, 2, 230, 0, HWhite}},
-	{"struve_2398", 1150, 89, starLook{HRed, 0, 170, HRed, 0}},
-	{"groombridge_34", 1160, 117, starLook{HRed, 0, 160, HRed, 0}},
-	{"epsilon_indi", 1190, 336, starLook{HAmber, 1, 190, 0, 0}},
-	{"tau_ceti", 1190, 173, starLook{HSun, 1, 210, 0, 0}},
-	{"teegardens_star", 1250, 160, starLook{HRed, 0, 130, 0, 0}},
-	{"kapteyns_star", 1280, 251, starLook{HRed, 0, 150, 0, 0}},
-}
+// NearStars are the stars of the neighbourhood, nearest first, from world/.
+var NearStars = func() (out [len(world.NearStars)]NearStar) {
+	for i, s := range world.NearStars {
+		l := s.Look
+		out[i] = NearStar{s.Key, s.Dist100, s.Lon, starLook{hueOf(l.Tone), l.Size, l.Weight, hueOf(l.Pair), hueOf(l.Extra)}}
+	}
+	return
+}()
 
-// ringLy is the gap between the faint distance rings, in light-years.
-const ringLy = 5
+const ringLy = world.RingLy
 
 // Colony is a building line with something standing, and so a lit star of the
 // neighbourhood.
-type Colony struct {
-	Line    string
-	Count   int // buildings of the line
-	Systems int // systems of its sector that shine
-	Tier    int // 0..3, the rank of the best building standing
-}
+type Colony = world.Colony
 
-// colonyStars says which star each colony lights: the colonies keep a star for
-// good, the earlier lines the nearer ones, with a seeded shuffle among stars
-// of a like distance.
-func colonyStars(seed int64, cs []Colony) []int {
-	order := make([]int, len(NearStars))
-	for i := range order {
-		order[i] = i
-	}
-	jitter := func(i int) int { return NearStars[i].Dist100 + roll(300, seed, 6100, int64(i)) }
-	slices.SortStableFunc(order, func(a, b int) int { return cmp.Compare(jitter(a), jitter(b)) })
-	out := make([]int, len(cs))
-	for i, c := range cs {
-		j := lineOf[c.Line]
-		rank := 0 // where this line stands among all the lines, with its own jitter
-		for k := 0; k < numLines; k++ {
-			if k*100+roll(250, seed, 6101, int64(k)) < j*100+roll(250, seed, 6101, int64(j)) {
-				rank++
-			}
-		}
-		out[i] = order[rank]
-	}
-	return out
-}
+func colonyStars(seed int64, cs []Colony) []int { return world.ColonyStars(seed, cs) }
 
 // OverviewNeighborhood draws Sol's neighbourhood into w by h cells: Sol at
 // the middle of the window, which is the middle of the world.
@@ -151,7 +106,7 @@ func (s *Scene) OverviewNeighborhood(w, h int) *Overview {
 
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			o.picks[y*w+x] = Pt{o.X0 + x, o.Y0 + y}
+			o.picks[y*w+x] = Pt{X: o.X0 + x, Y: o.Y0 + y}
 		}
 	}
 	return o
@@ -179,48 +134,22 @@ func paintNearStar(pix *Pixels, x, y int, l starLook, own uint8, arms bool) {
 	}
 }
 
-// paintNearLanes joins the colonies to Sol and to each other: every colony to
-// the nearest of Sol and the colonies already joined, so the web holds
-// together. A lane is a steady glow; busier ones are brighter.
+// paintNearLanes joins the colonies to Sol and to each other (world.Lanes
+// says which). A lane is a steady glow; busier ones are brighter.
 func (s *Scene) paintNearLanes(pix *Pixels, cx, cy int, pts *[len(NearStars)][2]int, colony map[int]Colony) {
-	type node struct {
-		x, y  int
-		line  string
-		count int
-	}
-	nodes := []node{{cx, cy, "home", 0}}
-	var lit []int
-	for i := range NearStars { // nearest first
-		if _, ok := colony[i]; ok {
-			lit = append(lit, i)
+	flat := make([][2]int, len(pts))
+	copy(flat, pts[:])
+	for _, l := range world.Lanes([2]int{cx, cy}, flat, colony) {
+		fx, fy := cx, cy
+		if l.From >= 0 {
+			fx, fy = pts[l.From][0], pts[l.From][1]
 		}
-	}
-	for _, i := range lit {
-		c := colony[i]
-		best, gap := 0, 1<<60
-		for j, n := range nodes {
-			if g := sq(n.x-pts[i][0]) + 4*sq(n.y-pts[i][1]); g < gap {
-				best, gap = j, g
-			}
-		}
-		from := nodes[best]
-		m := c.Count // the lane is as busy as the smaller colony it joins
-		if from.count > 0 {
-			m = min(m, from.count)
-		}
-		traffic := 1
-		if m >= 40 {
-			traffic = 3
-		} else if m >= 8 {
-			traffic = 2
-		}
-		own := pix.Owner(Thing{Kind: KindLane, Key: c.Line, Lineage: from.line, Count: traffic}, 2)
-		x0, y0, x1, y1 := floorDiv(from.x, pxUnit), floorDiv(from.y, pxUnit), floorDiv(pts[i][0], pxUnit), floorDiv(pts[i][1], pxUnit)
+		own := pix.Owner(Thing{Kind: KindLane, Key: l.Line, Lineage: l.FromLine, Count: l.Traffic}, 2)
+		x0, y0, x1, y1 := floorDiv(fx, pxUnit), floorDiv(fy, pxUnit), floorDiv(pts[l.To][0], pxUnit), floorDiv(pts[l.To][1], pxUnit)
 		n := max(abs(x1-x0), abs(y1-y0))
 		for k := 1; k < n; k++ {
-			pix.Set(x0+(x1-x0)*k/n, y0+(y1-y0)*k/n, P(HCyan, [4]int{0, 40, 60, 90}[traffic]), own)
+			pix.Set(x0+(x1-x0)*k/n, y0+(y1-y0)*k/n, P(HCyan, [4]int{0, 40, 60, 90}[l.Traffic]), own)
 		}
-		nodes = append(nodes, node{pts[i][0], pts[i][1], c.Line, c.Count})
 	}
 }
 

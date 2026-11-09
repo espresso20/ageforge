@@ -124,13 +124,13 @@ func (r Rect) borderAt(t int) Pt {
 	w, h := max(1, r.W-1), 2*max(1, r.H-1)
 	switch t %= 2 * (w + h); {
 	case t < w:
-		return Pt{r.X + t, r.Y}
+		return Pt{X: r.X + t, Y: r.Y}
 	case t < w+h:
-		return Pt{r.X + w, r.Y + (t-w)/2}
+		return Pt{X: r.X + w, Y: r.Y + (t-w)/2}
 	case t < 2*w+h:
-		return Pt{r.X + w - (t - w - h), r.Y + r.H - 1}
+		return Pt{X: r.X + w - (t - w - h), Y: r.Y + r.H - 1}
 	}
-	return Pt{r.X, r.Y + r.H - 1 - (t-2*w-h)/2}
+	return Pt{X: r.X, Y: r.Y + r.H - 1 - (t-2*w-h)/2}
 }
 
 // civSites places every civilization met, in the order of the model's list.
@@ -263,7 +263,7 @@ func (f *frame) paintSites() {
 	for _, s := range f.sites {
 		thing := Thing{Kind: KindCiv, Key: s.civ.Key}
 		for i, r := range runes {
-			f.put(Pt{s.at.X - len(runes)/2 + i, s.at.Y}, r, P(relationHue[s.civ.Relation], 255), thing)
+			f.put(Pt{X: s.at.X - len(runes)/2 + i, Y: s.at.Y}, r, P(relationHue[s.civ.Relation], 255), thing)
 		}
 		f.targets = append(f.targets, s.at)
 	}
@@ -333,7 +333,7 @@ func (f *frame) squareSpots() []Pt {
 	var spots []Pt
 	for dy := -2; dy <= 2; dy++ {
 		for dx := -4; dx <= 4; dx++ {
-			if p := (Pt{sq.X + dx, sq.Y + dy}); (dx != 0 || dy != 0) && f.g.in(p.X, p.Y) && !f.solid(p.X, p.Y) {
+			if p := (Pt{X: sq.X + dx, Y: sq.Y + dy}); (dx != 0 || dy != 0) && f.g.in(p.X, p.Y) && !f.solid(p.X, p.Y) {
 				spots = append(spots, p)
 			}
 		}

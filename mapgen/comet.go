@@ -1,13 +1,15 @@
 package mapgen
 
+import "github.com/espresso20/ageforge/world"
+
 // The comet crosses the cosmic view: it comes in at one side, takes minutes to
 // reach the other on a gentle curve, and then the sky is quiet for a minute or
 // two. Its head is a white speck with a wide, soft dust tail fanning away from
 // the Sun and a thin blue ion tail beside it. One at a time, never faster than
 // a pixel a frame.
 const (
-	cometCycle = 2800 // frames in one crossing and its gap (about 5.8 minutes)
-	cometTail  = 34   // the tail, in pixels
+	cometCycle = world.CometCycle // frames in one crossing and its gap (about 5.8 minutes)
+	cometTail  = 34               // the tail, in pixels
 )
 
 // cometPath is the head of the comet at frame anim over a canvas w by h

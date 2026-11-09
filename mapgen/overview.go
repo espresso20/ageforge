@@ -107,7 +107,7 @@ func (s *Scene) overviewPadded(w, h, padX, padY int) *Overview {
 			} else {
 				bx := x0 + step/512
 				by := y0 + step/512
-				o.picks[y*w+x] = Pt{bx, by}
+				o.picks[y*w+x] = Pt{X: bx, Y: by}
 				if s.SpaceCell != nil {
 					o.Grid.paint(x, y, s.SpaceCell(bx, by))
 				} else if s.GroundCell != nil {
@@ -134,7 +134,7 @@ var salience = [...]int{KindNone: 0, KindTerrain: 0, KindRoad: 2, KindAgent: 1, 
 func (s *Scene) mostImportant(x0, y0, x1, y1 int) Pt {
 	x1, y1 = max(x1, x0+1), max(y1, y0+1)
 	cx, cy := floorDiv(x0+x1, 2), floorDiv(y0+y1, 2)
-	best, bestSal := Pt{cx, cy}, 0
+	best, bestSal := Pt{X: cx, Y: cy}, 0
 	foundInGrid := false
 	for y := y0; y < y1; y++ {
 		for x := x0; x < x1; x++ {
@@ -157,12 +157,12 @@ func (s *Scene) mostImportant(x0, y0, x1, y1 int) Pt {
 				sal++ // a hub stands for its block before the systems round it
 			}
 			if sal > bestSal {
-				best, bestSal = Pt{x, y}, sal
+				best, bestSal = Pt{X: x, Y: y}, sal
 			}
 		}
 	}
 	if !s.Grid.in(best.X, best.Y) && foundInGrid {
-		best = Pt{clamp(cx, 0, s.Grid.W-1), clamp(cy, 0, s.Grid.H-1)}
+		best = Pt{X: clamp(cx, 0, s.Grid.W-1), Y: clamp(cy, 0, s.Grid.H-1)}
 	}
 	return best
 }
@@ -272,7 +272,7 @@ func (o *Overview) CellOf(p Pt) (x, y int, ok bool) {
 // Pick is the world cell a cell shows.
 func (o *Overview) Pick(x, y int) Pt {
 	if x < 0 || y < 0 || x >= o.Grid.W || y >= o.Grid.H {
-		return Pt{-1, -1}
+		return Pt{X: -1, Y: -1}
 	}
 	return o.picks[y*o.Grid.W+x]
 }
@@ -313,7 +313,7 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 		for x := 0; x < w; x++ {
 			wx := o.blockX(x)
 			wy := o.blockY(y)
-			o.picks[y*w+x] = Pt{wx, wy}
+			o.picks[y*w+x] = Pt{X: wx, Y: wy}
 			if s.Scale == Stars { // the close-up of Sol is on the dark between the stars
 				o.Grid.paint(x, y, s.deep.cell(s.Seed, o, x, y))
 			} else if s.SpaceCell != nil {
@@ -368,11 +368,11 @@ func (s *Scene) overviewSystem(w, h int, mode SystemViewMode) *Overview {
 			th := s.Grid.Things[s.Grid.Hit[i]]
 			if th.Kind == KindVisitor {
 				wx, wy := i%s.Grid.W, i/s.Grid.W
-				ox, oy, ok := o.CellOf(Pt{wx, wy})
+				ox, oy, ok := o.CellOf(Pt{X: wx, Y: wy})
 				if ok && o.Grid.in(ox, oy) {
 					o.Grid.paint(ox, oy, s.Grid.At(wx, wy))
 					o.Grid.mark(ox, oy, th)
-					o.picks[oy*w+ox] = Pt{wx, wy}
+					o.picks[oy*w+ox] = Pt{X: wx, Y: wy}
 					o.Grid.Hit[oy*w+ox] = s.Grid.Hit[i]
 				}
 			}

@@ -32,13 +32,13 @@ func halfRing(cx, cy, ry, side int) []Pt {
 	for dx := 1; dx <= rx; dx++ {
 		next := isqrt(ry * ry * (rx*rx - dx*dx) / (rx * rx))
 		for h := height; h >= next; h-- {
-			upper = append(upper, Pt{cx + side*dx, cy - h})
+			upper = append(upper, Pt{X: cx + side*dx, Y: cy - h})
 		}
 		height = next
 	}
 	cells := upper
 	for i := len(upper) - 2; i >= 0; i-- { // the lower half mirrors the upper
-		cells = append(cells, Pt{upper[i].X, 2*cy - upper[i].Y})
+		cells = append(cells, Pt{X: upper[i].X, Y: 2*cy - upper[i].Y})
 	}
 	return cells
 }
@@ -54,12 +54,12 @@ func newRingPlan(seed int64, sp ringSpec, scale Scale) *planner {
 	}
 	b := newPlannerSized(seed, gw, gh)
 	p := b.plan
-	p.Scale, p.Centre = scale, Pt{sp.cx, sp.cy}
-	hub := Pt{sp.cx, sp.cy - sp.hub - 1}
+	p.Scale, p.Centre = scale, Pt{X: sp.cx, Y: sp.cy}
+	hub := Pt{X: sp.cx, Y: sp.cy - sp.hub - 1}
 	p.Roads = []Road{{Cells: []Pt{hub}, Parent: -1}}
 	spoke := Road{Parent: 0, Tier: 1}
 	for y := hub.Y - 1; y >= max(0, sp.cy-sp.rings[len(sp.rings)-1]); y-- {
-		spoke.Cells = append(spoke.Cells, Pt{sp.cx, y})
+		spoke.Cells = append(spoke.Cells, Pt{X: sp.cx, Y: y})
 	}
 	p.Roads = append(p.Roads, spoke)
 	b.claimRoad(hub, 0)
@@ -71,7 +71,7 @@ func newRingPlan(seed int64, sp ringSpec, scale Scale) *planner {
 		for _, side := range []int{1, -1} {
 			cells := halfRing(sp.cx, sp.cy, ry, side)
 			if side == 1 {
-				cells = append(cells, Pt{sp.cx, sp.cy + ry})
+				cells = append(cells, Pt{X: sp.cx, Y: sp.cy + ry})
 			}
 			road := Road{Cells: cells, Parent: 1, From: crossing}
 			for _, c := range road.Cells {

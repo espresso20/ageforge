@@ -90,10 +90,10 @@ func (f *frame) districts() []District {
 				}
 				c := Rect{m.x / 2, m.y / 2, 1, 1}
 				if box.W == 0 {
-					box, heart, first = c, Pt{c.X, c.Y}, m
+					box, heart, first = c, Pt{X: c.X, Y: c.Y}, m
 				} else {
 					if clear(m) && !clear(first) {
-						heart = Pt{c.X, c.Y}
+						heart = Pt{X: c.X, Y: c.Y}
 					}
 					x0, y0 := min(box.X, c.X), min(box.Y, c.Y)
 					box = Rect{x0, y0, max(box.X+box.W, c.X+1) - x0, max(box.Y+box.H, c.Y+1) - y0}
@@ -123,7 +123,7 @@ func (f *frame) districts() []District {
 		if box.W == 0 {
 			continue
 		}
-		middle := Pt{box.X + box.W/2, box.Y + box.H/2}
+		middle := Pt{X: box.X + box.W/2, Y: box.Y + box.H/2}
 		heart, gap := Pt{}, 1<<60
 		for _, t := range f.targets {
 			th := f.g.ThingAt(t.X, t.Y)

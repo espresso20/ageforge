@@ -111,7 +111,7 @@ func (f *frame) saucerCells(sg mapmodel.Sighting) []Pt {
 	t, c := f.visit-sg.Start, f.plan.Centre
 	spot, found := Pt{}, false
 	if sg.Kind != mapmodel.SightFlyby {
-		want := Pt{c.X - 18 + int(sg.Roll>>4%37), c.Y - 7 + int(sg.Roll>>12%15)}
+		want := Pt{X: c.X - 18 + int(sg.Roll>>4%37), Y: c.Y - 7 + int(sg.Roll>>12%15)}
 		spot, found = f.openSpot(want)
 	}
 	var dome Pt
@@ -122,15 +122,15 @@ func (f *frame) saucerCells(sg mapmodel.Sighting) []Pt {
 			x = c.X + saucerReach - t*2*saucerReach/sg.Frames
 		}
 		drift := (int(sg.Roll>>8%7) - 3) * t / sg.Frames
-		dome = Pt{x, clamp(c.Y-10+int(sg.Roll>>4%5)+drift, 1, worldH-2)}
+		dome = Pt{X: x, Y: clamp(c.Y-10+int(sg.Roll>>4%5)+drift, 1, worldH-2)}
 	case pct < 15:
-		dome = Pt{spot.X, spot.Y - hoverRise + hoverRise*pct/15}
+		dome = Pt{X: spot.X, Y: spot.Y - hoverRise + hoverRise*pct/15}
 	case pct < 85:
-		dome = Pt{spot.X + [4]int{0, 1, 0, -1}[t/10%4], spot.Y}
+		dome = Pt{X: spot.X + [4]int{0, 1, 0, -1}[t/10%4], Y: spot.Y}
 	default:
-		dome = Pt{spot.X, spot.Y - hoverRise*(pct-85)/15}
+		dome = Pt{X: spot.X, Y: spot.Y - hoverRise*(pct-85)/15}
 	}
-	return []Pt{{dome.X - 1, dome.Y}, dome, {dome.X + 1, dome.Y}}
+	return []Pt{{X: dome.X - 1, Y: dome.Y}, dome, {X: dome.X + 1, Y: dome.Y}}
 }
 
 // openSpot is the cell nearest want with open ground to either side as well,
@@ -149,7 +149,7 @@ func (f *frame) openSpot(want Pt) (Pt, bool) {
 		for dy := -ring; dy <= ring; dy++ {
 			for dx := -2 * ring; dx <= 2*ring; dx++ {
 				if open(want.X+dx, want.Y+dy) {
-					return Pt{want.X + dx, want.Y + dy}, true
+					return Pt{X: want.X + dx, Y: want.Y + dy}, true
 				}
 			}
 		}
