@@ -217,7 +217,7 @@ func (f *frame) paintSpacePort() {
 	}
 
 	for _, m := range pp.mods {
-		f.targets = append(f.targets, Pt{m.x / 2, m.y / 2})
+		f.targets = append(f.targets, Pt{X: m.x / 2, Y: m.y / 2})
 	}
 	pix.Resolve(f.g)
 	pix.Release()

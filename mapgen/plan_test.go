@@ -70,13 +70,13 @@ func TestPlanNoOverlap(t *testing.T) {
 		}
 		claim := func(what string, r Rect) {
 			r.cells(func(x, y int) {
-				if prev, ok := taken[Pt{x, y}]; ok {
+				if prev, ok := taken[Pt{X: x, Y: y}]; ok {
 					t.Fatalf("seed %d: %s at (%d,%d) overlaps %s", seed, what, x, y, prev)
 				}
 				if !b.buildable(x, y) {
 					t.Fatalf("seed %d: %s at (%d,%d) is on %s", seed, what, x, y, biomeNames[f.Biome[at(x, y)]])
 				}
-				taken[Pt{x, y}] = what
+				taken[Pt{X: x, Y: y}] = what
 			})
 		}
 		for _, l := range p.Lots {
@@ -108,7 +108,7 @@ func TestPlanEveryParcelReachable(t *testing.T) {
 		queue := []Pt{p.Centre}
 		for head := 0; head < len(queue); head++ {
 			for _, d := range neighbours {
-				n := Pt{queue[head].X + d[0], queue[head].Y + d[1]}
+				n := Pt{X: queue[head].X + d[0], Y: queue[head].Y + d[1]}
 				if road[n] && !reached[n] {
 					reached[n] = true
 					queue = append(queue, n)

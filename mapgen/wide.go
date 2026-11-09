@@ -375,7 +375,7 @@ func (s *Scene) wideView(w, h int, void bool) *Overview {
 	}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			o.picks[y*w+x] = Pt{o.X0 + x, o.Y0 + y}
+			o.picks[y*w+x] = Pt{X: o.X0 + x, Y: o.Y0 + y}
 		}
 	}
 	return o

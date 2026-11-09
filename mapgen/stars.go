@@ -19,7 +19,7 @@ import (
 func NewStarPlan(seed int64, cat *mapmodel.Catalog) *Plan {
 	b := newPlanner(seed)
 	p := b.plan
-	p.Scale, p.Centre = Stars, Pt{worldW / 2, worldH / 2}
+	p.Scale, p.Centre = Stars, Pt{X: worldW / 2, Y: worldH / 2}
 	p.Roads = []Road{{Cells: []Pt{p.Centre}, Parent: -1}}
 	b.claimRoad(p.Centre, 0)
 	p.Galaxy = NewGalaxy(seed)

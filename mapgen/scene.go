@@ -69,7 +69,7 @@ func (gen *Generator) DrawAt(m *mapmodel.Model, at Moment) *Scene {
 	}
 	var colonies []Colony
 	if f.st.Scale == Stars {
-		c = Pt{f.g.W / 2, f.g.H / 2} // Sol, at the middle of the neighbourhood and of its close-up
+		c = Pt{X: f.g.W / 2, Y: f.g.H / 2} // Sol, at the middle of the neighbourhood and of its close-up
 		for _, h := range f.homeSectors() {
 			colonies = append(colonies, Colony{Line: h.line, Count: h.count, Systems: len(h.cells), Tier: h.tier})
 		}

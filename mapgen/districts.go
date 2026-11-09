@@ -76,8 +76,8 @@ func (p *Plan) placeHearts(seed int64, n, spreadX, spreadY int) []Pt {
 		rx, ry := 8+i*spreadX/n, 3+i*spreadY/n
 		best, bestGap := p.Centre, -1
 		for try := 0; try < 12; try++ {
-			c := Pt{p.Centre.X + roll(2*rx+1, seed, 50, int64(i), int64(try)) - rx,
-				p.Centre.Y + roll(2*ry+1, seed, 51, int64(i), int64(try)) - ry}
+			c := Pt{X: p.Centre.X + roll(2*rx+1, seed, 50, int64(i), int64(try)) - rx, Y: p.Centre.Y + roll(2*ry+1, seed, 51, int64(i), int64(try)) - ry}
+
 			gap := 1 << 40
 			for _, h := range hearts {
 				gap = min(gap, Rect{c.X, c.Y, 1, 1}.dist(h))

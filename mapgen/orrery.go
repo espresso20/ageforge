@@ -119,7 +119,7 @@ func (s *Scene) paintOrrery(o *Overview, spec *SystemSpec, mode SystemViewMode, 
 		ang := ((phaseFrac*4096)/1000 + (s.Anim/max(10, p.Orbit*p.Orbit/37))*16) % 4096
 		x16[i] = r.sx + rX[i]*cos4096(ang)/32
 		y16[i] = r.sy + rY[i]*sin4096(ang)/32
-		cells[i] = Pt{floorDiv(x16[i], 2*pxUnit), floorDiv(y16[i], 2*pxUnit)}
+		cells[i] = Pt{X: floorDiv(x16[i], 2*pxUnit), Y: floorDiv(y16[i], 2*pxUnit)}
 	}
 	r.body(sunOwn)
 	for i := range planets {

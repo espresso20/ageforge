@@ -36,7 +36,7 @@ func TestRoadsJoinUp(t *testing.T) {
 		f := groundFrame(age, noon)
 		for y := 0; y < worldH; y++ {
 			for x := 0; x < worldW; x++ {
-				if !f.laid(x, y) || f.plan.Bridge[Pt{x, y}] {
+				if !f.laid(x, y) || f.plan.Bridge[Pt{X: x, Y: y}] {
 					continue
 				}
 				joins := f.st.Roads[f.roadAt[at(x, y)]-1].Joins
@@ -79,7 +79,7 @@ func TestScatterKeepsApart(t *testing.T) {
 			if f.busy[i] {
 				t.Fatalf("%s: detail drawn on built ground at (%d,%d)", age, i%worldW, i/worldW)
 			}
-			perBlock[Pt{i % worldW / spotW, i / worldW / spotH}]++
+			perBlock[Pt{X: i % worldW / spotW, Y: i / worldW / spotH}]++
 		}
 		if len(perBlock) < 50 {
 			t.Errorf("%s: only %d blocks have any detail", age, len(perBlock))

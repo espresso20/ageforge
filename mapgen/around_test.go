@@ -201,7 +201,7 @@ func TestDisruptedRouteStallsItsCaravan(t *testing.T) {
 		g := gen.DrawAt(m, Moment{Anim: anim, Visit: -1}).Grid
 		for i, h := range g.Hit {
 			if th := g.Things[h]; th.Kind == KindRoute && g.Cells[i].R == '&' || th.Kind == KindRoute && g.Cells[i].R == '■' || th.Kind == KindRoute && g.Cells[i].R == '◆' {
-				out[Pt{i % g.W, i / g.W}] = true
+				out[Pt{X: i % g.W, Y: i / g.W}] = true
 			}
 		}
 		return out

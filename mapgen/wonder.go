@@ -45,7 +45,7 @@ func (f *frame) paintWonder(ws wonderSpot) {
 	}
 	w, h := t.size()
 	r := ws.plot.Rect
-	x0, y0 := anchor(Lot{Rect: r, Door: Pt{r.X + r.W/2, r.Y + r.H}}, w, h)
+	x0, y0 := anchor(Lot{Rect: r, Door: Pt{X: r.X + r.W/2, Y: r.Y + r.H}}, w, h)
 	built := h
 	if !ws.w.Built {
 		built = (h*int(ws.w.Progress*100) + 99) / 100
@@ -65,7 +65,7 @@ func (f *frame) paintWonder(ws wonderSpot) {
 			f.g.draw(x0+dx, y0+dy, ch, ink)
 			f.g.mark(x0+dx, y0+dy, thing)
 			if strings.IndexByte("gfln", tone) >= 0 {
-				f.glow = append(f.glow, Pt{x0 + dx, y0 + dy})
+				f.glow = append(f.glow, Pt{X: x0 + dx, Y: y0 + dy})
 			}
 		}
 	}

@@ -118,7 +118,7 @@ func edgeOf(in []bool) []Pt {
 				continue
 			}
 			if x == 0 || y == 0 || x == worldW-1 || y == worldH-1 || !in[at(x-1, y)] || !in[at(x+1, y)] || !in[at(x, y-1)] || !in[at(x, y+1)] {
-				out = append(out, Pt{x, y})
+				out = append(out, Pt{X: x, Y: y})
 			}
 		}
 	}
@@ -374,7 +374,7 @@ func straight(a, b Pt) []Pt {
 		}
 		x := a.X + (dx*i*2+n*sign(dx))/(2*n)
 		y := a.Y + (dy*i*2+n*sign(dy))/(2*n)
-		out = append(out, Pt{x, y})
+		out = append(out, Pt{X: x, Y: y})
 	}
 	return out
 }
@@ -396,7 +396,7 @@ func (f *frame) paintRift() {
 		if i+1 < len(rift) {
 			next = rift[i+1]
 		} else if i > 0 {
-			next = Pt{2*c.X - rift[i-1].X, 2*c.Y - rift[i-1].Y}
+			next = Pt{X: 2*c.X - rift[i-1].X, Y: 2*c.Y - rift[i-1].Y}
 		}
 		dx, dy := next.X-c.X, next.Y-c.Y
 		switch {
@@ -409,7 +409,7 @@ func (f *frame) paintRift() {
 		}
 		if i < len(rift)/3 { // the rim: distortion glow where it opens
 			for _, w := range []int{-1, 1} {
-				p := Pt{c.X + w, c.Y}
+				p := Pt{X: c.X + w, Y: c.Y}
 				if inWorld(p.X, p.Y) && f.sky(p) {
 					f.g.Cells[at(p.X, p.Y)].Bg = P(HPlasma, 35)
 					f.g.mark(p.X, p.Y, thing)

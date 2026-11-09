@@ -63,7 +63,7 @@ func TestSectorsFollowTheHomeArm(t *testing.T) {
 		seen := map[Pt]bool{}
 		for _, sec := range append(slices.Clone(p.Sectors), p.Rivals...) {
 			for _, c := range sec.Cells {
-				if !inWorld(c.X, c.Y) || seen[c] || seen[Pt{c.X - 1, c.Y}] || seen[Pt{c.X + 1, c.Y}] {
+				if !inWorld(c.X, c.Y) || seen[c] || seen[Pt{X: c.X - 1, Y: c.Y}] || seen[Pt{X: c.X + 1, Y: c.Y}] {
 					t.Errorf("seed %d: system %v is off the world, doubled or touching another", seed, c)
 				}
 				seen[c] = true

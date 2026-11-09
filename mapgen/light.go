@@ -48,7 +48,7 @@ func (f *frame) lampRoads(light Hue) {
 	for y := 0; y < f.g.H; y++ {
 		for x := 0; x < f.g.W; x++ {
 			if f.laid(x, y) && (x*5+y*3)%11 == 0 {
-				f.glowAt(Pt{x, y}, light, 70)
+				f.glowAt(Pt{X: x, Y: y}, light, 70)
 			}
 		}
 	}

@@ -323,7 +323,7 @@ func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, Paint)
 			if r == ' ' {
 				continue
 			}
-			p := Pt{x0 + dx, y0 + dy}
+			p := Pt{X: x0 + dx, Y: y0 + dy}
 			glyph, ink := look(r)
 			f.g.draw(p.X, p.Y, glyph, ink)
 			f.g.mark(p.X, p.Y, thing)
@@ -349,7 +349,7 @@ func (f *frame) stampCell(a Art, l Lot, thing Thing, look func(r rune) Cell) {
 			if r == ' ' {
 				continue
 			}
-			p := Pt{x0 + dx, y0 + dy}
+			p := Pt{X: x0 + dx, Y: y0 + dy}
 			c := look(r)
 			f.g.paint(p.X, p.Y, c)
 			f.g.mark(p.X, p.Y, thing)
@@ -389,7 +389,7 @@ func (f *frame) paintBuilding(pl placed) {
 
 	if f.st.Scale == System {
 		lot := f.plan.Lots[pl.lot]
-		mid := Pt{lot.Rect.X + lot.Rect.W/2, lot.Rect.Y + lot.Rect.H/2}
+		mid := Pt{X: lot.Rect.X + lot.Rect.W/2, Y: lot.Rect.Y + lot.Rect.H/2}
 		f.targets = append(f.targets, mid)
 		f.g.mark(mid.X, mid.Y, thing)
 		return
@@ -415,7 +415,7 @@ func (f *frame) paintBuilding(pl placed) {
 				if r == '*' {
 					r = coreGlyph
 				}
-				p := Pt{x0 + dx, y0 + dy}
+				p := Pt{X: x0 + dx, Y: y0 + dy}
 				spaceBg := f.g.At(p.X, p.Y).Bg
 				var fg Paint
 				bg := spaceBg
@@ -467,12 +467,12 @@ func (f *frame) paintHouse(lot int) {
 
 // middleOf is the drawn cell of art nearest its middle, where a cursor lands.
 func middleOf(rows []string, x0, y0 int) Pt {
-	best, bestGap := Pt{x0, y0}, 1<<30
+	best, bestGap := Pt{X: x0, Y: y0}, 1<<30
 	for dy, row := range rows {
 		for dx, r := range []rune(row) {
 			w, _ := Art(rows).size()
 			if gap := abs(dx-w/2) + 2*abs(dy-len(rows)/2); r != ' ' && gap < bestGap {
-				best, bestGap = Pt{x0 + dx, y0 + dy}, gap
+				best, bestGap = Pt{X: x0 + dx, Y: y0 + dy}, gap
 			}
 		}
 	}
@@ -505,7 +505,7 @@ func (f *frame) paintPort() {
 			}
 		}
 		if i == 0 {
-			f.targets = append(f.targets, Pt{x0 + w/2, y0 + h/2})
+			f.targets = append(f.targets, Pt{X: x0 + w/2, Y: y0 + h/2})
 		}
 	}
 }

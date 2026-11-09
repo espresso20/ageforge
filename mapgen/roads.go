@@ -91,7 +91,7 @@ func (b *planner) grow(parent, from int, dir [2]int, length, tier int) int {
 	cur := p.Roads[parent].Cells[from]
 	var cells []Pt
 	for len(cells) < length {
-		next := Pt{cur.X + dir[0], cur.Y + dir[1]}
+		next := Pt{X: cur.X + dir[0], Y: cur.Y + dir[1]}
 		if inWorld(next.X, next.Y) && b.claim[at(next.X, next.Y)] == roadCell {
 			break // it has met another road
 		}
@@ -126,7 +126,7 @@ func (b *planner) canExtend(c Pt, dir [2]int, road, parent int) bool {
 		return false
 	}
 	for _, side := range [][2]int{{dir[1], -dir[0]}, {-dir[1], dir[0]}} {
-		s := Pt{c.X + side[0], c.Y + side[1]}
+		s := Pt{X: c.X + side[0], Y: c.Y + side[1]}
 		if inWorld(s.X, s.Y) && b.claim[at(s.X, s.Y)] == roadCell && b.roadOf[at(s.X, s.Y)] != road && b.roadOf[at(s.X, s.Y)] != parent {
 			return false
 		}
@@ -142,8 +142,8 @@ func (b *planner) nudge(cur Pt, dir [2]int, road, parent int) Pt {
 		sides[0], sides[1] = sides[1], sides[0]
 	}
 	for _, side := range sides {
-		c := Pt{cur.X + side[0], cur.Y + side[1]}
-		ahead := Pt{c.X + dir[0], c.Y + dir[1]}
+		c := Pt{X: cur.X + side[0], Y: cur.Y + side[1]}
+		ahead := Pt{X: c.X + dir[0], Y: c.Y + dir[1]}
 		if b.canExtend(c, dir, road, parent) && b.canExtend(ahead, dir, road, parent) {
 			return c
 		}
