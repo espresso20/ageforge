@@ -27,6 +27,7 @@ type Pixels struct {
 	px     []Paint
 	own    []uint8
 	owners []pixOwner // owners[0] is nobody
+	rec    *[]pixOp   // when set, every call is also noted here (see pixrec.go)
 }
 
 // NewPixels makes an empty canvas for a grid of w by h cells.
@@ -36,7 +37,7 @@ func NewPixels(w, h int) *Pixels {
 	if p == nil || cap(p.px) < n {
 		p = &Pixels{px: make([]Paint, n), own: make([]uint8, n), owners: make([]pixOwner, 1, 16)}
 	}
-	p.W, p.H = 2*w, 2*h
+	p.W, p.H, p.rec = 2*w, 2*h, nil
 	p.px, p.own, p.owners = p.px[:n], p.own[:n], p.owners[:1]
 	clear(p.px)
 	clear(p.own)
@@ -65,6 +66,13 @@ func (p *Pixels) Owner(t Thing, prio int) uint8 {
 
 // Set paints a pixel; a paint with no hue or no weight leaves it as it was.
 func (p *Pixels) Set(x, y int, c Paint, own uint8) {
+	if p.rec != nil && c.Hue != HNone && c.Weight != 0 {
+		*p.rec = append(*p.rec, pixOp{kind: opSet, x: x, y: y, p: c})
+	}
+	p.set(x, y, c, own)
+}
+
+func (p *Pixels) set(x, y int, c Paint, own uint8) {
 	if x < 0 || y < 0 || x >= p.W || y >= p.H || c.Hue == HNone || c.Weight == 0 {
 		return
 	}
@@ -75,6 +83,9 @@ func (p *Pixels) Set(x, y int, c Paint, own uint8) {
 // Disc paints a round body; coordinates and radius use sixteenths of a pixel.
 func (p *Pixels) Disc(cx, cy, r int, own uint8, shade func(nx, ny int) Paint) {
 	r = max(r, 1)
+	if p.rec != nil {
+		*p.rec = append(*p.rec, pixOp{kind: opDisc, x: cx, y: cy, rx: r, shade: shade})
+	}
 	x0, x1 := (cx-r)/pxUnit-1, (cx+r)/pxUnit+1
 	y0, y1 := (cy-r/2)/pxUnit-1, (cy+r/2)/pxUnit+1
 	ccx, ccy := floorDiv(cx, pxUnit), floorDiv(cy, pxUnit)
@@ -85,7 +96,7 @@ func (p *Pixels) Disc(cx, cy, r int, own uint8, shade func(nx, ny int) Paint) {
 			if dx*dx+4*dy*dy > r*r && !(x == ccx && y == ccy) {
 				continue
 			}
-			p.Set(x, y, shade(clamp(dx*256/r, -256, 256), clamp(2*dy*256/r, -256, 256)), own)
+			p.set(x, y, shade(clamp(dx*256/r, -256, 256), clamp(2*dy*256/r, -256, 256)), own)
 		}
 	}
 }
@@ -94,6 +105,9 @@ func (p *Pixels) Disc(cx, cy, r int, own uint8, shade func(nx, ny int) Paint) {
 func (p *Pixels) Glow(cx, cy, r0, r1 int, c Hue, w0, steps int, own uint8) {
 	if steps < 1 || r1 <= r0 {
 		return
+	}
+	if p.rec != nil {
+		*p.rec = append(*p.rec, pixOp{kind: opGlow, x: cx, y: cy, rx: r0, ry: r1, p: P(c, w0), steps: steps})
 	}
 	x0, x1 := (cx-r1)/pxUnit-1, (cx+r1)/pxUnit+1
 	y0, y1 := (cy-r1/2)/pxUnit-1, (cy+r1/2)/pxUnit+1
@@ -110,13 +124,16 @@ func (p *Pixels) Glow(cx, cy, r0, r1 int, c Hue, w0, steps int, own uint8) {
 				d = r0
 			}
 			band := (d - r0) * steps / (r1 - r0)
-			p.Set(x, y, P(c, w0*(steps-band)/(steps+1)), own)
+			p.set(x, y, P(c, w0*(steps-band)/(steps+1)), own)
 		}
 	}
 }
 
 // Ellipse paints a one-pixel line, optionally dashed or limited to one half.
 func (p *Pixels) Ellipse(cx, cy, rx, ry int, c Paint, own uint8, gap, half int) {
+	if p.rec != nil && c.Hue != HNone && c.Weight != 0 {
+		*p.rec = append(*p.rec, pixOp{kind: opEllipse, x: cx, y: cy, rx: rx, ry: ry, p: c, gap: gap, half: half})
+	}
 	n := max(24, (rx+ry)*2/pxUnit*3/2)
 	n = min(n, 4096)
 	lastX, lastY := -1<<30, -1<<30
@@ -137,7 +154,19 @@ func (p *Pixels) Ellipse(cx, cy, rx, ry int, c Paint, own uint8, gap, half int) 
 		if gap > 0 && on%(gap+1) != 1 {
 			continue
 		}
-		p.Set(x, y, c, own)
+		p.set(x, y, c, own)
+	}
+}
+
+// Line paints a one-pixel line from the pixel (x0, y0) to (x1, y1), the ends
+// left out.
+func (p *Pixels) Line(x0, y0, x1, y1 int, c Paint, own uint8) {
+	if p.rec != nil && c.Hue != HNone && c.Weight != 0 {
+		*p.rec = append(*p.rec, pixOp{kind: opLine, x: x0, y: y0, rx: x1, ry: y1, p: c})
+	}
+	n := max(abs(x1-x0), abs(y1-y0))
+	for k := 1; k < n; k++ {
+		p.set(x0+(x1-x0)*k/n, y0+(y1-y0)*k/n, c, own)
 	}
 }
 
