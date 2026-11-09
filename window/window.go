@@ -357,7 +357,9 @@ func (g *Game) paint() {
 		}
 	}
 	for i, k := range g.cur {
-		if k != g.prev[i] {
+		// The right half of a wide rune is painted with it, never on its own:
+		// a fill there would wipe half the glyph.
+		if k != g.prev[i] && !k.covered {
 			g.drawCell(i%g.cols, i/g.cols, k)
 		}
 	}
