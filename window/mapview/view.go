@@ -43,23 +43,31 @@ func ArtScale(w int) int { return max(2, (w+175)/350) }
 // View is the map's camera and canvas. Its methods are safe from the ui
 // goroutine (Set, Clear, Do) and the draw thread (Update, Render) at once.
 type View struct {
-	mu     sync.Mutex
-	w      *world.World
-	key    uint64
-	pal    world.Palette
-	ch     chain
-	z, tz  float64   // log10 of the view width in metres, now and wanted
-	m      int       // master frame
-	off    world.Vec // centre, in the master frame's units
-	pick   int       // the object Next/Prev last centred
-	dirty  bool
-	canvas *image.RGBA
+	mu       sync.Mutex
+	w        *world.World
+	key      uint64
+	pal      world.Palette
+	ch       chain
+	z, tz    float64   // log10 of the view width in metres, now and wanted
+	m        int       // master frame
+	off      world.Vec // centre, in the master frame's units
+	pick     int       // the object Next/Prev last centred
+	sel      selection // the object selected, by click or Next/Prev
+	hold     hold
+	focus    focusTo
+	face     Face
+	names    func(string) string
+	onChange func(State)
+	last     stateKey
+	dirty    bool
+	canvas   *image.RGBA
 }
 
 func New() *View { return &View{dirty: true} }
 
 // Set gives the view the sky. Nothing is rebuilt unless key changed.
 func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
+	defer v.flush()
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	if v.w == w && v.key == key {
@@ -102,7 +110,7 @@ func (v *View) Zoom() (z float64, master int) {
 
 func (v *View) home() {
 	_, hi := v.ch.zRange()
-	v.z, v.tz, v.m, v.pick = hi, hi, 0, -1
+	v.z, v.tz, v.m, v.pick, v.sel = hi, hi, 0, -1, selection{}
 	v.off = world.Vec{}
 	for _, k := range []string{"sol", "milky_way"} {
 		if p, ok := v.ch.objPos(0, k); ok {
@@ -115,11 +123,13 @@ func (v *View) home() {
 
 // Do applies a camera key.
 func (v *View) Do(c Cmd) {
+	defer v.flush()
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	if v.ch == nil {
 		return
 	}
+	v.hold, v.focus = hold{}, focusTo{}
 	switch c.Op {
 	case ZoomIn:
 		v.tz -= zoomStep
@@ -153,7 +163,7 @@ func (v *View) cycle(fwd bool) {
 	for i := 1; i <= n; i++ {
 		j := ((v.pick+i*step)%n + n) % n
 		if o := &f.Objects[j]; o.Pick {
-			v.pick, v.off = j, regionPos(f, o.Pos)
+			v.pick, v.off, v.sel = j, o.Pos, selection{fi: v.m, key: o.Key}
 			return
 		}
 	}
@@ -171,13 +181,15 @@ func (v *View) clamp() {
 // Update eases the zoom toward its target by dt and keeps the master frame
 // current. It reports whether the picture changed.
 func (v *View) Update(dt time.Duration) bool {
+	defer v.flush()
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	if v.ch == nil {
 		return false
 	}
+	k := 1 - math.Exp(-float64(dt)/float64(easeTau))
 	if d := v.tz - v.z; math.Abs(d) > 1e-4 {
-		v.z += d * (1 - math.Exp(-float64(dt)/float64(easeTau)))
+		v.z += d * k
 		if math.Abs(v.tz-v.z) < 1e-3 {
 			v.z = v.tz
 		}
@@ -185,6 +197,11 @@ func (v *View) Update(dt time.Duration) bool {
 	}
 	if m := v.ch.master(v.z); m != v.m {
 		v.off, v.m, v.dirty = v.ch.centreIn(v.m, m, v.off), m, true
+	}
+	if v.hold.on || v.focus.on {
+		v.follow(k)
+		v.clamp()
+		v.dirty = true
 	}
 	return v.dirty
 }
@@ -221,5 +238,6 @@ func (v *View) Render(w, h int) *image.RGBA {
 			}
 		}
 	}
+	v.overlay(v.canvas, snapped)
 	return v.canvas
 }

@@ -125,3 +125,13 @@ func (p *pen) line(x0, y0, x1, y1 float64, t world.Tone, w uint8) {
 		p.px(int(math.Round(x0+(x1-x0)*f)), int(math.Round(y0+(y1-y0)*f)), col)
 	}
 }
+
+// ring2 is a one pixel circle of radius r about x, y in colour col: the
+// selection mark.
+func (p *pen) ring2(x, y, r float64, col color.RGBA) {
+	n := int(math.Min(2*math.Pi*r*2, 4000))
+	for k := 0; k < n; k++ {
+		a := 2 * math.Pi * float64(k) / float64(n)
+		p.px(int(math.Round(x+r*math.Cos(a))), int(math.Round(y+r*math.Sin(a))), col)
+	}
+}
