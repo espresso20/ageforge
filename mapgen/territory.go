@@ -164,7 +164,7 @@ func (p *Plan) layTerritory(seed int64) {
 		for j := 0; j < per && len(hubs) < len(mapmodel.LineageOrder)+rivalSlots; j++ {
 			rf := 260 + j*(660/per)
 			swing := (2*(j%2) - 1) * 70
-			c, _ := s.armAt(seed, k, rf, s.Spin*swing)
+			c, _ := s.ArmAt(seed, k, rf, s.Spin*swing)
 			c.X, c.Y = clamp(c.X, 6, worldW-7), clamp(c.Y, 3, worldH-4)
 			hubs = append(hubs, c)
 			want = append(want, rivalMax)

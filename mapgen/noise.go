@@ -1,6 +1,9 @@
 package mapgen
 
-import "github.com/espresso20/ageforge/mapmodel"
+import (
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/world"
+)
 
 // Noise and hashing in whole numbers: nothing here touches a float, so the
 // same seed gives the same bits on every machine.
@@ -50,19 +53,7 @@ func fbm(seed int64, x, y, octaves int) int {
 }
 
 // isqrt is the integer square root.
-func isqrt(n int) int {
-	if n <= 0 {
-		return 0
-	}
-	r := n
-	for r*r > n {
-		r = (r + n/r) / 2
-	}
-	for (r+1)*(r+1) <= n {
-		r++
-	}
-	return r
-}
+func isqrt(n int) int { return world.Isqrt(n) }
 
 func abs(v int) int {
 	if v < 0 {

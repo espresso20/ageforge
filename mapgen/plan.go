@@ -1,9 +1,12 @@
 package mapgen
 
-import "github.com/espresso20/ageforge/mapmodel"
+import (
+	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/world"
+)
 
 // Pt is a cell of the world.
-type Pt struct{ X, Y int }
+type Pt = world.Pt
 
 // Rect is a block of cells.
 type Rect struct{ X, Y, W, H int }

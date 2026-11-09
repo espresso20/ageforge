@@ -1,12 +1,16 @@
 package mapgen
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/espresso20/ageforge/world"
+)
 
 // The world is a fixed grid of cells, the same for every terminal size, so a
 // building never moves because the window did.
 const (
-	worldW = 240
-	worldH = 96
+	worldW = world.CellsW
+	worldH = world.CellsH
 )
 
 // Biome is what covers the ground at a cell.
