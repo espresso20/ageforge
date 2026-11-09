@@ -93,6 +93,10 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install window libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev
+
       # No GH_TOKEN override: the action authenticates git and gh as the Claude
       # GitHub App. Pushes made with the workflow's own GITHUB_TOKEN would hold the
       # PR's CI runs for manual approval (seen on #137).

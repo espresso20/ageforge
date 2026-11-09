@@ -106,6 +106,27 @@ func (a *App) OnDiscordChange(fn func()) {
 	}
 }
 
+// WindowHost is the window the game is drawn in, when there is one: the Settings
+// page offers the font choice only then.
+type WindowHost interface {
+	FontChoice() string // "mono" or "pixel"
+	NextFont()          // switch to the other font
+}
+
+// SetScreen installs s as the app's screen, wrapped by theme.WrapScreen so theme
+// sentinels resolve, instead of opening the terminal. Call it before Run.
+func (a *App) SetScreen(s tcell.Screen) {
+	a.tviewApp.SetScreen(theme.WrapScreen(s))
+	a.screenSet = true
+}
+
+// SetWindowHost tells the app it runs in a window (see WindowHost).
+func (a *App) SetWindowHost(h WindowHost) {
+	if a.menu != nil {
+		a.menu.window = h
+	}
+}
+
 // Run starts the tview application (blocks until exit)
 func (a *App) Run() error {
 	// Every theme paints its own canvas (the theming design §3.7): the terminal screen is

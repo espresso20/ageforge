@@ -414,6 +414,10 @@ func rootDataDir() string {
 	return binaryDataDir()
 }
 
+// RootDataDir is the folder the game keeps all its data in, above any account. The window
+// keeps its own settings there.
+func RootDataDir() string { return rootDataDir() }
+
 var (
 	binaryDataOnce sync.Once
 	binaryDataPath string

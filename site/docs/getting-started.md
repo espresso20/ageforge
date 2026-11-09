@@ -1,6 +1,6 @@
 # Installation
 
-AgeForge is a single binary with no runtime dependencies. Download the one for your system from the latest GitHub release, or build it from source.
+AgeForge is a single binary with no runtime dependencies. It opens in its own window: F11 or Alt+Enter toggles fullscreen (Cmd+Ctrl+F on a Mac), and Ctrl+= and Ctrl+- (Cmd on a Mac) change the text size, Ctrl+0 resets it. The Settings page picks a pixel or a clean font. Run `ageforge --terminal` to play in the terminal instead. Building from source on Linux needs the X11 and OpenGL development packages (`libgl1-mesa-dev xorg-dev`). Download the one for your system from the latest GitHub release, or build it from source.
 
 > Version note: the downloads below are version 3.6, the latest release. This Compendium describes version 4.0, which has no release yet. Version 3.6 has the `speed` command and the old city map. To play version 4.0, build from source.
 

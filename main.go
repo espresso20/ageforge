@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/espresso20/ageforge/presence"
 	"github.com/espresso20/ageforge/ui"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/window"
 )
 
 func main() {
@@ -41,6 +43,24 @@ func main() {
 
 	app := ui.NewApp(engine, version)
 
+	// The default is the window; --terminal keeps the terminal for now.
+	var err error
+	var win *window.Game
+	var done chan struct{}
+	if host, herr := window.NewHost(); herr != nil {
+		err = herr
+	} else if !slices.Contains(os.Args[1:], "--terminal") {
+		done = make(chan struct{})
+		win = window.New(window.Options{
+			Host: host, Dir: game.RootDataDir(), Done: done,
+			// Closing the window leaves the game the way Ctrl+C does.
+			OnClose: func() { leave(engine); app.Stop() },
+			Script:  os.Getenv("AGEFORGE_WINDOW_SCRIPT"),
+		})
+		app.SetScreen(host)
+		app.SetWindowHost(win)
+	}
+
 	// Discord Rich Presence: off unless the build carries an application id. It follows
 	// the menu and the game by reading the engine on its own goroutine.
 	status := presence.Start(presence.Options{AppID: presence.AppID, Activity: presence.Provider(engine, time.Now())})
@@ -52,7 +72,21 @@ func main() {
 
 	// Run blocks until the player leaves by any route: the menu's Quit, the quit command,
 	// Ctrl+C (a key to the terminal, not a signal) or a signal.
-	err := app.Run()
+	switch {
+	case err != nil: // the window could not be set up: nothing to run
+	case win == nil:
+		err = app.Run()
+	default:
+		// The window owns the main thread (macOS needs that); the game runs beside it.
+		// When the game ends the window closes, and when the window closes the game stops.
+		errc := make(chan error, 1)
+		go func() { errc <- app.Run(); close(done) }()
+		werr := win.Run()
+		app.Stop()
+		if err = <-errc; err == nil {
+			err = werr
+		}
+	}
 	status.Close()
 	leave(engine)
 	if err != nil {

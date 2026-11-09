@@ -25,5 +25,9 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install window libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev xorg-dev libasound2-dev
+
       - name: go test TestOrdinaryPath
         run: AGEFORGE_LONG_TESTS=1 go test ./smoke -run TestOrdinaryPath -count=1 -timeout 30m
