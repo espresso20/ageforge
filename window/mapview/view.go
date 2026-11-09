@@ -221,9 +221,7 @@ func (v *View) Render(w, h int) *image.RGBA {
 		return v.canvas
 	}
 	v.dirty = false
-	// whole art pixels: snap the centre in the master frame
-	ppu := float64(w) * v.ch[v.m].mx / v.width()
-	snapped := world.Vec{X: math.Round(v.off.X*ppu) / ppu, Y: math.Round(v.off.Y*ppu) / ppu}
+	snapped := v.snapped(w) // whole art pixels, in the master frame
 	under, over, t := v.ch.layers(v.z)
 	v.paint(v.canvas, under, snapped)
 	if over != under {
