@@ -201,7 +201,7 @@ func (g *Game) keys() {
 		meta:  ebiten.IsKeyPressed(ebiten.KeyMeta),
 	}
 	// The window's own keys come first and never reach the game.
-	zoom := m.ctrl
+	zoom := m.ctrl && !m.alt // Ctrl with Alt is AltGr, which types text
 	if mac {
 		zoom = m.meta
 	}
@@ -222,6 +222,12 @@ func (g *Game) keys() {
 		return
 	}
 	host := g.o.Host
+	if (zoom && inpututil.IsKeyJustPressed(ebiten.KeyV)) || (m.shift && inpututil.IsKeyJustPressed(ebiten.KeyInsert)) {
+		for _, p := range mapChars([]rune(clipboardText())) {
+			host.InjectKey(p.key, p.r, p.mod)
+		}
+		return
+	}
 	for _, k := range pressedKeys {
 		if g.holdFires(k) {
 			if p, ok := mapKey(k, m); ok {
@@ -357,7 +363,9 @@ func (g *Game) paint() {
 		}
 	}
 	for i, k := range g.cur {
-		if k != g.prev[i] {
+		// The right half of a wide rune is painted with it, never on its own:
+		// a fill there would wipe half the glyph.
+		if k != g.prev[i] && !k.covered {
 			g.drawCell(i%g.cols, i/g.cols, k)
 		}
 	}

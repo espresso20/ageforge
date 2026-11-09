@@ -569,6 +569,21 @@ The game keeps several local accounts, one active at a time, each with its own s
 
 ---
 
+## The window
+
+When AgeForge runs in its own window (not `--terminal`), the window has a few keys of its own. They never reach the game, and the game keeps every other key.
+
+| Key | Description |
+|---|---|
+| `F11`, `Alt`+`Enter`, or `Cmd`+`Ctrl`+`F` (Mac) | Toggle fullscreen. |
+| `Ctrl`+`=` / `Ctrl`+`-` (`Cmd` on a Mac) | Make the text larger or smaller. |
+| `Ctrl`+`0` (`Cmd` on a Mac) | Reset the text size. |
+| `Ctrl`+`V` (`Cmd`+`V` on a Mac) or `Shift`+`Insert` | Paste the clipboard's text, on one line, into the prompt. |
+
+The Settings page has a Font row (`f`) that switches between Pixel and JetBrains Mono. The font, the text size and the window size are remembered for next time. Pixel grows in whole steps of its own pixel size so it stays sharp; JetBrains Mono grows a point at a time.
+
+---
+
 ## Themes
 
 | Command | Description |
