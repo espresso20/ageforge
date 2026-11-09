@@ -67,7 +67,10 @@ var (
 	symbols    = ff("NotoSansSymbols.ttf")
 	mathFont   = ff("NotoSansMath-Regular.ttf")
 	canadian   = ff("NotoSansCanadianAboriginal.ttf")
-	fallbacks  = []*fontFile{symbols2, symbols, mathFont, canadian}
+	japanese   = ff("NotoSansJP-Regular.ttf")
+	emoji      = ff("NotoEmoji-Regular.ttf")
+	extra      = ff("NotoSansExtra.ttf")
+	fallbacks  = []*fontFile{symbols2, symbols, mathFont, canadian, japanese, emoji, extra}
 	chainMono  = append([]*fontFile{jbRegular}, fallbacks...)
 	chainBold  = append([]*fontFile{jbBold, jbRegular}, fallbacks...)
 	chainPixel = append([]*fontFile{departure, jbRegular}, fallbacks...)
