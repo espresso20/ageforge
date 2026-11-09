@@ -42,6 +42,7 @@ type Game struct {
 	pw, ph     int     // the window, in device pixels
 	size       float64 // the font's size in device pixels
 	cw, ch     int     // one cell, in device pixels
+	sky        *sky    // the map of space, drawn under the cells
 	asc        float64 // top of the line box to the baseline
 	cols, rows int
 	buf        *ebiten.Image
@@ -56,7 +57,7 @@ type Game struct {
 
 // New is a window for the host, with the settings saved in dir.
 func New(o Options) *Game {
-	g := &Game{o: o, faces: newFaces(), adv: map[advKey]float64{}, tface: map[faceID]*text.GoTextFace{}, scale: 1}
+	g := &Game{o: o, faces: newFaces(), sky: newSky(), adv: map[advKey]float64{}, tface: map[faceID]*text.GoTextFace{}, scale: 1}
 	g.set = loadSettings(o.Dir).clean(1)
 	if o.Script != "" {
 		g.script = loadScript(o.Script)
@@ -189,6 +190,7 @@ func (g *Game) Update() error {
 		return ebiten.Termination
 	}
 	g.keys()
+	g.sky.update()
 	return nil
 }
 
@@ -293,7 +295,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.paint()
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64((g.pw-g.cols*g.cw)/2), float64((g.ph-g.rows*g.ch)/2))
-	// Under the cells, so the images show where a cell is clear.
+	// Under the cells, so the sky shows where a cell is clear.
+	g.sky.draw(screen, int(op.GeoM.Element(0, 2)), int(op.GeoM.Element(1, 2)), g.cw, g.ch)
 	screen.DrawImage(g.buf, op)
 	g.cursor(screen, op.GeoM.Element(0, 2), op.GeoM.Element(1, 2))
 	if g.script != nil {
