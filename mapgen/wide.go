@@ -1,5 +1,7 @@
 package mapgen
 
+import "github.com/espresso20/ageforge/world"
+
 // The two wide views of the Galactic map. OVERVIEW is a sector of the Orion
 // Arm round Sol, its nebulae and star clusters set by their real direction
 // with the distance compressed (radius grows with the square root of the
@@ -8,27 +10,18 @@ package mapgen
 // canvas of light channels and kept; a frame copies them and twinkles a few
 // stars.
 
-// SkyObject is a named thing of the wide views.
-type SkyObject struct {
-	Key string
-	Ly  int // light-years from Sol; 0 for the Milky Way, which has none
-	lon int // galactic longitude, degrees (arm objects)
-}
+// SkyObject is a named thing of the wide views (catalogued in world/).
+type SkyObject = world.SkyObject
 
 // SkyObjects are the selectable objects: the arm sector's first, then the
 // void's. A map thing's Ref is the index plus one.
-var SkyObjects = [...]SkyObject{
-	{"orion_nebula", 1344, 209}, {"horsehead_nebula", 1375, 206}, {"pleiades", 444, 167}, {"hyades", 153, 180},
-	{"crab_nebula", 6500, 185}, {"eagle_nebula", 7000, 17}, {"lagoon_nebula", 4100, 6}, {"carina_nebula", 8500, 287},
-	{"milky_way", 0, 0}, {"large_magellanic_cloud", 160000, 0}, {"small_magellanic_cloud", 200000, 0},
-	{"andromeda", 2500000, 0}, {"triangulum", 2700000, 0},
-}
+var SkyObjects = world.SkyObjects
 
 const (
-	armObjects = 8
-	armReachLy = 8500
-	armBandDeg = 20 // the arm's direction on the screen
-	armSkew    = 6  // degrees the Horsehead is drawn aside so it does not sit on the Orion Nebula
+	armObjects = world.ArmObjects
+	armReachLy = world.ArmReachLy
+	armBandDeg = world.ArmBandDeg
+	armSkew    = world.ArmSkew
 )
 
 // light channels, then the dust that darkens them
@@ -155,19 +148,15 @@ type galLook struct {
 	spurs     bool // two fainter, shorter arms between the main ones
 }
 
+// lookOf is the painters' galaxy look for world's, at radius r.
+func lookOf(w world.GalaxyLook, r int) galLook {
+	return galLook{r: r, q: w.Q, phi: w.Phi, arms: w.Arms, spin: w.Spin, core: w.Core, bar: w.Bar, dust: w.Dust, stars: w.Stars, spurs: w.Spurs}
+}
+
 // armXY is the point at t (0..255 along it) of the arm that leaves at angle
 // off; with a bar the arms leave from its ends.
 func armXY(g galLook, cx, cy, off, t int) (int, int, int) {
-	lo := 30
-	if g.bar > 0 {
-		off += turn / 7
-		lo = 97
-	}
-	th := off + t*g.spin*turn/65536
-	r := g.r * (lo + (256-lo)*t*t/65536) / 256 // wide pitch outside, like a log spiral
-	u, v := r*cos4096(th)/1024, r*sin4096(th)/1024*g.q/256
-	cs, sn := cos4096(g.phi), sin4096(g.phi)
-	return cx + (u*cs-v*sn)/1024, cy + (u*sn+v*cs)/1024, r
+	return world.ArmXY(world.GalaxyLook{R: g.r, Q: g.q, Phi: g.phi, Arms: g.arms, Spin: g.spin, Core: g.core, Bar: g.bar, Dust: g.dust, Stars: g.stars, Spurs: g.spurs}, cx, cy, off, t)
 }
 
 // armXYf is armXY without the rounding, at t a fraction of a step: where the
@@ -473,10 +462,10 @@ func (c *wcanvas) arm(seed int64, colonies int, mark func(n uint8, x, y, r int))
 	c.ell(cx, cy, br, br, 0, cCool, 16)
 	c.ring(cx, cy, br, 48, P(HOrbit, 70))
 	for i, o := range SkyObjects[:armObjects] {
-		a := (o.lon - 60 + armSkew*boolInt(o.Key == "horsehead_nebula")) * turn / 360
+		a := (o.Lon - 60 + armSkew*boolInt(o.Key == "horsehead_nebula")) * turn / 360
 		r := reach * isqrt(o.Ly*10000/armReachLy) / 100
 		x, y := cx+r*cos4096(a)/1024, cy-r*sin4096(a)/1024
-		rad := [armObjects]int{7, 4, 4, 4, 5, 7, 7, 10}[i]
+		rad := world.ArmRadii[i]
 		c.nebula(seed, o.Key, x, y, rad)
 		mark(uint8(i+1), x, y, max(rad, 5))
 	}
@@ -506,7 +495,7 @@ func (c *wcanvas) void(seed int64, mark func(n uint8, x, y, r int)) {
 	type major struct{ x, y, r int }
 	majors := []major{{mwX, mwY, mwR}, {m31X, m31Y, m31R}, {m33X, m33Y, m33R}, {lmcX, lmcY, 10}, {smcX, smcY, 8}}
 
-	mw := galLook{r: mwR, q: 256, phi: 0, arms: 2, spin: 200, core: 150, bar: 130, dust: 200, stars: 1, spurs: true}
+	mw := lookOf(world.LookMilkyWay, mwR)
 	c.galaxy(seed, 1, mwX, mwY, mw)
 	sx, sy, _ := armXY(mw, mwX, mwY, 0, 170) // Sol, in the Orion spur
 	c.ring(sx, sy, 3, 12, P(HOrbit, 90))
@@ -515,11 +504,11 @@ func (c *wcanvas) void(seed int64, mark func(n uint8, x, y, r int)) {
 	mark(9, mwX, mwY, mwR*9/10)
 	mark(255, sx, sy, 4)
 
-	m31 := galLook{r: m31R, q: 85, phi: -turn / 12, arms: 2, spin: 256, core: 170, dust: 230, stars: 1}
+	m31 := lookOf(world.LookAndromeda, m31R)
 	c.galaxy(seed, 2, m31X, m31Y, m31)
 	c.ell(m31X, m31Y, m31R*11/10, m31R*11/10*85/256, -turn/12, cWarm, 40)
 	mark(12, m31X, m31Y, m31R*7/10)
-	m33 := galLook{r: m33R, q: 256, phi: 0, arms: 2, spin: 200, core: 90, dust: 0, stars: 1}
+	m33 := lookOf(world.LookTriangulum, m33R)
 	c.galaxy(seed, 3, m33X, m33Y, m33)
 	mark(13, m33X, m33Y, m33R*8/10)
 
