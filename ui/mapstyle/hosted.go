@@ -47,6 +47,13 @@ func (h *hostState) clear() {
 	h.mu.Unlock()
 }
 
+// The home system's names are rows shared with the terminal's inspector.
+var (
+	solName  = vibe.E("ui.mapstyle.space.sun.01", "Sol")
+	moonName = vibe.E("ui.mapstyle.space.moon.01", "The Moon")
+	satName  = vibe.E("ui.mapstyle.space.satellite.01", "Satellite")
+)
+
 var (
 	namesOnce sync.Once
 	nameOf    map[string]vibe.Entry
@@ -57,9 +64,9 @@ var (
 func SkyName(key string) string {
 	namesOnce.Do(func() {
 		nameOf = map[string]vibe.Entry{
-			"sol":       vibe.E("ui.mapstyle.space.sun.01", "Sol"),
-			"the_moon":  vibe.E("ui.mapstyle.space.moon.01", "The Moon"),
-			"satellite": vibe.E("ui.mapstyle.space.satellite.01", "Satellite"),
+			"sol":       solName,
+			"the_moon":  moonName,
+			"satellite": satName,
 		}
 		for i, o := range mapgen.SkyObjects {
 			nameOf[o.Key] = skyNames[i]

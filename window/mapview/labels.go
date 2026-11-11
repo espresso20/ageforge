@@ -101,13 +101,14 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		return
 	}
 	var ls []label
+	var picked string
 	add := func(i int, o *world.Object, chosen bool) {
 		text := v.names(o.Label)
 		if text == "" {
 			text = v.names(o.Inspect)
 		}
-		if text == "" {
-			return
+		if text == "" || (!chosen && text == picked) {
+			return // the same name twice (a star seen from two frames) reads once
 		}
 		p := v.penFor(img, i, off)
 		x, y := p.at(o.Pos)
@@ -123,6 +124,9 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		x, y := p.at(sel.Pos)
 		p.ring2(x, y, math.Max(p.radius(sel), 2)+3, v.pal.Mix(world.ToneWhite, 255))
 		add(v.sel.fi, sel, true)
+		if len(ls) > 0 {
+			picked = ls[0].text
+		}
 	}
 	f := v.ch[v.m].f
 	for j := range f.Objects {
