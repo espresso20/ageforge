@@ -309,7 +309,7 @@ const clusterGlow = 4
 // cluster is a scatter of bright points: mostly single pixels, a few brighter
 // with a glint, in the cluster's colour and white and a cooler blue.
 func (p *pen) cluster(o *world.Object, x, y, r float64) {
-	n := min(90, max(10, int(r*2.6)))
+	n := min(1500, max(10, int(r*2.6))) // members, at fixed places: more come in as the view closes
 	seed := hashKey(o.Key)
 	warm := o.Tone == world.ToneAmber // the Hyades: old, orange giants among the members
 	// thin the background field under the cluster so the members stand out
@@ -324,6 +324,13 @@ func (p *pen) cluster(o *world.Object, x, y, r float64) {
 				}
 			}
 		}
+	}
+	if far := clamp01((10 - r) / 6); far > 0 { // too far to resolve: a soft mark of one size, which the points replace as the view closes in
+		t := world.ToneBlue
+		if warm {
+			t = world.ToneAmber
+		}
+		p.glow(x, y, clusterGlow+1, t, uint8(110*far))
 	}
 	type mem struct{ x, y float64 }
 	var bright []mem

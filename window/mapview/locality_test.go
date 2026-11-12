@@ -15,8 +15,8 @@ func TestRegionObjectsSurviveZoomingToward(t *testing.T) {
 			at(v, z, 2, v.objAt(2, key).Pos)
 			img := v.Render(tw, th)
 			lit := 0
-			for y := th/2 - 20; y < th/2+20; y++ {
-				for x := tw/2 - 20; x < tw/2+20; x++ {
+			for y := th/2 - 40; y < th/2+40; y++ { // a cluster's crisp stars spread thin, close in
+				for x := tw/2 - 40; x < tw/2+40; x++ {
 					if img.RGBAAt(x, y) != v.pal.Bg {
 						lit++
 					}
