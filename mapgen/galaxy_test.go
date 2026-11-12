@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/mapmodel"
+	"github.com/espresso20/ageforge/world"
 )
 
 // TestGalaxyShapesVary: twenty seeds give at least twelve different galaxies,
@@ -14,7 +15,7 @@ func TestGalaxyShapesVary(t *testing.T) {
 	arms, bars := map[int]bool{}, map[bool]bool{}
 	quads, many, barred, flatMin, flatMax := map[int]bool{}, 0, 0, 100, 0
 	for seed := int64(1); seed <= 20; seed++ {
-		s := pickShape(seed)
+		s := world.PickShape(seed)
 		shapes[s] = true
 		arms[s.Arms], bars[s.Bar > 0] = true, true
 		quads[s.Rot*4/turn] = true
@@ -90,14 +91,14 @@ func TestSectorsFollowTheHomeArm(t *testing.T) {
 func TestSystemsGrowWithTheCount(t *testing.T) {
 	last := 0
 	for _, n := range []int{0, 1, 5, 20, 100, 500, 2000} {
-		got := systemsFor(n, sectorMax)
+		got := world.SystemsFor(n, sectorMax)
 		if got < last || got > sectorMax || n > 0 && got < 1 {
 			t.Errorf("%d buildings light %d systems after %d", n, got, last)
 		}
 		last = got
 	}
-	if systemsFor(200, sectorMax) < 3*systemsFor(15, sectorMax) {
-		t.Errorf("growth is too flat: 15 lights %d, 200 lights %d", systemsFor(15, sectorMax), systemsFor(200, sectorMax))
+	if world.SystemsFor(200, sectorMax) < 3*world.SystemsFor(15, sectorMax) {
+		t.Errorf("growth is too flat: 15 lights %d, 200 lights %d", world.SystemsFor(15, sectorMax), world.SystemsFor(200, sectorMax))
 	}
 }
 

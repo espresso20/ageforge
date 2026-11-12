@@ -16,8 +16,6 @@ const (
 
 type Sector = world.Sector
 
-func systemsFor(count, most int) int { return world.SystemsFor(count, most) }
-
 // layTerritory fixes the sectors along the home arm, the places for rivals on
 // the other arms and the rift (world/ lays them).
 func (p *Plan) layTerritory(seed int64) {
