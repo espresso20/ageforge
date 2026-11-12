@@ -3,6 +3,7 @@ package mapview
 import (
 	"math"
 	"testing"
+	"time"
 
 	"github.com/espresso20/ageforge/world"
 )
@@ -91,5 +92,22 @@ func TestGalacticLocalGroupIsLockedUntilQuantum(t *testing.T) {
 func TestInterstellarGalaxyStaysLocked(t *testing.T) {
 	if w := build(t, world.AgeInterstellar); w.Root.Find(world.FrameGalaxy) != nil {
 		t.Error("the Interstellar world holds a Galaxy frame")
+	}
+}
+
+func TestKeyboardZoomStopsAtAMadeUpSystem(t *testing.T) {
+	v, gi, star := galactic(t)
+	z, _ := zFor(v, gi)
+	at(v, z, gi, star.Pos)
+	x, y := screenOf(v, gi, star)
+	v.Focus(int(math.Round(x)), int(math.Round(y)), tw, th)
+	si := v.ch.idx(world.FrameSystem)
+	at(v, v.ch[si].bmin+(v.ch[si].bmax-v.ch[si].bmin)*.5, si, world.Vec{})
+	for i := 0; i < 40; i++ {
+		v.Do(Cmd{Op: ZoomIn})
+		v.Update(time.Second)
+	}
+	if v.ch.weightAt(len(v.ch)-1, v.z, v.look()) > 0 {
+		t.Errorf("zoom %.2f went past the system into a planet close-up", v.z)
 	}
 }

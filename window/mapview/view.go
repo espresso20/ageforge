@@ -175,7 +175,11 @@ func (v *View) Do(c Cmd) {
 	v.hold, v.focus = hold{}, focusTo{}
 	switch c.Op {
 	case ZoomIn:
+		old := v.tz
 		v.tz -= zoomStep
+		if si, hi := v.ch.idx(world.FrameSystem), v.ch[len(v.ch)-1].hi; si >= 0 && v.ch[si].f.Anchor != "sol" && old >= hi {
+			v.tz = math.Max(v.tz, hi) // a made-up system: the key stops at the system; a planet is entered by picking it or by the wheel, never as an empty close-up
+		}
 	case ZoomOut:
 		v.tz += zoomStep
 	case Home:
