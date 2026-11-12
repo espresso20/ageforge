@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the Orion Arm and the near stars are pixel art: a calm dithered arm of faint stars and dust, real art for clusters, emission and dark nebulae and the Crab, glowing class-colored stars with binary pairs, dithered dimming lanes, dotted rings and colony brackets, with no galaxy haze underneath.
 - In the window, the space map draws galaxies as dithered pixel art: spiral arms, dust lanes, pink star-forming knots, a bulge or bar, and clumpy irregular dwarfs for the Magellanic Clouds. The Milky Way is the same picture at both scales, so Sol sits on its arm. Stars draw as small discs with a glow, planets are brighter, names keep a gap, and the key hints show once.
 - In the window, the space map takes the mouse: wheel zoom about the pointer, drag to pan, click to select, double click to fly in. Names of what is in view are drawn in the pixel font, and the scale label and inspect lines follow the native map. Sol now sits on its arm in the Galaxy, so the whole disc shows and zooming in lands on Sol.
 - In the window, every space view of the Map is drawn by the window itself, from one model of the sky, and zooming is continuous from the Local Group down to Earth: the views dissolve into one another instead of jumping. Arrows pan, `PgUp`/`PgDn` zoom, `Tab` jumps between objects, `Home` goes back to Earth. The pictures are plain placeholder shapes for now. The terminal keeps cells.

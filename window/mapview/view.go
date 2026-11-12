@@ -61,7 +61,9 @@ type View struct {
 	last     stateKey
 	dirty    bool
 	canvas   *image.RGBA
+	top      *image.RGBA // the deeper frame of a crossfade, kept between frames
 	tex      texCache
+	art      artCache
 }
 
 func New() *View { return &View{dirty: true} }
@@ -70,6 +72,7 @@ func New() *View { return &View{dirty: true} }
 func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 	if w != nil && w.Root != nil {
 		v.tex.warm(w.Root) // the galaxies' textures, made here and not on the draw path
+		v.art.warm(w.Root.Find(world.FrameRegion), w.Seed)
 	}
 	defer v.flush()
 	v.mu.Lock()
@@ -234,7 +237,10 @@ func (v *View) Render(w, h int) *image.RGBA {
 	under, over, t := v.ch.layers(v.z)
 	v.paint(v.canvas, under, snapped)
 	if over != under {
-		top := image.NewRGBA(v.canvas.Rect)
+		if v.top == nil || v.top.Rect != v.canvas.Rect {
+			v.top = image.NewRGBA(v.canvas.Rect)
+		}
+		top := v.top
 		v.paint(top, over, snapped)
 		for y := 0; y < h; y++ {
 			for x := 0; x < w; x++ {
