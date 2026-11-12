@@ -330,10 +330,10 @@ func (g *galTex) at(lvl int, u, v float64) (out [nCh]float64) {
 	if x0 >= 0 && y0 >= 0 && x0+1 < s && y0+1 < s { // inside the texture: no edge tests
 		i00 := (y0*s + x0) * nCh
 		i10, i01, i11 := i00+nCh, i00+s*nCh, i00+s*nCh+nCh
-		for ch := range out {
-			a := float64(m[i00+ch])*(1-tx) + float64(m[i10+ch])*tx
-			b := float64(m[i01+ch])*(1-tx) + float64(m[i11+ch])*tx
-			out[ch] = (a + (b-a)*ty) / 255
+		ax, ay := int(tx*256), int(ty*256) // 8-bit weights: the four texels blend in whole numbers
+		w00, w10, w01, w11 := (256-ax)*(256-ay), ax*(256-ay), (256-ax)*ay, ax*ay
+		for _, ch := range [...]int{chL, chC, chK} { // the dust is already in the light
+			out[ch] = float64(int(m[i00+ch])*w00+int(m[i10+ch])*w10+int(m[i01+ch])*w01+int(m[i11+ch])*w11) / (255 * 65536)
 		}
 		return out
 	}
@@ -391,10 +391,14 @@ func (p *pen) galaxy(o *world.Object, x, y, rpx float64) {
 	star := p.pal.Mix(world.ToneWhite, 200)
 	wgt, lvl := float64(o.Weight)/255, g.level(rpx)
 	speck := rpx > 50
+	x0, x1 := max(0, xi-int(hx)-1), min(p.w-1, xi+int(hx)+1)
+	du, dv := gm.face(1, 0, rpx)
+	pix := p.img.Pix
+	put := func(i int, c color.RGBA) { pix[i], pix[i+1], pix[i+2], pix[i+3] = c.R, c.G, c.B, 255 }
 	for yy := max(0, yi-int(hy)-1); yy <= min(p.h-1, yi+int(hy)+1); yy++ {
-		for xx := max(0, xi-int(hx)-1); xx <= min(p.w-1, xi+int(hx)+1); xx++ {
-			wx, wy := xx-xi, yy-yi // dither and stars follow the galaxy, not the screen
-			u, v := gm.face(float64(wx), float64(wy), rpx)
+		u, v := gm.face(float64(x0-xi), float64(yy-yi), rpx) // the disc point steps evenly along a row
+		for xx := x0; xx <= x1; xx, u, v = xx+1, u+du, v+dv {
+			wx, wy := xx-xi, yy-yi // dither
 			if u*u+v*v >= 1 {
 				continue
 			}
@@ -404,17 +408,17 @@ func (p *pen) galaxy(o *world.Object, x, y, rpx float64) {
 			i := int(ch[chL]*wgt*(rampN-1) + b)
 			j := int(ch[chC]*wgt*float64(len(core)) + b) // the bulge: a dithered step ramp, no edge
 			if j > 0 && i > 0 {
-				p.px(xx, yy, core[min(j, len(core))-1])
+				put(p.img.PixOffset(xx, yy), core[min(j, len(core))-1])
 				continue
 			}
 			if k := int(ch[chK]*wgt*3 + b); k > 0 && ch[chL] > .08 {
 				col, i = knot, min(rampN-1, k+2)
 			} else if speck && ch[chL] > .05 && float64(hash2(wx, wy, g.seed)&0xffff)/65536 < .012*ch[chL] {
-				p.px(xx, yy, star)
+				put(p.img.PixOffset(xx, yy), star)
 				continue
 			}
 			if i > 0 {
-				p.px(xx, yy, col[min(i, rampN-1)])
+				put(p.img.PixOffset(xx, yy), col[min(i, rampN-1)])
 			}
 		}
 	}

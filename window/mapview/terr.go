@@ -19,10 +19,12 @@ func (p *pen) territory(o *world.Object, x, y, rpx float64) {
 	hx, hy := rpx*math.Hypot(gm.cos, gm.sin*gm.q), rpx*gm.ys*math.Hypot(gm.sin, gm.cos*gm.q)
 	xi, yi := int(math.Round(x)), int(math.Round(y))
 	gold := p.pal.Mix(world.ToneGold, 255)
+	x0, x1 := max(0, xi-int(hx)-1), min(p.w-1, xi+int(hx)+1)
+	du, dv := gm.face(1, 0, rpx)
 	for yy := max(0, yi-int(hy)-1); yy <= min(p.h-1, yi+int(hy)+1); yy++ {
-		for xx := max(0, xi-int(hx)-1); xx <= min(p.w-1, xi+int(hx)+1); xx++ {
+		u, v := gm.face(float64(x0-xi), float64(yy-yi), rpx)
+		for xx := x0; xx <= x1; xx, u, v = xx+1, u+du, v+dv {
 			wx, wy := xx-xi, yy-yi
-			u, v := gm.face(float64(wx), float64(wy), rpx)
 			if u*u+v*v >= 1 {
 				continue
 			}
