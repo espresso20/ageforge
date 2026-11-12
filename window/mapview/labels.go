@@ -28,6 +28,7 @@ type label struct {
 }
 
 const (
+	ringGap      = 2 // art pixels between what is drawn and its selection ring
 	prioSelected = 1000
 	labelGap     = 2 // art pixels between an object and its name
 	labelPad     = 2 // clear art pixels kept round a name (its keyline takes one)
@@ -88,11 +89,47 @@ func drawnR(p pen, o *world.Object) float64 {
 
 // ringR is the radius of o's selection ring: two art pixels outside all that
 // is drawn of it, so the object shows through.
-func ringR(p pen, o *world.Object) float64 { return drawnR(p, o) + 2 }
+func ringR(p pen, o *world.Object) float64 { return drawnR(p, o) + ringGap }
+
+// silhouetteBox is the box the Horsehead's silhouette fills on the canvas: its
+// name belongs beside the head, not out at the edge of the whole cloud.
+func silhouetteBox(p pen, o *world.Object) (image.Rectangle, bool) {
+	if o.Form != world.FormDark || p.f.Kind != world.FrameRegion {
+		return image.Rectangle{}, false
+	}
+	sb := p.art.cloudFor(o).sb
+	if sb.Empty() {
+		return image.Rectangle{}, false
+	}
+	x, y := p.at(o.Pos)
+	R := math.Max(p.radius(o), 3)
+	px := func(t, c, ctr float64) int { // texel edge to canvas
+		return int(math.Round(c + (ctr+(t/cloudN*2-1)*hwin)*R))
+	}
+	return image.Rect(px(float64(sb.Min.X), x, hx), px(float64(sb.Min.Y), y, hy),
+		px(float64(sb.Max.X), x, hx), px(float64(sb.Max.Y), y, hy)), true
+}
+
+// markOf is where o's selection ring is centred and how big it is: round the
+// drawn object, which for the Horsehead is the silhouette, not the whole cloud.
+func markOf(p pen, o *world.Object) (x, y, r float64) {
+	if b, ok := silhouetteBox(p, o); ok {
+		return float64(b.Min.X+b.Max.X) / 2, float64(b.Min.Y+b.Max.Y) / 2, math.Hypot(float64(b.Dx()), float64(b.Dy()))/2 + ringGap
+	}
+	x, y = p.at(o.Pos)
+	return x, y, ringR(p, o)
+}
 
 // extent is the box an object fills on the canvas: its sprite and glow, or
 // the selection ring round it.
 func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
+	if b, ok := silhouetteBox(p, o); ok {
+		if ringed {
+			cx, cy, r := markOf(p, o)
+			return boxOf(cx, cy, r+1)
+		}
+		return b
+	}
 	x, y := p.at(o.Pos)
 	r := math.Max(p.radius(o), 1)
 	if o.Kind == world.KindGalaxy && !ringed && p.radius(o) >= 1.5 { // a tilted galaxy fills an ellipse, not a square
@@ -187,8 +224,8 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 	sel := v.objAt(v.sel.fi, v.sel.key)
 	if sel != nil {
 		p := v.penFor(img, v.sel.fi, off)
-		x, y := p.at(sel.Pos)
-		p.ring2(x, y, ringR(p, sel), v.pal.Mix(world.ToneWhite, 255))
+		x, y, r := markOf(p, sel)
+		p.ring2(x, y, r, v.pal.Mix(world.ToneWhite, 255))
 		add(v.sel.fi, sel, true)
 		if len(ls) > 0 {
 			picked = ls[0].text
