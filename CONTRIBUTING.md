@@ -361,6 +361,8 @@ To run it locally:
 
 `make steam` cross-builds Windows, macOS (arm64) and Linux into `bin/steam/`. The Windows build carries `asyncpreemptoff=1` so the Go runtime does not freeze under Steam's overlay.
 
+A Steam build keeps its data in the OS user config folder, not beside the executable: `%AppData%\AgeForge` on Windows, `~/Library/Application Support/AgeForge` on macOS, `~/.config/AgeForge` on Linux. Point Steam Auto-Cloud at that folder. A build without the tag still uses `data/` next to the binary.
+
 ## Project Structure
 
 ```

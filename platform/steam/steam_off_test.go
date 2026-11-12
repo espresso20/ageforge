@@ -14,3 +14,9 @@ func TestOffBuildIsInert(t *testing.T) {
 	Unlock("anything")
 	Frame()
 }
+
+func TestOffBuildHasNoDataDir(t *testing.T) {
+	if d := DataDir(); d != "" {
+		t.Fatalf("DataDir = %q without the steam tag, want empty", d)
+	}
+}
