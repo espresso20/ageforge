@@ -402,7 +402,7 @@ func (p *pen) galaxy(o *world.Object, x, y, rpx float64) {
 		u, v := gm.face(float64(x0-xi), float64(yy-yi), rpx) // the disc point steps evenly along a row
 		for xx := x0; xx <= x1; xx, u, v = xx+1, u+du, v+dv {
 			wx, wy := xx-xi, yy-yi // dither
-			if u*u+v*v >= 1 {
+			if u*u+v*v >= 1 || (p.live != nil && !p.live[yy&3][xx&3]) {
 				continue
 			}
 			ch := g.at(lvl, u, v)

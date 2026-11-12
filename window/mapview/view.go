@@ -307,18 +307,28 @@ func (v *View) Render(w, h int) *image.RGBA {
 	v.dirty = false
 	snapped := v.snapped(w) // whole art pixels, in the master frame
 	under, over, t := v.ch.layersAt(v.z, v.look())
-	v.paint(v.canvas, under, snapped)
-	if over != under {
+	if over == under {
+		v.paint(v.canvas, under, snapped, nil)
+	} else {
 		if v.top == nil || v.top.Rect != v.canvas.Rect {
 			v.top = image.NewRGBA(v.canvas.Rect)
 		}
+		var show, hide [4][4]bool // the dither mask for this weight: where the deeper frame shows, and where the one under it
+		for y := range show {
+			for x := range show[y] {
+				show[y][x] = bayerF[y][x] < t
+				hide[y][x] = !show[y][x]
+			}
+		}
 		top := v.top
-		v.paint(top, over, snapped)
+		v.paint(v.canvas, under, snapped, &hide)
+		v.paint(top, over, snapped, &show)
 		for y := 0; y < h; y++ {
+			row, from := v.canvas.Pix[y*v.canvas.Stride:], top.Pix[y*top.Stride:]
+			m := &show[y&3]
 			for x := 0; x < w; x++ {
-				if Bayer(x, y) < t {
-					i := v.canvas.PixOffset(x, y)
-					copy(v.canvas.Pix[i:i+4], top.Pix[i:i+4])
+				if m[x&3] {
+					copy(row[x*4:x*4+4], from[x*4:x*4+4])
 				}
 			}
 		}

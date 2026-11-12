@@ -10,8 +10,18 @@ import (
 // bayer4 is the 4x4 ordered-dither matrix.
 var bayer4 = [4][4]uint8{{0, 8, 2, 10}, {12, 4, 14, 6}, {3, 11, 1, 9}, {15, 7, 13, 5}}
 
+// bayerF is bayer4 as thresholds in (0,1).
+var bayerF = func() (f [4][4]float64) {
+	for y := range f {
+		for x := range f[y] {
+			f[y][x] = (float64(bayer4[y][x]) + 0.5) / 16
+		}
+	}
+	return
+}()
+
 // Bayer is the dither threshold at pixel x,y, in (0,1).
-func Bayer(x, y int) float64 { return (float64(bayer4[y&3][x&3]) + 0.5) / 16 }
+func Bayer(x, y int) float64 { return bayerF[y&3][x&3] }
 
 // Ramp is n colours from the void (index 0) to the full tone (n-1): the
 // limited palette a sprite is shaded from.
