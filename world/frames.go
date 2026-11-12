@@ -167,24 +167,15 @@ func neighbourhoodFrame(seed int64, cols []Colony) *Frame {
 
 // systemFrame is Sol's system in AU: the star, the eight planets, the belts,
 // the dwarf and the comet, with a close-up frame of the home world under it.
-// star says whether the system hangs in the galaxy (it is anchored on Sol) or
-// stands alone as the whole map (space and interstellar ages).
-func systemFrame(m *mapmodel.Model, seed int64, star bool) *Frame {
-	f := &Frame{Kind: FrameSystem, Key: "sol_system", Unit: UnitAU, Radius: GateAU * 1.3, Band: Band{Min: 0.5, Max: 140}}
-	if star {
-		f.Anchor = "sol"
-	}
+// It hangs on Sol in the frames above it; the warp gate stands from the
+// galactic age on, or once the wonder is raised.
+func systemFrame(m *mapmodel.Model, seed int64) *Frame {
+	f := &Frame{Kind: FrameSystem, Key: "sol_system", Unit: UnitAU, Radius: GateAU * 1.3, Band: Band{Min: 0.5, Max: 140}, Anchor: "sol"}
 	sp := SolSpec
 	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: "sol", Label: "sol", Inspect: "sol", Size: 0.05, Tone: sp.Star.Mid,
 		Weight: 255, Pick: true, Star: &Look{Tone: sp.Star.Mid, Size: 3, Weight: 255, Extra: sp.Star.Core}})
 	for i, p := range sp.Planets {
-		kind := "rocky"
-		switch {
-		case p.Ring || p.Spot:
-			kind = "gas"
-		case p.Orbit > 85:
-			kind = "ice"
-		}
+		kind := planetKind(p)
 		ph := OrbitPhase(seed, i)
 		f.Objects = append(f.Objects, Object{Kind: KindPlanet, Key: SolNames[i], Label: SolNames[i], Inspect: SolNames[i],
 			Pos: polar(SolAU[i], ph), Size: float64(p.Size), Tone: p.Base.Tone, Weight: 255, Pick: true,
@@ -207,12 +198,23 @@ func systemFrame(m *mapmodel.Model, seed int64, star bool) *Frame {
 		f.Objects = append(f.Objects, Object{Kind: KindComet, Key: "comet", Label: "comet", Inspect: "comet", Tone: ToneWhite, Weight: 230,
 			Pick: true, Body: &Body{Orbit: KuiperAU, Period: CometCycle, Phase: Roll(Turn, seed, 5600), Kind: "comet"}})
 	}
-	if star || gateRaised(m.Wonders) {
+	if StarAge(ageOf(m)) || gateRaised(m.Wonders) {
 		f.Objects = append(f.Objects, Object{Kind: KindGate, Key: "warp_gate", Label: GateWonder, Inspect: GateWonder,
 			Pos: polar(GateAU, Roll(Turn, seed, 5305)), Tone: ToneCyan, Weight: 255, Pick: true, Gated: "wonder " + GateWonder})
 	}
-	f.Children = []*Frame{homeFrame(m, seed)}
+	f.Children = planetFrames(m, seed)
 	return f
+}
+
+// planetKind is how a planet of SolSpec draws: a gas giant, an ice giant or rock.
+func planetKind(p PlanetSpec) string {
+	switch {
+	case p.Ring || p.Spot:
+		return "gas"
+	case p.Orbit > 85:
+		return "ice"
+	}
+	return "rocky"
 }
 
 // HomeInflate is how much bigger than true the home close-up draws its unit

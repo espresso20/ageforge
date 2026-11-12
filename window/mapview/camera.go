@@ -65,6 +65,12 @@ func newChain(root *world.Frame) chain {
 		}
 		f = f.Children[0]
 	}
+	c.bounds()
+	return c
+}
+
+// bounds sets every layer's own band and the handoffs between them.
+func (c chain) bounds() {
 	for i := range c {
 		c[i].bmin = math.Log10(c[i].f.Band.Min * c[i].mx)
 		c[i].bmax = math.Log10(c[i].f.Band.Max * c[i].mx)
@@ -73,7 +79,31 @@ func newChain(root *world.Frame) chain {
 		a, b := math.Min(c[i-1].bmin, c[i].bmax), math.Max(c[i-1].bmin, c[i].bmax)
 		c[i].lo, c[i].hi = a, math.Max(b, a+1e-3)
 	}
-	return c
+}
+
+// withTail is the chain with its last frame (a planet's close-up) swapped for
+// f, another planet's, hung on the system above it.
+func (c chain) withTail(f *world.Frame) chain {
+	n := len(c) - 1
+	sys := c[n-1]
+	k := sys.mx / (unitM[sys.f.Unit] * math.Max(1, sys.f.Inflate)) // the schematic scale, if any
+	l := layer{f: f, mx: unitM[f.Unit] * k * math.Max(1, f.Inflate), reach: f.Radius * 1.1, anchor: f.Pos}
+	if pos, ok := c.objPos(n-1, f.Anchor); ok && f.Anchor != "" {
+		l.anchor = pos
+	}
+	out := append(chain(nil), c[:n]...)
+	out = append(out, l)
+	out.bounds()
+	return out
+}
+
+// idx is the position in the chain of the frame of kind k, or -1: the chain
+// starts at the outermost frame its age shows, not always at the Local Group.
+func (c chain) idx(k world.FrameKind) int {
+	if i := int(k) - int(c[0].f.Kind); i >= 0 && i < len(c) {
+		return i
+	}
+	return -1
 }
 
 // schemRatio is how much bigger the schematic frame draws the child than it is.
@@ -109,12 +139,15 @@ type look struct {
 // taking the view. Out past the arm's reach there is no Region object to look
 // at, and the frames round Sol take over again.
 func (c chain) local(i int, k look) float64 {
-	if i < 3 || !k.on {
+	if c[i].f.Kind < world.FrameNeighbourhood || !k.on {
 		return 1
 	}
 	smooth := func(x float64) float64 { x = math.Max(0, math.Min(1, x)); return x * x * (3 - 2*x) }
-	r := c.centreIn(k.m, 2, k.off)
-	far := smooth((math.Hypot(r.X, r.Y)/c[2].reach - 1) / .5)
+	far := 0.0 // with no Region in the chain there is nothing else to look at
+	if ri := c.idx(world.FrameRegion); ri >= 0 {
+		r := c.centreIn(k.m, ri, k.off)
+		far = smooth((math.Hypot(r.X, r.Y)/c[ri].reach - 1) / .5)
+	}
 	o := c.centreIn(k.m, i, k.off)
 	return 1 - (1-far)*smooth((math.Hypot(o.X, o.Y)/c[i].reach-1)/.6)
 }

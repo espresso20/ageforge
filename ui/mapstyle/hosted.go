@@ -19,6 +19,7 @@ type MapState struct {
 	Frame    world.FrameKind // the frame the camera is centred in
 	SelFrame world.FrameKind // the frame Sel belongs to
 	Sel      *world.Object
+	Lock     string // the age that opens Sel's frame, while the player's age has not reached it
 }
 
 // hostState is the last MapState, kept for the next draw. The host reports on
@@ -49,10 +50,39 @@ func (h *hostState) clear() {
 
 // The home system's names are rows shared with the terminal's inspector.
 var (
-	solName  = vibe.E("ui.mapstyle.space.sun.01", "Sol")
-	moonName = vibe.E("ui.mapstyle.space.moon.01", "The Moon")
-	satName  = vibe.E("ui.mapstyle.space.satellite.01", "Satellite")
+	solName   = vibe.E("ui.mapstyle.space.sun.01", "Sol")
+	moonName  = vibe.E("ui.mapstyle.space.moon.01", "The Moon")
+	satName   = vibe.E("ui.mapstyle.space.satellite.01", "Satellite")
+	stnName   = vibe.E("ui.mapstyle.space.station.name", "Orbital Space Station")
+	plutoName = vibe.E("ui.mapstyle.space.planet.pluto", "Pluto")
 )
+
+// moonNames are the major moons by the world's keys.
+var moonNames = map[string]vibe.Entry{
+	"phobos":    vibe.E("ui.mapstyle.space.moon.phobos", "Phobos"),
+	"deimos":    vibe.E("ui.mapstyle.space.moon.deimos", "Deimos"),
+	"io":        vibe.E("ui.mapstyle.space.moon.io", "Io"),
+	"europa":    vibe.E("ui.mapstyle.space.moon.europa", "Europa"),
+	"ganymede":  vibe.E("ui.mapstyle.space.moon.ganymede", "Ganymede"),
+	"callisto":  vibe.E("ui.mapstyle.space.moon.callisto", "Callisto"),
+	"enceladus": vibe.E("ui.mapstyle.space.moon.enceladus", "Enceladus"),
+	"rhea":      vibe.E("ui.mapstyle.space.moon.rhea", "Rhea"),
+	"titan":     vibe.E("ui.mapstyle.space.moon.titan", "Titan"),
+	"iapetus":   vibe.E("ui.mapstyle.space.moon.iapetus", "Iapetus"),
+	"miranda":   vibe.E("ui.mapstyle.space.moon.miranda", "Miranda"),
+	"titania":   vibe.E("ui.mapstyle.space.moon.titania", "Titania"),
+	"oberon":    vibe.E("ui.mapstyle.space.moon.oberon", "Oberon"),
+	"triton":    vibe.E("ui.mapstyle.space.moon.triton", "Triton"),
+	"charon":    vibe.E("ui.mapstyle.space.moon.charon", "Charon"),
+}
+
+// lockLines say which age opens a frame the player's age has not reached.
+// Placeholders: the words are rewritten in the sheets.
+var lockLines = map[string]vibe.Entry{
+	world.AgeInterstellar: vibe.E("ui.mapstyle.space.lock.interstellar_age", "Opens in the Interstellar Age."),
+	world.AgeGalactic:     vibe.E("ui.mapstyle.space.lock.galactic_age", "Opens in the Galactic Age."),
+	world.AgeQuantum:      vibe.E("ui.mapstyle.space.lock.quantum_age", "Opens in the Quantum Age."),
+}
 
 var (
 	namesOnce sync.Once
@@ -64,9 +94,14 @@ var (
 func SkyName(key string) string {
 	namesOnce.Do(func() {
 		nameOf = map[string]vibe.Entry{
-			"sol":       solName,
-			"the_moon":  moonName,
-			"satellite": satName,
+			"sol":           solName,
+			"the_moon":      moonName,
+			"satellite":     satName,
+			"space_station": stnName,
+			"pluto":         plutoName,
+		}
+		for k, e := range moonNames {
+			nameOf[k] = e
 		}
 		for i, o := range mapgen.SkyObjects {
 			nameOf[o.Key] = skyNames[i]
@@ -140,6 +175,12 @@ func (v *view) hostedInspect(m *mapmodel.Model) (Inspection, bool) {
 		return Inspection{}, false
 	}
 	o := s.Sel
+	if e, ok := lockLines[s.Lock]; ok { // a locked frame's object: its name and when it opens
+		return Inspection{Title: SkyName(o.Label), Lines: []string{e.String()}}, true
+	}
+	if o.Inspect == world.SolNames[world.Home] { // the planet is the planet, whatever the age calls the town
+		return describeHomeworld(m), true
+	}
 	switch o.Kind {
 	case world.KindSector:
 		return describeSector(m, mapgen.Thing{Kind: mapgen.KindSector, Key: o.Line, Lineage: o.Line, Count: o.Count}), true

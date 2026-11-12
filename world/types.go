@@ -131,7 +131,7 @@ type Body struct {
 type World struct {
 	Seed int64
 	Age  string
-	Root *Frame // the Local Group (star ages) or the system (other space ages)
+	Root *Frame // the outermost frame of the age's gate: the locked one if there is one (see GateOf)
 	Key  uint64 // ChangeKey of what it was built from
 }
 

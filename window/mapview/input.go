@@ -27,6 +27,7 @@ type State struct {
 	Frame    world.FrameKind
 	SelFrame world.FrameKind
 	Sel      *world.Object
+	Lock     string // the age that opens Sel's frame, while the age has not reached it
 }
 
 // hold keeps the point under the cursor still while a wheel zoom eases: P is
@@ -85,6 +86,9 @@ func (v *View) state() State {
 	s := State{Frame: v.ch[v.m].f.Kind}
 	if o := v.objAt(v.sel.fi, v.sel.key); o != nil {
 		s.Sel, s.SelFrame = o, v.ch[v.sel.fi].f.Kind
+		if v.sel.fi < v.open {
+			s.Lock = world.OpensAt(s.SelFrame)
+		}
 	}
 	return s
 }
@@ -165,6 +169,9 @@ func (v *View) Wheel(x, y, w, h int, n float64) {
 	}
 	v.focus = focusTo{}
 	p, fx, fy := v.cursorPoint(x, y, w, h)
+	if v.m == len(v.ch)-2 {
+		v.nearTail(p) // the planet under the cursor is the one the zoom is going into
+	}
 	v.hold = hold{on: true, p: p, hm: v.m, fx: fx, fy: fy}
 	v.tz -= n * zoomStep
 	v.clamp()
@@ -250,8 +257,11 @@ func (v *View) Focus(x, y, w, h int) {
 	v.mu.Lock()
 	defer v.mu.Unlock()
 	o := v.objAt(v.sel.fi, v.sel.key)
-	if o == nil {
+	if o == nil || v.sel.fi < v.open { // a locked frame's objects can be selected, not entered
 		return
+	}
+	if o.Kind == world.KindPlanet && v.sel.fi == len(v.ch)-2 {
+		v.swapTail(o.Key)
 	}
 	v.hold = hold{}
 	v.focus = focusTo{on: true, fi: v.sel.fi, pos: o.Pos}
@@ -302,5 +312,40 @@ func (v *View) follow(k float64) {
 		} else {
 			v.off = world.Vec{X: v.off.X + d.X*k, Y: v.off.Y + d.Y*k}
 		}
+	}
+}
+
+// swapTail hangs the close-up of planet key under the system, in place of the
+// last frame, when that frame is out of view (so nothing pops). The planet
+// sits where the system draws it, so the crossfade into it holds still.
+func (v *View) swapTail(key string) {
+	n := len(v.ch)
+	if n < 2 || v.ch[n-1].f.Kind != world.FramePlanet || v.ch[n-1].f.Anchor == key || v.ch.weightAt(n-1, v.z, v.look()) > 0 {
+		return
+	}
+	for _, f := range v.ch[n-2].f.Children {
+		if f.Anchor == key {
+			v.ch, v.dirty = v.ch.withTail(f), true
+			v.bod.warm(v.pal, f)
+			return
+		}
+	}
+}
+
+// nearTail swaps in the close-up of the planet nearest p, a point in the
+// system's units, as the squeezed system draws distance.
+func (v *View) nearTail(p world.Vec) {
+	f := v.ch[len(v.ch)-2].f
+	pd, best, key := disp(f, p), math.Inf(1), ""
+	for i := range f.Objects {
+		if o := &f.Objects[i]; o.Kind == world.KindPlanet && o.Body != nil {
+			d := disp(f, o.Pos)
+			if h := math.Hypot(d.X-pd.X, d.Y-pd.Y); h < best {
+				best, key = h, o.Key
+			}
+		}
+	}
+	if key != "" {
+		v.swapTail(key)
 	}
 }

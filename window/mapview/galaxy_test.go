@@ -166,7 +166,7 @@ func TestLabelStartsNextToItsOwnObject(t *testing.T) {
 
 func TestFocusOnTheLMCDivesIntoTheGalaxyFrame(t *testing.T) {
 	v := New()
-	v.Set(build(t, "galactic_age"), 1, testPal)
+	v.Set(build(t, "quantum_age"), 1, testPal) // the Local Group is locked before it
 	v.home()
 	lmc := findObj(t, v.ch[0].f, "large_magellanic_cloud")
 	x, y := screenOf(v, 0, lmc)

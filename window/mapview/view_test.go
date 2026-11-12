@@ -199,11 +199,11 @@ func TestNextCentresAPickableObject(t *testing.T) {
 	}
 }
 
-func TestSystemRootedAgeHasNoLocalGroup(t *testing.T) {
+func TestSpaceAgeChainStopsAtTheLockedNeighbourhood(t *testing.T) {
 	v := New()
 	v.Set(build(t, "space_age"), 1, testPal)
-	if v.ch[0].f.Kind != world.FrameSystem || len(v.ch) != 2 {
-		t.Errorf("space age chain starts at %v with %d frames, want the system and the planet", v.ch[0].f.Kind, len(v.ch))
+	if v.ch[0].f.Kind != world.FrameNeighbourhood || len(v.ch) != 3 || v.open != 1 {
+		t.Errorf("space age chain starts at %v with %d frames (open from %d), want the locked neighbourhood, the system and the planet", v.ch[0].f.Kind, len(v.ch), v.open)
 	}
 	v.Clear()
 	if v.Shown() || v.Render(10, 10) != nil {
@@ -255,7 +255,8 @@ func TestSolStaysInViewFromTheLocalGroupToTheRegion(t *testing.T) {
 	v := New()
 	v.Set(build(t, "galactic_age"), 1, testPal)
 	_, hi := v.ch.zRange()
-	v.off, _ = v.ch.objPos(0, "sol") // the home view centres the galaxy; dive from Sol
+	sol, _ := v.ch.objPos(0, "sol") // the home view centres the galaxy; dive from Sol
+	v.off = v.ch.centreIn(0, v.m, sol)
 	for z := hi; z > v.ch[2].bmin; z -= 0.05 {
 		v.z, v.tz = z, z
 		v.Update(0)
