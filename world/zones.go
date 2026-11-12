@@ -237,8 +237,16 @@ func GenStar(seed int64, id int, pos Vec, held bool) Object {
 // the region's radius, for a Region frame to show as a place.
 func placeStars(seed int64, parent, n int) []Object {
 	var out []Object
+	seen := map[string]bool{}
 	for j := 0; j < n; j++ {
-		id := genStarBase + Roll(900000, seed, 9500, int64(parent), int64(j))
+		var id int
+		for t := int64(0); ; t++ { // no two stars of one place share a name
+			id = genStarBase + Roll(900000, seed, 9500, int64(parent), int64(j), t)
+			if nm := genName(seed, int64(id)); !seen[nm] || t > 50 {
+				seen[nm] = true
+				break
+			}
+		}
 		a := Roll(Turn, seed, 9501, int64(parent), int64(j))
 		r := float64(900 + Roll(6600, seed, 9502, int64(parent), int64(j)))
 		out = append(out, GenStar(seed, id, polar(r, a), true))

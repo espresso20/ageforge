@@ -1,6 +1,7 @@
 package mapstyle
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -125,5 +126,34 @@ func TestLockedAndHomeInspectLines(t *testing.T) {
 	}
 	if SkyName("space_station") == "" || SkyName("europa") == "" || SkyName("pluto") == "" {
 		t.Error("a station, a moon or Pluto has no name")
+	}
+}
+
+// A made-up star keeps its id in its key; the player reads the name alone, for
+// the star, its planets and every star of the Region, with no two alike.
+func TestMadeUpNamesShowNoIDs(t *testing.T) {
+	h := &fakeHost{}
+	v, f := hostFrame(t, "galactic_age", h)
+	drawFrame(v, f, 120, 40, false).Fini()
+	digits := regexp.MustCompile(`\d{4,}`)
+	region := v.sky.Root.Find(world.FrameRegion)
+	seen := map[string]bool{}
+	for _, o := range region.Objects {
+		if !strings.HasPrefix(o.Key, "~") || o.Kind != world.KindStar {
+			continue
+		}
+		n := SkyName(o.Label)
+		if n == "" || digits.MatchString(n) || seen[n] {
+			t.Errorf("star %q reads %q (empty, with an id, or a repeat)", o.Key, n)
+		}
+		seen[n] = true
+		for _, p := range v.sky.System(o.Key).Objects {
+			if n := SkyName(p.Label); digits.MatchString(n) {
+				t.Errorf("%q of %q reads %q", p.Key, o.Key, n)
+			}
+		}
+	}
+	if len(seen) == 0 {
+		t.Fatal("the Region holds no made-up stars")
 	}
 }

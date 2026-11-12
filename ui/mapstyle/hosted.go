@@ -1,6 +1,7 @@
 package mapstyle
 
 import (
+	"strconv"
 	"strings"
 	"sync"
 
@@ -135,13 +136,24 @@ func SkyName(key string) string {
 			return e.String() + " " + key[i+1:]
 		}
 		if strings.HasPrefix(key, "~") {
-			return key[1:i] + " " + key[i+1:]
+			return madeUp(key[1:i]) + " " + key[i+1:]
 		}
 	}
 	if strings.HasPrefix(key, "~") { // a name the seed made up carries its own text
-		return key[1:]
+		return madeUp(key[1:])
 	}
 	return ""
+}
+
+// madeUp is a made-up name as the player reads it: the id after a star's name
+// stays in the key.
+func madeUp(s string) string {
+	if i := strings.LastIndexByte(s, ' '); i > 0 {
+		if _, err := strconv.Atoi(s[i+1:]); err == nil {
+			return s[:i]
+		}
+	}
+	return s
 }
 
 // hostedZoom names the scale of a frame of the window's map with the labels
