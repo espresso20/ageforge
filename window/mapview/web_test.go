@@ -1,6 +1,7 @@
 package mapview
 
 import (
+	"image/color"
 	"math"
 	"testing"
 	"time"
@@ -175,6 +176,14 @@ func TestBuiltStrandsWearTheirLineColours(t *testing.T) {
 		if !found {
 			t.Errorf("no pixel of %s in its line colour %v", o.Line, want)
 		}
+	}
+	var first color.RGBA
+	for l := range seen {
+		c := testPal.MixLine(world.LineIndex(l), 255)
+		if first != (color.RGBA{}) && c == first {
+			t.Errorf("two lines share the colour %v", c)
+		}
+		first = c
 	}
 	if len(seen) < 2 {
 		t.Fatalf("only %d built lines drew a strand", len(seen))
