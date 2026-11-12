@@ -66,6 +66,16 @@ func boxXY(x, y, rx, ry float64) image.Rectangle {
 	return image.Rect(ox-kx, oy-ky, ox+kx+1, oy+ky+1)
 }
 
+// ringR is the radius of o's selection ring: just outside what is drawn. A
+// dwarf's lit blob fills about 70% of its nominal radius, so its ring hugs that.
+func ringR(p pen, o *world.Object) float64 {
+	r := p.radius(o)
+	if o.Galaxy != nil && o.Galaxy.Irr && r >= 1.5 {
+		r *= .7
+	}
+	return math.Max(r, 2) + 3
+}
+
 // extent is the box an object fills on the canvas: its sprite and glow, or
 // the selection ring round it.
 func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
@@ -77,7 +87,7 @@ func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
 	}
 	switch {
 	case ringed:
-		r = math.Max(r, 2) + 4 // the ring, drawn at +3, and its width
+		r = ringR(p, o) + 1 // the ring and its width
 	case o.Kind == world.KindStar:
 		r += 3 // the glow ring
 	}
@@ -161,7 +171,7 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 	if sel != nil {
 		p := v.penFor(img, v.sel.fi, off)
 		x, y := p.at(sel.Pos)
-		p.ring2(x, y, math.Max(p.radius(sel), 2)+3, v.pal.Mix(world.ToneWhite, 255))
+		p.ring2(x, y, ringR(p, sel), v.pal.Mix(world.ToneWhite, 255))
 		add(v.sel.fi, sel, true)
 		if len(ls) > 0 {
 			picked = ls[0].text

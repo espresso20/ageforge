@@ -226,7 +226,7 @@ func (m *model) texel(u, v float64) (l, c, d, k float64) {
 		l = math.Exp(-3.4*math.Pow(r, .8)) * (.8 + .4*n)
 		return math.Min(1, l*edge), math.Min(1, math.Exp(-6*r)*1.4), 0, 0
 	}
-	bulge := (.6*math.Exp(-r/(m.core*.7)) + .5*math.Exp(-r/(m.core*2.4))) * (.8 + .4*Noise(u*45, v*45, m.seed^3))
+	bulge := (.6*math.Exp(-r/(m.core*.5)) + .5*math.Exp(-r/(m.core*1.7))) * (.8 + .4*Noise(u*45, v*45, m.seed^3))
 	disc := .17 * math.Exp(-2.4*r) * (.7 + .6*Noise(u*5+9, v*5, m.seed))
 	var arm, dust, knot float64
 	th := math.Atan2(v, u)
@@ -261,7 +261,14 @@ func (m *model) texel(u, v float64) (l, c, d, k float64) {
 	l = (bulge + disc + .8*arm + .3*wide*(.5+Noise(u*7, v*7, m.seed^9)) + .7*bar) * edge
 	l = 1 - math.Exp(-1.6*l)
 	l *= 1 - .8*math.Min(1, dust*m.dust)*(1-.8*bulge)
-	return math.Min(1, l), math.Min(1, bulge*1.25), math.Min(1, dust), math.Min(1, knot*edge)
+	return math.Min(1, l), warm(r, bulge), math.Min(1, dust), math.Min(1, knot*edge)
+}
+
+// warm is the bulge's colour channel: it has compact support, exactly zero
+// from 30% of the radius out, so no dither step can put warm pixels in the arms.
+func warm(r, bulge float64) float64 {
+	c := math.Pow(1-smooth(0, .4, r), 2.5) * math.Min(1, bulge*1.25)
+	return math.Max(0, c-.1) / .9
 }
 
 // irregular is a dwarf: warped, clumpy, with a few knots and maybe a bar.

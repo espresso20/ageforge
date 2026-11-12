@@ -203,3 +203,50 @@ func TestHomeCentresTheGalaxyHighAndSolDeep(t *testing.T) {
 		}
 	}
 }
+
+func TestWarmCoreStaysSmallAtEveryMip(t *testing.T) {
+	v := New()
+	v.Set(build(t, "galactic_age"), 1, testPal)
+	o := findObj(t, v.ch[0].f, "milky_way")
+	warm := map[[3]uint8]bool{}
+	for _, c := range coreRamp(&testPal) {
+		warm[[3]uint8{c.R, c.G, c.B}] = true
+	}
+	gm := geomOf(o)
+	for _, rpx := range []float64{100, 40, 14, 8} {
+		const w, h = 260, 260
+		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		fill(img, testPal.Bg)
+		p := pen{img: img, pal: &testPal, tex: &v.tex, w: w, h: h}
+		p.galaxy(o, w/2, h/2, rpx)
+		var lit, hot, arm, far int
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				c := img.RGBAAt(x, y)
+				if c == testPal.Bg {
+					continue
+				}
+				u, vv := gm.face(float64(x-w/2), float64(y-h/2), rpx)
+				r := math.Hypot(u, vv)
+				lit++
+				if warm[[3]uint8{c.R, c.G, c.B}] {
+					hot++
+					if r > .3 {
+						far++
+					}
+				} else if r >= .2 && r <= .4 {
+					arm++
+				}
+			}
+		}
+		if lit == 0 || float64(hot) > .2*float64(lit) {
+			t.Errorf("rpx %.0f: %d of %d lit pixels are warm, want under 20%%", rpx, hot, lit)
+		}
+		if far > 0 {
+			t.Errorf("rpx %.0f: %d warm pixels beyond 30%% of the radius", rpx, far)
+		}
+		if rpx >= 14 && arm == 0 {
+			t.Errorf("rpx %.0f: no lit arm pixels at 20-40%% of the radius", rpx)
+		}
+	}
+}
