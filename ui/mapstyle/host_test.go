@@ -16,14 +16,16 @@ type fakeHost struct {
 	worlds []*world.World
 	hidden int
 	cmds   []MapCmd
+	report func(MapState)
 }
 
 func (h *fakeHost) Show(r image.Rectangle, w *world.World, _ uint64, _ world.Palette) {
 	h.shown = append(h.shown, r)
 	h.worlds = append(h.worlds, w)
 }
-func (h *fakeHost) Hide()            { h.hidden++ }
-func (h *fakeHost) Command(c MapCmd) { h.cmds = append(h.cmds, c) }
+func (h *fakeHost) Watch(_ func(string) string, fn func(MapState)) { h.report = fn }
+func (h *fakeHost) Hide()                                          { h.hidden++ }
+func (h *fakeHost) Command(c MapCmd)                               { h.cmds = append(h.cmds, c) }
 
 func hostFrame(t *testing.T, age string, h SpaceHost) (*view, Frame) {
 	t.Helper()

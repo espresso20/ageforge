@@ -39,12 +39,28 @@ type pen struct {
 
 // paint draws chain frame i, with the view centred on master-frame offset off.
 func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
-	b := img.Bounds()
 	fill(img, v.pal.Bg)
+	p := v.penFor(img, i, off)
+	p.frame()
+}
+
+// penFor is a pen for chain frame i on img, centred on master-frame offset off.
+func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
+	b := img.Bounds()
 	p := pen{img: img, pal: &v.pal, f: v.ch[i].f, c: v.ch.centreIn(v.m, i, off),
 		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy()}
 	p.cx, p.cy = float64(p.w)/2, float64(p.h)/2
-	p.frame()
+	return p
+}
+
+// radius is how far out an object draws, in art pixels. Size is a true radius
+// in the galaxy frames and the close-up, but an art size in the system (a
+// planet's 68 is not 68 AU): there a body is a dot whose radius grows with it.
+func (p *pen) radius(o *world.Object) float64 {
+	if p.f.Kind == world.FrameSystem && o.Kind != world.KindBelt {
+		return 1 + o.Size/24
+	}
+	return o.Size * p.ppu
 }
 
 func fill(img *image.RGBA, c color.RGBA) {
@@ -73,13 +89,7 @@ func (p *pen) frame() {
 
 func (p *pen) object(o *world.Object) {
 	x, y := p.at(o.Pos)
-	// Size is a true radius in the galaxy frames and the close-up, but an art
-	// size in the system (a planet's 68 is not 68 AU): there a body is a dot
-	// whose radius grows with it.
-	r := o.Size * p.ppu
-	if p.f.Kind == world.FrameSystem && o.Kind != world.KindBelt {
-		r = 1 + o.Size/24
-	}
+	r := p.radius(o)
 	switch o.Kind {
 	case world.KindGalaxy:
 		p.galaxy(o, x, y, r)

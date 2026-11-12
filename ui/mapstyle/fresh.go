@@ -4,6 +4,7 @@ import (
 	"github.com/espresso20/ageforge/mapgen"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/vibe"
+	"github.com/espresso20/ageforge/world"
 )
 
 // freshFrames is how long what is new since the last visit stays lit once the
@@ -70,19 +71,27 @@ func (v *view) shownZoom() int {
 
 // zoomLabel names the zoom the last frame showed, and for a district whose.
 func (v *view) zoomLabel() string {
-	label := zoomName(v.shownZoom()).String()
-	if v.stars { // the star map's own rungs
-		switch v.shownZoom() {
-		case zCloseUp:
-			label = vibe.Line("ui.mapstyle.roguelike.view.zoomNames.closeup", "CLOSE-UP")
-		case zOverview:
-			label = vibe.Line("ui.mapstyle.roguelike.view.zoomNames.overview", "OVERVIEW")
-		}
+	if s, ok := v.hst.get(); ok && v.hosted && v.sky != nil { // the window's map knows its own scale
+		return hostedZoom(v.sky.Root.Kind == world.FrameLocalGroup, s.Frame)
 	}
+	label := rungName(v.stars, v.shownZoom())
 	if v.shownZoom() == zDistrict {
 		label += " · " + lineageLabel(v.district)
 	}
 	return label
+}
+
+// rungName names a zoom; the star map has its own names for two rungs.
+func rungName(stars bool, z int) string {
+	if stars {
+		switch z {
+		case zCloseUp:
+			return vibe.Line("ui.mapstyle.roguelike.view.zoomNames.closeup", "CLOSE-UP")
+		case zOverview:
+			return vibe.Line("ui.mapstyle.roguelike.view.zoomNames.overview", "OVERVIEW")
+		}
+	}
+	return zoomName(z).String()
 }
 
 // zoomTo sets the zoom the player chose. Entering the district zoom puts the

@@ -20,9 +20,19 @@ type sky struct {
 	rect image.Rectangle // the map, in screen cells; empty when hidden
 	view *mapview.View
 	img  *ebiten.Image
+	// where the last draw put the picture: the pixels it covers, the art
+	// scale, and the canvas size in art pixels
+	px   image.Rectangle
+	n    int
+	w, h int
+	ptr  pointer
 }
 
-func newSky() *sky { return &sky{view: mapview.New()} }
+func newSky() *sky {
+	s := &sky{view: mapview.New()}
+	s.view.SetFace(newFace(departure))
+	return s
+}
 
 // SpaceHost is the window's sky, for the Map panel to hand the world to.
 func (g *Game) SpaceHost() mapstyle.SpaceHost { return g.sky }
@@ -32,6 +42,14 @@ func (s *sky) Show(r image.Rectangle, w *world.World, key uint64, pal world.Pale
 	s.rect = r
 	s.mu.Unlock()
 	s.view.Set(w, key, pal)
+}
+
+// Watch hands the view the words for names and forwards its state to fn.
+func (s *sky) Watch(names func(string) string, fn func(mapstyle.MapState)) {
+	s.view.SetNames(names)
+	s.view.OnChange(func(m mapview.State) {
+		fn(mapstyle.MapState{Frame: m.Frame, SelFrame: m.SelFrame, Sel: m.Sel})
+	})
 }
 
 func (s *sky) Hide() {
@@ -65,6 +83,9 @@ func (s *sky) draw(screen *ebiten.Image, ox, oy, cw, ch int) {
 	px := image.Rect(ox+r.Min.X*cw, oy+r.Min.Y*ch, ox+r.Max.X*cw, oy+r.Max.Y*ch)
 	n := mapview.ArtScale(px.Dx())
 	w, h := (px.Dx()+n-1)/n, (px.Dy()+n-1)/n
+	s.mu.Lock()
+	s.px, s.n, s.w, s.h = px, n, w, h
+	s.mu.Unlock()
 	pix := s.view.Render(w, h)
 	if pix == nil {
 		return

@@ -27,6 +27,10 @@ type SpaceHost interface {
 	Hide()
 	// Command moves the camera: the map's keys, while the sky is shown.
 	Command(c MapCmd)
+	// Watch gives the host the words for the names it writes by objects
+	// (see SkyName) and where to report the frame and selection it is in.
+	// fn runs on the host's goroutines: it must only store the state.
+	Watch(names func(label string) string, fn func(MapState))
 }
 
 // MapOp is what a map key asks the camera to do.
@@ -103,6 +107,10 @@ func (v *view) hostSky(cv *Canvas, f Frame, p *cellPalette, x, y, w, h int) bool
 	if p != v.skyFor {
 		v.skyFor, v.skyPal = p, skyPalette(p)
 	}
+	if v.watched != f.Space {
+		f.Space.Watch(SkyName, v.hst.set)
+		v.watched = f.Space
+	}
 	key := v.sky.Key ^ v.skyPal.Hash()*0x100000001b3
 	f.Space.Show(image.Rect(cv.R.X+x, cv.R.Y+y, cv.R.X+x+w, cv.R.Y+y+h), v.sky, key, v.skyPal)
 	clear := tcell.StyleDefault.Foreground(p.bg).Background(theme.Transparent)
@@ -118,6 +126,7 @@ func (v *view) hostSky(cv *Canvas, f Frame, p *cellPalette, x, y, w, h int) bool
 func (v *view) unhost(f Frame) {
 	if v.hosted && f.Space != nil {
 		f.Space.Hide()
+		v.hst.clear()
 	}
 	v.hosted = false
 }
