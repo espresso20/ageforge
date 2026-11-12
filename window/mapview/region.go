@@ -121,7 +121,7 @@ func horse(u, v float64, seed uint32) (d, f float64) {
 		t := clamp01((px*dx + py*dy) / (dx*dx + dy*dy))
 		return math.Hypot(px-t*dx, py-t*dy) - r
 	}
-	sdf := capsule(.34, 1.2, .08, .0, .3) // the neck
+	sdf := capsule(.34, 1.2, .08, .0, .3)                                                                                    // the neck
 	for _, s := range [...][5]float64{{.05, -.4, -.28, -.2, .27}, {-.3, -.2, -.52, .12, .17}, {.14, -.66, .22, -.92, .07}} { // skull, muzzle, ear
 		a, b := sdf, capsule(s[0], s[1], s[2], s[3], s[4])
 		h := clamp01(.5 + .5*(b-a)/.12) // a smooth union: the joins are not creases
