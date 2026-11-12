@@ -7,6 +7,7 @@ package steam
 
 import (
 	"os"
+	"path/filepath"
 	"sync"
 
 	sw "github.com/hajimehoshi/go-steamworks"
@@ -17,6 +18,17 @@ const AppID = 480
 
 // Build is true in a build made with the steam tag.
 const Build = true
+
+// DataDir is the folder a Steam build keeps its data in: AgeForge under the
+// OS user config folder, where Steam Auto-Cloud can sync from. Empty if the
+// folder cannot be found.
+func DataDir() string {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(dir, "AgeForge")
+}
 
 // achievements maps a badge id to its Steam API name. Empty until the
 // shortlist of Steam achievements is decided.

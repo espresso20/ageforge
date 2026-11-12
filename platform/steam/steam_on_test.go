@@ -3,7 +3,10 @@
 package steam
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -58,5 +61,19 @@ func TestFrameWithoutSteamKeepsQueue(t *testing.T) {
 	Frame()
 	if len(queue) != 1 {
 		t.Fatalf("queue = %v, want it kept until Steam starts", queue)
+	}
+}
+
+func TestDataDirIsUnderUserConfig(t *testing.T) {
+	cfg, err := os.UserConfigDir()
+	if err != nil {
+		t.Skipf("no user config dir: %v", err)
+	}
+	d := DataDir()
+	if filepath.Base(d) != "AgeForge" {
+		t.Fatalf("DataDir = %q, want it to end with AgeForge", d)
+	}
+	if rel, err := filepath.Rel(cfg, d); err != nil || strings.HasPrefix(rel, "..") {
+		t.Fatalf("DataDir = %q, want it under %q", d, cfg)
 	}
 }
