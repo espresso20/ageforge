@@ -79,6 +79,9 @@ func (p *pen) line(x0, y0, x1, y1 float64, t world.Tone, w uint8) {
 	keep := 1.15 / (1 + span/90) // the share of its pixels a lane of this length keeps
 	x0, y0, x1, y1 = x0+t0*dx, y0+t0*dy, x0+t1*dx, y0+t1*dy
 	col := p.pal.Mix(t, w)
+	if p.lineCol != nil {
+		col = *p.lineCol
+	}
 	ox, oy := p.pinned()
 	n := int(math.Max(math.Abs(x1-x0), math.Abs(y1-y0))) + 1
 	for i := 0; i <= n; i++ {

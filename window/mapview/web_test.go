@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/world"
 )
 
@@ -152,6 +153,37 @@ func TestClickingAStrandSelectsItsLine(t *testing.T) {
 	v.Click(int(math.Round(x)), int(math.Round(y)), tw, th)
 	if got := v.objAt(v.sel.fi, v.sel.key); got == nil || got.Kind != world.KindStrand {
 		t.Errorf("a click on a strand selected %v", got)
+	}
+}
+
+func TestBuiltStrandsWearTheirLineColours(t *testing.T) {
+	v := transcendent(t)
+	v.Do(Cmd{Op: Home})
+	img := v.Render(tw, th)
+	seen := map[string]bool{}
+	for i := range v.ch[0].f.Objects {
+		o := &v.ch[0].f.Objects[i]
+		if o.Kind != world.KindStrand || o.Tone != world.ToneGold || seen[o.Line] {
+			continue
+		}
+		seen[o.Line] = true
+		want := testPal.MixLine(world.LineIndex(o.Line), o.Weight)
+		found := false
+		for p := 0; p < len(img.Pix) && !found; p += 4 {
+			found = img.Pix[p] == want.R && img.Pix[p+1] == want.G && img.Pix[p+2] == want.B
+		}
+		if !found {
+			t.Errorf("no pixel of %s in its line colour %v", o.Line, want)
+		}
+	}
+	if len(seen) < 2 {
+		t.Fatalf("only %d built lines drew a strand", len(seen))
+	}
+}
+
+func TestFrameWebLinesMatchTheCatalog(t *testing.T) {
+	if world.NumLines != len(mapmodel.LineageOrder) {
+		t.Errorf("NumLines %d, lineages %d", world.NumLines, len(mapmodel.LineageOrder))
 	}
 }
 

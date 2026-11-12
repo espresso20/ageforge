@@ -14,6 +14,13 @@ import (
 // so the same seed always weaves the same web; the glow is the only thing the
 // game state touches.
 
+// NumLines is how many building lines a palette colours: one per entry of
+// mapmodel.LineageOrder (a test holds it there).
+const NumLines = 17
+
+// LineIndex is a building line's place in mapmodel.LineageOrder, or -1.
+func LineIndex(line string) int { return slices.Index(mapmodel.LineageOrder, line) }
+
 const (
 	webNodes  = 30     // clusters, the Local Group among them
 	webHalfX  = 230    // Mly: nodes fall in a box this wide and half as tall

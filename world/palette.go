@@ -8,6 +8,7 @@ import "image/color"
 type Palette struct {
 	Bg    color.RGBA
 	Tones [NumTones]color.RGBA
+	Lines [NumLines]color.RGBA // the colour of each building line, as the legend shows it
 }
 
 // Of is shade s over the void: the tone at full weight is the tone's colour,
@@ -19,7 +20,19 @@ func (p *Palette) Mix(t Tone, w uint8) color.RGBA {
 	if t >= NumTones {
 		return p.Bg
 	}
-	c, k := p.Tones[t], int(w)
+	return p.over(p.Tones[t], w)
+}
+
+// MixLine is building line i (see LineIndex) at weight w over the void.
+func (p *Palette) MixLine(i int, w uint8) color.RGBA {
+	if i < 0 || i >= NumLines {
+		return p.Bg
+	}
+	return p.over(p.Lines[i], w)
+}
+
+func (p *Palette) over(c color.RGBA, w uint8) color.RGBA {
+	k := int(w)
 	mix := func(a, b uint8) uint8 { return uint8((int(a)*(255-k) + int(b)*k + 127) / 255) }
 	return color.RGBA{R: mix(p.Bg.R, c.R), G: mix(p.Bg.G, c.G), B: mix(p.Bg.B, c.B), A: 255}
 }
@@ -32,6 +45,9 @@ func (p *Palette) Hash() uint64 {
 	}
 	add(p.Bg)
 	for _, c := range p.Tones {
+		add(c)
+	}
+	for _, c := range p.Lines {
 		add(c)
 	}
 	return h

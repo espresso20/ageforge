@@ -30,6 +30,11 @@ func (p *pen) strand(o *world.Object) {
 		return
 	}
 	xs, ys := p.strandPts(o)
+	if o.Tone == world.ToneGold { // a built line wears its legend colour, dim when weak
+		c := p.pal.MixLine(world.LineIndex(o.Line), o.Weight)
+		p.lineCol = &c
+		defer func() { p.lineCol = nil }()
+	}
 	lanes := 1 + int(o.Weight)/110 // a faint thread is one pixel wide, the strongest line three
 	for i := 0; i < strandSteps; i++ {
 		for k := 0; k < lanes; k++ {

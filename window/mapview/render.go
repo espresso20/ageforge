@@ -86,19 +86,20 @@ func regionPos(f *world.Frame, p world.Vec) world.Vec {
 
 // A pen draws one frame onto a canvas.
 type pen struct {
-	img    *image.RGBA
-	pal    *world.Palette
-	f      *world.Frame
-	c      world.Vec // view centre, in the frame's units
-	ppu    float64   // art pixels per frame unit
-	cx, cy float64   // canvas centre
-	w, h   int
-	tex    *texCache
-	art    *artCache
-	bod    *bodyCache
-	seed   int64
-	tick   int                      // half seconds on the frame clock: the lights blink on it
-	done   func(*world.Object) bool // says whether a place is settled
+	img     *image.RGBA
+	pal     *world.Palette
+	f       *world.Frame
+	c       world.Vec // view centre, in the frame's units
+	ppu     float64   // art pixels per frame unit
+	cx, cy  float64   // canvas centre
+	w, h    int
+	tex     *texCache
+	art     *artCache
+	bod     *bodyCache
+	seed    int64
+	tick    int                      // half seconds on the frame clock: the lights blink on it
+	done    func(*world.Object) bool // says whether a place is settled
+	lineCol *color.RGBA              // set while a strand draws: its line's colour instead of a tone
 }
 
 // paint draws chain frame i, with the view centred on master-frame offset off.
