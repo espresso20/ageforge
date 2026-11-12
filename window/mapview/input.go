@@ -169,8 +169,11 @@ func (v *View) Wheel(x, y, w, h int, n float64) {
 	}
 	v.focus = focusTo{}
 	p, fx, fy := v.cursorPoint(x, y, w, h)
-	if v.m == len(v.ch)-2 {
-		v.nearTail(p) // the planet under the cursor is the one the zoom is going into
+	switch v.m { // the star or planet under the cursor is the one the zoom is going into
+	case v.ch.idx(world.FrameNeighbourhood):
+		v.nearSystem(p)
+	case v.ch.idx(world.FrameSystem):
+		v.nearTail(p)
 	}
 	v.hold = hold{on: true, p: p, hm: v.m, fx: fx, fy: fy}
 	v.tz -= n * zoomStep
@@ -260,8 +263,11 @@ func (v *View) Focus(x, y, w, h int) {
 	if o == nil || v.sel.fi < v.open { // a locked frame's objects can be selected, not entered
 		return
 	}
-	if o.Kind == world.KindPlanet && v.sel.fi == len(v.ch)-2 {
+	switch {
+	case o.Kind == world.KindPlanet && v.sel.fi == v.ch.idx(world.FrameSystem):
 		v.swapTail(o.Key)
+	case o.Kind == world.KindStar && v.sel.fi == v.ch.idx(world.FrameNeighbourhood):
+		v.swapSystem(o.Key)
 	}
 	v.hold = hold{}
 	v.focus = focusTo{on: true, fi: v.sel.fi, pos: o.Pos}
@@ -315,6 +321,48 @@ func (v *View) follow(k float64) {
 	}
 }
 
+// swapSystem hangs the system of the star key under the neighbourhood, in
+// place of the one there, when that system is out of view (so nothing pops).
+// The star sits where the neighbourhood draws it, so the crossfade holds still.
+func (v *View) swapSystem(key string) {
+	si := v.ch.idx(world.FrameSystem)
+	if si < 1 || v.ch[si].f.Anchor == key || v.ch.weightAt(si, v.z, v.look()) > 0 {
+		return
+	}
+	if f := v.w.System(key); f != nil {
+		v.ch, v.star, v.dirty = v.ch.withSystem(f), key, true
+		v.warmClose(f)
+	}
+}
+
+// nearSystem swaps in the system of the star nearest p, a point in the
+// neighbourhood's units, if one is close enough to be what the zoom is going into.
+func (v *View) nearSystem(p world.Vec) {
+	ni := v.ch.idx(world.FrameNeighbourhood)
+	if ni < 0 {
+		return
+	}
+	f, best, key := v.ch[ni].f, v.width()/v.ch[ni].mx*.12, ""
+	for i := range f.Objects {
+		if o := &f.Objects[i]; o.Kind == world.KindStar {
+			if h := math.Hypot(o.Pos.X-p.X, o.Pos.Y-p.Y); h < best {
+				best, key = h, o.Key
+			}
+		}
+	}
+	if key != "" {
+		v.swapSystem(key)
+	}
+}
+
+// warmClose makes the sprites of the first planet's close-up of system f off
+// the draw path.
+func (v *View) warmClose(f *world.Frame) {
+	if len(f.Children) > 0 {
+		v.bod.warm(v.pal, f.Children[0])
+	}
+}
+
 // swapTail hangs the close-up of planet key under the system, in place of the
 // last frame, when that frame is out of view (so nothing pops). The planet
 // sits where the system draws it, so the crossfade into it holds still.
@@ -335,7 +383,7 @@ func (v *View) swapTail(key string) {
 // nearTail swaps in the close-up of the planet nearest p, a point in the
 // system's units, as the squeezed system draws distance.
 func (v *View) nearTail(p world.Vec) {
-	f := v.ch[len(v.ch)-2].f
+	f := v.ch[v.ch.idx(world.FrameSystem)].f
 	pd, best, key := disp(f, p), math.Inf(1), ""
 	for i := range f.Objects {
 		if o := &f.Objects[i]; o.Kind == world.KindPlanet && o.Body != nil {

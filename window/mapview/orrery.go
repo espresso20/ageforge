@@ -259,6 +259,9 @@ func (p *pen) body(o *world.Object, x, y, r float64) {
 	dir := (int(math.Round(math.Atan2(sy-y, sx-x)/(2*math.Pi)*lightBuckets)) + lightBuckets) % lightBuckets
 	xi, yi := int(math.Round(x)), int(math.Round(y))
 	p.stamp(p.bod.get(p.pal, o, stepR(r), dir), xi, yi)
+	if o.Body.Settled > 0 { // the people's station by it, off the disc
+		p.craftDraw(moduleArt, x+r+4, y-r-3, 1, 230, (p.tick+int(hashKey(o.Key)&1))&1 == 0)
+	}
 	if r < 3 || o.Body.Moons == 0 {
 		return
 	}

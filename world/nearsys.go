@@ -1,6 +1,10 @@
 package world
 
-import "math"
+import (
+	"math"
+
+	"github.com/espresso20/ageforge/mapmodel"
+)
 
 // The near stars' systems. Sol's is a literal; every other star of NearStars
 // gets one laid out from the save's seed and the star's own key, the same each
@@ -126,18 +130,18 @@ func starSystem(seed int64, idx int, cols []Object) *Frame {
 				Size: au, Tone: ToneRock, Weight: 160, Pick: true, Body: &Body{Orbit: au, Kind: "belt"}})
 		}
 	}
+	first := firstPlanet(f)
 	for i, p := range ps {
 		sp := p.spec
 		sp.Close = clamp(sp.Size*28/10, 50, 110)
 		cf := worldFrame(seed, p.key, sp, p.kind, p.tone, p.earths, 100+idx*10+i)
-		for k, c := range cols {
+		for _, c := range cols {
 			if Roll(len(ps), seed, 6400, int64(idx), int64(lineIndex[c.Line])) != i {
 				continue
 			}
-			f.Objects[firstPlanet(f)+i].Body.Settled++
-			ph := Roll(Turn, seed, 6401, int64(idx), int64(k))
+			f.Objects[first+i].Body.Settled++
 			cf.Objects = append(cf.Objects, Object{Kind: KindStation, Key: "module_" + c.Line, Label: c.Line, Inspect: c.Line, Line: c.Line, Count: c.Count,
-				Tier: c.Tier, Gated: "lineage", Tone: ToneWhite, Weight: 255, Pick: true, Pos: polar(1.2+.35*float64(k), ph),
+				Tier: c.Tier, Gated: "lineage", Tone: ToneWhite, Weight: 255, Pick: true, Pos: polar(1.2, lineIndex[c.Line]*Turn/len(mapmodel.LineageOrder)),
 				Body: &Body{Parent: p.key, Kind: "module"}})
 		}
 		f.Children = append(f.Children, cf)

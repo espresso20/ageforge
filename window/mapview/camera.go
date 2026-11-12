@@ -81,20 +81,41 @@ func (c chain) bounds() {
 	}
 }
 
+// withSystem is the chain with the system under the neighbourhood (and the
+// close-up under that) swapped for sys, another star's, hung on its star.
+func (c chain) withSystem(sys *world.Frame) chain {
+	ni := c.idx(world.FrameNeighbourhood)
+	out := append(chain(nil), c[:ni+1]...)
+	for f := sys; f != nil; {
+		out = append(out, out.layerFor(f, c[ni].mx/(unitM[c[ni].f.Unit]*math.Max(1, c[ni].f.Inflate))))
+		if len(f.Children) == 0 {
+			break
+		}
+		f = f.Children[0]
+	}
+	out.bounds()
+	return out
+}
+
 // withTail is the chain with its last frame (a planet's close-up) swapped for
 // f, another planet's, hung on the system above it.
 func (c chain) withTail(f *world.Frame) chain {
 	n := len(c) - 1
 	sys := c[n-1]
-	k := sys.mx / (unitM[sys.f.Unit] * math.Max(1, sys.f.Inflate)) // the schematic scale, if any
-	l := layer{f: f, mx: unitM[f.Unit] * k * math.Max(1, f.Inflate), reach: f.Radius * 1.1, anchor: f.Pos}
-	if pos, ok := c.objPos(n-1, f.Anchor); ok && f.Anchor != "" {
-		l.anchor = pos
-	}
 	out := append(chain(nil), c[:n]...)
-	out = append(out, l)
+	out = append(out, out.layerFor(f, sys.mx/(unitM[sys.f.Unit]*math.Max(1, sys.f.Inflate)))) // k: the schematic scale, if any
 	out.bounds()
 	return out
+}
+
+// layerFor is the layer of frame f hung on the last frame of c, k the scale a
+// schematic frame above sets.
+func (c chain) layerFor(f *world.Frame, k float64) layer {
+	l := layer{f: f, mx: unitM[f.Unit] * k * math.Max(1, f.Inflate), reach: f.Radius * 1.1, anchor: f.Pos}
+	if pos, ok := c.objPos(len(c)-1, f.Anchor); ok && f.Anchor != "" {
+		l.anchor = pos
+	}
+	return l
 }
 
 // idx is the position in the chain of the frame of kind k, or -1: the chain

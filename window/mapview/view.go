@@ -66,6 +66,7 @@ type View struct {
 	tex      texCache
 	art      artCache
 	bod      bodyCache
+	star     string        // the near star whose system hangs under the neighbourhood ("" Sol's)
 	clock    time.Duration // the frame clock the lights blink on
 	tick     int           // half seconds of it
 }
@@ -94,6 +95,11 @@ func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 		return
 	}
 	v.ch = newChain(w.Root)
+	if f := w.System(v.star); v.star != "" && f != nil && v.ch.idx(world.FrameSystem) > 0 {
+		v.ch = v.ch.withSystem(f) // the system the player was in outlives a rebuild
+	} else {
+		v.star = ""
+	}
 	v.open = max(0, int(world.GateOf(w.Age).Open)-int(w.Root.Kind))
 	if fresh {
 		v.home()
@@ -221,7 +227,7 @@ func (v *View) Update(dt time.Duration) bool {
 	v.clock += dt
 	if t := int(v.clock / (500 * time.Millisecond)); t != v.tick {
 		v.tick = t
-		if v.z < v.ch[len(v.ch)-1].hi { // only the home close-up has lights
+		if v.z < v.ch[len(v.ch)-1].hi { // only a close-up has lights
 			v.dirty = true
 		}
 	}
@@ -235,7 +241,10 @@ func (v *View) Update(dt time.Duration) bool {
 	if m := v.ch.masterAt(v.z, v.look()); m != v.m {
 		v.off, v.m, v.dirty = v.ch.centreIn(v.m, m, v.off), m, true
 	}
-	if v.m == len(v.ch)-2 { // in the system: the planet nearest the centre is the one a zoom would enter
+	switch v.m { // the star or planet nearest the centre is the one a zoom would enter
+	case v.ch.idx(world.FrameNeighbourhood):
+		v.nearSystem(v.off)
+	case v.ch.idx(world.FrameSystem):
 		v.nearTail(v.off)
 	}
 	if v.hold.on || v.focus.on {
