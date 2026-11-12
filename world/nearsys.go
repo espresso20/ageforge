@@ -74,6 +74,14 @@ func (w *World) System(star string) *Frame {
 			idx = i
 		}
 	}
+	if id, ok := StarID(star); ok { // a star the seed made up: no colonies, but its world is always there to find
+		if w.sys == nil {
+			w.sys = map[string]*Frame{}
+		}
+		f := starSystem(w.Seed, NearStar{Key: star, Look: starLook(w.Seed, id)}, genIdx+id, nil)
+		w.sys[star] = f
+		return f
+	}
 	if idx < 0 {
 		return nil
 	}
@@ -86,16 +94,15 @@ func (w *World) System(star string) *Frame {
 	if w.sys == nil {
 		w.sys = map[string]*Frame{}
 	}
-	f := starSystem(w.Seed, idx, cols)
+	f := starSystem(w.Seed, NearStars[idx], idx, cols)
 	w.sys[star] = f
 	return f
 }
 
-// starSystem lays out the system of NearStars[idx]: its star (and companion),
+// starSystem lays out the system of star ns (rolled as idx, its catalogue index or genIdx+id): its star (and companion),
 // the planets, a belt now and then, and the people's stations where colonies
 // stand. cols are the colony markers of the neighbourhood at this star.
-func starSystem(seed int64, idx int, cols []Object) *Frame {
-	ns := NearStars[idx]
+func starSystem(seed int64, ns NearStar, idx int, cols []Object) *Frame {
 	sp, lum := starSpec(ns.Look)
 	f := &Frame{Kind: FrameSystem, Key: ns.Key + "_system", Unit: UnitAU, Radius: GateAU * 1.3, Band: Band{Min: 0.5, Max: 140}, Anchor: ns.Key}
 	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: ns.Key, Label: ns.Key, Inspect: ns.Key, Size: 0.05, Tone: sp.Mid, Weight: 255, Pick: true,
@@ -110,7 +117,7 @@ func starSystem(seed int64, idx int, cols []Object) *Frame {
 		f.Objects = append(f.Objects, Object{Kind: KindStar, Key: ns.Key + "_B", Label: ns.Key + "_B", Inspect: ns.Key + "_B", Pos: polar(sep, Roll(Turn, seed, 6200, int64(idx))),
 			Size: 0.03, Tone: mate, Weight: 255, Pick: true, Star: &Look{Tone: mate, Size: 2, Weight: 255}})
 	}
-	ps := genPlanets(seed, idx, lum, reach, len(cols))
+	ps := genPlanets(seed, ns, idx, lum, reach, max(len(cols), min(idx/genIdx, 1)))
 	for i, p := range ps {
 		ph := OrbitPhase(seed, 100+idx*10+i)
 		f.Objects = append(f.Objects, Object{Kind: KindPlanet, Key: p.key, Label: p.key, Inspect: p.key, Pos: polar(p.au, ph), Size: float64(p.spec.Size),
@@ -183,11 +190,10 @@ type genPlanet struct {
 
 const letters = "bcdefghi"
 
-// genPlanets rolls the planets of NearStars[idx]: the known ones, then seeded
+// genPlanets rolls the planets of star ns (rolled as idx): the known ones, then seeded
 // worlds on orbits spaced by a ratio of the star's own, out to reach AU. A star
 // the people have lit (lit > 0) always has at least one.
-func genPlanets(seed int64, idx int, lum, reach float64, lit int) []genPlanet {
-	ns := NearStars[idx]
+func genPlanets(seed int64, ns NearStar, idx int, lum, reach float64, lit int) []genPlanet {
 	var ps []genPlanet
 	used := map[byte]bool{}
 	for _, e := range exoplanets {

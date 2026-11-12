@@ -81,20 +81,24 @@ func (c chain) bounds() {
 	}
 }
 
-// withSystem is the chain with the system under the neighbourhood (and the
-// close-up under that) swapped for sys, another star's, hung on its star.
-func (c chain) withSystem(sys *world.Frame) chain {
-	ni := c.idx(world.FrameNeighbourhood)
-	out := append(chain(nil), c[:ni+1]...)
-	for f := sys; f != nil; {
-		out = append(out, out.layerFor(f, c[ni].mx/(unitM[c[ni].f.Unit]*math.Max(1, c[ni].f.Inflate))))
-		if len(f.Children) == 0 {
-			break
-		}
-		f = f.Children[0]
+// withFrom is the chain with everything under the frame of kind parent
+// swapped for f and the frames hung on it: another star's system under the
+// neighbourhood, another place's region under the galaxy.
+func (c chain) withFrom(parent world.FrameKind, f *world.Frame) chain {
+	pi := c.idx(parent)
+	out := append(chain(nil), c[:pi+1]...)
+	for ; f != nil; f = firstChild(f) {
+		out = append(out, out.layerFor(f, c[pi].mx/(unitM[c[pi].f.Unit]*math.Max(1, c[pi].f.Inflate))))
 	}
 	out.bounds()
 	return out
+}
+
+func firstChild(f *world.Frame) *world.Frame {
+	if len(f.Children) == 0 {
+		return nil
+	}
+	return f.Children[0]
 }
 
 // withTail is the chain with its last frame (a planet's close-up) swapped for

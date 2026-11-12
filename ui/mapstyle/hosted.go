@@ -85,6 +85,16 @@ var lockLines = map[string]vibe.Entry{
 	world.AgeQuantum:      vibe.E("ui.mapstyle.space.lock.quantum_age", "Opens in the Quantum Age."),
 }
 
+// heldLines say whether the people hold a sector or can go to a star. Placeholders.
+type hl struct{ zone, held bool }
+
+var heldLines = map[hl]vibe.Entry{
+	{true, true}:   vibe.E("ui.mapstyle.space.sector.held", "Held by your people."),
+	{true, false}:  vibe.E("ui.mapstyle.space.sector.free", "Not yet reached by your people."),
+	{false, true}:  vibe.E("ui.mapstyle.space.star.held", "Inside your territory."),
+	{false, false}: vibe.E("ui.mapstyle.space.star.out", "Outside your reach."),
+}
+
 var (
 	namesOnce sync.Once
 	nameOf    map[string]vibe.Entry
@@ -124,6 +134,12 @@ func SkyName(key string) string {
 		if e, ok := nameOf[key[:i]]; ok {
 			return e.String() + " " + key[i+1:]
 		}
+		if strings.HasPrefix(key, "~") {
+			return key[1:i] + " " + key[i+1:]
+		}
+	}
+	if strings.HasPrefix(key, "~") { // a name the seed made up carries its own text
+		return key[1:]
 	}
 	return ""
 }
@@ -186,6 +202,9 @@ func (v *view) hostedInspect(m *mapmodel.Model) (Inspection, bool) {
 	}
 	if o.Inspect == world.SolNames[world.Home] { // the planet is the planet, whatever the age calls the town
 		return describeHomeworld(m), true
+	}
+	if strings.HasPrefix(o.Label, "~") { // a sector or star the seed made up: its name, and whether the people hold it
+		return Inspection{Title: SkyName(o.Label), Lines: []string{heldLines[hl{o.Form == world.FormZone, o.Held}].String()}}, true
 	}
 	switch o.Kind {
 	case world.KindSector:

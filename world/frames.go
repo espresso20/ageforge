@@ -50,6 +50,13 @@ func galaxyFrame(m *mapmodel.Model, seed int64, g *Galaxy, t Territory) *Frame {
 			Tone: ToneCool, Weight: 255, Galaxy: &c.look, Pick: true})
 	}
 	cols := Colonies(m, t)
+	lit := 0
+	for _, c := range cols {
+		lit += c.Systems
+	}
+	zones := NewZones(seed, g.Shape, solLy(g), lit)
+	f.Objects[0].Terr = zones
+	f.Objects = append(f.Objects, zones.objects(seed)...)
 	for _, c := range cols {
 		sec := t.Sectors[lineIndex[c.Line]]
 		for i := 0; i < c.Systems; i++ {
@@ -108,19 +115,25 @@ func regionFrame(seed int64, colonies int) *Frame {
 		f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: armForms[i], Key: o.Key, Label: o.Key, Inspect: o.Key, Pos: pos,
 			Size: float64(ArmRadii[i]) * ArmReachLy / 100, Tone: tone, Weight: 220, Pick: true})
 	}
+	knots(f, seed, 11)
+	f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: FormTerritory, Key: "territory", Size: float64(ArmReachLy * (10 + min(colonies, 17)) / 100),
+		Tone: ToneGold, Weight: 24, Gated: "lineage"})
+	f.Objects = append(f.Objects, placeStars(seed, 0, placeStarCount+4)...) // the neighbours the people can go to
+	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: "sol", Label: "sol", Inspect: "sol", Tone: ToneSun, Weight: 255, Pick: true,
+		Star: &Look{Tone: ToneSun, Size: 1, Weight: 255, Extra: ToneWhite}})
+	return f
+}
+
+// knots scatters n of the arm's pink star-forming knots over region frame f.
+func knots(f *Frame, seed int64, n int) {
 	wd := ArmReachLy / 5
-	for i := 0; i < 11; i++ {
+	for i := 0; i < n; i++ {
 		u := float64((Roll(2*ArmReachLy, seed, 7051, int64(i)) - ArmReachLy) * 11 / 10)
 		v := float64((Roll(2*wd, seed, 7052, int64(i)) - wd) / 2)
 		c, s := float64(Cos4096(ArmBandDeg*Turn/360))/1024, float64(Sin4096(ArmBandDeg*Turn/360))/1024
 		f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: FormKnot, Key: "knot_" + itoa(i), Pos: Vec{u*c + v*s, -u*s + v*c},
 			Size: float64(2+Roll(3, seed, 7053, int64(i))) * ArmReachLy / 100, Tone: TonePink, Weight: 90})
 	}
-	f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: FormTerritory, Key: "territory", Size: float64(ArmReachLy * (10 + min(colonies, 17)) / 100),
-		Tone: ToneGold, Weight: 24, Gated: "lineage"})
-	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: "sol", Label: "sol", Inspect: "sol", Tone: ToneSun, Weight: 255, Pick: true,
-		Star: &Look{Tone: ToneSun, Size: 1, Weight: 255, Extra: ToneWhite}})
-	return f
 }
 
 // neighbourhoodFrame is the stars within 13 ly of Sol, the colonies the
