@@ -10,7 +10,7 @@ require (
 	github.com/rivo/tview v0.42.0
 	github.com/rivo/uniseg v0.4.7
 	golang.org/x/image v0.47.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/sys v0.50.0
 )
 
 require (
