@@ -59,9 +59,11 @@ func named(f *world.Frame, o *world.Object) bool {
 }
 
 // boxOf is the square an object (and anything drawn round it) fills.
-func boxOf(x, y, r float64) image.Rectangle {
-	ox, oy, k := int(math.Round(x)), int(math.Round(y)), int(math.Ceil(r))
-	return image.Rect(ox-k, oy-k, ox+k+1, oy+k+1)
+func boxOf(x, y, r float64) image.Rectangle { return boxXY(x, y, r, r) }
+
+func boxXY(x, y, rx, ry float64) image.Rectangle {
+	ox, oy, kx, ky := int(math.Round(x)), int(math.Round(y)), int(math.Ceil(rx)), int(math.Ceil(ry))
+	return image.Rect(ox-kx, oy-ky, ox+kx+1, oy+ky+1)
 }
 
 // extent is the box an object fills on the canvas: its sprite and glow, or
@@ -69,6 +71,10 @@ func boxOf(x, y, r float64) image.Rectangle {
 func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
 	x, y := p.at(o.Pos)
 	r := math.Max(p.radius(o), 1)
+	if o.Kind == world.KindGalaxy && !ringed && p.radius(o) >= 1.5 { // a tilted galaxy fills an ellipse, not a square
+		gm := geomOf(o)
+		return boxXY(x, y, r*math.Hypot(gm.cos, gm.sin*gm.q), r*gm.ys*math.Hypot(gm.sin, gm.cos*gm.q))
+	}
 	switch {
 	case ringed:
 		r = math.Max(r, 2) + 4 // the ring, drawn at +3, and its width
@@ -168,8 +174,13 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		if named(f, o) && !(sel == o) {
 			add(v.m, o, false)
 		}
-		if o.Kind == world.KindFeature || o == sel {
-			continue // wide washes are not obstacles; the selected one is in ls with its ring
+		switch o.Kind {
+		case world.KindStar, world.KindPlanet, world.KindMoon, world.KindGalaxy, world.KindColony, world.KindStation, world.KindShip:
+		default:
+			continue // orbits, belts and washes are not obstacles
+		}
+		if o == sel {
+			continue // the selected one comes in with its ring
 		}
 		objs = append(objs, extent(p, o, false))
 	}

@@ -1,6 +1,7 @@
 package mapview
 
 import (
+	"image/color"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -225,7 +226,7 @@ func (m *model) texel(u, v float64) (l, c, d, k float64) {
 		l = math.Exp(-3.4*math.Pow(r, .8)) * (.8 + .4*n)
 		return math.Min(1, l*edge), math.Min(1, math.Exp(-6*r)*1.4), 0, 0
 	}
-	bulge := (.6*math.Exp(-r/(m.core*.5)) + .5*math.Exp(-r/(m.core*1.7))) * (.8 + .4*Noise(u*45, v*45, m.seed^3))
+	bulge := (.6*math.Exp(-r/(m.core*.7)) + .5*math.Exp(-r/(m.core*2.4))) * (.8 + .4*Noise(u*45, v*45, m.seed^3))
 	disc := .17 * math.Exp(-2.4*r) * (.7 + .6*Noise(u*5+9, v*5, m.seed))
 	var arm, dust, knot float64
 	th := math.Atan2(v, u)
@@ -260,7 +261,7 @@ func (m *model) texel(u, v float64) (l, c, d, k float64) {
 	l = (bulge + disc + .8*arm + .3*wide*(.5+Noise(u*7, v*7, m.seed^9)) + .7*bar) * edge
 	l = 1 - math.Exp(-1.6*l)
 	l *= 1 - .8*math.Min(1, dust*m.dust)*(1-.8*bulge)
-	return math.Min(1, l), math.Min(1, bulge*bulge*.9), math.Min(1, dust), math.Min(1, knot*edge)
+	return math.Min(1, l), math.Min(1, bulge*1.25), math.Min(1, dust), math.Min(1, knot*edge)
 }
 
 // irregular is a dwarf: warped, clumpy, with a few knots and maybe a bar.
@@ -344,6 +345,17 @@ func (g *galTex) level(rpx float64) int {
 
 const rampN = 6
 
+// coreRamp is the bulge's four steps, orange through yellow to a pale
+// yellow-white at the centre.
+func coreRamp(pal *world.Palette) []color.RGBA {
+	mix := func(a, b color.RGBA, t int) color.RGBA {
+		f := func(x, y uint8) uint8 { return uint8((int(x)*(100-t) + int(y)*t) / 100) }
+		return color.RGBA{f(a.R, b.R), f(a.G, b.G), f(a.B, b.B), 255}
+	}
+	or, ye, wh := pal.Mix(world.ToneCore, 255), pal.Mix(world.ToneSun, 255), pal.Mix(world.ToneWhite, 255)
+	return []color.RGBA{or, ye, mix(ye, wh, 60), mix(ye, wh, 90)}
+}
+
 // galaxy draws o, rpx art pixels across its radius, centred at x, y.
 func (p *pen) galaxy(o *world.Object, x, y, rpx float64) {
 	g := p.tex.get(o)
@@ -357,7 +369,8 @@ func (p *pen) galaxy(o *world.Object, x, y, rpx float64) {
 		return
 	}
 	xi, yi := int(math.Round(x)), int(math.Round(y))
-	body, core, knot := Ramp(p.pal, o.Tone, rampN), Ramp(p.pal, world.ToneCore, rampN), Ramp(p.pal, world.TonePink, rampN)
+	body, knot := Ramp(p.pal, o.Tone, rampN), Ramp(p.pal, world.TonePink, rampN)
+	core := coreRamp(p.pal)
 	star := p.pal.Mix(world.ToneWhite, 200)
 	wgt, lvl := float64(o.Weight)/255, g.level(rpx)
 	speck := rpx > 50
@@ -372,8 +385,10 @@ func (p *pen) galaxy(o *world.Object, x, y, rpx float64) {
 			b := Bayer(wx, wy)
 			var col = body
 			i := int(ch[chL]*wgt*(rampN-1) + b)
-			if ch[chC] > .5 && i >= 4 {
-				col = core
+			j := int(ch[chC]*wgt*float64(len(core)) + b) // the bulge: a dithered step ramp, no edge
+			if j > 0 && i > 0 {
+				p.px(xx, yy, core[min(j, len(core))-1])
+				continue
 			}
 			if k := int(ch[chK]*wgt*3 + b); k > 0 && ch[chL] > .08 {
 				col, i = knot, min(rampN-1, k+2)
