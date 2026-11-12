@@ -90,7 +90,8 @@ type Object struct {
 	Galaxy *GalaxyLook  // KindGalaxy
 	Star   *Look        // KindStar, KindColony
 	Body   *Body        // KindPlanet, KindMoon, KindBelt, KindComet
-	Shape  *GalaxyShape // the seeded galaxy's disc (KindGalaxy of the Galaxy frame)
+	Shape  *GalaxyShape // the seeded galaxy's arms and tilt (the home galaxy in the Local Group and Galaxy frames)
+	Seed   int64        // with Shape: the save's seed, which the arms' winding reads
 	Path   []Vec        // a polyline: the home arm, core to rim (KindFeature)
 	Pick   bool         // the player can select it
 }

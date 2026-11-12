@@ -11,6 +11,7 @@ type GalaxyLook struct {
 	Dust      int
 	Stars     int
 	Spurs     bool // two fainter, shorter arms between the main ones
+	Irr       bool // an irregular dwarf: clumps, no arms (a bar if Bar is set)
 }
 
 // The three galaxies the Local Group draws with arms (radius is filled by the

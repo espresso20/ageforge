@@ -35,6 +35,7 @@ type pen struct {
 	ppu    float64   // art pixels per frame unit
 	cx, cy float64   // canvas centre
 	w, h   int
+	tex    *texCache
 }
 
 // paint draws chain frame i, with the view centred on master-frame offset off.
@@ -48,7 +49,7 @@ func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
 func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 	b := img.Bounds()
 	p := pen{img: img, pal: &v.pal, f: v.ch[i].f, c: v.ch.centreIn(v.m, i, off),
-		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy()}
+		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex}
 	p.cx, p.cy = float64(p.w)/2, float64(p.h)/2
 	return p
 }
@@ -57,6 +58,9 @@ func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 // in the galaxy frames and the close-up, but an art size in the system (a
 // planet's 68 is not 68 AU): there a body is a dot whose radius grows with it.
 func (p *pen) radius(o *world.Object) float64 {
+	if o.Kind == world.KindStar {
+		return starRadius(o)
+	}
 	if p.f.Kind == world.FrameSystem && o.Kind != world.KindBelt {
 		return 1 + o.Size/24
 	}
@@ -95,13 +99,7 @@ func (p *pen) object(o *world.Object) {
 		p.galaxy(o, x, y, r)
 	case world.KindFeature:
 		switch {
-		case len(o.Path) > 1:
-			px, py := p.at(o.Path[0])
-			for _, q := range o.Path[1:] {
-				qx, qy := p.at(q)
-				p.line(px, py, qx, qy, o.Tone, o.Weight)
-				px, py = qx, qy
-			}
+		case len(o.Path) > 1: // the home arm: the galaxy's own light draws it
 		case o.To != (world.Vec{}) || o.Key == "arm_band":
 			tx, ty := p.at(o.To)
 			p.line(x, y, tx, ty, o.Tone, o.Weight)
@@ -117,7 +115,7 @@ func (p *pen) object(o *world.Object) {
 		if o.Body != nil && o.Body.Orbit > 0 {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 60, false)
 		}
-		p.disc(x, y, math.Max(1, r), o.Tone, o.Weight)
+		p.planet(x, y, math.Max(1, r), o.Tone)
 	case world.KindComet:
 		if o.Body != nil {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 30, false)
@@ -125,7 +123,9 @@ func (p *pen) object(o *world.Object) {
 		p.disc(x, y, 1, o.Tone, o.Weight)
 	case world.KindStation, world.KindShip:
 		p.rect(x, y, math.Min(8, math.Max(2, r)), o.Tone, o.Weight)
-	default: // stars, systems, colonies, rifts, the gate
+	case world.KindStar:
+		p.star(x, y, o)
+	default: // systems, colonies, rifts, the gate
 		p.disc(x, y, math.Max(1, r), o.Tone, o.Weight)
 	}
 }

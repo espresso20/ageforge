@@ -164,7 +164,6 @@ func (v *view) drawBottom(cv *Canvas, width, height int, m *mapmodel.Model, in I
 	switch {
 	case !ok:
 		cv.Text(1, height-3, width-2, vibe.Line("ui.mapstyle.roguelike.chrome.bottom.03", "cursor hidden; move it with the arrow keys"), v.ink.Style(mapmodel.CText))
-		cv.Text(3, height-2, width-4, hints, dim)
 	default:
 		cv.Text(1, height-3, width-2, "▸ "+strings.Join(append([]string{in.Title}, in.Lines...), " · "), v.ink.Role(theme.RoleBright).Bold(true))
 		if in.Command == "" {
@@ -183,6 +182,8 @@ func (v *view) drawBottom(cv *Canvas, width, height int, m *mapmodel.Model, in I
 	}
 	if hintWidth := TextLen(hints); x+2+hintWidth <= width-1 {
 		cv.Text(width-1-hintWidth, height-1, hintWidth, hints, dim)
+	} else if !ok { // no room beside the zoom name: the hints take the row above
+		cv.Text(3, height-2, width-4, hints, dim)
 	}
 }
 

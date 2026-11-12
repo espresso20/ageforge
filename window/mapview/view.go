@@ -61,12 +61,16 @@ type View struct {
 	last     stateKey
 	dirty    bool
 	canvas   *image.RGBA
+	tex      texCache
 }
 
 func New() *View { return &View{dirty: true} }
 
 // Set gives the view the sky. Nothing is rebuilt unless key changed.
 func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
+	if w != nil && w.Root != nil {
+		v.tex.warm(w.Root) // the galaxies' textures, made here and not on the draw path
+	}
 	defer v.flush()
 	v.mu.Lock()
 	defer v.mu.Unlock()
@@ -110,14 +114,19 @@ func (v *View) Zoom() (z float64, master int) {
 
 func (v *View) home() {
 	_, hi := v.ch.zRange()
-	v.z, v.tz, v.m, v.pick, v.sel = hi, hi, 0, -1, selection{}
-	v.off = world.Vec{}
-	for _, k := range []string{"sol", "milky_way"} {
-		if p, ok := v.ch.objPos(0, k); ok {
-			v.off = p
-			break
-		}
+	v.z, v.tz, v.m = hi, hi, 0
+	v.centre()
+}
+
+// centre puts the Milky Way in the middle at the Local Group and in the upper
+// half of the Galaxy band (so the whole disc is in view), Sol anywhere deeper.
+func (v *View) centre() {
+	key := "sol"
+	if len(v.ch) < 2 || v.z >= (v.ch[1].bmin+v.ch[1].bmax)/2 {
+		key = "milky_way"
 	}
+	p, _ := v.ch.objPos(0, key)
+	v.pick, v.sel, v.off = -1, selection{}, v.ch.centreIn(0, v.m, p)
 	v.dirty = true
 }
 
@@ -136,7 +145,7 @@ func (v *View) Do(c Cmd) {
 	case ZoomOut:
 		v.tz += zoomStep
 	case Home:
-		v.home()
+		v.centre()
 	case Next, Prev:
 		v.cycle(c.Op == Next)
 	default:
@@ -174,7 +183,7 @@ func (v *View) clamp() {
 	lo, hi := v.ch.zRange()
 	v.tz = math.Max(lo, math.Min(hi, v.tz))
 	v.z = math.Max(lo, math.Min(hi, v.z))
-	r := v.ch[v.m].f.Radius * 1.1
+	r := v.ch[v.m].reach
 	v.off = world.Vec{X: math.Max(-r, math.Min(r, v.off.X)), Y: math.Max(-r, math.Min(r, v.off.Y))}
 }
 
