@@ -11,7 +11,17 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/nerdfont"
+	"github.com/espresso20/ageforge/platform/steam"
 )
+
+// skipInSteamBuild skips a test of the font download, which a Steam build
+// leaves out.
+func skipInSteamBuild(t *testing.T) {
+	t.Helper()
+	if steam.Build {
+		t.Skip("the font download is off in a Steam build")
+	}
+}
 
 // fakeInstaller counts its runs, reports one progress line and returns a
 // canned outcome. With release set it waits on it before returning, so a
@@ -110,6 +120,7 @@ func TestIconsFlowSeesIcons(t *testing.T) {
 }
 
 func TestIconsFlowInstalls(t *testing.T) {
+	skipInSteamBuild(t)
 	h := newIconsHarness([]string{"TERM_PROGRAM=iTerm.app", "HOME=/x"}, nerdfont.Result{Dir: "/x/Library/Fonts", Files: []string{"a.ttf"}}, nil)
 	h.flow.start()
 	h.press(t, 'b')
@@ -128,6 +139,7 @@ func TestIconsFlowInstalls(t *testing.T) {
 }
 
 func TestIconsFlowInstallFails(t *testing.T) {
+	skipInSteamBuild(t)
 	h := newIconsHarness(nil, nerdfont.Result{}, errors.New("the download could not start (are you online?)"))
 	h.flow.start()
 	h.press(t, 'b')
@@ -146,6 +158,7 @@ func TestIconsFlowInstallFails(t *testing.T) {
 }
 
 func TestIconsFlowDecline(t *testing.T) {
+	skipInSteamBuild(t)
 	h := newIconsHarness([]string{"WT_SESSION=abc"}, nerdfont.Result{}, nil)
 	h.flow.start()
 	h.press(t, 'b')
@@ -167,6 +180,7 @@ func TestIconsFlowDecline(t *testing.T) {
 // The install runs off the UI goroutine: its progress and its outcome come
 // back through post, and the window shows each.
 func TestIconsInstallRunsOffTheUIGoroutine(t *testing.T) {
+	skipInSteamBuild(t)
 	h := newIconsHarness([]string{"KITTY_WINDOW_ID=1"}, nerdfont.Result{}, nil)
 	release := make(chan struct{})
 	posted := make(chan func(), 4)
@@ -196,6 +210,7 @@ func TestIconsInstallRunsOffTheUIGoroutine(t *testing.T) {
 // Closing the window mid-install lets the install finish; the log says so,
 // and icons then opens on the outcome once before checking afresh.
 func TestIconsWindowClosedDuringInstall(t *testing.T) {
+	skipInSteamBuild(t)
 	h := newIconsHarness(nil, nerdfont.Result{}, nil)
 	release := make(chan struct{})
 	posted := make(chan func(), 4)
@@ -284,6 +299,7 @@ func pressKey(d *Dashboard, pages *tview.Pages, k tcell.Key, r rune) {
 // dashboard; its own keys walk the check through a (fake) install to the
 // terminal steps, and Esc closes it back to the prompt, not to the menu.
 func TestIconsWindowOnScreen(t *testing.T) {
+	skipInSteamBuild(t)
 	installs := 0
 	d, eng, pages := iconsTestDashboard(t, []string{"TERM_PROGRAM=iTerm.app"}, func(progress func(string)) fontInstaller {
 		return fakeInstaller{ran: &installs, res: nerdfont.Result{Dir: "/x"}, progress: progress}
