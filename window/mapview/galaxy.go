@@ -225,7 +225,7 @@ func (m *model) texel(u, v float64) (l, c, d, k float64) {
 		l = math.Exp(-3.4*math.Pow(r, .8)) * (.8 + .4*n)
 		return math.Min(1, l*edge), math.Min(1, math.Exp(-6*r)*1.4), 0, 0
 	}
-	bulge := math.Exp(-r / (m.core * .55))
+	bulge := (.6*math.Exp(-r/(m.core*.5)) + .5*math.Exp(-r/(m.core*1.7))) * (.8 + .4*Noise(u*45, v*45, m.seed^3))
 	disc := .17 * math.Exp(-2.4*r) * (.7 + .6*Noise(u*5+9, v*5, m.seed))
 	var arm, dust, knot float64
 	th := math.Atan2(v, u)
@@ -260,7 +260,7 @@ func (m *model) texel(u, v float64) (l, c, d, k float64) {
 	l = (bulge + disc + .8*arm + .3*wide*(.5+Noise(u*7, v*7, m.seed^9)) + .7*bar) * edge
 	l = 1 - math.Exp(-1.6*l)
 	l *= 1 - .8*math.Min(1, dust*m.dust)*(1-.8*bulge)
-	return math.Min(1, l), math.Min(1, bulge*1.25), math.Min(1, dust), math.Min(1, knot*edge)
+	return math.Min(1, l), math.Min(1, bulge*bulge*.9), math.Min(1, dust), math.Min(1, knot*edge)
 }
 
 // irregular is a dwarf: warped, clumpy, with a few knots and maybe a bar.
@@ -269,14 +269,14 @@ func (m *model) irregular(u, v, r float64) (l, c, d, k float64) {
 	wv := v + .3*(Noise(u*2.5+7, v*2.5+3, m.seed)-.5)
 	env := 1 - smooth(.3, 1, math.Hypot(wu*.9, wv))
 	n := .5*Noise(u*4, v*4, m.seed+1) + .3*Noise(u*9, v*9, m.seed+2) + .2*Noise(u*19, v*19, m.seed+3)
-	l = smooth(.3, .75, n*.9+env*.7-.2) * env
+	l = .9 * smooth(.28, 1.05, n*1.05+env*.5-.22) * env * (.45 + .8*Noise(u*6+3, v*6, m.seed+5))
 	if m.bar > 0 {
 		s, cs := math.Sincos(m.barAng)
 		along, across := u*cs+v*s, -u*s+v*cs
 		l += .55 * math.Exp(-.5*math.Pow(across/.1, 2)) * smooth(.55, .3, math.Abs(along)) * (.6 + .6*n)
 	}
-	if kn := Noise(u*30, v*30, m.seed+4); kn > .72 && env > .35 && n > .45 {
-		k = (kn - .72) / .28
+	if kn := Noise(u*30, v*30, m.seed+4); kn > .8 && env > .4 && n > .5 {
+		k = (kn - .8) / .2
 	}
 	return math.Min(1, l), 0, 0, k
 }
@@ -372,7 +372,7 @@ func (p *pen) galaxy(o *world.Object, x, y, rpx float64) {
 			b := Bayer(wx, wy)
 			var col = body
 			i := int(ch[chL]*wgt*(rampN-1) + b)
-			if ch[chC] > .5 && i >= 3 {
+			if ch[chC] > .5 && i >= 4 {
 				col = core
 			}
 			if k := int(ch[chK]*wgt*3 + b); k > 0 && ch[chL] > .08 {
