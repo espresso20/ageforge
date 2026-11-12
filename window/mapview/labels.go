@@ -20,6 +20,7 @@ type Face interface {
 type label struct {
 	x, y   float64 // where the object is
 	r      float64 // how far it draws, so the name clears it
+	key    string  // the object's key
 	text   string
 	mask   *image.Alpha
 	prio   int
@@ -172,11 +173,15 @@ func place(ls []label, w, h int, objs ...image.Rectangle) (shown []label, at []i
 		}
 		mw, mh := l.mask.Bounds().Dx(), l.mask.Bounds().Dy()
 		cx, cy := (own.Min.X+own.Max.X-mw)/2, (own.Min.Y+own.Max.Y-mh)/2
+		placed, spare := false, image.Point{-1, -1}
 		for _, p := range [...]image.Point{{own.Max.X + labelGap, cy}, {own.Min.X - labelGap - mw, cy},
 			{cx, own.Min.Y - labelGap - mh}, {cx, own.Max.Y + labelGap}} {
 			r := image.Rectangle{Min: p, Max: p.Add(image.Pt(mw, mh))}
 			if r.Min.X < 0 || r.Min.Y < 0 || r.Max.X > w || r.Max.Y > h {
 				continue
+			}
+			if spare.X < 0 {
+				spare = p
 			}
 			pad := r.Inset(-labelPad)
 			clash := false
@@ -191,7 +196,12 @@ func place(ls []label, w, h int, objs ...image.Rectangle) (shown []label, at []i
 			}
 			taken = append(taken, pad)
 			shown, at = append(shown, l), append(at, r.Min)
+			placed = true
 			break
+		}
+		if !placed && l.chosen && spare.X >= 0 { // the selected name always shows
+			shown, at = append(shown, l), append(at, spare)
+			taken = append(taken, image.Rectangle{Min: spare, Max: spare.Add(image.Pt(mw, mh))}.Inset(-labelPad))
 		}
 	}
 	return shown, at
@@ -199,8 +209,24 @@ func place(ls []label, w, h int, objs ...image.Rectangle) (shown []label, at []i
 
 // overlay draws the selection ring and the names over the finished canvas.
 func (v *View) overlay(img *image.RGBA, off world.Vec) {
+	shown, at := v.choose(img, off)
+	for i, l := range shown {
+		fg := v.pal.Mix(world.ToneWhite, 255)
+		if l.chosen {
+			fg = v.pal.Mix(world.ToneSun, 255)
+		}
+		blit(img, l.mask, at[i], v.pal.Bg, 1) // a one pixel keyline so it reads over the sky
+		blit(img, l.mask, at[i], fg, 0)
+	}
+}
+
+// choose draws the selection ring and chooses the names: which show and where.
+// Every name sits labelGap from its own object or is dropped; the selected
+// one's is never dropped, and takes the first spot on the canvas that clears
+// its ring when none clears everything.
+func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 	if v.face == nil || v.names == nil {
-		return
+		return nil, nil
 	}
 	var ls []label
 	var objs []image.Rectangle
@@ -215,11 +241,14 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		}
 		p := v.penFor(img, i, off)
 		x, y := p.at(o.Pos)
-		prio := ranks[o.Kind]
+		prio := 0 // kinds past the table (the gate, a comet) rank last
+		if int(o.Kind) < len(ranks) {
+			prio = ranks[o.Kind]
+		}
 		if chosen {
 			prio = prioSelected
 		}
-		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen})
+		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), key: o.Key, text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen})
 	}
 	sel := v.objAt(v.sel.fi, v.sel.key)
 	if sel != nil {
@@ -251,15 +280,7 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 	if sel != nil && v.sel.fi == v.m {
 		objs = append(objs, extent(p, sel, true))
 	}
-	shown, at := place(ls, img.Bounds().Dx(), img.Bounds().Dy(), objs...)
-	for i, l := range shown {
-		fg := v.pal.Mix(world.ToneWhite, 255)
-		if l.chosen {
-			fg = v.pal.Mix(world.ToneSun, 255)
-		}
-		blit(img, l.mask, at[i], v.pal.Bg, 1) // a one pixel keyline so it reads over the sky
-		blit(img, l.mask, at[i], fg, 0)
-	}
+	return place(ls, img.Bounds().Dx(), img.Bounds().Dy(), objs...)
 }
 
 // blit paints the mask's set pixels in c; grow > 0 paints each one's

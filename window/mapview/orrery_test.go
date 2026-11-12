@@ -191,3 +191,54 @@ func TestSelectionRingClearsTheDrawnObject(t *testing.T) {
 		}
 	}
 }
+
+// Every name that shows sits within labelGap of its own object's box, in
+// every frame, at every zoom tried; the selected one always shows.
+func TestLabelsStayBesideTheirObjects(t *testing.T) {
+	for fi := 0; fi < 6; fi++ {
+		v := nearView(t)
+		if fi >= len(v.ch) {
+			continue
+		}
+		v.SetFace(boxFace{})
+		v.SetNames(func(k string) string { return k })
+		lo, hi := v.ch[fi].lo, v.ch[fi].hi
+		if fi == 0 {
+			lo, hi = v.ch[0].bmin, v.ch[0].bmax
+		}
+		for k := 0; k <= 6; k++ {
+			z := lo + (hi-lo)*float64(k)/6
+			at(v, z, fi, centreOf(v, fi))
+			img := v.Render(tw, th)
+			shown, pts := v.choose(img, v.snapped(tw))
+			for i, l := range shown {
+				own := l.box
+				if own.Empty() {
+					own = boxOf(l.x, l.y, math.Max(l.r, 1))
+				}
+				r := image.Rectangle{Min: pts[i], Max: pts[i].Add(l.mask.Bounds().Size())}
+				gap := max(own.Min.X-r.Max.X, r.Min.X-own.Max.X, own.Min.Y-r.Max.Y, r.Min.Y-own.Max.Y)
+				if gap > labelGap && !l.chosen {
+					t.Errorf("frame %d z %.2f: %q is %d art px from its object", fi, z, l.key, gap)
+				}
+			}
+		}
+	}
+}
+
+// The selected object's name shows even when crowded.
+func TestSelectedNameAlwaysShows(t *testing.T) {
+	v := sysView(t)
+	v.SetFace(boxFace{})
+	v.SetNames(func(k string) string { return k })
+	v.sel = selection{fi: 4, key: "venus"}
+	at(v, 14.1, 4, centreOf(v, 4)) // the whole system, planets crowding the canvas
+	img := v.Render(tw, th)
+	shown, _ := v.choose(img, v.snapped(tw))
+	for _, l := range shown {
+		if l.key == "venus" && l.chosen {
+			return
+		}
+	}
+	t.Error("the selected planet's name is missing")
+}
