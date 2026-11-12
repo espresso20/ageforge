@@ -95,7 +95,7 @@ func TestHorseheadLabelHugsTheSilhouette(t *testing.T) {
 		near := box // what the name must hug: the silhouette, or its selection ring
 		if ringed {
 			cx, cy, rr := markOf(p, o)
-			near = boxOf(cx, cy, rr)
+			near = boxOf(cx, cy, rr+1) // the ring and its width
 		}
 		gap := max(near.Min.X-r.Max.X, r.Min.X-near.Max.X, near.Min.Y-r.Max.Y, r.Min.Y-near.Max.Y)
 		if gap > labelGap {
