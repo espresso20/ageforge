@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the Quantum Age opens the Local Group: Andromeda, Triangulum and the far galaxies can be entered down to a planet, each with a shape and stars from your seed. What you have not looked at is uncertain and shimmers between two or three versions until you click it; the seed picks the version, and the places you settle are kept in the save.
 - In the window, the Galactic Age opens the Milky Way as your territory: held sectors are tinted with a bright frontier, any star inside them can be entered down to a planet, and the Local Group stays locked until the Quantum Age.
 - In the window, the Interstellar Age opens the near stars: each can be entered and holds a seeded solar system (real exoplanets where they are known, a belt now and then), every planet of it has a close-up, and your colonies stand at their star and on a planet there. Labels on a locked level now dim with it.
 - In the window, the space map opens by age: the solar system in the Space Age, the near stars in the Interstellar Age, the Orion Arm and the galaxy in the Galactic Age and the Local Group after that, with the next level up shown grayed and locked. Every planet of the solar system can be entered for a close-up with its named moons, space station labels now show, and Earth inspects as Earth.
