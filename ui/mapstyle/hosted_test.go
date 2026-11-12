@@ -80,3 +80,28 @@ func TestSkyNameKnowsTheMapsObjects(t *testing.T) {
 		t.Error("an unnamed backdrop galaxy got a name")
 	}
 }
+
+// The star map's scale label follows the band the window's camera is in: the
+// Region reads as the overview, only the Neighbourhood as INNER, and the
+// system and the home world as the close-up.
+func TestScaleLabelFollowsTheBand(t *testing.T) {
+	h := &fakeHost{}
+	v, f := hostFrame(t, "galactic_age", h)
+	drawFrame(v, f, 120, 40, false).Fini()
+	label := func(k world.FrameKind) string {
+		h.report(MapState{Frame: k})
+		return v.zoomLabel()
+	}
+	if label(world.FrameRegion) != label(world.FrameGalaxy) {
+		t.Errorf("Region reads %q, want the Galaxy's %q", label(world.FrameRegion), label(world.FrameGalaxy))
+	}
+	inner := label(world.FrameNeighbourhood)
+	for _, k := range []world.FrameKind{world.FrameLocalGroup, world.FrameGalaxy, world.FrameRegion, world.FrameSystem, world.FramePlanet} {
+		if label(k) == inner {
+			t.Errorf("frame %v reads %q, which belongs to the Neighbourhood alone", k, inner)
+		}
+	}
+	if label(world.FrameSystem) != label(world.FramePlanet) {
+		t.Errorf("System %q and Planet %q should share the close-up label", label(world.FrameSystem), label(world.FramePlanet))
+	}
+}
