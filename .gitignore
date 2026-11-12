@@ -52,3 +52,4 @@ data/*.corrupt
 # Copy-editing sheets (go run ./cmd/words export): working files, not source
 words/export/
 words/vibe-todo/
+steam_appid.txt

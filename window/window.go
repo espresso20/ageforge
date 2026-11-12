@@ -6,6 +6,7 @@ package window
 
 import (
 	"image/color"
+	"log"
 	"math"
 	"runtime"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/rivo/uniseg"
 
+	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -69,6 +71,10 @@ func New(o Options) *Game {
 // Run opens the window and runs it until the game ends or the window is
 // closed. It must be called on the main goroutine.
 func (g *Game) Run() error {
+	// Steam must start before the graphics device exists, for the overlay.
+	if err := steam.Start(); err != nil {
+		log.Printf("steam: %v", err)
+	}
 	mw, mh := ebiten.Monitor().Size()
 	scale := ebiten.Monitor().DeviceScaleFactor()
 	g.scale = scale
@@ -168,6 +174,7 @@ func (g *Game) holdFires(k ebiten.Key) bool {
 
 // Update reads the keys and the window, once per tick.
 func (g *Game) Update() error {
+	steam.Frame()
 	select {
 	case <-g.o.Done:
 		return ebiten.Termination

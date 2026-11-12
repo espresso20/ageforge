@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/nerdfont"
+	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -150,6 +151,9 @@ func (f *iconsFlow) seeIcons() {
 // seeBoxes is the I see boxes answer: offer the install.
 func (f *iconsFlow) seeBoxes() {
 	f.stage = iconsAskInstall
+	if steam.Build {
+		f.stage = iconsManual // no download in a Steam build
+	}
 	f.notify()
 }
 
@@ -161,7 +165,7 @@ func (f *iconsFlow) decline() {
 
 // install runs the installer off the UI goroutine.
 func (f *iconsFlow) install() {
-	if f.stage == iconsInstalling {
+	if f.stage == iconsInstalling || steam.Build {
 		return
 	}
 	f.stage, f.err, f.progress = iconsInstalling, nil, nil

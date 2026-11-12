@@ -1,4 +1,4 @@
-.PHONY: banner build run clean check test vet validate smoke all release release-patch release-minor release-major commit
+.PHONY: banner build run clean check test vet validate smoke steam all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
@@ -46,6 +46,17 @@ test-raw: build vet
 # See CONTRIBUTING.md, "Smoke testing".
 smoke:
 	@go test ./smoke -count=1
+
+# The Steam builds, into bin/steam/. The tag turns Steamworks on and the
+# updater and font download off. The Windows flags stop the Go runtime
+# freezing the game under Steam's overlay and hide the console window.
+# See CONTRIBUTING.md, "Steam build".
+STEAM_VERSION ?= dev
+steam:
+	@mkdir -p bin/steam
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION) -X=runtime.godebugDefault=asyncpreemptoff=1 -H=windowsgui" -o bin/steam/ageforge-windows-amd64.exe .
+	GOOS=darwin GOARCH=arm64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION)" -o bin/steam/ageforge-darwin-arm64 .
+	GOOS=linux GOARCH=amd64 go build -tags steam -ldflags "-X main.version=$(STEAM_VERSION)" -o bin/steam/ageforge-linux-amd64 .
 
 # Run the game
 run: build

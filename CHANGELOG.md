@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- A build made with the `steam` tag talks to Steam: it starts Steamworks before the window opens, runs its callbacks every frame, can unlock Steam achievements for badges (none are mapped yet), and turns off the self-updater and the Nerd Font download. Other builds are unchanged.
 - In the window, the Transcendent Age opens the cosmic web above the Local Group: galaxy clusters joined by filaments, drawn as your civilization, where each building line owns strands that glow with how much of it you have built. It shows grayed and locked in the Quantum Age.
 - In the window, the Quantum Age opens the Local Group: Andromeda, Triangulum and the far galaxies can be entered down to a planet, each with a shape and stars from your seed. What you have not looked at is uncertain and shimmers between two or three versions until you click it; the seed picks the version, and the places you settle are kept in the save.
 - In the window, the Galactic Age opens the Milky Way as your territory: held sectors are tinted with a bright frontier, any star inside them can be entered down to a planet, and the Local Group stays locked until the Quantum Age.
