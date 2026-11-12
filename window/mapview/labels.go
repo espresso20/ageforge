@@ -66,15 +66,29 @@ func boxXY(x, y, rx, ry float64) image.Rectangle {
 	return image.Rect(ox-kx, oy-ky, ox+kx+1, oy+ky+1)
 }
 
-// ringR is the radius of o's selection ring: just outside what is drawn. A
-// dwarf's lit blob fills about 70% of its nominal radius, so its ring hugs that.
-func ringR(p pen, o *world.Object) float64 {
+// drawnR is how far o really draws from its centre, in art pixels, glow
+// aside: a system body's sprite (its rings included) is wider than its radius.
+func drawnR(p pen, o *world.Object) float64 {
 	r := p.radius(o)
-	if o.Galaxy != nil && o.Galaxy.Irr && r >= 1.5 {
+	if o.Galaxy != nil && o.Galaxy.Irr && r >= 1.5 { // a dwarf's lit blob fills about 70% of its nominal radius
 		r *= .7
 	}
-	return math.Max(r, 2) + 3
+	if o.Kind == world.KindStar {
+		return r + 3.5 // the glow
+	}
+	if p.f.Kind == world.FrameSystem && o.Body != nil && o.Kind != world.KindBelt {
+		sr := stepR(r)
+		if o.Body.Rings && sr >= 2 {
+			return math.Ceil(float64(sr)*2.3) + 1
+		}
+		return float64(sr) + 1
+	}
+	return math.Max(r, 1)
 }
+
+// ringR is the radius of o's selection ring: two art pixels outside all that
+// is drawn of it, so the object shows through.
+func ringR(p pen, o *world.Object) float64 { return drawnR(p, o) + 2 }
 
 // extent is the box an object fills on the canvas: its sprite and glow, or
 // the selection ring round it.
@@ -85,8 +99,8 @@ func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
 		gm := geomOf(o)
 		return boxXY(x, y, r*math.Hypot(gm.cos, gm.sin*gm.q), r*gm.ys*math.Hypot(gm.sin, gm.cos*gm.q))
 	}
-	if o.Body != nil && o.Body.Rings && p.f.Kind == world.FrameSystem { // Saturn's rings
-		r *= 2.3
+	if o.Body != nil && p.f.Kind == world.FrameSystem { // sprites and Saturn's rings
+		r = drawnR(p, o)
 	}
 	switch {
 	case ringed:

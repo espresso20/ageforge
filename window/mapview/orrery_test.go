@@ -168,3 +168,26 @@ func TestSystemSqueezeInverts(t *testing.T) {
 		t.Errorf("undisp(disp) = %v", got)
 	}
 }
+
+// The selection ring clears everything drawn of the object, Saturn's rings
+// included, by two art pixels.
+func TestSelectionRingClearsTheDrawnObject(t *testing.T) {
+	for _, z := range []float64{sysZ, 12.6, 12} {
+		v := sysView(t)
+		at(v, z, 4, world.Vec{})
+		img := v.Render(tw, th)
+		p := v.penFor(img, 4, v.snapped(tw))
+		for _, o := range planets(v) {
+			if o.Body == nil || o.Body.Spec.Size == 0 && o.Key != "pluto" {
+				continue
+			}
+			extent := 0
+			if o.Body.Spec.Size != 0 {
+				extent = v.bod.get(&v.pal, o, stepR(p.radius(o)), 0).ext
+			}
+			if got := ringR(p, o); got < float64(extent)+2 {
+				t.Errorf("z %.1f %s: ring radius %.1f, drawn extent %d", z, o.Key, got, extent)
+			}
+		}
+	}
+}

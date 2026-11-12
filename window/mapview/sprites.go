@@ -101,11 +101,14 @@ func (p *pen) line(x0, y0, x1, y1 float64, t world.Tone, w uint8) {
 	}
 }
 
-// ring2 is a one pixel circle of radius r about x, y in colour col: the
-// selection mark.
+// ring2 is a dotted one pixel circle of radius r about x, y in colour col: the
+// selection mark, open enough for the object to show through.
 func (p *pen) ring2(x, y, r float64, col color.RGBA) {
 	n := int(math.Min(2*math.Pi*r*2, 4000))
 	for k := 0; k < n; k++ {
+		if k&2 != 0 { // two on, two off
+			continue
+		}
 		a := 2 * math.Pi * float64(k) / float64(n)
 		p.px(int(math.Round(x+r*math.Cos(a))), int(math.Round(y+r*math.Sin(a))), col)
 	}
