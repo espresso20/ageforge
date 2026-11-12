@@ -29,6 +29,7 @@ type label struct {
 const (
 	prioSelected = 1000
 	labelGap     = 3 // art pixels between an object and its name
+	labelPad     = 2 // clear art pixels kept round a name (its keyline takes one)
 )
 
 // ranks says which kinds win a collision: Sol, then galaxies and the lit
@@ -79,7 +80,7 @@ func place(ls []label, w, h int) (shown []label, at []image.Point) {
 			if r.Min.X < 0 || r.Min.Y < 0 || r.Max.X > w || r.Max.Y > h {
 				continue
 			}
-			pad := r.Inset(-1)
+			pad := r.Inset(-labelPad)
 			clash := false
 			for _, t := range taken {
 				clash = clash || pad.Overlaps(t)

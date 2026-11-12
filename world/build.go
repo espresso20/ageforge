@@ -42,7 +42,7 @@ func Build(m *mapmodel.Model, seed int64) *World {
 		t := LayTerritory(seed, g)
 		cols := Colonies(m, t)
 		gal := galaxyFrame(m, seed, g, t)
-		lg := localGroup(seed, solLy(g))
+		lg := localGroup(seed, g.Shape, solLy(g))
 		region := regionFrame(seed, len(cols))
 		near := neighbourhoodFrame(seed, cols)
 		sys := systemFrame(m, seed, true)

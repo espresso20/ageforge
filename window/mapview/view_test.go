@@ -250,11 +250,12 @@ func TestWholeDiscFitsAtTheTopOfTheGalaxyBand(t *testing.T) {
 }
 
 // TestSolStaysInViewFromTheLocalGroupToTheRegion walks the zoom in from the
-// home view and checks Sol stays at the centre of the screen.
+// Local Group centred on Sol and checks Sol stays at the centre of the screen.
 func TestSolStaysInViewFromTheLocalGroupToTheRegion(t *testing.T) {
 	v := New()
 	v.Set(build(t, "galactic_age"), 1, testPal)
 	_, hi := v.ch.zRange()
+	v.off, _ = v.ch.objPos(0, "sol") // the home view centres the galaxy; dive from Sol
 	for z := hi; z > v.ch[2].bmin; z -= 0.05 {
 		v.z, v.tz = z, z
 		v.Update(0)

@@ -19,7 +19,7 @@ func lgVec(x, y int) Vec { return Vec{float64(x-lgW/2) * lgKly, float64(y-lgH/2)
 // localGroup lays the Local Group out. sol is Sol's place in the galaxy
 // frame, in light-years from the Milky Way's centre; the marker is the same
 // point drawn at the schematic scale, so the two frames agree on where it is.
-func localGroup(seed int64, sol Vec) *Frame {
+func localGroup(seed int64, shape GalaxyShape, sol Vec) *Frame {
 	f := &Frame{
 		Kind: FrameLocalGroup, Key: "local_group", Unit: UnitKly,
 		Radius: lgW / 2 * lgKly, Band: Band{Min: 3500, Max: 6000}, Schem: true,
@@ -39,7 +39,7 @@ func localGroup(seed int64, sol Vec) *Frame {
 			Tone: tone, Weight: 255, Galaxy: &look, Pick: pick}
 	}
 	f.Objects = append(f.Objects,
-		gal("milky_way", mwX, mwY, mwR, LookMilkyWay, ToneStar, true),
+		withShape(gal("milky_way", mwX, mwY, mwR, LookMilkyWay, ToneStar, true), shape, seed),
 		gal("andromeda", m31X, m31Y, m31R, LookAndromeda, ToneStar, true),
 		gal("triangulum", m33X, m33Y, m33R, LookTriangulum, ToneStar, true),
 	)
@@ -47,8 +47,7 @@ func localGroup(seed int64, sol Vec) *Frame {
 		key          string
 		x, y, rx, ry int
 	}{{"large_magellanic_cloud", lmcX, lmcY, 9, 6}, {"small_magellanic_cloud", smcX, smcY, 6, 4}} {
-		o := gal(p.key, p.x, p.y, p.rx, GalaxyLook{Q: 256 * p.ry / p.rx, Stars: 14}, ToneCool, true) // irregular: no arms
-		_ = i
+		o := gal(p.key, p.x, p.y, p.rx, GalaxyLook{Q: 256 * p.ry / p.rx, Stars: 14, Irr: true, Bar: 60 * (1 - i)}, ToneCool, true) // irregular: no arms, the Large Cloud has a bar
 		f.Objects = append(f.Objects, o)
 	}
 	// Sol, on the Milky Way's home arm: the galaxy frame's own point, scaled
@@ -88,6 +87,12 @@ func localGroup(seed int64, sol Vec) *Frame {
 		f.Objects = append(f.Objects, o)
 	}
 	return f
+}
+
+// withShape draws the home galaxy from the seeded arms the Galaxy frame uses.
+func withShape(o Object, s GalaxyShape, seed int64) Object {
+	o.Shape, o.Seed = &s, seed
+	return o
 }
 
 func itoa(i int) string {

@@ -61,12 +61,16 @@ type View struct {
 	last     stateKey
 	dirty    bool
 	canvas   *image.RGBA
+	tex      texCache
 }
 
 func New() *View { return &View{dirty: true} }
 
 // Set gives the view the sky. Nothing is rebuilt unless key changed.
 func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
+	if w != nil && w.Root != nil {
+		v.tex.warm(w.Root) // the galaxies' textures, made here and not on the draw path
+	}
 	defer v.flush()
 	v.mu.Lock()
 	defer v.mu.Unlock()
@@ -112,7 +116,7 @@ func (v *View) home() {
 	_, hi := v.ch.zRange()
 	v.z, v.tz, v.m, v.pick, v.sel = hi, hi, 0, -1, selection{}
 	v.off = world.Vec{}
-	for _, k := range []string{"sol", "milky_way"} {
+	for _, k := range []string{"milky_way", "sol"} { // the home galaxy centred, so its disc is in the middle when it fills the view
 		if p, ok := v.ch.objPos(0, k); ok {
 			v.off = p
 			break

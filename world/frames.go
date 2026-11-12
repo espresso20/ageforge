@@ -28,7 +28,7 @@ func galaxyFrame(m *mapmodel.Model, seed int64, g *Galaxy, t Territory) *Frame {
 		Radius: galRadiusLy, Band: Band{Min: 15000, Max: 240000}}
 	shape := g.Shape
 	f.Objects = append(f.Objects, Object{Kind: KindGalaxy, Key: "disc", Label: "milky_way", Inspect: "milky_way",
-		Size: galRadiusLy, Tone: ToneStar, Weight: 255, Shape: &shape})
+		Size: galRadiusLy, Tone: ToneStar, Weight: 255, Shape: &shape, Seed: seed})
 	path := make([]Vec, len(g.Home))
 	for i, p := range g.Home {
 		path[i] = cellLy(p)
