@@ -105,6 +105,24 @@ func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
 	fill(img, v.pal.Bg)
 	p := v.penFor(img, i, off)
 	p.frame()
+	if i < v.open {
+		v.lock(img)
+	}
+}
+
+// lockDim is how much of the palette's white a locked frame's brightest light
+// keeps, in 255ths.
+const lockDim = 140
+
+// lock greys a locked frame: every pixel loses its colour for its brightness,
+// and the brightness is dimmed, between the palette's background and white.
+func (v *View) lock(img *image.RGBA) {
+	white := v.pal.Tones[world.ToneWhite]
+	for i := 0; i < len(img.Pix); i += 4 {
+		c := color.RGBA{R: img.Pix[i], G: img.Pix[i+1], B: img.Pix[i+2], A: 255}
+		g := mixRGB(v.pal.Bg, white, luma(c)*lockDim/2550)
+		img.Pix[i], img.Pix[i+1], img.Pix[i+2] = g.R, g.G, g.B
+	}
 }
 
 // penFor is a pen for chain frame i on img, centred on master-frame offset off.

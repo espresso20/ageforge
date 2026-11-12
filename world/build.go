@@ -6,8 +6,8 @@ import (
 
 // The ages that have a sky. Ground ages build an empty World.
 const (
-	AgeSpace        = "space_age"        // the home planet and its ring
-	AgeInterstellar = "interstellar_age" // the solar system
+	AgeSpace        = "space_age"        // the solar system
+	AgeInterstellar = "interstellar_age" // the near stars
 	AgeGalactic     = "galactic_age"     // the star map
 	AgeQuantum      = "quantum_age"
 	AgeTranscendent = "transcendent_age"
@@ -30,14 +30,23 @@ func StarAge(age string) bool {
 	return age == AgeGalactic || age == AgeQuantum || age == AgeTranscendent
 }
 
+// SpaceAge says whether the age has a sky at all.
+func SpaceAge(age string) bool {
+	for _, a := range SpaceAges {
+		if a == age {
+			return true
+		}
+	}
+	return false
+}
+
 // Build lays out the sky of one save: seed is the save's seed (m.Seed), the
 // snapshot says what the people have built. Ground ages have no sky and give
 // a World with no Root. The same inputs give the same World.
 func Build(m *mapmodel.Model, seed int64) *World {
 	age := ageOf(m)
 	w := &World{Seed: seed, Age: age, Key: ChangeKey(m, seed)}
-	switch {
-	case StarAge(age):
+	if SpaceAge(age) {
 		g := NewGalaxy(seed)
 		t := LayTerritory(seed, g)
 		cols := Colonies(m, t)
@@ -45,14 +54,12 @@ func Build(m *mapmodel.Model, seed int64) *World {
 		lg := localGroup(seed, g.Shape, solLy(g))
 		region := regionFrame(seed, len(cols))
 		near := neighbourhoodFrame(seed, cols)
-		sys := systemFrame(m, seed, true)
+		sys := systemFrame(m, seed)
 		near.Children = []*Frame{sys}
 		region.Children = []*Frame{near}
 		gal.Children = []*Frame{region}
 		lg.Children = []*Frame{gal}
-		w.Root = lg
-	case age == AgeSpace || age == AgeInterstellar:
-		w.Root = systemFrame(m, seed, false)
+		w.Root = lg.Find(GateOf(age).Top()) // nothing outside the locked frame is built into the world
 	}
 	return w
 }
@@ -62,7 +69,7 @@ func Build(m *mapmodel.Model, seed int64) *World {
 // would differ.
 func ChangeKey(m *mapmodel.Model, seed int64) uint64 {
 	age := ageOf(m)
-	if !StarAge(age) && age != AgeSpace && age != AgeInterstellar {
+	if !SpaceAge(age) {
 		return mapmodel.Hash(seed, 0)
 	}
 	h := []int64{seed, mapmodel.HashStr(age), boolI(gateRaised(m.Wonders)), boolI(m.Harbinger != nil)}

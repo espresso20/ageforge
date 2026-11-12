@@ -50,6 +50,7 @@ type View struct {
 	ch       chain
 	z, tz    float64   // log10 of the view width in metres, now and wanted
 	m        int       // master frame
+	open     int       // the first chain frame the age lets the player enter; those above it are locked
 	off      world.Vec // centre, in the master frame's units
 	pick     int       // the object Next/Prev last centred
 	sel      selection // the object selected, by click or Next/Prev
@@ -93,6 +94,7 @@ func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 		return
 	}
 	v.ch = newChain(w.Root)
+	v.open = max(0, int(world.GateOf(w.Age).Open)-int(w.Root.Kind))
 	if fresh {
 		v.home()
 	} else {
@@ -121,9 +123,13 @@ func (v *View) Zoom() (z float64, master int) {
 	return v.z, v.m
 }
 
+// home is the whole of the outermost open frame in view, centred.
 func (v *View) home() {
-	_, hi := v.ch.zRange()
-	v.z, v.tz, v.m = hi, hi, 0
+	z := v.ch[0].bmax
+	if v.open > 0 {
+		z = v.ch[v.open].lo
+	}
+	v.z, v.tz, v.m = z, z, v.ch.masterAt(z, look{})
 	v.centre()
 }
 
@@ -131,7 +137,7 @@ func (v *View) home() {
 // half of the Galaxy band (so the whole disc is in view), Sol anywhere deeper.
 func (v *View) centre() {
 	key := "sol"
-	if len(v.ch) < 2 || v.z >= (v.ch[1].bmin+v.ch[1].bmax)/2 {
+	if v.ch[0].f.Kind == world.FrameLocalGroup && (len(v.ch) < 2 || v.z >= (v.ch[1].bmin+v.ch[1].bmax)/2) {
 		key = "milky_way"
 	}
 	p, _ := v.ch.objPos(0, key)
@@ -176,6 +182,9 @@ func (v *View) width() float64 { return math.Pow(10, v.z) }
 
 // cycle centres the next pickable object of the master frame.
 func (v *View) cycle(fwd bool) {
+	if v.m < v.open { // a locked frame has nothing to step to
+		return
+	}
 	f := v.ch[v.m].f
 	n, step := len(f.Objects), 1
 	if !fwd {
@@ -225,6 +234,9 @@ func (v *View) Update(dt time.Duration) bool {
 	}
 	if m := v.ch.masterAt(v.z, v.look()); m != v.m {
 		v.off, v.m, v.dirty = v.ch.centreIn(v.m, m, v.off), m, true
+	}
+	if v.m == len(v.ch)-2 { // in the system: the planet nearest the centre is the one a zoom would enter
+		v.nearTail(v.off)
 	}
 	if v.hold.on || v.focus.on {
 		v.follow(k)

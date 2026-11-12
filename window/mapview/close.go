@@ -19,13 +19,14 @@ import (
 const homePPUMin, homePPUMax = 10, 125
 
 // homeDir is the light's bucket for the whole close-up: the star is where the
-// planet's own orbit points the other way, so the sphere is lit from the same
+// frame's planet's own orbit points the other way, so the sphere is lit from the same
 // side as the system band draws it.
 func homeDir(f *world.Frame) int {
 	ph := 0
 	for i := range f.Objects {
-		if o := &f.Objects[i]; o.Key == world.SolNames[world.Home] && o.Body != nil {
+		if o := &f.Objects[i]; o.Kind == world.KindPlanet && o.Body != nil {
 			ph = o.Body.Phase
+			break
 		}
 	}
 	return ((ph+world.Turn/lightBuckets/2)/(world.Turn/lightBuckets) + lightBuckets/2) % lightBuckets
