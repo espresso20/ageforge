@@ -188,7 +188,7 @@ func (v *View) Pan(dx, dy float64, w int) {
 // near is the nearest pickable object to x, y within reach: from the frames
 // on screen, the master winning a tie.
 func (v *View) near(x, y, w, h int) (sel selection, ok bool) {
-	under, over, _ := v.ch.layers(v.z)
+	under, over, _ := v.ch.layersAt(v.z, v.look())
 	off := v.snapped(w)
 	best := float64(pickReach*pickReach) + 1e-9
 	geom := &image.RGBA{Rect: image.Rect(0, 0, w, h)} // the pen only reads its size

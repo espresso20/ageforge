@@ -304,7 +304,7 @@ var (
 
 // nebula draws a cloud form into the square r art pixels either side of x, y.
 func (p *pen) nebula(o *world.Object, art *artCache, x, y, r float64) {
-	if x+r < 0 || y+r < 0 || x-r > float64(p.w) || y-r > float64(p.h) || r > 6000 {
+	if x+r < 0 || y+r < 0 || x-r > float64(p.w) || y-r > float64(p.h) || r > 1e6 {
 		return
 	}
 	cl := art.cloudFor(o)

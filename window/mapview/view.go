@@ -163,6 +163,9 @@ func (v *View) Do(c Cmd) {
 	v.dirty = true
 }
 
+// look is the camera's centre, for the frames that hang on Sol.
+func (v *View) look() look { return look{m: v.m, off: v.off, on: true} }
+
 func (v *View) width() float64 { return math.Pow(10, v.z) }
 
 // cycle centres the next pickable object of the master frame.
@@ -207,7 +210,7 @@ func (v *View) Update(dt time.Duration) bool {
 		}
 		v.dirty = true
 	}
-	if m := v.ch.master(v.z); m != v.m {
+	if m := v.ch.masterAt(v.z, v.look()); m != v.m {
 		v.off, v.m, v.dirty = v.ch.centreIn(v.m, m, v.off), m, true
 	}
 	if v.hold.on || v.focus.on {
@@ -234,7 +237,7 @@ func (v *View) Render(w, h int) *image.RGBA {
 	}
 	v.dirty = false
 	snapped := v.snapped(w) // whole art pixels, in the master frame
-	under, over, t := v.ch.layers(v.z)
+	under, over, t := v.ch.layersAt(v.z, v.look())
 	v.paint(v.canvas, under, snapped)
 	if over != under {
 		if v.top == nil || v.top.Rect != v.canvas.Rect {

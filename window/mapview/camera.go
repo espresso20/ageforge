@@ -94,27 +94,56 @@ func (l layer) anchorObj(key string) *world.Object {
 	return nil
 }
 
+// A look is where the camera centres: master frame m, offset off. Frames below
+// the Region hang on Sol, so they fade out when the centre is well away from
+// it; the zero look is "at the frame's own origin" and leaves weights to zoom.
+type look struct {
+	m   int
+	off world.Vec
+	on  bool
+}
+
+// local is how far into view frame i is, by where the camera looks: 1 while
+// the centre is within the frame's reach of its origin, fading to 0 a little
+// past it, so a Region object can be zoomed into without the frames round Sol
+// taking the view. Out past the arm's reach there is no Region object to look
+// at, and the frames round Sol take over again.
+func (c chain) local(i int, k look) float64 {
+	if i < 3 || !k.on {
+		return 1
+	}
+	smooth := func(x float64) float64 { x = math.Max(0, math.Min(1, x)); return x * x * (3 - 2*x) }
+	r := c.centreIn(k.m, 2, k.off)
+	far := smooth((math.Hypot(r.X, r.Y)/c[2].reach - 1) / .5)
+	o := c.centreIn(k.m, i, k.off)
+	return 1 - (1-far)*smooth((math.Hypot(o.X, o.Y)/c[i].reach-1)/.6)
+}
+
 // weight is how far into view frame i is at zoom z: 0 zoomed out past its
 // handoff, 1 zoomed in past it. The root is always 1.
-func (c chain) weight(i int, z float64) float64 {
+func (c chain) weight(i int, z float64) float64 { return c.weightAt(i, z, look{}) }
+
+func (c chain) weightAt(i int, z float64, k look) float64 {
 	if i == 0 {
 		return 1
 	}
 	t := (c[i].hi - z) / (c[i].hi - c[i].lo)
 	t = math.Max(0, math.Min(1, t))
-	return t * t * (3 - 2*t)
+	return t * t * (3 - 2*t) * c.local(i, k)
 }
 
 // layers is the two frames to draw at z: the deeper one that has begun to
 // show, and the one under it while the deeper is still dithering in.
-func (c chain) layers(z float64) (under, over int, w float64) {
+func (c chain) layers(z float64) (under, over int, w float64) { return c.layersAt(z, look{}) }
+
+func (c chain) layersAt(z float64, k look) (under, over int, w float64) {
 	over = 0
 	for i := range c {
-		if c.weight(i, z) > 0 {
+		if c.weightAt(i, z, k) > 0 {
 			over = i
 		}
 	}
-	w = c.weight(over, z)
+	w = c.weightAt(over, z, k)
 	if w >= 1 || over == 0 {
 		return over, over, 1
 	}
@@ -123,10 +152,12 @@ func (c chain) layers(z float64) (under, over int, w float64) {
 
 // master is the deepest frame at least half in view: the camera's centre is
 // kept in its units, where it has the most precision.
-func (c chain) master(z float64) int {
+func (c chain) master(z float64) int { return c.masterAt(z, look{}) }
+
+func (c chain) masterAt(z float64, k look) int {
 	m := 0
 	for i := range c {
-		if c.weight(i, z) >= 0.5 {
+		if c.weightAt(i, z, k) >= 0.5 {
 			m = i
 		}
 	}
