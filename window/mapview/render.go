@@ -235,6 +235,10 @@ func (p *pen) object(o *world.Object) {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 30, false)
 		}
 		p.disc(x, y, 1, o.Tone, o.Weight)
+	case world.KindStrand:
+		p.strand(o)
+	case world.KindCluster:
+		p.webCluster(o, x, y, r)
 	case world.KindStar:
 		p.star(x, y, o)
 	case world.KindColony:

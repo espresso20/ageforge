@@ -43,7 +43,7 @@ func Strength(count, tier int) int {
 // webFrame is the cosmic web with lg, the Local Group, hung on the node it
 // stands for.
 func webFrame(m *mapmodel.Model, seed int64, lg *Frame) *Frame {
-	f := &Frame{Kind: FrameWeb, Key: "cosmic_web", Unit: UnitMly, Radius: webHalfX + 20, Band: Band{Min: 12, Max: 560}, Schem: true,
+	f := &Frame{Kind: FrameWeb, Key: "cosmic_web", Unit: UnitMly, Radius: webHalfX + 20, Band: Band{Min: 20, Max: 560}, Schem: true,
 		Children: []*Frame{lg}}
 	lg.Anchor = "local_group"
 	type pt struct{ x, y int }

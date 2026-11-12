@@ -14,8 +14,8 @@ func quantum(t *testing.T) *View {
 	v := New()
 	v.Set(build(t, world.AgeQuantum), 1, testPal)
 	v.bod.wg.Wait()
-	if v.open != 0 || v.ch[0].f.Kind != world.FrameLocalGroup {
-		t.Fatalf("open %d, first frame %v: the Local Group should be open", v.open, v.ch[0].f.Kind)
+	if v.open != 1 || v.ch[1].f.Kind != world.FrameLocalGroup {
+		t.Fatalf("open %d, first frame %v: the Local Group should be open under the locked web", v.open, v.ch[0].f.Kind)
 	}
 	return v
 }
@@ -34,14 +34,14 @@ func dive(t *testing.T, v *View, fi int, o *world.Object) {
 
 func TestQuantumGalaxyDivesToSystemThenPlanet(t *testing.T) {
 	v := quantum(t)
-	and := v.objAt(0, "andromeda")
-	dive(t, v, 0, and)
-	if v.gal != "andromeda" || v.ch[1].f.Anchor != "andromeda" {
-		t.Fatalf("gal %q, frame 1 %q: Andromeda was not entered", v.gal, v.ch[1].f.Anchor)
+	and := v.objAt(1, "andromeda")
+	dive(t, v, 1, and)
+	if v.gal != "andromeda" || v.ch[2].f.Anchor != "andromeda" {
+		t.Fatalf("gal %q, frame 1 %q: Andromeda was not entered", v.gal, v.ch[2].f.Anchor)
 	}
 	var star *world.Object
-	for i := range v.ch[1].f.Objects {
-		if o := &v.ch[1].f.Objects[i]; o.Kind == world.KindStar && o.Key != v.ch[2].f.Anchor { // not the one already hung
+	for i := range v.ch[2].f.Objects {
+		if o := &v.ch[2].f.Objects[i]; o.Kind == world.KindStar && o.Key != v.ch[3].f.Anchor { // not the one already hung
 			star = o
 			break
 		}
@@ -49,7 +49,7 @@ func TestQuantumGalaxyDivesToSystemThenPlanet(t *testing.T) {
 	if star == nil || star.Doubt == 0 {
 		t.Fatalf("Andromeda holds no uncertain star: %v", star)
 	}
-	dive(t, v, 1, star)
+	dive(t, v, 2, star)
 	ri, si := v.ch.idx(world.FrameRegion), v.ch.idx(world.FrameSystem)
 	if v.place != star.Key || v.ch[ri].f.Anchor != star.Key || v.ch[si].f.Anchor != star.Key {
 		t.Fatalf("place %q, region %q, system %q: no dive into %s", v.place, v.ch[ri].f.Anchor, v.ch[si].f.Anchor, star.Key)
@@ -69,7 +69,7 @@ func TestQuantumGalaxyDivesToSystemThenPlanet(t *testing.T) {
 		t.Fatalf("tail %v %q, want the planet %s", tail.Kind, tail.Anchor, planet.Key)
 	}
 	v.Set(build(t, world.AgeQuantum), 1, testPal) // a rebuild keeps the galaxy the player is in
-	if v.gal != "andromeda" || v.ch[1].f.Anchor != "andromeda" {
+	if v.gal != "andromeda" || v.ch[2].f.Anchor != "andromeda" {
 		t.Errorf("a rebuild left gal %q", v.gal)
 	}
 }
@@ -78,7 +78,7 @@ func TestQuantumGalaxiesKeepUniqueKeys(t *testing.T) {
 	w := build(t, world.AgeQuantum)
 	seen := map[string]string{}
 	n := 0
-	for _, lg := range w.Root.Objects {
+	for _, lg := range w.Root.Find(world.FrameLocalGroup).Objects {
 		if lg.Doubt == 0 {
 			continue
 		}
@@ -105,9 +105,9 @@ func TestQuantumGalaxiesKeepUniqueKeys(t *testing.T) {
 
 func TestUncertainPlaceDrawsDifferentlyOnTwoTicks(t *testing.T) {
 	v := quantum(t)
-	and := v.objAt(0, "andromeda")
-	z, _ := zFor(v, 0)
-	at(v, z, 0, and.Pos)
+	and := v.objAt(1, "andromeda")
+	z, _ := zFor(v, 1)
+	at(v, z, 1, and.Pos)
 	shot := func() []byte {
 		v.dirty = true
 		return append([]byte(nil), v.Render(tw, th).Pix...)
@@ -127,10 +127,10 @@ func TestUncertainPlaceDrawsDifferentlyOnTwoTicks(t *testing.T) {
 
 func TestSettledPlaceStopsFlickering(t *testing.T) {
 	v := quantum(t)
-	and := v.objAt(0, "andromeda")
-	z, _ := zFor(v, 0)
-	at(v, z, 0, and.Pos)
-	x, y := screenOf(v, 0, and)
+	and := v.objAt(1, "andromeda")
+	z, _ := zFor(v, 1)
+	at(v, z, 1, and.Pos)
+	x, y := screenOf(v, 1, and)
 	v.Click(int(math.Round(x)), int(math.Round(y)), tw, th)
 	if got := v.TakeSettled(); len(got) != 1 || got[0] != v.sel.key {
 		t.Fatalf("a click settled %v, selected %q", got, v.sel.key)
@@ -162,10 +162,11 @@ func TestSettledPlaceStopsFlickering(t *testing.T) {
 
 func TestSettledSurvivesTheSaveLoad(t *testing.T) {
 	w := build(t, world.AgeQuantum)
-	o := &w.Root.Objects[0]
-	for i := range w.Root.Objects {
-		if w.Root.Objects[i].Key == "andromeda" {
-			o = &w.Root.Objects[i]
+	lg := w.Root.Find(world.FrameLocalGroup)
+	o := &lg.Objects[0]
+	for i := range lg.Objects {
+		if lg.Objects[i].Key == "andromeda" {
+			o = &lg.Objects[i]
 		}
 	}
 	v := New()
@@ -181,7 +182,7 @@ func TestSettledSurvivesTheSaveLoad(t *testing.T) {
 
 func TestLocalGroupStaysLockedAtGalactic(t *testing.T) {
 	w := build(t, world.AgeGalactic)
-	for _, o := range w.Root.Objects {
+	for _, o := range w.Root.Find(world.FrameLocalGroup).Objects {
 		if o.Doubt > 0 || (o.Kind == world.KindGalaxy && o.Key != "milky_way" && o.Pick && o.Shape != nil) {
 			t.Errorf("%s is open at Galactic", o.Key)
 		}

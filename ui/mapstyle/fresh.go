@@ -72,7 +72,7 @@ func (v *view) shownZoom() int {
 // zoomLabel names the zoom the last frame showed, and for a district whose.
 func (v *view) zoomLabel() string {
 	if s, ok := v.hst.get(); ok && v.hosted && v.sky != nil { // the window's map knows its own scale
-		return hostedZoom(v.sky.Root.Kind == world.FrameLocalGroup, s.Frame)
+		return hostedZoom(v.sky.Root.Kind <= world.FrameLocalGroup, s.Frame)
 	}
 	label := rungName(v.stars, v.shownZoom())
 	if v.shownZoom() == zDistrict {

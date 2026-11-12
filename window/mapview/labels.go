@@ -48,6 +48,8 @@ func named(f *world.Frame, o *world.Object) bool {
 		return false
 	}
 	switch f.Kind {
+	case world.FrameWeb: // only home is named; a strand or cluster reads when picked
+		return o.Key == "local_group"
 	case world.FrameLocalGroup:
 		return o.Kind == world.KindGalaxy
 	case world.FrameGalaxy: // the sectors the people hold, by name

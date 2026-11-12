@@ -84,6 +84,7 @@ var lockLines = map[string]vibe.Entry{
 	world.AgeInterstellar: vibe.E("ui.mapstyle.space.lock.interstellar_age", "Opens in the Interstellar Age."),
 	world.AgeGalactic:     vibe.E("ui.mapstyle.space.lock.galactic_age", "Opens in the Galactic Age."),
 	world.AgeQuantum:      vibe.E("ui.mapstyle.space.lock.quantum_age", "Opens in the Quantum Age."),
+	world.AgeTranscendent: vibe.E("ui.mapstyle.space.lock.transcendent_age", "Opens in the Transcendent Age."),
 }
 
 // heldLines say whether the people hold a sector or can go to a star. Placeholders.
@@ -102,6 +103,8 @@ var (
 	uncertainName = vibe.E("ui.mapstyle.space.uncertain.name", "Uncertain")
 	uncertainLook = vibe.E("ui.mapstyle.space.uncertain.look", "Uncertain. Look closer to settle it.")
 	settledLook   = vibe.E("ui.mapstyle.space.uncertain.settled", "Settled.")
+	tooFarLine    = vibe.E("ui.mapstyle.space.web.too_far", "Too far to enter.")
+	localGroup    = vibe.E("ui.mapstyle.space.web.local_group", "Local Group")
 )
 
 var (
@@ -119,6 +122,7 @@ func SkyName(key string) string {
 			"satellite":     satName,
 			"space_station": stnName,
 			"pluto":         plutoName,
+			"local_group":   localGroup,
 		}
 		for k, e := range moonNames {
 			nameOf[k] = e
@@ -172,7 +176,7 @@ func madeUp(s string) string {
 func hostedZoom(star bool, k world.FrameKind) string {
 	z := zCloseUp
 	switch {
-	case star && k == world.FrameLocalGroup:
+	case star && (k == world.FrameLocalGroup || k == world.FrameWeb):
 		z = zCosmos
 	case star && (k == world.FrameGalaxy || k == world.FrameRegion): // no rung of its own for the arm: it is still the galaxy's overview
 		z = zOverview
@@ -230,7 +234,14 @@ func (v *view) hostedInspect(m *mapmodel.Model) (Inspection, bool) {
 		if !m.Settled[o.Key] {
 			return Inspection{Title: uncertainName.String(), Lines: []string{uncertainLook.String()}}, true
 		}
-		return Inspection{Title: SkyName(o.Label), Lines: []string{settledLook.String()}}, true
+		lines := []string{settledLook.String()}
+		if o.Kind == world.KindCluster {
+			lines = append(lines, tooFarLine.String())
+		}
+		return Inspection{Title: SkyName(o.Label), Lines: lines}, true
+	}
+	if o.Kind == world.KindStrand { // a filament is its building line
+		return Inspection{Title: SkyName(o.Label)}, true
 	}
 	if strings.HasPrefix(o.Label, "~") { // a sector or star the seed made up: its name, and whether the people hold it
 		return Inspection{Title: SkyName(o.Label), Lines: []string{heldLines[hl{o.Form == world.FormZone, o.Held}].String()}}, true

@@ -103,7 +103,7 @@ func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 		return
 	}
 	v.ch = newChain(w.Root)
-	if f := w.Galaxy(v.gal); v.gal != "" && f != nil && len(v.ch) > 1 {
+	if f, li := w.Galaxy(v.gal), v.ch.idx(world.FrameLocalGroup); v.gal != "" && f != nil && li >= 0 && len(v.ch) > li+1 {
 		v.ch = v.ch.withGalaxy(f)
 	} else {
 		v.gal = ""
@@ -166,12 +166,19 @@ func (v *View) home() {
 // centre puts the Milky Way in the middle at the Local Group and in the upper
 // half of the Galaxy band (so the whole disc is in view), Sol anywhere deeper.
 func (v *View) centre() {
-	key := "sol"
-	if v.ch[0].f.Kind == world.FrameLocalGroup && (len(v.ch) < 2 || v.z >= (v.ch[1].bmin+v.ch[1].bmax)/2) {
-		key = "milky_way"
+	l, key, li := 0, "sol", v.ch.idx(world.FrameLocalGroup)
+	switch {
+	case li < 0:
+	case li > 0 && v.z >= (v.ch[li].bmin+v.ch[li].bmax)/2: // the whole web: the Local Group is its node near the middle
+		key = "local_group"
+	default:
+		l = li
+		if len(v.ch) < li+2 || v.z >= (v.ch[li+1].bmin+v.ch[li+1].bmax)/2 {
+			key = "milky_way"
+		}
 	}
-	p, _ := v.ch.objPos(0, key)
-	v.pick, v.sel, v.off = -1, selection{}, v.ch.centreIn(0, v.m, p)
+	p, _ := v.ch.objPos(l, key)
+	v.pick, v.sel, v.off = -1, selection{}, v.ch.centreIn(l, v.m, p)
 	v.dirty = true
 }
 
