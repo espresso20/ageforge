@@ -1,5 +1,7 @@
 package world
 
+import "sync"
+
 // FrameKind says what a frame holds.
 type FrameKind uint8
 
@@ -125,6 +127,7 @@ type Body struct {
 	Kind     string  // "rocky", "gas", "ice", "dwarf", "moon", "belt", "comet"
 	Earths   float64 // physical radius, in Earth radii (planets); Object.Size is the art size
 	StationN int     // stations in its close-up
+	Settled  int     // colonies of the people on it (generated systems)
 }
 
 // World is the whole sky for one save.
@@ -133,6 +136,9 @@ type World struct {
 	Age  string
 	Root *Frame // the outermost frame of the age's gate: the locked one if there is one (see GateOf)
 	Key  uint64 // ChangeKey of what it was built from
+
+	mu  sync.Mutex        // guards sys
+	sys map[string]*Frame // generated near-star systems, built on first ask
 }
 
 // Find returns the frame of kind k at or below f, or nil.
