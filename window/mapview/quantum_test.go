@@ -191,3 +191,30 @@ func TestLocalGroupStaysLockedAtGalactic(t *testing.T) {
 		t.Error("Andromeda has a frame at Galactic")
 	}
 }
+
+// Tab (Next) puts focus on a place without a click: an uncertain one settles
+// the same way, and the state handed to the ui already says so.
+func TestTabSettlesAnUncertainPlace(t *testing.T) {
+	v := quantum(t)
+	and := v.objAt(1, "andromeda")
+	z, _ := zFor(v, 1)
+	at(v, z, 1, and.Pos)
+	var got []State
+	v.OnChange(func(s State) { got = append(got, s) })
+	for i := 0; i < len(v.ch[v.m].f.Objects); i++ {
+		v.Do(Cmd{Op: Next})
+		if o := v.objAt(v.sel.fi, v.sel.key); o != nil && o.Doubt > 0 {
+			if !v.isSettled(o) {
+				t.Fatalf("Tab focused %s and did not settle it", o.Key)
+			}
+			if taken := v.TakeSettled(); len(taken) != 1 || taken[0] != o.Key {
+				t.Fatalf("Tab settled %v, want [%s]", taken, o.Key)
+			}
+			if last := got[len(got)-1]; last.Sel == nil || last.Sel.Key != o.Key || !last.Settled {
+				t.Fatalf("the state after Tab is %+v: it should name %s as settled", last, o.Key)
+			}
+			return
+		}
+	}
+	t.Fatal("Tab never reached an uncertain place")
+}
