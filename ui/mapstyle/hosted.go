@@ -53,7 +53,7 @@ var (
 	solName   = vibe.E("ui.mapstyle.space.sun.01", "Sol")
 	moonName  = vibe.E("ui.mapstyle.space.moon.01", "The Moon")
 	satName   = vibe.E("ui.mapstyle.space.satellite.01", "Satellite")
-	stnName   = vibe.E("ui.mapstyle.space.station.01", "Orbital Space Station")
+	stnName   = vibe.E("ui.mapstyle.space.station.name", "Orbital Space Station")
 	plutoName = vibe.E("ui.mapstyle.space.planet.pluto", "Pluto")
 )
 
