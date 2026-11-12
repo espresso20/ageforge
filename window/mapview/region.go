@@ -239,27 +239,54 @@ func (p *pen) armStars(dx, dy float64, seed int64) {
 // cluster is a scatter of bright points: mostly single pixels, a few brighter
 // with a glint, in the cluster's colour and white and a cooler blue.
 func (p *pen) cluster(o *world.Object, x, y, r float64) {
-	n := min(80, max(6, int(r*2.4)))
+	n := min(90, max(10, int(r*2.6)))
 	seed := hashKey(o.Key)
-	tones := [...]world.Tone{o.Tone, world.ToneWhite, o.Tone, world.ToneCool}
+	warm := o.Tone == world.ToneAmber // the Hyades: old, orange giants among the members
+	// thin the background field under the cluster so the members stand out
+	if x+r > 0 && y+r > 0 && x-r < float64(p.w) && y-r < float64(p.h) && r < 400 {
+		ox, oy := p.pinned()
+		for yy := max(0, int(y-r*1.2)); yy <= min(p.h-1, int(y+r*1.2)); yy++ {
+			for xx := max(0, int(x-r*1.2)); xx <= min(p.w-1, int(x+r*1.2)); xx++ {
+				dx, dy := float64(xx)-x, float64(yy)-y
+				if d := math.Sqrt(dx*dx+dy*dy) / (r * 1.2); d < 1 && 1.1*(1-d) > Bayer(xx+ox, yy+oy) {
+					i := p.img.PixOffset(xx, yy)
+					p.img.Pix[i], p.img.Pix[i+1], p.img.Pix[i+2] = p.img.Pix[i]/3, p.img.Pix[i+1]/3, p.img.Pix[i+2]/3
+				}
+			}
+		}
+	}
+	type mem struct{ x, y float64 }
+	var bright []mem
 	for i := 0; i < n; i++ {
 		h := hash2(i, 7, seed)
 		a := float64(h&0xffff) / 65536 * 2 * math.Pi
-		d := r * math.Sqrt(-math.Log(1-.97*float64(h>>16)/65536)) * .8
-		d = math.Min(d, r)
+		d := math.Min(r*math.Sqrt(-math.Log(1-.97*float64(h>>16)/65536))*.7, r)
 		sx, sy := x+d*math.Cos(a), y+d*math.Sin(a)
-		t := tones[h>>3&3]
-		big := hash2(i, 9, seed)
+		t := world.ToneCool // hot blue-white
+		if warm && i%5 == 0 {
+			t = world.ToneAmber
+		} else if warm {
+			t = world.ToneWhite
+		} else if i%4 == 0 {
+			t = world.ToneWhite
+		}
 		switch {
-		case big%23 == 0 && r >= 5: // a bright member: a disc and a glint
-			p.disc(sx, sy, 1.2, t, 255)
-			for _, g := range [4][2]float64{{-2, 0}, {2, 0}, {0, -2}, {0, 2}} {
-				p.px(int(math.Round(sx+g[0])), int(math.Round(sy+g[1])), p.pal.Mix(t, 150))
+		case i < 7 && r >= 5: // the brightest: 2-3 px with a glint
+			big := 1.0 + float64(hash2(i, 9, seed)%3)*.4
+			p.disc(sx, sy, big, t, 255)
+			for _, g := range [4][2]float64{{-3, 0}, {3, 0}, {0, -3}, {0, 3}} {
+				p.px(int(math.Round(sx+g[0])), int(math.Round(sy+g[1])), p.pal.Mix(t, 170))
 			}
-		case big%3 == 0:
+			bright = append(bright, mem{sx, sy})
+		case i%3 == 0:
 			p.px(int(math.Round(sx)), int(math.Round(sy)), p.pal.Mix(t, 255))
 		default:
-			p.px(int(math.Round(sx)), int(math.Round(sy)), p.pal.Mix(t, uint8(110+big>>8&0x5f)))
+			p.px(int(math.Round(sx)), int(math.Round(sy)), p.pal.Mix(t, uint8(150+hash2(i, 11, seed)>>8&0x4f)))
+		}
+	}
+	if !warm { // the Pleiades' reflection haze round its brightest members
+		for _, m := range bright {
+			p.glow(m.x, m.y, math.Max(5, r*.35), world.ToneBlue, 90)
 		}
 	}
 }
@@ -308,6 +335,8 @@ func (p *pen) nebula(o *world.Object, art *artCache, x, y, r float64) {
 				case d*3.2 > th+.35:
 					i := p.img.PixOffset(xx, yy)
 					p.img.Pix[i], p.img.Pix[i+1], p.img.Pix[i+2] = p.img.Pix[i]/3, p.img.Pix[i+1]/3, p.img.Pix[i+2]/3
+				case d*3.2 > th-.6: // the bright rim of the cloud behind it
+					p.px(xx, yy, p.pal.Mix(world.TonePink, 235))
 				}
 				continue
 			}
@@ -327,7 +356,7 @@ func (p *pen) region(o *world.Object, x, y, r float64, art *artCache, seed int64
 	case world.FormCluster:
 		p.cluster(o, x, y, math.Max(r, 4))
 	case world.FormDark:
-		p.nebula(o, art, x, y, math.Max(r*.7, 3))
+		p.nebula(o, art, x, y, math.Max(r*.4, 3))
 	case world.FormEmission, world.FormRemnant:
 		p.nebula(o, art, x, y, math.Max(r, 3))
 	case world.FormKnot:

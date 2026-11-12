@@ -61,7 +61,8 @@ func (s *script) step(g *Game) bool {
 		case "focus":
 			g.sky.focus(v[0], v[1])
 		case "wheel":
-			g.sky.wheel(v[0], v[1], float64(v[2]))
+			f, _ := strconv.ParseFloat(strings.Fields(arg + " 0 0 0")[2], 64) // steps may be fractions
+			g.sky.wheel(v[0], v[1], f)
 		case "drag":
 			_, _, n := g.sky.size()
 			g.sky.pan(float64((v[2]-v[0])*n), float64((v[3]-v[1])*n))
