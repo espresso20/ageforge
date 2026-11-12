@@ -2,6 +2,8 @@ package mapview
 
 import (
 	"bytes"
+	"image"
+	"math"
 	"testing"
 
 	"github.com/espresso20/ageforge/world"
@@ -100,5 +102,69 @@ func TestCameraMovesDoNotRebuildSprites(t *testing.T) {
 	v.Render(tw, th)
 	if n := v.bod.builds.Load(); n != built {
 		t.Errorf("sprites built went from %d to %d while the camera moved", built, n)
+	}
+}
+
+// At whole-system zoom the display squeeze keeps the eight planets apart from
+// each other and from Sol, wherever each sits on its orbit.
+func TestPlanetsSitApartAtWholeSystemZoom(t *testing.T) {
+	v := nearView(t)
+	const w, h = 384, 236 // the real window's canvas
+	// the zoom at which Pluto's orbit just fits the canvas height
+	ppu := .94 * h / 2 / squeeze(v.ch[4].f, world.PlutoAU)
+	at(v, math.Log10(w/ppu*v.ch[4].mx), 4, world.Vec{})
+	if v.m != 4 {
+		t.Fatalf("whole-system zoom is in frame %d, not the system", v.m)
+	}
+	p := v.penFor(image.NewRGBA(image.Rect(0, 0, w, h)), 4, v.snapped(w))
+	sx, sy := p.at(world.Vec{})
+	type pt struct {
+		key  string
+		x, y float64
+	}
+	var ps []pt
+	for _, o := range planets(v) {
+		if o.Key == "pluto" {
+			continue
+		}
+		x, y := p.at(o.Pos)
+		if x < 0 || y < 0 || x > w || y > h {
+			t.Errorf("%s is off the canvas at %.0f,%.0f", o.Key, x, y)
+		}
+		if d := math.Hypot(x-sx, y-sy); d < 6 {
+			t.Errorf("%s is %.1f px from Sol", o.Key, d)
+		}
+		ps = append(ps, pt{o.Key, x, y})
+	}
+	if len(ps) != 8 {
+		t.Fatalf("%d planets", len(ps))
+	}
+	for i := range ps {
+		for j := i + 1; j < len(ps); j++ {
+			if d := math.Hypot(ps[i].x-ps[j].x, ps[i].y-ps[j].y); d < 6 {
+				t.Errorf("%s and %s are %.1f px apart", ps[i].key, ps[j].key, d)
+			}
+		}
+	}
+	// the belts and Pluto lie between their neighbours, not on them
+	rb := squeeze(p.f, world.BeltAU) * p.ppu
+	for _, q := range ps {
+		if d := math.Abs(math.Hypot(q.x-sx, q.y-sy) - rb); d < 6 {
+			t.Errorf("%s is %.1f px from the asteroid belt", q.key, d)
+		}
+	}
+}
+
+// Picking, panning and drawing share one mapping: the squeeze inverts.
+func TestSystemSqueezeInverts(t *testing.T) {
+	f := &world.Frame{Kind: world.FrameSystem}
+	for _, r := range []float64{.01, .39, 1, 5.2, 39.5, 140} {
+		if got := unsqueeze(f, squeeze(f, r)); math.Abs(got-r) > 1e-9*r {
+			t.Errorf("unsqueeze(squeeze(%v)) = %v", r, got)
+		}
+	}
+	pt := world.Vec{X: 3, Y: -4}
+	if got := undisp(f, disp(f, pt)); math.Hypot(got.X-3, got.Y+4) > 1e-9 {
+		t.Errorf("undisp(disp) = %v", got)
 	}
 }

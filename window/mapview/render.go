@@ -8,23 +8,60 @@ import (
 	"github.com/espresso20/ageforge/world"
 )
 
-// regionPos is the display position of a point in a frame. The Orion arm's
-// features are at true distance, which would put every near one on top of
-// Sol, so the region squeezes distance with a square root like the terminal
-// map did; this is a drawing choice and the world keeps the true numbers.
+// Display squeezes. The world keeps true numbers; these are drawing choices
+// that spread what the real distances bunch up. The region squeezes distance
+// with a square root like the terminal map did (the Orion arm's near features
+// would sit on Sol); the system squeezes with a logarithm, the orrery trick,
+// so Mercury to Neptune keep a few pixels apart in one view. Both are radial
+// and monotone, so every place that turns a point into a pixel (drawing,
+// picking, labels, panning, the handover to the close-up) goes through them.
+const (
+	regionSqueeze = 8500 // ly: where the region's squeeze leaves distance alone
+	sysEdge       = .39  // AU: Mercury, where the system's curve turns from a line to a log
+	sysInner      = .4   // display length of the line, against the log's 1 per e-fold
+	sysScale      = 7.87 // display units per e-fold, so Pluto sits near 40 as it did unsqueezed
+)
+
+// squeeze is the display length of the true length r in frame f.
+func squeeze(f *world.Frame, r float64) float64 {
+	switch f.Kind {
+	case world.FrameRegion:
+		return math.Sqrt(r * regionSqueeze)
+	case world.FrameSystem:
+		if r <= sysEdge {
+			return sysScale * sysInner * r / sysEdge
+		}
+		return sysScale * (sysInner + math.Log(r/sysEdge))
+	}
+	return r
+}
+
+// unsqueeze inverts squeeze.
+func unsqueeze(f *world.Frame, d float64) float64 {
+	switch f.Kind {
+	case world.FrameRegion:
+		return d * d / regionSqueeze
+	case world.FrameSystem:
+		if d <= sysScale*sysInner {
+			return d / (sysScale * sysInner) * sysEdge
+		}
+		return sysEdge * math.Exp(d/sysScale-sysInner)
+	}
+	return d
+}
+
+// regionPos is the display position of a point in a frame.
 func regionPos(f *world.Frame, p world.Vec) world.Vec {
-	if f.Kind != world.FrameRegion {
+	if f.Kind != world.FrameRegion && f.Kind != world.FrameSystem {
 		return p
 	}
 	r := math.Hypot(p.X, p.Y)
 	if r == 0 {
 		return p
 	}
-	s := math.Sqrt(r/regionSqueeze) * regionSqueeze / r
+	s := squeeze(f, r) / r
 	return world.Vec{X: p.X * s, Y: p.Y * s}
 }
-
-const regionSqueeze = 8500 // ly: where the squeeze leaves distance alone
 
 // A pen draws one frame onto a canvas.
 type pen struct {
@@ -159,7 +196,7 @@ func (p *pen) object(o *world.Object) {
 // point (the origin); solid says every pixel or every other one.
 func (p *pen) ring(_ int, ru float64, t world.Tone, w uint8, solid bool) {
 	x0, y0 := p.at(world.Vec{})
-	r := ru * p.ppu
+	r := squeeze(p.f, ru) * p.ppu
 	if r < 3 || x0+r < 0 || y0+r < 0 || x0-r > float64(p.w) || y0-r > float64(p.h) {
 		return
 	}

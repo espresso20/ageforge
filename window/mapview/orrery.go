@@ -242,7 +242,7 @@ func (p *pen) guides() {
 		case o.Kind == world.KindBelt:
 			p.belt(o)
 		case (o.Kind == world.KindPlanet || o.Kind == world.KindComet) && o.Body != nil && o.Body.Orbit > 0:
-			p.orbit(o.Body.Orbit*p.ppu, col)
+			p.orbit(squeeze(p.f, o.Body.Orbit)*p.ppu, col)
 		}
 	}
 }
@@ -281,7 +281,7 @@ func (p *pen) orbit(R float64, col color.RGBA) {
 // angle and a spread across it) from its number alone, so the belt holds still
 // as the camera moves and only spreads as the zoom closes in.
 func (p *pen) belt(o *world.Object) {
-	R := o.Size * p.ppu
+	R := squeeze(p.f, o.Size) * p.ppu
 	if R < 3 || R > 1e7 {
 		return
 	}
@@ -289,7 +289,7 @@ func (p *pen) belt(o *world.Object) {
 	if cx+R < 0 || cy+R < 0 || cx-R > float64(p.w) || cy-R > float64(p.h) {
 		return
 	}
-	hw := math.Max(o.Size*.13*p.ppu, 1.5)
+	hw := math.Max((squeeze(p.f, o.Size*1.13)-squeeze(p.f, o.Size*.87))/2*p.ppu, 1.5)
 	seed := hashKey(o.Key)
 	rocks := 900
 	if o.Tone != world.ToneRock {
