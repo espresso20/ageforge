@@ -67,10 +67,26 @@ const (
 	KindShip                   // a ship
 )
 
+// Form is what a feature looks like: the arm's band, a cluster of stars, a
+// glowing or dark cloud, a remnant, a knot of the arm or the people's reach.
+type Form uint8
+
+const (
+	FormNone      Form = iota
+	FormBand           // the arm's band of faint stars and dust
+	FormCluster        // an open cluster: bright points
+	FormEmission       // an emission nebula: a pink cloud with dark filaments
+	FormDark           // a dark nebula: a silhouette against the stars
+	FormRemnant        // a supernova remnant: a shell of filaments
+	FormKnot           // a small star-forming knot of the arm
+	FormTerritory      // the people's reach, a ring round Sol
+)
+
 // Object is anything the map shows. Not every field means something for every
 // kind; the comments on the fields say which kinds read them.
 type Object struct {
 	Kind ObjKind
+	Form Form   // KindFeature: how it looks
 	Key  string // unique within the frame
 	// Label and Inspect are vibe keys: the name the map writes by the object
 	// and the text the inspect panel shows. Empty means unlabelled/unpickable.

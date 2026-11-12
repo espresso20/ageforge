@@ -83,6 +83,9 @@ func galaxyFrame(m *mapmodel.Model, seed int64, g *Galaxy, t Territory) *Frame {
 	return f
 }
 
+// armForms is what each of the arm's named objects is, in SkyObjects order.
+var armForms = [ArmObjects]Form{FormEmission, FormDark, FormCluster, FormCluster, FormRemnant, FormEmission, FormEmission, FormEmission}
+
 // regionFrame is the Orion arm round Sol: the named nebulae and clusters at
 // their true distance and bearing, the arm's pink knots, and Sol at the
 // centre. The terminal map squeezes distance with a square root so the near
@@ -90,7 +93,7 @@ func galaxyFrame(m *mapmodel.Model, seed int64, g *Galaxy, t Territory) *Frame {
 func regionFrame(seed int64, colonies int) *Frame {
 	f := &Frame{Kind: FrameRegion, Key: "orion_arm", Unit: UnitLy, Anchor: "sol", Radius: ArmReachLy,
 		Band: Band{Min: 400, Max: 18000}}
-	f.Objects = append(f.Objects, Object{Kind: KindFeature, Key: "arm_band", Size: ArmReachLy, Tone: ToneArm, Weight: 120,
+	f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: FormBand, Key: "arm_band", Size: ArmReachLy, Tone: ToneArm, Weight: 120,
 		Pos: polar(0, 0), To: polar(ArmReachLy, ArmBandDeg*Turn/360)})
 	for i, o := range SkyObjects[:ArmObjects] {
 		a := (o.Lon - 60) * Turn / 360
@@ -98,18 +101,22 @@ func regionFrame(seed int64, colonies int) *Frame {
 			a += ArmSkew * Turn / 360
 		}
 		pos := polar(float64(o.Ly), -a) // the screen's y runs down
-		f.Objects = append(f.Objects, Object{Kind: KindFeature, Key: o.Key, Label: o.Key, Inspect: o.Key, Pos: pos,
-			Size: float64(ArmRadii[i]) * ArmReachLy / 100, Tone: ToneBlue, Weight: 220, Pick: true})
+		tone := ToneBlue
+		if o.Key == "hyades" {
+			tone = ToneAmber // the old cluster's stars are orange giants
+		}
+		f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: armForms[i], Key: o.Key, Label: o.Key, Inspect: o.Key, Pos: pos,
+			Size: float64(ArmRadii[i]) * ArmReachLy / 100, Tone: tone, Weight: 220, Pick: true})
 	}
 	wd := ArmReachLy / 5
 	for i := 0; i < 11; i++ {
 		u := float64((Roll(2*ArmReachLy, seed, 7051, int64(i)) - ArmReachLy) * 11 / 10)
 		v := float64((Roll(2*wd, seed, 7052, int64(i)) - wd) / 2)
 		c, s := float64(Cos4096(ArmBandDeg*Turn/360))/1024, float64(Sin4096(ArmBandDeg*Turn/360))/1024
-		f.Objects = append(f.Objects, Object{Kind: KindFeature, Key: "knot_" + itoa(i), Pos: Vec{u*c + v*s, -u*s + v*c},
+		f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: FormKnot, Key: "knot_" + itoa(i), Pos: Vec{u*c + v*s, -u*s + v*c},
 			Size: float64(2+Roll(3, seed, 7053, int64(i))) * ArmReachLy / 100, Tone: TonePink, Weight: 90})
 	}
-	f.Objects = append(f.Objects, Object{Kind: KindFeature, Key: "territory", Size: float64(ArmReachLy * (10 + min(colonies, 17)) / 100),
+	f.Objects = append(f.Objects, Object{Kind: KindFeature, Form: FormTerritory, Key: "territory", Size: float64(ArmReachLy * (10 + min(colonies, 17)) / 100),
 		Tone: ToneGold, Weight: 24, Gated: "lineage"})
 	f.Objects = append(f.Objects, Object{Kind: KindStar, Key: "sol", Label: "sol", Inspect: "sol", Tone: ToneSun, Weight: 255, Pick: true,
 		Star: &Look{Tone: ToneSun, Size: 1, Weight: 255, Extra: ToneWhite}})

@@ -34,16 +34,18 @@ func (p *pen) disc(x, y, r float64, t world.Tone, w uint8) {
 	}
 }
 
-// blob is a soft circle: dithered thinner toward its edge.
-func (p *pen) blob(x, y, r float64, t world.Tone, w uint8) {
-	if r > 6000 || x+r < 0 || y+r < 0 || x-r > float64(p.w) || y-r > float64(p.h) {
+// glow is the soft light round a star: a dither that thins to nothing at r,
+// pinned to the sky so a pan does not shimmer it.
+func (p *pen) glow(x, y, r float64, t world.Tone, w uint8) {
+	if x+r < 0 || y+r < 0 || x-r > float64(p.w) || y-r > float64(p.h) {
 		return
 	}
 	col := p.pal.Mix(t, w)
+	ox, oy := p.pinned()
 	for yy := max(0, int(y-r)); yy <= min(p.h-1, int(y+r)); yy++ {
 		for xx := max(0, int(x-r)); xx <= min(p.w-1, int(x+r)); xx++ {
 			dx, dy := float64(xx)-x, float64(yy)-y
-			if d := (dx*dx + dy*dy) / (r * r); d <= 1 && 1-d > Bayer(xx, yy) {
+			if d := math.Sqrt(dx*dx+dy*dy) / r; d <= 1 && (1-d)*(1-d)*1.4 > Bayer(xx+ox, yy+oy) {
 				p.px(xx, yy, col)
 			}
 		}
@@ -61,7 +63,8 @@ func (p *pen) rect(x, y, half float64, t world.Tone, w uint8) {
 	p.px(int(math.Round(x)), int(math.Round(y)), col)
 }
 
-// line clips to the canvas and draws a one-pixel line, dim by weight.
+// line clips to the canvas and draws a one-pixel line of the weight w, as a
+// dither that thins with length: a long lane is a fainter one.
 func (p *pen) line(x0, y0, x1, y1 float64, t world.Tone, w uint8) {
 	t0, t1 := 0.0, 1.0
 	dx, dy := x1-x0, y1-y0
@@ -83,12 +86,18 @@ func (p *pen) line(x0, y0, x1, y1 float64, t world.Tone, w uint8) {
 	if t0 >= t1 {
 		return
 	}
+	span := math.Hypot(dx, dy)
+	keep := 1.15 / (1 + span/90) // the share of its pixels a lane of this length keeps
 	x0, y0, x1, y1 = x0+t0*dx, y0+t0*dy, x0+t1*dx, y0+t1*dy
 	col := p.pal.Mix(t, w)
+	ox, oy := p.pinned()
 	n := int(math.Max(math.Abs(x1-x0), math.Abs(y1-y0))) + 1
 	for i := 0; i <= n; i++ {
 		f := float64(i) / float64(n)
-		p.px(int(math.Round(x0+(x1-x0)*f)), int(math.Round(y0+(y1-y0)*f)), col)
+		xx, yy := int(math.Round(x0+(x1-x0)*f)), int(math.Round(y0+(y1-y0)*f))
+		if Bayer(xx+ox, yy+oy) < keep {
+			p.px(xx, yy, col)
+		}
 	}
 }
 
@@ -102,14 +111,37 @@ func (p *pen) ring2(x, y, r float64, col color.RGBA) {
 	}
 }
 
-// star is a lit disc with a dithered glow ring round it, three art pixels
-// across at least; size is the star class (1 a dwarf, 3 the sun's size).
+// star is a lit disc with a dithered glow round it; size is the star class (1
+// a dwarf, 3 the sun's size). A binary is a second, smaller disc close beside
+// the first, on a side the star's name picks.
 func (p *pen) star(x, y float64, o *world.Object) {
 	r := starRadius(o)
-	p.blob(x, y, r+2.5, o.Tone, o.Weight/2)
+	p.glow(x, y, r+3.5, o.Tone, uint8(int(o.Weight)*2/3))
 	p.disc(x, y, r, o.Tone, o.Weight)
-	if o.Star != nil && o.Star.Extra != world.ToneNone && r >= 2 {
+	if o.Star == nil {
+		return
+	}
+	if o.Star.Extra != world.ToneNone && r >= 2 {
 		p.disc(x, y, r*.45, o.Star.Extra, 255) // the hot core
+	}
+	if o.Star.Pair != world.ToneNone {
+		a := float64(hashKey(o.Key)%360) * math.Pi / 180
+		d := r + 1.6
+		p.disc(x+d*math.Cos(a), y+d*math.Sin(a), math.Max(.8, r*.7), o.Star.Pair, o.Weight)
+	}
+}
+
+// colonyMark is a bracket in the player's colour round a lit star: four
+// corners, each an L two art pixels long.
+func (p *pen) colonyMark(x, y float64, o *world.Object) {
+	col := p.pal.Mix(o.Tone, o.Weight)
+	xi, yi := int(math.Round(x)), int(math.Round(y))
+	e := int(starRadius(o)) + 5
+	for _, s := range [4][2]int{{-1, -1}, {1, -1}, {-1, 1}, {1, 1}} {
+		for i := 0; i < 3; i++ {
+			p.px(xi+s[0]*(e-i), yi+s[1]*e, col)
+			p.px(xi+s[0]*e, yi+s[1]*(e-i), col)
+		}
 	}
 }
 

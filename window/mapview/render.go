@@ -36,6 +36,8 @@ type pen struct {
 	cx, cy float64   // canvas centre
 	w, h   int
 	tex    *texCache
+	art    *artCache
+	seed   int64
 }
 
 // paint draws chain frame i, with the view centred on master-frame offset off.
@@ -49,7 +51,10 @@ func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
 func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 	b := img.Bounds()
 	p := pen{img: img, pal: &v.pal, f: v.ch[i].f, c: v.ch.centreIn(v.m, i, off),
-		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex}
+		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art}
+	if v.w != nil {
+		p.seed = v.w.Seed
+	}
 	p.cx, p.cy = float64(p.w)/2, float64(p.h)/2
 	return p
 }
@@ -86,6 +91,11 @@ func (p *pen) frame() {
 		p.disc(x, y, p.ppu, world.ToneBlue, 255)
 		p.disc(x, y, p.ppu*0.6, world.ToneTeal, 160)
 	}
+	if p.f.Kind == world.FrameNeighbourhood { // the faint distance rings, a dotted circle every RingLy
+		for ly := float64(world.RingLy); ly < p.f.Radius; ly += world.RingLy {
+			p.ring(0, ly, world.ToneNone, 45, false)
+		}
+	}
 	for i := range p.f.Objects {
 		p.object(&p.f.Objects[i])
 	}
@@ -98,13 +108,8 @@ func (p *pen) object(o *world.Object) {
 	case world.KindGalaxy:
 		p.galaxy(o, x, y, r)
 	case world.KindFeature:
-		switch {
-		case len(o.Path) > 1: // the home arm: the galaxy's own light draws it
-		case o.To != (world.Vec{}) || o.Key == "arm_band":
-			tx, ty := p.at(o.To)
-			p.line(x, y, tx, ty, o.Tone, o.Weight)
-		default:
-			p.blob(x, y, math.Max(r, 1), o.Tone, o.Weight)
+		if len(o.Path) <= 1 { // the home arm's path is drawn by the galaxy's own light
+			p.region(o, x, y, r, p.art, p.seed)
 		}
 	case world.KindLane:
 		tx, ty := p.at(o.To)
@@ -125,6 +130,8 @@ func (p *pen) object(o *world.Object) {
 		p.rect(x, y, math.Min(8, math.Max(2, r)), o.Tone, o.Weight)
 	case world.KindStar:
 		p.star(x, y, o)
+	case world.KindColony:
+		p.colonyMark(x, y, o)
 	default: // systems, colonies, rifts, the gate
 		p.disc(x, y, math.Max(1, r), o.Tone, o.Weight)
 	}
