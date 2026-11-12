@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, the Interstellar Age opens the near stars: each can be entered and holds a seeded solar system (real exoplanets where they are known, a belt now and then), every planet of it has a close-up, and your colonies stand at their star and on a planet there. Labels on a locked level now dim with it.
 - In the window, the space map opens by age: the solar system in the Space Age, the near stars in the Interstellar Age, the Orion Arm and the galaxy in the Galactic Age and the Local Group after that, with the next level up shown grayed and locked. Every planet of the solar system can be entered for a close-up with its named moons, space station labels now show, and Earth inspects as Earth.
 - In the window, the deepest space zoom is a pixel-art close-up of the home planet: Earth as a large lit sphere, the Moon on a dim dotted orbit, and small code-drawn stations, ships and satellites kept off the planet's disc. The selection ring leaves small objects clear, and clicks pick every planet and body at any zoom.
 - In the window, solar systems on the space map are pixel-art orreries: dithered orbits, lit pixel-sphere planets with bands, rings and moons, scattered belts and a glowing star. Region objects such as the Orion Nebula and the Pleiades stay drawn as you zoom toward them, the Horsehead is a horse-head silhouette, and the scale label no longer says INNER in the wrong bands.

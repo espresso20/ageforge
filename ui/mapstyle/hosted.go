@@ -1,6 +1,7 @@
 package mapstyle
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/espresso20/ageforge/mapgen"
@@ -118,6 +119,11 @@ func SkyName(key string) string {
 	}
 	if _, ok := mapmodel.LineageNames[key]; ok {
 		return lineageLabel(key)
+	}
+	if i := strings.LastIndexByte(key, '_'); i > 0 && len(key)-i == 2 { // a generated planet or companion: its star's name and the letter
+		if e, ok := nameOf[key[:i]]; ok {
+			return e.String() + " " + key[i+1:]
+		}
 	}
 	return ""
 }
