@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/platform/steam"
 )
 
 // account_badges.go is the account's side of the badges: where they are
@@ -402,6 +403,10 @@ func (a *Account) grantLocked(book *badgeBook, def *config.BadgeDef, ctx badgeCt
 	if t := def.Reward.Theme; t != "" && !slices.Contains(a.Unlocks.Themes, t) {
 		a.Unlocks.Themes = append(a.Unlocks.Themes, t)
 	}
+	// Queue the Steam achievement too (a no-op without the steam build tag
+	// or an entry for the badge). Silent catch-up badges count: Steam sets
+	// an achievement once.
+	steam.Unlock(def.Key)
 	if !silent {
 		a.pendingEarned = append(a.pendingEarned, def.Key)
 	}

@@ -349,6 +349,18 @@ Text built in ordinary code (panels, log lines, refusals) needs no entry: the re
 
 ---
 
+## Steam build
+
+`go build -tags steam` makes the Steam build of the window. It starts Steamworks before the window opens, runs Steam's callbacks every frame, and unlocks Steam achievements for badges listed in `platform/steam` (`achievements`, empty until the shortlist is decided). It switches off the self-updater and the Nerd Font download, since Steam delivers updates. A build without the tag imports nothing from Steam. The App ID in `platform/steam` is 480 (Spacewar) until AgeForge has its own.
+
+To run it locally:
+
+1. Start the Steam client and sign in.
+2. Put a file named `steam_appid.txt` containing `480` next to the executable (it is git-ignored; never commit it).
+3. Build with the tag and run it: `go build -tags steam -o ageforge . && ./ageforge`.
+
+`make steam` cross-builds Windows, macOS (arm64) and Linux into `bin/steam/`. The Windows build carries `asyncpreemptoff=1` so the Go runtime does not freeze under Steam's overlay.
+
 ## Project Structure
 
 ```

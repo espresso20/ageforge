@@ -54,6 +54,7 @@ var notScanned = map[string]string{
 	"mapmodel/fixture":      "test fixtures",
 	"pkg/nerdfont":          "the icon font installer's glyph table and system paths",
 	"pkg/sprites":           "pixel art",
+	"platform/steam":        "the Steamworks door: no player text",
 	"pkg/wordlist":          "reads the plain-text word lists, no text of its own",
 	"ui/mapstyle/capture":   "a developer capture tool, never shown in the game",
 	"ui/mapstyle/styletest": "checks shared by the map tests, never shown in the game",

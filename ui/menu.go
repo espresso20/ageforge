@@ -16,6 +16,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/platform/steam"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/vibe"
 )
@@ -123,7 +124,7 @@ type mainMenu struct {
 func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) tview.Primitive {
 	m := newMainMenu(app, pages, engine, currentVersion)
 	// Background update check: a no-op on dev builds or network errors.
-	if currentVersion != "dev" {
+	if currentVersion != "dev" && !steam.Build {
 		go func() {
 			result, err := game.CheckLatest(currentVersion)
 			if err != nil || !result.IsNewer {
@@ -151,6 +152,12 @@ func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEn
 		time.AfterFunc(menuStrikeHold, func() { app.QueueUpdateDraw(fn) })
 	}
 	m.checkUpdates = func() { showUpdateCheck(app, pages, currentVersion) }
+	if steam.Build {
+		// Steam delivers updates; the entry only says so.
+		m.checkUpdates = func() {
+			showUpdateMsg(app, pages, vibe.Line("ui.menu.newMainMenu.01", "Steam keeps this game up to date."))
+		}
+	}
 	m.refresh(true)
 	return m
 }
