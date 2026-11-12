@@ -337,32 +337,6 @@ func (f *frame) stamp(a Art, l Lot, thing Thing, look func(r rune) (rune, Paint)
 	}
 }
 
-// stampCell draws art on a parcel setting both foreground and background.
-func (f *frame) stampCell(a Art, l Lot, thing Thing, look func(r rune) Cell) {
-	w, h := a.size()
-	x0, y0 := anchor(l, w, h)
-	if thing.Kind == KindBuilding {
-		f.targets = append(f.targets, middleOf(a, x0, y0))
-	}
-	for dy, row := range a {
-		for dx, r := range []rune(row) {
-			if r == ' ' {
-				continue
-			}
-			p := Pt{X: x0 + dx, Y: y0 + dy}
-			c := look(r)
-			f.g.paint(p.X, p.Y, c)
-			f.g.mark(p.X, p.Y, thing)
-			if strings.ContainsRune(f.st.Windows, r) {
-				f.glow = append(f.glow, p)
-			}
-			if r == f.st.Chimney {
-				f.vents = append(f.vents, p)
-			}
-		}
-	}
-}
-
 // ink is the paint of an art rune: its own if the style names one, else the
 // hue of the building line, or the walls' when there is none.
 func (f *frame) ink(r rune, line Hue) Paint {
