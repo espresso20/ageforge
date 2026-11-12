@@ -8,23 +8,60 @@ import (
 	"github.com/espresso20/ageforge/world"
 )
 
-// regionPos is the display position of a point in a frame. The Orion arm's
-// features are at true distance, which would put every near one on top of
-// Sol, so the region squeezes distance with a square root like the terminal
-// map did; this is a drawing choice and the world keeps the true numbers.
+// Display squeezes. The world keeps true numbers; these are drawing choices
+// that spread what the real distances bunch up. The region squeezes distance
+// with a square root like the terminal map did (the Orion arm's near features
+// would sit on Sol); the system squeezes with a logarithm, the orrery trick,
+// so Mercury to Neptune keep a few pixels apart in one view. Both are radial
+// and monotone, so every place that turns a point into a pixel (drawing,
+// picking, labels, panning, the handover to the close-up) goes through them.
+const (
+	regionSqueeze = 8500 // ly: where the region's squeeze leaves distance alone
+	sysEdge       = .39  // AU: Mercury, where the system's curve turns from a line to a log
+	sysInner      = .4   // display length of the line, against the log's 1 per e-fold
+	sysScale      = 7.87 // display units per e-fold, so Pluto sits near 40 as it did unsqueezed
+)
+
+// squeeze is the display length of the true length r in frame f.
+func squeeze(f *world.Frame, r float64) float64 {
+	switch f.Kind {
+	case world.FrameRegion:
+		return math.Sqrt(r * regionSqueeze)
+	case world.FrameSystem:
+		if r <= sysEdge {
+			return sysScale * sysInner * r / sysEdge
+		}
+		return sysScale * (sysInner + math.Log(r/sysEdge))
+	}
+	return r
+}
+
+// unsqueeze inverts squeeze.
+func unsqueeze(f *world.Frame, d float64) float64 {
+	switch f.Kind {
+	case world.FrameRegion:
+		return d * d / regionSqueeze
+	case world.FrameSystem:
+		if d <= sysScale*sysInner {
+			return d / (sysScale * sysInner) * sysEdge
+		}
+		return sysEdge * math.Exp(d/sysScale-sysInner)
+	}
+	return d
+}
+
+// regionPos is the display position of a point in a frame.
 func regionPos(f *world.Frame, p world.Vec) world.Vec {
-	if f.Kind != world.FrameRegion {
+	if f.Kind != world.FrameRegion && f.Kind != world.FrameSystem {
 		return p
 	}
 	r := math.Hypot(p.X, p.Y)
 	if r == 0 {
 		return p
 	}
-	s := math.Sqrt(r/regionSqueeze) * regionSqueeze / r
+	s := squeeze(f, r) / r
 	return world.Vec{X: p.X * s, Y: p.Y * s}
 }
-
-const regionSqueeze = 8500 // ly: where the squeeze leaves distance alone
 
 // A pen draws one frame onto a canvas.
 type pen struct {
@@ -37,6 +74,7 @@ type pen struct {
 	w, h   int
 	tex    *texCache
 	art    *artCache
+	bod    *bodyCache
 	seed   int64
 }
 
@@ -51,7 +89,7 @@ func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
 func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 	b := img.Bounds()
 	p := pen{img: img, pal: &v.pal, f: v.ch[i].f, c: v.ch.centreIn(v.m, i, off),
-		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art}
+		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art, bod: &v.bod}
 	if v.w != nil {
 		p.seed = v.w.Seed
 	}
@@ -64,10 +102,13 @@ func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 // planet's 68 is not 68 AU): there a body is a dot whose radius grows with it.
 func (p *pen) radius(o *world.Object) float64 {
 	if o.Kind == world.KindStar {
+		if p.f.Kind == world.FrameSystem {
+			return starRadius(o) * math.Min(p.growth(), 2.5)
+		}
 		return starRadius(o)
 	}
 	if p.f.Kind == world.FrameSystem && o.Kind != world.KindBelt {
-		return 1 + o.Size/24
+		return (1 + o.Size/24) * p.growth()
 	}
 	return o.Size * p.ppu
 }
@@ -96,8 +137,14 @@ func (p *pen) frame() {
 			p.ring(0, ly, world.ToneNone, 45, false)
 		}
 	}
+	system := p.f.Kind == world.FrameSystem
+	if system {
+		p.guides()
+	}
 	for i := range p.f.Objects {
-		p.object(&p.f.Objects[i])
+		if o := &p.f.Objects[i]; !system || o.Kind != world.KindBelt {
+			p.object(o)
+		}
 	}
 }
 
@@ -117,11 +164,19 @@ func (p *pen) object(o *world.Object) {
 	case world.KindBelt:
 		p.ring(0, o.Size, o.Tone, o.Weight, true)
 	case world.KindPlanet, world.KindMoon:
+		if p.f.Kind == world.FrameSystem {
+			p.body(o, x, y, r)
+			break
+		}
 		if o.Body != nil && o.Body.Orbit > 0 {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 60, false)
 		}
 		p.planet(x, y, math.Max(1, r), o.Tone)
 	case world.KindComet:
+		if p.f.Kind == world.FrameSystem {
+			p.comet(o, x, y)
+			break
+		}
 		if o.Body != nil {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 30, false)
 		}
@@ -141,7 +196,7 @@ func (p *pen) object(o *world.Object) {
 // point (the origin); solid says every pixel or every other one.
 func (p *pen) ring(_ int, ru float64, t world.Tone, w uint8, solid bool) {
 	x0, y0 := p.at(world.Vec{})
-	r := ru * p.ppu
+	r := squeeze(p.f, ru) * p.ppu
 	if r < 3 || x0+r < 0 || y0+r < 0 || x0-r > float64(p.w) || y0-r > float64(p.h) {
 		return
 	}

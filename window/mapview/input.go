@@ -49,19 +49,22 @@ type focusTo struct {
 // disp is a point's display position in frame f: the region squeezes distance.
 func disp(f *world.Frame, p world.Vec) world.Vec { return regionPos(f, p) }
 
-// undisp inverts disp: the squeeze maps r to sqrt(r*R), so r = d*d/R.
+// undisp inverts disp.
 func undisp(f *world.Frame, d world.Vec) world.Vec {
-	if f.Kind != world.FrameRegion {
+	r := math.Hypot(d.X, d.Y)
+	if r == 0 || (f.Kind != world.FrameRegion && f.Kind != world.FrameSystem) {
 		return d
 	}
-	s := math.Hypot(d.X, d.Y) / regionSqueeze
+	s := unsqueeze(f, r) / r
 	return world.Vec{X: d.X * s, Y: d.Y * s}
 }
 
 // snapped is the centre Render draws with: whole art pixels.
 func (v *View) snapped(w int) world.Vec {
 	ppu := float64(w) * v.ch[v.m].mx / v.width()
-	return world.Vec{X: math.Round(v.off.X*ppu) / ppu, Y: math.Round(v.off.Y*ppu) / ppu}
+	f := v.ch[v.m].f
+	d := disp(f, v.off)
+	return undisp(f, world.Vec{X: math.Round(d.X*ppu) / ppu, Y: math.Round(d.Y*ppu) / ppu})
 }
 
 // objAt finds the object of chain frame fi called key.
@@ -188,7 +191,7 @@ func (v *View) Pan(dx, dy float64, w int) {
 // near is the nearest pickable object to x, y within reach: from the frames
 // on screen, the master winning a tie.
 func (v *View) near(x, y, w, h int) (sel selection, ok bool) {
-	under, over, _ := v.ch.layers(v.z)
+	under, over, _ := v.ch.layersAt(v.z, v.look())
 	off := v.snapped(w)
 	best := float64(pickReach*pickReach) + 1e-9
 	geom := &image.RGBA{Rect: image.Rect(0, 0, w, h)} // the pen only reads its size

@@ -327,6 +327,16 @@ func (g *galTex) at(lvl int, u, v float64) (out [nCh]float64) {
 	x0, y0 := int(math.Floor(fx)), int(math.Floor(fy))
 	tx, ty := fx-float64(x0), fy-float64(y0)
 	m := g.mips[lvl]
+	if x0 >= 0 && y0 >= 0 && x0+1 < s && y0+1 < s { // inside the texture: no edge tests
+		i00 := (y0*s + x0) * nCh
+		i10, i01, i11 := i00+nCh, i00+s*nCh, i00+s*nCh+nCh
+		for ch := range out {
+			a := float64(m[i00+ch])*(1-tx) + float64(m[i10+ch])*tx
+			b := float64(m[i01+ch])*(1-tx) + float64(m[i11+ch])*tx
+			out[ch] = (a + (b-a)*ty) / 255
+		}
+		return out
+	}
 	px := func(x, y, ch int) float64 {
 		if x < 0 || y < 0 || x >= s || y >= s {
 			return 0

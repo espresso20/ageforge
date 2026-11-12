@@ -1,6 +1,7 @@
 package mapview
 
 import (
+	"image"
 	"image/color"
 	"math"
 	"sync"
@@ -26,8 +27,14 @@ const (
 )
 
 // A cloud is the texture of one nebula over the square -1..1: how much light
-// (d), and where the dark filaments run through it (f).
-type cloud struct{ d, f []uint8 }
+// (d), and where the dark filaments run through it (f). A dark nebula keeps
+// its silhouette (s) in a texture of its own over a small window of the cloud,
+// so it stays crisp at a fraction of the cloud's size; sb is the silhouette's
+// bounding box in that texture's texels.
+type cloud struct {
+	d, f, s []uint8
+	sb      image.Rectangle
+}
 
 type cloudKey struct {
 	key  string
@@ -109,6 +116,48 @@ func buildDust(seed uint32) []uint8 {
 	return d
 }
 
+// The Horsehead is two things. The nebula is a glow that hugs one edge (the
+// bottom), brightest right on the rim. The silhouette is a head and neck
+// rising out of that rim, hsize of the nebula's radius tall and drawn from a
+// texture over a window hwin of the nebula's radius either side of (hx, hy).
+const (
+	hsize = .24  // the silhouette's height, in nebula radii
+	hlen  = 2.5  // that height in the shape's own units
+	hx    = -.14 // where the shape sits in the nebula, in radii from its centre
+	hy    = .58
+	hwin  = 1.6 * hsize / hlen // the window's half size, in nebula radii
+)
+
+// horse is the silhouette in window units -1..1: how dark. A head taller than
+// wide, a neck with a skull, a muzzle and an ear on top, its edges warped by
+// noise, the neck running off the bottom to the rim.
+func horse(u, v float64, seed uint32) float64 {
+	u, v = u*1.6, v*1.6+.25 // the shape's own units
+	wx := u + (fbm(u*3+11, v*3, seed, 3)-.5)*.2
+	wy := v + (fbm(u*3, v*3+23, seed+5, 3)-.5)*.2 - .1
+	capsule := func(ax, ay, bx, by, r float64) float64 {
+		px, py, dx, dy := wx-ax, wy-ay, bx-ax, by-ay
+		t := clamp01((px*dx + py*dy) / (dx*dx + dy*dy))
+		return math.Hypot(px-t*dx, py-t*dy) - r
+	}
+	sdf := capsule(.34, 1.2, .08, .0, .3)                                                                                    // the neck
+	for _, s := range [...][5]float64{{.05, -.4, -.28, -.2, .27}, {-.3, -.2, -.52, .12, .17}, {.14, -.66, .22, -.92, .07}} { // skull, muzzle, ear
+		a, b := sdf, capsule(s[0], s[1], s[2], s[3], s[4])
+		h := clamp01(.5 + .5*(b-a)/.12) // a smooth union: the joins are not creases
+		sdf = b*(1-h) + a*h - .12*h*(1-h)
+	}
+	return clamp01(.5 - sdf/.07)
+}
+
+// glow is the Horsehead's bright cloud at u, v in nebula radii: a band along
+// the bottom rim, broken by noise, fading up into the dark.
+func glow(u, v float64, seed uint32) float64 {
+	r2 := u*u + v*v
+	rim := math.Exp(-math.Pow((math.Sqrt(r2)-.8)/.22, 2)) * clamp01((v+.25)/.9) // the lit edge, strongest at the bottom
+	body := .35 * clamp01((v+.5)/1.2) * (1 - r2)
+	return clamp01((rim + body) * (.7 + .6*fbm(u*6+3, v*6, seed+9, 3)))
+}
+
 func buildCloud(form world.Form, seed uint32) *cloud {
 	c := &cloud{d: make([]uint8, cloudN*cloudN), f: make([]uint8, cloudN*cloudN)}
 	for y := 0; y < cloudN; y++ {
@@ -120,7 +169,7 @@ func buildCloud(form world.Form, seed uint32) *cloud {
 			var d, f float64
 			switch form {
 			case world.FormDark:
-				d = clamp01((1-r*r)*1.6) * clamp01(n*1.7-.2)
+				f = glow(u, v, seed)
 			case world.FormRemnant:
 				shell := math.Exp(-math.Pow((r-.6)/.2, 2))
 				d = clamp01(shell*(.35+1.1*ridge+.4*n) + .6*math.Exp(-r*r*90))
@@ -131,23 +180,40 @@ func buildCloud(form world.Form, seed uint32) *cloud {
 			c.d[y*cloudN+x], c.f[y*cloudN+x] = uint8(255*d), uint8(255*f)
 		}
 	}
+	if form == world.FormDark {
+		c.s = make([]uint8, cloudN*cloudN)
+		c.sb = image.Rect(cloudN, cloudN, 0, 0)
+		for y := 0; y < cloudN; y++ {
+			for x := 0; x < cloudN; x++ {
+				d := horse((float64(x)+.5)/cloudN*2-1, (float64(y)+.5)/cloudN*2-1, seed)
+				c.s[y*cloudN+x] = uint8(255 * d)
+				if d > .5 {
+					c.sb = c.sb.Union(image.Rect(x, y, x+1, y+1))
+				}
+			}
+		}
+	}
 	return c
 }
 
+// silhouette is the dark nebula's silhouette read bilinearly at u, v in the
+// window's -1..1.
+func (c *cloud) silhouette(u, v float64) float64 { return sample(c.s, u, v) }
+
 // at is the texture read bilinearly at u, v in -1..1.
-func (c *cloud) at(u, v float64) (d, f float64) {
+func (c *cloud) at(u, v float64) (d, f float64) { return sample(c.d, u, v), sample(c.f, u, v) }
+
+// sample reads one texture bilinearly at u, v in -1..1.
+func sample(a []uint8, u, v float64) float64 {
 	x, y := (u+1)*.5*cloudN-.5, (v+1)*.5*cloudN-.5
 	x0, y0 := int(math.Floor(x)), int(math.Floor(y))
 	fx, fy := x-float64(x0), y-float64(y0)
-	pick := func(a []uint8, xx, yy int) float64 {
+	pick := func(xx, yy int) float64 {
 		return float64(a[min(cloudN-1, max(0, yy))*cloudN+min(cloudN-1, max(0, xx))])
 	}
-	lerp := func(a []uint8) float64 {
-		t := pick(a, x0, y0)*(1-fx) + pick(a, x0+1, y0)*fx
-		b := pick(a, x0, y0+1)*(1-fx) + pick(a, x0+1, y0+1)*fx
-		return (t + (b-t)*fy) / 255
-	}
-	return lerp(c.d), lerp(c.f)
+	t := pick(x0, y0)*(1-fx) + pick(x0+1, y0)*fx
+	b := pick(x0, y0+1)*(1-fx) + pick(x0+1, y0+1)*fx
+	return (t + (b-t)*fy) / 255
 }
 
 // worldAt is the display position under canvas pixel x, y.
@@ -236,10 +302,14 @@ func (p *pen) armStars(dx, dy float64, seed int64) {
 	}
 }
 
+// clusterGlow is the radius, in art pixels, of the haze round a cluster's
+// brightest stars: fixed, so a close view shows crisp points, not blue balls.
+const clusterGlow = 4
+
 // cluster is a scatter of bright points: mostly single pixels, a few brighter
 // with a glint, in the cluster's colour and white and a cooler blue.
 func (p *pen) cluster(o *world.Object, x, y, r float64) {
-	n := min(90, max(10, int(r*2.6)))
+	n := min(1500, max(10, int(r*2.6))) // members, at fixed places: more come in as the view closes
 	seed := hashKey(o.Key)
 	warm := o.Tone == world.ToneAmber // the Hyades: old, orange giants among the members
 	// thin the background field under the cluster so the members stand out
@@ -254,6 +324,13 @@ func (p *pen) cluster(o *world.Object, x, y, r float64) {
 				}
 			}
 		}
+	}
+	if far := clamp01((10 - r) / 6); far > 0 { // too far to resolve: a soft mark of one size, which the points replace as the view closes in
+		t := world.ToneBlue
+		if warm {
+			t = world.ToneAmber
+		}
+		p.glow(x, y, clusterGlow+1, t, uint8(110*far))
 	}
 	type mem struct{ x, y float64 }
 	var bright []mem
@@ -284,9 +361,9 @@ func (p *pen) cluster(o *world.Object, x, y, r float64) {
 			p.px(int(math.Round(sx)), int(math.Round(sy)), p.pal.Mix(t, uint8(150+hash2(i, 11, seed)>>8&0x4f)))
 		}
 	}
-	if !warm { // the Pleiades' reflection haze round its brightest members
+	if !warm { // the Pleiades' reflection haze round its brightest members: a tight glow, the same size at any zoom
 		for _, m := range bright {
-			p.glow(m.x, m.y, math.Max(5, r*.35), world.ToneBlue, 90)
+			p.glow(m.x, m.y, clusterGlow, world.ToneBlue, 90)
 		}
 	}
 }
@@ -304,7 +381,7 @@ var (
 
 // nebula draws a cloud form into the square r art pixels either side of x, y.
 func (p *pen) nebula(o *world.Object, art *artCache, x, y, r float64) {
-	if x+r < 0 || y+r < 0 || x-r > float64(p.w) || y-r > float64(p.h) || r > 6000 {
+	if x+r < 0 || y+r < 0 || x-r > float64(p.w) || y-r > float64(p.h) || r > 1e6 {
 		return
 	}
 	cl := art.cloudFor(o)
@@ -329,14 +406,15 @@ func (p *pen) nebula(o *world.Object, art *artCache, x, y, r float64) {
 			d, f := cl.at(u, v)
 			th := Bayer(xx+ox, yy+oy)
 			if o.Form == world.FormDark {
-				switch {
-				case d*3.2 > th+1.2: // the core takes the stars and the dust with it
+				var sil float64
+				if wu, wv := (u-hx)/hwin, (v-hy)/hwin; math.Abs(wu) <= 1 && math.Abs(wv) <= 1 {
+					sil = cl.silhouette(wu, wv)
+				}
+				switch i := int(f*5.2 + th - .55); {
+				case sil > .3+.6*th: // the silhouette takes the stars and the dust with it
 					p.px(xx, yy, dark)
-				case d*3.2 > th+.35:
-					i := p.img.PixOffset(xx, yy)
-					p.img.Pix[i], p.img.Pix[i+1], p.img.Pix[i+2] = p.img.Pix[i]/3, p.img.Pix[i+1]/3, p.img.Pix[i+2]/3
-				case d*3.2 > th-.6: // the bright rim of the cloud behind it
-					p.px(xx, yy, p.pal.Mix(world.TonePink, 235))
+				case i > 0: // the bright cloud behind it
+					p.px(xx, yy, ramp[min(5, i)])
 				}
 				continue
 			}
@@ -356,7 +434,7 @@ func (p *pen) region(o *world.Object, x, y, r float64, art *artCache, seed int64
 	case world.FormCluster:
 		p.cluster(o, x, y, math.Max(r, 4))
 	case world.FormDark:
-		p.nebula(o, art, x, y, math.Max(r*.4, 3))
+		p.nebula(o, art, x, y, math.Max(r, 3))
 	case world.FormEmission, world.FormRemnant:
 		p.nebula(o, art, x, y, math.Max(r, 3))
 	case world.FormKnot:

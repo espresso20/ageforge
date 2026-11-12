@@ -94,9 +94,9 @@ func hostedZoom(star bool, k world.FrameKind) string {
 	switch {
 	case star && k == world.FrameLocalGroup:
 		z = zCosmos
-	case star && k == world.FrameGalaxy:
+	case star && (k == world.FrameGalaxy || k == world.FrameRegion): // no rung of its own for the arm: it is still the galaxy's overview
 		z = zOverview
-	case star && (k == world.FrameRegion || k == world.FrameNeighbourhood):
+	case star && k == world.FrameNeighbourhood:
 		z = zInner
 	case !star && k == world.FrameSystem:
 		z = zOverview

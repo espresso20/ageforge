@@ -24,5 +24,3 @@ var (
 	sq        = world.Sq
 	NewGalaxy = world.NewGalaxy
 )
-
-func pickShape(seed int64) GalaxyShape { return world.PickShape(seed) }
