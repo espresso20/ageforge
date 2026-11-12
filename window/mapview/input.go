@@ -52,7 +52,7 @@ func disp(f *world.Frame, p world.Vec) world.Vec { return regionPos(f, p) }
 // undisp inverts disp.
 func undisp(f *world.Frame, d world.Vec) world.Vec {
 	r := math.Hypot(d.X, d.Y)
-	if r == 0 || (f.Kind != world.FrameRegion && f.Kind != world.FrameSystem) {
+	if r == 0 || !squeezed(f) {
 		return d
 	}
 	s := unsqueeze(f, r) / r
@@ -193,7 +193,7 @@ func (v *View) Pan(dx, dy float64, w int) {
 func (v *View) near(x, y, w, h int) (sel selection, ok bool) {
 	under, over, _ := v.ch.layersAt(v.z, v.look())
 	off := v.snapped(w)
-	best := float64(pickReach*pickReach) + 1e-9
+	best, nearC := float64(pickReach*pickReach)+1e-9, 0.0
 	geom := &image.RGBA{Rect: image.Rect(0, 0, w, h)} // the pen only reads its size
 	for _, i := range [...]int{under, over, v.m} {    // the master last, so a tie goes to it
 		p := v.penFor(geom, i, off)
@@ -203,12 +203,23 @@ func (v *View) near(x, y, w, h int) (sel selection, ok bool) {
 				continue
 			}
 			ox, oy := p.at(o.Pos)
-			if d := (ox-float64(x))*(ox-float64(x)) + (oy-float64(y))*(oy-float64(y)); d <= best {
-				best, sel, ok = d, selection{fi: i, key: o.Key}, true
+			c := math.Hypot(ox-float64(x), oy-float64(y))
+			d := math.Max(0, c-pickEdge(p, o))
+			if d*d < best || (d*d == best && ok && c <= nearC) { // on two discs, the one whose centre is closer
+				best, nearC, sel, ok = d*d, c, selection{fi: i, key: o.Key}, true
 			}
 		}
 	}
 	return sel, ok
+}
+
+// pickEdge is how far from its centre a click still hits o's sprite itself: a
+// big sphere is hit anywhere on its disc, not only near its middle.
+func pickEdge(p pen, o *world.Object) float64 {
+	if p.f.Kind == world.FramePlanet || (p.f.Kind == world.FrameSystem && o.Kind == world.KindPlanet && o.Body != nil) {
+		return drawnR(p, o) - 1
+	}
+	return 0
 }
 
 // Click selects the nearest object within reach of x, y, or nothing.

@@ -42,7 +42,7 @@ func newChain(root *world.Frame) chain {
 	var c chain
 	k := 1.0
 	for f := root; f != nil; {
-		l := layer{f: f, mx: unitM[f.Unit] * k, reach: f.Radius * 1.1}
+		l := layer{f: f, mx: unitM[f.Unit] * k * math.Max(1, f.Inflate), reach: f.Radius * 1.1}
 		for _, o := range f.Objects { // a satellite galaxy past the disc is still worth centring on
 			if o.Kind == world.KindGalaxy {
 				l.reach = math.Max(l.reach, math.Hypot(o.Pos.X, o.Pos.Y)+o.Size)
@@ -56,7 +56,7 @@ func newChain(root *world.Frame) chain {
 			}
 			if p.f.Schem && k == 1 { // the first frame under a schematic one sets the scale
 				k = schemRatio(c, l.f)
-				l.mx = unitM[f.Unit] * k
+				l.mx = unitM[f.Unit] * k * math.Max(1, f.Inflate)
 			}
 		}
 		c = append(c, l)

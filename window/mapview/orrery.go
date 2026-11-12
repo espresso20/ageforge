@@ -19,7 +19,7 @@ const lightBuckets = 16
 
 // spriteSteps are the radii (art pixels) a planet is drawn at: a zoom between
 // two of them snaps to the lower, so the cache holds a handful of sprites each.
-var spriteSteps = [...]int{1, 2, 3, 4, 5, 6, 7, 9, 11, 14, 17}
+var spriteSteps = [...]int{1, 2, 3, 4, 5, 6, 7, 9, 11, 14, 17, 22, 28, 36, 46, 58, 72, 90, 112}
 
 func stepR(r float64) int {
 	s := spriteSteps[0]
@@ -49,9 +49,15 @@ type bodyCache struct {
 	pal    world.Palette
 	m      map[bodyKey]*sprite
 	builds atomic.Int64
+	wg     sync.WaitGroup // warm-ups running
 }
 
 func (c *bodyCache) get(pal *world.Palette, o *world.Object, r, dir int) *sprite {
+	return c.fetch(pal, o, r, dir, true)
+}
+
+// fetch is get; count says whether a miss counts as a build (a warm-up's does not).
+func (c *bodyCache) fetch(pal *world.Palette, o *world.Object, r, dir int, count bool) *sprite {
 	k := bodyKey{o.Key, r, dir}
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -61,10 +67,42 @@ func (c *bodyCache) get(pal *world.Palette, o *world.Object, r, dir int) *sprite
 	if s := c.m[k]; s != nil {
 		return s
 	}
+	c.mu.Unlock() // a big sphere takes a while: build it with the cache free
 	s := buildBody(pal, o, r, dir)
+	c.mu.Lock()
+	if c.pal != *pal {
+		return s // the palette moved on while it was built: use it once, keep nothing
+	}
+	if old := c.m[k]; old != nil {
+		return old
+	}
 	c.m[k] = s
-	c.builds.Add(1)
+	if count {
+		c.builds.Add(1)
+	}
 	return s
+}
+
+// warm makes the home close-up's spheres (the planet and the Moon, at every
+// size the zoom can draw them) off the draw path, so the zoom does not stall
+// on the first big one.
+func (c *bodyCache) warm(pal world.Palette, f *world.Frame) {
+	c.wg.Add(1)
+	go func() {
+		defer c.wg.Done()
+		for i := range f.Objects {
+			o := &f.Objects[i]
+			if o.Body == nil || (o.Kind != world.KindPlanet && o.Kind != world.KindMoon) {
+				continue
+			}
+			for _, r := range spriteSteps {
+				if float64(r) > o.Size*homePPUMax || float64(r) < o.Size*homePPUMin-1 {
+					continue
+				}
+				c.fetch(&pal, o, r, homeDir(f), false)
+			}
+		}
+	}()
 }
 
 // lift raises c toward white until it is as bright as the palette's mid tone,
@@ -122,6 +160,7 @@ func buildBody(pal *world.Palette, o *world.Object, r, dir int) *sprite {
 	ocean, land := lift(pal, pal.Mix(world.ToneBlue, 255)), lift(pal, pal.Mix(world.ToneTeal, 255))
 	white, red := lift(pal, pal.Mix(world.ToneWhite, 255)), lift(pal, pal.Mix(world.ToneRed, 255))
 	blotch := lift(pal, pal.Of(sp.Blotch))
+	air := lift(pal, pal.Mix(world.ToneCyan, 255))
 	ringC := lift(pal, pal.Mix(world.ToneSand, 255))
 	const tilt, flat = -.32, .3 // the ring plane's turn, and how edge-on it is
 	ct, st := math.Cos(tilt), math.Sin(tilt)
@@ -153,6 +192,9 @@ func buildBody(pal *world.Palette, o *world.Object, r, dir int) *sprite {
 					}
 					if math.Abs(ny) > .84 || fbm(u*5+20, ny*9, sd+9, 3) > .6 {
 						c = mixRGB(c, white, 200)
+					}
+					if r >= 9 && d2 > .8 { // the air at the limb
+						c = mixRGB(c, air, int((d2-.8)*5*150))
 					}
 				case len(bands) > 0:
 					t := ny*.5 + .5 + (fbm(u*2+1, ny*6, sd, 2)-.5)*.12

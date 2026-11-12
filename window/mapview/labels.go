@@ -54,8 +54,8 @@ func named(f *world.Frame, o *world.Object) bool {
 		return o.Kind == world.KindStar || o.Kind == world.KindColony
 	case world.FrameSystem:
 		return o.Kind == world.KindPlanet || o.Kind == world.KindStar
-	case world.FramePlanet:
-		return o.Kind == world.KindMoon || o.Kind == world.KindStation || o.Kind == world.KindShip
+	case world.FramePlanet: // the swarm of satellites is not named, one by one
+		return o.Pick && (o.Kind == world.KindPlanet || o.Kind == world.KindMoon || o.Kind == world.KindStation || o.Kind == world.KindShip)
 	}
 	return false
 }
@@ -77,6 +77,12 @@ func drawnR(p pen, o *world.Object) float64 {
 	}
 	if o.Kind == world.KindStar {
 		return r + 3.5 // the glow
+	}
+	if p.f.Kind == world.FramePlanet {
+		if o.Body != nil && (o.Kind == world.KindPlanet || o.Kind == world.KindMoon) {
+			return float64(stepR(r)) + 1
+		}
+		return craftR(craftOf(o), homeScale(p.ppu))
 	}
 	if p.f.Kind == world.FrameSystem && o.Body != nil && o.Kind != world.KindBelt {
 		sr := stepR(r)
@@ -137,7 +143,7 @@ func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
 		gm := geomOf(o)
 		return boxXY(x, y, r*math.Hypot(gm.cos, gm.sin*gm.q), r*gm.ys*math.Hypot(gm.sin, gm.cos*gm.q))
 	}
-	if o.Body != nil && p.f.Kind == world.FrameSystem { // sprites and Saturn's rings
+	if (o.Body != nil && p.f.Kind == world.FrameSystem) || p.f.Kind == world.FramePlanet { // sprites and Saturn's rings
 		r = drawnR(p, o)
 	}
 	switch {
@@ -250,12 +256,13 @@ func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 		}
 		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), key: o.Key, text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen})
 	}
-	sel := v.objAt(v.sel.fi, v.sel.key)
+	sfi := v.selDrawn()
+	sel := v.objAt(sfi, v.sel.key)
 	if sel != nil {
-		p := v.penFor(img, v.sel.fi, off)
+		p := v.penFor(img, sfi, off)
 		x, y, r := markOf(p, sel)
 		p.ring2(x, y, r, v.pal.Mix(world.ToneWhite, 255))
-		add(v.sel.fi, sel, true)
+		add(sfi, sel, true)
 		if len(ls) > 0 {
 			picked = ls[0].text
 		}
@@ -277,10 +284,27 @@ func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 		}
 		objs = append(objs, extent(p, o, false))
 	}
-	if sel != nil && v.sel.fi == v.m {
+	if sel != nil && sfi == v.m {
 		objs = append(objs, extent(p, sel, true))
 	}
 	return place(ls, img.Bounds().Dx(), img.Bounds().Dy(), objs...)
+}
+
+// selDrawn is the frame the selection is drawn in: its own while that frame
+// is on screen, else the deeper frame that carries the same object (Earth
+// picked in the System stays picked in the Planet frame).
+func (v *View) selDrawn() int {
+	under, over, _ := v.ch.layersAt(v.z, v.look())
+	fi := v.sel.fi
+	if fi >= under {
+		return fi
+	}
+	for j := over; j >= under; j-- {
+		if v.objAt(j, v.sel.key) != nil {
+			return j
+		}
+	}
+	return fi
 }
 
 // blit paints the mask's set pixels in c; grow > 0 paints each one's
