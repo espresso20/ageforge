@@ -37,6 +37,7 @@ type pen struct {
 	w, h   int
 	tex    *texCache
 	art    *artCache
+	bod    *bodyCache
 	seed   int64
 }
 
@@ -51,7 +52,7 @@ func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
 func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 	b := img.Bounds()
 	p := pen{img: img, pal: &v.pal, f: v.ch[i].f, c: v.ch.centreIn(v.m, i, off),
-		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art}
+		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art, bod: &v.bod}
 	if v.w != nil {
 		p.seed = v.w.Seed
 	}
@@ -64,10 +65,13 @@ func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 // planet's 68 is not 68 AU): there a body is a dot whose radius grows with it.
 func (p *pen) radius(o *world.Object) float64 {
 	if o.Kind == world.KindStar {
+		if p.f.Kind == world.FrameSystem {
+			return starRadius(o) * math.Min(p.growth(), 2.5)
+		}
 		return starRadius(o)
 	}
 	if p.f.Kind == world.FrameSystem && o.Kind != world.KindBelt {
-		return 1 + o.Size/24
+		return (1 + o.Size/24) * p.growth()
 	}
 	return o.Size * p.ppu
 }
@@ -96,8 +100,14 @@ func (p *pen) frame() {
 			p.ring(0, ly, world.ToneNone, 45, false)
 		}
 	}
+	system := p.f.Kind == world.FrameSystem
+	if system {
+		p.guides()
+	}
 	for i := range p.f.Objects {
-		p.object(&p.f.Objects[i])
+		if o := &p.f.Objects[i]; !system || o.Kind != world.KindBelt {
+			p.object(o)
+		}
 	}
 }
 
@@ -117,11 +127,19 @@ func (p *pen) object(o *world.Object) {
 	case world.KindBelt:
 		p.ring(0, o.Size, o.Tone, o.Weight, true)
 	case world.KindPlanet, world.KindMoon:
+		if p.f.Kind == world.FrameSystem {
+			p.body(o, x, y, r)
+			break
+		}
 		if o.Body != nil && o.Body.Orbit > 0 {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 60, false)
 		}
 		p.planet(x, y, math.Max(1, r), o.Tone)
 	case world.KindComet:
+		if p.f.Kind == world.FrameSystem {
+			p.comet(o, x, y)
+			break
+		}
 		if o.Body != nil {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 30, false)
 		}

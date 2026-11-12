@@ -85,6 +85,9 @@ func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
 		gm := geomOf(o)
 		return boxXY(x, y, r*math.Hypot(gm.cos, gm.sin*gm.q), r*gm.ys*math.Hypot(gm.sin, gm.cos*gm.q))
 	}
+	if o.Body != nil && o.Body.Rings && p.f.Kind == world.FrameSystem { // Saturn's rings
+		r *= 2.3
+	}
 	switch {
 	case ringed:
 		r = ringR(p, o) + 1 // the ring and its width

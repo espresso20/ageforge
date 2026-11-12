@@ -64,6 +64,7 @@ type View struct {
 	top      *image.RGBA // the deeper frame of a crossfade, kept between frames
 	tex      texCache
 	art      artCache
+	bod      bodyCache
 }
 
 func New() *View { return &View{dirty: true} }

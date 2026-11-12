@@ -115,7 +115,7 @@ func (p *pen) ring2(x, y, r float64, col color.RGBA) {
 // a dwarf, 3 the sun's size). A binary is a second, smaller disc close beside
 // the first, on a side the star's name picks.
 func (p *pen) star(x, y float64, o *world.Object) {
-	r := starRadius(o)
+	r := p.radius(o)
 	p.glow(x, y, r+3.5, o.Tone, uint8(int(o.Weight)*2/3))
 	p.disc(x, y, r, o.Tone, o.Weight)
 	if o.Star == nil {
