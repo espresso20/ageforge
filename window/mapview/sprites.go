@@ -52,17 +52,6 @@ func (p *pen) glow(x, y, r float64, t world.Tone, w uint8) {
 	}
 }
 
-func (p *pen) rect(x, y, half float64, t world.Tone, w uint8) {
-	col := p.pal.Mix(t, w)
-	h := int(math.Min(half, 50))
-	for dy := -h + 1; dy < h; dy++ {
-		for dx := -h + 1; dx < h; dx++ {
-			p.px(int(math.Round(x))+dx, int(math.Round(y))+dy, col)
-		}
-	}
-	p.px(int(math.Round(x)), int(math.Round(y)), col)
-}
-
 // line clips to the canvas and draws a one-pixel line of the weight w, as a
 // dither that thins with length: a long lane is a fainter one.
 func (p *pen) line(x0, y0, x1, y1 float64, t world.Tone, w uint8) {
@@ -102,8 +91,19 @@ func (p *pen) line(x0, y0, x1, y1 float64, t world.Tone, w uint8) {
 }
 
 // ring2 is a dotted one pixel circle of radius r about x, y in colour col: the
-// selection mark, open enough for the object to show through.
+// selection mark, open enough for the object to show through. Round a small
+// object (under 4 art pixels) a whole circle is all clutter, so it is four
+// dotted corners of the box instead, just as far out.
 func (p *pen) ring2(x, y, r float64, col color.RGBA) {
+	if r-ringGap < 4 {
+		xi, yi, e := int(math.Round(x)), int(math.Round(y)), int(math.Ceil(r))
+		for _, s := range [4][2]int{{-1, -1}, {1, -1}, {-1, 1}, {1, 1}} {
+			p.px(xi+s[0]*e, yi+s[1]*e, col)
+			p.px(xi+s[0]*(e-2), yi+s[1]*e, col)
+			p.px(xi+s[0]*e, yi+s[1]*(e-2), col)
+		}
+		return
+	}
 	n := int(math.Min(2*math.Pi*r*2, 4000))
 	for k := 0; k < n; k++ {
 		if k&2 != 0 { // two on, two off

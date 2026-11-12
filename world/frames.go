@@ -215,13 +215,21 @@ func systemFrame(m *mapmodel.Model, seed int64, star bool) *Frame {
 	return f
 }
 
+// HomeInflate is how much bigger than true the home close-up draws its unit
+// (one planet radius): at the handoff from the system the planet is already
+// as big as the system draws it, and the Moon fits in a view with it.
+const HomeInflate = 320
+
 // homeFrame is the home world and what circles it, in planet radii: the
 // moon, the seeded stations and swarm, the starship, and one module for
 // every building line standing in the space age's ring city.
 func homeFrame(m *mapmodel.Model, seed int64) *Frame {
 	hp := SolSpec.Planets[Home]
-	f := &Frame{Kind: FramePlanet, Key: "earth", Unit: UnitPlanetRadii, Anchor: SolNames[Home], Radius: 6,
-		Band: Band{Min: 1.5, Max: 800}}
+	f := &Frame{Kind: FramePlanet, Key: "earth", Unit: UnitPlanetRadii, Anchor: SolNames[Home], Radius: 64,
+		Band: Band{Min: 4.5, Max: 28}, Inflate: HomeInflate}
+	f.Objects = append(f.Objects, Object{Kind: KindPlanet, Key: SolNames[Home], Label: SolNames[Home], Inspect: SolNames[Home],
+		Size: 1, Tone: ToneBlue, Weight: 255, Pick: true,
+		Body: &Body{Spec: hp, Phase: OrbitPhase(seed, Home), Kind: "rocky", Earths: 1, StationN: hp.Stations}})
 	for k := 0; k < hp.Moons; k++ {
 		ph := Roll(Turn, seed, 5201, int64(k))
 		f.Objects = append(f.Objects, Object{Kind: KindMoon, Key: "the_moon", Label: "the_moon", Inspect: "the_moon",

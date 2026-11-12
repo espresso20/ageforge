@@ -28,7 +28,7 @@
 //	rift       cells of the crack across the galaxy: seeded path; a harbinger is present
 //	colony     a near star lit by a line: ColonyStars picks it; lineage Count>0
 //	lane       warp lane between colonies and Sol, traffic 1..3 by the smaller count; two or more lit
-//	planet     eight planets (real AU, art size, seeded phase), Pluto: fixed table; always (System)
+//	planet     eight planets (real AU, art size, seeded phase), Pluto: fixed table; always (System); Earth again, large, in Planet
 //	belt       asteroid belt, Kuiper belt: fixed; always
 //	comet      one comet on a 2800-tick cycle: seeded phase; always
 //	gate       warp gate at 35 AU: wonder warp_nexus built, or any star-age system view

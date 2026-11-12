@@ -65,6 +65,8 @@ type View struct {
 	tex      texCache
 	art      artCache
 	bod      bodyCache
+	clock    time.Duration // the frame clock the lights blink on
+	tick     int           // half seconds of it
 }
 
 func New() *View { return &View{dirty: true} }
@@ -74,6 +76,9 @@ func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 	if w != nil && w.Root != nil {
 		v.tex.warm(w.Root) // the galaxies' textures, made here and not on the draw path
 		v.art.warm(w.Root.Find(world.FrameRegion), w.Seed)
+		if home := w.Root.Find(world.FramePlanet); home != nil {
+			v.bod.warm(pal, home)
+		}
 	}
 	defer v.flush()
 	v.mu.Lock()
@@ -204,6 +209,13 @@ func (v *View) Update(dt time.Duration) bool {
 		return false
 	}
 	k := 1 - math.Exp(-float64(dt)/float64(easeTau))
+	v.clock += dt
+	if t := int(v.clock / (500 * time.Millisecond)); t != v.tick {
+		v.tick = t
+		if v.z < v.ch[len(v.ch)-1].hi { // only the home close-up has lights
+			v.dirty = true
+		}
+	}
 	if d := v.tz - v.z; math.Abs(d) > 1e-4 {
 		v.z += d * k
 		if math.Abs(v.tz-v.z) < 1e-3 {

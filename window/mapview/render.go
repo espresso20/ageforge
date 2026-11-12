@@ -20,6 +20,12 @@ const (
 	sysEdge       = .39  // AU: Mercury, where the system's curve turns from a line to a log
 	sysInner      = .4   // display length of the line, against the log's 1 per e-fold
 	sysScale      = 7.87 // display units per e-fold, so Pluto sits near 40 as it did unsqueezed
+	// The home close-up spreads the low orbits and tucks the Moon in: a line
+	// of homeGain per planet radius out to homeEdge, then a log, so the Moon's
+	// 60 radii land about 8 radii from the planet, in view beside it.
+	homeGain = 1.5
+	homeEdge = 2.2 // planet radii
+	homeLog  = 1.5 // display units per e-fold past the edge
 )
 
 // squeeze is the display length of the true length r in frame f.
@@ -32,6 +38,11 @@ func squeeze(f *world.Frame, r float64) float64 {
 			return sysScale * sysInner * r / sysEdge
 		}
 		return sysScale * (sysInner + math.Log(r/sysEdge))
+	case world.FramePlanet:
+		if r <= homeEdge {
+			return homeGain * r
+		}
+		return homeGain*homeEdge + homeLog*math.Log(r/homeEdge)
 	}
 	return r
 }
@@ -46,13 +57,23 @@ func unsqueeze(f *world.Frame, d float64) float64 {
 			return d / (sysScale * sysInner) * sysEdge
 		}
 		return sysEdge * math.Exp(d/sysScale-sysInner)
+	case world.FramePlanet:
+		if d <= homeGain*homeEdge {
+			return d / homeGain
+		}
+		return homeEdge * math.Exp((d-homeGain*homeEdge)/homeLog)
 	}
 	return d
 }
 
+// squeezed says whether frame f draws distance through squeeze.
+func squeezed(f *world.Frame) bool {
+	return f.Kind == world.FrameRegion || f.Kind == world.FrameSystem || f.Kind == world.FramePlanet
+}
+
 // regionPos is the display position of a point in a frame.
 func regionPos(f *world.Frame, p world.Vec) world.Vec {
-	if f.Kind != world.FrameRegion && f.Kind != world.FrameSystem {
+	if !squeezed(f) {
 		return p
 	}
 	r := math.Hypot(p.X, p.Y)
@@ -76,6 +97,7 @@ type pen struct {
 	art    *artCache
 	bod    *bodyCache
 	seed   int64
+	tick   int // half seconds on the frame clock: the lights blink on it
 }
 
 // paint draws chain frame i, with the view centred on master-frame offset off.
@@ -89,7 +111,7 @@ func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
 func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 	b := img.Bounds()
 	p := pen{img: img, pal: &v.pal, f: v.ch[i].f, c: v.ch.centreIn(v.m, i, off),
-		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art, bod: &v.bod}
+		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art, bod: &v.bod, tick: v.tick}
 	if v.w != nil {
 		p.seed = v.w.Seed
 	}
@@ -127,10 +149,8 @@ func (p *pen) at(v world.Vec) (x, y float64) {
 }
 
 func (p *pen) frame() {
-	if p.f.Kind == world.FramePlanet { // the home world itself, which the frame is centred on
-		x, y := p.at(world.Vec{})
-		p.disc(x, y, p.ppu, world.ToneBlue, 255)
-		p.disc(x, y, p.ppu*0.6, world.ToneTeal, 160)
+	if p.f.Kind == world.FramePlanet {
+		p.homeGuides()
 	}
 	if p.f.Kind == world.FrameNeighbourhood { // the faint distance rings, a dotted circle every RingLy
 		for ly := float64(world.RingLy); ly < p.f.Radius; ly += world.RingLy {
@@ -151,6 +171,10 @@ func (p *pen) frame() {
 func (p *pen) object(o *world.Object) {
 	x, y := p.at(o.Pos)
 	r := p.radius(o)
+	if p.f.Kind == world.FramePlanet {
+		p.homeObject(o, x, y, r)
+		return
+	}
 	switch o.Kind {
 	case world.KindGalaxy:
 		p.galaxy(o, x, y, r)
@@ -181,8 +205,6 @@ func (p *pen) object(o *world.Object) {
 			p.ring(0, o.Body.Orbit, world.ToneNone, 30, false)
 		}
 		p.disc(x, y, 1, o.Tone, o.Weight)
-	case world.KindStation, world.KindShip:
-		p.rect(x, y, math.Min(8, math.Max(2, r)), o.Tone, o.Weight)
 	case world.KindStar:
 		p.star(x, y, o)
 	case world.KindColony:

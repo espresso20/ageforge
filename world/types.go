@@ -41,7 +41,8 @@ type Frame struct {
 	Pos      Vec     // anchor in the parent's units, at phase zero for a moving anchor
 	Radius   float64 // the extent of the frame, in its own units
 	Band     Band
-	Schem    bool // positions are schematic, not to scale (the Local Group)
+	Schem    bool    // positions are schematic, not to scale (the Local Group)
+	Inflate  float64 // a frame drawn this many times its unit's true size (0 or 1: true size): the home close-up, so its planet has a face at the handoff
 	Children []*Frame
 	Objects  []Object
 }
