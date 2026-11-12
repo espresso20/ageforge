@@ -52,6 +52,9 @@ func (s *sky) Watch(names func(string) string, fn func(mapstyle.MapState)) {
 	})
 }
 
+// TakeSettled hands over the places settled since the last call.
+func (s *sky) TakeSettled() []string { return s.view.TakeSettled() }
+
 func (s *sky) Hide() {
 	s.mu.Lock()
 	s.rect = image.Rectangle{}

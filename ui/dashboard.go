@@ -315,6 +315,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		// lock: the account hears that its player looked at a visitor.
 		d.engine.NoteVisitorInspected(kind)
 	}
+	d.mapPanel.settle = func(ids []string) { d.engine.SettlePlaces(ids) } // same thread and lock rules as spotted
 	d.mapPanel.toPrompt = d.handToPrompt
 	d.overlayMgr.RegisterWidget("map", vibe.E("ui.dashboard.NewDashboard.19", "Map"), d.mapPanel.open, d.mapPanel.update)
 	d.barOverlays = d.newBarOverlays()

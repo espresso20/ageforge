@@ -101,7 +101,9 @@ type mapPanel struct {
 	stage func(cmd string)
 	// spotted is told when the cursor is on the rare visitor, once a
 	// visit; onVisitor is whether it was there at the last look.
-	spotted   func(kind string)
+	spotted func(kind string)
+	// settle is told which uncertain places the player settled on the map.
+	settle    func(ids []string)
 	onVisitor bool
 }
 
@@ -141,6 +143,11 @@ func (p *mapPanel) update(state game.GameState) {
 	}
 	p.model = p.mv.model(&state)
 	p.lookForVisitor()
+	if p.settle != nil && p.space != nil {
+		if ids := p.space.TakeSettled(); len(ids) > 0 {
+			p.settle(ids)
+		}
+	}
 }
 
 // lookForVisitor tells the game when the cursor stands on the rare visitor

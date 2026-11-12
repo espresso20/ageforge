@@ -80,7 +80,7 @@ func texKeyOf(o *world.Object) (texKey, bool) {
 		if o.Size >= 100 {
 			t = 256
 		}
-		return texKey{look: l, seed: int64(hashKey(o.Key)), t: t}, true
+		return texKey{look: l, seed: int64(hashKey(o.Key)) ^ o.Seed, t: t}, true
 	}
 	return texKey{}, false
 }
@@ -104,7 +104,7 @@ func (c *texCache) get(o *world.Object) *galTex {
 	if t := c.m[k]; t != nil {
 		return t
 	}
-	if c.m == nil || len(c.m) > 48 { // a new save's sky replaces the old
+	if c.m == nil || len(c.m) > 160 { // a new save's sky replaces the old
 		c.m = map[texKey]*galTex{}
 	}
 	t := buildTex(k)
@@ -114,14 +114,17 @@ func (c *texCache) get(o *world.Object) *galTex {
 }
 
 // warm makes the textures a sky will need, off the draw path.
-func (c *texCache) warm(f *world.Frame) {
+func (c *texCache) warm(f *world.Frame, seed int64) {
 	for i := range f.Objects {
 		if o := &f.Objects[i]; o.Kind == world.KindGalaxy {
-			c.get(o)
+			for n := 0; n < max(1, int(o.Doubt)); n++ { // every version an uncertain galaxy shows
+				v := world.Version(seed, o, n)
+				c.get(&v)
+			}
 		}
 	}
 	for _, ch := range f.Children {
-		c.warm(ch)
+		c.warm(ch, seed)
 	}
 }
 

@@ -24,6 +24,7 @@ func (h *fakeHost) Show(r image.Rectangle, w *world.World, _ uint64, _ world.Pal
 	h.worlds = append(h.worlds, w)
 }
 func (h *fakeHost) Watch(_ func(string) string, fn func(MapState)) { h.report = fn }
+func (h *fakeHost) TakeSettled() []string                          { return nil }
 func (h *fakeHost) Hide()                                          { h.hidden++ }
 func (h *fakeHost) Command(c MapCmd)                               { h.cmds = append(h.cmds, c) }
 

@@ -66,11 +66,14 @@ type View struct {
 	tex      texCache
 	art      artCache
 	bod      bodyCache
-	place    string        // the star whose region hangs under the galaxy ("" Sol's)
-	nbr      string        // the star whose neighbourhood hangs under the region ("" the one the region is of)
-	star     string        // the near star whose system hangs under the neighbourhood ("" Sol's)
-	clock    time.Duration // the frame clock the lights blink on
-	tick     int           // half seconds of it
+	place    string          // the star whose region hangs under the galaxy ("" Sol's)
+	nbr      string          // the star whose neighbourhood hangs under the region ("" the one the region is of)
+	star     string          // the near star whose system hangs under the neighbourhood ("" Sol's)
+	clock    time.Duration   // the frame clock the lights blink on
+	tick     int             // half seconds of it
+	gal      string          // the Local Group galaxy hung under it ("" the Milky Way)
+	local    map[string]bool // places settled here, before the save has them
+	pending  []string        // settled here and not yet handed to the ui
 }
 
 func New() *View { return &View{dirty: true} }
@@ -78,7 +81,7 @@ func New() *View { return &View{dirty: true} }
 // Set gives the view the sky. Nothing is rebuilt unless key changed.
 func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 	if w != nil && w.Root != nil {
-		v.tex.warm(w.Root) // the galaxies' textures, made here and not on the draw path
+		v.tex.warm(w.Root, w.Seed) // the galaxies' textures, made here and not on the draw path
 		v.art.warm(w.Root.Find(world.FrameRegion), w.Seed)
 		if home := w.Root.Find(world.FramePlanet); home != nil {
 			v.bod.warm(pal, home)
@@ -91,12 +94,20 @@ func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 		return
 	}
 	fresh := v.w == nil || v.w.Root == nil || w.Root == nil || v.w.Root.Kind != w.Root.Kind
+	if v.w == nil || w == nil || v.w.Seed != w.Seed {
+		v.local, v.pending = nil, nil // another save's places are not this one's
+	}
 	v.w, v.key, v.pal, v.dirty = w, key, pal, true
 	if w == nil || w.Root == nil {
 		v.ch = nil
 		return
 	}
 	v.ch = newChain(w.Root)
+	if f := w.Galaxy(v.gal); v.gal != "" && f != nil && len(v.ch) > 1 {
+		v.ch = v.ch.withGalaxy(f)
+	} else {
+		v.gal = ""
+	}
 	// the place, neighbourhood and system the player was in outlive a rebuild
 	if f := w.Place(v.place); v.place != "" && f != nil && v.ch.idx(world.FrameRegion) > 0 {
 		v.ch = v.ch.withFrom(world.FrameGalaxy, f)
@@ -244,7 +255,7 @@ func (v *View) Update(dt time.Duration) bool {
 	v.clock += dt
 	if t := int(v.clock / (500 * time.Millisecond)); t != v.tick {
 		v.tick = t
-		if v.z < v.ch[len(v.ch)-1].hi { // only a close-up has lights
+		if v.z < v.ch[len(v.ch)-1].hi || (t&1 == 0 && v.doubts()) { // a close-up has lights; an uncertain place swaps version every second
 			v.dirty = true
 		}
 	}

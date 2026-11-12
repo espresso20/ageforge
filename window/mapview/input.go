@@ -241,6 +241,7 @@ func (v *View) Click(x, y, w, h int) {
 		return
 	}
 	v.sel, _ = v.near(x, y, w, h)
+	v.settle(v.objAt(v.sel.fi, v.sel.key), v.sel.fi)
 	v.pick = -1
 	if v.sel.fi == v.m {
 		for j := range v.ch[v.m].f.Objects {
@@ -264,7 +265,10 @@ func (v *View) Focus(x, y, w, h int) {
 		return
 	}
 	key := o.Key
+	swapped := false
 	switch {
+	case o.Kind == world.KindGalaxy && v.sel.fi == 0 && o.Pick:
+		swapped = v.swapGalaxy(key)
 	case o.Kind == world.KindPlanet && v.sel.fi == v.ch.idx(world.FrameSystem):
 		v.swapTail(key)
 	case o.Kind == world.KindStar && v.sel.fi == v.ch.idx(world.FrameGalaxy):
@@ -287,7 +291,7 @@ func (v *View) Focus(x, y, w, h int) {
 			break
 		}
 	}
-	if o.Kind == world.KindGalaxy { // a galaxy the deeper frame draws close up: dive to it, five of its widths across
+	if o.Kind == world.KindGalaxy && !swapped { // a galaxy the deeper frame draws close up: dive to it, five of its widths across
 		for i := v.sel.fi + 1; i < len(v.ch); i++ {
 			for j := range v.ch[i].f.Objects {
 				if c := &v.ch[i].f.Objects[j]; c.Key == o.Key && c.Kind == world.KindGalaxy {
@@ -328,6 +332,73 @@ func (v *View) follow(k float64) {
 			v.off = world.Vec{X: v.off.X + d.X*k, Y: v.off.Y + d.Y*k}
 		}
 	}
+}
+
+// settle fixes an uncertain place the player looked at: from now on it keeps
+// the one version the seed picks, and the ui is told to put it in the save.
+func (v *View) settle(o *world.Object, fi int) {
+	if o == nil || fi < v.open || v.isSettled(o) {
+		return
+	}
+	if v.local == nil {
+		v.local = map[string]bool{}
+	}
+	v.local[o.Key] = true
+	v.pending = append(v.pending, o.Key)
+	v.dirty = true
+}
+
+// isSettled says whether o shows one version: a place that is not uncertain,
+// or one that was settled here or in the save.
+func (v *View) isSettled(o *world.Object) bool {
+	return o.Doubt == 0 || v.local[o.Key] || v.w.Settled[o.Key]
+}
+
+// doubts says whether a frame on screen holds an uncertain place.
+func (v *View) doubts() bool {
+	for _, l := range v.ch {
+		for i := range l.f.Objects {
+			if o := &l.f.Objects[i]; o.Doubt > 0 && !v.isSettled(o) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// TakeSettled hands over the places settled since the last call, for the ui to
+// put in the save.
+func (v *View) TakeSettled() []string {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	out := v.pending
+	v.pending = nil
+	return out
+}
+
+// swapGalaxy hangs the galaxy key (and the chain under it) under the Local
+// Group in place of the one there, when that galaxy is out of view.
+func (v *View) swapGalaxy(key string) bool {
+	if len(v.ch) < 2 {
+		return false
+	}
+	if v.ch[1].f.Anchor == key {
+		return true
+	}
+	if v.ch.weightAt(1, v.z, v.look()) > 0 {
+		return false
+	}
+	f := v.w.Galaxy(key)
+	if f == nil {
+		return false
+	}
+	v.ch, v.dirty = v.ch.withGalaxy(f), true
+	v.gal, v.place, v.nbr, v.star = key, "", "", ""
+	if key == "milky_way" {
+		v.gal = ""
+	}
+	v.tex.warm(f, v.w.Seed)
+	return true
 }
 
 // swapSystem hangs the system of the star key under the neighbourhood, in
