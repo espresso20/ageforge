@@ -34,3 +34,36 @@ func TestZoomingTowardSolStillHandsOver(t *testing.T) {
 		t.Errorf("at Sol, z=18.4 draws frames %d/%d, want the Neighbourhood", u, o)
 	}
 }
+
+// The Horsehead is a silhouette taller than it is wide, with a head bump
+// (the top rows are narrower than the middle), and bright cloud behind it.
+func TestHorseheadIsAHeadShapedSilhouette(t *testing.T) {
+	const n = 120
+	minX, maxX, minY, maxY := n, 0, n, 0
+	var rows [n]int
+	bright := 0
+	for j := 0; j < n; j++ {
+		for i := 0; i < n; i++ {
+			d, f := horse(float64(i)/n*2-1, float64(j)/n*2-1, 7)
+			if d > .5 {
+				rows[j]++
+				minX, maxX, minY, maxY = min(minX, i), max(maxX, i), min(minY, j), max(maxY, j)
+			} else if f > .3 {
+				bright++
+			}
+		}
+	}
+	w, h := maxX-minX+1, maxY-minY+1
+	if h <= w {
+		t.Errorf("silhouette %dx%d is not taller than wide", w, h)
+	}
+	if top, mid := rows[minY+h/10], rows[minY+h/2]; top >= mid {
+		t.Errorf("no head bump: top row %d px, middle row %d px", top, mid)
+	}
+	if bright < 500 {
+		t.Errorf("only %d bright cloud pixels behind the silhouette", bright)
+	}
+	if a, b := rows[minY+h/2], rows[minY+h-1]; a == 0 || b == 0 {
+		t.Errorf("silhouette has gaps (%d, %d)", a, b)
+	}
+}

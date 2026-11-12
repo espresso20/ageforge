@@ -109,6 +109,30 @@ func buildDust(seed uint32) []uint8 {
 	return d
 }
 
+// horse is the Horsehead: a dark silhouette rising from the bottom of the
+// square, taller than wide, a neck with a skull, a muzzle and an ear on top,
+// its edges warped by noise; and the bright glow of the cloud behind it,
+// strongest down its back. d is how dark, f how bright.
+func horse(u, v float64, seed uint32) (d, f float64) {
+	wx := u + (fbm(u*3+11, v*3, seed, 3)-.5)*.2
+	wy := v + (fbm(u*3, v*3+23, seed+5, 3)-.5)*.2 - .1
+	capsule := func(ax, ay, bx, by, r float64) float64 {
+		px, py, dx, dy := wx-ax, wy-ay, bx-ax, by-ay
+		t := clamp01((px*dx + py*dy) / (dx*dx + dy*dy))
+		return math.Hypot(px-t*dx, py-t*dy) - r
+	}
+	sdf := capsule(.34, 1.2, .08, .0, .3) // the neck
+	for _, s := range [...][5]float64{{.05, -.4, -.28, -.2, .27}, {-.3, -.2, -.52, .12, .17}, {.14, -.66, .22, -.92, .07}} { // skull, muzzle, ear
+		a, b := sdf, capsule(s[0], s[1], s[2], s[3], s[4])
+		h := clamp01(.5 + .5*(b-a)/.12) // a smooth union: the joins are not creases
+		sdf = b*(1-h) + a*h - .12*h*(1-h)
+	}
+	d = clamp01(.5 - sdf/.07)
+	r2 := u*u + v*v
+	f = clamp01(1.2-sdf*2.2) * (.45 + .55*clamp01((u+.5)/1.1)) * (.75 + .5*fbm(u*6+3, v*6, seed+9, 3)) * (1 - r2) * (1 - r2)
+	return d, clamp01(f)
+}
+
 func buildCloud(form world.Form, seed uint32) *cloud {
 	c := &cloud{d: make([]uint8, cloudN*cloudN), f: make([]uint8, cloudN*cloudN)}
 	for y := 0; y < cloudN; y++ {
@@ -120,7 +144,7 @@ func buildCloud(form world.Form, seed uint32) *cloud {
 			var d, f float64
 			switch form {
 			case world.FormDark:
-				d = clamp01((1-r*r)*1.6) * clamp01(n*1.7-.2)
+				d, f = horse(u, v, seed)
 			case world.FormRemnant:
 				shell := math.Exp(-math.Pow((r-.6)/.2, 2))
 				d = clamp01(shell*(.35+1.1*ridge+.4*n) + .6*math.Exp(-r*r*90))
@@ -329,14 +353,11 @@ func (p *pen) nebula(o *world.Object, art *artCache, x, y, r float64) {
 			d, f := cl.at(u, v)
 			th := Bayer(xx+ox, yy+oy)
 			if o.Form == world.FormDark {
-				switch {
-				case d*3.2 > th+1.2: // the core takes the stars and the dust with it
+				switch i := int(f*5.2 + th - .55); {
+				case d > .3+.6*th: // the silhouette takes the stars and the dust with it
 					p.px(xx, yy, dark)
-				case d*3.2 > th+.35:
-					i := p.img.PixOffset(xx, yy)
-					p.img.Pix[i], p.img.Pix[i+1], p.img.Pix[i+2] = p.img.Pix[i]/3, p.img.Pix[i+1]/3, p.img.Pix[i+2]/3
-				case d*3.2 > th-.6: // the bright rim of the cloud behind it
-					p.px(xx, yy, p.pal.Mix(world.TonePink, 235))
+				case i > 0: // the bright cloud behind it
+					p.px(xx, yy, ramp[min(5, i)])
 				}
 				continue
 			}
