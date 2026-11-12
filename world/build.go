@@ -1,6 +1,9 @@
 package world
 
 import (
+	"maps"
+	"slices"
+
 	"github.com/espresso20/ageforge/mapmodel"
 )
 
@@ -45,13 +48,16 @@ func SpaceAge(age string) bool {
 // a World with no Root. The same inputs give the same World.
 func Build(m *mapmodel.Model, seed int64) *World {
 	age := ageOf(m)
-	w := &World{Seed: seed, Age: age, Key: ChangeKey(m, seed)}
+	w := &World{Seed: seed, Age: age, Key: ChangeKey(m, seed), Settled: m.Settled}
 	if SpaceAge(age) {
 		g := NewGalaxy(seed)
 		t := LayTerritory(seed, g)
 		cols := Colonies(m, t)
 		gal := galaxyFrame(m, seed, g, t)
 		lg := localGroup(seed, g.Shape, solLy(g))
+		if GateOf(age).Open == FrameLocalGroup {
+			openLocalGroup(lg, seed)
+		}
 		region := regionFrame(seed, len(cols))
 		near := neighbourhoodFrame(seed, cols)
 		sys := systemFrame(m, seed)
@@ -73,6 +79,9 @@ func ChangeKey(m *mapmodel.Model, seed int64) uint64 {
 		return mapmodel.Hash(seed, 0)
 	}
 	h := []int64{seed, mapmodel.HashStr(age), boolI(gateRaised(m.Wonders)), boolI(m.Harbinger != nil)}
+	for _, k := range slices.Sorted(maps.Keys(m.Settled)) {
+		h = append(h, mapmodel.HashStr(k))
+	}
 	for _, l := range m.Lineages {
 		if _, ok := lineIndex[l.Key]; !ok || l.Count <= 0 {
 			continue

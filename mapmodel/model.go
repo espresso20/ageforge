@@ -28,6 +28,8 @@ import (
 type Model struct {
 	Seed int64
 	Tick int
+	// Settled holds the sky places the player has settled at Quantum.
+	Settled map[string]bool
 
 	Age, AgeName         string
 	AgeIdx               int
@@ -206,7 +208,7 @@ type Catastrophe struct {
 func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	b.follow()
 	cat := b.cat
-	m := &Model{Seed: st.Seed, Tick: st.Tick, Age: st.Age, AgeName: st.AgeName, AgeIdx: cat.AgeIdx[st.Age],
+	m := &Model{Seed: st.Seed, Settled: st.Settled, Tick: st.Tick, Age: st.Age, AgeName: st.AgeName, AgeIdx: cat.AgeIdx[st.Age],
 		NextAge: st.NextAge, NextAgeName: st.NextAgeName, AgeReady: st.AgeReady, Catalog: cat,
 		byKey: map[string]*Building{}}
 	m.GateShare = st.AdvanceView().Share

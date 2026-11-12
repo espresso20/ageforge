@@ -259,6 +259,9 @@ type GameEngine struct {
 	harbingerArrived  map[string]bool
 	pendingBraceLevel int
 	harbingerHistory  []HarbingerRecord
+	// settled holds the ids of Quantum-opened sky places the player has
+	// settled (the map's uncertain places).
+	settled map[string]bool
 	// faithMeasure is the run's faith measure, what faith strength is read
 	// from (faith.go). Persisted. faithRate is the part of the faith rate it
 	// follows, set by recalculateRates with the rate. Not persisted.
@@ -4907,6 +4910,7 @@ func (ge *GameEngine) Reset() {
 	ge.runAccountID = ""
 	ge.runOrphaned = false
 	ge.harbingerHistory = nil
+	ge.settled = nil
 	ge.epochEventHistory = nil
 	ge.legacyBonuses = make(map[string]bool)
 	ge.catastropheHistory = nil
@@ -5082,6 +5086,7 @@ func (ge *GameEngine) GetState() GameState {
 		Harbinger:             ge.harbingerView(),
 		SessionStart:          ge.sessionStart.clone(),
 		HarbingerHistory:      cloneHarbingerHistory(ge.harbingerHistory),
+		Settled:               maps.Clone(ge.settled),
 		LegacyBonuses:         maps.Clone(ge.legacyBonuses),
 		CatastropheHistory:    ge.historyLines(),
 		CatastrophesEndured:   endured,

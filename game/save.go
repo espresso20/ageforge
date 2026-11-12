@@ -116,6 +116,7 @@ type GameSave struct {
 	CatastropheInvited bool              `json:"catastrophe_invited,omitempty"`
 	PendingBraceLevel  int               `json:"pending_brace_level,omitempty"`
 	HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
+	Settled            []string          `json:"settled_places,omitempty"`
 	// Fate is the current era's hidden fate (fate.go): whether a doom is
 	// fated, when it strikes, when its harbinger comes. omitempty, so saves
 	// without one keep their bytes and signatures.
@@ -635,6 +636,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CatastropheInvited: ge.catastropheInvited,
 		PendingBraceLevel:  ge.pendingBraceLevel,
 		HarbingerHistory:   ge.harbingerHistoryForSave(),
+		Settled:            ge.settledForSave(),
 		Fate:               ge.fateSaveCopy(),
 		ParkedHarbinger:    copyHarbingerSave(ge.parkedHarbinger),
 		FaithMeasure:       ge.faithSaveCopy(),

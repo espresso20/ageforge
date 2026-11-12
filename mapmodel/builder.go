@@ -67,7 +67,7 @@ func (b *Builder) Model(st *game.GameState, since *Visit) *Model {
 // expeditions, the harbinger, the pending catastrophe and the baseline.
 func Signature(st *game.GameState, since *Visit) uint64 {
 	h := Hash(st.Seed, int64(st.Tick), HashStr(st.Age), int64(st.Workers.TotalPop), int64(st.Workers.TotalIdle),
-		int64(len(st.BuildQueue)), HashStr(st.PendingCatastrophe), HashStr(st.CurrentAgeWonderKey))
+		int64(len(st.BuildQueue)), HashStr(st.PendingCatastrophe), HashStr(st.CurrentAgeWonderKey), int64(len(st.Settled)))
 	for _, k := range slices.Sorted(maps.Keys(st.Buildings)) {
 		bs := st.Buildings[k]
 		if bs.Count > 0 || bs.RuinCount > 0 {
