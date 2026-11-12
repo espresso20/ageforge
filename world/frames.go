@@ -29,6 +29,19 @@ func galaxyFrame(m *mapmodel.Model, seed int64, g *Galaxy, t Territory) *Frame {
 	shape := g.Shape
 	f.Objects = append(f.Objects, Object{Kind: KindGalaxy, Key: "disc", Label: "milky_way", Inspect: "milky_way",
 		Size: galRadiusLy, Tone: ToneStar, Weight: 255, Shape: &shape, Seed: seed})
+	// The Magellanic Clouds, pulled in from 160 kly to sit in the Galaxy band's
+	// view, below the disc as in the Local Group; radii from their real diameters.
+	for _, c := range [...]struct {
+		key  string
+		pos  Vec
+		r    int
+		look GalaxyLook
+	}{{"large_magellanic_cloud", Vec{68600, 58300}, 7000, GalaxyLook{Q: 170, Stars: 14, Irr: true, Bar: 60}},
+		{"small_magellanic_cloud", Vec{84600, 62300}, 3500, GalaxyLook{Q: 170, Stars: 14, Irr: true}}} {
+		c.look.R = c.r
+		f.Objects = append(f.Objects, Object{Kind: KindGalaxy, Key: c.key, Label: c.key, Inspect: c.key, Pos: c.pos, Size: float64(c.r),
+			Tone: ToneCool, Weight: 255, Galaxy: &c.look, Pick: true})
+	}
 	path := make([]Vec, len(g.Home))
 	for i, p := range g.Home {
 		path[i] = cellLy(p)

@@ -163,3 +163,43 @@ func TestLabelStartsNextToItsOwnObject(t *testing.T) {
 		t.Errorf("expected above the object, got %v", r)
 	}
 }
+
+func TestFocusOnTheLMCDivesIntoTheGalaxyFrame(t *testing.T) {
+	v := New()
+	v.Set(build(t, "galactic_age"), 1, testPal)
+	v.home()
+	lmc := findObj(t, v.ch[0].f, "large_magellanic_cloud")
+	x, y := screenOf(v, 0, lmc)
+	v.Focus(int(math.Round(x)), int(math.Round(y)), tw, th)
+	settle(v)
+	near := findObj(t, v.ch[1].f, "large_magellanic_cloud")
+	if v.sel.fi != 1 || v.sel.key != near.Key {
+		t.Fatalf("selection is %v, want the close-up LMC", v.sel)
+	}
+	d := v.ch.centreIn(1, v.m, near.Pos)
+	if px := math.Hypot(d.X-v.off.X, d.Y-v.off.Y) * v.ch[v.m].mx / v.width() * tw; px > 2 {
+		t.Errorf("the LMC is %.1f art px from the centre", px)
+	}
+	if across := 2 * near.Size * v.ch[1].mx / v.width() * tw; across < 40 {
+		t.Errorf("the LMC is %.0f art px across, want at least 40", across)
+	}
+}
+
+func TestHomeCentresTheGalaxyHighAndSolDeep(t *testing.T) {
+	v := New()
+	v.Set(build(t, "galactic_age"), 1, testPal)
+	for _, c := range []struct {
+		z   float64
+		key string
+		fi  int
+	}{{v.ch[1].bmax, "disc", 1}, {(v.ch[1].bmin+v.ch[1].bmax)/2 - .1, "sol", 1}, {v.ch[1].bmin, "sol", 1}} {
+		v.z, v.tz = c.z, c.z
+		v.Update(0)
+		v.Do(Cmd{Op: Home})
+		p, _ := v.ch.objPos(c.fi, c.key)
+		d := v.ch.centreIn(c.fi, v.m, p)
+		if px := math.Hypot(d.X-v.off.X, d.Y-v.off.Y) * v.ch[v.m].mx / v.width() * tw; px > 2 {
+			t.Errorf("z=%.2f: %s is %.1f art px from the centre after Home", c.z, c.key, px)
+		}
+	}
+}

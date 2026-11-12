@@ -248,6 +248,17 @@ func (v *View) Focus(x, y, w, h int) {
 			break
 		}
 	}
+	if o.Kind == world.KindGalaxy { // a galaxy the deeper frame draws close up: dive to it, five of its widths across
+		for i := v.sel.fi + 1; i < len(v.ch); i++ {
+			for j := range v.ch[i].f.Objects {
+				if c := &v.ch[i].f.Objects[j]; c.Key == o.Key && c.Kind == world.KindGalaxy {
+					v.sel, v.pick = selection{fi: i, key: c.Key}, -1
+					v.focus = focusTo{on: true, fi: i, pos: c.Pos}
+					v.tz = math.Log10(10 * c.Size * v.ch[i].mx)
+				}
+			}
+		}
+	}
 	if v.tz > v.z {
 		v.tz = v.z - focusSteps*zoomStep
 	}

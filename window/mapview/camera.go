@@ -14,6 +14,7 @@ type layer struct {
 	f          *world.Frame
 	mx         float64   // zoom metres per own unit (schematic scale included)
 	anchor     world.Vec // the frame's origin, in the parent's units
+	reach      float64   // how far from its origin the camera may centre, own units
 	lo, hi     float64   // log10 of the view width at which the frame is fully in (lo) and out (hi)
 	bmin, bmax float64   // log10 of the frame's own band
 }
@@ -41,7 +42,12 @@ func newChain(root *world.Frame) chain {
 	var c chain
 	k := 1.0
 	for f := root; f != nil; {
-		l := layer{f: f, mx: unitM[f.Unit] * k}
+		l := layer{f: f, mx: unitM[f.Unit] * k, reach: f.Radius * 1.1}
+		for _, o := range f.Objects { // a satellite galaxy past the disc is still worth centring on
+			if o.Kind == world.KindGalaxy {
+				l.reach = math.Max(l.reach, math.Hypot(o.Pos.X, o.Pos.Y)+o.Size)
+			}
+		}
 		if n := len(c); n > 0 {
 			p := c[n-1]
 			l.anchor = f.Pos
