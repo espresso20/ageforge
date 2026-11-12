@@ -22,6 +22,7 @@ type MapState struct {
 	SelFrame world.FrameKind // the frame Sel belongs to
 	Sel      *world.Object
 	Lock     string // the age that opens Sel's frame, while the player's age has not reached it
+	Settled  bool   // Sel was settled on the map; the model learns it a refresh later
 }
 
 // hostState is the last MapState, kept for the next draw. The host reports on
@@ -231,7 +232,7 @@ func (v *view) hostedInspect(m *mapmodel.Model) (Inspection, bool) {
 		return describeHomeworld(m), true
 	}
 	if o.Doubt > 0 { // a Quantum place: unnamed until the player settles it
-		if !m.Settled[o.Key] {
+		if !s.Settled && !m.Settled[o.Key] {
 			return Inspection{Title: uncertainName.String(), Lines: []string{uncertainLook.String()}}, true
 		}
 		lines := []string{settledLook.String()}

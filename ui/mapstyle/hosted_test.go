@@ -157,3 +157,20 @@ func TestMadeUpNamesShowNoIDs(t *testing.T) {
 		t.Fatal("the Region holds no made-up stars")
 	}
 }
+
+// A place the player just settled on the map reads as settled on the next
+// draw, without waiting for the game to hand the model the new id.
+func TestSettledOnTheMapInspectsAsSettledAtOnce(t *testing.T) {
+	h := &fakeHost{}
+	v, f := hostFrame(t, "quantum_age", h)
+	drawFrame(v, f, 120, 40, false).Fini()
+	and := objectNamed(t, v.sky, world.FrameLocalGroup, "andromeda")
+	h.report(MapState{Frame: world.FrameLocalGroup, SelFrame: world.FrameLocalGroup, Sel: and})
+	if in, _ := v.Inspect(f); in.Title != uncertainName.String() {
+		t.Fatalf("an unsettled place inspects as %+v", in)
+	}
+	h.report(MapState{Frame: world.FrameLocalGroup, SelFrame: world.FrameLocalGroup, Sel: and, Settled: true})
+	if in, _ := v.Inspect(f); in.Title == uncertainName.String() || len(in.Lines) == 0 || in.Lines[0] != settledLook.String() {
+		t.Errorf("a place settled on the map inspects as %+v", in)
+	}
+}

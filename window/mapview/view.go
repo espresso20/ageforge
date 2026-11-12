@@ -235,6 +235,7 @@ func (v *View) cycle(fwd bool) {
 		j := ((v.pick+i*step)%n + n) % n
 		if o := &f.Objects[j]; o.Pick {
 			v.pick, v.off, v.sel = j, o.Pos, selection{fi: v.m, key: o.Key}
+			v.settle(o, v.m)
 			return
 		}
 	}

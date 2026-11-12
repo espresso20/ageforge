@@ -48,7 +48,7 @@ func (s *sky) Show(r image.Rectangle, w *world.World, key uint64, pal world.Pale
 func (s *sky) Watch(names func(string) string, fn func(mapstyle.MapState)) {
 	s.view.SetNames(names)
 	s.view.OnChange(func(m mapview.State) {
-		fn(mapstyle.MapState{Frame: m.Frame, SelFrame: m.SelFrame, Sel: m.Sel, Lock: m.Lock})
+		fn(mapstyle.MapState{Frame: m.Frame, SelFrame: m.SelFrame, Sel: m.Sel, Lock: m.Lock, Settled: m.Settled})
 	})
 }
 

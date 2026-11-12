@@ -28,6 +28,7 @@ type State struct {
 	SelFrame world.FrameKind
 	Sel      *world.Object
 	Lock     string // the age that opens Sel's frame, while the age has not reached it
+	Settled  bool   // Sel is not uncertain, or has been settled here (the save may not have it yet)
 }
 
 // hold keeps the point under the cursor still while a wheel zoom eases: P is
@@ -85,7 +86,7 @@ func (v *View) objAt(fi int, key string) *world.Object {
 func (v *View) state() State {
 	s := State{Frame: v.ch[v.m].f.Kind}
 	if o := v.objAt(v.sel.fi, v.sel.key); o != nil {
-		s.Sel, s.SelFrame = o, v.ch[v.sel.fi].f.Kind
+		s.Sel, s.SelFrame, s.Settled = o, v.ch[v.sel.fi].f.Kind, v.isSettled(o)
 		if v.sel.fi < v.open {
 			s.Lock = world.OpensAt(s.SelFrame)
 		}
