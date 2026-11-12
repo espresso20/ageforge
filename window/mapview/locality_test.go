@@ -2,6 +2,7 @@ package mapview
 
 import (
 	"image"
+	"image/color"
 	"testing"
 )
 
@@ -101,5 +102,28 @@ func TestHorseheadLabelHugsTheSilhouette(t *testing.T) {
 		if gap > labelGap {
 			t.Errorf("ringed=%v: label is %d art px from it, want 2", ringed, gap)
 		}
+	}
+}
+
+// A cluster's stars stay points however far in the view goes: the glow round
+// the brightest is one size in art pixels, so lit pixels per star stay few.
+func TestClusterStarsStayCrisp(t *testing.T) {
+	v := nearView(t)
+	o := objOf(v, "pleiades")
+	var lit []int
+	for _, r := range []float64{20, 80, 300} {
+		p, img, _, _ := blankPen(v, 2, o, r)
+		p.object(o)
+		n := 0
+		for i := 0; i < len(img.Pix); i += 4 {
+			if lum(color.RGBA{R: img.Pix[i], G: img.Pix[i+1], B: img.Pix[i+2]}) > lum(p.pal.Bg) {
+				n++
+			}
+		}
+		lit = append(lit, n)
+	}
+	// stars spread out with the zoom; the lit area may grow with their count, never with a glow's radius
+	if lit[2] > 8*lit[0]+600 {
+		t.Errorf("lit pixels %v: the glow grows with the zoom", lit)
 	}
 }

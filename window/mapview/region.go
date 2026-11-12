@@ -302,6 +302,10 @@ func (p *pen) armStars(dx, dy float64, seed int64) {
 	}
 }
 
+// clusterGlow is the radius, in art pixels, of the haze round a cluster's
+// brightest stars: fixed, so a close view shows crisp points, not blue balls.
+const clusterGlow = 4
+
 // cluster is a scatter of bright points: mostly single pixels, a few brighter
 // with a glint, in the cluster's colour and white and a cooler blue.
 func (p *pen) cluster(o *world.Object, x, y, r float64) {
@@ -350,9 +354,9 @@ func (p *pen) cluster(o *world.Object, x, y, r float64) {
 			p.px(int(math.Round(sx)), int(math.Round(sy)), p.pal.Mix(t, uint8(150+hash2(i, 11, seed)>>8&0x4f)))
 		}
 	}
-	if !warm { // the Pleiades' reflection haze round its brightest members
+	if !warm { // the Pleiades' reflection haze round its brightest members: a tight glow, the same size at any zoom
 		for _, m := range bright {
-			p.glow(m.x, m.y, math.Max(5, r*.35), world.ToneBlue, 90)
+			p.glow(m.x, m.y, clusterGlow, world.ToneBlue, 90)
 		}
 	}
 }
