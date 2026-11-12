@@ -79,6 +79,8 @@ func Version(seed int64, o *Object, n int) Object {
 			l.Weight = 120
 		}
 		c.Star, c.Tone, c.Weight = &l, l.Tone, uint8(l.Weight)
+	case o.Kind == KindCluster: // a cluster's members fall another way
+		c.Seed = vseed(seed, o.Key, n)
 	case o.Shape != nil:
 		s := PickShape(vseed(seed, o.Key, n))
 		c.Shape, c.Seed = &s, vseed(seed, o.Key, n)
@@ -127,12 +129,13 @@ func (w *World) Galaxy(key string) *Frame {
 	if key == "milky_way" {
 		return w.Root.Find(FrameGalaxy)
 	}
-	if w.Root.Kind != FrameLocalGroup || galIndex(key) < 0 {
+	lg := w.Root.Find(FrameLocalGroup)
+	if lg == nil || galIndex(key) < 0 {
 		return nil
 	}
 	var o *Object
-	for i := range w.Root.Objects {
-		if c := &w.Root.Objects[i]; c.Key == key && c.Kind == KindGalaxy && c.Doubt > 0 {
+	for i := range lg.Objects {
+		if c := &lg.Objects[i]; c.Key == key && c.Kind == KindGalaxy && c.Doubt > 0 {
 			o = c
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapgen"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/world"
 )
@@ -89,6 +90,9 @@ func skyPalette(p *cellPalette) world.Palette {
 	out := world.Palette{Bg: rgba(p.bg)}
 	for t := range out.Tones {
 		out.Tones[t] = rgba(p.hue[toneHues[t]])
+	}
+	for i, l := range mapmodel.LineageOrder {
+		out.Lines[i] = rgba(p.colour(mapgen.LineHue(l)))
 	}
 	return out
 }

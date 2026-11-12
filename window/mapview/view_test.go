@@ -17,6 +17,9 @@ var testPal = func() world.Palette {
 	for i := range p.Tones {
 		p.Tones[i] = color.RGBA{R: uint8(40 + i*12), G: uint8(255 - i*9), B: uint8(90 + i*7), A: 255}
 	}
+	for i := range p.Lines {
+		p.Lines[i] = color.RGBA{R: uint8(30 + i*13), G: uint8(240 - i*11), B: uint8(60 + i*9), A: 255}
+	}
 	return p
 }()
 

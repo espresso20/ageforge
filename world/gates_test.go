@@ -17,8 +17,8 @@ func TestGateOfEachAge(t *testing.T) {
 		{AgeSpace, FrameSystem, true, FrameNeighbourhood},
 		{AgeInterstellar, FrameNeighbourhood, true, FrameRegion},
 		{AgeGalactic, FrameGalaxy, true, FrameLocalGroup},
-		{AgeQuantum, FrameLocalGroup, false, FrameLocalGroup},
-		{AgeTranscendent, FrameLocalGroup, false, FrameLocalGroup},
+		{AgeQuantum, FrameLocalGroup, true, FrameWeb},
+		{AgeTranscendent, FrameWeb, false, FrameWeb},
 	} {
 		g := GateOf(c.age)
 		if g.Open != c.open || g.Locked != c.locked || g.Top() != c.top {
@@ -38,6 +38,9 @@ func TestBuildStopsAtTheLockedFrame(t *testing.T) {
 		if g := GateOf(age); g.Locked && OpensAt(g.Top()) == "" {
 			t.Errorf("%s: the locked frame says no age opens it", age)
 		}
+	}
+	if OpensAt(FrameWeb) != AgeTranscendent {
+		t.Errorf("the web opens in %q", OpensAt(FrameWeb))
 	}
 	if OpensAt(FrameNeighbourhood) != AgeInterstellar {
 		t.Errorf("the neighbourhood opens in %q", OpensAt(FrameNeighbourhood))

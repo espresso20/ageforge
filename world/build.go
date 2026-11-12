@@ -55,7 +55,7 @@ func Build(m *mapmodel.Model, seed int64) *World {
 		cols := Colonies(m, t)
 		gal := galaxyFrame(m, seed, g, t)
 		lg := localGroup(seed, g.Shape, solLy(g))
-		if GateOf(age).Open == FrameLocalGroup {
+		if GateOf(age).Open <= FrameLocalGroup {
 			openLocalGroup(lg, seed)
 		}
 		region := regionFrame(seed, len(cols))
@@ -65,7 +65,11 @@ func Build(m *mapmodel.Model, seed int64) *World {
 		region.Children = []*Frame{near}
 		gal.Children = []*Frame{region}
 		lg.Children = []*Frame{gal}
-		w.Root = lg.Find(GateOf(age).Top()) // nothing outside the locked frame is built into the world
+		top := lg
+		if GateOf(age).Top() == FrameWeb {
+			top = webFrame(m, seed, lg)
+		}
+		w.Root = top.Find(GateOf(age).Top()) // nothing outside the locked frame is built into the world
 	}
 	return w
 }

@@ -6,7 +6,8 @@ import "sync"
 type FrameKind uint8
 
 const (
-	FrameLocalGroup    FrameKind = iota // the void between galaxies (kly)
+	FrameWeb           FrameKind = iota // the cosmic web of galaxy clusters (Mly)
+	FrameLocalGroup                     // the void between galaxies (kly)
 	FrameGalaxy                         // the home galaxy, seeded, with the people's territory (ly)
 	FrameRegion                         // the Orion arm sector round Sol (ly)
 	FrameNeighbourhood                  // Sol's nearest stars (ly)
@@ -18,7 +19,8 @@ const (
 type Unit uint8
 
 const (
-	UnitKly         Unit = iota // thousands of light-years
+	UnitMly         Unit = iota // millions of light-years
+	UnitKly                     // thousands of light-years
 	UnitLy                      // light-years
 	UnitAU                      // astronomical units
 	UnitPlanetRadii             // radii of the frame's planet
@@ -68,6 +70,8 @@ const (
 	KindStation                // a station, module or mine
 	KindGate                   // the warp gate
 	KindShip                   // a ship
+	KindCluster                // a galaxy cluster, a node of the cosmic web
+	KindStrand                 // a filament of the cosmic web, tied to one building line
 )
 
 // Form is what a feature looks like: the arm's band, a cluster of stars, a

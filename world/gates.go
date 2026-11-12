@@ -4,6 +4,7 @@ package world
 // FrameKind. This table is the whole rule: the map reads it and nothing else
 // says what an age may see. A kind with no age is always open (the planet).
 var opens = [...]string{
+	FrameWeb:           AgeTranscendent,
 	FrameLocalGroup:    AgeQuantum,
 	FrameGalaxy:        AgeGalactic,
 	FrameRegion:        AgeGalactic,
@@ -45,13 +46,13 @@ func GateOf(age string) Gate {
 	if at < 0 {
 		return g
 	}
-	for k := FramePlanet; k > FrameLocalGroup; k-- {
+	for k := FramePlanet; k > FrameWeb; k-- {
 		if !ageAtLeast(opens[k-1], at) {
 			break
 		}
 		g.Open = k - 1
 	}
-	g.Locked = g.Open > FrameLocalGroup
+	g.Locked = g.Open > FrameWeb
 	return g
 }
 

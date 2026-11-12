@@ -7,7 +7,7 @@ import (
 )
 
 // metres per one of a frame's own units.
-var unitM = [...]float64{world.UnitKly: 9.4607e18, world.UnitLy: 9.4607e15, world.UnitAU: 1.496e11, world.UnitPlanetRadii: 6.371e6}
+var unitM = [...]float64{world.UnitMly: 9.4607e21, world.UnitKly: 9.4607e18, world.UnitLy: 9.4607e15, world.UnitAU: 1.496e11, world.UnitPlanetRadii: 6.371e6}
 
 // A layer is one frame of the chain with what the camera needs of it.
 type layer struct {
@@ -54,7 +54,7 @@ func newChain(root *world.Frame) chain {
 			if pos, ok := c.objPos(n-1, f.Anchor); ok && f.Anchor != "" {
 				l.anchor = pos
 			}
-			if p.f.Schem && k == 1 { // the first frame under a schematic one sets the scale
+			if p.f.Schem { // the first frame under a schematic one sets the scale
 				k = schemRatio(c, l.f)
 				l.mx = unitM[f.Unit] * k * math.Max(1, f.Inflate)
 			}
@@ -92,7 +92,10 @@ func (c chain) withFrom(parent world.FrameKind, f *world.Frame) chain {
 // withGalaxy is the chain with everything under the Local Group swapped for
 // the galaxy frame f: the schematic Local Group draws each galaxy at its own
 // size, so k comes from the galaxy object f hangs on.
-func (c chain) withGalaxy(f *world.Frame) chain { return c[:1].graft(f, schemRatio(c[:1], f)) }
+func (c chain) withGalaxy(f *world.Frame) chain {
+	lg := c[:c.idx(world.FrameLocalGroup)+1]
+	return lg.graft(f, schemRatio(lg, f))
+}
 
 // graft hangs f and the first child at every level under c, k the scale a
 // schematic frame above sets.

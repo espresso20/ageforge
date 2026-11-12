@@ -214,6 +214,9 @@ func (v *View) near(x, y, w, h int) (sel selection, ok bool) {
 			}
 			ox, oy := p.at(o.Pos)
 			c := math.Hypot(ox-float64(x), oy-float64(y))
+			if o.Kind == world.KindStrand {
+				c = strandDist(p, o, float64(x), float64(y)) + 2 // a node wins where its strands end
+			}
 			d := math.Max(0, c-pickEdge(p, o))
 			if d*d < best || (d*d == best && ok && c <= nearC) { // on two discs, the one whose centre is closer
 				best, nearC, sel, ok = d*d, c, selection{fi: i, key: o.Key}, true
@@ -267,7 +270,9 @@ func (v *View) Focus(x, y, w, h int) {
 	key := o.Key
 	swapped := false
 	switch {
-	case o.Kind == world.KindGalaxy && v.sel.fi == 0 && o.Pick:
+	case o.Kind == world.KindCluster && key != "local_group":
+		return // too far to enter
+	case o.Kind == world.KindGalaxy && v.sel.fi == v.ch.idx(world.FrameLocalGroup) && o.Pick:
 		swapped = v.swapGalaxy(key)
 	case o.Kind == world.KindPlanet && v.sel.fi == v.ch.idx(world.FrameSystem):
 		v.swapTail(key)
@@ -379,13 +384,14 @@ func (v *View) TakeSettled() []string {
 // swapGalaxy hangs the galaxy key (and the chain under it) under the Local
 // Group in place of the one there, when that galaxy is out of view.
 func (v *View) swapGalaxy(key string) bool {
-	if len(v.ch) < 2 {
+	li := v.ch.idx(world.FrameLocalGroup)
+	if li < 0 || len(v.ch) < li+2 {
 		return false
 	}
-	if v.ch[1].f.Anchor == key {
+	if v.ch[li+1].f.Anchor == key {
 		return true
 	}
-	if v.ch.weightAt(1, v.z, v.look()) > 0 {
+	if v.ch.weightAt(li+1, v.z, v.look()) > 0 {
 		return false
 	}
 	f := v.w.Galaxy(key)

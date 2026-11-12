@@ -90,7 +90,7 @@ func TestHomeSystem(t *testing.T) {
 		if home == nil || home.Count(KindMoon) != 1 || home.Count(KindShip) != 1 {
 			t.Errorf("%s: home frame wrong", age)
 		}
-		if StarAge(age) != (w.Root.Kind == FrameLocalGroup) {
+		if StarAge(age) != (w.Root.Kind <= FrameLocalGroup) {
 			t.Errorf("%s: wrong root %v", age, w.Root.Kind)
 		}
 	}
