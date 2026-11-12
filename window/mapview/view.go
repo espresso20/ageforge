@@ -66,6 +66,8 @@ type View struct {
 	tex      texCache
 	art      artCache
 	bod      bodyCache
+	place    string        // the star whose region hangs under the galaxy ("" Sol's)
+	nbr      string        // the star whose neighbourhood hangs under the region ("" the one the region is of)
 	star     string        // the near star whose system hangs under the neighbourhood ("" Sol's)
 	clock    time.Duration // the frame clock the lights blink on
 	tick     int           // half seconds of it
@@ -95,8 +97,19 @@ func (v *View) Set(w *world.World, key uint64, pal world.Palette) {
 		return
 	}
 	v.ch = newChain(w.Root)
+	// the place, neighbourhood and system the player was in outlive a rebuild
+	if f := w.Place(v.place); v.place != "" && f != nil && v.ch.idx(world.FrameRegion) > 0 {
+		v.ch = v.ch.withFrom(world.FrameGalaxy, f)
+	} else {
+		v.place = ""
+	}
+	if f := w.Near(v.nbr); v.nbr != "" && f != nil && v.ch.idx(world.FrameNeighbourhood) > 0 {
+		v.ch = v.ch.withFrom(world.FrameRegion, f)
+	} else {
+		v.nbr = ""
+	}
 	if f := w.System(v.star); v.star != "" && f != nil && v.ch.idx(world.FrameSystem) > 0 {
-		v.ch = v.ch.withSystem(f) // the system the player was in outlives a rebuild
+		v.ch = v.ch.withFrom(world.FrameNeighbourhood, f)
 	} else {
 		v.star = ""
 	}
@@ -162,7 +175,11 @@ func (v *View) Do(c Cmd) {
 	v.hold, v.focus = hold{}, focusTo{}
 	switch c.Op {
 	case ZoomIn:
+		old := v.tz
 		v.tz -= zoomStep
+		if si, hi := v.ch.idx(world.FrameSystem), v.ch[len(v.ch)-1].hi; si >= 0 && v.ch[si].f.Anchor != "sol" && old >= hi {
+			v.tz = math.Max(v.tz, hi) // a made-up system: the key stops at the system; a planet is entered by picking it or by the wheel, never as an empty close-up
+		}
 	case ZoomOut:
 		v.tz += zoomStep
 	case Home:

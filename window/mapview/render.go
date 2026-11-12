@@ -196,6 +196,9 @@ func (p *pen) object(o *world.Object) {
 	switch o.Kind {
 	case world.KindGalaxy:
 		p.galaxy(o, x, y, r)
+		if o.Terr != nil {
+			p.territory(o, x, y, r)
+		}
 	case world.KindFeature:
 		if len(o.Path) <= 1 { // the home arm's path is drawn by the galaxy's own light
 			p.region(o, x, y, r, p.art, p.seed)

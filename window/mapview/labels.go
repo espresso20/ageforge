@@ -50,8 +50,10 @@ func named(f *world.Frame, o *world.Object) bool {
 	switch f.Kind {
 	case world.FrameLocalGroup:
 		return o.Kind == world.KindGalaxy
+	case world.FrameGalaxy: // the sectors the people hold, by name
+		return o.Key == "sol" || (o.Form == world.FormZone && o.Held)
 	case world.FrameRegion:
-		return o.Kind == world.KindFeature || o.Key == "sol"
+		return o.Kind == world.KindFeature || o.Kind == world.KindStar
 	case world.FrameNeighbourhood:
 		return o.Kind == world.KindStar || o.Kind == world.KindColony
 	case world.FrameSystem:

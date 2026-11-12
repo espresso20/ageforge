@@ -267,6 +267,13 @@ func (v *View) Focus(x, y, w, h int) {
 	switch {
 	case o.Kind == world.KindPlanet && v.sel.fi == v.ch.idx(world.FrameSystem):
 		v.swapTail(key)
+	case o.Kind == world.KindStar && v.sel.fi == v.ch.idx(world.FrameGalaxy):
+		if !o.Held && key != "sol" { // seen from outside the territory: named, not entered
+			return
+		}
+		v.swapPlace(key)
+	case o.Kind == world.KindStar && v.sel.fi == v.ch.idx(world.FrameRegion):
+		v.swapNear(key)
 	case (o.Kind == world.KindStar || o.Kind == world.KindColony) && v.sel.fi == v.ch.idx(world.FrameNeighbourhood):
 		key = o.Label // a colony stands at its star (its label is the star's key): the dive goes to that system
 		v.swapSystem(key)
@@ -332,8 +339,41 @@ func (v *View) swapSystem(key string) {
 		return
 	}
 	if f := v.w.System(key); f != nil {
-		v.ch, v.star, v.dirty = v.ch.withSystem(f), key, true
+		v.ch, v.star, v.dirty = v.ch.withFrom(world.FrameNeighbourhood, f), key, true
 		v.warmClose(f)
+	}
+}
+
+// swapPlace hangs the region of star key (and the chain under it) under the
+// galaxy, in place of the one there, when that region is out of view. Sol's is
+// the home one the world built.
+func (v *View) swapPlace(key string) {
+	ri := v.ch.idx(world.FrameRegion)
+	if ri < 1 || v.ch[ri].f.Anchor == key || v.ch.weightAt(ri, v.z, v.look()) > 0 {
+		return
+	}
+	if f := v.w.Place(key); f != nil {
+		v.ch, v.dirty = v.ch.withFrom(world.FrameGalaxy, f), true
+		v.place, v.nbr, v.star = key, "", ""
+		if key == "sol" {
+			v.place = ""
+		}
+	}
+}
+
+// swapNear hangs the neighbourhood of star key (and the system under it) under
+// the region, in place of the one there, when that is out of view.
+func (v *View) swapNear(key string) {
+	ni := v.ch.idx(world.FrameNeighbourhood)
+	if ni < 1 || v.ch[ni].f.Anchor == key || v.ch.weightAt(ni, v.z, v.look()) > 0 {
+		return
+	}
+	if f := v.w.Near(key); f != nil {
+		v.ch, v.dirty = v.ch.withFrom(world.FrameRegion, f), true
+		v.nbr, v.star = key, ""
+		if key == "sol" {
+			v.nbr = ""
+		}
 	}
 }
 

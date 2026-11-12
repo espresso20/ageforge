@@ -83,6 +83,7 @@ const (
 	FormRemnant        // a supernova remnant: a shell of filaments
 	FormKnot           // a small star-forming knot of the arm
 	FormTerritory      // the people's reach, a ring round Sol
+	FormZone           // a sector of the galaxy: its pick zone, drawn by the disc's tint
 )
 
 // Object is anything the map shows. Not every field means something for every
@@ -113,6 +114,8 @@ type Object struct {
 	Seed   int64        // with Shape: the save's seed, which the arms' winding reads
 	Path   []Vec        // a polyline: the home arm, core to rim (KindFeature)
 	Pick   bool         // the player can select it
+	Held   bool         // a sector or generated star: the people hold it, so a star may be entered
+	Terr   *Zones       // KindGalaxy of the home galaxy: the territory the disc is tinted with
 }
 
 // Body is the orbit and make-up of a planet, moon, belt or comet.
