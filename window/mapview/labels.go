@@ -23,12 +23,13 @@ type label struct {
 	text   string
 	mask   *image.Alpha
 	prio   int
-	chosen bool // the selected object: always shown, in the highlight colour
+	chosen bool            // the selected object: always shown, in the highlight colour
+	box    image.Rectangle // what the object and its ring fill (empty: derived from x, y, r)
 }
 
 const (
 	prioSelected = 1000
-	labelGap     = 3 // art pixels between an object and its name
+	labelGap     = 2 // art pixels between an object and its name
 	labelPad     = 2 // clear art pixels kept round a name (its keyline takes one)
 )
 
@@ -57,10 +58,33 @@ func named(f *world.Frame, o *world.Object) bool {
 	return false
 }
 
-// place chooses which labels show and where, highest priority first; one
-// that would touch an earlier one or leave the canvas is dropped. It returns
-// the top left of each shown label's text, in the order given.
-func place(ls []label, w, h int) (shown []label, at []image.Point) {
+// boxOf is the square an object (and anything drawn round it) fills.
+func boxOf(x, y, r float64) image.Rectangle {
+	ox, oy, k := int(math.Round(x)), int(math.Round(y)), int(math.Ceil(r))
+	return image.Rect(ox-k, oy-k, ox+k+1, oy+k+1)
+}
+
+// extent is the box an object fills on the canvas: its sprite and glow, or
+// the selection ring round it.
+func extent(p pen, o *world.Object, ringed bool) image.Rectangle {
+	x, y := p.at(o.Pos)
+	r := math.Max(p.radius(o), 1)
+	switch {
+	case ringed:
+		r = math.Max(r, 2) + 4 // the ring, drawn at +3, and its width
+	case o.Kind == world.KindStar:
+		r += 3 // the glow ring
+	}
+	return boxOf(x, y, r)
+}
+
+// place chooses which labels show and where, highest priority first. A name
+// starts labelGap art pixels from its own object's box, to the right, else the
+// left, above, below; the first spot that stays on the canvas and keeps
+// labelPad clear of every other drawn thing (the boxes in objs, earlier names)
+// wins, and a name with no such spot is dropped. It returns the top left of
+// each shown label's text, in the order given.
+func place(ls []label, w, h int, objs ...image.Rectangle) (shown []label, at []image.Point) {
 	order := make([]int, len(ls))
 	for i := range order {
 		order[i] = i
@@ -72,11 +96,15 @@ func place(ls []label, w, h int) (shown []label, at []image.Point) {
 		if l.mask == nil {
 			continue
 		}
+		own := l.box
+		if own.Empty() {
+			own = boxOf(l.x, l.y, math.Max(l.r, 1))
+		}
 		mw, mh := l.mask.Bounds().Dx(), l.mask.Bounds().Dy()
-		ox, oy := int(math.Round(l.x)), int(math.Round(l.y))
-		reach := int(math.Ceil(l.r)) + labelGap
-		for _, x := range [...]int{ox + reach, ox - reach - mw} { // right of it, else left
-			r := image.Rect(x, oy-mh/2, x+mw, oy-mh/2+mh)
+		cx, cy := (own.Min.X+own.Max.X-mw)/2, (own.Min.Y+own.Max.Y-mh)/2
+		for _, p := range [...]image.Point{{own.Max.X + labelGap, cy}, {own.Min.X - labelGap - mw, cy},
+			{cx, own.Min.Y - labelGap - mh}, {cx, own.Max.Y + labelGap}} {
+			r := image.Rectangle{Min: p, Max: p.Add(image.Pt(mw, mh))}
 			if r.Min.X < 0 || r.Min.Y < 0 || r.Max.X > w || r.Max.Y > h {
 				continue
 			}
@@ -84,6 +112,9 @@ func place(ls []label, w, h int) (shown []label, at []image.Point) {
 			clash := false
 			for _, t := range taken {
 				clash = clash || pad.Overlaps(t)
+			}
+			for _, o := range objs {
+				clash = clash || (o != own && pad.Overlaps(o))
 			}
 			if clash {
 				continue
@@ -102,6 +133,7 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		return
 	}
 	var ls []label
+	var objs []image.Rectangle
 	var picked string
 	add := func(i int, o *world.Object, chosen bool) {
 		text := v.names(o.Label)
@@ -117,7 +149,7 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		if chosen {
 			prio = prioSelected
 		}
-		ls = append(ls, label{x: x, y: y, r: math.Max(p.radius(o), 1), text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen})
+		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen})
 	}
 	sel := v.objAt(v.sel.fi, v.sel.key)
 	if sel != nil {
@@ -130,12 +162,21 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		}
 	}
 	f := v.ch[v.m].f
+	p := v.penFor(img, v.m, off)
 	for j := range f.Objects {
-		if o := &f.Objects[j]; named(f, o) && !(sel == o) {
+		o := &f.Objects[j]
+		if named(f, o) && !(sel == o) {
 			add(v.m, o, false)
 		}
+		if o.Kind == world.KindFeature || o == sel {
+			continue // wide washes are not obstacles; the selected one is in ls with its ring
+		}
+		objs = append(objs, extent(p, o, false))
 	}
-	shown, at := place(ls, img.Bounds().Dx(), img.Bounds().Dy())
+	if sel != nil && v.sel.fi == v.m {
+		objs = append(objs, extent(p, sel, true))
+	}
+	shown, at := place(ls, img.Bounds().Dx(), img.Bounds().Dy(), objs...)
 	for i, l := range shown {
 		fg := v.pal.Mix(world.ToneWhite, 255)
 		if l.chosen {

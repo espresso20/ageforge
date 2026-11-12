@@ -121,3 +121,45 @@ func TestLabelsKeepTwoArtPixelsApart(t *testing.T) {
 		}
 	}
 }
+
+func TestLabelsClearEveryDrawnObject(t *testing.T) {
+	f := boxFace{}
+	mine := boxOf(100, 50, 3)
+	other := boxOf(112, 50, 8) // a ringed neighbour right of it
+	l := label{x: 100, y: 50, r: 3, box: mine, text: "me", mask: f.Mask("me"), prio: 10}
+	shown, at := place([]label{l}, tw, th, mine, other)
+	if len(shown) != 1 {
+		t.Fatal("the label found no spot")
+	}
+	r := image.Rectangle{Min: at[0], Max: at[0].Add(shown[0].mask.Bounds().Size())}
+	if r.Inset(-labelPad).Overlaps(other) {
+		t.Errorf("label %v touches a neighbour's box %v", r, other)
+	}
+	if r.Inset(-labelPad).Overlaps(mine) && !r.Inset(-labelGap).Overlaps(mine) {
+		t.Error("label sits on its own object")
+	}
+	// boxed in on every side: hidden, not forced through
+	if s, _ := place([]label{l}, tw, th, mine, image.Rect(60, 20, 97, 80), image.Rect(103, 20, 140, 80),
+		image.Rect(60, 20, 140, 47), image.Rect(60, 53, 140, 80)); len(s) != 0 {
+		t.Error("a label with no clear spot was kept")
+	}
+}
+
+func TestLabelStartsNextToItsOwnObject(t *testing.T) {
+	f := boxFace{}
+	own := boxOf(150, 80, 6)
+	l := label{x: 150, y: 80, r: 6, box: own, text: "near", mask: f.Mask("near"), prio: 10}
+	// right and left are blocked, so it goes above
+	right, left := image.Rect(own.Max.X, 76, own.Max.X+40, 84), image.Rect(own.Min.X-40, 76, own.Min.X, 84)
+	shown, at := place([]label{l}, tw, th, own, right, left)
+	if len(shown) != 1 {
+		t.Fatal("no spot found")
+	}
+	r := image.Rectangle{Min: at[0], Max: at[0].Add(shown[0].mask.Bounds().Size())}
+	if !r.Inset(-labelGap - 1).Overlaps(own) { // at most labelGap clear pixels
+		t.Errorf("label %v starts more than 2 art px from its object %v", r, own)
+	}
+	if r.Max.Y > own.Min.Y {
+		t.Errorf("expected above the object, got %v", r)
+	}
+}
