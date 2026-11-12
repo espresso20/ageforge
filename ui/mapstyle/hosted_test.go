@@ -105,3 +105,25 @@ func TestScaleLabelFollowsTheBand(t *testing.T) {
 		t.Errorf("System %q and Planet %q should share the close-up label", label(world.FrameSystem), label(world.FramePlanet))
 	}
 }
+
+// A selected object of a locked frame reads as its name plus when it opens;
+// the home world reads as itself, and the station has a name.
+func TestLockedAndHomeInspectLines(t *testing.T) {
+	h := &fakeHost{}
+	v, f := hostFrame(t, "galactic_age", h)
+	drawFrame(v, f, 120, 40, false).Fini()
+	star := objectNamed(t, v.sky, world.FrameNeighbourhood, "alpha_centauri")
+	h.report(MapState{Frame: world.FrameNeighbourhood, SelFrame: world.FrameNeighbourhood, Sel: star, Lock: "interstellar_age"})
+	in, ok := v.Inspect(f)
+	if !ok || in.Title == "" || len(in.Lines) != 1 || !strings.Contains(in.Lines[0], "Interstellar") {
+		t.Errorf("locked star inspects as %+v", in)
+	}
+	earth := objectNamed(t, v.sky, world.FrameSystem, "earth")
+	h.report(MapState{Frame: world.FrameSystem, SelFrame: world.FrameSystem, Sel: earth})
+	if in, _ = v.Inspect(f); strings.Contains(in.Title, "Velgate") || in.Title == "" {
+		t.Errorf("Earth inspects as %q", in.Title)
+	}
+	if SkyName("space_station") == "" || SkyName("europa") == "" || SkyName("pluto") == "" {
+		t.Error("a station, a moon or Pluto has no name")
+	}
+}
