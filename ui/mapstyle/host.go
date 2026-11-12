@@ -31,6 +31,9 @@ type SpaceHost interface {
 	// (see SkyName) and where to report the frame and selection it is in.
 	// fn runs on the host's goroutines: it must only store the state.
 	Watch(names func(label string) string, fn func(MapState))
+	// TakeSettled hands over the uncertain places the player settled since
+	// the last call, for the game to keep in the save.
+	TakeSettled() []string
 }
 
 // MapOp is what a map key asks the camera to do.

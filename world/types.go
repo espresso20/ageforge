@@ -116,6 +116,7 @@ type Object struct {
 	Pick   bool         // the player can select it
 	Held   bool         // a sector or generated star: the people hold it, so a star may be entered
 	Terr   *Zones       // KindGalaxy of the home galaxy: the territory the disc is tinted with
+	Doubt  uint8        // a place Quantum opened that is not settled yet: it has this many candidate versions (2 or 3); 0 is a place that is certain
 }
 
 // Body is the orbit and make-up of a planet, moon, belt or comet.
@@ -139,6 +140,9 @@ type World struct {
 	Age  string
 	Root *Frame // the outermost frame of the age's gate: the locked one if there is one (see GateOf)
 	Key  uint64 // ChangeKey of what it was built from
+
+	// Settled holds the ids of the uncertain places the player has settled.
+	Settled map[string]bool
 
 	mu  sync.Mutex        // guards sys
 	sys map[string]*Frame // generated near-star systems, built on first ask

@@ -246,6 +246,9 @@ func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 	var picked string
 	add := func(i int, o *world.Object, chosen bool) {
 		text := v.names(o.Label)
+		if !v.isSettled(o) {
+			text = v.names(world.UncertainLabel)
+		}
 		if text == "" {
 			text = v.names(o.Inspect)
 		}

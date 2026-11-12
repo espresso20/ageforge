@@ -1583,6 +1583,7 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 		ge.pendingBraceLevel = 0
 	}
 	ge.harbingerHistory = append([]HarbingerRecord(nil), save.HarbingerHistory...)
+	ge.loadSettled(save.Settled)
 	ge.redrawHarbingerHistory()
 	// The Last Passage's thread parked behind the Cosmic Era's doom: only
 	// while that doom's thread is live, else it is the live thread again.

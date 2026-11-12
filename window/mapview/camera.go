@@ -86,9 +86,20 @@ func (c chain) bounds() {
 // neighbourhood, another place's region under the galaxy.
 func (c chain) withFrom(parent world.FrameKind, f *world.Frame) chain {
 	pi := c.idx(parent)
-	out := append(chain(nil), c[:pi+1]...)
+	return c[:pi+1].graft(f, c[pi].mx/(unitM[c[pi].f.Unit]*math.Max(1, c[pi].f.Inflate)))
+}
+
+// withGalaxy is the chain with everything under the Local Group swapped for
+// the galaxy frame f: the schematic Local Group draws each galaxy at its own
+// size, so k comes from the galaxy object f hangs on.
+func (c chain) withGalaxy(f *world.Frame) chain { return c[:1].graft(f, schemRatio(c[:1], f)) }
+
+// graft hangs f and the first child at every level under c, k the scale a
+// schematic frame above sets.
+func (c chain) graft(f *world.Frame, k float64) chain {
+	out := append(chain(nil), c...)
 	for ; f != nil; f = firstChild(f) {
-		out = append(out, out.layerFor(f, c[pi].mx/(unitM[c[pi].f.Unit]*math.Max(1, c[pi].f.Inflate))))
+		out = append(out, out.layerFor(f, k))
 	}
 	out.bounds()
 	return out

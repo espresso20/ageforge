@@ -94,6 +94,8 @@ type GameState struct {
 	SessionStart *SessionMark `json:",omitempty"`
 	// HarbingerHistory lists resolved harbingers this run, oldest first.
 	HarbingerHistory []HarbingerRecord
+	// Settled holds the sky places the player has settled at Quantum.
+	Settled map[string]bool
 	// Phase 9: civilization history + legacy bonuses
 	LegacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus is active
 	CatastropheHistory []string        // narrative log entries

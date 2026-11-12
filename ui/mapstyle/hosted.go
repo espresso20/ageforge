@@ -96,6 +96,14 @@ var heldLines = map[hl]vibe.Entry{
 	{false, false}: vibe.E("ui.mapstyle.space.star.out", "Outside your reach."),
 }
 
+// Uncertain places: what a Quantum place that is not settled yet is called,
+// and what it says about itself. Placeholders: Adam rewrites the words.
+var (
+	uncertainName = vibe.E("ui.mapstyle.space.uncertain.name", "Uncertain")
+	uncertainLook = vibe.E("ui.mapstyle.space.uncertain.look", "Uncertain. Look closer to settle it.")
+	settledLook   = vibe.E("ui.mapstyle.space.uncertain.settled", "Settled.")
+)
+
 var (
 	namesOnce sync.Once
 	nameOf    map[string]vibe.Entry
@@ -125,6 +133,9 @@ func SkyName(key string) string {
 			nameOf[k] = planetNames[i]
 		}
 	})
+	if key == world.UncertainLabel {
+		return uncertainName.String()
+	}
 	if e, ok := nameOf[key]; ok {
 		return e.String()
 	}
@@ -214,6 +225,12 @@ func (v *view) hostedInspect(m *mapmodel.Model) (Inspection, bool) {
 	}
 	if o.Inspect == world.SolNames[world.Home] { // the planet is the planet, whatever the age calls the town
 		return describeHomeworld(m), true
+	}
+	if o.Doubt > 0 { // a Quantum place: unnamed until the player settles it
+		if !m.Settled[o.Key] {
+			return Inspection{Title: uncertainName.String(), Lines: []string{uncertainLook.String()}}, true
+		}
+		return Inspection{Title: SkyName(o.Label), Lines: []string{settledLook.String()}}, true
 	}
 	if strings.HasPrefix(o.Label, "~") { // a sector or star the seed made up: its name, and whether the people hold it
 		return Inspection{Title: SkyName(o.Label), Lines: []string{heldLines[hl{o.Form == world.FormZone, o.Held}].String()}}, true

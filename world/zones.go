@@ -210,8 +210,12 @@ func StarID(key string) (int, bool) {
 }
 
 // starLook is how generated star id shines, and so what its system is like.
-func starLook(seed int64, id int) Look {
-	switch r := Roll(100, seed, 9400, int64(id)); {
+func starLook(seed int64, id int) Look { return starLookV(seed, id, 0) }
+
+// starLookV is the look of version n of star id; version 0 is the star itself.
+func starLookV(seed int64, id, n int) Look {
+	r := (Roll(100, seed, 9400, int64(id)) + 35*n) % 100 // each version a step along the classes
+	switch {
 	case r < 45:
 		return Look{Tone: ToneRed, Size: 0, Weight: 170}
 	case r < 70:
@@ -230,26 +234,34 @@ func GenStar(seed int64, id int, pos Vec, held bool) Object {
 		l.Weight = 120
 	}
 	k := StarKey(seed, id)
-	return Object{Kind: KindStar, Key: k, Label: k, Inspect: k, Pos: pos, Tone: l.Tone, Weight: uint8(l.Weight), Star: &l, Pick: true, Held: held}
+	return Object{Kind: KindStar, Key: k, Label: k, Inspect: k, Pos: pos, Tone: l.Tone, Weight: uint8(l.Weight), Star: &l, Pick: true, Held: held, Doubt: doubtOf(seed, id)}
 }
 
 // placeStars are the n stars about the star parent (0 for Sol), spread over
 // the region's radius, for a Region frame to show as a place.
 func placeStars(seed int64, parent, n int) []Object {
 	var out []Object
-	seen := map[string]bool{}
-	for j := 0; j < n; j++ {
-		var id int
-		for t := int64(0); ; t++ { // no two stars of one place share a name
-			id = genStarBase + Roll(900000, seed, 9500, int64(parent), int64(j), t)
-			if nm := genName(seed, int64(id)); !seen[nm] || t > 50 {
-				seen[nm] = true
-				break
-			}
-		}
+	for j, id := range starIDs(seed, parent/galStride*galStride, parent, n) {
 		a := Roll(Turn, seed, 9501, int64(parent), int64(j))
 		r := float64(900 + Roll(6600, seed, 9502, int64(parent), int64(j)))
 		out = append(out, GenStar(seed, id, polar(r, a), true))
 	}
 	return out
+}
+
+// starIDs are the ids of n stars about parent in the galaxy whose ids start at
+// base, no two with the same name.
+func starIDs(seed int64, base, parent, n int) []int {
+	ids := make([]int, n)
+	seen := map[string]bool{}
+	for j := range ids {
+		for t := int64(0); ; t++ {
+			ids[j] = base + genStarBase + Roll(900000, seed, 9500, int64(parent), int64(j), t)
+			if nm := genName(seed, int64(ids[j])); !seen[nm] || t > 50 {
+				seen[nm] = true
+				break
+			}
+		}
+	}
+	return ids
 }

@@ -97,7 +97,8 @@ type pen struct {
 	art    *artCache
 	bod    *bodyCache
 	seed   int64
-	tick   int // half seconds on the frame clock: the lights blink on it
+	tick   int                      // half seconds on the frame clock: the lights blink on it
+	done   func(*world.Object) bool // says whether a place is settled
 }
 
 // paint draws chain frame i, with the view centred on master-frame offset off.
@@ -129,7 +130,7 @@ func (v *View) lock(img *image.RGBA) {
 func (v *View) penFor(img *image.RGBA, i int, off world.Vec) pen {
 	b := img.Bounds()
 	p := pen{img: img, pal: &v.pal, f: v.ch[i].f, c: v.ch.centreIn(v.m, i, off),
-		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art, bod: &v.bod, tick: v.tick}
+		ppu: float64(b.Dx()) * v.ch[i].mx / v.width(), w: b.Dx(), h: b.Dy(), tex: &v.tex, art: &v.art, bod: &v.bod, tick: v.tick, done: v.isSettled}
 	if v.w != nil {
 		p.seed = v.w.Seed
 	}
@@ -187,6 +188,14 @@ func (p *pen) frame() {
 }
 
 func (p *pen) object(o *world.Object) {
+	if o.Doubt > 0 { // an uncertain place shows its versions in turn, a new one each second; a settled one keeps its own
+		n := world.PickVersion(p.seed, o)
+		if !p.done(o) {
+			n = (p.tick/2 + int(hashKey(o.Key))) % int(o.Doubt)
+		}
+		c := world.Version(p.seed, o, n)
+		o = &c
+	}
 	x, y := p.at(o.Pos)
 	r := p.radius(o)
 	if p.f.Kind == world.FramePlanet {
