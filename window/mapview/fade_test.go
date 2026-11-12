@@ -1,8 +1,7 @@
 package mapview
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	"bytes"
 	"hash"
 	"image"
 	"sort"
@@ -64,19 +63,54 @@ func BenchmarkFade(b *testing.B) {
 	}
 }
 
-// TestFadePictureIsPinned: the crossfade pixels do not drift (a golden hash of
-// every frame of both bands).
-func TestFadePictureIsPinned(t *testing.T) {
-	h := sha256.New()
+// TestFadeMaskedPaintMatchesFull: painting only the pixels each layer keeps
+// gives the same picture as painting both layers whole and dithering between
+// them, on every frame of both bands. (A golden hash would differ by CPU:
+// arm64 fuses multiply-adds.)
+func TestFadeMaskedPaintMatchesFull(t *testing.T) {
 	v := fadeView(t)
-	fadeFrames(v, world.FrameGalaxy, h)
-	fadeFrames(v, world.FrameRegion, h)
-	if got := hex.EncodeToString(h.Sum(nil)); got != fadeGolden {
-		t.Errorf("fade picture changed: %s", got)
+	w, h := 1200/ArtScale(1200), 675/ArtScale(1200)
+	n := 0
+	for i, c := range v.ch {
+		if (c.f.Kind != world.FrameGalaxy && c.f.Kind != world.FrameRegion) || i == 0 {
+			continue
+		}
+		for k := 0; k <= 40; k++ {
+			z := c.hi - (c.hi-c.lo)*float64(k)/40
+			v.z, v.tz = z, z
+			v.m = v.ch.masterAt(z, look{})
+			v.centre()
+			v.Update(0)
+			under, over, f := v.ch.layersAt(z, v.look())
+			if under == over {
+				continue
+			}
+			v.dirty = true
+			got := append([]byte(nil), v.Render(w, h).Pix...)
+			snapped := v.snapped(w)
+			want := image.NewRGBA(image.Rect(0, 0, w, h))
+			top := image.NewRGBA(want.Rect)
+			v.paint(want, under, snapped, nil)
+			v.paint(top, over, snapped, nil)
+			for y := 0; y < h; y++ {
+				for x := 0; x < w; x++ {
+					if Bayer(x, y) < f {
+						o := want.PixOffset(x, y)
+						copy(want.Pix[o:o+4], top.Pix[o:o+4])
+					}
+				}
+			}
+			v.overlay(want, snapped)
+			if !bytes.Equal(got, want.Pix) {
+				t.Fatalf("frame %d of %v at z=%.3f differs from the full paint", k, c.f.Kind, z)
+			}
+			n++
+		}
+	}
+	if n == 0 {
+		t.Fatal("no crossfade frames found")
 	}
 }
-
-const fadeGolden = "3a14fa4961f8b81b2eacbd8e44c1f2fee0da414b74dcd5e6c67a18173f687c4d"
 
 func fadeView(tb testing.TB) *View {
 	v := New()
