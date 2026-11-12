@@ -75,3 +75,34 @@ func TestNearSystemsAreSound(t *testing.T) {
 		t.Error("barnard's real planet is missing")
 	}
 }
+
+func TestColoniesStandInTheirStarsSystem(t *testing.T) {
+	w := Build(model(AgeInterstellar, 7, fixture.Options{}), 7)
+	cols := 0
+	for _, o := range w.Root.Find(FrameNeighbourhood).Objects {
+		if o.Kind != KindColony {
+			continue
+		}
+		cols++
+		f := w.System(o.Label)
+		settled, stations := 0, 0
+		for _, p := range f.Objects {
+			if p.Body != nil {
+				settled += p.Body.Settled
+			}
+		}
+		for _, c := range f.Children {
+			for _, s := range c.Objects {
+				if s.Kind == KindStation && s.Line == o.Line {
+					stations++
+				}
+			}
+		}
+		if settled == 0 || stations == 0 {
+			t.Errorf("colony %s at %s: %d settled planets, %d stations", o.Line, o.Label, settled, stations)
+		}
+	}
+	if cols == 0 {
+		t.Skip("the fixture has no colonies")
+	}
+}

@@ -26,6 +26,7 @@ type label struct {
 	prio   int
 	chosen bool            // the selected object: always shown, in the highlight colour
 	must   bool            // the home planet's name shows even where the craft crowd it
+	locked bool            // its object is on a locked frame, so the name dims with it
 	box    image.Rectangle // what the object and its ring fill (empty: derived from x, y, r)
 }
 
@@ -222,6 +223,9 @@ func (v *View) overlay(img *image.RGBA, off world.Vec) {
 		if l.chosen {
 			fg = v.pal.Mix(world.ToneSun, 255)
 		}
+		if l.locked {
+			fg = mixRGB(v.pal.Bg, v.pal.Tones[world.ToneWhite], lockDim)
+		}
 		blit(img, l.mask, at[i], v.pal.Bg, 1) // a one pixel keyline so it reads over the sky
 		blit(img, l.mask, at[i], fg, 0)
 	}
@@ -255,7 +259,7 @@ func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 		if chosen {
 			prio = prioSelected
 		}
-		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), key: o.Key, text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen, must: p.f.Kind == world.FramePlanet && o.Kind == world.KindPlanet})
+		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), key: o.Key, text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen, locked: i < v.open, must: p.f.Kind == world.FramePlanet && o.Kind == world.KindPlanet})
 	}
 	sfi := v.selDrawn()
 	sel := v.objAt(sfi, v.sel.key)

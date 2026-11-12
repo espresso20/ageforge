@@ -263,17 +263,19 @@ func (v *View) Focus(x, y, w, h int) {
 	if o == nil || v.sel.fi < v.open { // a locked frame's objects can be selected, not entered
 		return
 	}
+	key := o.Key
 	switch {
 	case o.Kind == world.KindPlanet && v.sel.fi == v.ch.idx(world.FrameSystem):
-		v.swapTail(o.Key)
-	case o.Kind == world.KindStar && v.sel.fi == v.ch.idx(world.FrameNeighbourhood):
-		v.swapSystem(o.Key)
+		v.swapTail(key)
+	case (o.Kind == world.KindStar || o.Kind == world.KindColony) && v.sel.fi == v.ch.idx(world.FrameNeighbourhood):
+		key = o.Label // a colony stands at its star (its label is the star's key): the dive goes to that system
+		v.swapSystem(key)
 	}
 	v.hold = hold{}
 	v.focus = focusTo{on: true, fi: v.sel.fi, pos: o.Pos}
 	v.tz -= focusSteps * zoomStep
 	for i := v.sel.fi + 1; i < len(v.ch); i++ {
-		if v.ch[i].f.Anchor == o.Key {
+		if v.ch[i].f.Anchor == key {
 			v.tz = v.ch[i].lo
 			break
 		}
