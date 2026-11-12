@@ -25,6 +25,7 @@ type label struct {
 	mask   *image.Alpha
 	prio   int
 	chosen bool            // the selected object: always shown, in the highlight colour
+	must   bool            // the home planet's name shows even where the craft crowd it
 	box    image.Rectangle // what the object and its ring fill (empty: derived from x, y, r)
 }
 
@@ -205,7 +206,7 @@ func place(ls []label, w, h int, objs ...image.Rectangle) (shown []label, at []i
 			placed = true
 			break
 		}
-		if !placed && l.chosen && spare.X >= 0 { // the selected name always shows
+		if !placed && (l.chosen || l.must) && spare.X >= 0 { // the selected name always shows
 			shown, at = append(shown, l), append(at, spare)
 			taken = append(taken, image.Rectangle{Min: spare, Max: spare.Add(image.Pt(mw, mh))}.Inset(-labelPad))
 		}
@@ -254,7 +255,7 @@ func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 		if chosen {
 			prio = prioSelected
 		}
-		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), key: o.Key, text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen})
+		ls = append(ls, label{x: x, y: y, r: p.radius(o), box: extent(p, o, chosen), key: o.Key, text: text, mask: v.face.Mask(text), prio: prio, chosen: chosen, must: p.f.Kind == world.FramePlanet && o.Kind == world.KindPlanet})
 	}
 	sfi := v.selDrawn()
 	sel := v.objAt(sfi, v.sel.key)
@@ -279,6 +280,9 @@ func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 		default:
 			continue // orbits, belts and washes are not obstacles
 		}
+		if o.Body != nil && o.Body.Kind == "satellite" {
+			continue // the swarm is unnamed specks; a name may sit over them
+		}
 		if o == sel {
 			continue // the selected one comes in with its ring
 		}
@@ -294,17 +298,10 @@ func (v *View) choose(img *image.RGBA, off world.Vec) ([]label, []image.Point) {
 // is on screen, else the deeper frame that carries the same object (Earth
 // picked in the System stays picked in the Planet frame).
 func (v *View) selDrawn() int {
-	under, over, _ := v.ch.layersAt(v.z, v.look())
-	fi := v.sel.fi
-	if fi >= under {
-		return fi
+	if v.sel.fi != v.m && v.objAt(v.m, v.sel.key) != nil {
+		return v.m
 	}
-	for j := over; j >= under; j-- {
-		if v.objAt(j, v.sel.key) != nil {
-			return j
-		}
-	}
-	return fi
+	return v.sel.fi
 }
 
 // blit paints the mask's set pixels in c; grow > 0 paints each one's
