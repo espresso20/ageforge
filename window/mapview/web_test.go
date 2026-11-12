@@ -165,7 +165,9 @@ func TestWebFrameIsQuick(t *testing.T) {
 		v.dirty = true
 		v.Render(1200, 800)
 	}
-	if per := time.Since(start) / n; per > 4*time.Millisecond {
+	per := time.Since(start) / n
+	t.Logf("web frame: %v", per)
+	if per > 4*time.Millisecond {
 		t.Errorf("a web frame takes %v at 1200 px wide", per)
 	}
 }
