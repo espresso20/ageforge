@@ -27,20 +27,17 @@ const galStars = 24
 // galBand is the zoom band of an entered galaxy (the home galaxy's).
 var galBand = Band{Min: 15000, Max: 240000}
 
-// galIndex numbers the Local Group's galaxies other than the Milky Way (0).
+// galIndex numbers the Local Group galaxies that open as galaxies of their own, or -1: the Milky Way and its satellites do not.
 func galIndex(key string) int {
 	switch key {
 	case "andromeda":
 		return 1
 	case "triangulum":
 		return 2
-	case "large_magellanic_cloud":
-		return 3
-	case "small_magellanic_cloud":
-		return 4
-	}
+	} // the Magellanic Clouds stay the Milky Way's satellites: the galaxy frame draws them close up
+
 	if n, err := strconv.Atoi(strings.TrimPrefix(key, "far_")); err == nil && strings.HasPrefix(key, "far_") {
-		return 5 + n
+		return 3 + n
 	}
 	return -1
 }
@@ -109,7 +106,7 @@ func openLocalGroup(f *Frame, seed int64) {
 			continue
 		}
 		o.Pick, o.Doubt = true, uint8(2+Roll(2, seed, 9603, int64(gi)))
-		if gi > 4 { // a far galaxy has no name of its own until it is settled
+		if gi > 2 { // a far galaxy has no name of its own until it is settled
 			k := StarKey(seed, gi)
 			o.Label, o.Inspect = k, k
 		}

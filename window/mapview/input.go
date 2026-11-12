@@ -272,7 +272,7 @@ func (v *View) Focus(x, y, w, h int) {
 	case o.Kind == world.KindPlanet && v.sel.fi == v.ch.idx(world.FrameSystem):
 		v.swapTail(key)
 	case o.Kind == world.KindStar && v.sel.fi == v.ch.idx(world.FrameGalaxy):
-		if !o.Held && key != "sol" { // seen from outside the territory: named, not entered
+		if !o.Held && key != "sol" && o.Doubt == 0 { // seen from outside the territory: named, not entered
 			return
 		}
 		v.swapPlace(key)
