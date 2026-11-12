@@ -23,7 +23,7 @@ var testPal = func() world.Palette {
 	return p
 }()
 
-func build(t *testing.T, age string) *world.World {
+func build(t testing.TB, age string) *world.World {
 	t.Helper()
 	st := fixture.State(fixture.Options{Age: age, Seed: 7, Tick: 43200})
 	m := mapmodel.NewBuilder(mapmodel.NewCatalog()).Build(&st, nil)

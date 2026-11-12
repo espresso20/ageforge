@@ -99,13 +99,17 @@ type pen struct {
 	seed    int64
 	tick    int                      // half seconds on the frame clock: the lights blink on it
 	done    func(*world.Object) bool // says whether a place is settled
+	live    *[4][4]bool              // when set, only these pixels (by x&3, y&3) are kept
 	lineCol *color.RGBA              // set while a strand draws: its line's colour instead of a tone
 }
 
 // paint draws chain frame i, with the view centred on master-frame offset off.
-func (v *View) paint(img *image.RGBA, i int, off world.Vec) {
+// live, when set, marks the pixels (by x&3, y&3) that will be kept: the
+// crossfade overwrites the rest, so a galaxy does not shade them.
+func (v *View) paint(img *image.RGBA, i int, off world.Vec, live *[4][4]bool) {
 	fill(img, v.pal.Bg)
 	p := v.penFor(img, i, off)
+	p.live = live
 	p.frame()
 	if i < v.open {
 		v.lock(img)
