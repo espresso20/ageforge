@@ -90,6 +90,8 @@ The detail pane beside the list shows the selected account's full ID and recover
 | `w` | Wipe the selected account (permanent, behind a type-the-name confirm) |
 | `Esc` or `q` | Back to the main menu |
 
+In the window, a click on an account selects it.
+
 On a narrow terminal the keys are set over two lines. For wiping, see [Wiping an account](#wiping-an-account).
 
 ---

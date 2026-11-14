@@ -87,6 +87,8 @@ The picker fills the window and **previews** each theme as you move to it. Theme
 | `Enter` | Keep the highlighted theme. On a locked theme it closes the picker and puts back the theme you had |
 | `Esc` / `q` | Cancel and revert to whatever you had before |
 
+In the window, a click on a row previews that theme.
+
 Beside the list, a **details pane** shows the highlighted theme's:
 
 - name, **Light** or **Dark** variant and group, then a one-line description;

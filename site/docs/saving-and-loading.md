@@ -110,6 +110,8 @@ If a save's parent is **deleted**, the child becomes an **orphan** and moves to 
 | `Enter` | Load the selected save |
 | `d` | Delete the selected save (asks you to confirm first) |
 | `r` | Rename the selected save |
+
+In the window, a click on a save selects it, and a click in the rename box puts the cursor there.
 | `c` | Duplicate the selected save, as `<name>-copy` (then `-copy-2`, `-copy-3` and so on) |
 | `m` | Mark the selected save as your main game, or unmark it |
 | `Esc` / `q` | Return to where you opened it from: the main menu, or your current run if opened mid-game |

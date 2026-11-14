@@ -7,6 +7,7 @@ All notable changes to AgeForge are documented here.
 ## [Unreleased]
 
 ### Added
+- In the window, buttons and lists take the mouse: a click presses a button or selects a row, and a click in a text field puts the cursor there. This covers the Load Game browser, the Accounts panel, the theme picker, the name, rename, import and wipe prompts, the dev unlock box, and the catastrophe, ancient memory and icons windows.
 - In the window, the mouse wheel scrolls the dashboard's log, the load and account pages and the theme picker's text. Every text box in the game is drawn by its own UI kit now; the terminal shows them as before.
 - In the window, a click moves the arrival screen and the ending film on, as Enter does.
 - In the window, the mouse wheel scrolls every text panel (Milestones, Army, Trade routes, Factions, Statistics, Logs, Epoch, History, Buildings, Help and the rest), and a click in the command bar puts the cursor at the character clicked. The panels and the command bar are drawn by the game's own UI kit; the terminal shows them as before.

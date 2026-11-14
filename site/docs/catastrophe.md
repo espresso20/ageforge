@@ -6,7 +6,7 @@ A catastrophe is a doom that threatens your civilization and forces a permanent 
 
 When a catastrophe strikes, nothing is destroyed yet. The game keeps running and the choice waits for you.
 
-A window opens with two buttons, Endure and Succumb. Press `E` or `S`, or move between the buttons with `Tab` or the arrow keys and press `Enter`. Endure is selected when the window opens, so a stray `Enter` chooses Endure. `Esc` closes the window without choosing, so you can look around first. The catastrophe stays pending.
+A window opens with two buttons, Endure and Succumb. Press `E` or `S`, or move between the buttons with `Tab` or the arrow keys and press `Enter`. Endure is selected when the window opens, so a stray `Enter` chooses Endure. In the window a click on a button presses it. `Esc` closes the window without choosing, so you can look around first. The catastrophe stays pending.
 
 <figure class="screen" data-screen="catastrophe"><figcaption>The choice a catastrophe brings, here the Great Plague in the Iron Era: what Endure would cost with this garrison, and what Succumb would keep.</figcaption></figure>
 
