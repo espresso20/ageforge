@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/window/kit"
 )
@@ -165,7 +163,7 @@ func TestLoadBrowserWithNoSaves(t *testing.T) {
 func pressModal(t *testing.T, r *menuRig, index int) {
 	t.Helper()
 	_, front := r.pages.GetFrontPage()
-	if _, ok := front.(*tview.Modal); !ok {
+	if _, ok := front.(*nativeDialog); !ok {
 		t.Fatalf("the page in front (%q) is not a dialog", r.front())
 	}
 	for i := 0; i < index; i++ {

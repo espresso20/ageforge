@@ -738,6 +738,8 @@ func (b *ledgerBox) Layout(r image.Rectangle) {
 	b.layout()
 }
 
+func (b *ledgerBox) kitDrawn() {}
+
 // CanFocus: the Ledger takes no keys.
 func (b *ledgerBox) CanFocus() bool { return false }
 

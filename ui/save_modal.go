@@ -21,7 +21,7 @@ func (d *Dashboard) showSaveChoiceModal() {
 
 	text := vibe.Sprintf("ui.save_modal.showSaveChoiceModal.01", "Save %q?", active)
 	buttons := []string{vibe.Line("ui.save_modal.showSaveChoiceModal.02", "Overwrite"), vibe.Line("ui.save_modal.showSaveChoiceModal.03", "Branch new"), vibe.Line("ui.save_modal.showSaveChoiceModal.04", "Cancel")}
-	modal := showButtonModal(d.pages, saveChoicePage, text, buttons, func(button int, _ string) {
+	modal := showButtonModal(d.app, d.pages, saveChoicePage, text, buttons, func(button int, _ string) {
 		switch button {
 		case 0: // "Overwrite"
 			name := d.engine.ActiveSaveName()

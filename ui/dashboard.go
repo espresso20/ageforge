@@ -1436,7 +1436,7 @@ func (d *Dashboard) leaveToMenu(msg string) {
 		d.overlayMgr.Hide()
 	}
 	d.pages.SwitchToPage("splash")
-	showButtonModal(d.pages, accountNoticePage, safeTags(msg), []string{txtOK.String()}, func(int, string) {})
+	showButtonModal(d.app, d.pages, accountNoticePage, safeTags(msg), []string{txtOK.String()}, func(int, string) {})
 }
 
 // codeWindowPage is the page of the small window a command's Window text is

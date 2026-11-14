@@ -86,27 +86,20 @@ func panelTextRect(r image.Rectangle) image.Rectangle {
 	return image.Rect(r.Min.X+panelPadX, r.Min.Y+1, r.Min.X+panelPadX+tw, r.Min.Y+1+th)
 }
 
-// Draw tells the text view where it is (code that asks it for its rectangle
-// still gets the answer), then draws the frame and the text as one tree.
-func (f *panelFrame) Draw(scr tcell.Screen) {
-	x, y, w, h := f.GetRect()
-	if w <= 0 || h <= 0 {
-		return
-	}
-	t := panelTextRect(image.Rect(x, y, x+w, y+h))
-	f.tv.SetRect(t.Min.X, t.Min.Y, t.Dx(), t.Dy())
-	f.nativeHost.Draw(scr)
-}
+func (f *panelFrame) kitDrawn() {}
 
-// Children: the text view's box is the frame's child.
-func (f *panelFrame) Children() []kit.Widget { return []kit.Widget{f.tv.box} }
+// Children: the text view is the frame's child.
+func (f *panelFrame) Children() []kit.Widget { return []kit.Widget{f.tv} }
 
 // Layout places the text inside the frame.
 func (f *panelFrame) Layout(r image.Rectangle) {
 	f.Place(r)
+	if f.nativeHost == nil || r.Empty() {
+		return // not on the screen yet
+	}
 	t := panelTextRect(r)
 	f.iw, f.ih = t.Dx(), t.Dy()
-	f.tv.box.Layout(t)
+	place(f.tv, t, screenOffset(f, r))
 }
 
 // Paint draws the frame, then the text inside it.
@@ -132,7 +125,7 @@ func (f *panelFrame) Paint(p *kit.Painter) {
 		g.fold()
 	}
 	paintExpeditionKit(p, g, r.Min, newExpPalette())
-	f.tv.box.Paint(p)
+	f.tv.Paint(p)
 }
 
 // Focus gives the keyboard to the text.

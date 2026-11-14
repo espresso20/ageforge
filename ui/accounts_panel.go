@@ -480,10 +480,10 @@ var wipeSavesLabel = vibe.E("ui.accounts_panel.wipeSavesLabel.01", "Delete all s
 // dialog the main menu's "Delete all saves" always showed; the entry now lives here, away
 // from Quit, and names the account it acts on. confirmed runs on the destructive button;
 // done runs after either answer, once the dialog is gone.
-func showWipeSavesConfirmation(pages *tview.Pages, account string, confirmed, done func()) {
+func showWipeSavesConfirmation(app *tview.Application, pages *tview.Pages, account string, confirmed, done func()) {
 	text := vibe.Sprintf("ui.accounts_panel.showWipeSavesConfirmation.01", "⚠  Delete all saves?\n\nEvery save of the account \"%s\" is deleted.\nThose runs and their prestige are lost.\nThe account (themes, lifetime stats, badges) is kept.\n\nThis cannot be undone.", account)
 	buttons := []string{vibe.Line("ui.accounts_panel.showWipeSavesConfirmation.02", "Cancel"), wipeSavesLabel.String()}
-	styleDangerModal(showButtonModal(pages, accountsSavesConfirm, text, buttons, func(_ int, buttonLabel string) {
+	styleDangerModal(showButtonModal(app, pages, accountsSavesConfirm, text, buttons, func(_ int, buttonLabel string) {
 		if buttonLabel == wipeSavesLabel.String() {
 			confirmed()
 		}
@@ -500,7 +500,7 @@ func (p *accountsPanel) doDeleteSaves() {
 		return
 	}
 	idx := p.list.GetCurrentItem()
-	showWipeSavesConfirmation(p.pages, displayNameOr(s), func() {
+	showWipeSavesConfirmation(p.app, p.pages, displayNameOr(s), func() {
 		n, err := p.engine.WipeSavesByID(s.AccountID)
 		if err != nil {
 			p.status.SetText(vibe.Sprintf("ui.accounts_panel.doDeleteSaves.01", "[red]Could not delete the saves: %v[-]", err))
@@ -537,7 +537,7 @@ func (p *accountsPanel) doWipe() {
 		name,
 	)
 	buttons := []string{vibe.Line("ui.accounts_panel.doWipe.02", "Keep it"), vibe.Line("ui.accounts_panel.doWipe.03", "Wipe it")}
-	styleDangerModal(showButtonModal(p.pages, accountsWipeConfirm1, text, buttons, func(button int, _ string) {
+	styleDangerModal(showButtonModal(p.app, p.pages, accountsWipeConfirm1, text, buttons, func(button int, _ string) {
 		if button == 1 { // "Wipe it"; the other button and Esc (-1) keep the account
 			p.showWipeTypeGate(s.AccountID, name, wasActive)
 			return

@@ -92,8 +92,8 @@ func takeKeys(window keyCapturer, keys map[kit.KeyCode]func()) {
 // showButtonModal shows text with buttons over the page. A button, or Esc
 // (button -1), removes the window and then calls done with the button's index
 // and label.
-func showButtonModal(pages *tview.Pages, page, text string, buttons []string, done func(button int, label string)) *tview.Modal {
-	modal := tview.NewModal().
+func showButtonModal(app *tview.Application, pages *tview.Pages, page, text string, buttons []string, done func(button int, label string)) *nativeDialog {
+	modal := newNativeDialog(app).
 		SetText(text).
 		AddButtons(buttons).
 		SetDoneFunc(func(button int, label string) {

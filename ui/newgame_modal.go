@@ -57,7 +57,7 @@ func showAccountNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 func showAccountNameConfirmModal(app *tview.Application, pages *tview.Pages, name string, onCreate func(name string), onRetype func()) {
 	text := vibe.Sprintf("ui.newgame_modal.showAccountNameConfirmModal.01", "Create your AgeForge account as %q?\nThis name is your identity. To restore your account on another device, enter it exactly as written here.", name)
 	buttons := []string{vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.02", "Create"), vibe.Line("ui.newgame_modal.showAccountNameConfirmModal.03", "Re-type")}
-	modal := showButtonModal(pages, accountNameConfirmPage, text, buttons, func(button int, _ string) {
+	modal := showButtonModal(app, pages, accountNameConfirmPage, text, buttons, func(button int, _ string) {
 		if button == 0 { // "Create"
 			onCreate(name)
 			return

@@ -53,6 +53,9 @@ func (p *peoplePanel) update(state game.GameState) {
 	p.view.row = clamp(p.view.row, 0, peopleRows(state, p.view.tab)-1)
 }
 
+// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
+func (p *peoplePanel) kitDrawn() {}
+
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *peoplePanel) Draw(scr tcell.Screen) {
 	p.host.SetRect(p.GetRect())

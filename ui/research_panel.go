@@ -124,6 +124,9 @@ func (m *treeModel) home() string {
 	return ""
 }
 
+// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
+func (p *researchPanel) kitDrawn() {}
+
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *researchPanel) Draw(scr tcell.Screen) {
 	p.host.SetRect(p.GetRect())
@@ -179,7 +182,7 @@ func (p *researchPanel) Mouse(m kit.Mouse) bool {
 	case m.Kind != kit.MousePress || m.Button != kit.ButtonLeft:
 		return false
 	case p.view.card:
-		return !m.Pt().In(p.model.cardAt) && p.closeCard()
+		return !m.Pt().Sub(p.Bounds().Min).In(p.model.cardAt) && p.closeCard()
 	}
 	key := p.model.techAt(m.Pt().Sub(p.Bounds().Min), p.view, p.w, p.h)
 	if key == "" {

@@ -37,16 +37,23 @@ func newBarPanel(route func(ev *kit.Key, prompt string) bool) barPanel {
 // normally keeps it): the panel's own keys work, and anything else goes to
 // the command bar, which takes the keyboard back.
 func (b *barPanel) InputHandler() func(*tcell.EventKey, func(tview.Primitive)) {
-	return keysIn(b.Box, func(ev *kit.Key) {
-		prompt := ""
-		if b.prompt != nil {
-			prompt = b.prompt()
-		}
-		if !b.route(ev, prompt) && b.toPrompt != nil {
-			b.toPrompt(ev)
-		}
-	})
+	return keysIn(b.Box, func(ev *kit.Key) { b.Key(*ev) })
 }
+
+// Key is the same, where the panel stands in a kit tree.
+func (b *barPanel) Key(k kit.Key) bool {
+	prompt := ""
+	if b.prompt != nil {
+		prompt = b.prompt()
+	}
+	if !b.route(&k, prompt) && b.toPrompt != nil {
+		b.toPrompt(&k)
+	}
+	return true
+}
+
+// boxFocused reports whether tview has given the panel itself the focus.
+func (b *barPanel) boxFocused() bool { return b.Box.HasFocus() }
 
 // overBar is an overlay's build result: the panel over the whole screen but
 // the command bar's rows, which it leaves to the dashboard underneath (a Flex

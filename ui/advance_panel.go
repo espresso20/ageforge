@@ -91,6 +91,9 @@ func (p *advancePanel) update(state game.GameState) {
 	p.ui.sel = clamp(p.ui.sel, 0, max(0, len(v.Pillars)-1))
 }
 
+// kitDrawn: the panel draws itself in Paint, so a kit container takes it in.
+func (p *advancePanel) kitDrawn() {}
+
 // Draw paints the panel: the host shows it, in the panel's rectangle.
 func (p *advancePanel) Draw(scr tcell.Screen) {
 	p.host.SetRect(p.GetRect())
