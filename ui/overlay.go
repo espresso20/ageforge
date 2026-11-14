@@ -61,7 +61,7 @@ type OverlayManager struct {
 	// focus is what holds the keyboard while the active overlay shows (its
 	// TextView, or a widget overlay's root); nil with none.
 	focus   tview.Primitive
-	pages   *tview.Pages
+	pages   *nativePages
 	app     *tview.Application
 	onClose func() // called after hide to restore focus to the command input field
 	screenW int    // updated every frame via SetBeforeDrawFunc
@@ -87,7 +87,7 @@ type OverlayManager struct {
 
 // NewOverlayManager creates an OverlayManager. onClose is called whenever an
 // overlay is closed so the caller can return focus to the command input field.
-func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func()) *OverlayManager {
+func NewOverlayManager(pages *nativePages, app *tview.Application, onClose func()) *OverlayManager {
 	om := &OverlayManager{
 		entries:       make(map[string]*overlayEntry),
 		widgetEntries: make(map[string]*widgetEntry),

@@ -25,7 +25,7 @@ const loadGamePage = "load_game"
 // the page can be rebuilt cheaply and selection restored after delete/rename/dup.
 type loadGameBrowser struct {
 	app    *tview.Application
-	pages  *tview.Pages
+	pages  *nativePages
 	engine *game.GameEngine
 
 	root     *nativeFlex
@@ -58,12 +58,12 @@ type loadGameBrowser struct {
 // backPage names the page to return to on Back/Esc; startOnLoad decides whether
 // a successful load should start the engine (true from the splash for the first
 // start, false mid-game where the engine is already running).
-func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, backPage string, startOnLoad bool) tview.Primitive {
+func CreateLoadGamePage(app *tview.Application, pages *nativePages, engine *game.GameEngine, backPage string, startOnLoad bool) tview.Primitive {
 	return newLoadGameBrowser(app, pages, engine, backPage, startOnLoad).root
 }
 
 // newLoadGameBrowser builds the browser; its root is the page.
-func newLoadGameBrowser(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, backPage string, startOnLoad bool) *loadGameBrowser {
+func newLoadGameBrowser(app *tview.Application, pages *nativePages, engine *game.GameEngine, backPage string, startOnLoad bool) *loadGameBrowser {
 	b := &loadGameBrowser{
 		app:         app,
 		pages:       pages,

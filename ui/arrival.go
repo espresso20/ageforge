@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -449,25 +447,27 @@ func (a *arrival) key() {
 	}
 }
 
-// Draw draws the screen at the clock's frame, then the theme's weather over
-// the cells it leaves empty, and keeps the redraw clock running while it moves.
-func (a *arrival) Draw(scr tcell.Screen) {
-	if a.stage == arrClosed {
-		return
-	}
-	a.nativeHost.Draw(scr)
-	if a.view.motion {
-		a.startClock(a.om)
-	} else {
-		a.stopClock()
-	}
-}
+// kitDrawn: the screen draws itself in Paint, the theme's weather and the
+// redraw clock with it, so a kit container takes it in.
+func (a *arrival) kitDrawn() {}
+
+// Covers: once closed the screen is not there for the pointer.
+func (a *arrival) Covers(image.Point) bool { return a.stage != arrClosed }
 
 // Layout takes the screen's rectangle.
 func (a *arrival) Layout(r image.Rectangle) { a.Place(r) }
 
 // Paint draws the screen at the clock's frame.
 func (a *arrival) Paint(p *kit.Painter) {
+	if a.stage == arrClosed {
+		return
+	}
+	// The clock runs only while the screen moves.
+	if a.view.motion {
+		a.startClock(a.om)
+	} else {
+		a.stopClock()
+	}
 	r := a.Bounds()
 	if r.Empty() {
 		return

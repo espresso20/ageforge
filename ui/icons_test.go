@@ -274,7 +274,7 @@ func TestTerminalFontSteps(t *testing.T) {
 
 // iconsTestDashboard is a dashboard on a fresh game with a named account,
 // whose icons check installs through in, inline.
-func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string)) fontInstaller) (*Dashboard, *game.GameEngine, *tview.Pages) {
+func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string)) fontInstaller) (*Dashboard, *game.GameEngine, *nativePages) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := game.NewGameEngine()
@@ -291,7 +291,7 @@ func iconsTestDashboard(t *testing.T, env []string, in func(progress func(string
 }
 
 // pressKey sends a key to whatever holds the keyboard, as the event loop does.
-func pressKey(d *Dashboard, pages *tview.Pages, k kit.KeyCode, r rune) {
+func pressKey(d *Dashboard, pages *nativePages, k kit.KeyCode, r rune) {
 	pages.InputHandler()(tev(k, r, 0), func(p tview.Primitive) { d.app.SetFocus(p) })
 }
 

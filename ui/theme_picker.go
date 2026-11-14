@@ -48,7 +48,7 @@ type pickerRow struct {
 // a live preview on the right, and live apply wired through SetChangedFunc.
 type themePicker struct {
 	app   *tview.Application
-	pages *tview.Pages
+	pages *nativePages
 
 	// engine is the bridge to the account layer (the theming design §6). It may be nil
 	// (accountless play / tests); every account touch nil-guards both the engine
@@ -117,7 +117,7 @@ func pickerRows(all []theme.Theme) []pickerRow {
 // engine bridges to the account layer for persistence + unlock gating (the theming design
 // §6); it may be nil for accountless play/tests, in which case confirm simply
 // doesn't persist and only the always-available themes are selectable.
-func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, returnPage string) tview.Primitive {
+func CreateThemePickerPage(app *tview.Application, pages *nativePages, engine *game.GameEngine, returnPage string) tview.Primitive {
 	all := theme.All()
 	p := &themePicker{
 		app:         app,

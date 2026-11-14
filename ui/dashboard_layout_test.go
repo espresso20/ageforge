@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -36,7 +35,7 @@ var layoutAges = []string{"primitive_age", "medieval_age", "quantum_age"}
 // stagedDashboard is a dashboard over a game moved into age: a few of every
 // building so far, stores at mixed levels (full, nearly empty, in between),
 // and five kinds of building under construction.
-func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.GameEngine) {
+func stagedDashboard(t *testing.T, age string) (*Dashboard, *nativePages, *game.GameEngine) {
 	t.Helper()
 	eng := game.NewGameEngine()
 	eng.SeedRNG(12)
@@ -99,7 +98,7 @@ func stagedDashboard(t *testing.T, age string) (*Dashboard, *tview.Pages, *game.
 
 // drawnDashboard draws the dashboard at w x h, as the app does, and returns
 // the screen's cells.
-func drawnDashboard(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []tcell.SimCell {
+func drawnDashboard(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []tcell.SimCell {
 	t.Helper()
 	sim := newSimScreen(t, w, h)
 	screen := theme.WrapScreen(sim)

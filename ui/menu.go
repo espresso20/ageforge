@@ -12,7 +12,6 @@ import (
 
 	"github.com/espresso20/ageforge/presence"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -77,7 +76,7 @@ type mainMenu struct {
 	*nativeHost
 	kit.Base
 	app     *tview.Application
-	pages   *tview.Pages
+	pages   *nativePages
 	engine  *game.GameEngine
 	version string
 
@@ -126,7 +125,7 @@ type mainMenu struct {
 
 // CreateSplashPage creates the main menu. A release build also asks, in
 // the background, whether a newer version is out.
-func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) tview.Primitive {
+func CreateSplashPage(app *tview.Application, pages *nativePages, engine *game.GameEngine, currentVersion string) tview.Primitive {
 	m := newMainMenu(app, pages, engine, currentVersion)
 	// Background update check: a no-op on dev builds or network errors.
 	if currentVersion != "dev" && !steam.Build {
@@ -146,7 +145,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 
 // newMainMenu makes the menu and reads what it says. It asks the network
 // nothing.
-func newMainMenu(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) *mainMenu {
+func newMainMenu(app *tview.Application, pages *nativePages, engine *game.GameEngine, currentVersion string) *mainMenu {
 	m := &mainMenu{
 		app: app, pages: pages, engine: engine, version: currentVersion,
 		now: time.Now, active: true, appID: presence.AppID,
@@ -419,18 +418,10 @@ func (m *mainMenu) stopClock() {
 // moving reports whether the page's motion is running.
 func (m *mainMenu) moving() bool { return m.active && m.set.Motion }
 
-// Draw draws the page, and keeps its clock running only while it moves.
-func (m *mainMenu) Draw(scr tcell.Screen) {
-	if !m.active {
-		return // under a page it opened, which covers the screen
-	}
-	m.nativeHost.Draw(scr)
-	if m.moving() {
-		m.startClock()
-	} else {
-		m.stopClock()
-	}
-}
+func (m *mainMenu) kitDrawn() {}
+
+// Covers: under a page it opened the menu is not there for the pointer.
+func (m *mainMenu) Covers(image.Point) bool { return m.active }
 
 // CanFocus: the menu takes the keys.
 func (m *mainMenu) CanFocus() bool { return true }
@@ -446,6 +437,15 @@ func (m *mainMenu) Layout(r image.Rectangle) {
 
 // Paint draws the page at the clock's frame.
 func (m *mainMenu) Paint(p *kit.Painter) {
+	if !m.active {
+		return // under a page it opened, which covers the screen
+	}
+	// The clock runs only while the page moves.
+	if m.moving() {
+		m.startClock()
+	} else {
+		m.stopClock()
+	}
 	r := m.Bounds()
 	if r.Empty() {
 		return

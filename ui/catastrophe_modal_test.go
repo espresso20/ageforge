@@ -38,7 +38,7 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 // visible around it, and nothing beneath shows through inside it.
 func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
 	const w, h = 160, 50
-	pages := tview.NewPages()
+	pages := newNativePages()
 	filler := tview.NewTextView().SetText(strings.Repeat(strings.Repeat("X", w)+"\n", h))
 	pages.AddPage("dashboard", filler, true, true)
 	d := NewDashboard(tview.NewApplication(), game.NewGameEngine(), pages)

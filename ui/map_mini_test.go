@@ -7,8 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -34,7 +32,7 @@ func miniTestGame(t testing.TB) *game.GameEngine {
 
 // drawDashboard lays the dashboard out at w x h and draws it (through the
 // theme screen wrapper, as the app does), returning the screen text.
-func drawDashboard(t testing.TB, d *Dashboard, pages *tview.Pages, w, h int) string {
+func drawDashboard(t testing.TB, d *Dashboard, pages *nativePages, w, h int) string {
 	t.Helper()
 	sim := newSimScreen(t, w, h)
 	scr := theme.WrapScreen(sim)
@@ -44,7 +42,7 @@ func drawDashboard(t testing.TB, d *Dashboard, pages *tview.Pages, w, h int) str
 	return simCells(sim).Text()
 }
 
-func newMiniDashboard(t testing.TB) (*Dashboard, *tview.Pages) {
+func newMiniDashboard(t testing.TB) (*Dashboard, *nativePages) {
 	t.Helper()
 	d, pages := newTestDashboard(miniTestGame(t))
 	miniOn(t, d)
@@ -126,7 +124,7 @@ func TestMiniMapSize(t *testing.T) {
 // the account; minimap on brings it back.
 func TestMinimapSetting(t *testing.T) {
 	d, eng := mapTestDashboard(t, true)
-	pages := tview.NewPages()
+	pages := newNativePages()
 	pages.AddPage("dashboard", d.Root(), true, true)
 	show := func() bool {
 		drawDashboard(t, d, pages, 160, 48)

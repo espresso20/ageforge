@@ -50,7 +50,7 @@ const (
 type Dashboard struct {
 	app    *tview.Application
 	engine *game.GameEngine
-	pages  *tview.Pages
+	pages  *nativePages
 	root   *nativeFlex
 
 	// vibeSeen is the VibeMode switch as the dashboard last drew it.
@@ -178,7 +178,7 @@ type Dashboard struct {
 }
 
 // NewDashboard creates the gameplay dashboard
-func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
+func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *nativePages) *Dashboard {
 	mv := newMapViews()
 	d := &Dashboard{
 		app:           app,

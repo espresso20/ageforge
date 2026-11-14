@@ -29,7 +29,7 @@ type endTimer struct {
 type endingRig struct {
 	e      *ending
 	om     *OverlayManager
-	pages  *tview.Pages
+	pages  *nativePages
 	clock  time.Time
 	timers []*endTimer
 	closed int // times the keyboard went back to the prompt
@@ -94,7 +94,7 @@ func sampleEnding(kind string, level int) game.RunEnding {
 // a frame costs; most tests do not look at them).
 func stagedEnding(t testing.TB, end game.RunEnding, tier mapmodel.GlyphTier, motion, towns bool) *endingRig {
 	t.Helper()
-	r := &endingRig{pages: tview.NewPages(), clock: time.Unix(3_000_000, 0)}
+	r := &endingRig{pages: newNativePages(), clock: time.Unix(3_000_000, 0)}
 	r.om = NewOverlayManager(r.pages, tview.NewApplication(), func() { r.closed++ })
 	r.om.after = func(d time.Duration, fn func()) func() {
 		tm := &endTimer{d: d, fn: fn}

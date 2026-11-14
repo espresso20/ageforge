@@ -110,11 +110,11 @@ func (f frame) Text() string { return strings.Join(f.Rows(), "\n") }
 
 // newTestDashboard is a dashboard over eng (a fresh game when eng is nil)
 // on the "dashboard" page of its own Pages, as the app lays them out.
-func newTestDashboard(eng *game.GameEngine) (*Dashboard, *tview.Pages) {
+func newTestDashboard(eng *game.GameEngine) (*Dashboard, *nativePages) {
 	if eng == nil {
 		eng = game.NewGameEngine()
 	}
-	pages := tview.NewPages()
+	pages := newNativePages()
 	d := NewDashboard(tview.NewApplication(), eng, pages)
 	pages.AddPage("dashboard", d.Root(), true, true)
 	return d, pages

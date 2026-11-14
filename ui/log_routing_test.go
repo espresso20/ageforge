@@ -5,14 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 )
 
 // logRoutingDashboard builds a dashboard over newCaseTestEngine (the
 // Primitive Age, stocked so every command below succeeds).
-func logRoutingDashboard(t *testing.T) (*Dashboard, *game.GameEngine, *tview.Pages) {
+func logRoutingDashboard(t *testing.T) (*Dashboard, *game.GameEngine, *nativePages) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	eng := newCaseTestEngine(t, "")

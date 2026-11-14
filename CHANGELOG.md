@@ -51,6 +51,7 @@ All notable changes to AgeForge are documented here.
 - **Mac-friendly keys.** Option+Up and Option+Down work as Page Up and Page Down everywhere, Option+Left and Option+Right as Home and End, and - and = zoom the map.
 
 ### Changed
+- Inside: the stack of pages itself (menu, dashboard, panels, popups) is the UI kit's now, so the whole screen is one picture painted in one pass. A panel or popup still leaves the command bar and the page around it usable, by eye and by mouse.
 - Inside: the Map panel, the mini map, the theme picker's sample and every theme's weather are painted through the UI kit now, so nothing the game shows is drawn straight onto the terminal library's screen any more. They look as they did.
 - Inside: the whole dashboard is one picture painted by the UI kit (its body, the left column, the map dock, the panels and the Ledger), and the game's dialogs are the kit's too. Only the map and the mini map still draw themselves the old way.
 - Inside: every layout box in the game (the dashboard's frame, each popup, each menu page) is now laid out and painted by the UI kit as one picture a screen, where each box used to paint itself through the terminal library. Nothing looks or plays differently.

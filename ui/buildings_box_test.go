@@ -5,8 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -27,7 +25,7 @@ const (
 )
 
 // playtestTown is a dashboard on a town like the playtest's.
-func playtestTown(t *testing.T) (*Dashboard, *tview.Pages) {
+func playtestTown(t *testing.T) (*Dashboard, *nativePages) {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	restoreForge(t)
@@ -44,7 +42,7 @@ func playtestTown(t *testing.T) (*Dashboard, *tview.Pages) {
 
 // buildingsBox returns the rows inside the Buildings box as drawn, with the
 // trailing blanks trimmed off each.
-func buildingsBox(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) []string {
+func buildingsBox(t *testing.T, d *Dashboard, pages *nativePages, w, h int) []string {
 	t.Helper()
 	drawDashboard(t, d, pages, w, h)
 	screen := strings.Split(drawDashboard(t, d, pages, w, h), "\n")

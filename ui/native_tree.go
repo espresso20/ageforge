@@ -181,6 +181,9 @@ func (g *nativeGroup) Paint(p *kit.Painter) {
 	}
 }
 
+// Covers: a group is nothing but its children.
+func (g *nativeGroup) Covers(image.Point) bool { return false }
+
 func (g *nativeGroup) covered() []image.Rectangle {
 	var out []image.Rectangle
 	for _, w := range g.kids {
@@ -381,21 +384,34 @@ func (f *nativeFlex) Paint(p *kit.Painter) {
 	}
 }
 
+// own is the cells the flex paints itself: its border, when it has one.
+func (f *nativeFlex) own() []image.Rectangle {
+	r := f.Bounds()
+	if !f.framed() || r.Empty() {
+		return nil
+	}
+	return []image.Rectangle{
+		image.Rect(r.Min.X, r.Min.Y, r.Max.X, r.Min.Y+1), image.Rect(r.Min.X, r.Max.Y-1, r.Max.X, r.Max.Y),
+		image.Rect(r.Min.X, r.Min.Y, r.Min.X+1, r.Max.Y), image.Rect(r.Max.X-1, r.Min.Y, r.Max.X, r.Max.Y),
+	}
+}
+
 // covered is the cells the flex paints: its border and its items. The rest
 // of its rectangle is left as it was on the screen.
 func (f *nativeFlex) covered() []image.Rectangle {
-	var out []image.Rectangle
-	if r := f.Bounds(); f.framed() && !r.Empty() {
-		out = append(out,
-			image.Rect(r.Min.X, r.Min.Y, r.Max.X, r.Min.Y+1), image.Rect(r.Min.X, r.Max.Y-1, r.Max.X, r.Max.Y),
-			image.Rect(r.Min.X, r.Min.Y, r.Min.X+1, r.Max.Y), image.Rect(r.Max.X-1, r.Min.Y, r.Max.X, r.Max.Y))
-	}
+	out := f.own()
 	for _, it := range f.items {
 		if it.w != nil {
 			out = append(out, coveredBy(it.w)...)
 		}
 	}
 	return out
+}
+
+// Covers: the flex itself is only its border; the rest is its items' or a
+// gap, which leaves the pointer to the page beneath.
+func (f *nativeFlex) Covers(pt image.Point) bool {
+	return f.framed() && !pt.In(f.inner(f.Bounds()))
 }
 
 // Focus gives the keyboard to the first item added with focus, or keeps it

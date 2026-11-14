@@ -18,8 +18,8 @@ import (
 func TestMiniMapAppearsWhereTheDocsSay(t *testing.T) {
 	restoreForge(t)
 	shown := func(w, h int) bool {
-		d := NewDashboard(tview.NewApplication(), game.NewGameEngine(), tview.NewPages())
-		pages := tview.NewPages()
+		d := NewDashboard(tview.NewApplication(), game.NewGameEngine(), newNativePages())
+		pages := newNativePages()
 		pages.AddPage("dashboard", d.Root(), true, true)
 		miniOn(t, d)
 		drawnDashboard(t, d, pages, w, h)

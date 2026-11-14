@@ -141,6 +141,9 @@ func (d *nativeDialog) Paint(p *kit.Painter) {
 	}
 }
 
+// Covers: the pointer is the dialog's inside its box and nowhere else.
+func (d *nativeDialog) Covers(pt image.Point) bool { return pt.In(d.box) }
+
 // covered: the dialog paints its box and nothing round it.
 func (d *nativeDialog) covered() []image.Rectangle { return []image.Rectangle{d.box} }
 

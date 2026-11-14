@@ -13,7 +13,7 @@ import (
 // App manages the tview application and page routing
 type App struct {
 	tviewApp  *tview.Application
-	pages     *tview.Pages
+	pages     *nativePages
 	engine    *game.GameEngine
 	dashboard *Dashboard
 	version   string
@@ -38,7 +38,7 @@ func NewApp(engine *game.GameEngine, version string) *App {
 
 	a := &App{
 		tviewApp: tview.NewApplication(),
-		pages:    tview.NewPages(),
+		pages:    newNativePages(),
 		engine:   engine,
 		version:  version,
 	}

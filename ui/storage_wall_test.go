@@ -5,8 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -19,7 +17,7 @@ const wallStore = "keep"
 // wallTown is a Medieval Age town (a few of every building, mixed stores)
 // where counts overrides the number of some buildings: a store built 40
 // times asks more for its next copy than the Medieval Age's stores can hold.
-func wallTown(t *testing.T, counts map[string]int) (*Dashboard, *tview.Pages, *game.GameEngine) {
+func wallTown(t *testing.T, counts map[string]int) (*Dashboard, *nativePages, *game.GameEngine) {
 	t.Helper()
 	d, pages, eng := stagedDashboard(t, "medieval_age")
 	all := map[string]int{}
@@ -43,7 +41,7 @@ func flat(rows []string) string {
 // panelPages draws the dashboard and turns the Buildings panel through its
 // pages, returning each page's rows (checked to be whole lines), until the
 // last one.
-func panelPages(t *testing.T, d *Dashboard, pages *tview.Pages, w, h int) [][]string {
+func panelPages(t *testing.T, d *Dashboard, pages *nativePages, w, h int) [][]string {
 	t.Helper()
 	var out [][]string
 	d.economyTab.bldFirst = 0

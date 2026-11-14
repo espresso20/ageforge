@@ -181,7 +181,7 @@ func TestThemePicker_NoDeadlockOnNavigate(t *testing.T) {
 	app := tview.NewApplication()
 	app.SetScreen(tcell.NewSimulationScreen("")) // app.Run() Inits it.
 
-	pages := tview.NewPages()
+	pages := newNativePages()
 	pages.AddPage("home", tview.NewBox(), true, false)
 	picker := CreateThemePickerPage(app, pages, nil, "home") // nil engine: accountless is fine
 	pages.AddPage(themePickerPage, picker, true, true)

@@ -4,8 +4,6 @@ import (
 	"image"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
@@ -243,22 +241,12 @@ func (e *ending) key() {
 	e.arm()
 }
 
-// Draw draws the film at the clock's frame, then the theme's weather over
-// the cells it leaves empty, and keeps the redraw clock running while it moves.
-func (e *ending) Draw(scr tcell.Screen) {
-	if e.closed {
-		return
-	}
-	e.nativeHost.Draw(scr)
-	if _, _, w, h := e.GetRect(); w <= 0 || h <= 0 {
-		return
-	}
-	if e.view.motion {
-		e.startClock(e.om)
-	} else {
-		e.stopClock()
-	}
-}
+// kitDrawn: the film draws itself in Paint, the theme's weather and the
+// redraw clock with it, so a kit container takes it in.
+func (e *ending) kitDrawn() {}
+
+// Covers: once closed the film is not there for the pointer.
+func (e *ending) Covers(image.Point) bool { return !e.closed }
 
 // Layout takes the film's rectangle.
 func (e *ending) Layout(r image.Rectangle) { e.Place(r) }
@@ -266,8 +254,14 @@ func (e *ending) Layout(r image.Rectangle) { e.Place(r) }
 // Paint draws the film at the clock's frame.
 func (e *ending) Paint(p *kit.Painter) {
 	r := e.Bounds()
-	if r.Empty() {
+	if e.closed || r.Empty() {
 		return
+	}
+	// The clock runs only while the film moves.
+	if e.view.motion {
+		e.startClock(e.om)
+	} else {
+		e.stopClock()
 	}
 	e.frameGrid(r.Dx(), r.Dy()).paint(p, r.Min, e.pal, e.view.plain)
 	// The theme's own weather, at full, from the heavy blow to the film's

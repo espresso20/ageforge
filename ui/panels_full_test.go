@@ -34,7 +34,7 @@ func panelCommands() []string {
 
 // poisonedStage is a dashboard in the Medieval Age with a page of poison over
 // it, so a panel's reach shows.
-func poisonedStage(t *testing.T) (*Dashboard, *tview.Pages) {
+func poisonedStage(t *testing.T) (*Dashboard, *nativePages) {
 	t.Helper()
 	restoreForge(t)
 	d, pages, _ := stagedDashboard(t, "medieval_age")
@@ -150,7 +150,7 @@ func TestTextPanelsShareOneFrame(t *testing.T) {
 	tiers := []mapmodel.GlyphTier{mapmodel.TierASCII, mapmodel.TierUnicode, mapmodel.TierNerd}
 	var cur mapmodel.GlyphTier
 	// a dashboard whose pages hold only the panel: the frame is judged on its own
-	pages := tview.NewPages()
+	pages := newNativePages()
 	d := NewDashboard(tview.NewApplication(), eng, pages)
 	d.overlayMgr.plain = func() bool { return cur == mapmodel.TierASCII }
 	for _, th := range theme.All() {
@@ -185,7 +185,7 @@ func TestTextPanelsShareOneFrame(t *testing.T) {
 }
 
 // drawnPages draws pages at w by h on a simulated screen.
-func drawnPages(t *testing.T, pages *tview.Pages, w, h int) []tcell.SimCell {
+func drawnPages(t *testing.T, pages *nativePages, w, h int) []tcell.SimCell {
 	t.Helper()
 	sim := tcell.NewSimulationScreen("UTF-8")
 	if err := sim.Init(); err != nil {

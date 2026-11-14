@@ -454,6 +454,32 @@ func TestAnyWidgetCanBeGivenTheKeys(t *testing.T) {
 	}
 }
 
+// holed is a layer that is only really there on its left half.
+type holed struct{ Flex }
+
+func (h *holed) Covers(pt image.Point) bool { return pt.X < 5 }
+
+// The pointer goes through a hole in the layer on top to the widget under
+// it; where the top layer has something of its own, that takes it, and
+// where the layer is there but empty nothing does.
+func TestThePointerGoesThroughAHole(t *testing.T) {
+	var log []string
+	under := newProbe("under", &log, true)
+	knob := newProbe("knob", &log, true)
+	top := &holed{}
+	top.Add(knob, 3, 0).Add(nil, 0, 1)
+	r, _ := screen(&Stack{Items: []Widget{under, top}}, 10, 3)
+	r.Mouse(Mouse{Kind: MousePress, X: 8, Y: 0}) // a hole: the widget under
+	r.Mouse(Mouse{Kind: MouseRelease, X: 8, Y: 0})
+	r.Mouse(Mouse{Kind: MousePress, X: 1, Y: 1}) // the knob
+	r.Mouse(Mouse{Kind: MouseRelease, X: 1, Y: 1})
+	r.Mouse(Mouse{Kind: MousePress, X: 4, Y: 1}) // the layer itself: nobody's
+	want := []string{"under press", "under release", "under leave", "knob press", "knob release", "knob leave"}
+	if !reflect.DeepEqual(log, want) {
+		t.Errorf("the mouse went %v, want %v", log, want)
+	}
+}
+
 func TestTabWalksTheFocus(t *testing.T) {
 	var log []string
 	a, b, c := newProbe("a", &log, false), newProbe("b", &log, false), newProbe("c", &log, false)
